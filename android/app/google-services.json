@@ -1,0 +1,48 @@
+{
+  "project_info": {
+    "project_number": "399849748934",
+    "project_id": "mirra-14b0e",
+    "storage_bucket": "mirra-14b0e.firebasestorage.app"
+  },
+  "client": [
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:399849748934:android:ab3e0fc02257c75697dac7",
+        "android_client_info": {
+          "package_name": "com.example.mirra"
+        }
+      },
+      "oauth_client": [],
+      "api_key": [
+        {
+          "current_key": "AIzaSyC82sslwobSzC1Bhl3_Un00NJndTHurJfo"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": []
+        }
+      }
+    },
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:399849748934:android:70d2d9b92cc77e3297dac7",
+        "android_client_info": {
+          "package_name": "mirra.com"
+        }
+      },
+      "oauth_client": [],
+      "api_key": [
+        {
+          "current_key": "AIzaSyC82sslwobSzC1Bhl3_Un00NJndTHurJfo"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": []
+        }
+      }
+    }
+  ],
+  "configuration_version": "1"
+}

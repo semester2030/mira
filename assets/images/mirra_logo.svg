@@ -1,0 +1,22 @@
+<svg width="160" height="80" viewBox="0 0 160 80" xmlns="http://www.w3.org/2000/svg">
+  <defs>
+    <linearGradient id="gradient" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" style="stop-color:#E86FA9;stop-opacity:1" />
+      <stop offset="100%" style="stop-color:#C19EE0;stop-opacity:1" />
+    </linearGradient>
+  </defs>
+  
+  <!-- Background circle -->
+  <circle cx="80" cy="40" r="35" fill="url(#gradient)" opacity="0.1"/>
+  
+  <!-- Main logo text -->
+  <text x="80" y="50" font-family="Arial, sans-serif" font-size="24" font-weight="bold" text-anchor="middle" fill="url(#gradient)">
+    ميرا
+  </text>
+  
+  <!-- Decorative elements -->
+  <circle cx="60" cy="25" r="3" fill="#E86FA9" opacity="0.6"/>
+  <circle cx="100" cy="25" r="3" fill="#C19EE0" opacity="0.6"/>
+  <circle cx="70" cy="60" r="2" fill="#E86FA9" opacity="0.4"/>
+  <circle cx="90" cy="60" r="2" fill="#C19EE0" opacity="0.4"/>
+</svg>
