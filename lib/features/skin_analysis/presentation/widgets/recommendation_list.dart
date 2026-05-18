@@ -2,7 +2,7 @@ import 'package:flutter/material.dart';
 
 class RecommendationList extends StatelessWidget {
   final List<String> recommendations;
-  const RecommendationList({Key? key, required this.recommendations}) : super(key: key);
+  const RecommendationList({super.key, required this.recommendations});
 
   @override
   Widget build(BuildContext context) {

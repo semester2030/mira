@@ -1,0 +1,15 @@
+import '../../features/outfit_analysis/domain/entities/outfit_report.dart';
+import '../../features/skin_analysis/domain/entities/skin_report.dart';
+
+class RecommendationRouteArgs {
+  final SkinReport? skin;
+  final OutfitReport? outfit;
+
+  const RecommendationRouteArgs({this.skin, this.outfit});
+}
+
+class OutfitOccasionRouteArgs {
+  final String imagePath;
+
+  const OutfitOccasionRouteArgs({required this.imagePath});
+}

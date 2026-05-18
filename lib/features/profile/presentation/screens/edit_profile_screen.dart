@@ -1,5 +1,8 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
+import 'package:image_picker/image_picker.dart';
+import '../../../../shared/theme/colors.dart';
+import '../../../../shared/widgets/premium/premium_exports.dart';
 import '../../domain/entities/profile_entity.dart';
 import '../blocs/profile_bloc.dart';
 import '../blocs/profile_event.dart';
@@ -7,7 +10,7 @@ import '../blocs/profile_state.dart';
 
 class EditProfileScreen extends StatefulWidget {
   final ProfileEntity profile;
-  
+
   const EditProfileScreen({super.key, required this.profile});
 
   @override
@@ -16,18 +19,18 @@ class EditProfileScreen extends StatefulWidget {
 
 class _EditProfileScreenState extends State<EditProfileScreen> {
   final _formKey = GlobalKey<FormState>();
-  final _nameController = TextEditingController();
-  final _emailController = TextEditingController();
-  final _phoneController = TextEditingController();
-  final _levelController = TextEditingController();
+  late final TextEditingController _nameController;
+  late final TextEditingController _emailController;
+  late final TextEditingController _phoneController;
+  late final TextEditingController _levelController;
 
   @override
   void initState() {
     super.initState();
-    _nameController.text = widget.profile.name;
-    _emailController.text = widget.profile.email;
-    _phoneController.text = widget.profile.phone ?? '';
-    _levelController.text = widget.profile.level;
+    _nameController = TextEditingController(text: widget.profile.name);
+    _emailController = TextEditingController(text: widget.profile.email);
+    _phoneController = TextEditingController(text: widget.profile.phone ?? '');
+    _levelController = TextEditingController(text: widget.profile.level);
   }
 
   @override
@@ -39,18 +42,28 @@ class _EditProfileScreenState extends State<EditProfileScreen> {
     super.dispose();
   }
 
+  Future<void> _pickImage() async {
+    final picker = ImagePicker();
+    final file = await picker.pickImage(source: ImageSource.gallery, imageQuality: 85);
+    if (file == null || !mounted) return;
+    context.read<ProfileBloc>().add(UpdateAvatar(file.path));
+  }
+
+  void _save() {
+    if (!_formKey.currentState!.validate()) return;
+    final updated = widget.profile.copyWith(
+      name: _nameController.text,
+      email: _emailController.text,
+      phone: _phoneController.text,
+      level: _levelController.text,
+    );
+    context.read<ProfileBloc>().add(UpdateProfile(updated));
+  }
+
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      appBar: AppBar(
-        title: const Text('تعديل الملف الشخصي'),
-        actions: [
-          TextButton(
-            onPressed: _saveProfile,
-            child: const Text('حفظ'),
-          ),
-        ],
-      ),
+      appBar: AppBar(title: const Text('تعديل الملف الشخصي')),
       body: BlocListener<ProfileBloc, ProfileState>(
         listener: (context, state) {
           if (state is ProfileUpdated) {
@@ -59,132 +72,77 @@ class _EditProfileScreenState extends State<EditProfileScreen> {
             );
             Navigator.pop(context);
           } else if (state is ProfileError) {
-            ScaffoldMessenger.of(context).showSnackBar(
-              SnackBar(content: Text(state.message)),
-            );
+            ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text(state.message)));
           }
         },
-        child: SingleChildScrollView(
-          padding: const EdgeInsets.all(16),
-          child: Form(
-            key: _formKey,
-            child: Column(
-              children: [
-                // صورة شخصية
-                GestureDetector(
-                  onTap: _pickImage,
-                  child: CircleAvatar(
-                    radius: 60,
-                    backgroundImage: widget.profile.avatarUrl != null 
-                        ? NetworkImage(widget.profile.avatarUrl!) 
-                        : null,
-                    child: widget.profile.avatarUrl == null
-                        ? const Icon(Icons.person, size: 60, color: Colors.purple)
-                        : null,
-                  ),
-                ),
-                const SizedBox(height: 16),
-                const Text('اضغط لتغيير الصورة', style: TextStyle(color: Colors.grey)),
-                const SizedBox(height: 24),
-                
-                // حقل الاسم
-                TextFormField(
-                  controller: _nameController,
-                  decoration: const InputDecoration(
-                    labelText: 'الاسم',
-                    border: OutlineInputBorder(),
-                  ),
-                  validator: (value) {
-                    if (value == null || value.isEmpty) {
-                      return 'يرجى إدخال الاسم';
-                    }
-                    return null;
-                  },
-                ),
-                const SizedBox(height: 16),
-                
-                // حقل البريد الإلكتروني
-                TextFormField(
-                  controller: _emailController,
-                  decoration: const InputDecoration(
-                    labelText: 'البريد الإلكتروني',
-                    border: OutlineInputBorder(),
-                  ),
-                  validator: (value) {
-                    if (value == null || value.isEmpty) {
-                      return 'يرجى إدخال البريد الإلكتروني';
-                    }
-                    if (!value.contains('@')) {
-                      return 'يرجى إدخال بريد إلكتروني صحيح';
-                    }
-                    return null;
-                  },
-                ),
-                const SizedBox(height: 16),
-                
-                // حقل رقم الهاتف
-                TextFormField(
-                  controller: _phoneController,
-                  decoration: const InputDecoration(
-                    labelText: 'رقم الهاتف',
-                    border: OutlineInputBorder(),
-                  ),
-                ),
-                const SizedBox(height: 16),
-                
-                // حقل المستوى
-                TextFormField(
-                  controller: _levelController,
-                  decoration: const InputDecoration(
-                    labelText: 'المستوى',
-                    border: OutlineInputBorder(),
-                  ),
-                ),
-                const SizedBox(height: 32),
-                
-                // زر الحفظ
-                BlocBuilder<ProfileBloc, ProfileState>(
-                  builder: (context, state) {
-                    return SizedBox(
-                      width: double.infinity,
-                      child: ElevatedButton(
-                        onPressed: state is ProfileUpdating ? null : _saveProfile,
-                        style: ElevatedButton.styleFrom(
-                          backgroundColor: Colors.purple,
-                          padding: const EdgeInsets.symmetric(vertical: 16),
+        child: FloatingGradientBackground(
+          child: SingleChildScrollView(
+            padding: const EdgeInsets.all(20),
+            child: Form(
+              key: _formKey,
+              child: Column(
+                children: [
+                  PremiumCard(
+                    child: Column(
+                      children: [
+                        GestureDetector(
+                          onTap: _pickImage,
+                          child: CircleAvatar(
+                            radius: 48,
+                            backgroundImage: widget.profile.avatarUrl != null
+                                ? NetworkImage(widget.profile.avatarUrl!)
+                                : null,
+                            backgroundColor: AppColors.primaryLight,
+                            child: widget.profile.avatarUrl == null
+                                ? const Icon(Icons.person_rounded, size: 48, color: AppColors.primary)
+                                : null,
+                          ),
                         ),
-                        child: state is ProfileUpdating
-                            ? const CircularProgressIndicator(color: Colors.white)
-                            : const Text('حفظ التغييرات'),
-                      ),
-                    );
-                  },
-                ),
-              ],
+                        const SizedBox(height: 8),
+                        TextButton(
+                          onPressed: _pickImage,
+                          child: const Text('تغيير الصورة'),
+                        ),
+                      ],
+                    ),
+                  ),
+                  const SizedBox(height: 16),
+                  PremiumInputField(
+                    label: 'الاسم',
+                    controller: _nameController,
+                    validator: (v) => v == null || v.isEmpty ? 'يرجى إدخال الاسم' : null,
+                  ),
+                  const SizedBox(height: 12),
+                  PremiumInputField(
+                    label: 'البريد الإلكتروني',
+                    controller: _emailController,
+                    keyboardType: TextInputType.emailAddress,
+                    validator: (v) {
+                      if (v == null || v.isEmpty) return 'يرجى إدخال البريد';
+                      if (!v.contains('@')) return 'بريد غير صحيح';
+                      return null;
+                    },
+                  ),
+                  const SizedBox(height: 12),
+                  PremiumInputField(label: 'رقم الهاتف', controller: _phoneController),
+                  const SizedBox(height: 12),
+                  PremiumInputField(label: 'المستوى', controller: _levelController),
+                  const SizedBox(height: 24),
+                  BlocBuilder<ProfileBloc, ProfileState>(
+                    builder: (context, state) {
+                      return PremiumButton(
+                        label: 'حفظ التغييرات',
+                        loading: state is ProfileUpdating,
+                        onPressed: state is ProfileUpdating ? null : _save,
+                      );
+                    },
+                  ),
+                ],
+              ),
             ),
           ),
         ),
       ),
-    );
-  }
-
-  void _saveProfile() {
-    if (_formKey.currentState!.validate()) {
-      final updatedProfile = widget.profile.copyWith(
-        name: _nameController.text,
-        email: _emailController.text,
-        phone: _phoneController.text,
-        level: _levelController.text,
-      );
-      
-      context.read<ProfileBloc>().add(UpdateProfile(updatedProfile));
-    }
-  }
-
-  void _pickImage() {
-    // TODO: تنفيذ اختيار الصورة
-    ScaffoldMessenger.of(context).showSnackBar(
-      const SnackBar(content: Text('سيتم تنفيذ اختيار الصورة قريباً')),
     );
   }
 }

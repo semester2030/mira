@@ -45,5 +45,11 @@
 	<true/>
 	<key>UIApplicationSupportsIndirectInputEvents</key>
 	<true/>
+	<key>NSCameraUsageDescription</key>
+	<string>ميرا تستخدم الكاميرا لتحليل بشرتك فوراً. لا نحتفظ بصورتك بعد المعالجة.</string>
+	<key>NSPhotoLibraryUsageDescription</key>
+	<string>يمكنك اختيار صورة للتحليل. لا نحفظ الصورة بعد انتهاء التحليل.</string>
+	<key>ITSAppUsesNonExemptEncryption</key>
+	<false/>
 </dict>
 </plist>

@@ -1,0 +1,12 @@
+import { Module } from '@nestjs/common';
+import { AiModule } from '../ai/ai.module';
+import { UsersModule } from '../users/users.module';
+import { SkinAnalysisController } from './skin-analysis.controller';
+import { SkinAnalysisService } from './skin-analysis.service';
+
+@Module({
+  imports: [AiModule, UsersModule],
+  controllers: [SkinAnalysisController],
+  providers: [SkinAnalysisService],
+})
+export class SkinAnalysisModule {}

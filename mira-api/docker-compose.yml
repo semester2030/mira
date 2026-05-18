@@ -1,0 +1,23 @@
+services:
+  postgres:
+    image: postgres:16-alpine
+    container_name: mira-postgres
+    restart: unless-stopped
+    environment:
+      POSTGRES_USER: mira
+      POSTGRES_PASSWORD: mira_secret
+      POSTGRES_DB: mira_db
+    ports:
+      - '5432:5432'
+    volumes:
+      - mira_pg_data:/var/lib/postgresql/data
+
+  redis:
+    image: redis:7-alpine
+    container_name: mira-redis
+    restart: unless-stopped
+    ports:
+      - '6379:6379'
+
+volumes:
+  mira_pg_data:

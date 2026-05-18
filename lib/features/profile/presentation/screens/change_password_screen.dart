@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
+import '../../../../shared/widgets/premium/premium_exports.dart';
 import '../blocs/profile_bloc.dart';
 import '../blocs/profile_event.dart';
 import '../blocs/profile_state.dart';
@@ -13,27 +14,30 @@ class ChangePasswordScreen extends StatefulWidget {
 
 class _ChangePasswordScreenState extends State<ChangePasswordScreen> {
   final _formKey = GlobalKey<FormState>();
-  final _currentPasswordController = TextEditingController();
-  final _newPasswordController = TextEditingController();
-  final _confirmPasswordController = TextEditingController();
-  bool _obscureCurrentPassword = true;
-  bool _obscureNewPassword = true;
-  bool _obscureConfirmPassword = true;
+  final _currentController = TextEditingController();
+  final _newController = TextEditingController();
+  final _confirmController = TextEditingController();
 
   @override
   void dispose() {
-    _currentPasswordController.dispose();
-    _newPasswordController.dispose();
-    _confirmPasswordController.dispose();
+    _currentController.dispose();
+    _newController.dispose();
+    _confirmController.dispose();
     super.dispose();
+  }
+
+  void _submit() {
+    if (!_formKey.currentState!.validate()) return;
+    context.read<ProfileBloc>().add(ChangePassword(
+          currentPassword: _currentController.text,
+          newPassword: _newController.text,
+        ));
   }
 
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      appBar: AppBar(
-        title: const Text('تغيير كلمة المرور'),
-      ),
+      appBar: AppBar(title: const Text('تغيير كلمة المرور')),
       body: BlocListener<ProfileBloc, ProfileState>(
         listener: (context, state) {
           if (state is PasswordChanged) {
@@ -42,132 +46,55 @@ class _ChangePasswordScreenState extends State<ChangePasswordScreen> {
             );
             Navigator.pop(context);
           } else if (state is ProfileError) {
-            ScaffoldMessenger.of(context).showSnackBar(
-              SnackBar(content: Text(state.message)),
-            );
+            ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text(state.message)));
           }
         },
-        child: SingleChildScrollView(
-          padding: const EdgeInsets.all(16),
-          child: Form(
-            key: _formKey,
-            child: Column(
-              children: [
-                const SizedBox(height: 32),
-                
-                // حقل كلمة المرور الحالية
-                TextFormField(
-                  controller: _currentPasswordController,
-                  obscureText: _obscureCurrentPassword,
-                  decoration: InputDecoration(
-                    labelText: 'كلمة المرور الحالية',
-                    border: const OutlineInputBorder(),
-                    suffixIcon: IconButton(
-                      icon: Icon(_obscureCurrentPassword ? Icons.visibility : Icons.visibility_off),
-                      onPressed: () {
-                        setState(() {
-                          _obscureCurrentPassword = !_obscureCurrentPassword;
-                        });
-                      },
-                    ),
+        child: FloatingGradientBackground(
+          child: SingleChildScrollView(
+            padding: const EdgeInsets.all(20),
+            child: Form(
+              key: _formKey,
+              child: Column(
+                children: [
+                  PremiumInputField(
+                    label: 'كلمة المرور الحالية',
+                    controller: _currentController,
+                    obscureText: true,
+                    validator: (v) => v == null || v.isEmpty ? 'مطلوبة' : null,
                   ),
-                  validator: (value) {
-                    if (value == null || value.isEmpty) {
-                      return 'يرجى إدخال كلمة المرور الحالية';
-                    }
-                    return null;
-                  },
-                ),
-                const SizedBox(height: 16),
-                
-                // حقل كلمة المرور الجديدة
-                TextFormField(
-                  controller: _newPasswordController,
-                  obscureText: _obscureNewPassword,
-                  decoration: InputDecoration(
-                    labelText: 'كلمة المرور الجديدة',
-                    border: const OutlineInputBorder(),
-                    suffixIcon: IconButton(
-                      icon: Icon(_obscureNewPassword ? Icons.visibility : Icons.visibility_off),
-                      onPressed: () {
-                        setState(() {
-                          _obscureNewPassword = !_obscureNewPassword;
-                        });
-                      },
-                    ),
+                  const SizedBox(height: 12),
+                  PremiumInputField(
+                    label: 'كلمة المرور الجديدة',
+                    controller: _newController,
+                    obscureText: true,
+                    validator: (v) {
+                      if (v == null || v.length < 6) return '6 أحرف على الأقل';
+                      return null;
+                    },
                   ),
-                  validator: (value) {
-                    if (value == null || value.isEmpty) {
-                      return 'يرجى إدخال كلمة المرور الجديدة';
-                    }
-                    if (value.length < 6) {
-                      return 'كلمة المرور يجب أن تكون 6 أحرف على الأقل';
-                    }
-                    return null;
-                  },
-                ),
-                const SizedBox(height: 16),
-                
-                // حقل تأكيد كلمة المرور
-                TextFormField(
-                  controller: _confirmPasswordController,
-                  obscureText: _obscureConfirmPassword,
-                  decoration: InputDecoration(
-                    labelText: 'تأكيد كلمة المرور',
-                    border: const OutlineInputBorder(),
-                    suffixIcon: IconButton(
-                      icon: Icon(_obscureConfirmPassword ? Icons.visibility : Icons.visibility_off),
-                      onPressed: () {
-                        setState(() {
-                          _obscureConfirmPassword = !_obscureConfirmPassword;
-                        });
-                      },
-                    ),
+                  const SizedBox(height: 12),
+                  PremiumInputField(
+                    label: 'تأكيد كلمة المرور',
+                    controller: _confirmController,
+                    obscureText: true,
+                    validator: (v) => v != _newController.text ? 'غير متطابقة' : null,
                   ),
-                  validator: (value) {
-                    if (value == null || value.isEmpty) {
-                      return 'يرجى تأكيد كلمة المرور';
-                    }
-                    if (value != _newPasswordController.text) {
-                      return 'كلمة المرور غير متطابقة';
-                    }
-                    return null;
-                  },
-                ),
-                const SizedBox(height: 32),
-                
-                // زر تغيير كلمة المرور
-                BlocBuilder<ProfileBloc, ProfileState>(
-                  builder: (context, state) {
-                    return SizedBox(
-                      width: double.infinity,
-                      child: ElevatedButton(
-                        onPressed: state is PasswordChanging ? null : _changePassword,
-                        style: ElevatedButton.styleFrom(
-                          backgroundColor: Colors.purple,
-                          padding: const EdgeInsets.symmetric(vertical: 16),
-                        ),
-                        child: state is PasswordChanging
-                            ? const CircularProgressIndicator(color: Colors.white)
-                            : const Text('تغيير كلمة المرور'),
-                      ),
-                    );
-                  },
-                ),
-              ],
+                  const SizedBox(height: 24),
+                  BlocBuilder<ProfileBloc, ProfileState>(
+                    builder: (context, state) {
+                      return PremiumButton(
+                        label: 'تغيير كلمة المرور',
+                        loading: state is PasswordChanging,
+                        onPressed: state is PasswordChanging ? null : _submit,
+                      );
+                    },
+                  ),
+                ],
+              ),
             ),
           ),
         ),
       ),
     );
-  }
-
-  void _changePassword() {
-    if (_formKey.currentState!.validate()) {
-      context.read<ProfileBloc>().add(ChangePassword(
-        currentPassword: _currentPasswordController.text,
-        newPassword: _newPasswordController.text,
-      ));
-    }
   }
 }

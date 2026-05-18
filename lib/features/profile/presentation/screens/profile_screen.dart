@@ -1,5 +1,11 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
+import '../../../../core/navigation/app_routes.dart';
+import '../../../../core/services/app_session.dart';
+import '../../../../shared/widgets/guest_banner.dart';
+import '../../../../shared/theme/colors.dart';
+import '../../../../shared/theme/typography.dart';
+import '../../../../shared/widgets/premium/premium_exports.dart';
 import '../../domain/entities/profile_entity.dart';
 import '../blocs/profile_bloc.dart';
 import '../blocs/profile_event.dart';
@@ -13,8 +19,44 @@ class ProfileScreen extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    if (AppSession.isGuest) {
+      return Scaffold(
+        appBar: AppBar(title: const Text('الملف الشخصي')),
+        body: FloatingGradientBackground(
+          child: ListView(
+            padding: const EdgeInsets.all(20),
+            children: [
+              const GuestBanner(),
+              PremiumCard(
+                child: Column(
+                  children: [
+                    CircleAvatar(
+                      radius: 40,
+                      backgroundColor: AppColors.primaryLight,
+                      child: Icon(Icons.person_outline_rounded, size: 40, color: AppColors.primary),
+                    ),
+                    const SizedBox(height: 16),
+                    Text('زائرة', style: AppTypography.headlineMedium),
+                    Text(
+                      'أنشئي حسابًا لحفظ ملفك وتحليلاتك',
+                      style: AppTypography.bodyMedium.copyWith(color: AppColors.textSecondary),
+                    ),
+                    const SizedBox(height: 20),
+                    PremiumButton(
+                      label: 'إنشاء حساب',
+                      onPressed: () => Navigator.pushNamed(context, AppRoutes.register),
+                    ),
+                  ],
+                ),
+              ),
+            ],
+          ),
+        ),
+      );
+    }
+
     return BlocProvider(
-      create: (context) => ProfileService.createProfileBloc()..add(const LoadProfile()),
+      create: (_) => ProfileService.createProfileBloc()..add(const LoadProfile()),
       child: const _ProfileScreenContent(),
     );
   }
@@ -25,182 +67,182 @@ class _ProfileScreenContent extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return BlocBuilder<ProfileBloc, ProfileState>(
+    return BlocConsumer<ProfileBloc, ProfileState>(
+      listener: (context, state) {
+        if (state is LoggedOut) {
+          Navigator.pushNamedAndRemoveUntil(context, AppRoutes.login, (_) => false);
+        }
+      },
       builder: (context, state) {
         if (state is ProfileLoading) {
-          return const Scaffold(
-            body: Center(child: CircularProgressIndicator()),
+          return Scaffold(
+            body: FloatingGradientBackground(
+              child: const Center(child: CircularProgressIndicator()),
+            ),
           );
         }
-        
         if (state is ProfileError) {
           return Scaffold(
             appBar: AppBar(title: const Text('الملف الشخصي')),
-            body: Center(
-              child: Column(
-                mainAxisAlignment: MainAxisAlignment.center,
-                children: [
-                  const Icon(Icons.error, size: 64, color: Colors.red),
-                  const SizedBox(height: 16),
-                  Text(state.message),
-                  const SizedBox(height: 16),
-                  ElevatedButton(
-                    onPressed: () {
-                      context.read<ProfileBloc>().add(const LoadProfile());
-                    },
-                    child: const Text('إعادة المحاولة'),
-                  ),
-                ],
-              ),
+            body: EmptyState(
+              icon: Icons.error_outline_rounded,
+              title: 'تعذر التحميل',
+              message: state.message,
+              actionLabel: 'إعادة المحاولة',
+              onAction: () => context.read<ProfileBloc>().add(const LoadProfile()),
             ),
           );
         }
-        
         if (state is ProfileLoaded) {
-          return _buildProfileContent(context, state.profile);
+          return _ProfileBody(profile: state.profile);
         }
-        
-        return const Scaffold(
-          body: Center(child: CircularProgressIndicator()),
-        );
+        return const Scaffold(body: Center(child: CircularProgressIndicator()));
       },
     );
   }
+}
 
-  Widget _buildProfileContent(BuildContext context, ProfileEntity profile) {
+class _ProfileBody extends StatelessWidget {
+  final ProfileEntity profile;
+
+  const _ProfileBody({required this.profile});
+
+  @override
+  Widget build(BuildContext context) {
     return Scaffold(
-      appBar: AppBar(title: const Text('الملف الشخصي')),
-      body: SingleChildScrollView(
-        padding: const EdgeInsets.all(24),
-        child: Column(
-          children: [
-            // صورة شخصية تفاعلية مع دائرة نقاط
-            Stack(
-              alignment: Alignment.center,
-              children: [
-                CircularProgressIndicator(
-                  value: profile.points / 200.0,
-                  strokeWidth: 5,
-                  backgroundColor: Colors.purple[50],
-                  valueColor: const AlwaysStoppedAnimation(Colors.purple),
+      appBar: AppBar(
+        title: const Text('الملف الشخصي'),
+        actions: [
+          IconButton(
+            icon: const Icon(Icons.settings_outlined),
+            onPressed: () => Navigator.pushNamed(context, AppRoutes.settings),
+          ),
+        ],
+      ),
+      body: FloatingGradientBackground(
+        child: SingleChildScrollView(
+          padding: const EdgeInsets.all(20),
+          child: Column(
+            children: [
+              PremiumCard(
+                child: Column(
+                  children: [
+                    Stack(
+                      alignment: Alignment.center,
+                      children: [
+                        SizedBox(
+                          width: 110,
+                          height: 110,
+                          child: CircularProgressIndicator(
+                            value: (profile.points / 200).clamp(0.0, 1.0),
+                            strokeWidth: 5,
+                            backgroundColor: AppColors.primaryLight,
+                            valueColor: const AlwaysStoppedAnimation(AppColors.primary),
+                          ),
+                        ),
+                        CircleAvatar(
+                          radius: 44,
+                          backgroundImage: profile.avatarUrl != null
+                              ? NetworkImage(profile.avatarUrl!)
+                              : null,
+                          backgroundColor: AppColors.primaryLight,
+                          child: profile.avatarUrl == null
+                              ? const Icon(Icons.person_rounded, size: 44, color: AppColors.primary)
+                              : null,
+                        ),
+                      ],
+                    ),
+                    const SizedBox(height: 16),
+                    Text(profile.name, style: AppTypography.headlineMedium),
+                    Text(
+                      profile.email,
+                      style: AppTypography.bodySmall.copyWith(color: AppColors.textSecondary),
+                    ),
+                    const SizedBox(height: 12),
+                    Chip(
+                      avatar: const Icon(Icons.verified_rounded, color: AppColors.gold, size: 18),
+                      label: Text('المستوى: ${profile.level}'),
+                      backgroundColor: AppColors.primaryLight,
+                    ),
+                  ],
                 ),
-                GestureDetector(
-                  onTap: () {
-                    // TODO: تغيير الصورة
-                  },
-                  child: CircleAvatar(
-                    radius: 48,
-                    backgroundImage: profile.avatarUrl != null 
-                        ? NetworkImage(profile.avatarUrl!) 
-                        : null,
-                    child: profile.avatarUrl == null
-                        ? const Icon(Icons.person, size: 48, color: Colors.purple)
-                        : null,
-                  ),
-                ),
-              ],
-            ),
-            const SizedBox(height: 16),
-            Text(profile.name, style: Theme.of(context).textTheme.titleLarge),
-            Text(profile.email, style: Theme.of(context).textTheme.bodyMedium),
-            if (profile.phone != null) 
-              Text(profile.phone!, style: Theme.of(context).textTheme.bodySmall),
-            const SizedBox(height: 8),
-            Chip(
-              label: Text('المستوى: ${profile.level}'),
-              avatar: const Icon(Icons.verified, color: Colors.amber),
-              backgroundColor: Colors.purple[50],
-            ),
-            const SizedBox(height: 16),
-            // إحصائيات سريعة
-            Row(
-              mainAxisAlignment: MainAxisAlignment.spaceEvenly,
-              children: [
-                _StatBox(icon: Icons.analytics, label: 'التحليلات', value: '${profile.analyses}'),
-                _StatBox(icon: Icons.tips_and_updates, label: 'النصائح', value: '${profile.tips}'),
-                _StatBox(icon: Icons.access_time, label: 'آخر نشاط', value: profile.lastActive),
-              ],
-            ),
-            const SizedBox(height: 24),
-            // إنجازات
-            Align(
-              alignment: Alignment.centerRight,
-              child: Text('إنجازاتك', style: Theme.of(context).textTheme.titleMedium),
-            ),
-            const SizedBox(height: 8),
-            ...profile.achievements.map((achievement) => ListTile(
-              leading: const Icon(Icons.emoji_events, color: Colors.amber),
-              title: Text(achievement.title),
-              subtitle: Text('بتاريخ: ${achievement.achievedAt.day}/${achievement.achievedAt.month}/${achievement.achievedAt.year}'),
-            )),
-            const SizedBox(height: 24),
-            // أزرار تفاعلية
-            ElevatedButton.icon(
-              icon: const Icon(Icons.edit),
-              label: const Text('تعديل الملف الشخصي'),
-              onPressed: () {
-                Navigator.push(
-                  context,
-                  MaterialPageRoute(
-                    builder: (context) => EditProfileScreen(profile: profile),
-                  ),
-                );
-              },
-              style: ElevatedButton.styleFrom(
-                backgroundColor: Colors.purple,
-                padding: const EdgeInsets.symmetric(horizontal: 32, vertical: 14),
               ),
-            ),
-            const SizedBox(height: 12),
-            OutlinedButton.icon(
-              icon: const Icon(Icons.lock_reset),
-              label: const Text('تغيير كلمة المرور'),
-              onPressed: () {
-                Navigator.push(
-                  context,
-                  MaterialPageRoute(
-                    builder: (context) => const ChangePasswordScreen(),
+              const SizedBox(height: 16),
+              Row(
+                children: [
+                  Expanded(child: _StatBox(icon: Icons.analytics_outlined, label: 'التحليلات', value: '${profile.analyses}')),
+                  const SizedBox(width: 8),
+                  Expanded(child: _StatBox(icon: Icons.tips_and_updates_outlined, label: 'النصائح', value: '${profile.tips}')),
+                  const SizedBox(width: 8),
+                  Expanded(child: _StatBox(icon: Icons.schedule_rounded, label: 'آخر نشاط', value: profile.lastActive)),
+                ],
+              ),
+              if (profile.achievements.isNotEmpty) ...[
+                const SectionHeader(title: 'إنجازاتك'),
+                ...profile.achievements.map(
+                  (a) => PremiumCard(
+                    margin: const EdgeInsets.only(bottom: 8),
+                    child: ListTile(
+                      contentPadding: EdgeInsets.zero,
+                      leading: const Icon(Icons.emoji_events_rounded, color: AppColors.gold),
+                      title: Text(a.title, style: AppTypography.titleMedium),
+                      subtitle: Text(
+                        'بتاريخ: ${a.achievedAt.day}/${a.achievedAt.month}/${a.achievedAt.year}',
+                        style: AppTypography.bodySmall,
+                      ),
+                    ),
                   ),
-                );
-              },
-            ),
-            const SizedBox(height: 12),
-            OutlinedButton.icon(
-              icon: const Icon(Icons.logout),
-              label: const Text('تسجيل الخروج'),
-              onPressed: () {
-                _showLogoutDialog(context);
-              },
-              style: OutlinedButton.styleFrom(foregroundColor: Colors.red),
-            ),
-          ],
+                ),
+              ],
+              const SizedBox(height: 16),
+              PremiumButton(
+                label: 'تعديل الملف الشخصي',
+                icon: Icons.edit_outlined,
+                onPressed: () {
+                  Navigator.push(
+                    context,
+                    MaterialPageRoute(
+                      builder: (_) => BlocProvider.value(
+                        value: context.read<ProfileBloc>(),
+                        child: EditProfileScreen(profile: profile),
+                      ),
+                    ),
+                  );
+                },
+              ),
+              const SizedBox(height: 10),
+              PremiumButton(
+                label: 'تغيير كلمة المرور',
+                variant: PremiumButtonVariant.secondary,
+                onPressed: () {
+                  Navigator.push(
+                    context,
+                    MaterialPageRoute(
+                      builder: (_) => BlocProvider.value(
+                        value: context.read<ProfileBloc>(),
+                        child: const ChangePasswordScreen(),
+                      ),
+                    ),
+                  );
+                },
+              ),
+              const SizedBox(height: 10),
+              PremiumButton(
+                label: 'تسجيل الخروج',
+                variant: PremiumButtonVariant.ghost,
+                onPressed: () => PremiumDialog.show(
+                  context,
+                  title: 'تسجيل الخروج',
+                  message: 'هل أنت متأكدة من رغبتك في تسجيل الخروج؟',
+                  confirmLabel: 'خروج',
+                  cancelLabel: 'إلغاء',
+                  onConfirm: () => context.read<ProfileBloc>().add(const Logout()),
+                ),
+              ),
+            ],
+          ),
         ),
       ),
-    );
-  }
-
-  void _showLogoutDialog(BuildContext context) {
-    showDialog(
-      context: context,
-      builder: (BuildContext context) {
-        return AlertDialog(
-          title: const Text('تسجيل الخروج'),
-          content: const Text('هل أنت متأكد من رغبتك في تسجيل الخروج؟'),
-          actions: [
-            TextButton(
-              onPressed: () => Navigator.of(context).pop(),
-              child: const Text('إلغاء'),
-            ),
-            TextButton(
-              onPressed: () {
-                Navigator.of(context).pop();
-                context.read<ProfileBloc>().add(const Logout());
-              },
-              child: const Text('تسجيل الخروج'),
-            ),
-          ],
-        );
-      },
     );
   }
 }
@@ -209,17 +251,22 @@ class _StatBox extends StatelessWidget {
   final IconData icon;
   final String label;
   final String value;
+
   const _StatBox({required this.icon, required this.label, required this.value});
 
   @override
   Widget build(BuildContext context) {
-    return Column(
-      children: [
-        Icon(icon, color: Colors.purple, size: 28),
-        const SizedBox(height: 4),
-        Text(value, style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 16)),
-        Text(label, style: Theme.of(context).textTheme.labelSmall),
-      ],
+    return PremiumCard(
+      padding: const EdgeInsets.symmetric(vertical: 16, horizontal: 8),
+      margin: EdgeInsets.zero,
+      child: Column(
+        children: [
+          Icon(icon, color: AppColors.primary, size: 22),
+          const SizedBox(height: 6),
+          Text(value, style: AppTypography.titleSmall, textAlign: TextAlign.center, maxLines: 1),
+          Text(label, style: AppTypography.labelSmall, textAlign: TextAlign.center),
+        ],
+      ),
     );
   }
 }

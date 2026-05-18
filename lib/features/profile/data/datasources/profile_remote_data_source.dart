@@ -31,8 +31,7 @@ class ProfileRemoteDataSourceImpl implements ProfileRemoteDataSource {
       return _createDefaultProfile(user);
     }
 
-    final data = doc.data()!;
-    return ProfileEntity.fromJson(data);
+    return ProfileEntity.fromJson({...doc.data()!, 'id': user.uid});
   }
 
   @override
@@ -92,7 +91,7 @@ class ProfileRemoteDataSourceImpl implements ProfileRemoteDataSource {
       if (!doc.exists) {
         return _createDefaultProfile(user);
       }
-      return ProfileEntity.fromJson(doc.data()!);
+      return ProfileEntity.fromJson({...doc.data()!, 'id': user.uid});
     });
   }
 

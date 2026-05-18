@@ -4,7 +4,7 @@ class SkinConditionIndicator extends StatelessWidget {
   final String label;
   final int value;
   final Color color;
-  const SkinConditionIndicator({Key? key, required this.label, required this.value, required this.color}) : super(key: key);
+  const SkinConditionIndicator({super.key, required this.label, required this.value, required this.color});
 
   @override
   Widget build(BuildContext context) {
@@ -20,7 +20,7 @@ class SkinConditionIndicator extends StatelessWidget {
               child: CircularProgressIndicator(
                 value: value / 100,
                 color: color,
-                backgroundColor: color.withOpacity(0.2),
+                backgroundColor: color.withValues(alpha: 0.2),
                 strokeWidth: 6,
               ),
             ),

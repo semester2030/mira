@@ -1,135 +1,463 @@
+import 'package:cloud_firestore/cloud_firestore.dart';
+import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/material.dart';
+import '../../../../core/navigation/app_routes.dart';
+import '../../../../core/services/app_session.dart';
+import '../../../../core/privacy/privacy_navigation.dart';
+import '../../../../shared/widgets/guest_banner.dart';
 import '../../../../shared/theme/colors.dart';
+import '../../../../shared/theme/gradients.dart';
+import '../../../../shared/theme/typography.dart';
+import '../../../../shared/widgets/premium/premium_exports.dart';
 import '../../../../shared/widgets/side_menu.dart';
 import '../../../../shared/widgets/mirra_logo.dart';
+import '../../../profile/domain/entities/profile_entity.dart';
 import '../../../skin_analysis/presentation/widgets/face_frame_overlay.dart';
 
 class DashboardScreen extends StatelessWidget {
   const DashboardScreen({super.key});
 
-  @override
-  Widget build(BuildContext context) {
-    // بيانات وهمية كمثال، اربطها لاحقًا بمصادر البيانات الحقيقية
-    final user = {
-      'name': 'ميرا',
-      'avatar': null,
-    };
-    final stats = [
-      _StatData('عدد التحليلات', 27, AppColors.primary, Icons.analytics, 'تحليل جديد هذا الشهر', '/analysis'),
-      _StatData('نقاط التميز', 120, AppColors.secondary, Icons.star_rounded, '+15 هذا الأسبوع', '/points'),
-      _StatData('نصائح مخصصة', 8, AppColors.accent, Icons.lightbulb, 'تم تحديثها اليوم', '/tips'),
-    ];
-    final progress = 0.65; // نسبة التقدم في رحلة العناية
-    final tip = '✨ نصيحة اليوم: احرصي على شرب 8 أكواب ماء يومياً للحفاظ على نضارة بشرتك!';
+  Stream<ProfileEntity?> _profileStream() {
+    final user = FirebaseAuth.instance.currentUser;
+    if (user == null) return Stream.value(null);
 
-    return Scaffold(
-      appBar: AppBar(
-        title: const MirraLogo.small(),
-        centerTitle: true,
-        actions: [
-          Builder(
-            builder: (context) => IconButton(
-              icon: const Icon(Icons.menu),
-              onPressed: () => Scaffold.of(context).openEndDrawer(),
+    return FirebaseFirestore.instance
+        .collection('users')
+        .doc(user.uid)
+        .snapshots()
+        .map((doc) {
+      if (!doc.exists) return null;
+      return ProfileEntity.fromJson({...doc.data()!, 'id': user.uid});
+    });
+  }
+
+  Stream<double> _beautyScoreStream() {
+    final user = FirebaseAuth.instance.currentUser;
+    if (user == null) return Stream.value(0);
+
+    return FirebaseFirestore.instance
+        .collection('users')
+        .doc(user.uid)
+        .collection('analyses')
+        .orderBy('createdAt', descending: true)
+        .limit(1)
+        .snapshots()
+        .map((snap) {
+      if (snap.docs.isEmpty) return 0.0;
+      return (snap.docs.first.data()['score'] as num?)?.toDouble() ?? 0.0;
+    });
+  }
+
+  Widget _homeBody(
+    BuildContext context, {
+    required String name,
+    required int points,
+    required int analysesCount,
+    required int tipsCount,
+    required double beautyScore,
+    required bool showGuestBanner,
+    Widget? beautyScoreChild,
+  }) {
+    final progress = (points / 200).clamp(0.0, 1.0);
+    final stats = [
+      _StatData('التحليلات', '$analysesCount', AppColors.primary, Icons.analytics_outlined, AppRoutes.analysis),
+      _StatData('النقاط', '$points', AppColors.secondary, Icons.star_rounded, AppRoutes.points),
+      _StatData('النصائح', '$tipsCount', AppColors.accent, Icons.lightbulb_outline_rounded, AppRoutes.tips),
+    ];
+
+    return SingleChildScrollView(
+      padding: const EdgeInsets.fromLTRB(20, 8, 20, 32),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          if (showGuestBanner) const GuestBanner(),
+          Text('مرحبًا، $name 👋', style: AppTypography.headlineLarge),
+          const SizedBox(height: 4),
+          Text(
+            showGuestBanner ? 'تصفّحي جميع خدمات ميرا كزائرة' : 'نتمنى لك يومًا جميلًا وبشرة مشرقة',
+            style: AppTypography.bodyMedium.copyWith(color: AppColors.textSecondary),
+          ),
+          const SizedBox(height: 24),
+          PremiumCard(
+            gradient: AppGradients.primary,
+            onTap: () => PrivacyNavigation.openSkinAnalysis(context),
+            padding: const EdgeInsets.all(24),
+            child: Row(
+              children: [
+                Expanded(
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      Text(
+                        'حلّلي بشرتك',
+                        style: AppTypography.headlineMedium.copyWith(color: AppColors.onPrimary),
+                      ),
+                      const SizedBox(height: 8),
+                      Text(
+                        showGuestBanner ? 'تجربة فورية — سجّلي لحفظ النتائج' : 'تحليل شخصي خاص — آمن وسري',
+                        style: AppTypography.bodyMedium.copyWith(
+                          color: AppColors.onPrimary.withValues(alpha: 0.9),
+                        ),
+                      ),
+                    ],
+                  ),
+                ),
+                const FaceFrameOverlay(width: 100, height: 130, compact: true),
+              ],
             ),
           ),
+          const SizedBox(height: 16),
+          PremiumCard(
+            gradient: LinearGradient(
+              colors: [
+                AppColors.secondary.withValues(alpha: 0.85),
+                AppColors.cardPurple.withValues(alpha: 0.9),
+              ],
+            ),
+            onTap: () => PrivacyNavigation.openOutfitAnalysis(context),
+            padding: const EdgeInsets.all(22),
+            child: Row(
+              children: [
+                Expanded(
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      Text(
+                        'حلّلي إطلالتك',
+                        style: AppTypography.headlineMedium.copyWith(color: AppColors.onPrimary),
+                      ),
+                      const SizedBox(height: 8),
+                      Text(
+                        'توافق الألوان والمناسبة — خاص وآمن',
+                        style: AppTypography.bodyMedium.copyWith(
+                          color: AppColors.onPrimary.withValues(alpha: 0.9),
+                        ),
+                      ),
+                    ],
+                  ),
+                ),
+                Icon(Icons.checkroom_rounded, size: 48, color: AppColors.onPrimary.withValues(alpha: 0.9)),
+              ],
+            ),
+          ),
+          const SizedBox(height: 24),
+          Row(
+            children: [
+              Expanded(
+                child: PremiumCard(
+                  child: beautyScoreChild ??
+                      BeautyScoreRing(
+                        score: beautyScore > 0 ? beautyScore : 72,
+                        size: 100,
+                        label: beautyScore > 0 ? 'آخر تحليل' : 'ابدئي التحليل',
+                      ),
+                ),
+              ),
+              const SizedBox(width: 12),
+              Expanded(
+                child: PremiumCard(
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      Text('تقدمك', style: AppTypography.titleMedium),
+                      const SizedBox(height: 12),
+                      AnimatedProgressBar(value: progress),
+                      const SizedBox(height: 8),
+                      Text(
+                        '${(progress * 100).round()}% · $points نقطة',
+                        style: AppTypography.labelSmall.copyWith(color: AppColors.textSecondary),
+                      ),
+                    ],
+                  ),
+                ),
+              ),
+            ],
+          ),
+          const SizedBox(height: 24),
+          const SectionHeader(title: 'نظرة سريعة'),
+          SizedBox(
+            height: 130,
+            child: ListView.separated(
+              scrollDirection: Axis.horizontal,
+              itemCount: stats.length,
+              separatorBuilder: (_, __) => const SizedBox(width: 12),
+              itemBuilder: (context, i) => _StatCard(data: stats[i]),
+            ),
+          ),
+          const SizedBox(height: 24),
+          PremiumCard(
+            child: Row(
+              children: [
+                Container(
+                  padding: const EdgeInsets.all(12),
+                  decoration: BoxDecoration(
+                    color: AppColors.accent.withValues(alpha: 0.2),
+                    borderRadius: BorderRadius.circular(14),
+                  ),
+                  child: const Icon(Icons.tips_and_updates_rounded, color: AppColors.primary),
+                ),
+                const SizedBox(width: 16),
+                const Expanded(
+                  child: Text(
+                    '✨ نصيحة اليوم: احرصي على شرب الماء وواقي الشمس يوميًا لبشرة أكثر إشراقًا.',
+                    style: TextStyle(height: 1.5),
+                  ),
+                ),
+              ],
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    if (!AppSession.canBrowse) {
+      return Scaffold(
+        body: FloatingGradientBackground(
+          child: SafeArea(
+            child: Padding(
+              padding: const EdgeInsets.all(24),
+              child: EmptyState(
+                icon: Icons.lock_outline_rounded,
+                title: 'سجّلي دخولك للمتابعة',
+                message: 'أو تصفّحي كزائرة لاستكشاف جميع خدمات ميرا دون حساب.',
+                actionLabel: 'تسجيل الدخول',
+                onAction: () => Navigator.pushReplacementNamed(context, AppRoutes.login),
+              ),
+            ),
+          ),
+        ),
+      );
+    }
+
+    if (AppSession.isGuest) {
+      return Scaffold(
+        extendBodyBehindAppBar: true,
+        appBar: AppBar(
+          title: const MirraLogo.small(),
+          actions: [
+            IconButton(
+              icon: const Icon(Icons.settings_outlined),
+              onPressed: () => Navigator.pushNamed(context, AppRoutes.settings),
+            ),
+            Builder(
+              builder: (ctx) => IconButton(
+                icon: const Icon(Icons.menu_rounded),
+                onPressed: () => Scaffold.of(ctx).openEndDrawer(),
+              ),
+            ),
+          ],
+        ),
+        endDrawer: const SideMenu(),
+        body: FloatingGradientBackground(
+          child: SafeArea(
+            child: _homeBody(
+              context,
+              name: 'زائرة',
+              points: 0,
+              analysesCount: 0,
+              tipsCount: 5,
+              beautyScore: 72,
+              showGuestBanner: true,
+            ),
+          ),
+        ),
+      );
+    }
+
+    final user = FirebaseAuth.instance.currentUser!;
+
+    return Scaffold(
+      extendBodyBehindAppBar: true,
+      appBar: AppBar(
+        title: const MirraLogo.small(),
+        actions: [
           IconButton(
-            icon: const Icon(Icons.notifications_none),
-            onPressed: () {},
+            icon: const Icon(Icons.settings_outlined),
+            onPressed: () => Navigator.pushNamed(context, AppRoutes.settings),
+          ),
+          Builder(
+            builder: (ctx) => IconButton(
+              icon: const Icon(Icons.menu_rounded),
+              onPressed: () => Scaffold.of(ctx).openEndDrawer(),
+            ),
           ),
         ],
       ),
       endDrawer: const SideMenu(),
-      body: SingleChildScrollView(
-        padding: const EdgeInsets.all(24),
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            Row(
-              children: [
-                CircleAvatar(
-                  radius: 32,
-                  backgroundImage: user['avatar'] != null ? NetworkImage(user['avatar'] ?? '') : null,
-                  child: user['avatar'] == null ? const Icon(Icons.person, size: 32) : null,
-                ),
-                const SizedBox(width: 16),
-                Column(
+      body: FloatingGradientBackground(
+        child: SafeArea(
+          child: StreamBuilder<ProfileEntity?>(
+            stream: _profileStream(),
+            builder: (context, profileSnap) {
+              if (profileSnap.connectionState == ConnectionState.waiting) {
+                return const Center(child: CircularProgressIndicator());
+              }
+
+              final profile = profileSnap.data;
+              final name = profile?.name ?? user.displayName ?? 'ميرا';
+              final points = profile?.points ?? 0;
+              final analysesCount = profile?.analyses ?? 0;
+              final progress = (points / 200).clamp(0.0, 1.0);
+
+              final stats = [
+                _StatData('التحليلات', '$analysesCount', AppColors.primary, Icons.analytics_outlined, AppRoutes.analysis),
+                _StatData('النقاط', '$points', AppColors.secondary, Icons.star_rounded, AppRoutes.points),
+                _StatData('النصائح', '${profile?.tips ?? 0}', AppColors.accent, Icons.lightbulb_outline_rounded, AppRoutes.tips),
+              ];
+
+              return SingleChildScrollView(
+                padding: const EdgeInsets.fromLTRB(20, 8, 20, 32),
+                child: Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
-                    Text('مرحبًا، ${user['name'] ?? ''} 👋', style: Theme.of(context).textTheme.titleLarge),
+                    Text('مرحبًا، $name 👋', style: AppTypography.headlineLarge),
                     const SizedBox(height: 4),
-                    Text('نتمنى لك يومًا جميلاً وبشرة صحية!', style: Theme.of(context).textTheme.bodyMedium),
+                    Text(
+                      'نتمنى لك يومًا جميلًا وبشرة مشرقة',
+                      style: AppTypography.bodyMedium.copyWith(color: AppColors.textSecondary),
+                    ),
+                    const SizedBox(height: 24),
+                    PremiumCard(
+                      gradient: AppGradients.primary,
+                      onTap: () => PrivacyNavigation.openSkinAnalysis(context),
+                      padding: const EdgeInsets.all(24),
+                      child: Row(
+                        children: [
+                          Expanded(
+                            child: Column(
+                              crossAxisAlignment: CrossAxisAlignment.start,
+                              children: [
+                                Text(
+                                  'حلّلي بشرتك',
+                                  style: AppTypography.headlineMedium.copyWith(color: AppColors.onPrimary),
+                                ),
+                                const SizedBox(height: 8),
+                                Text(
+                                  'تحليل شخصي خاص — آمن وسري',
+                                  style: AppTypography.bodyMedium.copyWith(
+                                    color: AppColors.onPrimary.withValues(alpha: 0.9),
+                                  ),
+                                ),
+                              ],
+                            ),
+                          ),
+                          const FaceFrameOverlay(width: 100, height: 130, compact: true),
+                        ],
+                      ),
+                    ),
+                    const SizedBox(height: 16),
+                    PremiumCard(
+                      gradient: LinearGradient(
+                        colors: [
+                          AppColors.secondary.withValues(alpha: 0.85),
+                          AppColors.cardPurple.withValues(alpha: 0.9),
+                        ],
+                      ),
+                      onTap: () => PrivacyNavigation.openOutfitAnalysis(context),
+                      padding: const EdgeInsets.all(22),
+                      child: Row(
+                        children: [
+                          Expanded(
+                            child: Column(
+                              crossAxisAlignment: CrossAxisAlignment.start,
+                              children: [
+                                Text(
+                                  'حلّلي إطلالتك',
+                                  style: AppTypography.headlineMedium.copyWith(color: AppColors.onPrimary),
+                                ),
+                                const SizedBox(height: 8),
+                                Text(
+                                  'توافق الألوان والمناسبة — خاص وآمن',
+                                  style: AppTypography.bodyMedium.copyWith(
+                                    color: AppColors.onPrimary.withValues(alpha: 0.9),
+                                  ),
+                                ),
+                              ],
+                            ),
+                          ),
+                          Icon(Icons.checkroom_rounded, size: 48, color: AppColors.onPrimary.withValues(alpha: 0.9)),
+                        ],
+                      ),
+                    ),
+                    const SizedBox(height: 24),
+                    Row(
+                      children: [
+                        Expanded(
+                          child: StreamBuilder<double>(
+                            stream: _beautyScoreStream(),
+                            builder: (context, scoreSnap) {
+                              final score = scoreSnap.data ?? 0;
+                              return PremiumCard(
+                                child: BeautyScoreRing(
+                                  score: score > 0 ? score : 72,
+                                  size: 100,
+                                  label: score > 0 ? 'آخر تحليل' : 'ابدئي التحليل',
+                                ),
+                              );
+                            },
+                          ),
+                        ),
+                        const SizedBox(width: 12),
+                        Expanded(
+                          child: PremiumCard(
+                            child: Column(
+                              crossAxisAlignment: CrossAxisAlignment.start,
+                              children: [
+                                Text('تقدمك', style: AppTypography.titleMedium),
+                                const SizedBox(height: 12),
+                                AnimatedProgressBar(value: progress),
+                                const SizedBox(height: 8),
+                                Text(
+                                  '${(progress * 100).round()}% · $points نقطة',
+                                  style: AppTypography.labelSmall.copyWith(color: AppColors.textSecondary),
+                                ),
+                              ],
+                            ),
+                          ),
+                        ),
+                      ],
+                    ),
+                    const SizedBox(height: 24),
+                    const SectionHeader(title: 'نظرة سريعة'),
+                    SizedBox(
+                      height: 130,
+                      child: ListView.separated(
+                        scrollDirection: Axis.horizontal,
+                        itemCount: stats.length,
+                        separatorBuilder: (_, __) => const SizedBox(width: 12),
+                        itemBuilder: (context, i) => _StatCard(data: stats[i]),
+                      ),
+                    ),
+                    const SizedBox(height: 24),
+                    PremiumCard(
+                      child: Row(
+                        children: [
+                          Container(
+                            padding: const EdgeInsets.all(12),
+                            decoration: BoxDecoration(
+                              color: AppColors.accent.withValues(alpha: 0.2),
+                              borderRadius: BorderRadius.circular(14),
+                            ),
+                            child: const Icon(Icons.tips_and_updates_rounded, color: AppColors.primary),
+                          ),
+                          const SizedBox(width: 16),
+                          const Expanded(
+                            child: Text(
+                              '✨ نصيحة اليوم: احرصي على شرب الماء وواقي الشمس يوميًا لبشرة أكثر إشراقًا.',
+                              style: TextStyle(height: 1.5),
+                            ),
+                          ),
+                        ],
+                      ),
+                    ),
                   ],
                 ),
-              ],
-            ),
-            const SizedBox(height: 24),
-            GestureDetector(
-              onTap: () {
-                Navigator.pushNamed(context, '/new-analysis');
-              },
-              child: const FaceFrameOverlay(),
-            ),
-            const SizedBox(height: 24),
-            SizedBox(
-              height: 140,
-              child: ListView.separated(
-                scrollDirection: Axis.horizontal,
-                itemCount: stats.length,
-                separatorBuilder: (_, __) => const SizedBox(width: 16),
-                itemBuilder: (context, i) => _StatCard(data: stats[i]),
-              ),
-            ),
-            const SizedBox(height: 32),
-            Text('تقدمك في رحلة العناية', style: Theme.of(context).textTheme.titleMedium),
-            const SizedBox(height: 8),
-            Stack(
-              alignment: Alignment.centerLeft,
-              children: [
-                Container(
-                  height: 18,
-                  decoration: BoxDecoration(
-                    color: AppColors.accent.withOpacity(0.13),
-                    borderRadius: BorderRadius.circular(12),
-                  ),
-                ),
-                FractionallySizedBox(
-                  widthFactor: progress,
-                  child: Container(
-                    height: 18,
-                    decoration: BoxDecoration(
-                      gradient: LinearGradient(colors: [AppColors.primary, AppColors.secondary]),
-                      borderRadius: BorderRadius.circular(12),
-                    ),
-                  ),
-                ),
-                Positioned.fill(
-                  child: Center(
-                    child: Text('${(progress * 100).toInt()}%', style: const TextStyle(fontWeight: FontWeight.bold)),
-                  ),
-                ),
-              ],
-            ),
-            const SizedBox(height: 32),
-            Container(
-              padding: const EdgeInsets.all(18),
-              decoration: BoxDecoration(
-                color: AppColors.accent.withOpacity(0.13),
-                borderRadius: BorderRadius.circular(16),
-                boxShadow: [
-                  BoxShadow(color: AppColors.accent.withOpacity(0.08), blurRadius: 12, offset: const Offset(0, 4)),
-                ],
-              ),
-              child: Row(
-                children: [
-                  Icon(Icons.tips_and_updates, color: AppColors.accent, size: 32),
-                  const SizedBox(width: 16),
-                  Expanded(child: Text(tip, style: Theme.of(context).textTheme.bodyLarge)),
-                ],
-              ),
-            ),
-            const SizedBox(height: 32),
-          ],
+              );
+            },
+          ),
         ),
       ),
     );
@@ -138,12 +466,11 @@ class DashboardScreen extends StatelessWidget {
 
 class _StatData {
   final String label;
-  final int value;
+  final String value;
   final Color color;
   final IconData icon;
-  final String subtitle;
   final String route;
-  _StatData(this.label, this.value, this.color, this.icon, this.subtitle, this.route);
+  const _StatData(this.label, this.value, this.color, this.icon, this.route);
 }
 
 class _StatCard extends StatelessWidget {
@@ -152,47 +479,24 @@ class _StatCard extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return GestureDetector(
-      onTap: () {
-        Navigator.pushNamed(context, data.route);
-      },
+    return PressableScale(
+      onTap: () => Navigator.pushNamed(context, data.route),
       child: Container(
-        width: 140,
-        height: 160,
-        padding: const EdgeInsets.symmetric(vertical: 20, horizontal: 12),
+        width: 120,
+        padding: const EdgeInsets.all(16),
         decoration: BoxDecoration(
-          color: data.color.withOpacity(0.12),
-          borderRadius: BorderRadius.circular(18),
-          boxShadow: [
-            BoxShadow(color: data.color.withOpacity(0.08), blurRadius: 10, offset: const Offset(0, 4)),
-          ],
+          color: data.color.withValues(alpha: 0.12),
+          borderRadius: BorderRadius.circular(20),
+          border: Border.all(color: data.color.withValues(alpha: 0.2)),
         ),
         child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
           mainAxisAlignment: MainAxisAlignment.center,
           children: [
-            Icon(data.icon, color: data.color, size: 28),
-            const SizedBox(height: 10),
-            Text('${data.value}', style: TextStyle(fontWeight: FontWeight.bold, fontSize: 20, color: data.color)),
-            const SizedBox(height: 8),
-            Flexible(
-              child: Text(
-                data.label,
-                style: Theme.of(context).textTheme.bodyMedium,
-                textAlign: TextAlign.center,
-                maxLines: 2,
-                overflow: TextOverflow.ellipsis,
-              ),
-            ),
-            if (data.subtitle.isNotEmpty) ...[
-              const SizedBox(height: 4),
-              Text(
-                data.subtitle,
-                style: Theme.of(context).textTheme.labelSmall?.copyWith(color: data.color),
-                textAlign: TextAlign.center,
-                maxLines: 1,
-                overflow: TextOverflow.ellipsis,
-              ),
-            ],
+            Icon(data.icon, color: data.color, size: 24),
+            const Spacer(),
+            Text(data.value, style: AppTypography.headlineSmall.copyWith(color: data.color)),
+            Text(data.label, style: AppTypography.labelSmall),
           ],
         ),
       ),

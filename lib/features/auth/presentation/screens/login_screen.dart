@@ -1,7 +1,11 @@
 import 'package:flutter/material.dart';
-import '../widgets/auth_text_field.dart';
-import '../../../../shared/widgets/mirra_ui.dart';
+import '../../../../core/navigation/app_routes.dart';
+import '../../../../shared/theme/colors.dart';
+import '../../../../shared/theme/typography.dart';
 import '../../../../shared/widgets/mirra_logo.dart';
+import '../../../../shared/widgets/premium/premium_exports.dart';
+import '../../../../core/services/guest_session_service.dart';
+import '../../../../core/utils/firebase_error_message.dart';
 import '../../domain/usecases/login_usecase.dart';
 import '../../data/repositories/auth_repository_impl.dart';
 
@@ -17,7 +21,6 @@ class _LoginScreenState extends State<LoginScreen> {
   final _emailController = TextEditingController();
   final _passwordController = TextEditingController();
   bool _loading = false;
-  
   late final LoginUseCase _loginUseCase;
 
   @override
@@ -26,117 +29,126 @@ class _LoginScreenState extends State<LoginScreen> {
     _loginUseCase = LoginUseCase(AuthRepositoryImpl());
   }
 
+  @override
+  void dispose() {
+    _emailController.dispose();
+    _passwordController.dispose();
+    super.dispose();
+  }
+
   Future<void> _handleLogin() async {
     if (!_formKey.currentState!.validate()) return;
-
     setState(() => _loading = true);
-    
     try {
       await _loginUseCase.call(
         _emailController.text.trim(),
         _passwordController.text,
       );
-      
-      if (mounted) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          const SnackBar(
-            content: Text('تم تسجيل الدخول بنجاح! ✅'),
-            backgroundColor: Colors.green,
-          ),
-        );
-        Navigator.pushReplacementNamed(context, '/dashboard');
-      }
+      if (!mounted) return;
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          content: Text('مرحبًا بك في ميرا ✨', style: AppTypography.bodyMedium.copyWith(color: AppColors.onPrimary)),
+          backgroundColor: AppColors.success,
+        ),
+      );
+      Navigator.pushReplacementNamed(context, AppRoutes.dashboard);
     } catch (e) {
-      if (mounted) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(
-            content: Text('خطأ: ${e.toString()}'),
-            backgroundColor: Colors.red,
-          ),
-        );
-      }
+      if (!mounted) return;
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(content: Text(friendlyFirebaseError(e)), backgroundColor: AppColors.error),
+      );
     } finally {
-      if (mounted) {
-        setState(() => _loading = false);
-      }
+      if (mounted) setState(() => _loading = false);
     }
   }
 
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      appBar: AppBar(title: const Text('تسجيل الدخول')),
-      body: SingleChildScrollView(
-        padding: const EdgeInsets.all(24),
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.stretch,
-          children: [
-            const SizedBox(height: 32),
-            const Center(child: MirraLogo.large()),
-            const SizedBox(height: 32),
-            Form(
+      body: FloatingGradientBackground(
+        child: SafeArea(
+          child: SingleChildScrollView(
+            padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 16),
+            child: Form(
               key: _formKey,
               child: Column(
-                mainAxisSize: MainAxisSize.min,
+                crossAxisAlignment: CrossAxisAlignment.stretch,
                 children: [
-                  AuthTextField(
-                    label: 'البريد الإلكتروني',
-                    controller: _emailController,
-                    keyboardType: TextInputType.emailAddress,
-                    validator: (v) => v != null && v.contains('@') ? null : 'أدخل بريدًا صحيحًا',
+                  const SizedBox(height: 16),
+                  const Center(child: MirraLogo.medium()),
+                  const SizedBox(height: 12),
+                  Text(
+                    'مرحبًا بك',
+                    style: AppTypography.displaySmall,
+                    textAlign: TextAlign.center,
+                  ),
+                  const SizedBox(height: 4),
+                  Text(
+                    'مرآتك الذكية الخاصة',
+                    style: AppTypography.bodyMedium.copyWith(color: AppColors.textSecondary),
+                    textAlign: TextAlign.center,
+                  ),
+                  const SizedBox(height: 32),
+                  PremiumCard(
+                    glass: true,
+                    padding: const EdgeInsets.all(24),
+                    child: Column(
+                      children: [
+                        PremiumInputField(
+                          label: 'البريد الإلكتروني',
+                          controller: _emailController,
+                          keyboardType: TextInputType.emailAddress,
+                          textInputAction: TextInputAction.next,
+                          validator: (v) =>
+                              v != null && v.contains('@') ? null : 'أدخل بريدًا صحيحًا',
+                        ),
+                        const SizedBox(height: 16),
+                        PremiumInputField(
+                          label: 'كلمة المرور',
+                          controller: _passwordController,
+                          obscureText: true,
+                          textInputAction: TextInputAction.done,
+                          validator: (v) =>
+                              v != null && v.length >= 6 ? null : 'كلمة المرور قصيرة',
+                        ),
+                        const SizedBox(height: 8),
+                        Align(
+                          alignment: AlignmentDirectional.centerStart,
+                          child: TextButton(
+                            onPressed: () => Navigator.pushNamed(context, AppRoutes.forgot),
+                            child: const Text('نسيت كلمة المرور؟'),
+                          ),
+                        ),
+                        const SizedBox(height: 16),
+                        PremiumButton(
+                          label: 'دخول',
+                          loading: _loading,
+                          onPressed: _loading ? null : _handleLogin,
+                        ),
+                      ],
+                    ),
                   ),
                   const SizedBox(height: 16),
-                  AuthTextField(
-                    label: 'كلمة المرور',
-                    controller: _passwordController,
-                    isPassword: true,
-                    validator: (v) => v != null && v.length >= 6 ? null : 'كلمة المرور قصيرة',
-                  ),
-                  const SizedBox(height: 24),
-                  SizedBox(
-                    width: double.infinity,
-                    child: PrimaryButton(
-                      text: 'دخول',
-                      loading: _loading,
-                      onPressed: _loading ? () {} : _handleLogin,
-                    ),
+                  PremiumButton(
+                    label: 'إنشاء حساب جديد',
+                    variant: PremiumButtonVariant.secondary,
+                    onPressed: () => Navigator.pushNamed(context, AppRoutes.register),
                   ),
                   const SizedBox(height: 12),
-                  Row(
-                    mainAxisAlignment: MainAxisAlignment.center,
-                    children: [
-                      SecondaryButton(
-                        text: 'إنشاء حساب جديد',
-                        onPressed: () {
-                          Navigator.pushNamed(context, '/register');
-                        },
-                      ),
-                      const SizedBox(width: 8),
-                      TextButton(
-                        onPressed: () {
-                          Navigator.pushNamed(context, '/forgot');
-                        },
-                        child: const Text('نسيت كلمة المرور؟'),
-                      ),
-                    ],
-                  ),
-                  const SizedBox(height: 24),
-                  OutlinedButton.icon(
-                    icon: const Icon(Icons.person_outline),
-                    label: const Text('الدخول كزائر'),
-                    style: OutlinedButton.styleFrom(
-                      foregroundColor: Colors.pink,
-                      side: const BorderSide(color: Colors.pinkAccent),
-                      textStyle: const TextStyle(fontWeight: FontWeight.bold),
-                    ),
-                    onPressed: () {
-                      Navigator.pushReplacementNamed(context, '/dashboard');
+                  PremiumButton(
+                    label: 'تصفّح كزائرة — بدون تسجيل',
+                    variant: PremiumButtonVariant.ghost,
+                    icon: Icons.visibility_outlined,
+                    onPressed: () async {
+                      await GuestSessionService.enter();
+                      if (!context.mounted) return;
+                      Navigator.pushReplacementNamed(context, AppRoutes.dashboard);
                     },
                   ),
                 ],
               ),
             ),
-          ],
+          ),
         ),
       ),
     );

@@ -91,9 +91,10 @@ class ProfileEntity {
       analyses: json['analyses'] as int,
       tips: json['tips'] as int,
       lastActive: json['lastActive'] as String,
-      achievements: (json['achievements'] as List<dynamic>)
-          .map((a) => AchievementEntity.fromJson(a as Map<String, dynamic>))
-          .toList(),
+      achievements: (json['achievements'] as List<dynamic>?)
+              ?.map((a) => AchievementEntity.fromJson(a as Map<String, dynamic>))
+              .toList() ??
+          const [],
       createdAt: DateTime.parse(json['createdAt'] as String),
       updatedAt: json['updatedAt'] != null 
           ? DateTime.parse(json['updatedAt'] as String) 
