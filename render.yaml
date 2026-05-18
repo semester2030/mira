@@ -1,0 +1,39 @@
+# Render Blueprint — نشر mira-api
+# Dashboard: https://dashboard.render.com/blueprints → New Blueprint Instance → ربط repo semester2030/mira
+
+databases:
+  - name: mira-db
+    plan: free
+    databaseName: mira_db
+    user: mira
+
+services:
+  - type: web
+    name: mira-api
+    runtime: node
+    rootDir: mira-api
+    plan: free
+    buildCommand: npm install && npx prisma generate && npm run build
+    startCommand: npx prisma migrate deploy && npm run start:prod
+    healthCheckPath: /api/v1/health
+    envVars:
+      - key: NODE_ENV
+        value: production
+      - key: API_PREFIX
+        value: api/v1
+      - key: SKIN_PROVIDER
+        value: mock
+      - key: OUTFIT_PROVIDER
+        value: mock
+      - key: AUTH_SKIP
+        value: "false"
+      - key: RATE_LIMIT_PER_HOUR
+        value: "30"
+      - key: DATABASE_URL
+        fromDatabase:
+          name: mira-db
+          property: connectionString
+      - key: FIREBASE_PROJECT_ID
+        sync: false
+      - key: GOOGLE_APPLICATION_CREDENTIALS
+        sync: false
