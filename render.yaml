@@ -13,7 +13,8 @@ services:
     runtime: node
     rootDir: mira-api
     plan: free
-    buildCommand: npm install && npx prisma generate && npm run build
+    # NODE_ENV=production يمنع تثبيت devDependencies — نحتاج nest/cli و prisma و @types/*
+    buildCommand: NPM_CONFIG_PRODUCTION=false npm install && npx prisma generate && npm run build
     startCommand: npx prisma migrate deploy && npm run start:prod
     healthCheckPath: /api/v1/health
     envVars:
