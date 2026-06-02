@@ -12,11 +12,20 @@ class SubscriptionUsage {
   });
 
   factory SubscriptionUsage.fromJson(Map<String, dynamic> json) {
+    final skinUsed = (json['skinThisMonth'] as num?)?.toInt() ?? 0;
+    final outfitUsed = (json['outfitThisMonth'] as num?)?.toInt() ?? 0;
+    var skinLeft = (json['skinRemaining'] as num?)?.toInt();
+    var outfitLeft = (json['outfitRemaining'] as num?)?.toInt();
+    final limits = json['limits'] as Map<String, dynamic>?;
+    final skinLimit = (limits?['skinAnalysisPerMonth'] as num?)?.toInt() ?? 3;
+    final outfitLimit = (limits?['outfitAnalysisPerMonth'] as num?)?.toInt() ?? 3;
+    skinLeft ??= (skinLimit - skinUsed).clamp(0, skinLimit);
+    outfitLeft ??= (outfitLimit - outfitUsed).clamp(0, outfitLimit);
     return SubscriptionUsage(
-      skinThisMonth: (json['skinThisMonth'] as num?)?.toInt() ?? 0,
-      outfitThisMonth: (json['outfitThisMonth'] as num?)?.toInt() ?? 0,
-      skinRemaining: (json['skinRemaining'] as num?)?.toInt() ?? 0,
-      outfitRemaining: (json['outfitRemaining'] as num?)?.toInt() ?? 0,
+      skinThisMonth: skinUsed,
+      outfitThisMonth: outfitUsed,
+      skinRemaining: skinLeft,
+      outfitRemaining: outfitLeft,
     );
   }
 }
@@ -37,7 +46,13 @@ class SubscriptionStatus {
   });
 
   factory SubscriptionStatus.fromJson(Map<String, dynamic> json) {
-    final usageJson = json['usage'] as Map<String, dynamic>? ?? {};
+    final usageJson = Map<String, dynamic>.from(
+      json['usage'] as Map<String, dynamic>? ?? {},
+    );
+    final limits = json['limits'] as Map<String, dynamic>?;
+    if (limits != null) {
+      usageJson['limits'] = limits;
+    }
     return SubscriptionStatus(
       plan: json['plan'] as String? ?? 'free',
       status: json['status'] as String? ?? 'active',

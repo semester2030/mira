@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import '../../../../shared/widgets/mira_app_bar.dart';
 
 import '../../../../core/analytics/mira_analytics.dart';
 import '../../../../core/config/mira_api_config.dart';
@@ -59,7 +60,7 @@ class _FeedbackScreenState extends State<FeedbackScreen> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      appBar: AppBar(title: const Text('قيّمي تجربتك')),
+      appBar: const MiraAppBar(pageTitle: 'قيّمي تجربتك'),
       body: Padding(
         padding: const EdgeInsets.all(20),
         child: Column(

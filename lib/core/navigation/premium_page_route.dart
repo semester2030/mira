@@ -17,6 +17,6 @@ class PremiumPageRoute<T> extends PageRouteBuilder<T> {
               ),
             );
           },
-          transitionDuration: const Duration(milliseconds: 320),
+          transitionDuration: const Duration(milliseconds: 380),
         );
 }

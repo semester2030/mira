@@ -5,7 +5,7 @@
 	<key>CFBundleDevelopmentRegion</key>
 	<string>$(DEVELOPMENT_LANGUAGE)</string>
 	<key>CFBundleDisplayName</key>
-	<string>Mirra</string>
+	<string>Mira</string>
 	<key>CFBundleExecutable</key>
 	<string>$(EXECUTABLE_NAME)</string>
 	<key>CFBundleIdentifier</key>
@@ -46,9 +46,9 @@
 	<key>UIApplicationSupportsIndirectInputEvents</key>
 	<true/>
 	<key>NSCameraUsageDescription</key>
-	<string>ميرا تستخدم الكاميرا لتحليل بشرتك فوراً. لا نحتفظ بصورتك بعد المعالجة.</string>
+	<string>ميرا تطلب الكاميرا فقط عندما تختارين «التقاط صورة» لتحليل البشرة (تقييم حالة البشرة وتوصيات العناية) أو لتحليل الإطلالة (تقييم اللوك للمناسبة). الصورة تُلتقط وتُرسل مشفّرة للتحليل ولا تُحفظ على خوادمنا بعد المعالجة. لا نستخدم الكاميرا في الخلفية ولا نسجّل فيديو.</string>
 	<key>NSPhotoLibraryUsageDescription</key>
-	<string>يمكنك اختيار صورة للتحليل. لا نحفظ الصورة بعد انتهاء التحليل.</string>
+	<string>يمكنك اختيار صورة من ألبومك لتحليل البشرة أو الإطلالة دون التقاط صورة جديدة. لا نحفظ الصورة الأصلية بعد انتهاء التحليل.</string>
 	<key>ITSAppUsesNonExemptEncryption</key>
 	<false/>
 </dict>

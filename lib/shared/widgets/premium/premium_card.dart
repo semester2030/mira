@@ -3,9 +3,8 @@ import 'package:flutter/material.dart';
 import '../../theme/colors.dart';
 import '../../theme/shadows.dart';
 import '../../theme/animations.dart';
-import 'pressable_scale.dart';
 
-class PremiumCard extends StatelessWidget {
+class PremiumCard extends StatefulWidget {
   final Widget child;
   final EdgeInsetsGeometry padding;
   final EdgeInsetsGeometry margin;
@@ -24,36 +23,55 @@ class PremiumCard extends StatelessWidget {
   });
 
   @override
+  State<PremiumCard> createState() => _PremiumCardState();
+}
+
+class _PremiumCardState extends State<PremiumCard> {
+  @override
   Widget build(BuildContext context) {
-    Widget card = AnimatedContainer(
-      duration: AppAnimations.defaultDuration,
-      margin: margin,
-      decoration: BoxDecoration(
-        gradient: gradient,
-        color: gradient == null
-            ? (glass ? AppColors.glassFill : AppColors.surface)
-            : null,
-        borderRadius: BorderRadius.circular(24),
-        border: Border.all(
-          color: glass ? AppColors.glassBorder : AppColors.border,
-          width: glass ? 1.2 : 1,
-        ),
-        boxShadow: AppShadows.card,
+    final decoration = BoxDecoration(
+      gradient: widget.gradient,
+      color: widget.gradient == null
+          ? (widget.glass ? AppColors.glassFill : AppColors.surface)
+          : null,
+      borderRadius: BorderRadius.circular(24),
+      border: Border.all(
+        color: widget.glass
+            ? AppColors.glassBorder
+            : AppColors.primary.withValues(alpha: 0.12),
+        width: widget.glass ? 1.2 : 1,
       ),
-      child: ClipRRect(
-        borderRadius: BorderRadius.circular(24),
-        child: glass
-            ? BackdropFilter(
-                filter: ImageFilter.blur(sigmaX: 12, sigmaY: 12),
-                child: Padding(padding: padding, child: child),
-              )
-            : Padding(padding: padding, child: child),
-      ),
+      boxShadow: AppShadows.card,
     );
 
-    if (onTap != null) {
-      card = PressableScale(onTap: onTap, child: card);
+    Widget inner = ClipRRect(
+      borderRadius: BorderRadius.circular(24),
+      child: widget.glass
+          ? BackdropFilter(
+              filter: ImageFilter.blur(sigmaX: 6, sigmaY: 6),
+              child: Padding(padding: widget.padding, child: widget.child),
+            )
+          : Padding(padding: widget.padding, child: widget.child),
+    );
+
+    final card = AnimatedContainer(
+      duration: AppAnimations.defaultDuration,
+      decoration: decoration,
+      child: inner,
+    );
+
+    if (widget.onTap == null) {
+      return Padding(padding: widget.margin, child: card);
     }
-    return card;
+
+    // GestureDetector أوضح من InkWell على التدرّجات — يمنع تعطّل النقر.
+    return Padding(
+      padding: widget.margin,
+      child: GestureDetector(
+        behavior: HitTestBehavior.opaque,
+        onTap: widget.onTap,
+        child: card,
+      ),
+    );
   }
 }

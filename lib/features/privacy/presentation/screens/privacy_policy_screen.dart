@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import '../../../../shared/widgets/mira_app_bar.dart';
 
 import '../../../../core/privacy/privacy_policy_content.dart';
 import '../../../../core/services/privacy_consent_storage.dart';
@@ -12,7 +13,7 @@ class PrivacyPolicyScreen extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      appBar: AppBar(title: const Text('سياسة الخصوصية')),
+      appBar: const MiraAppBar(pageTitle: 'سياسة الخصوصية'),
       body: FloatingGradientBackground(
         child: SafeArea(
           child: ListView(
@@ -22,7 +23,12 @@ class PrivacyPolicyScreen extends StatelessWidget {
               const SizedBox(height: 4),
               Text(
                 'الإصدار ${PrivacyPolicyContent.version} · ${PrivacyPolicyContent.lastUpdated}',
-                style: AppTypography.labelSmall.copyWith(color: AppColors.textSecondary),
+                style: AppTypography.bodySmall.copyWith(color: AppColors.textSecondary),
+              ),
+              const SizedBox(height: 4),
+              Text(
+                'آخر تحديث: مايو ${PrivacyPolicyContent.lastUpdated}',
+                style: AppTypography.labelSmall.copyWith(color: AppColors.textTertiary),
               ),
               const SizedBox(height: 20),
               ...PrivacyPolicyContent.sectionsAr.map(

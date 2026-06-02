@@ -23,9 +23,15 @@ services:
       - key: API_PREFIX
         value: api/v1
       - key: SKIN_PROVIDER
-        value: mock
+        value: perfect_corp
       - key: OUTFIT_PROVIDER
         value: mock
+      - key: PERFECT_API_KEY
+        sync: false
+      - key: PERFECT_BASE_URL
+        value: https://yce-api-01.makeupar.com/s2s/v2.0
+      - key: PERFECT_CORP_FALLBACK_MOCK
+        value: "false"
       - key: AUTH_SKIP
         value: "false"
       - key: RATE_LIMIT_PER_HOUR

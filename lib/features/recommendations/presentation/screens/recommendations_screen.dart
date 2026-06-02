@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import '../../../../shared/widgets/mira_app_bar.dart';
 
 import '../../../../core/ai/models/mira_occasion.dart';
 import '../../../../core/ai/models/mira_recommendation.dart';
@@ -52,7 +53,7 @@ class _RecommendationsScreenState extends State<RecommendationsScreen> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      appBar: AppBar(title: const Text('توصيات ميرا')),
+      appBar: const MiraAppBar(pageTitle: 'توصيات ميرا'),
       body: FloatingGradientBackground(
         child: SafeArea(
           child: FutureBuilder<MiraRecommendation>(

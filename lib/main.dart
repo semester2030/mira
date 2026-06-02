@@ -2,15 +2,15 @@ import 'package:flutter/material.dart';
 import 'package:flutter_localizations/flutter_localizations.dart';
 import 'package:firebase_core/firebase_core.dart';
 import 'firebase_options.dart';
+import 'core/navigation/app_navigator.dart';
 import 'core/navigation/app_routes.dart';
 import 'core/navigation/premium_page_route.dart';
 import 'core/services/guest_session_service.dart';
+import 'core/services/onboarding_storage.dart';
 import 'core/services/theme_storage.dart';
 import 'features/splash/presentation/screens/splash_screen.dart';
 import 'features/onboarding/presentation/screens/onboarding_screen.dart';
 import 'features/auth/presentation/screens/login_screen.dart';
-import 'features/auth/presentation/screens/register_screen.dart';
-import 'features/auth/presentation/screens/forgot_password_screen.dart';
 import 'features/dashboard/presentation/screens/dashboard_screen.dart';
 import 'features/profile/presentation/screens/profile_screen.dart';
 import 'features/profile/presentation/screens/settings_screen.dart';
@@ -20,6 +20,7 @@ import 'features/dashboard/presentation/screens/tips_screen.dart';
 import 'features/dashboard/presentation/screens/new_analysis_screen.dart';
 import 'features/skin_analysis/presentation/screens/scan_screen.dart';
 import 'features/skin_analysis/presentation/screens/result_screen.dart';
+import 'features/skin_analysis/presentation/screens/skin_routine_screen.dart';
 import 'features/skin_analysis/presentation/screens/history_screen.dart';
 import 'features/skin_analysis/domain/entities/skin_report.dart';
 import 'features/privacy/presentation/screens/privacy_consent_screen.dart';
@@ -33,22 +34,44 @@ import 'features/recommendations/presentation/screens/recommendations_screen.dar
 import 'features/subscription/presentation/screens/paywall_screen.dart';
 import 'features/subscription/presentation/screens/manage_subscription_screen.dart';
 import 'features/feedback/presentation/screens/feedback_screen.dart';
+import 'features/settings/presentation/screens/notifications_settings_screen.dart';
+import 'features/settings/presentation/screens/help_screen.dart';
+import 'features/settings/presentation/screens/about_screen.dart';
+import 'features/marketplace/presentation/screens/discover_hub_screen.dart';
+import 'features/marketplace/presentation/screens/partner_list_screen.dart';
+import 'features/marketplace/presentation/screens/product_detail_screen.dart';
+import 'features/marketplace/presentation/screens/service_detail_screen.dart';
+import 'features/marketplace/domain/entities/catalog_product.dart';
+import 'features/marketplace/domain/entities/catalog_service.dart';
 import 'shared/theme/theme.dart';
 
 void main() async {
   WidgetsFlutterBinding.ensureInitialized();
+  FlutterError.onError = (details) {
+    FlutterError.presentError(details);
+    debugPrint('FlutterError: ${details.exceptionAsString()}');
+  };
   await Firebase.initializeApp(
     options: DefaultFirebaseOptions.currentPlatform,
   );
   await GuestSessionService.load();
   final themeMode = await ThemeStorage.load();
-  runApp(MirraApp(initialThemeMode: themeMode));
+  final onboardingComplete = await OnboardingStorage.isComplete();
+  runApp(MirraApp(
+    initialThemeMode: themeMode,
+    showOnboarding: !onboardingComplete,
+  ));
 }
 
 class MirraApp extends StatefulWidget {
   final ThemeMode initialThemeMode;
+  final bool showOnboarding;
 
-  const MirraApp({super.key, required this.initialThemeMode});
+  const MirraApp({
+    super.key,
+    required this.initialThemeMode,
+    required this.showOnboarding,
+  });
 
   static MirraAppState? of(BuildContext context) =>
       context.findAncestorStateOfType<MirraAppState>();
@@ -76,6 +99,7 @@ class MirraAppState extends State<MirraApp> {
   @override
   Widget build(BuildContext context) {
     return MaterialApp(
+      navigatorKey: rootNavigatorKey,
       title: 'Mira',
       debugShowCheckedModeBanner: false,
       theme: AppTheme.lightTheme,
@@ -94,7 +118,7 @@ class MirraAppState extends State<MirraApp> {
           child: child ?? const SizedBox.shrink(),
         );
       },
-      initialRoute: AppRoutes.splash,
+      initialRoute: widget.showOnboarding ? AppRoutes.onboarding : AppRoutes.splash,
       onGenerateRoute: _onGenerateRoute,
     );
   }
@@ -106,11 +130,8 @@ class MirraAppState extends State<MirraApp> {
       case AppRoutes.onboarding:
         return PremiumPageRoute(page: const OnboardingScreen(), settings: settings);
       case AppRoutes.login:
-        return PremiumPageRoute(page: const LoginScreen(), settings: settings);
       case AppRoutes.register:
-        return PremiumPageRoute(page: const RegisterScreen(), settings: settings);
-      case AppRoutes.forgot:
-        return PremiumPageRoute(page: const ForgotPasswordScreen(), settings: settings);
+        return PremiumPageRoute(page: const LoginScreen(), settings: settings);
       case AppRoutes.dashboard:
         return PremiumPageRoute(page: const DashboardScreen(), settings: settings);
       case AppRoutes.profile:
@@ -136,6 +157,13 @@ class MirraAppState extends State<MirraApp> {
           page: ResultScreen(report: report),
           settings: settings,
         );
+      case AppRoutes.skinRoutine:
+        final routineReport = settings.arguments as SkinReport?;
+        if (routineReport == null) return null;
+        return PremiumPageRoute(
+          page: SkinRoutineScreen(report: routineReport),
+          settings: settings,
+        );
       case AppRoutes.privacyConsent:
         return PremiumPageRoute(page: const PrivacyConsentScreen(), settings: settings);
       case AppRoutes.privacyPolicy:
@@ -158,6 +186,34 @@ class MirraAppState extends State<MirraApp> {
         return PremiumPageRoute(page: const ManageSubscriptionScreen(), settings: settings);
       case AppRoutes.feedback:
         return PremiumPageRoute(page: const FeedbackScreen(), settings: settings);
+      case AppRoutes.notificationsSettings:
+        return PremiumPageRoute(page: const NotificationsSettingsScreen(), settings: settings);
+      case AppRoutes.help:
+        return PremiumPageRoute(page: const HelpScreen(), settings: settings);
+      case AppRoutes.about:
+        return PremiumPageRoute(page: const AboutScreen(), settings: settings);
+      case AppRoutes.discover:
+        return PremiumPageRoute(page: const DiscoverHubScreen(), settings: settings);
+      case AppRoutes.discoverList:
+        final type = settings.arguments as String? ?? 'brand';
+        return PremiumPageRoute(
+          page: PartnerListScreen(partnerType: type),
+          settings: settings,
+        );
+      case AppRoutes.productDetail:
+        final product = settings.arguments as CatalogProduct?;
+        if (product == null) return null;
+        return PremiumPageRoute(
+          page: ProductDetailScreen(product: product),
+          settings: settings,
+        );
+      case AppRoutes.serviceDetail:
+        final service = settings.arguments as CatalogService?;
+        if (service == null) return null;
+        return PremiumPageRoute(
+          page: ServiceDetailScreen(service: service),
+          settings: settings,
+        );
       default:
         return null;
     }

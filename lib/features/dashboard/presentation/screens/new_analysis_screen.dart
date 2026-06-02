@@ -1,10 +1,10 @@
 import 'package:flutter/material.dart';
+import '../../../../shared/widgets/mira_app_bar.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:image_picker/image_picker.dart';
 import 'dart:io';
 import '../../../../core/navigation/app_routes.dart';
 import '../../../../core/services/app_session.dart';
-import '../../../../core/services/privacy_consent_storage.dart';
 import '../../../../shared/widgets/guest_banner.dart';
 import '../../../../core/session/analysis_session.dart';
 import '../../../skin_analysis/data/repositories/skin_analysis_repository_impl.dart';
@@ -26,27 +26,8 @@ class NewAnalysisScreen extends StatefulWidget {
 class _NewAnalysisScreenState extends State<NewAnalysisScreen> {
   File? _capturedImage;
   bool _guestAnalyzing = false;
-  bool _checkingConsent = true;
   final _picker = ImagePicker();
   final _guestRepo = GuestSkinAnalysisRepository();
-
-  @override
-  void initState() {
-    super.initState();
-    _ensureConsent();
-  }
-
-  Future<void> _ensureConsent() async {
-    final accepted = await PrivacyConsentStorage.isAccepted();
-    if (!accepted && mounted) {
-      final result = await Navigator.pushNamed<bool>(context, AppRoutes.privacyConsent);
-      if (result != true && mounted) {
-        Navigator.pop(context);
-        return;
-      }
-    }
-    if (mounted) setState(() => _checkingConsent = false);
-  }
 
   Future<void> _pickImage() async {
     final file = await _picker.pickImage(source: ImageSource.camera, imageQuality: 85);
@@ -147,17 +128,11 @@ class _NewAnalysisScreenState extends State<NewAnalysisScreen> {
 
   @override
   Widget build(BuildContext context) {
-    if (_checkingConsent) {
-      return const Scaffold(
-        body: Center(child: CircularProgressIndicator()),
-      );
-    }
-
     final isGuest = AppSession.isGuest;
 
     if (!AppSession.canBrowse) {
       return Scaffold(
-        appBar: AppBar(title: const Text('تحليل البشرة')),
+        appBar: const MiraAppBar(pageTitle: 'تحليل البشرة'),
         body: EmptyState(
           icon: Icons.lock_outline_rounded,
           title: 'تسجيل الدخول مطلوب',
@@ -172,7 +147,7 @@ class _NewAnalysisScreenState extends State<NewAnalysisScreen> {
 
     if (isGuest) {
       return Scaffold(
-        appBar: AppBar(title: const Text('تحليل البشرة')),
+        appBar: const MiraAppBar(pageTitle: 'تحليل البشرة'),
         body: Column(
           children: [
             const GuestBanner(),
@@ -212,7 +187,7 @@ class _NewAnalysisScreenState extends State<NewAnalysisScreen> {
         builder: (context, state) {
           final loading = state is SkinAnalysisLoading;
           return Scaffold(
-            appBar: AppBar(title: const Text('تحليل البشرة')),
+            appBar: const MiraAppBar(pageTitle: 'تحليل البشرة'),
             body: _buildAnalysisBody(
               loading: loading,
               onAnalyze: canAnalyze && !loading

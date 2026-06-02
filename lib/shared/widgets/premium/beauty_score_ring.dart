@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import '../../delight/animated_counter.dart';
 import '../../theme/colors.dart';
 import '../../theme/gradients.dart';
 import '../../theme/typography.dart';
@@ -69,12 +70,13 @@ class _BeautyScoreRingState extends State<BeautyScoreRing>
                 children: [
                   ShaderMask(
                     shaderCallback: (bounds) => AppGradients.primary.createShader(bounds),
-                    child: Text(
-                      '${(widget.score * _progress.value).round()}',
+                    child: AnimatedCounter(
+                      value: widget.score * _progress.value,
                       style: AppTypography.displaySmall.copyWith(
                         color: Colors.white,
                         fontSize: widget.size * 0.28,
                       ),
+                      duration: const Duration(milliseconds: 1200),
                     ),
                   ),
                   Text(

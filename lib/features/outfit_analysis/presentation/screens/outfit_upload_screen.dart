@@ -1,12 +1,12 @@
 import 'dart:io';
 
 import 'package:flutter/material.dart';
+import '../../../../shared/widgets/mira_app_bar.dart';
 import 'package:image_picker/image_picker.dart';
 
 import '../../../../core/navigation/app_routes.dart';
 import '../../../../core/navigation/route_args.dart';
 import '../../../../core/services/app_session.dart';
-import '../../../../core/services/privacy_consent_storage.dart';
 import '../../../../shared/theme/colors.dart';
 import '../../../../shared/theme/typography.dart';
 import '../../../../shared/widgets/guest_banner.dart';
@@ -21,26 +21,7 @@ class OutfitUploadScreen extends StatefulWidget {
 
 class _OutfitUploadScreenState extends State<OutfitUploadScreen> {
   File? _image;
-  bool _checkingConsent = true;
   final _picker = ImagePicker();
-
-  @override
-  void initState() {
-    super.initState();
-    _ensureConsent();
-  }
-
-  Future<void> _ensureConsent() async {
-    final accepted = await PrivacyConsentStorage.isAccepted();
-    if (!accepted && mounted) {
-      final result = await Navigator.pushNamed<bool>(context, AppRoutes.privacyConsent);
-      if (result != true && mounted) {
-        Navigator.pop(context);
-        return;
-      }
-    }
-    if (mounted) setState(() => _checkingConsent = false);
-  }
 
   Future<void> _pickImage(ImageSource source) async {
     final file = await _picker.pickImage(source: source, imageQuality: 85);
@@ -58,13 +39,9 @@ class _OutfitUploadScreenState extends State<OutfitUploadScreen> {
 
   @override
   Widget build(BuildContext context) {
-    if (_checkingConsent) {
-      return const Scaffold(body: Center(child: CircularProgressIndicator()));
-    }
-
     if (!AppSession.canBrowse) {
       return Scaffold(
-        appBar: AppBar(title: const Text('تحليل الإطلالة')),
+        appBar: const MiraAppBar(pageTitle: 'تحليل الإطلالة'),
         body: EmptyState(
           icon: Icons.lock_outline_rounded,
           title: 'تسجيل الدخول مطلوب',
@@ -76,7 +53,7 @@ class _OutfitUploadScreenState extends State<OutfitUploadScreen> {
     }
 
     return Scaffold(
-      appBar: AppBar(title: const Text('تحليل الإطلالة')),
+      appBar: const MiraAppBar(pageTitle: 'تحليل الإطلالة'),
       body: FloatingGradientBackground(
         child: SafeArea(
           child: SingleChildScrollView(

@@ -1,4 +1,9 @@
 import 'package:flutter/material.dart';
+import 'package:firebase_auth/firebase_auth.dart';
+import 'package:shared_preferences/shared_preferences.dart';
+import '../../../../core/services/app_session.dart';
+import '../../../../core/services/user_stats_service.dart';
+import '../../../../shared/widgets/mira_app_bar.dart';
 import '../../../../shared/theme/colors.dart';
 import '../../../../shared/theme/typography.dart';
 import '../../../../shared/widgets/premium/premium_exports.dart';
@@ -13,6 +18,7 @@ class TipsScreen extends StatefulWidget {
 class _TipsScreenState extends State<TipsScreen> {
   int _filter = 0;
   static const _filters = ['الكل', 'ترطيب', 'حماية', 'نوم'];
+  bool _engagementRecorded = false;
 
   final _tips = const [
     (Icons.water_drop_outlined, 'ترطيب', 'اشربي 8 أكواب ماء يوميًا للحفاظ على نضارة بشرتك.'),
@@ -23,13 +29,34 @@ class _TipsScreenState extends State<TipsScreen> {
   ];
 
   @override
+  void initState() {
+    super.initState();
+    _recordEngagementOnce();
+  }
+
+  Future<void> _recordEngagementOnce() async {
+    if (_engagementRecorded || AppSession.isGuest) return;
+    final user = FirebaseAuth.instance.currentUser;
+    if (user == null) return;
+    _engagementRecorded = true;
+
+    final prefs = await SharedPreferences.getInstance();
+    final dayKey = 'mirra_tip_engagement_${user.uid}';
+    final today = DateTime.now().toIso8601String().split('T').first;
+    if (prefs.getString(dayKey) == today) return;
+
+    await UserStatsService.recordTipEngagement();
+    await prefs.setString(dayKey, today);
+  }
+
+  @override
   Widget build(BuildContext context) {
     final filtered = _filter == 0
         ? _tips
         : _tips.where((t) => t.$2 == _filters[_filter]).toList();
 
     return Scaffold(
-      appBar: AppBar(title: const Text('نصائح العناية')),
+      appBar: const MiraAppBar(pageTitle: 'نصائح العناية'),
       body: FloatingGradientBackground(
         child: Column(
           children: [
@@ -74,9 +101,12 @@ class _TipsScreenState extends State<TipsScreen> {
                           child: Column(
                             crossAxisAlignment: CrossAxisAlignment.start,
                             children: [
-                              Text(tip.$2, style: AppTypography.labelMedium.copyWith(color: AppColors.primary)),
+                              Text(tip.$2,
+                                  style: AppTypography.labelMedium
+                                      .copyWith(color: AppColors.primary)),
                               const SizedBox(height: 6),
-                              Text(tip.$3, style: AppTypography.bodyMedium.copyWith(height: 1.5)),
+                              Text(tip.$3,
+                                  style: AppTypography.bodyMedium.copyWith(height: 1.5)),
                             ],
                           ),
                         ),

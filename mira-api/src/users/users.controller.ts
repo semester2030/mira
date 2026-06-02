@@ -1,4 +1,4 @@
-import { Controller, Get, UseGuards } from '@nestjs/common';
+import { Controller, Delete, Get, HttpCode, UseGuards } from '@nestjs/common';
 import { FirebaseAuthGuard } from '../common/guards/firebase-auth.guard';
 import { CurrentUser } from '../common/decorators/current-user.decorator';
 import { RequestUser } from '../common/interfaces/request-user.interface';
@@ -19,5 +19,11 @@ export class UsersController {
       displayName: user.displayName,
       createdAt: user.createdAt,
     };
+  }
+
+  @Delete('me')
+  @HttpCode(204)
+  async deleteMe(@CurrentUser() authUser: RequestUser) {
+    await this.usersService.deleteAccount(authUser);
   }
 }

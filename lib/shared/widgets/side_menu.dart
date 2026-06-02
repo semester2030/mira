@@ -1,6 +1,6 @@
 import 'package:flutter/material.dart';
+import '../../core/navigation/analysis_navigation.dart';
 import '../../core/navigation/app_routes.dart';
-import '../../core/privacy/privacy_navigation.dart';
 import '../theme/colors.dart';
 import '../theme/gradients.dart';
 import '../theme/typography.dart';
@@ -26,7 +26,7 @@ class SideMenu extends StatelessWidget {
             ),
             child: SafeArea(
               child: Padding(
-                padding: const EdgeInsets.fromLTRB(16, 8, 16, 20),
+                padding: const EdgeInsets.fromLTRB(12, 4, 12, 20),
                 child: Column(
                   children: [
                     Row(
@@ -38,18 +38,7 @@ class SideMenu extends StatelessWidget {
                         ),
                       ],
                     ),
-                    const MirraLogo.medium(),
-                    const SizedBox(height: 16),
-                    Text(
-                      'مرحبًا، ميرا',
-                      style: AppTypography.titleLarge.copyWith(color: AppColors.onPrimary),
-                    ),
-                    Text(
-                      'رفيقتك الخاصة في العناية',
-                      style: AppTypography.bodySmall.copyWith(
-                        color: AppColors.onPrimary.withValues(alpha: 0.85),
-                      ),
-                    ),
+                    const MirraLogo.drawerHeader(height: 140, width: 280),
                   ],
                 ),
               ),
@@ -60,19 +49,33 @@ class SideMenu extends StatelessWidget {
               padding: const EdgeInsets.all(16),
               children: [
                 _MenuTile(
-                  icon: Icons.add_chart_rounded,
+                  icon: Icons.face_retouching_natural_rounded,
                   title: 'تحليل البشرة',
-                  onTap: () => PrivacyNavigation.openSkinAnalysis(context),
+                  onTap: () => _closeAndRun(
+                    context,
+                    (ctx) => AnalysisNavigation.openSkinAnalysis(ctx),
+                  ),
                 ),
                 _MenuTile(
-                  icon: Icons.checkroom_outlined,
+                  icon: Icons.checkroom_rounded,
                   title: 'تحليل الإطلالة',
-                  onTap: () => PrivacyNavigation.openOutfitAnalysis(context),
+                  onTap: () => _closeAndRun(
+                    context,
+                    (ctx) => AnalysisNavigation.openOutfitAnalysis(ctx),
+                  ),
                 ),
                 _MenuTile(
                   icon: Icons.auto_awesome_rounded,
                   title: 'توصيات ميرا',
-                  onTap: () => PrivacyNavigation.openRecommendations(context),
+                  onTap: () => _closeAndRun(
+                    context,
+                    (ctx) => AnalysisNavigation.openRecommendations(context: ctx),
+                  ),
+                ),
+                _MenuTile(
+                  icon: Icons.explore_outlined,
+                  title: 'اكتشفي — شركاء ميرا',
+                  route: AppRoutes.discover,
                 ),
                 _MenuTile(icon: Icons.history_rounded, title: 'سجل تحليل البشرة', route: AppRoutes.history),
                 _MenuTile(icon: Icons.inventory_2_outlined, title: 'سجل الإطلالات', route: AppRoutes.outfitHistory),
@@ -86,6 +89,14 @@ class SideMenu extends StatelessWidget {
         ],
       ),
     );
+  }
+
+  static void _closeAndRun(
+    BuildContext drawerContext,
+    Future<void> Function(BuildContext context) action,
+  ) {
+    Navigator.pop(drawerContext);
+    AnalysisNavigation.afterDrawerClose(action);
   }
 }
 
@@ -108,19 +119,30 @@ class _MenuTile extends StatelessWidget {
       padding: const EdgeInsets.only(bottom: 8),
       child: PressableScale(
         onTap: () {
-          Navigator.pop(context);
           if (onTap != null) {
             onTap!();
-          } else if (route != null) {
-            Navigator.pushNamed(context, route!);
+            return;
+          }
+          if (route != null) {
+            Navigator.pop(context);
+            AnalysisNavigation.afterDrawerClose((ctx) async {
+              await Navigator.of(ctx).pushNamed(route!);
+            });
           }
         },
         child: Container(
           padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 14),
           decoration: BoxDecoration(
-            color: AppColors.primaryLight.withValues(alpha: 0.5),
+            color: AppColors.surface,
             borderRadius: BorderRadius.circular(14),
-            border: Border.all(color: AppColors.border),
+            border: Border.all(color: AppColors.primary.withValues(alpha: 0.15)),
+            boxShadow: [
+              BoxShadow(
+                color: AppColors.primary.withValues(alpha: 0.04),
+                blurRadius: 8,
+                offset: const Offset(0, 2),
+              ),
+            ],
           ),
           child: Row(
             children: [

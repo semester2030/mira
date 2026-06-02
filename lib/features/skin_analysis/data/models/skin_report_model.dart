@@ -21,6 +21,8 @@ class SkinReportModel extends SkinReport {
     required super.advice,
     super.imageUrl,
     super.createdAt,
+    super.skinAge,
+    super.concernScores,
   });
 
   factory SkinReportModel.fromEntity(SkinReport entity, {String? docId}) {
@@ -44,6 +46,8 @@ class SkinReportModel extends SkinReport {
       advice: entity.advice,
       imageUrl: entity.imageUrl,
       createdAt: entity.createdAt,
+      skinAge: entity.skinAge,
+      concernScores: entity.concernScores,
     );
   }
 
@@ -61,6 +65,13 @@ class SkinReportModel extends SkinReport {
     }
 
     final advice = json['advice'] as String? ?? '';
+    final concernRaw = json['concernScores'];
+    final concernScores = <String, int>{};
+    if (concernRaw is Map) {
+      concernRaw.forEach((key, value) {
+        if (value is num) concernScores[key.toString()] = value.toInt();
+      });
+    }
 
     return SkinReportModel(
       id: docId,
@@ -80,6 +91,8 @@ class SkinReportModel extends SkinReport {
       skinToneEn: json['skinToneEn'] as String? ?? '',
       recommendations: recommendations.isNotEmpty ? recommendations : (advice.isNotEmpty ? [advice] : []),
       advice: advice,
+      skinAge: (json['skinAge'] as num?)?.toInt(),
+      concernScores: concernScores,
       // Legacy imageUrl in Firestore is ignored — zero image retention.
       createdAt: createdAt,
     );
@@ -103,6 +116,8 @@ class SkinReportModel extends SkinReport {
       if (skinToneEn.isNotEmpty) 'skinToneEn': skinToneEn,
       if (recommendations.isNotEmpty) 'recommendations': recommendations,
       'advice': advice,
+      if (skinAge != null) 'skinAge': skinAge,
+      if (concernScores.isNotEmpty) 'concernScores': concernScores,
       if (createdAt != null) 'createdAt': createdAt!.toIso8601String(),
     };
   }

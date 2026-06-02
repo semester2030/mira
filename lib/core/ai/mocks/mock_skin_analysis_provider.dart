@@ -82,6 +82,26 @@ class MockSkinAnalysisProvider implements SkinAnalysisProvider {
         ? ' Use soothing products for redness and blemishes.'
         : '';
 
+    int uiFromSeverity(int severity) =>
+        ((5 - severity.clamp(0, 5)) / 5 * 100).round();
+
+    final concernScores = <String, int>{
+      'redness': uiFromSeverity(redness),
+      'age_spot': uiFromSeverity(darkSpots),
+      'pore': uiFromSeverity(pores),
+      'texture': ((hydration + uiFromSeverity(pores)) / 2).round(),
+      'dark_circle': ((hydration + uiFromSeverity(wrinkles)) / 2).round(),
+      'wrinkle': uiFromSeverity(wrinkles),
+      'moisture': hydration,
+      'oiliness': (100 - oiliness).clamp(0, 100),
+      'acne': uiFromSeverity(acne),
+      'radiance': ((hydration + (100 - oiliness)) / 2).round(),
+      'firmness': uiFromSeverity(wrinkles),
+      'eye_bag': ((hydration + uiFromSeverity(wrinkles)) / 2).round(),
+    };
+
+    final skinAge = 26 + (seed % 14);
+
     return SkinAnalysisResult(
       beautyScore: beautyScore,
       skinTypeAr: profile.ar,
@@ -99,6 +119,8 @@ class MockSkinAnalysisProvider implements SkinAnalysisProvider {
       skinToneEn: skinTone.en,
       recommendationsAr: ['${profile.adviceAr}$extraAr'],
       recommendationsEn: ['${profile.adviceEn}$extraEn'],
+      skinAge: skinAge,
+      concernScores: concernScores,
     );
   }
 

@@ -19,6 +19,8 @@ class SkinAnalysisResult extends Equatable {
   final String skinToneEn;
   final List<String> recommendationsAr;
   final List<String> recommendationsEn;
+  final int? skinAge;
+  final Map<String, int> concernScores;
 
   const SkinAnalysisResult({
     required this.beautyScore,
@@ -37,6 +39,8 @@ class SkinAnalysisResult extends Equatable {
     required this.skinToneEn,
     required this.recommendationsAr,
     required this.recommendationsEn,
+    this.skinAge,
+    this.concernScores = const {},
   });
 
   String get primaryRecommendationAr =>
@@ -63,5 +67,7 @@ class SkinAnalysisResult extends Equatable {
         skinToneEn,
         recommendationsAr,
         recommendationsEn,
+        skinAge,
+        concernScores,
       ];
 }

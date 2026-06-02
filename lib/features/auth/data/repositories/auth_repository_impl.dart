@@ -1,121 +1,154 @@
+import 'dart:async';
+
 import 'package:firebase_auth/firebase_auth.dart' as auth;
 import '../../../../core/services/guest_session_service.dart';
 import '../../../../core/services/user_document_service.dart';
-import '../../domain/repositories/auth_repository.dart';
+import '../../domain/entities/phone_otp_session.dart';
 import '../../domain/entities/user_entity.dart';
+import '../../domain/repositories/auth_repository.dart';
 
 class AuthRepositoryImpl implements AuthRepository {
   final auth.FirebaseAuth _firebaseAuth = auth.FirebaseAuth.instance;
 
-  UserEntity? _userFromFirebase(auth.User? user) {
-    if (user == null) return null;
+  UserEntity? _userFromFirebase(auth.User user, {String? phoneOverride}) {
     return UserEntity(
       id: user.uid,
       name: user.displayName ?? '',
-      email: user.email ?? '',
+      phone: phoneOverride ?? user.phoneNumber ?? '',
       avatarUrl: user.photoURL,
     );
   }
 
-  auth.User? get currentUser => _firebaseAuth.currentUser;
-
   @override
-  Future<UserEntity> login(String email, String password) async {
-    try {
-      final credential = await _firebaseAuth.signInWithEmailAndPassword(
-        email: email,
-        password: password,
-      );
-      final user = credential.user;
-      if (user == null) {
-        throw Exception('فشل تسجيل الدخول');
-      }
-      await GuestSessionService.exit();
-      await UserDocumentService.ensureUserDocument(user: user);
-      return _userFromFirebase(user)!;
-    } on auth.FirebaseAuthException catch (e) {
-      String errorMessage = 'فشل تسجيل الدخول';
-      if (e.code == 'user-not-found') {
-        errorMessage = 'البريد الإلكتروني غير مسجل';
-      } else if (e.code == 'wrong-password' || e.code == 'invalid-credential') {
-        errorMessage = 'كلمة المرور غير صحيحة';
-      } else if (e.code == 'invalid-email') {
-        errorMessage = 'البريد الإلكتروني غير صحيح';
-      } else if (e.code == 'user-disabled') {
-        errorMessage = 'هذا الحساب معطل';
-      } else if (e.message != null) {
-        errorMessage = e.message!;
-      }
-      throw Exception(errorMessage);
-    } catch (_) {
-      final user = _firebaseAuth.currentUser;
-      if (user != null) {
-        await GuestSessionService.exit();
-        return _userFromFirebase(user)!;
-      }
-      rethrow;
-    }
+  Future<PhoneOtpSession> sendPhoneOtp(String e164Phone) {
+    return _verifyPhoneNumber(e164Phone, resendToken: null);
   }
 
   @override
-  Future<UserEntity> register(String name, String email, String password) async {
+  Future<PhoneOtpSession> resendPhoneOtp(PhoneOtpSession previous) {
+    return _verifyPhoneNumber(
+      previous.e164Phone,
+      resendToken: previous.resendToken,
+    );
+  }
+
+  Future<PhoneOtpSession> _verifyPhoneNumber(
+    String e164Phone, {
+    int? resendToken,
+  }) {
+    final completer = Completer<PhoneOtpSession>();
+
+    _firebaseAuth.verifyPhoneNumber(
+      phoneNumber: e164Phone,
+      forceResendingToken: resendToken,
+      timeout: const Duration(seconds: 120),
+      verificationCompleted: (credential) {
+        if (!completer.isCompleted) {
+          completer.complete(
+            PhoneOtpSession(
+              e164Phone: e164Phone,
+              autoCredential: credential,
+            ),
+          );
+        }
+      },
+      verificationFailed: (e) {
+        if (!completer.isCompleted) {
+          completer.completeError(e);
+        }
+      },
+      codeSent: (verificationId, newResendToken) {
+        if (!completer.isCompleted) {
+          completer.complete(
+            PhoneOtpSession(
+              e164Phone: e164Phone,
+              verificationId: verificationId,
+              resendToken: newResendToken,
+            ),
+          );
+        }
+      },
+      codeAutoRetrievalTimeout: (_) {},
+    );
+
+    return completer.future;
+  }
+
+  @override
+  Future<UserEntity> verifyPhoneOtp({
+    required String name,
+    required PhoneOtpSession session,
+    required String smsCode,
+  }) async {
     try {
-      final credential = await _firebaseAuth.createUserWithEmailAndPassword(
-        email: email,
-        password: password,
-      );
-      final user = credential.user;
-      if (user == null) {
-        throw Exception('فشل إنشاء الحساب');
+      final auth.PhoneAuthCredential credential;
+      if (session.autoCredential != null) {
+        credential = session.autoCredential!;
+      } else {
+        if (session.verificationId == null) {
+          throw Exception('انتهت صلاحية الجلسة — أعيدي إرسال الرمز');
+        }
+        final code = smsCode.trim();
+        if (code.length < 6) {
+          throw Exception('أدخلي رمز التحقق المكوّن من 6 أرقام');
+        }
+        credential = auth.PhoneAuthProvider.credential(
+          verificationId: session.verificationId!,
+          smsCode: code,
+        );
       }
-      await user.updateDisplayName(name);
+
+      final userCredential = await _firebaseAuth.signInWithCredential(credential);
+      final user = userCredential.user;
+      if (user == null) {
+        throw Exception('فشل التحقق من الرمز');
+      }
+
+      final trimmedName = name.trim();
+      final isNewUser = userCredential.additionalUserInfo?.isNewUser ?? false;
+
+      if (trimmedName.isNotEmpty && (isNewUser || (user.displayName ?? '').isEmpty)) {
+        await user.updateDisplayName(trimmedName);
+      }
       await user.reload();
       final current = _firebaseAuth.currentUser!;
+
       await GuestSessionService.exit();
-      await UserDocumentService.ensureUserDocument(user: current, displayName: name);
-      return _userFromFirebase(current)!;
+      await UserDocumentService.ensureUserDocument(
+        user: current,
+        displayName: trimmedName.isNotEmpty ? trimmedName : null,
+        phoneE164: session.e164Phone,
+        isNewUser: isNewUser,
+      );
+
+      return _userFromFirebase(current, phoneOverride: session.e164Phone)!;
     } on auth.FirebaseAuthException catch (e) {
-      String errorMessage = 'فشل إنشاء الحساب';
-      if (e.code == 'email-already-in-use') {
-        errorMessage = 'البريد الإلكتروني مستخدم بالفعل — جرّبي تسجيل الدخول';
-      } else if (e.code == 'weak-password') {
-        errorMessage = 'كلمة المرور ضعيفة جداً';
-      } else if (e.code == 'invalid-email') {
-        errorMessage = 'البريد الإلكتروني غير صحيح';
-      } else if (e.message != null) {
-        errorMessage = e.message!;
-      }
-      throw Exception(errorMessage);
-    } catch (_) {
-      final user = _firebaseAuth.currentUser;
-      if (user != null) {
-        await GuestSessionService.exit();
-        return _userFromFirebase(user)!;
-      }
-      rethrow;
+      throw _mapPhoneAuthError(e);
     }
   }
 
-  @override
-  Future<void> forgotPassword(String email) async {
-    try {
-      await _firebaseAuth.sendPasswordResetEmail(email: email);
-    } on auth.FirebaseAuthException catch (e) {
-      String errorMessage = 'فشل إرسال رابط الاستعادة';
-      if (e.code == 'user-not-found') {
-        errorMessage = 'البريد الإلكتروني غير مسجل';
-      } else if (e.code == 'invalid-email') {
-        errorMessage = 'البريد الإلكتروني غير صحيح';
-      } else if (e.message != null) {
-        errorMessage = e.message!;
-      }
-      throw Exception(errorMessage);
+  Exception _mapPhoneAuthError(auth.FirebaseAuthException e) {
+    switch (e.code) {
+      case 'invalid-verification-code':
+        return Exception('رمز التحقق غير صحيح');
+      case 'session-expired':
+        return Exception('انتهت صلاحية الرمز — أعيدي الإرسال');
+      case 'invalid-phone-number':
+        return Exception('رقم الجوال غير صحيح');
+      case 'too-many-requests':
+        return Exception('محاولات كثيرة — انتظري قليلًا');
+      case 'quota-exceeded':
+        return Exception('تم تجاوز حد الرسائل — حاولي لاحقًا');
+      default:
+        return Exception(e.message ?? 'فشل التحقق من الرمز');
     }
   }
 
   @override
   Future<UserEntity?> getCurrentUser() async {
-    return _userFromFirebase(_firebaseAuth.currentUser);
+    final user = _firebaseAuth.currentUser;
+    if (user == null) return null;
+    return _userFromFirebase(user);
   }
 
   @override

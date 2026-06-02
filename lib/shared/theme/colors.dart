@@ -13,7 +13,8 @@ class AppColors {
   static const Color surface = Color(0xFFFFFFFF);
   static const Color card = surface;
   static const Color textPrimary = Color(0xFF4A3A3A);
-  static const Color textSecondary = Color(0xFF6D5C5C);
+  static const Color textSecondary = Color(0xFF524343);
+  static const Color textTertiary = Color(0xFF6D5C5C);
   static const Color border = Color(0xFFF8BBD0);
   static const Color shadow = Color(0x1A000000);
   static const Color success = Color(0xFFA469C9);

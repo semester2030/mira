@@ -8,5 +8,6 @@ import { OutfitAnalysisService } from './outfit-analysis.service';
   imports: [AiModule, UsersModule],
   controllers: [OutfitAnalysisController],
   providers: [OutfitAnalysisService],
+  exports: [OutfitAnalysisService],
 })
 export class OutfitAnalysisModule {}

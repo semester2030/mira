@@ -1,53 +1,76 @@
 import 'package:flutter/material.dart';
 
-/// Widget موحّد لعرض شعار ميرا في جميع أنحاء التطبيق
+/// شعار ميرا — PNG شفاف فقط، بدون إطار أو خلفية في الواجهة.
 class MirraLogo extends StatelessWidget {
+  static const assetPath = 'assets/images/mira_logo_full.png';
+  static const _asset = assetPath;
+
   final double height;
   final double? width;
   final BoxFit fit;
 
   const MirraLogo({
     super.key,
-    this.height = 40,
+    required this.height,
     this.width,
-    this.fit = BoxFit.cover,
+    this.fit = BoxFit.contain,
   });
 
-  /// شعار صغير للـ AppBar
   const MirraLogo.small({
     super.key,
-    this.height = 32,
-    this.width,
-    this.fit = BoxFit.cover,
+    this.height = 40,
+    this.width = 120,
+    this.fit = BoxFit.contain,
   });
 
-  /// شعار متوسط للشاشات الرئيسية
+  const MirraLogo.appBar({
+    super.key,
+    this.height = 40,
+    this.width = 120,
+    this.fit = BoxFit.contain,
+  });
+
+  const MirraLogo.auth({
+    super.key,
+    this.height = 260,
+    this.width = 340,
+    this.fit = BoxFit.contain,
+  });
+
+  const MirraLogo.drawerHeader({
+    super.key,
+    this.height = 150,
+    this.width = 300,
+    this.fit = BoxFit.contain,
+  });
+
   const MirraLogo.medium({
     super.key,
-    this.height = 80,
-    this.width,
-    this.fit = BoxFit.cover,
+    this.height = 200,
+    this.width = 300,
+    this.fit = BoxFit.contain,
   });
 
-  /// شعار كبير لشاشات الترحيب والتسجيل
   const MirraLogo.large({
     super.key,
-    this.height = 200,
-    this.width = 400,
+    this.height = 300,
+    this.width = 360,
     this.fit = BoxFit.contain,
   });
 
   @override
   Widget build(BuildContext context) {
-    return ClipRRect(
-      borderRadius: BorderRadius.circular(16),
+    return SizedBox(
+      height: height,
+      width: width,
       child: Image.asset(
-        'assets/images/app_icon.png',
-        height: height,
-        width: width,
+        _asset,
         fit: fit,
+        filterQuality: FilterQuality.high,
+        isAntiAlias: true,
+        gaplessPlayback: true,
+        excludeFromSemantics: true,
       ),
     );
   }
 }
-

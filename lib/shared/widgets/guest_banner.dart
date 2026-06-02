@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import '../../core/navigation/app_routes.dart';
 import '../theme/colors.dart';
 import '../theme/typography.dart';
+import 'guest_mode_icon.dart';
 
 class GuestBanner extends StatelessWidget {
   const GuestBanner({super.key});
@@ -19,7 +20,7 @@ class GuestBanner extends StatelessWidget {
       ),
       child: Row(
         children: [
-          const Icon(Icons.visibility_outlined, color: AppColors.primary),
+          const GuestModeIcon(size: 32),
           const SizedBox(width: 12),
           Expanded(
             child: Column(
@@ -27,7 +28,7 @@ class GuestBanner extends StatelessWidget {
               children: [
                 Text('وضع الزائر', style: AppTypography.titleSmall),
                 Text(
-                  'تصفّحين جميع الخدمات. سجّلي حسابًا لحفظ تحليلاتك ونقاطك.',
+                  'تصفّحين جميع الخدمات. سجّلي دخولك برقم الجوال لحفظ تحليلاتك ونقاطك.',
                   style: AppTypography.bodySmall.copyWith(color: AppColors.textSecondary),
                 ),
               ],
@@ -35,8 +36,8 @@ class GuestBanner extends StatelessWidget {
           ),
           const SizedBox(width: 8),
           TextButton(
-            onPressed: () => Navigator.pushNamed(context, AppRoutes.register),
-            child: const Text('تسجيل'),
+            onPressed: () => Navigator.pushNamed(context, AppRoutes.login),
+            child: const Text('دخول'),
           ),
         ],
       ),

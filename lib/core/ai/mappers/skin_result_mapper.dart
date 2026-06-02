@@ -29,6 +29,8 @@ abstract final class SkinResultMapper {
       advice: result.primaryRecommendationAr,
       imageUrl: imageUrl,
       createdAt: createdAt,
+      skinAge: result.skinAge,
+      concernScores: result.concernScores,
     );
   }
 
@@ -53,6 +55,8 @@ abstract final class SkinResultMapper {
       recommendationsEn: report.recommendations.isNotEmpty
           ? List<String>.from(report.recommendations)
           : (report.advice.isNotEmpty ? [report.advice] : const []),
+      skinAge: report.skinAge,
+      concernScores: report.concernScores,
     );
   }
 }

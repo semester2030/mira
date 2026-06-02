@@ -18,6 +18,10 @@ class SkinReport {
   final String advice;
   final String? imageUrl;
   final DateTime? createdAt;
+  /// AI-estimated skin age (optional, from YouCam).
+  final int? skinAge;
+  /// Concern id → ui_score 0–100 (higher = healthier).
+  final Map<String, int> concernScores;
 
   const SkinReport({
     this.id,
@@ -39,6 +43,8 @@ class SkinReport {
     required this.advice,
     this.imageUrl,
     this.createdAt,
+    this.skinAge,
+    this.concernScores = const {},
   });
 
   double get beautyScore => score;
@@ -63,6 +69,8 @@ class SkinReport {
     String? advice,
     String? imageUrl,
     DateTime? createdAt,
+    int? skinAge,
+    Map<String, int>? concernScores,
   }) {
     return SkinReport(
       id: id ?? this.id,
@@ -84,6 +92,8 @@ class SkinReport {
       advice: advice ?? this.advice,
       imageUrl: imageUrl ?? this.imageUrl,
       createdAt: createdAt ?? this.createdAt,
+      skinAge: skinAge ?? this.skinAge,
+      concernScores: concernScores ?? this.concernScores,
     );
   }
 }

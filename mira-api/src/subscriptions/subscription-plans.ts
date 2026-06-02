@@ -16,3 +16,8 @@ export const PREMIUM_FEATURES = {
   unlimitedOutfitAnalysis: true,
   unlimitedRecommendations: true,
 } as const;
+
+/** `true` only when MIRA_SUBSCRIPTIONS_ENABLED=true — otherwise unlimited free access. */
+export function subscriptionsEnabled(): boolean {
+  return process.env.MIRA_SUBSCRIPTIONS_ENABLED === 'true';
+}

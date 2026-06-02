@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 
+import '../../../../core/config/mira_features.dart';
 import '../../data/repositories/subscription_repository_impl.dart';
 import '../../domain/entities/subscription_status.dart';
 import '../../../../core/navigation/app_routes.dart';
@@ -27,7 +28,9 @@ class _SubscriptionUsageCardState extends State<SubscriptionUsageCard> {
 
   @override
   Widget build(BuildContext context) {
-    if (AppSession.isGuest) return const SizedBox.shrink();
+    if (AppSession.isGuest || !MiraFeatures.subscriptionsEnabled) {
+      return const SizedBox.shrink();
+    }
 
     return FutureBuilder<SubscriptionStatus>(
       future: _future,

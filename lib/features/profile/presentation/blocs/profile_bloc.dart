@@ -1,7 +1,7 @@
 import 'package:flutter_bloc/flutter_bloc.dart';
+import '../../domain/entities/profile_entity.dart';
 import '../../domain/usecases/get_profile_usecase.dart';
 import '../../domain/usecases/update_profile_usecase.dart';
-import '../../domain/usecases/change_password_usecase.dart';
 import '../../domain/usecases/logout_usecase.dart';
 import 'profile_event.dart';
 import 'profile_state.dart';
@@ -9,20 +9,24 @@ import 'profile_state.dart';
 class ProfileBloc extends Bloc<ProfileEvent, ProfileState> {
   final GetProfileUseCase getProfileUseCase;
   final UpdateProfileUseCase updateProfileUseCase;
-  final ChangePasswordUseCase changePasswordUseCase;
   final LogoutUseCase logoutUseCase;
 
   ProfileBloc({
     required this.getProfileUseCase,
     required this.updateProfileUseCase,
-    required this.changePasswordUseCase,
     required this.logoutUseCase,
   }) : super(const ProfileInitial()) {
     on<LoadProfile>(_onLoadProfile);
     on<UpdateProfile>(_onUpdateProfile);
     on<UpdateAvatar>(_onUpdateAvatar);
-    on<ChangePassword>(_onChangePassword);
     on<Logout>(_onLogout);
+  }
+
+  ProfileEntity? _profileFromState(ProfileState s) {
+    if (s is ProfileLoaded) return s.profile;
+    if (s is ProfileUpdated) return s.profile;
+    if (s is ProfileUpdating) return s.profile;
+    return null;
   }
 
   Future<void> _onLoadProfile(LoadProfile event, Emitter<ProfileState> emit) async {
@@ -40,41 +44,25 @@ class ProfileBloc extends Bloc<ProfileEvent, ProfileState> {
       emit(ProfileUpdating(event.profile));
       final updatedProfile = await updateProfileUseCase(event.profile);
       emit(ProfileUpdated(updatedProfile));
+      emit(ProfileLoaded(updatedProfile));
     } catch (e) {
       emit(ProfileError('فشل في تحديث الملف الشخصي: ${e.toString()}'));
     }
   }
 
   Future<void> _onUpdateAvatar(UpdateAvatar event, Emitter<ProfileState> emit) async {
+    final current = _profileFromState(state);
+    if (current == null) return;
+
     try {
-      if (state is ProfileLoaded) {
-        final currentProfile = (state as ProfileLoaded).profile;
-        emit(ProfileUpdating(currentProfile));
-        
-        // تحديث الصورة الشخصية
-        final repository = getProfileUseCase.repository;
-        await repository.updateAvatar(event.imagePath);
-        
-        // إعادة تحميل الملف الشخصي
-        final updatedProfile = await getProfileUseCase();
-        emit(ProfileUpdated(updatedProfile));
-      }
+      emit(ProfileUpdating(current));
+      final repository = getProfileUseCase.repository;
+      await repository.updateAvatar(event.imagePath);
+      final updatedProfile = await getProfileUseCase();
+      emit(ProfileUpdated(updatedProfile));
+      emit(ProfileLoaded(updatedProfile));
     } catch (e) {
       emit(ProfileError('فشل في تحديث الصورة الشخصية: ${e.toString()}'));
-    }
-  }
-
-  Future<void> _onChangePassword(ChangePassword event, Emitter<ProfileState> emit) async {
-    try {
-      if (state is ProfileLoaded) {
-        final currentProfile = (state as ProfileLoaded).profile;
-        emit(PasswordChanging(currentProfile));
-        
-        await changePasswordUseCase(event.currentPassword, event.newPassword);
-        emit(PasswordChanged(currentProfile));
-      }
-    } catch (e) {
-      emit(ProfileError('فشل في تغيير كلمة المرور: ${e.toString()}'));
     }
   }
 

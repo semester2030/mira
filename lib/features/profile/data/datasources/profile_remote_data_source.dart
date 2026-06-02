@@ -2,13 +2,13 @@ import 'dart:io';
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:firebase_storage/firebase_storage.dart';
+import '../../../../core/profile/user_level.dart';
 import '../../domain/entities/profile_entity.dart';
 
 abstract class ProfileRemoteDataSource {
   Future<ProfileEntity> getCurrentProfile();
   Future<ProfileEntity> updateProfile(ProfileEntity profile);
   Future<String> uploadAvatar(String imagePath);
-  Future<void> changePassword(String currentPassword, String newPassword);
   Future<void> logout();
   Stream<ProfileEntity> getProfileStream();
 }
@@ -27,7 +27,6 @@ class ProfileRemoteDataSourceImpl implements ProfileRemoteDataSource {
 
     final doc = await _firestore.collection('users').doc(user.uid).get();
     if (!doc.exists) {
-      // إنشاء ملف شخصي افتراضي إذا لم يكن موجود
       return _createDefaultProfile(user);
     }
 
@@ -41,8 +40,15 @@ class ProfileRemoteDataSourceImpl implements ProfileRemoteDataSource {
       throw Exception('المستخدم غير مسجل الدخول');
     }
 
-    final updatedProfile = profile.copyWith(updatedAt: DateTime.now());
-    await _firestore.collection('users').doc(user.uid).set(updatedProfile.toJson());
+    final updatedProfile = profile.copyWith(
+      updatedAt: DateTime.now(),
+      level: UserLevel.fromPoints(profile.points),
+    );
+    final data = updatedProfile.toJson()
+      ..remove('id')
+      ..['createdAt'] = Timestamp.fromDate(updatedProfile.createdAt)
+      ..['updatedAt'] = Timestamp.fromDate(updatedProfile.updatedAt!);
+    await _firestore.collection('users').doc(user.uid).set(data, SetOptions(merge: true));
     return updatedProfile;
   }
 
@@ -56,23 +62,6 @@ class ProfileRemoteDataSourceImpl implements ProfileRemoteDataSource {
     final ref = _storage.ref().child('avatars/${user.uid}.jpg');
     await ref.putFile(File(imagePath));
     return await ref.getDownloadURL();
-  }
-
-  @override
-  Future<void> changePassword(String currentPassword, String newPassword) async {
-    final user = _auth.currentUser;
-    if (user == null) {
-      throw Exception('المستخدم غير مسجل الدخول');
-    }
-
-    // إعادة المصادقة قبل تغيير كلمة المرور
-    final credential = EmailAuthProvider.credential(
-      email: user.email!,
-      password: currentPassword,
-    );
-    await user.reauthenticateWithCredential(credential);
-    
-    await user.updatePassword(newPassword);
   }
 
   @override
@@ -98,11 +87,10 @@ class ProfileRemoteDataSourceImpl implements ProfileRemoteDataSource {
   ProfileEntity _createDefaultProfile(User user) {
     return ProfileEntity(
       id: user.uid,
-      name: user.displayName ?? 'مستخدم جديد',
-      email: user.email ?? '',
-      phone: user.phoneNumber,
+      name: user.displayName ?? 'مستخدمة ميرا',
+      phone: user.phoneNumber ?? '',
       avatarUrl: user.photoURL,
-      level: 'مبتدئة',
+      level: UserLevel.fromPoints(0),
       points: 0,
       analyses: 0,
       tips: 0,

@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import '../../../../shared/widgets/mira_app_bar.dart';
 
 import '../../../../core/analytics/mira_analytics.dart';
 import '../../../../core/navigation/app_routes.dart';
@@ -16,7 +17,7 @@ class PaywallScreen extends StatelessWidget {
     final status = ModalRoute.of(context)?.settings.arguments as SubscriptionStatus?;
 
     return Scaffold(
-      appBar: AppBar(title: const Text('ميرا بريميوم')),
+      appBar: const MiraAppBar(pageTitle: 'ميرا بريميوم'),
       body: FloatingGradientBackground(
         child: SafeArea(
           child: SingleChildScrollView(

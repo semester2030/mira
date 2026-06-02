@@ -30,19 +30,6 @@ class UpdateAvatar extends ProfileEvent {
   List<Object?> get props => [imagePath];
 }
 
-class ChangePassword extends ProfileEvent {
-  final String currentPassword;
-  final String newPassword;
-  
-  const ChangePassword({
-    required this.currentPassword,
-    required this.newPassword,
-  });
-  
-  @override
-  List<Object?> get props => [currentPassword, newPassword];
-}
-
 class Logout extends ProfileEvent {
   const Logout();
 }

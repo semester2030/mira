@@ -110,3 +110,64 @@ model AuditLog {
   @@index([userId, createdAt(sort: Desc)])
   @@map("audit_logs")
 }
+
+/// B2B partner — brand, clinic, or salon (v1 catalog + matching).
+model Partner {
+  id            String   @id @default(uuid())
+  type          String   // brand | clinic | salon
+  status        String   @default("active") // pending | active | suspended
+  nameAr        String   @map("name_ar")
+  nameEn        String   @map("name_en")
+  descriptionAr String?  @map("description_ar")
+  city          String   @default("الرياض")
+  logoEmoji     String?  @map("logo_emoji")
+  storeUrl      String?  @map("store_url")
+  rating        Float    @default(4.5)
+  createdAt     DateTime @default(now()) @map("created_at")
+  updatedAt     DateTime @updatedAt @map("updated_at")
+
+  products Product[]
+  services Service[]
+
+  @@index([type, status])
+  @@map("partners")
+}
+
+model Product {
+  id            String   @id @default(uuid())
+  partnerId     String   @map("partner_id")
+  partner       Partner  @relation(fields: [partnerId], references: [id], onDelete: Cascade)
+  nameAr        String   @map("name_ar")
+  nameEn        String   @map("name_en")
+  descriptionAr String?  @map("description_ar")
+  priceHalalas  Int      @map("price_halalas")
+  externalUrl   String   @map("external_url")
+  concernTags   String[] @map("concern_tags")
+  skinTypes     String[] @map("skin_types")
+  stepAr        String?  @map("step_ar")
+  sortOrder     Int      @default(0) @map("sort_order")
+  active        Boolean  @default(true)
+  createdAt     DateTime @default(now()) @map("created_at")
+
+  @@index([partnerId, active])
+  @@map("products")
+}
+
+model Service {
+  id              String   @id @default(uuid())
+  partnerId       String   @map("partner_id")
+  partner         Partner  @relation(fields: [partnerId], references: [id], onDelete: Cascade)
+  nameAr          String   @map("name_ar")
+  nameEn          String   @map("name_en")
+  descriptionAr   String?  @map("description_ar")
+  durationMin     Int      @map("duration_min")
+  priceHalalas    Int      @map("price_halalas")
+  concernTags     String[] @map("concern_tags")
+  bookingEnabled  Boolean  @default(false) @map("booking_enabled")
+  sortOrder       Int      @default(0) @map("sort_order")
+  active          Boolean  @default(true)
+  createdAt       DateTime @default(now()) @map("created_at")
+
+  @@index([partnerId, active])
+  @@map("services")
+}

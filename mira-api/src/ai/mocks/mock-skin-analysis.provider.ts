@@ -82,6 +82,26 @@ export class MockSkinAnalysisProvider implements SkinAnalysisProvider {
     const extraEn =
       acne >= 3 ? ' Use soothing products for redness and blemishes.' : '';
 
+    const uiFromSeverity = (s: number) =>
+      Math.round(((5 - Math.min(5, s)) / 5) * 100);
+
+    const concernScores: Record<string, number> = {
+      redness: uiFromSeverity(redness),
+      age_spot: uiFromSeverity(darkSpots),
+      pore: uiFromSeverity(pores),
+      texture: Math.round((hydration + uiFromSeverity(pores)) / 2),
+      dark_circle: Math.round((hydration + uiFromSeverity(wrinkles)) / 2),
+      wrinkle: uiFromSeverity(wrinkles),
+      moisture: hydration,
+      oiliness: 100 - oiliness,
+      acne: uiFromSeverity(acne),
+      radiance: Math.round((hydration + (100 - oiliness)) / 2),
+      firmness: uiFromSeverity(wrinkles),
+      eye_bag: Math.round((hydration + uiFromSeverity(wrinkles)) / 2),
+    };
+
+    const skinAge = 26 + (seed % 14);
+
     return {
       beautyScore,
       skinTypeAr: profile.ar,
@@ -99,6 +119,8 @@ export class MockSkinAnalysisProvider implements SkinAnalysisProvider {
       skinToneEn: skinTone.en,
       recommendationsAr: [`${profile.adviceAr}${extraAr}`],
       recommendationsEn: [`${profile.adviceEn}${extraEn}`],
+      concernScores,
+      skinAge,
     };
   }
 }

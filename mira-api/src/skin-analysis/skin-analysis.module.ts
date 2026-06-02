@@ -8,5 +8,6 @@ import { SkinAnalysisService } from './skin-analysis.service';
   imports: [AiModule, UsersModule],
   controllers: [SkinAnalysisController],
   providers: [SkinAnalysisService],
+  exports: [SkinAnalysisService],
 })
 export class SkinAnalysisModule {}

@@ -1,8 +1,10 @@
 import 'dart:io';
 
+import 'package:firebase_auth/firebase_auth.dart';
+
 import '../../../../core/ai/ai_module.dart';
-import '../../../../core/ai/mappers/skin_result_mapper.dart';
 import '../../../../core/config/mira_api_config.dart';
+import '../../../../core/ai/mappers/skin_result_mapper.dart';
 import '../../../../core/privacy/temp_image_cleanup.dart';
 import '../../domain/entities/skin_report.dart';
 import '../../domain/repositories/skin_analysis_repository.dart';
@@ -48,9 +50,15 @@ class SkinAnalysisRepositoryImpl implements SkinAnalysisRepository {
   }
 }
 
-/// Guest analysis — AI only, no Firestore (same provider as production path).
+/// Guest analysis — local mock only unless signed in with [MiraApiConfig.useBackend].
 class GuestSkinAnalysisRepository {
   Future<SkinReport> analyzeFromImage(String imagePath) async {
+    if (MiraApiConfig.useBackend && FirebaseAuth.instance.currentUser != null) {
+      final model =
+          await SkinAnalysisApiDataSource().analyzeAndSave(imagePath: imagePath);
+      return model;
+    }
+
     final file = File(imagePath);
     if (!await file.exists()) {
       throw Exception('لم يتم العثور على صورة التحليل');

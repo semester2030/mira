@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import '../../../../shared/widgets/mira_app_bar.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import '../../../../core/navigation/app_routes.dart';
 import '../../../../core/services/app_session.dart';
@@ -23,7 +24,7 @@ class AnalysisScreen extends StatelessWidget {
   Widget build(BuildContext context) {
     if (AppSession.isGuest) {
       return Scaffold(
-        appBar: AppBar(title: const Text('تحليلاتك')),
+        appBar: const MiraAppBar(pageTitle: 'تحليلاتك'),
         body: FloatingGradientBackground(
           child: ListView(
             padding: const EdgeInsets.all(20),
@@ -44,7 +45,7 @@ class AnalysisScreen extends StatelessWidget {
 
     if (!AppSession.canUseCloud) {
       return Scaffold(
-        appBar: AppBar(title: const Text('تحليلاتك')),
+        appBar: const MiraAppBar(pageTitle: 'تحليلاتك'),
         body: EmptyState(
           icon: Icons.lock_outline_rounded,
           title: 'تسجيل الدخول مطلوب',

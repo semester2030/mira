@@ -5,6 +5,7 @@ import '../../../../core/ai/models/skin_analysis_result.dart';
 import '../../../../core/network/api_client.dart';
 import '../../../../core/network/mira_api_endpoints.dart';
 import '../../../../core/privacy/temp_image_cleanup.dart';
+import '../../../../core/services/user_stats_service.dart';
 import '../models/skin_report_model.dart';
 
 /// Calls NestJS `POST /skin-analysis` — images are not stored on device after upload.
@@ -48,7 +49,9 @@ class SkinAnalysisApiDataSource {
         createdAt: createdAt ?? DateTime.now(),
       );
 
-      return SkinReportModel.fromEntity(report);
+      final model = SkinReportModel.fromEntity(report);
+      await UserStatsService.recordSkinAnalysis();
+      return model;
     } finally {
       await TempImageCleanup.deleteIfExists(imagePath);
     }
@@ -98,6 +101,18 @@ class SkinAnalysisApiDataSource {
       recommendationsEn: (json['recommendationsEn'] as List<dynamic>)
           .map((e) => e.toString())
           .toList(),
+      skinAge: (json['skinAge'] as num?)?.toInt(),
+      concernScores: _parseConcernScores(json['concernScores']),
+    );
+  }
+
+  Map<String, int> _parseConcernScores(dynamic raw) {
+    if (raw is! Map) return const {};
+    return raw.map(
+      (key, value) => MapEntry(
+        key.toString(),
+        value is num ? value.toInt() : 0,
+      ),
     );
   }
 }

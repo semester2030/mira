@@ -1,11 +1,18 @@
-import { Injectable } from '@nestjs/common';
+import { Injectable, Logger } from '@nestjs/common';
+import { ConfigService } from '@nestjs/config';
 import { Prisma, User } from '@prisma/client';
+import * as admin from 'firebase-admin';
 import { RequestUser } from '../common/interfaces/request-user.interface';
 import { PrismaService } from '../prisma/prisma.service';
 
 @Injectable()
 export class UsersService {
-  constructor(private readonly prisma: PrismaService) {}
+  private readonly logger = new Logger(UsersService.name);
+
+  constructor(
+    private readonly prisma: PrismaService,
+    private readonly config: ConfigService,
+  ) {}
 
   async findOrCreateFromFirebase(authUser: RequestUser): Promise<User> {
     const existing = await this.prisma.user.findUnique({
@@ -59,5 +66,44 @@ export class UsersService {
         metadata: params.metadata,
       },
     });
+  }
+
+  /** Permanently deletes the user row (cascade) and Firebase Auth account. */
+  async deleteAccount(authUser: RequestUser): Promise<void> {
+    const user = await this.getByFirebaseUid(authUser.firebaseUid);
+
+    if (user) {
+      await this.writeAuditLog({
+        userId: user.id,
+        action: 'account_deleted',
+        metadata: { email: user.email ?? null },
+      });
+      await this.prisma.user.delete({ where: { id: user.id } });
+    }
+
+    if (this.config.get<string>('AUTH_SKIP') === 'true') {
+      return;
+    }
+
+    const projectId = this.config.get<string>('FIREBASE_PROJECT_ID');
+    if (!projectId) {
+      this.logger.warn('FIREBASE_PROJECT_ID not set; skipped Firebase user deletion');
+      return;
+    }
+
+    if (admin.apps.length === 0) {
+      admin.initializeApp({
+        credential: admin.credential.applicationDefault(),
+        projectId,
+      });
+    }
+
+    try {
+      await admin.auth().deleteUser(authUser.firebaseUid);
+    } catch (err) {
+      this.logger.warn(
+        `Firebase deleteUser failed for ${authUser.firebaseUid}: ${String(err)}`,
+      );
+    }
   }
 }

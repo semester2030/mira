@@ -7,6 +7,7 @@ import {
   FREE_TIER_LIMITS,
   SUBSCRIPTION_PLANS,
   SubscriptionPlan,
+  subscriptionsEnabled,
 } from './subscription-plans';
 
 export type AnalysisKind = 'skin' | 'outfit';
@@ -24,10 +25,29 @@ export class SubscriptionsService {
     const sub = await this.ensureSubscription(user.id);
     const usage = await this.getMonthlyUsage(user.id);
 
+    if (!subscriptionsEnabled()) {
+      return {
+        plan: sub.plan,
+        status: sub.status,
+        isPremium: true,
+        subscriptionsEnabled: false,
+        message: 'جميع التحليلات مجانية حالياً',
+        currentPeriodEnd: sub.currentPeriodEnd?.toISOString() ?? null,
+        limits: FREE_TIER_LIMITS,
+        usage: {
+          skinThisMonth: usage.skinThisMonth,
+          outfitThisMonth: usage.outfitThisMonth,
+          skinRemaining: 9999,
+          outfitRemaining: 9999,
+        },
+      };
+    }
+
     return {
       plan: sub.plan,
       status: sub.status,
       isPremium: this.isPremiumPlan(sub.plan, sub.status),
+      subscriptionsEnabled: true,
       currentPeriodEnd: sub.currentPeriodEnd?.toISOString() ?? null,
       limits: FREE_TIER_LIMITS,
       usage,
@@ -35,6 +55,8 @@ export class SubscriptionsService {
   }
 
   async assertCanAnalyze(authUser: RequestUser, kind: AnalysisKind): Promise<void> {
+    if (!subscriptionsEnabled()) return;
+
     const user = await this.usersService.findOrCreateFromFirebase(authUser);
     const sub = await this.ensureSubscription(user.id);
 

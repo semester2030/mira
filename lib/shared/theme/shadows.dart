@@ -44,7 +44,23 @@ class AppShadows {
   ];
 
   // الظلال الخاصة بالعناصر
-  static List<BoxShadow> get card => xs;
+  static List<BoxShadow> get card => [
+    BoxShadow(
+      color: AppColors.primary.withValues(alpha: 0.06),
+      blurRadius: 18,
+      offset: const Offset(0, 6),
+    ),
+    ...xs,
+  ];
+
+  static List<BoxShadow> get cardPressed => [
+    BoxShadow(
+      color: AppColors.primary.withValues(alpha: 0.12),
+      blurRadius: 22,
+      offset: const Offset(0, 10),
+    ),
+    ...sm,
+  ];
   static List<BoxShadow> get button => sm;
   static List<BoxShadow> get input => xs;
   static List<BoxShadow> get list => sm;

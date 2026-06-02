@@ -1,8 +1,9 @@
+import '../../../../core/utils/firestore_parsers.dart';
+
 class ProfileEntity {
   final String id;
   final String name;
-  final String email;
-  final String? phone;
+  final String phone;
   final String? avatarUrl;
   final String level;
   final int points;
@@ -16,8 +17,7 @@ class ProfileEntity {
   const ProfileEntity({
     required this.id,
     required this.name,
-    required this.email,
-    this.phone,
+    required this.phone,
     this.avatarUrl,
     required this.level,
     required this.points,
@@ -32,7 +32,6 @@ class ProfileEntity {
   ProfileEntity copyWith({
     String? id,
     String? name,
-    String? email,
     String? phone,
     String? avatarUrl,
     String? level,
@@ -47,7 +46,6 @@ class ProfileEntity {
     return ProfileEntity(
       id: id ?? this.id,
       name: name ?? this.name,
-      email: email ?? this.email,
       phone: phone ?? this.phone,
       avatarUrl: avatarUrl ?? this.avatarUrl,
       level: level ?? this.level,
@@ -65,7 +63,6 @@ class ProfileEntity {
     return {
       'id': id,
       'name': name,
-      'email': email,
       'phone': phone,
       'avatarUrl': avatarUrl,
       'level': level,
@@ -80,24 +77,26 @@ class ProfileEntity {
   }
 
   factory ProfileEntity.fromJson(Map<String, dynamic> json) {
+    final phoneRaw = json['phone'] != null
+        ? FirestoreParsers.string(json['phone'])
+        : FirestoreParsers.string(json['email'], fallback: '');
     return ProfileEntity(
-      id: json['id'] as String,
-      name: json['name'] as String,
-      email: json['email'] as String,
-      phone: json['phone'] as String?,
-      avatarUrl: json['avatarUrl'] as String?,
-      level: json['level'] as String,
-      points: json['points'] as int,
-      analyses: json['analyses'] as int,
-      tips: json['tips'] as int,
-      lastActive: json['lastActive'] as String,
+      id: FirestoreParsers.string(json['id']),
+      name: FirestoreParsers.string(json['name'], fallback: 'ميرا'),
+      phone: phoneRaw,
+      avatarUrl: json['avatarUrl'] != null ? FirestoreParsers.string(json['avatarUrl']) : null,
+      level: FirestoreParsers.string(json['level'], fallback: 'مبتدئة'),
+      points: FirestoreParsers.integer(json['points']),
+      analyses: FirestoreParsers.integer(json['analyses']),
+      tips: FirestoreParsers.integer(json['tips']),
+      lastActive: FirestoreParsers.lastActiveLabel(json['lastActive']),
       achievements: (json['achievements'] as List<dynamic>?)
               ?.map((a) => AchievementEntity.fromJson(a as Map<String, dynamic>))
               .toList() ??
           const [],
-      createdAt: DateTime.parse(json['createdAt'] as String),
-      updatedAt: json['updatedAt'] != null 
-          ? DateTime.parse(json['updatedAt'] as String) 
+      createdAt: FirestoreParsers.dateTime(json['createdAt']),
+      updatedAt: json['updatedAt'] != null
+          ? FirestoreParsers.dateTime(json['updatedAt'])
           : null,
     );
   }
@@ -133,12 +132,12 @@ class AchievementEntity {
 
   factory AchievementEntity.fromJson(Map<String, dynamic> json) {
     return AchievementEntity(
-      id: json['id'] as String,
-      title: json['title'] as String,
-      description: json['description'] as String,
-      icon: json['icon'] as String,
-      achievedAt: DateTime.parse(json['achievedAt'] as String),
-      points: json['points'] as int,
+      id: FirestoreParsers.string(json['id']),
+      title: FirestoreParsers.string(json['title']),
+      description: FirestoreParsers.string(json['description']),
+      icon: FirestoreParsers.string(json['icon'], fallback: 'star'),
+      achievedAt: FirestoreParsers.dateTime(json['achievedAt']),
+      points: FirestoreParsers.integer(json['points']),
     );
   }
 }

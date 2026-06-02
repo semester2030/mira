@@ -7,6 +7,7 @@ import '../../../../core/ai/ai_module.dart';
 import '../../../../core/ai/mappers/skin_result_mapper.dart';
 import '../../../../core/ai/models/skin_analysis_result.dart';
 import '../../../../core/privacy/temp_image_cleanup.dart';
+import '../../../../core/services/user_stats_service.dart';
 import '../models/skin_report_model.dart';
 
 /// Firestore persistence for analysis **results only** — no image upload (privacy).
@@ -52,15 +53,11 @@ class SkinAnalysisRemoteDataSource {
 
     await doc.set(model.toJson());
 
-    await _firestore.collection('users').doc(uid).set(
-      {
-        'analyses': FieldValue.increment(1),
-        'points': FieldValue.increment(15),
-        'lastActive': 'الآن',
-        'updatedAt': createdAt.toIso8601String(),
-      },
-      SetOptions(merge: true),
-    );
+    try {
+      await UserStatsService.recordSkinAnalysis();
+    } catch (_) {
+      // لا نمنع عرض نتيجة التحليل إذا فشل تحديث النقاط فقط.
+    }
 
     return model;
   }

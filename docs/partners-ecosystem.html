@@ -1,0 +1,499 @@
+<!DOCTYPE html>
+<html lang="ar" dir="rtl">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>ميرا — مرجع منظومة الشركاء (ماركات · عيادات · صالونات)</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link href="https://fonts.googleapis.com/css2?family=Tajawal:wght@400;500;700;800&display=swap" rel="stylesheet" />
+  <link rel="stylesheet" href="partners-ecosystem.css" />
+</head>
+<body>
+  <header class="site-header">
+    <div class="container header-inner">
+      <a class="brand" href="index.html">ميرا · Mira</a>
+      <nav class="nav">
+        <a href="#summary">الملخص</a>
+        <a href="#today">الوضع الحالي</a>
+        <a href="#architecture">الهندسة</a>
+        <a href="#scenarios">السيناريوهات</a>
+        <a href="#booking">الحجز</a>
+        <a href="#screens">الشاشات</a>
+        <a href="#files">الملفات</a>
+        <a href="#portal">بوابة الشركاء</a>
+      </nav>
+    </div>
+  </header>
+
+  <main class="container">
+    <div class="hero">
+      <span class="badge">مرجع رسمي — v1.0 · يونيو 2026</span>
+      <h1>منظومة الشركاء في ميرا<br />ماركات التجميل · العيادات · الصالونات</h1>
+      <p>
+        وثيقة مرجعية لربط <strong>10+ ماركات</strong> (منتجات + متاجرهم الخاصة)،
+        <strong>عيادات وأطباء</strong>، و<strong>صالونات</strong> بتوصيات تحليل البشرة —
+        مع تدفقات حجز/طلب واضحة، وعدّ شاشات وملفات، وأدلة من كود المشروع الحالي.
+      </p>
+    </div>
+
+    <!-- 1. SUMMARY -->
+    <section id="summary">
+      <h2>١. القرار المعماري الموصى به</h2>
+      <div class="card ok">
+        <h3>نموذج هجين (Hybrid) — الأنسب لميرا</h3>
+        <table>
+          <thead>
+            <tr><th>الفئة</th><th>تجربة المستخدم (B2C)</th><th>تجربة الشريك (B2B)</th></tr>
+          </thead>
+          <tbody>
+            <tr>
+              <td><strong>مستخدمة ميرا</strong></td>
+              <td>تطبيق Flutter — اكتشاف، توصيات، حجز، متابعة</td>
+              <td>—</td>
+            </tr>
+            <tr>
+              <td><strong>ماركة / عيادة / صالون</strong></td>
+              <td>Deep link من التطبيق عند الحاجة</td>
+              <td><strong>بوابة ويب</strong> <code>partners.mira.app</code> — تسجيل، كatalog، مواعيد، تقارير</td>
+            </tr>
+            <tr>
+              <td><strong>فريق ميرا</strong></td>
+              <td>—</td>
+              <td>لوحة Admin — اعتماد الشركاء، مراقبة، عمولات</td>
+            </tr>
+          </tbody>
+        </table>
+        <p><strong>لماذا ليس كل شيء داخل التطبيق؟</strong></p>
+        <ul>
+          <li>الشركات لديها <strong>متاجر Salla / Shopify / Zid</strong> — الدفع والمخزون يبقى عندهم.</li>
+          <li>العيادات والصالونات تحتاج <strong>تقويم موظفين وإدارة يومية</strong> — أسهل على الويب.</li>
+          <li>فصل B2B يقلّل حجم التطبيق ويسرّع موافقة App Store.</li>
+        </ul>
+        <p><strong>لماذa ليس ويب فقط للجميع؟</strong> المستخدمة تتوقع تجربة موحّدة بعد التحليل داخل التطبيق (شاشة 2 و 3 الموجودة).</p>
+      </div>
+    </section>
+
+    <!-- 2. TODAY -->
+    <section id="today">
+      <h2>٢. ما هو موجود في الكود اليوم (أدلة)</h2>
+      <p>قبل بناء المنظومة، هذا ما يعمل فعلياً ويمكن البناء عليه:</p>
+
+      <h3>٢.١ مسار تحليل البشرة + التقرير (بدون حفظ صورة)</h3>
+      <table>
+        <thead><tr><th>الوظيفة</th><th>المسار في المشروع</th></tr></thead>
+        <tbody>
+          <tr>
+            <td>شاشة التقرير (مصفوفة + رادار)</td>
+            <td><code>lib/features/skin_analysis/presentation/screens/result_screen.dart</code></td>
+          </tr>
+          <tr>
+            <td>شاشة الروتين اليومي</td>
+            <td><code>lib/features/skin_analysis/presentation/screens/skin_routine_screen.dart</code></td>
+          </tr>
+          <tr>
+            <td>بناء درجات الم concerns + الروتين</td>
+            <td><code>lib/features/skin_analysis/domain/services/skin_report_matrix.dart</code></td>
+          </tr>
+          <tr>
+            <td>رادار Spider Chart</td>
+            <td><code>lib/features/skin_analysis/presentation/widgets/skin_health_radar_chart.dart</code></td>
+          </tr>
+          <tr>
+            <td>بطاقات منتجات (أيقونات — placeholder)</td>
+            <td><code>lib/features/skin_analysis/presentation/widgets/recommended_product_card.dart</code></td>
+          </tr>
+        </tbody>
+      </table>
+
+      <pre>// result_screen.dart — نقطة الدخول للتوصيات بعد التحليل
+final radar = SkinReportMatrix.radarScores(report);
+final previewProducts = SkinReportMatrix.dailyRoutine(report).take(3).toList();
+// → هنا نستبدل dailyRoutine() بمحرك مطابقة Partner Catalog</pre>
+
+      <h3>٢.٢ محرك توصيات عام (مكياج + styling — ليس منتجات ماركات بعد)</h3>
+      <table>
+        <thead><tr><th>الطبقة</th><th>المسار</th></tr></thead>
+        <tbody>
+          <tr><td>Flutter — Use case</td><td><code>lib/features/recommendations/domain/usecases/build_mira_recommendation_usecase.dart</code></td></tr>
+          <tr><td>Flutter — شاشة</td><td><code>lib/features/recommendations/presentation/screens/recommendations_screen.dart</code></td></tr>
+          <tr><td>Backend — API</td><td><code>mira-api/src/recommendations/recommendations.controller.ts</code></td></tr>
+          <tr><td>Backend — محرك</td><td><code>mira-api/src/ai/engine/mira-recommendation.engine.ts</code></td></tr>
+        </tbody>
+      </table>
+
+      <h3>٢.٣ قاعدة البيانات الحالية — مستخدمات B2C فقط</h3>
+      <pre>// mira-api/prisma/schema.prisma — لا يوجد Partner / Product / Booking بعد
+model User { skinAnalyses, outfitAnalyses, recommendations, subscription ... }
+model SkinAnalysis { resultJson }  // نتائج JSON بدون صورة
+model Recommendation { resultJson }</pre>
+
+      <h3>٢.٤ المسارات (Routes) — لا مسارات شركاء بعد</h3>
+      <pre>// lib/core/navigation/app_routes.dart
+skinResult → '/skin-result'
+skinRoutine → '/skin-routine'
+recommendations → '/recommendations'
+// مطلوب لاحقاً: marketplace, partnerProduct, bookClinic, bookSalon, myBookings</pre>
+
+      <div class="card warn">
+        <strong>الفجوة:</strong> المنتجات الحالية <code>SkinRoutineProduct</code> منطق محلي بأيقونات —
+        ليست كatalog ماركات حقيقي، ولا يوجد حجز أو طلب أو تسجيل شريك.
+      </div>
+    </section>
+
+    <!-- 3. ARCHITECTURE -->
+    <section id="architecture">
+      <h2>٣. الهندسة المقترحة — ثلاث طبقات</h2>
+      <div class="flow">[تحليل بشرة] → concernScores + skinType
+        ↓
+[Matching Engine] ← Partner Catalog (tags: moisture, acne, oily...)
+        ↓
+┌─────────────────┬──────────────────┬─────────────────┐
+│ BRAND           │ CLINIC           │ SALON           │
+│ عرض منتجات      │ عرض خدمات طبية   │ عرض خدمات تجميل │
+│ Deep link /     │ حجز موعد in-app  │ حجز موعد in-app │
+│ Affiliate checkout│ + تأكيد SMS    │ + اختيار stylist│
+└─────────────────┴──────────────────┴─────────────────┘</div>
+
+      <h3>٣.١ أنواع الشركاء (PartnerType)</h3>
+      <table>
+        <thead><tr><th>النوع</th><th>code</th><th>يبيع</th><th>الدفع</th></tr></thead>
+        <tbody>
+          <tr><td>ماركة تجميل</td><td><code>brand</code></td><td>منتجات (SKU)</td><td>متجر الشريك (Salla/Shopify) أو affiliate</td></tr>
+          <tr><td>عيادة / طبيب</td><td><code>clinic</code></td><td>استشارة، ليزر، peel، filler…</td><td>عربون in-app أو في العيادة</td></tr>
+          <tr><td>صالون</td><td><code>salon</code></td><td>فacial، مكياج، شعر…</td><td>عربون أو دفع كامل</td></tr>
+        </tbody>
+      </table>
+
+      <h3>٣.٢ نماذج Prisma مقترحة (Backend)</h3>
+      <pre>model Partner {
+  id, type, status, legalName, commercialReg, vatNumber,
+  firebaseUid, email, phone, logoUrl, descriptionAr,
+  storeUrl?, affiliateId?, commissionRate, verifiedAt
+  products Product[]   // brand only
+  services Service[]   // clinic + salon
+  locations PartnerLocation[]
+  staff PartnerStaff[] // salon optional
+}
+
+model Product {
+  partnerId, nameAr, price, currency, imageUrl,
+  externalProductUrl,  // رابط متجرهم
+  concernTags String[] // ["moisture","acne"]
+  skinTypes String[]   // ["oily","combination"]
+}
+
+model Service {
+  partnerId, nameAr, durationMin, price, concernTags[],
+  requiresConsultation Boolean
+}
+
+model Booking {
+  userId, partnerId, serviceId?, status,
+  scheduledAt, notes, depositAmount, paymentRef
+}
+
+model PartnerReferral {
+  userId, partnerId, productId?, clickedAt, convertedAt, commission
+}</pre>
+    </section>
+
+    <!-- 4. SCENARIOS -->
+    <section id="scenarios">
+      <h2>٤. سيناريوهات تفصيلية</h2>
+
+      <h3>٤.١ ماركة تجميل (Brand) — 10 شركات</h3>
+      <div class="card">
+        <h4>السيناريو A — متجر Salla/Shopify (الأكثر شيوعاً)</h4>
+        <ol>
+          <li>المستخدمة تنهي التحليل → شاشة التقرير + الروتين.</li>
+          <li>محرك المطابقة يختار 3–8 منتجات من ماركات معتمدة حسب <code>concernScores</code>.</li>
+          <li>تضغط «اشتري من المتجر» → <strong>Deep link</strong> لصفحة المنتج في متجر الماركة + UTM/affiliate.</li>
+          <li>الشراء والدفع <strong>100% على منصة الماركة</strong>.</li>
+          <li>ميرا تتتبع النقرات والتحويلات عبر webhook أو تقارير affiliate.</li>
+        </ol>
+        <p><span class="tag">لا مخزون في ميرا</span> <span class="tag">لا دفع in-app للمنتج</span> <span class="tag">أسرع إطلاق</span></p>
+      </div>
+      <div class="card">
+        <h4>السيناريو B — كatalog داخل ميرا + checkout خارجي</h4>
+        <ol>
+          <li>عرض المنتج داخل التطبيق (صورة، سعر، وصف).</li>
+          <li>«إتمام الطلب» يفتح WebView/Safari لسلة مسبقة التعبئة (cart pre-fill API إن توفر).</li>
+        </ol>
+      </div>
+      <div class="card">
+        <h4>السيناريو C — Marketplace كامل (مرحلة متقدمة)</h4>
+        <p>سلة موحّدة + دفع (Moyasar/HyperPay) + تقسيم عمولة — يحتاج اتفاقيات وامتثال أعلى.</p>
+      </div>
+
+      <h3>٤.٢ عيادة تجميل / طبيب</h3>
+      <div class="card">
+        <h4>السيناريو — توصية → حجز استشارة</h4>
+        <ol>
+          <li>تحليل يظهر: احمرار عالي + حبوب → توصية «استشارة جلدية» + « peel خفيف ».</li>
+          <li>قائمة عيادات قريبة (GPS أو مدينة من الملف).</li>
+          <li>اختيار طبيب/عيادة → خدمة → تاريخ → وقت → تأكيد.</li>
+          <li>إشعار للعيادة (بوابة الشركاء + SMS).</li>
+          <li>تذكير قبل الموعد 24 ساعة.</li>
+        </ol>
+        <p><strong>ملاحظة طبية:</strong> التوصيات «إرشادية» وليست تشخيصاً — disclaimer في كل شاشة.</p>
+      </div>
+
+      <h3>٤.٣ صالون تجميل</h3>
+      <div class="card">
+        <h4>السيناريو — روتين + حجز خدمة</h4>
+        <ol>
+          <li>بشرة جافة → سيروم (ماركة) + «جلسة facial ترطيب» (صالون).</li>
+          <li>اختيار صالون → خدمة (60 د) → stylist اختياري → موعد.</li>
+          <li>عربون 50 ر.س in-app أو «ادفع في الصالon».</li>
+          <li>بعد الجلسة: تقييم + نقاط ميرا.</li>
+        </ol>
+      </div>
+    </section>
+
+    <!-- 5. BOOKING -->
+    <section id="booking">
+      <h2>٥. Booking Flow — تدفقات الحجز بالتفصيل</h2>
+
+      <h3>٥.١ حجز عيادة (7 خطوات — 5 شاشات في التطبيق)</h3>
+      <div class="flow">1. Discovery     ← من skin_routine أو tab «عيادات»
+2. Clinic List    ← فلتر: مدينة، تقييم، concern
+3. Clinic Detail  ← أطباء، خدمات، صور، موقع
+4. Service Pick   ← مدة، سعر، ما قبل الجلسة
+5. DateTime       ← تقويم من Partner Portal API
+6. Confirm        ← ملخص + disclaimer + عربون؟
+7. Success        ← رقم حجز + إضافة للتقويم</div>
+      <table>
+        <thead><tr><th>حالة الحجز</th><th>من يغيّرها</th></tr></thead>
+        <tbody>
+          <tr><td><code>pending</code></td><td>المستخدمة — awaiting clinic</td></tr>
+          <tr><td><code>confirmed</code></td><td>العيادة — بوابة الشركاء</td></tr>
+          <tr><td><code>cancelled</code></td><td>أي طرف + سياسة إلغاء</td></tr>
+          <tr><td><code>completed</code></td><td>العيادة — بعد الزيارة</td></tr>
+          <tr><td><code>no_show</code></td><td>العيادة</td></tr>
+        </tbody>
+      </table>
+
+      <h3>٥.٢ حجز صالون (8 خطوات — 6 شاشات)</h3>
+      <div class="flow">Discovery → Salon List → Salon Detail → Service → Stylist (optional)
+→ DateTime → Confirm (+ deposit) → Success</div>
+
+      <h3>٥.٣ طلب منتج ماركة (4 خطوات — 3 شاشات in-app + متجر خارجي)</h3>
+      <div class="flow">Matched Products (from report) → Product Detail → «الشراء من المتجر»
+→ External Store Checkout (Salla/Shopify) → (optional) Return deep link + conversion ping</div>
+
+      <h3>٥.٤ API endpoints مقترحة (NestJS)</h3>
+      <pre>GET  /api/v1/marketplace/match?analysisId=&type=brand|clinic|salon
+GET  /api/v1/partners?type=&city=
+GET  /api/v1/partners/:id/products|services
+GET  /api/v1/partners/:id/availability?from=&to=
+POST /api/v1/bookings
+GET  /api/v1/bookings/me
+PATCH /api/v1/bookings/:id/cancel
+
+--- Partner Portal (JWT partner role) ---
+POST /api/v1/partner/auth/register
+GET  /api/v1/partner/me
+CRUD /api/v1/partner/products|services
+GET  /api/v1/partner/bookings
+PATCH /api/v1/partner/bookings/:id/status
+GET  /api/v1/partner/analytics</pre>
+    </section>
+
+    <!-- 6. PLACEMENT -->
+    <section id="placement">
+      <h2>٦. مكانهم داخل تطبيق ميرا</h2>
+      <table>
+        <thead><tr><th>الموقع</th><th>المحتوى</th></tr></thead>
+        <tbody>
+          <tr><td>بعد التحليل — <code>skin_routine_screen</code></td><td>منتجات ماركات + «احجزي عند عيادة/صالون»</td></tr>
+          <tr><td>تبويب جديد «اكتشفي» أو «السوق»</td><td>Hub: ماركات | عيادات | صالونات</td></tr>
+          <tr><td>Side menu / Dashboard</td><td>«حجوزاتي» · «طلباتي» (روابط متابعة)</td></tr>
+          <tr><td>Profile</td><td>المدينة، حساسية، تفضيلات — لتحسين المطابقة</td></tr>
+          <tr><td>Notifications</td><td>تذكير موعد، عروض ماركة matched</td></tr>
+        </tbody>
+      </table>
+    </section>
+
+    <!-- 7. SCREENS -->
+    <section id="screens">
+      <h2>٧. عدد الشاشات المطلوبة</h2>
+      <div class="grid-2">
+        <div class="card">
+          <h3>تطبيق Flutter (مستخدمة) — ~18 شاشة جديدة</h3>
+          <table>
+            <tr><td>Marketplace Hub</td><td>1</td></tr>
+            <tr><td>قائمة + تفاصيل ماركة/منتج</td><td>3</td></tr>
+            <tr><td>Handoff شراء خارجي</td><td>1</td></tr>
+            <tr><td>قائمة + تفاصيل عيادة</td><td>2</td></tr>
+            <tr><td>حجز عيادة (خدمة→وقت→تأكيد→نجاح)</td><td>4</td></tr>
+            <tr><td>قائمة + تفاصيل صالون</td><td>2</td></tr>
+            <tr><td>حجز صالon (+ stylist)</td><td>5</td></tr>
+            <tr><td>حجوزاتي / طلباتي</td><td>2</td></tr>
+          </table>
+          <p>+ تعديل 2 شاشة موجودة: <code>skin_routine_screen</code> + <code>result_screen</code></p>
+        </div>
+        <div class="card">
+          <h3>بوابة الشركاء (Web) — ~16 شاشة</h3>
+          <table>
+            <tr><td>Landing + تسجيل + OTP</td><td>3</td></tr>
+            <tr><td>Onboarding (نوع، وثائق، ملف)</td><td>4</td></tr>
+            <tr><td>Dashboard</td><td>1</td></tr>
+            <tr><td>Products/Services CRUD</td><td>3</td></tr>
+            <tr><td>Calendar availability</td><td>1</td></tr>
+            <tr><td>Bookings inbox + detail</td><td>2</td></tr>
+            <tr><td>Analytics + Settings</td><td>2</td></tr>
+          </table>
+        </div>
+      </div>
+      <div class="card">
+        <h3>Admin مira — ~8 شاشات</h3>
+        <p>اعتماد شركاء · مراجعة وثائق · إدارة عمولات · تقارير · feature flags</p>
+      </div>
+    </section>
+
+    <!-- 8. FILES -->
+    <section id="files">
+      <h2>٨. الملفات المطلوبة (تقدير)</h2>
+
+      <h3>٨.١ Backend — NestJS (<code>mira-api/</code>) ~45–55 ملف</h3>
+      <pre>mira-api/src/
+  partners/
+    partners.module.ts
+    partners.controller.ts          # public list/detail
+    partners.service.ts
+    dto/
+  partner-portal/
+    partner-auth.controller.ts      # register/login
+    partner-products.controller.ts
+    partner-services.controller.ts
+    partner-bookings.controller.ts
+    partner-availability.controller.ts
+  marketplace/
+    marketplace.controller.ts       # GET /match
+    matching.engine.ts              # concernScores → catalog
+  bookings/
+    bookings.controller.ts          # user bookings
+    bookings.service.ts
+  referrals/
+    referrals.service.ts            # brand click tracking
+  admin/
+    admin-partners.controller.ts
+prisma/schema.prisma                # + Partner, Product, Service, Booking...</pre>
+
+      <h3>٨.٢ Frontend — Flutter ~30–38 ملف</h3>
+      <pre>lib/features/
+  marketplace/
+    data/ ... api + models
+    domain/ entities: partner, product, service, booking
+    presentation/
+      screens/  (~12 screens)
+      widgets/
+  bookings/
+    presentation/screens/ my_bookings_screen.dart ...
+lib/core/navigation/app_routes.dart   # +6 routes</pre>
+
+      <h3>٨.٣ Partner Portal — Web (~35–45 ملف)</h3>
+      <p>مقترح: <strong>Next.js</strong> أو <strong>React + Vite</strong> منفصل في <code>partners-web/</code></p>
+      <pre>partners-web/
+  src/app/register, dashboard, products, bookings, calendar
+  src/lib/api.ts → mira-api /partner/*</pre>
+    </section>
+
+    <!-- 9. PARTNER PROFILE -->
+    <section id="partner-profile">
+      <h2>٩. ملف الشريك — ماذا يحتاج كل نوع؟</h2>
+      <table>
+        <thead><tr><th>الحقل</th><th>ماركة</th><th>عيادة</th><th>صالون</th></tr></thead>
+        <tbody>
+          <tr><td>الاسم التجاري + شعار</td><td>✓</td><td>✓</td><td>✓</td></tr>
+          <tr><td>السجل التجاري / الرخصة</td><td>✓</td><td>✓ + ترخيص وزارة الصحة</td><td>✓ + بلدية</td></tr>
+          <tr><td>الرقم الضريبي</td><td>✓</td><td>✓</td><td>✓</td></tr>
+          <tr><td>رابط المتجر / الموقع</td><td>✓ إلزامي</td><td>اختياري</td><td>اختياري</td></tr>
+          <tr><td>المدينة + الفروع</td><td>—</td><td>✓</td><td>✓</td></tr>
+          <tr><td>ساعات العمل / التقويم</td><td>—</td><td>✓</td><td>✓</td></tr>
+          <tr><td>كatalog منتجات + concern tags</td><td>✓</td><td>—</td><td>—</td></tr>
+          <tr><td>كatalog خدمات + مدة + سعر</td><td>—</td><td>✓</td><td>✓</td></tr>
+          <tr><td>Staff / أطباء</td><td>—</td><td>✓</td><td>✓ stylists</td></tr>
+          <tr><td>حساب بنكي / IBAN (عمولات)</td><td>✓</td><td>✓</td><td>✓</td></tr>
+        </tbody>
+      </table>
+    </section>
+
+    <!-- 10. REGISTRATION -->
+    <section id="portal">
+      <h2>١٠. شاشات تسجيل الشركاء (بوابة الويب)</h2>
+      <div class="flow">/register
+  Step 1: نوع الشريك (brand | clinic | salon)
+  Step 2: جوال + OTP (Firebase Auth — نفس infra المستخدمات)
+  Step 3: بيانات قانونية (سجل، ضريبة، رفع PDF)
+  Step 4: الملف العام (اسم، وصف، شعار، مدينة)
+  Step 5: نوع الكatalog
+           brand  → import URL أو إدخال منتجات يدوي
+           clinic → خدمات + أطباء + availability
+           salon  → خدمات + موظفين + availability
+  Step 6: pending_review → Admin يعتمد → active</div>
+
+      <h3>١٠.١ ربط Matching Engine بالكود الحالي</h3>
+      <pre>// اليوم — skin_report_matrix.dart
+SkinReportMatrix.dailyRoutine(report)  // قواعد ثابتة
+
+// المستقبل — marketplace/matching.engine.ts
+match(report.concernScores, product.concernTags) → score
+sort by match + partner tier + commission</pre>
+
+      <h3>١٠.٢ مراحل الإطلاق المقترحة</h3>
+      <table>
+        <thead><tr><th>المرحلة</th><th>المحتوى</th><th>المدة التقديرية</th></tr></thead>
+        <tbody>
+          <tr><td>MVP-1</td><td>3 ماركات + deep link + تتبع نقرات</td><td>6–8 أسابيع</td></tr>
+          <tr><td>MVP-2</td><td>5 عيادات + حجز in-app</td><td>8–10 أسابيع</td></tr>
+          <tr><td>MVP-3</td><td>10 صالonات + stylists</td><td>6–8 أسابيع</td></tr>
+          <tr><td>Growth</td><td>Marketplace hub + admin + analytics</td><td>مستمر</td></tr>
+        </tbody>
+      </table>
+    </section>
+
+    <!-- 11. APP VS WEB -->
+    <section id="app-vs-web">
+      <h2>١١. تطبيق أم ويب للشركاء؟ — الخلاصة</h2>
+      <table>
+        <thead><tr><th></th><th>داخل تطبيق ميرا</th><th>بوابة ويب partners.mira.app</th></tr></thead>
+        <tbody>
+          <tr><td>تسجيل 10 ماركات وإدارة 500 SKU</td><td>❌ ضيق</td><td>✅ مثالي</td></tr>
+          <tr><td>تقويم مواعيد العيادة</td><td>❌</td><td>✅</td></tr>
+          <tr><td>اكتشاف وشراء/حجز للمستخدمة</td><td>✅</td><td>❌ (فقط deep link)</td></tr>
+          <tr><td>إشعارات push للمستخدمة</td><td>✅</td><td>—</td></tr>
+          <tr><td>سرعة Time-to-market</td><td>بطيء</td><td>أسرع للـ B2B</td></tr>
+        </tbody>
+      </table>
+      <div class="card ok">
+        <strong>التوصية النهائية:</strong>
+        <ul>
+          <li><strong>المستخدمة</strong> → كل شيء في تطبيق Flutter (اكتشاف، توصية، حجز، متابعة).</li>
+          <li><strong>الشركاء</strong> → بوابة وeb مستقلة + رابط «إدارة حسابك» من footer التطبيق.</li>
+          <li><strong>الربط</strong> → REST API موحّد في <code>mira-api</code> مع أدوار: <code>user</code> | <code>partner</code> | <code>admin</code>.</li>
+        </ul>
+      </div>
+    </section>
+
+    <section id="legal">
+      <h2>١٢. امتثال وخصوصية</h2>
+      <ul>
+        <li>لا تُشارك صورة التحليل مع الشركاء — فقط <strong>درجات مجهولة</strong> (concern scores + skin type).</li>
+        <li>موافقة صريحة قبل مشاركة رقم الجوال مع عيادة/صالon للحجز.</li>
+        <li>Disclaimer: التوصيات ليست تشخيصاً طبياً.</li>
+        <li>يتماشى مع سياسة ميرا الحالية: <code>lib/core/privacy/privacy_policy_content.dart</code></li>
+      </ul>
+    </section>
+  </main>
+
+  <footer class="container">
+    <p>
+      <strong>ميرا — Partners Ecosystem Reference v1.0</strong><br />
+      مستند HTML رسمي · يستند إلى كود المستودع <code>/Users/fayez/Desktop/mira</code> · يونيو 2026<br />
+      <a href="index.html">الموقع التعريفي</a> ·
+      <a href="partners-ecosystem.html">هذه الوثيقة</a>
+    </p>
+  </footer>
+</body>
+</html>

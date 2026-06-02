@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import '../../../../shared/widgets/mira_app_bar.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 
 import '../../../../core/ai/models/mira_occasion.dart';
@@ -28,7 +29,7 @@ class _OccasionSelectScreenState extends State<OccasionSelectScreen> {
     final args = ModalRoute.of(context)?.settings.arguments as OutfitOccasionRouteArgs?;
     if (args == null) {
       return Scaffold(
-        appBar: AppBar(title: const Text('المناسبة')),
+        appBar: const MiraAppBar(pageTitle: 'المناسبة'),
         body: const Center(child: Text('مسار غير صالح')),
       );
     }
@@ -57,7 +58,7 @@ class _OccasionSelectScreenState extends State<OccasionSelectScreen> {
           final loading = state is OutfitAnalysisLoading;
 
           return Scaffold(
-            appBar: AppBar(title: const Text('اختيار المناسبة')),
+            appBar: const MiraAppBar(pageTitle: 'اختيار المناسبة'),
             body: FloatingGradientBackground(
               child: SafeArea(
                 child: Padding(

@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import '../../../../shared/widgets/mira_app_bar.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import '../../../../core/navigation/app_routes.dart';
 import '../../../../core/services/app_session.dart';
@@ -22,7 +23,7 @@ class _HistoryScreenState extends State<HistoryScreen> {
   Widget build(BuildContext context) {
     if (AppSession.isGuest) {
       return Scaffold(
-        appBar: AppBar(title: const Text('سجل التحليلات')),
+        appBar: const MiraAppBar(pageTitle: 'سجل التحليلات'),
         body: FloatingGradientBackground(
           child: ListView(
             padding: const EdgeInsets.all(20),
@@ -43,7 +44,7 @@ class _HistoryScreenState extends State<HistoryScreen> {
 
     if (!AppSession.canUseCloud) {
       return Scaffold(
-        appBar: AppBar(title: const Text('سجل التحليلات')),
+        appBar: const MiraAppBar(pageTitle: 'سجل التحليلات'),
         body: EmptyState(
           icon: Icons.lock_outline_rounded,
           title: 'تسجيل الدخول مطلوب',
@@ -57,7 +58,7 @@ class _HistoryScreenState extends State<HistoryScreen> {
     return BlocProvider(
       create: (_) => SkinAnalysisBloc()..add(const LoadAnalysisHistory()),
       child: Scaffold(
-        appBar: AppBar(title: const Text('سجل التحليلات')),
+        appBar: const MiraAppBar(pageTitle: 'سجل التحليلات'),
         body: FloatingGradientBackground(
           child: BlocBuilder<SkinAnalysisBloc, SkinAnalysisState>(
             builder: (context, state) {

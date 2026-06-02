@@ -18,7 +18,8 @@
     "prisma:migrate": "prisma migrate dev",
     "prisma:push": "prisma db push",
     "db:setup": "bash scripts/setup-local-db.sh",
-    "dev": "bash scripts/dev.sh"
+    "stop": "bash scripts/stop-port.sh",
+    "dev": "bash scripts/stop-port.sh && bash scripts/dev.sh"
   },
   "dependencies": {
     "@nestjs/common": "^11.0.0",

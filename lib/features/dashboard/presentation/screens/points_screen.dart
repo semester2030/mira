@@ -1,6 +1,7 @@
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/material.dart';
+import '../../../../shared/widgets/mira_app_bar.dart';
 import '../../../../core/navigation/app_routes.dart';
 import '../../../../core/services/app_session.dart';
 import '../../../../shared/widgets/guest_banner.dart';
@@ -16,7 +17,7 @@ class PointsScreen extends StatelessWidget {
   Widget build(BuildContext context) {
     if (AppSession.isGuest) {
       return Scaffold(
-        appBar: AppBar(title: const Text('نقاط التميز')),
+        appBar: const MiraAppBar(pageTitle: 'نقاط التميز'),
         body: FloatingGradientBackground(
           child: ListView(
             padding: const EdgeInsets.all(20),
@@ -45,7 +46,7 @@ class PointsScreen extends StatelessWidget {
     final user = FirebaseAuth.instance.currentUser;
     if (user == null) {
       return Scaffold(
-        appBar: AppBar(title: const Text('نقاط التميز')),
+        appBar: const MiraAppBar(pageTitle: 'نقاط التميز'),
         body: EmptyState(
           icon: Icons.lock_outline_rounded,
           title: 'تسجيل الدخول مطلوب',
@@ -57,7 +58,7 @@ class PointsScreen extends StatelessWidget {
     }
 
     return Scaffold(
-      appBar: AppBar(title: const Text('نقاط التميز')),
+      appBar: const MiraAppBar(pageTitle: 'نقاط التميز'),
       body: FloatingGradientBackground(
         child: StreamBuilder<DocumentSnapshot<Map<String, dynamic>>>(
           stream: FirebaseFirestore.instance.collection('users').doc(user.uid).snapshots(),
@@ -99,8 +100,8 @@ class PointsScreen extends StatelessWidget {
                       children: [
                         Text('نقاطك الحالية', style: AppTypography.titleMedium),
                         const SizedBox(height: 8),
-                        Text(
-                          '$points',
+                        AnimatedCounter(
+                          value: points,
                           style: AppTypography.displayLarge.copyWith(color: AppColors.gold),
                         ),
                         Text(

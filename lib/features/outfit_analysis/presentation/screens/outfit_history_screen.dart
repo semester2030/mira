@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import '../../../../shared/widgets/mira_app_bar.dart';
 
 import '../../../../core/config/mira_api_config.dart';
 import '../../../../core/privacy/privacy_navigation.dart';
@@ -28,7 +29,7 @@ class _OutfitHistoryScreenState extends State<OutfitHistoryScreen> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      appBar: AppBar(title: const Text('سجل الإطلالات')),
+      appBar: const MiraAppBar(pageTitle: 'سجل الإطلالات'),
       body: FloatingGradientBackground(
         child: SafeArea(
           child: Column(

@@ -1,7 +1,12 @@
+import 'dart:io';
+
 import 'package:flutter/material.dart';
+import '../../../../core/utils/saudi_phone.dart';
+import '../../../../shared/widgets/mira_app_bar.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:image_picker/image_picker.dart';
 import '../../../../shared/theme/colors.dart';
+import '../../../../shared/theme/typography.dart';
 import '../../../../shared/widgets/premium/premium_exports.dart';
 import '../../domain/entities/profile_entity.dart';
 import '../blocs/profile_bloc.dart';
@@ -20,128 +25,196 @@ class EditProfileScreen extends StatefulWidget {
 class _EditProfileScreenState extends State<EditProfileScreen> {
   final _formKey = GlobalKey<FormState>();
   late final TextEditingController _nameController;
-  late final TextEditingController _emailController;
-  late final TextEditingController _phoneController;
-  late final TextEditingController _levelController;
+  String? _avatarUrl;
+  String? _localAvatarPath;
+  bool _savePending = false;
 
   @override
   void initState() {
     super.initState();
     _nameController = TextEditingController(text: widget.profile.name);
-    _emailController = TextEditingController(text: widget.profile.email);
-    _phoneController = TextEditingController(text: widget.profile.phone ?? '');
-    _levelController = TextEditingController(text: widget.profile.level);
+    _avatarUrl = widget.profile.avatarUrl;
   }
 
   @override
   void dispose() {
     _nameController.dispose();
-    _emailController.dispose();
-    _phoneController.dispose();
-    _levelController.dispose();
     super.dispose();
   }
 
-  Future<void> _pickImage() async {
+  Future<void> _choosePhotoSource() async {
+    final source = await showModalBottomSheet<ImageSource>(
+      context: context,
+      builder: (ctx) => SafeArea(
+        child: Column(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            ListTile(
+              leading: const Icon(Icons.photo_library_outlined),
+              title: const Text('من المعرض'),
+              onTap: () => Navigator.pop(ctx, ImageSource.gallery),
+            ),
+            ListTile(
+              leading: const Icon(Icons.photo_camera_outlined),
+              title: const Text('التقاط صورة'),
+              onTap: () => Navigator.pop(ctx, ImageSource.camera),
+            ),
+          ],
+        ),
+      ),
+    );
+    if (source == null || !mounted) return;
+
     final picker = ImagePicker();
-    final file = await picker.pickImage(source: ImageSource.gallery, imageQuality: 85);
+    final file = await picker.pickImage(source: source, imageQuality: 85);
     if (file == null || !mounted) return;
+
+    setState(() => _localAvatarPath = file.path);
+    if (!mounted) return;
     context.read<ProfileBloc>().add(UpdateAvatar(file.path));
   }
 
   void _save() {
     if (!_formKey.currentState!.validate()) return;
-    final updated = widget.profile.copyWith(
-      name: _nameController.text,
-      email: _emailController.text,
-      phone: _phoneController.text,
-      level: _levelController.text,
-    );
+    _savePending = true;
+    final updated = widget.profile.copyWith(name: _nameController.text.trim());
     context.read<ProfileBloc>().add(UpdateProfile(updated));
+  }
+
+  ImageProvider? get _avatarImage {
+    if (_localAvatarPath != null) {
+      return FileImage(File(_localAvatarPath!));
+    }
+    if (_avatarUrl != null) {
+      return NetworkImage(_avatarUrl!);
+    }
+    return null;
   }
 
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      appBar: AppBar(title: const Text('تعديل الملف الشخصي')),
-      body: BlocListener<ProfileBloc, ProfileState>(
+      appBar: const MiraAppBar(pageTitle: 'تعديل الملف الشخصي'),
+      body: BlocConsumer<ProfileBloc, ProfileState>(
         listener: (context, state) {
-          if (state is ProfileUpdated) {
-            ScaffoldMessenger.of(context).showSnackBar(
-              const SnackBar(content: Text('تم تحديث الملف الشخصي بنجاح')),
-            );
-            Navigator.pop(context);
+          if (state is ProfileLoaded) {
+            setState(() {
+              _avatarUrl = state.profile.avatarUrl;
+              _localAvatarPath = null;
+            });
+            if (_savePending) {
+              _savePending = false;
+              ScaffoldMessenger.of(context).showSnackBar(
+                const SnackBar(content: Text('تم تحديث الملف الشخصي بنجاح')),
+              );
+              Navigator.pop(context);
+            }
           } else if (state is ProfileError) {
+            _savePending = false;
             ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text(state.message)));
           }
         },
-        child: FloatingGradientBackground(
-          child: SingleChildScrollView(
-            padding: const EdgeInsets.all(20),
-            child: Form(
-              key: _formKey,
-              child: Column(
-                children: [
-                  PremiumCard(
-                    child: Column(
-                      children: [
-                        GestureDetector(
-                          onTap: _pickImage,
-                          child: CircleAvatar(
-                            radius: 48,
-                            backgroundImage: widget.profile.avatarUrl != null
-                                ? NetworkImage(widget.profile.avatarUrl!)
-                                : null,
-                            backgroundColor: AppColors.primaryLight,
-                            child: widget.profile.avatarUrl == null
-                                ? const Icon(Icons.person_rounded, size: 48, color: AppColors.primary)
-                                : null,
+        builder: (context, state) {
+          final updating = state is ProfileUpdating;
+          final level = state is ProfileLoaded
+              ? state.profile.level
+              : (state is ProfileUpdating ? state.profile.level : widget.profile.level);
+
+          return FloatingGradientBackground(
+            child: SingleChildScrollView(
+              padding: const EdgeInsets.all(20),
+              child: Form(
+                key: _formKey,
+                child: Column(
+                  children: [
+                    PremiumCard(
+                      child: Column(
+                        children: [
+                          GestureDetector(
+                            onTap: updating ? null : _choosePhotoSource,
+                            child: CircleAvatar(
+                              radius: 48,
+                              backgroundImage: _avatarImage,
+                              backgroundColor: AppColors.primaryLight,
+                              child: _avatarImage == null
+                                  ? const Icon(Icons.person_rounded,
+                                      size: 48, color: AppColors.primary)
+                                  : null,
+                            ),
                           ),
-                        ),
-                        const SizedBox(height: 8),
-                        TextButton(
-                          onPressed: _pickImage,
-                          child: const Text('تغيير الصورة'),
-                        ),
-                      ],
+                          const SizedBox(height: 8),
+                          TextButton(
+                            onPressed: updating ? null : _choosePhotoSource,
+                            child: const Text('تغيير الصورة'),
+                          ),
+                        ],
+                      ),
                     ),
-                  ),
-                  const SizedBox(height: 16),
-                  PremiumInputField(
-                    label: 'الاسم',
-                    controller: _nameController,
-                    validator: (v) => v == null || v.isEmpty ? 'يرجى إدخال الاسم' : null,
-                  ),
-                  const SizedBox(height: 12),
-                  PremiumInputField(
-                    label: 'البريد الإلكتروني',
-                    controller: _emailController,
-                    keyboardType: TextInputType.emailAddress,
-                    validator: (v) {
-                      if (v == null || v.isEmpty) return 'يرجى إدخال البريد';
-                      if (!v.contains('@')) return 'بريد غير صحيح';
-                      return null;
-                    },
-                  ),
-                  const SizedBox(height: 12),
-                  PremiumInputField(label: 'رقم الهاتف', controller: _phoneController),
-                  const SizedBox(height: 12),
-                  PremiumInputField(label: 'المستوى', controller: _levelController),
-                  const SizedBox(height: 24),
-                  BlocBuilder<ProfileBloc, ProfileState>(
-                    builder: (context, state) {
-                      return PremiumButton(
-                        label: 'حفظ التغييرات',
-                        loading: state is ProfileUpdating,
-                        onPressed: state is ProfileUpdating ? null : _save,
-                      );
-                    },
-                  ),
-                ],
+                    const SizedBox(height: 16),
+                    PremiumInputField(
+                      label: 'الاسم',
+                      controller: _nameController,
+                      validator: (v) =>
+                          v != null && v.trim().length >= 2 ? null : 'يرجى إدخال الاسم',
+                    ),
+                    const SizedBox(height: 12),
+                    PremiumCard(
+                      padding: const EdgeInsets.all(16),
+                      child: Row(
+                        children: [
+                          const Icon(Icons.phone_android_rounded, color: AppColors.primary),
+                          const SizedBox(width: 12),
+                          Expanded(
+                            child: Column(
+                              crossAxisAlignment: CrossAxisAlignment.start,
+                              children: [
+                                Text('رقم الجوال', style: AppTypography.labelSmall),
+                                Text(
+                                  SaudiPhone.display(widget.profile.phone),
+                                  style: AppTypography.titleMedium,
+                                ),
+                              ],
+                            ),
+                          ),
+                        ],
+                      ),
+                    ),
+                    const SizedBox(height: 12),
+                    PremiumCard(
+                      padding: const EdgeInsets.all(16),
+                      child: Row(
+                        children: [
+                          const Icon(Icons.verified_rounded, color: AppColors.gold),
+                          const SizedBox(width: 12),
+                          Expanded(
+                            child: Column(
+                              crossAxisAlignment: CrossAxisAlignment.start,
+                              children: [
+                                Text('المستوى', style: AppTypography.labelSmall),
+                                Text(level, style: AppTypography.titleMedium),
+                                Text(
+                                  'يُحسب تلقائياً من نقاطك — ${widget.profile.points} نقطة',
+                                  style: AppTypography.bodySmall
+                                      .copyWith(color: AppColors.textSecondary),
+                                ),
+                              ],
+                            ),
+                          ),
+                        ],
+                      ),
+                    ),
+                    const SizedBox(height: 24),
+                    PremiumButton(
+                      label: 'حفظ التغييرات',
+                      loading: updating,
+                      onPressed: updating ? null : _save,
+                    ),
+                  ],
+                ),
               ),
             ),
-          ),
-        ),
+          );
+        },
       ),
     );
   }

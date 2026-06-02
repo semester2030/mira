@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import '../../../../shared/widgets/mira_app_bar.dart';
 
 import '../../../../core/navigation/app_routes.dart';
 import '../../../../core/services/privacy_consent_storage.dart';
@@ -27,7 +28,7 @@ class _PrivacyConsentScreenState extends State<PrivacyConsentScreen> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      appBar: AppBar(title: const Text('الخصوصية والموافقة')),
+      appBar: const MiraAppBar(pageTitle: 'الخصوصية والموافقة'),
       body: FloatingGradientBackground(
         child: SafeArea(
           child: Padding(
@@ -49,6 +50,9 @@ class _PrivacyConsentScreenState extends State<PrivacyConsentScreen> {
                       child: Column(
                         crossAxisAlignment: CrossAxisAlignment.start,
                         children: [
+                          _bullet(
+                            'الكاميرا تُستخدم فقط عند ضغطك «التقاط صورة» لتحليل البشرة أو الإطلالة — وليس في الخلفية.',
+                          ),
                           _bullet('صورك للتحليل فقط — لا ننشرها ولا نشاركها.'),
                           _bullet('لا نحتفظ بصور الوجه أو الإطلالة بعد المعالجة.'),
                           _bullet('نخزّن نتائج التحليل (نص وأرقام) لسجلّك الخاص.'),

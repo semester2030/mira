@@ -3,8 +3,8 @@ abstract final class AppRoutes {
   static const splash = '/';
   static const onboarding = '/onboarding';
   static const login = '/login';
+  /// Same screen as [login] — phone OTP handles sign-up and sign-in.
   static const register = '/register';
-  static const forgot = '/forgot';
   static const dashboard = '/dashboard';
   static const profile = '/profile';
   static const settings = '/settings';
@@ -15,6 +15,7 @@ abstract final class AppRoutes {
   static const newAnalysis = '/new-analysis';
   static const skinScan = '/skin-scan';
   static const skinResult = '/skin-result';
+  static const skinRoutine = '/skin-routine';
   static const privacyConsent = '/privacy-consent';
   static const privacyPolicy = '/privacy-policy';
   static const outfitUpload = '/outfit-upload';
@@ -25,4 +26,11 @@ abstract final class AppRoutes {
   static const paywall = '/paywall';
   static const manageSubscription = '/manage-subscription';
   static const feedback = '/feedback';
+  static const notificationsSettings = '/settings-notifications';
+  static const help = '/help';
+  static const about = '/about';
+  static const discover = '/discover';
+  static const discoverList = '/discover-list';
+  static const productDetail = '/product-detail';
+  static const serviceDetail = '/service-detail';
 }

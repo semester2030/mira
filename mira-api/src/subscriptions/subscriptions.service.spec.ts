@@ -35,7 +35,23 @@ describe('SubscriptionsService', () => {
     );
   });
 
-  it('throws when free tier skin limit reached', async () => {
+  it('allows unlimited analyses when subscriptions disabled', async () => {
+    const prev = process.env.MIRA_SUBSCRIPTIONS_ENABLED;
+    process.env.MIRA_SUBSCRIPTIONS_ENABLED = 'false';
+    prisma.subscription.findUnique.mockResolvedValue({
+      userId: 'user-1',
+      plan: SUBSCRIPTION_PLANS.free,
+      status: 'active',
+    });
+    prisma.skinAnalysis.count.mockResolvedValue(99);
+
+    await expect(service.assertCanAnalyze(authUser, 'skin')).resolves.toBeUndefined();
+    process.env.MIRA_SUBSCRIPTIONS_ENABLED = prev;
+  });
+
+  it('throws when free tier skin limit reached and subscriptions enabled', async () => {
+    const prev = process.env.MIRA_SUBSCRIPTIONS_ENABLED;
+    process.env.MIRA_SUBSCRIPTIONS_ENABLED = 'true';
     prisma.subscription.findUnique.mockResolvedValue({
       userId: 'user-1',
       plan: SUBSCRIPTION_PLANS.free,
@@ -47,6 +63,7 @@ describe('SubscriptionsService', () => {
     await expect(service.assertCanAnalyze(authUser, 'skin')).rejects.toBeInstanceOf(
       ForbiddenException,
     );
+    process.env.MIRA_SUBSCRIPTIONS_ENABLED = prev;
   });
 
   it('allows premium users', async () => {

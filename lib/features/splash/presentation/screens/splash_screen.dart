@@ -2,12 +2,10 @@ import 'package:flutter/material.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import '../../../../core/navigation/app_routes.dart';
 import '../../../../core/services/guest_session_service.dart';
-import '../../../../core/services/onboarding_storage.dart';
-import '../../../../shared/theme/colors.dart';
-import '../../../../shared/theme/typography.dart';
-import '../../../../shared/widgets/premium/floating_gradient_background.dart';
+import '../../../../shared/widgets/premium/premium_exports.dart';
 import '../../../../shared/widgets/mirra_logo.dart';
 
+/// للعائدات — بدون مؤقت؛ زر «متابعة» فقط.
 class SplashScreen extends StatefulWidget {
   const SplashScreen({super.key});
 
@@ -19,40 +17,32 @@ class _SplashScreenState extends State<SplashScreen> with SingleTickerProviderSt
   late AnimationController _controller;
   late Animation<double> _scale;
   late Animation<double> _fade;
+  bool _navigating = false;
 
   @override
   void initState() {
     super.initState();
     _controller = AnimationController(
       vsync: this,
-      duration: const Duration(milliseconds: 1400),
+      duration: const Duration(milliseconds: 900),
     );
-    _scale = Tween<double>(begin: 0.85, end: 1).animate(
+    _scale = Tween<double>(begin: 0.9, end: 1).animate(
       CurvedAnimation(parent: _controller, curve: Curves.easeOutBack),
     );
     _fade = Tween<double>(begin: 0, end: 1).animate(
-      CurvedAnimation(parent: _controller, curve: const Interval(0, 0.6, curve: Curves.easeOut)),
+      CurvedAnimation(parent: _controller, curve: Curves.easeOut),
     );
     _controller.forward();
-    _navigateNext();
   }
 
-  Future<void> _navigateNext() async {
-    await Future<void>.delayed(const Duration(milliseconds: 2200));
-    if (!mounted) return;
-
-    final onboardingDone = await OnboardingStorage.isComplete();
-    if (!mounted) return;
-
-    if (!onboardingDone) {
-      Navigator.pushReplacementNamed(context, AppRoutes.onboarding);
-      return;
-    }
+  Future<void> _goNext() async {
+    if (_navigating) return;
+    _navigating = true;
 
     await GuestSessionService.load();
-    final user = FirebaseAuth.instance.currentUser;
     if (!mounted) return;
 
+    final user = FirebaseAuth.instance.currentUser;
     if (user != null) {
       Navigator.pushReplacementNamed(context, AppRoutes.dashboard);
     } else if (GuestSessionService.isActive) {
@@ -72,28 +62,28 @@ class _SplashScreenState extends State<SplashScreen> with SingleTickerProviderSt
   Widget build(BuildContext context) {
     return Scaffold(
       body: FloatingGradientBackground(
-        child: Center(
-          child: AnimatedBuilder(
-            animation: _controller,
-            builder: (context, child) {
-              return Opacity(
-                opacity: _fade.value,
-                child: Transform.scale(scale: _scale.value, child: child),
-              );
-            },
+        showParticles: false,
+        child: SafeArea(
+          child: Padding(
+            padding: const EdgeInsets.all(24),
             child: Column(
-              mainAxisSize: MainAxisSize.min,
               children: [
-                const MirraLogo.large(),
-                const SizedBox(height: 24),
-                Text(
-                  'ميرا',
-                  style: AppTypography.displayMedium.copyWith(color: AppColors.primaryDark),
+                const Spacer(),
+                AnimatedBuilder(
+                  animation: _controller,
+                  builder: (context, child) {
+                    return Opacity(
+                      opacity: _fade.value,
+                      child: Transform.scale(scale: _scale.value, child: child),
+                    );
+                  },
+                  child: const MirraLogo.large(),
                 ),
-                const SizedBox(height: 8),
-                Text(
-                  'مرآتك الذكية الخاصة',
-                  style: AppTypography.bodyMedium.copyWith(color: AppColors.textSecondary),
+                const Spacer(),
+                PremiumButton(
+                  label: 'متابعة',
+                  icon: Icons.arrow_back_rounded,
+                  onPressed: _goNext,
                 ),
               ],
             ),

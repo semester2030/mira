@@ -15,4 +15,7 @@ export interface SkinAnalysisResult {
   skinToneEn: string;
   recommendationsAr: string[];
   recommendationsEn: string[];
+  /** YouCam ui_score map — id → 0–100 (higher = healthier). */
+  concernScores?: Record<string, number>;
+  skinAge?: number;
 }

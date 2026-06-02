@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import '../../../../shared/widgets/mira_app_bar.dart';
 
 import '../../../../core/navigation/app_routes.dart';
 import '../../../../core/privacy/privacy_navigation.dart';
@@ -15,14 +16,17 @@ class OutfitResultScreen extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    AnalysisSession.setOutfit(report);
     return Scaffold(
-      appBar: AppBar(title: const Text('نتيجة الإطلالة')),
-      body: FloatingGradientBackground(
-        child: SafeArea(
-          child: SingleChildScrollView(
-            padding: const EdgeInsets.all(20),
-            child: Column(
-              children: [
+      appBar: const MiraAppBar(pageTitle: 'نتيجة الإطلالة'),
+      body: CelebrationOnMount(
+        message: AnalysisCelebration.messageForOutfit(),
+        child: FloatingGradientBackground(
+          child: SafeArea(
+            child: SingleChildScrollView(
+              padding: const EdgeInsets.all(20),
+              child: StaggeredEntrance(
+                children: [
                 PremiumCard(
                   child: Column(
                     children: [
@@ -87,7 +91,8 @@ class OutfitResultScreen extends StatelessWidget {
                     (_) => false,
                   ),
                 ),
-              ],
+                ],
+              ),
             ),
           ),
         ),

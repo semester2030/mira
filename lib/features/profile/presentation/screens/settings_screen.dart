@@ -1,6 +1,8 @@
 import 'package:flutter/material.dart';
+import '../../../../shared/widgets/mira_app_bar.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import '../../../../core/navigation/app_routes.dart';
+import '../../../../core/services/account_deletion_service.dart';
 import '../../../../core/services/app_session.dart';
 import '../../../../core/services/guest_session_service.dart';
 import '../../../../shared/widgets/guest_banner.dart';
@@ -19,6 +21,79 @@ class SettingsScreen extends StatefulWidget {
 
 class _SettingsScreenState extends State<SettingsScreen> {
   bool _darkMode = false;
+  bool _deletingAccount = false;
+
+  Future<void> _confirmDeleteAccount(BuildContext context) async {
+    final first = await showDialog<bool>(
+      context: context,
+      builder: (ctx) => AlertDialog(
+        title: const Text('حذف الحساب؟'),
+        content: const Text(
+          'سيتم حذف حسابك وبياناتك من ميرا نهائياً، بما في ذلك:\n'
+          '• بيانات تسجيل الدخول\n'
+          '• سجل تحليلات البشرة والإطلالة\n'
+          '• الاشتراك والتفضيلات\n\n'
+          'لا يمكن التراجع عن هذا الإجراء.',
+        ),
+        actions: [
+          TextButton(onPressed: () => Navigator.pop(ctx, false), child: const Text('إلغاء')),
+          TextButton(
+            onPressed: () => Navigator.pop(ctx, true),
+            child: Text('متابعة', style: TextStyle(color: AppColors.error)),
+          ),
+        ],
+      ),
+    );
+    if (first != true || !context.mounted) return;
+
+    final second = await showDialog<bool>(
+      context: context,
+      builder: (ctx) => AlertDialog(
+        title: const Text('تأكيد الحذف'),
+        content: const Text('هل أنتِ متأكدة من حذف حسابك نهائياً؟'),
+        actions: [
+          TextButton(onPressed: () => Navigator.pop(ctx, false), child: const Text('إلغاء')),
+          FilledButton(
+            style: FilledButton.styleFrom(backgroundColor: AppColors.error),
+            onPressed: () => Navigator.pop(ctx, true),
+            child: const Text('نعم، احذفي حسابي'),
+          ),
+        ],
+      ),
+    );
+    if (second != true || !context.mounted) return;
+
+    setState(() => _deletingAccount = true);
+    final result = await AccountDeletionService.deleteAccount();
+    if (!context.mounted) return;
+    setState(() => _deletingAccount = false);
+
+    switch (result) {
+      case AccountDeletionResult.success:
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(content: Text('تم حذف حسابك')),
+        );
+        Navigator.pushNamedAndRemoveUntil(context, AppRoutes.login, (_) => false);
+      case AccountDeletionResult.needsRecentLogin:
+        showDialog<void>(
+          context: context,
+          builder: (ctx) => AlertDialog(
+            title: const Text('تأكيد الهوية مطلوب'),
+            content: const Text(
+              'لأمانك، سجّلي خروجك ثم ادخلي مجدداً برقم الجوال ورمز التحقق، '
+              'ثم أعيدي محاولة حذف الحساب من الإعدادات.',
+            ),
+            actions: [
+              TextButton(onPressed: () => Navigator.pop(ctx), child: const Text('حسناً')),
+            ],
+          ),
+        );
+      case AccountDeletionResult.failed:
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(content: Text('تعذّر حذف الحساب. حاولي لاحقاً أو تواصلي مع الدعم.')),
+        );
+    }
+  }
 
   @override
   void didChangeDependencies() {
@@ -30,8 +105,10 @@ class _SettingsScreenState extends State<SettingsScreen> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      appBar: AppBar(title: const Text('الإعدادات')),
-      body: ListView(
+      appBar: const MiraAppBar(pageTitle: 'الإعدادات'),
+      body: Stack(
+        children: [
+          ListView(
         padding: const EdgeInsets.all(20),
         children: [
           if (AppSession.isGuest) const GuestBanner(),
@@ -81,13 +158,14 @@ class _SettingsScreenState extends State<SettingsScreen> {
                 _SettingsTile(
                   icon: Icons.notifications_outlined,
                   title: 'الإشعارات',
-                  onTap: () {},
+                  onTap: () =>
+                      Navigator.pushNamed(context, AppRoutes.notificationsSettings),
                 ),
                 const Divider(height: 1, color: AppColors.border),
                 _SettingsTile(
                   icon: Icons.lock_outline_rounded,
                   title: 'الخصوصية والأمان',
-                  subtitle: 'لا نحتفظ بصورك — اقرئي السياسة',
+                  subtitle: 'الكاميرا للتحليل فقط — حذف الحساب من الأسفل',
                   onTap: () => Navigator.pushNamed(context, AppRoutes.privacyPolicy),
                 ),
               ],
@@ -106,14 +184,14 @@ class _SettingsScreenState extends State<SettingsScreen> {
                 _SettingsTile(
                   icon: Icons.help_outline_rounded,
                   title: 'المساعدة',
-                  onTap: () {},
+                  onTap: () => Navigator.pushNamed(context, AppRoutes.help),
                 ),
                 const Divider(height: 1, color: AppColors.border),
                 _SettingsTile(
                   icon: Icons.info_outline_rounded,
                   title: 'عن ميرا',
                   subtitle: 'الإصدار 1.0.0 · مرآتك الذكية الخاصة',
-                  onTap: () {},
+                  onTap: () => Navigator.pushNamed(context, AppRoutes.about),
                 ),
               ],
             ),
@@ -121,13 +199,7 @@ class _SettingsScreenState extends State<SettingsScreen> {
           if (AppSession.isGuest) ...[
             const SizedBox(height: 16),
             PremiumButton(
-              label: 'إنشاء حساب',
-              onPressed: () => Navigator.pushNamed(context, AppRoutes.register),
-            ),
-            const SizedBox(height: 8),
-            PremiumButton(
-              label: 'تسجيل الدخول',
-              variant: PremiumButtonVariant.secondary,
+              label: 'تسجيل الدخول برقم الجوال',
               onPressed: () => Navigator.pushNamed(context, AppRoutes.login),
             ),
             const SizedBox(height: 8),
@@ -142,6 +214,15 @@ class _SettingsScreenState extends State<SettingsScreen> {
             ),
           ] else if (FirebaseAuth.instance.currentUser != null) ...[
             const SizedBox(height: 16),
+            PremiumCard(
+              child: _SettingsTile(
+                icon: Icons.delete_forever_outlined,
+                title: 'حذف الحساب',
+                subtitle: 'يُحذف حسابك وبياناتك نهائياً — لا يمكن التراجع',
+                onTap: () => _confirmDeleteAccount(context),
+              ),
+            ),
+            const SizedBox(height: 16),
             PremiumButton(
               label: 'تسجيل الخروج',
               variant: PremiumButtonVariant.ghost,
@@ -153,6 +234,13 @@ class _SettingsScreenState extends State<SettingsScreen> {
               },
             ),
           ],
+        ],
+          ),
+          if (_deletingAccount)
+            Container(
+              color: Colors.black26,
+              child: const Center(child: CircularProgressIndicator()),
+            ),
         ],
       ),
     );

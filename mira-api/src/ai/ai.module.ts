@@ -5,6 +5,7 @@ import { FashnOutfitProvider } from './mocks/fashn-outfit.provider';
 import { MockOutfitAnalysisProvider } from './mocks/mock-outfit-analysis.provider';
 import { MockSkinAnalysisProvider } from './mocks/mock-skin-analysis.provider';
 import { PerfectCorpSkinProvider } from './mocks/perfect-corp-skin.provider';
+import { PerfectCorpService } from './services/perfect-corp.service';
 import {
   OUTFIT_ANALYSIS_PROVIDER,
   OutfitAnalysisProvider,
@@ -19,6 +20,7 @@ import {
     MiraRecommendationEngine,
     MockSkinAnalysisProvider,
     MockOutfitAnalysisProvider,
+    PerfectCorpService,
     PerfectCorpSkinProvider,
     FashnOutfitProvider,
     {

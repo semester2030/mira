@@ -26,11 +26,6 @@ class ProfileRepositoryImpl implements ProfileRepository {
   }
 
   @override
-  Future<void> changePassword(String currentPassword, String newPassword) {
-    return remoteDataSource.changePassword(currentPassword, newPassword);
-  }
-
-  @override
   Future<void> logout() {
     return remoteDataSource.logout();
   }
