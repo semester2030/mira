@@ -47,6 +47,7 @@ class _OnboardingScreenState extends State<OnboardingScreen> {
   Widget build(BuildContext context) {
     return Scaffold(
       body: FloatingGradientBackground(
+        showOrbs: false,
         showParticles: false,
         child: SafeArea(
           child: Column(

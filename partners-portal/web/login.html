@@ -1,0 +1,59 @@
+<!DOCTYPE html>
+<html lang="ar" dir="rtl">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <meta name="mira-api-base" content="https://mira-api-n4p3.onrender.com/api/v1" />
+  <title>دخول الشريك — ميرا</title>
+  <link href="https://fonts.googleapis.com/css2?family=Tajawal:wght@400;700;800&display=swap" rel="stylesheet" />
+  <link rel="stylesheet" href="css/site.css" />
+</head>
+<body>
+  <header>
+    <div class="container wrap">
+      <a class="brand" href="index.html">ميرا · شركاء</a>
+    </div>
+  </header>
+
+  <main class="container">
+    <div class="card" style="max-width:480px;margin:0 auto">
+      <h1>دخول الشريك</h1>
+      <p class="lead">استخدم البريد ورمز الدخول الذي استلمته بعد اعتماد طلبك.</p>
+      <div id="msg" class="hidden"></div>
+      <form id="loginForm">
+        <label>البريد الإلكتروني</label>
+        <input name="email" type="email" required />
+        <label>رمز الدخول</label>
+        <input name="accessToken" required placeholder="64 حرف hex" />
+        <div class="actions">
+          <button type="submit" class="btn btn-primary">دخول</button>
+        </div>
+      </form>
+    </div>
+  </main>
+
+  <script src="js/api.js"></script>
+  <script>
+    if (PartnersApi.isLoggedIn()) location.href = 'dashboard.html';
+
+    const form = document.getElementById('loginForm');
+    const msg = document.getElementById('msg');
+
+    form.addEventListener('submit', async (e) => {
+      e.preventDefault();
+      const fd = new FormData(form);
+      msg.className = 'alert warn';
+      msg.textContent = 'جاري التحقق...';
+      msg.classList.remove('hidden');
+      try {
+        const res = await PartnersApi.login(fd.get('email'), fd.get('accessToken'));
+        PartnersApi.saveSession(res.email, res.accessToken);
+        location.href = 'dashboard.html';
+      } catch (err) {
+        msg.className = 'alert err';
+        msg.textContent = err.message;
+      }
+    });
+  </script>
+</body>
+</html>

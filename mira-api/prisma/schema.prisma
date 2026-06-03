@@ -128,6 +128,9 @@ model Partner {
 
   products Product[]
   services Service[]
+  applications PartnerApplication[]
+  users      PartnerUser[]
+  events     PartnerEvent[]
 
   @@index([type, status])
   @@map("partners")
@@ -170,4 +173,74 @@ model Service {
 
   @@index([partnerId, active])
   @@map("services")
+}
+
+/// Public website contact / partnership leads (no auth).
+model WebsiteLead {
+  id        String   @id @default(uuid())
+  name      String
+  email     String
+  phone     String?
+  type      String   @default("contact") // contact | partnership | media | support
+  message   String
+  ipHash    String?  @map("ip_hash")
+  createdAt DateTime @default(now()) @map("created_at")
+
+  @@index([createdAt(sort: Desc)])
+  @@map("website_leads")
+}
+
+/// Partner onboarding request — auto workflow to Partner on approve.
+model PartnerApplication {
+  id            String    @id @default(uuid())
+  status        String    @default("pending") // pending | approved | rejected
+  type          String    // brand | clinic | salon
+  nameAr        String    @map("name_ar")
+  nameEn        String    @map("name_en")
+  contactName   String    @map("contact_name")
+  contactEmail  String    @map("contact_email")
+  contactPhone  String    @map("contact_phone")
+  city          String    @default("الرياض")
+  descriptionAr String?   @map("description_ar")
+  storeUrl      String?   @map("store_url")
+  crNumber      String?   @map("cr_number")
+  vatNumber     String?   @map("vat_number")
+  message       String?
+  statusToken   String    @unique @map("status_token")
+  partnerId     String?   @map("partner_id")
+  rejectReason  String?   @map("reject_reason")
+  reviewedAt    DateTime? @map("reviewed_at")
+  createdAt     DateTime  @default(now()) @map("created_at")
+
+  partner Partner? @relation(fields: [partnerId], references: [id])
+
+  @@index([status, createdAt(sort: Desc)])
+  @@map("partner_applications")
+}
+
+/// Partner portal login — one owner per partner (v1).
+model PartnerUser {
+  id          String   @id @default(uuid())
+  partnerId   String   @unique @map("partner_id")
+  partner     Partner  @relation(fields: [partnerId], references: [id], onDelete: Cascade)
+  email       String   @unique
+  accessToken String   @unique @map("access_token")
+  role        String   @default("owner")
+  createdAt   DateTime @default(now()) @map("created_at")
+
+  @@map("partner_users")
+}
+
+/// Aggregated partner analytics (no user PII).
+model PartnerEvent {
+  id        String   @id @default(uuid())
+  partnerId String   @map("partner_id")
+  partner   Partner  @relation(fields: [partnerId], references: [id], onDelete: Cascade)
+  eventType String   @map("event_type") // impression | click | booking_request
+  targetId  String?  @map("target_id")
+  targetType String? @map("target_type") // product | service
+  createdAt DateTime @default(now()) @map("created_at")
+
+  @@index([partnerId, eventType, createdAt(sort: Desc)])
+  @@map("partner_events")
 }

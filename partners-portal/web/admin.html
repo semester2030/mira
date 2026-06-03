@@ -1,0 +1,114 @@
+<!DOCTYPE html>
+<html lang="ar" dir="rtl">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <meta name="mira-api-base" content="https://mira-api-n4p3.onrender.com/api/v1" />
+  <title>إدارة الطلبات — ميرا (داخلي)</title>
+  <link href="https://fonts.googleapis.com/css2?family=Tajawal:wght@400;700;800&display=swap" rel="stylesheet" />
+  <link rel="stylesheet" href="css/site.css" />
+</head>
+<body>
+  <header>
+    <div class="container wrap">
+      <a class="brand" href="index.html">ميرا · Admin</a>
+    </div>
+  </header>
+
+  <main class="container">
+    <div class="card">
+      <h1>طلبات الشراكة</h1>
+      <p class="lead">صفحة داخلية — أدخل مفتاح الإدارة (X-Admin-Key) من Render env.</p>
+      <label>Admin API Key</label>
+      <input id="adminKey" type="password" placeholder="ADMIN_API_KEY" />
+      <div class="actions">
+        <button id="loadBtn" class="btn btn-primary">تحميل الطلبات</button>
+      </div>
+      <div id="msg" class="hidden"></div>
+      <div id="list" style="margin-top:1rem"></div>
+    </div>
+  </main>
+
+  <script src="js/api.js"></script>
+  <script>
+    const keyInput = document.getElementById('adminKey');
+    if (localStorage.getItem('mira_admin_key')) {
+      keyInput.value = localStorage.getItem('mira_admin_key');
+    }
+
+    document.getElementById('loadBtn').onclick = load;
+
+    async function load() {
+      const key = keyInput.value.trim();
+      if (!key) return alert('أدخل المفتاح');
+      localStorage.setItem('mira_admin_key', key);
+
+      const msg = document.getElementById('msg');
+      const list = document.getElementById('list');
+      msg.className = 'alert warn';
+      msg.textContent = 'جاري التحميل...';
+      msg.classList.remove('hidden');
+
+      try {
+        const apps = await PartnersApi.adminList(key, 'pending');
+        msg.classList.add('hidden');
+
+        if (!apps.length) {
+          list.innerHTML = '<p class="lead">لا طلبات معلّقة.</p>';
+          return;
+        }
+
+        list.innerHTML = apps
+          .map(
+            (a) => `<div class="list-item" data-id="${a.id}">
+              <strong>${a.nameAr}</strong> (${a.type}) — ${a.contactEmail}
+              <br><small>${a.contactName} · ${a.contactPhone} · ${a.city}</small>
+              <div class="actions">
+                <button class="btn btn-primary approve">اعتماد</button>
+                <button class="btn btn-danger reject">رفض</button>
+              </div>
+              <div class="result hidden"></div>
+            </div>`,
+          )
+          .join('');
+
+        list.querySelectorAll('.approve').forEach((btn) => {
+          btn.onclick = async () => {
+            const item = btn.closest('.list-item');
+            const id = item.dataset.id;
+            try {
+              const res = await PartnersApi.adminApprove(key, id);
+              item.querySelector('.result').className = 'alert ok';
+              item.querySelector('.result').innerHTML =
+                'تم! partnerId: ' +
+                res.partnerId +
+                '<br>accessToken: <div class="token-box">' +
+                res.accessToken +
+                '</div>';
+              btn.disabled = true;
+            } catch (e) {
+              alert(e.message);
+            }
+          };
+        });
+
+        list.querySelectorAll('.reject').forEach((btn) => {
+          btn.onclick = async () => {
+            const reason = prompt('سبب الرفض (اختياري):');
+            const item = btn.closest('.list-item');
+            try {
+              await PartnersApi.adminReject(key, item.dataset.id, reason || undefined);
+              item.remove();
+            } catch (e) {
+              alert(e.message);
+            }
+          };
+        });
+      } catch (err) {
+        msg.className = 'alert err';
+        msg.textContent = err.message;
+      }
+    }
+  </script>
+</body>
+</html>

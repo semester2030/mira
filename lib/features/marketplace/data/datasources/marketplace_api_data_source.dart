@@ -131,4 +131,25 @@ class MarketplaceApiDataSource {
       storeUrl: json['storeUrl'] as String?,
     );
   }
+
+  /// Fire-and-forget click analytics for partner catalog (no PII).
+  Future<void> trackClick({
+    required String partnerId,
+    required String targetId,
+    required String targetType,
+  }) async {
+    try {
+      await _dio.post<void>(
+        MiraApiEndpoints.partnersPortalTrack,
+        data: {
+          'partnerId': partnerId,
+          'eventType': 'click',
+          'targetId': targetId,
+          'targetType': targetType,
+        },
+      );
+    } catch (_) {
+      // Analytics must not block UX.
+    }
+  }
 }

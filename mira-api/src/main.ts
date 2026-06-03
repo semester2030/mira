@@ -20,6 +20,18 @@ async function bootstrap(): Promise<void> {
   );
   app.useGlobalFilters(new HttpExceptionFilter());
 
+  const websiteOrigins = config
+    .get<string>('WEBSITE_CORS_ORIGINS', '*')
+    .split(',')
+    .map((o) => o.trim())
+    .filter(Boolean);
+  app.enableCors({
+    origin: websiteOrigins.length === 1 && websiteOrigins[0] === '*'
+      ? true
+      : websiteOrigins,
+    methods: ['GET', 'POST', 'PATCH', 'PUT', 'DELETE', 'OPTIONS'],
+  });
+
   const port = config.get<number>('PORT', 3000);
   await app.listen(port, '0.0.0.0');
 }

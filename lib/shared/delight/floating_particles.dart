@@ -103,9 +103,7 @@ class _ParticlesPainter extends CustomPainter {
       final dy = ((p.y + progress * p.speed) % 1.2) - 0.1;
       final dx = p.x * size.width + drift;
       final dyPos = dy * size.height;
-      final paint = Paint()
-        ..color = p.color
-        ..maskFilter = const MaskFilter.blur(BlurStyle.normal, 3);
+      final paint = Paint()..color = p.color;
       canvas.drawCircle(Offset(dx, dyPos), p.size, paint);
     }
   }

@@ -13,6 +13,8 @@ import { FeedbackModule } from './feedback/feedback.module';
 import { SubscriptionsModule } from './subscriptions/subscriptions.module';
 import { UsersModule } from './users/users.module';
 import { MarketplaceModule } from './marketplace/marketplace.module';
+import { WebsiteModule } from './website/website.module';
+import { PartnersPortalModule } from './partners-portal/partners-portal.module';
 
 @Module({
   imports: [
@@ -30,6 +32,8 @@ import { MarketplaceModule } from './marketplace/marketplace.module';
     RecommendationsModule,
     FeedbackModule,
     MarketplaceModule,
+    WebsiteModule,
+    PartnersPortalModule,
   ],
 })
 export class AppModule {}

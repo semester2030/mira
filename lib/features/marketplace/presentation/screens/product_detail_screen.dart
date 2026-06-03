@@ -1,11 +1,13 @@
 import 'package:flutter/material.dart';
 import 'package:url_launcher/url_launcher.dart';
 
+import '../../../../core/config/mira_api_config.dart';
 import '../../../../shared/theme/colors.dart';
 import '../../../../shared/theme/typography.dart';
 import '../../../../shared/widgets/mira_app_bar.dart';
 import '../../../../shared/widgets/premium/premium_exports.dart';
 import '../../domain/entities/catalog_product.dart';
+import '../../data/datasources/marketplace_api_data_source.dart';
 
 class ProductDetailScreen extends StatelessWidget {
   final CatalogProduct product;
@@ -13,6 +15,13 @@ class ProductDetailScreen extends StatelessWidget {
   const ProductDetailScreen({super.key, required this.product});
 
   Future<void> _openStore(BuildContext context) async {
+    if (MiraApiConfig.useBackend) {
+      MarketplaceApiDataSource().trackClick(
+        partnerId: product.partnerId,
+        targetId: product.id,
+        targetType: 'product',
+      );
+    }
     final uri = Uri.tryParse(product.externalUrl);
     if (uri == null) return;
     final ok = await launchUrl(uri, mode: LaunchMode.externalApplication);

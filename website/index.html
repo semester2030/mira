@@ -1,0 +1,252 @@
+<!DOCTYPE html>
+<html lang="ar" dir="rtl">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <meta name="description" content="ميرا — منصة عربية لتحليل البشرة والإطلالة بالذكاء الاصطناعي، Perfect Corp، marketplace شركاء، وخصوصية كاملة." />
+  <meta name="mira-api-base" content="https://mira-api-n4p3.onrender.com/api/v1" />
+  <title>ميرا | منصة الجمال الذكية</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link href="https://fonts.googleapis.com/css2?family=Tajawal:wght@400;500;700;800&display=swap" rel="stylesheet" />
+  <link rel="stylesheet" href="./css/site.css" />
+</head>
+<body>
+  <header class="site-header">
+    <div class="container nav-wrap">
+      <a href="./index.html" class="brand" aria-label="Mira">
+        <img src="./assets/mira_logo_full.png" alt="ميرا" width="120" height="40" />
+      </a>
+      <span id="apiStatus" class="status-pill" aria-live="polite">
+        <span class="dot"></span> API
+      </span>
+      <button id="menuToggle" class="menu-toggle" type="button" aria-label="القائمة">☰</button>
+      <nav id="mainNav" class="main-nav">
+        <a href="#features">المميزات</a>
+        <a href="#how">كيف تعمل</a>
+        <a href="#discover">اكتشفي</a>
+        <a href="#privacy">الخصوصية</a>
+        <a href="./partners.html">الشركاء</a>
+        <a href="#contact">تواصل</a>
+        <a href="#download" class="nav-cta">حمّلي التطبيق</a>
+      </nav>
+    </div>
+  </header>
+
+  <main>
+    <section class="hero" id="home">
+      <div class="container hero-grid">
+        <div class="hero-content">
+          <p class="badge">MIRA BEAUTY INTELLIGENCE · v1.0</p>
+          <h1>ميرا… ذكاءٌ يُبرز جمالكِ</h1>
+          <p class="lead">
+            تطبيق عربي شامل: تحليل بشرة بـ Perfect Corp، تحليل إطلالة، روتين شخصي،
+            marketplace ماركات وعيادات وصالونات — مع خصوصية لا تُساوم.
+          </p>
+          <div class="hero-actions">
+            <a href="#download" class="btn btn-primary">حمّلي التطبيق</a>
+            <a href="#features" class="btn btn-ghost">استكشفي المميزات</a>
+          </div>
+        </div>
+        <div class="hero-visual">
+          <div class="hero-card">
+            <img src="./assets/guest_icon.svg" alt="" />
+            <strong>مسار التحليل</strong>
+            <ul>
+              <li>Selfie → Render → YouCam</li>
+              <li>تقرير + رادار + روتين</li>
+              <li>منتجات وخدمات مطابقة</li>
+              <li>بدون حفظ الصورة</li>
+            </ul>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <section class="section alt" id="stats">
+      <div class="container">
+        <div class="stats-row" id="statsRow">
+          <div class="stat-card"><h3 data-stat="partners">—</h3><p>شريك نشط</p></div>
+          <div class="stat-card"><h3 data-stat="products">—</h3><p>منتج في السجل</p></div>
+          <div class="stat-card"><h3 data-stat="services">—</h3><p>خدمة (عيادة/صالون)</p></div>
+          <div class="stat-card"><h3>2</h3><p>تحليل ذكي (بشرة + إطلالة)</p></div>
+        </div>
+      </div>
+    </section>
+
+    <section class="section" id="features">
+      <div class="container">
+        <div class="section-head">
+          <h2>جميع مميزات ميرا</h2>
+          <p>كل ما في التطبيق — موثّق ومربوط بـ API حقيقي على Render.</p>
+        </div>
+        <div id="featuresGrid" class="features-grid" aria-live="polite">
+          <p style="text-align:center;color:var(--muted);grid-column:1/-1">جاري تحميل المميزات…</p>
+        </div>
+      </div>
+    </section>
+
+    <section class="section alt" id="how">
+      <div class="container">
+        <div class="section-head">
+          <h2>كيف تعمل ميرا؟</h2>
+          <p>ثلاث خطوات — من الصورة إلى القرار.</p>
+        </div>
+        <div class="steps">
+          <article class="step">
+            <div class="step-num">1</div>
+            <h3>التقطي أو اختاري صورة</h3>
+            <p>كاميرا أو ألبوم — بموافقة خصوصية واضحة. وضع زائر للتجربة بدون حساب.</p>
+          </article>
+          <article class="step">
+            <div class="step-num">2</div>
+            <h3>التحليل على السيرفر</h3>
+            <p>Flutter → Render (mira-api) → Perfect Corp للبشرة. الصورة في الذاكرة فقط ثم تُمحى.</p>
+          </article>
+          <article class="step">
+            <div class="step-num">3</div>
+            <h3>تقرير + روتين + اكتشفي</h3>
+            <p>رادار، مصفوفة، روتين يومي، ومنتجات/خدمات من marketplace الشركاء.</p>
+          </article>
+        </div>
+      </div>
+    </section>
+
+    <section class="section" id="architecture">
+      <div class="container">
+        <div class="section-head">
+          <h2>البنية التقنية</h2>
+          <p>تصميم إنتاجي — المفتاح السري على السيرفر فقط.</p>
+        </div>
+        <pre class="arch-box">Flutter App  ──►  Render (mira-api)  ──►  Perfect Corp YouCam
+                         │
+                         ├── PostgreSQL (نتائج نصية + شركاء)
+                         └── Marketplace matching
+
+❌ Flutter لا يتصل بـ Perfect Corp مباشرة
+✅ الصورة لا تُخزَّن بعد التحليل</pre>
+      </div>
+    </section>
+
+    <section class="section alt" id="discover">
+      <div class="container">
+        <div class="section-head">
+          <h2>اكتشفي — شركاء ميرا</h2>
+          <p>ماركات · عيادات · صالونات — بيانات حية من API.</p>
+        </div>
+        <div class="partners-tabs" role="tablist">
+          <button type="button" class="tab-btn active" data-type="">الكل</button>
+          <button type="button" class="tab-btn" data-type="brand">ماركات</button>
+          <button type="button" class="tab-btn" data-type="clinic">عيادات</button>
+          <button type="button" class="tab-btn" data-type="salon">صالونات</button>
+        </div>
+        <div id="partnersGrid" class="partners-grid" aria-live="polite"></div>
+      </div>
+    </section>
+
+    <section class="section" id="privacy">
+      <div class="container">
+        <div class="section-head">
+          <h2>الخصوصية أولاً</h2>
+          <p>صور النساء حساسة — بنينا ميرا على هذا المبدأ.</p>
+        </div>
+        <div class="features-grid">
+          <article class="feature-card">
+            <span class="feature-icon">🔐</span>
+            <h3>لا حفظ للصور</h3>
+            <p>يُخزَّن ملخص التحليل (نص وأرقام) فقط — ليس selfie.</p>
+          </article>
+          <article class="feature-card">
+            <span class="feature-icon">🛡️</span>
+            <h3>TLS + Firebase Auth</h3>
+            <p>OTP جوال سعودي، tokens آمنة، حذف حساب من الإعدادات.</p>
+          </article>
+          <article class="feature-card">
+            <span class="feature-icon">📄</span>
+            <h3>سياسة شفافة</h3>
+            <p><a href="./privacy.html">اقرئي سياسة الخصوصية الكاملة</a></p>
+          </article>
+        </div>
+      </div>
+    </section>
+
+    <section class="section alt" id="contact">
+      <div class="container contact-grid">
+        <div>
+          <h2>تواصلي معنا</h2>
+          <p class="lead" style="font-size:1rem">شراكات · إعلام · دعم — الرسالة تُحفظ في قاعدة بيانات mira-api.</p>
+          <p><strong>privacy@mira.app</strong></p>
+        </div>
+        <form id="contactForm" class="contact-form" novalidate>
+          <div class="form-group">
+            <label for="name">الاسم</label>
+            <input id="name" name="name" required minlength="2" maxlength="120" />
+          </div>
+          <div class="form-group">
+            <label for="email">البريد</label>
+            <input id="email" name="email" type="email" required />
+          </div>
+          <div class="form-group">
+            <label for="phone">الجوال (اختياري)</label>
+            <input id="phone" name="phone" type="tel" maxlength="20" />
+          </div>
+          <div class="form-group">
+            <label for="type">نوع الطلب</label>
+            <select id="type" name="type">
+              <option value="contact">استفسار عام</option>
+              <option value="partnership">شراكة (ماركة/عيادة/صالون)</option>
+              <option value="media">إعلام</option>
+              <option value="support">دعم</option>
+            </select>
+          </div>
+          <div class="form-group">
+            <label for="message">الرسالة</label>
+            <textarea id="message" name="message" required minlength="10" maxlength="2000"></textarea>
+          </div>
+          <button type="submit" class="btn btn-primary btn-block">إرسال</button>
+          <p id="formMsg" class="form-msg" hidden></p>
+        </form>
+      </div>
+    </section>
+
+    <section class="section" id="download">
+      <div class="container" style="text-align:center">
+        <h2>حمّلي ميرا</h2>
+        <p class="lead" style="margin:0 auto 1.5rem">TestFlight / App Store — قريباً. للتجربة الداخلية تواصلي مع فريق ميرا.</p>
+        <a href="#contact" class="btn btn-primary">اطلبي وصول تجريبي</a>
+      </div>
+    </section>
+  </main>
+
+  <footer class="site-footer">
+    <div class="container footer-grid">
+      <div>
+        <img src="./assets/mira_logo_full.png" alt="ميرا" width="100" />
+        <p style="color:var(--muted);font-size:0.9rem">مرآتك الذكية الخاصة — مشروع سعودي.</p>
+      </div>
+      <div>
+        <h4>المنتج</h4>
+        <ul class="footer-links">
+          <li><a href="#features">المميزات</a></li>
+          <li><a href="#how">كيف تعمل</a></li>
+          <li><a href="./privacy.html">الخصوصية</a></li>
+        </ul>
+      </div>
+      <div>
+        <h4>الأعمال</h4>
+        <ul class="footer-links">
+          <li><a href="./partners.html">منظومة الشركاء</a></li>
+          <li><a href="#contact">شراكة B2B</a></li>
+          <li><a href="../docs/partners-ecosystem.html">مرجع تقني B2B</a></li>
+        </ul>
+      </div>
+    </div>
+    <div class="container footer-bottom">
+      <p>© <span id="year"></span> Mira. جميع الحقوق محفوظة.</p>
+    </div>
+  </footer>
+
+  <script src="./js/api.js"></script>
+  <script src="./js/site.js"></script>
+</body>
+</html>

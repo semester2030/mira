@@ -62,6 +62,7 @@ class _SplashScreenState extends State<SplashScreen> with SingleTickerProviderSt
   Widget build(BuildContext context) {
     return Scaffold(
       body: FloatingGradientBackground(
+        showOrbs: false,
         showParticles: false,
         child: SafeArea(
           child: Padding(

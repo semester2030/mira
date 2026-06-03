@@ -11,8 +11,8 @@ class FloatingGradientBackground extends StatelessWidget {
   const FloatingGradientBackground({
     super.key,
     required this.child,
-    this.showOrbs = true,
-    this.showParticles = true,
+    this.showOrbs = false,
+    this.showParticles = false,
   });
 
   @override

@@ -1,0 +1,191 @@
+<!DOCTYPE html>
+<html lang="ar" dir="rtl">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <meta name="mira-api-base" content="https://mira-api-n4p3.onrender.com/api/v1" />
+  <title>لوحة التحكم — شركاء ميرا</title>
+  <link href="https://fonts.googleapis.com/css2?family=Tajawal:wght@400;700;800&display=swap" rel="stylesheet" />
+  <link rel="stylesheet" href="css/site.css" />
+</head>
+<body>
+  <header>
+    <div class="container wrap">
+      <a class="brand" href="index.html">ميرا · شركاء</a>
+      <nav>
+        <a href="#" id="logout">خروج</a>
+      </nav>
+    </div>
+  </header>
+
+  <main class="container">
+    <div id="loading" class="alert warn">جاري التحميل...</div>
+    <div id="app" class="hidden">
+      <div class="card">
+        <h1 id="partnerName">—</h1>
+        <p class="lead" id="partnerMeta">—</p>
+        <div class="stats" id="stats"></div>
+      </div>
+
+      <div class="card" id="catalogSection">
+        <h2 id="catalogTitle">الكتalog</h2>
+        <div id="catalogList"></div>
+
+        <h2>إضافة جديد</h2>
+        <form id="catalogForm"></form>
+      </div>
+    </div>
+  </main>
+
+  <script src="js/api.js"></script>
+  <script>
+    if (!PartnersApi.isLoggedIn()) location.href = 'login.html';
+
+    document.getElementById('logout').onclick = (e) => {
+      e.preventDefault();
+      PartnersApi.clearSession();
+      location.href = 'login.html';
+    };
+
+    const CONCERNS = 'moisture,pore,acne,wrinkle,redness,oiliness,texture,age_spot';
+
+    function formatPrice(h) {
+      return (h / 100).toFixed(0) + ' ر.س';
+    }
+
+    async function load() {
+      try {
+        const data = await PartnersApi.dashboard();
+        document.getElementById('loading').classList.add('hidden');
+        document.getElementById('app').classList.remove('hidden');
+
+        const p = data.partner;
+        document.getElementById('partnerName').textContent =
+          (p.logoEmoji || '') + ' ' + p.nameAr;
+        document.getElementById('partnerMeta').textContent =
+          p.type + ' · ' + p.city + (p.storeUrl ? ' · ' + p.storeUrl : '');
+
+        const a = data.analytics30d;
+        document.getElementById('stats').innerHTML = `
+          <div class="stat"><div class="num">${a.impressions}</div><div class="lbl">مشاهدات (30 يوم)</div></div>
+          <div class="stat"><div class="num">${a.clicks}</div><div class="lbl">نقرات</div></div>
+          <div class="stat"><div class="num">${data.catalog.productCount + data.catalog.serviceCount}</div><div class="lbl">عناصر الكتalog</div></div>
+        `;
+
+        renderCatalog(p.type, data.catalog);
+        renderForm(p.type);
+      } catch (err) {
+        document.getElementById('loading').className = 'alert err';
+        document.getElementById('loading').textContent = err.message;
+      }
+    }
+
+    function renderCatalog(type, catalog) {
+      const list = document.getElementById('catalogList');
+      const items =
+        type === 'brand' ? catalog.products : catalog.services;
+
+      if (!items.length) {
+        list.innerHTML = '<p class="lead">لا عناصر بعد — أضف أول منتج/خدمة.</p>';
+        return;
+      }
+
+      list.innerHTML = items
+        .map((item) => {
+          const price = formatPrice(item.priceHalalas);
+          const extra =
+            type === 'brand'
+              ? item.externalUrl
+              : item.durationMin + ' د · حجز: ' + (item.bookingEnabled ? 'نعم' : 'لا');
+          return `<div class="list-item">
+            <strong>${item.nameAr}</strong> ${item.active ? '' : '(معطّل)'}
+            <br><small>${price} · ${item.concernTags.join(', ')}</small>
+            <br><small>${extra}</small>
+            ${!item.active ? '' : `<div class="actions"><button class="btn btn-ghost btn-sm" data-del="${item.id}">إخفاء</button></div>`}
+          </div>`;
+        })
+        .join('');
+
+      list.querySelectorAll('[data-del]').forEach((btn) => {
+        btn.onclick = async () => {
+          if (!confirm('إخفاء هذا العنصر من التطبيق؟')) return;
+          const id = btn.dataset.del;
+          if (type === 'brand') await PartnersApi.deleteProduct(id);
+          else await PartnersApi.deleteService(id);
+          load();
+        };
+      });
+    }
+
+    function renderForm(type) {
+      const form = document.getElementById('catalogForm');
+      document.getElementById('catalogTitle').textContent =
+        type === 'brand' ? 'منتجاتك' : 'خدماتك';
+
+      if (type === 'brand') {
+        form.innerHTML = `
+          <div class="grid-2">
+            <div><label>اسم عربي</label><input name="nameAr" required /></div>
+            <div><label>اسم English</label><input name="nameEn" required /></div>
+          </div>
+          <label>الوصف</label><textarea name="descriptionAr"></textarea>
+          <div class="grid-2">
+            <div><label>السعر (هللة)</label><input name="priceHalalas" type="number" required placeholder="8900 = 89 ر.س" /></div>
+            <div><label>رابط المتجر</label><input name="externalUrl" type="url" required /></div>
+          </div>
+          <label>concern tags (مفصولة بفاصلة)</label><input name="concernTags" value="${CONCERNS.split(',')[0]},${CONCERNS.split(',')[2]}" required />
+          <label>نوع البشرة (مفصولة بفاصلة)</label><input name="skinTypes" value="مختلطة,دهنية" />
+          <label>خطوة الروتين</label><input name="stepAr" placeholder="سيروم" />
+          <div class="actions"><button type="submit" class="btn btn-primary">إضافة منتج</button></div>
+        `;
+        form.onsubmit = async (e) => {
+          e.preventDefault();
+          const fd = new FormData(form);
+          await PartnersApi.createProduct({
+            nameAr: fd.get('nameAr'),
+            nameEn: fd.get('nameEn'),
+            descriptionAr: fd.get('descriptionAr') || undefined,
+            priceHalalas: parseInt(fd.get('priceHalalas'), 10),
+            externalUrl: fd.get('externalUrl'),
+            concernTags: fd.get('concernTags').split(',').map((s) => s.trim()),
+            skinTypes: fd.get('skinTypes').split(',').map((s) => s.trim()),
+            stepAr: fd.get('stepAr') || undefined,
+          });
+          form.reset();
+          load();
+        };
+      } else {
+        form.innerHTML = `
+          <div class="grid-2">
+            <div><label>اسم عربي</label><input name="nameAr" required /></div>
+            <div><label>اسم English</label><input name="nameEn" required /></div>
+          </div>
+          <label>الوصف</label><textarea name="descriptionAr"></textarea>
+          <div class="grid-2">
+            <div><label>المدة (دقيقة)</label><input name="durationMin" type="number" value="45" required /></div>
+            <div><label>السعر (هللة)</label><input name="priceHalalas" type="number" required placeholder="35000" /></div>
+          </div>
+          <label>concern tags</label><input name="concernTags" value="acne,pore" required />
+          <div class="actions"><button type="submit" class="btn btn-primary">إضافة خدمة</button></div>
+        `;
+        form.onsubmit = async (e) => {
+          e.preventDefault();
+          const fd = new FormData(form);
+          await PartnersApi.createService({
+            nameAr: fd.get('nameAr'),
+            nameEn: fd.get('nameEn'),
+            descriptionAr: fd.get('descriptionAr') || undefined,
+            durationMin: parseInt(fd.get('durationMin'), 10),
+            priceHalalas: parseInt(fd.get('priceHalalas'), 10),
+            concernTags: fd.get('concernTags').split(',').map((s) => s.trim()),
+          });
+          form.reset();
+          load();
+        };
+      }
+    }
+
+    load();
+  </script>
+</body>
+</html>

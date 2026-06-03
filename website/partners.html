@@ -1,0 +1,108 @@
+<!DOCTYPE html>
+<html lang="ar" dir="rtl">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <meta name="mira-api-base" content="https://mira-api-n4p3.onrender.com/api/v1" />
+  <title>شركاء ميرا | B2B</title>
+  <link href="https://fonts.googleapis.com/css2?family=Tajawal:wght@400;700;800&display=swap" rel="stylesheet" />
+  <link rel="stylesheet" href="./css/site.css" />
+</head>
+<body>
+  <header class="site-header">
+    <div class="container nav-wrap">
+      <a href="./index.html" class="brand"><img src="./assets/mira_logo_full.png" alt="ميرا" width="100" /></a>
+      <nav class="main-nav" style="display:flex">
+        <a href="./index.html">الرئيسية</a>
+        <a href="#join">انضمي</a>
+      </nav>
+    </div>
+  </header>
+
+  <section class="hero">
+    <div class="container" style="text-align:center;max-width:720px">
+      <p class="badge">B2B · Marketplace</p>
+      <h1>منظومة شركاء ميرا</h1>
+      <p class="lead">ماركات التجميل · العيادات · الصالونات — مطابقة ذكية بعد تحليل البشرة.</p>
+    </div>
+  </section>
+
+  <section class="section alt">
+    <div class="container">
+      <div class="features-grid">
+        <article class="feature-card">
+          <span class="feature-icon">💄</span>
+          <h3>ماركات</h3>
+          <p>Deep link لمتجرك (Salla / Shopify / Zid). منتجات في catalog مع concern tags.</p>
+          <span class="tag live">متاح v1</span>
+        </article>
+        <article class="feature-card">
+          <span class="feature-icon">🏥</span>
+          <h3>عيادات</h3>
+          <p>خدمات مطابقة لتقرير البشرة. الحجز عبر التطبيق — قريباً.</p>
+          <span class="tag soon">قريباً</span>
+        </article>
+        <article class="feature-card">
+          <span class="feature-icon">💇‍♀️</span>
+          <h3>صالونات</h3>
+          <p>عرض خدمات وأسعار. bookingEnabled=false حتى تفعيل بوابة الشركاء.</p>
+          <span class="tag soon">قريباً</span>
+        </article>
+      </div>
+    </div>
+  </section>
+
+  <section class="section" id="join">
+    <div class="container contact-grid">
+      <div>
+        <h2>انضمي كشريكة</h2>
+        <p>املئي النموذج — يصل لقاعدة بيانات mira-api. للوثيقة التقنية الكاملة:</p>
+        <p><a href="../docs/partners-ecosystem.html">مرجع منظومة الشركاء (HTML)</a></p>
+      </div>
+      <form id="partnerForm" novalidate>
+        <div class="form-group">
+          <label for="pname">اسم الجهة / الشخص</label>
+          <input id="pname" required minlength="2" />
+        </div>
+        <div class="form-group">
+          <label for="pemail">البريد</label>
+          <input id="pemail" type="email" required />
+        </div>
+        <div class="form-group">
+          <label for="pmsg">نوع الشراكة والتفاصيل</label>
+          <textarea id="pmsg" required minlength="10"></textarea>
+        </div>
+        <button type="submit" class="btn btn-primary btn-block">إرسال طلب شراكة</button>
+        <p id="pFormMsg" class="form-msg" hidden></p>
+      </form>
+    </div>
+  </section>
+
+  <footer class="site-footer">
+    <div class="container footer-bottom"><p>© Mira · <a href="./index.html">الرئيسية</a></p></div>
+  </footer>
+  <script src="./js/api.js"></script>
+  <script>
+    document.getElementById('partnerForm').addEventListener('submit', async (e) => {
+      e.preventDefault();
+      const msg = document.getElementById('pFormMsg');
+      try {
+        const r = await MiraApi.submitLead({
+          name: document.getElementById('pname').value,
+          email: document.getElementById('pemail').value,
+          type: 'partnership',
+          message: document.getElementById('pmsg').value,
+        });
+        msg.textContent = r.message;
+        msg.className = 'form-msg ok';
+        msg.hidden = false;
+        e.target.reset();
+      } catch (err) {
+        msg.textContent = err.message;
+        msg.className = 'form-msg err';
+        msg.hidden = false;
+      }
+    });
+  </script>
+</body>
+</html>

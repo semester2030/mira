@@ -44,3 +44,23 @@ services:
         sync: false
       - key: GOOGLE_APPLICATION_CREDENTIALS
         sync: false
+      - key: WEBSITE_CORS_ORIGINS
+        sync: false
+      - key: ADMIN_API_KEY
+        sync: false
+      - key: PARTNER_AUTO_APPROVE
+        value: "false"
+
+  - type: web
+    name: mira-partners-portal
+    runtime: static
+    rootDir: partners-portal/web
+    buildCommand: echo "partners portal ready"
+    staticPublishPath: .
+
+  - type: web
+    name: mira-website
+    runtime: static
+    rootDir: website
+    buildCommand: echo "static site ready"
+    staticPublishPath: .

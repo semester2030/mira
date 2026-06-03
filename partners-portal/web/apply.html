@@ -1,0 +1,131 @@
+<!DOCTYPE html>
+<html lang="ar" dir="rtl">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <meta name="mira-api-base" content="https://mira-api-n4p3.onrender.com/api/v1" />
+  <title>طلب انضمام — شركاء ميرا</title>
+  <link href="https://fonts.googleapis.com/css2?family=Tajawal:wght@400;700;800&display=swap" rel="stylesheet" />
+  <link rel="stylesheet" href="css/site.css" />
+</head>
+<body>
+  <header>
+    <div class="container wrap">
+      <a class="brand" href="index.html">ميرا · شركاء</a>
+      <nav><a href="status.html">حالة الطلب</a></nav>
+    </div>
+  </header>
+
+  <main class="container">
+    <div class="card">
+      <h1>طلب انضمام كشريك</h1>
+      <p class="lead">املأ النموذج — سنراجع طلبك ونفعّل حسابك آلياً بعد الاعتماد.</p>
+      <div id="msg" class="hidden"></div>
+
+      <form id="applyForm">
+        <label>نوع الشريك</label>
+        <select name="type" required>
+          <option value="brand">ماركة تجميل</option>
+          <option value="clinic">عيادة</option>
+          <option value="salon">صالون</option>
+        </select>
+
+        <div class="grid-2">
+          <div>
+            <label>الاسم (عربي)</label>
+            <input name="nameAr" required minlength="2" placeholder="مثال: لمسة نور" />
+          </div>
+          <div>
+            <label>الاسم (English)</label>
+            <input name="nameEn" required minlength="2" placeholder="Lamsa Noor" />
+          </div>
+        </div>
+
+        <div class="grid-2">
+          <div>
+            <label>اسم المسؤول</label>
+            <input name="contactName" required />
+          </div>
+          <div>
+            <label>البريد الإلكتروني</label>
+            <input name="contactEmail" type="email" required />
+          </div>
+        </div>
+
+        <div class="grid-2">
+          <div>
+            <label>الجوال</label>
+            <input name="contactPhone" required placeholder="05xxxxxxxx" />
+          </div>
+          <div>
+            <label>المدينة</label>
+            <input name="city" value="الرياض" />
+          </div>
+        </div>
+
+        <label>وصف مختصر (عربي)</label>
+        <textarea name="descriptionAr" placeholder="ماذا تقدّمون؟"></textarea>
+
+        <label>رابط المتجر (ماركات — اختياري)</label>
+        <input name="storeUrl" type="url" placeholder="https://..." />
+
+        <div class="grid-2">
+          <div>
+            <label>السجل التجاري (اختياري)</label>
+            <input name="crNumber" />
+          </div>
+          <div>
+            <label>الرقم الضريبي (اختياري)</label>
+            <input name="vatNumber" />
+          </div>
+        </div>
+
+        <label>رسالة إضافية</label>
+        <textarea name="message"></textarea>
+
+        <div class="actions">
+          <button type="submit" class="btn btn-primary">إرسال الطلب</button>
+        </div>
+      </form>
+    </div>
+  </main>
+
+  <script src="js/api.js"></script>
+  <script>
+    const form = document.getElementById('applyForm');
+    const msg = document.getElementById('msg');
+
+    form.addEventListener('submit', async (e) => {
+      e.preventDefault();
+      msg.className = 'alert warn';
+      msg.textContent = 'جاري الإرسال...';
+      msg.classList.remove('hidden');
+
+      const fd = new FormData(form);
+      const payload = Object.fromEntries(fd.entries());
+      if (!payload.storeUrl) delete payload.storeUrl;
+
+      try {
+        const res = await PartnersApi.apply(payload);
+        if (res.autoApproved && res.accessToken) {
+          PartnersApi.saveSession(res.loginEmail || payload.contactEmail, res.accessToken);
+          msg.className = 'alert ok';
+          msg.innerHTML = 'تم التفعيل تلقائياً! <a href="dashboard.html">اذهب للوحة التحكم</a>';
+        } else {
+          msg.className = 'alert ok';
+          msg.innerHTML =
+            'تم استلام طلبك. احفظ رمز التتبع: <div class="token-box">' +
+            res.statusToken +
+            '</div> <a href="status.html?token=' +
+            encodeURIComponent(res.statusToken) +
+            '">تتبع الحالة</a>';
+        }
+        form.reset();
+      } catch (err) {
+        msg.className = 'alert err';
+        msg.textContent = err.message;
+      }
+    });
+  </script>
+</body>
+</html>

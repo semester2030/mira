@@ -1,0 +1,74 @@
+<!DOCTYPE html>
+<html lang="ar" dir="rtl">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <meta name="mira-api-base" content="https://mira-api-n4p3.onrender.com/api/v1" />
+  <title>حالة الطلب — شركاء ميرا</title>
+  <link href="https://fonts.googleapis.com/css2?family=Tajawal:wght@400;700;800&display=swap" rel="stylesheet" />
+  <link rel="stylesheet" href="css/site.css" />
+</head>
+<body>
+  <header>
+    <div class="container wrap">
+      <a class="brand" href="index.html">ميرا · شركاء</a>
+    </div>
+  </header>
+
+  <main class="container">
+    <div class="card">
+      <h1>تتبع طلب الانضمام</h1>
+      <label>رمز التتبع</label>
+      <input id="tokenInput" placeholder="الصق الرمز الذي استلمته بعد التقديم" />
+      <div class="actions">
+        <button id="checkBtn" class="btn btn-primary">تحقق</button>
+      </div>
+      <div id="result" class="hidden" style="margin-top:1rem"></div>
+    </div>
+  </main>
+
+  <script src="js/api.js"></script>
+  <script>
+    const params = new URLSearchParams(location.search);
+    const tokenInput = document.getElementById('tokenInput');
+    if (params.get('token')) tokenInput.value = params.get('token');
+
+    document.getElementById('checkBtn').addEventListener('click', check);
+
+    async function check() {
+      const token = tokenInput.value.trim();
+      const box = document.getElementById('result');
+      box.classList.remove('hidden');
+      box.innerHTML = '<div class="alert warn">جاري التحقق...</div>';
+
+      try {
+        const s = await PartnersApi.status(token);
+        let html = '<div class="alert ok">الحالة: <strong>' + s.status + '</strong></div>';
+        html += '<p><strong>' + s.nameAr + '</strong> (' + s.type + ')</p>';
+
+        if (s.status === 'approved' && s.accessToken) {
+          html += '<p>تم التفعيل! رمز الدخول:</p><div class="token-box">' + s.accessToken + '</div>';
+          html += '<div class="actions"><button class="btn btn-primary" id="saveBtn">حفظ والدخول</button></div>';
+        } else if (s.status === 'rejected') {
+          html = '<div class="alert err">مرفوض: ' + (s.rejectReason || '') + '</div>';
+        } else {
+          html += '<p class="lead">طلبك قيد المراجعة — عادة 1–3 أيام عمل.</p>';
+        }
+        box.innerHTML = html;
+
+        const saveBtn = document.getElementById('saveBtn');
+        if (saveBtn) {
+          saveBtn.onclick = () => {
+            PartnersApi.saveSession(s.loginEmail, s.accessToken);
+            location.href = 'dashboard.html';
+          };
+        }
+      } catch (err) {
+        box.innerHTML = '<div class="alert err">' + err.message + '</div>';
+      }
+    }
+
+    if (params.get('token')) check();
+  </script>
+</body>
+</html>
