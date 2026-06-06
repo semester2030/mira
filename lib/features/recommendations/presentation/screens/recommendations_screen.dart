@@ -23,6 +23,7 @@ class RecommendationsScreen extends StatefulWidget {
 class _RecommendationsScreenState extends State<RecommendationsScreen> {
   late final BuildMiraRecommendationUseCase _useCase;
   Future<MiraRecommendation>? _future;
+  String? _loadError;
 
   @override
   void initState() {
@@ -37,11 +38,15 @@ class _RecommendationsScreenState extends State<RecommendationsScreen> {
     final outfit = args?.outfit ?? AnalysisSession.lastOutfit;
 
     if (skin == null) {
-      setState(() => _future = Future.error(Exception('أجري تحليل البشرة أولاً')));
+      setState(() {
+        _loadError = 'أجري تحليل البشرة أولاً';
+        _future = null;
+      });
       return;
     }
 
     setState(() {
+      _loadError = null;
       _future = _useCase.fromReports(
         skinReport: skin,
         outfitReport: outfit,
@@ -56,7 +61,19 @@ class _RecommendationsScreenState extends State<RecommendationsScreen> {
       appBar: const MiraAppBar(pageTitle: 'توصيات ميرا'),
       body: FloatingGradientBackground(
         child: SafeArea(
-          child: FutureBuilder<MiraRecommendation>(
+          child: _loadError != null
+              ? EmptyState(
+                  icon: Icons.spa_outlined,
+                  title: 'تحليل البشرة مطلوب',
+                  message: _loadError!,
+                  actionLabel: 'تحليل البشرة',
+                  onAction: () => Navigator.pushNamedAndRemoveUntil(
+                    context,
+                    AppRoutes.dashboard,
+                    (_) => false,
+                  ),
+                )
+              : FutureBuilder<MiraRecommendation>(
             future: _future,
             builder: (context, snap) {
               if (snap.connectionState == ConnectionState.waiting) {
@@ -69,7 +86,7 @@ class _RecommendationsScreenState extends State<RecommendationsScreen> {
                 return EmptyState(
                   icon: Icons.spa_outlined,
                   title: 'تحليل البشرة مطلوب',
-                  message: snap.error?.toString() ?? 'أجري تحليل البشرة ثم الإطلالة للحصول على توصيات كاملة.',
+                  message: 'أجري تحليل البشرة ثم الإطلالة للحصول على توصيات كاملة.',
                   actionLabel: 'تحليل البشرة',
                   onAction: () => Navigator.pushNamedAndRemoveUntil(
                     context,

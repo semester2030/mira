@@ -31,7 +31,7 @@ services:
       - key: PERFECT_BASE_URL
         value: https://yce-api-01.makeupar.com/s2s/v2.0
       - key: PERFECT_CORP_FALLBACK_MOCK
-        value: "false"
+        value: "true"
       - key: AUTH_SKIP
         value: "false"
       - key: RATE_LIMIT_PER_HOUR

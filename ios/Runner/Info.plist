@@ -53,5 +53,20 @@
 	<string>يمكنك اختيار صورة من ألبومك لتحليل البشرة أو الإطلالة دون التقاط صورة جديدة. لا نحفظ الصورة الأصلية بعد انتهاء التحليل.</string>
 	<key>ITSAppUsesNonExemptEncryption</key>
 	<false/>
+	<key>UIBackgroundModes</key>
+	<array>
+		<string>remote-notification</string>
+	</array>
+	<key>CFBundleURLTypes</key>
+	<array>
+		<dict>
+			<key>CFBundleTypeRole</key>
+			<string>Editor</string>
+			<key>CFBundleURLSchemes</key>
+			<array>
+				<string>com.googleusercontent.apps.399849748934-997680efh2b5k9c4q2usk3q7hb6gq2ud</string>
+			</array>
+		</dict>
+	</array>
 </dict>
 </plist>

@@ -1,4 +1,9 @@
-import { Injectable, Logger } from '@nestjs/common';
+import {
+  BadRequestException,
+  Injectable,
+  InternalServerErrorException,
+  Logger,
+} from '@nestjs/common';
 import { ConfigService } from '@nestjs/config';
 import { SkinAnalysisResult } from '../contracts/skin-analysis-result.interface';
 import { SkinAnalysisProvider } from '../providers/skin-analysis.provider';
@@ -35,11 +40,18 @@ export class PerfectCorpSkinProvider implements SkinAnalysisProvider {
     } catch (error) {
       const message = error instanceof Error ? error.message : String(error);
       this.logger.error(`YouCam skin analysis failed: ${message}`);
+      if (message.includes('error_src_face_too_small')) {
+        throw new BadRequestException(
+          'الوجه صغير أو بعيد في الصورة — قرّبي الكاميرا حتى يملأ الوجه الإطار.',
+        );
+      }
       if (allowFallback) {
         this.logger.warn('Falling back to mock skin analysis');
         return this.mock.analyze(imageBytes);
       }
-      throw error;
+      throw new InternalServerErrorException(
+        `YouCam skin analysis failed: ${message}`,
+      );
     }
   }
 }

@@ -23,9 +23,14 @@ class SkinAnalysisApiDataSource {
         ),
       });
 
+      // YouCam polling on the server can take up to ~90s — longer than default Dio timeout.
       final response = await _dio.post<Map<String, dynamic>>(
         MiraApiEndpoints.skinAnalysis,
         data: formData,
+        options: Options(
+          sendTimeout: const Duration(seconds: 120),
+          receiveTimeout: const Duration(seconds: 120),
+        ),
       );
 
       final data = response.data;

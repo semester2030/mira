@@ -27,15 +27,18 @@ String friendlyMiraError(Object error) {
       if (msg != null && msg.isNotEmpty) return msg;
       return 'وصلتِ للحد المجاني. اشتركي في ميرا بريميوم للتحليل بدون حدود.';
     }
+    if (status == 400) {
+      final msg = _localizeServerMessage(_extractMessage(data));
+      if (msg != null && msg.isNotEmpty) return msg;
+      return 'تعذر تحليل الصورة — تأكدي من وضوح الوجه وقرب الكاميرا.';
+    }
     if (status == 429) {
       return 'طلبات كثيرة — انتظري قليلًا ثم أعيدي المحاولة.';
     }
     if (status != null && status >= 500) {
-      final msg = _extractMessage(data);
-      if (msg != null && msg.isNotEmpty) {
-        return 'خطأ في الخادم: $msg';
-      }
-      return 'خطأ في خادم ميرا ($status). تحققي من تشغيل PostgreSQL و mira-api.';
+      final msg = _localizeServerMessage(_extractMessage(data));
+      if (msg != null && msg.isNotEmpty) return msg;
+      return 'خطأ في خادم ميرا ($status). تحققي من إعدادات Render (Perfect Corp و Firebase).';
     }
   }
   return friendlyFirebaseError(error);
@@ -49,4 +52,26 @@ String? _extractMessage(dynamic data) {
     return message.first.toString();
   }
   return null;
+}
+
+String? _localizeServerMessage(String? raw) {
+  if (raw == null || raw.isEmpty) return null;
+  final lower = raw.toLowerCase();
+  if (lower.contains('error_src_face_too_small') || lower.contains('face_too_small')) {
+    return 'الوجه بعيد أو صغير في الصورة — قرّبي الجوال حتى يملأ الإطار البيضاوي ثم أعيدي التقاط الصورة.';
+  }
+  if (lower.contains('youcam task timed out')) {
+    return 'انتهت مهلة تحليل YouCam — أعيدي المحاولة بعد دقيقة.';
+  }
+  if (lower.contains('youcam skin analysis failed')) {
+    return 'فشل تحليل البشرة عبر YouCam. تحققي من PERFECT_API_KEY على Render '
+        'أو فعّلي PERFECT_CORP_FALLBACK_MOCK=true مؤقتاً.';
+  }
+  if (lower.contains('perfect corp api key is not configured')) {
+    return 'مفتاح Perfect Corp غير مضبوط على السيرفر (PERFECT_API_KEY).';
+  }
+  if (lower.contains('internal server error')) {
+    return 'خطأ داخلي في السيرفر — راجعي سجلات Render لمزيد من التفاصيل.';
+  }
+  return 'خطأ في الخادم: $raw';
 }

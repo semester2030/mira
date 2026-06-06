@@ -1,20 +1,21 @@
-import 'package:flutter/material.dart';
-import '../../../../shared/widgets/mira_app_bar.dart';
-import 'package:flutter_bloc/flutter_bloc.dart';
-import 'package:image_picker/image_picker.dart';
 import 'dart:io';
+
+import 'package:flutter/material.dart';
+import 'package:flutter_bloc/flutter_bloc.dart';
+
 import '../../../../core/navigation/app_routes.dart';
 import '../../../../core/services/app_session.dart';
-import '../../../../shared/widgets/guest_banner.dart';
 import '../../../../core/session/analysis_session.dart';
-import '../../../skin_analysis/data/repositories/skin_analysis_repository_impl.dart';
 import '../../../../shared/theme/colors.dart';
 import '../../../../shared/theme/typography.dart';
+import '../../../../shared/widgets/guest_banner.dart';
+import '../../../../shared/widgets/mira_app_bar.dart';
 import '../../../../shared/widgets/premium/premium_exports.dart';
+import '../../../skin_analysis/data/repositories/skin_analysis_repository_impl.dart';
 import '../../../skin_analysis/presentation/blocs/skin_analysis_bloc.dart';
 import '../../../skin_analysis/presentation/blocs/skin_analysis_event.dart';
 import '../../../skin_analysis/presentation/blocs/skin_analysis_state.dart';
-import '../../../skin_analysis/presentation/widgets/face_frame_overlay.dart';
+import '../../../skin_analysis/presentation/widgets/face_capture_panel.dart';
 
 class NewAnalysisScreen extends StatefulWidget {
   const NewAnalysisScreen({super.key});
@@ -26,13 +27,7 @@ class NewAnalysisScreen extends StatefulWidget {
 class _NewAnalysisScreenState extends State<NewAnalysisScreen> {
   File? _capturedImage;
   bool _guestAnalyzing = false;
-  final _picker = ImagePicker();
   final _guestRepo = GuestSkinAnalysisRepository();
-
-  Future<void> _pickImage() async {
-    final file = await _picker.pickImage(source: ImageSource.camera, imageQuality: 85);
-    if (file != null) setState(() => _capturedImage = File(file.path));
-  }
 
   Future<void> _runGuestAnalysis(BuildContext context) async {
     if (_capturedImage == null) return;
@@ -65,62 +60,64 @@ class _NewAnalysisScreenState extends State<NewAnalysisScreen> {
     required bool loading,
     required VoidCallback? onAnalyze,
   }) {
-    return FloatingGradientBackground(
+    final hasPhoto = _capturedImage != null;
+
+    return Container(
+      decoration: const BoxDecoration(
+        gradient: LinearGradient(
+          begin: Alignment.topCenter,
+          end: Alignment.bottomCenter,
+          colors: [Color(0xFF2A1A24), Color(0xFF120C10)],
+        ),
+      ),
       child: SafeArea(
-        child: SingleChildScrollView(
-          padding: const EdgeInsets.all(20),
-          child: Column(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              const SectionHeader(
-                title: 'تحليل البشرة بالذكاء الاصطناعي',
-                subtitle: 'التقطي صورة واضحة — ميرا تحلل نوع بشرتك تلقائياً',
-              ),
-              const SizedBox(height: 20),
-              Center(
-                child: PressableScale(
-                  onTap: loading ? null : _pickImage,
-                  child: Stack(
-                    alignment: Alignment.center,
-                    children: [
-                      const FaceFrameOverlay(),
-                      if (_capturedImage != null)
-                        ClipRRect(
-                          borderRadius: BorderRadius.circular(20),
-                          child: Image.file(
-                            _capturedImage!,
-                            width: 160,
-                            height: 200,
-                            fit: BoxFit.cover,
-                          ),
-                        )
-                      else
-                        Container(
-                          padding: const EdgeInsets.all(16),
-                          decoration: BoxDecoration(
-                            color: AppColors.surface.withValues(alpha: 0.9),
-                            shape: BoxShape.circle,
-                          ),
-                          child: const Icon(
-                            Icons.camera_alt_rounded,
-                            size: 36,
-                            color: AppColors.primary,
-                          ),
-                        ),
-                    ],
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.stretch,
+          children: [
+            Padding(
+              padding: const EdgeInsets.fromLTRB(20, 8, 20, 0),
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Text(
+                    'تحليل البشرة بالذكاء الاصطناعي',
+                    style: AppTypography.headlineSmall.copyWith(color: AppColors.onPrimary),
                   ),
-                ),
+                  const SizedBox(height: 6),
+                  Text(
+                    hasPhoto
+                        ? 'راجعي صورتك — ثم ابدئي التحليل'
+                        : 'كاميرا ميرا الاحترافية — ثبّتي وجهك داخل الإطار',
+                    style: AppTypography.bodyMedium.copyWith(
+                      color: AppColors.onPrimary.withValues(alpha: 0.78),
+                    ),
+                  ),
+                ],
               ),
-              const SizedBox(height: 32),
-              PremiumButton(
-                label: loading ? 'جاري التحليل بالذكاء الاصطناعي...' : 'بدء التحليل',
+            ),
+            Expanded(
+              child: FaceCapturePanel(
+                capturedImage: _capturedImage,
+                enabled: !loading && !_guestAnalyzing,
+                isAnalyzing: loading || _guestAnalyzing,
+                onImageChanged: (file) => setState(() => _capturedImage = file),
+              ),
+            ),
+            Padding(
+              padding: const EdgeInsets.fromLTRB(20, 4, 20, 20),
+              child: PremiumButton(
+                label: loading
+                    ? 'جاري التحليل بالذكاء الاصطناعي...'
+                    : hasPhoto
+                        ? 'بدء التحليل'
+                        : 'التقطي صورتك أولاً',
                 loading: loading,
                 icon: Icons.auto_awesome_rounded,
                 variant: PremiumButtonVariant.gold,
-                onPressed: onAnalyze,
+                onPressed: hasPhoto ? onAnalyze : null,
               ),
-            ],
-          ),
+            ),
+          ],
         ),
       ),
     );
@@ -146,18 +143,28 @@ class _NewAnalysisScreenState extends State<NewAnalysisScreen> {
     final canAnalyze = _capturedImage != null && !_guestAnalyzing;
 
     if (isGuest) {
-      return Scaffold(
-        appBar: const MiraAppBar(pageTitle: 'تحليل البشرة'),
-        body: Column(
-          children: [
-            const GuestBanner(),
-            Expanded(
-              child: _buildAnalysisBody(
-                loading: _guestAnalyzing,
-                onAnalyze: canAnalyze ? () => _runGuestAnalysis(context) : null,
+      return Theme(
+        data: Theme.of(context).copyWith(
+          appBarTheme: AppBarTheme(
+            foregroundColor: AppColors.onPrimary,
+            backgroundColor: Colors.transparent,
+            surfaceTintColor: Colors.transparent,
+          ),
+        ),
+        child: Scaffold(
+          extendBodyBehindAppBar: true,
+          appBar: const MiraAppBar(pageTitle: 'تحليل البشرة'),
+          body: Column(
+            children: [
+              const GuestBanner(),
+              Expanded(
+                child: _buildAnalysisBody(
+                  loading: _guestAnalyzing,
+                  onAnalyze: canAnalyze ? () => _runGuestAnalysis(context) : null,
+                ),
               ),
-            ),
-          ],
+            ],
+          ),
         ),
       );
     }
@@ -186,17 +193,27 @@ class _NewAnalysisScreenState extends State<NewAnalysisScreen> {
         },
         builder: (context, state) {
           final loading = state is SkinAnalysisLoading;
-          return Scaffold(
-            appBar: const MiraAppBar(pageTitle: 'تحليل البشرة'),
-            body: _buildAnalysisBody(
-              loading: loading,
-              onAnalyze: canAnalyze && !loading
-                  ? () {
-                      context.read<SkinAnalysisBloc>().add(
-                            StartSkinAnalysis(imagePath: _capturedImage!.path),
-                          );
-                    }
-                  : null,
+          return Theme(
+            data: Theme.of(context).copyWith(
+              appBarTheme: AppBarTheme(
+                foregroundColor: AppColors.onPrimary,
+                backgroundColor: Colors.transparent,
+                surfaceTintColor: Colors.transparent,
+              ),
+            ),
+            child: Scaffold(
+              extendBodyBehindAppBar: true,
+              appBar: const MiraAppBar(pageTitle: 'تحليل البشرة'),
+              body: _buildAnalysisBody(
+                loading: loading,
+                onAnalyze: canAnalyze && !loading
+                    ? () {
+                        context.read<SkinAnalysisBloc>().add(
+                              StartSkinAnalysis(imagePath: _capturedImage!.path),
+                            );
+                      }
+                    : null,
+              ),
             ),
           );
         },

@@ -15,6 +15,13 @@
           "fileOutput": "android/app/google-services.json"
         }
       },
+      "ios": {
+        "default": {
+          "projectId": "mirra-14b0e",
+          "appId": "1:399849748934:ios:07f1a376b7cfe5e497dac7",
+          "fileOutput": "ios/Runner/GoogleService-Info.plist"
+        }
+      },
       "dart": {
         "lib/firebase_options.dart": {
           "projectId": "mirra-14b0e",

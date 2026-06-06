@@ -6,14 +6,13 @@ abstract final class MiraApiConfig {
   /// `true` = all analysis goes through Render; `false` = on-device mocks only.
   static const bool useBackend = bool.fromEnvironment(
     'USE_MIRA_API',
-    defaultValue: false,
+    defaultValue: true,
   );
 
   /// Local simulator: http://localhost:3000/api/v1
-  /// Render: https://YOUR-SERVICE.onrender.com/api/v1
-  /// Physical iPhone: use Mac LAN IP on port 3000 (not localhost)
+  /// Render production default below — override with --dart-define for local API.
   static const String baseUrl = String.fromEnvironment(
     'MIRA_API_BASE_URL',
-    defaultValue: 'http://localhost:3000/api/v1',
+    defaultValue: 'https://mira-api-n4p3.onrender.com/api/v1',
   );
 }
