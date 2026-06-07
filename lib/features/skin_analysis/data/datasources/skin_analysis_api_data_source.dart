@@ -1,3 +1,5 @@
+import 'dart:io';
+
 import 'package:dio/dio.dart';
 
 import '../../../../core/ai/mappers/skin_result_mapper.dart';
@@ -6,6 +8,7 @@ import '../../../../core/network/api_client.dart';
 import '../../../../core/network/mira_api_endpoints.dart';
 import '../../../../core/privacy/temp_image_cleanup.dart';
 import '../../../../core/services/user_stats_service.dart';
+import '../../presentation/utils/face_image_processor.dart';
 import '../models/skin_report_model.dart';
 
 /// Calls NestJS `POST /skin-analysis` — images are not stored on device after upload.
@@ -15,51 +18,106 @@ class SkinAnalysisApiDataSource {
   SkinAnalysisApiDataSource({Dio? dio}) : _dio = dio ?? ApiClient.instance;
 
   Future<SkinReportModel> analyzeAndSave({required String imagePath}) async {
+    Object? lastError;
+
     try {
-      final formData = FormData.fromMap({
-        'image': await MultipartFile.fromFile(
-          imagePath,
-          filename: 'scan.jpg',
-        ),
-      });
+      for (var attempt = 0; attempt < 2; attempt++) {
+        File? prepared;
+        try {
+          prepared = await FaceImageProcessor.prepareForAnalysis(
+            File(imagePath),
+            boostLevel: attempt,
+          );
 
-      // YouCam polling on the server can take up to ~90s — longer than default Dio timeout.
-      final response = await _dio.post<Map<String, dynamic>>(
-        MiraApiEndpoints.skinAnalysis,
-        data: formData,
-        options: Options(
-          sendTimeout: const Duration(seconds: 120),
-          receiveTimeout: const Duration(seconds: 120),
-        ),
-      );
+          final response = await _dio.post<Map<String, dynamic>>(
+            MiraApiEndpoints.skinAnalysis,
+            data: FormData.fromMap({
+              'image': await MultipartFile.fromFile(
+                prepared.path,
+                filename: 'scan.jpg',
+              ),
+            }),
+            options: Options(
+              sendTimeout: const Duration(seconds: 120),
+              receiveTimeout: const Duration(seconds: 120),
+            ),
+          );
 
-      final data = response.data;
-      if (data == null) {
-        throw Exception('استجابة فارغة من الخادم');
+          final model = _parseResponse(response.data);
+          await UserStatsService.recordSkinAnalysis();
+          return model;
+        } on DioException catch (e) {
+          lastError = e;
+          if (attempt == 0 && _shouldRetryOnDevice(e)) {
+            continue;
+          }
+          rethrow;
+        } catch (e) {
+          lastError = e;
+          rethrow;
+        } finally {
+          if (prepared != null && prepared.path != imagePath) {
+            await TempImageCleanup.deleteIfExists(prepared.path);
+          }
+        }
       }
 
-      final skinJson = data['skin'] as Map<String, dynamic>?;
-      if (skinJson == null) {
-        throw Exception('تنسيق استجابة التحليل غير صالح');
-      }
-
-      final result = _parseSkinResult(skinJson);
-      final id = data['id'] as String?;
-      final createdAtRaw = data['createdAt'] as String?;
-      final createdAt = createdAtRaw != null ? DateTime.tryParse(createdAtRaw) : null;
-
-      final report = SkinResultMapper.toReport(
-        result,
-        id: id,
-        createdAt: createdAt ?? DateTime.now(),
-      );
-
-      final model = SkinReportModel.fromEntity(report);
-      await UserStatsService.recordSkinAnalysis();
-      return model;
+      throw lastError ?? Exception('تعذر إرسال الصورة');
     } finally {
       await TempImageCleanup.deleteIfExists(imagePath);
     }
+  }
+
+  bool _shouldRetryOnDevice(DioException error) {
+    if (error.type == DioExceptionType.connectionTimeout ||
+        error.type == DioExceptionType.receiveTimeout ||
+        error.type == DioExceptionType.sendTimeout) {
+      return false;
+    }
+
+    final status = error.response?.statusCode;
+    if (status != 400 && status != 500) return false;
+
+    final message = _responseMessage(error.response?.data)?.toLowerCase() ?? '';
+    return message.contains('face') ||
+        message.contains('lighting') ||
+        message.contains('youcam') ||
+        message.contains('وجه') ||
+        message.contains('إضاء');
+  }
+
+  String? _responseMessage(dynamic data) {
+    if (data is! Map) return null;
+    final message = data['message'];
+    if (message is String) return message;
+    if (message is List && message.isNotEmpty) {
+      return message.first.toString();
+    }
+    return null;
+  }
+
+  SkinReportModel _parseResponse(Map<String, dynamic>? data) {
+    if (data == null) {
+      throw Exception('استجابة فارغة من الخادم');
+    }
+
+    final skinJson = data['skin'] as Map<String, dynamic>?;
+    if (skinJson == null) {
+      throw Exception('تنسيق استجابة التحليل غير صالح');
+    }
+
+    final result = _parseSkinResult(skinJson);
+    final id = data['id'] as String?;
+    final createdAtRaw = data['createdAt'] as String?;
+    final createdAt = createdAtRaw != null ? DateTime.tryParse(createdAtRaw) : null;
+
+    final report = SkinResultMapper.toReport(
+      result,
+      id: id,
+      createdAt: createdAt ?? DateTime.now(),
+    );
+
+    return SkinReportModel.fromEntity(report);
   }
 
   Future<List<SkinReportModel>> fetchHistory({int limit = 50}) async {

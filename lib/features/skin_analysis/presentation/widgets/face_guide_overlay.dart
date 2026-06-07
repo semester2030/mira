@@ -228,6 +228,6 @@ Rect computeFaceGuideRect(Size size, {double widthFactor = 0.78}) {
   final width = size.width * widthFactor;
   final height = width * 1.32;
   final left = (size.width - width) / 2;
-  final top = math.max(20.0, (size.height - height) * 0.32);
+  final top = math.max(16.0, (size.height - height) / 2);
   return Rect.fromLTWH(left, top, width, height);
 }

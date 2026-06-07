@@ -58,7 +58,10 @@ String? _localizeServerMessage(String? raw) {
   if (raw == null || raw.isEmpty) return null;
   final lower = raw.toLowerCase();
   if (lower.contains('error_src_face_too_small') || lower.contains('face_too_small')) {
-    return 'الوجه بعيد أو صغير في الصورة — قرّبي الجوال حتى يملأ الإطار البيضاوي ثم أعيدي التقاط الصورة.';
+    return 'تعذر تحليل الصورة — أعيدي التقاط صورة أقرب مع إضاءة أمامية.';
+  }
+  if (lower.contains('error_lighting_dark') || lower.contains('lighting_dark')) {
+    return 'الإضاءة ضعيفة — انتقلي لمكان أفضل ثم أعيدي المحاولة.';
   }
   if (lower.contains('youcam task timed out')) {
     return 'انتهت مهلة تحليل YouCam — أعيدي المحاولة بعد دقيقة.';

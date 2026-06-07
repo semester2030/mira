@@ -1,5 +1,4 @@
 import 'dart:io';
-import 'dart:ui' as ui;
 
 import 'package:camera/camera.dart';
 import 'package:flutter/material.dart';
@@ -12,7 +11,7 @@ import '../utils/face_image_processor.dart';
 import 'ai_analysis_overlay.dart';
 import 'face_guide_overlay.dart';
 
-/// In-app front camera with stable mirrored preview (no left/right flip on capture).
+/// In-app front camera — mirrored preview matches captured review (no jump left/right).
 class FaceCapturePanel extends StatefulWidget {
   final ValueChanged<File?> onImageChanged;
   final File? capturedImage;
@@ -35,22 +34,20 @@ class _FaceCapturePanelState extends State<FaceCapturePanel>
     with TickerProviderStateMixin, WidgetsBindingObserver {
   CameraController? _controller;
   bool _isFrontCamera = true;
+  bool _mirrorCapturedPreview = false;
   bool _initializing = true;
   String? _error;
   bool _capturing = false;
-
-  ui.Rect _lastFaceRect = ui.Rect.zero;
-  ui.Size _lastViewportSize = ui.Size.zero;
 
   late final AnimationController _pulseController;
   late final AnimationController _scanController;
   late final AnimationController _tipController;
 
   static const _tips = [
-    'قرّبي وجهك حتى يملأ الإطار',
+    'ثبّتي وجهك في منتصف الدائرة',
+    'قرّبي الجوال حتى يملأ الإطار',
     'إضاءة أمامية طبيعية',
     'انظري للكاميرا مباشرة',
-    'أبعدي الشعر عن الوجه',
   ];
 
   @override
@@ -78,6 +75,7 @@ class _FaceCapturePanelState extends State<FaceCapturePanel>
     if (oldWidget.capturedImage == null && widget.capturedImage != null) {
       _pauseCamera();
     } else if (oldWidget.capturedImage != null && widget.capturedImage == null) {
+      _mirrorCapturedPreview = false;
       _resumeCamera();
     }
   }
@@ -178,18 +176,9 @@ class _FaceCapturePanelState extends State<FaceCapturePanel>
     try {
       await HapticFeedback.mediumImpact();
       final photo = await controller.takePicture();
-      final raw = File(photo.path);
-
-      final processed = _lastViewportSize == ui.Size.zero
-          ? raw
-          : await FaceImageProcessor.prepareForAnalysis(
-              raw,
-              guideRect: _lastFaceRect,
-              viewportSize: _lastViewportSize,
-            );
-
+      _mirrorCapturedPreview = _isFrontCamera;
       await _pauseCamera();
-      widget.onImageChanged(processed);
+      widget.onImageChanged(File(photo.path));
     } catch (e) {
       if (!mounted) return;
       ScaffoldMessenger.of(context).showSnackBar(
@@ -210,27 +199,9 @@ class _FaceCapturePanelState extends State<FaceCapturePanel>
       imageQuality: 92,
     );
     if (picked == null || !mounted) return;
-
-    try {
-      final raw = File(picked.path);
-      final processed = _lastViewportSize == ui.Size.zero
-          ? raw
-          : await FaceImageProcessor.prepareForAnalysis(
-              raw,
-              guideRect: _lastFaceRect,
-              viewportSize: _lastViewportSize,
-            );
-      await _pauseCamera();
-      widget.onImageChanged(processed);
-    } catch (e) {
-      if (!mounted) return;
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(
-          content: Text(e.toString().replaceFirst('Exception: ', '')),
-          backgroundColor: AppColors.error,
-        ),
-      );
-    }
+    _mirrorCapturedPreview = false;
+    await _pauseCamera();
+    widget.onImageChanged(File(picked.path));
   }
 
   Future<void> _retake() async {
@@ -245,46 +216,82 @@ class _FaceCapturePanelState extends State<FaceCapturePanel>
     await _initCamera(direction: next);
   }
 
-  Widget _mirrorIfFront(Widget child) {
-    if (!_isFrontCamera) return child;
-    return Transform.flip(flipX: true, child: child);
-  }
+  Widget _buildCoverPreview({
+    required BoxConstraints constraints,
+    required double contentWidth,
+    required double contentHeight,
+    required Widget child,
+    required bool mirror,
+  }) {
+    final boxW = constraints.maxWidth;
+    final boxH = constraints.maxHeight;
+    if (boxW <= 0 || boxH <= 0 || contentWidth <= 0 || contentHeight <= 0) {
+      return const SizedBox.shrink();
+    }
 
-  /// Standard camera preview scaling — no horizontal stretch.
-  Widget _buildLivePreview(CameraController controller, BoxConstraints constraints) {
-    final size = constraints.biggest;
-    var scale = size.aspectRatio * controller.value.aspectRatio;
-    if (scale < 1) scale = 1 / scale;
+    Widget content = SizedBox(
+      width: contentWidth,
+      height: contentHeight,
+      child: child,
+    );
+
+    if (mirror) {
+      content = Transform.flip(flipX: true, child: content);
+    }
 
     return ClipRRect(
       borderRadius: BorderRadius.circular(28),
-      child: Transform.scale(
-        scale: scale,
-        child: Center(
-          child: _mirrorIfFront(CameraPreview(controller)),
+      child: SizedBox(
+        width: boxW,
+        height: boxH,
+        child: FittedBox(
+          fit: BoxFit.cover,
+          alignment: Alignment.center,
+          clipBehavior: Clip.hardEdge,
+          child: content,
         ),
       ),
     );
   }
 
-  Widget _buildCapturedPreview(File file) {
-    return ClipRRect(
-      borderRadius: BorderRadius.circular(28),
-      child: _mirrorIfFront(
-        Image.file(
-          file,
-          fit: BoxFit.cover,
-          width: double.infinity,
-          height: double.infinity,
-          alignment: Alignment.center,
-        ),
-      ),
+  (double width, double height) _cameraPreviewDimensions(CameraController controller) {
+    final previewSize = controller.value.previewSize;
+    if (previewSize == null) {
+      final ar = controller.value.aspectRatio;
+      return ar >= 1 ? (ar, 1.0) : (1.0, 1.0 / ar);
+    }
+
+    final isPortrait =
+        MediaQuery.orientationOf(context) == Orientation.portrait;
+    if (isPortrait) {
+      return (previewSize.height.toDouble(), previewSize.width.toDouble());
+    }
+    return (previewSize.width.toDouble(), previewSize.height.toDouble());
+  }
+
+  Widget _buildLivePreview(CameraController controller, BoxConstraints constraints) {
+    final (width, height) = _cameraPreviewDimensions(controller);
+    return _buildCoverPreview(
+      constraints: constraints,
+      contentWidth: width,
+      contentHeight: height,
+      mirror: _isFrontCamera,
+      child: CameraPreview(controller),
+    );
+  }
+
+  Widget _buildCapturedPreview(File file, BoxConstraints constraints) {
+    return _StableCapturedPreview(
+      file: file,
+      constraints: constraints,
+      mirror: _mirrorCapturedPreview,
+      builder: _buildCoverPreview,
     );
   }
 
   Widget _buildPreviewBox(BoxConstraints constraints) {
     if (widget.capturedImage != null) {
-      return _buildCapturedPreview(widget.capturedImage!);
+      return _buildCapturedPreview(widget.capturedImage!, constraints);
     }
 
     final controller = _controller;
@@ -334,12 +341,12 @@ class _FaceCapturePanelState extends State<FaceCapturePanel>
 
   @override
   Widget build(BuildContext context) {
-    return LayoutBuilder(
+        return LayoutBuilder(
       builder: (context, constraints) {
         final viewportSize = constraints.biggest;
+        FaceImageProcessor.viewportAspectRatio =
+            viewportSize.width / viewportSize.height;
         final faceRect = computeFaceGuideRect(viewportSize);
-        _lastFaceRect = faceRect;
-        _lastViewportSize = viewportSize;
 
         return AnimatedBuilder(
           animation: Listenable.merge([_pulseController, _scanController, _tipController]),
@@ -351,42 +358,36 @@ class _FaceCapturePanelState extends State<FaceCapturePanel>
               children: [
                 Padding(
                   padding: const EdgeInsets.fromLTRB(16, 8, 16, 0),
-                  child: Row(
-                    children: [
-                      Expanded(
-                        child: AnimatedSwitcher(
-                          duration: const Duration(milliseconds: 450),
-                          child: Container(
-                            key: ValueKey(tipIndex),
-                            padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 8),
-                            decoration: BoxDecoration(
-                              color: Colors.black.withValues(alpha: 0.35),
-                              borderRadius: BorderRadius.circular(999),
-                              border: Border.all(color: AppColors.gold.withValues(alpha: 0.35)),
-                            ),
-                            child: Row(
-                              mainAxisSize: MainAxisSize.min,
-                              children: [
-                                Icon(
-                                  Icons.lightbulb_outline_rounded,
-                                  size: 16,
-                                  color: AppColors.gold.withValues(alpha: 0.95),
-                                ),
-                                const SizedBox(width: 8),
-                                Flexible(
-                                  child: Text(
-                                    _tips[tipIndex],
-                                    style: AppTypography.labelMedium.copyWith(
-                                      color: AppColors.onPrimary,
-                                    ),
-                                  ),
-                                ),
-                              ],
+                  child: AnimatedSwitcher(
+                    duration: const Duration(milliseconds: 450),
+                    child: Container(
+                      key: ValueKey(tipIndex),
+                      padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 8),
+                      decoration: BoxDecoration(
+                        color: Colors.black.withValues(alpha: 0.35),
+                        borderRadius: BorderRadius.circular(999),
+                        border: Border.all(color: AppColors.gold.withValues(alpha: 0.35)),
+                      ),
+                      child: Row(
+                        mainAxisSize: MainAxisSize.min,
+                        children: [
+                          Icon(
+                            Icons.center_focus_strong_rounded,
+                            size: 16,
+                            color: AppColors.gold.withValues(alpha: 0.95),
+                          ),
+                          const SizedBox(width: 8),
+                          Flexible(
+                            child: Text(
+                              _tips[tipIndex],
+                              style: AppTypography.labelMedium.copyWith(
+                                color: AppColors.onPrimary,
+                              ),
                             ),
                           ),
-                        ),
+                        ],
                       ),
-                    ],
+                    ),
                   ),
                 ),
                 const SizedBox(height: 12),
@@ -431,7 +432,7 @@ class _FaceCapturePanelState extends State<FaceCapturePanel>
                                   const SizedBox(width: 8),
                                   Flexible(
                                     child: Text(
-                                      'تم التقاط الصورة — ابدئي التحليل الذكي',
+                                      'تم التقاط الصورة — جاهزة للتحليل',
                                       style: AppTypography.labelMedium.copyWith(color: Colors.white),
                                     ),
                                   ),
@@ -460,6 +461,115 @@ class _FaceCapturePanelState extends State<FaceCapturePanel>
           },
         );
       },
+    );
+  }
+}
+
+typedef _CoverPreviewBuilder = Widget Function({
+  required BoxConstraints constraints,
+  required double contentWidth,
+  required double contentHeight,
+  required Widget child,
+  required bool mirror,
+});
+
+class _StableCapturedPreview extends StatefulWidget {
+  final File file;
+  final BoxConstraints constraints;
+  final bool mirror;
+  final _CoverPreviewBuilder builder;
+
+  const _StableCapturedPreview({
+    required this.file,
+    required this.constraints,
+    required this.mirror,
+    required this.builder,
+  });
+
+  @override
+  State<_StableCapturedPreview> createState() => _StableCapturedPreviewState();
+}
+
+class _StableCapturedPreviewState extends State<_StableCapturedPreview> {
+  Uint8List? _orientedBytes;
+  double? _contentWidth;
+  double? _contentHeight;
+
+  @override
+  void initState() {
+    super.initState();
+    _loadOrientedImage();
+  }
+
+  @override
+  void didUpdateWidget(covariant _StableCapturedPreview oldWidget) {
+    super.didUpdateWidget(oldWidget);
+    if (oldWidget.file.path != widget.file.path) {
+      _orientedBytes = null;
+      _contentWidth = null;
+      _contentHeight = null;
+      _loadOrientedImage();
+    }
+  }
+
+  Future<void> _loadOrientedImage() async {
+    try {
+      final viewportAspect =
+          widget.constraints.maxWidth / widget.constraints.maxHeight;
+      final size = await FaceImageProcessor.decodeOrientedSize(widget.file);
+      final bytes = await FaceImageProcessor.readOrientedJpegBytes(
+        widget.file,
+        targetAspectRatio: viewportAspect,
+      );
+      if (!mounted) return;
+
+      var width = size.width;
+      var height = size.height;
+      final imageAspect = width / height;
+      if ((imageAspect - viewportAspect).abs() >= 0.01) {
+        if (imageAspect > viewportAspect) {
+          width = height * viewportAspect;
+        } else {
+          height = width / viewportAspect;
+        }
+      }
+
+      setState(() {
+        _contentWidth = width;
+        _contentHeight = height;
+        _orientedBytes = bytes;
+      });
+    } catch (_) {
+      if (!mounted) return;
+      setState(() {
+        _contentWidth = 3;
+        _contentHeight = 4;
+        _orientedBytes = null;
+      });
+    }
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    if (_orientedBytes == null ||
+        _contentWidth == null ||
+        _contentHeight == null) {
+      return const Center(
+        child: CircularProgressIndicator(color: AppColors.gold, strokeWidth: 2),
+      );
+    }
+
+    return widget.builder(
+      constraints: widget.constraints,
+      contentWidth: _contentWidth!,
+      contentHeight: _contentHeight!,
+      mirror: widget.mirror,
+      child: Image.memory(
+        _orientedBytes!,
+        fit: BoxFit.fill,
+        gaplessPlayback: true,
+        filterQuality: FilterQuality.medium,
+      ),
     );
   }
 }

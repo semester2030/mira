@@ -1,104 +1,172 @@
 import 'dart:io';
 import 'dart:math' as math;
+import 'dart:typed_data';
 import 'dart:ui' as ui;
 
 import 'package:image/image.dart' as img;
 
-/// Crops and normalizes a selfie so YouCam receives a large, centered face.
+/// Prepares selfie JPEGs for YouCam — same crop as on-screen preview + auto enhancement.
 class FaceImageProcessor {
   FaceImageProcessor._();
 
-  /// Returns a new JPEG optimized for skin analysis (center crop + min resolution).
+  /// Set by [FaceCapturePanel] so upload matches the preview frame.
+  static double? viewportAspectRatio;
+
+  /// Center crop + face zoom + exposure fix for YouCam upload.
+  ///
+  /// [boostLevel] 0 = normal, 1 = extra zoom/brightness if first attempt failed.
   static Future<File> prepareForAnalysis(
     File source, {
-    required ui.Rect guideRect,
-    required ui.Size viewportSize,
+    int boostLevel = 0,
   }) async {
-    final raw = await source.readAsBytes();
-    var decoded = img.decodeImage(raw);
-    if (decoded == null) {
-      throw Exception('تعذر قراءة الصورة');
-    }
+    var image = await _decodeOriented(source);
 
-    decoded = img.bakeOrientation(decoded);
+    final aspect = viewportAspectRatio ?? (image.width / image.height);
+    image = _centerCropToAspect(image, aspect);
 
-    final crop = _mapGuideToImageCrop(
-      imageWidth: decoded.width,
-      imageHeight: decoded.height,
-      guideRect: guideRect,
-      viewportSize: viewportSize,
-    );
+    final zoom = boostLevel > 0 ? 0.72 : 0.82;
+    image = _centerZoom(image, zoom);
 
-    var cropped = img.copyCrop(
-      decoded,
-      x: crop.left.round(),
-      y: crop.top.round(),
-      width: crop.width.round(),
-      height: crop.height.round(),
-    );
+    image = _normalizeExposure(image, boostLevel: boostLevel);
+    image = _ensureMinShortSide(image, 1280);
 
-    const minShortSide = 960;
-    final shortSide = math.min(cropped.width, cropped.height);
-    if (shortSide < minShortSide) {
-      final scale = minShortSide / shortSide;
-      cropped = img.copyResize(
-        cropped,
-        width: (cropped.width * scale).round(),
-        height: (cropped.height * scale).round(),
-        interpolation: img.Interpolation.linear,
-      );
-    }
-
-    final dir = Directory.systemTemp;
     final outPath =
-        '${dir.path}/mira_face_${DateTime.now().millisecondsSinceEpoch}.jpg';
+        '${Directory.systemTemp.path}/mira_face_${DateTime.now().millisecondsSinceEpoch}.jpg';
     final out = File(outPath);
-    await out.writeAsBytes(img.encodeJpg(cropped, quality: 92));
+    await out.writeAsBytes(img.encodeJpg(image, quality: 94));
     return out;
   }
 
-  /// Maps on-screen face guide to image coordinates (cover-fit preview math).
-  static ui.Rect _mapGuideToImageCrop({
-    required int imageWidth,
-    required int imageHeight,
-    required ui.Rect guideRect,
-    required ui.Size viewportSize,
-  }) {
-    final imageAspect = imageWidth / imageHeight;
-    final viewAspect = viewportSize.width / viewportSize.height;
+  static Future<ui.Size> decodeOrientedSize(File file) async {
+    final oriented = await _decodeOriented(file);
+    return ui.Size(oriented.width.toDouble(), oriented.height.toDouble());
+  }
 
-    double scale;
-    double offsetX = 0;
-    double offsetY = 0;
+  /// JPEG bytes with EXIF orientation applied — matches what the user saw in frame.
+  static Future<Uint8List> readOrientedJpegBytes(
+    File file, {
+    int quality = 95,
+    double? targetAspectRatio,
+  }) async {
+    var oriented = await _decodeOriented(file);
+    if (targetAspectRatio != null && targetAspectRatio > 0) {
+      oriented = _centerCropToAspect(oriented, targetAspectRatio);
+    }
+    return Uint8List.fromList(img.encodeJpg(oriented, quality: quality));
+  }
 
-    if (imageAspect > viewAspect) {
-      scale = viewportSize.height / imageHeight;
-      offsetX = (viewportSize.width - imageWidth * scale) / 2;
-    } else {
-      scale = viewportSize.width / imageWidth;
-      offsetY = (viewportSize.height - imageHeight * scale) / 2;
+  static img.Image _centerCropToAspect(img.Image source, double targetAspectRatio) {
+    final sourceAspect = source.width / source.height;
+    if ((sourceAspect - targetAspectRatio).abs() < 0.01) {
+      return source;
     }
 
-    final left = ((guideRect.left - offsetX) / scale).clamp(0.0, imageWidth.toDouble());
-    final top = ((guideRect.top - offsetY) / scale).clamp(0.0, imageHeight.toDouble());
-    final right = ((guideRect.right - offsetX) / scale).clamp(0.0, imageWidth.toDouble());
-    final bottom = ((guideRect.bottom - offsetY) / scale).clamp(0.0, imageHeight.toDouble());
+    if (sourceAspect > targetAspectRatio) {
+      final cropWidth = (source.height * targetAspectRatio).round();
+      final left = ((source.width - cropWidth) / 2).round().clamp(0, source.width - 1);
+      return img.copyCrop(
+        source,
+        x: left,
+        y: 0,
+        width: math.min(cropWidth, source.width - left),
+        height: source.height,
+      );
+    }
 
-    var cropW = right - left;
-    var cropH = bottom - top;
+    final cropHeight = (source.width / targetAspectRatio).round();
+    final top = ((source.height - cropHeight) / 2).round().clamp(0, source.height - 1);
+    return img.copyCrop(
+      source,
+      x: 0,
+      y: top,
+      width: source.width,
+      height: math.min(cropHeight, source.height - top),
+    );
+  }
 
-    // Slight expansion so hairline/chin stay inside the crop for YouCam.
-    const pad = 0.08;
-    final padW = cropW * pad;
-    final padH = cropH * pad;
-    final expandedLeft = (left - padW).clamp(0.0, imageWidth.toDouble());
-    final expandedTop = (top - padH).clamp(0.0, imageHeight.toDouble());
-    final expandedRight = (right + padW).clamp(0.0, imageWidth.toDouble());
-    final expandedBottom = (bottom + padH).clamp(0.0, imageHeight.toDouble());
+  static img.Image _centerZoom(img.Image source, double fraction) {
+    final cropW = (source.width * fraction).round().clamp(1, source.width);
+    final cropH = (source.height * fraction).round().clamp(1, source.height);
+    final left = ((source.width - cropW) / 2).round().clamp(0, source.width - 1);
+    final top = ((source.height - cropH) / 2).round().clamp(0, source.height - 1);
 
-    cropW = expandedRight - expandedLeft;
-    cropH = expandedBottom - expandedTop;
+    final cropped = img.copyCrop(
+      source,
+      x: left,
+      y: top,
+      width: math.min(cropW, source.width - left),
+      height: math.min(cropH, source.height - top),
+    );
 
-    return ui.Rect.fromLTWH(expandedLeft, expandedTop, cropW, cropH);
+    return img.copyResize(
+      cropped,
+      width: source.width,
+      height: source.height,
+      interpolation: img.Interpolation.linear,
+    );
+  }
+
+  static img.Image _normalizeExposure(img.Image source, {int boostLevel = 0}) {
+    final avg = _averageCenterLuminance(source);
+    final target = 118.0 + (boostLevel * 12);
+
+    if (avg < target) {
+      final factor = (target / math.max(avg, 24)).clamp(1.0, 1.75);
+      return img.adjustColor(
+        source,
+        brightness: ((factor - 1) * 0.55).clamp(0.0, 0.35),
+        contrast: 1.04 + (boostLevel * 0.03),
+        gamma: avg < 70 ? 0.88 : 0.94,
+      );
+    }
+
+    if (avg > 210) {
+      return img.adjustColor(source, brightness: -0.06, contrast: 0.98);
+    }
+
+    return source;
+  }
+
+  static double _averageCenterLuminance(img.Image source) {
+    final left = (source.width * 0.2).round();
+    final top = (source.height * 0.15).round();
+    final right = (source.width * 0.8).round();
+    final bottom = (source.height * 0.85).round();
+
+    var sum = 0.0;
+    var count = 0;
+    final step = math.max(1, (source.width / 48).round());
+
+    for (var y = top; y < bottom; y += step) {
+      for (var x = left; x < right; x += step) {
+        final pixel = source.getPixel(x, y);
+        sum += 0.299 * pixel.r + 0.587 * pixel.g + 0.114 * pixel.b;
+        count++;
+      }
+    }
+
+    return count == 0 ? 128 : sum / count;
+  }
+
+  static img.Image _ensureMinShortSide(img.Image source, int minShortSide) {
+    final shortSide = math.min(source.width, source.height);
+    if (shortSide >= minShortSide) return source;
+
+    final scale = minShortSide / shortSide;
+    return img.copyResize(
+      source,
+      width: (source.width * scale).round(),
+      height: (source.height * scale).round(),
+      interpolation: img.Interpolation.linear,
+    );
+  }
+
+  static Future<img.Image> _decodeOriented(File file) async {
+    final raw = await file.readAsBytes();
+    final decoded = img.decodeImage(raw);
+    if (decoded == null) {
+      throw Exception('تعذر قراءة الصورة');
+    }
+    return img.bakeOrientation(decoded);
   }
 }
