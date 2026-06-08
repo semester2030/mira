@@ -15,6 +15,8 @@ abstract final class AppRoutes {
   static const newAnalysis = '/new-analysis';
   static const skinScan = '/skin-scan';
   static const skinResult = '/skin-result';
+  static const miraBeautyReport = '/mira-beauty-report';
+  static const beautyProgress = '/beauty-progress';
   static const skinRoutine = '/skin-routine';
   static const privacyConsent = '/privacy-consent';
   static const privacyPolicy = '/privacy-policy';
@@ -23,6 +25,7 @@ abstract final class AppRoutes {
   static const outfitResult = '/outfit-result';
   static const outfitHistory = '/outfit-history';
   static const recommendations = '/recommendations';
+  static const recommendationHistory = '/recommendation-history';
   static const paywall = '/paywall';
   static const manageSubscription = '/manage-subscription';
   static const feedback = '/feedback';

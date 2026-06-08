@@ -1,6 +1,6 @@
-import { Injectable, Logger } from '@nestjs/common';
+import { BadRequestException, Injectable, Logger } from '@nestjs/common';
 import { ConfigService } from '@nestjs/config';
-import { Prisma, User } from '@prisma/client';
+import { Prisma, User, UserPreference } from '@prisma/client';
 import * as admin from 'firebase-admin';
 import { RequestUser } from '../common/interfaces/request-user.interface';
 import { PrismaService } from '../prisma/prisma.service';
@@ -52,6 +52,36 @@ export class UsersService {
 
   async getByFirebaseUid(firebaseUid: string): Promise<User | null> {
     return this.prisma.user.findUnique({ where: { firebaseUid } });
+  }
+
+  async getPreferences(userId: string): Promise<UserPreference | null> {
+    return this.prisma.userPreference.findUnique({ where: { userId } });
+  }
+
+  async updatePreferences(
+    userId: string,
+    data: { birthYear?: number | null; locale?: string },
+  ): Promise<UserPreference> {
+    if (data.birthYear !== undefined && data.birthYear !== null) {
+      const year = Math.trunc(data.birthYear);
+      const currentYear = new Date().getFullYear();
+      if (year < 1920 || year > currentYear) {
+        throw new BadRequestException('سنة الميلاد غير صالحة');
+      }
+    }
+
+    return this.prisma.userPreference.upsert({
+      where: { userId },
+      create: {
+        userId,
+        locale: data.locale ?? 'ar',
+        birthYear: data.birthYear ?? null,
+      },
+      update: {
+        ...(data.locale !== undefined ? { locale: data.locale } : {}),
+        ...(data.birthYear !== undefined ? { birthYear: data.birthYear } : {}),
+      },
+    });
   }
 
   async writeAuditLog(params: {

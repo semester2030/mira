@@ -31,4 +31,14 @@ export class MatchMarketplaceDto {
   @IsOptional()
   @IsString()
   city?: string;
+
+  @IsOptional()
+  @IsString()
+  undertoneEn?: string;
+
+  @IsOptional()
+  @IsInt()
+  @Min(1)
+  @Max(100)
+  userAge?: number;
 }

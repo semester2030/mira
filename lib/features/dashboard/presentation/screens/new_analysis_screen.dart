@@ -4,6 +4,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 
 import '../../../../core/navigation/app_routes.dart';
+import '../../../../core/navigation/mira_report_navigation.dart';
 import '../../../../core/services/app_session.dart';
 import '../../../../core/session/analysis_session.dart';
 import '../../../../shared/theme/colors.dart';
@@ -45,7 +46,7 @@ class _NewAnalysisScreenState extends State<NewAnalysisScreen> {
           backgroundColor: AppColors.secondary,
         ),
       );
-      Navigator.pushNamed(context, AppRoutes.skinResult, arguments: report);
+      MiraReportNavigation.openAfterAnalysis(context, report);
     } catch (e) {
       if (!context.mounted) return;
       ScaffoldMessenger.of(context).showSnackBar(
@@ -184,7 +185,7 @@ class _NewAnalysisScreenState extends State<NewAnalysisScreen> {
                 backgroundColor: AppColors.success,
               ),
             );
-            Navigator.pushNamed(context, AppRoutes.skinResult, arguments: state.report);
+            MiraReportNavigation.openAfterAnalysis(context, state.report);
           } else if (state is SkinAnalysisFailure) {
             ScaffoldMessenger.of(context).showSnackBar(
               SnackBar(content: Text(state.message), backgroundColor: AppColors.error),

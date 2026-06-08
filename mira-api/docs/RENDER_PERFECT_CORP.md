@@ -39,7 +39,7 @@ Global prefix default: `api/v1`.
 |--------|------|-------------|
 | `POST` | `/api/v1/ai/skin-analysis` | Multipart field `image` → Perfect Corp |
 | `POST` | `/api/v1/ai/outfit-analysis` | Multipart `image` + body `occasion` |
-| `POST` | `/api/v1/ai/full-mira-analysis` | Reserved (501 for now) |
+| `POST` | `/api/v1/ai/full-mira-analysis` | Skin + outfit + fusion + recommendation (multipart: `skinImage`, `outfitImage`, `occasion`) |
 | `POST` | `/api/v1/skin-analysis` | Legacy alias (same handler) |
 | `GET` | `/api/v1/health` | Health check |
 

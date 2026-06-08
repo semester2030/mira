@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import '../../../../shared/widgets/mira_app_bar.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import '../../../../core/navigation/app_routes.dart';
+import '../../../../core/navigation/mira_report_navigation.dart';
 import '../../../../core/services/app_session.dart';
 import '../../../../core/privacy/privacy_navigation.dart';
 import '../../../../shared/widgets/guest_banner.dart';
@@ -99,10 +100,9 @@ class AnalysisScreen extends StatelessWidget {
                     final report = state.reports[i];
                     return PremiumCard(
                       margin: const EdgeInsets.only(bottom: 12),
-                      onTap: () => Navigator.pushNamed(
+                      onTap: () => MiraReportNavigation.openFromHistory(
                         context,
-                        AppRoutes.skinResult,
-                        arguments: report,
+                        report,
                       ),
                       child: Row(
                         children: [

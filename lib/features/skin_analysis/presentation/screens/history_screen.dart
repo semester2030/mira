@@ -88,12 +88,28 @@ class _HistoryScreenState extends State<HistoryScreen> {
                     onAction: () => PrivacyNavigation.openSkinAnalysis(context),
                   );
                 }
-                return ListView.builder(
+                return ListView(
                   padding: const EdgeInsets.symmetric(vertical: 16),
-                  itemCount: state.reports.length,
-                  itemBuilder: (context, index) {
-                    return ResultCard(report: state.reports[index], index: index);
-                  },
+                  children: [
+                    if (state.reports.length >= 2)
+                      Padding(
+                        padding: const EdgeInsets.fromLTRB(16, 0, 16, 12),
+                        child: PremiumButton(
+                          label: 'عرض تقدم البشرة',
+                          icon: Icons.show_chart_outlined,
+                          variant: PremiumButtonVariant.gold,
+                          onPressed: () =>
+                              Navigator.pushNamed(context, AppRoutes.beautyProgress),
+                        ),
+                      ),
+                    ...List.generate(
+                      state.reports.length,
+                      (index) => ResultCard(
+                        report: state.reports[index],
+                        index: index,
+                      ),
+                    ),
+                  ],
                 );
               }
               return const SizedBox.shrink();

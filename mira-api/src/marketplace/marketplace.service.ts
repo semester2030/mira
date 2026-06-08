@@ -124,6 +124,8 @@ export class MarketplaceService implements OnModuleInit {
           p.skinTypes,
           concerns,
           skinTypeAr,
+          dto.undertoneEn,
+          dto.userAge,
         ),
         concernTags: p.concernTags,
       }))

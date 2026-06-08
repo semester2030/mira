@@ -25,6 +25,7 @@ class EditProfileScreen extends StatefulWidget {
 class _EditProfileScreenState extends State<EditProfileScreen> {
   final _formKey = GlobalKey<FormState>();
   late final TextEditingController _nameController;
+  int? _birthYear;
   String? _avatarUrl;
   String? _localAvatarPath;
   bool _savePending = false;
@@ -33,6 +34,7 @@ class _EditProfileScreenState extends State<EditProfileScreen> {
   void initState() {
     super.initState();
     _nameController = TextEditingController(text: widget.profile.name);
+    _birthYear = widget.profile.birthYear;
     _avatarUrl = widget.profile.avatarUrl;
   }
 
@@ -77,7 +79,10 @@ class _EditProfileScreenState extends State<EditProfileScreen> {
   void _save() {
     if (!_formKey.currentState!.validate()) return;
     _savePending = true;
-    final updated = widget.profile.copyWith(name: _nameController.text.trim());
+    final updated = widget.profile.copyWith(
+      name: _nameController.text.trim(),
+      birthYear: _birthYear,
+    );
     context.read<ProfileBloc>().add(UpdateProfile(updated));
   }
 
@@ -156,6 +161,44 @@ class _EditProfileScreenState extends State<EditProfileScreen> {
                       controller: _nameController,
                       validator: (v) =>
                           v != null && v.trim().length >= 2 ? null : 'يرجى إدخال الاسم',
+                    ),
+                    const SizedBox(height: 12),
+                    PremiumCard(
+                      padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
+                      child: DropdownButtonFormField<int?>(
+                        initialValue: _birthYear,
+                        decoration: InputDecoration(
+                          labelText: 'سنة الميلاد (اختياري)',
+                          labelStyle: AppTypography.labelSmall,
+                          border: InputBorder.none,
+                        ),
+                        items: [
+                          const DropdownMenuItem<int?>(
+                            value: null,
+                            child: Text('لم أحدد بعد'),
+                          ),
+                          ...List.generate(
+                            DateTime.now().year - 1920 + 1,
+                            (i) {
+                              final year = DateTime.now().year - i;
+                              return DropdownMenuItem<int?>(
+                                value: year,
+                                child: Text('$year'),
+                              );
+                            },
+                          ),
+                        ],
+                        onChanged: updating
+                            ? null
+                            : (value) => setState(() => _birthYear = value),
+                      ),
+                    ),
+                    const SizedBox(height: 8),
+                    Text(
+                      'سنة الميلاد تُستخدم لمقارنة عمرك مع عمر بشرتك — وليست مطلوبة للتسجيل.',
+                      style: AppTypography.bodySmall.copyWith(
+                        color: AppColors.textSecondary,
+                      ),
                     ),
                     const SizedBox(height: 12),
                     PremiumCard(

@@ -6,6 +6,7 @@ import '../../../../core/ai/ai_module.dart';
 import '../../../../core/config/mira_api_config.dart';
 import '../../../../core/ai/mappers/skin_result_mapper.dart';
 import '../../../../core/privacy/temp_image_cleanup.dart';
+import '../../../intelligence/presentation/widgets/mira_report_helpers.dart';
 import '../../domain/entities/skin_report.dart';
 import '../../domain/repositories/skin_analysis_repository.dart';
 import '../datasources/skin_analysis_api_data_source.dart';
@@ -66,7 +67,8 @@ class GuestSkinAnalysisRepository {
     try {
       final bytes = await file.readAsBytes();
       final result = await AiModule.instance.skinProvider.analyze(bytes);
-      return SkinResultMapper.toReport(result, createdAt: DateTime.now());
+      final report = SkinResultMapper.toReport(result, createdAt: DateTime.now());
+      return attachMiraReport(report);
     } finally {
       await TempImageCleanup.deleteIfExists(imagePath);
     }

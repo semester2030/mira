@@ -7,6 +7,8 @@ export function scoreProductMatch(
   skinTypes: string[],
   concerns: ConcernMap,
   skinTypeAr: string,
+  undertoneEn?: string,
+  userAge?: number,
 ): number {
   if (concernTags.length === 0) return 50;
 
@@ -25,7 +27,37 @@ export function scoreProductMatch(
   if (needWeight === 0) return 40;
 
   const skinBonus = _skinTypeBonus(skinTypes, skinTypeAr);
-  return Math.min(100, Math.round(matchWeight / concernTags.length + skinBonus));
+  const undertoneBonus = _undertoneBonus(concernTags, undertoneEn);
+  const ageBonus = _ageBonus(userAge, concernTags);
+  return Math.min(
+    100,
+    Math.round(matchWeight / concernTags.length + skinBonus + undertoneBonus + ageBonus),
+  );
+}
+
+function _undertoneBonus(concernTags: string[], undertoneEn?: string): number {
+  if (!undertoneEn) return 0;
+  const tone = undertoneEn.toLowerCase();
+  const tags = concernTags.join(' ').toLowerCase();
+  if (tone === 'warm' && (tags.includes('hydration') || tags.includes('moisture'))) {
+    return 6;
+  }
+  if (tone === 'cool' && tags.includes('redness')) {
+    return 6;
+  }
+  if (tone === 'warm' && tags.includes('glow')) {
+    return 4;
+  }
+  return 0;
+}
+
+function _ageBonus(userAge?: number, concernTags: string[] = []): number {
+  if (!userAge) return 0;
+  const tags = concernTags.join(' ').toLowerCase();
+  if (userAge < 22 && tags.includes('acne')) return 8;
+  if (userAge >= 35 && tags.includes('wrinkle')) return 8;
+  if (userAge >= 28 && tags.includes('age')) return 5;
+  return 0;
 }
 
 function _skinTypeBonus(skinTypes: string[], skinTypeAr: string): number {

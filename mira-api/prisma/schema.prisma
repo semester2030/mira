@@ -80,6 +80,7 @@ model UserPreference {
   userId          String   @unique @map("user_id")
   user            User     @relation(fields: [userId], references: [id], onDelete: Cascade)
   locale          String   @default("ar")
+  birthYear       Int?     @map("birth_year")
   stylePrefsJson  Json?    @map("style_prefs_json")
   createdAt       DateTime @default(now()) @map("created_at")
   updatedAt       DateTime @updatedAt @map("updated_at")

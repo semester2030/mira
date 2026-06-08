@@ -10,6 +10,20 @@ import '../../../../core/ai/models/styling_recommendation.dart';
 import '../../../../core/network/api_client.dart';
 import '../../../../core/network/mira_api_endpoints.dart';
 
+class RecommendationHistoryItem {
+  final String id;
+  final DateTime createdAt;
+  final String? occasionId;
+  final MiraRecommendation recommendation;
+
+  const RecommendationHistoryItem({
+    required this.id,
+    required this.createdAt,
+    this.occasionId,
+    required this.recommendation,
+  });
+}
+
 class RecommendationsApiDataSource {
   final Dio _dio;
 
@@ -33,6 +47,25 @@ class RecommendationsApiDataSource {
     if (data == null) throw Exception('استجابة فارغة من الخادم');
 
     return _parseRecommendation(data);
+  }
+
+  Future<List<RecommendationHistoryItem>> history({int limit = 20}) async {
+    final response = await _dio.get<List<dynamic>>(
+      MiraApiEndpoints.recommendationsHistory,
+      queryParameters: {'limit': limit},
+    );
+
+    final rows = response.data ?? const [];
+    return rows.map((row) {
+      final map = row as Map<String, dynamic>;
+      final data = map['data'] as Map<String, dynamic>;
+      return RecommendationHistoryItem(
+        id: map['id'] as String? ?? '',
+        createdAt: DateTime.tryParse(map['createdAt'] as String? ?? '') ?? DateTime.now(),
+        occasionId: map['occasionId'] as String?,
+        recommendation: _parseRecommendation(data),
+      );
+    }).toList();
   }
 
   Map<String, dynamic> _skinToJson(SkinAnalysisResult s) => {

@@ -1,6 +1,9 @@
+import '../../../intelligence/domain/entities/mira_beauty_report.dart';
 import '../../domain/entities/skin_report.dart';
 
 class SkinReportModel extends SkinReport {
+  final MiraBeautyReport? miraReport;
+
   SkinReportModel({
     super.id,
     required super.skinType,
@@ -23,9 +26,14 @@ class SkinReportModel extends SkinReport {
     super.createdAt,
     super.skinAge,
     super.concernScores,
+    this.miraReport,
   });
 
-  factory SkinReportModel.fromEntity(SkinReport entity, {String? docId}) {
+  factory SkinReportModel.fromEntity(
+    SkinReport entity, {
+    String? docId,
+    MiraBeautyReport? miraReport,
+  }) {
     return SkinReportModel(
       id: docId ?? entity.id,
       skinType: entity.skinType,
@@ -48,6 +56,7 @@ class SkinReportModel extends SkinReport {
       createdAt: entity.createdAt,
       skinAge: entity.skinAge,
       concernScores: entity.concernScores,
+      miraReport: miraReport,
     );
   }
 
@@ -93,7 +102,6 @@ class SkinReportModel extends SkinReport {
       advice: advice,
       skinAge: (json['skinAge'] as num?)?.toInt(),
       concernScores: concernScores,
-      // Legacy imageUrl in Firestore is ignored — zero image retention.
       createdAt: createdAt,
     );
   }

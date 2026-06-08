@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import '../../domain/entities/skin_report.dart';
-import '../../../../core/navigation/app_routes.dart';
+import '../../../../core/navigation/mira_report_navigation.dart';
+import '../../../intelligence/presentation/widgets/mira_report_helpers.dart';
 import '../../../../shared/theme/colors.dart';
 import '../../../../shared/theme/typography.dart';
 import '../../../../shared/widgets/premium/premium_card.dart';
@@ -21,7 +22,7 @@ class ResultCard extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return PressableScale(
-      onTap: () => Navigator.pushNamed(context, AppRoutes.skinResult, arguments: report),
+      onTap: () => MiraReportNavigation.openFromHistory(context, report),
       child: PremiumCard(
         margin: const EdgeInsets.symmetric(horizontal: 16, vertical: 6),
         child: Row(
@@ -47,8 +48,12 @@ class ResultCard extends StatelessWidget {
                     ),
                   const SizedBox(height: 4),
                   Text(
-                    'نوع البشرة: ${report.skinType} · ${report.score.round()}%',
+                    report.skinType.isNotEmpty
+                        ? 'نوع البشرة: ${report.skinType}'
+                        : resolveMiraReport(report).headlineAr,
                     style: AppTypography.bodySmall,
+                    maxLines: 2,
+                    overflow: TextOverflow.ellipsis,
                   ),
                 ],
               ),

@@ -2,16 +2,15 @@ import 'dart:io';
 
 import 'package:dio/dio.dart';
 
-import '../../../../core/ai/mappers/skin_result_mapper.dart';
-import '../../../../core/ai/models/skin_analysis_result.dart';
 import '../../../../core/network/api_client.dart';
 import '../../../../core/network/mira_api_endpoints.dart';
 import '../../../../core/privacy/temp_image_cleanup.dart';
 import '../../../../core/services/user_stats_service.dart';
+import '../../../intelligence/data/mappers/mira_beauty_report_mapper.dart';
 import '../../presentation/utils/face_image_processor.dart';
 import '../models/skin_report_model.dart';
 
-/// Calls NestJS `POST /skin-analysis` — images are not stored on device after upload.
+/// Calls NestJS `POST /ai/skin-analysis` — Mira Intelligence Layer response.
 class SkinAnalysisApiDataSource {
   final Dio _dio;
 
@@ -101,23 +100,23 @@ class SkinAnalysisApiDataSource {
       throw Exception('استجابة فارغة من الخادم');
     }
 
-    final skinJson = data['skin'] as Map<String, dynamic>?;
-    if (skinJson == null) {
-      throw Exception('تنسيق استجابة التحليل غير صالح');
+    final miraJson = data['miraReport'] as Map<String, dynamic>?;
+    if (miraJson == null) {
+      throw Exception('تنسيق تقرير ميرا غير صالح — Intelligence Layer مطلوب');
     }
 
-    final result = _parseSkinResult(skinJson);
+    final miraReport = MiraBeautyReportMapper.fromJson(miraJson);
     final id = data['id'] as String?;
     final createdAtRaw = data['createdAt'] as String?;
     final createdAt = createdAtRaw != null ? DateTime.tryParse(createdAtRaw) : null;
 
-    final report = SkinResultMapper.toReport(
-      result,
+    final report = MiraBeautyReportMapper.toSkinReport(
+      miraReport,
       id: id,
       createdAt: createdAt ?? DateTime.now(),
     );
 
-    return SkinReportModel.fromEntity(report);
+    return SkinReportModel.fromEntity(report, miraReport: miraReport);
   }
 
   Future<List<SkinReportModel>> fetchHistory({int limit = 50}) async {
@@ -129,53 +128,16 @@ class SkinAnalysisApiDataSource {
     final list = response.data ?? [];
     return list.map((item) {
       final map = item as Map<String, dynamic>;
-      final skinJson = map['skin'] as Map<String, dynamic>;
-      final result = _parseSkinResult(skinJson);
+      final miraJson = map['miraReport'] as Map<String, dynamic>;
+      final miraReport = MiraBeautyReportMapper.fromJson(miraJson);
       final id = map['id'] as String;
       final createdAt = DateTime.tryParse(map['createdAt'] as String? ?? '');
-      final report = SkinResultMapper.toReport(
-        result,
+      final report = MiraBeautyReportMapper.toSkinReport(
+        miraReport,
         id: id,
         createdAt: createdAt,
       );
-      return SkinReportModel.fromEntity(report);
+      return SkinReportModel.fromEntity(report, miraReport: miraReport);
     }).toList();
-  }
-
-  SkinAnalysisResult _parseSkinResult(Map<String, dynamic> json) {
-    return SkinAnalysisResult(
-      beautyScore: (json['beautyScore'] as num).toDouble(),
-      skinTypeAr: json['skinTypeAr'] as String,
-      skinTypeEn: json['skinTypeEn'] as String,
-      hydration: (json['hydration'] as num).toInt(),
-      oiliness: (json['oiliness'] as num).toInt(),
-      pores: (json['pores'] as num).toInt(),
-      wrinkles: (json['wrinkles'] as num).toInt(),
-      darkSpots: (json['darkSpots'] as num).toInt(),
-      acne: (json['acne'] as num).toInt(),
-      redness: (json['redness'] as num).toInt(),
-      undertoneAr: json['undertoneAr'] as String,
-      undertoneEn: json['undertoneEn'] as String,
-      skinToneAr: json['skinToneAr'] as String,
-      skinToneEn: json['skinToneEn'] as String,
-      recommendationsAr: (json['recommendationsAr'] as List<dynamic>)
-          .map((e) => e.toString())
-          .toList(),
-      recommendationsEn: (json['recommendationsEn'] as List<dynamic>)
-          .map((e) => e.toString())
-          .toList(),
-      skinAge: (json['skinAge'] as num?)?.toInt(),
-      concernScores: _parseConcernScores(json['concernScores']),
-    );
-  }
-
-  Map<String, int> _parseConcernScores(dynamic raw) {
-    if (raw is! Map) return const {};
-    return raw.map(
-      (key, value) => MapEntry(
-        key.toString(),
-        value is num ? value.toInt() : 0,
-      ),
-    );
   }
 }

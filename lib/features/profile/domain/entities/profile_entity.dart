@@ -1,6 +1,8 @@
 import '../../../../core/utils/firestore_parsers.dart';
 
 class ProfileEntity {
+  static const Object _unset = Object();
+
   final String id;
   final String name;
   final String phone;
@@ -13,6 +15,7 @@ class ProfileEntity {
   final List<AchievementEntity> achievements;
   final DateTime createdAt;
   final DateTime? updatedAt;
+  final int? birthYear;
 
   const ProfileEntity({
     required this.id,
@@ -27,6 +30,7 @@ class ProfileEntity {
     required this.achievements,
     required this.createdAt,
     this.updatedAt,
+    this.birthYear,
   });
 
   ProfileEntity copyWith({
@@ -42,6 +46,7 @@ class ProfileEntity {
     List<AchievementEntity>? achievements,
     DateTime? createdAt,
     DateTime? updatedAt,
+    Object? birthYear = _unset,
   }) {
     return ProfileEntity(
       id: id ?? this.id,
@@ -56,6 +61,7 @@ class ProfileEntity {
       achievements: achievements ?? this.achievements,
       createdAt: createdAt ?? this.createdAt,
       updatedAt: updatedAt ?? this.updatedAt,
+      birthYear: birthYear == _unset ? this.birthYear : birthYear as int?,
     );
   }
 
@@ -73,6 +79,7 @@ class ProfileEntity {
       'achievements': achievements.map((a) => a.toJson()).toList(),
       'createdAt': createdAt.toIso8601String(),
       'updatedAt': updatedAt?.toIso8601String(),
+      if (birthYear != null) 'birthYear': birthYear,
     };
   }
 
@@ -97,6 +104,9 @@ class ProfileEntity {
       createdAt: FirestoreParsers.dateTime(json['createdAt']),
       updatedAt: json['updatedAt'] != null
           ? FirestoreParsers.dateTime(json['updatedAt'])
+          : null,
+      birthYear: json['birthYear'] != null
+          ? FirestoreParsers.integer(json['birthYear'])
           : null,
     );
   }

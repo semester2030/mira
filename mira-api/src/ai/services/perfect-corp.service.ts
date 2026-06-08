@@ -2,6 +2,7 @@ import { Injectable, Logger } from '@nestjs/common';
 import { ConfigService } from '@nestjs/config';
 import { resolvePerfectCorpConfig } from '../config/perfect-corp.config';
 import { SkinAnalysisResult } from '../contracts/skin-analysis-result.interface';
+import { resolveUndertone } from '../../intelligence/pipeline/undertone-intelligence';
 
 /** YouCam S2S v2.0 — multipart file upload → task → poll (server-side only). */
 
@@ -30,8 +31,8 @@ export class PerfectCorpService {
 
     const fileId = await this.uploadImage(baseUrl, apiKey, imageBytes);
     const taskId = await this.createSkinTask(baseUrl, apiKey, fileId);
-    const concerns = await this.pollUntilDone(baseUrl, apiKey, taskId);
-    const mapped = this.mapYouCamResults(concerns);
+    const { concerns, rawData } = await this.pollUntilDone(baseUrl, apiKey, taskId);
+    const mapped = this.mapYouCamResults(concerns, rawData);
     this.logger.log(
       `YouCam skin analysis OK (task=${taskId.slice(0, 12)}…, concerns=${concerns.length})`,
     );
@@ -140,7 +141,7 @@ export class PerfectCorpService {
     baseUrl: string,
     apiKey: string,
     taskId: string,
-  ): Promise<YouCamConcern[]> {
+  ): Promise<{ concerns: YouCamConcern[]; rawData: Record<string, unknown> }> {
     const { pollIntervalMs: intervalMs, pollMaxMs: maxMs } =
       resolvePerfectCorpConfig(this.config);
     const deadline = Date.now() + maxMs;
@@ -167,7 +168,7 @@ export class PerfectCorpService {
       ).toLowerCase();
 
       if (status === 'success') {
-        return extractConcerns(data);
+        return { concerns: extractConcerns(data), rawData: data };
       }
       if (status === 'error') {
         throw new Error(
@@ -181,7 +182,10 @@ export class PerfectCorpService {
     throw new Error(`YouCam task timed out after ${maxMs}ms`);
   }
 
-  private mapYouCamResults(concerns: YouCamConcern[]): SkinAnalysisResult {
+  private mapYouCamResults(
+    concerns: YouCamConcern[],
+    rawData?: Record<string, unknown>,
+  ): SkinAnalysisResult {
     const byType = new Map<string, number>();
     for (const item of concerns) {
       if (typeof item.ui_score === 'number') {
@@ -254,6 +258,10 @@ export class PerfectCorpService {
     }
 
     const skinAge = estimateSkinAge(concernScores);
+    const undertone = resolveUndertone(rawData ?? {}, concernScores, {
+      redness,
+      hydration,
+    });
 
     return {
       beautyScore: Math.round(beautyScore),
@@ -266,10 +274,10 @@ export class PerfectCorpService {
       acne,
       darkSpots,
       redness,
-      undertoneAr: 'محايد',
-      undertoneEn: 'Neutral',
-      skinToneAr: 'متوسط',
-      skinToneEn: 'Medium',
+      undertoneAr: undertone.undertoneAr,
+      undertoneEn: undertone.undertoneEn,
+      skinToneAr: undertone.skinToneAr,
+      skinToneEn: undertone.skinToneEn,
       recommendationsAr,
       recommendationsEn: recommendationsAr.map((ar) =>
         translateRecommendationStub(ar),

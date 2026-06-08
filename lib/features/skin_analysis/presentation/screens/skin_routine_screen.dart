@@ -7,6 +7,9 @@ import '../../../../shared/theme/colors.dart';
 import '../../../../shared/theme/typography.dart';
 import '../../../../shared/widgets/mira_app_bar.dart';
 import '../../../../shared/widgets/premium/premium_exports.dart';
+import '../../../intelligence/domain/entities/mira_beauty_report.dart';
+import '../../../intelligence/presentation/widgets/treatment_plan_section.dart';
+import '../../../intelligence/presentation/widgets/mira_report_helpers.dart';
 import '../../../marketplace/presentation/widgets/marketplace_matched_section.dart';
 import '../../domain/entities/skin_report.dart';
 import '../../domain/services/skin_report_matrix.dart';
@@ -21,7 +24,8 @@ class SkinRoutineScreen extends StatelessWidget {
   Widget build(BuildContext context) {
     AnalysisSession.setSkin(report);
     final isGuest = AppSession.isGuest;
-    final skinAge = SkinReportMatrix.skinAge(report);
+    final mira = resolveMiraReport(report);
+    final skinAge = mira.skinAgeEstimate ?? SkinReportMatrix.skinAge(report);
 
     return Scaffold(
       backgroundColor: AppColors.surface,
@@ -32,7 +36,11 @@ class SkinRoutineScreen extends StatelessWidget {
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.stretch,
             children: [
-              _ProfileSummary(report: report, skinAge: skinAge),
+              _ProfileSummary(
+                report: report,
+                mira: mira,
+                skinAge: skinAge,
+              ),
               const SizedBox(height: 20),
               PremiumButton(
                 label: isGuest ? 'تم — النتيجة للعرض فقط' : 'حفظ النتيجة',
@@ -51,16 +59,8 @@ class SkinRoutineScreen extends StatelessWidget {
                 ),
               ],
               const SizedBox(height: 28),
-              Text(
-                'Recommended Routines',
-                style: AppTypography.labelSmall.copyWith(
-                  color: AppColors.textTertiary,
-                  letterSpacing: 1,
-                ),
-              ),
-              const SizedBox(height: 4),
-              Text('الروتين والشركاء', style: AppTypography.headlineSmall),
-              const SizedBox(height: 16),
+              TreatmentPlanSection(plan: mira.dailyRoutine),
+              const SizedBox(height: 24),
               MarketplaceMatchedSection(
                 report: report,
                 showServices: true,
@@ -74,7 +74,9 @@ class SkinRoutineScreen extends StatelessWidget {
                     Text('نصيحة ميرا', style: AppTypography.titleMedium),
                     const SizedBox(height: 8),
                     Text(
-                      report.advice,
+                      mira.summaryAdviceAr.isNotEmpty
+                          ? mira.summaryAdviceAr
+                          : report.advice,
                       style: AppTypography.bodyMedium.copyWith(height: 1.5),
                     ),
                   ],
@@ -125,12 +127,19 @@ class SkinRoutineScreen extends StatelessWidget {
 
 class _ProfileSummary extends StatelessWidget {
   final SkinReport report;
+  final MiraBeautyReport mira;
   final int skinAge;
 
-  const _ProfileSummary({required this.report, required this.skinAge});
+  const _ProfileSummary({
+    required this.report,
+    required this.mira,
+    required this.skinAge,
+  });
 
   @override
   Widget build(BuildContext context) {
+    final skinType = mira.skinTypeAr.isNotEmpty ? mira.skinTypeAr : report.skinType;
+
     return Row(
       children: [
         CircleAvatar(
@@ -143,9 +152,11 @@ class _ProfileSummary extends StatelessWidget {
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
-              Text(report.skinType, style: AppTypography.titleLarge),
+              Text(skinType, style: AppTypography.titleLarge),
               Text(
-                'Skin Report · $skinAge سنة تقديري',
+                mira.childSafety.isMinor
+                    ? 'Skin Report · عناية مراهقة'
+                    : 'Skin Report · ${skinAge > 0 ? '$skinAge سنة تقديري' : 'تحليل مخصص'}',
                 style: AppTypography.bodySmall.copyWith(
                   color: AppColors.textSecondary,
                 ),

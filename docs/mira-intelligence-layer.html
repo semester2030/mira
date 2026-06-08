@@ -1,0 +1,1453 @@
+<!DOCTYPE html>
+<html lang="ar" dir="rtl">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <meta name="description" content="مرجع Mira Intelligence Layer — تحويل ميرا من wrapper إلى مستشار جمال ذكي. أدلة من الكود، هندسة، وخطة تنفيذ." />
+  <title>ميرا — Mira Intelligence Layer | مرجع استراتيجي وتقني</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link href="https://fonts.googleapis.com/css2?family=Tajawal:wght@400;500;700;800&display=swap" rel="stylesheet" />
+  <link rel="stylesheet" href="mira-intelligence-layer.css" />
+</head>
+<body>
+  <header class="site-header">
+    <div class="container header-inner">
+      <a class="brand" href="index.html">ميرا · Mira</a>
+      <nav class="nav">
+        <a href="#verdict">الحكم</a>
+        <a href="#today">الوضع الحالي</a>
+        <a href="#gaps">الفجوات</a>
+        <a href="#architecture">الهندسة</a>
+        <a href="#proofs">الأدلة</a>
+        <a href="#roadmap">المراحل الست</a>
+        <a href="#phase-1-done">المرحلة 1 ✓</a>
+        <a href="#phase-2-done">المرحلة 2 ✓</a>
+        <a href="#phase-3-done">المرحلة 3 ✓</a>
+        <a href="#phase-4-done">المرحلة 4 ✓</a>
+        <a href="#phase-5-done">المرحلة 5 ✓</a>
+        <a href="#phase-6-done">المرحلة 6 ✓</a>
+        <a href="#educational-face-map">Educational Map</a>
+        <a href="#face-map-policy">سياسة Face Map</a>
+        <a href="#req-map">خريطة المتطلبات</a>
+        <a href="#risks">المخاطر</a>
+      </nav>
+    </div>
+  </header>
+
+  <main class="container">
+    <div class="hero">
+      <span class="badge">MIRA INTELLIGENCE LAYER · NEXT GENERATION</span>
+      <h1>من «ماسح بشرة» إلى<br />مستشار جمال شخصي بالذكاء الاصطناعي</h1>
+      <p class="lead">
+        وثيقة مرجعية رسمية لتحويل ميرا إلى منصة Saudi-first premium.
+        Perfect Corp = محرك تحليل فقط. ميرا = طبقة الذكاء التي تترجم، تخصص، تدمج، وتتابع.
+        كل ادّعاء في هذه الصفحة مربوط بمسار ملف في المستودع
+        <code>semester2030/mira</code>.
+      </p>
+      <div class="hero-meta">
+        <span class="meta-pill">📁 55–85 ملف للتنفيذ الكامل</span>
+        <span class="meta-pill">⚙️ NestJS + Flutter + Prisma</span>
+        <span class="meta-pill">📅 يونيو 2026</span>
+        <span class="meta-pill">🔗 commit 6292e71+</span>
+      </div>
+    </div>
+
+    <section class="toc">
+      <h2 style="margin-top:0;font-size:1.2rem;">فهرس المحتويات</h2>
+      <ol>
+        <li><a href="#verdict">الحكم التنفيذي والتدفق المستهدف</a></li>
+        <li><a href="#today">الوضع الحالي — ماذا يعمل فعلاً</a></li>
+        <li><a href="#gaps">مصفوفة الرؤية vs الواقع</a></li>
+        <li><a href="#architecture">أين توضع Intelligence Layer</a></li>
+        <li><a href="#proofs">أدلة من الكود (Backend + Flutter)</a></li>
+        <li><a href="#modules">الوحدات المطلوبة بالتفصيل</a></li>
+        <li><a href="#roadmap">المراحل الست — حسب الأولوية</a></li>
+        <li><a href="#phase-1-done">المرحلة 1 — ما نُفّذ</a></li>
+        <li><a href="#phase-2-done">المرحلة 2 — ما نُفّذ</a></li>
+        <li><a href="#phase-3-done">المرحلة 3 — ما نُفّذ</a></li>
+        <li><a href="#phase-4-done">المرحلة 4 — ما نُفّذ</a></li>
+        <li><a href="#phase-5-done">المرحلة 5 — ما نُفّذ</a></li>
+        <li><a href="#educational-face-map">Educational Face Map</a></li>
+        <li><a href="#face-map-policy">سياسة Face Map (Product Policy)</a></li>
+        <li><a href="#req-map">خريطة المتطلبات → المراحل</a></li>
+        <li><a href="#risks">مخاطر حرجة وتوصيات</a></li>
+      </ol>
+    </section>
+
+    <!-- VERDICT -->
+    <section id="verdict">
+      <h2>١. الحكم التنفيذي</h2>
+      <div class="card ok">
+        <h3 style="margin-top:0;">✅ الرؤية صحيحة — والهيكل الحالي يتحملها</h3>
+        <p>
+          ميرا اليوم = <strong>Perfect Corp wrapper</strong> + radar chart + marketplace tags.
+          الرؤية الجديدة = <strong>Mira Intelligence Layer</strong> بين YouCam والمستخدم.
+          لا حاجة لإعادة بناء المشروع — بل إضافة module جديد وربط ما هو موجود.
+        </p>
+      </div>
+
+      <div class="verdict-grid">
+        <div class="verdict-item">
+          <strong>⭐⭐⭐⭐⭐</strong>
+          <span>قيمة تجارية</span>
+        </div>
+        <div class="verdict-item">
+          <strong>⭐⭐⭐⭐</strong>
+          <span>ملاءمة الهيكل</span>
+        </div>
+        <div class="verdict-item">
+          <strong>⭐⭐</strong>
+          <span>جاهزية فورية</span>
+        </div>
+        <div class="verdict-item">
+          <strong>~30%</strong>
+          <span>نسبة تنفيذ الرؤية اليوم</span>
+        </div>
+      </div>
+
+      <h3>التدفق المستهدف (Core Architecture)</h3>
+      <div class="flow flow-gold">User Photo
+    ↓
+Perfect Corp Analysis        ← محرك فقط (موجود)
+    ↓
+<strong>Mira Intelligence Layer</strong>   ← جديد — لا يُرى للمستخدم
+    ↓
+Personalized Report          ← لغة بشرية، لا أرقام خام
+    ↓
+Treatment Plan               ← صباح / مساء مخصص
+    ↓
+Product Recommendations      ← marketplace + rules
+    ↓
+Progress Tracking            ← trends من التاريخ</div>
+
+      <div class="card warn">
+        <h3 style="margin-top:0;">⚠️ قاعدة ذهبية</h3>
+        <p><strong>المستخدم لا يرى أبداً:</strong> Oiliness: 73 · Pores: 65 · Wrinkles: 28</p>
+        <p><strong>يرى بدلاً:</strong> «نلاحظ زيادة بسيطة في إفراز الدهون في منطقة T-Zone» — مولّدة من <code>narrative-engine</code>.</p>
+      </div>
+    </section>
+
+    <!-- TODAY -->
+    <section id="today">
+      <h2>٢. الوضع الحالي — ماذا يعمل فعلاً</h2>
+
+      <div class="grid-2">
+        <div class="card">
+          <h3 style="margin-top:0;">✅ مسار البشرة (الأكثر اكتمالاً)</h3>
+          <div class="flow">Flutter NewAnalysisScreen
+  → FaceCapturePanel + FaceImageProcessor
+  → POST /api/v1/ai/skin-analysis
+  → PerfectCorpSkinProvider + YouCam S2S
+  → Prisma skin_analyses.resultJson
+  → ResultScreen (radar + marketplace)</div>
+          <p><span class="tag ok">Production</span> Perfect Corp على Render</p>
+        </div>
+        <div class="card">
+          <h3 style="margin-top:0;">⚠️ مسارات ثانوية</h3>
+          <ul>
+            <li><strong>Outfit:</strong> FASHN/mock — <span class="tag warn">جزئي</span></li>
+            <li><strong>Recommendations:</strong> rule engine — undertone ثابت Neutral</li>
+            <li><strong>full-mira-analysis:</strong> <span class="tag danger">501 Not Implemented</span></li>
+            <li><strong>Progress:</strong> قائمة history فقط — بدون trends</li>
+          </ul>
+        </div>
+      </div>
+
+      <h3>شجرة الملفات ذات الصلة (موجودة)</h3>
+      <div class="arch-tree"><span class="exists">lib/features/skin_analysis/</span>          ← 27 ملف (capture + result + history)
+<span class="exists">lib/features/outfit_analysis/</span>        ← 12 ملف
+<span class="exists">lib/features/recommendations/</span>        ← 5 ملفات
+<span class="exists">lib/features/marketplace/</span>            ← 19 ملف (product matching)
+<span class="exists">lib/core/ai/engine/</span>                  ← mira_recommendation_engine.dart
+<span class="exists">mira-api/src/ai/</span>                     ← Perfect Corp + FASHN + gateway
+<span class="exists">mira-api/src/skin-analysis/</span>          ← persist + history
+<span class="exists">mira-api/prisma/schema.prisma</span>        ← SkinAnalysis, OutfitAnalysis JSON blobs
+<span class="new">mira-api/src/intelligence/</span>           ← <strong>غير موجود — مطلوب</strong>
+<span class="new">lib/features/intelligence/</span>           ← <strong>غير موجود — مطلوب</strong></div>
+    </section>
+
+    <!-- GAPS -->
+    <section id="gaps">
+      <h2>٣. مصفوفة الرؤية vs الواقع</h2>
+      <table>
+        <thead>
+          <tr>
+            <th>ميزة الرؤية</th>
+            <th>الحالة</th>
+            <th>الدليل</th>
+            <th>الجهد</th>
+          </tr>
+        </thead>
+        <tbody>
+          <tr>
+            <td>إزالة raw scores — لغة بشرية</td>
+            <td class="status-no">❌</td>
+            <td><code>result_screen.dart</code> يعرض radar + أرقام</td>
+            <td>12–18 ملف</td>
+          </tr>
+          <tr>
+            <td>Age Intelligence (Real vs Skin)</td>
+            <td class="status-no">❌</td>
+            <td><code>profile_entity.dart</code> بدون birthYear</td>
+            <td>14–18 ملف</td>
+          </tr>
+          <tr>
+            <td>Child Safety Validation</td>
+            <td class="status-no">❌</td>
+            <td>لا guard في أي provider</td>
+            <td>6–8 ملفات</td>
+          </tr>
+          <tr>
+            <td>Face Problem Localization</td>
+            <td class="status-no">❌</td>
+            <td>markers فقط إذا <code>spatialConfidence ≠ none</code></td>
+            <td>20–35 ملف (true) · 8–12 (fallback)</td>
+          </tr>
+          <tr>
+            <td>Face Health Map</td>
+            <td class="status-no">❌</td>
+            <td>مشروطة — <a href="#face-map-policy">Product Policy §٨</a></td>
+            <td>Gate + spike إلزامي</td>
+          </tr>
+          <tr>
+            <td>Mira Beauty Report (8 أقسام)</td>
+            <td class="status-partial">⚠️</td>
+            <td>result + routine جزئيان</td>
+            <td>15–20 ملف</td>
+          </tr>
+          <tr>
+            <td>Treatment Plan (AM/PM)</td>
+            <td class="status-partial">⚠️</td>
+            <td><code>SkinReportMatrix.dailyRoutine()</code> غير موصول</td>
+            <td>8–12 ملف</td>
+          </tr>
+          <tr>
+            <td>Progress Engine (68→74→82)</td>
+            <td class="status-no">❌</td>
+            <td><code>resultJson</code> blob — لا trends API</td>
+            <td>14–20 ملف</td>
+          </tr>
+          <tr>
+            <td>Product Engine مخصص</td>
+            <td class="status-partial">⚠️</td>
+            <td><code>marketplace-matching.engine.ts</code> tags</td>
+            <td>10–14 ملف</td>
+          </tr>
+          <tr>
+            <td>Style Intelligence (Fashion AI)</td>
+            <td class="status-partial">⚠️</td>
+            <td>FASHN mock fallback</td>
+            <td>12–18 ملف</td>
+          </tr>
+          <tr>
+            <td>Beauty + Fashion Fusion</td>
+            <td class="status-no">❌</td>
+            <td>undertone hardcoded «محايد»</td>
+            <td>8–12 ملف</td>
+          </tr>
+          <tr>
+            <td>full-mira-analysis</td>
+            <td class="status-no">❌</td>
+            <td><code>NotImplementedException</code></td>
+            <td>6–10 ملفات</td>
+          </tr>
+        </tbody>
+      </table>
+    </section>
+
+    <!-- ARCHITECTURE -->
+    <section id="architecture">
+      <h2>٤. أين توضع Intelligence Layer</h2>
+      <p>الفصل الصحيح بين الطبقات — بدون كسر ما يعمل:</p>
+
+      <table>
+        <thead>
+          <tr><th>الطبقة</th><th>المسار</th><th>المسؤولية</th></tr>
+        </thead>
+        <tbody>
+          <tr>
+            <td><strong>Providers</strong></td>
+            <td><code>mira-api/src/ai/</code></td>
+            <td>YouCam + FASHN خام — keys server-side فقط</td>
+          </tr>
+          <tr>
+            <td><strong>Intelligence</strong> 🆕</td>
+            <td><code>mira-api/src/intelligence/</code></td>
+            <td>ترجمة · age · safety · plans · fusion · progress</td>
+          </tr>
+          <tr>
+            <td><strong>Persistence</strong></td>
+            <td><code>skin-analysis/</code> · Prisma</td>
+            <td>تخزين JSON + history</td>
+          </tr>
+          <tr>
+            <td><strong>Capture UX</strong></td>
+            <td><code>lib/features/skin_analysis/</code></td>
+            <td>كاميرا + oval — يبقى كما هو</td>
+          </tr>
+          <tr>
+            <td><strong>Report UI</strong> 🆕</td>
+            <td><code>lib/features/intelligence/</code></td>
+            <td>Mira Beauty Report — 8 أقسام</td>
+          </tr>
+          <tr>
+            <td><strong>Commerce</strong></td>
+            <td><code>marketplace/</code></td>
+            <td>منتجات — يستهلك output من intelligence</td>
+          </tr>
+        </tbody>
+      </table>
+
+      <h3>هيكل Module المقترح (Backend)</h3>
+      <div class="arch-tree">mira-api/src/intelligence/
+├── intelligence.module.ts
+├── intelligence.controller.ts       <span class="new">POST /intelligence/beauty-report</span>
+├── intelligence.service.ts          orchestrator
+├── pipeline/
+│   ├── ingest-perfect-corp.ts
+│   ├── ingest-outfit.ts
+│   ├── narrative-engine.ts          ← human language AR
+│   ├── age-intelligence.ts
+│   ├── child-safety-guard.ts
+│   ├── face-zone-mapper.ts
+│   ├── treatment-plan-engine.ts
+│   ├── progress-engine.ts
+│   └── fusion-engine.ts
+└── contracts/mira-beauty-report.interface.ts</div>
+
+      <h3>هيكل Feature المقترح (Flutter)</h3>
+      <div class="arch-tree">lib/features/intelligence/
+├── domain/entities/mira_beauty_report.dart
+├── data/datasources/intelligence_api_data_source.dart
+└── presentation/
+    ├── screens/mira_beauty_report_screen.dart
+    └── widgets/
+        ├── face_health_map.dart
+        ├── skin_age_comparison_card.dart
+        ├── concern_narrative_section.dart
+        ├── treatment_plan_section.dart
+        └── progress_timeline.dart</div>
+    </section>
+
+    <!-- PROOFS -->
+    <section id="proofs">
+      <h2>٥. أدلة من الكود — Backend</h2>
+
+      <div class="proof-block">
+        <div class="proof-label">دليل ١ — full-mira-analysis غير مُنفَّذ</div>
+        <p><span class="path">mira-api/src/ai/ai-gateway.controller.ts</span> · lines 71–77</p>
+        <pre>@Post('full-mira-analysis')
+fullMiraAnalysis() {
+  throw new NotImplementedException(
+    'full-mira-analysis is not available yet; use skin-analysis and outfit-analysis',
+  );
+}</pre>
+      </div>
+
+      <div class="proof-block">
+        <div class="proof-label">دليل ٢ — undertone ثابت يمنع Beauty+Fashion Fusion</div>
+        <p><span class="path">mira-api/src/ai/services/perfect-corp.service.ts</span> · mapYouCamResults</p>
+        <pre>undertoneAr: 'محايد',
+undertoneEn: 'Neutral',
+skinToneAr: 'متوسط',
+skinToneEn: 'Medium',</pre>
+        <p>Recommendation engine يعتمد على undertone — النتيجة دائماً «Neutral Pink» makeup.</p>
+      </div>
+
+      <div class="proof-block">
+        <div class="proof-label">دليل ٣ — YouCam يُرجع scores فقط بدون zones</div>
+        <p><span class="path">mira-api/src/ai/services/perfect-corp.service.ts</span> · extractConcerns</p>
+        <pre>concerns.push({
+  type: row.type,
+  ui_score: typeof row.ui_score === 'number' ? row.ui_score : undefined,
+  raw_score: typeof row.raw_score === 'number' ? row.raw_score : undefined,
+});</pre>
+        <p>لا forehead · cheek · mask · coordinates — Face Map يحتاج طبقة إضافية.</p>
+      </div>
+
+      <div class="proof-block">
+        <div class="proof-label">دليل ٤ — dst_actions بدون regional analysis</div>
+        <p><span class="path">mira-api/src/ai/config/perfect-corp.config.ts</span></p>
+        <pre>PERFECT_CORP_DEFAULT_DST_ACTIONS = [
+  'wrinkle', 'pore', 'texture', 'acne',
+  'moisture', 'oiliness', 'redness', 'age_spot',
+]</pre>
+      </div>
+
+      <div class="proof-block">
+        <div class="proof-label">دليل ٥ — Prisma: JSON blob بدون trends</div>
+        <p><span class="path">mira-api/prisma/schema.prisma</span></p>
+        <pre>model SkinAnalysis {
+  id         String   @id @default(uuid())
+  userId     String   @map("user_id")
+  resultJson Json     @map("result_json")
+  createdAt  DateTime @default(now())
+}</pre>
+      </div>
+
+      <h2 style="margin-top:40px;">أدلة من الكود — Flutter</h2>
+
+      <div class="proof-block">
+        <div class="proof-label">دليل ٦ — UI يعرض radar + أرقام (ليس narrative)</div>
+        <p><span class="path">lib/features/skin_analysis/presentation/screens/result_screen.dart</span></p>
+        <pre>Text('نوع البشرة: ${report.skinType} · عمر البشرة التقديري: $skinAge')
+Text('النتيجة العامة $overall')
+Center(child: SkinHealthRadarChart(scores: radar))</pre>
+      </div>
+
+      <div class="proof-block">
+        <div class="proof-label">دليل ٧ — Profile بدون Real Age</div>
+        <p><span class="path">lib/features/profile/domain/entities/profile_entity.dart</span></p>
+        <pre>class ProfileEntity {
+  final String name;
+  final String phone;
+  final int points;
+  final int analyses;
+  // لا birthYear · لا age
+}</pre>
+      </div>
+
+      <div class="proof-block">
+        <div class="proof-label">دليل ٨ — Treatment Plan موجود لكن غير موصول</div>
+        <p><span class="path">lib/features/skin_analysis/domain/services/skin_report_matrix.dart</span></p>
+        <pre>static List&lt;SkinRoutineProduct&gt; dailyRoutine(SkinReport report) {
+  // منطق AM/PM من concernScores — لا يُستدعى في skin_routine_screen
+}</pre>
+        <p><span class="path">recommendation_list.dart</span> — widget بدون أي import في المشروع.</p>
+      </div>
+
+      <div class="proof-block">
+        <div class="proof-label">دليل ٩ — Chaining في الذاكرة فقط</div>
+        <p><span class="path">lib/core/session/analysis_session.dart</span></p>
+        <pre>static SkinReport? lastSkin;
+static OutfitReport? lastOutfit;
+// in-memory — يُفقد عند إغلاق التطبيق</pre>
+      </div>
+    </section>
+
+    <!-- MODULES -->
+    <section id="modules">
+      <h2>٦. الوحدات المطلوبة — Mira Beauty Report</h2>
+      <div class="grid-3">
+        <div class="card">
+          <h4>1. Overall Beauty Score</h4>
+          <p><span class="tag ok">موجود</span> BeautyScoreRing + report.score</p>
+        </div>
+        <div class="card">
+          <h4>2. Skin Age Comparison</h4>
+          <p><span class="tag danger">جديد</span> birthYear + skinAge delta</p>
+        </div>
+        <div class="card">
+          <h4>3. Main Concerns</h4>
+          <p><span class="tag danger">جديد</span> narrative-engine AR</p>
+        </div>
+        <div class="card">
+          <h4>4. Face Health Map</h4>
+          <p><span class="tag warn">P4</span> بعد spike Perfect Corp</p>
+        </div>
+        <div class="card">
+          <h4>5. Daily Routine</h4>
+          <p><span class="tag warn">wire</span> SkinReportMatrix + products</p>
+        </div>
+        <div class="card">
+          <h4>6. Weekly Plan</h4>
+          <p><span class="tag danger">جديد</span> treatment-plan-engine</p>
+        </div>
+        <div class="card">
+          <h4>7. Product Recommendations</h4>
+          <p><span class="tag ok">موجود</span> MarketplaceMatchedSection</p>
+        </div>
+        <div class="card">
+          <h4>8. Progress Forecast</h4>
+          <p><span class="tag danger">جديد</span> progress-engine + charts</p>
+        </div>
+      </div>
+
+      <h3>Mira Style Intelligence (Fashion)</h3>
+      <div class="card">
+        <p>Module منفصل: <code>lib/features/outfit_analysis/</code> + <code>fusion-engine.ts</code></p>
+        <ul>
+          <li>Outfit Score · Color Compatibility · Style Category</li>
+          <li>دمج undertone حقيقي → ألوان ملابس (beige/olive vs cold gray)</li>
+          <li>يعتمد على إصلاح undertone في Perfect Corp mapper</li>
+        </ul>
+      </div>
+    </section>
+
+    <!-- ROADMAP: 6 PHASES -->
+    <section id="roadmap">
+      <h2>٧. المراحل الست — حسب الأولوية (دقيق)</h2>
+      <p>
+        كل متطلب من رؤية MIRA Intelligence Layer يُنفَّذ في <strong>مرحلة واحدة فقط</strong>.
+        الترتيب مبني على: <em>الاعتماديات التقنية → القيمة للمستخدم → المخاطرة → العائد التجاري</em>.
+        لا تبدأ مرحلة قبل اكتمال معايير القبول للمرحلة السابقة.
+      </p>
+
+      <div class="phase-bar">
+        <div class="phase"><div class="phase-num">1</div><strong>أساس الذكاء</strong><p style="font-size:0.8rem;color:var(--muted);margin:0;">Backend + Narrative</p></div>
+        <div class="phase"><div class="phase-num">2</div><strong>تقرير ميرا</strong><p style="font-size:0.8rem;color:var(--muted);margin:0;">Premium UI</p></div>
+        <div class="phase"><div class="phase-num">3</div><strong>العمر والأمان</strong><p style="font-size:0.8rem;color:var(--muted);margin:0;">Age + Safety</p></div>
+        <div class="phase"><div class="phase-num">4</div><strong>محرك التقدم</strong><p style="font-size:0.8rem;color:var(--muted);margin:0;">Progress</p></div>
+        <div class="phase"><div class="phase-num">5</div><strong>خريطة الوجه</strong><p style="font-size:0.8rem;color:var(--muted);margin:0;">Face Map</p></div>
+        <div class="phase"><div class="phase-num">6</div><strong>الإطلالة والدمج</strong><p style="font-size:0.8rem;color:var(--muted);margin:0;">Style Fusion</p></div>
+      </div>
+
+      <!-- PHASE 1 -->
+      <div class="card ok" id="phase-1">
+        <h3 style="margin-top:0;">المرحلة 1 — أساس Mira Intelligence Layer (Backend)</h3>
+        <p><span class="tag ok">أولوية قصوى</span> <span class="tag">~3–4 أسابيع</span> <span class="tag">24–32 ملف</span></p>
+        <p><strong>لماذا أولاً؟</strong> بدون هذه الطبقة، ميرا تبقى wrapper لـ Perfect Corp. كل المراحل اللاحقة تستهلك output هذه المرحلة.</p>
+
+        <h4>🎯 الهدف</h4>
+        <p>إنشاء <code>mira-api/src/intelligence/</code> — طبقة بين YouCam والمستخدم. المستخدم لا يرى raw API values أبداً.</p>
+
+        <h4>✅ داخل النطاق (IN)</h4>
+        <table>
+          <thead><tr><th>المتطلب</th><th>التنفيذ الدقيق</th><th>ملفات مقترحة</th></tr></thead>
+          <tbody>
+            <tr>
+              <td>Core Architecture — Flow</td>
+              <td>Photo → Perfect Corp → <strong>Intelligence</strong> → JSON جديد <code>MiraBeautyReport</code></td>
+              <td><code>intelligence.module.ts</code> · <code>intelligence.service.ts</code> · <code>intelligence.controller.ts</code></td>
+            </tr>
+            <tr>
+              <td>Remove Raw Analysis</td>
+              <td><code>narrative-engine.ts</code> — تحويل concernScores إلى جمل عربية (قواعد + templates)</td>
+              <td><code>pipeline/narrative-engine.ts</code> · <code>contracts/mira-beauty-report.interface.ts</code></td>
+            </tr>
+            <tr>
+              <td>Perfect Corp = engine only</td>
+              <td><code>ingest-perfect-corp.ts</code> — rawSkin داخلي فقط، لا يُرسل للFlutter</td>
+              <td><code>pipeline/ingest-perfect-corp.ts</code></td>
+            </tr>
+            <tr>
+              <td>Treatment Plan — أساس</td>
+              <td><code>treatment-plan-engine.ts</code> — AM/PM من concernScores (port من <code>SkinReportMatrix</code>)</td>
+              <td><code>pipeline/treatment-plan-engine.ts</code></td>
+            </tr>
+            <tr>
+              <td>Product Recommendations — ربط</td>
+              <td>استدعاء <code>marketplace-matching.engine.ts</code> داخل orchestrator</td>
+              <td>تعديل <code>intelligence.service.ts</code> + <code>marketplace.service.ts</code></td>
+            </tr>
+            <tr>
+              <td>API Endpoint</td>
+              <td><code>POST /api/v1/intelligence/beauty-report</code> أو ترقية response الـ skin-analysis</td>
+              <td><code>intelligence.controller.ts</code> · تعديل <code>app.module.ts</code></td>
+            </tr>
+            <tr>
+              <td>Flutter Data Layer</td>
+              <td>Entity + datasource + mapper للـ MiraBeautyReport</td>
+              <td><code>lib/features/intelligence/data/*</code> · <code>domain/entities/mira_beauty_report.dart</code></td>
+            </tr>
+            <tr>
+              <td>Tests</td>
+              <td>Unit: narrative + treatment · Integration: endpoint</td>
+              <td><code>mira-api/src/intelligence/*.spec.ts</code></td>
+            </tr>
+          </tbody>
+        </table>
+
+        <h4>❌ خارج النطاق (OUT)</h4>
+        <ul>
+          <li>Face Map · Age Comparison · Progress charts · Style Fusion · Child Safety · Weekly Plan · LLM</li>
+          <li>تغيير كamera UX (<code>face_capture_panel.dart</code> يبقى كما هو)</li>
+        </ul>
+
+        <h4>📋 معايير القبول</h4>
+        <ol>
+          <li>Response API لا يحتوي <code>hydration: 73</code> في path المستخدم — فقط <code>concernsNarrative[]</code></li>
+          <li>كل concern له جملة عربية واحدة على الأقل</li>
+          <li>AM/PM routine ≥ 3 خطوات مخصصة حسب scores</li>
+          <li>Products ≥ 3 من marketplace match</li>
+          <li>Perfect Corp raw data غير exposed في Swagger/response</li>
+        </ol>
+
+        <h4>🔗 يعتمد على</h4>
+        <p>Perfect Corp provider الحالي (<code>perfect-corp-skin.provider.ts</code>) + marketplace module.</p>
+
+        <div class="card ok" id="phase-1-done" style="margin-top:1.5rem;border:2px solid var(--ok);">
+          <h4 style="margin-top:0;">✅ ما نُفّذ — المرحلة 1 (يونيو 2026)</h4>
+          <p>
+            نُفّذت المرحلة الأولى على <strong>ثلاثة أجزاء حسب الأولوية</strong>:
+            محركات الذكاء في الـ Backend، ثم ربط الـ API، ثم طبقة البيانات والواجهة في Flutter.
+            Perfect Corp يبقى محركاً داخلياً — المستخدم يرى <code>MiraBeautyReport</code> فقط.
+          </p>
+
+          <h4>الجزء 1 — محركات Intelligence (Backend)</h4>
+          <table>
+            <thead><tr><th>ملف</th><th>الدور</th></tr></thead>
+            <tbody>
+              <tr><td><code>mira-api/src/intelligence/contracts/mira-beauty-report.interface.ts</code></td><td>عقد <code>MiraBeautyReport</code> + payload v2 للتخزين</td></tr>
+              <tr><td><code>pipeline/narrative-engine.ts</code></td><td>تحويل concernScores إلى جمل عربية (بدون أرقام خام)</td></tr>
+              <tr><td><code>pipeline/treatment-plan-engine.ts</code></td><td>روتين AM/PM مخصص من نفس الـ scores</td></tr>
+              <tr><td><code>pipeline/face-zone-mapper.ts</code></td><td><code>spatialConfidence: none</code> — سرد آمن فقط، بدون markers وهمية</td></tr>
+              <tr><td><code>*.spec.ts</code></td><td>اختبارات وحدة للـ narrative و treatment</td></tr>
+            </tbody>
+          </table>
+
+          <h4>الجزء 2 — ربط API</h4>
+          <table>
+            <thead><tr><th>ملف</th><th>الدور</th></tr></thead>
+            <tbody>
+              <tr><td><code>intelligence.service.ts</code> · <code>intelligence.module.ts</code></td><td>أوركسترا: narrative + treatment + marketplace match</td></tr>
+              <tr><td><code>skin-analysis.service.ts</code></td><td>بعد YouCam → <code>buildBeautyReport()</code> → تخزين JSON v2</td></tr>
+              <tr><td><code>skin-analysis-response.dto.ts</code></td><td>Response يعرض <code>miraReport</code> — لا يُرسل <code>skin</code> خام للعميل</td></tr>
+              <tr><td><code>skin-analysis.module.ts</code></td><td>استيراد <code>IntelligenceModule</code></td></tr>
+            </tbody>
+          </table>
+
+          <h4>الجزء 3 — Flutter (Data + UI أساسي)</h4>
+          <table>
+            <thead><tr><th>ملف</th><th>الدور</th></tr></thead>
+            <tbody>
+              <tr><td><code>lib/features/intelligence/domain/entities/mira_beauty_report.dart</code></td><td>Entity للتقرير</td></tr>
+              <tr><td><code>data/mappers/mira_beauty_report_mapper.dart</code></td><td>JSON ↔ entity ↔ SkinReport</td></tr>
+              <tr><td><code>skin_analysis_api_data_source.dart</code></td><td>يقرأ <code>miraReport</code> من API والسجل</td></tr>
+              <tr><td><code>skin_report_model.dart</code></td><td>حقل اختياري <code>miraReport</code></td></tr>
+              <tr><td><code>result_screen.dart</code></td><td>عند وجود miraReport: headline + concerns + routine — بدون radar</td></tr>
+              <tr><td><code>skin_routine_screen.dart</code></td><td>عرض <code>DailyRoutineSection</code> من التقرير</td></tr>
+              <tr><td><code>concern_narrative_section.dart</code> · <code>daily_routine_section.dart</code></td><td>Widgets لعرض السرد والروتين</td></tr>
+            </tbody>
+          </table>
+
+          <h4>📊 النتائج المتوقعة بعد هذه المرحلة</h4>
+          <ul>
+            <li><strong>للمستخدم المسجّل (Backend):</strong> تقرير بشرة بلغة عربية مفهومة — «ملاحظات ميرا» + روتين صباح/مساء — بدلاً من radar وأرقام hydration/pores.</li>
+            <li><strong>للـ API:</strong> كل تحليل جديد يُخزَّن كـ <code>{ version: 2, miraReport }</code>؛ السجل القديم (v1) يُعاد بناؤه عند القراءة عبر <code>buildBeautyReport(legacy)</code>.</li>
+            <li><strong>للمنتج:</strong> فصل واضح بين محرك YouCam و«صوت ميرا» — أساس لجميع المراحل 2–6.</li>
+            <li><strong>للثقة:</strong> Face Map معطّل (<code>faceMapEnabled: false</code>, <code>spatialConfidence: none</code>) حتى توفر Perfect Corp بيانات مكانية حقيقية (المرحلة 5).</li>
+            <li><strong>للتوصيات:</strong> منتجات الشركاء تُدمَج في التقرير عبر marketplace match داخل الـ orchestrator.</li>
+          </ul>
+
+          <h4>⚠️ ما لم يُنفَّذ بعد (متعمد — خارج نطاق المرحلة 1)</h4>
+          <ul>
+            <li>واجهة Premium كاملة (<code>MiraBeautyReportScreen</code>) — م scheduled للمرحلة 2</li>
+            <li>Guest mode المحلي — ما زال يستخدم legacy radar (mock بدون Backend)</li>
+            <li>Face Map · Age Comparison · Progress · Style Fusion · LLM</li>
+            <li>Endpoint مستقل <code>/intelligence/beauty-report</code> — التكامل عبر skin-analysis كافٍ حالياً</li>
+          </ul>
+
+          <h4>✓ معايير القبول — حالة التحقق</h4>
+          <table>
+            <thead><tr><th>المعيار</th><th>الحالة</th></tr></thead>
+            <tbody>
+              <tr><td>لا أرقام خام في response المستخدم</td><td><span class="tag ok">✓</span> <code>miraReport</code> فقط</td></tr>
+              <tr><td>كل concern له جملة عربية</td><td><span class="tag ok">✓</span> <code>narrative-engine</code></td></tr>
+              <tr><td>AM/PM ≥ 3 خطوات</td><td><span class="tag ok">✓</span> <code>treatment-plan-engine</code></td></tr>
+              <tr><td>Products من marketplace</td><td><span class="tag ok">✓</span> داخل orchestrator</td></tr>
+              <tr><td>Perfect Corp raw غير exposed</td><td><span class="tag ok">✓</span> داخلي فقط</td></tr>
+            </tbody>
+          </table>
+        </div>
+      </div>
+
+      <!-- PHASE 2 -->
+      <div class="card ok" id="phase-2">
+        <h3 style="margin-top:0;">المرحلة 2 — Mira Beauty Report + Premium Experience (Flutter UI)</h3>
+        <p><span class="tag ok">أولوية عالية</span> <span class="tag">~2–3 أسابيع</span> <span class="tag">18–26 ملف</span></p>
+        <p><strong>لماذا ثانياً؟</strong> المرحلة 1 بدون UI = invisible للمستخدم. هنا يتحول الشعور من «scanner» إلى «advisor».</p>
+
+        <h4>🎯 الهدف</h4>
+        <p>استبدال <code>result_screen.dart</code> بـ <code>MiraBeautyReportScreen</code> — luxury feminine intelligent UX.</p>
+
+        <h4>✅ داخل النطاق — أقسام التقرير (4 من 8)</h4>
+        <table>
+          <thead><tr><th>#</th><th>قسم Mira Beauty Report</th><th>Widget</th><th>مصدر البيانات</th></tr></thead>
+          <tbody>
+            <tr><td>1</td><td>Overall Beauty Score</td><td><code>beauty_score_hero.dart</code></td><td>Phase 1 API</td></tr>
+            <tr><td>3</td><td>Main Concerns (narrative)</td><td><code>concern_narrative_section.dart</code></td><td>narrative-engine</td></tr>
+            <tr><td>5</td><td>Daily Routine</td><td><code>treatment_plan_section.dart</code></td><td>treatment-plan-engine</td></tr>
+            <tr><td>7</td><td>Product Recommendations</td><td><code>MarketplaceMatchedSection</code> (موجود)</td><td>marketplace</td></tr>
+          </tbody>
+        </table>
+
+        <h4>✅ Premium Experience</h4>
+        <ul>
+          <li>إزالة <code>SkinHealthRadarChart</code> من المسار الرئيسي (أو secondary toggle)</li>
+          <li>إزالة «Oiliness: 73» — wire <code>recommendation_list.dart</code> · <code>skin_condition_indicator.dart</code></li>
+          <li>Staggered animations · gold/premium cards · personalized greeting بالاسم من profile</li>
+          <li>Navigation: بعد التحليل → <code>AppRoutes.miraBeautyReport</code></li>
+        </ul>
+
+        <h4>❌ خارج النطاق</h4>
+        <ul>
+          <li>أقسام 2 (Age) · 4 (Face Map — <a href="#face-map-policy">مشروط ببيانات مكانية</a>) · 6 (Weekly) · 8 (Progress) — placeholder «قريباً» أو narrative-only</li>
+        </ul>
+
+        <h4>📋 معايير القبول</h4>
+        <ol>
+          <li>لا raw numbers visible في الشاشة الرئيسية للتقرير</li>
+          <li>4 أقسام مكتملة + scroll premium</li>
+          <li>Guest + signed-in paths يعملان</li>
+          <li>Time-to-read ≤ 90 ثانية — لغة بشرية 100%</li>
+        </ol>
+
+        <h4>🔗 يعتمد على</h4>
+        <p>اكتمال Phase 1 API + <code>MiraBeautyReport</code> entity.</p>
+
+        <div class="card ok" id="phase-2-done" style="margin-top:1.5rem;border:2px solid var(--ok);">
+          <h4 style="margin-top:0;">✅ ما نُفّذ — المرحلة 2 (يونيو 2026)</h4>
+          <p>
+            نُفّذت على <strong>ثلاثة أجزاء حسب الأولوية</strong>: شاشة Premium + widgets،
+            مسار Guest/legacy محلي، ثم Navigation + توثيق.
+          </p>
+
+          <h4>الجزء 1 — Premium UI Core</h4>
+          <table>
+            <thead><tr><th>ملف</th><th>الدور</th></tr></thead>
+            <tbody>
+              <tr><td><code>mira_beauty_report_screen.dart</code></td><td>الشاشة الرئيسية — DelightBackground + StaggeredEntrance + 4 أقسام مكتملة</td></tr>
+              <tr><td><code>beauty_score_hero.dart</code></td><td>قسم 1 — مؤشر جمال البشرة (رقم واحد فقط)</td></tr>
+              <tr><td><code>concern_narrative_section.dart</code></td><td>قسم 3 — ملاحظات بشرية بدون metrics</td></tr>
+              <tr><td><code>treatment_plan_section.dart</code></td><td>قسم 5 — روتين AM/PM premium</td></tr>
+              <tr><td><code>mira_tips_section.dart</code></td><td>نصائح من <code>tipsAr</code> — بديل <code>recommendation_list</code></td></tr>
+              <tr><td><code>mira_coming_soon_card.dart</code></td><td>Placeholder للأقسام 2 · 4 · 6 · 8</td></tr>
+            </tbody>
+          </table>
+
+          <h4>الجزء 2 — Guest + Legacy Path</h4>
+          <table>
+            <thead><tr><th>ملف</th><th>الدور</th></tr></thead>
+            <tbody>
+              <tr><td><code>local_mira_report_builder.dart</code></td><td>بناء <code>MiraBeautyReport</code> محلياً — mirror للـ backend engines</td></tr>
+              <tr><td><code>mira_report_helpers.dart</code></td><td><code>resolveMiraReport()</code> + <code>attachMiraReport()</code></td></tr>
+              <tr><td><code>GuestSkinAnalysisRepository</code></td><td>Guest path يُرجع تقرير ميرا كاملاً</td></tr>
+            </tbody>
+          </table>
+
+          <h4>الجزء 3 — Navigation + Experience</h4>
+          <table>
+            <thead><tr><th>ملف</th><th>الدور</th></tr></thead>
+            <tbody>
+              <tr><td><code>AppRoutes.miraBeautyReport</code></td><td>مسار جديد بعد التحليل</td></tr>
+              <tr><td><code>mira_report_navigation.dart</code></td><td><code>openAfterAnalysis</code> · <code>openFromHistory</code></td></tr>
+              <tr><td><code>PersonalizedGreetingHeader</code></td><td>ترحيب بالاسم في التقرير</td></tr>
+              <tr><td><code>AnalysisCelebration</code></td><td>احتفال لطيف بعد تحليل جديد</td></tr>
+              <tr><td><code>result_screen.dart</code></td><td>Alias legacy → <code>MiraBeautyReportScreen</code></td></tr>
+            </tbody>
+          </table>
+
+          <h4>📊 النتائج المتوقعة</h4>
+          <ul>
+            <li><strong>UX:</strong> انتقال من «scanner + radar» إلى «مستشار جمال» — scroll premium، لغة 100% عربية.</li>
+            <li><strong>Guest + Signed-in:</strong> نفس تجربة التقرير — Guest عبر builder محلي، المسجّلة عبر API.</li>
+            <li><strong>لا raw metrics:</strong> لا Oiliness: 73 · لا radar في المسار الرئيسي · لا <code>SkinConditionIndicator</code> بالأرقام.</li>
+            <li><strong>4 أقسام مكتملة:</strong> Score · Concerns · Routine · Products.</li>
+            <li><strong>4 placeholders:</strong> Age · Face Map · Weekly · Progress — مع رابط للمرحلة القادمة.</li>
+          </ul>
+
+          <h4>✓ معايير القبول — حالة التحقق</h4>
+          <table>
+            <thead><tr><th>المعيار</th><th>الحالة</th></tr></thead>
+            <tbody>
+              <tr><td>لا raw numbers في الشاشة الرئيسية</td><td><span class="tag ok">✓</span> مؤشر واحد فقط</td></tr>
+              <tr><td>4 أقسام + scroll premium</td><td><span class="tag ok">✓</span></td></tr>
+              <tr><td>Guest + signed-in</td><td><span class="tag ok">✓</span></td></tr>
+              <tr><td>لغة بشرية 100%</td><td><span class="tag ok">✓</span></td></tr>
+            </tbody>
+          </table>
+        </div>
+      </div>
+
+      <!-- PHASE 3 -->
+      <div class="card warn" id="phase-3">
+        <h3 style="margin-top:0;">المرحلة 3 — Age Intelligence + Child Safety</h3>
+        <p><span class="tag warn">أولوية متوسطة-عالية</span> <span class="tag">~2–3 أسابيع</span> <span class="tag">16–22 ملف</span></p>
+        <p><strong>لماذا ثالثاً؟</strong> يحتاج profile sync + guard logic. يُكمّل التقرير (قسم 2) ويمنع misdiagnosis للأطفال.</p>
+
+        <h4>✅ داخل النطاق</h4>
+        <table>
+          <thead><tr><th>المتطلب</th><th>Backend</th><th>Flutter</th></tr></thead>
+          <tbody>
+            <tr>
+              <td>Age optional — لا في التسجيل</td>
+              <td><code>UserPreference.birthYear</code> Prisma migration</td>
+              <td><code>edit_profile_screen.dart</code> — حقل اختياري</td>
+            </tr>
+            <tr>
+              <td>Real Age vs Skin Age</td>
+              <td><code>pipeline/age-intelligence.ts</code></td>
+              <td><code>skin_age_comparison_card.dart</code></td>
+            </tr>
+            <tr>
+              <td>Why + causes + opportunities</td>
+              <td>قوالب عربية في age-intelligence</td>
+              <td>expandable cards في comparison card</td>
+            </tr>
+            <tr>
+              <td>Child Safety</td>
+              <td><code>pipeline/child-safety-guard.ts</code> — threshold 16</td>
+              <td>إخفاء wrinkle/skinAge sections</td>
+            </tr>
+            <tr>
+              <td>Firestore ↔ Prisma sync</td>
+              <td><code>users.service.ts</code> + preference endpoint</td>
+              <td><code>profile_repository</code> + API sync</td>
+            </tr>
+          </tbody>
+        </table>
+
+        <h4>Mira Beauty Report — قسم 2</h4>
+        <p>«عمرك 30 · بشرتك تبدو 35 · +5 سنوات» + شرح «جفاف + شمس».</p>
+
+        <h4>❌ خارج النطاق</h4>
+        <ul><li>Face Map · Progress · Style · Weekly Plan</li></ul>
+
+        <h4>🔗 يعتمد على</h4>
+        <p>اكتمال Phase 1 API + <code>MiraBeautyReport</code> entity.</p>
+
+        <div class="card ok" id="phase-3-done" style="margin-top:1.5rem;border:2px solid var(--ok);">
+          <h4 style="margin-top:0;">✅ ما نُفّذ — المرحلة 3 (يونيو 2026)</h4>
+          <p>
+            نُفّذت على <strong>ثلاثة أجزاء حسب الأولوية</strong>:
+            محركات Age + Child Safety في Backend، ثم API preferences + sync،
+            ثم Flutter UI + الملف الشخصي.
+          </p>
+
+          <h4>الجزء 1 — Backend Engines</h4>
+          <table>
+            <thead><tr><th>ملف</th><th>الدور</th></tr></thead>
+            <tbody>
+              <tr><td><code>pipeline/age-intelligence.ts</code></td><td>مقارنة العمر الحقيقي vs عمر البشرة + causes + opportunities</td></tr>
+              <tr><td><code>pipeline/child-safety-guard.ts</code></td><td>threshold 16 — إخفاء wrinkle + skin age delta</td></tr>
+              <tr><td><code>prisma … birth_year</code></td><td><code>UserPreference.birthYear</code> اختياري</td></tr>
+              <tr><td><code>intelligence.service.ts</code></td><td>دمج ageComparison + childSafety في <code>MiraBeautyReport</code></td></tr>
+              <tr><td><code>*.spec.ts</code></td><td>اختبارات age + safety + minors</td></tr>
+            </tbody>
+          </table>
+
+          <h4>الجزء 2 — API + Profile Sync</h4>
+          <table>
+            <thead><tr><th>ملف</th><th>الدور</th></tr></thead>
+            <tbody>
+              <tr><td><code>GET/PATCH /users/me/preferences</code></td><td>قراءة/تحديث <code>birthYear</code></td></tr>
+              <tr><td><code>users.service.ts</code></td><td>validation + upsert preferences</td></tr>
+              <tr><td><code>skin-analysis.service.ts</code></td><td>يمرّر birthYear عند التحليل · يُعيد enrich للسجل</td></tr>
+              <tr><td><code>profile_repository_impl.dart</code></td><td>sync birthYear ↔ Prisma عند الحفظ</td></tr>
+              <tr><td><code>edit_profile_screen.dart</code></td><td>حقل سنة ميلاد اختياري — ليس في التسجيل</td></tr>
+            </tbody>
+          </table>
+
+          <h4>الجزء 3 — Flutter Report Section 2</h4>
+          <table>
+            <thead><tr><th>ملف</th><th>الدور</th></tr></thead>
+            <tbody>
+              <tr><td><code>skin_age_comparison_card.dart</code></td><td>قسم 2 — headline + expandable insights</td></tr>
+              <tr><td><code>local_age_intelligence.dart</code></td><td>mirror محلي للـ guest path</td></tr>
+              <tr><td><code>age_comparison.dart</code></td><td>Entity + childSafety</td></tr>
+              <tr><td><code>mira_beauty_report_screen.dart</code></td><td>استبدال placeholder بقسم العمر</td></tr>
+            </tbody>
+          </table>
+
+          <h4>📊 النتائج المتوقعة</h4>
+          <ul>
+            <li><strong>التسجيل:</strong> يعمل بدون age — سنة الميلاد اختيارية في الملف الشخصي فقط.</li>
+            <li><strong>المقارنة:</strong> «عمرك 30 · بشرتك تبدو 35 · +5 سنوات» + أسباب وفرص تحسين.</li>
+            <li><strong>Child Safety:</strong> عمر &lt; 16 → لا wrinkle diagnosis · لا skin age delta · رسالة آمنة.</li>
+            <li><strong>Unrealistic:</strong> skinAge &gt; 80 → suppressed + رسالة عامة.</li>
+            <li><strong>Guest:</strong> رسالة تسجيل بدلاً من مقارنة — بدون بيانات وهمية.</li>
+          </ul>
+
+          <h4>✓ معايير القبول — حالة التحقق</h4>
+          <table>
+            <thead><tr><th>المعيار</th><th>الحالة</th></tr></thead>
+            <tbody>
+              <tr><td>التسجيل بدون age</td><td><span class="tag ok">✓</span></td></tr>
+              <tr><td>birthYear editable</td><td><span class="tag ok">✓</span> edit profile</td></tr>
+              <tr><td>user age &lt; 16 → no wrinkle · no delta</td><td><span class="tag ok">✓</span></td></tr>
+              <tr><td>skinAge &gt; 80 → suppressed</td><td><span class="tag ok">✓</span></td></tr>
+            </tbody>
+          </table>
+        </div>
+      </div>
+
+      <!-- PHASE 4 -->
+      <div class="card warn" id="phase-4">
+        <h3 style="margin-top:0;">المرحلة 4 — Beauty Progress Engine (Retention)</h3>
+        <p><span class="tag warn">أولوية متوسطة</span> <span class="tag">~2–3 أسابيع</span> <span class="tag">18–24 ملف</span></p>
+        <p><strong>لماذا رابعة؟</strong> يحتاج ≥2 scans per user. يُفعّل «addictive personalized» ويُميّز ميرا تجارياً.</p>
+
+        <h4>✅ داخل النطاق</h4>
+        <ul>
+          <li><code>pipeline/progress-engine.ts</code> — trends من <code>skin_analyses</code> history</li>
+          <li><code>GET /intelligence/progress</code> — hydration/pores/redness deltas</li>
+          <li><code>progress_timeline.dart</code> — charts 68→74→82</li>
+          <li>Milestones: «تحسّن الترطيب +12%» · ربط <code>achievements</code> في profile</li>
+          <li>Mira Beauty Report — <strong>قسم 8: Progress Forecast</strong> (basic linear projection)</li>
+          <li>Optional: <code>concern_snapshot</code> columns في Prisma لتسريع queries</li>
+        </ul>
+
+        <h4>❌ خارج النطاق</h4>
+        <ul><li>Face Map · Style Fusion · LLM forecast</li></ul>
+
+        <h4>📋 معايير القبول</h4>
+        <ol>
+          <li>بعد scan ثانٍ → trend visible</li>
+          <li>Improvement + regression labels بالعربي</li>
+          <li>History screen link → progress detail</li>
+        </ol>
+
+        <div class="card ok" id="phase-4-done" style="margin-top:1.5rem;border:2px solid var(--ok);">
+          <h4 style="margin-top:0;">✅ ما نُفّذ — المرحلة 4 (يونيو 2026)</h4>
+          <p>
+            نُفّذت على <strong>ثلاثة أجزاء حسب الأولوية</strong>:
+            محرك Trends في Backend، ثم API + ربط التقرير، ثم Flutter timeline + شاشة التفاصيل.
+          </p>
+
+          <h4>الجزء 1 — progress-engine (Backend)</h4>
+          <table>
+            <thead><tr><th>ملف</th><th>الدور</th></tr></thead>
+            <tbody>
+              <tr><td><code>pipeline/progress-engine.ts</code></td><td>Trends من history: overall · moisture · pore · redness</td></tr>
+              <tr><td><code>ProgressForecastPayload</code></td><td>timeline · trends · milestones · linear 30-day forecast</td></tr>
+              <tr><td><code>progress-engine.spec.ts</code></td><td>اختبار scan &lt; 2 و scan ≥ 2</td></tr>
+            </tbody>
+          </table>
+
+          <h4>الجزء 2 — API + Report Integration</h4>
+          <table>
+            <thead><tr><th>ملف</th><th>الدور</th></tr></thead>
+            <tbody>
+              <tr><td><code>GET /intelligence/progress</code></td><td>Progress كامل للمستخدم</td></tr>
+              <tr><td><code>intelligence.controller.ts</code></td><td>Endpoint + auth</td></tr>
+              <tr><td><code>attachProgressForecast()</code></td><td>يُرفق progressForecast بكل تحليل + history</td></tr>
+            </tbody>
+          </table>
+
+          <h4>الجزء 3 — Flutter UI</h4>
+          <table>
+            <thead><tr><th>ملف</th><th>الدور</th></tr></thead>
+            <tbody>
+              <tr><td><code>progress_timeline.dart</code></td><td>رسم 68→74→82</td></tr>
+              <tr><td><code>progress_forecast_section.dart</code></td><td>قسم 8 في تقرير ميرا</td></tr>
+              <tr><td><code>beauty_progress_screen.dart</code></td><td>شاشة تفاصيل Trends + milestones</td></tr>
+              <tr><td><code>local_progress_builder.dart</code></td><td>Fallback محلي من history</td></tr>
+              <tr><td><code>history_screen.dart</code></td><td>زر «عرض تقدم البشرة» عند ≥2 تحليل</td></tr>
+            </tbody>
+          </table>
+
+          <h4>📊 النتائج المتوقعة</h4>
+          <ul>
+            <li><strong>Retention:</strong> المستخدمة ترى تحسّناً أو تراجعاً بلغة عربية واضحة بعد التحليل الثاني.</li>
+            <li><strong>Milestones:</strong> «تحسّن الترطيب +12 نقطة» · «ارتفع مؤشر جمال بشرتك».</li>
+            <li><strong>Forecast:</strong> تقدير خطي 30 يوماً — بدون LLM.</li>
+            <li><strong>Navigation:</strong> من السجل أو التقرير → شاشة تقدم كاملة.</li>
+          </ul>
+
+          <h4>✓ معايير القبول — حالة التحقق</h4>
+          <table>
+            <thead><tr><th>المعيار</th><th>الحالة</th></tr></thead>
+            <tbody>
+              <tr><td>بعد scan ثانٍ → trend visible</td><td><span class="tag ok">✓</span></td></tr>
+              <tr><td>Improvement + regression بالعربي</td><td><span class="tag ok">✓</span></td></tr>
+              <tr><td>History → progress detail</td><td><span class="tag ok">✓</span></td></tr>
+            </tbody>
+          </table>
+        </div>
+      </div>
+
+      <!-- PHASE 5 -->
+      <div class="card danger" id="phase-5">
+        <h3 style="margin-top:0;">المرحلة 5 — Face Health Map (مشروطة — لا heuristic markers)</h3>
+        <p>
+          <span class="tag danger">أكبر خطر في الخطة</span>
+          <span class="tag">Gate إلزامي قبل أي كود UI</span>
+          <span class="tag">22–32 ملف إذا spatial = نعم · 8–12 إذا spatial = لا</span>
+        </p>
+        <p><strong>لماذا خامسة؟</strong> YouCam الحالي يُرجع scores عامة فقط — لا coordinates. رسم markers «دقيقة» بدون بيانات مكانية = <strong>كسر ثقة المستخدم</strong>.</p>
+
+        <div class="card ok" style="margin:16px 0;border-right:4px solid var(--ok);">
+          <h4 style="margin-top:0;color:var(--ok);">📜 Product Policy (ملزمة)</h4>
+          <ol>
+            <li><strong>Face Map = مشروطة</strong> بتوفر بيانات مكانية حقيقية من Perfect Corp (mask · regional scores · coordinates).</li>
+            <li><strong>ممنوع</strong> عرض علامات/نقاط حمراء «دقيقة» على الوجه إذا التحليل global-only.</li>
+            <li><strong>Heuristic</strong> (T-zone = oiliness) — narrative نصي فقط + disclaimer — <strong>ليس</strong> face map.</li>
+            <li>كل response يحمل <code>spatialConfidence: "none" | "regional" | "pixel"</code> — UI يقرأها ولا يتجاوزها.</li>
+          </ol>
+          <p style="margin-bottom:0;"><a href="#face-map-policy">السياسة الكاملة ↓</a></p>
+        </div>
+
+        <h4>⚠️ 5a — Spike Gate (أسبوع 0 — لا كود Flutter قبلها)</h4>
+        <table>
+          <thead><tr><th>خطوة</th><th>إجراء</th><th>مخرج</th></tr></thead>
+          <tbody>
+            <tr><td>1</td><td>مراجعة Perfect Corp S2S contract + sample JSON</td><td>تقرير: هل masks/regions موجودة؟</td></tr>
+            <tr><td>2</td><td>اختبار <code>dst_actions</code> إضافية إن وُجدت</td><td>pass/fail spatial</td></tr>
+            <tr><td>3</td><td>قرار Product + Tech</td><td>مسار 5b-true أو 5b-fallback</td></tr>
+          </tbody>
+        </table>
+
+        <h4>5b-true — spatial data = نعم ✅</h4>
+        <p><span class="tag ok">يُنفَّذ Face Map كامل</span></p>
+        <ul>
+          <li><code>pipeline/face-zone-mapper.ts</code> — maps من API فقط</li>
+          <li><code>face_health_map.dart</code> — markers على zones حقيقية</li>
+          <li><code>spatialConfidence: "regional" | "pixel"</code></li>
+          <li>Mira Beauty Report — <strong>قسم 4</strong> مفعّل</li>
+        </ul>
+
+        <h4>5b-fallback — spatial data = لا ⚠️</h4>
+        <p><span class="tag warn">لا Face Map — بديل آمن</span></p>
+        <ul>
+          <li><code>concern_zones_narrative.dart</code> — بطاقات نصية: «قد تظهر المسام في T-Zone»</li>
+          <li>Disclaimer: <em>«تقدير عام — ليس تشخيص موضعي على الوجه»</em></li>
+          <li>قسم 4 = <strong>Concern Zones (نصي)</strong> — بدون رسم markers</li>
+          <li><strong>ممنوع:</strong> <code>face_health_map.dart</code> مع red dots</li>
+          <li>تأجيل Map حتى upgrade API أو provider بديل</li>
+        </ul>
+
+        <h4>📋 معايير القبول — 5b-true</h4>
+        <ol>
+          <li>كل marker مربوط بـ region id من API response</li>
+          <li><code>spatialConfidence !== "none"</code></li>
+          <li>لا marker بدون <code>source: "perfect_corp"</code> في metadata</li>
+        </ol>
+
+        <h4>📋 معايير القبول — 5b-fallback</h4>
+        <ol>
+          <li>صفر markers على صورة الوجه</li>
+          <li>concerns narrative + disclaimer visible</li>
+          <li>لا claim «medical-grade visualization»</li>
+        </ol>
+
+        <h4>❌ خارج النطاق (دائماً)</h4>
+        <ul>
+          <li>Heuristic markers على الوجه (T-zone guessing)</li>
+          <li>MediaPipe landmarks مُقدَّمة كـ «تشخيص Perfect Corp»</li>
+          <li>Style · Fusion · LLM</li>
+        </ul>
+
+        <div class="card ok" id="phase-5-done" style="margin-top:1.5rem;border:2px solid var(--ok);">
+          <h4 style="margin-top:0;">✅ ما نُفّذ — المرحلة 5 (يونيو 2026)</h4>
+          <p>
+            نُفّذت بمبدأ <strong>Validation-First</strong>: تحقق تقني من Perfect Corp <em>قبل</em> أي UI مكانية.
+            النتيجة: YouCam يعطي scores عامة فقط — فاختارنا <strong>Educational Face Map</strong>
+            (استرشادي · بصري · صادق) — وليس Medical Face Map (markers حمراء · تشخيص موضعي وهمي).
+          </p>
+
+          <div class="card ok" id="educational-face-map" style="margin:16px 0;border-right:4px solid var(--secondary);">
+            <h4 style="margin-top:0;color:var(--ok);">🎨 Educational Face Map — ما تراه المستخدمة</h4>
+            <ol>
+              <li><strong>وجه أنثوي فاخر</strong> — الجبهة · تحت العين · الخدين · الأنف · الذقن · خط الفك.</li>
+              <li><strong>تظليل بنفسجي خفيف</strong> على مناطق شائعة (مثل T-Zone) — <em>بدون</em> نقاط حمراء.</li>
+              <li><strong>بطاقة insight:</strong> «بناءً على نتيجة المسام المرتفعة، <strong>غالباً</strong> ما تظهر في T-Zone — <strong>منطقة شائعة</strong> وليست تشخيصاً مؤكداً على وجهك.»</li>
+              <li><strong>Disclaimer ثابت:</strong> «الخريطة التالية استرشادية وليست تشخيصاً مكانياً دقيقة.»</li>
+              <li><strong>شارة الثقة:</strong> ثقة منخفضة — استرشادي (حتى ترقية YouCam).</li>
+            </ol>
+            <p style="margin-bottom:0;"><strong>الفرق الجوهري:</strong> Medical Map = «المشكلة هنا» · Educational Map = «غالباً في هذه المنطقة الشائعة».</p>
+          </div>
+
+          <h4>لماذا لم نرسم markers حمراء؟</h4>
+          <table>
+            <thead><tr><th>Perfect Corp يعطي</th><th>Perfect Corp لا يعطي</th></tr></thead>
+            <tbody>
+              <tr>
+                <td>Redness · Pores · Wrinkles · Hydration <strong>scores</strong></td>
+                <td>❌ «التجاعيد هنا» · «المسام هنا» · «الخد الأيسر أسوأ»</td>
+              </tr>
+            </tbody>
+          </table>
+          <p>رسم markers على الجبهة أو الخد = <strong>اختراع معلومة غير موجودة</strong> — أخطر شيء في تطبيق مثل ميرا.</p>
+
+          <h4>Confidence Layer — للمستخدمة</h4>
+          <table>
+            <thead><tr><th>المستوى</th><th>مصدر YouCam</th><th>الوضع</th><th>النص العربي</th></tr></thead>
+            <tbody>
+              <tr><td><span class="tag warn">منخفضة</span></td><td>Global scores فقط</td><td><code>educational</code></td><td>ثقة منخفضة — استرشادي</td></tr>
+              <tr><td><span class="tag">متوسطة</span></td><td><code>region_scores</code></td><td><code>regional</code></td><td>ثقة متوسطة — تحليل مناطقي</td></tr>
+              <tr><td><span class="tag ok">عالية</span></td><td>mask · coordinates</td><td><code>spatial</code></td><td>ثقة عالية — تحليل مكاني من YouCam</td></tr>
+            </tbody>
+          </table>
+
+          <h4>5a — Spike Gate + Audit</h4>
+          <table>
+            <thead><tr><th>الفحص</th><th>النتيجة</th></tr></thead>
+            <tbody>
+              <tr><td><code>perfect_corp_spatial_capabilities.md</code></td><td>Audit كامل لـ S2S v2.0</td></tr>
+              <tr><td><code>results.output</code></td><td><code>type + ui_score</code> فقط — لا masks · regions · coordinates</td></tr>
+              <tr><td><code>detectSpatialCapability()</code></td><td><span class="tag warn">Educational Map (confidence: low)</span></td></tr>
+            </tbody>
+          </table>
+
+          <h4>الجزء 1 — Audit + face-map-engine (Backend)</h4>
+          <table>
+            <thead><tr><th>ملف</th><th>الدور</th></tr></thead>
+            <tbody>
+              <tr><td><code>docs/perfect_corp_spatial_capabilities.md</code></td><td>Audit كامل — global-only verdict</td></tr>
+              <tr><td><code>pipeline/spatial-spike.ts</code></td><td>Gate: none · regional · pixel</td></tr>
+              <tr><td><code>pipeline/face-map-engine.ts</code></td><td>Educational + spatial modes · confidence low|medium|high</td></tr>
+              <tr><td><code>face_health_map.interface.ts</code></td><td><code>FaceHealthMapPayload</code></td></tr>
+              <tr><td><code>face-map-engine.spec.ts</code></td><td>يمنع «تم اكتشاف» بدون spatial data</td></tr>
+            </tbody>
+          </table>
+
+          <h4>الجزء 2 — Report Integration</h4>
+          <table>
+            <thead><tr><th>حقل</th><th>الدور</th></tr></thead>
+            <tbody>
+              <tr><td><code>faceHealthMap</code></td><td>Payload كامل على <code>MiraBeautyReport</code></td></tr>
+              <tr><td><code>concernZonesSection</code></td><td>نصوص متزامنة مع insight cards</td></tr>
+              <tr><td><code>faceMap.enabled</code></td><td><code>false</code> في educational — لا medical markers</td></tr>
+            </tbody>
+          </table>
+
+          <h4>الجزء 3 — Flutter UI</h4>
+          <table>
+            <thead><tr><th>ملف</th><th>الدور</th></tr></thead>
+            <tbody>
+              <tr><td><code>face_health_map_section.dart</code></td><td>وجه أنثوي + zones + confidence badge + disclaimer</td></tr>
+              <tr><td><code>face_diagram_painter.dart</code></td><td>CustomPainter — تظليل ناعم بدون red dots</td></tr>
+              <tr><td><code>local_face_map_builder.dart</code></td><td>Fallback محلي للضيف</td></tr>
+              <tr><td><code>mira_beauty_report_screen.dart</code></td><td>قسم 4 — Educational Face Map</td></tr>
+            </tbody>
+          </table>
+
+          <h4>✓ معايير القبول — حالة التحقق</h4>
+          <table>
+            <thead><tr><th>المعيار</th><th>الحالة</th></tr></thead>
+            <tbody>
+              <tr><td>لا fake spatial diagnosis</td><td><span class="tag ok">✓</span></td></tr>
+              <tr><td>Confidence واضحة (منخفضة / متوسطة / عالية)</td><td><span class="tag ok">✓</span></td></tr>
+              <tr><td>تجربة بصرية — ليس نصاً فقط</td><td><span class="tag ok">✓</span></td></tr>
+              <tr><td>جاهز لترقية YouCam → Real Spatial</td><td><span class="tag ok">✓</span></td></tr>
+              <tr><td>لا «medical-grade map» على confidence منخفضة</td><td><span class="tag ok">✓</span></td></tr>
+            </tbody>
+          </table>
+
+          <div class="card warn" style="margin-top:16px;margin-bottom:0;">
+            <h4 style="margin-top:0;">⚖️ Product Principle (ملزم)</h4>
+            <p style="margin-bottom:0;">
+              <strong>Trust over visual impressiveness.</strong>
+              إذا البيانات تدعم localization دقيقة → Real Spatial Map.
+              إذا لا → Educational Map شفاف وجميل.
+              <strong>Never invent precision.</strong>
+            </p>
+          </div>
+        </div>
+      </div>
+
+      <!-- PHASE 6 -->
+      <div class="card" id="phase-6">
+        <h3 style="margin-top:0;">المرحلة 6 — Style Intelligence + Beauty-Fashion Fusion + Weekly Plan</h3>
+        <p><span class="tag">أولوية توسع</span> <span class="tag">~3–4 أسابيع</span> <span class="tag">20–28 ملف</span></p>
+        <p><strong>لماذا أخيرة؟</strong> يعتمد على undertone حقيقي + outfit production + age + progress. الميزة التنافسية الكاملة.</p>
+
+        <h4>✅ داخل النطاق</h4>
+        <table>
+          <thead><tr><th>المتطلب</th><th>التنفيذ</th></tr></thead>
+          <tbody>
+            <tr>
+              <td>Fix undertone hardcoded</td>
+              <td>تعديل <code>mapYouCamResults</code> — استخراج warm/cool/neutral من YouCam</td>
+            </tr>
+            <tr>
+              <td>Mira Style Intelligence</td>
+              <td><code>pipeline/ingest-outfit.ts</code> · FASHN production · <code>MiraStyleReport</code></td>
+            </tr>
+            <tr>
+              <td>Beauty + Fashion Fusion</td>
+              <td><code>pipeline/fusion-engine.ts</code> — warm tone → beige/olive/gold · avoid cold gray</td>
+            </tr>
+            <tr>
+              <td>full-mira-analysis</td>
+              <td>تفعيل <code>POST /ai/full-mira-analysis</code> (حالياً 501)</td>
+            </tr>
+            <tr>
+              <td>Mira Style Report</td>
+              <td>Outfit Score · Color Compatibility · Style Category · Alternative Looks</td>
+            </tr>
+            <tr>
+              <td>Weekly Improvement Plan</td>
+              <td><code>treatment-plan-engine</code> weekly tier · Mira Beauty Report <strong>قسم 6</strong></td>
+            </tr>
+            <tr>
+              <td>Product Engine enhanced</td>
+              <td>age group + skin type + concerns — no generic recs</td>
+            </tr>
+            <tr>
+              <td>Recommendation history UI</td>
+              <td>شاشة Flutter لـ <code>GET /recommendations/history</code></td>
+            </tr>
+          </tbody>
+        </table>
+
+        <h4>📋 معايير القبول</h4>
+        <ol>
+          <li>مستان analysis مختلفان → products مختلفة</li>
+          <li>warm undertone → beige/olive recommendations</li>
+          <li>full-mira-analysis 201 success</li>
+          <li>Weekly plan 7-day structured</li>
+        </ol>
+      </div>
+
+      <div class="card ok" id="phase-6-done" style="margin-top:1.5rem;border:2px solid var(--ok);">
+        <h4 style="margin-top:0;">✅ ما نُفّذ — المرحلة 6 (يونيو 2026)</h4>
+        <p>
+          Style Intelligence + Beauty-Fashion Fusion + Weekly Plan + تفعيل
+          <code>POST /ai/full-mira-analysis</code> — undertone حقيقي من YouCam أو inference.
+        </p>
+
+        <h4>Backend</h4>
+        <table>
+          <thead><tr><th>ملف</th><th>الدور</th></tr></thead>
+          <tbody>
+            <tr><td><code>undertone-intelligence.ts</code></td><td>استخراج warm/cool/neutral من YouCam · fallback من scores</td></tr>
+            <tr><td><code>ingest-outfit.ts</code> · <code>fusion-engine.ts</code></td><td>Mira Style Report · دمج undertone + ألوان الإطلالة</td></tr>
+            <tr><td><code>weekly-plan-engine.ts</code></td><td>خطة 7 أيام — قسم 6 في Mira Beauty Report</td></tr>
+            <tr><td><code>full-mira-analysis.service.ts</code></td><td>skin + outfit + fusion + recommendation — 201</td></tr>
+            <tr><td><code>marketplace-matching.engine.ts</code></td><td>undertone + age bonus في score المنتجات</td></tr>
+          </tbody>
+        </table>
+
+        <h4>Flutter</h4>
+        <ul>
+          <li><code>WeeklyPlanSection</code> — خطة أسبوعية 7 أيام في تقرير ميرا</li>
+          <li><code>StyleFusionSection</code> — دمج الجمال والإطلالة (undertone · ألوان · مكياج)</li>
+          <li><code>RecommendationHistoryScreen</code> — <code>GET /recommendations/history</code></li>
+        </ul>
+
+        <h4>معايير القبول</h4>
+        <ol>
+          <li>Undertone دافئ → beige/olive/gold في fusion + marketplace bonus</li>
+          <li><code>POST /ai/full-mira-analysis</code> يعيد skin + outfit + styleReport + fusion + recommendation</li>
+          <li>Weekly plan = 7 أيام structured في API و UI</li>
+          <li>سجل التوصيات متاح من شاشة توصيات ميرا</li>
+        </ol>
+      </div>
+
+      <h3>ملخص عدّ الملفات — 6 مراحل</h3>
+      <table>
+        <thead>
+          <tr><th>المرحلة</th><th>Backend</th><th>Flutter</th><th>Tests</th><th>المجموع</th><th>المدة</th></tr>
+        </thead>
+        <tbody>
+          <tr><td><strong>1</strong> أساس الذكاء</td><td>14–18</td><td>6–8</td><td>4–6</td><td><strong>24–32</strong></td><td>3–4 أسابيع</td></tr>
+          <tr><td><strong>2</strong> تقرير ميرا UI</td><td>2–4</td><td>14–18</td><td>2–4</td><td><strong>18–26</strong></td><td>2–3 أسابيع</td></tr>
+          <tr><td><strong>3</strong> العمر والأمان</td><td>8–10</td><td>6–8</td><td>2–4</td><td><strong>16–22</strong></td><td>2–3 أسابيع</td></tr>
+          <tr><td><strong>4</strong> محرك التقدم</td><td>8–12</td><td>8–10</td><td>2–4</td><td><strong>18–24</strong></td><td>2–3 أسابيع</td></tr>
+          <tr><td><strong>5</strong> Face Map</td><td>10–14 أو 4–6</td><td>10–14 أو 4–6</td><td>2–4</td><td><strong>22–32</strong> (true) · <strong>8–12</strong> (fallback)</td><td>1 spike + 2–4 أسابيع</td></tr>
+          <tr><td><strong>6</strong> الإطلالة والدمج</td><td>10–14</td><td>8–12</td><td>2–4</td><td><strong>20–28</strong></td><td>3–4 أسابيع</td></tr>
+        </tbody>
+      </table>
+      <div class="card ok">
+        <p><strong>الإجمالي: 118–164 ملف</strong> · <strong>15–22 أسبوع</strong> (فريق 1–2 dev) · +15–25 ملف اختياري لـ LLM narrative tier</p>
+      </div>
+    </section>
+
+    <!-- FACE MAP PRODUCT POLICY -->
+    <section id="face-map-policy">
+      <h2>٨. سياسة Face Map — Product Policy (رسمية · ملزمة)</h2>
+      <p>
+        حماية ثقة المستخدم: ميرا مستشار جمال — وليست «خريطة طبية وهمية».
+        <strong>Face Map مشروطة ببيانات مكانية حقيقية.</strong>
+      </p>
+
+      <div class="card danger">
+        <h3 style="margin-top:0;">🚫 ممنوع منعاً باتاً</h3>
+        <ul>
+          <li>علامات/نقاط «دقيقة» على الوجه عندما المصدر = global scores فقط</li>
+          <li>Heuristic (T-zone = oiliness) مُقدَّم كـ «تحليل مكاني من YouCam»</li>
+          <li>MediaPipe landmarks كمصدر تشخيص — guide UX فقط إن وُجد</li>
+          <li>«medical-grade map» بدون <code>spatialConfidence: regional|pixel</code></li>
+        </ul>
+      </div>
+
+      <div class="card ok">
+        <h3 style="margin-top:0;">✅ مسموح حسب مستوى البيانات</h3>
+        <table>
+          <thead>
+            <tr><th>spatialConfidence</th><th>مصدر</th><th>UI مسموح</th><th>UI ممنوع</th></tr>
+          </thead>
+          <tbody>
+            <tr>
+              <td><code>none</code> + <code>confidence: low</code></td>
+              <td>Global scores (الوضع الحالي — مُنفَّذ)</td>
+              <td><strong>Educational Face Map</strong> · تظليل بنفسجي ناعم · «غالباً» · disclaimer</td>
+              <td>Red markers · «المشكلة هنا بالضبط» · medical-grade claims</td>
+            </tr>
+            <tr>
+              <td><code>regional</code></td>
+              <td>Perfect Corp regional scores</td>
+              <td>Soft zone highlights (forehead/cheek/…)</td>
+              <td>Pixel dots بدون mask</td>
+            </tr>
+            <tr>
+              <td><code>pixel</code></td>
+              <td>Perfect Corp mask / coordinates</td>
+              <td>Face Health Map كامل · luxury viz</td>
+              <td>—</td>
+            </tr>
+          </tbody>
+        </table>
+      </div>
+
+      <h3>Contract — FaceHealthMapPayload (Phase 5)</h3>
+      <pre>interface FaceHealthMapPayload {
+  enabled: boolean;
+  confidence: 'low' | 'medium' | 'high';
+  confidenceLabelAr: string;       // ثقة منخفضة — استرشادي
+  mode: 'educational' | 'regional' | 'spatial';
+  titleAr: string;
+  disclaimerAr: string;
+  zones: Array&lt;{
+    id: 'forehead' | 'under_eye' | 'cheek_left' | 'cheek_right' | 'nose' | 'chin' | 'jawline' | 't_zone';
+    labelAr: string;
+    highlight: boolean;
+    highlightColor: string;        // #C19EE0 educational purple
+    source: 'educational' | 'perfect_corp';
+  }&gt;;
+  insightCards: Array&lt;{ concernLabelAr; zoneLabelAr; bodyAr }&gt;;
+}</pre>
+
+      <p>مرجع Audit: <code>mira-api/docs/perfect_corp_spatial_capabilities.md</code></p>
+
+      <h3>Flutter — قاعدة العرض (مُحدَّثة — يونيو 2026)</h3>
+      <pre>if (report.faceHealthMap.enabled) {
+  return FaceHealthMapSection(map: report.faceHealthMap);
+  // educational: soft purple zones + confidence badge + disclaimer
+  // spatial/regional: auto when YouCam returns mask/region data
+}
+return ConcernZonesNarrativeSection(...);  // legacy fallback only</pre>
+
+      <h3>Backend — face-zone-mapper</h3>
+      <pre>if (!hasRegionalOrMaskData(rawYouCam)) {
+  return {
+    spatialConfidence: 'none',
+    faceMap: { enabled: false, zones: [] },
+    concernZonesNarrative: buildSafeNarrativeOnly(rawYouCam),
+  };
+}
+// map ONLY from API — never infer pixel positions</pre>
+
+      <div class="proof-block">
+        <div class="proof-label">دليل — لا spatial data اليوم</div>
+        <p><span class="path">mira-api/src/ai/services/perfect-corp.service.ts</span> · extractConcerns</p>
+        <pre>concerns.push({ type, ui_score, raw_score });
+// ❌ no region · no mask · no x/y</pre>
+      </div>
+
+      <div class="card warn">
+        <h3 style="margin-top:0;">⚖️ لماذا heuristic يضعف الثقة؟</h3>
+        <p>
+          خريطة «طبية» → ثقة → خطأ موضعي → <strong>شك في التقرير كاملاً</strong>
+          (score · routine · products). خسارة واحدة &gt; فائدة خريطة جميلة بدون بيانات.
+        </p>
+      </div>
+
+      <div class="card ok">
+        <h3 style="margin-top:0;">✅ Educational Face Map — مُنفَّذ (يونيو 2026)</h3>
+        <ul>
+          <li><strong>وجه بصري</strong> — CustomPainter · zones labeled · تظليل بنفسجي خفيف</li>
+          <li><strong>Insight cards</strong> — «غالباً في T-Zone» · «منطقة شائعة» — ليس «مؤكد على وجهك»</li>
+          <li><strong>Confidence badge</strong> — ثقة منخفضة / متوسطة / عالية — ظاهرة للمستخدمة</li>
+          <li><strong>Disclaimer</strong> — «الخريطة استرشادية وليست تشخيصاً مكانياً دقيقة»</li>
+          <li><a href="#educational-face-map">التفاصيل الكاملة في المرحلة 5 ↓</a></li>
+        </ul>
+      </div>
+    </section>
+
+    <!-- REQUIREMENTS MAP -->
+    <section id="req-map">
+      <h2>٩. خريطة المتطلبات → المراحل (كل بند في مرحلة واحدة)</h2>
+      <table>
+        <thead>
+          <tr><th>متطلب الرؤية</th><th>المرحلة</th><th>ملاحظة</th></tr>
+        </thead>
+        <tbody>
+          <tr><td>Core Architecture — Intelligence Layer</td><td><strong>1</strong></td><td>Backend module</td></tr>
+          <tr><td>Perfect Corp = engine only</td><td><strong>1</strong></td><td>ingest-perfect-corp</td></tr>
+          <tr><td>Remove raw scores — human language</td><td><strong>1 + 2</strong></td><td>1=engine · 2=UI enforcement</td></tr>
+          <tr><td>Personalized Treatment Plan (AM/PM)</td><td><strong>1 + 2</strong></td><td>1=logic · 2=display</td></tr>
+          <tr><td>Product Recommendations</td><td><strong>1 + 2</strong></td><td>wire marketplace</td></tr>
+          <tr><td>Mira Beauty Report — sections 1,3,5,7</td><td><strong>2</strong></td><td>first UI ship</td></tr>
+          <tr><td>Mira Premium Experience</td><td><strong>2</strong></td><td>luxury UX</td></tr>
+          <tr><td>Age Intelligence System</td><td><strong>3</strong></td><td>birthYear optional</td></tr>
+          <tr><td>Child Safety Validation</td><td><strong>3</strong></td><td>guard + UI hide</td></tr>
+          <tr><td>Mira Beauty Report — section 2</td><td><strong>3</strong></td><td>age comparison</td></tr>
+          <tr><td>Beauty Progress Engine</td><td><strong>4</strong></td><td>trends + milestones</td></tr>
+          <tr><td>Mira Beauty Report — section 8</td><td><strong>4</strong></td><td>progress forecast</td></tr>
+          <tr><td>Face Problem Localization</td><td><strong>5</strong></td><td>markers فقط إذا spatial = true</td></tr>
+          <tr><td>Face Health Map</td><td><strong>5</strong></td><td>مشروطة — انظر <a href="#face-map-policy">السياسة</a></td></tr>
+          <tr><td>Mira Beauty Report — section 4</td><td><strong>5</strong></td><td>Map أو narrative fallback</td></tr>
+          <tr><td>Outfit Intelligence (Fashion AI)</td><td><strong>6</strong></td><td>FASHN production</td></tr>
+          <tr><td>Beauty + Fashion Fusion</td><td><strong>6</strong></td><td>fusion-engine</td></tr>
+          <tr><td>Mira Style Report</td><td><strong>6</strong></td><td>outfit score + colors</td></tr>
+          <tr><td>Weekly Improvement Plan</td><td><strong>6</strong></td><td>section 6</td></tr>
+          <tr><td>Product Engine — age group differentiation</td><td><strong>6</strong></td><td>needs age from P3</td></tr>
+          <tr><td>full-mira-analysis endpoint</td><td><strong>6</strong></td><td>currently 501</td></tr>
+          <tr><td>Never generic AI outputs</td><td><strong>1→6</strong></td><td>مبدأ مستمر — يُختبر كل phase</td></tr>
+        </tbody>
+      </table>
+
+      <h3>ترتيب الاعتماديات (Dependency Graph)</h3>
+      <div class="flow">Phase 1 (Backend Intelligence)
+    ↓
+Phase 2 (Beauty Report UI) ─────────────────────────┐
+    ↓                                                │
+Phase 3 (Age + Safety) ──→ required for P6 products  │
+    ↓                                                │
+Phase 4 (Progress) ──→ needs ≥2 scans                │
+    ↓                                                │
+Phase 5a (Spike) ──→ spatial? ──→ 5b-true (Real Spatial Map) | 5b-fallback (Educational Face Map · NO red markers)
+    ↓
+Phase 6 (Style Fusion) ← needs P3 undertone + P1 orchestrator</div>
+    </section>
+
+    <!-- FILES section removed — merged into roadmap -->
+
+    <!-- RISKS -->
+    <section id="risks">
+      <h2>١٠. مخاطر حرجة وتوصيات</h2>
+
+      <div class="card danger">
+        <h3 style="margin-top:0;">Face Map — أكبر خطر (سياسة §٨)</h3>
+        <p>
+          لا markers على الوجه بدون spatial data.
+          <a href="#face-map-policy">سياسة Face Map</a> ملزمة قبل sprint المرحلة 5.
+        </p>
+        <table>
+          <thead><tr><th>السينario</th><th>قرار Product</th></tr></thead>
+          <tbody>
+            <tr><td>Perfect Corp masks/regions</td><td>5b-true — Face Map</td></tr>
+            <tr><td>Global scores فقط</td><td>Educational Face Map — confidence: low · لا red markers</td></tr>
+            <tr><td>Heuristic للإسراع</td><td>مرفوض للmarkers · narrative مسموح</td></tr>
+          </tbody>
+        </table>
+      </div>      </div>
+
+      <div class="card warn">
+        <h3 style="margin-top:0;">⚠️ Dual Persistence</h3>
+        <p>Profile → Firestore · Analyses → Prisma PostgreSQL. Age Intelligence يحتاج <code>birthYear</code> في Prisma <code>UserPreference</code> أو sync من Firestore.</p>
+      </div>
+
+      <div class="card warn">
+        <h3 style="margin-top:0;">⚠️ Undertone Hardcoded</h3>
+        <p>Beauty+Fashion Fusion مستحيل بدون إصلاح <code>mapYouCamResults</code> — استخراج undertone من YouCam أو inference action منفصل.</p>
+      </div>
+
+      <div class="card ok">
+        <h3 style="margin-top:0;">✅ الخلاصة</h3>
+        <p>
+          <strong>ميرا ليست skin scanner — مira مستشار جمال شخصي.</strong>
+          الهيكل جاهز. <strong>Face Map = مشروطة.</strong> ابدأوا المرحلة 1→2→3 — لا markers بدون spatial data.
+        </p>
+      </div>
+    </section>
+
+    <footer>
+      <p>
+        © <span id="year"></span> Mira · MIRA Intelligence Layer Reference ·
+        <a href="index.html">الموقع الرئيسي</a> ·
+        <a href="partners-ecosystem.html">منظومة الشركاء</a> ·
+        <a href="../website/index.html">الموقع الكامل</a>
+      </p>
+      <p>مستند مبني على تحليل الكود الفعلي — repo: semester2030/mira · branch main</p>
+    </footer>
+  </main>
+
+  <script>
+    document.getElementById("year").textContent = new Date().getFullYear();
+  </script>
+</body>
+</html>

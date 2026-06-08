@@ -4,6 +4,7 @@ import 'package:firebase_core/firebase_core.dart';
 import 'firebase_options.dart';
 import 'core/navigation/app_navigator.dart';
 import 'core/navigation/app_routes.dart';
+import 'core/navigation/route_args.dart';
 import 'core/navigation/premium_page_route.dart';
 import 'core/services/guest_session_service.dart';
 import 'core/services/onboarding_storage.dart';
@@ -19,7 +20,8 @@ import 'features/dashboard/presentation/screens/points_screen.dart';
 import 'features/dashboard/presentation/screens/tips_screen.dart';
 import 'features/dashboard/presentation/screens/new_analysis_screen.dart';
 import 'features/skin_analysis/presentation/screens/scan_screen.dart';
-import 'features/skin_analysis/presentation/screens/result_screen.dart';
+import 'features/intelligence/presentation/screens/beauty_progress_screen.dart';
+import 'features/intelligence/presentation/screens/mira_beauty_report_screen.dart';
 import 'features/skin_analysis/presentation/screens/skin_routine_screen.dart';
 import 'features/skin_analysis/presentation/screens/history_screen.dart';
 import 'features/skin_analysis/domain/entities/skin_report.dart';
@@ -31,6 +33,7 @@ import 'features/outfit_analysis/presentation/screens/outfit_result_screen.dart'
 import 'features/outfit_analysis/presentation/screens/outfit_history_screen.dart';
 import 'features/outfit_analysis/domain/entities/outfit_report.dart';
 import 'features/recommendations/presentation/screens/recommendations_screen.dart';
+import 'features/recommendations/presentation/screens/recommendation_history_screen.dart';
 import 'features/subscription/presentation/screens/paywall_screen.dart';
 import 'features/subscription/presentation/screens/manage_subscription_screen.dart';
 import 'features/feedback/presentation/screens/feedback_screen.dart';
@@ -151,10 +154,29 @@ class MirraAppState extends State<MirraApp> {
       case AppRoutes.skinScan:
         return PremiumPageRoute(page: const ScanScreen(), settings: settings);
       case AppRoutes.skinResult:
-        final report = settings.arguments as SkinReport?;
+      case AppRoutes.miraBeautyReport:
+        final args = settings.arguments;
+        if (args is MiraReportRouteArgs) {
+          return PremiumPageRoute(
+            page: MiraBeautyReportScreen(
+              report: args.report,
+              showCelebration: args.celebrate,
+            ),
+            settings: settings,
+          );
+        }
+        final report = args as SkinReport?;
         if (report == null) return null;
         return PremiumPageRoute(
-          page: ResultScreen(report: report),
+          page: MiraBeautyReportScreen(
+            report: report,
+            showCelebration: settings.name == AppRoutes.miraBeautyReport,
+          ),
+          settings: settings,
+        );
+      case AppRoutes.beautyProgress:
+        return PremiumPageRoute(
+          page: const BeautyProgressScreen(),
           settings: settings,
         );
       case AppRoutes.skinRoutine:
@@ -180,6 +202,8 @@ class MirraAppState extends State<MirraApp> {
         return PremiumPageRoute(page: const OutfitHistoryScreen(), settings: settings);
       case AppRoutes.recommendations:
         return PremiumPageRoute(page: const RecommendationsScreen(), settings: settings);
+      case AppRoutes.recommendationHistory:
+        return PremiumPageRoute(page: const RecommendationHistoryScreen(), settings: settings);
       case AppRoutes.paywall:
         return PremiumPageRoute(page: const PaywallScreen(), settings: settings);
       case AppRoutes.manageSubscription:

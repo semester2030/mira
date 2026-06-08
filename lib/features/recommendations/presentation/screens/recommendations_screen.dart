@@ -102,6 +102,17 @@ class _RecommendationsScreenState extends State<RecommendationsScreen> {
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.stretch,
                   children: [
+                    Align(
+                      alignment: Alignment.centerLeft,
+                      child: TextButton.icon(
+                        onPressed: () => Navigator.pushNamed(
+                          context,
+                          AppRoutes.recommendationHistory,
+                        ),
+                        icon: const Icon(Icons.history_rounded, size: 18),
+                        label: const Text('سجل التوصيات'),
+                      ),
+                    ),
                     PremiumCard(
                       gradient: LinearGradient(
                         colors: [

@@ -13,3 +13,13 @@ class OutfitOccasionRouteArgs {
 
   const OutfitOccasionRouteArgs({required this.imagePath});
 }
+
+class MiraReportRouteArgs {
+  final SkinReport report;
+  final bool celebrate;
+
+  const MiraReportRouteArgs({
+    required this.report,
+    this.celebrate = false,
+  });
+}
