@@ -3,7 +3,7 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1" />
-  <meta name="description" content="مرجع Mira Intelligence Layer — تحويل ميرا من wrapper إلى مستشار جمال ذكي. أدلة من الكود، هندسة، وخطة تنفيذ." />
+  <meta name="description" content="مرجع Mira Intelligence Layer — Phases 1–6 مُنفَّذة · Phase 7 Mira Advisor AI (مو spec) · أدلة من الكود." />
   <title>ميرا — Mira Intelligence Layer | مرجع استراتيجي وتقني</title>
   <link rel="preconnect" href="https://fonts.googleapis.com" />
   <link href="https://fonts.googleapis.com/css2?family=Tajawal:wght@400;500;700;800&display=swap" rel="stylesheet" />
@@ -19,13 +19,14 @@
         <a href="#gaps">الفجوات</a>
         <a href="#architecture">الهندسة</a>
         <a href="#proofs">الأدلة</a>
-        <a href="#roadmap">المراحل الست</a>
+        <a href="#roadmap">المراحل 1–7</a>
         <a href="#phase-1-done">المرحلة 1 ✓</a>
         <a href="#phase-2-done">المرحلة 2 ✓</a>
         <a href="#phase-3-done">المرحلة 3 ✓</a>
         <a href="#phase-4-done">المرحلة 4 ✓</a>
         <a href="#phase-5-done">المرحلة 5 ✓</a>
         <a href="#phase-6-done">المرحلة 6 ✓</a>
+        <a href="#mira-advisor-ai">Advisor AI · 7</a>
         <a href="#implementation-audit">عدّ التنفيذ ✓</a>
         <a href="#educational-face-map">Educational Map</a>
         <a href="#face-map-policy">سياسة Face Map</a>
@@ -62,14 +63,14 @@
         <li><a href="#architecture">أين توضع Intelligence Layer</a></li>
         <li><a href="#proofs">أدلة من الكود (Backend + Flutter)</a></li>
         <li><a href="#modules">الوحدات المطلوبة بالتفصيل</a></li>
-        <li><a href="#roadmap">المراحل الست — حسب الأولوية</a></li>
+        <li><a href="#roadmap">المراحل 1–7 — حسب الأولوية</a></li>
         <li><a href="#phase-1-done">المرحلة 1 — ما نُفّذ</a></li>
         <li><a href="#phase-2-done">المرحلة 2 — ما نُفّذ</a></li>
         <li><a href="#phase-3-done">المرحلة 3 — ما نُفّذ</a></li>
         <li><a href="#phase-4-done">المرحلة 4 — ما نُفّذ</a></li>
         <li><a href="#phase-5-done">المرحلة 5 — ما نُفّذ</a></li>
-        <li><a href="#educational-face-map">Educational Face Map</a></li>
         <li><a href="#phase-6-done">المرحلة 6 — ما نُfّذ</a></li>
+        <li><a href="#mira-advisor-ai">المرحلة 7 — Mira Advisor AI (مو spec)</a></li>
         <li><a href="#implementation-audit">§٩ عدّ التنفيذ الفعلي (109 ملف)</a></li>
         <li><a href="#face-map-policy">سياسة Face Map (Product Policy)</a></li>
         <li><a href="#req-map">خريطة المتطلبات → المراحل</a></li>
@@ -479,7 +480,7 @@ static OutfitReport? lastOutfit;
 
     <!-- ROADMAP: 6 PHASES -->
     <section id="roadmap">
-      <h2>٧. المراحل الست — حسب الأولوية (دقيق)</h2>
+      <h2>٧. المراحل 1–7 — حسب الأولوية (دقيق)</h2>
       <p>
         كل متطلب من رؤية MIRA Intelligence Layer يُنفَّذ في <strong>مرحلة واحدة فقط</strong>.
         الترتيب مبني على: <em>الاعتماديات التقنية → القيمة للمستخدم → المخاطرة → العائد التجاري</em>.
@@ -1217,6 +1218,260 @@ static OutfitReport? lastOutfit;
           <li>Weekly plan = 7 أيام structured في API و UI</li>
           <li>سجل التوصيات متاح من شاشة توصيات ميرا</li>
         </ol>
+      </div>
+
+      <!-- PHASE 7 — MIRA ADVISOR AI (full spec · not implemented yet) -->
+      <div class="card" id="phase-7" style="margin-top:2rem;border:2px solid var(--secondary);">
+        <span class="tag" style="margin-bottom:0.75rem;display:inline-block;">المرحلة القادمة · مو spec رسمي</span>
+        <h3 style="margin-top:0;" id="mira-advisor-ai">المرحلة 7 — Mira Advisor AI</h3>
+        <p class="lead" style="margin-bottom:1rem;">
+          <strong>حالة التنفيذ:</strong> <span class="tag warn">غير مُنفَّذ بعد</span> —
+          الشات والـ LLM <strong>مستقبلاً</strong> وليس مطلوباً الآن.
+          هذا القسم يوثّق الرؤية والهندسة والمعايير بالكامل لبدء التطوير لاحقاً.
+        </p>
+
+        <div class="card ok" style="margin:1rem 0;">
+          <h4 style="margin-top:0;">Context — ما اكتمل (Phases 1–6)</h4>
+          <ul>
+            <li><strong>Phase 1</strong> — Intelligence Layer</li>
+            <li><strong>Phase 2</strong> — Premium Report UI</li>
+            <li><strong>Phase 3</strong> — Age Intelligence + Child Safety</li>
+            <li><strong>Phase 4</strong> — Progress Engine</li>
+            <li><strong>Phase 5</strong> — Educational Face Map (No Fake Precision)</li>
+            <li><strong>Phase 6</strong> — Style Intelligence + Weekly Plan</li>
+          </ul>
+          <p style="margin-bottom:0;">
+            <strong>MIRA لم تعد Skin Scanner.</strong> MIRA أصبحت <strong>Beauty Advisor</strong>.
+            الخطوة التالية: تحويل ميرا إلى <strong>AI Beauty Consultant</strong> — وليس مجرد تقرير ثابت.
+          </p>
+        </div>
+
+        <h4>الهدف</h4>
+        <p>إنشاء طبقة جديدة: <code>Mira Advisor AI</code> — تسمح للمستخدمة بطرح أسئلة حقيقية على ميرا <strong>بعد التحليل</strong>.</p>
+        <table>
+          <thead><tr><th>أمثلة أسئلة</th></tr></thead>
+          <tbody>
+            <tr><td>هل أحتاج سيروم؟</td></tr>
+            <tr><td>لماذا تظهر لدي الهالات؟</td></tr>
+            <tr><td>هل أستخدم فيتامين C؟</td></tr>
+            <tr><td>ما سبب اتساع المسام؟</td></tr>
+            <tr><td>هل يناسبني الريتينول؟</td></tr>
+            <tr><td>كيف أحسن بشرتي قبل مناسبة؟</td></tr>
+            <tr><td>هل أحتاج جلسة عيادة؟</td></tr>
+            <tr><td>ما أفضل منتج من منتجات ميرا لي؟</td></tr>
+          </tbody>
+        </table>
+
+        <h4>Product Vision — من Scanner إلى Consultant</h4>
+        <div class="card" style="background:var(--surface-alt);">
+          <p><strong>حالياً:</strong></p>
+          <pre>صورة → تحليل → تقرير</pre>
+          <p><strong>المطلوب:</strong></p>
+          <pre>صورة → تحليل → تقرير → محادثة ذكية → توصيات شخصية → متابعة مستمرة</pre>
+        </div>
+
+        <h4>Architecture — Module جديد</h4>
+        <pre>mira-api/src/advisor/
+
+advisor/
+├── advisor.module.ts
+├── advisor.controller.ts
+├── advisor.service.ts
+├── contracts/
+│   ├── advisor-request.interface.ts
+│   └── advisor-response.interface.ts
+├── engines/
+│   ├── advisor-context-builder.ts
+│   ├── advisor-guard.ts
+│   ├── recommendation-explainer.ts
+│   └── routine-advisor.ts
+└── tests/</pre>
+
+        <h4 id="advisor-context-builder">Context Builder</h4>
+        <p>قبل إرسال أي سؤال للـ LLM (مستقبلاً) — أو قبل أي إجابة deterministic — يجب بناء <strong>Context كامل</strong> من:</p>
+        <ul>
+          <li>Latest analysis</li>
+          <li>Skin type · skin age · real age</li>
+          <li>Concerns · routine · progress history</li>
+          <li>Recommended products · style report · weekly plan</li>
+        </ul>
+        <p>المصادر في الكود الحالي: <code>IntelligenceService</code> · <code>MiraBeautyReport</code> · <code>GET /intelligence/progress</code> · marketplace match · Phase 6 fusion/weekly.</p>
+
+        <div class="card ok" style="margin:1rem 0;">
+          <h4 style="margin-top:0;">مثال — «هل أحتاج سيروم؟»</h4>
+          <p>لا يُرسل السؤال وحده. يُرسل السياق ثم السؤال:</p>
+          <pre>Age: 39
+Skin Age: 33
+Skin Type: Combination
+Concerns:
+• Pores
+• Mild Dark Circles
+Current Routine:
+• Cleanser
+• Moisturizer
+• SPF
+Products:
+• Hydro Boost
+• Vitamin C
+Progress:
+Hydration Improved
+
+Question: هل أحتاج سيروم؟</pre>
+          <p style="margin-bottom:0;font-size:0.9rem;color:var(--text-secondary);">
+            ⚠️ عند غياب concern موضّح (مثل «هالات») في YouCam — يُطبَّق نفس صدق Phase 5: «بناءً على مؤشرات عامة» وليس تشخيصاً موضعياً.
+          </p>
+        </div>
+
+        <h4 id="advisor-guard">Advisor Guard — سياسة الأمان</h4>
+        <div class="card danger">
+          <h4 style="margin-top:0;">🚫 ممنوع على ميرا</h4>
+          <ul>
+            <li>تشخيص أمراض جلدية</li>
+            <li>وصف أدوية</li>
+            <li>ادعاء طبي</li>
+            <li>وصفة علاجية</li>
+            <li>نتائج مضمونة</li>
+          </ul>
+        </div>
+        <div class="card ok">
+          <h4 style="margin-top:0;">✅ مسموح</h4>
+          <ul>
+            <li>نصائح عناية</li>
+            <li>تفسير التحليل</li>
+            <li>شرح الروتين</li>
+            <li>شرح المنتجات</li>
+            <li>اقتراح زيارة طبيب جلدية عند الحاجة</li>
+          </ul>
+        </div>
+
+        <h4 id="recommendation-explainer">Recommendation Explainer</h4>
+        <p><strong>المشكلة اليوم:</strong> منتج «Vitamin C» يظهر — المستخدمة لا تعرف <em>لماذا</em>.</p>
+        <div class="card" style="border-right:4px solid var(--gold);">
+          <p><strong>المطلوب:</strong></p>
+          <blockquote style="margin:0;border:none;padding:0;font-style:normal;line-height:1.7;">
+            لماذا أوصت ميرا بهذا المنتج؟<br />
+            لأن تحليلك أظهر مؤشرات بسيطة تتعلق بتفاوت اللون والإشراقة،
+            وسيروم فيتامين C يساعد عادةً في دعم توحيد المظهر العام للبشرة.
+          </blockquote>
+        </div>
+
+        <h4 id="routine-advisor">Routine Advisor</h4>
+        <p>سؤال: <em>«لماذا وضعتِ واقي الشمس؟»</em></p>
+        <blockquote>لأن الحفاظ على نتائجك الحالية يعتمد على تقليل تأثير الأشعة فوق البنفسجية.</blockquote>
+
+        <h4 id="advisor-follow-up">Smart Follow-Up Questions</h4>
+        <p>بعد كل إجابة ترجع ميرا:</p>
+        <pre>{
+  "answer": "...",
+  "suggestedQuestions": [
+    "كيف أحسن المسام؟",
+    "هل أحتاج جلسة عناية؟",
+    "ما المنتج الأنسب لي؟"
+  ],
+  "confidence": "high"
+}</pre>
+
+        <h4 id="advisor-api">API — Endpoint مستقبلي</h4>
+        <table>
+          <thead><tr><th>Method</th><th>Path</th><th>الحالة</th></tr></thead>
+          <tbody>
+            <tr>
+              <td><code>POST</code></td>
+              <td><code>/api/v1/advisor/chat</code></td>
+              <td><span class="tag warn">مplanned</span></td>
+            </tr>
+          </tbody>
+        </table>
+        <p><strong>Request:</strong></p>
+        <pre>{
+  "message": "هل أحتاج سيروم؟",
+  "analysisId": "optional — latest if omitted"
+}</pre>
+        <p><strong>Response:</strong></p>
+        <pre>{
+  "answer": "...",
+  "suggestedQuestions": [],
+  "confidence": "high"
+}</pre>
+
+        <h4 id="advisor-flutter">Flutter — شاشة مستقبلية</h4>
+        <ul>
+          <li><code>MiraAdvisorScreen</code> — محادثة كاملة (لاحقاً)</li>
+          <li>في <code>MiraBeautyReportScreen</code> — قسم <strong>«اسألي ميرا»</strong> بأسئلة جاهزة:
+            <ul>
+              <li>هل أحتاج سيروم؟</li>
+              <li>هل يناسبني الريتينول؟</li>
+              <li>كيف أحسن الهالات؟</li>
+              <li>كيف أحافظ على النتائج؟</li>
+            </ul>
+          </li>
+        </ul>
+
+        <h4>Design</h4>
+        <p>نفس هوية ميرا: <strong>Luxury · Feminine · Elegant · Premium</strong> — DelightBackground · PremiumCard · لغة عربية بشرية.</p>
+
+        <h4 id="advisor-intelligence-rules">Intelligence Rules</h4>
+        <div class="card danger" style="margin-bottom:1rem;">
+          <ul style="margin-bottom:0;">
+            <li>❌ لا تكرر التقرير حرفياً</li>
+            <li>❌ لا تكرر النصوص الجاهزة من <code>narrative-engine</code></li>
+            <li>❌ لا إجابات عامة («اشربي ماء» بدون ربط بتحليلها)</li>
+          </ul>
+        </div>
+        <p>كل إجابة تعتمد على:</p>
+        <pre>Current Analysis
++ Age Intelligence
++ Progress Engine
++ Products
++ Style Intelligence</pre>
+
+        <h4 id="advisor-acceptance">معايير القبول (Acceptance Criteria)</h4>
+        <table>
+          <thead><tr><th>#</th><th>المعيار</th></tr></thead>
+          <tbody>
+            <tr><td>✅</td><td>المستخدمة تشعر أن ميرا تعرف بشرتها</td></tr>
+            <tr><td>✅</td><td>كل إجابة مبنية على بياناتها</td></tr>
+            <tr><td>✅</td><td>شرح سبب كل توصية</td></tr>
+            <tr><td>✅</td><td>دعم أسئلة متابعة (<code>suggestedQuestions</code>)</td></tr>
+            <tr><td>✅</td><td>لا نصائح طبية</td></tr>
+            <tr><td>✅</td><td>لا ادعاءات علاجية</td></tr>
+            <tr><td>✅</td><td>أقل من 3 ثوانٍ للاستجابة (يتطلب hybrid engines + streaming)</td></tr>
+            <tr><td>✅</td><td>يعمل مع جميع التقارير الحالية (v2 + legacy fallback)</td></tr>
+          </tbody>
+        </table>
+
+        <h4 id="advisor-phasing">توصية تنفيذ — مرحلتان فرعيتان</h4>
+        <table>
+          <thead><tr><th>الفرع</th><th>المحتوى</th><th>LLM</th></tr></thead>
+          <tbody>
+            <tr>
+              <td><strong>7a</strong></td>
+              <td><code>advisor-context-builder</code> · <code>recommendation-explainer</code> · <code>routine-advisor</code> · <code>advisor-guard</code> · قسم «اسألي ميرا» في التقرير</td>
+              <td><span class="tag ok">بدون LLM</span> — سريع · آمن · رخيص</td>
+            </tr>
+            <tr>
+              <td><strong>7b</strong></td>
+              <td>LLM polish · streaming · سجل محادثة · <code>MiraAdvisorScreen</code></td>
+              <td><span class="tag">مع LLM</span> — لاحقاً</td>
+            </tr>
+          </tbody>
+        </table>
+
+        <div class="card ok" id="advisor-product-principle" style="margin-top:1.5rem;border:2px solid var(--ok);">
+          <h4 style="margin-top:0;">Product Principle — مبدأ المنتج</h4>
+          <p style="font-size:1.05rem;line-height:1.8;margin-bottom:0.5rem;">
+            <strong>MIRA is not a Skin Scanner.<br />
+            MIRA is a Personal Beauty Advisor.</strong>
+          </p>
+          <p style="margin-bottom:0;">
+            Every answer must feel <strong>personal</strong>, <strong>context-aware</strong>,
+            and based on the user's <strong>real analysis history</strong>.<br />
+            <em>Trust &gt; Hype · Personalization &gt; Generic AI</em>
+          </p>
+          <p style="margin-top:1rem;margin-bottom:0;font-size:0.95rem;">
+            هذه المرحلة هي التي ستنقل ميرا من «تطبيق تحليل بشرة» إلى «مستشارة تجميل ذكية» فعلياً.
+          </p>
+        </div>
       </div>
 
       <!-- IMPLEMENTATION AUDIT — exact counts from repo -->
