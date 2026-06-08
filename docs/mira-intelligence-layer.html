@@ -26,6 +26,7 @@
         <a href="#phase-4-done">المرحلة 4 ✓</a>
         <a href="#phase-5-done">المرحلة 5 ✓</a>
         <a href="#phase-6-done">المرحلة 6 ✓</a>
+        <a href="#implementation-audit">عدّ التنفيذ ✓</a>
         <a href="#educational-face-map">Educational Map</a>
         <a href="#face-map-policy">سياسة Face Map</a>
         <a href="#req-map">خريطة المتطلبات</a>
@@ -45,7 +46,7 @@
         <code>semester2030/mira</code>.
       </p>
       <div class="hero-meta">
-        <span class="meta-pill">📁 55–85 ملف للتنفيذ الكامل</span>
+        <span class="meta-pill">📁 109 ملف مُنفَّذ (commit <code>07f6c98</code>)</span>
         <span class="meta-pill">⚙️ NestJS + Flutter + Prisma</span>
         <span class="meta-pill">📅 يونيو 2026</span>
         <span class="meta-pill">🔗 commit 6292e71+</span>
@@ -68,6 +69,8 @@
         <li><a href="#phase-4-done">المرحلة 4 — ما نُفّذ</a></li>
         <li><a href="#phase-5-done">المرحلة 5 — ما نُفّذ</a></li>
         <li><a href="#educational-face-map">Educational Face Map</a></li>
+        <li><a href="#phase-6-done">المرحلة 6 — ما نُfّذ</a></li>
+        <li><a href="#implementation-audit">§٩ عدّ التنفيذ الفعلي (109 ملف)</a></li>
         <li><a href="#face-map-policy">سياسة Face Map (Product Policy)</a></li>
         <li><a href="#req-map">خريطة المتطلبات → المراحل</a></li>
         <li><a href="#risks">مخاطر حرجة وتوصيات</a></li>
@@ -1216,7 +1219,253 @@ static OutfitReport? lastOutfit;
         </ol>
       </div>
 
-      <h3>ملخص عدّ الملفات — 6 مراحل</h3>
+      <!-- IMPLEMENTATION AUDIT — exact counts from repo -->
+      <section id="implementation-audit" style="margin-top:2.5rem;">
+        <h2>٩. عدّ التنفيذ الفعلي — أدلة دقيقة من الكود</h2>
+        <p>
+          كل رقم أدناه مأخوذ من المستودع <code>semester2030/mira</code> بعد اكتمال المراحل 1–6.
+          المصدر: commit <code>07f6c98</code> على <code>main</code>
+          (<em>Add Mira Intelligence Layer through Phase 6 for Render deploy</em>).
+        </p>
+
+        <div class="card ok">
+          <h3 style="margin-top:0;">📊 الملخص التنفيذي (Git)</h3>
+          <table>
+            <thead><tr><th>المقياس</th><th>القيمة</th><th>الدليل</th></tr></thead>
+            <tbody>
+              <tr><td>إجمالي الملفات المتغيّرة</td><td><strong>109</strong></td><td><code>git show 07f6c98 --stat</code></td></tr>
+              <tr><td>أسطر مُضافة</td><td><strong>+9,466</strong></td><td>نفس الأمر</td></tr>
+              <tr><td>أسطر محذوفة</td><td><strong>−230</strong></td><td>نفس الأمر</td></tr>
+              <tr><td>صافي الكود الجديد</td><td><strong>+9,236</strong></td><td>9466 − 230</td></tr>
+            </tbody>
+          </table>
+        </div>
+
+        <h3>Backend — <code>mira-api/</code></h3>
+        <table>
+          <thead><tr><th>الطبقة</th><th>ملفات</th><th>أسطر</th><th>المسار</th></tr></thead>
+          <tbody>
+            <tr>
+              <td><strong>Intelligence Module</strong></td>
+              <td>30</td><td>2,783</td>
+              <td><code>mira-api/src/intelligence/**</code></td>
+            </tr>
+            <tr>
+              <td>↳ Production TypeScript</td><td>19</td><td>—</td><td>بدون <code>*.spec.ts</code></td>
+            </tr>
+            <tr>
+              <td>↳ Unit tests</td><td>11</td><td>—</td><td><code>*.spec.ts</code></td>
+            </tr>
+            <tr>
+              <td>↳ Pipeline engines</td><td>12</td><td>1,820</td><td><code>pipeline/*.ts</code> (بدون spec)</td>
+            </tr>
+            <tr>
+              <td>↳ Contracts</td><td>4</td><td>—</td><td><code>contracts/*.interface.ts</code></td>
+            </tr>
+            <tr>
+              <td><strong>Integration &amp; Wire-up</strong></td>
+              <td>22</td><td>2,050</td>
+              <td>skin · ai-gateway · users · marketplace · prisma · docs</td>
+            </tr>
+            <tr>
+              <td><strong>مجموع Backend في الـ commit</strong></td>
+              <td><strong>52</strong></td><td><strong>~4,833</strong></td><td>30 + 22</td>
+            </tr>
+          </tbody>
+        </table>
+
+        <h4>12 Pipeline Engine — أسطر كل ملف (production)</h4>
+        <table>
+          <thead><tr><th>الملف</th><th>أسطر</th><th>المرحلة</th></tr></thead>
+          <tbody>
+            <tr><td><code>narrative-engine.ts</code></td><td>196</td><td>1</td></tr>
+            <tr><td><code>treatment-plan-engine.ts</code></td><td>94</td><td>1</td></tr>
+            <tr><td><code>face-zone-mapper.ts</code></td><td>17</td><td>1 / 5</td></tr>
+            <tr><td><code>age-intelligence.ts</code></td><td>161</td><td>3</td></tr>
+            <tr><td><code>child-safety-guard.ts</code></td><td>78</td><td>3</td></tr>
+            <tr><td><code>progress-engine.ts</code></td><td>217</td><td>4</td></tr>
+            <tr><td><code>spatial-spike.ts</code></td><td>105</td><td>5</td></tr>
+            <tr><td><code>face-map-engine.ts</code></td><td>313</td><td>5</td></tr>
+            <tr><td><code>undertone-intelligence.ts</code></td><td>161</td><td>6</td></tr>
+            <tr><td><code>ingest-outfit.ts</code></td><td>66</td><td>6</td></tr>
+            <tr><td><code>fusion-engine.ts</code></td><td>96</td><td>6</td></tr>
+            <tr><td><code>weekly-plan-engine.ts</code></td><td>116</td><td>6</td></tr>
+          </tbody>
+        </table>
+
+        <h4>Orkestrator + Contracts</h4>
+        <table>
+          <thead><tr><th>الملف</th><th>أسطر</th></tr></thead>
+          <tbody>
+            <tr><td><code>intelligence.service.ts</code></td><td>198</td></tr>
+            <tr><td><code>contracts/mira-beauty-report.interface.ts</code></td><td>179</td></tr>
+            <tr><td><code>contracts/face_health_map.interface.ts</code></td><td>—</td></tr>
+            <tr><td><code>contracts/mira-style-report.interface.ts</code></td><td>—</td></tr>
+            <tr><td><code>contracts/weekly-plan.interface.ts</code></td><td>—</td></tr>
+            <tr><td><code>intelligence.controller.ts</code></td><td><code>GET /intelligence/progress</code></td></tr>
+            <tr><td><code>intelligence.module.ts</code></td><td>مُصدَّر في <code>app.module.ts</code></td></tr>
+          </tbody>
+        </table>
+
+        <h4>Integration Backend — 22 ملف (خارج <code>intelligence/</code>)</h4>
+        <pre>mira-api/src/ai/ai-gateway.controller.ts          → POST full-mira-analysis (كان 501)
+mira-api/src/ai/services/full-mira-analysis.service.ts
+mira-api/src/ai/services/perfect-corp.service.ts    → resolveUndertone()
+mira-api/src/skin-analysis/skin-analysis.service.ts → buildBeautyReport + miraReport v2
+mira-api/src/skin-analysis/dto/skin-analysis-response.dto.ts
+mira-api/src/users/users.controller.ts              → PATCH me/preferences (birthYear)
+mira-api/src/marketplace/marketplace-matching.engine.ts → undertone + age bonus
+mira-api/prisma/migrations/20250608120000_user_birth_year/
+mira-api/docs/perfect_corp_spatial_capabilities.md
+… (+ 13 ملف wire-up)</pre>
+
+        <h3>Flutter — <code>lib/</code></h3>
+        <table>
+          <thead><tr><th>الطبقة</th><th>ملفات</th><th>أسطر</th><th>المسار</th></tr></thead>
+          <tbody>
+            <tr>
+              <td><strong>Intelligence Feature</strong></td>
+              <td>31</td><td>3,803</td>
+              <td><code>lib/features/intelligence/**</code></td>
+            </tr>
+            <tr><td>↳ شاشات (Screens)</td><td>2</td><td>421</td><td><code>presentation/screens/*.dart</code></td></tr>
+            <tr><td>↳ Widgets</td><td>15</td><td>1,607</td><td><code>presentation/widgets/*.dart</code></td></tr>
+            <tr><td>↳ Entities</td><td>7</td><td>—</td><td><code>domain/entities/*.dart</code></td></tr>
+            <tr><td>↳ Offline builders</td><td>5</td><td>—</td><td><code>domain/services/local_*.dart</code></td></tr>
+            <tr><td>↳ Data (mapper + API)</td><td>2</td><td>353</td><td><code>data/**</code></td></tr>
+            <tr>
+              <td><strong>Integration Flutter</strong></td>
+              <td>22</td><td>2,491</td>
+              <td>skin · profile · recommendations · navigation · main</td>
+            </tr>
+            <tr>
+              <td><strong>مجموع Flutter في الـ commit</strong></td>
+              <td><strong>53</strong></td><td><strong>~6,294</strong></td><td>31 + 22</td>
+            </tr>
+          </tbody>
+        </table>
+
+        <h4>الشاشات — 3 جديدة + 7 مُعدَّلة</h4>
+        <table>
+          <thead><tr><th>النوع</th><th>العدد</th><th>المسارات (دليل)</th></tr></thead>
+          <tbody>
+            <tr>
+              <td><strong>شاشات جديدة</strong></td><td>3</td>
+              <td>
+                <code>mira_beauty_report_screen.dart</code> (225 س)<br />
+                <code>beauty_progress_screen.dart</code> (196 س)<br />
+                <code>recommendation_history_screen.dart</code> (124 س)
+              </td>
+            </tr>
+            <tr>
+              <td><strong>Routes في main.dart</strong></td><td>3</td>
+              <td><code>AppRoutes.miraBeautyReport</code> · <code>beautyProgress</code> · <code>recommendationHistory</code></td>
+            </tr>
+            <tr>
+              <td><strong>شاشات مُعدَّلة (wire-up)</strong></td><td>7</td>
+              <td>
+                <code>result_screen.dart</code> · <code>history_screen.dart</code> ·
+                <code>skin_routine_screen.dart</code> · <code>edit_profile_screen.dart</code> ·
+                <code>recommendations_screen.dart</code> · <code>analysis_screen.dart</code> ·
+                <code>new_analysis_screen.dart</code>
+              </td>
+            </tr>
+          </tbody>
+        </table>
+
+        <h4>15 Widget في تقرير ميرا — أسطر كل ملف</h4>
+        <table>
+          <thead><tr><th>Widget</th><th>أسطر</th><th>المرحلة</th></tr></thead>
+          <tbody>
+            <tr><td><code>beauty_score_hero.dart</code></td><td>57</td><td>2</td></tr>
+            <tr><td><code>concern_narrative_section.dart</code></td><td>74</td><td>1</td></tr>
+            <tr><td><code>treatment_plan_section.dart</code></td><td>121</td><td>1</td></tr>
+            <tr><td><code>mira_tips_section.dart</code></td><td>47</td><td>1</td></tr>
+            <tr><td><code>daily_routine_section.dart</code></td><td>72</td><td>1</td></tr>
+            <tr><td><code>skin_age_comparison_card.dart</code></td><td>133</td><td>3</td></tr>
+            <tr><td><code>progress_forecast_section.dart</code></td><td>105</td><td>4</td></tr>
+            <tr><td><code>progress_timeline.dart</code></td><td>115</td><td>4</td></tr>
+            <tr><td><code>face_health_map_section.dart</code></td><td>247</td><td>5</td></tr>
+            <tr><td><code>face_diagram_painter.dart</code></td><td>193</td><td>5</td></tr>
+            <tr><td><code>concern_zones_narrative_section.dart</code></td><td>109</td><td>5</td></tr>
+            <tr><td><code>weekly_plan_section.dart</code></td><td>108</td><td>6</td></tr>
+            <tr><td><code>style_fusion_section.dart</code></td><td>115</td><td>6</td></tr>
+            <tr><td><code>mira_coming_soon_card.dart</code></td><td>76</td><td>2</td></tr>
+            <tr><td><code>mira_report_helpers.dart</code></td><td>35</td><td>2</td></tr>
+          </tbody>
+        </table>
+
+        <h4>7 Entities (Domain)</h4>
+        <pre>mira_beauty_report.dart · age_comparison.dart · concern_zones_section.dart
+face_health_map.dart · progress_forecast.dart · weekly_plan.dart · mira_style_report.dart</pre>
+
+        <h3>Docs — 4 ملفات · 2,009 سطر</h3>
+        <table>
+          <thead><tr><th>ملف</th><th>أسطر</th></tr></thead>
+          <tbody>
+            <tr><td><code>docs/mira-intelligence-layer.html</code></td><td>1,453+</td></tr>
+            <tr><td><code>docs/mira-intelligence-layer.css</code></td><td>355</td></tr>
+            <tr><td><code>docs/index.html</code></td><td>201</td></tr>
+            <tr><td><code>docs/partners-ecosystem.html</code></td><td>+1</td></tr>
+          </tbody>
+        </table>
+
+        <h3>عدّ الملفات حسب المرحلة — فعلي (109 ملف)</h3>
+        <p>توزيع الملفات على المراحل حسب الملف «الأساسي» لكل feature — بعض الملفات تخدم أكثر من مرحلة (مثل <code>intelligence.service.ts</code>).</p>
+        <table>
+          <thead>
+            <tr><th>المرحلة</th><th>Backend</th><th>Flutter</th><th>Tests</th><th>Docs/DB</th><th>المجموع</th></tr>
+          </thead>
+          <tbody>
+            <tr><td><strong>1</strong> أساس الذكاء</td><td>11</td><td>11</td><td>2</td><td>0</td><td><strong>24</strong></td></tr>
+            <tr><td><strong>2</strong> تقرير ميرا UI</td><td>0</td><td>12</td><td>0</td><td>0</td><td><strong>12</strong></td></tr>
+            <tr><td><strong>3</strong> العمر والأمان</td><td>8</td><td>7</td><td>1</td><td>2</td><td><strong>18</strong></td></tr>
+            <tr><td><strong>4</strong> محرك التقدم</td><td>2</td><td>6</td><td>1</td><td>0</td><td><strong>9</strong></td></tr>
+            <tr><td><strong>5</strong> Face Map</td><td>8</td><td>7</td><td>3</td><td>3</td><td><strong>21</strong></td></tr>
+            <tr><td><strong>6</strong> Style + Fusion</td><td>15</td><td>10</td><td>4</td><td>0</td><td><strong>29</strong></td></tr>
+            <tr><td><strong>مشترك / wire-up</strong></td><td>8</td><td>10</td><td>0</td><td>0</td><td><strong>18</strong></td></tr>
+          </tbody>
+        </table>
+
+        <div class="card ok">
+          <h4 style="margin-top:0;">✅ مقارنة: التقدير vs الفعلي</h4>
+          <table>
+            <thead><tr><th></th><th>التقدير (خارطة الطريق)</th><th>الفعلي (commit 07f6c98)</th></tr></thead>
+            <tbody>
+              <tr><td>إجمالي الملفات (6 مراحل)</td><td>118–164</td><td><strong>109</strong> (+ 4 docs)</td></tr>
+              <tr><td>Backend production</td><td>52–78</td><td><strong>41</strong> (19 intelligence + 22 integration − overlap counted once = 52 total mira-api files)</td></tr>
+              <tr><td>Flutter</td><td>52–68</td><td><strong>53</strong> ملف <code>lib/</code></td></tr>
+              <tr><td>Unit tests</td><td>12–24</td><td><strong>11</strong> spec في <code>intelligence/</code></td></tr>
+              <tr><td>شاشات Flutter جديدة</td><td>—</td><td><strong>3</strong></td></tr>
+              <tr><td>Widgets تقرير ميرا</td><td>—</td><td><strong>15</strong></td></tr>
+              <tr><td>Pipeline engines</td><td>—</td><td><strong>12</strong></td></tr>
+            </tbody>
+          </table>
+        </div>
+
+        <h3>API Endpoints المُفعَّلة بالتنفيذ</h3>
+        <table>
+          <thead><tr><th>Method</th><th>Path</th><th>المرحلة</th><th>الملف</th></tr></thead>
+          <tbody>
+            <tr><td><code>POST</code></td><td><code>/api/v1/ai/skin-analysis</code></td><td>1</td><td>يرجع <code>miraReport</code> v2</td></tr>
+            <tr><td><code>GET</code></td><td><code>/api/v1/intelligence/progress</code></td><td>4</td><td><code>intelligence.controller.ts</code></td></tr>
+            <tr><td><code>PATCH</code></td><td><code>/api/v1/users/me/preferences</code></td><td>3</td><td><code>birthYear</code> اختياري</td></tr>
+            <tr><td><code>POST</code></td><td><code>/api/v1/ai/full-mira-analysis</code></td><td>6</td><td>كان <span class="tag danger">501</span> → <span class="tag ok">201</span></td></tr>
+            <tr><td><code>GET</code></td><td><code>/api/v1/recommendations/history</code></td><td>6</td><td><code>RecommendationHistoryScreen</code></td></tr>
+          </tbody>
+        </table>
+
+        <h3>أمر التحقق (Clone محلي)</h3>
+        <pre>git show 07f6c98 --stat
+find mira-api/src/intelligence -type f | wc -l          # → 30
+find lib/features/intelligence -name '*.dart' | wc -l   # → 31
+find lib/features/intelligence/presentation/screens -name '*.dart' | wc -l  # → 2
+find lib/features/intelligence/presentation/widgets -name '*.dart' | wc -l  # → 15
+wc -l mira-api/src/intelligence/**/*.ts                 # → 2783 total
+wc -l lib/features/intelligence/**/*.dart               # → 3803 total</pre>
+      </section>
+
+      <h3>ملخص عدّ الملفات — 6 مراحل (تقدير أولي · للمقارنة)</h3>
       <table>
         <thead>
           <tr><th>المرحلة</th><th>Backend</th><th>Flutter</th><th>Tests</th><th>المجموع</th><th>المدة</th></tr>
@@ -1231,7 +1480,7 @@ static OutfitReport? lastOutfit;
         </tbody>
       </table>
       <div class="card ok">
-        <p><strong>الإجمالي: 118–164 ملف</strong> · <strong>15–22 أسبوع</strong> (فريق 1–2 dev) · +15–25 ملف اختياري لـ LLM narrative tier</p>
+        <p><strong>التقدير الأولي: 118–164 ملف</strong> · <strong>الفعلي المُنفَّذ: 109 ملف</strong> (+ 4 docs) — انظر <a href="#implementation-audit">§٩ عدّ التنفيذ</a></p>
       </div>
     </section>
 
