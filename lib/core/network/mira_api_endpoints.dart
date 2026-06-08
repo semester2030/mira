@@ -4,6 +4,7 @@ abstract final class MiraApiEndpoints {
   static const me = '/users/me';
   static const mePreferences = '/users/me/preferences';
   static const intelligenceProgress = '/intelligence/progress';
+  static const advisorChat = '/advisor/chat';
   /// Flutter → Render only (Render → Perfect Corp). Do not call Perfect Corp from the app.
   static const skinAnalysis = '/ai/skin-analysis';
   static const skinHistory = '/skin-analysis/history';

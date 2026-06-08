@@ -16,6 +16,7 @@ import { MarketplaceModule } from './marketplace/marketplace.module';
 import { WebsiteModule } from './website/website.module';
 import { PartnersPortalModule } from './partners-portal/partners-portal.module';
 import { IntelligenceModule } from './intelligence/intelligence.module';
+import { AdvisorModule } from './advisor/advisor.module';
 
 @Module({
   imports: [
@@ -29,6 +30,7 @@ import { IntelligenceModule } from './intelligence/intelligence.module';
     HealthModule,
     UsersModule,
     IntelligenceModule,
+    AdvisorModule,
     SkinAnalysisModule,
     OutfitAnalysisModule,
     RecommendationsModule,

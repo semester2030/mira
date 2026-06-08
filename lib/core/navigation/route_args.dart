@@ -23,3 +23,13 @@ class MiraReportRouteArgs {
     this.celebrate = false,
   });
 }
+
+class AdvisorRouteArgs {
+  final SkinReport report;
+  final String? initialQuestion;
+
+  const AdvisorRouteArgs({
+    required this.report,
+    this.initialQuestion,
+  });
+}

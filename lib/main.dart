@@ -34,6 +34,7 @@ import 'features/outfit_analysis/presentation/screens/outfit_history_screen.dart
 import 'features/outfit_analysis/domain/entities/outfit_report.dart';
 import 'features/recommendations/presentation/screens/recommendations_screen.dart';
 import 'features/recommendations/presentation/screens/recommendation_history_screen.dart';
+import 'features/advisor/presentation/screens/mira_advisor_screen.dart';
 import 'features/subscription/presentation/screens/paywall_screen.dart';
 import 'features/subscription/presentation/screens/manage_subscription_screen.dart';
 import 'features/feedback/presentation/screens/feedback_screen.dart';
@@ -204,6 +205,8 @@ class MirraAppState extends State<MirraApp> {
         return PremiumPageRoute(page: const RecommendationsScreen(), settings: settings);
       case AppRoutes.recommendationHistory:
         return PremiumPageRoute(page: const RecommendationHistoryScreen(), settings: settings);
+      case AppRoutes.miraAdvisor:
+        return PremiumPageRoute(page: const MiraAdvisorScreen(), settings: settings);
       case AppRoutes.paywall:
         return PremiumPageRoute(page: const PaywallScreen(), settings: settings);
       case AppRoutes.manageSubscription:

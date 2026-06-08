@@ -3,7 +3,7 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1" />
-  <meta name="description" content="مرجع Mira Intelligence Layer — Phases 1–6 مُنفَّذة · Phase 7 Mira Advisor AI (مو spec) · أدلة من الكود." />
+  <meta name="description" content="مرجع Mira Intelligence Layer — Phases 1–7a مُنفَّذة · Mira Advisor AI · أدلة من الكود." />
   <title>ميرا — Mira Intelligence Layer | مرجع استراتيجي وتقني</title>
   <link rel="preconnect" href="https://fonts.googleapis.com" />
   <link href="https://fonts.googleapis.com/css2?family=Tajawal:wght@400;500;700;800&display=swap" rel="stylesheet" />
@@ -26,7 +26,8 @@
         <a href="#phase-4-done">المرحلة 4 ✓</a>
         <a href="#phase-5-done">المرحلة 5 ✓</a>
         <a href="#phase-6-done">المرحلة 6 ✓</a>
-        <a href="#mira-advisor-ai">Advisor AI · 7</a>
+        <a href="#phase-7-done">المرحلة 7 ✓</a>
+        <a href="#mira-advisor-ai">Advisor spec</a>
         <a href="#implementation-audit">عدّ التنفيذ ✓</a>
         <a href="#educational-face-map">Educational Map</a>
         <a href="#face-map-policy">سياسة Face Map</a>
@@ -70,7 +71,7 @@
         <li><a href="#phase-4-done">المرحلة 4 — ما نُفّذ</a></li>
         <li><a href="#phase-5-done">المرحلة 5 — ما نُفّذ</a></li>
         <li><a href="#phase-6-done">المرحلة 6 — ما نُfّذ</a></li>
-        <li><a href="#mira-advisor-ai">المرحلة 7 — Mira Advisor AI (مو spec)</a></li>
+        <li><a href="#mira-advisor-ai">المرحلة 7 — Mira Advisor AI ✓</a></li>
         <li><a href="#implementation-audit">§٩ عدّ التنفيذ الفعلي (109 ملف)</a></li>
         <li><a href="#face-map-policy">سياسة Face Map (Product Policy)</a></li>
         <li><a href="#req-map">خريطة المتطلبات → المراحل</a></li>
@@ -1222,12 +1223,11 @@ static OutfitReport? lastOutfit;
 
       <!-- PHASE 7 — MIRA ADVISOR AI (full spec · not implemented yet) -->
       <div class="card" id="phase-7" style="margin-top:2rem;border:2px solid var(--secondary);">
-        <span class="tag" style="margin-bottom:0.75rem;display:inline-block;">المرحلة القادمة · مو spec رسمي</span>
+        <span class="tag ok" style="margin-bottom:0.75rem;display:inline-block;">المرحلة 7 · Phase 7a مُنفَّذ</span>
         <h3 style="margin-top:0;" id="mira-advisor-ai">المرحلة 7 — Mira Advisor AI</h3>
         <p class="lead" style="margin-bottom:1rem;">
-          <strong>حالة التنفيذ:</strong> <span class="tag warn">غير مُنفَّذ بعد</span> —
-          الشات والـ LLM <strong>مستقبلاً</strong> وليس مطلوباً الآن.
-          هذا القسم يوثّق الرؤية والهندسة والمعايير بالكامل لبدء التطوير لاحقاً.
+          <strong>حالة التنفيذ:</strong> <span class="tag ok">Phase 7a ✓</span> deterministic advisor ·
+          <span class="tag warn">Phase 7b</span> LLM polish — مستقبلاً.
         </p>
 
         <div class="card ok" style="margin:1rem 0;">
@@ -1474,14 +1474,61 @@ Question: هل أحتاج سيروم؟</pre>
         </div>
       </div>
 
+      <div class="card ok" id="phase-7-done" style="margin-top:1.5rem;border:2px solid var(--ok);">
+        <h4 style="margin-top:0;">✅ ما نُفّذ — Phase 7a (يونيو 2026)</h4>
+        <p>مستشار ميرا deterministic — بدون LLM — مبني على <code>MiraBeautyReport</code> + Progress + Products.</p>
+
+        <h4>Backend — <code>mira-api/src/advisor/</code></h4>
+        <table>
+          <thead><tr><th>ملف</th><th>الدور</th></tr></thead>
+          <tbody>
+            <tr><td><code>advisor-context-builder.ts</code></td><td>سياق كامل من آخر تحليل</td></tr>
+            <tr><td><code>advisor-guard.ts</code></td><td>حظر تشخيص · أدوية · وصفات</td></tr>
+            <tr><td><code>recommendation-explainer.ts</code></td><td>لماذا هذا المنتج؟</td></tr>
+            <tr><td><code>routine-advisor.ts</code></td><td>لماذا SPF / خطوات الروتين؟</td></tr>
+            <tr><td><code>advisor-answer-engine.ts</code></td><td>توجيه intent + follow-ups</td></tr>
+            <tr><td><code>POST /api/v1/advisor/chat</code></td><td>Firebase auth · rate limit</td></tr>
+          </tbody>
+        </table>
+
+        <h4>Flutter</h4>
+        <ul>
+          <li><code>AskMiraSection</code> — في <code>MiraBeautyReportScreen</code></li>
+          <li><code>MiraAdvisorScreen</code> — محادثة · API أو offline</li>
+          <li><code>LocalAdvisorEngine</code> — guest / offline mirror</li>
+        </ul>
+
+        <h4>معايير القبول — Phase 7a</h4>
+        <ol>
+          <li>إجابات مبنية على تقرير المستخدم — لا generic</li>
+          <li>Advisor Guard يحظر الطلبات الطبية</li>
+          <li><code>suggestedQuestions</code> بعد كل رد</li>
+          <li>استجابة &lt;3s (engines محلية — بدون LLM)</li>
+        </ol>
+        <p style="margin-bottom:0;"><strong>Phase 7b لاحقاً:</strong> LLM polish · streaming · سجل محادثة persistent.</p>
+      </div>
+
       <!-- IMPLEMENTATION AUDIT — exact counts from repo -->
       <section id="implementation-audit" style="margin-top:2.5rem;">
         <h2>٩. عدّ التنفيذ الفعلي — أدلة دقيقة من الكود</h2>
         <p>
-          كل رقم أدناه مأخوذ من المستودع <code>semester2030/mira</code> بعد اكتمال المراحل 1–6.
-          المصدر: commit <code>07f6c98</code> على <code>main</code>
-          (<em>Add Mira Intelligence Layer through Phase 6 for Render deploy</em>).
+          كل رقم أدناه مأخوذ من المستودع <code>semester2030/mira</code> بعد اكتمال المراحل 1–7a.
+          المصدر الأساسي: commit <code>07f6c98</code> (1–6) + Phase 7a (يونيو 2026).
         </p>
+
+        <div class="card ok" style="margin-bottom:1.25rem;">
+          <h4 style="margin-top:0;">📊 Phase 7a — إضافة (Advisor)</h4>
+          <table>
+            <thead><tr><th>الطبقة</th><th>ملفات</th><th>أسطر</th><th>المسار</th></tr></thead>
+            <tbody>
+              <tr><td><strong>Advisor Module</strong></td><td>13</td><td>824</td><td><code>mira-api/src/advisor/**</code></td></tr>
+              <tr><td>↳ Production engines</td><td>11</td><td>—</td><td>بدون <code>*.spec.ts</code></td></tr>
+              <tr><td>↳ Unit tests</td><td>2</td><td>—</td><td><code>advisor-guard.spec.ts</code> · <code>advisor-answer-engine.spec.ts</code></td></tr>
+              <tr><td><strong>Flutter Advisor</strong></td><td>5</td><td>479</td><td><code>lib/features/advisor/**</code></td></tr>
+              <tr><td><strong>إجمالي Phase 7a</strong></td><td><strong>18</strong></td><td><strong>~1,303</strong></td><td>13 backend + 5 flutter</td></tr>
+            </tbody>
+          </table>
+        </div>
 
         <div class="card ok">
           <h3 style="margin-top:0;">📊 الملخص التنفيذي (Git)</h3>
@@ -1605,16 +1652,17 @@ mira-api/docs/perfect_corp_spatial_capabilities.md
           <thead><tr><th>النوع</th><th>العدد</th><th>المسارات (دليل)</th></tr></thead>
           <tbody>
             <tr>
-              <td><strong>شاشات جديدة</strong></td><td>3</td>
+              <td><strong>شاشات جديدة</strong></td><td>4</td>
               <td>
                 <code>mira_beauty_report_screen.dart</code> (225 س)<br />
                 <code>beauty_progress_screen.dart</code> (196 س)<br />
-                <code>recommendation_history_screen.dart</code> (124 س)
+                <code>recommendation_history_screen.dart</code> (124 س)<br />
+                <code>mira_advisor_screen.dart</code> (Phase 7a)
               </td>
             </tr>
             <tr>
-              <td><strong>Routes في main.dart</strong></td><td>3</td>
-              <td><code>AppRoutes.miraBeautyReport</code> · <code>beautyProgress</code> · <code>recommendationHistory</code></td>
+              <td><strong>Routes في main.dart</strong></td><td>4</td>
+              <td><code>AppRoutes.miraBeautyReport</code> · <code>beautyProgress</code> · <code>recommendationHistory</code> · <code>miraAdvisor</code></td>
             </tr>
             <tr>
               <td><strong>شاشات مُعدَّلة (wire-up)</strong></td><td>7</td>
@@ -1647,6 +1695,7 @@ mira-api/docs/perfect_corp_spatial_capabilities.md
             <tr><td><code>style_fusion_section.dart</code></td><td>115</td><td>6</td></tr>
             <tr><td><code>mira_coming_soon_card.dart</code></td><td>76</td><td>2</td></tr>
             <tr><td><code>mira_report_helpers.dart</code></td><td>35</td><td>2</td></tr>
+            <tr><td><code>ask_mira_section.dart</code></td><td>—</td><td>7a</td></tr>
           </tbody>
         </table>
 
@@ -1678,6 +1727,7 @@ face_health_map.dart · progress_forecast.dart · weekly_plan.dart · mira_style
             <tr><td><strong>4</strong> محرك التقدم</td><td>2</td><td>6</td><td>1</td><td>0</td><td><strong>9</strong></td></tr>
             <tr><td><strong>5</strong> Face Map</td><td>8</td><td>7</td><td>3</td><td>3</td><td><strong>21</strong></td></tr>
             <tr><td><strong>6</strong> Style + Fusion</td><td>15</td><td>10</td><td>4</td><td>0</td><td><strong>29</strong></td></tr>
+            <tr><td><strong>7a</strong> Mira Advisor</td><td>13</td><td>5</td><td>2</td><td>0</td><td><strong>20</strong></td></tr>
             <tr><td><strong>مشترك / wire-up</strong></td><td>8</td><td>10</td><td>0</td><td>0</td><td><strong>18</strong></td></tr>
           </tbody>
         </table>
@@ -1707,6 +1757,7 @@ face_health_map.dart · progress_forecast.dart · weekly_plan.dart · mira_style
             <tr><td><code>PATCH</code></td><td><code>/api/v1/users/me/preferences</code></td><td>3</td><td><code>birthYear</code> اختياري</td></tr>
             <tr><td><code>POST</code></td><td><code>/api/v1/ai/full-mira-analysis</code></td><td>6</td><td>كان <span class="tag danger">501</span> → <span class="tag ok">201</span></td></tr>
             <tr><td><code>GET</code></td><td><code>/api/v1/recommendations/history</code></td><td>6</td><td><code>RecommendationHistoryScreen</code></td></tr>
+            <tr><td><code>POST</code></td><td><code>/api/v1/advisor/chat</code></td><td>7a</td><td><code>advisor.controller.ts</code> · Firebase auth</td></tr>
           </tbody>
         </table>
 

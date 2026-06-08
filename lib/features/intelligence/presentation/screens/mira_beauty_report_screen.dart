@@ -21,6 +21,7 @@ import '../widgets/mira_tips_section.dart';
 import '../widgets/progress_forecast_section.dart';
 import '../widgets/treatment_plan_section.dart';
 import '../widgets/weekly_plan_section.dart';
+import '../../../advisor/presentation/widgets/ask_mira_section.dart';
 
 /// Phase 2 — Premium Mira Beauty Report experience.
 class MiraBeautyReportScreen extends StatefulWidget {
@@ -113,6 +114,8 @@ class _MiraBeautyReportScreenState extends State<MiraBeautyReportScreen> {
                 MiraTipsSection(tips: mira.tipsAr),
                 const SizedBox(height: 12),
                 ProgressForecastSection(forecast: mira.progressForecast),
+                const SizedBox(height: 20),
+                AskMiraSection(report: widget.report, mira: mira),
                 const SizedBox(height: 24),
                 PremiumButton(
                   label: 'تفاصيل الروتين والشركاء',
