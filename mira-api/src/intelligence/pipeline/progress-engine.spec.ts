@@ -68,7 +68,7 @@ describe('progress-engine', () => {
       days: [],
     },
     progressForecast: buildProgressForecast([]),
-  });
+  } as MiraBeautyReport);
 
   it('needs more scans when history < 2', () => {
     const result = buildProgressForecast([

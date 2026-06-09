@@ -5,6 +5,7 @@ import {
   FaceMapPayload,
 } from '../contracts/mira-beauty-report.interface';
 import {
+  FaceHealthConcernOverlay,
   FaceHealthInsightCard,
   FaceHealthMapPayload,
   FaceHealthMapZone,
@@ -13,6 +14,7 @@ import {
   FaceMapMode,
 } from '../contracts/face_health_map.interface';
 import { detectSpatialCapability } from './spatial-spike';
+import { parseYouCamSpatial } from './youcam-spatial-parser';
 
 const EDUCATIONAL_HIGHLIGHT = '#C19EE0';
 const REGIONAL_HIGHLIGHT = '#A469C9';
@@ -111,10 +113,10 @@ export function buildFaceMapBundle(
   const spike = detectSpatialCapability(rawYouCam ?? { results: { output: [] } });
 
   if (spike.verdict === '5b-true-pixel') {
-    return buildSpatialBundle(skin, 'pixel', 'spatial', 'high');
+    return buildSpatialBundle(skin, 'pixel', 'spatial', 'high', rawYouCam);
   }
   if (spike.verdict === '5b-true-regional') {
-    return buildSpatialBundle(skin, 'regional', 'regional', 'medium');
+    return buildSpatialBundle(skin, 'regional', 'regional', 'medium', rawYouCam);
   }
 
   return buildEducationalBundle(skin);
@@ -130,19 +132,30 @@ function buildEducationalBundle(skin: SkinAnalysisResult): FaceMapBundle {
     insightCards.push(buildInsightCard(rule, skin));
   }
 
-  const zones = buildAllFaceZones(highlightIds, 'educational', EDUCATIONAL_HIGHLIGHT);
+  const spatial = parseYouCamSpatial(
+    { results: { output: [] } },
+    skin.concernScores ?? {},
+    'educational',
+  );
+  const activeOverlay =
+    spatial.concernOverlays.find((o) => o.concernId === spatial.defaultConcernId) ??
+    spatial.concernOverlays[0];
+  const zones = buildZonesForOverlay(activeOverlay, 'educational', EDUCATIONAL_HIGHLIGHT);
   const concernZones = buildConcernZonesFromInsights(insightCards);
 
   const faceHealthMap: FaceHealthMapPayload = {
-    enabled: insightCards.length > 0,
+    enabled: insightCards.length > 0 || spatial.concernOverlays.length > 0,
     confidence: 'low',
     confidenceLabelAr: 'ثقة منخفضة — استرشادي',
     mode: 'educational',
-    titleAr: 'خريطة الوجه الاسترشادية',
-    subtitleAr: 'مناطق شائعة — وليست تشخيصاً مؤكداً على وجهك',
+    titleAr: 'خريطة تحليل البشرة',
+    subtitleAr: 'استكشفي كل concern — المناطق الملوّنة شائعة علمياً',
     disclaimerAr: EDUCATIONAL_DISCLAIMER,
     zones,
     insightCards: insightCards.slice(0, 4),
+    concernOverlays: spatial.concernOverlays,
+    defaultConcernId: spatial.defaultConcernId,
+    markers: [],
   };
 
   return {
@@ -166,19 +179,32 @@ function buildSpatialBundle(
   spatialConfidence: SpatialConfidence,
   mode: FaceMapMode,
   confidence: FaceMapConfidence,
+  rawYouCam?: unknown,
 ): FaceMapBundle {
   const triggered = collectTriggeredConcerns(skin);
-  const highlightIds = new Set<FaceHealthZoneId>();
   const insightCards: FaceHealthInsightCard[] = [];
 
   for (const rule of triggered) {
-    for (const z of rule.highlightZoneIds) highlightIds.add(z);
-    insightCards.push(buildInsightCard(rule, skin, mode !== 'educational'));
+    insightCards.push(buildInsightCard(rule, skin, true));
   }
 
+  const spatial = parseYouCamSpatial(
+    rawYouCam ?? { results: { output: [] } },
+    skin.concernScores ?? {},
+    mode === 'spatial' ? 'spatial' : 'regional',
+  );
+  const activeOverlay =
+    spatial.concernOverlays.find((o) => o.concernId === spatial.defaultConcernId) ??
+    spatial.concernOverlays[0];
+
   const highlightColor =
-    confidence === 'high' ? SPATIAL_HIGHLIGHT : REGIONAL_HIGHLIGHT;
-  const zones = buildAllFaceZones(highlightIds, 'perfect_corp', highlightColor);
+    activeOverlay?.highlightColor ??
+    (confidence === 'high' ? SPATIAL_HIGHLIGHT : REGIONAL_HIGHLIGHT);
+  const zones = buildZonesForOverlay(
+    activeOverlay,
+    'perfect_corp',
+    highlightColor,
+  );
   const concernZones = buildConcernZonesFromInsights(insightCards);
 
   const confidenceLabelAr =
@@ -194,14 +220,17 @@ function buildSpatialBundle(
     confidence,
     confidenceLabelAr,
     mode,
-    titleAr: 'خريطة صحة الوجه',
+    titleAr: 'خريطة تحليل البشرة',
     subtitleAr:
       confidence === 'high'
-        ? 'بيانات مكانية من YouCam'
-        : 'تحليل مناطقي من YouCam',
+        ? 'بيانات مكانية من YouCam — نقاط ومناطق'
+        : 'درجات مناطقية من YouCam',
     disclaimerAr,
     zones,
     insightCards: insightCards.slice(0, 4),
+    concernOverlays: spatial.concernOverlays,
+    defaultConcernId: spatial.defaultConcernId,
+    markers: spatial.markers,
   };
 
   return {
@@ -249,11 +278,16 @@ function buildInsightCard(
   };
 }
 
-function buildAllFaceZones(
-  highlightIds: Set<FaceHealthZoneId>,
+function buildZonesForOverlay(
+  overlay: FaceHealthConcernOverlay | undefined,
   source: 'educational' | 'perfect_corp',
-  highlightColor: string,
+  fallbackColor: string,
 ): FaceHealthMapZone[] {
+  const highlightIds = new Set(overlay?.highlightZoneIds ?? []);
+  const color = overlay?.highlightColor ?? fallbackColor;
+  const zoneScores = overlay?.zoneScores ?? {};
+  const concernIds = overlay?.concernId ? [overlay.concernId] : [];
+
   const baseZoneIds: FaceHealthZoneId[] = [
     'forehead',
     'under_eye',
@@ -267,9 +301,13 @@ function buildAllFaceZones(
   const zones: FaceHealthMapZone[] = baseZoneIds.map((id) => ({
     id,
     labelAr: ZONE_LABELS[id],
-    highlight: highlightIds.has(id) || (id !== 'jawline' && highlightIds.has('t_zone') && ['forehead', 'nose', 'chin'].includes(id)),
-    highlightColor,
-    concernIds: [],
+    highlight:
+      highlightIds.has(id) ||
+      (highlightIds.has('t_zone') &&
+        ['forehead', 'nose', 'chin'].includes(id)),
+    highlightColor: color,
+    concernIds: highlightIds.has(id) ? concernIds : [],
+    zoneScore: zoneScores[id],
     source,
   }));
 
@@ -278,8 +316,9 @@ function buildAllFaceZones(
       id: 't_zone',
       labelAr: ZONE_LABELS.t_zone,
       highlight: true,
-      highlightColor,
-      concernIds: [],
+      highlightColor: color,
+      concernIds,
+      zoneScore: zoneScores.t_zone,
       educationalNoteAr: 'منطقة T-Zone — شائعة للدهون والمسام',
       source,
     });

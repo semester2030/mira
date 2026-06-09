@@ -74,4 +74,20 @@ describe('IntelligenceService age + safety', () => {
     expect(report.weeklyPlan.enabled).toBe(true);
     expect(report.weeklyPlan.days).toHaveLength(7);
   });
+
+  it('includes beauty journey with next goal', async () => {
+    const service = new IntelligenceService(marketplace as never, prisma as never);
+    const report = await service.buildBeautyReport({ ...skin, beautyScore: 67 });
+    expect(report.beautyJourney.enabled).toBe(true);
+    expect(report.beautyJourney.nextGoal.targetValue).toBeGreaterThan(67);
+    expect(report.beautyJourney.priorities.length).toBeGreaterThan(0);
+  });
+
+  it('includes confidence layer items', async () => {
+    const service = new IntelligenceService(marketplace as never, prisma as never);
+    const birthYear = new Date().getFullYear() - 30;
+    const report = await service.buildBeautyReport(skin, { birthYear });
+    expect(report.confidenceLayer.enabled).toBe(true);
+    expect(report.confidenceLayer.items.length).toBe(5);
+  });
 });

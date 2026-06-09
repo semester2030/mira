@@ -1,5 +1,5 @@
 import { Injectable } from '@nestjs/common';
-import { SkinAnalysisResult } from '../contracts/skin-analysis-result.interface';
+import { SkinAnalysisProviderResult } from '../contracts/skin-analysis-provider-result.interface';
 import { SkinAnalysisProvider } from '../providers/skin-analysis.provider';
 import { delay, nextInt, seedFromImageBytes } from '../utils/image-seed';
 
@@ -56,7 +56,7 @@ export class MockSkinAnalysisProvider implements SkinAnalysisProvider {
     { ar: 'داكن', en: 'Deep' },
   ];
 
-  async analyze(imageBytes: Buffer): Promise<SkinAnalysisResult> {
+  async analyze(imageBytes: Buffer): Promise<SkinAnalysisProviderResult> {
     await delay(900);
 
     const seed = seedFromImageBytes(imageBytes);
@@ -103,6 +103,7 @@ export class MockSkinAnalysisProvider implements SkinAnalysisProvider {
     const skinAge = 26 + (seed % 14);
 
     return {
+      result: {
       beautyScore,
       skinTypeAr: profile.ar,
       skinTypeEn: profile.en,
@@ -121,6 +122,7 @@ export class MockSkinAnalysisProvider implements SkinAnalysisProvider {
       recommendationsEn: [`${profile.adviceEn}${extraEn}`],
       concernScores,
       skinAge,
+    },
     };
   }
 }

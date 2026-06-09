@@ -4,17 +4,21 @@ import '../../../../core/navigation/app_routes.dart';
 import '../../../../shared/theme/colors.dart';
 import '../../../../shared/theme/typography.dart';
 import '../../../../shared/widgets/premium/premium_card.dart';
+import '../../../../shared/widgets/confidence_badge.dart';
 import '../../domain/entities/age_comparison.dart';
+import '../../domain/entities/confidence_layer.dart';
 
 /// Section 2 — Real age vs skin age with expandable insights.
 class SkinAgeComparisonCard extends StatelessWidget {
   final AgeComparison comparison;
   final ChildSafety childSafety;
+  final ConfidenceItem? confidence;
 
   const SkinAgeComparisonCard({
     super.key,
     required this.comparison,
     required this.childSafety,
+    this.confidence,
   });
 
   @override
@@ -59,6 +63,20 @@ class SkinAgeComparisonCard extends StatelessWidget {
               style: AppTypography.bodyMedium.copyWith(height: 1.55),
             ),
           ] else if (comparison.enabled) ...[
+            if (confidence != null) ...[
+              Align(
+                alignment: AlignmentDirectional.centerStart,
+                child: ConfidenceBadge(
+                  level: confidence!.level,
+                  label: confidence!.level == 'high'
+                      ? 'ثقة عالية'
+                      : confidence!.level == 'medium'
+                          ? 'ثقة متوسطة'
+                          : 'ثقة منخفضة',
+                ),
+              ),
+              const SizedBox(height: 10),
+            ],
             Text(
               comparison.headlineAr,
               style: AppTypography.titleSmall.copyWith(color: AppColors.primaryDark),

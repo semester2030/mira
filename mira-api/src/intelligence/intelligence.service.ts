@@ -24,6 +24,8 @@ import {
 } from './pipeline/progress-engine';
 import { buildTreatmentPlan } from './pipeline/treatment-plan-engine';
 import { buildWeeklyPlan } from './pipeline/weekly-plan-engine';
+import { buildBeautyJourney } from './pipeline/beauty-journey-engine';
+import { buildConfidenceLayer } from './pipeline/confidence-layer';
 import {
   extractLegacySkinFromStored,
   extractMiraReportFromStored,
@@ -75,7 +77,7 @@ export class IntelligenceService {
       concernIds: mainConcerns.map((c) => c.id),
     });
 
-    return {
+    const base: MiraBeautyReport = {
       version: 1,
       spatialConfidence: zone.spatialConfidence,
       overallBeautyScore: skin.beautyScore,
@@ -105,6 +107,17 @@ export class IntelligenceService {
       })),
       weeklyPlan,
       progressForecast: buildProgressForecast([]),
+    } as MiraBeautyReport;
+
+    return this.enrichReportLayers(base);
+  }
+
+  private enrichReportLayers(report: MiraBeautyReport): MiraBeautyReport {
+    const beautyJourney = buildBeautyJourney(report);
+    const withJourney = { ...report, beautyJourney };
+    return {
+      ...withJourney,
+      confidenceLayer: buildConfidenceLayer(withJourney),
     };
   }
 
@@ -122,10 +135,10 @@ export class IntelligenceService {
         miraReport: report,
       },
     ];
-    return {
+    return this.enrichReportLayers({
       ...report,
       progressForecast: buildProgressForecast(entries),
-    };
+    });
   }
 
   async getProgress(userId: string): Promise<ProgressForecastPayload> {
@@ -155,7 +168,7 @@ export class IntelligenceService {
       concernIds: mainConcerns.map((c) => c.id),
     });
 
-    return {
+    return this.enrichReportLayers({
       ...report,
       skinAgeEstimate: safety.sanitizedSkinAge,
       mainConcerns,
@@ -163,7 +176,7 @@ export class IntelligenceService {
       childSafety: toChildSafetyPayload(safety),
       progressForecast:
         report.progressForecast ?? buildProgressForecast([]),
-    };
+    });
   }
 
   private async loadProgressHistory(

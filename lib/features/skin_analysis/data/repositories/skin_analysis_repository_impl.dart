@@ -3,6 +3,7 @@ import 'dart:io';
 import 'package:firebase_auth/firebase_auth.dart';
 
 import '../../../../core/ai/ai_module.dart';
+import '../../../../core/face_gate/face_gate_validator.dart';
 import '../../../../core/config/mira_api_config.dart';
 import '../../../../core/ai/mappers/skin_result_mapper.dart';
 import '../../../../core/privacy/temp_image_cleanup.dart';
@@ -54,6 +55,8 @@ class SkinAnalysisRepositoryImpl implements SkinAnalysisRepository {
 /// Guest analysis — local mock only unless signed in with [MiraApiConfig.useBackend].
 class GuestSkinAnalysisRepository {
   Future<SkinReport> analyzeFromImage(String imagePath) async {
+    await FaceGateValidator.instance.assertAccepted(File(imagePath));
+
     if (MiraApiConfig.useBackend && FirebaseAuth.instance.currentUser != null) {
       final model =
           await SkinAnalysisApiDataSource().analyzeAndSave(imagePath: imagePath);

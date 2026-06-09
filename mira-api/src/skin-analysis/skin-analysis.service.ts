@@ -13,6 +13,7 @@ import { MiraBeautyReport } from '../intelligence/contracts/mira-beauty-report.i
 import { IntelligenceService } from '../intelligence/intelligence.service';
 import { RateLimitService } from '../common/services/rate-limit.service';
 import { RequestUser } from '../common/interfaces/request-user.interface';
+import { FaceGateService } from '../ai/face-gate/face-gate.service';
 import { PrismaService } from '../prisma/prisma.service';
 import { SubscriptionsService } from '../subscriptions/subscriptions.service';
 import { UsersService } from '../users/users.service';
@@ -33,6 +34,7 @@ export class SkinAnalysisService {
     private readonly usersService: UsersService,
     private readonly rateLimit: RateLimitService,
     private readonly subscriptions: SubscriptionsService,
+    private readonly faceGate: FaceGateService,
   ) {}
 
   async analyze(
@@ -47,18 +49,29 @@ export class SkinAnalysisService {
     await this.subscriptions.assertCanAnalyze(authUser, 'skin');
     await this.rateLimit.assertWithinLimit(user.id, 'skin-analysis');
 
+    await this.faceGate.assertAnalyzablePhoto(imageBuffer);
+
     const prefs = await this.usersService.getPreferences(user.id);
-    const skinInternal = await this.skinProvider.analyze(imageBuffer);
+    const { result: skinInternal, rawYouCam } =
+      await this.skinProvider.analyze(imageBuffer);
     imageBuffer.fill(0);
+
+    const providerAudit = rawYouCam
+      ? { rawYouCam, capturedAt: new Date().toISOString() }
+      : undefined;
 
     const miraReportBase = await this.intelligence.buildBeautyReport(skinInternal, {
       birthYear: prefs?.birthYear ?? null,
+      rawYouCam,
     });
 
     const record = await this.prisma.skinAnalysis.create({
       data: {
         userId: user.id,
-        resultJson: buildStoredPayload(miraReportBase) as unknown as Prisma.InputJsonValue,
+        resultJson: buildStoredPayload(
+          miraReportBase,
+          providerAudit,
+        ) as unknown as Prisma.InputJsonValue,
       },
     });
 
@@ -71,7 +84,10 @@ export class SkinAnalysisService {
     await this.prisma.skinAnalysis.update({
       where: { id: record.id },
       data: {
-        resultJson: buildStoredPayload(miraReport) as unknown as Prisma.InputJsonValue,
+        resultJson: buildStoredPayload(
+          miraReport,
+          providerAudit,
+        ) as unknown as Prisma.InputJsonValue,
       },
     });
 

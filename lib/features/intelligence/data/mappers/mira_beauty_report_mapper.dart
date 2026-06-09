@@ -1,3 +1,5 @@
+import '../../domain/entities/beauty_journey.dart';
+import '../../domain/entities/confidence_layer.dart';
 import '../../domain/entities/age_comparison.dart';
 import '../../domain/entities/face_health_map.dart';
 import '../../domain/entities/concern_zones_section.dart';
@@ -68,6 +70,82 @@ abstract final class MiraBeautyReportMapper {
       }).toList(),
       weeklyPlan: _parseWeeklyPlan(json['weeklyPlan']),
       progressForecast: _parseProgressForecast(json['progressForecast']),
+      beautyJourney: _parseBeautyJourney(json['beautyJourney'], json),
+      confidenceLayer: _parseConfidenceLayer(json['confidenceLayer']),
+    );
+  }
+
+  static BeautyJourney _parseBeautyJourney(
+    dynamic raw,
+    Map<String, dynamic> fallbackRoot,
+  ) {
+    if (raw is! Map<String, dynamic>) {
+      final score = (fallbackRoot['overallBeautyScore'] as num?)?.toInt() ?? 0;
+      return BeautyJourney.empty(score);
+    }
+
+    final goalRaw = raw['nextGoal'] as Map<String, dynamic>? ?? {};
+    final topRaw = raw['topOpportunity'] as Map<String, dynamic>?;
+    final prioritiesRaw = raw['priorities'] as List<dynamic>? ?? [];
+
+    JourneyPriority? parsePriority(Map<String, dynamic> map) => JourneyPriority(
+          rank: (map['rank'] as num?)?.toInt() ?? 0,
+          concernId: map['concernId'] as String? ?? '',
+          labelAr: map['labelAr'] as String? ?? '',
+          currentScore: (map['currentScore'] as num?)?.toInt() ?? 0,
+          expectedGainPoints: (map['expectedGainPoints'] as num?)?.toInt() ?? 0,
+          rationaleAr: map['rationaleAr'] as String? ?? '',
+        );
+
+    return BeautyJourney(
+      enabled: raw['enabled'] as bool? ?? true,
+      headlineAr: raw['headlineAr'] as String? ?? '',
+      summaryAr: raw['summaryAr'] as String? ?? '',
+      currentOverallScore: (raw['currentOverallScore'] as num?)?.toInt() ?? 0,
+      nextGoal: JourneyGoal(
+        metricId: goalRaw['metricId'] as String? ?? 'overall',
+        labelAr: goalRaw['labelAr'] as String? ?? '',
+        currentValue: (goalRaw['currentValue'] as num?)?.toInt() ?? 0,
+        targetValue: (goalRaw['targetValue'] as num?)?.toInt() ?? 0,
+        horizonDays: (goalRaw['horizonDays'] as num?)?.toInt() ?? 30,
+        headlineAr: goalRaw['headlineAr'] as String? ?? '',
+        summaryAr: goalRaw['summaryAr'] as String? ?? '',
+      ),
+      topOpportunity: topRaw != null ? parsePriority(topRaw) : null,
+      priorities: prioritiesRaw
+          .whereType<Map<String, dynamic>>()
+          .map((map) => JourneyPriority(
+                rank: (map['rank'] as num?)?.toInt() ?? 0,
+                concernId: map['concernId'] as String? ?? '',
+                labelAr: map['labelAr'] as String? ?? '',
+                currentScore: (map['currentScore'] as num?)?.toInt() ?? 0,
+                expectedGainPoints:
+                    (map['expectedGainPoints'] as num?)?.toInt() ?? 0,
+                rationaleAr: map['rationaleAr'] as String? ?? '',
+              ))
+          .toList(),
+      planSummaryAr: raw['planSummaryAr'] as String? ?? '',
+      followUpAr: raw['followUpAr'] as String? ?? '',
+    );
+  }
+
+  static ConfidenceLayer _parseConfidenceLayer(dynamic raw) {
+    if (raw is! Map<String, dynamic>) return ConfidenceLayer.empty;
+
+    final itemsRaw = raw['items'] as List<dynamic>? ?? [];
+    return ConfidenceLayer(
+      enabled: raw['enabled'] as bool? ?? true,
+      headlineAr: raw['headlineAr'] as String? ?? '',
+      summaryAr: raw['summaryAr'] as String? ?? '',
+      items: itemsRaw.map((item) {
+        final map = item as Map<String, dynamic>;
+        return ConfidenceItem(
+          id: map['id'] as String? ?? '',
+          labelAr: map['labelAr'] as String? ?? '',
+          level: map['level'] as String? ?? 'low',
+          reasonAr: map['reasonAr'] as String? ?? '',
+        );
+      }).toList(),
     );
   }
 
@@ -115,6 +193,8 @@ abstract final class MiraBeautyReportMapper {
 
     final zonesRaw = raw['zones'] as List<dynamic>? ?? [];
     final cardsRaw = raw['insightCards'] as List<dynamic>? ?? [];
+    final overlaysRaw = raw['concernOverlays'] as List<dynamic>? ?? [];
+    final markersRaw = raw['markers'] as List<dynamic>? ?? [];
 
     return FaceHealthMap(
       enabled: raw['enabled'] as bool? ?? false,
@@ -135,6 +215,7 @@ abstract final class MiraBeautyReportMapper {
                   ?.map((e) => e.toString())
                   .toList() ??
               const [],
+          zoneScore: (map['zoneScore'] as num?)?.toInt(),
           educationalNoteAr: map['educationalNoteAr'] as String?,
           source: map['source'] as String? ?? 'educational',
         );
@@ -151,6 +232,37 @@ abstract final class MiraBeautyReportMapper {
               const [],
           zoneLabelAr: map['zoneLabelAr'] as String? ?? '',
           bodyAr: map['bodyAr'] as String? ?? '',
+        );
+      }).toList(),
+      concernOverlays: overlaysRaw.map((item) {
+        final map = item as Map<String, dynamic>;
+        final zoneScoresRaw = map['zoneScores'] as Map<String, dynamic>? ?? {};
+        return FaceHealthConcernOverlay(
+          concernId: map['concernId'] as String? ?? '',
+          labelAr: map['labelAr'] as String? ?? '',
+          labelEn: map['labelEn'] as String? ?? '',
+          globalScore: (map['globalScore'] as num?)?.toInt() ?? 0,
+          severity: map['severity'] as String? ?? 'mild',
+          zoneScores: zoneScoresRaw.map(
+            (k, v) => MapEntry(k, (v as num).toInt()),
+          ),
+          highlightZoneIds: (map['highlightZoneIds'] as List<dynamic>?)
+                  ?.map((e) => e.toString())
+                  .toList() ??
+              const [],
+          highlightColor: map['highlightColor'] as String? ?? '#C19EE0',
+          hasRegionalData: map['hasRegionalData'] as bool? ?? false,
+        );
+      }).toList(),
+      defaultConcernId: raw['defaultConcernId'] as String? ?? '',
+      markers: markersRaw.map((item) {
+        final map = item as Map<String, dynamic>;
+        return FaceHealthSpatialMarker(
+          concernId: map['concernId'] as String? ?? '',
+          zoneId: map['zoneId'] as String? ?? '',
+          x: (map['x'] as num?)?.toDouble() ?? 0,
+          y: (map['y'] as num?)?.toDouble() ?? 0,
+          severity: (map['severity'] as num?)?.toInt() ?? 1,
         );
       }).toList(),
     );

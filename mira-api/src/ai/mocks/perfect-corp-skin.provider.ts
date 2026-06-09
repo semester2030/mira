@@ -5,13 +5,15 @@ import {
   Logger,
 } from '@nestjs/common';
 import { ConfigService } from '@nestjs/config';
-import { SkinAnalysisResult } from '../contracts/skin-analysis-result.interface';
+import { SkinAnalysisProviderResult } from '../contracts/skin-analysis-provider-result.interface';
 import { SkinAnalysisProvider } from '../providers/skin-analysis.provider';
 import { PerfectCorpService } from '../services/perfect-corp.service';
+import { buildYouCamImageVariants } from '../utils/youcam-image-variants';
 import {
-  buildYouCamImageVariants,
-  isRecoverableYouCamError,
-} from '../utils/youcam-image-variants';
+  faceGateMessageFromYouCam,
+  isFaceBlockingYouCamError,
+  isFaceQualityYouCamError,
+} from '../face-gate/youcam-face-errors';
 import { MockSkinAnalysisProvider } from './mock-skin-analysis.provider';
 
 /**
@@ -28,10 +30,10 @@ export class PerfectCorpSkinProvider implements SkinAnalysisProvider {
     private readonly config: ConfigService,
   ) {}
 
-  async analyze(imageBytes: Buffer): Promise<SkinAnalysisResult> {
+  async analyze(imageBytes: Buffer): Promise<SkinAnalysisProviderResult> {
     if (!this.perfectCorp.isConfigured()) {
       this.logger.warn(
-        'PERFECT_API_KEY / PERFECT_CORP_API_KEY not set — using mock skin analysis',
+        'PERFECT_API_KEY / PERFECT_CORP_API_KEY not set — using mock skin analysis (no server face ML)',
       );
       return this.mock.analyze(imageBytes);
     }
@@ -44,19 +46,24 @@ export class PerfectCorpSkinProvider implements SkinAnalysisProvider {
 
     for (let i = 0; i < variants.length; i++) {
       try {
-        const result = await this.perfectCorp.analyzeSkin(variants[i]);
+        const { result, rawYouCam } = await this.perfectCorp.analyzeSkin(variants[i]);
         if (i > 0) {
           this.logger.log(
             `YouCam succeeded on auto-retry variant ${i + 1}/${variants.length}`,
           );
         }
-        return result;
+        return { result, rawYouCam };
       } catch (error) {
         lastMessage = error instanceof Error ? error.message : String(error);
-        const recoverable = isRecoverableYouCamError(lastMessage);
+
+        if (isFaceBlockingYouCamError(lastMessage)) {
+          throw new BadRequestException(faceGateMessageFromYouCam(lastMessage));
+        }
+
+        const qualityIssue = isFaceQualityYouCamError(lastMessage);
         const hasNext = i < variants.length - 1;
 
-        if (recoverable && hasNext) {
+        if (qualityIssue && hasNext) {
           this.logger.warn(
             `YouCam variant ${i + 1}/${variants.length} failed (${lastMessage}) — retrying with enhanced image`,
           );
@@ -65,22 +72,15 @@ export class PerfectCorpSkinProvider implements SkinAnalysisProvider {
 
         this.logger.error(`YouCam skin analysis failed: ${lastMessage}`);
 
-        if (allowFallback && recoverable) {
-          this.logger.warn(
-            'All YouCam variants failed — falling back to mock skin analysis',
-          );
-          return this.mock.analyze(imageBytes);
+        if (qualityIssue) {
+          throw new BadRequestException(faceGateMessageFromYouCam(lastMessage));
         }
 
-        if (lastMessage.includes('error_src_face_too_small')) {
-          throw new BadRequestException(
-            'تعذر تحليل الصورة — أعيدي التقاط صورة أقرب مع إضاءة أمامية.',
+        if (allowFallback) {
+          this.logger.warn(
+            'Non-face YouCam failure — falling back to mock (dev only; set PERFECT_CORP_FALLBACK_MOCK=false in prod)',
           );
-        }
-        if (lastMessage.includes('error_lighting_dark')) {
-          throw new BadRequestException(
-            'الإضاءة ضعيفة — انتقلي لمكان أفضل ثم أعيدي المحاولة.',
-          );
+          return this.mock.analyze(imageBytes);
         }
 
         throw new InternalServerErrorException(

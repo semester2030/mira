@@ -1,8 +1,12 @@
 import 'package:dio/dio.dart';
 
+import '../face_gate/face_gate_exception.dart';
 import 'firebase_error_message.dart';
 
 String friendlyMiraError(Object error) {
+  if (error is FaceGateException) {
+    return error.messageAr;
+  }
   if (error is DioException) {
     switch (error.type) {
       case DioExceptionType.connectionTimeout:
@@ -59,6 +63,15 @@ String? _localizeServerMessage(String? raw) {
   final lower = raw.toLowerCase();
   if (lower.contains('error_src_face_too_small') || lower.contains('face_too_small')) {
     return 'تعذر تحليل الصورة — أعيدي التقاط صورة أقرب مع إضاءة أمامية.';
+  }
+  if (lower.contains('no_face') ||
+      lower.contains('face_not') ||
+      lower.contains('error_src_no_face') ||
+      lower.contains('face_detection')) {
+    return 'لم نتعرف على وجه — التقطي selfie واضح وثبّتي وجهك في منتصف الإطار.';
+  }
+  if (lower.contains('face_gate')) {
+    return raw;
   }
   if (lower.contains('error_lighting_dark') || lower.contains('lighting_dark')) {
     return 'الإضاءة ضعيفة — انتقلي لمكان أفضل ثم أعيدي المحاولة.';

@@ -138,6 +138,58 @@ export interface ProgressForecastPayload {
   projectedOverallScore30Days?: number;
 }
 
+export type ConfidenceLevel = 'high' | 'medium' | 'low';
+
+export interface JourneyPriority {
+  rank: number;
+  concernId: string;
+  labelAr: string;
+  currentScore: number;
+  expectedGainPoints: number;
+  rationaleAr: string;
+}
+
+export interface JourneyGoal {
+  metricId: 'overall';
+  labelAr: string;
+  currentValue: number;
+  targetValue: number;
+  horizonDays: number;
+  headlineAr: string;
+  summaryAr: string;
+}
+
+export interface BeautyJourneyPayload {
+  enabled: boolean;
+  headlineAr: string;
+  summaryAr: string;
+  currentOverallScore: number;
+  nextGoal: JourneyGoal;
+  topOpportunity: JourneyPriority | null;
+  priorities: JourneyPriority[];
+  planSummaryAr: string;
+  followUpAr: string;
+}
+
+export interface ConfidenceItem {
+  id:
+    | 'age_comparison'
+    | 'journey_goal'
+    | 'progress_forecast'
+    | 'recommendations'
+    | 'face_map';
+  labelAr: string;
+  level: ConfidenceLevel;
+  reasonAr: string;
+}
+
+export interface ConfidenceLayerPayload {
+  enabled: boolean;
+  headlineAr: string;
+  summaryAr: string;
+  items: ConfidenceItem[];
+}
+
 /** User-facing report — no raw provider metrics. */
 export interface MiraBeautyReport {
   version: 1;
@@ -160,11 +212,21 @@ export interface MiraBeautyReport {
   recommendedProducts: RecommendedProductSummary[];
   weeklyPlan: WeeklyPlanPayload;
   progressForecast: ProgressForecastPayload;
+  beautyJourney: BeautyJourneyPayload;
+  confidenceLayer: ConfidenceLayerPayload;
+}
+
+/** Server-only audit blob — never returned to Flutter clients. */
+export interface StoredProviderAudit {
+  rawYouCam?: Record<string, unknown>;
+  capturedAt: string;
 }
 
 export interface StoredSkinAnalysisPayload {
   version: 2;
   miraReport: MiraBeautyReport;
+  /** Optional YouCam raw task JSON for spatial audit (stripped from API). */
+  providerAudit?: StoredProviderAudit;
 }
 
 export function isStoredSkinAnalysisV2(

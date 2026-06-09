@@ -4,11 +4,19 @@ import 'package:flutter/material.dart';
 
 import '../../domain/entities/face_health_map.dart';
 
-/// Premium feminine face diagram with soft zone highlights.
+/// Premium face diagram with Playground-style zone heatmap, scores, and markers.
 class FaceDiagramPainter extends CustomPainter {
   final List<FaceHealthZone> zones;
+  final List<FaceHealthSpatialMarker> markers;
+  final bool showZoneScores;
+  final bool showMarkers;
 
-  FaceDiagramPainter({required this.zones});
+  FaceDiagramPainter({
+    required this.zones,
+    this.markers = const [],
+    this.showZoneScores = false,
+    this.showMarkers = false,
+  });
 
   @override
   void paint(Canvas canvas, Size size) {
@@ -20,8 +28,10 @@ class FaceDiagramPainter extends CustomPainter {
 
     _drawFaceBase(canvas, faceRect);
     _drawZoneHighlights(canvas, faceRect);
+    if (showMarkers) _drawMarkers(canvas, faceRect);
     _drawFaceOutline(canvas, faceRect);
     _drawZoneLabels(canvas, faceRect);
+    if (showZoneScores) _drawZoneScoreBadges(canvas, faceRect);
   }
 
   void _drawFaceBase(Canvas canvas, Rect faceRect) {
@@ -42,22 +52,23 @@ class FaceDiagramPainter extends CustomPainter {
   void _drawZoneHighlights(Canvas canvas, Rect faceRect) {
     final highlightMap = {for (final z in zones.where((z) => z.highlight)) z.id: z};
 
-    void drawZone(String id, Path path) {
+    void drawZone(String id, Path path, {Offset? scoreAnchor}) {
       final zone = highlightMap[id];
       if (zone == null) return;
       final color = _parseHex(zone.highlightColor);
+      final alpha = _heatmapAlpha(zone.zoneScore);
       canvas.drawPath(
         path,
         Paint()
-          ..color = color.withValues(alpha: 0.38)
+          ..color = color.withValues(alpha: alpha)
           ..style = PaintingStyle.fill,
       );
       canvas.drawPath(
         path,
         Paint()
-          ..color = color.withValues(alpha: 0.55)
+          ..color = color.withValues(alpha: alpha + 0.12)
           ..style = PaintingStyle.stroke
-          ..strokeWidth = 1.2,
+          ..strokeWidth = 1.4,
       );
     }
 
@@ -76,6 +87,72 @@ class FaceDiagramPainter extends CustomPainter {
         ..addPath(_chinPath(faceRect), Offset.zero);
       drawZone('t_zone', tZone);
     }
+  }
+
+  void _drawMarkers(Canvas canvas, Rect faceRect) {
+    for (final marker in markers) {
+      final center = Offset(
+        faceRect.left + faceRect.width * marker.x,
+        faceRect.top + faceRect.height * marker.y,
+      );
+      final radius = 3.5 + marker.severity * 0.8;
+      canvas.drawCircle(
+        center,
+        radius + 2,
+        Paint()..color = Colors.white.withValues(alpha: 0.85),
+      );
+      canvas.drawCircle(
+        center,
+        radius,
+        Paint()..color = const Color(0xFFE74C3C).withValues(alpha: 0.75),
+      );
+    }
+  }
+
+  void _drawZoneScoreBadges(Canvas canvas, Rect faceRect) {
+    final anchors = <String, Offset>{
+      'forehead': Offset(faceRect.center.dx, faceRect.top + faceRect.height * 0.14),
+      'under_eye': Offset(faceRect.center.dx, faceRect.top + faceRect.height * 0.32),
+      'cheek_left': Offset(faceRect.left + faceRect.width * 0.22, faceRect.center.dy + 4),
+      'cheek_right': Offset(faceRect.right - faceRect.width * 0.22, faceRect.center.dy + 4),
+      'nose': Offset(faceRect.center.dx, faceRect.center.dy + 8),
+      'chin': Offset(faceRect.center.dx, faceRect.bottom - faceRect.height * 0.1),
+      't_zone': Offset(faceRect.center.dx, faceRect.center.dy - 8),
+    };
+
+    for (final zone in zones) {
+      final score = zone.zoneScore;
+      if (score == null || !zone.highlight) continue;
+      final anchor = anchors[zone.id];
+      if (anchor == null) continue;
+      _drawScoreBadge(canvas, anchor, score, _parseHex(zone.highlightColor));
+    }
+  }
+
+  void _drawScoreBadge(Canvas canvas, Offset center, int score, Color color) {
+    const badgeR = 14.0;
+    canvas.drawCircle(
+      center,
+      badgeR + 1.5,
+      Paint()..color = Colors.white.withValues(alpha: 0.92),
+    );
+    canvas.drawCircle(
+      center,
+      badgeR,
+      Paint()..color = color.withValues(alpha: 0.88),
+    );
+    final tp = TextPainter(
+      text: TextSpan(
+        text: '$score',
+        style: const TextStyle(
+          color: Colors.white,
+          fontSize: 10,
+          fontWeight: FontWeight.w700,
+        ),
+      ),
+      textDirection: TextDirection.ltr,
+    )..layout();
+    tp.paint(canvas, center - Offset(tp.width / 2, tp.height / 2));
   }
 
   void _drawFaceOutline(Canvas canvas, Rect faceRect) {
@@ -117,6 +194,12 @@ class FaceDiagramPainter extends CustomPainter {
     label('الأنف', Offset(faceRect.center.dx, faceRect.center.dy + 8));
     label('الذقن', Offset(faceRect.center.dx, faceRect.bottom - 18));
     label('الفك', Offset(faceRect.center.dx, faceRect.bottom + 2));
+  }
+
+  double _heatmapAlpha(int? score) {
+    if (score == null) return 0.38;
+    final intensity = (100 - score.clamp(0, 100)) / 100;
+    return 0.22 + intensity * 0.42;
   }
 
   Path _faceOutlinePath(Rect r) {
@@ -189,5 +272,8 @@ class FaceDiagramPainter extends CustomPainter {
 
   @override
   bool shouldRepaint(covariant FaceDiagramPainter oldDelegate) =>
-      oldDelegate.zones != zones;
+      oldDelegate.zones != zones ||
+      oldDelegate.markers != markers ||
+      oldDelegate.showZoneScores != showZoneScores ||
+      oldDelegate.showMarkers != showMarkers;
 }

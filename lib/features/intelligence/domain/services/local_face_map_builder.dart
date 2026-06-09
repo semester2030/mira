@@ -10,6 +10,14 @@ abstract final class LocalFaceMapBuilder {
   static const _disclaimer =
       'الخريطة التالية استرشادية وليست تشخيصاً مكانياً دقيقة — المناطق الملوّنة شائعة علمياً وليست «مشكلتك هنا بالضبط».';
 
+  static const _concernMeta = <String, ({String ar, String en, String color})>{
+    'oiliness': (ar: 'الدهون', en: 'Oiliness', color: '#F5A623'),
+    'pore': (ar: 'المسام', en: 'Pores', color: '#9B59B6'),
+    'moisture': (ar: 'الترطيب', en: 'Moisture', color: '#3498DB'),
+    'redness': (ar: 'الاحمرار', en: 'Redness', color: '#E74C3C'),
+    'age_spot': (ar: 'التصبغات', en: 'Spots', color: '#D35400'),
+  };
+
   static FaceHealthMap fromSkinReport(SkinReport report) {
     final scores = {
       for (final c in SkinReportMatrix.matrixScores(report)) c.id: c.score,
@@ -18,6 +26,7 @@ abstract final class LocalFaceMapBuilder {
 
     final insights = <FaceHealthInsight>[];
     final highlightIds = <String>{};
+    final overlays = <FaceHealthConcernOverlay>[];
 
     void addRule({
       required String concernId,
@@ -27,6 +36,19 @@ abstract final class LocalFaceMapBuilder {
       required int threshold,
       required int score,
     }) {
+      final meta = _concernMeta[concernId];
+      overlays.add(FaceHealthConcernOverlay(
+        concernId: concernId,
+        labelAr: meta?.ar ?? labelAr,
+        labelEn: meta?.en ?? concernId,
+        globalScore: score,
+        severity: score >= 70 ? 'mild' : score >= 55 ? 'moderate' : 'noticeable',
+        zoneScores: const {},
+        highlightZoneIds: zoneIds,
+        highlightColor: meta?.color ?? _highlight,
+        hasRegionalData: false,
+      ));
+
       if (score >= threshold) return;
       for (final z in zoneIds) {
         highlightIds.add(z);
@@ -84,19 +106,28 @@ abstract final class LocalFaceMapBuilder {
       score: ui('age_spot', 100 - report.spots * 20),
     );
 
+    overlays.sort((a, b) => a.globalScore.compareTo(b.globalScore));
+    final defaultId = overlays.firstWhere(
+      (o) => o.globalScore < 65,
+      orElse: () => overlays.first,
+    ).concernId;
+
     final cards = insights.take(4).toList();
-    if (cards.isEmpty) return FaceHealthMap.empty;
+    if (cards.isEmpty && overlays.isEmpty) return FaceHealthMap.empty;
 
     return FaceHealthMap(
       enabled: true,
       confidence: 'low',
       confidenceLabelAr: 'ثقة منخفضة — استرشادي',
       mode: 'educational',
-      titleAr: 'خريطة الوجه الاسترشادية',
-      subtitleAr: 'مناطق شائعة — وليست تشخيصاً مؤكداً على وجهك',
+      titleAr: 'خريطة تحليل البشرة',
+      subtitleAr: 'استكشفي كل concern — المناطق الملوّنة شائعة علمياً',
       disclaimerAr: _disclaimer,
       zones: _buildZones(highlightIds),
       insightCards: cards,
+      concernOverlays: overlays,
+      defaultConcernId: defaultId,
+      markers: const [],
     );
   }
 

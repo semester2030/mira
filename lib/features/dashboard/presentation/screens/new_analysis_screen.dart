@@ -12,6 +12,7 @@ import '../../../../shared/theme/typography.dart';
 import '../../../../shared/widgets/guest_banner.dart';
 import '../../../../shared/widgets/mira_app_bar.dart';
 import '../../../../shared/widgets/premium/premium_exports.dart';
+import '../../../../core/utils/mira_api_error_message.dart';
 import '../../../skin_analysis/data/repositories/skin_analysis_repository_impl.dart';
 import '../../../skin_analysis/presentation/blocs/skin_analysis_bloc.dart';
 import '../../../skin_analysis/presentation/blocs/skin_analysis_event.dart';
@@ -50,7 +51,7 @@ class _NewAnalysisScreenState extends State<NewAnalysisScreen> {
     } catch (e) {
       if (!context.mounted) return;
       ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(content: Text(e.toString()), backgroundColor: AppColors.error),
+        SnackBar(content: Text(friendlyMiraError(e)), backgroundColor: AppColors.error),
       );
     } finally {
       if (mounted) setState(() => _guestAnalyzing = false);

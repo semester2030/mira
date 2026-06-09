@@ -2,9 +2,12 @@ import { buildAdvisorAnswer } from './advisor-answer-engine';
 import { buildAdvisorContext } from './advisor-context-builder';
 import { MiraBeautyReport } from '../../intelligence/contracts/mira-beauty-report.interface';
 import { WEEKLY_PLAN_EMPTY } from '../../intelligence/contracts/weekly-plan.interface';
+import { buildBeautyJourney } from '../../intelligence/pipeline/beauty-journey-engine';
+import { buildConfidenceLayer } from '../../intelligence/pipeline/confidence-layer';
 
 describe('advisor-answer-engine', () => {
-  const baseReport = (): MiraBeautyReport => ({
+  const baseReport = (): MiraBeautyReport => {
+    const draft = {
     version: 1,
     spatialConfidence: 'none',
     overallBeautyScore: 72,
@@ -93,7 +96,16 @@ describe('advisor-answer-engine', () => {
       trends: [],
       milestones: [],
     },
-  });
+    } as MiraBeautyReport;
+    return {
+      ...draft,
+      beautyJourney: buildBeautyJourney(draft),
+      confidenceLayer: buildConfidenceLayer({
+        ...draft,
+        beautyJourney: buildBeautyJourney(draft),
+      }),
+    };
+  };
 
   it('answers serum question with context', () => {
     const ctx = buildAdvisorContext('a1', baseReport(), { userAge: 39 });

@@ -1,15 +1,9 @@
 import sharp from 'sharp';
+import { isFaceQualityYouCamError } from '../face-gate/youcam-face-errors';
 
-const RECOVERABLE_YOUCAM_ERRORS = [
-  'error_src_face_too_small',
-  'face_too_small',
-  'error_lighting_dark',
-  'error_lighting',
-] as const;
-
+/** @deprecated use isFaceQualityYouCamError from face-gate */
 export function isRecoverableYouCamError(message: string): boolean {
-  const lower = message.toLowerCase();
-  return RECOVERABLE_YOUCAM_ERRORS.some((token) => lower.includes(token));
+  return isFaceQualityYouCamError(message);
 }
 
 /** Progressive JPEG variants — retried silently before surfacing an error. */

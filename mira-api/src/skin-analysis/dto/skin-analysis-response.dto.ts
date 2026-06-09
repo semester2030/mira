@@ -30,8 +30,13 @@ export class SkinAnalysisResponseDto {
 
 export function buildStoredPayload(
   miraReport: MiraBeautyReport,
+  providerAudit?: StoredSkinAnalysisPayload['providerAudit'],
 ): StoredSkinAnalysisPayload {
-  return { version: 2, miraReport };
+  return {
+    version: 2,
+    miraReport,
+    ...(providerAudit ? { providerAudit } : {}),
+  };
 }
 
 export function extractMiraReportFromStored(

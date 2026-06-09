@@ -27,6 +27,9 @@
         <a href="#phase-5-done">المرحلة 5 ✓</a>
         <a href="#phase-6-done">المرحلة 6 ✓</a>
         <a href="#phase-7-done">المرحلة 7 ✓</a>
+        <a href="#phase-7c-done">7c+7d ✓</a>
+        <a href="#beauty-journey-engine">7c Journey</a>
+        <a href="#confidence-layer">7d Confidence</a>
         <a href="#mira-advisor-ai">Advisor spec</a>
         <a href="#implementation-audit">عدّ التنفيذ ✓</a>
         <a href="#educational-face-map">Educational Map</a>
@@ -72,6 +75,8 @@
         <li><a href="#phase-5-done">المرحلة 5 — ما نُفّذ</a></li>
         <li><a href="#phase-6-done">المرحلة 6 — ما نُfّذ</a></li>
         <li><a href="#mira-advisor-ai">المرحلة 7 — Mira Advisor AI ✓</a></li>
+        <li><a href="#beauty-journey-engine">المرحلة 7c — Beauty Journey Engine</a></li>
+        <li><a href="#confidence-layer">المرحلة 7d — Confidence Layer</a></li>
         <li><a href="#implementation-audit">§٩ عدّ التنفيذ الفعلي (109 ملف)</a></li>
         <li><a href="#face-map-policy">سياسة Face Map (Product Policy)</a></li>
         <li><a href="#req-map">خريطة المتطلبات → المراحل</a></li>
@@ -1506,6 +1511,149 @@ Question: هل أحتاج سيروم؟</pre>
           <li>استجابة &lt;3s (engines محلية — بدون LLM)</li>
         </ol>
         <p style="margin-bottom:0;"><strong>Phase 7b لاحقاً:</strong> LLM polish · streaming · سجل محادثة persistent.</p>
+      </div>
+
+      <!-- PHASE 7c — BEAUTY JOURNEY ENGINE -->
+      <div class="card" id="beauty-journey-engine" style="margin-top:2rem;border:2px solid var(--gold, #c9a227);">
+        <span class="tag warn" style="margin-bottom:0.75rem;display:inline-block;">المرحلة 7c · الأولوية التالية</span>
+        <h3 style="margin-top:0;">Phase 7c — Beauty Journey Engine</h3>
+        <p class="lead" style="margin-bottom:1rem;">
+          تحويل التقرير من <strong>«الحالة الحالية فقط»</strong> إلى <strong>«رحلة واضحة»</strong>:
+          أين أنا → إلى أين → كيف أصل → متابعة أسبوعية.
+        </p>
+
+        <div class="card ok" style="margin:1rem 0;">
+          <h4 style="margin-top:0;">لماذا 7c قبل 7b (LLM)؟</h4>
+          <p>المستخدمات لا تدفعن لوجود Chat — بل عندما تشعرن أن ميرا:</p>
+          <ul>
+            <li>تعرف حالتي الحالية</li>
+            <li>تعرف هدفي القادم</li>
+            <li>تعرف كيف أصل له</li>
+            <li>وتتابعني أسبوعاً بعد أسبوع</li>
+          </ul>
+          <p style="margin-bottom:0;">هذا يحوّل ميرا من <em>محلل بشرة</em> إلى <em>مدربة عناية شخصية</em>.</p>
+        </div>
+
+        <h4>الفجوة الحالية</h4>
+        <table>
+          <thead><tr><th>اليوم</th><th>المطلوب (7c)</th></tr></thead>
+          <tbody>
+            <tr><td>بشرتك جيدة · روتين · منتجات</td><td><strong>الهدف القادم:</strong> 67 → 72 خلال 30 يوماً</td></tr>
+            <tr><td>concerns narrative</td><td><strong>أكبر فرصة:</strong> المسام +8 نقاط</td></tr>
+            <tr><td>weekly plan منفصل</td><td><strong>أولويات 1–2–3</strong> مرتبطة بالهدف</td></tr>
+            <tr><td>progress بعد تحليلين</td><td><strong>خطة الوصول</strong> + متابعة من أول تحليل</td></tr>
+          </tbody>
+        </table>
+
+        <h4>Architecture</h4>
+        <pre>mira-api/src/intelligence/pipeline/
+
+beauty-journey-engine.ts   ← Goal Framing من MiraBeautyReport
+confidence-layer.ts        ← درجات ثقة (7d — يُبنى مع 7c)
+
+Input:  MiraBeautyReport + progressForecast + weeklyPlan
+Output: beautyJourney { nextGoal · priorities · topOpportunity · planSummary }</pre>
+
+        <h4>Payload — <code>BeautyJourneyPayload</code></h4>
+        <table>
+          <thead><tr><th>حقل</th><th>مثال</th></tr></thead>
+          <tbody>
+            <tr><td><code>currentOverallScore</code></td><td>67</td></tr>
+            <tr><td><code>nextGoal.targetValue</code></td><td>72</td></tr>
+            <tr><td><code>nextGoal.horizonDays</code></td><td>30</td></tr>
+            <tr><td><code>topOpportunity</code></td><td>المسام · 62 · +8</td></tr>
+            <tr><td><code>priorities[1..3]</code></td><td>المسام · الهالات · الترطيب</td></tr>
+            <tr><td><code>planSummaryAr</code></td><td>من weekly plan + routine</td></tr>
+            <tr><td><code>followUpAr</code></td><td>تحليل متابعة بعد 7–14 يوماً</td></tr>
+          </tbody>
+        </table>
+
+        <h4>Flutter</h4>
+        <ul>
+          <li><code>BeautyJourneySection</code> — بعد <code>BeautyScoreHero</code> مباشرة</li>
+          <li>تدفق UI: الحالة → الهدف → الفرصة → الأولويات → الخطة</li>
+          <li><code>LocalBeautyJourneyBuilder</code> — offline mirror</li>
+        </ul>
+
+        <h4>معايير القبول — Phase 7c</h4>
+        <ol>
+          <li>كل تقرير يعرض <code>nextGoal</code> رقمياً (current → target · 30 يوماً)</li>
+          <li>≥ 1 priority + <code>topOpportunity</code> من concerns الفعلية</li>
+          <li>لا generic — مبني على scores/severity في التقرير</li>
+          <li>يعمل من أول تحليل (بدون انتظار scan ثانٍ)</li>
+          <li>يستهلك <code>progressForecast.projectedOverallScore30Days</code> عند توفره</li>
+        </ol>
+      </div>
+
+      <!-- PHASE 7d — CONFIDENCE LAYER -->
+      <div class="card" id="confidence-layer" style="margin-top:1.5rem;border:2px solid var(--secondary, #c19ee0);">
+        <span class="tag warn" style="margin-bottom:0.75rem;display:inline-block;">المرحلة 7d · مع 7c</span>
+        <h3 style="margin-top:0;">Phase 7d — Confidence Layer</h3>
+        <p class="lead" style="margin-bottom:1rem;">
+          عبارات قوية مثل «بشرتك تبدو أصغر بـ 6 سنوات» تحتاج <strong>درجة ثقة</strong> — وإلا تُضعف المصداقية.
+        </p>
+
+        <h4>مستويات الثقة</h4>
+        <table>
+          <thead><tr><th>المستوى</th><th>متى</th><th>عرض للمستخدمة</th></tr></thead>
+          <tbody>
+            <tr><td><span class="tag ok">ثقة عالية</span></td><td>birthYear + skinAge + ≥2 scans</td><td>عبارة مباشرة</td></tr>
+            <tr><td><span class="tag warn">ثقة متوسطة</span></td><td>scan واحد · تقدير خطي</td><td>«قد» · «مؤشر أولي»</td></tr>
+            <tr><td><span class="tag danger">ثقة منخفضة</span></td><td>guest · بيانات ناقصة</td><td>«نحتاج تحليلاً إضافياً»</td></tr>
+          </tbody>
+        </table>
+
+        <h4>Confidence per claim</h4>
+        <table>
+          <thead><tr><th>Claim</th><th>مصدر</th></tr></thead>
+          <tbody>
+            <tr><td>عمر البشرة / age comparison</td><td>birthYear · skinAge · childSafety</td></tr>
+            <tr><td>التوقعات 30 يوماً</td><td>scanCount · linear projection</td></tr>
+            <tr><td>هدف الرحلة (7c)</td><td>severity + history depth</td></tr>
+            <tr><td>التوصيات / marketplace</td><td>matchScore average</td></tr>
+            <tr><td>Face Map</td><td>موجود — <code>faceHealthMap.confidence</code></td></tr>
+          </tbody>
+        </table>
+
+        <h4>Payload — <code>ConfidenceLayerPayload</code></h4>
+        <pre>confidenceLayer: {
+  enabled: true,
+  headlineAr: "درجة ثقة ميرا في تقريرك",
+  items: [
+    { id: "age_comparison", level: "high", labelAr: "...", reasonAr: "..." },
+    { id: "journey_goal", level: "medium", ... },
+    ...
+  ]
+}</pre>
+
+        <h4>Flutter</h4>
+        <ul>
+          <li><code>ConfidenceLayerSection</code> — badges في التقرير</li>
+          <li><code>SkinAgeComparisonCard</code> — badge ثقة على العبارة القوية</li>
+          <li>نفس منطق Face Map confidence badge</li>
+        </ul>
+
+        <h4>ترتيب الأولويات المُحدَّث (Phase 7)</h4>
+        <ol>
+          <li><span class="tag ok">7a ✓</span> Mira Advisor — deterministic</li>
+          <li><span class="tag warn">7c</span> Beauty Journey Engine</li>
+          <li><span class="tag warn">7d</span> Confidence Layer</li>
+          <li><span class="tag">7e</span> Partner Recommendation Engine (journey-aware)</li>
+          <li><span class="tag">7b</span> LLM polish — آخراً</li>
+        </ol>
+      </div>
+
+      <div class="card ok" id="phase-7c-done" style="margin-top:1.5rem;border:2px solid var(--ok);">
+        <h4 style="margin-top:0;">✅ ما نُفّذ — Phase 7c + 7d (يونيو 2026)</h4>
+        <table>
+          <thead><tr><th>ملف</th><th>الدور</th></tr></thead>
+          <tbody>
+            <tr><td><code>beauty-journey-engine.ts</code></td><td>nextGoal · priorities · topOpportunity</td></tr>
+            <tr><td><code>confidence-layer.ts</code></td><td>ثقة لكل claim في التقرير</td></tr>
+            <tr><td><code>BeautyJourneySection</code></td><td>بعد BeautyScoreHero في التقرير</td></tr>
+            <tr><td><code>ConfidenceLayerSection</code></td><td>badges + SkinAgeComparisonCard</td></tr>
+          </tbody>
+        </table>
       </div>
 
       <!-- IMPLEMENTATION AUDIT — exact counts from repo -->

@@ -23,7 +23,10 @@ export class PerfectCorpService {
   }
 
   /** Analyze skin via YouCam; image stays in memory on this server only. */
-  async analyzeSkin(imageBytes: Buffer): Promise<SkinAnalysisResult> {
+  async analyzeSkin(imageBytes: Buffer): Promise<{
+    result: SkinAnalysisResult;
+    rawYouCam: Record<string, unknown>;
+  }> {
     const { apiKey, baseUrl } = resolvePerfectCorpConfig(this.config);
     if (!apiKey) {
       throw new Error('Perfect Corp API key is not configured on the server');
@@ -32,11 +35,11 @@ export class PerfectCorpService {
     const fileId = await this.uploadImage(baseUrl, apiKey, imageBytes);
     const taskId = await this.createSkinTask(baseUrl, apiKey, fileId);
     const { concerns, rawData } = await this.pollUntilDone(baseUrl, apiKey, taskId);
-    const mapped = this.mapYouCamResults(concerns, rawData);
+    const result = this.mapYouCamResults(concerns, rawData);
     this.logger.log(
       `YouCam skin analysis OK (task=${taskId.slice(0, 12)}…, concerns=${concerns.length})`,
     );
-    return mapped;
+    return { result, rawYouCam: rawData };
   }
 
   private authHeaders(apiKey: string): Record<string, string> {

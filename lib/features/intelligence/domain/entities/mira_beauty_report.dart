@@ -1,4 +1,6 @@
 import 'age_comparison.dart';
+import 'beauty_journey.dart';
+import 'confidence_layer.dart';
 import 'concern_zones_section.dart';
 import 'face_health_map.dart';
 import 'progress_forecast.dart';
@@ -88,6 +90,8 @@ class MiraBeautyReport {
   final List<RecommendedProductSummary> recommendedProducts;
   final WeeklyPlan weeklyPlan;
   final ProgressForecast progressForecast;
+  final BeautyJourney beautyJourney;
+  final ConfidenceLayer confidenceLayer;
 
   const MiraBeautyReport({
     required this.version,
@@ -110,6 +114,8 @@ class MiraBeautyReport {
     required this.recommendedProducts,
     required this.weeklyPlan,
     required this.progressForecast,
+    required this.beautyJourney,
+    required this.confidenceLayer,
   });
 
   bool get hasSpatialFaceMap =>

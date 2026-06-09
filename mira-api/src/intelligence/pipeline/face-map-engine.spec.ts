@@ -29,6 +29,8 @@ describe('face-map-engine (Educational Face Map)', () => {
     expect(bundle.faceHealthMap.confidence).toBe('low');
     expect(bundle.faceHealthMap.confidenceLabelAr).toContain('ثقة منخفضة');
     expect(bundle.faceHealthMap.disclaimerAr).toContain('استرشادية');
+    expect(bundle.faceHealthMap.concernOverlays.length).toBeGreaterThan(0);
+    expect(bundle.faceHealthMap.defaultConcernId).toBeTruthy();
   });
 
   it('highlights t_zone for elevated pores/oiliness without red markers', () => {
@@ -57,6 +59,10 @@ describe('face-map-engine (Educational Face Map)', () => {
     const bundle = buildFaceMapBundle(oilySkin, raw);
     expect(bundle.faceHealthMap.confidence).toBe('medium');
     expect(bundle.faceHealthMap.mode).toBe('regional');
+    const pore = bundle.faceHealthMap.concernOverlays.find(
+      (o) => o.concernId === 'pore',
+    );
+    expect(pore?.hasRegionalData).toBe(true);
   });
 
   it('returns high confidence for mask/coordinates', () => {

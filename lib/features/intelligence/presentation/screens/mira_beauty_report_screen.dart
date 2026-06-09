@@ -11,6 +11,8 @@ import '../../../../shared/widgets/premium/premium_exports.dart';
 import '../../../marketplace/presentation/widgets/marketplace_matched_section.dart';
 import '../../../skin_analysis/domain/entities/skin_report.dart';
 import '../../domain/entities/mira_beauty_report.dart';
+import '../widgets/beauty_journey_section.dart';
+import '../widgets/confidence_layer_section.dart';
 import '../widgets/beauty_score_hero.dart';
 import '../widgets/concern_narrative_section.dart';
 import '../widgets/concern_zones_narrative_section.dart';
@@ -88,6 +90,8 @@ class _MiraBeautyReportScreenState extends State<MiraBeautyReportScreen> {
                 ),
                 const SizedBox(height: 20),
                 BeautyScoreHero(report: mira),
+                const SizedBox(height: 16),
+                BeautyJourneySection(journey: mira.beautyJourney),
                 if (mira.summaryAdviceAr.isNotEmpty) ...[
                   const SizedBox(height: 16),
                   _SummaryCard(text: mira.summaryAdviceAr),
@@ -96,6 +100,7 @@ class _MiraBeautyReportScreenState extends State<MiraBeautyReportScreen> {
                 SkinAgeComparisonCard(
                   comparison: mira.ageComparison,
                   childSafety: mira.childSafety,
+                  confidence: mira.confidenceLayer.itemFor('age_comparison'),
                 ),
                 const SizedBox(height: 12),
                 ConcernNarrativeSection(concerns: mira.mainConcerns),
@@ -114,6 +119,8 @@ class _MiraBeautyReportScreenState extends State<MiraBeautyReportScreen> {
                 MiraTipsSection(tips: mira.tipsAr),
                 const SizedBox(height: 12),
                 ProgressForecastSection(forecast: mira.progressForecast),
+                const SizedBox(height: 12),
+                ConfidenceLayerSection(layer: mira.confidenceLayer),
                 const SizedBox(height: 20),
                 AskMiraSection(report: widget.report, mira: mira),
                 const SizedBox(height: 24),

@@ -6,15 +6,48 @@ import '../../../../shared/widgets/premium/premium_card.dart';
 import '../../domain/entities/face_health_map.dart';
 import 'face_diagram_painter.dart';
 
-/// Section 4 — Educational or spatial Face Health Map.
-class FaceHealthMapSection extends StatelessWidget {
+/// Section 4 — Playground-style interactive Face Health Map.
+class FaceHealthMapSection extends StatefulWidget {
   final FaceHealthMap map;
 
   const FaceHealthMapSection({super.key, required this.map});
 
   @override
+  State<FaceHealthMapSection> createState() => _FaceHealthMapSectionState();
+}
+
+class _FaceHealthMapSectionState extends State<FaceHealthMapSection> {
+  late String _selectedConcernId;
+
+  FaceHealthMap get map => widget.map;
+
+  @override
+  void initState() {
+    super.initState();
+    _selectedConcernId = map.defaultConcernId.isNotEmpty
+        ? map.defaultConcernId
+        : (map.concernOverlays.isNotEmpty
+            ? map.concernOverlays.first.concernId
+            : '');
+  }
+
+  @override
+  void didUpdateWidget(covariant FaceHealthMapSection oldWidget) {
+    super.didUpdateWidget(oldWidget);
+    if (oldWidget.map.defaultConcernId != map.defaultConcernId &&
+        map.overlayById(_selectedConcernId) == null) {
+      _selectedConcernId = map.defaultConcernId;
+    }
+  }
+
+  @override
   Widget build(BuildContext context) {
     if (!map.enabled) return const SizedBox.shrink();
+
+    final overlay = map.overlayById(_selectedConcernId);
+    final zones = map.zonesForConcern(_selectedConcernId);
+    final markers = map.markersForConcern(_selectedConcernId);
+    final showRegional = overlay?.hasRegionalData ?? false;
 
     return Column(
       crossAxisAlignment: CrossAxisAlignment.stretch,
@@ -23,70 +56,63 @@ class FaceHealthMapSection extends StatelessWidget {
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.stretch,
             children: [
-              Row(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  Container(
-                    padding: const EdgeInsets.all(10),
-                    decoration: BoxDecoration(
-                      gradient: LinearGradient(
-                        colors: [
-                          AppColors.primaryLight.withValues(alpha: 0.9),
-                          AppColors.cardPurple.withValues(alpha: 0.7),
-                        ],
-                      ),
-                      borderRadius: BorderRadius.circular(14),
-                    ),
-                    child: Icon(
-                      map.isEducational
-                          ? Icons.face_retouching_natural_outlined
-                          : Icons.biotech_outlined,
-                      color: AppColors.primaryDark,
-                      size: 24,
-                    ),
-                  ),
-                  const SizedBox(width: 12),
-                  Expanded(
-                    child: Column(
-                      crossAxisAlignment: CrossAxisAlignment.start,
-                      children: [
-                        Text(map.titleAr, style: AppTypography.titleMedium),
-                        if (map.subtitleAr.isNotEmpty) ...[
-                          const SizedBox(height: 4),
-                          Text(
-                            map.subtitleAr,
-                            style: AppTypography.bodySmall.copyWith(
-                              color: AppColors.textSecondary,
-                            ),
-                          ),
-                        ],
+              _Header(map: map),
+              if (map.concernOverlays.isNotEmpty) ...[
+                const SizedBox(height: 16),
+                _ConcernSelector(
+                  overlays: map.concernOverlays,
+                  selectedId: _selectedConcernId,
+                  onSelected: (id) => setState(() => _selectedConcernId = id),
+                ),
+              ],
+              if (overlay != null) ...[
+                const SizedBox(height: 14),
+                _ConcernScoreHero(overlay: overlay, showRegional: showRegional),
+              ],
+              const SizedBox(height: 16),
+              AnimatedSwitcher(
+                duration: const Duration(milliseconds: 320),
+                switchInCurve: Curves.easeOutCubic,
+                switchOutCurve: Curves.easeInCubic,
+                child: Container(
+                  key: ValueKey(_selectedConcernId),
+                  decoration: BoxDecoration(
+                    borderRadius: BorderRadius.circular(20),
+                    gradient: LinearGradient(
+                      begin: Alignment.topCenter,
+                      end: Alignment.bottomCenter,
+                      colors: [
+                        AppColors.background,
+                        (overlay != null
+                                ? _parseHex(overlay.highlightColor)
+                                : AppColors.cardPink)
+                            .withValues(alpha: 0.18),
                       ],
                     ),
-                  ),
-                  const SizedBox(width: 8),
-                  _ConfidenceBadge(confidence: map.confidence, label: map.confidenceLabelAr),
-                ],
-              ),
-              const SizedBox(height: 18),
-              Container(
-                decoration: BoxDecoration(
-                  borderRadius: BorderRadius.circular(20),
-                  gradient: LinearGradient(
-                    begin: Alignment.topCenter,
-                    end: Alignment.bottomCenter,
-                    colors: [
-                      AppColors.background,
-                      AppColors.cardPink.withValues(alpha: 0.35),
+                    border: Border.all(color: AppColors.border.withValues(alpha: 0.5)),
+                    boxShadow: [
+                      BoxShadow(
+                        color: (overlay?.highlightColor != null
+                                ? _parseHex(overlay!.highlightColor)
+                                : AppColors.primaryLight)
+                            .withValues(alpha: 0.12),
+                        blurRadius: 24,
+                        offset: const Offset(0, 8),
+                      ),
                     ],
                   ),
-                  border: Border.all(color: AppColors.border.withValues(alpha: 0.5)),
-                ),
-                padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 12),
-                child: SizedBox(
-                  height: 300,
-                  width: double.infinity,
-                  child: CustomPaint(
-                    painter: FaceDiagramPainter(zones: map.zones),
+                  padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 12),
+                  child: SizedBox(
+                    height: 320,
+                    width: double.infinity,
+                    child: CustomPaint(
+                      painter: FaceDiagramPainter(
+                        zones: zones,
+                        markers: markers,
+                        showZoneScores: showRegional,
+                        showMarkers: map.isRealSpatial && markers.isNotEmpty,
+                      ),
+                    ),
                   ),
                 ),
               ),
@@ -111,10 +137,7 @@ class FaceHealthMapSection extends StatelessWidget {
                       height: 48,
                       decoration: BoxDecoration(
                         color: _parseHex(
-                          map.zones
-                                  .where((z) => z.highlight)
-                                  .map((z) => z.highlightColor)
-                                  .firstOrNull ??
+                          map.overlayById(card.concernId)?.highlightColor ??
                               '#C19EE0',
                         ),
                         borderRadius: BorderRadius.circular(4),
@@ -156,6 +179,243 @@ class FaceHealthMapSection extends StatelessWidget {
           ),
         ],
       ],
+    );
+  }
+
+  Color _parseHex(String hex) {
+    final value = hex.replaceFirst('#', '');
+    return Color(int.parse('FF$value', radix: 16));
+  }
+}
+
+class _Header extends StatelessWidget {
+  final FaceHealthMap map;
+
+  const _Header({required this.map});
+
+  @override
+  Widget build(BuildContext context) {
+    return Row(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        Container(
+          padding: const EdgeInsets.all(10),
+          decoration: BoxDecoration(
+            gradient: LinearGradient(
+              colors: [
+                AppColors.primaryLight.withValues(alpha: 0.9),
+                AppColors.cardPurple.withValues(alpha: 0.7),
+              ],
+            ),
+            borderRadius: BorderRadius.circular(14),
+          ),
+          child: Icon(
+            map.isEducational
+                ? Icons.face_retouching_natural_outlined
+                : Icons.biotech_outlined,
+            color: AppColors.primaryDark,
+            size: 24,
+          ),
+        ),
+        const SizedBox(width: 12),
+        Expanded(
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Text(map.titleAr, style: AppTypography.titleMedium),
+              if (map.subtitleAr.isNotEmpty) ...[
+                const SizedBox(height: 4),
+                Text(
+                  map.subtitleAr,
+                  style: AppTypography.bodySmall.copyWith(
+                    color: AppColors.textSecondary,
+                  ),
+                ),
+              ],
+            ],
+          ),
+        ),
+        const SizedBox(width: 8),
+        _ConfidenceBadge(
+          confidence: map.confidence,
+          label: map.confidenceLabelAr,
+        ),
+      ],
+    );
+  }
+}
+
+class _ConcernSelector extends StatelessWidget {
+  final List<FaceHealthConcernOverlay> overlays;
+  final String selectedId;
+  final ValueChanged<String> onSelected;
+
+  const _ConcernSelector({
+    required this.overlays,
+    required this.selectedId,
+    required this.onSelected,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    return SizedBox(
+      height: 42,
+      child: ListView.separated(
+        scrollDirection: Axis.horizontal,
+        itemCount: overlays.length,
+        separatorBuilder: (_, __) => const SizedBox(width: 8),
+        itemBuilder: (context, index) {
+          final overlay = overlays[index];
+          final selected = overlay.concernId == selectedId;
+          final color = _parseHex(overlay.highlightColor);
+
+          return Material(
+            color: Colors.transparent,
+            child: InkWell(
+              onTap: () => onSelected(overlay.concernId),
+              borderRadius: BorderRadius.circular(14),
+              child: AnimatedContainer(
+                duration: const Duration(milliseconds: 220),
+                padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 8),
+                decoration: BoxDecoration(
+                  color: selected
+                      ? color.withValues(alpha: 0.18)
+                      : AppColors.background,
+                  borderRadius: BorderRadius.circular(14),
+                  border: Border.all(
+                    color: selected
+                        ? color.withValues(alpha: 0.55)
+                        : AppColors.border.withValues(alpha: 0.6),
+                    width: selected ? 1.5 : 1,
+                  ),
+                ),
+                child: Row(
+                  mainAxisSize: MainAxisSize.min,
+                  children: [
+                    Container(
+                      width: 8,
+                      height: 8,
+                      decoration: BoxDecoration(
+                        color: color,
+                        shape: BoxShape.circle,
+                      ),
+                    ),
+                    const SizedBox(width: 8),
+                    Text(
+                      overlay.labelAr,
+                      style: AppTypography.labelMedium.copyWith(
+                        color: selected
+                            ? AppColors.primaryDark
+                            : AppColors.textSecondary,
+                        fontWeight: selected ? FontWeight.w700 : FontWeight.w500,
+                      ),
+                    ),
+                    const SizedBox(width: 6),
+                    Text(
+                      '${overlay.globalScore}',
+                      style: AppTypography.labelSmall.copyWith(
+                        color: overlay.isHealthy
+                            ? const Color(0xFF2E7D32)
+                            : const Color(0xFFC62828),
+                        fontWeight: FontWeight.w700,
+                      ),
+                    ),
+                  ],
+                ),
+              ),
+            ),
+          );
+        },
+      ),
+    );
+  }
+
+  Color _parseHex(String hex) {
+    final value = hex.replaceFirst('#', '');
+    return Color(int.parse('FF$value', radix: 16));
+  }
+}
+
+class _ConcernScoreHero extends StatelessWidget {
+  final FaceHealthConcernOverlay overlay;
+  final bool showRegional;
+
+  const _ConcernScoreHero({
+    required this.overlay,
+    required this.showRegional,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    final color = _parseHex(overlay.highlightColor);
+    final progress = overlay.globalScore / 100;
+
+    return Container(
+      padding: const EdgeInsets.all(14),
+      decoration: BoxDecoration(
+        borderRadius: BorderRadius.circular(16),
+        gradient: LinearGradient(
+          colors: [
+            color.withValues(alpha: 0.12),
+            AppColors.cardPink.withValues(alpha: 0.25),
+          ],
+        ),
+        border: Border.all(color: color.withValues(alpha: 0.25)),
+      ),
+      child: Row(
+        children: [
+          SizedBox(
+            width: 56,
+            height: 56,
+            child: Stack(
+              alignment: Alignment.center,
+              children: [
+                SizedBox(
+                  width: 56,
+                  height: 56,
+                  child: CircularProgressIndicator(
+                    value: progress,
+                    strokeWidth: 5,
+                    backgroundColor: Colors.white.withValues(alpha: 0.6),
+                    color: color,
+                  ),
+                ),
+                Text(
+                  '${overlay.globalScore}',
+                  style: AppTypography.titleSmall.copyWith(
+                    color: AppColors.primaryDark,
+                    fontWeight: FontWeight.w800,
+                  ),
+                ),
+              ],
+            ),
+          ),
+          const SizedBox(width: 14),
+          Expanded(
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Text(
+                  overlay.labelAr,
+                  style: AppTypography.labelLarge.copyWith(
+                    color: AppColors.primaryDark,
+                  ),
+                ),
+                const SizedBox(height: 4),
+                Text(
+                  showRegional
+                      ? 'درجات مناطقية من YouCam — اختاري concern لاستكشاف الخريطة'
+                      : 'درجة عامة — المناطق الملوّنة استرشادية علمياً',
+                  style: AppTypography.bodySmall.copyWith(
+                    color: AppColors.textSecondary,
+                    height: 1.45,
+                  ),
+                ),
+              ],
+            ),
+          ),
+        ],
+      ),
     );
   }
 
@@ -236,12 +496,5 @@ class _DisclaimerBox extends StatelessWidget {
         ],
       ),
     );
-  }
-}
-
-extension<T> on Iterable<T> {
-  T? get firstOrNull {
-    final it = iterator;
-    return it.moveNext() ? it.current : null;
   }
 }

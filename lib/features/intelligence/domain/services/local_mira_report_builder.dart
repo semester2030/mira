@@ -1,11 +1,15 @@
 import '../../../../core/ai/mappers/skin_result_mapper.dart';
 import '../../../skin_analysis/domain/entities/skin_report.dart';
 import '../../../skin_analysis/domain/services/skin_report_matrix.dart';
+import '../entities/beauty_journey.dart';
+import '../entities/confidence_layer.dart';
 import '../entities/mira_beauty_report.dart';
 import '../entities/concern_zones_section.dart';
 import '../services/local_face_map_builder.dart';
 import '../entities/progress_forecast.dart';
 import 'local_age_intelligence.dart';
+import 'local_beauty_journey_builder.dart';
+import 'local_confidence_layer_builder.dart';
 import 'local_weekly_plan_builder.dart';
 
 /// Offline fallback — mirrors backend engines for guest / legacy reports.
@@ -41,7 +45,7 @@ abstract final class LocalMiraReportBuilder {
     final dailyRoutine = _routine(report);
     final weeklyPlan = LocalWeeklyPlanBuilder.fromSkinReport(report, dailyRoutine);
 
-    return MiraBeautyReport(
+    final base = MiraBeautyReport(
       version: 1,
       spatialConfidence: 'none',
       overallBeautyScore: score,
@@ -71,6 +75,59 @@ abstract final class LocalMiraReportBuilder {
       recommendedProducts: const [],
       weeklyPlan: weeklyPlan,
       progressForecast: ProgressForecast.empty,
+      beautyJourney: BeautyJourney.empty(score),
+      confidenceLayer: ConfidenceLayer.empty,
+    );
+
+    final journey = LocalBeautyJourneyBuilder.fromReport(base);
+    final withJourney = MiraBeautyReport(
+      version: base.version,
+      spatialConfidence: base.spatialConfidence,
+      overallBeautyScore: base.overallBeautyScore,
+      headlineAr: base.headlineAr,
+      skinTypeAr: base.skinTypeAr,
+      skinTypeEn: base.skinTypeEn,
+      skinAgeEstimate: base.skinAgeEstimate,
+      ageComparison: base.ageComparison,
+      childSafety: base.childSafety,
+      mainConcerns: base.mainConcerns,
+      dailyRoutine: base.dailyRoutine,
+      summaryAdviceAr: base.summaryAdviceAr,
+      tipsAr: base.tipsAr,
+      faceMapEnabled: base.faceMapEnabled,
+      concernZonesSection: base.concernZonesSection,
+      faceHealthMap: base.faceHealthMap,
+      concernZonesNarrative: base.concernZonesNarrative,
+      recommendedProducts: base.recommendedProducts,
+      weeklyPlan: base.weeklyPlan,
+      progressForecast: base.progressForecast,
+      beautyJourney: journey,
+      confidenceLayer: ConfidenceLayer.empty,
+    );
+
+    return MiraBeautyReport(
+      version: withJourney.version,
+      spatialConfidence: withJourney.spatialConfidence,
+      overallBeautyScore: withJourney.overallBeautyScore,
+      headlineAr: withJourney.headlineAr,
+      skinTypeAr: withJourney.skinTypeAr,
+      skinTypeEn: withJourney.skinTypeEn,
+      skinAgeEstimate: withJourney.skinAgeEstimate,
+      ageComparison: withJourney.ageComparison,
+      childSafety: withJourney.childSafety,
+      mainConcerns: withJourney.mainConcerns,
+      dailyRoutine: withJourney.dailyRoutine,
+      summaryAdviceAr: withJourney.summaryAdviceAr,
+      tipsAr: withJourney.tipsAr,
+      faceMapEnabled: withJourney.faceMapEnabled,
+      concernZonesSection: withJourney.concernZonesSection,
+      faceHealthMap: withJourney.faceHealthMap,
+      concernZonesNarrative: withJourney.concernZonesNarrative,
+      recommendedProducts: withJourney.recommendedProducts,
+      weeklyPlan: withJourney.weeklyPlan,
+      progressForecast: withJourney.progressForecast,
+      beautyJourney: journey,
+      confidenceLayer: LocalConfidenceLayerBuilder.fromReport(withJourney),
     );
   }
 

@@ -1,3 +1,5 @@
+import type { ConcernSeverity } from './mira-beauty-report.interface';
+
 /** User-facing confidence — translated to Arabic in payload. */
 export type FaceMapConfidence = 'low' | 'medium' | 'high';
 
@@ -22,6 +24,8 @@ export interface FaceHealthMapZone {
   /** Soft highlight hex — e.g. #C19EE0 for educational purple. */
   highlightColor: string;
   concernIds: string[];
+  /** Per-zone ui_score when regional/spatial data exists. */
+  zoneScore?: number;
   educationalNoteAr?: string;
   source: FaceHealthZoneSource;
 }
@@ -35,6 +39,30 @@ export interface FaceHealthInsightCard {
   bodyAr: string;
 }
 
+/** Playground-style concern tab — global score + optional per-zone scores. */
+export interface FaceHealthConcernOverlay {
+  concernId: string;
+  labelAr: string;
+  labelEn: string;
+  globalScore: number;
+  severity: ConcernSeverity;
+  zoneScores: Partial<Record<FaceHealthZoneId, number>>;
+  highlightZoneIds: FaceHealthZoneId[];
+  highlightColor: string;
+  /** True when zone scores originate from YouCam regional data. */
+  hasRegionalData: boolean;
+}
+
+/** Pixel-level markers when YouCam returns coordinates (spatial mode). */
+export interface FaceHealthSpatialMarker {
+  concernId: string;
+  zoneId: FaceHealthZoneId;
+  /** Normalized 0–1 relative to face bounds. */
+  x: number;
+  y: number;
+  severity: number;
+}
+
 export interface FaceHealthMapPayload {
   enabled: boolean;
   confidence: FaceMapConfidence;
@@ -45,6 +73,10 @@ export interface FaceHealthMapPayload {
   disclaimerAr: string;
   zones: FaceHealthMapZone[];
   insightCards: FaceHealthInsightCard[];
+  /** Interactive concern tabs (Playground-style). */
+  concernOverlays: FaceHealthConcernOverlay[];
+  defaultConcernId: string;
+  markers: FaceHealthSpatialMarker[];
 }
 
 export const FACE_HEALTH_MAP_EMPTY: FaceHealthMapPayload = {
@@ -57,4 +89,7 @@ export const FACE_HEALTH_MAP_EMPTY: FaceHealthMapPayload = {
   disclaimerAr: '',
   zones: [],
   insightCards: [],
+  concernOverlays: [],
+  defaultConcernId: '',
+  markers: [],
 };

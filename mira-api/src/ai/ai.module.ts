@@ -6,6 +6,7 @@ import { MockOutfitAnalysisProvider } from './mocks/mock-outfit-analysis.provide
 import { MockSkinAnalysisProvider } from './mocks/mock-skin-analysis.provider';
 import { PerfectCorpSkinProvider } from './mocks/perfect-corp-skin.provider';
 import { PerfectCorpService } from './services/perfect-corp.service';
+import { FaceGateService } from './face-gate/face-gate.service';
 import {
   OUTFIT_ANALYSIS_PROVIDER,
   OutfitAnalysisProvider,
@@ -21,6 +22,7 @@ import {
     MockSkinAnalysisProvider,
     MockOutfitAnalysisProvider,
     PerfectCorpService,
+    FaceGateService,
     PerfectCorpSkinProvider,
     FashnOutfitProvider,
     {
@@ -54,6 +56,7 @@ import {
     SKIN_ANALYSIS_PROVIDER,
     OUTFIT_ANALYSIS_PROVIDER,
     MiraRecommendationEngine,
+    FaceGateService,
   ],
 })
 export class AiModule {}

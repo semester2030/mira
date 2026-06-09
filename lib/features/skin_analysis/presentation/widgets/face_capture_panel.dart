@@ -5,6 +5,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:image_picker/image_picker.dart';
 
+import '../../../../core/face_gate/face_gate_validator.dart';
 import '../../../../shared/theme/colors.dart';
 import '../../../../shared/theme/typography.dart';
 import '../utils/face_image_processor.dart';
@@ -38,6 +39,7 @@ class _FaceCapturePanelState extends State<FaceCapturePanel>
   bool _initializing = true;
   String? _error;
   bool _capturing = false;
+  bool _validatingFace = false;
 
   late final AnimationController _pulseController;
   late final AnimationController _scanController;
@@ -167,10 +169,32 @@ class _FaceCapturePanelState extends State<FaceCapturePanel>
     await controller.resumePreview();
   }
 
+  Future<bool> _validateAndAccept(File file) async {
+    if (!mounted) return false;
+    setState(() => _validatingFace = true);
+    try {
+      final result = await FaceGateValidator.instance.validate(file);
+      if (!mounted) return false;
+      if (!result.isAccepted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Text(result.messageAr),
+            backgroundColor: AppColors.error,
+            duration: const Duration(seconds: 4),
+          ),
+        );
+        return false;
+      }
+      return true;
+    } finally {
+      if (mounted) setState(() => _validatingFace = false);
+    }
+  }
+
   Future<void> _capture() async {
     final controller = _controller;
     if (controller == null || !controller.value.isInitialized || _capturing) return;
-    if (!widget.enabled || widget.isAnalyzing) return;
+    if (!widget.enabled || widget.isAnalyzing || _validatingFace) return;
 
     setState(() => _capturing = true);
     try {
@@ -178,7 +202,13 @@ class _FaceCapturePanelState extends State<FaceCapturePanel>
       final photo = await controller.takePicture();
       _mirrorCapturedPreview = _isFrontCamera;
       await _pauseCamera();
-      widget.onImageChanged(File(photo.path));
+      final file = File(photo.path);
+      final ok = await _validateAndAccept(file);
+      if (!ok) {
+        await _resumeCamera();
+        return;
+      }
+      widget.onImageChanged(file);
     } catch (e) {
       if (!mounted) return;
       ScaffoldMessenger.of(context).showSnackBar(
@@ -193,7 +223,7 @@ class _FaceCapturePanelState extends State<FaceCapturePanel>
   }
 
   Future<void> _pickFromGallery() async {
-    if (!widget.enabled || widget.isAnalyzing) return;
+    if (!widget.enabled || widget.isAnalyzing || _validatingFace) return;
     final picked = await ImagePicker().pickImage(
       source: ImageSource.gallery,
       imageQuality: 92,
@@ -201,7 +231,13 @@ class _FaceCapturePanelState extends State<FaceCapturePanel>
     if (picked == null || !mounted) return;
     _mirrorCapturedPreview = false;
     await _pauseCamera();
-    widget.onImageChanged(File(picked.path));
+    final file = File(picked.path);
+    final ok = await _validateAndAccept(file);
+    if (!ok) {
+      await _resumeCamera();
+      return;
+    }
+    widget.onImageChanged(file);
   }
 
   Future<void> _retake() async {
@@ -352,7 +388,7 @@ class _FaceCapturePanelState extends State<FaceCapturePanel>
           animation: Listenable.merge([_pulseController, _scanController, _tipController]),
           builder: (context, _) {
             final tipIndex = (_tipController.value * _tips.length).floor() % _tips.length;
-            final interactive = widget.enabled && !widget.isAnalyzing;
+            final interactive = widget.enabled && !widget.isAnalyzing && !_validatingFace;
 
             return Column(
               children: [
@@ -440,7 +476,8 @@ class _FaceCapturePanelState extends State<FaceCapturePanel>
                               ),
                             ),
                           ),
-                        if (widget.isAnalyzing) const AiAnalysisOverlay(),
+                        if (widget.isAnalyzing || _validatingFace)
+                          const AiAnalysisOverlay(),
                       ],
                     ),
                   ),
