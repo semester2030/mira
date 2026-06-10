@@ -6,11 +6,14 @@ import 'package:flutter/services.dart';
 import 'package:image_picker/image_picker.dart';
 
 import '../../../../core/face_gate/face_gate_validator.dart';
+import '../live_face_map/face_mapping_context.dart';
+import '../live_face_map/live_face_overlay_controller.dart';
+import '../live_face_map/models/face_mesh_models.dart';
+import '../live_face_map/scan_region_animation.dart';
+import '../live_face_map/widgets/live_face_analysis_overlay.dart';
 import '../../../../shared/theme/colors.dart';
 import '../../../../shared/theme/typography.dart';
 import '../utils/face_image_processor.dart';
-import 'ai_analysis_overlay.dart';
-import 'face_guide_overlay.dart';
 
 /// In-app front camera — mirrored preview matches captured review (no jump left/right).
 class FaceCapturePanel extends StatefulWidget {
@@ -44,6 +47,9 @@ class _FaceCapturePanelState extends State<FaceCapturePanel>
   late final AnimationController _pulseController;
   late final AnimationController _scanController;
   late final AnimationController _tipController;
+  late final LiveFaceOverlayController _faceOverlayController;
+  bool _imageStreamActive = false;
+  Size _previewBoxSize = Size.zero;
 
   static const _tips = [
     'ثبّتي وجهك في منتصف الدائرة',
@@ -62,12 +68,13 @@ class _FaceCapturePanelState extends State<FaceCapturePanel>
     )..repeat(reverse: true);
     _scanController = AnimationController(
       vsync: this,
-      duration: const Duration(milliseconds: 2600),
+      duration: ScanRegionAnimation.cycleDuration,
     )..repeat();
     _tipController = AnimationController(
       vsync: this,
       duration: const Duration(milliseconds: 4200),
     )..repeat();
+    _faceOverlayController = LiveFaceOverlayController();
     _initCamera();
   }
 
@@ -75,10 +82,19 @@ class _FaceCapturePanelState extends State<FaceCapturePanel>
   void didUpdateWidget(covariant FaceCapturePanel oldWidget) {
     super.didUpdateWidget(oldWidget);
     if (oldWidget.capturedImage == null && widget.capturedImage != null) {
+      _stopFaceStream();
       _pauseCamera();
+      _detectFaceOnStill(widget.capturedImage!);
     } else if (oldWidget.capturedImage != null && widget.capturedImage == null) {
       _mirrorCapturedPreview = false;
+      _faceOverlayController.reset();
       _resumeCamera();
+    }
+
+    if (!oldWidget.isAnalyzing && widget.isAnalyzing) {
+      _faceOverlayController.setAnalyzing(true);
+    } else if (oldWidget.isAnalyzing && !widget.isAnalyzing) {
+      _faceOverlayController.setAnalyzing(false);
     }
   }
 
@@ -88,6 +104,8 @@ class _FaceCapturePanelState extends State<FaceCapturePanel>
     _pulseController.dispose();
     _scanController.dispose();
     _tipController.dispose();
+    _stopFaceStream();
+    _faceOverlayController.dispose();
     _controller?.dispose();
     super.dispose();
   }
@@ -130,7 +148,9 @@ class _FaceCapturePanelState extends State<FaceCapturePanel>
         selected,
         ResolutionPreset.high,
         enableAudio: false,
-        imageFormatGroup: ImageFormatGroup.jpeg,
+        imageFormatGroup: Platform.isIOS
+            ? ImageFormatGroup.bgra8888
+            : ImageFormatGroup.yuv420,
       );
 
       await controller.initialize();
@@ -146,6 +166,9 @@ class _FaceCapturePanelState extends State<FaceCapturePanel>
         _isFrontCamera = selected.lensDirection == CameraLensDirection.front;
         _initializing = false;
       });
+      if (widget.capturedImage == null && !widget.isAnalyzing) {
+        await _startFaceStream(controller);
+      }
     } catch (e) {
       if (!mounted) return;
       setState(() {
@@ -158,6 +181,7 @@ class _FaceCapturePanelState extends State<FaceCapturePanel>
   Future<void> _pauseCamera() async {
     final controller = _controller;
     if (controller == null || !controller.value.isInitialized) return;
+    await _stopFaceStream();
     if (controller.value.isPreviewPaused) return;
     await controller.pausePreview();
   }
@@ -167,6 +191,86 @@ class _FaceCapturePanelState extends State<FaceCapturePanel>
     if (controller == null || !controller.value.isInitialized) return;
     if (!controller.value.isPreviewPaused) return;
     await controller.resumePreview();
+    if (widget.capturedImage == null && !widget.isAnalyzing) {
+      await _startFaceStream(controller);
+    }
+  }
+
+  Future<void> _startFaceStream(CameraController controller) async {
+    if (_imageStreamActive || !controller.value.isInitialized) return;
+    try {
+      _faceOverlayController.startStream();
+      await controller.startImageStream(_onCameraImage);
+      _imageStreamActive = true;
+    } catch (_) {
+      _imageStreamActive = false;
+    }
+  }
+
+  Future<void> _stopFaceStream() async {
+    final controller = _controller;
+    _faceOverlayController.stopStream();
+    if (!_imageStreamActive || controller == null) return;
+    try {
+      if (controller.value.isStreamingImages) {
+        await controller.stopImageStream();
+      }
+    } catch (_) {}
+    _imageStreamActive = false;
+  }
+
+  void _onCameraImage(CameraImage image) {
+    final controller = _controller;
+    if (!mounted || controller == null || widget.capturedImage != null) return;
+
+    if (_previewBoxSize == Size.zero) return;
+
+    final (contentW, contentH) = _cameraPreviewDimensions(controller);
+    _faceOverlayController.processCameraImage(
+      image: image,
+      camera: controller.description,
+      deviceOrientation: controller.value.deviceOrientation,
+      mapping: FaceMappingContext(
+        rawImageSize: Size(image.width.toDouble(), image.height.toDouble()),
+        contentSize: Size(contentW, contentH),
+        viewportSize: _previewBoxSize,
+        lensDirection: controller.description.lensDirection,
+      ),
+    );
+  }
+
+  Future<void> _detectFaceOnStill(File file) async {
+    if (!mounted || _previewBoxSize == Size.zero) return;
+
+    File? temp;
+    try {
+      final aspect = _previewBoxSize.width / _previewBoxSize.height;
+      final bytes = await FaceImageProcessor.readOrientedJpegBytes(
+        file,
+        targetAspectRatio: aspect,
+      );
+      temp = File(
+        '${Directory.systemTemp.path}/mira_face_map_${DateTime.now().millisecondsSinceEpoch}.jpg',
+      );
+      await temp.writeAsBytes(bytes, flush: true);
+      final contentSize = await FaceImageProcessor.decodeOrientedSize(temp);
+
+      await _faceOverlayController.processStillImage(
+        file: temp,
+        mapping: FaceMappingContext(
+          rawImageSize: contentSize,
+          contentSize: contentSize,
+          viewportSize: _previewBoxSize,
+          lensDirection: _mirrorCapturedPreview
+              ? CameraLensDirection.front
+              : CameraLensDirection.back,
+        ),
+      );
+    } finally {
+      if (temp != null && await temp.exists()) {
+        await temp.delete();
+      }
+    }
   }
 
   Future<bool> _validateAndAccept(File file) async {
@@ -203,8 +307,10 @@ class _FaceCapturePanelState extends State<FaceCapturePanel>
       _mirrorCapturedPreview = _isFrontCamera;
       await _pauseCamera();
       final file = File(photo.path);
+      await _detectFaceOnStill(file);
       final ok = await _validateAndAccept(file);
       if (!ok) {
+        _faceOverlayController.reset();
         await _resumeCamera();
         return;
       }
@@ -379,106 +485,59 @@ class _FaceCapturePanelState extends State<FaceCapturePanel>
   Widget build(BuildContext context) {
         return LayoutBuilder(
       builder: (context, constraints) {
-        final viewportSize = constraints.biggest;
-        FaceImageProcessor.viewportAspectRatio =
-            viewportSize.width / viewportSize.height;
-        final faceRect = computeFaceGuideRect(viewportSize);
-
         return AnimatedBuilder(
-          animation: Listenable.merge([_pulseController, _scanController, _tipController]),
+          animation: Listenable.merge([
+            _pulseController,
+            _scanController,
+            _tipController,
+            _faceOverlayController,
+          ]),
           builder: (context, _) {
             final tipIndex = (_tipController.value * _tips.length).floor() % _tips.length;
             final interactive = widget.enabled && !widget.isAnalyzing && !_validatingFace;
+            _faceOverlayController.updateScanProgress(_scanController.value);
+
+            final overlayState = widget.isAnalyzing || _validatingFace
+                ? LiveCameraOverlayState.analyzing
+                : widget.capturedImage != null
+                    ? LiveCameraOverlayState.captured
+                    : _faceOverlayController.frame.hasFace
+                        ? LiveCameraOverlayState.faceDetected
+                        : LiveCameraOverlayState.initial;
 
             return Column(
               children: [
-                Padding(
-                  padding: const EdgeInsets.fromLTRB(16, 8, 16, 0),
-                  child: AnimatedSwitcher(
-                    duration: const Duration(milliseconds: 450),
-                    child: Container(
-                      key: ValueKey(tipIndex),
-                      padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 8),
-                      decoration: BoxDecoration(
-                        color: Colors.black.withValues(alpha: 0.35),
-                        borderRadius: BorderRadius.circular(999),
-                        border: Border.all(color: AppColors.gold.withValues(alpha: 0.35)),
-                      ),
-                      child: Row(
-                        mainAxisSize: MainAxisSize.min,
-                        children: [
-                          Icon(
-                            Icons.center_focus_strong_rounded,
-                            size: 16,
-                            color: AppColors.gold.withValues(alpha: 0.95),
-                          ),
-                          const SizedBox(width: 8),
-                          Flexible(
-                            child: Text(
-                              _tips[tipIndex],
-                              style: AppTypography.labelMedium.copyWith(
-                                color: AppColors.onPrimary,
-                              ),
-                            ),
-                          ),
-                        ],
-                      ),
-                    ),
-                  ),
-                ),
-                const SizedBox(height: 12),
                 Expanded(
                   child: Padding(
                     padding: const EdgeInsets.symmetric(horizontal: 12),
-                    child: Stack(
-                      alignment: Alignment.center,
-                      children: [
-                        Positioned.fill(
-                          child: _buildPreviewBox(BoxConstraints.loose(viewportSize)),
-                        ),
-                        Positioned.fill(
-                          child: IgnorePointer(
-                            child: FaceGuideOverlay(
-                              faceRect: faceRect,
-                              pulse: _pulseController.value,
-                              scanProgress: _scanController.value,
-                              showLabel: widget.capturedImage == null && !widget.isAnalyzing,
-                            ),
-                          ),
-                        ),
-                        if (widget.capturedImage != null && !widget.isAnalyzing)
-                          Positioned(
-                            top: 16,
-                            left: 16,
-                            right: 16,
-                            child: Container(
-                              padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
-                              decoration: BoxDecoration(
-                                color: AppColors.success.withValues(alpha: 0.92),
-                                borderRadius: BorderRadius.circular(12),
-                              ),
-                              child: Row(
-                                mainAxisAlignment: MainAxisAlignment.center,
-                                children: [
-                                  const Icon(
-                                    Icons.check_circle_outline,
-                                    color: Colors.white,
-                                    size: 18,
-                                  ),
-                                  const SizedBox(width: 8),
-                                  Flexible(
-                                    child: Text(
-                                      'تم التقاط الصورة — جاهزة للتحليل',
-                                      style: AppTypography.labelMedium.copyWith(color: Colors.white),
-                                    ),
-                                  ),
-                                ],
+                    child: LayoutBuilder(
+                      builder: (context, previewConstraints) {
+                        _previewBoxSize = previewConstraints.biggest;
+                        FaceImageProcessor.viewportAspectRatio =
+                            _previewBoxSize.width / _previewBoxSize.height;
+
+                        return Stack(
+                          alignment: Alignment.center,
+                          children: [
+                            Positioned.fill(
+                              child: _buildPreviewBox(
+                                BoxConstraints.loose(_previewBoxSize),
                               ),
                             ),
-                          ),
-                        if (widget.isAnalyzing || _validatingFace)
-                          const AiAnalysisOverlay(),
-                      ],
+                            Positioned.fill(
+                              child: IgnorePointer(
+                                child: LiveFaceAnalysisOverlay(
+                                  controller: _faceOverlayController,
+                                  uiState: overlayState,
+                                  pulse: _pulseController.value,
+                                  scanProgress: _scanController.value,
+                                  hintText: _tips[tipIndex],
+                                ),
+                              ),
+                            ),
+                          ],
+                        );
+                      },
                     ),
                   ),
                 ),

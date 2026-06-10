@@ -16,7 +16,7 @@ void main() {
     });
 
     test('rejects face too small in frame', () {
-      final r = FaceGateRules.evaluate(faceCount: 1, faceAreaRatio: 0.04);
+      final r = FaceGateRules.evaluate(faceCount: 1, faceAreaRatio: 0.03);
       expect(r.isAccepted, isFalse);
       expect(r.reasonCode, 'face_too_small');
     });
@@ -35,7 +35,7 @@ void main() {
       final r = FaceGateRules.evaluate(
         faceCount: 1,
         faceAreaRatio: 0.3,
-        headYawDegrees: 40,
+        headYawDegrees: 48,
       );
       expect(r.isAccepted, isFalse);
       expect(r.reasonCode, 'head_turned');

@@ -2,6 +2,7 @@ import 'dart:math' as math;
 
 import 'package:flutter/material.dart';
 
+import '../../../../shared/geometry/face_anatomy_geometry.dart';
 import '../../../../shared/theme/colors.dart';
 
 /// Premium face guide with AI mesh dots and optional analyzing mode.
@@ -112,9 +113,9 @@ class _FaceGuidePainter extends CustomPainter {
 
   @override
   void paint(Canvas canvas, Size size) {
-    final oval = Path()..addOval(faceRect);
+    final facePath = FaceAnatomyGeometry.outlinePath(faceRect);
     final backdrop = Path()..addRect(Rect.fromLTWH(0, 0, size.width, size.height));
-    final mask = Path.combine(PathOperation.difference, backdrop, oval);
+    final mask = Path.combine(PathOperation.difference, backdrop, facePath);
 
     canvas.drawPath(
       mask,
@@ -122,19 +123,22 @@ class _FaceGuidePainter extends CustomPainter {
     );
 
     if (aiMode) {
+      canvas.save();
+      canvas.clipPath(facePath);
       _drawAiMesh(canvas, faceRect, pulse);
+      canvas.restore();
     }
 
     final glow = 0.45 + (pulse * 0.55);
-    canvas.drawOval(
-      faceRect,
+    canvas.drawPath(
+      facePath,
       Paint()
         ..color = AppColors.primary.withValues(alpha: glow)
         ..style = PaintingStyle.stroke
         ..strokeWidth = 2.8,
     );
-    canvas.drawOval(
-      faceRect.deflate(6),
+    canvas.drawPath(
+      facePath,
       Paint()
         ..color = AppColors.gold.withValues(alpha: 0.35 + pulse * 0.25)
         ..style = PaintingStyle.stroke
@@ -144,9 +148,10 @@ class _FaceGuidePainter extends CustomPainter {
     _drawCorners(canvas, faceRect);
 
     final scanY = faceRect.top + (faceRect.height * scanProgress);
-    canvas.drawLine(
-      Offset(faceRect.left + 16, scanY),
-      Offset(faceRect.right - 16, scanY),
+    FaceAnatomyGeometry.drawScanLine(
+      canvas,
+      faceRect,
+      scanProgress,
       Paint()
         ..shader = LinearGradient(
           colors: [
@@ -163,13 +168,13 @@ class _FaceGuidePainter extends CustomPainter {
     final dotPaint = Paint()
       ..color = AppColors.gold.withValues(alpha: 0.22 + pulse * 0.18);
     const cols = 5;
-    const rows = 7;
+    const rows = 6;
     for (var r = 0; r < rows; r++) {
       for (var c = 0; c < cols; c++) {
         final tX = (c + 0.5) / cols;
-        final tY = (r + 0.5) / rows;
-        final angle = (tX - 0.5) * math.pi * 0.35;
-        final rx = rect.width / 2 * (1 - tY * 0.12);
+        final tY = 0.10 + (r + 0.5) / rows * 0.72;
+        final angle = (tX - 0.5) * math.pi * 0.30;
+        final rx = rect.width / 2 * (1 - tY * 0.15);
         final cx = rect.center.dx + math.sin(angle) * rx * (tX * 2 - 1);
         final cy = rect.top + tY * rect.height;
         canvas.drawCircle(Offset(cx, cy), 1.6 + pulse, dotPaint);
@@ -223,11 +228,7 @@ class _FaceGuidePainter extends CustomPainter {
   }
 }
 
-/// Computes a centered face oval for the current layout constraints.
-Rect computeFaceGuideRect(Size size, {double widthFactor = 0.78}) {
-  final width = size.width * widthFactor;
-  final height = width * 1.32;
-  final left = (size.width - width) / 2;
-  final top = math.max(16.0, (size.height - height) / 2);
-  return Rect.fromLTWH(left, top, width, height);
+/// Computes a centered face guide for the current layout constraints.
+Rect computeFaceGuideRect(Size size, {double widthFactor = 0.68}) {
+  return FaceAnatomyGeometry.computeGuideRect(size, widthFactor: widthFactor);
 }

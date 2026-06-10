@@ -4,14 +4,14 @@ import 'face_gate_result.dart';
 abstract final class FaceGateRules {
   FaceGateRules._();
 
-  /// Minimum face bounding-box area vs full image (8%).
-  static const minFaceAreaRatio = 0.08;
+  /// Minimum face bounding-box area vs full image (5%).
+  static const minFaceAreaRatio = 0.05;
 
   /// Maximum face area — avoids extreme crops that are not full-face selfies.
-  static const maxFaceAreaRatio = 0.92;
+  static const maxFaceAreaRatio = 0.95;
 
-  static const maxHeadYawDegrees = 30.0;
-  static const maxHeadRollDegrees = 25.0;
+  static const maxHeadYawDegrees = 42.0;
+  static const maxHeadRollDegrees = 32.0;
 
   static FaceGateResult evaluate({
     required int faceCount,

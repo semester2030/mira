@@ -2,7 +2,6 @@ import 'dart:io';
 
 import 'package:dio/dio.dart';
 
-import '../../../../core/face_gate/face_gate_validator.dart';
 import '../../../../core/network/api_client.dart';
 import '../../../../core/network/mira_api_endpoints.dart';
 import '../../../../core/privacy/temp_image_cleanup.dart';
@@ -18,8 +17,6 @@ class SkinAnalysisApiDataSource {
   SkinAnalysisApiDataSource({Dio? dio}) : _dio = dio ?? ApiClient.instance;
 
   Future<SkinReportModel> analyzeAndSave({required String imagePath}) async {
-    await FaceGateValidator.instance.assertAccepted(File(imagePath));
-
     Object? lastError;
 
     try {

@@ -2,6 +2,7 @@ import 'dart:ui' as ui;
 
 import 'package:flutter/material.dart';
 
+import '../../../../shared/geometry/face_anatomy_geometry.dart';
 import '../../domain/entities/face_health_map.dart';
 
 /// Premium face diagram with Playground-style zone heatmap, scores, and markers.
@@ -21,21 +22,22 @@ class FaceDiagramPainter extends CustomPainter {
   @override
   void paint(Canvas canvas, Size size) {
     final faceRect = Rect.fromCenter(
-      center: Offset(size.width * 0.5, size.height * 0.52),
-      width: size.width * 0.68,
-      height: size.height * 0.82,
+      center: Offset(size.width * 0.5, size.height * 0.50),
+      width: size.width * 0.62,
+      height: size.height * 0.72,
     );
 
-    _drawFaceBase(canvas, faceRect);
-    _drawZoneHighlights(canvas, faceRect);
-    if (showMarkers) _drawMarkers(canvas, faceRect);
-    _drawFaceOutline(canvas, faceRect);
+    final facePath = FaceAnatomyGeometry.outlinePath(faceRect);
+
+    _drawFaceBase(canvas, facePath, faceRect);
+    _drawZoneHighlights(canvas, faceRect, facePath);
+    if (showMarkers) _drawMarkers(canvas, faceRect, facePath);
+    _drawFaceOutline(canvas, facePath);
     _drawZoneLabels(canvas, faceRect);
     if (showZoneScores) _drawZoneScoreBadges(canvas, faceRect);
   }
 
-  void _drawFaceBase(Canvas canvas, Rect faceRect) {
-    final path = _faceOutlinePath(faceRect);
+  void _drawFaceBase(Canvas canvas, Path facePath, Rect faceRect) {
     final paint = Paint()
       ..shader = ui.Gradient.linear(
         faceRect.topCenter,
@@ -46,17 +48,20 @@ class FaceDiagramPainter extends CustomPainter {
           const Color(0xFFE8D5F2).withValues(alpha: 0.55),
         ],
       );
-    canvas.drawPath(path, paint);
+    canvas.drawPath(facePath, paint);
   }
 
-  void _drawZoneHighlights(Canvas canvas, Rect faceRect) {
+  void _drawZoneHighlights(Canvas canvas, Rect faceRect, Path facePath) {
     final highlightMap = {for (final z in zones.where((z) => z.highlight)) z.id: z};
 
-    void drawZone(String id, Path path, {Offset? scoreAnchor}) {
+    void drawZone(String id) {
       final zone = highlightMap[id];
       if (zone == null) return;
       final color = _parseHex(zone.highlightColor);
       final alpha = _heatmapAlpha(zone.zoneScore);
+      final path = FaceAnatomyGeometry.zonePath(faceRect, id);
+      if (path.getBounds().isEmpty) return;
+
       canvas.drawPath(
         path,
         Paint()
@@ -72,29 +77,32 @@ class FaceDiagramPainter extends CustomPainter {
       );
     }
 
-    drawZone('forehead', _foreheadPath(faceRect));
-    drawZone('under_eye', _underEyePath(faceRect));
-    drawZone('cheek_left', _cheekLeftPath(faceRect));
-    drawZone('cheek_right', _cheekRightPath(faceRect));
-    drawZone('nose', _nosePath(faceRect));
-    drawZone('chin', _chinPath(faceRect));
-    drawZone('jawline', _jawlinePath(faceRect));
+    for (final id in [
+      'forehead',
+      'under_eye',
+      'cheek_left',
+      'cheek_right',
+      'nose',
+      'chin',
+      'jawline',
+    ]) {
+      drawZone(id);
+    }
 
     if (highlightMap.containsKey('t_zone')) {
-      final tZone = Path()
-        ..addPath(_foreheadPath(faceRect), Offset.zero)
-        ..addPath(_nosePath(faceRect), Offset.zero)
-        ..addPath(_chinPath(faceRect), Offset.zero);
-      drawZone('t_zone', tZone);
+      for (final id in ['forehead', 'nose', 'chin']) {
+        drawZone(id);
+      }
     }
   }
 
-  void _drawMarkers(Canvas canvas, Rect faceRect) {
+  void _drawMarkers(Canvas canvas, Rect faceRect, Path facePath) {
     for (final marker in markers) {
       final center = Offset(
         faceRect.left + faceRect.width * marker.x,
         faceRect.top + faceRect.height * marker.y,
       );
+      if (!facePath.contains(center)) continue;
       final radius = 3.5 + marker.severity * 0.8;
       canvas.drawCircle(
         center,
@@ -110,15 +118,7 @@ class FaceDiagramPainter extends CustomPainter {
   }
 
   void _drawZoneScoreBadges(Canvas canvas, Rect faceRect) {
-    final anchors = <String, Offset>{
-      'forehead': Offset(faceRect.center.dx, faceRect.top + faceRect.height * 0.14),
-      'under_eye': Offset(faceRect.center.dx, faceRect.top + faceRect.height * 0.32),
-      'cheek_left': Offset(faceRect.left + faceRect.width * 0.22, faceRect.center.dy + 4),
-      'cheek_right': Offset(faceRect.right - faceRect.width * 0.22, faceRect.center.dy + 4),
-      'nose': Offset(faceRect.center.dx, faceRect.center.dy + 8),
-      'chin': Offset(faceRect.center.dx, faceRect.bottom - faceRect.height * 0.1),
-      't_zone': Offset(faceRect.center.dx, faceRect.center.dy - 8),
-    };
+    final anchors = FaceAnatomyGeometry.zoneAnchors(faceRect);
 
     for (final zone in zones) {
       final score = zone.zoneScore;
@@ -155,9 +155,9 @@ class FaceDiagramPainter extends CustomPainter {
     tp.paint(canvas, center - Offset(tp.width / 2, tp.height / 2));
   }
 
-  void _drawFaceOutline(Canvas canvas, Rect faceRect) {
+  void _drawFaceOutline(Canvas canvas, Path facePath) {
     canvas.drawPath(
-      _faceOutlinePath(faceRect),
+      facePath,
       Paint()
         ..color = const Color(0xFFC19EE0).withValues(alpha: 0.45)
         ..style = PaintingStyle.stroke
@@ -187,82 +187,19 @@ class FaceDiagramPainter extends CustomPainter {
       painter.paint(canvas, offset);
     }
 
-    label('الجبهة', Offset(faceRect.center.dx, faceRect.top - 6));
-    label('تحت العين', Offset(faceRect.center.dx, faceRect.top + faceRect.height * 0.28));
-    label('الخد', Offset(faceRect.left - 4, faceRect.center.dy), align: TextAlign.right);
-    label('الخد', Offset(faceRect.right - 68, faceRect.center.dy));
-    label('الأنف', Offset(faceRect.center.dx, faceRect.center.dy + 8));
-    label('الذقن', Offset(faceRect.center.dx, faceRect.bottom - 18));
-    label('الفك', Offset(faceRect.center.dx, faceRect.bottom + 2));
+    label('الجبهة', Offset(faceRect.center.dx, faceRect.top + faceRect.height * 0.02));
+    label('تحت العين', Offset(faceRect.center.dx, faceRect.top + faceRect.height * 0.26));
+    label('الخد', Offset(faceRect.left - 4, faceRect.top + faceRect.height * 0.44), align: TextAlign.right);
+    label('الخد', Offset(faceRect.right - 68, faceRect.top + faceRect.height * 0.44));
+    label('الأنف', Offset(faceRect.center.dx, faceRect.top + faceRect.height * 0.48));
+    label('الذقن', Offset(faceRect.center.dx, faceRect.top + faceRect.height * 0.72));
+    label('الفك', Offset(faceRect.center.dx, faceRect.top + faceRect.height * 0.82));
   }
 
   double _heatmapAlpha(int? score) {
     if (score == null) return 0.38;
     final intensity = (100 - score.clamp(0, 100)) / 100;
     return 0.22 + intensity * 0.42;
-  }
-
-  Path _faceOutlinePath(Rect r) {
-    return Path()
-      ..moveTo(r.center.dx, r.top + r.height * 0.02)
-      ..quadraticBezierTo(r.right + r.width * 0.06, r.top + r.height * 0.22, r.right - r.width * 0.04, r.center.dy)
-      ..quadraticBezierTo(r.right - r.width * 0.02, r.bottom - r.height * 0.08, r.center.dx, r.bottom)
-      ..quadraticBezierTo(r.left + r.width * 0.02, r.bottom - r.height * 0.08, r.left + r.width * 0.04, r.center.dy)
-      ..quadraticBezierTo(r.left - r.width * 0.06, r.top + r.height * 0.22, r.center.dx, r.top + r.height * 0.02)
-      ..close();
-  }
-
-  Path _foreheadPath(Rect r) => Path()
-    ..addOval(Rect.fromCenter(
-      center: Offset(r.center.dx, r.top + r.height * 0.14),
-      width: r.width * 0.78,
-      height: r.height * 0.18,
-    ));
-
-  Path _underEyePath(Rect r) {
-    final path = Path();
-    final y = r.top + r.height * 0.32;
-    path.addOval(Rect.fromCenter(center: Offset(r.center.dx - r.width * 0.18, y), width: r.width * 0.22, height: r.height * 0.08));
-    path.addOval(Rect.fromCenter(center: Offset(r.center.dx + r.width * 0.18, y), width: r.width * 0.22, height: r.height * 0.08));
-    return path;
-  }
-
-  Path _cheekLeftPath(Rect r) => Path()
-    ..addOval(Rect.fromCenter(
-      center: Offset(r.left + r.width * 0.22, r.center.dy + r.height * 0.04),
-      width: r.width * 0.28,
-      height: r.height * 0.22,
-    ));
-
-  Path _cheekRightPath(Rect r) => Path()
-    ..addOval(Rect.fromCenter(
-      center: Offset(r.right - r.width * 0.22, r.center.dy + r.height * 0.04),
-      width: r.width * 0.28,
-      height: r.height * 0.22,
-    ));
-
-  Path _nosePath(Rect r) => Path()
-    ..addRRect(RRect.fromRectAndRadius(
-      Rect.fromCenter(
-        center: Offset(r.center.dx, r.center.dy + r.height * 0.06),
-        width: r.width * 0.14,
-        height: r.height * 0.22,
-      ),
-      const Radius.circular(10),
-    ));
-
-  Path _chinPath(Rect r) => Path()
-    ..addOval(Rect.fromCenter(
-      center: Offset(r.center.dx, r.bottom - r.height * 0.1),
-      width: r.width * 0.36,
-      height: r.height * 0.14,
-    ));
-
-  Path _jawlinePath(Rect r) {
-    final path = Path()
-      ..moveTo(r.left + r.width * 0.18, r.bottom - r.height * 0.06)
-      ..quadraticBezierTo(r.center.dx, r.bottom + r.height * 0.04, r.right - r.width * 0.18, r.bottom - r.height * 0.06);
-    return path;
   }
 
   Color _parseHex(String hex) {

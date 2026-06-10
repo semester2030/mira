@@ -2,6 +2,7 @@ import 'dart:io';
 
 import 'package:google_mlkit_face_detection/google_mlkit_face_detection.dart';
 
+import '../../features/skin_analysis/presentation/utils/face_image_processor.dart';
 import 'face_gate_exception.dart';
 import 'face_gate_result.dart';
 import 'face_gate_rules.dart';
@@ -18,10 +19,10 @@ class FaceGateValidator {
     _detector ??= FaceDetector(
       options: FaceDetectorOptions(
         performanceMode: FaceDetectorMode.accurate,
-        minFaceSize: 0.12,
+        minFaceSize: 0.08,
         enableContours: false,
         enableClassification: false,
-        enableLandmarks: false,
+        enableLandmarks: true,
         enableTracking: false,
       ),
     );
@@ -36,36 +37,27 @@ class FaceGateValidator {
       );
     }
 
-    final inputImage = InputImage.fromFilePath(imageFile.path);
-
     try {
-      final faces = await _faceDetector.processImage(inputImage);
-      final (imageWidth, imageHeight) = _resolveImageSize(inputImage, faces);
+      // Match on-screen preview: EXIF orientation + center crop.
+      final oriented = await _orientedPreviewFile(imageFile);
+      try {
+        final primary = await _detectOnFile(oriented);
+        if (primary != null) return primary;
 
-      if (faces.isEmpty) {
-        return FaceGateRules.evaluate(
-          faceCount: 0,
-          faceAreaRatio: 0,
-        );
+        // Fallback: raw camera file (some gallery picks).
+        if (oriented.path != imageFile.path) {
+          final fallback = await _detectOnFile(imageFile);
+          if (fallback != null) return fallback;
+        }
+
+        return FaceGateRules.evaluate(faceCount: 0, faceAreaRatio: 0);
+      } finally {
+        if (oriented.path != imageFile.path) {
+          if (await oriented.exists()) {
+            await oriented.delete();
+          }
+        }
       }
-
-      faces.sort(
-        (a, b) => _faceBoxArea(b).compareTo(_faceBoxArea(a)),
-      );
-      final primary = faces.first;
-      final ratio = FaceGateRules.faceAreaRatio(
-        boxWidth: primary.boundingBox.width,
-        boxHeight: primary.boundingBox.height,
-        imageWidth: imageWidth,
-        imageHeight: imageHeight,
-      );
-
-      return FaceGateRules.evaluate(
-        faceCount: faces.length,
-        faceAreaRatio: ratio,
-        headYawDegrees: primary.headEulerAngleY,
-        headRollDegrees: primary.headEulerAngleZ,
-      );
     } catch (_) {
       return const FaceGateResult.rejected(
         reasonCode: 'detector_error',
@@ -73,6 +65,45 @@ class FaceGateValidator {
             'تعذر فحص الصورة — أعيدي التقاط selfie واضح بإضاءة جيدة.',
       );
     }
+  }
+
+  Future<File> _orientedPreviewFile(File source) async {
+    final aspect = FaceImageProcessor.viewportAspectRatio;
+    final bytes = await FaceImageProcessor.readOrientedJpegBytes(
+      source,
+      targetAspectRatio: aspect,
+    );
+    final path =
+        '${Directory.systemTemp.path}/mira_face_gate_${DateTime.now().millisecondsSinceEpoch}.jpg';
+    final out = File(path);
+    await out.writeAsBytes(bytes, flush: true);
+    return out;
+  }
+
+  Future<FaceGateResult?> _detectOnFile(File file) async {
+    final inputImage = InputImage.fromFilePath(file.path);
+    final faces = await _faceDetector.processImage(inputImage);
+    final (imageWidth, imageHeight) = _resolveImageSize(inputImage, faces);
+
+    if (faces.isEmpty) return null;
+
+    faces.sort(
+      (a, b) => _faceBoxArea(b).compareTo(_faceBoxArea(a)),
+    );
+    final primary = faces.first;
+    final ratio = FaceGateRules.faceAreaRatio(
+      boxWidth: primary.boundingBox.width,
+      boxHeight: primary.boundingBox.height,
+      imageWidth: imageWidth,
+      imageHeight: imageHeight,
+    );
+
+    return FaceGateRules.evaluate(
+      faceCount: faces.length,
+      faceAreaRatio: ratio,
+      headYawDegrees: primary.headEulerAngleY,
+      headRollDegrees: primary.headEulerAngleZ,
+    );
   }
 
   /// Throws [FaceGateException] when the photo is not acceptable.
