@@ -1,27 +1,27 @@
 import '../entities/confidence_layer.dart';
 import '../entities/mira_beauty_report.dart';
 
-/// Offline mirror of backend confidence-layer.ts
+/// Offline mirror of backend confidence-layer.ts — simplified trust labels.
 abstract final class LocalConfidenceLayerBuilder {
   LocalConfidenceLayerBuilder._();
 
   static ConfidenceLayer fromReport(MiraBeautyReport report) {
     final items = [
-      _ageComparison(report),
       _journeyGoal(report),
+      _ageComparison(report),
+      _faceMap(report),
       _progressForecast(report),
       _recommendations(report),
-      _faceMap(report),
     ];
 
     final highCount = items.where((i) => i.level == 'high').length;
 
     return ConfidenceLayer(
       enabled: true,
-      headlineAr: 'درجة ثقة ميرا في تقريرك',
-      summaryAr: highCount >= 3
-          ? 'معظم ادّعاءات التقرير مدعومة ببيانات قوية — استمري على المتابعة.'
-          : 'بعض الأقسام تقديرية — المتابعة الدورية ترفع دقة التقرير.',
+      headlineAr: 'ثقة ميرا في تقريرك',
+      summaryAr: highCount >= 2
+          ? 'معظم أقسام التقرير مدعومة ببيانات تحليلك — بعض الأقسام استرشادية.'
+          : 'أقسام التقرير مزيج من تحليلك وبيانات تعليمية — المتابعة ترفع الدقة.',
       items: items,
     );
   }
@@ -34,47 +34,32 @@ abstract final class LocalConfidenceLayerBuilder {
         labelAr: 'مقارنة عمر البشرة',
         level: 'low',
         reasonAr: age.suppressedReason == 'missing_birth_year'
-            ? 'أضيفي سنة الميلاد في الملف الشخصي لتفعيل مقارنة دقيقة.'
+            ? 'أضيفي سنة الميلاد في الملف الشخصي لتفعيل المقارنة.'
             : 'مقارنة العمر غير متاحة — بيانات غير كافية.',
       );
     }
 
-    if (age.userAge != null && age.skinAge != null && age.deltaYears != null) {
-      final level = (age.deltaYears!.abs() >= 5) ? 'medium' : 'high';
-      return ConfidenceItem(
-        id: 'age_comparison',
-        labelAr: 'مقارنة عمر البشرة',
-        level: level,
-        reasonAr: level == 'high'
-            ? 'ثقة عالية — عمرك وعمر بشرتك من تحليل موثّق.'
-            : 'ثقة متوسطة — فرق ملحوظ؛ استمري على الروتين للتأكيد.',
-      );
-    }
-
-    return const ConfidenceItem(
+    final level = (age.deltaYears != null && age.deltaYears!.abs() >= 5) ? 'medium' : 'high';
+    return ConfidenceItem(
       id: 'age_comparison',
-      labelAr: 'مقارنة عمر البشرة',
-      level: 'medium',
-      reasonAr: 'ثقة متوسطة — تقدير من تحليل واحد.',
+      labelAr: 'مقارنة عمر البشرة — ${_levelLabel(level)}',
+      level: level,
+      reasonAr: 'تقدير من تحليلك — وليس تشخيصاً طبياً للعمر.',
     );
   }
 
   static ConfidenceItem _journeyGoal(MiraBeautyReport report) {
     final scans = report.progressForecast.scanCount;
-    final level = scans >= 3
-        ? 'high'
-        : scans >= 2
-            ? 'medium'
-            : 'low';
+    final level = scans >= 3 ? 'high' : scans >= 2 ? 'medium' : 'low';
     return ConfidenceItem(
       id: 'journey_goal',
-      labelAr: 'هدف الرحلة (30 يوماً)',
+      labelAr: 'هدف الرحلة — ${_levelLabel(level)}',
       level: level,
       reasonAr: scans >= 3
-          ? 'ثقة عالية — الهدف مبني على $scans تحليلات وTrends.'
+          ? 'مبني على $scans تحليلات واتجاهات تقدمك.'
           : scans >= 2
-              ? 'ثقة متوسطة — تقدير من تحليلين.'
-              : 'ثقة منخفضة — تقدير أولي من تحليل واحد.',
+              ? 'تقدير من تحليلين — يتحسّن مع المتابعة.'
+              : 'تقدير أولي من تحليل واحد.',
     );
   }
 
@@ -83,19 +68,17 @@ abstract final class LocalConfidenceLayerBuilder {
     if (!pf.enabled || pf.needsMoreScans) {
       return const ConfidenceItem(
         id: 'progress_forecast',
-        labelAr: 'توقعات التقدم',
+        labelAr: 'توقعات التقدم — استرشادي',
         level: 'low',
-        reasonAr: 'ثقة منخفضة — تحتاجين تحليلاً ثانياً.',
+        reasonAr: 'تحتاجين تحليلاً ثانياً لتفعيل Trends.',
       );
     }
     final level = pf.scanCount >= 3 ? 'high' : 'medium';
     return ConfidenceItem(
       id: 'progress_forecast',
-      labelAr: 'توقعات التقدم',
+      labelAr: 'توقعات التقدم — ${_levelLabel(level)}',
       level: level,
-      reasonAr: level == 'high'
-          ? 'ثقة عالية — projection من ${pf.scanCount} تحليلات.'
-          : 'ثقة متوسطة — مقارنة بين آخر تحليلين.',
+      reasonAr: 'تقدير تقريبي بناءً على بيانات المتابعة.',
     );
   }
 
@@ -103,9 +86,9 @@ abstract final class LocalConfidenceLayerBuilder {
     if (report.recommendedProducts.isEmpty) {
       return const ConfidenceItem(
         id: 'recommendations',
-        labelAr: 'توصيات المنتجات',
+        labelAr: 'توصيات المنتجات — استرشادي',
         level: 'low',
-        reasonAr: 'ثقة منخفضة — لا منتجات مطابقة بعد.',
+        reasonAr: 'سيتم عرض منتجات مناسبة عند توفر شركاء في هذا التصنيف.',
       );
     }
     final avg = report.recommendedProducts
@@ -115,9 +98,9 @@ abstract final class LocalConfidenceLayerBuilder {
     final level = avg >= 75 ? 'high' : avg >= 55 ? 'medium' : 'low';
     return ConfidenceItem(
       id: 'recommendations',
-      labelAr: 'توصيات المنتجات',
+      labelAr: 'توصيات المنتجات — ${_levelLabel(level)}',
       level: level,
-      reasonAr: 'ثقة ${level == 'high' ? 'عالية' : level == 'medium' ? 'متوسطة' : 'منخفضة'} — متوسط تطابق ${avg.round()}%.',
+      reasonAr: 'متوسط تطابق ${avg.round()}% مع احتياجات تقريرك.',
     );
   }
 
@@ -126,18 +109,22 @@ abstract final class LocalConfidenceLayerBuilder {
     if (!map.enabled) {
       return const ConfidenceItem(
         id: 'face_map',
-        labelAr: 'خريطة الوجه',
+        labelAr: 'خريطة الوجه — استرشادي',
         level: 'low',
-        reasonAr: 'ثقة منخفضة — خريطة غير مفعّلة.',
+        reasonAr: 'الخريطة غير مفعّلة في هذا التقرير.',
       );
     }
-    return ConfidenceItem(
+    return const ConfidenceItem(
       id: 'face_map',
-      labelAr: 'خريطة الوجه',
-      level: map.confidence,
-      reasonAr: map.confidenceLabelAr.isNotEmpty
-          ? map.confidenceLabelAr
-          : 'ثقة ${map.confidence}',
+      labelAr: 'خريطة الوجه — استرشادي',
+      level: 'low',
+      reasonAr: 'تعرض مناطق شائعة الارتباط بالمؤشر، وليس مواقع دقيقة على وجهك.',
     );
   }
+
+  static String _levelLabel(String level) => switch (level) {
+        'high' => 'ثقة مرتفعة',
+        'medium' => 'ثقة متوسطة',
+        _ => 'استرشادي',
+      };
 }

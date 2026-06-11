@@ -1,4 +1,5 @@
 import 'dart:io';
+import 'dart:ui';
 
 import 'package:google_mlkit_face_detection/google_mlkit_face_detection.dart';
 
@@ -91,18 +92,31 @@ class FaceGateValidator {
       (a, b) => _faceBoxArea(b).compareTo(_faceBoxArea(a)),
     );
     final primary = faces.first;
+    final box = primary.boundingBox;
     final ratio = FaceGateRules.faceAreaRatio(
-      boxWidth: primary.boundingBox.width,
-      boxHeight: primary.boundingBox.height,
+      boxWidth: box.width,
+      boxHeight: box.height,
       imageWidth: imageWidth,
       imageHeight: imageHeight,
     );
 
-    return FaceGateRules.evaluate(
+    final centerOffsetX = (box.center.dx / imageWidth) - 0.5;
+    final centerOffsetY = (box.center.dy / imageHeight) - 0.46;
+
+    final rules = FaceGateRules.evaluate(
       faceCount: faces.length,
       faceAreaRatio: ratio,
       headYawDegrees: primary.headEulerAngleY,
       headRollDegrees: primary.headEulerAngleZ,
+      centerOffsetXRatio: centerOffsetX,
+      centerOffsetYRatio: centerOffsetY,
+    );
+
+    if (!rules.isAccepted) return rules;
+
+    return FaceGateResult.acceptedWithFace(
+      faceBox: Rect.fromLTRB(box.left, box.top, box.right, box.bottom),
+      imageSize: Size(imageWidth, imageHeight),
     );
   }
 

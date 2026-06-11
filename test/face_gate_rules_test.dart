@@ -40,5 +40,15 @@ void main() {
       expect(r.isAccepted, isFalse);
       expect(r.reasonCode, 'head_turned');
     });
+
+    test('rejects horizontally off-center face', () {
+      final r = FaceGateRules.evaluate(
+        faceCount: 1,
+        faceAreaRatio: 0.25,
+        centerOffsetXRatio: 0.18,
+      );
+      expect(r.isAccepted, isFalse);
+      expect(r.reasonCode, 'face_off_center');
+    });
   });
 }

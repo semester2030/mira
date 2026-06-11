@@ -5,8 +5,10 @@ import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:image_picker/image_picker.dart';
 
+import '../../../../core/face_gate/face_gate_result.dart';
 import '../../../../core/face_gate/face_gate_validator.dart';
 import '../live_face_map/face_mapping_context.dart';
+import '../live_face_map/face_mesh_quality_gate.dart';
 import '../live_face_map/live_face_overlay_controller.dart';
 import '../live_face_map/models/face_mesh_models.dart';
 import '../live_face_map/scan_region_animation.dart';
@@ -46,6 +48,7 @@ class _FaceCapturePanelState extends State<FaceCapturePanel>
 
   late final AnimationController _pulseController;
   late final AnimationController _scanController;
+  late final AnimationController _sweepController;
   late final AnimationController _tipController;
   late final LiveFaceOverlayController _faceOverlayController;
   bool _imageStreamActive = false;
@@ -70,6 +73,10 @@ class _FaceCapturePanelState extends State<FaceCapturePanel>
       vsync: this,
       duration: ScanRegionAnimation.cycleDuration,
     )..repeat();
+    _sweepController = AnimationController(
+      vsync: this,
+      duration: ScanRegionAnimation.sweepDuration,
+    )..repeat();
     _tipController = AnimationController(
       vsync: this,
       duration: const Duration(milliseconds: 4200),
@@ -93,6 +100,10 @@ class _FaceCapturePanelState extends State<FaceCapturePanel>
 
     if (!oldWidget.isAnalyzing && widget.isAnalyzing) {
       _faceOverlayController.setAnalyzing(true);
+      final captured = widget.capturedImage;
+      if (captured != null) {
+        _detectFaceOnStill(captured);
+      }
     } else if (oldWidget.isAnalyzing && !widget.isAnalyzing) {
       _faceOverlayController.setAnalyzing(false);
     }
@@ -103,6 +114,7 @@ class _FaceCapturePanelState extends State<FaceCapturePanel>
     WidgetsBinding.instance.removeObserver(this);
     _pulseController.dispose();
     _scanController.dispose();
+    _sweepController.dispose();
     _tipController.dispose();
     _stopFaceStream();
     _faceOverlayController.dispose();
@@ -235,6 +247,7 @@ class _FaceCapturePanelState extends State<FaceCapturePanel>
         contentSize: Size(contentW, contentH),
         viewportSize: _previewBoxSize,
         lensDirection: controller.description.lensDirection,
+        mirrorPreview: _isFrontCamera,
       ),
     );
   }
@@ -264,6 +277,7 @@ class _FaceCapturePanelState extends State<FaceCapturePanel>
           lensDirection: _mirrorCapturedPreview
               ? CameraLensDirection.front
               : CameraLensDirection.back,
+          mirrorPreview: _mirrorCapturedPreview,
         ),
       );
     } finally {
@@ -273,32 +287,72 @@ class _FaceCapturePanelState extends State<FaceCapturePanel>
     }
   }
 
-  Future<bool> _validateAndAccept(File file) async {
-    if (!mounted) return false;
+  bool get _canTakePhoto {
+    if (_previewBoxSize == Size.zero) return false;
+    return FaceMeshQualityGate.canTakePhoto(_faceOverlayController.frame);
+  }
+
+  void _showGateMessage(String message) {
+    ScaffoldMessenger.of(context).showSnackBar(
+      SnackBar(
+        content: Text(message),
+        backgroundColor: AppColors.error,
+        duration: const Duration(seconds: 4),
+      ),
+    );
+  }
+
+  Future<FaceGateResult?> _validateFile(File file) async {
+    if (!mounted) return null;
     setState(() => _validatingFace = true);
     try {
-      final result = await FaceGateValidator.instance.validate(file);
-      if (!mounted) return false;
-      if (!result.isAccepted) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(
-            content: Text(result.messageAr),
-            backgroundColor: AppColors.error,
-            duration: const Duration(seconds: 4),
-          ),
-        );
-        return false;
+      final gate = await FaceGateValidator.instance.validate(file);
+      if (!mounted) return null;
+      if (!gate.isAccepted) {
+        _showGateMessage(gate.messageAr);
+        return gate;
       }
-      return true;
+
+      if (!FaceMeshQualityGate.canTakePhoto(_faceOverlayController.frame)) {
+        _showGateMessage(
+          'تعذر تأكيد الوجه في الصورة — ثبّتي وجهك وانظري للكاميرا ثم أعيدي المحاولة.',
+        );
+        return const FaceGateResult.rejected(
+          reasonCode: 'mesh_low_quality',
+          messageAr: 'تعذر تأكيد الوجه في الصورة',
+        );
+      }
+
+      return gate;
     } finally {
       if (mounted) setState(() => _validatingFace = false);
     }
+  }
+
+  Future<File> _normalizeAcceptedCapture(File raw, FaceGateResult gate) async {
+    if (gate.faceBox == null || gate.imageSize == null) return raw;
+    final aligned = await FaceImageProcessor.normalizeFaceInFrame(
+      raw,
+      faceBox: gate.faceBox!,
+      imageSize: gate.imageSize!,
+    );
+    if (aligned.path != raw.path) {
+      await _detectFaceOnStill(aligned);
+    }
+    return aligned;
   }
 
   Future<void> _capture() async {
     final controller = _controller;
     if (controller == null || !controller.value.isInitialized || _capturing) return;
     if (!widget.enabled || widget.isAnalyzing || _validatingFace) return;
+
+    if (!_canTakePhoto) {
+      _showGateMessage(
+        'ثبّتي وجهك داخل الإطار الذهبي حتى يظهر التتبع بوضوح.',
+      );
+      return;
+    }
 
     setState(() => _capturing = true);
     try {
@@ -308,13 +362,14 @@ class _FaceCapturePanelState extends State<FaceCapturePanel>
       await _pauseCamera();
       final file = File(photo.path);
       await _detectFaceOnStill(file);
-      final ok = await _validateAndAccept(file);
-      if (!ok) {
+      final gate = await _validateFile(file);
+      if (gate == null || !gate.isAccepted) {
         _faceOverlayController.reset();
         await _resumeCamera();
         return;
       }
-      widget.onImageChanged(file);
+      final normalized = await _normalizeAcceptedCapture(file, gate);
+      widget.onImageChanged(normalized);
     } catch (e) {
       if (!mounted) return;
       ScaffoldMessenger.of(context).showSnackBar(
@@ -338,12 +393,15 @@ class _FaceCapturePanelState extends State<FaceCapturePanel>
     _mirrorCapturedPreview = false;
     await _pauseCamera();
     final file = File(picked.path);
-    final ok = await _validateAndAccept(file);
-    if (!ok) {
+    await _detectFaceOnStill(file);
+    final gate = await _validateFile(file);
+    if (gate == null || !gate.isAccepted) {
+      _faceOverlayController.reset();
       await _resumeCamera();
       return;
     }
-    widget.onImageChanged(file);
+    final normalized = await _normalizeAcceptedCapture(file, gate);
+    widget.onImageChanged(normalized);
   }
 
   Future<void> _retake() async {
@@ -489,12 +547,14 @@ class _FaceCapturePanelState extends State<FaceCapturePanel>
           animation: Listenable.merge([
             _pulseController,
             _scanController,
+            _sweepController,
             _tipController,
             _faceOverlayController,
           ]),
           builder: (context, _) {
             final tipIndex = (_tipController.value * _tips.length).floor() % _tips.length;
             final interactive = widget.enabled && !widget.isAnalyzing && !_validatingFace;
+            final canTakePhoto = _canTakePhoto;
             _faceOverlayController.updateScanProgress(_scanController.value);
 
             final overlayState = widget.isAnalyzing || _validatingFace
@@ -531,7 +591,10 @@ class _FaceCapturePanelState extends State<FaceCapturePanel>
                                   uiState: overlayState,
                                   pulse: _pulseController.value,
                                   scanProgress: _scanController.value,
-                                  hintText: _tips[tipIndex],
+                                  sweepProgress: _sweepController.value,
+                                  hintText: canTakePhoto
+                                      ? 'الإطار جاهز — اضغطي زر التصوير'
+                                      : _tips[tipIndex],
                                 ),
                               ),
                             ),
@@ -543,7 +606,10 @@ class _FaceCapturePanelState extends State<FaceCapturePanel>
                 ),
                 const SizedBox(height: 16),
                 _CaptureControls(
-                  enabled: interactive && !_initializing && _error == null,
+                  enabled: interactive &&
+                      !_initializing &&
+                      _error == null &&
+                      (widget.capturedImage != null || canTakePhoto),
                   capturing: _capturing,
                   hasCapture: widget.capturedImage != null,
                   onCapture: _capture,

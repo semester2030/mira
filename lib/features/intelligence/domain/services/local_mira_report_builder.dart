@@ -60,12 +60,7 @@ abstract final class LocalMiraReportBuilder {
       summaryAdviceAr: report.advice.isNotEmpty
           ? report.advice
           : 'اتبعي روتينك اليومي بثبات — النتائج تحتاج وقتاً وصبراً.',
-      tipsAr: report.recommendations.isNotEmpty
-          ? report.recommendations.take(5).toList()
-          : const [
-              'روتين يومي: تنظيف لطيف، ترطيب، وواقي شمس.',
-              'اشربي ماء كافياً — الترطيب يبدأ من الداخل.',
-            ],
+      tipsAr: _personalizedTips(report, concerns),
       faceMapEnabled: false,
       concernZonesSection: concernZones,
       faceHealthMap: faceHealthMap,
@@ -391,4 +386,45 @@ abstract final class LocalMiraReportBuilder {
       zones: zones.take(4).toList(),
     );
   }
+
+  static List<String> _personalizedTips(
+    SkinReport report,
+    List<ConcernNarrative> concerns,
+  ) {
+    if (report.recommendations.isNotEmpty) {
+      return report.recommendations.take(5).toList();
+    }
+
+    final actionable = concerns.where((c) => c.severity != 'none').toList();
+    if (actionable.isEmpty) {
+      return const [
+        'بشرتك في توازن جيد — حافظي على روتينك الحالي وواقي الشمس يومياً.',
+      ];
+    }
+
+    return [
+      for (final c in actionable.take(4)) _tipForConcern(c.id),
+    ];
+  }
+
+  static String _tipForConcern(String id) => switch (id) {
+        'moisture' =>
+          'لأن مؤشر الترطيب لديك يحتاج دعماً بسيطاً، ابدئي بروتين خفيف: تنظيف لطيف صباحاً، مرطب يومي، وواقي شمس.',
+        'pore' =>
+          'لأن المسام بارزة لديك، ركزي على تنظيف لطيف مساءً ومقشر BHA خفيف 1–2 مرات أسبوعياً.',
+        'oiliness' =>
+          'لأن إفراز الدهون مرتفع، اختاري منظفاً يوازن الدهون دون تجفيف البشرة.',
+        'redness' =>
+          'لأن الاحمرار ظاهر، تجنبي الحرارة والمنتجات القاسية واختاري مرطبات مهدئة.',
+        'age_spot' =>
+          'لأن التصبغات واضحة، واقي SPF 50 يومياً هو أهم خطوة قبل أي منتج تفتيح.',
+        'wrinkle' =>
+          'لأن علامات التجاعيد ظاهرة، اجمعي بين ترطيب يومي وواقي شمس — النتائج تحتاج وقتاً.',
+        'acne' =>
+          'لأن الحبوب نشطة، تجنبي لمس الوجه واستخدمي معالجة لطيفة بعد التنظيف مساءً.',
+        'dark_circle' =>
+          'لأن الهالات بارزة، نوم كافٍ وترطيب خفيف تحت العين يساعدان على المظهر.',
+        _ =>
+          'ركزي على روتين بسيط وثابت — النتائج تحتاج صبراً وانتظاماً.',
+      };
 }

@@ -1,86 +1,110 @@
 import 'package:flutter/material.dart';
 
 import '../models/face_mesh_models.dart' as models;
-import '../scan_region_animation.dart';
 import 'face_map_palette.dart';
 import 'smooth_path_builder.dart';
 
-/// Premium sequential region fills — single purple, no multi-color AR mask.
+/// Full-face educational map — all regions visible, each with its own color.
 class EducationalFaceRegionsPainter extends CustomPainter {
   final models.FaceMeshFrame frame;
-  final double scanProgress;
-  final bool sequentialScan;
 
   EducationalFaceRegionsPainter({
     required this.frame,
-    required this.scanProgress,
-    this.sequentialScan = true,
   });
-
-  static const _visibleRegions = {
-    models.FaceRegionId.forehead,
-    models.FaceRegionId.underEye,
-    models.FaceRegionId.nose,
-    models.FaceRegionId.cheek,
-    models.FaceRegionId.chin,
-  };
 
   @override
   void paint(Canvas canvas, Size size) {
-    if (!sequentialScan) return;
+    if (!frame.quality.showRegions || frame.outline.length < 8) return;
 
-    for (final region in frame.regions) {
-      if (!region.isValid || !_visibleRegions.contains(region.id)) continue;
+    final ovalPath = SmoothPathBuilder.polygonPath(frame.outline);
+    final regions = frame.regions
+        .where((r) => !r.suppressed && r.points.length >= 3)
+        .toList()
+      ..sort(
+        (a, b) => FaceMapPalette.paintPriority(a.id)
+            .compareTo(FaceMapPalette.paintPriority(b.id)),
+      );
 
-      final strength = ScanRegionAnimation.strengthFor(region.id, scanProgress);
-      if (strength <= 0.01) continue;
+    _paintFaceOutline(canvas, ovalPath);
 
-      _paintRegion(canvas, region, strength);
+    for (final region in regions) {
+      _paintRegion(canvas, region, ovalPath);
     }
+  }
+
+  void _paintFaceOutline(Canvas canvas, Path ovalPath) {
+    if (ovalPath.getBounds().isEmpty) return;
+
+    canvas.drawPath(
+      ovalPath,
+      Paint()
+        ..style = PaintingStyle.stroke
+        ..strokeWidth = 1.0
+        ..strokeJoin = StrokeJoin.round
+        ..isAntiAlias = true
+        ..color = FaceMapPalette.faceOutline,
+    );
   }
 
   void _paintRegion(
     Canvas canvas,
     models.FaceRegionPolygon region,
-    double strength,
+    Path ovalPath,
   ) {
-    final simplified = SmoothPathBuilder.simplify(region.points, target: 14);
-    final path = SmoothPathBuilder.fromPoints(simplified, tension: 0.48);
-    final bounds = path.getBounds().inflate(22);
-    final fill = FaceMapPalette.regionFill(strength);
-    final glow = FaceMapPalette.glow(strength);
+    final path = SmoothPathBuilder.polygonPath(region.points);
+    if (path.getBounds().isEmpty) return;
+
+    canvas.save();
+    canvas.clipPath(ovalPath);
 
     canvas.drawPath(
       path,
       Paint()
-        ..color = glow
-        ..maskFilter = const MaskFilter.blur(BlurStyle.normal, 18),
+        ..style = PaintingStyle.fill
+        ..isAntiAlias = true
+        ..color = FaceMapPalette.regionFill(region.id),
+    );
+
+    canvas.restore();
+
+    _paintPreciseBorder(canvas, path, ovalPath, region.id);
+  }
+
+  void _paintPreciseBorder(
+    Canvas canvas,
+    Path borderPath,
+    Path ovalPath,
+    models.FaceRegionId id,
+  ) {
+    canvas.save();
+    canvas.clipPath(ovalPath);
+
+    canvas.drawPath(
+      borderPath,
+      Paint()
+        ..style = PaintingStyle.stroke
+        ..strokeWidth = FaceMapPalette.contrastStrokeWidth
+        ..strokeJoin = StrokeJoin.round
+        ..strokeCap = StrokeCap.round
+        ..isAntiAlias = true
+        ..color = FaceMapPalette.borderContrast,
     );
 
     canvas.drawPath(
-      path,
+      borderPath,
       Paint()
-        ..shader = RadialGradient(
-          center: Alignment.center,
-          radius: 1.2,
-          colors: [
-            fill,
-            FaceMapPalette.primary.withValues(alpha: 0.02),
-          ],
-        ).createShader(bounds),
+        ..style = PaintingStyle.stroke
+        ..strokeWidth = FaceMapPalette.strokeWidth
+        ..strokeJoin = StrokeJoin.round
+        ..strokeCap = StrokeCap.round
+        ..isAntiAlias = true
+        ..color = FaceMapPalette.regionBorder(id),
     );
 
-    canvas.drawPath(
-      path,
-      Paint()
-        ..color = fill.withValues(alpha: (fill.a * 0.85).clamp(0.08, 0.15))
-        ..maskFilter = const MaskFilter.blur(BlurStyle.normal, 10),
-    );
+    canvas.restore();
   }
 
   @override
   bool shouldRepaint(covariant EducationalFaceRegionsPainter oldDelegate) =>
-      oldDelegate.frame != frame ||
-      oldDelegate.scanProgress != scanProgress ||
-      oldDelegate.sequentialScan != sequentialScan;
+      oldDelegate.frame != frame;
 }

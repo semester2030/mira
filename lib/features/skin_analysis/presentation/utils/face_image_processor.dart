@@ -1,7 +1,7 @@
 import 'dart:io';
 import 'dart:math' as math;
 import 'dart:typed_data';
-import 'dart:ui' as ui;
+import 'dart:ui';
 
 import 'package:image/image.dart' as img;
 
@@ -37,9 +37,9 @@ class FaceImageProcessor {
     return out;
   }
 
-  static Future<ui.Size> decodeOrientedSize(File file) async {
+  static Future<Size> decodeOrientedSize(File file) async {
     final oriented = await _decodeOriented(file);
-    return ui.Size(oriented.width.toDouble(), oriented.height.toDouble());
+    return Size(oriented.width.toDouble(), oriented.height.toDouble());
   }
 
   /// JPEG bytes with EXIF orientation applied — matches what the user saw in frame.
@@ -53,6 +53,52 @@ class FaceImageProcessor {
       oriented = _centerCropToAspect(oriented, targetAspectRatio);
     }
     return Uint8List.fromList(img.encodeJpg(oriented, quality: quality));
+  }
+
+  /// Centers the face in a fixed viewport crop — preview matches post-capture.
+  static Future<File> normalizeFaceInFrame(
+    File source, {
+    required Rect faceBox,
+    required Size imageSize,
+    double faceHeightFraction = 0.58,
+  }) async {
+    var image = await _decodeOriented(source);
+    final aspect = viewportAspectRatio ?? (image.width / image.height);
+
+    final scaleX = image.width / imageSize.width;
+    final scaleY = image.height / imageSize.height;
+    final box = Rect.fromLTRB(
+      faceBox.left * scaleX,
+      faceBox.top * scaleY,
+      faceBox.right * scaleX,
+      faceBox.bottom * scaleY,
+    );
+
+    final cropH = (box.height / faceHeightFraction).clamp(1.0, image.height.toDouble());
+    final cropW = (cropH * aspect).clamp(1.0, image.width.toDouble());
+    final adjustedH = cropW / aspect;
+
+    var left = box.center.dx - cropW / 2;
+    var top = box.center.dy - adjustedH / 2;
+
+    if (left < 0) left = 0;
+    if (top < 0) top = 0;
+    if (left + cropW > image.width) left = image.width - cropW;
+    if (top + adjustedH > image.height) top = image.height - adjustedH;
+
+    final cropped = img.copyCrop(
+      image,
+      x: left.round().clamp(0, image.width - 1),
+      y: top.round().clamp(0, image.height - 1),
+      width: math.min(cropW.round(), image.width),
+      height: math.min(adjustedH.round(), image.height),
+    );
+
+    final outPath =
+        '${Directory.systemTemp.path}/mira_face_aligned_${DateTime.now().millisecondsSinceEpoch}.jpg';
+    final out = File(outPath);
+    await out.writeAsBytes(img.encodeJpg(cropped, quality: 95));
+    return out;
   }
 
   static img.Image _centerCropToAspect(img.Image source, double targetAspectRatio) {

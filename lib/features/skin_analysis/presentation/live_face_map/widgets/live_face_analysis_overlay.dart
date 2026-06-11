@@ -2,19 +2,22 @@ import 'package:flutter/material.dart';
 
 import '../../../../../shared/theme/colors.dart';
 import '../../../../../shared/theme/typography.dart';
+import '../face_map_debug_config.dart';
 import '../live_face_overlay_controller.dart';
 import '../models/face_mesh_models.dart';
 import '../painters/educational_face_regions_painter.dart';
-import '../scan_region_animation.dart';
+import '../painters/face_mesh_debug_painter.dart';
+import '../painters/live_face_guide_painter.dart';
 import 'mira_scanning_badge.dart';
 import 'tracking_quality_badge.dart';
 
-/// Premium live face-map overlay — sequential purple scan, educational only.
+/// Premium landmark-accurate face analysis overlay.
 class LiveFaceAnalysisOverlay extends StatelessWidget {
   final LiveFaceOverlayController controller;
   final LiveCameraOverlayState uiState;
   final double pulse;
   final double scanProgress;
+  final double sweepProgress;
 
   const LiveFaceAnalysisOverlay({
     super.key,
@@ -22,6 +25,7 @@ class LiveFaceAnalysisOverlay extends StatelessWidget {
     required this.uiState,
     required this.pulse,
     required this.scanProgress,
+    required this.sweepProgress,
     this.hintText = 'انظري للكاميرا مباشرة',
   });
 
@@ -34,21 +38,35 @@ class LiveFaceAnalysisOverlay extends StatelessWidget {
       builder: (context, _) {
         final frame = controller.frame;
         final analyzing = uiState == LiveCameraOverlayState.analyzing;
-        final showRegions = analyzing && frame.quality.showRegions;
-        final activeRegion = ScanRegionAnimation.activeStepIndex(scanProgress);
+        final showLiveGuide = !analyzing && uiState != LiveCameraOverlayState.captured;
+        final canDrawRegions =
+            analyzing && frame.outline.length >= 8 && frame.quality.showRegions;
 
         return Stack(
           fit: StackFit.expand,
           children: [
-            if (analyzing)
-              Container(color: Colors.black.withValues(alpha: 0.10)),
-
-            if (showRegions)
+            if (showLiveGuide)
               RepaintBoundary(
                 child: CustomPaint(
-                  painter: EducationalFaceRegionsPainter(
+                  painter: LiveFaceGuidePainter(
                     frame: frame,
-                    scanProgress: scanProgress,
+                    pulse: pulse,
+                  ),
+                ),
+              ),
+            if (canDrawRegions)
+              RepaintBoundary(
+                child: CustomPaint(
+                  painter: EducationalFaceRegionsPainter(frame: frame),
+                ),
+              ),
+
+            if (FaceMapDebugConfig.showOverlay && frame.outline.isNotEmpty)
+              RepaintBoundary(
+                child: CustomPaint(
+                  painter: FaceMeshDebugPainter(
+                    frame: frame,
+                    landmarks: controller.debugLandmarks,
                   ),
                 ),
               ),
@@ -65,7 +83,7 @@ class LiveFaceAnalysisOverlay extends StatelessWidget {
               ),
             ),
 
-            if (uiState == LiveCameraOverlayState.initial)
+            if (!analyzing && uiState != LiveCameraOverlayState.captured)
               Positioned(
                 top: 52,
                 left: 16,
@@ -81,20 +99,22 @@ class LiveFaceAnalysisOverlay extends StatelessWidget {
                 child: _CapturedBanner(),
               ),
 
-            if (!frame.quality.showRegions && !analyzing)
+            if (analyzing && !frame.quality.showRegions)
               Positioned(
                 bottom: 52,
                 left: 16,
                 right: 16,
-                child: Center(child: TrackingQualityBadge(quality: frame.quality)),
+                child: const Center(
+                  child: TrackingQualityBadge(quality: FaceTrackingQuality.low),
+                ),
               ),
 
-            if (analyzing)
-              Positioned(
+            if (analyzing && frame.quality.showRegions)
+              const Positioned(
                 left: 16,
                 right: 16,
                 bottom: 18,
-                child: _RegionScanLabel(activeIndex: activeRegion),
+                child: _FullFaceScanLabel(),
               ),
 
             const Positioned(
@@ -160,17 +180,8 @@ class _CapturedBanner extends StatelessWidget {
   }
 }
 
-class _RegionScanLabel extends StatelessWidget {
-  final int activeIndex;
-  const _RegionScanLabel({required this.activeIndex});
-
-  static const _labels = [
-    'جاري تحليل الجبهة…',
-    'جاري تحليل منطقة تحت العين…',
-    'جاري تحليل الأنف…',
-    'جاري تحليل الخدين…',
-    'جاري تحليل الذقن…',
-  ];
+class _FullFaceScanLabel extends StatelessWidget {
+  const _FullFaceScanLabel();
 
   @override
   Widget build(BuildContext context) {
@@ -180,11 +191,11 @@ class _RegionScanLabel extends StatelessWidget {
         color: Colors.black.withValues(alpha: 0.52),
         borderRadius: BorderRadius.circular(14),
         border: Border.all(
-          color: const Color(0xFFA855F7).withValues(alpha: 0.35),
+          color: const Color(0xFFC88BFF).withValues(alpha: 0.35),
         ),
       ),
       child: Text(
-        _labels[activeIndex.clamp(0, _labels.length - 1)],
+        'جاري تحليل مناطق الوجه…',
         textAlign: TextAlign.center,
         style: AppTypography.labelMedium.copyWith(color: AppColors.onPrimary),
       ),

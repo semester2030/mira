@@ -35,12 +35,12 @@ abstract final class LocalBeautyJourneyBuilder {
 
     var headline = 'رحلة عنايتك مع ميرا';
     var summary =
-        'نربط حالتك الحالية بهدف واضح — ثم خطة أسبوعية قابلة للمتابعة.';
+        'نربط حالتك الحالية بهدف مقترح — ثم خطة أسبوعية قابلة للمتابعة.';
 
     if (top != null) {
       headline = 'أكبر فرصة للتحسن: ${top.labelAr}';
       summary =
-          'مؤشر ${top.labelAr} ${top.currentScore} — التحسن المتوقع +${top.expectedGainPoints} نقطة.';
+          'مؤشر ${top.labelAr} ${top.currentScore} — تحسّن محتمل +${top.expectedGainPoints} نقطة عند الالتزام بالروتين.';
       if (priorities.length >= 2) {
         summary += ' · الأولوية الثانية: ${priorities[1].labelAr}.';
       }
@@ -93,9 +93,9 @@ abstract final class LocalBeautyJourneyBuilder {
       currentValue: current,
       targetValue: target,
       horizonDays: horizon,
-      headlineAr: 'هدفنا القادم: الوصول إلى $target خلال $horizon يوماً',
+      headlineAr: 'الهدف المقترح: $current → $target خلال $horizon يوماً',
       summaryAr: target > current
-          ? 'من $current إلى $target — خطة ميرا الأسبوعية وروتينك اليومي هما الطريق.'
+          ? 'هدف ميرا المقترح خلال $horizon يوماً: تحسين المؤشر تدريجياً — وليس ضماناً.'
           : 'حافظي على $current+ — روتينك الحالي يحافظ على توازن بشرتك.',
     );
   }

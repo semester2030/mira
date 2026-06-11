@@ -12,7 +12,7 @@ extension FaceTrackingQualityLabels on FaceTrackingQuality {
 
   String get badgeMessageAr => switch (this) {
         FaceTrackingQuality.low => 'ثبّتي وجهك داخل الإطار',
-        FaceTrackingQuality.high => 'جودة التتبع: ممتاز',
-        FaceTrackingQuality.medium => 'جودة التتبع: جيد',
+        FaceTrackingQuality.high => 'جاهز للتصوير',
+        FaceTrackingQuality.medium => 'جاهز للتصوير',
       };
 }

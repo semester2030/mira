@@ -2,9 +2,21 @@ import 'dart:ui';
 
 import '../models/face_mesh_models.dart';
 
-/// Converts landmark polygons into organic Catmull-Rom curves — no sharp edges.
+/// Converts landmark polygons into viewport paths.
 class SmoothPathBuilder {
   SmoothPathBuilder._();
+
+  /// Straight segments through each landmark — maximum boundary precision.
+  static Path polygonPath(List<FaceMeshPoint> points) {
+    if (points.length < 3) return Path();
+
+    final path = Path()..moveTo(points.first.x, points.first.y);
+    for (var i = 1; i < points.length; i++) {
+      path.lineTo(points[i].x, points[i].y);
+    }
+    path.close();
+    return path;
+  }
 
   static Path fromPoints(List<FaceMeshPoint> points, {double tension = 0.42}) {
     if (points.length < 3) return Path();

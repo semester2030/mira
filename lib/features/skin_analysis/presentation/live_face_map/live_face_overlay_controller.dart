@@ -28,6 +28,7 @@ class LiveFaceOverlayController extends ChangeNotifier {
   static const _smoothFactor = 0.62;
 
   FaceMeshFrame get frame => _frame;
+  List<FaceMeshPoint> get debugLandmarks => _frame.debugLandmarks;
   FaceOverlayPhase get phase => _phase;
   double get revealProgress => _revealProgress;
   double get scanProgress => _scanProgress;
@@ -79,9 +80,8 @@ class LiveFaceOverlayController extends ChangeNotifier {
       return;
     }
 
-    _frame = snap || !_frame.hasFace
-        ? next
-        : _frame.lerp(next, _smoothFactor);
+    final useSnap = snap || !_frame.hasFace || _analyzing;
+    _frame = useSnap ? next : _frame.lerp(next, _smoothFactor);
 
     if (!hadFace || forceMeshReady) {
       _phase = FaceOverlayPhase.faceDetected;

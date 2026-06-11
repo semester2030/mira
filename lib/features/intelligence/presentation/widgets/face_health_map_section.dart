@@ -4,7 +4,8 @@ import '../../../../shared/theme/colors.dart';
 import '../../../../shared/theme/typography.dart';
 import '../../../../shared/widgets/premium/premium_card.dart';
 import '../../domain/entities/face_health_map.dart';
-import 'face_diagram_painter.dart';
+import 'beauty_report_face_map/beauty_report_face_map.dart';
+import '../../domain/constants/report_face_map_spec.dart';
 
 /// Section 4 — Playground-style interactive Face Health Map.
 class FaceHealthMapSection extends StatefulWidget {
@@ -45,8 +46,6 @@ class _FaceHealthMapSectionState extends State<FaceHealthMapSection> {
     if (!map.enabled) return const SizedBox.shrink();
 
     final overlay = map.overlayById(_selectedConcernId);
-    final zones = map.zonesForConcern(_selectedConcernId);
-    final markers = map.markersForConcern(_selectedConcernId);
     final showRegional = overlay?.hasRegionalData ?? false;
 
     return Column(
@@ -70,56 +69,20 @@ class _FaceHealthMapSectionState extends State<FaceHealthMapSection> {
                 _ConcernScoreHero(overlay: overlay, showRegional: showRegional),
               ],
               const SizedBox(height: 16),
-              AnimatedSwitcher(
-                duration: const Duration(milliseconds: 320),
-                switchInCurve: Curves.easeOutCubic,
-                switchOutCurve: Curves.easeInCubic,
-                child: Container(
-                  key: ValueKey(_selectedConcernId),
-                  decoration: BoxDecoration(
-                    borderRadius: BorderRadius.circular(20),
-                    gradient: LinearGradient(
-                      begin: Alignment.topCenter,
-                      end: Alignment.bottomCenter,
-                      colors: [
-                        AppColors.background,
-                        (overlay != null
-                                ? _parseHex(overlay.highlightColor)
-                                : AppColors.cardPink)
-                            .withValues(alpha: 0.18),
-                      ],
-                    ),
-                    border: Border.all(color: AppColors.border.withValues(alpha: 0.5)),
-                    boxShadow: [
-                      BoxShadow(
-                        color: (overlay?.highlightColor != null
-                                ? _parseHex(overlay!.highlightColor)
-                                : AppColors.primaryLight)
-                            .withValues(alpha: 0.12),
-                        blurRadius: 24,
-                        offset: const Offset(0, 8),
-                      ),
-                    ],
-                  ),
-                  padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 12),
-                  child: SizedBox(
-                    height: 320,
-                    width: double.infinity,
-                    child: CustomPaint(
-                      painter: FaceDiagramPainter(
-                        zones: zones,
-                        markers: markers,
-                        showZoneScores: showRegional,
-                        showMarkers: map.isRealSpatial && markers.isNotEmpty,
-                      ),
-                    ),
-                  ),
-                ),
+              AnimatedBeautyReportFaceMap(
+                concernId: _selectedConcernId.isNotEmpty
+                    ? _selectedConcernId
+                    : ReportFaceMapSpec.tabOrder.first,
+                highlightZoneIds: overlay?.highlightZoneIds ?? const [],
+                highlightColorHex: overlay?.highlightColor,
+                concernScore: overlay?.globalScore ?? 70,
               ),
-              if (map.disclaimerAr.isNotEmpty) ...[
-                const SizedBox(height: 14),
-                _DisclaimerBox(text: map.disclaimerAr),
-              ],
+              const SizedBox(height: 14),
+              _DisclaimerBox(
+                text: map.disclaimerAr.isNotEmpty
+                    ? map.disclaimerAr
+                    : ReportFaceMapSpec.disclaimerAr,
+              ),
             ],
           ),
         ),
@@ -209,10 +172,8 @@ class _Header extends StatelessWidget {
             ),
             borderRadius: BorderRadius.circular(14),
           ),
-          child: Icon(
-            map.isEducational
-                ? Icons.face_retouching_natural_outlined
-                : Icons.biotech_outlined,
+          child: const Icon(
+            Icons.face_retouching_natural_outlined,
             color: AppColors.primaryDark,
             size: 24,
           ),
@@ -364,6 +325,30 @@ class _ConcernScoreHero extends StatelessWidget {
       ),
       child: Row(
         children: [
+          Expanded(
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Text(
+                  overlay.labelAr,
+                  style: AppTypography.labelLarge.copyWith(
+                    color: AppColors.primaryDark,
+                  ),
+                ),
+                const SizedBox(height: 4),
+                Text(
+                  showRegional
+                      ? 'درجات مناطقية — كل لون يطابق شدة الارتباط بالمنطقة'
+                      : 'المناطق الملوّنة تتغيّر حسب المؤشر — كلما كان اللون أوضح، كان الارتباط أقوى',
+                  style: AppTypography.bodySmall.copyWith(
+                    color: AppColors.textSecondary,
+                    height: 1.45,
+                  ),
+                ),
+              ],
+            ),
+          ),
+          const SizedBox(width: 14),
           SizedBox(
             width: 56,
             height: 56,
@@ -385,30 +370,6 @@ class _ConcernScoreHero extends StatelessWidget {
                   style: AppTypography.titleSmall.copyWith(
                     color: AppColors.primaryDark,
                     fontWeight: FontWeight.w800,
-                  ),
-                ),
-              ],
-            ),
-          ),
-          const SizedBox(width: 14),
-          Expanded(
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                Text(
-                  overlay.labelAr,
-                  style: AppTypography.labelLarge.copyWith(
-                    color: AppColors.primaryDark,
-                  ),
-                ),
-                const SizedBox(height: 4),
-                Text(
-                  showRegional
-                      ? 'درجات مناطقية من YouCam — اختاري concern لاستكشاف الخريطة'
-                      : 'درجة عامة — المناطق الملوّنة استرشادية علمياً',
-                  style: AppTypography.bodySmall.copyWith(
-                    color: AppColors.textSecondary,
-                    height: 1.45,
                   ),
                 ),
               ],

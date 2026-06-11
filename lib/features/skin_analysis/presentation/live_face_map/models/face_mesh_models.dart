@@ -62,20 +62,23 @@ class FaceRegionPolygon {
   final FaceRegionId id;
   final List<FaceMeshPoint> points;
   final bool isLeftSide;
+  final bool suppressed;
 
   const FaceRegionPolygon({
     required this.id,
     required this.points,
     this.isLeftSide = false,
+    this.suppressed = false,
   });
 
-  bool get isValid => points.length >= 3;
+  bool get isValid => points.length >= 3 && !suppressed;
 
   FaceRegionPolygon lerp(FaceRegionPolygon other, double t) {
     if (points.length != other.points.length) return other;
     return FaceRegionPolygon(
       id: id,
       isLeftSide: isLeftSide,
+      suppressed: t > 0.5 ? other.suppressed : suppressed,
       points: [
         for (var i = 0; i < points.length; i++)
           points[i].lerp(other.points[i], t),
@@ -115,6 +118,7 @@ class FaceMeshFrame {
   final List<FaceRegionPolygon> regions;
   final FaceTrackingQuality quality;
   final Rect? boundingBox;
+  final List<FaceMeshPoint> debugLandmarks;
   final DateTime timestamp;
 
   const FaceMeshFrame({
@@ -122,6 +126,7 @@ class FaceMeshFrame {
     required this.regions,
     required this.quality,
     this.boundingBox,
+    this.debugLandmarks = const [],
     required this.timestamp,
   });
 
@@ -132,12 +137,15 @@ class FaceMeshFrame {
     timestamp: DateTime.fromMillisecondsSinceEpoch(0),
   );
 
-  bool get hasFace => outline.length >= 8 && quality.showRegions;
+  bool get hasFace => outline.length >= 8;
 
-  bool get hasRegions => regions.any((r) => r.isValid);
+  bool get hasRegions => regions.any((r) => r.points.length >= 3);
+
+  bool get hasPaintableRegions =>
+      regions.any((r) => r.points.length >= 3 && !r.suppressed);
 
   FaceMeshFrame lerp(FaceMeshFrame other, double t) {
-    if (!hasFace || !other.hasFace) return other;
+    if (outline.length < 8 || other.outline.length < 8) return other;
     if (outline.length != other.outline.length) return other;
 
     return FaceMeshFrame(
@@ -153,6 +161,7 @@ class FaceMeshFrame {
       ],
       quality: other.quality,
       boundingBox: other.boundingBox,
+      debugLandmarks: other.debugLandmarks,
       timestamp: other.timestamp,
     );
   }

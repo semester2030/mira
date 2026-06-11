@@ -151,7 +151,7 @@ abstract final class LocalProgressBuilder {
     if (projected == null) {
       return 'قارنا آخر تحليلين — راجعي Trends أدناه.';
     }
-    return 'إذا استمررتِ على روتينك، قد يصل مؤشرك إلى $projected خلال 30 يوماً (تقدير خطي).';
+    return 'قد يتحسّن مؤشرك تدريجياً عند الالتزام بالروتين — تقدير تقريبي بناءً على بيانات المتابعة.';
   }
 
   static int? _project30Days(List<ProgressTimelinePoint> timeline) {

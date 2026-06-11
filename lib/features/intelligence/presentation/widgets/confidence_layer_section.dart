@@ -64,9 +64,9 @@ class _ConfidenceRow extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final badgeLabel = switch (item.level) {
-      'high' => 'ثقة عالية',
+      'high' => 'ثقة مرتفعة',
       'medium' => 'ثقة متوسطة',
-      _ => 'ثقة منخفضة',
+      _ => 'استرشادي',
     };
 
     return Padding(

@@ -1,21 +1,50 @@
 import 'package:flutter/material.dart';
 
-/// MIRA premium face-map color — single translucent purple only.
+import '../models/face_mesh_models.dart';
+
+/// Per-region luxury palette — ultra-transparent fill, crisp colored borders.
 class FaceMapPalette {
   FaceMapPalette._();
 
-  static const primary = Color(0xFFA855F7);
-  static const minOpacity = 0.10;
-  static const maxOpacity = 0.15;
+  static const fillOpacity = 0.055;
+  static const borderOpacity = 0.44;
+  static const borderContrastOpacity = 0.18;
+  static const strokeWidth = 1.5;
+  static const contrastStrokeWidth = 2.25;
+  static const faceOutlineOpacity = 0.20;
 
-  static Color regionFill(double strength) {
-    final t = strength.clamp(0.0, 1.0);
-    final alpha = minOpacity + (maxOpacity - minOpacity) * t;
-    return primary.withValues(alpha: alpha.clamp(minOpacity, maxOpacity));
-  }
+  static const _regionBase = <FaceRegionId, Color>{
+    FaceRegionId.forehead: Color(0xFF9B8CFF),
+    FaceRegionId.underEye: Color(0xFFFFB8A8),
+    FaceRegionId.nose: Color(0xFF6FD4C8),
+    FaceRegionId.cheek: Color(0xFFFF9EC8),
+    FaceRegionId.chin: Color(0xFF8CB4FF),
+    FaceRegionId.jawline: Color(0xFFB8C8E8),
+  };
 
-  static Color glow(double strength) {
-    final t = strength.clamp(0.0, 1.0);
-    return primary.withValues(alpha: (0.04 + 0.04 * t).clamp(0.0, 0.08));
+  static Color regionFill(FaceRegionId id) =>
+      (_regionBase[id] ?? const Color(0xFFC88BFF)).withValues(alpha: fillOpacity);
+
+  static Color regionBorder(FaceRegionId id) =>
+      (_regionBase[id] ?? const Color(0xFFC88BFF)).withValues(alpha: borderOpacity);
+
+  static Color get borderContrast =>
+      Colors.white.withValues(alpha: borderContrastOpacity);
+
+  static Color get faceOutline =>
+      Colors.white.withValues(alpha: faceOutlineOpacity);
+
+  /// Back → front paint order so overlapping regions stay readable.
+  static const paintOrder = <FaceRegionId>[
+    FaceRegionId.cheek,
+    FaceRegionId.underEye,
+    FaceRegionId.forehead,
+    FaceRegionId.nose,
+    FaceRegionId.chin,
+  ];
+
+  static int paintPriority(FaceRegionId id) {
+    final index = paintOrder.indexOf(id);
+    return index < 0 ? paintOrder.length : index;
   }
 }

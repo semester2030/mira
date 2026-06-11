@@ -1,67 +1,58 @@
 /// MediaPipe Face Mesh landmark index groups (468-point topology).
-/// Source: MediaPipe FACEMESH_* constants — no hardcoded screen positions.
+/// Small ordered anatomical loops — no cross-face traversal.
 abstract final class MediapipeLandmarkIndices {
-  /// Full face jaw/cheek/forehead boundary.
+  /// Full face boundary — clipping and forehead construction only.
   static const faceOval = <int>[
     10, 338, 297, 332, 284, 251, 389, 356, 454, 323, 361, 288, 397, 365,
     379, 378, 400, 377, 152, 148, 176, 149, 150, 136, 172, 58, 132, 93,
     234, 127, 162, 21, 54, 103, 67, 109,
   ];
 
-  static const leftEye = <int>[
-    33, 7, 163, 144, 145, 153, 154, 155, 133, 173, 157, 158, 159, 160, 161, 246,
+  /// Closed forehead loop — top arc, temples, and brow ridge in order.
+  static const forehead = <int>[
+    109, 67, 103, 10, 338, 297, 298, 300, 293, 334, 296, 336, 107, 66, 105, 63,
+    70, 54,
   ];
 
-  static const rightEye = <int>[
-    263, 249, 390, 373, 374, 380, 381, 382, 362, 398, 384, 385, 386, 387, 388, 466,
-  ];
-
-  static const leftEyebrowTop = <int>[70, 63, 105, 66, 107];
-  static const rightEyebrowTop = <int>[300, 293, 334, 296, 336];
-
-  /// Ordered under-eye boundary (left) — lower lid + tear trough loop.
+  /// Left lower eyelid + tear trough.
   static const leftUnderEye = <int>[
-    33, 246, 161, 160, 159, 158, 157, 173, 133,
-    111, 117, 118, 119, 120, 121, 128, 245, 189, 221, 222, 223, 224, 225,
-    113, 226, 31, 228, 229, 230, 231, 232, 233, 244,
+    133, 173, 157, 158, 159, 160, 161, 246, 33, 111, 117, 118, 119, 120,
+    121, 128, 245, 189, 221, 222, 223, 224, 225, 113, 226,
   ];
 
-  /// Ordered under-eye boundary (right).
+  /// Right lower eyelid + tear trough.
   static const rightUnderEye = <int>[
-    263, 466, 388, 387, 386, 385, 384, 398, 362,
-    340, 346, 347, 348, 349, 350, 357, 465, 412, 399, 456, 420, 429, 279,
-    294, 440, 275, 419, 360, 363, 281, 5, 4, 195, 196,
+    362, 398, 384, 385, 386, 387, 388, 466, 263, 340, 346, 347, 348, 349,
+    350, 357, 465, 412, 399, 456, 420, 429, 279, 294, 440, 275,
   ];
 
-  /// Ordered nose boundary loop.
+  /// Nose perimeter — bridge, tip, alae, closed loop.
   static const nose = <int>[
-    168, 6, 197, 195, 5, 4, 1, 19, 94, 2, 98, 97, 326, 327, 294, 278, 344,
-    440, 275, 4, 45, 51, 134, 131, 198, 236, 3, 196, 168,
+    168, 6, 197, 195, 5, 4, 1, 19, 94, 2, 98, 64, 48, 115, 220, 45, 275, 440,
+    344, 278, 294, 327, 326, 97,
   ];
 
+  /// Left malar cheek — zygomatic loop along cheek bone.
   static const leftCheek = <int>[
-    116, 123, 147, 213, 192, 214, 135, 169, 170, 140, 171, 175, 396, 369,
-    395, 394, 364, 367, 435, 401,
+    50, 101, 36, 205, 207, 187, 147, 123, 116, 117, 118, 119, 120, 121, 128,
+    245, 189, 203, 206, 216, 212, 214, 192, 213,
   ];
 
+  /// Right malar cheek — zygomatic loop, no lower-eyelid bleed.
   static const rightCheek = <int>[
-    345, 352, 376, 433, 416, 434, 430, 431, 262, 428, 396, 427, 411, 280,
-    352, 345, 340, 346, 347, 348,
+    280, 352, 411, 427, 425, 266, 330, 347, 346, 340, 265, 261, 448, 449, 450,
+    451, 452, 453, 412, 351, 416, 433, 376, 401,
   ];
 
-  static const chin = <int>[
-    152, 377, 400, 378, 379, 365, 397, 288, 361, 323, 454, 356, 389, 251,
-    284, 332, 297, 338, 10, 109, 67, 103, 54, 21, 162, 127,
-  ];
-
+  /// Lower lip — upper boundary of chin region.
   static const lowerLip = <int>[
     61, 146, 91, 181, 84, 17, 314, 405, 321, 375, 291, 409, 270, 269, 267,
     0, 37, 39, 40, 185,
   ];
 
-  static const jawline = <int>[
+  /// Local chin arc — center jaw only, no temple/forehead landmarks.
+  static const chinArc = <int>[
     172, 136, 150, 149, 176, 148, 152, 377, 400, 378, 379, 365, 397, 288,
-    361, 323, 454, 356, 389, 251, 284, 332, 297, 338, 10, 109, 67, 103, 54,
-    21, 162, 127, 234, 93, 132, 58,
+    361, 323, 454, 356, 389, 251, 284,
   ];
 }

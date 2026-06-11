@@ -1,11 +1,12 @@
 import 'dart:io';
+
 import 'package:camera/camera.dart';
 import 'package:flutter/services.dart';
 import 'package:image/image.dart' as img;
 import 'package:mediapipe_face_mesh/mediapipe_face_mesh.dart';
 
 import 'face_mapping_context.dart';
-import 'mediapipe_coordinate_mapper.dart';
+import 'face_mesh_point_mapper.dart';
 import 'mediapipe_region_builder.dart';
 import 'models/face_mesh_models.dart';
 import 'utils/face_mesh_camera_image_adapter.dart';
@@ -72,7 +73,10 @@ class FaceMeshService {
 
     _isProcessing = true;
     try {
-      final rotation = _rotationDegrees(camera: camera, deviceOrientation: deviceOrientation);
+      final rotation = _rotationDegrees(
+        camera: camera,
+        deviceOrientation: deviceOrientation,
+      );
       if (rotation == null) return FaceMeshFrame.empty;
 
       final FaceMeshInferenceResult result;
@@ -90,7 +94,6 @@ class FaceMeshService {
         result.meshResult,
         mapping: mapping,
         rotationDegrees: rotation,
-        mirrorHorizontal: _mirrorHorizontal(camera.lensDirection),
       );
     } catch (_) {
       return FaceMeshFrame.empty;
@@ -102,7 +105,6 @@ class FaceMeshService {
   Future<FaceMeshFrame> processFile({
     required File file,
     required FaceMappingContext mapping,
-    bool mirrorHorizontal = false,
   }) async {
     if (_isProcessing || !mapping.isValid) return FaceMeshFrame.empty;
     await initialize();
@@ -145,7 +147,6 @@ class FaceMeshService {
         result.meshResult,
         mapping: mapping,
         rotationDegrees: 0,
-        mirrorHorizontal: mirrorHorizontal,
       );
     } catch (_) {
       return FaceMeshFrame.empty;
@@ -158,16 +159,13 @@ class FaceMeshService {
     FaceMeshResult? mesh, {
     required FaceMappingContext mapping,
     required int rotationDegrees,
-    required bool mirrorHorizontal,
   }) {
     if (mesh == null || mesh.landmarks.length < 468) return FaceMeshFrame.empty;
 
-    final mapper = MediapipeCoordinateMapper(
+    final mapper = FaceMeshPointMapper(
       mesh: mesh,
-      contentSize: mapping.contentSize,
-      viewportSize: mapping.viewportSize,
+      context: mapping,
       rotationDegrees: rotationDegrees,
-      mirrorHorizontal: mirrorHorizontal,
     );
 
     return _regionBuilder.build(mesh: mesh, mapper: mapper);
@@ -187,9 +185,6 @@ class FaceMeshService {
     }
     return (camera.sensorOrientation - deviceRotation + 360) % 360;
   }
-
-  bool _mirrorHorizontal(CameraLensDirection direction) =>
-      !Platform.isIOS && direction == CameraLensDirection.front;
 
   Future<void> dispose() async {
     _detector?.close();

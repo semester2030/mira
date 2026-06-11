@@ -1,5 +1,6 @@
 # Python venv (logo build scripts)
 .venv-brand/
+.venv-face/
 
 # Miscellaneous
 *.class

@@ -130,7 +130,7 @@ class _GoalCard extends StatelessWidget {
                 padding: const EdgeInsets.symmetric(horizontal: 8),
                 child: Icon(Icons.arrow_back_rounded, size: 18, color: AppColors.gold),
               ),
-              _ScorePill(label: 'الهدف', value: goal.targetValue, highlight: true),
+              _ScorePill(label: 'الهدف المقترح', value: goal.targetValue, highlight: true),
             ],
           ),
           const SizedBox(height: 8),
@@ -212,7 +212,7 @@ class _PriorityRow extends StatelessWidget {
                   style: AppTypography.labelLarge,
                 ),
                 Text(
-                  '${priority.currentScore} · +${priority.expectedGainPoints} متوقع',
+                  '${priority.currentScore} · تحسّن محتمل +${priority.expectedGainPoints}',
                   style: AppTypography.bodySmall.copyWith(color: AppColors.textSecondary),
                 ),
               ],

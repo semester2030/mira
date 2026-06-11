@@ -9,11 +9,15 @@ class FaceMappingContext {
   final Size viewportSize;
   final CameraLensDirection lensDirection;
 
+  /// Must match [Transform.flip] on the camera preview (front = mirrored selfie).
+  final bool mirrorPreview;
+
   const FaceMappingContext({
     required this.rawImageSize,
     required this.contentSize,
     required this.viewportSize,
     required this.lensDirection,
+    this.mirrorPreview = false,
   });
 
   static const empty = FaceMappingContext(

@@ -13,11 +13,17 @@ abstract final class FaceGateRules {
   static const maxHeadYawDegrees = 42.0;
   static const maxHeadRollDegrees = 32.0;
 
+  /// Face center vs image center (fraction of image width/height).
+  static const maxCenterOffsetXRatio = 0.13;
+  static const maxCenterOffsetYRatio = 0.11;
+
   static FaceGateResult evaluate({
     required int faceCount,
     required double faceAreaRatio,
     double? headYawDegrees,
     double? headRollDegrees,
+    double? centerOffsetXRatio,
+    double? centerOffsetYRatio,
   }) {
     if (faceCount == 0) {
       return const FaceGateResult.rejected(
@@ -66,6 +72,24 @@ abstract final class FaceGateRules {
         reasonCode: 'head_tilted',
         messageAr:
             'عدّلي زاوية الرأس — انظري للكاميرا بشكل مستقيم.',
+      );
+    }
+
+    if (centerOffsetXRatio != null &&
+        centerOffsetXRatio.abs() > maxCenterOffsetXRatio) {
+      return const FaceGateResult.rejected(
+        reasonCode: 'face_off_center',
+        messageAr:
+            'الوجه ليس في المنتصف — ثبّتي وجهك داخل الإطار الذهبي.',
+      );
+    }
+
+    if (centerOffsetYRatio != null &&
+        centerOffsetYRatio.abs() > maxCenterOffsetYRatio) {
+      return const FaceGateResult.rejected(
+        reasonCode: 'face_off_center_vertical',
+        messageAr:
+            'عدّلي موضع الوجه عمودياً — اجعلي الجبهة والذقن داخل الإطار.',
       );
     }
 

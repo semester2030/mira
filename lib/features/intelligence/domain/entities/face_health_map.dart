@@ -57,10 +57,7 @@ class FaceHealthMap {
     final overlay = overlayById(concernId);
     if (overlay == null) return zones;
 
-    final highlightIds = {...overlay.highlightZoneIds};
-    if (highlightIds.contains('t_zone')) {
-      highlightIds.addAll(['forehead', 'nose', 'chin']);
-    }
+    final highlightIds = _expandZoneIds(overlay.highlightZoneIds);
 
     return zones
         .map(
@@ -80,6 +77,24 @@ class FaceHealthMap {
 
   List<FaceHealthSpatialMarker> markersForConcern(String concernId) =>
       markers.where((m) => m.concernId == concernId).toList();
+
+  static Set<String> _expandZoneIds(List<String> ids) {
+    final out = <String>{};
+    for (final id in ids) {
+      switch (id) {
+        case 't_zone':
+          out.addAll(['forehead', 'nose', 'chin_jaw']);
+        case 'under_eye':
+          out.addAll(['under_eye_left', 'under_eye_right']);
+        case 'chin':
+        case 'jawline':
+          out.add('chin_jaw');
+        default:
+          out.add(id);
+      }
+    }
+    return out;
+  }
 }
 
 class FaceHealthZone {
