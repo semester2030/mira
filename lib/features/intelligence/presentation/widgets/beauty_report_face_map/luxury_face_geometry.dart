@@ -15,12 +15,18 @@ abstract final class LuxuryFaceGeometry {
     return Rect.fromLTWH(left, top, w, h);
   }
 
-  static Rect faceBoundsIn(Rect area) {
-    final h = area.height * 0.94;
+  /// Face rect inside [areaSize] — origin (0,0), for CustomPaint in a Positioned child.
+  static Rect faceBoundsLocal(Size areaSize) {
+    final h = areaSize.height * 0.94;
     final w = h * (viewW / viewH);
-    final left = area.left + (area.width - w) / 2;
-    final top = area.top + area.height * 0.02;
+    final left = (areaSize.width - w) / 2;
+    final top = areaSize.height * 0.02;
     return Rect.fromLTWH(left, top, w, h);
+  }
+
+  static Rect faceBoundsIn(Rect area) {
+    final local = faceBoundsLocal(Size(area.width, area.height));
+    return local.shift(Offset(area.left, area.top));
   }
 
   static Offset map(Rect b, double nx, double ny) =>
@@ -141,6 +147,13 @@ abstract final class LuxuryFaceGeometry {
     ..cubicTo(148, 102, 150, 100, 152, 100)
     ..close();
 
+  static Path mouthPerioralNorm() => Path()
+    ..moveTo(82, 158)
+    ..cubicTo(90, 152, 110, 152, 118, 158)
+    ..cubicTo(114, 168, 106, 174, 100, 174)
+    ..cubicTo(94, 174, 86, 168, 82, 158)
+    ..close();
+
   static Path? regionNorm(String id) => switch (id) {
         'forehead' => foreheadNorm(),
         'forehead_center' => foreheadCenterNorm(),
@@ -150,6 +163,7 @@ abstract final class LuxuryFaceGeometry {
         'cheeks_left' => cheeksLeftNorm(),
         'cheeks_right' => cheeksRightNorm(),
         'chin' => chinNorm(),
+        'mouth_perioral' => mouthPerioralNorm(),
         'jawline' => jawlineNorm(),
         'smile_lines_left' => smileLinesLeftNorm(),
         'smile_lines_right' => smileLinesRightNorm(),

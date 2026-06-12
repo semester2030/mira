@@ -10,6 +10,7 @@ enum FaceMapRegion {
   cheeksLeft,
   cheeksRight,
   chin,
+  mouthPerioral,
   jawline,
   smileLinesLeft,
   smileLinesRight,
@@ -25,111 +26,136 @@ class FaceMapRegionHighlight {
   final FaceMapIntensity intensity;
 
   const FaceMapRegionHighlight(this.region, this.intensity);
+
+  @override
+  bool operator ==(Object other) =>
+      other is FaceMapRegionHighlight &&
+      other.region == region &&
+      other.intensity == intensity;
+
+  @override
+  int get hashCode => Object.hash(region, intensity);
 }
 
-/// Educational concern → region overlays + luxury palette.
+/// Smart guided face-map — concern overlays tied to analysis score.
 abstract final class ReportFaceMapSpec {
-  static const highOpacity = 0.22;
-  static const mediumOpacity = 0.16;
-  static const lowOpacity = 0.10;
-  static const borderOpacity = 0.20;
-  static const blurSigma = 6.0;
   static const switchDurationMs = 300;
+  static const borderOpacity = 0.32;
+  static const blurSigma = 3.5;
 
+  static const titleAr = 'خريطة مؤشرات البشرة';
+  static const subtitleAr =
+      'تعرض المناطق الشائعة المرتبطة بالمؤشر المختار بناءً على نتيجة تحليلك.';
+  static const confidenceBadgeAr = 'إرشادية — مرتبطة بنتيجتك';
   static const disclaimerAr =
-      'الخريطة توضّح المناطق الشائعة ارتباطاً بهذا المؤشر، وليست تشخيصاً موضعياً دقيقاً.';
+      'خريطة إرشادية ذكية — المناطق الملوّنة مرتبطة بنتيجة المؤشر المختار، وليست تشخيصاً موضعياً.';
 
   static const mapBackground = Color(0xFFFFFFFF);
 
+  /// Legend tier multipliers applied on top of [scoreOpacity].
+  static const highTierFactor = 1.0;
+  static const mediumTierFactor = 0.88;
+  static const lowTierFactor = 0.75;
+
   static const _specs = <String, _ConcernSpec>{
+    'oiliness': _ConcernSpec(
+      color: Color(0xFFD4AF37),
+      heroCopyAr:
+          'المناطق الملونة تتغير حسب درجتك — كلما زادت النتيجة زادت كثافة الظهور.',
+      factors: _oilinessFactors,
+      highlights: [
+        FaceMapRegionHighlight(FaceMapRegion.forehead, FaceMapIntensity.high),
+        FaceMapRegionHighlight(FaceMapRegion.nose, FaceMapIntensity.high),
+        FaceMapRegionHighlight(FaceMapRegion.chin, FaceMapIntensity.high),
+      ],
+    ),
     'pore': _ConcernSpec(
       color: Color(0xFFA855F7),
+      heroCopyAr:
+          'المناطق المظللة تشير إلى أكثر المناطق ارتباطاً بوضوح المسام.',
       factors: _poreFactors,
       highlights: [
         FaceMapRegionHighlight(FaceMapRegion.nose, FaceMapIntensity.high),
-        FaceMapRegionHighlight(FaceMapRegion.cheeksLeft, FaceMapIntensity.medium),
-        FaceMapRegionHighlight(FaceMapRegion.cheeksRight, FaceMapIntensity.medium),
-        FaceMapRegionHighlight(FaceMapRegion.foreheadCenter, FaceMapIntensity.low),
-      ],
-    ),
-    'oiliness': _ConcernSpec(
-      color: Color(0xFFF59E0B),
-      factors: _oilinessFactors,
-      highlights: [
-        FaceMapRegionHighlight(FaceMapRegion.forehead, FaceMapIntensity.medium),
-        FaceMapRegionHighlight(FaceMapRegion.nose, FaceMapIntensity.high),
-        FaceMapRegionHighlight(FaceMapRegion.chin, FaceMapIntensity.medium),
+        FaceMapRegionHighlight(FaceMapRegion.cheeksLeft, FaceMapIntensity.high),
+        FaceMapRegionHighlight(FaceMapRegion.cheeksRight, FaceMapIntensity.high),
+        FaceMapRegionHighlight(FaceMapRegion.foreheadCenter, FaceMapIntensity.medium),
       ],
     ),
     'moisture': _ConcernSpec(
       color: Color(0xFF3B82F6),
+      heroCopyAr:
+          'المناطق الظاهرة تمثل أكثر الأماكن احتياجاً لدعم الترطيب حسب مؤشرك.',
       factors: _moistureFactors,
       highlights: [
         FaceMapRegionHighlight(FaceMapRegion.cheeksLeft, FaceMapIntensity.high),
         FaceMapRegionHighlight(FaceMapRegion.cheeksRight, FaceMapIntensity.high),
+        FaceMapRegionHighlight(FaceMapRegion.mouthPerioral, FaceMapIntensity.high),
         FaceMapRegionHighlight(FaceMapRegion.forehead, FaceMapIntensity.medium),
-        FaceMapRegionHighlight(FaceMapRegion.chin, FaceMapIntensity.medium),
-        FaceMapRegionHighlight(FaceMapRegion.underEyesLeft, FaceMapIntensity.low),
-        FaceMapRegionHighlight(FaceMapRegion.underEyesRight, FaceMapIntensity.low),
-      ],
-    ),
-    'redness': _ConcernSpec(
-      color: Color(0xFFEF4444),
-      factors: _rednessFactors,
-      highlights: [
-        FaceMapRegionHighlight(FaceMapRegion.cheeksLeft, FaceMapIntensity.high),
-        FaceMapRegionHighlight(FaceMapRegion.cheeksRight, FaceMapIntensity.high),
-        FaceMapRegionHighlight(FaceMapRegion.nose, FaceMapIntensity.medium),
-        FaceMapRegionHighlight(FaceMapRegion.chin, FaceMapIntensity.low),
-      ],
-    ),
-    'age_spot': _ConcernSpec(
-      color: Color(0xFFD97706),
-      factors: _pigmentationFactors,
-      highlights: [
-        FaceMapRegionHighlight(FaceMapRegion.cheeksLeft, FaceMapIntensity.high),
-        FaceMapRegionHighlight(FaceMapRegion.cheeksRight, FaceMapIntensity.high),
-        FaceMapRegionHighlight(FaceMapRegion.forehead, FaceMapIntensity.medium),
-        FaceMapRegionHighlight(FaceMapRegion.underEyesLeft, FaceMapIntensity.low),
-        FaceMapRegionHighlight(FaceMapRegion.underEyesRight, FaceMapIntensity.low),
-        FaceMapRegionHighlight(FaceMapRegion.smileLinesLeft, FaceMapIntensity.low),
-        FaceMapRegionHighlight(FaceMapRegion.smileLinesRight, FaceMapIntensity.low),
-      ],
-    ),
-    'wrinkle': _ConcernSpec(
-      color: Color(0xFFEC4899),
-      factors: _wrinkleFactors,
-      highlights: [
-        FaceMapRegionHighlight(FaceMapRegion.forehead, FaceMapIntensity.high),
-        FaceMapRegionHighlight(FaceMapRegion.crowFeetLeft, FaceMapIntensity.high),
-        FaceMapRegionHighlight(FaceMapRegion.crowFeetRight, FaceMapIntensity.high),
-        FaceMapRegionHighlight(FaceMapRegion.smileLinesLeft, FaceMapIntensity.medium),
-        FaceMapRegionHighlight(FaceMapRegion.smileLinesRight, FaceMapIntensity.medium),
-        FaceMapRegionHighlight(FaceMapRegion.underEyesLeft, FaceMapIntensity.low),
-        FaceMapRegionHighlight(FaceMapRegion.underEyesRight, FaceMapIntensity.low),
-      ],
-    ),
-    'acne': _ConcernSpec(
-      color: Color(0xFFF97316),
-      factors: _acneFactors,
-      highlights: [
-        FaceMapRegionHighlight(FaceMapRegion.forehead, FaceMapIntensity.medium),
-        FaceMapRegionHighlight(FaceMapRegion.cheeksLeft, FaceMapIntensity.high),
-        FaceMapRegionHighlight(FaceMapRegion.cheeksRight, FaceMapIntensity.high),
-        FaceMapRegionHighlight(FaceMapRegion.chin, FaceMapIntensity.medium),
-        FaceMapRegionHighlight(FaceMapRegion.jawline, FaceMapIntensity.medium),
       ],
     ),
     'dark_circle': _ConcernSpec(
-      color: Color(0xFF7C3AED),
+      color: Color(0xFF6D28D9),
+      heroCopyAr:
+          'المناطق تحت العينين مرتبطة مباشرة بدرجة مؤشر الهالات في تحليلك.',
       factors: _darkCircleFactors,
       highlights: [
         FaceMapRegionHighlight(FaceMapRegion.underEyesLeft, FaceMapIntensity.high),
         FaceMapRegionHighlight(FaceMapRegion.underEyesRight, FaceMapIntensity.high),
       ],
     ),
+    'redness': _ConcernSpec(
+      color: Color(0xFFEF4444),
+      heroCopyAr:
+          'الخدين والأنف يظهران بكثافة تتناسب مع درجة الاحمرار في نتيجتك.',
+      factors: _rednessFactors,
+      highlights: [
+        FaceMapRegionHighlight(FaceMapRegion.cheeksLeft, FaceMapIntensity.high),
+        FaceMapRegionHighlight(FaceMapRegion.cheeksRight, FaceMapIntensity.high),
+        FaceMapRegionHighlight(FaceMapRegion.nose, FaceMapIntensity.high),
+      ],
+    ),
+    'acne': _ConcernSpec(
+      color: Color(0xFFF97316),
+      heroCopyAr:
+          'المناطق الملونة تعكس شدة مؤشر الحبوب — كلما ارتفعت النتيجة زادت الوضوح.',
+      factors: _acneFactors,
+      highlights: [
+        FaceMapRegionHighlight(FaceMapRegion.forehead, FaceMapIntensity.high),
+        FaceMapRegionHighlight(FaceMapRegion.cheeksLeft, FaceMapIntensity.high),
+        FaceMapRegionHighlight(FaceMapRegion.cheeksRight, FaceMapIntensity.high),
+        FaceMapRegionHighlight(FaceMapRegion.chin, FaceMapIntensity.high),
+      ],
+    ),
+    'wrinkle': _ConcernSpec(
+      color: Color(0xFFC084FC),
+      heroCopyAr:
+          'الجبهة وحول العين وخطوط الابتسامة تتغيّر حسب درجة مؤشر التجاعيد.',
+      factors: _wrinkleFactors,
+      highlights: [
+        FaceMapRegionHighlight(FaceMapRegion.forehead, FaceMapIntensity.high),
+        FaceMapRegionHighlight(FaceMapRegion.underEyesLeft, FaceMapIntensity.medium),
+        FaceMapRegionHighlight(FaceMapRegion.underEyesRight, FaceMapIntensity.medium),
+        FaceMapRegionHighlight(FaceMapRegion.crowFeetLeft, FaceMapIntensity.high),
+        FaceMapRegionHighlight(FaceMapRegion.crowFeetRight, FaceMapIntensity.high),
+        FaceMapRegionHighlight(FaceMapRegion.smileLinesLeft, FaceMapIntensity.medium),
+        FaceMapRegionHighlight(FaceMapRegion.smileLinesRight, FaceMapIntensity.medium),
+      ],
+    ),
+    'age_spot': _ConcernSpec(
+      color: Color(0xFFD4A574),
+      heroCopyAr:
+          'الخدين والجبهة تظهران بكثافة مرتبطة بدرجة مؤشر التصبغات.',
+      factors: _pigmentationFactors,
+      highlights: [
+        FaceMapRegionHighlight(FaceMapRegion.cheeksLeft, FaceMapIntensity.high),
+        FaceMapRegionHighlight(FaceMapRegion.cheeksRight, FaceMapIntensity.high),
+        FaceMapRegionHighlight(FaceMapRegion.forehead, FaceMapIntensity.high),
+      ],
+    ),
     'texture': _ConcernSpec(
       color: Color(0xFF10B981),
+      heroCopyAr:
+          'المناطق الملوّنة تعكس شدة مؤشر الملمس في نتيجة تحليلك.',
       factors: _textureFactors,
       highlights: [
         FaceMapRegionHighlight(FaceMapRegion.cheeksLeft, FaceMapIntensity.high),
@@ -138,6 +164,14 @@ abstract final class ReportFaceMapSpec {
         FaceMapRegionHighlight(FaceMapRegion.chin, FaceMapIntensity.medium),
       ],
     ),
+  };
+
+  static const _aliases = <String, String>{
+    'pores': 'pore',
+    'hydration': 'moisture',
+    'dark_circles': 'dark_circle',
+    'pigmentation': 'age_spot',
+    'wrinkles': 'wrinkle',
   };
 
   static const _pigmentationFactors = [
@@ -196,35 +230,42 @@ abstract final class ReportFaceMapSpec {
   ];
 
   static List<String> get tabOrder => [
+        'oiliness',
         'pore',
         'moisture',
-        'oiliness',
-        'redness',
-        'age_spot',
-        'wrinkle',
-        'acne',
         'dark_circle',
+        'redness',
+        'acne',
+        'wrinkle',
+        'age_spot',
         'texture',
       ];
 
+  static String canonicalId(String concernId) =>
+      _aliases[concernId] ?? concernId;
+
   static Color colorFor(String concernId, {String? fallbackHex}) {
-    final spec = _specs[concernId];
+    final spec = _specs[canonicalId(concernId)];
     if (spec != null) return spec.color;
     if (fallbackHex != null) return _parseHex(fallbackHex);
-    return const Color(0xFFD97706);
+    return const Color(0xFFD4AF37);
   }
 
   static List<FaceMapRegionHighlight> highlightsFor(
     String concernId,
     List<String> legacyZoneIds,
   ) {
-    final spec = _specs[concernId];
+    final spec = _specs[canonicalId(concernId)];
     if (spec != null) return spec.highlights;
     return _legacyHighlights(legacyZoneIds);
   }
 
   static List<FaceMapFactor> factorsFor(String concernId) =>
-      _specs[concernId]?.factors ?? _pigmentationFactors;
+      _specs[canonicalId(concernId)]?.factors ?? _pigmentationFactors;
+
+  static String heroCopyFor(String concernId) =>
+      _specs[canonicalId(concernId)]?.heroCopyAr ??
+      'المناطق الملونة مرتبطة بنتيجة المؤشر المختار — كلما زادت النتيجة زادت الكثافة.';
 
   static String regionId(FaceMapRegion region) => switch (region) {
         FaceMapRegion.forehead => 'forehead',
@@ -235,6 +276,7 @@ abstract final class ReportFaceMapSpec {
         FaceMapRegion.cheeksLeft => 'cheeks_left',
         FaceMapRegion.cheeksRight => 'cheeks_right',
         FaceMapRegion.chin => 'chin',
+        FaceMapRegion.mouthPerioral => 'mouth_perioral',
         FaceMapRegion.jawline => 'jawline',
         FaceMapRegion.smileLinesLeft => 'smile_lines_left',
         FaceMapRegion.smileLinesRight => 'smile_lines_right',
@@ -242,21 +284,28 @@ abstract final class ReportFaceMapSpec {
         FaceMapRegion.crowFeetRight => 'crow_feet_right',
       };
 
-  static double baseOpacity(FaceMapIntensity intensity) => switch (intensity) {
-        FaceMapIntensity.high => highOpacity,
-        FaceMapIntensity.medium => mediumOpacity,
-        FaceMapIntensity.low => lowOpacity,
-      };
-
-  /// Score >= 85 stronger · 70–84 normal · < 70 subtle.
-  static double scoreMultiplier(int score) {
-    if (score >= 85) return 1.12;
-    if (score >= 70) return 1.0;
-    return 0.78;
+  /// Direct score → opacity bands (0–100 on chip).
+  static double scoreOpacity(int score) {
+    final s = score.clamp(0, 100);
+    if (s <= 40) return 0.15;
+    if (s <= 60) return 0.30;
+    if (s <= 80) return 0.50;
+    return 0.70;
   }
 
-  static double fillOpacityFor(FaceMapIntensity intensity, int score) =>
-      (baseOpacity(intensity) * scoreMultiplier(score)).clamp(0.08, 0.28);
+  static double fillOpacityFor(FaceMapIntensity intensity, int score) {
+    final tier = switch (intensity) {
+      FaceMapIntensity.high => highTierFactor,
+      FaceMapIntensity.medium => mediumTierFactor,
+      FaceMapIntensity.low => lowTierFactor,
+    };
+    return (scoreOpacity(score) * tier).clamp(0.12, 0.75);
+  }
+
+  /// Legend preview opacities at a reference score of 70.
+  static double legendHighOpacity = scoreOpacity(70) * highTierFactor;
+  static double legendMediumOpacity = scoreOpacity(70) * mediumTierFactor;
+  static double legendLowOpacity = scoreOpacity(70) * lowTierFactor;
 
   static List<FaceMapRegionHighlight> _legacyHighlights(List<String> ids) {
     final regions = <FaceMapRegion>{};
@@ -276,21 +325,14 @@ abstract final class ReportFaceMapSpec {
       if (id.contains('chin') || id.contains('jaw')) {
         regions.add(FaceMapRegion.chin);
       }
-      if (id.contains('smile')) {
-        regions.add(FaceMapRegion.smileLinesLeft);
-        regions.add(FaceMapRegion.smileLinesRight);
-      }
-      if (id.contains('crows')) {
-        regions.add(FaceMapRegion.crowFeetLeft);
-        regions.add(FaceMapRegion.crowFeetRight);
-      }
+      if (id.contains('mouth')) regions.add(FaceMapRegion.mouthPerioral);
     }
     if (regions.isEmpty) {
-      return [const FaceMapRegionHighlight(FaceMapRegion.forehead, FaceMapIntensity.medium)];
+      return [const FaceMapRegionHighlight(FaceMapRegion.forehead, FaceMapIntensity.high)];
     }
     return [
       for (final r in regions)
-        FaceMapRegionHighlight(r, FaceMapIntensity.medium),
+        FaceMapRegionHighlight(r, FaceMapIntensity.high),
     ];
   }
 
@@ -308,11 +350,13 @@ class FaceMapFactor {
 
 class _ConcernSpec {
   final Color color;
+  final String heroCopyAr;
   final List<FaceMapRegionHighlight> highlights;
   final List<FaceMapFactor> factors;
 
   const _ConcernSpec({
     required this.color,
+    required this.heroCopyAr,
     required this.highlights,
     required this.factors,
   });

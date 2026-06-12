@@ -337,9 +337,7 @@ class _ConcernScoreHero extends StatelessWidget {
                 ),
                 const SizedBox(height: 4),
                 Text(
-                  showRegional
-                      ? 'درجات مناطقية — كل لون يطابق شدة الارتباط بالمنطقة'
-                      : 'المناطق الملوّنة تتغيّر حسب المؤشر — كلما كان اللون أوضح، كان الارتباط أقوى',
+                  ReportFaceMapSpec.heroCopyFor(overlay.concernId),
                   style: AppTypography.bodySmall.copyWith(
                     color: AppColors.textSecondary,
                     height: 1.45,
@@ -397,7 +395,8 @@ class _ConfidenceBadge extends StatelessWidget {
     final (bg, fg, icon) = switch (confidence) {
       'high' => (AppColors.cardPurple, AppColors.primaryDark, Icons.verified_outlined),
       'medium' => (AppColors.cardBlue, AppColors.info, Icons.layers_outlined),
-      _ => (AppColors.goldLight, const Color(0xFF8D6E00), Icons.info_outline),
+      'guided' => (AppColors.cardPurple.withValues(alpha: 0.55), AppColors.primaryDark, Icons.auto_awesome_outlined),
+      _ => (AppColors.cardPink, AppColors.primaryDark, Icons.auto_awesome_outlined),
     };
 
     return Container(

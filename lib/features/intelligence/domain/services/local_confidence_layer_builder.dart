@@ -1,3 +1,4 @@
+import '../constants/report_face_map_spec.dart';
 import '../entities/confidence_layer.dart';
 import '../entities/mira_beauty_report.dart';
 
@@ -116,9 +117,9 @@ abstract final class LocalConfidenceLayerBuilder {
     }
     return const ConfidenceItem(
       id: 'face_map',
-      labelAr: 'خريطة الوجه — استرشادي',
-      level: 'low',
-      reasonAr: 'تعرض مناطق شائعة الارتباط بالمؤشر، وليس مواقع دقيقة على وجهك.',
+      labelAr: 'خريطة مؤشرات البشرة — إرشادية',
+      level: 'medium',
+      reasonAr: ReportFaceMapSpec.confidenceBadgeAr,
     );
   }
 

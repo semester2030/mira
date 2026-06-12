@@ -1,12 +1,12 @@
 import 'package:flutter/material.dart';
 
 import '../../../domain/constants/report_face_map_spec.dart';
-import 'beauty_report_face_map_painter.dart';
+import 'animated_overlay_layer.dart';
 import 'face_map_stack_widgets.dart';
 import 'luxury_face_geometry.dart';
 import 'premium_face_base_image.dart';
 
-/// Premium beauty-tech face map — Stack: white canvas, face PNG, dynamic overlays.
+/// Stack(faceImage, animatedOverlayLayer) — premium guided face map.
 class BeautyReportFaceMap extends StatelessWidget {
   final String concernId;
   final List<String> highlightZoneIds;
@@ -31,15 +31,16 @@ class BeautyReportFaceMap extends StatelessWidget {
       child: LayoutBuilder(
         builder: (context, constraints) {
           final size = Size(constraints.maxWidth, mapHeight);
+          final canonicalId = ReportFaceMapSpec.canonicalId(concernId);
           final color = ReportFaceMapSpec.colorFor(
-            concernId,
+            canonicalId,
             fallbackHex: highlightColorHex,
           );
           final highlights = ReportFaceMapSpec.highlightsFor(
-            concernId,
+            canonicalId,
             highlightZoneIds,
           );
-          final factors = ReportFaceMapSpec.factorsFor(concernId);
+          final factors = ReportFaceMapSpec.factorsFor(canonicalId);
 
           const faceInset = EdgeInsets.fromLTRB(52, 6, 10, 44);
           final faceArea = Rect.fromLTWH(
@@ -48,7 +49,10 @@ class BeautyReportFaceMap extends StatelessWidget {
             size.width - faceInset.horizontal,
             size.height - faceInset.vertical,
           );
-          final faceBounds = LuxuryFaceGeometry.faceBoundsIn(faceArea);
+          final faceRect = LuxuryFaceGeometry.faceBoundsIn(faceArea);
+          final paintBounds = LuxuryFaceGeometry.faceBoundsLocal(
+            Size(faceRect.width, faceRect.height),
+          );
 
           return ClipRRect(
             borderRadius: BorderRadius.circular(20),
@@ -56,28 +60,16 @@ class BeautyReportFaceMap extends StatelessWidget {
               fit: StackFit.expand,
               children: [
                 const ColoredBox(color: ReportFaceMapSpec.mapBackground),
-                PremiumFaceBaseImage.layer(faceBounds: faceBounds),
+                PremiumFaceBaseImage.layer(faceBounds: faceRect),
                 Positioned.fromRect(
-                  rect: faceArea,
-                  child: AnimatedSwitcher(
-                    duration: const Duration(
-                      milliseconds: ReportFaceMapSpec.switchDurationMs,
-                    ),
-                    switchInCurve: Curves.easeOutCubic,
-                    switchOutCurve: Curves.easeInCubic,
-                    transitionBuilder: (child, animation) => FadeTransition(
-                      opacity: animation,
-                      child: child,
-                    ),
-                    child: CustomPaint(
-                      key: ValueKey('$concernId-$concernScore'),
-                      painter: BeautyReportConcernPainter(
-                        highlights: highlights,
-                        highlightColor: color,
-                        faceBounds: faceBounds,
-                        concernScore: concernScore,
-                      ),
-                    ),
+                  rect: faceRect,
+                  child: AnimatedOverlayLayer(
+                    concernId: canonicalId,
+                    concernScore: concernScore,
+                    color: color,
+                    highlights: highlights,
+                    paintBounds: paintBounds,
+                    size: Size(faceRect.width, faceRect.height),
                   ),
                 ),
                 Positioned(
@@ -88,7 +80,10 @@ class BeautyReportFaceMap extends StatelessWidget {
                 Positioned(
                   right: 12,
                   bottom: 10,
-                  child: FaceMapIntensityLegend(accent: color),
+                  child: FaceMapScoreLegend(
+                    accent: color,
+                    score: concernScore,
+                  ),
                 ),
               ],
             ),

@@ -76,7 +76,49 @@ class _FactorItem extends StatelessWidget {
   }
 }
 
-/// Bottom-right intensity legend.
+/// Bottom-right score-linked legend.
+class FaceMapScoreLegend extends StatelessWidget {
+  final Color accent;
+  final int score;
+
+  const FaceMapScoreLegend({
+    super.key,
+    required this.accent,
+    required this.score,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    final opacity = ReportFaceMapSpec.scoreOpacity(score);
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.end,
+      mainAxisSize: MainAxisSize.min,
+      children: [
+        _LegendRow(
+          label: 'كثافة المؤشر',
+          dot: Container(
+            width: 10,
+            height: 10,
+            decoration: BoxDecoration(
+              color: accent.withValues(alpha: opacity),
+              shape: BoxShape.circle,
+            ),
+          ),
+        ),
+        const SizedBox(height: 4),
+        Text(
+          'النتيجة $score → ${(opacity * 100).round()}%',
+          style: AppTypography.labelSmall.copyWith(
+            fontSize: 9,
+            color: const Color(0xFF7A6B72),
+          ),
+        ),
+      ],
+    );
+  }
+}
+
+/// Regional tier legend (reference).
 class FaceMapIntensityLegend extends StatelessWidget {
   final Color accent;
 
@@ -89,36 +131,24 @@ class FaceMapIntensityLegend extends StatelessWidget {
       mainAxisSize: MainAxisSize.min,
       children: [
         _LegendRow(
-          label: 'مناطق ظهور عالية',
+          label: 'مناطق رئيسية',
           dot: Container(
             width: 10,
             height: 10,
             decoration: BoxDecoration(
-              color: accent.withValues(alpha: ReportFaceMapSpec.highOpacity),
+              color: accent.withValues(alpha: ReportFaceMapSpec.legendHighOpacity),
               shape: BoxShape.circle,
             ),
           ),
         ),
         const SizedBox(height: 6),
         _LegendRow(
-          label: 'مناطق متوسطة',
+          label: 'مناطق ثانوية',
           dot: Container(
             width: 10,
             height: 10,
             decoration: BoxDecoration(
-              color: accent.withValues(alpha: ReportFaceMapSpec.mediumOpacity),
-              shape: BoxShape.circle,
-            ),
-          ),
-        ),
-        const SizedBox(height: 6),
-        _LegendRow(
-          label: 'مناطق محتملة',
-          dot: Container(
-            width: 10,
-            height: 10,
-            decoration: BoxDecoration(
-              color: accent.withValues(alpha: ReportFaceMapSpec.lowOpacity),
+              color: accent.withValues(alpha: ReportFaceMapSpec.legendMediumOpacity),
               shape: BoxShape.circle,
             ),
           ),

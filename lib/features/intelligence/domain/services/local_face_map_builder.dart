@@ -120,11 +120,11 @@ abstract final class LocalFaceMapBuilder {
 
     return FaceHealthMap(
       enabled: true,
-      confidence: 'low',
-      confidenceLabelAr: 'استرشادي',
+      confidence: 'guided',
+      confidenceLabelAr: ReportFaceMapSpec.confidenceBadgeAr,
       mode: 'educational',
-      titleAr: 'خريطة تحليل البشرة',
-      subtitleAr: 'اختياري مؤشر — المناطق الملوّنة تتغيّر حسب المؤشر المختار',
+      titleAr: ReportFaceMapSpec.titleAr,
+      subtitleAr: ReportFaceMapSpec.subtitleAr,
       disclaimerAr: ReportFaceMapSpec.disclaimerAr,
       zones: _allZones(),
       insightCards: insights.take(4).toList(),
