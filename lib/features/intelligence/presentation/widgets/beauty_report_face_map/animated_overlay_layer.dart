@@ -28,15 +28,16 @@ class AnimatedOverlayLayer extends StatelessWidget {
       key: ValueKey('$concernId-$concernScore'),
       tween: Tween(begin: 0, end: 1),
       duration: const Duration(milliseconds: ReportFaceMapSpec.switchDurationMs),
-      curve: Curves.easeOutCubic,
+      curve: Curves.easeInOutCubic,
       builder: (context, t, _) {
         return Opacity(
           opacity: t,
           child: Transform.scale(
-            scale: 0.97 + (0.03 * t),
+            scale: 0.98 + (0.02 * t),
             child: CustomPaint(
               size: size,
               painter: BeautyReportConcernPainter(
+                concernId: concernId,
                 highlights: highlights,
                 highlightColor: color,
                 faceBounds: paintBounds,

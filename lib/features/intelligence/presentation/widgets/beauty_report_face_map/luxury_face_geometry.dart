@@ -17,10 +17,10 @@ abstract final class LuxuryFaceGeometry {
 
   /// Face rect inside [areaSize] — origin (0,0), for CustomPaint in a Positioned child.
   static Rect faceBoundsLocal(Size areaSize) {
-    final h = areaSize.height * 0.94;
+    final h = areaSize.height * 1.0;
     final w = h * (viewW / viewH);
     final left = (areaSize.width - w) / 2;
-    final top = areaSize.height * 0.02;
+    final top = areaSize.height * 0.01;
     return Rect.fromLTWH(left, top, w, h);
   }
 

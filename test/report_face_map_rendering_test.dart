@@ -2,22 +2,28 @@ import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:mirra/features/intelligence/domain/constants/report_face_map_spec.dart';
 import 'package:mirra/features/intelligence/presentation/widgets/beauty_report_face_map/luxury_face_geometry.dart';
+import 'package:mirra/features/intelligence/presentation/widgets/beauty_report_face_map/organic_face_geometry.dart';
 
 void main() {
   group('Report face map rendering', () {
-    test('overlay paths stay inside local paint bounds', () {
-      const faceArea = Rect.fromLTRB(52, 6, 300, 370);
+    test('heatmap overlay paths stay inside local paint bounds', () {
+      const faceArea = Rect.fromLTRB(52, 6, 300, 396);
       final faceRect = LuxuryFaceGeometry.faceBoundsIn(faceArea);
       final paintBounds = LuxuryFaceGeometry.faceBoundsLocal(
         Size(faceRect.width, faceRect.height),
       );
 
       for (final concernId in ReportFaceMapSpec.tabOrder) {
+        if (ReportFaceMapSpec.renderModeFor(concernId) !=
+            FaceMapRenderMode.heatmap) {
+          continue;
+        }
+
         final highlights = ReportFaceMapSpec.highlightsFor(concernId, const []);
         expect(highlights, isNotEmpty, reason: concernId);
 
         for (final item in highlights) {
-          final path = LuxuryFaceGeometry.regionPath(
+          final path = OrganicFaceGeometry.regionPath(
             paintBounds,
             ReportFaceMapSpec.regionId(item.region),
           );
@@ -31,31 +37,36 @@ void main() {
       }
     });
 
-    test('score opacity bands match spec', () {
-      expect(ReportFaceMapSpec.scoreOpacity(35), 0.15);
-      expect(ReportFaceMapSpec.scoreOpacity(50), 0.30);
-      expect(ReportFaceMapSpec.scoreOpacity(70), 0.50);
-      expect(ReportFaceMapSpec.scoreOpacity(90), 0.70);
+    test('score opacity bands match production spec', () {
+      expect(ReportFaceMapSpec.scoreOpacity(25), 0.15);
+      expect(ReportFaceMapSpec.scoreOpacity(40), 0.25);
+      expect(ReportFaceMapSpec.scoreOpacity(60), 0.40);
+      expect(ReportFaceMapSpec.scoreOpacity(80), 0.55);
+      expect(ReportFaceMapSpec.scoreOpacity(95), 0.72);
     });
 
-    test('higher score produces stronger overlay opacity', () {
+    test('higher score produces stronger overlay opacity and spread', () {
       final low = ReportFaceMapSpec.fillOpacityFor(
         FaceMapIntensity.high,
-        55,
+        35,
       );
       final mid = ReportFaceMapSpec.fillOpacityFor(
         FaceMapIntensity.high,
-        70,
+        60,
       );
       final high = ReportFaceMapSpec.fillOpacityFor(
         FaceMapIntensity.high,
-        85,
+        90,
       );
       expect(mid, greaterThan(low));
       expect(high, greaterThan(mid));
+      expect(
+        ReportFaceMapSpec.scoreSpread(90),
+        greaterThan(ReportFaceMapSpec.scoreSpread(35)),
+      );
     });
 
-    test('each concern produces distinct region sets', () {
+    test('each concern uses distinct render mode or region sets', () {
       Set<FaceMapRegion> regions(String id) =>
           ReportFaceMapSpec.highlightsFor(id, const [])
               .map((h) => h.region)
@@ -72,25 +83,34 @@ void main() {
       expect(darkCircles, isNot(equals(oiliness)));
       expect(darkCircles, isNot(equals(pores)));
       expect(darkCircles, isNot(equals(hydration)));
+
+      expect(ReportFaceMapSpec.renderModeFor('wrinkle'),
+          FaceMapRenderMode.wrinkleLines);
+      expect(ReportFaceMapSpec.renderModeFor('acne'),
+          FaceMapRenderMode.acneSpots);
+      expect(ReportFaceMapSpec.renderModeFor('texture'),
+          FaceMapRenderMode.textureGrain);
     });
 
-    test('oiliness maps to T-zone only', () {
+    test('oiliness maps to T-zone micro-regions', () {
       final regions = ReportFaceMapSpec.highlightsFor('oiliness', const [])
           .map((h) => h.region)
           .toSet();
       expect(regions, {
-        FaceMapRegion.forehead,
-        FaceMapRegion.nose,
-        FaceMapRegion.chin,
+        FaceMapRegion.foreheadCenter,
+        FaceMapRegion.noseBridge,
+        FaceMapRegion.noseTip,
+        FaceMapRegion.chinCenter,
       });
     });
 
-    test('hydration includes mouth perioral region', () {
+    test('hydration includes wide cheeks and mouth perioral', () {
       final regions = ReportFaceMapSpec.highlightsFor('moisture', const [])
           .map((h) => h.region)
           .toSet();
       expect(regions, contains(FaceMapRegion.mouthPerioral));
-      expect(regions, contains(FaceMapRegion.cheeksLeft));
+      expect(regions, contains(FaceMapRegion.cheekWideLeft));
+      expect(regions, contains(FaceMapRegion.foreheadWide));
     });
 
     test('dark circles map to under-eye regions only', () {
@@ -113,15 +133,16 @@ void main() {
       expect(moisture, equals(hydration));
     });
 
-    test('hero copy is concern-specific', () {
+    test('hero copy and disclaimer are concern-specific', () {
       expect(
         ReportFaceMapSpec.heroCopyFor('oiliness'),
         isNot(equals(ReportFaceMapSpec.heroCopyFor('pore'))),
       );
       expect(
-        ReportFaceMapSpec.heroCopyFor('moisture'),
-        isNot(equals(ReportFaceMapSpec.heroCopyFor('dark_circle'))),
+        ReportFaceMapSpec.disclaimerAr,
+        contains('المناطق الأكثر ارتباطاً'),
       );
+      expect(ReportFaceMapSpec.disclaimerAr, isNot(contains('ليست')));
     });
   });
 }

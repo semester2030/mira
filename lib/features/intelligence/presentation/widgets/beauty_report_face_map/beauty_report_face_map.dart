@@ -42,7 +42,7 @@ class BeautyReportFaceMap extends StatelessWidget {
           );
           final factors = ReportFaceMapSpec.factorsFor(canonicalId);
 
-          const faceInset = EdgeInsets.fromLTRB(52, 6, 10, 44);
+          const faceInset = EdgeInsets.fromLTRB(52, 6, 10, 24);
           final faceArea = Rect.fromLTWH(
             faceInset.left,
             faceInset.top,
@@ -79,7 +79,7 @@ class BeautyReportFaceMap extends StatelessWidget {
                 ),
                 Positioned(
                   right: 12,
-                  bottom: 10,
+                  bottom: 4,
                   child: FaceMapScoreLegend(
                     accent: color,
                     score: concernScore,
