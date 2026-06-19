@@ -1,5 +1,7 @@
 import 'package:flutter/material.dart';
 import '../../../../core/constants/brand_copy.dart';
+import '../../../../core/constants/mira_public_urls.dart';
+import '../../../../core/utils/mira_url_launcher.dart';
 import '../../../../shared/theme/colors.dart';
 import '../../../../shared/theme/typography.dart';
 import '../../../../shared/widgets/mira_app_bar.dart';
@@ -59,6 +61,31 @@ class AboutScreen extends StatelessWidget {
                 ],
               ),
             ),
+            const SizedBox(height: 12),
+            PremiumCard(
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Text('الدعم والخصوصية', style: AppTypography.titleMedium),
+                  const SizedBox(height: 12),
+                  _LinkTile(
+                    label: 'سياسة الخصوصية (ويب)',
+                    onTap: () => MiraUrlLauncher.openExternal(
+                      context,
+                      MiraPublicUrls.privacyPolicy,
+                    ),
+                  ),
+                  const Divider(height: 16),
+                  _LinkTile(
+                    label: MiraPublicUrls.supportEmail,
+                    onTap: () => MiraUrlLauncher.openExternal(
+                      context,
+                      'mailto:${MiraPublicUrls.supportEmail}',
+                    ),
+                  ),
+                ],
+              ),
+            ),
           ],
         ),
       ),
@@ -74,6 +101,30 @@ class AboutScreen extends StatelessWidget {
           const Text('• ', style: TextStyle(color: AppColors.primary, fontSize: 18)),
           Expanded(child: Text(text, style: AppTypography.bodyMedium)),
         ],
+      ),
+    );
+  }
+}
+
+class _LinkTile extends StatelessWidget {
+  const _LinkTile({required this.label, required this.onTap});
+
+  final String label;
+  final VoidCallback onTap;
+
+  @override
+  Widget build(BuildContext context) {
+    return InkWell(
+      onTap: onTap,
+      borderRadius: BorderRadius.circular(8),
+      child: Padding(
+        padding: const EdgeInsets.symmetric(vertical: 4),
+        child: Row(
+          children: [
+            Expanded(child: Text(label, style: AppTypography.bodyMedium)),
+            const Icon(Icons.open_in_new_rounded, size: 18, color: AppColors.textSecondary),
+          ],
+        ),
       ),
     );
   }

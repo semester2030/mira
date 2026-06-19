@@ -1,6 +1,6 @@
-import '../../../../core/ai/mappers/skin_result_mapper.dart';
 import '../../../skin_analysis/domain/entities/skin_report.dart';
 import '../../../skin_analysis/domain/services/skin_report_matrix.dart';
+import '../../../skin_analysis/domain/services/beauty_score_engine.dart';
 import '../entities/beauty_journey.dart';
 import '../entities/confidence_layer.dart';
 import '../entities/mira_beauty_report.dart';
@@ -21,8 +21,8 @@ abstract final class LocalMiraReportBuilder {
     int? birthYear,
     bool isGuest = false,
   }) {
-    final result = SkinResultMapper.fromReport(report);
-    final score = result.beautyScore.round().clamp(0, 100);
+    final scored = BeautyScoreEngine.compute(report);
+    final score = scored.finalScore;
     final rawSkinAge = report.skinAge ?? SkinReportMatrix.skinAge(report);
     final safety = LocalAgeIntelligence.applyChildSafety(
       birthYear: birthYear,
@@ -127,10 +127,13 @@ abstract final class LocalMiraReportBuilder {
   }
 
   static String _headline(int score) {
-    if (score >= 82) {
-      return 'بشرتك في حالة جيدة — نكمل معاً على روتين يحافظ على توازنها.';
+    if (score >= 79) {
+      return 'بشرتك في حالة ممتازة — نكمل معاً على روتين يحافظ على توازنها.';
     }
-    if (score >= 68) {
+    if (score >= 69) {
+      return 'بشرتك في حالة جيدة — روتين ميرا يساعدك على تحسين ${score >= 74 ? 'التوازن' : 'النقاط الضعيفة'}.';
+    }
+    if (score >= 56) {
       return 'بشرتك تحتاج عناية مركّزة — خطة ميرا اليومية تناسبك.';
     }
     return 'بشرتك تستحق اهتماماً إضافياً — ابدئي بالخطوات البسيطة أدناه.';

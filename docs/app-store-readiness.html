@@ -1,0 +1,1239 @@
+<!DOCTYPE html>
+<html lang="ar" dir="rtl">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <meta name="description" content="خطة App Store احترافية لميرا — ٣ بكجات (بنية الإطلاق · TestFlight · Production) + ٥ أجزاء تنفيذية + أدلة من الكود." />
+  <title>ميرا | مرجع جاهزية App Store — أدلة من الكود</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link href="https://fonts.googleapis.com/css2?family=Tajawal:wght@400;500;700;800&display=swap" rel="stylesheet" />
+  <link rel="stylesheet" href="app-store-readiness.css" />
+</head>
+<body>
+  <header class="site-header">
+    <div class="container header-inner">
+      <a class="brand" href="index.html">ميرا · Mira</a>
+      <nav class="nav">
+        <a href="#packages" class="nav-highlight">نشر · ٣ مراحل</a>
+        <a href="mira-subscription-packages.html">اشتراكات · ٣ باقات</a>
+        <a href="#prep">التفصيل · ٥ أجزاء</a>
+        <a href="#verdict">الحكم</a>
+        <a href="#ready">جاهز ✅</a>
+        <a href="#blockers">Blockers</a>
+      </nav>
+    </div>
+  </header>
+
+  <main class="container">
+    <section class="hero hero-appstore">
+      <span class="badge">APP STORE READINESS AUDIT · يونيو 2026</span>
+      <h1>مرجع جاهزية App Store<br />أدلة دقيقة من الكود</h1>
+      <p class="lead">
+        تقييم تقني–قانوني لمشروع <code>mira</code> (Flutter + NestJS) قبل الرفع على Apple App Store.
+        كل بند مربوط بمسار ملف، سطر، أو اختبار — بدون تسويق.
+      </p>
+      <div class="hero-meta">
+        <span class="meta-pill">🍎 Guideline 3.1.1 · 5.1 · 2.1</span>
+        <span class="meta-pill">🧪 73 اختبار Flutter — All passed</span>
+        <span class="meta-pill">📦 version 1.0.0+1</span>
+        <span class="meta-pill">🎯 جاهزية كاملة ~64%</span>
+      </div>
+      <p class="hero-cta">
+        <a class="btn-prep" href="#packages">الخطة · ٣ بكجات ←</a>
+        <a class="btn-prep btn-prep-ghost" href="#prep">التفصيل التنفيذي</a>
+      </p>
+    </section>
+
+    <!-- ═══ 3 PACKAGES — STRATEGIC PLAN ═══ -->
+    <section id="packages" class="packages-section">
+      <div class="packages-intro">
+        <span class="badge badge-gold">STRATEGIC RELEASE PLAN · MIRA iOS</span>
+        <h2>خطة النشر — ٣ مراحل (Release)</h2>
+        <p class="lead packages-lead">
+          <strong>ملاحظة:</strong> هذه <em>بكجات نشر</em> (TestFlight → Production) — وليست باقات الاشتراك.
+          لخطط الأسعار (مجاني · بلس · بريميوم) →
+          <a href="mira-subscription-packages.html">باقات الاشتراك ↗</a>
+        </p>
+        <div class="packages-flow" aria-label="تسلسل البكجات">
+          <div class="flow-node flow-a"><span>A</span> بنية الإطلاق</div>
+          <div class="flow-arrow">→</div>
+          <div class="flow-node flow-b"><span>B</span> TestFlight</div>
+          <div class="flow-arrow">→</div>
+          <div class="flow-node flow-c"><span>C</span> Production</div>
+        </div>
+      </div>
+
+      <div class="packages-grid">
+
+        <!-- PACKAGE A -->
+        <article id="package-a" class="package-card package-a">
+          <header class="package-head">
+            <div class="package-id">
+              <span class="pkg-code">PKG-A</span>
+              <span class="pkg-phase">المرحلة ١</span>
+            </div>
+            <h3>بكج بنية الإطلاق</h3>
+            <p class="pkg-tagline">Launch Infrastructure</p>
+            <div class="pkg-meta-row">
+              <span>⏱ 7–10 أيام عمل</span>
+              <span>📦 v1.0.0 · build +1</span>
+              <span>🎯 جاهزية 40→55%</span>
+            </div>
+          </header>
+
+          <div class="pkg-objective">
+            <strong>الهدف الاستراتيجي</strong>
+            <p>تحويل المشروع من «مستودع قابل للتطوير» إلى «منتج قابل للرفع على Apple» — بدون نشر للمستخدمين بعد.</p>
+          </div>
+
+          <div class="pkg-scope">
+            <div class="scope-in">
+              <strong>✓ داخل النطاق</strong>
+              <ul>
+                <li>Bundle ID إنتاجي + Apple Team + Code Signing</li>
+                <li>Privacy Manifest (<code>PrivacyInfo.xcprivacy</code>)</li>
+                <li>App Store Connect: تطبيق + metadata أساسي</li>
+                <li>إخفاء Paywall والسعر + إزالة placeholder «App Store قريباً»</li>
+                <li>Privacy Policy URL عامة + Support URL</li>
+                <li>Archive + Upload ناجح (Internal TestFlight فقط)</li>
+                <li>Export Compliance + Usage Strings audit</li>
+              </ul>
+            </div>
+            <div class="scope-out">
+              <strong>✗ خارج النطاق</strong>
+              <ul>
+                <li>TestFlight External / Soft Launch</li>
+                <li>StoreKit / IAP</li>
+                <li>OUTFIT production على Render</li>
+                <li>Crashlytics / Analytics</li>
+              </ul>
+            </div>
+          </div>
+
+          <div class="pkg-deliverables">
+            <strong>المخرجات (Deliverables)</strong>
+            <ol>
+              <li>IPA مرفوع على Connect — Build <code>1.0.0 (2+)</code></li>
+              <li><code>ios/Runner/PrivacyInfo.xcprivacy</code> — manifest كامل</li>
+              <li>Bundle ID: <code>app.mira.beauty</code> (أو المعتمد) في pbxproj + Android</li>
+              <li>Feature flags: <code>MIRA_SUBSCRIPTIONS_ENABLED=false</code></li>
+              <li>Paywall route معطّل أو مخفي من UI navigation</li>
+              <li>صفحة Privacy Policy على <code>docs/</code> أو <code>website/</code> — URL عام</li>
+              <li>Checklist Apple Guidelines 5.1 + Export — موقّع</li>
+            </ol>
+          </div>
+
+          <div class="pkg-acceptance">
+            <strong>معايير القبول (DoD)</strong>
+            <ul class="accept-list">
+              <li>Archive من Xcode بدون warning حرج</li>
+              <li>Upload → Processing → Ready to Test (Internal)</li>
+              <li>لا نصوص placeholder في أي شاشة review-visible</li>
+              <li>Privacy Nutrition Labels في Connect تطابق Info.plist</li>
+              <li>حذف حساب: اختبار QA واحد موثّق (Firebase + API)</li>
+            </ul>
+          </div>
+
+          <div class="pkg-config">
+            <strong>تكوين مطلوب</strong>
+            <div class="proof-block"><span class="path">Flutter · compile-time</span>MIRA_SUBSCRIPTIONS_ENABLED=false
+USE_MIRA_API=true</div>
+            <div class="proof-block"><span class="path">Render · بدون تغيير</span>SKIN_PROVIDER=perfect_corp
+OUTFIT_PROVIDER=mock
+AUTH_SKIP=false</div>
+          </div>
+
+          <div class="pkg-risks">
+            <strong>مخاطر + تخفيف</strong>
+            <table class="mini-table">
+              <tr><td>رفض Manifest</td><td>→ مراجعة SDK declarations لكل dependency</td></tr>
+              <tr><td>Team ID ناقص</td><td>→ Apple Developer Account ($99/yr) قبل البدء</td></tr>
+              <tr><td>Guideline 3.1.1</td><td>→ إخفاء كامل للـ paywall في PKG-A</td></tr>
+            </table>
+          </div>
+
+          <footer class="pkg-footer">
+            <span class="pkg-maps">يرتبط بـ: <a href="#prep-part-1">جزء ١</a> + <a href="#prep-part-2">جزء ٢</a></span>
+            <span class="pkg-unlock">يفتح → PKG-B</span>
+          </footer>
+        </article>
+
+        <!-- PACKAGE B -->
+        <article id="package-b" class="package-card package-b package-featured">
+          <div class="featured-ribbon">الأولوية · Soft Launch</div>
+          <header class="package-head">
+            <div class="package-id">
+              <span class="pkg-code">PKG-B</span>
+              <span class="pkg-phase">المرحلة ٢</span>
+            </div>
+            <h3>بكج TestFlight السوق</h3>
+            <p class="pkg-tagline">Market Validation · Skin-First</p>
+            <div class="pkg-meta-row">
+              <span>⏱ 10–14 يوم عمل</span>
+              <span>📦 v1.0.0 · build +5→+10</span>
+              <span>🎯 جاهزية 55→78%</span>
+            </div>
+          </header>
+
+          <div class="pkg-prereq">
+            <strong>شرط مسبق:</strong> PKG-A مكتمل + Internal TestFlight Build processed
+          </div>
+
+          <div class="pkg-objective">
+            <strong>الهدف الاستراتيجي</strong>
+            <p>إطلاق تجريبي خارجي (100–500 مختبر) لمسار تحليل البشرة — التحقق من المنتج والخصوصية والأداء قبل Monetization.</p>
+          </div>
+
+          <div class="pkg-scope">
+            <div class="scope-in">
+              <strong>✓ داخل النطاق</strong>
+              <ul>
+                <li>TestFlight External Testing — مجموعة «MIRA Skin Beta»</li>
+                <li>Skin pipeline production: Perfect Corp على Render — QA end-to-end</li>
+                <li>Guest mode + OTP سعودي + Privacy consent gate</li>
+                <li>Face Gate + Live Face Map + Beauty Score — regression QA</li>
+                <li>إخفاء/تعطيل الإطلالة (<code>mira_features</code> flag) أو شارة «قريباً»</li>
+                <li><code>flutter test</code> 73+ — CI gate قبل كل build</li>
+                <li>Release notes عربية + feedback channel (in-app أو TestFlight)</li>
+                <li>Admin portal: مراقبة users · analyses · feedback</li>
+              </ul>
+            </div>
+            <div class="scope-out">
+              <strong>✗ خارج النطاق</strong>
+              <ul>
+                <li>اشتراك مدفوع / StoreKit</li>
+                <li>OUTFIT_PROVIDER production</li>
+                <li>App Store Public listing</li>
+                <li>Marketing campaign واسعة</li>
+              </ul>
+            </div>
+          </div>
+
+          <div class="pkg-deliverables">
+            <strong>المخرجات (Deliverables)</strong>
+            <ol>
+              <li>Build External TestFlight — <code>1.0.0 (10)</code> minimum</li>
+              <li>QA Report: 10+ تحليل بشرة ناجح من مختبرين حقيقيين</li>
+              <li>Skin analysis success rate ≥ 90% (Face Gate pass → result)</li>
+              <li>Zero P0 crashes في 7 أيام beta</li>
+              <li>Feature flag doc: outfit disabled, subscriptions off</li>
+              <li>Ops runbook: Admin portal + health endpoint monitoring</li>
+              <li>Feedback triage: 3 دورات (أسبوعية) من Admin</li>
+            </ol>
+          </div>
+
+          <div class="pkg-kpis">
+            <strong>KPIs قابلة للقياس</strong>
+            <div class="kpi-grid">
+              <div class="kpi"><span class="kpi-val">≥90%</span><span class="kpi-label">إكمال التحليل</span></div>
+              <div class="kpi"><span class="kpi-val">≤3s</span><span class="kpi-label">P95 API latency</span></div>
+              <div class="kpi"><span class="kpi-val">0</span><span class="kpi-label">P0 crashes / 7d</span></div>
+              <div class="kpi"><span class="kpi-val">≥50</span><span class="kpi-label">مختبر نشط</span></div>
+            </div>
+          </div>
+
+          <div class="pkg-acceptance">
+            <strong>معايير القبول (DoD)</strong>
+            <ul class="accept-list">
+              <li>External group approved + 50+ installs</li>
+              <li>Perfect Corp live — لا silent mock (<code>health</code> hint clean)</li>
+              <li>Privacy consent → analysis → result: 100% في smoke test</li>
+              <li>Account deletion verified على 3 حسابات beta</li>
+              <li>Stakeholder sign-off: «جاهزون للمرحلة C»</li>
+            </ul>
+          </div>
+
+          <div class="pkg-config">
+            <strong>تكوين مطلوب</strong>
+            <div class="proof-block"><span class="path">mira_features.dart · suggested</span>MIRA_SUBSCRIPTIONS_ENABLED=false
+MIRA_OUTFIT_ENABLED=false  // compile-time flag to add
+MIRA_OUTFIT_BETA_BADGE=false</div>
+            <div class="proof-block"><span class="path">Render · verify only</span>SKIN_PROVIDER=perfect_corp
+PERFECT_CORP_FALLBACK_MOCK=true  // ⚠️ document fallback behavior
+OUTFIT_PROVIDER=mock</div>
+          </div>
+
+          <div class="pkg-risks">
+            <strong>مخاطر + تخفيف</strong>
+            <table class="mini-table">
+              <tr><td>Perfect Corp downtime</td><td>→ health alert + fallback messaging للمستخدم</td></tr>
+              <tr><td>Face Gate strict</td><td>→ beta cohort metrics · tune thresholds</td></tr>
+              <tr><td>Render cold start</td><td>→ keep-alive ping · first-analysis UX loading</td></tr>
+            </table>
+          </div>
+
+          <footer class="pkg-footer">
+            <span class="pkg-maps">يرتبط بـ: <a href="#prep-part-3">جزء ٣</a> + Admin ops</span>
+            <span class="pkg-unlock">يفتح → PKG-C</span>
+          </footer>
+        </article>
+
+        <!-- PACKAGE C -->
+        <article id="package-c" class="package-card package-c">
+          <header class="package-head">
+            <div class="package-id">
+              <span class="pkg-code">PKG-C</span>
+              <span class="pkg-phase">المرحلة ٣</span>
+            </div>
+            <h3>بكج App Store الإنتاج</h3>
+            <p class="pkg-tagline">Production · Monetization · Full Product</p>
+            <div class="pkg-meta-row">
+              <span>⏱ 4–6 أسابيع</span>
+              <span>📦 v1.1.0 · build +1</span>
+              <span>🎯 جاهزية 78→95%</span>
+            </div>
+          </header>
+
+          <div class="pkg-prereq">
+            <strong>شرط مسبق:</strong> PKG-B KPIs met + 2+ أسابيع beta stable
+          </div>
+
+          <div class="pkg-objective">
+            <strong>الهدف الاستراتيجي</strong>
+            <p>نشر عام على App Store مع منتج كامل (بشرة + إطلالة) + اشتراك ميرا بريميوم (٣٩ ريال/شهر) عبر StoreKit — Guideline 3.1.1 compliant.</p>
+          </div>
+
+          <div class="pkg-scope">
+            <div class="scope-in">
+              <strong>✓ داخل النطاق</strong>
+              <ul>
+                <li>StoreKit 2 أو RevenueCat — <code>purchases_flutter</code></li>
+                <li>Subscription Product في Connect — <code>mira_premium_monthly</code></li>
+                <li>Paywall + Manage Subscription — ربط حقيقي</li>
+                <li>Webhook verify signature — <code>subscriptions.service.ts</code></li>
+                <li><code>MIRA_SUBSCRIPTIONS_ENABLED=true</code> Flutter + Backend</li>
+                <li>OUTFIT_PROVIDER production على Render</li>
+                <li><code>PERFECT_CORP_FALLBACK_MOCK=false</code></li>
+                <li>Google Vision → mira-api (لا client-side keys)</li>
+                <li>Firebase Crashlytics + optional Analytics</li>
+                <li>App Store Review submission + marketing assets</li>
+                <li>Free tier: 3 skin + 3 outfit/month (<code>subscription-plans.ts</code>)</li>
+              </ul>
+            </div>
+            <div class="scope-out">
+              <strong>✗ خارج النطاق (v1.1)</strong>
+              <ul>
+                <li>Marketplace / Fusion engine</li>
+                <li>Android Play Store (iOS first)</li>
+                <li>Partners portal public launch</li>
+              </ul>
+            </div>
+          </div>
+
+          <div class="pkg-deliverables">
+            <strong>المخرجات (Deliverables)</strong>
+            <ol>
+              <li>App Store Approved — Public listing KSA</li>
+              <li>IAP Sandbox + Production: purchase · restore · cancel</li>
+              <li>Outfit analysis live — OUTFIT ≠ mock</li>
+              <li><code>environment.dart</code> — central config</li>
+              <li>Crashlytics dashboard + alert rules</li>
+              <li>Privacy Policy v1.1 — IAP + outfit data flows</li>
+              <li>Post-launch runbook: subscription sync · refund · support</li>
+            </ol>
+          </div>
+
+          <div class="pkg-kpis">
+            <strong>KPIs قابلة للقياس</strong>
+            <div class="kpi-grid">
+              <div class="kpi"><span class="kpi-val">100%</span><span class="kpi-label">Review pass</span></div>
+              <div class="kpi"><span class="kpi-val">≥99%</span><span class="kpi-label">IAP success sandbox</span></div>
+              <div class="kpi"><span class="kpi-val">&lt;1%</span><span class="kpi-label">Crash-free sessions</span></div>
+              <div class="kpi"><span class="kpi-val">2</span><span class="kpi-label">Core flows live</span></div>
+            </div>
+          </div>
+
+          <div class="pkg-acceptance">
+            <strong>معايير القبول (DoD)</strong>
+            <ul class="accept-list">
+              <li>Apple Review Approved — no Guideline 2.1 / 3.1.1 rejection</li>
+              <li>Sandbox purchase → entitlement على السيرفر خلال 30s</li>
+              <li>Restore purchases يعمل بعد reinstall</li>
+              <li>Outfit E2E: capture → score → recommendations</li>
+              <li>Free tier limits enforced (3/3 monthly)</li>
+              <li>72h post-launch: no Sev-1 incidents</li>
+            </ul>
+          </div>
+
+          <div class="pkg-config">
+            <strong>تكوين مطلوب</strong>
+            <div class="proof-block"><span class="path">Render · production target</span>OUTFIT_PROVIDER=fashn  // or production provider
+PERFECT_CORP_FALLBACK_MOCK=false
+MIRA_SUBSCRIPTIONS_ENABLED=true
+GOOGLE_VISION_API_KEY= (server secret only)</div>
+            <div class="proof-block"><span class="path">Flutter · release build</span>--dart-define=MIRA_SUBSCRIPTIONS_ENABLED=true
+// NO GOOGLE_VISION_API_KEY in client</div>
+            <div class="proof-block"><span class="path">App Store Connect</span>Product: mira_premium_monthly
+Price: SAR 39.00 / month
+Subscription Group: Mira Premium</div>
+          </div>
+
+          <div class="pkg-risks">
+            <strong>مخاطر + تخفيف</strong>
+            <table class="mini-table">
+              <tr><td>3.1.1 rejection</td><td>→ StoreKit قبل أي سعر UI · sandbox video للمراجع</td></tr>
+              <tr><td>Webhook spoofing</td><td>→ Apple/RevenueCat signature verify</td></tr>
+              <tr><td>Outfit quality</td><td>→ beta badge 2 weeks post-launch if needed</td></tr>
+            </table>
+          </div>
+
+          <footer class="pkg-footer">
+            <span class="pkg-maps">يرتبط بـ: <a href="#prep-part-4">جزء ٤</a> + <a href="#prep-part-5">جزء ٥</a></span>
+            <span class="pkg-unlock">النهاية → App Store Public</span>
+          </footer>
+        </article>
+      </div>
+
+      <!-- COMPARISON MATRIX -->
+      <div class="packages-matrix card">
+        <h3 style="margin-top:0">مصفوفة المقارنة — ٣ بكجات</h3>
+        <div class="matrix-scroll">
+          <table class="compare-matrix">
+            <thead>
+              <tr>
+                <th>البند</th>
+                <th class="col-a">PKG-A<br/><small>بنية الإطلاق</small></th>
+                <th class="col-b">PKG-B<br/><small>TestFlight</small></th>
+                <th class="col-c">PKG-C<br/><small>Production</small></th>
+              </tr>
+            </thead>
+            <tbody>
+              <tr><td>Bundle ID + Signing</td><td>✅</td><td>—</td><td>—</td></tr>
+              <tr><td>Privacy Manifest</td><td>✅</td><td>—</td><td>—</td></tr>
+              <tr><td>Paywall مخفي</td><td>✅</td><td>✅</td><td>❌ → StoreKit</td></tr>
+              <tr><td>TestFlight External</td><td>—</td><td>✅</td><td>—</td></tr>
+              <tr><td>Skin production</td><td>—</td><td>✅</td><td>✅</td></tr>
+              <tr><td>Outfit live</td><td>—</td><td>❌ mock</td><td>✅</td></tr>
+              <tr><td>IAP / Premium</td><td>—</td><td>—</td><td>✅ 39 SAR</td></tr>
+              <tr><td>Crashlytics</td><td>—</td><td>—</td><td>✅</td></tr>
+              <tr><td>App Store Public</td><td>—</td><td>—</td><td>✅</td></tr>
+              <tr><td>Free tier limits</td><td>∞ (subs off)</td><td>∞ (subs off)</td><td>3+3/month</td></tr>
+              <tr><td>Admin ops</td><td>—</td><td>✅</td><td>✅</td></tr>
+              <tr><td>Guidelines covered</td><td>5.1 · Export</td><td>+ 2.1 · 4.2</td><td>+ 3.1.1 full</td></tr>
+            </tbody>
+          </table>
+        </div>
+      </div>
+
+      <!-- TIMELINE -->
+      <div class="packages-timeline card">
+        <h3 style="margin-top:0">الجدول الزمني التراكمي</h3>
+        <div class="gantt">
+          <div class="gantt-row">
+            <span class="gantt-label">PKG-A</span>
+            <div class="gantt-bar-wrap"><div class="gantt-bar bar-a" style="width:18%">أسبوع 1–2</div></div>
+          </div>
+          <div class="gantt-row">
+            <span class="gantt-label">PKG-B</span>
+            <div class="gantt-bar-wrap"><div class="gantt-bar bar-b" style="width:28%;margin-right:18%">أسبوع 2–4</div></div>
+          </div>
+          <div class="gantt-row">
+            <span class="gantt-label">PKG-C</span>
+            <div class="gantt-bar-wrap"><div class="gantt-bar bar-c" style="width:55%;margin-right:46%">أسبوع 4–10</div></div>
+          </div>
+          <div class="gantt-row gantt-milestone">
+            <span class="gantt-label">🎯</span>
+            <div class="gantt-milestones">
+              <span style="right:82%">Internal TF</span>
+              <span style="right:54%">External Beta</span>
+              <span style="right:0%">App Store Live</span>
+            </div>
+          </div>
+        </div>
+        <p class="muted" style="font-size:0.85rem;margin-bottom:0">المدة الإجمالية: 8–10 أسابيع من PKG-A إلى Public — مع buffer أسبوعين للـ Review.</p>
+      </div>
+
+      <!-- ROLES -->
+      <div class="packages-roles card">
+        <h3 style="margin-top:0">توزيع المسؤوليات</h3>
+        <table>
+          <thead><tr><th>الدور</th><th>PKG-A</th><th>PKG-B</th><th>PKG-C</th></tr></thead>
+          <tbody>
+            <tr><td><strong>Apple Account Owner</strong></td><td>Connect · Signing · Metadata</td><td>External groups</td><td>IAP products · Review</td></tr>
+            <tr><td><strong>Flutter Dev</strong></td><td>Manifest · hide paywall</td><td>Feature flags · QA fixes</td><td>StoreKit · outfit UI</td></tr>
+            <tr><td><strong>Backend Dev</strong></td><td>CORS · health</td><td>Skin monitoring</td><td>OUTFIT prod · webhook</td></tr>
+            <tr><td><strong>QA</strong></td><td>Account delete smoke</td><td>10+ skin E2E · metrics</td><td>IAP sandbox · outfit E2E</td></tr>
+            <tr><td><strong>Ops / Admin</strong></td><td>—</td><td>Feedback triage</td><td>Post-launch support</td></tr>
+          </tbody>
+        </table>
+      </div>
+
+      <p class="packages-bridge">
+        <a href="#prep">↓ التفصيل التنفيذي — ٥ أجزاء</a> · كل بكج = مجموعة أجزاء مع checklist تفاعلي
+      </p>
+    </section>
+
+    <!-- PREP — 5 PARTS -->
+    <section id="prep" class="prep-section">
+      <div class="prep-header">
+        <span class="badge">خطة التنفيذ · حسب الأولوية</span>
+        <h2>مرحلة التجهيز — ٥ أجزاء</h2>
+        <p class="lead prep-lead">
+          تفصيل تنفيذي للـ <a href="#packages">٣ بكجات</a>:
+          <strong>PKG-A</strong> = جزء ١+٢ ·
+          <strong>PKG-B</strong> = جزء ٣ ·
+          <strong>PKG-C</strong> = جزء ٤+٥.
+          علّم ✓ عند الإنجاز (يُحفظ محلياً).
+        </p>
+        <div class="prep-progress-wrap">
+          <div class="prep-progress-label">
+            <span>التقدم الكلي</span>
+            <strong id="prepProgressText">0 / 0</strong>
+          </div>
+          <div class="prep-progress-bar"><span id="prepProgressFill" style="width:0%"></span></div>
+        </div>
+        <nav class="prep-parts-nav" aria-label="أجزاء التجهيز">
+          <a href="#prep-part-1"><span class="part-num">١</span> Apple</a>
+          <a href="#prep-part-2"><span class="part-num">٢</span> امتثال</a>
+          <a href="#prep-part-3"><span class="part-num">٣</span> TestFlight</a>
+          <a href="#prep-part-4"><span class="part-num">٤</span> Backend</a>
+          <a href="#prep-part-5"><span class="part-num">٥</span> IAP</a>
+        </nav>
+      </div>
+
+      <!-- PART 1 -->
+      <article id="prep-part-1" class="prep-part prep-part-p0" data-part="1">
+        <header class="prep-part-head">
+          <div class="prep-part-meta">
+            <span class="priority-badge p0">P0 · أولوية قصوى</span>
+            <span class="prep-time">⏱ 3–5 أيام</span>
+          </div>
+          <h3>الجزء ١ — أساس Apple التقني</h3>
+          <p class="prep-goal">بدون هذا الجزء: لا Archive، لا Upload، لا Review.</p>
+        </header>
+        <div class="prep-unlocks"><strong>يفتح:</strong> بناء IPA ورفعه على App Store Connect</div>
+        <ul class="prep-tasks" data-part-id="1">
+          <li class="prep-task" data-task="1-1">
+            <label><input type="checkbox" /> استبدال Bundle ID التجريبي <code>com.example.mirra</code> بمعرّف إنتاجي (مثلاً <code>app.mira.beauty</code>)</label>
+            <div class="task-proof"><span class="path">ios/Runner.xcodeproj/project.pbxproj</span>PRODUCT_BUNDLE_IDENTIFIER = com.example.mirra;</div>
+          </li>
+          <li class="prep-task" data-task="1-2">
+            <label><input type="checkbox" /> ربط Apple Developer Team + Automatic/Manual Signing في Xcode</label>
+            <div class="task-proof"><span class="path">project.pbxproj</span>لا يوجد DEVELOPMENT_TEAM حالياً — مطلوب للـ Archive</div>
+          </li>
+          <li class="prep-task" data-task="1-3">
+            <label><input type="checkbox" /> إنشاء تطبيق في App Store Connect بنفس Bundle ID</label>
+            <div class="task-proof">Dashboard → Apps → New App · Platform iOS · SKU فريد</div>
+          </li>
+          <li class="prep-task" data-task="1-4">
+            <label><input type="checkbox" /> إضافة <code>PrivacyInfo.xcprivacy</code> (Privacy Manifest) لـ Firebase + ML Kit + Camera</label>
+            <div class="task-proof"><span class="path">ios/</span>لا ملف PrivacyInfo.xcprivacy — مطلوب من Apple لـ third-party SDKs</div>
+          </li>
+          <li class="prep-task" data-task="1-5">
+            <label><input type="checkbox" /> التحقق من Export Compliance — <code>ITSAppUsesNonExemptEncryption = false</code></label>
+            <div class="task-proof"><span class="path">ios/Runner/Info.plist</span>✅ موجود — تأكيد في App Store Connect عند الرفع</div>
+          </li>
+          <li class="prep-task" data-task="1-6">
+            <label><input type="checkbox" /> (إن وُجد Push) تحديث <code>aps-environment</code> إلى <code>production</code></label>
+            <div class="task-proof"><span class="path">ios/Runner/Runner.entitlements</span>aps-environment = development ← للإنتاج</div>
+          </li>
+        </ul>
+        <div class="prep-dod">
+          <strong>تعريف الجاهزية:</strong> Archive ناجح من Xcode → Upload إلى App Store Connect بدون أخطاء signing/manifest.
+        </div>
+      </article>
+
+      <!-- PART 2 -->
+      <article id="prep-part-2" class="prep-part prep-part-p0" data-part="2">
+        <header class="prep-part-head">
+          <div class="prep-part-meta">
+            <span class="priority-badge p0">P0 · رفض Review محتمل</span>
+            <span class="prep-time">⏱ 2–4 أيام</span>
+          </div>
+          <h3>الجزء ٢ — الامتثال وقائمة المتجر</h3>
+          <p class="prep-goal">Guideline 5.1 + 3.1.1 + 2.1 — ما يراه المُراجع في التطبيق والمتجر.</p>
+        </header>
+        <div class="prep-unlocks"><strong>يفتح:</strong> تقديم Build للـ Review بدون رفض فوري</div>
+        <ul class="prep-tasks" data-part-id="2">
+          <li class="prep-task" data-task="2-1">
+            <label><input type="checkbox" /> إخفاء Paywall والسعر (٣٩ ريال) أو إزالة زر «اشتركي» حتى ربط StoreKit</label>
+            <div class="task-proof"><span class="path">paywall_screen.dart</span>سعر + CTA بدون in_app_purchase في pubspec.yaml → Guideline 3.1.1</div>
+          </li>
+          <li class="prep-task" data-task="2-2">
+            <label><input type="checkbox" /> إزالة/إخفاء نص «الاشتراك عبر App Store قريباً» من واجهة المستخدم</label>
+            <div class="task-proof"><span class="path">manage_subscription_screen.dart:171</span>«الاشتراك عبر App Store قريباً…» — placeholder 2.1</div>
+          </li>
+          <li class="prep-task" data-task="2-3">
+            <label><input type="checkbox" /> Privacy Policy URL عامة (web) — ليس in-app فقط</label>
+            <div class="task-proof"><span class="path">privacy_policy_content.dart</span>✅ in-app · مطلوب URL في App Store Connect → docs/ أو website/</div>
+          </li>
+          <li class="prep-task" data-task="2-4">
+            <label><input type="checkbox" /> Support URL + بريد privacy@mira.app فعّال</label>
+            <div class="task-proof">App Store Connect → App Information → Support URL</div>
+          </li>
+          <li class="prep-task" data-task="2-5">
+            <label><input type="checkbox" /> اختبار حذف الحساب end-to-end (Firebase + API <code>DELETE /users/me</code>)</label>
+            <div class="task-proof"><span class="path">account_deletion_service.dart</span>Guideline 5.1.1(v) — ✅ الكود موجود · QA يدوي مطلوب</div>
+          </li>
+          <li class="prep-task" data-task="2-6">
+            <label><input type="checkbox" /> App Store Connect: لقطات شاشة، Age Rating، Privacy Nutrition Labels</label>
+            <div class="task-proof">Camera + Photo Library + User ID (Firebase) — مطابقة Info.plist</div>
+          </li>
+          <li class="prep-task" data-task="2-7">
+            <label><input type="checkbox" /> التأكد أن Usage Strings (كاميرا/ألبوم) واضحة بالعربية</label>
+            <div class="task-proof"><span class="path">ios/Runner/Info.plist</span>NSCameraUsageDescription · NSPhotoLibraryUsageDescription — ✅</div>
+          </li>
+        </ul>
+        <div class="prep-dod">
+          <strong>تعريف الجاهزية:</strong> لا paywall بسعر · لا placeholder نصوص · metadata كامل في Connect · حذف حساب يعمل.
+        </div>
+      </article>
+
+      <!-- PART 3 -->
+      <article id="prep-part-3" class="prep-part prep-part-p1" data-part="3">
+        <header class="prep-part-head">
+          <div class="prep-part-meta">
+            <span class="priority-badge p1">P1 · Soft Launch</span>
+            <span class="prep-time">⏱ 1 أسبوع</span>
+          </div>
+          <h3>الجزء ٣ — TestFlight (تحليل البشرة)</h3>
+          <p class="prep-goal">أول build للمختبرين: بشرة + guest + free — بدون اشتراك مدفوع.</p>
+        </header>
+        <div class="prep-unlocks"><strong>يفتح:</strong> TestFlight External Testing · Soft Launch السعودية</div>
+        <ul class="prep-tasks" data-part-id="3">
+          <li class="prep-task" data-task="3-1">
+            <label><input type="checkbox" /> تأكيد <code>SKIN_PROVIDER=perfect_corp</code> + مفتاح YouCam على Render</label>
+            <div class="task-proof"><span class="path">render.yaml</span>SKIN_PROVIDER=perfect_corp · PERFECT_API_KEY (secret)</div>
+          </li>
+          <li class="prep-task" data-task="3-2">
+            <label><input type="checkbox" /> اختبار تحليل بشرة حقيقي على production API (ليس mock)</label>
+            <div class="task-proof"><span class="path">mira_api_config.dart</span>useBackend: true · baseUrl → mira-api-n4p3.onrender.com</div>
+          </li>
+          <li class="prep-task" data-task="3-3">
+            <label><input type="checkbox" /> تعطيل/إخفاء الإطلالة أو وسمها «تجريبي» في TestFlight الأول</label>
+            <div class="task-proof"><span class="path">mira_features.dart</span>OUTFIT_PROVIDER=mock على السيرفر · outfit ~45%</div>
+          </li>
+          <li class="prep-task" data-task="3-4">
+            <label><input type="checkbox" /> التأكد <code>MIRA_SUBSCRIPTIONS_ENABLED=false</code> (Flutter + Backend)</label>
+            <div class="task-proof"><span class="path">mira_features.dart</span>· subscription-plans.ts — subscriptionsEnabled() default false</div>
+          </li>
+          <li class="prep-task" data-task="3-5">
+            <label><input type="checkbox" /> Privacy consent gate قبل أول تحليل — اختبار يدوي + automated</label>
+            <div class="task-proof"><span class="path">test/analysis_navigation_test.dart</span>privacy consent gate opens before analysis</div>
+          </li>
+          <li class="prep-task" data-task="3-6">
+            <label><input type="checkbox" /> <code>flutter test</code> — 73 اختبار passing قبل كل build</label>
+            <div class="task-proof">All tests passed! (73 tests) — يونيو 2026</div>
+          </li>
+          <li class="prep-task" data-task="3-7">
+            <label><input type="checkbox" /> QA يدوي: OTP سعودي · Guest · Face Gate · Live Face Map · النتيجة</label>
+            <div class="task-proof"><span class="path">face_gate_validator.dart</span>· face_mesh_service.dart · beauty_score_engine</div>
+          </li>
+          <li class="prep-task" data-task="3-8">
+            <label><input type="checkbox" /> رفع Build 1.0.0 (build +1) → TestFlight Internal ثم External</label>
+            <div class="task-proof"><span class="path">pubspec.yaml</span>version: 1.0.0+1</div>
+          </li>
+        </ul>
+        <div class="prep-dod">
+          <strong>تعريف الجاهزية:</strong> 10+ مختبرين يكملون تحليل بشرة بنجاح · لا crash · لا paywall.
+        </div>
+      </article>
+
+      <!-- PART 4 -->
+      <article id="prep-part-4" class="prep-part prep-part-p1" data-part="4">
+        <header class="prep-part-head">
+          <div class="prep-part-meta">
+            <span class="priority-badge p1">P1 · قبل Production Full</span>
+            <span class="prep-time">⏱ 2–3 أسابيع</span>
+          </div>
+          <h3>الجزء ٤ — تقوية Backend والمنتج</h3>
+          <p class="prep-goal">إطلالة production-grade · observability · أسرار خارج العميل.</p>
+        </header>
+        <div class="prep-unlocks"><strong>يفتح:</strong> Beta بشرة+إطلالة · Production Full (بدون IAP)</div>
+        <ul class="prep-tasks" data-part-id="4">
+          <li class="prep-task" data-task="4-1">
+            <label><input type="checkbox" /> تغيير <code>OUTFIT_PROVIDER</code> من mock إلى provider إنتاجي على Render</label>
+            <div class="task-proof"><span class="path">render.yaml</span>OUTFIT_PROVIDER=mock ← blocker رئيسي للإطلالة</div>
+          </li>
+          <li class="prep-task" data-task="4-2">
+            <label><input type="checkbox" /> <code>PERFECT_CORP_FALLBACK_MOCK=false</code> — لا silent mock للبشرة</label>
+            <div class="task-proof"><span class="path">render.yaml</span>PERFECT_CORP_FALLBACK_MOCK=true · health.controller hint</div>
+          </li>
+          <li class="prep-task" data-task="4-3">
+            <label><input type="checkbox" /> نقل Google Vision من Flutter (<code>dart-define</code>) إلى mira-api</label>
+            <div class="task-proof"><span class="path">outfit_intelligence_config.dart</span>GOOGLE_VISION_API_KEY client-side — خطر أمني في release</div>
+          </li>
+          <li class="prep-task" data-task="4-4">
+            <label><input type="checkbox" /> ملء <code>environment.dart</code> — central env config</label>
+            <div class="task-proof"><span class="path">lib/core/config/environment.dart</span>0 bytes حالياً</div>
+          </li>
+          <li class="prep-task" data-task="4-5">
+            <label><input type="checkbox" /> إضافة Firebase Crashlytics + تفعيل crash reporting</label>
+            <div class="task-proof"><span class="path">pubspec.yaml</span>لا firebase_crashlytics · firebase_analytics معلّق</div>
+          </li>
+          <li class="prep-task" data-task="4-6">
+            <label><input type="checkbox" /> QA إطلالة: live capture · pose · segmentation · score engine</label>
+            <div class="task-proof">test/outfit_live_capture_test.dart · outfit_segmentation_test.dart · outfit_score_engine_test.dart</div>
+          </li>
+          <li class="prep-task" data-task="4-7">
+            <label><input type="checkbox" /> Admin portal جاهز للـ ops (users · analyses · feedback)</label>
+            <div class="task-proof"><span class="path">admin-portal/web/</span>· mira-api/src/admin/ · X-Admin-Key</div>
+          </li>
+        </ul>
+        <div class="prep-dod">
+          <strong>تعريف الجاهزية:</strong> إطلالة حقيقية على production · health endpoint بدون mock hints · Crashlytics يلتقط الأخطاء.
+        </div>
+      </article>
+
+      <!-- PART 5 -->
+      <article id="prep-part-5" class="prep-part prep-part-p2" data-part="5">
+        <header class="prep-part-head">
+          <div class="prep-part-meta">
+            <span class="priority-badge p2">P2 · Monetization</span>
+            <span class="prep-time">⏱ 2–4 أسابيع</span>
+          </div>
+          <h3>الجزء ٥ — الاشتراكات والإنتاج الكامل</h3>
+          <p class="prep-goal">Guideline 3.1.1 كامل · ميرا بريميوم · Marketplace (إن وُجد).</p>
+        </header>
+        <div class="prep-unlocks"><strong>يفتح:</strong> App Store Production · إيرادات · Fusion + Marketplace</div>
+        <ul class="prep-tasks" data-part-id="5">
+          <li class="prep-task" data-task="5-1">
+            <label><input type="checkbox" /> اختيار ودمج StoreKit 2 أو RevenueCat (<code>purchases_flutter</code>)</label>
+            <div class="task-proof"><span class="path">pubspec.yaml</span>لا in_app_purchase ولا purchases_flutter</div>
+          </li>
+          <li class="prep-task" data-task="5-2">
+            <label><input type="checkbox" /> إنشاء Subscription Products في App Store Connect (٣٩ ريال/شهر)</label>
+            <div class="task-proof"><span class="path">paywall_screen.dart</span>السعر المعروض حالياً · يجب مطابقته لـ Product ID</div>
+          </li>
+          <li class="prep-task" data-task="5-3">
+            <label><input type="checkbox" /> تفعيل <code>MIRA_SUBSCRIPTIONS_ENABLED=true</code> (Flutter + Backend متزامن)</label>
+            <div class="task-proof"><span class="path">mira_features.dart</span>· subscription-plans.ts · subscription_gate.dart</div>
+          </li>
+          <li class="prep-task" data-task="5-4">
+            <label><input type="checkbox" /> webhook App Store مع verify signature (استبدال placeholder)</label>
+            <div class="task-proof"><span class="path">subscriptions.service.ts:102</span>handleStoreWebhook — placeholder بدون verify</div>
+          </li>
+          <li class="prep-task" data-task="5-5">
+            <label><input type="checkbox" /> Restore Purchases + Manage Subscription (رابط App Store)</label>
+            <div class="task-proof"><span class="path">manage_subscription_screen.dart</span>· subscription_status_test.dart</div>
+          </li>
+          <li class="prep-task" data-task="5-6">
+            <label><input type="checkbox" /> Sandbox testing: شراء · تجديد · إلغاء · entitlement sync</label>
+            <div class="task-proof">App Store Connect → Sandbox Testers · RevenueCat dashboard</div>
+          </li>
+          <li class="prep-task" data-task="5-7">
+            <label><input type="checkbox" /> Production Full: بشرة + إطلالة + Fusion (إن جاهز) · marketing assets</label>
+            <div class="task-proof"><span class="path">docs/mira-production-readiness.html</span>Production Full ~64% → 90%+</div>
+          </li>
+        </ul>
+        <div class="prep-dod">
+          <strong>تعريف الجاهزية:</strong> شراء sandbox ناجح · entitlement على السيرفر · Paywall قانوني · Review approved للإنتاج.
+        </div>
+      </article>
+
+      <div class="prep-summary card">
+        <h3 style="margin-top:0">ملخص التسلسل</h3>
+        <table>
+          <thead><tr><th>الجزء</th><th>الهدف</th><th>بعد الإنجاز</th></tr></thead>
+          <tbody>
+            <tr><td><strong>١ Apple</strong></td><td>Signing + Manifest</td><td>Upload ممكن</td></tr>
+            <tr><td><strong>٢ امتثال</strong></td><td>لا رفض Review</td><td>Submit for Review</td></tr>
+            <tr><td><strong>٣ TestFlight</strong></td><td>بشرة + free</td><td>Soft Launch</td></tr>
+            <tr><td><strong>٤ Backend</strong></td><td>إطلالة + ops</td><td>Beta كامل</td></tr>
+            <tr><td><strong>٥ IAP</strong></td><td>StoreKit + premium</td><td>Production + إيرادات</td></tr>
+          </tbody>
+        </table>
+      </div>
+    </section>
+
+    <!-- VERDICT -->
+    <section id="verdict">
+      <h2>١. الحكم التنفيذي</h2>
+
+      <div class="verdict-banner no">
+        <strong>❌ غير جاهز للنشر العام (Production) على App Store اليوم</strong>
+        <p style="margin:8px 0 0">
+          Blockers حرجة: Bundle ID تجريبي، لا Privacy Manifest، Paywall بسعر بدون StoreKit، إطلالة mock على السيرفر.
+        </p>
+      </div>
+
+      <div class="verdict-banner partial">
+        <strong>⚠️ جاهز جزئياً لـ TestFlight / Soft Launch</strong>
+        <p style="margin:8px 0 0">
+          مسار تحليل البشرة (~82%) + خصوصية + auth + backend — بعد إصلاح P0 التقني من Apple.
+        </p>
+      </div>
+
+      <table>
+        <thead>
+          <tr><th>سيناريو</th><th>الحكم</th><th>الدليل</th></tr>
+        </thead>
+        <tbody>
+          <tr>
+            <td><strong>App Store Production (كامل)</strong></td>
+            <td><span class="status-pill missing">غير جاهز</span></td>
+            <td>IAP + outfit production + bundle ID</td>
+          </tr>
+          <tr>
+            <td><strong>TestFlight — بشرة فقط</strong></td>
+            <td><span class="status-pill partial">ممكن بعد P0</span></td>
+            <td><code>docs/mira-production-readiness.html</code> — Face 82%</td>
+          </tr>
+          <tr>
+            <td><strong>TestFlight — بشرة + إطلالة</strong></td>
+            <td><span class="status-pill wip">Beta فقط</span></td>
+            <td><code>render.yaml</code> → <code>OUTFIT_PROVIDER=mock</code></td>
+          </tr>
+        </tbody>
+      </table>
+    </section>
+
+    <!-- MATRIX -->
+    <section id="matrix">
+      <h2>٢. مصفوفة الجاهزية (من الكود)</h2>
+      <div class="verdict-grid">
+        <div class="verdict-item">
+          <div class="score-ring high">82%</div>
+          <span>تحليل البشرة</span>
+        </div>
+        <div class="verdict-item">
+          <div class="score-ring low">45%</div>
+          <span>تحليل الإطلالة</span>
+        </div>
+        <div class="verdict-item">
+          <div class="score-ring mid">40%</div>
+          <span>App Store Compliance</span>
+        </div>
+        <div class="verdict-item">
+          <div class="score-ring low">15%</div>
+          <span>Monetization / IAP</span>
+        </div>
+        <div class="verdict-item">
+          <div class="score-ring mid">70%</div>
+          <span>Backend Production</span>
+        </div>
+        <div class="verdict-item">
+          <div class="score-ring mid">64%</div>
+          <span>المنتج الكامل</span>
+        </div>
+      </div>
+      <p class="muted" style="font-size:0.88rem">
+        المصدر: <code>docs/mira-production-readiness.html</code> + فحص مباشر للمستودع · يونيو 2026
+      </p>
+    </section>
+
+    <!-- READY -->
+    <section id="ready">
+      <h2>٣. ما هو جاهز — مع الأدلة ✅</h2>
+
+      <div class="card ok">
+        <h3>٣.١ Backend &amp; API</h3>
+        <ul class="proof-list">
+          <li>
+            <strong>الاتصال بالخادم مفعّل افتراضياً</strong>
+            <code>lib/core/config/mira_api_config.dart</code> — <code>useBackend: defaultValue: true</code>
+            <div class="proof-block"><span class="path">lib/core/config/mira_api_config.dart</span>static const bool useBackend = bool.fromEnvironment('USE_MIRA_API', defaultValue: true);
+static const String baseUrl = String.fromEnvironment('MIRA_API_BASE_URL', defaultValue: 'https://mira-api-n4p3.onrender.com/api/v1');</div>
+          </li>
+          <li>
+            <strong>Perfect Corp على Render (بشرة)</strong>
+            <code>render.yaml</code> — <code>SKIN_PROVIDER=perfect_corp</code>, <code>AUTH_SKIP=false</code>
+          </li>
+          <li>
+            <strong>مفاتيح YouCam على السيرفر فقط — ليس في Flutter</strong>
+            <code>lib/core/config/mira_api_config.dart</code> — تعليق: «Perfect Corp API keys live only on Render»
+          </li>
+        </ul>
+      </div>
+
+      <div class="card ok">
+        <h3>٣.٢ الخصوصية (Apple Guideline 5.1)</h3>
+        <ul class="proof-list">
+          <li>
+            <strong>موافقة صريحة قبل الكاميرا</strong>
+            <code>lib/features/privacy/presentation/screens/privacy_consent_screen.dart</code>
+            <div class="proof-block"><span class="path">privacy_consent_screen.dart — نص الموافقة</span>«الكاميرا تُستخدم فقط عند ضغطك «التقاط صورة»…»
+«لا نحتفظ بصور الوجه أو الإطلالة بعد المعالجة»</div>
+          </li>
+          <li>
+            <strong>اختبار: privacy gate قبل التحليل</strong>
+            <code>test/analysis_navigation_test.dart</code> — <code>privacy consent gate opens before analysis</code>
+          </li>
+          <li>
+            <strong>سياسة خصوصية داخل التطبيق v1.0</strong>
+            <code>lib/core/privacy/privacy_policy_content.dart</code>
+          </li>
+          <li>
+            <strong>حذف الحساب من الإعدادات</strong>
+            <code>lib/core/services/account_deletion_service.dart</code> + <code>settings_screen.dart</code> + API <code>DELETE /users/me</code>
+            <div class="proof-block"><span class="path">account_deletion_service.dart</span>if (MiraApiConfig.useBackend) {
+  await UserApiDataSource().deleteAccount();
+}
+await user.delete(); // Firebase Auth</div>
+          </li>
+          <li>
+            <strong>Usage strings مفصّلة (كاميرا + ألبوم)</strong>
+            <code>ios/Runner/Info.plist</code> — <code>NSCameraUsageDescription</code>, <code>NSPhotoLibraryUsageDescription</code>
+          </li>
+          <li>
+            <strong>ITSAppUsesNonExemptEncryption = false</strong>
+            <code>ios/Runner/Info.plist</code> — تصدير التشفير (Export Compliance)
+          </li>
+          <li>
+            <strong>Audit log على السيرفر</strong>
+            <code>mira-api/prisma/schema.prisma</code> — model <code>AuditLog</code> + <code>skin_analysis.completed</code> metadata <code>imageRetained: false</code>
+          </li>
+        </ul>
+      </div>
+
+      <div class="card ok">
+        <h3>٣.٣ المصادقة والتدفق</h3>
+        <ul class="proof-list">
+          <li><strong>OTP جوال سعودي</strong> — <code>login_screen.dart</code> + <code>test/saudi_phone_test.dart</code> (4 tests)</li>
+          <li><strong>Firebase Auth</strong> — <code>pubspec.yaml</code>: firebase_auth, firebase_core</li>
+          <li><strong>Guest mode</strong> — <code>lib/core/services/guest_session_service.dart</code></li>
+          <li><strong>Onboarding + Splash</strong> — <code>main.dart</code> + <code>OnboardingStorage</code></li>
+        </ul>
+      </div>
+
+      <div class="card ok">
+        <h3>٣.٤ تحليل البشرة (الأقوى)</h3>
+        <ul class="proof-list">
+          <li><strong>Face Gate</strong> — <code>lib/core/face_gate/face_gate_validator.dart</code> + <code>test/face_gate_rules_test.dart</code></li>
+          <li><strong>Live Face Map / MediaPipe</strong> — <code>face_mesh_service.dart</code>, <code>face_mapping_context.dart</code></li>
+          <li><strong>Beauty Score Engine</strong> — 7 tests في <code>test/beauty_score_engine_test.dart</code></li>
+          <li><strong>Mira Intelligence Layer</strong> — <code>docs/mira-intelligence-layer.html</code></li>
+          <li><strong>جاهزية ~82%</strong> — <code>docs/mira-production-readiness.html#verdict</code></li>
+        </ul>
+      </div>
+
+      <div class="card ok">
+        <h3>٣.٥ تحليل الإطلالة (جزئي — Beta)</h3>
+        <ul class="proof-list">
+          <li><strong>Live capture + pose</strong> — <code>outfit_live_capture_panel.dart</code> + <code>test/outfit_live_capture_test.dart</code></li>
+          <li><strong>Segmentation + colors</strong> — <code>test/outfit_segmentation_test.dart</code></li>
+          <li><strong>Deterministic engine</strong> — <code>test/outfit_intelligence_service_test.dart</code>, <code>outfit_score_engine_test.dart</code></li>
+          <li><strong>Google Vision (Flutter optional)</strong> — <code>outfit_intelligence_config.dart</code> — <code>GOOGLE_VISION_API_KEY</code> via dart-define</li>
+        </ul>
+      </div>
+
+      <div class="card ok">
+        <h3>٣.٦ Admin &amp; Ops (داخلي — ليس App Store)</h3>
+        <ul class="proof-list">
+          <li><strong>Admin portal</strong> — <code>admin-portal/web/</code> + <code>mira-api/src/admin/</code></li>
+          <li><strong>Partners portal</strong> — <code>partners-portal/web/</code></li>
+        </ul>
+      </div>
+    </section>
+
+    <!-- BLOCKERS -->
+    <section id="blockers">
+      <h2>٤. Blockers — أدلة الرفض المحتمل ❌</h2>
+
+      <div class="card warn">
+        <h3>٤.١ Apple Technical (P0)</h3>
+        <table class="evidence-table">
+          <thead><tr><th>Blocker</th><th>الملف / الدليل</th><th>التأثير</th></tr></thead>
+          <tbody>
+            <tr>
+              <td>Bundle ID تجريبي</td>
+              <td class="file">ios/Runner.xcodeproj/project.pbxproj<br/>PRODUCT_BUNDLE_IDENTIFIER = com.example.mirra</td>
+              <td>لا يُقبل للإنتاج</td>
+            </tr>
+            <tr>
+              <td>لا DEVELOPMENT_TEAM</td>
+              <td class="file">project.pbxproj — لا يوجد DEVELOPMENT_TEAM</td>
+              <td>لا Archive / لا Upload</td>
+            </tr>
+            <tr>
+              <td>لا Privacy Manifest</td>
+              <td class="file">لا ملف ios/**/PrivacyInfo.xcprivacy</td>
+              <td>مطلوب لـ Firebase, ML Kit, Camera SDKs</td>
+            </tr>
+            <tr>
+              <td>Push = development</td>
+              <td class="file">ios/Runner/Runner.entitlements<br/>aps-environment = development</td>
+              <td>Push production يحتاج production entitlement</td>
+            </tr>
+            <tr>
+              <td>environment.dart فارغ</td>
+              <td class="file">lib/core/config/environment.dart — 0 bytes</td>
+              <td>لا central env config</td>
+            </tr>
+          </tbody>
+        </table>
+      </div>
+
+      <div class="card warn">
+        <h3>٤.٢ الاشتراكات — Guideline 3.1.1</h3>
+        <table class="evidence-table">
+          <thead><tr><th>Blocker</th><th>الدليل من الكود</th></tr></thead>
+          <tbody>
+            <tr>
+              <td>لا StoreKit / RevenueCat</td>
+              <td class="file">pubspec.yaml — لا in_app_purchase ولا purchases_flutter</td>
+            </tr>
+            <tr>
+              <td>Paywall يعرض سعر</td>
+              <td class="file">paywall_screen.dart — «٣٩ ريال / شهر» + زر «اشتركي»</td>
+            </tr>
+            <tr>
+              <td>يعترف أن App Store غير مربوط</td>
+              <td class="file">manage_subscription_screen.dart:171<br/>«الاشتراك عبر App Store قريباً»</td>
+            </tr>
+            <tr>
+              <td>الاشتراكات معطّلة افتراضياً (Flutter)</td>
+              <td class="file">mira_features.dart — MIRA_SUBSCRIPTIONS_ENABLED defaultValue: false</td>
+            </tr>
+            <tr>
+              <td>الاشتراكات معطّلة (Backend)</td>
+              <td class="file">subscription-plans.ts — subscriptionsEnabled() ← MIRA_SUBSCRIPTIONS_ENABLED !== 'true'</td>
+            </tr>
+            <tr>
+              <td>Webhook placeholder</td>
+              <td class="file">subscriptions.service.ts:102–105 — handleStoreWebhook بدون verify signature</td>
+            </tr>
+          </tbody>
+        </table>
+        <div class="proof-block"><span class="path">manage_subscription_screen.dart — سطر 171</span>'الاشتراك عبر App Store قريباً. يمكنكِ معاينة ميرا بريميوم الآن.'</div>
+        <div class="proof-block"><span class="path">subscriptions.service.ts</span>/** Placeholder for RevenueCat / App Store webhook — verify signature in production. */
+async handleStoreWebhook(body: Record&lt;string, unknown&gt;) {
+  return { received: true, body };
+}</div>
+      </div>
+
+      <div class="card warn">
+        <h3>٤.٣ Backend &amp; المنتج</h3>
+        <table class="evidence-table">
+          <thead><tr><th>Blocker</th><th>الدليل</th></tr></thead>
+          <tbody>
+            <tr>
+              <td>إطلالة = mock على Render</td>
+              <td class="file">render.yaml — OUTFIT_PROVIDER=mock</td>
+            </tr>
+            <tr>
+              <td>Perfect Corp fallback mock</td>
+              <td class="file">PERFECT_CORP_FALLBACK_MOCK=true — health hint</td>
+            </tr>
+            <tr>
+              <td>Google Vision من Flutter</td>
+              <td class="file">outfit_intelligence_config.dart — مفتاح client-side عبر dart-define</td>
+            </tr>
+            <tr>
+              <td>Analytics معطّل</td>
+              <td class="file">pubspec.yaml — firebase_analytics معلّق (سطر 70)</td>
+            </tr>
+            <tr>
+              <td>لا Crashlytics</td>
+              <td class="file">لا firebase_crashlytics في pubspec.yaml</td>
+            </tr>
+          </tbody>
+        </table>
+      </div>
+
+      <div class="card">
+        <h3>٤.٤ الوثائق الداخلية تعترف بعدم الجاهزية</h3>
+        <ul class="proof-list">
+          <li><code>docs/mira-production-readiness.html</code> — Production Full: «يتطلب P0 الإطلالة»</li>
+          <li><code>website/index.html</code> — «TestFlight / App Store — قريباً»</li>
+          <li><code>docs/mira-production-readiness.html</code> — المنتج الكامل ~64%</li>
+        </ul>
+      </div>
+    </section>
+
+    <!-- APPLE GUIDELINES -->
+    <section id="apple">
+      <h2>٥. خريطة Apple Guidelines</h2>
+      <table>
+        <thead>
+          <tr><th>Guideline</th><th>المتطلب</th><th>الحالة</th><th>الدليل</th></tr>
+        </thead>
+        <tbody>
+          <tr>
+            <td><strong>5.1.1</strong> Privacy</td>
+            <td>Usage strings + policy + consent</td>
+            <td><span class="status-pill done">جاهز</span></td>
+            <td>Info.plist + PrivacyConsentScreen + privacy_policy_content</td>
+          </tr>
+          <tr>
+            <td><strong>5.1.1(v)</strong> Account deletion</td>
+            <td>حذف من داخل التطبيق</td>
+            <td><span class="status-pill done">جاهز</span></td>
+            <td>AccountDeletionService + settings_screen</td>
+          </tr>
+          <tr>
+            <td><strong>3.1.1</strong> In-App Purchase</td>
+            <td>اشتراك digital عبر StoreKit</td>
+            <td><span class="status-pill missing">غير جاهز</span></td>
+            <td>paywall بدون IAP</td>
+          </tr>
+          <tr>
+            <td><strong>2.1</strong> App Completeness</td>
+            <td>لا placeholders / broken flows</td>
+            <td><span class="status-pill partial">جزئي</span></td>
+            <td>outfit mock + «App Store قريباً»</td>
+          </tr>
+          <tr>
+            <td><strong>4.2</strong> Minimum functionality</td>
+            <td>قيمة حقيقية للمستخدم</td>
+            <td><span class="status-pill partial">بشرة ✅</span></td>
+            <td>Skin pipeline production-grade</td>
+          </tr>
+          <tr>
+            <td><strong>Privacy Manifest</strong></td>
+            <td>PrivacyInfo.xcprivacy</td>
+            <td><span class="status-pill missing">ناقص</span></td>
+            <td>لا ملف في ios/</td>
+          </tr>
+          <tr>
+            <td><strong>Export Compliance</strong></td>
+            <td>ITSAppUsesNonExemptEncryption</td>
+            <td><span class="status-pill done">جاهز</span></td>
+            <td>Info.plist = false</td>
+          </tr>
+        </tbody>
+      </table>
+    </section>
+
+    <!-- TESTS -->
+    <section id="tests">
+      <h2>٦. الأدلة الآلية — الاختبارات</h2>
+      <div class="card ok">
+        <p><strong>flutter test</strong> — يونيو 2026:</p>
+        <div class="proof-block">All tests passed! (73 tests)</div>
+        <h4>ملفات الاختبار (15)</h4>
+        <table>
+          <thead><tr><th>الملف</th><th>المجال</th></tr></thead>
+          <tbody>
+            <tr><td><code>beauty_score_engine_test.dart</code></td><td>Beauty Score (7)</td></tr>
+            <tr><td><code>face_gate_rules_test.dart</code></td><td>Face Gate</td></tr>
+            <tr><td><code>face_mesh_quality_gate_test.dart</code></td><td>Face Mesh</td></tr>
+            <tr><td><code>analysis_navigation_test.dart</code></td><td>Privacy gate + navigation</td></tr>
+            <tr><td><code>saudi_phone_test.dart</code></td><td>OTP phone (4)</td></tr>
+            <tr><td><code>outfit_live_capture_test.dart</code></td><td>Outfit capture</td></tr>
+            <tr><td><code>outfit_intelligence_service_test.dart</code></td><td>Outfit intelligence</td></tr>
+            <tr><td><code>outfit_segmentation_test.dart</code></td><td>Segmentation</td></tr>
+            <tr><td><code>subscription_status_test.dart</code></td><td>Subscriptions</td></tr>
+            <tr><td><code>widget_test.dart</code></td><td>UI components</td></tr>
+          </tbody>
+        </table>
+      </div>
+    </section>
+
+    <!-- BACKEND -->
+    <section id="backend">
+      <h2>٧. Backend Production — Render</h2>
+      <div class="proof-block"><span class="path">render.yaml — env vars</span>NODE_ENV=production
+SKIN_PROVIDER=perfect_corp
+OUTFIT_PROVIDER=mock          ← blocker للإطلالة production
+AUTH_SKIP=false               ← ✅ production auth
+ADMIN_API_KEY= (secret)
+PERFECT_CORP_FALLBACK_MOCK=true ← ⚠️ fallback silent mock</div>
+      <div class="proof-block"><span class="path">mira-api/src/health/health.controller.ts</span>returns: status, skinProvider, perfectCorpKeySet, perfectCorpFallbackMock, hint</div>
+      <p><strong>Admin API</strong> — <code>mira-api/src/admin/</code> — 14 endpoints محمية بـ <code>X-Admin-Key</code></p>
+    </section>
+
+    <!-- P0 (مرجع سريع — التفصيل في #prep) -->
+    <section id="p0">
+      <h2>٨. Checklist P0 — مرجع سريع</h2>
+      <p class="muted" style="margin-top:-8px;font-size:0.9rem">للتنفيذ التفصيلي مع أدلة وتتبع تقدم → <a href="#prep">مرحلة التجهيز · ٥ أجزاء</a></p>
+
+      <h3>Apple Technical</h3>
+      <ul class="checklist">
+        <li class="block">Bundle ID حقيقي (مثلاً app.mira.beauty) — استبدال com.example.mirra</li>
+        <li class="block">Apple Developer Team + Code Signing في Xcode</li>
+        <li class="block">PrivacyInfo.xcprivacy لكل SDK (Firebase, ML Kit, Camera)</li>
+        <li class="warn">aps-environment: production (إذا Push فعّال)</li>
+        <li class="warn">App Store Connect: screenshots, age rating, privacy nutrition labels</li>
+      </ul>
+
+      <h3>Guideline Compliance</h3>
+      <ul class="checklist">
+        <li class="block">إخفاء Paywall/السعر — أو ربط StoreKit/RevenueCat</li>
+        <li class="warn">Privacy Policy URL عامة (web) — ليس in-app فقط</li>
+        <li class="warn">Support URL + privacy@mira.app فعّال</li>
+      </ul>
+
+      <h3>Product / Backend</h3>
+      <ul class="checklist">
+        <li class="block">OUTFIT_PROVIDER production (ليس mock)</li>
+        <li class="warn">PERFECT_CORP_FALLBACK_MOCK=false على Render</li>
+        <li class="warn">نقل Google Vision للـ API (لا dart-define في release)</li>
+        <li class="warn">Firebase Crashlytics</li>
+        <li class="done">73 Flutter tests passing</li>
+      </ul>
+    </section>
+
+    <!-- PATH -->
+    <section id="path">
+      <h2>٩. مسار النشر المقترح</h2>
+      <div class="timeline">
+        <div class="timeline-item">
+          <strong>الآن → 1–2 أسبوع</strong>
+          <p>P0 Apple blockers: bundle ID, Privacy Manifest, signing, إخفاء paywall</p>
+        </div>
+        <div class="timeline-item">
+          <strong>TestFlight Soft Launch</strong>
+          <p>تحليل بشرة + guest + free — بدون اشتراك مدفوع</p>
+        </div>
+        <div class="timeline-item">
+          <strong>Beta</strong>
+          <p>إطلالة مع شارة «تجريبي» + OUTFIT production</p>
+        </div>
+        <div class="timeline-item">
+          <strong>Production Full</strong>
+          <p>IAP + outfit + marketplace — بعد 2–4 أسابيع TestFlight</p>
+        </div>
+      </div>
+
+      <div class="card">
+        <h3 style="margin-top:0">قرار النشر من الوثائق الداخلية</h3>
+        <table>
+          <thead><tr><th>المرحلة</th><th>المحتوى</th><th>الحالة</th></tr></thead>
+          <tbody>
+            <tr>
+              <td>Soft Launch</td>
+              <td>تحليل البشرة + تقرير ميرا</td>
+              <td><span class="status-pill done">جاهز تقريباً</span></td>
+            </tr>
+            <tr>
+              <td>Beta</td>
+              <td>إطلالة Mock + شفافية «تجريبي»</td>
+              <td><span class="status-pill partial">ممكن الآن</span></td>
+            </tr>
+            <tr>
+              <td>Production Full</td>
+              <td>بشرة + إطلالة + Fusion + Marketplace</td>
+              <td><span class="status-pill missing">يتطلب P0</span></td>
+            </tr>
+          </tbody>
+        </table>
+        <p class="muted" style="font-size:0.85rem;margin-bottom:0">المصدر: docs/mira-production-readiness.html §١</p>
+      </div>
+    </section>
+
+    <section id="files-index">
+      <h2>١٠. فهرس الملفات المرجعية</h2>
+      <table>
+        <thead><tr><th>الملف</th><th>الدور</th></tr></thead>
+        <tbody>
+          <tr><td><code>pubspec.yaml</code></td><td>version 1.0.0+1, dependencies</td></tr>
+          <tr><td><code>ios/Runner/Info.plist</code></td><td>permissions, encryption export</td></tr>
+          <tr><td><code>ios/Runner/Runner.entitlements</code></td><td>push environment</td></tr>
+          <tr><td><code>ios/Runner.xcodeproj/project.pbxproj</code></td><td>bundle ID, deployment 15.5</td></tr>
+          <tr><td><code>lib/core/config/mira_api_config.dart</code></td><td>backend URL, useBackend</td></tr>
+          <tr><td><code>lib/core/config/mira_features.dart</code></td><td>feature flags compile-time</td></tr>
+          <tr><td><code>render.yaml</code></td><td>production backend config</td></tr>
+          <tr><td><code>mira-api/src/subscriptions/</code></td><td>subscription logic, webhook stub</td></tr>
+          <tr><td><code>test/*.dart</code></td><td>73 automated tests</td></tr>
+          <tr><td><code>docs/mira-production-readiness.html</code></td><td>جاهزية المنتج التفصيلية</td></tr>
+        </tbody>
+      </table>
+    </section>
+  </main>
+
+  <footer class="site-footer">
+    <div class="container">
+      <p>
+        Mira App Store Readiness Audit · يونيو 2026 ·
+        <a href="mira-subscription-packages.html">باقات الاشتراك</a> ·
+        <a href="mira-production-readiness.html">جاهزية الإنتاج</a> ·
+        <a href="mira-intelligence-layer.html">Intelligence Layer</a> ·
+        <a href="index.html">الرئيسية</a>
+      </p>
+      <p class="muted" style="font-size:0.82rem">كل الأدلة مأخوذة من فحص المستودع المحلي — أعد التقييم بعد كل release candidate.</p>
+    </div>
+  </footer>
+  <script src="app-store-prep.js"></script>
+</body>
+</html>

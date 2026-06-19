@@ -5,6 +5,7 @@ import '../config/mira_api_config.dart';
 import '../../features/profile/data/datasources/user_api_data_source.dart';
 import 'guest_session_service.dart';
 import 'privacy_consent_storage.dart';
+import '../../features/packages/data/package_credit_storage.dart';
 
 enum AccountDeletionResult {
   success,
@@ -51,5 +52,6 @@ abstract final class AccountDeletionService {
     final prefs = await SharedPreferences.getInstance();
     await prefs.remove('mira_dev_premium');
     await prefs.remove('mirra_guest_mode');
+    await PackageCreditStorage.create().then((s) => s.clear());
   }
 }

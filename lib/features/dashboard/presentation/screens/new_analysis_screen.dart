@@ -2,7 +2,9 @@ import 'dart:io';
 
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
 
+import '../../../../core/config/mira_features.dart';
 import '../../../../core/navigation/app_routes.dart';
 import '../../../../core/navigation/mira_report_navigation.dart';
 import '../../../../core/services/app_session.dart';
@@ -13,20 +15,21 @@ import '../../../../shared/widgets/guest_banner.dart';
 import '../../../../shared/widgets/mira_app_bar.dart';
 import '../../../../shared/widgets/premium/premium_exports.dart';
 import '../../../../core/utils/mira_api_error_message.dart';
+import '../../../packages/presentation/providers/package_credit_provider.dart';
 import '../../../skin_analysis/data/repositories/skin_analysis_repository_impl.dart';
 import '../../../skin_analysis/presentation/blocs/skin_analysis_bloc.dart';
 import '../../../skin_analysis/presentation/blocs/skin_analysis_event.dart';
 import '../../../skin_analysis/presentation/blocs/skin_analysis_state.dart';
 import '../../../skin_analysis/presentation/widgets/face_capture_panel.dart';
 
-class NewAnalysisScreen extends StatefulWidget {
+class NewAnalysisScreen extends ConsumerStatefulWidget {
   const NewAnalysisScreen({super.key});
 
   @override
-  State<NewAnalysisScreen> createState() => _NewAnalysisScreenState();
+  ConsumerState<NewAnalysisScreen> createState() => _NewAnalysisScreenState();
 }
 
-class _NewAnalysisScreenState extends State<NewAnalysisScreen> {
+class _NewAnalysisScreenState extends ConsumerState<NewAnalysisScreen> {
   File? _capturedImage;
   bool _guestAnalyzing = false;
   final _guestRepo = GuestSkinAnalysisRepository();
@@ -55,6 +58,31 @@ class _NewAnalysisScreenState extends State<NewAnalysisScreen> {
       );
     } finally {
       if (mounted) setState(() => _guestAnalyzing = false);
+    }
+  }
+
+  Future<void> _startSignedInAnalysis(BuildContext context) async {
+    if (_capturedImage == null) return;
+    if (MiraFeatures.packagesEnabled && !AppSession.isGuest) {
+      final ok = await PackageCreditGate.ensureSkinCredits(context, ref);
+      if (!ok || !context.mounted) return;
+    }
+    context.read<SkinAnalysisBloc>().add(
+          StartSkinAnalysis(imagePath: _capturedImage!.path),
+        );
+  }
+
+  Future<void> _onSkinAnalysisSuccess(BuildContext context) async {
+    if (MiraFeatures.packagesEnabled && !AppSession.isGuest) {
+      try {
+        await ref.read(userPackageProvider.notifier).consumeSkinCredit();
+      } catch (e) {
+        if (!context.mounted) return;
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(content: Text('$e'), backgroundColor: AppColors.error),
+        );
+        return;
+      }
     }
   }
 
@@ -174,8 +202,10 @@ class _NewAnalysisScreenState extends State<NewAnalysisScreen> {
     return BlocProvider(
       create: (_) => SkinAnalysisBloc(),
       child: BlocConsumer<SkinAnalysisBloc, SkinAnalysisState>(
-        listener: (context, state) {
+        listener: (context, state) async {
           if (state is SkinAnalysisSuccess) {
+            await _onSkinAnalysisSuccess(context);
+            if (!context.mounted) return;
             AnalysisSession.setSkin(state.report);
             ScaffoldMessenger.of(context).showSnackBar(
               SnackBar(
@@ -209,11 +239,7 @@ class _NewAnalysisScreenState extends State<NewAnalysisScreen> {
               body: _buildAnalysisBody(
                 loading: loading,
                 onAnalyze: canAnalyze && !loading
-                    ? () {
-                        context.read<SkinAnalysisBloc>().add(
-                              StartSkinAnalysis(imagePath: _capturedImage!.path),
-                            );
-                      }
+                    ? () => _startSignedInAnalysis(context)
                     : null,
               ),
             ),

@@ -1,27 +1,31 @@
 import 'package:flutter/material.dart';
-import '../../../../shared/widgets/mira_app_bar.dart';
-import 'package:flutter_bloc/flutter_bloc.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import '../../../../core/ai/models/mira_occasion.dart';
+import '../../../../core/navigation/analysis_navigation.dart';
 import '../../../../core/navigation/app_routes.dart';
 import '../../../../core/navigation/route_args.dart';
+import '../../../../core/config/mira_features.dart';
+import '../../../../core/services/app_session.dart';
 import '../../../../core/session/analysis_session.dart';
-import '../../../../core/utils/firebase_error_message.dart';
+import '../../../../core/utils/mira_api_error_message.dart';
 import '../../../../shared/theme/colors.dart';
 import '../../../../shared/theme/typography.dart';
+import '../../../../shared/widgets/mira_app_bar.dart';
 import '../../../../shared/widgets/premium/premium_exports.dart';
-import '../blocs/outfit_analysis_bloc.dart';
-import '../blocs/outfit_analysis_event.dart';
-import '../blocs/outfit_analysis_state.dart';
+import '../../domain/entities/outfit_analysis_mode.dart';
+import '../../domain/helpers/outfit_analysis_mapper.dart';
+import '../providers/outfit_intelligence_providers.dart';
+import '../../../packages/presentation/providers/package_credit_provider.dart';
 
-class OccasionSelectScreen extends StatefulWidget {
+class OccasionSelectScreen extends ConsumerStatefulWidget {
   const OccasionSelectScreen({super.key});
 
   @override
-  State<OccasionSelectScreen> createState() => _OccasionSelectScreenState();
+  ConsumerState<OccasionSelectScreen> createState() => _OccasionSelectScreenState();
 }
 
-class _OccasionSelectScreenState extends State<OccasionSelectScreen> {
+class _OccasionSelectScreenState extends ConsumerState<OccasionSelectScreen> {
   MiraOccasion? _selected;
 
   @override
@@ -34,100 +38,161 @@ class _OccasionSelectScreenState extends State<OccasionSelectScreen> {
       );
     }
 
-    return BlocProvider(
-      create: (_) => OutfitAnalysisBloc(),
-      child: BlocConsumer<OutfitAnalysisBloc, OutfitAnalysisState>(
-        listener: (context, state) {
-          if (state is OutfitAnalysisSuccess) {
-            AnalysisSession.setOutfit(state.report);
-            Navigator.pushReplacementNamed(
-              context,
-              AppRoutes.outfitResult,
-              arguments: state.report,
-            );
-          } else if (state is OutfitAnalysisFailure) {
-            ScaffoldMessenger.of(context).showSnackBar(
-              SnackBar(
-                content: Text(friendlyFirebaseError(state.message)),
-                backgroundColor: AppColors.error,
-              ),
-            );
-          }
-        },
-        builder: (context, state) {
-          final loading = state is OutfitAnalysisLoading;
+    final skin = ref.watch(optionalSkinReportProvider);
+    final isSmart = args.mode == OutfitAnalysisMode.smart;
 
-          return Scaffold(
-            appBar: const MiraAppBar(pageTitle: 'اختيار المناسبة'),
-            body: FloatingGradientBackground(
-              child: SafeArea(
-                child: Padding(
-                  padding: const EdgeInsets.all(20),
-                  child: Column(
-                    crossAxisAlignment: CrossAxisAlignment.stretch,
-                    children: [
-                      Text(
-                        'لأي مناسبة هذه الإطلالة؟',
-                        style: AppTypography.headlineSmall,
-                      ),
-                      const SizedBox(height: 16),
-                      Expanded(
-                        child: GridView.count(
-                          crossAxisCount: 2,
-                          mainAxisSpacing: 12,
-                          crossAxisSpacing: 12,
-                          childAspectRatio: 1.4,
-                          children: MiraOccasion.values.map((o) {
-                            final selected = _selected == o;
-                            return PressableScale(
-                              onTap: loading ? null : () => setState(() => _selected = o),
-                              child: PremiumCard(
-                                padding: const EdgeInsets.all(12),
-                                child: Column(
-                                  mainAxisAlignment: MainAxisAlignment.center,
-                                  children: [
-                                    Icon(
-                                      _iconFor(o),
-                                      color: selected ? AppColors.primary : AppColors.textSecondary,
-                                    ),
-                                    const SizedBox(height: 8),
-                                    Text(
-                                      o.labelAr,
-                                      style: AppTypography.titleMedium.copyWith(
-                                        color: selected ? AppColors.primary : null,
-                                      ),
-                                      textAlign: TextAlign.center,
-                                    ),
-                                  ],
-                                ),
-                              ),
-                            );
-                          }).toList(),
-                        ),
-                      ),
-                      PremiumButton(
-                        label: loading ? 'جاري التحليل...' : 'تحليل الإطلالة',
-                        loading: loading,
-                        icon: Icons.auto_awesome_rounded,
-                        variant: PremiumButtonVariant.gold,
-                        onPressed: _selected != null && !loading
-                            ? () {
-                                context.read<OutfitAnalysisBloc>().add(
-                                      StartOutfitAnalysis(
-                                        imagePath: args.imagePath,
-                                        occasion: _selected!,
-                                      ),
-                                    );
-                              }
-                            : null,
-                      ),
-                    ],
-                  ),
-                ),
-              ),
+    if (isSmart && skin == null) {
+      return Scaffold(
+        appBar: const MiraAppBar(pageTitle: 'المناسبة'),
+        body: EmptyState(
+          icon: Icons.face_retouching_natural_outlined,
+          title: 'تحليل البشرة مطلوب',
+          message: 'للاستفادة من التحليل الذكي، حلّلي بشرتك أولاً',
+          actionLabel: 'تحليل البشرة',
+          onAction: () => AnalysisNavigation.openSkinAnalysis(context),
+        ),
+      );
+    }
+
+    ref.listen(outfitIntelligenceNotifierProvider, (previous, next) {
+      next.whenOrNull(
+        data: (analysis) async {
+          if (analysis == null) return;
+          if (isSmart && MiraFeatures.packagesEnabled && !AppSession.isGuest) {
+            try {
+              await ref.read(userPackageProvider.notifier).consumeSmartOutfitCredit();
+            } catch (e) {
+              if (!context.mounted) return;
+              ScaffoldMessenger.of(context).showSnackBar(
+                SnackBar(content: Text('$e'), backgroundColor: AppColors.error),
+              );
+              return;
+            }
+          }
+          if (!context.mounted) return;
+          final legacy = OutfitAnalysisMapper.toLegacyReport(analysis);
+          AnalysisSession.setOutfitIntelligence(analysis);
+          AnalysisSession.setOutfit(legacy);
+          Navigator.pushReplacementNamed(
+            context,
+            AppRoutes.outfitResult,
+            arguments: analysis,
+          );
+        },
+        error: (error, _) {
+          ScaffoldMessenger.of(context).showSnackBar(
+            SnackBar(
+              content: Text(friendlyMiraError(error)),
+              backgroundColor: AppColors.error,
             ),
           );
         },
+      );
+    });
+
+    final asyncState = ref.watch(outfitIntelligenceNotifierProvider);
+    final loading = asyncState.isLoading;
+
+    return Scaffold(
+      appBar: const MiraAppBar(pageTitle: 'اختيار المناسبة'),
+      body: FloatingGradientBackground(
+        child: SafeArea(
+          child: Padding(
+            padding: const EdgeInsets.all(20),
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.stretch,
+              children: [
+                if (isSmart && skin != null)
+                  PremiumCard(
+                    padding: const EdgeInsets.all(14),
+                    child: Row(
+                      children: [
+                        const Icon(Icons.link_rounded, color: AppColors.secondary, size: 22),
+                        const SizedBox(width: 10),
+                        Expanded(
+                          child: Text(
+                            'مرتبط ببشرتك: ${skin.skinType} · ${skin.undertone.isNotEmpty ? skin.undertone : 'undertone'}',
+                            style: AppTypography.bodySmall,
+                          ),
+                        ),
+                      ],
+                    ),
+                  )
+                else
+                  PremiumCard(
+                    padding: const EdgeInsets.all(14),
+                    child: Row(
+                      children: [
+                        const Icon(Icons.flash_on_rounded, color: AppColors.gold, size: 22),
+                        const SizedBox(width: 10),
+                        Expanded(
+                          child: Text(
+                            'تحليل سريع — ألوان وتنسيق ومناسبة فقط',
+                            style: AppTypography.bodySmall,
+                          ),
+                        ),
+                      ],
+                    ),
+                  ),
+                const SizedBox(height: 16),
+                Text(
+                  'لأي مناسبة هذه الإطلالة؟',
+                  style: AppTypography.headlineSmall,
+                ),
+                const SizedBox(height: 16),
+                Expanded(
+                  child: GridView.count(
+                    crossAxisCount: 2,
+                    mainAxisSpacing: 12,
+                    crossAxisSpacing: 12,
+                    childAspectRatio: 1.4,
+                    children: MiraOccasion.values.map((o) {
+                      final selected = _selected == o;
+                      return PressableScale(
+                        onTap: loading ? null : () => setState(() => _selected = o),
+                        child: PremiumCard(
+                          padding: const EdgeInsets.all(12),
+                          child: Column(
+                            mainAxisAlignment: MainAxisAlignment.center,
+                            children: [
+                              Icon(
+                                _iconFor(o),
+                                color: selected ? AppColors.primary : AppColors.textSecondary,
+                              ),
+                              const SizedBox(height: 8),
+                              Text(
+                                o.labelAr,
+                                style: AppTypography.titleMedium.copyWith(
+                                  color: selected ? AppColors.primary : null,
+                                ),
+                                textAlign: TextAlign.center,
+                              ),
+                            ],
+                          ),
+                        ),
+                      );
+                    }).toList(),
+                  ),
+                ),
+                PremiumButton(
+                  label: loading ? 'جاري التحليل...' : 'تحليل الإطلالة',
+                  loading: loading,
+                  icon: Icons.auto_awesome_rounded,
+                  variant: PremiumButtonVariant.gold,
+                  onPressed: _selected != null && !loading
+                      ? () {
+                          ref.read(outfitIntelligenceNotifierProvider.notifier).analyze(
+                                imagePath: args.imagePath,
+                                occasion: _selected!,
+                                mode: args.mode,
+                              );
+                        }
+                      : null,
+                ),
+              ],
+            ),
+          ),
+        ),
       ),
     );
   }

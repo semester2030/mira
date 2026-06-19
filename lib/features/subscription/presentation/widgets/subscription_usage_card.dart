@@ -28,7 +28,7 @@ class _SubscriptionUsageCardState extends State<SubscriptionUsageCard> {
 
   @override
   Widget build(BuildContext context) {
-    if (AppSession.isGuest || !MiraFeatures.subscriptionsEnabled) {
+    if (AppSession.isGuest || !MiraFeatures.showSubscriptionManagementUi) {
       return const SizedBox.shrink();
     }
 

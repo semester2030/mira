@@ -1,44 +1,26 @@
-import 'dart:io';
-
 import 'package:flutter/material.dart';
-import '../../../../shared/widgets/mira_app_bar.dart';
-import 'package:image_picker/image_picker.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
 
+import '../../../../core/navigation/analysis_navigation.dart';
 import '../../../../core/navigation/app_routes.dart';
 import '../../../../core/navigation/route_args.dart';
 import '../../../../core/services/app_session.dart';
+import '../../../../core/session/analysis_session.dart';
 import '../../../../shared/theme/colors.dart';
 import '../../../../shared/theme/typography.dart';
 import '../../../../shared/widgets/guest_banner.dart';
+import '../../../../shared/widgets/mira_app_bar.dart';
 import '../../../../shared/widgets/premium/premium_exports.dart';
+import '../../domain/entities/outfit_analysis_mode.dart';
+import '../providers/outfit_intelligence_providers.dart';
+import '../../../packages/presentation/providers/package_credit_provider.dart';
 
-class OutfitUploadScreen extends StatefulWidget {
+/// Entry hub — Quick vs Smart outfit analysis modes.
+class OutfitUploadScreen extends ConsumerWidget {
   const OutfitUploadScreen({super.key});
 
   @override
-  State<OutfitUploadScreen> createState() => _OutfitUploadScreenState();
-}
-
-class _OutfitUploadScreenState extends State<OutfitUploadScreen> {
-  File? _image;
-  final _picker = ImagePicker();
-
-  Future<void> _pickImage(ImageSource source) async {
-    final file = await _picker.pickImage(source: source, imageQuality: 85);
-    if (file != null) setState(() => _image = File(file.path));
-  }
-
-  void _continue() {
-    if (_image == null) return;
-    Navigator.pushNamed(
-      context,
-      AppRoutes.occasionSelect,
-      arguments: OutfitOccasionRouteArgs(imagePath: _image!.path),
-    );
-  }
-
-  @override
-  Widget build(BuildContext context) {
+  Widget build(BuildContext context, WidgetRef ref) {
     if (!AppSession.canBrowse) {
       return Scaffold(
         appBar: const MiraAppBar(pageTitle: 'تحليل الإطلالة'),
@@ -52,6 +34,8 @@ class _OutfitUploadScreenState extends State<OutfitUploadScreen> {
       );
     }
 
+    final hasSkin = AnalysisSession.hasSkinReport;
+
     return Scaffold(
       appBar: const MiraAppBar(pageTitle: 'تحليل الإطلالة'),
       body: FloatingGradientBackground(
@@ -62,45 +46,50 @@ class _OutfitUploadScreenState extends State<OutfitUploadScreen> {
               crossAxisAlignment: CrossAxisAlignment.stretch,
               children: [
                 if (AppSession.isGuest) const GuestBanner(),
-                const SectionHeader(
-                  title: 'صورة إطلالتك',
-                  subtitle: 'التقطي أو اختاري صورة واضحة — لا نحفظ الصورة بعد التحليل',
+                Text(
+                  'اختر نوع التحليل',
+                  style: AppTypography.headlineSmall,
                 ),
-                const SizedBox(height: 20),
-                PressableScale(
-                  onTap: () => _showPickSheet(context),
-                  child: Container(
-                    width: double.infinity,
-                    height: 220,
-                    decoration: BoxDecoration(
-                      color: AppColors.surface.withValues(alpha: 0.85),
-                      borderRadius: BorderRadius.circular(20),
-                      border: Border.all(color: AppColors.border),
-                    ),
-                    child: _image != null
-                        ? ClipRRect(
-                            borderRadius: BorderRadius.circular(20),
-                            child: Image.file(_image!, fit: BoxFit.cover, width: double.infinity),
-                          )
-                        : Column(
-                            mainAxisAlignment: MainAxisAlignment.center,
-                            children: [
-                              Icon(
-                                Icons.checkroom_outlined,
-                                size: 48,
-                                color: AppColors.primary.withValues(alpha: 0.8),
-                              ),
-                              const SizedBox(height: 12),
-                              Text('اضغطي لإضافة صورة', style: AppTypography.titleMedium),
-                            ],
-                          ),
+                const SizedBox(height: 8),
+                Text(
+                  'حلّلي إطلالتك عدة مرات يومياً — التحليل الذكي يضيف ربطاً ببشرتك',
+                  style: AppTypography.bodyMedium.copyWith(
+                    color: AppColors.textSecondary,
+                    height: 1.5,
                   ),
                 ),
-                const SizedBox(height: 28),
-                PremiumButton(
-                  label: 'اختيار المناسبة',
-                  icon: Icons.arrow_back_rounded,
-                  onPressed: _image != null ? _continue : null,
+                if (hasSkin) ...[
+                  const SizedBox(height: 16),
+                  PremiumCard(
+                    child: Row(
+                      children: [
+                        const Icon(Icons.check_circle_outline, color: AppColors.secondary),
+                        const SizedBox(width: 10),
+                        Expanded(
+                          child: Text(
+                            'بشرتك جاهزة للتحليل الذكي',
+                            style: AppTypography.bodySmall,
+                          ),
+                        ),
+                      ],
+                    ),
+                  ),
+                ],
+                const SizedBox(height: 20),
+                _ModeCard(
+                  title: 'تحليل سريع للإطلالة',
+                  subtitle: 'تحليل الألوان والتنسيق والمناسبة',
+                  icon: Icons.flash_on_rounded,
+                  accent: AppColors.gold,
+                  onTap: () => _start(context, ref, OutfitAnalysisMode.quick),
+                ),
+                const SizedBox(height: 12),
+                _ModeCard(
+                  title: 'تحليل ذكي مرتبط بالبشرة',
+                  subtitle: 'دقة أعلى وربط مباشر مع بشرتك',
+                  icon: Icons.auto_awesome_rounded,
+                  accent: AppColors.secondary,
+                  onTap: () => _startSmart(context, ref, hasSkin),
                 ),
               ],
             ),
@@ -110,29 +99,92 @@ class _OutfitUploadScreenState extends State<OutfitUploadScreen> {
     );
   }
 
-  void _showPickSheet(BuildContext context) {
-    showModalBottomSheet<void>(
-      context: context,
-      builder: (ctx) => SafeArea(
-        child: Column(
-          mainAxisSize: MainAxisSize.min,
+  Future<void> _start(
+    BuildContext context,
+    WidgetRef ref,
+    OutfitAnalysisMode mode,
+  ) async {
+    await ref.read(outfitAnalysisModeProvider.notifier).select(mode);
+    if (!context.mounted) return;
+    await Navigator.pushNamed(
+      context,
+      AppRoutes.outfitLiveCapture,
+      arguments: OutfitLiveCaptureRouteArgs(mode: mode),
+    );
+  }
+
+  Future<void> _startSmart(
+    BuildContext context,
+    WidgetRef ref,
+    bool hasSkin,
+  ) async {
+    if (!hasSkin) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          content: Text(
+            'للاستفادة من التحليل الذكي، حلّلي بشرتك أولاً',
+            style: AppTypography.bodyMedium.copyWith(color: AppColors.onPrimary),
+          ),
+          backgroundColor: AppColors.primary,
+        ),
+      );
+      await AnalysisNavigation.openSkinAnalysis(context);
+      return;
+    }
+    if (!await PackageCreditGate.ensureSmartOutfitCredits(context, ref)) return;
+    if (!context.mounted) return;
+    await _start(context, ref, OutfitAnalysisMode.smart);
+  }
+}
+
+class _ModeCard extends StatelessWidget {
+  final String title;
+  final String subtitle;
+  final IconData icon;
+  final Color accent;
+  final VoidCallback onTap;
+
+  const _ModeCard({
+    required this.title,
+    required this.subtitle,
+    required this.icon,
+    required this.accent,
+    required this.onTap,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    return PressableScale(
+      onTap: onTap,
+      child: PremiumCard(
+        child: Row(
           children: [
-            ListTile(
-              leading: const Icon(Icons.camera_alt_rounded),
-              title: const Text('الكاميرا'),
-              onTap: () {
-                Navigator.pop(ctx);
-                _pickImage(ImageSource.camera);
-              },
+            Container(
+              padding: const EdgeInsets.all(14),
+              decoration: BoxDecoration(
+                color: accent.withValues(alpha: 0.12),
+                shape: BoxShape.circle,
+              ),
+              child: Icon(icon, color: accent, size: 28),
             ),
-            ListTile(
-              leading: const Icon(Icons.photo_library_outlined),
-              title: const Text('المعرض'),
-              onTap: () {
-                Navigator.pop(ctx);
-                _pickImage(ImageSource.gallery);
-              },
+            const SizedBox(width: 14),
+            Expanded(
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Text(title, style: AppTypography.titleMedium),
+                  const SizedBox(height: 4),
+                  Text(
+                    subtitle,
+                    style: AppTypography.bodySmall.copyWith(
+                      color: AppColors.textSecondary,
+                      height: 1.4,
+                    ),
+                  ),
+                ],
+              ),
             ),
+            Icon(Icons.arrow_back_ios_new_rounded, size: 16, color: accent),
           ],
         ),
       ),

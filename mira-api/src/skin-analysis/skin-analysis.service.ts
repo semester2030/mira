@@ -11,6 +11,7 @@ import {
 } from '../ai/providers/skin-analysis.provider';
 import { MiraBeautyReport } from '../intelligence/contracts/mira-beauty-report.interface';
 import { IntelligenceService } from '../intelligence/intelligence.service';
+import { computeBeautyScore } from '../intelligence/pipeline/beauty-score-engine';
 import { RateLimitService } from '../common/services/rate-limit.service';
 import { RequestUser } from '../common/interfaces/request-user.interface';
 import { FaceGateService } from '../ai/face-gate/face-gate.service';
@@ -56,6 +57,8 @@ export class SkinAnalysisService {
       await this.skinProvider.analyze(imageBuffer);
     imageBuffer.fill(0);
 
+    const previousBeautyScore = await this.loadPreviousBeautyScore(user.id);
+
     const providerAudit = rawYouCam
       ? { rawYouCam, capturedAt: new Date().toISOString() }
       : undefined;
@@ -63,6 +66,7 @@ export class SkinAnalysisService {
     const miraReportBase = await this.intelligence.buildBeautyReport(skinInternal, {
       birthYear: prefs?.birthYear ?? null,
       rawYouCam,
+      previousBeautyScore,
     });
 
     const record = await this.prisma.skinAnalysis.create({
@@ -106,8 +110,29 @@ export class SkinAnalysisService {
       record.id,
       record.createdAt,
       miraReport,
-      skinInternal,
+      {
+        ...skinInternal,
+        beautyScore: computeBeautyScore(skinInternal, {
+          previousScore: previousBeautyScore,
+        }).finalScore,
+      },
     );
+  }
+
+  private async loadPreviousBeautyScore(userId: string): Promise<number | null> {
+    const previous = await this.prisma.skinAnalysis.findFirst({
+      where: { userId },
+      orderBy: { createdAt: 'desc' },
+      select: { resultJson: true },
+    });
+    if (!previous) return null;
+
+    const report = extractMiraReportFromStored(previous.resultJson);
+    if (report?.overallBeautyScore != null) return report.overallBeautyScore;
+
+    const legacy = extractLegacySkinFromStored(previous.resultJson);
+    if (legacy?.beautyScore != null) return Math.round(legacy.beautyScore);
+    return null;
   }
 
   async history(authUser: RequestUser, limit = 20) {

@@ -1,0 +1,347 @@
+<!DOCTYPE html>
+<html lang="ar" dir="rtl">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <meta name="description" content="خطة باقات اشتراك ميرا — ٣ مستويات دقيقة: مجاني · بلس · بريميوم. أسعار SAR، حدود، ميزات، Product IDs، وربط بالكود." />
+  <title>ميرا | باقات الاشتراك — ٣ خطط</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link href="https://fonts.googleapis.com/css2?family=Tajawal:wght@400;500;700;800&display=swap" rel="stylesheet" />
+  <link rel="stylesheet" href="mira-subscription-packages.css" />
+</head>
+<body>
+  <header class="site-header">
+    <div class="container header-inner">
+      <a class="brand" href="index.html">ميرا · Mira</a>
+      <nav class="nav">
+        <a href="#plans">٣ باقات</a>
+        <a href="#matrix">المقارنة</a>
+        <a href="#storekit">StoreKit</a>
+        <a href="#backend">Backend</a>
+        <a href="#gaps">الفجوات</a>
+        <a href="app-store-readiness.html">App Store</a>
+      </nav>
+    </div>
+  </header>
+
+  <main class="container">
+    <section class="hero hero-subs">
+      <span class="badge badge-gold">SUBSCRIPTION STRATEGY · يونيو 2026</span>
+      <h1>باقات الاشتراك — ٣ خطط دقيقة</h1>
+      <p class="lead">
+        خطة monetization مدروسة لميرا: ثلاث باقات واضحة، أسعار SAR، حدود شهرية، وميزات Intelligence Layer —
+        مربوطة بـ <code>subscription-plans.ts</code> و App Store Connect. ليست بكجات النشر (TestFlight).
+      </p>
+      <div class="hero-meta">
+        <span class="meta-pill">💳 Auto-Renewable Subscriptions</span>
+        <span class="meta-pill">🇸🇦 تسعير SAR</span>
+        <span class="meta-pill">📱 Guideline 3.1.1</span>
+        <span class="meta-pill">⚙️ الكود اليوم: free + premium فقط</span>
+      </div>
+    </section>
+
+    <!-- PRINCIPLES -->
+    <section class="strategy-block card">
+      <h2 style="margin-top:0">مبادئ التصميم</h2>
+      <div class="principle-card">
+        <div class="principle-item">
+          <strong>١. ثلاثة خيارات فقط</strong>
+          لا أكثر — قرار سريع: جرّبي · استخدمي · استخدمي بلا حدود.
+        </div>
+        <div class="principle-item">
+          <strong>٢. القيمة تتصاعد</strong>
+          المجاني = اكتشاف · بلس = تقرير كامل · بريميوم = يومي + fusion + marketplace.
+        </div>
+        <div class="principle-item">
+          <strong>٣. SAR psychology</strong>
+          ٠ · ٢٤ · ٣٩ ريال — نقاط سعر مألوفة في KSA beauty apps.
+        </div>
+        <div class="principle-item">
+          <strong>٤. Apple-first</strong>
+          كل باقة مدفوعة = Product ID واحد في Subscription Group واحد.
+        </div>
+      </div>
+      <div class="upgrade-flow">
+        <div class="upgrade-node node-free">مجاني<small>0 ر.س</small></div>
+        <span>→</span>
+        <div class="upgrade-node node-plus">ميرا بلس<small>24 ر.س/شهر</small></div>
+        <span>→</span>
+        <div class="upgrade-node node-premium">ميرا بريميوم<small>39 ر.س/شهر</small></div>
+      </div>
+    </section>
+
+    <!-- 3 PLANS -->
+    <section id="plans">
+      <h2>الباقات الثلاث — التفصيل الكامل</h2>
+
+      <div class="pricing-grid">
+
+        <!-- FREE -->
+        <article id="plan-free" class="pricing-card free">
+          <header class="pricing-head">
+            <span class="plan-code">PLAN_FREE</span>
+            <h3>ميرا مجاني</h3>
+            <p class="plan-persona">للتجربة والاكتشاف · مراجع App Store</p>
+            <div class="plan-price">
+              <span class="amount">٠</span>
+              <span class="currency">ر.س</span>
+              <span class="period">/ شهر</span>
+            </div>
+            <p class="plan-alt-price">لا بطاقة · تسجيل OTP أو Guest</p>
+          </header>
+          <div class="pricing-body">
+            <div class="limits-box">
+              <strong>الحدود الشهرية (مسجّلة)</strong>
+              <div class="limit-row"><span>تحليل بشرة</span><strong>3</strong></div>
+              <div class="limit-row"><span>تحليل إطلالة</span><strong>3</strong></div>
+              <div class="limit-row"><span>زائر (Guest)</span><strong>1 تجربة · بدون حفظ</strong></div>
+            </div>
+            <ul class="feature-list">
+              <li><span class="yes">✓</span> Beauty Score + أهم 3 concerns</li>
+              <li><span class="yes">✓</span> Face Gate + Live Face Map</li>
+              <li><span class="yes">✓</span> OTP جوال · Guest mode</li>
+              <li><span class="yes">✓</span> خصوصية + حذف حساب</li>
+              <li class="disabled"><span class="no">—</span> تقرير ميرا الكامل (7 أقسام)</li>
+              <li class="disabled"><span class="no">—</span> Weekly Plan · Treatment AM/PM</li>
+              <li class="disabled"><span class="no">—</span> Fusion بشرة+إطلالة</li>
+              <li class="disabled"><span class="no">—</span> Marketplace matches</li>
+              <li class="disabled"><span class="no">—</span> أولوية API</li>
+            </ul>
+          </div>
+          <footer class="pricing-foot">
+            <strong>Backend key:</strong> <code>free</code>
+            <div class="proof-block" style="margin-top:10px;font-size:0.72rem"><span class="path">subscription-plans.ts</span>FREE_TIER_LIMITS = { skin: 3, outfit: 3 }</div>
+          </footer>
+        </article>
+
+        <!-- PLUS -->
+        <article id="plan-plus" class="pricing-card plus">
+          <header class="pricing-head">
+            <span class="plan-code">PLAN_PLUS</span>
+            <h3>ميرا بلس</h3>
+            <p class="plan-persona">للاستخدام الأسبوعي · تقرير كامل بسعر معقول</p>
+            <div class="plan-price">
+              <span class="amount">٢٤</span>
+              <span class="currency">ر.س</span>
+              <span class="period">/ شهر</span>
+            </div>
+            <p class="plan-alt-price">٥٩ ر.س / 3 أشهر (−١٨٪) · ١٩٩ ر.س / سنة</p>
+          </header>
+          <div class="pricing-body">
+            <div class="limits-box">
+              <strong>الحدود الشهرية</strong>
+              <div class="limit-row"><span>تحليل بشرة</span><strong>12</strong></div>
+              <div class="limit-row"><span>تحليل إطلالة</span><strong>12</strong></div>
+              <div class="limit-row"><span>≈</span><strong>كل 2–3 أيام</strong></div>
+            </div>
+            <ul class="feature-list">
+              <li><span class="yes">✓</span> كل ميزات المجاني</li>
+              <li><span class="yes">✓</span> تقرير ميرا الكامل (7 أقسام)</li>
+              <li><span class="yes">✓</span> Face Health Map · Beauty Score Ring</li>
+              <li><span class="yes">✓</span> Weekly Plan (7 أيام)</li>
+              <li><span class="yes">✓</span> Treatment Plan AM/PM</li>
+              <li><span class="yes">✓</span> توصيات مكياج وإطلالة (standard)</li>
+              <li><span class="yes">✓</span> سجل التحليلات + progress</li>
+              <li class="disabled"><span class="no">—</span> Fusion · Marketplace premium</li>
+              <li class="disabled"><span class="no">—</span> تحليل بلا حدود</li>
+              <li class="disabled"><span class="no">—</span> أولوية API</li>
+            </ul>
+          </div>
+          <footer class="pricing-foot">
+            <strong>Backend key:</strong> <code>plus</code> <span class="gap-missing">← جديد · غير مُنفّذ</span>
+            <p class="store-id">mira_plus_monthly · mira_plus_quarterly · mira_plus_yearly</p>
+          </footer>
+        </article>
+
+        <!-- PREMIUM -->
+        <article id="plan-premium" class="pricing-card premium">
+          <div class="pricing-ribbon">الأكثر شمولاً · Best Value لليومي</div>
+          <header class="pricing-head">
+            <span class="plan-code">PLAN_PREMIUM</span>
+            <h3>ميرا بريميوم</h3>
+            <p class="plan-persona">للاستخدام اليومي · stylist · power user</p>
+            <div class="plan-price">
+              <span class="amount">٣٩</span>
+              <span class="currency">ر.س</span>
+              <span class="period">/ شهر</span>
+            </div>
+            <p class="plan-alt-price">٩٩ ر.س / 3 أشهر (−١٥٪) · ٣٤٩ ر.س / سنة</p>
+          </header>
+          <div class="pricing-body">
+            <div class="limits-box">
+              <strong>الحدود</strong>
+              <div class="limit-row"><span>تحليل بشرة</span><strong>∞ بلا حدود</strong></div>
+              <div class="limit-row"><span>تحليل إطلالة</span><strong>∞ بلا حدود</strong></div>
+              <div class="limit-row"><span>توصيات</span><strong>∞ كاملة</strong></div>
+            </div>
+            <ul class="feature-list">
+              <li><span class="yes">✓</span> كل ميزات بلس</li>
+              <li><span class="yes">✓</span> تحليلات بلا حدود (skin + outfit)</li>
+              <li><span class="yes">✓</span> Fusion Engine — بشرة + إطلالة</li>
+              <li><span class="yes">✓</span> Marketplace matches · product links</li>
+              <li><span class="yes">✓</span> أولوية في طابور AI</li>
+              <li><span class="yes">✓</span> Confidence Layer كامل</li>
+              <li><span class="yes">✓</span> Style Color Palette · accessories</li>
+              <li><span class="yes">✓</span> دعم أسرع (Support priority)</li>
+            </ul>
+          </div>
+          <footer class="pricing-foot">
+            <strong>Backend key:</strong> <code>premium</code> <span class="gap-ok">✅ موجود</span>
+            <div class="proof-block" style="margin-top:10px;font-size:0.72rem"><span class="path">paywall_screen.dart:71</span>«٣٩ ريال / شهر» — UI جاهز · StoreKit ناقص</div>
+            <p class="store-id">mira_premium_monthly · mira_premium_quarterly · mira_premium_yearly</p>
+          </footer>
+        </article>
+      </div>
+    </section>
+
+    <!-- MATRIX -->
+    <section id="matrix" class="card">
+      <h2 style="margin-top:0">مصفوفة الميزات — ٣ باقات</h2>
+      <div class="matrix-scroll">
+        <table class="compare-features">
+          <thead>
+            <tr>
+              <th>الميزة</th>
+              <th class="col-free">مجاني</th>
+              <th class="col-plus">بلس</th>
+              <th class="col-premium">بريميوم</th>
+            </tr>
+          </thead>
+          <tbody>
+            <tr><td>السعر الشهري</td><td>٠</td><td>٢٤ ر.س</td><td>٣٩ ر.س</td></tr>
+            <tr><td>بشرة / شهر</td><td>3</td><td>12</td><td>∞</td></tr>
+            <tr><td>إطلالة / شهر</td><td>3</td><td>12</td><td>∞</td></tr>
+            <tr><td>Beauty Score</td><td>✅</td><td>✅</td><td>✅</td></tr>
+            <tr><td>تقرير ميرا 7 أقسام</td><td>ملخّص</td><td>✅ كامل</td><td>✅ كامل</td></tr>
+            <tr><td>Weekly Plan</td><td>—</td><td>✅</td><td>✅</td></tr>
+            <tr><td>Treatment AM/PM</td><td>—</td><td>✅</td><td>✅</td></tr>
+            <tr><td>Fusion Engine</td><td>—</td><td>—</td><td>✅</td></tr>
+            <tr><td>Marketplace</td><td>—</td><td>عرض فقط</td><td>✅ matches</td></tr>
+            <tr><td>أولوية API</td><td>—</td><td>—</td><td>✅</td></tr>
+            <tr><td>Guest demo</td><td>1 بدون حفظ</td><td>—</td><td>—</td></tr>
+            <tr><td>حفظ السجل</td><td>✅</td><td>✅</td><td>✅</td></tr>
+          </tbody>
+        </table>
+      </div>
+    </section>
+
+    <!-- STOREKIT -->
+    <section id="storekit" class="card">
+      <h2 style="margin-top:0">App Store Connect — Subscription Group</h2>
+      <p>مجموعة واحدة: <strong>Mira Premium Plans</strong> — يسمح Apple بالترقية/التخفيض بين البلس والبريميوم.</p>
+      <table>
+        <thead>
+          <tr><th>Product ID</th><th>الباقة</th><th>المدة</th><th>السعر SAR</th><th>Intro Offer (اختياري)</th></tr>
+        </thead>
+        <tbody>
+          <tr><td><code>mira_plus_monthly</code></td><td>بلس</td><td>1 شهر</td><td>24.00</td><td>—</td></tr>
+          <tr><td><code>mira_plus_quarterly</code></td><td>بلس</td><td>3 أشهر</td><td>59.00</td><td>—</td></tr>
+          <tr><td><code>mira_plus_yearly</code></td><td>بلس</td><td>12 شهر</td><td>199.00</td><td>7 أيام trial</td></tr>
+          <tr><td><code>mira_premium_monthly</code></td><td>بريميوم</td><td>1 شهر</td><td>39.00</td><td>—</td></tr>
+          <tr><td><code>mira_premium_quarterly</code></td><td>بريميوم</td><td>3 أشهر</td><td>99.00</td><td>—</td></tr>
+          <tr><td><code>mira_premium_yearly</code></td><td>بريميوم</td><td>12 شهر</td><td>349.00</td><td>7 أيام trial</td></tr>
+        </tbody>
+      </table>
+      <div class="proof-block"><span class="path">قواعد Apple 3.1.1</span>• Restore Purchases إلزامي
+• Manage Subscription → رابط App Store
+• السعر في UI = السعر في Connect
+• لا redirect لشراء خارج التطبيق</div>
+      <h3>قواعد الترقية</h3>
+      <ul>
+        <li><strong>مجاني → بلس/بريميوم:</strong> paywall عند نفاد الحد · أو من الإعدادات</li>
+        <li><strong>بلس → بريميوم:</strong> upgrade في نفس Subscription Group · proration تلقائي من Apple</li>
+        <li><strong>بريميوم → بلس:</strong> downgrade ينفّذ نهاية الفترة الحالية</li>
+        <li><strong>إلغاء:</strong> entitlement حتى <code>currentPeriodEnd</code></li>
+      </ul>
+    </section>
+
+    <!-- BACKEND -->
+    <section id="backend" class="card">
+      <h2 style="margin-top:0">Backend — خطة التنفيذ التقني</h2>
+      <div class="proof-block"><span class="path">subscription-plans.ts — target</span>export const SUBSCRIPTION_PLANS = {
+  free: 'free',
+  plus: 'plus',      // ← ADD
+  premium: 'premium',
+} as const;
+
+export const PLAN_LIMITS = {
+  free:    { skin: 3,  outfit: 3  },
+  plus:    { skin: 12, outfit: 12 },
+  premium: { skin: -1, outfit: -1 }, // -1 = unlimited
+} as const;
+
+export const PLAN_FEATURES = {
+  free:    { fullReport: false, weeklyPlan: false, fusion: false, marketplace: false },
+  plus:    { fullReport: true,  weeklyPlan: true,  fusion: false, marketplace: 'browse' },
+  premium: { fullReport: true,  weeklyPlan: true,  fusion: true,  marketplace: 'full' },
+} as const;</div>
+      <table class="gap-table">
+        <thead><tr><th>المكوّن</th><th>الحالة</th><th>الملف</th></tr></thead>
+        <tbody>
+          <tr><td>free limits 3+3</td><td class="gap-ok">✅</td><td>subscription-plans.ts</td></tr>
+          <tr><td>premium unlimited</td><td class="gap-ok">✅</td><td>subscriptions.service.ts</td></tr>
+          <tr><td>plus tier</td><td class="gap-missing">❌</td><td>plans + assertCanAnalyze + webhook</td></tr>
+          <tr><td>feature gating (report sections)</td><td class="gap-missing">❌</td><td>intelligence screens · API middleware</td></tr>
+          <tr><td>StoreKit / RevenueCat</td><td class="gap-missing">❌</td><td>pubspec.yaml · paywall_screen</td></tr>
+          <tr><td>webhook verify</td><td class="gap-missing">❌</td><td>subscriptions.service.ts:102 placeholder</td></tr>
+          <tr><td>subscriptions disabled</td><td class="gap-partial">⚠️ default off</td><td>MIRA_SUBSCRIPTIONS_ENABLED=false</td></tr>
+          <tr><td>Paywall UI (premium only)</td><td class="gap-partial">⚠️</td><td>paywall_screen.dart — باقة واحدة</td></tr>
+        </tbody>
+      </table>
+    </section>
+
+    <!-- GAPS / ROADMAP -->
+    <section id="gaps" class="card">
+      <h2 style="margin-top:0">خطة التنفيذ — ٤ خطوات</h2>
+      <div class="timeline">
+        <div class="timeline-item">
+          <strong>١ · Backend plans (2–3 أيام)</strong>
+          <p>plus في subscription-plans.ts · PLAN_LIMITS · PLAN_FEATURES · assertCanAnalyze · getStatus limits per plan</p>
+        </div>
+        <div class="timeline-item">
+          <strong>٢ · Feature gates (3–4 أيام)</strong>
+          <p>Flutter: SubscriptionStatus.isPlus · canAccessFullReport · intelligence sections · paywall 3-tier picker</p>
+        </div>
+        <div class="timeline-item">
+          <strong>٣ · StoreKit (1–2 أسبوع)</strong>
+          <p>RevenueCat أو in_app_purchase · 6 Product IDs · restore · manage · webhook → plan sync</p>
+        </div>
+        <div class="timeline-item">
+          <strong>٤ · QA + Sandbox (3–5 أيام)</strong>
+          <p>purchase · upgrade plus→premium · downgrade · cancel · limit enforcement · subscription_status_test</p>
+        </div>
+      </div>
+      <div class="verdict-banner partial" style="margin-top:20px">
+        <strong>⚠️ PKG-C (App Store Production) يتطلب:</strong>
+        <p style="margin:8px 0 0">StoreKit + 3 باقات + webhook — لا تفعّل <code>MIRA_SUBSCRIPTIONS_ENABLED=true</code> قبل اكتمال الخطوة ٣.</p>
+      </div>
+    </section>
+
+    <!-- UNIT ECONOMICS -->
+    <section class="card">
+      <h2 style="margin-top:0">Unit Economics (تقديري)</h2>
+      <table>
+        <thead><tr><th>الباقة</th><th>إيراد/مستخدم/شهر</th><th>تكلفة API تقريبية*</th><th>هامش</th></tr></thead>
+        <tbody>
+          <tr><td>مجاني</td><td>٠</td><td>~3–6 SAR (3+3 analyses)</td><td>CAC / acquisition</td></tr>
+          <tr><td>بلس</td><td>24 SAR</td><td>~8–14 SAR (12+12 max)</td><td>~40–65%</td></tr>
+          <tr><td>بريميوم</td><td>39 SAR</td><td>variable · cap soft 60/mo</td><td>~50%+</td></tr>
+        </tbody>
+      </table>
+      <p class="muted" style="font-size:0.82rem">*Perfect Corp + outfit provider · يُحدّث بعد production pricing</p>
+    </section>
+  </main>
+
+  <footer class="site-footer">
+    <div class="container">
+      <p>
+        Mira Subscription Packages · يونيو 2026 ·
+        <a href="app-store-readiness.html">App Store Readiness</a> ·
+        <a href="mira-intelligence-layer.html">Intelligence Layer</a> ·
+        <a href="index.html">الرئيسية</a>
+      </p>
+      <p class="muted" style="font-size:0.82rem">بكجات النشر (TestFlight) ≠ باقات الاشتراك — راجع app-store-readiness.html#packages للنشر.</p>
+    </div>
+  </footer>
+</body>
+</html>

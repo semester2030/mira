@@ -1,4 +1,5 @@
 /// In-app privacy policy text (Arabic primary).
+/// Public web copy: [MiraPublicUrls.privacyPolicy]
 abstract final class PrivacyPolicyContent {
   static const titleAr = 'سياسة الخصوصية — ميرا';
   static const version = '1.0';

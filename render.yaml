@@ -59,6 +59,13 @@ services:
     staticPublishPath: .
 
   - type: web
+    name: mira-admin-portal
+    runtime: static
+    rootDir: admin-portal/web
+    buildCommand: echo "admin portal ready"
+    staticPublishPath: .
+
+  - type: web
     name: mira-website
     runtime: static
     rootDir: website

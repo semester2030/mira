@@ -17,6 +17,9 @@ import { AnalyzeOutfitBodyDto } from '../outfit-analysis/dto/analyze-outfit.dto'
 import { OutfitAnalysisService } from '../outfit-analysis/outfit-analysis.service';
 import { SkinAnalysisService } from '../skin-analysis/skin-analysis.service';
 import { FullMiraAnalysisService } from './services/full-mira-analysis.service';
+import { OutfitHybridIntelligenceService } from './services/outfit-hybrid-intelligence.service';
+import { OutfitIntelligenceBodyDto } from './dto/outfit-intelligence-body.dto';
+import { SkinReportSnapshot } from './contracts/outfit-intelligence.interface';
 
 const MAX_IMAGE_BYTES = 10 * 1024 * 1024;
 
@@ -33,6 +36,7 @@ export class AiGatewayController {
     private readonly skinAnalysisService: SkinAnalysisService,
     private readonly outfitAnalysisService: OutfitAnalysisService,
     private readonly fullMiraAnalysisService: FullMiraAnalysisService,
+    private readonly outfitHybridIntelligenceService: OutfitHybridIntelligenceService,
   ) {}
 
   @Post('skin-analysis')
@@ -68,6 +72,26 @@ export class AiGatewayController {
       user,
       file?.buffer ?? Buffer.alloc(0),
       body.occasion,
+    );
+  }
+
+  /** Skin-linked hybrid outfit intelligence — Vision + LLM with server-side keys. */
+  @Post('outfit-intelligence')
+  @UseInterceptors(
+    FileInterceptor('image', {
+      storage: memoryStorage(),
+      limits: { fileSize: MAX_IMAGE_BYTES },
+    }),
+  )
+  analyzeOutfitIntelligence(
+    @UploadedFile() file: Express.Multer.File,
+    @Body() body: OutfitIntelligenceBodyDto,
+  ) {
+    const skin = JSON.parse(body.skinReport) as SkinReportSnapshot;
+    return this.outfitHybridIntelligenceService.analyze(
+      file?.buffer ?? Buffer.alloc(0),
+      body.occasion,
+      skin,
     );
   }
 

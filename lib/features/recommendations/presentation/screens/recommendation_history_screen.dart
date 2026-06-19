@@ -29,10 +29,14 @@ class _RecommendationHistoryScreenState extends State<RecommendationHistoryScree
 
   void _load() {
     if (AppSession.isGuest || !AppSession.canUseCloud) {
-      setState(() => _future = Future.value(const []));
+      setState(() {
+        _future = Future.value(const []);
+      });
       return;
     }
-    setState(() => _future = _api.history());
+    setState(() {
+      _future = _api.history();
+    });
   }
 
   @override

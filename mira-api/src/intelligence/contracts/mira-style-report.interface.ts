@@ -1,6 +1,11 @@
 export interface MiraStyleReport {
   version: 1;
   outfitScore: number;
+  confidence: number;
+  severityLevel: string;
+  strongestIssueAr: string;
+  improvementPotential: number;
+  occasionReady: boolean;
   styleCategoryAr: string;
   styleCategoryEn: string;
   garmentTypeAr: string;
@@ -10,6 +15,8 @@ export interface MiraStyleReport {
   occasionSuitabilityAr: string;
   headlineAr: string;
   summaryAr: string;
+  styleTipsAr: string[];
+  disclaimerAr: string;
 }
 
 export interface StyleFusionPayload {

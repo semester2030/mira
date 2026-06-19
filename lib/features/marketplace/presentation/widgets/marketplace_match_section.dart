@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 
+import '../../../../core/config/mira_features.dart';
 import '../../../../core/navigation/app_routes.dart';
 import '../../../../shared/theme/colors.dart';
 import '../../../../shared/theme/typography.dart';
@@ -11,6 +12,7 @@ import '../screens/product_detail_screen.dart';
 import '../screens/service_detail_screen.dart';
 import 'matched_product_tile.dart';
 import 'matched_service_tile.dart';
+import 'marketplace_coming_soon_view.dart';
 
 /// Loads partner catalog matched to [report] — API or local fallback.
 class MarketplaceMatchSection extends StatefulWidget {
@@ -43,6 +45,10 @@ class _MarketplaceMatchSectionState extends State<MarketplaceMatchSection> {
 
   @override
   Widget build(BuildContext context) {
+    if (!MiraFeatures.marketplaceEnabled) {
+      return const MarketplaceComingSoonView(compact: true);
+    }
+
     return FutureBuilder<MarketplaceMatch>(
       future: _future,
       builder: (context, snapshot) {

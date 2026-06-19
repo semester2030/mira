@@ -1,9 +1,7 @@
 import { BadRequestException, Injectable } from '@nestjs/common';
 import { parseOccasion } from '../contracts/mira-occasion';
+import { MiraStyleReport } from '../../intelligence/contracts/mira-style-report.interface';
 import { buildStyleFusion } from '../../intelligence/pipeline/fusion-engine';
-import {
-  buildMiraStyleReport,
-} from '../../intelligence/pipeline/ingest-outfit';
 import { RequestUser } from '../../common/interfaces/request-user.interface';
 import { OutfitAnalysisService } from '../../outfit-analysis/outfit-analysis.service';
 import { RecommendationsService } from '../../recommendations/recommendations.service';
@@ -48,7 +46,10 @@ export class FullMiraAnalysisService {
     }
 
     const fusion = buildStyleFusion(skinInternal, outfitDto.outfit);
-    const styleReport = buildMiraStyleReport(outfitDto.outfit, fusion.summaryAr);
+    const styleReport: MiraStyleReport = {
+      ...outfitDto.miraStyleReport,
+      summaryAr: fusion.summaryAr || outfitDto.miraStyleReport.summaryAr,
+    };
     const recommendation = await this.recommendationsService.build(
       authUser,
       skinInternal,

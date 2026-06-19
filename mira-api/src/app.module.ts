@@ -17,6 +17,7 @@ import { WebsiteModule } from './website/website.module';
 import { PartnersPortalModule } from './partners-portal/partners-portal.module';
 import { IntelligenceModule } from './intelligence/intelligence.module';
 import { AdvisorModule } from './advisor/advisor.module';
+import { AdminModule } from './admin/admin.module';
 
 @Module({
   imports: [
@@ -38,6 +39,7 @@ import { AdvisorModule } from './advisor/advisor.module';
     MarketplaceModule,
     WebsiteModule,
     PartnersPortalModule,
+    AdminModule,
   ],
 })
 export class AppModule {}

@@ -142,6 +142,7 @@ export class PartnersPortalService {
         contactEmail: true,
         contactPhone: true,
         city: true,
+        message: true,
         createdAt: true,
       },
     });

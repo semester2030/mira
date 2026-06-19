@@ -64,7 +64,7 @@ class DefaultFirebaseOptions {
     messagingSenderId: '399849748934',
     projectId: 'mirra-14b0e',
     storageBucket: 'mirra-14b0e.firebasestorage.app',
-    iosBundleId: 'com.example.mirra',
+    iosBundleId: 'app.mira.beauty',
   );
 
   static const FirebaseOptions macos = FirebaseOptions(
@@ -73,7 +73,7 @@ class DefaultFirebaseOptions {
     messagingSenderId: '399849748934',
     projectId: 'mirra-14b0e',
     storageBucket: 'mirra-14b0e.firebasestorage.app',
-    iosBundleId: 'com.example.mirra',
+    iosBundleId: 'app.mira.beauty',
   );
 
   static const FirebaseOptions windows = FirebaseOptions(

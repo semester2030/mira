@@ -166,25 +166,19 @@ class _ManageSubscriptionScreenState extends State<ManageSubscriptionScreen> {
                           ],
                         ),
                       ),
-                      const SizedBox(height: 16),
-                      Text(
-                        'الاشتراك عبر App Store قريباً. يمكنكِ معاينة ميرا بريميوم الآن.',
-                        style: AppTypography.bodyMedium.copyWith(
-                          color: AppColors.textSecondary,
-                          height: 1.6,
+                      if (MiraFeatures.showSubscriptionPurchaseUi) ...[
+                        const SizedBox(height: 16),
+                        PremiumButton(
+                          label: 'ترقية إلى ميرا بريميوم',
+                          icon: Icons.star_rounded,
+                          variant: PremiumButtonVariant.gold,
+                          onPressed: () => Navigator.pushNamed(
+                            context,
+                            AppRoutes.paywall,
+                            arguments: s,
+                          ),
                         ),
-                      ),
-                      const SizedBox(height: 16),
-                      PremiumButton(
-                        label: 'ترقية إلى ميرا بريميوم',
-                        icon: Icons.star_rounded,
-                        variant: PremiumButtonVariant.gold,
-                        onPressed: () => Navigator.pushNamed(
-                          context,
-                          AppRoutes.paywall,
-                          arguments: s,
-                        ),
-                      ),
+                      ],
                       if (kDebugMode) ...[
                         const SizedBox(height: 10),
                         PremiumButton(

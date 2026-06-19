@@ -42,12 +42,14 @@ class SkinAnalysisRemoteDataSource {
     String uid,
     SkinAnalysisResult result,
   ) async {
+    final previousScore = await _latestBeautyScore(uid);
     final doc = _analysesRef(uid).doc();
     final createdAt = DateTime.now();
     final report = SkinResultMapper.toReport(
       result,
       id: doc.id,
       createdAt: createdAt,
+      previousBeautyScore: previousScore,
     );
     final model = SkinReportModel.fromEntity(report);
 
@@ -60,6 +62,17 @@ class SkinAnalysisRemoteDataSource {
     }
 
     return model;
+  }
+
+  Future<int?> _latestBeautyScore(String uid) async {
+    final snapshot = await _analysesRef(uid)
+        .orderBy('createdAt', descending: true)
+        .limit(1)
+        .get();
+    if (snapshot.docs.isEmpty) return null;
+    final score = snapshot.docs.first.data()['score'];
+    if (score is num) return score.round();
+    return null;
   }
 
   Future<List<SkinReportModel>> fetchHistory({int limit = 50}) async {

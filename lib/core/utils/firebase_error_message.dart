@@ -1,5 +1,7 @@
 import 'package:firebase_auth/firebase_auth.dart';
 
+import '../constants/mira_app_identity.dart';
+
 String friendlyFirebaseError(Object error) {
   if (error is FirebaseException && error is! FirebaseAuthException) {
     switch (error.code) {
@@ -39,7 +41,7 @@ String friendlyFirebaseError(Object error) {
       case 'missing-client-identifier':
         return 'إعداد iOS ناقص — تأكد من GoogleService-Info.plist و REVERSED_CLIENT_ID في Info.plist';
       case 'app-not-authorized':
-        return 'التطبيق غير مصرّح — Bundle ID يجب أن يطابق Firebase (com.example.mirra)';
+        return 'التطبيق غير مصرّح — Bundle ID يجب أن يطابق Firebase (${MiraAppIdentity.bundleId})';
       case 'user-disabled':
         return 'هذا الحساب معطّل';
       default:

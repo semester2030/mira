@@ -1,4 +1,4 @@
-package com.example.mirra
+package app.mira.beauty
 
 import io.flutter.embedding.android.FlutterActivity
 

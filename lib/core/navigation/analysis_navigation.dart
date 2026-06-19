@@ -7,6 +7,7 @@ import '../../features/privacy/presentation/screens/privacy_consent_screen.dart'
 import '../../features/skin_analysis/domain/entities/skin_report.dart';
 import '../../features/dashboard/presentation/screens/new_analysis_screen.dart';
 import '../../features/recommendations/presentation/screens/recommendations_screen.dart';
+import '../../features/packages/presentation/providers/package_credit_provider.dart';
 import '../services/privacy_consent_storage.dart';
 import 'app_navigator.dart';
 import 'app_routes.dart';
@@ -53,6 +54,8 @@ abstract final class AnalysisNavigation {
     try {
       if (!context.mounted) return;
       if (!await _ensureConsent(context)) return;
+      if (!context.mounted) return;
+      if (!await PackageCreditGate.ensureSkinCreditsNav(context)) return;
       if (!context.mounted) return;
 
       await Navigator.of(context).push<void>(

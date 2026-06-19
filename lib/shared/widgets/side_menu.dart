@@ -1,4 +1,6 @@
 import 'package:flutter/material.dart';
+import '../../core/config/mira_features.dart';
+import '../../core/constants/marketplace_copy.dart';
 import '../../core/navigation/analysis_navigation.dart';
 import '../../core/navigation/app_routes.dart';
 import '../theme/colors.dart';
@@ -75,6 +77,9 @@ class SideMenu extends StatelessWidget {
                 _MenuTile(
                   icon: Icons.explore_outlined,
                   title: 'اكتشفي — شركاء ميرا',
+                  subtitle: MiraFeatures.marketplaceEnabled
+                      ? null
+                      : MarketplaceCopy.dashboardTeaser,
                   route: AppRoutes.discover,
                 ),
                 _MenuTile(icon: Icons.history_rounded, title: 'سجل تحليل البشرة', route: AppRoutes.history),
@@ -103,12 +108,14 @@ class SideMenu extends StatelessWidget {
 class _MenuTile extends StatelessWidget {
   final IconData icon;
   final String title;
+  final String? subtitle;
   final String? route;
   final VoidCallback? onTap;
 
   const _MenuTile({
     required this.icon,
     required this.title,
+    this.subtitle,
     this.route,
     this.onTap,
   });
@@ -148,7 +155,23 @@ class _MenuTile extends StatelessWidget {
             children: [
               Icon(icon, color: AppColors.primary, size: 22),
               const SizedBox(width: 12),
-              Expanded(child: Text(title, style: AppTypography.titleMedium)),
+              Expanded(
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Text(title, style: AppTypography.titleMedium),
+                    if (subtitle != null) ...[
+                      const SizedBox(height: 2),
+                      Text(
+                        subtitle!,
+                        style: AppTypography.bodySmall.copyWith(
+                          color: AppColors.textSecondary,
+                        ),
+                      ),
+                    ],
+                  ],
+                ),
+              ),
               const Icon(Icons.chevron_left, size: 18, color: AppColors.textSecondary),
             ],
           ),

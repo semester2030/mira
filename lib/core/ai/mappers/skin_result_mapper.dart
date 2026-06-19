@@ -1,4 +1,5 @@
 import '../../../features/skin_analysis/domain/entities/skin_report.dart';
+import '../../../features/skin_analysis/domain/services/beauty_score_engine.dart';
 import '../models/skin_analysis_result.dart';
 
 /// Maps provider contract → feature entity (Firestore / UI).
@@ -8,8 +9,9 @@ abstract final class SkinResultMapper {
     String? id,
     String? imageUrl,
     DateTime? createdAt,
+    int? previousBeautyScore,
   }) {
-    return SkinReport(
+    final preliminary = SkinReport(
       id: id,
       skinType: result.skinTypeAr,
       skinTypeEn: result.skinTypeEn,
@@ -32,6 +34,13 @@ abstract final class SkinResultMapper {
       skinAge: result.skinAge,
       concernScores: result.concernScores,
     );
+
+    final scored = BeautyScoreEngine.compute(
+      preliminary,
+      previousScore: previousBeautyScore,
+    );
+
+    return preliminary.copyWith(score: scored.finalScore.toDouble());
   }
 
   static SkinAnalysisResult fromReport(SkinReport report) {

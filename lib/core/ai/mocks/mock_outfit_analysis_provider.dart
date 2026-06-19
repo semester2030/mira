@@ -4,6 +4,7 @@ import '../models/mira_occasion.dart';
 import '../models/outfit_analysis_result.dart';
 import '../providers/outfit_analysis_provider.dart';
 import '../utils/image_seed.dart';
+import '../../../features/outfit_analysis/domain/entities/outfit_style_metrics.dart';
 
 /// Deterministic mock — simulates FASHN.ai until API key is configured.
 class MockOutfitAnalysisProvider implements OutfitAnalysisProvider {
@@ -43,7 +44,9 @@ class MockOutfitAnalysisProvider implements OutfitAnalysisProvider {
     final style = _styles[(seed ~/ 3) % _styles.length];
     final palette = _colorPalettes[(seed ~/ 5) % _colorPalettes.length];
 
-    final compatibilityScore = (78 + rng.nextInt(22)).toDouble();
+    final baseHealth = 52 + rng.nextInt(38);
+    final styleMetrics = _buildMetrics(baseHealth, rng, occasion);
+    final compatibilityScore = baseHealth.toDouble();
     final suitability = _occasionSuitability(occasion, compatibilityScore);
 
     return OutfitAnalysisResult(
@@ -58,6 +61,37 @@ class MockOutfitAnalysisProvider implements OutfitAnalysisProvider {
       alternativeColorsAr: _alternativeColorsAr(occasion),
       alternativeColorsEn: _alternativeColorsEn(occasion),
       occasion: occasion,
+      styleMetrics: styleMetrics,
+    );
+  }
+
+  static OutfitStyleMetrics _buildMetrics(
+    int baseHealth,
+    math.Random rng,
+    MiraOccasion occasion,
+  ) {
+    int jitter(int center, int spread) =>
+        (center + rng.nextInt(spread * 2 + 1) - spread).clamp(0, 100);
+
+    var occasionFit = jitter(baseHealth, 8);
+    var formalityGap = (100 - baseHealth + rng.nextInt(12)).clamp(0, 100);
+
+    if (occasion == MiraOccasion.interview || occasion == MiraOccasion.work) {
+      occasionFit = (occasionFit - 6).clamp(0, 100);
+      formalityGap = (formalityGap + 8).clamp(0, 100);
+    }
+
+    return OutfitStyleMetrics(
+      colorHarmony: jitter(baseHealth, 6),
+      occasionFit: occasionFit,
+      styleCoherence: jitter(baseHealth - 2, 7),
+      silhouetteBalance: jitter(baseHealth - 3, 6),
+      polish: jitter(baseHealth - 5, 8),
+      colorClashSeverity: (100 - baseHealth + rng.nextInt(10)).clamp(0, 100),
+      occasionMismatchSeverity: (100 - occasionFit + rng.nextInt(8)).clamp(0, 100),
+      tonalImbalanceSeverity: (100 - baseHealth + rng.nextInt(14)).clamp(0, 100),
+      accessoryOverloadSeverity: jitter(100 - baseHealth, 12),
+      formalityGapSeverity: formalityGap,
     );
   }
 
@@ -65,11 +99,13 @@ class MockOutfitAnalysisProvider implements OutfitAnalysisProvider {
     MiraOccasion occasion,
     double score,
   ) {
-    final level = score >= 90
+    final level = score >= 86
         ? (ar: 'ممتاز', en: 'Excellent')
-        : score >= 80
+        : score >= 74
             ? (ar: 'مناسب جدًا', en: 'Very suitable')
-            : (ar: 'مناسب', en: 'Suitable');
+            : score >= 62
+                ? (ar: 'مناسب', en: 'Suitable')
+                : (ar: 'يحتاج تحسين', en: 'Needs improvement');
 
     return (
       ar: '${level.ar} لمناسبة ${occasion.labelAr}',

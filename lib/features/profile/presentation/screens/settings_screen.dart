@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import '../../../../core/config/mira_features.dart';
 import '../../../../shared/widgets/mira_app_bar.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import '../../../../core/navigation/app_routes.dart';
@@ -11,6 +12,7 @@ import '../../../../shared/theme/colors.dart';
 import '../../../../shared/theme/typography.dart';
 import '../../../../shared/widgets/premium/premium_exports.dart';
 import '../../../subscription/presentation/widgets/subscription_usage_card.dart';
+import '../../../packages/presentation/widgets/package_credit_card.dart';
 
 class SettingsScreen extends StatefulWidget {
   const SettingsScreen({super.key});
@@ -113,8 +115,13 @@ class _SettingsScreenState extends State<SettingsScreen> {
         children: [
           if (AppSession.isGuest) const GuestBanner(),
           if (!AppSession.isGuest) ...[
-            const SubscriptionUsageCard(),
-            const SizedBox(height: 16),
+            if (MiraFeatures.packagesEnabled) ...[
+              const PackageCreditCard(),
+              const SizedBox(height: 16),
+            ] else if (MiraFeatures.showSubscriptionManagementUi) ...[
+              const SubscriptionUsageCard(),
+              const SizedBox(height: 16),
+            ],
           ],
           PremiumCard(
             child: Column(
@@ -146,14 +153,14 @@ class _SettingsScreenState extends State<SettingsScreen> {
                   onTap: () => Navigator.pushNamed(context, AppRoutes.profile),
                 ),
                 const Divider(height: 1, color: AppColors.border),
-                if (!AppSession.isGuest)
+                if (!AppSession.isGuest && MiraFeatures.showSubscriptionManagementUi)
                   _SettingsTile(
                     icon: Icons.diamond_outlined,
                     title: 'الاشتراك',
                     subtitle: 'إدارة ميرا بريميوم',
                     onTap: () => Navigator.pushNamed(context, AppRoutes.manageSubscription),
                   ),
-                if (!AppSession.isGuest)
+                if (!AppSession.isGuest && MiraFeatures.showSubscriptionManagementUi)
                   const Divider(height: 1, color: AppColors.border),
                 _SettingsTile(
                   icon: Icons.notifications_outlined,

@@ -1,3 +1,4 @@
+import '../../../features/intelligence/domain/entities/mira_style_report.dart';
 import '../../../features/outfit_analysis/domain/entities/outfit_report.dart';
 import '../models/mira_occasion.dart';
 import '../models/outfit_analysis_result.dart';
@@ -7,6 +8,8 @@ abstract final class OutfitResultMapper {
     OutfitAnalysisResult result, {
     String? id,
     DateTime? createdAt,
+    MiraStyleReport? miraStyleReport,
+    StyleFusion? styleFusion,
   }) {
     return OutfitReport(
       id: id,
@@ -23,6 +26,8 @@ abstract final class OutfitResultMapper {
       occasionId: result.occasion.id,
       occasionLabelAr: result.occasion.labelAr,
       createdAt: createdAt,
+      miraStyleReport: miraStyleReport,
+      styleFusion: styleFusion,
     );
   }
 

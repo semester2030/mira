@@ -26,6 +26,7 @@ import { buildTreatmentPlan } from './pipeline/treatment-plan-engine';
 import { buildWeeklyPlan } from './pipeline/weekly-plan-engine';
 import { buildBeautyJourney } from './pipeline/beauty-journey-engine';
 import { buildConfidenceLayer } from './pipeline/confidence-layer';
+import { computeBeautyScore } from './pipeline/beauty-score-engine';
 import {
   extractLegacySkinFromStored,
   extractMiraReportFromStored,
@@ -44,6 +45,7 @@ export class IntelligenceService {
       city?: string;
       birthYear?: number | null;
       rawYouCam?: unknown;
+      previousBeautyScore?: number | null;
     },
   ): Promise<MiraBeautyReport> {
     const safety = applyChildSafetyGuard({
@@ -77,10 +79,14 @@ export class IntelligenceService {
       concernIds: mainConcerns.map((c) => c.id),
     });
 
+    const beautyScore = computeBeautyScore(skin, {
+      previousScore: options?.previousBeautyScore,
+    });
+
     const base: MiraBeautyReport = {
       version: 1,
       spatialConfidence: zone.spatialConfidence,
-      overallBeautyScore: skin.beautyScore,
+      overallBeautyScore: beautyScore.finalScore,
       headlineAr: buildHeadlineAr(skin),
       skinTypeAr: skin.skinTypeAr,
       skinTypeEn: skin.skinTypeEn,

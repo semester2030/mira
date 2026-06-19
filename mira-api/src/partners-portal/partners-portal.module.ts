@@ -1,5 +1,5 @@
 import { Module } from '@nestjs/common';
-import { AdminApiKeyGuard } from './guards/admin-api-key.guard';
+import { AdminApiKeyGuard } from '../common/guards/admin-api-key.guard';
 import { PartnerTokenGuard } from './guards/partner-token.guard';
 import { PartnersPortalController } from './partners-portal.controller';
 import { PartnersPortalService } from './partners-portal.service';

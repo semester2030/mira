@@ -2,6 +2,8 @@ import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/material.dart';
 import '../../../../core/navigation/app_routes.dart';
+import '../../../../core/config/mira_features.dart';
+import '../../../../core/constants/marketplace_copy.dart';
 import '../../../../core/services/app_session.dart';
 import '../../../../core/navigation/analysis_navigation.dart';
 import '../../../../shared/widgets/guest_banner.dart';
@@ -115,7 +117,9 @@ class DashboardScreen extends StatelessWidget {
                       children: [
                         Text('اكتشفي', style: AppTypography.titleMedium),
                         Text(
-                          'ماركات · عيادات · صالونات حسب تحليلك',
+                          MiraFeatures.marketplaceEnabled
+                              ? 'ماركات · عيادات · صالونات حسب تحليلك'
+                              : MarketplaceCopy.dashboardTeaser,
                           style: AppTypography.bodySmall.copyWith(
                             color: AppColors.textSecondary,
                           ),
@@ -337,7 +341,7 @@ class _DashboardAnalysisCardsState extends State<_DashboardAnalysisCards> {
           padding: const EdgeInsets.all(22),
           child: AnalysisLaunchCardCopy(
             title: 'حلّلي إطلالتك',
-            subtitle: 'توافق الألوان والمناسبة — خاص وآمن',
+            subtitle: 'سريع عدة مرات يومياً — أو ذكي مرتبط ببشرتك',
             trailing: Icon(
               Icons.checkroom_rounded,
               size: 48,

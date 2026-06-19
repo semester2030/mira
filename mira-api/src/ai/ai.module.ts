@@ -1,12 +1,16 @@
 import { Module } from '@nestjs/common';
 import { ConfigService } from '@nestjs/config';
 import { MiraRecommendationEngine } from './engine/mira-recommendation.engine';
+import { GoogleVisionOutfitService } from './google-vision/google-vision-outfit.service';
+import { LlmOutfitReasoningService } from './llm/llm-outfit-reasoning.service';
 import { FashnOutfitProvider } from './mocks/fashn-outfit.provider';
 import { MockOutfitAnalysisProvider } from './mocks/mock-outfit-analysis.provider';
 import { MockSkinAnalysisProvider } from './mocks/mock-skin-analysis.provider';
 import { PerfectCorpSkinProvider } from './mocks/perfect-corp-skin.provider';
 import { PerfectCorpService } from './services/perfect-corp.service';
+import { OutfitHybridIntelligenceService } from './services/outfit-hybrid-intelligence.service';
 import { FaceGateService } from './face-gate/face-gate.service';
+import { OutfitQualityGateService } from './outfit-gate/outfit-quality-gate.service';
 import {
   OUTFIT_ANALYSIS_PROVIDER,
   OutfitAnalysisProvider,
@@ -23,8 +27,12 @@ import {
     MockOutfitAnalysisProvider,
     PerfectCorpService,
     FaceGateService,
+    OutfitQualityGateService,
     PerfectCorpSkinProvider,
     FashnOutfitProvider,
+    GoogleVisionOutfitService,
+    LlmOutfitReasoningService,
+    OutfitHybridIntelligenceService,
     {
       provide: SKIN_ANALYSIS_PROVIDER,
       inject: [ConfigService, PerfectCorpSkinProvider, MockSkinAnalysisProvider],
@@ -57,6 +65,10 @@ import {
     OUTFIT_ANALYSIS_PROVIDER,
     MiraRecommendationEngine,
     FaceGateService,
+    OutfitQualityGateService,
+    GoogleVisionOutfitService,
+    LlmOutfitReasoningService,
+    OutfitHybridIntelligenceService,
   ],
 })
 export class AiModule {}

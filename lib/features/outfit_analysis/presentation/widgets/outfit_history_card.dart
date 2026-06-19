@@ -22,7 +22,7 @@ class OutfitHistoryCard extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return PressableScale(
-      onTap: () => Navigator.pushNamed(context, AppRoutes.outfitResult, arguments: report),
+      onTap: () => Navigator.pushNamed(context, AppRoutes.miraStyleReport, arguments: report),
       child: PremiumCard(
         margin: const EdgeInsets.only(bottom: 8),
         child: Row(
@@ -44,7 +44,7 @@ class OutfitHistoryCard extends StatelessWidget {
                   if (_date().isNotEmpty)
                     Text(_date(), style: AppTypography.labelSmall.copyWith(color: AppColors.textSecondary)),
                   Text(
-                    'توافق ${report.compatibilityScore.round()}%',
+                    'توافق ${(report.miraStyleReport?.outfitScore ?? report.compatibilityScore.round())}%',
                     style: AppTypography.bodySmall,
                   ),
                 ],

@@ -1,6 +1,7 @@
 import 'package:equatable/equatable.dart';
 
 import 'mira_occasion.dart';
+import '../../../features/outfit_analysis/domain/entities/outfit_style_metrics.dart';
 
 /// Canonical outfit analysis output (provider-agnostic contract).
 /// Maps to FASHN.ai / Style DNA when API keys are configured.
@@ -16,6 +17,7 @@ class OutfitAnalysisResult extends Equatable {
   final List<String> alternativeColorsAr;
   final List<String> alternativeColorsEn;
   final MiraOccasion occasion;
+  final OutfitStyleMetrics? styleMetrics;
 
   const OutfitAnalysisResult({
     required this.compatibilityScore,
@@ -29,7 +31,38 @@ class OutfitAnalysisResult extends Equatable {
     required this.alternativeColorsAr,
     required this.alternativeColorsEn,
     required this.occasion,
+    this.styleMetrics,
   });
+
+  OutfitAnalysisResult copyWith({
+    double? compatibilityScore,
+    List<String>? dominantColors,
+    String? garmentTypeAr,
+    String? garmentTypeEn,
+    String? styleCategoryAr,
+    String? styleCategoryEn,
+    String? occasionSuitabilityAr,
+    String? occasionSuitabilityEn,
+    List<String>? alternativeColorsAr,
+    List<String>? alternativeColorsEn,
+    MiraOccasion? occasion,
+    OutfitStyleMetrics? styleMetrics,
+  }) {
+    return OutfitAnalysisResult(
+      compatibilityScore: compatibilityScore ?? this.compatibilityScore,
+      dominantColors: dominantColors ?? this.dominantColors,
+      garmentTypeAr: garmentTypeAr ?? this.garmentTypeAr,
+      garmentTypeEn: garmentTypeEn ?? this.garmentTypeEn,
+      styleCategoryAr: styleCategoryAr ?? this.styleCategoryAr,
+      styleCategoryEn: styleCategoryEn ?? this.styleCategoryEn,
+      occasionSuitabilityAr: occasionSuitabilityAr ?? this.occasionSuitabilityAr,
+      occasionSuitabilityEn: occasionSuitabilityEn ?? this.occasionSuitabilityEn,
+      alternativeColorsAr: alternativeColorsAr ?? this.alternativeColorsAr,
+      alternativeColorsEn: alternativeColorsEn ?? this.alternativeColorsEn,
+      occasion: occasion ?? this.occasion,
+      styleMetrics: styleMetrics ?? this.styleMetrics,
+    );
+  }
 
   @override
   List<Object?> get props => [
@@ -44,5 +77,6 @@ class OutfitAnalysisResult extends Equatable {
         alternativeColorsAr,
         alternativeColorsEn,
         occasion,
+        styleMetrics,
       ];
 }

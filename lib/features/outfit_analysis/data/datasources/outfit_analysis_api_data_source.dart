@@ -6,6 +6,8 @@ import '../../../../core/ai/models/outfit_analysis_result.dart';
 import '../../../../core/network/api_client.dart';
 import '../../../../core/network/mira_api_endpoints.dart';
 import '../../../../core/privacy/temp_image_cleanup.dart';
+import '../../../intelligence/data/mappers/mira_style_report_mapper.dart';
+import '../../../outfit_analysis/domain/entities/outfit_style_metrics.dart';
 import '../../domain/entities/outfit_report.dart';
 
 class OutfitAnalysisApiDataSource {
@@ -26,24 +28,16 @@ class OutfitAnalysisApiDataSource {
       final response = await _dio.post<Map<String, dynamic>>(
         MiraApiEndpoints.outfitAnalysis,
         data: formData,
+        options: Options(
+          sendTimeout: const Duration(seconds: 120),
+          receiveTimeout: const Duration(seconds: 120),
+        ),
       );
 
       final data = response.data;
       if (data == null) throw Exception('استجابة فارغة من الخادم');
 
-      final outfitJson = data['outfit'] as Map<String, dynamic>?;
-      if (outfitJson == null) throw Exception('تنسيق استجابة الإطلالة غير صالح');
-
-      final result = _parseOutfitResult(outfitJson, occasion);
-      final id = data['id'] as String?;
-      final createdAtRaw = data['createdAt'] as String?;
-      final createdAt = createdAtRaw != null ? DateTime.tryParse(createdAtRaw) : null;
-
-      return OutfitResultMapper.toReport(
-        result,
-        id: id,
-        createdAt: createdAt ?? DateTime.now(),
-      );
+      return _parseResponse(data, occasion);
     } finally {
       await TempImageCleanup.deleteIfExists(imagePath);
     }
@@ -58,16 +52,31 @@ class OutfitAnalysisApiDataSource {
     final list = response.data ?? [];
     return list.map((item) {
       final map = item as Map<String, dynamic>;
-      final outfitJson = map['outfit'] as Map<String, dynamic>;
       final occasionId = map['occasionId'] as String? ?? 'casual';
       final occasion = MiraOccasion.fromId(occasionId) ?? MiraOccasion.casual;
-      final result = _parseOutfitResult(outfitJson, occasion);
-      return OutfitResultMapper.toReport(
-        result,
-        id: map['id'] as String,
-        createdAt: DateTime.tryParse(map['createdAt'] as String? ?? ''),
-      );
+      return _parseResponse(map, occasion);
     }).toList();
+  }
+
+  OutfitReport _parseResponse(Map<String, dynamic> data, MiraOccasion fallbackOccasion) {
+    final outfitJson = data['outfit'] as Map<String, dynamic>?;
+    if (outfitJson == null) throw Exception('تنسيق استجابة الإطلالة غير صالح');
+
+    final result = _parseOutfitResult(outfitJson, fallbackOccasion);
+    final styleReportJson = data['miraStyleReport'] as Map<String, dynamic>?;
+    final styleReport =
+        styleReportJson != null ? MiraStyleReportMapper.fromJson(styleReportJson) : null;
+
+    final id = data['id'] as String?;
+    final createdAtRaw = data['createdAt'] as String?;
+    final createdAt = createdAtRaw != null ? DateTime.tryParse(createdAtRaw) : null;
+
+    return OutfitResultMapper.toReport(
+      result,
+      id: id,
+      createdAt: createdAt ?? DateTime.now(),
+      miraStyleReport: styleReport,
+    );
   }
 
   OutfitAnalysisResult _parseOutfitResult(
@@ -76,6 +85,7 @@ class OutfitAnalysisApiDataSource {
   ) {
     final occasionId = json['occasion'] as String? ?? fallbackOccasion.id;
     final occasion = MiraOccasion.fromId(occasionId) ?? fallbackOccasion;
+    final metricsJson = json['styleMetrics'] as Map<String, dynamic>?;
 
     return OutfitAnalysisResult(
       compatibilityScore: (json['compatibilityScore'] as num).toDouble(),
@@ -95,6 +105,8 @@ class OutfitAnalysisApiDataSource {
           .map((e) => e.toString())
           .toList(),
       occasion: occasion,
+      styleMetrics:
+          metricsJson != null ? OutfitStyleMetrics.fromJson(metricsJson) : null,
     );
   }
 }

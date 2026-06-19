@@ -37,6 +37,11 @@ class StyleFusion {
 class MiraStyleReport {
   final int version;
   final int outfitScore;
+  final int confidence;
+  final String severityLevel;
+  final String strongestIssueAr;
+  final int improvementPotential;
+  final bool occasionReady;
   final String styleCategoryAr;
   final String styleCategoryEn;
   final String garmentTypeAr;
@@ -46,10 +51,17 @@ class MiraStyleReport {
   final String occasionSuitabilityAr;
   final String headlineAr;
   final String summaryAr;
+  final List<String> styleTipsAr;
+  final String disclaimerAr;
 
   const MiraStyleReport({
     required this.version,
     required this.outfitScore,
+    this.confidence = 70,
+    this.severityLevel = '',
+    this.strongestIssueAr = '',
+    this.improvementPotential = 0,
+    this.occasionReady = false,
     required this.styleCategoryAr,
     required this.styleCategoryEn,
     required this.garmentTypeAr,
@@ -59,5 +71,7 @@ class MiraStyleReport {
     required this.occasionSuitabilityAr,
     required this.headlineAr,
     required this.summaryAr,
+    this.styleTipsAr = const [],
+    this.disclaimerAr = '',
   });
 }

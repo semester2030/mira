@@ -3,6 +3,8 @@ import 'dart:math' as math;
 import '../models/skin_analysis_result.dart';
 import '../providers/skin_analysis_provider.dart';
 import '../utils/image_seed.dart';
+import '../../../features/skin_analysis/domain/entities/skin_report.dart';
+import '../../../features/skin_analysis/domain/services/beauty_score_engine.dart';
 
 /// Deterministic mock — simulates AI from image bytes until Perfect Corp API is connected.
 class MockSkinAnalysisProvider implements SkinAnalysisProvider {
@@ -73,8 +75,6 @@ class MockSkinAnalysisProvider implements SkinAnalysisProvider {
     final acne = (rng.nextInt(4)).clamp(0, 5);
     final redness = (rng.nextInt(3)).clamp(0, 5);
 
-    final beautyScore = ((hydration + (100 - oiliness)) / 2).clamp(0, 100).toDouble();
-
     final extraAr = acne >= 3
         ? ' استخدمي منتجات مهدئة للاحمرار والبثور.'
         : '';
@@ -99,6 +99,22 @@ class MockSkinAnalysisProvider implements SkinAnalysisProvider {
       'firmness': uiFromSeverity(wrinkles),
       'eye_bag': ((hydration + uiFromSeverity(wrinkles)) / 2).round(),
     };
+
+    final beautyScore = BeautyScoreEngine.compute(
+      SkinReport(
+        skinType: profile.ar,
+        score: 0,
+        hydration: hydration,
+        oiliness: oiliness,
+        pores: pores,
+        wrinkles: wrinkles,
+        spots: darkSpots,
+        acne: acne,
+        redness: redness,
+        advice: '',
+        concernScores: concernScores,
+      ),
+    ).finalScore.toDouble();
 
     final skinAge = 26 + (seed % 14);
 

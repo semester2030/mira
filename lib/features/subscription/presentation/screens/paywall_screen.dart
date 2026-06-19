@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import '../../../../shared/widgets/mira_app_bar.dart';
 
 import '../../../../core/analytics/mira_analytics.dart';
+import '../../../../core/config/mira_features.dart';
 import '../../../../core/navigation/app_routes.dart';
 import '../../domain/entities/subscription_status.dart';
 import '../../../../shared/theme/colors.dart';
@@ -13,6 +14,19 @@ class PaywallScreen extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    if (!MiraFeatures.showSubscriptionPurchaseUi) {
+      return Scaffold(
+        appBar: const MiraAppBar(pageTitle: 'ميرا بريميوم'),
+        body: EmptyState(
+          icon: Icons.lock_outline_rounded,
+          title: 'غير متاح حالياً',
+          message: 'خطط ميرا بريميوم ستتوفر عبر App Store في تحديث قادم.',
+          actionLabel: 'رجوع',
+          onAction: () => Navigator.pop(context),
+        ),
+      );
+    }
+
     MiraAnalytics.subscriptionViewed();
     final status = ModalRoute.of(context)?.settings.arguments as SubscriptionStatus?;
 
@@ -66,11 +80,6 @@ class PaywallScreen extends StatelessWidget {
                       _benefit('توصيات مكياج وإكسسوارات كاملة'),
                       _benefit('أولوية في التحليل بالذكاء الاصطناعي'),
                       _benefit('خصوصية تامة — لا نحتفظ بصورك'),
-                      const SizedBox(height: 12),
-                      Text(
-                        '٣٩ ريال / شهر',
-                        style: AppTypography.titleLarge.copyWith(color: AppColors.primary),
-                      ),
                     ],
                   ),
                 ),

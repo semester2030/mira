@@ -1,0 +1,533 @@
+<!DOCTYPE html>
+<html lang="ar" dir="rtl">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <meta name="description" content="مرجع جاهزية إنتاج ميرا — تحليل الوجه مكتمل تقريباً · تحليل الإطلالة قيد البناء · أدلة من الكود وخطة النشر." />
+  <title>ميرا | مرجع الجاهزية للإنتاج — Face & Outfit</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link href="https://fonts.googleapis.com/css2?family=Tajawal:wght@400;500;700;800&display=swap" rel="stylesheet" />
+  <link rel="stylesheet" href="mira-production-readiness.css" />
+</head>
+<body>
+  <header class="site-header">
+    <div class="container header-inner">
+      <a class="brand" href="index.html">ميرا · Mira</a>
+      <nav class="nav">
+        <a href="#verdict">الحكم</a>
+        <a href="#face-done">الوجه ✓</a>
+        <a href="#face-proof">أدلة الوجه</a>
+        <a href="#face-gaps">فجوات الوجه</a>
+        <a href="#outfit-status">الإطلالة</a>
+        <a href="#outfit-gaps">متطلبات الإطلالة</a>
+        <a href="#compare">المقارنة</a>
+        <a href="#launch">خطة النشر</a>
+        <a href="app-store-readiness.html">App Store</a>
+        <a href="mira-intelligence-layer.html">Intelligence Layer</a>
+      </nav>
+    </div>
+  </header>
+
+  <main class="container">
+    <section class="hero hero-production">
+      <span class="badge">MIRA PRODUCTION READINESS · يونيو 2026</span>
+      <h1>مرجع الجاهزية للإنتاج<br />تحليل الوجه · تحليل الإطلالة</h1>
+      <p class="lead">
+        وثيقة تقنية–منتجية رسمية تُثبت ما نُفّذ فعلاً في المستودع
+        <code>semester2030/mira</code>، وتُحدّد بدقة ما تبقّى قبل النشر العام.
+        كل بند مربوط بمسار ملف أو commit أو اختبار — بدون تسويق فارغ.
+      </p>
+      <div class="hero-meta">
+        <span class="meta-pill">📱 Flutter + NestJS + Prisma</span>
+        <span class="meta-pill">🧪 9 اختبارات Flutter · 14+ pipeline specs</span>
+        <span class="meta-pill">🔗 main @ 37395ba+</span>
+        <span class="meta-pill">🎯 Face ~82% · Outfit ~45%</span>
+      </div>
+    </section>
+
+    <!-- VERDICT -->
+    <section id="verdict">
+      <h2>١. الحكم التنفيذي</h2>
+      <div class="grid-2">
+        <div class="card ok">
+          <h3 style="margin-top:0;">✅ تحليل الوجه — قريب من الإنتاج</h3>
+          <p>
+            مسار كامل: التقاط حي (MediaPipe) → بوابة وجه (ML Kit + Server) → YouCam/Perfect Corp →
+            <strong>Mira Intelligence Layer</strong> → تقرير جمال premium → خريطة مؤشرات → Beauty Score Engine واقعي.
+          </p>
+          <div class="maturity-bar"><span style="width:82%"></span></div>
+          <p style="margin-bottom:0;font-size:0.88rem;color:var(--muted);">جاهزية تقديرية: <strong>82%</strong></p>
+        </div>
+        <div class="card warn">
+          <h3 style="margin-top:0;">⚠️ تحليل الإطلالة — يحتاج طبقة intelligence</h3>
+          <p>
+            واجهة وتدفق API موجودان، لكن الذكاء الافتراضي <strong>Mock/FASHN stub</strong>،
+            بدون quality gate، بدون Style Fusion في UI، وبدون parity مع عمق تقرير البشرة.
+          </p>
+          <div class="maturity-bar"><span style="width:45%"></span></div>
+          <p style="margin-bottom:0;font-size:0.88rem;color:var(--muted);">جاهزية تقديرية: <strong>45%</strong></p>
+        </div>
+      </div>
+
+      <div class="verdict-grid">
+        <div class="verdict-item">
+          <div class="score-ring high">82%</div>
+          <span>تحليل الوجه</span>
+        </div>
+        <div class="verdict-item">
+          <div class="score-ring low">45%</div>
+          <span>تحليل الإطلالة</span>
+        </div>
+        <div class="verdict-item">
+          <div class="score-ring mid">64%</div>
+          <span>المنتج الكامل</span>
+        </div>
+        <div class="verdict-item">
+          <strong>2–4 أسابيع</strong>
+          <span>تقدير لإطلاق الإطلالة production</span>
+        </div>
+      </div>
+
+      <div class="card">
+        <h3 style="margin-top:0;">قرار النشر المقترح</h3>
+        <table>
+          <thead>
+            <tr><th>المرحلة</th><th>المحتوى</th><th>الحالة</th></tr>
+          </thead>
+          <tbody>
+            <tr>
+              <td><strong>Soft Launch</strong></td>
+              <td>تحليل البشرة + تقرير ميرا + خريطة مؤشرات</td>
+              <td><span class="status-pill done">جاهز تقريباً</span></td>
+            </tr>
+            <tr>
+              <td><strong>Beta</strong></td>
+              <td>تحليل الإطلالة مع Mock + شفافية «تجريبي»</td>
+              <td><span class="status-pill partial">ممكن الآن</span></td>
+            </tr>
+            <tr>
+              <td><strong>Production Full</strong></td>
+              <td>بشرة + إطلالة + Fusion + Marketplace موحّد</td>
+              <td><span class="status-pill missing">يتطلب P0 الإطلالة</span></td>
+            </tr>
+          </tbody>
+        </table>
+      </div>
+    </section>
+
+    <!-- FACE DONE -->
+    <section id="face-done">
+      <h2>٢. تحليل الوجه — ما نُفّذ (بالتفصيل)</h2>
+
+      <h3>٢.١ التدفق end-to-end</h3>
+      <div class="flow flow-gold">NewAnalysisScreen
+  → FaceCapturePanel (Camera + MediaPipe 468 landmarks)
+  → FaceMeshQualityGate (محاذاة · حجم · استقرار)
+  → FaceGateValidator ML Kit (وجه واحد · زاوية · مركز)
+  → FaceImageProcessor (EXIF · crop · exposure boost)
+  → POST /api/v1/ai/skin-analysis
+  → FaceGateService (Sharp server-side)
+  → PerfectCorpSkinProvider → YouCam S2S
+  → IntelligenceService (15+ engines)
+  → MiraBeautyReportScreen</div>
+
+      <h3>٢.٢ طبقات المنتج المنفّذة</h3>
+      <div class="grid-2">
+        <div class="card">
+          <h4 style="margin-top:0;">A · Live Capture (Premium)</h4>
+          <ul>
+            <li>MediaPipe face mesh — 468 نقطة</li>
+            <li>Scanning overlay + region painters</li>
+            <li>Quality gate قبل الالتقاط</li>
+            <li>معالجة صورة مطابقة للمعاينة</li>
+          </ul>
+          <code>lib/features/skin_analysis/presentation/live_face_map/</code>
+        </div>
+        <div class="card">
+          <h4 style="margin-top:0;">B · Mira Beauty Report</h4>
+          <ul>
+            <li>Beauty Score Hero + حلقة تقدم</li>
+            <li>Main Concerns + Narratives عربية</li>
+            <li>Daily Routine + Weekly Plan</li>
+            <li>Beauty Journey + Progress Forecast</li>
+            <li>Confidence Layer + Age Comparison</li>
+            <li>Marketplace recommendations</li>
+          </ul>
+          <code>lib/features/intelligence/presentation/screens/mira_beauty_report_screen.dart</code>
+        </div>
+        <div class="card">
+          <h4 style="margin-top:0;">C · Face Map (Production-grade)</h4>
+          <ul>
+            <li>9 concerns — mapping فريد لكل مؤشر</li>
+            <li>Heatmap عضوي + Wrinkle lines + Acne spots + Texture grain</li>
+            <li>Score-based density (0.15→0.72)</li>
+            <li>Transitions 300ms easeInOutCubic</li>
+            <li>Disclaimer قانوني محدّث</li>
+          </ul>
+          <code>lib/features/intelligence/presentation/widgets/beauty_report_face_map/</code>
+          <p style="font-size:0.85rem;color:var(--muted);">Commits: <code>37395ba</code> · <code>0502dcd</code> · <code>fd5d0bc</code></p>
+        </div>
+        <div class="card">
+          <h4 style="margin-top:0;">D · Beauty Score Engine (Realistic)</h4>
+          <ul>
+            <li>Weighted positives — penalty-based negatives</li>
+            <li>Compound penalties (دهون+مسام · حبوب+احمرار · …)</li>
+            <li>Capture confidence multiplier</li>
+            <li>Temporal smoothing ±4</li>
+            <li>Distribution: 58–82 typical · 90+ نادر</li>
+          </ul>
+          <code>lib/features/skin_analysis/domain/services/beauty_score_engine.dart</code>
+          <code>mira-api/src/intelligence/pipeline/beauty-score-engine.ts</code>
+        </div>
+      </div>
+
+      <h3>٢.٣ Backend Intelligence Pipeline</h3>
+      <table>
+        <thead>
+          <tr><th>Engine</th><th>الملف</th><th>الاختبار</th></tr>
+        </thead>
+        <tbody>
+          <tr><td>Beauty Score</td><td><code>beauty-score-engine.ts</code></td><td><code>beauty-score-engine.spec.ts</code></td></tr>
+          <tr><td>Face Map</td><td><code>face-map-engine.ts</code></td><td><code>face-map-engine.spec.ts</code></td></tr>
+          <tr><td>Narrative</td><td><code>narrative-engine.ts</code></td><td><code>narrative-engine.spec.ts</code></td></tr>
+          <tr><td>Treatment Plan</td><td><code>treatment-plan-engine.ts</code></td><td><code>treatment-plan-engine.spec.ts</code></td></tr>
+          <tr><td>Weekly Plan</td><td><code>weekly-plan-engine.ts</code></td><td><code>weekly-plan-engine.spec.ts</code></td></tr>
+          <tr><td>Beauty Journey</td><td><code>beauty-journey-engine.ts</code></td><td><code>beauty-journey-engine.spec.ts</code></td></tr>
+          <tr><td>Confidence Layer</td><td><code>confidence-layer.ts</code></td><td><code>confidence-layer.spec.ts</code></td></tr>
+          <tr><td>Progress Forecast</td><td><code>progress-engine.ts</code></td><td><code>progress-engine.spec.ts</code></td></tr>
+          <tr><td>Age Intelligence</td><td><code>age-intelligence.ts</code></td><td><code>age-intelligence.spec.ts</code></td></tr>
+          <tr><td>Child Safety</td><td><code>child-safety-guard.ts</code></td><td>integrated</td></tr>
+          <tr><td>Spatial / YouCam</td><td><code>spatial-spike.ts</code> · <code>youcam-spatial-parser.ts</code></td><td><code>spatial-spike.spec.ts</code></td></tr>
+          <tr><td>Style Fusion</td><td><code>fusion-engine.ts</code></td><td><code>fusion-engine.spec.ts</code></td></tr>
+        </tbody>
+      </table>
+    </section>
+
+    <!-- FACE PROOF -->
+    <section id="face-proof">
+      <h2>٣. أدلة تحليل الوجه — إثباتات من الكود</h2>
+
+      <div class="card ok">
+        <h3 style="margin-top:0;">✅ Commits pushed (main)</h3>
+        <ul class="proof-list">
+          <li><strong>37395ba</strong> — Production-grade face map renderers (heatmap · lines · spots · grain)<br /><code>11 files · +831 lines</code></li>
+          <li><strong>0502dcd</strong> — Score-driven guided overlay system<br /><code>report_face_map_spec · animated layers · 9 tests</code></li>
+          <li><strong>fd5d0bc</strong> — Analytical face map + live capture quality<br /><code>49 files · MediaPipe · intelligence layer</code></li>
+        </ul>
+      </div>
+
+      <h3>اختبارات Flutter (9 ملفات — 4 مخصصة للوجه)</h3>
+      <table>
+        <thead><tr><th>الاختبار</th><th>ما يثبته</th></tr></thead>
+        <tbody>
+          <tr><td><code>test/report_face_map_rendering_test.dart</code></td><td>Geometry bounds · opacity bands · concern uniqueness · disclaimer</td></tr>
+          <tr><td><code>test/beauty_score_engine_test.dart</code></td><td>No inflation · compound penalties · temporal ±4 · capture quality</td></tr>
+          <tr><td><code>test/face_mesh_quality_gate_test.dart</code></td><td>Live capture quality rules</td></tr>
+          <tr><td><code>test/face_gate_rules_test.dart</code></td><td>ML Kit face gate thresholds</td></tr>
+          <tr><td><code>test/analysis_navigation_test.dart</code></td><td>Analysis flow routing</td></tr>
+        </tbody>
+      </table>
+
+      <h3>API Endpoints (Production path)</h3>
+      <table>
+        <thead><tr><th>Method</th><th>Path</th><th>الملف</th></tr></thead>
+        <tbody>
+          <tr><td>POST</td><td><code>/api/v1/ai/skin-analysis</code></td><td><code>mira-api/src/ai/ai-gateway.controller.ts</code></td></tr>
+          <tr><td>GET</td><td><code>/api/v1/skin-analysis/history</code></td><td><code>mira-api/src/skin-analysis/skin-analysis.controller.ts</code></td></tr>
+          <tr><td>GET</td><td><code>/api/v1/intelligence/progress</code></td><td><code>mira-api/src/intelligence/intelligence.controller.ts</code></td></tr>
+        </tbody>
+      </table>
+
+      <h3>Config & Security</h3>
+      <ul>
+        <li><code>USE_MIRA_API=true</code> — Flutter default → Render backend</li>
+        <li><code>SKIN_PROVIDER=perfect_corp</code> — YouCam production</li>
+        <li>Perfect Corp keys server-only — لا تُرسل للعميل</li>
+        <li>الصورة تُحذف بعد التحليل — audit log فقط</li>
+        <li>Rate limit + subscription gate على <code>SkinAnalysisService</code></li>
+      </ul>
+    </section>
+
+    <!-- FACE GAPS -->
+    <section id="face-gaps">
+      <h2>٤. تحليل الوجه — المتبقي قبل النشر الكامل</h2>
+      <table>
+        <thead><tr><th>#</th><th>البند</th><th>الأولوية</th><th>التفاصيل</th></tr></thead>
+        <tbody>
+          <tr>
+            <td>1</td>
+            <td>Beauty Score Engine commit + push</td>
+            <td><span class="status-pill wip">P0</span></td>
+            <td>منفّذ محلياً — <code>beauty_score_engine.dart</code> · <code>beauty-score-engine.ts</code> — بانتظار commit</td>
+          </tr>
+          <tr>
+            <td>2</td>
+            <td>Spatial Face Map (YouCam pixel/regional)</td>
+            <td><span class="status-pill partial">P1</span></td>
+            <td>الكود جاهز — YouCam S2S يُرجع global scores فقط · الوضع الحالي: educational map</td>
+          </tr>
+          <tr>
+            <td>3</td>
+            <td>Wire CaptureQuality → Score on upload</td>
+            <td><span class="status-pill partial">P1</span></td>
+            <td><code>CaptureQualitySignals</code> موجود — defaults neutral · لم يُربط بـ mesh metrics بعد</td>
+          </tr>
+          <tr>
+            <td>4</td>
+            <td>PERFECT_CORP_FALLBACK_MOCK=false في prod</td>
+            <td><span class="status-pill wip">P0</span></td>
+            <td>تجنّب silent mock عند فشل YouCam</td>
+          </tr>
+          <tr>
+            <td>5</td>
+            <td>E2E integration test (API + Flutter)</td>
+            <td><span class="status-pill partial">P1</span></td>
+            <td>لا يوجد test لـ <code>SkinAnalysisService</code> end-to-end</td>
+          </tr>
+          <tr>
+            <td>6</td>
+            <td>Guest mode transparency</td>
+            <td><span class="status-pill partial">P2</span></td>
+            <td>Mock provider للضيوف — يحتاج badge «تجريبي»</td>
+          </tr>
+          <tr>
+            <td>7</td>
+            <td>Firestore legacy path</td>
+            <td><span class="status-pill partial">P2</span></td>
+            <td><code>useBackend=false</code> — مسار قديم · deprecate</td>
+          </tr>
+        </tbody>
+      </table>
+    </section>
+
+    <!-- OUTFIT STATUS -->
+    <section id="outfit-status">
+      <h2>٥. تحليل الإطلالة — الوضع الحالي</h2>
+
+      <h3>٥.١ التدفق الموجود</h3>
+      <div class="flow">OutfitUploadScreen (اختيار صورة)
+  → OccasionSelectScreen (زفاف · عمل · كاجوال · …)
+  → POST /api/v1/ai/outfit-analysis
+  → OutfitAnalysisProvider (Mock default · FASHN stub)
+  → OutfitResultScreen (score + colors + suitability)
+  → OutfitHistoryScreen</div>
+
+      <h3>٥.٢ ما يعمل فعلاً</h3>
+      <div class="grid-2">
+        <div class="card ok">
+          <h4 style="margin-top:0;">✅ منفّذ</h4>
+          <ul>
+            <li>4 شاشات Flutter كاملة</li>
+            <li>OutfitAnalysisBloc + Repository</li>
+            <li>API: auth · rate limit · subscription · Prisma persist</li>
+            <li>Occasion enum (7 مناسبات)</li>
+            <li>History API + UI</li>
+            <li>Recommendations engine يقبل outfit اختياري</li>
+            <li>User stats: +12 نقطة لكل تحليل</li>
+          </ul>
+        </div>
+        <div class="card warn">
+          <h4 style="margin-top:0;">⚠️ ضعيف / Mock</h4>
+          <ul>
+            <li><code>OUTFIT_PROVIDER=mock</code> default في .env</li>
+            <li>FASHN provider — HTTP generic · fallback to mock</li>
+            <li>لا quality gate للصورة (لا garment detect)</li>
+            <li>لا Style Report · لا Style Fusion UI</li>
+            <li>لا timeout/retry parity مع skin</li>
+            <li><code>SubscriptionGate.canAnalyzeOutfit()</code> = always true</li>
+          </ul>
+        </div>
+      </div>
+
+      <h3>٥.٣ ملفات Flutter (12 ملف)</h3>
+      <table>
+        <thead><tr><th>النوع</th><th>المسار</th></tr></thead>
+        <tbody>
+          <tr><td>Upload</td><td><code>lib/features/outfit_analysis/presentation/screens/outfit_upload_screen.dart</code></td></tr>
+          <tr><td>Occasion</td><td><code>.../occasion_select_screen.dart</code></td></tr>
+          <tr><td>Result</td><td><code>.../outfit_result_screen.dart</code></td></tr>
+          <tr><td>History</td><td><code>.../outfit_history_screen.dart</code></td></tr>
+          <tr><td>API Client</td><td><code>.../data/datasources/outfit_analysis_api_data_source.dart</code></td></tr>
+          <tr><td>Entity</td><td><code>.../domain/entities/outfit_report.dart</code></td></tr>
+        </tbody>
+      </table>
+
+      <h3>٥.٤ Backend</h3>
+      <table>
+        <thead><tr><th>المكوّن</th><th>المسار</th><th>الحالة</th></tr></thead>
+        <tbody>
+          <tr><td>Outfit Service</td><td><code>mira-api/src/outfit-analysis/outfit-analysis.service.ts</code></td><td><span class="status-pill done">Production shape</span></td></tr>
+          <tr><td>Mock Provider</td><td><code>mira-api/src/ai/mocks/mock-outfit-analysis.provider.ts</code></td><td><span class="status-pill done">Default</span></td></tr>
+          <tr><td>FASHN Provider</td><td><code>mira-api/src/ai/mocks/fashn-outfit.provider.ts</code></td><td><span class="status-pill partial">Stub · unverified contract</span></td></tr>
+          <tr><td>Ingest Outfit</td><td><code>mira-api/src/intelligence/pipeline/ingest-outfit.ts</code></td><td><span class="status-pill partial">Backend only</span></td></tr>
+          <tr><td>Fusion Engine</td><td><code>mira-api/src/intelligence/pipeline/fusion-engine.ts</code></td><td><span class="status-pill done">Tested · not in UI</span></td></tr>
+          <tr><td>Full Mira Analysis</td><td><code>mira-api/src/ai/services/full-mira-analysis.service.ts</code></td><td><span class="status-pill partial">No Flutter client</span></td></tr>
+          <tr><td>StyleFusionSection</td><td><code>lib/features/intelligence/presentation/widgets/style_fusion_section.dart</code></td><td><span class="status-pill missing">Orphan — unused</span></td></tr>
+        </tbody>
+      </table>
+    </section>
+
+    <!-- OUTFIT GAPS -->
+    <section id="outfit-gaps">
+      <h2>٦. تحليل الإطلالة — المتطلبات الكاملة للإنتاج</h2>
+      <p>نفس مستوى الاحترافية المُنفّذ في تحليل الوجه — penalty-based scoring · intelligence layer · quality gates · tests · premium UI.</p>
+
+      <h3>P0 — Blocking (لا نشر production بدونها)</h3>
+      <table>
+        <thead><tr><th>#</th><th>المتطلب</th><th>الوصف التقني</th><th>مرجع Face (parity)</th></tr></thead>
+        <tbody>
+          <tr>
+            <td>1</td>
+            <td><strong>Outfit AI Provider حقيقي</strong></td>
+            <td>Validate FASHN API contract · fix response mapping · <code>OUTFIT_PROVIDER=fashn</code> on Render</td>
+            <td>PerfectCorpSkinProvider</td>
+          </tr>
+          <tr>
+            <td>2</td>
+            <td><strong>Outfit Score Engine</strong></td>
+            <td>Weighted scoring: color harmony · occasion fit · silhouette · contrast — NOT average</td>
+            <td>beauty-score-engine.ts</td>
+          </tr>
+          <tr>
+            <td>3</td>
+            <td><strong>Outfit Quality Gate</strong></td>
+            <td>Min resolution · full outfit visible · person/garment detection · lighting check</td>
+            <td>FaceGate + FaceMeshQualityGate</td>
+          </tr>
+          <tr>
+            <td>4</td>
+            <td><strong>Mira Style Report</strong></td>
+            <td>Full report screen: score hero · color palette · occasion narrative · improvement tips · confidence</td>
+            <td>MiraBeautyReportScreen</td>
+          </tr>
+          <tr>
+            <td>5</td>
+            <td><strong>Fail-fast prod config</strong></td>
+            <td><code>FASHN_FALLBACK_MOCK=false</code> — no silent mock in production</td>
+            <td>PERFECT_CORP_FALLBACK_MOCK</td>
+          </tr>
+          <tr>
+            <td>6</td>
+            <td><strong>Provider integration tests</strong></td>
+            <td><code>fashn-outfit.provider.spec.ts</code> · <code>outfit-analysis.service.spec.ts</code></td>
+            <td>beauty-score-engine.spec.ts</td>
+          </tr>
+        </tbody>
+      </table>
+
+      <h3>P1 — Product completeness</h3>
+      <table>
+        <thead><tr><th>#</th><th>المتطلب</th><th>التفاصيل</th></tr></thead>
+        <tbody>
+          <tr><td>7</td><td><strong>Style Fusion UI</strong></td><td>Wire <code>StyleFusionSection</code> when skin + outfit exist · undertone × colors clash detection</td></tr>
+          <tr><td>8</td><td><strong>Full Mira Analysis client</strong></td><td>Flutter endpoint for <code>POST /ai/full-mira-analysis</code> — unified session</td></tr>
+          <tr><td>9</td><td><strong>Subscription gate</strong></td><td>Implement <code>canAnalyzeOutfit()</code> · paywall on 403 quota</td></tr>
+          <tr><td>10</td><td><strong>Alternative looks UI</strong></td><td>Show <code>alternativeColorsAr</code> · styling cards · not one-line text</td></tr>
+          <tr><td>11</td><td><strong>Image preprocessing</strong></td><td>OutfitImageProcessor: crop · exposure · 120s timeout · retry</td></tr>
+          <tr><td>12</td><td><strong>Outfit Intelligence Pipeline</strong></td><td><code>outfit-narrative-engine</code> · <code>outfit-journey-engine</code> · <code>style-confidence-layer</code></td></tr>
+          <tr><td>13</td><td><strong>Marketplace outfit-aware</strong></td><td>Match products by dominant colors + occasion + undertone from skin</td></tr>
+        </tbody>
+      </table>
+
+      <h3>P2 — Polish & scale</h3>
+      <ul>
+        <li><code>outfit_analysis_bloc_test.dart</code> + widget tests for result screen</li>
+        <li>Outfit progress trends (like beauty progress)</li>
+        <li>Local fallback builder (<code>LocalStyleReportBuilder</code>) for offline/guest parity</li>
+        <li>i18n — move hardcoded Arabic to translations</li>
+        <li>Website: outfit status «live» only when FASHN validated</li>
+      </ul>
+
+      <div class="card">
+        <h3 style="margin-top:0;">🎯 Target: Outfit Analysis Architecture (مستهدف)</h3>
+        <div class="flow flow-gold">Outfit Photo
+  → OutfitQualityGate (resolution · visibility · lighting)
+  → FASHN / Production Provider
+  → Mira Outfit Intelligence Layer
+    · outfit-score-engine (penalty-based)
+    · color-harmony-engine
+    · occasion-narrative-engine
+    · style-confidence-layer
+  → Mira Style Report (premium UI)
+  → Style Fusion (skin + outfit)
+  → Marketplace (color + occasion aware)
+  → Style Progress Tracking</div>
+      </div>
+    </section>
+
+    <!-- COMPARE -->
+    <section id="compare">
+      <h2>٧. مقارنة النضج — Face vs Outfit</h2>
+      <div class="compare-header">
+        <span>الطبقة</span>
+        <span>تحليل الوجه</span>
+        <span>تحليل الإطلالة</span>
+      </div>
+      <div class="compare-row"><span>Capture UX</span><span><span class="status-pill done">MediaPipe live</span></span><span><span class="status-pill partial">Static picker</span></span></div>
+      <div class="compare-row"><span>Quality Gate</span><span><span class="status-pill done">ML Kit + Server</span></span><span><span class="status-pill missing">None</span></span></div>
+      <div class="compare-row"><span>AI Provider</span><span><span class="status-pill done">Perfect Corp</span></span><span><span class="status-pill partial">Mock default</span></span></div>
+      <div class="compare-row"><span>Score Engine</span><span><span class="status-pill wip">Realistic (WIP commit)</span></span><span><span class="status-pill missing">Simple compat score</span></span></div>
+      <div class="compare-row"><span>Intelligence Report</span><span><span class="status-pill done">MiraBeautyReport</span></span><span><span class="status-pill missing">Flat result only</span></span></div>
+      <div class="compare-row"><span>Visual Map</span><span><span class="status-pill done">Face Map premium</span></span><span><span class="status-pill missing">N/A</span></span></div>
+      <div class="compare-row"><span>Fusion</span><span><span class="status-pill partial">Engine only</span></span><span><span class="status-pill missing">UI orphan</span></span></div>
+      <div class="compare-row"><span>Tests</span><span><span class="status-pill done">4 face + 14 API</span></span><span><span class="status-pill missing">Quota only</span></span></div>
+      <div class="compare-row"><span>Marketplace</span><span><span class="status-pill done">Skin-driven match</span></span><span><span class="status-pill missing">Not wired</span></span></div>
+      <div class="compare-row"><span>Progress tracking</span><span><span class="status-pill done">Beauty progress API</span></span><span><span class="status-pill missing">None</span></span></div>
+    </section>
+
+    <!-- LAUNCH -->
+    <section id="launch">
+      <h2>٨. خطة النشر — Timeline</h2>
+      <div class="timeline">
+        <div class="timeline-item done">
+          <strong>✅ Phase A — Face Analysis Core</strong>
+          <p>Live capture · YouCam · Intelligence Layer · Beauty Report · Face Map production · pushed to main</p>
+        </div>
+        <div class="timeline-item wip">
+          <strong>🔄 Phase B — Face Score Realism</strong>
+          <p>Beauty Score Engine · commit · disable mock fallback · wire capture quality</p>
+        </div>
+        <div class="timeline-item pending">
+          <strong>⏳ Phase C — Outfit Intelligence (2–3 weeks)</strong>
+          <p>FASHN validation · Outfit Score Engine · Quality Gate · Mira Style Report</p>
+        </div>
+        <div class="timeline-item pending">
+          <strong>⏳ Phase D — Fusion & Marketplace (1 week)</strong>
+          <p>StyleFusionSection · full-mira-analysis client · unified recommendations</p>
+        </div>
+        <div class="timeline-item pending">
+          <strong>🚀 Phase E — Production Launch</strong>
+          <p>App Store · Render prod config · monitoring · legal copy review · beta → GA</p>
+        </div>
+      </div>
+
+      <div class="card ok">
+        <h3 style="margin-top:0;">Checklist النشر النهائي</h3>
+        <table>
+          <thead><tr><th>✓</th><th>البند</th><th>Face</th><th>Outfit</th></tr></thead>
+          <tbody>
+            <tr><td>☑</td><td>End-to-end user flow</td><td>✅</td><td>⚠️ Mock</td></tr>
+            <tr><td>☑</td><td>Real AI provider in prod</td><td>✅ YouCam</td><td>❌</td></tr>
+            <tr><td>☑</td><td>Realistic scoring engine</td><td>🔄 WIP</td><td>❌</td></tr>
+            <tr><td>☑</td><td>Premium report UI</td><td>✅</td><td>❌</td></tr>
+            <tr><td>☑</td><td>Quality gates</td><td>✅</td><td>❌</td></tr>
+            <tr><td>☑</td><td>Unit tests</td><td>✅</td><td>❌</td></tr>
+            <tr><td>☑</td><td>Subscription enforcement</td><td>✅ Backend</td><td>⚠️ Gate open</td></tr>
+            <tr><td>☑</td><td>Legal / disclaimer copy</td><td>✅ Face map</td><td>⚠️ Basic</td></tr>
+            <tr><td>☑</td><td>Progress / retention</td><td>✅</td><td>❌</td></tr>
+            <tr><td>☑</td><td>Skin + Outfit fusion</td><td colspan="2" style="text-align:center">❌ Engine only</td></tr>
+          </tbody>
+        </table>
+      </div>
+    </section>
+
+    <p class="footer-note">
+      MIRA Production Readiness · Generated from codebase audit · يونيو 2026<br />
+      Repository: <code>github.com/semester2030/mira</code> ·
+      <a href="mira-intelligence-layer.html">Intelligence Layer Reference</a> ·
+      <a href="app-store-readiness.html">App Store Readiness</a> ·
+      <a href="index.html">الموقع الرئيسي</a>
+    </p>
+  </main>
+</body>
+</html>

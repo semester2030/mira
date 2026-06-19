@@ -1,4 +1,5 @@
 import { MiraOccasion } from './mira-occasion';
+import { OutfitStyleMetrics } from './outfit-style-metrics.interface';
 
 export interface OutfitAnalysisResult {
   compatibilityScore: number;
@@ -12,4 +13,5 @@ export interface OutfitAnalysisResult {
   alternativeColorsAr: string[];
   alternativeColorsEn: string[];
   occasion: MiraOccasion;
+  styleMetrics?: OutfitStyleMetrics;
 }

@@ -1,8 +1,10 @@
 import 'package:flutter/material.dart';
 import '../../../../shared/widgets/mira_app_bar.dart';
 
+import '../../../../core/constants/mira_public_urls.dart';
 import '../../../../core/privacy/privacy_policy_content.dart';
 import '../../../../core/services/privacy_consent_storage.dart';
+import '../../../../core/utils/mira_url_launcher.dart';
 import '../../../../shared/theme/colors.dart';
 import '../../../../shared/theme/typography.dart';
 import '../../../../shared/widgets/premium/premium_exports.dart';
@@ -25,9 +27,19 @@ class PrivacyPolicyScreen extends StatelessWidget {
                 'الإصدار ${PrivacyPolicyContent.version} · ${PrivacyPolicyContent.lastUpdated}',
                 style: AppTypography.bodySmall.copyWith(color: AppColors.textSecondary),
               ),
-              const SizedBox(height: 4),
+              const SizedBox(height: 12),
+              PremiumButton(
+                label: 'عرض النسخة على الويب',
+                icon: Icons.open_in_new_rounded,
+                variant: PremiumButtonVariant.secondary,
+                onPressed: () => MiraUrlLauncher.openExternal(
+                  context,
+                  MiraPublicUrls.privacyPolicy,
+                ),
+              ),
+              const SizedBox(height: 8),
               Text(
-                'آخر تحديث: مايو ${PrivacyPolicyContent.lastUpdated}',
+                'الخصوصية: ${MiraPublicUrls.privacyEmail}',
                 style: AppTypography.labelSmall.copyWith(color: AppColors.textTertiary),
               ),
               const SizedBox(height: 20),
@@ -61,7 +73,9 @@ class PrivacyPolicyScreen extends StatelessWidget {
                       if (!context.mounted) return;
                       ScaffoldMessenger.of(context).showSnackBar(
                         const SnackBar(
-                          content: Text('تم سحب الموافقة. لن يُستخدم التحليل بالكاميرا حتى توافقي مجدداً.'),
+                          content: Text(
+                            'تم سحب الموافقة. لن يُستخدم التحليل بالكاميرا حتى توافقي مجدداً.',
+                          ),
                         ),
                       );
                       Navigator.pop(context);

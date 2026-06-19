@@ -16,6 +16,9 @@
 .swiftpm/
 migrate_working_dir/
 
+# Xcode signing (local team ID — copy from Signing.xcconfig.example)
+ios/Flutter/Signing.xcconfig.local
+
 # IntelliJ related
 *.iml
 *.ipr

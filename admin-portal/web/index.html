@@ -1,0 +1,83 @@
+<!DOCTYPE html>
+<html lang="ar" dir="rtl">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <meta name="mira-api-base" content="http://localhost:3000/api/v1" />
+  <title>ميرا · لوحة الإدارة</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link href="https://fonts.googleapis.com/css2?family=Tajawal:wght@400;500;600;700;800&display=swap" rel="stylesheet" />
+  <link rel="stylesheet" href="css/admin.css" />
+</head>
+<body>
+  <!-- Login -->
+  <div id="loginScreen" class="login-screen">
+    <div class="login-card">
+      <div class="login-brand">
+        <div class="login-logo">M</div>
+        <div>
+          <h1>لوحة إدارة ميرا</h1>
+          <p>Ops · Partners · System</p>
+        </div>
+      </div>
+      <p class="lead" style="color:var(--text-muted);margin:0 0 0.5rem;">
+        أدخلي مفتاح الإدارة (<code style="font-size:0.85em">X-Admin-Key</code>) من متغيرات Render.
+      </p>
+      <label for="adminKey">Admin API Key</label>
+      <input id="adminKey" type="password" placeholder="ADMIN_API_KEY" autocomplete="off" />
+      <button id="loginBtn" class="btn btn-primary btn-block">دخول آمن</button>
+      <div id="loginError" class="alert err hidden"></div>
+    </div>
+  </div>
+
+  <!-- App -->
+  <div id="appShell" class="app-shell hidden">
+    <aside id="sidebar" class="sidebar">
+      <div class="sidebar-brand">
+        <div class="logo">M</div>
+        <div>
+          <strong>ميرا Admin</strong>
+          <small>مركز التشغيل</small>
+        </div>
+      </div>
+
+      <div class="nav-section">Ops</div>
+      <button class="nav-item active" data-view="dashboard"><span class="icon">◈</span> لوحة التحكم</button>
+      <button class="nav-item" data-view="users"><span class="icon">◎</span> المستخدمات</button>
+      <button class="nav-item" data-view="audit"><span class="icon">▤</span> سجل التدقيق</button>
+      <button class="nav-item" data-view="feedback"><span class="icon">★</span> التقييمات</button>
+
+      <div class="nav-section">Partners</div>
+      <button class="nav-item" data-view="applications"><span class="icon">✓</span> طلبات الشركاء</button>
+      <button class="nav-item" data-view="partners"><span class="icon">◇</span> الشركاء</button>
+      <button class="nav-item" data-view="leads"><span class="icon">✉</span> رسائل الموقع</button>
+
+      <div class="nav-section">System</div>
+      <button class="nav-item" data-view="system"><span class="icon">⚙</span> النظام</button>
+
+      <div class="sidebar-footer">
+        <button id="logoutBtn" class="nav-item"><span class="icon">⎋</span> خروج</button>
+      </div>
+    </aside>
+
+    <main class="main">
+      <div class="topbar">
+        <div>
+          <button id="menuToggle" class="btn btn-ghost btn-sm menu-toggle">☰</button>
+          <h2 id="pageTitle">لوحة التحكم</h2>
+          <p id="pageSubtitle">نظرة شاملة على التطبيق</p>
+        </div>
+        <div class="topbar-actions">
+          <span class="pill live">متصل</span>
+          <button id="refreshBtn" class="btn btn-ghost btn-sm">↻ تحديث</button>
+        </div>
+      </div>
+      <div id="viewRoot"></div>
+    </main>
+  </div>
+
+  <script src="js/api.js"></script>
+  <script src="js/app.js"></script>
+</body>
+</html>

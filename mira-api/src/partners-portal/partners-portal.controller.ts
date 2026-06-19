@@ -11,7 +11,7 @@ import {
   UseGuards,
 } from '@nestjs/common';
 import { IsOptional, IsString } from 'class-validator';
-import { AdminApiKeyGuard } from './guards/admin-api-key.guard';
+import { AdminApiKeyGuard } from '../common/guards/admin-api-key.guard';
 import {
   PartnerRequest,
   PartnerTokenGuard,
