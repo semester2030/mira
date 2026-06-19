@@ -24,6 +24,22 @@ cp ios/Flutter/Signing.xcconfig.example ios/Flutter/Signing.xcconfig.local
 # عدّل DEVELOPMENT_TEAM = YOUR_TEAM_ID
 ```
 
+## Push Notifications (لاحقاً)
+
+معطّلة مؤقتاً لتجنّب تعارض Provisioning Profile أثناء التطوير.
+
+**لإعادة التفعيل:**
+1. Xcode → Runner → Signing & Capabilities → **+ Push Notifications**
+2. في `ios/Runner/Runner.entitlements` أضف:
+   ```xml
+   <key>aps-environment</key>
+   <string>development</string>
+   ```
+   (استخدم `production` لـ TestFlight/App Store)
+3. فعّل Push على App ID `app.mira.beauty` في Apple Developer
+4. أزل التعليق عن `firebase_messaging` في `pubspec.yaml` ثم `flutter pub get && cd ios && pod install`
+5. إن أضفت Push في Xcode يدوياً سابقاً، احذف Capability ثم أعد إضافتها بعد توقيع PLA
+
 ## App Store Connect
 
 - Privacy Policy URL: `https://mira.app/docs/privacy-policy.html` (أو `--dart-define=MIRA_PUBLIC_SITE_URL=...`)
