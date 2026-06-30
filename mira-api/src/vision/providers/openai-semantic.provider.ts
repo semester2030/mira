@@ -57,9 +57,9 @@ export class OpenAiSemanticProvider implements SemanticVisionProvider {
     }
 
     const model = this.config.get<string>('LLM_MODEL', 'gpt-4o-mini');
-    const configuredTemp = this.config.get<number>('LLM_TEMPERATURE', 0.2);
-    const temperature = Math.min(0.2, configuredTemp);
-    const timeoutMs = this.config.get<number>('LLM_TIMEOUT_MS', 45000);
+    const configuredTemp = Number(this.config.get('LLM_TEMPERATURE') ?? 0.2);
+    const temperature = Math.min(0.2, Number.isFinite(configuredTemp) ? configuredTemp : 0.2);
+    const timeoutMs = Number(this.config.get('LLM_TIMEOUT_MS') ?? 45000);
     const jsonSchema = buildOpenAiSemanticsJsonSchema();
 
     const mime = this.detectMime(input.imageBuffer);
@@ -121,7 +121,9 @@ export class OpenAiSemanticProvider implements SemanticVisionProvider {
       });
 
       if (!response.ok) {
-        throw new Error(`HTTP ${response.status} ${response.statusText}`);
+        const errBody = await response.text().catch(() => '');
+        const detail = errBody.slice(0, 800) || response.statusText;
+        throw new Error(`HTTP ${response.status} ${detail}`);
       }
 
       const payload = (await response.json()) as {

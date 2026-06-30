@@ -12,20 +12,32 @@ export function buildOpenAiSemanticsJsonSchema() {
   const colors = sorted(registry.colorIds);
   const archetypes = sorted(registry.archetypeIds);
 
+  // OpenAI strict json_schema: every key in properties must appear in required (use null for optional).
   const garmentProperties = {
     categoryId: { type: 'string', enum: categories },
     typeId: { type: 'string', enum: types },
-    sleeve: { type: 'string' },
-    neckline: { type: 'string' },
-    fit: { type: 'string' },
+    sleeve: { type: ['string', 'null'] },
+    neckline: { type: ['string', 'null'] },
+    fit: { type: ['string', 'null'] },
     colors: {
       type: 'array',
       items: { type: 'string', enum: colors },
       minItems: 1,
     },
-    material: { type: 'string' },
+    material: { type: ['string', 'null'] },
     providerConfidence: { type: 'number', minimum: 0, maximum: 1 },
   };
+
+  const garmentRequired = [
+    'categoryId',
+    'typeId',
+    'sleeve',
+    'neckline',
+    'fit',
+    'colors',
+    'material',
+    'providerConfidence',
+  ];
 
   const accessoryProperties = {
     categoryId: { type: 'string', enum: categories },
@@ -36,6 +48,8 @@ export function buildOpenAiSemanticsJsonSchema() {
     },
     providerConfidence: { type: 'number', minimum: 0, maximum: 1 },
   };
+
+  const accessoryRequired = ['categoryId', 'typeId', 'colors', 'providerConfidence'];
 
   return {
     name: 'fashion_semantics_v1',
@@ -49,7 +63,7 @@ export function buildOpenAiSemanticsJsonSchema() {
           items: {
             type: 'object',
             properties: garmentProperties,
-            required: ['categoryId', 'typeId', 'colors', 'providerConfidence'],
+            required: garmentRequired,
             additionalProperties: false,
           },
         },
@@ -58,7 +72,7 @@ export function buildOpenAiSemanticsJsonSchema() {
           items: {
             type: 'object',
             properties: accessoryProperties,
-            required: ['categoryId', 'typeId', 'providerConfidence'],
+            required: accessoryRequired,
             additionalProperties: false,
           },
         },

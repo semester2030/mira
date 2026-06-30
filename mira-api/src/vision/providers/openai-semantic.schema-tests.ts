@@ -56,6 +56,22 @@ function testJsonSchemaHasNoScoreFields(): void {
   assert.equal(schema.strict, true);
 }
 
+function testJsonSchemaStrictRequiresAllGarmentProperties(): void {
+  const schema = buildOpenAiSemanticsJsonSchema();
+  const garment = schema.schema.properties.garments.items;
+  const props = Object.keys(garment.properties);
+  for (const key of props) {
+    assert.ok(
+      garment.required.includes(key),
+      `garment.${key} must be required for OpenAI strict schema`,
+    );
+  }
+  const accessory = schema.schema.properties.accessories.items;
+  for (const key of Object.keys(accessory.properties)) {
+    assert.ok(accessory.required.includes(key), `accessory.${key} must be required`);
+  }
+}
+
 function testMockSemanticsBuildsValidFashionVisionDocument(): void {
   const geometry = parseFashnGeometryResponse(buildMockFashnGeometryResponse());
   const semantics = parseOpenAiSemanticResponse(buildMockOpenAiSemanticResponse());
@@ -75,6 +91,7 @@ export function runOpenAiSemanticTests(): void {
   testForbiddenRecommendationsRejected();
   testEmptyGarmentsFailsValidation();
   testJsonSchemaHasNoScoreFields();
+  testJsonSchemaStrictRequiresAllGarmentProperties();
   testMockSemanticsBuildsValidFashionVisionDocument();
 }
 
