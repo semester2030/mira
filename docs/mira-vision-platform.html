@@ -3,7 +3,7 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1" />
-  <meta name="description" content="MIRA Vision Platform — المرجع الرسمي · Phases 0–8 مكتملة · خارطة النضج الإنتاجي 9–17 · OpenAI + FASHN" />
+  <meta name="description" content="MIRA Vision Platform — Phases 0–8 مكتملة · منشور Render 30 يونيو 2026 · FASHN + OpenAI · commit dca812d" />
   <title>ميرا | Vision Platform — المرجع الرسمي للتنفيذ</title>
   <link rel="preconnect" href="https://fonts.googleapis.com" />
   <link href="https://fonts.googleapis.com/css2?family=Tajawal:wght@400;500;700;800&display=swap" rel="stylesheet" />
@@ -47,8 +47,9 @@
     <aside class="audit-sidebar no-print">
       <h4>محتويات المواصفة</h4>
       <a href="#charter">🏛 المرجع الرسمي</a>
-      <a href="#implementation-status">حالة التنفيذ</a>
-      <a href="#current-runtime">⚠️ الوضع الحالي</a>
+        <a href="#implementation-status">حالة التنفيذ</a>
+        <a href="#production-deploy">🚀 النشر الإنتاجي</a>
+        <a href="#current-runtime">الوضع التشغيلي</a>
       <a href="#implemented-detail">تفاصيل ما نُفّذ</a>
       <a href="#implemented-files">جدول الملفات</a>
       <a href="#tests-commands">اختبارات</a>
@@ -72,7 +73,8 @@
 
     <main class="audit-main">
       <nav class="audit-mobile-nav no-print">
-        <a href="#current-runtime">⚠️ الوضع</a>
+        <a href="#production-deploy">🚀 النشر</a>
+      <a href="#current-runtime">الوضع</a>
         <a href="#implemented-detail">نُفّذ</a>
         <a href="#phases">مراحل</a>
         <a href="#production-readiness">9–17</a>
@@ -105,9 +107,21 @@
         <p id="next-phase-hint" style="font-weight:800;color:var(--primary-strong);margin-top:12px"></p>
       </section>
 
+      <section id="production-deploy" class="card" style="border:2px solid var(--ok);background:linear-gradient(135deg,#f8fdf9,#fffef8)">
+        <span class="hardening-badge" style="border-color:var(--ok);color:#2e7d5a;background:rgba(46,125,90,0.12);margin-bottom:12px;display:inline-block">
+          🚀 PRODUCTION DEPLOY · Render · 30 يونيو 2026
+        </span>
+        <h2>النشر الإنتاجي — النتائج الأخيرة</h2>
+        <p style="font-size:0.88rem;color:var(--muted)">
+          GitHub <code>dca812d</code> → Render auto-deploy · Vision Platform live على
+          <code>https://mira-api-n4p3.onrender.com</code>
+        </p>
+        <div id="production-deploy-content"></div>
+      </section>
+
       <section id="current-runtime" class="card">
-        <div class="current-runtime-warn">
-          <h3>⚠️ الوضع التشغيلي الحالي — مهم جدًا</h3>
+        <div class="current-runtime-warn" style="border-color:var(--ok);background:#f8fdf9">
+          <h3>✅ الوضع التشغيلي — Vision Platform على الإنتاج</h3>
           <p style="margin:0 0 12px;font-size:0.9rem">
             Phases 0–8 <strong>مكتملة</strong> — Vision Platform هو المسار الوحيد.
             Google Vision <strong>محذوف بالكامل</strong> من Flutter و mira-api.

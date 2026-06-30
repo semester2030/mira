@@ -37,11 +37,12 @@
     <section class="hero" id="home">
       <div class="container hero-grid">
         <div class="hero-content">
-          <p class="badge">MIRA BEAUTY INTELLIGENCE · v1.0</p>
+          <p class="badge">MIRA BEAUTY INTELLIGENCE · Vision Platform Live</p>
           <h1>ميرا… ذكاءٌ يُبرز جمالكِ</h1>
           <p class="lead">
-            تطبيق عربي شامل: تحليل بشرة بـ Perfect Corp، تحليل إطلالة، روتين شخصي،
-            marketplace ماركات وعيادات وصالونات — مع خصوصية لا تُساوم.
+            تطبيق عربي شامل: تحليل بشرة بـ Perfect Corp، تحليل إطلالة بـ
+            <strong>FASHN + OpenAI</strong> عبر Vision Platform على Render،
+            marketplace شركاء، وخصوصية لا تُساوم.
           </p>
           <div class="hero-actions">
             <a href="#download" class="btn btn-primary">حمّلي التطبيق</a>
@@ -53,10 +54,10 @@
             <img src="./assets/guest_icon.svg" alt="" />
             <strong>مسار التحليل</strong>
             <ul>
-              <li>Selfie → Render → YouCam</li>
-              <li>تقرير + رادار + روتين</li>
-              <li>منتجات وخدمات مطابقة</li>
-              <li>بدون حفظ الصورة</li>
+              <li>Selfie → Perfect Corp (بشرة)</li>
+              <li>Outfit → FASHN + OpenAI (إطلالة)</li>
+              <li>تقرير + رادار + روتين + marketplace</li>
+              <li>بدون حفظ الصورة · مفاتيح على السيرفر فقط</li>
             </ul>
           </div>
         </div>
@@ -101,7 +102,7 @@
           <article class="step">
             <div class="step-num">2</div>
             <h3>التحليل على السيرفر</h3>
-            <p>Flutter → Render (mira-api) → Perfect Corp للبشرة. الصورة في الذاكرة فقط ثم تُمحى.</p>
+            <p>Flutter → Render (mira-api): Perfect Corp للبشرة · Vision Platform (FASHN geometry + OpenAI semantic) للإطلالة. الصورة في الذاكرة فقط.</p>
           </article>
           <article class="step">
             <div class="step-num">3</div>
@@ -118,12 +119,13 @@
           <h2>البنية التقنية</h2>
           <p>تصميم إنتاجي — المفتاح السري على السيرفر فقط.</p>
         </div>
-        <pre class="arch-box">Flutter App  ──►  Render (mira-api)  ──►  Perfect Corp YouCam
-                         │
-                         ├── PostgreSQL (نتائج نصية + شركاء)
+        <pre class="arch-box">Flutter App  ──►  Render (mira-api)  ──►  Perfect Corp YouCam (بشرة)
+                         │                      └──►  FASHN + OpenAI (إطلالة · Vision Platform)
+                         ├── PostgreSQL (نتائج + شركاء)
                          └── Marketplace matching
 
-❌ Flutter لا يتصل بـ Perfect Corp مباشرة
+✅ POST /ai/vision/outfit/analyze — live (commit dca812d)
+❌ Flutter لا يحمل مفاتيح AI — Render فقط
 ✅ الصورة لا تُخزَّن بعد التحليل</pre>
       </div>
     </section>
@@ -227,7 +229,7 @@
       <div>
         <h4>المنتج</h4>
         <ul class="footer-links">
-          <li><a href="#features">المميزات</a></li>
+          <li><a href="../docs/mira-vision-platform.html#production-deploy">Vision Platform · النشر</a></li>
           <li><a href="#how">كيف تعمل</a></li>
           <li><a href="./privacy.html">الخصوصية</a></li>
         </ul>

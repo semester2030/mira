@@ -1,4 +1,6 @@
 import assert from 'node:assert/strict';
+import { buildFashnAuthHeader, resolveFashnRunPath } from './fashn-api.client';
+import { ConfigService } from '@nestjs/config';
 import {
   assertNoForbiddenFashnFields,
   runGeometryQualityGate,
@@ -8,6 +10,24 @@ import {
   buildMockFashnGeometryResponse,
   parseFashnGeometryResponse,
 } from '../providers/fashn-geometry.parser';
+
+function testBearerPrefixNormalization(): void {
+  const h = buildFashnAuthHeader('sk-test-key', 'Authorization', 'Bearer');
+  assert.equal(h.Authorization, 'Bearer sk-test-key');
+  const h2 = buildFashnAuthHeader('sk-test-key', 'Authorization', 'Bearer ');
+  assert.equal(h2.Authorization, 'Bearer sk-test-key');
+}
+
+function testLegacySegmentationEndpointMapsToRun(): void {
+  const config = {
+    get: (key: string, def?: string) => {
+      if (key === 'FASHN_GEOMETRY_ENDPOINT') return '/v1/segmentation';
+      if (key === 'FASHN_RUN_ENDPOINT') return def;
+      return def;
+    },
+  } as ConfigService;
+  assert.equal(resolveFashnRunPath(config), '/v1/run');
+}
 
 function testValidMockGeometryPassesGate(): void {
   const raw = buildMockFashnGeometryResponse();
@@ -71,6 +91,8 @@ function testParseInfersTopologyWhenMissing(): void {
 }
 
 export function runFashnGeometryTests(): void {
+  testBearerPrefixNormalization();
+  testLegacySegmentationEndpointMapsToRun();
   testValidMockGeometryPassesGate();
   testForbiddenCompatibilityScoreRejected();
   testForbiddenRecommendationRejected();

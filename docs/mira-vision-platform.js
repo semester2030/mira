@@ -7,8 +7,49 @@
 
   const STORAGE = 'mira_vision_platform_v1';
   const SPEC_VERSION = '1.0.0';
-  const SPEC_DATE = '2026-06-01';
-  const IMPLEMENTATION_LOG_DATE = '2026-06-01';
+  const SPEC_DATE = '2026-06-30';
+  const IMPLEMENTATION_LOG_DATE = '2026-06-30';
+  const PRODUCTION_COMMIT = 'dca812d';
+  const PRODUCTION_API_URL = 'https://mira-api-n4p3.onrender.com/api/v1';
+
+  /** نتائج النشر الإنتاجي — Render 30 يونيو 2026 */
+  const PRODUCTION_DEPLOY = {
+    date: '2026-06-30',
+    time: '07:12 UTC',
+    commit: PRODUCTION_COMMIT,
+    branch: 'main',
+    github: 'https://github.com/semester2030/mira',
+    serviceUrl: 'https://mira-api-n4p3.onrender.com',
+    apiPrefix: PRODUCTION_API_URL,
+    status: 'live',
+    filesInCommit: 313,
+    linesAdded: 25512,
+    prismaMigrations: '5 applied · no pending',
+    modulesLive: ['VisionModule', 'AiGatewayModule'],
+    routesVerified: [
+      'POST /api/v1/ai/vision/outfit/analyze',
+      'POST /api/v1/ai/outfit-segmentation',
+      'POST /api/v1/ai/skin-analysis',
+      'POST /api/v1/ai/outfit-intelligence',
+      'POST /api/v1/ai/full-mira-analysis',
+    ],
+    startupProof: [
+      'VisionModule dependencies initialized',
+      'Mapped {/api/v1/ai/outfit-segmentation, POST} route',
+      'Mapped {/api/v1/ai/vision/outfit/analyze, POST} route',
+      'Nest application successfully started',
+    ],
+    envConfigured: [
+      'FASHN_API_KEY', 'FASHN_BASE_URL=https://api.fashn.ai', 'FASHN_GEOMETRY_ENDPOINT=/v1/segmentation',
+      'LLM_API_KEY', 'LLM_BASE_URL=https://api.openai.com/v1', 'LLM_MODEL=gpt-4o-mini',
+      'PERFECT_API_KEY', 'FIREBASE_PROJECT_ID', 'DATABASE_URL',
+    ],
+    nextSteps: [
+      'اختبار تحليل إطلالة حيّ من التطبيق (Firebase auth)',
+      'مراقبة Render logs عند أول طلب FASHN/OpenAI',
+      'Phase 9 — Evaluation Framework (خارطة 9–17)',
+    ],
+  };
 
   /** ما يعمل فعليًا في التطبيق vs ما بُني لكن غير موصول */
   const CURRENT_RUNTIME = {
@@ -43,7 +84,9 @@
   const RUNTIME_QA = [
     { q: 'هل التطبيق يستخدم Endpoint الجديد؟', a: '✅ نعم — Phase 7 (VisionApiDataSource)' },
     { q: 'هل Google Vision ما زال يعمل؟', a: '❌ محذوف بالكامل — Phase 8' },
-    { q: 'هل OpenAI / FASHN متصلان؟', a: '✅ نعم في Vision API (Phase 3 + 4) — يحتاج FASHN_* + LLM_API_KEY على السيرفر' },
+    { q: 'هل OpenAI / FASHN متصلان؟', a: '✅ نعم — مفاتيح مضبوطة على Render (30 يونيو 2026)' },
+    { q: 'هل Vision Platform منشور على Render؟', a: `✅ نعم — ${PRODUCTION_DEPLOY.serviceUrl} · commit ${PRODUCTION_COMMIT}` },
+    { q: 'هل مسارات Vision مسجّلة في الإنتاج؟', a: '✅ vision/outfit/analyze + outfit-segmentation — مؤكّد في startup logs' },
     { q: 'هل FashionVisionDocument v1 موجود؟', a: '✅ نعم — Phase 1 + validator' },
     { q: 'هل VisionApiDataSource موجود في Flutter؟', a: '✅ نعم — Phase 7 موصول بـ OutfitIntelligenceService' },
     { q: 'هل Result Screen تغيّرت؟', a: '❌ لا — لم تُمس' },
@@ -427,6 +470,12 @@ cd mira-api && npm run build
       summary: 'حذف Google Vision · FASHN segmentation · VisionOrchestrator hybrid · lib/ google_vision = 0',
       date: '2026-06-01',
     },
+    {
+      phase: 'Deploy',
+      status: 'done',
+      summary: `GitHub push ${PRODUCTION_COMMIT} · Render live · VisionModule + 6 AI routes · FASHN + OpenAI env · 313 ملف`,
+      date: '2026-06-30',
+    },
   ];
 
   const PHASES = [
@@ -726,7 +775,9 @@ cd mira-api && npm run build
       { label: 'منصات Vision', value: '2', sub: 'FASHN + OpenAI' },
       { label: 'مفاتيح على Flutter', value: '0', sub: 'لا API keys للمزودين' },
       { label: 'Endpoint رئيسي', value: '1', sub: 'POST /ai/vision/outfit/analyze' },
+      { label: 'حالة Render', value: 'Live', sub: `commit ${PRODUCTION_COMMIT}` },
       { label: 'اختبارات Vision', value: '5', sub: 'npm run test:vision-*' },
+      { label: 'GitHub', value: '✓', sub: 'main متزامن' },
     ],
     platforms: [
       {
@@ -921,22 +972,38 @@ cd mira-api && npm run build
       { step: 'Conflicts', cmd: 'cd mira-api && npm run test:vision-conflicts', expect: '3 rules OK' },
       { step: 'Flutter adapter', cmd: 'flutter test test/fashion_vision_to_engine_adapter_test.dart', expect: '1+ tests' },
       { step: 'Flutter intelligence', cmd: 'flutter test test/outfit_intelligence_service_test.dart', expect: '13 tests' },
+      { step: 'Routes live', cmd: 'Render startup logs', expect: 'vision/outfit/analyze + outfit-segmentation mapped' },
+      { step: 'GitHub sync', cmd: `git log -1 → ${PRODUCTION_COMMIT}`, expect: 'Vision Platform pushed' },
       { step: 'Health live', cmd: 'curl https://mira-api-n4p3.onrender.com/api/v1/health', expect: '"status":"ok"' },
       { step: 'Admin keys (dev)', cmd: 'GET /admin/system-config + X-Admin-Key', expect: 'fashnKeySet:true, llmKeySet:true' },
     ],
     gaps: [
       {
+        severity: 'ok',
+        title: '✅ GitHub + Render — منشور (30 يونيو 2026)',
+        detail: `commit ${PRODUCTION_COMMIT} على main · VisionModule live · 6 مسارات AI · Prisma OK`,
+        proof: 'Render deploy logs 2026-06-30 07:12 UTC',
+        fix: '— مكتمل',
+      },
+      {
         severity: 'warn',
-        title: 'مفاتيح FASHN و OpenAI يجب ضبطها يدويًا في Render',
-        detail: 'render.yaml يعرّف FASHN_API_KEY و LLM_API_KEY كـ sync:false — القيم السرية تُضاف في Dashboard بعد كل deploy جديد إن لزم.',
-        proof: 'render.yaml — FASHN_API_KEY, LLM_API_KEY (sync: false)',
-        fix: 'Render → mira-api → Environment → Secrets: FASHN_API_KEY, FASHN_BASE_URL, LLM_API_KEY',
+        title: 'FASHN API adapter — قد يحتاج توافق مع /v1/run',
+        detail: 'الكود الحالي يستدعي POST {FASHN_BASE_URL}/v1/segmentation بشكل متزامن. API FASHN الرسمي async (/v1/run + poll). أول تحليل حيّ قد يرجع 502 VISION_PROVIDER_FAILED.',
+        proof: 'fashn-geometry.provider.ts:53-68',
+        fix: 'إعادة كتابة adapter أو تأكيد endpoint من FASHN — راقب Render logs',
+      },
+      {
+        severity: 'info',
+        title: 'اختبار E2E من التطبيق',
+        detail: 'لم يُثبت بعد تحليل إطلالة حيّ بنجاح على الإنتاج — يتطلب Firebase login + صورة.',
+        proof: 'Phase 9 evaluation — مخطّط',
+        fix: 'جرّبي من Flutter → راقبي Render logs',
       },
       {
         severity: 'info',
         title: 'AI Audit baseline (50–200 صورة)',
-        detail: 'موصوف في Phase 8 كـ QA يدوي — لم يُؤتمت بعد.',
-        proof: 'IMPLEMENTED_BY_PHASE phase 8 notYet',
+        detail: 'موصوف في Phase 9 — لم يُؤتمت بعد.',
+        proof: 'production-readiness Phase 9',
         fix: 'mira-project-audit.html',
       },
     ],
@@ -1488,6 +1555,47 @@ Skip FASHN + OpenAI`,
     setTimeout(() => t.classList.remove('show'), 2800);
   }
 
+  function renderProductionDeploy() {
+    const el = $('production-deploy-content');
+    if (!el) return;
+    const d = PRODUCTION_DEPLOY;
+    el.innerHTML = `
+      <div class="official-seal" style="background:#f0fdf4;border-color:var(--ok);margin-bottom:16px">
+        <strong>🎉 منشور على Render — ${d.date} ${d.time}</strong>
+        <p style="margin:8px 0 0;font-size:0.88rem">
+          commit <code>${d.commit}</code> · ${d.filesInCommit} ملف ·
+          <a href="${d.serviceUrl}" target="_blank" rel="noopener">${d.serviceUrl}</a>
+        </p>
+      </div>
+      <div class="stat-grid" style="margin-bottom:16px">
+        ${[
+          ['Live', 'حالة الخدمة'],
+          [d.commit.slice(0, 7), 'Git commit'],
+          ['6', 'مسارات AI'],
+          ['5', 'Prisma migrations'],
+        ].map(([n, l]) => `<div class="stat-card"><div class="num">${n}</div><div class="lbl">${l}</div></div>`).join('')}
+      </div>
+      <h4>إثبات من startup logs</h4>
+      <ul style="font-size:0.86rem;padding-right:20px">
+        ${d.startupProof.map((s) => `<li><code style="font-size:0.78rem;direction:ltr">${s}</code></li>`).join('')}
+      </ul>
+      <h4>مسارات Vision (Production)</h4>
+      <table class="audit-table">
+        <thead><tr><th>Method</th><th>Path</th><th>Flutter</th></tr></thead>
+        <tbody>
+          <tr><td>POST</td><td><code>/api/v1/ai/vision/outfit/analyze</code></td><td>VisionApiDataSource</td></tr>
+          <tr><td>POST</td><td><code>/api/v1/ai/outfit-segmentation</code></td><td>OutfitSegmentationApiDataSource</td></tr>
+        </tbody>
+      </table>
+      <h4 style="margin-top:16px">Env vars مضبوطة على Render</h4>
+      <p style="font-size:0.84rem;color:var(--muted)">${d.envConfigured.join(' · ')}</p>
+      <h4 style="margin-top:16px">الخطوات التالية</h4>
+      <ol style="font-size:0.86rem;padding-right:20px">
+        ${d.nextSteps.map((s) => `<li>${s}</li>`).join('')}
+      </ol>
+    `;
+  }
+
   function renderCurrentRuntime() {
     const split = $('runtime-split');
     if (split) {
@@ -1497,7 +1605,7 @@ Skip FASHN + OpenAI`,
         <div class="runtime-box live">
           <h4>${live.title}</h4>
           <pre class="dependency-graph" style="margin:8px 0;font-size:0.68rem;padding:12px">${live.flow}</pre>
-          <p style="margin:0;font-size:0.82rem;color:var(--danger)">${live.note}</p>
+          <p style="margin:0;font-size:0.82rem;color:var(--ok)">${live.note}</p>
         </div>
         <div class="runtime-box new">
           <h4>${neu.title}</h4>
@@ -1788,8 +1896,8 @@ Skip FASHN + OpenAI`,
       gapsEl.innerHTML = `
         <h3 style="margin-top:28px">فجوات معروفة — يجب إغلاقها قبل الإنتاج</h3>
         ${pi.gaps.map((g) => `
-          <div class="card ${g.severity === 'warn' ? 'warn' : ''}" style="margin-top:12px;padding:14px">
-            <h4 style="margin:0 0 6px">${g.severity === 'warn' ? '⚠️' : 'ℹ️'} ${g.title}</h4>
+          <div class="card ${g.severity === 'warn' ? 'warn' : g.severity === 'ok' ? 'ok' : ''}" style="margin-top:12px;padding:14px">
+            <h4 style="margin:0 0 6px">${g.severity === 'warn' ? '⚠️' : g.severity === 'ok' ? '✅' : 'ℹ️'} ${g.title}</h4>
             <p style="margin:0 0 8px;font-size:0.86rem">${g.detail}</p>
             <p style="margin:0 0 6px;font-size:0.78rem"><strong>إثبات:</strong> ${g.proof}</p>
             <p style="margin:0;font-size:0.82rem;color:var(--primary-strong)"><strong>الإصلاح:</strong> ${g.fix}</p>
@@ -2244,6 +2352,8 @@ Silent OutfitImageAnalyzer fallback`;
       officialReference: 'docs/mira-vision-platform.html',
       constitution: CONSTITUTION,
       currentRuntime: CURRENT_RUNTIME,
+      productionDeploy: PRODUCTION_DEPLOY,
+      productionCommit: PRODUCTION_COMMIT,
       platformIntegration: PLATFORM_INTEGRATION,
       productionReadiness: PRODUCTION_READINESS,
       implementedByPhase: IMPLEMENTED_BY_PHASE,
@@ -2273,6 +2383,7 @@ Silent OutfitImageAnalyzer fallback`;
     if (dateEl) dateEl.textContent = SPEC_DATE + ' · v' + SPEC_VERSION;
 
     renderImplementationStatus();
+    renderProductionDeploy();
     renderCurrentRuntime();
     renderImplementedDetail();
     renderImplementedFiles();

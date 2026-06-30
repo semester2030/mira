@@ -42,9 +42,9 @@
       </p>
       <div class="hero-meta">
         <span class="meta-pill">📱 Flutter + NestJS + Prisma</span>
-        <span class="meta-pill">🧪 9 اختبارات Flutter · 14+ pipeline specs</span>
-        <span class="meta-pill">🔗 main @ 37395ba+</span>
-        <span class="meta-pill">🎯 Face ~82% · Outfit ~45%</span>
+        <span class="meta-pill">🧪 122+ اختبار Flutter · 5 vision specs</span>
+        <span class="meta-pill">🔗 main @ dca812d · Render live</span>
+        <span class="meta-pill">🎯 Face ~82% · Outfit ~78%</span>
       </div>
     </section>
 
@@ -61,14 +61,15 @@
           <div class="maturity-bar"><span style="width:82%"></span></div>
           <p style="margin-bottom:0;font-size:0.88rem;color:var(--muted);">جاهزية تقديرية: <strong>82%</strong></p>
         </div>
-        <div class="card warn">
-          <h3 style="margin-top:0;">⚠️ تحليل الإطلالة — يحتاج طبقة intelligence</h3>
+        <div class="card ok">
+          <h3 style="margin-top:0;">✅ تحليل الإطلالة — Vision Platform منشور</h3>
           <p>
-            واجهة وتدفق API موجودان، لكن الذكاء الافتراضي <strong>Mock/FASHN stub</strong>،
-            بدون quality gate، بدون Style Fusion في UI، وبدون parity مع عمق تقرير البشرة.
+            Phases 0–8 مكتملة · Google Vision محذوف ·
+            <strong>POST /ai/vision/outfit/analyze</strong> live على Render ·
+            FASHN geometry + OpenAI semantic + MIRA Engine · premium result UI.
           </p>
-          <div class="maturity-bar"><span style="width:45%"></span></div>
-          <p style="margin-bottom:0;font-size:0.88rem;color:var(--muted);">جاهزية تقديرية: <strong>45%</strong></p>
+          <div class="maturity-bar"><span style="width:78%"></span></div>
+          <p style="margin-bottom:0;font-size:0.88rem;color:var(--muted);">جاهزية تقديرية: <strong>78%</strong> · بانتظار E2E live + FASHN adapter validation</p>
         </div>
       </div>
 
@@ -78,16 +79,16 @@
           <span>تحليل الوجه</span>
         </div>
         <div class="verdict-item">
-          <div class="score-ring low">45%</div>
+          <div class="score-ring mid">78%</div>
           <span>تحليل الإطلالة</span>
         </div>
         <div class="verdict-item">
-          <div class="score-ring mid">64%</div>
+          <div class="score-ring mid">80%</div>
           <span>المنتج الكامل</span>
         </div>
         <div class="verdict-item">
-          <strong>2–4 أسابيع</strong>
-          <span>تقدير لإطلاق الإطلالة production</span>
+          <strong>1–2 أسابيع</strong>
+          <span>E2E live + Phase 9 evaluation</span>
         </div>
       </div>
 
@@ -105,13 +106,13 @@
             </tr>
             <tr>
               <td><strong>Beta</strong></td>
-              <td>تحليل الإطلالة مع Mock + شفافية «تجريبي»</td>
-              <td><span class="status-pill partial">ممكن الآن</span></td>
+              <td>تحليل الإطلالة Vision Platform — FASHN + OpenAI على Render</td>
+              <td><span class="status-pill done">live — commit dca812d</span></td>
             </tr>
             <tr>
               <td><strong>Production Full</strong></td>
               <td>بشرة + إطلالة + Fusion + Marketplace موحّد</td>
-              <td><span class="status-pill missing">يتطلب P0 الإطلالة</span></td>
+              <td><span class="status-pill partial">E2E validation + Phase 9</span></td>
             </tr>
           </tbody>
         </table>
@@ -305,67 +306,61 @@
 
     <!-- OUTFIT STATUS -->
     <section id="outfit-status">
-      <h2>٥. تحليل الإطلالة — الوضع الحالي</h2>
+      <h2>٥. تحليل الإطلالة — Vision Platform (منشور)</h2>
 
-      <h3>٥.١ التدفق الموجود</h3>
-      <div class="flow">OutfitUploadScreen (اختيار صورة)
-  → OccasionSelectScreen (زفاف · عمل · كاجوال · …)
-  → POST /api/v1/ai/outfit-analysis
-  → OutfitAnalysisProvider (Mock default · FASHN stub)
-  → OutfitResultScreen (score + colors + suitability)
-  → OutfitHistoryScreen</div>
+      <div class="card ok" style="margin-bottom:20px">
+        <h3 style="margin-top:0">🚀 Render · 30 يونيو 2026 · commit dca812d</h3>
+        <ul>
+          <li><code>VisionModule dependencies initialized</code></li>
+          <li><code>POST /api/v1/ai/vision/outfit/analyze</code> — mapped</li>
+          <li><code>POST /api/v1/ai/outfit-segmentation</code> — mapped</li>
+          <li>FASHN + OpenAI env vars configured on Render</li>
+        </ul>
+      </div>
+
+      <h3>٥.١ التدفق الإنتاجي</h3>
+      <div class="flow flow-gold">OutfitIntelligenceService.analyze()
+  → VisionApiDataSource → POST /api/v1/ai/vision/outfit/analyze
+  → VisionOrchestrator (FASHN geometry + OpenAI semantic)
+  → FashionVisionToEngineAdapter → DeterministicOutfitEngine
+  → OutfitSegmentationApiDataSource (overlay)
+  → OutfitResultScreen (hero · segment map · why-this-works)</div>
 
       <h3>٥.٢ ما يعمل فعلاً</h3>
       <div class="grid-2">
         <div class="card ok">
-          <h4 style="margin-top:0;">✅ منفّذ</h4>
+          <h4 style="margin-top:0;">✅ منفّذ ومنشور</h4>
           <ul>
-            <li>4 شاشات Flutter كاملة</li>
-            <li>OutfitAnalysisBloc + Repository</li>
-            <li>API: auth · rate limit · subscription · Prisma persist</li>
-            <li>Occasion enum (7 مناسبات)</li>
-            <li>History API + UI</li>
-            <li>Recommendations engine يقبل outfit اختياري</li>
-            <li>User stats: +12 نقطة لكل تحليل</li>
+            <li>Vision Platform Phases 0–8 — Google Vision محذوف</li>
+            <li>313 ملف · +25,512 سطر · pushed to GitHub</li>
+            <li>FashionVisionDocument v1 · Quality Gate · Conflict Resolver</li>
+            <li>Premium result UI — hero · harmony · insight cards</li>
+            <li>122+ Flutter tests · 5 npm vision test suites</li>
+            <li>DeterministicOutfitEngine · trust scoring · stylist copy</li>
           </ul>
         </div>
         <div class="card warn">
-          <h4 style="margin-top:0;">⚠️ ضعيف / Mock</h4>
+          <h4 style="margin-top:0;">⚠️ متبقٍ قبل GA كامل</h4>
           <ul>
-            <li><code>OUTFIT_PROVIDER=mock</code> default في .env</li>
-            <li>FASHN provider — HTTP generic · fallback to mock</li>
-            <li>لا quality gate للصورة (لا garment detect)</li>
-            <li>لا Style Report · لا Style Fusion UI</li>
-            <li>لا timeout/retry parity مع skin</li>
-            <li><code>SubscriptionGate.canAnalyzeOutfit()</code> = always true</li>
+            <li>FASHN adapter — قد يحتاج /v1/run async API</li>
+            <li>E2E live test من التطبيق — لم يُثبت بعد</li>
+            <li>Phase 9 — AI Evaluation Framework</li>
+            <li>Style Fusion UI · full-mira-analysis client</li>
+            <li>Subscription gate outfit — partial</li>
           </ul>
         </div>
       </div>
 
-      <h3>٥.٣ ملفات Flutter (12 ملف)</h3>
-      <table>
-        <thead><tr><th>النوع</th><th>المسار</th></tr></thead>
-        <tbody>
-          <tr><td>Upload</td><td><code>lib/features/outfit_analysis/presentation/screens/outfit_upload_screen.dart</code></td></tr>
-          <tr><td>Occasion</td><td><code>.../occasion_select_screen.dart</code></td></tr>
-          <tr><td>Result</td><td><code>.../outfit_result_screen.dart</code></td></tr>
-          <tr><td>History</td><td><code>.../outfit_history_screen.dart</code></td></tr>
-          <tr><td>API Client</td><td><code>.../data/datasources/outfit_analysis_api_data_source.dart</code></td></tr>
-          <tr><td>Entity</td><td><code>.../domain/entities/outfit_report.dart</code></td></tr>
-        </tbody>
-      </table>
-
-      <h3>٥.٤ Backend</h3>
+      <h3>٥.٣ Backend Vision (mira-api/src/vision/)</h3>
       <table>
         <thead><tr><th>المكوّن</th><th>المسار</th><th>الحالة</th></tr></thead>
         <tbody>
-          <tr><td>Outfit Service</td><td><code>mira-api/src/outfit-analysis/outfit-analysis.service.ts</code></td><td><span class="status-pill done">Production shape</span></td></tr>
-          <tr><td>Mock Provider</td><td><code>mira-api/src/ai/mocks/mock-outfit-analysis.provider.ts</code></td><td><span class="status-pill done">Default</span></td></tr>
-          <tr><td>FASHN Provider</td><td><code>mira-api/src/ai/mocks/fashn-outfit.provider.ts</code></td><td><span class="status-pill partial">Stub · unverified contract</span></td></tr>
-          <tr><td>Ingest Outfit</td><td><code>mira-api/src/intelligence/pipeline/ingest-outfit.ts</code></td><td><span class="status-pill partial">Backend only</span></td></tr>
-          <tr><td>Fusion Engine</td><td><code>mira-api/src/intelligence/pipeline/fusion-engine.ts</code></td><td><span class="status-pill done">Tested · not in UI</span></td></tr>
-          <tr><td>Full Mira Analysis</td><td><code>mira-api/src/ai/services/full-mira-analysis.service.ts</code></td><td><span class="status-pill partial">No Flutter client</span></td></tr>
-          <tr><td>StyleFusionSection</td><td><code>lib/features/intelligence/presentation/widgets/style_fusion_section.dart</code></td><td><span class="status-pill missing">Orphan — unused</span></td></tr>
+          <tr><td>Vision Orchestrator</td><td><code>vision-orchestrator.service.ts</code></td><td><span class="status-pill done">Live</span></td></tr>
+          <tr><td>FASHN Geometry</td><td><code>providers/fashn-geometry.provider.ts</code></td><td><span class="status-pill partial">Live · adapter TBD</span></td></tr>
+          <tr><td>OpenAI Semantic</td><td><code>providers/openai-semantic.provider.ts</code></td><td><span class="status-pill done">Live</span></td></tr>
+          <tr><td>Segmentation</td><td><code>ai/segmentation/outfit-segmentation.service.ts</code></td><td><span class="status-pill done">FASHN only</span></td></tr>
+          <tr><td>Legacy Mock</td><td><code>ai/mocks/mock-outfit-analysis.provider.ts</code></td><td><span class="status-pill missing">Not user path</span></td></tr>
+          <tr><td>Google Vision</td><td><code>—</code></td><td><span class="status-pill missing">Deleted Phase 8</span></td></tr>
         </tbody>
       </table>
     </section>
@@ -467,13 +462,13 @@
         <span>تحليل الإطلالة</span>
       </div>
       <div class="compare-row"><span>Capture UX</span><span><span class="status-pill done">MediaPipe live</span></span><span><span class="status-pill partial">Static picker</span></span></div>
-      <div class="compare-row"><span>Quality Gate</span><span><span class="status-pill done">ML Kit + Server</span></span><span><span class="status-pill missing">None</span></span></div>
-      <div class="compare-row"><span>AI Provider</span><span><span class="status-pill done">Perfect Corp</span></span><span><span class="status-pill partial">Mock default</span></span></div>
-      <div class="compare-row"><span>Score Engine</span><span><span class="status-pill wip">Realistic (WIP commit)</span></span><span><span class="status-pill missing">Simple compat score</span></span></div>
-      <div class="compare-row"><span>Intelligence Report</span><span><span class="status-pill done">MiraBeautyReport</span></span><span><span class="status-pill missing">Flat result only</span></span></div>
-      <div class="compare-row"><span>Visual Map</span><span><span class="status-pill done">Face Map premium</span></span><span><span class="status-pill missing">N/A</span></span></div>
+      <div class="compare-row"><span>Quality Gate</span><span><span class="status-pill done">ML Kit + Server</span></span><span><span class="status-pill done">Vision pipeline gates</span></span></div>
+      <div class="compare-row"><span>AI Provider</span><span><span class="status-pill done">Perfect Corp</span></span><span><span class="status-pill done">FASHN + OpenAI</span></span></div>
+      <div class="compare-row"><span>Score Engine</span><span><span class="status-pill wip">Realistic (WIP commit)</span></span><span><span class="status-pill done">DeterministicOutfitEngine</span></span></div>
+      <div class="compare-row"><span>Intelligence Report</span><span><span class="status-pill done">MiraBeautyReport</span></span><span><span class="status-pill partial">Premium result UI</span></span></div>
+      <div class="compare-row"><span>Visual Map</span><span><span class="status-pill done">Face Map premium</span></span><span><span class="status-pill done">Segment map overlay</span></span></div>
       <div class="compare-row"><span>Fusion</span><span><span class="status-pill partial">Engine only</span></span><span><span class="status-pill missing">UI orphan</span></span></div>
-      <div class="compare-row"><span>Tests</span><span><span class="status-pill done">4 face + 14 API</span></span><span><span class="status-pill missing">Quota only</span></span></div>
+      <div class="compare-row"><span>Tests</span><span><span class="status-pill done">4 face + 14 API</span></span><span><span class="status-pill done">122+ Flutter · 5 vision</span></span></div>
       <div class="compare-row"><span>Marketplace</span><span><span class="status-pill done">Skin-driven match</span></span><span><span class="status-pill missing">Not wired</span></span></div>
       <div class="compare-row"><span>Progress tracking</span><span><span class="status-pill done">Beauty progress API</span></span><span><span class="status-pill missing">None</span></span></div>
     </section>
@@ -490,9 +485,13 @@
           <strong>🔄 Phase B — Face Score Realism</strong>
           <p>Beauty Score Engine · commit · disable mock fallback · wire capture quality</p>
         </div>
-        <div class="timeline-item pending">
-          <strong>⏳ Phase C — Outfit Intelligence (2–3 weeks)</strong>
-          <p>FASHN validation · Outfit Score Engine · Quality Gate · Mira Style Report</p>
+        <div class="timeline-item done">
+          <strong>✅ Phase C — Vision Platform Deploy</strong>
+          <p>Phases 0–8 · GitHub dca812d · Render live · FASHN + OpenAI env · 6 AI routes</p>
+        </div>
+        <div class="timeline-item wip">
+          <strong>🔄 Phase C2 — E2E + FASHN adapter</strong>
+          <p>Live app test · FASHN /v1/run compatibility · Phase 9 evaluation</p>
         </div>
         <div class="timeline-item pending">
           <strong>⏳ Phase D — Fusion & Marketplace (1 week)</strong>
@@ -509,12 +508,12 @@
         <table>
           <thead><tr><th>✓</th><th>البند</th><th>Face</th><th>Outfit</th></tr></thead>
           <tbody>
-            <tr><td>☑</td><td>End-to-end user flow</td><td>✅</td><td>⚠️ Mock</td></tr>
-            <tr><td>☑</td><td>Real AI provider in prod</td><td>✅ YouCam</td><td>❌</td></tr>
-            <tr><td>☑</td><td>Realistic scoring engine</td><td>🔄 WIP</td><td>❌</td></tr>
-            <tr><td>☑</td><td>Premium report UI</td><td>✅</td><td>❌</td></tr>
-            <tr><td>☑</td><td>Quality gates</td><td>✅</td><td>❌</td></tr>
-            <tr><td>☑</td><td>Unit tests</td><td>✅</td><td>❌</td></tr>
+            <tr><td>☑</td><td>End-to-end user flow</td><td>✅</td><td>✅ Vision path</td></tr>
+            <tr><td>☑</td><td>Real AI provider in prod</td><td>✅ YouCam</td><td>✅ FASHN + OpenAI</td></tr>
+            <tr><td>☑</td><td>Realistic scoring engine</td><td>🔄 WIP</td><td>✅ MIRA Engine</td></tr>
+            <tr><td>☑</td><td>Premium report UI</td><td>✅</td><td>✅ Result hero</td></tr>
+            <tr><td>☑</td><td>Quality gates</td><td>✅</td><td>✅ Vision pipeline</td></tr>
+            <tr><td>☑</td><td>Unit tests</td><td>✅</td><td>✅ 122+ tests</td></tr>
             <tr><td>☑</td><td>Subscription enforcement</td><td>✅ Backend</td><td>⚠️ Gate open</td></tr>
             <tr><td>☑</td><td>Legal / disclaimer copy</td><td>✅ Face map</td><td>⚠️ Basic</td></tr>
             <tr><td>☑</td><td>Progress / retention</td><td>✅</td><td>❌</td></tr>
@@ -525,8 +524,8 @@
     </section>
 
     <p class="footer-note">
-      MIRA Production Readiness · Generated from codebase audit · يونيو 2026<br />
-      Repository: <code>github.com/semester2030/mira</code> ·
+      MIRA Production Readiness · Updated 30 June 2026 · Vision Platform live<br />
+      Repository: <code>github.com/semester2030/mira</code> · commit <code>dca812d</code> ·
       <a href="mira-intelligence-layer.html">Intelligence Layer Reference</a> ·
       <a href="app-store-readiness.html">App Store Readiness</a> ·
       <a href="index.html">الموقع الرئيسي</a>

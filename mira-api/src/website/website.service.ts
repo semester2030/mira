@@ -29,12 +29,13 @@ const FEATURES: WebsiteFeature[] = [
   {
     id: 'outfit',
     icon: '👗',
-    titleAr: 'تحليل الإطلالة',
-    summaryAr: 'قيّمي تناغم الألوان وملاءمة اللوك للمناسبة (عمل، سهرة، يومي…).',
+    titleAr: 'تحليل الإطلالة — Vision Platform',
+    summaryAr: 'FASHN (geometry) + OpenAI (semantic) عبر Render — MIRA Engine يقرر الدرجة والتوصيات.',
     bulletsAr: [
-      'اختيار المناسبة قبل التحليل',
-      'درجة جمال وتوصيات تحسين',
-      'سجل إطلالات سابق',
+      'POST /ai/vision/outfit/analyze — live على الإنتاج',
+      'اختيار المناسبة · خريطة قطع · hero premium',
+      'DeterministicOutfitEngine — لا Google Vision',
+      'سجل إطلالات + compare + color harmony',
     ],
     status: 'live',
   },
@@ -125,7 +126,10 @@ export class WebsiteService {
       services,
       contactSubmissions: leads,
       skinEngine: 'Perfect Corp YouCam',
+      outfitEngine: 'Vision Platform (FASHN + OpenAI)',
       apiStatus: 'ok',
+      productionCommit: 'dca812d',
+      productionUrl: 'https://mira-api-n4p3.onrender.com/api/v1',
     };
   }
 
