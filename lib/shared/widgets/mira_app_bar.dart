@@ -4,9 +4,10 @@ import '../theme/typography.dart';
 
 /// شريط علوي — نفس شعار ميرا الوحيد.
 class MiraAppBar extends StatelessWidget implements PreferredSizeWidget {
-  const MiraAppBar({super.key, this.pageTitle});
+  const MiraAppBar({super.key, this.pageTitle, this.actions});
 
   final String? pageTitle;
+  final List<Widget>? actions;
 
   @override
   Size get preferredSize => const Size.fromHeight(kToolbarHeight);
@@ -25,6 +26,7 @@ class MiraAppBar extends StatelessWidget implements PreferredSizeWidget {
     return AppBar(
       backgroundColor: Colors.transparent,
       surfaceTintColor: Colors.transparent,
+      actions: actions,
       title: Row(
         children: [
           const MirraLogo.appBar(height: 36, width: 110),

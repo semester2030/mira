@@ -1,0 +1,26 @@
+{
+  "version": 1,
+  "relations": ["works_with", "similar_to", "layer_over", "layer_under", "replaces"],
+  "edges": [
+    { "from": "blazer_beige_001", "to": "trousers_navy_001", "relation": "works_with", "weight": 0.96, "whyAr": "بلوزر بيج مع بنطلون كحلي — قاعدة Quiet Luxury" },
+    { "from": "blazer_beige_001", "to": "satin_top_black_001", "relation": "layer_over", "weight": 0.88, "whyAr": "طبقة علوية منظّمة فوق بلوزة ساتان" },
+    { "from": "blazer_beige_001", "to": "heels_nude_001", "relation": "works_with", "weight": 0.92, "whyAr": "كعب nude يمدّد الساق ويوازن البيج" },
+    { "from": "blazer_beige_001", "to": "bag_black_leather_001", "relation": "works_with", "weight": 0.90, "whyAr": "حقيبة جلد سوداء تثبّت الإطلالة المهنية" },
+    { "from": "blazer_beige_001", "to": "watch_gold_001", "relation": "works_with", "weight": 0.85, "whyAr": "ساعة ذهبية تُكمل Old Money" },
+    { "from": "blazer_beige_001", "to": "silver_necklace_001", "relation": "works_with", "weight": 0.78, "whyAr": "عقد فضي هادئ للإطلالات الكلاسيكية" },
+    { "from": "trousers_navy_001", "to": "heels_black_001", "relation": "works_with", "weight": 0.94, "whyAr": "كعب أسود يرسّخ الخط المهني" },
+    { "from": "corset_cream_001", "to": "skirt_silk_beige_001", "relation": "works_with", "weight": 0.93, "whyAr": "كورسيه كريمي مع تنورة حرير بيج" },
+    { "from": "corset_cream_001", "to": "pearl_earrings_001", "relation": "works_with", "weight": 0.91, "whyAr": "لؤلؤ يُضيء الوجه بلطف" },
+    { "from": "corset_cream_001", "to": "cape_ivory_001", "relation": "layer_over", "weight": 0.87, "whyAr": "كape عاجي للمناسبات" },
+    { "from": "satin_top_black_001", "to": "skirt_classic_black_001", "relation": "works_with", "weight": 0.95, "whyAr": "أسود على أسود — Monochromatic formal" },
+    { "from": "satin_top_black_001", "to": "clutch_silver_001", "relation": "works_with", "weight": 0.89, "whyAr": "كلاتش فضي للسهرات" },
+    { "from": "skirt_silk_beige_001", "to": "heels_nude_001", "relation": "works_with", "weight": 0.90, "whyAr": "nude tones harmony" },
+    { "from": "cape_ivory_001", "to": "shawl_wedding_001", "relation": "similar_to", "weight": 0.82, "whyAr": "طبقات احتفالية متشابهة" },
+    { "from": "cardigan_gray_001", "to": "tote_beige_001", "relation": "works_with", "weight": 0.86, "whyAr": "كاجوال مريح للسفر" },
+    { "from": "cardigan_gray_001", "to": "sunglasses_tortoise_001", "relation": "works_with", "weight": 0.80, "whyAr": "إطلالة يومية متكاملة" },
+    { "from": "heels_black_001", "to": "diamond_bracelet_001", "relation": "works_with", "weight": 0.88, "whyAr": "لمسة سهرة راقية" },
+    { "from": "bag_black_leather_001", "to": "watch_gold_001", "relation": "works_with", "weight": 0.87, "whyAr": "إكسسوارات مهنية متناسقة" },
+    { "from": "pearl_earrings_001", "to": "shawl_wedding_001", "relation": "works_with", "weight": 0.92, "whyAr": "زفاف كلاسيكي" },
+    { "from": "scarf_beige_001", "to": "blazer_beige_001", "relation": "layer_over", "weight": 0.84, "whyAr": "وشاح يضيف عمقاً لونياً" }
+  ]
+}

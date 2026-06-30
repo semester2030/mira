@@ -6,16 +6,17 @@ import {
   OutfitVisualProfileDto,
   SkinReportSnapshot,
 } from '../contracts/outfit-intelligence.interface';
-import { GoogleVisionOutfitService } from '../google-vision/google-vision-outfit.service';
 import { LlmOutfitReasoningService } from '../llm/llm-outfit-reasoning.service';
 import { seedFromImageBytes } from '../utils/image-seed';
+import { FashionVisionDocument } from '../../vision/schema/fashion-vision-document.v1';
+import { VisionOrchestratorService } from '../../vision/vision-orchestrator.service';
 
 @Injectable()
 export class OutfitHybridIntelligenceService {
   private readonly logger = new Logger(OutfitHybridIntelligenceService.name);
 
   constructor(
-    private readonly vision: GoogleVisionOutfitService,
+    private readonly visionOrchestrator: VisionOrchestratorService,
     private readonly llm: LlmOutfitReasoningService,
   ) {}
 
@@ -26,9 +27,15 @@ export class OutfitHybridIntelligenceService {
   ): Promise<OutfitIntelligenceResponseDto> {
     let visual: OutfitVisualProfileDto;
     try {
-      visual = await this.vision.analyze(imageBuffer);
+      const result = await this.visionOrchestrator.analyze({
+        imageBuffer,
+        occasionId,
+        mode: 'smart',
+        skinSnapshot: skin as unknown as Record<string, unknown>,
+      });
+      visual = mapFashionVisionToVisualProfile(result.fashionVision);
     } catch (error) {
-      this.logger.warn(`Vision fallback: ${String(error)}`);
+      this.logger.warn(`Vision Platform fallback: ${String(error)}`);
       visual = this.deterministicVisual(imageBuffer);
     }
 
@@ -107,4 +114,30 @@ export class OutfitHybridIntelligenceService {
       colorHarmonyScore: score - 6,
     };
   }
+}
+
+function mapFashionVisionToVisualProfile(
+  doc: FashionVisionDocument,
+): OutfitVisualProfileDto {
+  const garments = doc.semantics.garments;
+  const accessories = doc.semantics.accessories;
+  const primary = garments[0];
+  const overall = doc.fusion.overallConfidence;
+
+  return {
+    labels: garments.map((g) => g.typeId),
+    dominantColors: doc.semantics.dominantColorIds,
+    clothingTypes: garments.map((g) => g.typeId),
+    accessoryTypes: accessories.map((a) => a.typeId),
+    styleSignals: doc.semantics.styleArchetypeId ? [doc.semantics.styleArchetypeId] : [],
+    textureHints: [],
+    confidence: Math.round(overall * 100),
+    source: 'vision_platform',
+    garmentTypeAr: primary?.typeId ?? 'إطلالة',
+    garmentTypeEn: primary?.categoryId ?? 'Outfit',
+    styleTypeAr: doc.semantics.styleArchetypeId ?? 'أنيق',
+    styleTypeEn: doc.semantics.styleArchetypeId ?? 'Style',
+    contrastLevel: 0.55,
+    formalityLevel: 0.55,
+  };
 }

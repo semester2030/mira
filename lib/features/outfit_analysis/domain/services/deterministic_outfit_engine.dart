@@ -1,11 +1,14 @@
 import '../../../../core/ai/models/mira_occasion.dart';
 import '../../../skin_analysis/domain/entities/skin_report.dart';
+import '../adapters/fashion_vision_to_engine_adapter.dart';
 import '../entities/outfit_analysis.dart';
 import '../entities/outfit_analysis_mode.dart';
+import '../entities/fashion_vision_document.dart';
 import '../entities/outfit_visual_profile.dart';
 import '../entities/user_gender.dart';
 import '../helpers/skin_palette_mapper.dart';
 import '../helpers/undertone_resolver.dart';
+import 'outfit_trust_scoring.dart';
 
 export '../entities/outfit_analysis_mode.dart';
 
@@ -52,6 +55,24 @@ abstract final class DeterministicOutfitEngine {
     );
   }
 
+  /// Phase 7 — MIRA engine consumes [FashionVisionDocument] (via adapter).
+  static OutfitAnalysis analyzeFromFashionVision({
+    required FashionVisionDocument fashion,
+    SkinReport? skin,
+    required MiraOccasion occasion,
+    required OutfitAnalysisMode mode,
+    UserGender gender = UserGender.female,
+  }) {
+    final visual = FashionVisionToEngineAdapter.toVisualProfile(fashion);
+    return analyze(
+      skin: skin,
+      visual: visual,
+      occasion: occasion,
+      mode: mode,
+      gender: gender,
+    );
+  }
+
   static OutfitAnalysis _analyzeSmart({
     required SkinReport skin,
     required OutfitVisualProfile visual,
@@ -65,11 +86,23 @@ abstract final class DeterministicOutfitEngine {
     final styleScore = _styleBalanceScore(visual);
     final harmonyScore = _colorHarmonyScore(palette, visual);
 
-    final compatibilityScore = computeWeightedFinalSmart(
+    final rawScore = computeWeightedFinalSmart(
       skinScore: skinScore,
       occasionScore: occasionScore,
       styleScore: styleScore,
       colorHarmonyScore: harmonyScore,
+    );
+    final compatibilityScore = OutfitTrustScoring.applyFinalScore(
+      rawScore: rawScore,
+      occasionScore: occasionScore,
+      styleScore: styleScore,
+      colorHarmonyScore: harmonyScore,
+    );
+    final confidence = OutfitTrustScoring.applyConfidence(
+      baseConfidence: _smartConfidence(skin, visual),
+      colorHarmonyScore: harmonyScore,
+      occasionScore: occasionScore,
+      styleScore: styleScore,
     );
 
     final matchReasons = _buildMatchReasons(skin, palette, visual, occasion);
@@ -104,7 +137,7 @@ abstract final class DeterministicOutfitEngine {
       accessories: accessories,
       makeup: makeup,
       explanation: _smartExplanation(skin, palette, visual, occasion, compatibilityScore),
-      confidence: _smartConfidence(skin, visual),
+      confidence: confidence,
       skinScore: skinScore,
       occasionScore: occasionScore,
       styleScore: styleScore,
@@ -122,10 +155,22 @@ abstract final class DeterministicOutfitEngine {
     final styleScore = _styleBalanceScore(visual);
     final harmonyScore = _visualColorHarmonyScore(visual);
 
-    final compatibilityScore = computeWeightedFinalQuick(
+    final rawScore = computeWeightedFinalQuick(
       occasionScore: occasionScore,
       styleScore: styleScore,
       colorHarmonyScore: harmonyScore,
+    );
+    final compatibilityScore = OutfitTrustScoring.applyFinalScore(
+      rawScore: rawScore,
+      occasionScore: occasionScore,
+      styleScore: styleScore,
+      colorHarmonyScore: harmonyScore,
+    );
+    final confidence = OutfitTrustScoring.applyConfidence(
+      baseConfidence: _quickConfidence(visual),
+      colorHarmonyScore: harmonyScore,
+      occasionScore: occasionScore,
+      styleScore: styleScore,
     );
 
     final matchReasons = _buildQuickMatchReasons(visual, occasion);
@@ -150,7 +195,7 @@ abstract final class DeterministicOutfitEngine {
       ]),
       makeup: '',
       explanation: _quickExplanation(visual, occasion, compatibilityScore),
-      confidence: _quickConfidence(visual),
+      confidence: confidence,
       skinScore: 0,
       occasionScore: occasionScore,
       styleScore: styleScore,
@@ -184,7 +229,7 @@ abstract final class DeterministicOutfitEngine {
       occasion: occasion,
       clothingType: visual.garmentTypeAr.isNotEmpty
           ? visual.garmentTypeAr
-          : (visual.clothingTypes.firstOrNull ?? 'غير مؤكد'),
+          : (visual.clothingTypes.firstOrNull ?? 'قطعة غير قابلة للتحليل'),
       styleType: visual.styleTypeAr.isNotEmpty
           ? visual.styleTypeAr
           : (visual.styleSignals.firstOrNull ?? 'أنيق'),

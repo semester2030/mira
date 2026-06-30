@@ -36,8 +36,8 @@ String friendlyFirebaseError(Object error) {
       case 'captcha-check-failed':
         return 'فشل التحقق الأمني — أعيدي المحاولة';
       case 'internal-error':
-        return 'خطأ داخلي من Firebase — غالباً: فعّل Blaze Plan لرسائل SMS الحقيقية، '
-            'أو أضف رقمك كـ Test Phone في Firebase Console → Authentication → Phone';
+        return 'تعذّر إرسال الرمز — تأكدي من اتصال الإنترنت، '
+            'أكملي نافذة التحقق إن ظهرت، أو أضيفي رقمك كـ Test Phone في Firebase Console → Authentication → Phone';
       case 'missing-client-identifier':
         return 'إعداد iOS ناقص — تأكد من GoogleService-Info.plist و REVERSED_CLIENT_ID في Info.plist';
       case 'app-not-authorized':

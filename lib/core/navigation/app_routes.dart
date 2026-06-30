@@ -27,6 +27,7 @@ abstract final class AppRoutes {
   static const outfitResult = '/outfit-result';
   static const miraStyleReport = '/mira-style-report';
   static const outfitHistory = '/outfit-history';
+  static const outfitCompare = '/outfit-compare';
   static const recommendations = '/recommendations';
   static const recommendationHistory = '/recommendation-history';
   static const miraAdvisor = '/mira-advisor';

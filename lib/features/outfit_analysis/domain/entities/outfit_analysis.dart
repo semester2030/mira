@@ -211,7 +211,7 @@ class OutfitAnalysis {
       contrastLevel: json['contrastLevel'] as String? ?? '',
       formalityLevel: json['formalityLevel'] as String? ?? '',
       analysisSource: json['analysisSource'] as String? ?? 'hybrid',
-      visualSource: json['visualSource'] as String? ?? 'google_vision',
+      visualSource: json['visualSource'] as String? ?? 'vision_platform',
       skinCompatibilityScore:
           (json['skinCompatibilityScore'] as num?)?.round() ?? 0,
       occasionMatchScore: (json['occasionMatchScore'] as num?)?.round() ?? 0,

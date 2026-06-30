@@ -7,12 +7,17 @@
   "client": [
     {
       "client_info": {
-        "mobilesdk_app_id": "1:399849748934:android:ab3e0fc02257c75697dac7",
+        "mobilesdk_app_id": "1:399849748934:android:1d531f1bf71ed3f097dac7",
         "android_client_info": {
           "package_name": "app.mira.beauty"
         }
       },
-      "oauth_client": [],
+      "oauth_client": [
+        {
+          "client_id": "399849748934-03t3dv0f44fmkv93nuceulsleuvb4ub7.apps.googleusercontent.com",
+          "client_type": 3
+        }
+      ],
       "api_key": [
         {
           "current_key": "AIzaSyC82sslwobSzC1Bhl3_Un00NJndTHurJfo"
@@ -20,7 +25,55 @@
       ],
       "services": {
         "appinvite_service": {
-          "other_platform_oauth_client": []
+          "other_platform_oauth_client": [
+            {
+              "client_id": "399849748934-03t3dv0f44fmkv93nuceulsleuvb4ub7.apps.googleusercontent.com",
+              "client_type": 3
+            },
+            {
+              "client_id": "399849748934-997680efh2b5k9c4q2usk3q7hb6gq2ud.apps.googleusercontent.com",
+              "client_type": 2,
+              "ios_info": {
+                "bundle_id": "com.example.mirra"
+              }
+            }
+          ]
+        }
+      }
+    },
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:399849748934:android:ab3e0fc02257c75697dac7",
+        "android_client_info": {
+          "package_name": "com.example.mirra"
+        }
+      },
+      "oauth_client": [
+        {
+          "client_id": "399849748934-03t3dv0f44fmkv93nuceulsleuvb4ub7.apps.googleusercontent.com",
+          "client_type": 3
+        }
+      ],
+      "api_key": [
+        {
+          "current_key": "AIzaSyC82sslwobSzC1Bhl3_Un00NJndTHurJfo"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": [
+            {
+              "client_id": "399849748934-03t3dv0f44fmkv93nuceulsleuvb4ub7.apps.googleusercontent.com",
+              "client_type": 3
+            },
+            {
+              "client_id": "399849748934-997680efh2b5k9c4q2usk3q7hb6gq2ud.apps.googleusercontent.com",
+              "client_type": 2,
+              "ios_info": {
+                "bundle_id": "com.example.mirra"
+              }
+            }
+          ]
         }
       }
     },
@@ -31,7 +84,12 @@
           "package_name": "mirra.com"
         }
       },
-      "oauth_client": [],
+      "oauth_client": [
+        {
+          "client_id": "399849748934-03t3dv0f44fmkv93nuceulsleuvb4ub7.apps.googleusercontent.com",
+          "client_type": 3
+        }
+      ],
       "api_key": [
         {
           "current_key": "AIzaSyC82sslwobSzC1Bhl3_Un00NJndTHurJfo"
@@ -39,7 +97,19 @@
       ],
       "services": {
         "appinvite_service": {
-          "other_platform_oauth_client": []
+          "other_platform_oauth_client": [
+            {
+              "client_id": "399849748934-03t3dv0f44fmkv93nuceulsleuvb4ub7.apps.googleusercontent.com",
+              "client_type": 3
+            },
+            {
+              "client_id": "399849748934-997680efh2b5k9c4q2usk3q7hb6gq2ud.apps.googleusercontent.com",
+              "client_type": 2,
+              "ios_info": {
+                "bundle_id": "com.example.mirra"
+              }
+            }
+          ]
         }
       }
     }

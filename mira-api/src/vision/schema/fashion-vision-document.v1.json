@@ -1,0 +1,245 @@
+{
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "$id": "https://mira.app/schemas/fashion-vision-document.v1.json",
+  "title": "FashionVisionDocument",
+  "description": "MIRA Universal Fashion Schema v1.0.0 — docs/mira-vision-platform.html",
+  "type": "object",
+  "required": [
+    "schemaVersion",
+    "analysisGate",
+    "provenance",
+    "geometry",
+    "semantics",
+    "fusion"
+  ],
+  "additionalProperties": false,
+  "properties": {
+    "schemaVersion": {
+      "type": "string",
+      "const": "1.0.0"
+    },
+    "analysisGate": {
+      "type": "string",
+      "enum": ["proceed", "blocked", "degraded"]
+    },
+    "provenance": {
+      "type": "object",
+      "required": ["providers", "timestamp", "orchestratorVersion"],
+      "additionalProperties": false,
+      "properties": {
+        "providers": {
+          "type": "array",
+          "minItems": 1,
+          "items": { "type": "string", "minLength": 1 }
+        },
+        "timestamp": { "type": "string", "format": "date-time" },
+        "orchestratorVersion": { "type": "string", "minLength": 1 },
+        "pipelinePhase": { "type": "string" },
+        "rejectReasons": {
+          "type": "array",
+          "items": {
+            "type": "object",
+            "required": ["code", "message"],
+            "additionalProperties": false,
+            "properties": {
+              "code": { "type": "string" },
+              "message": { "type": "string" },
+              "path": { "type": "string" }
+            }
+          }
+        },
+        "normalizationNotes": {
+          "type": "array",
+          "items": { "type": "string" }
+        }
+      }
+    },
+    "geometry": {
+      "type": "object",
+      "required": ["segments", "topology"],
+      "additionalProperties": false,
+      "properties": {
+        "segments": {
+          "type": "array",
+          "items": { "$ref": "#/definitions/geometrySegment" }
+        },
+        "topology": { "$ref": "#/definitions/geometryTopology" }
+      }
+    },
+    "semantics": {
+      "type": "object",
+      "required": ["garments", "accessories", "layering", "dominantColorIds", "secondaryColorIds"],
+      "additionalProperties": false,
+      "properties": {
+        "garments": {
+          "type": "array",
+          "minItems": 1,
+          "items": { "$ref": "#/definitions/semanticGarment" }
+        },
+        "accessories": {
+          "type": "array",
+          "items": { "$ref": "#/definitions/semanticAccessory" }
+        },
+        "styleArchetypeId": { "type": "string" },
+        "layering": {
+          "type": "array",
+          "items": { "type": "string" }
+        },
+        "dominantColorIds": {
+          "type": "array",
+          "items": { "type": "string" }
+        },
+        "secondaryColorIds": {
+          "type": "array",
+          "items": { "type": "string" }
+        }
+      }
+    },
+    "fusion": {
+      "type": "object",
+      "required": ["resolvedGarments", "conflicts", "fieldConfidence", "overallConfidence"],
+      "additionalProperties": false,
+      "properties": {
+        "resolvedGarments": {
+          "type": "array",
+          "items": { "$ref": "#/definitions/resolvedGarment" }
+        },
+        "conflicts": {
+          "type": "array",
+          "items": { "$ref": "#/definitions/visionConflict" }
+        },
+        "fieldConfidence": {
+          "type": "array",
+          "items": { "$ref": "#/definitions/fieldConfidence" }
+        },
+        "overallConfidence": {
+          "type": "number",
+          "minimum": 0,
+          "maximum": 1
+        }
+      }
+    }
+  },
+  "definitions": {
+    "normalizedBbox": {
+      "type": "object",
+      "required": ["x", "y", "w", "h"],
+      "additionalProperties": false,
+      "properties": {
+        "x": { "type": "number", "minimum": 0, "maximum": 1 },
+        "y": { "type": "number", "minimum": 0, "maximum": 1 },
+        "w": { "type": "number", "minimum": 0, "maximum": 1 },
+        "h": { "type": "number", "minimum": 0, "maximum": 1 }
+      }
+    },
+    "geometrySegment": {
+      "type": "object",
+      "required": ["id", "regionRole", "polygon", "bbox"],
+      "additionalProperties": false,
+      "properties": {
+        "id": { "type": "string", "minLength": 1 },
+        "regionRole": {
+          "type": "string",
+          "enum": ["upper", "lower", "outerwear", "feet", "accessory", "full_body", "unknown"]
+        },
+        "polygon": {
+          "type": "array",
+          "minItems": 3,
+          "items": {
+            "type": "array",
+            "minItems": 2,
+            "maxItems": 2,
+            "items": { "type": "number" }
+          }
+        },
+        "bbox": { "$ref": "#/definitions/normalizedBbox" },
+        "cropRef": { "type": "string" }
+      }
+    },
+    "geometryTopology": {
+      "type": "object",
+      "required": ["pieceCount", "onePiece", "silhouetteHint"],
+      "additionalProperties": false,
+      "properties": {
+        "pieceCount": { "type": "integer", "minimum": 0 },
+        "onePiece": { "type": "boolean" },
+        "silhouetteHint": {
+          "type": "string",
+          "enum": ["one_piece", "two_piece", "layered", "unknown"]
+        }
+      }
+    },
+    "semanticGarment": {
+      "type": "object",
+      "required": ["categoryId", "typeId", "colors", "providerConfidence"],
+      "additionalProperties": false,
+      "properties": {
+        "categoryId": { "type": "string", "minLength": 1 },
+        "typeId": { "type": "string", "minLength": 1 },
+        "sleeve": { "type": "string" },
+        "neckline": { "type": "string" },
+        "fit": { "type": "string" },
+        "colors": {
+          "type": "array",
+          "minItems": 1,
+          "items": { "type": "string" }
+        },
+        "material": { "type": "string" },
+        "providerConfidence": {
+          "type": "number",
+          "minimum": 0,
+          "maximum": 1
+        }
+      }
+    },
+    "semanticAccessory": {
+      "type": "object",
+      "required": ["categoryId", "typeId", "providerConfidence"],
+      "additionalProperties": false,
+      "properties": {
+        "categoryId": { "type": "string", "minLength": 1 },
+        "typeId": { "type": "string", "minLength": 1 },
+        "colors": {
+          "type": "array",
+          "items": { "type": "string" }
+        },
+        "providerConfidence": {
+          "type": "number",
+          "minimum": 0,
+          "maximum": 1
+        }
+      }
+    },
+    "resolvedGarment": {
+      "type": "object",
+      "required": ["categoryId", "typeId", "confidence"],
+      "additionalProperties": false,
+      "properties": {
+        "categoryId": { "type": "string" },
+        "typeId": { "type": "string" },
+        "confidence": { "type": "number", "minimum": 0, "maximum": 1 }
+      }
+    },
+    "visionConflict": {
+      "type": "object",
+      "required": ["code", "message", "severity"],
+      "additionalProperties": false,
+      "properties": {
+        "code": { "type": "string" },
+        "message": { "type": "string" },
+        "severity": { "type": "string", "enum": ["low", "medium", "high"] },
+        "semanticValue": { "type": "string" },
+        "geometryValue": { "type": "string" }
+      }
+    },
+    "fieldConfidence": {
+      "type": "object",
+      "required": ["field", "confidence"],
+      "additionalProperties": false,
+      "properties": {
+        "field": { "type": "string" },
+        "confidence": { "type": "number", "minimum": 0, "maximum": 1 }
+      }
+    }
+  }
+}

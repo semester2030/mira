@@ -13,6 +13,7 @@ import '../../domain/services/outfit_capture_rules.dart';
 import '../../domain/services/outfit_capture_validator.dart';
 import '../utils/outfit_camera_frame_utils.dart';
 import 'outfit_body_guide_overlay.dart';
+import 'outfit_pose_tracking_overlay.dart';
 
 /// V2 live outfit capture — pose validation, freeze frame, block until valid.
 class OutfitLiveCapturePanel extends StatefulWidget {
@@ -116,7 +117,7 @@ class _OutfitLiveCapturePanelState extends State<OutfitLiveCapturePanel>
 
       final controller = CameraController(
         selected,
-        ResolutionPreset.medium,
+        ResolutionPreset.high,
         enableAudio: false,
         imageFormatGroup: Platform.isIOS
             ? ImageFormatGroup.bgra8888
@@ -225,7 +226,7 @@ class _OutfitLiveCapturePanelState extends State<OutfitLiveCapturePanel>
   Future<void> _schedulePoseCheck(CameraImage image) async {
     if (_poseChecking || widget.frozenImage != null) return;
     final now = DateTime.now();
-    if (now.difference(_lastPoseCheck).inMilliseconds < 1400) return;
+    if (now.difference(_lastPoseCheck).inMilliseconds < 900) return;
 
     _poseChecking = true;
     _lastPoseCheck = now;
@@ -414,9 +415,21 @@ class _OutfitLiveCapturePanelState extends State<OutfitLiveCapturePanel>
                         if (!hasFrozen)
                           Positioned.fill(
                             child: IgnorePointer(
-                              child: OutfitBodyGuideOverlay(
-                                frameReady: _validation.isValid,
-                                pulse: _pulseController.value,
+                              child: Stack(
+                                fit: StackFit.expand,
+                                children: [
+                                  OutfitBodyGuideOverlay(
+                                    frameReady: _validation.isValid,
+                                    pulse: _pulseController.value,
+                                    pose: _pose,
+                                  ),
+                                  if (_pose.hasDetailedTracking)
+                                    OutfitPoseTrackingOverlay(
+                                      pose: _pose,
+                                      frameReady: _validation.isValid,
+                                      pulse: _pulseController.value,
+                                    ),
+                                ],
                               ),
                             ),
                           ),

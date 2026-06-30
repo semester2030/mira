@@ -1,6 +1,8 @@
 import 'dart:async';
+import 'dart:developer' as developer;
 
 import 'package:firebase_auth/firebase_auth.dart' as auth;
+import 'package:flutter/foundation.dart';
 import '../../../../core/services/guest_session_service.dart';
 import '../../../../core/services/user_document_service.dart';
 import '../../domain/entities/phone_otp_session.dart';
@@ -53,11 +55,20 @@ class AuthRepositoryImpl implements AuthRepository {
         }
       },
       verificationFailed: (e) {
+        if (kDebugMode) {
+          developer.log(
+            'Phone OTP failed: ${e.code} — ${e.message}',
+            name: 'AuthRepository',
+          );
+        }
         if (!completer.isCompleted) {
           completer.completeError(e);
         }
       },
       codeSent: (verificationId, newResendToken) {
+        if (kDebugMode) {
+          developer.log('Phone OTP codeSent to $e164Phone', name: 'AuthRepository');
+        }
         if (!completer.isCompleted) {
           completer.complete(
             PhoneOtpSession(

@@ -1,0 +1,49 @@
+{
+  "version": 1,
+  "archetypes": {
+    "quiet_luxury": {
+      "labelAr": "رفاهية هادئة",
+      "keywords": ["minimal", "neutral", "linen", "cashmere", "matte"]
+    },
+    "old_money": {
+      "labelAr": "أناقة كلاسيكية",
+      "keywords": ["classic", "tailored", "pearl", "navy", "blazer"]
+    },
+    "minimal": {
+      "labelAr": "مينimal",
+      "keywords": ["clean", "solid", "monochrome", "structured"]
+    },
+    "business": {
+      "labelAr": "مهني",
+      "keywords": ["blazer", "trousers", "watch", "formal", "work"]
+    },
+    "evening": {
+      "labelAr": "سهرة",
+      "keywords": ["satin", "clutch", "heel", "jewelry", "silk"]
+    },
+    "wedding": {
+      "labelAr": "زفاف",
+      "keywords": ["pearl", "ivory", "shawl", "lace", "elegant"]
+    },
+    "casual": {
+      "labelAr": "كاجوال",
+      "keywords": ["cardigan", "tote", "denim", "relaxed"]
+    },
+    "resort": {
+      "labelAr": "منتجع",
+      "keywords": ["linen", "light", "summer", "scarf", "sunglasses"]
+    },
+    "winter": {
+      "labelAr": "شتاء",
+      "keywords": ["wool", "coat", "layer", "cashmere"]
+    },
+    "summer": {
+      "labelAr": "صيف",
+      "keywords": ["silk", "light", "nude", "breathable"]
+    },
+    "travel": {
+      "labelAr": "سفر",
+      "keywords": ["tote", "comfort", "layer", "versatile"]
+    }
+  }
+}

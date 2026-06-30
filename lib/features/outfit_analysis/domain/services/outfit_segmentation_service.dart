@@ -4,11 +4,13 @@ import 'dart:ui';
 
 import 'package:image/image.dart' as img;
 
-import '../../data/helpers/vision_color_mapper.dart';
-import '../entities/outfit_body_pose_metrics.dart';
 import '../entities/outfit_segment_map.dart';
 import '../entities/outfit_visual_profile.dart';
+import '../helpers/outfit_fashion_taxonomy.dart';
+import '../helpers/outfit_fashion_validator.dart';
+import '../helpers/outfit_vision_region_builder.dart';
 import 'outfit_body_pose_analyzer.dart';
+import 'outfit_contour_refiner.dart';
 import 'outfit_segment_color_extractor.dart';
 
 /// Localized object from Google Vision with bounding box.
@@ -24,7 +26,7 @@ class VisionLocalizedObject {
   });
 }
 
-/// Builds deterministic outfit segment map from frozen image + Vision hits.
+/// Person mask → Vision garments → contour → KMeans colors → validation.
 class OutfitSegmentationService {
   OutfitSegmentationService({
     OutfitBodyPoseAnalyzer? poseAnalyzer,
@@ -42,159 +44,70 @@ class OutfitSegmentationService {
     if (decoded == null) return OutfitSegmentMap.empty;
 
     final oriented = img.bakeOrientation(decoded);
-    OutfitBodyPoseMetrics pose = OutfitBodyPoseMetrics.none;
-    try {
-      pose = await _poseAnalyzer.analyzeFile(imageFile);
-    } catch (_) {
-      pose = OutfitBodyPoseMetrics.none;
-    }
-    final baseRegions = _regionsFromPose(pose);
+    final pose = await _poseAnalyzer.analyzeFile(imageFile);
 
-    final labeled = _attachVisionLabels(baseRegions, visionObjects, visual);
-    final colorMap = OutfitSegmentColorExtractor.extractAllZones(oriented, labeled);
+    final detected = OutfitVisionRegionBuilder.build(
+      visionObjects: visionObjects,
+      pose: pose,
+    );
 
-    return OutfitSegmentMap(
-      regions: labeled,
+    final withContours = detected
+        .map(
+          (region) => region.copyWith(
+            normalizedPolygon: OutfitContourRefiner.refine(
+              oriented,
+              normalizedRect: region.normalizedRect,
+            ),
+          ),
+        )
+        .toList();
+
+    final regions = OutfitFashionTaxonomy.visibleRegions(withContours);
+    final colorMap = OutfitSegmentColorExtractor.extractAllZones(
+      oriented,
+      regions,
+      pose: pose,
+    );
+
+    final regionsWithColors = regions
+        .map(
+          (r) => r.copyWith(
+            colors: colorMap[r.zone] ?? const [],
+          ),
+        )
+        .toList();
+
+    final palette = OutfitSegmentColorExtractor.extractGarmentPalette(
+      oriented,
+      regions: regionsWithColors,
+      pose: pose,
+    );
+
+    var map = OutfitSegmentMap(
+      regions: regionsWithColors,
       upperBodyColors: colorMap[OutfitSegmentZone.upperBody] ?? const [],
       lowerBodyColors: colorMap[OutfitSegmentZone.lowerBody] ?? const [],
       shoeColors: colorMap[OutfitSegmentZone.feet] ?? const [],
       accessoryColors: colorMap[OutfitSegmentZone.accessories] ?? const [],
+      garmentPalette: palette,
       imageWidth: oriented.width.toDouble(),
       imageHeight: oriented.height.toDouble(),
-      source: visual?.source ?? 'deterministic',
+      source: visionObjects.isNotEmpty ? 'vision_garment' : 'unvalidated',
     );
-  }
 
-  List<OutfitSegmentRegion> _regionsFromPose(OutfitBodyPoseMetrics pose) {
-    if (pose.isFullBodyReady) {
-      return _deterministicFallbackRegions();
-    }
-    return _deterministicFallbackRegions();
-  }
+    final validation = OutfitFashionValidator.validate(
+      segmentMap: map,
+      palette: palette,
+      pose: pose,
+    );
+    map = OutfitFashionValidator.applyValidation(map, validation);
 
-  List<OutfitSegmentRegion> _deterministicFallbackRegions() {
-    return const [
-      OutfitSegmentRegion(
-        zone: OutfitSegmentZone.head,
-        normalizedRect: Rect.fromLTWH(0.32, 0.04, 0.36, 0.12),
-        labelAr: 'الرأس',
-        labelEn: 'Head',
-      ),
-      OutfitSegmentRegion(
-        zone: OutfitSegmentZone.upperBody,
-        normalizedRect: Rect.fromLTWH(0.22, 0.16, 0.56, 0.28),
-        labelAr: 'سترة',
-        labelEn: 'Blazer',
-      ),
-      OutfitSegmentRegion(
-        zone: OutfitSegmentZone.waist,
-        normalizedRect: Rect.fromLTWH(0.28, 0.44, 0.44, 0.1),
-        labelAr: 'الخصر',
-        labelEn: 'Waist',
-      ),
-      OutfitSegmentRegion(
-        zone: OutfitSegmentZone.lowerBody,
-        normalizedRect: Rect.fromLTWH(0.24, 0.52, 0.52, 0.28),
-        labelAr: 'بنطال',
-        labelEn: 'Pants',
-      ),
-      OutfitSegmentRegion(
-        zone: OutfitSegmentZone.feet,
-        normalizedRect: Rect.fromLTWH(0.26, 0.82, 0.48, 0.14),
-        labelAr: 'حذاء',
-        labelEn: 'Shoes',
-      ),
-      OutfitSegmentRegion(
-        zone: OutfitSegmentZone.accessories,
-        normalizedRect: Rect.fromLTWH(0.62, 0.28, 0.22, 0.22),
-        labelAr: 'حقيبة',
-        labelEn: 'Bag',
-      ),
-    ];
-  }
-
-  List<OutfitSegmentRegion> _attachVisionLabels(
-    List<OutfitSegmentRegion> regions,
-    List<VisionLocalizedObject> objects,
-    OutfitVisualProfile? visual,
-  ) {
-    final updated = <OutfitSegmentRegion>[];
-    for (final region in regions) {
-      var labelAr = region.labelAr;
-      var labelEn = region.labelEn;
-      var confidence = region.confidence;
-
-      final object = _bestObjectForZone(region.zone, objects);
-      if (object != null) {
-        labelEn = object.name;
-        labelAr = VisionColorMapper.labelToArabic(object.name);
-        confidence = object.score;
-      } else {
-        final visualLabel = _visualLabelForZone(region.zone, visual);
-        if (visualLabel != null) {
-          labelAr = visualLabel;
-          labelEn = visualLabel;
-          confidence = visual?.clothingConfidence ?? 0.6;
-        }
-      }
-
-      updated.add(
-        region.copyWith(
-          labelAr: labelAr,
-          labelEn: labelEn,
-          confidence: confidence,
-        ),
-      );
-    }
-    return updated;
-  }
-
-  VisionLocalizedObject? _bestObjectForZone(
-    OutfitSegmentZone zone,
-    List<VisionLocalizedObject> objects,
-  ) {
-    VisionLocalizedObject? best;
-    for (final object in objects) {
-      final center = object.normalizedBox.center;
-      if (!_centerInZone(center, zone)) continue;
-      if (best == null || object.score > best.score) best = object;
-    }
-    return best;
-  }
-
-  bool _centerInZone(Offset center, OutfitSegmentZone zone) {
-    return switch (zone) {
-      OutfitSegmentZone.head => center.dy < 0.18,
-      OutfitSegmentZone.upperBody => center.dy >= 0.14 && center.dy < 0.46,
-      OutfitSegmentZone.waist => center.dy >= 0.4 && center.dy < 0.52,
-      OutfitSegmentZone.lowerBody => center.dy >= 0.48 && center.dy < 0.82,
-      OutfitSegmentZone.feet => center.dy >= 0.78,
-      OutfitSegmentZone.accessories =>
-        center.dx > 0.55 || (center.dy < 0.35 && center.dx < 0.3),
-    };
-  }
-
-  String? _visualLabelForZone(OutfitSegmentZone zone, OutfitVisualProfile? visual) {
-    if (visual == null) return null;
-    return switch (zone) {
-      OutfitSegmentZone.upperBody =>
-        visual.clothingTypes.firstOrNull ?? visual.garmentTypeAr,
-      OutfitSegmentZone.lowerBody =>
-        visual.clothingTypes.length > 1 ? visual.clothingTypes[1] : null,
-      OutfitSegmentZone.feet =>
-        visual.accessoryTypes.where((a) => a.contains('حذ')).firstOrNull,
-      OutfitSegmentZone.accessories => visual.accessoryTypes.firstOrNull,
-      _ => null,
-    };
+    return map;
   }
 
   Future<void> dispose() async {
     await _poseAnalyzer.dispose();
   }
-}
-
-extension _FirstOrNull<E> on List<E> {
-  E? get firstOrNull => isEmpty ? null : first;
 }
 
 /// Parses Vision localized object annotations into bounding boxes.

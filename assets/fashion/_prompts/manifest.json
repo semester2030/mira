@@ -1,0 +1,322 @@
+[
+  {
+    "id": "blazer_beige_001",
+    "output": "assets/fashion/tops/blazer_beige.png",
+    "prompts": {
+      "generation": "assets/fashion/_prompts/blazer_beige_001_generation.txt",
+      "editing": "assets/fashion/_prompts/blazer_beige_001_editing.txt",
+      "backgroundRemoval": "assets/fashion/_prompts/blazer_beige_001_backgroundRemoval.txt"
+    },
+    "angles": {
+      "front": "tops/blazer_beige.png",
+      "back": "tops/blazer_beige_back.png",
+      "angle45": "tops/blazer_beige_45.png",
+      "detail": "tops/blazer_beige_detail.png",
+      "fabric": "tops/blazer_beige_fabric.png"
+    }
+  },
+  {
+    "id": "corset_cream_001",
+    "output": "assets/fashion/tops/corset_cream.png",
+    "prompts": {
+      "generation": "assets/fashion/_prompts/corset_cream_001_generation.txt",
+      "editing": "assets/fashion/_prompts/corset_cream_001_editing.txt",
+      "backgroundRemoval": "assets/fashion/_prompts/corset_cream_001_backgroundRemoval.txt"
+    },
+    "angles": {
+      "front": "tops/corset_cream.png",
+      "back": "tops/corset_cream_back.png",
+      "angle45": "tops/corset_cream_45.png",
+      "detail": "tops/corset_cream_detail.png",
+      "fabric": "tops/corset_cream_fabric.png"
+    }
+  },
+  {
+    "id": "satin_top_black_001",
+    "output": "assets/fashion/tops/satin_top_black.png",
+    "prompts": {
+      "generation": "assets/fashion/_prompts/satin_top_black_001_generation.txt",
+      "editing": "assets/fashion/_prompts/satin_top_black_001_editing.txt",
+      "backgroundRemoval": "assets/fashion/_prompts/satin_top_black_001_backgroundRemoval.txt"
+    },
+    "angles": {
+      "front": "tops/satin_top_black.png",
+      "back": "tops/satin_top_black_back.png",
+      "angle45": "tops/satin_top_black_45.png",
+      "detail": "tops/satin_top_black_detail.png",
+      "fabric": "tops/satin_top_black_fabric.png"
+    }
+  },
+  {
+    "id": "skirt_silk_beige_001",
+    "output": "assets/fashion/bottoms/skirt_silk_beige.png",
+    "prompts": {
+      "generation": "assets/fashion/_prompts/skirt_silk_beige_001_generation.txt",
+      "editing": "assets/fashion/_prompts/skirt_silk_beige_001_editing.txt",
+      "backgroundRemoval": "assets/fashion/_prompts/skirt_silk_beige_001_backgroundRemoval.txt"
+    },
+    "angles": {
+      "front": "bottoms/skirt_silk_beige.png",
+      "back": "bottoms/skirt_silk_beige_back.png",
+      "angle45": "bottoms/skirt_silk_beige_45.png",
+      "detail": "bottoms/skirt_silk_beige_detail.png",
+      "fabric": "bottoms/skirt_silk_beige_fabric.png"
+    }
+  },
+  {
+    "id": "trousers_navy_001",
+    "output": "assets/fashion/bottoms/trousers_navy.png",
+    "prompts": {
+      "generation": "assets/fashion/_prompts/trousers_navy_001_generation.txt",
+      "editing": "assets/fashion/_prompts/trousers_navy_001_editing.txt",
+      "backgroundRemoval": "assets/fashion/_prompts/trousers_navy_001_backgroundRemoval.txt"
+    },
+    "angles": {
+      "front": "bottoms/trousers_navy.png",
+      "back": "bottoms/trousers_navy_back.png",
+      "angle45": "bottoms/trousers_navy_45.png",
+      "detail": "bottoms/trousers_navy_detail.png",
+      "fabric": "bottoms/trousers_navy_fabric.png"
+    }
+  },
+  {
+    "id": "skirt_classic_black_001",
+    "output": "assets/fashion/bottoms/skirt_classic_black.png",
+    "prompts": {
+      "generation": "assets/fashion/_prompts/skirt_classic_black_001_generation.txt",
+      "editing": "assets/fashion/_prompts/skirt_classic_black_001_editing.txt",
+      "backgroundRemoval": "assets/fashion/_prompts/skirt_classic_black_001_backgroundRemoval.txt"
+    },
+    "angles": {
+      "front": "bottoms/skirt_classic_black.png",
+      "back": "bottoms/skirt_classic_black_back.png",
+      "angle45": "bottoms/skirt_classic_black_45.png",
+      "detail": "bottoms/skirt_classic_black_detail.png",
+      "fabric": "bottoms/skirt_classic_black_fabric.png"
+    }
+  },
+  {
+    "id": "cape_ivory_001",
+    "output": "assets/fashion/outerwear/cape_elegant_ivory.png",
+    "prompts": {
+      "generation": "assets/fashion/_prompts/cape_ivory_001_generation.txt",
+      "editing": "assets/fashion/_prompts/cape_ivory_001_editing.txt",
+      "backgroundRemoval": "assets/fashion/_prompts/cape_ivory_001_backgroundRemoval.txt"
+    },
+    "angles": {
+      "front": "outerwear/cape_elegant_ivory.png",
+      "back": "outerwear/cape_elegant_ivory_back.png",
+      "angle45": "outerwear/cape_elegant_ivory_45.png",
+      "detail": "outerwear/cape_elegant_ivory_detail.png",
+      "fabric": "outerwear/cape_elegant_ivory_fabric.png"
+    }
+  },
+  {
+    "id": "cardigan_gray_001",
+    "output": "assets/fashion/outerwear/cardigan_soft_gray.png",
+    "prompts": {
+      "generation": "assets/fashion/_prompts/cardigan_gray_001_generation.txt",
+      "editing": "assets/fashion/_prompts/cardigan_gray_001_editing.txt",
+      "backgroundRemoval": "assets/fashion/_prompts/cardigan_gray_001_backgroundRemoval.txt"
+    },
+    "angles": {
+      "front": "outerwear/cardigan_soft_gray.png",
+      "back": "outerwear/cardigan_soft_gray_back.png",
+      "angle45": "outerwear/cardigan_soft_gray_45.png",
+      "detail": "outerwear/cardigan_soft_gray_detail.png",
+      "fabric": "outerwear/cardigan_soft_gray_fabric.png"
+    }
+  },
+  {
+    "id": "shawl_wedding_001",
+    "output": "assets/fashion/outerwear/shawl_wedding.png",
+    "prompts": {
+      "generation": "assets/fashion/_prompts/shawl_wedding_001_generation.txt",
+      "editing": "assets/fashion/_prompts/shawl_wedding_001_editing.txt",
+      "backgroundRemoval": "assets/fashion/_prompts/shawl_wedding_001_backgroundRemoval.txt"
+    },
+    "angles": {
+      "front": "outerwear/shawl_wedding.png",
+      "back": "outerwear/shawl_wedding_back.png",
+      "angle45": "outerwear/shawl_wedding_45.png",
+      "detail": "outerwear/shawl_wedding_detail.png",
+      "fabric": "outerwear/shawl_wedding_fabric.png"
+    }
+  },
+  {
+    "id": "clutch_silver_001",
+    "output": "assets/fashion/bags/clutch_silver.png",
+    "prompts": {
+      "generation": "assets/fashion/_prompts/clutch_silver_001_generation.txt",
+      "editing": "assets/fashion/_prompts/clutch_silver_001_editing.txt",
+      "backgroundRemoval": "assets/fashion/_prompts/clutch_silver_001_backgroundRemoval.txt"
+    },
+    "angles": {
+      "front": "bags/clutch_silver.png",
+      "back": "bags/clutch_silver_back.png",
+      "angle45": "bags/clutch_silver_45.png",
+      "detail": "bags/clutch_silver_detail.png",
+      "fabric": "bags/clutch_silver_fabric.png"
+    }
+  },
+  {
+    "id": "bag_black_leather_001",
+    "output": "assets/fashion/bags/bag_black_leather.png",
+    "prompts": {
+      "generation": "assets/fashion/_prompts/bag_black_leather_001_generation.txt",
+      "editing": "assets/fashion/_prompts/bag_black_leather_001_editing.txt",
+      "backgroundRemoval": "assets/fashion/_prompts/bag_black_leather_001_backgroundRemoval.txt"
+    },
+    "angles": {
+      "front": "bags/bag_black_leather.png",
+      "back": "bags/bag_black_leather_back.png",
+      "angle45": "bags/bag_black_leather_45.png",
+      "detail": "bags/bag_black_leather_detail.png",
+      "fabric": "bags/bag_black_leather_fabric.png"
+    }
+  },
+  {
+    "id": "tote_beige_001",
+    "output": "assets/fashion/bags/tote_casual_beige.png",
+    "prompts": {
+      "generation": "assets/fashion/_prompts/tote_beige_001_generation.txt",
+      "editing": "assets/fashion/_prompts/tote_beige_001_editing.txt",
+      "backgroundRemoval": "assets/fashion/_prompts/tote_beige_001_backgroundRemoval.txt"
+    },
+    "angles": {
+      "front": "bags/tote_casual_beige.png",
+      "back": "bags/tote_casual_beige_back.png",
+      "angle45": "bags/tote_casual_beige_45.png",
+      "detail": "bags/tote_casual_beige_detail.png",
+      "fabric": "bags/tote_casual_beige_fabric.png"
+    }
+  },
+  {
+    "id": "heels_nude_001",
+    "output": "assets/fashion/heels/heels_nude.png",
+    "prompts": {
+      "generation": "assets/fashion/_prompts/heels_nude_001_generation.txt",
+      "editing": "assets/fashion/_prompts/heels_nude_001_editing.txt",
+      "backgroundRemoval": "assets/fashion/_prompts/heels_nude_001_backgroundRemoval.txt"
+    },
+    "angles": {
+      "front": "heels/heels_nude.png",
+      "back": "heels/heels_nude_back.png",
+      "angle45": "heels/heels_nude_45.png",
+      "detail": "heels/heels_nude_detail.png",
+      "fabric": "heels/heels_nude_fabric.png"
+    }
+  },
+  {
+    "id": "heels_black_001",
+    "output": "assets/fashion/heels/heels_black.png",
+    "prompts": {
+      "generation": "assets/fashion/_prompts/heels_black_001_generation.txt",
+      "editing": "assets/fashion/_prompts/heels_black_001_editing.txt",
+      "backgroundRemoval": "assets/fashion/_prompts/heels_black_001_backgroundRemoval.txt"
+    },
+    "angles": {
+      "front": "heels/heels_black.png",
+      "back": "heels/heels_black_back.png",
+      "angle45": "heels/heels_black_45.png",
+      "detail": "heels/heels_black_detail.png",
+      "fabric": "heels/heels_black_fabric.png"
+    }
+  },
+  {
+    "id": "pearl_earrings_001",
+    "output": "assets/fashion/jewelry/pearl_earrings.png",
+    "prompts": {
+      "generation": "assets/fashion/_prompts/pearl_earrings_001_generation.txt",
+      "editing": "assets/fashion/_prompts/pearl_earrings_001_editing.txt",
+      "backgroundRemoval": "assets/fashion/_prompts/pearl_earrings_001_backgroundRemoval.txt"
+    },
+    "angles": {
+      "front": "jewelry/pearl_earrings.png",
+      "back": "jewelry/pearl_earrings_back.png",
+      "angle45": "jewelry/pearl_earrings_45.png",
+      "detail": "jewelry/pearl_earrings_detail.png",
+      "fabric": "jewelry/pearl_earrings_fabric.png"
+    }
+  },
+  {
+    "id": "silver_necklace_001",
+    "output": "assets/fashion/jewelry/silver_necklace.png",
+    "prompts": {
+      "generation": "assets/fashion/_prompts/silver_necklace_001_generation.txt",
+      "editing": "assets/fashion/_prompts/silver_necklace_001_editing.txt",
+      "backgroundRemoval": "assets/fashion/_prompts/silver_necklace_001_backgroundRemoval.txt"
+    },
+    "angles": {
+      "front": "jewelry/silver_necklace.png",
+      "back": "jewelry/silver_necklace_back.png",
+      "angle45": "jewelry/silver_necklace_45.png",
+      "detail": "jewelry/silver_necklace_detail.png",
+      "fabric": "jewelry/silver_necklace_fabric.png"
+    }
+  },
+  {
+    "id": "diamond_bracelet_001",
+    "output": "assets/fashion/jewelry/diamond_bracelet.png",
+    "prompts": {
+      "generation": "assets/fashion/_prompts/diamond_bracelet_001_generation.txt",
+      "editing": "assets/fashion/_prompts/diamond_bracelet_001_editing.txt",
+      "backgroundRemoval": "assets/fashion/_prompts/diamond_bracelet_001_backgroundRemoval.txt"
+    },
+    "angles": {
+      "front": "jewelry/diamond_bracelet.png",
+      "back": "jewelry/diamond_bracelet_back.png",
+      "angle45": "jewelry/diamond_bracelet_45.png",
+      "detail": "jewelry/diamond_bracelet_detail.png",
+      "fabric": "jewelry/diamond_bracelet_fabric.png"
+    }
+  },
+  {
+    "id": "scarf_beige_001",
+    "output": "assets/fashion/scarves/silk_scarf_beige.png",
+    "prompts": {
+      "generation": "assets/fashion/_prompts/scarf_beige_001_generation.txt",
+      "editing": "assets/fashion/_prompts/scarf_beige_001_editing.txt",
+      "backgroundRemoval": "assets/fashion/_prompts/scarf_beige_001_backgroundRemoval.txt"
+    },
+    "angles": {
+      "front": "scarves/silk_scarf_beige.png",
+      "back": "scarves/silk_scarf_beige_back.png",
+      "angle45": "scarves/silk_scarf_beige_45.png",
+      "detail": "scarves/silk_scarf_beige_detail.png",
+      "fabric": "scarves/silk_scarf_beige_fabric.png"
+    }
+  },
+  {
+    "id": "watch_gold_001",
+    "output": "assets/fashion/jewelry/watch_gold.png",
+    "prompts": {
+      "generation": "assets/fashion/_prompts/watch_gold_001_generation.txt",
+      "editing": "assets/fashion/_prompts/watch_gold_001_editing.txt",
+      "backgroundRemoval": "assets/fashion/_prompts/watch_gold_001_backgroundRemoval.txt"
+    },
+    "angles": {
+      "front": "jewelry/watch_gold.png",
+      "back": "jewelry/watch_gold_back.png",
+      "angle45": "jewelry/watch_gold_45.png",
+      "detail": "jewelry/watch_gold_detail.png",
+      "fabric": "jewelry/watch_gold_fabric.png"
+    }
+  },
+  {
+    "id": "sunglasses_tortoise_001",
+    "output": "assets/fashion/jewelry/sunglasses_tortoise.png",
+    "prompts": {
+      "generation": "assets/fashion/_prompts/sunglasses_tortoise_001_generation.txt",
+      "editing": "assets/fashion/_prompts/sunglasses_tortoise_001_editing.txt",
+      "backgroundRemoval": "assets/fashion/_prompts/sunglasses_tortoise_001_backgroundRemoval.txt"
+    },
+    "angles": {
+      "front": "jewelry/sunglasses_tortoise.png",
+      "back": "jewelry/sunglasses_tortoise_back.png",
+      "angle45": "jewelry/sunglasses_tortoise_45.png",
+      "detail": "jewelry/sunglasses_tortoise_detail.png",
+      "fabric": "jewelry/sunglasses_tortoise_fabric.png"
+    }
+  }
+]

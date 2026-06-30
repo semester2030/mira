@@ -1,0 +1,190 @@
+<!DOCTYPE html>
+<html lang="ar" dir="rtl">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <meta name="description" content="تقرير Product Hardening لمشروع ميرا — نتائج قابلة للقياس · 120 اختبار · 24 ملف محذوف · Feature Freeze" />
+  <title>ميرا | Product Hardening — تقرير الهندسة النهائي</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link href="https://fonts.googleapis.com/css2?family=Tajawal:wght@400;500;700;800&display=swap" rel="stylesheet" />
+  <link rel="stylesheet" href="mira-project-audit.css" />
+</head>
+<body>
+  <header class="site-header">
+    <div class="container header-inner">
+      <a class="brand" href="index.html">ميرا · Mira</a>
+      <nav class="nav no-print">
+        <a href="mira-vision-platform.html">Vision Platform 🏛</a>
+        <a href="mira-project-audit.html">تدقيق المشروع</a>
+        <a href="mira-production-readiness.html">جاهزية الإنتاج</a>
+        <a href="mira-intelligence-layer.html">Intelligence</a>
+        <a href="#summary">الملخص</a>
+        <a href="#phases">المراحل</a>
+      </nav>
+    </div>
+  </header>
+
+  <div class="container hero-audit hardening-hero" id="top">
+    <span class="hardening-badge">✓ PRODUCT HARDENING COMPLETE · يونيو 2026</span>
+    <span class="badge">FINAL ENGINEERING REPORT · MEASURABLE OUTCOMES</span>
+    <h1>تقرير تثبيت المنتج<br />Product Hardening — نتائج قابلة للقياس</h1>
+    <p class="lead">
+      تم تنفيذ مرحلة التثبيت وفق <strong>Feature Freeze</strong> صارم: لا ميزات جديدة، لا إعادة تصميم، لا تغيير في منطق الذكاء الاصطناعي.
+      الهدف كان الاستقرار والقياس والاختبار — وليس البناء.
+      آخر تحديث: <span id="report-date">—</span>
+    </p>
+    <div class="stat-grid" id="metrics-grid"></div>
+    <div class="readiness-ring-wrap" id="readiness-rings"></div>
+    <div class="toolbar no-print" style="margin-top:20px">
+      <button type="button" class="btn btn-primary" id="btn-export">تصدير التقرير JSON</button>
+      <button type="button" class="btn btn-secondary" id="btn-print">طباعة / PDF</button>
+      <a href="mira-project-audit.html" class="btn btn-secondary" style="text-decoration:none;display:inline-flex;align-items:center">← تدقيق المشروع الكامل</a>
+    </div>
+  </div>
+
+  <div class="container audit-layout">
+    <aside class="audit-sidebar no-print">
+      <h4>محتويات التقرير</h4>
+      <a href="#rules">قواعد التثبيت</a>
+      <a href="#summary">ملخص تنفيذي</a>
+      <a href="#compare">قبل / بعد</a>
+      <a href="#phases">10 مراحل التنفيذ</a>
+      <a href="#architecture">Architecture</a>
+      <a href="#state">State Management</a>
+      <a href="#tests">الاختبارات</a>
+      <a href="#dead-code">Dead Code</a>
+      <a href="#dependency">خريطة التبعيات</a>
+      <a href="#security">الأمان</a>
+      <a href="#production">Production Flags</a>
+      <a href="#readiness">نسبة الجاهزية</a>
+      <a href="#risks">المخاطر المتبقية</a>
+      <a href="#future">Future Improvements</a>
+      <a href="#nav-hub">روابط ذات صلة</a>
+    </aside>
+
+    <main class="audit-main">
+      <nav class="audit-mobile-nav no-print">
+        <a href="#summary">ملخص</a>
+        <a href="#phases">مراحل</a>
+        <a href="#tests">اختبارات</a>
+        <a href="#readiness">جاهزية</a>
+        <a href="#risks">مخاطر</a>
+      </nav>
+
+      <section id="rules" class="card">
+        <div class="rules-box">
+          <h3>⚠️ قواعد Product Hardening — ما تم الالتزام به</h3>
+          <div class="rules-grid" id="rules-grid"></div>
+        </div>
+      </section>
+
+      <section id="summary" class="card">
+        <h2>ملخص تنفيذي</h2>
+        <p>
+          انتهت مرحلة التثبيت بتحسينات قابلة للقياس في الاستقرار والاختبارات وجودة الكود —
+          دون المساس بتجربة المستخدم أو إضافة ميزات.
+        </p>
+        <table class="audit-table" id="summary-table">
+          <thead><tr><th>المحور</th><th>قبل</th><th>بعد</th><th>الحالة</th></tr></thead>
+          <tbody></tbody>
+        </table>
+      </section>
+
+      <section id="compare" class="card">
+        <h2>مقارنة قبل / بعد</h2>
+        <div class="compare-grid" id="compare-grid"></div>
+      </section>
+
+      <section id="phases" class="card">
+        <h2>مراحل التنفيذ العشر</h2>
+        <p style="color:var(--muted);font-size:0.9rem;margin-bottom:8px">
+          كل مرحلة موثّقة بحالة واضحة — مكتملة، معلّقة، أو خارج النطاق عمدًا.
+        </p>
+        <div class="phase-timeline" id="phase-timeline"></div>
+      </section>
+
+      <section id="architecture" class="card">
+        <h2>Architecture Health — <span id="arch-score"></span></h2>
+        <table class="audit-table" id="arch-table">
+          <tbody></tbody>
+        </table>
+      </section>
+
+      <section id="state" class="card">
+        <h2>State Management Health — <span id="state-score"></span></h2>
+        <table class="audit-table" id="state-table">
+          <thead><tr><th>المكوّن</th><th>العدد</th><th>الحالة</th></tr></thead>
+          <tbody></tbody>
+        </table>
+      </section>
+
+      <section id="tests" class="card">
+        <h2>Test Coverage — <span id="test-score"></span></h2>
+        <div id="test-summary"></div>
+        <h3>إصلاحات الجذر (Phase 4)</h3>
+        <ul id="test-fixes"></ul>
+        <h3>فجوات متبقية (لم تُغطَّ)</h3>
+        <ul id="test-gaps"></ul>
+      </section>
+
+      <section id="dead-code" class="card">
+        <h2>Dead Code Removed — <span id="dead-count">24</span> ملفًا</h2>
+        <p style="font-size:0.88rem;color:var(--muted)">
+          تم التحقق من عدم وجود مراجع قبل الحذف — تحليل تبعيات كامل.
+        </p>
+        <div class="dead-file-grid" id="removed-list"></div>
+      </section>
+
+      <section id="dependency" class="card">
+        <h2>خريطة التبعيات — مسار الإطلالة الفعّال</h2>
+        <div class="dependency-graph" id="dependency-graph"></div>
+      </section>
+
+      <section id="security" class="card">
+        <h2>Security Summary</h2>
+        <table class="audit-table" id="security-table">
+          <tbody></tbody>
+        </table>
+      </section>
+
+      <section id="production" class="card">
+        <h2>Production Configuration</h2>
+        <table class="audit-table" id="production-table">
+          <thead><tr><th>Flag</th><th>Default</th><th>Production risk</th></tr></thead>
+          <tbody></tbody>
+        </table>
+      </section>
+
+      <section id="readiness" class="card">
+        <h2>نسبة الجاهزية (محسوبة)</h2>
+        <div class="progress-dashboard" id="readiness-calc"></div>
+        <p style="font-size:0.88rem;color:var(--muted)">
+          الصيغة: (test_pass × 25) + (analyzer_clean × 15) + (dead_code_removed × 10) + (state_consolidated × 10) + (e2e × 20) + (ai_audit × 10) + (performance × 10)
+          — البنود غير المكتملة = 0
+        </p>
+      </section>
+
+      <section id="risks" class="card">
+        <h2>Production Risks المتبقية</h2>
+        <table class="audit-table" id="risks-table">
+          <thead><tr><th>المخاطرة</th><th>الشدة</th><th>الإجراء المطلوب</th></tr></thead>
+          <tbody></tbody>
+        </table>
+      </section>
+
+      <section id="future" class="card">
+        <h2>Future Improvements (لم تُنفَّذ — Feature Freeze)</h2>
+        <ul id="future-list"></ul>
+      </section>
+
+      <section id="nav-hub" class="card">
+        <h2>روابط ذات صلة</h2>
+        <div class="nav-hub" id="nav-hub-links"></div>
+      </section>
+    </main>
+  </div>
+
+  <div class="toast" id="toast"></div>
+  <script src="mira-engineering-report.js"></script>
+</body>
+</html>

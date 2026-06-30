@@ -1,3 +1,5 @@
+import 'package:flutter/material.dart';
+
 /// Maps Google Vision color channels to Arabic fashion color names.
 abstract final class VisionColorMapper {
   VisionColorMapper._();
@@ -46,14 +48,27 @@ abstract final class VisionColorMapper {
     if (lower.contains('abaya')) return 'عباءة';
     if (lower.contains('suit')) return 'بدلة';
     if (lower.contains('skirt')) return 'تنورة';
-    if (lower.contains('blouse') || lower.contains('shirt')) return 'بلوزة';
+    if (lower.contains('t-shirt') || lower.contains('tee')) return 'تيشيرت';
+    if (lower.contains('blouse')) return 'بلوزة';
+    if (lower.contains('blazer')) return 'بلوزر';
+    if (lower.contains('corset')) return 'كورسيه';
+    if (lower.contains('cape')) return 'كاب';
+    if (lower.contains('gown')) return 'فستان';
+    if (lower.contains('shirt')) return 'قميص';
+    if (lower.contains('sweater') || lower.contains('hoodie')) return 'كنزة';
     if (lower.contains('pants') || lower.contains('trouser') || lower.contains('jean')) {
       return 'بنطلون';
     }
     if (lower.contains('jacket') || lower.contains('coat')) return 'جاكيت';
     if (lower.contains('bag') || lower.contains('handbag')) return 'حقيبة';
-    if (lower.contains('shoe') || lower.contains('heel')) return 'حذاء';
+    if (lower.contains('shoe') || lower.contains('heel') || lower.contains('boot')) {
+      return 'حذاء';
+    }
+    if (lower.contains('watch')) return 'ساعة';
+    if (lower.contains('sunglass') || lower.contains('glasses')) return 'نظارة';
     if (lower.contains('scarf')) return 'وشاح';
+    if (lower.contains('belt')) return 'حزام';
+    if (lower.contains('necklace')) return 'عقد';
     if (lower.contains('jewelry') || lower.contains('earring')) return 'إكسسوار';
     if (lower.contains('formal')) return 'رسمي';
     if (lower.contains('casual')) return 'كاجوال';
@@ -63,5 +78,29 @@ abstract final class VisionColorMapper {
     if (lower.contains('denim')) return 'دنيم';
     if (lower.contains('leather')) return 'جلد';
     return enLabel;
+  }
+
+  /// Arabic fashion color name → display swatch color.
+  static Color toDisplayColor(String arabicName) {
+    return switch (arabicName.trim()) {
+      'أسود' => const Color(0xFF1A1A1A),
+      'أبيض' => const Color(0xFFF5F5F5),
+      'بيج' => const Color(0xFFD2BEA0),
+      'كريمي' => const Color(0xFFEBE0C8),
+      'رمادي' => const Color(0xFF9E9E9E),
+      'كحلي' => const Color(0xFF1A2848),
+      'أزرق' => const Color(0xFF3F51B5),
+      'زيتوني' => const Color(0xFF6B7040),
+      'ذهبي' => const Color(0xFFC8A850),
+      'وردي' => const Color(0xFFE699B0),
+      'أحمر' => const Color(0xFFB42832),
+      'نبيتي' => const Color(0xFF781828),
+      'بني' => const Color(0xFF785032),
+      'فضي' => const Color(0xFFBEBEC8),
+      'تركواز' => const Color(0xFF3CAAA0),
+      'مرجاني' => const Color(0xFFF07864),
+      'دنيم' => const Color(0xFF5B7FA8),
+      _ => const Color(0xFFC19EE0),
+    };
   }
 }

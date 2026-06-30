@@ -1,0 +1,89 @@
+{
+  "version": 1,
+  "colors": {
+    "beige_linen": {
+      "name": "beige",
+      "nameAr": "بيج",
+      "hex": "#E8D6C0",
+      "lab": [86.2, 2.1, 18.4],
+      "hsv": [32, 18, 91]
+    },
+    "cream_soft": {
+      "name": "cream",
+      "nameAr": "كريمي",
+      "hex": "#F5EDE0",
+      "lab": [93.5, 1.2, 9.8],
+      "hsv": [38, 10, 96]
+    },
+    "black_pure": {
+      "name": "black",
+      "nameAr": "أسود",
+      "hex": "#1A1A1A",
+      "lab": [8.5, 0.1, -0.2],
+      "hsv": [0, 0, 10]
+    },
+    "navy_deep": {
+      "name": "navy",
+      "nameAr": "كحلي",
+      "hex": "#1E2A4A",
+      "lab": [18.2, 5.4, -22.1],
+      "hsv": [222, 58, 29]
+    },
+    "ivory_warm": {
+      "name": "ivory",
+      "nameAr": "عاجي",
+      "hex": "#F7F2EA",
+      "lab": [95.8, 0.8, 6.2],
+      "hsv": [40, 6, 97]
+    },
+    "gray_soft": {
+      "name": "gray",
+      "nameAr": "رمادي",
+      "hex": "#C8C4BE",
+      "lab": [79.4, 0.5, 2.1],
+      "hsv": [40, 5, 78]
+    },
+    "silver_metal": {
+      "name": "silver",
+      "nameAr": "فضي",
+      "hex": "#C0C0C8",
+      "lab": [78.2, 0.2, -2.4],
+      "hsv": [240, 5, 78]
+    },
+    "gold_warm": {
+      "name": "gold",
+      "nameAr": "ذهبي",
+      "hex": "#C9A962",
+      "lab": [68.4, 2.8, 38.2],
+      "hsv": [42, 52, 79]
+    },
+    "nude_heel": {
+      "name": "nude",
+      "nameAr": "نود",
+      "hex": "#E3C4A8",
+      "lab": [80.1, 8.2, 18.6],
+      "hsv": [28, 26, 89]
+    },
+    "pearl_white": {
+      "name": "pearl",
+      "nameAr": "لؤلؤي",
+      "hex": "#F5F0E8",
+      "lab": [94.2, 0.5, 4.8],
+      "hsv": [38, 8, 96]
+    },
+    "brown_tortoise": {
+      "name": "brown",
+      "nameAr": "بني",
+      "hex": "#6B4A32",
+      "lab": [35.8, 12.4, 22.1],
+      "hsv": [25, 54, 42]
+    },
+    "blush_lilac": {
+      "name": "lilac",
+      "nameAr": "لافندر",
+      "hex": "#EDE4F0",
+      "lab": [90.8, 4.2, -4.8],
+      "hsv": [285, 8, 94]
+    }
+  }
+}

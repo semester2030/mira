@@ -1,0 +1,469 @@
+<!DOCTYPE html>
+<html lang="ar" dir="rtl">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <meta name="description" content="تقرير تدقيق شامل لمشروع ميرا — Integration Phase · Product Hardening · خطة 5 مراحل · جرد معماري · E2E · AI Audit · Performance" />
+  <title>ميرا | تقرير تدقيق المشروع — Project Audit</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link href="https://fonts.googleapis.com/css2?family=Tajawal:wght@400;500;700;800&display=swap" rel="stylesheet" />
+  <link rel="stylesheet" href="mira-project-audit.css" />
+</head>
+<body>
+  <header class="site-header">
+    <div class="container header-inner">
+      <a class="brand" href="index.html">ميرا · Mira</a>
+      <nav class="nav no-print">
+        <a href="mira-vision-platform.html">Vision Platform 🏛</a>
+        <a href="mira-engineering-report.html">تقرير التثبيت ✓</a>
+        <a href="mira-production-readiness.html">جاهزية الإنتاج</a>
+        <a href="mira-intelligence-layer.html">Intelligence</a>
+        <a href="app-store-readiness.html">App Store</a>
+        <a href="#hardening-results">النتائج</a>
+        <a href="#plan">الخطة</a>
+      </nav>
+    </div>
+  </header>
+
+  <div class="container hero-audit" id="top">
+    <span class="badge">MIRA PROJECT AUDIT · INTEGRATION PHASE · يونيو 2026</span>
+    <h1>تقرير تدقيق المشروع<br />Product Hardening — ليس Feature Phase</h1>
+    <p class="lead">
+      وثيقة تدقيق شاملة لمشروع <code>semester2030/mira</code>.
+      الهدف: التأكد أن كل ما بُني يعمل معًا بجودة عالية — <strong>بدون إضافة ميزات جديدة</strong>
+      حتى يكتمل التكامل والقياس والاختبار.
+      آخر تحديث: <span id="audit-date">—</span>
+    </p>
+    <div class="stat-grid" id="stat-grid"></div>
+    <div class="toolbar no-print" style="margin-top:24px">
+      <button type="button" class="btn btn-primary" id="btn-export-json">تصدير JSON</button>
+      <button type="button" class="btn btn-secondary" id="btn-export-csv">تصدير AI Audit CSV</button>
+      <button type="button" class="btn btn-secondary" id="btn-print">طباعة / PDF</button>
+      <button type="button" class="btn btn-ghost" id="btn-reset">مسح التقدّم المحلي</button>
+    </div>
+  </div>
+
+  <div class="container audit-layout">
+    <aside class="audit-sidebar no-print">
+      <h4>محتويات التقرير</h4>
+      <a href="#hardening-results">نتائج التثبيت ✓</a>
+      <a href="mira-vision-platform.html">Vision Platform 🏛</a>
+      <a href="#overview">نظرة عامة</a>
+      <a href="#verdict">الحكم التنفيذي</a>
+      <a href="#phase-1">المرحلة 1 — Feature Freeze</a>
+      <a href="#phase-2">المرحلة 2 — Architecture</a>
+      <a href="#inventory">جرد الأرقام</a>
+      <a href="#complete">ما اكتمل 100%</a>
+      <a href="#placeholders">Placeholders</a>
+      <a href="#phase-3">المرحلة 3 — E2E</a>
+      <a href="#phase-4">المرحلة 4 — AI Audit</a>
+      <a href="#phase-5">المرحلة 5 — Performance</a>
+      <a href="#tests">الاختبارات</a>
+      <a href="#flags">Feature Flags</a>
+      <a href="#fake-map">خريطة البيانات الوهمية</a>
+      <a href="#plan">خطة 4 أسابيع</a>
+      <a href="#after">بعد الاستقرار</a>
+    </aside>
+
+    <main class="audit-main">
+      <section id="hardening-results" class="card" style="border:2px solid rgba(46,125,90,0.35);background:linear-gradient(135deg,#f8fdf9,#fff8fc)">
+        <span class="hardening-badge">✓ PRODUCT HARDENING — يونيو 2026</span>
+        <h2 style="margin-top:8px">نتائج مرحلة التثبيت — قابلة للقياس</h2>
+        <p>
+          اكتملت مرحلة Product Hardening وفق Feature Freeze صارم.
+          التفاصيل الكاملة — 10 مراحل، مقارنة قبل/بعد، خريطة تبعيات، وتصدير JSON — في التقرير المخصص.
+        </p>
+        <div class="stat-grid" id="hardening-mini-stats" style="margin:16px 0"></div>
+        <div class="readiness-ring-wrap" id="hardening-mini-rings" style="margin:12px 0"></div>
+        <div class="nav-hub" style="margin-top:16px">
+          <a href="mira-engineering-report.html">
+            <strong>تقرير الهندسة النهائي ←</strong>
+            <span>ملخص تنفيذي · 24 ملف محذوف · 120 اختبار · مخاطر الإنتاج</span>
+          </a>
+          <a href="mira-engineering-report.html#phases">
+            <strong>مراحل التنفيذ العشر</strong>
+            <span>حالة كل مرحلة — مكتمل / معلّق / خارج النطاق</span>
+          </a>
+        </div>
+      </section>
+
+      <section id="vision-platform-ref" class="card no-print" style="border:3px solid var(--gold);background:linear-gradient(135deg,#fffef8,#f8fdf9)">
+        <span class="hardening-badge" style="border-color:var(--gold);color:#8b6914">🏛 VISION PLATFORM — المرجع الرسمي</span>
+        <h2 style="margin-top:8px">ترحيل طبقة الرؤية — لا تنفيذ خارج المستند</h2>
+        <p>استبدال Google Vision بـ OpenAI + FASHN — 9 مراحل · schema · orchestrator · خطوات تفاعلية.</p>
+        <a href="mira-vision-platform.html" class="btn btn-primary" style="text-decoration:none;display:inline-flex;margin-top:8px">فتح المرجع الرسمي ←</a>
+      </section>
+
+      <nav class="audit-mobile-nav no-print">
+        <a href="#hardening-results">تثبيت</a>
+        <a href="#phase-1">Freeze</a>
+        <a href="#phase-2">Arch</a>
+        <a href="#phase-3">E2E</a>
+        <a href="#phase-4">AI</a>
+        <a href="#phase-5">Perf</a>
+        <a href="#plan">الخطة</a>
+      </nav>
+
+      <!-- OVERVIEW -->
+      <section id="overview" class="card">
+        <h2>لماذا Integration Phase؟</h2>
+        <p>
+          MIRA تجاوزت مرحلة «بناء التطبيق». التحدي لم يعد كتابة كود — بل التأكد أن
+          <strong>كل ما بُني يعمل معًا</strong>. كل ميزة جديدة قد تكسر 3–4 ميزات موجودة.
+        </p>
+        <div class="grid-2">
+          <div class="card ok" style="margin:0">
+            <h3 style="margin-top:0">✅ ما يُقيَّم عالياً</h3>
+            <ul>
+              <li>الهندسة البرمجية: <strong>10/10</strong></li>
+              <li>قابلية التوسع: <strong>10/10</strong></li>
+              <li>تنظيم البيانات والـ Assets: <strong>10/10</strong></li>
+              <li>Fashion Pipeline (هندسيًا): <strong>10/10</strong></li>
+            </ul>
+          </div>
+          <div class="card warn" style="margin:0">
+            <h3 style="margin-top:0">⚠️ ما يحتاج عمل</h3>
+            <ul>
+              <li>جودة الصور: <strong>2/10</strong> (placeholders)</li>
+              <li>ذكاء التوصيات: <strong>~8.5/10</strong> (غير مُقاس على 200 صورة)</li>
+              <li>الجاهزية الإجمالية: <strong>~58%</strong> (منتج) · <strong>60%</strong> (هندسة)</li>
+              <li>E2E يدوي + AI Audit 200 — لم يُكتمل بعد</li>
+            </ul>
+          </div>
+        </div>
+      </section>
+
+      <!-- VERDICT -->
+      <section id="verdict">
+        <h2>الحكم التنفيذي — مصفوفة الجاهزية</h2>
+        <div class="progress-dashboard" id="readiness-dashboard"></div>
+        <p class="muted" style="font-size:0.88rem">
+          لا تبدأ استبدال محرك الرؤية (Google Vision) قبل اكتمال المراحل الخمس —
+          ستغيّر طبقة واحدة في نظام <strong>مستقر</strong>، وليس نظامًا قيد الإنشاء.
+        </p>
+      </section>
+
+      <!-- PHASE 1 -->
+      <section id="phase-1">
+        <div class="phase-banner mandatory">
+          <div class="phase-num">1</div>
+          <div>
+            <h2 style="margin:0 0 6px">Feature Freeze — إلزامي</h2>
+            <p style="margin:0;font-size:0.92rem">
+              <strong>أوقفوا إضافة أي ميزة جديدة.</strong> حتى لو جاءت فكرة رائعة.
+              السبب: كل ميزة جديدة قد تكسر 3 أو 4 ميزات موجودة.
+            </p>
+          </div>
+        </div>
+        <div class="card">
+          <h3 style="margin-top:0">قواعد التجميد</h3>
+          <ul>
+            <li>لا ميزات UI جديدة</li>
+            <li>لا محركات ذكاء إضافية</li>
+            <li>لا توسيع catalog إلا استبدال PNGs بنفس الأسماء</li>
+            <li>مسموح: إصلاح bugs · حذف كود ميت · اختبارات · قياس · توثيق</li>
+            <li>مسموح بعد الأسبوع 4: استبدال Vision · تفعيل IAP · FASHN على Render</li>
+          </ul>
+        </div>
+      </section>
+
+      <!-- PHASE 2 -->
+      <section id="phase-2">
+        <div class="phase-banner">
+          <div class="phase-num">2</div>
+          <div>
+            <h2 style="margin:0 0 6px">مراجعة Architecture كاملة</h2>
+            <p style="margin:0;font-size:0.92rem">راجعوا Providers · Services · Models · Entities · Repositories · DI · Navigation · State</p>
+          </div>
+        </div>
+
+        <h3 id="inventory">جرد الأرقام — إجابات مدير المشروع</h3>
+        <table class="audit-table">
+          <thead><tr><th>السؤال</th><th>الجواب</th></tr></thead>
+          <tbody>
+            <tr><td>كم Provider؟</td><td><strong>7</strong> Riverpod فعّالة + <strong>2</strong> Blocs + <strong>4</strong> AI providers</td></tr>
+            <tr><td>كم Service؟</td><td><strong>~32</strong> domain + <strong>5</strong> core (بعد حذف 8 stubs)</td></tr>
+            <tr><td>كم Model؟</td><td><strong>10</strong> data models (1 غير مستخدم: <code>UserModel</code>)</td></tr>
+            <tr><td>كم Entity؟</td><td><strong>43</strong> domain entities</td></tr>
+            <tr><td>كم Repository؟</td><td><strong>6</strong> أزواج interface + impl</td></tr>
+            <tr><td>كم Use Case؟</td><td><strong>7</strong> فقط (auth · profile · recommendations)</td></tr>
+            <tr><td>كم Route؟</td><td><strong>33</strong> named route</td></tr>
+            <tr><td>كم ملف Dart؟</td><td><strong>429</strong> في <code>lib/</code> <span class="completion-pill done">−24</span></td></tr>
+            <tr><td>كم Feature module؟</td><td><strong>17</strong> (واحد فارغ: <code>mira_analysis</code>)</td></tr>
+            <tr><td>كم اختبار Flutter؟</td><td><strong>26</strong> ملف · <strong>120</strong> ناجح · <strong>0</strong> فاشل <span class="completion-pill done">✅</span></td></tr>
+            <tr><td>كم spec في mira-api؟</td><td><strong>22</strong></td></tr>
+          </tbody>
+        </table>
+
+        <h3>State Management — 3 أنظمة متوازية</h3>
+        <div class="flow-diagram">Riverpod  → outfit intelligence + packages
+Bloc      → skin analysis + profile
+Singleton → AiModule (mock AI افتراضيًا)
+⚠️ new_analysis_screen.dart يخلط Riverpod + Bloc</div>
+
+        <h3>Riverpod Providers</h3>
+        <table class="audit-table">
+          <thead><tr><th>Provider</th><th>الحالة</th></tr></thead>
+          <tbody id="tbl-riverpod"></tbody>
+        </table>
+
+        <h3>Blocs</h3>
+        <table class="audit-table">
+          <thead><tr><th>Bloc</th><th>الحالة</th><th>الشاشات</th></tr></thead>
+          <tbody id="tbl-blocs"></tbody>
+        </table>
+
+        <h3>Repositories</h3>
+        <table class="audit-table">
+          <thead><tr><th>Interface</th><th>Implementation</th><th>الحالة</th><th>ملاحظة</th></tr></thead>
+          <tbody id="tbl-repos"></tbody>
+        </table>
+
+        <h3>مشاكل معمارية حرجة</h3>
+        <table class="audit-table">
+          <thead><tr><th>المشكلة</th><th>التفاصيل</th></tr></thead>
+          <tbody id="tbl-arch"></tbody>
+        </table>
+
+        <h3>مسار الإطلالة — بعد الدمج</h3>
+        <table class="audit-table">
+          <thead><tr><th>المسار</th><th>الحالة</th><th>الملفات</th></tr></thead>
+          <tbody>
+            <tr>
+              <td><strong>التحليل (فعّال)</strong></td>
+              <td><span class="completion-pill done">✅ مسار وحيد</span></td>
+              <td><code>OutfitIntelligenceService</code> · Riverpod · <code>occasion_select_screen</code></td>
+            </tr>
+            <tr>
+              <td><strong>السجل</strong></td>
+              <td><span class="completion-pill partial">⚠️ history فقط</span></td>
+              <td><code>OutfitAnalysisRepository</code> — Firestore</td>
+            </tr>
+            <tr>
+              <td><strong>قديم (محذوف)</strong></td>
+              <td><span class="completion-pill done">🗑 OutfitAnalysisBloc</span></td>
+              <td>3 ملفات — حُذفت في Product Hardening</td>
+            </tr>
+          </tbody>
+        </table>
+
+        <h3>ملفات ميتة — تم الحذف ✓</h3>
+        <p style="font-size:0.88rem;color:var(--muted)">24 ملفًا — تحقق من التبعيات ثم حُذف. القائمة للمرجعية.</p>
+        <p id="dead-progress" style="font-weight:800;color:var(--primary-strong)"></p>
+        <ul class="task-list" id="dead-files-list"></ul>
+      </section>
+
+      <!-- COMPLETE + PLACEHOLDERS -->
+      <section id="complete">
+        <h2>ما اكتمل بنسبة عالية (~85–100%)</h2>
+        <table class="audit-table">
+          <thead><tr><th>المجال</th><th>%</th><th>الدليل</th></tr></thead>
+          <tbody id="tbl-complete"></tbody>
+        </table>
+      </section>
+
+      <section id="placeholders">
+        <h2>ما ما زال Placeholder / وهمي</h2>
+        <table class="audit-table">
+          <thead><tr><th>البند</th><th>التفاصيل</th></tr></thead>
+          <tbody id="tbl-placeholders"></tbody>
+        </table>
+      </section>
+
+      <!-- PHASE 3 -->
+      <section id="phase-3">
+        <div class="phase-banner">
+          <div class="phase-num">3</div>
+          <div>
+            <h2 style="margin:0 0 6px">End-to-End Testing</h2>
+            <p style="margin:0;font-size:0.92rem">
+              اختبروا التطبيق كمستخدمة حقيقية. <strong>إذا تعطل مسار واحد — لا تنتقلوا للمرحلة التالية.</strong>
+            </p>
+          </div>
+        </div>
+
+        <div id="e2e-progress"></div>
+
+        <table class="audit-table checklist-table">
+          <thead>
+            <tr>
+              <th>#</th>
+              <th>المسار</th>
+              <th>متوقع</th>
+              <th>المخاطر</th>
+              <th>iOS</th>
+              <th>Android</th>
+              <th>ملاحظات QA</th>
+            </tr>
+          </thead>
+          <tbody id="e2e-tbody"></tbody>
+        </table>
+
+        <div class="card" style="margin-top:16px">
+          <h3 style="margin-top:0">تسلسل E2E الكامل (10 خطوات)</h3>
+          <div class="flow-diagram">1. إنشاء حساب (OTP)
+2. تحليل البشرة
+3. حفظ التقرير
+4. تحليل الإطلالة
+5. اختيار المناسبة
+6. ظهور التقرير
+7. الاشتراك / Paywall
+8. إعادة التحليل (cache)
+9. تغيير الباقة
+10. تسجيل الخروج</div>
+        </div>
+      </section>
+
+      <!-- PHASE 4 -->
+      <section id="phase-4">
+        <div class="phase-banner">
+          <div class="phase-num">4</div>
+          <div>
+            <h2 style="margin:0 0 6px">AI Accuracy Audit — الأهم</h2>
+            <p style="margin:0;font-size:0.92rem">200 صورة · سجّلوا: اكتشاف · لون · مناسبة · اقتراح · سبب</p>
+          </div>
+        </div>
+
+        <div id="ai-stats"></div>
+
+        <h3>أهداف الدقة قبل الإطلاق</h3>
+        <table class="audit-table">
+          <thead><tr><th>المقياس</th><th>الهدف</th><th>الحالي</th></tr></thead>
+          <tbody id="tbl-ai-targets"></tbody>
+        </table>
+
+        <div class="ai-audit-scroll no-print">
+          <table class="audit-table checklist-table">
+            <thead>
+              <tr>
+                <th>#</th>
+                <th>الصورة</th>
+                <th>نوع القطعة</th>
+                <th>مكتشف؟</th>
+                <th>لون؟</th>
+                <th>مناسبة؟</th>
+                <th>اقتراح؟</th>
+                <th>سبب؟</th>
+                <th>ملاحظات</th>
+              </tr>
+            </thead>
+            <tbody id="ai-tbody"></tbody>
+          </table>
+        </div>
+        <p class="print-only muted">جدول AI Audit — 200 صف — يُعبّأ من النسخة التفاعلية</p>
+      </section>
+
+      <!-- PHASE 5 -->
+      <section id="phase-5">
+        <div class="phase-banner">
+          <div class="phase-num">5</div>
+          <div>
+            <h2 style="margin:0 0 6px">Performance</h2>
+            <p style="margin:0;font-size:0.92rem">زمن التحليل · حجم الصور · الذاكرة · البطارية · الكاش · التنقل</p>
+          </div>
+        </div>
+        <table class="audit-table">
+          <thead><tr><th>البند</th><th>الملاحظة</th></tr></thead>
+          <tbody id="tbl-performance"></tbody>
+        </table>
+        <div class="card">
+          <h3 style="margin-top:0">قالب قياس الأداء (يُعبّأ يدويًا)</h3>
+          <table class="audit-table">
+            <thead>
+              <tr><th>الجهاز</th><th>Skin (ث)</th><th>Outfit (ث)</th><th>RAM peak</th><th>ملاحظات</th></tr>
+            </thead>
+            <tbody>
+              <tr><td>iPhone ___</td><td>—</td><td>—</td><td>—</td><td></td></tr>
+              <tr><td>Android ___</td><td>—</td><td>—</td><td>—</td><td></td></tr>
+              <tr><td>Simulator</td><td>—</td><td>—</td><td>—</td><td>للتطوير فقط</td></tr>
+            </tbody>
+          </table>
+        </div>
+      </section>
+
+      <!-- TESTS -->
+      <section id="tests">
+        <h2>الاختبارات — الحالة والفجوات</h2>
+        <div class="card warn">
+          <h3 style="margin-top:0">❌ 3 اختبارات فاشلة</h3>
+          <p><code>test/outfit_intelligence_service_test.dart</code></p>
+          <p style="margin-bottom:0">
+            <strong>TimeoutException 30s</strong> — الاختبار يضرب
+            <code>OutfitSegmentationApiDataSource.segment</code> عبر Dio (شبكة حقيقية).
+            <strong>الإصلاح:</strong> mock API في الاختبار — لا ميزة جديدة.
+          </p>
+        </div>
+        <h3>فجوات التغطية</h3>
+        <table class="audit-table">
+          <thead><tr><th>المجال</th><th>موجود</th><th>ينقص</th></tr></thead>
+          <tbody id="tbl-test-gaps"></tbody>
+        </table>
+        <h3>اختبارات ناجحة (عينة)</h3>
+        <ul style="font-size:0.9rem">
+          <li>Garment detection · Fashion validator · Segmentation (13+)</li>
+          <li>Fashion recommendation + intelligence (9)</li>
+          <li>Beauty score · Trust scoring · Navigation · Saudi phone</li>
+          <li>Outfit capture · Face gate · Package credit</li>
+        </ul>
+      </section>
+
+      <!-- FLAGS -->
+      <section id="flags">
+        <h2>Feature Flags — الوضع الحالي للإنتاج</h2>
+        <p style="font-size:0.9rem;color:var(--muted)">التطبيق يعمل كـ <strong>free mode</strong> بالكامل تقريبًا</p>
+        <table class="audit-table">
+          <thead><tr><th>Flag</th><th>الافتراضي</th><th>التأثير</th></tr></thead>
+          <tbody id="tbl-flags"></tbody>
+        </table>
+      </section>
+
+      <!-- FAKE MAP -->
+      <section id="fake-map">
+        <h2>خريطة البيانات الوهمية</h2>
+        <div class="flow-diagram" id="fake-data-map"></div>
+        <h3>Render Production (render.yaml)</h3>
+        <table class="audit-table">
+          <thead><tr><th>المتغير</th><th>القيمة</th><th>المشكلة</th></tr></thead>
+          <tbody>
+            <tr><td><code>SKIN_PROVIDER</code></td><td>perfect_corp</td><td class="risk-low">✅</td></tr>
+            <tr><td><code>OUTFIT_PROVIDER</code></td><td>mock</td><td class="risk-high">❌ legacy API path</td></tr>
+            <tr><td><code>PERFECT_CORP_FALLBACK_MOCK</code></td><td>true</td><td class="risk-high">❌ silent mock fallback</td></tr>
+          </tbody>
+        </table>
+      </section>
+
+      <!-- PLAN -->
+      <section id="plan">
+        <h2>خطة العمل — 4 أسابيع (بدون ميزات جديدة)</h2>
+        <div class="week-plan" id="week-plan"></div>
+      </section>
+
+      <section id="after">
+        <h2>بعد استقرار النظام فقط</h2>
+        <div class="card">
+          <p>لا تبدأ أي بند أدناه قبل اكتمال المراحل الخمس وتقرير AI Audit نظيف:</p>
+          <ul>
+            <li>استبدال / تحسين Google Vision</li>
+            <li>استبدال 20 PNG بصور studio 2000×2000</li>
+            <li>تفعيل StoreKit (<code>MIRA_STORE_KIT_ENABLED=true</code>)</li>
+            <li><code>OUTFIT_PROVIDER=fashn</code> على Render</li>
+            <li><code>PERFECT_CORP_FALLBACK_MOCK=false</code></li>
+            <li>Embeddings حقيقية (CLIP/ViT) بدل hash vectors</li>
+          </ul>
+        </div>
+      </section>
+
+      <footer class="card" style="margin-top:40px;text-align:center">
+        <p style="margin:0;font-size:0.85rem;color:var(--muted)">
+          MIRA Project Audit · Integration Phase ·
+          <a href="index.html">الموقع الرئيسي</a> ·
+          <a href="mira-production-readiness.html">جاهزية الإنتاج</a>
+        </p>
+      </footer>
+    </main>
+  </div>
+
+  <div class="toast" id="toast" role="status"></div>
+  <script src="mira-project-audit.js"></script>
+</body>
+</html>

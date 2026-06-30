@@ -2,32 +2,41 @@ import 'dart:developer' as developer;
 import 'dart:io';
 
 import '../../../../core/ai/models/mira_occasion.dart';
+import '../../../../core/config/mira_api_config.dart';
+import '../../data/datasources/outfit_segmentation_api_data_source.dart';
+import '../../data/datasources/vision_api_data_source.dart';
 import '../../data/services/outfit_analysis_cache_service.dart';
 import '../../../../core/session/analysis_session.dart';
 import '../../../skin_analysis/domain/entities/skin_report.dart';
+import '../adapters/fashion_vision_to_engine_adapter.dart';
 import '../entities/outfit_analysis.dart';
 import '../entities/outfit_analysis_mode.dart';
+import '../entities/fashion_vision_document.dart';
 import '../entities/outfit_segment_map.dart';
 import '../entities/user_gender.dart';
 import '../entities/outfit_visual_profile.dart';
+import '../exceptions/vision_platform_exception.dart';
 import 'deterministic_outfit_engine.dart';
-import 'google_vision_outfit_service.dart';
-import 'outfit_image_analyzer.dart';
 import 'outfit_segmentation_service.dart';
 
-/// Capture → Vision → body map → segment colors → deterministic scoring.
+/// Capture → Vision Platform API → segment map → deterministic scoring.
+/// Phase 7 — VisionApiDataSource only; no Google Vision · no silent fallback.
+/// Reference: docs/mira-vision-platform.html
 class OutfitIntelligenceService {
   OutfitIntelligenceService({
-    GoogleVisionOutfitService? visionService,
+    VisionApiDataSource? visionApi,
     OutfitAnalysisCacheService? cacheService,
     OutfitSegmentationService? segmentationService,
-  })  : _vision = visionService ?? GoogleVisionOutfitService(),
+    OutfitSegmentationApiDataSource? segmentationApi,
+  })  : _visionApi = visionApi ?? VisionApiDataSource(),
         _cache = cacheService,
-        _segmentation = segmentationService ?? OutfitSegmentationService();
+        _segmentation = segmentationService ?? OutfitSegmentationService(),
+        _segmentationApi = segmentationApi ?? OutfitSegmentationApiDataSource();
 
-  final GoogleVisionOutfitService _vision;
+  final VisionApiDataSource _visionApi;
   final OutfitAnalysisCacheService? _cache;
   final OutfitSegmentationService _segmentation;
+  final OutfitSegmentationApiDataSource _segmentationApi;
 
   Future<OutfitAnalysis> analyze({
     SkinReport? skin,
@@ -62,21 +71,37 @@ class OutfitIntelligenceService {
       return cached.analysis.copyWith(frozenImagePath: outfitImage.path);
     }
 
-    final resolved = await _resolveVisualWithObjects(outfitImage);
-    final segmentMap = await _segmentation.buildFromFrozenImage(
-      outfitImage,
-      visual: resolved.profile,
-      visionObjects: resolved.localizedObjects,
+    final visionResult = await _resolveVisionFromPlatform(
+      outfitImage: outfitImage,
+      occasion: occasion,
+      mode: mode,
+      skin: skin,
     );
 
-    final visual = _mergeRegionColors(resolved.profile, segmentMap);
+    final fashion = visionResult.fashionVision;
+    final visual = FashionVisionToEngineAdapter.toVisualProfile(fashion);
+    final visionObjects =
+        FashionVisionToEngineAdapter.toLocalizedObjects(fashion);
+
+    final segmentMap = await _buildSegmentMap(
+      outfitImage,
+      visionObjects: visionObjects,
+    );
+
+    final mergedVisual = _mergeRegionColors(visual, segmentMap);
     final analysis = DeterministicOutfitEngine.analyze(
       skin: skin,
-      visual: visual,
+      visual: mergedVisual.copyWith(source: 'vision_platform'),
       occasion: occasion,
       mode: mode,
       gender: gender ?? AnalysisSession.userGender,
     );
+
+    final garmentColors = _garmentColorsOnly(segmentMap);
+    final mismatch = _piecesNeedingAttention(segmentMap, analysis.mismatchReasons);
+    if (segmentMap.validationMessage != null) {
+      mismatch.insert(0, segmentMap.validationMessage!);
+    }
 
     final enriched = analysis.copyWith(
       frozenImagePath: outfitImage.path,
@@ -85,67 +110,127 @@ class OutfitIntelligenceService {
       lowerBodyColors: segmentMap.lowerBodyColors,
       shoeColors: segmentMap.shoeColors,
       accessoryColors: segmentMap.accessoryColors,
-      dominantColors: _dominantFromSegments(segmentMap, visual.dominantColors),
-      detectedPieces: _piecesFromSegments(segmentMap, analysis.detectedPieces),
-      mismatchReasons: _piecesNeedingAttention(segmentMap, analysis.mismatchReasons),
+      dominantColors: garmentColors.isNotEmpty ? garmentColors : mergedVisual.dominantColors,
+      recommendedColors: garmentColors.isNotEmpty
+          ? _dedupe([...garmentColors, ...analysis.recommendedColors]).take(6).toList()
+          : analysis.recommendedColors,
+      detectedPieces: segmentMap.hasTrustedOverlay
+          ? _piecesFromSegments(segmentMap, analysis.detectedPieces)
+          : analysis.detectedPieces,
+      mismatchReasons: mismatch,
+      visualSource: 'vision_platform',
     );
 
-    await cache.put(key: cacheKey, visual: visual, analysis: enriched);
+    await cache.put(key: cacheKey, visual: mergedVisual, analysis: enriched);
     return enriched;
   }
 
-  Future<OutfitVisionResult> _resolveVisualWithObjects(File outfitImage) async {
-    try {
-      return await _vision.analyzeWithObjects(outfitImage);
-    } catch (error, stack) {
-      developer.log(
-        'Google Vision failed — deterministic visual fallback',
-        error: error,
-        stackTrace: stack,
-        name: 'OutfitIntelligenceService',
+  Future<OutfitSegmentMap> _buildSegmentMap(
+    File outfitImage, {
+    required List<VisionLocalizedObject> visionObjects,
+  }) async {
+    if (MiraApiConfig.useBackend) {
+      try {
+        final serverMap = await _segmentationApi.segment(imagePath: outfitImage.path);
+        if (serverMap != null && serverMap.regions.isNotEmpty) {
+          developer.log(
+            'Server pixel contours: ${serverMap.regions.length} regions (${serverMap.source})',
+            name: 'OutfitIntelligenceService',
+          );
+          return serverMap;
+        }
+      } catch (error, stack) {
+        developer.log(
+          'Server segmentation failed — local fallback',
+          error: error,
+          stackTrace: stack,
+          name: 'OutfitIntelligenceService',
+        );
+      }
+    }
+
+    return _segmentation.buildFromFrozenImage(
+      outfitImage,
+      visionObjects: visionObjects,
+    );
+  }
+
+  Future<VisionOutfitAnalyzeResult> _resolveVisionFromPlatform({
+    required File outfitImage,
+    required MiraOccasion occasion,
+    required OutfitAnalysisMode mode,
+    SkinReport? skin,
+  }) async {
+    if (!MiraApiConfig.useBackend) {
+      throw const VisionPlatformException(
+        code: 'VISION_API_DISABLED',
+        message: 'Vision Platform requires USE_MIRA_API=true',
+        userMessageAr: 'خدمة التحليل غير متاحة حاليًا. حاولي لاحقًا.',
       );
     }
 
-    try {
-      final profile = await OutfitImageAnalyzer.analyze(outfitImage);
-      return OutfitVisionResult(profile: profile);
-    } catch (error, stack) {
-      developer.log(
-        'Deterministic visual analyzer failed',
-        error: error,
-        stackTrace: stack,
-        name: 'OutfitIntelligenceService',
+    final result = await _visionApi.analyze(
+      imagePath: outfitImage.path,
+      occasionId: occasion.id,
+      mode: mode.name,
+      skinSnapshot: skin != null ? _skinSnapshot(skin) : null,
+    );
+
+    if (result == null) {
+      throw const VisionPlatformException(
+        code: 'VISION_API_EMPTY',
+        message: 'Vision API returned empty response',
+        userMessageAr: 'تعذّر تحليل الإطلالة. أعيدي التقاط الصورة وحاولي مجددًا.',
       );
-      rethrow;
     }
+
+    if (result.isBlocked) {
+      throw VisionPlatformException(
+        code: 'ANALYSIS_BLOCKED',
+        message: 'Vision analysisGate=blocked',
+        userMessageAr: result.userMessageAr ??
+            'تعذّر تحليل الإطلالة بوضوح. أعيدي التقاط الصورة في إضاءة أفضل.',
+      );
+    }
+
+    return result;
   }
+
+  Map<String, dynamic> _skinSnapshot(SkinReport skin) => {
+        'skinType': skin.skinType,
+        'undertone': skin.undertone,
+        'undertoneEn': skin.undertoneEn,
+        'oiliness': skin.oiliness,
+        'redness': skin.redness,
+        'score': skin.score,
+      };
 
   OutfitVisualProfile _mergeRegionColors(
     OutfitVisualProfile visual,
     OutfitSegmentMap segmentMap,
   ) {
-    final regionColors = [
+    final garmentColors = _garmentColorsOnly(segmentMap);
+    if (garmentColors.isEmpty) {
+      return visual.copyWith(dominantColors: const []);
+    }
+    return visual.copyWith(
+      dominantColors: garmentColors,
+      clothingTypes: segmentMap.hasTrustedOverlay
+          ? segmentMap.regions.map((r) => r.labelAr).toList()
+          : visual.clothingTypes,
+    );
+  }
+
+  List<String> _garmentColorsOnly(OutfitSegmentMap segmentMap) {
+    if (segmentMap.garmentPalette.isReliable) {
+      return segmentMap.garmentPalette.ordered;
+    }
+    final merged = [
       ...segmentMap.upperBodyColors,
       ...segmentMap.lowerBodyColors,
       ...segmentMap.shoeColors,
       ...segmentMap.accessoryColors,
     ];
-    if (regionColors.isEmpty) return visual;
-    return visual.copyWith(
-      dominantColors: _dedupe([...regionColors, ...visual.dominantColors]).take(6).toList(),
-    );
-  }
-
-  List<String> _dominantFromSegments(
-    OutfitSegmentMap segmentMap,
-    List<String> fallback,
-  ) {
-    final merged = [
-      ...segmentMap.upperBodyColors,
-      ...segmentMap.lowerBodyColors,
-      ...segmentMap.shoeColors,
-    ];
-    if (merged.isEmpty) return fallback;
     return _dedupe(merged).take(5).toList();
   }
 

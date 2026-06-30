@@ -7,6 +7,14 @@ import {
   SkinReportSnapshot,
 } from '../contracts/outfit-intelligence.interface';
 
+// ─────────────────────────────────────────────────────────────────────────────
+// VISION PLATFORM — LEGACY (Google hybrid path via OutfitHybridIntelligenceService)
+// Do NOT use for Vision Platform semantics — use OpenAiSemanticProvider (Phase 4).
+// This service generates final compatibilityScore — forbidden in new vision pipeline.
+// Final scores/recommendations must come from MIRA Deterministic Engine (Phase 7+).
+// Reference: docs/mira-vision-platform.html
+// ─────────────────────────────────────────────────────────────────────────────
+
 @Injectable()
 export class LlmOutfitReasoningService {
   private readonly logger = new Logger(LlmOutfitReasoningService.name);

@@ -1,0 +1,1956 @@
+{
+  "version": 3,
+  "library": "mira-luxury-fashion",
+  "imageSpec": {
+    "format": "png",
+    "minWidth": 2000,
+    "minHeight": 2000,
+    "background": "transparent",
+    "lighting": "studio",
+    "view": "front",
+    "noModel": true,
+    "noWatermark": true,
+    "style": "luxury-product-photography"
+  },
+  "promptSuffix": "Ultra detailed, luxury ecommerce quality, PNG, no mannequin, no person, no watermark, no text, 8K, isolated transparent background, front view, studio lighting, soft shadows.",
+  "categories": {
+    "tops": {
+      "targetCount": 120
+    },
+    "bottoms": {
+      "targetCount": 100
+    },
+    "dresses": {
+      "targetCount": 150
+    },
+    "outerwear": {
+      "targetCount": 80
+    },
+    "bags": {
+      "targetCount": 120
+    },
+    "heels": {
+      "targetCount": 150
+    },
+    "jewelry": {
+      "targetCount": 250
+    },
+    "scarves": {
+      "targetCount": 60
+    },
+    "watches": {
+      "targetCount": 100
+    },
+    "sunglasses": {
+      "targetCount": 100
+    }
+  },
+  "pieces": [
+    {
+      "id": "blazer_beige_001",
+      "file": "tops/blazer_beige.png",
+      "category": "tops",
+      "titleAr": "بلوزر بيج منظّم",
+      "color": "beige",
+      "colorHex": "#D4C4A8",
+      "colorTags": [
+        "بيج",
+        "كريمي",
+        "بني",
+        "نود"
+      ],
+      "season": [
+        "spring",
+        "autumn",
+        "winter"
+      ],
+      "style": "luxury",
+      "styleTag": "classic",
+      "occasion": [
+        "work",
+        "interview",
+        "university"
+      ],
+      "brandStyle": "minimal",
+      "priceLevel": "premium",
+      "kind": "clothing",
+      "minFormality": 0.48,
+      "maxFormality": 0.92,
+      "whyAr": "طبقة منظّمة تُكمل الأناقة الكلاسيكية",
+      "aiPrompt": "Ultra realistic luxury women's beige tailored blazer, premium fashion product photography",
+      "subcategory": "blazer",
+      "colorId": "beige_linen",
+      "secondaryColorId": "cream_soft",
+      "material": "linen",
+      "styles": [
+        "luxury",
+        "minimal",
+        "classic"
+      ],
+      "archetypes": [
+        "quiet_luxury",
+        "business",
+        "old_money"
+      ],
+      "fit": "regular",
+      "sleeve": "long",
+      "texture": "matte",
+      "pattern": "solid",
+      "countryStyle": "European",
+      "scores": {
+        "luxury": 93,
+        "formal": 88,
+        "minimal": 96,
+        "business": 90
+      },
+      "compatibleWith": [
+        "trousers_navy_001",
+        "skirt_classic_black_001",
+        "heels_nude_001",
+        "bag_black_leather_001",
+        "watch_gold_001"
+      ],
+      "prompts": {
+        "generation": "Ultra realistic luxury women's beige tailored blazer, premium fashion product photography, Ultra detailed, luxury ecommerce quality, PNG, no mannequin, no person, no watermark, no text, 8K, isolated transparent background, front view, studio lighting, soft shadows.",
+        "editing": "Enhance fabric texture, correct color accuracy, studio lighting balance, luxury ecommerce finish, no artifacts.",
+        "backgroundRemoval": "Remove background completely, preserve garment edges, transparent PNG, no halo, luxury product cutout quality. Item: بلوزر بيج منظّم."
+      },
+      "angles": {
+        "front": "tops/blazer_beige.png",
+        "back": "tops/blazer_beige_back.png",
+        "angle45": "tops/blazer_beige_45.png",
+        "detail": "tops/blazer_beige_detail.png",
+        "fabric": "tops/blazer_beige_fabric.png"
+      },
+      "imageQuality": "8k",
+      "transparent": true,
+      "recommendedFor": [
+        "hourglass",
+        "rectangle",
+        "tall"
+      ],
+      "extendedOccasions": [
+        "office",
+        "meeting",
+        "interview",
+        "business",
+        "dinner"
+      ],
+      "ontologyPath": [
+        "clothing",
+        "tops",
+        "blazer",
+        "luxury",
+        "minimal",
+        "classic",
+        "quiet_luxury",
+        "business",
+        "old_money",
+        "minimal",
+        "premium"
+      ]
+    },
+    {
+      "id": "corset_cream_001",
+      "file": "tops/corset_cream.png",
+      "category": "tops",
+      "titleAr": "كورسيه كريمي",
+      "color": "cream",
+      "colorHex": "#F5E6D3",
+      "colorTags": [
+        "كريمي",
+        "بيج",
+        "أبيض",
+        "ذهبي"
+      ],
+      "season": [
+        "spring",
+        "summer"
+      ],
+      "style": "luxury",
+      "styleTag": "classic",
+      "occasion": [
+        "evening",
+        "wedding",
+        "eid"
+      ],
+      "brandStyle": "romantic",
+      "priceLevel": "premium",
+      "kind": "clothing",
+      "minFormality": 0.62,
+      "maxFormality": 1.0,
+      "whyAr": "يضيف بنية أنيقة ويُوازن الإطلالة الرسمية",
+      "aiPrompt": "Ultra realistic luxury women's cream corset top, satin fabric, premium product photography",
+      "subcategory": "corset",
+      "colorId": "cream_soft",
+      "secondaryColorId": "beige_linen",
+      "material": "satin",
+      "styles": [
+        "luxury",
+        "classic",
+        "evening"
+      ],
+      "archetypes": [
+        "evening",
+        "wedding",
+        "old_money"
+      ],
+      "fit": "fitted",
+      "sleeve": "sleeveless",
+      "texture": "satin",
+      "pattern": "solid",
+      "scores": {
+        "luxury": 91,
+        "formal": 85,
+        "minimal": 78,
+        "business": 62
+      },
+      "compatibleWith": [
+        "skirt_silk_beige_001",
+        "cape_ivory_001",
+        "pearl_earrings_001"
+      ],
+      "prompts": {
+        "generation": "Ultra realistic luxury women's cream corset top, satin fabric, premium product photography, Ultra detailed, luxury ecommerce quality, PNG, no mannequin, no person, no watermark, no text, 8K, isolated transparent background, front view, studio lighting, soft shadows.",
+        "editing": "Enhance fabric texture, correct color accuracy, studio lighting balance, luxury ecommerce finish, no artifacts.",
+        "backgroundRemoval": "Remove background completely, preserve garment edges, transparent PNG, no halo, luxury product cutout quality. Item: كورسيه كريمي."
+      },
+      "angles": {
+        "front": "tops/corset_cream.png",
+        "back": "tops/corset_cream_back.png",
+        "angle45": "tops/corset_cream_45.png",
+        "detail": "tops/corset_cream_detail.png",
+        "fabric": "tops/corset_cream_fabric.png"
+      },
+      "imageQuality": "8k",
+      "transparent": true,
+      "recommendedFor": [
+        "hourglass",
+        "slim",
+        "petite"
+      ],
+      "extendedOccasions": [
+        "wedding",
+        "dinner",
+        "party",
+        "eid"
+      ],
+      "ontologyPath": [
+        "clothing",
+        "tops",
+        "corset",
+        "luxury",
+        "classic",
+        "evening",
+        "evening",
+        "wedding",
+        "old_money",
+        "romantic",
+        "premium"
+      ]
+    },
+    {
+      "id": "satin_top_black_001",
+      "file": "tops/satin_top_black.png",
+      "category": "tops",
+      "titleAr": "بلوزة ساتان سوداء",
+      "color": "black",
+      "colorHex": "#1A1A1A",
+      "colorTags": [
+        "أسود",
+        "كحلي",
+        "فضي"
+      ],
+      "season": [
+        "autumn",
+        "winter"
+      ],
+      "style": "luxury",
+      "styleTag": "formal",
+      "occasion": [
+        "work",
+        "evening",
+        "interview"
+      ],
+      "brandStyle": "minimal",
+      "priceLevel": "premium",
+      "kind": "clothing",
+      "minFormality": 0.55,
+      "maxFormality": 1.0,
+      "whyAr": "لمسة فاخرة ترفع التباين وتمنح حضوراً راقياً",
+      "aiPrompt": "Ultra realistic luxury black satin blouse, premium fashion product photography",
+      "subcategory": "blouse",
+      "colorId": "black_pure",
+      "secondaryColorId": "silver_metal",
+      "material": "satin",
+      "styles": [
+        "luxury",
+        "formal",
+        "evening"
+      ],
+      "archetypes": [
+        "evening",
+        "business",
+        "minimal"
+      ],
+      "fit": "regular",
+      "sleeve": "long",
+      "texture": "satin",
+      "scores": {
+        "luxury": 90,
+        "formal": 92,
+        "minimal": 88,
+        "business": 86
+      },
+      "compatibleWith": [
+        "trousers_navy_001",
+        "skirt_classic_black_001",
+        "heels_black_001"
+      ],
+      "prompts": {
+        "generation": "Ultra realistic luxury black satin blouse, premium fashion product photography, Ultra detailed, luxury ecommerce quality, PNG, no mannequin, no person, no watermark, no text, 8K, isolated transparent background, front view, studio lighting, soft shadows.",
+        "editing": "Enhance fabric texture, correct color accuracy, studio lighting balance, luxury ecommerce finish, no artifacts.",
+        "backgroundRemoval": "Remove background completely, preserve garment edges, transparent PNG, no halo, luxury product cutout quality. Item: بلوزة ساتان سوداء."
+      },
+      "angles": {
+        "front": "tops/satin_top_black.png",
+        "back": "tops/satin_top_black_back.png",
+        "angle45": "tops/satin_top_black_45.png",
+        "detail": "tops/satin_top_black_detail.png",
+        "fabric": "tops/satin_top_black_fabric.png"
+      },
+      "imageQuality": "8k",
+      "transparent": true,
+      "recommendedFor": [
+        "hourglass",
+        "slim",
+        "rectangle"
+      ],
+      "extendedOccasions": [
+        "dinner",
+        "party",
+        "meeting",
+        "graduation"
+      ],
+      "ontologyPath": [
+        "clothing",
+        "tops",
+        "blouse",
+        "luxury",
+        "formal",
+        "evening",
+        "evening",
+        "business",
+        "minimal",
+        "minimal",
+        "premium"
+      ]
+    },
+    {
+      "id": "skirt_silk_beige_001",
+      "file": "bottoms/skirt_silk_beige.png",
+      "category": "bottoms",
+      "titleAr": "تنورة حرير بيج",
+      "color": "beige",
+      "colorHex": "#E8DCC8",
+      "colorTags": [
+        "بيج",
+        "كريمي",
+        "ذهبي",
+        "نود"
+      ],
+      "season": [
+        "spring",
+        "summer",
+        "autumn"
+      ],
+      "style": "luxury",
+      "styleTag": "classic",
+      "occasion": [
+        "evening",
+        "wedding",
+        "eid"
+      ],
+      "brandStyle": "romantic",
+      "priceLevel": "premium",
+      "kind": "clothing",
+      "minFormality": 0.58,
+      "maxFormality": 1.0,
+      "whyAr": "تنعّم الخط وتوازن الألوان الدافئة",
+      "aiPrompt": "Ultra realistic luxury silk midi skirt beige, flowing fabric, product photography",
+      "subcategory": "skirt",
+      "colorId": "beige_linen",
+      "secondaryColorId": "cream_soft",
+      "material": "silk",
+      "styles": [
+        "luxury",
+        "classic",
+        "evening"
+      ],
+      "archetypes": [
+        "quiet_luxury",
+        "evening",
+        "old_money"
+      ],
+      "fit": "A-line",
+      "scores": {
+        "luxury": 92,
+        "formal": 84,
+        "minimal": 90,
+        "business": 72
+      },
+      "compatibleWith": [
+        "blazer_beige_001",
+        "corset_cream_001",
+        "heels_nude_001"
+      ],
+      "prompts": {
+        "generation": "Ultra realistic luxury silk midi skirt beige, flowing fabric, product photography, Ultra detailed, luxury ecommerce quality, PNG, no mannequin, no person, no watermark, no text, 8K, isolated transparent background, front view, studio lighting, soft shadows.",
+        "editing": "Enhance fabric texture, correct color accuracy, studio lighting balance, luxury ecommerce finish, no artifacts.",
+        "backgroundRemoval": "Remove background completely, preserve garment edges, transparent PNG, no halo, luxury product cutout quality. Item: تنورة حرير بيج."
+      },
+      "angles": {
+        "front": "bottoms/skirt_silk_beige.png",
+        "back": "bottoms/skirt_silk_beige_back.png",
+        "angle45": "bottoms/skirt_silk_beige_45.png",
+        "detail": "bottoms/skirt_silk_beige_detail.png",
+        "fabric": "bottoms/skirt_silk_beige_fabric.png"
+      },
+      "imageQuality": "8k",
+      "transparent": true,
+      "recommendedFor": [
+        "pear",
+        "hourglass",
+        "petite"
+      ],
+      "extendedOccasions": [
+        "wedding",
+        "dinner",
+        "eid",
+        "graduation"
+      ],
+      "ontologyPath": [
+        "clothing",
+        "bottoms",
+        "skirt",
+        "luxury",
+        "classic",
+        "evening",
+        "quiet_luxury",
+        "evening",
+        "old_money",
+        "romantic",
+        "premium"
+      ]
+    },
+    {
+      "id": "trousers_navy_001",
+      "file": "bottoms/trousers_navy.png",
+      "category": "bottoms",
+      "titleAr": "بنطلون كحلي",
+      "color": "navy",
+      "colorHex": "#1E2A4A",
+      "colorTags": [
+        "كحلي",
+        "أزرق",
+        "رمادي",
+        "أبيض"
+      ],
+      "season": [
+        "spring",
+        "autumn",
+        "winter"
+      ],
+      "style": "luxury",
+      "styleTag": "formal",
+      "occasion": [
+        "work",
+        "interview"
+      ],
+      "brandStyle": "minimal",
+      "priceLevel": "premium",
+      "kind": "clothing",
+      "minFormality": 0.55,
+      "maxFormality": 1.0,
+      "whyAr": "قاعدة رسمية تثبّت الإطلالة المهنية",
+      "aiPrompt": "Ultra realistic luxury navy tailored trousers, premium wool fabric, product photography",
+      "subcategory": "trousers",
+      "colorId": "navy_deep",
+      "secondaryColorId": "black_pure",
+      "material": "wool",
+      "styles": [
+        "luxury",
+        "formal",
+        "business"
+      ],
+      "archetypes": [
+        "business",
+        "old_money",
+        "minimal"
+      ],
+      "fit": "tailored",
+      "scores": {
+        "luxury": 88,
+        "formal": 94,
+        "minimal": 92,
+        "business": 96
+      },
+      "compatibleWith": [
+        "blazer_beige_001",
+        "satin_top_black_001",
+        "heels_black_001"
+      ],
+      "prompts": {
+        "generation": "Ultra realistic luxury navy tailored trousers, premium wool fabric, product photography, Ultra detailed, luxury ecommerce quality, PNG, no mannequin, no person, no watermark, no text, 8K, isolated transparent background, front view, studio lighting, soft shadows.",
+        "editing": "Enhance fabric texture, correct color accuracy, studio lighting balance, luxury ecommerce finish, no artifacts.",
+        "backgroundRemoval": "Remove background completely, preserve garment edges, transparent PNG, no halo, luxury product cutout quality. Item: بنطلون كحلي."
+      },
+      "angles": {
+        "front": "bottoms/trousers_navy.png",
+        "back": "bottoms/trousers_navy_back.png",
+        "angle45": "bottoms/trousers_navy_45.png",
+        "detail": "bottoms/trousers_navy_detail.png",
+        "fabric": "bottoms/trousers_navy_fabric.png"
+      },
+      "imageQuality": "8k",
+      "transparent": true,
+      "recommendedFor": [
+        "rectangle",
+        "hourglass",
+        "tall",
+        "slim"
+      ],
+      "extendedOccasions": [
+        "office",
+        "meeting",
+        "business",
+        "interview",
+        "airport"
+      ],
+      "ontologyPath": [
+        "clothing",
+        "bottoms",
+        "trousers",
+        "luxury",
+        "formal",
+        "business",
+        "business",
+        "old_money",
+        "minimal",
+        "minimal",
+        "premium"
+      ]
+    },
+    {
+      "id": "skirt_classic_black_001",
+      "file": "bottoms/skirt_classic_black.png",
+      "category": "bottoms",
+      "titleAr": "تنورة سوداء كلاسيك",
+      "color": "black",
+      "colorHex": "#141414",
+      "colorTags": [
+        "أسود",
+        "فضي",
+        "أبيض",
+        "نبيتي"
+      ],
+      "season": [
+        "autumn",
+        "winter"
+      ],
+      "style": "luxury",
+      "styleTag": "formal",
+      "occasion": [
+        "work",
+        "evening",
+        "interview"
+      ],
+      "brandStyle": "minimal",
+      "priceLevel": "premium",
+      "kind": "clothing",
+      "minFormality": 0.52,
+      "maxFormality": 1.0,
+      "whyAr": "خطّ أنيق يعزّز التوازن والرقي",
+      "aiPrompt": "Ultra realistic luxury classic black pencil skirt, premium product photography",
+      "subcategory": "skirt",
+      "colorId": "black_pure",
+      "secondaryColorId": "silver_metal",
+      "material": "wool",
+      "styles": [
+        "luxury",
+        "formal",
+        "classic"
+      ],
+      "archetypes": [
+        "business",
+        "evening",
+        "minimal"
+      ],
+      "fit": "pencil",
+      "scores": {
+        "luxury": 89,
+        "formal": 90,
+        "minimal": 94,
+        "business": 88
+      },
+      "compatibleWith": [
+        "blazer_beige_001",
+        "satin_top_black_001",
+        "heels_black_001"
+      ],
+      "prompts": {
+        "generation": "Ultra realistic luxury classic black pencil skirt, premium product photography, Ultra detailed, luxury ecommerce quality, PNG, no mannequin, no person, no watermark, no text, 8K, isolated transparent background, front view, studio lighting, soft shadows.",
+        "editing": "Enhance fabric texture, correct color accuracy, studio lighting balance, luxury ecommerce finish, no artifacts.",
+        "backgroundRemoval": "Remove background completely, preserve garment edges, transparent PNG, no halo, luxury product cutout quality. Item: تنورة سوداء كلاسيك."
+      },
+      "angles": {
+        "front": "bottoms/skirt_classic_black.png",
+        "back": "bottoms/skirt_classic_black_back.png",
+        "angle45": "bottoms/skirt_classic_black_45.png",
+        "detail": "bottoms/skirt_classic_black_detail.png",
+        "fabric": "bottoms/skirt_classic_black_fabric.png"
+      },
+      "imageQuality": "8k",
+      "transparent": true,
+      "recommendedFor": [
+        "hourglass",
+        "rectangle",
+        "slim",
+        "all"
+      ],
+      "extendedOccasions": [
+        "dinner",
+        "office"
+      ],
+      "ontologyPath": [
+        "clothing",
+        "bottoms",
+        "skirt",
+        "luxury",
+        "formal",
+        "classic",
+        "business",
+        "evening",
+        "minimal",
+        "minimal",
+        "premium"
+      ]
+    },
+    {
+      "id": "cape_ivory_001",
+      "file": "outerwear/cape_elegant_ivory.png",
+      "category": "outerwear",
+      "titleAr": "كاب عاجي",
+      "color": "ivory",
+      "colorHex": "#F7F2EA",
+      "colorTags": [
+        "كريمي",
+        "أبيض",
+        "بيج",
+        "ذهبي"
+      ],
+      "season": [
+        "autumn",
+        "winter"
+      ],
+      "style": "luxury",
+      "styleTag": "classic",
+      "occasion": [
+        "wedding",
+        "evening",
+        "eid"
+      ],
+      "brandStyle": "romantic",
+      "priceLevel": "premium",
+      "kind": "clothing",
+      "minFormality": 0.65,
+      "maxFormality": 1.0,
+      "whyAr": "طبقة خارجية فاخرة تُبرز الإطلالة دون ازدحام",
+      "aiPrompt": "Ultra realistic luxury ivory cape coat, elegant drape, premium product photography",
+      "subcategory": "cape",
+      "colorId": "ivory_warm",
+      "secondaryColorId": "cream_soft",
+      "material": "wool",
+      "styles": [
+        "luxury",
+        "classic",
+        "evening"
+      ],
+      "archetypes": [
+        "wedding",
+        "evening",
+        "quiet_luxury"
+      ],
+      "fit": "oversized",
+      "scores": {
+        "luxury": 95,
+        "formal": 88,
+        "minimal": 82,
+        "business": 60
+      },
+      "compatibleWith": [
+        "corset_cream_001",
+        "pearl_earrings_001",
+        "heels_nude_001"
+      ],
+      "prompts": {
+        "generation": "Ultra realistic luxury ivory cape coat, elegant drape, premium product photography, Ultra detailed, luxury ecommerce quality, PNG, no mannequin, no person, no watermark, no text, 8K, isolated transparent background, front view, studio lighting, soft shadows.",
+        "editing": "Enhance fabric texture, correct color accuracy, studio lighting balance, luxury ecommerce finish, no artifacts.",
+        "backgroundRemoval": "Remove background completely, preserve garment edges, transparent PNG, no halo, luxury product cutout quality. Item: كاب عاجي."
+      },
+      "angles": {
+        "front": "outerwear/cape_elegant_ivory.png",
+        "back": "outerwear/cape_elegant_ivory_back.png",
+        "angle45": "outerwear/cape_elegant_ivory_45.png",
+        "detail": "outerwear/cape_elegant_ivory_detail.png",
+        "fabric": "outerwear/cape_elegant_ivory_fabric.png"
+      },
+      "imageQuality": "8k",
+      "transparent": true,
+      "recommendedFor": [
+        "tall",
+        "hourglass",
+        "slim"
+      ],
+      "extendedOccasions": [
+        "wedding",
+        "graduation",
+        "dinner",
+        "eid"
+      ],
+      "ontologyPath": [
+        "clothing",
+        "outerwear",
+        "cape",
+        "luxury",
+        "classic",
+        "evening",
+        "wedding",
+        "evening",
+        "quiet_luxury",
+        "romantic",
+        "premium"
+      ]
+    },
+    {
+      "id": "cardigan_gray_001",
+      "file": "outerwear/cardigan_soft_gray.png",
+      "category": "outerwear",
+      "titleAr": "كارديجان ناعم",
+      "color": "gray",
+      "colorHex": "#C8C4BE",
+      "colorTags": [
+        "رمادي",
+        "بيج",
+        "أبيض",
+        "أزرق"
+      ],
+      "season": [
+        "spring",
+        "autumn"
+      ],
+      "style": "luxury",
+      "styleTag": "casual",
+      "occasion": [
+        "casual",
+        "university"
+      ],
+      "brandStyle": "minimal",
+      "priceLevel": "mid",
+      "kind": "clothing",
+      "minFormality": 0.0,
+      "maxFormality": 0.55,
+      "whyAr": "طبقة خفيفة تضيف راحة مع الحفاظ على التنسيق",
+      "aiPrompt": "Ultra realistic soft gray cashmere cardigan, premium product photography",
+      "subcategory": "cardigan",
+      "colorId": "gray_soft",
+      "secondaryColorId": "beige_linen",
+      "material": "cashmere",
+      "styles": [
+        "luxury",
+        "casual",
+        "minimal"
+      ],
+      "archetypes": [
+        "casual",
+        "quiet_luxury",
+        "travel"
+      ],
+      "fit": "relaxed",
+      "sleeve": "long",
+      "scores": {
+        "luxury": 82,
+        "formal": 55,
+        "minimal": 88,
+        "business": 48
+      },
+      "compatibleWith": [
+        "tote_beige_001",
+        "trousers_navy_001"
+      ],
+      "prompts": {
+        "generation": "Ultra realistic soft gray cashmere cardigan, premium product photography, Ultra detailed, luxury ecommerce quality, PNG, no mannequin, no person, no watermark, no text, 8K, isolated transparent background, front view, studio lighting, soft shadows.",
+        "editing": "Enhance fabric texture, correct color accuracy, studio lighting balance, luxury ecommerce finish, no artifacts.",
+        "backgroundRemoval": "Remove background completely, preserve garment edges, transparent PNG, no halo, luxury product cutout quality. Item: كارديجان ناعم."
+      },
+      "angles": {
+        "front": "outerwear/cardigan_soft_gray.png",
+        "back": "outerwear/cardigan_soft_gray_back.png",
+        "angle45": "outerwear/cardigan_soft_gray_45.png",
+        "detail": "outerwear/cardigan_soft_gray_detail.png",
+        "fabric": "outerwear/cardigan_soft_gray_fabric.png"
+      },
+      "imageQuality": "8k",
+      "transparent": true,
+      "recommendedFor": [
+        "rectangle",
+        "pear",
+        "plus_size",
+        "all"
+      ],
+      "extendedOccasions": [
+        "travel",
+        "airport",
+        "casual",
+        "ramadan"
+      ],
+      "ontologyPath": [
+        "clothing",
+        "outerwear",
+        "cardigan",
+        "luxury",
+        "casual",
+        "minimal",
+        "casual",
+        "quiet_luxury",
+        "travel",
+        "minimal",
+        "mid"
+      ]
+    },
+    {
+      "id": "shawl_wedding_001",
+      "file": "outerwear/shawl_wedding.png",
+      "category": "outerwear",
+      "titleAr": "شال سهرة",
+      "color": "ivory",
+      "colorHex": "#EDE4F0",
+      "colorTags": [
+        "فضي",
+        "أبيض",
+        "وردي",
+        "ذهبي"
+      ],
+      "season": [
+        "winter"
+      ],
+      "style": "luxury",
+      "styleTag": "wedding",
+      "occasion": [
+        "wedding",
+        "evening"
+      ],
+      "brandStyle": "romantic",
+      "priceLevel": "premium",
+      "kind": "accessory",
+      "minFormality": 0.7,
+      "maxFormality": 1.0,
+      "whyAr": "لمسة احتفالية تُكمل إطلالة المناسبات",
+      "aiPrompt": "Ultra realistic luxury wedding shawl wrap, silk chiffon, product photography",
+      "subcategory": "shawl",
+      "colorId": "blush_lilac",
+      "secondaryColorId": "ivory_warm",
+      "material": "silk",
+      "styles": [
+        "luxury",
+        "wedding",
+        "evening"
+      ],
+      "archetypes": [
+        "wedding",
+        "evening"
+      ],
+      "scores": {
+        "luxury": 94,
+        "formal": 86,
+        "minimal": 70,
+        "business": 40
+      },
+      "compatibleWith": [
+        "pearl_earrings_001",
+        "clutch_silver_001"
+      ],
+      "prompts": {
+        "generation": "Ultra realistic luxury wedding shawl wrap, silk chiffon, product photography, Ultra detailed, luxury ecommerce quality, PNG, no mannequin, no person, no watermark, no text, 8K, isolated transparent background, front view, studio lighting, soft shadows.",
+        "editing": "Enhance fabric texture, correct color accuracy, studio lighting balance, luxury ecommerce finish, no artifacts.",
+        "backgroundRemoval": "Remove background completely, preserve garment edges, transparent PNG, no halo, luxury product cutout quality. Item: شال سهرة."
+      },
+      "angles": {
+        "front": "outerwear/shawl_wedding.png",
+        "back": "outerwear/shawl_wedding_back.png",
+        "angle45": "outerwear/shawl_wedding_45.png",
+        "detail": "outerwear/shawl_wedding_detail.png",
+        "fabric": "outerwear/shawl_wedding_fabric.png"
+      },
+      "imageQuality": "8k",
+      "transparent": true,
+      "recommendedFor": [
+        "all"
+      ],
+      "extendedOccasions": [
+        "wedding",
+        "eid",
+        "ramadan",
+        "graduation"
+      ],
+      "ontologyPath": [
+        "accessory",
+        "outerwear",
+        "shawl",
+        "luxury",
+        "wedding",
+        "evening",
+        "wedding",
+        "evening",
+        "romantic",
+        "premium"
+      ]
+    },
+    {
+      "id": "clutch_silver_001",
+      "file": "bags/clutch_silver.png",
+      "category": "bags",
+      "titleAr": "كلاتش فضي",
+      "color": "silver",
+      "colorHex": "#C0C0C8",
+      "colorTags": [
+        "فضي",
+        "أسود",
+        "نبيتي",
+        "أبيض"
+      ],
+      "season": [
+        "spring",
+        "summer",
+        "autumn",
+        "winter"
+      ],
+      "style": "luxury",
+      "styleTag": "formal",
+      "occasion": [
+        "evening",
+        "wedding",
+        "work"
+      ],
+      "brandStyle": "minimal",
+      "priceLevel": "premium",
+      "kind": "accessory",
+      "minFormality": 0.58,
+      "maxFormality": 1.0,
+      "whyAr": "إكسسوار عملي يضيف لمعاناً راقياً",
+      "aiPrompt": "Ultra realistic luxury silver evening clutch bag, metallic leather, product photography",
+      "subcategory": "clutch",
+      "colorId": "silver_metal",
+      "secondaryColorId": "black_pure",
+      "material": "leather",
+      "styles": [
+        "luxury",
+        "formal",
+        "evening"
+      ],
+      "archetypes": [
+        "evening",
+        "wedding",
+        "business"
+      ],
+      "scores": {
+        "luxury": 92,
+        "formal": 90,
+        "minimal": 85,
+        "business": 78
+      },
+      "compatibleWith": [
+        "heels_black_001",
+        "satin_top_black_001",
+        "diamond_bracelet_001"
+      ],
+      "prompts": {
+        "generation": "Ultra realistic luxury silver evening clutch bag, metallic leather, product photography, Ultra detailed, luxury ecommerce quality, PNG, no mannequin, no person, no watermark, no text, 8K, isolated transparent background, front view, studio lighting, soft shadows.",
+        "editing": "Enhance fabric texture, correct color accuracy, studio lighting balance, luxury ecommerce finish, no artifacts.",
+        "backgroundRemoval": "Remove background completely, preserve garment edges, transparent PNG, no halo, luxury product cutout quality. Item: كلاتش فضي."
+      },
+      "angles": {
+        "front": "bags/clutch_silver.png",
+        "back": "bags/clutch_silver_back.png",
+        "angle45": "bags/clutch_silver_45.png",
+        "detail": "bags/clutch_silver_detail.png",
+        "fabric": "bags/clutch_silver_fabric.png"
+      },
+      "imageQuality": "8k",
+      "transparent": true,
+      "recommendedFor": [
+        "hourglass",
+        "rectangle",
+        "slim",
+        "all"
+      ],
+      "extendedOccasions": [
+        "dinner",
+        "office"
+      ],
+      "ontologyPath": [
+        "accessory",
+        "bags",
+        "clutch",
+        "luxury",
+        "formal",
+        "evening",
+        "evening",
+        "wedding",
+        "business",
+        "minimal",
+        "premium"
+      ]
+    },
+    {
+      "id": "bag_black_leather_001",
+      "file": "bags/bag_black_leather.png",
+      "category": "bags",
+      "titleAr": "حقيبة جلد سوداء",
+      "color": "black",
+      "colorHex": "#1C1C1C",
+      "colorTags": [
+        "أسود",
+        "كحلي",
+        "بيج",
+        "أبيض"
+      ],
+      "season": [
+        "autumn",
+        "winter"
+      ],
+      "style": "luxury",
+      "styleTag": "formal",
+      "occasion": [
+        "work",
+        "interview",
+        "evening"
+      ],
+      "brandStyle": "minimal",
+      "priceLevel": "premium",
+      "kind": "accessory",
+      "minFormality": 0.5,
+      "maxFormality": 1.0,
+      "whyAr": "حقيبة فاخرة تُكمل الإطلالة المهنية",
+      "aiPrompt": "Ultra realistic luxury black leather handbag, structured top handle, product photography",
+      "subcategory": "handbag",
+      "colorId": "black_pure",
+      "secondaryColorId": "gold_warm",
+      "material": "leather",
+      "styles": [
+        "luxury",
+        "formal",
+        "business"
+      ],
+      "archetypes": [
+        "business",
+        "quiet_luxury",
+        "old_money"
+      ],
+      "scores": {
+        "luxury": 93,
+        "formal": 88,
+        "minimal": 90,
+        "business": 92
+      },
+      "compatibleWith": [
+        "blazer_beige_001",
+        "trousers_navy_001",
+        "watch_gold_001"
+      ],
+      "prompts": {
+        "generation": "Ultra realistic luxury black leather handbag, structured top handle, product photography, Ultra detailed, luxury ecommerce quality, PNG, no mannequin, no person, no watermark, no text, 8K, isolated transparent background, front view, studio lighting, soft shadows.",
+        "editing": "Enhance fabric texture, correct color accuracy, studio lighting balance, luxury ecommerce finish, no artifacts.",
+        "backgroundRemoval": "Remove background completely, preserve garment edges, transparent PNG, no halo, luxury product cutout quality. Item: حقيبة جلد سوداء."
+      },
+      "angles": {
+        "front": "bags/bag_black_leather.png",
+        "back": "bags/bag_black_leather_back.png",
+        "angle45": "bags/bag_black_leather_45.png",
+        "detail": "bags/bag_black_leather_detail.png",
+        "fabric": "bags/bag_black_leather_fabric.png"
+      },
+      "imageQuality": "8k",
+      "transparent": true,
+      "recommendedFor": [
+        "hourglass",
+        "rectangle",
+        "slim",
+        "all"
+      ],
+      "extendedOccasions": [
+        "dinner",
+        "office"
+      ],
+      "ontologyPath": [
+        "accessory",
+        "bags",
+        "handbag",
+        "luxury",
+        "formal",
+        "business",
+        "business",
+        "quiet_luxury",
+        "old_money",
+        "minimal",
+        "premium"
+      ]
+    },
+    {
+      "id": "tote_beige_001",
+      "file": "bags/tote_casual_beige.png",
+      "category": "bags",
+      "titleAr": "توت بيج",
+      "color": "beige",
+      "colorHex": "#D9CDB8",
+      "colorTags": [
+        "بيج",
+        "بني",
+        "أبيض",
+        "أزرق"
+      ],
+      "season": [
+        "spring",
+        "summer"
+      ],
+      "style": "luxury",
+      "styleTag": "casual",
+      "occasion": [
+        "casual",
+        "university"
+      ],
+      "brandStyle": "minimal",
+      "priceLevel": "mid",
+      "kind": "accessory",
+      "minFormality": 0.0,
+      "maxFormality": 0.48,
+      "whyAr": "عملية وأنيقة للإطلالات اليومية",
+      "aiPrompt": "Ultra realistic luxury beige leather tote bag, product photography",
+      "subcategory": "tote",
+      "colorId": "beige_linen",
+      "secondaryColorId": "brown_tortoise",
+      "material": "leather",
+      "styles": [
+        "luxury",
+        "casual"
+      ],
+      "archetypes": [
+        "casual",
+        "travel",
+        "resort"
+      ],
+      "scores": {
+        "luxury": 78,
+        "formal": 42,
+        "minimal": 82,
+        "business": 55
+      },
+      "compatibleWith": [
+        "cardigan_gray_001",
+        "sunglasses_tortoise_001"
+      ],
+      "prompts": {
+        "generation": "Ultra realistic luxury beige leather tote bag, product photography, Ultra detailed, luxury ecommerce quality, PNG, no mannequin, no person, no watermark, no text, 8K, isolated transparent background, front view, studio lighting, soft shadows.",
+        "editing": "Enhance fabric texture, correct color accuracy, studio lighting balance, luxury ecommerce finish, no artifacts.",
+        "backgroundRemoval": "Remove background completely, preserve garment edges, transparent PNG, no halo, luxury product cutout quality. Item: توت بيج."
+      },
+      "angles": {
+        "front": "bags/tote_casual_beige.png",
+        "back": "bags/tote_casual_beige_back.png",
+        "angle45": "bags/tote_casual_beige_45.png",
+        "detail": "bags/tote_casual_beige_detail.png",
+        "fabric": "bags/tote_casual_beige_fabric.png"
+      },
+      "imageQuality": "8k",
+      "transparent": true,
+      "recommendedFor": [
+        "all"
+      ],
+      "extendedOccasions": [
+        "travel",
+        "airport",
+        "casual"
+      ],
+      "ontologyPath": [
+        "accessory",
+        "bags",
+        "tote",
+        "luxury",
+        "casual",
+        "casual",
+        "travel",
+        "resort",
+        "minimal",
+        "mid"
+      ]
+    },
+    {
+      "id": "heels_nude_001",
+      "file": "heels/heels_nude.png",
+      "category": "heels",
+      "titleAr": "كعب عاجي",
+      "color": "nude",
+      "colorHex": "#E3C4A8",
+      "colorTags": [
+        "بيج",
+        "نود",
+        "كريمي",
+        "ذهبي"
+      ],
+      "season": [
+        "spring",
+        "summer",
+        "autumn"
+      ],
+      "style": "luxury",
+      "styleTag": "classic",
+      "occasion": [
+        "work",
+        "wedding",
+        "evening"
+      ],
+      "brandStyle": "minimal",
+      "priceLevel": "premium",
+      "kind": "accessory",
+      "minFormality": 0.52,
+      "maxFormality": 1.0,
+      "whyAr": "يمدّد الساق بصرياً ويُوازن الألوان الدافئة",
+      "aiPrompt": "Ultra realistic luxury nude beige high heel pump, leather, product photography",
+      "subcategory": "pump",
+      "colorId": "nude_heel",
+      "secondaryColorId": "beige_linen",
+      "material": "leather",
+      "styles": [
+        "luxury",
+        "classic",
+        "formal"
+      ],
+      "archetypes": [
+        "business",
+        "evening",
+        "old_money"
+      ],
+      "scores": {
+        "luxury": 90,
+        "formal": 86,
+        "minimal": 88,
+        "business": 84
+      },
+      "compatibleWith": [
+        "blazer_beige_001",
+        "skirt_silk_beige_001",
+        "clutch_silver_001"
+      ],
+      "prompts": {
+        "generation": "Ultra realistic luxury nude beige high heel pump, leather, product photography, Ultra detailed, luxury ecommerce quality, PNG, no mannequin, no person, no watermark, no text, 8K, isolated transparent background, front view, studio lighting, soft shadows.",
+        "editing": "Enhance fabric texture, correct color accuracy, studio lighting balance, luxury ecommerce finish, no artifacts.",
+        "backgroundRemoval": "Remove background completely, preserve garment edges, transparent PNG, no halo, luxury product cutout quality. Item: كعب عاجي."
+      },
+      "angles": {
+        "front": "heels/heels_nude.png",
+        "back": "heels/heels_nude_back.png",
+        "angle45": "heels/heels_nude_45.png",
+        "detail": "heels/heels_nude_detail.png",
+        "fabric": "heels/heels_nude_fabric.png"
+      },
+      "imageQuality": "8k",
+      "transparent": true,
+      "recommendedFor": [
+        "petite",
+        "hourglass",
+        "slim",
+        "all"
+      ],
+      "extendedOccasions": [
+        "office",
+        "wedding",
+        "dinner",
+        "graduation"
+      ],
+      "ontologyPath": [
+        "accessory",
+        "heels",
+        "pump",
+        "luxury",
+        "classic",
+        "formal",
+        "business",
+        "evening",
+        "old_money",
+        "minimal",
+        "premium"
+      ]
+    },
+    {
+      "id": "heels_black_001",
+      "file": "heels/heels_black.png",
+      "category": "heels",
+      "titleAr": "كعب أسود",
+      "color": "black",
+      "colorHex": "#111111",
+      "colorTags": [
+        "أسود",
+        "كحلي",
+        "أبيض",
+        "فضي"
+      ],
+      "season": [
+        "autumn",
+        "winter"
+      ],
+      "style": "luxury",
+      "styleTag": "formal",
+      "occasion": [
+        "work",
+        "interview",
+        "evening"
+      ],
+      "brandStyle": "minimal",
+      "priceLevel": "premium",
+      "kind": "accessory",
+      "minFormality": 0.55,
+      "maxFormality": 1.0,
+      "whyAr": "قاعدة كلاسيكية تثبّت الإطلالة الرسمية",
+      "aiPrompt": "Ultra realistic luxury black high heel stiletto, patent leather, product photography",
+      "subcategory": "stiletto",
+      "colorId": "black_pure",
+      "secondaryColorId": "silver_metal",
+      "material": "patent_leather",
+      "styles": [
+        "luxury",
+        "formal",
+        "evening"
+      ],
+      "archetypes": [
+        "business",
+        "evening",
+        "minimal"
+      ],
+      "scores": {
+        "luxury": 91,
+        "formal": 92,
+        "minimal": 90,
+        "business": 88
+      },
+      "compatibleWith": [
+        "trousers_navy_001",
+        "skirt_classic_black_001",
+        "clutch_silver_001"
+      ],
+      "prompts": {
+        "generation": "Ultra realistic luxury black high heel stiletto, patent leather, product photography, Ultra detailed, luxury ecommerce quality, PNG, no mannequin, no person, no watermark, no text, 8K, isolated transparent background, front view, studio lighting, soft shadows.",
+        "editing": "Enhance fabric texture, correct color accuracy, studio lighting balance, luxury ecommerce finish, no artifacts.",
+        "backgroundRemoval": "Remove background completely, preserve garment edges, transparent PNG, no halo, luxury product cutout quality. Item: كعب أسود."
+      },
+      "angles": {
+        "front": "heels/heels_black.png",
+        "back": "heels/heels_black_back.png",
+        "angle45": "heels/heels_black_45.png",
+        "detail": "heels/heels_black_detail.png",
+        "fabric": "heels/heels_black_fabric.png"
+      },
+      "imageQuality": "8k",
+      "transparent": true,
+      "recommendedFor": [
+        "all"
+      ],
+      "extendedOccasions": [
+        "office",
+        "meeting",
+        "party",
+        "graduation",
+        "interview"
+      ],
+      "ontologyPath": [
+        "accessory",
+        "heels",
+        "stiletto",
+        "luxury",
+        "formal",
+        "evening",
+        "business",
+        "evening",
+        "minimal",
+        "minimal",
+        "premium"
+      ]
+    },
+    {
+      "id": "pearl_earrings_001",
+      "file": "jewelry/pearl_earrings.png",
+      "category": "jewelry",
+      "titleAr": "أقراط لؤلؤ",
+      "color": "pearl",
+      "colorHex": "#F5F0E8",
+      "colorTags": [
+        "أبيض",
+        "كريمي",
+        "فضي",
+        "ذهبي"
+      ],
+      "season": [
+        "spring",
+        "summer",
+        "autumn",
+        "winter"
+      ],
+      "style": "luxury",
+      "styleTag": "wedding",
+      "occasion": [
+        "wedding",
+        "evening",
+        "eid"
+      ],
+      "brandStyle": "classic",
+      "priceLevel": "premium",
+      "kind": "accessory",
+      "minFormality": 0.6,
+      "maxFormality": 1.0,
+      "whyAr": "لمسة كلاسيكية تُضيء الوجه بلطف",
+      "aiPrompt": "Ultra realistic luxury pearl drop earrings, fine jewelry product photography",
+      "subcategory": "earrings",
+      "colorId": "pearl_white",
+      "secondaryColorId": "gold_warm",
+      "material": "pearl",
+      "styles": [
+        "luxury",
+        "classic",
+        "wedding"
+      ],
+      "archetypes": [
+        "wedding",
+        "evening",
+        "old_money"
+      ],
+      "scores": {
+        "luxury": 94,
+        "formal": 88,
+        "minimal": 80,
+        "business": 72
+      },
+      "compatibleWith": [
+        "corset_cream_001",
+        "cape_ivory_001",
+        "shawl_wedding_001"
+      ],
+      "prompts": {
+        "generation": "Ultra realistic luxury pearl drop earrings, fine jewelry product photography, Ultra detailed, luxury ecommerce quality, PNG, no mannequin, no person, no watermark, no text, 8K, isolated transparent background, front view, studio lighting, soft shadows.",
+        "editing": "Enhance fabric texture, correct color accuracy, studio lighting balance, luxury ecommerce finish, no artifacts.",
+        "backgroundRemoval": "Remove background completely, preserve garment edges, transparent PNG, no halo, luxury product cutout quality. Item: أقراط لؤلؤ."
+      },
+      "angles": {
+        "front": "jewelry/pearl_earrings.png",
+        "back": "jewelry/pearl_earrings_back.png",
+        "angle45": "jewelry/pearl_earrings_45.png",
+        "detail": "jewelry/pearl_earrings_detail.png",
+        "fabric": "jewelry/pearl_earrings_fabric.png"
+      },
+      "imageQuality": "8k",
+      "transparent": true,
+      "recommendedFor": [
+        "all"
+      ],
+      "extendedOccasions": [
+        "wedding",
+        "graduation",
+        "dinner",
+        "eid"
+      ],
+      "ontologyPath": [
+        "accessory",
+        "jewelry",
+        "earrings",
+        "luxury",
+        "classic",
+        "wedding",
+        "wedding",
+        "evening",
+        "old_money",
+        "classic",
+        "premium"
+      ]
+    },
+    {
+      "id": "silver_necklace_001",
+      "file": "jewelry/silver_necklace.png",
+      "category": "jewelry",
+      "titleAr": "عقد فضي",
+      "color": "silver",
+      "colorHex": "#B8B8C0",
+      "colorTags": [
+        "فضي",
+        "أسود",
+        "أبيض",
+        "كحلي"
+      ],
+      "season": [
+        "spring",
+        "summer",
+        "autumn",
+        "winter"
+      ],
+      "style": "luxury",
+      "styleTag": "classic",
+      "occasion": [
+        "evening",
+        "work",
+        "wedding"
+      ],
+      "brandStyle": "minimal",
+      "priceLevel": "premium",
+      "kind": "accessory",
+      "minFormality": 0.5,
+      "maxFormality": 1.0,
+      "whyAr": "خطّ رقبي أنيق يكسر البساطة بذوق",
+      "aiPrompt": "Ultra realistic luxury silver chain necklace, fine jewelry product photography",
+      "subcategory": "necklace",
+      "colorId": "silver_metal",
+      "secondaryColorId": "black_pure",
+      "material": "silver",
+      "styles": [
+        "luxury",
+        "classic",
+        "minimal"
+      ],
+      "archetypes": [
+        "evening",
+        "quiet_luxury",
+        "business"
+      ],
+      "scores": {
+        "luxury": 90,
+        "formal": 82,
+        "minimal": 92,
+        "business": 76
+      },
+      "compatibleWith": [
+        "blazer_beige_001",
+        "satin_top_black_001",
+        "clutch_silver_001"
+      ],
+      "prompts": {
+        "generation": "Ultra realistic luxury silver chain necklace, fine jewelry product photography, Ultra detailed, luxury ecommerce quality, PNG, no mannequin, no person, no watermark, no text, 8K, isolated transparent background, front view, studio lighting, soft shadows.",
+        "editing": "Enhance fabric texture, correct color accuracy, studio lighting balance, luxury ecommerce finish, no artifacts.",
+        "backgroundRemoval": "Remove background completely, preserve garment edges, transparent PNG, no halo, luxury product cutout quality. Item: عقد فضي."
+      },
+      "angles": {
+        "front": "jewelry/silver_necklace.png",
+        "back": "jewelry/silver_necklace_back.png",
+        "angle45": "jewelry/silver_necklace_45.png",
+        "detail": "jewelry/silver_necklace_detail.png",
+        "fabric": "jewelry/silver_necklace_fabric.png"
+      },
+      "imageQuality": "8k",
+      "transparent": true,
+      "recommendedFor": [
+        "hourglass",
+        "rectangle",
+        "slim",
+        "all"
+      ],
+      "extendedOccasions": [
+        "dinner",
+        "office"
+      ],
+      "ontologyPath": [
+        "accessory",
+        "jewelry",
+        "necklace",
+        "luxury",
+        "classic",
+        "minimal",
+        "evening",
+        "quiet_luxury",
+        "business",
+        "minimal",
+        "premium"
+      ]
+    },
+    {
+      "id": "diamond_bracelet_001",
+      "file": "jewelry/diamond_bracelet.png",
+      "category": "jewelry",
+      "titleAr": "سوار فاخر",
+      "color": "silver",
+      "colorHex": "#E8E8F0",
+      "colorTags": [
+        "فضي",
+        "ذهبي",
+        "أسود",
+        "أبيض"
+      ],
+      "season": [
+        "spring",
+        "summer",
+        "autumn",
+        "winter"
+      ],
+      "style": "luxury",
+      "styleTag": "classic",
+      "occasion": [
+        "evening",
+        "wedding",
+        "eid"
+      ],
+      "brandStyle": "classic",
+      "priceLevel": "premium",
+      "kind": "accessory",
+      "minFormality": 0.58,
+      "maxFormality": 1.0,
+      "whyAr": "لمسة لامعة تُكمل الأناقة من دون مبالغة",
+      "aiPrompt": "Ultra realistic luxury diamond tennis bracelet, fine jewelry product photography",
+      "subcategory": "bracelet",
+      "colorId": "silver_metal",
+      "secondaryColorId": "gold_warm",
+      "material": "white_gold",
+      "styles": [
+        "luxury",
+        "evening",
+        "classic"
+      ],
+      "archetypes": [
+        "evening",
+        "wedding",
+        "old_money"
+      ],
+      "scores": {
+        "luxury": 96,
+        "formal": 86,
+        "minimal": 78,
+        "business": 65
+      },
+      "compatibleWith": [
+        "clutch_silver_001",
+        "satin_top_black_001"
+      ],
+      "prompts": {
+        "generation": "Ultra realistic luxury diamond tennis bracelet, fine jewelry product photography, Ultra detailed, luxury ecommerce quality, PNG, no mannequin, no person, no watermark, no text, 8K, isolated transparent background, front view, studio lighting, soft shadows.",
+        "editing": "Enhance fabric texture, correct color accuracy, studio lighting balance, luxury ecommerce finish, no artifacts.",
+        "backgroundRemoval": "Remove background completely, preserve garment edges, transparent PNG, no halo, luxury product cutout quality. Item: سوار فاخر."
+      },
+      "angles": {
+        "front": "jewelry/diamond_bracelet.png",
+        "back": "jewelry/diamond_bracelet_back.png",
+        "angle45": "jewelry/diamond_bracelet_45.png",
+        "detail": "jewelry/diamond_bracelet_detail.png",
+        "fabric": "jewelry/diamond_bracelet_fabric.png"
+      },
+      "imageQuality": "8k",
+      "transparent": true,
+      "recommendedFor": [
+        "hourglass",
+        "rectangle",
+        "slim",
+        "all"
+      ],
+      "extendedOccasions": [
+        "dinner",
+        "office"
+      ],
+      "ontologyPath": [
+        "accessory",
+        "jewelry",
+        "bracelet",
+        "luxury",
+        "evening",
+        "classic",
+        "evening",
+        "wedding",
+        "old_money",
+        "classic",
+        "premium"
+      ]
+    },
+    {
+      "id": "scarf_beige_001",
+      "file": "scarves/silk_scarf_beige.png",
+      "category": "scarves",
+      "titleAr": "وشاح حرير بيج",
+      "color": "beige",
+      "colorHex": "#E5D5BC",
+      "colorTags": [
+        "بيج",
+        "كريمي",
+        "بني",
+        "ذهبي"
+      ],
+      "season": [
+        "autumn",
+        "winter"
+      ],
+      "style": "luxury",
+      "styleTag": "classic",
+      "occasion": [
+        "work",
+        "university",
+        "casual"
+      ],
+      "brandStyle": "classic",
+      "priceLevel": "premium",
+      "kind": "accessory",
+      "minFormality": 0.35,
+      "maxFormality": 0.85,
+      "whyAr": "يضيف عمقاً لونياً وحركة ناعمة للإطلالة",
+      "aiPrompt": "Ultra realistic luxury beige silk scarf, draped fold, product photography",
+      "subcategory": "scarf",
+      "colorId": "beige_linen",
+      "secondaryColorId": "cream_soft",
+      "material": "silk",
+      "styles": [
+        "luxury",
+        "classic",
+        "casual"
+      ],
+      "archetypes": [
+        "quiet_luxury",
+        "travel",
+        "resort"
+      ],
+      "scores": {
+        "luxury": 86,
+        "formal": 70,
+        "minimal": 84,
+        "business": 68
+      },
+      "compatibleWith": [
+        "blazer_beige_001",
+        "cardigan_gray_001"
+      ],
+      "prompts": {
+        "generation": "Ultra realistic luxury beige silk scarf, draped fold, product photography, Ultra detailed, luxury ecommerce quality, PNG, no mannequin, no person, no watermark, no text, 8K, isolated transparent background, front view, studio lighting, soft shadows.",
+        "editing": "Enhance fabric texture, correct color accuracy, studio lighting balance, luxury ecommerce finish, no artifacts.",
+        "backgroundRemoval": "Remove background completely, preserve garment edges, transparent PNG, no halo, luxury product cutout quality. Item: وشاح حرير بيج."
+      },
+      "angles": {
+        "front": "scarves/silk_scarf_beige.png",
+        "back": "scarves/silk_scarf_beige_back.png",
+        "angle45": "scarves/silk_scarf_beige_45.png",
+        "detail": "scarves/silk_scarf_beige_detail.png",
+        "fabric": "scarves/silk_scarf_beige_fabric.png"
+      },
+      "imageQuality": "8k",
+      "transparent": true,
+      "recommendedFor": [
+        "hourglass",
+        "rectangle",
+        "slim",
+        "all"
+      ],
+      "extendedOccasions": [
+        "dinner",
+        "office"
+      ],
+      "ontologyPath": [
+        "accessory",
+        "scarves",
+        "scarf",
+        "luxury",
+        "classic",
+        "casual",
+        "quiet_luxury",
+        "travel",
+        "resort",
+        "classic",
+        "premium"
+      ]
+    },
+    {
+      "id": "watch_gold_001",
+      "file": "jewelry/watch_gold.png",
+      "category": "watch",
+      "titleAr": "ساعة ذهبية",
+      "color": "gold",
+      "colorHex": "#C9A962",
+      "colorTags": [
+        "ذهبي",
+        "بيج",
+        "أسود",
+        "كحلي"
+      ],
+      "season": [
+        "spring",
+        "summer",
+        "autumn",
+        "winter"
+      ],
+      "style": "luxury",
+      "styleTag": "formal",
+      "occasion": [
+        "work",
+        "interview",
+        "evening"
+      ],
+      "brandStyle": "minimal",
+      "priceLevel": "premium",
+      "kind": "accessory",
+      "minFormality": 0.45,
+      "maxFormality": 1.0,
+      "whyAr": "إكسسوار دقيق يعزّز الطابع المهني",
+      "aiPrompt": "Ultra realistic luxury gold women's watch, minimalist dial, product photography",
+      "subcategory": "watch",
+      "colorId": "gold_warm",
+      "secondaryColorId": "black_pure",
+      "material": "gold",
+      "styles": [
+        "luxury",
+        "formal",
+        "business"
+      ],
+      "archetypes": [
+        "business",
+        "old_money",
+        "quiet_luxury"
+      ],
+      "scores": {
+        "luxury": 94,
+        "formal": 90,
+        "minimal": 88,
+        "business": 92
+      },
+      "compatibleWith": [
+        "blazer_beige_001",
+        "bag_black_leather_001",
+        "trousers_navy_001"
+      ],
+      "prompts": {
+        "generation": "Ultra realistic luxury gold women's watch, minimalist dial, product photography, Ultra detailed, luxury ecommerce quality, PNG, no mannequin, no person, no watermark, no text, 8K, isolated transparent background, front view, studio lighting, soft shadows.",
+        "editing": "Enhance fabric texture, correct color accuracy, studio lighting balance, luxury ecommerce finish, no artifacts.",
+        "backgroundRemoval": "Remove background completely, preserve garment edges, transparent PNG, no halo, luxury product cutout quality. Item: ساعة ذهبية."
+      },
+      "angles": {
+        "front": "jewelry/watch_gold.png",
+        "back": "jewelry/watch_gold_back.png",
+        "angle45": "jewelry/watch_gold_45.png",
+        "detail": "jewelry/watch_gold_detail.png",
+        "fabric": "jewelry/watch_gold_fabric.png"
+      },
+      "imageQuality": "8k",
+      "transparent": true,
+      "recommendedFor": [
+        "hourglass",
+        "rectangle",
+        "slim",
+        "all"
+      ],
+      "extendedOccasions": [
+        "dinner",
+        "office"
+      ],
+      "ontologyPath": [
+        "accessory",
+        "watch",
+        "watch",
+        "luxury",
+        "formal",
+        "business",
+        "business",
+        "old_money",
+        "quiet_luxury",
+        "minimal",
+        "premium"
+      ]
+    },
+    {
+      "id": "sunglasses_tortoise_001",
+      "file": "jewelry/sunglasses_tortoise.png",
+      "category": "sunglasses",
+      "titleAr": "نظارة كلاسيك",
+      "color": "brown",
+      "colorHex": "#6B4A32",
+      "colorTags": [
+        "بني",
+        "بيج",
+        "أسود",
+        "ذهبي"
+      ],
+      "season": [
+        "spring",
+        "summer"
+      ],
+      "style": "luxury",
+      "styleTag": "casual",
+      "occasion": [
+        "casual",
+        "university"
+      ],
+      "brandStyle": "classic",
+      "priceLevel": "premium",
+      "kind": "accessory",
+      "minFormality": 0.0,
+      "maxFormality": 0.55,
+      "whyAr": "لمسة عصرية للإطلالات اليومية",
+      "aiPrompt": "Ultra realistic luxury tortoise shell sunglasses, acetate frame, product photography",
+      "subcategory": "sunglasses",
+      "colorId": "brown_tortoise",
+      "secondaryColorId": "gold_warm",
+      "material": "acetate",
+      "styles": [
+        "luxury",
+        "casual",
+        "resort"
+      ],
+      "archetypes": [
+        "casual",
+        "resort",
+        "travel",
+        "summer"
+      ],
+      "scores": {
+        "luxury": 84,
+        "formal": 45,
+        "minimal": 80,
+        "business": 40
+      },
+      "compatibleWith": [
+        "tote_beige_001",
+        "cardigan_gray_001"
+      ],
+      "prompts": {
+        "generation": "Ultra realistic luxury tortoise shell sunglasses, acetate frame, product photography, Ultra detailed, luxury ecommerce quality, PNG, no mannequin, no person, no watermark, no text, 8K, isolated transparent background, front view, studio lighting, soft shadows.",
+        "editing": "Enhance fabric texture, correct color accuracy, studio lighting balance, luxury ecommerce finish, no artifacts.",
+        "backgroundRemoval": "Remove background completely, preserve garment edges, transparent PNG, no halo, luxury product cutout quality. Item: نظارة كلاسيك."
+      },
+      "angles": {
+        "front": "jewelry/sunglasses_tortoise.png",
+        "back": "jewelry/sunglasses_tortoise_back.png",
+        "angle45": "jewelry/sunglasses_tortoise_45.png",
+        "detail": "jewelry/sunglasses_tortoise_detail.png",
+        "fabric": "jewelry/sunglasses_tortoise_fabric.png"
+      },
+      "imageQuality": "8k",
+      "transparent": true,
+      "recommendedFor": [
+        "all"
+      ],
+      "extendedOccasions": [
+        "travel",
+        "beach",
+        "airport"
+      ],
+      "ontologyPath": [
+        "accessory",
+        "sunglasses",
+        "sunglasses",
+        "luxury",
+        "casual",
+        "resort",
+        "casual",
+        "resort",
+        "travel",
+        "summer",
+        "classic",
+        "premium"
+      ]
+    }
+  ]
+}

@@ -463,8 +463,9 @@ export class AdminService {
         perfectCorpFallbackMock:
           this.config.get<string>('PERFECT_CORP_FALLBACK_MOCK', 'true') !==
           'false',
-        googleVisionKeySet:
-          (this.config.get<string>('GOOGLE_VISION_API_KEY') ?? '').length > 0,
+        fashnKeySet:
+          (this.config.get<string>('FASHN_API_KEY') ?? '').length > 0,
+        llmKeySet: (this.config.get<string>('LLM_API_KEY') ?? '').length > 0,
       },
       features: {
         subscriptionsEnabled: subscriptionsEnabled(),

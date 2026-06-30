@@ -32,7 +32,7 @@ abstract final class OutfitImageAnalyzer {
       confidence: 58,
       clothingConfidence: 0,
       source: 'deterministic',
-      garmentTypeAr: 'غير مؤكد',
+      garmentTypeAr: 'قطعة غير قابلة للتحليل',
       garmentTypeEn: '',
       styleTypeAr: formality >= 0.6 ? 'كلاسيكي' : 'كاجوال',
       styleTypeEn: formality >= 0.6 ? 'Classic' : 'Casual',

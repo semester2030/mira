@@ -8,6 +8,11 @@ import { MockOutfitAnalysisProvider } from './mock-outfit-analysis.provider';
 /**
  * Placeholder for FASHN.ai API.
  * Set FASHN_API_KEY — implement HTTP call in analyze().
+ *
+ * VISION PLATFORM — LEGACY (OUTFIT_PROVIDER path only).
+ * Do NOT use for Vision Platform geometry — use FashnGeometryProvider (Phase 3).
+ * Reference: docs/mira-vision-platform.html
+ * This provider returns compatibilityScore — forbidden in new vision pipeline.
  */
 @Injectable()
 export class FashnOutfitProvider implements OutfitAnalysisProvider {

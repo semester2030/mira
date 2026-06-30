@@ -22,7 +22,7 @@ void main() {
     final pkg = await s.buyPackage(PackageType.starter, now: now);
 
     expect(pkg.skinCredits, 5);
-    expect(pkg.smartOutfitCredits, 20);
+    expect(pkg.smartOutfitCredits, 30);
     expect(pkg.isValidAt(now), isTrue);
     expect(s.hasSkinCredits(now: now), isTrue);
     expect(s.hasSmartOutfitCredits(now: now), isTrue);
@@ -35,8 +35,8 @@ void main() {
     await s.buyPackage(PackageType.starter, now: now);
     final stacked = await s.buyPackage(PackageType.plus, now: now.add(const Duration(days: 1)));
 
-    expect(stacked.skinCredits, 5 + 20);
-    expect(stacked.smartOutfitCredits, 20 + 100);
+    expect(stacked.skinCredits, 5 + 15);
+    expect(stacked.smartOutfitCredits, 30 + 120);
   });
 
   test('consumeSkinCredit decrements balance', () async {
@@ -47,7 +47,7 @@ void main() {
     final after = await s.consumeSkinCredit(now: now);
 
     expect(after.skinCredits, 4);
-    expect(after.smartOutfitCredits, 20);
+    expect(after.smartOutfitCredits, 30);
   });
 
   test('consumeSmartOutfitCredit decrements balance', () async {
@@ -57,7 +57,7 @@ void main() {
 
     final after = await s.consumeSmartOutfitCredit(now: now);
 
-    expect(after.smartOutfitCredits, 19);
+    expect(after.smartOutfitCredits, 29);
     expect(after.skinCredits, 5);
   });
 
@@ -100,8 +100,8 @@ void main() {
     final now = DateTime(2026, 6, 1);
     final pkg = await s.buyPackage(PackageType.elite, now: now);
 
-    expect(pkg.skinCredits, 50);
-    expect(pkg.smartOutfitCredits, 300);
+    expect(pkg.skinCredits, 30);
+    expect(pkg.smartOutfitCredits, 400);
     expect(pkg.expiresAt, purchasedPlusDays(now, 180));
   });
 }

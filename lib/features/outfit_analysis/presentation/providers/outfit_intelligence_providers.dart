@@ -2,25 +2,26 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import '../../../../core/services/outfit_analysis_mode_storage.dart';
 import '../../../../core/session/analysis_session.dart';
+import '../../data/datasources/vision_api_data_source.dart';
 import '../../../skin_analysis/domain/entities/skin_report.dart';
 import '../../domain/entities/outfit_analysis.dart';
 import '../../domain/entities/outfit_analysis_mode.dart';
 import '../../domain/services/outfit_intelligence_service.dart';
-import 'google_vision_provider.dart';
 import 'outfit_intelligence_notifier.dart';
+
+final visionApiDataSourceProvider = Provider<VisionApiDataSource>(
+  (ref) => VisionApiDataSource(),
+);
 
 final outfitIntelligenceServiceProvider = Provider<OutfitIntelligenceService>(
   (ref) => OutfitIntelligenceService(
-    visionService: ref.watch(googleVisionOutfitServiceProvider),
+    visionApi: ref.watch(visionApiDataSourceProvider),
   ),
 );
 
 final optionalSkinReportProvider = Provider<SkinReport?>((ref) {
   return AnalysisSession.lastSkin;
 });
-
-@Deprecated('Use optionalSkinReportProvider')
-final requiredSkinReportProvider = optionalSkinReportProvider;
 
 final outfitAnalysisModeProvider =
     StateNotifierProvider<OutfitAnalysisModeNotifier, OutfitAnalysisMode>(

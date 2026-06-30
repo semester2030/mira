@@ -1,20 +1,36 @@
 import 'package:flutter/material.dart';
 
+import '../../domain/entities/outfit_body_pose_metrics.dart';
+import '../../domain/entities/outfit_body_silhouette.dart';
 import '../../../../shared/theme/colors.dart';
 import '../../../../shared/theme/typography.dart';
 
-/// Full-body outfit framing guide — tall rounded rectangle (not face oval).
+/// Full-body outfit framing guide — adapts to detected body bounds when available.
 class OutfitBodyGuideOverlay extends StatelessWidget {
   final bool frameReady;
   final double pulse;
+  final OutfitBodyPoseMetrics pose;
 
   const OutfitBodyGuideOverlay({
     super.key,
     required this.frameReady,
     required this.pulse,
+    this.pose = OutfitBodyPoseMetrics.none,
   });
 
-  static Rect guideRect(Size size) {
+  static Rect guideRect(Size size, {OutfitBodyPoseMetrics pose = OutfitBodyPoseMetrics.none}) {
+    if (pose.bodyBounds != null && pose.hasDetailedTracking) {
+      final b = pose.bodyBounds!;
+      final padX = b.width * 0.06;
+      final padY = b.height * 0.04;
+      return Rect.fromLTRB(
+        ((b.left - padX).clamp(0.0, 1.0)) * size.width,
+        ((b.top - padY).clamp(0.0, 1.0)) * size.height,
+        ((b.right + padX).clamp(0.0, 1.0)) * size.width,
+        ((b.bottom + padY).clamp(0.0, 1.0)) * size.height,
+      );
+    }
+
     final width = size.width * 0.78;
     final height = size.height * 0.88;
     return Rect.fromCenter(
@@ -29,7 +45,7 @@ class OutfitBodyGuideOverlay extends StatelessWidget {
     return LayoutBuilder(
       builder: (context, constraints) {
         final size = constraints.biggest;
-        final guide = guideRect(size);
+        final guide = guideRect(size, pose: pose);
         final borderColor = frameReady ? AppColors.secondary : AppColors.gold;
         final glow = 0.45 + pulse * 0.35;
 
@@ -47,7 +63,9 @@ class OutfitBodyGuideOverlay extends StatelessWidget {
               right: 0,
               top: guide.top - 34,
               child: Text(
-                'ضعي جسمك بالكامل داخل الإطار',
+                pose.hasDetailedTracking
+                    ? 'تتبّع الجسم — ${pose.silhouette.labelAr}'
+                    : 'ضعي جسمك بالكامل داخل الإطار',
                 textAlign: TextAlign.center,
                 style: AppTypography.labelSmall.copyWith(
                   color: AppColors.onPrimary.withValues(alpha: 0.9),

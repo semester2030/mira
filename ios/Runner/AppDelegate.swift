@@ -1,5 +1,6 @@
 import Flutter
 import UIKit
+import FirebaseCore
 import FirebaseAuth
 import UserNotifications
 
@@ -9,12 +10,16 @@ import UserNotifications
     _ application: UIApplication,
     didFinishLaunchingWithOptions launchOptions: [UIApplication.LaunchOptionsKey: Any]?
   ) -> Bool {
+    // Must run before Phone Auth / APNs — otherwise Auth.auth() is not ready.
+    FirebaseApp.configure()
+    Auth.auth().languageCode = "ar"
+
     GeneratedPluginRegistrant.register(with: self)
 
-    // Firebase Phone Auth on iOS needs APNs (silent push) or reCAPTCHA URL callback.
     if #available(iOS 10.0, *) {
       UNUserNotificationCenter.current().delegate = self
     }
+    // Without Push entitlement Firebase falls back to reCAPTCHA; still register for token when available.
     application.registerForRemoteNotifications()
 
     return super.application(application, didFinishLaunchingWithOptions: launchOptions)
@@ -36,6 +41,8 @@ import UserNotifications
     _ application: UIApplication,
     didFailToRegisterForRemoteNotificationsWithError error: Error
   ) {
+    // Expected when Push capability is off — Phone Auth uses reCAPTCHA instead.
+    NSLog("Mira: APNs registration failed (reCAPTCHA fallback): \(error.localizedDescription)")
     super.application(application, didFailToRegisterForRemoteNotificationsWithError: error)
   }
 

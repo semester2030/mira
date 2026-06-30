@@ -121,7 +121,7 @@ class OutfitVisualProfile {
       confidence: (json['confidence'] as num?)?.round() ?? 70,
       clothingConfidence:
           (json['clothingConfidence'] as num?)?.toDouble() ?? 0,
-      source: json['source'] as String? ?? 'google_vision',
+      source: json['source'] as String? ?? 'vision_platform',
       garmentTypeAr: json['garmentTypeAr'] as String? ?? '',
       garmentTypeEn: json['garmentTypeEn'] as String? ?? '',
       styleTypeAr: json['styleTypeAr'] as String? ?? '',

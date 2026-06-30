@@ -103,6 +103,15 @@ class _LoginScreenState extends State<LoginScreen> {
         _otpController.clear();
       });
       _startResendCooldown();
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(
+          content: Text(
+            'تم طلب الرمز — انتظري حتى 60 ثانية. '
+            'إن ظهرت نافذة تحقق من Google، أكمليها ثم انتظري الرسالة.',
+          ),
+          duration: Duration(seconds: 6),
+        ),
+      );
     } catch (e) {
       if (!mounted) return;
       ScaffoldMessenger.of(context).showSnackBar(

@@ -1,0 +1,25 @@
+{
+  "version": 1,
+  "year": 2026,
+  "season": "spring_summer",
+  "colors": [
+    { "id": "mocha", "nameAr": "موكا", "hex": "#8B7355", "weight": 0.95 },
+    { "id": "burgundy", "nameAr": "نبيتي", "hex": "#722F37", "weight": 0.88 },
+    { "id": "olive", "nameAr": "زيتوني", "hex": "#6B7050", "weight": 0.82 },
+    { "id": "chocolate", "nameAr": "شوكولاتة", "hex": "#4A3728", "weight": 0.80 },
+    { "id": "blush", "nameAr": "وردي ناعم", "hex": "#E8C4C4", "weight": 0.75 }
+  ],
+  "styles": [
+    { "id": "quiet_luxury", "nameAr": "رفاهية هادئة", "weight": 0.98 },
+    { "id": "old_money", "nameAr": "أناقة كلاسيكية", "weight": 0.94 },
+    { "id": "minimal", "nameAr": "مينimal", "weight": 0.92 },
+    { "id": "coastal_grandmother", "nameAr": "ساحلي كلاسيكي", "weight": 0.70 },
+    { "id": "power_dressing", "nameAr": "أناقة مهنية", "weight": 0.85 }
+  ],
+  "materials": [
+    { "id": "linen", "weight": 0.90 },
+    { "id": "silk", "weight": 0.85 },
+    { "id": "cashmere", "weight": 0.78 },
+    { "id": "leather", "weight": 0.82 }
+  ]
+}

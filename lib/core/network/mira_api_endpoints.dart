@@ -10,6 +10,9 @@ abstract final class MiraApiEndpoints {
   static const skinHistory = '/skin-analysis/history';
   static const outfitAnalysis = '/ai/outfit-analysis';
   static const outfitIntelligence = '/ai/outfit-intelligence';
+  static const outfitSegmentation = '/ai/outfit-segmentation';
+  /// Vision Platform — official outfit vision pipeline (Phase 2+).
+  static const visionOutfitAnalyze = '/ai/vision/outfit/analyze';
   static const outfitHistory = '/outfit-analysis/history';
   static const recommendations = '/recommendations';
   static const recommendationsHistory = '/recommendations/history';

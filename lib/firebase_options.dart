@@ -52,27 +52,27 @@ class DefaultFirebaseOptions {
 
   static const FirebaseOptions android = FirebaseOptions(
     apiKey: 'AIzaSyC82sslwobSzC1Bhl3_Un00NJndTHurJfo',
-    appId: '1:399849748934:android:ab3e0fc02257c75697dac7',
+    appId: '1:399849748934:android:1d531f1bf71ed3f097dac7',
     messagingSenderId: '399849748934',
     projectId: 'mirra-14b0e',
     storageBucket: 'mirra-14b0e.firebasestorage.app',
   );
-
   static const FirebaseOptions ios = FirebaseOptions(
     apiKey: 'AIzaSyB4p9rd5NwT1Fm_zY6s-kXA1EilP8M4Eew',
-    appId: '1:399849748934:ios:07f1a376b7cfe5e497dac7',
+    appId: '1:399849748934:ios:25ac117e432b31f497dac7',
     messagingSenderId: '399849748934',
     projectId: 'mirra-14b0e',
     storageBucket: 'mirra-14b0e.firebasestorage.app',
+    iosClientId: '399849748934-3u8tj6pc38f3l4at6hmmapkdgg031ej6.apps.googleusercontent.com',
     iosBundleId: 'app.mira.beauty',
   );
-
   static const FirebaseOptions macos = FirebaseOptions(
     apiKey: 'AIzaSyB4p9rd5NwT1Fm_zY6s-kXA1EilP8M4Eew',
-    appId: '1:399849748934:ios:07f1a376b7cfe5e497dac7',
+    appId: '1:399849748934:ios:25ac117e432b31f497dac7',
     messagingSenderId: '399849748934',
     projectId: 'mirra-14b0e',
     storageBucket: 'mirra-14b0e.firebasestorage.app',
+    iosClientId: '399849748934-3u8tj6pc38f3l4at6hmmapkdgg031ej6.apps.googleusercontent.com',
     iosBundleId: 'app.mira.beauty',
   );
 

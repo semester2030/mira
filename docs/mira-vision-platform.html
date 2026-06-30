@@ -1,0 +1,493 @@
+<!DOCTYPE html>
+<html lang="ar" dir="rtl">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <meta name="description" content="MIRA Vision Platform — المرجع الرسمي · Phases 0–8 مكتملة · خارطة النضج الإنتاجي 9–17 · OpenAI + FASHN" />
+  <title>ميرا | Vision Platform — المرجع الرسمي للتنفيذ</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link href="https://fonts.googleapis.com/css2?family=Tajawal:wght@400;500;700;800&display=swap" rel="stylesheet" />
+  <link rel="stylesheet" href="mira-project-audit.css" />
+</head>
+<body>
+  <header class="site-header">
+    <div class="container header-inner">
+      <a class="brand" href="index.html">ميرا · Mira</a>
+      <nav class="nav no-print">
+        <a href="#charter">المرجع الرسمي</a>
+        <a href="#pipeline">المخطط</a>
+        <a href="#phases">المراحل</a>
+        <a href="#production-readiness">9–17</a>
+        <a href="#file-map">الملفات</a>
+        <a href="mira-project-audit.html">تدقيق المشروع</a>
+      </nav>
+    </div>
+  </header>
+
+  <div class="container hero-audit vision-hero" id="top">
+    <span class="hardening-badge" style="border-color:var(--gold);color:#8b6914;background:rgba(201,162,39,0.15)">🏛 OFFICIAL IMPLEMENTATION REFERENCE</span>
+    <span class="badge">MIRA VISION PLATFORM · MIGRATION SPEC v1.0.0</span>
+    <h1>منصة الرؤية — Vision Platform<br />المرجع الرسمي الوحيد للتنفيذ</h1>
+    <p class="lead">
+      استبدال طبقة Outfit Vision من Google Vision إلى بنية هجينة إنتاجية:
+      <strong>FASHN (geometry)</strong> + <strong>OpenAI (semantic attributes)</strong> + <strong>MIRA Engine (قرارات نهائية)</strong>.
+      <br />آخر تحديث: <span id="spec-date">—</span>
+    </p>
+    <div class="stat-grid" id="vision-stats"></div>
+    <p id="phase-progress-text" style="font-weight:800;color:var(--primary-strong);margin:12px 0 4px"></p>
+    <div class="progress-bar-wrap" style="max-width:400px"><span id="phase-progress-bar" style="width:0%"></span></div>
+    <div class="toolbar no-print" style="margin-top:20px">
+      <button type="button" class="btn btn-primary" id="btn-export">تصدير المواصفات JSON</button>
+      <button type="button" class="btn btn-secondary" id="btn-print">طباعة / PDF</button>
+      <button type="button" class="btn btn-ghost" id="btn-reset">مسح تقدّم المراحل</button>
+    </div>
+  </div>
+
+  <div class="container audit-layout">
+    <aside class="audit-sidebar no-print">
+      <h4>محتويات المواصفة</h4>
+      <a href="#charter">🏛 المرجع الرسمي</a>
+      <a href="#implementation-status">حالة التنفيذ</a>
+      <a href="#current-runtime">⚠️ الوضع الحالي</a>
+      <a href="#implemented-detail">تفاصيل ما نُفّذ</a>
+      <a href="#implemented-files">جدول الملفات</a>
+      <a href="#tests-commands">اختبارات</a>
+      <a href="#why">لماذا التغيير؟</a>
+      <a href="#before-after">قبل / بعد</a>
+      <a href="#pipeline">المخطط الكامل</a>
+      <a href="#layers">طبقات النظام</a>
+      <a href="#constitution">الدستور المعماري</a>
+      <a href="#providers">عقود المزودين</a>
+      <a href="#schema">Fashion Schema</a>
+      <a href="#api">API Contract</a>
+      <a href="#flutter">عقد Flutter</a>
+      <a href="#platform-integration">🔗 تكامل المنصات</a>
+      <a href="#failure">سياسة الفشل</a>
+      <a href="#phases">مراحل التنفيذ 0–8</a>
+      <a href="#production-readiness">🚀 خارطة النضج الإنتاجي 9–17</a>
+      <a href="#file-map">خريطة الملفات</a>
+      <a href="#forbidden">ممنوعات</a>
+      <a href="#nav-hub">روابط ذات صلة</a>
+    </aside>
+
+    <main class="audit-main">
+      <nav class="audit-mobile-nav no-print">
+        <a href="#current-runtime">⚠️ الوضع</a>
+        <a href="#implemented-detail">نُفّذ</a>
+        <a href="#phases">مراحل</a>
+        <a href="#production-readiness">9–17</a>
+        <a href="#api">Schema</a>
+        <a href="#platform-integration">تكامل</a>
+      </nav>
+
+      <!-- CHARTER -->
+      <section id="charter" class="card">
+        <div class="official-seal">
+          <strong>🏛 مرجع رسمي — لا تنفيذ خارج هذا المستند</strong>
+          <p>
+            أي تعديل على طبقة Outfit Vision يجب أن يتبع <strong>هذه الصفحة خطوة بخطوة</strong>.
+            لا PR، لا refactor، لا provider جديد خارج المراحل 0–8 المذكورة هنا.
+            عند الشك — ارجع إلى هذا المستند.
+          </p>
+        </div>
+        <p style="font-size:0.9rem;color:var(--muted)">
+          المسار: نقرأ المرحلة → ننفّذ خطواتها → نحقق معايير القبول → نضع ✓ → ننتقل للمرحلة التالية.
+        </p>
+      </section>
+
+      <section id="implementation-status" class="card" style="border:2px solid var(--ok)">
+        <h2>حالة التنفيذ — Live</h2>
+        <p style="font-size:0.88rem;color:var(--muted)">يُحدَّث مع كل مرحلة مكتملة في الكود. لا تنفيذ خارج هذا المسار.</p>
+        <table class="audit-table" id="implementation-status-table">
+          <thead><tr><th>Phase</th><th>الحالة</th><th>ما تم</th><th>التاريخ</th></tr></thead>
+          <tbody></tbody>
+        </table>
+        <p id="next-phase-hint" style="font-weight:800;color:var(--primary-strong);margin-top:12px"></p>
+      </section>
+
+      <section id="current-runtime" class="card">
+        <div class="current-runtime-warn">
+          <h3>⚠️ الوضع التشغيلي الحالي — مهم جدًا</h3>
+          <p style="margin:0 0 12px;font-size:0.9rem">
+            Phases 0–8 <strong>مكتملة</strong> — Vision Platform هو المسار الوحيد.
+            Google Vision <strong>محذوف بالكامل</strong> من Flutter و mira-api.
+            Endpoint <strong>POST /ai/vision/outfit/analyze</strong> + MIRA Engine في التطبيق.
+          </p>
+          <div class="runtime-split" id="runtime-split"></div>
+        </div>
+        <table class="audit-table">
+          <thead><tr><th>السؤال</th><th>الجواب</th></tr></thead>
+          <tbody id="runtime-qa-table"></tbody>
+        </table>
+      </section>
+
+      <section id="implemented-detail" class="card">
+        <h2>تفاصيل ما نُفّذ — Phases 0 · 1 · 2 · 3 · 4 · 5 · 6 · 7 · 8</h2>
+        <p style="font-size:0.88rem;color:var(--muted)">
+          قائمة كاملة بكل ملف وكل تغيير — مرجع التنفيذ. <strong>✅ Migration complete.</strong>
+        </p>
+        <div id="implemented-detail-container"></div>
+      </section>
+
+      <section id="implemented-files" class="card">
+        <h2>جدول الملفات — منفّذ vs مخطّط</h2>
+        <table class="audit-table" id="implemented-files-table">
+          <thead><tr><th>Phase</th><th>الإجراء</th><th>الحالة</th><th>المسار</th><th>ملاحظة</th></tr></thead>
+          <tbody></tbody>
+        </table>
+      </section>
+
+      <section id="tests-commands" class="card">
+        <h2>اختبارات وأوامر التحقق</h2>
+        <pre class="schema-block" id="verify-commands"></pre>
+      </section>
+
+      <!-- WHY -->
+      <section id="why" class="card">
+        <h2>لماذا التغيير؟</h2>
+        <p>
+          Google Vision <strong>ليس معطّلًا</strong> — لكنه خدمة رؤية حاسوبية <em>عامة</em>
+          لا تقدّم فهم أزياء بمستوى إنتاجي. MIRA تجاوزت مرحلة النموذج الأولي؛
+          قيمة المنتج في <strong>محرك MIRA</strong> وليس في مزود خارجي.
+        </p>
+        <div class="why-grid" id="why-grid"></div>
+        <div class="rules-box" style="margin-top:20px;border-color:rgba(46,125,90,0.3);background:#f8fdf9">
+          <h3 style="color:var(--ok)">ما لن يتغيّر</h3>
+          <div class="rules-grid">
+            <div class="rule-item allowed">Flutter architecture</div>
+            <div class="rule-item allowed">Riverpod</div>
+            <div class="rule-item allowed">Perfect Corp (skin)</div>
+            <div class="rule-item allowed">Deterministic Engine (منطق القرار)</div>
+            <div class="rule-item allowed">Recommendation Engine</div>
+            <div class="rule-item allowed">Result Screen · UI</div>
+            <div class="rule-item allowed">Subscription · Packages</div>
+            <div class="rule-item allowed">Fashion catalog · ontology</div>
+          </div>
+        </div>
+      </section>
+
+      <!-- BEFORE AFTER -->
+      <section id="before-after" class="card">
+        <h2>قبل / بعد — معمارية الرؤية</h2>
+        <div class="dual-pipeline">
+          <div class="pipeline-col old">
+            <h3>❌ الوضع الحالي (يُستبدل)</h3>
+            <div class="dependency-graph" style="font-size:0.7rem">Flutter
+  │  GOOGLE_VISION_API_KEY (dart-define)
+  ▼
+GoogleVisionOutfitService (client)
+  │  labels · objects · colors
+  ▼
+OutfitSegmentationService
+  │  Vision objects + ML Kit
+  ▼
+OutfitVisualProfile (ولد من Google)
+  ▼
+DeterministicOutfitEngine
+  │
+  ⚠️ silent fallback → OutfitImageAnalyzer
+
+mira-api (مسار ثانوي):
+  GoogleVision + LlmOutfitReasoning (scores!)
+  FashnOutfitProvider (recommendations!)</div>
+          </div>
+          <div class="pipeline-col new">
+            <h3>✅ الوضع المستهدف (Vision Platform)</h3>
+            <div class="dependency-graph" style="font-size:0.7rem;color:#c8f0d8">Flutter
+  │  POST /ai/vision/outfit/analyze فقط
+  ▼
+mira-api VisionOrchestrator
+  ├─ FASHN → geometry only
+  └─ OpenAI → attributes only
+  ▼
+Quality Gate → Normalizer
+  ▼
+FashionVisionDocument v1
+  ▼
+Validator → Conflict → Confidence
+  ▼
+MIRA Deterministic Engine
+  ▼
+Result Screen (unchanged)</div>
+          </div>
+        </div>
+      </section>
+
+      <!-- PIPELINE -->
+      <section id="pipeline" class="card">
+        <h2>المخطط الكامل — خط الأنابيب</h2>
+        <p style="font-size:0.88rem;color:var(--muted)">14 طبقة — من التطبيق إلى الشاشة. المحرك لا يعرف OpenAI ولا FASHN.</p>
+        <div style="display:flex;flex-wrap:wrap;gap:32px;align-items:flex-start;margin-top:20px">
+          <div class="pipeline-stack" id="pipeline-stack"></div>
+          <div style="flex:1;min-width:280px">
+            <h3 style="font-size:0.95rem">مخطط التبعيات التفصيلي</h3>
+            <div class="dependency-graph" id="full-pipeline-graph"></div>
+          </div>
+        </div>
+      </section>
+
+      <!-- LAYERS -->
+      <section id="layers" class="card">
+        <h2>طبقات النظام — المسؤوليات</h2>
+        <table class="audit-table">
+          <thead><tr><th>#</th><th>الطبقة</th><th>السؤال الذي تجيب عليه</th><th>نوع</th></tr></thead>
+          <tbody>
+            <tr><td>6</td><td><strong>Quality Gate</strong></td><td>هل المدخل <em>صالح تقنيًا</em>؟ (schema · version · required · ranges)</td><td>حارس باب</td></tr>
+            <tr><td>7</td><td><strong>Normalizer</strong></td><td>هل القيم <em>ضمن ontology</em>؟</td><td>تحويل</td></tr>
+            <tr><td>8</td><td><strong>FashionVisionDocument</strong></td><td>ما هو <em>العقد المركزي</em>؟</td><td>schema</td></tr>
+            <tr><td>9</td><td><strong>Validator</strong></td><td>هل التركيبة <em>منطقية أزيائيًا</em>؟</td><td>منطق</td></tr>
+            <tr><td>10</td><td><strong>Conflict Resolver</strong></td><td>هل المزودان <em>متفقان</em>؟ (semantic vs geometry)</td><td>دمج</td></tr>
+            <tr><td>11</td><td><strong>Confidence Engine</strong></td><td>هل نمرّر · نرفض · أم نطلب إعادة؟</td><td>قرار gate</td></tr>
+            <tr><td>12</td><td><strong>MIRA Engine</strong></td><td>الدرجات · التوصيات · الرفاهية · الأسباب</td><td>قرار نهائي</td></tr>
+          </tbody>
+        </table>
+        <div class="layer-detail-grid" id="layer-cards"></div>
+      </section>
+
+      <!-- CONSTITUTION -->
+      <section id="constitution" class="card">
+        <h2>الدستور المعماري — قواعد ثابتة</h2>
+        <div class="constitution-box">
+          <h3>10 قواعد — لا تُكسر أثناء التنفيذ</h3>
+          <ol id="constitution-list"></ol>
+        </div>
+      </section>
+
+      <!-- PROVIDERS -->
+      <section id="providers" class="card">
+        <h2>عقود المزودين — ما مسموح وما ممنوع</h2>
+        <div class="grid-2" style="display:grid;grid-template-columns:1fr 1fr;gap:20px">
+          <div>
+            <h3 style="color:var(--secondary)">OpenAI — Semantic فقط</h3>
+            <h4 style="font-size:0.85rem;color:var(--ok)">✓ مسموح</h4>
+            <ul id="openai-allowed" style="font-size:0.84rem"></ul>
+            <h4 style="font-size:0.85rem;color:var(--danger)">✕ ممنوع</h4>
+            <ul id="openai-forbidden" style="font-size:0.84rem"></ul>
+          </div>
+          <div>
+            <h3 style="color:var(--primary-strong)">FASHN — Geometry فقط</h3>
+            <h4 style="font-size:0.85rem;color:var(--ok)">✓ مسموح</h4>
+            <ul id="fashn-allowed" style="font-size:0.84rem"></ul>
+            <h4 style="font-size:0.85rem;color:var(--danger)">✕ ممنوع</h4>
+            <ul id="fashn-forbidden" style="font-size:0.84rem"></ul>
+          </div>
+        </div>
+        <div class="card warn" style="margin-top:16px">
+          <h4 style="margin-top:0">MIRA Engine — المسؤول الوحيد عن</h4>
+          <p style="margin:0;font-size:0.88rem">
+            Score · Recommendation · Luxury Rating · Compatibility · Outfit Grade ·
+            Color Harmony · Occasion Scoring · Ranking · Reason Generation · Final Confidence
+          </p>
+        </div>
+      </section>
+
+      <!-- SCHEMA -->
+      <section id="schema" class="card">
+        <h2>Universal Fashion Schema v1.0.0</h2>
+        <p>
+          العقد المركزي — مستقل عن OpenAI وFASHN وGoogle.
+          مبني على <code>assets/fashion/ontology.json</code> و <code>colors.json</code>.
+        </p>
+        <pre class="schema-block" id="schema-example"></pre>
+        <table class="audit-table" style="margin-top:16px">
+          <thead><tr><th>الحقل</th><th>المصدر</th><th>الوصف</th></tr></thead>
+          <tbody>
+            <tr><td><code>geometry.*</code></td><td>FASHN</td><td>segments, topology, silhouetteHint</td></tr>
+            <tr><td><code>semantics.*</code></td><td>OpenAI</td><td>garments, accessories, styleArchetypeId</td></tr>
+            <tr><td><code>fusion.*</code></td><td>MIRA pipeline</td><td>resolvedGarments, conflicts, confidence</td></tr>
+            <tr><td><code>analysisGate</code></td><td>Confidence Engine</td><td>proceed | blocked | degraded</td></tr>
+            <tr><td><code>provenance</code></td><td>Orchestrator</td><td>providers, timestamp, schemaVersion</td></tr>
+          </tbody>
+        </table>
+      </section>
+
+      <!-- API -->
+      <section id="api" class="card">
+        <h2>API Contract — Endpoint واحد</h2>
+        <div class="rules-box" style="background:#f8fdf9;border-color:var(--ok)">
+          <h3 style="color:var(--ok)">القاعدة: Flutter يعرف هذا فقط</h3>
+          <p style="margin:0;font-size:0.9rem">
+            <code style="direction:ltr">POST /ai/vision/outfit/analyze</code>
+          </p>
+        </div>
+        <h3>Request</h3>
+        <pre class="schema-block">Content-Type: multipart/form-data
+
+image: File (required)
+occasionId: string (required)     // من ontology occasion
+mode: "quick" | "smart" (required)
+skinSnapshot: JSON (optional)     // مطلوب إذا mode=smart
+locale: "ar" (default)</pre>
+        <h3>Response 200</h3>
+        <pre class="schema-block">{
+  "fashionVision": { /* FashionVisionDocument v1 */ },
+  "analysis": { /* OutfitAnalysis — من MIRA Engine */ },
+  "meta": {
+    "processingMs": 4200,
+    "analysisGate": "proceed"
+  }
+}</pre>
+        <h3>Response Errors (لا silent fallback)</h3>
+        <table class="audit-table">
+          <thead><tr><th>Code</th><th>المعنى</th><th>UX</th></tr></thead>
+          <tbody>
+            <tr><td><code>VISION_PROVIDER_FAILED</code></td><td>OpenAI أو FASHN فشل</td><td>رسالة خطأ واضحة</td></tr>
+            <tr><td><code>QUALITY_GATE_REJECTED</code></td><td>JSON غير صالح</td><td>أعيدي التقاط الصورة</td></tr>
+            <tr><td><code>CONFLICT_BLOCKED</code></td><td>تعارض حرج semantic/geometry</td><td>أعيدي التقاط الصورة</td></tr>
+            <tr><td><code>CONFIDENCE_TOO_LOW</code></td><td>ثقة &lt; الحد الأدنى</td><td>صورة أوضح مطلوبة</td></tr>
+          </tbody>
+        </table>
+      </section>
+
+      <!-- FLUTTER -->
+      <section id="flutter" class="card">
+        <h2>عقد Flutter — أعمى تمامًا عن المزودين</h2>
+        <table class="audit-table">
+          <thead><tr><th>يعرف</th><th>لا يعرف</th></tr></thead>
+          <tbody>
+            <tr>
+              <td>
+                <code>VisionApiDataSource</code><br />
+                <code>MiraApiEndpoints.visionOutfitAnalyze</code><br />
+                <code>FashionVisionDocument</code> (DTO)<br />
+                <code>OutfitIntelligenceService</code>
+              </td>
+              <td class="risk-high">
+                OpenAI · FASHN · Google Vision<br />
+                أي API Key · أي Provider<br />
+                OutfitImageAnalyzer fallback
+              </td>
+            </tr>
+          </tbody>
+        </table>
+        <h3>التغيير في OutfitIntelligenceService</h3>
+        <div class="dependency-graph" style="font-size:0.75rem">// قبل
+_resolveVisualWithObjects() → GoogleVisionOutfitService
+_buildSegmentMap() → Vision objects + ML Kit
+// fallback صامت → OutfitImageAnalyzer ❌
+
+// بعد
+analyze() → VisionApiDataSource.analyze()
+  → يستقبل FashionVisionDocument + OutfitAnalysis
+  → لا vision محلي
+  → لا fallback صامت</div>
+      </section>
+
+      <!-- PLATFORM INTEGRATION -->
+      <section id="platform-integration" class="card" style="border:2px solid var(--gold)">
+        <span class="hardening-badge" style="border-color:var(--gold);color:#8b6914;background:rgba(201,162,39,0.12);margin-bottom:12px;display:inline-block">
+          🔗 دليل التكامل الكامل — Frontend · Backend · Render
+        </span>
+        <h2>تكامل المنصات — FASHN + OpenAI + Firebase + Render</h2>
+        <p style="font-size:0.9rem;color:var(--muted)">
+          كل متطلب · كل متغير بيئة · كل ملف · كل endpoint — مع <strong>إثبات من الكود الحالي</strong>.
+          المفاتيح السرية على السيرفر فقط — Flutter لا يحمل FASHN ولا OpenAI ولا Perfect Corp.
+        </p>
+        <div id="integration-stats" class="stat-grid" style="margin:16px 0"></div>
+        <div id="integration-platforms"></div>
+        <div id="integration-architecture"></div>
+        <div id="integration-env"></div>
+        <div id="integration-render"></div>
+        <div id="integration-frontend"></div>
+        <div id="integration-backend"></div>
+        <div id="integration-endpoints"></div>
+        <div id="integration-errors"></div>
+        <div id="integration-verify"></div>
+        <div id="integration-gaps"></div>
+      </section>
+
+      <!-- FAILURE -->
+      <section id="failure" class="card">
+        <h2>سياسة الفشل — No Fake Data</h2>
+        <table class="audit-table">
+          <thead><tr><th>الحالة</th><th>السلوك</th><th>ممنوع</th></tr></thead>
+          <tbody>
+            <tr><td>OpenAI فشل</td><td>structured error — توقف التحليل</td><td class="risk-high">fabricate attributes</td></tr>
+            <tr><td>FASHN فشل</td><td>متابعة فقط إذا OpenAI confidence ≥ 0.75؛ وإلا توقف</td><td class="risk-high">mock segmentation</td></tr>
+            <tr><td>Conflict حرج</td><td>analysisGate = blocked</td><td class="risk-high">اختيار عشوائي</td></tr>
+            <tr><td>Quality Gate reject</td><td>رفض فوري + log</td><td class="risk-high">تمرير JSON ناقص</td></tr>
+            <tr><td>Google (Phase 0–7)</td><td>bridge مؤقت فقط — لا تحسين</td><td class="risk-high">تطوير جديد على parser</td></tr>
+          </tbody>
+        </table>
+      </section>
+
+      <!-- PHASES -->
+      <section id="phases" class="card">
+        <h2>مراحل التنفيذ 0–8 — خطوة بخطوة</h2>
+        <p style="font-size:0.88rem;color:var(--muted)">
+          ضع ✓ على كل خطوة عند إكمالها — يُحفظ في المتصفح. لا تنتقل لمرحلة جديدة قبل استيفاء معايير القبول.
+        </p>
+        <div class="phase-timeline" id="phases-container"></div>
+      </section>
+
+      <!-- PRODUCTION READINESS ROADMAP (Phases 9–17) -->
+      <section id="production-readiness" class="card" style="border:2px solid #5b4d9e">
+        <span class="hardening-badge" style="border-color:#5b4d9e;color:#3d2f7a;background:rgba(91,77,158,0.12);margin-bottom:12px;display:inline-block">
+          🚀 PRODUCTION READINESS ROADMAP · Post Phase 8
+        </span>
+        <h2>خارطة النضج الإنتاجي — Phases 9–17</h2>
+        <p style="font-size:0.9rem;color:var(--muted)">
+          امتداد رسمي لـ Vision Platform بعد اكتمال Phases 0–8.
+          <strong>لا إعادة تصميم معمارية</strong> — نضج إنتاجي · جودة AI · مراقبة · صيانة طويلة المدى.
+          <br /><strong>تنفيذ تدريجي</strong> — لا تُنفَّذ جميع المراحل دفعة واحدة.
+        </p>
+        <div id="readiness-hero"></div>
+        <div id="readiness-summary-table" style="margin:20px 0"></div>
+        <div id="readiness-priority"></div>
+        <div id="readiness-existing"></div>
+        <h3 style="margin-top:28px;border-top:1px dashed var(--border);padding-top:20px">تفاصيل كل مرحلة — 9 إلى 17</h3>
+        <p style="font-size:0.86rem;color:var(--muted)">ضع ✓ على الخطوات عند التنفيذ — يُحفظ في المتصفح.</p>
+        <div class="phase-timeline" id="readiness-phases-container"></div>
+        <div id="readiness-gaps"></div>
+      </section>
+
+      <!-- FILE MAP -->
+      <section id="file-map" class="card">
+        <h2>خريطة الملفات الكاملة — منفّذ ✅ vs مخطّط ⏳</h2>
+        <p style="font-size:0.86rem;color:var(--muted)">نفس البيانات في <a href="#implemented-files">جدول الملفات</a> — هذا القسم للمرجع السريع في خطة المستقبل.</p>
+        <table class="audit-table" id="file-map-table">
+          <thead><tr><th>حالة</th><th>الإجراء</th><th>المسار</th><th>ملاحظة</th></tr></thead>
+          <tbody></tbody>
+        </table>
+      </section>
+
+      <!-- FORBIDDEN -->
+      <section id="forbidden" class="card">
+        <h2>ممنوعات مطلقة أثناء التنفيذ</h2>
+        <div class="rules-box">
+          <h3>لا تفعل هذا — حتى لو بدا أسهل</h3>
+          <div class="rules-grid">
+            <div class="rule-item forbidden">تنفيذ خارج المراحل 0–8</div>
+            <div class="rule-item forbidden">OpenAI يُرجع recommendations</div>
+            <div class="rule-item forbidden">FASHN يُرجع compatibilityScore</div>
+            <div class="rule-item forbidden">API keys في Flutter</div>
+            <div class="rule-item forbidden">Silent fallback / mock صامت</div>
+            <div class="rule-item forbidden">تغيير Result Screen UI</div>
+            <div class="rule-item forbidden">لمس Perfect Corp</div>
+            <div class="rule-item forbidden">حذف Google قبل Phase 8</div>
+            <div class="rule-item forbidden">تحسين Google parser أثناء الترحيل</div>
+            <div class="rule-item forbidden">Adapter دائم — مؤقت فقط</div>
+          </div>
+        </div>
+      </section>
+
+      <!-- NAV -->
+      <section id="nav-hub" class="card">
+        <h2>روابط ذات صلة</h2>
+        <div class="nav-hub">
+          <a href="mira-project-audit.html"><strong>تدقيق المشروع</strong><span>AI Audit 200 · E2E checklist</span></a>
+          <a href="mira-engineering-report.html"><strong>تقرير التثبيت</strong><span>Product Hardening · 120 test</span></a>
+          <a href="mira-intelligence-layer.html"><strong>Intelligence Layer</strong><span>Catalog · ranking · ontology</span></a>
+          <a href="mira-production-readiness.html"><strong>جاهزية الإنتاج</strong><span>Render · flags · App Store</span></a>
+          <a href="#production-readiness"><strong>خارطة النضج 9–17</strong><span>Evaluation · Ops · Cache · Monitoring</span></a>
+          <a href="#platform-integration"><strong>تكامل المنصات</strong><span>FASHN · OpenAI · Render · Flutter</span></a>
+          <a href="index.html"><strong>الصفحة الرئيسية</strong><span>بوابة وثائق ميرا</span></a>
+        </div>
+      </section>
+    </main>
+  </div>
+
+  <div class="toast" id="toast"></div>
+  <script src="mira-vision-platform.js"></script>
+</body>
+</html>

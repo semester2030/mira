@@ -36,6 +36,7 @@ import 'features/outfit_analysis/presentation/screens/outfit_upload_screen.dart'
 import 'features/outfit_analysis/presentation/screens/occasion_select_screen.dart';
 import 'features/outfit_analysis/presentation/screens/outfit_result_screen.dart';
 import 'features/outfit_analysis/presentation/screens/outfit_history_screen.dart';
+import 'features/outfit_analysis/presentation/screens/outfit_compare_screen.dart';
 import 'features/outfit_analysis/domain/entities/outfit_analysis.dart';
 import 'features/outfit_analysis/domain/entities/outfit_report.dart';
 import 'features/recommendations/presentation/screens/recommendations_screen.dart';
@@ -62,9 +63,30 @@ void main() async {
     FlutterError.presentError(details);
     debugPrint('FlutterError: ${details.exceptionAsString()}');
   };
-  await Firebase.initializeApp(
-    options: DefaultFirebaseOptions.currentPlatform,
-  );
+
+  ErrorWidget.builder = (details) {
+    return Material(
+      color: const Color(0xFFFFF8FC),
+      child: Center(
+        child: Padding(
+          padding: const EdgeInsets.all(24),
+          child: Text(
+            'حدث خطأ في الواجهة\n${details.exceptionAsString()}',
+            textAlign: TextAlign.center,
+            style: const TextStyle(color: Color(0xFF5A4A6A), fontSize: 14),
+          ),
+        ),
+      ),
+    );
+  };
+
+  try {
+    await Firebase.initializeApp(
+      options: DefaultFirebaseOptions.currentPlatform,
+    );
+  } catch (e, st) {
+    debugPrint('Firebase.initializeApp failed: $e\n$st');
+  }
   await GuestSessionService.load();
   final themeMode = await ThemeStorage.load();
   final onboardingComplete = await OnboardingStorage.isComplete();
@@ -128,12 +150,17 @@ class MirraAppState extends State<MirraApp> {
         GlobalCupertinoLocalizations.delegate,
       ],
       builder: (context, child) {
+        // With initialRoute, [child] can be null for the first frames → blank white screen.
+        final content = child ??
+            (widget.showOnboarding
+                ? const OnboardingScreen()
+                : const SplashScreen());
         return Directionality(
           textDirection: TextDirection.rtl,
-          child: child ?? const SizedBox.shrink(),
+          child: content,
         );
       },
-      initialRoute: widget.showOnboarding ? AppRoutes.onboarding : AppRoutes.splash,
+      home: widget.showOnboarding ? const OnboardingScreen() : const SplashScreen(),
       onGenerateRoute: _onGenerateRoute,
     );
   }
@@ -225,7 +252,24 @@ class MirraAppState extends State<MirraApp> {
           settings: settings,
         );
       case AppRoutes.outfitHistory:
+        final historyArgs = settings.arguments;
+        if (historyArgs is OutfitHistoryRouteArgs) {
+          return PremiumPageRoute(
+            page: OutfitHistoryScreen(
+              anchorSnapshot: historyArgs.anchorSnapshot,
+              startCompareMode: historyArgs.startCompareMode,
+            ),
+            settings: settings,
+          );
+        }
         return PremiumPageRoute(page: const OutfitHistoryScreen(), settings: settings);
+      case AppRoutes.outfitCompare:
+        final compareArgs = settings.arguments as OutfitCompareRouteArgs?;
+        if (compareArgs == null) return null;
+        return PremiumPageRoute(
+          page: OutfitCompareScreen(left: compareArgs.left, right: compareArgs.right),
+          settings: settings,
+        );
       case AppRoutes.recommendations:
         return PremiumPageRoute(page: const RecommendationsScreen(), settings: settings);
       case AppRoutes.recommendationHistory:

@@ -1,0 +1,152 @@
+{
+  "version": 1,
+  "pairs": [
+    {
+      "anchorId": "blazer_beige_001",
+      "compatibleIds": [
+        "trousers_navy_001",
+        "skirt_classic_black_001",
+        "heels_nude_001",
+        "heels_black_001",
+        "bag_black_leather_001",
+        "clutch_silver_001",
+        "silver_necklace_001",
+        "watch_gold_001",
+        "satin_top_black_001"
+      ],
+      "whyAr": "بلوزر بيج يُوازن مع قواعد داكنة وأحذية nude وإكسسوارات هادئة"
+    },
+    {
+      "anchorId": "corset_cream_001",
+      "compatibleIds": [
+        "skirt_silk_beige_001",
+        "cape_ivory_001",
+        "heels_nude_001",
+        "pearl_earrings_001",
+        "silver_necklace_001",
+        "clutch_silver_001"
+      ],
+      "whyAr": "كورسيه كريمي ينسجم مع تنورات حريرية ولمسات لؤلؤية"
+    },
+    {
+      "anchorId": "satin_top_black_001",
+      "compatibleIds": [
+        "skirt_classic_black_001",
+        "trousers_navy_001",
+        "heels_black_001",
+        "clutch_silver_001",
+        "diamond_bracelet_001",
+        "silver_necklace_001"
+      ],
+      "whyAr": "ساتان أسود يبني إطلالة سهرة متوازنة مع فضي وأسود"
+    },
+    {
+      "anchorId": "skirt_silk_beige_001",
+      "compatibleIds": [
+        "blazer_beige_001",
+        "corset_cream_001",
+        "heels_nude_001",
+        "clutch_silver_001",
+        "scarf_beige_001",
+        "pearl_earrings_001"
+      ],
+      "whyAr": "تنورة حرير بيج تُكمل طبقات علوية ناعمة وأحذية nude"
+    },
+    {
+      "anchorId": "trousers_navy_001",
+      "compatibleIds": [
+        "blazer_beige_001",
+        "satin_top_black_001",
+        "heels_black_001",
+        "bag_black_leather_001",
+        "watch_gold_001",
+        "silver_necklace_001"
+      ],
+      "whyAr": "بنطلون كحلي قاعدة مهنية للبلوزر والإكسسوارات الكلاسيكية"
+    },
+    {
+      "anchorId": "skirt_classic_black_001",
+      "compatibleIds": [
+        "blazer_beige_001",
+        "satin_top_black_001",
+        "heels_black_001",
+        "clutch_silver_001",
+        "diamond_bracelet_001"
+      ],
+      "whyAr": "تنورة سوداء كلاسيكية مع طبقات علوية منظّمة"
+    },
+    {
+      "anchorId": "cape_ivory_001",
+      "compatibleIds": [
+        "corset_cream_001",
+        "skirt_silk_beige_001",
+        "heels_nude_001",
+        "pearl_earrings_001",
+        "shawl_wedding_001"
+      ],
+      "whyAr": "كape عاجي يُبرز إطلالات احتفالية ناعمة"
+    },
+    {
+      "anchorId": "cardigan_gray_001",
+      "compatibleIds": [
+        "tote_beige_001",
+        "trousers_navy_001",
+        "sunglasses_tortoise_001",
+        "scarf_beige_001"
+      ],
+      "whyAr": "كارديجان رمادي للإطلالات اليومية المريحة"
+    },
+    {
+      "anchorId": "heels_nude_001",
+      "compatibleIds": [
+        "blazer_beige_001",
+        "skirt_silk_beige_001",
+        "corset_cream_001",
+        "clutch_silver_001",
+        "pearl_earrings_001"
+      ],
+      "whyAr": "كعب nude يمدّد الساق ويوازن الألوان الدافئة"
+    },
+    {
+      "anchorId": "heels_black_001",
+      "compatibleIds": [
+        "trousers_navy_001",
+        "skirt_classic_black_001",
+        "satin_top_black_001",
+        "bag_black_leather_001",
+        "clutch_silver_001"
+      ],
+      "whyAr": "كعب أسود يرسّخ الإطلالات الرسمية"
+    },
+    {
+      "anchorId": "clutch_silver_001",
+      "compatibleIds": [
+        "satin_top_black_001",
+        "heels_black_001",
+        "diamond_bracelet_001",
+        "silver_necklace_001"
+      ],
+      "whyAr": "كلاتش فضي للسهرات والمناسبات"
+    },
+    {
+      "anchorId": "bag_black_leather_001",
+      "compatibleIds": [
+        "blazer_beige_001",
+        "trousers_navy_001",
+        "heels_black_001",
+        "watch_gold_001"
+      ],
+      "whyAr": "حقيبة جلد سوداء للإطلالات المهنية"
+    },
+    {
+      "anchorId": "pearl_earrings_001",
+      "compatibleIds": [
+        "corset_cream_001",
+        "cape_ivory_001",
+        "shawl_wedding_001",
+        "clutch_silver_001"
+      ],
+      "whyAr": "أقراط لؤلؤ للمناسبات الكلاسيكية"
+    }
+  ]
+}

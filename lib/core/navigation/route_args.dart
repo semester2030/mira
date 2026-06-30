@@ -1,5 +1,5 @@
-import '../../features/outfit_analysis/domain/entities/outfit_analysis.dart';
 import '../../features/outfit_analysis/domain/entities/outfit_analysis_mode.dart';
+import '../../features/outfit_analysis/domain/entities/outfit_compare_snapshot.dart';
 import '../../features/outfit_analysis/domain/entities/outfit_report.dart';
 import '../../features/skin_analysis/domain/entities/skin_report.dart';
 
@@ -43,5 +43,22 @@ class AdvisorRouteArgs {
   const AdvisorRouteArgs({
     required this.report,
     this.initialQuestion,
+  });
+}
+
+class OutfitCompareRouteArgs {
+  final OutfitCompareSnapshot left;
+  final OutfitCompareSnapshot right;
+
+  const OutfitCompareRouteArgs({required this.left, required this.right});
+}
+
+class OutfitHistoryRouteArgs {
+  final OutfitCompareSnapshot? anchorSnapshot;
+  final bool startCompareMode;
+
+  const OutfitHistoryRouteArgs({
+    this.anchorSnapshot,
+    this.startCompareMode = false,
   });
 }

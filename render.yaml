@@ -32,6 +32,20 @@ services:
         value: https://yce-api-01.makeupar.com/s2s/v2.0
       - key: PERFECT_CORP_FALLBACK_MOCK
         value: "true"
+      - key: FASHN_API_KEY
+        sync: false
+      - key: FASHN_BASE_URL
+        sync: false
+      - key: FASHN_GEOMETRY_ENDPOINT
+        value: /v1/segmentation
+      - key: LLM_API_KEY
+        sync: false
+      - key: LLM_BASE_URL
+        value: https://api.openai.com/v1
+      - key: LLM_MODEL
+        value: gpt-4o-mini
+      - key: LLM_TEMPERATURE
+        value: "0.2"
       - key: AUTH_SKIP
         value: "false"
       - key: RATE_LIMIT_PER_HOUR

@@ -1,46 +1,119 @@
-# PKG-A — Firebase بعد تغيير Bundle ID
+# PKG-A — Firebase + Bundle ID `app.mira.beauty`
 
-تم تحديث معرّف التطبيق إلى **`app.mira.beauty`** في Xcode وGradle.
+## ✅ تم في المشروع (2026-06-27)
 
-## مطلوب قبل TestFlight
+| المنصة | Bundle / Package | Firebase App ID |
+|--------|------------------|-----------------|
+| iOS | `app.mira.beauty` | `1:399849748934:ios:25ac117e432b31f497dac7` |
+| Android | `app.mira.beauty` | `1:399849748934:android:1d531f1bf71ed3f097dac7` |
 
-1. [Firebase Console](https://console.firebase.google.com/) → مشروع `mirra-14b0e`
-2. **Add app** → iOS → Bundle ID: `app.mira.beauty`
-3. **Add app** → Android → Package: `app.mira.beauty`
-4. نزّل الملفات الجديدة واستبدل:
-   - `ios/Runner/GoogleService-Info.plist`
-   - `android/app/google-services.json`
-5. شغّل من جذر المشروع:
-   ```bash
-   dart pub global activate flutterfire_cli
-   flutterfire configure
-   ```
-6. تحقق: `lib/firebase_options.dart` يحتوي `iosBundleId: 'app.mira.beauty'`
+الملفات المحدّثة:
+- `ios/Runner/GoogleService-Info.plist`
+- `android/app/google-services.json`
+- `lib/firebase_options.dart`
+- `ios/Runner/Info.plist` → `REVERSED_CLIENT_ID` الجديد
+- `firebase.json`
 
-## Apple Signing
+**التطبيق القديم** `com.example.mirra` (`…07f1a376…`) — لا تستخدمه. يمكن حذفه من Firebase Console لاحقاً.
+
+---
+
+## إعادة التكوين (إذا لزم)
+
+```bash
+dart pub global activate flutterfire_cli
+flutterfire configure \
+  --project=mirra-14b0e \
+  --platforms=ios,android \
+  --ios-bundle-id=app.mira.beauty \
+  --android-package-name=app.mira.beauty \
+  --yes
+```
+
+ثم انسخ `REVERSED_CLIENT_ID` من `GoogleService-Info.plist` إلى `ios/Runner/Info.plist` → `CFBundleURLSchemes`.
+
+---
+
+## Phone Auth — اختبار OTP
+
+1. Authentication → Sign-in method → **Phone** → Enabled
+2. **Phone numbers for testing** (موصى به للتطوير — بدون SMS حقيقي):
+   - `+966553411556` → `123456` (مثال)
+3. SMS region: **Allow → Saudi Arabia (SA)**
+4. إن **لم يصل SMS** رغم ظهور شاشة «رمز التحقق»:
+   - انتظري 60 ثانية
+   - أكملي **نافذة reCAPTCHA** إن ظهرت (Firebase بدون Push)
+   - Project settings → Cloud Messaging → **APNs Authentication Key** (.p8) — اختياري لتحسين Silent Verify
+   - Firebase Console → Authentication → Usage — تحققي من عدم تجاوز الحصة
+5. `AppDelegate.swift` يستدعي `FirebaseApp.configure()` قبل Phone Auth
+
+---
+
+## Apple Signing (Xcode)
+
+### الأخطاء في الصورة
+
+| الخطأ | السبب | الحل |
+|-------|--------|------|
+| **No Account for Team "P9C9QSDZY9"** | Apple ID غير مسجّل في Xcode | Xcode → **Settings…** (⌘,) → **Accounts** → **+** → Apple ID → سجّل دخول حساب **TARIQ ALDALBAHI** |
+| **No profiles for 'app.mira.beauty'** | يتبع خطأ الحساب أعلاه | بعد تسجيل الدخول: Signing & Capabilities → **Try Again** أو أزل ✓ ثم أعد ✓ **Automatically manage signing** |
+| **PhaseScriptExecution failed** | غالباً نتيجة فشل التوقيع أو امتلاء القرص | تأكد من ≥5 GB فارغ، ثم `flutter clean` و `pod install` |
+
+### خطوات Xcode (بالترتيب)
+
+1. **Xcode → Settings → Accounts** → أضف Apple ID (نفس حساب Developer Team **P9C9QSDZY9**)
+2. [developer.apple.com](https://developer.apple.com) → سجّل **Program License Agreement** إن ظهرت
+3. **Runner** → **Signing & Capabilities**:
+   - ✓ Automatically manage signing
+   - Team: **TARIQ ALDALBAHI**
+   - Bundle Identifier: **`app.mira.beauty`**
+4. **أزل Background Modes → Remote notifications** (Push معطّل مؤقتاً — لا تحتاجه لـ OTP/reCAPTCHA)
+5. **Product → Clean Build Folder** (⇧⌘K) ثم Build
+
+### ملف الفريق المحلي (اختياري)
 
 ```bash
 cp ios/Flutter/Signing.xcconfig.example ios/Flutter/Signing.xcconfig.local
-# عدّل DEVELOPMENT_TEAM = YOUR_TEAM_ID
+# DEVELOPMENT_TEAM = P9C9QSDZY9
 ```
+
+`Signing.xcconfig.local` في `.gitignore` — لا يُرفع إلى Git.
+
+### بناء من Terminal (موصى به)
+
+```bash
+cd /Users/fayez/Desktop/mira
+flutter clean && flutter pub get
+cd ios && pod install && cd ..
+flutter run -d YOUR_DEVICE_ID
+```
+
+**لا تبني من مجلد `ios/` فقط** — استخدم `flutter run` من جذر المشروع.
+
+---
 
 ## Push Notifications (لاحقاً)
 
-معطّلة مؤقتاً لتجنّب تعارض Provisioning Profile أثناء التطوير.
+معطّلة مؤقتاً. لإعادة التفعيل:
+1. Xcode → Push Notifications capability
+2. `Runner.entitlements` → `aps-environment`
+3. Firebase → APNs key
+4. `firebase_messaging` في `pubspec.yaml`
 
-**لإعادة التفعيل:**
-1. Xcode → Runner → Signing & Capabilities → **+ Push Notifications**
-2. في `ios/Runner/Runner.entitlements` أضف:
-   ```xml
-   <key>aps-environment</key>
-   <string>development</string>
-   ```
-   (استخدم `production` لـ TestFlight/App Store)
-3. فعّل Push على App ID `app.mira.beauty` في Apple Developer
-4. أزل التعليق عن `firebase_messaging` في `pubspec.yaml` ثم `flutter pub get && cd ios && pod install`
-5. إن أضفت Push في Xcode يدوياً سابقاً، احذف Capability ثم أعد إضافتها بعد توقيع PLA
+---
 
 ## App Store Connect
 
-- Privacy Policy URL: `https://mira.app/docs/privacy-policy.html` (أو `--dart-define=MIRA_PUBLIC_SITE_URL=...`)
-- Support URL: `https://mira.app/docs/support.html`
+- Privacy: `https://mira.app/docs/privacy-policy.html`
+- Support: `https://mira.app/docs/support.html`
+
+---
+
+## تحقق بعد البناء
+
+```bash
+flutter clean && cd ios && pod install && cd ..
+flutter run -d YOUR_DEVICE
+```
+
+في Firebase Console → Project settings → Your apps: تأكد أن iOS يظهر **`app.mira.beauty`** وليس `com.example.mirra`.

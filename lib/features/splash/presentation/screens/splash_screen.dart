@@ -1,7 +1,8 @@
 import 'package:flutter/material.dart';
 import 'package:firebase_auth/firebase_auth.dart';
-import '../../../../core/navigation/app_routes.dart';
 import '../../../../core/services/guest_session_service.dart';
+import '../../../../features/dashboard/presentation/screens/dashboard_screen.dart';
+import '../../../../features/auth/presentation/screens/login_screen.dart';
 import '../../../../shared/widgets/premium/premium_exports.dart';
 import '../../../../shared/widgets/mirra_logo.dart';
 
@@ -44,11 +45,20 @@ class _SplashScreenState extends State<SplashScreen> with SingleTickerProviderSt
 
     final user = FirebaseAuth.instance.currentUser;
     if (user != null) {
-      Navigator.pushReplacementNamed(context, AppRoutes.dashboard);
+      Navigator.pushReplacement(
+        context,
+        MaterialPageRoute(builder: (_) => const DashboardScreen()),
+      );
     } else if (GuestSessionService.isActive) {
-      Navigator.pushReplacementNamed(context, AppRoutes.dashboard);
+      Navigator.pushReplacement(
+        context,
+        MaterialPageRoute(builder: (_) => const DashboardScreen()),
+      );
     } else {
-      Navigator.pushReplacementNamed(context, AppRoutes.login);
+      Navigator.pushReplacement(
+        context,
+        MaterialPageRoute(builder: (_) => const LoginScreen()),
+      );
     }
   }
 

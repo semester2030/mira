@@ -4,15 +4,20 @@ import 'dart:typed_data';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:image/image.dart' as img;
 import 'package:mirra/core/ai/models/mira_occasion.dart';
+import 'package:mirra/features/outfit_analysis/data/datasources/outfit_segmentation_api_data_source.dart';
+import 'package:mirra/features/outfit_analysis/data/datasources/vision_api_data_source.dart';
+import 'package:mirra/features/outfit_analysis/domain/entities/fashion_vision_document.dart';
 import 'package:mirra/features/outfit_analysis/domain/entities/outfit_analysis_mode.dart';
+import 'package:mirra/features/outfit_analysis/domain/entities/outfit_segment_map.dart';
 import 'package:mirra/features/outfit_analysis/domain/entities/outfit_visual_profile.dart';
 import 'package:mirra/features/outfit_analysis/domain/entities/user_gender.dart';
 import 'package:mirra/features/outfit_analysis/domain/helpers/skin_palette_mapper.dart';
 import 'package:mirra/features/outfit_analysis/domain/helpers/undertone_resolver.dart';
 import 'package:mirra/features/outfit_analysis/domain/services/deterministic_outfit_engine.dart';
-import 'package:mirra/features/outfit_analysis/domain/services/google_vision_outfit_service.dart';
 import 'package:mirra/features/outfit_analysis/domain/services/outfit_image_analyzer.dart';
 import 'package:mirra/features/outfit_analysis/domain/services/outfit_intelligence_service.dart';
+import 'package:mirra/features/outfit_analysis/domain/services/outfit_segmentation_service.dart';
+import 'package:mirra/features/outfit_analysis/domain/services/outfit_trust_scoring.dart';
 import 'package:mirra/features/skin_analysis/domain/entities/skin_report.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 
@@ -38,23 +43,14 @@ void main() {
   });
 
   group('DeterministicOutfitEngine', () {
-    test('weighted final score matches visible breakdown formula', () async {
-      final visual = await OutfitImageAnalyzer.analyze(await _solidImageFile(180, 140, 90));
-      final analysis = DeterministicOutfitEngine.analyze(
-        skin: _warmSkin(),
-        visual: visual,
-        occasion: MiraOccasion.work,
-        mode: OutfitAnalysisMode.smart,
+    test('trust layer never drops strong outfits below floor', () {
+      final adjusted = OutfitTrustScoring.applyFinalScore(
+        rawScore: 49,
+        occasionScore: 85,
+        styleScore: 78,
+        colorHarmonyScore: 70,
       );
-
-      final expected = DeterministicOutfitEngine.computeWeightedFinalSmart(
-        skinScore: analysis.skinCompatibilityScore,
-        occasionScore: analysis.occasionMatchScore,
-        styleScore: analysis.styleBalanceScore,
-        colorHarmonyScore: analysis.colorHarmonyScore,
-      );
-
-      expect(analysis.compatibilityScore, expected);
+      expect(adjusted, greaterThanOrEqualTo(70));
     });
 
     test('removes duplicate alternative and rejected colors', () async {
@@ -132,13 +128,26 @@ void main() {
         isFalse,
       );
     });
+
+    test('analyzeFromFashionVision uses vision_platform source', () {
+      final analysis = DeterministicOutfitEngine.analyzeFromFashionVision(
+        fashion: _mockFashionDoc(),
+        skin: _warmSkin(),
+        occasion: MiraOccasion.work,
+        mode: OutfitAnalysisMode.smart,
+      );
+      expect(analysis.visualSource, 'vision_platform');
+      expect(analysis.compatibilityScore, inInclusiveRange(0, 100));
+    });
   });
 
   group('OutfitIntelligenceService', () {
     test('produces deterministic score for fixed skin and image', () async {
       final file = await _solidImageFile(180, 140, 90);
       final service = OutfitIntelligenceService(
-        visionService: _FailingVision(),
+        visionApi: _MockVisionApi(),
+        segmentationApi: _NoNetworkSegmentation(),
+        segmentationService: _TestSegmentation(),
       );
 
       final first = await service.analyze(
@@ -159,6 +168,7 @@ void main() {
       expect(first.compatibilityScore, inInclusiveRange(0, 100));
       expect(first.skinCompatibilityScore, greaterThan(0));
       expect(first.analysisSource, 'deterministic');
+      expect(first.visualSource, 'vision_platform');
       expect(first.whyItFits, isNotEmpty);
     });
 
@@ -188,7 +198,9 @@ void main() {
     test('quick mode works without SkinReport', () async {
       final file = await _solidImageFile(180, 140, 90);
       final service = OutfitIntelligenceService(
-        visionService: _FailingVision(),
+        visionApi: _MockVisionApi(),
+        segmentationApi: _NoNetworkSegmentation(),
+        segmentationService: _TestSegmentation(),
       );
 
       final result = await service.analyze(
@@ -201,6 +213,7 @@ void main() {
       expect(result.skinCompatibilityScore, 0);
       expect(result.suggestedMakeup, isEmpty);
       expect(result.compatibilityScore, inInclusiveRange(0, 100));
+      expect(result.visualSource, 'vision_platform');
       expect(
         result.compatibilityScore,
         DeterministicOutfitEngine.computeWeightedFinalQuick(
@@ -214,7 +227,9 @@ void main() {
     test('smart mode requires SkinReport', () async {
       final file = await _solidImageFile(180, 140, 90);
       final service = OutfitIntelligenceService(
-        visionService: _FailingVision(),
+        visionApi: _MockVisionApi(),
+        segmentationApi: _NoNetworkSegmentation(),
+        segmentationService: _TestSegmentation(),
       );
 
       expect(
@@ -251,16 +266,82 @@ void main() {
   });
 }
 
-class _FailingVision extends GoogleVisionOutfitService {
-  @override
-  Future<OutfitVisualProfile> analyze(File imageFile) async {
-    throw StateError('vision unavailable in test');
-  }
+FashionVisionDocument _mockFashionDoc() => FashionVisionDocument(
+      schemaVersion: '1.0.0',
+      analysisGate: 'proceed',
+      provenance: const {},
+      geometry: const {
+        'segments': [
+          {
+            'id': 's1',
+            'regionRole': 'outerwear',
+            'bbox': {'x': 0.2, 'y': 0.18, 'w': 0.6, 'h': 0.34},
+            'polygon': [
+              [0.2, 0.18],
+              [0.8, 0.18],
+              [0.8, 0.52],
+              [0.2, 0.52],
+            ],
+          },
+        ],
+        'topology': {
+          'pieceCount': 1,
+          'onePiece': false,
+          'silhouetteHint': 'two_piece',
+        },
+      },
+      semantics: const {
+        'garments': [
+          {
+            'categoryId': 'outerwear',
+            'typeId': 'blazer',
+            'colors': ['beige_linen', 'cream_soft'],
+            'providerConfidence': 0.82,
+          },
+        ],
+        'accessories': [],
+        'styleArchetypeId': 'business',
+        'layering': ['base', 'outerwear'],
+        'dominantColorIds': ['beige_linen'],
+        'secondaryColorIds': ['cream_soft'],
+      },
+      fusion: const {
+        'overallConfidence': 0.72,
+        'conflicts': [],
+        'resolvedGarments': [],
+        'fieldConfidence': [],
+      },
+    );
 
+class _MockVisionApi extends VisionApiDataSource {
   @override
-  Future<OutfitVisionResult> analyzeWithObjects(File imageFile) async {
-    throw StateError('vision unavailable in test');
+  Future<VisionOutfitAnalyzeResult?> analyze({
+    required String imagePath,
+    required String occasionId,
+    required String mode,
+    Map<String, dynamic>? skinSnapshot,
+    String locale = 'ar',
+  }) async {
+    return VisionOutfitAnalyzeResult(
+      fashionVision: _mockFashionDoc(),
+      meta: const {'phase': 'test-mock'},
+    );
   }
+}
+
+class _NoNetworkSegmentation extends OutfitSegmentationApiDataSource {
+  @override
+  Future<OutfitSegmentMap?> segment({required String imagePath}) async => null;
+}
+
+class _TestSegmentation extends OutfitSegmentationService {
+  @override
+  Future<OutfitSegmentMap> buildFromFrozenImage(
+    File imageFile, {
+    OutfitVisualProfile? visual,
+    List<VisionLocalizedObject> visionObjects = const [],
+  }) async =>
+      OutfitSegmentMap.empty;
 }
 
 SkinReport _warmSkin({int oiliness = 45}) {

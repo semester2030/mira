@@ -4,10 +4,11 @@ import { RecommendationsModule } from '../recommendations/recommendations.module
 import { SkinAnalysisModule } from '../skin-analysis/skin-analysis.module';
 import { AiGatewayController } from './ai-gateway.controller';
 import { AiModule } from './ai.module';
+import { VisionModule } from '../vision/vision.module';
 import { FullMiraAnalysisService } from './services/full-mira-analysis.service';
 
 @Module({
-  imports: [SkinAnalysisModule, OutfitAnalysisModule, RecommendationsModule, AiModule],
+  imports: [SkinAnalysisModule, OutfitAnalysisModule, RecommendationsModule, AiModule, VisionModule],
   controllers: [AiGatewayController],
   providers: [FullMiraAnalysisService],
 })

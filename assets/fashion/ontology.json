@@ -1,0 +1,71 @@
+{
+  "version": 1,
+  "taxonomy": {
+    "category": {
+      "tops": { "parent": "clothing", "labelAr": "علوي" },
+      "bottoms": { "parent": "clothing", "labelAr": "سفلي" },
+      "outerwear": { "parent": "clothing", "labelAr": "طبقة خارجية" },
+      "bags": { "parent": "accessory", "labelAr": "حقائب" },
+      "heels": { "parent": "accessory", "labelAr": "أحذية" },
+      "jewelry": { "parent": "accessory", "labelAr": "مجوهرات" },
+      "scarves": { "parent": "accessory", "labelAr": "أوشحة" }
+    },
+    "formality": {
+      "casual": { "level": 0.3, "labelAr": "كاجوال" },
+      "smart_casual": { "level": 0.5, "labelAr": "أنيق يومي" },
+      "business": { "level": 0.75, "labelAr": "مهني" },
+      "formal": { "level": 0.9, "labelAr": "رسمي" },
+      "black_tie": { "level": 1.0, "labelAr": "سهرة راقية" }
+    },
+    "archetype": {
+      "quiet_luxury": { "parent": "luxury", "labelAr": "رفاهية هادئة" },
+      "old_money": { "parent": "luxury", "labelAr": "أناقة كلاسيكية" },
+      "minimal": { "parent": "style", "labelAr": "مينimal" },
+      "business": { "parent": "occasion", "labelAr": "مهني" },
+      "evening": { "parent": "occasion", "labelAr": "سهرة" },
+      "wedding": { "parent": "occasion", "labelAr": "زفاف" },
+      "casual": { "parent": "occasion", "labelAr": "كاجوال" },
+      "resort": { "parent": "season", "labelAr": "منتجع" },
+      "travel": { "parent": "lifestyle", "labelAr": "سفر" }
+    },
+    "season": {
+      "spring": { "months": [3, 4, 5], "labelAr": "ربيع" },
+      "summer": { "months": [6, 7, 8], "labelAr": "صيف" },
+      "autumn": { "months": [9, 10, 11], "labelAr": "خريف" },
+      "winter": { "months": [12, 1, 2], "labelAr": "شتاء" }
+    },
+    "occasion": {
+      "office": { "formality": 0.75, "labelAr": "مكتب" },
+      "meeting": { "formality": 0.82, "labelAr": "اجتماع" },
+      "wedding": { "formality": 0.95, "labelAr": "زفاف" },
+      "graduation": { "formality": 0.88, "labelAr": "تخرج" },
+      "dinner": { "formality": 0.78, "labelAr": "عشاء" },
+      "travel": { "formality": 0.4, "labelAr": "سفر" },
+      "airport": { "formality": 0.35, "labelAr": "مطار" },
+      "business": { "formality": 0.8, "labelAr": "أعمال" },
+      "interview": { "formality": 0.85, "labelAr": "مقابلة" },
+      "party": { "formality": 0.72, "labelAr": "حفلة" },
+      "ramadan": { "formality": 0.65, "labelAr": "رمضان" },
+      "eid": { "formality": 0.8, "labelAr": "عيد" },
+      "beach": { "formality": 0.25, "labelAr": "شاطئ" }
+    },
+    "bodyType": {
+      "pear": { "labelAr": "كمثرى" },
+      "hourglass": { "labelAr": "ساعة رملية" },
+      "rectangle": { "labelAr": "مستطيل" },
+      "triangle": { "labelAr": "مثلث" },
+      "petite": { "labelAr": "قصيرة" },
+      "tall": { "labelAr": "طويلة" },
+      "plus_size": { "labelAr": "مقاسات كبيرة" },
+      "slim": { "labelAr": "نحيفة" }
+    },
+    "climate": {
+      "hot_dry": { "tempMin": 30, "labelAr": "حار جاف" },
+      "hot_humid": { "tempMin": 28, "humidityMin": 60, "labelAr": "حار رطب" },
+      "mild": { "tempMin": 18, "tempMax": 28, "labelAr": "معتدل" },
+      "cold": { "tempMax": 12, "labelAr": "بارد" },
+      "rainy": { "rain": true, "labelAr": "ممطر" },
+      "windy": { "windMin": 25, "labelAr": "عاصف" }
+    }
+  }
+}
