@@ -8,6 +8,7 @@ import '../../../../shared/theme/colors.dart';
 import '../../../../shared/theme/typography.dart';
 import '../../../../shared/widgets/premium/pressable_scale.dart';
 import '../../../skin_analysis/domain/entities/skin_report.dart';
+import '../../domain/helpers/outfit_arabic_labels.dart';
 import '../../domain/entities/outfit_analysis.dart';
 
 /// Skin ↔ outfit bridge under harmony bars.
@@ -84,7 +85,7 @@ class _LinkedSkinCard extends StatelessWidget {
                   ),
                   const SizedBox(height: 2),
                   Text(
-                    'Undertone $undertone · توافق $skinScore%',
+                    OutfitArabicLabels.skinHarmonyLine(undertone, skinScore),
                     style: AppTypography.bodySmall.copyWith(color: AppColors.textSecondary),
                   ),
                 ],

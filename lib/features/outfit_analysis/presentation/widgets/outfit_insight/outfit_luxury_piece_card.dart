@@ -6,17 +6,22 @@ import '../../../../../shared/theme/shadows.dart';
 import '../../../../../shared/theme/typography.dart';
 import '../../../../../shared/widgets/premium/pressable_scale.dart';
 import '../../../domain/entities/suggested_piece_model.dart';
+import '../../../domain/helpers/outfit_arabic_labels.dart';
 import '../outfit_result_motion.dart';
 
 /// Luxury catalog card — PNG product on premium white surface.
 class OutfitLuxuryPieceCard extends StatelessWidget {
   final SuggestedPieceModel piece;
   final double width;
+  final bool isWishlisted;
+  final VoidCallback? onWishlistToggle;
 
   const OutfitLuxuryPieceCard({
     super.key,
     required this.piece,
     this.width = 132,
+    this.isWishlisted = false,
+    this.onWishlistToggle,
   });
 
   @override
@@ -45,23 +50,41 @@ class OutfitLuxuryPieceCard extends StatelessWidget {
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.stretch,
           children: [
-            Align(
-              alignment: Alignment.centerLeft,
-              child: Container(
-                padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 3),
-                decoration: BoxDecoration(
-                  color: AppColors.goldLight.withValues(alpha: 0.45),
-                  borderRadius: BorderRadius.circular(999),
-                ),
-                child: Text(
-                  piece.categoryLabelAr,
-                  style: AppTypography.labelSmall.copyWith(
-                    fontSize: 10,
-                    fontWeight: FontWeight.w700,
-                    color: const Color(0xFF6B5A4E),
+            Row(
+              children: [
+                Expanded(
+                  child: Align(
+                    alignment: Alignment.centerLeft,
+                    child: Container(
+                      padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 3),
+                      decoration: BoxDecoration(
+                        color: AppColors.goldLight.withValues(alpha: 0.45),
+                        borderRadius: BorderRadius.circular(999),
+                      ),
+                      child: Text(
+                        piece.categoryLabelAr,
+                        style: AppTypography.labelSmall.copyWith(
+                          fontSize: 10,
+                          fontWeight: FontWeight.w700,
+                          color: const Color(0xFF6B5A4E),
+                        ),
+                      ),
+                    ),
                   ),
                 ),
-              ),
+                if (onWishlistToggle != null)
+                  GestureDetector(
+                    onTap: () {
+                      HapticFeedback.lightImpact();
+                      onWishlistToggle!();
+                    },
+                    child: Icon(
+                      isWishlisted ? Icons.favorite_rounded : Icons.favorite_border_rounded,
+                      size: 20,
+                      color: isWishlisted ? AppColors.secondary : AppColors.textSecondary,
+                    ),
+                  ),
+              ],
             ),
             const SizedBox(height: 8),
             Expanded(
@@ -81,16 +104,7 @@ class OutfitLuxuryPieceCard extends StatelessWidget {
                   borderRadius: BorderRadius.circular(16),
                   child: Padding(
                     padding: const EdgeInsets.all(8),
-                    child: Image.asset(
-                      piece.imageAsset,
-                      fit: BoxFit.contain,
-                      errorBuilder: (_, __, ___) => Center(
-                        child: Icon(
-                          Icons.checkroom_outlined,
-                          color: AppColors.textSecondary.withValues(alpha: 0.4),
-                        ),
-                      ),
-                    ),
+                    child: _ProductImage(assetPath: piece.imageAsset),
                   ),
                 ),
               ),
@@ -116,7 +130,7 @@ class OutfitLuxuryPieceCard extends StatelessWidget {
                 ),
                 const SizedBox(width: 4),
                 Text(
-                  '${piece.compatibilityPercent}% توافق',
+                  'توافق القطعة ${piece.compatibilityPercent}%',
                   style: AppTypography.labelSmall.copyWith(
                     color: AppColors.secondary,
                     fontWeight: FontWeight.w700,
@@ -153,13 +167,13 @@ class OutfitLuxuryPieceCard extends StatelessWidget {
               children: [
                 SizedBox(
                   height: 160,
-                  child: Image.asset(piece.imageAsset, fit: BoxFit.contain),
+                  child: _ProductImage(assetPath: piece.imageAsset, large: true),
                 ),
                 const SizedBox(height: 14),
                 Text(piece.title, style: AppTypography.titleMedium),
                 const SizedBox(height: 6),
                 Text(
-                  piece.styleTag,
+                  OutfitArabicLabels.styleTag(piece.styleTag),
                   style: AppTypography.labelSmall.copyWith(color: AppColors.textSecondary),
                 ),
                 const SizedBox(height: 12),
@@ -171,18 +185,30 @@ class OutfitLuxuryPieceCard extends StatelessWidget {
                     borderRadius: BorderRadius.circular(16),
                   ),
                   child: Text(
-                    piece.whyAr,
+                    OutfitArabicLabels.humanizeEngineCopy(piece.whyAr),
                     style: AppTypography.bodySmall.copyWith(height: 1.5),
                     textAlign: TextAlign.center,
                   ),
                 ),
                 const SizedBox(height: 12),
                 Text(
-                  'توافق ${piece.compatibilityPercent}% · ثقة ${piece.confidencePercent}%',
+                  OutfitArabicLabels.pieceCompatibilityLine(
+                    piece.compatibilityPercent,
+                    piece.confidencePercent,
+                  ),
                   style: AppTypography.labelLarge.copyWith(
                     color: AppColors.secondary,
                     fontWeight: FontWeight.w800,
                   ),
+                ),
+                const SizedBox(height: 4),
+                Text(
+                  'مقياس توافق القطعة — مختلف عن درجة الإطلالة الكلية',
+                  style: AppTypography.labelSmall.copyWith(
+                    color: AppColors.textSecondary,
+                    height: 1.35,
+                  ),
+                  textAlign: TextAlign.center,
                 ),
                 if (piece.evidence.isNotEmpty) ...[
                   const SizedBox(height: 10),
@@ -190,7 +216,7 @@ class OutfitLuxuryPieceCard extends StatelessWidget {
                         (e) => Padding(
                           padding: const EdgeInsets.only(bottom: 4),
                           child: Text(
-                            '• $e',
+                            '• ${OutfitArabicLabels.humanizeEngineCopy(e)}',
                             style: AppTypography.labelSmall.copyWith(
                               color: AppColors.textSecondary,
                             ),
@@ -213,5 +239,64 @@ class OutfitLuxuryPieceCard extends StatelessWidget {
       return Color(int.parse('FF$cleaned', radix: 16));
     }
     return AppColors.gold;
+  }
+}
+
+class _ProductImage extends StatelessWidget {
+  final String assetPath;
+  final bool large;
+
+  const _ProductImage({required this.assetPath, this.large = false});
+
+  @override
+  Widget build(BuildContext context) {
+    return Image.asset(
+      assetPath,
+      fit: BoxFit.contain,
+      errorBuilder: (_, __, ___) => _ProductPlaceholder(large: large),
+    );
+  }
+}
+
+class _ProductPlaceholder extends StatelessWidget {
+  final bool large;
+
+  const _ProductPlaceholder({this.large = false});
+
+  @override
+  Widget build(BuildContext context) {
+    return Container(
+      width: double.infinity,
+      decoration: BoxDecoration(
+        gradient: LinearGradient(
+          begin: Alignment.topCenter,
+          end: Alignment.bottomCenter,
+          colors: [
+            AppColors.primaryLight.withValues(alpha: 0.35),
+            AppColors.surface,
+          ],
+        ),
+        borderRadius: BorderRadius.circular(large ? 18 : 14),
+      ),
+      child: Column(
+        mainAxisAlignment: MainAxisAlignment.center,
+        children: [
+          Icon(
+            Icons.checkroom_outlined,
+            size: large ? 42 : 32,
+            color: AppColors.secondary.withValues(alpha: 0.45),
+          ),
+          if (large) ...[
+            const SizedBox(height: 8),
+            Text(
+              'معاينة القطعة قريباً',
+              style: AppTypography.labelSmall.copyWith(
+                color: AppColors.textSecondary,
+              ),
+            ),
+          ],
+        ],
+      ),
+    );
   }
 }

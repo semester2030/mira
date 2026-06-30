@@ -8,26 +8,47 @@ import '../../domain/entities/outfit_analysis.dart';
 import '../../domain/helpers/outfit_stylist_copy.dart';
 import 'outfit_result_motion.dart';
 
-/// Section 7 — emotional «why this works» (P0).
-class OutfitWhyThisWorksSection extends StatelessWidget {
+/// Section 7 — emotional «why this works» (expandable).
+class OutfitWhyThisWorksSection extends StatefulWidget {
   final OutfitAnalysis analysis;
 
   const OutfitWhyThisWorksSection({super.key, required this.analysis});
 
   @override
+  State<OutfitWhyThisWorksSection> createState() => _OutfitWhyThisWorksSectionState();
+}
+
+class _OutfitWhyThisWorksSectionState extends State<OutfitWhyThisWorksSection> {
+  bool _expanded = false;
+
+  @override
   Widget build(BuildContext context) {
     final lines = OutfitStylistCopy.whyThisWorks(
-      analysis,
+      widget.analysis,
       skin: AnalysisSession.lastSkin,
     );
     if (lines.isEmpty) return const SizedBox.shrink();
 
+    final visible = _expanded ? lines : lines.take(2).toList();
+    final hasMore = lines.length > 2;
+
     return Column(
       crossAxisAlignment: CrossAxisAlignment.stretch,
       children: [
-        Text(
-          'لماذا تعمل هذه الإطلالة',
-          style: AppTypography.titleMedium.copyWith(fontWeight: FontWeight.w800),
+        Row(
+          children: [
+            Expanded(
+              child: Text(
+                'لماذا تعمل هذه الإطلالة',
+                style: AppTypography.titleMedium.copyWith(fontWeight: FontWeight.w800),
+              ),
+            ),
+            if (hasMore)
+              TextButton(
+                onPressed: () => setState(() => _expanded = !_expanded),
+                child: Text(_expanded ? 'عرض أقل' : 'المزيد (${lines.length})'),
+              ),
+          ],
         ),
         const SizedBox(height: 10),
         OutfitStaggerPop(
@@ -37,7 +58,7 @@ class OutfitWhyThisWorksSection extends StatelessWidget {
             padding: const EdgeInsets.fromLTRB(18, 16, 18, 18),
             child: Column(
               children: [
-                for (var i = 0; i < lines.length; i++) ...[
+                for (var i = 0; i < visible.length; i++) ...[
                   if (i > 0) const SizedBox(height: 14),
                   Row(
                     crossAxisAlignment: CrossAxisAlignment.start,
@@ -58,7 +79,7 @@ class OutfitWhyThisWorksSection extends StatelessWidget {
                       const SizedBox(width: 12),
                       Expanded(
                         child: Text(
-                          lines[i],
+                          visible[i],
                           style: AppTypography.bodyMedium.copyWith(height: 1.55),
                         ),
                       ),

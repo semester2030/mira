@@ -111,7 +111,8 @@ class _OutfitColorAlternativePanelState extends State<OutfitColorAlternativePane
                   child: _PreviewColumn(
                     title: 'المقترح',
                     colorName: selected.alternativeColorAr,
-                    scoreDelta: selected.projectedOverallDelta,
+                    scoreDelta: selected.projectedHarmonyDelta,
+                    scoreDeltaLabel: 'تحسين الانسجام',
                     child: _AnimatedPiece(
                       key: ValueKey(selected.alternativeColorAr),
                       kind: _visualKind(selected.pieceKind),
@@ -180,12 +181,14 @@ class _PreviewColumn extends StatelessWidget {
   final String title;
   final String colorName;
   final int? scoreDelta;
+  final String? scoreDeltaLabel;
   final Widget child;
 
   const _PreviewColumn({
     required this.title,
     required this.colorName,
     required this.scoreDelta,
+    this.scoreDeltaLabel,
     required this.child,
   });
 
@@ -201,7 +204,9 @@ class _PreviewColumn extends StatelessWidget {
         if (scoreDelta != null) ...[
           const SizedBox(height: 4),
           Text(
-            scoreDelta! >= 0 ? '+$scoreDelta% تقريباً' : '$scoreDelta% تقريباً',
+            scoreDelta! >= 0
+                ? '+$scoreDelta% ${scoreDeltaLabel ?? 'تقريباً'}'
+                : '$scoreDelta% ${scoreDeltaLabel ?? 'تقريباً'}',
             style: AppTypography.labelSmall.copyWith(
               color: scoreDelta! >= 0 ? AppColors.success : AppColors.gold,
               fontWeight: FontWeight.w600,

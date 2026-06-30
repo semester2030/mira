@@ -3,6 +3,7 @@ import 'package:flutter/material.dart';
 import '../../data/helpers/vision_color_mapper.dart';
 import '../entities/outfit_analysis.dart';
 import '../entities/outfit_segment_map.dart';
+import '../helpers/outfit_arabic_labels.dart';
 import '../helpers/outfit_fashion_taxonomy.dart';
 
 enum OutfitPieceKind {
@@ -141,15 +142,16 @@ abstract final class OutfitColorPreviewService {
   }
 
   static String _insightFor(String alt, int delta, String piece) {
+    final label = OutfitArabicLabels.garmentLabel(piece);
     if (delta >= 10) {
-      return 'لون $alt على $piece يرفع انسجام الألوان مع بشرتك';
+      return 'لون $alt على $label يرفع انسجام الألوان مع بشرتك';
     }
     if (delta >= 4) {
-      return 'لمسة $alt على $piece تنعّم التوازن اللوني';
+      return 'لمسة $alt على $label تنعّم التوازن اللوني';
     }
     if (delta <= -8) {
-      return 'تجنّبي $alt على $piece — قد يتعارض مع undertone بشرتك';
+      return 'تجنّبي $alt على $label — قد يتعارض مع تدرج بشرتك';
     }
-    return 'جرّبي $alt على $piece وقارني الإحساس العام';
+    return 'جرّبي $alt على $label وقارني الإحساس العام';
   }
 }

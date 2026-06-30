@@ -1,5 +1,6 @@
 import '../../../skin_analysis/domain/entities/skin_report.dart';
 import '../entities/outfit_analysis.dart';
+import '../helpers/outfit_arabic_labels.dart';
 import '../helpers/undertone_resolver.dart';
 import '../helpers/skin_palette_mapper.dart';
 
@@ -21,6 +22,20 @@ abstract final class OutfitStylistCopy {
     );
   }
 
+  /// Always derived from [compatibilityScore] — never stale cached text.
+  static String scoreSubtitle(OutfitAnalysis analysis) {
+    final score = analysis.compatibilityScore;
+    final garment = analysis.clothingType.isNotEmpty ? analysis.clothingType : 'إطلالتك';
+    final style = analysis.styleType.isNotEmpty ? analysis.styleType : 'متوازنة';
+    final occasion = analysis.occasion.labelAr;
+
+    if (analysis.isSmartMode) {
+      return 'تقييم $score/100 لـ$garment ($style) في مناسبة $occasion — مرتبط بتحليل بشرتك.';
+    }
+    return 'تحليل $score/100 لـ$garment ($style) في مناسبة $occasion — '
+        'فعّلي تحليل البشرة لدقة أعلى.';
+  }
+
   static List<OutfitColorInsight> colorHarmonyInsights(
     OutfitAnalysis analysis, {
     SkinReport? skin,
@@ -30,23 +45,25 @@ abstract final class OutfitStylistCopy {
         ? UndertoneResolver.labelAr(SkinPaletteMapper.fromSkinReport(skin).undertone)
         : null;
 
-    for (final color in analysis.dominantColors.take(3)) {
+    final current = analysis.dominantColors.take(3).toList();
+    for (var i = 0; i < current.length; i++) {
       insights.add(
         OutfitColorInsight(
-          colorNameAr: color,
+          colorNameAr: current[i],
           category: OutfitColorCategory.current,
-          whyAr: _whyCurrentColor(color, analysis, undertone),
+          whyAr: _whyCurrentColor(current[i], analysis, undertone, index: i),
         ),
       );
     }
 
+    var compatibleIndex = 0;
     for (final color in analysis.recommendedColors.take(4)) {
       if (analysis.dominantColors.contains(color)) continue;
       insights.add(
         OutfitColorInsight(
           colorNameAr: color,
           category: OutfitColorCategory.compatible,
-          whyAr: _whyCompatibleColor(color, undertone),
+          whyAr: _whyCompatibleColor(color, undertone, index: compatibleIndex++),
         ),
       );
     }
@@ -56,7 +73,7 @@ abstract final class OutfitStylistCopy {
         OutfitColorInsight(
           colorNameAr: color,
           category: OutfitColorCategory.avoid,
-          whyAr: _whyAvoidColor(color, undertone),
+          whyAr: _whyAvoidColor(color, undertone, analysis),
         ),
       );
     }
@@ -72,19 +89,20 @@ abstract final class OutfitStylistCopy {
     final undertone = skin != null
         ? UndertoneResolver.labelAr(SkinPaletteMapper.fromSkinReport(skin).undertone)
         : null;
+    final occasion = analysis.occasion.labelAr;
 
     for (final reason in analysis.matchReasons) {
-      lines.add(_humanize(reason));
+      lines.add(OutfitArabicLabels.humanizeEngineCopy(reason));
     }
 
-    if (analysis.colorHarmonyScore >= 78) {
+    if (analysis.colorHarmonyScore >= 78 &&
+        !lines.any((l) => l.contains('انسجام') || l.contains('لون'))) {
       lines.add('انسجام الألوان يمنح إطلالتك حضوراً أنيقاً ومتوازناً');
     }
 
-    if (analysis.occasionMatchScore >= 80) {
-      lines.add(
-        'القصة والألوان تخدم مناسبة ${analysis.occasion.labelAr} بثقة',
-      );
+    if (analysis.occasionMatchScore >= 80 &&
+        !lines.any((l) => l.contains(occasion))) {
+      lines.add('القصة والألوان تخدم مناسبة $occasion بثقة');
     }
 
     if (undertone != null && analysis.isSmartMode) {
@@ -93,16 +111,19 @@ abstract final class OutfitStylistCopy {
       );
       if (matching.isNotEmpty) {
         lines.add(
-          'لون ${matching.first} يرفع دفء undertone $undertone ويُبرز إشراق وجهك',
+          'لون ${matching.first} يرفع دفء ${OutfitArabicLabels.undertonePhrase(undertone)} '
+          'ويُبرز إشراق وجهك',
         );
       } else if (analysis.recommendedColors.isNotEmpty) {
         lines.add(
-          'جرّبي ${analysis.recommendedColors.first} — ينسجم مع undertone $undertone',
+          'جرّبي ${analysis.recommendedColors.first} — ينسجم مع '
+          '${OutfitArabicLabels.undertonePhrase(undertone)}',
         );
       }
     }
 
-    if (analysis.styleBalanceScore >= 76) {
+    if (analysis.styleBalanceScore >= 76 &&
+        !lines.any((l) => l.contains('توازن') || l.contains('بصري'))) {
       lines.add('التوازن البصري في القطع يعطي انطباعاً راقياً دون مبالغة');
     }
 
@@ -159,38 +180,54 @@ abstract final class OutfitStylistCopy {
   static String _whyCurrentColor(
     String color,
     OutfitAnalysis analysis,
-    String? undertone,
-  ) {
+    String? undertone, {
+    int index = 0,
+  }) {
+    final garment = analysis.clothingType.isNotEmpty ? analysis.clothingType : 'إطلالتك';
+    final occasion = analysis.occasion.labelAr;
+    final undertoneSuffix =
+        undertone != null ? ' — ينسجم مع ${OutfitArabicLabels.undertonePhrase(undertone)}' : '';
+
     if (analysis.recommendedColors.any((r) => _sameFamily(r, color))) {
-      return undertone != null
-          ? '$color ينسجم مع undertone $undertone ويُبرز إشراقك'
-          : '$color ينسجم مع ألوان إطلالتك الحالية';
+      return switch (index) {
+        0 => 'لون $color هو الأساس في $garment — يخدم $occasion$undertoneSuffix',
+        1 => '$color يضيف عمقاً ويرفع توازن الإطلالة$undertoneSuffix',
+        _ => '$color يكمل لوحة $occasion بانسجام$undertoneSuffix',
+      };
     }
     if (analysis.rejectedColors.any((r) => _sameFamily(r, color))) {
-      return 'استخدمي $color بحذر — قد يقلل من توهج البشرة';
+      return 'استخدمي $color بحذر — قد يقلل من توهج البشرة في $occasion';
     }
-    return '$color يعطي إطلالتك شخصية مميزة';
+    return switch (index) {
+      0 => '$color يمنح $garment حضوراً مميزاً في $occasion',
+      1 => '$color يضيف تبايناً لطيفاً دون كسر التنسيق',
+      _ => '$color يعطي إطلالتك شخصية واضحة',
+    };
   }
 
-  static String _whyCompatibleColor(String color, String? undertone) {
+  static String _whyCompatibleColor(String color, String? undertone, {int index = 0}) {
     if (undertone != null) {
-      return '$color يرفع دفء undertone $undertone ويمنح إشراقة أعلى';
+      return switch (index) {
+        0 => '$color يرفع دفء ${OutfitArabicLabels.undertonePhrase(undertone)} ويمنح إشراقة أعلى',
+        _ => '$color بديل أنيق ينسجم مع ${OutfitArabicLabels.undertonePhrase(undertone)}',
+      };
     }
-    return '$color بديل أنيق ينسجم مع إطلالتك';
+    return switch (index) {
+      0 => '$color يضيف لمسة أنيقة دون مبالغة',
+      1 => '$color بديل متوازن يرفع انسجام الإطلالة',
+      _ => '$color ينسجم مع باقي ألوان إطلالتك',
+    };
   }
 
-  static String _whyAvoidColor(String color, String? undertone) {
+  static String _whyAvoidColor(String color, String? undertone, OutfitAnalysis analysis) {
+    if (color.contains('مزج') || color.contains('كثيرة')) {
+      return 'تقليل عدد الألوان يرفع انسجام ${analysis.occasion.labelAr} — '
+          'اختاري لونين أساسيين';
+    }
     if (undertone != null) {
-      return 'تجنّبي $color — قد يخفف توازن undertone $undertone';
+      return 'تجنّبي $color — قد يخفف توازن ${OutfitArabicLabels.undertonePhrase(undertone)}';
     }
     return '$color قد يشتت التنسيق — جرّبي بديلاً أنعم';
-  }
-
-  static String _humanize(String raw) {
-    if (raw.contains('undertone')) {
-      return raw.replaceAll('undertone', 'Undertone');
-    }
-    return raw;
   }
 
   static bool _sameFamily(String a, String b) {

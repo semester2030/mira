@@ -51,6 +51,15 @@ class OutfitHarmonyPanel extends StatelessWidget {
           score: colorHarmonyScore,
           delayMs: showSkinTone ? 400 : 260,
         ),
+        const SizedBox(height: 8),
+        Text(
+          'مقاييس فرعية — درجة الإطلالة الكلية في الأعلى',
+          style: AppTypography.labelSmall.copyWith(
+            color: AppColors.textSecondary.withValues(alpha: 0.85),
+            height: 1.35,
+          ),
+          textAlign: TextAlign.center,
+        ),
       ],
     );
   }

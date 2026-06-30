@@ -1,7 +1,6 @@
 import '../catalog/fashion_asset_catalog.dart';
-import '../catalog/fashion_catalog_types.dart';
 import '../entities/outfit_analysis.dart';
-import 'fashion_intelligence_types.dart';
+import '../helpers/outfit_arabic_labels.dart';
 
 /// Phase 14 — explainable stylist copy in Arabic.
 abstract final class FashionStylistReasoning {
@@ -14,7 +13,9 @@ abstract final class FashionStylistReasoning {
     required List<String> evidence,
     String? graphWhy,
   }) {
-    if (graphWhy != null && graphWhy.isNotEmpty) return graphWhy;
+    if (graphWhy != null && graphWhy.isNotEmpty) {
+      return OutfitArabicLabels.humanizeEngineCopy(graphWhy);
+    }
 
     final parts = <String>[];
     final archetype = piece.archetypes.isNotEmpty ? piece.archetypes.first : piece.styleTag;
@@ -24,11 +25,11 @@ abstract final class FashionStylistReasoning {
     if ((breakdown['colorHarmony'] ?? 0) >= 12) {
       parts.add('لأنه يوازن ألوان إطلالتك');
     } else if ((breakdown['compatibility'] ?? 0) >= 15) {
-      parts.add('لأنه يكمل القطع المكتشفة في lookك');
+      parts.add('لأنه يكمل القطع المكتشفة في إطلالتك');
     }
 
     if (archetype == 'quiet_luxury' || archetype == 'old_money') {
-      parts.add('ويعزّز طابع Quiet Luxury');
+      parts.add('ويعزّز طابع الرفاهية الهادئة');
     } else if (archetype == 'business') {
       parts.add('ويرفع حضورك المهني');
     } else if (archetype == 'evening' || archetype == 'wedding') {
@@ -36,7 +37,7 @@ abstract final class FashionStylistReasoning {
     }
 
     if ((breakdown['trend'] ?? 0) >= 8) {
-      parts.add('مع لمسة ترند 2026');
+      parts.add('مع لمسة ${OutfitArabicLabels.trend2026()}');
     }
 
     if ((breakdown['season'] ?? 0) >= 10) {
@@ -44,7 +45,7 @@ abstract final class FashionStylistReasoning {
     }
 
     if (parts.length == 1 && piece.whyAr.isNotEmpty) {
-      return piece.whyAr;
+      return OutfitArabicLabels.humanizeEngineCopy(piece.whyAr);
     }
 
     return '${parts.join(' ')}.';
@@ -56,19 +57,19 @@ abstract final class FashionStylistReasoning {
   }) {
     final out = <String>[];
     if ((breakdown['colorHarmony'] ?? 0) >= 10) {
-      out.add('تناغم لوني: ${breakdown['colorHarmony']!.round()}%');
+      out.add(OutfitArabicLabels.colorHarmonyEvidence(breakdown['colorHarmony']!.round()));
     }
     if ((breakdown['graph'] ?? 0) >= 10) {
-      out.add('مطابقة Knowledge Graph');
+      out.add(OutfitArabicLabels.knowledgeGraphMatch());
     }
     if ((breakdown['trend'] ?? 0) >= 6) {
-      out.add('ترند 2026');
+      out.add(OutfitArabicLabels.trend2026());
     }
     if (piece.scores.luxury >= 90) {
-      out.add('Luxury Score ${piece.scores.luxury}');
+      out.add(OutfitArabicLabels.luxuryScoreLine(piece.scores.luxury));
     }
     if (out.isEmpty && piece.whyAr.isNotEmpty) {
-      out.add(piece.whyAr);
+      out.add(OutfitArabicLabels.humanizeEngineCopy(piece.whyAr));
     }
     return out;
   }

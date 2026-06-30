@@ -71,7 +71,7 @@ class _BeautyScoreRingState extends State<BeautyScoreRing>
                   ShaderMask(
                     shaderCallback: (bounds) => AppGradients.primary.createShader(bounds),
                     child: AnimatedCounter(
-                      value: widget.score * _progress.value,
+                      value: widget.score,
                       style: AppTypography.displaySmall.copyWith(
                         color: Colors.white,
                         fontSize: widget.size * 0.28,

@@ -11,11 +11,17 @@ import '../../domain/entities/outfit_segment_map.dart';
 class OutfitSegmentMapOverlay extends StatelessWidget {
   final File imageFile;
   final OutfitSegmentMap segmentMap;
+  final bool interactive;
+  final OutfitSegmentZone? selectedZone;
+  final ValueChanged<OutfitSegmentRegion>? onRegionTap;
 
   const OutfitSegmentMapOverlay({
     super.key,
     required this.imageFile,
     required this.segmentMap,
+    this.interactive = false,
+    this.selectedZone,
+    this.onRegionTap,
   });
 
   @override
@@ -34,6 +40,9 @@ class OutfitSegmentMapOverlay extends StatelessWidget {
               (entry) => _RegionOverlay(
                 region: entry.value,
                 index: entry.key,
+                interactive: interactive,
+                selected: selectedZone == entry.value.zone,
+                onTap: onRegionTap == null ? null : () => onRegionTap!(entry.value),
               ),
             ),
           ],
@@ -46,8 +55,17 @@ class OutfitSegmentMapOverlay extends StatelessWidget {
 class _RegionOverlay extends StatefulWidget {
   final OutfitSegmentRegion region;
   final int index;
+  final bool interactive;
+  final bool selected;
+  final VoidCallback? onTap;
 
-  const _RegionOverlay({required this.region, this.index = 0});
+  const _RegionOverlay({
+    required this.region,
+    this.index = 0,
+    this.interactive = false,
+    this.selected = false,
+    this.onTap,
+  });
 
   @override
   State<_RegionOverlay> createState() => _RegionOverlayState();
@@ -94,7 +112,7 @@ class _RegionOverlayState extends State<_RegionOverlay>
           animation: _reveal,
           builder: (context, _) {
             final labelOpacity = ((_reveal.value - 0.55) / 0.45).clamp(0.0, 1.0);
-            return Stack(
+            final content = Stack(
               children: [
                 Positioned.fill(
                   child: CustomPaint(
@@ -102,9 +120,18 @@ class _RegionOverlayState extends State<_RegionOverlay>
                       region: widget.region,
                       canvasSize: Size(w, h),
                       revealProgress: _reveal.value,
+                      emphasize: widget.selected,
                     ),
                   ),
                 ),
+                if (widget.interactive)
+                  Positioned.fromRect(
+                    rect: box,
+                    child: Material(
+                      color: Colors.transparent,
+                      child: InkWell(onTap: widget.onTap),
+                    ),
+                  ),
                 Positioned(
                   left: box.left + 6,
                   top: (box.top - 28).clamp(0.0, h - 28),
@@ -116,12 +143,14 @@ class _RegionOverlayState extends State<_RegionOverlay>
                         label: widget.region.labelAr,
                         category: _categoryAr(widget.region.zone),
                         confidence: widget.region.confidence,
+                        interactive: widget.interactive,
                       ),
                     ),
                   ),
                 ),
               ],
             );
+            return content;
           },
         );
       },
@@ -133,11 +162,13 @@ class _ContourPainter extends CustomPainter {
   final OutfitSegmentRegion region;
   final Size canvasSize;
   final double revealProgress;
+  final bool emphasize;
 
   _ContourPainter({
     required this.region,
     required this.canvasSize,
     this.revealProgress = 1,
+    this.emphasize = false,
   });
 
   @override
@@ -146,7 +177,7 @@ class _ContourPainter extends CustomPainter {
     final path = _extractRevealedPath(fullPath, revealProgress);
     if (path.computeMetrics().isEmpty) return;
 
-    final alpha = (0.14 + region.confidence * 0.2).clamp(0.14, 0.34);
+    final alpha = (0.14 + region.confidence * 0.2 + (emphasize ? 0.12 : 0)).clamp(0.14, 0.46);
 
     final fill = Paint()
       ..color = AppColors.secondary.withValues(alpha: alpha * revealProgress)
@@ -271,7 +302,8 @@ class _ContourPainter extends CustomPainter {
   bool shouldRepaint(covariant _ContourPainter oldDelegate) =>
       oldDelegate.region != region ||
       oldDelegate.canvasSize != canvasSize ||
-      oldDelegate.revealProgress != revealProgress;
+      oldDelegate.revealProgress != revealProgress ||
+      oldDelegate.emphasize != emphasize;
 }
 
 String _categoryAr(OutfitSegmentZone zone) {
@@ -288,11 +320,13 @@ class _LabelChip extends StatelessWidget {
   final String label;
   final String category;
   final double confidence;
+  final bool interactive;
 
   const _LabelChip({
     required this.label,
     required this.category,
     required this.confidence,
+    this.interactive = false,
   });
 
   @override
@@ -345,6 +379,10 @@ class _LabelChip extends StatelessWidget {
                 fontSize: 10,
               ),
             ),
+          ],
+          if (interactive) ...[
+            const SizedBox(width: 5),
+            Icon(Icons.touch_app_outlined, size: 12, color: AppColors.secondary),
           ],
           if (confidence > 0) ...[
             const SizedBox(width: 6),

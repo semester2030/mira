@@ -58,7 +58,7 @@ abstract final class OutfitInsightBuilder {
         accent: c2,
         subtitleAr: analysis.suggestedMakeup.isNotEmpty
             ? analysis.suggestedMakeup
-            : 'لمسة وردية تناسب undertone',
+            : 'لمسة وردية تناسب تدرج بشرتك',
       ),
       OutfitInsightItem(
         labelAr: 'أحمر شفاه',

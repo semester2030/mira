@@ -120,11 +120,11 @@ void main() {
       );
 
       expect(
-        analysis.whyItFits.any((r) => r.contains('undertone بشرتك')),
+        analysis.whyItFits.any((r) => r.contains('تدرج البشرة')),
         isTrue,
       );
       expect(
-        analysis.whyItFits.any((r) => r == 'ينسجم مع undertone محايد'),
+        analysis.whyItFits.any((r) => r.contains('undertone')),
         isFalse,
       );
     });

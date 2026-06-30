@@ -78,7 +78,7 @@ class OutfitLookResultHero extends StatelessWidget {
                         child: BeautyScoreRing(
                           score: analysis.compatibilityScore.toDouble(),
                           size: hasPhoto ? 118 : 156,
-                          label: '',
+                          label: 'درجة الإطلالة',
                         ),
                       ),
                       const SizedBox(height: 8),
@@ -108,7 +108,7 @@ class OutfitLookResultHero extends StatelessWidget {
             if (analysis.explanation.isNotEmpty) ...[
               const SizedBox(height: 14),
               Text(
-                analysis.explanation,
+                OutfitStylistCopy.scoreSubtitle(analysis),
                 style: AppTypography.bodySmall.copyWith(
                   color: AppColors.textSecondary,
                   height: 1.5,

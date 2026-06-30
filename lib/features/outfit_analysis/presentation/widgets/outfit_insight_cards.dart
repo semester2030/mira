@@ -15,8 +15,15 @@ import 'outfit_result_motion.dart';
 /// Premium stylist deck — asset-backed pieces + curated accessories.
 class OutfitInsightCards extends StatelessWidget {
   final OutfitAnalysis analysis;
+  final Set<String> wishlistedIds;
+  final ValueChanged<SuggestedPieceModel>? onWishlistToggle;
 
-  const OutfitInsightCards({super.key, required this.analysis});
+  const OutfitInsightCards({
+    super.key,
+    required this.analysis,
+    this.wishlistedIds = const {},
+    this.onWishlistToggle,
+  });
 
   @override
   Widget build(BuildContext context) {
@@ -42,18 +49,26 @@ class OutfitInsightCards extends StatelessWidget {
           const SizedBox(height: 14),
           _PremiumInsightCard(
             title: 'قطع مقترحة',
-            subtitle: 'مختارة بذوق Stylist — لرفع التوازن والأناقة',
+            subtitle: 'مختارة بذوق ميرا — لرفع التوازن والأناقة',
             trailing: Icons.checkroom_outlined,
-            child: _LuxuryPieceRow(pieces: pieces),
+            child: _LuxuryPieceRow(
+              pieces: pieces,
+              wishlistedIds: wishlistedIds,
+              onWishlistToggle: onWishlistToggle,
+            ),
           ),
         ],
         if (accessories.isNotEmpty) ...[
           const SizedBox(height: 14),
           _PremiumInsightCard(
             title: 'إكسسوارات مناسبة',
-            subtitle: 'قطع واضحة وقابلة للارتداء — بدون placeholders',
+            subtitle: 'قطع واضحة وقابلة للارتداء — مع صور عالية الجودة',
             trailing: Icons.diamond_outlined,
-            child: _LuxuryPieceRow(pieces: accessories),
+            child: _LuxuryPieceRow(
+              pieces: accessories,
+              wishlistedIds: wishlistedIds,
+              onWishlistToggle: onWishlistToggle,
+            ),
           ),
         ],
         if (makeup.isNotEmpty) ...[
@@ -141,8 +156,14 @@ class _PremiumInsightCard extends StatelessWidget {
 
 class _LuxuryPieceRow extends StatelessWidget {
   final List<SuggestedPieceModel> pieces;
+  final Set<String> wishlistedIds;
+  final ValueChanged<SuggestedPieceModel>? onWishlistToggle;
 
-  const _LuxuryPieceRow({required this.pieces});
+  const _LuxuryPieceRow({
+    required this.pieces,
+    this.wishlistedIds = const {},
+    this.onWishlistToggle,
+  });
 
   @override
   Widget build(BuildContext context) {
@@ -158,7 +179,13 @@ class _LuxuryPieceRow extends StatelessWidget {
             phaseIndex: index,
             child: OutfitStaggerPop(
               index: index,
-              child: OutfitLuxuryPieceCard(piece: pieces[index]),
+              child: OutfitLuxuryPieceCard(
+                piece: pieces[index],
+                isWishlisted: wishlistedIds.contains(pieces[index].id),
+                onWishlistToggle: onWishlistToggle == null
+                    ? null
+                    : () => onWishlistToggle!(pieces[index]),
+              ),
             ),
           );
         },

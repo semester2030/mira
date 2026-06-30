@@ -107,12 +107,12 @@ abstract final class DeterministicOutfitEngine {
 
     final matchReasons = _buildMatchReasons(skin, palette, visual, occasion);
     final mismatchReasons = _buildMismatchReasons(skin, palette, visual, occasion);
-    final recommendations = mismatchReasons.isNotEmpty
-        ? mismatchReasons
-        : [
-            'حافظي على بساطة الألوان مع undertone '
-                '${UndertoneResolver.labelAr(palette.undertone)} لبشرتك',
-          ];
+    final recommendations = buildImprovementActions(
+      mismatchReasons,
+      occasion,
+      isSmart: true,
+      undertoneAr: UndertoneResolver.labelAr(palette.undertone),
+    );
 
     final recommendedColors =
         _dedupe(_recommendedAlternatives(palette, visual, occasion));
@@ -175,9 +175,7 @@ abstract final class DeterministicOutfitEngine {
 
     final matchReasons = _buildQuickMatchReasons(visual, occasion);
     final mismatchReasons = _buildQuickMismatchReasons(visual, occasion);
-    final recommendations = mismatchReasons.isNotEmpty
-        ? mismatchReasons
-        : ['حافظي على توازن لوني بسيط يناسب ${occasion.labelAr}'];
+    final recommendations = buildImprovementActions(mismatchReasons, occasion);
 
     return _buildResult(
       mode: OutfitAnalysisMode.quick,
@@ -406,8 +404,8 @@ abstract final class DeterministicOutfitEngine {
     int score,
   ) {
     final garment = visual.garmentTypeAr.isNotEmpty ? visual.garmentTypeAr : 'إطلالة';
-    return 'تحليل سريع $score/100 لـ$garment (${visual.styleTypeAr}) '
-        'في مناسبة ${occasion.labelAr} — بدون ربط بالبشرة.';
+    return 'تحليل $score/100 لـ$garment (${visual.styleTypeAr}) '
+        'في مناسبة ${occasion.labelAr}.';
   }
 
   static String _smartExplanation(
@@ -420,8 +418,69 @@ abstract final class DeterministicOutfitEngine {
     final undertone = UndertoneResolver.labelAr(palette.undertone);
     final garment = visual.garmentTypeAr.isNotEmpty ? visual.garmentTypeAr : 'إطلالة';
     return 'تقييم $score/100 لـ$garment (${visual.styleTypeAr}) '
-        'لبشرة ${skin.skinType} undertone $undertone '
+        'لبشرة ${skin.skinType} — تدرج البشرة $undertone '
         'في مناسبة ${occasion.labelAr}.';
+  }
+
+  /// Actionable tips — never duplicate mismatch bullets verbatim.
+  static List<String> buildImprovementActions(
+    List<String> mismatchReasons,
+    MiraOccasion occasion, {
+    bool isSmart = false,
+    String? undertoneAr,
+  }) {
+    if (mismatchReasons.isEmpty) {
+      if (isSmart && undertoneAr != null && undertoneAr.isNotEmpty) {
+        return [
+          'حافظي على بساطة الألوان مع تدرج البشرة $undertoneAr لبشرتك',
+        ];
+      }
+      return ['حافظي على توازن لوني بسيط يناسب ${occasion.labelAr}'];
+    }
+
+    final actions = <String>[];
+    for (final mismatch in mismatchReasons) {
+      final action = _mismatchToImprovement(mismatch, occasion);
+      if (action != null && !actions.contains(action)) {
+        actions.add(action);
+      }
+    }
+
+    if (actions.isEmpty) {
+      return ['جرّبي تبسيط اللوحة اللونية لرفع التناسق في ${occasion.labelAr}'];
+    }
+    return actions.take(4).toList();
+  }
+
+  static String? _mismatchToImprovement(String mismatch, MiraOccasion occasion) {
+    if (mismatch.contains('كثرة الألوان') || mismatch.contains('مزج')) {
+      return 'اختاري لونين أساسيين فقط — لون القطعة ولون الإكسسوار';
+    }
+    if (mismatch.contains('الحذاء غير واضح')) {
+      return 'في التصوير التالي: أظهري الحذاء كاملاً للحصول على توصيات أدق';
+    }
+    if (mismatch.contains('الجزء العلوي غير واضح')) {
+      return 'صوّري من مستوى الكتف مع إظهار الكتفين بوضوح';
+    }
+    if (mismatch.contains('كاجوال') && mismatch.contains('مقابلة')) {
+      return 'أضيفي بلوزر أو كعباً كلاسيكياً لرفع الرسمية';
+    }
+    if (mismatch.contains('التباين')) {
+      return 'استبدلي قطعةً واحدة بلون أقرب لباقي الإطلالة';
+    }
+    if (mismatch.contains('رسمية') && mismatch.contains('كاجوال')) {
+      return 'خفّفي الرسمية بقطعة كاجوال واحدة متوازنة';
+    }
+    if (mismatch.contains('يتعارض') && mismatch.contains('تدرج')) {
+      return 'جرّبي لوناً من لوحة ألوان بشرتك بدلاً من اللون الحالي';
+    }
+    if (mismatch.contains('دهنية') && mismatch.contains('لامعة')) {
+      return 'اختاري أقمشة مطفية بدلاً من اللمعان القوي';
+    }
+    if (mismatch.contains('احمرار')) {
+      return 'ابتعدي عن الأحمر الساطع قرب الوجه — جرّبي مرجاني أو نود';
+    }
+    return null;
   }
 
   static int _quickConfidence(OutfitVisualProfile visual) {
@@ -530,15 +589,15 @@ abstract final class DeterministicOutfitEngine {
         .toList();
 
     if (matchingColors.length >= 2) {
-      reasons.add('الألوان ${matchingColors.join(' و')} تنسجم مع undertone بشرتك ($undertone)');
+      reasons.add('الألوان ${matchingColors.join(' و')} تنسجم مع تدرج البشرة ($undertone)');
     } else {
       for (final color in matchingColors) {
-        reasons.add('لون $color يتناسب مع undertone بشرتك ($undertone)');
+        reasons.add('لون $color يتناسب مع تدرج البشرة ($undertone)');
       }
     }
 
     if (_isNeutralPalette(visual.dominantColors)) {
-      reasons.add('الألوان المحايدة تنسجم مع undertone بشرتك');
+      reasons.add('الألوان المحايدة تنسجم مع تدرج بشرتك');
     }
 
     if (visual.formalityLevel >= 0.6 &&
@@ -566,7 +625,7 @@ abstract final class DeterministicOutfitEngine {
     final undertone = UndertoneResolver.labelAr(palette.undertone);
     for (final color in visual.dominantColors) {
       if (_colorMatchesAny(color, palette.blockedPalettes)) {
-        reasons.add('لون $color قد يتعارض مع undertone بشرتك ($undertone)');
+        reasons.add('لون $color قد يتعارض مع تدرج البشرة ($undertone)');
       }
     }
     final oiliness = skin.oiliness > 0
@@ -646,9 +705,9 @@ abstract final class DeterministicOutfitEngine {
     OutfitVisualProfile visual,
   ) {
     final base = switch (palette.undertone) {
-      SkinUndertone.warm => 'نود دافئ · blush خوخي · bronzer خفيف',
-      SkinUndertone.cool => 'وردي بارد · highlighter فضي · mauve eyes',
-      SkinUndertone.neutral => 'وردي محايد · contour ناعم',
+      SkinUndertone.warm => 'نود دافئ · أحمر خدود خوخي · برونزر خفيف',
+      SkinUndertone.cool => 'وردي بارد · هايلايتر فضي · ظلال عيون موف',
+      SkinUndertone.neutral => 'وردي محايد · كونتور ناعم',
     };
     if (_issueSeverity(skin, 'redness', skin.redness) > 60) {
       return '$base — مكياج مهدئ أخضر خفيف تحت الأساس';

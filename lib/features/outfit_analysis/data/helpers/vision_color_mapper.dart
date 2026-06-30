@@ -50,6 +50,8 @@ abstract final class VisionColorMapper {
     if (lower.contains('skirt')) return 'تنورة';
     if (lower.contains('t-shirt') || lower.contains('tee')) return 'تيشيرت';
     if (lower.contains('blouse')) return 'بلوزة';
+    if (lower == 'top' || lower.endsWith(' top')) return 'قطعة علوية';
+    if (lower.contains('top') && !lower.contains('stop')) return 'قطعة علوية';
     if (lower.contains('blazer')) return 'بلوزر';
     if (lower.contains('corset')) return 'كورسيه';
     if (lower.contains('cape')) return 'كاب';

@@ -28,6 +28,21 @@ abstract final class AnalysisCelebration {
     );
     overlay.insert(entry);
   }
+
+  /// Lighter burst when a story chapter is discovered — no sharing.
+  static void showChapterUnlock(BuildContext context, {required String message}) {
+    final overlay = Overlay.of(context);
+    late OverlayEntry entry;
+
+    entry = OverlayEntry(
+      builder: (ctx) => _CelebrationLayer(
+        message: message,
+        compact: true,
+        onDone: () => entry.remove(),
+      ),
+    );
+    overlay.insert(entry);
+  }
 }
 
 class CelebrationOnMount extends StatefulWidget {
@@ -60,8 +75,13 @@ class _CelebrationOnMountState extends State<CelebrationOnMount> {
 class _CelebrationLayer extends StatefulWidget {
   final String message;
   final VoidCallback onDone;
+  final bool compact;
 
-  const _CelebrationLayer({required this.message, required this.onDone});
+  const _CelebrationLayer({
+    required this.message,
+    required this.onDone,
+    this.compact = false,
+  });
 
   @override
   State<_CelebrationLayer> createState() => _CelebrationLayerState();
@@ -93,7 +113,10 @@ class _CelebrationLayerState extends State<_CelebrationLayer>
       child: Stack(
         fit: StackFit.expand,
         children: [
-          SoftConfettiOverlay(onComplete: widget.onDone),
+          SoftConfettiOverlay(
+            duration: Duration(milliseconds: widget.compact ? 1600 : 2800),
+            onComplete: widget.onDone,
+          ),
           SafeArea(
             child: Align(
               alignment: Alignment.topCenter,

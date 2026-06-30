@@ -60,7 +60,7 @@ abstract final class FashionVisionToEngineAdapter {
   static const _archetypeStyleAr = <String, String>{
     'quiet_luxury': 'رفاهية هادئة',
     'old_money': 'كلاسيكي',
-    'minimal': 'مينimal',
+    'minimal': 'بسيط',
     'business': 'مهني',
     'evening': 'سهرة',
     'wedding': 'زفاف',

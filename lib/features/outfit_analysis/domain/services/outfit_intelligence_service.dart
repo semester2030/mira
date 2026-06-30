@@ -118,6 +118,14 @@ class OutfitIntelligenceService {
           ? _piecesFromSegments(segmentMap, analysis.detectedPieces)
           : analysis.detectedPieces,
       mismatchReasons: mismatch,
+      recommendations: DeterministicOutfitEngine.buildImprovementActions(
+        mismatch,
+        occasion,
+        isSmart: mode == OutfitAnalysisMode.smart,
+        undertoneAr: skin != null
+            ? (skin.undertone.isNotEmpty ? skin.undertone : skin.undertoneEn)
+            : null,
+      ),
       visualSource: 'vision_platform',
     );
 
