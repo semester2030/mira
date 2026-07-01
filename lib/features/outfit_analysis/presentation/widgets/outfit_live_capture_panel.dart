@@ -19,11 +19,13 @@ import 'outfit_pose_tracking_overlay.dart';
 class OutfitLiveCapturePanel extends StatefulWidget {
   final ValueChanged<File?> onImageChanged;
   final File? frozenImage;
+  final ValueChanged<OutfitCaptureValidationResult>? onValidationChanged;
 
   const OutfitLiveCapturePanel({
     super.key,
     required this.onImageChanged,
     this.frozenImage,
+    this.onValidationChanged,
   });
 
   @override
@@ -291,6 +293,7 @@ class _OutfitLiveCapturePanelState extends State<OutfitLiveCapturePanel>
         _validation = validation;
         _capturing = false;
       });
+      widget.onValidationChanged?.call(validation);
       await _pauseCamera();
     } catch (_) {
       if (!mounted) return;
@@ -305,6 +308,7 @@ class _OutfitLiveCapturePanelState extends State<OutfitLiveCapturePanel>
       _pose = OutfitBodyPoseMetrics.none;
       _validation = OutfitCaptureValidationResult.ready;
     });
+    widget.onValidationChanged?.call(OutfitCaptureValidationResult.ready);
     await _resumeCamera();
   }
 
@@ -327,6 +331,7 @@ class _OutfitLiveCapturePanelState extends State<OutfitLiveCapturePanel>
     await _pauseCamera();
     widget.onImageChanged(file);
     setState(() => _validation = validation);
+    widget.onValidationChanged?.call(validation);
   }
 
   Future<void> _toggleCamera() async {

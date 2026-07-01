@@ -8,6 +8,7 @@ enum OutfitCaptureHint {
   lowLight,
   blurry,
   bodyNotDetected,
+  notOutfitPhoto,
 }
 
 class OutfitCaptureFrameMetrics {

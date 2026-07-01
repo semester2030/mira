@@ -29,7 +29,7 @@ const PROCEED_THRESHOLD = 0.65;
 const DEGRADED_THRESHOLD = 0.4;
 
 const BLOCKED_UX_MESSAGE_AR =
-  'تعذّر تحليل الإطلالة بوضوح. أعيدي التقاط الصورة في إضاءة أفضل وحاولي مجددًا.';
+  'لم نتحقق من إطلالتك — التقطي صورة كاملة لجسمك وملابسك (لا سكرينشوت ولا صور تطبيقات).';
 
 /**
  * Per-field + overall confidence and final analysisGate — Phase 6.

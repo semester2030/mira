@@ -9,6 +9,7 @@ import '../entities/outfit_body_pose_metrics.dart';
 import '../entities/outfit_capture_validation.dart';
 import 'outfit_body_pose_analyzer.dart';
 import 'outfit_capture_rules.dart';
+import 'outfit_photo_trust_gate.dart';
 import '../../presentation/utils/outfit_camera_frame_utils.dart';
 
 /// Validates live outfit camera frames and captured stills.
@@ -61,13 +62,23 @@ class OutfitCaptureValidator {
 
   Future<OutfitCaptureValidationResult> validateFile(File file) async {
     if (!await file.exists()) {
-      return OutfitCaptureRules.evaluateStill(OutfitCaptureFrameMetrics.neutral);
+      return const OutfitCaptureValidationResult(
+        isValid: false,
+        hint: OutfitCaptureHint.notOutfitPhoto,
+        hintAr: 'لم نستلم صورة — أعيدي التقاط الإطلالة',
+        metrics: OutfitCaptureFrameMetrics.neutral,
+      );
     }
 
     final bytes = await file.readAsBytes();
     final decoded = img.decodeImage(bytes);
     if (decoded == null) {
-      return OutfitCaptureRules.evaluateStill(OutfitCaptureFrameMetrics.neutral);
+      return const OutfitCaptureValidationResult(
+        isValid: false,
+        hint: OutfitCaptureHint.notOutfitPhoto,
+        hintAr: 'تعذّر قراءة الصورة — استخدمي JPG أو PNG واضح',
+        metrics: OutfitCaptureFrameMetrics.neutral,
+      );
     }
 
     final oriented = img.bakeOrientation(decoded);
@@ -83,7 +94,24 @@ class OutfitCaptureValidator {
         filePath: temp.path,
         pose: pose,
       );
-      return OutfitCaptureRules.evaluateStill(metrics);
+
+      final rulesResult = OutfitCaptureRules.evaluateStill(metrics);
+      if (!rulesResult.isValid) return rulesResult;
+
+      final trust = OutfitPhotoTrustGate.evaluateStill(
+        metrics: metrics,
+        image: oriented,
+      );
+      if (!trust.isAccepted) {
+        return OutfitCaptureValidationResult(
+          isValid: false,
+          hint: OutfitCaptureHint.notOutfitPhoto,
+          hintAr: trust.messageAr,
+          metrics: metrics,
+        );
+      }
+
+      return rulesResult;
     } finally {
       if (await temp.exists()) {
         await temp.delete();

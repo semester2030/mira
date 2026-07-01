@@ -13,6 +13,8 @@ abstract final class MiraApiEndpoints {
   static const outfitSegmentation = '/ai/outfit-segmentation';
   /// Vision Platform — official outfit vision pipeline (Phase 2+).
   static const visionOutfitAnalyze = '/ai/vision/outfit/analyze';
+  /// Garment recolor — FASHN Edit (Phase A). Reference: docs/mira-garment-recolor.html
+  static const visionOutfitRecolor = '/ai/vision/outfit/recolor';
   static const outfitHistory = '/outfit-analysis/history';
   static const recommendations = '/recommendations';
   static const recommendationsHistory = '/recommendations/history';

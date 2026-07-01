@@ -13,6 +13,8 @@ import '../outfit_result_motion.dart';
 class OutfitLuxuryPieceCard extends StatelessWidget {
   final SuggestedPieceModel piece;
   final double width;
+  /// When set (e.g. swipe stack), image area expands to fill. When null, uses intrinsic height for horizontal lists.
+  final double? height;
   final bool isWishlisted;
   final VoidCallback? onWishlistToggle;
 
@@ -20,6 +22,7 @@ class OutfitLuxuryPieceCard extends StatelessWidget {
     super.key,
     required this.piece,
     this.width = 132,
+    this.height,
     this.isWishlisted = false,
     this.onWishlistToggle,
   });
@@ -33,6 +36,7 @@ class OutfitLuxuryPieceCard extends StatelessWidget {
       },
       child: Container(
         width: width,
+        height: height,
         padding: const EdgeInsets.fromLTRB(12, 12, 12, 14),
         decoration: BoxDecoration(
           color: Colors.white,
@@ -49,6 +53,7 @@ class OutfitLuxuryPieceCard extends StatelessWidget {
         ),
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.stretch,
+          mainAxisSize: height != null ? MainAxisSize.max : MainAxisSize.min,
           children: [
             Row(
               children: [
@@ -87,27 +92,10 @@ class OutfitLuxuryPieceCard extends StatelessWidget {
               ],
             ),
             const SizedBox(height: 8),
-            Expanded(
-              child: DecoratedBox(
-                decoration: BoxDecoration(
-                  color: const Color(0xFFFAFAFA),
-                  borderRadius: BorderRadius.circular(16),
-                  boxShadow: [
-                    BoxShadow(
-                      color: Colors.black.withValues(alpha: 0.06),
-                      blurRadius: 12,
-                      offset: const Offset(0, 6),
-                    ),
-                  ],
-                ),
-                child: ClipRRect(
-                  borderRadius: BorderRadius.circular(16),
-                  child: Padding(
-                    padding: const EdgeInsets.all(8),
-                    child: _ProductImage(assetPath: piece.imageAsset),
-                  ),
-                ),
-              ),
+            _ProductImageFrame(
+              height: height != null ? null : width * 0.58,
+              expand: height != null,
+              assetPath: piece.imageAsset,
             ),
             const SizedBox(height: 10),
             Text(
@@ -239,6 +227,45 @@ class OutfitLuxuryPieceCard extends StatelessWidget {
       return Color(int.parse('FF$cleaned', radix: 16));
     }
     return AppColors.gold;
+  }
+}
+
+class _ProductImageFrame extends StatelessWidget {
+  final double? height;
+  final bool expand;
+  final String assetPath;
+
+  const _ProductImageFrame({
+    required this.assetPath,
+    this.height,
+    this.expand = false,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    final frame = DecoratedBox(
+      decoration: BoxDecoration(
+        color: const Color(0xFFFAFAFA),
+        borderRadius: BorderRadius.circular(16),
+        boxShadow: [
+          BoxShadow(
+            color: Colors.black.withValues(alpha: 0.06),
+            blurRadius: 12,
+            offset: const Offset(0, 6),
+          ),
+        ],
+      ),
+      child: ClipRRect(
+        borderRadius: BorderRadius.circular(16),
+        child: Padding(
+          padding: const EdgeInsets.all(8),
+          child: _ProductImage(assetPath: assetPath),
+        ),
+      ),
+    );
+
+    if (expand) return Expanded(child: frame);
+    return SizedBox(height: height, child: frame);
   }
 }
 

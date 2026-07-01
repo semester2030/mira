@@ -48,6 +48,12 @@ class OutfitAnalysis {
   final List<String> shoeColors;
   final List<String> accessoryColors;
 
+  /// Vision Platform gate — proceed | degraded | blocked.
+  final String analysisGate;
+
+  /// User-facing trust message from server or client gate.
+  final String? photoTrustMessageAr;
+
   List<String> get whyItFits => matchReasons;
 
   List<String> get whatNeedsAttention => mismatchReasons;
@@ -95,6 +101,8 @@ class OutfitAnalysis {
     this.lowerBodyColors = const [],
     this.shoeColors = const [],
     this.accessoryColors = const [],
+    this.analysisGate = 'proceed',
+    this.photoTrustMessageAr,
   });
 
   OutfitAnalysis copyWith({
@@ -131,6 +139,8 @@ class OutfitAnalysis {
     List<String>? lowerBodyColors,
     List<String>? shoeColors,
     List<String>? accessoryColors,
+    String? analysisGate,
+    String? photoTrustMessageAr,
   }) {
     return OutfitAnalysis(
       occasion: occasion ?? this.occasion,
@@ -166,6 +176,8 @@ class OutfitAnalysis {
       lowerBodyColors: lowerBodyColors ?? this.lowerBodyColors,
       shoeColors: shoeColors ?? this.shoeColors,
       accessoryColors: accessoryColors ?? this.accessoryColors,
+      analysisGate: analysisGate ?? this.analysisGate,
+      photoTrustMessageAr: photoTrustMessageAr ?? this.photoTrustMessageAr,
     );
   }
 

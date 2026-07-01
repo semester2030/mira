@@ -15,9 +15,11 @@ import '../../../../../shared/theme/typography.dart';
 import '../../../../../shared/widgets/premium/premium_exports.dart';
 import '../../../domain/entities/outfit_analysis.dart';
 import '../../../domain/entities/outfit_compare_snapshot.dart';
+import '../../../domain/entities/outfit_photo_trust.dart';
 import '../../../domain/entities/outfit_segment_map.dart';
 import '../../../domain/entities/suggested_piece_model.dart';
 import '../../../domain/helpers/outfit_result_sections.dart';
+import '../../../domain/helpers/outfit_result_trust.dart';
 import '../../../domain/services/outfit_occasion_scoring.dart';
 import '../../../domain/services/outfit_piece_wishlist_service.dart';
 import '../outfit_color_alternative_panel.dart';
@@ -28,6 +30,7 @@ import '../outfit_look_result_hero.dart';
 import '../outfit_next_occasion_card.dart';
 import '../outfit_segment_map_overlay.dart';
 import '../outfit_why_this_works_section.dart';
+import 'outfit_garment_recolor_panel.dart';
 import 'outfit_mira_voice_bubble.dart';
 import 'outfit_photo_color_slider.dart';
 import 'outfit_piece_swipe_vote.dart';
@@ -39,11 +42,13 @@ import 'outfit_result_sticky_hero.dart';
 class OutfitResultStoryShell extends StatefulWidget {
   final OutfitAnalysis analysis;
   final OutfitResultSectionPlan sections;
+  final OutfitResultTrust trust;
 
   const OutfitResultStoryShell({
     super.key,
     required this.analysis,
     required this.sections,
+    required this.trust,
   });
 
   @override
@@ -208,7 +213,10 @@ class _OutfitResultStoryShellState extends State<OutfitResultStoryShell> {
                   _chapterScroll(
                     0,
                     [
-                      OutfitLookResultHero(analysis: widget.analysis),
+                      OutfitLookResultHero(
+                        analysis: widget.analysis,
+                        showPhoto: widget.trust.showPhotoInHero,
+                      ),
                       const SizedBox(height: 14),
                       OutfitNextOccasionCard(
                         analysis: widget.analysis,
@@ -255,6 +263,8 @@ class _OutfitResultStoryShellState extends State<OutfitResultStoryShell> {
                   _chapterScroll(
                     2,
                     [
+                      OutfitGarmentRecolorPanel(analysis: widget.analysis),
+                      const SizedBox(height: 16),
                       OutfitColorAlternativePanel(analysis: widget.analysis),
                       const SizedBox(height: 16),
                       OutfitPieceSwipeVote(pieces: votePieces),
@@ -440,6 +450,7 @@ class _InteractivePhotoCard extends StatelessWidget {
             imageFile: File(analysis.frozenImagePath!),
             segmentMap: analysis.segmentMap!,
             interactive: true,
+            outlineOnly: true,
             selectedZone: selectedZone,
             onRegionTap: onRegionTap,
           ),

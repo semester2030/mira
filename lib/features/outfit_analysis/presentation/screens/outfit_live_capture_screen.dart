@@ -23,6 +23,7 @@ class OutfitLiveCaptureScreen extends StatefulWidget {
 class _OutfitLiveCaptureScreenState extends State<OutfitLiveCaptureScreen> {
   File? _frozenImage;
   OutfitAnalysisMode _mode = OutfitAnalysisMode.quick;
+  bool _captureTrusted = false;
 
   @override
   void didChangeDependencies() {
@@ -119,6 +120,7 @@ class _OutfitLiveCaptureScreenState extends State<OutfitLiveCaptureScreen> {
                   child: OutfitLiveCapturePanel(
                     frozenImage: _frozenImage,
                     onImageChanged: (file) => setState(() => _frozenImage = file),
+                    onValidationChanged: (v) => setState(() => _captureTrusted = v.isValid),
                   ),
                 ),
                 Padding(
@@ -127,7 +129,7 @@ class _OutfitLiveCaptureScreenState extends State<OutfitLiveCaptureScreen> {
                     label: hasPhoto ? 'اختيار المناسبة' : 'التقط إطلالتك أولاً',
                     icon: Icons.arrow_back_rounded,
                     variant: PremiumButtonVariant.gold,
-                    onPressed: hasPhoto ? _continue : null,
+                    onPressed: hasPhoto && _captureTrusted ? _continue : null,
                   ),
                 ),
               ],

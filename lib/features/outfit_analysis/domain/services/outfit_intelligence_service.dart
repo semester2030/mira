@@ -15,7 +15,9 @@ import '../entities/fashion_vision_document.dart';
 import '../entities/outfit_segment_map.dart';
 import '../entities/user_gender.dart';
 import '../entities/outfit_visual_profile.dart';
-import '../exceptions/vision_platform_exception.dart';
+import '../helpers/outfit_result_trust.dart';
+import '../../../../core/exceptions/vision_platform_exception.dart';
+import 'outfit_capture_validator.dart';
 import 'deterministic_outfit_engine.dart';
 import 'outfit_segmentation_service.dart';
 
@@ -49,6 +51,20 @@ class OutfitIntelligenceService {
       throw ArgumentError('Smart mode requires a SkinReport');
     }
 
+    final captureValidator = OutfitCaptureValidator();
+    try {
+      final preCapture = await captureValidator.validateFile(outfitImage);
+      if (!preCapture.isValid) {
+        throw VisionPlatformException(
+          code: 'OUTFIT_PHOTO_UNTRUSTED',
+          message: preCapture.hint?.name ?? 'capture_invalid',
+          userMessageAr: preCapture.hintAr,
+        );
+      }
+    } finally {
+      await captureValidator.dispose();
+    }
+
     final bytes = await outfitImage.readAsBytes();
     final cache = _cache ?? await OutfitAnalysisCacheService.create();
     final skinKey = mode == OutfitAnalysisMode.smart
@@ -68,7 +84,11 @@ class OutfitIntelligenceService {
 
     final cached = await cache.get(cacheKey);
     if (cached != null) {
-      return cached.analysis.copyWith(frozenImagePath: outfitImage.path);
+      final cachedAnalysis = cached.analysis.copyWith(frozenImagePath: outfitImage.path);
+      final cachedTrust = OutfitResultTrustPolicy.evaluate(cachedAnalysis);
+      if (!cachedTrust.isBlocked) {
+        return cachedAnalysis;
+      }
     }
 
     final visionResult = await _resolveVisionFromPlatform(
@@ -103,6 +123,15 @@ class OutfitIntelligenceService {
       mismatch.insert(0, segmentMap.validationMessage!);
     }
 
+    if (!segmentMap.hasTrustedOverlay) {
+      throw VisionPlatformException(
+        code: 'OUTFIT_RESULT_UNTRUSTED',
+        message: 'Segment map not visually trusted',
+        userMessageAr: segmentMap.validationMessage ??
+            OutfitResultTrustPolicy.blockedDefaultMessage,
+      );
+    }
+
     final enriched = analysis.copyWith(
       frozenImagePath: outfitImage.path,
       segmentMap: segmentMap,
@@ -127,7 +156,19 @@ class OutfitIntelligenceService {
             : null,
       ),
       visualSource: 'vision_platform',
+      analysisGate: visionResult.fashionVision.analysisGate,
+      photoTrustMessageAr: visionResult.userMessageAr,
+      visualConfidence: (visionResult.fashionVision.overallConfidence * 100).round().clamp(0, 100),
     );
+
+    final trust = OutfitResultTrustPolicy.evaluate(enriched);
+    if (trust.isBlocked) {
+      throw VisionPlatformException(
+        code: 'OUTFIT_RESULT_UNTRUSTED',
+        message: 'Segment map or analysis gate blocked',
+        userMessageAr: trust.messageAr,
+      );
+    }
 
     await cache.put(key: cacheKey, visual: mergedVisual, analysis: enriched);
     return enriched;

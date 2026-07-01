@@ -3,11 +3,140 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1" />
-  <meta name="description" content="MIRA Vision Platform — Phases 0–8 مكتملة · منشور Render 30 يونيو 2026 · FASHN + OpenAI · commit dca812d" />
+  <meta name="description" content="MIRA Vision Platform — Phases 0–8 مكتملة · منشور Render 30 يوليو 2026 · FASHN + OpenAI · commit dca812d" />
   <title>ميرا | Vision Platform — المرجع الرسمي للتنفيذ</title>
   <link rel="preconnect" href="https://fonts.googleapis.com" />
   <link href="https://fonts.googleapis.com/css2?family=Tajawal:wght@400;500;700;800&display=swap" rel="stylesheet" />
   <link rel="stylesheet" href="mira-project-audit.css" />
+  <style>
+    .atelier-hero { background: linear-gradient(145deg, rgba(201,162,39,0.14), rgba(124,58,237,0.1)); border: 2px solid rgba(201,162,39,0.35); border-radius: 20px; padding: 24px 26px; margin-bottom: 24px; }
+    .atelier-phase { border: 1px solid var(--border); border-radius: 16px; padding: 18px 20px; margin-bottom: 14px; background: var(--surface); }
+    .atelier-phase.live { border-color: var(--ok); box-shadow: 0 6px 24px rgba(46,125,90,0.12); }
+    .atelier-phase.planned { border-color: #7c3aed; opacity: 0.92; }
+    .atelier-phase.trust { border-color: var(--gold); }
+    .atelier-badge { display: inline-block; padding: 4px 12px; border-radius: 999px; font-size: 0.76rem; font-weight: 800; margin-bottom: 8px; }
+    .atelier-badge.live { background: rgba(46,125,90,0.15); color: #15803d; }
+    .atelier-badge.planned { background: rgba(124,58,237,0.12); color: #6d28d9; }
+    .atelier-badge.trust { background: rgba(201,162,39,0.18); color: #8b6914; }
+    .atelier-scope-yes { color: var(--ok); font-weight: 700; }
+    .atelier-scope-no { color: var(--danger); font-weight: 700; }
+    .atelier-prompt-box { background: #1a1625; color: #f5f0ff; border-radius: 14px; padding: 16px 18px; font-size: 0.88rem; line-height: 1.85; white-space: pre-wrap; border: 1px solid rgba(201,162,39,0.25); }
+    .atelier-flow { font-family: ui-monospace, monospace; font-size: 0.8rem; background: var(--surface-alt); padding: 16px; border-radius: 12px; line-height: 1.75; overflow-x: auto; }
+    #garment-atelier .sub-nav { display: flex; flex-wrap: wrap; gap: 8px; margin: 16px 0 24px; }
+    #garment-atelier .sub-nav a { font-size: 0.82rem; padding: 6px 12px; border-radius: 999px; border: 1px solid var(--border); background: var(--surface); text-decoration: none; color: inherit; }
+    .atelier-phase.qel { border-color: #5b4d9e; box-shadow: 0 6px 24px rgba(91,77,158,0.14); }
+    .atelier-badge.qel { background: rgba(91,77,158,0.14); color: #3d2f7a; }
+    .qel-pipeline { border: 2px solid #5b4d9e; border-radius: 16px; padding: 20px; background: linear-gradient(135deg,#faf8ff,#fffef8); margin: 16px 0; }
+    .qel-score-tree { font-family: ui-monospace, monospace; font-size: 0.82rem; line-height: 1.9; background: #1a1625; color: #e8e0ff; padding: 16px 18px; border-radius: 12px; }
+    /* Q4 Human Evaluation Sheet */
+    .q4-eval-hero { border: 2px solid #5b4d9e; border-radius: 18px; padding: 20px 22px; background: linear-gradient(135deg,#faf8ff 0%,#fffef8 100%); margin-bottom: 20px; }
+    .q4-stats-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(140px, 1fr)); gap: 12px; margin: 16px 0; }
+    .q4-stat { background: var(--surface); border: 1px solid var(--border); border-radius: 14px; padding: 14px 16px; text-align: center; }
+    .q4-stat .val { font-size: 1.5rem; font-weight: 800; color: var(--primary-strong); display: block; }
+    .q4-stat .lbl { font-size: 0.72rem; color: var(--muted); margin-top: 4px; }
+    .q4-stat.ok .val { color: #15803d; }
+    .q4-stat.warn .val { color: #b45309; }
+    .q4-stat.bad .val { color: var(--danger); }
+    .q4-toolbar { display: flex; flex-wrap: wrap; gap: 8px; margin: 12px 0 16px; }
+    .q4-toolbar .btn { font-size: 0.82rem; padding: 8px 14px; }
+    .q4-table-wrap { overflow-x: auto; border: 1px solid var(--border); border-radius: 16px; background: var(--surface); box-shadow: 0 4px 24px rgba(91,77,158,0.08); }
+    .q4-eval-table { width: 100%; border-collapse: collapse; font-size: 0.82rem; min-width: 1480px; }
+    .q4-eval-table thead th { position: sticky; top: 0; background: #1a1625; color: #f5f0ff; padding: 12px 8px; text-align: center; font-weight: 700; white-space: nowrap; z-index: 2; border-bottom: 2px solid rgba(201,162,39,0.35); }
+    .q4-eval-table thead th.group-human { background: #2a2440; }
+    .q4-eval-table thead th.group-qel { background: #1e3a2f; }
+    .q4-eval-table tbody td { padding: 8px 6px; border-bottom: 1px solid var(--border); vertical-align: middle; text-align: center; }
+    .q4-eval-table tbody tr:hover { background: rgba(201,162,39,0.04); }
+    .q4-eval-table tbody tr.row-pass { background: rgba(46,125,90,0.06); }
+    .q4-eval-table tbody tr.row-fail { background: rgba(200,60,60,0.06); }
+    .q4-eval-table input[type="text"], .q4-eval-table input[type="number"] { width: 100%; max-width: 88px; padding: 6px 8px; border: 1px solid var(--border); border-radius: 8px; font-family: inherit; font-size: 0.8rem; text-align: center; }
+    .q4-eval-table input.score { max-width: 52px; }
+    .q4-eval-table select { padding: 6px 8px; border-radius: 8px; border: 1px solid var(--border); font-size: 0.8rem; }
+    .q4-pill { display: inline-block; padding: 3px 10px; border-radius: 999px; font-size: 0.72rem; font-weight: 800; }
+    .q4-pill.pass { background: rgba(46,125,90,0.15); color: #15803d; }
+    .q4-pill.fail { background: rgba(200,60,60,0.12); color: var(--danger); }
+    .q4-pill.pending { background: rgba(124,58,237,0.1); color: #6d28d9; }
+    .q4-pill.na { background: var(--surface-alt); color: var(--muted); }
+    .q4-benchmark { display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 10px; margin-top: 16px; }
+    .q4-benchmark .bench { padding: 12px 14px; border-radius: 12px; font-size: 0.84rem; border: 1px solid var(--border); }
+    .q4-benchmark .bench.excellent { border-color: var(--ok); background: rgba(46,125,90,0.08); }
+    .q4-benchmark .bench.good { border-color: #b45309; background: rgba(180,83,9,0.06); }
+    .q4-benchmark .bench.block { border-color: var(--danger); background: rgba(200,60,60,0.06); }
+    .q4-legend { margin-top: 18px; font-size: 0.86rem; line-height: 1.85; color: var(--muted); }
+    .q4-legend strong { color: inherit; }
+    .q4-progress-wrap { margin: 14px 0 4px; }
+    .q4-progress-label { display: flex; justify-content: space-between; font-size: 0.82rem; margin-bottom: 6px; font-weight: 700; }
+    .q4-progress-bar { height: 12px; background: var(--surface-alt); border-radius: 999px; overflow: hidden; border: 1px solid var(--border); }
+    .q4-progress-fill { height: 100%; border-radius: 999px; transition: width 0.35s ease; background: linear-gradient(90deg,#5b4d9e,#c9a227); }
+    .q4-progress-fill.ok { background: linear-gradient(90deg,#2e7d5a,#4ade80); }
+    .q4-filter-bar { display: flex; flex-wrap: wrap; gap: 10px; align-items: center; margin: 0 0 12px; padding: 12px 14px; background: var(--surface-alt); border-radius: 12px; border: 1px solid var(--border); }
+    .q4-filter-bar input[type="search"] { flex: 1; min-width: 160px; padding: 8px 12px; border-radius: 10px; border: 1px solid var(--border); font-family: inherit; }
+    .q4-filter-bar select { padding: 8px 10px; border-radius: 10px; border: 1px solid var(--border); font-family: inherit; }
+    .q4-pagination { display: flex; flex-wrap: wrap; gap: 8px; align-items: center; justify-content: space-between; margin: 12px 0 0; font-size: 0.84rem; }
+    .q4-pagination .pages { display: flex; gap: 4px; flex-wrap: wrap; }
+    .q4-pagination .page-btn { min-width: 36px; padding: 6px 10px; border: 1px solid var(--border); border-radius: 8px; background: var(--surface); cursor: pointer; font-family: inherit; }
+    .q4-pagination .page-btn.active { background: var(--primary-strong); color: #fff; border-color: var(--primary-strong); }
+    .q4-pagination .page-btn:disabled { opacity: 0.4; cursor: not-allowed; }
+    .q4-eval-table tbody tr.row-incomplete { border-right: 3px solid #b45309; }
+    .q4-eval-table tbody tr.row-complete { border-right: 3px solid #15803d; }
+    .q4-eval-table td.sticky-id { position: sticky; right: 0; background: inherit; z-index: 1; box-shadow: -4px 0 8px rgba(0,0,0,0.04); font-weight: 800; }
+    .q4-eval-table thead th.sticky-id { position: sticky; right: 0; z-index: 3; }
+    .q4-status-dot { display: inline-block; width: 8px; height: 8px; border-radius: 50%; margin-left: 4px; vertical-align: middle; }
+    .q4-status-dot.complete { background: #15803d; }
+    .q4-status-dot.partial { background: #b45309; }
+    .q4-status-dot.empty { background: #cbd5e1; }
+    .q4-dist-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(180px, 1fr)); gap: 10px; margin-top: 14px; }
+    .q4-dist-card { background: var(--surface); border: 1px solid var(--border); border-radius: 12px; padding: 10px 12px; font-size: 0.78rem; }
+    .q4-dist-card .bar-row { display: flex; align-items: center; gap: 6px; margin: 4px 0; }
+    .q4-dist-card .bar { flex: 1; height: 6px; background: var(--surface-alt); border-radius: 4px; overflow: hidden; }
+    .q4-dist-card .bar-fill { height: 100%; background: #5b4d9e; border-radius: 4px; }
+    .q4-launch-badge { display: inline-block; padding: 8px 16px; border-radius: 12px; font-weight: 800; font-size: 0.9rem; margin-top: 10px; }
+    .q4-launch-badge.ready { background: rgba(46,125,90,0.15); color: #15803d; border: 2px solid #15803d; }
+    .q4-launch-badge.not-ready { background: rgba(200,60,60,0.08); color: var(--danger); border: 2px solid var(--danger); }
+    .q4-table-wrap { max-height: 72vh; overflow: auto; }
+    .q4-eval-table input.path { max-width: 130px; font-size: 0.7rem; text-align: left; direction: ltr; }
+    .q4-eval-table .row-warn td { outline: 1px dashed rgba(200,60,60,0.25); }
+    input[type="file"].q4-csv-input { display: none; }
+    /* Atelier gates + release timeline */
+    .atelier-gates-hero { border: 2px solid #c9a227; border-radius: 18px; padding: 20px 22px; background: linear-gradient(135deg,#fffef8 0%,#faf8ff 100%); margin-bottom: 20px; }
+    .atelier-gates-flow { display: flex; flex-wrap: wrap; gap: 8px; align-items: center; justify-content: center; margin: 16px 0; font-size: 0.88rem; font-weight: 700; }
+    .atelier-gate-pill { padding: 8px 14px; border-radius: 999px; border: 2px solid var(--border); background: var(--surface); }
+    .atelier-gate-pill.done { border-color: var(--ok); background: rgba(46,125,90,0.1); color: #15803d; }
+    .atelier-gate-pill.now { border-color: #5b4d9e; background: rgba(91,77,158,0.12); color: #3d2f7a; box-shadow: 0 0 0 3px rgba(91,77,158,0.15); }
+    .atelier-gate-pill.locked { border-color: var(--danger); background: rgba(200,60,60,0.06); color: var(--danger); opacity: 0.92; }
+    .atelier-gate-arrow { color: var(--muted); font-size: 1.1rem; }
+    .atelier-release-timeline { position: relative; margin: 20px 0; padding-right: 28px; border-right: 3px solid var(--border); }
+    .atelier-release-week { position: relative; margin-bottom: 22px; padding: 14px 16px 14px 0; }
+    .atelier-release-week::before { content: ''; position: absolute; right: -34px; top: 18px; width: 14px; height: 14px; border-radius: 50%; background: var(--border); border: 3px solid var(--surface); }
+    .atelier-release-week.now::before { background: #5b4d9e; box-shadow: 0 0 0 4px rgba(91,77,158,0.2); }
+    .atelier-release-week.done::before { background: var(--ok); }
+    .atelier-release-week.locked::before { background: #cbd5e1; }
+    .atelier-release-week h4 { margin: 0 0 6px; font-size: 0.95rem; }
+    .atelier-release-week .week-meta { font-size: 0.78rem; color: var(--muted); margin-bottom: 8px; }
+    .atelier-release-week ul { margin: 0; padding-right: 18px; font-size: 0.86rem; line-height: 1.75; }
+    .atelier-gates-table td.gate-open { color: #15803d; font-weight: 700; }
+    .atelier-gates-table td.gate-locked { color: var(--danger); font-weight: 700; }
+    .atelier-next-step { border: 2px solid #5b4d9e; border-radius: 14px; padding: 16px 18px; background: rgba(91,77,158,0.06); margin-top: 16px; }
+    .atelier-next-step strong { color: #3d2f7a; }
+    /* Q4 Phase 1 */
+    .q4-p1-hero { border: 2px solid #5b4d9e; border-radius: 18px; padding: 22px; background: linear-gradient(135deg,#faf8ff,#fffef8); margin-bottom: 20px; }
+    .q4-p1-stats { display: grid; grid-template-columns: repeat(auto-fill, minmax(120px, 1fr)); gap: 10px; margin: 16px 0; }
+    .q4-p1-stat { text-align: center; padding: 12px; border-radius: 12px; background: var(--surface); border: 1px solid var(--border); }
+    .q4-p1-stat .v { font-size: 1.4rem; font-weight: 800; color: #5b4d9e; display: block; }
+    .q4-p1-stat .l { font-size: 0.72rem; color: var(--muted); }
+    .q4-p1-progress-bar { height: 10px; background: var(--surface-alt); border-radius: 999px; overflow: hidden; margin: 10px 0; border: 1px solid var(--border); }
+    .q4-p1-progress-fill { height: 100%; background: linear-gradient(90deg,#5b4d9e,#c9a227); transition: width 0.35s; }
+    .q4-p1-decision { padding: 14px 16px; border-radius: 12px; font-weight: 800; font-size: 0.92rem; margin-top: 12px; }
+    .q4-p1-decision.go { background: rgba(46,125,90,0.12); color: #15803d; border: 2px solid #15803d; }
+    .q4-p1-decision.no-go { background: rgba(200,60,60,0.08); color: var(--danger); border: 2px solid var(--danger); }
+    .q4-p1-decision.pending { background: rgba(91,77,158,0.08); color: #3d2f7a; border: 2px solid #5b4d9e; }
+    .q4-p1-steps { display: grid; gap: 10px; margin: 14px 0; }
+    .q4-p1-step { display: flex; gap: 12px; align-items: flex-start; padding: 12px 14px; background: var(--surface); border-radius: 12px; border: 1px solid var(--border); }
+    .q4-p1-step-num { width: 28px; height: 28px; border-radius: 50%; background: #5b4d9e; color: #fff; display: flex; align-items: center; justify-content: center; font-weight: 800; font-size: 0.82rem; flex-shrink: 0; }
+    .q4-p1-proof-live { margin-top: 14px; padding: 12px 14px; background: #1a1625; color: #e8e0ff; border-radius: 12px; font-size: 0.84rem; line-height: 1.75; }
+    .q4-p1-scenarios { max-height: 280px; overflow: auto; font-size: 0.8rem; }
+    #q4-phase1-risks tr.bad td { background: rgba(200,60,60,0.06); }
+    #q4-phase1-risks tr.warn td { background: rgba(180,83,9,0.06); }
+  </style>
 </head>
 <body>
   <header class="site-header">
@@ -15,6 +144,7 @@
       <a class="brand" href="index.html">ميرا · Mira</a>
       <nav class="nav no-print">
         <a href="#charter">المرجع الرسمي</a>
+        <a href="#garment-atelier">👗 Atelier</a>
         <a href="#pipeline">المخطط</a>
         <a href="#phases">المراحل</a>
         <a href="#production-readiness">9–17</a>
@@ -47,6 +177,9 @@
     <aside class="audit-sidebar no-print">
       <h4>محتويات المواصفة</h4>
       <a href="#charter">🏛 المرجع الرسمي</a>
+      <a href="#garment-atelier">👗 Atelier — تعديل الإطلالة</a>
+      <a href="#atelier-gates-timeline">🗓️ بوابات A+·B·C</a>
+      <a href="#atelier-qel">🛡️ Phase Q — QEL</a>
         <a href="#implementation-status">حالة التنفيذ</a>
         <a href="#production-deploy">🚀 النشر الإنتاجي</a>
         <a href="#current-runtime">الوضع التشغيلي</a>
@@ -95,6 +228,579 @@
         <p style="font-size:0.9rem;color:var(--muted)">
           المسار: نقرأ المرحلة → ننفّذ خطواتها → نحقق معايير القبول → نضع ✓ → ننتقل للمرحلة التالية.
         </p>
+        <p style="margin-top:14px;padding:12px 16px;background:linear-gradient(135deg,rgba(124,58,237,0.08),rgba(201,162,39,0.1));border-radius:12px;border:1px solid rgba(201,162,39,0.35);font-size:0.9rem">
+          👗 <strong>Atelier — استوديو تعديل الإطلالة:</strong> امتداد رسمي لـ Vision Platform — ثقة الصورة · إعادة تلوين FASHN Edit · خارطة المراحل المستقبلية.
+          <a href="#garment-atelier" style="font-weight:800;margin-inline-start:6px">المرجع الكامل ←</a>
+        </p>
+      </section>
+
+      <!-- 👗 ATELIER — OFFICIAL GARMENT MODIFICATION REFERENCE -->
+      <section id="garment-atelier" class="card" style="border:3px solid var(--gold);background:linear-gradient(180deg,#fffef8 0%,#fff 40%)">
+        <span class="hardening-badge" style="border-color:var(--gold);color:#8b6914;background:rgba(201,162,39,0.18);margin-bottom:12px;display:inline-block">
+          👗 ATELIER · OFFICIAL GARMENT MODIFICATION REFERENCE
+        </span>
+        <h2>Atelier — استوديو تعديل الإطلالة<br /><span style="font-size:0.72em;color:var(--muted);font-weight:600">المرجع الرسمي الوحيد لتعديل الملابس على صورة المستخدم</span></h2>
+        <p style="font-size:0.92rem;color:var(--muted);max-width:920px">
+          هذا القسم — تحت <a href="#charter">🏛 المرجع الرسمي</a> — يوثّق <strong>كل ما نُفّذ</strong> و<strong>كل ما سيُنفّذ</strong>
+          من تعديلات حقيقية على الملابس في تطبيق ميرا. أي PR أو ميزة تعديل إطلالة يجب أن يتبع هذا المستند.
+          <br />آخر تحديث: <strong>يوليو 2026</strong> · T0 · A · <strong>Phase Q (QEL)</strong> · A+ · B · C · D
+        </p>
+
+        <div class="stat-grid" id="atelier-stats" style="margin:20px 0"></div>
+
+        <nav class="sub-nav no-print" aria-label="محتويات Atelier">
+          <a href="#atelier-vision">الطموح</a>
+          <a href="#atelier-scope">نطاق التنفيذ</a>
+          <a href="#atelier-trust">T0 الثقة</a>
+          <a href="#atelier-chapters">فصول النتيجة</a>
+      <a href="#atelier-phase-a">A — Edit</a>
+      <a href="#atelier-qel">🛡️ Phase Q — QEL</a>
+      <a href="#atelier-prompt">البرومبت</a>
+          <a href="#atelier-api">API</a>
+          <a href="#atelier-flutter">Flutter</a>
+          <a href="#atelier-backend">Backend</a>
+          <a href="#atelier-roadmap">الخارطة</a>
+          <a href="#atelier-gates-timeline">🗓️ بوابات الإطلاق</a>
+          <a href="#atelier-files">الملفات</a>
+          <a href="#atelier-env">البيئة</a>
+          <a href="#atelier-audit">التدقيق</a>
+          <a href="#atelier-outcomes">النتائج المستهدفة</a>
+          <a href="#atelier-remaining">المتبقي</a>
+          <a href="#atelier-q4-phase1">🚀 Q4 بداية (50)</a>
+          <a href="#atelier-q4-eval">📊 Q4 — سجل الاختبار</a>
+          <a href="#atelier-verify">التحقق</a>
+        </nav>
+
+        <div class="official-seal" style="border-color:rgba(91,77,158,0.45);background:linear-gradient(135deg,#faf8ff,#fffef8);margin-top:14px">
+          <strong>🛡️ قاعدة Phase Q — لا A+ ولا Try-On قبل QEL</strong>
+          <p style="margin:0;font-size:0.9rem">
+            Atelier ليس «recolor feature» — هو <strong>AI Garment Integrity System</strong>.
+            أي ناتج FASHN Edit يمرّ عبر <strong>Quality Enforcement Layer</strong> قبل UI.
+            بدون QEL = impressive · مع QEL = <strong>defensible</strong> (moat حقيقي).
+            <a href="#atelier-gates-timeline" style="font-weight:700">الجدول الزمني وبوابات A+·B·C ↗</a>
+          </p>
+        </div>
+
+        <div class="official-seal" style="border-color:rgba(201,162,39,0.5);background:linear-gradient(135deg,#fffef8,#faf8ff);margin-top:14px">
+          <strong>👗 قاعدة Atelier — لا تنفيذ خارج هذا القسم</strong>
+          <p style="margin:0;font-size:0.9rem">
+            تعديل الصورة = <strong>FASHN على السيرفر فقط</strong> · لا API keys في Flutter · لا درجة على صورة غير موثوقة ·
+            لا Story · لا مشاركة · لا حفظ للصورة بعد المعالجة · البرومпт العربي يُرسل من التطبيق ويُبنى/يُعدَّل في
+            <code>OutfitGarmentRecolorPanel</code>.
+          </p>
+        </div>
+
+        <!-- VISION -->
+        <div id="atelier-vision" style="margin-top:28px">
+          <h3>🎯 الطموح — من المعاينة إلى الواقع</h3>
+          <p style="font-size:0.9rem;line-height:1.85">
+            هدف Atelier: أن تستطيع المستخدمة <strong>رؤية تعديلات حقيقية على إطلالتها</strong> — ليس فلاتر تقريبية —
+            مع الحفاظ على <strong>ثقة المنتج</strong> (لا درجات وهمية · لا صور marketing · لا تغيير للوجه).
+            التوسع <strong>تدريجي</strong>: قطعة واحدة → عدة قطع → try-on من الكatalog → تنسيق ذكي خطوة بخطوة.
+          </p>
+          <table class="audit-table">
+            <thead><tr><th>الأداة</th><th>الفصل</th><th>النوع</th><th>الدقة</th><th>الحالة</th></tr></thead>
+            <tbody>
+              <tr><td><code>ColorFilter</code></td><td>«ألوانك»</td><td>معاينة فورية محلية</td><td>≈ تقريبية</td><td>✅ منفّذ</td></tr>
+              <tr><td><code>OutfitColorAlternativePanel</code></td><td>«جرّبي»</td><td>رسم توضيحي للقطعة</td><td>إرشاد بصري</td><td>✅ منفّذ</td></tr>
+              <tr><td><strong>FASHN Edit</strong></td><td>«جرّبي»</td><td>تلوين قماش حقيقي على الصورة</td><td>★★★★</td><td>✅ Phase A</td></tr>
+              <tr><td><strong>Phase Q — QEL</strong></td><td>بين Edit والعرض</td><td>سلامة الحقيقة البصرية · Visual Truth Integrity</td><td>★★★★★</td><td>✅ <strong>Q0–Q3 + Q4 baseline</strong></td></tr>
+              <tr><td><strong>Edit متعدد القطع</strong></td><td>«جرّبي»</td><td>بلوزة + بنطلون + عباءة تراكمي</td><td>★★★★</td><td>🔒 <a href="#atelier-gates-timeline">Phase A+ — بعد Q4</a></td></tr>
+              <tr><td><strong>Try-On Max</strong></td><td>«دولابك» / marketplace</td><td>قطعة catalog على الجسم</td><td>★★★★★</td><td>🔒 <a href="#atelier-gates-timeline">Phase B — بعد A+</a></td></tr>
+              <tr><td><strong>تنسيق ذكي</strong></td><td>عبر الفصول</td><td>ميرا تقترح → المستخدمة تختار → تنفيذ</td><td>—</td><td>🔒 <a href="#atelier-gates-timeline">Phase C — بعد B</a></td></tr>
+            </tbody>
+          </table>
+        </div>
+
+        <!-- SCOPE -->
+        <div id="atelier-scope" style="margin-top:28px">
+          <h3>⚖️ نطاق التنفيذ — ما يُنفَّذ وما لا يُنفَّذ</h3>
+          <div class="grid-2" style="display:grid;grid-template-columns:1fr 1fr;gap:20px;margin-top:12px">
+            <div class="rules-box" style="background:#f8fdf9;border-color:rgba(46,125,90,0.3)">
+              <h4 style="color:var(--ok);margin-top:0">✓ يُنفَّذ (Phase A — الآن)</h4>
+              <ul style="font-size:0.88rem;line-height:1.75">
+                <li class="atelier-scope-yes">تغيير <strong>لون قطعة واحدة</strong> على صورة المستخدم</li>
+                <li class="atelier-scope-yes">اختيار القطعة (فستان · بلوزة · عباءة · …)</li>
+                <li class="atelier-scope-yes">برومبت عربي <strong>قابل للتعديل</strong> قبل الإرسال</li>
+                <li class="atelier-scope-yes">مقارنة قبل/بعد · سحب للمقارنة</li>
+                <li class="atelier-scope-yes">حفظ الوجه · الخلفية · الإكسسوارات (عبر البرومпт)</li>
+              </ul>
+            </div>
+            <div class="rules-box" style="background:#fff5f5;border-color:rgba(200,60,60,0.25)">
+              <h4 style="color:var(--danger);margin-top:0">✕ لا يُنفَّذ (حتى لو كُتب في البرومبت)</h4>
+              <ul style="font-size:0.88rem;line-height:1.75">
+                <li class="atelier-scope-no">إضافة حقيبة · عقد · حذاء <strong>جديد</strong></li>
+                <li class="atelier-scope-no">تغيير مكياج أو تسريحة على الصورة</li>
+                <li class="atelier-scope-no">استبدال الإطلالة كاملة بقطعة متجر</li>
+                <li class="atelier-scope-no">تنفيذ «كل اقتراحات ميرا» دفعة واحدة</li>
+                <li class="atelier-scope-no">برومпт حر بدون حدود → <strong>غير مضمون</strong></li>
+              </ul>
+            </div>
+          </div>
+        </div>
+
+        <!-- TRUST T0 -->
+        <div id="atelier-trust" style="margin-top:28px">
+          <h3>🛡️ T0 — نظام الثقة (أولوية قصوى · منفّذ)</h3>
+          <p style="font-size:0.88rem;color:var(--muted)">يمنع عرض درجة 75/100 على صورة ليست إطلالة (لقطة شاشة · marketing · بدون جسم).</p>
+          <pre class="atelier-flow">التقاط → OutfitCaptureValidator + OutfitPhotoTrustGate
+       → زر «متابعة» معطّل إلا إذا trusted
+تحليل → pre-trust evaluateFile()
+       → Vision API + segmentMap
+       → رفض إذا !hasTrustedOverlay
+       → OutfitResultTrustPolicy
+النتيجة → blocked: OutfitUntrustedResultView (بدون score)
+       → degraded: بانر تحذير
+       → trusted: التجربة الكاملة</pre>
+          <table class="audit-table" style="margin-top:12px">
+            <thead><tr><th>المكوّن</th><th>المسار</th><th>الدور</th></tr></thead>
+            <tbody>
+              <tr><td><code>OutfitPhotoTrustGate</code></td><td><code>lib/.../outfit_photo_trust_gate.dart</code></td><td>رفض screenshots · UI · جسم صغير</td></tr>
+              <tr><td><code>OutfitCaptureValidator</code></td><td><code>lib/.../outfit_capture_validator.dart</code></td><td>دمج قواعد التقاط + trust</td></tr>
+              <tr><td><code>OutfitResultTrustPolicy</code></td><td><code>lib/.../outfit_result_trust.dart</code></td><td>blocked / degraded / trusted</td></tr>
+              <tr><td><code>OutfitUntrustedResultView</code></td><td><code>lib/.../outfit_untrusted_result_view.dart</code></td><td>UI بدون درجة + إعادة تصوير</td></tr>
+              <tr><td><code>OutfitIntelligenceService</code></td><td><code>lib/.../outfit_intelligence_service.dart</code></td><td>throw إذا overlay غير موثوق</td></tr>
+            </tbody>
+          </table>
+        </div>
+
+        <!-- CHAPTERS -->
+        <div id="atelier-chapters" style="margin-top:28px">
+          <h3>📖 فصول نتيجة الإطلالة — أين كل أداة؟</h3>
+          <table class="audit-table">
+            <thead><tr><th>#</th><th>الفصل</th><th>الأدوات</th><th>تعديل صورة حقيقي؟</th></tr></thead>
+            <tbody>
+              <tr><td>1</td><td><strong>إطلالتك</strong></td><td>Hero · segment map (outline-only) · لمس المناطق</td><td>❌ تفاعل فقط</td></tr>
+              <tr><td>2</td><td><strong>ألوانك</strong></td><td><code>OutfitPhotoColorSlider</code> · ColorHarmony</td><td>❌ معاينة ColorFilter</td></tr>
+              <tr><td>3</td><td><strong>جرّبي</strong></td><td><code>OutfitGarmentRecolorPanel</code> · ColorAlternative · SwipeVote</td><td>✅ FASHN Edit هنا</td></tr>
+              <tr><td>4</td><td><strong>دولابك</strong></td><td>InsightCards · wishlist · compare</td><td>❌ حفظ محلي</td></tr>
+            </tbody>
+          </table>
+          <p style="font-size:0.86rem;color:var(--muted);margin-top:10px">
+            ⚠️ <strong>إعادة التلوين الحقيقية</strong> في الفصل 3 فقط — ليس في «ألوانك». البرومبت تحت الصورة في
+            <code>OutfitGarmentRecolorPanel</code> → زر «تطبيق التلوين على صورتي».
+          </p>
+        </div>
+
+        <!-- PHASE A -->
+        <div id="atelier-phase-a" style="margin-top:28px">
+          <div class="atelier-phase live">
+            <span class="atelier-badge live">✅ Phase A — LIVE</span>
+            <h4 style="margin:8px 0">FASHN Edit — نفس القطعة · لون مختلف</h4>
+            <pre class="atelier-flow">Flutter (فصل «جرّبي» · OutfitGarmentRecolorPanel)
+  │  multipart: image + targetColorAr + garmentLabelAr + customPromptAr + visionContext
+  ▼
+Render mira-api
+  POST /api/v1/ai/vision/outfit/recolor
+  │
+  ├─ GarmentRecolorPromptService v2  → برومبت + visionContext (Q0)
+  ├─ GarmentCropCompositeService     → crop polygon + composite (Q2)
+  ├─ FashnGarmentRecolorService      → FASHN Edit + GarmentQelService (Q3)
+  └─ response: imageBase64 + qel + attempt + userMessageAr
+
+❌ لا PostgreSQL · ❌ لا Story · ✅ Firebase Auth · ✅ الذاكرة فقط أثناء الطلب</pre>
+            <ul style="font-size:0.88rem;margin-top:12px" id="atelier-phase-a-checklist"></ul>
+          </div>
+        </div>
+
+        <!-- PHASE Q — QEL -->
+        <div id="atelier-qel" style="margin-top:32px">
+          <span class="hardening-badge" style="border-color:#5b4d9e;color:#3d2f7a;background:rgba(91,77,158,0.12);margin-bottom:12px;display:inline-block">
+            🛡️ PHASE Q — QUALITY ENFORCEMENT LAYER (QEL)
+          </span>
+          <h3>AI Garment Integrity System — سلامة الحقيقة البصرية</h3>
+          <p style="font-size:0.9rem;line-height:1.85;color:var(--muted)">
+            المشكلة ليست «هل نستطيع بناء Atelier؟» — بل: <strong>هل النتيجة تجعل المستخدمة تقول: هذا فعلاً أنا لكن أفضل؟</strong>
+            FASHN Edit قوي لكنه وحده لا يصنع wow دائم. QEL هو الفرق بين منتج عادي ومنتج عالمي.
+          </p>
+
+          <div class="qel-pipeline">
+            <h4 style="margin:0 0 12px;color:#3d2f7a">المسار الإلزامي — لا تخطّي QEL</h4>
+            <pre class="atelier-flow" style="background:transparent;margin:0">Analyze (Vision Platform) → segment + semantics + geometry
+       ↓
+OutfitGarmentRecolorPanel → Contextual Prompt v2 (Q0)
+       ↓
+FASHN Edit (Phase A)
+       ↓
+┌────────────────── Phase Q — Perceptual Validation ──────────────────┐
+│  Identity Diff Gate (hybrid) · Skin Integrity (Perfect Corp)        │
+│  Segment Drift Check (post-edit re-segment · IoU)                  │
+│  Material Heuristic Lock (gloss · contrast · fold sharpness)       │
+│  [Q2] Crop-first + polygon padding + composite (optional path)       │
+│  Elite QEL Scorer (weighted sub-scores) · auto-retry max 2         │
+└────────────────────────────────────────────────────────────────────┘
+       ↓
+MIRA Acceptance Gate (weighted threshold — ليس رقم أعمى واحد)
+       ↓
+UI Display (قبل/بعد) — أو رفض واضح بدون fake</pre>
+          </div>
+
+          <h4 style="margin-top:24px">لماذا القماش ≠ لون فقط</h4>
+          <table class="audit-table">
+            <thead><tr><th>بُعد القماش</th><th>إذا تجاهلته</th></tr></thead>
+            <tbody>
+              <tr><td>Texture · Fiber behavior</td><td>أسود حرير ≠ أسود كتان — يبدو plastic</td></tr>
+              <tr><td>Light absorption · Reflectivity</td><td>matte → satin كارثة (Material Drift)</td></tr>
+              <tr><td>Fold shadows · Material depth</td><td>ثنيات مسطّحة · fake</td></tr>
+              <tr><td>Edge bleeding (جلد · شعر · إكسسوار)</td><td>الثقة تنهار فوراً</td></tr>
+              <tr><td>Identity (وجه · جسم · إضاءة)</td><td>«هذه ليست أنا» — فشل المنتج</td></tr>
+            </tbody>
+          </table>
+
+          <h4 style="margin-top:24px">Prompt Builder v2 — ثلاثي الوعي</h4>
+          <p style="font-size:0.88rem">ليس semantic فقط — يجب أن يكون:</p>
+          <table class="audit-table">
+            <thead><tr><th>البُعد</th><th>مصادر MIRA</th><th>مثال في البرومبت</th></tr></thead>
+            <tbody>
+              <tr><td><strong>semantic-aware</strong></td><td><code>material</code> · <code>textureHints</code> · colors</td><td>«حافظي على خامة الساتان اللامعة…» (conditional إذا confidence ≥ 0.6)</td></tr>
+              <tr><td><strong>geometry-aware</strong></td><td><code>regionRole</code> · <code>fit</code> · <code>foldDensity</code> · silhouette</td><td>«حافظي على كثافة الثنيات في الكتف والصدر» (oversized · upper)</td></tr>
+              <tr><td><strong>material-aware</strong></td><td>gloss level · pattern · ontology</td><td>«لا تحوّلي مطفي → لامع»</td></tr>
+            </tbody>
+          </table>
+          <p style="font-size:0.86rem;color:var(--muted)">⚠️ لا تزعم خامة بثقة إذا <code>providerConfidence &lt; 0.6</code> — استخدم صياغة مشروطة.</p>
+          <div class="atelier-prompt-box" id="atelier-prompt-v2-example" style="margin-top:10px"></div>
+
+          <h4 style="margin-top:24px">Identity Diff Gate — Hybrid (ليس SSIM وحده)</h4>
+          <table class="audit-table">
+            <thead><tr><th>إشارة</th><th>السبب</th></tr></thead>
+            <tbody>
+              <tr><td>Face embedding distance</td><td>هوية — أقوى من SSIM للوجه</td></tr>
+              <tr><td>Landmark consistency</td><td>MediaPipe / pose — proportions</td></tr>
+              <tr><td>Skin tone delta</td><td>undertone drift</td></tr>
+              <tr><td><strong>Skin Integrity Validator (Perfect Corp)</strong></td><td>undertone · texture class · tone zones — <em>moat</em></td></tr>
+            </tbody>
+          </table>
+          <p style="font-size:0.86rem;color:var(--muted)">SSIM وحده ضعيف مع light shifts · exposure drift — استخدمه كإشارة مساعدة للخلفية فقط.</p>
+
+          <h4 style="margin-top:24px">Segment Drift After Edit — Q1 حاسم</h4>
+          <pre class="atelier-flow">Original → Segment (mask M₀)
+       → FASHN Edit
+       → Re-segment Edited (mask M₁)
+       → IoU(M₀, M₁) على garment region
+
+إذا IoU &lt; threshold → Reject
+(اللون الجديد يغيّر contrast → الحدود القديمة لم تعد صالحة)</pre>
+
+          <h4 style="margin-top:24px">Crop-first (Q2) — Polygon + padding</h4>
+          <p style="font-size:0.88rem">لا bbox خام — <strong>padded polygon crop</strong> من segment map → edit على crop → composite مع feathering.
+            bbox يلتقط background زائد؛ polygon أنظف للحواف.</p>
+
+          <h4 style="margin-top:24px">Elite QEL Scorer — weighted (ليس threshold أعمى)</h4>
+          <div class="qel-score-tree" id="atelier-qel-score-tree"></div>
+          <p style="font-size:0.86rem;color:var(--muted);margin-top:10px">
+            قبول مرجّح: <code>QEL = w₁·Identity + w₂·Edge + w₃·Material + w₄·Region + w₅·Color</code> ·
+            auto-retry max 2 · ثم رفض واضح للمستخدمة.
+          </p>
+
+          <h4 style="margin-top:24px">Material Heuristic Lock — P1 (ليس P2)</h4>
+          <ul style="font-size:0.88rem;line-height:1.8">
+            <li><strong>gloss delta</strong> — luminance percentiles داخل garment mask</li>
+            <li><strong>contrast map</strong> — local contrast قبل/بعد</li>
+            <li><strong>fold sharpness</strong> — edge density في ثنيات القماش</li>
+            <li>عباءة matte → satin = reject (ثاني أكبر سبب fake بعد identity)</li>
+          </ul>
+
+          <h4 style="margin-top:28px;border-top:1px dashed var(--border);padding-top:20px">خارطة Phase Q — Q0 → Q4</h4>
+          <div id="atelier-qel-phases"></div>
+
+          <div class="rules-box" style="margin-top:20px;background:#fff5f5;border-color:rgba(200,60,60,0.3)">
+            <h4 style="color:var(--danger);margin-top:0">⛔ ممنوع</h4>
+            <ul style="font-size:0.88rem;margin:0;padding-right:20px;line-height:1.75">
+              <li>Phase A+ (multi-piece) قبل اكتمال Q1 على الأقل</li>
+              <li>Phase B (Try-On) قبل Q2 + Q3</li>
+              <li>عرض ناتج Edit في UI بدون MIRA Acceptance Gate</li>
+              <li>custom prompt حر يتجاوز QEL — Scorer يبقى السلطة</li>
+            </ul>
+          </div>
+        </div>
+
+        <!-- PROMPT -->
+        <div id="atelier-prompt" style="margin-top:28px">
+          <h3>✍️ مختبر البرومبت — قواعد الكتابة</h3>
+          <table class="audit-table">
+            <thead><tr><th>القاعدة</th><th>القيمة</th></tr></thead>
+            <tbody>
+              <tr><td>الحد الأدنى (Flutter)</td><td><strong>20 حرفاً</strong></td></tr>
+              <tr><td>الموصى به</td><td><strong>200–500 حرف</strong> — مركّز على قطعة + لون + المحظورات</td></tr>
+              <tr><td>الحد العملي</td><td>~800 حرف — أطول قد يفشل أو يُهمَل من FASHN</td></tr>
+              <tr><td>لا حد أقصى صارم في API</td><td><code>customPromptAr</code> اختياري · يُرسل كما هو</td></tr>
+              <tr><td>إعادة توليد</td><td>زر «إعادة توليد» يبني من القطعة + اللون عبر <code>GarmentRecolorPromptBuilder</code></td></tr>
+              <tr><td>مهلة HTTP</td><td><strong>180 ثانية</strong> connect/send/receive (كان 60s → timeout سابق)</td></tr>
+              <tr><td>مهلة FASHN poll</td><td><strong>120000 ms</strong> على Render</td></tr>
+            </tbody>
+          </table>
+          <p style="font-size:0.88rem;margin-top:12px"><strong>مثال برومпт مُولَّد:</strong></p>
+          <div class="atelier-prompt-box" id="atelier-prompt-example"></div>
+        </div>
+
+        <!-- API -->
+        <div id="atelier-api" style="margin-top:28px">
+          <h3>🔌 عقد API — recolor</h3>
+          <pre class="atelier-flow" id="atelier-api-contract"></pre>
+        </div>
+
+        <!-- FLUTTER -->
+        <div id="atelier-flutter" style="margin-top:28px">
+          <h3>📱 Flutter — ملفات Phase A + T0</h3>
+          <table class="audit-table" id="atelier-flutter-table">
+            <thead><tr><th>الحالة</th><th>الملف</th><th>الوظيفة</th></tr></thead>
+            <tbody></tbody>
+          </table>
+        </div>
+
+        <!-- BACKEND -->
+        <div id="atelier-backend" style="margin-top:28px">
+          <h3>⚙️ Backend — mira-api</h3>
+          <table class="audit-table" id="atelier-backend-table">
+            <thead><tr><th>الحالة</th><th>الملف</th><th>الوظيفة</th></tr></thead>
+            <tbody></tbody>
+          </table>
+        </div>
+
+        <!-- ROADMAP -->
+        <div id="atelier-roadmap" style="margin-top:28px">
+          <h3>🗺️ الخارطة الكاملة — T0 · A · <strong>Q</strong> · A+ · B · C · D</h3>
+          <p style="font-size:0.86rem;color:var(--muted)">Phase Q إلزامي بين A و A+ — التفاصيل في <a href="#atelier-qel">Phase Q — QEL</a>.</p>
+          <div id="atelier-roadmap-phases"></div>
+        </div>
+
+        <!-- GATES + RELEASE TIMELINE -->
+        <div id="atelier-gates-timeline" style="margin-top:32px">
+          <span class="hardening-badge" style="border-color:#c9a227;color:#8b6914;background:rgba(201,162,39,0.12);margin-bottom:12px;display:inline-block">
+            🗓️ بوابات الإطلاق — A+ · B · C مقفولة عمداً
+          </span>
+          <h3>الخطوة التالية الوحيدة التي تفتح A+</h3>
+          <div class="atelier-gates-hero">
+            <p style="margin:0;font-size:0.92rem;line-height:1.9">
+              <strong>لا يُنفَّذ كود A+ / B / C</strong> قبل إغلاق بوابة الثقة.
+              التسلسل الرسمي: <strong>سجل Q4 (100 صورة)</strong> → <strong>نشر QEL على Render</strong> → معايرة threshold →
+              ثم فقط تُفتح المراحل التالية. هذا يحمي المنتج من عرض نتائج تغيّر الهوية أو خامة القماش.
+            </p>
+            <div class="atelier-gates-flow" id="atelier-gates-flow"></div>
+            <div class="atelier-next-step" id="atelier-next-step"></div>
+          </div>
+          <h4 style="margin-top:24px">جدول البوابات — ماذا يفتح ماذا؟</h4>
+          <table class="audit-table atelier-gates-table" id="atelier-gates-table">
+            <thead>
+              <tr>
+                <th>المرحلة</th>
+                <th>الميزة</th>
+                <th>شرط الفتح</th>
+                <th>الحالة</th>
+                <th>الإجراء</th>
+              </tr>
+            </thead>
+            <tbody id="atelier-gates-tbody"></tbody>
+          </table>
+          <h4 style="margin-top:28px">الجدول الزمني المقترح — 2026 (حسب وتيرة التقييم البشري)</h4>
+          <p style="font-size:0.86rem;color:var(--muted);margin-bottom:12px">
+            التواريخ <strong>مقترحة</strong> — تتقدّم أو تتأخر حسب سرعة إكمال 100 Case في
+            <a href="#atelier-q4-eval">سجل Q4</a>. الهدف: ~25 صورة مُقيَّمة أسبوعياً.
+          </p>
+          <div class="atelier-release-timeline" id="atelier-release-timeline"></div>
+          <div class="rules-box" style="margin-top:20px;background:#f8fdf9;border-color:rgba(46,125,90,0.3)">
+            <h4 style="color:var(--ok);margin-top:0">✓ معيار «جاهز لفتح A+»</h4>
+            <ul style="font-size:0.88rem;line-height:1.85;margin:0;padding-right:20px" id="atelier-a-plus-criteria"></ul>
+          </div>
+        </div>
+
+        <!-- FILES -->
+        <div id="atelier-files" style="margin-top:28px">
+          <h3>📁 segment map — outline-only (فصل «إطلالتك»)</h3>
+          <p style="font-size:0.88rem">الطبقة المملوءة (fill) سببت انقساماً بصرياً. الحل المنفّذ: <code>outlineOnly: true</code> في
+            <code>OutfitSegmentMapOverlay</code> — حدود وتوهج بدون fill.</p>
+        </div>
+
+        <!-- ENV -->
+        <div id="atelier-env" style="margin-top:28px">
+          <h3>🌐 متغيرات Render — Atelier</h3>
+          <pre class="atelier-flow" id="atelier-env-block"></pre>
+        </div>
+
+        <!-- AUDIT -->
+        <div id="atelier-audit" style="margin-top:28px">
+          <h3>🔍 التدقيق الصارم — ما نُفّذ بالأدلة (يونيو–يوليو 2026)</h3>
+          <p style="font-size:0.88rem;color:var(--muted);margin-bottom:12px">
+            كل ✓ مربوط بملف في المستودع أو أمر تحقق. ✗ = موثّق في المستند لكن <strong>غير منفّذ بعد</strong> أو جزئي.
+          </p>
+          <table class="audit-table" id="atelier-audit-table">
+            <thead><tr><th>المرحلة</th><th>الادّعاء</th><th>الحالة</th><th>الدليل في الكود</th><th>فجوة صادقة</th></tr></thead>
+            <tbody></tbody>
+          </table>
+        </div>
+
+        <!-- TARGET OUTCOMES -->
+        <div id="atelier-outcomes" style="margin-top:28px">
+          <h3>🎯 النتائج التي نريدها — معايير القبول الدقيقة</h3>
+          <p style="font-size:0.88rem;color:var(--muted);margin-bottom:12px">
+            هذا ما يجب أن تحصل عليه المستخدمة — وليس «ميزة موجودة في الكود» فقط.
+          </p>
+          <div id="atelier-outcomes-list"></div>
+        </div>
+
+        <!-- REMAINING -->
+        <div id="atelier-remaining" style="margin-top:28px">
+          <h3>⏳ المتبقي — ممنوع تجاوزه</h3>
+          <table class="audit-table" id="atelier-remaining-table">
+            <thead><tr><th>البند</th><th>المرحلة</th><th>لماذا مهم</th><th>شرط البدء</th></tr></thead>
+            <tbody></tbody>
+          </table>
+        </div>
+
+        <!-- Q4 PHASE 1 — بداية 25–50 -->
+        <div id="atelier-q4-phase1" style="margin-top:32px">
+          <span class="hardening-badge" style="border-color:#5b4d9e;color:#3d2f7a;background:rgba(91,77,158,0.12);margin-bottom:12px;display:inline-block">
+            🚀 Q4 PHASE 1 — بداية (25–50 Case) · الخطوة الآن
+          </span>
+          <h3>تنفيذ كامل — معايرة قبل 100 صورة</h3>
+          <div class="q4-p1-hero">
+            <h4 style="margin:0 0 10px;color:#3d2f7a">✅ إثبات الفهم — ماذا ننفّذ؟</h4>
+            <div id="q4-phase1-proof"></div>
+            <div class="q4-p1-proof-live" id="q4-p1-proof-live">إثبات حي — املئي السجل أدناه ليظهر هنا تلقائياً</div>
+            <div class="q4-p1-progress-bar"><div class="q4-p1-progress-fill" id="q4-p1-progress-fill" style="width:0%"></div></div>
+            <div class="q4-p1-stats">
+              <div class="q4-p1-stat"><span class="v" id="q4-p1-complete">0 / 50</span><span class="l">مكتمل 001–050</span></div>
+              <div class="q4-p1-stat"><span class="v" id="q4-p1-pass">0</span><span class="l">PASS</span></div>
+              <div class="q4-p1-stat"><span class="v" id="q4-p1-rate">—</span><span class="l">Pass Rate</span></div>
+              <div class="q4-p1-stat"><span class="v" id="q4-p1-identity">0</span><span class="l">Identity Fail</span></div>
+              <div class="q4-p1-stat"><span class="v" id="q4-p1-qel">—</span><span class="l">QEL↔Human</span></div>
+            </div>
+            <div class="q4-p1-decision pending" id="q4-p1-decision">أكملي 25 Case على الأقل في 001–050</div>
+            <div class="q4-toolbar no-print" style="margin-top:14px">
+              <button type="button" class="btn btn-primary" id="q4-btn-init50">📋 Q4 بداية — 50 Case</button>
+              <button type="button" class="btn btn-secondary" id="q4-btn-export-p1">تصدير manifest Phase 1</button>
+              <a href="#atelier-q4-eval" class="btn btn-secondary">السجل التفاعلي ↓</a>
+            </div>
+          </div>
+          <h4>سير العمل — 6 خطوات</h4>
+          <div class="q4-p1-steps" id="q4-phase1-workflow"></div>
+          <h4 style="margin-top:24px">50 سيناريو جاهز (001–050)</h4>
+          <p style="font-size:0.86rem;color:var(--muted)">فستان · بلوزة · بنطلون · عباءة · جاكيت · تنورة · جينز — تنوع ألوان. الدرجات تُملأ من التطبيق.</p>
+          <div class="q4-table-wrap q4-p1-scenarios">
+            <table class="audit-table" id="q4-phase1-scenarios-table">
+              <thead><tr><th>ID</th><th>القطعة</th><th>Before</th><th>After</th><th>ملاحظة السيناريو</th></tr></thead>
+              <tbody id="q4-phase1-scenarios-tbody"></tbody>
+            </table>
+          </div>
+          <h4 style="margin-top:28px">ماذا سترى في التطبيق بعد إكمال Phase 1؟</h4>
+          <table class="audit-table">
+            <thead><tr><th>منطقة التطبيق</th><th>قبل Phase 1</th><th>بعد Phase 1</th><th>شعور المستخدمة</th></tr></thead>
+            <tbody id="q4-phase1-app-outcomes"></tbody>
+          </table>
+          <h4 style="margin-top:28px;color:var(--danger)">مخاطر عدم تنفيذ Q4 (لماذا لا نتخطاها)</h4>
+          <table class="audit-table" id="q4-phase1-risks">
+            <thead><tr><th>الخطر</th><th>الشدة</th><th>الأثر على المنتج</th></tr></thead>
+            <tbody id="q4-phase1-risks-tbody"></tbody>
+          </table>
+        </div>
+
+        <!-- Q4 EVALUATION SHEET -->
+        <div id="atelier-q4-eval" style="margin-top:32px">
+          <span class="hardening-badge" style="border-color:#5b4d9e;color:#3d2f7a;background:rgba(91,77,158,0.12);margin-bottom:12px;display:inline-block">
+            📊 PHASE Q4 — HUMAN EVALUATION SHEET
+          </span>
+          <h3>سجل اختبار Atelier — 100 صورة · Before → After → تقييم دقيق</h3>
+          <p style="font-size:0.86rem;color:var(--muted);margin:-8px 0 12px">
+            ⛔ <strong>A+ · B · C مقفولة</strong> حتى إغلاق هذه البوابة —
+            <a href="#atelier-gates-timeline">راجع الجدول الزمني والبوابات ↗</a>
+          </p>
+          <div class="q4-eval-hero">
+            <p style="margin:0;font-size:0.9rem;line-height:1.85">
+              <strong>الهدف:</strong> 100 Case حقيقية من مستخدمات حقيقيات ·
+              <strong>معيار الإطلاق:</strong> ≥ <strong>85 PASS</strong> من 100 (85%) ·
+              <strong>Identity Fail</strong> = رفض فوري · يُحفظ تلقائياً · تصدير CSV / manifest JSON.
+            </p>
+            <div class="q4-progress-wrap">
+              <div class="q4-progress-label">
+                <span id="q4-progress-text">التقدّم: 0 / 100 مكتمل</span>
+                <span id="q4-pass-target">هدف PASS: 0 / 85</span>
+              </div>
+              <div class="q4-progress-bar"><div class="q4-progress-fill" id="q4-progress-fill" style="width:0%"></div></div>
+            </div>
+            <div id="q4-launch-badge"></div>
+            <div class="q4-stats-grid" id="q4-eval-stats"></div>
+            <div class="q4-benchmark" id="q4-eval-benchmark"></div>
+            <div class="q4-dist-grid" id="q4-eval-distribution"></div>
+          </div>
+          <div class="q4-toolbar no-print">
+            <button type="button" class="btn btn-primary" id="q4-btn-init50">📋 Q4 بداية — 50 Case</button>
+            <button type="button" class="btn btn-primary" id="q4-btn-init100">قالب 100 Case</button>
+            <button type="button" class="btn btn-secondary" id="q4-btn-add">+ Case</button>
+            <button type="button" class="btn btn-secondary" id="q4-btn-suggest">اقتراح Final تلقائي</button>
+            <button type="button" class="btn btn-secondary" id="q4-btn-export-csv">تصدير CSV</button>
+            <button type="button" class="btn btn-secondary" id="q4-btn-export-p1">تصدير manifest Phase 1</button>
+            <button type="button" class="btn btn-secondary" id="q4-btn-export-manifest">تصدير manifest 100</button>
+            <button type="button" class="btn btn-secondary" id="q4-btn-import">استيراد JSON</button>
+            <button type="button" class="btn btn-secondary" id="q4-btn-import-csv">استيراد CSV مسارات</button>
+            <button type="button" class="btn btn-secondary" id="q4-btn-export-template">قالب CSV مسارات</button>
+            <button type="button" class="btn btn-secondary" id="q4-btn-reset7">إعادة 7 Cases</button>
+          </div>
+          <input type="file" id="q4-import-file" accept="application/json" hidden />
+          <input type="file" id="q4-import-csv-file" accept=".csv,text/csv" hidden />
+          <div class="q4-filter-bar no-print">
+            <input type="search" id="q4-search" placeholder="بحث ID · لون · قطعة…" />
+            <select id="q4-filter">
+              <option value="phase1" selected>Phase 1 (001–050)</option>
+              <option value="all">الكل</option>
+              <option value="complete">مكتمل ✓</option>
+              <option value="incomplete">غير مكتمل</option>
+              <option value="pass">PASS فقط</option>
+              <option value="fail">FAIL فقط</option>
+              <option value="pending">Pending</option>
+              <option value="identity-fail">Identity Fail (&lt;6)</option>
+              <option value="no-paths">بدون مسارات</option>
+            </select>
+            <select id="q4-page-size">
+              <option value="25" selected>25 / صفحة</option>
+              <option value="50">50 / صفحة</option>
+              <option value="100">100 / صفحة</option>
+            </select>
+            <span id="q4-filter-count" style="font-size:0.82rem;color:var(--muted)"></span>
+          </div>
+          <div class="q4-table-wrap">
+            <table class="q4-eval-table" id="q4-eval-table">
+              <thead>
+                <tr>
+                  <th rowspan="2">ID</th>
+                  <th rowspan="2">القطعة</th>
+                  <th rowspan="2">Before</th>
+                  <th rowspan="2">After</th>
+                  <th rowspan="2" title="مسار before.jpg">Path Before</th>
+                  <th rowspan="2" title="مسار after.jpg">Path After</th>
+                  <th colspan="6" class="group-human">تقييم بشري (1–10)</th>
+                  <th rowspan="2">Final</th>
+                  <th colspan="2" class="group-qel">QEL آلي</th>
+                  <th rowspan="2">Core Ø</th>
+                  <th rowspan="2">ملاحظات</th>
+                  <th rowspan="2"></th>
+                </tr>
+                <tr>
+                  <th class="group-human" title="Identity — الأهم">Identity</th>
+                  <th class="group-human">Fabric</th>
+                  <th class="group-human">Edge</th>
+                  <th class="group-human">Shape</th>
+                  <th class="group-human">Color</th>
+                  <th class="group-human">Realism</th>
+                  <th class="group-qel">Score</th>
+                  <th class="group-qel">Gate</th>
+                </tr>
+              </thead>
+              <tbody id="q4-eval-tbody"></tbody>
+            </table>
+          </div>
+          <div class="q4-pagination no-print" id="q4-pagination"></div>
+          <div class="q4-legend" id="q4-eval-legend"></div>
+        </div>
+
+        <!-- VERIFY -->
+        <div id="atelier-verify" style="margin-top:28px">
+          <h3>✅ أوامر التحقق</h3>
+          <pre class="schema-block" id="atelier-verify-commands"></pre>
+          <p style="font-size:0.86rem;color:var(--muted);margin-top:12px">
+            مختبر برومبت تفاعلي (ويب): <a href="mira-garment-recolor.html#prompt-lab">mira-garment-recolor.html#prompt-lab</a>
+            — للتجربة قبل الإرسال · المرجع الرسمي للتنفيذ: <strong>هذه الصفحة</strong>.
+          </p>
+        </div>
       </section>
 
       <section id="implementation-status" class="card" style="border:2px solid var(--ok)">
@@ -109,7 +815,7 @@
 
       <section id="production-deploy" class="card" style="border:2px solid var(--ok);background:linear-gradient(135deg,#f8fdf9,#fffef8)">
         <span class="hardening-badge" style="border-color:var(--ok);color:#2e7d5a;background:rgba(46,125,90,0.12);margin-bottom:12px;display:inline-block">
-          🚀 PRODUCTION DEPLOY · Render · 30 يونيو 2026
+          🚀 PRODUCTION DEPLOY · Render · 30 يوليو 2026
         </span>
         <h2>النشر الإنتاجي — النتائج الأخيرة</h2>
         <p style="font-size:0.88rem;color:var(--muted)">
@@ -495,7 +1201,8 @@ analyze() → VisionApiDataSource.analyze()
           <a href="mira-production-readiness.html"><strong>جاهزية الإنتاج</strong><span>Render · flags · App Store</span></a>
           <a href="#production-readiness"><strong>خارطة النضج 9–17</strong><span>Evaluation · Ops · Cache · Monitoring</span></a>
           <a href="#platform-integration"><strong>تكامل المنصات</strong><span>FASHN · OpenAI · Render · Flutter</span></a>
-          <a href="index.html"><strong>الصفحة الرئيسية</strong><span>بوابة وثائق ميرا</span></a>
+          <a href="#garment-atelier"><strong>👗 Atelier + Phase Q</strong><span>QEL · Visual Truth Integrity · المرجع الرسمي</span></a>
+          <a href="mira-garment-recolor.html"><strong>مختبر البرومبت</strong><span>تفاعلي · مكمّل لـ Atelier</span></a>
         </div>
       </section>
     </main>
@@ -503,5 +1210,8 @@ analyze() → VisionApiDataSource.analyze()
 
   <div class="toast" id="toast"></div>
   <script src="mira-vision-platform.js"></script>
+  <script src="mira-q4-phase1.js"></script>
+  <script src="mira-q4-eval-sheet.js"></script>
+  <script>document.addEventListener('DOMContentLoaded', function () { if (window.initQ4EvalSheet) initQ4EvalSheet(); });</script>
 </body>
 </html>

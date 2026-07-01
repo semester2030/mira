@@ -12,6 +12,7 @@ class OutfitSegmentMapOverlay extends StatelessWidget {
   final File imageFile;
   final OutfitSegmentMap segmentMap;
   final bool interactive;
+  final bool outlineOnly;
   final OutfitSegmentZone? selectedZone;
   final ValueChanged<OutfitSegmentRegion>? onRegionTap;
 
@@ -20,6 +21,7 @@ class OutfitSegmentMapOverlay extends StatelessWidget {
     required this.imageFile,
     required this.segmentMap,
     this.interactive = false,
+    this.outlineOnly = false,
     this.selectedZone,
     this.onRegionTap,
   });
@@ -41,6 +43,7 @@ class OutfitSegmentMapOverlay extends StatelessWidget {
                 region: entry.value,
                 index: entry.key,
                 interactive: interactive,
+                outlineOnly: outlineOnly,
                 selected: selectedZone == entry.value.zone,
                 onTap: onRegionTap == null ? null : () => onRegionTap!(entry.value),
               ),
@@ -56,6 +59,7 @@ class _RegionOverlay extends StatefulWidget {
   final OutfitSegmentRegion region;
   final int index;
   final bool interactive;
+  final bool outlineOnly;
   final bool selected;
   final VoidCallback? onTap;
 
@@ -63,6 +67,7 @@ class _RegionOverlay extends StatefulWidget {
     required this.region,
     this.index = 0,
     this.interactive = false,
+    this.outlineOnly = false,
     this.selected = false,
     this.onTap,
   });
@@ -121,6 +126,7 @@ class _RegionOverlayState extends State<_RegionOverlay>
                       canvasSize: Size(w, h),
                       revealProgress: _reveal.value,
                       emphasize: widget.selected,
+                      outlineOnly: widget.outlineOnly,
                     ),
                   ),
                 ),
@@ -163,12 +169,14 @@ class _ContourPainter extends CustomPainter {
   final Size canvasSize;
   final double revealProgress;
   final bool emphasize;
+  final bool outlineOnly;
 
   _ContourPainter({
     required this.region,
     required this.canvasSize,
     this.revealProgress = 1,
     this.emphasize = false,
+    this.outlineOnly = false,
   });
 
   @override
@@ -179,10 +187,12 @@ class _ContourPainter extends CustomPainter {
 
     final alpha = (0.14 + region.confidence * 0.2 + (emphasize ? 0.12 : 0)).clamp(0.14, 0.46);
 
-    final fill = Paint()
-      ..color = AppColors.secondary.withValues(alpha: alpha * revealProgress)
-      ..style = PaintingStyle.fill;
-    canvas.drawPath(path, fill);
+    if (!outlineOnly) {
+      final fill = Paint()
+        ..color = AppColors.secondary.withValues(alpha: alpha * revealProgress)
+        ..style = PaintingStyle.fill;
+      canvas.drawPath(path, fill);
+    }
 
     // Soft glow — layered strokes (MaskFilter.blur can crash on some iOS GPUs).
     final glow = Paint()
@@ -303,7 +313,8 @@ class _ContourPainter extends CustomPainter {
       oldDelegate.region != region ||
       oldDelegate.canvasSize != canvasSize ||
       oldDelegate.revealProgress != revealProgress ||
-      oldDelegate.emphasize != emphasize;
+      oldDelegate.emphasize != emphasize ||
+      oldDelegate.outlineOnly != outlineOnly;
 }
 
 String _categoryAr(OutfitSegmentZone zone) {

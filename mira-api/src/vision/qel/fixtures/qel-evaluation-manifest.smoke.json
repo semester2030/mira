@@ -1,0 +1,17 @@
+{
+  "schemaVersion": "qel-evaluation-manifest.v1",
+  "description": "Smoke test — same image as before/after (should pass QEL). Paths relative to this file.",
+  "entries": [
+    {
+      "id": "smoke-identical-pair",
+      "humanAccept": true,
+      "originalPath": "../../../../../assets/images/premium_face_base.png",
+      "editedPath": "../../../../../assets/images/premium_face_base.png",
+      "visionContext": {
+        "regionRole": "upper",
+        "glossLevel": "matte",
+        "garmentBbox": { "x": 0.12, "y": 0.2, "w": 0.76, "h": 0.38 }
+      }
+    }
+  ]
+}

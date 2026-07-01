@@ -1,0 +1,32 @@
+{
+  "schemaVersion": "qel-calibration.v1",
+  "description": "Phase Q4 evaluation baseline — extend with human scores before production-wide rollout",
+  "profile": {
+    "id": "baseline",
+    "threshold": 0.85,
+    "minSegmentIoU": 0.55,
+    "weights": {
+      "identity": 0.35,
+      "edge": 0.25,
+      "material": 0.2,
+      "region": 0.15,
+      "color": 0.05
+    }
+  },
+  "samples": [
+    {
+      "id": "sample-upper-matte-cotton",
+      "regionRole": "upper",
+      "glossLevel": "matte",
+      "humanAccept": true,
+      "notes": "Placeholder — replace with real outfit pairs + human ranking"
+    },
+    {
+      "id": "sample-lower-denim",
+      "regionRole": "lower",
+      "glossLevel": "semi",
+      "humanAccept": true,
+      "notes": "Target 100+ labeled pairs for threshold calibration"
+    }
+  ]
+}

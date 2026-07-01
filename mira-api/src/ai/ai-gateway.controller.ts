@@ -24,6 +24,9 @@ import { OutfitIntelligenceBodyDto } from './dto/outfit-intelligence-body.dto';
 import { SkinReportSnapshot } from './contracts/outfit-intelligence.interface';
 import { VisionOrchestratorService } from '../vision/vision-orchestrator.service';
 import { VisionOutfitAnalyzeBodyDto } from '../vision/dto/vision-outfit-analyze-body.dto';
+import { VisionOutfitRecolorBodyDto } from '../vision/dto/vision-outfit-recolor-body.dto';
+import { FashnGarmentRecolorService } from '../vision/recolor/fashn-garment-recolor.service';
+import { GarmentRecolorVisionContext } from '../vision/qel/garment-recolor-context.types';
 
 const MAX_IMAGE_BYTES = 10 * 1024 * 1024;
 
@@ -43,6 +46,7 @@ export class AiGatewayController {
     private readonly outfitHybridIntelligenceService: OutfitHybridIntelligenceService,
     private readonly outfitSegmentationService: OutfitSegmentationService,
     private readonly visionOrchestrator: VisionOrchestratorService,
+    private readonly fashnGarmentRecolorService: FashnGarmentRecolorService,
   ) {}
 
   @Post('skin-analysis')
@@ -150,6 +154,32 @@ export class AiGatewayController {
     });
   }
 
+  /**
+   * Garment recolor — FASHN Edit (Phase A).
+   * Arabic prompt · server-side only · no image persistence.
+   * Reference: docs/mira-garment-recolor.html
+   */
+  @Post('vision/outfit/recolor')
+  @UseInterceptors(
+    FileInterceptor('image', {
+      storage: memoryStorage(),
+      limits: { fileSize: MAX_IMAGE_BYTES },
+    }),
+  )
+  recolorVisionOutfit(
+    @UploadedFile() file: Express.Multer.File,
+    @Body() body: VisionOutfitRecolorBodyDto,
+  ) {
+    return this.fashnGarmentRecolorService.recolor({
+      imageBuffer: file?.buffer ?? Buffer.alloc(0),
+      targetColorAr: body.targetColorAr,
+      targetColorHex: body.targetColorHex,
+      garmentLabelAr: body.garmentLabelAr,
+      customPromptAr: body.customPromptAr,
+      visionContext: parseGarmentVisionContext(body.visionContext),
+    });
+  }
+
   /** Combined skin + outfit + style fusion + unified recommendations. */
   @Post('full-mira-analysis')
   @UseInterceptors(
@@ -179,5 +209,14 @@ export class AiGatewayController {
       files.outfitImage?.[0]?.buffer ?? Buffer.alloc(0),
       body.occasion,
     );
+  }
+}
+
+function parseGarmentVisionContext(raw?: string): GarmentRecolorVisionContext | undefined {
+  if (!raw?.trim()) return undefined;
+  try {
+    return JSON.parse(raw) as GarmentRecolorVisionContext;
+  } catch {
+    return undefined;
   }
 }

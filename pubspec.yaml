@@ -41,7 +41,6 @@ dependencies:
     sdk: flutter
   flutter_localizations:
     sdk: flutter
-  google_fonts: ^6.2.1
   shared_preferences: ^2.3.3
   intl: ^0.20.2
   logger: ^2.0.2
@@ -122,6 +121,19 @@ flutter:
   #
   # For details regarding fonts from package dependencies,
   # see https://flutter.dev/to/font-from-package
+
+  fonts:
+    - family: Tajawal
+      fonts:
+        - asset: assets/fonts/Tajawal-Regular.ttf
+          weight: 400
+        - asset: assets/fonts/Tajawal-Medium.ttf
+          weight: 500
+        - asset: assets/fonts/Tajawal-Bold.ttf
+          weight: 700
+    - family: Playfair Display
+      fonts:
+        - asset: assets/fonts/PlayfairDisplay-Variable.ttf
 
   assets:
     - assets/images/

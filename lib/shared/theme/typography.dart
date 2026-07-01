@@ -1,10 +1,18 @@
 import 'package:flutter/material.dart';
-import 'package:google_fonts/google_fonts.dart';
 import 'colors.dart';
 
 /// Premium typography: Playfair for display, Tajawal for UI (Arabic-friendly).
+/// Fonts are bundled locally — no network fetch (avoids iOS DartWorker crashes).
 class AppTypography {
   AppTypography._();
+
+  static const _tajawalFamily = 'Tajawal';
+  static const _playfairFamily = 'Playfair Display';
+  static const _fallbackFamilies = <String>[
+    'SF Pro Text',
+    'Helvetica Neue',
+    'Arial',
+  ];
 
   static TextStyle _tajawal({
     required double size,
@@ -13,7 +21,9 @@ class AppTypography {
     double height = 1.35,
     double letterSpacing = 0,
   }) {
-    return GoogleFonts.tajawal(
+    return TextStyle(
+      fontFamily: _tajawalFamily,
+      fontFamilyFallback: _fallbackFamilies,
       fontSize: size,
       fontWeight: weight,
       color: color,
@@ -28,7 +38,9 @@ class AppTypography {
     Color color = AppColors.textPrimary,
     double height = 1.2,
   }) {
-    return GoogleFonts.playfairDisplay(
+    return TextStyle(
+      fontFamily: _playfairFamily,
+      fontFamilyFallback: _fallbackFamilies,
       fontSize: size,
       fontWeight: weight,
       color: color,

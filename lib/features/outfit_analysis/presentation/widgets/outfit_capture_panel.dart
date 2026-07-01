@@ -15,11 +15,13 @@ import 'outfit_body_guide_overlay.dart';
 class OutfitCapturePanel extends StatefulWidget {
   final ValueChanged<File?> onImageChanged;
   final File? capturedImage;
+  final ValueChanged<OutfitCaptureValidationResult>? onValidationChanged;
 
   const OutfitCapturePanel({
     super.key,
     required this.onImageChanged,
     this.capturedImage,
+    this.onValidationChanged,
   });
 
   @override
@@ -269,6 +271,7 @@ class _OutfitCapturePanelState extends State<OutfitCapturePanel>
         _validation = validation;
         _capturing = false;
       });
+      widget.onValidationChanged?.call(validation);
       await _pauseCamera();
     } catch (e) {
       if (!mounted) return;
@@ -286,6 +289,7 @@ class _OutfitCapturePanelState extends State<OutfitCapturePanel>
   Future<void> _retake() async {
     widget.onImageChanged(null);
     setState(() => _validation = OutfitCaptureValidationResult.ready);
+    widget.onValidationChanged?.call(OutfitCaptureValidationResult.ready);
     await _resumeCamera();
   }
 
@@ -311,6 +315,7 @@ class _OutfitCapturePanelState extends State<OutfitCapturePanel>
     await _pauseCamera();
     widget.onImageChanged(file);
     setState(() => _validation = validation);
+    widget.onValidationChanged?.call(validation);
   }
 
   Future<void> _toggleCamera() async {

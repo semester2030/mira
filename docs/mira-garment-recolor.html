@@ -1,0 +1,255 @@
+<!DOCTYPE html>
+<html lang="ar" dir="rtl">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <meta name="description" content="ميرا — خارطة إعادة تلوين القماش: FASHN Edit (المرحلة أ) · Try-On Max (المرحلة ب) · برومبت عربي · خصوصية بدون مشاركة" />
+  <title>ميرا | إعادة تلوين القماش — Garment Recolor</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link href="https://fonts.googleapis.com/css2?family=Tajawal:wght@400;500;700;800&display=swap" rel="stylesheet" />
+  <link rel="stylesheet" href="mira-project-audit.css" />
+  <style>
+    .recolor-hero { background: linear-gradient(145deg, rgba(201,162,39,0.12), rgba(124,58,237,0.08)); }
+    .phase-card { border: 1px solid var(--border); border-radius: 16px; padding: 20px; margin-bottom: 16px; background: var(--surface); transition: box-shadow .25s; }
+    .phase-card.active { border-color: var(--gold); box-shadow: 0 8px 32px rgba(201,162,39,0.15); }
+    .phase-badge { display: inline-block; padding: 4px 12px; border-radius: 999px; font-size: 0.78rem; font-weight: 800; }
+    .phase-badge.live { background: rgba(34,197,94,0.15); color: #15803d; }
+    .phase-badge.soon { background: rgba(124,58,237,0.12); color: #6d28d9; }
+    .prompt-preview { background: #1a1625; color: #f5f0ff; border-radius: 14px; padding: 18px 20px; font-size: 0.95rem; line-height: 1.85; white-space: pre-wrap; min-height: 140px; border: 1px solid rgba(201,162,39,0.25); }
+    .color-chip { width: 44px; height: 44px; border-radius: 50%; border: 2px solid transparent; cursor: pointer; transition: transform .2s, border-color .2s; }
+    .color-chip:hover, .color-chip.selected { transform: scale(1.08); border-color: var(--gold); }
+    .compare-slider { position: relative; border-radius: 16px; overflow: hidden; aspect-ratio: 3/4; max-width: 320px; margin: 16px auto; }
+    .compare-slider img { width: 100%; height: 100%; object-fit: cover; display: block; }
+    .compare-handle { position: absolute; top: 0; bottom: 0; width: 3px; background: var(--gold); cursor: ew-resize; }
+    .compare-handle::after { content: '◆'; position: absolute; top: 50%; left: 50%; transform: translate(-50%,-50%); background: var(--gold); color: #fff; width: 28px; height: 28px; border-radius: 50%; display: flex; align-items: center; justify-content: center; font-size: 10px; }
+    .arch-flow { font-family: ui-monospace, monospace; font-size: 0.82rem; background: var(--surface-alt); padding: 16px; border-radius: 12px; line-height: 1.7; overflow-x: auto; }
+    .interactive-panel { display: grid; gap: 16px; grid-template-columns: 1fr 1fr; }
+    @media (max-width: 768px) { .interactive-panel { grid-template-columns: 1fr; } }
+  </style>
+</head>
+<body>
+  <header class="site-header">
+    <div class="container header-inner">
+      <a class="brand" href="index.html">ميرا · Mira</a>
+      <nav class="nav no-print">
+        <a href="#overview">نظرة عامة</a>
+        <a href="#phases">المراحل</a>
+        <a href="#prompt-lab">مختبر البرومبت</a>
+        <a href="#api">API</a>
+        <a href="mira-vision-platform.html">Vision Platform</a>
+      </nav>
+    </div>
+  </header>
+
+  <div class="container hero-audit recolor-hero" id="top">
+    <span class="hardening-badge" style="border-color:var(--gold);color:#8b6914;background:rgba(201,162,39,0.15)">👗 GARMENT RECOLOR ROADMAP</span>
+    <span class="badge">Phase A · FASHN Edit · برومبت عربي</span>
+    <h1>إعادة تلوين القماش<br />من المعاينة إلى الواقع</h1>
+    <p class="lead">
+      تحويل لون الفستان أو البلوزة <strong>على صورة المستخدم</strong> — ليس فلتر ColorFilter، بل تعديل ذكي عبر
+      <strong>FASHN Edit</strong> على سيرفر ميرا. بدون مشاركة · بدون Story · خصوصية أولاً.
+    </p>
+    <div class="stat-grid" id="recolor-stats"></div>
+  </div>
+
+  <div class="container audit-layout">
+    <aside class="audit-sidebar no-print">
+      <h4>محتويات</h4>
+      <a href="#overview">لماذا؟</a>
+      <a href="#edit-vs-tryon">Edit vs Try-On</a>
+      <a href="#phases">المراحل أ / ب</a>
+      <a href="#architecture">المعمارية</a>
+      <a href="#prompt-lab">مختبر البرومبت العربي</a>
+      <a href="#privacy">الخصوصية</a>
+      <a href="#api">عقد API</a>
+      <a href="#flutter">Flutter</a>
+      <a href="#segment-fix">إصلاح خريطة القطع</a>
+      <a href="#env">متغيرات البيئة</a>
+    </aside>
+
+    <main class="audit-main">
+      <section id="overview" class="audit-section">
+        <div class="callout" style="border-color:var(--gold);background:rgba(201,162,39,0.08)">
+          <p>🏛 <strong>المرجع الرسمي للتنفيذ:</strong>
+            <a href="mira-vision-platform.html#garment-atelier"><strong>Atelier — استوديو تعديل الإطلالة</strong></a>
+            على Vision Platform · T0 · Phase A–D · جداول الملفات · عقد API.
+            <a href="mira-vision-platform.html#atelier-q4-phase1" style="display:block;margin-top:8px;font-weight:800">🚀 Q4 Phase 1 — ابدئي هنا (50 Case)</a>
+            <a href="mira-vision-platform.html#atelier-gates-timeline" style="display:block;margin-top:6px;font-weight:700">🗓️ بوابات الإطلاق</a>
+            هذه الصفحة <em>مختبر برومبت تفاعلي</em> مكمّل.</p>
+        </div>
+        <h2>لماذا نحتاج إعادة تلوين حقيقية؟</h2>
+        <div class="callout">
+          <p>في فصل <strong>«ألوانك»</strong>، شريط السحب يطبّق <code>ColorFilter</code> على الجزء العلوي — معاينة سريعة تقريبية.</p>
+          <p>في فصل <strong>«جرّبي»</strong>، المرحلة أ تستدعي <strong>FASHN Edit</strong> لتغيير لون القماش فقط مع الحفاظ على الوجه والخلفية والإكسسوارات.</p>
+        </div>
+        <table class="audit-table">
+          <thead><tr><th>الأداة</th><th>الاستخدام</th><th>الدقة</th></tr></thead>
+          <tbody>
+            <tr><td>ColorFilter (ألوانك)</td><td>معاينة فورية</td><td>≈ تقريبية</td></tr>
+            <tr><td>FASHN Edit (جرّبي)</td><td>نفس الفستان → لون جديد</td><td>★★★★ واقعية</td></tr>
+            <tr><td>FASHN Try-On Max (لاحقاً)</td><td>قطعة كatalog → على الجسم</td><td>★★★★★ لكن أصعب</td></tr>
+          </tbody>
+        </table>
+      </section>
+
+      <section id="edit-vs-tryon" class="audit-section">
+        <h2>Edit مقابل Try-On Max</h2>
+        <div class="phase-card active">
+          <span class="phase-badge live">المرحلة أ — Edit</span>
+          <h3>نفس القطعة · لون مختلف</h3>
+          <ul>
+            <li>المدخلات: صورة المستخدم + برومبت عربي أنيق</li>
+            <li>المخرجات: صورة معدّلة — القماش فقط</li>
+            <li>الزمن: 20–120 ثانية · 1–5 credits</li>
+            <li>الأنسب: «أريد فستاني الأزرق أسوداً»</li>
+          </ul>
+        </div>
+        <div class="phase-card">
+          <span class="phase-badge soon">المرحلة ب — Try-On Max</span>
+          <h3>قطعة من الكatalog · على الجسم</h3>
+          <ul>
+            <li>المدخلات: صورة model + صورة garment منفصلة</li>
+            <li>الأنسب: «جرّبي هذا الفستان من المتجر»</li>
+            <li>يتطلب marketplace integration</li>
+          </ul>
+        </div>
+      </section>
+
+      <section id="phases" class="audit-section">
+        <h2>خارطة التنفيذ</h2>
+        <ol class="phase-list" id="phase-checklist"></ol>
+      </section>
+
+      <section id="architecture" class="audit-section">
+        <h2>المعمارية — Phase A</h2>
+        <pre class="arch-flow">Flutter (فصل جرّبي)
+    │  multipart: image + targetColorAr + garmentLabelAr
+    ▼
+Render mira-api
+    POST /api/v1/ai/vision/outfit/recolor
+    │
+    ├─ GarmentRecolorPromptService  →  برومبت عربي احترافي
+    ├─ FashnGarmentRecolorService   →  model_name: "edit"
+    │       POST /v1/run  →  poll /v1/status/{id}
+    └─ response: imageBase64 + promptAr + userMessageAr
+
+❌ لا تخزين للصورة بعد المعالجة
+❌ لا مشاركة · لا Story · لا export
+✅ Firebase Auth على المسار</pre>
+      </section>
+
+      <section id="prompt-lab" class="audit-section">
+        <h2>مختبر البرومبت العربي — تفاعلي</h2>
+        <p>جرّبي تركيبة البرومبت قبل الإرسال إلى FASHN. النص يُعرض للمستخدم في التطبيق ويُرسل للنموذج.</p>
+        <div class="interactive-panel">
+          <div>
+            <label><strong>القطعة</strong></label>
+            <select id="garment-select" class="input-field" style="width:100%;margin-top:8px;padding:10px;border-radius:10px">
+              <option value="فستان">فستان</option>
+              <option value="بلوزة">بلوزة</option>
+              <option value="عباءة">عباءة</option>
+              <option value="تنورة">تنورة</option>
+              <option value="جاكيت">جاكيت</option>
+            </select>
+            <p style="margin-top:16px"><strong>اللون المستهدف</strong></p>
+            <div id="color-chips" style="display:flex;flex-wrap:wrap;gap:10px;margin-top:10px"></div>
+          </div>
+          <div>
+            <p><strong>البرومبت المُولَّد</strong></p>
+            <div class="prompt-preview" id="prompt-output"></div>
+            <p style="margin-top:12px;font-size:0.85rem;color:var(--text-muted)">
+              رسالة للمستخدم: <span id="user-message"></span>
+            </p>
+          </div>
+        </div>
+      </section>
+
+      <section id="privacy" class="audit-section">
+        <h2>الخصوصية — بدون استثناء</h2>
+        <ul>
+          <li>المعالجة على سيرفر ميرا فقط — المفتاح السري لا يصل للتطبيق</li>
+          <li>الصورة في الذاكرة أثناء الطلب — لا تُحفظ في PostgreSQL</li>
+          <li>لا Story · لا مشاركة · لا export — قرار صريح من المنتج</li>
+          <li>النتيجة تُعرض محلياً في الجلسة — لا رفع تلقائي</li>
+        </ul>
+      </section>
+
+      <section id="api" class="audit-section">
+        <h2>عقد API</h2>
+        <pre class="arch-flow">POST /api/v1/ai/vision/outfit/recolor
+Authorization: Bearer &lt;Firebase ID Token&gt;
+Content-Type: multipart/form-data
+
+Fields:
+  image            (file, required)
+  targetColorAr    (string, required)  — مثال: "أسود"
+  targetColorHex   (string, optional)  — مثال: "#1A1A1A"
+  garmentLabelAr   (string, optional)  — مثال: "فستان"
+  customPromptAr   (string, optional)  — برومبت معدّل من التطبيق
+  visionContext    (string, optional)  — JSON Phase Q0/Q2 (bbox · polygon · material)
+  locale           (string, default ar)
+
+Response 200:
+{
+  "imageBase64": "...",
+  "mimeType": "image/jpeg",
+  "promptAr": "...",
+  "targetColorAr": "أسود",
+  "garmentLabelAr": "فستان",
+  "processingMs": 45000,
+  "attempt": 1,
+  "qel": {
+    "accepted": true,
+    "weightedScore": 0.91,
+    "threshold": 0.85,
+    "cropFirst": true,
+    "calibrationProfile": "baseline"
+  },
+  "userMessageAr": "أعدنا تلوين فستانك إلى الأسود — بإطلالة طبيعية"
+}
+
+Response 422 (QEL_REJECTED):
+{
+  "statusCode": 422,
+  "code": "QEL_REJECTED",
+  "message": "لم نعرض النتيجة — التعديل غيّر الهوية أو خامة القماش..."
+}</pre>
+      </section>
+
+      <section id="flutter" class="audit-section">
+        <h2>تكامل Flutter — فصل «جرّبي»</h2>
+        <ul>
+          <li><code>OutfitGarmentRecolorPanel</code> — شرائح ألوان + حالة تحميل + مقارنة قبل/بعد</li>
+          <li><code>VisionApiDataSource.recolorGarment()</code> — timeout 120s</li>
+          <li>رسائل ميرا أثناء الانتظار: «ميرا تعيد تلوين إطلالتك…»</li>
+        </ul>
+      </section>
+
+      <section id="segment-fix" class="audit-section">
+        <h2>إصلاح خريطة القطع — فصل «إطلالتك»</h2>
+        <p>الطبقة الملوّنة المملوءة تسبب انقساماً بصرياً (أزرق + كحلي). الحل: <strong>outline-only</strong> — حدود وتوهج بدون fill.</p>
+      </section>
+
+      <section id="env" class="audit-section">
+        <h2>متغيرات البيئة (Render)</h2>
+        <pre class="arch-flow">FASHN_EDIT_MODEL=edit
+FASHN_EDIT_POLL_MAX_MS=120000
+FASHN_EDIT_RESOLUTION=1k          # optional
+FASHN_EDIT_GENERATION_MODE=quality  # optional
+
+# Phase Q — QEL
+QEL_ENABLED=true
+QEL_ACCEPT_THRESHOLD=0.85
+QEL_MAX_RETRIES=2
+QEL_SEGMENT_DRIFT=true
+QEL_CROP_FIRST=true               # Q2 crop-first pipeline
+QEL_CROP_PADDING=0.08
+QEL_CROP_FEATHER_PX=6
+QEL_CALIBRATION_PROFILE=baseline  # baseline | strict | JSON</pre>
+      </section>
+    </main>
+  </div>
+
+  <script src="mira-garment-recolor.js"></script>
+</body>
+</html>

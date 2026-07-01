@@ -21,6 +21,7 @@ class OutfitCameraScreen extends StatefulWidget {
 
 class _OutfitCameraScreenState extends State<OutfitCameraScreen> {
   File? _capturedImage;
+  bool _captureTrusted = false;
 
   void _continue() {
     final image = _capturedImage;
@@ -87,6 +88,7 @@ class _OutfitCameraScreenState extends State<OutfitCameraScreen> {
                   child: OutfitCapturePanel(
                     capturedImage: _capturedImage,
                     onImageChanged: (file) => setState(() => _capturedImage = file),
+                    onValidationChanged: (v) => setState(() => _captureTrusted = v.isValid),
                   ),
                 ),
                 Padding(
@@ -95,7 +97,7 @@ class _OutfitCameraScreenState extends State<OutfitCameraScreen> {
                     label: hasPhoto ? 'اختيار المناسبة' : 'التقطي إطلالتك أولاً',
                     icon: Icons.arrow_back_rounded,
                     variant: PremiumButtonVariant.gold,
-                    onPressed: hasPhoto ? _continue : null,
+                    onPressed: hasPhoto && _captureTrusted ? _continue : null,
                   ),
                 ),
               ],

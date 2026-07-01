@@ -97,6 +97,7 @@ export async function fashnRunPrediction(
 export async function fashnPollPrediction(
   config: ConfigService,
   predictionId: string,
+  options?: { pollMaxMs?: number; pollIntervalMs?: number },
 ): Promise<FashnStatusResponse> {
   const apiKey = config.get<string>('FASHN_API_KEY')?.trim();
   const baseUrl = config.get<string>('FASHN_BASE_URL')?.trim();
@@ -108,8 +109,9 @@ export async function fashnPollPrediction(
   const url = `${baseUrl.replace(/\/+$/, '')}/${statusPath.replace(/^\/+/, '')}/${predictionId}`;
   const headerName = config.get<string>('FASHN_API_KEY_HEADER', 'Authorization');
   const headerPrefix = config.get<string>('FASHN_API_KEY_PREFIX', 'Bearer ');
-  const pollIntervalMs = config.get<number>('FASHN_POLL_INTERVAL_MS', 1500);
-  const pollMaxMs = config.get<number>('FASHN_POLL_MAX_MS', 45000);
+  const pollIntervalMs =
+    options?.pollIntervalMs ?? config.get<number>('FASHN_POLL_INTERVAL_MS', 1500);
+  const pollMaxMs = options?.pollMaxMs ?? config.get<number>('FASHN_POLL_MAX_MS', 45000);
 
   const started = Date.now();
   const inProgress = new Set(['starting', 'in_queue', 'processing']);

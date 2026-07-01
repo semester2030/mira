@@ -40,6 +40,18 @@ const FEATURES: WebsiteFeature[] = [
     status: 'live',
   },
   {
+    id: 'outfit-recolor',
+    icon: '🎨',
+    titleAr: 'إعادة تلوين القماش — FASHN Edit',
+    summaryAr: 'نفس الفستان · لون جديد — برومبت عربي على سيرفر ميرا، بدون مشاركة.',
+    bulletsAr: [
+      'POST /ai/vision/outfit/recolor — المرحلة أ',
+      'فصل «جرّبي» — قبل/بعد تفاعلي',
+      'docs/mira-garment-recolor.html',
+    ],
+    status: 'beta',
+  },
+  {
     id: 'discover',
     icon: '🛍️',
     titleAr: 'اكتشفي — Marketplace',

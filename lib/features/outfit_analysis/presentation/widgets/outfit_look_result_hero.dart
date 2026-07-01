@@ -15,8 +15,13 @@ import 'outfit_skin_harmony_link.dart';
 /// Cinematic hero — photo + score ring + stylist verdict (P0).
 class OutfitLookResultHero extends StatelessWidget {
   final OutfitAnalysis analysis;
+  final bool showPhoto;
 
-  const OutfitLookResultHero({super.key, required this.analysis});
+  const OutfitLookResultHero({
+    super.key,
+    required this.analysis,
+    this.showPhoto = true,
+  });
 
   @override
   Widget build(BuildContext context) {
@@ -30,7 +35,7 @@ class OutfitLookResultHero extends StatelessWidget {
         : analysis.colorHarmonyScore;
 
     final photoPath = analysis.frozenImagePath;
-    final hasPhoto = photoPath != null && File(photoPath).existsSync();
+    final hasPhoto = showPhoto && photoPath != null && File(photoPath).existsSync();
 
     return OutfitStaggerPop(
       index: 0,

@@ -40,6 +40,28 @@ services:
         value: /v1/run
       - key: FASHN_GEOMETRY_MODEL
         value: background-remove
+      - key: FASHN_POLL_MAX_MS
+        value: "45000"
+      - key: FASHN_EDIT_MODEL
+        value: edit
+      - key: FASHN_EDIT_POLL_MAX_MS
+        value: "120000"
+      - key: QEL_ENABLED
+        value: "true"
+      - key: QEL_ACCEPT_THRESHOLD
+        value: "0.85"
+      - key: QEL_MAX_RETRIES
+        value: "2"
+      - key: QEL_SEGMENT_DRIFT
+        value: "true"
+      - key: QEL_CROP_FIRST
+        value: "true"
+      - key: QEL_CROP_PADDING
+        value: "0.08"
+      - key: QEL_CROP_FEATHER_PX
+        value: "6"
+      - key: QEL_CALIBRATION_PROFILE
+        value: baseline
       - key: LLM_API_KEY
         sync: false
       - key: LLM_BASE_URL

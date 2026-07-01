@@ -1,9 +1,13 @@
 import 'package:dio/dio.dart';
 
+import '../exceptions/vision_platform_exception.dart';
 import '../face_gate/face_gate_exception.dart';
 import 'firebase_error_message.dart';
 
 String friendlyMiraError(Object error) {
+  if (error is VisionPlatformException) {
+    return error.userMessageAr ?? error.message;
+  }
   if (error is FaceGateException) {
     return error.messageAr;
   }
@@ -36,8 +40,27 @@ String friendlyMiraError(Object error) {
       if (msg != null && msg.isNotEmpty) return msg;
       return 'تعذر تحليل الصورة — تأكدي من وضوح الوجه وقرب الكاميرا.';
     }
+    if (status == 422) {
+      final code = _extractCode(data);
+      if (code == 'QEL_REJECTED') {
+        return 'لم نعرض النتيجة — التعديل غيّر الهوية أو خامة القماش. جرّبي لوناً آخر أو صورة أوضح.';
+      }
+      final msg = _localizeServerMessage(_extractMessage(data));
+      if (msg != null && msg.isNotEmpty) return msg;
+      return 'تعذّر قبول النتيجة — جرّبي لوناً آخر أو صورة أوضح.';
+    }
     if (status == 429) {
       return 'طلبات كثيرة — انتظري قليلًا ثم أعيدي المحاولة.';
+    }
+    if (status == 503) {
+      final msg = _localizeServerMessage(_extractMessage(data));
+      if (msg != null && msg.isNotEmpty) return msg;
+      return 'الخدمة غير متاحة حالياً — حاولي لاحقاً.';
+    }
+    if (status == 502) {
+      final msg = _localizeServerMessage(_extractMessage(data));
+      if (msg != null && msg.isNotEmpty) return msg;
+      return 'تعذّر إكمال المعالجة — جرّبي مجدداً أو صورة أوضح.';
     }
     if (status != null && status >= 500) {
       final msg = _localizeServerMessage(_extractMessage(data));
@@ -52,8 +75,23 @@ String? _extractMessage(dynamic data) {
   if (data is! Map) return null;
   final message = data['message'];
   if (message is String) return message;
+  if (message is Map) {
+    final nested = message['message'];
+    if (nested is String) return nested;
+  }
   if (message is List && message.isNotEmpty) {
     return message.first.toString();
+  }
+  return null;
+}
+
+String? _extractCode(dynamic data) {
+  if (data is! Map) return null;
+  final code = data['code'];
+  if (code is String) return code;
+  if (code is Map) {
+    final nested = code['code'];
+    if (nested is String) return nested;
   }
   return null;
 }
@@ -86,8 +124,17 @@ String? _localizeServerMessage(String? raw) {
   if (lower.contains('perfect corp api key is not configured')) {
     return 'مفتاح Perfect Corp غير مضبوط على السيرفر (PERFECT_API_KEY).';
   }
+  if (lower.contains('qel_rejected') || lower.contains('لم نعرض النتيجة')) {
+    return 'لم نعرض النتيجة — التعديل غيّر الهوية أو خامة القماش. جرّبي لوناً آخر أو صورة أوضح.';
+  }
+  if (lower.contains('fashn_not_configured') || lower.contains('غير متاحة حاليا')) {
+    return 'خدمة إعادة التلوين غير مفعّلة على السيرفر — تواصلي مع الدعم.';
+  }
+  if (lower.contains('garment_recolor_failed') || lower.contains('إعادة تلوين')) {
+    return raw;
+  }
   if (lower.contains('internal server error')) {
     return 'خطأ داخلي في السيرفر — راجعي سجلات Render لمزيد من التفاصيل.';
   }
-  return 'خطأ في الخادم: $raw';
+  return raw;
 }

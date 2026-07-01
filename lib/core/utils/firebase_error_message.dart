@@ -55,10 +55,24 @@ String friendlyFirebaseError(Object error) {
   }
 
   if (error is Exception) {
-    final msg = error.toString();
+    final msg = error.toString().trim();
+    if (msg.isEmpty) {
+      return 'حدث خطأ غير متوقع. حاولي مرة أخرى.';
+    }
     if (msg.startsWith('Exception: ')) {
       return msg.replaceFirst('Exception: ', '');
     }
+    if (msg.startsWith('Bad state: ')) {
+      return msg.replaceFirst('Bad state: ', '');
+    }
+    if (msg.startsWith('Instance of ')) {
+      return 'حدث خطأ غير متوقع. حاولي مرة أخرى.';
+    }
+    return msg;
+  }
+
+  if (error is FormatException || error is TypeError) {
+    return 'تعذّر قراءة نتيجة التحليل — أعيدي المحاولة.';
   }
 
   return 'حدث خطأ غير متوقع. حاولي مرة أخرى.';

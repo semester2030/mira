@@ -120,6 +120,8 @@ abstract final class OutfitCaptureRules {
       OutfitCaptureHint.lowLight => 'الإضاءة ضعيفة',
       OutfitCaptureHint.blurry => 'الصورة غير واضحة',
       OutfitCaptureHint.bodyNotDetected => 'ضعي جسمك بالكامل داخل الإطار',
+      OutfitCaptureHint.notOutfitPhoto =>
+        'التقطي صورة إطلالة حقيقية — لا سكرينشوت ولا صور تطبيقات',
     };
   }
 

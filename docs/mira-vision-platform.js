@@ -28,6 +28,7 @@
     modulesLive: ['VisionModule', 'AiGatewayModule'],
     routesVerified: [
       'POST /api/v1/ai/vision/outfit/analyze',
+      'POST /api/v1/ai/vision/outfit/recolor',
       'POST /api/v1/ai/outfit-segmentation',
       'POST /api/v1/ai/skin-analysis',
       'POST /api/v1/ai/outfit-intelligence',
@@ -2378,6 +2379,787 @@ Silent OutfitImageAnalyzer fallback`;
     toast('تم المسح');
   }
 
+  /** 👗 Atelier — Official Garment Modification Reference */
+  const GARMENT_ATELIER = {
+    updated: '2026-07-01',
+    stats: [
+      ['T0 الثقة', '✅ منفّذ'],
+      ['Phase A Edit', '✅ منفّذ'],
+      ['Phase Q QEL', '✅ Q0–Q3 + Q4 baseline'],
+      ['A+ / Try-On', '🔒 بعد dataset Q4'],
+    ],
+    phaseAChecklist: [
+      'OutfitGarmentRecolorPanel — صورة · قطعة · ألوان · برومبت · زر تطبيق',
+      'GarmentRecolorPromptBuilder — معاينة برومпт على الجهاز',
+      'VisionApiDataSource.recolorGarment() — timeout 180s · customPromptAr',
+      'GarmentRecolorPromptService — برومпт عربي + customPromptAr override',
+      'FashnGarmentRecolorService — FASHN Edit poll',
+      'POST /ai/vision/outfit/recolor في AiGatewayController',
+      'مقارنة قبل/بعد — سحب أفقي',
+      'OutfitSegmentMapOverlay outlineOnly في «إطلالتك»',
+    ],
+    flutterFiles: [
+      ['✅', 'lib/features/outfit_analysis/presentation/widgets/engagement/outfit_garment_recolor_panel.dart', 'UI رئيسي — برومبت + تطبيق'],
+      ['✅', 'lib/features/outfit_analysis/domain/helpers/garment_recolor_prompt_builder.dart', 'بناء برومпт معاينة'],
+      ['✅', 'lib/features/outfit_analysis/domain/helpers/garment_recolor_vision_context.dart', 'Q0+Q2 — visionContext + polygon'],
+      ['✅', 'lib/features/outfit_analysis/data/datasources/vision_api_data_source.dart', 'recolorGarment() + qel'],
+      ['✅', 'lib/features/outfit_analysis/presentation/widgets/engagement/outfit_result_story_shell.dart', 'فصل «جرّبي»'],
+      ['✅', 'lib/features/outfit_analysis/presentation/widgets/engagement/outfit_photo_color_slider.dart', 'معاينة ColorFilter — «ألوانك»'],
+      ['✅', 'lib/features/outfit_analysis/presentation/widgets/outfit_color_alternative_panel.dart', 'رسم قطعة بديلة'],
+      ['✅', 'lib/features/outfit_analysis/presentation/widgets/outfit_segment_map_overlay.dart', 'outline-only'],
+      ['✅', 'lib/features/outfit_analysis/domain/services/outfit_photo_trust_gate.dart', 'T0 — بوابة ثقة'],
+      ['✅', 'lib/features/outfit_analysis/domain/helpers/outfit_result_trust.dart', 'T0 — سياسة النتيجة'],
+      ['✅', 'lib/features/outfit_analysis/presentation/widgets/outfit_untrusted_result_view.dart', 'T0 — UI محظور'],
+      ['✅', 'test/outfit_photo_trust_test.dart', 'اختبارات الثقة'],
+    ],
+    backendFiles: [
+      ['✅', 'mira-api/src/vision/qel/garment-qel.service.ts', 'Q1+Q3 — weighted scorer'],
+      ['✅', 'mira-api/src/vision/qel/garment-crop-composite.service.ts', 'Q2 — crop + composite'],
+      ['✅', 'mira-api/src/vision/qel/qel-calibration.service.ts', 'Q4 — profiles'],
+      ['✅', 'mira-api/src/vision/qel/image-region-metrics.ts', 'identity · edge · material metrics'],
+      ['✅', 'mira-api/src/vision/recolor/fashn-garment-recolor.service.ts', 'FASHN Edit + QEL loop'],
+      ['✅', 'mira-api/src/vision/recolor/garment-recolor-prompt.service.ts', 'برومبت v2 + visionContext'],
+      ['✅', 'mira-api/src/vision/dto/vision-outfit-recolor-body.dto.ts', 'DTO + visionContext'],
+      ['✅', 'mira-api/src/ai/ai-gateway.controller.ts', 'POST vision/outfit/recolor'],
+      ['✅', 'mira-api/src/vision/vision.module.ts', 'DI providers'],
+      ['✅', 'render.yaml', 'FASHN_EDIT_* + QEL_* env vars'],
+    ],
+    roadmap: [
+      {
+        id: 'T0',
+        badge: 'trust',
+        label: '✅ T0 — نظام الثقة',
+        title: 'لا درجة بدون صورة إطلالة موثوقة',
+        status: 'live',
+        items: [
+          'OutfitPhotoTrustGate — capture + analyze',
+          'OutfitResultTrustPolicy — blocked/degraded/trusted',
+          'OutfitUntrustedResultView — بدون score',
+          'Capture screens — continue فقط إذا trusted',
+        ],
+      },
+      {
+        id: 'A',
+        badge: 'live',
+        label: '✅ Phase A — FASHN Edit',
+        title: 'تلوين قطعة واحدة · برومبت عربي',
+        status: 'live',
+        items: [
+          'POST /ai/vision/outfit/recolor',
+          'OutfitGarmentRecolorPanel كامل',
+          'customPromptAr + visionContext من التطبيق',
+          'قبل/بعد · 180s timeout',
+          '✅ QEL gate — لا عرض بدون pass',
+        ],
+      },
+      {
+        id: 'Q',
+        badge: 'live',
+        label: '✅ Phase Q — QEL (Q0–Q4 baseline)',
+        title: 'AI Garment Integrity System — بوابة القبول',
+        status: 'live',
+        items: [
+          'Q0 Prompt v2 + visionContext — ✅',
+          'Q1 GarmentQelService — identity · edge · material · segment drift — ✅',
+          'Q3 Acceptance gate + auto-retry max 2 — ✅',
+          'Q2 Crop-first · Q4 Calibration profile — ✅',
+          '⛔ A+ / Try-On بعد 100+ human-labeled pairs',
+        ],
+      },
+      {
+        id: 'A+',
+        badge: 'planned',
+        label: '🔒 Phase A+ — بعد Q',
+        title: 'Edit متعدد — بلوزة + بنطلون + عباءة',
+        status: 'planned',
+        items: [
+          'مقفول حتى Phase Q1 stable',
+          'polygon crops per zone · QEL per step',
+          'progress UI · إلغاء بين الخطوات',
+        ],
+      },
+      {
+        id: 'B',
+        badge: 'planned',
+        label: '🔒 Phase B — بعد Q2+Q3',
+        title: 'Try-On Max — catalog على الجسم',
+        status: 'planned',
+        items: [
+          'model + garment images',
+          'marketplace integration',
+          'QEL على try-on output إلزامي',
+        ],
+      },
+      {
+        id: 'C',
+        badge: 'planned',
+        label: '⏳ Phase C — تنسيق ذكي',
+        title: 'ميرا تقترح → المستخدمة تختار → تنفيذ خطوة',
+        status: 'planned',
+        items: [
+          'Orchestrator يربط تحليل MIRA + Atelier',
+          'لا «برومпт حر لكل شيء» — خطوات واضحة',
+          'كل خطوة: preview + confirm',
+        ],
+      },
+      {
+        id: 'D',
+        badge: 'planned',
+        label: '⏳ Phase D — نضج',
+        title: 'cache · rate limit · monitoring',
+        status: 'planned',
+        items: [
+          'cache جلسة (لا حفظ دائم للصورة)',
+          'rate limit مخصص لـ recolor',
+          'Datadog / Render metrics لـ FASHN latency',
+        ],
+      },
+    ],
+    promptExample:
+      'أعدي تلوين بلوزة في هذه الصورة إلى كحلي (#1A2848).\n\n' +
+      '• المطلوب: تغيير لون القماش فقط — مع الحفاظ على القصة والنسيج والثنيات والظلال والانعكاسات الطبيعية.\n' +
+      '• المحظور تماماً: الوجه، الشعر، البشرة، اليدين، الخلفية، الحذاء، الحقيبة، المجوهرات، وملامح الجسم.\n' +
+      '• الجودة: إخراج واقعي بأسلوب تصوير أزياء فاخر — بدون فلاتر أو تجميل للوجه.\n' +
+      '• الدقة: لون كحلي موحّد على بلوزة مع حواف نظيفة عند خط الفصل مع الجلد.',
+    promptV2Example:
+      'أعدي تلوين البلوزة (upper · fit: oversized · foldDensity: high) إلى كحلي غامق (#1A2848).\n\n' +
+      '• الخامة: إن كان القماش لامعاً — حافظي على انعكاسات الضوء الطبيعية؛ إن كان مطفياً — لا تزيدي اللمعان.\n' +
+      '• الهندسة: حافظي على كثافة الثنيات الطبيعية في منطقة الكتف والصدر — لا تسطّحي الطيات.\n' +
+      '• المطلوب: تغيير طبقة الصبغة فقط — لا تغيّري نسيج الألياف ولا سلوك القماش.\n' +
+      '• المحظور: الوجه · الشعر · البشرة · الخلفية · الإكسسوارات · تغيير proportions.\n' +
+      '• الحواف: حواف نظيفة عند خط الفصل مع الجلد — zero bleeding.',
+    qelScoreTree:
+      'QEL Score (weighted acceptance)\n' +
+      '├── IdentityScore      (face histogram + skin luma delta — implemented)\n' +
+      '│     └── SkinIntegrityValidator (Perfect Corp) — ⏳ planned\n' +
+      '├── EdgeScore          (bleeding · hair boundary · accessory boundary)\n' +
+      '├── MaterialScore      (gloss delta · contrast map · fold sharpness)\n' +
+      '├── RegionIntegrityScore (post-edit re-segment · IoU vs M₀)\n' +
+      '└── ColorConsistencyScore (variance inside garment mask)\n' +
+      '\n' +
+      'Accept if weighted_sum ≥ threshold · else retry (max 2) · else reject',
+    qelPhases: [
+      {
+        id: 'Q0',
+        badge: 'qel',
+        label: '✅ Phase Q0 — Prompt v2',
+        title: 'Contextual · Geometry-aware · Material guardrails',
+        items: [
+          'GarmentRecolorPromptService v2 — visionContext ✅',
+          'regionRole · fit · foldDensity في البرومبت ✅',
+          'conditional material (confidence ≥ 0.6) ✅',
+          'GarmentRecolorPromptBuilder + GarmentRecolorVisionContext Flutter ✅',
+        ],
+      },
+      {
+        id: 'Q1',
+        badge: 'live',
+        label: '✅ Phase Q1 — Perceptual Validation',
+        title: 'Identity · Skin · Segment Drift · Material heuristics',
+        items: [
+          'Identity Diff — face histogram + skin tone delta ✅',
+          'Skin Integrity — luma delta heuristic (Perfect Corp ⏳)',
+          'Segment Drift — re-segment post-edit · IoU threshold ✅',
+          'Material Heuristic Lock — gloss · contrast · fold sharpness ✅',
+        ],
+      },
+      {
+        id: 'Q2',
+        badge: 'qel',
+        label: '✅ Phase Q2 — Crop-first',
+        title: 'Padded polygon crop · composite engine',
+        items: [
+          'polygon + padding من segment (ليس bbox خام) ✅',
+          'edit على crop · composite مع feathering ✅',
+          'color match luminance في المناطق المجاورة ✅',
+        ],
+      },
+      {
+        id: 'Q3',
+        badge: 'qel',
+        label: '✅ Phase Q3 — Acceptance Gate',
+        title: 'Elite Scorer · weighted · auto-retry',
+        items: [
+          'QEL Score tree — 5 sub-scores مرجّحة ✅',
+          'MIRA Acceptance Gate — لا UI بدون pass ✅',
+          'auto-retry max 2 (prompt أشد) · 422 QEL_REJECTED ✅',
+        ],
+      },
+      {
+        id: 'Q4',
+        badge: 'qel',
+        label: '✅ Phase Q4 — Calibration (baseline)',
+        title: 'Evaluation dataset · human ranking',
+        items: [
+          'QelCalibrationService — baseline + strict profiles ✅',
+          'npm run test:qel-calibration — runner + threshold suggest ✅',
+          'fixtures/qel-calibration-baseline.v1.json ✅',
+          '100+ real user outfits · human score — ⏳ · <a href="#atelier-q4-eval">سجل Q4 التفاعلي ↓</a>',
+        ],
+      },
+    ],
+    apiContract:
+      'POST /api/v1/ai/vision/outfit/recolor\n' +
+      'Authorization: Bearer <Firebase ID Token>\n' +
+      'Content-Type: multipart/form-data\n\n' +
+      'Fields:\n' +
+      '  image            (file, required)\n' +
+      '  targetColorAr    (string, required)\n' +
+      '  targetColorHex   (string, optional)\n' +
+      '  garmentLabelAr   (string, optional)\n' +
+      '  customPromptAr   (string, optional)  — min 20 chars in Flutter UI\n' +
+      '  visionContext    (string, optional)  — JSON: regionRole · garmentBbox · garmentPolygon · fit · glossLevel\n' +
+      '  locale           (string, default ar)\n\n' +
+      'Response 200:\n' +
+      '{\n' +
+      '  "imageBase64": "...",\n' +
+      '  "mimeType": "image/jpeg",\n' +
+      '  "promptAr": "...",\n' +
+      '  "targetColorAr": "أسود",\n' +
+      '  "garmentLabelAr": "بلوزة",\n' +
+      '  "processingMs": 45000,\n' +
+      '  "attempt": 1,\n' +
+      '  "qel": {\n' +
+      '    "accepted": true,\n' +
+      '    "weightedScore": 0.91,\n' +
+      '    "threshold": 0.85,\n' +
+      '    "cropFirst": true,\n' +
+      '    "calibrationProfile": "baseline",\n' +
+      '    "subScores": { "identityScore": 0.94, "edgeScore": 0.88, ... }\n' +
+      '  },\n' +
+      '  "userMessageAr": "أعدنا تلوين بلوزتك — بإطلالة طبيعية"\n' +
+      '}\n\n' +
+      'Errors:\n' +
+      '  422 QEL_REJECTED          → لم نعرض النتيجة — identity/material drift\n' +
+      '  503 FASHN_NOT_CONFIGURED  → FASHN_API_KEY missing\n' +
+      '  502 GARMENT_RECOLOR_FAILED→ FASHN poll failed\n' +
+      '  400 EMPTY_IMAGE',
+    envBlock:
+      'FASHN_API_KEY=...                    # مطلوب\n' +
+      'FASHN_BASE_URL=https://api.fashn.ai\n' +
+      'FASHN_EDIT_MODEL=edit\n' +
+      'FASHN_EDIT_POLL_MAX_MS=120000\n\n' +
+      '# Phase Q — QEL (render.yaml)\n' +
+      'QEL_ENABLED=true\n' +
+      'QEL_ACCEPT_THRESHOLD=0.85\n' +
+      'QEL_MAX_RETRIES=2\n' +
+      'QEL_SEGMENT_DRIFT=true\n' +
+      'QEL_CROP_FIRST=true\n' +
+      'QEL_CROP_PADDING=0.08\n' +
+      'QEL_CROP_FEATHER_PX=6\n' +
+      'QEL_CALIBRATION_PROFILE=baseline   # baseline | strict | JSON',
+    verifyCommands:
+      '# T0 — Flutter trust (5 tests)\n' +
+      'flutter test test/outfit_photo_trust_test.dart\n\n' +
+      '# Backend build\n' +
+      'cd mira-api && npm run build\n\n' +
+      '# Q4 calibration smoke\n' +
+      'cd mira-api && npm run test:qel-calibration:smoke\n\n' +
+      '# Q4 with real before/after pairs\n' +
+      'QEL_CALIBRATION_DATASET=~/qel-manifest.json npm run test:qel-calibration\n\n' +
+      '# Manual E2E\n' +
+      '1. npm run start:dev (mira-api) + flutter run --dart-define=USE_MIRA_API=true\n' +
+      '2. selfie إطلالة حقيقية → تحليل → فصل «جرّبي»\n' +
+      '3. قطعة + لون + برومبت → «تطبيق التلوين» (حتى 180s)\n' +
+      '4. ✓ قبل/بعد + شارة Phase Q · ✗ رسالة QEL_REJECTED\n' +
+      '5. لقطة marketing → blocked بدون score (T0)',
+    auditProof: [
+      {
+        phase: 'T0',
+        claim: 'لا درجة/تجربة كاملة على صورة غير موثوقة',
+        status: 'verified',
+        evidence:
+          'outfit_photo_trust_gate.dart · outfit_result_trust.dart · outfit_untrusted_result_view.dart · test/outfit_photo_trust_test.dart (5/5)',
+        gap: '—',
+      },
+      {
+        phase: 'A',
+        claim: 'POST recolor + OutfitGarmentRecolorPanel + قبل/بعد',
+        status: 'verified',
+        evidence:
+          'ai-gateway.controller.ts L162 · fashn-garment-recolor.service.ts · outfit_garment_recolor_panel.dart · vision_api_data_source.dart timeout 180s',
+        gap: '—',
+      },
+      {
+        phase: 'Q0',
+        claim: 'Prompt v2 + visionContext (semantic · geometry · material)',
+        status: 'verified',
+        evidence:
+          'garment-recolor-prompt.service.ts composePromptV2 · garment_recolor_vision_context.dart · garment_recolor_prompt_builder.dart',
+        gap: 'material من analysis غالباً null — conditional prompt فقط',
+      },
+      {
+        phase: 'Q1',
+        claim: 'Identity · edge · material · segment drift',
+        status: 'partial',
+        evidence:
+          'garment-qel.service.ts · image-region-metrics.ts · FashnGeometryProvider.segment post-edit',
+        gap: 'Face embedding · landmarks · Perfect Corp skin — غير منفّذ (luma histogram فقط)',
+      },
+      {
+        phase: 'Q2',
+        claim: 'Crop-first polygon + feather composite',
+        status: 'verified',
+        evidence:
+          'garment-crop-composite.service.ts · garmentPolygon في visionContext · QEL_CROP_FIRST=true',
+        gap: 'polygon فقط إذا segment map hasContour — وإلا bbox fallback',
+      },
+      {
+        phase: 'Q3',
+        claim: 'Weighted scorer ≥0.85 · retry 2 · 422 reject · no UI without pass',
+        status: 'verified',
+        evidence:
+          'garment-qel.service.ts WEIGHTS via QelCalibrationService · fashn loop · mira_api_error_message.dart QEL_REJECTED · panel _QelBadge',
+        gap: '—',
+      },
+      {
+        phase: 'Q4',
+        claim: 'Calibration profiles + offline runner',
+        status: 'partial',
+        evidence:
+          'qel-calibration.service.ts · qel-calibration.runner.ts · npm run test:qel-calibration:smoke ✓',
+        gap: '100+ human-labeled outfit pairs — غير موجود · threshold من smoke فقط',
+      },
+      {
+        phase: 'Deploy',
+        claim: 'QEL live على Render production',
+        status: 'pending',
+        evidence: 'render.yaml QEL_* vars · كود محلي',
+        gap: 'git push + Render env + FASHN_API_KEY — لم يُتحقق من deploy هذا PR',
+      },
+    ],
+    targetOutcomes: [
+      {
+        title: '1. الثقة — T0',
+        bullets: [
+          'لقطة شاشة / marketing / بدون جسم → OutfitUntrustedResultView · بدون score · زر إعادة تصوير',
+          'selfie إطلالة كاملة موثوقة → فصول النتيجة الكاملة متاحة',
+          'التحقق: flutter test test/outfit_photo_trust_test.dart → 5/5',
+        ],
+      },
+      {
+        title: '2. إعادة التلوين — فصل «جرّبي» فقط',
+        bullets: [
+          'المستخدمة تختار قطعة + لون + تعدّل برومبت عربي (≥20 حرف) → تضغط «تطبيق التلوين»',
+          'الانتظار 30–180s · لا نتيجة فورية (ليس ColorFilter)',
+          'النجاح: سحب قبل/بعد + شارة «Phase Q — جودة X% · Q2 crop · محاولة N»',
+          'الفشل QEL: «لم نعرض النتيجة — التعديل غيّر الهوية أو خامة القماش» — بدون fake before/after',
+        ],
+      },
+      {
+        title: '3. سلامة بصرية — QEL',
+        bullets: [
+          'الوجه والبشرة: histogram + skin luma delta في face rect (ليس embedding بعد)',
+          'القماش: gloss · contrast · fold laplacian delta — reject إذا matte→glossy',
+          'الحدود: segment re-segment IoU ≥ 0.55 على upper bbox',
+          'القبول: weightedScore ≥ 0.85 AND rejectReasons.length === 0',
+          'auto-retry: prompt أشد (strictRetrySuffix) · max 2 retries · ثم 422',
+        ],
+      },
+      {
+        title: '4. ما لا نريده أبداً',
+        bullets: [
+          'درجة 75/100 على صورة ليست إطلالة',
+          'وجه «محسّن» أو بشرة مختلفة بعد recolor',
+          'قماش plastic · matte→satin · bleeding على الجلد',
+          'عرض نتيجة FASHN بدون QEL pass',
+          'Story · مشاركة · حفظ صورة على السيرفر',
+        ],
+      },
+      {
+        title: '5. معيار «wow» المستهدف (قبل A+)',
+        bullets: [
+          'المستخدمة تقول: «هذا أنا — لكن اللون أحلى»',
+          '≥85% humanAccept على dataset 100+ زوج before/after (Q4 — لم يتحقق بعد)',
+          'reject rate واضح أفضل من عرض fake',
+        ],
+      },
+    ],
+    remainingItems: [
+      {
+        item: '100+ human-labeled before/after pairs',
+        phase: 'Q4',
+        why: 'معايرة threshold وweights — بدونها baseline 0.85 افتراضي',
+        gate: 'قبل production-wide QEL tuning · قبل A+',
+      },
+      {
+        item: 'Perfect Corp Skin Integrity Validator',
+        phase: 'Q1',
+        why: 'moat — undertone · texture zones · not just luma',
+        gate: 'قبل ادّعاء «hybrid identity» كامل',
+      },
+      {
+        item: 'Face embedding + landmark diff',
+        phase: 'Q1',
+        why: 'SSIM/luma ضعيف مع exposure drift',
+        gate: 'اختياري قبل A+ · مذكور في المستند',
+      },
+      {
+        item: 'git push + Render deploy مع QEL_* + FASHN_API_KEY',
+        phase: 'Deploy',
+        why: 'التطبيق على Render بدون QEL = خطر ثقة',
+        gate: 'قبل beta خارج الفريق',
+      },
+      {
+        item: 'Phase A+ multi-piece edit',
+        phase: 'A+',
+        why: 'بلوزة + بنطلون + عباءة تراكمي',
+        gate: 'Q4 dataset baseline + Q1 stable',
+      },
+      {
+        item: 'Phase B Try-On Max',
+        phase: 'B',
+        why: 'catalog garment على الجسم',
+        gate: 'Q2 + Q3 + Q4 على try-on output',
+      },
+      {
+        item: 'Phase C orchestrator · Phase D cache/metrics',
+        phase: 'C/D',
+        why: 'تنسيق ذكي · rate limit recolor · Datadog',
+        gate: 'بعد A/B stable',
+      },
+    ],
+    gatesTimeline: {
+      nextStepHtml:
+        'الخطوة <strong>الآن</strong>: أكملي <a href="#atelier-q4-eval">سجل Q4 — 100 صورة</a> → صدّري manifest → ' +
+        '<code>npm run test:qel-calibration</code> → انشري QEL على Render مع <code>FASHN_API_KEY</code>. ' +
+        'بعد ≥85% PASS — يُفتح <strong>Phase A+</strong> للتطوير.',
+      flow: [
+        { id: 'T0', label: 'T0 الثقة', status: 'done' },
+        { id: 'A', label: 'Phase A Edit', status: 'done' },
+        { id: 'Q', label: 'Phase Q QEL', status: 'done' },
+        { id: 'Q4', label: 'Q4 — 100 صورة', status: 'now' },
+        { id: 'DEPLOY', label: 'نشر QEL Render', status: 'locked' },
+        { id: 'A+', label: 'Phase A+', status: 'locked' },
+        { id: 'B', label: 'Phase B', status: 'locked' },
+        { id: 'C', label: 'Phase C', status: 'locked' },
+      ],
+      gates: [
+        {
+          phase: 'Q4',
+          feature: 'معايرة QEL + threshold إنتاجي',
+          condition: '100 Case مكتمل · ≥85 PASS · manifest JSON',
+          status: 'now',
+          action: '<a href="#atelier-q4-eval">سجل Q4 ↓</a>',
+        },
+        {
+          phase: 'Deploy',
+          feature: 'QEL live على Render',
+          condition: 'git push · QEL_* + FASHN_API_KEY · smoke test',
+          status: 'locked',
+          action: 'render.yaml · env vars',
+        },
+        {
+          phase: 'A+',
+          feature: 'Edit متعدد القطع — بلوزة + بنطلون + عباءة',
+          condition: 'Q4 مغلق ≥85% · Q1 stable · QEL على الإنتاج',
+          status: 'locked',
+          action: 'فصل «جرّبي» — تراكمي',
+        },
+        {
+          phase: 'B',
+          feature: 'Try-On Max — catalog على الجسم',
+          condition: 'A+ مستقر · Q2+Q3 على try-on · marketplace',
+          status: 'locked',
+          action: 'فصل «دولابك»',
+        },
+        {
+          phase: 'C',
+          feature: 'تنسيق ذكي — اقتراح → اختيار → تنفيذ',
+          condition: 'A+ و B مستقران · orchestrator',
+          status: 'locked',
+          action: 'عبر الفصول',
+        },
+        {
+          phase: 'D',
+          feature: 'cache · rate limit · Datadog',
+          condition: 'بعد A/B/C stable',
+          status: 'locked',
+          action: 'نضج تشغيلي',
+        },
+      ],
+      weeks: [
+        {
+          period: 'يونيو 2026 — أسبوع 1–2',
+          title: 'Q4 Phase 1 — بداية (25–50 Case)',
+          status: 'now',
+          items: [
+            '<a href="#atelier-q4-phase1">قسم Q4 Phase 1</a> — 50 سيناريو جاهز',
+            '«Q4 بداية — 50 Case» في السجل',
+            'تشغيل «جرّبي» — تعبئة الدرجات + QEL',
+            'قرار Go/No-Go عند ≥25 مكتمل',
+          ],
+        },
+        {
+          period: 'يونيو 2026 — أسبوع 3–4',
+          title: 'Q4 — إكمال 100 + تصدير manifest',
+          status: 'now',
+          items: [
+            '25 Case إضافية أسبوعياً حتى 100 مكتمل',
+            'اقتراح Final تلقائي + مراجعة Identity Fail',
+            'تصدير qel-manifest-100.json',
+            'npm run test:qel-calibration — ضبط threshold',
+          ],
+        },
+        {
+          period: 'يوليو 2026 — أسبوع 1',
+          title: 'نشر QEL على Render + إغلاق بوابة Q4',
+          status: 'locked',
+          items: [
+            'git push → Render auto-deploy',
+            'QEL_ENABLED=true · FASHN_API_KEY · QEL_ACCEPT_THRESHOLD',
+            'Smoke: recolor في التطبيق مع شارة QEL',
+            '✅ بوابة Q4 مغلقة عند ≥85% PASS',
+          ],
+        },
+        {
+          period: 'يوليو 2026 — أسبوع 2–4',
+          title: 'Phase A+ — تطوير Edit متعدد القطع',
+          status: 'locked',
+          items: [
+            'يفتح فقط بعد إغلاق Q4 + Deploy',
+            'تراكمي: بلوزة → بنطلون → عباءة',
+            'QEL على كل خطوة · polygon per zone',
+            'progress UI · إلغاء بين الخطوات',
+          ],
+        },
+        {
+          period: 'أغسطس 2026',
+          title: 'Phase B — Try-On Max + دولابك',
+          status: 'locked',
+          items: [
+            'بعد A+ مستقر (2–3 أسابيع QA)',
+            'FASHN Try-On · صورة catalog + الجسم',
+            'QEL على مخرجات try-on',
+            'MIRA_MARKETPLACE_ENABLED عند الجاهزية',
+          ],
+        },
+        {
+          period: 'سبتمبر 2026',
+          title: 'Phase C — تنسيق ذكي',
+          status: 'locked',
+          items: [
+            'Orchestrator: تحليل MIRA → اقتراح → اختيار → تنفيذ',
+            'كل خطوة: preview + confirm',
+            'لا برومبت حر بدون حدود',
+          ],
+        },
+        {
+          period: 'أكتوبر–نوفمبر 2026',
+          title: 'Phase D + beta واسع',
+          status: 'locked',
+          items: [
+            'cache جلسة · rate limit recolor',
+            'Datadog / Render metrics',
+            'beta خارج الفريق إذا كل البوابات خضراء',
+          ],
+        },
+      ],
+      aPlusCriteria: [
+        '100/100 Case مكتمل في سجل Q4 (مسارات + 4 درجات Core + Final)',
+        '≥ 85 PASS من 100 (85%) — Pass Rate في السجل',
+        'صفر أو حد أدنى Identity Fail غير مقبول',
+        'manifest JSON مُصدَّر + test:qel-calibration ناجح',
+        'QEL منشور على Render — التطبيق يعرض شارة QEL فقط عند القبول',
+        'شعور المستخدمة: «هذا أنا — لكن اللون أحلى»',
+      ],
+    },
+  };
+
+  function renderGarmentAtelier() {
+    const statsEl = $('atelier-stats');
+    if (statsEl) {
+      statsEl.innerHTML = GARMENT_ATELIER.stats
+        .map(
+          ([k, v]) =>
+            `<div class="stat-card"><span class="stat-label">${k}</span><span class="stat-value">${v}</span></div>`,
+        )
+        .join('');
+    }
+
+    const checklist = $('atelier-phase-a-checklist');
+    if (checklist) {
+      checklist.innerHTML = GARMENT_ATELIER.phaseAChecklist.map((t) => `<li>${t}</li>`).join('');
+    }
+
+    const promptEx = $('atelier-prompt-example');
+    if (promptEx) promptEx.textContent = GARMENT_ATELIER.promptExample;
+
+    const promptV2 = $('atelier-prompt-v2-example');
+    if (promptV2) promptV2.textContent = GARMENT_ATELIER.promptV2Example;
+
+    const scoreTree = $('atelier-qel-score-tree');
+    if (scoreTree) scoreTree.textContent = GARMENT_ATELIER.qelScoreTree;
+
+    const qelPhases = $('atelier-qel-phases');
+    if (qelPhases) {
+      qelPhases.innerHTML = GARMENT_ATELIER.qelPhases
+        .map(
+          (phase) => `<div class="atelier-phase qel">
+            <span class="atelier-badge qel">${phase.label}</span>
+            <h4 style="margin:8px 0">${phase.title}</h4>
+            <ul style="font-size:0.88rem;line-height:1.75;margin:0;padding-right:20px">
+              ${phase.items.map((i) => `<li>${i}</li>`).join('')}
+            </ul>
+          </div>`,
+        )
+        .join('');
+    }
+
+    const flutterTb = document.querySelector('#atelier-flutter-table tbody');
+    if (flutterTb) {
+      flutterTb.innerHTML = GARMENT_ATELIER.flutterFiles
+        .map(([s, p, n]) => `<tr><td>${s}</td><td><code>${p}</code></td><td>${n}</td></tr>`)
+        .join('');
+    }
+
+    const backendTb = document.querySelector('#atelier-backend-table tbody');
+    if (backendTb) {
+      backendTb.innerHTML = GARMENT_ATELIER.backendFiles
+        .map(([s, p, n]) => `<tr><td>${s}</td><td><code>${p}</code></td><td>${n}</td></tr>`)
+        .join('');
+    }
+
+    const roadmapEl = $('atelier-roadmap-phases');
+    if (roadmapEl) {
+      roadmapEl.innerHTML = GARMENT_ATELIER.roadmap
+        .map((phase) => {
+          const cls =
+            phase.status === 'live'
+              ? 'live'
+              : phase.badge === 'trust'
+                ? 'trust'
+                : phase.badge === 'qel'
+                  ? 'qel'
+                  : 'planned';
+          return `<div class="atelier-phase ${cls}">
+            <span class="atelier-badge ${phase.badge}">${phase.label}</span>
+            <h4 style="margin:8px 0">${phase.title}</h4>
+            <ul style="font-size:0.88rem;line-height:1.75;margin:0;padding-right:20px">
+              ${phase.items.map((i) => `<li>${i}</li>`).join('')}
+            </ul>
+          </div>`;
+        })
+        .join('');
+    }
+
+    const apiEl = $('atelier-api-contract');
+    if (apiEl && GARMENT_ATELIER.apiContract) apiEl.textContent = GARMENT_ATELIER.apiContract;
+
+    const envEl = $('atelier-env-block');
+    if (envEl && GARMENT_ATELIER.envBlock) envEl.textContent = GARMENT_ATELIER.envBlock;
+
+    const verifyEl = $('atelier-verify-commands');
+    if (verifyEl && GARMENT_ATELIER.verifyCommands) verifyEl.textContent = GARMENT_ATELIER.verifyCommands;
+
+    const auditTb = document.querySelector('#atelier-audit-table tbody');
+    if (auditTb && GARMENT_ATELIER.auditProof) {
+      auditTb.innerHTML = GARMENT_ATELIER.auditProof.map((row) => {
+        const pill =
+          row.status === 'verified'
+            ? '<span class="completion-pill done">✅ verified</span>'
+            : row.status === 'partial'
+              ? '<span class="completion-pill partial">⚠️ partial</span>'
+              : '<span class="completion-pill pending">⏳ pending</span>';
+        return `<tr>
+          <td><strong>${row.phase}</strong></td>
+          <td>${row.claim}</td>
+          <td>${pill}</td>
+          <td><code style="font-size:0.78rem;word-break:break-all">${row.evidence}</code></td>
+          <td style="font-size:0.84rem;color:var(--muted)">${row.gap}</td>
+        </tr>`;
+      }).join('');
+    }
+
+    const outcomesEl = $('atelier-outcomes-list');
+    if (outcomesEl && GARMENT_ATELIER.targetOutcomes) {
+      outcomesEl.innerHTML = GARMENT_ATELIER.targetOutcomes
+        .map(
+          (o) => `<div class="atelier-phase trust" style="margin-bottom:12px">
+            <h4 style="margin:0 0 8px">${o.title}</h4>
+            <ul style="font-size:0.88rem;line-height:1.8;margin:0;padding-right:20px">
+              ${o.bullets.map((b) => `<li>${b}</li>`).join('')}
+            </ul>
+          </div>`,
+        )
+        .join('');
+    }
+
+    const remainTb = document.querySelector('#atelier-remaining-table tbody');
+    if (remainTb && GARMENT_ATELIER.remainingItems) {
+      remainTb.innerHTML = GARMENT_ATELIER.remainingItems
+        .map(
+          (r) => `<tr>
+            <td>${r.item}</td>
+            <td><strong>${r.phase}</strong></td>
+            <td style="font-size:0.86rem">${r.why}</td>
+            <td style="font-size:0.86rem;color:var(--muted)">${r.gate}</td>
+          </tr>`,
+        )
+        .join('');
+    }
+
+    renderAtelierGatesTimeline();
+  }
+
+  function renderAtelierGatesTimeline() {
+    const gt = GARMENT_ATELIER.gatesTimeline;
+    if (!gt) return;
+
+    const nextEl = $('atelier-next-step');
+    if (nextEl) nextEl.innerHTML = gt.nextStepHtml;
+
+    const flowEl = $('atelier-gates-flow');
+    if (flowEl) {
+      flowEl.innerHTML = gt.flow
+        .map((g, i) => {
+          const pill = `<span class="atelier-gate-pill ${g.status}">${g.label}</span>`;
+          const arrow = i < gt.flow.length - 1 ? '<span class="atelier-gate-arrow">←</span>' : '';
+          return pill + arrow;
+        })
+        .join('');
+    }
+
+    const gatesTb = $('atelier-gates-tbody');
+    if (gatesTb) {
+      gatesTb.innerHTML = gt.gates
+        .map((g) => {
+          const statusLabel =
+            g.status === 'done'
+              ? '<span class="gate-open">✅ منفّذ</span>'
+              : g.status === 'now'
+                ? '<span style="color:#5b4d9e;font-weight:800">⏳ الآن</span>'
+                : '<span class="gate-locked">🔒 مقفول</span>';
+          return `<tr>
+            <td><strong>${g.phase}</strong></td>
+            <td>${g.feature}</td>
+            <td style="font-size:0.86rem">${g.condition}</td>
+            <td>${statusLabel}</td>
+            <td style="font-size:0.86rem">${g.action}</td>
+          </tr>`;
+        })
+        .join('');
+    }
+
+    const timelineEl = $('atelier-release-timeline');
+    if (timelineEl) {
+      timelineEl.innerHTML = gt.weeks
+        .map(
+          (w) => `<div class="atelier-release-week ${w.status}">
+            <div class="week-meta">${w.period}</div>
+            <h4>${w.title}</h4>
+            <ul>${w.items.map((i) => `<li>${i}</li>`).join('')}</ul>
+          </div>`,
+        )
+        .join('');
+    }
+
+    const criteriaEl = $('atelier-a-plus-criteria');
+    if (criteriaEl) {
+      criteriaEl.innerHTML = gt.aPlusCriteria.map((c) => `<li>${c}</li>`).join('');
+    }
+  }
+
   function init() {
     const dateEl = $('spec-date');
     if (dateEl) dateEl.textContent = SPEC_DATE + ' · v' + SPEC_VERSION;
@@ -2397,6 +3179,7 @@ Silent OutfitImageAnalyzer fallback`;
     renderLists();
     renderFileMap();
     renderPhases();
+    renderGarmentAtelier();
     renderSchema();
     renderDependencyGraph();
     setupSidebar();

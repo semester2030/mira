@@ -92,11 +92,13 @@ class _OutfitPieceSwipeVoteState extends State<OutfitPieceSwipeVote> {
               children: [
                 Positioned(
                   right: 8,
+                  top: 0,
+                  height: 220,
                   child: Opacity(
                     opacity: 0.55,
                     child: Transform.scale(
                       scale: 0.92,
-                      child: OutfitLuxuryPieceCard(piece: right, width: 140),
+                      child: OutfitLuxuryPieceCard(piece: right, width: 140, height: 220),
                     ),
                   ),
                 ),
@@ -106,7 +108,7 @@ class _OutfitPieceSwipeVoteState extends State<OutfitPieceSwipeVote> {
                   onDismissed: (dir) => _vote(dir == DismissDirection.startToEnd ? right : left),
                   background: _SwipeHint(side: _SwipeSide.right, label: right.title),
                   secondaryBackground: _SwipeHint(side: _SwipeSide.left, label: left.title),
-                  child: OutfitLuxuryPieceCard(piece: left, width: 148),
+                  child: OutfitLuxuryPieceCard(piece: left, width: 148, height: 220),
                 ),
               ],
             ),

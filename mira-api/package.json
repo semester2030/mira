@@ -24,7 +24,9 @@
     "test:vision-geometry": "npm run build && node dist/vision/providers/fashn-geometry.schema-tests.js",
     "test:vision-semantic": "npm run build && node dist/vision/providers/openai-semantic.schema-tests.js",
     "test:vision-pipeline": "npm run build && node dist/vision/pipeline/vision-pipeline.schema-tests.js",
-    "test:vision-conflicts": "npm run build && node dist/vision/pipeline/conflict-confidence.schema-tests.js"
+    "test:vision-conflicts": "npm run build && node dist/vision/pipeline/conflict-confidence.schema-tests.js",
+    "test:qel-calibration": "npm run build && node dist/vision/qel/qel-calibration.runner.js",
+    "test:qel-calibration:smoke": "npm run build && QEL_CALIBRATION_DATASET=src/vision/qel/fixtures/qel-evaluation-manifest.smoke.json node dist/vision/qel/qel-calibration.runner.js"
   },
   "dependencies": {
     "@nestjs/common": "^11.0.0",

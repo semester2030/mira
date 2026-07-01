@@ -1,0 +1,17 @@
+{
+  "schemaVersion": "qel-evaluation-manifest.v1",
+  "description": "Replace placeholder paths with REAL absolute paths on your Mac before running.",
+  "entries": [
+    {
+      "id": "example-upper-recolor-01",
+      "humanAccept": true,
+      "originalPath": "/Users/YOU/Desktop/outfit-before.jpg",
+      "editedPath": "/Users/YOU/Desktop/outfit-after.jpg",
+      "visionContext": {
+        "regionRole": "upper",
+        "glossLevel": "matte",
+        "garmentBbox": { "x": 0.12, "y": 0.2, "w": 0.76, "h": 0.38 }
+      }
+    }
+  ]
+}

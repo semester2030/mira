@@ -55,6 +55,7 @@ class _OccasionSelectScreenState extends ConsumerState<OccasionSelectScreen> {
     }
 
     ref.listen(outfitIntelligenceNotifierProvider, (previous, next) {
+      if (next.isLoading) return;
       next.whenOrNull(
         data: (analysis) async {
           if (analysis == null) return;
@@ -80,10 +81,13 @@ class _OccasionSelectScreenState extends ConsumerState<OccasionSelectScreen> {
           );
         },
         error: (error, _) {
+          if (!context.mounted) return;
+          ref.read(outfitIntelligenceNotifierProvider.notifier).reset();
           ScaffoldMessenger.of(context).showSnackBar(
             SnackBar(
               content: Text(friendlyMiraError(error)),
               backgroundColor: AppColors.error,
+              duration: const Duration(seconds: 5),
             ),
           );
         },
