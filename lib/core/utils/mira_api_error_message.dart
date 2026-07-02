@@ -127,6 +127,11 @@ String? _localizeServerMessage(String? raw) {
   if (lower.contains('qel_rejected') || lower.contains('لم نعرض النتيجة')) {
     return 'لم نعرض النتيجة — التعديل غيّر الهوية أو خامة القماش. جرّبي لوناً آخر أو صورة أوضح.';
   }
+  if (lower.contains('openai semantic provider failed') ||
+      lower.contains('openai semantics failed') ||
+      lower.contains('invalid schema for response_format')) {
+    return 'تعذّر تحليل الإطلالة — جاري تحديث السيرفر. أعيدي المحاولة بعد دقائق.';
+  }
   if (lower.contains('fashn_not_configured') || lower.contains('غير متاحة حاليا')) {
     return 'خدمة إعادة التلوين غير مفعّلة على السيرفر — تواصلي مع الدعم.';
   }

@@ -4,12 +4,40 @@ function sorted(set: ReadonlySet<string>): string[] {
   return [...set].sort();
 }
 
+/** OpenAI structured outputs cap — total enum values across the whole schema. */
+export const OPENAI_SCHEMA_MAX_ENUM_VALUES = 500;
+
+/**
+ * Color ids are validated post-parse in FashionNormalizerService (247+ colors).
+ * Inlining color enums in the schema exceeded OpenAI's 500 enum limit (HTTP 400).
+ */
+const colorIdString = {
+  type: 'string',
+  description: 'Fashion ontology color id, e.g. navy_deep or black_pure',
+} as const;
+
+/** Count enum values in a JSON-schema-like tree (for tests). */
+export function countJsonSchemaEnumValues(node: unknown): number {
+  if (node == null || typeof node !== 'object') return 0;
+  if (Array.isArray(node)) {
+    return node.reduce((sum, item) => sum + countJsonSchemaEnumValues(item), 0);
+  }
+  const record = node as Record<string, unknown>;
+  let count = 0;
+  if (Array.isArray(record.enum)) {
+    count += record.enum.length;
+  }
+  for (const value of Object.values(record)) {
+    count += countJsonSchemaEnumValues(value);
+  }
+  return count;
+}
+
 /** Strict JSON Schema for OpenAI response_format (attributes only — no scores). */
 export function buildOpenAiSemanticsJsonSchema() {
   const registry = loadFashionOntologyRegistry();
   const categories = sorted(registry.categoryIds);
   const types = sorted(registry.garmentTypeIds);
-  const colors = sorted(registry.colorIds);
   const archetypes = sorted(registry.archetypeIds);
 
   // OpenAI strict json_schema: every key in properties must appear in required (use null for optional).
@@ -21,7 +49,7 @@ export function buildOpenAiSemanticsJsonSchema() {
     fit: { type: ['string', 'null'] },
     colors: {
       type: 'array',
-      items: { type: 'string', enum: colors },
+      items: colorIdString,
       minItems: 1,
     },
     material: { type: ['string', 'null'] },
@@ -44,7 +72,7 @@ export function buildOpenAiSemanticsJsonSchema() {
     typeId: { type: 'string', enum: types },
     colors: {
       type: 'array',
-      items: { type: 'string', enum: colors },
+      items: colorIdString,
     },
     providerConfidence: { type: 'number', minimum: 0, maximum: 1 },
   };
@@ -84,12 +112,12 @@ export function buildOpenAiSemanticsJsonSchema() {
         },
         dominantColorIds: {
           type: 'array',
-          items: { type: 'string', enum: colors },
+          items: colorIdString,
           minItems: 1,
         },
         secondaryColorIds: {
           type: 'array',
-          items: { type: 'string', enum: colors },
+          items: colorIdString,
         },
       },
       required: [

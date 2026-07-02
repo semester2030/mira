@@ -11,7 +11,11 @@ import {
 } from '../pipeline/semantic-quality-gate.service';
 import { buildFashionVisionDocumentFromParts } from '../schema/fashion-vision-document.builder';
 import { validateFashionVisionDocument } from '../schema/fashion-vision-document.validator';
-import { buildOpenAiSemanticsJsonSchema } from './openai-semantic.response-schema';
+import {
+  buildOpenAiSemanticsJsonSchema,
+  countJsonSchemaEnumValues,
+  OPENAI_SCHEMA_MAX_ENUM_VALUES,
+} from './openai-semantic.response-schema';
 
 function testValidMockSemanticsPassesGate(): void {
   const raw = buildMockOpenAiSemanticResponse();
@@ -56,6 +60,15 @@ function testJsonSchemaHasNoScoreFields(): void {
   assert.equal(schema.strict, true);
 }
 
+function testJsonSchemaEnumCountWithinOpenAiLimit(): void {
+  const schema = buildOpenAiSemanticsJsonSchema();
+  const enumCount = countJsonSchemaEnumValues(schema.schema);
+  assert.ok(
+    enumCount <= OPENAI_SCHEMA_MAX_ENUM_VALUES,
+    `schema has ${enumCount} enum values; OpenAI limit is ${OPENAI_SCHEMA_MAX_ENUM_VALUES}`,
+  );
+}
+
 function testJsonSchemaStrictRequiresAllGarmentProperties(): void {
   const schema = buildOpenAiSemanticsJsonSchema();
   const garment = schema.schema.properties.garments.items;
@@ -91,6 +104,7 @@ export function runOpenAiSemanticTests(): void {
   testForbiddenRecommendationsRejected();
   testEmptyGarmentsFailsValidation();
   testJsonSchemaHasNoScoreFields();
+  testJsonSchemaEnumCountWithinOpenAiLimit();
   testJsonSchemaStrictRequiresAllGarmentProperties();
   testMockSemanticsBuildsValidFashionVisionDocument();
 }
