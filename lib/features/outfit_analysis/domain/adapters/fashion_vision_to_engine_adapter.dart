@@ -23,6 +23,11 @@ abstract final class FashionVisionToEngineAdapter {
     'pearl_white': 'لؤلؤي',
     'brown_tortoise': 'بني',
     'blush_lilac': 'لافندر',
+    'emerald_deep': 'زمردي',
+    'teal_satin': 'تركواز داكن',
+    'forest_green': 'أخضر',
+    'ruby_red': 'أحمر',
+    'white_pure': 'أبيض',
   };
 
   static const _typeIdToEn = <String, String>{

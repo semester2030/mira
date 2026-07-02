@@ -8,6 +8,7 @@ abstract final class AnalysisSession {
   static SkinReport? lastSkin;
   static OutfitReport? lastOutfit;
   static OutfitAnalysis? lastOutfitIntelligence;
+  static String? lastRecolorAttemptId;
   static UserGender userGender = UserGender.female;
 
   static void setSkin(SkinReport report) => lastSkin = report;
@@ -18,10 +19,13 @@ abstract final class AnalysisSession {
     lastOutfitIntelligence = analysis;
   }
 
+  static void setRecolorAttemptId(String? id) => lastRecolorAttemptId = id;
+
   static void clear() {
     lastSkin = null;
     lastOutfit = null;
     lastOutfitIntelligence = null;
+    lastRecolorAttemptId = null;
     userGender = UserGender.female;
   }
 

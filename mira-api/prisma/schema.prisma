@@ -22,6 +22,8 @@ model User {
   preference      UserPreference?
   feedback        Feedback[]
   auditLogs       AuditLog[]
+  consultationSessions ConsultationSession[]
+  atelierRecolorAttempts AtelierRecolorAttempt[]
 
   @@map("users")
 }
@@ -244,4 +246,109 @@ model PartnerEvent {
 
   @@index([partnerId, eventType, createdAt(sort: Desc)])
   @@map("partner_events")
+}
+
+/// MCE — consultation session (reference: docs/mira-vision-platform.html#mce-consultation)
+model ConsultationSession {
+  id               String   @id @default(uuid())
+  userId           String   @map("user_id")
+  user             User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  titleAr          String?  @map("title_ar")
+  status           String   @default("active")
+  locale           String   @default("ar")
+  occasionId       String?  @map("occasion_id")
+  activeSnapshotId String?  @map("active_snapshot_id")
+  rollingSummaryAr String?  @map("rolling_summary_ar") @db.Text
+  turnCount        Int      @default(0) @map("turn_count")
+  lastCompactedAt  DateTime? @map("last_compacted_at")
+  planTier         String   @default("free") @map("plan_tier")
+  metadataJson     Json?    @map("metadata_json")
+  createdAt        DateTime @default(now()) @map("created_at")
+  updatedAt        DateTime @updatedAt @map("updated_at")
+
+  messages       ConsultationMessage[]
+  snapshots      ConsultationContextSnapshot[]
+  recommendations ConsultationRecommendation[]
+
+  @@index([userId, updatedAt(sort: Desc)])
+  @@index([userId, status])
+  @@map("consultation_sessions")
+}
+
+model ConsultationMessage {
+  id           String   @id @default(uuid())
+  sessionId    String   @map("session_id")
+  session      ConsultationSession @relation(fields: [sessionId], references: [id], onDelete: Cascade)
+  role         String
+  contentAr    String   @map("content_ar") @db.Text
+  payloadJson  Json?    @map("payload_json")
+  tokenCountIn  Int?    @map("token_count_in")
+  tokenCountOut Int?    @map("token_count_out")
+  modelId      String?  @map("model_id")
+  latencyMs    Int?     @map("latency_ms")
+  blocked      Boolean  @default(false)
+  createdAt    DateTime @default(now()) @map("created_at")
+
+  @@index([sessionId, createdAt])
+  @@map("consultation_messages")
+}
+
+model ConsultationContextSnapshot {
+  id               String   @id @default(uuid())
+  sessionId        String   @map("session_id")
+  session          ConsultationSession @relation(fields: [sessionId], references: [id], onDelete: Cascade)
+  version          Int
+  skinAnalysisId   String?  @map("skin_analysis_id")
+  outfitAnalysisId String?  @map("outfit_analysis_id")
+  recolorAttemptId String?  @map("recolor_attempt_id")
+  snapshotJson     Json     @map("snapshot_json")
+  factRegistryJson Json     @map("fact_registry_json")
+  contentHash      String   @map("content_hash")
+  createdAt        DateTime @default(now()) @map("created_at")
+
+  @@unique([sessionId, version])
+  @@index([skinAnalysisId])
+  @@index([outfitAnalysisId])
+  @@map("consultation_context_snapshots")
+}
+
+model ConsultationRecommendation {
+  id          String   @id @default(uuid())
+  sessionId   String   @map("session_id")
+  session     ConsultationSession @relation(fields: [sessionId], references: [id], onDelete: Cascade)
+  messageId   String?  @map("message_id")
+  type        String
+  titleAr     String   @map("title_ar")
+  rationaleAr String   @map("rationale_ar") @db.Text
+  confidence  String
+  partnerId   String?  @map("partner_id")
+  productId   String?  @map("product_id")
+  metadataJson Json?   @map("metadata_json")
+  createdAt   DateTime @default(now()) @map("created_at")
+
+  @@index([sessionId, createdAt])
+  @@map("consultation_recommendations")
+}
+
+/// MCE Phase 4 — Atelier QEL recolor attempts (no image stored).
+model AtelierRecolorAttempt {
+  id               String   @id @default(uuid())
+  userId           String   @map("user_id")
+  user             User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  outfitAnalysisId String?  @map("outfit_analysis_id")
+  garmentLabelAr   String   @map("garment_label_ar")
+  targetColorAr    String   @map("target_color_ar")
+  targetColorHex   String?  @map("target_color_hex")
+  regionRole       String?  @map("region_role")
+  qelGate          String   @map("qel_gate")
+  qelScoresJson    Json?    @map("qel_scores_json")
+  rejectReasonAr   String?  @map("reject_reason_ar") @db.Text
+  recolorScope     String   @default("color_only") @map("recolor_scope")
+  processingMs     Int?     @map("processing_ms")
+  attemptNumber    Int      @default(1) @map("attempt_number")
+  metadataJson     Json?    @map("metadata_json")
+  createdAt        DateTime @default(now()) @map("created_at")
+
+  @@index([userId, createdAt(sort: Desc)])
+  @@map("atelier_recolor_attempts")
 }

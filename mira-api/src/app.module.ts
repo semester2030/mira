@@ -17,6 +17,7 @@ import { WebsiteModule } from './website/website.module';
 import { PartnersPortalModule } from './partners-portal/partners-portal.module';
 import { IntelligenceModule } from './intelligence/intelligence.module';
 import { AdvisorModule } from './advisor/advisor.module';
+import { ConsultationModule } from './consultation/consultation.module';
 import { AdminModule } from './admin/admin.module';
 
 @Module({
@@ -32,6 +33,7 @@ import { AdminModule } from './admin/admin.module';
     UsersModule,
     IntelligenceModule,
     AdvisorModule,
+    ConsultationModule,
     SkinAnalysisModule,
     OutfitAnalysisModule,
     RecommendationsModule,

@@ -1,45 +1,40 @@
 import 'package:flutter/material.dart';
 
-/// Maps Google Vision color channels to Arabic fashion color names.
+import '../../domain/catalog/fashion_color_library.dart';
+import '../../domain/catalog/professional_color_matcher.dart';
+
+/// Maps garment pixels to professional catalog colors (CIEDE2000).
 abstract final class VisionColorMapper {
   VisionColorMapper._();
 
   static String fromRgb(double r, double g, double b) {
-    final ri = (r * 255).round();
-    final gi = (g * 255).round();
-    final bi = (b * 255).round();
+    return fromRgbInt(
+      (r * 255).round(),
+      (g * 255).round(),
+      (b * 255).round(),
+    );
+  }
 
-    const candidates = <(String, int, int, int)>[
-      ('أسود', 20, 20, 20),
-      ('أبيض', 245, 245, 245),
-      ('بيج', 210, 190, 160),
-      ('كريمي', 235, 225, 200),
-      ('رمادي', 128, 128, 128),
-      ('كحلي', 25, 40, 80),
-      ('أزرق', 40, 80, 180),
-      ('زيتوني', 100, 110, 60),
-      ('ذهبي', 200, 170, 80),
-      ('وردي', 230, 150, 170),
-      ('أحمر', 180, 40, 50),
-      ('نبيتي', 120, 20, 40),
-      ('بني', 120, 80, 50),
-      ('فضي', 190, 190, 200),
-      ('تركواز', 60, 170, 170),
-      ('مرجاني', 240, 120, 100),
-    ];
+  static String fromRgbInt(int r, int g, int b) {
+    return matchRgbInt(r, g, b).displayNameAr;
+  }
 
-    var best = 'مختلط';
-    var bestDist = 1 << 30;
-    for (final c in candidates) {
-      final d = (ri - c.$2) * (ri - c.$2) +
-          (gi - c.$3) * (gi - c.$3) +
-          (bi - c.$4) * (bi - c.$4);
-      if (d < bestDist) {
-        bestDist = d;
-        best = c.$1;
-      }
-    }
-    return best;
+  static ProfessionalColorMatch matchRgbInt(
+    int r,
+    int g,
+    int b, {
+    double? avgR,
+    double? avgG,
+    double? avgB,
+  }) {
+    return ProfessionalColorMatcher.matchRgb(
+      r,
+      g,
+      b,
+      avgR: avgR,
+      avgG: avgG,
+      avgB: avgB,
+    );
   }
 
   static String labelToArabic(String enLabel) {
@@ -50,7 +45,6 @@ abstract final class VisionColorMapper {
     if (lower.contains('skirt')) return 'تنورة';
     if (lower.contains('t-shirt') || lower.contains('tee')) return 'تيشيرت';
     if (lower.contains('blouse')) return 'بلوزة';
-    if (lower == 'top' || lower.endsWith(' top')) return 'قطعة علوية';
     if (lower.contains('top') && !lower.contains('stop')) return 'قطعة علوية';
     if (lower.contains('blazer')) return 'بلوزر';
     if (lower.contains('corset')) return 'كورسيه';
@@ -84,25 +78,19 @@ abstract final class VisionColorMapper {
 
   /// Arabic fashion color name → display swatch color.
   static Color toDisplayColor(String arabicName) {
-    return switch (arabicName.trim()) {
-      'أسود' => const Color(0xFF1A1A1A),
-      'أبيض' => const Color(0xFFF5F5F5),
-      'بيج' => const Color(0xFFD2BEA0),
-      'كريمي' => const Color(0xFFEBE0C8),
-      'رمادي' => const Color(0xFF9E9E9E),
-      'كحلي' => const Color(0xFF1A2848),
-      'أزرق' => const Color(0xFF3F51B5),
-      'زيتوني' => const Color(0xFF6B7040),
-      'ذهبي' => const Color(0xFFC8A850),
-      'وردي' => const Color(0xFFE699B0),
-      'أحمر' => const Color(0xFFB42832),
-      'نبيتي' => const Color(0xFF781828),
-      'بني' => const Color(0xFF785032),
-      'فضي' => const Color(0xFFBEBEC8),
-      'تركواز' => const Color(0xFF3CAAA0),
-      'مرجاني' => const Color(0xFFF07864),
-      'دنيم' => const Color(0xFF5B7FA8),
-      _ => const Color(0xFFC19EE0),
-    };
+    final entry = FashionColorLibrary.byName(arabicName);
+    if (entry != null) return entry.color;
+
+    final hex = ProfessionalColorMatcher.hexForName(arabicName);
+    final h = hex.replaceFirst('#', '');
+    if (h.length == 6) {
+      return Color(int.parse('FF$h', radix: 16));
+    }
+    return const Color(0xFFC19EE0);
+  }
+
+  static Color hexToColor(String hex) {
+    final h = hex.replaceFirst('#', '');
+    return Color(int.parse('FF$h', radix: 16));
   }
 }

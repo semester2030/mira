@@ -140,9 +140,7 @@ class OutfitIntelligenceService {
       shoeColors: segmentMap.shoeColors,
       accessoryColors: segmentMap.accessoryColors,
       dominantColors: garmentColors.isNotEmpty ? garmentColors : mergedVisual.dominantColors,
-      recommendedColors: garmentColors.isNotEmpty
-          ? _dedupe([...garmentColors, ...analysis.recommendedColors]).take(6).toList()
-          : analysis.recommendedColors,
+      recommendedColors: analysis.recommendedColors,
       detectedPieces: segmentMap.hasTrustedOverlay
           ? _piecesFromSegments(segmentMap, analysis.detectedPieces)
           : analysis.detectedPieces,
@@ -186,7 +184,11 @@ class OutfitIntelligenceService {
             'Server pixel contours: ${serverMap.regions.length} regions (${serverMap.source})',
             name: 'OutfitIntelligenceService',
           );
-          return serverMap;
+          final enriched = await _segmentation.enrichServerColors(outfitImage, serverMap);
+          return enriched.copyWith(
+            isVisualTrusted: true,
+            validationMessage: null,
+          );
         }
       } catch (error, stack) {
         developer.log(
@@ -272,6 +274,10 @@ class OutfitIntelligenceService {
 
   List<String> _garmentColorsOnly(OutfitSegmentMap segmentMap) {
     if (segmentMap.garmentPalette.isReliable) {
+      final detailed = segmentMap.garmentPalette.detailedColors;
+      if (detailed.isNotEmpty) {
+        return detailed.map((d) => d.displayNameAr).toList();
+      }
       return segmentMap.garmentPalette.ordered;
     }
     final merged = [

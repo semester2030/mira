@@ -70,13 +70,22 @@ abstract final class GarmentRecolorPromptBuilder {
   }
 
   static String _geometryLine(GarmentRecolorVisionContext? ctx) {
+    final parts = <String>[];
     if (ctx?.foldDensity == 'high') {
-      return '• الهندسة: حافظي على كثافة الثنيات الطبيعية في الكتف والصدر — لا تسطّحي الطيات.';
+      parts.add('كثافة الثنيات الطبيعية في الكتف والصدر');
+    } else if (ctx?.fit != null) {
+      parts.add('قصة ${ctx!.fit}');
     }
-    if (ctx?.fit != null) {
-      return '• الهندسة: حافظي على قصة ${ctx!.fit} والثنيات الطبيعية.';
+    if (ctx?.silhouetteHint != null && ctx!.silhouetteHint!.isNotEmpty) {
+      parts.add('silhouette: ${ctx.silhouetteHint}');
     }
-    return '• الهندسة: حافظي على ثنيات القماش الطبيعية وقصّة القطعة كما هي.';
+    if (ctx?.pieceCount != null && ctx!.pieceCount! > 0) {
+      parts.add('pieces: ${ctx.pieceCount}');
+    }
+    if (parts.isEmpty) {
+      return '• الهندسة: حافظي على ثنيات القماش الطبيعية وقصّة القطعة كما هي.';
+    }
+    return '• الهندسة: حافظي على ${parts.join(' · ')} — لا تسطّحي الطيات.';
   }
 
   static String userMessage({

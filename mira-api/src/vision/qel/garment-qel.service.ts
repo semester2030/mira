@@ -98,16 +98,16 @@ export class GarmentQelService {
       Math.abs(garmentAfter.laplacianVar - garmentBefore.laplacianVar) /
       Math.max(0.001, garmentBefore.laplacianVar);
 
-    let materialScore = 1 - glossDelta * 2.8 - contrastDelta * 1.6 - Math.max(0, foldDelta - 0.35) * 0.4;
+    let materialScore = 1 - glossDelta * 2.2 - contrastDelta * 1.4 - Math.max(0, foldDelta - 0.42) * 0.35;
     materialScore = Math.max(0, Math.min(1, materialScore));
 
     const glossLevel = params.visionContext?.glossLevel;
-    if (glossLevel === 'matte' && glossAfter > glossBefore + 0.08) {
-      materialScore *= 0.55;
+    if (glossLevel === 'matte' && glossAfter > glossBefore + 0.1) {
+      materialScore *= 0.62;
       rejectReasons.push('تحوّل القماش من مطفي إلى لامع');
     }
 
-    if (materialScore < 0.58) {
+    if (materialScore < 0.48) {
       rejectReasons.push('انجراف خامة القماش');
     }
 
@@ -116,8 +116,11 @@ export class GarmentQelService {
     if (segmentDriftEnabled) {
       try {
         const editedGeometry = await this.geometry.segment(params.edited);
-        const upper = editedGeometry.segments.find((s) => s.regionRole === 'upper');
-        const editedBbox = upper?.bbox ?? editedGeometry.segments[0]?.bbox;
+        const garmentSeg =
+          editedGeometry.segments.find((s) => s.regionRole === 'full_body') ??
+          editedGeometry.segments.find((s) => s.regionRole === 'upper') ??
+          editedGeometry.segments[0];
+        const editedBbox = garmentSeg?.bbox;
         if (editedBbox) {
           const iou = bboxIoU(garmentRect, editedBbox);
           regionIntegrityScore = Math.max(0, Math.min(1, iou / minSegmentIoU));

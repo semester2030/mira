@@ -14,6 +14,16 @@ abstract final class OutfitSegmentMapMapper {
     List<String> list(String key) =>
         (json[key] as List<dynamic>?)?.map((e) => e.toString()).toList() ?? const [];
 
+    final source = json['source'] as String? ?? 'server';
+    final trustedSources = {
+      'fashn_geometry_contour',
+      'vision_garment',
+      'vision_pixel_contour',
+      'server',
+    };
+    final isVisualTrusted = json['isVisualTrusted'] as bool? ??
+        (regions.isNotEmpty && trustedSources.contains(source));
+
     return OutfitSegmentMap(
       regions: regions,
       upperBodyColors: list('upperBodyColors'),
@@ -22,7 +32,9 @@ abstract final class OutfitSegmentMapMapper {
       accessoryColors: list('accessoryColors'),
       imageWidth: (json['imageWidth'] as num?)?.toDouble() ?? 0,
       imageHeight: (json['imageHeight'] as num?)?.toDouble() ?? 0,
-      source: json['source'] as String? ?? 'server',
+      source: source,
+      isVisualTrusted: isVisualTrusted,
+      validationMessage: json['validationMessage'] as String?,
     );
   }
 

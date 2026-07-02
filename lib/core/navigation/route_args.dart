@@ -1,5 +1,6 @@
 import '../../features/outfit_analysis/domain/entities/outfit_analysis_mode.dart';
 import '../../features/outfit_analysis/domain/entities/outfit_compare_snapshot.dart';
+import '../../features/outfit_analysis/domain/entities/outfit_analysis.dart';
 import '../../features/outfit_analysis/domain/entities/outfit_report.dart';
 import '../../features/skin_analysis/domain/entities/skin_report.dart';
 
@@ -37,13 +38,42 @@ class MiraReportRouteArgs {
 }
 
 class AdvisorRouteArgs {
-  final SkinReport report;
+  final SkinReport? skinReport;
+  final OutfitAnalysis? outfitAnalysis;
+  final String? outfitAnalysisId;
+  final String? recolorAttemptId;
   final String? initialQuestion;
 
   const AdvisorRouteArgs({
-    required this.report,
+    this.skinReport,
+    this.outfitAnalysis,
+    this.outfitAnalysisId,
+    this.recolorAttemptId,
     this.initialQuestion,
   });
+
+  /// Skin-only legacy entry (Phase 2).
+  factory AdvisorRouteArgs.skin(SkinReport report, {String? initialQuestion}) {
+    return AdvisorRouteArgs(
+      skinReport: report,
+      initialQuestion: initialQuestion,
+    );
+  }
+
+  /// Atelier QEL recolor consultation (Phase 4).
+  factory AdvisorRouteArgs.atelier({
+    required String recolorAttemptId,
+    SkinReport? skinReport,
+    OutfitAnalysis? outfitAnalysis,
+    String? initialQuestion,
+  }) {
+    return AdvisorRouteArgs(
+      recolorAttemptId: recolorAttemptId,
+      skinReport: skinReport,
+      outfitAnalysis: outfitAnalysis,
+      initialQuestion: initialQuestion,
+    );
+  }
 }
 
 class OutfitCompareRouteArgs {

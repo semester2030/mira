@@ -45,37 +45,37 @@ abstract final class OutfitPhotoTrustGate {
     required img.Image image,
   }) {
     final poseResult = _evaluatePoseAndFace(metrics);
-    if (!poseResult.isAccepted) return poseResult;
-
-    final bodyHeight = OutfitPersonMask.bounds(metrics.pose)?.height ?? 0;
-    if (metrics.pose.trackingScore >= 0.65 && bodyHeight >= 0.55) {
+    if (poseResult.isAccepted) {
+      // ML Kit verified person + face — accept studio / gallery / camera stills.
       return OutfitPhotoTrustResult.accepted;
     }
 
-    // Gallery / studio stills — person verified on-device; skip screenshot heuristics.
-    if (_isVerifiedOutfitStill(metrics, bodyHeight)) {
-      return OutfitPhotoTrustResult.accepted;
+    // Face visible but pose weak — lenient path for saved gallery / studio shots.
+    if (_isLenientGalleryStill(metrics)) {
+      if (!_looksLikeScreenOrMarketing(image)) {
+        return OutfitPhotoTrustResult.accepted;
+      }
+      return const OutfitPhotoTrustResult(
+        isAccepted: false,
+        reasonCode: 'screen_or_marketing',
+        messageAr:
+            'هذه تبدو كسكرينشوت أو إعلان — اختاري صورة حقيقية لإطلالتك (جسم كامل)',
+      );
     }
 
-    return evaluateImageOnly(image);
+    return poseResult;
   }
 
-  /// Person + face confirmed — real outfit photo (studio, mirror, saved gallery).
-  static bool _isVerifiedOutfitStill(
-    OutfitCaptureFrameMetrics metrics,
-    double bodyHeight,
-  ) {
-    final pose = metrics.pose;
+  /// Saved photo with a clear face — do not require perfect pose landmarks.
+  static bool _isLenientGalleryStill(OutfitCaptureFrameMetrics metrics) {
     if (metrics.faceCount != 1) return false;
-    if (!pose.personDetected || !pose.headDetected) return false;
-    if (!pose.shouldersDetected && !pose.torsoDetected) return false;
-    if (pose.trackingScore < minTrackingScore) return false;
+    if (metrics.brightness < 0.18 || metrics.blurScore < 6.0) return false;
+    if (metrics.faceAreaRatio > maxFaceAreaRatio) return false;
+    final bodyHeight = OutfitPersonMask.bounds(metrics.pose)?.height ?? 0;
     if (bodyHeight < minBodyHeightRatio) return false;
-    if (metrics.faceAreaRatio < minFaceAreaRatio ||
-        metrics.faceAreaRatio > maxFaceAreaRatio) {
-      return false;
-    }
-    return true;
+    final minFace = bodyHeight >= 0.48 ? 0.0012 : minFaceAreaRatio;
+    if (metrics.faceAreaRatio < minFace) return false;
+    return metrics.pose.personDetected || metrics.pose.headDetected;
   }
 
   static OutfitPhotoTrustResult evaluateImageOnly(img.Image image) {
@@ -126,7 +126,10 @@ abstract final class OutfitPhotoTrustGate {
       );
     }
 
-    if (metrics.faceAreaRatio < minFaceAreaRatio || metrics.faceAreaRatio > maxFaceAreaRatio) {
+    final bodyHeightForFace = OutfitPersonMask.bounds(pose)?.height ?? 0;
+    final minFaceArea = bodyHeightForFace >= 0.48 ? 0.0012 : minFaceAreaRatio;
+    if (metrics.faceAreaRatio > maxFaceAreaRatio ||
+        metrics.faceAreaRatio < minFaceArea) {
       return const OutfitPhotoTrustResult(
         isAccepted: false,
         reasonCode: 'face_framing',
@@ -142,7 +145,7 @@ abstract final class OutfitPhotoTrustGate {
       );
     }
 
-    if (!pose.shouldersDetected || (!pose.torsoDetected && !pose.legsDetected)) {
+    if (!pose.shouldersDetected && !pose.torsoDetected && !pose.legsDetected) {
       return const OutfitPhotoTrustResult(
         isAccepted: false,
         reasonCode: 'incomplete_body',
@@ -182,8 +185,8 @@ abstract final class OutfitPhotoTrustGate {
 
   static bool _looksLikeScreenOrMarketing(img.Image image) {
     final centerVar = _regionVariance(image, 0.22, 0.12, 0.78, 0.88);
-    // Person / outfit texture in the frame — not a flat UI screenshot.
-    if (centerVar >= 680) return false;
+    // Person / outfit in frame — studio backdrop + solid dress still has subject texture.
+    if (centerVar >= 520) return false;
 
     final topVar = _regionVariance(image, 0, 0, 1, 0.07);
     final sideMean = (_regionMean(image, 0, 0.08, 0.1, 0.92) +

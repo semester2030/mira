@@ -7,9 +7,10 @@ import '../../../../../shared/theme/colors.dart';
 import '../../../../../shared/theme/typography.dart';
 import '../../../data/helpers/vision_color_mapper.dart';
 import '../../../domain/entities/outfit_analysis.dart';
+import '../../../domain/entities/outfit_segment_map.dart';
 import '../../../domain/services/outfit_color_preview_service.dart';
 
-/// Before/after color tint on the user's photo — upper-body region.
+/// Before/after color tint on the user's photo — garment polygon only.
 class OutfitPhotoColorSlider extends StatefulWidget {
   final OutfitAnalysis analysis;
 
@@ -37,6 +38,8 @@ class _OutfitPhotoColorSliderState extends State<OutfitPhotoColorSlider> {
       alt.alternativeColor,
       _blend,
     )!;
+
+    final garmentRegion = _garmentRegion(widget.analysis.segmentMap);
 
     return Container(
       decoration: BoxDecoration(
@@ -66,8 +69,8 @@ class _OutfitPhotoColorSliderState extends State<OutfitPhotoColorSlider> {
                 fit: StackFit.expand,
                 children: [
                   Image.file(File(path), fit: BoxFit.cover),
-                  ClipRect(
-                    clipper: _UpperBodyClipper(fraction: 0.58),
+                  ClipPath(
+                    clipper: _GarmentPolygonClipper(region: garmentRegion),
                     child: ColorFiltered(
                       colorFilter: ColorFilter.mode(
                         tint.withValues(alpha: 0.22 + _blend * 0.38),
@@ -147,18 +150,71 @@ class _OutfitPhotoColorSliderState extends State<OutfitPhotoColorSlider> {
       ),
     );
   }
+
+  static OutfitSegmentRegion? _garmentRegion(OutfitSegmentMap? map) {
+    if (map == null || map.regions.isEmpty) return null;
+
+    for (final region in map.regions) {
+      final label = '${region.labelAr} ${region.labelEn}'.toLowerCase();
+      if (label.contains('فستان') || label.contains('dress') || label.contains('gown')) {
+        return region;
+      }
+    }
+
+    OutfitSegmentRegion? best;
+    var bestArea = 0.0;
+    for (final region in map.regions) {
+      if (region.zone == OutfitSegmentZone.head) continue;
+      final area = region.normalizedRect.width * region.normalizedRect.height;
+      if (area > bestArea) {
+        bestArea = area;
+        best = region;
+      }
+    }
+    return best;
+  }
 }
 
-class _UpperBodyClipper extends CustomClipper<Rect> {
-  final double fraction;
+class _GarmentPolygonClipper extends CustomClipper<Path> {
+  final OutfitSegmentRegion? region;
 
-  _UpperBodyClipper({required this.fraction});
-
-  @override
-  Rect getClip(Size size) => Rect.fromLTWH(0, 0, size.width, size.height * fraction);
+  _GarmentPolygonClipper({required this.region});
 
   @override
-  bool shouldReclip(covariant _UpperBodyClipper oldClipper) => oldClipper.fraction != fraction;
+  Path getClip(Size size) {
+    final r = region;
+    if (r == null) {
+      return Path()..addRect(Rect.fromLTWH(0, size.height * 0.18, size.width, size.height * 0.72));
+    }
+
+    if (r.hasContour) {
+      final path = Path();
+      final first = r.normalizedPolygon.first;
+      path.moveTo(first.dx * size.width, first.dy * size.height);
+      for (final p in r.normalizedPolygon.skip(1)) {
+        path.lineTo(p.dx * size.width, p.dy * size.height);
+      }
+      path.close();
+      return path;
+    }
+
+    final rect = r.normalizedRect;
+    return Path()
+      ..addRRect(
+        RRect.fromRectAndRadius(
+          Rect.fromLTWH(
+            rect.left * size.width,
+            rect.top * size.height,
+            rect.width * size.width,
+            rect.height * size.height,
+          ),
+          const Radius.circular(8),
+        ),
+      );
+  }
+
+  @override
+  bool shouldReclip(covariant _GarmentPolygonClipper oldClipper) => oldClipper.region != region;
 }
 
 class _ColorBadge extends StatelessWidget {

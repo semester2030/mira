@@ -22,6 +22,7 @@ import '../../../domain/helpers/outfit_result_sections.dart';
 import '../../../domain/helpers/outfit_result_trust.dart';
 import '../../../domain/services/outfit_occasion_scoring.dart';
 import '../../../domain/services/outfit_piece_wishlist_service.dart';
+import '../../../../advisor/presentation/widgets/ask_outfit_mira_section.dart';
 import '../outfit_color_alternative_panel.dart';
 import '../outfit_color_harmony_panel.dart';
 import '../outfit_insight/outfit_insight_builder.dart';
@@ -321,6 +322,11 @@ class _OutfitResultStoryShellState extends State<OutfitResultStoryShell> {
                           ),
                         ),
                       ],
+                      const SizedBox(height: 16),
+                      AskOutfitMiraSection(
+                        analysis: widget.analysis,
+                        skinReport: widget.analysis.isSmartMode ? AnalysisSession.lastSkin : null,
+                      ),
                       const SizedBox(height: 20),
                       PremiumButton(
                         label: 'قارني مع إطلالة من السجل',

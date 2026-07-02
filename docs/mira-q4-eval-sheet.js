@@ -12,61 +12,12 @@
   const PASS_TARGET = 85;
   const PASS_RATE_TARGET = 85;
 
-  /** 50 سيناريو Q4 Phase 1 — تنوع قطع وألوان (بدون درجات — تُملأ من التطبيق). */
-  const PHASE1_SCENARIOS = [
-    { id: '001', piece: 'فستان', beforeColor: 'أزرق', afterColor: 'أسود', notes: 'فستان · تحويل داكن' },
-    { id: '002', piece: 'فستان', beforeColor: 'أزرق', afterColor: 'أبيض', notes: 'فستان · فاتح على داكن' },
-    { id: '003', piece: 'فستان', beforeColor: 'سماوي', afterColor: 'كحلي', notes: 'فستان · أزرق → كحلي' },
-    { id: '004', piece: 'فستان', beforeColor: 'أحمر', afterColor: 'أسود', notes: 'فستان · أحمر قوي' },
-    { id: '005', piece: 'فستان', beforeColor: 'بيج', afterColor: 'خمري', notes: 'فستان · محايد → خمري' },
-    { id: '006', piece: 'فستان', beforeColor: 'خمري', afterColor: 'أخضر زمردي', notes: 'فستان · أخضر' },
-    { id: '007', piece: 'فستان', beforeColor: 'أخضر', afterColor: 'أسود', notes: 'فستان · أخضر → أسود' },
-    { id: '008', piece: 'بلوزة', beforeColor: 'أبيض', afterColor: 'كحلي', notes: 'بلوزة قطن · upper' },
-    { id: '009', piece: 'بلوزة', beforeColor: 'وردي', afterColor: 'نبيتي', notes: 'بلوزة · وردي → نبيتي' },
-    { id: '010', piece: 'بلوزة', beforeColor: 'رمادي', afterColor: 'أسود', notes: 'بلوزة · رمادي' },
-    { id: '011', piece: 'بلوزة', beforeColor: 'ذهبي', afterColor: 'بيج', notes: 'بلوزة · لامع → مطفي' },
-    { id: '012', piece: 'بلوزة', beforeColor: 'أزرق', afterColor: 'تركواز', notes: 'بلوزة · أزرق فاتح' },
-    { id: '013', piece: 'بلوزة', beforeColor: 'أسود', afterColor: 'أحمر', notes: 'بلوزة · داكن → أحمر' },
-    { id: '014', piece: 'بلوزة', beforeColor: 'كريمي', afterColor: 'زيتوني', notes: 'بلوزة · محايد' },
-    { id: '015', piece: 'بلوزة', beforeColor: 'مرجاني', afterColor: 'خمري', notes: 'بلوزة · دافئ' },
-    { id: '016', piece: 'بنطلون', beforeColor: 'أسود', afterColor: 'كحلي', notes: 'بنطلون · lower' },
-    { id: '017', piece: 'بنطلون', beforeColor: 'بيج', afterColor: 'بني', notes: 'بنطلون · بيج' },
-    { id: '018', piece: 'بنطلون', beforeColor: 'رمادي', afterColor: 'أسود', notes: 'بنطلون · رمادي' },
-    { id: '019', piece: 'بنطلون', beforeColor: 'أبيض', afterColor: 'زيتوني', notes: 'بنطلون · فاتح' },
-    { id: '020', piece: 'بنطلون', beforeColor: 'كحلي', afterColor: 'أسود', notes: 'بنطلون · كحلي' },
-    { id: '021', piece: 'جينز', beforeColor: 'دنيم', afterColor: 'أسود', notes: 'جينز · دنيم → أسود' },
-    { id: '022', piece: 'جينز', beforeColor: 'دنيم', afterColor: 'كحلي', notes: 'جينز · دنيم فاتح' },
-    { id: '023', piece: 'عباءة', beforeColor: 'أسود', afterColor: 'كحلي', notes: 'عباءة · outer · مطفي' },
-    { id: '024', piece: 'عباءة', beforeColor: 'بيج', afterColor: 'خمري', notes: 'عباءة · محايد' },
-    { id: '025', piece: 'عباءة', beforeColor: 'رمادي', afterColor: 'أسود', notes: 'عباءة · رمادي' },
-    { id: '026', piece: 'عباءة', beforeColor: 'أبيض', afterColor: 'كريمي', notes: 'عباءة · فاتح' },
-    { id: '027', piece: 'عباءة', beforeColor: 'زيتوني', afterColor: 'أسود', notes: 'عباءة · زيتوني' },
-    { id: '028', piece: 'عباءة', beforeColor: 'وردي', afterColor: 'نبيتي', notes: 'عباءة · وردي' },
-    { id: '029', piece: 'فستان', beforeColor: 'أسود', afterColor: 'ذهبي', notes: 'فستان سهرة · لامع' },
-    { id: '030', piece: 'فستان', beforeColor: 'أبيض', afterColor: 'فضي', notes: 'فستان · فضي' },
-    { id: '031', piece: 'فستان', beforeColor: 'كحلي', afterColor: 'أسود', notes: 'فستان · كحلي' },
-    { id: '032', piece: 'فستان', beforeColor: 'تركواز', afterColor: 'أزرق', notes: 'فستان · تركواز' },
-    { id: '033', piece: 'فستان', beforeColor: 'نبيتي', afterColor: 'أسود', notes: 'فستان · نبيتي' },
-    { id: '034', piece: 'فستان', beforeColor: 'زيتوني', afterColor: 'بيج', notes: 'فستان · زيتوني' },
-    { id: '035', piece: 'فستان', beforeColor: 'بني', afterColor: 'خمري', notes: 'فستان · بني' },
-    { id: '036', piece: 'جاكيت', beforeColor: 'أسود', afterColor: 'كحلي', notes: 'جاكيت · upper' },
-    { id: '037', piece: 'جاكيت', beforeColor: 'بيج', afterColor: 'زيتوني', notes: 'جاكيت · محايد' },
-    { id: '038', piece: 'جاكيت', beforeColor: 'رمادي', afterColor: 'أسود', notes: 'جاكيت · رمادي' },
-    { id: '039', piece: 'جاكيت', beforeColor: 'أحمر', afterColor: 'أسود', notes: 'جاكيت · أحمر' },
-    { id: '040', piece: 'جاكيت', beforeColor: 'كحلي', afterColor: 'بني', notes: 'جاكيت · كحلي' },
-    { id: '041', piece: 'تنورة', beforeColor: 'أسود', afterColor: 'خمري', notes: 'تنورة · lower' },
-    { id: '042', piece: 'تنورة', beforeColor: 'أبيض', afterColor: 'كحلي', notes: 'تنورة · أبيض' },
-    { id: '043', piece: 'تنورة', beforeColor: 'بيج', afterColor: 'ذهبي', notes: 'تنورة · بيج' },
-    { id: '044', piece: 'تنورة', beforeColor: 'وردي', afterColor: 'نبيتي', notes: 'تنورة · وردي' },
-    { id: '045', piece: 'تنورة', beforeColor: 'رمادي', afterColor: 'أسود', notes: 'تنورة · رمادي' },
-    { id: '046', piece: 'فستان', beforeColor: 'أصفر', afterColor: 'ذهبي', notes: 'حافة · فاتح → لامع' },
-    { id: '047', piece: 'بلوزة', beforeColor: 'أسود', afterColor: 'أبيض', notes: 'حافة · تباين عالي' },
-    { id: '048', piece: 'فستان', beforeColor: 'فضي', afterColor: 'أسود', notes: 'حافة · معدني' },
-    { id: '049', piece: 'عباءة', beforeColor: 'كحلي', afterColor: 'أسود', notes: 'حافة · عباءة داكنة' },
-    { id: '050', piece: 'فستان', beforeColor: 'خمري', afterColor: 'أسود', notes: 'حافة · خمري كلاسيك' },
-  ];
+  /** Scenarios — single source: mira-q4-perception-taxonomy.js (loaded before this file). */
+  const PHASE1_SCENARIOS = window.Q4_PHASE1_SCENARIOS || [];
 
-  const SEED_CASES = PHASE1_SCENARIOS.slice(0, 7);
+  const SEED_CASES = PHASE1_SCENARIOS.length
+    ? PHASE1_SCENARIOS.slice(0, 7)
+    : [{ id: '001', piece: 'فستان', beforeColor: 'أزرق', afterColor: 'أسود', notes: 'seed' }];
 
   const SCORE_KEYS = ['identity', 'fabric', 'edge', 'shape', 'colorQ', 'realism'];
   const CORE_KEYS = ['identity', 'fabric', 'edge', 'shape'];
@@ -93,6 +44,11 @@
       qelScore: seed?.qelScore ?? '',
       qelGate: seed?.qelGate || 'pending',
       notes: seed?.notes ?? '',
+      topology: seed?.topology ?? '',
+      topologyAr: seed?.topologyAr ?? '',
+      pieceCount: seed?.pieceCount ?? '',
+      regionRole: seed?.regionRole ?? '',
+      outfitDesc: seed?.outfitDesc ?? '',
     };
   }
 
@@ -106,6 +62,11 @@
         beforePath: `~/qel-dataset/${s.id}/before.jpg`,
         afterPath: `~/qel-dataset/${s.id}/after.jpg`,
         notes: s.notes || '',
+        topology: s.topology || '',
+        topologyAr: s.topologyAr || '',
+        pieceCount: s.pieceCount ?? '',
+        regionRole: s.regionRole || '',
+        outfitDesc: s.outfitDesc || '',
       }),
     );
   }
@@ -1036,5 +997,4 @@
   };
 
   window.getQ4Phase1Stats = computePhase1Stats;
-  window.Q4_PHASE1_SCENARIOS = PHASE1_SCENARIOS;
 })();

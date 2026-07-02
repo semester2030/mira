@@ -1,89 +1,3710 @@
 {
-  "version": 1,
+  "version": 2,
   "colors": {
+    "black_pure": {
+      "name": "black",
+      "nameAr": "أسود",
+      "hex": "#141414",
+      "lab": [
+        6.3,
+        -0.0,
+        0.0
+      ],
+      "hsv": [
+        0,
+        0,
+        8
+      ]
+    },
+    "black_soft": {
+      "name": "soft black",
+      "nameAr": "أسود ناعم",
+      "hex": "#292929",
+      "lab": [
+        16.6,
+        -0.0,
+        0.0
+      ],
+      "hsv": [
+        0,
+        0,
+        16
+      ]
+    },
+    "charcoal": {
+      "name": "charcoal",
+      "nameAr": "فحمي",
+      "hex": "#3D3D3D",
+      "lab": [
+        25.8,
+        -0.0,
+        0.0
+      ],
+      "hsv": [
+        0,
+        0,
+        24
+      ]
+    },
+    "gray_dark": {
+      "name": "dark gray",
+      "nameAr": "رمادي غامق",
+      "hex": "#575757",
+      "lab": [
+        37.0,
+        -0.0,
+        0.0
+      ],
+      "hsv": [
+        0,
+        0,
+        34
+      ]
+    },
+    "gray_mid": {
+      "name": "gray",
+      "nameAr": "رمادي",
+      "hex": "#858585",
+      "lab": [
+        55.5,
+        -0.0,
+        0.0
+      ],
+      "hsv": [
+        0,
+        0,
+        52
+      ]
+    },
+    "gray_light": {
+      "name": "light gray",
+      "nameAr": "رمادي فاتح",
+      "hex": "#B8B8B8",
+      "lab": [
+        74.8,
+        -0.0,
+        0.0
+      ],
+      "hsv": [
+        0,
+        0,
+        72
+      ]
+    },
+    "silver": {
+      "name": "silver",
+      "nameAr": "فضي",
+      "hex": "#C7C7C7",
+      "lab": [
+        80.2,
+        -0.0,
+        0.0
+      ],
+      "hsv": [
+        0,
+        0,
+        78
+      ]
+    },
+    "white_pure": {
+      "name": "white",
+      "nameAr": "أبيض",
+      "hex": "#FAFAFA",
+      "lab": [
+        98.3,
+        -0.0,
+        0.0
+      ],
+      "hsv": [
+        0,
+        0,
+        98
+      ]
+    },
+    "ivory": {
+      "name": "ivory",
+      "nameAr": "عاجي",
+      "hex": "#F2F0EE",
+      "lab": [
+        94.9,
+        0.3,
+        1.2
+      ],
+      "hsv": [
+        30,
+        2,
+        95
+      ]
+    },
+    "cream": {
+      "name": "cream",
+      "nameAr": "كريمي",
+      "hex": "#EEECE7",
+      "lab": [
+        93.4,
+        -0.2,
+        2.7
+      ],
+      "hsv": [
+        43,
+        3,
+        93
+      ]
+    },
+    "pearl": {
+      "name": "pearl",
+      "nameAr": "لؤلؤي",
+      "hex": "#F3F2F1",
+      "lab": [
+        95.5,
+        0.2,
+        0.6
+      ],
+      "hsv": [
+        30,
+        1,
+        95
+      ]
+    },
+    "off_white": {
+      "name": "off white",
+      "nameAr": "أبيض عاجي",
+      "hex": "#E8E6E3",
+      "lab": [
+        91.4,
+        0.1,
+        1.7
+      ],
+      "hsv": [
+        36,
+        2,
+        91
+      ]
+    },
+    "red_pale": {
+      "name": "red pale",
+      "nameAr": "أحمر فاتح جداً",
+      "hex": "#F5CCCC",
+      "lab": [
+        85.5,
+        14.4,
+        5.4
+      ],
+      "hsv": [
+        0,
+        17,
+        96
+      ]
+    },
+    "red_light": {
+      "name": "red light",
+      "nameAr": "أحمر فاتح",
+      "hex": "#EC9898",
+      "lab": [
+        71.3,
+        31.5,
+        13.2
+      ],
+      "hsv": [
+        0,
+        36,
+        93
+      ]
+    },
+    "red_soft": {
+      "name": "red soft",
+      "nameAr": "أحمر ناعم",
+      "hex": "#E56C6C",
+      "lab": [
+        60.3,
+        47.0,
+        22.7
+      ],
+      "hsv": [
+        0,
+        53,
+        90
+      ]
+    },
+    "red_mid": {
+      "name": "red medium",
+      "nameAr": "أحمر متوسط",
+      "hex": "#DE3535",
+      "lab": [
+        49.9,
+        63.9,
+        41.0
+      ],
+      "hsv": [
+        0,
+        76,
+        87
+      ]
+    },
+    "red_deep": {
+      "name": "red deep",
+      "nameAr": "أحمر غامق",
+      "hex": "#B91D1D",
+      "lab": [
+        40.1,
+        59.1,
+        41.8
+      ],
+      "hsv": [
+        0,
+        84,
+        73
+      ]
+    },
+    "red_dark": {
+      "name": "red dark",
+      "nameAr": "أحمر غامق جداً",
+      "hex": "#7D1212",
+      "lab": [
+        26.3,
+        43.9,
+        30.4
+      ],
+      "hsv": [
+        0,
+        86,
+        49
+      ]
+    },
+    "rust_pale": {
+      "name": "rust pale",
+      "nameAr": "صدأ فاتح جداً",
+      "hex": "#F3D5CE",
+      "lab": [
+        87.5,
+        9.3,
+        7.3
+      ],
+      "hsv": [
+        11,
+        15,
+        95
+      ]
+    },
+    "rust_light": {
+      "name": "rust light",
+      "nameAr": "صدأ فاتح",
+      "hex": "#E8AB9C",
+      "lab": [
+        75.3,
+        20.4,
+        16.5
+      ],
+      "hsv": [
+        12,
+        33,
+        91
+      ]
+    },
+    "rust_soft": {
+      "name": "rust soft",
+      "nameAr": "صدأ ناعم",
+      "hex": "#DF8872",
+      "lab": [
+        65.4,
+        30.9,
+        25.9
+      ],
+      "hsv": [
+        12,
+        49,
+        87
+      ]
+    },
+    "rust_mid": {
+      "name": "rust medium",
+      "nameAr": "صدأ متوسط",
+      "hex": "#D65C3D",
+      "lab": [
+        54.3,
+        46.1,
+        41.1
+      ],
+      "hsv": [
+        12,
+        71,
+        84
+      ]
+    },
+    "rust_deep": {
+      "name": "rust deep",
+      "nameAr": "صدأ غامق",
+      "hex": "#B24124",
+      "lab": [
+        43.3,
+        44.5,
+        40.8
+      ],
+      "hsv": [
+        12,
+        80,
+        70
+      ]
+    },
+    "rust_dark": {
+      "name": "rust dark",
+      "nameAr": "صدأ غامق جداً",
+      "hex": "#782A17",
+      "lab": [
+        28.7,
+        33.0,
+        29.6
+      ],
+      "hsv": [
+        12,
+        81,
+        47
+      ]
+    },
+    "terracotta_pale": {
+      "name": "terracotta pale",
+      "nameAr": "تراكوتا فاتح جداً",
+      "hex": "#F1DCD0",
+      "lab": [
+        89.1,
+        5.3,
+        8.5
+      ],
+      "hsv": [
+        22,
+        14,
+        95
+      ]
+    },
+    "terracotta_light": {
+      "name": "terracotta light",
+      "nameAr": "تراكوتا فاتح",
+      "hex": "#E3B9A0",
+      "lab": [
+        78.2,
+        11.5,
+        18.4
+      ],
+      "hsv": [
+        22,
+        30,
+        89
+      ]
+    },
+    "terracotta_soft": {
+      "name": "terracotta soft",
+      "nameAr": "تراكوتا ناعم",
+      "hex": "#D99B78",
+      "lab": [
+        69.2,
+        19.0,
+        27.5
+      ],
+      "hsv": [
+        22,
+        45,
+        85
+      ]
+    },
+    "terracotta_mid": {
+      "name": "terracotta medium",
+      "nameAr": "تراكوتا متوسط",
+      "hex": "#CE7846",
+      "lab": [
+        59.0,
+        29.2,
+        41.3
+      ],
+      "hsv": [
+        22,
+        66,
+        81
+      ]
+    },
+    "terracotta_deep": {
+      "name": "terracotta deep",
+      "nameAr": "تراكوتا غامق",
+      "hex": "#AA5A2C",
+      "lab": [
+        47.0,
+        29.1,
+        40.1
+      ],
+      "hsv": [
+        22,
+        74,
+        67
+      ]
+    },
+    "terracotta_dark": {
+      "name": "terracotta dark",
+      "nameAr": "تراكوتا غامق جداً",
+      "hex": "#733C1C",
+      "lab": [
+        31.7,
+        21.3,
+        29.7
+      ],
+      "hsv": [
+        22,
+        76,
+        45
+      ]
+    },
+    "orange_pale": {
+      "name": "orange pale",
+      "nameAr": "برتقالي فاتح جداً",
+      "hex": "#F7E2CA",
+      "lab": [
+        91.0,
+        3.4,
+        14.3
+      ],
+      "hsv": [
+        32,
+        18,
+        97
+      ]
+    },
+    "orange_light": {
+      "name": "orange light",
+      "nameAr": "برتقالي فاتح",
+      "hex": "#F0C594",
+      "lab": [
+        82.2,
+        8.8,
+        30.3
+      ],
+      "hsv": [
+        32,
+        38,
+        94
+      ]
+    },
+    "orange_soft": {
+      "name": "orange soft",
+      "nameAr": "برتقالي ناعم",
+      "hex": "#EAAD66",
+      "lab": [
+        75.0,
+        14.6,
+        44.8
+      ],
+      "hsv": [
+        32,
+        56,
+        92
+      ]
+    },
+    "orange_mid": {
+      "name": "orange medium",
+      "nameAr": "برتقالي متوسط",
+      "hex": "#E5902E",
+      "lab": [
+        67.1,
+        24.9,
+        61.6
+      ],
+      "hsv": [
+        32,
+        80,
+        90
+      ]
+    },
+    "orange_deep": {
+      "name": "orange deep",
+      "nameAr": "برتقالي غامق",
+      "hex": "#C07116",
+      "lab": [
+        55.2,
+        25.2,
+        57.6
+      ],
+      "hsv": [
+        32,
+        89,
+        75
+      ]
+    },
+    "orange_dark": {
+      "name": "orange dark",
+      "nameAr": "برتقالي غامق جداً",
+      "hex": "#814B0E",
+      "lab": [
+        37.4,
+        18.4,
+        42.2
+      ],
+      "hsv": [
+        32,
+        89,
+        51
+      ]
+    },
+    "amber_pale": {
+      "name": "amber pale",
+      "nameAr": "كهرماني فاتح جداً",
+      "hex": "#F8EAC9",
+      "lab": [
+        93.0,
+        -0.5,
+        17.8
+      ],
+      "hsv": [
+        42,
+        19,
+        97
+      ]
+    },
+    "amber_light": {
+      "name": "amber light",
+      "nameAr": "كهرماني فاتح",
+      "hex": "#F2D591",
+      "lab": [
+        86.3,
+        0.9,
+        37.3
+      ],
+      "hsv": [
+        42,
+        40,
+        95
+      ]
+    },
+    "amber_soft": {
+      "name": "amber soft",
+      "nameAr": "كهرماني ناعم",
+      "hex": "#EEC463",
+      "lab": [
+        81.0,
+        4.0,
+        53.5
+      ],
+      "hsv": [
+        42,
+        58,
+        93
+      ]
+    },
+    "amber_mid": {
+      "name": "amber medium",
+      "nameAr": "كهرماني متوسط",
+      "hex": "#EAB02A",
+      "lab": [
+        75.3,
+        9.9,
+        70.4
+      ],
+      "hsv": [
+        42,
+        82,
+        92
+      ]
+    },
+    "amber_deep": {
+      "name": "amber deep",
+      "nameAr": "كهرماني غامق",
+      "hex": "#C48F12",
+      "lab": [
+        62.9,
+        10.4,
+        64.8
+      ],
+      "hsv": [
+        42,
+        91,
+        77
+      ]
+    },
+    "amber_dark": {
+      "name": "amber dark",
+      "nameAr": "كهرماني غامق جداً",
+      "hex": "#84600B",
+      "lab": [
+        43.2,
+        7.3,
+        48.0
+      ],
+      "hsv": [
+        42,
+        92,
+        52
+      ]
+    },
+    "gold_pale": {
+      "name": "gold pale",
+      "nameAr": "ذهبي فاتح جداً",
+      "hex": "#F4ECCD",
+      "lab": [
+        93.3,
+        -2.3,
+        16.0
+      ],
+      "hsv": [
+        48,
+        16,
+        96
+      ]
+    },
+    "gold_light": {
+      "name": "gold light",
+      "nameAr": "ذهبي فاتح",
+      "hex": "#EADA9A",
+      "lab": [
+        87.0,
+        -3.7,
+        33.5
+      ],
+      "hsv": [
+        48,
+        34,
+        92
+      ]
+    },
+    "gold_soft": {
+      "name": "gold soft",
+      "nameAr": "ذهبي ناعم",
+      "hex": "#E2CB6F",
+      "lab": [
+        81.9,
+        -3.6,
+        48.4
+      ],
+      "hsv": [
+        48,
+        51,
+        89
+      ]
+    },
+    "gold_mid": {
+      "name": "gold medium",
+      "nameAr": "ذهبي متوسط",
+      "hex": "#D9BA3A",
+      "lab": [
+        76.2,
+        -2.1,
+        65.2
+      ],
+      "hsv": [
+        48,
+        73,
+        85
+      ]
+    },
+    "gold_deep": {
+      "name": "gold deep",
+      "nameAr": "ذهبي غامق",
+      "hex": "#B59721",
+      "lab": [
+        63.4,
+        -0.3,
+        60.7
+      ],
+      "hsv": [
+        48,
+        82,
+        71
+      ]
+    },
+    "gold_dark": {
+      "name": "gold dark",
+      "nameAr": "ذهبي غامق جداً",
+      "hex": "#7A6615",
+      "lab": [
+        43.8,
+        -0.7,
+        45.0
+      ],
+      "hsv": [
+        48,
+        83,
+        48
+      ]
+    },
+    "yellow_pale": {
+      "name": "yellow pale",
+      "nameAr": "أصفر فاتح جداً",
+      "hex": "#F6F2CB",
+      "lab": [
+        94.9,
+        -4.9,
+        19.3
+      ],
+      "hsv": [
+        54,
+        17,
+        96
+      ]
+    },
+    "yellow_light": {
+      "name": "yellow light",
+      "nameAr": "أصفر فاتح",
+      "hex": "#EEE796",
+      "lab": [
+        90.6,
+        -9.2,
+        40.3
+      ],
+      "hsv": [
+        55,
+        37,
+        93
+      ]
+    },
+    "yellow_soft": {
+      "name": "yellow soft",
+      "nameAr": "أصفر ناعم",
+      "hex": "#E8DD69",
+      "lab": [
+        86.9,
+        -10.8,
+        57.3
+      ],
+      "hsv": [
+        55,
+        55,
+        91
+      ]
+    },
+    "yellow_mid": {
+      "name": "yellow medium",
+      "nameAr": "أصفر متوسط",
+      "hex": "#E2D332",
+      "lab": [
+        83.4,
+        -11.4,
+        74.9
+      ],
+      "hsv": [
+        55,
+        78,
+        89
+      ]
+    },
+    "yellow_deep": {
+      "name": "yellow deep",
+      "nameAr": "أصفر غامق",
+      "hex": "#BCAF1A",
+      "lab": [
+        70.5,
+        -10.1,
+        68.7
+      ],
+      "hsv": [
+        55,
+        86,
+        74
+      ]
+    },
+    "yellow_dark": {
+      "name": "yellow dark",
+      "nameAr": "أصفر غامق جداً",
+      "hex": "#7F7610",
+      "lab": [
+        48.9,
+        -7.6,
+        51.1
+      ],
+      "hsv": [
+        55,
+        87,
+        50
+      ]
+    },
+    "lime_pale": {
+      "name": "lime pale",
+      "nameAr": "ليموني فاتح جداً",
+      "hex": "#EDF2CF",
+      "lab": [
+        94.3,
+        -7.5,
+        16.4
+      ],
+      "hsv": [
+        69,
+        14,
+        95
+      ]
+    },
+    "lime_light": {
+      "name": "lime light",
+      "nameAr": "ليموني فاتح",
+      "hex": "#DCE69E",
+      "lab": [
+        89.1,
+        -14.6,
+        34.0
+      ],
+      "hsv": [
+        68,
+        31,
+        90
+      ]
+    },
+    "lime_soft": {
+      "name": "lime soft",
+      "nameAr": "ليموني ناعم",
+      "hex": "#CEDC74",
+      "lab": [
+        84.8,
+        -19.8,
+        49.2
+      ],
+      "hsv": [
+        68,
+        47,
+        86
+      ]
+    },
+    "lime_mid": {
+      "name": "lime medium",
+      "nameAr": "ليموني متوسط",
+      "hex": "#BFD241",
+      "lab": [
+        80.5,
+        -24.8,
+        66.1
+      ],
+      "hsv": [
+        68,
+        69,
+        82
+      ]
+    },
+    "lime_deep": {
+      "name": "lime deep",
+      "nameAr": "ليموني غامق",
+      "hex": "#9DAF28",
+      "lab": [
+        68.0,
+        -23.1,
+        61.9
+      ],
+      "hsv": [
+        68,
+        77,
+        69
+      ]
+    },
+    "lime_dark": {
+      "name": "lime dark",
+      "nameAr": "ليموني غامق جداً",
+      "hex": "#697619",
+      "lab": [
+        47.0,
+        -17.5,
+        45.9
+      ],
+      "hsv": [
+        68,
+        79,
+        46
+      ]
+    },
+    "olive_pale": {
+      "name": "olive pale",
+      "nameAr": "زيتوني فاتح جداً",
+      "hex": "#E3EED3",
+      "lab": [
+        92.7,
+        -8.3,
+        11.8
+      ],
+      "hsv": [
+        84,
+        11,
+        93
+      ]
+    },
+    "olive_light": {
+      "name": "olive light",
+      "nameAr": "زيتوني فاتح",
+      "hex": "#C6DDA6",
+      "lab": [
+        85.2,
+        -17.1,
+        24.5
+      ],
+      "hsv": [
+        85,
+        25,
+        87
+      ]
+    },
+    "olive_soft": {
+      "name": "olive soft",
+      "nameAr": "زيتوني ناعم",
+      "hex": "#AFD080",
+      "lab": [
+        79.5,
+        -24.4,
+        36.2
+      ],
+      "hsv": [
+        85,
+        38,
+        82
+      ]
+    },
+    "olive_mid": {
+      "name": "olive medium",
+      "nameAr": "زيتوني متوسط",
+      "hex": "#93C251",
+      "lab": [
+        73.1,
+        -33.5,
+        50.8
+      ],
+      "hsv": [
+        85,
+        58,
+        76
+      ]
+    },
+    "olive_deep": {
+      "name": "olive deep",
+      "nameAr": "زيتوني غامق",
+      "hex": "#74A037",
+      "lab": [
+        60.9,
+        -31.8,
+        48.3
+      ],
+      "hsv": [
+        85,
+        66,
+        63
+      ]
+    },
+    "olive_dark": {
+      "name": "olive dark",
+      "nameAr": "زيتوني غامق جداً",
+      "hex": "#4D6C23",
+      "lab": [
+        41.9,
+        -23.9,
+        36.0
+      ],
+      "hsv": [
+        85,
+        68,
+        42
+      ]
+    },
+    "sage_pale": {
+      "name": "sage pale",
+      "nameAr": "مريمي فاتح جداً",
+      "hex": "#DDEAD6",
+      "lab": [
+        91.3,
+        -7.9,
+        8.2
+      ],
+      "hsv": [
+        99,
+        9,
+        92
+      ]
+    },
+    "sage_light": {
+      "name": "sage light",
+      "nameAr": "مريمي فاتح",
+      "hex": "#BBD7AC",
+      "lab": [
+        83.0,
+        -17.1,
+        18.2
+      ],
+      "hsv": [
+        99,
+        20,
+        84
+      ]
+    },
+    "sage_soft": {
+      "name": "sage soft",
+      "nameAr": "مريمي ناعم",
+      "hex": "#9EC889",
+      "lab": [
+        76.3,
+        -25.5,
+        27.1
+      ],
+      "hsv": [
+        100,
+        32,
+        78
+      ]
+    },
+    "sage_mid": {
+      "name": "sage medium",
+      "nameAr": "مريمي متوسط",
+      "hex": "#7BB65D",
+      "lab": [
+        68.4,
+        -35.4,
+        39.1
+      ],
+      "hsv": [
+        100,
+        49,
+        71
+      ]
+    },
+    "sage_deep": {
+      "name": "sage deep",
+      "nameAr": "مريمي غامق",
+      "hex": "#5D9541",
+      "lab": [
+        56.3,
+        -34.3,
+        38.1
+      ],
+      "hsv": [
+        100,
+        56,
+        58
+      ]
+    },
+    "sage_dark": {
+      "name": "sage dark",
+      "nameAr": "مريمي غامق جداً",
+      "hex": "#3E652A",
+      "lab": [
+        38.7,
+        -25.7,
+        28.7
+      ],
+      "hsv": [
+        100,
+        58,
+        40
+      ]
+    },
+    "green_pale": {
+      "name": "green pale",
+      "nameAr": "أخضر فاتح جداً",
+      "hex": "#D2EFD4",
+      "lab": [
+        91.8,
+        -14.4,
+        9.9
+      ],
+      "hsv": [
+        124,
+        12,
+        94
+      ]
+    },
+    "green_light": {
+      "name": "green light",
+      "nameAr": "أخضر فاتح",
+      "hex": "#A4E0A9",
+      "lab": [
+        84.0,
+        -29.8,
+        20.9
+      ],
+      "hsv": [
+        125,
+        27,
+        88
+      ]
+    },
+    "green_soft": {
+      "name": "green soft",
+      "nameAr": "أخضر ناعم",
+      "hex": "#7DD484",
+      "lab": [
+        77.9,
+        -42.6,
+        31.6
+      ],
+      "hsv": [
+        125,
+        41,
+        83
+      ]
+    },
+    "green_mid": {
+      "name": "green medium",
+      "nameAr": "أخضر متوسط",
+      "hex": "#4DC757",
+      "lab": [
+        71.6,
+        -56.5,
+        45.5
+      ],
+      "hsv": [
+        125,
+        61,
+        78
+      ]
+    },
+    "green_deep": {
+      "name": "green deep",
+      "nameAr": "أخضر غامق",
+      "hex": "#32A43C",
+      "lab": [
+        59.5,
+        -52.7,
+        43.7
+      ],
+      "hsv": [
+        125,
+        70,
+        64
+      ]
+    },
+    "green_dark": {
+      "name": "green dark",
+      "nameAr": "أخضر غامق جداً",
+      "hex": "#206F27",
+      "lab": [
+        40.9,
+        -39.4,
+        32.5
+      ],
+      "hsv": [
+        125,
+        71,
+        44
+      ]
+    },
+    "emerald_pale": {
+      "name": "emerald pale",
+      "nameAr": "زمردي فاتح جداً",
+      "hex": "#D0F1DE",
+      "lab": [
+        92.4,
+        -14.3,
+        5.6
+      ],
+      "hsv": [
+        145,
+        14,
+        95
+      ]
+    },
+    "emerald_light": {
+      "name": "emerald light",
+      "nameAr": "زمردي فاتح",
+      "hex": "#A0E3BC",
+      "lab": [
+        85.0,
+        -29.0,
+        12.4
+      ],
+      "hsv": [
+        145,
+        30,
+        89
+      ]
+    },
+    "emerald_soft": {
+      "name": "emerald soft",
+      "nameAr": "زمردي ناعم",
+      "hex": "#78D9A0",
+      "lab": [
+        79.7,
+        -41.3,
+        19.4
+      ],
+      "hsv": [
+        145,
+        45,
+        85
+      ]
+    },
+    "emerald_mid": {
+      "name": "emerald medium",
+      "nameAr": "زمردي متوسط",
+      "hex": "#46CE7E",
+      "lab": [
+        74.2,
+        -54.5,
+        29.3
+      ],
+      "hsv": [
+        145,
+        66,
+        81
+      ]
+    },
+    "emerald_deep": {
+      "name": "emerald deep",
+      "nameAr": "زمردي غامق",
+      "hex": "#2CAA61",
+      "lab": [
+        61.8,
+        -50.4,
+        28.1
+      ],
+      "hsv": [
+        145,
+        74,
+        67
+      ]
+    },
+    "emerald_dark": {
+      "name": "emerald dark",
+      "nameAr": "زمردي غامق جداً",
+      "hex": "#1C7340",
+      "lab": [
+        42.6,
+        -37.7,
+        21.1
+      ],
+      "hsv": [
+        145,
+        76,
+        45
+      ]
+    },
+    "teal_pale": {
+      "name": "teal pale",
+      "nameAr": "تركواز فاتح جداً",
+      "hex": "#D2EFE8",
+      "lab": [
+        92.2,
+        -10.8,
+        0.2
+      ],
+      "hsv": [
+        166,
+        12,
+        94
+      ]
+    },
+    "teal_light": {
+      "name": "teal light",
+      "nameAr": "تركواز فاتح",
+      "hex": "#A4E0D1",
+      "lab": [
+        84.9,
+        -22.1,
+        1.2
+      ],
+      "hsv": [
+        165,
+        27,
+        88
+      ]
+    },
+    "teal_soft": {
+      "name": "teal soft",
+      "nameAr": "تركواز ناعم",
+      "hex": "#7DD4BE",
+      "lab": [
+        79.1,
+        -31.4,
+        2.7
+      ],
+      "hsv": [
+        165,
+        41,
+        83
+      ]
+    },
+    "teal_mid": {
+      "name": "teal medium",
+      "nameAr": "تركواز متوسط",
+      "hex": "#4DC7A8",
+      "lab": [
+        73.1,
+        -41.4,
+        5.5
+      ],
+      "hsv": [
+        165,
+        61,
+        78
+      ]
+    },
+    "teal_deep": {
+      "name": "teal deep",
+      "nameAr": "تركواز غامق",
+      "hex": "#32A487",
+      "lab": [
+        60.8,
+        -38.7,
+        5.9
+      ],
+      "hsv": [
+        165,
+        70,
+        64
+      ]
+    },
+    "teal_dark": {
+      "name": "teal dark",
+      "nameAr": "تركواز غامق جداً",
+      "hex": "#206F5B",
+      "lab": [
+        41.9,
+        -28.9,
+        4.3
+      ],
+      "hsv": [
+        165,
+        71,
+        44
+      ]
+    },
+    "cyan_pale": {
+      "name": "cyan pale",
+      "nameAr": "سماوي فاتح جداً",
+      "hex": "#D1EDF0",
+      "lab": [
+        91.9,
+        -8.5,
+        -4.5
+      ],
+      "hsv": [
+        186,
+        13,
+        94
+      ]
+    },
+    "cyan_light": {
+      "name": "cyan light",
+      "nameAr": "سماوي فاتح",
+      "hex": "#A2DCE2",
+      "lab": [
+        84.2,
+        -17.0,
+        -8.9
+      ],
+      "hsv": [
+        186,
+        28,
+        89
+      ]
+    },
+    "cyan_soft": {
+      "name": "cyan soft",
+      "nameAr": "سماوي ناعم",
+      "hex": "#7ACFD6",
+      "lab": [
+        78.2,
+        -23.9,
+        -11.5
+      ],
+      "hsv": [
+        185,
+        43,
+        84
+      ]
+    },
+    "cyan_mid": {
+      "name": "cyan medium",
+      "nameAr": "سماوي متوسط",
+      "hex": "#49BFCA",
+      "lab": [
+        71.5,
+        -29.3,
+        -15.3
+      ],
+      "hsv": [
+        185,
+        64,
+        79
+      ]
+    },
+    "cyan_deep": {
+      "name": "cyan deep",
+      "nameAr": "سماوي غامق",
+      "hex": "#2F9DA7",
+      "lab": [
+        59.4,
+        -26.8,
+        -14.1
+      ],
+      "hsv": [
+        185,
+        72,
+        65
+      ]
+    },
+    "cyan_dark": {
+      "name": "cyan dark",
+      "nameAr": "سماوي غامق جداً",
+      "hex": "#1E6A71",
+      "lab": [
+        40.9,
+        -20.0,
+        -10.6
+      ],
+      "hsv": [
+        185,
+        73,
+        44
+      ]
+    },
+    "sky_pale": {
+      "name": "sky pale",
+      "nameAr": "سماوي فاتح فاتح جداً",
+      "hex": "#D3E5EE",
+      "lab": [
+        89.9,
+        -4.2,
+        -6.4
+      ],
+      "hsv": [
+        200,
+        11,
+        93
+      ]
+    },
+    "sky_light": {
+      "name": "sky light",
+      "nameAr": "سماوي فاتح فاتح",
+      "hex": "#A6CBDD",
+      "lab": [
+        79.6,
+        -8.2,
+        -13.0
+      ],
+      "hsv": [
+        200,
+        25,
+        87
+      ]
+    },
+    "sky_soft": {
+      "name": "sky soft",
+      "nameAr": "سماوي فاتح ناعم",
+      "hex": "#80B6D0",
+      "lab": [
+        71.3,
+        -11.1,
+        -18.7
+      ],
+      "hsv": [
+        200,
+        38,
+        82
+      ]
+    },
+    "sky_mid": {
+      "name": "sky medium",
+      "nameAr": "سماوي فاتح متوسط",
+      "hex": "#519CC2",
+      "lab": [
+        61.1,
+        -12.1,
+        -26.6
+      ],
+      "hsv": [
+        200,
+        58,
+        76
+      ]
+    },
+    "sky_deep": {
+      "name": "sky deep",
+      "nameAr": "سماوي فاتح غامق",
+      "hex": "#377DA0",
+      "lab": [
+        49.5,
+        -10.7,
+        -25.2
+      ],
+      "hsv": [
+        200,
+        66,
+        63
+      ]
+    },
+    "sky_dark": {
+      "name": "sky dark",
+      "nameAr": "سماوي فاتح غامق جداً",
+      "hex": "#23546C",
+      "lab": [
+        33.5,
+        -8.3,
+        -18.7
+      ],
+      "hsv": [
+        200,
+        68,
+        42
+      ]
+    },
+    "azure_pale": {
+      "name": "azure pale",
+      "nameAr": "أزرق سماوي فاتح جداً",
+      "hex": "#D1DEF0",
+      "lab": [
+        88.0,
+        -0.8,
+        -10.3
+      ],
+      "hsv": [
+        215,
+        13,
+        94
+      ]
+    },
+    "azure_light": {
+      "name": "azure light",
+      "nameAr": "أزرق سماوي فاتح",
+      "hex": "#A2BCE2",
+      "lab": [
+        75.5,
+        -0.3,
+        -21.9
+      ],
+      "hsv": [
+        216,
+        28,
+        89
+      ]
+    },
+    "azure_soft": {
+      "name": "azure soft",
+      "nameAr": "أزرق سماوي ناعم",
+      "hex": "#7AA1D6",
+      "lab": [
+        65.3,
+        0.5,
+        -31.1
+      ],
+      "hsv": [
+        215,
+        43,
+        84
+      ]
+    },
+    "azure_mid": {
+      "name": "azure medium",
+      "nameAr": "أزرق سماوي متوسط",
+      "hex": "#497FCA",
+      "lab": [
+        52.8,
+        5.7,
+        -44.2
+      ],
+      "hsv": [
+        215,
+        64,
+        79
+      ]
+    },
+    "azure_deep": {
+      "name": "azure deep",
+      "nameAr": "أزرق سماوي غامق",
+      "hex": "#2F61A7",
+      "lab": [
+        41.1,
+        7.5,
+        -42.6
+      ],
+      "hsv": [
+        215,
+        72,
+        65
+      ]
+    },
+    "azure_dark": {
+      "name": "azure dark",
+      "nameAr": "أزرق سماوي غامق جداً",
+      "hex": "#1E4071",
+      "lab": [
+        27.1,
+        5.8,
+        -31.9
+      ],
+      "hsv": [
+        215,
+        73,
+        44
+      ]
+    },
+    "blue_pale": {
+      "name": "blue pale",
+      "nameAr": "أزرق فاتح جداً",
+      "hex": "#CFD8F2",
+      "lab": [
+        86.4,
+        2.1,
+        -13.7
+      ],
+      "hsv": [
+        225,
+        14,
+        95
+      ]
+    },
+    "blue_light": {
+      "name": "blue light",
+      "nameAr": "أزرق فاتح",
+      "hex": "#9EB0E6",
+      "lab": [
+        72.2,
+        6.1,
+        -29.1
+      ],
+      "hsv": [
+        225,
+        31,
+        90
+      ]
+    },
+    "blue_soft": {
+      "name": "blue soft",
+      "nameAr": "أزرق ناعم",
+      "hex": "#748EDC",
+      "lab": [
+        60.1,
+        11.7,
+        -42.7
+      ],
+      "hsv": [
+        225,
+        47,
+        86
+      ]
+    },
+    "blue_mid": {
+      "name": "blue medium",
+      "nameAr": "أزرق متوسط",
+      "hex": "#4165D2",
+      "lab": [
+        45.7,
+        23.4,
+        -60.1
+      ],
+      "hsv": [
+        225,
+        69,
+        82
+      ]
+    },
+    "blue_deep": {
+      "name": "blue deep",
+      "nameAr": "أزرق غامق",
+      "hex": "#2849AF",
+      "lab": [
+        34.6,
+        25.4,
+        -57.8
+      ],
+      "hsv": [
+        225,
+        77,
+        69
+      ]
+    },
+    "blue_dark": {
+      "name": "blue dark",
+      "nameAr": "أزرق غامق جداً",
+      "hex": "#193076",
+      "lab": [
+        22.4,
+        18.3,
+        -42.7
+      ],
+      "hsv": [
+        225,
+        79,
+        46
+      ]
+    },
+    "cobalt_pale": {
+      "name": "cobalt pale",
+      "nameAr": "كوبالت فاتح جداً",
+      "hex": "#D0D0F1",
+      "lab": [
+        84.4,
+        6.4,
+        -16.2
+      ],
+      "hsv": [
+        240,
+        14,
+        95
+      ]
+    },
+    "cobalt_light": {
+      "name": "cobalt light",
+      "nameAr": "كوبالت فاتح",
+      "hex": "#A0A0E3",
+      "lab": [
+        68.1,
+        14.9,
+        -33.8
+      ],
+      "hsv": [
+        240,
+        30,
+        89
+      ]
+    },
+    "cobalt_soft": {
+      "name": "cobalt soft",
+      "nameAr": "كوبالت ناعم",
+      "hex": "#7878D9",
+      "lab": [
+        54.5,
+        24.8,
+        -49.9
+      ],
+      "hsv": [
+        240,
+        45,
+        85
+      ]
+    },
+    "cobalt_mid": {
+      "name": "cobalt medium",
+      "nameAr": "كوبالت متوسط",
+      "hex": "#4646CE",
+      "lab": [
+        38.1,
+        42.1,
+        -70.3
+      ],
+      "hsv": [
+        240,
+        66,
+        81
+      ]
+    },
+    "cobalt_deep": {
+      "name": "cobalt deep",
+      "nameAr": "كوبالت غامق",
+      "hex": "#2C2CAA",
+      "lab": [
+        27.4,
+        42.4,
+        -66.7
+      ],
+      "hsv": [
+        240,
+        74,
+        67
+      ]
+    },
+    "cobalt_dark": {
+      "name": "cobalt dark",
+      "nameAr": "كوبالت غامق جداً",
+      "hex": "#1C1C73",
+      "lab": [
+        17.1,
+        31.2,
+        -49.5
+      ],
+      "hsv": [
+        240,
+        76,
+        45
+      ]
+    },
+    "navy_pale": {
+      "name": "navy pale",
+      "nameAr": "كحلي فاتح جداً",
+      "hex": "#DAD3EE",
+      "lab": [
+        85.8,
+        7.4,
+        -12.4
+      ],
+      "hsv": [
+        256,
+        11,
+        93
+      ]
+    },
+    "navy_light": {
+      "name": "navy light",
+      "nameAr": "كحلي فاتح",
+      "hex": "#B4A6DD",
+      "lab": [
+        71.0,
+        16.1,
+        -25.9
+      ],
+      "hsv": [
+        255,
+        25,
+        87
+      ]
+    },
+    "navy_soft": {
+      "name": "navy soft",
+      "nameAr": "كحلي ناعم",
+      "hex": "#9480D0",
+      "lab": [
+        58.3,
+        25.0,
+        -38.6
+      ],
+      "hsv": [
+        255,
+        38,
+        82
+      ]
+    },
+    "navy_mid": {
+      "name": "navy medium",
+      "nameAr": "كحلي متوسط",
+      "hex": "#6E51C2",
+      "lab": [
+        42.9,
+        39.0,
+        -55.3
+      ],
+      "hsv": [
+        255,
+        58,
+        76
+      ]
+    },
+    "navy_deep": {
+      "name": "navy deep",
+      "nameAr": "كحلي غامق",
+      "hex": "#5137A0",
+      "lab": [
+        31.9,
+        38.2,
+        -53.2
+      ],
+      "hsv": [
+        255,
+        66,
+        63
+      ]
+    },
+    "navy_dark": {
+      "name": "navy dark",
+      "nameAr": "كحلي غامق جداً",
+      "hex": "#35236C",
+      "lab": [
+        20.2,
+        28.4,
+        -39.8
+      ],
+      "hsv": [
+        255,
+        68,
+        42
+      ]
+    },
+    "indigo_pale": {
+      "name": "indigo pale",
+      "nameAr": "نيلي فاتح جداً",
+      "hex": "#E3D2EF",
+      "lab": [
+        86.3,
+        11.1,
+        -12.1
+      ],
+      "hsv": [
+        275,
+        12,
+        94
+      ]
+    },
+    "indigo_light": {
+      "name": "indigo light",
+      "nameAr": "نيلي فاتح",
+      "hex": "#C7A4E0",
+      "lab": [
+        72.3,
+        23.9,
+        -25.5
+      ],
+      "hsv": [
+        275,
+        27,
+        88
+      ]
+    },
+    "indigo_soft": {
+      "name": "indigo soft",
+      "nameAr": "نيلي ناعم",
+      "hex": "#B07DD4",
+      "lab": [
+        60.5,
+        35.9,
+        -37.3
+      ],
+      "hsv": [
+        275,
+        41,
+        83
+      ]
+    },
+    "indigo_mid": {
+      "name": "indigo medium",
+      "nameAr": "نيلي متوسط",
+      "hex": "#944DC7",
+      "lab": [
+        46.6,
+        51.2,
+        -52.0
+      ],
+      "hsv": [
+        275,
+        61,
+        78
+      ]
+    },
+    "indigo_deep": {
+      "name": "indigo deep",
+      "nameAr": "نيلي غامق",
+      "hex": "#7532A4",
+      "lab": [
+        35.5,
+        49.3,
+        -49.5
+      ],
+      "hsv": [
+        275,
+        70,
+        64
+      ]
+    },
+    "indigo_dark": {
+      "name": "indigo dark",
+      "nameAr": "نيلي غامق جداً",
+      "hex": "#4E206F",
+      "lab": [
+        23.0,
+        36.6,
+        -37.0
+      ],
+      "hsv": [
+        275,
+        71,
+        44
+      ]
+    },
+    "purple_pale": {
+      "name": "purple pale",
+      "nameAr": "بنفسجي فاتح جداً",
+      "hex": "#EBD1F0",
+      "lab": [
+        86.8,
+        14.4,
+        -11.9
+      ],
+      "hsv": [
+        290,
+        13,
+        94
+      ]
+    },
+    "purple_light": {
+      "name": "purple light",
+      "nameAr": "بنفسجي فاتح",
+      "hex": "#D7A2E2",
+      "lab": [
+        73.4,
+        30.5,
+        -24.7
+      ],
+      "hsv": [
+        290,
+        28,
+        89
+      ]
+    },
+    "purple_soft": {
+      "name": "purple soft",
+      "nameAr": "بنفسجي ناعم",
+      "hex": "#C77AD6",
+      "lab": [
+        62.4,
+        44.7,
+        -35.1
+      ],
+      "hsv": [
+        290,
+        43,
+        84
+      ]
+    },
+    "purple_mid": {
+      "name": "purple medium",
+      "nameAr": "بنفسجي متوسط",
+      "hex": "#B549CA",
+      "lab": [
+        50.5,
+        61.5,
+        -47.3
+      ],
+      "hsv": [
+        290,
+        64,
+        79
+      ]
+    },
+    "purple_deep": {
+      "name": "purple deep",
+      "nameAr": "بنفسجي غامق",
+      "hex": "#932FA7",
+      "lab": [
+        39.6,
+        57.7,
+        -44.4
+      ],
+      "hsv": [
+        290,
+        72,
+        65
+      ]
+    },
+    "purple_dark": {
+      "name": "purple dark",
+      "nameAr": "بنفسجي غامق جداً",
+      "hex": "#631E71",
+      "lab": [
+        26.1,
+        43.0,
+        -33.2
+      ],
+      "hsv": [
+        290,
+        73,
+        44
+      ]
+    },
+    "plum_pale": {
+      "name": "plum pale",
+      "nameAr": "برقوقي فاتح جداً",
+      "hex": "#EED3E9",
+      "lab": [
+        87.3,
+        13.1,
+        -7.4
+      ],
+      "hsv": [
+        311,
+        11,
+        93
+      ]
+    },
+    "plum_light": {
+      "name": "plum light",
+      "nameAr": "برقوقي فاتح",
+      "hex": "#DDA6D4",
+      "lab": [
+        74.4,
+        27.7,
+        -15.4
+      ],
+      "hsv": [
+        310,
+        25,
+        87
+      ]
+    },
+    "plum_soft": {
+      "name": "plum soft",
+      "nameAr": "برقوقي ناعم",
+      "hex": "#D080C3",
+      "lab": [
+        64.0,
+        40.8,
+        -22.0
+      ],
+      "hsv": [
+        310,
+        38,
+        82
+      ]
+    },
+    "plum_mid": {
+      "name": "plum medium",
+      "nameAr": "برقوقي متوسط",
+      "hex": "#C251AF",
+      "lab": [
+        52.3,
+        56.6,
+        -28.6
+      ],
+      "hsv": [
+        310,
+        58,
+        76
+      ]
+    },
+    "plum_deep": {
+      "name": "plum deep",
+      "nameAr": "برقوقي غامق",
+      "hex": "#A0378E",
+      "lab": [
+        41.5,
+        53.3,
+        -26.3
+      ],
+      "hsv": [
+        310,
+        66,
+        63
+      ]
+    },
+    "plum_dark": {
+      "name": "plum dark",
+      "nameAr": "برقوقي غامق جداً",
+      "hex": "#6C2360",
+      "lab": [
+        27.4,
+        40.0,
+        -20.0
+      ],
+      "hsv": [
+        310,
+        68,
+        42
+      ]
+    },
+    "magenta_pale": {
+      "name": "magenta pale",
+      "nameAr": "أرجواني فاتح جداً",
+      "hex": "#F1D0E3",
+      "lab": [
+        86.7,
+        14.7,
+        -5.1
+      ],
+      "hsv": [
+        325,
+        14,
+        95
+      ]
+    },
+    "magenta_light": {
+      "name": "magenta light",
+      "nameAr": "أرجواني فاتح",
+      "hex": "#E3A0C7",
+      "lab": [
+        73.3,
+        30.7,
+        -10.0
+      ],
+      "hsv": [
+        325,
+        30,
+        89
+      ]
+    },
+    "magenta_soft": {
+      "name": "magenta soft",
+      "nameAr": "أرجواني ناعم",
+      "hex": "#D978B0",
+      "lab": [
+        62.8,
+        44.8,
+        -13.0
+      ],
+      "hsv": [
+        325,
+        45,
+        85
+      ]
+    },
+    "magenta_mid": {
+      "name": "magenta medium",
+      "nameAr": "أرجواني متوسط",
+      "hex": "#CE4695",
+      "lab": [
+        51.5,
+        60.9,
+        -14.5
+      ],
+      "hsv": [
+        325,
+        66,
+        81
+      ]
+    },
+    "magenta_deep": {
+      "name": "magenta deep",
+      "nameAr": "أرجواني غامق",
+      "hex": "#AA2C76",
+      "lab": [
+        40.7,
+        56.8,
+        -12.7
+      ],
+      "hsv": [
+        325,
+        74,
+        67
+      ]
+    },
+    "magenta_dark": {
+      "name": "magenta dark",
+      "nameAr": "أرجواني غامق جداً",
+      "hex": "#731C4F",
+      "lab": [
+        26.9,
+        42.3,
+        -9.5
+      ],
+      "hsv": [
+        325,
+        76,
+        45
+      ]
+    },
+    "rose_pale": {
+      "name": "rose pale",
+      "nameAr": "وردي فاتح جداً",
+      "hex": "#EFD2D9",
+      "lab": [
+        86.7,
+        11.2,
+        0.3
+      ],
+      "hsv": [
+        346,
+        12,
+        94
+      ]
+    },
+    "rose_light": {
+      "name": "rose light",
+      "nameAr": "وردي فاتح",
+      "hex": "#E0A4B3",
+      "lab": [
+        73.3,
+        24.3,
+        1.0
+      ],
+      "hsv": [
+        345,
+        27,
+        88
+      ]
+    },
+    "rose_soft": {
+      "name": "rose soft",
+      "nameAr": "وردي ناعم",
+      "hex": "#D47D93",
+      "lab": [
+        62.3,
+        36.4,
+        2.8
+      ],
+      "hsv": [
+        345,
+        41,
+        83
+      ]
+    },
+    "rose_mid": {
+      "name": "rose medium",
+      "nameAr": "وردي متوسط",
+      "hex": "#C74D6B",
+      "lab": [
+        50.1,
+        51.1,
+        8.5
+      ],
+      "hsv": [
+        345,
+        61,
+        78
+      ]
+    },
+    "rose_deep": {
+      "name": "rose deep",
+      "nameAr": "وردي غامق",
+      "hex": "#A4324F",
+      "lab": [
+        39.1,
+        48.7,
+        9.5
+      ],
+      "hsv": [
+        345,
+        70,
+        64
+      ]
+    },
+    "rose_dark": {
+      "name": "rose dark",
+      "nameAr": "وردي غامق جداً",
+      "hex": "#6F2034",
+      "lab": [
+        25.7,
+        36.3,
+        6.9
+      ],
+      "hsv": [
+        345,
+        71,
+        44
+      ]
+    },
+    "pink_pale": {
+      "name": "pink pale",
+      "nameAr": "زهري فاتح جداً",
+      "hex": "#EDD4D6",
+      "lab": [
+        87.0,
+        9.0,
+        2.2
+      ],
+      "hsv": [
+        355,
+        11,
+        93
+      ]
+    },
+    "pink_light": {
+      "name": "pink light",
+      "nameAr": "زهري فاتح",
+      "hex": "#DCA8AC",
+      "lab": [
+        73.7,
+        19.7,
+        5.4
+      ],
+      "hsv": [
+        355,
+        24,
+        86
+      ]
+    },
+    "pink_soft": {
+      "name": "pink soft",
+      "nameAr": "زهري ناعم",
+      "hex": "#CE8389",
+      "lab": [
+        62.6,
+        29.6,
+        8.9
+      ],
+      "hsv": [
+        355,
+        36,
+        81
+      ]
+    },
+    "pink_mid": {
+      "name": "pink medium",
+      "nameAr": "زهري متوسط",
+      "hex": "#BE555E",
+      "lab": [
+        49.8,
+        43.0,
+        15.7
+      ],
+      "hsv": [
+        355,
+        55,
+        75
+      ]
+    },
+    "pink_deep": {
+      "name": "pink deep",
+      "nameAr": "زهري غامق",
+      "hex": "#9C3A42",
+      "lab": [
+        38.7,
+        41.5,
+        16.9
+      ],
+      "hsv": [
+        355,
+        63,
+        61
+      ]
+    },
+    "pink_dark": {
+      "name": "pink dark",
+      "nameAr": "زهري غامق جداً",
+      "hex": "#6A252B",
+      "lab": [
+        25.5,
+        31.3,
+        12.5
+      ],
+      "hsv": [
+        355,
+        65,
+        42
+      ]
+    },
+    "coral_pale": {
+      "name": "coral pale",
+      "nameAr": "مرجاني فاتح جداً",
+      "hex": "#F2D8CF",
+      "lab": [
+        88.2,
+        7.5,
+        7.7
+      ],
+      "hsv": [
+        15,
+        14,
+        95
+      ]
+    },
+    "coral_light": {
+      "name": "coral light",
+      "nameAr": "مرجاني فاتح",
+      "hex": "#E6B09E",
+      "lab": [
+        76.3,
+        17.2,
+        16.8
+      ],
+      "hsv": [
+        15,
+        31,
+        90
+      ]
+    },
+    "coral_soft": {
+      "name": "coral soft",
+      "nameAr": "مرجاني ناعم",
+      "hex": "#DC8E74",
+      "lab": [
+        66.4,
+        26.8,
+        26.1
+      ],
+      "hsv": [
+        15,
+        47,
+        86
+      ]
+    },
+    "coral_mid": {
+      "name": "coral medium",
+      "nameAr": "مرجاني متوسط",
+      "hex": "#D26541",
+      "lab": [
+        55.5,
+        40.4,
+        40.1
+      ],
+      "hsv": [
+        15,
+        69,
+        82
+      ]
+    },
+    "coral_deep": {
+      "name": "coral deep",
+      "nameAr": "مرجاني غامق",
+      "hex": "#AF4928",
+      "lab": [
+        44.3,
+        39.8,
+        39.5
+      ],
+      "hsv": [
+        15,
+        77,
+        69
+      ]
+    },
+    "coral_dark": {
+      "name": "coral dark",
+      "nameAr": "مرجاني غامق جداً",
+      "hex": "#763019",
+      "lab": [
+        29.5,
+        29.2,
+        29.2
+      ],
+      "hsv": [
+        15,
+        79,
+        46
+      ]
+    },
+    "peach_pale": {
+      "name": "peach pale",
+      "nameAr": "خوخي فاتح جداً",
+      "hex": "#F0E0D1",
+      "lab": [
+        90.1,
+        3.0,
+        9.3
+      ],
+      "hsv": [
+        29,
+        13,
+        94
+      ]
+    },
+    "peach_light": {
+      "name": "peach light",
+      "nameAr": "خوخي فاتح",
+      "hex": "#E2C2A2",
+      "lab": [
+        80.4,
+        6.6,
+        20.3
+      ],
+      "hsv": [
+        30,
+        28,
+        89
+      ]
+    },
+    "peach_soft": {
+      "name": "peach soft",
+      "nameAr": "خوخي ناعم",
+      "hex": "#D6A87A",
+      "lab": [
+        72.0,
+        11.0,
+        30.2
+      ],
+      "hsv": [
+        30,
+        43,
+        84
+      ]
+    },
+    "peach_mid": {
+      "name": "peach medium",
+      "nameAr": "خوخي متوسط",
+      "hex": "#CA8A49",
+      "lab": [
+        62.7,
+        18.0,
+        44.0
+      ],
+      "hsv": [
+        30,
+        64,
+        79
+      ]
+    },
+    "peach_deep": {
+      "name": "peach deep",
+      "nameAr": "خوخي غامق",
+      "hex": "#A76B2F",
+      "lab": [
+        50.6,
+        18.5,
+        42.3
+      ],
+      "hsv": [
+        30,
+        72,
+        65
+      ]
+    },
+    "peach_dark": {
+      "name": "peach dark",
+      "nameAr": "خوخي غامق جداً",
+      "hex": "#71471E",
+      "lab": [
+        34.2,
+        13.9,
+        31.3
+      ],
+      "hsv": [
+        30,
+        73,
+        44
+      ]
+    },
+    "nude_pale": {
+      "name": "nude pale",
+      "nameAr": "نود فاتح جداً",
+      "hex": "#E7E2D9",
+      "lab": [
+        90.0,
+        0.1,
+        5.0
+      ],
+      "hsv": [
+        39,
+        6,
+        91
+      ]
+    },
+    "nude_light": {
+      "name": "nude light",
+      "nameAr": "نود فاتح",
+      "hex": "#D1C6B2",
+      "lab": [
+        80.3,
+        0.5,
+        11.4
+      ],
+      "hsv": [
+        39,
+        15,
+        82
+      ]
+    },
+    "nude_soft": {
+      "name": "nude soft",
+      "nameAr": "نود ناعم",
+      "hex": "#BFAE92",
+      "lab": [
+        71.8,
+        1.6,
+        16.6
+      ],
+      "hsv": [
+        37,
+        24,
+        75
+      ]
+    },
+    "nude_mid": {
+      "name": "nude medium",
+      "nameAr": "نود متوسط",
+      "hex": "#AB9269",
+      "lab": [
+        61.9,
+        3.4,
+        25.2
+      ],
+      "hsv": [
+        37,
+        39,
+        67
+      ]
+    },
+    "nude_deep": {
+      "name": "nude deep",
+      "nameAr": "نود غامق",
+      "hex": "#8A734C",
+      "lab": [
+        49.7,
+        3.4,
+        24.9
+      ],
+      "hsv": [
+        38,
+        45,
+        54
+      ]
+    },
+    "nude_dark": {
+      "name": "nude dark",
+      "nameAr": "نود غامق جداً",
+      "hex": "#5E4D31",
+      "lab": [
+        33.8,
+        2.9,
+        19.3
+      ],
+      "hsv": [
+        37,
+        48,
+        37
+      ]
+    },
+    "beige_pale": {
+      "name": "beige pale",
+      "nameAr": "بيج فاتح جداً",
+      "hex": "#E6E1DB",
+      "lab": [
+        89.8,
+        0.6,
+        3.5
+      ],
+      "hsv": [
+        33,
+        5,
+        90
+      ]
+    },
+    "beige_light": {
+      "name": "beige light",
+      "nameAr": "بيج فاتح",
+      "hex": "#CDC4B6",
+      "lab": [
+        79.5,
+        0.7,
+        8.1
+      ],
+      "hsv": [
+        37,
+        11,
+        80
+      ]
+    },
+    "beige_soft": {
+      "name": "beige soft",
+      "nameAr": "بيج ناعم",
+      "hex": "#BAAB97",
+      "lab": [
+        70.7,
+        2.1,
+        12.3
+      ],
+      "hsv": [
+        34,
+        19,
+        73
+      ]
+    },
+    "beige_mid": {
+      "name": "beige medium",
+      "nameAr": "بيج متوسط",
+      "hex": "#A48E70",
+      "lab": [
+        60.3,
+        3.6,
+        19.1
+      ],
+      "hsv": [
+        35,
+        32,
+        64
+      ]
+    },
+    "beige_deep": {
+      "name": "beige deep",
+      "nameAr": "بيج غامق",
+      "hex": "#846F52",
+      "lab": [
+        48.1,
+        3.8,
+        19.2
+      ],
+      "hsv": [
+        35,
+        38,
+        52
+      ]
+    },
+    "beige_dark": {
+      "name": "beige dark",
+      "nameAr": "بيج غامق جداً",
+      "hex": "#594A36",
+      "lab": [
+        32.5,
+        3.0,
+        14.3
+      ],
+      "hsv": [
+        34,
+        39,
+        35
+      ]
+    },
+    "camel_pale": {
+      "name": "camel pale",
+      "nameAr": "جملي فاتح جداً",
+      "hex": "#EAE4D6",
+      "lab": [
+        90.7,
+        -0.3,
+        7.5
+      ],
+      "hsv": [
+        42,
+        9,
+        92
+      ]
+    },
+    "camel_light": {
+      "name": "camel light",
+      "nameAr": "جملي فاتح",
+      "hex": "#D7C9AC",
+      "lab": [
+        81.4,
+        0.2,
+        16.3
+      ],
+      "hsv": [
+        40,
+        20,
+        84
+      ]
+    },
+    "camel_soft": {
+      "name": "camel soft",
+      "nameAr": "جملي ناعم",
+      "hex": "#C8B389",
+      "lab": [
+        73.8,
+        1.2,
+        24.2
+      ],
+      "hsv": [
+        40,
+        32,
+        78
+      ]
+    },
+    "camel_mid": {
+      "name": "camel medium",
+      "nameAr": "جملي متوسط",
+      "hex": "#B6995D",
+      "lab": [
+        64.6,
+        2.9,
+        35.4
+      ],
+      "hsv": [
+        40,
+        49,
+        71
+      ]
+    },
+    "camel_deep": {
+      "name": "camel deep",
+      "nameAr": "جملي غامق",
+      "hex": "#957941",
+      "lab": [
+        52.3,
+        3.8,
+        34.5
+      ],
+      "hsv": [
+        40,
+        56,
+        58
+      ]
+    },
+    "camel_dark": {
+      "name": "camel dark",
+      "nameAr": "جملي غامق جداً",
+      "hex": "#65512A",
+      "lab": [
+        35.6,
+        3.0,
+        25.8
+      ],
+      "hsv": [
+        40,
+        58,
+        40
+      ]
+    },
+    "brown_pale": {
+      "name": "brown pale",
+      "nameAr": "بني فاتح جداً",
+      "hex": "#ECE0D5",
+      "lab": [
+        89.8,
+        2.2,
+        6.8
+      ],
+      "hsv": [
+        29,
+        10,
+        93
+      ]
+    },
+    "brown_light": {
+      "name": "brown light",
+      "nameAr": "بني فاتح",
+      "hex": "#DAC0AA",
+      "lab": [
+        79.3,
+        5.8,
+        14.5
+      ],
+      "hsv": [
+        28,
+        22,
+        85
+      ]
+    },
+    "brown_soft": {
+      "name": "brown soft",
+      "nameAr": "بني ناعم",
+      "hex": "#CBA686",
+      "lab": [
+        70.7,
+        9.0,
+        21.7
+      ],
+      "hsv": [
+        28,
+        34,
+        80
+      ]
+    },
+    "brown_mid": {
+      "name": "brown medium",
+      "nameAr": "بني متوسط",
+      "hex": "#BB8658",
+      "lab": [
+        60.2,
+        15.0,
+        32.7
+      ],
+      "hsv": [
+        28,
+        53,
+        73
+      ]
+    },
+    "brown_deep": {
+      "name": "brown deep",
+      "nameAr": "بني غامق",
+      "hex": "#99683D",
+      "lab": [
+        48.3,
+        15.0,
+        31.9
+      ],
+      "hsv": [
+        28,
+        60,
+        60
+      ]
+    },
+    "brown_dark": {
+      "name": "brown dark",
+      "nameAr": "بني غامق جداً",
+      "hex": "#684527",
+      "lab": [
+        32.6,
+        11.6,
+        24.0
+      ],
+      "hsv": [
+        28,
+        62,
+        41
+      ]
+    },
+    "chocolate_pale": {
+      "name": "chocolate pale",
+      "nameAr": "شوكولاتي فاتح جداً",
+      "hex": "#EADDD7",
+      "lab": [
+        89.0,
+        3.4,
+        4.5
+      ],
+      "hsv": [
+        19,
+        8,
+        92
+      ]
+    },
+    "chocolate_light": {
+      "name": "chocolate light",
+      "nameAr": "شوكولاتي فاتح",
+      "hex": "#D5BBAE",
+      "lab": [
+        77.7,
+        7.2,
+        10.0
+      ],
+      "hsv": [
+        20,
+        18,
+        84
+      ]
+    },
+    "chocolate_soft": {
+      "name": "chocolate soft",
+      "nameAr": "شوكولاتي ناعم",
+      "hex": "#C59F8C",
+      "lab": [
+        68.4,
+        11.3,
+        15.2
+      ],
+      "hsv": [
+        20,
+        29,
+        77
+      ]
+    },
+    "chocolate_mid": {
+      "name": "chocolate medium",
+      "nameAr": "شوكولاتي متوسط",
+      "hex": "#B37C61",
+      "lab": [
+        56.9,
+        18.1,
+        23.3
+      ],
+      "hsv": [
+        20,
+        46,
+        70
+      ]
+    },
+    "chocolate_deep": {
+      "name": "chocolate deep",
+      "nameAr": "شوكولاتي غامق",
+      "hex": "#925E45",
+      "lab": [
+        45.0,
+        18.4,
+        23.0
+      ],
+      "hsv": [
+        19,
+        53,
+        57
+      ]
+    },
+    "chocolate_dark": {
+      "name": "chocolate dark",
+      "nameAr": "شوكولاتي غامق جداً",
+      "hex": "#633E2C",
+      "lab": [
+        30.1,
+        14.0,
+        17.7
+      ],
+      "hsv": [
+        20,
+        56,
+        39
+      ]
+    },
+    "blush_pale": {
+      "name": "blush pale",
+      "nameAr": "وردي محايد فاتح جداً",
+      "hex": "#EAD6E0",
+      "lab": [
+        87.5,
+        8.6,
+        -2.4
+      ],
+      "hsv": [
+        330,
+        9,
+        92
+      ]
+    },
+    "blush_light": {
+      "name": "blush light",
+      "nameAr": "وردي محايد فاتح",
+      "hex": "#D7ACC2",
+      "lab": [
+        74.7,
+        19.2,
+        -5.2
+      ],
+      "hsv": [
+        329,
+        20,
+        84
+      ]
+    },
+    "blush_soft": {
+      "name": "blush soft",
+      "nameAr": "وردي محايد ناعم",
+      "hex": "#C889A8",
+      "lab": [
+        64.2,
+        28.7,
+        -6.6
+      ],
+      "hsv": [
+        330,
+        32,
+        78
+      ]
+    },
+    "blush_mid": {
+      "name": "blush medium",
+      "nameAr": "وردي محايد متوسط",
+      "hex": "#B65D8A",
+      "lab": [
+        51.4,
+        41.4,
+        -8.5
+      ],
+      "hsv": [
+        330,
+        49,
+        71
+      ]
+    },
+    "blush_deep": {
+      "name": "blush deep",
+      "nameAr": "وردي محايد غامق",
+      "hex": "#95416B",
+      "lab": [
+        40.0,
+        40.1,
+        -7.2
+      ],
+      "hsv": [
+        330,
+        56,
+        58
+      ]
+    },
+    "blush_dark": {
+      "name": "blush dark",
+      "nameAr": "وردي محايد غامق جداً",
+      "hex": "#652A47",
+      "lab": [
+        26.4,
+        30.2,
+        -5.1
+      ],
+      "hsv": [
+        331,
+        58,
+        40
+      ]
+    },
+    "lavender_pale": {
+      "name": "lavender pale",
+      "nameAr": "لافندر فاتح جداً",
+      "hex": "#EAD7EA",
+      "lab": [
+        88.0,
+        9.9,
+        -6.9
+      ],
+      "hsv": [
+        300,
+        8,
+        92
+      ]
+    },
+    "lavender_light": {
+      "name": "lavender light",
+      "nameAr": "لافندر فاتح",
+      "hex": "#D5AED5",
+      "lab": [
+        75.6,
+        20.8,
+        -14.3
+      ],
+      "hsv": [
+        300,
+        18,
+        84
+      ]
+    },
+    "lavender_soft": {
+      "name": "lavender soft",
+      "nameAr": "لافندر ناعم",
+      "hex": "#C58CC5",
+      "lab": [
+        65.5,
+        31.1,
+        -21.0
+      ],
+      "hsv": [
+        300,
+        29,
+        77
+      ]
+    },
+    "lavender_mid": {
+      "name": "lavender medium",
+      "nameAr": "لافندر متوسط",
+      "hex": "#B361B3",
+      "lab": [
+        53.4,
+        45.2,
+        -29.5
+      ],
+      "hsv": [
+        300,
+        46,
+        70
+      ]
+    },
+    "lavender_deep": {
+      "name": "lavender deep",
+      "nameAr": "لافندر غامق",
+      "hex": "#924592",
+      "lab": [
+        41.9,
+        43.6,
+        -28.2
+      ],
+      "hsv": [
+        300,
+        53,
+        57
+      ]
+    },
+    "lavender_dark": {
+      "name": "lavender dark",
+      "nameAr": "لافندر غامق جداً",
+      "hex": "#632C63",
+      "lab": [
+        27.7,
+        33.3,
+        -21.6
+      ],
+      "hsv": [
+        300,
+        56,
+        39
+      ]
+    },
+    "lilac_pale": {
+      "name": "lilac pale",
+      "nameAr": "ليلكي فاتح جداً",
+      "hex": "#E3D8E9",
+      "lab": [
+        87.6,
+        6.8,
+        -7.0
+      ],
+      "hsv": [
+        279,
+        7,
+        91
+      ]
+    },
+    "lilac_light": {
+      "name": "lilac light",
+      "nameAr": "ليلكي فاتح",
+      "hex": "#C8B0D4",
+      "lab": [
+        74.9,
+        15.2,
+        -15.0
+      ],
+      "hsv": [
+        280,
+        17,
+        83
+      ]
+    },
+    "lilac_soft": {
+      "name": "lilac soft",
+      "nameAr": "ليلكي ناعم",
+      "hex": "#B18EC2",
+      "lab": [
+        63.8,
+        22.8,
+        -22.0
+      ],
+      "hsv": [
+        280,
+        27,
+        76
+      ]
+    },
+    "lilac_mid": {
+      "name": "lilac medium",
+      "nameAr": "ليلكي متوسط",
+      "hex": "#9664AF",
+      "lab": [
+        50.3,
+        33.9,
+        -32.2
+      ],
+      "hsv": [
+        280,
+        43,
+        69
+      ]
+    },
+    "lilac_deep": {
+      "name": "lilac deep",
+      "nameAr": "ليلكي غامق",
+      "hex": "#77488E",
+      "lab": [
+        38.7,
+        33.1,
+        -31.0
+      ],
+      "hsv": [
+        280,
+        49,
+        56
+      ]
+    },
+    "lilac_dark": {
+      "name": "lilac dark",
+      "nameAr": "ليلكي غامق جداً",
+      "hex": "#502E60",
+      "lab": [
+        25.3,
+        25.5,
+        -23.6
+      ],
+      "hsv": [
+        281,
+        52,
+        38
+      ]
+    },
+    "burgundy_pale": {
+      "name": "burgundy pale",
+      "nameAr": "نبيتي فاتح جداً",
+      "hex": "#ECD5D5",
+      "lab": [
+        87.1,
+        8.0,
+        2.9
+      ],
+      "hsv": [
+        0,
+        10,
+        93
+      ]
+    },
+    "burgundy_light": {
+      "name": "burgundy light",
+      "nameAr": "نبيتي فاتح",
+      "hex": "#DAAAAA",
+      "lab": [
+        73.9,
+        17.6,
+        6.8
+      ],
+      "hsv": [
+        0,
+        22,
+        85
+      ]
+    },
+    "burgundy_soft": {
+      "name": "burgundy soft",
+      "nameAr": "نبيتي ناعم",
+      "hex": "#CB8686",
+      "lab": [
+        62.9,
+        26.5,
+        10.9
+      ],
+      "hsv": [
+        0,
+        34,
+        80
+      ]
+    },
+    "burgundy_mid": {
+      "name": "burgundy medium",
+      "nameAr": "نبيتي متوسط",
+      "hex": "#BB5858",
+      "lab": [
+        49.8,
+        39.9,
+        19.2
+      ],
+      "hsv": [
+        0,
+        53,
+        73
+      ]
+    },
+    "burgundy_deep": {
+      "name": "burgundy deep",
+      "nameAr": "نبيتي غامق",
+      "hex": "#993D3D",
+      "lab": [
+        38.6,
+        38.5,
+        19.8
+      ],
+      "hsv": [
+        0,
+        60,
+        60
+      ]
+    },
+    "burgundy_dark": {
+      "name": "burgundy dark",
+      "nameAr": "نبيتي غامق جداً",
+      "hex": "#682727",
+      "lab": [
+        25.4,
+        29.2,
+        15.0
+      ],
+      "hsv": [
+        0,
+        62,
+        41
+      ]
+    },
+    "wine_pale": {
+      "name": "wine pale",
+      "nameAr": "خمري فاتح جداً",
+      "hex": "#EED3D8",
+      "lab": [
+        86.9,
+        10.2,
+        1.0
+      ],
+      "hsv": [
+        349,
+        11,
+        93
+      ]
+    },
+    "wine_light": {
+      "name": "wine light",
+      "nameAr": "خمري فاتح",
+      "hex": "#DDA6AF",
+      "lab": [
+        73.4,
+        21.6,
+        3.3
+      ],
+      "hsv": [
+        350,
+        25,
+        87
+      ]
+    },
+    "wine_soft": {
+      "name": "wine soft",
+      "nameAr": "خمري ناعم",
+      "hex": "#D0808E",
+      "lab": [
+        62.3,
+        32.6,
+        5.7
+      ],
+      "hsv": [
+        350,
+        38,
+        82
+      ]
+    },
+    "wine_mid": {
+      "name": "wine medium",
+      "nameAr": "خمري متوسط",
+      "hex": "#C25164",
+      "lab": [
+        49.8,
+        46.9,
+        12.2
+      ],
+      "hsv": [
+        350,
+        58,
+        76
+      ]
+    },
+    "wine_deep": {
+      "name": "wine deep",
+      "nameAr": "خمري غامق",
+      "hex": "#A03748",
+      "lab": [
+        39.0,
+        44.7,
+        13.7
+      ],
+      "hsv": [
+        350,
+        66,
+        63
+      ]
+    },
+    "wine_dark": {
+      "name": "wine dark",
+      "nameAr": "خمري غامق جداً",
+      "hex": "#6C232F",
+      "lab": [
+        25.6,
+        33.4,
+        10.0
+      ],
+      "hsv": [
+        350,
+        68,
+        42
+      ]
+    },
     "beige_linen": {
-      "name": "beige",
-      "nameAr": "بيج",
-      "hex": "#E8D6C0",
-      "lab": [86.2, 2.1, 18.4],
-      "hsv": [32, 18, 91]
+      "name": "beige soft",
+      "nameAr": "بيج ناعم",
+      "hex": "#BAAB97",
+      "lab": [
+        70.7,
+        2.1,
+        12.3
+      ],
+      "hsv": [
+        34,
+        19,
+        73
+      ]
     },
     "cream_soft": {
       "name": "cream",
       "nameAr": "كريمي",
-      "hex": "#F5EDE0",
-      "lab": [93.5, 1.2, 9.8],
-      "hsv": [38, 10, 96]
-    },
-    "black_pure": {
-      "name": "black",
-      "nameAr": "أسود",
-      "hex": "#1A1A1A",
-      "lab": [8.5, 0.1, -0.2],
-      "hsv": [0, 0, 10]
-    },
-    "navy_deep": {
-      "name": "navy",
-      "nameAr": "كحلي",
-      "hex": "#1E2A4A",
-      "lab": [18.2, 5.4, -22.1],
-      "hsv": [222, 58, 29]
+      "hex": "#EEECE7",
+      "lab": [
+        93.4,
+        -0.2,
+        2.7
+      ],
+      "hsv": [
+        43,
+        3,
+        93
+      ]
     },
     "ivory_warm": {
       "name": "ivory",
       "nameAr": "عاجي",
-      "hex": "#F7F2EA",
-      "lab": [95.8, 0.8, 6.2],
-      "hsv": [40, 6, 97]
+      "hex": "#F2F0EE",
+      "lab": [
+        94.9,
+        0.3,
+        1.2
+      ],
+      "hsv": [
+        30,
+        2,
+        95
+      ]
     },
     "gray_soft": {
-      "name": "gray",
-      "nameAr": "رمادي",
-      "hex": "#C8C4BE",
-      "lab": [79.4, 0.5, 2.1],
-      "hsv": [40, 5, 78]
+      "name": "light gray",
+      "nameAr": "رمادي فاتح",
+      "hex": "#B8B8B8",
+      "lab": [
+        74.8,
+        -0.0,
+        0.0
+      ],
+      "hsv": [
+        0,
+        0,
+        72
+      ]
     },
     "silver_metal": {
       "name": "silver",
       "nameAr": "فضي",
-      "hex": "#C0C0C8",
-      "lab": [78.2, 0.2, -2.4],
-      "hsv": [240, 5, 78]
+      "hex": "#C7C7C7",
+      "lab": [
+        80.2,
+        -0.0,
+        0.0
+      ],
+      "hsv": [
+        0,
+        0,
+        78
+      ]
     },
     "gold_warm": {
-      "name": "gold",
-      "nameAr": "ذهبي",
-      "hex": "#C9A962",
-      "lab": [68.4, 2.8, 38.2],
-      "hsv": [42, 52, 79]
+      "name": "gold medium",
+      "nameAr": "ذهبي متوسط",
+      "hex": "#D9BA3A",
+      "lab": [
+        76.2,
+        -2.1,
+        65.2
+      ],
+      "hsv": [
+        48,
+        73,
+        85
+      ]
     },
     "nude_heel": {
-      "name": "nude",
-      "nameAr": "نود",
-      "hex": "#E3C4A8",
-      "lab": [80.1, 8.2, 18.6],
-      "hsv": [28, 26, 89]
+      "name": "nude soft",
+      "nameAr": "نود ناعم",
+      "hex": "#BFAE92",
+      "lab": [
+        71.8,
+        1.6,
+        16.6
+      ],
+      "hsv": [
+        37,
+        24,
+        75
+      ]
     },
     "pearl_white": {
       "name": "pearl",
       "nameAr": "لؤلؤي",
-      "hex": "#F5F0E8",
-      "lab": [94.2, 0.5, 4.8],
-      "hsv": [38, 8, 96]
+      "hex": "#F3F2F1",
+      "lab": [
+        95.5,
+        0.2,
+        0.6
+      ],
+      "hsv": [
+        30,
+        1,
+        95
+      ]
     },
     "brown_tortoise": {
-      "name": "brown",
-      "nameAr": "بني",
-      "hex": "#6B4A32",
-      "lab": [35.8, 12.4, 22.1],
-      "hsv": [25, 54, 42]
+      "name": "brown deep",
+      "nameAr": "بني غامق",
+      "hex": "#99683D",
+      "lab": [
+        48.3,
+        15.0,
+        31.9
+      ],
+      "hsv": [
+        28,
+        60,
+        60
+      ]
     },
     "blush_lilac": {
-      "name": "lilac",
-      "nameAr": "لافندر",
-      "hex": "#EDE4F0",
-      "lab": [90.8, 4.2, -4.8],
-      "hsv": [285, 8, 94]
+      "name": "blush soft",
+      "nameAr": "وردي محايد ناعم",
+      "hex": "#C889A8",
+      "lab": [
+        64.2,
+        28.7,
+        -6.6
+      ],
+      "hsv": [
+        330,
+        32,
+        78
+      ]
+    },
+    "teal_satin": {
+      "name": "teal deep",
+      "nameAr": "تركواز غامق",
+      "hex": "#32A487",
+      "lab": [
+        60.8,
+        -38.7,
+        5.9
+      ],
+      "hsv": [
+        165,
+        70,
+        64
+      ]
+    },
+    "forest_green": {
+      "name": "green deep",
+      "nameAr": "أخضر غامق",
+      "hex": "#32A43C",
+      "lab": [
+        59.5,
+        -52.7,
+        43.7
+      ],
+      "hsv": [
+        125,
+        70,
+        64
+      ]
+    },
+    "ruby_red": {
+      "name": "burgundy deep",
+      "nameAr": "نبيتي غامق",
+      "hex": "#993D3D",
+      "lab": [
+        38.6,
+        38.5,
+        19.8
+      ],
+      "hsv": [
+        0,
+        60,
+        60
+      ]
     }
   }
 }

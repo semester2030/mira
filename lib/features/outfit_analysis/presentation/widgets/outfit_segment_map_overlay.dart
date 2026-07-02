@@ -38,7 +38,12 @@ class OutfitSegmentMapOverlay extends StatelessWidget {
           fit: StackFit.expand,
           children: [
             Image.file(imageFile, fit: BoxFit.cover),
-            ...segmentMap.regions.asMap().entries.map(
+            ...segmentMap.regions
+                .where((r) => r.zone != OutfitSegmentZone.head)
+                .toList()
+                .asMap()
+                .entries
+                .map(
               (entry) => _RegionOverlay(
                 region: entry.value,
                 index: entry.key,

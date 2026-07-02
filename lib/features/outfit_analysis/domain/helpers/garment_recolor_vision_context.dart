@@ -2,6 +2,7 @@ import 'dart:convert';
 
 import '../entities/outfit_analysis.dart';
 import '../entities/outfit_segment_map.dart';
+import 'outfit_topology.dart';
 
 /// Phase Q0 — vision context for contextual recolor prompt + QEL regions.
 class GarmentRecolorVisionContext {
@@ -12,6 +13,7 @@ class GarmentRecolorVisionContext {
   final String? foldDensity;
   final String? textureHint;
   final String? silhouetteHint;
+  final int? pieceCount;
   final String? glossLevel;
   final Map<String, double>? garmentBbox;
   final List<List<double>>? garmentPolygon;
@@ -24,6 +26,7 @@ class GarmentRecolorVisionContext {
     this.foldDensity,
     this.textureHint,
     this.silhouetteHint,
+    this.pieceCount,
     this.glossLevel,
     this.garmentBbox,
     this.garmentPolygon,
@@ -34,6 +37,11 @@ class GarmentRecolorVisionContext {
     String? garmentLabelAr,
   }) {
     final region = _pickGarmentRegion(analysis.segmentMap, garmentLabelAr);
+    final topology = OutfitTopologyInfer.infer(
+      analysis.segmentMap,
+      garmentLabelAr: garmentLabelAr,
+    );
+    final roleFromLabel = OutfitTopologyInfer.regionRoleForGarment(garmentLabelAr);
     final bbox = region != null
         ? {
             'x': region.normalizedRect.left,
@@ -52,12 +60,14 @@ class GarmentRecolorVisionContext {
         : null;
 
     return GarmentRecolorVisionContext(
-      regionRole: _regionRole(region?.zone),
+      regionRole: roleFromLabel ?? _regionRole(region?.zone),
       material: null,
       materialConfidence: region?.confidence,
       fit: _inferFit(analysis),
       foldDensity: _inferFoldDensity(analysis),
       textureHint: texture,
+      silhouetteHint: topology.silhouetteHint,
+      pieceCount: topology.pieceCount,
       glossLevel: _inferGloss(analysis),
       garmentBbox: bbox,
       garmentPolygon: polygon,
@@ -72,6 +82,7 @@ class GarmentRecolorVisionContext {
         if (foldDensity != null) 'foldDensity': foldDensity,
         if (textureHint != null) 'textureHint': textureHint,
         if (silhouetteHint != null) 'silhouetteHint': silhouetteHint,
+        if (pieceCount != null) 'pieceCount': pieceCount,
         if (glossLevel != null) 'glossLevel': glossLevel,
         if (garmentBbox != null) 'garmentBbox': garmentBbox,
         if (garmentPolygon != null) 'garmentPolygon': garmentPolygon,

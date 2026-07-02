@@ -1,4 +1,4 @@
-import { IsNotEmpty, IsOptional, IsString } from 'class-validator';
+import { IsNotEmpty, IsOptional, IsString, IsUUID } from 'class-validator';
 
 export class VisionOutfitRecolorBodyDto {
   /** Arabic fashion color name — e.g. أسود، ذهبي */
@@ -28,4 +28,8 @@ export class VisionOutfitRecolorBodyDto {
   @IsOptional()
   @IsString()
   visionContext?: string;
+
+  @IsOptional()
+  @IsUUID()
+  outfitAnalysisId?: string;
 }

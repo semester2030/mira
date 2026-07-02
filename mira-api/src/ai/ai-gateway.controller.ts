@@ -7,6 +7,7 @@ import {
   UseGuards,
   UseInterceptors,
   BadRequestException,
+  UnprocessableEntityException,
 } from '@nestjs/common';
 import { FileFieldsInterceptor, FileInterceptor } from '@nestjs/platform-express';
 import { memoryStorage } from 'multer';
@@ -27,6 +28,7 @@ import { VisionOutfitAnalyzeBodyDto } from '../vision/dto/vision-outfit-analyze-
 import { VisionOutfitRecolorBodyDto } from '../vision/dto/vision-outfit-recolor-body.dto';
 import { FashnGarmentRecolorService } from '../vision/recolor/fashn-garment-recolor.service';
 import { GarmentRecolorVisionContext } from '../vision/qel/garment-recolor-context.types';
+import { AtelierRecolorAttemptService } from '../atelier/atelier-recolor-attempt.service';
 
 const MAX_IMAGE_BYTES = 10 * 1024 * 1024;
 
@@ -47,6 +49,7 @@ export class AiGatewayController {
     private readonly outfitSegmentationService: OutfitSegmentationService,
     private readonly visionOrchestrator: VisionOrchestratorService,
     private readonly fashnGarmentRecolorService: FashnGarmentRecolorService,
+    private readonly atelierAttempts: AtelierRecolorAttemptService,
   ) {}
 
   @Post('skin-analysis')
@@ -167,17 +170,61 @@ export class AiGatewayController {
     }),
   )
   recolorVisionOutfit(
+    @CurrentUser() user: RequestUser,
     @UploadedFile() file: Express.Multer.File,
     @Body() body: VisionOutfitRecolorBodyDto,
   ) {
-    return this.fashnGarmentRecolorService.recolor({
-      imageBuffer: file?.buffer ?? Buffer.alloc(0),
-      targetColorAr: body.targetColorAr,
-      targetColorHex: body.targetColorHex,
-      garmentLabelAr: body.garmentLabelAr,
-      customPromptAr: body.customPromptAr,
-      visionContext: parseGarmentVisionContext(body.visionContext),
-    });
+    const visionContext = parseGarmentVisionContext(body.visionContext);
+    return this.recolorAndPersist(user, file?.buffer ?? Buffer.alloc(0), body, visionContext);
+  }
+
+  private async recolorAndPersist(
+    user: RequestUser,
+    imageBuffer: Buffer,
+    body: VisionOutfitRecolorBodyDto,
+    visionContext?: GarmentRecolorVisionContext,
+  ) {
+    try {
+      const result = await this.fashnGarmentRecolorService.recolor({
+        imageBuffer,
+        targetColorAr: body.targetColorAr,
+        targetColorHex: body.targetColorHex,
+        garmentLabelAr: body.garmentLabelAr,
+        customPromptAr: body.customPromptAr,
+        visionContext,
+      });
+
+      const attempt = await this.atelierAttempts.persistAccepted(
+        user,
+        result,
+        visionContext,
+        body.outfitAnalysisId,
+      );
+
+      return { ...result, recolorAttemptId: attempt.id };
+    } catch (err) {
+      if (
+        err instanceof UnprocessableEntityException &&
+        body.garmentLabelAr &&
+        body.targetColorAr
+      ) {
+        const payload = err.getResponse() as { qel?: import('../vision/qel/garment-qel.service').QelEvaluation };
+        try {
+          await this.atelierAttempts.persistRejected(user, {
+            garmentLabelAr: body.garmentLabelAr,
+            targetColorAr: body.targetColorAr,
+            targetColorHex: body.targetColorHex,
+            regionRole: visionContext?.regionRole,
+            visionContext,
+            outfitAnalysisId: body.outfitAnalysisId,
+            qel: payload.qel,
+          });
+        } catch {
+          // best-effort
+        }
+      }
+      throw err;
+    }
   }
 
   /** Combined skin + outfit + style fusion + unified recommendations. */

@@ -7,6 +7,7 @@ export type GarmentRecolorVisionContext = {
   foldDensity?: 'low' | 'medium' | 'high';
   textureHint?: string;
   silhouetteHint?: string;
+  pieceCount?: number;
   garmentBbox?: { x: number; y: number; w: number; h: number };
   glossLevel?: 'matte' | 'semi' | 'glossy';
   /** Normalized polygon [[x,y], ...] — Phase Q2 crop-first. */

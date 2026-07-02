@@ -18,6 +18,7 @@ import { FashionValidatorService } from './pipeline/fashion-validator.service';
 import { QualityGateService } from './pipeline/quality-gate.service';
 import { ConflictResolverService } from './pipeline/conflict-resolver.service';
 import { ConfidenceEngineService } from './pipeline/confidence-engine.service';
+import { TopologyResolverService } from './pipeline/topology-resolver.service';
 
 export interface VisionOutfitAnalyzeInput {
   imageBuffer: Buffer;
@@ -63,6 +64,7 @@ export class VisionOrchestratorService {
     private readonly normalizer: FashionNormalizerService,
     private readonly fashionValidator: FashionValidatorService,
     private readonly conflictResolver: ConflictResolverService,
+    private readonly topologyResolver: TopologyResolverService,
     private readonly confidenceEngine: ConfidenceEngineService,
     private readonly qualityGate: QualityGateService,
   ) {}
@@ -129,6 +131,12 @@ export class VisionOrchestratorService {
       normalized.semantics,
       normalized.confidenceMultiplier,
     );
+
+    const topologyMerge = this.topologyResolver.resolve(geometry, adjustedSemantics);
+    geometry = {
+      ...geometry,
+      topology: topologyMerge.topology,
+    };
 
     const conflict = this.conflictResolver.resolve(geometry, adjustedSemantics);
     const rejectReasons: ProvenanceAuditEntry[] = [];

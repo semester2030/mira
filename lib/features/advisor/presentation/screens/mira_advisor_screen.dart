@@ -2,14 +2,26 @@ import 'package:flutter/material.dart';
 
 import '../../../../core/navigation/route_args.dart';
 import '../../../../core/services/app_session.dart';
+import '../../../../core/session/analysis_session.dart';
 import '../../../../shared/theme/colors.dart';
 import '../../../../shared/theme/typography.dart';
 import '../../../../shared/widgets/mira_app_bar.dart';
+import '../../../../shared/widgets/mce/mce_citation_chips.dart';
+import '../../../../shared/widgets/mce/mce_confidence_badge.dart';
+import '../../../../shared/widgets/mce/mce_streaming_text.dart';
 import '../../../../shared/widgets/premium/premium_exports.dart';
-import '../../../intelligence/presentation/widgets/mira_report_helpers.dart';
-import '../../data/datasources/advisor_api_data_source.dart';
+import '../../../consultation/data/datasources/consultation_api_data_source.dart';
+import '../../../consultation/data/datasources/consultation_stream_data_source.dart';
+import '../../../outfit_analysis/data/datasources/outfit_analysis_api_data_source.dart';
+import '../../../outfit_analysis/domain/helpers/outfit_consultation_mapper.dart';
 import '../../domain/entities/advisor_response.dart';
-import '../../domain/services/local_advisor_engine.dart';
+
+const _skinStarterQuestions = [
+  'لماذا درجة ترطيبي كذا؟',
+  'ما أفضل خطوة في روتيني الصباحي؟',
+  'كيف أحافظ على نتائج التحليل؟',
+  'ما المنتجات الأنسب لبشرتي؟',
+];
 
 class MiraAdvisorScreen extends StatefulWidget {
   const MiraAdvisorScreen({super.key});
@@ -22,18 +34,89 @@ class _MiraAdvisorScreenState extends State<MiraAdvisorScreen> {
   final _input = TextEditingController();
   final _scroll = ScrollController();
   final _messages = <AdvisorMessage>[];
-  final _api = AdvisorApiDataSource();
+  final _consultationApi = ConsultationApiDataSource();
+  final _streamApi = ConsultationStreamDataSource();
+  final _outfitApi = OutfitAnalysisApiDataSource();
   bool _loading = false;
+  bool _sessionReady = false;
+  String? _sessionId;
+  String? _snapshotId;
+  String? _sessionError;
+  _ConsultationFocus _focus = _ConsultationFocus.skin;
 
   @override
   void initState() {
     super.initState();
-    WidgetsBinding.instance.addPostFrameCallback((_) {
-      final args = ModalRoute.of(context)?.settings.arguments as AdvisorRouteArgs?;
+    WidgetsBinding.instance.addPostFrameCallback((_) async {
+      await _ensureSession();
+      if (!mounted) return;
+      final args = _args;
       if (args?.initialQuestion != null) {
         _send(args!.initialQuestion!);
       }
     });
+  }
+
+  AdvisorRouteArgs? get _args =>
+      ModalRoute.of(context)?.settings.arguments as AdvisorRouteArgs?;
+
+  Future<void> _ensureSession() async {
+    final args = _args;
+    if (args == null) return;
+    if (!AppSession.canUseCloud || AppSession.isGuest) {
+      setState(() {
+        _sessionError = 'سجّلي الدخول لاستخدام مستشار ميرا الذكي · MCE';
+      });
+      return;
+    }
+    if (_sessionReady) return;
+
+    try {
+      String? outfitAnalysisId = args.outfitAnalysisId;
+      if (outfitAnalysisId == null && args.outfitAnalysis != null) {
+        final snapshot = await _outfitApi.saveIntelligenceSnapshot(
+          OutfitConsultationMapper.toSnapshotPayload(args.outfitAnalysis!),
+        );
+        outfitAnalysisId = snapshot.id;
+      }
+
+      final outfitPrimary = args.outfitAnalysis != null || outfitAnalysisId != null;
+      final skinId = outfitPrimary && args.skinReport == null
+          ? null
+          : (args.skinReport?.id ?? (outfitPrimary ? null : AnalysisSession.lastSkin?.id));
+      final recolorId = args.recolorAttemptId ?? AnalysisSession.lastRecolorAttemptId;
+
+      final session = await _consultationApi.createSession(
+        skinAnalysisId: skinId,
+        outfitAnalysisId: outfitAnalysisId,
+        recolorAttemptId: recolorId,
+        occasionId: args.outfitAnalysis?.occasion.id,
+      );
+      if (!mounted) return;
+      setState(() {
+        _sessionId = session.id;
+        _snapshotId = session.activeSnapshotId;
+        _sessionReady = true;
+        _sessionError = null;
+        _focus = recolorId != null
+            ? _ConsultationFocus.atelier
+            : outfitPrimary
+                ? _ConsultationFocus.outfit
+                : _ConsultationFocus.skin;
+        if (session.suggestedStartersAr.isNotEmpty) {
+          _followUps = session.suggestedStartersAr;
+        }
+      });
+    } catch (e) {
+      if (!mounted) return;
+      setState(() {
+        _sessionReady = false;
+        _sessionError = 'تعذّر بدء جلسة MCE — حدّثي التطبيق أو حاولي لاحقاً';
+        _focus = args.outfitAnalysis != null
+            ? _ConsultationFocus.outfit
+            : _ConsultationFocus.skin;
+      });
+    }
   }
 
   @override
@@ -47,8 +130,12 @@ class _MiraAdvisorScreenState extends State<MiraAdvisorScreen> {
     final trimmed = text.trim();
     if (trimmed.isEmpty || _loading) return;
 
-    final args = ModalRoute.of(context)?.settings.arguments as AdvisorRouteArgs?;
-    if (args == null) return;
+    if (!AppSession.canUseCloud || AppSession.isGuest) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(content: Text('سجّلي الدخول لاستخدام مستشار ميرا الذكي')),
+      );
+      return;
+    }
 
     setState(() {
       _loading = true;
@@ -58,25 +145,13 @@ class _MiraAdvisorScreenState extends State<MiraAdvisorScreen> {
     _scrollToEnd();
 
     try {
-      final AdvisorResponse response;
-      if (AppSession.canUseCloud && !AppSession.isGuest) {
-        response = await _api.chat(
-          message: trimmed,
-          analysisId: args.report.id,
-        );
-      } else {
-        final mira = resolveMiraReport(args.report);
-        response = LocalAdvisorEngine.answer(mira, trimmed);
+      if (_sessionId == null) {
+        await _ensureSession();
       }
-
-      if (!mounted) return;
-      setState(() {
-        _messages.add(
-          AdvisorMessage(text: response.answer, isUser: false, at: DateTime.now()),
-        );
-        _followUps = response.suggestedQuestions;
-        _loading = false;
-      });
+      if (_sessionId == null) {
+        throw Exception(_sessionError ?? 'تعذّر بدء جلسة مستشار ميرا · MCE');
+      }
+      await _sendWithStream(trimmed);
     } catch (e) {
       if (!mounted) return;
       setState(() => _loading = false);
@@ -87,7 +162,77 @@ class _MiraAdvisorScreenState extends State<MiraAdvisorScreen> {
     _scrollToEnd();
   }
 
-  List<String> _followUps = LocalAdvisorEngine.presetQuestions;
+  Future<void> _sendWithStream(String trimmed) async {
+    final streamMsg = AdvisorMessage(
+      text: '',
+      isUser: false,
+      at: DateTime.now(),
+      isStreaming: true,
+    );
+    setState(() => _messages.add(streamMsg));
+    final streamIndex = _messages.length - 1;
+
+    final turn = await _streamApi.sendMessageStream(
+      sessionId: _sessionId!,
+      message: trimmed,
+      contextSnapshotId: _snapshotId,
+      onDelta: (delta) {
+        if (!mounted) return;
+        setState(() {
+          _messages[streamIndex] = streamMsg.copyWith(
+            text: delta,
+            isStreaming: true,
+          );
+        });
+        _scrollToEnd();
+      },
+    );
+
+    if (!mounted) return;
+    final assistant = turn.assistantMessage;
+    setState(() {
+      _messages[streamIndex] = AdvisorMessage(
+        text: assistant.contentAr,
+        isUser: false,
+        at: assistant.createdAt,
+        confidence: assistant.confidence,
+        citedFacts: assistant.citedFacts
+            .map(
+              (f) => MceCitedFact(id: f.id, labelAr: f.labelAr, valueAr: f.valueAr),
+            )
+            .toList(),
+      );
+      _snapshotId = turn.session.activeSnapshotId ?? _snapshotId;
+      if (turn.session.suggestedStartersAr.isNotEmpty) {
+        _followUps = turn.session.suggestedStartersAr;
+      }
+      _loading = false;
+    });
+  }
+
+  List<String> _followUps = _skinStarterQuestions;
+
+  String get _bannerText {
+    if (_sessionError != null) return _sessionError!;
+    if (!_sessionReady) return 'جاري تجهيز جلسة الاستشارة…';
+    return switch (_focus) {
+      _ConsultationFocus.atelier =>
+        'إجابات مُؤَسَّسة على تجربة Atelier وQEL — تلوين قماش فقط',
+      _ConsultationFocus.outfit =>
+        'إجابات مُؤَسَّسة على تحليل إطلالتك — أسلوب · مناسبة · إكسسوارات',
+      _ConsultationFocus.skin =>
+        'إجابات مُؤَسَّسة على تقرير بشرتكِ — لا إعادة تحليل للصورة',
+    };
+  }
+
+  String get _inputHint {
+    return switch (_focus) {
+      _ConsultationFocus.atelier => 'اسألي عن التلوين · QEL · دقة اللون · الهوية…',
+      _ConsultationFocus.outfit =>
+        'اسألي عن الأسلوب · المناسبة · الإكسسوارات · المكياج…',
+      _ConsultationFocus.skin => 'اسألي عن العناية · الروتين · المنتجات…',
+    };
+  }
 
   void _scrollToEnd() {
     WidgetsBinding.instance.addPostFrameCallback((_) {
@@ -103,24 +248,32 @@ class _MiraAdvisorScreenState extends State<MiraAdvisorScreen> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      appBar: const MiraAppBar(pageTitle: 'مستشار ميرا'),
+      appBar: MiraAppBar(
+        pageTitle: _sessionReady ? 'مستشار ميرا · MCE' : 'مستشار ميرا',
+      ),
       body: DelightBackground(
         showParticles: false,
         child: SafeArea(
           child: Column(
             children: [
+              Padding(
+                padding: const EdgeInsets.fromLTRB(16, 8, 16, 0),
+                child: Text(
+                  _bannerText,
+                  style: AppTypography.labelSmall.copyWith(
+                    color: _sessionError != null
+                        ? AppColors.gold
+                        : AppColors.textTertiary,
+                  ),
+                  textAlign: TextAlign.center,
+                ),
+              ),
               Expanded(
                 child: ListView.builder(
                   controller: _scroll,
                   padding: const EdgeInsets.all(16),
-                  itemCount: _messages.length + (_loading ? 1 : 0),
+                  itemCount: _messages.length,
                   itemBuilder: (context, index) {
-                    if (_loading && index == _messages.length) {
-                      return const Padding(
-                        padding: EdgeInsets.all(12),
-                        child: LoadingSkeleton(lines: 2),
-                      );
-                    }
                     final msg = _messages[index];
                     return _Bubble(message: msg);
                   },
@@ -150,7 +303,7 @@ class _MiraAdvisorScreenState extends State<MiraAdvisorScreen> {
                       child: TextField(
                         controller: _input,
                         decoration: InputDecoration(
-                          hintText: 'اسألي عن العناية · الروتين · المنتجات…',
+                          hintText: _inputHint,
                           filled: true,
                           fillColor: AppColors.surface,
                           border: OutlineInputBorder(
@@ -159,13 +312,19 @@ class _MiraAdvisorScreenState extends State<MiraAdvisorScreen> {
                           ),
                         ),
                         textInputAction: TextInputAction.send,
-                        onSubmitted: _send,
+                        onSubmitted: _loading ? null : _send,
                       ),
                     ),
                     const SizedBox(width: 8),
                     IconButton.filled(
                       onPressed: _loading ? null : () => _send(_input.text),
-                      icon: const Icon(Icons.send_rounded),
+                      icon: _loading
+                          ? const SizedBox(
+                              width: 18,
+                              height: 18,
+                              child: CircularProgressIndicator(strokeWidth: 2),
+                            )
+                          : const Icon(Icons.send_rounded),
                       style: IconButton.styleFrom(
                         backgroundColor: AppColors.gold,
                         foregroundColor: AppColors.primaryDark,
@@ -181,6 +340,8 @@ class _MiraAdvisorScreenState extends State<MiraAdvisorScreen> {
     );
   }
 }
+
+enum _ConsultationFocus { skin, outfit, atelier }
 
 class _Bubble extends StatelessWidget {
   final AdvisorMessage message;
@@ -202,9 +363,28 @@ class _Bubble extends StatelessWidget {
               : AppColors.cardPurple.withValues(alpha: 0.35),
           borderRadius: BorderRadius.circular(16),
         ),
-        child: Text(
-          message.text,
-          style: AppTypography.bodyMedium.copyWith(height: 1.55),
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.stretch,
+          children: [
+            if (!isUser && message.confidence != null)
+              Align(
+                alignment: Alignment.centerLeft,
+                child: MceConfidenceBadge(confidence: message.confidence!),
+              ),
+            if (!isUser && message.confidence != null) const SizedBox(height: 6),
+            message.isStreaming
+                ? MceStreamingText(text: message.text, isStreaming: true)
+                : Text(
+                    message.text,
+                    style: AppTypography.bodyMedium.copyWith(height: 1.55),
+                  ),
+            if (!isUser && message.citedFacts.isNotEmpty)
+              MceCitationChips(
+                facts: message.citedFacts
+                    .map((f) => (label: f.labelAr, value: f.valueAr))
+                    .toList(),
+              ),
+          ],
         ),
       ),
     );

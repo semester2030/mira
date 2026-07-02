@@ -5,6 +5,10 @@ import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 
 import '../../../../../core/config/mira_api_config.dart';
+import '../../../../../core/navigation/app_routes.dart';
+import '../../../../../core/navigation/route_args.dart';
+import '../../../../../core/services/app_session.dart';
+import '../../../../../core/session/analysis_session.dart';
 import '../../../../../core/utils/mira_api_error_message.dart';
 import '../../../../../shared/theme/colors.dart';
 import '../../../../../shared/theme/typography.dart';
@@ -186,6 +190,9 @@ class _OutfitGarmentRecolorPanelState extends State<OutfitGarmentRecolorPanel>
       }
 
       HapticFeedback.lightImpact();
+      if (result.recolorAttemptId != null) {
+        AnalysisSession.setRecolorAttemptId(result.recolorAttemptId);
+      }
       setState(() {
         _loading = false;
         _result = result;
@@ -423,6 +430,24 @@ class _OutfitGarmentRecolorPanelState extends State<OutfitGarmentRecolorPanel>
               textAlign: TextAlign.center,
               style: AppTypography.labelSmall.copyWith(color: AppColors.textSecondary),
             ),
+            if (_result!.recolorAttemptId != null && AppSession.canUseCloud) ...[
+              const SizedBox(height: 14),
+              PremiumButton(
+                label: 'اسألي ميرا عن التلوين · QEL',
+                icon: Icons.chat_bubble_outline_rounded,
+                variant: PremiumButtonVariant.secondary,
+                onPressed: () => Navigator.pushNamed(
+                  context,
+                  AppRoutes.miraAdvisor,
+                  arguments: AdvisorRouteArgs.atelier(
+                    recolorAttemptId: _result!.recolorAttemptId!,
+                    outfitAnalysis: widget.analysis,
+                    skinReport: AnalysisSession.lastSkin,
+                    initialQuestion: 'لماذا نجح التلوين؟',
+                  ),
+                ),
+              ),
+            ],
           ],
           const SizedBox(height: 12),
           Row(

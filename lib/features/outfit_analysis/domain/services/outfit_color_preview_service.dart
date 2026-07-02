@@ -93,6 +93,12 @@ abstract final class OutfitColorPreviewService {
   static (String, OutfitPieceKind)? _primaryUpperPiece(OutfitAnalysis analysis) {
     final regions = analysis.segmentMap?.regions ?? const [];
     for (final region in regions) {
+      final label = '${region.labelAr} ${region.labelEn}'.toLowerCase();
+      if (label.contains('فستان') || label.contains('dress') || label.contains('gown')) {
+        return (region.labelAr, OutfitPieceKind.dress);
+      }
+    }
+    for (final region in regions) {
       if (region.zone == OutfitSegmentZone.upperBody) {
         return (region.labelAr, _kindFromLabel(region.labelAr));
       }

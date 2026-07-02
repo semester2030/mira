@@ -2,11 +2,48 @@ class AdvisorMessage {
   final String text;
   final bool isUser;
   final DateTime at;
+  final String? confidence;
+  final List<MceCitedFact> citedFacts;
+  final bool isStreaming;
 
   const AdvisorMessage({
     required this.text,
     required this.isUser,
     required this.at,
+    this.confidence,
+    this.citedFacts = const [],
+    this.isStreaming = false,
+  });
+
+  AdvisorMessage copyWith({
+    String? text,
+    bool? isUser,
+    DateTime? at,
+    String? confidence,
+    List<MceCitedFact>? citedFacts,
+    bool? isStreaming,
+  }) {
+    return AdvisorMessage(
+      text: text ?? this.text,
+      isUser: isUser ?? this.isUser,
+      at: at ?? this.at,
+      confidence: confidence ?? this.confidence,
+      citedFacts: citedFacts ?? this.citedFacts,
+      isStreaming: isStreaming ?? this.isStreaming,
+    );
+  }
+}
+
+/// Cited fact for citation chips in advisor UI.
+class MceCitedFact {
+  final String id;
+  final String labelAr;
+  final String valueAr;
+
+  const MceCitedFact({
+    required this.id,
+    required this.labelAr,
+    required this.valueAr,
   });
 }
 

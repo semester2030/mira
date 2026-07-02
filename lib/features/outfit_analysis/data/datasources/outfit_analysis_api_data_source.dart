@@ -43,6 +43,19 @@ class OutfitAnalysisApiDataSource {
     }
   }
 
+  Future<OutfitSnapshotRef> saveIntelligenceSnapshot(Map<String, dynamic> payload) async {
+    final response = await _dio.post<Map<String, dynamic>>(
+      MiraApiEndpoints.outfitSnapshots,
+      data: payload,
+    );
+    final data = response.data;
+    if (data == null) throw Exception('تعذر حفظ لقطة الإطلالة');
+    return OutfitSnapshotRef(
+      id: data['id'] as String? ?? '',
+      occasionId: data['occasionId'] as String? ?? '',
+    );
+  }
+
   Future<List<OutfitReport>> fetchHistory({int limit = 50}) async {
     final response = await _dio.get<List<dynamic>>(
       MiraApiEndpoints.outfitHistory,
@@ -109,4 +122,11 @@ class OutfitAnalysisApiDataSource {
           metricsJson != null ? OutfitStyleMetrics.fromJson(metricsJson) : null,
     );
   }
+}
+
+class OutfitSnapshotRef {
+  final String id;
+  final String occasionId;
+
+  const OutfitSnapshotRef({required this.id, required this.occasionId});
 }

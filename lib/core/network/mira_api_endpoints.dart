@@ -5,6 +5,9 @@ abstract final class MiraApiEndpoints {
   static const mePreferences = '/users/me/preferences';
   static const intelligenceProgress = '/intelligence/progress';
   static const advisorChat = '/advisor/chat';
+  static const consultationSessions = '/consultation/sessions';
+  static String consultationMessages(String sessionId) =>
+      '/consultation/sessions/$sessionId/messages';
   /// Flutter → Render only (Render → Perfect Corp). Do not call Perfect Corp from the app.
   static const skinAnalysis = '/ai/skin-analysis';
   static const skinHistory = '/skin-analysis/history';
@@ -16,6 +19,9 @@ abstract final class MiraApiEndpoints {
   /// Garment recolor — FASHN Edit (Phase A). Reference: docs/mira-garment-recolor.html
   static const visionOutfitRecolor = '/ai/vision/outfit/recolor';
   static const outfitHistory = '/outfit-analysis/history';
+  static const outfitSnapshots = '/outfit-analysis/snapshots';
+  static String consultationContext(String sessionId) =>
+      '/consultation/sessions/$sessionId/context';
   static const recommendations = '/recommendations';
   static const recommendationsHistory = '/recommendations/history';
   static const subscriptionMe = '/subscriptions/me';

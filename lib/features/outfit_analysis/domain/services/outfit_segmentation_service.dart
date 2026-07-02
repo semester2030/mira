@@ -105,6 +105,53 @@ class OutfitSegmentationService {
     return map;
   }
 
+  /// Re-sample garment pixels locally — corrects stale server color names.
+  Future<OutfitSegmentMap> enrichServerColors(
+    File imageFile,
+    OutfitSegmentMap map,
+  ) async {
+    if (map.regions.isEmpty) return map;
+
+    final bytes = await imageFile.readAsBytes();
+    final decoded = img.decodeImage(bytes);
+    if (decoded == null) return map;
+
+    final oriented = img.bakeOrientation(decoded);
+    final pose = await _poseAnalyzer.analyzeFile(imageFile);
+    final colorMap = OutfitSegmentColorExtractor.extractAllZones(
+      oriented,
+      map.regions,
+      pose: pose,
+    );
+
+    final regionsWithColors = map.regions
+        .map(
+          (r) => r.copyWith(
+            colors: colorMap[r.zone]?.isNotEmpty == true
+                ? colorMap[r.zone]!
+                : r.colors,
+          ),
+        )
+        .toList();
+
+    final palette = OutfitSegmentColorExtractor.extractGarmentPalette(
+      oriented,
+      regions: regionsWithColors,
+      pose: pose,
+    );
+
+    return map.copyWith(
+      regions: regionsWithColors,
+      upperBodyColors: colorMap[OutfitSegmentZone.upperBody] ?? map.upperBodyColors,
+      lowerBodyColors: colorMap[OutfitSegmentZone.lowerBody] ?? map.lowerBodyColors,
+      shoeColors: colorMap[OutfitSegmentZone.feet] ?? map.shoeColors,
+      accessoryColors: colorMap[OutfitSegmentZone.accessories] ?? map.accessoryColors,
+      garmentPalette: palette.isReliable ? palette : map.garmentPalette,
+      imageWidth: oriented.width.toDouble(),
+      imageHeight: oriented.height.toDouble(),
+    );
+  }
+
   Future<void> dispose() async {
     await _poseAnalyzer.dispose();
   }

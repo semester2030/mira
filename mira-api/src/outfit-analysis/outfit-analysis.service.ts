@@ -22,6 +22,7 @@ import { PrismaService } from '../prisma/prisma.service';
 import { SubscriptionsService } from '../subscriptions/subscriptions.service';
 import { UsersService } from '../users/users.service';
 import { OutfitAnalysisResponseDto } from './dto/outfit-analysis-response.dto';
+import { SaveOutfitSnapshotDto } from './dto/save-outfit-snapshot.dto';
 
 @Injectable()
 export class OutfitAnalysisService {
@@ -121,6 +122,49 @@ export class OutfitAnalysisService {
         miraStyleReport,
       };
     });
+  }
+
+  /** Persist Vision Platform intelligence snapshot (no image) for MCE grounding. */
+  async saveIntelligenceSnapshot(authUser: RequestUser, dto: SaveOutfitSnapshotDto) {
+    const occasion = parseOccasion(dto.occasionId);
+    if (!occasion) {
+      throw new BadRequestException('مناسبة غير صالحة');
+    }
+
+    const user = await this.usersService.findOrCreateFromFirebase(authUser);
+
+    const record = await this.prisma.outfitAnalysis.create({
+      data: {
+        userId: user.id,
+        occasionId: occasion,
+        resultJson: {
+          source: 'vision_platform',
+          intelligence: {
+            ...dto.intelligence,
+            occasionId: occasion,
+            analysisSource: dto.intelligence.analysisSource ?? 'vision_platform',
+          },
+        } as unknown as Prisma.InputJsonValue,
+      },
+    });
+
+    await this.usersService.writeAuditLog({
+      userId: user.id,
+      action: 'outfit_analysis.snapshot_saved',
+      metadata: {
+        analysisId: record.id,
+        occasion,
+        compatibilityScore: dto.intelligence.compatibilityScore,
+        privacyPolicyVersion: '1.0',
+        imageRetained: false,
+      },
+    });
+
+    return {
+      id: record.id,
+      occasionId: record.occasionId,
+      createdAt: record.createdAt.toISOString(),
+    };
   }
 
   private async loadPreviousOutfitScore(userId: string): Promise<number | null> {

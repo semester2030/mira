@@ -96,6 +96,7 @@ class VisionGarmentRecolorResult {
   final int processingMs;
   final VisionGarmentQelResult? qel;
   final int attempt;
+  final String? recolorAttemptId;
 
   const VisionGarmentRecolorResult({
     required this.imageBase64,
@@ -107,6 +108,7 @@ class VisionGarmentRecolorResult {
     required this.processingMs,
     this.qel,
     this.attempt = 1,
+    this.recolorAttemptId,
   });
 
   factory VisionGarmentRecolorResult.fromJson(Map<String, dynamic> json) {
@@ -122,6 +124,7 @@ class VisionGarmentRecolorResult {
           ? VisionGarmentQelResult.fromJson(json['qel'] as Map<String, dynamic>)
           : null,
       attempt: (json['attempt'] as num?)?.toInt() ?? 1,
+      recolorAttemptId: json['recolorAttemptId'] as String?,
     );
   }
 }

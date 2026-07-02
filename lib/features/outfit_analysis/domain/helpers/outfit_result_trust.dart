@@ -49,7 +49,16 @@ abstract final class OutfitResultTrustPolicy {
       return OutfitResultTrust(
         level: OutfitResultTrustLevel.degraded,
         titleAr: degradedTitle,
-        messageAr: 'تعذّر استخراج ألوان الملابس بدقة — جرّبي إضاءة أفضل',
+        messageAr: 'تعذّر استخراج ألوان الملابس بدقة عالية — جرّبي إضاءة طبيعية أوضح',
+      );
+    }
+
+    final weakPalette = map.garmentPalette.detailedColors.any((c) => c.confidence < 0.65);
+    if (weakPalette) {
+      return OutfitResultTrust(
+        level: OutfitResultTrustLevel.degraded,
+        titleAr: degradedTitle,
+        messageAr: 'بعض الألوان تقريبية — أعيدي التقاط صورة بإضاءة متوازنة لدقة أعلى',
       );
     }
 

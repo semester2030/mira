@@ -136,6 +136,98 @@
     .q4-p1-scenarios { max-height: 280px; overflow: auto; font-size: 0.8rem; }
     #q4-phase1-risks tr.bad td { background: rgba(200,60,60,0.06); }
     #q4-phase1-risks tr.warn td { background: rgba(180,83,9,0.06); }
+    .q4-perception-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 14px; margin: 14px 0; }
+    @media (max-width: 720px) { .q4-perception-grid { grid-template-columns: 1fr; } }
+    .q4-perception-card { padding: 14px 16px; border-radius: 12px; border: 1px solid var(--border); background: var(--surface); }
+    .q4-perception-card.pass { border-color: rgba(46,125,90,0.35); }
+    .q4-perception-card.fail { border-color: rgba(200,60,60,0.35); }
+    .q4-perception-card ul { margin: 8px 0 0; padding-right: 20px; font-size: 0.86rem; line-height: 1.75; }
+    .q4-topo-card { padding: 12px 14px; border: 1px solid var(--border); border-radius: 10px; background: var(--surface); margin-bottom: 10px; }
+    #q4-perception-rubric tr.bad td { background: rgba(200,60,60,0.05); }
+    /* MCE — محرك الاستشارة الذكية */
+    #mce-consultation { border: 3px solid #0d9488 !important; background: linear-gradient(180deg, #f0fdfa 0%, #fff 45%) !important; }
+    .mce-hero { border: 2px solid rgba(13,148,136,0.35); border-radius: 20px; padding: 22px 24px; margin-bottom: 22px; background: linear-gradient(135deg, rgba(13,148,136,0.08), rgba(91,77,158,0.06)); }
+    .mce-stat-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(110px, 1fr)); gap: 10px; margin: 16px 0; }
+    .mce-stat { text-align: center; padding: 12px; border-radius: 12px; background: var(--surface); border: 1px solid var(--border); }
+    .mce-stat .v { font-size: 1.35rem; font-weight: 800; color: #0d9488; display: block; }
+    .mce-stat.warn .v { color: #b45309; }
+    .mce-stat .l { font-size: 0.7rem; color: var(--muted); }
+  #mce-consultation .sub-nav a.mce-active { border-color: #0d9488; background: rgba(13,148,136,0.1); color: #0f766e; font-weight: 800; }
+    .mce-verdict-box { border: 2px solid #0d9488; border-radius: 16px; padding: 18px 20px; background: var(--surface); }
+    .mce-verdict-label { font-weight: 800; color: #0f766e; font-size: 1.05rem; }
+    .mce-pillar-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 12px; margin-top: 14px; }
+    .mce-pillar { padding: 12px 14px; border-radius: 12px; border: 1px solid var(--border); background: var(--surface-alt); font-size: 0.86rem; line-height: 1.75; }
+    .mce-pillar .ico { font-size: 1.2rem; display: block; margin-bottom: 4px; }
+    .mce-rule-card { border: 1px solid var(--border); border-radius: 14px; padding: 14px 16px; margin-bottom: 10px; cursor: pointer; transition: box-shadow 0.2s; background: var(--surface); }
+    .mce-rule-card:hover { box-shadow: 0 4px 16px rgba(13,148,136,0.1); }
+    .mce-rule-card.open { border-color: #0d9488; }
+    .mce-rule-head { display: flex; align-items: center; gap: 10px; margin-bottom: 6px; }
+    .mce-rule-num { width: 26px; height: 26px; border-radius: 50%; background: #0d9488; color: #fff; display: flex; align-items: center; justify-content: center; font-weight: 800; font-size: 0.8rem; }
+    .mce-forbidden { font-size: 0.8rem; color: var(--danger); margin-top: 8px; display: none; }
+    .mce-rule-card.open .mce-forbidden { display: block; }
+    .mce-pipeline-pre { background: #1a1625; color: #ccfbf1; padding: 16px 18px; border-radius: 12px; font-size: 0.78rem; line-height: 1.8; overflow-x: auto; }
+    .mce-tab-row { display: flex; flex-wrap: wrap; gap: 8px; margin: 14px 0; }
+    .mce-tab-btn { padding: 8px 14px; border-radius: 999px; border: 1px solid var(--border); background: var(--surface); cursor: pointer; font-family: inherit; font-size: 0.84rem; }
+    .mce-tab-btn.active { background: #0d9488; color: #fff; border-color: #0d9488; }
+    .mce-layer-panel { border: 1px solid var(--border); border-radius: 14px; padding: 16px 18px; background: var(--surface); min-height: 120px; }
+    .mce-layer-path { margin-bottom: 10px; font-size: 0.82rem; }
+    .mce-layer-list { margin: 0; padding-right: 22px; line-height: 1.85; font-size: 0.88rem; }
+    .mce-phase-nav { display: grid; grid-template-columns: repeat(5, 1fr); gap: 8px; margin: 16px 0; }
+    @media (max-width: 900px) { .mce-phase-nav { grid-template-columns: 1fr; } }
+    .mce-phase-btn { display: flex; flex-direction: column; align-items: flex-start; gap: 4px; padding: 12px 14px; border: 2px solid var(--border); border-radius: 14px; background: var(--surface); cursor: pointer; font-family: inherit; text-align: right; transition: all 0.2s; }
+    .mce-phase-btn .num { width: 28px; height: 28px; border-radius: 50%; background: var(--surface-alt); display: flex; align-items: center; justify-content: center; font-weight: 800; font-size: 0.85rem; }
+    .mce-phase-btn .title { font-weight: 800; font-size: 0.82rem; line-height: 1.4; }
+    .mce-phase-btn .dur { font-size: 0.72rem; color: var(--muted); }
+    .mce-phase-btn.active { border-color: #0d9488; background: rgba(13,148,136,0.08); box-shadow: 0 4px 20px rgba(13,148,136,0.15); }
+    .mce-phase-btn.active .num { background: #0d9488; color: #fff; }
+    .mce-phase-detail { border: 2px solid #0d9488; border-radius: 16px; padding: 18px 20px; background: var(--surface); margin-top: 12px; }
+    .mce-phase-badge { display: inline-block; padding: 4px 12px; border-radius: 999px; font-size: 0.76rem; font-weight: 800; background: rgba(13,148,136,0.12); color: #0f766e; margin-bottom: 8px; }
+    .mce-phase-detail .goal { font-size: 0.9rem; line-height: 1.8; }
+    .mce-phase-detail ul { line-height: 1.85; font-size: 0.88rem; }
+    .mce-exit { margin-top: 12px; padding: 10px 14px; border-radius: 10px; background: rgba(46,125,90,0.1); color: #15803d; font-weight: 700; font-size: 0.86rem; }
+    .mce-files code { font-size: 0.78rem; }
+    .mce-method { background: #0d9488; color: #fff; padding: 2px 8px; border-radius: 6px; font-size: 0.72rem; }
+    #mce-risks tr.bad td { background: rgba(200,60,60,0.06); }
+    #mce-risks tr.warn td { background: rgba(180,83,9,0.06); }
+    .mce-filter-row { display: flex; flex-wrap: wrap; gap: 8px; margin-bottom: 12px; }
+    .mce-filter-btn { padding: 6px 12px; border-radius: 999px; border: 1px solid var(--border); background: var(--surface); cursor: pointer; font-family: inherit; font-size: 0.8rem; }
+    .mce-filter-btn.active { background: #0d9488; color: #fff; border-color: #0d9488; }
+    .mce-memory-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 12px; }
+    .mce-memory-card { border: 1px solid var(--border); border-radius: 12px; padding: 14px; background: var(--surface); }
+    .mce-memory-card .tier { font-weight: 800; color: #0d9488; display: block; margin-bottom: 6px; }
+    .mce-memory-card .ttl { font-size: 0.76rem; color: var(--muted); }
+    .mce-cost-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 16px; }
+    @media (max-width: 720px) { .mce-cost-grid { grid-template-columns: 1fr; } }
+    .mce-cost-sliders label { display: block; font-size: 0.84rem; margin: 10px 0 4px; font-weight: 700; }
+    .mce-cost-sliders input[type="range"] { width: 100%; }
+    .mce-cost-result { border: 2px solid #0d9488; border-radius: 14px; padding: 16px; background: rgba(13,148,136,0.06); }
+    .mce-cost-row { display: flex; justify-content: space-between; padding: 6px 0; font-size: 0.88rem; border-bottom: 1px dashed var(--border); }
+    .mce-cost-row.highlight { border: none; font-size: 1rem; color: #0f766e; margin-top: 8px; }
+    .mce-cost-note { font-size: 0.76rem; color: var(--muted); margin-top: 10px; }
+    .mce-demo-wrap { border: 2px solid #5b4d9e; border-radius: 16px; overflow: hidden; background: var(--surface); }
+    .mce-demo-tabs { display: flex; flex-wrap: wrap; gap: 0; border-bottom: 1px solid var(--border); }
+    .mce-demo-tab { flex: 1; min-width: 100px; padding: 10px 12px; border: none; background: var(--surface-alt); cursor: pointer; font-family: inherit; font-size: 0.82rem; font-weight: 700; }
+    .mce-demo-tab.active { background: #5b4d9e; color: #fff; }
+    .mce-demo-body { padding: 16px 18px; }
+    .mce-demo-context { font-size: 0.8rem; color: var(--muted); padding: 8px 12px; background: var(--surface-alt); border-radius: 10px; margin-bottom: 12px; }
+    .mce-q-chips { display: flex; flex-wrap: wrap; gap: 8px; margin-bottom: 14px; }
+    .mce-q-chip { padding: 6px 12px; border-radius: 999px; border: 1px solid var(--border); background: #fff; cursor: pointer; font-family: inherit; font-size: 0.8rem; }
+    .mce-q-chip.active { border-color: #5b4d9e; background: rgba(91,77,158,0.1); font-weight: 700; }
+    .mce-chat-user { background: #0d9488; color: #fff; padding: 10px 14px; border-radius: 14px 14px 4px 14px; margin: 8px 0 8px 40px; font-size: 0.88rem; }
+    .mce-chat-bot { background: var(--surface-alt); padding: 12px 14px; border-radius: 14px 14px 14px 4px; margin: 8px 40px 8px 0; font-size: 0.88rem; line-height: 1.85; border: 1px solid var(--border); }
+    .mce-chat-bot .conf { display: inline-block; font-size: 0.72rem; font-weight: 800; padding: 2px 8px; border-radius: 999px; margin-bottom: 6px; background: rgba(46,125,90,0.15); color: #15803d; }
+    .mce-cites { display: flex; flex-wrap: wrap; gap: 6px; margin-top: 10px; }
+    .mce-cite { font-size: 0.72rem; padding: 3px 8px; border-radius: 6px; background: #1a1625; color: #99f6e4; font-family: ui-monospace, monospace; }
+    .mce-future-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(160px, 1fr)); gap: 10px; }
+    .mce-future-card { border: 1px solid var(--border); border-radius: 12px; padding: 12px; text-align: center; font-size: 0.84rem; }
+    .mce-future-card span { font-size: 1.5rem; display: block; margin-bottom: 6px; }
+    .mce-impl-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(260px, 1fr)); gap: 12px; }
+    .mce-impl-card { border: 2px solid var(--border); border-radius: 14px; padding: 14px 16px; background: var(--surface); }
+    .mce-impl-card.done { border-color: #0d9488; background: rgba(13,148,136,0.06); }
+    .mce-impl-badge { display: inline-block; font-size: 0.76rem; font-weight: 800; margin-bottom: 6px; }
+    .mce-impl-card ul { margin: 8px 0 0; padding-right: 18px; font-size: 0.82rem; line-height: 1.75; }
+    .mce-verify { margin-top: 10px; font-size: 0.78rem; color: #0f766e; font-weight: 700; }
+    .mce-phase-btn.done { border-color: rgba(46,125,90,0.4); }
   </style>
 </head>
 <body>
@@ -144,6 +236,7 @@
       <a class="brand" href="index.html">ميرا · Mira</a>
       <nav class="nav no-print">
         <a href="#charter">المرجع الرسمي</a>
+        <a href="#mce-consultation">💬 الاستشارة</a>
         <a href="#garment-atelier">👗 Atelier</a>
         <a href="#pipeline">المخطط</a>
         <a href="#phases">المراحل</a>
@@ -177,6 +270,7 @@
     <aside class="audit-sidebar no-print">
       <h4>محتويات المواصفة</h4>
       <a href="#charter">🏛 المرجع الرسمي</a>
+      <a href="#mce-consultation">💬 محرك الاستشارة (MCE)</a>
       <a href="#garment-atelier">👗 Atelier — تعديل الإطلالة</a>
       <a href="#atelier-gates-timeline">🗓️ بوابات A+·B·C</a>
       <a href="#atelier-qel">🛡️ Phase Q — QEL</a>
@@ -228,10 +322,175 @@
         <p style="font-size:0.9rem;color:var(--muted)">
           المسار: نقرأ المرحلة → ننفّذ خطواتها → نحقق معايير القبول → نضع ✓ → ننتقل للمرحلة التالية.
         </p>
-        <p style="margin-top:14px;padding:12px 16px;background:linear-gradient(135deg,rgba(124,58,237,0.08),rgba(201,162,39,0.1));border-radius:12px;border:1px solid rgba(201,162,39,0.35);font-size:0.9rem">
+        <p style="margin-top:14px;padding:12px 16px;background:linear-gradient(135deg,rgba(13,148,136,0.1),rgba(91,77,158,0.08));border-radius:12px;border:1px solid rgba(13,148,136,0.35);font-size:0.9rem">
+          💬 <strong>محرك الاستشارة الذكية (MCE):</strong> من محلّل ثابت إلى مستشارة تفاعلية — الرؤية تستخرج الحقائق، والذكاء الاصطناعي يشرحها فقط.
+          <a href="#mce-consultation" style="font-weight:800;margin-inline-start:6px">المرجع الكامل ←</a>
+        </p>
+        <p style="margin-top:10px;padding:12px 16px;background:linear-gradient(135deg,rgba(124,58,237,0.08),rgba(201,162,39,0.1));border-radius:12px;border:1px solid rgba(201,162,39,0.35);font-size:0.9rem">
           👗 <strong>Atelier — استوديو تعديل الإطلالة:</strong> امتداد رسمي لـ Vision Platform — ثقة الصورة · إعادة تلوين FASHN Edit · خارطة المراحل المستقبلية.
           <a href="#garment-atelier" style="font-weight:800;margin-inline-start:6px">المرجع الكامل ←</a>
         </p>
+      </section>
+
+      <!-- 💬 MCE — محرك الاستشارة الذكية -->
+      <section id="mce-consultation" class="card">
+        <span class="hardening-badge" style="border-color:#0d9488;color:#0f766e;background:rgba(13,148,136,0.12);margin-bottom:12px;display:inline-block">
+          💬 MCE · OFFICIAL CONSULTATION ENGINE REFERENCE
+        </span>
+        <h2>محرك الاستشارة الذكية<br /><span style="font-size:0.72em;color:var(--muted);font-weight:600">MIRA Consultation Engine — من التحليل إلى المحادثة المُؤَسَّسة</span></h2>
+        <p style="font-size:0.92rem;color:var(--muted);max-width:960px">
+          يحوّل ميرا من <strong>محلّل ثابت</strong> إلى <strong>مستشارة تفاعلية</strong> للبشرة والإطلالة والتلوين — دون إعادة تحليل الصورة في المحادثة.
+          هذا القسم تحت <a href="#charter">🏛 المرجع الرسمي</a> — أي تنفيذ لاستشارة ذكية يتبع هذا المستند.
+          <br />الحالة: <strong id="mce-live-status">المرحلة ٢ — استشارة البشرة MVP ✅</strong> · الإصدار 1.0.0 · يونيو 2026
+        </p>
+
+        <div id="mce-implementation-section" style="margin-top:20px">
+          <h3>📦 نتائج التنفيذ — حيّة من الكود</h3>
+          <div id="mce-implementation"></div>
+        </div>
+
+        <div class="mce-hero">
+          <p style="margin:0 0 12px;font-size:0.9rem;line-height:1.85">
+            <strong>القاعدة الذهبية:</strong> الرؤية (Perfect Corp · FASHN · OpenAI Semantic) تستخرج <em>حقائق</em>.
+            FASHN Edit ينفّذ <em>تلويناً فقط</em>. MCE يستخدم OpenAI لـ <em>الشرح والاستشارة</em> — لا كشف · لا درجات مُختلَقة.
+          </p>
+          <div class="mce-stat-grid" id="mce-hero-stats"></div>
+        </div>
+
+        <nav class="sub-nav no-print" aria-label="محتويات MCE">
+          <a href="#mce-implementation-section">نتائج التنفيذ</a>
+          <a href="#mce-verdict-section">الحكم</a>
+          <a href="#mce-rules-section">القواعد</a>
+          <a href="#mce-pipeline-section">المسار</a>
+          <a href="#mce-layers-section">الطبقات</a>
+          <a href="#mce-phases-section">٥ مراحل</a>
+          <a href="#mce-demo-section">تجربة تفاعلية</a>
+          <a href="#mce-api-section">API</a>
+          <a href="#mce-memory-section">الذاكرة</a>
+          <a href="#mce-cost-section">التكلفة</a>
+          <a href="#mce-risks-section">المخاطر</a>
+          <a href="#mce-security-section">الأمان</a>
+          <a href="#mce-future-section">المستقبل</a>
+        </nav>
+
+        <div id="mce-verdict-section" style="margin-top:24px">
+          <h3>١ — الحكم الاستراتيجي</h3>
+          <div id="mce-verdict"></div>
+        </div>
+
+        <div id="mce-rules-section" style="margin-top:28px">
+          <h3>٢ — القواعد المعمارية (غير قابلة للتفاوض)</h3>
+          <p style="font-size:0.86rem;color:var(--muted)">انقري على كل قاعدة لعرض الممنوع ↓</p>
+          <div id="mce-golden-rules"></div>
+        </div>
+
+        <div id="mce-pipeline-section" style="margin-top:28px">
+          <h3>٣ — مسار المعالجة الكامل</h3>
+          <div id="mce-pipeline"></div>
+        </div>
+
+        <div id="mce-layers-section" style="margin-top:28px">
+          <h3>٤ — الطبقات الأربع</h3>
+          <div class="mce-tab-row" id="mce-layer-tabs"></div>
+          <div class="mce-layer-panel" id="mce-layer-panel"></div>
+        </div>
+
+        <div id="mce-phases-section" style="margin-top:32px">
+          <h3>٥ — خطة التنفيذ — ٥ مراحل دقيقة</h3>
+          <p style="font-size:0.86rem;color:var(--muted);margin-bottom:8px">
+            اختاري مرحلة لعرض المخرجات · معايير الخروج · الملفات — لا تنتقلي للمرحلة التالية قبل إغلاق الحالية.
+          </p>
+          <div class="mce-phase-nav" id="mce-phase-nav"></div>
+          <div id="mce-phase-panel"></div>
+        </div>
+
+        <div id="mce-demo-section" style="margin-top:32px">
+          <h3>٦ — محاكاة تفاعلية (Grounded Demo)</h3>
+          <p style="font-size:0.86rem;color:var(--muted)">
+            نموذج توضيحي — يوضح كيف تُبنى الإجابة من حقائق مخزّنة وليس من تخمين. ليست API حية.
+          </p>
+          <div class="mce-demo-wrap">
+            <div class="mce-demo-tabs" id="mce-demo-tabs"></div>
+            <div class="mce-demo-body">
+              <div class="mce-demo-context" id="mce-demo-context"></div>
+              <div class="mce-q-chips" id="mce-demo-questions"></div>
+              <div id="mce-demo-answer"></div>
+              <div class="mce-cites" id="mce-demo-cites"></div>
+            </div>
+          </div>
+        </div>
+
+        <div id="mce-api-section" style="margin-top:28px">
+          <h3>٧ — نقاط API (NestJS)</h3>
+          <p style="font-size:0.84rem;color:var(--muted)">المسار: <code>mira-api/src/consultation/</code> · مصادقة Firebase على كل الطلبات</p>
+          <table class="audit-table" id="mce-endpoints">
+            <thead><tr><th>Method</th><th>المسار</th><th>الوظيفة</th></tr></thead>
+            <tbody id="mce-endpoints-tbody"></tbody>
+          </table>
+        </div>
+
+        <div id="mce-memory-section" style="margin-top:28px">
+          <h3>٨ — نموذج الذاكرة</h3>
+          <div class="mce-memory-grid" id="mce-memory"></div>
+          <div class="official-seal" style="margin-top:14px;border-color:rgba(13,148,136,0.4)">
+            <strong>ضغط السياق</strong>
+            <p style="margin:0;font-size:0.88rem;line-height:1.8">
+              لا يُرسل JSON كامل كل دورة. بعد إنشاء الجلسة: <code>contextSnapshotId</code> فقط.
+              كل ٨ أدوار: توليد <code>rollingSummaryAr</code> وإسقاط الرسائل القديمة من البرومبت.
+            </p>
+          </div>
+        </div>
+
+        <div id="mce-cost-section" style="margin-top:28px">
+          <h3>٩ — حاسبة التكلفة التفاعلية</h3>
+          <div class="mce-cost-grid">
+            <div class="mce-cost-sliders">
+              <label>عدد المستخدمات النشطات (MAU) <span id="mce-val-mau">100000</span></label>
+              <input type="range" id="mce-cost-mau" min="10000" max="500000" step="10000" value="100000" />
+              <label>نسبة استخدام MCE % <span id="mce-val-adoption">30</span></label>
+              <input type="range" id="mce-cost-adoption" min="5" max="100" step="5" value="30" />
+              <label>جلسات / مستخدمة / شهر <span id="mce-val-sessions">4</span></label>
+              <input type="range" id="mce-cost-sessions" min="1" max="20" step="1" value="4" />
+              <label>أدوار / جلسة <span id="mce-val-turns">6</span></label>
+              <input type="range" id="mce-cost-turns" min="2" max="15" step="1" value="6" />
+            </div>
+            <div class="mce-cost-result" id="mce-cost-result"></div>
+          </div>
+        </div>
+
+        <div id="mce-risks-section" style="margin-top:28px">
+          <h3>١٠ — المخاطر والتخفيف</h3>
+          <div class="mce-filter-row">
+            <button type="button" class="mce-filter-btn active" data-mce-risk-filter="all">الكل</button>
+            <button type="button" class="mce-filter-btn" data-mce-risk-filter="حرج">حرج</button>
+            <button type="button" class="mce-filter-btn" data-mce-risk-filter="عالي">عالي</button>
+            <button type="button" class="mce-filter-btn" data-mce-risk-filter="متوسط">متوسط</button>
+          </div>
+          <table class="audit-table" id="mce-risks">
+            <thead><tr><th>الخطورة</th><th>الخطر</th><th>الأثر</th><th>التخفيف</th></tr></thead>
+            <tbody id="mce-risks-tbody"></tbody>
+          </table>
+        </div>
+
+        <div id="mce-security-section" style="margin-top:28px">
+          <h3>١١ — الأمان والخصوصية</h3>
+          <div id="mce-security"></div>
+        </div>
+
+        <div id="mce-future-section" style="margin-top:28px">
+          <h3>١٢ — قابلية التوسع المستقبلية</h3>
+          <div class="mce-future-grid" id="mce-future"></div>
+        </div>
+
+        <div class="official-seal" style="margin-top:24px;border-color:#0d9488;background:linear-gradient(135deg,#f0fdfa,#fff)">
+          <strong>💬 لا تنفيذ MCE خارج هذا القسم</strong>
+          <p style="margin:0;font-size:0.9rem;line-height:1.85">
+            التكامل الإلزامي: <code>lib/features/skin_analysis/</code> · <code>lib/features/outfit_analysis/</code> · <code>lib/features/consultation/</code> (جديد)
+            · <code>mira-api/src/vision/</code> (تنفيذ فقط) · <code>mira-api/src/consultation/</code> (جديد).
+            استبدال <code>Advisor</code> التدريجي — لا ازدواجية.
+            المرحلة ١ قبل أي بث أو Atelier في المحادثة.
+          </p>
+        </div>
       </section>
 
       <!-- 👗 ATELIER — OFFICIAL GARMENT MODIFICATION REFERENCE -->
@@ -266,6 +525,7 @@
           <a href="#atelier-audit">التدقيق</a>
           <a href="#atelier-outcomes">النتائج المستهدفة</a>
           <a href="#atelier-remaining">المتبقي</a>
+          <a href="#atelier-q4-perception">🎯 إدراك القطع</a>
           <a href="#atelier-q4-phase1">🚀 Q4 بداية (50)</a>
           <a href="#atelier-q4-eval">📊 Q4 — سجل الاختبار</a>
           <a href="#atelier-verify">التحقق</a>
@@ -647,6 +907,25 @@ UI Display (قبل/بعد) — أو رفض واضح بدون fake</pre>
           </table>
         </div>
 
+        <!-- Q4 PERCEPTION — topology + recolor scope (single source: mira-q4-perception-taxonomy.js) -->
+        <div id="atelier-q4-perception" style="margin-top:32px">
+          <span class="hardening-badge" style="border-color:#2e7d5a;color:#15803d;background:rgba(46,125,90,0.1);margin-bottom:12px;display:inline-block">
+            🎯 Perception — تمييز القطع · تلوين فقط
+          </span>
+          <h3>إدراك الإطلالة بدقة — قبل أي تغيير لون</h3>
+          <p style="font-size:0.86rem;color:var(--muted);margin:-6px 0 12px">
+            فستان (قطعة واحدة) ≠ بلوزة+بنطلون ≠ جاكيت+طبقات — <strong>لا إعادة توليد</strong> · لا تغيير وجه · Phase A فقط.
+          </p>
+          <div id="q4-perception-scope"></div>
+          <h4 style="margin-top:20px">أنواع Topology</h4>
+          <div id="q4-perception-topology"></div>
+          <div class="q4-p1-stats" id="q4-perception-stats" style="margin:16px 0"></div>
+          <h4>مسار المعالجة</h4>
+          <div id="q4-perception-pipeline"></div>
+          <h4 style="margin-top:20px">معايير PASS/FAIL — Q4 Rubric</h4>
+          <div id="q4-perception-rubric"></div>
+        </div>
+
         <!-- Q4 PHASE 1 — بداية 25–50 -->
         <div id="atelier-q4-phase1" style="margin-top:32px">
           <span class="hardening-badge" style="border-color:#5b4d9e;color:#3d2f7a;background:rgba(91,77,158,0.12);margin-bottom:12px;display:inline-block">
@@ -678,7 +957,7 @@ UI Display (قبل/بعد) — أو رفض واضح بدون fake</pre>
           <p style="font-size:0.86rem;color:var(--muted)">فستان · بلوزة · بنطلون · عباءة · جاكيت · تنورة · جينز — تنوع ألوان. الدرجات تُملأ من التطبيق.</p>
           <div class="q4-table-wrap q4-p1-scenarios">
             <table class="audit-table" id="q4-phase1-scenarios-table">
-              <thead><tr><th>ID</th><th>القطعة</th><th>Before</th><th>After</th><th>ملاحظة السيناريو</th></tr></thead>
+              <thead><tr><th>ID</th><th>القطعة</th><th>Topology</th><th>Before</th><th>After</th><th>الإطلالة / ملاحظة</th></tr></thead>
               <tbody id="q4-phase1-scenarios-tbody"></tbody>
             </table>
           </div>
@@ -1202,6 +1481,7 @@ analyze() → VisionApiDataSource.analyze()
           <a href="#production-readiness"><strong>خارطة النضج 9–17</strong><span>Evaluation · Ops · Cache · Monitoring</span></a>
           <a href="#platform-integration"><strong>تكامل المنصات</strong><span>FASHN · OpenAI · Render · Flutter</span></a>
           <a href="#garment-atelier"><strong>👗 Atelier + Phase Q</strong><span>QEL · Visual Truth Integrity · المرجع الرسمي</span></a>
+          <a href="#mce-consultation"><strong>💬 محرك الاستشارة MCE</strong><span>استشارة مُؤَسَّسة · ٥ مراحل · معمارية كاملة</span></a>
           <a href="mira-garment-recolor.html"><strong>مختبر البرومبت</strong><span>تفاعلي · مكمّل لـ Atelier</span></a>
         </div>
       </section>
@@ -1210,8 +1490,16 @@ analyze() → VisionApiDataSource.analyze()
 
   <div class="toast" id="toast"></div>
   <script src="mira-vision-platform.js"></script>
+  <script src="mira-mce-architecture.js"></script>
+  <script src="mira-mce-ui.js"></script>
+  <script src="mira-q4-perception-taxonomy.js"></script>
+  <script src="mira-q4-perception-ui.js"></script>
   <script src="mira-q4-phase1.js"></script>
   <script src="mira-q4-eval-sheet.js"></script>
-  <script>document.addEventListener('DOMContentLoaded', function () { if (window.initQ4EvalSheet) initQ4EvalSheet(); });</script>
+  <script>document.addEventListener('DOMContentLoaded', function () {
+    if (window.initMceConsultation) initMceConsultation();
+    if (window.initQ4Perception) initQ4Perception();
+    if (window.initQ4EvalSheet) initQ4EvalSheet();
+  });</script>
 </body>
 </html>

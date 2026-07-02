@@ -1,4 +1,5 @@
 import '../../../skin_analysis/domain/entities/skin_report.dart';
+import '../entities/detected_garment_color.dart';
 import '../entities/outfit_analysis.dart';
 import '../helpers/outfit_arabic_labels.dart';
 import '../helpers/undertone_resolver.dart';
@@ -45,15 +46,33 @@ abstract final class OutfitStylistCopy {
         ? UndertoneResolver.labelAr(SkinPaletteMapper.fromSkinReport(skin).undertone)
         : null;
 
-    final current = analysis.dominantColors.take(3).toList();
-    for (var i = 0; i < current.length; i++) {
-      insights.add(
-        OutfitColorInsight(
-          colorNameAr: current[i],
-          category: OutfitColorCategory.current,
-          whyAr: _whyCurrentColor(current[i], analysis, undertone, index: i),
-        ),
-      );
+    final currentDetails = analysis.segmentMap?.garmentPalette.detailedColors ?? const [];
+    if (currentDetails.isNotEmpty) {
+      for (var i = 0; i < currentDetails.length && i < 3; i++) {
+        final d = currentDetails[i];
+        insights.add(
+          OutfitColorInsight(
+            colorNameAr: d.nameAr,
+            displayNameAr: d.displayNameAr,
+            hex: d.hex,
+            confidence: d.confidence,
+            matchTierAr: d.matchTierAr,
+            category: OutfitColorCategory.current,
+            whyAr: _whyDetectedColor(d, analysis, undertone, index: i),
+          ),
+        );
+      }
+    } else {
+      final current = _detectedGarmentColors(analysis).take(3).toList();
+      for (var i = 0; i < current.length; i++) {
+        insights.add(
+          OutfitColorInsight(
+            colorNameAr: current[i],
+            category: OutfitColorCategory.current,
+            whyAr: _whyCurrentColor(current[i], analysis, undertone, index: i),
+          ),
+        );
+      }
     }
 
     var compatibleIndex = 0;
@@ -177,6 +196,46 @@ abstract final class OutfitStylistCopy {
     return 'فرصة لتعزيز التناسق اللوني';
   }
 
+  static List<String> _detectedGarmentColors(OutfitAnalysis analysis) {
+    final seen = <String>{};
+    final out = <String>[];
+    void addAll(Iterable<String> colors) {
+      for (final raw in colors) {
+        final t = raw.trim();
+        if (t.isEmpty || seen.contains(t)) continue;
+        seen.add(t);
+        out.add(t);
+      }
+    }
+
+    addAll(analysis.upperBodyColors);
+    if (analysis.segmentMap?.garmentPalette.isReliable == true) {
+      addAll(analysis.segmentMap!.garmentPalette.ordered);
+    }
+    addAll(analysis.dominantColors);
+    addAll(analysis.lowerBodyColors);
+    return out;
+  }
+
+  static String _whyDetectedColor(
+    DetectedGarmentColor color,
+    OutfitAnalysis analysis,
+    String? undertone, {
+    int index = 0,
+  }) {
+    final garment = analysis.clothingType.isNotEmpty ? analysis.clothingType : 'إطلالتك';
+    final occasion = analysis.occasion.labelAr;
+    final undertoneSuffix =
+        undertone != null ? ' — ينسجم مع ${OutfitArabicLabels.undertonePhrase(undertone)}' : '';
+    final pct = (color.confidence * 100).round();
+
+    return switch (index) {
+      0 => 'رصدنا ${color.displayNameAr} في $garment — ${color.matchTierAr} ($pct%)$undertoneSuffix',
+      1 => '${color.displayNameAr} يظهر كطبقة لونية ثانية في إطلالتك — $pct% ثقة',
+      _ => '${color.displayNameAr} يكمل لوحة $occasion — درجة ${color.shadeAr}',
+    };
+  }
+
   static String _whyCurrentColor(
     String color,
     OutfitAnalysis analysis,
@@ -188,7 +247,9 @@ abstract final class OutfitStylistCopy {
     final undertoneSuffix =
         undertone != null ? ' — ينسجم مع ${OutfitArabicLabels.undertonePhrase(undertone)}' : '';
 
-    if (analysis.recommendedColors.any((r) => _sameFamily(r, color))) {
+    if (analysis.recommendedColors.any((r) => _sameFamily(r, color)) &&
+        !analysis.dominantColors.contains(color) &&
+        !analysis.upperBodyColors.contains(color)) {
       return switch (index) {
         0 => 'لون $color هو الأساس في $garment — يخدم $occasion$undertoneSuffix',
         1 => '$color يضيف عمقاً ويرفع توازن الإطلالة$undertoneSuffix',
@@ -199,9 +260,9 @@ abstract final class OutfitStylistCopy {
       return 'استخدمي $color بحذر — قد يقلل من توهج البشرة في $occasion';
     }
     return switch (index) {
-      0 => '$color يمنح $garment حضوراً مميزاً في $occasion',
-      1 => '$color يضيف تبايناً لطيفاً دون كسر التنسيق',
-      _ => '$color يعطي إطلالتك شخصية واضحة',
+      0 => 'رصدنا $color كأحد ألوان $garment في الصورة$undertoneSuffix',
+      1 => '$color يظهر بوضوح في إطلالتك الحالية',
+      _ => '$color يساهم في شخصية الإطلالة في $occasion',
     };
   }
 
@@ -265,12 +326,22 @@ enum OutfitColorCategory { current, compatible, avoid }
 
 class OutfitColorInsight {
   final String colorNameAr;
+  final String? displayNameAr;
+  final String? hex;
+  final double? confidence;
+  final String? matchTierAr;
   final OutfitColorCategory category;
   final String whyAr;
 
   const OutfitColorInsight({
     required this.colorNameAr,
+    this.displayNameAr,
+    this.hex,
+    this.confidence,
+    this.matchTierAr,
     required this.category,
     required this.whyAr,
   });
+
+  String get titleAr => displayNameAr ?? colorNameAr;
 }

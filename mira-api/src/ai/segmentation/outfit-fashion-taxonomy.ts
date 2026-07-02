@@ -73,6 +73,7 @@ export function isAccessory(lower: string): boolean {
 
 export function zoneForObject(name: string, centerY: number): OutfitSegmentZone {
   const lower = name.toLowerCase();
+  if (lower.includes('dress') || lower.includes('gown')) return 'upperBody';
   if (isFootwear(lower)) return 'feet';
   if (isBag(lower) || isAccessory(lower)) return 'accessories';
   if (isClothing(lower)) {

@@ -5,6 +5,7 @@ import { FashionNormalizerService } from './pipeline/fashion-normalizer.service'
 import { FashionValidatorService } from './pipeline/fashion-validator.service';
 import { ConflictResolverService } from './pipeline/conflict-resolver.service';
 import { ConfidenceEngineService } from './pipeline/confidence-engine.service';
+import { TopologyResolverService } from './pipeline/topology-resolver.service';
 import { QualityGateService } from './pipeline/quality-gate.service';
 import { VisionOrchestratorService } from './vision-orchestrator.service';
 import { GarmentRecolorPromptService } from './recolor/garment-recolor-prompt.service';
@@ -20,6 +21,7 @@ import { QelCalibrationService } from './qel/qel-calibration.service';
     FashionNormalizerService,
     FashionValidatorService,
     ConflictResolverService,
+    TopologyResolverService,
     ConfidenceEngineService,
     QualityGateService,
     VisionOrchestratorService,

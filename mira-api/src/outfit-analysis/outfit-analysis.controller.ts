@@ -14,6 +14,7 @@ import { FirebaseAuthGuard } from '../common/guards/firebase-auth.guard';
 import { CurrentUser } from '../common/decorators/current-user.decorator';
 import { RequestUser } from '../common/interfaces/request-user.interface';
 import { AnalyzeOutfitBodyDto } from './dto/analyze-outfit.dto';
+import { SaveOutfitSnapshotDto } from './dto/save-outfit-snapshot.dto';
 import { OutfitAnalysisService } from './outfit-analysis.service';
 
 const MAX_IMAGE_BYTES = 10 * 1024 * 1024;
@@ -52,5 +53,10 @@ export class OutfitAnalysisController {
       user,
       Number.isNaN(parsed) ? 20 : parsed,
     );
+  }
+
+  @Post('snapshots')
+  saveSnapshot(@CurrentUser() user: RequestUser, @Body() body: SaveOutfitSnapshotDto) {
+    return this.outfitAnalysisService.saveIntelligenceSnapshot(user, body);
   }
 }

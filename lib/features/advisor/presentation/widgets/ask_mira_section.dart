@@ -61,20 +61,20 @@ class AskMiraSection extends StatelessWidget {
               onPressed: () => Navigator.pushNamed(
                 context,
                 AppRoutes.miraAdvisor,
-                arguments: AdvisorRouteArgs(report: report, initialQuestion: q),
+                arguments: AdvisorRouteArgs.skin(report, initialQuestion: q),
               ),
             );
           }).toList(),
         ),
         const SizedBox(height: 10),
         PremiumButton(
-          label: AppSession.canUseCloud ? 'محادثة مع مستشار ميرا' : 'اسألي ميرا (تجريبي)',
+          label: AppSession.canUseCloud ? 'محادثة مع مستشار ميرا · MCE' : 'سجّلي الدخول للاستشارة الذكية',
           icon: Icons.auto_awesome_outlined,
           variant: PremiumButtonVariant.secondary,
           onPressed: () => Navigator.pushNamed(
             context,
             AppRoutes.miraAdvisor,
-            arguments: AdvisorRouteArgs(report: report),
+            arguments: AdvisorRouteArgs.skin(report),
           ),
         ),
       ],

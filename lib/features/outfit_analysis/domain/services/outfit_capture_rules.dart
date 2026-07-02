@@ -1,5 +1,6 @@
 import '../entities/outfit_body_pose_metrics.dart';
 import '../entities/outfit_capture_validation.dart';
+import '../helpers/outfit_person_mask.dart';
 
 /// Deterministic outfit framing rules — full body, not face-only.
 abstract final class OutfitCaptureRules {
@@ -63,7 +64,9 @@ abstract final class OutfitCaptureRules {
           metrics.faceCenterYNormalized > maxFaceCenterY) {
         return _invalid(OutfitCaptureHint.showFullOutfit, metrics);
       }
-      if (metrics.faceAreaRatio < minFaceAreaRatio) {
+      final bodyHeight = OutfitPersonMask.bounds(metrics.pose)?.height ?? 0;
+      final minFace = bodyHeight >= 0.48 ? 0.0012 : minFaceAreaRatio;
+      if (metrics.faceAreaRatio < minFace) {
         return _invalid(OutfitCaptureHint.moveCloser, metrics);
       }
       return _acceptStill(

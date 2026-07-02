@@ -41,6 +41,29 @@ export class RedisService implements OnModuleDestroy {
     }
   }
 
+  async getJson<T>(key: string): Promise<T | null> {
+    const redis = this.getClient();
+    if (!redis) return null;
+    try {
+      const raw = await redis.get(key);
+      if (!raw) return null;
+      return JSON.parse(raw) as T;
+    } catch (err) {
+      this.logger.warn(`Redis get skipped: ${(err as Error).message}`);
+      return null;
+    }
+  }
+
+  async setJson(key: string, value: unknown, ttlSeconds: number): Promise<void> {
+    const redis = this.getClient();
+    if (!redis) return;
+    try {
+      await redis.set(key, JSON.stringify(value), 'EX', ttlSeconds);
+    } catch (err) {
+      this.logger.warn(`Redis set skipped: ${(err as Error).message}`);
+    }
+  }
+
   async onModuleDestroy(): Promise<void> {
     await this.client?.quit();
   }

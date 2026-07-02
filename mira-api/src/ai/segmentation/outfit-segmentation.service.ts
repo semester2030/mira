@@ -25,20 +25,10 @@ import { RegionRole } from '../../vision/schema/fashion-vision-document.v1';
 // Reference: docs/mira-vision-platform.html
 // ─────────────────────────────────────────────────────────────────────────────
 
-const COLOR_NAMES: Array<[string, number, number, number]> = [
-  ['أسود', 20, 20, 20],
-  ['أبيض', 245, 245, 245],
-  ['بيج', 210, 190, 160],
-  ['كريمي', 235, 225, 200],
-  ['رمادي', 128, 128, 128],
-  ['كحلي', 25, 40, 80],
-  ['أزرق', 40, 80, 180],
-  ['زيتوني', 100, 110, 60],
-  ['ذهبي', 200, 170, 80],
-  ['وردي', 230, 150, 170],
-  ['أحمر', 180, 40, 50],
-  ['بني', 120, 80, 50],
-];
+import {
+  isSpecularHighlight,
+  matchRgb,
+} from '../../vision/color/professional-color-matcher';
 
 interface VisionObject {
   name: string;
@@ -149,8 +139,13 @@ export class OutfitSegmentationService {
       .raw()
       .toBuffer({ resolveWithObject: true });
 
-    const buckets = new Map<string, number>();
+    const buckets = new Map<string, { count: number; display: string }>();
     const step = Math.max(1, Math.floor(Math.sqrt((width * height) / 1200)));
+
+    let sumR = 0;
+    let sumG = 0;
+    let sumB = 0;
+    let pixelCount = 0;
 
     for (let y = 0; y < height; y += step) {
       for (let x = 0; x < width; x += step) {
@@ -158,28 +153,38 @@ export class OutfitSegmentationService {
         const r = data[i];
         const g = data[i + 1];
         const b = data[i + 2];
-        const name = this.rgbName(r, g, b);
-        buckets.set(name, (buckets.get(name) ?? 0) + 1);
+        if (isSpecularHighlight(r, g, b)) continue;
+        sumR += r;
+        sumG += g;
+        sumB += b;
+        pixelCount += 1;
+      }
+    }
+
+    const avgR = pixelCount > 0 ? sumR / pixelCount : 128;
+    const avgG = pixelCount > 0 ? sumG / pixelCount : 128;
+    const avgB = pixelCount > 0 ? sumB / pixelCount : 128;
+
+    for (let y = 0; y < height; y += step) {
+      for (let x = 0; x < width; x += step) {
+        const i = (y * width + x) * 3;
+        const r = data[i];
+        const g = data[i + 1];
+        const b = data[i + 2];
+        if (isSpecularHighlight(r, g, b)) continue;
+        const match = matchRgb(r, g, b, { avgR, avgG, avgB });
+        const prev = buckets.get(match.id);
+        buckets.set(match.id, {
+          count: (prev?.count ?? 0) + 1,
+          display: match.displayNameAr,
+        });
       }
     }
 
     return [...buckets.entries()]
-      .sort((a, b) => b[1] - a[1])
+      .sort((a, b) => b[1].count - a[1].count)
       .slice(0, 4)
-      .map(([name]) => name);
-  }
-
-  private rgbName(r: number, g: number, b: number): string {
-    let best = 'مختلط';
-    let bestDist = Number.MAX_SAFE_INTEGER;
-    for (const [name, cr, cg, cb] of COLOR_NAMES) {
-      const d = (r - cr) ** 2 + (g - cg) ** 2 + (b - cb) ** 2;
-      if (d < bestDist) {
-        bestDist = d;
-        best = name;
-      }
-    }
-    return best;
+      .map(([, v]) => v.display);
   }
 
   private colorsForZone(

@@ -27,8 +27,8 @@ function segmentFromBbox(
 }
 
 /**
- * Derive upper/lower geometry from FASHN background-remove PNG (alpha mask).
- * FASHN has no dedicated segmentation API — subject cutout → normalized bboxes.
+ * Derive garment geometry from FASHN background-remove PNG (alpha mask).
+ * Dress-like silhouettes → single full_body segment (skips face region).
  */
 export async function geometryFromFashnMaskPng(pngBuffer: Buffer): Promise<GeometryPayload> {
   const { data, info } = await sharp(pngBuffer)
@@ -67,16 +67,43 @@ export async function geometryFromFashnMaskPng(pngBuffer: Buffer): Promise<Geome
   const nx = (v: number) => Math.min(1, Math.max(0, v / width));
   const ny = (v: number) => Math.min(1, Math.max(0, v / height));
 
+  const subjectW = maxX - minX + 1;
   const subjectH = maxY - minY + 1;
+  const aspect = subjectH / Math.max(subjectW, 1);
+
+  // Floor-length dress / gown: tall silhouette → one piece, garment starts below face.
+  const dressLike = aspect >= 1.38;
+
+  if (dressLike) {
+    const neckPx = minY + subjectH * 0.17;
+    const dress = segmentFromBbox(
+      'fashn-dress',
+      'full_body',
+      nx(minX),
+      ny(neckPx),
+      nx(subjectW),
+      ny(maxY - neckPx + 1),
+    );
+
+    return {
+      segments: [dress],
+      topology: {
+        pieceCount: 1,
+        onePiece: true,
+        silhouetteHint: 'one_piece',
+      },
+    };
+  }
+
   const splitPx = minY + subjectH * 0.42;
 
   const upper = segmentFromBbox(
     'fashn-upper',
     'upper',
     nx(minX),
-    ny(minY),
-    nx(maxX - minX + 1),
-    ny(Math.max(1, splitPx - minY)),
+    ny(minY + subjectH * 0.14),
+    nx(subjectW),
+    ny(Math.max(1, splitPx - (minY + subjectH * 0.14))),
   );
 
   const lower = segmentFromBbox(
@@ -84,7 +111,7 @@ export async function geometryFromFashnMaskPng(pngBuffer: Buffer): Promise<Geome
     'lower',
     nx(minX),
     ny(splitPx),
-    nx(maxX - minX + 1),
+    nx(subjectW),
     ny(maxY - splitPx + 1),
   );
 

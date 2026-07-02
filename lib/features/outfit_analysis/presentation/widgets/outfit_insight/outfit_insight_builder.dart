@@ -1,5 +1,7 @@
 import 'package:flutter/material.dart';
 
+import '../../../data/helpers/vision_color_mapper.dart';
+import '../../../domain/catalog/fashion_color_library.dart';
 import '../../../domain/entities/outfit_analysis.dart';
 import '../../../domain/entities/suggested_piece_model.dart';
 import '../../../domain/services/fashion_recommendation_engine.dart';
@@ -11,11 +13,11 @@ abstract final class OutfitInsightBuilder {
 
   static List<OutfitPaletteSwatch> palette(OutfitAnalysis analysis) {
     final names = <String>[
-      ...analysis.recommendedColors,
-      ...analysis.dominantColors,
       ...analysis.upperBodyColors,
+      ...analysis.dominantColors,
       ...analysis.lowerBodyColors,
       ...analysis.shoeColors,
+      ...analysis.recommendedColors,
     ];
     final seen = <String>{};
     final out = <OutfitPaletteSwatch>[];
@@ -76,20 +78,8 @@ abstract final class OutfitInsightBuilder {
   }
 
   static Color _colorFromName(String name) {
-    return switch (name) {
-      'أسود' => const Color(0xFF1A1A1A),
-      'أبيض' => const Color(0xFFF5F5F5),
-      'بيج' => const Color(0xFFD4C4A8),
-      'كريمي' => const Color(0xFFF0E6D8),
-      'ذهبي' => const Color(0xFFC9A962),
-      'فضي' => const Color(0xFFB8B8C0),
-      'كحلي' => const Color(0xFF1E2A4A),
-      'أزرق' => const Color(0xFF3A5A9A),
-      'وردي' => const Color(0xFFE8A0B0),
-      'نبيتي' => const Color(0xFF6B2038),
-      'بني' => const Color(0xFF7A5A3A),
-      'زيتوني' => const Color(0xFF6B7050),
-      _ => const Color(0xFFD4C4A8),
-    };
+    final entry = FashionColorLibrary.byName(name);
+    if (entry != null) return entry.color;
+    return VisionColorMapper.toDisplayColor(name);
   }
 }

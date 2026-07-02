@@ -4,18 +4,20 @@ import 'dart:ui';
 import 'package:image/image.dart' as img;
 
 import '../../data/helpers/vision_color_mapper.dart';
+import '../catalog/professional_color_matcher.dart';
+import '../entities/detected_garment_color.dart';
 import '../entities/garment_color_palette.dart';
 import '../entities/outfit_body_pose_metrics.dart';
 import '../entities/outfit_segment_map.dart';
 import '../helpers/outfit_person_mask.dart';
 
-/// KMeans garment color extraction — mask pixels only (no full-image sampling).
+/// KMeans garment color extraction — mask pixels + CIEDE2000 catalog matching.
 abstract final class OutfitSegmentColorExtractor {
   OutfitSegmentColorExtractor._();
 
-  static const _sampleTarget = 4000;
-  static const _kMeansK = 3;
-  static const _kMeansIter = 24;
+  static const _sampleTarget = 5000;
+  static const _kMeansK = 4;
+  static const _kMeansIter = 28;
 
   static GarmentColorPalette extractGarmentPalette(
     img.Image image, {
@@ -32,24 +34,38 @@ abstract final class OutfitSegmentColorExtractor {
         ),
       );
     }
-    if (samples.length < 12) return GarmentColorPalette.empty;
+    if (samples.length < 16) return GarmentColorPalette.empty;
 
+    final wb = _grayWorldAverages(samples);
     final clusters = _kMeans(samples, k: _kMeansK);
     if (clusters.isEmpty) return GarmentColorPalette.empty;
 
-    final named = clusters
-        .map(
-          (rgb) => VisionColorMapper.fromRgb(
-            rgb[0] / 255,
-            rgb[1] / 255,
-            rgb[2] / 255,
-          ),
-        )
-        .toList();
+    final detailed = <DetectedGarmentColor>[];
+    final seen = <String>{};
 
+    for (final rgb in clusters) {
+      final match = ProfessionalColorMatcher.matchRgb(
+        rgb[0],
+        rgb[1],
+        rgb[2],
+        avgR: wb.$1,
+        avgG: wb.$2,
+        avgB: wb.$3,
+      );
+      if (seen.contains(match.id)) continue;
+      seen.add(match.id);
+      detailed.add(DetectedGarmentColor.fromMatch(match));
+    }
+
+  detailed.sort((a, b) => b.confidence.compareTo(a.confidence));
+
+    final named = detailed.map((d) => d.displayNameAr).toList();
     final coverage = (samples.length / _sampleTarget).clamp(0.0, 1.0);
     final spread = _clusterSpread(clusters);
-    final confidence = (0.35 + coverage * 0.35 + spread * 0.3).clamp(0.0, 0.98);
+    final avgConfidence = detailed.isEmpty
+        ? 0.0
+        : detailed.map((d) => d.confidence).reduce((a, b) => a + b) / detailed.length;
+    final confidence = (avgConfidence * 0.7 + coverage * 0.15 + spread * 0.15).clamp(0.0, 0.99);
 
     return GarmentColorPalette(
       primaryColor: named.elementAtOrNull(0) ?? '',
@@ -57,6 +73,7 @@ abstract final class OutfitSegmentColorExtractor {
       accentColor: named.elementAtOrNull(2) ?? '',
       confidence: confidence,
       allColors: named,
+      detailedColors: detailed,
     );
   }
 
@@ -69,17 +86,25 @@ abstract final class OutfitSegmentColorExtractor {
     final samples = _sampleRegion(image, region: region, pose: pose);
     if (samples.isEmpty) return const [];
 
+    final wb = _grayWorldAverages(samples);
     final clusters = _kMeans(samples, k: math.min(maxColors, _kMeansK));
-    return clusters
-        .map(
-          (rgb) => VisionColorMapper.fromRgb(
-            rgb[0] / 255,
-            rgb[1] / 255,
-            rgb[2] / 255,
-          ),
-        )
-        .toSet()
-        .toList();
+    final out = <String>[];
+    final seen = <String>{};
+
+    for (final rgb in clusters) {
+      final match = ProfessionalColorMatcher.matchRgb(
+        rgb[0],
+        rgb[1],
+        rgb[2],
+        avgR: wb.$1,
+        avgG: wb.$2,
+        avgB: wb.$3,
+      );
+      if (seen.contains(match.id)) continue;
+      seen.add(match.id);
+      out.add(match.displayNameAr);
+    }
+    return out;
   }
 
   static Map<OutfitSegmentZone, List<String>> extractAllZones(
@@ -96,6 +121,18 @@ abstract final class OutfitSegmentColorExtractor {
       );
     }
     return map;
+  }
+
+  static (double, double, double) _grayWorldAverages(List<List<int>> samples) {
+    if (samples.isEmpty) return (128, 128, 128);
+    var sr = 0.0, sg = 0.0, sb = 0.0;
+    for (final s in samples) {
+      sr += s[0];
+      sg += s[1];
+      sb += s[2];
+    }
+    final n = samples.length;
+    return (sr / n, sg / n, sb / n);
   }
 
   static List<List<int>> _sampleRegion(
@@ -126,6 +163,7 @@ abstract final class OutfitSegmentColorExtractor {
         final g = pixel.g.toInt();
         final b = pixel.b.toInt();
         if (_isSkinTone(r, g, b) || _isBackground(r, g, b) || _isShadow(r, g, b)) continue;
+        if (ProfessionalColorMatcher.isSpecularHighlight(r, g, b)) continue;
         if (!_isGarmentPixel(r, g, b)) continue;
         samples.add([r, g, b]);
       }
@@ -211,7 +249,7 @@ abstract final class OutfitSegmentColorExtractor {
       (a[2] - b[2]) * (a[2] - b[2]);
 
   static double _clusterSpread(List<List<int>> clusters) {
-    if (clusters.length < 2) return 0.4;
+    if (clusters.length < 2) return 0.45;
     var total = 0.0;
     for (var i = 0; i < clusters.length; i++) {
       for (var j = i + 1; j < clusters.length; j++) {

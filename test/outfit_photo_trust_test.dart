@@ -123,6 +123,30 @@ void main() {
       );
       expect(result.isAccepted, isTrue);
     });
+
+    test('accepts when pose+face pass even on flat studio backdrop', () {
+      final result = OutfitPhotoTrustGate.evaluateStill(
+        metrics: OutfitCaptureFrameMetrics(
+          brightness: 0.55,
+          blurScore: 14,
+          faceCount: 1,
+          faceAreaRatio: 0.018,
+          faceCenterYNormalized: 0.12,
+          faceBottomYNormalized: 0.2,
+          pose: const OutfitBodyPoseMetrics(
+            personDetected: true,
+            headDetected: true,
+            shouldersDetected: true,
+            torsoDetected: true,
+            legsDetected: true,
+            trackingScore: 0.72,
+            bodyBounds: Rect.fromLTWH(0.2, 0.08, 0.6, 0.84),
+          ),
+        ),
+        image: _flatUiCardImage(),
+      );
+      expect(result.isAccepted, isTrue);
+    });
   });
 
   group('OutfitResultTrustPolicy', () {

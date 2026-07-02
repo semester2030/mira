@@ -70,6 +70,10 @@ services:
         value: gpt-4o-mini
       - key: LLM_TEMPERATURE
         value: "0.2"
+      - key: MCE_CONSULTATION_ENABLED
+        value: "true"
+      - key: MCE_FAQ_CACHE
+        value: "true"
       - key: AUTH_SKIP
         value: "false"
       - key: RATE_LIMIT_PER_HOUR

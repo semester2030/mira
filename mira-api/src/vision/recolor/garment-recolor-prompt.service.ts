@@ -121,6 +121,9 @@ export class GarmentRecolorPromptService {
       parts.push('ثنيات طبيعية متوسطة');
     }
     if (ctx.silhouetteHint) parts.push(`silhouette: ${ctx.silhouetteHint}`);
+    if (ctx.pieceCount != null && ctx.pieceCount > 0) {
+      parts.push(`pieces: ${ctx.pieceCount}`);
+    }
     if (!parts.length) return '• الهندسة: حافظي على ثنيات القماش الطبيعية وقصّة القطعة كما هي.';
     return `• الهندسة: حافظي على ${parts.join(' · ')} — لا تسطّحي الطيات.`;
   }

@@ -157,7 +157,7 @@
       scenTb.innerHTML = scenarios
         .map(
           (s) =>
-            `<tr><td><strong>${s.id}</strong></td><td>${s.piece}</td><td>${s.beforeColor}</td><td>${s.afterColor}</td><td style="font-size:0.78rem;color:var(--muted)">${s.notes || ''}</td></tr>`,
+            `<tr><td><strong>${s.id}</strong></td><td>${s.piece}</td><td><code>${s.topology || '—'}</code></td><td>${s.beforeColor}</td><td>${s.afterColor}</td><td style="font-size:0.78rem;color:var(--muted)">${s.outfitDesc || s.notes || ''}</td></tr>`,
         )
         .join('');
     }
