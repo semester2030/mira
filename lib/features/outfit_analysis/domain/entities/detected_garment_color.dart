@@ -1,4 +1,4 @@
-import 'professional_color_matcher.dart';
+import '../catalog/professional_color_matcher.dart';
 
 /// Rich garment color detection result (Delta-E grounded).
 class DetectedGarmentColor {

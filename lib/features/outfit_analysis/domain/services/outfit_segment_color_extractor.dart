@@ -3,7 +3,6 @@ import 'dart:ui';
 
 import 'package:image/image.dart' as img;
 
-import '../../data/helpers/vision_color_mapper.dart';
 import '../catalog/professional_color_matcher.dart';
 import '../entities/detected_garment_color.dart';
 import '../entities/garment_color_palette.dart';
