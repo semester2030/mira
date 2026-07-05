@@ -6,7 +6,7 @@
   'use strict';
 
   const SPEC = {
-    version: '1.0.0',
+    version: '1.1.0',
     date: '2026-07-05',
     repo: 'semester2030/mira',
     author: 'MIRA Engineering',
@@ -142,6 +142,10 @@
       icon: '💄',
       title: 'تجربة المكياج الحي',
       priority: 1,
+      rolloutWave: 'W1',
+      rolloutLabel: 'الموجة 1 — الأولوية القصوى · إطلاق AR الأول',
+      isHero: true,
+      launchOrder: 1,
       roi: 'عالي جداً',
       banuba: true,
       visage: true,
@@ -175,6 +179,10 @@
       icon: '💇',
       title: 'تجربة ألوان الشعر',
       priority: 4,
+      rolloutWave: 'W3',
+      rolloutLabel: 'الموجة 3 — بعد إطلاق المكياج',
+      isHero: false,
+      launchOrder: 4,
       roi: 'عالي',
       banuba: true,
       visage: true,
@@ -198,6 +206,10 @@
       icon: '👓',
       title: 'تجربة النظارات',
       priority: 3,
+      rolloutWave: 'W3',
+      rolloutLabel: 'الموجة 3 — retail · شراكات optical',
+      isHero: false,
+      launchOrder: 5,
       roi: 'عالي (retail)',
       banuba: true,
       visage: true,
@@ -221,6 +233,10 @@
       icon: '💎',
       title: 'تجربة الإكسسوارات',
       priority: 5,
+      rolloutWave: 'W4',
+      rolloutLabel: 'الموجة 4 — توسع · 3D assets',
+      isHero: false,
+      launchOrder: 6,
       roi: 'متوسط',
       banuba: true,
       visage: true,
@@ -237,6 +253,10 @@
       icon: '💅',
       title: 'تجربة طلاء الأظافر',
       priority: 6,
+      rolloutWave: 'W4',
+      rolloutLabel: 'الموجة 4 — nice-to-have',
+      isHero: false,
+      launchOrder: 7,
       roi: 'منخفض–متوسط',
       banuba: true,
       visage: false,
@@ -253,6 +273,10 @@
       icon: '👁',
       title: 'العدسات اللاصقة',
       priority: 6,
+      rolloutWave: 'W3',
+      rolloutLabel: 'الموجة 3 — مع الشعر والنظارات',
+      isHero: false,
+      launchOrder: 5,
       roi: 'متوسط',
       banuba: true,
       visage: true,
@@ -269,6 +293,10 @@
       icon: '✨',
       title: 'فلترات احترافية (Preview)',
       priority: 2,
+      rolloutWave: 'W2',
+      rolloutLabel: 'الموجة 2 — بعد المكياج · يدعم try-on UX',
+      isHero: false,
+      launchOrder: 2,
       roi: 'عالي',
       banuba: true,
       visage: true,
@@ -286,9 +314,171 @@
     },
   ];
 
+  /** سياسة الإطلاق — الميزات السبع على موجات · المكياج أولاً */
+  const AR_ROLLOUT_POLICY = {
+    headline: 'لا تُطلق الميزات السبع دفعة واحدة',
+    subline: 'كل ميزة AR لها موجة إطلاق مستقلة · Gate · تكلفة · معايير قبول',
+    heroFeature: 'makeup',
+    heroFeatureAr: '💄 تجربة المكياج الحي',
+    firstPublicRelease: 'MIRA Try — Makeup (Wave 1)',
+    whyMakeupFirst: [
+      'أقرب ربط مع Perfect Corp (undertone · skin type · concerns)',
+      'أعلى conversion للـ marketplace (SKU makeup واضح)',
+      'Banuba POC أسرع (lip preset → full suite)',
+      'ROI أعلى · مخاطر أقل من hair/glasses/3D assets',
+      'يتماشى مع Analyze → Recommend → Try → Buy',
+    ],
+    notInWave1: ['hair', 'glasses', 'accessories', 'nails', 'contacts'],
+    forbidden: [
+      'إطلاق 7 ميزات AR في release واحد',
+      'بدء Banuba بـ hair أو glasses قبل makeup',
+      'تفعيل filters أثناء capture التحليل (Perfect Corp)',
+      'Marketplace بدون SKU makeup قبل Wave 1',
+    ],
+  };
+
+  /** طبقات المكياج — تفصيل Wave 1 (الأهم) */
+  const MAKEUP_LAYERS = [
+    {
+      layer: 'P2.1 — Lip POC',
+      weeks: '3–4',
+      items: ['أحمر شفاه فقط', 'SKU واحد → preset واحد', 'Deep link من تقرير MIRA', '5 أجهزة · 30fps'],
+      gate: 'Banuba contract + lip try-on demo',
+      cost: { min: 18000, max: 32000 },
+    },
+    {
+      layer: 'P2.2 — Full Makeup Suite',
+      weeks: '8–12',
+      items: [
+        'أحمر شفاه (lipstick · gloss · matte)',
+        'بلاشر (blush · cream · powder)',
+        'آيشادو (eyeshadow palettes)',
+        'كونتور (contour · bronzer)',
+        'هايلايتر (highlight · glow)',
+        'كريم أساس (foundation · BB · tint)',
+      ],
+      gate: '50+ SKUs · try-on من beauty report · buy E2E',
+      cost: { min: 45000, max: 78000 },
+    },
+  ];
+
+  /** موجات إطلاق AR — 5 موجات + Wave 0 تأسيس */
+  const AR_ROLLOUT_WAVES = [
+    {
+      id: 'W0',
+      order: 0,
+      icon: '🏗',
+      title: 'Wave 0 — التأسيس (بدون AR)',
+      subtitle: 'Marketplace live — شرط قبل أي try-on',
+      implPhases: ['P2.0'],
+      weeks: '4–6',
+      features: [],
+      featureLabels: ['— لا AR — Marketplace + SKU + analytics فقط'],
+      releaseName: 'MIRA Marketplace Beta',
+      userSees: 'منتجات مقترحة · شراء · بدون كاميرا AR',
+      why: 'Try-on بدون شراء = wow بدون revenue. Wave 0 يبني قاعدة Try→Buy.',
+      gate: 'Conversion ≥ 2% · 10+ makeup SKUs mapped',
+      cost: { min: 25000, max: 45000 },
+      teamFocus: 'Backend · Product · Partnerships',
+      status: 'prerequisite',
+    },
+    {
+      id: 'W1',
+      order: 1,
+      icon: '💄',
+      title: 'Wave 1 — المكياج (الأولوية القصوى)',
+      subtitle: '⭐ إطلاق AR الأول · Hero Feature',
+      implPhases: ['P2.1', 'P2.2'],
+      weeks: '11–16',
+      features: ['makeup'],
+      featureLabels: ['💄 تجربة المكياج الحي — lip → full suite'],
+      releaseName: 'MIRA Try — Makeup',
+      userSees: '«يناسبك 312» → جربي على وجهك → اشتري',
+      why: 'Heart of Phase 2. Perfect Corp → shade match → Banuba lip/blush/eyes/base. Highest ROI.',
+      gate: 'Makeup E2E · 30fps · legal disclaimer · Banuba signed',
+      cost: { min: 63000, max: 110000 },
+      teamFocus: 'Mobile (Banuba) · MIRA Engine (shade-matcher) · Content (presets)',
+      status: 'hero',
+      makeupLayers: MAKEUP_LAYERS,
+    },
+    {
+      id: 'W2',
+      order: 2,
+      icon: '✨',
+      title: 'Wave 2 — فلترات Preview',
+      subtitle: 'بعد Wave 1 — يحسّن تجربة try-on',
+      implPhases: ['P2.3'],
+      weeks: '2–3',
+      features: ['filters'],
+      featureLabels: ['✨ فلترات احترافية (preview only · ليس TikTok)'],
+      releaseName: 'MIRA Try — Beauty Filters',
+      userSees: 'Glow · matte · soft light أثناء تجربة المكياج فقط',
+      why: 'يرفع perceived quality · لا يمس Perfect Corp (mode separation)',
+      gate: 'ANALYZE mode = zero filters · TRY_ON mode = filters OK',
+      cost: { min: 12000, max: 22000 },
+      teamFocus: 'Architecture · Flutter · QA regression skin scores',
+      status: 'enhancement',
+    },
+    {
+      id: 'W3',
+      order: 3,
+      icon: '💇',
+      title: 'Wave 3 — شعر · نظارات · عدسات',
+      subtitle: 'Retail expansion — 3 ميزات في موجة واحدة',
+      implPhases: ['P2.4'],
+      weeks: '10–14',
+      features: ['hair', 'glasses', 'contacts'],
+      featureLabels: ['💇 ألوان الشعر', '👓 نظارات', '👁 عدسات لاصقة'],
+      releaseName: 'MIRA Try — Style',
+      userSees: 'جربي لون شعر · نظارة · عدسة — من توصية MIRA',
+      why: 'Retail partners (optical · hair) · wow عالي · يحتاج 3D assets',
+      gate: '2 optical partners · hair presets · try→buy live',
+      cost: { min: 55000, max: 92000 },
+      teamFocus: 'Partnerships · 3D assets · Mobile',
+      status: 'expansion',
+    },
+    {
+      id: 'W4',
+      order: 4,
+      icon: '💎',
+      title: 'Wave 4 — إكسسوارات · أظافر · Fusion',
+      subtitle: 'توسع + ربط FASHN outfit مع makeup',
+      implPhases: ['P2.5'],
+      weeks: '8–12',
+      features: ['accessories', 'nails'],
+      featureLabels: ['💎 إكسسوارات', '💅 أظافر', '🔗 Fusion outfit+makeup'],
+      releaseName: 'MIRA Try — Complete Look',
+      userSees: '«هذا المكياج مع فستانك» → look كامل · أقراط · أظافر',
+      why: 'Platform differentiation · FASHN + Banuba fusion = moat',
+      gate: 'Fusion E2E · accessory tracking stable',
+      cost: { min: 48000, max: 85000 },
+      teamFocus: 'MIRA Fusion Engine · Mobile · Content',
+      status: 'platform',
+    },
+    {
+      id: 'W5',
+      order: 5,
+      icon: '🛡',
+      title: 'Wave 5 — Production Hardening',
+      subtitle: 'يعبر جميع الموجات — قبل scale عالمي',
+      implPhases: ['P2.6'],
+      weeks: '4–6',
+      features: ['all'],
+      featureLabels: ['QA 20 devices · Sentry · PDPL · cost monitoring'],
+      releaseName: 'MIRA Try — Global Ready',
+      userSees: 'استقرار · سرعة · compliance',
+      why: 'Enterprise-grade قبل دخول سوق global',
+      gate: 'Launch checklist 100% · crash rate < 0.1%',
+      cost: { min: 22000, max: 40000 },
+      teamFocus: 'QA · DevOps · Legal · Finance',
+      status: 'hardening',
+    },
+  ];
+
   const IMPL_PHASES = [
     {
       id: 'P2.0',
+      wave: 'W0',
       title: 'P2.0 — Prerequisites & Marketplace Live',
       weeks: '4–6',
       goal: 'بدون marketplace فعّال · try-on = wow بدون revenue.',
@@ -304,6 +494,7 @@
     },
     {
       id: 'P2.1',
+      wave: 'W1',
       title: 'P2.1 — Banuba POC (Lip Try-on فقط)',
       weeks: '3–4',
       goal: 'إثبات تقني: Banuba + Flutter + MIRA recommendation → one SKU.',
@@ -319,7 +510,8 @@
     },
     {
       id: 'P2.2',
-      title: 'P2.2 — Full Makeup Suite',
+      wave: 'W1',
+      title: 'P2.2 — Full Makeup Suite ⭐ Hero',
       weeks: '8–12',
       goal: '💄 كامل: lip · blush · eyeshadow · foundation · contour · highlight.',
       tasks: [
@@ -333,6 +525,7 @@
     },
     {
       id: 'P2.3',
+      wave: 'W2',
       title: 'P2.3 — Beauty Filters + MediaPipe coexistence',
       weeks: '2–3',
       goal: 'فلترات preview · MediaPipe للcapture · Banuba للtry-on — لا تداخل.',
@@ -346,6 +539,7 @@
     },
     {
       id: 'P2.4',
+      wave: 'W3',
       title: 'P2.4 — Hair · Glasses · Eye Color',
       weeks: '10–14',
       goal: '💇 👓 👁 — retail-ready modules.',
@@ -359,6 +553,7 @@
     },
     {
       id: 'P2.5',
+      wave: 'W4',
       title: 'P2.5 — Accessories · Nails · Outfit+Makeup Fusion',
       weeks: '8–12',
       goal: '💎 💅 · «هذا المكياج يناسب فستانك» — FASHN + Banuba.',
@@ -373,6 +568,7 @@
     },
     {
       id: 'P2.6',
+      wave: 'W5',
       title: 'P2.6 — Production Hardening',
       weeks: '4–6',
       goal: 'Enterprise-grade قبل دخول السوق العالمي.',
@@ -450,6 +646,13 @@
         <p style="margin-bottom:0;"><strong>Banuba</strong> (موصى به) = AR Experience Layer — <em>ليس</em> بديل Perfect Corp أو MediaPipe.</p>
       </div>
 
+      <div class="card hero-makeup-banner" style="margin-top:20px;">
+        <h3 style="margin-top:0;">💄 سياسة الإطلاق — الميزات السبع على موجات</h3>
+        <p><strong>${AR_ROLLOUT_POLICY.headline}.</strong> ${AR_ROLLOUT_POLICY.subline}</p>
+        <p><strong>الأولوية القصوى:</strong> ${AR_ROLLOUT_POLICY.heroFeatureAr} → إطلاق <code>${AR_ROLLOUT_POLICY.firstPublicRelease}</code></p>
+        <p style="margin-bottom:0;"><a href="#ar-rollout">← التفاصيل الكاملة · 5 موجات · تكلفة كل موجة</a></p>
+      </div>
+
       <div class="disclaimer-box" style="margin-top:20px;">
         ⚠️ <strong>تنبيه التكلفة:</strong> جميع الأرقام تقديرية engineering · Banuba/Visage يتطلبان عرض سعر رسمي (Enterprise · MAU-based).
         الأسعار بالدollar الأمريكي · التحويل لـ SAR: ×${SPEC.sarRate}.
@@ -467,7 +670,8 @@
         <li><a href="#architecture">الهندسة · 6 طبقات</a></li>
         <li><a href="#phase1-recap">Phase 1 — ما هو جاهز</a></li>
         <li><a href="#phase2-scope">Phase 2 — النطاق</a></li>
-        <li><a href="#ar-features">7 ميزات AR بالتفصيل</a></li>
+        <li><a href="#ar-rollout">⭐ موجات الإطلاق — المكياج أولاً</a></li>
+        <li><a href="#ar-features">7 ميزات AR — تفصيل كل ميزة</a></li>
         <li><a href="#banuba-vs-visage">Banuba vs Visage</a></li>
         <li><a href="#mira-loop">Analyze → Recommend → Try → Buy</a></li>
         <li><a href="#marketplace">Marketplace · الربط التجاري</a></li>
@@ -558,26 +762,48 @@ Buy (Marketplace + Partners)
     const s = el('section', { id: 'phase2-scope' });
     s.innerHTML = `
       <h2>٤. Phase 2 — النطاق</h2>
+      <div class="card" style="border:2px solid #9b7bff;margin-bottom:20px;">
+        <h4 style="margin-top:0;">📌 قرار الإطلاق الرسمي</h4>
+        <p><strong>لا نُطلق الميزات السبع AR دفعة واحدة.</strong> نُطلق على <strong>5 موجات (W0→W5)</strong>.</p>
+        <p><strong>Wave 1 = 💄 المكياج</strong> — إطلاق AR الأول والأهم. باقي الميزات (شعر · نظارات · إكسسوارات · …) في موجات لاحقة بعد Gate كل موجة.</p>
+        <p style="margin-bottom:0;"><a href="#ar-rollout">خريطة الموجات الكاملة →</a></p>
+      </div>
       <div class="grid-2">
         <div class="card">
-          <h4 style="margin-top:0;">✅ داخل النطاق</h4>
+          <h4 style="margin-top:0;">✅ Wave 1 — الآن (الأولوية)</h4>
           <ul>
-            <li>Banuba SDK integration (Flutter)</li>
-            <li>7 AR features (حسب الأولوية)</li>
-            <li>MIRA Try-on Orchestrator</li>
-            <li>Marketplace Try → Buy flow</li>
-            <li>Shade recommendation من Perfect Corp data</li>
-            <li>Fusion outfit + makeup</li>
+            <li>💄 <strong>تجربة المكياج الحي</strong> (lip → full suite)</li>
+            <li>P2.1 Lip POC → P2.2 Full Makeup</li>
+            <li>MIRA shade recommendation → try → buy</li>
+            <li>إطلاق: <code>MIRA Try — Makeup</code></li>
           </ul>
         </div>
         <div class="card">
-          <h4 style="margin-top:0;">❌ خارج النطاق</h4>
+          <h4 style="margin-top:0;">⏳ موجات لاحقة (بعد Gate)</h4>
           <ul>
-            <li>بناء Face Mesh engine داخلي</li>
-            <li>استبدال Perfect Corp بـ Banuba للبشرة</li>
-            <li>استبدال MediaPipe للcapture</li>
-            <li>Dense mesh 10K–100K</li>
-            <li>Medical-grade diagnosis</li>
+            <li>W2: ✨ فلترات preview</li>
+            <li>W3: 💇 شعر · 👓 نظارات · 👁 عدسات</li>
+            <li>W4: 💎 إكسسوارات · 💅 أظافر · Fusion</li>
+            <li>W5: 🛡 Production hardening</li>
+          </ul>
+        </div>
+      </div>
+      <div class="grid-2" style="margin-top:16px;">
+        <div class="card">
+          <h4 style="margin-top:0;">✅ داخل النطاق الكلي</h4>
+          <ul>
+            <li>Banuba SDK (Flutter) — موجة موجة</li>
+            <li>7 AR features — <strong>على مراحل</strong></li>
+            <li>MIRA Try-on Orchestrator</li>
+            <li>Marketplace Try → Buy</li>
+            <li>Shade recommendation · Fusion</li>
+          </ul>
+        </div>
+        <div class="card">
+          <h4 style="margin-top:0;">❌ ممنوع</h4>
+          <ul>
+            ${AR_ROLLOUT_POLICY.forbidden.map((f) => `<li>${f}</li>`).join('')}
+            <li>بناء Face Mesh داخلي · استبدال Perfect Corp</li>
           </ul>
         </div>
       </div>
@@ -585,12 +811,156 @@ Buy (Marketplace + Partners)
     root.appendChild(s);
   }
 
+  function renderArRollout(root) {
+    const s = el('section', { id: 'ar-rollout' });
+    const waveCards = AR_ROLLOUT_WAVES.map((w) => {
+      const heroClass = w.status === 'hero' ? 'rollout-wave hero-wave' : 'rollout-wave';
+      const statusBadge =
+        w.status === 'hero'
+          ? '<span class="phase-badge p2">⭐ الأولوية القصوى</span>'
+          : w.status === 'prerequisite'
+            ? '<span class="phase-badge cost">شرط مسبق</span>'
+            : `<span class="phase-badge p1">موجة ${w.order}</span>`;
+
+      let makeupDetail = '';
+      if (w.makeupLayers) {
+        makeupDetail = `
+          <h4>💄 تفصيل طبقات المكياج (Wave 1)</h4>
+          <table class="task-table">
+            <thead><tr><th>الطبقة</th><th>المدة</th><th>المحتوى</th><th>Gate</th><th>التكلفة</th></tr></thead>
+            <tbody>${w.makeupLayers
+              .map(
+                (m) => `
+              <tr>
+                <td><strong>${m.layer}</strong></td>
+                <td>${m.weeks}</td>
+                <td><ul style="margin:0;padding-right:16px">${m.items.map((i) => `<li>${i}</li>`).join('')}</ul></td>
+                <td>${m.gate}</td>
+                <td>${fmt(m.cost.min)} – ${fmt(m.cost.max)}</td>
+              </tr>`
+              )
+              .join('')}</tbody>
+          </table>`;
+      }
+
+      const featureList = w.featureLabels
+        .map((l) => `<li>${l}</li>`)
+        .join('');
+
+      return `
+        <div class="${heroClass} card">
+          <div class="rollout-wave-header">
+            <span class="rollout-icon">${w.icon}</span>
+            <div>
+              <h3 style="margin:0;">${w.title} ${statusBadge}</h3>
+              <p class="rollout-sub">${w.subtitle}</p>
+            </div>
+          </div>
+          <div class="rollout-meta">
+            <span><strong>Impl:</strong> ${w.implPhases.join(' → ')}</span>
+            <span><strong>المدة:</strong> ${w.weeks}</span>
+            <span><strong>Release:</strong> <code>${w.releaseName}</code></span>
+            <span><strong>التكلفة:</strong> ${fmt(w.cost.min)} – ${fmt(w.cost.max)} (${sar(w.cost.min)} – ${sar(w.cost.max)} SAR)</span>
+          </div>
+          <div class="grid-2" style="margin-top:14px;">
+            <div>
+              <h4 style="margin-top:0;">ميزات هذه الموجة</h4>
+              <ul>${featureList || '<li>—</li>'}</ul>
+              <p><strong>يرى المستخدم:</strong> ${w.userSees}</p>
+            </div>
+            <div>
+              <h4 style="margin-top:0;">لماذا هذا الترتيب؟</h4>
+              <p>${w.why}</p>
+              <p><strong>Gate (لا تنتقل للموجة التالية بدون):</strong> ${w.gate}</p>
+              <p><strong>فريق:</strong> ${w.teamFocus}</p>
+            </div>
+          </div>
+          ${makeupDetail}
+        </div>`;
+    }).join('');
+
+    const matrixRows = AR_FEATURES.sort((a, b) => a.launchOrder - b.launchOrder)
+      .map((f) => {
+        const wave = AR_ROLLOUT_WAVES.find((w) => w.id === f.rolloutWave);
+        return `<tr class="${f.isHero ? 'hero-row' : ''}">
+          <td>${f.icon} ${f.title}</td>
+          <td><code>${f.rolloutWave}</code> · ${f.rolloutLabel}</td>
+          <td>${wave ? wave.releaseName : '—'}</td>
+          <td>${f.isHero ? '<strong>⭐ Wave 1 — أول إطلاق AR</strong>' : 'بعد Gate ' + f.rolloutWave}</td>
+          <td>${fmt(f.costBuild.min)} – ${fmt(f.costBuild.max)}</td>
+        </tr>`;
+      })
+      .join('');
+
+    s.innerHTML = `
+      <h2>⭐ ٥. موجات إطلاق الميزات السبع — المكياج أولاً</h2>
+
+      <div class="card hero-makeup-banner">
+        <h3 style="margin-top:0;">${AR_ROLLOUT_POLICY.headline}</h3>
+        <p>${AR_ROLLOUT_POLICY.subline}</p>
+        <p><strong>إطلاق AR الأول:</strong> <code>${AR_ROLLOUT_POLICY.firstPublicRelease}</code></p>
+      </div>
+
+      <h3>لماذا المكياج Wave 1 (قبل أي ميزة أخرى)؟</h3>
+      <ul>${AR_ROLLOUT_POLICY.whyMakeupFirst.map((r) => `<li>${r}</li>`).join('')}</ul>
+
+      <h3>❌ غير موجود في Wave 1 (يُؤجل عمداً)</h3>
+      <p>${AR_ROLLOUT_POLICY.notInWave1.map((id) => {
+        const f = AR_FEATURES.find((x) => x.id === id);
+        return f ? f.icon + ' ' + f.title : id;
+      }).join(' · ')}</p>
+
+      <div class="flow-loop" style="margin:24px 0;">
+W0 Marketplace (no AR)
+  ↓ gate
+W1 💄 MAKEUP — Hero · MIRA Try — Makeup     ← FIRST AR RELEASE
+  ↓ gate
+W2 ✨ Filters (preview · try-on mode only)
+  ↓ gate
+W3 💇 Hair · 👓 Glasses · 👁 Contacts
+  ↓ gate
+W4 💎 Accessories · 💅 Nails · Fusion
+  ↓ gate
+W5 🛡 Production Hardening · Global Ready
+      </div>
+
+      <h3>مصفوفة: كل ميزة → موجتها → release</h3>
+      <table class="task-table feature-matrix">
+        <thead>
+          <tr>
+            <th>الميزة</th>
+            <th>الموجة</th>
+            <th>اسم Release</th>
+            <th>متى تُطلق</th>
+            <th>تكلفة بناء</th>
+          </tr>
+        </thead>
+        <tbody>${matrixRows}</tbody>
+      </table>
+
+      <h3 style="margin-top:36px;">تفصيل كل موجة</h3>
+      <div class="rollout-timeline">${waveCards}</div>
+
+      <div class="disclaimer-box" style="margin-top:24px;">
+        <strong>ملاحظة تنفيذية:</strong> Wave 5 (Hardening) يُنفَّذ بالتوازي مع اختبار كل موجة —
+        لكن «Global Ready» release لا يحدث إلا بعد اجتياز Gate W1 على الأقل (Makeup live + revenue).
+      </div>
+    `;
+    root.appendChild(s);
+  }
+
   function renderArFeatures(root) {
     const s = el('section', { id: 'ar-features' });
-    let blocks = AR_FEATURES.map(
+    let blocks = AR_FEATURES.sort((a, b) => a.launchOrder - b.launchOrder).map(
       (f) => `
-      <div class="impl-phase card">
-        <h3>${f.icon} ${f.title} <span class="phase-badge p2">أولوية ${f.priority}</span> · ROI: ${f.roi}</h3>
+      <div class="impl-phase card ${f.isHero ? 'hero-wave' : ''}" id="feature-${f.id}">
+        <h3>
+          ${f.icon} ${f.title}
+          ${f.isHero ? '<span class="phase-badge p2">⭐ Wave 1 · Hero</span>' : `<span class="phase-badge p1">${f.rolloutWave}</span>`}
+          · ROI: ${f.roi}
+        </h3>
+        <p class="rollout-sub"><strong>موجة الإطلاق:</strong> ${f.rolloutLabel}</p>
+        ${f.isHero ? '<p class="hero-tag">🚀 <strong>أول ميزة AR تُطلق للمستخدمين</strong> — لا تُدمج مع الميزات الأخرى في release واحد.</p>' : `<p class="deferred-tag">⏳ <strong>مؤجّلة</strong> — تُطلق بعد Gate ${f.rolloutWave} (ليس مع المكياج).</p>`}
         <p>${f.description}</p>
         <p><strong>لماذا:</strong> ${f.why}</p>
         <h4>التنفيذ التقني</h4>
@@ -604,7 +974,10 @@ Buy (Marketplace + Partners)
         (${sar(f.costBuild.min)} – ${sar(f.costBuild.max)} SAR)</p>
       </div>`
     ).join('');
-    s.innerHTML = `<h2>٥. ميزات AR — تفصيل تنفيذي</h2>${blocks}`;
+    s.innerHTML = `
+      <h2>٦. ميزات AR — تفصيل تنفيذي (مرتبة حسب موجة الإطلاق)</h2>
+      <p>كل ميزة أدناه مربوطة بموجة (<a href="#ar-rollout">W0–W5</a>). <strong>Wave 1 = المكياج فقط.</strong></p>
+      ${blocks}`;
     root.appendChild(s);
   }
 
@@ -614,7 +987,7 @@ Buy (Marketplace + Partners)
       (r) => `<tr><td>${r.feature}</td><td>${r.banuba}</td><td>${r.visage}</td></tr>`
     ).join('');
     s.innerHTML = `
-      <h2>٦. Banuba vs Visage</h2>
+      <h2>٧. Banuba vs Visage</h2>
       <table class="task-table feature-matrix">
         <thead><tr><th>الميزة</th><th>Banuba</th><th>Visage</th></tr></thead>
         <tbody>${rows}</tbody>
@@ -630,7 +1003,7 @@ Buy (Marketplace + Partners)
   function renderMiraLoop(root) {
     const s = el('section', { id: 'mira-loop' });
     s.innerHTML = `
-      <h2>٧. Analyze → Recommend → Try → Buy</h2>
+      <h2>٨. Analyze → Recommend → Try → Buy</h2>
       <div class="flow-loop">
 [1] User captures face (MediaPipe WOW → quality gate)
 [2] POST /ai/skin-analysis → Perfect Corp → SkinReport
@@ -660,10 +1033,10 @@ Buy (Marketplace + Partners)
   function renderMarketplace(root) {
     const s = el('section', { id: 'marketplace' });
     s.innerHTML = `
-      <h2>٨. Marketplace — شرط Phase 2</h2>
+      <h2>٩. Marketplace — شرط Wave 0 (قبل المكياج)</h2>
       <div class="card" style="border-right:4px solid var(--warn);">
         <p><strong>⚠️ Banuba قبل Marketplace live = wow بدون revenue.</strong></p>
-        <p style="margin-bottom:0;">الترتيب: Soft Launch Phase 1 → Marketplace live → Banuba POC → expand.</p>
+        <p style="margin-bottom:0;">الترتيب: W0 Marketplace → W1 Makeup → W2+ …</p>
       </div>
       <h3>موجود في الكود</h3>
       <ul>
@@ -688,9 +1061,16 @@ Buy (Marketplace + Partners)
   function renderImplementation(root) {
     const s = el('section', { id: 'implementation' });
     let phases = IMPL_PHASES.map(
-      (p) => `
-      <div class="impl-phase card">
-        <h3>${p.title} <span class="phase-badge cost">${p.weeks} أسابيع</span></h3>
+      (p) => {
+        const wave = AR_ROLLOUT_WAVES.find((w) => w.id === p.wave);
+        return `
+      <div class="impl-phase card ${p.wave === 'W1' ? 'hero-wave' : ''}">
+        <h3>
+          ${p.title}
+          <span class="phase-badge ${p.wave === 'W1' ? 'p2' : 'cost'}">${p.wave}${wave ? ' · ' + wave.icon : ''}</span>
+          <span class="phase-badge cost">${p.weeks} أسابيع</span>
+        </h3>
+        ${p.wave === 'W1' ? '<p class="hero-tag">⭐ جزء من Wave 1 — إطلاق AR Hero (Makeup)</p>' : ''}
         <p><strong>الهدف:</strong> ${p.goal}</p>
         <p><strong>Gate:</strong> ${p.gate}</p>
         <p><strong>تكلفة:</strong> ${fmt(p.cost.min)} – ${fmt(p.cost.max)}</p>
@@ -698,9 +1078,13 @@ Buy (Marketplace + Partners)
           <thead><tr><th>المهمة</th><th>Owner</th><th>Proof</th></tr></thead>
           <tbody>${p.tasks.map((t) => `<tr><td>${t.task}</td><td>${t.owner}</td><td><code>${t.proof}</code></td></tr>`).join('')}</tbody>
         </table>
-      </div>`
+      </div>`;
+      }
     ).join('');
-    s.innerHTML = `<h2>٩. خطة التنفيذ P2.0 → P2.6</h2>${phases}`;
+    s.innerHTML = `
+      <h2>١٠. خطة التنفيذ P2.0 → P2.6 (مربوطة بالموجات)</h2>
+      <p>كل P2.x ينتمي لموجة W0–W5. <strong>P2.1 + P2.2 = Wave 1 Makeup فقط.</strong></p>
+      ${phases}`;
     root.appendChild(s);
   }
 
@@ -716,7 +1100,42 @@ Buy (Marketplace + Partners)
     const totalMax = Object.values(COST_SUMMARY).reduce((a, v) => a + v.max, 0);
 
     s.innerHTML = `
-      <h2>١٠. التكلفة — تقدير engineering</h2>
+      <h2>١١. التكلفة — تقدير engineering (موجة موجة)</h2>
+
+      <h3>تكلفة كل موجة (build فقط — بدون SDK)</h3>
+      <table class="task-table">
+        <thead>
+          <tr><th>الموجة</th><th>المحتوى</th><th>USD</th><th>SAR</th></tr>
+        </thead>
+        <tbody>
+          ${AR_ROLLOUT_WAVES.map(
+            (w) => `<tr class="${w.status === 'hero' ? 'hero-row' : ''}">
+              <td><strong>${w.id}</strong> ${w.icon} ${w.title.replace(/^Wave \d — /, '')}</td>
+              <td>${w.featureLabels.join(' · ') || 'Marketplace'}</td>
+              <td>${fmt(w.cost.min)} – ${fmt(w.cost.max)}</td>
+              <td>${sar(w.cost.min)} – ${sar(w.cost.max)}</td>
+            </tr>`
+          ).join('')}
+          <tr style="font-weight:800;background:#fdf5f9">
+            <td colspan="2">مجموع Waves W0–W5 (build)</td>
+            <td>${fmt(AR_ROLLOUT_WAVES.reduce((a, w) => a + w.cost.min, 0))} – ${fmt(AR_ROLLOUT_WAVES.reduce((a, w) => a + w.cost.max, 0))}</td>
+            <td>${sar(AR_ROLLOUT_WAVES.reduce((a, w) => a + w.cost.min, 0))} – ${sar(AR_ROLLOUT_WAVES.reduce((a, w) => a + w.cost.max, 0))}</td>
+          </tr>
+        </tbody>
+      </table>
+
+      <h3 style="margin-top:28px;">💄 Wave 1 Makeup — تفصيل التكلفة (الأهم)</h3>
+      <table class="task-table">
+        <thead><tr><th>الطبقة</th><th>USD</th><th>SAR</th></tr></thead>
+        <tbody>
+          ${MAKEUP_LAYERS.map(
+            (m) => `<tr><td>${m.layer}</td><td>${fmt(m.cost.min)} – ${fmt(m.cost.max)}</td><td>${sar(m.cost.min)} – ${sar(m.cost.max)}</td></tr>`
+          ).join('')}
+          <tr class="hero-row"><td><strong>Wave 1 Makeup إجمالي</strong></td><td>${fmt(63000)} – ${fmt(110000)}</td><td>${sar(63000)} – ${sar(110000)}</td></tr>
+        </tbody>
+      </table>
+
+      <h3 style="margin-top:28px;">Overhead + SDK (سنوي)</h3>
       <table class="task-table">
         <thead><tr><th>البند</th><th>USD</th><th>SAR (×${SPEC.sarRate})</th></tr></thead>
         <tbody>${rows}
@@ -730,12 +1149,13 @@ Buy (Marketplace + Partners)
 
       <div class="cost-calculator" style="margin-top:28px;">
         <h3 style="margin-top:0;">🧮 حاسبة تفاعلية</h3>
-        <label for="scopeSelect">نطاق Phase 2</label>
+        <label for="scopeSelect">نطاق Phase 2 (حسب الموجة)</label>
         <select id="scopeSelect">
-          <option value="poc">P2.1 POC — Lip try-on فقط</option>
-          <option value="makeup">P2.1 + P2.2 — Makeup كامل</option>
-          <option value="standard" selected>Standard — Makeup + Filters + Hair + Glasses</option>
-          <option value="full">Full — كل الـ 7 ميزات + Fusion</option>
+          <option value="w0">W0 — Marketplace فقط (بدون AR)</option>
+          <option value="w1" selected>W1 — 💄 Makeup Hero (الأولوية)</option>
+          <option value="w1w2">W1 + W2 — Makeup + Filters</option>
+          <option value="w1w3">W1→W3 — Makeup + Style (hair/glasses/contacts)</option>
+          <option value="full">W0→W5 — كل الموجات (7 ميزات)</option>
         </select>
         <label for="sdkTier">Banuba SDK (شهري)</label>
         <select id="sdkTier">
@@ -767,11 +1187,21 @@ Buy (Marketplace + Partners)
   }
 
   function initCostCalculator(baseMin, baseMax) {
+    const waveCost = (ids) => {
+      const waves = AR_ROLLOUT_WAVES.filter((w) => ids.includes(w.id));
+      return {
+        min: waves.reduce((a, w) => a + w.cost.min, 0),
+        max: waves.reduce((a, w) => a + w.cost.max, 0),
+        months: Math.ceil(waves.reduce((a, w) => a + parseInt(w.weeks.split('–')[1] || w.weeks, 10), 0) / 4),
+        label: waves.map((w) => w.id).join(' → '),
+      };
+    };
     const scopes = {
-      poc: { min: 43000, max: 77000, months: 4 },
-      makeup: { min: 88000, max: 145000, months: 8 },
-      standard: { min: baseMin, max: baseMax, months: 12 },
-      full: { min: 320000, max: 520000, months: 18 },
+      w0: { ...waveCost(['W0']), months: 1.5, note: 'بدون AR — Marketplace فقط' },
+      w1: { ...waveCost(['W0', 'W1']), months: 4, note: '⭐ إطلاق AR الأول — Makeup Hero' },
+      w1w2: { ...waveCost(['W0', 'W1', 'W2']), months: 5, note: 'Makeup + Beauty filters' },
+      w1w3: { ...waveCost(['W0', 'W1', 'W2', 'W3']), months: 8, note: 'حتى Style (hair · glasses · contacts)' },
+      full: { min: baseMin, max: baseMax, months: 14, label: 'W0→W5', note: 'كل الميزات السبع — على مراحل' },
     };
     const select = document.getElementById('scopeSelect');
     const sdk = document.getElementById('sdkTier');
@@ -790,9 +1220,12 @@ Buy (Marketplace + Partners)
       const totalMax = build.max + sdkTotal * 1.2;
       out.innerHTML = `
         <div>نطاق: <strong>${select.options[select.selectedIndex].text}</strong></div>
+        <div>${sc.note || ''}</div>
+        <div>موجات: <code>${sc.label || '—'}</code></div>
         <div>مدة تقديرية: <strong>${sc.months} شهر</strong></div>
         <div class="big">${fmt(Math.round(totalMin))} – ${fmt(Math.round(totalMax))}</div>
-        <div>${sar(Math.round(totalMin))} – ${sar(Math.round(totalMax))} SAR · شامل SDK ${sc.months} شهر</div>
+        <div>${sar(Math.round(totalMin))} – ${sar(Math.round(totalMax))} SAR · build + SDK ${sc.months} شهر</div>
+        ${select.value === 'w1' ? '<p style="margin:12px 0 0;font-size:0.88rem"><strong>Wave 1:</strong> P2.1 Lip POC + P2.2 Full Makeup — لا شعر · لا نظارات · لا إكسسوارات.</p>' : ''}
       `;
     }
     select.addEventListener('change', update);
@@ -804,11 +1237,12 @@ Buy (Marketplace + Partners)
   function renderRisks(root) {
     const s = el('section', { id: 'risks' });
     s.innerHTML = `
-      <h2>١١. المخاطر</h2>
+      <h2>١٢. المخاطر</h2>
       <table class="task-table">
         <thead><tr><th>الخطر</th><th>الاحتمال</th><th>التخفيف</th></tr></thead>
         <tbody>
-          <tr><td>Banuba pricing أعلى من التقدير</td><td class="risk-med">متوسط</td><td>POC قبل عقد سنوي · Visage كبديل</td></tr>
+          <tr><td>إطلاق 7 ميزات دفعة واحدة → quality collapse</td><td class="risk-high">عالي</td><td>سياسة Waves W0–W5 · Makeup Hero W1</td></tr>
+          <tr><td>Banuba pricing أعلى من التقدير</td><td class="risk-med">متوسط</td><td>POC W1 lip قبل عقد سنوي</td></tr>
           <tr><td>أداء AR &lt; 30fps على أجهزة mid-range</td><td class="risk-med">متوسط</td><td>Device matrix · quality tiers</td></tr>
           <tr><td>Marketplace غير جاهز → no ROI</td><td class="risk-high">عالي</td><td>P2.0 gate قبل Banuba</td></tr>
           <tr><td>Perfect Corp scores affected by filters</td><td class="risk-high">عالي</td><td>ANALYZE vs TRY_ON mode separation</td></tr>
@@ -824,24 +1258,25 @@ Buy (Marketplace + Partners)
   function renderPrerequisites(root) {
     const s = el('section', { id: 'prerequisites' });
     s.innerHTML = `
-      <h2>١٢. متطلبات قبل بدء Phase 2</h2>
+      <h2>١٣. متطلبات قبل بدء Phase 2</h2>
       <table class="task-table">
         <thead><tr><th>#</th><th>المتطلب</th><th>الحالة</th></tr></thead>
         <tbody>
           <tr><td>1</td><td>Phase 1 Soft Launch live</td><td><span class="status-pill partial">~82%</span></td></tr>
           <tr><td>2</td><td>E2E Perfect Corp production validated</td><td><span class="status-pill partial">pending</span></td></tr>
           <tr><td>3</td><td>Marketplace enabled + 10 SKUs</td><td><span class="status-pill missing">required</span></td></tr>
-          <tr><td>4</td><td>Banuba trial SDK + Flutter POC</td><td><span class="status-pill missing">P2.1</span></td></tr>
-          <tr><td>5</td><td>Legal: AR preview disclaimer</td><td><span class="status-pill missing">required</span></td></tr>
-          <tr><td>6</td><td>Budget approved: $225K–$392K + SDK</td><td><span class="status-pill missing">stakeholder</span></td></tr>
-          <tr><td>7</td><td>Partner contracts (1 beauty + 1 optical)</td><td><span class="status-pill missing">commercial</span></td></tr>
+          <tr><td>4</td><td>Wave 0: Marketplace + 10 makeup SKUs</td><td><span class="status-pill missing">W0 gate</span></td></tr>
+          <tr><td>5</td><td>Wave 1: Banuba lip POC (P2.1)</td><td><span class="status-pill missing">Makeup Hero</span></td></tr>
+          <tr><td>6</td><td>Wave 1: Full makeup suite (P2.2)</td><td><span class="status-pill missing">after P2.1 gate</span></td></tr>
+          <tr><td>7</td><td>Legal: AR preview disclaimer</td><td><span class="status-pill missing">required</span></td></tr>
+          <tr><td>8</td><td>Budget Wave 1: ~$88K–$155K (W0+W1)</td><td><span class="status-pill missing">stakeholder</span></td></tr>
         </tbody>
       </table>
       <div class="card ok" style="margin-top:20px;">
         <h4 style="margin-top:0;">✅ قرار الدخول للسوق العالمي</h4>
         <p style="margin:0;">
-          <strong>Phase 1 professional launch</strong> أولاً → ثم Phase 2 بالترتيب P2.0→P2.6.
-          لا تدخلوا السوق بـ AR نصف مكتمل — ادخلوا Phase 1 مكتمل · Phase 2 كـ «MIRA Try» major release.
+          <strong>Wave 0 → Wave 1 Makeup</strong> أولاً — لا تتخطون إلى W2/W3 قبل Gate W1.
+          الميزات الست الأخرى <strong>مؤجّلة عمداً</strong> — ليست تأخيراً بل احترافية.
         </p>
       </div>
     `;
@@ -857,6 +1292,7 @@ Buy (Marketplace + Partners)
     renderArchitecture(root);
     renderPhase1(root);
     renderPhase2Scope(root);
+    renderArRollout(root);
     renderArFeatures(root);
     renderBanubaVisage(root);
     renderMiraLoop(root);
