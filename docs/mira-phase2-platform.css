@@ -1,0 +1,146 @@
+@import url("mira-intelligence-layer.css");
+
+.hero-phase2 {
+  padding: 52px 0 36px;
+  background:
+    radial-gradient(circle at 8% 0%, rgba(92, 225, 255, 0.14), transparent 38%),
+    radial-gradient(circle at 92% 6%, rgba(201, 162, 39, 0.16), transparent 42%),
+    radial-gradient(circle at 50% 100%, rgba(193, 158, 224, 0.12), transparent 50%);
+}
+
+.phase-badge {
+  display: inline-block;
+  padding: 4px 12px;
+  border-radius: 999px;
+  font-size: 0.72rem;
+  font-weight: 800;
+  letter-spacing: 0.04em;
+}
+
+.phase-badge.p1 { background: #e8f5ee; color: var(--ok); }
+.phase-badge.p2 { background: #f3ebff; color: #6d28d9; }
+.phase-badge.cost { background: #fff8e6; color: var(--warn); }
+
+.arch-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(240px, 1fr));
+  gap: 14px;
+}
+
+.arch-card {
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: 16px;
+  padding: 16px 18px;
+  box-shadow: var(--shadow);
+}
+
+.arch-card h4 { margin: 0 0 8px; font-size: 1rem; }
+.arch-card .role { font-size: 0.82rem; color: var(--muted); margin-bottom: 10px; }
+.arch-card ul { margin: 0; padding-right: 18px; font-size: 0.88rem; }
+
+.flow-loop {
+  background: linear-gradient(135deg, #2d1f2a, #1a1220);
+  color: #fad9e9;
+  border-radius: 18px;
+  padding: 24px;
+  font-family: ui-monospace, monospace;
+  font-size: 0.82rem;
+  line-height: 1.9;
+  overflow-x: auto;
+  direction: ltr;
+  text-align: left;
+}
+
+.cost-calculator {
+  background: var(--surface);
+  border: 2px solid var(--gold);
+  border-radius: 18px;
+  padding: 22px;
+  box-shadow: var(--shadow);
+}
+
+.cost-calculator label {
+  display: block;
+  font-weight: 700;
+  margin: 14px 0 6px;
+  font-size: 0.92rem;
+}
+
+.cost-calculator select,
+.cost-calculator input[type="range"] {
+  width: 100%;
+  max-width: 420px;
+}
+
+.cost-total {
+  margin-top: 20px;
+  padding: 18px;
+  border-radius: 14px;
+  background: linear-gradient(135deg, rgba(201, 162, 39, 0.12), rgba(193, 158, 224, 0.12));
+  border: 1px solid rgba(201, 162, 39, 0.35);
+}
+
+.cost-total .big {
+  font-size: 1.8rem;
+  font-weight: 800;
+  color: var(--primary-strong);
+}
+
+.feature-matrix td:first-child { font-weight: 700; white-space: nowrap; }
+
+.impl-phase {
+  border-right: 4px solid var(--secondary);
+  padding-right: 18px;
+  margin-bottom: 28px;
+}
+
+.impl-phase h3 { margin-top: 0; }
+
+.task-table { width: 100%; border-collapse: collapse; font-size: 0.88rem; }
+.task-table th, .task-table td {
+  border: 1px solid var(--border);
+  padding: 10px 12px;
+  vertical-align: top;
+}
+.task-table th { background: #fdf5f9; text-align: right; }
+
+.risk-high { color: var(--danger); font-weight: 800; }
+.risk-med { color: var(--warn); font-weight: 700; }
+.risk-low { color: var(--ok); font-weight: 700; }
+
+.compare-cols {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 16px;
+}
+
+@media (max-width: 768px) {
+  .compare-cols { grid-template-columns: 1fr; }
+  .nav { display: none; }
+  .nav.open { display: flex; flex-direction: column; width: 100%; }
+}
+
+.disclaimer-box {
+  background: #fff8e6;
+  border: 1px solid rgba(184, 134, 11, 0.35);
+  border-radius: 14px;
+  padding: 16px 18px;
+  font-size: 0.9rem;
+}
+
+.status-pill {
+  display: inline-block;
+  padding: 3px 10px;
+  border-radius: 999px;
+  font-size: 0.75rem;
+  font-weight: 800;
+}
+
+.status-pill.done { background: #e8f5ee; color: var(--ok); }
+.status-pill.partial { background: #fff8e6; color: var(--warn); }
+.status-pill.missing { background: #fdecea; color: var(--danger); }
+.status-pill.wip { background: #f3ebff; color: #6d28d9; }
+
+.toc ol { columns: 2; column-gap: 32px; }
+@media (max-width: 640px) { .toc ol { columns: 1; } }
