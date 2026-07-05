@@ -8,20 +8,28 @@ import '../face_tracking_quality.dart';
 class TrackingQualityBadge extends StatelessWidget {
   final FaceTrackingQuality quality;
   final bool compact;
+  final bool lockOn;
 
   const TrackingQualityBadge({
     super.key,
     required this.quality,
     this.compact = false,
+    this.lockOn = false,
   });
 
   @override
   Widget build(BuildContext context) {
-    final accent = switch (quality) {
-      FaceTrackingQuality.high => AppColors.gold,
-      FaceTrackingQuality.medium => AppColors.secondary,
-      FaceTrackingQuality.low => AppColors.textTertiary,
-    };
+    final accent = lockOn
+        ? AppColors.gold
+        : switch (quality) {
+            FaceTrackingQuality.high => const Color(0xFF5CE1FF),
+            FaceTrackingQuality.medium => AppColors.secondary,
+            FaceTrackingQuality.low => AppColors.textTertiary,
+          };
+
+    final message = lockOn
+        ? 'MIRA AI — جاهز'
+        : quality.badgeMessageAr;
 
     return Container(
       padding: EdgeInsets.symmetric(
@@ -31,11 +39,11 @@ class TrackingQualityBadge extends StatelessWidget {
       decoration: BoxDecoration(
         color: Colors.black.withValues(alpha: 0.38),
         borderRadius: BorderRadius.circular(999),
-        border: Border.all(color: accent.withValues(alpha: 0.45)),
+        border: Border.all(color: accent.withValues(alpha: 0.55)),
         boxShadow: [
           BoxShadow(
-            color: accent.withValues(alpha: 0.12),
-            blurRadius: 12,
+            color: accent.withValues(alpha: 0.16),
+            blurRadius: 14,
           ),
         ],
       ),
@@ -43,15 +51,17 @@ class TrackingQualityBadge extends StatelessWidget {
         mainAxisSize: MainAxisSize.min,
         children: [
           Icon(
-            quality == FaceTrackingQuality.low
-                ? Icons.face_retouching_off_outlined
-                : Icons.face_retouching_natural_outlined,
+            lockOn
+                ? Icons.auto_awesome
+                : quality == FaceTrackingQuality.low
+                    ? Icons.face_retouching_off_outlined
+                    : Icons.radar_rounded,
             size: compact ? 14 : 16,
             color: accent,
           ),
           const SizedBox(width: 7),
           Text(
-            quality.badgeMessageAr,
+            message,
             style: (compact ? AppTypography.labelSmall : AppTypography.labelMedium)
                 .copyWith(color: AppColors.onPrimary),
           ),

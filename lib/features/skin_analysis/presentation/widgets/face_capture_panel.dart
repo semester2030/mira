@@ -53,6 +53,7 @@ class _FaceCapturePanelState extends State<FaceCapturePanel>
   late final LiveFaceOverlayController _faceOverlayController;
   bool _imageStreamActive = false;
   Size _previewBoxSize = Size.zero;
+  bool _wasReadyForCapture = false;
 
   static const _tips = [
     'ثبّتي وجهك في منتصف الدائرة',
@@ -557,6 +558,13 @@ class _FaceCapturePanelState extends State<FaceCapturePanel>
             final canTakePhoto = _canTakePhoto;
             _faceOverlayController.updateScanProgress(_scanController.value);
 
+            if (canTakePhoto && !_wasReadyForCapture) {
+              _wasReadyForCapture = true;
+              HapticFeedback.heavyImpact();
+            } else if (!canTakePhoto) {
+              _wasReadyForCapture = false;
+            }
+
             final overlayState = widget.isAnalyzing || _validatingFace
                 ? LiveCameraOverlayState.analyzing
                 : widget.capturedImage != null
@@ -592,8 +600,9 @@ class _FaceCapturePanelState extends State<FaceCapturePanel>
                                   pulse: _pulseController.value,
                                   scanProgress: _scanController.value,
                                   sweepProgress: _sweepController.value,
+                                  lockOn: canTakePhoto,
                                   hintText: canTakePhoto
-                                      ? 'الإطار جاهز — اضغطي زر التصوير'
+                                      ? 'تم التثبيت — اضغطي زر التصوير'
                                       : _tips[tipIndex],
                                 ),
                               ),
