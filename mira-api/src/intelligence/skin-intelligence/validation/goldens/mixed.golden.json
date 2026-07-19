@@ -1,0 +1,1354 @@
+{
+  "id": "mixed",
+  "svi": 46,
+  "sviConfidence": 76,
+  "formulaId": "svi-v2-dynamic-denom",
+  "findingIds": [
+    "finding_acne",
+    "finding_darkCircles",
+    "finding_firmness",
+    "finding_hydration",
+    "finding_oiliness",
+    "finding_pigmentation",
+    "finding_pores",
+    "finding_radiance",
+    "finding_redness",
+    "finding_texture",
+    "finding_wrinkles"
+  ],
+  "recoIds": [
+    "edu_disclaimer",
+    "lifestyle_hydration",
+    "rec_acne_night",
+    "rec_hydration_morning",
+    "rec_pores_night",
+    "rec_radiance_weekly",
+    "rec_texture_weekly",
+    "rec_wrinkles_night"
+  ],
+  "unavailable": [
+    "elasticity",
+    "fineLines",
+    "sensitivity",
+    "toneUniformity"
+  ],
+  "report": {
+    "analysisId": "fixture_mixed",
+    "provider": "perfect_corp",
+    "providerVersion": "youcam-s2s",
+    "formulaVersion": "svi-v2-dynamic-denom",
+    "captureVersion": "cq-thresholds-v2.1",
+    "qualityVersion": "iq-v2.1+qc-v1.1",
+    "skinVersion": "skin-model-v1",
+    "intelligenceVersion": "skin-intel-v1",
+    "reportVersion": "skin-report-v1",
+    "generatedAt": "STABLE_TIMESTAMP",
+    "confidence": 76,
+    "limitations": [
+      "SVI v2 uses only available metrics (dynamic denominator).",
+      "Not a medical or clinical assessment.",
+      "Capture lighting and camera quality may affect readings.",
+      "Canonical model never fabricates missing metrics.",
+      "Canonical model never fabricates missing metrics."
+    ],
+    "language": "ar+en",
+    "executiveSummaryAr": "مؤشر حيوية البشرة 46 (ثقة 76). نقاط القوة تُعرض عند توفر مؤشرات إيجابية. فرصة عناية: الترطيب. تحليل تجميلي إرشادي — ليس تشخيصاً طبياً ولا تقييماً للجمال.",
+    "executiveSummaryEn": "Skin Vitality Index 46 (confidence 76). Strengths appear when positive metrics are available. Care opportunity: Hydration. Cosmetic informational analysis — not medical diagnosis or beauty ranking.",
+    "positiveFindings": [],
+    "priorityFindings": [
+      {
+        "id": "finding_hydration",
+        "metricId": "hydration",
+        "titleAr": "الترطيب",
+        "titleEn": "Hydration",
+        "severity": "moderate",
+        "confidence": "medium",
+        "evidenceAr": "المؤشر «الترطيب» بلغ 45/100 (مصدر: provider_measured). هذه قراءة تجميلية من الصورة وليست تشخيصاً طبياً.",
+        "evidenceEn": "Hydration scored 45/100 (source: provider_measured). Cosmetic image-based reading — not a medical diagnosis.",
+        "normalizedValue": 45,
+        "recommendationEligible": true,
+        "priority": 40,
+        "limitations": [
+          "Mapped from provider; lighting and capture quality may influence the reading."
+        ],
+        "source": "provider_measured"
+      },
+      {
+        "id": "finding_radiance",
+        "metricId": "radiance",
+        "titleAr": "الإشراق",
+        "titleEn": "Radiance",
+        "severity": "moderate",
+        "confidence": "medium",
+        "evidenceAr": "المؤشر «الإشراق» بلغ 48/100 (مصدر: provider_measured). هذه قراءة تجميلية من الصورة وليست تشخيصاً طبياً.",
+        "evidenceEn": "Radiance scored 48/100 (source: provider_measured). Cosmetic image-based reading — not a medical diagnosis.",
+        "normalizedValue": 48,
+        "recommendationEligible": true,
+        "priority": 40,
+        "limitations": [
+          "Mapped from provider; lighting and capture quality may influence the reading."
+        ],
+        "source": "provider_measured"
+      },
+      {
+        "id": "finding_texture",
+        "metricId": "texture",
+        "titleAr": "الملمس",
+        "titleEn": "Texture",
+        "severity": "moderate",
+        "confidence": "medium",
+        "evidenceAr": "المؤشر «الملمس» بلغ 44/100 (مصدر: provider_measured). هذه قراءة تجميلية من الصورة وليست تشخيصاً طبياً.",
+        "evidenceEn": "Texture scored 44/100 (source: provider_measured). Cosmetic image-based reading — not a medical diagnosis.",
+        "normalizedValue": 44,
+        "recommendationEligible": true,
+        "priority": 40,
+        "limitations": [
+          "Mapped from provider; lighting and capture quality may influence the reading."
+        ],
+        "source": "provider_measured"
+      },
+      {
+        "id": "finding_pores",
+        "metricId": "pores",
+        "titleAr": "المسام",
+        "titleEn": "Pores",
+        "severity": "moderate",
+        "confidence": "medium",
+        "evidenceAr": "المؤشر «المسام» بلغ 40/100 (مصدر: provider_measured). هذه قراءة تجميلية من الصورة وليست تشخيصاً طبياً.",
+        "evidenceEn": "Pores scored 40/100 (source: provider_measured). Cosmetic image-based reading — not a medical diagnosis.",
+        "normalizedValue": 40,
+        "recommendationEligible": true,
+        "priority": 40,
+        "limitations": [
+          "Mapped from provider; lighting and capture quality may influence the reading."
+        ],
+        "source": "provider_measured"
+      },
+      {
+        "id": "finding_acne",
+        "metricId": "acne",
+        "titleAr": "مظهر الحبوب",
+        "titleEn": "Acne appearance",
+        "severity": "moderate",
+        "confidence": "medium",
+        "evidenceAr": "المؤشر «مظهر الحبوب» بلغ 45/100 (مصدر: provider_measured). هذه قراءة تجميلية من الصورة وليست تشخيصاً طبياً.",
+        "evidenceEn": "Acne appearance scored 45/100 (source: provider_measured). Cosmetic image-based reading — not a medical diagnosis.",
+        "normalizedValue": 45,
+        "recommendationEligible": true,
+        "priority": 40,
+        "limitations": [
+          "Mapped from provider; lighting and capture quality may influence the reading."
+        ],
+        "source": "provider_measured"
+      },
+      {
+        "id": "finding_wrinkles",
+        "metricId": "wrinkles",
+        "titleAr": "التجاعيد",
+        "titleEn": "Wrinkles",
+        "severity": "moderate",
+        "confidence": "medium",
+        "evidenceAr": "المؤشر «التجاعيد» بلغ 50/100 (مصدر: provider_measured). هذه قراءة تجميلية من الصورة وليست تشخيصاً طبياً.",
+        "evidenceEn": "Wrinkles scored 50/100 (source: provider_measured). Cosmetic image-based reading — not a medical diagnosis.",
+        "normalizedValue": 50,
+        "recommendationEligible": true,
+        "priority": 40,
+        "limitations": [
+          "Mapped from provider; lighting and capture quality may influence the reading."
+        ],
+        "source": "provider_measured"
+      },
+      {
+        "id": "finding_pigmentation",
+        "metricId": "pigmentation",
+        "titleAr": "التصبغات",
+        "titleEn": "Pigmentation",
+        "severity": "moderate",
+        "confidence": "medium",
+        "evidenceAr": "المؤشر «التصبغات» بلغ 55/100 (مصدر: provider_measured). هذه قراءة تجميلية من الصورة وليست تشخيصاً طبياً.",
+        "evidenceEn": "Pigmentation scored 55/100 (source: provider_measured). Cosmetic image-based reading — not a medical diagnosis.",
+        "normalizedValue": 55,
+        "recommendationEligible": true,
+        "priority": 40,
+        "limitations": [
+          "Mapped from provider; lighting and capture quality may influence the reading."
+        ],
+        "source": "provider_measured"
+      },
+      {
+        "id": "finding_redness",
+        "metricId": "redness",
+        "titleAr": "الاحمرار",
+        "titleEn": "Redness",
+        "severity": "moderate",
+        "confidence": "medium",
+        "evidenceAr": "المؤشر «الاحمرار» بلغ 40/100 (مصدر: provider_measured). هذه قراءة تجميلية من الصورة وليست تشخيصاً طبياً.",
+        "evidenceEn": "Redness scored 40/100 (source: provider_measured). Cosmetic image-based reading — not a medical diagnosis.",
+        "normalizedValue": 40,
+        "recommendationEligible": true,
+        "priority": 40,
+        "limitations": [
+          "Mapped from provider; lighting and capture quality may influence the reading."
+        ],
+        "source": "provider_measured"
+      },
+      {
+        "id": "finding_darkCircles",
+        "metricId": "darkCircles",
+        "titleAr": "الهالات",
+        "titleEn": "Dark circles",
+        "severity": "moderate",
+        "confidence": "medium",
+        "evidenceAr": "المؤشر «الهالات» بلغ 38/100 (مصدر: provider_measured). هذه قراءة تجميلية من الصورة وليست تشخيصاً طبياً.",
+        "evidenceEn": "Dark circles scored 38/100 (source: provider_measured). Cosmetic image-based reading — not a medical diagnosis.",
+        "normalizedValue": 38,
+        "recommendationEligible": true,
+        "priority": 40,
+        "limitations": [
+          "Mapped from provider; lighting and capture quality may influence the reading."
+        ],
+        "source": "provider_measured"
+      },
+      {
+        "id": "finding_oiliness",
+        "metricId": "oiliness",
+        "titleAr": "إفراز الدهون",
+        "titleEn": "Oiliness",
+        "severity": "moderate",
+        "confidence": "medium",
+        "evidenceAr": "المؤشر «إفراز الدهون» بلغ 42/100 (مصدر: provider_measured). هذه قراءة تجميلية من الصورة وليست تشخيصاً طبياً.",
+        "evidenceEn": "Oiliness scored 42/100 (source: provider_measured). Cosmetic image-based reading — not a medical diagnosis.",
+        "normalizedValue": 42,
+        "recommendationEligible": true,
+        "priority": 40,
+        "limitations": [
+          "Mapped from provider; lighting and capture quality may influence the reading."
+        ],
+        "source": "provider_measured"
+      },
+      {
+        "id": "finding_firmness",
+        "metricId": "firmness",
+        "titleAr": "الثبات",
+        "titleEn": "Firmness",
+        "severity": "moderate",
+        "confidence": "medium",
+        "evidenceAr": "المؤشر «الثبات» بلغ 52/100 (مصدر: provider_measured). هذه قراءة تجميلية من الصورة وليست تشخيصاً طبياً.",
+        "evidenceEn": "Firmness scored 52/100 (source: provider_measured). Cosmetic image-based reading — not a medical diagnosis.",
+        "normalizedValue": 52,
+        "recommendationEligible": true,
+        "priority": 40,
+        "limitations": [
+          "Mapped from provider; lighting and capture quality may influence the reading."
+        ],
+        "source": "provider_measured"
+      }
+    ],
+    "allFindings": [
+      {
+        "id": "finding_hydration",
+        "metricId": "hydration",
+        "titleAr": "الترطيب",
+        "titleEn": "Hydration",
+        "severity": "moderate",
+        "confidence": "medium",
+        "evidenceAr": "المؤشر «الترطيب» بلغ 45/100 (مصدر: provider_measured). هذه قراءة تجميلية من الصورة وليست تشخيصاً طبياً.",
+        "evidenceEn": "Hydration scored 45/100 (source: provider_measured). Cosmetic image-based reading — not a medical diagnosis.",
+        "normalizedValue": 45,
+        "recommendationEligible": true,
+        "priority": 40,
+        "limitations": [
+          "Mapped from provider; lighting and capture quality may influence the reading."
+        ],
+        "source": "provider_measured"
+      },
+      {
+        "id": "finding_radiance",
+        "metricId": "radiance",
+        "titleAr": "الإشراق",
+        "titleEn": "Radiance",
+        "severity": "moderate",
+        "confidence": "medium",
+        "evidenceAr": "المؤشر «الإشراق» بلغ 48/100 (مصدر: provider_measured). هذه قراءة تجميلية من الصورة وليست تشخيصاً طبياً.",
+        "evidenceEn": "Radiance scored 48/100 (source: provider_measured). Cosmetic image-based reading — not a medical diagnosis.",
+        "normalizedValue": 48,
+        "recommendationEligible": true,
+        "priority": 40,
+        "limitations": [
+          "Mapped from provider; lighting and capture quality may influence the reading."
+        ],
+        "source": "provider_measured"
+      },
+      {
+        "id": "finding_texture",
+        "metricId": "texture",
+        "titleAr": "الملمس",
+        "titleEn": "Texture",
+        "severity": "moderate",
+        "confidence": "medium",
+        "evidenceAr": "المؤشر «الملمس» بلغ 44/100 (مصدر: provider_measured). هذه قراءة تجميلية من الصورة وليست تشخيصاً طبياً.",
+        "evidenceEn": "Texture scored 44/100 (source: provider_measured). Cosmetic image-based reading — not a medical diagnosis.",
+        "normalizedValue": 44,
+        "recommendationEligible": true,
+        "priority": 40,
+        "limitations": [
+          "Mapped from provider; lighting and capture quality may influence the reading."
+        ],
+        "source": "provider_measured"
+      },
+      {
+        "id": "finding_pores",
+        "metricId": "pores",
+        "titleAr": "المسام",
+        "titleEn": "Pores",
+        "severity": "moderate",
+        "confidence": "medium",
+        "evidenceAr": "المؤشر «المسام» بلغ 40/100 (مصدر: provider_measured). هذه قراءة تجميلية من الصورة وليست تشخيصاً طبياً.",
+        "evidenceEn": "Pores scored 40/100 (source: provider_measured). Cosmetic image-based reading — not a medical diagnosis.",
+        "normalizedValue": 40,
+        "recommendationEligible": true,
+        "priority": 40,
+        "limitations": [
+          "Mapped from provider; lighting and capture quality may influence the reading."
+        ],
+        "source": "provider_measured"
+      },
+      {
+        "id": "finding_acne",
+        "metricId": "acne",
+        "titleAr": "مظهر الحبوب",
+        "titleEn": "Acne appearance",
+        "severity": "moderate",
+        "confidence": "medium",
+        "evidenceAr": "المؤشر «مظهر الحبوب» بلغ 45/100 (مصدر: provider_measured). هذه قراءة تجميلية من الصورة وليست تشخيصاً طبياً.",
+        "evidenceEn": "Acne appearance scored 45/100 (source: provider_measured). Cosmetic image-based reading — not a medical diagnosis.",
+        "normalizedValue": 45,
+        "recommendationEligible": true,
+        "priority": 40,
+        "limitations": [
+          "Mapped from provider; lighting and capture quality may influence the reading."
+        ],
+        "source": "provider_measured"
+      },
+      {
+        "id": "finding_wrinkles",
+        "metricId": "wrinkles",
+        "titleAr": "التجاعيد",
+        "titleEn": "Wrinkles",
+        "severity": "moderate",
+        "confidence": "medium",
+        "evidenceAr": "المؤشر «التجاعيد» بلغ 50/100 (مصدر: provider_measured). هذه قراءة تجميلية من الصورة وليست تشخيصاً طبياً.",
+        "evidenceEn": "Wrinkles scored 50/100 (source: provider_measured). Cosmetic image-based reading — not a medical diagnosis.",
+        "normalizedValue": 50,
+        "recommendationEligible": true,
+        "priority": 40,
+        "limitations": [
+          "Mapped from provider; lighting and capture quality may influence the reading."
+        ],
+        "source": "provider_measured"
+      },
+      {
+        "id": "finding_pigmentation",
+        "metricId": "pigmentation",
+        "titleAr": "التصبغات",
+        "titleEn": "Pigmentation",
+        "severity": "moderate",
+        "confidence": "medium",
+        "evidenceAr": "المؤشر «التصبغات» بلغ 55/100 (مصدر: provider_measured). هذه قراءة تجميلية من الصورة وليست تشخيصاً طبياً.",
+        "evidenceEn": "Pigmentation scored 55/100 (source: provider_measured). Cosmetic image-based reading — not a medical diagnosis.",
+        "normalizedValue": 55,
+        "recommendationEligible": true,
+        "priority": 40,
+        "limitations": [
+          "Mapped from provider; lighting and capture quality may influence the reading."
+        ],
+        "source": "provider_measured"
+      },
+      {
+        "id": "finding_redness",
+        "metricId": "redness",
+        "titleAr": "الاحمرار",
+        "titleEn": "Redness",
+        "severity": "moderate",
+        "confidence": "medium",
+        "evidenceAr": "المؤشر «الاحمرار» بلغ 40/100 (مصدر: provider_measured). هذه قراءة تجميلية من الصورة وليست تشخيصاً طبياً.",
+        "evidenceEn": "Redness scored 40/100 (source: provider_measured). Cosmetic image-based reading — not a medical diagnosis.",
+        "normalizedValue": 40,
+        "recommendationEligible": true,
+        "priority": 40,
+        "limitations": [
+          "Mapped from provider; lighting and capture quality may influence the reading."
+        ],
+        "source": "provider_measured"
+      },
+      {
+        "id": "finding_darkCircles",
+        "metricId": "darkCircles",
+        "titleAr": "الهالات",
+        "titleEn": "Dark circles",
+        "severity": "moderate",
+        "confidence": "medium",
+        "evidenceAr": "المؤشر «الهالات» بلغ 38/100 (مصدر: provider_measured). هذه قراءة تجميلية من الصورة وليست تشخيصاً طبياً.",
+        "evidenceEn": "Dark circles scored 38/100 (source: provider_measured). Cosmetic image-based reading — not a medical diagnosis.",
+        "normalizedValue": 38,
+        "recommendationEligible": true,
+        "priority": 40,
+        "limitations": [
+          "Mapped from provider; lighting and capture quality may influence the reading."
+        ],
+        "source": "provider_measured"
+      },
+      {
+        "id": "finding_oiliness",
+        "metricId": "oiliness",
+        "titleAr": "إفراز الدهون",
+        "titleEn": "Oiliness",
+        "severity": "moderate",
+        "confidence": "medium",
+        "evidenceAr": "المؤشر «إفراز الدهون» بلغ 42/100 (مصدر: provider_measured). هذه قراءة تجميلية من الصورة وليست تشخيصاً طبياً.",
+        "evidenceEn": "Oiliness scored 42/100 (source: provider_measured). Cosmetic image-based reading — not a medical diagnosis.",
+        "normalizedValue": 42,
+        "recommendationEligible": true,
+        "priority": 40,
+        "limitations": [
+          "Mapped from provider; lighting and capture quality may influence the reading."
+        ],
+        "source": "provider_measured"
+      },
+      {
+        "id": "finding_firmness",
+        "metricId": "firmness",
+        "titleAr": "الثبات",
+        "titleEn": "Firmness",
+        "severity": "moderate",
+        "confidence": "medium",
+        "evidenceAr": "المؤشر «الثبات» بلغ 52/100 (مصدر: provider_measured). هذه قراءة تجميلية من الصورة وليست تشخيصاً طبياً.",
+        "evidenceEn": "Firmness scored 52/100 (source: provider_measured). Cosmetic image-based reading — not a medical diagnosis.",
+        "normalizedValue": 52,
+        "recommendationEligible": true,
+        "priority": 40,
+        "limitations": [
+          "Mapped from provider; lighting and capture quality may influence the reading."
+        ],
+        "source": "provider_measured"
+      }
+    ],
+    "metrics": [
+      {
+        "id": "hydration",
+        "displayNameAr": "الترطيب",
+        "displayNameEn": "Hydration",
+        "availability": "available",
+        "normalizedValue": 45,
+        "confidence": 70,
+        "source": "provider_measured",
+        "provider": "perfect_corp",
+        "limitations": [
+          "Mapped from provider; lighting and capture quality may influence the reading."
+        ],
+        "recommendationEligible": true,
+        "explanation": {
+          "metricId": "hydration",
+          "titleAr": "الترطيب",
+          "titleEn": "Hydration",
+          "levelAr": "يحتاج عناية",
+          "levelEn": "Needs care",
+          "confidenceAr": "متوسط",
+          "confidenceEn": "Medium",
+          "reasonAr": "قياس المزود لـ«الترطيب» أقل من النطاق المستهدف التجميلي — فرصة عناية.",
+          "reasonEn": "Provider measured hydration below the cosmetic target range — a care opportunity.",
+          "evidenceAr": "قيمة مقيّسة 45/100 · مصدر provider_measured · ثقة 70.",
+          "evidenceEn": "Measured 45/100 · source provider_measured · confidence 70.",
+          "limitationsAr": "Mapped from provider; lighting and capture quality may influence the reading.",
+          "limitationsEn": "Mapped from provider; lighting and capture quality may influence the reading.",
+          "howAr": "تُحوَّل قيمة المزود إلى مقياس صحي موحّد 0–100 عبر محوّل المزود، ثم تُعرض مع المصدر والثقة.",
+          "howEn": "Provider value is normalized to a 0–100 health-oriented scale via the provider adapter, then shown with source and confidence.",
+          "availability": "available",
+          "source": "provider_measured",
+          "provider": "perfect_corp",
+          "version": "explain-v1"
+        }
+      },
+      {
+        "id": "radiance",
+        "displayNameAr": "الإشراق",
+        "displayNameEn": "Radiance",
+        "availability": "available",
+        "normalizedValue": 48,
+        "confidence": 70,
+        "source": "provider_measured",
+        "provider": "perfect_corp",
+        "limitations": [
+          "Mapped from provider; lighting and capture quality may influence the reading."
+        ],
+        "recommendationEligible": true,
+        "explanation": {
+          "metricId": "radiance",
+          "titleAr": "الإشراق",
+          "titleEn": "Radiance",
+          "levelAr": "يحتاج عناية",
+          "levelEn": "Needs care",
+          "confidenceAr": "متوسط",
+          "confidenceEn": "Medium",
+          "reasonAr": "قياس المزود لـ«الإشراق» أقل من النطاق المستهدف التجميلي — فرصة عناية.",
+          "reasonEn": "Provider measured radiance below the cosmetic target range — a care opportunity.",
+          "evidenceAr": "قيمة مقيّسة 48/100 · مصدر provider_measured · ثقة 70.",
+          "evidenceEn": "Measured 48/100 · source provider_measured · confidence 70.",
+          "limitationsAr": "Mapped from provider; lighting and capture quality may influence the reading.",
+          "limitationsEn": "Mapped from provider; lighting and capture quality may influence the reading.",
+          "howAr": "تُحوَّل قيمة المزود إلى مقياس صحي موحّد 0–100 عبر محوّل المزود، ثم تُعرض مع المصدر والثقة.",
+          "howEn": "Provider value is normalized to a 0–100 health-oriented scale via the provider adapter, then shown with source and confidence.",
+          "availability": "available",
+          "source": "provider_measured",
+          "provider": "perfect_corp",
+          "version": "explain-v1"
+        }
+      },
+      {
+        "id": "texture",
+        "displayNameAr": "الملمس",
+        "displayNameEn": "Texture",
+        "availability": "available",
+        "normalizedValue": 44,
+        "confidence": 70,
+        "source": "provider_measured",
+        "provider": "perfect_corp",
+        "limitations": [
+          "Mapped from provider; lighting and capture quality may influence the reading."
+        ],
+        "recommendationEligible": true,
+        "explanation": {
+          "metricId": "texture",
+          "titleAr": "الملمس",
+          "titleEn": "Texture",
+          "levelAr": "يحتاج عناية",
+          "levelEn": "Needs care",
+          "confidenceAr": "متوسط",
+          "confidenceEn": "Medium",
+          "reasonAr": "قياس المزود لـ«الملمس» أقل من النطاق المستهدف التجميلي — فرصة عناية.",
+          "reasonEn": "Provider measured texture below the cosmetic target range — a care opportunity.",
+          "evidenceAr": "قيمة مقيّسة 44/100 · مصدر provider_measured · ثقة 70.",
+          "evidenceEn": "Measured 44/100 · source provider_measured · confidence 70.",
+          "limitationsAr": "Mapped from provider; lighting and capture quality may influence the reading.",
+          "limitationsEn": "Mapped from provider; lighting and capture quality may influence the reading.",
+          "howAr": "تُحوَّل قيمة المزود إلى مقياس صحي موحّد 0–100 عبر محوّل المزود، ثم تُعرض مع المصدر والثقة.",
+          "howEn": "Provider value is normalized to a 0–100 health-oriented scale via the provider adapter, then shown with source and confidence.",
+          "availability": "available",
+          "source": "provider_measured",
+          "provider": "perfect_corp",
+          "version": "explain-v1"
+        }
+      },
+      {
+        "id": "pores",
+        "displayNameAr": "المسام",
+        "displayNameEn": "Pores",
+        "availability": "available",
+        "normalizedValue": 40,
+        "confidence": 70,
+        "source": "provider_measured",
+        "provider": "perfect_corp",
+        "limitations": [
+          "Mapped from provider; lighting and capture quality may influence the reading."
+        ],
+        "recommendationEligible": true,
+        "explanation": {
+          "metricId": "pores",
+          "titleAr": "المسام",
+          "titleEn": "Pores",
+          "levelAr": "يحتاج عناية",
+          "levelEn": "Needs care",
+          "confidenceAr": "متوسط",
+          "confidenceEn": "Medium",
+          "reasonAr": "قياس المزود لـ«المسام» أقل من النطاق المستهدف التجميلي — فرصة عناية.",
+          "reasonEn": "Provider measured pores below the cosmetic target range — a care opportunity.",
+          "evidenceAr": "قيمة مقيّسة 40/100 · مصدر provider_measured · ثقة 70.",
+          "evidenceEn": "Measured 40/100 · source provider_measured · confidence 70.",
+          "limitationsAr": "Mapped from provider; lighting and capture quality may influence the reading.",
+          "limitationsEn": "Mapped from provider; lighting and capture quality may influence the reading.",
+          "howAr": "تُحوَّل قيمة المزود إلى مقياس صحي موحّد 0–100 عبر محوّل المزود، ثم تُعرض مع المصدر والثقة.",
+          "howEn": "Provider value is normalized to a 0–100 health-oriented scale via the provider adapter, then shown with source and confidence.",
+          "availability": "available",
+          "source": "provider_measured",
+          "provider": "perfect_corp",
+          "version": "explain-v1"
+        }
+      },
+      {
+        "id": "acne",
+        "displayNameAr": "مظهر الحبوب",
+        "displayNameEn": "Acne appearance",
+        "availability": "available",
+        "normalizedValue": 45,
+        "confidence": 70,
+        "source": "provider_measured",
+        "provider": "perfect_corp",
+        "limitations": [
+          "Mapped from provider; lighting and capture quality may influence the reading."
+        ],
+        "recommendationEligible": true,
+        "explanation": {
+          "metricId": "acne",
+          "titleAr": "مظهر الحبوب",
+          "titleEn": "Acne appearance",
+          "levelAr": "يحتاج عناية",
+          "levelEn": "Needs care",
+          "confidenceAr": "متوسط",
+          "confidenceEn": "Medium",
+          "reasonAr": "قياس المزود لـ«مظهر الحبوب» أقل من النطاق المستهدف التجميلي — فرصة عناية.",
+          "reasonEn": "Provider measured acne appearance below the cosmetic target range — a care opportunity.",
+          "evidenceAr": "قيمة مقيّسة 45/100 · مصدر provider_measured · ثقة 70.",
+          "evidenceEn": "Measured 45/100 · source provider_measured · confidence 70.",
+          "limitationsAr": "Mapped from provider; lighting and capture quality may influence the reading.",
+          "limitationsEn": "Mapped from provider; lighting and capture quality may influence the reading.",
+          "howAr": "تُحوَّل قيمة المزود إلى مقياس صحي موحّد 0–100 عبر محوّل المزود، ثم تُعرض مع المصدر والثقة.",
+          "howEn": "Provider value is normalized to a 0–100 health-oriented scale via the provider adapter, then shown with source and confidence.",
+          "availability": "available",
+          "source": "provider_measured",
+          "provider": "perfect_corp",
+          "version": "explain-v1"
+        }
+      },
+      {
+        "id": "wrinkles",
+        "displayNameAr": "التجاعيد",
+        "displayNameEn": "Wrinkles",
+        "availability": "available",
+        "normalizedValue": 50,
+        "confidence": 70,
+        "source": "provider_measured",
+        "provider": "perfect_corp",
+        "limitations": [
+          "Mapped from provider; lighting and capture quality may influence the reading."
+        ],
+        "recommendationEligible": true,
+        "explanation": {
+          "metricId": "wrinkles",
+          "titleAr": "التجاعيد",
+          "titleEn": "Wrinkles",
+          "levelAr": "يحتاج عناية",
+          "levelEn": "Needs care",
+          "confidenceAr": "متوسط",
+          "confidenceEn": "Medium",
+          "reasonAr": "قياس المزود لـ«التجاعيد» أقل من النطاق المستهدف التجميلي — فرصة عناية.",
+          "reasonEn": "Provider measured wrinkles below the cosmetic target range — a care opportunity.",
+          "evidenceAr": "قيمة مقيّسة 50/100 · مصدر provider_measured · ثقة 70.",
+          "evidenceEn": "Measured 50/100 · source provider_measured · confidence 70.",
+          "limitationsAr": "Mapped from provider; lighting and capture quality may influence the reading.",
+          "limitationsEn": "Mapped from provider; lighting and capture quality may influence the reading.",
+          "howAr": "تُحوَّل قيمة المزود إلى مقياس صحي موحّد 0–100 عبر محوّل المزود، ثم تُعرض مع المصدر والثقة.",
+          "howEn": "Provider value is normalized to a 0–100 health-oriented scale via the provider adapter, then shown with source and confidence.",
+          "availability": "available",
+          "source": "provider_measured",
+          "provider": "perfect_corp",
+          "version": "explain-v1"
+        }
+      },
+      {
+        "id": "fineLines",
+        "displayNameAr": "الخطوط الدقيقة",
+        "displayNameEn": "Fine lines",
+        "availability": "unavailable",
+        "confidence": 0,
+        "source": "unavailable",
+        "provider": "perfect_corp",
+        "limitations": [
+          "Metric fineLines not provided by current provider mapping — left unavailable."
+        ],
+        "recommendationEligible": false,
+        "explanation": {
+          "metricId": "fineLines",
+          "titleAr": "الخطوط الدقيقة",
+          "titleEn": "Fine lines",
+          "levelAr": "غير متاح",
+          "levelEn": "Unavailable",
+          "confidenceAr": "غير متاح",
+          "confidenceEn": "Unavailable",
+          "reasonAr": "لم يوفّر المزود هذا المؤشر في جلسة التحليل الحالية.",
+          "reasonEn": "The provider did not supply this metric in the current analysis.",
+          "evidenceAr": "لا توجد قيمة قابلة للتتبع.",
+          "evidenceEn": "No traceable measured value.",
+          "limitationsAr": "Metric fineLines not provided by current provider mapping — left unavailable.",
+          "limitationsEn": "Metric fineLines not provided by current provider mapping — left unavailable.",
+          "howAr": "لا يُحسب أي تقدير بديل — تُعرض الحالة كـ «غير متاح» فقط.",
+          "howEn": "No substitute estimate is invented — status remains Unavailable.",
+          "availability": "unavailable",
+          "source": "unavailable",
+          "provider": "perfect_corp",
+          "version": "explain-v1"
+        }
+      },
+      {
+        "id": "pigmentation",
+        "displayNameAr": "التصبغات",
+        "displayNameEn": "Pigmentation",
+        "availability": "available",
+        "normalizedValue": 55,
+        "confidence": 70,
+        "source": "provider_measured",
+        "provider": "perfect_corp",
+        "limitations": [
+          "Mapped from provider; lighting and capture quality may influence the reading."
+        ],
+        "recommendationEligible": true,
+        "explanation": {
+          "metricId": "pigmentation",
+          "titleAr": "التصبغات",
+          "titleEn": "Pigmentation",
+          "levelAr": "متوسط",
+          "levelEn": "Moderate",
+          "confidenceAr": "متوسط",
+          "confidenceEn": "Medium",
+          "reasonAr": "قياس المزود لـ«التصبغات» ضمن نطاق متوسط تجميلي.",
+          "reasonEn": "Provider measured pigmentation in a moderate cosmetic range.",
+          "evidenceAr": "قيمة مقيّسة 55/100 · مصدر provider_measured · ثقة 70.",
+          "evidenceEn": "Measured 55/100 · source provider_measured · confidence 70.",
+          "limitationsAr": "Mapped from provider; lighting and capture quality may influence the reading.",
+          "limitationsEn": "Mapped from provider; lighting and capture quality may influence the reading.",
+          "howAr": "تُحوَّل قيمة المزود إلى مقياس صحي موحّد 0–100 عبر محوّل المزود، ثم تُعرض مع المصدر والثقة.",
+          "howEn": "Provider value is normalized to a 0–100 health-oriented scale via the provider adapter, then shown with source and confidence.",
+          "availability": "available",
+          "source": "provider_measured",
+          "provider": "perfect_corp",
+          "version": "explain-v1"
+        }
+      },
+      {
+        "id": "redness",
+        "displayNameAr": "الاحمرار",
+        "displayNameEn": "Redness",
+        "availability": "available",
+        "normalizedValue": 40,
+        "confidence": 70,
+        "source": "provider_measured",
+        "provider": "perfect_corp",
+        "limitations": [
+          "Mapped from provider; lighting and capture quality may influence the reading."
+        ],
+        "recommendationEligible": true,
+        "explanation": {
+          "metricId": "redness",
+          "titleAr": "الاحمرار",
+          "titleEn": "Redness",
+          "levelAr": "يحتاج عناية",
+          "levelEn": "Needs care",
+          "confidenceAr": "متوسط",
+          "confidenceEn": "Medium",
+          "reasonAr": "قياس المزود لـ«الاحمرار» أقل من النطاق المستهدف التجميلي — فرصة عناية.",
+          "reasonEn": "Provider measured redness below the cosmetic target range — a care opportunity.",
+          "evidenceAr": "قيمة مقيّسة 40/100 · مصدر provider_measured · ثقة 70.",
+          "evidenceEn": "Measured 40/100 · source provider_measured · confidence 70.",
+          "limitationsAr": "Mapped from provider; lighting and capture quality may influence the reading.",
+          "limitationsEn": "Mapped from provider; lighting and capture quality may influence the reading.",
+          "howAr": "تُحوَّل قيمة المزود إلى مقياس صحي موحّد 0–100 عبر محوّل المزود، ثم تُعرض مع المصدر والثقة.",
+          "howEn": "Provider value is normalized to a 0–100 health-oriented scale via the provider adapter, then shown with source and confidence.",
+          "availability": "available",
+          "source": "provider_measured",
+          "provider": "perfect_corp",
+          "version": "explain-v1"
+        }
+      },
+      {
+        "id": "darkCircles",
+        "displayNameAr": "الهالات",
+        "displayNameEn": "Dark circles",
+        "availability": "available",
+        "normalizedValue": 38,
+        "confidence": 70,
+        "source": "provider_measured",
+        "provider": "perfect_corp",
+        "limitations": [
+          "Mapped from provider; lighting and capture quality may influence the reading."
+        ],
+        "recommendationEligible": true,
+        "explanation": {
+          "metricId": "darkCircles",
+          "titleAr": "الهالات",
+          "titleEn": "Dark circles",
+          "levelAr": "يحتاج عناية",
+          "levelEn": "Needs care",
+          "confidenceAr": "متوسط",
+          "confidenceEn": "Medium",
+          "reasonAr": "قياس المزود لـ«الهالات» أقل من النطاق المستهدف التجميلي — فرصة عناية.",
+          "reasonEn": "Provider measured dark circles below the cosmetic target range — a care opportunity.",
+          "evidenceAr": "قيمة مقيّسة 38/100 · مصدر provider_measured · ثقة 70.",
+          "evidenceEn": "Measured 38/100 · source provider_measured · confidence 70.",
+          "limitationsAr": "Mapped from provider; lighting and capture quality may influence the reading.",
+          "limitationsEn": "Mapped from provider; lighting and capture quality may influence the reading.",
+          "howAr": "تُحوَّل قيمة المزود إلى مقياس صحي موحّد 0–100 عبر محوّل المزود، ثم تُعرض مع المصدر والثقة.",
+          "howEn": "Provider value is normalized to a 0–100 health-oriented scale via the provider adapter, then shown with source and confidence.",
+          "availability": "available",
+          "source": "provider_measured",
+          "provider": "perfect_corp",
+          "version": "explain-v1"
+        }
+      },
+      {
+        "id": "oiliness",
+        "displayNameAr": "إفراز الدهون",
+        "displayNameEn": "Oiliness",
+        "availability": "available",
+        "normalizedValue": 42,
+        "confidence": 70,
+        "source": "provider_measured",
+        "provider": "perfect_corp",
+        "limitations": [
+          "Mapped from provider; lighting and capture quality may influence the reading."
+        ],
+        "recommendationEligible": true,
+        "explanation": {
+          "metricId": "oiliness",
+          "titleAr": "إفراز الدهون",
+          "titleEn": "Oiliness",
+          "levelAr": "يحتاج عناية",
+          "levelEn": "Needs care",
+          "confidenceAr": "متوسط",
+          "confidenceEn": "Medium",
+          "reasonAr": "قياس المزود لـ«إفراز الدهون» أقل من النطاق المستهدف التجميلي — فرصة عناية.",
+          "reasonEn": "Provider measured oiliness below the cosmetic target range — a care opportunity.",
+          "evidenceAr": "قيمة مقيّسة 42/100 · مصدر provider_measured · ثقة 70.",
+          "evidenceEn": "Measured 42/100 · source provider_measured · confidence 70.",
+          "limitationsAr": "Mapped from provider; lighting and capture quality may influence the reading.",
+          "limitationsEn": "Mapped from provider; lighting and capture quality may influence the reading.",
+          "howAr": "تُحوَّل قيمة المزود إلى مقياس صحي موحّد 0–100 عبر محوّل المزود، ثم تُعرض مع المصدر والثقة.",
+          "howEn": "Provider value is normalized to a 0–100 health-oriented scale via the provider adapter, then shown with source and confidence.",
+          "availability": "available",
+          "source": "provider_measured",
+          "provider": "perfect_corp",
+          "version": "explain-v1"
+        }
+      },
+      {
+        "id": "firmness",
+        "displayNameAr": "الثبات",
+        "displayNameEn": "Firmness",
+        "availability": "available",
+        "normalizedValue": 52,
+        "confidence": 70,
+        "source": "provider_measured",
+        "provider": "perfect_corp",
+        "limitations": [
+          "Mapped from provider; lighting and capture quality may influence the reading."
+        ],
+        "recommendationEligible": true,
+        "explanation": {
+          "metricId": "firmness",
+          "titleAr": "الثبات",
+          "titleEn": "Firmness",
+          "levelAr": "يحتاج عناية",
+          "levelEn": "Needs care",
+          "confidenceAr": "متوسط",
+          "confidenceEn": "Medium",
+          "reasonAr": "قياس المزود لـ«الثبات» أقل من النطاق المستهدف التجميلي — فرصة عناية.",
+          "reasonEn": "Provider measured firmness below the cosmetic target range — a care opportunity.",
+          "evidenceAr": "قيمة مقيّسة 52/100 · مصدر provider_measured · ثقة 70.",
+          "evidenceEn": "Measured 52/100 · source provider_measured · confidence 70.",
+          "limitationsAr": "Mapped from provider; lighting and capture quality may influence the reading.",
+          "limitationsEn": "Mapped from provider; lighting and capture quality may influence the reading.",
+          "howAr": "تُحوَّل قيمة المزود إلى مقياس صحي موحّد 0–100 عبر محوّل المزود، ثم تُعرض مع المصدر والثقة.",
+          "howEn": "Provider value is normalized to a 0–100 health-oriented scale via the provider adapter, then shown with source and confidence.",
+          "availability": "available",
+          "source": "provider_measured",
+          "provider": "perfect_corp",
+          "version": "explain-v1"
+        }
+      },
+      {
+        "id": "elasticity",
+        "displayNameAr": "المرونة",
+        "displayNameEn": "Elasticity",
+        "availability": "unavailable",
+        "confidence": 0,
+        "source": "unavailable",
+        "provider": "perfect_corp",
+        "limitations": [
+          "Metric elasticity not provided by current provider mapping — left unavailable."
+        ],
+        "recommendationEligible": false,
+        "explanation": {
+          "metricId": "elasticity",
+          "titleAr": "المرونة",
+          "titleEn": "Elasticity",
+          "levelAr": "غير متاح",
+          "levelEn": "Unavailable",
+          "confidenceAr": "غير متاح",
+          "confidenceEn": "Unavailable",
+          "reasonAr": "لم يوفّر المزود هذا المؤشر في جلسة التحليل الحالية.",
+          "reasonEn": "The provider did not supply this metric in the current analysis.",
+          "evidenceAr": "لا توجد قيمة قابلة للتتبع.",
+          "evidenceEn": "No traceable measured value.",
+          "limitationsAr": "Metric elasticity not provided by current provider mapping — left unavailable.",
+          "limitationsEn": "Metric elasticity not provided by current provider mapping — left unavailable.",
+          "howAr": "لا يُحسب أي تقدير بديل — تُعرض الحالة كـ «غير متاح» فقط.",
+          "howEn": "No substitute estimate is invented — status remains Unavailable.",
+          "availability": "unavailable",
+          "source": "unavailable",
+          "provider": "perfect_corp",
+          "version": "explain-v1"
+        }
+      },
+      {
+        "id": "sensitivity",
+        "displayNameAr": "الحساسية الظاهرة",
+        "displayNameEn": "Sensitivity",
+        "availability": "unavailable",
+        "confidence": 0,
+        "source": "unavailable",
+        "provider": "perfect_corp",
+        "limitations": [
+          "Metric sensitivity not provided by current provider mapping — left unavailable."
+        ],
+        "recommendationEligible": false,
+        "explanation": {
+          "metricId": "sensitivity",
+          "titleAr": "الحساسية الظاهرة",
+          "titleEn": "Sensitivity",
+          "levelAr": "غير متاح",
+          "levelEn": "Unavailable",
+          "confidenceAr": "غير متاح",
+          "confidenceEn": "Unavailable",
+          "reasonAr": "لم يوفّر المزود هذا المؤشر في جلسة التحليل الحالية.",
+          "reasonEn": "The provider did not supply this metric in the current analysis.",
+          "evidenceAr": "لا توجد قيمة قابلة للتتبع.",
+          "evidenceEn": "No traceable measured value.",
+          "limitationsAr": "Metric sensitivity not provided by current provider mapping — left unavailable.",
+          "limitationsEn": "Metric sensitivity not provided by current provider mapping — left unavailable.",
+          "howAr": "لا يُحسب أي تقدير بديل — تُعرض الحالة كـ «غير متاح» فقط.",
+          "howEn": "No substitute estimate is invented — status remains Unavailable.",
+          "availability": "unavailable",
+          "source": "unavailable",
+          "provider": "perfect_corp",
+          "version": "explain-v1"
+        }
+      },
+      {
+        "id": "toneUniformity",
+        "displayNameAr": "انتظام اللون",
+        "displayNameEn": "Tone uniformity",
+        "availability": "unavailable",
+        "confidence": 0,
+        "source": "unavailable",
+        "provider": "perfect_corp",
+        "limitations": [
+          "Metric toneUniformity not provided by current provider mapping — left unavailable."
+        ],
+        "recommendationEligible": false,
+        "explanation": {
+          "metricId": "toneUniformity",
+          "titleAr": "انتظام اللون",
+          "titleEn": "Tone uniformity",
+          "levelAr": "غير متاح",
+          "levelEn": "Unavailable",
+          "confidenceAr": "غير متاح",
+          "confidenceEn": "Unavailable",
+          "reasonAr": "لم يوفّر المزود هذا المؤشر في جلسة التحليل الحالية.",
+          "reasonEn": "The provider did not supply this metric in the current analysis.",
+          "evidenceAr": "لا توجد قيمة قابلة للتتبع.",
+          "evidenceEn": "No traceable measured value.",
+          "limitationsAr": "Metric toneUniformity not provided by current provider mapping — left unavailable.",
+          "limitationsEn": "Metric toneUniformity not provided by current provider mapping — left unavailable.",
+          "howAr": "لا يُحسب أي تقدير بديل — تُعرض الحالة كـ «غير متاح» فقط.",
+          "howEn": "No substitute estimate is invented — status remains Unavailable.",
+          "availability": "unavailable",
+          "source": "unavailable",
+          "provider": "perfect_corp",
+          "version": "explain-v1"
+        }
+      },
+      {
+        "id": "undertone",
+        "displayNameAr": "الأساس اللوني",
+        "displayNameEn": "Undertone",
+        "availability": "available",
+        "categoricalValue": "Neutral",
+        "confidence": 65,
+        "source": "provider_measured",
+        "provider": "perfect_corp",
+        "limitations": [
+          "Undertone is cosmetic classification from provider labels, not lab colorimetry."
+        ],
+        "recommendationEligible": true,
+        "explanation": {
+          "metricId": "undertone",
+          "titleAr": "الأساس اللوني",
+          "titleEn": "Undertone",
+          "levelAr": "Neutral",
+          "levelEn": "Neutral",
+          "confidenceAr": "متوسط",
+          "confidenceEn": "Medium",
+          "reasonAr": "تصنيف تجميلي للأساس اللوني من تسميات المزود.",
+          "reasonEn": "Cosmetic undertone classification from provider labels.",
+          "evidenceAr": "القيمة: Neutral (مصدر: provider_measured).",
+          "evidenceEn": "Value: Neutral (source: provider_measured).",
+          "limitationsAr": "ليس قياساً لونياً مخبرياً. الإضاءة قد تؤثر.",
+          "limitationsEn": "Not lab colorimetry. Lighting may influence the result.",
+          "howAr": "يُعرض التصنيف كما ورد من طبقة التعيين الكانوني دون اختراع.",
+          "howEn": "Shown as mapped from the canonical adapter without invention.",
+          "availability": "available",
+          "source": "provider_measured",
+          "provider": "perfect_corp",
+          "version": "explain-v1"
+        }
+      }
+    ],
+    "svi": {
+      "score": 46,
+      "confidence": 76,
+      "version": "svi-v2",
+      "formulaId": "svi-v2-dynamic-denom",
+      "explanationAr": "مؤشر حيوية البشرة (v2) = 46. أبرز نقطة إيجابية: الثبات (52). أبرز فرصة تحسين: الهالات (38). استُبعد 4 مؤشراً غير متاح من المقام. هذا مؤشر تجميلي إرشادي وليس تقييماً للجمال أو تشخيصاً طبياً.",
+      "explanationEn": "Skin Vitality Index (v2) = 46. Top strength: Firmness (52). Top improvement opportunity: Dark circles (38). 4 unavailable metrics excluded from the denominator. Cosmetic informational index — not beauty ranking or medical diagnosis.",
+      "positiveContributors": [
+        {
+          "metricId": "hydration",
+          "labelAr": "الترطيب",
+          "labelEn": "Hydration",
+          "weight": 0.22,
+          "normalizedValue": 45,
+          "contribution": 9.9,
+          "polarity": "positive"
+        },
+        {
+          "metricId": "firmness",
+          "labelAr": "الثبات",
+          "labelEn": "Firmness",
+          "weight": 0.16,
+          "normalizedValue": 52,
+          "contribution": 8.32,
+          "polarity": "positive"
+        },
+        {
+          "metricId": "radiance",
+          "labelAr": "الإشراق",
+          "labelEn": "Radiance",
+          "weight": 0.18,
+          "normalizedValue": 48,
+          "contribution": 8.64,
+          "polarity": "positive"
+        },
+        {
+          "metricId": "texture",
+          "labelAr": "الملمس",
+          "labelEn": "Texture",
+          "weight": 0.14,
+          "normalizedValue": 44,
+          "contribution": 6.16,
+          "polarity": "positive"
+        }
+      ],
+      "negativeContributors": [
+        {
+          "metricId": "oiliness",
+          "labelAr": "إفراز الدهون",
+          "labelEn": "Oiliness",
+          "weight": 0.1,
+          "normalizedValue": 42,
+          "contribution": 5.800000000000001,
+          "polarity": "negative"
+        },
+        {
+          "metricId": "pores",
+          "labelAr": "المسام",
+          "labelEn": "Pores",
+          "weight": 0.1,
+          "normalizedValue": 40,
+          "contribution": 6,
+          "polarity": "negative"
+        },
+        {
+          "metricId": "acne",
+          "labelAr": "مظهر الحبوب",
+          "labelEn": "Acne appearance",
+          "weight": 0.12,
+          "normalizedValue": 45,
+          "contribution": 6.6,
+          "polarity": "negative"
+        },
+        {
+          "metricId": "pigmentation",
+          "labelAr": "التصبغات",
+          "labelEn": "Pigmentation",
+          "weight": 0.1,
+          "normalizedValue": 55,
+          "contribution": 4.5,
+          "polarity": "negative"
+        },
+        {
+          "metricId": "redness",
+          "labelAr": "الاحمرار",
+          "labelEn": "Redness",
+          "weight": 0.08,
+          "normalizedValue": 40,
+          "contribution": 4.8,
+          "polarity": "negative"
+        },
+        {
+          "metricId": "darkCircles",
+          "labelAr": "الهالات",
+          "labelEn": "Dark circles",
+          "weight": 0.08,
+          "normalizedValue": 38,
+          "contribution": 4.96,
+          "polarity": "negative"
+        },
+        {
+          "metricId": "wrinkles",
+          "labelAr": "التجاعيد",
+          "labelEn": "Wrinkles",
+          "weight": 0.1,
+          "normalizedValue": 50,
+          "contribution": 5,
+          "polarity": "negative"
+        }
+      ],
+      "unavailableExcluded": [
+        "elasticity",
+        "toneUniformity",
+        "fineLines",
+        "sensitivity"
+      ],
+      "limitations": [
+        "SVI v2 uses only available metrics (dynamic denominator).",
+        "Not a medical or clinical assessment.",
+        "Capture lighting and camera quality may affect readings.",
+        "Canonical model never fabricates missing metrics."
+      ]
+    },
+    "recommendations": [
+      {
+        "id": "edu_disclaimer",
+        "category": "educational",
+        "titleAr": "طبيعة التحليل",
+        "titleEn": "About this analysis",
+        "bodyAr": "نتائج ميرا تجميلية وإرشادية مبنية على الصورة. لا تشخّص أمراضاً ولا تصف أدوية.",
+        "bodyEn": "Mira results are cosmetic and image-based. They do not diagnose disease or prescribe medication.",
+        "reasonAr": "شفافية المنتج وثقة المستخدم.",
+        "reasonEn": "Product transparency and user trust.",
+        "evidence": {
+          "metricIds": [],
+          "findingIds": [],
+          "values": {}
+        },
+        "confidence": 100,
+        "priority": 5,
+        "cosmeticOnly": true,
+        "limitations": [
+          "Cosmetic guidance only — not a medical prescription or diagnosis."
+        ]
+      },
+      {
+        "id": "rec_hydration_morning",
+        "category": "morning",
+        "titleAr": "مرطّب لطيف صباحاً",
+        "titleEn": "Gentle morning moisturizer",
+        "bodyAr": "جرّبي مرطباً خفيفاً مناسباً لنوع بشرتكِ بعد التنظيف. منتج تجميلي — ليس علاجاً طبياً.",
+        "bodyEn": "Try a light moisturizer suited to your skin type after cleansing. Cosmetic product — not medical treatment.",
+        "reasonAr": "المؤشر «الترطيب» بلغ 45/100 (مصدر: provider_measured). هذه قراءة تجميلية من الصورة وليست تشخيصاً طبياً.",
+        "reasonEn": "Hydration scored 45/100 (source: provider_measured). Cosmetic image-based reading — not a medical diagnosis.",
+        "evidence": {
+          "metricIds": [
+            "hydration"
+          ],
+          "findingIds": [
+            "finding_hydration"
+          ],
+          "values": {
+            "hydration": 45
+          }
+        },
+        "confidence": 70,
+        "priority": 40,
+        "cosmeticOnly": true,
+        "limitations": [
+          "Mapped from provider; lighting and capture quality may influence the reading.",
+          "Cosmetic guidance only — not a medical prescription or diagnosis."
+        ]
+      },
+      {
+        "id": "rec_radiance_weekly",
+        "category": "weekly",
+        "titleAr": "عناية أسبوعية لطيفة",
+        "titleEn": "Gentle weekly care",
+        "bodyAr": "تقشير لطيف جداً مرة أسبوعياً إن ناسب بشرتكِ — تجنبي الإفراط. تجميلي فقط.",
+        "bodyEn": "Very gentle weekly exfoliation if suitable for your skin — avoid overdoing it. Cosmetic only.",
+        "reasonAr": "المؤشر «الإشراق» بلغ 48/100 (مصدر: provider_measured). هذه قراءة تجميلية من الصورة وليست تشخيصاً طبياً.",
+        "reasonEn": "Radiance scored 48/100 (source: provider_measured). Cosmetic image-based reading — not a medical diagnosis.",
+        "evidence": {
+          "metricIds": [
+            "radiance"
+          ],
+          "findingIds": [
+            "finding_radiance"
+          ],
+          "values": {
+            "radiance": 48
+          }
+        },
+        "confidence": 70,
+        "priority": 40,
+        "cosmeticOnly": true,
+        "limitations": [
+          "Mapped from provider; lighting and capture quality may influence the reading.",
+          "Cosmetic guidance only — not a medical prescription or diagnosis."
+        ]
+      },
+      {
+        "id": "rec_texture_weekly",
+        "category": "weekly",
+        "titleAr": "عناية أسبوعية لطيفة",
+        "titleEn": "Gentle weekly care",
+        "bodyAr": "تقشير لطيف جداً مرة أسبوعياً إن ناسب بشرتكِ — تجنبي الإفراط. تجميلي فقط.",
+        "bodyEn": "Very gentle weekly exfoliation if suitable for your skin — avoid overdoing it. Cosmetic only.",
+        "reasonAr": "المؤشر «الملمس» بلغ 44/100 (مصدر: provider_measured). هذه قراءة تجميلية من الصورة وليست تشخيصاً طبياً.",
+        "reasonEn": "Texture scored 44/100 (source: provider_measured). Cosmetic image-based reading — not a medical diagnosis.",
+        "evidence": {
+          "metricIds": [
+            "texture"
+          ],
+          "findingIds": [
+            "finding_texture"
+          ],
+          "values": {
+            "texture": 44
+          }
+        },
+        "confidence": 70,
+        "priority": 40,
+        "cosmeticOnly": true,
+        "limitations": [
+          "Mapped from provider; lighting and capture quality may influence the reading.",
+          "Cosmetic guidance only — not a medical prescription or diagnosis."
+        ]
+      },
+      {
+        "id": "rec_pores_night",
+        "category": "night",
+        "titleAr": "عناية مسائية للملمس",
+        "titleEn": "Evening texture care",
+        "bodyAr": "منتجات عناية تجميلية خفيفة القوام ليلاً قد تدعم مظهر نعومة المسام مع الوقت.",
+        "bodyEn": "Lightweight evening cosmetic care may support a smoother pore appearance over time.",
+        "reasonAr": "المؤشر «المسام» بلغ 40/100 (مصدر: provider_measured). هذه قراءة تجميلية من الصورة وليست تشخيصاً طبياً.",
+        "reasonEn": "Pores scored 40/100 (source: provider_measured). Cosmetic image-based reading — not a medical diagnosis.",
+        "evidence": {
+          "metricIds": [
+            "pores"
+          ],
+          "findingIds": [
+            "finding_pores"
+          ],
+          "values": {
+            "pores": 40
+          }
+        },
+        "confidence": 70,
+        "priority": 40,
+        "cosmeticOnly": true,
+        "limitations": [
+          "Mapped from provider; lighting and capture quality may influence the reading.",
+          "Cosmetic guidance only — not a medical prescription or diagnosis."
+        ]
+      },
+      {
+        "id": "rec_acne_night",
+        "category": "night",
+        "titleAr": "روتين لطيف لمظهر البشرة",
+        "titleEn": "Gentle appearance-focused routine",
+        "bodyAr": "حافظي على تنظيف لطيف وتجنّبي فرك المنطقة بقوة. للاستشارات الطبية راجعي مختصاً — ميرا لا تشخّص حب الشباب الطبي.",
+        "bodyEn": "Keep cleansing gentle and avoid harsh scrubbing. For medical advice see a clinician — Mira does not diagnose acne disease.",
+        "reasonAr": "المؤشر «مظهر الحبوب» بلغ 45/100 (مصدر: provider_measured). هذه قراءة تجميلية من الصورة وليست تشخيصاً طبياً.",
+        "reasonEn": "Acne appearance scored 45/100 (source: provider_measured). Cosmetic image-based reading — not a medical diagnosis.",
+        "evidence": {
+          "metricIds": [
+            "acne"
+          ],
+          "findingIds": [
+            "finding_acne"
+          ],
+          "values": {
+            "acne": 45
+          }
+        },
+        "confidence": 70,
+        "priority": 40,
+        "cosmeticOnly": true,
+        "limitations": [
+          "Mapped from provider; lighting and capture quality may influence the reading.",
+          "Cosmetic guidance only — not a medical prescription or diagnosis."
+        ]
+      },
+      {
+        "id": "rec_wrinkles_night",
+        "category": "night",
+        "titleAr": "ترطيب داعم للمظهر",
+        "titleEn": "Appearance-supporting moisture",
+        "bodyAr": "ترطيب ليلي منتظم منتج تجميلي قد يدعم مظهر نعومة الخطوط مع الوقت.",
+        "bodyEn": "Consistent evening moisturization (cosmetic) may support a smoother look of lines over time.",
+        "reasonAr": "المؤشر «التجاعيد» بلغ 50/100 (مصدر: provider_measured). هذه قراءة تجميلية من الصورة وليست تشخيصاً طبياً.",
+        "reasonEn": "Wrinkles scored 50/100 (source: provider_measured). Cosmetic image-based reading — not a medical diagnosis.",
+        "evidence": {
+          "metricIds": [
+            "wrinkles"
+          ],
+          "findingIds": [
+            "finding_wrinkles"
+          ],
+          "values": {
+            "wrinkles": 50
+          }
+        },
+        "confidence": 70,
+        "priority": 40,
+        "cosmeticOnly": true,
+        "limitations": [
+          "Mapped from provider; lighting and capture quality may influence the reading.",
+          "Cosmetic guidance only — not a medical prescription or diagnosis."
+        ]
+      },
+      {
+        "id": "lifestyle_hydration",
+        "category": "lifestyle",
+        "titleAr": "عادات لطيفة للترطيب",
+        "titleEn": "Gentle hydration habits",
+        "bodyAr": "اشربي الماء بانتظام وتجنّبي غسل الوجه بماء ساخن جداً. هذه نصيحة نمط حياة تجميلية.",
+        "bodyEn": "Stay hydrated and avoid very hot water on the face. Lifestyle cosmetic tip only.",
+        "reasonAr": "الترطيب المقاس 45/100.",
+        "reasonEn": "Measured hydration 45/100.",
+        "evidence": {
+          "metricIds": [
+            "hydration"
+          ],
+          "findingIds": [],
+          "values": {
+            "hydration": 45
+          }
+        },
+        "confidence": 70,
+        "priority": 55,
+        "cosmeticOnly": true,
+        "limitations": [
+          "Cosmetic guidance only — not a medical prescription or diagnosis.",
+          "Mapped from provider; lighting and capture quality may influence the reading."
+        ]
+      }
+    ],
+    "progress": {
+      "comparable": false,
+      "unavailableReasonAr": "لا يوجد تحليل سابق للمقارنة.",
+      "unavailableReasonEn": "No previous analysis available for comparison.",
+      "overallTrend": "unknown",
+      "currentSvi": 46,
+      "metricTrends": [],
+      "limitations": [
+        "Need at least two compatible analyses for trends."
+      ],
+      "version": "progress-v1"
+    },
+    "retakeGuidanceAr": "للحصول على مقارنة عادلة لاحقاً: إضاءة أمامية ناعمة، وجه ثابت، نفس زاوية الكاميرا تقريباً.",
+    "retakeGuidanceEn": "For a fair later comparison: soft front lighting, steady face, similar camera angle.",
+    "metadata": {
+      "isMock": false,
+      "skinTypeAr": "مختلطة",
+      "skinTypeEn": "Combination"
+    }
+  }
+}

@@ -7,6 +7,7 @@ import 'package:image_picker/image_picker.dart';
 
 import '../../../../core/face_gate/face_gate_result.dart';
 import '../../../../core/face_gate/face_gate_validator.dart';
+import '../../domain/image_quality/image_quality_evaluator.dart';
 import '../live_face_map/face_mapping_context.dart';
 import '../live_face_map/face_mesh_quality_gate.dart';
 import '../live_face_map/live_face_overlay_controller.dart';
@@ -313,13 +314,30 @@ class _FaceCapturePanelState extends State<FaceCapturePanel>
         return gate;
       }
 
+      // Phase 2: real blur/brightness/exposure before accepting capture.
+      final quality = await ImageQualityEvaluator.evaluateFile(
+        file,
+        faceGate: gate,
+      );
+      if (!quality.mayProceedToProvider) {
+        _showGateMessage(quality.messageAr);
+        return FaceGateResult.rejected(
+          reasonCode: quality.blockingReasons.isNotEmpty
+              ? quality.blockingReasons.first
+              : 'quality_blocked',
+          messageAr: quality.messageAr,
+          messageEn: quality.messageEn,
+        );
+      }
+
       if (!FaceMeshQualityGate.canTakePhoto(_faceOverlayController.frame)) {
         _showGateMessage(
-          'تعذر تأكيد الوجه في الصورة — ثبّتي وجهك وانظري للكاميرا ثم أعيدي المحاولة.',
+          'ثبّتي وجهك وانظري للكاميرا ثم أعيدي المحاولة.',
         );
         return const FaceGateResult.rejected(
           reasonCode: 'mesh_low_quality',
-          messageAr: 'تعذر تأكيد الوجه في الصورة',
+          messageAr: 'ثبّتي وجهك وانظري للكاميرا ثم أعيدي المحاولة.',
+          messageEn: 'Hold still, look at the camera, then try again.',
         );
       }
 
@@ -331,10 +349,11 @@ class _FaceCapturePanelState extends State<FaceCapturePanel>
 
   Future<File> _normalizeAcceptedCapture(File raw, FaceGateResult gate) async {
     if (gate.faceBox == null || gate.imageSize == null) return raw;
-    final aligned = await FaceImageProcessor.normalizeFaceInFrame(
+    final aligned = await FaceImageProcessor.alignForAnalysis(
       raw,
       faceBox: gate.faceBox!,
       imageSize: gate.imageSize!,
+      rollDegrees: gate.headRollDegrees,
     );
     if (aligned.path != raw.path) {
       await _detectFaceOnStill(aligned);

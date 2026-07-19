@@ -1,0 +1,32 @@
+{
+  "subsystem": "Garment Intelligence",
+  "version": "1.0.0",
+  "status": "Production Approved · Frozen",
+  "releaseDate": "2026-07-19",
+  "buildReleaseIdentifier": "0.2.1-garment-intelligence-remediation",
+  "architecture": "fashion-intelligence-arch-v1",
+  "schemaVersion": "garment-schema-v1",
+  "mappingVersion": "garment-mapping-v1",
+  "contractVersion": "garment-contract-v1",
+  "identityPolicyVersion": "garment-identity-v1",
+  "runtimeVersion": "fashion-runtime-v1",
+  "capabilityCatalogVersion": "fashion-cap-catalog-v1",
+  "capabilityId": "analyze_garment",
+  "compatibility": "garment-compat-v1",
+  "fashionCompat": "fashion-compat-v1",
+  "dependencies": {
+    "wardrobeFoundation": "6B · wardrobe-schema-v1",
+    "fashionSession": "fashion-session-v1",
+    "fashionRuntime": "fashion-runtime-v1",
+    "visionDocument": "FashionVisionDocument 1.0.0 (internal adapter input only)",
+    "fashionAliases": "vision/schema/fashion-aliases.ts (SSOT)"
+  },
+  "compatibilityWindow": {
+    "wardrobe": "wardrobe-schema-v1 refs only",
+    "outfitIntelligence": "may consume CanonicalGarment; must not redefine it",
+    "stylingIntelligence": "may reference garmentId + attributes; must not mutate GI engines",
+    "providers": "swap via Vision adapters only; CanonicalGarment unchanged"
+  },
+  "freezePhase": "6C.2",
+  "program": "Premium Transformation Program"
+}

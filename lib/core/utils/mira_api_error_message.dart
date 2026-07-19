@@ -118,8 +118,7 @@ String? _localizeServerMessage(String? raw) {
     return 'انتهت مهلة تحليل YouCam — أعيدي المحاولة بعد دقيقة.';
   }
   if (lower.contains('youcam skin analysis failed')) {
-    return 'فشل تحليل البشرة عبر YouCam. تحققي من PERFECT_API_KEY على Render '
-        'أو فعّلي PERFECT_CORP_FALLBACK_MOCK=true مؤقتاً.';
+    return 'فشل تحليل البشرة مؤقتاً. أعيدي المحاولة بعد قليل، أو حسّني الإضاءة وجودة الصورة.';
   }
   if (lower.contains('perfect corp api key is not configured')) {
     return 'مفتاح Perfect Corp غير مضبوط على السيرفر (PERFECT_API_KEY).';

@@ -4,12 +4,14 @@ import 'package:camera/camera.dart';
 import 'package:flutter/services.dart';
 import 'package:image/image.dart' as img;
 import 'package:mediapipe_face_mesh/mediapipe_face_mesh.dart';
+import 'dart:ui' show Size;
 
 import 'face_mapping_context.dart';
 import 'face_mesh_point_mapper.dart';
 import 'mediapipe_region_builder.dart';
 import 'models/face_mesh_models.dart';
 import 'utils/face_mesh_camera_image_adapter.dart';
+import '../../../face_intelligence/domain/geometry_anchors.dart';
 
 /// Production face mesh via MediaPipe 468-point landmarks.
 class FaceMeshService {
@@ -150,6 +152,94 @@ class FaceMeshService {
       );
     } catch (_) {
       return FaceMeshFrame.empty;
+    } finally {
+      _isProcessing = false;
+    }
+  }
+
+  /// Phase 4.5 — extract normalized GeometryAnchors for Face Intelligence upload.
+  ///
+  /// Uses raw MediaPipe landmark x/y (0–1 image space). Never uses viewport
+  /// [FaceMeshFrame.debugLandmarks] (those are overlay coords).
+  /// Returns null when mesh unavailable — caller must not invent anchors.
+  Future<
+      ({
+        GeometryAnchors? anchors,
+        int pointCount,
+        String trackingQuality,
+      })?> extractFaceIntelLandmarks(File file) async {
+    if (_isProcessing) return null;
+    await initialize();
+    final pipeline = _pipeline;
+    if (pipeline == null) return null;
+
+    _isProcessing = true;
+    try {
+      final bytes = await file.readAsBytes();
+      final decoded = img.decodeImage(bytes);
+      if (decoded == null) return null;
+
+      final rgba = img.Image(width: decoded.width, height: decoded.height);
+      for (var y = 0; y < decoded.height; y++) {
+        for (var x = 0; x < decoded.width; x++) {
+          rgba.setPixel(x, y, decoded.getPixel(x, y));
+        }
+      }
+      final buffer = Uint8List(rgba.width * rgba.height * 4);
+      var i = 0;
+      for (var y = 0; y < rgba.height; y++) {
+        for (var x = 0; x < rgba.width; x++) {
+          final p = rgba.getPixel(x, y);
+          buffer[i++] = p.r.toInt();
+          buffer[i++] = p.g.toInt();
+          buffer[i++] = p.b.toInt();
+          buffer[i++] = p.a.toInt();
+        }
+      }
+
+      final input = FaceMeshImage(
+        pixels: buffer,
+        width: rgba.width,
+        height: rgba.height,
+        pixelFormat: FaceMeshPixelFormat.rgba,
+      );
+
+      final result = pipeline.process(input, rotationDegrees: 0);
+      final mesh = result.meshResult;
+      if (mesh == null || mesh.landmarks.length < 468) return null;
+
+      final points = <FaceMeshPoint>[
+        for (final lm in mesh.landmarks) FaceMeshPoint(lm.x, lm.y),
+      ];
+      final anchors = GeometryAnchorExtractor.fromLandmarkList(points);
+
+      var trackingQuality = 'medium';
+      try {
+        final size = Size(rgba.width.toDouble(), rgba.height.toDouble());
+        final mapping = FaceMappingContext(
+          rawImageSize: size,
+          contentSize: size,
+          viewportSize: size,
+          lensDirection: CameraLensDirection.back,
+          mirrorPreview: false,
+        );
+        final frame = _mapResult(
+          mesh,
+          mapping: mapping,
+          rotationDegrees: 0,
+        );
+        trackingQuality = frame.quality.name;
+      } catch (_) {
+        trackingQuality = 'medium';
+      }
+
+      return (
+        anchors: anchors,
+        pointCount: mesh.landmarks.length,
+        trackingQuality: trackingQuality,
+      );
+    } catch (_) {
+      return null;
     } finally {
       _isProcessing = false;
     }

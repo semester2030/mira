@@ -3,12 +3,12 @@ import 'dart:io';
 import 'package:firebase_auth/firebase_auth.dart';
 
 import '../../../../core/ai/ai_module.dart';
-import '../../../../core/face_gate/face_gate_validator.dart';
 import '../../../../core/config/mira_api_config.dart';
 import '../../../../core/ai/mappers/skin_result_mapper.dart';
 import '../../../../core/privacy/temp_image_cleanup.dart';
 import '../../../intelligence/presentation/widgets/mira_report_helpers.dart';
 import '../../domain/entities/skin_report.dart';
+import '../../domain/image_quality/image_quality_evaluator.dart';
 import '../../domain/repositories/skin_analysis_repository.dart';
 import '../datasources/skin_analysis_api_data_source.dart';
 import '../datasources/skin_analysis_remote_data_source.dart';
@@ -28,10 +28,11 @@ class SkinAnalysisRepositoryImpl implements SkinAnalysisRepository {
             : null;
 
   @override
-  Future<SkinReport> analyzeAndSave({required String imagePath}) {
+  Future<SkinReport> analyzeAndSave({required String imagePath}) async {
     if (MiraApiConfig.useBackend) {
       return apiDataSource!.analyzeAndSave(imagePath: imagePath);
     }
+    await SkinCaptureQualityGate.assertProviderReady(File(imagePath));
     return firestoreDataSource!.analyzeAndSave(imagePath: imagePath);
   }
 
@@ -55,13 +56,16 @@ class SkinAnalysisRepositoryImpl implements SkinAnalysisRepository {
 /// Guest analysis — local mock only unless signed in with [MiraApiConfig.useBackend].
 class GuestSkinAnalysisRepository {
   Future<SkinReport> analyzeFromImage(String imagePath) async {
-    await FaceGateValidator.instance.assertAccepted(File(imagePath));
-
     if (MiraApiConfig.useBackend && FirebaseAuth.instance.currentUser != null) {
+      // API datasource runs Phase 2 quality gate before upload.
       final model =
           await SkinAnalysisApiDataSource().analyzeAndSave(imagePath: imagePath);
       return model;
     }
+
+    // Local / mock path — still block unreliable images (no provider credits).
+    final signals =
+        await SkinCaptureQualityGate.assertProviderReady(File(imagePath));
 
     final file = File(imagePath);
     if (!await file.exists()) {
@@ -70,7 +74,11 @@ class GuestSkinAnalysisRepository {
     try {
       final bytes = await file.readAsBytes();
       final result = await AiModule.instance.skinProvider.analyze(bytes);
-      final report = SkinResultMapper.toReport(result, createdAt: DateTime.now());
+      final report = SkinResultMapper.toReport(
+        result,
+        createdAt: DateTime.now(),
+        captureQuality: signals,
+      );
       return attachMiraReport(report);
     } finally {
       await TempImageCleanup.deleteIfExists(imagePath);

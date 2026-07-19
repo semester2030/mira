@@ -73,6 +73,64 @@
   max-width: 420px;
 }
 
+.muted-inline {
+  font-size: 0.82rem;
+  color: var(--muted);
+  font-weight: 500;
+}
+
+.assumption-list {
+  margin: 0;
+  padding-right: 22px;
+  font-size: 0.92rem;
+  line-height: 1.75;
+}
+
+.mau-scenario-block {
+  margin-top: 28px;
+  padding-top: 8px;
+  border-top: 1px dashed var(--border);
+}
+
+.mau-scenario-block h4 {
+  margin-bottom: 6px;
+}
+
+.scenario-meta {
+  font-size: 0.88rem;
+  color: var(--muted);
+  margin: 0 0 12px;
+}
+
+.table-scroll {
+  overflow-x: auto;
+  -webkit-overflow-scrolling: touch;
+}
+
+.mau-month-table {
+  font-size: 0.84rem;
+  min-width: 920px;
+}
+
+.mau-month-table th,
+.mau-month-table td {
+  white-space: nowrap;
+}
+
+.mau-total-cell {
+  background: rgba(201, 162, 39, 0.08);
+  min-width: 140px;
+}
+
+.mau-six-month-row {
+  font-weight: 800;
+  background: #fdf5f9;
+}
+
+.token-explainer table {
+  font-size: 0.9rem;
+}
+
 .cost-total {
   margin-top: 20px;
   padding: 18px;

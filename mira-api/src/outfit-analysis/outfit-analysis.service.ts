@@ -2,7 +2,9 @@ import {
   BadRequestException,
   Inject,
   Injectable,
+  ServiceUnavailableException,
 } from '@nestjs/common';
+import { ConfigService } from '@nestjs/config';
 import { Prisma } from '@prisma/client';
 import { parseOccasion } from '../ai/contracts/mira-occasion';
 import { OutfitAnalysisResult } from '../ai/contracts/outfit-analysis-result.interface';
@@ -23,7 +25,13 @@ import { SubscriptionsService } from '../subscriptions/subscriptions.service';
 import { UsersService } from '../users/users.service';
 import { OutfitAnalysisResponseDto } from './dto/outfit-analysis-response.dto';
 import { SaveOutfitSnapshotDto } from './dto/save-outfit-snapshot.dto';
+import { isLegacyOutfitMockBlocked } from '../config/production-integrity';
+import { LEGACY_OUTFIT_MOCK_UNAVAILABLE_AR } from '../intelligence/contracts/cosmetic-copy';
 
+/**
+ * LEGACY outfit analysis path (OUTFIT_PROVIDER).
+ * Canonical production fashion path: Vision Platform POST /ai/vision/outfit/analyze
+ */
 @Injectable()
 export class OutfitAnalysisService {
   constructor(
@@ -34,6 +42,7 @@ export class OutfitAnalysisService {
     private readonly usersService: UsersService,
     private readonly rateLimit: RateLimitService,
     private readonly subscriptions: SubscriptionsService,
+    private readonly config: ConfigService,
   ) {}
 
   async analyze(
@@ -41,6 +50,18 @@ export class OutfitAnalysisService {
     imageBuffer: Buffer,
     occasionId: string,
   ): Promise<OutfitAnalysisResponseDto> {
+    if (
+      isLegacyOutfitMockBlocked({
+        NODE_ENV: this.config.get<string>('NODE_ENV'),
+        OUTFIT_PROVIDER: this.config.get<string>('OUTFIT_PROVIDER'),
+        ALLOW_LEGACY_OUTFIT_MOCK_IN_PROD: this.config.get<string>(
+          'ALLOW_LEGACY_OUTFIT_MOCK_IN_PROD',
+        ),
+      })
+    ) {
+      throw new ServiceUnavailableException(LEGACY_OUTFIT_MOCK_UNAVAILABLE_AR);
+    }
+
     if (!imageBuffer?.length) {
       throw new BadRequestException('Image file is required');
     }

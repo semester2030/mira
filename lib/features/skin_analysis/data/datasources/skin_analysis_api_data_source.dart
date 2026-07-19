@@ -7,6 +7,7 @@ import '../../../../core/network/mira_api_endpoints.dart';
 import '../../../../core/privacy/temp_image_cleanup.dart';
 import '../../../../core/services/user_stats_service.dart';
 import '../../../intelligence/data/mappers/mira_beauty_report_mapper.dart';
+import '../../domain/image_quality/image_quality_evaluator.dart';
 import '../../presentation/utils/face_image_processor.dart';
 import '../models/skin_report_model.dart';
 
@@ -18,24 +19,36 @@ class SkinAnalysisApiDataSource {
 
   Future<SkinReportModel> analyzeAndSave({required String imagePath}) async {
     Object? lastError;
+    File? alignedTemp;
 
     try {
+      // Phase 2: quality gate BEFORE upload — no Perfect credits on fail.
+      final gate = await SkinCaptureQualityGate.run(File(imagePath));
+      final sourceForPrepare = gate.readyFile;
+      if (sourceForPrepare.path != imagePath) {
+        alignedTemp = sourceForPrepare;
+      }
+
       for (var attempt = 0; attempt < 2; attempt++) {
         File? prepared;
         try {
           prepared = await FaceImageProcessor.prepareForAnalysis(
-            File(imagePath),
+            sourceForPrepare,
             boostLevel: attempt,
           );
 
+          final formMap = <String, dynamic>{
+            'image': await MultipartFile.fromFile(
+              prepared.path,
+              filename: 'scan.jpg',
+            ),
+            // Operational Hardening — always send faceIntel with explicit runtime.
+            'faceIntel': gate.faceIntelJson,
+          };
+
           final response = await _dio.post<Map<String, dynamic>>(
             MiraApiEndpoints.skinAnalysis,
-            data: FormData.fromMap({
-              'image': await MultipartFile.fromFile(
-                prepared.path,
-                filename: 'scan.jpg',
-              ),
-            }),
+            data: FormData.fromMap(formMap),
             options: Options(
               sendTimeout: const Duration(seconds: 120),
               receiveTimeout: const Duration(seconds: 120),
@@ -62,7 +75,12 @@ class SkinAnalysisApiDataSource {
       }
 
       throw lastError ?? Exception('تعذر إرسال الصورة');
+    } on ImageQualityException {
+      rethrow;
     } finally {
+      if (alignedTemp != null) {
+        await TempImageCleanup.deleteIfExists(alignedTemp.path);
+      }
       await TempImageCleanup.deleteIfExists(imagePath);
     }
   }
@@ -108,7 +126,8 @@ class SkinAnalysisApiDataSource {
     final miraReport = MiraBeautyReportMapper.fromJson(miraJson);
     final id = data['id'] as String?;
     final createdAtRaw = data['createdAt'] as String?;
-    final createdAt = createdAtRaw != null ? DateTime.tryParse(createdAtRaw) : null;
+    final createdAt =
+        createdAtRaw != null ? DateTime.tryParse(createdAtRaw) : null;
 
     final report = MiraBeautyReportMapper.toSkinReport(
       miraReport,

@@ -25,13 +25,21 @@ services:
       - key: SKIN_PROVIDER
         value: perfect_corp
       - key: OUTFIT_PROVIDER
+        # LEGACY path only — canonical fashion is Vision Platform /ai/vision/outfit/analyze
         value: mock
       - key: PERFECT_API_KEY
         sync: false
       - key: PERFECT_BASE_URL
         value: https://yce-api-01.makeupar.com/s2s/v2.0
       - key: PERFECT_CORP_FALLBACK_MOCK
-        value: "true"
+        # Phase 0 — must be false in production (startup integrity gate)
+        value: "false"
+      - key: MOCK_PROVIDER_ACCESS
+        value: "false"
+      - key: FASHION_PROVIDER
+        value: vision_platform
+      - key: BEAUTY_TRYON_ENABLED
+        value: "false"
       - key: FASHN_API_KEY
         sync: false
       - key: FASHN_BASE_URL

@@ -38,6 +38,6 @@ import {
     ConsultationMessageService,
     ConsultationOrchestratorService,
   ],
-  exports: [ConsultationOrchestratorService],
+  exports: [ConsultationOrchestratorService, MceGroundingPipelineService],
 })
 export class ConsultationModule {}

@@ -5,8 +5,9 @@ import '../../../../shared/theme/typography.dart';
 import '../../../../shared/widgets/premium/beauty_score_ring.dart';
 import '../../../../shared/widgets/premium/premium_card.dart';
 import '../../domain/entities/mira_beauty_report.dart';
+import '../../domain/entities/result_provenance.dart';
 
-/// Section 1 — Overall beauty score hero (single aggregate score only).
+/// Section 1 — Skin Vitality Index hero (legacy field: overallBeautyScore).
 class BeautyScoreHero extends StatelessWidget {
   final MiraBeautyReport report;
 
@@ -14,12 +15,24 @@ class BeautyScoreHero extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    if (!report.canDisplayInProduction) {
+      return PremiumCard(
+        padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 24),
+        child: Text(
+          report.provenance?.unavailableReason ??
+              'النتيجة غير متاحة للعرض في الإنتاج.',
+          style: AppTypography.bodyMedium,
+          textAlign: TextAlign.center,
+        ),
+      );
+    }
+
     return PremiumCard(
       padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 24),
       child: Column(
         children: [
           Text(
-            'MIRA BEAUTY REPORT',
+            'MIRA SKIN REPORT',
             style: AppTypography.labelSmall.copyWith(
               color: AppColors.gold,
               letterSpacing: 1.4,
@@ -28,11 +41,20 @@ class BeautyScoreHero extends StatelessWidget {
           ),
           const SizedBox(height: 16),
           BeautyScoreRing(
-            score: report.overallBeautyScore.toDouble(),
+            score: report.skinVitalityIndex.toDouble(),
             size: 140,
-            label: 'مؤشر جمال البشرة',
+            label: report.displayScoreLabelAr,
           ),
-          const SizedBox(height: 20),
+          const SizedBox(height: 12),
+          Text(
+            report.scoreSupportingAr,
+            style: AppTypography.bodySmall.copyWith(
+              color: AppColors.textSecondary,
+              height: 1.45,
+            ),
+            textAlign: TextAlign.center,
+          ),
+          const SizedBox(height: 16),
           Text(
             report.headlineAr,
             style: AppTypography.titleLarge.copyWith(height: 1.45),
@@ -47,8 +69,20 @@ class BeautyScoreHero extends StatelessWidget {
             ),
             child: Text(
               'نوع البشرة: ${report.skinTypeAr}',
-              style: AppTypography.labelLarge.copyWith(color: AppColors.primaryDark),
+              style: AppTypography.labelLarge
+                  .copyWith(color: AppColors.primaryDark),
             ),
+          ),
+          const SizedBox(height: 14),
+          Text(
+            report.disclaimerAr.isNotEmpty
+                ? report.disclaimerAr
+                : CosmeticCopy.disclaimerAr,
+            style: AppTypography.labelSmall.copyWith(
+              color: AppColors.textSecondary,
+              height: 1.4,
+            ),
+            textAlign: TextAlign.center,
           ),
         ],
       ),

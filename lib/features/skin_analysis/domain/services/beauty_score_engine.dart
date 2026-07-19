@@ -3,7 +3,8 @@ import '../entities/capture_quality_signals.dart';
 import '../entities/skin_report.dart';
 import 'skin_report_matrix.dart';
 
-/// Strict, penalty-based MIRA beauty scoring — no simple averages.
+/// Strict, penalty-based MIRA Skin Vitality Index engine (legacy: BeautyScore).
+/// Not an objective attractiveness or medical score.
 abstract final class BeautyScoreEngine {
   BeautyScoreEngine._();
 
@@ -45,7 +46,7 @@ abstract final class BeautyScoreEngine {
     'radiance': 'الإشراق',
   };
 
-  /// Computes a realistic beauty score from skin metrics.
+  /// Computes Skin Vitality Index from skin metrics (deterministic).
   static BeautyScoreResult compute(
     SkinReport report, {
     CaptureQualitySignals captureQuality = const CaptureQualitySignals.neutral(),

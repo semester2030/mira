@@ -1,0 +1,31 @@
+{
+  "version": "face-reco-v1",
+  "engineId": "face-styling-reco-v1",
+  "shapeId": "oval",
+  "recommendationIds": [
+    "edu_face_styling_disclaimer",
+    "rec_hairstyle_oval"
+  ],
+  "categories": [
+    "educational",
+    "hairstyle"
+  ],
+  "evidence": [
+    {
+      "id": "edu_face_styling_disclaimer",
+      "findingIds": [],
+      "metricIds": [],
+      "productLockIn": false
+    },
+    {
+      "id": "rec_hairstyle_oval",
+      "findingIds": [
+        "face_shape_oval"
+      ],
+      "metricIds": [
+        "faceShape"
+      ],
+      "productLockIn": false
+    }
+  ]
+}

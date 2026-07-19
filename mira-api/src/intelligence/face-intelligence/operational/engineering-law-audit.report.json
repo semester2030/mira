@@ -1,0 +1,47 @@
+{
+  "passed": true,
+  "findings": [
+    {
+      "law": "EL4",
+      "severity": "pass",
+      "title": "Single Face Report pipeline call in IntelligenceService",
+      "evidence": "runFaceReportPipeline occurrences in intelligence.service.ts: 1"
+    },
+    {
+      "law": "EL4",
+      "severity": "pass",
+      "title": "Flutter client mirror gate present",
+      "evidence": "../lib/features/face_intelligence/domain/face_client_mirror_gate.dart"
+    },
+    {
+      "law": "EL1",
+      "severity": "pass",
+      "title": "Flutter FaceFoundationPipeline gated against production",
+      "evidence": "face_foundation.dart assertMirrorAllowed"
+    },
+    {
+      "law": "EL3",
+      "severity": "pass",
+      "title": "Runtime ownership on MiraBeautyReport",
+      "evidence": "faceIntelligenceRuntime field wiring"
+    },
+    {
+      "law": "EL5",
+      "severity": "pass",
+      "title": "API runFaceReportPipeline is single SoT for production report",
+      "evidence": "report.pipeline.ts"
+    },
+    {
+      "law": "EL2",
+      "severity": "pass",
+      "title": "Reuse production bridge + parse (no parallel report builder)",
+      "evidence": "FaceIntelProductionBridge + parseFaceIntelPackage"
+    },
+    {
+      "law": "EL1",
+      "severity": "warn",
+      "title": "Flutter Face engines retained as Testing/Future offline mirrors",
+      "evidence": "Documented in flutter_face_engine_ownership.md; gated by FaceClientMirrorGate"
+    }
+  ]
+}

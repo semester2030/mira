@@ -461,8 +461,9 @@ export class AdminService {
         outfitProvider: this.config.get<string>('OUTFIT_PROVIDER', 'mock'),
         perfectCorpKeySet: perfect.apiKey.length > 0,
         perfectCorpFallbackMock:
-          this.config.get<string>('PERFECT_CORP_FALLBACK_MOCK', 'true') !==
-          'false',
+          this.config.get<string>('PERFECT_CORP_FALLBACK_MOCK', 'false') ===
+          'true' &&
+          this.config.get<string>('NODE_ENV', 'development') !== 'production',
         fashnKeySet:
           (this.config.get<string>('FASHN_API_KEY') ?? '').length > 0,
         llmKeySet: (this.config.get<string>('LLM_API_KEY') ?? '').length > 0,

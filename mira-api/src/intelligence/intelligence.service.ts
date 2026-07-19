@@ -6,6 +6,17 @@ import {
   MiraBeautyReport,
   ProgressForecastPayload,
 } from './contracts/mira-beauty-report.interface';
+import {
+  buildSkinVitalityProvenance,
+  DISCLAIMER_AR,
+  DISCLAIMER_EN,
+  SCORE_SCHEMA_VERSION,
+  SKIN_VITALITY_LABEL_AR,
+  SKIN_VITALITY_LABEL_EN,
+  SKIN_VITALITY_SUPPORTING_AR,
+  assertDisplayableInProduction,
+} from './contracts/result-provenance';
+import { isProductionEnv } from '../config/production-integrity';
 import { buildAgeComparison } from './pipeline/age-intelligence';
 import {
   applyChildSafetyGuard,
@@ -26,11 +37,26 @@ import { buildTreatmentPlan } from './pipeline/treatment-plan-engine';
 import { buildWeeklyPlan } from './pipeline/weekly-plan-engine';
 import { buildBeautyJourney } from './pipeline/beauty-journey-engine';
 import { buildConfidenceLayer } from './pipeline/confidence-layer';
-import { computeBeautyScore } from './pipeline/beauty-score-engine';
+import { CaptureQualitySignals } from './pipeline/beauty-score-engine';
 import {
   extractLegacySkinFromStored,
   extractMiraReportFromStored,
 } from '../skin-analysis/dto/skin-analysis-response.dto';
+import { SkinMetric } from '../ports/skin/skin-analysis.port';
+import { buildResultMeta, ResultMeta } from '../ports/shared/result-meta';
+import {
+  ProgressSnapshot,
+  runSkinIntelligencePipeline,
+} from './skin-intelligence';
+import {
+  FaceReportPipelineInput,
+  runFaceReportPipeline,
+} from './face-intelligence';
+import {
+  FACE_INTEL_RUNTIME_NOT_REQUESTED,
+  FaceIntelRuntimeStateDto,
+  faceIntelRuntimeUnavailable,
+} from './face-intelligence/face-intel-runtime-state';
 
 @Injectable()
 export class IntelligenceService {
@@ -46,6 +72,24 @@ export class IntelligenceService {
       birthYear?: number | null;
       rawYouCam?: unknown;
       previousBeautyScore?: number | null;
+      isMock?: boolean;
+      providerName?: string;
+      providerVersion?: string;
+      captureQuality?: CaptureQualitySignals;
+      /** Phase 3 — port metrics (never raw provider JSON). */
+      portMetrics?: SkinMetric[];
+      portMeta?: ResultMeta;
+      analysisId?: string;
+      previousProgressSnapshot?: ProgressSnapshot | null;
+      captureVersion?: string;
+      qualityVersion?: string;
+      sameCaptureQuality?: boolean;
+      /**
+       * Phase 4E/4.5 — on-device face intel inputs (anchors/pose).
+       * Operational Hardening — runtime is always explicit when provided.
+       */
+      faceIntel?: FaceReportPipelineInput;
+      faceIntelRuntime?: FaceIntelRuntimeStateDto;
     },
   ): Promise<MiraBeautyReport> {
     const safety = applyChildSafetyGuard({
@@ -79,14 +123,108 @@ export class IntelligenceService {
       concernIds: mainConcerns.map((c) => c.id),
     });
 
-    const beautyScore = computeBeautyScore(skin, {
-      previousScore: options?.previousBeautyScore,
+    const production = isProductionEnv(process.env.NODE_ENV);
+    const isMock = options?.isMock === true;
+    const provider =
+      options?.providerName ?? (isMock ? 'mock_skin' : 'perfect_corp');
+
+    const portMeta: ResultMeta =
+      options?.portMeta ??
+      buildResultMeta({
+        source: isMock ? 'mock' : 'provider_measured',
+        provider,
+        providerVersion: options?.providerVersion,
+        confidence: 70,
+        isMock,
+        isProduction: production,
+        calculationVersion: 'svi-v2',
+        limitations: ['Built without port meta — metrics from legacy skin only'],
+      });
+
+    const intel = runSkinIntelligencePipeline({
+      analysisId: options?.analysisId ?? 'pending',
+      portMetrics: options?.portMetrics,
+      legacy: skin,
+      meta: portMeta,
+      captureQuality: options?.captureQuality,
+      captureVersion: options?.captureVersion,
+      qualityVersion: options?.qualityVersion,
+      previousSnapshot: options?.previousProgressSnapshot,
+      sameCaptureQuality: options?.sameCaptureQuality,
     });
+
+    const provenance = buildSkinVitalityProvenance({
+      isMock,
+      provider,
+      providerVersion: options?.providerVersion ?? options?.portMeta?.providerVersion,
+      confidence: intel.sviConfidence,
+      isProduction: production,
+      limitations: [
+        'Skin Vitality Index v2 — locally calculated from available metrics only (dynamic denominator).',
+        'Not objective attractiveness, medical health, or clinical diagnosis.',
+        ...intel.report.limitations.slice(0, 3),
+      ],
+    });
+    assertDisplayableInProduction(provenance, production);
+
+    const summaryFromIntel =
+      intel.report.executiveSummaryAr ||
+      tipsAr[0] ||
+      mainConcerns[0]?.narrativeAr ||
+      '';
+
+    // Operational Hardening — Face Report pipeline executes at most once.
+    let faceIntelligence: MiraBeautyReport['faceIntelligence'];
+    let faceIntelligenceRuntime: FaceIntelRuntimeStateDto =
+      options?.faceIntelRuntime ?? FACE_INTEL_RUNTIME_NOT_REQUESTED;
+
+    if (options?.faceIntel) {
+      const faceOut = runFaceReportPipeline({
+        ...options.faceIntel,
+        analysisId:
+          options.faceIntel.analysisId ??
+          options.analysisId ??
+          'pending',
+        captureVersion:
+          options.faceIntel.captureVersion ?? options.captureVersion,
+      });
+      faceIntelligence = faceOut.report;
+      if (
+        (!options.faceIntelRuntime ||
+          options.faceIntelRuntime.status === 'AVAILABLE') &&
+        !faceOut.report.measurementEligible
+      ) {
+        faceIntelligenceRuntime = faceIntelRuntimeUnavailable(
+          faceOut.report.eligibilityReasonCodes[0] ??
+            'measurement_ineligible',
+          'eligibility',
+          30,
+        );
+      } else if (!options.faceIntelRuntime) {
+        faceIntelligenceRuntime = {
+          status: 'AVAILABLE',
+          reason: 'face_intel_inputs_ready',
+          stage: 'intelligence',
+          confidence: 80,
+          userVisibleAr: 'تم تجهيز قراءة الملامح.',
+          userVisibleEn: 'Face feature reading is ready.',
+        };
+      } else {
+        faceIntelligenceRuntime = options.faceIntelRuntime;
+      }
+    }
 
     const base: MiraBeautyReport = {
       version: 1,
+      scoreSchemaVersion: SCORE_SCHEMA_VERSION,
       spatialConfidence: zone.spatialConfidence,
-      overallBeautyScore: beautyScore.finalScore,
+      overallBeautyScore: intel.sviScore,
+      displayScoreLabelAr: SKIN_VITALITY_LABEL_AR,
+      displayScoreLabelEn: SKIN_VITALITY_LABEL_EN,
+      scoreSupportingAr: SKIN_VITALITY_SUPPORTING_AR,
+      disclaimerAr: DISCLAIMER_AR,
+      disclaimerEn: DISCLAIMER_EN,
+      provenance,
       headlineAr: buildHeadlineAr(skin),
       skinTypeAr: skin.skinTypeAr,
       skinTypeEn: skin.skinTypeEn,
@@ -95,7 +233,7 @@ export class IntelligenceService {
       childSafety: toChildSafetyPayload(safety),
       mainConcerns,
       dailyRoutine,
-      summaryAdviceAr: tipsAr[0] ?? mainConcerns[0]?.narrativeAr ?? '',
+      summaryAdviceAr: summaryFromIntel,
       tipsAr,
       faceMap: zone.faceMap,
       faceHealthMap: zone.faceHealthMap,
@@ -113,6 +251,9 @@ export class IntelligenceService {
       })),
       weeklyPlan,
       progressForecast: buildProgressForecast([]),
+      skinIntelligence: intel.report,
+      faceIntelligence,
+      faceIntelligenceRuntime,
     } as MiraBeautyReport;
 
     return this.enrichReportLayers(base);

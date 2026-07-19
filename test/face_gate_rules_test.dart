@@ -31,14 +31,24 @@ void main() {
       expect(r.isAccepted, isTrue);
     });
 
-    test('rejects strong head turn', () {
+    test('rejects strong head turn (unified yaw 35°)', () {
       final r = FaceGateRules.evaluate(
         faceCount: 1,
         faceAreaRatio: 0.3,
-        headYawDegrees: 48,
+        headYawDegrees: 36,
       );
       expect(r.isAccepted, isFalse);
       expect(r.reasonCode, 'head_turned');
+    });
+
+    test('rejects strong head pitch (unified pitch 30°)', () {
+      final r = FaceGateRules.evaluate(
+        faceCount: 1,
+        faceAreaRatio: 0.3,
+        headPitchDegrees: 31,
+      );
+      expect(r.isAccepted, isFalse);
+      expect(r.reasonCode, 'head_pitch');
     });
 
     test('rejects horizontally off-center face', () {

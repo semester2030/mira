@@ -1,0 +1,1693 @@
+<!DOCTYPE html>
+<html lang="ar" dir="rtl">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <meta name="description" content="برنامج تحويل ميرا الإنتاجي — تقييم الخطة المرحلية، حوكمة التنفيذ، وبوابات الموافقة من Phase 0 إلى Phase 8." />
+  <title>ميرا · برنامج التحويل الإنتاجي · Production Transformation</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:wght@500;600;700&family=IBM+Plex+Sans+Arabic:wght@400;500;600;700&family=JetBrains+Mono:wght@400;600&family=Tajawal:wght@400;500;700&display=swap" rel="stylesheet" />
+  <link rel="stylesheet" href="mira-production-transformation-program.css" />
+</head>
+<body>
+<div class="layout">
+  <aside>
+    <div class="brand">
+      <span class="brand-mark" title="أيقونة البرنامج — درع حقيقة + مرحلة" aria-hidden="true">
+        <svg viewBox="0 0 24 24" fill="none" stroke="#fff" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round">
+          <path d="M12 3l7 3v5c0 5-3.2 8.2-7 9.5C8.2 19.2 5 16 5 11V6l7-3z"/>
+          <path d="M9.5 12.2l1.8 1.8 3.5-4"/>
+        </svg>
+      </span>
+      <div>
+        <h1>PRODUCTION TRANSFORMATION</h1>
+        <p>ميرا · برنامج مرحلي صارم · v1.0</p>
+      </div>
+    </div>
+
+    <div class="gov-banner">
+      حوكمة: Phase 0→3.5 + Face Intel 4A–4F مكتملات · مسار الوجه مغلق تحققياً · موافقة صريحة قبل المرحلة البرنامجية التالية.
+    </div>
+
+    <a class="switch audit" href="mira-development.html">
+      <span class="ico"><svg viewBox="0 0 24 24" fill="none" stroke="#fff" stroke-width="2"><circle cx="11" cy="11" r="7"/><path d="M20 20l-3-3"/></svg></span>
+      <span>تدقيق التطوير · Evidence Audit</span>
+    </a>
+    <a class="switch ready" href="mira-production-readiness.html">
+      <span class="ico"><svg viewBox="0 0 24 24" fill="none" stroke="#fff" stroke-width="2"><path d="M5 12l4 4L19 6"/></svg></span>
+      <span>جاهزية الإنتاج</span>
+    </a>
+    <a class="switch phase0" href="#phase0-report">
+      <span class="ico"><svg viewBox="0 0 24 24" fill="none" stroke="#fff" stroke-width="2"><path d="M12 3l7 3v5c0 5-3.2 8.2-7 9.5C8.2 19.2 5 16 5 11V6l7-3z"/><path d="M9.5 12.2l1.8 1.8 3.5-4"/></svg></span>
+      <span>تقرير Phase 0 · PASSED</span>
+    </a>
+
+    <input class="nav-search" id="navSearch" type="search" placeholder="ابحث في الأقسام…" />
+
+    <div class="sec-label">الرأي والحوكمة</div>
+    <nav>
+      <a href="#s1">1 · الحكم التنفيذي <span class="st ok">VERDICT</span></a>
+      <a href="#s2">2 · أدلة حية من المستودع</a>
+      <a href="#s3">3 · هل الخطة مناسبة؟</a>
+      <a href="#s4">4 · تعديلات إلزامية</a>
+      <a href="#s5">5 · عملية العمل</a>
+      <a href="#s6">6 · المراحل 0–8 <span class="st now">CORE</span></a>
+      <a href="#s7">7 · ترتيب التنفيذ</a>
+      <a href="#s8">8 · بوابات الإطلاق</a>
+      <a href="#s9">9 · تصنيف مصدر الحقيقة</a>
+      <a href="#phase1-report">P1 · تقرير Phase 1 <span class="st ok">DONE</span></a>
+      <a href="#phase2-report">P2 · تقرير Phase 2 <span class="st ok">DONE</span></a>
+      <a href="#phase2_1-report">P2.1 · إصلاحات التحقق <span class="st ok">DONE</span></a>
+      <a href="#phase3-report">P3 · Skin Intelligence <span class="st ok">DONE</span></a>
+      <a href="#phase3_5-report">P3.5 · Validation & Contracts <span class="st ok">DONE</span></a>
+      <a href="#face-arch-lock">P4 · Architecture Lock <span class="st ok">DONE</span></a>
+      <a href="#phase4a-report">P4A · Face Foundation <span class="st ok">DONE</span></a>
+      <a href="#phase4b-report">P4B · Face Geometry <span class="st ok">DONE</span></a>
+      <a href="#phase4c-report">P4C · Facial Features <span class="st ok">DONE</span></a>
+      <a href="#phase4d-report">P4D · Recommendations <span class="st ok">DONE</span></a>
+      <a href="#phase4e-report">P4E · Face Report <span class="st ok">DONE</span></a>
+      <a href="#phase4f-report">P4F · Validation <span class="st ok">DONE</span></a>
+      <a href="#phase4_5-report">P4.5 · Production Integration <span class="st ok">DONE</span></a>
+      <a href="#phase5a-report">P5A · Beauty Experience Foundation <span class="st ok">DONE</span></a>
+      <a href="#phase5a5-report">P5A.5 · Capability Catalog Freeze <span class="st ok">DONE</span></a>
+      <a href="#phase5b-report">P5B · First Lip Capability <span class="st warn">STOPPED</span></a>
+      <a href="#phase5b0-report">P5B.0 · Provider Readiness <span class="st ok">DONE</span></a>
+      <a href="#phase5b1-report">P5B.1 · Integration Readiness <span class="st ok">DONE</span></a>
+      <a href="#phase6b-report">P6B · Wardrobe Foundation <span class="st ok">DONE</span></a>
+      <a href="#phase6c-report">P6C · Garment Intelligence <span class="st ok">FROZEN</span></a>
+      <a href="#phase6d-report">P6D · Outfit Intelligence <span class="st ok">FROZEN</span></a>
+      <a href="#phase6e-report">P6E · Styling Intelligence <span class="st ok">FROZEN</span></a>
+      <a href="#phase7b-report">P7B · AI Beauty Advisor <span class="st ok">FROZEN</span></a>
+      <a href="#face-arch-lock-plan">P4 · Face Arch Lock</a>
+      <a href="#phase1-plan">P1 · خطة Phase 1</a>
+      <a href="#phase0-report">10 · تقرير Phase 0 <span class="st ok">DONE</span></a>
+      <a href="#s11">11 · سلامة المستودع</a>
+      <a href="#s12">12 · بوابة الموافقة · البرنامج مكتمل <span class="st ok">DONE</span></a>
+    </nav>
+  </aside>
+
+  <main>
+    <div class="progress-wrap"><div class="progress-bar" id="progressBar"></div></div>
+
+    <header class="hero">
+      <div class="hero-inner">
+        <div class="pills">
+          <span class="pill rose">MIRA · PREMIUM TRANSFORMATION</span>
+          <span class="pill ok">Phase 0→3.5 · PASSED</span>
+          <span class="pill ok">Face Intel 4A–4F · DONE</span>
+          <span class="pill ok">Face Intelligence v1.0.0 · FROZEN</span>
+          <span class="pill ok">Operational Hardening · DONE</span>
+          <span class="pill ok">Phase 5A Beauty Experience Foundation · DONE</span>
+          <span class="pill ok">Capability Catalog v1.0.0 · FROZEN</span>
+          <span class="pill warn">Phase 5B · STOPPED — lip license not verified</span>
+          <span class="pill ok">Phase 5B.0 Provider Readiness v1.0.0 · DONE</span>
+          <span class="pill ok">Phase 5B.1 Integration Ready · Provider Exec Disabled</span>
+          <span class="pill ok">Garment Intelligence v1.0.0 · FROZEN</span>
+          <span class="pill ok">Outfit Intelligence v1.0.0 · FROZEN</span>
+          <span class="pill ok">Styling Intelligence v1.0.0 · FROZEN</span>
+          <span class="pill ok">AI Beauty Advisor v1.0.0 · FROZEN</span>
+          <span class="pill ok">Premium Transformation Track · COMPLETE</span>
+          <span class="pill warn">Phase 5B · STOPPED — lip license not verified</span>
+          <span class="pill danger">NO fake PerfectBeautyAdapter · NO live provider calls</span>
+        </div>
+        <h2>برنامج تحويل ميرا الإنتاجي</h2>
+        <p class="lead">
+          مسار الموضة والمستشارة مكتمل ومجمد:
+          <strong>Garment · Outfit · Styling · AI Beauty Advisor</strong> عند v1.0.0.
+          <strong>Phase 5B</strong> ما زال متوقفاً عند الترخيص (صحيح).
+          Recommendation Engine مسار لاحق منفصل.
+          <a href="#phase7b-report">تقرير 7B Freeze</a> ·
+          <a href="#s12">بوابة الإكمال</a>.
+        </p>
+      </div>
+    </header>
+
+    <div class="content">
+
+      <section class="card" id="s1">
+        <h2><span class="num">1</span> الحكم التنفيذي</h2>
+        <div class="callout verdict">
+          <strong>الخطة مناسبة لميرا — مع معايرة إلزامية قبل التنفيذ.</strong><br>
+          ترتيب «الحقيقة أولاً → منافذ → التقاط → بشرة → وجه → Perfect VTO → موضة → تحقق/تحيز → تشغيل»
+          يطابق مخاطر المستودع الفعلية التي وثّقها Evidence Audit، ويحمي من إطلاق premium على نتائج مزروعة.
+        </div>
+        <div class="grid">
+          <div class="stat" onclick="jump('phase2-report')"><b>✓</b><span>Phase 0+1+2 مكتملات</span></div>
+          <div class="stat" onclick="jump('s6')"><b>9</b><span>مراحل (0–8)</span></div>
+          <div class="stat" onclick="jump('phase2-report')"><b>51+</b><span>اختبارات خضراء</span></div>
+          <div class="stat" onclick="jump('phase4f-report')"><b>4F</b><span>Face Validation DONE</span></div>
+          <div class="stat" onclick="jump('phase4_5-report')"><b>4.5</b><span>Production Integration DONE</span></div>
+          <div class="stat" onclick="jump('phase5a-report')"><b>5A</b><span>Beauty Experience Foundation</span></div>
+          <div class="stat" onclick="jump('phase5a5-report')"><b>5A.5</b><span>Capability Catalog Frozen</span></div>
+          <div class="stat" onclick="jump('phase5b-report')"><b>5B</b><span>STOPPED · License gate</span></div>
+          <div class="stat" onclick="jump('phase5b0-report')"><b>5B.0</b><span>Provider Readiness DONE</span></div>
+          <div class="stat" onclick="jump('phase5b1-report')"><b>5B.1</b><span>Integration Ready</span></div>
+          <div class="stat" onclick="jump('phase6b-report')"><b>6B</b><span>Wardrobe Foundation</span></div>
+          <div class="stat" onclick="jump('phase6c-report')"><b>6C</b><span>Garment · FROZEN</span></div>
+          <div class="stat" onclick="jump('phase6d-report')"><b>6D</b><span>Outfit · FROZEN</span></div>
+          <div class="stat" onclick="jump('phase6e-report')"><b>6E</b><span>Styling · FROZEN</span></div>
+          <div class="stat" onclick="jump('phase7b-report')"><b>7B</b><span>Advisor · FROZEN</span></div>
+          <div class="stat" onclick="jump('s12')"><b>✓</b><span>Track Complete</span></div>
+        </div>
+        <p>
+          بعد Phase 0: <code>PERFECT_CORP_FALLBACK_MOCK=false</code> في blueprint،
+          حارس إقلاع يرفض الإعداد غير الآمن، وعرض «مؤشر حيوية البشرة» بدل درجة جمال موضوعية.
+          مسارات Wardrobe → GI → OI → Styling → AI Beauty Advisor مجمّدة رسمياً.
+        </p>
+      </section>
+
+      <section class="card" id="s2">
+        <h2><span class="num">2</span> أدلة حية من المستودع (يوليو 2026)</h2>
+        <p>فُحص فرع <code>cursor/phase2-platform-docs-9309</code> محليًا. أدلة قاطعة:</p>
+        <table>
+          <tr><th>البند</th><th>الواقع</th><th>الملف</th><th>أثر على الخطة</th></tr>
+          <tr>
+            <td>Mock fallback بشرة</td>
+            <td><span class="tag pass">OFF في blueprint + حارس إقلاع</span></td>
+            <td><code>render.yaml</code> · <code>production-integrity.ts</code> · <code>perfect-corp-skin.provider.ts</code></td>
+            <td>Phase 0 مكتمل — زامن Render Dashboard</td>
+          </tr>
+          <tr>
+            <td>Outfit legacy</td>
+            <td><span class="tag adj">OUTFIT_PROVIDER=mock (محجوب في prod)</span></td>
+            <td><code>outfit-analysis.service.ts</code> guard</td>
+            <td>Phase 6 إزالة كاملة</td>
+          </tr>
+          <tr>
+            <td>Beauty Score</td>
+            <td><span class="tag pass">مؤشر حيوية البشرة + disclaimer</span></td>
+            <td><code>BeautyScoreHero</code> · provenance · scoreSchemaVersion=2</td>
+            <td><span class="tag pass">SVI v2 منفَّذ</span></td>
+          </tr>
+          <tr>
+            <td>rawYouCam</td>
+            <td><span class="tag pass">redacted فقط عند التخزين</span></td>
+            <td><code>youcam-audit-redact.ts</code></td>
+            <td>Phase 0 مكتمل</td>
+          </tr>          <tr>
+            <td>Capture quality</td>
+            <td><span class="tag adj">غالبًا neutral</span></td>
+            <td><code>CaptureQualitySignals.neutral()</code> → score engine</td>
+            <td>Phase 2 إلزامي قبل ثقة عالية</td>
+          </tr>
+          <tr>
+            <td>Makeup VTO</td>
+            <td><span class="tag fail">0 في الكود</span></td>
+            <td>Evidence Audit + perfect-services</td>
+            <td>Phase 5 بعد ترخيص فقط</td>
+          </tr>
+          <tr>
+            <td>Vision fashion</td>
+            <td><span class="tag pass">مسار حي FASHN+OpenAI</span></td>
+            <td>Vision Platform · commits حديثة</td>
+            <td>يُحتفظ به كمسار كانوني Phase 6</td>
+          </tr>
+        </table>
+        <div class="evidence">
+          مقتطف سلوكي مؤكد: عند فشل YouCam غير المرتبط بجودة الوجه، إذا
+          <code>allowFallback === true</code> (الافتراضي) يُستدعى
+          <code>this.mock.analyze(imageBytes)</code> ويُعاد للمستخدم كنتيجة تحليل —
+          وهذا بالضبط ما تمنعُه Phase 0.
+        </div>
+      </section>
+
+      <section class="card" id="s3">
+        <h2><span class="num">3</span> هل الخطة مناسبة لميرا؟ — تحليل عميق</h2>
+        <h3>ما يناسب تمامًا</h3>
+        <ul>
+          <li><strong>Phase 0 قبل كل شيء</strong> — المستودع لديه فجوة مصداقية مثبتة (mock + تسمية جمال).</li>
+          <li><strong>تصنيف مصدر الحقيقة</strong> — مطلوب لأن النظام يخلط YouCam وheuristics وmock وVision.</li>
+          <li><strong>فصل البشرة عن الوجه عن الموضة</strong> — يمنع إعادة إنتاج «درجة جاذبية» ضارة.</li>
+          <li><strong>Phase 7 تحقق/تحيز قبل الإطلاق</strong> — يمنع ادعاءات App Store غير مدعومة.</li>
+          <li><strong>حوكمة مرحلة بمرحلة</strong> — تناسب فريقًا صغيرًا ومستودعًا كبيرًا (Flutter + Nest + docs).</li>
+        </ul>
+        <h3>ما يحتاج معايرة (لا رفض)</h3>
+        <ul>
+          <li>Phase 1 واسعة — نفّذ ports للمسارات الحرجة فقط (Skin/Fashion/TryOn) أولًا، لا 12 منفذًا دفعة واحدة.</li>
+          <li>Phase 4/5 قد تتوازي جزئيًا بعد Phase 3 إذا التقطت الجودة (Phase 2) جاهزة — لكن ليس قبل Phase 0–1.</li>
+          <li>Phase 6 تعتمد على Vision الموجود — ركّز على عزل legacy لا إعادة بناء كاملة.</li>
+          <li>نصوص الموقع التسويقي (<code>docs/index.html</code>) جزء من مشكلة المصداقية ويجب إدراجها في 0.4.</li>
+        </ul>
+        <div class="callout warn">
+          <strong>خلاصة الرأي:</strong> اعتمد الخطة كـ <em>برنامج برنامج رسمي</em>،
+          مع قائمة التعديلات في القسم 4 كـ «ملحق حوكمة v1.0»،
+          ولا تبدأ التنفيذ البرمجي إلا بـ Phase 0 بعد موافقتك الصريحة.
+        </div>
+      </section>
+
+      <section class="card" id="s4">
+        <h2><span class="num">4</span> تعديلات إلزامية على الخطة الأصلية</h2>
+        <div id="adjustmentsRoot"></div>
+      </section>
+
+      <section class="card" id="s5">
+        <h2><span class="num">5</span> عملية العمل الاحترافية (كيف ننفّذ)</h2>
+        <div class="timeline">
+          <div class="tl-item">
+            <h4>A · Discovery مغلق</h4>
+            <p>Evidence Audit + هذا البرنامج = مصدر الحقيقة للحوكمة. لا استراتيجية متضاربة جديدة دون ربط.</p>
+          </div>
+          <div class="tl-item">
+            <h4>B · موافقة مرحلة</h4>
+            <p>أنت توافق على بدء Phase N كتابيًا. الوكيل لا يبدأ N+1 تلقائيًا.</p>
+          </div>
+          <div class="tl-item">
+            <h4>C · خطة تنفيذ مصغّرة</h4>
+            <p>قبل أي تعديل كود: قائمة ملفات · مخاطر · اختبارات · تراجع. (مطلوب في Phase 0 من الخطة.)</p>
+          </div>
+          <div class="tl-item">
+            <h4>D · تنفيذ + اختبارات</h4>
+            <p>Flutter + Nest للمسارات المتأثرة. لا إخفاء فشل. لا «مكتمل» مع اختبار أحمر.</p>
+          </div>
+          <div class="tl-item">
+            <h4>E · تقرير إكمال بالقالب الإلزامي</h4>
+            <p>17 قسمًا كما في مواصفاتك (ملفات · قبول · مخاطر · نشر · تراجع · بوابة موافقة).</p>
+          </div>
+          <div class="tl-item">
+            <h4>F · قرارك: قبول / إعادة عمل / تأجيل</h4>
+            <p>فقط بعد القبول يُفتح قفل المرحلة التالية في هذا الموقع وفي التنفيذ.</p>
+          </div>
+        </div>
+        <div class="flow">PHASE GATE LOOP
+  approve(Phase N)
+       → implement(N) only
+       → test(N)
+       → report(N)
+       → STOP
+       → wait(explicit approve N+1)
+       → … until Phase 8 final report</div>
+      </section>
+
+      <section class="card" id="s6">
+        <h2><span class="num">6</span> المراحل 0–8 — بطاقات العمل</h2>
+        <p>اضغط أي مرحلة للتفاصيل. المرحلة 0 فقط مفتوحة للتنفيذ عند موافقتك.</p>
+        <div id="phasesRoot"></div>
+      </section>
+
+      <section class="card" id="s7">
+        <h2><span class="num">7</span> ترتيب التنفيذ الموصى به</h2>
+        <div class="flow">Day-0 (docs)     هذا الموقع + ربط التنقل ✓
+Day-1 (Phase 0)  render guard → typed failure → rename SVI → provenance
+                 → disclaimer → redact rawYouCam → isolate legacy → tests
+     GATE ★
+Phase 1          Skin/Fashion ports + unsafe config fail-fast + CI soft
+     GATE
+Phase 2          CaptureQuality wired + gate before upload
+     GATE
+Phase 3          Skin Vitality Index v2 + no fake skin age
+     GATE
+Phase 4          Face geometry (no attractiveness score)
+     GATE
+Phase 5          Perfect VTO only if licensed (else skip/defer)
+     GATE
+Phase 6          Canonical Vision path · retire mock outfit path
+     GATE
+Phase 7          Validation + claim matrix + limited rollout
+     GATE
+Phase 8          SLOs · cost · retention · runbooks
+     ★ Premium controlled launch decision</div>
+      </section>
+
+      <section class="card" id="s8">
+        <h2><span class="num">8</span> بوابات الإطلاق (منفصلة عن بوابات المراحل)</h2>
+        <table>
+          <tr><th>البوابة</th><th>الشرط الأدنى</th><th>القرار</th></tr>
+          <tr>
+            <td>Internal dogfood</td>
+            <td>Phase 0 مقبولة + mock OFF في prod + disclaimer</td>
+            <td>فريق داخلي فقط</td>
+          </tr>
+          <tr>
+            <td>Closed beta</td>
+            <td>Phase 0–3 + جودة التقاط + claim matrix مسودة</td>
+            <td>مدعوات محدودات</td>
+          </tr>
+          <tr>
+            <td>Conditional premium</td>
+            <td>Phase 0–6 + flags تكلفة + لا ادعاءات محظورة</td>
+            <td>ميزات premium بعلم</td>
+          </tr>
+          <tr>
+            <td>Public premium</td>
+            <td>Phase 7 تحيز/تحقق + Phase 8 مراقبة أساسية</td>
+            <td>إطلاق عام محسوب</td>
+          </tr>
+        </table>
+        <div class="callout danger">
+          لا تُعلن «PRODUCTION · جاهزية كاملة» على الموقع التسويقي بينما Blueprint الإنتاج ما زال يسمح بـ mock fallback.
+        </div>
+      </section>
+
+      <section class="card" id="s9">
+        <h2><span class="num">9</span> تصنيف مصدر الحقيقة (إلزامي لكل نتيجة)</h2>
+        <table>
+          <tr><th>resultSource</th><th>المعنى</th><th>canDisplay في prod؟</th></tr>
+          <tr><td><code>provider_measured</code></td><td>قياس من مزود (مثل YouCam)</td><td>نعم مع ثقة</td></tr>
+          <tr><td><code>local_measured</code></td><td>قياس محلي حقيقي (blur/landmarks)</td><td>نعم</td></tr>
+          <tr><td><code>locally_calculated</code></td><td>حساب حتمي من مقاييس متاحة (SVI)</td><td>نعم + شرح</td></tr>
+          <tr><td><code>inferred</code></td><td>استنتاج (undertone ضعيف الإضاءة)</td><td>نعم مع وسم واضح</td></tr>
+          <tr><td><code>heuristic</code></td><td>قاعدة/وزن محلي</td><td>نعم مع وسم</td></tr>
+          <tr><td><code>user_supplied</code></td><td>إدخال مستخدمة</td><td>نعم</td></tr>
+          <tr><td><code>mock</code></td><td>نتيجة مزروعة</td><td><span class="tag fail">لا</span></td></tr>
+          <tr><td><code>unavailable</code></td><td>غير متاح</td><td>حالة فارغة صريحة</td></tr>
+        </table>
+        <p>مستويات الثقة: <code>high</code> · <code>medium</code> · <code>low</code> · <code>unavailable</code></p>
+      </section>
+
+      <section class="card" id="phase1-plan">
+        <h2><span class="num">P1</span> خطة تنفيذ Phase 1 (قبل التعديل)</h2>
+        <div class="callout verdict">
+          <strong>الحالة:</strong> Discovery + تنفيذ مكتملان · انظر <a href="#phase1-report">تقرير Phase 1</a> · Phase 2 نُفِّذت لاحقًا.
+          حماية Phase 0 بقيت سليمة.
+        </div>
+        <h3>اكتشاف المسارات الكانونية</h3>
+        <ul>
+          <li><strong>Skin:</strong> Flutter API → <code>/ai/skin-analysis</code> → <code>SkinAnalysisService</code> → <code>SKIN_ANALYSIS_PROVIDER</code> → PerfectCorp → Intelligence → Prisma → UI</li>
+          <li><strong>Fashion:</strong> Flutter Vision → <code>/ai/vision/outfit/analyze</code> → <code>VisionOrchestratorService</code> → FASHN + OpenAI → normalize → Flutter</li>
+          <li><strong>Legacy:</strong> <code>OUTFIT_PROVIDER=mock</code> محجوب في الإنتاج (Phase 0)</li>
+        </ul>
+        <h3>نطاق التنفيذ (5 منافذ فقط)</h3>
+        <ol style="font-size:0.88rem;color:var(--muted)">
+          <li><code>SkinAnalysisPort</code> + PerfectCorpSkinAdapter + MockSkinAdapter</li>
+          <li><code>FashionAnalysisPort</code> + VisionFashionAdapter (FASHN+OpenAI)</li>
+          <li><code>ImageQualityPort</code> + adapter صادق (unavailable لما لم يُقاس)</li>
+          <li><code>BeautyTryOnPort</code> + DisabledBeautyTryOnAdapter + flag false</li>
+          <li><code>AnalysisTelemetryPort</code> + Noop adapter (لا ادعاء مراقبة)</li>
+        </ol>
+        <h3>Orchestrators</h3>
+        <p><code>SkinAnalysisOrchestrator</code> · <code>FashionAnalysisOrchestrator</code> — تحقق · استدعاء · أخطاء typed · provenance · telemetry · بدون mock صامت.</p>
+        <h3>مجلد جديد</h3>
+        <p><code>mira-api/src/ports/</code> — لا حذف لمزودين عاملين قبل التحقق · لا إعادة تصميم UI · لا تغيير معادلة SVI.</p>
+        <div class="callout verdict">نُفِّذ — التفاصيل في <a href="#phase1-report">تقرير Phase 1</a>.</div>
+      </section>
+
+      <section class="card" id="phase1-report">
+        <h2><span class="num">P1</span> تقرير إكمال Phase 1</h2>
+        <div class="callout verdict">
+          <strong>1. Executive result: Passed</strong><br>
+          5 منافذ · محولات · Orchestrators · أخطاء typed · إعداد fail-fast · CI · وثائق · Phase 0 أخضر.
+        </div>
+        <h3>Ports / Adapters</h3>
+        <table>
+          <tr><th>Port</th><th>Adapter</th><th>Orchestrator</th></tr>
+          <tr><td>SkinAnalysisPort</td><td>PerfectCorpSkinAdapter · MockSkinAdapter</td><td>SkinAnalysisOrchestrator</td></tr>
+          <tr><td>FashionAnalysisPort</td><td>VisionFashionAdapter</td><td>FashionAnalysisOrchestrator</td></tr>
+          <tr><td>ImageQualityPort</td><td>CaptureImageQualityAdapter</td><td>—</td></tr>
+          <tr><td>BeautyTryOnPort</td><td>DisabledBeautyTryOnAdapter</td><td>—</td></tr>
+          <tr><td>AnalysisTelemetryPort</td><td>NoopAnalysisTelemetryAdapter</td><td>—</td></tr>
+        </table>
+        <h3>Tests</h3>
+        <table>
+          <tr><th>الأمر</th><th>النتيجة</th></tr>
+          <tr><td><code>npm run test:phase0-integrity</code></td><td><span class="tag pass">PASS</span> 10</td></tr>
+          <tr><td><code>npm run test:phase1-ports</code></td><td><span class="tag pass">PASS</span> 14</td></tr>
+          <tr><td><code>flutter test</code> phase0 + beauty</td><td><span class="tag pass">PASS</span> 11</td></tr>
+        </table>
+        <h3>Docs / CI / Rollback</h3>
+        <ul>
+          <li><a href="architecture/provider-ports.md">provider-ports.md</a></li>
+          <li><a href="architecture/analysis-orchestration.md">analysis-orchestration.md</a></li>
+          <li><a href="architecture/state-management-boundaries.md">state-management-boundaries.md</a></li>
+          <li><a href="deployment/phase1-environment.md">phase1-environment.md</a></li>
+          <li><a href="phase1-rollback.md">phase1-rollback.md</a></li>
+          <li><code>.github/workflows/mira-ci.yml</code></li>
+        </ul>
+        <h3>Phase 0 regression</h3>
+        <p><span class="tag pass">Pass</span> — mock fallback / SVI / provenance / redact / legacy outfit block لم تُضعَف.</p>
+        <div class="callout gate">
+          Phase 1 is complete and implementation has stopped.
+          Explicit approval is required before Phase 2.
+        </div>
+      </section>
+
+      <section class="card" id="phase2-report">
+        <h2><span class="num">P2</span> تقرير إكمال Phase 2</h2>
+        <div class="callout verdict">
+          <strong>1. Executive result: Passed</strong><br>
+          جودة التقاط حقيقية · بوابة قبل الرفع والخادم · محاذاة وجه · qc-v1 · حماية أرصدة Perfect · لا Phase 3.
+        </div>
+        <h3>2–7 Architecture summary</h3>
+        <ul>
+          <li><strong>ImageQuality</strong> — measured vs unavailable؛ Laplacian blur · brightness · contrast · exposure · pose (ML Kit)</li>
+          <li><strong>Pipeline</strong> — Capture → quality → ML Kit → align → normalize → upload → server IQ → analysis</li>
+          <li><strong>Alignment</strong> — roll ≤28° · face 58% · short≥1280 · لا تمديد هندسي</li>
+          <li><strong>Confidence</strong> — <code>qc-v1</code> حتمي وإصداري؛ SVI formula لم تُغيَّر</li>
+        </ul>
+        <h3>8. Key files</h3>
+        <p style="font-size:0.82rem;color:var(--muted)">
+          <code>lib/.../image_quality/**</code> · <code>face_image_processor.dart</code> ·
+          <code>capture-image-quality.adapter.ts</code> · <code>pixel-image-metrics.ts</code> ·
+          <code>skin-analysis.service.ts</code>
+        </p>
+        <h3>9–10 Tests / Regression</h3>
+        <table>
+          <tr><th>الأمر</th><th>النتيجة</th></tr>
+          <tr><td><code>npm run test:phase0-integrity</code></td><td><span class="tag pass">PASS</span> 10</td></tr>
+          <tr><td><code>npm run test:phase1-ports</code></td><td><span class="tag pass">PASS</span> 14</td></tr>
+          <tr><td><code>npm run test:phase2-image-quality</code></td><td><span class="tag pass">PASS</span> 5</td></tr>
+          <tr><td><code>flutter test</code> phase0+1 anchors + phase2</td><td><span class="tag pass">PASS</span> 31</td></tr>
+        </table>
+        <h3>Docs / Rollback</h3>
+        <ul>
+          <li><a href="architecture/image-quality.md">image-quality.md</a></li>
+          <li><a href="architecture/face-alignment.md">face-alignment.md</a></li>
+          <li><a href="phase2-rollback.md">phase2-rollback.md</a></li>
+        </ul>
+        <div class="callout gate">
+          Phase 2 is complete and implementation has stopped.
+          Explicit approval is required before Phase 3.
+        </div>
+      </section>
+
+      <section class="card" id="phase2_1-report">
+        <h2><span class="num">P2.1</span> تقرير إكمال Phase 2.1 — Critical Verification Fixes</h2>
+        <div class="callout verdict">
+          <strong>Passed</strong> — BlazeFace server face · no fake measured signals · unified pose thresholds ·
+          contrast informational · provider protection tests · perf measured · Phase 0/1/2 green.
+        </div>
+        <ul>
+          <li><a href="architecture/server-face-presence.md">server-face-presence.md</a></li>
+          <li><a href="architecture/capture-quality-thresholds.md">capture-quality-thresholds.md</a></li>
+          <li><a href="architecture/phase2_1-performance.md">phase2_1-performance.md</a></li>
+          <li><a href="phase2.1-rollback.md">phase2.1-rollback.md</a></li>
+          <li><code>npm run test:phase2.1</code> · <code>npm run test:phase2.1-perf</code></li>
+        </ul>
+        <div class="callout gate">
+          Phase 2.1 is complete and implementation has stopped.
+          Explicit approval is required before Phase 3.
+        </div>
+      </section>
+
+      <section class="card" id="phase0-report">        <h2><span class="num">10</span> تقرير إكمال Phase 0</h2>
+        <div class="callout verdict">
+          <strong>1. Executive result: Passed</strong><br>
+          لا silent mock في الإنتاج · مؤشر حيوية البشرة · provenance · disclaimer · تخزين redacted · حارس إعداد · اختبارات خضراء.
+        </div>
+
+        <h3>2. Objectives completed</h3>
+        <ul>
+          <li>0.1 تعطيل silent Perfect mock fallback في الإنتاج + فشل Typed</li>
+          <li>0.2 إعادة تسمية واجهة المستخدم إلى «مؤشر حيوية البشرة» مع حفظ <code>overallBeautyScore</code></li>
+          <li>0.3 نموذج <code>ResultProvenance</code> (TS + Dart)</li>
+          <li>0.4 إخلاء مسؤولية تجميلي AR/EN في التقرير والموقع</li>
+          <li>0.5 <code>redactYouCamAudit</code> — لا تخزين rawYouCam كامل</li>
+          <li>0.6 عزل مسار OUTFIT mock + حجب في الإنتاج</li>
+          <li>0.7 اختبارات Phase 0 (API 10 + Flutter 4 + beauty engine 7)</li>
+        </ul>
+
+        <h3>3. Files changed (أساسي)</h3>
+        <table>
+          <tr><th>المسار</th><th>الغرض</th></tr>
+          <tr><td><code>mira-api/src/config/production-integrity.ts</code></td><td>حارس إعداد الإنتاج</td></tr>
+          <tr><td><code>mira-api/src/main.ts</code></td><td>assert عند الإقلاع</td></tr>
+          <tr><td><code>mira-api/src/ai/mocks/perfect-corp-skin.provider.ts</code></td><td>لا mock في prod</td></tr>
+          <tr><td><code>mira-api/src/skin-analysis/skin-analysis.service.ts</code></td><td>redact + رفض mock</td></tr>
+          <tr><td><code>mira-api/src/intelligence/intelligence.service.ts</code></td><td>SVI + provenance</td></tr>
+          <tr><td><code>mira-api/src/outfit-analysis/outfit-analysis.service.ts</code></td><td>حجب legacy mock</td></tr>
+          <tr><td><code>render.yaml</code></td><td>FALLBACK=false</td></tr>
+          <tr><td><code>lib/.../beauty_score_hero.dart</code> + ring + report screen</td><td>واجهة SVI + disclaimer</td></tr>
+          <tr><td><code>docs/phase0-rollback.md</code></td><td>مسار تراجع</td></tr>
+        </table>
+
+        <h3>10. Tests executed</h3>
+        <table>
+          <tr><th>الأمر</th><th>النتيجة</th></tr>
+          <tr><td><code>npm run test:phase0-integrity</code></td><td><span class="tag pass">PASS</span> 10 checks</td></tr>
+          <tr><td><code>flutter test test/phase0_truth_safety_test.dart test/beauty_score_engine_test.dart</code></td><td><span class="tag pass">PASS</span> 11 tests</td></tr>
+          <tr><td><code>dart analyze</code> (intelligence + ring + errors)</td><td><span class="tag pass">No issues</span></td></tr>
+        </table>
+
+        <h3>12. Acceptance criteria</h3>
+        <table>
+          <tr><th>المعيار</th><th>الحكم</th><th>دليل</th></tr>
+          <tr><td>لا silent mock في production</td><td><span class="tag pass">Pass</span></td><td>isPerfectMockFallbackAllowed + perfect-corp provider</td></tr>
+          <tr><td>لا نتيجة مزيفة كحقيقية</td><td><span class="tag pass">Pass</span></td><td>isMock + canDisplay=false + ServiceUnavailable</td></tr>
+          <tr><td>Beauty Score ليس جاذبية موضوعية</td><td><span class="tag pass">Pass</span></td><td>مؤشر حيوية البشرة + supporting copy</td></tr>
+          <tr><td>إخلاء مسؤولية ظاهر</td><td><span class="tag pass">Pass</span></td><td>تقرير ميرا + disclaimer fields</td></tr>
+          <tr><td>provenance + confidence</td><td><span class="tag pass">Pass</span></td><td>result-provenance.ts / .dart</td></tr>
+          <tr><td>تخزين provider مُقلَّل</td><td><span class="tag pass">Pass</span></td><td>redactYouCamAudit</td></tr>
+          <tr><td>إعداد الإنتاج يرفض قيمًا غير آمنة</td><td><span class="tag pass">Pass</span></td><td>assertProductionIntegrity</td></tr>
+          <tr><td>الاختبارات تمرّ</td><td><span class="tag pass">Pass</span></td><td>انظر أعلاه</td></tr>
+          <tr><td>مسار تراجع موثّق</td><td><span class="tag pass">Pass</span></td><td><a href="phase0-rollback.md">phase0-rollback.md</a></td></tr>
+        </table>
+
+        <h3>13. Remaining risks</h3>
+        <ul>
+          <li>Render Dashboard قد يبقى عليه <code>PERFECT_CORP_FALLBACK_MOCK=true</code> يدويًا — يجب مزامنته مع blueprint عند النشر.</li>
+          <li><code>OUTFIT_PROVIDER=mock</code> ما زال في render.yaml (معزول/محجوب) — الإزالة الكاملة في Phase 6.</li>
+          <li>عمر البشرة الصيَغي ما زال موجودًا — تصحيح أعمق في Phase 3.</li>
+          <li>CaptureQuality غالبًا neutral — Phase 2.</li>
+        </ul>
+
+        <h3>14. Deployment steps</h3>
+        <ol style="font-size:0.88rem;color:var(--muted)">
+          <li>دمج تغييرات Phase 0.</li>
+          <li>على Render: تأكيد <code>PERFECT_CORP_FALLBACK_MOCK=false</code> و<code>SKIN_PROVIDER=perfect_corp</code>.</li>
+          <li>نشر mira-api — إذا فشل الإقلاع فالـ integrity gate يعمل كما يجب.</li>
+          <li>التحقق من <code>/api/v1/health</code> → <code>phase0.perfectCorpFallbackMockAllowed=false</code>.</li>
+        </ol>
+
+        <h3>15. Rollback</h3>
+        <p>انظر <a href="phase0-rollback.md">docs/phase0-rollback.md</a> — لا تُعِد تفعيل mock في الإنتاج كـ«إصلاح».</p>
+
+        <h3>16. Recommended next phase</h3>
+        <p><strong>Phase 1 — Architecture Stabilization &amp; Provider Ports</strong> (بعد موافقتك).</p>
+      </section>
+
+      <section class="card" id="phase0-ready" style="display:none" aria-hidden="true"></section>
+
+      <section class="card" id="s11">
+        <h2><span class="num">11</span> سلامة المستودع</h2>
+        <table>
+          <tr><th>البند</th><th>القيمة</th></tr>
+          <tr><td>الفرع</td><td><code>cursor/phase2-platform-docs-9309</code></td></tr>
+          <tr><td>هذه الجولة</td><td>Phase 0→3.5 + Face Intel 4A–4F منفَّذة · مسار الوجه مغلق تحققياً</td></tr>
+          <tr><td>أسرار</td><td>لا مفاتيح في المصدر · Render sync:false</td></tr>
+          <tr><td>تراجع</td><td><a href="phase0-rollback.md">phase0</a> · <a href="phase1-rollback.md">phase1</a> · <a href="phase2-rollback.md">phase2</a> · <a href="architecture/phase2.1-rollback.md">phase2.1</a> · <a href="architecture/phase3-rollback.md">phase3</a> · <a href="phase3_5-rollback.md">phase3.5</a></td></tr>
+        </table>
+      </section>
+
+      <section class="card" id="phase3-report">
+        <h2><span class="num">P3</span> تقرير إكمال Phase 3 — Professional Skin Intelligence</h2>
+        <div class="callout verdict">
+          <strong>Phase 3 · PASSED</strong> — نموذج بشرة مستقل عن المزود · SVI v2 · توصيات/تقدم/تقرير قابل للتفسير.
+        </div>
+        <ul style="font-size:0.88rem">
+          <li><a href="architecture/skin-intelligence.md">skin-intelligence.md</a></li>
+          <li><a href="architecture/skin-report.md">skin-report.md</a></li>
+          <li><a href="architecture/svi-v2.md">svi-v2.md</a></li>
+          <li><a href="architecture/recommendation-engine.md">recommendation-engine.md</a></li>
+          <li><a href="architecture/phase3-rollback.md">phase3-rollback.md</a></li>
+          <li><code>npm run test:phase3-skin-intel</code></li>
+        </ul>
+      </section>
+
+      <section class="card" id="phase3_5-report">
+        <h2><span class="num">P3.5</span> تقرير إكمال Phase 3.5 — Validation &amp; Contracts</h2>
+        <div class="callout verdict">
+          <strong>Phase 3.5 · PASSED</strong> — عقود ملزمة · تدقيق قابلية التفسير · لقطات ذهبية · استقلال المزود · توافق خلفي.
+        </div>
+        <ul style="font-size:0.88rem">
+          <li><a href="contracts/skin_intelligence_contract.md">skin_intelligence_contract.md</a></li>
+          <li><a href="contracts/skin_report_contract.md">skin_report_contract.md</a></li>
+          <li><a href="contracts/svi_contract.md">svi_contract.md</a></li>
+          <li><a href="contracts/recommendation_contract.md">recommendation_contract.md</a></li>
+          <li><a href="contracts/progress_contract.md">progress_contract.md</a></li>
+          <li><a href="architecture/phase3_validation.md">phase3_validation.md</a></li>
+          <li><a href="phase3_5-rollback.md">phase3_5-rollback.md</a></li>
+          <li><code>npm run test:phase3.5</code></li>
+        </ul>
+        <div class="callout gate">
+          Phase 3.5 is complete and implementation has stopped.
+          Explicit approval is required before Phase 4.
+        </div>
+      </section>
+
+      <!-- ========== FACE INTELLIGENCE ARCHITECTURE LOCK ========== -->
+      <section class="card" id="face-arch-lock">
+        <h2><span class="num">P4</span> Face Intelligence · Architecture Lock</h2>
+
+        <div class="callout verdict">
+          <strong>ARCHITECTURE LOCK · COMPLETED · NO IMPLEMENTATION</strong><br>
+          هذا <em>ليس</em> Phase 4A. هذا القفل النهائي قبل أي كود لذكاء الملامح.
+          الهدف: أقصى إعادة استخدام · أدنى تكرار · مصدر حقيقة واحد · قابلية صيانة طويلة الأمد.
+          المصدر النصي: <a href="architecture/face-intelligence-architecture-lock.md">face-intelligence-architecture-lock.md</a>
+        </div>
+
+        <div class="callout danger">
+          <strong>قوانين هندسية ملزمة</strong><br>
+          1) لا تكرار بدون دليل · 2) أعد الاستخدام قبل الإنشاء · 3) مفهوم واحد = مالك واحد ·
+          4) لا خطوط إنتاج متوازية · 5) مصدر حقيقة واحد للعتبات / المعالم / الصيغ / الإصدارات.
+          أي ازدواجية مكتشفة → <strong>STOP · Report · Wait</strong>.
+        </div>
+
+        <div class="callout warn">
+          <strong>ثيم موحّد (إلزامي لأي UI لاحق)</strong> —
+          <code>AppColors</code> · <code>AppTypography</code> · <code>Premium*</code> · <code>MiraAppBar</code> · <code>DelightBackground</code>.
+          ممنوع: hex عشوائي · TextStyle خام · SnackBar كواجهة أساسية.
+        </div>
+
+        <nav class="arch-toc" aria-label="فهرس قفل الهندسة">
+          <a href="#fal-1">1 ملخص</a>
+          <a href="#fal-2">2 مكوّنات</a>
+          <a href="#fal-3">3 مصفوفة إعادة الاستخدام</a>
+          <a href="#fal-4">4 الملاك القانونيون</a>
+          <a href="#fal-5">5 الأنبوب</a>
+          <a href="#fal-6">6 التبعيات</a>
+          <a href="#fal-7">7 المجلدات</a>
+          <a href="#fal-8">8 العقود</a>
+          <a href="#fal-9">9 ممنوعات التكرار</a>
+          <a href="#face-arch-lock-plan">10 خطة 4A–4F</a>
+          <a href="#fal-11">11 مخاطر</a>
+          <a href="#fal-12">12 لا تُكرَّر</a>
+          <a href="#fal-13">13 تُمدَّد</a>
+          <a href="#fal-14">14 لا تُلمس</a>
+          <a href="#fal-15">15 الحكم</a>
+        </nav>
+
+        <h3 id="fal-1">1 · ملخص المستودع</h3>
+        <table>
+          <tr><th>الطبقة</th><th>الواقع</th><th>أثر على Face Intel</th></tr>
+          <tr><td>Capture Quality (2 / 2.1)</td><td><span class="tag pass">إنتاجي</span></td><td>مدخل إلزامي — إعادة استخدام</td></tr>
+          <tr><td>MediaPipe 468</td><td><span class="tag pass">موجود · UX التقاط فقط</span></td><td><span class="tag extend">EXTEND</span> كمدخل قياس — لا يغذي SVI اليوم</td></tr>
+          <tr><td>ML Kit Face Gate + Euler</td><td><span class="tag pass">موجود</span></td><td>بوابة pose غير الآمن</td></tr>
+          <tr><td>BlazeFace (خادم)</td><td><span class="tag pass">حضور فقط</span></td><td>لا yaw/pitch/roll — لا تختلق</td></tr>
+          <tr><td>Face Health Map</td><td><span class="tag pass">خريطة بشرة تعليمية</span></td><td><span class="tag forbid">ليس</span> نموذج Face Intel — شقيق فقط</td></tr>
+          <tr><td>Skin Intelligence 3 / 3.5</td><td><span class="tag pass">عقود + ذهبية</span></td><td>نمط عقود — لا تدمج الصيغ</td></tr>
+          <tr><td>هندسة نسب/أثلاث/تماثل</td><td><span class="tag adj">غير موجود</span></td><td><span class="tag create">CREATE مبرَّر</span> في 4B</td></tr>
+          <tr><td>Face shape / DTO / goldens</td><td><span class="tag adj">غير موجود</span></td><td>4C / 4E / 4F</td></tr>
+        </table>
+
+        <h3 id="fal-2">2 · المكوّنات الموجودة (لا تُعاد كتابتها)</h3>
+        <table>
+          <tr><th>المجال</th><th>مسارات أساسية</th><th>الدور</th></tr>
+          <tr>
+            <td>MediaPipe / Landmarks</td>
+            <td><code>live_face_map/face_mesh_service.dart</code> · <code>mediapipe_landmark_indices.dart</code> · <code>mediapipe_region_builder.dart</code> · <code>face_mesh_models.dart</code> · <code>face_mesh_point_mapper.dart</code></td>
+            <td>استخراج 468 + مناطق حية</td>
+          </tr>
+          <tr>
+            <td>Face Gate / Pose</td>
+            <td><code>lib/core/face_gate/*</code> · <code>capture_quality_thresholds.dart</code> · <code>face_image_processor.dart</code></td>
+            <td>ML Kit + عتبات + محاذاة roll</td>
+          </tr>
+          <tr>
+            <td>Server presence</td>
+            <td><code>mira-api/.../face-gate/face-gate.service.ts</code> · <code>blazeface-face-presence.detector.ts</code></td>
+            <td>حضور الوجه على الخادم</td>
+          </tr>
+          <tr>
+            <td>Skin Face Map</td>
+            <td><code>face-map-engine.ts</code> · <code>face_health_map.interface.ts</code> · UI <code>beauty_report_face_map/*</code></td>
+            <td>اهتمامات بشرة — ليس قياساً هندسياً</td>
+          </tr>
+          <tr>
+            <td>Skin Intel + Validation</td>
+            <td><code>skin-intelligence/*</code> · <code>validation/goldens/*</code> · <code>docs/contracts/skin_*</code></td>
+            <td>شقيق · نمط عقود فقط</td>
+          </tr>
+          <tr>
+            <td>خارج النطاق</td>
+            <td>FASHN geometry · Beauty Try-On · <code>overallBeautyScore</code></td>
+            <td>موضة / VTO / مؤشر حيوية بشرة — ليس جاذبية وجه</td>
+          </tr>
+        </table>
+
+        <h3 id="fal-3">3 · مصفوفة إعادة الاستخدام</h3>
+        <table>
+          <tr><th>المكوّن</th><th>التصنيف</th><th>السبب</th><th>المالك</th><th>المرحلة</th></tr>
+          <tr><td>MediaPipe mesh + indices</td><td><span class="tag extend">EXTEND</span></td><td>مصدر المعالم الوحيد</td><td>live_face_map</td><td>4A</td></tr>
+          <tr><td>FaceMeshPointMapper</td><td><span class="tag extend">EXTEND</span></td><td>فضاء وجه موحّد للقياس</td><td>live_face_map</td><td>4A–4B</td></tr>
+          <tr><td>FaceGateRules + thresholds v2.1</td><td><span class="tag reuse">REUSE</span></td><td>حجب القياس عند pose غير آمن</td><td>face_gate + thresholds</td><td>4A–4B</td></tr>
+          <tr><td>BlazeFace server</td><td><span class="tag reuse">REUSE</span></td><td>حضور فقط</td><td>ai/face-gate</td><td>4A</td></tr>
+          <tr><td>Image quality port</td><td><span class="tag reuse">REUSE</span></td><td>أعلى الأنبوب</td><td>ports/image-quality</td><td>4A</td></tr>
+          <tr><td>Face alignment</td><td><span class="tag reuse">REUSE</span></td><td>لا إعادة تنفيذ محاذاة</td><td>face_image_processor</td><td>—</td></tr>
+          <tr><td>FaceHealthMap / face-map-engine</td><td><span class="tag reuse">عرض فقط</span></td><td>بشرة ≠ ملامح</td><td>intelligence/pipeline</td><td>4E شقيق</td></tr>
+          <tr><td>LocalFaceMapBuilder</td><td><span class="tag legacy">LEGACY</span></td><td>منطق مناطق موازٍ</td><td>Flutter intelligence</td><td>4F تنظيف</td></tr>
+          <tr><td>face-zone-mapper alias</td><td><span class="tag legacy">DEPRECATED</span></td><td>غلاف لـ buildFaceMapBundle</td><td>pipeline</td><td>إزالة لاحقاً</td></tr>
+          <tr><td>Luxury/Organic geometry</td><td><span class="tag reuse">فن فقط</span></td><td>ليس قياساً</td><td>beauty_report_face_map</td><td>4E chrome</td></tr>
+          <tr><td>Skin Intelligence engines</td><td><span class="tag forbid">FORBIDDEN DUP</span></td><td>مجال مختلف</td><td>skin-intelligence</td><td>—</td></tr>
+          <tr><td>Contract-audit + goldens pattern</td><td><span class="tag extend">PATTERN</span></td><td>قالب 4F</td><td>validation/</td><td>4F</td></tr>
+          <tr><td>Theme Premium/AppColors</td><td><span class="tag reuse">REUSE</span></td><td>قانون الثيم</td><td>shared/theme</td><td>أي UI</td></tr>
+          <tr><td>Face Geometry Engine</td><td><span class="tag create">CREATE</span></td><td>لا يوجد نسب/أثلاث/تماثل</td><td>face-intelligence (مقترح)</td><td>4B</td></tr>
+          <tr><td>Face Shape classifier</td><td><span class="tag create">CREATE</span></td><td>مفقود</td><td>face-intelligence</td><td>4C</td></tr>
+          <tr><td>Face Report DTO</td><td><span class="tag create">CREATE</span></td><td>لا تُحمَّل على FaceHealthMap</td><td>face-intelligence</td><td>4E</td></tr>
+          <tr><td>MediaPipe ثانٍ / عتبات ثانية / Attractiveness</td><td><span class="tag forbid">FORBIDDEN</span></td><td>ازدواجية أو مخالفة البرنامج</td><td>—</td><td>—</td></tr>
+        </table>
+
+        <h3 id="fal-4">4 · الملاك القانونيون (مفهوم واحد → مالك واحد)</h3>
+        <ul class="owner-list">
+          <li><strong>عتبات الالتقاط</strong> → <code>capture_quality_thresholds.dart</code> + مرآة الخادم <code>cq-thresholds-v2.1</code></li>
+          <li><strong>فهارس المعالم</strong> → <code>mediapipe_landmark_indices.dart</code></li>
+          <li><strong>مناطق الـ mesh الحية</strong> → <code>FaceRegionId</code> في <code>face_mesh_models.dart</code></li>
+          <li><strong>مناطق تقرير البشرة</strong> → <code>FaceHealthZoneId</code> / face-map-engine</li>
+          <li><strong>فن طبقات التقرير</strong> → <code>FaceMapRegion</code> / report_face_map_spec</li>
+          <li><strong>Pose Euler</strong> → ML Kit عبر FaceGateValidator (ليس BlazeFace)</li>
+          <li><strong>حضور الخادم</strong> → BlazeFace detector</li>
+          <li><strong>المحاذاة</strong> → FaceImageProcessor / face-alignment.md</li>
+          <li><strong>مقاييس البشرة / SVI</strong> → skin-intelligence/*</li>
+          <li><strong>نسب / أثلاث / تماثل</strong> → محرك هندسة وجه جديد (وحيد) — 4B</li>
+          <li><strong>شكل الوجه</strong> → وحدة Face Shape جديدة — 4C</li>
+          <li><strong>نتائج/توصيات/تقرير الوجه</strong> → حزمة face-intelligence — 4D/4E</li>
+          <li><strong>الثقة / Provenance</strong> → نمط Phase 0</li>
+        </ul>
+        <div class="callout info">
+          ثلاث تصنيفات مناطق (<code>FaceRegionId</code> ≠ <code>FaceHealthZoneId</code> ≠ <code>FaceMapRegion</code>) تبقى منفصلة مع <strong>مappers صريحة</strong> — ممنوع دمج الأنواع أو invent تصنيف رابع بلا موافقة.
+        </div>
+
+        <h3 id="fal-5">5 · الأنبوب القانوني (هدف — بدون تنفيذ)</h3>
+        <div class="pipeline" dir="ltr" style="justify-content:flex-end;flex-direction:row-reverse">
+          <span class="step exist">Capture</span><span class="arrow">→</span>
+          <span class="step exist">Quality</span><span class="arrow">→</span>
+          <span class="step exist">Presence</span><span class="arrow">→</span>
+          <span class="step exist">Landmarks</span><span class="arrow">→</span>
+          <span class="step extend">Eligibility</span><span class="arrow">→</span>
+          <span class="step new">Geometry</span><span class="arrow">→</span>
+          <span class="step new">Features</span><span class="arrow">→</span>
+          <span class="step new">Face Intel</span><span class="arrow">→</span>
+          <span class="step new">Recos</span><span class="arrow">→</span>
+          <span class="step new">Report/DTO</span><span class="arrow">→</span>
+          <span class="step extend">Flutter</span>
+        </div>
+        <p style="font-size:0.78rem;color:var(--muted)">
+          <span class="tag pass">أخضر</span> موجود ·
+          <span class="tag extend">أزرق</span> تمديد ·
+          <span class="tag create">ذهبي/وردي</span> جديد مبرَّر.
+          عند pose غير آمن: القياسات <strong>unavailable</strong> — لا اختلاق.
+        </p>
+        <table>
+          <tr><th>الحدود</th><th>القاعدة</th></tr>
+          <tr><td>Capture → Quality</td><td>فشل مغلق — لا Face Intel إن حُظرت الجودة</td></tr>
+          <tr><td>Presence</td><td>لا استنتاج faceCount</td></tr>
+          <tr><td>Landmarks → Geometry</td><td>فقط إذا Eligibility ناجحة</td></tr>
+          <tr><td>Face Intel ↔ Skin Intel</td><td>مخرجات شقيقة على التقرير — لا صيغ مشتركة ولا تعبئة متقاطعة</td></tr>
+          <tr><td>DTO → Flutter</td><td>لا JSON مزود / لا payload خام MediaPipe</td></tr>
+          <tr><td>توصيات</td><td>أدلة فقط · تجميلي/styling · لا دواء · لا درجة جاذبية</td></tr>
+        </table>
+        <table>
+          <tr><th>خط الإنتاج</th><th>الحالة</th></tr>
+          <tr><td>IQ → FaceGate → Skin Orchestrator → Skin Intel → Report</td><td><span class="tag pass">Canonical (بشرة)</span></td></tr>
+          <tr><td>MediaPipe live guidance</td><td><span class="tag pass">Canonical (UX التقاط)</span> — ليس ذكاءً</td></tr>
+          <tr><td>face-map-engine → FaceHealthMap</td><td><span class="tag pass">Canonical (خريطة بشرة)</span></td></tr>
+          <tr><td>LocalFaceMapBuilder</td><td><span class="tag legacy">Legacy عميل</span> — ترحيل/إهمال في 4F</td></tr>
+          <tr><td>mapFaceZones</td><td><span class="tag legacy">Deprecated</span></td></tr>
+          <tr><td>Geometry → Face Report</td><td><span class="tag create">Target Canonical (وجه)</span> — غير مبني</td></tr>
+        </table>
+
+        <h3 id="fal-6">6 · رسم التبعيات</h3>
+        <div class="callout info">
+          <strong>الحالي:</strong> MediaPipe لا يغذي التقرير · Skin Intel + FaceHealthMap يغذيان MiraBeautyReport · LocalFaceMapBuilder مسار موازٍ ضعيف.<br>
+          <strong>الهدف:</strong> Mesh → Eligibility → Geometry → Features → Face Report DTO → نفس الـ Report كحقل شقيق · بدون دورة · بدون تسرّب Perfect إلى Face Intel.
+        </div>
+        <pre style="font-size:0.7rem;direction:ltr;text-align:left;overflow:auto;background:var(--surface);padding:0.85rem;border-radius:10px;border:1px solid var(--border);color:var(--muted)">Camera → IQ + ML Kit + MediaPipe
+         → Eligibility (pose/quality)
+         → Landmarks → Geometry(4B) → Features(4C)
+         → FaceIntel → Recos(4D) → FaceReportDTO(4E) ──┐
+Skin path → SkinIntel + FaceHealthMap ─────────────────┴→ MiraBeautyReport → Flutter</pre>
+
+        <h3 id="fal-7">7 · هيكل المجلدات (اقتراح فقط — لم يُنشأ)</h3>
+        <table>
+          <tr><th>النوع</th><th>المسار</th></tr>
+          <tr><td>موجود — تمديد</td><td><code>lib/core/face_gate/</code> · <code>live_face_map/</code> · <code>image_quality/</code> · <code>shared/theme</code> · <code>mira-api/.../face-gate/</code> · <code>ports/image-quality/</code></td></tr>
+          <tr><td>موجود — لا تُلمس الصيغ</td><td><code>mira-api/.../skin-intelligence/</code> · <code>face-map-engine.ts</code> (بشرة فقط)</td></tr>
+          <tr><td>جديد مبرَّر لاحقاً</td><td><code>lib/features/face_intelligence/{domain,data,presentation}</code> · <code>mira-api/src/intelligence/face-intelligence/{geometry,features,recommendation,report,validation}</code> · <code>docs/contracts/face_*.md</code></td></tr>
+          <tr><td><span class="tag forbid">ممنوع</span></td><td>MediaPipe ثانٍ · <code>face_map/</code> يطغى على FaceHealthMap · وضع Face Intel داخل skin-intelligence · استخدام FASHN geometry للوجه</td></tr>
+        </table>
+
+        <h3 id="fal-8">8 · خطة العقود (تخطيط فقط)</h3>
+        <table>
+          <tr><th>العقد المخطّط</th><th>الغرض</th><th>القالب</th></tr>
+          <tr><td>face_intelligence_contract.md</td><td>القانون الأم · provenance · لا attractiveness</td><td>skin_intelligence_contract</td></tr>
+          <tr><td>face_model_contract.md</td><td>نموذج وجه كانوني</td><td>canonical-skin.model</td></tr>
+          <tr><td>face_measurement_contract.md</td><td>صيغ نسب/أثلاث/تماثل + إصدارات</td><td>svi_contract</td></tr>
+          <tr><td>face_findings_contract.md</td><td>نتائج قابلة للشرح</td><td>finding pattern</td></tr>
+          <tr><td>face_recommendation_contract.md</td><td>styling بأدلة</td><td>recommendation_contract</td></tr>
+          <tr><td>face_report_contract.md</td><td>DTO عام</td><td>skin_report_contract</td></tr>
+          <tr><td>face_localization_contract.md</td><td>مصطلحات AR/EN</td><td>Phase 3.5 loc</td></tr>
+          <tr><td>face_progress_contract.md</td><td>تتبّع لاحق اختياري</td><td>progress_contract</td></tr>
+          <tr><td>face_validation_contract.md</td><td>مدقق + ذهبية</td><td>phase3_validation</td></tr>
+        </table>
+
+        <h3 id="fal-9">9 · تقرير ممنوع التكرار</h3>
+        <table>
+          <tr><th>الازدواج المحتمل</th><th>موجود؟</th><th>الحكم</th></tr>
+          <tr><td>خدمة MediaPipe جديدة</td><td>نعم</td><td><span class="tag forbid">FORBIDDEN</span> — مدّد الحالية</td></tr>
+          <tr><td>حزمة عتبات جديدة</td><td>نعم v2.1</td><td><span class="tag forbid">FORBIDDEN</span> — ترقيم إصدار عند الحاجة</td></tr>
+          <tr><td>FaceGate ثالث</td><td>ML Kit + BlazeFace</td><td><span class="tag forbid">FORBIDDEN</span> — قدرة مختلفة لكن لا ثالث</td></tr>
+          <tr><td>تحميل Geometry على FaceHealthMap</td><td>خريطة بشرة</td><td><span class="tag forbid">FORBIDDEN</span> — DTO شقيق</td></tr>
+          <tr><td>فهارس معالم مكررة</td><td>نعم</td><td><span class="tag forbid">FORBIDDEN</span></td></tr>
+          <tr><td>نسب داخل SVI</td><td>SVI بشرة</td><td><span class="tag forbid">FORBIDDEN</span> — محرك منفصل</td></tr>
+          <tr><td>Attractiveness / beauty face score</td><td>محظور برنامجياً</td><td><span class="tag forbid">ALWAYS FORBIDDEN</span></td></tr>
+          <tr><td>Perfect كمصدر Face Intel</td><td>محوّل بشرة فقط</td><td><span class="tag forbid">FORBIDDEN</span></td></tr>
+          <tr><td>الكتابة فوق skin goldens</td><td>Phase 3.5</td><td><span class="tag forbid">FORBIDDEN</span> — ذهبية وجه منفصلة</td></tr>
+          <tr><td>UI خارج الثيم</td><td>ثيم موحّد</td><td><span class="tag forbid">FORBIDDEN</span></td></tr>
+        </table>
+      </section>
+
+      <section class="card" id="face-arch-lock-plan">
+        <h2><span class="num">4×</span> خطة التنفيذ Phase 4A → 4F</h2>
+        <div class="callout warn">
+          كل مرحلة تفتح فقط بعد موافقة صريحة على المرحلة السابقة.
+          <strong>ابدئي بـ 4A فقط</strong> — لا تقفزي إلى الهندسة أو التقرير.
+        </div>
+
+        <div class="phase-mini-grid">
+          <div class="phase-mini" id="phase-4a">
+            <span class="badge-mini">PHASE 4A</span>
+            <h4>Face Foundation</h4>
+            <p><strong>النطاق:</strong> حدود تصدير إطار المعالم · واجهة أهلية القياس (pose/quality) · هيكل النموذج الكانوني (ids / availability / provenance) · unavailable عند عدم الأمان · مسودات عقود.<br>
+            <strong>ممنوع:</strong> صيغ نسب · شكل وجه · Perfect · تعديل SVI · إعادة تصميم UI · VTO · تكرار mesh/gate.</p>
+          </div>
+          <div class="phase-mini" id="phase-4b">
+            <span class="badge-mini">PHASE 4B</span>
+            <h4>Geometry</h4>
+            <p><strong>النطاق:</strong> نسب · أثلاث وجه · تماثل حذر · صيغ موثّقة · ثقة · إصدارات · اختبارات/ذهبية للهندسة فقط.<br>
+            <strong>ممنوع:</strong> درجة جاذبية · اختلاق مقاييس بشرة · MediaPipe ثانٍ.</p>
+          </div>
+          <div class="phase-mini" id="phase-4c">
+            <span class="badge-mini">PHASE 4C</span>
+            <h4>Facial Features</h4>
+            <p><strong>النطاق:</strong> تصنيف شكل الوجه (هجين + ثقة) · نتائج ملامح قابلة للشرح · منفصل عن skin type / undertone.<br>
+            <strong>ممنوع:</strong> تشخيص طبي · دمج في FaceHealthMap.</p>
+          </div>
+          <div class="phase-mini" id="phase-4d">
+            <span class="badge-mini">PHASE 4D</span>
+            <h4>Recommendations</h4>
+            <p><strong>النطاق:</strong> توصيات styling بأدلة من findings/geometry · لغة تجميلية AR/EN · فئات.<br>
+            <strong>ممنوع:</strong> توصية بلا دليل · قفل منتجات Perfect.</p>
+          </div>
+          <div class="phase-mini" id="phase-4e">
+            <span class="badge-mini">PHASE 4E</span>
+            <h4>Report</h4>
+            <p><strong>النطاق:</strong> Face Report DTO شقيق على MiraBeautyReport · قسم Flutter بالثيم الموحّد · طبقات ملامح (ليست heatmap بشرة كحقيقة قياس).<br>
+            <strong>ممنوع:</strong> تسرّب مزود · UI طبي مخيف · ألوان خارج الثيم.</p>
+          </div>
+          <div class="phase-mini" id="phase-4f">
+            <span class="badge-mini">PHASE 4F</span>
+            <h4>Validation</h4>
+            <p><strong>النطاق:</strong> مدققو عقود · ذهبية · تدقيق تعريب · استقلال مزود · انحدار 0→3.5 · خطة إهمال LocalFaceMapBuilder.<br>
+            <strong>ممنوع:</strong> إصلاح صامت · تغيير الهندسة لمطابقة الذهبية بلا موافقة.</p>
+          </div>
+        </div>
+
+        <h3 id="fal-11">11 · مخاطر معمارية</h3>
+        <table>
+          <tr><th>المخاطر</th><th>الشدة</th><th>التخفيف</th></tr>
+          <tr><td>ثلاث تصنيفات مناطق تربك التنفيذ</td><td>عالية</td><td>مappers + تسمية صريحة (SkinFaceZone / MeshRegion / FaceFeatureLayer)</td></tr>
+          <tr><td>الـ mesh لا يصل للخادم</td><td>متوسطة</td><td>قرار 4A: قياس على الجهاز مقابل ملخص معالم (خصوصية)</td></tr>
+          <tr><td>تحميل FaceHealthMap</td><td>عالية</td><td>DTO شقيق فقط</td></tr>
+          <tr><td>تسلل «جمال/جاذبية» في التسمية</td><td>عالية</td><td>حظر beauty/attractiveness في APIs الوجه</td></tr>
+          <tr><td>انحراف الثيم</td><td>عالية</td><td>بوابة Premium/AppColors</td></tr>
+          <tr><td>LocalFaceMapBuilder</td><td>متوسطة</td><td>إهمال في 4F</td></tr>
+          <tr><td>خلط Face داخل skin-intelligence</td><td>عالية</td><td>مجلد + عقود منفصلة</td></tr>
+        </table>
+
+        <h3 id="fal-12">12 · ملفات يجب ألا تُكرَّر أبداً</h3>
+        <p style="font-size:0.82rem">
+          <code>mediapipe_landmark_indices.dart</code> ·
+          <code>face_mesh_service.dart</code> ·
+          <code>capture_quality_thresholds.dart</code> / <code>capture-quality.thresholds.ts</code> ·
+          <code>face_gate_rules.dart</code> / <code>face_gate_validator.dart</code> ·
+          <code>blazeface-face-presence.detector.ts</code> ·
+          <code>skin-intelligence/*</code> + ذهبية البشرة ·
+          <code>face_health_map.interface.ts</code> كـ schema لـ Face Intel ·
+          توكنات الثيم <code>AppColors</code> / Premium
+        </p>
+
+        <h3 id="fal-13">13 · ملفات يجب تمديدها</h3>
+        <p style="font-size:0.82rem">
+          حدود mesh / mapper ·
+          <code>face_gate_rules.dart</code> (أهلية القياس) ·
+          <code>mira_beauty_report</code> (حقل شقيق لاحقاً) ·
+          شاشة التقرير (قسم 4E بالثيم) ·
+          نمط contract-audit (مدقق وجه جديد) ·
+          سكربتات اختبار المراحل
+        </p>
+
+        <h3 id="fal-14">14 · ملفات تبقى بلا مساس (إلا عيب مثبت)</h3>
+        <p style="font-size:0.82rem">
+          Phase 0 integrity · عتبات/BlazeFace 2.1 · صيغة SVI v2 وذهبية البشرة ·
+          داخل Perfect skin adapter · FASHN geometry · Beauty Try-On ·
+          هندسة فن التقرير كـ <em>مصدر قياس</em>
+        </p>
+
+        <h3 id="fal-15">15 · الحكم النهائي للهندسة</h3>
+        <table>
+          <tr><th>السؤال</th><th>الجواب</th></tr>
+          <tr><td>هل نبدأ بلا MediaPipe جديد؟</td><td><strong>نعم — يجب</strong></td></tr>
+          <tr><td>هل FaceHealthMap = Face Intel؟</td><td><strong>لا</strong></td></tr>
+          <tr><td>هل يوجد محرك هندسة للتمديد؟</td><td><strong>لا — إنشاء مبرَّر تحت مالك جديد</strong></td></tr>
+          <tr><td>هل الأنبوب الواحد مصمَّم؟</td><td><strong>نعم — غير منفَّذ</strong></td></tr>
+          <tr><td>مسار أقصى إعادة استخدام؟</td><td>Mesh + Gate + Thresholds + Theme + صدفة التقرير + انضباط عقود 3.5</td></tr>
+          <tr><td>جاهزون للكود؟</td><td><strong>لا — Architecture Lock فقط</strong></td></tr>
+          <tr><td>الخطوة المسموحة التالية</td><td><strong>Phase 4A بعد موافقة صريحة</strong></td></tr>
+        </table>
+
+        <div class="callout gate">
+          Architecture Lock completed.<br>
+          No implementation performed.<br>
+          Ready to begin Phase 4A only after explicit approval.
+        </div>
+      </section>
+
+      <section class="card" id="phase4a-report">
+        <h2><span class="num">P4A</span> تقرير إكمال Phase 4A — Face Foundation</h2>
+        <div class="callout verdict">
+          <strong>Phase 4A · PASSED</strong> — أهلية قياس · ملخص معالم · نموذج وجه هيكلي · كل المقاييس unavailable · بلا جاذبية · بلا هندسة بعد.
+        </div>
+
+        <h3>1 Executive Summary</h3>
+        <p>أُنشئ أساس Face Intelligence كشقيق لـ Skin Intelligence. يُعاد استخدام عتبات <code>cq-thresholds-v2.1</code> و<code>FaceGateRules</code> و<code>FaceMeshFrame</code>. لا صيغ نسب/تماثل (4B) ولا شكل وجه (4C) ولا UI تقرير (4E).</p>
+
+        <h3>2 What was built</h3>
+        <table>
+          <tr><th>المكوّن</th><th>المسار</th><th>التبرير</th></tr>
+          <tr><td>Canonical face skeleton</td><td><code>mira-api/.../face-intelligence/canonical-face.model.ts</code></td><td>لا يوجد نموذج وجه سابق</td></tr>
+          <tr><td>Measurement eligibility</td><td><code>measurement-eligibility.ts</code> + Flutter mirror</td><td>تمديد عتبات/بوابة — بلا حزمة عتبات ثانية</td></tr>
+          <tr><td>Landmark frame summary</td><td><code>landmark-frame.ts</code> + <code>LandmarkFrameMapper</code></td><td>حدود دون تكرار MediaPipe</td></tr>
+          <tr><td>Foundation pipeline</td><td><code>runFaceFoundationPipeline</code> / <code>FaceFoundationPipeline</code></td><td>أنبوب 4A فقط</td></tr>
+          <tr><td>Contract</td><td><code>docs/contracts/face_intelligence_contract.md</code></td><td>عقد تأسيس</td></tr>
+        </table>
+
+        <h3>3 Reuse (not duplicated)</h3>
+        <ul style="font-size:0.85rem">
+          <li><code>CAPTURE_QUALITY_THRESHOLDS</code> / <code>CaptureQualityThresholds</code></li>
+          <li><code>FaceGateRules</code> / <code>FaceGateResult</code></li>
+          <li><code>FaceMeshFrame</code> / <code>FaceRegionId</code> (ملخص فقط)</li>
+          <li>Skin Intelligence — معزول (لا استيراد)</li>
+        </ul>
+
+        <h3>4 Tests</h3>
+        <table>
+          <tr><th>الأمر</th><th>التحقق</th></tr>
+          <tr><td><code>npm run test:phase4a</code></td><td>أهلية · هيكل · unavailable · لا تسرّب مزود · عتبات v2.1 · Phase 0 mock</td></tr>
+          <tr><td><code>flutter test test/phase4a_face_foundation_test.dart</code></td><td>6 اختبارات — أهلية · هيكل · mapper · readyForGeometry</td></tr>
+        </table>
+
+        <h3>5 Explicitly NOT done (correct)</h3>
+        <ul style="font-size:0.85rem">
+          <li>Phase 4B Geometry formulas</li>
+          <li>Phase 4C Face shape</li>
+          <li>Phase 4D Recommendations</li>
+          <li>Phase 4E Report UI</li>
+          <li>Perfect integration changes</li>
+        </ul>
+
+        <div class="callout gate">
+          Phase 4A is complete and implementation has stopped.<br>
+          Explicit approval is required before Phase 4B.
+        </div>
+      </section>
+
+      <section class="card" id="phase4b-report">
+        <h2><span class="num">P4B</span> تقرير إكمال Phase 4B — Face Geometry</h2>
+        <div class="callout verdict">
+          <strong>Phase 4B · PASSED</strong> — نسب · أثلاث · تماثل حذر · صيغ موثّقة · unavailable عند عدم الأهلية/المراسي · faceShape ما زال unavailable · بلا جاذبية.
+        </div>
+
+        <h3>1 Executive Summary</h3>
+        <p>
+          محرك هندسة وجه واحد (<code>face-geom-ratios-thirds-sym-v1</code>) على أساس 4A.
+          يُعاد استخدام أهلية القياس وفهارس MediaPipe كمالك وحيد للمراسي.
+          لا شكل وجه (4C) ولا توصيات (4D) ولا UI تقرير (4E).
+        </p>
+
+        <h3>2 What was built</h3>
+        <table>
+          <tr><th>المكوّن</th><th>المسار</th><th>التبرير</th></tr>
+          <tr><td>Geometry anchors</td><td><code>geometry/geometry-anchors.ts</code> + Flutter <code>geometry_anchors.dart</code></td><td>مراسي 0–1 من فهارس MediaPipe فقط</td></tr>
+          <tr><td>Face Geometry Engine</td><td><code>geometry/face-geometry.engine.ts</code> + <code>face_geometry_engine.dart</code></td><td>صيغ نسب/أثلاث/تماثل مرآتية</td></tr>
+          <tr><td>Geometry pipeline</td><td><code>runFaceGeometryPipeline</code> / <code>FaceGeometryPipeline</code></td><td>4A foundation ثم هندسة</td></tr>
+          <tr><td>Golden</td><td><code>geometry/goldens/frontal_high.golden.json</code></td><td>ثبات صيغ أمامي عالي الجودة</td></tr>
+          <tr><td>Contract</td><td><code>docs/contracts/face_measurement_contract.md</code></td><td>عقد قياس/هندسة</td></tr>
+        </table>
+
+        <h3>3 Formulas (documented)</h3>
+        <ul style="font-size:0.85rem">
+          <li>width/height · eye spacing · nose/mouth to face width</li>
+          <li>facial thirds balance (CV → score)</li>
+          <li>cautious symmetry (lower confidence ceiling)</li>
+        </ul>
+
+        <h3>4 Reuse (not duplicated)</h3>
+        <ul style="font-size:0.85rem">
+          <li><code>MediapipeLandmarkIndices</code> — مالك فهارس المراسي الوحيد</li>
+          <li><code>cq-thresholds-v2.1</code> / eligibility من 4A</li>
+          <li>لا محرك MediaPipe ثانٍ · لا استيراد Skin Intelligence</li>
+        </ul>
+
+        <h3>5 Tests</h3>
+        <table>
+          <tr><th>الأمر</th><th>التحقق</th></tr>
+          <tr><td><code>npm run test:phase4a</code></td><td>OK — لا انحدار</td></tr>
+          <tr><td><code>npm run test:phase4b</code></td><td>أهلية · مراسي · صيغ · golden · faceShape unavailable</td></tr>
+          <tr><td><code>flutter test test/phase4a_*.dart test/phase4b_*.dart</code></td><td>13 اختبارًا أخضرًا</td></tr>
+        </table>
+
+        <h3>6 Explicitly NOT done (correct)</h3>
+        <ul style="font-size:0.85rem">
+          <li>Phase 4C Face shape / features</li>
+          <li>Phase 4D Recommendations</li>
+          <li>Phase 4E Report UI</li>
+          <li>Perfect integration changes</li>
+          <li>Attractiveness / beauty ranking</li>
+        </ul>
+
+        <div class="callout gate">
+          Phase 4B is complete and implementation has stopped.<br>
+          Explicit approval is required before Phase 4C.
+        </div>
+      </section>
+
+      <section class="card" id="phase4c-report">
+        <h2><span class="num">P4C</span> تقرير إكمال Phase 4C — Facial Features</h2>
+        <div class="callout verdict">
+          <strong>Phase 4C · PASSED</strong> — شكل وجه هجين + ثقة · نتائج ملامح قابلة للشرح · منفصل عن skin type/undertone · بلا تشخيص طبي · بلا FaceHealthMap · بلا جاذبية.
+        </div>
+
+        <h3>1 Executive Summary</h3>
+        <p>
+          مصنّف شكل الوجه <code>face-shape-hybrid-ratios-v1</code> (oval/round/square/heart/oblong/diamond/triangle)
+          فوق هندسة 4B، مع محرك findings تجميلي مستقل عن Skin Intelligence.
+          لا توصيات (4D) ولا UI تقرير (4E).
+        </p>
+
+        <h3>2 What was built</h3>
+        <table>
+          <tr><th>المكوّن</th><th>المسار</th><th>التبرير</th></tr>
+          <tr><td>Jaw anchors</td><td><code>MediapipeLandmarkIndices.geometryLeftJaw/RightJaw</code> + GeometryAnchors</td><td>تمديد مالك الفهارس الوحيد</td></tr>
+          <tr><td>Face Shape classifier</td><td><code>features/face-shape.classifier.ts</code> + Flutter mirror</td><td>CREATE مبرَّر — مفقود</td></tr>
+          <tr><td>Face findings</td><td><code>features/face-finding.engine.ts</code> + Flutter mirror</td><td>نتائج بأدلة فقط</td></tr>
+          <tr><td>Features pipeline</td><td><code>runFaceFeaturesPipeline</code> / <code>FaceFeaturesPipeline</code></td><td>Geometry ثم Shape+Findings</td></tr>
+          <tr><td>Golden</td><td><code>features/goldens/oval_high.golden.json</code></td><td>ثبات تصنيف oval</td></tr>
+          <tr><td>Contracts</td><td><code>face_findings_contract.md</code> + تحديث عقد الوجه</td><td>عقود 4C</td></tr>
+        </table>
+
+        <h3>3 Taxonomy &amp; reuse</h3>
+        <ul style="font-size:0.85rem">
+          <li>7 أصناف تجميلية · ثقة من هامش الدرجات · unavailable عند إشارة ضعيفة</li>
+          <li>إعادة استخدام أهلية 4A + مراسي/هندسة 4B · لا MediaPipe ثانٍ · لا skin-intelligence</li>
+        </ul>
+
+        <h3>4 Tests</h3>
+        <table>
+          <tr><th>الأمر</th><th>التحقق</th></tr>
+          <tr><td><code>npm run test:phase4b</code></td><td>OK — لا انحدار (مراسي فك)</td></tr>
+          <tr><td><code>npm run test:phase4c</code></td><td>oval/heart/oblong · findings · golden · لا attractiveness</td></tr>
+          <tr><td><code>flutter test test/phase4b_*.dart test/phase4c_*.dart</code></td><td>14 اختبارًا أخضرًا</td></tr>
+        </table>
+
+        <h3>5 Explicitly NOT done (correct)</h3>
+        <ul style="font-size:0.85rem">
+          <li>Phase 4D Recommendations</li>
+          <li>Phase 4E Report UI / sibling DTO</li>
+          <li>Phase 4F full validation suite</li>
+          <li>Perfect integration · attractiveness · medical claims</li>
+        </ul>
+
+        <div class="callout gate">
+          Phase 4C is complete and implementation has stopped.<br>
+          Explicit approval is required before Phase 4D.
+        </div>
+      </section>
+
+      <section class="card" id="phase4d-report">
+        <h2><span class="num">P4D</span> تقرير إكمال Phase 4D — Recommendations</h2>
+        <div class="callout verdict">
+          <strong>Phase 4D · PASSED</strong> — توصيات تنسيق بأدلة (شعر/كنتور/نظارات/إكسسوارات) · AR/EN · بلا قفل منتجات Perfect · بلا توصية بلا دليل · بلا UI تقرير.
+        </div>
+
+        <h3>1 Executive Summary</h3>
+        <p>
+          محرك <code>face-styling-reco-v1</code> يبني توصيات تجميلية من findings المؤهلة فقط.
+          شقيق لتوصيات البشرة — بلا استيراد skin-intelligence. لا DTO تقرير ولا قسم Flutter بعد (4E).
+        </p>
+
+        <h3>2 What was built</h3>
+        <table>
+          <tr><th>المكوّن</th><th>المسار</th><th>التبرير</th></tr>
+          <tr><td>Face recommendation engine</td><td><code>recommendation/face-recommendation.engine.ts</code> + Flutter mirror</td><td>CREATE مبرَّر — styling بأدلة</td></tr>
+          <tr><td>Recommendation pipeline</td><td><code>runFaceRecommendationPipeline</code> / <code>FaceRecommendationPipeline</code></td><td>Features ثم Recos</td></tr>
+          <tr><td>Golden</td><td><code>recommendation/goldens/oval_styling.golden.json</code></td><td>ثبات معرفات/أدلة oval</td></tr>
+          <tr><td>Contract</td><td><code>docs/contracts/face_recommendation_contract.md</code></td><td>عقد 4D</td></tr>
+        </table>
+
+        <h3>3 Categories</h3>
+        <ul style="font-size:0.85rem">
+          <li><code>hairstyle</code> · <code>makeup_contour</code> · <code>eyewear</code> · <code>accessories</code> · <code>educational</code></li>
+          <li>كل غير-تعليمي يتطلب <code>findingIds</code> و/أو <code>metricIds</code> · <code>productLockIn: false</code></li>
+        </ul>
+
+        <h3>4 Tests</h3>
+        <table>
+          <tr><th>الأمر</th><th>التحقق</th></tr>
+          <tr><td><code>npm run test:phase4c</code></td><td>OK — لا انحدار</td></tr>
+          <tr><td><code>npm run test:phase4d</code></td><td>أدلة · disclaimer · golden · لا Perfect/attractiveness</td></tr>
+          <tr><td><code>flutter test test/phase4c_*.dart test/phase4d_*.dart</code></td><td>13 اختبارًا أخضرًا</td></tr>
+        </table>
+
+        <h3>5 Explicitly NOT done (correct)</h3>
+        <ul style="font-size:0.85rem">
+          <li>Phase 4E Face Report DTO + Flutter section</li>
+          <li>Phase 4F full validation suite</li>
+          <li>Marketplace / Perfect product wiring</li>
+        </ul>
+
+        <div class="callout gate">
+          Phase 4D is complete and implementation has stopped.<br>
+          Explicit approval is required before Phase 4E.
+        </div>
+      </section>
+
+      <section class="card" id="phase4e-report">
+        <h2><span class="num">P4E</span> تقرير إكمال Phase 4E — Face Report</h2>
+        <div class="callout verdict">
+          <strong>Phase 4E · PASSED</strong> — DTO شقيق <code>faceIntelligence</code> على MiraBeautyReport · قسم Flutter بالثيم الموحّد · طبقات ملامح سردية (ليست heatmap بشرة) · بلا تسرّب مزود · بلا جاذبية.
+        </div>
+
+        <h3>1 Executive Summary</h3>
+        <p>
+          <code>FaceIntelligenceReportDto</code> (<code>face-report-v1</code>) يُبنى من أنبوب 4D ويُرفق اختيارياً عبر <code>options.faceIntel</code>.
+          قسم <code>FaceIntelligenceSection</code> يعرض الشكل · الطبقات · المقاييس · توصيات التنسيق بـ Premium/AppColors/AppTypography فقط.
+        </p>
+
+        <h3>2 What was built</h3>
+        <table>
+          <tr><th>المكوّن</th><th>المسار</th><th>التبرير</th></tr>
+          <tr><td>Face report engine</td><td><code>report/face-report.engine.ts</code></td><td>DTO نظيف بلا مزود</td></tr>
+          <tr><td>Report pipeline</td><td><code>runFaceReportPipeline</code></td><td>Reco → Report</td></tr>
+          <tr><td>MiraBeautyReport sibling</td><td><code>faceIntelligence?</code> + IntelligenceService</td><td>نفس نمط skinIntelligence</td></tr>
+          <tr><td>Flutter entity + section</td><td><code>face_intelligence_report.dart</code> · <code>face_intelligence_section.dart</code></td><td>UI ثيم موحّد</td></tr>
+          <tr><td>Golden</td><td><code>report/goldens/oval_face_report.golden.json</code></td><td>ثبات شكل/طبقات/توصيات</td></tr>
+          <tr><td>Contract</td><td><code>docs/contracts/face_report_contract.md</code></td><td>عقد 4E</td></tr>
+        </table>
+
+        <h3>3 Explicit separation</h3>
+        <ul style="font-size:0.85rem">
+          <li><code>faceIntelligence</code> ≠ <code>faceHealthMap</code></li>
+          <li>Feature layers = سرد تنسيق · ليست حقيقة قياس بشرة</li>
+          <li>عند غياب <code>faceIntel</code> لا يُختلق التقرير</li>
+        </ul>
+
+        <h3>4 Tests</h3>
+        <table>
+          <tr><th>الأمر</th><th>التحقق</th></tr>
+          <tr><td><code>npm run test:phase4d</code></td><td>OK — لا انحدار</td></tr>
+          <tr><td><code>npm run test:phase4e</code></td><td>DTO · طبقات · golden · لا provider leak</td></tr>
+          <tr><td><code>flutter test test/phase4e_face_report_test.dart</code></td><td>parse + Premium section</td></tr>
+        </table>
+
+        <h3>5 Explicitly NOT done (correct)</h3>
+        <ul style="font-size:0.85rem">
+          <li>Phase 4F Validation (auditors · full goldens · deprecations)</li>
+          <li>Always-on faceIntel without on-device anchors</li>
+          <li>Attractiveness · medical UI · off-theme colors</li>
+        </ul>
+
+        <div class="callout gate">
+          Phase 4E is complete and implementation has stopped.<br>
+          Explicit approval is required before Phase 4F.
+        </div>
+      </section>
+
+      <section class="card" id="phase4f-report">
+        <h2><span class="num">P4F</span> تقرير إكمال Phase 4F — Validation</h2>
+        <div class="callout verdict">
+          <strong>Phase 4F · PASSED</strong> — مدققو عقود · ذهبية (oval/heart/oblong/ineligible) · تعريب · استقلال مزود · انحدار 4A–4E + Phase 3.5 · خطة إهمال LocalFaceMapBuilder · بلا إصلاح صامت.
+        </div>
+
+        <h3>1 Executive Summary</h3>
+        <p>
+          حزمة <code>face-validation-v1</code> تثبت اتساق Eligibility→Geometry→Shape→Recos→Report.
+          المدققون يفشلون بصوت عالٍ. ذهبية البشرة لم تُمس. <code>LocalFaceMapBuilder</code> مُعلَّم Deprecated مع خطة ترحيل موثّقة.
+        </p>
+
+        <h3>2 What was built</h3>
+        <table>
+          <tr><th>المكوّن</th><th>المسار</th></tr>
+          <tr><td>Contract auditors</td><td><code>face-intelligence/validation/contract-audit.ts</code></td></tr>
+          <tr><td>Fixtures + goldens</td><td><code>validation/fixtures.ts</code> · <code>validation/goldens/*</code></td></tr>
+          <tr><td>Suite</td><td><code>npm run test:phase4f</code></td></tr>
+          <tr><td>Contracts</td><td><code>face_validation_contract.md</code></td></tr>
+          <tr><td>Deprecation plan</td><td><code>architecture/local-face-map-builder-deprecation.md</code></td></tr>
+        </table>
+
+        <h3>3 Regression</h3>
+        <ul style="font-size:0.85rem">
+          <li>يعيد تشغيل <code>test:phase4a</code>…<code>test:phase4e</code> و<code>test:phase3.5</code></li>
+          <li>يحظر attractiveness · يفرض فصل FaceHealthMap · يمنع اختلاق unavailable</li>
+        </ul>
+
+        <h3>4 Explicitly NOT done (correct)</h3>
+        <ul style="font-size:0.85rem">
+          <li>حذف LocalFaceMapBuilder (خطة فقط)</li>
+          <li>تغيير صيغ الهندسة لمطابقة ذهبية بلا موافقة</li>
+          <li>Perfect VTO / Fashion (مراحل برنامج لاحقة)</li>
+        </ul>
+
+        <div class="callout gate">
+          Face Intelligence track (4A–4F) is complete and validation has stopped further Face Intel feature work.<br>
+          Explicit approval is required before the next program phase.
+        </div>
+      </section>
+
+      <section class="card" id="phase4_5-report">
+        <h2><span class="num">P4.5</span> تقرير إكمال Phase 4.5 — Production Integration</h2>
+        <div class="callout verdict">
+          <strong>Phase 4.5 · PASSED</strong> — ربط مسار Face Intelligence الإنتاجي (Capture→…→faceIntelligence→Flutter section) بلا خوارزميات جديدة وبلا دمج FaceHealthMap.
+        </div>
+
+        <h3>1 Executive Summary</h3>
+        <p>
+          المكتبات 4A–4F كانت موجودة وغير منفَّذة في الإنتاج. Phase 4.5 يمرّر <code>faceIntel</code> من الجهاز عبر multipart إلى
+          <code>IntelligenceService.buildBeautyReport</code> فيملأ <code>MiraBeautyReport.faceIntelligence</code> مرة واحدة.
+        </p>
+
+        <h3>2 Canonical path</h3>
+        <p style="font-size:0.85rem">
+          انظر <a href="architecture/face_production_pipeline.md">face_production_pipeline.md</a> ·
+          علاقة FaceHealthMap: <a href="architecture/face_health_map_relationship.md">sibling (C)</a> ·
+          تراجع: <a href="phase4_5-rollback.md">phase4_5-rollback.md</a>
+        </p>
+
+        <h3>3 Tests</h3>
+        <ul style="font-size:0.85rem">
+          <li><code>npm run test:phase4_5</code></li>
+          <li><code>flutter test test/phase4_5_face_production_test.dart</code></li>
+          <li>انحدار: <code>test:phase4a</code>…<code>test:phase4f</code> + Phase 0–3.5</li>
+        </ul>
+
+        <h3>4 Explicitly NOT done</h3>
+        <ul style="font-size:0.85rem">
+          <li>تحسين Geometry / Shape / Recommendations / Report UI</li>
+          <li>محركات ملامح جديدة (عين/حاجب/أنف/فم)</li>
+          <li>Phase 5 / Perfect VTO</li>
+        </ul>
+
+        <div class="callout gate">
+          Face Intelligence v1.0.0 has been frozen.<br>
+          Future modifications require a formal Change Request.<br>
+          Phase 5A Foundation is complete. Phase 5B requires explicit approval.
+        </div>
+      </section>
+
+      <section class="card" id="phase5a-report">
+        <h2><span class="num">5A</span> Beauty Experience Foundation · تقرير الإكمال</h2>
+        <div class="callout verdict">
+          <strong>PASSED — Foundation only.</strong>
+          Beauty Experience منظومة مستقلة تحت
+          <code>mira-api/src/beauty-experience/</code>.
+          لا Perfect SDK · لا Banuba · لا واجهة VTO · لا مساس بـ Face/Skin Intelligence.
+        </div>
+
+        <h3>1 Executive Summary</h3>
+        <p style="font-size:0.88rem">
+          نُفّذ أساس المنصة: <code>BeautyExperiencePort</code>، Capability Engine،
+          Policy Engine، Provider Manager، Beauty Session، Canonical DTOs،
+          Comparison/History، ومصفوفة المزوّدين (stubs).
+          Flutter يطلب <strong>Capability</strong> فقط — لا Provider.
+        </p>
+
+        <h3>2 BeautyExperiencePort</h3>
+        <ul style="font-size:0.85rem">
+          <li><code>BEAUTY_EXPERIENCE_PORT</code> → <code>FoundationBeautyExperienceAdapter</code></li>
+          <li><code>BeautyTryOnPort</code> deprecated مع ترحيل موثّق</li>
+          <li>المسار: Capability → Policy → Provider Manager → Canonical DTO</li>
+        </ul>
+
+        <h3>3–5 Engines</h3>
+        <ul style="font-size:0.85rem">
+          <li>Capability Registry/Engine — أصول مطلوبة (lip_mask / hair_mask / face_mask / face_mesh)</li>
+          <li>Policy Engine — أعلام، ترخيص، حصة، موافقة، جودة… قبل أي مزوّد</li>
+          <li>Provider Manager — أولوية (Lip: Perfect 100 / Banuba 80) · stubs غير مرخّصة</li>
+        </ul>
+
+        <h3>6–11 Session · Sources · Matrix · DTOs · Compare · History</h3>
+        <ul style="font-size:0.85rem">
+          <li>جلسة Mira مع Analysis Sources: skin / face / fashion / future</li>
+          <li>مصفوفة قدرات موسّعة في <code>provider-matrix.ts</code></li>
+          <li>DTOs عامة بلا حقول مزوّد · Comparison كامل · History = Session→Attempts→Looks</li>
+        </ul>
+
+        <h3>12 Docs</h3>
+        <ul style="font-size:0.82rem">
+          <li><a href="architecture/beauty_experience_foundation.md">Foundation</a></li>
+          <li><a href="architecture/beauty_experience_capability_engine.md">Capability Engine</a></li>
+          <li><a href="architecture/beauty_experience_policy_engine.md">Policy Engine</a></li>
+          <li><a href="architecture/beauty_experience_provider_manager.md">Provider Manager</a></li>
+          <li><a href="architecture/beauty_experience_session.md">Session</a></li>
+          <li><a href="architecture/beauty_experience_provider_matrix.md">Matrix</a></li>
+          <li><a href="architecture/beauty_experience_engineering_laws.md">Engineering Laws</a></li>
+          <li><a href="architecture/beauty_experience_tryon_port_migration.md">TryOn migration</a></li>
+          <li>ADRs: <a href="architecture/adr/ADR-BE-001-independent-subsystem.md">BE-001</a>…
+            <a href="architecture/adr/ADR-BE-005-canonical-dtos-only.md">BE-005</a></li>
+        </ul>
+
+        <h3>13 Tests</h3>
+        <ul style="font-size:0.85rem">
+          <li><code>npm run test:phase5a</code></li>
+          <li><code>npm run audit:beauty-eng-laws</code></li>
+          <li>Health: <code>intelligence.beautyExperience</code> · <code>realTryOn: false</code></li>
+        </ul>
+
+        <h3>14 Explicitly NOT done</h3>
+        <ul style="font-size:0.85rem">
+          <li>Perfect / Banuba SDK</li>
+          <li>Real Virtual Try-On · Realtime AR · Product UI · Commerce</li>
+        </ul>
+
+        <div class="callout gate">
+          Phase 5A Foundation is complete.<br>
+          Beauty Capability Catalog v1.0.0 has been frozen.<br>
+          Implementation has stopped.<br>
+          Explicit approval is required before Phase 5B.
+        </div>
+      </section>
+
+      <section class="card" id="phase5a5-report">
+        <h2><span class="num">5A.5</span> Beauty Capability Catalog · Freeze</h2>
+        <div class="callout verdict">
+          <strong>FROZEN v1.0.0</strong> — حوكمة القدرات فقط.
+          لا Perfect · لا Banuba · لا Try-On · لا UI.
+          IDs دائمة (قانون #13) · Metadata مصدر حقيقة واحد (قانون #14).
+        </div>
+
+        <h3>Catalog IDs</h3>
+        <p style="font-size:0.85rem">
+          <code>lip</code> · <code>foundation</code> · <code>blush</code> ·
+          <code>eyeshadow</code> · <code>contour</code> · <code>hair_color</code> ·
+          <code>hair_style</code> · <code>glasses</code> (عرض: Eyewear) ·
+          <code>look</code> · <code>makeup_vto</code> (deprecated)
+        </p>
+
+        <h3>Governance docs</h3>
+        <ul style="font-size:0.82rem">
+          <li><a href="governance/BEAUTY_CAPABILITY_CATALOG.md">Catalog</a></li>
+          <li><a href="governance/BEAUTY_CAPABILITY_VERSION_POLICY.md">Version Policy</a></li>
+          <li><a href="governance/BEAUTY_CAPABILITY_RUNTIME_MATRIX.md">Runtime Matrix</a></li>
+          <li><a href="governance/BEAUTY_CAPABILITY_DEPENDENCIES.md">Dependencies</a></li>
+          <li><a href="governance/BEAUTY_PROVIDER_SUPPORT_MATRIX.md">Provider Support</a></li>
+          <li><a href="governance/BEAUTY_CAPABILITY_CONTRACTS.md">Contracts</a></li>
+          <li><a href="governance/BEAUTY_CAPABILITY_FREEZE_v1.0.0.md">Freeze v1.0.0</a></li>
+        </ul>
+
+        <h3>Validation</h3>
+        <ul style="font-size:0.85rem">
+          <li><code>npm run test:phase5a5</code></li>
+          <li><code>npm run test:phase5a</code> · <code>audit:beauty-eng-laws</code></li>
+          <li>Health: <code>capabilityCatalogVersion: 1.0.0</code> · <code>capabilityCatalogFrozen: true</code></li>
+        </ul>
+
+        <div class="callout gate">
+          Beauty Capability Catalog v1.0.0 has been frozen.<br>
+          Future capabilities require formal Change Requests.<br>
+          Phase 5B may begin only after lip license verification.
+        </div>
+      </section>
+
+      <section class="card" id="phase5b-report">
+        <h2><span class="num">5B</span> First Licensed Capability · <code>lip</code> · STOPPED</h2>
+        <div class="callout verdict">
+          <strong>NO-GO — لا تنفيذ وهمي.</strong><br>
+          منتج Perfect Makeup VTO يدعم lip في الوثائق العامة
+          (<code>/task/makeup-vto</code> · <code>lip_color</code>.
+          ترخيص حساب ميرا + وحدات Makeup VTO + إعدادات الإنتاج:
+          <strong>Unknown / Not Supported</strong>.
+          لم يُنشأ <code>PerfectBeautyAdapter</code>.
+        </div>
+
+        <h3>Verification matrix</h3>
+        <table>
+          <thead><tr><th>Check</th><th>Result</th></tr></thead>
+          <tbody>
+            <tr><td>Perfect product supports lip</td><td><span class="tag ok">Supported</span></td></tr>
+            <tr><td>Mira account Makeup VTO license</td><td><span class="tag warn">Unknown</span></td></tr>
+            <tr><td>Mira deploy try-on flags</td><td><span class="tag forbid">Not Supported</span> (<code>BEAUTY_TRYON_ENABLED=false</code>)</td></tr>
+            <tr><td>Overall</td><td><span class="tag forbid">STOPPED</span></td></tr>
+          </tbody>
+        </table>
+
+        <h3>Docs</h3>
+        <ul style="font-size:0.85rem">
+          <li><a href="governance/PHASE_5B_PROVIDER_VERIFICATION.md">Provider Verification</a></li>
+          <li><a href="governance/PHASE_5B_COMPLETION_REPORT.md">Completion / Stop Report</a></li>
+        </ul>
+
+        <h3>Resume checklist</h3>
+        <ol style="font-size:0.85rem">
+          <li>YouCam Console → confirm Makeup VTO units</li>
+          <li>Playground or one probe: <code>file/makeup-vto</code> + <code>lip_color</code></li>
+          <li>Document retention · rate limits · pricing</li>
+          <li>CR + re-approve Phase 5B implementation</li>
+        </ol>
+
+        <div class="callout gate">
+          Phase 5B stopped: Perfect Corp lip license not verified.<br>
+          No PerfectBeautyAdapter was activated.<br>
+          Disabled / Foundation path remains active.<br>
+          Explicit license verification is required before Phase 5B implementation resumes.
+        </div>
+      </section>
+
+      <section class="card" id="phase5b0-report">
+        <h2><span class="num">5B.0</span> Provider Readiness Platform · النتائج والنواقص</h2>
+        <div class="callout verdict">
+          <strong>PASSED — Config-Not-Code · v1.0.0</strong><br>
+          منصة جاهزية المزوّدين جاهزة. شراء مزوّد = عمل تجاري + تهيئة،
+          وليس مشروع هندسي (قوانين #19–#22).
+          لا SDK · لا استدعاءات خارجية · لا Try-On.
+        </div>
+
+        <h3>النتائج (ما اكتمل)</h3>
+        <ul style="font-size:0.85rem">
+          <li>Provider Registry — Perfect / Banuba / Disabled / Future / Unknown</li>
+          <li>License Registry — purchased · verified · expired · unknown · pending · rejected</li>
+          <li>Capability Activation — disabled → activated (يبقى disabled حتى اكتمال القائمة)</li>
+          <li>Configuration model — أسماء متغيرات البيئة فقط (بدون أسرار في الكود)</li>
+          <li>Verification workflow — Pass/Fail/Unknown · بدون live probe</li>
+          <li>Health · Cost · Sandbox · Documentation registries</li>
+          <li>Activation checklist — كل البنود إلزامية Pass</li>
+          <li>Configuration wizard (معمارية فقط، بلا UI)</li>
+          <li>Readiness report — Ready / Partially Ready / Blocked / Unknown</li>
+          <li>اختبار: <code>npm run test:phase5b0</code></li>
+          <li>Health: <code>intelligence.beautyExperience.providerReadiness</code></li>
+        </ul>
+
+        <h3>النواقص (Gaps) — تمنع استئناف 5B</h3>
+        <table>
+          <thead><tr><th>النقص</th><th>الحالة</th><th>المطلوب</th></tr></thead>
+          <tbody>
+            <tr><td>ترخيص Perfect Makeup VTO لـ <code>lip</code></td><td><span class="tag forbid">Unknown</span></td><td>تأكيد الوحدات من YouCam Console + evidence</td></tr>
+            <tr><td>API reachability</td><td><span class="tag warn">Unknown</span></td><td>Smoke test بعد الترخيص (خارج 5B.0)</td></tr>
+            <tr><td>Authentication valid</td><td><span class="tag forbid">Fail/Unknown</span></td><td>مفتاح صالح لمسار makeup-vto</td></tr>
+            <tr><td>Sandbox verified</td><td><span class="tag warn">Unknown</span></td><td>Playground / sandbox proof</td></tr>
+            <tr><td>Quota remaining</td><td><span class="tag warn">Unknown</span></td><td>تسجيل الرصيد في Registry</td></tr>
+            <tr><td>Feature flags</td><td><span class="tag forbid">false</span></td><td><code>BEAUTY_REAL_TRYON_ENABLED</code> + <code>BEAUTY_LIP_LICENSE_VERIFIED</code></td></tr>
+            <tr><td>Retention / Privacy docs</td><td><span class="tag warn">Partial</span></td><td>روابط سياسات Perfect</td></tr>
+            <tr><td>Banuba</td><td><span class="tag forbid">Unconfigured</span></td><td>خارج نطاق 5B — يبقى معطلاً</td></tr>
+            <tr><td>Flutter config UI</td><td><span class="tag warn">Not built</span></td><td>اختياري لاحقاً — المعمارية موجودة</td></tr>
+            <tr><td>PerfectBeautyAdapter</td><td><span class="tag forbid">Not built</span></td><td>بعد اجتياز Checklist فقط (مرحلة 5B)</td></tr>
+          </tbody>
+        </table>
+
+        <h3>Readiness snapshot</h3>
+        <table>
+          <thead><tr><th>Provider</th><th>Level</th></tr></thead>
+          <tbody>
+            <tr><td><code>perfect_beauty</code></td><td><span class="tag forbid">Blocked</span></td></tr>
+            <tr><td><code>banuba_beauty</code></td><td><span class="tag forbid">Blocked</span></td></tr>
+            <tr><td><code>disabled</code></td><td><span class="tag forbid">Blocked</span> (سلامة)</td></tr>
+            <tr><td><code>future</code> / <code>unknown</code></td><td><span class="tag warn">Unknown</span></td></tr>
+          </tbody>
+        </table>
+
+        <h3>Docs</h3>
+        <ul style="font-size:0.82rem">
+          <li><a href="governance/PROVIDER_READINESS_v1.0.0.md">PROVIDER_READINESS_v1.0.0</a></li>
+          <li><a href="governance/PROVIDER_REGISTRY.md">Registry</a></li>
+          <li><a href="governance/PROVIDER_LICENSE_POLICY.md">License Policy</a></li>
+          <li><a href="governance/PROVIDER_VERIFICATION_CHECKLIST.md">Verification Checklist</a></li>
+          <li><a href="governance/PROVIDER_CONFIGURATION.md">Configuration</a></li>
+          <li><a href="governance/PROVIDER_ACTIVATION_GUIDE.md">Activation Guide</a></li>
+          <li><a href="governance/PROVIDER_HEALTH_MODEL.md">Health</a> ·
+              <a href="governance/PROVIDER_COST_MODEL.md">Cost</a></li>
+        </ul>
+
+        <div class="callout gate">
+          Provider Readiness Platform v1.0.0 is complete.<br>
+          Provider activation now requires configuration rather than development.<br>
+          Phase 5B may resume after provider verification.
+        </div>
+      </section>
+
+      <section class="card" id="phase5b1-report">
+        <h2><span class="num">5B.1</span> Provider Simulation &amp; Integration Readiness</h2>
+        <div class="callout verdict">
+          <strong>PASSED — Integration Ready · Provider Execution Disabled · 0.2.0-integration</strong><br>
+          تدفق الإنتاج الكامل حول Beauty Experience بدون مزوّد مرخّص.
+          عند التفعيل لاحقاً: لا تغيير Flutter · لا معمارية · لا جلسة/DTO —
+          فقط تفعيل المزوّد.
+        </div>
+
+        <h3>ما اكتمل</h3>
+        <ul style="font-size:0.85rem">
+          <li>Canonical Try-On DTO — <code>resultAssetUrl: null</code> عند الحظر</li>
+          <li>Session attempts · Look lifecycle · History · Favorites · Collections · Compare · Share</li>
+          <li>Runtime states + retry policy (يشمل <code>BLOCKED_BY_CONFIGURATION</code>)</li>
+          <li>Feature flags · Telemetry · Activation hooks · Capability placeholders</li>
+          <li>لا Perfect · لا Banuba · لا صور مزيّفة · لا استدعاءات خارجية</li>
+          <li>اختبار: <code>npm run test:phase5b1</code></li>
+          <li>Health: <code>intelligence.beautyExperience.integration</code></li>
+        </ul>
+
+        <h3>قواعد التنفيذ</h3>
+        <table>
+          <thead><tr><th>قاعدة</th><th>النتيجة في 5B.1</th></tr></thead>
+          <tbody>
+            <tr><td>قدرة غير متاحة</td><td>Runtime state (reason · stage · retryable)</td></tr>
+            <tr><td>تنفيذ المزوّد</td><td><span class="tag forbid">Disabled</span></td></tr>
+            <tr><td>صور try-on</td><td><span class="tag forbid">Never fabricated</span></td></tr>
+            <tr><td>تفعيل لاحق</td><td>Flags + readiness + adapter فقط</td></tr>
+          </tbody>
+        </table>
+
+        <h3>Docs</h3>
+        <ul style="font-size:0.82rem">
+          <li><a href="governance/PHASE_5B1_COMPLETION_REPORT.md">PHASE_5B1_COMPLETION_REPORT</a></li>
+          <li><a href="governance/BEAUTY_INTEGRATION_v0.2.0.md">BEAUTY_INTEGRATION_v0.2.0</a></li>
+          <li><a href="governance/BEAUTY_CAPABILITY_RUNTIME_MATRIX.md">Runtime Matrix</a></li>
+        </ul>
+
+        <div class="callout gate">
+          Phase 5B.1 Integration Readiness is complete.<br>
+          Provider execution remains disabled.<br>
+          Do not start Phase 5C.
+        </div>
+      </section>
+
+      <section class="card" id="phase6b-report">
+        <h2><span class="num">6B</span> Wardrobe Foundation</h2>
+        <div class="callout verdict">
+          <strong>PASSED — 0.1.0-wardrobe-foundation</strong><br>
+          Canonical Wardrobe + Fashion Session · Mira-owned · لا محركات ذكاء · لا مزوّدين.
+        </div>
+        <ul style="font-size:0.85rem">
+          <li>Package: <code>mira-api/src/fashion-intelligence/</code></li>
+          <li>Capabilities: wardrobe · insights · history · progress (Mira-only)</li>
+          <li>Test: <code>npm run test:phase6b</code></li>
+          <li>Health: <code>intelligence.fashionIntelligence</code></li>
+        </ul>
+        <ul style="font-size:0.82rem">
+          <li><a href="governance/PHASE_6B_WARDROBE_FOUNDATION_COMPLETION_REPORT.md">Completion</a></li>
+          <li><a href="governance/PHASE_6B_ARCHITECTURE_COMPLIANCE_REPORT.md">Architecture</a></li>
+          <li><a href="governance/PHASE_6B_CONTRACT_COMPLIANCE_REPORT.md">Contracts</a></li>
+          <li><a href="governance/PHASE_6B_MIGRATION_NOTES.md">Migration</a></li>
+        </ul>
+        <div class="callout gate">
+          Phase 6B Wardrobe Foundation complete.<br>
+          Ready for Phase 6C after explicit approval.
+        </div>
+      </section>
+
+      <section class="card" id="phase6c-report">
+        <h2><span class="num">6C</span> Garment Intelligence</h2>
+        <div class="callout verdict">
+          <strong>FROZEN v1.0.0</strong> — Production Freeze (Phase 6C.2)<br>
+          Build: <code>0.2.1-garment-intelligence-remediation</code> · Re-Audit approved.
+        </div>
+        <ul style="font-size:0.85rem">
+          <li>Package: <code>mira-api/src/fashion-intelligence/garment/</code> (protected)</li>
+          <li>Test: <code>npm run test:phase6c</code></li>
+          <li><a href="governance/GARMENT_INTELLIGENCE_PRODUCTION_FREEZE_v1.0.0.md">Production Freeze Report</a></li>
+          <li><a href="governance/GARMENT_INTELLIGENCE_FREEZE_CERTIFICATE_v1.0.0.md">Freeze Certificate</a></li>
+          <li><a href="governance/GARMENT_INTELLIGENCE_VERSION_MANIFEST.md">Version Manifest</a></li>
+          <li><a href="governance/GARMENT_INTELLIGENCE_CHANGE_POLICY.md">Change Policy</a></li>
+          <li><a href="governance/GARMENT_INTELLIGENCE_TECHNICAL_DEBT.md">Technical Debt</a></li>
+          <li><a href="governance/PHASE_6C1_REMEDIATION_REPORT.md">6C.1 Remediation</a></li>
+        </ul>
+        <div class="callout gate">
+          Garment Intelligence v1.0.0 is officially frozen.<br>
+          Outfit · Styling · AI Beauty Advisor also frozen at v1.0.0.
+        </div>
+      </section>
+
+      <section class="card" id="phase6d-report">
+        <h2><span class="num">6D</span> Outfit Intelligence</h2>
+        <div class="callout verdict">
+          <strong>FROZEN v1.0.0</strong> — Production Freeze (Phase 6D.3)<br>
+          Release: <code>1.0.0-outfit-intelligence</code> · Certificate <code>MIRA-OI-FREEZE-1.0.0</code>
+        </div>
+        <ul style="font-size:0.85rem">
+          <li>Package: <code>mira-api/src/fashion-intelligence/outfit/</code> (protected)</li>
+          <li>Law #31 real evidence graph · CanonicalOutfit sole public model</li>
+          <li>Test: <code>npm run test:phase6d</code></li>
+          <li><a href="governance/PHASE_6D3_OUTFIT_INTELLIGENCE_FREEZE_CERTIFICATE.md">Freeze Certificate</a></li>
+          <li><a href="governance/PHASE_6D3_OUTFIT_INTELLIGENCE_VERSION_MANIFEST.md">Version Manifest</a></li>
+          <li><a href="governance/PHASE_6D3_OUTFIT_INTELLIGENCE_PRODUCTION_FREEZE_REPORT.md">Freeze Report</a></li>
+          <li><a href="governance/PHASE_6D1_REMEDIATION_REPORT.md">6D.1 Remediation</a></li>
+        </ul>
+        <div class="callout gate">
+          Outfit Intelligence v1.0.0 is officially frozen.<br>
+          Styling Intelligence 6E / Advisor 7B completed and frozen.
+        </div>
+      </section>
+
+      <section class="card" id="phase6e-report">
+        <h2><span class="num">6E</span> Styling Intelligence</h2>
+        <div class="callout verdict">
+          <strong>FROZEN v1.0.0</strong> — Production Freeze (Phase 6E.3)<br>
+          Release: <code>1.0.0-styling-intelligence</code> · Certificate <code>MIRA-SI-FREEZE-1.0.0</code>
+        </div>
+        <ul style="font-size:0.85rem">
+          <li>Package: <code>mira-api/src/fashion-intelligence/styling/</code> (protected)</li>
+          <li>Law #32 frozen evidence · Canonical Styling Profile · Decision Ledger internal</li>
+          <li>Caps: <code>analyze_style</code> · <code>style_reason</code> · <code>style_goals</code> (<code>recommendations</code> disabled)</li>
+          <li>Test: <code>npm run test:phase6e</code></li>
+          <li><a href="governance/PHASE_6E3_STYLING_INTELLIGENCE_FREEZE_CERTIFICATE.md">Freeze Certificate</a></li>
+          <li><a href="governance/PHASE_6E3_STYLING_INTELLIGENCE_VERSION_MANIFEST.md">Version Manifest</a></li>
+          <li><a href="governance/PHASE_6E3_STYLING_INTELLIGENCE_PRODUCTION_FREEZE_REPORT.md">Freeze Report</a></li>
+          <li><a href="governance/PHASE_6E_INDEPENDENT_REAUDIT_RECORD.md">Independent Re-Audit A</a></li>
+          <li><a href="governance/PHASE_6E2_REMEDIATION_REPORT.md">6E.2 Remediation</a></li>
+        </ul>
+        <div class="callout gate">
+          Styling Intelligence v1.0.0 is officially frozen.<br>
+          AI Beauty Advisor may consume Canonical Styling Profile only.
+        </div>
+      </section>
+
+      <section class="card" id="phase7b-report">
+        <h2><span class="num">7B</span> AI Beauty Advisor</h2>
+        <div class="callout verdict">
+          <strong>FROZEN v1.0.0</strong> — Production Freeze (Phase 7B.2)<br>
+          Release: <code>1.0.0-beauty-advisor</code> · Certificate <code>MIRA-BA-FREEZE-1.0.0</code>
+        </div>
+        <ul style="font-size:0.85rem">
+          <li>Package: <code>mira-api/src/beauty-advisor/</code> · façade <code>mira-api/src/advisor/</code></li>
+          <li>Advisor Evidence Envelope · Laws #33 / #34 · grounded conversation only</li>
+          <li>Test: <code>npm run test:phase7b</code></li>
+          <li><a href="governance/PHASE_7B2_AI_BEAUTY_ADVISOR_FREEZE_CERTIFICATE.md">Freeze Certificate</a></li>
+          <li><a href="governance/PHASE_7B2_AI_BEAUTY_ADVISOR_VERSION_MANIFEST.md">Version Manifest</a></li>
+          <li><a href="governance/PHASE_7B2_AI_BEAUTY_ADVISOR_PRODUCTION_FREEZE_REPORT.md">Freeze Report</a></li>
+          <li><a href="governance/PHASE_7B_INDEPENDENT_REAUDIT_RECORD.md">Independent Re-Audit A</a></li>
+          <li><a href="governance/PHASE_7B1_REMEDIATION_REPORT.md">7B.1 Remediation</a></li>
+          <li><a href="governance/PHASE_7B2_PROGRAM_COMPLETION_SUMMARY.md">Program Completion Summary</a></li>
+        </ul>
+        <div class="callout gate">
+          AI Beauty Advisor v1.0.0 is officially frozen.<br>
+          Premium Transformation fashion/advisor track complete.<br>
+          Recommendation Engine remains a separate later track.
+        </div>
+      </section>
+
+      <section class="card" id="s12">
+        <h2><span class="num">12</span> بوابة الموافقة — إكمال المسار</h2>
+        <div class="callout verdict">
+          <strong>Premium Transformation Track · COMPLETE</strong><br>
+          Skin · Face · Wardrobe · Garment · Outfit · Styling · AI Beauty Advisor — all v1.0.0 frozen.<br>
+          Beauty Experience: Activation Ready (5B lip still STOPPED on license).<br>
+          Recommendation Engine: deferred / separate owner.
+        </div>
+        <p style="font-size:0.88rem">
+          <a href="#phase7b-report">7B Advisor · FROZEN</a> ·
+          <a href="#phase6e-report">6E Styling · FROZEN</a> ·
+          <a href="#phase6d-report">6D Outfit · FROZEN</a> ·
+          <a href="#phase6c-report">6C Garment · FROZEN</a> ·
+          <a href="#phase6b-report">6B Wardrobe</a>
+        </p>
+        <ul style="font-size:0.82rem">
+          <li><a href="governance/PHASE_7B2_PROGRAM_COMPLETION_SUMMARY.md">Program Completion Summary</a></li>
+          <li><a href="governance/PHASE_7B2_AI_BEAUTY_ADVISOR_FREEZE_CERTIFICATE.md">Advisor Freeze Certificate</a></li>
+          <li><a href="governance/PHASE_6E3_STYLING_INTELLIGENCE_FREEZE_CERTIFICATE.md">Styling Freeze Certificate</a></li>
+          <li><a href="governance/PHASE_6D3_OUTFIT_INTELLIGENCE_FREEZE_CERTIFICATE.md">Outfit Freeze Certificate</a></li>
+        </ul>
+      </section>
+      <p class="footer-note">
+        ميرا · GI · OI · Styling · AI Beauty Advisor v1.0.0 FROZEN · Premium Transformation Track COMPLETE · يوليو 2026
+      </p>
+    </div>
+  </main>
+</div>
+<script src="mira-production-transformation-program.js"></script>
+</body>
+</html>

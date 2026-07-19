@@ -1,0 +1,26 @@
+{
+  "version": "face-shape-v1",
+  "formulaId": "face-shape-hybrid-ratios-v1",
+  "availability": "available",
+  "shapeId": "oval",
+  "confidence": 100,
+  "signals": {
+    "wh": 0.7499999999999999,
+    "f2c": 0.9047619047619047,
+    "j2c": 0.8333333333333335,
+    "f2j": 1.0857142857142854,
+    "cheekW": 0.42,
+    "faceH": 0.56,
+    "foreheadW": 0.37999999999999995,
+    "jawW": 0.35000000000000003
+  },
+  "scores": {
+    "oblong": 0,
+    "round": 0,
+    "square": 0,
+    "heart": 0.009826152683294884,
+    "triangle": 0,
+    "diamond": 0.061764388295001096,
+    "oval": 0.64927113702624
+  }
+}

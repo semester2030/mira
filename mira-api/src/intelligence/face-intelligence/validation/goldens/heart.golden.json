@@ -1,0 +1,408 @@
+{
+  "id": "heart",
+  "contractVersion": "face-intel-contract-v1",
+  "validationVersion": "face-validation-v1",
+  "shapeId": "heart",
+  "shapeAvailability": "available",
+  "findingIds": [
+    "face_shape_heart",
+    "narrower_lower_face"
+  ],
+  "recoIds": [
+    "edu_face_styling_disclaimer",
+    "rec_accessories_narrow_lower",
+    "rec_contour_heart",
+    "rec_eyewear_heart",
+    "rec_hairstyle_heart"
+  ],
+  "layerIds": [
+    "layer_face_shape_heart",
+    "layer_narrower_lower_face"
+  ],
+  "unavailable": [],
+  "confidence": 100,
+  "measurementEligible": true,
+  "report": {
+    "analysisId": "fix-heart",
+    "provider": "on_device_landmarks",
+    "formulaVersion": "face-shape-hybrid-ratios-v1",
+    "captureVersion": "cq-thresholds-v2.1",
+    "faceVersion": "face-model-v1",
+    "intelligenceVersion": "face-intel-v1",
+    "geometryVersion": "face-geometry-v1",
+    "geometryFormulaId": "face-geom-ratios-thirds-sym-v1",
+    "shapeVersion": "face-shape-v1",
+    "shapeFormulaId": "face-shape-hybrid-ratios-v1",
+    "recommendationVersion": "face-reco-v1",
+    "recommendationEngineId": "face-styling-reco-v1",
+    "reportVersion": "face-report-v1",
+    "confidence": 100,
+    "limitations": [
+      "Cosmetic facial-feature report — not attractiveness scoring.",
+      "Not a medical or clinical assessment.",
+      "Feature layers are styling narratives — not skin heatmap measurement truth.",
+      "Sibling to Skin Intelligence; does not modify FaceHealthMap or SVI.",
+      "Phase 4C face shape applied where signals allow.",
+      "Sibling to Skin Intelligence; does not modify SVI or FaceHealthMap.",
+      "Cosmetic face-shape taxonomy — not attractiveness scoring.",
+      "Cosmetic face-shape taxonomy — not attractiveness scoring.",
+      "Not a medical or clinical craniofacial assessment."
+    ],
+    "language": "ar+en",
+    "executiveSummaryAr": "شكل الوجه الظاهر: قلبي (ثقة 100). جبهة أعرض نسبياً من الفك السفلي الظاهر. 4 توصيات تنسيق تجميلية بأدلة. ذكاء ملامح تجميلي — ليس تشخيصاً طبياً ولا درجة جاذبية. منفصل عن خريطة صحة البشرة.",
+    "executiveSummaryEn": "Apparent face shape: Heart (confidence 100). Forehead relatively wider than the apparent lower jaw. 4 evidence-backed cosmetic styling tips. Cosmetic facial-feature intelligence — not medical diagnosis or attractiveness scoring. Separate from skin FaceHealthMap.",
+    "measurementEligible": true,
+    "eligibilityReasonCodes": [],
+    "shape": {
+      "availability": "available",
+      "shapeId": "heart",
+      "displayNameAr": "قلبي",
+      "displayNameEn": "Heart",
+      "confidence": 100,
+      "explanationAr": "شكل الوجه الظاهر: قلبي (ثقة 100). صيغة هجينة من نسب العرض/الارتفاع والجبهة/الوجنة/الفك.",
+      "explanationEn": "Apparent face shape: Heart (confidence 100). Hybrid ratios of width/height and forehead/cheek/jaw spans."
+    },
+    "findings": [
+      {
+        "id": "face_shape_heart",
+        "category": "shape",
+        "metricIds": [
+          "faceShape"
+        ],
+        "titleAr": "شكل الوجه: قلبي",
+        "titleEn": "Face shape: Heart",
+        "detailAr": "جبهة أعرض نسبياً من الفك السفلي الظاهر.",
+        "detailEn": "Forehead relatively wider than the apparent lower jaw.",
+        "severity": "info",
+        "confidence": "high",
+        "recommendationEligible": true,
+        "priority": 10,
+        "limitations": [
+          "Cosmetic styling finding — not a medical diagnosis.",
+          "Not attractiveness scoring.",
+          "Independent of skin type / undertone."
+        ],
+        "source": "face-shape-hybrid-ratios-v1"
+      },
+      {
+        "id": "narrower_lower_face",
+        "category": "proportion",
+        "metricIds": [
+          "faceShape"
+        ],
+        "titleAr": "جزء سفلي أضيق ظاهرياً",
+        "titleEn": "Apparently narrower lower face",
+        "detailAr": "عرض الفك أقل نسبياً من الجبهة في المراسي الحالية.",
+        "detailEn": "Jaw span is relatively smaller than forehead in current anchors.",
+        "severity": "info",
+        "confidence": "high",
+        "recommendationEligible": true,
+        "priority": 25,
+        "limitations": [
+          "Cosmetic styling finding — not a medical diagnosis.",
+          "Not attractiveness scoring.",
+          "Independent of skin type / undertone."
+        ],
+        "source": "face-shape-hybrid-ratios-v1"
+      }
+    ],
+    "notableFindings": [],
+    "metrics": [
+      {
+        "id": "facialThirdsBalance",
+        "displayNameAr": "توازن أثلاث الوجه",
+        "displayNameEn": "Facial thirds balance",
+        "availability": "available",
+        "normalizedValue": 41,
+        "categoricalValue": "raw=0.2673",
+        "confidence": 78,
+        "source": "locally_calculated",
+        "limitations": [
+          "Cosmetic facial geometry — not attractiveness scoring.",
+          "Not a medical or clinical craniofacial assessment.",
+          "Pose, camera lens, and lighting can affect measurements.",
+          "Formula face-geom-ratios-thirds-sym-v1",
+          "Thirds from vertical spans forehead→brow, brow→noseBase, noseBase→chin; score from low CV."
+        ]
+      },
+      {
+        "id": "eyeSpacingRatio",
+        "displayNameAr": "نسبة تباعد العينين",
+        "displayNameEn": "Eye spacing ratio",
+        "availability": "available",
+        "normalizedValue": 0,
+        "categoricalValue": "raw=0.4000",
+        "confidence": 78,
+        "source": "locally_calculated",
+        "limitations": [
+          "Cosmetic facial geometry — not attractiveness scoring.",
+          "Not a medical or clinical craniofacial assessment.",
+          "Pose, camera lens, and lighting can affect measurements.",
+          "Formula face-geom-ratios-thirds-sym-v1",
+          "eyeSpacingRatio = interocular(inner corners) / faceWidth."
+        ]
+      },
+      {
+        "id": "faceWidthHeightRatio",
+        "displayNameAr": "نسبة عرض إلى ارتفاع الوجه",
+        "displayNameEn": "Face width-to-height ratio",
+        "availability": "available",
+        "normalizedValue": 51,
+        "categoricalValue": "raw=0.7143",
+        "confidence": 78,
+        "source": "locally_calculated",
+        "limitations": [
+          "Cosmetic facial geometry — not attractiveness scoring.",
+          "Not a medical or clinical craniofacial assessment.",
+          "Pose, camera lens, and lighting can affect measurements.",
+          "Formula face-geom-ratios-thirds-sym-v1",
+          "faceWidthHeightRatio = dist(leftFace,rightFace) / dist(foreheadTop,chin)."
+        ]
+      },
+      {
+        "id": "noseToFaceWidthRatio",
+        "displayNameAr": "نسبة عرض الأنف إلى الوجه",
+        "displayNameEn": "Nose-to-face width ratio",
+        "availability": "available",
+        "normalizedValue": 29,
+        "categoricalValue": "raw=0.3000",
+        "confidence": 78,
+        "source": "locally_calculated",
+        "limitations": [
+          "Cosmetic facial geometry — not attractiveness scoring.",
+          "Not a medical or clinical craniofacial assessment.",
+          "Pose, camera lens, and lighting can affect measurements.",
+          "Formula face-geom-ratios-thirds-sym-v1",
+          "noseToFaceWidthRatio = dist(leftAla,rightAla) / faceWidth."
+        ]
+      },
+      {
+        "id": "mouthToFaceWidthRatio",
+        "displayNameAr": "نسبة عرض الفم إلى الوجه",
+        "displayNameEn": "Mouth-to-face width ratio",
+        "availability": "available",
+        "normalizedValue": 0,
+        "categoricalValue": "raw=0.5000",
+        "confidence": 78,
+        "source": "locally_calculated",
+        "limitations": [
+          "Cosmetic facial geometry — not attractiveness scoring.",
+          "Not a medical or clinical craniofacial assessment.",
+          "Pose, camera lens, and lighting can affect measurements.",
+          "Formula face-geom-ratios-thirds-sym-v1",
+          "mouthToFaceWidthRatio = dist(leftMouth,rightMouth) / faceWidth."
+        ]
+      },
+      {
+        "id": "symmetryCautious",
+        "displayNameAr": "التماثل الظاهر (بحذر)",
+        "displayNameEn": "Apparent symmetry (cautious)",
+        "availability": "available",
+        "normalizedValue": 100,
+        "categoricalValue": "raw=0.0000",
+        "confidence": 62,
+        "source": "locally_calculated",
+        "limitations": [
+          "Cosmetic facial geometry — not attractiveness scoring.",
+          "Not a medical or clinical craniofacial assessment.",
+          "Pose, camera lens, and lighting can affect measurements.",
+          "Formula face-geom-ratios-thirds-sym-v1",
+          "Cautious L/R deviation only — not medical symmetry diagnosis.",
+          "Strongly affected by head yaw; eligibility must keep pose frontal."
+        ]
+      },
+      {
+        "id": "faceShape",
+        "displayNameAr": "شكل الوجه",
+        "displayNameEn": "Face shape",
+        "availability": "available",
+        "normalizedValue": 100,
+        "categoricalValue": "heart",
+        "confidence": 100,
+        "source": "locally_calculated",
+        "limitations": [
+          "Cosmetic face-shape taxonomy — not attractiveness scoring.",
+          "Not a medical or clinical craniofacial assessment.",
+          "Separate from skin type / undertone.",
+          "Formula face-shape-hybrid-ratios-v1",
+          "Hybrid heuristic — lighting, hairstyle, and expression can shift class.",
+          "Jaw span uses MediaPipe chinArc endpoints (indices owned by MediapipeLandmarkIndices)."
+        ]
+      }
+    ],
+    "recommendations": [
+      {
+        "id": "edu_face_styling_disclaimer",
+        "category": "educational",
+        "titleAr": "طبيعة توصيات التنسيق",
+        "titleEn": "About styling recommendations",
+        "bodyAr": "اقتراحات ميرا للشعر/المكياج/النظارات تجميلية وإرشادية من شكل الوجه الظاهر والقياسات المتاحة. لا تشخّص ولا تربط بمنتج إلزامي.",
+        "bodyEn": "Mira hairstyle/makeup/eyewear tips are cosmetic guidance from apparent face shape and available measurements. Not diagnostic; no mandatory product lock-in.",
+        "reasonAr": "شفافية المنتج وثقة المستخدم.",
+        "reasonEn": "Product transparency and user trust.",
+        "evidence": {
+          "metricIds": [],
+          "findingIds": [],
+          "values": {}
+        },
+        "confidence": 100,
+        "priority": 5,
+        "cosmeticOnly": true,
+        "productLockIn": false,
+        "limitations": [
+          "Cosmetic styling guidance only — not a medical prescription or diagnosis.",
+          "No Perfect Corp / marketplace product lock-in in Phase 4D."
+        ]
+      },
+      {
+        "id": "rec_hairstyle_heart",
+        "category": "hairstyle",
+        "titleAr": "توازن الجزء السفلي",
+        "titleEn": "Balance the lower face",
+        "bodyAr": "أطوال تصل للذقن أو أطول مع طبقات سفلية تساعد على موازنة جبهة أعرض ظاهرياً.",
+        "bodyEn": "Chin-length or longer cuts with lower layers help balance an apparently wider forehead.",
+        "reasonAr": "بناءً على شكل الوجه الظاهر: قلبي.",
+        "reasonEn": "Based on apparent face shape: Heart.",
+        "evidence": {
+          "metricIds": [
+            "faceShape"
+          ],
+          "findingIds": [
+            "face_shape_heart"
+          ],
+          "values": {
+            "faceShape": "heart"
+          }
+        },
+        "confidence": 82,
+        "priority": 20,
+        "cosmeticOnly": true,
+        "productLockIn": false,
+        "limitations": [
+          "Cosmetic styling guidance only — not a medical prescription or diagnosis.",
+          "No Perfect Corp / marketplace product lock-in in Phase 4D.",
+          "Cosmetic styling finding — not a medical diagnosis.",
+          "Not attractiveness scoring."
+        ]
+      },
+      {
+        "id": "rec_contour_heart",
+        "category": "makeup_contour",
+        "titleAr": "تخفيف الجبهة وإبراز الذقن",
+        "titleEn": "Soften forehead, lift chin",
+        "bodyAr": "كنتور خفيف على الصدغين وإبراز بسيط على الذقن يوازن النسب الظاهرة.",
+        "bodyEn": "Light temple contour and a soft chin highlight balance apparent proportions.",
+        "reasonAr": "دليل الشكل: قلبي.",
+        "reasonEn": "Shape evidence: Heart.",
+        "evidence": {
+          "metricIds": [
+            "faceShape"
+          ],
+          "findingIds": [
+            "face_shape_heart"
+          ],
+          "values": {
+            "faceShape": "heart"
+          }
+        },
+        "confidence": 82,
+        "priority": 30,
+        "cosmeticOnly": true,
+        "productLockIn": false,
+        "limitations": [
+          "Cosmetic styling guidance only — not a medical prescription or diagnosis.",
+          "No Perfect Corp / marketplace product lock-in in Phase 4D."
+        ]
+      },
+      {
+        "id": "rec_eyewear_heart",
+        "category": "eyewear",
+        "titleAr": "إطارات أخف في الأعلى",
+        "titleEn": "Lighter upper frames",
+        "bodyAr": "إطارات أرفع عند الحافة العلوية أو بشكل قطة خفيف توازن الجبهة الأعراض ظاهرياً.",
+        "bodyEn": "Lighter top edges or soft cat-eye shapes balance an apparently wider forehead.",
+        "reasonAr": "دليل الشكل: قلبي.",
+        "reasonEn": "Shape evidence: Heart.",
+        "evidence": {
+          "metricIds": [
+            "faceShape"
+          ],
+          "findingIds": [
+            "face_shape_heart"
+          ],
+          "values": {
+            "faceShape": "heart"
+          }
+        },
+        "confidence": 82,
+        "priority": 40,
+        "cosmeticOnly": true,
+        "productLockIn": false,
+        "limitations": [
+          "Cosmetic styling guidance only — not a medical prescription or diagnosis.",
+          "No Perfect Corp / marketplace product lock-in in Phase 4D."
+        ]
+      },
+      {
+        "id": "rec_accessories_narrow_lower",
+        "category": "accessories",
+        "titleAr": "تفصيل يضيف عرضاً سفلياً خفيفاً",
+        "titleEn": "Detail that adds soft lower width",
+        "bodyAr": "أقراط تتسع للأسفل أو طوق يلامس عظمة الترقوة قد يوازن الجزء السفلي الأضيق ظاهرياً.",
+        "bodyEn": "Earrings that widen downward or a collarbone necklace may balance an apparently narrower lower face.",
+        "reasonAr": "عرض الفك أقل نسبياً من الجبهة في المراسي الحالية.",
+        "reasonEn": "Jaw span is relatively smaller than forehead in current anchors.",
+        "evidence": {
+          "metricIds": [
+            "faceShape"
+          ],
+          "findingIds": [
+            "narrower_lower_face"
+          ],
+          "values": {}
+        },
+        "confidence": 82,
+        "priority": 46,
+        "cosmeticOnly": true,
+        "productLockIn": false,
+        "limitations": [
+          "Cosmetic styling guidance only — not a medical prescription or diagnosis.",
+          "No Perfect Corp / marketplace product lock-in in Phase 4D."
+        ]
+      }
+    ],
+    "featureLayers": [
+      {
+        "id": "layer_face_shape_heart",
+        "kind": "shape",
+        "titleAr": "شكل الوجه: قلبي",
+        "titleEn": "Face shape: Heart",
+        "detailAr": "جبهة أعرض نسبياً من الفك السفلي الظاهر.",
+        "detailEn": "Forehead relatively wider than the apparent lower jaw.",
+        "metricIds": [
+          "faceShape"
+        ],
+        "confidence": "high"
+      },
+      {
+        "id": "layer_narrower_lower_face",
+        "kind": "proportion",
+        "titleAr": "جزء سفلي أضيق ظاهرياً",
+        "titleEn": "Apparently narrower lower face",
+        "detailAr": "عرض الفك أقل نسبياً من الجبهة في المراسي الحالية.",
+        "detailEn": "Jaw span is relatively smaller than forehead in current anchors.",
+        "metricIds": [
+          "faceShape"
+        ],
+        "confidence": "high"
+      }
+    ],
+    "retakeGuidanceAr": "لقراءة ملامح أوضح: إضاءة أمامية ناعمة، وجه أمامي ثابت، مسافة كافية، بدون التفات قوي.",
+    "retakeGuidanceEn": "For clearer feature reading: soft front light, steady frontal face, adequate distance, no strong head turn.",
+    "metadata": {
+      "isMock": false,
+      "measurementEligible": true,
+      "schemaNote": "faceIntelligence sibling on MiraBeautyReport — never FaceHealthMap schema."
+    }
+  }
+}

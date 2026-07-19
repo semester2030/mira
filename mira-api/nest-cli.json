@@ -5,7 +5,11 @@
   "compilerOptions": {
     "deleteOutDir": true,
     "assets": [
-      { "include": "vision/qel/fixtures/**/*", "watchAssets": true }
+      { "include": "vision/qel/fixtures/**/*", "watchAssets": true },
+      {
+        "include": "beauty-experience/capability/*.json",
+        "watchAssets": true
+      }
     ]
   }
 }

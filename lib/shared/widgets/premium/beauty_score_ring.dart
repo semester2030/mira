@@ -14,7 +14,7 @@ class BeautyScoreRing extends StatefulWidget {
     super.key,
     required this.score,
     this.size = 120,
-    this.label = 'درجة الجمال',
+    this.label = 'مؤشر حيوية البشرة',
   });
 
   @override

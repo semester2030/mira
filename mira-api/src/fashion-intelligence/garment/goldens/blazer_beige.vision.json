@@ -1,0 +1,58 @@
+{
+  "schemaVersion": "1.0.0",
+  "analysisGate": "proceed",
+  "provenance": {
+    "providers": ["geometry", "semantic"],
+    "timestamp": "2026-07-19T00:00:00.000Z",
+    "orchestratorVersion": "vision-v1"
+  },
+  "geometry": {
+    "segments": [
+      {
+        "id": "seg_upper_1",
+        "regionRole": "upper",
+        "polygon": [[0.1, 0.1], [0.5, 0.1], [0.5, 0.5], [0.1, 0.5]],
+        "bbox": { "x": 0.1, "y": 0.1, "w": 0.4, "h": 0.4 }
+      }
+    ],
+    "topology": {
+      "pieceCount": 1,
+      "onePiece": false,
+      "silhouetteHint": "two_piece"
+    }
+  },
+  "semantics": {
+    "garments": [
+      {
+        "categoryId": "tops",
+        "typeId": "blazer",
+        "sleeve": "long",
+        "neckline": "lapel",
+        "fit": "tailored",
+        "colors": ["beige"],
+        "material": "wool",
+        "providerConfidence": 0.82
+      }
+    ],
+    "accessories": [],
+    "styleArchetypeId": "quiet_luxury",
+    "layering": ["outer"],
+    "dominantColorIds": ["beige_linen"],
+    "secondaryColorIds": []
+  },
+  "fusion": {
+    "resolvedGarments": [
+      {
+        "categoryId": "tops",
+        "typeId": "blazer",
+        "confidence": 0.8
+      }
+    ],
+    "conflicts": [],
+    "fieldConfidence": [
+      { "field": "typeId", "confidence": 0.8 },
+      { "field": "categoryId", "confidence": 0.85 }
+    ],
+    "overallConfidence": 0.8
+  }
+}

@@ -3,6 +3,7 @@ import {
   Injectable,
   InternalServerErrorException,
   Logger,
+  ServiceUnavailableException,
 } from '@nestjs/common';
 import { ConfigService } from '@nestjs/config';
 import { SkinAnalysisProviderResult } from '../contracts/skin-analysis-provider-result.interface';
@@ -15,10 +16,19 @@ import {
   isFaceQualityYouCamError,
 } from '../face-gate/youcam-face-errors';
 import { MockSkinAnalysisProvider } from './mock-skin-analysis.provider';
+import {
+  isPerfectMockFallbackAllowed,
+  isProductionEnv,
+} from '../../config/production-integrity';
+import {
+  SKIN_PROVIDER_UNAVAILABLE_AR,
+} from '../../intelligence/contracts/cosmetic-copy';
 
 /**
  * Skin analysis via Perfect Corp YouCam (Render / mira-api only).
  * Flutter never calls Perfect Corp directly.
+ *
+ * Phase 0: never silently return mock results in production.
  */
 @Injectable()
 export class PerfectCorpSkinProvider implements SkinAnalysisProvider {
@@ -31,28 +41,46 @@ export class PerfectCorpSkinProvider implements SkinAnalysisProvider {
   ) {}
 
   async analyze(imageBytes: Buffer): Promise<SkinAnalysisProviderResult> {
+    const production = isProductionEnv(this.config.get<string>('NODE_ENV'));
+    const allowFallback = isPerfectMockFallbackAllowed({
+      NODE_ENV: this.config.get<string>('NODE_ENV'),
+      PERFECT_CORP_FALLBACK_MOCK: this.config.get<string>(
+        'PERFECT_CORP_FALLBACK_MOCK',
+      ),
+    });
+
     if (!this.perfectCorp.isConfigured()) {
+      if (production || !allowFallback) {
+        this.logger.error(
+          'PERFECT_API_KEY missing — refusing mock in production / when fallback disabled',
+        );
+        throw new ServiceUnavailableException(SKIN_PROVIDER_UNAVAILABLE_AR);
+      }
       this.logger.warn(
-        'PERFECT_API_KEY / PERFECT_CORP_API_KEY not set — using mock skin analysis (no server face ML)',
+        'PERFECT_API_KEY / PERFECT_CORP_API_KEY not set — using mock skin analysis (dev/demo only)',
       );
       return this.mock.analyze(imageBytes);
     }
-
-    const allowFallback =
-      this.config.get<string>('PERFECT_CORP_FALLBACK_MOCK', 'true') !== 'false';
 
     const variants = await buildYouCamImageVariants(imageBytes);
     let lastMessage = '';
 
     for (let i = 0; i < variants.length; i++) {
       try {
-        const { result, rawYouCam } = await this.perfectCorp.analyzeSkin(variants[i]);
+        const { result, rawYouCam } = await this.perfectCorp.analyzeSkin(
+          variants[i],
+        );
         if (i > 0) {
           this.logger.log(
             `YouCam succeeded on auto-retry variant ${i + 1}/${variants.length}`,
           );
         }
-        return { result, rawYouCam };
+        return {
+          result,
+          rawYouCam,
+          isMock: false,
+          providerName: 'perfect_corp',
+        };
       } catch (error) {
         lastMessage = error instanceof Error ? error.message : String(error);
 
@@ -78,7 +106,7 @@ export class PerfectCorpSkinProvider implements SkinAnalysisProvider {
 
         if (allowFallback) {
           this.logger.warn(
-            'Non-face YouCam failure — falling back to mock (dev only; set PERFECT_CORP_FALLBACK_MOCK=false in prod)',
+            'Non-face YouCam failure — falling back to mock (non-production only)',
           );
           return this.mock.analyze(imageBytes);
         }
@@ -90,7 +118,7 @@ export class PerfectCorpSkinProvider implements SkinAnalysisProvider {
     }
 
     if (allowFallback) {
-      this.logger.warn('Falling back to mock skin analysis');
+      this.logger.warn('Falling back to mock skin analysis (non-production only)');
       return this.mock.analyze(imageBytes);
     }
 

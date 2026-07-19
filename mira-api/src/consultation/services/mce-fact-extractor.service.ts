@@ -59,7 +59,7 @@ export class MceFactExtractorService {
     if (skin) {
       facts.push({
         id: 'skin.beautyScore',
-        labelAr: 'درجة الجمال',
+        labelAr: 'مؤشر حيوية البشرة',
         valueAr: String(skin.beautyScore),
         confidence: 'high',
       });

@@ -1,0 +1,733 @@
+{
+  "id": "unavailable_heavy",
+  "svi": 71,
+  "sviConfidence": 70,
+  "formulaId": "svi-v2-dynamic-denom",
+  "findingIds": [
+    "finding_hydration"
+  ],
+  "recoIds": [
+    "edu_disclaimer",
+    "rec_hydration_morning"
+  ],
+  "unavailable": [
+    "acne",
+    "darkCircles",
+    "elasticity",
+    "fineLines",
+    "firmness",
+    "oiliness",
+    "pigmentation",
+    "pores",
+    "radiance",
+    "redness",
+    "sensitivity",
+    "texture",
+    "toneUniformity",
+    "undertone",
+    "wrinkles"
+  ],
+  "report": {
+    "analysisId": "fixture_unavailable_heavy",
+    "provider": "perfect_corp",
+    "providerVersion": "youcam-s2s",
+    "formulaVersion": "svi-v2-dynamic-denom",
+    "captureVersion": "cq-thresholds-v2.1",
+    "qualityVersion": "iq-v2.1+qc-v1.1",
+    "skinVersion": "skin-model-v1",
+    "intelligenceVersion": "skin-intel-v1",
+    "reportVersion": "skin-report-v1",
+    "generatedAt": "STABLE_TIMESTAMP",
+    "confidence": 70,
+    "limitations": [
+      "SVI v2 uses only available metrics (dynamic denominator).",
+      "Not a medical or clinical assessment.",
+      "Capture lighting and camera quality may affect readings.",
+      "Canonical model never fabricates missing metrics.",
+      "Canonical model never fabricates missing metrics."
+    ],
+    "language": "ar+en",
+    "executiveSummaryAr": "مؤشر حيوية البشرة 71 (ثقة 70). نقاط القوة تُعرض عند توفر مؤشرات إيجابية. لا توجد أولويات عناية ملحوظة في هذه القراءة. تحليل تجميلي إرشادي — ليس تشخيصاً طبياً ولا تقييماً للجمال.",
+    "executiveSummaryEn": "Skin Vitality Index 71 (confidence 70). Strengths appear when positive metrics are available. No notable care priorities in this reading. Cosmetic informational analysis — not medical diagnosis or beauty ranking.",
+    "positiveFindings": [],
+    "priorityFindings": [],
+    "allFindings": [
+      {
+        "id": "finding_hydration",
+        "metricId": "hydration",
+        "titleAr": "الترطيب",
+        "titleEn": "Hydration",
+        "severity": "mild",
+        "confidence": "medium",
+        "evidenceAr": "المؤشر «الترطيب» بلغ 70/100 (مصدر: provider_measured). هذه قراءة تجميلية من الصورة وليست تشخيصاً طبياً.",
+        "evidenceEn": "Hydration scored 70/100 (source: provider_measured). Cosmetic image-based reading — not a medical diagnosis.",
+        "normalizedValue": 70,
+        "recommendationEligible": true,
+        "priority": 70,
+        "limitations": [
+          "Mapped from provider; lighting and capture quality may influence the reading."
+        ],
+        "source": "provider_measured"
+      }
+    ],
+    "metrics": [
+      {
+        "id": "hydration",
+        "displayNameAr": "الترطيب",
+        "displayNameEn": "Hydration",
+        "availability": "available",
+        "normalizedValue": 70,
+        "confidence": 70,
+        "source": "provider_measured",
+        "provider": "perfect_corp",
+        "limitations": [
+          "Mapped from provider; lighting and capture quality may influence the reading."
+        ],
+        "recommendationEligible": true,
+        "explanation": {
+          "metricId": "hydration",
+          "titleAr": "الترطيب",
+          "titleEn": "Hydration",
+          "levelAr": "متوسط",
+          "levelEn": "Moderate",
+          "confidenceAr": "متوسط",
+          "confidenceEn": "Medium",
+          "reasonAr": "قياس المزود لـ«الترطيب» ضمن نطاق متوسط تجميلي.",
+          "reasonEn": "Provider measured hydration in a moderate cosmetic range.",
+          "evidenceAr": "قيمة مقيّسة 70/100 · مصدر provider_measured · ثقة 70.",
+          "evidenceEn": "Measured 70/100 · source provider_measured · confidence 70.",
+          "limitationsAr": "Mapped from provider; lighting and capture quality may influence the reading.",
+          "limitationsEn": "Mapped from provider; lighting and capture quality may influence the reading.",
+          "howAr": "تُحوَّل قيمة المزود إلى مقياس صحي موحّد 0–100 عبر محوّل المزود، ثم تُعرض مع المصدر والثقة.",
+          "howEn": "Provider value is normalized to a 0–100 health-oriented scale via the provider adapter, then shown with source and confidence.",
+          "availability": "available",
+          "source": "provider_measured",
+          "provider": "perfect_corp",
+          "version": "explain-v1"
+        }
+      },
+      {
+        "id": "radiance",
+        "displayNameAr": "الإشراق",
+        "displayNameEn": "Radiance",
+        "availability": "unavailable",
+        "confidence": 0,
+        "source": "unavailable",
+        "provider": "perfect_corp",
+        "limitations": [
+          "Metric radiance not provided by current provider mapping — left unavailable."
+        ],
+        "recommendationEligible": false,
+        "explanation": {
+          "metricId": "radiance",
+          "titleAr": "الإشراق",
+          "titleEn": "Radiance",
+          "levelAr": "غير متاح",
+          "levelEn": "Unavailable",
+          "confidenceAr": "غير متاح",
+          "confidenceEn": "Unavailable",
+          "reasonAr": "لم يوفّر المزود هذا المؤشر في جلسة التحليل الحالية.",
+          "reasonEn": "The provider did not supply this metric in the current analysis.",
+          "evidenceAr": "لا توجد قيمة قابلة للتتبع.",
+          "evidenceEn": "No traceable measured value.",
+          "limitationsAr": "Metric radiance not provided by current provider mapping — left unavailable.",
+          "limitationsEn": "Metric radiance not provided by current provider mapping — left unavailable.",
+          "howAr": "لا يُحسب أي تقدير بديل — تُعرض الحالة كـ «غير متاح» فقط.",
+          "howEn": "No substitute estimate is invented — status remains Unavailable.",
+          "availability": "unavailable",
+          "source": "unavailable",
+          "provider": "perfect_corp",
+          "version": "explain-v1"
+        }
+      },
+      {
+        "id": "texture",
+        "displayNameAr": "الملمس",
+        "displayNameEn": "Texture",
+        "availability": "unavailable",
+        "confidence": 0,
+        "source": "unavailable",
+        "provider": "perfect_corp",
+        "limitations": [
+          "Metric texture not provided by current provider mapping — left unavailable."
+        ],
+        "recommendationEligible": false,
+        "explanation": {
+          "metricId": "texture",
+          "titleAr": "الملمس",
+          "titleEn": "Texture",
+          "levelAr": "غير متاح",
+          "levelEn": "Unavailable",
+          "confidenceAr": "غير متاح",
+          "confidenceEn": "Unavailable",
+          "reasonAr": "لم يوفّر المزود هذا المؤشر في جلسة التحليل الحالية.",
+          "reasonEn": "The provider did not supply this metric in the current analysis.",
+          "evidenceAr": "لا توجد قيمة قابلة للتتبع.",
+          "evidenceEn": "No traceable measured value.",
+          "limitationsAr": "Metric texture not provided by current provider mapping — left unavailable.",
+          "limitationsEn": "Metric texture not provided by current provider mapping — left unavailable.",
+          "howAr": "لا يُحسب أي تقدير بديل — تُعرض الحالة كـ «غير متاح» فقط.",
+          "howEn": "No substitute estimate is invented — status remains Unavailable.",
+          "availability": "unavailable",
+          "source": "unavailable",
+          "provider": "perfect_corp",
+          "version": "explain-v1"
+        }
+      },
+      {
+        "id": "pores",
+        "displayNameAr": "المسام",
+        "displayNameEn": "Pores",
+        "availability": "unavailable",
+        "confidence": 0,
+        "source": "unavailable",
+        "provider": "perfect_corp",
+        "limitations": [
+          "Metric pores not provided by current provider mapping — left unavailable."
+        ],
+        "recommendationEligible": false,
+        "explanation": {
+          "metricId": "pores",
+          "titleAr": "المسام",
+          "titleEn": "Pores",
+          "levelAr": "غير متاح",
+          "levelEn": "Unavailable",
+          "confidenceAr": "غير متاح",
+          "confidenceEn": "Unavailable",
+          "reasonAr": "لم يوفّر المزود هذا المؤشر في جلسة التحليل الحالية.",
+          "reasonEn": "The provider did not supply this metric in the current analysis.",
+          "evidenceAr": "لا توجد قيمة قابلة للتتبع.",
+          "evidenceEn": "No traceable measured value.",
+          "limitationsAr": "Metric pores not provided by current provider mapping — left unavailable.",
+          "limitationsEn": "Metric pores not provided by current provider mapping — left unavailable.",
+          "howAr": "لا يُحسب أي تقدير بديل — تُعرض الحالة كـ «غير متاح» فقط.",
+          "howEn": "No substitute estimate is invented — status remains Unavailable.",
+          "availability": "unavailable",
+          "source": "unavailable",
+          "provider": "perfect_corp",
+          "version": "explain-v1"
+        }
+      },
+      {
+        "id": "acne",
+        "displayNameAr": "مظهر الحبوب",
+        "displayNameEn": "Acne appearance",
+        "availability": "unavailable",
+        "confidence": 0,
+        "source": "unavailable",
+        "provider": "perfect_corp",
+        "limitations": [
+          "Metric acne not provided by current provider mapping — left unavailable."
+        ],
+        "recommendationEligible": false,
+        "explanation": {
+          "metricId": "acne",
+          "titleAr": "مظهر الحبوب",
+          "titleEn": "Acne appearance",
+          "levelAr": "غير متاح",
+          "levelEn": "Unavailable",
+          "confidenceAr": "غير متاح",
+          "confidenceEn": "Unavailable",
+          "reasonAr": "لم يوفّر المزود هذا المؤشر في جلسة التحليل الحالية.",
+          "reasonEn": "The provider did not supply this metric in the current analysis.",
+          "evidenceAr": "لا توجد قيمة قابلة للتتبع.",
+          "evidenceEn": "No traceable measured value.",
+          "limitationsAr": "Metric acne not provided by current provider mapping — left unavailable.",
+          "limitationsEn": "Metric acne not provided by current provider mapping — left unavailable.",
+          "howAr": "لا يُحسب أي تقدير بديل — تُعرض الحالة كـ «غير متاح» فقط.",
+          "howEn": "No substitute estimate is invented — status remains Unavailable.",
+          "availability": "unavailable",
+          "source": "unavailable",
+          "provider": "perfect_corp",
+          "version": "explain-v1"
+        }
+      },
+      {
+        "id": "wrinkles",
+        "displayNameAr": "التجاعيد",
+        "displayNameEn": "Wrinkles",
+        "availability": "unavailable",
+        "confidence": 0,
+        "source": "unavailable",
+        "provider": "perfect_corp",
+        "limitations": [
+          "Metric wrinkles not provided by current provider mapping — left unavailable."
+        ],
+        "recommendationEligible": false,
+        "explanation": {
+          "metricId": "wrinkles",
+          "titleAr": "التجاعيد",
+          "titleEn": "Wrinkles",
+          "levelAr": "غير متاح",
+          "levelEn": "Unavailable",
+          "confidenceAr": "غير متاح",
+          "confidenceEn": "Unavailable",
+          "reasonAr": "لم يوفّر المزود هذا المؤشر في جلسة التحليل الحالية.",
+          "reasonEn": "The provider did not supply this metric in the current analysis.",
+          "evidenceAr": "لا توجد قيمة قابلة للتتبع.",
+          "evidenceEn": "No traceable measured value.",
+          "limitationsAr": "Metric wrinkles not provided by current provider mapping — left unavailable.",
+          "limitationsEn": "Metric wrinkles not provided by current provider mapping — left unavailable.",
+          "howAr": "لا يُحسب أي تقدير بديل — تُعرض الحالة كـ «غير متاح» فقط.",
+          "howEn": "No substitute estimate is invented — status remains Unavailable.",
+          "availability": "unavailable",
+          "source": "unavailable",
+          "provider": "perfect_corp",
+          "version": "explain-v1"
+        }
+      },
+      {
+        "id": "fineLines",
+        "displayNameAr": "الخطوط الدقيقة",
+        "displayNameEn": "Fine lines",
+        "availability": "unavailable",
+        "confidence": 0,
+        "source": "unavailable",
+        "provider": "perfect_corp",
+        "limitations": [
+          "Metric fineLines not provided by current provider mapping — left unavailable."
+        ],
+        "recommendationEligible": false,
+        "explanation": {
+          "metricId": "fineLines",
+          "titleAr": "الخطوط الدقيقة",
+          "titleEn": "Fine lines",
+          "levelAr": "غير متاح",
+          "levelEn": "Unavailable",
+          "confidenceAr": "غير متاح",
+          "confidenceEn": "Unavailable",
+          "reasonAr": "لم يوفّر المزود هذا المؤشر في جلسة التحليل الحالية.",
+          "reasonEn": "The provider did not supply this metric in the current analysis.",
+          "evidenceAr": "لا توجد قيمة قابلة للتتبع.",
+          "evidenceEn": "No traceable measured value.",
+          "limitationsAr": "Metric fineLines not provided by current provider mapping — left unavailable.",
+          "limitationsEn": "Metric fineLines not provided by current provider mapping — left unavailable.",
+          "howAr": "لا يُحسب أي تقدير بديل — تُعرض الحالة كـ «غير متاح» فقط.",
+          "howEn": "No substitute estimate is invented — status remains Unavailable.",
+          "availability": "unavailable",
+          "source": "unavailable",
+          "provider": "perfect_corp",
+          "version": "explain-v1"
+        }
+      },
+      {
+        "id": "pigmentation",
+        "displayNameAr": "التصبغات",
+        "displayNameEn": "Pigmentation",
+        "availability": "unavailable",
+        "confidence": 0,
+        "source": "unavailable",
+        "provider": "perfect_corp",
+        "limitations": [
+          "Metric pigmentation not provided by current provider mapping — left unavailable."
+        ],
+        "recommendationEligible": false,
+        "explanation": {
+          "metricId": "pigmentation",
+          "titleAr": "التصبغات",
+          "titleEn": "Pigmentation",
+          "levelAr": "غير متاح",
+          "levelEn": "Unavailable",
+          "confidenceAr": "غير متاح",
+          "confidenceEn": "Unavailable",
+          "reasonAr": "لم يوفّر المزود هذا المؤشر في جلسة التحليل الحالية.",
+          "reasonEn": "The provider did not supply this metric in the current analysis.",
+          "evidenceAr": "لا توجد قيمة قابلة للتتبع.",
+          "evidenceEn": "No traceable measured value.",
+          "limitationsAr": "Metric pigmentation not provided by current provider mapping — left unavailable.",
+          "limitationsEn": "Metric pigmentation not provided by current provider mapping — left unavailable.",
+          "howAr": "لا يُحسب أي تقدير بديل — تُعرض الحالة كـ «غير متاح» فقط.",
+          "howEn": "No substitute estimate is invented — status remains Unavailable.",
+          "availability": "unavailable",
+          "source": "unavailable",
+          "provider": "perfect_corp",
+          "version": "explain-v1"
+        }
+      },
+      {
+        "id": "redness",
+        "displayNameAr": "الاحمرار",
+        "displayNameEn": "Redness",
+        "availability": "unavailable",
+        "confidence": 0,
+        "source": "unavailable",
+        "provider": "perfect_corp",
+        "limitations": [
+          "Metric redness not provided by current provider mapping — left unavailable."
+        ],
+        "recommendationEligible": false,
+        "explanation": {
+          "metricId": "redness",
+          "titleAr": "الاحمرار",
+          "titleEn": "Redness",
+          "levelAr": "غير متاح",
+          "levelEn": "Unavailable",
+          "confidenceAr": "غير متاح",
+          "confidenceEn": "Unavailable",
+          "reasonAr": "لم يوفّر المزود هذا المؤشر في جلسة التحليل الحالية.",
+          "reasonEn": "The provider did not supply this metric in the current analysis.",
+          "evidenceAr": "لا توجد قيمة قابلة للتتبع.",
+          "evidenceEn": "No traceable measured value.",
+          "limitationsAr": "Metric redness not provided by current provider mapping — left unavailable.",
+          "limitationsEn": "Metric redness not provided by current provider mapping — left unavailable.",
+          "howAr": "لا يُحسب أي تقدير بديل — تُعرض الحالة كـ «غير متاح» فقط.",
+          "howEn": "No substitute estimate is invented — status remains Unavailable.",
+          "availability": "unavailable",
+          "source": "unavailable",
+          "provider": "perfect_corp",
+          "version": "explain-v1"
+        }
+      },
+      {
+        "id": "darkCircles",
+        "displayNameAr": "الهالات",
+        "displayNameEn": "Dark circles",
+        "availability": "unavailable",
+        "confidence": 0,
+        "source": "unavailable",
+        "provider": "perfect_corp",
+        "limitations": [
+          "Metric darkCircles not provided by current provider mapping — left unavailable."
+        ],
+        "recommendationEligible": false,
+        "explanation": {
+          "metricId": "darkCircles",
+          "titleAr": "الهالات",
+          "titleEn": "Dark circles",
+          "levelAr": "غير متاح",
+          "levelEn": "Unavailable",
+          "confidenceAr": "غير متاح",
+          "confidenceEn": "Unavailable",
+          "reasonAr": "لم يوفّر المزود هذا المؤشر في جلسة التحليل الحالية.",
+          "reasonEn": "The provider did not supply this metric in the current analysis.",
+          "evidenceAr": "لا توجد قيمة قابلة للتتبع.",
+          "evidenceEn": "No traceable measured value.",
+          "limitationsAr": "Metric darkCircles not provided by current provider mapping — left unavailable.",
+          "limitationsEn": "Metric darkCircles not provided by current provider mapping — left unavailable.",
+          "howAr": "لا يُحسب أي تقدير بديل — تُعرض الحالة كـ «غير متاح» فقط.",
+          "howEn": "No substitute estimate is invented — status remains Unavailable.",
+          "availability": "unavailable",
+          "source": "unavailable",
+          "provider": "perfect_corp",
+          "version": "explain-v1"
+        }
+      },
+      {
+        "id": "oiliness",
+        "displayNameAr": "إفراز الدهون",
+        "displayNameEn": "Oiliness",
+        "availability": "unavailable",
+        "confidence": 0,
+        "source": "unavailable",
+        "provider": "perfect_corp",
+        "limitations": [
+          "Metric oiliness not provided by current provider mapping — left unavailable."
+        ],
+        "recommendationEligible": false,
+        "explanation": {
+          "metricId": "oiliness",
+          "titleAr": "إفراز الدهون",
+          "titleEn": "Oiliness",
+          "levelAr": "غير متاح",
+          "levelEn": "Unavailable",
+          "confidenceAr": "غير متاح",
+          "confidenceEn": "Unavailable",
+          "reasonAr": "لم يوفّر المزود هذا المؤشر في جلسة التحليل الحالية.",
+          "reasonEn": "The provider did not supply this metric in the current analysis.",
+          "evidenceAr": "لا توجد قيمة قابلة للتتبع.",
+          "evidenceEn": "No traceable measured value.",
+          "limitationsAr": "Metric oiliness not provided by current provider mapping — left unavailable.",
+          "limitationsEn": "Metric oiliness not provided by current provider mapping — left unavailable.",
+          "howAr": "لا يُحسب أي تقدير بديل — تُعرض الحالة كـ «غير متاح» فقط.",
+          "howEn": "No substitute estimate is invented — status remains Unavailable.",
+          "availability": "unavailable",
+          "source": "unavailable",
+          "provider": "perfect_corp",
+          "version": "explain-v1"
+        }
+      },
+      {
+        "id": "firmness",
+        "displayNameAr": "الثبات",
+        "displayNameEn": "Firmness",
+        "availability": "unavailable",
+        "confidence": 0,
+        "source": "unavailable",
+        "provider": "perfect_corp",
+        "limitations": [
+          "Metric firmness not provided by current provider mapping — left unavailable."
+        ],
+        "recommendationEligible": false,
+        "explanation": {
+          "metricId": "firmness",
+          "titleAr": "الثبات",
+          "titleEn": "Firmness",
+          "levelAr": "غير متاح",
+          "levelEn": "Unavailable",
+          "confidenceAr": "غير متاح",
+          "confidenceEn": "Unavailable",
+          "reasonAr": "لم يوفّر المزود هذا المؤشر في جلسة التحليل الحالية.",
+          "reasonEn": "The provider did not supply this metric in the current analysis.",
+          "evidenceAr": "لا توجد قيمة قابلة للتتبع.",
+          "evidenceEn": "No traceable measured value.",
+          "limitationsAr": "Metric firmness not provided by current provider mapping — left unavailable.",
+          "limitationsEn": "Metric firmness not provided by current provider mapping — left unavailable.",
+          "howAr": "لا يُحسب أي تقدير بديل — تُعرض الحالة كـ «غير متاح» فقط.",
+          "howEn": "No substitute estimate is invented — status remains Unavailable.",
+          "availability": "unavailable",
+          "source": "unavailable",
+          "provider": "perfect_corp",
+          "version": "explain-v1"
+        }
+      },
+      {
+        "id": "elasticity",
+        "displayNameAr": "المرونة",
+        "displayNameEn": "Elasticity",
+        "availability": "unavailable",
+        "confidence": 0,
+        "source": "unavailable",
+        "provider": "perfect_corp",
+        "limitations": [
+          "Metric elasticity not provided by current provider mapping — left unavailable."
+        ],
+        "recommendationEligible": false,
+        "explanation": {
+          "metricId": "elasticity",
+          "titleAr": "المرونة",
+          "titleEn": "Elasticity",
+          "levelAr": "غير متاح",
+          "levelEn": "Unavailable",
+          "confidenceAr": "غير متاح",
+          "confidenceEn": "Unavailable",
+          "reasonAr": "لم يوفّر المزود هذا المؤشر في جلسة التحليل الحالية.",
+          "reasonEn": "The provider did not supply this metric in the current analysis.",
+          "evidenceAr": "لا توجد قيمة قابلة للتتبع.",
+          "evidenceEn": "No traceable measured value.",
+          "limitationsAr": "Metric elasticity not provided by current provider mapping — left unavailable.",
+          "limitationsEn": "Metric elasticity not provided by current provider mapping — left unavailable.",
+          "howAr": "لا يُحسب أي تقدير بديل — تُعرض الحالة كـ «غير متاح» فقط.",
+          "howEn": "No substitute estimate is invented — status remains Unavailable.",
+          "availability": "unavailable",
+          "source": "unavailable",
+          "provider": "perfect_corp",
+          "version": "explain-v1"
+        }
+      },
+      {
+        "id": "sensitivity",
+        "displayNameAr": "الحساسية الظاهرة",
+        "displayNameEn": "Sensitivity",
+        "availability": "unavailable",
+        "confidence": 0,
+        "source": "unavailable",
+        "provider": "perfect_corp",
+        "limitations": [
+          "Metric sensitivity not provided by current provider mapping — left unavailable."
+        ],
+        "recommendationEligible": false,
+        "explanation": {
+          "metricId": "sensitivity",
+          "titleAr": "الحساسية الظاهرة",
+          "titleEn": "Sensitivity",
+          "levelAr": "غير متاح",
+          "levelEn": "Unavailable",
+          "confidenceAr": "غير متاح",
+          "confidenceEn": "Unavailable",
+          "reasonAr": "لم يوفّر المزود هذا المؤشر في جلسة التحليل الحالية.",
+          "reasonEn": "The provider did not supply this metric in the current analysis.",
+          "evidenceAr": "لا توجد قيمة قابلة للتتبع.",
+          "evidenceEn": "No traceable measured value.",
+          "limitationsAr": "Metric sensitivity not provided by current provider mapping — left unavailable.",
+          "limitationsEn": "Metric sensitivity not provided by current provider mapping — left unavailable.",
+          "howAr": "لا يُحسب أي تقدير بديل — تُعرض الحالة كـ «غير متاح» فقط.",
+          "howEn": "No substitute estimate is invented — status remains Unavailable.",
+          "availability": "unavailable",
+          "source": "unavailable",
+          "provider": "perfect_corp",
+          "version": "explain-v1"
+        }
+      },
+      {
+        "id": "toneUniformity",
+        "displayNameAr": "انتظام اللون",
+        "displayNameEn": "Tone uniformity",
+        "availability": "unavailable",
+        "confidence": 0,
+        "source": "unavailable",
+        "provider": "perfect_corp",
+        "limitations": [
+          "Metric toneUniformity not provided by current provider mapping — left unavailable."
+        ],
+        "recommendationEligible": false,
+        "explanation": {
+          "metricId": "toneUniformity",
+          "titleAr": "انتظام اللون",
+          "titleEn": "Tone uniformity",
+          "levelAr": "غير متاح",
+          "levelEn": "Unavailable",
+          "confidenceAr": "غير متاح",
+          "confidenceEn": "Unavailable",
+          "reasonAr": "لم يوفّر المزود هذا المؤشر في جلسة التحليل الحالية.",
+          "reasonEn": "The provider did not supply this metric in the current analysis.",
+          "evidenceAr": "لا توجد قيمة قابلة للتتبع.",
+          "evidenceEn": "No traceable measured value.",
+          "limitationsAr": "Metric toneUniformity not provided by current provider mapping — left unavailable.",
+          "limitationsEn": "Metric toneUniformity not provided by current provider mapping — left unavailable.",
+          "howAr": "لا يُحسب أي تقدير بديل — تُعرض الحالة كـ «غير متاح» فقط.",
+          "howEn": "No substitute estimate is invented — status remains Unavailable.",
+          "availability": "unavailable",
+          "source": "unavailable",
+          "provider": "perfect_corp",
+          "version": "explain-v1"
+        }
+      },
+      {
+        "id": "undertone",
+        "displayNameAr": "الأساس اللوني",
+        "displayNameEn": "Undertone",
+        "availability": "unavailable",
+        "confidence": 0,
+        "source": "unavailable",
+        "provider": "perfect_corp",
+        "limitations": [
+          "Undertone not provided by provider"
+        ],
+        "recommendationEligible": false,
+        "explanation": {
+          "metricId": "undertone",
+          "titleAr": "الأساس اللوني",
+          "titleEn": "Undertone",
+          "levelAr": "غير متاح",
+          "levelEn": "Unavailable",
+          "confidenceAr": "غير متاح",
+          "confidenceEn": "Unavailable",
+          "reasonAr": "لم يوفّر المزود هذا المؤشر في جلسة التحليل الحالية.",
+          "reasonEn": "The provider did not supply this metric in the current analysis.",
+          "evidenceAr": "لا توجد قيمة قابلة للتتبع.",
+          "evidenceEn": "No traceable measured value.",
+          "limitationsAr": "Undertone not provided by provider",
+          "limitationsEn": "Undertone not provided by provider",
+          "howAr": "لا يُحسب أي تقدير بديل — تُعرض الحالة كـ «غير متاح» فقط.",
+          "howEn": "No substitute estimate is invented — status remains Unavailable.",
+          "availability": "unavailable",
+          "source": "unavailable",
+          "provider": "perfect_corp",
+          "version": "explain-v1"
+        }
+      }
+    ],
+    "svi": {
+      "score": 71,
+      "confidence": 70,
+      "version": "svi-v2",
+      "formulaId": "svi-v2-dynamic-denom",
+      "explanationAr": "مؤشر حيوية البشرة (v2) = 71. أبرز نقطة إيجابية: الترطيب (70). استُبعد 14 مؤشراً غير متاح من المقام. هذا مؤشر تجميلي إرشادي وليس تقييماً للجمال أو تشخيصاً طبياً.",
+      "explanationEn": "Skin Vitality Index (v2) = 71. Top strength: Hydration (70). 14 unavailable metrics excluded from the denominator. Cosmetic informational index — not beauty ranking or medical diagnosis.",
+      "positiveContributors": [
+        {
+          "metricId": "hydration",
+          "labelAr": "الترطيب",
+          "labelEn": "Hydration",
+          "weight": 0.22,
+          "normalizedValue": 70,
+          "contribution": 15.4,
+          "polarity": "positive"
+        }
+      ],
+      "negativeContributors": [],
+      "unavailableExcluded": [
+        "firmness",
+        "radiance",
+        "texture",
+        "elasticity",
+        "toneUniformity",
+        "oiliness",
+        "pores",
+        "acne",
+        "pigmentation",
+        "redness",
+        "darkCircles",
+        "wrinkles",
+        "fineLines",
+        "sensitivity"
+      ],
+      "limitations": [
+        "SVI v2 uses only available metrics (dynamic denominator).",
+        "Not a medical or clinical assessment.",
+        "Capture lighting and camera quality may affect readings.",
+        "Canonical model never fabricates missing metrics."
+      ]
+    },
+    "recommendations": [
+      {
+        "id": "edu_disclaimer",
+        "category": "educational",
+        "titleAr": "طبيعة التحليل",
+        "titleEn": "About this analysis",
+        "bodyAr": "نتائج ميرا تجميلية وإرشادية مبنية على الصورة. لا تشخّص أمراضاً ولا تصف أدوية.",
+        "bodyEn": "Mira results are cosmetic and image-based. They do not diagnose disease or prescribe medication.",
+        "reasonAr": "شفافية المنتج وثقة المستخدم.",
+        "reasonEn": "Product transparency and user trust.",
+        "evidence": {
+          "metricIds": [],
+          "findingIds": [],
+          "values": {}
+        },
+        "confidence": 100,
+        "priority": 5,
+        "cosmeticOnly": true,
+        "limitations": [
+          "Cosmetic guidance only — not a medical prescription or diagnosis."
+        ]
+      },
+      {
+        "id": "rec_hydration_morning",
+        "category": "morning",
+        "titleAr": "مرطّب لطيف صباحاً",
+        "titleEn": "Gentle morning moisturizer",
+        "bodyAr": "جرّبي مرطباً خفيفاً مناسباً لنوع بشرتكِ بعد التنظيف. منتج تجميلي — ليس علاجاً طبياً.",
+        "bodyEn": "Try a light moisturizer suited to your skin type after cleansing. Cosmetic product — not medical treatment.",
+        "reasonAr": "المؤشر «الترطيب» بلغ 70/100 (مصدر: provider_measured). هذه قراءة تجميلية من الصورة وليست تشخيصاً طبياً.",
+        "reasonEn": "Hydration scored 70/100 (source: provider_measured). Cosmetic image-based reading — not a medical diagnosis.",
+        "evidence": {
+          "metricIds": [
+            "hydration"
+          ],
+          "findingIds": [
+            "finding_hydration"
+          ],
+          "values": {
+            "hydration": 70
+          }
+        },
+        "confidence": 70,
+        "priority": 70,
+        "cosmeticOnly": true,
+        "limitations": [
+          "Mapped from provider; lighting and capture quality may influence the reading.",
+          "Cosmetic guidance only — not a medical prescription or diagnosis."
+        ]
+      }
+    ],
+    "progress": {
+      "comparable": false,
+      "unavailableReasonAr": "لا يوجد تحليل سابق للمقارنة.",
+      "unavailableReasonEn": "No previous analysis available for comparison.",
+      "overallTrend": "unknown",
+      "currentSvi": 71,
+      "metricTrends": [],
+      "limitations": [
+        "Need at least two compatible analyses for trends."
+      ],
+      "version": "progress-v1"
+    },
+    "retakeGuidanceAr": "للحصول على مقارنة عادلة لاحقاً: إضاءة أمامية ناعمة، وجه ثابت، نفس زاوية الكاميرا تقريباً.",
+    "retakeGuidanceEn": "For a fair later comparison: soft front lighting, steady face, similar camera angle.",
+    "metadata": {
+      "isMock": false,
+      "skinTypeAr": "مختلطة",
+      "skinTypeEn": "Combination"
+    }
+  }
+}

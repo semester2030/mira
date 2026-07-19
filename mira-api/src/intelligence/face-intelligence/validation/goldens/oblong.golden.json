@@ -1,0 +1,434 @@
+{
+  "id": "oblong",
+  "contractVersion": "face-intel-contract-v1",
+  "validationVersion": "face-validation-v1",
+  "shapeId": "oblong",
+  "shapeAvailability": "available",
+  "findingIds": [
+    "elongated_vertical_proportion",
+    "face_shape_oblong"
+  ],
+  "recoIds": [
+    "edu_face_styling_disclaimer",
+    "rec_accessories_elongation",
+    "rec_contour_oblong",
+    "rec_eyewear_oblong",
+    "rec_hairstyle_oblong"
+  ],
+  "layerIds": [
+    "layer_elongated_vertical_proportion",
+    "layer_face_shape_oblong"
+  ],
+  "unavailable": [],
+  "confidence": 100,
+  "measurementEligible": true,
+  "report": {
+    "analysisId": "fix-oblong",
+    "provider": "on_device_landmarks",
+    "formulaVersion": "face-shape-hybrid-ratios-v1",
+    "captureVersion": "cq-thresholds-v2.1",
+    "faceVersion": "face-model-v1",
+    "intelligenceVersion": "face-intel-v1",
+    "geometryVersion": "face-geometry-v1",
+    "geometryFormulaId": "face-geom-ratios-thirds-sym-v1",
+    "shapeVersion": "face-shape-v1",
+    "shapeFormulaId": "face-shape-hybrid-ratios-v1",
+    "recommendationVersion": "face-reco-v1",
+    "recommendationEngineId": "face-styling-reco-v1",
+    "reportVersion": "face-report-v1",
+    "confidence": 100,
+    "limitations": [
+      "Cosmetic facial-feature report — not attractiveness scoring.",
+      "Not a medical or clinical assessment.",
+      "Feature layers are styling narratives — not skin heatmap measurement truth.",
+      "Sibling to Skin Intelligence; does not modify FaceHealthMap or SVI.",
+      "Phase 4C face shape applied where signals allow.",
+      "Sibling to Skin Intelligence; does not modify SVI or FaceHealthMap.",
+      "Cosmetic face-shape taxonomy — not attractiveness scoring.",
+      "Cosmetic face-shape taxonomy — not attractiveness scoring.",
+      "Not a medical or clinical craniofacial assessment."
+    ],
+    "language": "ar+en",
+    "executiveSummaryAr": "شكل الوجه الظاهر: مستطيل/طويل (ثقة 100). ارتفاع الوجه أطول نسبياً مقارنة بالعرض. 4 توصيات تنسيق تجميلية بأدلة. ذكاء ملامح تجميلي — ليس تشخيصاً طبياً ولا درجة جاذبية. منفصل عن خريطة صحة البشرة.",
+    "executiveSummaryEn": "Apparent face shape: Oblong (confidence 100). Face height relatively longer compared with width. 4 evidence-backed cosmetic styling tips. Cosmetic facial-feature intelligence — not medical diagnosis or attractiveness scoring. Separate from skin FaceHealthMap.",
+    "measurementEligible": true,
+    "eligibilityReasonCodes": [],
+    "shape": {
+      "availability": "available",
+      "shapeId": "oblong",
+      "displayNameAr": "مستطيل/طويل",
+      "displayNameEn": "Oblong",
+      "confidence": 100,
+      "explanationAr": "شكل الوجه الظاهر: مستطيل/طويل (ثقة 100). صيغة هجينة من نسب العرض/الارتفاع والجبهة/الوجنة/الفك.",
+      "explanationEn": "Apparent face shape: Oblong (confidence 100). Hybrid ratios of width/height and forehead/cheek/jaw spans."
+    },
+    "findings": [
+      {
+        "id": "face_shape_oblong",
+        "category": "shape",
+        "metricIds": [
+          "faceShape"
+        ],
+        "titleAr": "شكل الوجه: مستطيل/طويل",
+        "titleEn": "Face shape: Oblong",
+        "detailAr": "ارتفاع الوجه أطول نسبياً مقارنة بالعرض.",
+        "detailEn": "Face height relatively longer compared with width.",
+        "severity": "info",
+        "confidence": "high",
+        "recommendationEligible": true,
+        "priority": 10,
+        "limitations": [
+          "Cosmetic styling finding — not a medical diagnosis.",
+          "Not attractiveness scoring.",
+          "Independent of skin type / undertone."
+        ],
+        "source": "face-shape-hybrid-ratios-v1"
+      },
+      {
+        "id": "elongated_vertical_proportion",
+        "category": "proportion",
+        "metricIds": [
+          "faceWidthHeightRatio",
+          "faceShape"
+        ],
+        "titleAr": "نِسَب عمودية أطول ظاهرياً",
+        "titleEn": "Apparently elongated vertical proportions",
+        "detailAr": "ارتفاع الوجه أكبر نسبياً من العرض في القياس الحالي.",
+        "detailEn": "Face height is relatively larger than width in the current measurement.",
+        "severity": "notable",
+        "confidence": "high",
+        "recommendationEligible": true,
+        "priority": 20,
+        "limitations": [
+          "Cosmetic styling finding — not a medical diagnosis.",
+          "Not attractiveness scoring.",
+          "Independent of skin type / undertone."
+        ],
+        "source": "face-shape-hybrid-ratios-v1"
+      }
+    ],
+    "notableFindings": [
+      {
+        "id": "elongated_vertical_proportion",
+        "category": "proportion",
+        "metricIds": [
+          "faceWidthHeightRatio",
+          "faceShape"
+        ],
+        "titleAr": "نِسَب عمودية أطول ظاهرياً",
+        "titleEn": "Apparently elongated vertical proportions",
+        "detailAr": "ارتفاع الوجه أكبر نسبياً من العرض في القياس الحالي.",
+        "detailEn": "Face height is relatively larger than width in the current measurement.",
+        "severity": "notable",
+        "confidence": "high",
+        "recommendationEligible": true,
+        "priority": 20,
+        "limitations": [
+          "Cosmetic styling finding — not a medical diagnosis.",
+          "Not attractiveness scoring.",
+          "Independent of skin type / undertone."
+        ],
+        "source": "face-shape-hybrid-ratios-v1"
+      }
+    ],
+    "metrics": [
+      {
+        "id": "facialThirdsBalance",
+        "displayNameAr": "توازن أثلاث الوجه",
+        "displayNameEn": "Facial thirds balance",
+        "availability": "available",
+        "normalizedValue": 55,
+        "categoricalValue": "raw=0.2020",
+        "confidence": 78,
+        "source": "locally_calculated",
+        "limitations": [
+          "Cosmetic facial geometry — not attractiveness scoring.",
+          "Not a medical or clinical craniofacial assessment.",
+          "Pose, camera lens, and lighting can affect measurements.",
+          "Formula face-geom-ratios-thirds-sym-v1",
+          "Thirds from vertical spans forehead→brow, brow→noseBase, noseBase→chin; score from low CV."
+        ]
+      },
+      {
+        "id": "eyeSpacingRatio",
+        "displayNameAr": "نسبة تباعد العينين",
+        "displayNameEn": "Eye spacing ratio",
+        "availability": "available",
+        "normalizedValue": 0,
+        "categoricalValue": "raw=0.5000",
+        "confidence": 78,
+        "source": "locally_calculated",
+        "limitations": [
+          "Cosmetic facial geometry — not attractiveness scoring.",
+          "Not a medical or clinical craniofacial assessment.",
+          "Pose, camera lens, and lighting can affect measurements.",
+          "Formula face-geom-ratios-thirds-sym-v1",
+          "eyeSpacingRatio = interocular(inner corners) / faceWidth."
+        ]
+      },
+      {
+        "id": "faceWidthHeightRatio",
+        "displayNameAr": "نسبة عرض إلى ارتفاع الوجه",
+        "displayNameEn": "Face width-to-height ratio",
+        "availability": "available",
+        "normalizedValue": 0,
+        "categoricalValue": "raw=0.3810",
+        "confidence": 78,
+        "source": "locally_calculated",
+        "limitations": [
+          "Cosmetic facial geometry — not attractiveness scoring.",
+          "Not a medical or clinical craniofacial assessment.",
+          "Pose, camera lens, and lighting can affect measurements.",
+          "Formula face-geom-ratios-thirds-sym-v1",
+          "faceWidthHeightRatio = dist(leftFace,rightFace) / dist(foreheadTop,chin)."
+        ]
+      },
+      {
+        "id": "noseToFaceWidthRatio",
+        "displayNameAr": "نسبة عرض الأنف إلى الوجه",
+        "displayNameEn": "Nose-to-face width ratio",
+        "availability": "available",
+        "normalizedValue": 0,
+        "categoricalValue": "raw=0.3750",
+        "confidence": 78,
+        "source": "locally_calculated",
+        "limitations": [
+          "Cosmetic facial geometry — not attractiveness scoring.",
+          "Not a medical or clinical craniofacial assessment.",
+          "Pose, camera lens, and lighting can affect measurements.",
+          "Formula face-geom-ratios-thirds-sym-v1",
+          "noseToFaceWidthRatio = dist(leftAla,rightAla) / faceWidth."
+        ]
+      },
+      {
+        "id": "mouthToFaceWidthRatio",
+        "displayNameAr": "نسبة عرض الفم إلى الوجه",
+        "displayNameEn": "Mouth-to-face width ratio",
+        "availability": "available",
+        "normalizedValue": 0,
+        "categoricalValue": "raw=0.6250",
+        "confidence": 78,
+        "source": "locally_calculated",
+        "limitations": [
+          "Cosmetic facial geometry — not attractiveness scoring.",
+          "Not a medical or clinical craniofacial assessment.",
+          "Pose, camera lens, and lighting can affect measurements.",
+          "Formula face-geom-ratios-thirds-sym-v1",
+          "mouthToFaceWidthRatio = dist(leftMouth,rightMouth) / faceWidth."
+        ]
+      },
+      {
+        "id": "symmetryCautious",
+        "displayNameAr": "التماثل الظاهر (بحذر)",
+        "displayNameEn": "Apparent symmetry (cautious)",
+        "availability": "available",
+        "normalizedValue": 100,
+        "categoricalValue": "raw=0.0000",
+        "confidence": 62,
+        "source": "locally_calculated",
+        "limitations": [
+          "Cosmetic facial geometry — not attractiveness scoring.",
+          "Not a medical or clinical craniofacial assessment.",
+          "Pose, camera lens, and lighting can affect measurements.",
+          "Formula face-geom-ratios-thirds-sym-v1",
+          "Cautious L/R deviation only — not medical symmetry diagnosis.",
+          "Strongly affected by head yaw; eligibility must keep pose frontal."
+        ]
+      },
+      {
+        "id": "faceShape",
+        "displayNameAr": "شكل الوجه",
+        "displayNameEn": "Face shape",
+        "availability": "available",
+        "normalizedValue": 100,
+        "categoricalValue": "oblong",
+        "confidence": 100,
+        "source": "locally_calculated",
+        "limitations": [
+          "Cosmetic face-shape taxonomy — not attractiveness scoring.",
+          "Not a medical or clinical craniofacial assessment.",
+          "Separate from skin type / undertone.",
+          "Formula face-shape-hybrid-ratios-v1",
+          "Hybrid heuristic — lighting, hairstyle, and expression can shift class.",
+          "Jaw span uses MediaPipe chinArc endpoints (indices owned by MediapipeLandmarkIndices)."
+        ]
+      }
+    ],
+    "recommendations": [
+      {
+        "id": "edu_face_styling_disclaimer",
+        "category": "educational",
+        "titleAr": "طبيعة توصيات التنسيق",
+        "titleEn": "About styling recommendations",
+        "bodyAr": "اقتراحات ميرا للشعر/المكياج/النظارات تجميلية وإرشادية من شكل الوجه الظاهر والقياسات المتاحة. لا تشخّص ولا تربط بمنتج إلزامي.",
+        "bodyEn": "Mira hairstyle/makeup/eyewear tips are cosmetic guidance from apparent face shape and available measurements. Not diagnostic; no mandatory product lock-in.",
+        "reasonAr": "شفافية المنتج وثقة المستخدم.",
+        "reasonEn": "Product transparency and user trust.",
+        "evidence": {
+          "metricIds": [],
+          "findingIds": [],
+          "values": {}
+        },
+        "confidence": 100,
+        "priority": 5,
+        "cosmeticOnly": true,
+        "productLockIn": false,
+        "limitations": [
+          "Cosmetic styling guidance only — not a medical prescription or diagnosis.",
+          "No Perfect Corp / marketplace product lock-in in Phase 4D."
+        ]
+      },
+      {
+        "id": "rec_hairstyle_oblong",
+        "category": "hairstyle",
+        "titleAr": "عرض جانبي خفيف",
+        "titleEn": "Gentle lateral width",
+        "bodyAr": "تجنّبي الارتفاع الزائد عند التاج؛ طبقات جانبية أو انحناء عند الخدين تُقرّب النسب ظاهرياً.",
+        "bodyEn": "Avoid excess crown height; side layers or cheek curves can soften elongated proportions.",
+        "reasonAr": "بناءً على شكل الوجه الظاهر: مستطيل/طويل.",
+        "reasonEn": "Based on apparent face shape: Oblong.",
+        "evidence": {
+          "metricIds": [
+            "faceShape"
+          ],
+          "findingIds": [
+            "face_shape_oblong"
+          ],
+          "values": {
+            "faceShape": "oblong"
+          }
+        },
+        "confidence": 82,
+        "priority": 20,
+        "cosmeticOnly": true,
+        "productLockIn": false,
+        "limitations": [
+          "Cosmetic styling guidance only — not a medical prescription or diagnosis.",
+          "No Perfect Corp / marketplace product lock-in in Phase 4D.",
+          "Cosmetic styling finding — not a medical diagnosis.",
+          "Not attractiveness scoring."
+        ]
+      },
+      {
+        "id": "rec_contour_oblong",
+        "category": "makeup_contour",
+        "titleAr": "كنتور أفقي لطيف",
+        "titleEn": "Gentle horizontal contour",
+        "bodyAr": "إبراز على التفاحات وكنتور خفيف تحت عظمة الوجنة يقرّب الطول الظاهر دون مبالغة.",
+        "bodyEn": "Apple highlight with soft under-cheek contour can shorten the apparent length gently.",
+        "reasonAr": "دليل الشكل: مستطيل/طويل.",
+        "reasonEn": "Shape evidence: Oblong.",
+        "evidence": {
+          "metricIds": [
+            "faceShape"
+          ],
+          "findingIds": [
+            "face_shape_oblong"
+          ],
+          "values": {
+            "faceShape": "oblong"
+          }
+        },
+        "confidence": 82,
+        "priority": 30,
+        "cosmeticOnly": true,
+        "productLockIn": false,
+        "limitations": [
+          "Cosmetic styling guidance only — not a medical prescription or diagnosis.",
+          "No Perfect Corp / marketplace product lock-in in Phase 4D."
+        ]
+      },
+      {
+        "id": "rec_eyewear_oblong",
+        "category": "eyewear",
+        "titleAr": "إطارات أعرض أفقياً",
+        "titleEn": "Wider horizontal frames",
+        "bodyAr": "إطارات أعرض من منتصف الوجه تقلّل الإحساس بالطول الظاهر.",
+        "bodyEn": "Frames wider than mid-face reduce the sense of elongation.",
+        "reasonAr": "دليل الشكل: مستطيل/طويل.",
+        "reasonEn": "Shape evidence: Oblong.",
+        "evidence": {
+          "metricIds": [
+            "faceShape"
+          ],
+          "findingIds": [
+            "face_shape_oblong"
+          ],
+          "values": {
+            "faceShape": "oblong"
+          }
+        },
+        "confidence": 82,
+        "priority": 40,
+        "cosmeticOnly": true,
+        "productLockIn": false,
+        "limitations": [
+          "Cosmetic styling guidance only — not a medical prescription or diagnosis.",
+          "No Perfect Corp / marketplace product lock-in in Phase 4D."
+        ]
+      },
+      {
+        "id": "rec_accessories_elongation",
+        "category": "accessories",
+        "titleAr": "إكسسوارات تُقرّب الطول الظاهر",
+        "titleEn": "Accessories that soften elongation",
+        "bodyAr": "أقراط أعرض أفقياً أو قلائد متوسطة الطول قد تُوازن الإحساس بالطول — اختيار شخصي تجميلي.",
+        "bodyEn": "Wider earrings or mid-length necklaces may balance elongation — personal cosmetic choice.",
+        "reasonAr": "ارتفاع الوجه أكبر نسبياً من العرض في القياس الحالي.",
+        "reasonEn": "Face height is relatively larger than width in the current measurement.",
+        "evidence": {
+          "metricIds": [
+            "faceWidthHeightRatio",
+            "faceShape"
+          ],
+          "findingIds": [
+            "elongated_vertical_proportion"
+          ],
+          "values": {}
+        },
+        "confidence": 82,
+        "priority": 45,
+        "cosmeticOnly": true,
+        "productLockIn": false,
+        "limitations": [
+          "Cosmetic styling guidance only — not a medical prescription or diagnosis.",
+          "No Perfect Corp / marketplace product lock-in in Phase 4D."
+        ]
+      }
+    ],
+    "featureLayers": [
+      {
+        "id": "layer_face_shape_oblong",
+        "kind": "shape",
+        "titleAr": "شكل الوجه: مستطيل/طويل",
+        "titleEn": "Face shape: Oblong",
+        "detailAr": "ارتفاع الوجه أطول نسبياً مقارنة بالعرض.",
+        "detailEn": "Face height relatively longer compared with width.",
+        "metricIds": [
+          "faceShape"
+        ],
+        "confidence": "high"
+      },
+      {
+        "id": "layer_elongated_vertical_proportion",
+        "kind": "proportion",
+        "titleAr": "نِسَب عمودية أطول ظاهرياً",
+        "titleEn": "Apparently elongated vertical proportions",
+        "detailAr": "ارتفاع الوجه أكبر نسبياً من العرض في القياس الحالي.",
+        "detailEn": "Face height is relatively larger than width in the current measurement.",
+        "metricIds": [
+          "faceWidthHeightRatio",
+          "faceShape"
+        ],
+        "confidence": "high"
+      }
+    ],
+    "retakeGuidanceAr": "لقراءة ملامح أوضح: إضاءة أمامية ناعمة، وجه أمامي ثابت، مسافة كافية، بدون التفات قوي.",
+    "retakeGuidanceEn": "For clearer feature reading: soft front light, steady frontal face, adequate distance, no strong head turn.",
+    "metadata": {
+      "isMock": false,
+      "measurementEligible": true,
+      "schemaNote": "faceIntelligence sibling on MiraBeautyReport — never FaceHealthMap schema."
+    }
+  }
+}

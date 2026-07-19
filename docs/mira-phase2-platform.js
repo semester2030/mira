@@ -6,7 +6,7 @@
   'use strict';
 
   const SPEC = {
-    version: '1.1.0',
+    version: '1.2.0',
     date: '2026-07-05',
     repo: 'semester2030/mira',
     author: 'MIRA Engineering',
@@ -597,6 +597,269 @@
     { feature: 'توصية MIRA', banuba: '⭐ الأول — makeup + beauty', visage: 'بديل — إذا أولوية glasses/tracking' },
   ];
 
+  /** تشغيل شهري — Banuba + YouCam + Render · شهر 1–6 · 100/500/1000 MAU */
+  const MAU_OPERATING_MODEL = {
+    tokenNote:
+      'Client Token = مفتاح تفعيل SDK (trial ~14 يوم مجاناً). الرسوم = عقد سنوي ÷ 12 حسب MAU — ليس «كل try-on = فلوس».',
+    rampByMonth: [
+      { month: 1, label: 'شهر 1 · Beta', factor: 0.2, banuba: 'trial' },
+      { month: 2, label: 'شهر 2 · Trial AR', factor: 0.35, banuba: 'trial' },
+      { month: 3, label: 'شهر 3 · عقد Banuba', factor: 0.55, banuba: 'contract' },
+      { month: 4, label: 'شهر 4 · Ramp', factor: 0.75, banuba: 'contract' },
+      { month: 5, label: 'شهر 5 · Ramp', factor: 0.9, banuba: 'contract' },
+      { month: 6, label: 'شهر 6 · هدف MAU', factor: 1.0, banuba: 'contract' },
+    ],
+    scenarios: [
+      {
+        id: 'mau100',
+        label: '100 MAU',
+        subtitle: 'Beta · أصدقاء · influencers صغار',
+        targetMau: 100,
+        banubaAnnualUsd: { min: 12000, max: 18000 },
+      },
+      {
+        id: 'mau500',
+        label: '500 MAU',
+        subtitle: 'Soft launch · تسويق محدود',
+        targetMau: 500,
+        banubaAnnualUsd: { min: 18000, max: 28000 },
+      },
+      {
+        id: 'mau1000',
+        label: '1000 MAU',
+        subtitle: 'هدف سنة 1 · عرض Banuba الرسمي',
+        targetMau: 1000,
+        banubaAnnualUsd: { min: 15000, max: 35000 },
+      },
+    ],
+    usage: {
+      skinScansPerActiveUser: 1.2,
+      youcamPerScanUsd: { min: 0.12, max: 0.4 },
+      outfitAdoption: 0.45,
+      outfitPerRunUsd: { min: 0.3, max: 1.0 },
+      openaiPerUserUsd: { min: 0.1, max: 0.35 },
+      renderBaseUsd: { min: 30, max: 55 },
+      renderPerUserUsd: { min: 0.03, max: 0.1 },
+      firebaseUsd: { min: 0, max: 25 },
+    },
+    assumptions: [
+      'MAU = مستخدم فريد في الشهر فتح ميزة AR try-on (تعريف Banuba يُؤكَّد مع Account Manager).',
+      'YouCam = ~1.2 تحليل بشرة/مستخدم/شهر (per API call — ليس Banuba).',
+      'Outfit = ~45% من النشطين × تحليل إطلالة واحد (FASHN + OpenAI على Render).',
+      'OpenAI = استشارة MCE + semantic outfit — تقدير per user.',
+      'Banuba = $0 في شهر 1–2 (trial) · من شهر 3 = عقد سنوي ÷ 12 (iOS · Makeup فقط).',
+      'Render = Postgres + API على free/starter + زيادة طفيفة مع الحجم.',
+    ],
+  };
+
+  function calcMonthOperating(scenario, monthDef) {
+    const u = MAU_OPERATING_MODEL.usage;
+    const active = Math.max(1, Math.round(scenario.targetMau * monthDef.factor));
+    const skinScans = Math.round(active * u.skinScansPerActiveUser);
+    const outfitRuns = Math.round(active * u.outfitAdoption);
+
+    const youcam = {
+      min: skinScans * u.youcamPerScanUsd.min,
+      max: skinScans * u.youcamPerScanUsd.max,
+    };
+    const outfit = {
+      min: outfitRuns * u.outfitPerRunUsd.min,
+      max: outfitRuns * u.outfitPerRunUsd.max,
+    };
+    const openai = {
+      min: active * u.openaiPerUserUsd.min,
+      max: active * u.openaiPerUserUsd.max,
+    };
+    const render = {
+      min: u.renderBaseUsd.min + active * u.renderPerUserUsd.min,
+      max: u.renderBaseUsd.max + active * u.renderPerUserUsd.max,
+    };
+    const banuba =
+      monthDef.banuba === 'contract'
+        ? {
+            min: scenario.banubaAnnualUsd.min / 12,
+            max: scenario.banubaAnnualUsd.max / 12,
+          }
+        : { min: 0, max: 0 };
+
+    const total = {
+      min:
+        youcam.min +
+        outfit.min +
+        openai.min +
+        render.min +
+        banuba.min +
+        u.firebaseUsd.min,
+      max:
+        youcam.max +
+        outfit.max +
+        openai.max +
+        render.max +
+        banuba.max +
+        u.firebaseUsd.max,
+    };
+
+    return {
+      active,
+      skinScans,
+      outfitRuns,
+      youcam,
+      outfit,
+      openai,
+      render,
+      banuba,
+      total,
+    };
+  }
+
+  function sumSixMonths(scenario) {
+    let min = 0;
+    let max = 0;
+    MAU_OPERATING_MODEL.rampByMonth.forEach((m) => {
+      const c = calcMonthOperating(scenario, m);
+      min += c.total.min;
+      max += c.total.max;
+    });
+    return { min, max };
+  }
+
+  function renderMauOperatingHtml() {
+    const assumptionLis = MAU_OPERATING_MODEL.assumptions
+      .map((a) => `<li>${a}</li>`)
+      .join('');
+
+    const scenarioTables = MAU_OPERATING_MODEL.scenarios
+      .map((sc) => {
+        const rows = MAU_OPERATING_MODEL.rampByMonth.map((m) => {
+          const c = calcMonthOperating(sc, m);
+          const banubaCell =
+            m.banuba === 'trial'
+              ? '<span class="phase-badge p1">Trial $0</span>'
+              : `${fmt(Math.round(c.banuba.min))} – ${fmt(Math.round(c.banuba.max))}`;
+          return `<tr>
+            <td><strong>${m.label}</strong></td>
+            <td>${c.active.toLocaleString('ar-SA')}</td>
+            <td>${c.skinScans}</td>
+            <td>${fmt(Math.round(c.youcam.min))} – ${fmt(Math.round(c.youcam.max))}</td>
+            <td>${fmt(Math.round(c.outfit.min))} – ${fmt(Math.round(c.outfit.max))}</td>
+            <td>${fmt(Math.round(c.openai.min))} – ${fmt(Math.round(c.openai.max))}</td>
+            <td>${fmt(Math.round(c.render.min))} – ${fmt(Math.round(c.render.max))}</td>
+            <td>${banubaCell}</td>
+            <td class="mau-total-cell"><strong>${fmt(Math.round(c.total.min))} – ${fmt(Math.round(c.total.max))}</strong><br><span class="muted-inline">${sar(Math.round(c.total.min))} – ${sar(Math.round(c.total.max))} SAR</span></td>
+          </tr>`;
+        }).join('');
+
+        const six = sumSixMonths(sc);
+        return `
+          <div class="mau-scenario-block" id="mau-${sc.id}">
+            <h4>${sc.label} <span class="muted-inline">— ${sc.subtitle}</span></h4>
+            <p class="scenario-meta">هدف MAU في شهر 6: <strong>${sc.targetMau.toLocaleString('ar-SA')}</strong> ·
+              Banuba سنوي (تقدير): ${fmt(sc.banubaAnnualUsd.min)} – ${fmt(sc.banubaAnnualUsd.max)}
+              (${sar(sc.banubaAnnualUsd.min)} – ${sar(sc.banubaAnnualUsd.max)} SAR)</p>
+            <div class="table-scroll">
+              <table class="task-table mau-month-table">
+                <thead>
+                  <tr>
+                    <th>الشهر</th>
+                    <th>MAU نشط</th>
+                    <th>تحليلات بشرة</th>
+                    <th>YouCam</th>
+                    <th>Outfit API</th>
+                    <th>OpenAI</th>
+                    <th>Render</th>
+                    <th>Banuba</th>
+                    <th>المجموع الشهري</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  ${rows}
+                  <tr class="mau-six-month-row">
+                    <td colspan="8"><strong>مجموع شهر 1 → 6 (تشغيل فقط)</strong></td>
+                    <td class="mau-total-cell">
+                      <strong>${fmt(Math.round(six.min))} – ${fmt(Math.round(six.max))}</strong><br>
+                      <span class="muted-inline">${sar(Math.round(six.min))} – ${sar(Math.round(six.max))} SAR</span>
+                    </td>
+                  </tr>
+                </tbody>
+              </table>
+            </div>
+          </div>`;
+      })
+      .join('');
+
+    const compareRow = MAU_OPERATING_MODEL.scenarios
+      .map((sc) => {
+        const m6 = calcMonthOperating(
+          sc,
+          MAU_OPERATING_MODEL.rampByMonth[5]
+        );
+        const six = sumSixMonths(sc);
+        return `<tr>
+          <td><strong>${sc.label}</strong></td>
+          <td>${sc.targetMau.toLocaleString('ar-SA')}</td>
+          <td>${fmt(Math.round(m6.total.min))} – ${fmt(Math.round(m6.total.max))}</td>
+          <td>${sar(Math.round(m6.total.min))} – ${sar(Math.round(m6.total.max))}</td>
+          <td>${fmt(Math.round(six.min))} – ${fmt(Math.round(six.max))}</td>
+          <td>${sar(Math.round(six.min))} – ${sar(Math.round(six.max))}</td>
+        </tr>`;
+      })
+      .join('');
+
+    return `
+      <div class="card token-explainer" id="mau-operating-costs" style="margin-top:36px;border:2px solid #9b7bff;">
+        <h3 style="margin-top:0;">💳 Token vs رسوم — قبل الأرقام</h3>
+        <table class="task-table">
+          <thead><tr><th>المفهوم</th><th>وش هو؟</th><th>هل كل استخدام؟</th></tr></thead>
+          <tbody>
+            <tr><td><strong>Banuba Client Token</strong></td><td>مفتاح تفعيل SDK (trial أو commercial)</td><td>❌ لا — يفعّل الفترة المدفوعة</td></tr>
+            <tr><td><strong>Banuba عقد MAU</strong></td><td>ترخيص سنوي ÷ 12 — حسب مستخدمين AR/شهر</td><td>❌ لا per try-on</td></tr>
+            <tr><td><strong>YouCam API</strong></td><td>تحليل بشرة على Render</td><td>✅ ~كل تحليل بشرة</td></tr>
+            <tr><td><strong>FASHN + OpenAI Outfit</strong></td><td>تحليل إطلالة</td><td>✅ ~كل run</td></tr>
+          </tbody>
+        </table>
+        <p class="muted-inline" style="margin-bottom:0;">${MAU_OPERATING_MODEL.tokenNote}</p>
+      </div>
+
+      <h3 style="margin-top:32px;">📊 تكلفة التشغيل — شهر 1 إلى 6 (Banuba + YouCam + Render)</h3>
+      <p>تقدير <strong>OPEX شهري</strong> — بدون تكلفة بناء (Wave 1 dev) · بدون فريق · بدون Marketplace commission.</p>
+
+      <div class="disclaimer-box">
+        ⚠️ الأرقام engineering estimates · Banuba/YouCam يتطلبان عرض سعر رسمي ·
+        <a href="https://www.banuba.com/faq/banuba-sdk-pricing" target="_blank" rel="noopener">Banuba pricing FAQ</a>
+      </div>
+
+      <h4 style="margin-top:20px;">افتراضات النموذج</h4>
+      <ul class="assumption-list">${assumptionLis}</ul>
+
+      <h4 style="margin-top:24px;">مقارنة سريعة — شهر 6 vs مجموع 6 أشهر</h4>
+      <table class="task-table">
+        <thead>
+          <tr>
+            <th>السيناريو</th>
+            <th>MAU هدف</th>
+            <th>شهر 6 USD</th>
+            <th>شهر 6 SAR</th>
+            <th>مجموع 6 أشهر USD</th>
+            <th>مجموع 6 أشهر SAR</th>
+          </tr>
+        </thead>
+        <tbody>${compareRow}</tbody>
+      </table>
+
+      ${scenarioTables}
+
+      <div class="card ok" style="margin-top:24px;">
+        <h4 style="margin-top:0;">✅ كيف تقرئين الجدول</h4>
+        <ul style="margin:0;padding-right:20px;">
+          <li><strong>شهر 1–2:</strong> Banuba = $0 (trial) — ركّزي على POC شفاه + YouCam.</li>
+          <li><strong>شهر 3+:</strong> Banuba = أ biggest line item — لا توقّعي عقد قبل 100–200 مستخدمة حقيقية.</li>
+          <li><strong>1000 MAU:</strong> شهر 6 ≈ ${fmt(Math.round(calcMonthOperating(MAU_OPERATING_MODEL.scenarios[2], MAU_OPERATING_MODEL.rampByMonth[5]).total.min))}–${fmt(Math.round(calcMonthOperating(MAU_OPERATING_MODEL.scenarios[2], MAU_OPERATING_MODEL.rampByMonth[5]).total.max))}/شهر — ليس $35k/شهر (ذلك تقدير <em>سنوي</em> قديم).</li>
+          <li>اطلبي من Banuba quote لـ <strong>1000 MAU · Flutter · Makeup lip only</strong> قبل التزام.</li>
+        </ul>
+      </div>
+    `;
+  }
+
   const COST_SUMMARY = {
     phase2Build: { min: 225000, max: 392000, label: 'تطوير Phase 2 (one-time)' },
     sdkAnnual: { min: 24000, max: 120000, label: 'Banuba SDK (سنوي)' },
@@ -676,7 +939,8 @@
         <li><a href="#mira-loop">Analyze → Recommend → Try → Buy</a></li>
         <li><a href="#marketplace">Marketplace · الربط التجاري</a></li>
         <li><a href="#implementation">خطة التنفيذ P2.0–P2.6</a></li>
-        <li><a href="#costs">التكلفة · حاسبة تفاعلية</a></li>
+        <li><a href="#costs">التكلفة · build + حاسبة</a></li>
+        <li><a href="#mau-operating-costs">تشغيل شهر 1–6 · 100/500/1000 MAU</a></li>
         <li><a href="#risks">المخاطر</a></li>
         <li><a href="#prerequisites">متطلبات قبل البدء</a></li>
       </ol>
@@ -1181,6 +1445,8 @@ W5 🛡 Production Hardening · Global Ready
           <tr><td>Render + Firebase + Postgres</td><td>$50 – $300</td></tr>
         </tbody>
       </table>
+
+      ${renderMauOperatingHtml()}
     `;
     root.appendChild(s);
     initCostCalculator(totalMin, totalMax);

@@ -5,8 +5,12 @@ import '../../domain/entities/face_health_map.dart';
 import '../../domain/entities/concern_zones_section.dart';
 import '../../domain/entities/progress_forecast.dart';
 import '../../domain/entities/mira_beauty_report.dart';
+import '../../domain/entities/result_provenance.dart';
+import '../../domain/entities/face_intelligence_report.dart';
+import '../../domain/entities/skin_intelligence_report.dart';
 import '../../domain/entities/weekly_plan.dart';
 import '../../../skin_analysis/domain/entities/skin_report.dart';
+import '../../../face_intelligence/domain/face_intel_runtime_state.dart';
 
 abstract final class MiraBeautyReportMapper {
   MiraBeautyReportMapper._();
@@ -19,8 +23,20 @@ abstract final class MiraBeautyReportMapper {
 
     return MiraBeautyReport(
       version: (json['version'] as num?)?.toInt() ?? 1,
+      scoreSchemaVersion: (json['scoreSchemaVersion'] as num?)?.toInt() ?? 1,
       spatialConfidence: json['spatialConfidence'] as String? ?? 'none',
       overallBeautyScore: (json['overallBeautyScore'] as num?)?.toInt() ?? 0,
+      displayScoreLabelAr: json['displayScoreLabelAr'] as String? ??
+          CosmeticCopy.skinVitalityIndexAr,
+      displayScoreLabelEn: json['displayScoreLabelEn'] as String? ??
+          CosmeticCopy.skinVitalityIndexEn,
+      scoreSupportingAr: json['scoreSupportingAr'] as String? ??
+          CosmeticCopy.skinVitalitySupportingAr,
+      disclaimerAr:
+          json['disclaimerAr'] as String? ?? CosmeticCopy.disclaimerAr,
+      disclaimerEn:
+          json['disclaimerEn'] as String? ?? CosmeticCopy.disclaimerEn,
+      provenance: ResultProvenance.tryParse(json['provenance']),
       headlineAr: json['headlineAr'] as String? ?? '',
       skinTypeAr: json['skinTypeAr'] as String? ?? '',
       skinTypeEn: json['skinTypeEn'] as String? ?? '',
@@ -72,6 +88,10 @@ abstract final class MiraBeautyReportMapper {
       progressForecast: _parseProgressForecast(json['progressForecast']),
       beautyJourney: _parseBeautyJourney(json['beautyJourney'], json),
       confidenceLayer: _parseConfidenceLayer(json['confidenceLayer']),
+      skinIntelligence: SkinIntelligenceReport.tryParse(json['skinIntelligence']),
+      faceIntelligence: FaceIntelligenceReport.tryParse(json['faceIntelligence']),
+      faceIntelligenceRuntime:
+          FaceIntelRuntimeState.tryParse(json['faceIntelligenceRuntime']),
     );
   }
 

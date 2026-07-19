@@ -24,8 +24,8 @@ import { OutfitSegmentationService } from './segmentation/outfit-segmentation.se
 import { OutfitIntelligenceBodyDto } from './dto/outfit-intelligence-body.dto';
 import { SkinReportSnapshot } from './contracts/outfit-intelligence.interface';
 import { VisionOrchestratorService } from '../vision/vision-orchestrator.service';
-import { VisionOutfitAnalyzeBodyDto } from '../vision/dto/vision-outfit-analyze-body.dto';
-import { VisionOutfitRecolorBodyDto } from '../vision/dto/vision-outfit-recolor-body.dto';
+import { FashionAnalysisOrchestrator } from '../ports/orchestrators/fashion-analysis.orchestrator';
+import { VisionOutfitAnalyzeBodyDto } from '../vision/dto/vision-outfit-analyze-body.dto';import { VisionOutfitRecolorBodyDto } from '../vision/dto/vision-outfit-recolor-body.dto';
 import { FashnGarmentRecolorService } from '../vision/recolor/fashn-garment-recolor.service';
 import { GarmentRecolorVisionContext } from '../vision/qel/garment-recolor-context.types';
 import { AtelierRecolorAttemptService } from '../atelier/atelier-recolor-attempt.service';
@@ -48,6 +48,7 @@ export class AiGatewayController {
     private readonly outfitHybridIntelligenceService: OutfitHybridIntelligenceService,
     private readonly outfitSegmentationService: OutfitSegmentationService,
     private readonly visionOrchestrator: VisionOrchestratorService,
+    private readonly fashionAnalysisOrchestrator: FashionAnalysisOrchestrator,
     private readonly fashnGarmentRecolorService: FashnGarmentRecolorService,
     private readonly atelierAttempts: AtelierRecolorAttemptService,
   ) {}
@@ -62,10 +63,16 @@ export class AiGatewayController {
   analyzeSkin(
     @CurrentUser() user: RequestUser,
     @UploadedFile() file: Express.Multer.File,
+    /**
+     * Phase 4.5 — optional multipart field `faceIntel` (JSON string).
+     * When absent/invalid, faceIntelligence sibling is omitted (never invented).
+     */
+    @Body() body?: { faceIntel?: string },
   ) {
     return this.skinAnalysisService.analyze(
       user,
       file?.buffer ?? Buffer.alloc(0),
+      body?.faceIntel,
     );
   }
 
@@ -122,8 +129,8 @@ export class AiGatewayController {
 
   /**
    * Vision Platform — official outfit vision entry (Phase 2+).
+   * Phase 1: routed through FashionAnalysisOrchestrator / FashionAnalysisPort.
    * Flutter must use this endpoint only — no client-side vision providers.
-   * Reference: docs/mira-vision-platform.html
    */
   @Post('vision/outfit/analyze')
   @UseInterceptors(
@@ -132,7 +139,7 @@ export class AiGatewayController {
       limits: { fileSize: MAX_IMAGE_BYTES },
     }),
   )
-  analyzeVisionOutfit(
+  async analyzeVisionOutfit(
     @UploadedFile() file: Express.Multer.File,
     @Body() body: VisionOutfitAnalyzeBodyDto,
   ) {
@@ -148,13 +155,32 @@ export class AiGatewayController {
       }
     }
 
-    return this.visionOrchestrator.analyze({
-      imageBuffer: file?.buffer ?? Buffer.alloc(0),
+    const result = await this.fashionAnalysisOrchestrator.analyze({
+      imageBytes: file?.buffer ?? Buffer.alloc(0),
       occasionId: body.occasionId,
       mode: body.mode,
       skinSnapshot,
       locale: body.locale ?? 'ar',
     });
+
+    // Public contract (6C.1): CanonicalGarment only — no FashionVisionDocument on wire
+    return {
+      garments: result.garments,
+      analysis: result.analysis,
+      warnings: result.warnings,
+      limitations: result.limitations,
+      runtime: result.runtime,
+      meta: {
+        processingMs: result.processingMs,
+        analysisGate: result.analysisGate,
+        phase: 'ports-v1-canonical-garment',
+        userMessageAr: result.userMessageAr,
+        traceId: result.meta.traceId,
+        calculationVersion: result.meta.calculationVersion,
+        confidence: result.meta.confidence,
+        // provider identity strings intentionally omitted from HTTP meta
+      },
+    };
   }
 
   /**

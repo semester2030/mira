@@ -1,0 +1,75 @@
+{
+  "reportVersion": "face-report-v1",
+  "shape": {
+    "availability": "available",
+    "shapeId": "oval",
+    "displayNameAr": "بيضاوي",
+    "displayNameEn": "Oval",
+    "confidence": 100,
+    "explanationAr": "شكل الوجه الظاهر: بيضاوي (ثقة 100). صيغة هجينة من نسب العرض/الارتفاع والجبهة/الوجنة/الفك.",
+    "explanationEn": "Apparent face shape: Oval (confidence 100). Hybrid ratios of width/height and forehead/cheek/jaw spans."
+  },
+  "metricIds": [
+    {
+      "id": "facialThirdsBalance",
+      "availability": "available",
+      "categoricalValue": "raw=0.2673",
+      "normalizedValue": 41,
+      "confidence": 78
+    },
+    {
+      "id": "eyeSpacingRatio",
+      "availability": "available",
+      "categoricalValue": "raw=0.3810",
+      "normalizedValue": 32,
+      "confidence": 78
+    },
+    {
+      "id": "faceWidthHeightRatio",
+      "availability": "available",
+      "categoricalValue": "raw=0.7500",
+      "normalizedValue": 80,
+      "confidence": 78
+    },
+    {
+      "id": "noseToFaceWidthRatio",
+      "availability": "available",
+      "categoricalValue": "raw=0.2857",
+      "normalizedValue": 49,
+      "confidence": 78
+    },
+    {
+      "id": "mouthToFaceWidthRatio",
+      "availability": "available",
+      "categoricalValue": "raw=0.4762",
+      "normalizedValue": 26,
+      "confidence": 78
+    },
+    {
+      "id": "symmetryCautious",
+      "availability": "available",
+      "categoricalValue": "raw=0.0000",
+      "normalizedValue": 100,
+      "confidence": 62
+    },
+    {
+      "id": "faceShape",
+      "availability": "available",
+      "categoricalValue": "oval",
+      "normalizedValue": 100,
+      "confidence": 100
+    }
+  ],
+  "findingIds": [
+    "face_shape_oval"
+  ],
+  "layerIds": [
+    "layer_face_shape_oval"
+  ],
+  "recommendationIds": [
+    "edu_face_styling_disclaimer",
+    "rec_hairstyle_oval"
+  ],
+  "confidence": 100,
+  "measurementEligible": true
+}

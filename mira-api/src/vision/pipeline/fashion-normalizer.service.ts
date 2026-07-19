@@ -8,6 +8,13 @@ import {
   loadFashionOntologyRegistry,
 } from '../schema/fashion-ontology.registry';
 import {
+  FASHION_ARCHETYPE_ALIASES,
+  FASHION_CATEGORY_ALIASES,
+  FASHION_COLOR_ALIASES,
+  FASHION_TYPE_ALIASES,
+  fashionAliasSlug,
+} from '../schema/fashion-aliases';
+import {
   SemanticAccessory,
   SemanticGarment,
   SemanticsPayload,
@@ -18,85 +25,6 @@ export interface NormalizationResult {
   notes: string[];
   /** Multiplier applied to providerConfidence when ids were mapped (0..1). */
   confidenceMultiplier: number;
-}
-
-const CATEGORY_ALIASES: Record<string, string> = {
-  top: 'tops',
-  tops: 'tops',
-  shirt: 'tops',
-  blouse: 'tops',
-  upper: 'tops',
-  bottom: 'bottoms',
-  bottoms: 'bottoms',
-  pants: 'bottoms',
-  skirt: 'bottoms',
-  lower: 'bottoms',
-  outer: 'outerwear',
-  outerwear: 'outerwear',
-  jacket: 'outerwear',
-  blazer: 'outerwear',
-  coat: 'outerwear',
-  bag: 'bags',
-  bags: 'bags',
-  heel: 'heels',
-  heels: 'heels',
-  shoe: 'heels',
-  shoes: 'heels',
-  jewel: 'jewelry',
-  jewelry: 'jewelry',
-  scarf: 'scarves',
-  scarves: 'scarves',
-};
-
-const TYPE_ALIASES: Record<string, string> = {
-  blazers: 'blazer',
-  jackets: 'jacket',
-  dresses: 'dress',
-  skirts: 'skirt',
-  pant: 'pants',
-  trousers: 'pants',
-  jeans: 'jeans',
-  shirts: 'shirt',
-  blouses: 'blouse',
-  tops: 'top',
-  coats: 'coat',
-  abayas: 'abaya',
-  suits: 'suit',
-  heel: 'heels',
-  heels: 'heels',
-  bag: 'bag',
-  bags: 'bag',
-  earrings: 'jewelry',
-  necklace: 'jewelry',
-  scarf: 'scarf',
-};
-
-const COLOR_ALIASES: Record<string, string> = {
-  black: 'black_pure',
-  navy: 'navy_deep',
-  beige: 'beige_linen',
-  cream: 'cream_soft',
-  ivory: 'ivory_warm',
-  gray: 'gray_soft',
-  grey: 'gray_soft',
-  silver: 'silver_metal',
-  white: 'ivory_warm',
-};
-
-const ARCHETYPE_ALIASES: Record<string, string> = {
-  business_casual: 'business',
-  formal: 'evening',
-  casual: 'casual',
-  minimalism: 'minimal',
-  quiet: 'quiet_luxury',
-};
-
-function slug(raw: string): string {
-  return raw
-    .trim()
-    .toLowerCase()
-    .replace(/\s+/g, '_')
-    .replace(/[^a-z0-9_]/g, '');
 }
 
 @Injectable()
@@ -221,10 +149,10 @@ export class FashionNormalizerService {
     notes: string[],
     onPenalty: (multiplier: number) => void,
   ): string {
-    const id = slug(raw);
+    const id = fashionAliasSlug(raw);
     if (isKnownCategoryId(registry, id)) return id;
 
-    const alias = CATEGORY_ALIASES[id];
+    const alias = FASHION_CATEGORY_ALIASES[id];
     if (alias && isKnownCategoryId(registry, alias)) {
       notes.push(`${path}.categoryId mapped ${raw} → ${alias}`);
       onPenalty(0.85);
@@ -243,10 +171,10 @@ export class FashionNormalizerService {
     notes: string[],
     onPenalty: (multiplier: number) => void,
   ): string {
-    const id = slug(raw);
+    const id = fashionAliasSlug(raw);
     if (isKnownGarmentTypeId(registry, id)) return id;
 
-    const alias = TYPE_ALIASES[id];
+    const alias = FASHION_TYPE_ALIASES[id];
     if (alias && isKnownGarmentTypeId(registry, alias)) {
       notes.push(`${path}.typeId mapped ${raw} → ${alias}`);
       onPenalty(0.85);
@@ -267,12 +195,12 @@ export class FashionNormalizerService {
   ): string[] {
     const out: string[] = [];
     for (const raw of colors) {
-      const id = slug(raw);
+      const id = fashionAliasSlug(raw);
       if (isKnownColorId(registry, id)) {
         out.push(id);
         continue;
       }
-      const alias = COLOR_ALIASES[id];
+      const alias = FASHION_COLOR_ALIASES[id];
       if (alias && isKnownColorId(registry, alias)) {
         notes.push(`${path} color mapped ${raw} → ${alias}`);
         onPenalty(0.85);
@@ -286,9 +214,9 @@ export class FashionNormalizerService {
   }
 
   private normalizeArchetypeId(raw: string, registry: FashionOntologyRegistry): string {
-    const id = slug(raw);
+    const id = fashionAliasSlug(raw);
     if (isKnownArchetypeId(registry, id)) return id;
-    const alias = ARCHETYPE_ALIASES[id];
+    const alias = FASHION_ARCHETYPE_ALIASES[id];
     if (alias && isKnownArchetypeId(registry, alias)) return alias;
     return 'casual';
   }

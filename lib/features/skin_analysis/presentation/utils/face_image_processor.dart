@@ -5,7 +5,24 @@ import 'dart:ui';
 
 import 'package:image/image.dart' as img;
 
-/// Prepares selfie JPEGs for YouCam — same crop as on-screen preview + auto enhancement.
+import '../../domain/image_quality/capture_quality_thresholds.dart';
+
+/// Documented alignment constants — see docs/architecture/face-alignment.md
+abstract final class FaceAlignmentLimits {
+  FaceAlignmentLimits._();
+
+  /// Do not apply roll correction beyond this (degrees).
+  static const maxAbsRollDegrees = CaptureQualityThresholds.maxRollDegrees;
+  /// Minimum short edge after alignment.
+  static const outputMinShortSide = 1280;
+
+  static const jpegQuality = 95;
+
+  /// Face bounding-box height as fraction of aligned crop height.
+  static const faceHeightFraction = 0.58;
+}
+
+/// Prepares selfie JPEGs for analysis — same crop as on-screen preview + auto enhancement.
 class FaceImageProcessor {
   FaceImageProcessor._();
 
@@ -62,19 +79,67 @@ class FaceImageProcessor {
     required Size imageSize,
     double faceHeightFraction = 0.58,
   }) async {
+    return alignForAnalysis(
+      source,
+      faceBox: faceBox,
+      imageSize: imageSize,
+      faceHeightFraction: faceHeightFraction,
+    );
+  }
+
+  /// Production face alignment (Phase 2).
+  ///
+  /// - Reference: ML Kit bounding box center (not landmark warp).
+  /// - Optional roll correction within [FaceAlignmentLimits.maxAbsRollDegrees].
+  /// - Crop margins via [faceHeightFraction] (face height ≈ 58% of crop).
+  /// - Output: JPEG quality 95, short side ≥ 1280, no geometry stretch/symmetry.
+  /// - Known limits: no 3D pose unwarp; pitch/yaw not corrected by warp.
+  static Future<File> alignForAnalysis(
+    File source, {
+    required Rect faceBox,
+    required Size imageSize,
+    double faceHeightFraction = FaceAlignmentLimits.faceHeightFraction,
+    double? rollDegrees,
+  }) async {
     var image = await _decodeOriented(source);
     final aspect = viewportAspectRatio ?? (image.width / image.height);
 
     final scaleX = image.width / imageSize.width;
     final scaleY = image.height / imageSize.height;
-    final box = Rect.fromLTRB(
+    var box = Rect.fromLTRB(
       faceBox.left * scaleX,
       faceBox.top * scaleY,
       faceBox.right * scaleX,
       faceBox.bottom * scaleY,
     );
 
-    final cropH = (box.height / faceHeightFraction).clamp(1.0, image.height.toDouble());
+    final roll = rollDegrees;
+    if (roll != null &&
+        roll.abs() >= 1.5 &&
+        roll.abs() <= FaceAlignmentLimits.maxAbsRollDegrees) {
+      final pad = math.max(box.width, box.height) * 0.4;
+      final left = (box.left - pad).clamp(0.0, image.width - 1.0);
+      final top = (box.top - pad).clamp(0.0, image.height - 1.0);
+      final right = (box.right + pad).clamp(left + 1.0, image.width.toDouble());
+      final bottom = (box.bottom + pad).clamp(top + 1.0, image.height.toDouble());
+      final padded = img.copyCrop(
+        image,
+        x: left.round(),
+        y: top.round(),
+        width: (right - left).round(),
+        height: (bottom - top).round(),
+      );
+      image = img.copyRotate(padded, angle: -roll);
+      // After padded rotate, face remains near canvas center — no stretch.
+      box = Rect.fromCenter(
+        center: Offset(image.width / 2, image.height / 2),
+        width: box.width,
+        height: box.height,
+      );
+    }
+
+    final cropH =
+        (box.height / faceHeightFraction).clamp(1.0, image.height.toDouble());
     final cropW = (cropH * aspect).clamp(1.0, image.width.toDouble());
     final adjustedH = cropW / aspect;
 
@@ -86,7 +151,7 @@ class FaceImageProcessor {
     if (left + cropW > image.width) left = image.width - cropW;
     if (top + adjustedH > image.height) top = image.height - adjustedH;
 
-    final cropped = img.copyCrop(
+    var cropped = img.copyCrop(
       image,
       x: left.round().clamp(0, image.width - 1),
       y: top.round().clamp(0, image.height - 1),
@@ -94,10 +159,14 @@ class FaceImageProcessor {
       height: math.min(adjustedH.round(), image.height),
     );
 
+    cropped = _ensureMinShortSide(cropped, FaceAlignmentLimits.outputMinShortSide);
+
     final outPath =
         '${Directory.systemTemp.path}/mira_face_aligned_${DateTime.now().millisecondsSinceEpoch}.jpg';
     final out = File(outPath);
-    await out.writeAsBytes(img.encodeJpg(cropped, quality: 95));
+    await out.writeAsBytes(
+      img.encodeJpg(cropped, quality: FaceAlignmentLimits.jpegQuality),
+    );
     return out;
   }
 

@@ -19,6 +19,9 @@ import { IntelligenceModule } from './intelligence/intelligence.module';
 import { AdvisorModule } from './advisor/advisor.module';
 import { ConsultationModule } from './consultation/consultation.module';
 import { AdminModule } from './admin/admin.module';
+import { PortsModule } from './ports/ports.module';
+import { BeautyExperienceModule } from './beauty-experience/beauty-experience.module';
+import { FashionIntelligenceModule } from './fashion-intelligence/fashion-intelligence.module';
 
 @Module({
   imports: [
@@ -27,6 +30,9 @@ import { AdminModule } from './admin/admin.module';
     RedisModule,
     CommonModule,
     AiModule,
+    PortsModule,
+    BeautyExperienceModule,
+    FashionIntelligenceModule,
     AiGatewayModule,
     SubscriptionsModule,
     HealthModule,

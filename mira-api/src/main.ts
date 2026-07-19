@@ -3,8 +3,13 @@ import { ConfigService } from '@nestjs/config';
 import { NestFactory } from '@nestjs/core';
 import { AppModule } from './app.module';
 import { HttpExceptionFilter } from './common/filters/http-exception.filter';
+import { assertProviderPortsConfig } from './ports/config/provider-ports.config';
+import { assertProductionIntegrity } from './config/production-integrity';
 
 async function bootstrap(): Promise<void> {
+  assertProductionIntegrity(process.env);
+  assertProviderPortsConfig(process.env);
+
   const app = await NestFactory.create(AppModule);
 
   const config = app.get(ConfigService);

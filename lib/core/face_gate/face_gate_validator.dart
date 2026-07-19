@@ -107,16 +107,38 @@ class FaceGateValidator {
       faceCount: faces.length,
       faceAreaRatio: ratio,
       headYawDegrees: primary.headEulerAngleY,
+      headPitchDegrees: primary.headEulerAngleX,
       headRollDegrees: primary.headEulerAngleZ,
       centerOffsetXRatio: centerOffsetX,
       centerOffsetYRatio: centerOffsetY,
     );
 
-    if (!rules.isAccepted) return rules;
+    if (!rules.isAccepted) {
+      return FaceGateResult.rejected(
+        reasonCode: rules.reasonCode ?? 'face_gate',
+        messageAr: rules.messageAr,
+        messageEn: rules.messageEn,
+      );
+    }
+
+    final leftEye = primary.landmarks[FaceLandmarkType.leftEye];
+    final rightEye = primary.landmarks[FaceLandmarkType.rightEye];
+    final mouth = primary.landmarks[FaceLandmarkType.bottomMouth] ??
+        primary.landmarks[FaceLandmarkType.leftMouth] ??
+        primary.landmarks[FaceLandmarkType.rightMouth];
 
     return FaceGateResult.acceptedWithFace(
       faceBox: Rect.fromLTRB(box.left, box.top, box.right, box.bottom),
       imageSize: Size(imageWidth, imageHeight),
+      faceCount: faces.length,
+      faceAreaRatio: ratio,
+      headYawDegrees: primary.headEulerAngleY,
+      headPitchDegrees: primary.headEulerAngleX,
+      headRollDegrees: primary.headEulerAngleZ,
+      centerOffsetXRatio: centerOffsetX,
+      centerOffsetYRatio: centerOffsetY,
+      eyesVisible: leftEye != null && rightEye != null,
+      mouthVisible: mouth != null,
     );
   }
 

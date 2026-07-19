@@ -3,8 +3,12 @@ import 'beauty_journey.dart';
 import 'confidence_layer.dart';
 import 'concern_zones_section.dart';
 import 'face_health_map.dart';
+import 'face_intelligence_report.dart';
 import 'progress_forecast.dart';
+import 'result_provenance.dart';
+import 'skin_intelligence_report.dart';
 import 'weekly_plan.dart';
+import '../../../face_intelligence/domain/face_intel_runtime_state.dart';
 
 class ConcernNarrative {
   final String id;
@@ -69,10 +73,18 @@ class RecommendedProductSummary {
 }
 
 /// User-facing intelligence report — Phase 1 Mira Intelligence Layer.
+/// Phase 0: overallBeautyScore is Skin Vitality Index (legacy field name retained).
 class MiraBeautyReport {
   final int version;
+  final int scoreSchemaVersion;
   final String spatialConfidence;
   final int overallBeautyScore;
+  final String displayScoreLabelAr;
+  final String displayScoreLabelEn;
+  final String scoreSupportingAr;
+  final String disclaimerAr;
+  final String disclaimerEn;
+  final ResultProvenance? provenance;
   final String headlineAr;
   final String skinTypeAr;
   final String skinTypeEn;
@@ -92,11 +104,24 @@ class MiraBeautyReport {
   final ProgressForecast progressForecast;
   final BeautyJourney beautyJourney;
   final ConfidenceLayer confidenceLayer;
+  /// Phase 3 — explainable skin intelligence (optional for legacy stored reports).
+  final SkinIntelligenceReport? skinIntelligence;
+  /// Phase 4E — face intelligence sibling (optional; never FaceHealthMap).
+  final FaceIntelligenceReport? faceIntelligence;
+  /// Operational Hardening — explicit Face Intelligence runtime (never silent).
+  final FaceIntelRuntimeState? faceIntelligenceRuntime;
 
   const MiraBeautyReport({
     required this.version,
+    this.scoreSchemaVersion = 1,
     required this.spatialConfidence,
     required this.overallBeautyScore,
+    this.displayScoreLabelAr = CosmeticCopy.skinVitalityIndexAr,
+    this.displayScoreLabelEn = CosmeticCopy.skinVitalityIndexEn,
+    this.scoreSupportingAr = CosmeticCopy.skinVitalitySupportingAr,
+    this.disclaimerAr = CosmeticCopy.disclaimerAr,
+    this.disclaimerEn = CosmeticCopy.disclaimerEn,
+    this.provenance,
     required this.headlineAr,
     required this.skinTypeAr,
     required this.skinTypeEn,
@@ -116,8 +141,17 @@ class MiraBeautyReport {
     required this.progressForecast,
     required this.beautyJourney,
     required this.confidenceLayer,
+    this.skinIntelligence,
+    this.faceIntelligence,
+    this.faceIntelligenceRuntime,
   });
+
+  /// Skin Vitality Index — same numeric field, credible display name.
+  int get skinVitalityIndex => overallBeautyScore;
 
   bool get hasSpatialFaceMap =>
       faceHealthMap.isRealSpatial && faceHealthMap.confidence != 'low';
+
+  bool get canDisplayInProduction =>
+      provenance == null || (provenance!.canDisplay && !provenance!.isMock);
 }

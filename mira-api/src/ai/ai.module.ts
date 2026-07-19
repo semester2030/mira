@@ -11,6 +11,10 @@ import { PerfectCorpService } from './services/perfect-corp.service';
 import { OutfitHybridIntelligenceService } from './services/outfit-hybrid-intelligence.service';
 import { OutfitSegmentationService } from './segmentation/outfit-segmentation.service';
 import { FaceGateService } from './face-gate/face-gate.service';
+import {
+  BlazeFacePresenceDetector,
+  FACE_PRESENCE_DETECTOR,
+} from './face-gate/blazeface-face-presence.detector';
 import { OutfitQualityGateService } from './outfit-gate/outfit-quality-gate.service';
 import {
   OUTFIT_ANALYSIS_PROVIDER,
@@ -28,6 +32,11 @@ import {
     MockSkinAnalysisProvider,
     MockOutfitAnalysisProvider,
     PerfectCorpService,
+    BlazeFacePresenceDetector,
+    {
+      provide: FACE_PRESENCE_DETECTOR,
+      useExisting: BlazeFacePresenceDetector,
+    },
     FaceGateService,
     OutfitQualityGateService,
     PerfectCorpSkinProvider,
@@ -67,10 +76,15 @@ import {
     OUTFIT_ANALYSIS_PROVIDER,
     MiraRecommendationEngine,
     FaceGateService,
+    BlazeFacePresenceDetector,
+    FACE_PRESENCE_DETECTOR,
     OutfitQualityGateService,
     LlmOutfitReasoningService,
     OutfitHybridIntelligenceService,
     OutfitSegmentationService,
+    PerfectCorpSkinProvider,
+    MockSkinAnalysisProvider,
+    PerfectCorpService,
   ],
 })
 export class AiModule {}

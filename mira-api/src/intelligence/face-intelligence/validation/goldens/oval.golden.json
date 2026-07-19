@@ -1,0 +1,285 @@
+{
+  "id": "oval",
+  "contractVersion": "face-intel-contract-v1",
+  "validationVersion": "face-validation-v1",
+  "shapeId": "oval",
+  "shapeAvailability": "available",
+  "findingIds": [
+    "face_shape_oval"
+  ],
+  "recoIds": [
+    "edu_face_styling_disclaimer",
+    "rec_hairstyle_oval"
+  ],
+  "layerIds": [
+    "layer_face_shape_oval"
+  ],
+  "unavailable": [],
+  "confidence": 100,
+  "measurementEligible": true,
+  "report": {
+    "analysisId": "fix-oval",
+    "provider": "on_device_landmarks",
+    "formulaVersion": "face-shape-hybrid-ratios-v1",
+    "captureVersion": "cq-thresholds-v2.1",
+    "faceVersion": "face-model-v1",
+    "intelligenceVersion": "face-intel-v1",
+    "geometryVersion": "face-geometry-v1",
+    "geometryFormulaId": "face-geom-ratios-thirds-sym-v1",
+    "shapeVersion": "face-shape-v1",
+    "shapeFormulaId": "face-shape-hybrid-ratios-v1",
+    "recommendationVersion": "face-reco-v1",
+    "recommendationEngineId": "face-styling-reco-v1",
+    "reportVersion": "face-report-v1",
+    "confidence": 100,
+    "limitations": [
+      "Cosmetic facial-feature report — not attractiveness scoring.",
+      "Not a medical or clinical assessment.",
+      "Feature layers are styling narratives — not skin heatmap measurement truth.",
+      "Sibling to Skin Intelligence; does not modify FaceHealthMap or SVI.",
+      "Phase 4C face shape applied where signals allow.",
+      "Sibling to Skin Intelligence; does not modify SVI or FaceHealthMap.",
+      "Cosmetic face-shape taxonomy — not attractiveness scoring.",
+      "Cosmetic face-shape taxonomy — not attractiveness scoring.",
+      "Not a medical or clinical craniofacial assessment."
+    ],
+    "language": "ar+en",
+    "executiveSummaryAr": "شكل الوجه الظاهر: بيضاوي (ثقة 100). نسب متوازنة نسبياً بين العرض والارتفاع مع فك أضيق قليلاً من الوجنة. 1 توصيات تنسيق تجميلية بأدلة. ذكاء ملامح تجميلي — ليس تشخيصاً طبياً ولا درجة جاذبية. منفصل عن خريطة صحة البشرة.",
+    "executiveSummaryEn": "Apparent face shape: Oval (confidence 100). Relatively balanced width/height with a jaw slightly narrower than the cheeks. 1 evidence-backed cosmetic styling tips. Cosmetic facial-feature intelligence — not medical diagnosis or attractiveness scoring. Separate from skin FaceHealthMap.",
+    "measurementEligible": true,
+    "eligibilityReasonCodes": [],
+    "shape": {
+      "availability": "available",
+      "shapeId": "oval",
+      "displayNameAr": "بيضاوي",
+      "displayNameEn": "Oval",
+      "confidence": 100,
+      "explanationAr": "شكل الوجه الظاهر: بيضاوي (ثقة 100). صيغة هجينة من نسب العرض/الارتفاع والجبهة/الوجنة/الفك.",
+      "explanationEn": "Apparent face shape: Oval (confidence 100). Hybrid ratios of width/height and forehead/cheek/jaw spans."
+    },
+    "findings": [
+      {
+        "id": "face_shape_oval",
+        "category": "shape",
+        "metricIds": [
+          "faceShape"
+        ],
+        "titleAr": "شكل الوجه: بيضاوي",
+        "titleEn": "Face shape: Oval",
+        "detailAr": "نسب متوازنة نسبياً بين العرض والارتفاع مع فك أضيق قليلاً من الوجنة.",
+        "detailEn": "Relatively balanced width/height with a jaw slightly narrower than the cheeks.",
+        "severity": "info",
+        "confidence": "high",
+        "recommendationEligible": true,
+        "priority": 10,
+        "limitations": [
+          "Cosmetic styling finding — not a medical diagnosis.",
+          "Not attractiveness scoring.",
+          "Independent of skin type / undertone."
+        ],
+        "source": "face-shape-hybrid-ratios-v1"
+      }
+    ],
+    "notableFindings": [],
+    "metrics": [
+      {
+        "id": "facialThirdsBalance",
+        "displayNameAr": "توازن أثلاث الوجه",
+        "displayNameEn": "Facial thirds balance",
+        "availability": "available",
+        "normalizedValue": 41,
+        "categoricalValue": "raw=0.2673",
+        "confidence": 78,
+        "source": "locally_calculated",
+        "limitations": [
+          "Cosmetic facial geometry — not attractiveness scoring.",
+          "Not a medical or clinical craniofacial assessment.",
+          "Pose, camera lens, and lighting can affect measurements.",
+          "Formula face-geom-ratios-thirds-sym-v1",
+          "Thirds from vertical spans forehead→brow, brow→noseBase, noseBase→chin; score from low CV."
+        ]
+      },
+      {
+        "id": "eyeSpacingRatio",
+        "displayNameAr": "نسبة تباعد العينين",
+        "displayNameEn": "Eye spacing ratio",
+        "availability": "available",
+        "normalizedValue": 32,
+        "categoricalValue": "raw=0.3810",
+        "confidence": 78,
+        "source": "locally_calculated",
+        "limitations": [
+          "Cosmetic facial geometry — not attractiveness scoring.",
+          "Not a medical or clinical craniofacial assessment.",
+          "Pose, camera lens, and lighting can affect measurements.",
+          "Formula face-geom-ratios-thirds-sym-v1",
+          "eyeSpacingRatio = interocular(inner corners) / faceWidth."
+        ]
+      },
+      {
+        "id": "faceWidthHeightRatio",
+        "displayNameAr": "نسبة عرض إلى ارتفاع الوجه",
+        "displayNameEn": "Face width-to-height ratio",
+        "availability": "available",
+        "normalizedValue": 80,
+        "categoricalValue": "raw=0.7500",
+        "confidence": 78,
+        "source": "locally_calculated",
+        "limitations": [
+          "Cosmetic facial geometry — not attractiveness scoring.",
+          "Not a medical or clinical craniofacial assessment.",
+          "Pose, camera lens, and lighting can affect measurements.",
+          "Formula face-geom-ratios-thirds-sym-v1",
+          "faceWidthHeightRatio = dist(leftFace,rightFace) / dist(foreheadTop,chin)."
+        ]
+      },
+      {
+        "id": "noseToFaceWidthRatio",
+        "displayNameAr": "نسبة عرض الأنف إلى الوجه",
+        "displayNameEn": "Nose-to-face width ratio",
+        "availability": "available",
+        "normalizedValue": 49,
+        "categoricalValue": "raw=0.2857",
+        "confidence": 78,
+        "source": "locally_calculated",
+        "limitations": [
+          "Cosmetic facial geometry — not attractiveness scoring.",
+          "Not a medical or clinical craniofacial assessment.",
+          "Pose, camera lens, and lighting can affect measurements.",
+          "Formula face-geom-ratios-thirds-sym-v1",
+          "noseToFaceWidthRatio = dist(leftAla,rightAla) / faceWidth."
+        ]
+      },
+      {
+        "id": "mouthToFaceWidthRatio",
+        "displayNameAr": "نسبة عرض الفم إلى الوجه",
+        "displayNameEn": "Mouth-to-face width ratio",
+        "availability": "available",
+        "normalizedValue": 26,
+        "categoricalValue": "raw=0.4762",
+        "confidence": 78,
+        "source": "locally_calculated",
+        "limitations": [
+          "Cosmetic facial geometry — not attractiveness scoring.",
+          "Not a medical or clinical craniofacial assessment.",
+          "Pose, camera lens, and lighting can affect measurements.",
+          "Formula face-geom-ratios-thirds-sym-v1",
+          "mouthToFaceWidthRatio = dist(leftMouth,rightMouth) / faceWidth."
+        ]
+      },
+      {
+        "id": "symmetryCautious",
+        "displayNameAr": "التماثل الظاهر (بحذر)",
+        "displayNameEn": "Apparent symmetry (cautious)",
+        "availability": "available",
+        "normalizedValue": 100,
+        "categoricalValue": "raw=0.0000",
+        "confidence": 62,
+        "source": "locally_calculated",
+        "limitations": [
+          "Cosmetic facial geometry — not attractiveness scoring.",
+          "Not a medical or clinical craniofacial assessment.",
+          "Pose, camera lens, and lighting can affect measurements.",
+          "Formula face-geom-ratios-thirds-sym-v1",
+          "Cautious L/R deviation only — not medical symmetry diagnosis.",
+          "Strongly affected by head yaw; eligibility must keep pose frontal."
+        ]
+      },
+      {
+        "id": "faceShape",
+        "displayNameAr": "شكل الوجه",
+        "displayNameEn": "Face shape",
+        "availability": "available",
+        "normalizedValue": 100,
+        "categoricalValue": "oval",
+        "confidence": 100,
+        "source": "locally_calculated",
+        "limitations": [
+          "Cosmetic face-shape taxonomy — not attractiveness scoring.",
+          "Not a medical or clinical craniofacial assessment.",
+          "Separate from skin type / undertone.",
+          "Formula face-shape-hybrid-ratios-v1",
+          "Hybrid heuristic — lighting, hairstyle, and expression can shift class.",
+          "Jaw span uses MediaPipe chinArc endpoints (indices owned by MediapipeLandmarkIndices)."
+        ]
+      }
+    ],
+    "recommendations": [
+      {
+        "id": "edu_face_styling_disclaimer",
+        "category": "educational",
+        "titleAr": "طبيعة توصيات التنسيق",
+        "titleEn": "About styling recommendations",
+        "bodyAr": "اقتراحات ميرا للشعر/المكياج/النظارات تجميلية وإرشادية من شكل الوجه الظاهر والقياسات المتاحة. لا تشخّص ولا تربط بمنتج إلزامي.",
+        "bodyEn": "Mira hairstyle/makeup/eyewear tips are cosmetic guidance from apparent face shape and available measurements. Not diagnostic; no mandatory product lock-in.",
+        "reasonAr": "شفافية المنتج وثقة المستخدم.",
+        "reasonEn": "Product transparency and user trust.",
+        "evidence": {
+          "metricIds": [],
+          "findingIds": [],
+          "values": {}
+        },
+        "confidence": 100,
+        "priority": 5,
+        "cosmeticOnly": true,
+        "productLockIn": false,
+        "limitations": [
+          "Cosmetic styling guidance only — not a medical prescription or diagnosis.",
+          "No Perfect Corp / marketplace product lock-in in Phase 4D."
+        ]
+      },
+      {
+        "id": "rec_hairstyle_oval",
+        "category": "hairstyle",
+        "titleAr": "مرونة في قصّات الشعر",
+        "titleEn": "Flexible hairstyle options",
+        "bodyAr": "الشكل البيضاوي الظاهري يتقبّل معظم الأطوال؛ جرّبي طبقات خفيفة حول الوجه لإبراز التوازن.",
+        "bodyEn": "An apparent oval shape suits most lengths; soft face-framing layers can highlight balance.",
+        "reasonAr": "بناءً على شكل الوجه الظاهر: بيضاوي.",
+        "reasonEn": "Based on apparent face shape: Oval.",
+        "evidence": {
+          "metricIds": [
+            "faceShape"
+          ],
+          "findingIds": [
+            "face_shape_oval"
+          ],
+          "values": {
+            "faceShape": "oval"
+          }
+        },
+        "confidence": 82,
+        "priority": 20,
+        "cosmeticOnly": true,
+        "productLockIn": false,
+        "limitations": [
+          "Cosmetic styling guidance only — not a medical prescription or diagnosis.",
+          "No Perfect Corp / marketplace product lock-in in Phase 4D.",
+          "Cosmetic styling finding — not a medical diagnosis.",
+          "Not attractiveness scoring."
+        ]
+      }
+    ],
+    "featureLayers": [
+      {
+        "id": "layer_face_shape_oval",
+        "kind": "shape",
+        "titleAr": "شكل الوجه: بيضاوي",
+        "titleEn": "Face shape: Oval",
+        "detailAr": "نسب متوازنة نسبياً بين العرض والارتفاع مع فك أضيق قليلاً من الوجنة.",
+        "detailEn": "Relatively balanced width/height with a jaw slightly narrower than the cheeks.",
+        "metricIds": [
+          "faceShape"
+        ],
+        "confidence": "high"
+      }
+    ],
+    "retakeGuidanceAr": "لقراءة ملامح أوضح: إضاءة أمامية ناعمة، وجه أمامي ثابت، مسافة كافية، بدون التفات قوي.",
+    "retakeGuidanceEn": "For clearer feature reading: soft front light, steady frontal face, adequate distance, no strong head turn.",
+    "metadata": {
+      "isMock": false,
+      "measurementEligible": true,
+      "schemaNote": "faceIntelligence sibling on MiraBeautyReport — never FaceHealthMap schema."
+    }
+  }
+}

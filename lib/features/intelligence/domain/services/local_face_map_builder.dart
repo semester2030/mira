@@ -4,6 +4,13 @@ import '../constants/report_face_map_spec.dart';
 import '../entities/face_health_map.dart';
 
 /// Offline educational face map for guest / legacy reports.
+///
+/// @Deprecated Phase 4F — prefer server FaceHealthMap + sibling faceIntelligence.
+/// See docs/architecture/local-face-map-builder-deprecation.md
+@Deprecated(
+  'Prefer server FaceHealthMap and MiraBeautyReport.faceIntelligence. '
+  'See docs/architecture/local-face-map-builder-deprecation.md',
+)
 abstract final class LocalFaceMapBuilder {
   LocalFaceMapBuilder._();
 

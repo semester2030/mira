@@ -1,4 +1,5 @@
 import {
+  Body,
   Controller,
   Get,
   Post,
@@ -31,8 +32,14 @@ export class SkinAnalysisController {
   async analyze(
     @CurrentUser() user: RequestUser,
     @UploadedFile() file: Express.Multer.File,
+    /** Phase 4.5 — optional multipart `faceIntel` JSON string. */
+    @Body() body?: { faceIntel?: string },
   ) {
-    return this.skinAnalysisService.analyze(user, file?.buffer ?? Buffer.alloc(0));
+    return this.skinAnalysisService.analyze(
+      user,
+      file?.buffer ?? Buffer.alloc(0),
+      body?.faceIntel,
+    );
   }
 
   @Get('history')

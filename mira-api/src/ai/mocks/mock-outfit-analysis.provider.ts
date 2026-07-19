@@ -9,6 +9,11 @@ import { OutfitStyleMetrics } from '../contracts/outfit-style-metrics.interface'
 import { OutfitAnalysisProvider } from '../providers/outfit-analysis.provider';
 import { delay, nextInt, seedFromImageBytes } from '../utils/image-seed';
 
+/**
+ * Phase 0 LEGACY — mock outfit provider for tests/dev only.
+ * Blocked from serving production results via OutfitAnalysisService guard.
+ * Canonical path: Vision Platform /ai/vision/outfit/analyze
+ */
 @Injectable()
 export class MockOutfitAnalysisProvider implements OutfitAnalysisProvider {
   private readonly garments = [

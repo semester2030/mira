@@ -20,6 +20,9 @@ import '../widgets/skin_age_comparison_card.dart';
 import '../widgets/mira_report_helpers.dart';
 import '../widgets/mira_tips_section.dart';
 import '../widgets/progress_forecast_section.dart';
+import '../widgets/face_intelligence_section.dart';
+import '../widgets/face_intel_runtime_notice.dart';
+import '../widgets/skin_intelligence_section.dart';
 import '../widgets/treatment_plan_section.dart';
 import '../widgets/weekly_plan_section.dart';
 import '../../../advisor/presentation/widgets/ask_mira_section.dart';
@@ -87,8 +90,42 @@ class _MiraBeautyReportScreenState extends State<MiraBeautyReportScreen> {
                   'تقرير شخصي من تحليلك — واضح، لطيف، وقابل للمتابعة',
                   style: AppTypography.bodySmall.copyWith(color: AppColors.textSecondary),
                 ),
+                const SizedBox(height: 12),
+                Container(
+                  width: double.infinity,
+                  padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 10),
+                  decoration: BoxDecoration(
+                    color: AppColors.goldLight.withValues(alpha: 0.35),
+                    borderRadius: BorderRadius.circular(12),
+                    border: Border.all(color: AppColors.gold.withValues(alpha: 0.35)),
+                  ),
+                  child: Text(
+                    mira.disclaimerAr.isNotEmpty
+                        ? mira.disclaimerAr
+                        : 'هذا التحليل تجميلي وإرشادي، وليس تشخيصاً طبياً. قد تختلف النتائج باختلاف الإضاءة والكاميرا وجودة الصورة.',
+                    style: AppTypography.labelSmall.copyWith(
+                      color: AppColors.textSecondary,
+                      height: 1.45,
+                    ),
+                    textAlign: TextAlign.center,
+                  ),
+                ),
                 const SizedBox(height: 20),
                 BeautyScoreHero(report: mira),
+                if (mira.skinIntelligence != null) ...[
+                  const SizedBox(height: 16),
+                  SkinIntelligenceSection(report: mira.skinIntelligence!),
+                ],
+                if (mira.faceIntelligence != null) ...[
+                  const SizedBox(height: 16),
+                  FaceIntelligenceSection(report: mira.faceIntelligence!),
+                ] else if (mira.faceIntelligenceRuntime != null &&
+                    mira.faceIntelligenceRuntime!.showNotice) ...[
+                  const SizedBox(height: 16),
+                  FaceIntelRuntimeNotice(
+                    runtime: mira.faceIntelligenceRuntime!,
+                  ),
+                ],
                 const SizedBox(height: 16),
                 BeautyJourneySection(journey: mira.beautyJourney),
                 const SizedBox(height: 16),

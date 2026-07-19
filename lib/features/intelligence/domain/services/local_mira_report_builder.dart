@@ -41,6 +41,7 @@ abstract final class LocalMiraReportBuilder {
     );
 
     final concernZones = _concernZones(report);
+    // ignore: deprecated_member_use — Phase 4F deprecation; see local-face-map-builder-deprecation.md
     final faceHealthMap = LocalFaceMapBuilder.fromSkinReport(report);
     final dailyRoutine = _routine(report);
     final weeklyPlan = LocalWeeklyPlanBuilder.fromSkinReport(report, dailyRoutine);

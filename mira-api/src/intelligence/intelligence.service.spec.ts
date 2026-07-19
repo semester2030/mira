@@ -79,8 +79,12 @@ describe('IntelligenceService age + safety', () => {
     const service = new IntelligenceService(marketplace as never, prisma as never);
     const report = await service.buildBeautyReport({ ...skin, beautyScore: 67 });
     expect(report.beautyJourney.enabled).toBe(true);
-    expect(report.beautyJourney.nextGoal.targetValue).toBeGreaterThan(67);
+    expect(report.beautyJourney.nextGoal.targetValue).toBeGreaterThan(
+      report.overallBeautyScore,
+    );
     expect(report.beautyJourney.priorities.length).toBeGreaterThan(0);
+    expect(report.skinIntelligence).toBeDefined();
+    expect(report.provenance?.calculationVersion).toBe('svi-v2');
   });
 
   it('includes confidence layer items', async () => {

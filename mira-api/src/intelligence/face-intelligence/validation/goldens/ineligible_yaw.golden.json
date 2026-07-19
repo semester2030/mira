@@ -1,0 +1,220 @@
+{
+  "id": "ineligible_yaw",
+  "contractVersion": "face-intel-contract-v1",
+  "validationVersion": "face-validation-v1",
+  "shapeId": null,
+  "shapeAvailability": "unavailable",
+  "findingIds": [],
+  "recoIds": [
+    "edu_face_styling_disclaimer"
+  ],
+  "layerIds": [],
+  "unavailable": [
+    "eyeSpacingRatio",
+    "faceShape",
+    "faceWidthHeightRatio",
+    "facialThirdsBalance",
+    "mouthToFaceWidthRatio",
+    "noseToFaceWidthRatio",
+    "symmetryCautious"
+  ],
+  "confidence": 0,
+  "measurementEligible": false,
+  "report": {
+    "analysisId": "fix-yaw",
+    "provider": "on_device_landmarks",
+    "formulaVersion": "face-shape-hybrid-ratios-v1",
+    "captureVersion": "cq-thresholds-v2.1",
+    "faceVersion": "face-model-v1",
+    "intelligenceVersion": "face-intel-v1",
+    "geometryVersion": "face-geometry-v1",
+    "geometryFormulaId": "face-geom-ratios-thirds-sym-v1",
+    "shapeVersion": "face-shape-v1",
+    "shapeFormulaId": "face-shape-hybrid-ratios-v1",
+    "recommendationVersion": "face-reco-v1",
+    "recommendationEngineId": "face-styling-reco-v1",
+    "reportVersion": "face-report-v1",
+    "confidence": 0,
+    "limitations": [
+      "Cosmetic facial-feature report — not attractiveness scoring.",
+      "Not a medical or clinical assessment.",
+      "Feature layers are styling narratives — not skin heatmap measurement truth.",
+      "Sibling to Skin Intelligence; does not modify FaceHealthMap or SVI.",
+      "Phase 4C face shape applied where signals allow.",
+      "Sibling to Skin Intelligence; does not modify SVI or FaceHealthMap.",
+      "Cosmetic face-shape taxonomy — not attractiveness scoring.",
+      "Cosmetic face-shape taxonomy — not attractiveness scoring.",
+      "Not a medical or clinical craniofacial assessment."
+    ],
+    "language": "ar+en",
+    "executiveSummaryAr": "شكل الوجه غير متاح في هذه القراءة. لا توصيات تنسيق إضافية في هذه القراءة. ذكاء ملامح تجميلي — ليس تشخيصاً طبياً ولا درجة جاذبية. منفصل عن خريطة صحة البشرة.",
+    "executiveSummaryEn": "Face shape unavailable in this reading. No additional styling tips in this reading. Cosmetic facial-feature intelligence — not medical diagnosis or attractiveness scoring. Separate from skin FaceHealthMap.",
+    "measurementEligible": false,
+    "eligibilityReasonCodes": [
+      "head_turned"
+    ],
+    "shape": {
+      "availability": "unavailable",
+      "confidence": 0,
+      "explanationAr": "شكل الوجه غير متاح — القياس غير مؤهل.",
+      "explanationEn": "Face shape unavailable — measurement not eligible.",
+      "unavailableReason": "measurement_not_eligible"
+    },
+    "findings": [],
+    "notableFindings": [],
+    "metrics": [
+      {
+        "id": "facialThirdsBalance",
+        "displayNameAr": "توازن أثلاث الوجه",
+        "displayNameEn": "Facial thirds balance",
+        "availability": "unavailable",
+        "confidence": 0,
+        "source": "unavailable",
+        "limitations": [
+          "Cosmetic facial geometry — not attractiveness scoring.",
+          "Not a medical or clinical craniofacial assessment.",
+          "Pose, camera lens, and lighting can affect measurements.",
+          "Formula face-geom-ratios-thirds-sym-v1",
+          "eligibility:head_turned",
+          "Catalog owner phase: 4B. Unavailable — value not invented."
+        ],
+        "unavailableReason": "measurement_not_eligible"
+      },
+      {
+        "id": "eyeSpacingRatio",
+        "displayNameAr": "نسبة تباعد العينين",
+        "displayNameEn": "Eye spacing ratio",
+        "availability": "unavailable",
+        "confidence": 0,
+        "source": "unavailable",
+        "limitations": [
+          "Cosmetic facial geometry — not attractiveness scoring.",
+          "Not a medical or clinical craniofacial assessment.",
+          "Pose, camera lens, and lighting can affect measurements.",
+          "Formula face-geom-ratios-thirds-sym-v1",
+          "eligibility:head_turned",
+          "Catalog owner phase: 4B. Unavailable — value not invented."
+        ],
+        "unavailableReason": "measurement_not_eligible"
+      },
+      {
+        "id": "faceWidthHeightRatio",
+        "displayNameAr": "نسبة عرض إلى ارتفاع الوجه",
+        "displayNameEn": "Face width-to-height ratio",
+        "availability": "unavailable",
+        "confidence": 0,
+        "source": "unavailable",
+        "limitations": [
+          "Cosmetic facial geometry — not attractiveness scoring.",
+          "Not a medical or clinical craniofacial assessment.",
+          "Pose, camera lens, and lighting can affect measurements.",
+          "Formula face-geom-ratios-thirds-sym-v1",
+          "eligibility:head_turned",
+          "Catalog owner phase: 4B. Unavailable — value not invented."
+        ],
+        "unavailableReason": "measurement_not_eligible"
+      },
+      {
+        "id": "noseToFaceWidthRatio",
+        "displayNameAr": "نسبة عرض الأنف إلى الوجه",
+        "displayNameEn": "Nose-to-face width ratio",
+        "availability": "unavailable",
+        "confidence": 0,
+        "source": "unavailable",
+        "limitations": [
+          "Cosmetic facial geometry — not attractiveness scoring.",
+          "Not a medical or clinical craniofacial assessment.",
+          "Pose, camera lens, and lighting can affect measurements.",
+          "Formula face-geom-ratios-thirds-sym-v1",
+          "eligibility:head_turned",
+          "Catalog owner phase: 4B. Unavailable — value not invented."
+        ],
+        "unavailableReason": "measurement_not_eligible"
+      },
+      {
+        "id": "mouthToFaceWidthRatio",
+        "displayNameAr": "نسبة عرض الفم إلى الوجه",
+        "displayNameEn": "Mouth-to-face width ratio",
+        "availability": "unavailable",
+        "confidence": 0,
+        "source": "unavailable",
+        "limitations": [
+          "Cosmetic facial geometry — not attractiveness scoring.",
+          "Not a medical or clinical craniofacial assessment.",
+          "Pose, camera lens, and lighting can affect measurements.",
+          "Formula face-geom-ratios-thirds-sym-v1",
+          "eligibility:head_turned",
+          "Catalog owner phase: 4B. Unavailable — value not invented."
+        ],
+        "unavailableReason": "measurement_not_eligible"
+      },
+      {
+        "id": "symmetryCautious",
+        "displayNameAr": "التماثل الظاهر (بحذر)",
+        "displayNameEn": "Apparent symmetry (cautious)",
+        "availability": "unavailable",
+        "confidence": 0,
+        "source": "unavailable",
+        "limitations": [
+          "Cosmetic facial geometry — not attractiveness scoring.",
+          "Not a medical or clinical craniofacial assessment.",
+          "Pose, camera lens, and lighting can affect measurements.",
+          "Formula face-geom-ratios-thirds-sym-v1",
+          "eligibility:head_turned",
+          "Catalog owner phase: 4B. Unavailable — value not invented."
+        ],
+        "unavailableReason": "measurement_not_eligible"
+      },
+      {
+        "id": "faceShape",
+        "displayNameAr": "شكل الوجه",
+        "displayNameEn": "Face shape",
+        "availability": "unavailable",
+        "confidence": 0,
+        "source": "unavailable",
+        "limitations": [
+          "Cosmetic face-shape taxonomy — not attractiveness scoring.",
+          "Not a medical or clinical craniofacial assessment.",
+          "Separate from skin type / undertone.",
+          "Formula face-shape-hybrid-ratios-v1",
+          "eligibility:head_turned",
+          "Catalog owner phase: 4C. Unavailable — value not invented."
+        ],
+        "unavailableReason": "measurement_not_eligible"
+      }
+    ],
+    "recommendations": [
+      {
+        "id": "edu_face_styling_disclaimer",
+        "category": "educational",
+        "titleAr": "طبيعة توصيات التنسيق",
+        "titleEn": "About styling recommendations",
+        "bodyAr": "اقتراحات ميرا للشعر/المكياج/النظارات تجميلية وإرشادية من شكل الوجه الظاهر والقياسات المتاحة. لا تشخّص ولا تربط بمنتج إلزامي.",
+        "bodyEn": "Mira hairstyle/makeup/eyewear tips are cosmetic guidance from apparent face shape and available measurements. Not diagnostic; no mandatory product lock-in.",
+        "reasonAr": "شفافية المنتج وثقة المستخدم.",
+        "reasonEn": "Product transparency and user trust.",
+        "evidence": {
+          "metricIds": [],
+          "findingIds": [],
+          "values": {}
+        },
+        "confidence": 100,
+        "priority": 5,
+        "cosmeticOnly": true,
+        "productLockIn": false,
+        "limitations": [
+          "Cosmetic styling guidance only — not a medical prescription or diagnosis.",
+          "No Perfect Corp / marketplace product lock-in in Phase 4D."
+        ]
+      }
+    ],
+    "featureLayers": [],
+    "retakeGuidanceAr": "لقراءة ملامح أوضح: إضاءة أمامية ناعمة، وجه أمامي ثابت، مسافة كافية، بدون التفات قوي.",
+    "retakeGuidanceEn": "For clearer feature reading: soft front light, steady frontal face, adequate distance, no strong head turn.",
+    "metadata": {
+      "isMock": false,
+      "measurementEligible": false,
+      "schemaNote": "faceIntelligence sibling on MiraBeautyReport — never FaceHealthMap schema."
+    }
+  }
+}

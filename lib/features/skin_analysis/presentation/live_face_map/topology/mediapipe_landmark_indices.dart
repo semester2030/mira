@@ -55,4 +55,45 @@ abstract final class MediapipeLandmarkIndices {
     172, 136, 150, 149, 176, 148, 152, 377, 400, 378, 379, 365, 397, 288,
     361, 323, 454, 356, 389, 251, 284,
   ];
+
+  /// Phase 4B — named anchors for Face Geometry (single owner of index ids).
+  /// Consumers must use these constants — do not hardcode duplicate indices elsewhere.
+  static const geometryForeheadTop = 10;
+  static const geometryBrowMid = 9;
+  static const geometryNoseTip = 1;
+  static const geometryNoseBase = 2;
+  static const geometryChin = 152;
+  static const geometryLeftEyeOuter = 33;
+  static const geometryLeftEyeInner = 133;
+  static const geometryRightEyeInner = 362;
+  static const geometryRightEyeOuter = 263;
+  static const geometryLeftMouth = 61;
+  static const geometryRightMouth = 291;
+  static const geometryLeftFace = 234;
+  static const geometryRightFace = 454;
+  static const geometryLeftAla = 98;
+  static const geometryRightAla = 327;
+  /// Phase 4C — jaw width for face-shape hybrid classifier (chinArc endpoints).
+  static const geometryLeftJaw = 172;
+  static const geometryRightJaw = 397;
+
+  static const geometryAnchorIndices = <int>[
+    geometryForeheadTop,
+    geometryBrowMid,
+    geometryNoseTip,
+    geometryNoseBase,
+    geometryChin,
+    geometryLeftEyeOuter,
+    geometryLeftEyeInner,
+    geometryRightEyeInner,
+    geometryRightEyeOuter,
+    geometryLeftMouth,
+    geometryRightMouth,
+    geometryLeftFace,
+    geometryRightFace,
+    geometryLeftAla,
+    geometryRightAla,
+    geometryLeftJaw,
+    geometryRightJaw,
+  ];
 }

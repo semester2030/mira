@@ -1,0 +1,33 @@
+{
+  "product": "Mira Face Intelligence",
+  "version": "1.0.0",
+  "status": "Production Approved · Frozen",
+  "releaseDate": "2026-07-19",
+  "program": "Premium Transformation Program",
+  "productionPath": "mira-api runFaceReportPipeline via IntelligenceService.buildBeautyReport",
+  "identifiers": {
+    "architectureVersion": "face-intel-arch-lock-v1",
+    "intelligenceVersion": "face-intel-v1",
+    "faceModelVersion": "face-model-v1",
+    "foundationVersion": "face-foundation-v1",
+    "eligibilityVersion": "face-eligibility-v1",
+    "landmarkFrameVersion": "landmark-frame-v1",
+    "geometryAnchorsVersion": "geometry-anchors-v1",
+    "geometryVersion": "face-geometry-v1",
+    "geometryFormulaId": "face-geom-ratios-thirds-sym-v1",
+    "shapeVersion": "face-shape-v1",
+    "shapeFormulaId": "face-shape-hybrid-ratios-v1",
+    "findingSchema": "face-finding-v1",
+    "recommendationVersion": "face-reco-v1",
+    "recommendationEngineId": "face-styling-reco-v1",
+    "reportVersion": "face-report-v1",
+    "contractVersion": "face-intel-contract-v1",
+    "validationVersion": "face-validation-v1",
+    "localization": "ar+en",
+    "captureQualityVersion": "cq-thresholds-v2.1",
+    "compatibilityVersion": "face-compat-v1",
+    "runtimeStatesVersion": "face-runtime-states-v1"
+  },
+  "frozenAt": "2026-07-19T00:00:00.000Z",
+  "changePolicy": "docs/governance/FACE_INTELLIGENCE_CHANGE_POLICY.md"
+}

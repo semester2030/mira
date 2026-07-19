@@ -1,3 +1,4 @@
+import '../../../features/skin_analysis/domain/entities/capture_quality_signals.dart';
 import '../../../features/skin_analysis/domain/entities/skin_report.dart';
 import '../../../features/skin_analysis/domain/services/beauty_score_engine.dart';
 import '../models/skin_analysis_result.dart';
@@ -10,6 +11,7 @@ abstract final class SkinResultMapper {
     String? imageUrl,
     DateTime? createdAt,
     int? previousBeautyScore,
+    CaptureQualitySignals? captureQuality,
   }) {
     final preliminary = SkinReport(
       id: id,
@@ -38,6 +40,7 @@ abstract final class SkinResultMapper {
     final scored = BeautyScoreEngine.compute(
       preliminary,
       previousScore: previousBeautyScore,
+      captureQuality: captureQuality ?? const CaptureQualitySignals.neutral(),
     );
 
     return preliminary.copyWith(score: scored.finalScore.toDouble());

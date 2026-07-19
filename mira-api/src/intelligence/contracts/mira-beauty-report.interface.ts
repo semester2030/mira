@@ -193,8 +193,20 @@ export interface ConfidenceLayerPayload {
 /** User-facing report — no raw provider metrics. */
 export interface MiraBeautyReport {
   version: 1;
+  /** Phase 0 — schema for score semantics (2 = Skin Vitality Index era). */
+  scoreSchemaVersion?: number;
   spatialConfidence: SpatialConfidence;
+  /**
+   * Legacy field name kept for storage compatibility.
+   * User-facing meaning (schema ≥2): Skin Vitality Index — not objective beauty.
+   */
   overallBeautyScore: number;
+  displayScoreLabelAr?: string;
+  displayScoreLabelEn?: string;
+  scoreSupportingAr?: string;
+  disclaimerAr?: string;
+  disclaimerEn?: string;
+  provenance?: import('./result-provenance').ResultProvenance;
   headlineAr: string;
   skinTypeAr: string;
   skinTypeEn: string;
@@ -214,12 +226,29 @@ export interface MiraBeautyReport {
   progressForecast: ProgressForecastPayload;
   beautyJourney: BeautyJourneyPayload;
   confidenceLayer: ConfidenceLayerPayload;
+  /**
+   * Phase 3 — provider-independent skin intelligence report (no raw provider JSON).
+   */
+  skinIntelligence?: import('../skin-intelligence/report.engine').SkinIntelligenceReportDto;
+  /**
+   * Phase 4E — Face Intelligence report sibling (geometry/shape/styling).
+   * Never overload FaceHealthMap with this schema.
+   */
+  faceIntelligence?: import('../face-intelligence/report/face-report.engine').FaceIntelligenceReportDto;
+  /**
+   * Operational Hardening — explicit Face Intelligence runtime (never silent).
+   */
+  faceIntelligenceRuntime?: import('../face-intelligence/face-intel-runtime-state').FaceIntelRuntimeStateDto;
 }
 
 /** Server-only audit blob — never returned to Flutter clients. */
 export interface StoredProviderAudit {
-  rawYouCam?: Record<string, unknown>;
+  /** @deprecated Phase 0 — must not persist full raw payloads. */
+  rawYouCam?: never;
+  redacted?: import('../pipeline/youcam-audit-redact').RedactedYouCamAudit;
   capturedAt: string;
+  provider?: string;
+  isMock?: boolean;
 }
 
 export interface StoredSkinAnalysisPayload {

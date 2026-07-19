@@ -1,0 +1,61 @@
+{
+  "version": "face-geometry-v1",
+  "formulaId": "face-geom-ratios-thirds-sym-v1",
+  "raw": {
+    "faceWidth": 0.43999999999999995,
+    "faceHeight": 0.73,
+    "widthHeight": 0.6027397260273972,
+    "eyeSpacing": 0.36363636363636365,
+    "noseWidth": 0.2727272727272729,
+    "mouthWidth": 0.4545454545454545,
+    "thirdUpper": 0.17,
+    "thirdMiddle": 0.25999999999999995,
+    "thirdLower": 0.30000000000000004,
+    "thirdsCv": 0.22341789630548076,
+    "asymmetryIndex": 0
+  },
+  "metrics": [
+    {
+      "id": "faceWidthHeightRatio",
+      "availability": "available",
+      "normalizedValue": 0,
+      "confidence": 78,
+      "categoricalValue": "raw=0.6027"
+    },
+    {
+      "id": "eyeSpacingRatio",
+      "availability": "available",
+      "normalizedValue": 61,
+      "confidence": 78,
+      "categoricalValue": "raw=0.3636"
+    },
+    {
+      "id": "noseToFaceWidthRatio",
+      "availability": "available",
+      "normalizedValue": 68,
+      "confidence": 78,
+      "categoricalValue": "raw=0.2727"
+    },
+    {
+      "id": "mouthToFaceWidthRatio",
+      "availability": "available",
+      "normalizedValue": 51,
+      "confidence": 78,
+      "categoricalValue": "raw=0.4545"
+    },
+    {
+      "id": "facialThirdsBalance",
+      "availability": "available",
+      "normalizedValue": 50,
+      "confidence": 78,
+      "categoricalValue": "raw=0.2234"
+    },
+    {
+      "id": "symmetryCautious",
+      "availability": "available",
+      "normalizedValue": 100,
+      "confidence": 62,
+      "categoricalValue": "raw=0.0000"
+    }
+  ]
+}
