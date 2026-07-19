@@ -3,7 +3,7 @@ import 'package:flutter/material.dart';
 import '../../../../../shared/theme/colors.dart';
 import '../models/face_mesh_models.dart';
 
-/// Soft premium scan glow — no hard lines or debug geometry.
+/// Soft premium scan glow — laser beam sweeps the face during live capture.
 class ScanningLinePainter extends CustomPainter {
   final List<FaceMeshPoint> outline;
   final double progress;
@@ -12,6 +12,8 @@ class ScanningLinePainter extends CustomPainter {
     required this.outline,
     required this.progress,
   });
+
+  static const _beamCyan = Color(0xFF5CE1FF);
 
   @override
   void paint(Canvas canvas, Size size) {
@@ -22,7 +24,7 @@ class ScanningLinePainter extends CustomPainter {
     final bottom = ys.last;
     final y = top + (bottom - top) * progress;
 
-    final beamRect = Rect.fromLTWH(0, y - 36, size.width, 72);
+    final beamRect = Rect.fromLTWH(0, y - 42, size.width, 84);
     canvas.drawRect(
       beamRect,
       Paint()
@@ -30,12 +32,21 @@ class ScanningLinePainter extends CustomPainter {
           begin: Alignment.topCenter,
           end: Alignment.bottomCenter,
           colors: [
-            AppColors.gold.withValues(alpha: 0),
-            AppColors.gold.withValues(alpha: 0.22),
-            AppColors.gold.withValues(alpha: 0),
+            _beamCyan.withValues(alpha: 0),
+            _beamCyan.withValues(alpha: 0.35),
+            AppColors.gold.withValues(alpha: 0.28),
+            _beamCyan.withValues(alpha: 0),
           ],
         ).createShader(beamRect)
-        ..maskFilter = const MaskFilter.blur(BlurStyle.normal, 8),
+        ..maskFilter = const MaskFilter.blur(BlurStyle.normal, 10),
+    );
+
+    canvas.drawLine(
+      Offset(0, y),
+      Offset(size.width, y),
+      Paint()
+        ..strokeWidth = 1.4
+        ..color = _beamCyan.withValues(alpha: 0.75),
     );
   }
 
