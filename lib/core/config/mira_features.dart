@@ -42,4 +42,40 @@ abstract final class MiraFeatures {
     'MIRA_MARKETPLACE_ENABLED',
     defaultValue: false,
   );
+
+  /// AT-3 / PROD-FINAL-1 — Build inclusion for Fashion Advisor route.
+  /// Default `false`. Release binary may set dart-define true for inclusion.
+  /// Runtime server entitlement `fashionAdvisorModeB` is also required
+  /// (see usages that AND with [MiraRuntimeEntitlementStore]).
+  /// Does NOT alone enable backend Fashion Knowledge Mode B.
+  static const bool fashionAdvisorV1 = bool.fromEnvironment(
+    'MIRA_FASHION_ADVISOR_V1',
+    defaultValue: false,
+  );
+
+  /// Phase 9C — Interactive Capture Mirror (guidance + auto-capture via 9B latch).
+  /// Default `false` keeps legacy manual capture path unchanged.
+  /// QA: `--dart-define=MIRA_FACE_CAPTURE_MIRROR_V1=true`
+  static const bool faceCaptureMirrorV1 = bool.fromEnvironment(
+    'MIRA_FACE_CAPTURE_MIRROR_V1',
+    defaultValue: false,
+  );
+
+  /// Phase 9D — Soft Laser / Analysis Motion (decorative post-capture wait).
+  /// Default `false` keeps legacy analyzing overlay unchanged.
+  /// QA: `--dart-define=MIRA_FACE_ANALYSIS_MOTION_V1=true`
+  /// Soft laser does NOT measure the face (Law #41).
+  static const bool faceAnalysisMotionV1 = bool.fromEnvironment(
+    'MIRA_FACE_ANALYSIS_MOTION_V1',
+    defaultValue: false,
+  );
+
+  /// Phase 9F — Interactive Result Mirror (executive first surface).
+  /// Default `false` keeps legacy / Results V2 entry unchanged.
+  /// QA: `--dart-define=MIRA_FACE_RESULT_MIRROR_V1=true`
+  /// Consumes 9E projection VMs only — no Face Intelligence recomputation.
+  static const bool faceResultMirrorV1 = bool.fromEnvironment(
+    'MIRA_FACE_RESULT_MIRROR_V1',
+    defaultValue: false,
+  );
 }

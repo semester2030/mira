@@ -7,6 +7,9 @@ import 'package:image_picker/image_picker.dart';
 
 import '../../../../core/face_gate/face_gate_result.dart';
 import '../../../../core/face_gate/face_gate_validator.dart';
+import '../../../face_analysis_experience/capture/capture.dart';
+import '../../../face_analysis_experience/presentation/analysis/analysis_motion.dart';
+import '../../../face_analysis_experience/presentation/capture/capture_mirror.dart';
 import '../../domain/image_quality/image_quality_evaluator.dart';
 import '../live_face_map/face_mapping_context.dart';
 import '../live_face_map/face_mesh_quality_gate.dart';
@@ -25,12 +28,20 @@ class FaceCapturePanel extends StatefulWidget {
   final bool enabled;
   final bool isAnalyzing;
 
+  /// Phase 9D — when [FaceAnalysisMotionFlag] is on, drives Soft Laser stages.
+  final AnalysisPipelineStatus analysisPipelineStatus;
+  final String? analysisErrorMessage;
+  final VoidCallback? onAnalysisMotionHandoff;
+
   const FaceCapturePanel({
     super.key,
     required this.onImageChanged,
     this.capturedImage,
     this.enabled = true,
     this.isAnalyzing = false,
+    this.analysisPipelineStatus = AnalysisPipelineStatus.idle,
+    this.analysisErrorMessage,
+    this.onAnalysisMotionHandoff,
   });
 
   @override
@@ -54,6 +65,13 @@ class _FaceCapturePanelState extends State<FaceCapturePanel>
   late final LiveFaceOverlayController _faceOverlayController;
   bool _imageStreamActive = false;
   Size _previewBoxSize = Size.zero;
+
+  /// Phase 9C mirror — only constructed/used when flag ON.
+  CaptureMirrorCoordinator? _mirrorCoordinator;
+  FaceCaptureGuidanceVm? _mirrorGuidance;
+  double _mirrorHoldProgress = 0;
+  double _captureFlashOpacity = 0;
+  bool _mirrorAutoCaptureQueued = false;
 
   static const _tips = [
     'ثبّتي وجهك في منتصف الدائرة',
@@ -83,6 +101,9 @@ class _FaceCapturePanelState extends State<FaceCapturePanel>
       duration: const Duration(milliseconds: 4200),
     )..repeat();
     _faceOverlayController = LiveFaceOverlayController();
+    if (FaceCaptureMirrorFlag.enabled) {
+      _mirrorCoordinator = CaptureMirrorCoordinator();
+    }
     _initCamera();
   }
 
@@ -96,6 +117,10 @@ class _FaceCapturePanelState extends State<FaceCapturePanel>
     } else if (oldWidget.capturedImage != null && widget.capturedImage == null) {
       _mirrorCapturedPreview = false;
       _faceOverlayController.reset();
+      _mirrorCoordinator?.resetForRetake();
+      _mirrorGuidance = null;
+      _mirrorHoldProgress = 0;
+      _captureFlashOpacity = 0;
       _resumeCamera();
     }
 
@@ -129,10 +154,13 @@ class _FaceCapturePanelState extends State<FaceCapturePanel>
     if (controller == null || !controller.value.isInitialized) return;
 
     if (state == AppLifecycleState.inactive || state == AppLifecycleState.paused) {
+      _mirrorCoordinator?.onLifecycleInterrupt();
+      _mirrorAutoCaptureQueued = false;
       _pauseCamera();
     } else if (state == AppLifecycleState.resumed &&
         widget.capturedImage == null &&
         !widget.isAnalyzing) {
+      _mirrorCoordinator?.onLifecycleInterrupt();
       _resumeCamera();
     }
   }
@@ -288,9 +316,153 @@ class _FaceCapturePanelState extends State<FaceCapturePanel>
     }
   }
 
+  bool get _motionEnabled => FaceAnalysisMotionFlag.enabled;
+
+  Widget _buildOverlayLayer({
+    required int tipIndex,
+    required bool canTakePhoto,
+    required LiveCameraOverlayState overlayState,
+    required FaceCaptureGuidanceVm? guidance,
+    required CaptureMirrorTick? mirrorTick,
+  }) {
+    // Phase 9D — Soft Laser during real analysis wait only (not shutter validation).
+    if (_motionEnabled &&
+        widget.isAnalyzing &&
+        widget.capturedImage != null &&
+        !_validatingFace) {
+      final status = widget.analysisPipelineStatus == AnalysisPipelineStatus.idle
+          ? AnalysisPipelineStatus.running
+          : widget.analysisPipelineStatus;
+      return AnalysisMotionOverlay(
+        frame: _faceOverlayController.frame,
+        pipelineStatus: status,
+        errorMessageAr: widget.analysisErrorMessage,
+        reduceMotion: _reduceMotion,
+        onHandoffReady: widget.onAnalysisMotionHandoff,
+      );
+    }
+
+    if (_mirrorEnabled &&
+        !widget.isAnalyzing &&
+        widget.capturedImage == null &&
+        guidance != null) {
+      return InteractiveCaptureMirrorOverlay(
+        frame: _faceOverlayController.frame,
+        guidance: guidance,
+        poseHint: mirrorTick?.result.pose ?? PoseKind.unknown,
+        holdProgress01: _mirrorHoldProgress,
+        pulse: _pulseController.value,
+        flashOpacity: _captureFlashOpacity,
+        reduceMotion: _reduceMotion,
+      );
+    }
+
+    return LiveFaceAnalysisOverlay(
+      controller: _faceOverlayController,
+      uiState: overlayState,
+      pulse: _pulseController.value,
+      scanProgress: _scanController.value,
+      sweepProgress: _sweepController.value,
+      hintText: canTakePhoto
+          ? 'الإطار جاهز — اضغطي زر التصوير'
+          : _tips[tipIndex],
+    );
+  }
+
+  bool get _mirrorEnabled => FaceCaptureMirrorFlag.enabled;
+
   bool get _canTakePhoto {
     if (_previewBoxSize == Size.zero) return false;
+    if (_mirrorEnabled) {
+      return _mirrorGuidance?.canManualCapture == true;
+    }
     return FaceMeshQualityGate.canTakePhoto(_faceOverlayController.frame);
+  }
+
+  bool get _reduceMotion {
+    final mq = MediaQuery.maybeOf(context);
+    return mq?.disableAnimations ?? false;
+  }
+
+  CaptureMirrorTick? _evaluateMirrorTick() {
+    final coordinator = _mirrorCoordinator;
+    if (!_mirrorEnabled || coordinator == null) return null;
+    if (_previewBoxSize == Size.zero) return null;
+
+    final controller = _controller;
+    final permissionDenied = _error != null &&
+        (_error!.toLowerCase().contains('permission') ||
+            _error!.contains('رفض') ||
+            _error!.contains('إذن'));
+    final cameraReady =
+        controller != null && controller.value.isInitialized && !_initializing;
+    final paused = controller?.value.isPreviewPaused == true;
+
+    final input = coordinator.inputFromMesh(
+      frame: widget.capturedImage != null ? null : _faceOverlayController.frame,
+      viewport: _previewBoxSize,
+      now: DateTime.now(),
+      cameraReady: cameraReady,
+      permissionGranted: permissionDenied ? false : true,
+      cameraPaused: paused,
+      controllerDisposed: controller == null && !_initializing,
+    );
+
+    return coordinator.tick(
+      input: input,
+      captureInProgress: _capturing || _validatingFace,
+      alreadyCaptured: widget.capturedImage != null,
+    );
+  }
+
+  void _applyMirrorTick(CaptureMirrorTick tick) {
+    _mirrorGuidance = tick.guidance;
+    _mirrorHoldProgress = tick.holdProgress01;
+
+    final needsSideEffects = tick.shouldHapticReady ||
+        tick.shouldHapticEligible ||
+        tick.shouldAutoCapture;
+    if (!needsSideEffects) return;
+
+    final captured = tick;
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      if (!mounted) return;
+      if (captured.shouldHapticReady) {
+        CaptureMirrorHaptics.onReadyEntered();
+      }
+      if (captured.shouldHapticEligible) {
+        CaptureMirrorHaptics.onAutoEligible();
+      }
+      if (captured.shouldAutoCapture &&
+          !_mirrorAutoCaptureQueued &&
+          !_capturing &&
+          widget.capturedImage == null &&
+          widget.enabled &&
+          !widget.isAnalyzing) {
+        _mirrorAutoCaptureQueued = true;
+        _runMirrorAutoCapture();
+      }
+    });
+  }
+
+  Future<void> _runMirrorAutoCapture() async {
+    final coordinator = _mirrorCoordinator;
+    if (coordinator == null) return;
+    if (_capturing || widget.capturedImage != null) {
+      _mirrorAutoCaptureQueued = false;
+      return;
+    }
+    coordinator.beginFiring(DateTime.now());
+    await _capture(fromAuto: true);
+    _mirrorAutoCaptureQueued = false;
+  }
+
+  Future<void> _playCaptureFlash() async {
+    if (!mounted) return;
+    setState(() => _captureFlashOpacity = 0.72);
+    await Future<void>.delayed(const Duration(milliseconds: 90));
+    if (!mounted) return;
+    setState(() => _captureFlashOpacity = 0);
   }
 
   void _showGateMessage(String message) {
@@ -361,12 +533,25 @@ class _FaceCapturePanelState extends State<FaceCapturePanel>
     return aligned;
   }
 
-  Future<void> _capture() async {
+  Future<void> _capture({bool fromAuto = false}) async {
     final controller = _controller;
     if (controller == null || !controller.value.isInitialized || _capturing) return;
     if (!widget.enabled || widget.isAnalyzing || _validatingFace) return;
 
-    if (!_canTakePhoto) {
+    if (_mirrorEnabled) {
+      final canManual = _mirrorGuidance?.canManualCapture == true;
+      if (!fromAuto && !canManual) {
+        _showGateMessage(
+          _mirrorGuidance?.instructionAr ??
+              'ثبّتي وجهك داخل الإطار حتى تصبح جاهزة.',
+        );
+        return;
+      }
+      if (fromAuto && _mirrorCoordinator?.latchPhase != CaptureLatchPhase.firing) {
+        // Auto path must go through latch.beginFiring first.
+        return;
+      }
+    } else if (!_canTakePhoto) {
       _showGateMessage(
         'ثبّتي وجهك داخل الإطار الذهبي حتى يظهر التتبع بوضوح.',
       );
@@ -375,7 +560,12 @@ class _FaceCapturePanelState extends State<FaceCapturePanel>
 
     setState(() => _capturing = true);
     try {
-      await HapticFeedback.mediumImpact();
+      if (_mirrorEnabled) {
+        await CaptureMirrorHaptics.onShutter();
+        await _playCaptureFlash();
+      } else {
+        await HapticFeedback.mediumImpact();
+      }
       final photo = await controller.takePicture();
       _mirrorCapturedPreview = _isFrontCamera;
       await _pauseCamera();
@@ -384,12 +574,15 @@ class _FaceCapturePanelState extends State<FaceCapturePanel>
       final gate = await _validateFile(file);
       if (gate == null || !gate.isAccepted) {
         _faceOverlayController.reset();
+        _mirrorCoordinator?.releaseAfterFailure();
         await _resumeCamera();
         return;
       }
       final normalized = await _normalizeAcceptedCapture(file, gate);
+      _mirrorCoordinator?.markCaptured();
       widget.onImageChanged(normalized);
     } catch (e) {
+      _mirrorCoordinator?.releaseAfterFailure();
       if (!mounted) return;
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(
@@ -397,9 +590,21 @@ class _FaceCapturePanelState extends State<FaceCapturePanel>
           backgroundColor: AppColors.error,
         ),
       );
+      await _resumeCamera();
     } finally {
       if (mounted) setState(() => _capturing = false);
     }
+  }
+
+  Future<void> _retake() async {
+    if (widget.isAnalyzing) return;
+    _mirrorCoordinator?.resetForRetake();
+    _mirrorGuidance = null;
+    _mirrorHoldProgress = 0;
+    _captureFlashOpacity = 0;
+    _mirrorAutoCaptureQueued = false;
+    widget.onImageChanged(null);
+    await _resumeCamera();
   }
 
   Future<void> _pickFromGallery() async {
@@ -416,17 +621,13 @@ class _FaceCapturePanelState extends State<FaceCapturePanel>
     final gate = await _validateFile(file);
     if (gate == null || !gate.isAccepted) {
       _faceOverlayController.reset();
+      _mirrorCoordinator?.releaseAfterFailure();
       await _resumeCamera();
       return;
     }
     final normalized = await _normalizeAcceptedCapture(file, gate);
+    _mirrorCoordinator?.markCaptured();
     widget.onImageChanged(normalized);
-  }
-
-  Future<void> _retake() async {
-    if (widget.isAnalyzing) return;
-    widget.onImageChanged(null);
-    await _resumeCamera();
   }
 
   Future<void> _toggleCamera() async {
@@ -522,7 +723,7 @@ class _FaceCapturePanelState extends State<FaceCapturePanel>
             const CircularProgressIndicator(color: AppColors.gold),
             const SizedBox(height: 16),
             Text(
-              'تجهيز كاميرا MIRA AI...',
+              'جاري تجهيز الكاميرا…',
               style: AppTypography.bodyMedium.copyWith(color: AppColors.onPrimary),
             ),
           ],
@@ -573,6 +774,10 @@ class _FaceCapturePanelState extends State<FaceCapturePanel>
           builder: (context, _) {
             final tipIndex = (_tipController.value * _tips.length).floor() % _tips.length;
             final interactive = widget.enabled && !widget.isAnalyzing && !_validatingFace;
+            final mirrorTick = _mirrorEnabled ? _evaluateMirrorTick() : null;
+            if (mirrorTick != null) {
+              _applyMirrorTick(mirrorTick);
+            }
             final canTakePhoto = _canTakePhoto;
             _faceOverlayController.updateScanProgress(_scanController.value);
 
@@ -583,6 +788,16 @@ class _FaceCapturePanelState extends State<FaceCapturePanel>
                     : _faceOverlayController.frame.hasFace
                         ? LiveCameraOverlayState.faceDetected
                         : LiveCameraOverlayState.initial;
+
+            final guidance = _mirrorGuidance;
+            final shutterEnabled = interactive &&
+                !_initializing &&
+                _error == null &&
+                (widget.capturedImage != null ||
+                    (_mirrorEnabled
+                        ? (guidance?.canManualCapture == true ||
+                            widget.capturedImage != null)
+                        : canTakePhoto));
 
             return Column(
               children: [
@@ -605,15 +820,12 @@ class _FaceCapturePanelState extends State<FaceCapturePanel>
                             ),
                             Positioned.fill(
                               child: IgnorePointer(
-                                child: LiveFaceAnalysisOverlay(
-                                  controller: _faceOverlayController,
-                                  uiState: overlayState,
-                                  pulse: _pulseController.value,
-                                  scanProgress: _scanController.value,
-                                  sweepProgress: _sweepController.value,
-                                  hintText: canTakePhoto
-                                      ? 'الإطار جاهز — اضغطي زر التصوير'
-                                      : _tips[tipIndex],
+                                child: _buildOverlayLayer(
+                                  tipIndex: tipIndex,
+                                  canTakePhoto: canTakePhoto,
+                                  overlayState: overlayState,
+                                  guidance: guidance,
+                                  mirrorTick: mirrorTick,
                                 ),
                               ),
                             ),
@@ -625,16 +837,14 @@ class _FaceCapturePanelState extends State<FaceCapturePanel>
                 ),
                 const SizedBox(height: 16),
                 _CaptureControls(
-                  enabled: interactive &&
-                      !_initializing &&
-                      _error == null &&
-                      (widget.capturedImage != null || canTakePhoto),
+                  enabled: shutterEnabled,
                   capturing: _capturing,
                   hasCapture: widget.capturedImage != null,
-                  onCapture: _capture,
+                  onCapture: () => _capture(fromAuto: false),
                   onRetake: _retake,
                   onGallery: _pickFromGallery,
                   onFlip: _toggleCamera,
+                  mirrorStyle: _mirrorEnabled,
                 ),
                 const SizedBox(height: 8),
               ],
@@ -763,6 +973,7 @@ class _CaptureControls extends StatelessWidget {
   final VoidCallback onRetake;
   final VoidCallback onGallery;
   final VoidCallback onFlip;
+  final bool mirrorStyle;
 
   const _CaptureControls({
     required this.enabled,
@@ -772,10 +983,12 @@ class _CaptureControls extends StatelessWidget {
     required this.onRetake,
     required this.onGallery,
     required this.onFlip,
+    this.mirrorStyle = false,
   });
 
   @override
   Widget build(BuildContext context) {
+    final ring = mirrorStyle ? CaptureMirrorTokens.shutterRing : AppColors.gold;
     return Padding(
       padding: const EdgeInsets.symmetric(horizontal: 24),
       child: Row(
@@ -790,19 +1003,19 @@ class _CaptureControls extends StatelessWidget {
             onTap: enabled && !capturing ? (hasCapture ? onRetake : onCapture) : null,
             child: AnimatedContainer(
               duration: const Duration(milliseconds: 200),
-              width: hasCapture ? 68 : 82,
-              height: hasCapture ? 68 : 82,
+              width: hasCapture ? 68 : (mirrorStyle ? 74 : 82),
+              height: hasCapture ? 68 : (mirrorStyle ? 74 : 82),
               decoration: BoxDecoration(
                 shape: BoxShape.circle,
                 border: Border.all(
-                  color: hasCapture ? AppColors.secondary : AppColors.gold,
-                  width: 4,
+                  color: hasCapture ? AppColors.secondary : ring,
+                  width: mirrorStyle ? 3 : 4,
                 ),
                 color: Colors.white.withValues(alpha: enabled ? 0.15 : 0.05),
                 boxShadow: enabled && !hasCapture
                     ? [
                         BoxShadow(
-                          color: AppColors.gold.withValues(alpha: 0.35),
+                          color: ring.withValues(alpha: 0.35),
                           blurRadius: 18,
                           spreadRadius: 1,
                         ),
@@ -810,14 +1023,14 @@ class _CaptureControls extends StatelessWidget {
                     : null,
               ),
               child: capturing
-                  ? const Padding(
-                      padding: EdgeInsets.all(18),
-                      child: CircularProgressIndicator(strokeWidth: 2, color: AppColors.gold),
+                  ? Padding(
+                      padding: const EdgeInsets.all(18),
+                      child: CircularProgressIndicator(strokeWidth: 2, color: ring),
                     )
                   : Icon(
                       hasCapture ? Icons.refresh_rounded : Icons.circle,
-                      size: hasCapture ? 30 : 58,
-                      color: hasCapture ? AppColors.onPrimary : AppColors.gold,
+                      size: hasCapture ? 30 : (mirrorStyle ? 48 : 58),
+                      color: hasCapture ? AppColors.onPrimary : ring,
                     ),
             ),
           ),

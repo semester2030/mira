@@ -5,6 +5,8 @@
 
 export type IntegrityEnv = {
   NODE_ENV?: string;
+  AUTH_SKIP?: string;
+  PARTNER_AUTO_APPROVE?: string;
   PERFECT_CORP_FALLBACK_MOCK?: string;
   SKIN_PROVIDER?: string;
   OUTFIT_PROVIDER?: string;
@@ -39,6 +41,22 @@ export function validateProductionIntegrity(
 ): IntegrityIssue[] {
   const issues: IntegrityIssue[] = [];
   if (!isProductionEnv(env.NODE_ENV)) return issues;
+
+  if (env.AUTH_SKIP === 'true') {
+    issues.push({
+      code: 'AUTH_SKIP_IN_PROD',
+      severity: 'fatal',
+      message: 'AUTH_SKIP=true is forbidden in production.',
+    });
+  }
+
+  if (env.PARTNER_AUTO_APPROVE === 'true') {
+    issues.push({
+      code: 'PARTNER_AUTO_APPROVE_IN_PROD',
+      severity: 'fatal',
+      message: 'PARTNER_AUTO_APPROVE=true is forbidden in production.',
+    });
+  }
 
   const fallback = env.PERFECT_CORP_FALLBACK_MOCK ?? 'true';
   if (fallback !== 'false') {

@@ -23,9 +23,11 @@ import { OutfitHybridIntelligenceService } from './services/outfit-hybrid-intell
 import { OutfitSegmentationService } from './segmentation/outfit-segmentation.service';
 import { OutfitIntelligenceBodyDto } from './dto/outfit-intelligence-body.dto';
 import { SkinReportSnapshot } from './contracts/outfit-intelligence.interface';
+import { applyOutfitIntelligenceFashionBoundary } from '../fashion-knowledge/advisor-integration/outfit-intelligence-boundary';
 import { VisionOrchestratorService } from '../vision/vision-orchestrator.service';
 import { FashionAnalysisOrchestrator } from '../ports/orchestrators/fashion-analysis.orchestrator';
-import { VisionOutfitAnalyzeBodyDto } from '../vision/dto/vision-outfit-analyze-body.dto';import { VisionOutfitRecolorBodyDto } from '../vision/dto/vision-outfit-recolor-body.dto';
+import { VisionOutfitAnalyzeBodyDto } from '../vision/dto/vision-outfit-analyze-body.dto';
+import { VisionOutfitRecolorBodyDto } from '../vision/dto/vision-outfit-recolor-body.dto';
 import { FashnGarmentRecolorService } from '../vision/recolor/fashn-garment-recolor.service';
 import { GarmentRecolorVisionContext } from '../vision/qel/garment-recolor-context.types';
 import { AtelierRecolorAttemptService } from '../atelier/atelier-recolor-attempt.service';
@@ -103,16 +105,21 @@ export class AiGatewayController {
       limits: { fileSize: MAX_IMAGE_BYTES },
     }),
   )
-  analyzeOutfitIntelligence(
+  async analyzeOutfitIntelligence(
     @UploadedFile() file: Express.Multer.File,
     @Body() body: OutfitIntelligenceBodyDto,
   ) {
     const skin = JSON.parse(body.skinReport) as SkinReportSnapshot;
-    return this.outfitHybridIntelligenceService.analyze(
+    const result = await this.outfitHybridIntelligenceService.analyze(
       file?.buffer ?? Buffer.alloc(0),
       body.occasion,
       skin,
     );
+    // FK-12: strip user-facing prescriptive styling fields (analytical scores remain).
+    return applyOutfitIntelligenceFashionBoundary({
+      visual: result.visual as unknown as Record<string, unknown>,
+      analysis: result.analysis as unknown as Record<string, unknown>,
+    });
   }
 
   /** Pixel-refined garment contours — Vision bbox + server-side mask tracing. */

@@ -3,6 +3,7 @@ abstract final class MiraApiEndpoints {
   static const health = '/health';
   static const me = '/users/me';
   static const mePreferences = '/users/me/preferences';
+  static const entitlementsRuntime = '/entitlements/runtime';
   static const intelligenceProgress = '/intelligence/progress';
   static const advisorChat = '/advisor/chat';
   static const consultationSessions = '/consultation/sessions';

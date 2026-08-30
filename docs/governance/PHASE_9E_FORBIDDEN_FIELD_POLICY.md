@@ -1,0 +1,3 @@
+# Forbidden
+
+beauty_score, درجة جاذبية, golden_ratio_beauty, 3d_depth, medical_diagnosis, …

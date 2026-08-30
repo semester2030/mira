@@ -1,13 +1,13 @@
-import { Body, Controller, Post } from '@nestjs/common';
+import { Controller, Post } from '@nestjs/common';
 import { SubscriptionsService } from './subscriptions.service';
 
-/** Public endpoint for App Store / RevenueCat webhooks (verify signature before production). */
+/** Reserved public endpoint; fails closed until signed webhooks are implemented. */
 @Controller('subscriptions')
 export class SubscriptionsWebhookController {
   constructor(private readonly subscriptionsService: SubscriptionsService) {}
 
   @Post('webhook')
-  webhook(@Body() body: Record<string, unknown>) {
-    return this.subscriptionsService.handleStoreWebhook(body);
+  webhook() {
+    return this.subscriptionsService.handleStoreWebhook();
   }
 }

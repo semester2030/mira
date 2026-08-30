@@ -1,0 +1,3 @@
+# PHASE 9I CONTEXT PRIORITY
+
+Selected GUIDANCE/DETAIL/INSIGHT/REGION → primary → general.

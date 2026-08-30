@@ -2,6 +2,7 @@ import 'dart:io';
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:firebase_storage/firebase_storage.dart';
+import '../../../../core/entitlements/mira_runtime_entitlement_store.dart';
 import '../../../../core/profile/user_level.dart';
 import '../../domain/entities/profile_entity.dart';
 
@@ -66,6 +67,7 @@ class ProfileRemoteDataSourceImpl implements ProfileRemoteDataSource {
 
   @override
   Future<void> logout() async {
+    MiraRuntimeEntitlementStore.clear();
     await _auth.signOut();
   }
 

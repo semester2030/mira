@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import '../../../../core/config/mira_features.dart';
+import '../../../../core/entitlements/mira_runtime_entitlement_store.dart';
 import '../../../../shared/widgets/mira_app_bar.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import '../../../../core/navigation/app_routes.dart';
@@ -235,6 +236,7 @@ class _SettingsScreenState extends State<SettingsScreen> {
               variant: PremiumButtonVariant.ghost,
               onPressed: () async {
                 await GuestSessionService.exit();
+                MiraRuntimeEntitlementStore.clear();
                 await FirebaseAuth.instance.signOut();
                 if (!context.mounted) return;
                 Navigator.pushNamedAndRemoveUntil(context, AppRoutes.login, (_) => false);

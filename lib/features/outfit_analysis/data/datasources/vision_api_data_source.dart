@@ -5,7 +5,7 @@ import 'package:dio/dio.dart';
 import '../../../../core/config/mira_api_config.dart';
 import '../../../../core/network/api_client.dart';
 import '../../../../core/network/mira_api_endpoints.dart';
-import '../../domain/entities/fashion_vision_document.dart';
+import '../../domain/entities/canonical_garment.dart';
 
 /// Vision Platform gateway — Flutter knows this endpoint only (Phase 2+).
 /// Reference: docs/mira-vision-platform.html
@@ -28,8 +28,7 @@ class VisionApiDataSource {
       'occasionId': occasionId,
       'mode': mode,
       'locale': locale,
-      if (skinSnapshot != null)
-        'skinSnapshot': jsonEncode(skinSnapshot),
+      if (skinSnapshot != null) 'skinSnapshot': jsonEncode(skinSnapshot),
     });
 
     final response = await _dio.post<Map<String, dynamic>>(

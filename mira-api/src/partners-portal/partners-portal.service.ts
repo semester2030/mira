@@ -84,11 +84,9 @@ export class PartnersPortalService {
   async getApplicationStatus(statusToken: string) {
     const app = await this.prisma.partnerApplication.findUnique({
       where: { statusToken },
-      include: { partner: { include: { users: true } } },
     });
     if (!app) throw new NotFoundException('الطلب غير موجود');
 
-    const user = app.partner?.users[0];
     return {
       status: app.status,
       type: app.type,
@@ -96,8 +94,6 @@ export class PartnersPortalService {
       rejectReason: app.rejectReason,
       reviewedAt: app.reviewedAt,
       partnerId: app.partnerId,
-      accessToken:
-        app.status === 'approved' && user ? user.accessToken : undefined,
       loginEmail:
         app.status === 'approved' ? app.contactEmail : undefined,
     };

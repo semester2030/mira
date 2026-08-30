@@ -1,4 +1,8 @@
-import { ForbiddenException, Injectable } from '@nestjs/common';
+import {
+  ForbiddenException,
+  Injectable,
+  NotImplementedException,
+} from '@nestjs/common';
 import { ConfigService } from '@nestjs/config';
 import { PrismaService } from '../prisma/prisma.service';
 import { UsersService } from '../users/users.service';
@@ -99,9 +103,9 @@ export class SubscriptionsService {
     });
   }
 
-  /** Placeholder for RevenueCat / App Store webhook — verify signature in production. */
-  async handleStoreWebhook(body: Record<string, unknown>) {
-    return { received: true, body };
+  /** Fail closed until a signed store webhook implementation is available. */
+  handleStoreWebhook(): never {
+    throw new NotImplementedException('Subscription webhook is not configured');
   }
 
   private async ensureSubscription(userId: string) {

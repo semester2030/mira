@@ -22,6 +22,7 @@ import { AdminModule } from './admin/admin.module';
 import { PortsModule } from './ports/ports.module';
 import { BeautyExperienceModule } from './beauty-experience/beauty-experience.module';
 import { FashionIntelligenceModule } from './fashion-intelligence/fashion-intelligence.module';
+import { ProductionEntitlementModule } from './production-entitlements/production-entitlement.module';
 
 @Module({
   imports: [
@@ -33,6 +34,7 @@ import { FashionIntelligenceModule } from './fashion-intelligence/fashion-intell
     PortsModule,
     BeautyExperienceModule,
     FashionIntelligenceModule,
+    ProductionEntitlementModule,
     AiGatewayModule,
     SubscriptionsModule,
     HealthModule,

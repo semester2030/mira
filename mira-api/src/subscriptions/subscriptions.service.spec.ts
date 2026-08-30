@@ -1,4 +1,4 @@
-import { ForbiddenException } from '@nestjs/common';
+import { ForbiddenException, NotImplementedException } from '@nestjs/common';
 import { ConfigService } from '@nestjs/config';
 import { SubscriptionsService } from './subscriptions.service';
 import { SUBSCRIPTION_PLANS } from './subscription-plans';
@@ -74,5 +74,25 @@ describe('SubscriptionsService', () => {
     });
 
     await expect(service.assertCanAnalyze(authUser, 'skin')).resolves.toBeUndefined();
+  });
+
+  it('fails closed without echoing an unsigned webhook body', () => {
+    const attackerBody = { event: 'premium_granted', secret: 'do-not-echo' };
+
+    expect(() =>
+      (service.handleStoreWebhook as unknown as (body: unknown) => never)(
+        attackerBody,
+      ),
+    ).toThrow(NotImplementedException);
+  });
+
+  it('blocks dev premium before any production mutation', async () => {
+    (config.get as jest.Mock).mockReturnValueOnce('production');
+
+    await expect(service.activatePremiumDev(authUser)).rejects.toBeInstanceOf(
+      ForbiddenException,
+    );
+    expect(usersService.findOrCreateFromFirebase).not.toHaveBeenCalled();
+    expect(prisma.subscription.update).not.toHaveBeenCalled();
   });
 });

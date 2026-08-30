@@ -8,10 +8,9 @@ import '../../data/datasources/vision_api_data_source.dart';
 import '../../data/services/outfit_analysis_cache_service.dart';
 import '../../../../core/session/analysis_session.dart';
 import '../../../skin_analysis/domain/entities/skin_report.dart';
-import '../adapters/fashion_vision_to_engine_adapter.dart';
+import '../adapters/canonical_garment_to_engine_adapter.dart';
 import '../entities/outfit_analysis.dart';
-import '../entities/outfit_analysis_mode.dart';
-import '../entities/fashion_vision_document.dart';
+import '../entities/canonical_garment.dart';
 import '../entities/outfit_segment_map.dart';
 import '../entities/user_gender.dart';
 import '../entities/outfit_visual_profile.dart';
@@ -30,15 +29,19 @@ class OutfitIntelligenceService {
     OutfitAnalysisCacheService? cacheService,
     OutfitSegmentationService? segmentationService,
     OutfitSegmentationApiDataSource? segmentationApi,
-  })  : _visionApi = visionApi ?? VisionApiDataSource(),
-        _cache = cacheService,
-        _segmentation = segmentationService ?? OutfitSegmentationService(),
-        _segmentationApi = segmentationApi ?? OutfitSegmentationApiDataSource();
+    OutfitCaptureValidator Function()? captureValidatorFactory,
+  }) : _visionApi = visionApi ?? VisionApiDataSource(),
+       _cache = cacheService,
+       _segmentation = segmentationService ?? OutfitSegmentationService(),
+       _segmentationApi = segmentationApi ?? OutfitSegmentationApiDataSource(),
+       _captureValidatorFactory =
+           captureValidatorFactory ?? OutfitCaptureValidator.new;
 
   final VisionApiDataSource _visionApi;
   final OutfitAnalysisCacheService? _cache;
   final OutfitSegmentationService _segmentation;
   final OutfitSegmentationApiDataSource _segmentationApi;
+  final OutfitCaptureValidator Function() _captureValidatorFactory;
 
   Future<OutfitAnalysis> analyze({
     SkinReport? skin,
@@ -51,7 +54,7 @@ class OutfitIntelligenceService {
       throw ArgumentError('Smart mode requires a SkinReport');
     }
 
-    final captureValidator = OutfitCaptureValidator();
+    final captureValidator = _captureValidatorFactory();
     try {
       final preCapture = await captureValidator.validateFile(outfitImage);
       if (!preCapture.isValid) {
@@ -70,7 +73,9 @@ class OutfitIntelligenceService {
     final skinKey = mode == OutfitAnalysisMode.smart
         ? cache.skinKeyFromReport(
             skinType: skin!.skinType,
-            undertone: skin.undertone.isNotEmpty ? skin.undertone : skin.undertoneEn,
+            undertone: skin.undertone.isNotEmpty
+                ? skin.undertone
+                : skin.undertoneEn,
             oiliness: skin.oiliness,
             redness: skin.redness,
           )
@@ -84,7 +89,9 @@ class OutfitIntelligenceService {
 
     final cached = await cache.get(cacheKey);
     if (cached != null) {
-      final cachedAnalysis = cached.analysis.copyWith(frozenImagePath: outfitImage.path);
+      final cachedAnalysis = cached.analysis.copyWith(
+        frozenImagePath: outfitImage.path,
+      );
       final cachedTrust = OutfitResultTrustPolicy.evaluate(cachedAnalysis);
       if (!cachedTrust.isBlocked) {
         return cachedAnalysis;
@@ -98,14 +105,16 @@ class OutfitIntelligenceService {
       skin: skin,
     );
 
-    final fashion = visionResult.fashionVision;
-    final visual = FashionVisionToEngineAdapter.toVisualProfile(fashion);
-    final visionObjects =
-        FashionVisionToEngineAdapter.toLocalizedObjects(fashion);
+    final visual = CanonicalGarmentToEngineAdapter.toVisualProfile(
+      visionResult.garments,
+    );
 
     final segmentMap = await _buildSegmentMap(
       outfitImage,
-      visionObjects: visionObjects,
+      // CanonicalGarment.geometryRef deliberately carries no coordinates.
+      // Never recreate the server-internal FashionVisionDocument or invent
+      // bounding boxes in the client.
+      visionObjects: const [],
     );
 
     final mergedVisual = _mergeRegionColors(visual, segmentMap);
@@ -118,7 +127,10 @@ class OutfitIntelligenceService {
     );
 
     final garmentColors = _garmentColorsOnly(segmentMap);
-    final mismatch = _piecesNeedingAttention(segmentMap, analysis.mismatchReasons);
+    final mismatch = _piecesNeedingAttention(
+      segmentMap,
+      analysis.mismatchReasons,
+    );
     if (segmentMap.validationMessage != null) {
       mismatch.insert(0, segmentMap.validationMessage!);
     }
@@ -127,7 +139,8 @@ class OutfitIntelligenceService {
       throw VisionPlatformException(
         code: 'OUTFIT_RESULT_UNTRUSTED',
         message: 'Segment map not visually trusted',
-        userMessageAr: segmentMap.validationMessage ??
+        userMessageAr:
+            segmentMap.validationMessage ??
             OutfitResultTrustPolicy.blockedDefaultMessage,
       );
     }
@@ -139,7 +152,9 @@ class OutfitIntelligenceService {
       lowerBodyColors: segmentMap.lowerBodyColors,
       shoeColors: segmentMap.shoeColors,
       accessoryColors: segmentMap.accessoryColors,
-      dominantColors: garmentColors.isNotEmpty ? garmentColors : mergedVisual.dominantColors,
+      dominantColors: garmentColors.isNotEmpty
+          ? garmentColors
+          : mergedVisual.dominantColors,
       recommendedColors: analysis.recommendedColors,
       detectedPieces: segmentMap.hasTrustedOverlay
           ? _piecesFromSegments(segmentMap, analysis.detectedPieces)
@@ -153,10 +168,10 @@ class OutfitIntelligenceService {
             ? (skin.undertone.isNotEmpty ? skin.undertone : skin.undertoneEn)
             : null,
       ),
-      visualSource: 'vision_platform',
-      analysisGate: visionResult.fashionVision.analysisGate,
+      visualSource: 'canonical_garment',
+      analysisGate: visionResult.analysisGate,
       photoTrustMessageAr: visionResult.userMessageAr,
-      visualConfidence: (visionResult.fashionVision.overallConfidence * 100).round().clamp(0, 100),
+      visualConfidence: visionResult.confidencePercent,
     );
 
     final trust = OutfitResultTrustPolicy.evaluate(enriched);
@@ -178,13 +193,18 @@ class OutfitIntelligenceService {
   }) async {
     if (MiraApiConfig.useBackend) {
       try {
-        final serverMap = await _segmentationApi.segment(imagePath: outfitImage.path);
+        final serverMap = await _segmentationApi.segment(
+          imagePath: outfitImage.path,
+        );
         if (serverMap != null && serverMap.regions.isNotEmpty) {
           developer.log(
             'Server pixel contours: ${serverMap.regions.length} regions (${serverMap.source})',
             name: 'OutfitIntelligenceService',
           );
-          final enriched = await _segmentation.enrichServerColors(outfitImage, serverMap);
+          final enriched = await _segmentation.enrichServerColors(
+            outfitImage,
+            serverMap,
+          );
           return enriched.copyWith(
             isVisualTrusted: true,
             validationMessage: null,
@@ -231,7 +251,8 @@ class OutfitIntelligenceService {
       throw const VisionPlatformException(
         code: 'VISION_API_EMPTY',
         message: 'Vision API returned empty response',
-        userMessageAr: 'تعذّر تحليل الإطلالة. أعيدي التقاط الصورة وحاولي مجددًا.',
+        userMessageAr:
+            'تعذّر تحليل الإطلالة. أعيدي التقاط الصورة وحاولي مجددًا.',
       );
     }
 
@@ -239,7 +260,8 @@ class OutfitIntelligenceService {
       throw VisionPlatformException(
         code: 'ANALYSIS_BLOCKED',
         message: 'Vision analysisGate=blocked',
-        userMessageAr: result.userMessageAr ??
+        userMessageAr:
+            result.userMessageAr ??
             'تعذّر تحليل الإطلالة بوضوح. أعيدي التقاط الصورة في إضاءة أفضل.',
       );
     }
@@ -248,13 +270,13 @@ class OutfitIntelligenceService {
   }
 
   Map<String, dynamic> _skinSnapshot(SkinReport skin) => {
-        'skinType': skin.skinType,
-        'undertone': skin.undertone,
-        'undertoneEn': skin.undertoneEn,
-        'oiliness': skin.oiliness,
-        'redness': skin.redness,
-        'score': skin.score,
-      };
+    'skinType': skin.skinType,
+    'undertone': skin.undertone,
+    'undertoneEn': skin.undertoneEn,
+    'oiliness': skin.oiliness,
+    'redness': skin.redness,
+    'score': skin.score,
+  };
 
   OutfitVisualProfile _mergeRegionColors(
     OutfitVisualProfile visual,
@@ -294,10 +316,12 @@ class OutfitIntelligenceService {
     List<String> fallback,
   ) {
     final labels = segmentMap.regions
-        .where((r) =>
-            r.zone != OutfitSegmentZone.head &&
-            r.zone != OutfitSegmentZone.waist &&
-            r.labelAr.isNotEmpty)
+        .where(
+          (r) =>
+              r.zone != OutfitSegmentZone.head &&
+              r.zone != OutfitSegmentZone.waist &&
+              r.labelAr.isNotEmpty,
+        )
         .map((r) => r.labelAr)
         .toList();
     if (labels.isEmpty) return fallback;

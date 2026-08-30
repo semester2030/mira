@@ -85,6 +85,34 @@ function testProductionRejectsMockSkinProvider(): void {
   );
 }
 
+function testProductionRejectsAuthSkip(): void {
+  const env = {
+    NODE_ENV: 'production',
+    AUTH_SKIP: 'true',
+    PERFECT_CORP_FALLBACK_MOCK: 'false',
+    SKIN_PROVIDER: 'perfect_corp',
+  };
+  assert.ok(
+    validateProductionIntegrity(env).some((i) => i.code === 'AUTH_SKIP_IN_PROD'),
+  );
+  assert.throws(() => assertProductionIntegrity(env));
+}
+
+function testProductionRejectsPartnerAutoApprove(): void {
+  const env = {
+    NODE_ENV: 'production',
+    PARTNER_AUTO_APPROVE: 'true',
+    PERFECT_CORP_FALLBACK_MOCK: 'false',
+    SKIN_PROVIDER: 'perfect_corp',
+  };
+  assert.ok(
+    validateProductionIntegrity(env).some(
+      (i) => i.code === 'PARTNER_AUTO_APPROVE_IN_PROD',
+    ),
+  );
+  assert.throws(() => assertProductionIntegrity(env));
+}
+
 function testProductionAcceptsSafeConfig(): void {
   assert.doesNotThrow(() =>
     assertProductionIntegrity({
@@ -211,6 +239,8 @@ function testHistoricalScoreFieldReadable(): void {
 function main(): void {
   testProductionRejectsUnsafeFallback();
   testProductionRejectsMockSkinProvider();
+  testProductionRejectsAuthSkip();
+  testProductionRejectsPartnerAutoApprove();
   testProductionAcceptsSafeConfig();
   testMockFallbackNeverAllowedInProduction();
   testMockCannotDisplayInProduction();
@@ -219,7 +249,7 @@ function main(): void {
   testSkinVitalityDeterministic();
   testLegacyOutfitMockBlockedInProd();
   testHistoricalScoreFieldReadable();
-  console.log('phase0-integrity.schema-tests: OK (10 checks)');
+  console.log('phase0-integrity.schema-tests: OK (12 checks)');
 }
 
 main();

@@ -1,0 +1,967 @@
+<!DOCTYPE html>
+<html lang="ar" dir="rtl">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <meta name="description" content="معرفة الأزياء — Mira Fashion Knowledge · FK-14 Platform Freeze · Activation Track AT-4R (live QA paused)" />
+  <title>معرفة الأزياء | Mira Fashion Knowledge · FK-14 Freeze · AT-4R</title>
+  <link rel="stylesheet" href="mira-fashion-knowledge.css" />
+</head>
+<body>
+  <header class="site-header">
+    <div class="header-inner">
+      <a class="brand" href="index.html">ميرا · معرفة الأزياء</a>
+      <nav class="nav">
+        <a href="#decision">القرار</a>
+        <a href="#status">الوضع الحالي</a>
+        <a href="#activation">مسار التفعيل</a>
+        <a href="#audit">تدقيق FK-11</a>
+        <a href="#ownership">الملكية</a>
+        <a href="#hybrid">الهجين</a>
+        <a href="#pipeline">المسار</a>
+        <a href="#claim">Claim Lock</a>
+        <a href="#roadmap">الخارطة</a>
+        <a href="#docs">الوثائق</a>
+        <a href="mira-production-transformation-program.html">برنامج التحويل</a>
+      </nav>
+    </div>
+  </header>
+
+  <section class="hero">
+    <div>
+      <span class="kicker">FK-14 FROZEN · PROD-FINAL-1 BLOCKED · OWNER-CANARY NOT ACTIVE</span>
+      <h1>معرفة الأزياء</h1>
+      <p class="lead">
+        طبقة معرفة أزياء إضافية فوق الذكاء المجمّد: مبادئ وقواعد قابلة للتتبع، مع استخدام حذر لمعرفة الـLLM العامة —
+        دون تحويل كلام النموذج إلى «حقيقة ميرا»، ودون إعادة فتح Garment / Outfit / Styling / Advisor.
+      </p>
+      <div class="decision" id="decision">
+        <strong>القرار الحالي:</strong> منصة معرفة الأزياء مجمّدة — <code>1.0.0-fashion-knowledge</code> · <code>MIRA-FK-FREEZE-1.0.0</code><br/>
+        PROD-FINAL-1: <strong>BLOCKED</strong> · FASHION_GO_LIVE = BLOCKED · OWNER-CANARY not active (ليس LIVE)<br/>
+        AT-4R: Local QA scaffold جاهز · <code>LLM_API_KEY</code> <strong>MISSING</strong> · <code>mira-api-qa</code> غير منشأة · live Mode B غير مثبت<br/>
+        الإنتاج: Render <code>mira-api</code> = <strong>Service Suspended</strong> · أعلام FKL غير مفعّلة · Telemetry OFF<br/>
+        Source: <code>mira-api/src/fashion-knowledge/</code> ما زال <strong>UNTRACKED</strong> — لا نشر لمصدر غير ملتزم<br/>
+        التالي: موافقة بشرية على QA backend + مفتاح LLM + commit هوية المصدر — <strong>لا تفعيل تلقائي</strong>
+      </div>
+    </div>
+    <div class="icon-badge" aria-label="أيقونة معرفة الأزياء">
+      <div class="icon-glyph" aria-hidden="true">✦</div>
+    </div>
+  </section>
+
+  <section class="section" id="status">
+    <h2>الوضع الحالي بعد سلسلة الإصلاح والتجميد</h2>
+    <p class="section-note">سلسلة الأحكام محفوظة تاريخيًا: FK-11 = <strong>C</strong> → FK-12 إصلاح → FK-13 = <strong>B</strong> → FK-14 تجميد منصة → AT-1…AT-4R تفعيل مراقب.</p>
+    <div class="grid">
+      <article class="card">
+        <span class="tag">FK-14</span>
+        <h3>تجميد المنصة</h3>
+        <p>معمارية Year-1 Mode B + Claim Lock + ربط fail-closed + Laws #37–#39 مجمّدة. التجميد ≠ تفعيل إنتاجي.</p>
+      </article>
+      <article class="card">
+        <span class="tag">FK-12</span>
+        <h3>الربط الإنتاجي</h3>
+        <p><code>POST /advisor/chat</code> → <code>AdvisorService</code> → جسر معرفة الأزياء → Claim Lock → Envelope. (أُغلق فراغ FK-11)</p>
+      </article>
+      <article class="card">
+        <span class="tag">AT-2</span>
+        <h3>مزود LLM إنتاجي</h3>
+        <p><code>OpenAiFashionKnowledgeLlmProvider</code> مسجّل على <code>FASHION_KNOWLEDGE_LLM_PORT</code> — لا يستدعي <code>MceLlmService</code>.</p>
+      </article>
+      <article class="card">
+        <span class="tag">AT-3</span>
+        <h3>مسار Flutter</h3>
+        <p>علم العميل <code>MIRA_FASHION_ADVISOR_V1</code> (افتراضي false). مع ON: إطلالة → <code>/advisor/chat</code> + سياق fashion. مع OFF: unavailable بلا وصف MCE.</p>
+      </article>
+      <article class="card">
+        <span class="tag warn">AT-4 / AT-4R / PROD-RC-1</span>
+        <h3>QA حي متوقف · RC1 BLOCKED</h3>
+        <p>لا <code>mira-api-qa</code>. Local scaffold جاهز. <code>LLM_API_KEY</code> <strong>MISSING</strong>. إنتاج Render <strong>Suspended</strong>. FASHION_GO_LIVE = BLOCKED.</p>
+      </article>
+      <article class="card">
+        <span class="tag rose">الإنتاج</span>
+        <h3>معزول</h3>
+        <p>خدمة Render <code>mira-api</code> إنتاجية فقط — لم تُفعَّل عليها أعلام FKL. لا أسرار مُلتقطة من الإنتاج لـ QA.</p>
+      </article>
+    </div>
+  </section>
+
+  <section class="section" id="activation">
+    <h2>مسار التفعيل · Activation Track</h2>
+    <div class="table-wrap">
+      <table>
+        <thead><tr><th>المرحلة</th><th>الاسم</th><th>الحكم / الحالة</th></tr></thead>
+        <tbody>
+          <tr><td>AT-1</td><td>Discovery &amp; Readiness (READ-ONLY)</td><td>مكتمل · فجوات: مزود Nest + مسار Flutter عبر MCE</td></tr>
+          <tr><td>AT-2</td><td>Production LLM Provider</td><td><strong>A</strong> · مزود OpenAI FKL جاهز · الأعلام OFF</td></tr>
+          <tr><td>AT-3</td><td>Flutter Fashion Context + Advisor Route</td><td><strong>A</strong> · مسار العميل جاهز · افتراضي OFF</td></tr>
+          <tr><td>AT-4</td><td>Controlled QA Activation</td><td><strong>B</strong> · لا بيئة آمنة لـ live E2E وقتها</td></tr>
+          <tr><td>AT-4R</td><td>QA Environment + Live Provider Readiness</td><td><strong>B جزئي</strong> · سقالات محلية جاهزة · المفتاح ناقص · <em>متوقف هنا</em></td></tr>
+          <tr><td>AT-5</td><td>Independent Activation Audit</td><td>مغلق حتى يصبح AT-4 = A بعد إثبات حي</td></tr>
+          <tr><td>AT-6</td><td>Production Activation Certificate</td><td>محظور حتى بوابات التفعيل</td></tr>
+        </tbody>
+      </table>
+    </div>
+    <p class="section-note">معرّف مسار التفعيل الحالي: <code>1.0.0-fashion-knowledge+at4r-qa-readiness</code> (إضافي فوق تجميد المنصة).</p>
+    <div class="pipeline" aria-label="مسار QA المحلي">
+      <div><strong>Local QA (المفضّل)</strong>: Nest محلي + <code>.env.qa</code> (gitignored) + Flutter Simulator</div>
+      <div>↓ أعلام QA فقط: Integration+LLM = true · Telemetry = false · Legacy MCE fashion = false</div>
+      <div>↓ <code>npm run at4r:live</code> → إثبات <code>liveProviderExecuted=true</code></div>
+      <div>↓ Flutter: <code>MIRA_FASHION_ADVISOR_V1=true</code> + <code>MIRA_API_BASE_URL</code> محلي</div>
+      <div>↓ لا تفعيل على Render الإنتاج</div>
+    </div>
+  </section>
+
+  <section class="section" id="audit">
+    <h2>ماذا أثبت تدقيق FK-11 التاريخي؟ (محفوظ)</h2>
+    <p class="section-note">حكم FK-11 = <strong>C</strong> بقي في السجل. كثير من فجوات الأسلاك أُغلقت في FK-12+، لكن هذا القسم يحفظ أدلة التدقيق الأصلي.</p>
+    <div class="grid">
+      <article class="card">
+        <span class="tag">موجود ومجمّد</span>
+        <h3>GI · OI · SI · Wardrobe · Advisor</h3>
+        <p>كشف القطع والألوان، توافق slots، مناسبة، قرارات مبنية على أدلة — دون مكتبة مبادئ أزياء مُسنَدة بمصدر.</p>
+      </article>
+      <article class="card">
+        <span class="tag warn">جزئي</span>
+        <h3>heuristics + كتالوج Flutter</h3>
+        <p><code>compatibility.json</code> و<code>knowledge_graph.json</code> حواف SKU / whyAr — ليست قاعدة معرفة مهنية بـ provenance.</p>
+      </article>
+      <article class="card">
+        <span class="tag rose">مخاطرة FK-11</span>
+        <h3>MCE LLM</h3>
+        <p>كان قادرًا على نصيحة أزياء وصفية بلا Claim Lock — عولج لاحقًا بحجر Option A + مسار Advisor.</p>
+      </article>
+      <article class="card">
+        <span class="tag rose">Wire gap FK-11</span>
+        <h3>جسر غير موصول</h3>
+        <p><code>runFashionKnowledgeAdvisorBridge</code> لم يكن على <code>/advisor/chat</code> — أُصلح في FK-12.</p>
+      </article>
+      <article class="card">
+        <span class="tag warn">أحمر + أصفر</span>
+        <h3>لا clash كقاعدة معرفة</h3>
+        <p><code>isClashPair</code> في Nest لا يغطي الأحمر/الأصفر كمعرفة مُسنَدة — Mode B / Claim Lock يعالج الادعاء لاحقًا.</p>
+      </article>
+      <article class="card">
+        <span class="tag">SI</span>
+        <h3>دليل لا مبدأ</h3>
+        <p>StylingReasoningEngine يفسّر أدلة مجمّدة (Law #32) ولا يملك مبادئ تنسيق مستقلة.</p>
+      </article>
+    </div>
+  </section>
+
+  <section class="section" id="ownership">
+    <h2>فصل المسؤوليات (مقفل)</h2>
+    <div class="grid">
+      <article class="card">
+        <span class="tag">GI</span>
+        <h3>ماذا تلبس؟</h3>
+        <p>CanonicalGarment — كشف وتطبيع. لا قواعد أزياء.</p>
+      </article>
+      <article class="card">
+        <span class="tag">OI</span>
+        <h3>كيف ترتبط القطع؟</h3>
+        <p>توافق / تناغم / مناسبة كأدلة. لا مكتبة مبادئ.</p>
+      </article>
+      <article class="card">
+        <span class="tag warn">FKL · جديد</span>
+        <h3>ماذا تقول معرفة الأزياء؟</h3>
+        <p>مبادئ · اتفاقيات · dress code · لون · إكسسوار · provenance · تعارضات.</p>
+      </article>
+      <article class="card">
+        <span class="tag">SI</span>
+        <h3>كيف ينطبق على هذه المستخدمة؟</h3>
+        <p>تفضيلات وأهداف وذاكرة — مدخلات لـ Claim Lock، دون تعديل SI المجمّد.</p>
+      </article>
+      <article class="card">
+        <span class="tag">Advisor</span>
+        <h3>كيف تُشرح؟</h3>
+        <p>Envelope + سرد آمن فقط من مرشحات Claim-Locked.</p>
+      </article>
+      <article class="card">
+        <span class="tag rose">ليس ملك FKL</span>
+        <h3>خارج النطاق</h3>
+        <p>كشف · تخزين خزانة · ترتيب تسوق · محادثة خام · inventory منتجات.</p>
+      </article>
+    </div>
+  </section>
+
+  <section class="section" id="hybrid">
+    <h2>استراتيجية هجينة · Mode A / Mode B</h2>
+    <div class="grid">
+      <article class="card">
+        <span class="tag">Mode A</span>
+        <h3>معرفة ميرا المنظمة</h3>
+        <p>قواعد مُراجَعة، بإصدار، بمصدر، تتفوق دائماً على LLM عند الانطباق. Year-1: <strong>ACTIVE = 0</strong>.</p>
+      </article>
+      <article class="card">
+        <span class="tag warn">Mode B</span>
+        <h3>معرفة LLM عامة</h3>
+        <p>مرشح منظم فقط · <code>llm_general_knowledge</code> · <code>uncurated</code> · ثقة محدودة · لا اقتباس مزيف · عبر Claim Lock.</p>
+      </article>
+      <article class="card">
+        <span class="tag">الترقية</span>
+        <h3>خلال 12 شهراً</h3>
+        <p>LLM مؤهّل → أنماط → مراجعة بشرية → قاعدة ميرا → تقليل الاعتماد على النموذج. لا ترقية تلقائية (Law #39).</p>
+      </article>
+    </div>
+  </section>
+
+  <section class="section" id="pipeline">
+    <h2>المسار التشغيلي المستهدف (إضافي فقط)</h2>
+    <div class="pipeline" aria-label="مسار معرفة الأزياء">
+      <div><strong>GI</strong> CanonicalGarment[]  +  <strong>OI</strong> evidence projection (consume-only)</div>
+      <div>↓ Occasion + Style prefs (read-only SI/memory)</div>
+      <div><strong>Fashion Knowledge Layer</strong> · Rule match + LLM draft candidates</div>
+      <div>↓ <strong>FashionAdviceCandidate[]</strong></div>
+      <div>↓ <strong>Fashion Claim Lock</strong> · PASS / QUALIFIED / BLOCK / CLARIFY</div>
+      <div>↓ Envelope projection → <strong>Advisor</strong> narration</div>
+      <div>↓ عميل Flutter (عند علم QA): <code>POST /advisor/chat</code> + fashion DTO — بلا مسار MCE مزدوج</div>
+    </div>
+  </section>
+
+  <section class="section" id="claim">
+    <h2>Claim Lock · لا نصيحة للمستخدم بدون قفل</h2>
+    <p class="section-note">بوابات الحد الأدنى: مدخلات قانونية · نوع معرفة مصنّف · ذاتية معلنة · provenance · أدلة · تفضيل · ثقة · لا حكم جمالي/جسدي.</p>
+    <div class="grid">
+      <article class="card"><span class="tag">PASS</span><h3>مسموح</h3><p>معرفة منظمة أو LLM مؤهّل بشروط كاملة.</p></article>
+      <article class="card"><span class="tag warn">PASS_WITH_QUALIFICATION</span><h3>بتحفظ</h3><p>لغة شرطية · مصدر غير مُعتمَد · تعارض تفضيل.</p></article>
+      <article class="card"><span class="tag rose">BLOCK / CLARIFY</span><h3>مرفوع</h3><p>ادعاء حتمي بلا دليل · provenance مزيف · مناسبة ناقصة عند الحاجة.</p></article>
+    </div>
+  </section>
+
+  <section class="section" id="roadmap">
+    <h2>خارطة المراحل · من الاكتشاف إلى التفعيل</h2>
+    <div class="table-wrap">
+      <table>
+        <thead><tr><th>المرحلة</th><th>الاسم</th><th>بوابة الخروج</th></tr></thead>
+        <tbody>
+          <tr><td>FK-1</td><td>Discovery &amp; Architecture Lock</td><td>مكتمل</td></tr>
+          <tr><td>FK-2</td><td>Contracts + Claim Lock</td><td>مكتمل</td></tr>
+          <tr><td>FK-3</td><td>LLM Hybrid Adapter</td><td>مكتمل</td></tr>
+          <tr><td>FK-4</td><td>Knowledge Registry</td><td>مكتمل</td></tr>
+          <tr><td>FK-5</td><td>Color + Occasion Knowledge</td><td>أساس مرشحات · ACTIVE=0</td></tr>
+          <tr><td>FK-5A</td><td>Source &amp; Human Approval Gate</td><td>بنية بوابة · ACTIVE=0 · مصادر=0</td></tr>
+          <tr><td>FK-6</td><td>Accessories / Shoes / Bags / Jewelry</td><td>قدرة Mode B · ACTIVE=0</td></tr>
+          <tr><td>FK-7</td><td>Fabric / Silhouette / Proportion</td><td>قدرة Mode B · Law #37 · ACTIVE=0</td></tr>
+          <tr><td>FK-8</td><td>Cultural Context</td><td>قدرة Mode B · Law #38 · ACTIVE=0</td></tr>
+          <tr><td>FK-9</td><td>Telemetry + Feedback</td><td>مكتمل · Law #39 · لا ترقية تلقائية</td></tr>
+          <tr><td>FK-10</td><td>Advisor Integration (مكتبة)</td><td>مكتمل كمكتبة · الربط أُغلق لاحقًا في FK-12</td></tr>
+          <tr><td>FK-11</td><td>Independent Audit</td><td><strong>C</strong> · NOT APPROVED FOR FREEZE (محفوظ)</td></tr>
+          <tr><td>FK-12</td><td>Production Wiring Remediation</td><td><strong>A</strong> · READY FOR FK-13</td></tr>
+          <tr><td>FK-13</td><td>Independent Re-Audit</td><td><strong>B</strong> · APPROVED FOR FK-14 WITH ACTIVATION DEPS</td></tr>
+          <tr><td>FK-14</td><td>Production Freeze v1.0.0</td><td><strong>مكتمل</strong> · شهادة MIRA-FK-FREEZE-1.0.0 · تفعيل ≠ تجميد</td></tr>
+          <tr><td>AT-1</td><td>Activation Discovery</td><td>مكتمل (READ-ONLY)</td></tr>
+          <tr><td>AT-2</td><td>Production LLM Provider</td><td><strong>A</strong></td></tr>
+          <tr><td>AT-3</td><td>Flutter Advisor Route</td><td><strong>A</strong></td></tr>
+          <tr><td>AT-4</td><td>Controlled QA Activation</td><td><strong>B</strong> · يحتاج بيئة</td></tr>
+          <tr><td>AT-4R</td><td>QA + Live Provider Readiness</td><td><strong>B جزئي</strong> · <em>توقف الاختبار هنا</em></td></tr>
+          <tr><td>AT-5</td><td>Independent Activation Audit</td><td>مغلق</td></tr>
+          <tr><td>AT-6</td><td>Production Activation Certificate</td><td>مغلق</td></tr>
+        </tbody>
+      </table>
+    </div>
+  </section>
+
+  <section class="section" id="docs">
+    <h2>وثائق معرفة الأزياء</h2>
+    <p class="section-note">
+      فهرس كامل من <code>docs/governance/</code> — من تدقيق القدرة وFK-1…FK-14 ثم مسار التفعيل AT-1…AT-4R.
+      الحكم التاريخي FK-11 = C محفوظ في وثائقه. التجميد الحالي = FK-14. الاختبار الحي متوقف عند AT-4R.
+    </p>
+    <div class="doc-list" id="docList"></div>
+  </section>
+
+  <footer class="footer">
+    <p><strong>معرفة الأزياء</strong> · Mira Fashion Knowledge &amp; Advice Program · FK-14 Freeze · Activation Track AT-4R</p>
+    <p>Platform frozen · Production unactivated · Live QA paused · NEXT (later): local LLM key → AT-4 live re-run → AT-5.</p>
+  </footer>
+
+  <script>
+    const at4r = [
+      ["AT4R_ADVISOR_API_LIVE_SMOKE.md", "AT-4R · دخان API المستشارة الحي"],
+      ["AT4R_AT5_GATE.md", "AT-4R · بوابة AT-5"],
+      ["AT4R_AUTH_READINESS.md", "AT-4R · جاهزية المصادقة"],
+      ["AT4R_BACKEND_FLAG_CONFIGURATION.md", "AT-4R · إعداد أعلام الخلفية (QA)"],
+      ["AT4R_BLOCKER_RESOLUTION.md", "AT-4R · حل الموانع"],
+      ["AT4R_COST_GUARD.md", "AT-4R · حارس التكلفة"],
+      ["AT4R_DATA_ISOLATION.md", "AT-4R · عزل البيانات"],
+      ["AT4R_DEVICE_NETWORKING.md", "AT-4R · شبكات الأجهزة"],
+      ["AT4R_ENV_AND_SECRETS.md", "AT-4R · البيئة والأسرار"],
+      ["AT4R_ENV_REQUIREMENTS.md", "AT-4R · متطلبات البيئة"],
+      ["AT4R_EXECUTIVE_SUMMARY.md", "AT-4R · الملخص التنفيذي"],
+      ["AT4R_FLUTTER_AUTH_NETWORK.md", "AT-4R · مصادقة وشبكة Flutter"],
+      ["AT4R_FLUTTER_E2E_LIVE.md", "AT-4R · مسار Flutter E2E الحي"],
+      ["AT4R_FLUTTER_QA_CONFIGURATION.md", "AT-4R · إعداد Flutter QA"],
+      ["AT4R_LIVE_PROOF_AND_GATE.md", "AT-4R · الإثبات الحي والبوابة"],
+      ["AT4R_LIVE_TEST_PROOF.md", "AT-4R · إثبات الاختبار الحي"],
+      ["AT4R_LOCAL_QA_ARCHITECTURE.md", "AT-4R · معمارية QA المحلية"],
+      ["AT4R_LOG_SECURITY.md", "AT-4R · أمن السجلات"],
+      ["AT4R_MODEL_CONFORMANCE.md", "AT-4R · مطابقة النموذج"],
+      ["AT4R_PROVIDER_CONNECTIVITY.md", "AT-4R · اتصال المزود"],
+      ["AT4R_PUBLIC_RESPONSE_SECURITY.md", "AT-4R · أمن الاستجابة العامة"],
+      ["AT4R_QA_CHECKLIST.md", "AT-4R · قائمة فحص QA"],
+      ["AT4R_RED_YELLOW_WEDDING_LIVE.md", "AT-4R · أحمر/أصفر/زفاف — حي"],
+      ["AT4R_REGRESSION_REPORT.md", "AT-4R · تقرير الانحدار"],
+      ["AT4R_REGRESSION_RISKS.md", "AT-4R · مخاطر الانحدار"],
+      ["AT4R_RISK_REGISTER.md", "AT-4R · سجل المخاطر"],
+      ["AT4R_ROLLBACK_VERIFICATION.md", "AT-4R · تحقق التراجع"],
+      ["AT4R_SECRET_HANDLING.md", "AT-4R · معالجة الأسرار"],
+      ["AT4R_STAGING_DECISION.md", "AT-4R · قرار Staging"],
+      ["AT4R_STRUCTURED_OUTPUT_LIVE.md", "AT-4R · المخرج المنظم الحي"],
+      ["AT4R_TECHNICAL_DEBT.md", "AT-4R · الدين التقني"],
+      ["AT4R_TELEMETRY_OFF_VERIFICATION.md", "AT-4R · تحقق إيقاف القياس"],
+    ];
+    const at4 = [
+      ["AT4_ACTIVATION_CONFIGURATION.md", "AT-4 · إعداد التفعيل"],
+      ["AT4_E2E_SCENARIO_STATUS.md", "AT-4 · حالة سيناريوهات E2E"],
+      ["AT4_EXECUTIVE_SUMMARY.md", "AT-4 · الملخص التنفيذي"],
+      ["AT4_FLAG_MATRIX.md", "AT-4 · مصفوفة الأعلام"],
+      ["AT4_PROVIDER_HEALTH_REPORT.md", "AT-4 · تقرير صحة المزود"],
+      ["AT4_QA_ENVIRONMENT_REPORT.md", "AT-4 · تقرير بيئة QA"],
+      ["AT4_REGRESSION_AND_AT5_READINESS.md", "AT-4 · الانحدار وجاهزية AT-5"],
+      ["AT4_ROLLBACK_VERIFICATION.md", "AT-4 · تحقق التراجع"],
+    ];
+    const at3 = [
+      ["AT3_AT4_READINESS.md", "AT-3 · جاهزية AT-4"],
+      ["AT3_CLIENT_FEATURE_FLAG.md", "AT-3 · علم ميزة العميل"],
+      ["AT3_CONTEXT_TRUST_POLICY.md", "AT-3 · سياسة ثقة السياق"],
+      ["AT3_CULTURAL_CONTEXT.md", "AT-3 · السياق الثقافي"],
+      ["AT3_EXECUTIVE_SUMMARY.md", "AT-3 · الملخص التنفيذي"],
+      ["AT3_FASHION_ROUTE_ARCHITECTURE.md", "AT-3 · معمارية مسار الأزياء"],
+      ["AT3_GOVERNANCE_PACK.md", "AT-3 · حزمة الحوكمة"],
+      ["AT3_IMPLEMENTATION_REPORT.md", "AT-3 · تقرير التنفيذ"],
+      ["AT3_TEST_REPORT.md", "AT-3 · تقرير الاختبارات"],
+    ];
+    const at2 = [
+      ["AT2_ADVISOR_SERVICE_INTEGRATION.md", "AT-2 · تكامل AdvisorService"],
+      ["AT2_AT3_READINESS.md", "AT-2 · جاهزية AT-3"],
+      ["AT2_BODY_CULTURAL_SAFETY.md", "AT-2 · سلامة الجسم والسياق الثقافي"],
+      ["AT2_CONFIG_MANIFEST.md", "AT-2 · بيان الإعداد"],
+      ["AT2_COST_USAGE_HOOK.md", "AT-2 · خطاف التكلفة/الاستخدام"],
+      ["AT2_EXECUTIVE_SUMMARY.md", "AT-2 · الملخص التنفيذي"],
+      ["AT2_FAILURE_BEHAVIOR.md", "AT-2 · سلوك الفشل"],
+      ["AT2_FALSE_PROVENANCE_TEST.md", "AT-2 · اختبار provenance مزيف"],
+      ["AT2_FASHION_KNOWLEDGE_LLM_PORT_IMPLEMENTATION.md", "AT-2 · تنفيذ منفذ FKL LLM"],
+      ["AT2_FEATURE_FLAG_REPORT.md", "AT-2 · تقرير أعلام الميزات"],
+      ["AT2_FROZEN_BOUNDARY_VERIFICATION.md", "AT-2 · تحقق حدود التجميد"],
+      ["AT2_IMPLEMENTATION_REPORT.md", "AT-2 · تقرير التنفيذ"],
+      ["AT2_LOGGING_PRIVACY.md", "AT-2 · خصوصية السجلات"],
+      ["AT2_NEST_DI_REGISTRATION.md", "AT-2 · تسجيل Nest DI"],
+      ["AT2_OPENAI_PROVIDER_ADAPTER.md", "AT-2 · محوّل مزود OpenAI"],
+      ["AT2_PROMPT_INJECTION_TEST.md", "AT-2 · اختبار حقن الـprompt"],
+      ["AT2_PROMPT_POLICY_COMPLIANCE.md", "AT-2 · امتثال سياسة الـprompt"],
+      ["AT2_PROVIDER_ARCHITECTURE.md", "AT-2 · معمارية المزود"],
+      ["AT2_PROVIDER_CONFIGURATION.md", "AT-2 · إعداد المزود"],
+      ["AT2_PROVIDER_SECURITY.md", "AT-2 · أمن المزود"],
+      ["AT2_RED_YELLOW_WEDDING_TEST.md", "AT-2 · اختبار أحمر/أصفر/زفاف"],
+      ["AT2_REGRESSION_REPORT.md", "AT-2 · تقرير الانحدار"],
+      ["AT2_RETRY_TIMEOUT_POLICY.md", "AT-2 · سياسة إعادة المحاولة/المهلة"],
+      ["AT2_RISK_REGISTER.md", "AT-2 · سجل المخاطر"],
+      ["AT2_STATIC_ANALYSIS_REPORT.md", "AT-2 · تقرير التحليل الثابت"],
+      ["AT2_STRUCTURED_OUTPUT_REPORT.md", "AT-2 · تقرير المخرج المنظم"],
+      ["AT2_TECHNICAL_DEBT.md", "AT-2 · الدين التقني"],
+      ["AT2_TEST_REPORT.md", "AT-2 · تقرير الاختبارات"],
+    ];
+    const at1 = [
+      ["AT1_ACTIVATION_DEPENDENCY_RECLASSIFICATION.md", "AT-1 · إعادة تصنيف تبعيات التفعيل"],
+      ["AT1_CLIENT_PATH_AUDIT.md", "AT-1 · تدقيق مسار العميل"],
+      ["AT1_DEPLOYMENT_ARCHITECTURE.md", "AT-1 · معمارية النشر"],
+      ["AT1_EXECUTIVE_SUMMARY.md", "AT-1 · الملخص التنفيذي"],
+      ["AT1_INDEPENDENT_READINESS_REPORT.md", "AT-1 · تقرير الجاهزية المستقل"],
+      ["AT1_LLM_INVENTORY.md", "AT-1 · جرد LLM"],
+      ["AT1_NEST_DI_GAP.md", "AT-1 · فجوة Nest DI"],
+      ["AT1_OPENAI_REUSE_DECISION.md", "AT-1 · قرار إعادة استخدام OpenAI"],
+      ["AT1_PHASE_PLAN.md", "AT-1 · خطة المراحل"],
+      ["AT1_SAFE_YEAR1_FLAG_CONFIGURATION.md", "AT-1 · إعداد أعلام السنة الأولى الآمن"],
+    ];
+    const fk14 = [
+      ["PHASE_FK14_ACTIVATION_CONFIGURATION.md", "FK-14 · إعداد التفعيل"],
+      ["PHASE_FK14_ACTIVATION_DEPENDENCY_REGISTER.md", "FK-14 · سجل تبعيات التفعيل"],
+      ["PHASE_FK14_ADVISOR_INTEGRATION_FREEZE.md", "FK-14 · تجميد تكامل المستشارة"],
+      ["PHASE_FK14_BREAKING_CHANGE_POLICY.md", "FK-14 · سياسة التغيير الكاسر"],
+      ["PHASE_FK14_CHANGE_POLICY.md", "FK-14 · سياسة التغيير"],
+      ["PHASE_FK14_CLAIM_LOCK_FREEZE.md", "FK-14 · تجميد Claim Lock"],
+      ["PHASE_FK14_COMPATIBILITY_MATRIX.md", "FK-14 · مصفوفة التوافق"],
+      ["PHASE_FK14_CONSENT_DEPENDENCY.md", "FK-14 · تبعية الموافقة"],
+      ["PHASE_FK14_DOCUMENTATION_TRUTH_REPORT.md", "FK-14 · تقرير صدق الوثائق"],
+      ["PHASE_FK14_ENGINEERING_LAWS.md", "FK-14 · القوانين الهندسية"],
+      ["PHASE_FK14_EXECUTIVE_SUMMARY.md", "FK-14 · الملخص التنفيذي"],
+      ["PHASE_FK14_EXPORT_BOUNDARY.md", "FK-14 · حدود التصدير"],
+      ["PHASE_FK14_FASHION_KNOWLEDGE_FREEZE_CERTIFICATE.md", "FK-14 · شهادة تجميد معرفة الأزياء"],
+      ["PHASE_FK14_FASHION_KNOWLEDGE_PRODUCTION_FREEZE_REPORT.md", "FK-14 · تقرير تجميد الإنتاج"],
+      ["PHASE_FK14_FASHION_KNOWLEDGE_VERSION_MANIFEST.md", "FK-14 · بيان إصدار معرفة الأزياء"],
+      ["PHASE_FK14_FEATURE_FLAG_MANIFEST.md", "FK-14 · بيان أعلام الميزات"],
+      ["PHASE_FK14_LLM_TRUST_BOUNDARY_FREEZE.md", "FK-14 · تجميد حدود ثقة LLM"],
+      ["PHASE_FK14_MCE_QUARANTINE_FREEZE.md", "FK-14 · تجميد حجر MCE"],
+      ["PHASE_FK14_MODE_A_FIRST_POLICY.md", "FK-14 · سياسة Mode A أولًا"],
+      ["PHASE_FK14_MODE_A_STATUS.md", "FK-14 · حالة Mode A"],
+      ["PHASE_FK14_MODE_B_PROVIDER_DEPENDENCY.md", "FK-14 · تبعية مزود Mode B"],
+      ["PHASE_FK14_OUTFIT_BOUNDARY.md", "FK-14 · حدود الإطلالة"],
+      ["PHASE_FK14_PRODUCTION_ACTIVATION_POLICY.md", "FK-14 · سياسة تفعيل الإنتاج"],
+      ["PHASE_FK14_PROGRAM_COMPLETION_SUMMARY.md", "FK-14 · ملخص اكتمال البرنامج"],
+      ["PHASE_FK14_PROTECTED_COMPONENTS.md", "FK-14 · المكوّنات المحمية"],
+      ["PHASE_FK14_PUBLIC_CONTRACT_INVENTORY.md", "FK-14 · جرد العقود العامة"],
+      ["PHASE_FK14_REGRESSION_REPORT.md", "FK-14 · تقرير الانحدار"],
+      ["PHASE_FK14_RISK_REGISTER.md", "FK-14 · سجل المخاطر"],
+      ["PHASE_FK14_ROLLBACK_POLICY.md", "FK-14 · سياسة التراجع"],
+      ["PHASE_FK14_SAFE_CONFIGURATION.md", "FK-14 · الإعداد الآمن"],
+      ["PHASE_FK14_SECURITY_FREEZE.md", "FK-14 · تجميد الأمن"],
+      ["PHASE_FK14_SOURCE_REVIEW_STATUS.md", "FK-14 · حالة مراجعة المصادر"],
+      ["PHASE_FK14_TECHNICAL_DEBT_REGISTER.md", "FK-14 · سجل الدين التقني"],
+      ["PHASE_FK14_TELEMETRY_FREEZE.md", "FK-14 · تجميد القياس"],
+    ];
+    const fk13 = [
+      ["FK13_ACTIVATION_READINESS.md", "FK-13 · جاهزية التفعيل"],
+      ["FK13_CLAIM_LOCK_AUDIT.md", "FK-13 · تدقيق Claim Lock"],
+      ["FK13_CONTEXT_TRUST_AUDIT.md", "FK-13 · تدقيق ثقة السياق"],
+      ["FK13_DOCUMENTATION_TRUTH_AUDIT.md", "FK-13 · تدقيق صدق الوثائق"],
+      ["FK13_E2E_AUDIT.md", "FK-13 · تدقيق E2E"],
+      ["FK13_ENGINEERING_LAWS_AUDIT.md", "FK-13 · تدقيق القوانين الهندسية"],
+      ["FK13_EXECUTIVE_SUMMARY.md", "FK-13 · الملخص التنفيذي"],
+      ["FK13_FAIL_CLOSED_AUDIT.md", "FK-13 · تدقيق Fail-Closed"],
+      ["FK13_FEATURE_FLAG_AUDIT.md", "FK-13 · تدقيق أعلام الميزات"],
+      ["FK13_FINDINGS_REGISTER.md", "FK-13 · سجل النتائج"],
+      ["FK13_FK11_RESOLUTION_VERIFICATION.md", "FK-13 · تحقق حل نتائج FK-11"],
+      ["FK13_FK14_GATE_DECISION.md", "FK-13 · قرار بوابة FK-14"],
+      ["FK13_FREEZE_READINESS.md", "FK-13 · جاهزية التجميد"],
+      ["FK13_HTTP_TEST_REALISM.md", "FK-13 · واقعية اختبارات HTTP"],
+      ["FK13_INDEPENDENT_REAUDIT_REPORT.md", "FK-13 · تقرير إعادة التدقيق المستقل"],
+      ["FK13_MCE_CONSULTATION_BYPASS_AUDIT.md", "FK-13 · تدقيق تجاوز استشارة MCE"],
+      ["FK13_MODE_B_PROVIDER_AUDIT.md", "FK-13 · تدقيق مزود Mode B"],
+      ["FK13_NEST_DI_AUDIT.md", "FK-13 · تدقيق Nest DI"],
+      ["FK13_PRODUCTION_WIRING_AUDIT.md", "FK-13 · تدقيق ربط الإنتاج"],
+      ["FK13_PROJECTION_ENVELOPE_AUDIT.md", "FK-13 · تدقيق الإسقاط/الظرف"],
+      ["FK13_REGISTRY_INTEGRITY_AUDIT.md", "FK-13 · تدقيق سلامة السجل"],
+      ["FK13_REGISTRY_WRITE_ISOLATION.md", "FK-13 · عزل كتابة السجل"],
+      ["FK13_REGRESSION_REPORT.md", "FK-13 · تقرير الانحدار"],
+      ["FK13_REMAINING_RISKS.md", "FK-13 · المخاطر المتبقية"],
+      ["FK13_SECURITY_AUDIT.md", "FK-13 · تدقيق الأمن"],
+      ["FK13_STATIC_ANALYSIS_REPORT.md", "FK-13 · تقرير التحليل الثابت"],
+      ["FK13_TECHNICAL_DEBT.md", "FK-13 · الدين التقني"],
+      ["FK13_TELEMETRY_CONSENT_AUDIT.md", "FK-13 · تدقيق موافقة القياس"],
+    ];
+    const fk12 = [
+      ["FK12_ADVISOR_HTTP_INTEGRATION.md", "FK-12 · تكامل HTTP للمستشارة"],
+      ["FK12_BODY_SAFETY_REPORT.md", "FK-12 · تقرير سلامة الجسم"],
+      ["FK12_CLAIM_LOCK_ENFORCEMENT.md", "FK-12 · إنفاذ Claim Lock"],
+      ["FK12_CONTEXT_ASSEMBLY_REPORT.md", "FK-12 · تقرير تجميع السياق"],
+      ["FK12_CULTURAL_SAFETY_REPORT.md", "FK-12 · تقرير السلامة الثقافية"],
+      ["FK12_DOCUMENTATION_CORRECTION_REPORT.md", "FK-12 · تقرير تصحيح الوثائق"],
+      ["FK12_ENVELOPE_PROJECTION.md", "FK-12 · إسقاط الظرف"],
+      ["FK12_EXECUTIVE_SUMMARY.md", "FK-12 · الملخص التنفيذي"],
+      ["FK12_EXPORT_HARDENING.md", "FK-12 · تصلب التصدير"],
+      ["FK12_FAIL_CLOSED_REPORT.md", "FK-12 · تقرير Fail-Closed"],
+      ["FK12_FALSE_PROVENANCE_REPORT.md", "FK-12 · تقرير provenance مزيف"],
+      ["FK12_FASHION_CONTEXT_CONTRACT.md", "FK-12 · عقد سياق الأزياء"],
+      ["FK12_FEATURE_FLAG_MATRIX.md", "FK-12 · مصفوفة أعلام الميزات"],
+      ["FK12_FK11_RESOLUTION_MATRIX.md", "FK-12 · مصفوفة حل نتائج FK-11"],
+      ["FK12_FK13_READINESS_REPORT.md", "FK-12 · جاهزية FK-13"],
+      ["FK12_FRESHNESS_REPORT.md", "FK-12 · تقرير الحداثة"],
+      ["FK12_FROZEN_BOUNDARY_VERIFICATION.md", "FK-12 · تحقق حدود التجميد"],
+      ["FK12_G8_EXCEPTION_DECISION.md", "FK-12 · قرار استثناء G8"],
+      ["FK12_HTTP_E2E_REPORT.md", "FK-12 · تقرير HTTP E2E"],
+      ["FK12_INTEGRATION_OFF_POLICY.md", "FK-12 · سياسة إيقاف التكامل"],
+      ["FK12_INTENT_ROUTING_REPORT.md", "FK-12 · تقرير توجيه النية"],
+      ["FK12_LAW_34_HARDENING.md", "FK-12 · تصلب القانون #34"],
+      ["FK12_MCE_BYPASS_CLOSURE.md", "FK-12 · إغلاق تجاوز MCE"],
+      ["FK12_MODE_A_MODE_B_RUNTIME.md", "FK-12 · تشغيل Mode A / Mode B"],
+      ["FK12_OUTFIT_INTELLIGENCE_BOUNDARY.md", "FK-12 · حدود Outfit Intelligence"],
+      ["FK12_PRODUCTION_WIRING_REPORT.md", "FK-12 · تقرير ربط الإنتاج"],
+      ["FK12_PROMPT_INJECTION_REPORT.md", "FK-12 · تقرير حقن الـprompt"],
+      ["FK12_PUBLIC_DTO_SECURITY.md", "FK-12 · أمن DTO العام"],
+      ["FK12_REGISTRY_WRITE_ISOLATION.md", "FK-12 · عزل كتابة السجل"],
+      ["FK12_REGRESSION_REPORT.md", "FK-12 · تقرير الانحدار"],
+      ["FK12_RELIGIOUS_BOUNDARY_REPORT.md", "FK-12 · تقرير الحدود الدينية"],
+      ["FK12_REMEDIATION_REPORT.md", "FK-12 · تقرير الإصلاح"],
+      ["FK12_RISK_REGISTER.md", "FK-12 · سجل المخاطر"],
+      ["FK12_STATIC_ANALYSIS_REPORT.md", "FK-12 · تقرير التحليل الثابت"],
+      ["FK12_TECHNICAL_DEBT_REGISTER.md", "FK-12 · سجل الدين التقني"],
+      ["FK12_TELEMETRY_CONSENT_GATE.md", "FK-12 · بوابة موافقة القياس"],
+      ["FK12_TEST_REPORT.md", "FK-12 · تقرير الاختبارات"],
+      ["FK12_TRACEABILITY_REPORT.md", "FK-12 · تقرير التتبع"],
+      ["FK12_VERSION_MANIFEST.md", "FK-12 · بيان الإصدار"],
+    ];
+    const fk11 = [
+      ["FK11_ACCESSORIES_AUDIT.md", "FK-11 · تدقيق الإكسسوارات"],
+      ["FK11_ACTIVATION_READINESS.md", "FK-11 · جاهزية التفعيل"],
+      ["FK11_ADVISOR_INTEGRATION_AUDIT.md", "FK-11 · تدقيق تكامل المستشارة"],
+      ["FK11_ARCHITECTURE_AUDIT.md", "FK-11 · تدقيق المعمارية"],
+      ["FK11_AUTO_PROMOTION_AUDIT.md", "FK-11 · تدقيق الترقية التلقائية"],
+      ["FK11_CLAIM_LOCK_AUDIT.md", "FK-11 · تدقيق Claim Lock"],
+      ["FK11_CULTURAL_CONTEXT_AUDIT.md", "FK-11 · تدقيق السياق الثقافي"],
+      ["FK11_DOCUMENTATION_TRUTH_AUDIT.md", "FK-11 · تدقيق صدق الوثائق"],
+      ["FK11_E2E_SCENARIO_AUDIT.md", "FK-11 · تدقيق سيناريوهات E2E"],
+      ["FK11_ENGINEERING_LAWS_AUDIT.md", "FK-11 · تدقيق القوانين الهندسية"],
+      ["FK11_EXECUTIVE_SUMMARY.md", "FK-11 · الملخص التنفيذي"],
+      ["FK11_FAILURE_MODE_AUDIT.md", "FK-11 · تدقيق أوضاع الفشل"],
+      ["FK11_FEATURE_FLAG_AUDIT.md", "FK-11 · تدقيق أعلام الميزات"],
+      ["FK11_FINDINGS_REGISTER.md", "FK-11 · سجل النتائج"],
+      ["FK11_FORM_SILHOUETTE_AUDIT.md", "FK-11 · تدقيق الشكل/الظل"],
+      ["FK11_FREEZE_READINESS.md", "FK-11 · جاهزية التجميد"],
+      ["FK11_INDEPENDENT_AUDIT_REPORT.md", "FK-11 · تقرير التدقيق المستقل"],
+      ["FK11_LLM_BOUNDARY_AUDIT.md", "FK-11 · تدقيق حدود LLM"],
+      ["FK11_MCE_BYPASS_AUDIT.md", "FK-11 · تدقيق تجاوز MCE"],
+      ["FK11_PRIVACY_AUDIT.md", "FK-11 · تدقيق الخصوصية"],
+      ["FK11_PRODUCTION_WIRING_AUDIT.md", "FK-11 · تدقيق ربط الإنتاج"],
+      ["FK11_REGISTRY_AUDIT.md", "FK-11 · تدقيق السجل"],
+      ["FK11_REGRESSION_REPORT.md", "FK-11 · تقرير الانحدار"],
+      ["FK11_REMEDIATION_REQUIREMENTS.md", "FK-11 · متطلبات الإصلاح"],
+      ["FK11_SECURITY_AUDIT.md", "FK-11 · تدقيق الأمن"],
+      ["FK11_STATIC_ANALYSIS_REPORT.md", "FK-11 · تقرير التحليل الثابت"],
+      ["FK11_TECHNICAL_DEBT_AUDIT.md", "FK-11 · تدقيق الدين التقني"],
+      ["FK11_TELEMETRY_FEEDBACK_AUDIT.md", "FK-11 · تدقيق القياس والملاحظات"],
+      ["FK11_TEST_COVERAGE_AUDIT.md", "FK-11 · تدقيق تغطية الاختبارات"],
+    ];
+    const fk10 = [
+      ["FK10_ADVISOR_INTEGRATION_ARCHITECTURE.md", "FK-10 · ADVISOR INTEGRATION ARCHITECTURE"],
+      ["FK10_ALTERNATIVE_POLICY.md", "FK-10 · ALTERNATIVE POLICY"],
+      ["FK10_ARABIC_FASHION_LANGUAGE.md", "FK-10 · ARABIC FASHION LANGUAGE"],
+      ["FK10_BLOCK_POLICY.md", "FK-10 · BLOCK POLICY"],
+      ["FK10_BODY_SAFETY.md", "FK-10 · BODY SAFETY"],
+      ["FK10_CLARIFICATION_POLICY.md", "FK-10 · CLARIFICATION POLICY"],
+      ["FK10_CONSENT_GATE.md", "FK-10 · CONSENT GATE"],
+      ["FK10_CONTEXT_UPDATE_POLICY.md", "FK-10 · CONTEXT UPDATE POLICY"],
+      ["FK10_CULTURAL_CONTEXT_COMPLIANCE.md", "FK-10 · CULTURAL CONTEXT COMPLIANCE"],
+      ["FK10_ELIGIBILITY_MAPPING.md", "FK-10 · ELIGIBILITY MAPPING"],
+      ["FK10_ENVELOPE_INTEGRATION.md", "FK-10 · ENVELOPE INTEGRATION"],
+      ["FK10_EXECUTIVE_SUMMARY.md", "FK-10 · الملخص التنفيذي"],
+      ["FK10_FASHION_ADVISOR_PROJECTION.md", "FK-10 · FASHION ADVISOR PROJECTION"],
+      ["FK10_FASHION_INTENT_ROUTING.md", "FK-10 · FASHION INTENT ROUTING"],
+      ["FK10_FEATURE_FLAG_ROLLOUT.md", "FK-10 · طرح أعلام الميزات"],
+      ["FK10_FEEDBACK_INTEGRATION.md", "FK-10 · FEEDBACK INTEGRATION"],
+      ["FK10_FK11_AUDIT_READINESS.md", "FK-10 · جاهزية تدقيق FK-11"],
+      ["FK10_FOLLOWUP_REASONING.md", "FK-10 · FOLLOWUP REASONING"],
+      ["FK10_FRESHNESS_POLICY.md", "FK-10 · FRESHNESS POLICY"],
+      ["FK10_FROZEN_BOUNDARY_VERIFICATION.md", "FK-10 · تحقق حدود التجميد"],
+      ["FK10_IMPLEMENTATION_REPORT.md", "FK-10 · تقرير التنفيذ"],
+      ["FK10_KNOWLEDGE_BRIDGE.md", "FK-10 · KNOWLEDGE BRIDGE"],
+      ["FK10_LAW_33_COMPLIANCE.md", "FK-10 · LAW 33 COMPLIANCE"],
+      ["FK10_LAW_34_COMPLIANCE.md", "FK-10 · LAW 34 COMPLIANCE"],
+      ["FK10_LEGACY_BYPASS_REPORT.md", "FK-10 · LEGACY BYPASS REPORT"],
+      ["FK10_MCE_BYPASS_AUDIT.md", "FK-10 · تدقيق تجاوز MCE"],
+      ["FK10_MODE_A_FIRST_POLICY.md", "FK-10 · سياسة Mode A أولًا"],
+      ["FK10_MODE_B_POLICY.md", "FK-10 · MODE B POLICY"],
+      ["FK10_NO_GENERIC_FALLBACK.md", "FK-10 · NO GENERIC FALLBACK"],
+      ["FK10_PASS_POLICY.md", "FK-10 · PASS POLICY"],
+      ["FK10_PREFERENCE_UPDATE_POLICY.md", "FK-10 · PREFERENCE UPDATE POLICY"],
+      ["FK10_PROMPT_INJECTION_REPORT.md", "FK-10 · تقرير حقن الـprompt"],
+      ["FK10_PUBLIC_NARRATION_POLICY.md", "FK-10 · PUBLIC NARRATION POLICY"],
+      ["FK10_QUALIFIED_POLICY.md", "FK-10 · QUALIFIED POLICY"],
+      ["FK10_RED_YELLOW_WEDDING_E2E.md", "FK-10 · RED YELLOW WEDDING E2E"],
+      ["FK10_REGRESSION_REPORT.md", "FK-10 · تقرير الانحدار"],
+      ["FK10_RELIGIOUS_BOUNDARY.md", "FK-10 · RELIGIOUS BOUNDARY"],
+      ["FK10_RESPONSE_VALIDATION.md", "FK-10 · RESPONSE VALIDATION"],
+      ["FK10_RISK_REGISTER.md", "FK-10 · سجل المخاطر"],
+      ["FK10_SECURITY_REPORT.md", "FK-10 · SECURITY REPORT"],
+      ["FK10_STATIC_ANALYSIS_REPORT.md", "FK-10 · تقرير التحليل الثابت"],
+      ["FK10_TECHNICAL_DEBT_REGISTER.md", "FK-10 · سجل الدين التقني"],
+      ["FK10_TELEMETRY_INTEGRATION.md", "FK-10 · TELEMETRY INTEGRATION"],
+      ["FK10_TEST_REPORT.md", "FK-10 · تقرير الاختبارات"],
+      ["FK10_TRACEABILITY_REPORT.md", "FK-10 · تقرير التتبع"],
+      ["FK10_VERSION_MANIFEST.md", "FK-10 · بيان الإصدار"],
+    ];
+    const fk9 = [
+      ["FK9_12_MONTH_DATA_CHECKPOINTS.md", "FK-9 · 12 MONTH DATA CHECKPOINTS"],
+      ["FK9_AGGREGATION_POLICY.md", "FK-9 · AGGREGATION POLICY"],
+      ["FK9_ANALYTICS_METRICS_CONTRACT.md", "FK-9 · ANALYTICS METRICS CONTRACT"],
+      ["FK9_BLOCKED_CANDIDATE_TELEMETRY.md", "FK-9 · BLOCKED CANDIDATE TELEMETRY"],
+      ["FK9_CLAIM_LOCK_TELEMETRY.md", "FK-9 · CLAIM LOCK TELEMETRY"],
+      ["FK9_CONSENT_INTEGRATION_REPORT.md", "FK-9 · CONSENT INTEGRATION REPORT"],
+      ["FK9_CONTEXT_CORRECTION_POLICY.md", "FK-9 · CONTEXT CORRECTION POLICY"],
+      ["FK9_CULTURAL_PRIVACY.md", "FK-9 · CULTURAL PRIVACY"],
+      ["FK9_DATA_RETENTION_POLICY.md", "FK-9 · DATA RETENTION POLICY"],
+      ["FK9_DETERMINISM_REPORT.md", "FK-9 · DETERMINISM REPORT"],
+      ["FK9_EVENT_ORDERING_POLICY.md", "FK-9 · EVENT ORDERING POLICY"],
+      ["FK9_EVENT_STORE_PORT.md", "FK-9 · EVENT STORE PORT"],
+      ["FK9_EVENT_TAXONOMY.md", "FK-9 · EVENT TAXONOMY"],
+      ["FK9_EXECUTIVE_SUMMARY.md", "FK-9 · الملخص التنفيذي"],
+      ["FK9_EXPLICIT_IMPLICIT_POLICY.md", "FK-9 · EXPLICIT IMPLICIT POLICY"],
+      ["FK9_FEEDBACK_CONTRACT.md", "FK-9 · FEEDBACK CONTRACT"],
+      ["FK9_FEEDBACK_LOOP_BIAS.md", "FK-9 · FEEDBACK LOOP BIAS"],
+      ["FK9_FEEDBACK_SEMANTICS.md", "FK-9 · FEEDBACK SEMANTICS"],
+      ["FK9_FK10_READINESS_REPORT.md", "FK-9 · FK10 READINESS REPORT"],
+      ["FK9_FROZEN_BOUNDARY_VERIFICATION.md", "FK-9 · تحقق حدود التجميد"],
+      ["FK9_IDEMPOTENCY_POLICY.md", "FK-9 · IDEMPOTENCY POLICY"],
+      ["FK9_IMPLEMENTATION_REPORT.md", "FK-9 · تقرير التنفيذ"],
+      ["FK9_LAW_39.md", "FK-9 · LAW 39"],
+      ["FK9_LLM_QUALITY_METRICS.md", "FK-9 · LLM QUALITY METRICS"],
+      ["FK9_NORMALIZATION_POLICY.md", "FK-9 · NORMALIZATION POLICY"],
+      ["FK9_NO_AUTO_PROMOTION_POLICY.md", "FK-9 · NO AUTO PROMOTION POLICY"],
+      ["FK9_PERFORMANCE_REPORT.md", "FK-9 · PERFORMANCE REPORT"],
+      ["FK9_POPULARITY_BIAS_POLICY.md", "FK-9 · POPULARITY BIAS POLICY"],
+      ["FK9_PREFERENCE_SIGNAL_POLICY.md", "FK-9 · PREFERENCE SIGNAL POLICY"],
+      ["FK9_PRIVACY_AND_MINIMIZATION.md", "FK-9 · PRIVACY AND MINIMIZATION"],
+      ["FK9_REGRESSION_REPORT.md", "FK-9 · تقرير الانحدار"],
+      ["FK9_RESEARCH_CANDIDATE_MODEL.md", "FK-9 · RESEARCH CANDIDATE MODEL"],
+      ["FK9_RISK_REGISTER.md", "FK-9 · سجل المخاطر"],
+      ["FK9_RULE_USAGE_TELEMETRY.md", "FK-9 · RULE USAGE TELEMETRY"],
+      ["FK9_SAMPLE_SIZE_POLICY.md", "FK-9 · SAMPLE SIZE POLICY"],
+      ["FK9_SECURITY_REPORT.md", "FK-9 · SECURITY REPORT"],
+      ["FK9_STATIC_ANALYSIS_REPORT.md", "FK-9 · تقرير التحليل الثابت"],
+      ["FK9_TECHNICAL_DEBT_REGISTER.md", "FK-9 · سجل الدين التقني"],
+      ["FK9_TELEMETRY_ARCHITECTURE.md", "FK-9 · TELEMETRY ARCHITECTURE"],
+      ["FK9_TELEMETRY_CONTRACT.md", "FK-9 · TELEMETRY CONTRACT"],
+      ["FK9_TEST_REPORT.md", "FK-9 · تقرير الاختبارات"],
+      ["FK9_YEAR1_RESEARCH_PIPELINE.md", "FK-9 · YEAR1 RESEARCH PIPELINE"],
+    ];
+    const fk8 = [
+      ["FK8_CLAIM_LOCK_COMPATIBILITY.md", "FK-8 · CLAIM LOCK COMPATIBILITY"],
+      ["FK8_CONTEXT_CONFIDENCE_POLICY.md", "FK-8 · CONTEXT CONFIDENCE POLICY"],
+      ["FK8_CONTEXT_SOURCE_POLICY.md", "FK-8 · CONTEXT SOURCE POLICY"],
+      ["FK8_CULTURAL_CONFLICT_POLICY.md", "FK-8 · CULTURAL CONFLICT POLICY"],
+      ["FK8_CULTURAL_CONTEXT_ARCHITECTURE.md", "FK-8 · CULTURAL CONTEXT ARCHITECTURE"],
+      ["FK8_CULTURAL_CONTEXT_CONTRACT.md", "FK-8 · CULTURAL CONTEXT CONTRACT"],
+      ["FK8_CULTURAL_PROVENANCE_POLICY.md", "FK-8 · CULTURAL PROVENANCE POLICY"],
+      ["FK8_CULTURAL_REVIEW_CANDIDATES.md", "FK-8 · CULTURAL REVIEW CANDIDATES"],
+      ["FK8_CULTURAL_REVIEW_REQUIREMENTS.md", "FK-8 · CULTURAL REVIEW REQUIREMENTS"],
+      ["FK8_CULTURAL_SOURCE_REQUIREMENTS.md", "FK-8 · CULTURAL SOURCE REQUIREMENTS"],
+      ["FK8_CULTURAL_TONE_SAFETY.md", "FK-8 · CULTURAL TONE SAFETY"],
+      ["FK8_EXECUTIVE_SUMMARY.md", "FK-8 · الملخص التنفيذي"],
+      ["FK8_FK9_READINESS_REPORT.md", "FK-8 · FK9 READINESS REPORT"],
+      ["FK8_FROZEN_BOUNDARY_VERIFICATION.md", "FK-8 · تحقق حدود التجميد"],
+      ["FK8_IMPLEMENTATION_REPORT.md", "FK-8 · تقرير التنفيذ"],
+      ["FK8_LAW_38.md", "FK-8 · LAW 38"],
+      ["FK8_MODESTY_BOUNDARY.md", "FK-8 · MODESTY BOUNDARY"],
+      ["FK8_NO_IDENTITY_INFERENCE_POLICY.md", "FK-8 · NO IDENTITY INFERENCE POLICY"],
+      ["FK8_OCCASION_CULTURE_INTERSECTION.md", "FK-8 · OCCASION CULTURE INTERSECTION"],
+      ["FK8_PRIVACY_REPORT.md", "FK-8 · PRIVACY REPORT"],
+      ["FK8_REGION_SCOPE_MODEL.md", "FK-8 · REGION SCOPE MODEL"],
+      ["FK8_REGRESSION_REPORT.md", "FK-8 · تقرير الانحدار"],
+      ["FK8_RISK_REGISTER.md", "FK-8 · سجل المخاطر"],
+      ["FK8_SAUDI_GULF_READINESS.md", "FK-8 · SAUDI GULF READINESS"],
+      ["FK8_SCENARIO_VALIDATION.md", "FK-8 · SCENARIO VALIDATION"],
+      ["FK8_STATIC_ANALYSIS_REPORT.md", "FK-8 · تقرير التحليل الثابت"],
+      ["FK8_TECHNICAL_DEBT_REGISTER.md", "FK-8 · سجل الدين التقني"],
+      ["FK8_TEST_REPORT.md", "FK-8 · تقرير الاختبارات"],
+      ["FK8_USER_PREFERENCE_OVERRIDE.md", "FK-8 · USER PREFERENCE OVERRIDE"],
+      ["FK8_YEAR1_MODE_B_CULTURAL_POLICY.md", "FK-8 · YEAR1 MODE B CULTURAL POLICY"],
+    ];
+    const fk7 = [
+      ["FK7_BODY_LANGUAGE_SAFETY.md", "FK-7 · سلامة لغة الجسم"],
+      ["FK7_DETERMINISM_REPORT.md", "FK-7 · DETERMINISM REPORT"],
+      ["FK7_ENGINEERING_LAW_37.md", "FK-7 · ENGINEERING LAW 37"],
+      ["FK7_EXECUTIVE_SUMMARY.md", "FK-7 · الملخص التنفيذي"],
+      ["FK7_FEATURE_FLAGS.md", "FK-7 · FEATURE FLAGS"],
+      ["FK7_FK8_READINESS.md", "FK-7 · FK8 READINESS"],
+      ["FK7_FROZEN_BOUNDARY_VERIFICATION.md", "FK-7 · تحقق حدود التجميد"],
+      ["FK7_IMPLEMENTATION_REPORT.md", "FK-7 · تقرير التنفيذ"],
+      ["FK7_LAYERING_BOUNDARY.md", "FK-7 · LAYERING BOUNDARY"],
+      ["FK7_NO_SHOPPING_NO_ADVISOR.md", "FK-7 · NO SHOPPING NO ADVISOR"],
+      ["FK7_OWNERSHIP_BOUNDARY.md", "FK-7 · OWNERSHIP BOUNDARY"],
+      ["FK7_RED_YELLOW_AND_REFERENCE_SCENARIOS.md", "FK-7 · RED YELLOW AND REFERENCE SCENARIOS"],
+      ["FK7_REGRESSION_REPORT.md", "FK-7 · تقرير الانحدار"],
+      ["FK7_REPOSITORY_AUDIT.md", "FK-7 · REPOSITORY AUDIT"],
+      ["FK7_RISK_REGISTER.md", "FK-7 · سجل المخاطر"],
+      ["FK7_STATIC_ANALYSIS_REPORT.md", "FK-7 · تقرير التحليل الثابت"],
+      ["FK7_TECHNICAL_DEBT_REGISTER.md", "FK-7 · سجل الدين التقني"],
+      ["FK7_TEST_REPORT.md", "FK-7 · تقرير الاختبارات"],
+      ["FK7_VALIDATION_REPORT.md", "FK-7 · VALIDATION REPORT"],
+      ["FK7_VERSION_MANIFEST.md", "FK-7 · بيان الإصدار"],
+      ["FK7_VISUAL_COMPLEXITY.md", "FK-7 · VISUAL COMPLEXITY"],
+      ["FK7_YEAR1_MODE_B_CONTINUITY.md", "FK-7 · YEAR1 MODE B CONTINUITY"],
+    ];
+    const fk6 = [
+      ["FK6_ACCESSORY_FACT_PROJECTION.md", "FK-6 · ACCESSORY FACT PROJECTION"],
+      ["FK6_ADVICE_TYPES.md", "FK-6 · ADVICE TYPES"],
+      ["FK6_CLAIM_LOCK_VERIFICATION.md", "FK-6 · تحقق Claim Lock"],
+      ["FK6_DETERMINISM_REPORT.md", "FK-6 · DETERMINISM REPORT"],
+      ["FK6_DOMAIN_CONTRACT_AUDIT.md", "FK-6 · DOMAIN CONTRACT AUDIT"],
+      ["FK6_ELIGIBILITY_AND_QUALIFICATION.md", "FK-6 · ELIGIBILITY AND QUALIFICATION"],
+      ["FK6_EXECUTIVE_SUMMARY.md", "FK-6 · الملخص التنفيذي"],
+      ["FK6_FEATURE_FLAGS.md", "FK-6 · FEATURE FLAGS"],
+      ["FK6_FK7_READINESS.md", "FK-6 · FK7 READINESS"],
+      ["FK6_FROZEN_BOUNDARY_VERIFICATION.md", "FK-6 · تحقق حدود التجميد"],
+      ["FK6_IMPLEMENTATION_REPORT.md", "FK-6 · تقرير التنفيذ"],
+      ["FK6_MODE_A_REGISTRY_BEHAVIOR.md", "FK-6 · MODE A REGISTRY BEHAVIOR"],
+      ["FK6_MODE_B_PROMPT_EXTENSION.md", "FK-6 · MODE B PROMPT EXTENSION"],
+      ["FK6_NO_SHOPPING_POLICY.md", "FK-6 · NO SHOPPING POLICY"],
+      ["FK6_PRESENCE_AND_ROLE_MODEL.md", "FK-6 · PRESENCE AND ROLE MODEL"],
+      ["FK6_RED_YELLOW_WEDDING_TEST.md", "FK-6 · اختبار أحمر/أصفر/زفاف"],
+      ["FK6_REGRESSION_REPORT.md", "FK-6 · تقرير الانحدار"],
+      ["FK6_RISK_REGISTER.md", "FK-6 · سجل المخاطر"],
+      ["FK6_SECURITY_AND_SAFETY.md", "FK-6 · SECURITY AND SAFETY"],
+      ["FK6_STATIC_ANALYSIS_REPORT.md", "FK-6 · تقرير التحليل الثابت"],
+      ["FK6_TECHNICAL_DEBT_REGISTER.md", "FK-6 · سجل الدين التقني"],
+      ["FK6_TELEMETRY_FEEDBACK_READINESS.md", "FK-6 · TELEMETRY FEEDBACK READINESS"],
+      ["FK6_TEST_REPORT.md", "FK-6 · تقرير الاختبارات"],
+      ["FK6_VALIDATION_REPORT.md", "FK-6 · VALIDATION REPORT"],
+      ["FK6_VERSION_MANIFEST.md", "FK-6 · بيان الإصدار"],
+      ["FK6_YEAR1_MODE_B_POLICY.md", "FK-6 · YEAR1 MODE B POLICY"],
+    ];
+    const fk5a = [
+      ["FK5A_ACTIVE_RULE_INVENTORY.md", "FK-5A · ACTIVE RULE INVENTORY"],
+      ["FK5A_APPROVAL_GATE.md", "FK-5A · APPROVAL GATE"],
+      ["FK5A_CLAIM_LOCK_VERIFICATION.md", "FK-5A · تحقق Claim Lock"],
+      ["FK5A_COLOR_REVIEW.md", "FK-5A · COLOR REVIEW"],
+      ["FK5A_CONFIDENCE_RECALIBRATION.md", "FK-5A · CONFIDENCE RECALIBRATION"],
+      ["FK5A_COPYRIGHT_SAFETY.md", "FK-5A · COPYRIGHT SAFETY"],
+      ["FK5A_COVERAGE_REPORT.md", "FK-5A · COVERAGE REPORT"],
+      ["FK5A_CURATED_PRECEDENCE_REPORT.md", "FK-5A · CURATED PRECEDENCE REPORT"],
+      ["FK5A_CURATED_REGISTRY_RELEASE.md", "FK-5A · CURATED REGISTRY RELEASE"],
+      ["FK5A_DRESS_CODE_REVIEW.md", "FK-5A · DRESS CODE REVIEW"],
+      ["FK5A_EXECUTIVE_SUMMARY.md", "FK-5A · الملخص التنفيذي"],
+      ["FK5A_FK6_GATE_DECISION.md", "FK-5A · FK6 GATE DECISION"],
+      ["FK5A_FROZEN_BOUNDARY_VERIFICATION.md", "FK-5A · تحقق حدود التجميد"],
+      ["FK5A_HUMAN_REVIEW_RECORD.md", "FK-5A · HUMAN REVIEW RECORD"],
+      ["FK5A_MODE_A_VS_MODE_B_REPORT.md", "FK-5A · MODE A VS MODE B REPORT"],
+      ["FK5A_MULTI_SOURCE_VALIDATION.md", "FK-5A · MULTI SOURCE VALIDATION"],
+      ["FK5A_OCCASION_REVIEW.md", "FK-5A · OCCASION REVIEW"],
+      ["FK5A_RED_YELLOW_WEDDING_REPORT.md", "FK-5A · RED YELLOW WEDDING REPORT"],
+      ["FK5A_REGISTRY_PROMOTION_REPORT.md", "FK-5A · REGISTRY PROMOTION REPORT"],
+      ["FK5A_REGRESSION_REPORT.md", "FK-5A · تقرير الانحدار"],
+      ["FK5A_REJECTED_RULE_INVENTORY.md", "FK-5A · REJECTED RULE INVENTORY"],
+      ["FK5A_RESEARCH_MORE_INVENTORY.md", "FK-5A · RESEARCH MORE INVENTORY"],
+      ["FK5A_RISK_REGISTER.md", "FK-5A · سجل المخاطر"],
+      ["FK5A_ROLLBACK_REPORT.md", "FK-5A · ROLLBACK REPORT"],
+      ["FK5A_RULE_SCOPE_NARROWING.md", "FK-5A · RULE SCOPE NARROWING"],
+      ["FK5A_RULE_SOURCE_EVIDENCE_MATRIX.md", "FK-5A · RULE SOURCE EVIDENCE MATRIX"],
+      ["FK5A_SOURCE_INVENTORY.md", "FK-5A · SOURCE INVENTORY"],
+      ["FK5A_SOURCE_REQUIREMENTS.md", "FK-5A · SOURCE REQUIREMENTS"],
+      ["FK5A_STATIC_ANALYSIS_REPORT.md", "FK-5A · تقرير التحليل الثابت"],
+      ["FK5A_TEST_REPORT.md", "FK-5A · تقرير الاختبارات"],
+    ];
+    const fk5 = [
+      ["FK5_ACTIVE_RULE_INVENTORY.md", "FK-5 · ACTIVE RULE INVENTORY"],
+      ["FK5_APPLICABILITY_REPORT.md", "FK-5 · APPLICABILITY REPORT"],
+      ["FK5_CLAIM_LOCK_COMPATIBILITY.md", "FK-5 · CLAIM LOCK COMPATIBILITY"],
+      ["FK5_COLOR_KNOWLEDGE_MODEL.md", "FK-5 · COLOR KNOWLEDGE MODEL"],
+      ["FK5_COLOR_OCCASION_INTERSECTION.md", "FK-5 · COLOR OCCASION INTERSECTION"],
+      ["FK5_COLOR_THEORY_VS_STYLING_POLICY.md", "FK-5 · COLOR THEORY VS STYLING POLICY"],
+      ["FK5_COPYRIGHT_SAFETY_REPORT.md", "FK-5 · COPYRIGHT SAFETY REPORT"],
+      ["FK5_CURATED_VS_LLM_PRECEDENCE.md", "FK-5 · CURATED VS LLM PRECEDENCE"],
+      ["FK5_DRESS_CODE_MODEL.md", "FK-5 · DRESS CODE MODEL"],
+      ["FK5_EXCEPTION_REPORT.md", "FK-5 · EXCEPTION REPORT"],
+      ["FK5_EXECUTIVE_SUMMARY.md", "FK-5 · الملخص التنفيذي"],
+      ["FK5_EXPLAINABILITY_REPORT.md", "FK-5 · EXPLAINABILITY REPORT"],
+      ["FK5_FK6_READINESS_REPORT.md", "FK-5 · FK6 READINESS REPORT"],
+      ["FK5_FROZEN_BOUNDARY_VERIFICATION.md", "FK-5 · تحقق حدود التجميد"],
+      ["FK5_HUMAN_REVIEW_PACK.md", "FK-5 · HUMAN REVIEW PACK"],
+      ["FK5_IMPLEMENTATION_REPORT.md", "FK-5 · تقرير التنفيذ"],
+      ["FK5_MULTI_SOURCE_POLICY.md", "FK-5 · MULTI SOURCE POLICY"],
+      ["FK5_OCCASION_KNOWLEDGE_MODEL.md", "FK-5 · OCCASION KNOWLEDGE MODEL"],
+      ["FK5_PERFORMANCE_REPORT.md", "FK-5 · PERFORMANCE REPORT"],
+      ["FK5_RED_YELLOW_WEDDING_REPORT.md", "FK-5 · RED YELLOW WEDDING REPORT"],
+      ["FK5_REGISTRY_RELEASE_REPORT.md", "FK-5 · REGISTRY RELEASE REPORT"],
+      ["FK5_REGISTRY_UPDATE_REPORT.md", "FK-5 · REGISTRY UPDATE REPORT"],
+      ["FK5_REGRESSION_REPORT.md", "FK-5 · تقرير الانحدار"],
+      ["FK5_REVIEW_CANDIDATE_INVENTORY.md", "FK-5 · REVIEW CANDIDATE INVENTORY"],
+      ["FK5_REVIEW_STATUS_REPORT.md", "FK-5 · REVIEW STATUS REPORT"],
+      ["FK5_RISK_REGISTER.md", "FK-5 · سجل المخاطر"],
+      ["FK5_ROLLBACK_VERIFICATION.md", "FK-5 · تحقق التراجع"],
+      ["FK5_RULE_AUTHORING_POLICY.md", "FK-5 · RULE AUTHORING POLICY"],
+      ["FK5_RULE_CONFIDENCE_POLICY.md", "FK-5 · RULE CONFIDENCE POLICY"],
+      ["FK5_RULE_DEDUPLICATION_REPORT.md", "FK-5 · RULE DEDUPLICATION REPORT"],
+      ["FK5_RULE_PROVENANCE_REPORT.md", "FK-5 · RULE PROVENANCE REPORT"],
+      ["FK5_RULE_SUBJECTIVITY_REPORT.md", "FK-5 · RULE SUBJECTIVITY REPORT"],
+      ["FK5_SECURITY_AND_INTEGRITY_REPORT.md", "FK-5 · SECURITY AND INTEGRITY REPORT"],
+      ["FK5_SOURCE_AUTHORITY_POLICY.md", "FK-5 · SOURCE AUTHORITY POLICY"],
+      ["FK5_SOURCE_DISCOVERY_REPORT.md", "FK-5 · SOURCE DISCOVERY REPORT"],
+      ["FK5_STATIC_ANALYSIS_REPORT.md", "FK-5 · تقرير التحليل الثابت"],
+      ["FK5_TECHNICAL_DEBT_REGISTER.md", "FK-5 · سجل الدين التقني"],
+      ["FK5_TEST_REPORT.md", "FK-5 · تقرير الاختبارات"],
+    ];
+    const fk4 = [
+      ["FK4_ACTIVE_RULE_POLICY.md", "FK-4 · ACTIVE RULE POLICY"],
+      ["FK4_ADMIN_BOUNDARY.md", "FK-4 · ADMIN BOUNDARY"],
+      ["FK4_AUDIT_HISTORY.md", "FK-4 · AUDIT HISTORY"],
+      ["FK4_CACHE_POLICY.md", "FK-4 · CACHE POLICY"],
+      ["FK4_CLAIM_LOCK_COMPATIBILITY.md", "FK-4 · CLAIM LOCK COMPATIBILITY"],
+      ["FK4_CONDITION_EVALUATOR.md", "FK-4 · CONDITION EVALUATOR"],
+      ["FK4_CONFIDENCE_FILTERING.md", "FK-4 · CONFIDENCE FILTERING"],
+      ["FK4_COPYRIGHT_SAFETY_POLICY.md", "FK-4 · COPYRIGHT SAFETY POLICY"],
+      ["FK4_CULTURAL_CONTEXT_INDEX.md", "FK-4 · CULTURAL CONTEXT INDEX"],
+      ["FK4_DETERMINISM_REPORT.md", "FK-4 · DETERMINISM REPORT"],
+      ["FK4_EXCEPTION_PRECEDENCE.md", "FK-4 · EXCEPTION PRECEDENCE"],
+      ["FK4_EXECUTIVE_SUMMARY.md", "FK-4 · الملخص التنفيذي"],
+      ["FK4_FK3_INTEGRATION_BOUNDARY.md", "FK-4 · FK3 INTEGRATION BOUNDARY"],
+      ["FK4_FK5_READINESS_REPORT.md", "FK-4 · FK5 READINESS REPORT"],
+      ["FK4_FROZEN_BOUNDARY_VERIFICATION.md", "FK-4 · تحقق حدود التجميد"],
+      ["FK4_IMPLEMENTATION_REPORT.md", "FK-4 · تقرير التنفيذ"],
+      ["FK4_JSON_STORAGE_DECISION.md", "FK-4 · JSON STORAGE DECISION"],
+      ["FK4_LOOKUP_REASON_CODES.md", "FK-4 · LOOKUP REASON CODES"],
+      ["FK4_OCCASION_INDEX.md", "FK-4 · OCCASION INDEX"],
+      ["FK4_PERFORMANCE_REPORT.md", "FK-4 · PERFORMANCE REPORT"],
+      ["FK4_PRODUCTION_LOADER.md", "FK-4 · PRODUCTION LOADER"],
+      ["FK4_PROVENANCE_REQUIREMENTS.md", "FK-4 · PROVENANCE REQUIREMENTS"],
+      ["FK4_REGISTRY_ARCHITECTURE.md", "FK-4 · REGISTRY ARCHITECTURE"],
+      ["FK4_REGISTRY_CONTRACT.md", "FK-4 · REGISTRY CONTRACT"],
+      ["FK4_REGISTRY_RELEASE_MODEL.md", "FK-4 · REGISTRY RELEASE MODEL"],
+      ["FK4_REGISTRY_VALIDATION_REPORT.md", "FK-4 · REGISTRY VALIDATION REPORT"],
+      ["FK4_REGISTRY_VERSIONING.md", "FK-4 · REGISTRY VERSIONING"],
+      ["FK4_REGRESSION_REPORT.md", "FK-4 · تقرير الانحدار"],
+      ["FK4_RISK_REGISTER.md", "FK-4 · سجل المخاطر"],
+      ["FK4_ROLLBACK_POLICY.md", "FK-4 · سياسة التراجع"],
+      ["FK4_RULE_CONFLICT_POLICY.md", "FK-4 · RULE CONFLICT POLICY"],
+      ["FK4_RULE_INDEX_ARCHITECTURE.md", "FK-4 · RULE INDEX ARCHITECTURE"],
+      ["FK4_RULE_LOOKUP_CONTRACT.md", "FK-4 · RULE LOOKUP CONTRACT"],
+      ["FK4_SECURITY_REPORT.md", "FK-4 · SECURITY REPORT"],
+      ["FK4_SNAPSHOT_ARCHITECTURE.md", "FK-4 · SNAPSHOT ARCHITECTURE"],
+      ["FK4_STATIC_ANALYSIS_REPORT.md", "FK-4 · تقرير التحليل الثابت"],
+      ["FK4_STORAGE_PORT.md", "FK-4 · STORAGE PORT"],
+      ["FK4_SUBJECTIVITY_FILTERING.md", "FK-4 · SUBJECTIVITY FILTERING"],
+      ["FK4_SUPERSESSION_POLICY.md", "FK-4 · SUPERSESSION POLICY"],
+      ["FK4_TECHNICAL_DEBT_REGISTER.md", "FK-4 · سجل الدين التقني"],
+      ["FK4_TEST_REPORT.md", "FK-4 · تقرير الاختبارات"],
+      ["FK4_TREND_VALIDITY.md", "FK-4 · TREND VALIDITY"],
+      ["FK4_VERSION_MANIFEST.md", "FK-4 · بيان الإصدار"],
+    ];
+    const fk3 = [
+      ["FK3_ASSUMPTION_POLICY.md", "FK-3 · ASSUMPTION POLICY"],
+      ["FK3_BLOCK_POLICY.md", "FK-3 · BLOCK POLICY"],
+      ["FK3_CACHING_DECISION.md", "FK-3 · CACHING DECISION"],
+      ["FK3_CLAIM_LOCK_INTEGRATION.md", "FK-3 · CLAIM LOCK INTEGRATION"],
+      ["FK3_CLARIFICATION_POLICY.md", "FK-3 · CLARIFICATION POLICY"],
+      ["FK3_CONFIDENCE_CAP_POLICY.md", "FK-3 · CONFIDENCE CAP POLICY"],
+      ["FK3_CONTEXT_PROJECTION.md", "FK-3 · CONTEXT PROJECTION"],
+      ["FK3_COST_CONTROL.md", "FK-3 · COST CONTROL"],
+      ["FK3_CULTURAL_CONTEXT_POLICY.md", "FK-3 · CULTURAL CONTEXT POLICY"],
+      ["FK3_DETERMINISM_REPORT.md", "FK-3 · DETERMINISM REPORT"],
+      ["FK3_DRAFT_TO_CANDIDATE_MAPPING.md", "FK-3 · DRAFT TO CANDIDATE MAPPING"],
+      ["FK3_DRAFT_VALIDATION.md", "FK-3 · DRAFT VALIDATION"],
+      ["FK3_EXECUTIVE_SUMMARY.md", "FK-3 · الملخص التنفيذي"],
+      ["FK3_FEATURE_FLAG.md", "FK-3 · FEATURE FLAG"],
+      ["FK3_FK4_READINESS_REPORT.md", "FK-3 · FK4 READINESS REPORT"],
+      ["FK3_FROZEN_BOUNDARY_VERIFICATION.md", "FK-3 · تحقق حدود التجميد"],
+      ["FK3_IMPLEMENTATION_REPORT.md", "FK-3 · تقرير التنفيذ"],
+      ["FK3_LLM_ADAPTER_ARCHITECTURE.md", "FK-3 · LLM ADAPTER ARCHITECTURE"],
+      ["FK3_LLM_PROVIDER_PORT.md", "FK-3 · LLM PROVIDER PORT"],
+      ["FK3_LLM_REQUEST_CONTRACT.md", "FK-3 · LLM REQUEST CONTRACT"],
+      ["FK3_OCCASION_POLICY.md", "FK-3 · OCCASION POLICY"],
+      ["FK3_OUTPUT_SANITIZATION.md", "FK-3 · OUTPUT SANITIZATION"],
+      ["FK3_PREFERENCE_POLICY.md", "FK-3 · PREFERENCE POLICY"],
+      ["FK3_PROMPT_INJECTION_SECURITY.md", "FK-3 · PROMPT INJECTION SECURITY"],
+      ["FK3_PROMPT_POLICY.md", "FK-3 · PROMPT POLICY"],
+      ["FK3_PROVIDER_CONFIGURATION.md", "FK-3 · إعداد المزود"],
+      ["FK3_QUALIFICATION_POLICY.md", "FK-3 · QUALIFICATION POLICY"],
+      ["FK3_RED_YELLOW_WEDDING_TEST.md", "FK-3 · اختبار أحمر/أصفر/زفاف"],
+      ["FK3_REGRESSION_REPORT.md", "FK-3 · تقرير الانحدار"],
+      ["FK3_RETRY_AND_FAILURE_POLICY.md", "FK-3 · RETRY AND FAILURE POLICY"],
+      ["FK3_RISK_REGISTER.md", "FK-3 · سجل المخاطر"],
+      ["FK3_RUNTIME_CONTRACT.md", "FK-3 · RUNTIME CONTRACT"],
+      ["FK3_SECURITY_REPORT.md", "FK-3 · SECURITY REPORT"],
+      ["FK3_STATIC_ANALYSIS_REPORT.md", "FK-3 · تقرير التحليل الثابت"],
+      ["FK3_STRUCTURED_OUTPUT_CONTRACT.md", "FK-3 · STRUCTURED OUTPUT CONTRACT"],
+      ["FK3_TECHNICAL_DEBT_REGISTER.md", "FK-3 · سجل الدين التقني"],
+      ["FK3_TEST_PROVIDER.md", "FK-3 · TEST PROVIDER"],
+      ["FK3_TEST_REPORT.md", "FK-3 · تقرير الاختبارات"],
+      ["FK3_VALIDATION_REPORT.md", "FK-3 · VALIDATION REPORT"],
+    ];
+    const fk2 = [
+      ["FK2_ALTERNATIVE_CONTRACT.md", "FK-2 · ALTERNATIVE CONTRACT"],
+      ["FK2_APPLICABILITY_EXCEPTION_CONTRACT.md", "FK-2 · APPLICABILITY EXCEPTION CONTRACT"],
+      ["FK2_CLAIM_LOCK_CONTRACT.md", "FK-2 · CLAIM LOCK CONTRACT"],
+      ["FK2_CLAIM_LOCK_GATE_MATRIX.md", "FK-2 · CLAIM LOCK GATE MATRIX"],
+      ["FK2_CULTURAL_CONFLICT_CONTRACT.md", "FK-2 · CULTURAL CONFLICT CONTRACT"],
+      ["FK2_CURATED_RULE_PRECEDENCE_POLICY.md", "FK-2 · CURATED RULE PRECEDENCE POLICY"],
+      ["FK2_DETERMINISM_REPORT.md", "FK-2 · DETERMINISM REPORT"],
+      ["FK2_EXECUTIVE_SUMMARY.md", "FK-2 · الملخص التنفيذي"],
+      ["FK2_FASHION_ADVICE_CANDIDATE_CONTRACT.md", "FK-2 · FASHION ADVICE CANDIDATE CONTRACT"],
+      ["FK2_FASHION_KNOWLEDGE_RULE_CONTRACT.md", "FK-2 · FASHION KNOWLEDGE RULE CONTRACT"],
+      ["FK2_FK3_READINESS_REPORT.md", "FK-2 · FK3 READINESS REPORT"],
+      ["FK2_FROZEN_BOUNDARY_VERIFICATION.md", "FK-2 · تحقق حدود التجميد"],
+      ["FK2_IMPLEMENTATION_REPORT.md", "FK-2 · تقرير التنفيذ"],
+      ["FK2_KNOWLEDGE_CONFIDENCE_CONTRACT.md", "FK-2 · KNOWLEDGE CONFIDENCE CONTRACT"],
+      ["FK2_KNOWLEDGE_TYPE_CONTRACT.md", "FK-2 · KNOWLEDGE TYPE CONTRACT"],
+      ["FK2_LLM_CANDIDATE_POLICY.md", "FK-2 · LLM CANDIDATE POLICY"],
+      ["FK2_PACKAGE_ARCHITECTURE.md", "FK-2 · PACKAGE ARCHITECTURE"],
+      ["FK2_PREFERENCE_CONFLICT_CONTRACT.md", "FK-2 · PREFERENCE CONFLICT CONTRACT"],
+      ["FK2_PROVENANCE_CONTRACT.md", "FK-2 · PROVENANCE CONTRACT"],
+      ["FK2_PUBLIC_CLAIM_STRENGTH_POLICY.md", "FK-2 · PUBLIC CLAIM STRENGTH POLICY"],
+      ["FK2_RED_YELLOW_WEDDING_TEST_REPORT.md", "FK-2 · تقرير الاختبارات"],
+      ["FK2_RISK_REGISTER.md", "FK-2 · سجل المخاطر"],
+      ["FK2_RULE_CONDITION_CONTRACT.md", "FK-2 · RULE CONDITION CONTRACT"],
+      ["FK2_RULE_CONFLICT_MODEL.md", "FK-2 · RULE CONFLICT MODEL"],
+      ["FK2_RULE_LIFECYCLE.md", "FK-2 · RULE LIFECYCLE"],
+      ["FK2_SECURITY_AND_LEAKAGE_REPORT.md", "FK-2 · SECURITY AND LEAKAGE REPORT"],
+      ["FK2_STATIC_ANALYSIS_REPORT.md", "FK-2 · تقرير التحليل الثابت"],
+      ["FK2_SUBJECTIVITY_CONTRACT.md", "FK-2 · SUBJECTIVITY CONTRACT"],
+      ["FK2_TECHNICAL_DEBT_REGISTER.md", "FK-2 · سجل الدين التقني"],
+      ["FK2_TEST_REPORT.md", "FK-2 · تقرير الاختبارات"],
+      ["FK2_TONE_SAFETY_POLICY.md", "FK-2 · TONE SAFETY POLICY"],
+      ["FK2_VALIDATION_REPORT.md", "FK-2 · VALIDATION REPORT"],
+      ["FK2_VERSION_MANIFEST.md", "FK-2 · بيان الإصدار"],
+    ];
+    const fk1 = [
+      ["FASHION_KNOWLEDGE_ARCHITECTURE_EXECUTIVE_SUMMARY.md", "FK-1 · الملخص التنفيذي"],
+      ["FASHION_KNOWLEDGE_ARCHITECTURE_LOCK.md", "FK-1 · قفل المعمارية"],
+      ["FASHION_KNOWLEDGE_OWNERSHIP_MODEL.md", "FK-1 · الملكية"],
+      ["FASHION_KNOWLEDGE_TYPE_SYSTEM.md", "FK-1 · أنواع المعرفة"],
+      ["FASHION_KNOWLEDGE_RULE_MODEL.md", "FK-1 · نموذج القاعدة"],
+      ["FASHION_KNOWLEDGE_CONDITION_MODEL.md", "FK-1 · الشروط"],
+      ["FASHION_ADVICE_CANDIDATE_CONTRACT.md", "FK-1 · مرشح النصيحة"],
+      ["FASHION_CLAIM_LOCK_ARCHITECTURE.md", "FK-1 · Claim Lock"],
+      ["FASHION_LLM_HYBRID_STRATEGY.md", "FK-1 · استراتيجية LLM"],
+      ["FASHION_PROVENANCE_ARCHITECTURE.md", "FK-1 · Provenance"],
+      ["FASHION_SUBJECTIVITY_MODEL.md", "FK-1 · الذاتية"],
+      ["FASHION_CONFLICT_RESOLUTION_POLICY.md", "FK-1 · التعارض"],
+      ["FASHION_ALTERNATIVE_GENERATION_ARCHITECTURE.md", "FK-1 · البدائل"],
+      ["FASHION_OCCASION_KNOWLEDGE_ARCHITECTURE.md", "FK-1 · المناسبة"],
+      ["FASHION_COLOR_KNOWLEDGE_ARCHITECTURE.md", "FK-1 · اللون"],
+      ["FASHION_ACCESSORY_KNOWLEDGE_ARCHITECTURE.md", "FK-1 · الإكسسوار"],
+      ["FASHION_FABRIC_SILHOUETTE_ARCHITECTURE.md", "FK-1 · قماش/ظل"],
+      ["FASHION_CULTURAL_KNOWLEDGE_ARCHITECTURE.md", "FK-1 · السياق الثقافي"],
+      ["FASHION_KNOWLEDGE_REGISTRY_ARCHITECTURE.md", "FK-1 · السجل"],
+      ["FASHION_KNOWLEDGE_GRAPH_DECISION.md", "FK-1 · قرار الرسم البياني"],
+      ["FASHION_OUTFIT_INTELLIGENCE_INTEGRATION.md", "FK-1 · تكامل OI"],
+      ["FASHION_STYLING_INTELLIGENCE_INTEGRATION.md", "FK-1 · تكامل SI"],
+      ["FASHION_ADVISOR_INTEGRATION.md", "FK-1 · تكامل Advisor"],
+      ["FASHION_MCE_TRANSITION_POLICY.md", "FK-1 · انتقال MCE"],
+      ["FASHION_TELEMETRY_ARCHITECTURE.md", "FK-1 · التحليلات"],
+      ["FASHION_FEEDBACK_MODEL.md", "FK-1 · الملاحظات"],
+      ["FASHION_12_MONTH_DATA_STRATEGY.md", "FK-1 · استراتيجية 12 شهراً"],
+      ["FASHION_KNOWLEDGE_PROMOTION_PIPELINE.md", "FK-1 · ترقية المعرفة"],
+      ["FASHION_HUMAN_REVIEW_MODEL.md", "FK-1 · المراجعة البشرية"],
+      ["FASHION_ADVICE_TONE_AND_SAFETY.md", "FK-1 · النبرة والسلامة"],
+      ["RED_YELLOW_WEDDING_TARGET_ARCHITECTURE.md", "FK-1 · أثر أحمر/أصفر/زفاف"],
+      ["FASHION_KNOWLEDGE_VERSIONING_STRATEGY.md", "FK-1 · الإصدارات"],
+      ["FASHION_KNOWLEDGE_TESTING_STRATEGY.md", "FK-1 · الاختبار"],
+      ["FASHION_KNOWLEDGE_RISK_REGISTER.md", "FK-1 · المخاطر"],
+      ["FASHION_KNOWLEDGE_TECHNICAL_DEBT_REGISTER.md", "FK-1 · الدين التقني"],
+      ["FASHION_KNOWLEDGE_IMPLEMENTATION_ROADMAP.md", "FK-1 · خارطة التنفيذ"],
+    ];
+    const audit = [
+      ["FASHION_ADVICE_CAPABILITY_EXECUTIVE_SUMMARY.md", "تدقيق · الملخص التنفيذي"],
+      ["CURRENT_FASHION_CAPABILITY_MATRIX.md", "تدقيق · مصفوفة القدرة"],
+      ["FASHION_KNOWLEDGE_SOURCE_AUDIT.md", "تدقيق · مصادر المعرفة"],
+      ["FASHION_RULE_INVENTORY.md", "تدقيق · جرد القواعد"],
+      ["FASHION_HEURISTIC_AUDIT.md", "تدقيق · الـheuristics"],
+      ["COLOR_STYLING_CAPABILITY_AUDIT.md", "تدقيق · اللون"],
+      ["OCCASION_DRESS_CODE_AUDIT.md", "تدقيق · المناسبة"],
+      ["ACCESSORY_STYLING_CAPABILITY_AUDIT.md", "تدقيق · الإكسسوار"],
+      ["FASHION_LLM_DEPENDENCY_AUDIT.md", "تدقيق · اعتماد LLM"],
+      ["FASHION_EXPLAINABILITY_AUDIT.md", "تدقيق · الشرح"],
+      ["FASHION_PROVENANCE_AUDIT.md", "تدقيق · المصدر"],
+      ["RED_YELLOW_WEDDING_CAPABILITY_TRACE.md", "تدقيق · أحمر/أصفر/زفاف"],
+      ["FASHION_KNOWLEDGE_GAP_REPORT.md", "تدقيق · الفجوات"],
+      ["BUILD_VS_LLM_DECISION_REPORT.md", "تدقيق · بناء vs LLM"],
+      ["FROZEN_ARCHITECTURE_IMPACT_REPORT.md", "تدقيق · أثر التجميد"],
+    ];
+    const docs = [
+      at4r,
+      at4,
+      at3,
+      at2,
+      at1,
+      fk14,
+      fk13,
+      fk12,
+      fk11,
+      fk10,
+      fk9,
+      fk8,
+      fk7,
+      fk6,
+      fk5a,
+      fk5,
+      fk4,
+      fk3,
+      fk2,
+      fk1,
+      audit
+    ].flat();
+    document.getElementById("docList").innerHTML = docs.map(([file, title]) =>
+      `<a href="governance/${file}" target="_blank" rel="noopener"><strong>${title}</strong><span>${file}</span></a>`
+    ).join("");
+  </script>
+</body>
+</html>

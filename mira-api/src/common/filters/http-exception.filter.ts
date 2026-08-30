@@ -6,7 +6,7 @@ import {
   HttpStatus,
   Logger,
 } from '@nestjs/common';
-import { Response } from 'express';
+import { Request, Response } from 'express';
 
 @Catch()
 export class HttpExceptionFilter implements ExceptionFilter {
@@ -15,6 +15,8 @@ export class HttpExceptionFilter implements ExceptionFilter {
   catch(exception: unknown, host: ArgumentsHost): void {
     const ctx = host.switchToHttp();
     const response = ctx.getResponse<Response>();
+    const request = ctx.getRequest<Request>();
+    const route = `${request?.method ?? '?'} ${request?.originalUrl ?? '?'}`;
 
     let status = HttpStatus.INTERNAL_SERVER_ERROR;
     let message = 'Internal server error';
@@ -41,7 +43,16 @@ export class HttpExceptionFilter implements ExceptionFilter {
         message = exception.message;
       }
     } else if (exception instanceof Error) {
-      this.logger.error(exception.message, exception.stack);
+      // `fetch failed` hides the real transport error in `cause`; surface it for triage.
+      const cause = (exception as Error & { cause?: unknown }).cause;
+      const causeText =
+        cause instanceof Error
+          ? ` (cause: ${(cause as Error & { code?: string }).code ?? cause.name} — ${cause.message})`
+          : '';
+      this.logger.error(
+        `${route} — ${exception.message}${causeText}`,
+        exception.stack,
+      );
       message = exception.message || message;
     }
 

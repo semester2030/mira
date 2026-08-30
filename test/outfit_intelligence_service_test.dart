@@ -1,19 +1,21 @@
 import 'dart:io';
 import 'dart:typed_data';
+import 'dart:ui';
 
 import 'package:flutter_test/flutter_test.dart';
 import 'package:image/image.dart' as img;
 import 'package:mirra/core/ai/models/mira_occasion.dart';
 import 'package:mirra/features/outfit_analysis/data/datasources/outfit_segmentation_api_data_source.dart';
 import 'package:mirra/features/outfit_analysis/data/datasources/vision_api_data_source.dart';
-import 'package:mirra/features/outfit_analysis/domain/entities/fashion_vision_document.dart';
-import 'package:mirra/features/outfit_analysis/domain/entities/outfit_analysis_mode.dart';
+import 'package:mirra/features/outfit_analysis/domain/entities/canonical_garment.dart';
+import 'package:mirra/features/outfit_analysis/domain/entities/outfit_capture_validation.dart';
 import 'package:mirra/features/outfit_analysis/domain/entities/outfit_segment_map.dart';
 import 'package:mirra/features/outfit_analysis/domain/entities/outfit_visual_profile.dart';
 import 'package:mirra/features/outfit_analysis/domain/entities/user_gender.dart';
 import 'package:mirra/features/outfit_analysis/domain/helpers/skin_palette_mapper.dart';
 import 'package:mirra/features/outfit_analysis/domain/helpers/undertone_resolver.dart';
 import 'package:mirra/features/outfit_analysis/domain/services/deterministic_outfit_engine.dart';
+import 'package:mirra/features/outfit_analysis/domain/services/outfit_capture_validator.dart';
 import 'package:mirra/features/outfit_analysis/domain/services/outfit_image_analyzer.dart';
 import 'package:mirra/features/outfit_analysis/domain/services/outfit_intelligence_service.dart';
 import 'package:mirra/features/outfit_analysis/domain/services/outfit_segmentation_service.dart';
@@ -34,9 +36,7 @@ void main() {
     });
 
     test('high oiliness blocks shiny fabrics', () {
-      final profile = SkinPaletteMapper.fromSkinReport(
-        _warmSkin(oiliness: 82),
-      );
+      final profile = SkinPaletteMapper.fromSkinReport(_warmSkin(oiliness: 82));
       expect(profile.blockedPalettes, contains('أقمشة لامعة'));
       expect(profile.skinIssueFlags, contains('high_oiliness'));
     });
@@ -81,7 +81,9 @@ void main() {
     });
 
     test('male gender removes makeup recommendations', () async {
-      final visual = await OutfitImageAnalyzer.analyze(await _solidImageFile(180, 140, 90));
+      final visual = await OutfitImageAnalyzer.analyze(
+        await _solidImageFile(180, 140, 90),
+      );
 
       final male = DeterministicOutfitEngine.analyze(
         skin: _warmSkin(),
@@ -119,24 +121,18 @@ void main() {
         mode: OutfitAnalysisMode.smart,
       );
 
-      expect(
-        analysis.whyItFits.any((r) => r.contains('تدرج البشرة')),
-        isTrue,
-      );
-      expect(
-        analysis.whyItFits.any((r) => r.contains('undertone')),
-        isFalse,
-      );
+      expect(analysis.whyItFits.any((r) => r.contains('تدرج البشرة')), isTrue);
+      expect(analysis.whyItFits.any((r) => r.contains('undertone')), isFalse);
     });
 
-    test('analyzeFromFashionVision uses vision_platform source', () {
-      final analysis = DeterministicOutfitEngine.analyzeFromFashionVision(
-        fashion: _mockFashionDoc(),
+    test('analyzeFromCanonicalGarments uses canonical source', () {
+      final analysis = DeterministicOutfitEngine.analyzeFromCanonicalGarments(
+        garments: _mockCanonicalGarments(),
         skin: _warmSkin(),
         occasion: MiraOccasion.work,
         mode: OutfitAnalysisMode.smart,
       );
-      expect(analysis.visualSource, 'vision_platform');
+      expect(analysis.visualSource, 'canonical_garment');
       expect(analysis.compatibilityScore, inInclusiveRange(0, 100));
     });
   });
@@ -148,6 +144,7 @@ void main() {
         visionApi: _MockVisionApi(),
         segmentationApi: _NoNetworkSegmentation(),
         segmentationService: _TestSegmentation(),
+        captureValidatorFactory: _AlwaysValidCaptureValidator.new,
       );
 
       final first = await service.analyze(
@@ -168,7 +165,7 @@ void main() {
       expect(first.compatibilityScore, inInclusiveRange(0, 100));
       expect(first.skinCompatibilityScore, greaterThan(0));
       expect(first.analysisSource, 'deterministic');
-      expect(first.visualSource, 'vision_platform');
+      expect(first.visualSource, 'canonical_garment');
       expect(first.whyItFits, isNotEmpty);
     });
 
@@ -201,6 +198,7 @@ void main() {
         visionApi: _MockVisionApi(),
         segmentationApi: _NoNetworkSegmentation(),
         segmentationService: _TestSegmentation(),
+        captureValidatorFactory: _AlwaysValidCaptureValidator.new,
       );
 
       final result = await service.analyze(
@@ -213,7 +211,7 @@ void main() {
       expect(result.skinCompatibilityScore, 0);
       expect(result.suggestedMakeup, isEmpty);
       expect(result.compatibilityScore, inInclusiveRange(0, 100));
-      expect(result.visualSource, 'vision_platform');
+      expect(result.visualSource, 'canonical_garment');
       expect(
         result.compatibilityScore,
         DeterministicOutfitEngine.computeWeightedFinalQuick(
@@ -230,6 +228,7 @@ void main() {
         visionApi: _MockVisionApi(),
         segmentationApi: _NoNetworkSegmentation(),
         segmentationService: _TestSegmentation(),
+        captureValidatorFactory: _AlwaysValidCaptureValidator.new,
       );
 
       expect(
@@ -266,52 +265,36 @@ void main() {
   });
 }
 
-FashionVisionDocument _mockFashionDoc() => FashionVisionDocument(
-      schemaVersion: '1.0.0',
-      analysisGate: 'proceed',
-      provenance: const {},
-      geometry: const {
-        'segments': [
-          {
-            'id': 's1',
-            'regionRole': 'outerwear',
-            'bbox': {'x': 0.2, 'y': 0.18, 'w': 0.6, 'h': 0.34},
-            'polygon': [
-              [0.2, 0.18],
-              [0.8, 0.18],
-              [0.8, 0.52],
-              [0.2, 0.52],
-            ],
-          },
-        ],
-        'topology': {
-          'pieceCount': 1,
-          'onePiece': false,
-          'silhouetteHint': 'two_piece',
-        },
-      },
-      semantics: const {
-        'garments': [
-          {
-            'categoryId': 'outerwear',
-            'typeId': 'blazer',
-            'colors': ['beige_linen', 'cream_soft'],
-            'providerConfidence': 0.82,
-          },
-        ],
-        'accessories': [],
-        'styleArchetypeId': 'business',
-        'layering': ['base', 'outerwear'],
-        'dominantColorIds': ['beige_linen'],
-        'secondaryColorIds': ['cream_soft'],
-      },
-      fusion: const {
-        'overallConfidence': 0.72,
-        'conflicts': [],
-        'resolvedGarments': [],
-        'fieldConfidence': [],
-      },
-    );
+List<CanonicalGarment> _mockCanonicalGarments() => [
+  CanonicalGarment.fromJson({
+    'garmentId': 'garm_test_blazer',
+    'version': 'garment-schema-v1',
+    'identity': {
+      'categoryId': 'outerwear',
+      'typeId': 'blazer',
+      'entityClass': 'garment',
+    },
+    'attributes': {
+      'colors': ['beige_linen', 'cream_soft'],
+      'material': {'kind': 'estimated', 'value': 'linen'},
+      'season': ['all_season'],
+      'occasion': ['work'],
+      'styleHints': ['business'],
+    },
+    'geometryRef': {'segmentId': 's1', 'regionRole': 'outerwear'},
+    'confidence': 0.82,
+    'fieldConfidence': const [],
+    'availability': 'detected',
+    'source': 'vision',
+    'limitations': const [],
+    'explainability': const [],
+    'localeLabels': {'en': 'Blazer', 'ar': 'سترة رسمية'},
+    'runtime': const {},
+    'mappingVersion': 'garment-mapping-v1',
+    'createdAt': '2026-08-30T00:00:00.000Z',
+    'updatedAt': '2026-08-30T00:00:00.000Z',
+  }),
+];
 
 class _MockVisionApi extends VisionApiDataSource {
   @override
@@ -323,8 +306,12 @@ class _MockVisionApi extends VisionApiDataSource {
     String locale = 'ar',
   }) async {
     return VisionOutfitAnalyzeResult(
-      fashionVision: _mockFashionDoc(),
-      meta: const {'phase': 'test-mock'},
+      garments: _mockCanonicalGarments(),
+      meta: const {
+        'analysisGate': 'proceed',
+        'confidence': 82,
+        'phase': 'test-canonical-mock',
+      },
     );
   }
 }
@@ -334,14 +321,36 @@ class _NoNetworkSegmentation extends OutfitSegmentationApiDataSource {
   Future<OutfitSegmentMap?> segment({required String imagePath}) async => null;
 }
 
+class _AlwaysValidCaptureValidator extends OutfitCaptureValidator {
+  @override
+  Future<OutfitCaptureValidationResult> validateFile(File file) async =>
+      OutfitCaptureValidationResult.ready;
+
+  @override
+  Future<void> dispose() async {}
+}
+
 class _TestSegmentation extends OutfitSegmentationService {
   @override
   Future<OutfitSegmentMap> buildFromFrozenImage(
     File imageFile, {
     OutfitVisualProfile? visual,
     List<VisionLocalizedObject> visionObjects = const [],
-  }) async =>
-      OutfitSegmentMap.empty;
+  }) async => const OutfitSegmentMap(
+    regions: [
+      OutfitSegmentRegion(
+        zone: OutfitSegmentZone.upperBody,
+        normalizedRect: Rect.fromLTWH(0.2, 0.2, 0.6, 0.45),
+        labelAr: 'قطعة علوية',
+        labelEn: 'Top',
+        colors: ['بيج'],
+        confidence: 0.9,
+      ),
+    ],
+    upperBodyColors: ['بيج'],
+    source: 'test',
+    isVisualTrusted: true,
+  );
 }
 
 SkinReport _warmSkin({int oiliness = 45}) {

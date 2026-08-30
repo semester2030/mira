@@ -1,5 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:firebase_auth/firebase_auth.dart';
+import '../../../../core/entitlements/mira_runtime_entitlement_loader.dart';
+import '../../../../core/entitlements/mira_runtime_entitlement_store.dart';
 import '../../../../core/services/guest_session_service.dart';
 import '../../../../features/dashboard/presentation/screens/dashboard_screen.dart';
 import '../../../../features/auth/presentation/screens/login_screen.dart';
@@ -45,16 +47,21 @@ class _SplashScreenState extends State<SplashScreen> with SingleTickerProviderSt
 
     final user = FirebaseAuth.instance.currentUser;
     if (user != null) {
+      // PROD-FINAL-1: refresh server entitlements; failures stay fail-closed OFF.
+      await MiraRuntimeEntitlementLoader.refresh();
+      if (!mounted) return;
       Navigator.pushReplacement(
         context,
         MaterialPageRoute(builder: (_) => const DashboardScreen()),
       );
     } else if (GuestSessionService.isActive) {
+      MiraRuntimeEntitlementStore.clear();
       Navigator.pushReplacement(
         context,
         MaterialPageRoute(builder: (_) => const DashboardScreen()),
       );
     } else {
+      MiraRuntimeEntitlementStore.clear();
       Navigator.pushReplacement(
         context,
         MaterialPageRoute(builder: (_) => const LoginScreen()),

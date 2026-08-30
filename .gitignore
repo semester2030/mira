@@ -51,6 +51,9 @@ mira-api/node_modules/
 mira-api/dist/
 mira-api/build/
 mira-api/.env
+mira-api/.env.local
+mira-api/.env.qa
+mira-api/.env.*.local
 
 # Android Gradle reports (generated)
 android/build/

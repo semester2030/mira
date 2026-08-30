@@ -17,6 +17,8 @@ abstract final class AppRoutes {
   static const skinResult = '/skin-result';
   static const miraBeautyReport = '/mira-beauty-report';
   static const beautyProgress = '/beauty-progress';
+  /// Phase 9J — Face analysis history (comparability-gated).
+  static const faceHistory = '/face-history';
   static const skinRoutine = '/skin-routine';
   static const privacyConsent = '/privacy-consent';
   static const privacyPolicy = '/privacy-policy';

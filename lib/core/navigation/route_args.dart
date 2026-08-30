@@ -1,3 +1,4 @@
+import '../../features/face_analysis_experience/advisor_context/contracts/face_advisor_context.dart';
 import '../../features/outfit_analysis/domain/entities/outfit_analysis_mode.dart';
 import '../../features/outfit_analysis/domain/entities/outfit_compare_snapshot.dart';
 import '../../features/outfit_analysis/domain/entities/outfit_analysis.dart';
@@ -30,10 +31,25 @@ class OutfitOccasionRouteArgs {
 class MiraReportRouteArgs {
   final SkinReport report;
   final bool celebrate;
+  /// When true, always open legacy long report (e.g. details from v2 summary).
+  final bool forceLegacy;
+  /// Optional stale banner on results_v2 first surface.
+  final bool isStale;
+  /// Phase 9F — short-lived capture hold path for Result Mirror continuity.
+  final String? captureImagePath;
+  /// Phase 9F — true only for post-analysis navigation (not history).
+  final bool fromFreshAnalysis;
+  /// Phase 9J — open Result Mirror for a historical analysis (read projection of that report).
+  final bool fromHistory;
 
   const MiraReportRouteArgs({
     required this.report,
     this.celebrate = false,
+    this.forceLegacy = false,
+    this.isStale = false,
+    this.captureImagePath,
+    this.fromFreshAnalysis = false,
+    this.fromHistory = false,
   });
 }
 
@@ -43,6 +59,8 @@ class AdvisorRouteArgs {
   final String? outfitAnalysisId;
   final String? recolorAttemptId;
   final String? initialQuestion;
+  /// Phase 9I — Face Result / Guidance context for frozen Advisor chat.
+  final FaceAdvisorContext? faceContext;
 
   const AdvisorRouteArgs({
     this.skinReport,
@@ -50,6 +68,7 @@ class AdvisorRouteArgs {
     this.outfitAnalysisId,
     this.recolorAttemptId,
     this.initialQuestion,
+    this.faceContext,
   });
 
   /// Skin-only legacy entry (Phase 2).
@@ -57,6 +76,19 @@ class AdvisorRouteArgs {
     return AdvisorRouteArgs(
       skinReport: report,
       initialQuestion: initialQuestion,
+    );
+  }
+
+  /// Phase 9I — Face contextual Ask Mira (canonical Advisor path).
+  factory AdvisorRouteArgs.face({
+    required SkinReport report,
+    required FaceAdvisorContext faceContext,
+    String? initialQuestion,
+  }) {
+    return AdvisorRouteArgs(
+      skinReport: report,
+      faceContext: faceContext,
+      initialQuestion: initialQuestion ?? faceContext.initialQuestionAr,
     );
   }
 
@@ -90,5 +122,16 @@ class OutfitHistoryRouteArgs {
   const OutfitHistoryRouteArgs({
     this.anchorSnapshot,
     this.startCompareMode = false,
+  });
+}
+
+/// Phase 9J — Face analysis history host.
+class FaceHistoryRouteArgs {
+  final String? currentReportId;
+  final SkinReport? currentReport;
+
+  const FaceHistoryRouteArgs({
+    this.currentReportId,
+    this.currentReport,
   });
 }

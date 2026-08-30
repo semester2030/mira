@@ -1,3 +1,4 @@
+import 'dart:async';
 import 'dart:io';
 
 import 'package:flutter/material.dart';
@@ -15,6 +16,8 @@ import '../../../../shared/widgets/guest_banner.dart';
 import '../../../../shared/widgets/mira_app_bar.dart';
 import '../../../../shared/widgets/premium/premium_exports.dart';
 import '../../../../core/utils/mira_api_error_message.dart';
+import '../../../face_analysis_experience/presentation/analysis/analysis_motion.dart';
+import '../../../face_analysis_experience/presentation/result/result_mirror.dart';
 import '../../../packages/presentation/providers/package_credit_provider.dart';
 import '../../../skin_analysis/data/repositories/skin_analysis_repository_impl.dart';
 import '../../../skin_analysis/presentation/blocs/skin_analysis_bloc.dart';
@@ -34,13 +37,81 @@ class _NewAnalysisScreenState extends ConsumerState<NewAnalysisScreen> {
   bool _guestAnalyzing = false;
   final _guestRepo = GuestSkinAnalysisRepository();
 
+  AnalysisPipelineStatus _pipelineStatus = AnalysisPipelineStatus.idle;
+  String? _pipelineError;
+  Completer<void>? _motionHandoff;
+  String? _resultMirrorHoldPath;
+
+  bool get _motionOn => FaceAnalysisMotionFlag.enabled;
+
+  void _beginMotionPipeline() {
+    if (!_motionOn) return;
+    _motionHandoff = Completer<void>();
+    setState(() {
+      _pipelineStatus = AnalysisPipelineStatus.running;
+      _pipelineError = null;
+    });
+  }
+
+  void _onMotionHandoff() {
+    final gate = _motionHandoff;
+    if (gate != null && !gate.isCompleted) {
+      gate.complete();
+    }
+  }
+
+  Future<void> _awaitMotionHandoffIfNeeded() async {
+    if (!_motionOn) return;
+    final gate = _motionHandoff;
+    if (gate == null) return;
+    final maxWait = AnalysisMotionTimingPolicy.defaults.softMinChoreography +
+        AnalysisMotionTimingPolicy.defaults.maxDelayAfterSuccess +
+        AnalysisMotionTimingPolicy.defaults.completing +
+        const Duration(milliseconds: 200);
+    try {
+      await gate.future.timeout(maxWait);
+    } on TimeoutException {
+      // Never hold navigation purely for theatre.
+    }
+  }
+
+  Future<String?> _prepareResultMirrorHold() async {
+    if (!FaceResultMirrorFlag.enabled || _capturedImage == null) return null;
+    return FaceResultMirrorImageHold.prepareFrom(_capturedImage!.path);
+  }
+
+  /// Canonical Face retake reset — clear capture + motion; preserve history.
+  Future<void> _onReportRouteClosed(Object? result) async {
+    final retake = result == FaceRetakePolicy.popResult;
+    if (retake) {
+      FaceHistoryAnalytics.retakeCompleted();
+    }
+    _resultMirrorHoldPath = null;
+    if (!mounted) return;
+    if (!retake) return;
+    setState(() {
+      _capturedImage = null;
+      _pipelineStatus = AnalysisPipelineStatus.idle;
+      _pipelineError = null;
+      _motionHandoff = null;
+    });
+  }
+
   Future<void> _runGuestAnalysis(BuildContext context) async {
     if (_capturedImage == null) return;
     setState(() => _guestAnalyzing = true);
+    _beginMotionPipeline();
+    final mirrorHold = await _prepareResultMirrorHold();
+    _resultMirrorHoldPath = mirrorHold;
     try {
       final report = await _guestRepo.analyzeFromImage(_capturedImage!.path);
       AnalysisSession.setSkin(report);
       if (!context.mounted) return;
+      if (_motionOn) {
+        setState(() => _pipelineStatus = AnalysisPipelineStatus.succeeded);
+        await _awaitMotionHandoffIfNeeded();
+        if (!context.mounted) return;
+      }
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(
           content: Text(
@@ -50,14 +121,36 @@ class _NewAnalysisScreenState extends ConsumerState<NewAnalysisScreen> {
           backgroundColor: AppColors.secondary,
         ),
       );
-      MiraReportNavigation.openAfterAnalysis(context, report);
+      MiraReportNavigation.openAfterAnalysis(
+        context,
+        report,
+        captureImagePath: mirrorHold,
+      ).then(_onReportRouteClosed);
     } catch (e) {
+      await FaceResultMirrorImageHold.release(mirrorHold);
+      _resultMirrorHoldPath = null;
       if (!context.mounted) return;
+      final msg = friendlyMiraError(e);
+      if (_motionOn) {
+        setState(() {
+          _pipelineStatus = AnalysisPipelineStatus.failed;
+          _pipelineError = msg;
+        });
+      }
       ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(content: Text(friendlyMiraError(e)), backgroundColor: AppColors.error),
+        SnackBar(content: Text(msg), backgroundColor: AppColors.error),
       );
     } finally {
-      if (mounted) setState(() => _guestAnalyzing = false);
+      if (mounted) {
+        setState(() {
+          _guestAnalyzing = false;
+          if (!_motionOn ||
+              _pipelineStatus != AnalysisPipelineStatus.failed) {
+            _pipelineStatus = AnalysisPipelineStatus.idle;
+            _pipelineError = null;
+          }
+        });
+      }
     }
   }
 
@@ -67,6 +160,8 @@ class _NewAnalysisScreenState extends ConsumerState<NewAnalysisScreen> {
       final ok = await PackageCreditGate.ensureSkinCredits(context, ref);
       if (!ok || !context.mounted) return;
     }
+    _resultMirrorHoldPath = await _prepareResultMirrorHold();
+    _beginMotionPipeline();
     context.read<SkinAnalysisBloc>().add(
           StartSkinAnalysis(imagePath: _capturedImage!.path),
         );
@@ -91,13 +186,14 @@ class _NewAnalysisScreenState extends ConsumerState<NewAnalysisScreen> {
     required VoidCallback? onAnalyze,
   }) {
     final hasPhoto = _capturedImage != null;
+    final analyzing = loading || _guestAnalyzing;
 
     return Container(
       decoration: const BoxDecoration(
         gradient: LinearGradient(
           begin: Alignment.topCenter,
           end: Alignment.bottomCenter,
-          colors: [Color(0xFF2A1A24), Color(0xFF120C10)],
+          colors: [FaceExperienceTokens.captureGradientTop, FaceExperienceTokens.captureGradientBottom],
         ),
       ),
       child: SafeArea(
@@ -116,7 +212,9 @@ class _NewAnalysisScreenState extends ConsumerState<NewAnalysisScreen> {
                   const SizedBox(height: 6),
                   Text(
                     hasPhoto
-                        ? 'راجعي صورتك — ثم ابدئي التحليل'
+                        ? (analyzing && _motionOn
+                            ? 'نجهّز تحليلَك على صورتك'
+                            : 'راجعي صورتك — ثم ابدئي التحليل')
                         : 'كاميرا ميرا الاحترافية — ثبّتي وجهك داخل الإطار',
                     style: AppTypography.bodyMedium.copyWith(
                       color: AppColors.onPrimary.withValues(alpha: 0.78),
@@ -129,15 +227,30 @@ class _NewAnalysisScreenState extends ConsumerState<NewAnalysisScreen> {
               child: FaceCapturePanel(
                 capturedImage: _capturedImage,
                 enabled: !loading && !_guestAnalyzing,
-                isAnalyzing: loading || _guestAnalyzing,
-                onImageChanged: (file) => setState(() => _capturedImage = file),
+                isAnalyzing: analyzing,
+                analysisPipelineStatus: _motionOn
+                    ? (analyzing
+                        ? (_pipelineStatus == AnalysisPipelineStatus.idle
+                            ? AnalysisPipelineStatus.running
+                            : _pipelineStatus)
+                        : _pipelineStatus)
+                    : AnalysisPipelineStatus.idle,
+                analysisErrorMessage: _pipelineError,
+                onAnalysisMotionHandoff: _onMotionHandoff,
+                onImageChanged: (file) => setState(() {
+                  _capturedImage = file;
+                  _pipelineStatus = AnalysisPipelineStatus.idle;
+                  _pipelineError = null;
+                }),
               ),
             ),
             Padding(
               padding: const EdgeInsets.fromLTRB(20, 4, 20, 20),
               child: PremiumButton(
                 label: loading
-                    ? 'جاري التحليل بالذكاء الاصطناعي...'
+                    ? (_motionOn
+                        ? 'جاري تجهيز التحليل...'
+                        : 'جاري التحليل بالذكاء الاصطناعي...')
                     : hasPhoto
                         ? 'بدء التحليل'
                         : 'التقطي صورتك أولاً',
@@ -207,6 +320,13 @@ class _NewAnalysisScreenState extends ConsumerState<NewAnalysisScreen> {
             await _onSkinAnalysisSuccess(context);
             if (!context.mounted) return;
             AnalysisSession.setSkin(state.report);
+            if (_motionOn) {
+              setState(() => _pipelineStatus = AnalysisPipelineStatus.succeeded);
+              // Keep isAnalyzing true briefly via loading state — bloc already Success
+              // so loading is false. Hold UI with succeeded status until handoff.
+              await _awaitMotionHandoffIfNeeded();
+              if (!context.mounted) return;
+            }
             ScaffoldMessenger.of(context).showSnackBar(
               SnackBar(
                 content: Text(
@@ -216,15 +336,40 @@ class _NewAnalysisScreenState extends ConsumerState<NewAnalysisScreen> {
                 backgroundColor: AppColors.success,
               ),
             );
-            MiraReportNavigation.openAfterAnalysis(context, state.report);
+            MiraReportNavigation.openAfterAnalysis(
+              context,
+              state.report,
+              captureImagePath: _resultMirrorHoldPath,
+            ).then((result) async {
+              await _onReportRouteClosed(result);
+            });
+            if (mounted) {
+              setState(() {
+                _pipelineStatus = AnalysisPipelineStatus.idle;
+                _pipelineError = null;
+              });
+            }
           } else if (state is SkinAnalysisFailure) {
+            if (_resultMirrorHoldPath != null) {
+              await FaceResultMirrorImageHold.release(_resultMirrorHoldPath);
+              _resultMirrorHoldPath = null;
+            }
+            if (_motionOn) {
+              setState(() {
+                _pipelineStatus = AnalysisPipelineStatus.failed;
+                _pipelineError = state.message;
+              });
+            }
             ScaffoldMessenger.of(context).showSnackBar(
               SnackBar(content: Text(state.message), backgroundColor: AppColors.error),
             );
           }
         },
         builder: (context, state) {
-          final loading = state is SkinAnalysisLoading;
+          final loading = state is SkinAnalysisLoading ||
+              (_motionOn &&
+                  _pipelineStatus == AnalysisPipelineStatus.succeeded &&
+                  state is SkinAnalysisSuccess);
           return Theme(
             data: Theme.of(context).copyWith(
               appBarTheme: AppBarTheme(

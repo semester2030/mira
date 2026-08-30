@@ -8,23 +8,51 @@ import 'route_args.dart';
 abstract final class MiraReportNavigation {
   MiraReportNavigation._();
 
-  static void open(
+  static Future<Object?> open(
     BuildContext context,
     SkinReport report, {
     bool celebrate = false,
+    bool forceLegacy = false,
+    String? captureImagePath,
+    bool fromFreshAnalysis = false,
+    bool fromHistory = false,
   }) {
-    Navigator.pushNamed(
+    return Navigator.pushNamed(
       context,
       AppRoutes.miraBeautyReport,
-      arguments: MiraReportRouteArgs(report: report, celebrate: celebrate),
+      arguments: MiraReportRouteArgs(
+        report: report,
+        celebrate: celebrate,
+        forceLegacy: forceLegacy,
+        captureImagePath: captureImagePath,
+        fromFreshAnalysis: fromFreshAnalysis,
+        fromHistory: fromHistory,
+      ),
     );
   }
 
-  static void openAfterAnalysis(BuildContext context, SkinReport report) {
-    open(context, report, celebrate: true);
+  static Future<Object?> openAfterAnalysis(
+    BuildContext context,
+    SkinReport report, {
+    String? captureImagePath,
+  }) {
+    return open(
+      context,
+      report,
+      celebrate: true,
+      captureImagePath: captureImagePath,
+      fromFreshAnalysis: true,
+    );
   }
 
-  static void openFromHistory(BuildContext context, SkinReport report) {
-    open(context, report, celebrate: false);
+  /// Opens historical Face Result Mirror when flag ON (that report's projection only).
+  static Future<Object?> openFromHistory(BuildContext context, SkinReport report) {
+    return open(
+      context,
+      report,
+      celebrate: false,
+      fromFreshAnalysis: false,
+      fromHistory: true,
+    );
   }
 }

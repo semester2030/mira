@@ -9,6 +9,10 @@
       {
         "include": "beauty-experience/capability/*.json",
         "watchAssets": true
+      },
+      {
+        "include": "fashion-knowledge/assets/**/*",
+        "watchAssets": true
       }
     ]
   }
