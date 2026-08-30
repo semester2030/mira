@@ -6,11 +6,22 @@ import { resolveUndertone } from '../../intelligence/pipeline/undertone-intellig
 
 /** YouCam S2S v2.0 — multipart file upload → task → poll (server-side only). */
 
-type YouCamConcern = {
+export type YouCamConcern = {
   type: string;
   ui_score?: number;
   raw_score?: number;
 };
+
+export const REQUIRED_YOUCAM_CONCERNS = [
+  'wrinkle',
+  'pore',
+  'texture',
+  'acne',
+  'moisture',
+  'oiliness',
+  'redness',
+  'age_spot',
+] as const;
 
 @Injectable()
 export class PerfectCorpService {
@@ -185,33 +196,45 @@ export class PerfectCorpService {
     throw new Error(`YouCam task timed out after ${maxMs}ms`);
   }
 
-  private mapYouCamResults(
+  mapYouCamResults(
     concerns: YouCamConcern[],
     rawData?: Record<string, unknown>,
   ): SkinAnalysisResult {
     const byType = new Map<string, number>();
     for (const item of concerns) {
-      if (typeof item.ui_score === 'number') {
+      if (
+        typeof item.ui_score === 'number' &&
+        Number.isFinite(item.ui_score) &&
+        item.ui_score >= 0 &&
+        item.ui_score <= 100
+      ) {
         byType.set(item.type.toLowerCase(), item.ui_score);
       }
     }
 
-    const score = (type: string, fallback: number) =>
-      byType.get(type) ?? fallback;
+    const missing = REQUIRED_YOUCAM_CONCERNS.filter(
+      (type) => !byType.has(type),
+    );
+    if (missing.length > 0) {
+      throw new Error(
+        `YouCam incomplete result: missing or invalid ui_score for ${missing.join(',')}`,
+      );
+    }
 
     const beautyScore = average(
       [...byType.values()].filter((v) => Number.isFinite(v)),
-      72,
     );
 
-    const hydration = clamp(score('moisture', 60), 0, 100);
-    const oiliness = clamp(score('oiliness', 40), 0, 100);
+    const score = (type: (typeof REQUIRED_YOUCAM_CONCERNS)[number]) =>
+      byType.get(type)!;
 
-    const pores = severityFromUi(score('pore', 70));
-    const wrinkles = severityFromUi(score('wrinkle', 70));
-    const acne = severityFromUi(score('acne', 75));
-    const darkSpots = severityFromUi(score('age_spot', 80));
-    const redness = severityFromUi(score('redness', 85));
+    const hydration = score('moisture');
+    const oiliness = score('oiliness');
+    const pores = severityFromUi(score('pore'));
+    const wrinkles = severityFromUi(score('wrinkle'));
+    const acne = severityFromUi(score('acne'));
+    const darkSpots = severityFromUi(score('age_spot'));
+    const redness = severityFromUi(score('redness'));
 
     const { skinTypeAr, skinTypeEn } = inferSkinType(hydration, oiliness);
 
@@ -228,36 +251,6 @@ export class PerfectCorpService {
     const concernScores: Record<string, number> = {};
     for (const [type, value] of byType.entries()) {
       concernScores[normalizeConcernId(type)] = Math.round(value);
-    }
-    for (const id of [
-      'moisture',
-      'oiliness',
-      'pore',
-      'wrinkle',
-      'acne',
-      'age_spot',
-      'redness',
-      'texture',
-    ]) {
-      if (concernScores[id] == null) {
-        const fallback =
-          id === 'moisture'
-            ? hydration
-            : id === 'oiliness'
-              ? 100 - oiliness
-              : id === 'pore'
-                ? score('pore', 70)
-                : id === 'wrinkle'
-                  ? score('wrinkle', 70)
-                  : id === 'acne'
-                    ? score('acne', 75)
-                    : id === 'age_spot'
-                      ? score('age_spot', 80)
-                      : id === 'redness'
-                        ? score('redness', 85)
-                        : score('texture', 72);
-        concernScores[id] = Math.round(fallback);
-      }
     }
 
     const skinAge = estimateSkinAge(concernScores);
@@ -451,8 +444,10 @@ function clamp(n: number, min: number, max: number): number {
   return Math.min(max, Math.max(min, n));
 }
 
-function average(values: number[], fallback: number): number {
-  if (values.length === 0) return fallback;
+function average(values: number[]): number {
+  if (values.length === 0) {
+    throw new Error('YouCam incomplete result: no measurable ui_score values');
+  }
   return values.reduce((a, b) => a + b, 0) / values.length;
 }
 
@@ -469,7 +464,9 @@ function normalizeConcernId(type: string): string {
 
 function estimateSkinAge(scores: Record<string, number>): number {
   const values = Object.values(scores).filter((v) => Number.isFinite(v));
-  if (values.length === 0) return 30;
+  if (values.length === 0) {
+    throw new Error('YouCam incomplete result: cannot estimate skin age');
+  }
   const avg = values.reduce((a, b) => a + b, 0) / values.length;
   return Math.round(28 + (100 - avg) / 4);
 }

@@ -5,6 +5,7 @@ import 'package:firebase_storage/firebase_storage.dart';
 import '../../../../core/entitlements/mira_runtime_entitlement_store.dart';
 import '../../../../core/profile/user_level.dart';
 import '../../domain/entities/profile_entity.dart';
+import '../storage/avatar_storage_contract.dart';
 
 abstract class ProfileRemoteDataSource {
   Future<ProfileEntity> getCurrentProfile();
@@ -49,7 +50,10 @@ class ProfileRemoteDataSourceImpl implements ProfileRemoteDataSource {
       ..remove('id')
       ..['createdAt'] = Timestamp.fromDate(updatedProfile.createdAt)
       ..['updatedAt'] = Timestamp.fromDate(updatedProfile.updatedAt!);
-    await _firestore.collection('users').doc(user.uid).set(data, SetOptions(merge: true));
+    await _firestore
+        .collection('users')
+        .doc(user.uid)
+        .set(data, SetOptions(merge: true));
     return updatedProfile;
   }
 
@@ -60,8 +64,16 @@ class ProfileRemoteDataSourceImpl implements ProfileRemoteDataSource {
       throw Exception('المستخدم غير مسجل الدخول');
     }
 
-    final ref = _storage.ref().child('avatars/${user.uid}.jpg');
-    await ref.putFile(File(imagePath));
+    final file = File(imagePath);
+    final size = await file.length();
+    if (size > AvatarStorageContract.maxBytes) {
+      throw ArgumentError('Avatar image exceeds the 5 MiB limit');
+    }
+    final contentType = AvatarStorageContract.contentTypeForPath(imagePath);
+    final ref = _storage.ref().child(
+      AvatarStorageContract.objectPath(user.uid),
+    );
+    await ref.putFile(file, SettableMetadata(contentType: contentType));
     return await ref.getDownloadURL();
   }
 

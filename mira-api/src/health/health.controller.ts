@@ -49,10 +49,17 @@ import {
   FASHION_SESSION_VERSION,
   FASHION_WARDROBE_SCHEMA_VERSION,
 } from '../fashion-intelligence/release';
+import { RedisService } from '../redis/redis.service';
+import { BlazeFacePresenceDetector } from '../ai/face-gate/blazeface-face-presence.detector';
 
 @Controller('health')
 export class HealthController {
-  constructor(private readonly config: ConfigService) {}
+  constructor(
+    private readonly config: ConfigService,
+    private readonly redis: RedisService = new RedisService(config),
+    private readonly blazeFace: BlazeFacePresenceDetector =
+      new BlazeFacePresenceDetector(config),
+  ) {}
 
   @Get()
   check() {
@@ -75,6 +82,8 @@ export class HealthController {
       level: e.level,
       reasonCount: e.reasons.length,
     }));
+    const redis = this.redis.runtimeStatus();
+    const blazeFace = this.blazeFace.runtimeStatus();
 
     return {
       status: 'ok',
@@ -94,6 +103,10 @@ export class HealthController {
           : skinProvider !== 'perfect_corp'
             ? 'Set SKIN_PROVIDER=perfect_corp'
             : undefined,
+      },
+      runtimeDependencies: {
+        redis,
+        blazeFace,
       },
       intelligence: {
         captureQualityVersion: CAPTURE_QUALITY_THRESHOLDS.version,

@@ -31,6 +31,7 @@ import { VisionOutfitRecolorBodyDto } from '../vision/dto/vision-outfit-recolor-
 import { FashnGarmentRecolorService } from '../vision/recolor/fashn-garment-recolor.service';
 import { GarmentRecolorVisionContext } from '../vision/qel/garment-recolor-context.types';
 import { AtelierRecolorAttemptService } from '../atelier/atelier-recolor-attempt.service';
+import { RateLimitService } from '../common/services/rate-limit.service';
 
 const MAX_IMAGE_BYTES = 10 * 1024 * 1024;
 
@@ -53,6 +54,7 @@ export class AiGatewayController {
     private readonly fashionAnalysisOrchestrator: FashionAnalysisOrchestrator,
     private readonly fashnGarmentRecolorService: FashnGarmentRecolorService,
     private readonly atelierAttempts: AtelierRecolorAttemptService,
+    private readonly rateLimit: RateLimitService,
   ) {}
 
   @Post('skin-analysis')
@@ -130,7 +132,14 @@ export class AiGatewayController {
       limits: { fileSize: MAX_IMAGE_BYTES },
     }),
   )
-  analyzeOutfitSegmentation(@UploadedFile() file: Express.Multer.File) {
+  async analyzeOutfitSegmentation(
+    @CurrentUser() user: RequestUser,
+    @UploadedFile() file: Express.Multer.File,
+  ) {
+    await this.rateLimit.assertWithinLimit(
+      user.firebaseUid,
+      'fashion_segmentation',
+    );
     return this.outfitSegmentationService.segment(file?.buffer ?? Buffer.alloc(0));
   }
 
@@ -147,9 +156,11 @@ export class AiGatewayController {
     }),
   )
   async analyzeVisionOutfit(
+    @CurrentUser() user: RequestUser,
     @UploadedFile() file: Express.Multer.File,
     @Body() body: VisionOutfitAnalyzeBodyDto,
   ) {
+    await this.rateLimit.assertWithinLimit(user.firebaseUid, 'fashion_analysis');
     let skinSnapshot: Record<string, unknown> | null = null;
     if (body.skinSnapshot?.trim()) {
       try {
@@ -202,11 +213,12 @@ export class AiGatewayController {
       limits: { fileSize: MAX_IMAGE_BYTES },
     }),
   )
-  recolorVisionOutfit(
+  async recolorVisionOutfit(
     @CurrentUser() user: RequestUser,
     @UploadedFile() file: Express.Multer.File,
     @Body() body: VisionOutfitRecolorBodyDto,
   ) {
+    await this.rateLimit.assertWithinLimit(user.firebaseUid, 'fashion_recolor');
     const visionContext = parseGarmentVisionContext(body.visionContext);
     return this.recolorAndPersist(user, file?.buffer ?? Buffer.alloc(0), body, visionContext);
   }

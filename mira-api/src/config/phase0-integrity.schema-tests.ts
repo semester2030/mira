@@ -6,6 +6,7 @@ import assert from 'node:assert/strict';
 import {
   assertProductionIntegrity,
   isLegacyOutfitMockBlocked,
+  isLegacyOutfitPathBlockedInProduction,
   isPerfectMockFallbackAllowed,
   validateProductionIntegrity,
 } from './production-integrity';
@@ -216,7 +217,29 @@ function testLegacyOutfitMockBlockedInProd(): void {
       NODE_ENV: 'production',
       OUTFIT_PROVIDER: 'fashn',
     }),
+    true,
+  );
+  assert.equal(
+    isLegacyOutfitPathBlockedInProduction({
+      NODE_ENV: 'production',
+      OUTFIT_PROVIDER: 'fashn',
+    }),
+    true,
+  );
+  assert.equal(
+    isLegacyOutfitPathBlockedInProduction({
+      NODE_ENV: 'test',
+      OUTFIT_PROVIDER: 'mock',
+    }),
     false,
+  );
+  assert.ok(
+    validateProductionIntegrity({
+      NODE_ENV: 'production',
+      PERFECT_CORP_FALLBACK_MOCK: 'false',
+      SKIN_PROVIDER: 'perfect_corp',
+      ALLOW_LEGACY_OUTFIT_MOCK_IN_PROD: 'true',
+    }).some((i) => i.code === 'ALLOW_LEGACY_OUTFIT_MOCK_IN_PROD_UNSAFE'),
   );
 }
 

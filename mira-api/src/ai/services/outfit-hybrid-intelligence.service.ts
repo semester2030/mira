@@ -1,4 +1,4 @@
-import { Injectable, Logger } from '@nestjs/common';
+import { Injectable, Logger, ServiceUnavailableException } from '@nestjs/common';
 import { parseOccasion } from '../contracts/mira-occasion';
 import {
   OutfitIntelligenceAnalysisDto,
@@ -10,6 +10,7 @@ import { LlmOutfitReasoningService } from '../llm/llm-outfit-reasoning.service';
 import { seedFromImageBytes } from '../utils/image-seed';
 import { FashionVisionDocument } from '../../vision/schema/fashion-vision-document.v1';
 import { VisionOrchestratorService } from '../../vision/vision-orchestrator.service';
+import { isProductionEnv } from '../../config/production-integrity';
 
 @Injectable()
 export class OutfitHybridIntelligenceService {
@@ -25,6 +26,16 @@ export class OutfitHybridIntelligenceService {
     occasionId: string,
     skin: SkinReportSnapshot,
   ): Promise<OutfitIntelligenceResponseDto> {
+    if (isProductionEnv()) {
+      throw new ServiceUnavailableException({
+        code: 'LEGACY_OUTFIT_INTELLIGENCE_UNAVAILABLE',
+        message:
+          'مسار تحليل الإطلالة القديم غير متاح. استخدمي مسار تحليل الأزياء المعتمد.',
+        messageEn:
+          'Legacy outfit intelligence is unavailable. Use the canonical fashion analysis path.',
+      });
+    }
+
     let visual: OutfitVisualProfileDto;
     try {
       const result = await this.visionOrchestrator.analyze({

@@ -67,8 +67,10 @@ async function run() {
     orchestrator as never,
     {} as never,
     {} as never,
+    { assertWithinLimit: async () => undefined } as never,
   );
   const response = await controller.analyzeVisionOutfit(
+    { firebaseUid: 'test-user' } as never,
     { buffer: Buffer.from('image') } as Express.Multer.File,
     dto,
   );

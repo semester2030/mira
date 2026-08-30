@@ -2,6 +2,15 @@ import { Injectable, Logger, OnModuleDestroy } from '@nestjs/common';
 import { ConfigService } from '@nestjs/config';
 import Redis from 'ioredis';
 
+export class RedisCriticalControlUnavailableError extends Error {
+  constructor(message = 'Critical Redis control is unavailable') {
+    super(message);
+    this.name = 'RedisCriticalControlUnavailableError';
+  }
+}
+
+export type RedisRuntimeState = 'AVAILABLE' | 'DEGRADED' | 'UNAVAILABLE';
+
 @Injectable()
 export class RedisService implements OnModuleDestroy {
   private readonly logger = new Logger(RedisService.name);
@@ -12,7 +21,7 @@ export class RedisService implements OnModuleDestroy {
     this.enabled = Boolean(this.config.get<string>('REDIS_URL')?.trim());
   }
 
-  private getClient(): Redis | null {
+  protected getClient(): Redis | null {
     if (!this.enabled) return null;
     if (!this.client) {
       const url = this.config.get<string>('REDIS_URL', 'redis://localhost:6379');
@@ -27,7 +36,11 @@ export class RedisService implements OnModuleDestroy {
 
   async incrementRateLimit(key: string, windowSeconds: number): Promise<number> {
     const redis = this.getClient();
-    if (!redis) return 0;
+    if (!redis) {
+      throw new RedisCriticalControlUnavailableError(
+        'Critical Redis counter is not configured',
+      );
+    }
 
     try {
       const count = await redis.incr(key);
@@ -36,9 +49,30 @@ export class RedisService implements OnModuleDestroy {
       }
       return count;
     } catch (err) {
-      this.logger.warn(`Rate limit skipped: ${(err as Error).message}`);
-      return 0;
+      this.logger.error(
+        `Critical Redis counter failed: ${(err as Error).message}`,
+      );
+      throw new RedisCriticalControlUnavailableError();
     }
+  }
+
+  runtimeStatus(): {
+    configured: boolean;
+    state: RedisRuntimeState;
+    criticalControls: 'fail_closed';
+    optionalCache: 'fail_open';
+  } {
+    const state: RedisRuntimeState = !this.enabled
+      ? 'UNAVAILABLE'
+      : this.client?.status === 'ready'
+        ? 'AVAILABLE'
+        : 'DEGRADED';
+    return {
+      configured: this.enabled,
+      state,
+      criticalControls: 'fail_closed',
+      optionalCache: 'fail_open',
+    };
   }
 
   async getJson<T>(key: string): Promise<T | null> {

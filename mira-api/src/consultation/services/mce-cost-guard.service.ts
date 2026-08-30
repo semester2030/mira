@@ -1,7 +1,15 @@
-import { HttpException, HttpStatus, Injectable } from '@nestjs/common';
+import {
+  HttpException,
+  HttpStatus,
+  Injectable,
+  ServiceUnavailableException,
+} from '@nestjs/common';
 import { ConfigService } from '@nestjs/config';
 import { createHash } from 'node:crypto';
-import { RedisService } from '../../redis/redis.service';
+import {
+  RedisCriticalControlUnavailableError,
+  RedisService,
+} from '../../redis/redis.service';
 import { MceAssistantPayloadV1 } from '../contracts/mce-context-snapshot.v1';
 
 const PLAN_DAILY_LIMITS: Record<string, number> = {
@@ -26,7 +34,21 @@ export class MceCostGuardService {
     const limit = this.dailyLimit(planTier);
     const day = new Date().toISOString().slice(0, 10);
     const key = `mce:daily:${userId}:${day}`;
-    const count = await this.redis.incrementRateLimit(key, 86_400);
+    let count: number;
+    try {
+      count = await this.redis.incrementRateLimit(key, 86_400);
+    } catch (error) {
+      if (error instanceof RedisCriticalControlUnavailableError) {
+        throw new ServiceUnavailableException({
+          code: 'MCE_QUOTA_UNAVAILABLE',
+          message:
+            'تعذر التحقق من حصة الاستشارة بأمان. حاولي مرة أخرى لاحقاً.',
+          messageEn:
+            'Consultation quota protection is unavailable. Try again later.',
+        });
+      }
+      throw error;
+    }
 
     if (count > limit) {
       throw new HttpException(

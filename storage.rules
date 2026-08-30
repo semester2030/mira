@@ -1,15 +1,28 @@
 rules_version = '2';
 service firebase.storage {
   match /b/{bucket}/o {
+    function isSignedIn() {
+      return request.auth != null;
+    }
+
+    function isAvatarOwner(userId) {
+      return isSignedIn() && request.auth.uid == userId;
+    }
+
+    function isValidAvatarUpload() {
+      return request.resource.size <= 5 * 1024 * 1024
+        && request.resource.contentType.matches('image/(jpeg|png|webp)');
+    }
+
     // Skin scan images are never stored — zero retention policy.
     match /skin_scans/{allPaths=**} {
       allow read, write: if false;
     }
 
-    // Profile avatars only (user-initiated).
-    match /avatars/{userId}/{fileName} {
-      allow read: if request.auth != null;
-      allow write: if request.auth != null && request.auth.uid == userId;
+    // Canonical profile avatar object. Existing tokenized legacy URLs remain valid.
+    match /avatars/{userId}/avatar {
+      allow read: if isSignedIn();
+      allow write: if isAvatarOwner(userId) && isValidAvatarUpload();
     }
   }
 }
