@@ -14,7 +14,6 @@ import type {
 import { parseOpenAiFashionDraftJson } from './openai-fashion-draft.parser';
 import {
   OPENAI_FASHION_DRAFT_RESPONSE_FORMAT,
-  OPENAI_FASHION_DRAFT_SHAPE_HINT,
 } from './openai-fashion-draft.schema';
 import {
   normalizeLlmBaseUrl,
@@ -223,7 +222,7 @@ export class OpenAiFashionKnowledgeLlmProvider
       `createdAt must equal "${request.clockNowIso}".`,
       `traceId must equal "${request.traceId}".`,
       `evidenceRefs must be a subset of the request evidenceRefs.`,
-      `Shape hint: ${JSON.stringify(OPENAI_FASHION_DRAFT_SHAPE_HINT)}`,
+      'Field structure, enum values and casing are enforced by the strict response JSON Schema.',
     ].join('\n');
 
     return {

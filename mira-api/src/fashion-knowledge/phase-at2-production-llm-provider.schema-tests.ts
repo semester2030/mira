@@ -39,6 +39,10 @@ import {
   normalizeLlmBaseUrl,
 } from './llm/providers/openai-provider-config';
 import { parseOpenAiFashionDraftJson } from './llm/providers/openai-fashion-draft.parser';
+import {
+  OPENAI_FASHION_DRAFT_JSON_SCHEMA,
+  OPENAI_FASHION_DRAFT_RESPONSE_FORMAT,
+} from './llm/providers/openai-fashion-draft.schema';
 import { MockFashionKnowledgeLlmProvider } from './llm/mock-provider';
 import { AdvisorService } from '../advisor/advisor.service';
 import { BeautyAdvisorService } from '../beauty-advisor/beauty-advisor.service';
@@ -142,6 +146,8 @@ function validDraftJson(overrides: Record<string, unknown> = {}): string {
             changeId: 'c_keep',
             targetRef: 'look',
             action: 'keep',
+            toDirection: null,
+            notes: null,
           },
         ],
         expectedStyleEffect: 'Bold statement preserved',
@@ -161,6 +167,7 @@ function validDraftJson(overrides: Record<string, unknown> = {}): string {
             targetRef: 'garment:skirt:yellow',
             action: 'neutralize_color',
             toDirection: 'neutral',
+            notes: null,
           },
         ],
         expectedStyleEffect: 'Lower color intensity',
@@ -229,6 +236,117 @@ const DEFAULT_ENV = {
   LLM_MODEL: 'gpt-4o-mini',
   FASHION_KNOWLEDGE_LLM_TIMEOUT_MS: '5000',
 };
+
+function schemaAccepts(schema: unknown, value: unknown): boolean {
+  if (schema == null || typeof schema !== 'object' || Array.isArray(schema)) {
+    return false;
+  }
+  const s = schema as Record<string, unknown>;
+  const types = Array.isArray(s.type) ? s.type : [s.type];
+  const actual =
+    value === null
+      ? 'null'
+      : Array.isArray(value)
+        ? 'array'
+        : typeof value;
+  if (!types.includes(actual)) return false;
+  if (
+    Array.isArray(s.enum) &&
+    !s.enum.some((allowed) => Object.is(allowed, value))
+  ) {
+    return false;
+  }
+  if (actual === 'array') {
+    const items = value as unknown[];
+    if (typeof s.minItems === 'number' && items.length < s.minItems) return false;
+    if (typeof s.maxItems === 'number' && items.length > s.maxItems) return false;
+    return items.every((item) => schemaAccepts(s.items, item));
+  }
+  if (actual === 'object') {
+    const record = value as Record<string, unknown>;
+    const properties = (s.properties ?? {}) as Record<string, unknown>;
+    const required = (s.required ?? []) as string[];
+    if (required.some((key) => !(key in record))) return false;
+    if (
+      s.additionalProperties === false &&
+      Object.keys(record).some((key) => !(key in properties))
+    ) {
+      return false;
+    }
+    return Object.entries(record).every(
+      ([key, item]) =>
+        !(key in properties) || schemaAccepts(properties[key], item),
+    );
+  }
+  return true;
+}
+
+section('strict_provider_schema_contract', () => {
+  assert.equal(OPENAI_FASHION_DRAFT_RESPONSE_FORMAT.type, 'json_schema');
+  assert.equal(
+    OPENAI_FASHION_DRAFT_RESPONSE_FORMAT.json_schema.strict,
+    true,
+  );
+  const valid = JSON.parse(validDraftJson()) as Record<string, unknown>;
+  assert.equal(schemaAccepts(OPENAI_FASHION_DRAFT_JSON_SCHEMA, valid), true);
+
+  assert.equal(
+    schemaAccepts(OPENAI_FASHION_DRAFT_JSON_SCHEMA, {
+      ...valid,
+      subjectivity: 'SUBJECTIVE',
+    }),
+    false,
+  );
+  assert.equal(
+    schemaAccepts(OPENAI_FASHION_DRAFT_JSON_SCHEMA, {
+      ...valid,
+      preferenceConflict: 'unknown',
+    }),
+    false,
+  );
+  assert.equal(
+    schemaAccepts(OPENAI_FASHION_DRAFT_JSON_SCHEMA, {
+      ...valid,
+      preferenceConflict: ConflictState.UNKNOWN,
+      culturalConflict: ConflictState.UNKNOWN,
+    }),
+    true,
+  );
+
+  const missing = { ...valid };
+  delete missing.rationale;
+  assert.equal(
+    schemaAccepts(OPENAI_FASHION_DRAFT_JSON_SCHEMA, missing),
+    false,
+  );
+
+  const invalidAlternative = structuredClone(valid);
+  delete (
+    invalidAlternative.alternatives as Array<Record<string, unknown>>
+  )[0].qualification;
+  assert.equal(
+    schemaAccepts(OPENAI_FASHION_DRAFT_JSON_SCHEMA, invalidAlternative),
+    false,
+  );
+
+  const invalidAction = structuredClone(valid);
+  (
+    (invalidAction.alternatives as Array<Record<string, unknown>>)[0]
+      .changes as Array<Record<string, unknown>>
+  )[0].action = 'hallucinated_action';
+  assert.equal(
+    schemaAccepts(OPENAI_FASHION_DRAFT_JSON_SCHEMA, invalidAction),
+    false,
+  );
+
+  assert.equal(
+    schemaAccepts(OPENAI_FASHION_DRAFT_JSON_SCHEMA, {
+      ...valid,
+      unexpectedProviderField: true,
+    }),
+    false,
+  );
+});
 
 section('versions_and_activation_track', () => {
   assert.equal(FASHION_KNOWLEDGE_RELEASE, '1.0.0-fashion-knowledge');
@@ -335,9 +453,17 @@ async function main(): Promise<void> {
   });
 
   await asection('valid_structured_output', async () => {
+    let requestBody: Record<string, unknown> | undefined;
     const provider = makeProvider(
       DEFAULT_ENV,
-      makeFetchReturningDraft(validDraftJson()),
+      async (_url, init) => {
+        requestBody = JSON.parse(String(init?.body)) as Record<string, unknown>;
+        return jsonResponse(200, {
+          id: 'chatcmpl_at2_test',
+          choices: [{ message: { content: validDraftJson() } }],
+          usage: { prompt_tokens: 120, completion_tokens: 90 },
+        });
+      },
     );
     const result = await provider.generateStructuredDraft({
       request: redYellowRequest(),
@@ -347,6 +473,14 @@ async function main(): Promise<void> {
     assert.ok(result.draft);
     assert.equal(result.tokenUsage?.promptTokens, 120);
     assert.equal(result.draft?.knowledgeType, KnowledgeType.LLM_GENERAL_KNOWLEDGE);
+    const responseFormat = requestBody?.response_format as
+      | Record<string, unknown>
+      | undefined;
+    assert.equal(responseFormat?.type, 'json_schema');
+    assert.equal(
+      (responseFormat?.json_schema as Record<string, unknown>)?.strict,
+      true,
+    );
   });
 
   await asection('malformed_provider_output', async () => {

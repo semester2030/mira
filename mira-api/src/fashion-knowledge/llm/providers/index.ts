@@ -12,6 +12,6 @@ export {
 } from './openai-provider-config';
 export { parseOpenAiFashionDraftJson } from './openai-fashion-draft.parser';
 export {
+  OPENAI_FASHION_DRAFT_JSON_SCHEMA,
   OPENAI_FASHION_DRAFT_RESPONSE_FORMAT,
-  OPENAI_FASHION_DRAFT_SHAPE_HINT,
 } from './openai-fashion-draft.schema';
