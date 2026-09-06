@@ -17,12 +17,17 @@ class SkinAnalysisApiDataSource {
 
   SkinAnalysisApiDataSource({Dio? dio}) : _dio = dio ?? ApiClient.instance;
 
-  Future<SkinReportModel> analyzeAndSave({required String imagePath}) async {
+  /// On success, deletes ephemeral prepared temps and the original capture path.
+  /// On failure, retains [imagePath] for deterministic retry/recapture UX.
+  Future<SkinReportModel> analyzeAndSave({
+    required String imagePath,
+    void Function()? onRemoteWaitStarted,
+  }) async {
     Object? lastError;
     File? alignedTemp;
+    var succeeded = false;
 
     try {
-      // Phase 2: quality gate BEFORE upload — no Perfect credits on fail.
       final gate = await SkinCaptureQualityGate.run(File(imagePath));
       final sourceForPrepare = gate.readyFile;
       if (sourceForPrepare.path != imagePath) {
@@ -42,10 +47,10 @@ class SkinAnalysisApiDataSource {
               prepared.path,
               filename: 'scan.jpg',
             ),
-            // Operational Hardening — always send faceIntel with explicit runtime.
             'faceIntel': gate.faceIntelJson,
           };
 
+          onRemoteWaitStarted?.call();
           final response = await _dio.post<Map<String, dynamic>>(
             MiraApiEndpoints.skinAnalysis,
             data: FormData.fromMap(formMap),
@@ -57,6 +62,7 @@ class SkinAnalysisApiDataSource {
 
           final model = _parseResponse(response.data);
           await UserStatsService.recordSkinAnalysis();
+          succeeded = true;
           return model;
         } on DioException catch (e) {
           lastError = e;
@@ -78,10 +84,13 @@ class SkinAnalysisApiDataSource {
     } on ImageQualityException {
       rethrow;
     } finally {
-      if (alignedTemp != null) {
+      if (alignedTemp != null && alignedTemp.path != imagePath) {
         await TempImageCleanup.deleteIfExists(alignedTemp.path);
       }
-      await TempImageCleanup.deleteIfExists(imagePath);
+      // Only delete the user capture after a successful analysis.
+      if (succeeded) {
+        await TempImageCleanup.deleteIfExists(imagePath);
+      }
     }
   }
 
@@ -96,6 +105,14 @@ class SkinAnalysisApiDataSource {
     if (status != 400 && status != 500) return false;
 
     final message = _responseMessage(error.response?.data)?.toLowerCase() ?? '';
+    // Do not auto-retry capture-quality codes that require recapture.
+    final code = _responseCode(error.response?.data)?.toUpperCase() ?? '';
+    if (code.startsWith('CAPTURE_') ||
+        code == 'NO_FACE' ||
+        code == 'IMAGE_QUALITY_FAILURE') {
+      return false;
+    }
+
     return message.contains('face') ||
         message.contains('lighting') ||
         message.contains('youcam') ||
@@ -111,6 +128,12 @@ class SkinAnalysisApiDataSource {
       return message.first.toString();
     }
     return null;
+  }
+
+  String? _responseCode(dynamic data) {
+    if (data is! Map) return null;
+    final code = data['code'] ?? data['captureCode'];
+    return code?.toString();
   }
 
   SkinReportModel _parseResponse(Map<String, dynamic>? data) {

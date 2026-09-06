@@ -54,21 +54,37 @@ String friendlyMiraError(Object error) {
     }
     if (status == 503) {
       final msg = _localizeServerMessage(_extractMessage(data));
-      if (msg != null && msg.isNotEmpty) return msg;
-      return 'الخدمة غير متاحة حالياً — حاولي لاحقاً.';
+      if (msg != null && msg.isNotEmpty && !_looksTechnical(msg)) return msg;
+      return 'تعذر بدء التحليل حاليًا. يمكنك المحاولة مرة أخرى بعد قليل.';
+    }
+    if (status == 504) {
+      return 'استغرق التحليل وقتًا أطول من المتوقع. حاول مرة أخرى.';
     }
     if (status == 502) {
       final msg = _localizeServerMessage(_extractMessage(data));
-      if (msg != null && msg.isNotEmpty) return msg;
+      if (msg != null && msg.isNotEmpty && !_looksTechnical(msg)) return msg;
       return 'تعذّر إكمال المعالجة — جرّبي مجدداً أو صورة أوضح.';
     }
     if (status != null && status >= 500) {
       final msg = _localizeServerMessage(_extractMessage(data));
-      if (msg != null && msg.isNotEmpty) return msg;
-      return 'خطأ في خادم ميرا ($status). تحققي من إعدادات Render (Perfect Corp و Firebase).';
+      if (msg != null && msg.isNotEmpty && !_looksTechnical(msg)) return msg;
+      return 'تعذر بدء التحليل حاليًا. يمكنك المحاولة مرة أخرى بعد قليل.';
     }
   }
-  return friendlyFirebaseError(error);
+  final fallback = friendlyFirebaseError(error);
+  if (_looksTechnical(fallback)) {
+    return 'تعذر بدء التحليل حاليًا. يمكنك المحاولة مرة أخرى بعد قليل.';
+  }
+  return fallback;
+}
+
+bool _looksTechnical(String raw) {
+  final lower = raw.toLowerCase();
+  return lower.contains('exception') ||
+      lower.contains('service unavailable') ||
+      lower.contains('internal server error') ||
+      lower.startsWith('dioexception') ||
+      lower.contains('statuscode');
 }
 
 String? _extractMessage(dynamic data) {
@@ -98,7 +114,18 @@ String? _extractCode(dynamic data) {
 
 String? _localizeServerMessage(String? raw) {
   if (raw == null || raw.isEmpty) return null;
+  if (_looksTechnical(raw)) return null;
   final lower = raw.toLowerCase();
+  if (lower.contains('error_src_face_out_of_bound') ||
+      lower.contains('face_out_of_bound') ||
+      lower.contains('out_of_bounds')) {
+    return 'تأكد من ظهور الوجه كاملًا داخل الإطار ثم أعد التقاط الصورة.';
+  }
+  if (lower.contains('capture_lighting_too_dark') ||
+      lower.contains('error_lighting_dark') ||
+      lower.contains('lighting_dark')) {
+    return 'التقط الصورة في مكان أكثر إضاءة للحصول على تحليل أوضح.';
+  }
   if (lower.contains('error_src_face_too_small') || lower.contains('face_too_small')) {
     return 'تعذر تحليل الصورة — أعيدي التقاط صورة أقرب مع إضاءة أمامية.';
   }
@@ -114,14 +141,14 @@ String? _localizeServerMessage(String? raw) {
   if (lower.contains('error_lighting_dark') || lower.contains('lighting_dark')) {
     return 'الإضاءة ضعيفة — انتقلي لمكان أفضل ثم أعيدي المحاولة.';
   }
-  if (lower.contains('youcam task timed out')) {
-    return 'انتهت مهلة تحليل YouCam — أعيدي المحاولة بعد دقيقة.';
+  if (lower.contains('youcam task timed out') || lower.contains('provider_timeout')) {
+    return 'استغرق التحليل وقتًا أطول من المتوقع. حاول مرة أخرى.';
   }
   if (lower.contains('youcam skin analysis failed')) {
-    return 'فشل تحليل البشرة مؤقتاً. أعيدي المحاولة بعد قليل، أو حسّني الإضاءة وجودة الصورة.';
+    return 'تعذر بدء التحليل حاليًا. يمكنك المحاولة مرة أخرى بعد قليل.';
   }
   if (lower.contains('perfect corp api key is not configured')) {
-    return 'مفتاح Perfect Corp غير مضبوط على السيرفر (PERFECT_API_KEY).';
+    return 'تعذر بدء التحليل حاليًا. يمكنك المحاولة مرة أخرى بعد قليل.';
   }
   if (lower.contains('qel_rejected') || lower.contains('لم نعرض النتيجة')) {
     return 'لم نعرض النتيجة — التعديل غيّر الهوية أو خامة القماش. جرّبي لوناً آخر أو صورة أوضح.';
@@ -138,7 +165,7 @@ String? _localizeServerMessage(String? raw) {
     return raw;
   }
   if (lower.contains('internal server error')) {
-    return 'خطأ داخلي في السيرفر — راجعي سجلات Render لمزيد من التفاصيل.';
+    return 'تعذر بدء التحليل حاليًا. يمكنك المحاولة مرة أخرى بعد قليل.';
   }
   return raw;
 }

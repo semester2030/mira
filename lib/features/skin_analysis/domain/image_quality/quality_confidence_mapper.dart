@@ -154,10 +154,10 @@ abstract final class QualityConfidenceMapper {
       signals: signals,
       blockingReasons: const [],
       messageAr: verdict == ImageQualityVerdict.excellent
-          ? 'جودة التقاط ممتازة — جاهزة للتحليل.'
+          ? 'جودة التقاط ممتازة — تم التقاط الصورة.'
           : 'جودة التقاط مقبولة — يمكنك المتابعة.',
       messageEn: verdict == ImageQualityVerdict.excellent
-          ? 'Excellent capture quality — ready for analysis.'
+          ? 'Excellent capture quality — photo captured.'
           : 'Acceptable capture quality — you may continue.',
     );
   }

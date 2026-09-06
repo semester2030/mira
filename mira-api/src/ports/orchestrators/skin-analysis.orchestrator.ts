@@ -12,6 +12,7 @@ import { PerfectCorpSkinAdapter } from '../adapters/perfect-corp-skin.adapter';
 import { MockSkinAdapter } from '../adapters/mock-skin.adapter';
 import {
   ProviderPortError,
+  createProviderError,
   toClientProviderError,
 } from '../shared/provider-error';
 import { newTraceId } from '../shared/result-meta';
@@ -206,6 +207,7 @@ export class SkinAnalysisOrchestrator {
         if (
           err.providerError.code === 'invalid_input' ||
           err.providerError.code === 'no_face' ||
+          err.providerError.code === 'multiple_faces' ||
           err.providerError.code === 'image_quality_failure'
         ) {
           throw new BadRequestException(client);
@@ -224,13 +226,15 @@ export class SkinAnalysisOrchestrator {
     return new Promise<T>((resolve, reject) => {
       const timer = setTimeout(() => {
         reject(
-          new ProviderPortError({
-            code: 'provider_timeout',
-            retryable: true,
-            safeUserMessageKey: 'errors.provider_timeout',
-            provider: 'skin_orchestrator',
-            traceId,
-          }),
+          new ProviderPortError(
+            createProviderError({
+              code: 'provider_timeout',
+              retryable: true,
+              safeUserMessageKey: 'errors.provider_timeout',
+              provider: 'skin_orchestrator',
+              traceId,
+            }),
+          ),
         );
       }, ms);
       promise

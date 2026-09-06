@@ -156,11 +156,15 @@ export class SkinAnalysisService {
         faceIntelRuntime: parsedFace.runtime,
       });
     } catch (err) {
-      throw new ServiceUnavailableException(
-        err instanceof Error
-          ? err.message
-          : 'تعذر بناء تقرير التحليل بأمان',
-      );
+      throw new ServiceUnavailableException({
+        code: 'INTERNAL_PROCESSING_FAILURE',
+        category: 'internal',
+        message: 'تعذر بدء التحليل حاليًا. يمكنك المحاولة مرة أخرى بعد قليل.',
+        messageEn: 'Analysis could not be completed safely. Try again later.',
+        retryable: true,
+        requiresRecapture: false,
+        userAction: 'retry',
+      });
     }
 
     const record = await this.prisma.skinAnalysis.create({

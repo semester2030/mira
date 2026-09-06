@@ -170,7 +170,7 @@ class _CapturedBanner extends StatelessWidget {
           const SizedBox(width: 8),
           Flexible(
             child: Text(
-              'تم التقاط الصورة — جاهزة للتحليل',
+              'تم التقاط الصورة',
               style: AppTypography.labelMedium.copyWith(color: Colors.white),
             ),
           ),

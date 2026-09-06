@@ -5,7 +5,6 @@ import 'package:firebase_auth/firebase_auth.dart';
 import '../../../../core/ai/ai_module.dart';
 import '../../../../core/config/mira_api_config.dart';
 import '../../../../core/ai/mappers/skin_result_mapper.dart';
-import '../../../../core/privacy/temp_image_cleanup.dart';
 import '../../../intelligence/presentation/widgets/mira_report_helpers.dart';
 import '../../domain/entities/skin_report.dart';
 import '../../domain/image_quality/image_quality_evaluator.dart';
@@ -28,11 +27,18 @@ class SkinAnalysisRepositoryImpl implements SkinAnalysisRepository {
             : null;
 
   @override
-  Future<SkinReport> analyzeAndSave({required String imagePath}) async {
+  Future<SkinReport> analyzeAndSave({
+    required String imagePath,
+    void Function()? onRemoteWaitStarted,
+  }) async {
     if (MiraApiConfig.useBackend) {
-      return apiDataSource!.analyzeAndSave(imagePath: imagePath);
+      return apiDataSource!.analyzeAndSave(
+        imagePath: imagePath,
+        onRemoteWaitStarted: onRemoteWaitStarted,
+      );
     }
     await SkinCaptureQualityGate.assertProviderReady(File(imagePath));
+    onRemoteWaitStarted?.call();
     return firestoreDataSource!.analyzeAndSave(imagePath: imagePath);
   }
 
@@ -55,15 +61,18 @@ class SkinAnalysisRepositoryImpl implements SkinAnalysisRepository {
 
 /// Guest analysis — local mock only unless signed in with [MiraApiConfig.useBackend].
 class GuestSkinAnalysisRepository {
-  Future<SkinReport> analyzeFromImage(String imagePath) async {
+  Future<SkinReport> analyzeFromImage(
+    String imagePath, {
+    void Function()? onRemoteWaitStarted,
+  }) async {
     if (MiraApiConfig.useBackend && FirebaseAuth.instance.currentUser != null) {
-      // API datasource runs Phase 2 quality gate before upload.
-      final model =
-          await SkinAnalysisApiDataSource().analyzeAndSave(imagePath: imagePath);
+      final model = await SkinAnalysisApiDataSource().analyzeAndSave(
+        imagePath: imagePath,
+        onRemoteWaitStarted: onRemoteWaitStarted,
+      );
       return model;
     }
 
-    // Local / mock path — still block unreliable images (no provider credits).
     final signals =
         await SkinCaptureQualityGate.assertProviderReady(File(imagePath));
 
@@ -71,6 +80,7 @@ class GuestSkinAnalysisRepository {
     if (!await file.exists()) {
       throw Exception('لم يتم العثور على صورة التحليل');
     }
+    onRemoteWaitStarted?.call();
     try {
       final bytes = await file.readAsBytes();
       final result = await AiModule.instance.skinProvider.analyze(bytes);
@@ -81,7 +91,7 @@ class GuestSkinAnalysisRepository {
       );
       return attachMiraReport(report);
     } finally {
-      await TempImageCleanup.deleteIfExists(imagePath);
+      // Guest mock path may delete; signed API path owns lifecycle.
     }
   }
 }

@@ -1,7 +1,6 @@
 import {
   BadRequestException,
   Injectable,
-  InternalServerErrorException,
   Logger,
   ServiceUnavailableException,
 } from '@nestjs/common';
@@ -11,9 +10,10 @@ import { SkinAnalysisProvider } from '../providers/skin-analysis.provider';
 import { PerfectCorpService } from '../services/perfect-corp.service';
 import { buildYouCamImageVariants } from '../utils/youcam-image-variants';
 import {
-  faceGateMessageFromYouCam,
+  classifyYouCamCaptureError,
   isFaceBlockingYouCamError,
   isFaceQualityYouCamError,
+  isFaceRecaptureImmediateYouCamError,
 } from '../face-gate/youcam-face-errors';
 import { MockSkinAnalysisProvider } from './mock-skin-analysis.provider';
 import {
@@ -84,8 +84,25 @@ export class PerfectCorpSkinProvider implements SkinAnalysisProvider {
       } catch (error) {
         lastMessage = error instanceof Error ? error.message : String(error);
 
-        if (isFaceBlockingYouCamError(lastMessage)) {
-          throw new BadRequestException(faceGateMessageFromYouCam(lastMessage));
+        const capture = classifyYouCamCaptureError(lastMessage);
+        if (
+          isFaceRecaptureImmediateYouCamError(lastMessage) ||
+          isFaceBlockingYouCamError(lastMessage)
+        ) {
+          this.logger.warn(
+            `YouCam capture rejection (${capture?.code ?? 'capture'}) — no variant retry`,
+          );
+          throw new BadRequestException(
+            capture ?? {
+              code: 'INVALID_IMAGE',
+              category: 'capture_quality',
+              message:
+                'تعذر تحليل الصورة — تأكدي من وضوح الوجه وقرب الكاميرا.',
+              retryable: false,
+              requiresRecapture: true,
+              userAction: 'recapture',
+            },
+          );
         }
 
         const qualityIssue = isFaceQualityYouCamError(lastMessage);
@@ -100,8 +117,8 @@ export class PerfectCorpSkinProvider implements SkinAnalysisProvider {
 
         this.logger.error(`YouCam skin analysis failed: ${lastMessage}`);
 
-        if (qualityIssue) {
-          throw new BadRequestException(faceGateMessageFromYouCam(lastMessage));
+        if (qualityIssue && capture) {
+          throw new BadRequestException(capture);
         }
 
         if (allowFallback) {
@@ -111,9 +128,16 @@ export class PerfectCorpSkinProvider implements SkinAnalysisProvider {
           return this.mock.analyze(imageBytes);
         }
 
-        throw new InternalServerErrorException(
-          `YouCam skin analysis failed: ${lastMessage}`,
-        );
+        // Real provider failure — never leak raw YouCam strings to clients.
+        throw new ServiceUnavailableException({
+          code: 'PROVIDER_UNAVAILABLE',
+          category: 'provider',
+          message: 'تعذر بدء التحليل حاليًا. يمكنك المحاولة مرة أخرى بعد قليل.',
+          messageEn: 'Analysis is temporarily unavailable. Try again shortly.',
+          retryable: true,
+          requiresRecapture: false,
+          userAction: 'retry',
+        });
       }
     }
 
@@ -122,8 +146,18 @@ export class PerfectCorpSkinProvider implements SkinAnalysisProvider {
       return this.mock.analyze(imageBytes);
     }
 
-    throw new InternalServerErrorException(
-      `YouCam skin analysis failed: ${lastMessage || 'unknown error'}`,
-    );
+    const capture = classifyYouCamCaptureError(lastMessage);
+    if (capture) {
+      throw new BadRequestException(capture);
+    }
+    throw new ServiceUnavailableException({
+      code: 'PROVIDER_UNAVAILABLE',
+      category: 'provider',
+      message: 'تعذر بدء التحليل حاليًا. يمكنك المحاولة مرة أخرى بعد قليل.',
+      messageEn: 'Analysis is temporarily unavailable. Try again shortly.',
+      retryable: true,
+      requiresRecapture: false,
+      userAction: 'retry',
+    });
   }
 }
