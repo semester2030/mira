@@ -201,6 +201,18 @@ class _SettingsScreenState extends State<SettingsScreen> {
                   subtitle: 'الإصدار 1.0.0 · مرآتك الذكية الخاصة',
                   onTap: () => Navigator.pushNamed(context, AppRoutes.about),
                 ),
+                if (MiraFeatures.fashionIconPreviewAvailable) ...[
+                  const Divider(height: 1, color: AppColors.border),
+                  _SettingsTile(
+                    icon: Icons.auto_awesome_outlined,
+                    title: 'معاينة أيقونات الأزياء (داخلي)',
+                    subtitle: '36 أيقونة · موافقة المالك قبل الهجرة',
+                    onTap: () => Navigator.pushNamed(
+                      context,
+                      AppRoutes.fashionIconSystemPreview,
+                    ),
+                  ),
+                ],
               ],
             ),
           ),

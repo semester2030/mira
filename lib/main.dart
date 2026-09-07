@@ -17,6 +17,7 @@ import 'features/auth/presentation/screens/login_screen.dart';
 import 'features/dashboard/presentation/screens/dashboard_screen.dart';
 import 'features/profile/presentation/screens/profile_screen.dart';
 import 'features/profile/presentation/screens/settings_screen.dart';
+import 'features/dev_tools/presentation/screens/fashion_icon_system_preview_screen.dart';
 import 'features/dashboard/presentation/screens/analysis_screen.dart';
 import 'features/dashboard/presentation/screens/points_screen.dart';
 import 'features/dashboard/presentation/screens/tips_screen.dart';
@@ -192,6 +193,14 @@ class MirraAppState extends State<MirraApp> {
         return PremiumPageRoute(page: const ProfileScreen(), settings: settings);
       case AppRoutes.settings:
         return PremiumPageRoute(page: const SettingsScreen(), settings: settings);
+      case AppRoutes.fashionIconSystemPreview:
+        if (!MiraFeatures.fashionIconPreviewAvailable) {
+          return PremiumPageRoute(page: const SettingsScreen(), settings: settings);
+        }
+        return PremiumPageRoute(
+          page: const FashionIconSystemPreviewScreen(),
+          settings: settings,
+        );
       case AppRoutes.analysis:
         return PremiumPageRoute(page: const AnalysisScreen(), settings: settings);
       case AppRoutes.history:

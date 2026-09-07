@@ -1,3 +1,5 @@
+import 'package:flutter/foundation.dart';
+
 /// Feature flags — flip when product decisions are finalized.
 abstract final class MiraFeatures {
   MiraFeatures._();
@@ -78,4 +80,17 @@ abstract final class MiraFeatures {
     'MIRA_FACE_RESULT_MIRROR_V1',
     defaultValue: false,
   );
+
+  /// Phase 5 — Internal Fashion Icon System Owner Preview (36 icons).
+  /// Default `false`. Debug builds can open via [fashionIconPreviewAvailable].
+  /// QA release: `--dart-define=MIRA_FASHION_ICON_PREVIEW=true`
+  /// Does NOT migrate production Fashion screen icons.
+  static const bool fashionIconPreview = bool.fromEnvironment(
+    'MIRA_FASHION_ICON_PREVIEW',
+    defaultValue: false,
+  );
+
+  /// Preview route is available in debug OR when dart-define is true.
+  static bool get fashionIconPreviewAvailable =>
+      kDebugMode || fashionIconPreview;
 }
