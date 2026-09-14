@@ -32,6 +32,7 @@ export interface SkinOrchestratorOutput {
   isMock: boolean;
   providerName: string;
   rawYouCam?: Record<string, unknown>;
+  ephemeralMasks?: SkinAnalysisPortResult['_ephemeralMasks'];
   traceId: string;
 }
 
@@ -157,8 +158,10 @@ export class SkinAnalysisOrchestrator {
 
       const skinInternal = portResult.legacyInternal as unknown as SkinAnalysisResult;
       const rawYouCam = portResult._ephemeralRawYouCam;
+      const ephemeralMasks = portResult._ephemeralMasks;
       // Strip ephemeral raw before leaving orchestrator boundary for persistence callers
       delete portResult._ephemeralRawYouCam;
+      delete portResult._ephemeralMasks;
 
       this.telemetry.track({
         name: 'provider_succeeded',
@@ -185,6 +188,7 @@ export class SkinAnalysisOrchestrator {
         isMock: portResult.meta.isMock,
         providerName: portResult.meta.provider,
         rawYouCam,
+        ephemeralMasks,
         traceId,
       };
     } catch (err) {

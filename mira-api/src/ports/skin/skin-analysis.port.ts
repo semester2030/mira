@@ -35,6 +35,22 @@ export interface SkinAnalysisPortResult {
    * Adapters may attach; orchestrator redacts before storage.
    */
   _ephemeralRawYouCam?: Record<string, unknown>;
+  /**
+   * Session-only Perfect HD masks for Face Explorer — never persist to History.
+   */
+  _ephemeralMasks?: Array<{
+    concernType: string;
+    region?: string;
+    rawScore?: number;
+    uiScore?: number;
+    outputMaskName?: string;
+    scoreOnly: boolean;
+    width?: number;
+    height?: number;
+    alignedWithSource?: boolean | null;
+    contentType?: string;
+    maskBase64?: string;
+  }>;
 }
 
 export interface SkinAnalysisPort {

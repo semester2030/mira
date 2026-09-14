@@ -5,6 +5,7 @@ import 'package:firebase_auth/firebase_auth.dart';
 import '../../../../core/ai/ai_module.dart';
 import '../../../../core/config/mira_api_config.dart';
 import '../../../../core/ai/mappers/skin_result_mapper.dart';
+import '../../../../core/session/analysis_session.dart';
 import '../../../intelligence/presentation/widgets/mira_report_helpers.dart';
 import '../../domain/entities/skin_report.dart';
 import '../../domain/image_quality/image_quality_evaluator.dart';
@@ -88,6 +89,17 @@ class GuestSkinAnalysisRepository {
         result,
         createdAt: DateTime.now(),
         captureQuality: signals,
+      );
+      AnalysisSession.recordMaskCreateProof(
+        const PerfectMaskCreateProof(
+          endpoint: 'local_guest_mock',
+          rawPresent: false,
+          rawCount: 0,
+          withBytesCount: 0,
+          providerKeys: [],
+          sessionCreated: false,
+          skipReason: 'local_guest_or_unauthenticated_mock',
+        ),
       );
       return attachMiraReport(report);
     } finally {

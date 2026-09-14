@@ -103,6 +103,7 @@ export class SkinAnalysisService {
       isMock,
       providerName,
       rawYouCam,
+      ephemeralMasks,
       traceId,
     } = orchestrated;
 
@@ -205,6 +206,10 @@ export class SkinAnalysisService {
         isMock: isMock === true,
         provider: providerName,
         traceId,
+        // Sanitized — counts only, never mask payloads / URLs.
+        ephemeralMaskCount: ephemeralMasks?.length ?? 0,
+        ephemeralMaskWithBytes:
+          ephemeralMasks?.filter((m) => !!m.maskBase64).length ?? 0,
       },
     });
 
@@ -216,6 +221,7 @@ export class SkinAnalysisService {
         ...skinInternal,
         beautyScore: miraReport.overallBeautyScore,
       },
+      ephemeralMasks,
     );
   }
 

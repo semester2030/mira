@@ -18,6 +18,7 @@ import { FullMiraAnalysisBodyDto } from './dto/full-mira-analysis-body.dto';
 import { AnalyzeOutfitBodyDto } from '../outfit-analysis/dto/analyze-outfit.dto';
 import { OutfitAnalysisService } from '../outfit-analysis/outfit-analysis.service';
 import { SkinAnalysisService } from '../skin-analysis/skin-analysis.service';
+import { PerfectHdMaskAcceptanceService } from './services/perfect-hd-mask-acceptance.service';
 import { FullMiraAnalysisService } from './services/full-mira-analysis.service';
 import { OutfitHybridIntelligenceService } from './services/outfit-hybrid-intelligence.service';
 import { OutfitSegmentationService } from './segmentation/outfit-segmentation.service';
@@ -46,6 +47,7 @@ const MAX_IMAGE_BYTES = 10 * 1024 * 1024;
 export class AiGatewayController {
   constructor(
     private readonly skinAnalysisService: SkinAnalysisService,
+    private readonly perfectHdMaskAcceptance: PerfectHdMaskAcceptanceService,
     private readonly outfitAnalysisService: OutfitAnalysisService,
     private readonly fullMiraAnalysisService: FullMiraAnalysisService,
     private readonly outfitHybridIntelligenceService: OutfitHybridIntelligenceService,
@@ -78,6 +80,41 @@ export class AiGatewayController {
       file?.buffer ?? Buffer.alloc(0),
       body?.faceIntel,
     );
+  }
+
+  /**
+   * TECHNICAL ACCEPTANCE ONLY — Perfect HD detection masks.
+   * Does not replace production skin-analysis. No History image/mask persistence.
+   * POST /api/v1/ai/skin-analysis-hd-masks
+   */
+  @Post('skin-analysis-hd-masks')
+  @UseInterceptors(
+    FileInterceptor('image', {
+      storage: memoryStorage(),
+      limits: { fileSize: MAX_IMAGE_BYTES },
+    }),
+  )
+  async analyzeSkinHdMasks(
+    @CurrentUser() _user: RequestUser,
+    @UploadedFile() file: Express.Multer.File,
+  ) {
+    const buf = file?.buffer ?? Buffer.alloc(0);
+    try {
+      const out = await this.perfectHdMaskAcceptance.runTechnicalAcceptance(buf);
+      return {
+        mode: 'hd_mask_technical_acceptance',
+        legacyLandmarkMap: 'DEPRECATED_PENDING_OWNER_APPROVAL_FOR_SPATIAL',
+        camerakit: 'NOT_AVAILABLE_IN_MIRA_REPO',
+        retentionNoteAr:
+          'نتائج Perfect المؤقتة (~24 ساعة) — لا تُحفظ صورة الوجه ولا الـmasks في History.',
+        report: out.report,
+        ephemeralMasks: out.ephemeralMasks,
+        sourceImageBase64: out.sourceImageBase64,
+        sourceContentType: out.sourceContentType,
+      };
+    } finally {
+      if (buf.length) buf.fill(0);
+    }
   }
 
   @Post('outfit-analysis')

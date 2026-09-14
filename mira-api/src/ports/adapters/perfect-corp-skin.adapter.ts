@@ -105,6 +105,7 @@ export class PerfectCorpSkinAdapter implements SkinAnalysisPort {
           ],
         }),
         _ephemeralRawYouCam: out.rawYouCam,
+        _ephemeralMasks: out.ephemeralMasks,
       };
     } catch (err) {
       if (

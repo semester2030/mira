@@ -8,6 +8,7 @@ import { MockOutfitAnalysisProvider } from './mocks/mock-outfit-analysis.provide
 import { MockSkinAnalysisProvider } from './mocks/mock-skin-analysis.provider';
 import { PerfectCorpSkinProvider } from './mocks/perfect-corp-skin.provider';
 import { PerfectCorpService } from './services/perfect-corp.service';
+import { PerfectHdMaskAcceptanceService } from './services/perfect-hd-mask-acceptance.service';
 import { OutfitHybridIntelligenceService } from './services/outfit-hybrid-intelligence.service';
 import { OutfitSegmentationService } from './segmentation/outfit-segmentation.service';
 import { FaceGateService } from './face-gate/face-gate.service';
@@ -32,6 +33,7 @@ import {
     MockSkinAnalysisProvider,
     MockOutfitAnalysisProvider,
     PerfectCorpService,
+    PerfectHdMaskAcceptanceService,
     BlazeFacePresenceDetector,
     {
       provide: FACE_PRESENCE_DETECTOR,
@@ -85,6 +87,7 @@ import {
     PerfectCorpSkinProvider,
     MockSkinAnalysisProvider,
     PerfectCorpService,
+    PerfectHdMaskAcceptanceService,
   ],
 })
 export class AiModule {}
