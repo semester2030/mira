@@ -12,18 +12,37 @@ export class SkinAnalysisResponseDto {
   miraReport!: MiraBeautyReport;
   /** @deprecated Internal legacy shape — omit in new clients. */
   skin?: SkinAnalysisResult;
+  /**
+   * Session-only Perfect HD masks for Face Explorer.
+   * Never stored in History / resultJson.
+   */
+  ephemeralMasks?: Array<{
+    concernType: string;
+    region?: string;
+    rawScore?: number;
+    uiScore?: number;
+    outputMaskName?: string;
+    scoreOnly: boolean;
+    width?: number;
+    height?: number;
+    alignedWithSource?: boolean | null;
+    contentType?: string;
+    maskBase64?: string;
+  }>;
 
   static from(
     id: string,
     createdAt: Date,
     miraReport: MiraBeautyReport,
     skinInternal?: SkinAnalysisResult,
+    ephemeralMasks?: SkinAnalysisResponseDto['ephemeralMasks'],
   ): SkinAnalysisResponseDto {
     return {
       id,
       createdAt: createdAt.toISOString(),
       miraReport,
       skin: skinInternal,
+      ...(ephemeralMasks?.length ? { ephemeralMasks } : {}),
     };
   }
 }

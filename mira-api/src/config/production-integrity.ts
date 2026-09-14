@@ -5,6 +5,8 @@
 
 export type IntegrityEnv = {
   NODE_ENV?: string;
+  AUTH_SKIP?: string;
+  PARTNER_AUTO_APPROVE?: string;
   PERFECT_CORP_FALLBACK_MOCK?: string;
   SKIN_PROVIDER?: string;
   OUTFIT_PROVIDER?: string;
@@ -27,11 +29,16 @@ export function isPerfectMockFallbackAllowed(env: IntegrityEnv = process.env): b
   return (env.PERFECT_CORP_FALLBACK_MOCK ?? 'false') === 'true';
 }
 
-/** Legacy OUTFIT_PROVIDER=mock must not serve "real" results in production. */
+/** No legacy OUTFIT_PROVIDER path may serve scored results in production. */
+export function isLegacyOutfitPathBlockedInProduction(
+  env: IntegrityEnv = process.env,
+): boolean {
+  return isProductionEnv(env.NODE_ENV);
+}
+
+/** @deprecated Compatibility alias for existing callers/tests. */
 export function isLegacyOutfitMockBlocked(env: IntegrityEnv = process.env): boolean {
-  if (!isProductionEnv(env.NODE_ENV)) return false;
-  if ((env.OUTFIT_PROVIDER ?? 'mock') !== 'mock') return false;
-  return (env.ALLOW_LEGACY_OUTFIT_MOCK_IN_PROD ?? 'false') !== 'true';
+  return isLegacyOutfitPathBlockedInProduction(env);
 }
 
 export function validateProductionIntegrity(
@@ -39,6 +46,22 @@ export function validateProductionIntegrity(
 ): IntegrityIssue[] {
   const issues: IntegrityIssue[] = [];
   if (!isProductionEnv(env.NODE_ENV)) return issues;
+
+  if (env.AUTH_SKIP === 'true') {
+    issues.push({
+      code: 'AUTH_SKIP_IN_PROD',
+      severity: 'fatal',
+      message: 'AUTH_SKIP=true is forbidden in production.',
+    });
+  }
+
+  if (env.PARTNER_AUTO_APPROVE === 'true') {
+    issues.push({
+      code: 'PARTNER_AUTO_APPROVE_IN_PROD',
+      severity: 'fatal',
+      message: 'PARTNER_AUTO_APPROVE=true is forbidden in production.',
+    });
+  }
 
   const fallback = env.PERFECT_CORP_FALLBACK_MOCK ?? 'true';
   if (fallback !== 'false') {
@@ -66,6 +89,15 @@ export function validateProductionIntegrity(
       severity: 'warn',
       message:
         'OUTFIT_PROVIDER=mock is legacy. Canonical fashion path is Vision Platform (/ai/vision/outfit/analyze). Legacy outfit-analysis endpoint rejects mock results in production.',
+    });
+  }
+
+  if (env.ALLOW_LEGACY_OUTFIT_MOCK_IN_PROD === 'true') {
+    issues.push({
+      code: 'ALLOW_LEGACY_OUTFIT_MOCK_IN_PROD_UNSAFE',
+      severity: 'fatal',
+      message:
+        'ALLOW_LEGACY_OUTFIT_MOCK_IN_PROD=true is forbidden. Legacy outfit paths are disabled in production.',
     });
   }
 

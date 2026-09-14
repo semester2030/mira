@@ -28,6 +28,7 @@ import { MceLlmService } from './mce-llm.service';
 import { MceMemoryCompactionService } from './mce-memory-compaction.service';
 import { MceModerationService } from './mce-moderation.service';
 import { McePromptAssemblerService, MceResponseValidatorService } from './mce-prompt-assembler.service';
+import { evaluateMceFashionQuarantine } from '../../fashion-knowledge/advisor-integration/mce-bypass';
 
 @Injectable()
 export class ConsultationOrchestratorService {
@@ -137,33 +138,50 @@ export class ConsultationOrchestratorService {
         `${ctx.mod.safeReply}\n\n${this.moderation.disclaimer()}`,
       );
       write('delta', { text: assistantPayload.answerAr });
-    } else if (!this.llm.isConfigured()) {
-      write('error', { code: 'MCE_LLM_NOT_CONFIGURED', message: 'محرك الاستشارة غير متاح' });
-      res.end();
-      return;
     } else {
-      let accumulated = '';
-      for await (const chunk of this.llm.stream(ctx.llmMessages!)) {
-        accumulated += chunk;
-        const preview = extractPartialAnswerAr(accumulated);
-        if (preview) write('delta', { text: preview });
-      }
+      const fashionQ = evaluateMceFashionQuarantine(
+        ctx.userRow.contentAr,
+        (k, d) => {
+          const v = this.config.get<string>(k);
+          return v ?? d;
+        },
+      );
+      if (fashionQ.quarantine && fashionQ.safeReplyAr) {
+        assistantPayload = this.validator.blockedPayload(
+          `${fashionQ.safeReplyAr}\n\n${this.moderation.disclaimer()}`,
+        );
+        write('delta', { text: assistantPayload.answerAr });
+      } else if (!this.llm.isConfigured()) {
+        write('error', {
+          code: 'MCE_LLM_NOT_CONFIGURED',
+          message: 'محرك الاستشارة غير متاح',
+        });
+        res.end();
+        return;
+      } else {
+        let accumulated = '';
+        for await (const chunk of this.llm.stream(ctx.llmMessages!)) {
+          accumulated += chunk;
+          const preview = extractPartialAnswerAr(accumulated);
+          if (preview) write('delta', { text: preview });
+        }
 
-      let parsed: MceAssistantPayloadV1;
-      try {
-        parsed = JSON.parse(accumulated) as MceAssistantPayloadV1;
-      } catch {
-        parsed = {
-          answerAr: accumulated,
-          confidence: 'low',
-          intent: 'parse_fallback',
-          citedFactIds: [],
-          suggestedQuestionsAr: [],
-          blocked: false,
-          disclaimerAr: '',
-        };
+        let parsed: MceAssistantPayloadV1;
+        try {
+          parsed = JSON.parse(accumulated) as MceAssistantPayloadV1;
+        } catch {
+          parsed = {
+            answerAr: accumulated,
+            confidence: 'low',
+            intent: 'parse_fallback',
+            citedFactIds: [],
+            suggestedQuestionsAr: [],
+            blocked: false,
+            disclaimerAr: '',
+          };
+        }
+        assistantPayload = this.validator.validate(parsed, ctx.factRegistry);
       }
-      assistantPayload = this.validator.validate(parsed, ctx.factRegistry);
     }
 
     const turn = await this.finalizeTurn(ctx, assistantPayload);
@@ -236,10 +254,21 @@ export class ConsultationOrchestratorService {
     llmMessages?: Array<{ role: 'system' | 'user' | 'assistant'; content: string }>;
     factRegistry: MceFactEntry[];
     faqKey: string;
+    userRow: { contentAr: string };
   }): Promise<MceAssistantPayloadV1> {
     if (ctx.mod.blocked && ctx.mod.safeReply) {
       return this.validator.blockedPayload(
         `${ctx.mod.safeReply}\n\n${this.moderation.disclaimer()}`,
+      );
+    }
+    // FK-10: quarantine free-form fashion prescriptions when Advisor integration is on.
+    const fashionQ = evaluateMceFashionQuarantine(ctx.userRow.contentAr, (k, d) => {
+      const v = this.config.get<string>(k);
+      return v ?? d;
+    });
+    if (fashionQ.quarantine && fashionQ.safeReplyAr) {
+      return this.validator.blockedPayload(
+        `${fashionQ.safeReplyAr}\n\n${this.moderation.disclaimer()}`,
       );
     }
     if (ctx.cached) {

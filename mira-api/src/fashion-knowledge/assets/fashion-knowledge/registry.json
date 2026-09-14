@@ -1,0 +1,15 @@
+{
+  "registryId": "mira_fashion_knowledge_prod",
+  "registryVersion": "0.0.0-empty",
+  "releaseId": "fk4-empty",
+  "createdAt": "2026-08-10T00:00:00.000Z",
+  "updatedAt": "2026-08-10T00:00:00.000Z",
+  "rules": [],
+  "relations": [],
+  "provenanceCatalog": [],
+  "metadata": {
+    "note": "Empty production Fashion Knowledge Registry — FK-5 review candidates live outside this ACTIVE set until Tier A/B sources + proven human approval. Rollback target remains fk4-empty.",
+    "fk5Release": "0.9.0-fashion-knowledge-advisor-integration",
+    "fk5ActiveRuleCount": 0
+  }
+}

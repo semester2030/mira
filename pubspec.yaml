@@ -66,6 +66,7 @@ dependencies:
   google_mlkit_face_detection: ^0.13.2
   mediapipe_face_mesh: ^1.8.0
   google_mlkit_pose_detection: ^0.14.1
+  phosphoricons_flutter: ^1.0.0
   # firebase_analytics: ^10.7.4  # معطل مؤقتاً بسبب تعارض Kotlin
 
 dev_dependencies:
@@ -138,6 +139,7 @@ flutter:
   assets:
     - assets/images/
     - assets/icons/
+    - assets/icons/fashion/
     - assets/fonts/
     - assets/translations/
     - assets/fashion/

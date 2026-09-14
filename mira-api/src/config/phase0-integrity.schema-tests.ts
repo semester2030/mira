@@ -6,6 +6,7 @@ import assert from 'node:assert/strict';
 import {
   assertProductionIntegrity,
   isLegacyOutfitMockBlocked,
+  isLegacyOutfitPathBlockedInProduction,
   isPerfectMockFallbackAllowed,
   validateProductionIntegrity,
 } from './production-integrity';
@@ -83,6 +84,34 @@ function testProductionRejectsMockSkinProvider(): void {
       SKIN_PROVIDER: 'mock',
     }),
   );
+}
+
+function testProductionRejectsAuthSkip(): void {
+  const env = {
+    NODE_ENV: 'production',
+    AUTH_SKIP: 'true',
+    PERFECT_CORP_FALLBACK_MOCK: 'false',
+    SKIN_PROVIDER: 'perfect_corp',
+  };
+  assert.ok(
+    validateProductionIntegrity(env).some((i) => i.code === 'AUTH_SKIP_IN_PROD'),
+  );
+  assert.throws(() => assertProductionIntegrity(env));
+}
+
+function testProductionRejectsPartnerAutoApprove(): void {
+  const env = {
+    NODE_ENV: 'production',
+    PARTNER_AUTO_APPROVE: 'true',
+    PERFECT_CORP_FALLBACK_MOCK: 'false',
+    SKIN_PROVIDER: 'perfect_corp',
+  };
+  assert.ok(
+    validateProductionIntegrity(env).some(
+      (i) => i.code === 'PARTNER_AUTO_APPROVE_IN_PROD',
+    ),
+  );
+  assert.throws(() => assertProductionIntegrity(env));
 }
 
 function testProductionAcceptsSafeConfig(): void {
@@ -188,7 +217,29 @@ function testLegacyOutfitMockBlockedInProd(): void {
       NODE_ENV: 'production',
       OUTFIT_PROVIDER: 'fashn',
     }),
+    true,
+  );
+  assert.equal(
+    isLegacyOutfitPathBlockedInProduction({
+      NODE_ENV: 'production',
+      OUTFIT_PROVIDER: 'fashn',
+    }),
+    true,
+  );
+  assert.equal(
+    isLegacyOutfitPathBlockedInProduction({
+      NODE_ENV: 'test',
+      OUTFIT_PROVIDER: 'mock',
+    }),
     false,
+  );
+  assert.ok(
+    validateProductionIntegrity({
+      NODE_ENV: 'production',
+      PERFECT_CORP_FALLBACK_MOCK: 'false',
+      SKIN_PROVIDER: 'perfect_corp',
+      ALLOW_LEGACY_OUTFIT_MOCK_IN_PROD: 'true',
+    }).some((i) => i.code === 'ALLOW_LEGACY_OUTFIT_MOCK_IN_PROD_UNSAFE'),
   );
 }
 
@@ -211,6 +262,8 @@ function testHistoricalScoreFieldReadable(): void {
 function main(): void {
   testProductionRejectsUnsafeFallback();
   testProductionRejectsMockSkinProvider();
+  testProductionRejectsAuthSkip();
+  testProductionRejectsPartnerAutoApprove();
   testProductionAcceptsSafeConfig();
   testMockFallbackNeverAllowedInProduction();
   testMockCannotDisplayInProduction();
@@ -219,7 +272,7 @@ function main(): void {
   testSkinVitalityDeterministic();
   testLegacyOutfitMockBlockedInProd();
   testHistoricalScoreFieldReadable();
-  console.log('phase0-integrity.schema-tests: OK (10 checks)');
+  console.log('phase0-integrity.schema-tests: OK (12 checks)');
 }
 
 main();

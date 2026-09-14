@@ -1,9 +1,9 @@
 import '../../../../core/ai/models/mira_occasion.dart';
 import '../../../skin_analysis/domain/entities/skin_report.dart';
-import '../adapters/fashion_vision_to_engine_adapter.dart';
+import '../adapters/canonical_garment_to_engine_adapter.dart';
+import '../entities/canonical_garment.dart';
 import '../entities/outfit_analysis.dart';
 import '../entities/outfit_analysis_mode.dart';
-import '../entities/fashion_vision_document.dart';
 import '../entities/outfit_visual_profile.dart';
 import '../entities/user_gender.dart';
 import '../helpers/skin_palette_mapper.dart';
@@ -16,12 +16,7 @@ export '../entities/outfit_analysis_mode.dart';
 abstract final class DeterministicOutfitEngine {
   DeterministicOutfitEngine._();
 
-  static const _femaleAccessoryHints = [
-    'حقيبة يد',
-    'عقد',
-    'أقراط',
-    'وشاح',
-  ];
+  static const _femaleAccessoryHints = ['حقيبة يد', 'عقد', 'أقراط', 'وشاح'];
 
   static const _maleAccessoryDefaults = [
     'ساعة',
@@ -48,22 +43,18 @@ abstract final class DeterministicOutfitEngine {
         gender: gender,
       );
     }
-    return _analyzeQuick(
-      visual: visual,
-      occasion: occasion,
-      gender: gender,
-    );
+    return _analyzeQuick(visual: visual, occasion: occasion, gender: gender);
   }
 
-  /// Phase 7 — MIRA engine consumes [FashionVisionDocument] (via adapter).
-  static OutfitAnalysis analyzeFromFashionVision({
-    required FashionVisionDocument fashion,
+  /// Existing engine consumes frozen GI output through a bounded adapter.
+  static OutfitAnalysis analyzeFromCanonicalGarments({
+    required List<CanonicalGarment> garments,
     SkinReport? skin,
     required MiraOccasion occasion,
     required OutfitAnalysisMode mode,
     UserGender gender = UserGender.female,
   }) {
-    final visual = FashionVisionToEngineAdapter.toVisualProfile(fashion);
+    final visual = CanonicalGarmentToEngineAdapter.toVisualProfile(garments);
     return analyze(
       skin: skin,
       visual: visual,
@@ -106,7 +97,12 @@ abstract final class DeterministicOutfitEngine {
     );
 
     final matchReasons = _buildMatchReasons(skin, palette, visual, occasion);
-    final mismatchReasons = _buildMismatchReasons(skin, palette, visual, occasion);
+    final mismatchReasons = _buildMismatchReasons(
+      skin,
+      palette,
+      visual,
+      occasion,
+    );
     final recommendations = buildImprovementActions(
       mismatchReasons,
       occasion,
@@ -114,8 +110,9 @@ abstract final class DeterministicOutfitEngine {
       undertoneAr: UndertoneResolver.labelAr(palette.undertone),
     );
 
-    final recommendedColors =
-        _dedupe(_recommendedAlternatives(palette, visual, occasion));
+    final recommendedColors = _dedupe(
+      _recommendedAlternatives(palette, visual, occasion),
+    );
     final rejectedColors = _dedupe(_rejectedColors(palette, visual));
     final accessories = _accessoriesForGender(
       gender: gender,
@@ -136,7 +133,13 @@ abstract final class DeterministicOutfitEngine {
       rejectedColors: rejectedColors,
       accessories: accessories,
       makeup: makeup,
-      explanation: _smartExplanation(skin, palette, visual, occasion, compatibilityScore),
+      explanation: _smartExplanation(
+        skin,
+        palette,
+        visual,
+        occasion,
+        compatibilityScore,
+      ),
       confidence: confidence,
       skinScore: skinScore,
       occasionScore: occasionScore,
@@ -189,7 +192,10 @@ abstract final class DeterministicOutfitEngine {
       rejectedColors: _dedupe(_quickRejectedColors(visual, occasion)),
       accessories: _dedupe([
         ...visual.accessoryTypes,
-        if (gender.isMale) ..._maleAccessoryDefaults else ..._femaleAccessoryHints,
+        if (gender.isMale)
+          ..._maleAccessoryDefaults
+        else
+          ..._femaleAccessoryHints,
       ]),
       makeup: '',
       explanation: _quickExplanation(visual, occasion, compatibilityScore),
@@ -266,7 +272,8 @@ abstract final class DeterministicOutfitEngine {
     required int styleScore,
     required int colorHarmonyScore,
   }) {
-    final total = (skinScore * 0.40) +
+    final total =
+        (skinScore * 0.40) +
         (occasionScore * 0.35) +
         (styleScore * 0.15) +
         (colorHarmonyScore * 0.10);
@@ -279,7 +286,8 @@ abstract final class DeterministicOutfitEngine {
     required int styleScore,
     required int colorHarmonyScore,
   }) {
-    final total = (occasionScore * 0.45) +
+    final total =
+        (occasionScore * 0.45) +
         (styleScore * 0.30) +
         (colorHarmonyScore * 0.25);
     return total.round().clamp(0, 100);
@@ -291,13 +299,12 @@ abstract final class DeterministicOutfitEngine {
     required int occasionScore,
     required int styleScore,
     required int colorHarmonyScore,
-  }) =>
-      computeWeightedFinalSmart(
-        skinScore: skinScore,
-        occasionScore: occasionScore,
-        styleScore: styleScore,
-        colorHarmonyScore: colorHarmonyScore,
-      );
+  }) => computeWeightedFinalSmart(
+    skinScore: skinScore,
+    occasionScore: occasionScore,
+    styleScore: styleScore,
+    colorHarmonyScore: colorHarmonyScore,
+  );
 
   static String _smartStyleVerdict(int score) {
     if (score >= 86) return 'إطلالة متقنة — متناغمة مع بشرتك';
@@ -318,7 +325,8 @@ abstract final class DeterministicOutfitEngine {
     final colorCount = visual.dominantColors.length;
     if (colorCount == 2) score += 12;
     if (colorCount >= 4) score -= 14;
-    if (visual.contrastLevel >= 0.35 && visual.contrastLevel <= 0.65) score += 10;
+    if (visual.contrastLevel >= 0.35 && visual.contrastLevel <= 0.65)
+      score += 10;
     if (_isNeutralPalette(visual.dominantColors)) score += 8;
     if (visual.contrastLevel > 0.82) score -= 8;
     return score.round().clamp(0, 100);
@@ -343,7 +351,9 @@ abstract final class DeterministicOutfitEngine {
       reasons.add('أسلوب ${visual.styleTypeAr} متوازن للمناسبة');
     }
     if (reasons.isEmpty) {
-      reasons.add('إطلالة ${visual.styleTypeAr} مناسبة جزئياً لـ${occasion.labelAr}');
+      reasons.add(
+        'إطلالة ${visual.styleTypeAr} مناسبة جزئياً لـ${occasion.labelAr}',
+      );
     }
     return reasons.take(4).toList();
   }
@@ -376,7 +386,8 @@ abstract final class DeterministicOutfitEngine {
   ) {
     final base = switch (occasion) {
       MiraOccasion.wedding || MiraOccasion.eid => ['ذهبي', 'شامبين', 'عنابي'],
-      MiraOccasion.work || MiraOccasion.interview => ['كحلي', 'بيج', 'رمادي فاتح'],
+      MiraOccasion.work ||
+      MiraOccasion.interview => ['كحلي', 'بيج', 'رمادي فاتح'],
       MiraOccasion.evening => ['أسود', 'ياقوتي', 'فضي'],
       _ => ['تركواز', 'مرجاني', 'لافندر'],
     };
@@ -403,7 +414,9 @@ abstract final class DeterministicOutfitEngine {
     MiraOccasion occasion,
     int score,
   ) {
-    final garment = visual.garmentTypeAr.isNotEmpty ? visual.garmentTypeAr : 'إطلالة';
+    final garment = visual.garmentTypeAr.isNotEmpty
+        ? visual.garmentTypeAr
+        : 'إطلالة';
     return 'تحليل $score/100 لـ$garment (${visual.styleTypeAr}) '
         'في مناسبة ${occasion.labelAr}.';
   }
@@ -416,7 +429,9 @@ abstract final class DeterministicOutfitEngine {
     int score,
   ) {
     final undertone = UndertoneResolver.labelAr(palette.undertone);
-    final garment = visual.garmentTypeAr.isNotEmpty ? visual.garmentTypeAr : 'إطلالة';
+    final garment = visual.garmentTypeAr.isNotEmpty
+        ? visual.garmentTypeAr
+        : 'إطلالة';
     return 'تقييم $score/100 لـ$garment (${visual.styleTypeAr}) '
         'لبشرة ${skin.skinType} — تدرج البشرة $undertone '
         'في مناسبة ${occasion.labelAr}.';
@@ -431,9 +446,7 @@ abstract final class DeterministicOutfitEngine {
   }) {
     if (mismatchReasons.isEmpty) {
       if (isSmart && undertoneAr != null && undertoneAr.isNotEmpty) {
-        return [
-          'حافظي على بساطة الألوان مع تدرج البشرة $undertoneAr لبشرتك',
-        ];
+        return ['حافظي على بساطة الألوان مع تدرج البشرة $undertoneAr لبشرتك'];
       }
       return ['حافظي على توازن لوني بسيط يناسب ${occasion.labelAr}'];
     }
@@ -452,7 +465,10 @@ abstract final class DeterministicOutfitEngine {
     return actions.take(4).toList();
   }
 
-  static String? _mismatchToImprovement(String mismatch, MiraOccasion occasion) {
+  static String? _mismatchToImprovement(
+    String mismatch,
+    MiraOccasion occasion,
+  ) {
     if (mismatch.contains('كثرة الألوان') || mismatch.contains('مزج')) {
       return 'اختاري لونين أساسيين فقط — لون القطعة ولون الإكسسوار';
     }
@@ -514,7 +530,8 @@ abstract final class DeterministicOutfitEngine {
         ? skin.oiliness
         : (100 - (skin.concernScores['oiliness'] ?? 60)).clamp(0, 100);
     if (oiliness > 75 && _hasShinyFabricHint(visual)) score -= 12;
-    if (_issueSeverity(skin, 'redness', skin.redness) > 70 && _isRedDominant(visual)) {
+    if (_issueSeverity(skin, 'redness', skin.redness) > 70 &&
+        _isRedDominant(visual)) {
       score -= 16;
     }
     if (_issueSeverity(skin, 'age_spot', skin.spots) > 80 &&
@@ -528,7 +545,10 @@ abstract final class DeterministicOutfitEngine {
     return score.round().clamp(0, 100);
   }
 
-  static int _occasionMatchScore(MiraOccasion occasion, OutfitVisualProfile visual) {
+  static int _occasionMatchScore(
+    MiraOccasion occasion,
+    OutfitVisualProfile visual,
+  ) {
     var score = 72.0;
     switch (occasion) {
       case MiraOccasion.interview:
@@ -543,7 +563,8 @@ abstract final class DeterministicOutfitEngine {
       case MiraOccasion.wedding:
       case MiraOccasion.eid:
         if (visual.formalityLevel >= 0.55) score += 10;
-        if (_hasAnyColor(visual, ['ذهبي', 'كريمي', 'نبيتي', 'شامبين'])) score += 6;
+        if (_hasAnyColor(visual, ['ذهبي', 'كريمي', 'نبيتي', 'شامبين']))
+          score += 6;
       case MiraOccasion.evening:
         if (visual.contrastLevel >= 0.5) score += 8;
         if (visual.formalityLevel >= 0.5) score += 6;
@@ -560,12 +581,16 @@ abstract final class DeterministicOutfitEngine {
     final colorCount = visual.dominantColors.length;
     if (colorCount == 2) score += 10;
     if (colorCount >= 4) score -= 12;
-    if (visual.contrastLevel >= 0.35 && visual.contrastLevel <= 0.65) score += 8;
+    if (visual.contrastLevel >= 0.35 && visual.contrastLevel <= 0.65)
+      score += 8;
     if (visual.contrastLevel > 0.82) score -= 10;
     return score.round().clamp(0, 100);
   }
 
-  static int _colorHarmonyScore(SkinPaletteProfile palette, OutfitVisualProfile visual) {
+  static int _colorHarmonyScore(
+    SkinPaletteProfile palette,
+    OutfitVisualProfile visual,
+  ) {
     var score = 70.0;
     var matches = 0;
     for (final color in visual.dominantColors) {
@@ -589,7 +614,9 @@ abstract final class DeterministicOutfitEngine {
         .toList();
 
     if (matchingColors.length >= 2) {
-      reasons.add('الألوان ${matchingColors.join(' و')} تنسجم مع تدرج البشرة ($undertone)');
+      reasons.add(
+        'الألوان ${matchingColors.join(' و')} تنسجم مع تدرج البشرة ($undertone)',
+      );
     } else {
       for (final color in matchingColors) {
         reasons.add('لون $color يتناسب مع تدرج البشرة ($undertone)');
@@ -632,7 +659,8 @@ abstract final class DeterministicOutfitEngine {
         ? skin.oiliness
         : (100 - (skin.concernScores['oiliness'] ?? 60)).clamp(0, 100);
     if (oiliness > 75) reasons.add('بشرتك دهنية — تجنّبي الأقمشة اللامعة');
-    if (_issueSeverity(skin, 'redness', skin.redness) > 70 && _isRedDominant(visual)) {
+    if (_issueSeverity(skin, 'redness', skin.redness) > 70 &&
+        _isRedDominant(visual)) {
       reasons.add('احمرار البشرة — الأحمر السائد قرب الوجه يزيد الظهور');
     }
     if (occasion == MiraOccasion.interview) {
@@ -668,10 +696,14 @@ abstract final class DeterministicOutfitEngine {
     return base;
   }
 
-  static List<String> _rejectedColors(SkinPaletteProfile palette, OutfitVisualProfile visual) {
+  static List<String> _rejectedColors(
+    SkinPaletteProfile palette,
+    OutfitVisualProfile visual,
+  ) {
     final rejected = List<String>.from(palette.blockedPalettes);
     for (final c in visual.dominantColors) {
-      if (_colorMatchesAny(c, palette.blockedPalettes) && !rejected.contains(c)) {
+      if (_colorMatchesAny(c, palette.blockedPalettes) &&
+          !rejected.contains(c)) {
         rejected.add(c);
       }
     }

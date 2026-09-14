@@ -1,0 +1,8 @@
+# FK-7 — Feature Flags
+
+| Flag | Default |
+|------|---------|
+| `FASHION_KNOWLEDGE_FORM_SILHOUETTE_ENABLED` | false |
+| `FASHION_KNOWLEDGE_LLM_ENABLED` | false |
+| `FASHION_KNOWLEDGE_REGISTRY_ENABLED` | false |
+| `FASHION_KNOWLEDGE_ACCESSORIES_ENABLED` | false |

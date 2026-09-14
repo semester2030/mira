@@ -46,23 +46,14 @@
         let html = '<div class="alert ok">الحالة: <strong>' + s.status + '</strong></div>';
         html += '<p><strong>' + s.nameAr + '</strong> (' + s.type + ')</p>';
 
-        if (s.status === 'approved' && s.accessToken) {
-          html += '<p>تم التفعيل! رمز الدخول:</p><div class="token-box">' + s.accessToken + '</div>';
-          html += '<div class="actions"><button class="btn btn-primary" id="saveBtn">حفظ والدخول</button></div>';
+        if (s.status === 'approved') {
+          html += '<p class="lead">تم تفعيل الطلب. ستصلك بيانات الدخول عبر قناة التواصل المعتمدة.</p>';
         } else if (s.status === 'rejected') {
           html = '<div class="alert err">مرفوض: ' + (s.rejectReason || '') + '</div>';
         } else {
           html += '<p class="lead">طلبك قيد المراجعة — عادة 1–3 أيام عمل.</p>';
         }
         box.innerHTML = html;
-
-        const saveBtn = document.getElementById('saveBtn');
-        if (saveBtn) {
-          saveBtn.onclick = () => {
-            PartnersApi.saveSession(s.loginEmail, s.accessToken);
-            location.href = 'dashboard.html';
-          };
-        }
       } catch (err) {
         box.innerHTML = '<div class="alert err">' + err.message + '</div>';
       }

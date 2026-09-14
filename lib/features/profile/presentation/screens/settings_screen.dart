@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import '../../../../core/config/mira_features.dart';
+import '../../../../core/entitlements/mira_runtime_entitlement_store.dart';
 import '../../../../shared/widgets/mira_app_bar.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import '../../../../core/navigation/app_routes.dart';
@@ -200,6 +201,18 @@ class _SettingsScreenState extends State<SettingsScreen> {
                   subtitle: 'الإصدار 1.0.0 · مرآتك الذكية الخاصة',
                   onTap: () => Navigator.pushNamed(context, AppRoutes.about),
                 ),
+                if (MiraFeatures.fashionIconPreviewAvailable) ...[
+                  const Divider(height: 1, color: AppColors.border),
+                  _SettingsTile(
+                    icon: Icons.auto_awesome_outlined,
+                    title: 'معاينة أيقونات الأزياء (داخلي)',
+                    subtitle: '36 أيقونة · موافقة المالك قبل الهجرة',
+                    onTap: () => Navigator.pushNamed(
+                      context,
+                      AppRoutes.fashionIconSystemPreview,
+                    ),
+                  ),
+                ],
               ],
             ),
           ),
@@ -235,6 +248,7 @@ class _SettingsScreenState extends State<SettingsScreen> {
               variant: PremiumButtonVariant.ghost,
               onPressed: () async {
                 await GuestSessionService.exit();
+                MiraRuntimeEntitlementStore.clear();
                 await FirebaseAuth.instance.signOut();
                 if (!context.mounted) return;
                 Navigator.pushNamedAndRemoveUntil(context, AppRoutes.login, (_) => false);

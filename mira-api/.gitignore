@@ -1,5 +1,8 @@
 node_modules/
 dist/
 .env
+.env.local
+.env.qa
+.env.*.local
 *.log
 .DS_Store

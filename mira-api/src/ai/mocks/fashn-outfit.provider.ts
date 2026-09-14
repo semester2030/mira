@@ -4,6 +4,7 @@ import { MiraOccasion } from '../contracts/mira-occasion';
 import { OutfitAnalysisResult } from '../contracts/outfit-analysis-result.interface';
 import { OutfitAnalysisProvider } from '../providers/outfit-analysis.provider';
 import { MockOutfitAnalysisProvider } from './mock-outfit-analysis.provider';
+import { isProductionEnv } from '../../config/production-integrity';
 
 /**
  * Placeholder for FASHN.ai API.
@@ -26,6 +27,12 @@ export class FashnOutfitProvider implements OutfitAnalysisProvider {
     imageBytes: Buffer,
     occasion: MiraOccasion,
   ): Promise<OutfitAnalysisResult> {
+    if (isProductionEnv(this.config.get<string>('NODE_ENV'))) {
+      throw new Error(
+        'Legacy FASHN outfit provider is disabled in production; use Vision Platform',
+      );
+    }
+
     const apiKey = this.config.get<string>('FASHN_API_KEY');
     const baseUrl = this.config.get<string>('FASHN_BASE_URL');
     if (!apiKey?.trim() || !baseUrl?.trim()) {

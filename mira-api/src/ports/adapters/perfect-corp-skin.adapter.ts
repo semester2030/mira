@@ -1,4 +1,4 @@
-import { Injectable } from '@nestjs/common';
+import { Injectable, BadRequestException, ServiceUnavailableException, GatewayTimeoutException } from '@nestjs/common';
 import { ConfigService } from '@nestjs/config';
 import { SkinAnalysisResult } from '../../ai/contracts/skin-analysis-result.interface';
 import { PerfectCorpSkinProvider } from '../../ai/mocks/perfect-corp-skin.provider';
@@ -105,9 +105,19 @@ export class PerfectCorpSkinAdapter implements SkinAnalysisPort {
           ],
         }),
         _ephemeralRawYouCam: out.rawYouCam,
+        _ephemeralMasks: out.ephemeralMasks,
       };
     } catch (err) {
-      if (err instanceof ProviderPortError) throw err;
+      if (
+        err instanceof ServiceUnavailableException ||
+        err instanceof BadRequestException ||
+        err instanceof GatewayTimeoutException
+      ) {
+        throw err;
+      }
+      if (err instanceof ProviderPortError) {
+        throw err;
+      }
       const message = err instanceof Error ? err.message : String(err);
       throw new ProviderPortError(
         classifyProviderFailure({

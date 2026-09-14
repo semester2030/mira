@@ -12,15 +12,20 @@
 | Garment Intelligence | v1.0.0 | Prior freeze |
 | Outfit Intelligence | v1.0.0 | `MIRA-OI-FREEZE-1.0.0` |
 | Styling Intelligence | v1.0.0 | `MIRA-SI-FREEZE-1.0.0` |
-| **AI Beauty Advisor** | **v1.0.0** | **`MIRA-BA-FREEZE-1.0.0`** |
+| AI Beauty Advisor | v1.0.0 | `MIRA-BA-FREEZE-1.0.0` |
+| **Fashion Knowledge Platform** | **v1.0.0** | **`MIRA-FK-FREEZE-1.0.0`** |
 
 ## Sibling / deferred
 
 | Item | Status |
 |------|--------|
 | Beauty Experience | Activation Ready (not Advisor-owned) |
-| Recommendation Engine | Future / separate owner |
+| Recommendation Engine | Future / separate owner (AD-FK-05) |
 | Marketplace | Out of scope |
+| Fashion Knowledge Activation Track | Pending AD-FK-01…05 (provider, consent, client context) |
+
+> **Note (FK-14):** Fashion Knowledge Platform freeze is a **Platform Freeze**, not Production Activation Complete. ACTIVE curated rules = 0. Mode B Nest provider pending.
+
 
 ## Advisor gate chain
 

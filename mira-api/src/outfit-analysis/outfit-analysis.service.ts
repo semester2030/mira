@@ -25,7 +25,7 @@ import { SubscriptionsService } from '../subscriptions/subscriptions.service';
 import { UsersService } from '../users/users.service';
 import { OutfitAnalysisResponseDto } from './dto/outfit-analysis-response.dto';
 import { SaveOutfitSnapshotDto } from './dto/save-outfit-snapshot.dto';
-import { isLegacyOutfitMockBlocked } from '../config/production-integrity';
+import { isLegacyOutfitPathBlockedInProduction } from '../config/production-integrity';
 import { LEGACY_OUTFIT_MOCK_UNAVAILABLE_AR } from '../intelligence/contracts/cosmetic-copy';
 
 /**
@@ -51,7 +51,7 @@ export class OutfitAnalysisService {
     occasionId: string,
   ): Promise<OutfitAnalysisResponseDto> {
     if (
-      isLegacyOutfitMockBlocked({
+      isLegacyOutfitPathBlockedInProduction({
         NODE_ENV: this.config.get<string>('NODE_ENV'),
         OUTFIT_PROVIDER: this.config.get<string>('OUTFIT_PROVIDER'),
         ALLOW_LEGACY_OUTFIT_MOCK_IN_PROD: this.config.get<string>(

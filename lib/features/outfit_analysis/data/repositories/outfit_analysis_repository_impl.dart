@@ -1,7 +1,5 @@
 import 'dart:io';
 
-import '../../../../core/ai/ai_module.dart';
-import '../../../../core/ai/mappers/outfit_result_mapper.dart';
 import '../../../../core/ai/models/mira_occasion.dart';
 import '../../../../core/config/mira_api_config.dart';
 import '../../../../core/privacy/temp_image_cleanup.dart';
@@ -20,9 +18,9 @@ class OutfitAnalysisRepositoryImpl implements OutfitAnalysisRepository {
   final OutfitAnalysisApiDataSource? _apiDataSource;
 
   OutfitAnalysisRepositoryImpl({OutfitAnalysisApiDataSource? apiDataSource})
-      : _apiDataSource = MiraApiConfig.useBackend
-            ? (apiDataSource ?? OutfitAnalysisApiDataSource())
-            : null;
+    : _apiDataSource = MiraApiConfig.useBackend
+          ? (apiDataSource ?? OutfitAnalysisApiDataSource())
+          : null;
 
   @override
   Future<OutfitReport> analyze({
@@ -46,12 +44,9 @@ class OutfitAnalysisRepositoryImpl implements OutfitAnalysisRepository {
           occasion: occasion,
         );
       } else {
-        final bytes = await prepared.readAsBytes();
-        final result = await AiModule.instance.outfitProvider.analyze(
-          imageBytes: bytes,
-          occasion: occasion,
+        throw StateError(
+          'Legacy outfit analysis is disabled; canonical backend is required',
         );
-        report = OutfitResultMapper.toReport(result, createdAt: DateTime.now());
       }
     } finally {
       await TempImageCleanup.deleteIfExists(preparedPath);

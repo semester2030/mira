@@ -1,0 +1,465 @@
+<!DOCTYPE html>
+<html lang="ar" dir="rtl">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <meta name="description" content="تطوير تحليل البشرة — Phase 8A Architecture Lock لتجربة نتائج الذكاء الاصطناعي في ميرا" />
+  <title>تطوير تحليل البشرة | Mira Results Experience · Phase 8A</title>
+  <link rel="stylesheet" href="mira-skin-results-experience.css" />
+</head>
+<body>
+  <header class="site-header">
+    <div class="header-inner">
+      <a class="brand" href="index.html">ميرا · تطوير تحليل البشرة</a>
+      <nav class="nav">
+        <a href="#decision">القرار</a>
+        <a href="#findings">الاكتشاف</a>
+        <a href="#target">الهدف</a>
+        <a href="#laws">القوانين</a>
+        <a href="#phase8e">Phase 8E</a>
+        <a href="#phase8d">Phase 8D</a>
+        <a href="#phase8c">Phase 8C</a>
+        <a href="#phase8b">Phase 8B</a>
+        <a href="#docs">الوثائق</a>
+        <a href="#phases">المراحل</a>
+        <a href="mira-production-transformation-program.html">برنامج التحويل</a>
+      </nav>
+    </div>
+  </header>
+
+  <section class="hero">
+    <div>
+      <span class="kicker">PHASE 8A–8E · PERSONAL PLAN READY · FLAG DEFAULT LEGACY</span>
+      <h1>تطوير تحليل البشرة</h1>
+      <p class="lead">
+        قفل معماري لتجربة نتائج تحليل البشرة: تحويل الذكاء المجمّد إلى رحلة واضحة، مختصرة، تفاعلية، وموثوقة —
+        دون تعديل محركات Skin / Face / Advisor المجمّدة.
+      </p>
+      <div class="decision" id="decision">
+        Phase 8A: Architecture Lock<br/>
+        Phase 8B: Projection Contracts · <code>0.1.0-results-projection</code><br/>
+        Phase 8C: First Surface · <code>0.2.0-results-first-surface</code><br/>
+        Phase 8D: Metrics + Mode B Map · <code>0.3.0-results-metrics-map</code><br/>
+        Phase 8E: <strong>A — PERSONAL PLAN + ROUTINE COMPLETE · READY FOR 8F</strong>
+        · <code>0.4.0-results-personal-plan</code>
+        · flag default <code>legacy</code>
+        · QA: <code>--dart-define=MIRA_RESULTS_EXPERIENCE_V2=true</code>
+      </div>
+    </div>
+    <div class="icon-badge" aria-label="أيقونة تطوير تحليل البشرة">
+      <div class="icon-glyph" aria-hidden="true">◈</div>
+    </div>
+  </section>
+
+  <section class="section" id="findings">
+    <h2>ملخص الاكتشاف من المستودع</h2>
+    <p class="section-note">أدلة كود فقط — الشاشة الأساسية <code>MiraBeautyReportScreen</code> تمرّر ~15–19 قسماً في <code>SingleChildScrollView</code> واحد.</p>
+    <div class="grid">
+      <article class="card">
+        <span class="tag warn">مشكلة العرض</span>
+        <h3>تقرير طويل ومكرر</h3>
+        <p>أولويات ونصائح وثقة تظهر في Skin Intelligence + Journey + Concerns + Tips + Treatment دون مالك عرض واحد.</p>
+      </article>
+      <article class="card">
+        <span class="tag rose">تسريب داخلي</span>
+        <h3>مصطلحات غير عامة</h3>
+        <p><code>skin_intelligence_section.dart</code> يعرض مصدر المؤشر (<code>provider_measured</code>) وإصدار SVI. زر Advisor يذكر <code>MCE</code>.</p>
+      </article>
+      <article class="card">
+        <span class="tag">خريطة البشرة</span>
+        <h3>Mode B — إرشادية</h3>
+        <p><code>ReportFaceMapSpec</code>: مناطق شائعة مرتبطة بالنتيجة — ليست heatmap موضعية مُقاسة. يجب شارة وضع واضحة.</p>
+      </article>
+      <article class="card">
+        <span class="tag warn">الدرجات</span>
+        <h3>دلالة الأرقام غامضة</h3>
+        <p>درجات الاهتمام: الأعلى أفضل عبر <code>_severity</code>. الثقة والتوقع يستخدمان لغة رقمية مشابهة لمؤشر الحيوية.</p>
+      </article>
+      <article class="card">
+        <span class="tag">التقدم</span>
+        <h3>مقارنة ضعيفة</h3>
+        <p><code>LocalProgressBuilder</code> يقارن درجتين دون بوابات إضاءة/كاميرا/إصدار نموذج. كلمة Trends تظهر داخل نص عربي.</p>
+      </article>
+      <article class="card">
+        <span class="tag">Advisor</span>
+        <h3>مدخل متأخر</h3>
+        <p><code>AskMiraSection</code> في أسفل التقرير بعد الإرهاق البصري. يجب احترام Laws #33/#34 دون محرك ذكاء ثانٍ.</p>
+      </article>
+    </div>
+  </section>
+
+  <section class="section" id="evidence">
+    <h2>مسارات الإثبات الأساسية</h2>
+    <div class="table-wrap">
+      <table>
+        <thead>
+          <tr><th>المكوّن</th><th>المسار</th><th>الدور</th></tr>
+        </thead>
+        <tbody>
+          <tr><td>شاشة النتيجة</td><td><code>lib/features/intelligence/presentation/screens/mira_beauty_report_screen.dart</code></td><td>التمرير الطويل الحالي</td></tr>
+          <tr><td>ذكاء البشرة UI</td><td><code>.../widgets/skin_intelligence_section.dart</code></td><td>تسريب المصدر/الإصدار</td></tr>
+          <tr><td>مواصفات الخريطة</td><td><code>.../constants/report_face_map_spec.dart</code></td><td>Mode B illustrative</td></tr>
+          <tr><td>بناء التقدم</td><td><code>.../services/local_progress_builder.dart</code></td><td>Trends / إسقاط 30 يوماً</td></tr>
+          <tr><td>مدخل Advisor</td><td><code>lib/features/advisor/.../ask_mira_section.dart</code></td><td>أسئلة جاهزة + MCE</td></tr>
+          <tr><td>المسارات</td><td><code>lib/core/navigation/app_routes.dart</code></td><td>/mira-beauty-report · /skin-result · /skin-routine · /beauty-progress · /mira-advisor</td></tr>
+        </tbody>
+      </table>
+    </div>
+  </section>
+
+  <section class="section" id="target">
+    <h2>المعمارية المستهدفة</h2>
+    <div class="grid">
+      <article class="card">
+        <span class="tag">Option D</span>
+        <h3>Hybrid Summary + Tabs + Sheets</h3>
+        <ul>
+          <li>ملخص تنفيذي واحد</li>
+          <li>≤3 أولويات</li>
+          <li>فعل واحد لليوم</li>
+          <li>مداخل: روتين · تقدم · Advisor</li>
+        </ul>
+      </article>
+      <article class="card">
+        <span class="tag">Projection</span>
+        <h3>Result Projection Layer</h3>
+        <p>Frozen outputs → Presentation VMs → سياسة ظهور → نسخة عامة → وحدات UI → Envelope عند الطلب.</p>
+      </article>
+      <article class="card">
+        <span class="tag warn">حدود مجمّدة</span>
+        <h3>لا يُمس</h3>
+        <p>Skin / Face / Fashion stack / Beauty Advisor / Laws #1–#34 / حسابات الثقة والأدلة.</p>
+      </article>
+    </div>
+  </section>
+
+  <section class="section" id="laws">
+    <h2>تقييم القوانين المقترحة</h2>
+    <div class="grid">
+      <article class="card">
+        <span class="tag">#35 · APPROVE</span>
+        <h3>معنى واحد · مصدر واحد · ثقة واحدة · فعل واحد · مالك عرض واحد</h3>
+        <p>قانون طبقة عرض — متوافق مع #33/#34 ولا يغيّر ملكية الذكاء المجمّد.</p>
+      </article>
+      <article class="card">
+        <span class="tag">#36 · APPROVE</span>
+        <h3>لا مصطلحات داخلية للجمهور</h3>
+        <p>يمنع ظهور provider/canonical/raw/trace/MCE/إصدارات SVI في الواجهة العامة.</p>
+      </article>
+      <article class="card">
+        <span class="tag warn">قرارات قبل 8B</span>
+        <h3>خمسة قرارات مفتوحة</h3>
+        <ul>
+          <li>حد تطابق المنتج (≥70% مقترح)</li>
+          <li>نص شارة Mode B</li>
+          <li>اسم العلم والدفعة</li>
+          <li>عمر البشرة على السطح الأول؟</li>
+          <li>أسئلة Advisor من الـ envelope فقط</li>
+        </ul>
+      </article>
+    </div>
+  </section>
+
+  
+  
+  <section class="section" id="phase8e">
+    <h2>Phase 8E — Personal Plan &amp; Routine</h2>
+    <p class="section-note">خطة عناية واحدة خلف العلم. بدون تقدم/منتجات/تجارة. العلم يبقى legacy.</p>
+    <div class="grid">
+      <article class="card">
+        <span class="tag">الخطة</span>
+        <h3>ResultsPersonalPlanScreen</h3>
+        <ul>
+          <li>ملخص خطة + تركيز</li>
+          <li>≤3 صباح · ≤3 مساء</li>
+          <li>تعديل أسبوعي واحد</li>
+          <li>ما يجب تجنبه</li>
+          <li>إكمال محلي مرتبط بالتاريخ</li>
+        </ul>
+      </article>
+      <article class="card">
+        <span class="tag">الملكية</span>
+        <h3>مالك الروتين الوحيد</h3>
+        <p>غسول · مرطب · واقي شمس · تعديل أسبوعي · تجنّب — دون تكرار في الملخص/المؤشرات.</p>
+      </article>
+      <article class="card">
+        <span class="tag">اختبارات</span>
+        <h3>Widget + Golden</h3>
+        <p>phase8e_personal_plan_test · 14 goldens · انحدارات 8B–8D / 7B / Skin / Face</p>
+      </article>
+      <article class="card">
+        <span class="tag warn">خارج النطاق</span>
+        <h3>لم يُنفَّذ في 8E</h3>
+        <p>تقدم · منتجات · تجارة · تعديل Advisor · تفعيل عالمي</p>
+      </article>
+    </div>
+  </section>
+
+  <section class="section" id="phase8d">
+    <h2>Phase 8D — Metrics Detail &amp; Interactive Skin Map</h2>
+    <p class="section-note">مؤشرات + خريطة إرشادية Mode B فقط. الروتين/التقدم/المنتجات خارج النطاق. العلم يبقى legacy.</p>
+    <div class="grid">
+      <article class="card">
+        <span class="tag">المؤشرات</span>
+        <h3>Overview + Detail Sheet</h3>
+        <ul>
+          <li>بطاقات مختصرة من عقود 8B</li>
+          <li>دلالة wellness مقابل severity</li>
+          <li>ثقة منفصلة عن الحالة</li>
+          <li>فعل واحد مملوك لكل مؤشر</li>
+          <li>مدخل Ask Mira من التفصيل</li>
+        </ul>
+      </article>
+      <article class="card">
+        <span class="tag">الخريطة</span>
+        <h3>Mode B — توضيح إرشادي</h3>
+        <ul>
+          <li>شارة «توضيح إرشادي»</li>
+          <li>شرح إلزامي قبل التفسير</li>
+          <li>لا ادعاء قياس موضعي</li>
+          <li>مخاوف مسقطة فقط</li>
+          <li>حالات: unavailable / stale / low confidence / missing image</li>
+        </ul>
+      </article>
+      <article class="card">
+        <span class="tag">اختبارات</span>
+        <h3>18 widget + 13 golden</h3>
+        <p>phase8d_metrics_map_test · phase8d_golden_test · انحدارات 8B/8C/7B/Skin/Face</p>
+      </article>
+      <article class="card">
+        <span class="tag warn">خارج النطاق</span>
+        <h3>لم يُنفَّذ في 8D</h3>
+        <p>روتين كامل · تقدم · منتجات · تعديل Advisor · تفعيل عالمي لـ results_v2</p>
+      </article>
+    </div>
+  </section>
+
+  <section class="section" id="phase8c">
+    <h2>Phase 8C — Executive Summary &amp; Priority Experience</h2>
+    <p class="section-note">السطح الأول فقط خلف العلم. التقرير القديم يبقى الافتراضي.</p>
+    <div class="grid">
+      <article class="card">
+        <span class="tag">ما نُفّذ</span>
+        <h3>ResultsExecutiveSummaryScreen</h3>
+        <ul>
+          <li>ملخص تنفيذي واحد</li>
+          <li>≤3 أولويات من الإسقاط</li>
+          <li>خطوة اليوم الواحدة</li>
+          <li>مداخل: روتينك · تقدمك · مستشار ميرا</li>
+          <li>تفاصيل → التقرير القديم (forceLegacy)</li>
+        </ul>
+      </article>
+      <article class="card">
+        <span class="tag">العلم</span>
+        <h3>mira_results_experience_v2</h3>
+        <p>الافتراضي <strong>legacy</strong>. التفعيل التجريبي عبر dart-define أو FlagStore — بدون تفعيل عالمي.</p>
+      </article>
+      <article class="card">
+        <span class="tag">اختبارات</span>
+        <h3>Widget + Golden</h3>
+        <p>phase8c_first_surface_test · 10 goldens · انحدارات 8B / 7B / Skin Intel / Face 4F</p>
+      </article>
+      <article class="card">
+        <span class="tag warn">خارج النطاق</span>
+        <h3>لم يُنفَّذ في 8C</h3>
+        <p>تفاصيل المؤشرات · خريطة البشرة · روتين كامل · تقدم كامل · منتجات · تعديل Advisor</p>
+      </article>
+    </div>
+  </section>
+
+  <section class="section" id="phase8b">
+    <h2>Phase 8B — Result Projection &amp; Presentation Contracts</h2>
+    <p class="section-note">عقود وعرض فقط — بدون إعادة تصميم واجهة التقرير. الحزمة: <code>lib/features/results_experience/</code></p>
+    <div class="grid">
+      <article class="card">
+        <span class="tag">Projection</span>
+        <h3>ResultExperienceProjector</h3>
+        <p>مدخل مجمّد → نماذج عامة آمنة · حتمية · إصدار <code>results-projection-v1</code></p>
+      </article>
+      <article class="card">
+        <span class="tag">Semantics</span>
+        <h3>دلالة الدرجات</h3>
+        <p>WELLNESS مقابل CONCERN_SEVERITY (الأعلى أسوأ) · ثقة منفصلة · تقدير ≠ قياس</p>
+      </article>
+      <article class="card">
+        <span class="tag warn">قرارات مطبّقة</span>
+        <h3>75% / Mode B / Skin Age ثانوي</h3>
+        <p>منتجات · خريطة إرشادية · مستشار ميرا بلا MCE · العلم افتراضياً legacy</p>
+      </article>
+      <article class="card">
+        <span class="tag">Tests</span>
+        <h3>19/19 + انحدارات مجمّدة</h3>
+        <p>phase8b_results_projection_test · test:phase7b OK · test:phase6e OK</p>
+      </article>
+      <article class="card">
+        <span class="tag">Laws</span>
+        <h3>#35 و #36</h3>
+        <p>مالك عرض واحد · لا مصطلحات داخلية للجمهور</p>
+      </article>
+      <article class="card">
+        <span class="tag rose">حدود</span>
+        <h3>لا UI نهائي</h3>
+        <p>لا تفعيل results_v2 · لا تعديل ذكاء مجمّد · جاهز لـ 8C</p>
+      </article>
+    </div>
+  </section>
+
+  <section class="section" id="docs">
+    <h2>وثائق تطوير تحليل البشرة (8A–8E)</h2>
+    <p class="section-note">كل المتطلبات والحوكمة تحت أيقونة «تطوير تحليل البشرة». الملفات في <code>docs/governance/PHASE_8A_*.md</code> … <code>PHASE_8E_*.md</code>.</p>
+    <div class="doc-list" id="docList"></div>
+  </section>
+
+  <section class="section" id="phases">
+    <h2>خارطة التنفيذ المستقبلية (لا تنفيذ الآن)</h2>
+    <div class="table-wrap">
+      <table>
+        <thead><tr><th>المرحلة</th><th>الاسم</th><th>بوابة الخروج</th></tr></thead>
+        <tbody>
+          <tr><td>8B</td><td>Projection &amp; Contracts</td><td>VMs + اختبارات الدلالة</td></tr>
+          <tr><td>8C</td><td>Executive Summary &amp; Priorities</td><td>حدود السطح الأول</td></tr>
+          <tr><td>8D</td><td>Metrics &amp; Skin Map</td><td><strong>مكتمل</strong> · شارة Mode B · لا ادعاء قياس موضعي</td></tr>
+          <tr><td>8E</td><td>Personal Plan &amp; Routine</td><td><strong>مكتمل</strong> · مالك واحد للروتين · إكمال محلي</td></tr>
+          <tr><td>8F</td><td>Progress</td><td>عقد القابلية للمقارنة</td></tr>
+          <tr><td>8G</td><td>Products</td><td>أهلية + إفصاح</td></tr>
+          <tr><td>8H</td><td>Advisor Assembly</td><td>Laws #33/#34</td></tr>
+          <tr><td>8I–8L</td><td>Audit → Freeze</td><td>شهادة إنتاج</td></tr>
+        </tbody>
+      </table>
+    </div>
+  </section>
+
+  <footer class="footer">
+    <p><strong>تطوير تحليل البشرة</strong> · Mira Results Experience Transformation · Phase 8E</p>
+    <p>Personal Plan + Routine خلف العلم · الذكاء المجمّد دون تعديل · results_v2 افتراضياً legacy.</p>
+  </footer>
+
+  <script>
+    const docs8a = [
+      ["PHASE_8A_EXECUTIVE_SUMMARY.md", "8A · الملخص التنفيذي"],
+      ["PHASE_8A_ARCHITECTURE_LOCK.md", "8A · قفل المعمارية"],
+      ["PHASE_8A_CURRENT_STATE_ARCHITECTURE.md", "8A · الحالة الحالية"],
+      ["PHASE_8A_REPOSITORY_DISCOVERY.md", "8A · اكتشاف المستودع"],
+      ["PHASE_8A_USER_JOURNEY_AUDIT.md", "8A · رحلة المستخدم"],
+      ["PHASE_8A_INFORMATION_ARCHITECTURE_AUDIT.md", "8A · هندسة المعلومات"],
+      ["PHASE_8A_DUPLICATION_MATRIX.md", "8A · التكرار"],
+      ["PHASE_8A_SCORE_SEMANTICS_AUDIT.md", "8A · دلالة الدرجات"],
+      ["PHASE_8A_CONTRADICTION_REGISTER.md", "8A · التناقضات"],
+      ["PHASE_8A_CONTENT_AND_LOCALIZATION_AUDIT.md", "8A · المحتوى"],
+      ["PHASE_8A_PERSONALIZATION_AUDIT.md", "8A · التخصيص"],
+      ["PHASE_8A_TRUST_AND_SAFETY_AUDIT.md", "8A · الثقة"],
+      ["PHASE_8A_SKIN_MAP_AUDIT.md", "8A · الخريطة"],
+      ["PHASE_8A_PRODUCT_RECOMMENDATION_AUDIT.md", "8A · المنتجات"],
+      ["PHASE_8A_PROGRESS_COMPARABILITY_AUDIT.md", "8A · التقدم"],
+      ["PHASE_8A_ADVISOR_INTEGRATION_AUDIT.md", "8A · Advisor"],
+      ["PHASE_8A_TARGET_EXPERIENCE_ARCHITECTURE.md", "8A · الهدف"],
+      ["PHASE_8A_RESULT_PRESENTATION_MODEL.md", "8A · نموذج العرض"],
+      ["PHASE_8A_RESULT_DESIGN_SYSTEM.md", "8A · التصميم"],
+      ["PHASE_8A_INTERACTION_ARCHITECTURE.md", "8A · التفاعل"],
+      ["PHASE_8A_ANALYTICS_CONTRACT.md", "8A · التحليلات"],
+      ["PHASE_8A_TESTING_STRATEGY.md", "8A · الاختبار"],
+      ["PHASE_8A_MIGRATION_STRATEGY.md", "8A · الترحيل"],
+      ["PHASE_8A_IMPLEMENTATION_ROADMAP.md", "8A · الخارطة"],
+      ["PHASE_8A_RISK_REGISTER.md", "8A · المخاطر"],
+      ["PHASE_8A_TECHNICAL_DEBT_REGISTER.md", "8A · الدين التقني"]
+    ];
+    const docs8e = [
+      ["PHASE_8E_EXECUTIVE_SUMMARY.md", "8E · الملخص التنفيذي"],
+      ["PHASE_8E_IMPLEMENTATION_REPORT.md", "8E · تقرير التنفيذ"],
+      ["PHASE_8E_ROUTINE_ARCHITECTURE.md", "8E · معمارية الروتين"],
+      ["PHASE_8E_PERSONAL_PLAN_CONTRACT.md", "8E · عقد الخطة"],
+      ["PHASE_8E_MORNING_ROUTINE.md", "8E · الصباح"],
+      ["PHASE_8E_EVENING_ROUTINE.md", "8E · المساء"],
+      ["PHASE_8E_WEEKLY_ADJUSTMENT.md", "8E · التعديل الأسبوعي"],
+      ["PHASE_8E_AVOIDANCE_POLICY.md", "8E · التجنب"],
+      ["PHASE_8E_ADVICE_DEDUPLICATION_REPORT.md", "8E · إزالة التكرار"],
+      ["PHASE_8E_PERSONALIZATION_REPORT.md", "8E · التخصيص"],
+      ["PHASE_8E_ROUTINE_SAFETY_POLICY.md", "8E · السلامة"],
+      ["PHASE_8E_COMPLETION_STATE_ARCHITECTURE.md", "8E · الإكمال"],
+      ["PHASE_8E_DATE_AND_TIME_BEHAVIOR.md", "8E · التاريخ/الوقت"],
+      ["PHASE_8E_TODAY_ACTION_INTEGRATION.md", "8E · خطوة اليوم"],
+      ["PHASE_8E_ADVISOR_INTEGRATION.md", "8E · المستشار"],
+      ["PHASE_8E_RTL_AND_LOCALIZATION_REPORT.md", "8E · RTL"],
+      ["PHASE_8E_ACCESSIBILITY_REPORT.md", "8E · الوصول"],
+      ["PHASE_8E_NAVIGATION_COMPATIBILITY.md", "8E · التنقل"],
+      ["PHASE_8E_ANALYTICS_REPORT.md", "8E · التحليلات"],
+      ["PHASE_8E_TEST_REPORT.md", "8E · الاختبارات"],
+      ["PHASE_8E_GOLDEN_TEST_REPORT.md", "8E · Golden"],
+      ["PHASE_8E_FROZEN_BOUNDARY_VERIFICATION.md", "8E · الحدود المجمّدة"],
+      ["PHASE_8E_RISK_REGISTER.md", "8E · المخاطر"],
+      ["PHASE_8E_TECHNICAL_DEBT_REGISTER.md", "8E · الدين التقني"],
+      ["PHASE_8E_RELEASE_MANIFEST.md", "8E · بيان الإصدار"]
+    ];
+    const docs8d = [
+      ["PHASE_8D_EXECUTIVE_SUMMARY.md", "8D · الملخص التنفيذي"],
+      ["PHASE_8D_IMPLEMENTATION_REPORT.md", "8D · تقرير التنفيذ"],
+      ["PHASE_8D_METRICS_ARCHITECTURE.md", "8D · معمارية المؤشرات"],
+      ["PHASE_8D_METRIC_OVERVIEW.md", "8D · نظرة المؤشرات"],
+      ["PHASE_8D_METRIC_DETAIL_SHEET.md", "8D · ورقة التفصيل"],
+      ["PHASE_8D_SCORE_SEMANTICS_VERIFICATION.md", "8D · دلالة الدرجات"],
+      ["PHASE_8D_ADVICE_DEDUPLICATION_REPORT.md", "8D · إزالة تكرار النصائح"],
+      ["PHASE_8D_SKIN_MAP_ARCHITECTURE.md", "8D · معمارية الخريطة"],
+      ["PHASE_8D_SKIN_MAP_MODE_B_COMPLIANCE.md", "8D · امتثال Mode B"],
+      ["PHASE_8D_SKIN_MAP_VISUALIZATION.md", "8D · تصور الخريطة"],
+      ["PHASE_8D_SKIN_MAP_INTERACTION.md", "8D · تفاعل الخريطة"],
+      ["PHASE_8D_RTL_AND_LOCALIZATION_REPORT.md", "8D · RTL"],
+      ["PHASE_8D_ACCESSIBILITY_REPORT.md", "8D · الوصول"],
+      ["PHASE_8D_ANALYTICS_REPORT.md", "8D · التحليلات"],
+      ["PHASE_8D_TEST_REPORT.md", "8D · الاختبارات"],
+      ["PHASE_8D_GOLDEN_TEST_REPORT.md", "8D · Golden"],
+      ["PHASE_8D_FROZEN_BOUNDARY_VERIFICATION.md", "8D · الحدود المجمّدة"],
+      ["PHASE_8D_RISK_REGISTER.md", "8D · المخاطر"],
+      ["PHASE_8D_TECHNICAL_DEBT_REGISTER.md", "8D · الدين التقني"],
+      ["PHASE_8D_RELEASE_MANIFEST.md", "8D · بيان الإصدار"]
+    ];
+    const docs8c = [
+      ["PHASE_8C_EXECUTIVE_SUMMARY.md", "8C · الملخص التنفيذي"],
+      ["PHASE_8C_IMPLEMENTATION_REPORT.md", "8C · تقرير التنفيذ"],
+      ["PHASE_8C_FIRST_SURFACE_ARCHITECTURE.md", "8C · معمارية السطح الأول"],
+      ["PHASE_8C_EXECUTIVE_SUMMARY_COMPONENT.md", "8C · مكوّن الملخص"],
+      ["PHASE_8C_PRIORITY_EXPERIENCE.md", "8C · الأولويات"],
+      ["PHASE_8C_TODAY_ACTION_CONTRACT.md", "8C · خطوة اليوم"],
+      ["PHASE_8C_SECONDARY_ENTRY_POINTS.md", "8C · المداخل الثانوية"],
+      ["PHASE_8C_VISUAL_HIERARCHY_REPORT.md", "8C · التسلسل البصري"],
+      ["PHASE_8C_RTL_AND_LOCALIZATION_REPORT.md", "8C · RTL"],
+      ["PHASE_8C_ACCESSIBILITY_REPORT.md", "8C · الوصول"],
+      ["PHASE_8C_NAVIGATION_COMPATIBILITY.md", "8C · التنقل"],
+      ["PHASE_8C_ANALYTICS_REPORT.md", "8C · التحليلات"],
+      ["PHASE_8C_TEST_REPORT.md", "8C · الاختبارات"],
+      ["PHASE_8C_GOLDEN_TEST_REPORT.md", "8C · Golden"],
+      ["PHASE_8C_FROZEN_BOUNDARY_VERIFICATION.md", "8C · الحدود المجمّدة"],
+      ["PHASE_8C_RISK_REGISTER.md", "8C · المخاطر"],
+      ["PHASE_8C_TECHNICAL_DEBT_REGISTER.md", "8C · الدين التقني"],
+      ["PHASE_8C_RELEASE_MANIFEST.md", "8C · بيان الإصدار"]
+    ];
+    const docs8b = [
+      ["PHASE_8B_EXECUTIVE_SUMMARY.md", "8B · الملخص التنفيذي"],
+      ["PHASE_8B_IMPLEMENTATION_REPORT.md", "8B · تقرير التنفيذ"],
+      ["PHASE_8B_PACKAGE_ARCHITECTURE.md", "8B · معمارية الحزمة"],
+      ["PHASE_8B_RESULT_PRESENTATION_CONTRACTS.md", "8B · عقود العرض"],
+      ["PHASE_8B_SCORE_SEMANTICS_CONTRACT.md", "8B · دلالة الدرجات"],
+      ["PHASE_8B_VISIBILITY_POLICY.md", "8B · سياسة الظهور"],
+      ["PHASE_8B_ADVICE_OWNERSHIP_POLICY.md", "8B · ملكية النصائح"],
+      ["PHASE_8B_PERSONALIZATION_CLASSIFICATION.md", "8B · التخصيص"],
+      ["PHASE_8B_PUBLIC_LANGUAGE_POLICY.md", "8B · اللغة العامة"],
+      ["PHASE_8B_CONFIDENCE_PRESENTATION_CONTRACT.md", "8B · الثقة"],
+      ["PHASE_8B_SKIN_MAP_PRESENTATION_CONTRACT.md", "8B · الخريطة"],
+      ["PHASE_8B_PROGRESS_COMPARABILITY_CONTRACT.md", "8B · التقدم"],
+      ["PHASE_8B_PRODUCT_PRESENTATION_CONTRACT.md", "8B · المنتجات"],
+      ["PHASE_8B_SKIN_AGE_PRESENTATION_CONTRACT.md", "8B · عمر البشرة"],
+      ["PHASE_8B_ADVISOR_ENTRY_CONTRACT.md", "8B · مدخل المستشار"],
+      ["PHASE_8B_VALIDATION_REPORT.md", "8B · التحقق"],
+      ["PHASE_8B_TEST_REPORT.md", "8B · الاختبارات"],
+      ["PHASE_8B_FROZEN_BOUNDARY_VERIFICATION.md", "8B · الحدود المجمّدة"],
+      ["PHASE_8B_RISK_REGISTER.md", "8B · المخاطر"],
+      ["PHASE_8B_TECHNICAL_DEBT_REGISTER.md", "8B · الدين التقني"],
+      ["PHASE_8B_RELEASE_MANIFEST.md", "8B · بيان الإصدار"],
+      ["PHASE_8B_ENGINEERING_LAWS_35_36.md", "8B · القوانين 35–36"]
+    ];
+    const docs = [...docs8e, ...docs8d, ...docs8c, ...docs8b, ...docs8a];
+    document.getElementById("docList").innerHTML = docs.map(([file, title]) =>
+      `<a href="governance/${file}" target="_blank" rel="noopener"><strong>${title}</strong><span>${file}</span></a>`
+    ).join("");
+  </script>
+</body>
+</html>

@@ -1,16 +1,36 @@
 import { Injectable, Logger } from '@nestjs/common';
 import { ConfigService } from '@nestjs/config';
+import * as dns from 'node:dns';
 import { resolvePerfectCorpConfig } from '../config/perfect-corp.config';
 import { SkinAnalysisResult } from '../contracts/skin-analysis-result.interface';
 import { resolveUndertone } from '../../intelligence/pipeline/undertone-intelligence';
+import { assertHdOnlyActions } from './perfect-hd-mask.parser';
+
+/** Prefer IPv4 for Perfect S3 accelerate uploads (avoids local IPv6 ConnectTimeout). */
+try {
+  dns.setDefaultResultOrder('ipv4first');
+} catch {
+  /* older Node — ignore */
+}
 
 /** YouCam S2S v2.0 — multipart file upload → task → poll (server-side only). */
 
-type YouCamConcern = {
+export type YouCamConcern = {
   type: string;
   ui_score?: number;
   raw_score?: number;
 };
+
+export const REQUIRED_YOUCAM_CONCERNS = [
+  'wrinkle',
+  'pore',
+  'texture',
+  'acne',
+  'moisture',
+  'oiliness',
+  'redness',
+  'age_spot',
+] as const;
 
 @Injectable()
 export class PerfectCorpService {
@@ -40,6 +60,44 @@ export class PerfectCorpService {
       `YouCam skin analysis OK (task=${taskId.slice(0, 12)}…, concerns=${concerns.length})`,
     );
     return { result, rawYouCam: rawData };
+  }
+
+  /** Map already-fetched YouCam task data (HD or SD) into SkinAnalysisResult. */
+  mapFromRawYouCam(rawData: Record<string, unknown>): {
+    result: SkinAnalysisResult;
+  } {
+    const concerns = extractConcerns(rawData);
+    return { result: this.mapYouCamResults(concerns, rawData) };
+  }
+
+  /**
+   * HD Skin Analysis with independent detection masks (technical acceptance).
+   * Never mixes SD+HD. enable_mask_overlay=false → independent PNG masks.
+   * Legacy SD analyzeSkin() path is unchanged.
+   */
+  async analyzeSkinHdMasks(
+    imageBytes: Buffer,
+    dstActions: string[],
+  ): Promise<{
+    rawYouCam: Record<string, unknown>;
+    taskId: string;
+  }> {
+    const { apiKey, baseUrl } = resolvePerfectCorpConfig(this.config);
+    if (!apiKey) {
+      throw new Error('Perfect Corp API key is not configured on the server');
+    }
+    assertHdOnlyActions(dstActions);
+
+    const fileId = await this.uploadImage(baseUrl, apiKey, imageBytes);
+    const taskId = await this.createSkinTask(baseUrl, apiKey, fileId, {
+      dstActions,
+      enableMaskOverlay: false,
+    });
+    const { rawData } = await this.pollUntilDone(baseUrl, apiKey, taskId);
+    this.logger.log(
+      `YouCam HD mask analysis OK (task=${taskId.slice(0, 12)}…, actions=${dstActions.length})`,
+    );
+    return { rawYouCam: rawData, taskId };
   }
 
   private authHeaders(apiKey: string): Record<string, string> {
@@ -113,17 +171,30 @@ export class PerfectCorpService {
     baseUrl: string,
     apiKey: string,
     fileId: string,
+    overrides?: {
+      dstActions?: string[];
+      /** false = independent masks (Perfect default). true = single blended overlay. */
+      enableMaskOverlay?: boolean;
+    },
   ): Promise<string> {
-    const { dstActions } = resolvePerfectCorpConfig(this.config);
+    const cfg = resolvePerfectCorpConfig(this.config);
+    const dstActions = overrides?.dstActions ?? cfg.dstActions;
+
+    const body: Record<string, unknown> = {
+      src_file_id: fileId,
+      dst_actions: dstActions,
+      format: 'json',
+    };
+    if (overrides?.enableMaskOverlay !== undefined) {
+      body.miniserver_args = {
+        enable_mask_overlay: overrides.enableMaskOverlay,
+      };
+    }
 
     const res = await fetch(`${baseUrl}/task/skin-analysis`, {
       method: 'POST',
       headers: this.authHeaders(apiKey),
-      body: JSON.stringify({
-        src_file_id: fileId,
-        dst_actions: dstActions,
-        format: 'json',
-      }),
+      body: JSON.stringify(body),
     });
 
     const json = (await res.json()) as Record<string, unknown>;
@@ -185,33 +256,45 @@ export class PerfectCorpService {
     throw new Error(`YouCam task timed out after ${maxMs}ms`);
   }
 
-  private mapYouCamResults(
+  mapYouCamResults(
     concerns: YouCamConcern[],
     rawData?: Record<string, unknown>,
   ): SkinAnalysisResult {
     const byType = new Map<string, number>();
     for (const item of concerns) {
-      if (typeof item.ui_score === 'number') {
+      if (
+        typeof item.ui_score === 'number' &&
+        Number.isFinite(item.ui_score) &&
+        item.ui_score >= 0 &&
+        item.ui_score <= 100
+      ) {
         byType.set(item.type.toLowerCase(), item.ui_score);
       }
     }
 
-    const score = (type: string, fallback: number) =>
-      byType.get(type) ?? fallback;
+    const missing = REQUIRED_YOUCAM_CONCERNS.filter(
+      (type) => !byType.has(type),
+    );
+    if (missing.length > 0) {
+      throw new Error(
+        `YouCam incomplete result: missing or invalid ui_score for ${missing.join(',')}`,
+      );
+    }
 
     const beautyScore = average(
       [...byType.values()].filter((v) => Number.isFinite(v)),
-      72,
     );
 
-    const hydration = clamp(score('moisture', 60), 0, 100);
-    const oiliness = clamp(score('oiliness', 40), 0, 100);
+    const score = (type: (typeof REQUIRED_YOUCAM_CONCERNS)[number]) =>
+      byType.get(type)!;
 
-    const pores = severityFromUi(score('pore', 70));
-    const wrinkles = severityFromUi(score('wrinkle', 70));
-    const acne = severityFromUi(score('acne', 75));
-    const darkSpots = severityFromUi(score('age_spot', 80));
-    const redness = severityFromUi(score('redness', 85));
+    const hydration = score('moisture');
+    const oiliness = score('oiliness');
+    const pores = severityFromUi(score('pore'));
+    const wrinkles = severityFromUi(score('wrinkle'));
+    const acne = severityFromUi(score('acne'));
+    const darkSpots = severityFromUi(score('age_spot'));
+    const redness = severityFromUi(score('redness'));
 
     const { skinTypeAr, skinTypeEn } = inferSkinType(hydration, oiliness);
 
@@ -228,36 +311,6 @@ export class PerfectCorpService {
     const concernScores: Record<string, number> = {};
     for (const [type, value] of byType.entries()) {
       concernScores[normalizeConcernId(type)] = Math.round(value);
-    }
-    for (const id of [
-      'moisture',
-      'oiliness',
-      'pore',
-      'wrinkle',
-      'acne',
-      'age_spot',
-      'redness',
-      'texture',
-    ]) {
-      if (concernScores[id] == null) {
-        const fallback =
-          id === 'moisture'
-            ? hydration
-            : id === 'oiliness'
-              ? 100 - oiliness
-              : id === 'pore'
-                ? score('pore', 70)
-                : id === 'wrinkle'
-                  ? score('wrinkle', 70)
-                  : id === 'acne'
-                    ? score('acne', 75)
-                    : id === 'age_spot'
-                      ? score('age_spot', 80)
-                      : id === 'redness'
-                        ? score('redness', 85)
-                        : score('texture', 72);
-        concernScores[id] = Math.round(fallback);
-      }
     }
 
     const skinAge = estimateSkinAge(concernScores);
@@ -349,19 +402,75 @@ function extractTaskId(json: Record<string, unknown>): string | null {
 function extractConcerns(data: Record<string, unknown>): YouCamConcern[] {
   const results = asRecord(data.results);
   const output = results?.output;
-  if (!Array.isArray(output)) return [];
-
   const concerns: YouCamConcern[] = [];
-  for (const item of output) {
-    const row = asRecord(item);
-    if (!row || typeof row.type !== 'string') continue;
+  const push = (type: string, ui?: number, raw?: number) => {
     concerns.push({
-      type: row.type,
-      ui_score: typeof row.ui_score === 'number' ? row.ui_score : undefined,
-      raw_score: typeof row.raw_score === 'number' ? row.raw_score : undefined,
+      type: normalizeConcernId(type),
+      ui_score: ui,
+      raw_score: raw,
     });
+  };
+
+  if (Array.isArray(output)) {
+    for (const item of output) {
+      const row = asRecord(item);
+      if (!row || typeof row.type !== 'string') continue;
+      push(
+        row.type,
+        typeof row.ui_score === 'number' ? row.ui_score : undefined,
+        typeof row.raw_score === 'number' ? row.raw_score : undefined,
+      );
+    }
   }
-  return concerns;
+
+  // HD nested score_info (hd_pore.whole, etc.)
+  const roots = [data, results].filter(Boolean) as Record<string, unknown>[];
+  for (const root of roots) {
+    for (const [key, val] of Object.entries(root)) {
+      if (!key.startsWith('hd_')) continue;
+      const rec = asRecord(val);
+      if (!rec) continue;
+      if (
+        'ui_score' in rec ||
+        'raw_score' in rec ||
+        'mask_urls' in rec ||
+        'output_mask_name' in rec
+      ) {
+        push(
+          key,
+          typeof rec.ui_score === 'number' ? rec.ui_score : undefined,
+          typeof rec.raw_score === 'number' ? rec.raw_score : undefined,
+        );
+        continue;
+      }
+      for (const [region, rv] of Object.entries(rec)) {
+        const sub = asRecord(rv);
+        if (!sub) continue;
+        if (typeof sub.ui_score !== 'number' && typeof sub.raw_score !== 'number') {
+          continue;
+        }
+        // Prefer whole/all for global score map; still collect.
+        if (region === 'whole' || region === 'all' || !concerns.some((c) => normalizeConcernId(c.type) === normalizeConcernId(key) && c.ui_score != null)) {
+          push(
+            key,
+            typeof sub.ui_score === 'number' ? sub.ui_score : undefined,
+            typeof sub.raw_score === 'number' ? sub.raw_score : undefined,
+          );
+        }
+      }
+    }
+  }
+
+  // Dedupe by type keeping first with ui_score (whole preferred via order)
+  const map = new Map<string, YouCamConcern>();
+  for (const c of concerns) {
+    const id = normalizeConcernId(c.type);
+    const prev = map.get(id);
+    if (!prev || (prev.ui_score == null && c.ui_score != null)) {
+      map.set(id, { ...c, type: id });
+    }
+  }
+  return [...map.values()];
 }
 
 function severityFromUi(uiScore: number): number {
@@ -451,8 +560,10 @@ function clamp(n: number, min: number, max: number): number {
   return Math.min(max, Math.max(min, n));
 }
 
-function average(values: number[], fallback: number): number {
-  if (values.length === 0) return fallback;
+function average(values: number[]): number {
+  if (values.length === 0) {
+    throw new Error('YouCam incomplete result: no measurable ui_score values');
+  }
   return values.reduce((a, b) => a + b, 0) / values.length;
 }
 
@@ -461,7 +572,8 @@ function sleep(ms: number): Promise<void> {
 }
 
 function normalizeConcernId(type: string): string {
-  const t = type.toLowerCase();
+  let t = type.toLowerCase();
+  if (t.startsWith('hd_')) t = t.slice(3);
   if (t === 'dark_circle' || t === 'dark_circle_v2') return 'dark_circle';
   if (t === 'age_spot') return 'age_spot';
   return t;
@@ -469,7 +581,9 @@ function normalizeConcernId(type: string): string {
 
 function estimateSkinAge(scores: Record<string, number>): number {
   const values = Object.values(scores).filter((v) => Number.isFinite(v));
-  if (values.length === 0) return 30;
+  if (values.length === 0) {
+    throw new Error('YouCam incomplete result: cannot estimate skin age');
+  }
   const avg = values.reduce((a, b) => a + b, 0) / values.length;
   return Math.round(28 + (100 - avg) / 4);
 }

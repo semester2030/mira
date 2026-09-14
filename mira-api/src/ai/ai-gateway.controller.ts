@@ -18,17 +18,21 @@ import { FullMiraAnalysisBodyDto } from './dto/full-mira-analysis-body.dto';
 import { AnalyzeOutfitBodyDto } from '../outfit-analysis/dto/analyze-outfit.dto';
 import { OutfitAnalysisService } from '../outfit-analysis/outfit-analysis.service';
 import { SkinAnalysisService } from '../skin-analysis/skin-analysis.service';
+import { PerfectHdMaskAcceptanceService } from './services/perfect-hd-mask-acceptance.service';
 import { FullMiraAnalysisService } from './services/full-mira-analysis.service';
 import { OutfitHybridIntelligenceService } from './services/outfit-hybrid-intelligence.service';
 import { OutfitSegmentationService } from './segmentation/outfit-segmentation.service';
 import { OutfitIntelligenceBodyDto } from './dto/outfit-intelligence-body.dto';
 import { SkinReportSnapshot } from './contracts/outfit-intelligence.interface';
+import { applyOutfitIntelligenceFashionBoundary } from '../fashion-knowledge/advisor-integration/outfit-intelligence-boundary';
 import { VisionOrchestratorService } from '../vision/vision-orchestrator.service';
 import { FashionAnalysisOrchestrator } from '../ports/orchestrators/fashion-analysis.orchestrator';
-import { VisionOutfitAnalyzeBodyDto } from '../vision/dto/vision-outfit-analyze-body.dto';import { VisionOutfitRecolorBodyDto } from '../vision/dto/vision-outfit-recolor-body.dto';
+import { VisionOutfitAnalyzeBodyDto } from '../vision/dto/vision-outfit-analyze-body.dto';
+import { VisionOutfitRecolorBodyDto } from '../vision/dto/vision-outfit-recolor-body.dto';
 import { FashnGarmentRecolorService } from '../vision/recolor/fashn-garment-recolor.service';
 import { GarmentRecolorVisionContext } from '../vision/qel/garment-recolor-context.types';
 import { AtelierRecolorAttemptService } from '../atelier/atelier-recolor-attempt.service';
+import { RateLimitService } from '../common/services/rate-limit.service';
 
 const MAX_IMAGE_BYTES = 10 * 1024 * 1024;
 
@@ -43,6 +47,7 @@ const MAX_IMAGE_BYTES = 10 * 1024 * 1024;
 export class AiGatewayController {
   constructor(
     private readonly skinAnalysisService: SkinAnalysisService,
+    private readonly perfectHdMaskAcceptance: PerfectHdMaskAcceptanceService,
     private readonly outfitAnalysisService: OutfitAnalysisService,
     private readonly fullMiraAnalysisService: FullMiraAnalysisService,
     private readonly outfitHybridIntelligenceService: OutfitHybridIntelligenceService,
@@ -51,6 +56,7 @@ export class AiGatewayController {
     private readonly fashionAnalysisOrchestrator: FashionAnalysisOrchestrator,
     private readonly fashnGarmentRecolorService: FashnGarmentRecolorService,
     private readonly atelierAttempts: AtelierRecolorAttemptService,
+    private readonly rateLimit: RateLimitService,
   ) {}
 
   @Post('skin-analysis')
@@ -74,6 +80,41 @@ export class AiGatewayController {
       file?.buffer ?? Buffer.alloc(0),
       body?.faceIntel,
     );
+  }
+
+  /**
+   * TECHNICAL ACCEPTANCE ONLY — Perfect HD detection masks.
+   * Does not replace production skin-analysis. No History image/mask persistence.
+   * POST /api/v1/ai/skin-analysis-hd-masks
+   */
+  @Post('skin-analysis-hd-masks')
+  @UseInterceptors(
+    FileInterceptor('image', {
+      storage: memoryStorage(),
+      limits: { fileSize: MAX_IMAGE_BYTES },
+    }),
+  )
+  async analyzeSkinHdMasks(
+    @CurrentUser() _user: RequestUser,
+    @UploadedFile() file: Express.Multer.File,
+  ) {
+    const buf = file?.buffer ?? Buffer.alloc(0);
+    try {
+      const out = await this.perfectHdMaskAcceptance.runTechnicalAcceptance(buf);
+      return {
+        mode: 'hd_mask_technical_acceptance',
+        legacyLandmarkMap: 'DEPRECATED_PENDING_OWNER_APPROVAL_FOR_SPATIAL',
+        camerakit: 'NOT_AVAILABLE_IN_MIRA_REPO',
+        retentionNoteAr:
+          'نتائج Perfect المؤقتة (~24 ساعة) — لا تُحفظ صورة الوجه ولا الـmasks في History.',
+        report: out.report,
+        ephemeralMasks: out.ephemeralMasks,
+        sourceImageBase64: out.sourceImageBase64,
+        sourceContentType: out.sourceContentType,
+      };
+    } finally {
+      if (buf.length) buf.fill(0);
+    }
   }
 
   @Post('outfit-analysis')
@@ -103,16 +144,21 @@ export class AiGatewayController {
       limits: { fileSize: MAX_IMAGE_BYTES },
     }),
   )
-  analyzeOutfitIntelligence(
+  async analyzeOutfitIntelligence(
     @UploadedFile() file: Express.Multer.File,
     @Body() body: OutfitIntelligenceBodyDto,
   ) {
     const skin = JSON.parse(body.skinReport) as SkinReportSnapshot;
-    return this.outfitHybridIntelligenceService.analyze(
+    const result = await this.outfitHybridIntelligenceService.analyze(
       file?.buffer ?? Buffer.alloc(0),
       body.occasion,
       skin,
     );
+    // FK-12: strip user-facing prescriptive styling fields (analytical scores remain).
+    return applyOutfitIntelligenceFashionBoundary({
+      visual: result.visual as unknown as Record<string, unknown>,
+      analysis: result.analysis as unknown as Record<string, unknown>,
+    });
   }
 
   /** Pixel-refined garment contours — Vision bbox + server-side mask tracing. */
@@ -123,7 +169,14 @@ export class AiGatewayController {
       limits: { fileSize: MAX_IMAGE_BYTES },
     }),
   )
-  analyzeOutfitSegmentation(@UploadedFile() file: Express.Multer.File) {
+  async analyzeOutfitSegmentation(
+    @CurrentUser() user: RequestUser,
+    @UploadedFile() file: Express.Multer.File,
+  ) {
+    await this.rateLimit.assertWithinLimit(
+      user.firebaseUid,
+      'fashion_segmentation',
+    );
     return this.outfitSegmentationService.segment(file?.buffer ?? Buffer.alloc(0));
   }
 
@@ -140,9 +193,11 @@ export class AiGatewayController {
     }),
   )
   async analyzeVisionOutfit(
+    @CurrentUser() user: RequestUser,
     @UploadedFile() file: Express.Multer.File,
     @Body() body: VisionOutfitAnalyzeBodyDto,
   ) {
+    await this.rateLimit.assertWithinLimit(user.firebaseUid, 'fashion_analysis');
     let skinSnapshot: Record<string, unknown> | null = null;
     if (body.skinSnapshot?.trim()) {
       try {
@@ -195,11 +250,12 @@ export class AiGatewayController {
       limits: { fileSize: MAX_IMAGE_BYTES },
     }),
   )
-  recolorVisionOutfit(
+  async recolorVisionOutfit(
     @CurrentUser() user: RequestUser,
     @UploadedFile() file: Express.Multer.File,
     @Body() body: VisionOutfitRecolorBodyDto,
   ) {
+    await this.rateLimit.assertWithinLimit(user.firebaseUid, 'fashion_recolor');
     const visionContext = parseGarmentVisionContext(body.visionContext);
     return this.recolorAndPersist(user, file?.buffer ?? Buffer.alloc(0), body, visionContext);
   }

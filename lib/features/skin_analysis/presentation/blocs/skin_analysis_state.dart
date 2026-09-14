@@ -1,4 +1,5 @@
 import 'package:equatable/equatable.dart';
+import '../../../face_analysis_experience/presentation/analysis/contracts/face_analysis_journey.dart';
 import '../../domain/entities/skin_report.dart';
 
 abstract class SkinAnalysisState extends Equatable {
@@ -10,6 +11,16 @@ abstract class SkinAnalysisState extends Equatable {
 
 class SkinAnalysisInitial extends SkinAnalysisState {
   const SkinAnalysisInitial();
+}
+
+/// Local prep / upload not yet dispatched — Soft Laser must NOT run.
+class SkinAnalysisSubmitting extends SkinAnalysisState {
+  const SkinAnalysisSubmitting();
+}
+
+/// Remote Face pipeline wait — Soft Laser may run (presentation group).
+class SkinAnalysisProcessing extends SkinAnalysisState {
+  const SkinAnalysisProcessing();
 }
 
 class SkinAnalysisLoading extends SkinAnalysisState {
@@ -27,11 +38,14 @@ class SkinAnalysisSuccess extends SkinAnalysisState {
 
 class SkinAnalysisFailure extends SkinAnalysisState {
   final String message;
+  final FaceAnalysisJourneyError? journeyError;
 
-  const SkinAnalysisFailure(this.message);
+  const SkinAnalysisFailure(this.message, {this.journeyError});
+
+  bool get requiresRecapture => journeyError?.requiresRecapture ?? false;
 
   @override
-  List<Object?> get props => [message];
+  List<Object?> get props => [message, journeyError?.code];
 }
 
 class SkinAnalysisHistoryLoaded extends SkinAnalysisState {

@@ -103,6 +103,7 @@ export class SkinAnalysisService {
       isMock,
       providerName,
       rawYouCam,
+      ephemeralMasks,
       traceId,
     } = orchestrated;
 
@@ -156,11 +157,15 @@ export class SkinAnalysisService {
         faceIntelRuntime: parsedFace.runtime,
       });
     } catch (err) {
-      throw new ServiceUnavailableException(
-        err instanceof Error
-          ? err.message
-          : 'تعذر بناء تقرير التحليل بأمان',
-      );
+      throw new ServiceUnavailableException({
+        code: 'INTERNAL_PROCESSING_FAILURE',
+        category: 'internal',
+        message: 'تعذر بدء التحليل حاليًا. يمكنك المحاولة مرة أخرى بعد قليل.',
+        messageEn: 'Analysis could not be completed safely. Try again later.',
+        retryable: true,
+        requiresRecapture: false,
+        userAction: 'retry',
+      });
     }
 
     const record = await this.prisma.skinAnalysis.create({
@@ -201,6 +206,10 @@ export class SkinAnalysisService {
         isMock: isMock === true,
         provider: providerName,
         traceId,
+        // Sanitized — counts only, never mask payloads / URLs.
+        ephemeralMaskCount: ephemeralMasks?.length ?? 0,
+        ephemeralMaskWithBytes:
+          ephemeralMasks?.filter((m) => !!m.maskBase64).length ?? 0,
       },
     });
 
@@ -212,6 +221,7 @@ export class SkinAnalysisService {
         ...skinInternal,
         beautyScore: miraReport.overallBeautyScore,
       },
+      ephemeralMasks,
     );
   }
 

@@ -78,4 +78,45 @@ describe('PartnersPortalService', () => {
     expect(result.accessToken).toBeDefined();
     expect(prisma.$transaction).toHaveBeenCalled();
   });
+
+  it('never exposes an access token through public application status', async () => {
+    prisma.partnerApplication.findUnique.mockResolvedValue({
+      id: 'app-1',
+      status: 'approved',
+      type: 'brand',
+      nameAr: 'ماركة',
+      contactEmail: 's@t.com',
+      partnerId: 'partner-1',
+      rejectReason: null,
+      reviewedAt: new Date(),
+      partner: {
+        users: [{ accessToken: 'should-never-be-public' }],
+      },
+    });
+
+    const result = await service.getApplicationStatus('public-status-token');
+
+    expect(result).not.toHaveProperty('accessToken');
+    expect(prisma.partnerApplication.findUnique).toHaveBeenCalledWith({
+      where: { statusToken: 'public-status-token' },
+    });
+  });
+
+  it('preserves owner scope when updating partner products', async () => {
+    prisma.product.findFirst.mockResolvedValue(null);
+
+    await expect(
+      service.updateProduct('partner-a', 'product-of-partner-b', {
+        nameAr: 'منتج',
+        nameEn: 'Product',
+        priceHalalas: 1000,
+        externalUrl: 'https://example.com/product',
+        concernTags: [],
+      }),
+    ).rejects.toThrow('المنتج غير موجود');
+    expect(prisma.product.findFirst).toHaveBeenCalledWith({
+      where: { id: 'product-of-partner-b', partnerId: 'partner-a' },
+    });
+    expect(prisma.product.update).not.toHaveBeenCalled();
+  });
 });

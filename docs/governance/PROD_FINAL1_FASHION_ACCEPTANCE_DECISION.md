@@ -1,0 +1,3 @@
+# Fashion Acceptance
+
+**C) FASHION FINAL PRODUCTION ACTIVATION BLOCKED**

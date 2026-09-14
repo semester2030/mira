@@ -12,6 +12,7 @@ import { PerfectCorpSkinAdapter } from '../adapters/perfect-corp-skin.adapter';
 import { MockSkinAdapter } from '../adapters/mock-skin.adapter';
 import {
   ProviderPortError,
+  createProviderError,
   toClientProviderError,
 } from '../shared/provider-error';
 import { newTraceId } from '../shared/result-meta';
@@ -31,6 +32,7 @@ export interface SkinOrchestratorOutput {
   isMock: boolean;
   providerName: string;
   rawYouCam?: Record<string, unknown>;
+  ephemeralMasks?: SkinAnalysisPortResult['_ephemeralMasks'];
   traceId: string;
 }
 
@@ -156,8 +158,10 @@ export class SkinAnalysisOrchestrator {
 
       const skinInternal = portResult.legacyInternal as unknown as SkinAnalysisResult;
       const rawYouCam = portResult._ephemeralRawYouCam;
+      const ephemeralMasks = portResult._ephemeralMasks;
       // Strip ephemeral raw before leaving orchestrator boundary for persistence callers
       delete portResult._ephemeralRawYouCam;
+      delete portResult._ephemeralMasks;
 
       this.telemetry.track({
         name: 'provider_succeeded',
@@ -184,6 +188,7 @@ export class SkinAnalysisOrchestrator {
         isMock: portResult.meta.isMock,
         providerName: portResult.meta.provider,
         rawYouCam,
+        ephemeralMasks,
         traceId,
       };
     } catch (err) {
@@ -206,6 +211,7 @@ export class SkinAnalysisOrchestrator {
         if (
           err.providerError.code === 'invalid_input' ||
           err.providerError.code === 'no_face' ||
+          err.providerError.code === 'multiple_faces' ||
           err.providerError.code === 'image_quality_failure'
         ) {
           throw new BadRequestException(client);
@@ -224,13 +230,15 @@ export class SkinAnalysisOrchestrator {
     return new Promise<T>((resolve, reject) => {
       const timer = setTimeout(() => {
         reject(
-          new ProviderPortError({
-            code: 'provider_timeout',
-            retryable: true,
-            safeUserMessageKey: 'errors.provider_timeout',
-            provider: 'skin_orchestrator',
-            traceId,
-          }),
+          new ProviderPortError(
+            createProviderError({
+              code: 'provider_timeout',
+              retryable: true,
+              safeUserMessageKey: 'errors.provider_timeout',
+              provider: 'skin_orchestrator',
+              traceId,
+            }),
+          ),
         );
       }, ms);
       promise

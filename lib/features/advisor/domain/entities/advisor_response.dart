@@ -53,6 +53,7 @@ class AdvisorResponse {
   final String confidence;
   final String intent;
   final bool blocked;
+  final String? disclaimerAr;
 
   const AdvisorResponse({
     required this.answer,
@@ -60,6 +61,7 @@ class AdvisorResponse {
     required this.confidence,
     required this.intent,
     this.blocked = false,
+    this.disclaimerAr,
   });
 
   factory AdvisorResponse.fromJson(Map<String, dynamic> json) {
@@ -72,6 +74,7 @@ class AdvisorResponse {
       confidence: json['confidence'] as String? ?? 'medium',
       intent: json['intent'] as String? ?? 'general',
       blocked: json['blocked'] as bool? ?? false,
+      disclaimerAr: json['disclaimerAr'] as String?,
     );
   }
 }

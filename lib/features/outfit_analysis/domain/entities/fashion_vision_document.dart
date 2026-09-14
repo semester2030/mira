@@ -40,31 +40,3 @@ class FashionVisionDocument {
     return 0;
   }
 }
-
-class VisionOutfitAnalyzeResult {
-  final FashionVisionDocument fashionVision;
-  final Map<String, dynamic>? analysis;
-  final Map<String, dynamic> meta;
-
-  const VisionOutfitAnalyzeResult({
-    required this.fashionVision,
-    this.analysis,
-    required this.meta,
-  });
-
-  factory VisionOutfitAnalyzeResult.fromJson(Map<String, dynamic> json) {
-    return VisionOutfitAnalyzeResult(
-      fashionVision: FashionVisionDocument.fromJson(
-        Map<String, dynamic>.from(json['fashionVision'] as Map? ?? const {}),
-      ),
-      analysis: json['analysis'] != null
-          ? Map<String, dynamic>.from(json['analysis'] as Map)
-          : null,
-      meta: Map<String, dynamic>.from(json['meta'] as Map? ?? const {}),
-    );
-  }
-
-  String? get userMessageAr => meta['userMessageAr'] as String?;
-
-  bool get isBlocked => fashionVision.analysisGate == 'blocked';
-}

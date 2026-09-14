@@ -1,8 +1,12 @@
-import '../entities/skin_report.dart';
+import '../../domain/entities/skin_report.dart';
 
 abstract class SkinAnalysisRepository {
-  /// Runs AI analysis on [imagePath] and persists result for signed-in users.
-  Future<SkinReport> analyzeAndSave({required String imagePath});
+  /// [onRemoteWaitStarted] fires after local gates when the HTTP Face request
+  /// is dispatched (truthful Soft Laser threshold for sync API).
+  Future<SkinReport> analyzeAndSave({
+    required String imagePath,
+    void Function()? onRemoteWaitStarted,
+  });
 
   Future<List<SkinReport>> getHistory();
 

@@ -1,0 +1,12 @@
+{
+  "schemaVersion": "fashion-knowledge-review-candidate-v1",
+  "release": "0.9.0-fashion-knowledge-advisor-integration",
+  "note": "Review candidate inventory mirror — not loaded as production ACTIVE rules. See curated/*.ts as source of truth.",
+  "productionActiveRuleCount": 0,
+  "colorCandidateCount": 8,
+  "occasionCandidateCount": 9,
+  "sourcingGaps": [
+    "fk5_external_authority_gap_color",
+    "fk5_external_authority_gap_occasion"
+  ]
+}

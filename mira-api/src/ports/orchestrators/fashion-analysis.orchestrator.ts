@@ -10,6 +10,7 @@ import { resolveProviderPortsConfig } from '../config/provider-ports.config';
 import { VisionFashionAdapter } from '../adapters/vision-fashion.adapter';
 import {
   ProviderPortError,
+  createProviderError,
   toClientProviderError,
 } from '../shared/provider-error';
 import { newTraceId } from '../shared/result-meta';
@@ -141,13 +142,15 @@ export class FashionAnalysisOrchestrator {
     return new Promise<T>((resolve, reject) => {
       const timer = setTimeout(() => {
         reject(
-          new ProviderPortError({
-            code: 'provider_timeout',
-            retryable: true,
-            safeUserMessageKey: 'errors.provider_timeout',
-            provider: 'fashion_orchestrator',
-            traceId,
-          }),
+          new ProviderPortError(
+            createProviderError({
+              code: 'provider_timeout',
+              retryable: true,
+              safeUserMessageKey: 'errors.provider_timeout',
+              provider: 'fashion_orchestrator',
+              traceId,
+            }),
+          ),
         );
       }, ms);
       promise

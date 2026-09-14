@@ -1,5 +1,7 @@
 import 'package:flutter/material.dart';
 
+import '../../../../core/config/mira_features.dart';
+import '../../../../core/entitlements/mira_runtime_entitlement_store.dart';
 import '../../../../core/navigation/app_routes.dart';
 import '../../../../core/navigation/route_args.dart';
 import '../../../../core/services/app_session.dart';
@@ -10,7 +12,9 @@ import '../../../skin_analysis/domain/entities/skin_report.dart';
 import '../../../outfit_analysis/domain/entities/outfit_analysis.dart';
 import '../../../outfit_analysis/domain/helpers/outfit_consultation_mapper.dart';
 
-/// MCE Phase 3 — «اسألي ميرا عن إطلالتك» from outfit result.
+/// «اسألي ميرا عن إطلالتك» from outfit result.
+/// AT-3: REPOINT_TO_ADVISOR when `MIRA_FASHION_ADVISOR_V1=true` (via MiraAdvisorScreen).
+/// Flag OFF → fashionUnavailable safe surface (no legacy MCE fashion prescription).
 class AskOutfitMiraSection extends StatelessWidget {
   final OutfitAnalysis analysis;
   final SkinReport? skinReport;
@@ -35,6 +39,10 @@ class AskOutfitMiraSection extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final cta = !AppSession.canUseCloud
+        ? 'اسألي ميرا (تجريبي)'
+        : 'محادثة عن الإطلالة';
+
     return PremiumCard(
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.stretch,
@@ -47,17 +55,23 @@ class AskOutfitMiraSection extends StatelessWidget {
                   color: AppColors.cardPurple.withValues(alpha: 0.35),
                   borderRadius: BorderRadius.circular(12),
                 ),
-                child: const Icon(Icons.style_outlined, color: AppColors.secondary),
+                child:
+                    const Icon(Icons.style_outlined, color: AppColors.secondary),
               ),
               const SizedBox(width: 12),
               Expanded(
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
-                    Text('اسألي ميرا عن إطلالتك', style: AppTypography.titleMedium),
+                    Text('اسألي ميرا عن إطلالتك',
+                        style: AppTypography.titleMedium),
                     Text(
-                      'استشارة أسلوب ومناسبة — مبنية على تحليلك',
-                      style: AppTypography.bodySmall.copyWith(color: AppColors.textSecondary),
+                      MiraFeatures.fashionAdvisorV1 &&
+                              MiraRuntimeEntitlementStore.fashionAdvisorModeB
+                          ? 'استشارة أسلوب ومناسبة — عبر مستشار ميرا'
+                          : 'استشارة أسلوب ومناسبة — مبنية على تحليلك',
+                      style: AppTypography.bodySmall
+                          .copyWith(color: AppColors.textSecondary),
                     ),
                   ],
                 ),
@@ -77,7 +91,7 @@ class AskOutfitMiraSection extends StatelessWidget {
           ),
           const SizedBox(height: 10),
           PremiumButton(
-            label: AppSession.canUseCloud ? 'محادثة عن الإطلالة · MCE' : 'اسألي ميرا (تجريبي)',
+            label: cta,
             icon: Icons.chat_bubble_outline_rounded,
             variant: PremiumButtonVariant.secondary,
             onPressed: () => _openAdvisor(context),

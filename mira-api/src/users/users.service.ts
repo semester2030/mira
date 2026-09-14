@@ -1,4 +1,9 @@
-import { BadRequestException, Injectable, Logger } from '@nestjs/common';
+import {
+  BadRequestException,
+  Injectable,
+  Logger,
+  ServiceUnavailableException,
+} from '@nestjs/common';
 import { ConfigService } from '@nestjs/config';
 import { Prisma, User, UserPreference } from '@prisma/client';
 import * as admin from 'firebase-admin';
@@ -115,10 +120,26 @@ export class UsersService {
       return;
     }
 
+    try {
+      await this.deleteFirebaseUser(authUser.firebaseUid);
+    } catch (err) {
+      if (firebaseAuthErrorCode(err) === 'auth/user-not-found') {
+        return;
+      }
+      this.logger.error(
+        `Firebase identity deletion failed (${firebaseAuthErrorCode(err) ?? 'unknown'})`,
+      );
+      throw new ServiceUnavailableException({
+        code: 'ACCOUNT_IDENTITY_DELETE_FAILED',
+        message: 'Account identity deletion could not be completed safely.',
+      });
+    }
+  }
+
+  protected async deleteFirebaseUser(firebaseUid: string): Promise<void> {
     const projectId = this.config.get<string>('FIREBASE_PROJECT_ID');
     if (!projectId) {
-      this.logger.warn('FIREBASE_PROJECT_ID not set; skipped Firebase user deletion');
-      return;
+      throw new Error('FIREBASE_PROJECT_ID_MISSING');
     }
 
     if (admin.apps.length === 0) {
@@ -128,12 +149,12 @@ export class UsersService {
       });
     }
 
-    try {
-      await admin.auth().deleteUser(authUser.firebaseUid);
-    } catch (err) {
-      this.logger.warn(
-        `Firebase deleteUser failed for ${authUser.firebaseUid}: ${String(err)}`,
-      );
-    }
+    await admin.auth().deleteUser(firebaseUid);
   }
+}
+
+function firebaseAuthErrorCode(error: unknown): string | undefined {
+  if (!error || typeof error !== 'object') return undefined;
+  const code = (error as { code?: unknown }).code;
+  return typeof code === 'string' ? code : undefined;
 }

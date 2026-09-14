@@ -17,6 +17,7 @@ import 'features/auth/presentation/screens/login_screen.dart';
 import 'features/dashboard/presentation/screens/dashboard_screen.dart';
 import 'features/profile/presentation/screens/profile_screen.dart';
 import 'features/profile/presentation/screens/settings_screen.dart';
+import 'features/dev_tools/presentation/screens/fashion_icon_system_preview_screen.dart';
 import 'features/dashboard/presentation/screens/analysis_screen.dart';
 import 'features/dashboard/presentation/screens/points_screen.dart';
 import 'features/dashboard/presentation/screens/tips_screen.dart';
@@ -24,6 +25,9 @@ import 'features/dashboard/presentation/screens/new_analysis_screen.dart';
 import 'features/skin_analysis/presentation/screens/scan_screen.dart';
 import 'features/intelligence/presentation/screens/beauty_progress_screen.dart';
 import 'features/intelligence/presentation/screens/mira_beauty_report_screen.dart';
+import 'features/results_experience/flags/mira_results_experience_flag.dart';
+import 'features/results_experience/presentation/routing/results_report_entry.dart';
+import 'features/face_analysis_experience/history/history.dart';
 import 'features/intelligence/presentation/screens/mira_style_report_screen.dart';
 import 'features/skin_analysis/presentation/screens/skin_routine_screen.dart';
 import 'features/skin_analysis/presentation/screens/history_screen.dart';
@@ -59,6 +63,15 @@ import 'shared/theme/theme.dart';
 
 void main() async {
   WidgetsFlutterBinding.ensureInitialized();
+  // Phase 8C: results_v2 opt-in only via dart-define (default legacy).
+  if (const bool.fromEnvironment('MIRA_RESULTS_EXPERIENCE_V2', defaultValue: false)) {
+    MiraResultsExperienceFlagStore.apply(
+      const MiraResultsExperienceFlag(
+        variant: MiraResultsExperienceVariant.resultsV2,
+      ),
+    );
+  }
+
   FlutterError.onError = (details) {
     FlutterError.presentError(details);
     debugPrint('FlutterError: ${details.exceptionAsString()}');
@@ -180,6 +193,14 @@ class MirraAppState extends State<MirraApp> {
         return PremiumPageRoute(page: const ProfileScreen(), settings: settings);
       case AppRoutes.settings:
         return PremiumPageRoute(page: const SettingsScreen(), settings: settings);
+      case AppRoutes.fashionIconSystemPreview:
+        if (!MiraFeatures.fashionIconPreviewAvailable) {
+          return PremiumPageRoute(page: const SettingsScreen(), settings: settings);
+        }
+        return PremiumPageRoute(
+          page: const FashionIconSystemPreviewScreen(),
+          settings: settings,
+        );
       case AppRoutes.analysis:
         return PremiumPageRoute(page: const AnalysisScreen(), settings: settings);
       case AppRoutes.history:
@@ -197,9 +218,14 @@ class MirraAppState extends State<MirraApp> {
         final args = settings.arguments;
         if (args is MiraReportRouteArgs) {
           return PremiumPageRoute(
-            page: MiraBeautyReportScreen(
+            page: ResultsReportEntry(
               report: args.report,
               showCelebration: args.celebrate,
+              forceLegacy: args.forceLegacy,
+              isStale: args.isStale,
+              captureImagePath: args.captureImagePath,
+              fromFreshAnalysis: args.fromFreshAnalysis,
+              fromHistory: args.fromHistory,
             ),
             settings: settings,
           );
@@ -207,9 +233,21 @@ class MirraAppState extends State<MirraApp> {
         final report = args as SkinReport?;
         if (report == null) return null;
         return PremiumPageRoute(
-          page: MiraBeautyReportScreen(
+          page: ResultsReportEntry(
             report: report,
             showCelebration: settings.name == AppRoutes.miraBeautyReport,
+          ),
+          settings: settings,
+        );
+      case AppRoutes.faceHistory:
+        final histArgs = settings.arguments;
+        final faceHist = histArgs is FaceHistoryRouteArgs
+            ? histArgs
+            : const FaceHistoryRouteArgs();
+        return PremiumPageRoute(
+          page: FaceHistoryHostScreen(
+            currentReportId: faceHist.currentReportId,
+            currentReport: faceHist.currentReport,
           ),
           settings: settings,
         );
