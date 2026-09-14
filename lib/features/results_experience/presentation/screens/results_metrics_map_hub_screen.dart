@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 
 import '../../../../core/navigation/app_routes.dart';
 import '../../../../core/navigation/route_args.dart';
+import '../../../../core/session/analysis_session.dart';
 import '../../../../shared/theme/colors.dart';
 import '../../../../shared/theme/typography.dart';
 import '../../../../shared/widgets/mira_app_bar.dart';
@@ -144,11 +145,14 @@ class _ResultsMetricsMapHubScreenState extends State<ResultsMetricsMapHubScreen>
                         metrics: e.metrics,
                         isStale: widget.isStale,
                         missingImage: widget.missingImage,
+                        maskSession: AnalysisSession.lastPerfectMasks,
                         onInfoOpened: ResultsV2Analytics.skinMapInfoOpened,
-                        onConcernSelected: (id) =>
-                            ResultsV2Analytics.skinMapConcernSelected(
-                          concernId: id,
-                        ),
+                        onConcernSelected: (id) {
+                          if (id == null) return;
+                          ResultsV2Analytics.skinMapConcernSelected(
+                            concernId: id,
+                          );
+                        },
                         onUnavailable: ResultsV2Analytics.skinMapUnavailable,
                         onAskMira: _askMiraForConcern,
                         onOpenRoutine: _openPlan,

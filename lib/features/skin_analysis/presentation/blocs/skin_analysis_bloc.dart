@@ -5,6 +5,7 @@ import '../../../../core/utils/mira_api_error_message.dart';
 import '../../../face_analysis_experience/presentation/analysis/contracts/face_analysis_journey.dart';
 import '../../data/repositories/skin_analysis_repository_impl.dart';
 import '../../domain/repositories/skin_analysis_repository.dart';
+import '../debug/skin_start_analysis_trace.dart';
 import 'skin_analysis_event.dart';
 import 'skin_analysis_state.dart';
 
@@ -25,18 +26,22 @@ class SkinAnalysisBloc extends Bloc<SkinAnalysisEvent, SkinAnalysisState> {
   ) async {
     if (_inFlight) return;
     _inFlight = true;
+    SkinStartAnalysisTrace.mark('BLOC_START_ENTERED');
     emit(const SkinAnalysisSubmitting());
     try {
       final report = await repository.analyzeAndSave(
         imagePath: event.imagePath,
         onRemoteWaitStarted: () {
+          SkinStartAnalysisTrace.mark('BACKEND_WAIT_STARTED');
           if (!emit.isDone) {
             emit(const SkinAnalysisProcessing());
           }
         },
       );
+      SkinStartAnalysisTrace.mark('NAVIGATION_TO_RESULT ready');
       emit(SkinAnalysisSuccess(report));
     } catch (e) {
+      SkinStartAnalysisTrace.fail('BLOC_CATCH', e);
       final mapped = _mapError(e);
       emit(SkinAnalysisFailure(mapped.snackMessage, journeyError: mapped));
     } finally {

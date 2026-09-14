@@ -46,4 +46,16 @@ class AppColors {
   /// Glass overlay on gradients.
   static const Color glassFill = Color(0xBFFFFFFF);
   static const Color glassBorder = Color(0x66FFFFFF);
+
+  /// Face Explorer analysis accents — pigmentation/acne differentiated for clarity.
+  static const Color analysisPigmentation = Color(0xFFB83280);
+  static const Color analysisPores = Color(0xFF5B8FA8);
+  static const Color analysisWrinkles = Color(0xFFA78BFA);
+  static const Color analysisRedness = Color(0xFFE07070);
+  static const Color analysisTexture = Color(0xFF9B7FD4);
+  static const Color analysisAcne = Color(0xFFE0673A);
+  static const Color analysisHydration = Color(0xFF4A9FE0);
+  static const Color analysisOil = Color(0xFFF0A020);
+  static const Color analysisCalloutSurface = Color(0xF7FFFFFF);
+  static const Color analysisCalloutLine = Color(0xAAB83280);
 }

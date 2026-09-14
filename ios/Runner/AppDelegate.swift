@@ -22,7 +22,22 @@ import UserNotifications
     // Without Push entitlement Firebase falls back to reCAPTCHA; still register for token when available.
     application.registerForRemoteNotifications()
 
-    return super.application(application, didFinishLaunchingWithOptions: launchOptions)
+    let launched = super.application(application, didFinishLaunchingWithOptions: launchOptions)
+
+    // Apple matting POC: register MethodChannel ONLY after Flutter bootstrap.
+    // Does NOT run VNGeneratePersonSegmentationRequest (that stays on-demand in POC).
+    DispatchQueue.main.async {
+      guard
+        let controller = self.window?.rootViewController as? FlutterViewController
+      else {
+        NSLog("Mira: ApplePersonMattingChannel skipped — no FlutterViewController yet")
+        return
+      }
+      ApplePersonMattingChannel.register(with: controller.binaryMessenger)
+      NSLog("Mira: ApplePersonMattingChannel registered (post-launch, lazy Vision)")
+    }
+
+    return launched
   }
 
   override func application(

@@ -47,4 +47,10 @@ abstract final class AppRoutes {
 
   /// Internal Owner Preview — Fashion Icon System (not production migration).
   static const fashionIconSystemPreview = '/dev/fashion-icon-system-preview';
+
+  /// Technical Perfect HD mask viewer (acceptance only — not premium UI).
+  static const perfectHdMaskTechnicalViewer = '/dev/perfect-hd-mask-viewer';
+
+  /// Isolated Apple portrait/hair matting POC (not production).
+  static const applePortraitMattingPoc = '/dev/apple-portrait-matting-poc';
 }

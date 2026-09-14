@@ -6,7 +6,9 @@ import '../../../../shared/theme/colors.dart';
 import '../../../../shared/theme/typography.dart';
 import '../../../../shared/widgets/premium/premium_card.dart';
 import '../../../../shared/widgets/premium/pressable_scale.dart';
+import '../../../results_experience/presentation/icons/mira_skin_glyphs.dart';
 
+/// History row — metrics/summary only. Never shows a user face image.
 class ResultCard extends StatelessWidget {
   final SkinReport report;
   final int index;
@@ -28,14 +30,16 @@ class ResultCard extends StatelessWidget {
         child: Row(
           children: [
             Container(
-              width: 4,
-              height: 56,
+              width: 40,
+              height: 40,
               decoration: BoxDecoration(
-                color: AppColors.primary,
-                borderRadius: BorderRadius.circular(2),
+                color: AppColors.primaryLight.withValues(alpha: 0.55),
+                borderRadius: BorderRadius.circular(12),
               ),
+              alignment: Alignment.center,
+              child: MiraSkinGlyphs.of(MiraSkinGlyphId.history, size: 22),
             ),
-            const SizedBox(width: 16),
+            const SizedBox(width: 14),
             Expanded(
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
@@ -44,7 +48,8 @@ class ResultCard extends StatelessWidget {
                   if (_formatDate().isNotEmpty)
                     Text(
                       _formatDate(),
-                      style: AppTypography.labelSmall.copyWith(color: AppColors.textSecondary),
+                      style: AppTypography.labelSmall
+                          .copyWith(color: AppColors.textSecondary),
                     ),
                   const SizedBox(height: 4),
                   Text(
@@ -55,10 +60,17 @@ class ResultCard extends StatelessWidget {
                     maxLines: 2,
                     overflow: TextOverflow.ellipsis,
                   ),
+                  const SizedBox(height: 2),
+                  Text(
+                    'بدون صورة وجه محفوظة',
+                    style: AppTypography.labelSmall.copyWith(
+                      color: AppColors.textTertiary,
+                    ),
+                  ),
                 ],
               ),
             ),
-            const Icon(Icons.chevron_left, color: AppColors.textSecondary),
+            MiraSkinGlyphs.of(MiraSkinGlyphId.chevron, size: 18),
           ],
         ),
       ),

@@ -72,6 +72,14 @@ abstract final class MiraFeatures {
     defaultValue: false,
   );
 
+  /// Phase 5 — Truth-first Interactive Skin Report (2026-09-09).
+  /// Default `true` so owner physical review sees the new Skin experience.
+  /// Disable: `--dart-define=MIRA_SKIN_INTERACTIVE_REPORT_V1=false`
+  static const bool skinInteractiveReportV1 = bool.fromEnvironment(
+    'MIRA_SKIN_INTERACTIVE_REPORT_V1',
+    defaultValue: true,
+  );
+
   /// Phase 9F — Interactive Result Mirror (executive first surface).
   /// Default `false` keeps legacy / Results V2 entry unchanged.
   /// QA: `--dart-define=MIRA_FACE_RESULT_MIRROR_V1=true`

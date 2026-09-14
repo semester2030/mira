@@ -1,5 +1,7 @@
 import 'package:flutter/material.dart';
 
+import '../session/analysis_session.dart';
+import '../../features/results_experience/domain/perfect_mask_session.dart';
 import '../../features/skin_analysis/domain/entities/skin_report.dart';
 import 'app_routes.dart';
 import 'route_args.dart';
@@ -16,6 +18,7 @@ abstract final class MiraReportNavigation {
     String? captureImagePath,
     bool fromFreshAnalysis = false,
     bool fromHistory = false,
+    PerfectMaskSession? perfectMaskSession,
   }) {
     return Navigator.pushNamed(
       context,
@@ -27,6 +30,10 @@ abstract final class MiraReportNavigation {
         captureImagePath: captureImagePath,
         fromFreshAnalysis: fromFreshAnalysis,
         fromHistory: fromHistory,
+        // Bind THIS result route to the analysis session (not a later static).
+        perfectMaskSession: fromHistory
+            ? null
+            : (perfectMaskSession ?? AnalysisSession.lastPerfectMasks),
       ),
     );
   }
@@ -42,6 +49,7 @@ abstract final class MiraReportNavigation {
       celebrate: true,
       captureImagePath: captureImagePath,
       fromFreshAnalysis: true,
+      perfectMaskSession: AnalysisSession.lastPerfectMasks,
     );
   }
 
