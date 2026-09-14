@@ -59,6 +59,7 @@ async function run() {
 
   const controller = new AiGatewayController(
     {} as never,
+    {} as never, // PerfectHdMaskAcceptanceService
     {} as never,
     {} as never,
     {} as never,
