@@ -168,9 +168,17 @@ class OutfitIntelligenceService {
             ? (skin.undertone.isNotEmpty ? skin.undertone : skin.undertoneEn)
             : null,
       ),
-      visualSource: 'canonical_garment',
-      analysisGate: visionResult.analysisGate,
-      photoTrustMessageAr: visionResult.userMessageAr,
+      visualSource: segmentMap.source == 'pose_anatomy'
+          ? 'vision_semantic_pose'
+          : 'canonical_garment',
+      analysisGate: segmentMap.source == 'pose_anatomy'
+          ? 'degraded'
+          : visionResult.analysisGate,
+      photoTrustMessageAr:
+          visionResult.userMessageAr ??
+          (segmentMap.source == 'pose_anatomy'
+              ? segmentMap.validationMessage
+              : null),
       visualConfidence: visionResult.confidencePercent,
     );
 
@@ -220,10 +228,22 @@ class OutfitIntelligenceService {
       }
     }
 
-    return _segmentation.buildFromFrozenImage(
+    final local = await _segmentation.buildFromFrozenImage(
       outfitImage,
       visionObjects: visionObjects,
     );
+    if (local.hasTrustedOverlay) return local;
+
+    // When FASHN boxes are unavailable, use declared pose-anatomy bands.
+    final poseMap = await _segmentation.buildPoseAnatomyMap(outfitImage);
+    if (poseMap.hasTrustedOverlay) {
+      developer.log(
+        'Using pose anatomy segment map (degraded)',
+        name: 'OutfitIntelligenceService',
+      );
+      return poseMap;
+    }
+    return local;
   }
 
   Future<VisionOutfitAnalyzeResult> _resolveVisionFromPlatform({

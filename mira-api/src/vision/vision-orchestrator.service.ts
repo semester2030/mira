@@ -1,11 +1,12 @@
 import {
   BadGatewayException,
   BadRequestException,
+  HttpException,
   Injectable,
   Logger,
   ServiceUnavailableException,
 } from '@nestjs/common';
-import { AnalysisGate, FashionVisionDocument, ProvenanceAuditEntry } from './schema/fashion-vision-document.v1';
+import { AnalysisGate, FashionVisionDocument, GeometryPayload, ProvenanceAuditEntry } from './schema/fashion-vision-document.v1';
 import {
   applyConfidenceMultiplier,
   buildFashionVisionDocumentFromParts,
@@ -49,6 +50,63 @@ function mergeGates(...gates: AnalysisGate[]): AnalysisGate {
   return 'proceed';
 }
 
+/** Approximate full-body band when FASHN geometry is unavailable (quota / outage). */
+export function degradedGeometryStub(): GeometryPayload {
+  return {
+    segments: [
+      {
+        id: 'degraded-full-body',
+        regionRole: 'full_body',
+        polygon: [
+          [0.12, 0.06],
+          [0.88, 0.06],
+          [0.88, 0.94],
+          [0.12, 0.94],
+        ],
+        bbox: { x: 0.12, y: 0.06, w: 0.76, h: 0.88 },
+      },
+    ],
+    topology: {
+      pieceCount: 1,
+      onePiece: true,
+      silhouetteHint: 'unknown',
+    },
+  };
+}
+
+export function isFashnQuotaOrUnavailable(error: unknown): boolean {
+  if (error instanceof ServiceUnavailableException) {
+    const body = error.getResponse();
+    if (body && typeof body === 'object') {
+      const code = (body as { code?: string }).code ?? '';
+      const message = String((body as { message?: string }).message ?? '');
+      if (
+        code === 'FASHN_QUOTA_EXCEEDED' ||
+        code === 'FASHN_NOT_CONFIGURED' ||
+        /429|out of credits|quota|not configured/i.test(message)
+      ) {
+        return true;
+      }
+    }
+    return /429|out of credits|quota/i.test(error.message);
+  }
+  if (error instanceof BadGatewayException) {
+    const body = error.getResponse();
+    if (body && typeof body === 'object') {
+      const detail = String(
+        (body as { detail?: string; message?: string }).detail ??
+          (body as { message?: string }).message ??
+          '',
+      );
+      return /429|out of credits|quota/i.test(detail);
+    }
+  }
+  if (error instanceof Error) {
+    return /429|out of credits|quota|FASHN_QUOTA/i.test(error.message);
+  }
+  return false;
+}
+
 /**
  * Vision Platform orchestrator — single entry for outfit vision pipeline.
  * Phase 6: conflict resolver + confidence engine → fusion.conflicts + analysisGate.
@@ -87,21 +145,30 @@ export class VisionOrchestratorService {
     }
 
     let geometry;
+    let geometryDegraded = false;
     try {
       geometry = await this.fashnGeometry.segment(input.imageBuffer);
     } catch (error) {
-      if (
+      if (isFashnQuotaOrUnavailable(error)) {
+        this.logger.warn(
+          `FASHN geometry unavailable (${error instanceof Error ? error.message : String(error)}) — continuing OpenAI-only with degraded geometry stub`,
+        );
+        geometry = degradedGeometryStub();
+        geometryDegraded = true;
+      } else if (
         error instanceof BadGatewayException ||
-        error instanceof ServiceUnavailableException
+        error instanceof ServiceUnavailableException ||
+        error instanceof HttpException
       ) {
         throw error;
+      } else {
+        this.logger.error(`FASHN geometry failed: ${String(error)}`);
+        throw new BadGatewayException({
+          code: 'VISION_PROVIDER_FAILED',
+          message: 'FASHN geometry failed',
+          provider: 'fashn-geometry',
+        });
       }
-      this.logger.error(`FASHN geometry failed: ${String(error)}`);
-      throw new BadGatewayException({
-        code: 'VISION_PROVIDER_FAILED',
-        message: 'FASHN geometry failed',
-        provider: 'fashn-geometry',
-      });
     }
 
     let semantics;
@@ -150,12 +217,14 @@ export class VisionOrchestratorService {
       geometry,
       semantics: conflict.semantics,
       providers: [
-        'fashn-geometry',
+        geometryDegraded ? 'geometry-degraded-stub' : 'fashn-geometry',
         'openai-semantic',
         'pipeline-phase-5',
         'pipeline-phase-6',
       ],
-      analysisGate: upstreamGate,
+      analysisGate: geometryDegraded
+        ? mergeGates(upstreamGate, 'degraded')
+        : upstreamGate,
       pipelinePhase: '6-conflict-confidence',
       normalizationNotes: normalized.notes,
       fusion: {
@@ -200,6 +269,14 @@ export class VisionOrchestratorService {
       upstreamGate,
     });
 
+    if (geometryDegraded) {
+      rejectReasons.push({
+        code: 'GEOMETRY_DEGRADED_FASHN',
+        message:
+          'FASHN geometry unavailable — OpenAI semantics with approximate body band',
+      });
+    }
+
     if (confidence.analysisGate === 'blocked') {
       rejectReasons.push({
         code: 'ANALYSIS_BLOCKED',
@@ -207,16 +284,20 @@ export class VisionOrchestratorService {
       });
     }
 
+    const finalGate = geometryDegraded
+      ? mergeGates(confidence.analysisGate, 'degraded')
+      : confidence.analysisGate;
+
     fashionVision = buildFashionVisionDocumentFromParts({
       geometry,
       semantics: conflict.semantics,
       providers: [
-        'fashn-geometry',
+        geometryDegraded ? 'geometry-degraded-stub' : 'fashn-geometry',
         'openai-semantic',
         'pipeline-phase-5',
         'pipeline-phase-6',
       ],
-      analysisGate: confidence.analysisGate,
+      analysisGate: finalGate,
       pipelinePhase: '6-conflict-confidence',
       normalizationNotes: normalized.notes,
       rejectReasons: rejectReasons.length ? rejectReasons : undefined,
@@ -241,7 +322,9 @@ export class VisionOrchestratorService {
         processingMs: Date.now() - started,
         analysisGate: fashionVision.analysisGate,
         phase: '6-conflict-confidence',
-        userMessageAr: confidence.userMessageAr,
+        userMessageAr: geometryDegraded
+          ? 'تحليل تقريبي — خدمة تحديد القطع غير متاحة مؤقتًا. أعيدي المحاولة لاحقًا لدقة أعلى.'
+          : confidence.userMessageAr,
       },
     };
   }

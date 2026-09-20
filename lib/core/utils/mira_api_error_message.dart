@@ -50,9 +50,15 @@ String friendlyMiraError(Object error) {
       return 'تعذّر قبول النتيجة — جرّبي لوناً آخر أو صورة أوضح.';
     }
     if (status == 429) {
-      return 'طلبات كثيرة — انتظري قليلًا ثم أعيدي المحاولة.';
+      final msg = _localizeServerMessage(_extractMessage(data));
+      if (msg != null && msg.isNotEmpty && !_looksTechnical(msg)) return msg;
+      return 'طلبات كثيرة أو نفاد رصيد خدمة التحليل. انتظري قليلًا أو تواصلي مع الدعم.';
     }
     if (status == 503) {
+      final code = _extractCode(data);
+      if (code == 'FASHN_QUOTA_EXCEEDED') {
+        return 'خدمة تحديد القطع غير متاحة مؤقتًا (نفاد الرصيد). جرّبي التحليل مجددًا بعد دقائق.';
+      }
       final msg = _localizeServerMessage(_extractMessage(data));
       if (msg != null && msg.isNotEmpty && !_looksTechnical(msg)) return msg;
       return 'تعذر بدء التحليل حاليًا. يمكنك المحاولة مرة أخرى بعد قليل.';
@@ -71,6 +77,9 @@ String friendlyMiraError(Object error) {
       return 'تعذر بدء التحليل حاليًا. يمكنك المحاولة مرة أخرى بعد قليل.';
     }
   }
+  final asText = error.toString();
+  final fromText = _localizeServerMessage(asText);
+  if (fromText != null && fromText.isNotEmpty) return fromText;
   final fallback = friendlyFirebaseError(error);
   if (_looksTechnical(fallback)) {
     return 'تعذر بدء التحليل حاليًا. يمكنك المحاولة مرة أخرى بعد قليل.';
@@ -114,8 +123,14 @@ String? _extractCode(dynamic data) {
 
 String? _localizeServerMessage(String? raw) {
   if (raw == null || raw.isEmpty) return null;
-  if (_looksTechnical(raw)) return null;
   final lower = raw.toLowerCase();
+  // Quota / credits before technical filter — Exception wrappers contain "exception".
+  if (lower.contains('out of credits') ||
+      lower.contains('fashn_quota') ||
+      lower.contains('quota_exceeded')) {
+    return 'خدمة تحديد القطع غير متاحة مؤقتًا (نفاد الرصيد). أعيدي المحاولة لاحقًا.';
+  }
+  if (_looksTechnical(raw)) return null;
   if (lower.contains('error_src_face_out_of_bound') ||
       lower.contains('face_out_of_bound') ||
       lower.contains('out_of_bounds')) {
