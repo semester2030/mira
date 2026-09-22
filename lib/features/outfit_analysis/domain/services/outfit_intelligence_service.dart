@@ -115,6 +115,7 @@ class OutfitIntelligenceService {
       // Never recreate the server-internal FashionVisionDocument or invent
       // bounding boxes in the client.
       visionObjects: const [],
+      garments: visionResult.garments,
     );
 
     final mergedVisual = _mergeRegionColors(visual, segmentMap);
@@ -145,6 +146,8 @@ class OutfitIntelligenceService {
       );
     }
 
+    final useVisionPieces = segmentMap.source == 'pose_anatomy' ||
+        analysis.detectedPieces.isNotEmpty;
     final enriched = analysis.copyWith(
       frozenImagePath: outfitImage.path,
       segmentMap: segmentMap,
@@ -156,9 +159,11 @@ class OutfitIntelligenceService {
           ? garmentColors
           : mergedVisual.dominantColors,
       recommendedColors: analysis.recommendedColors,
-      detectedPieces: segmentMap.hasTrustedOverlay
-          ? _piecesFromSegments(segmentMap, analysis.detectedPieces)
-          : analysis.detectedPieces,
+      detectedPieces: useVisionPieces && analysis.detectedPieces.isNotEmpty
+          ? analysis.detectedPieces
+          : (segmentMap.hasTrustedOverlay
+              ? _piecesFromSegments(segmentMap, analysis.detectedPieces)
+              : analysis.detectedPieces),
       mismatchReasons: mismatch,
       recommendations: DeterministicOutfitEngine.buildImprovementActions(
         mismatch,
@@ -198,6 +203,7 @@ class OutfitIntelligenceService {
   Future<OutfitSegmentMap> _buildSegmentMap(
     File outfitImage, {
     required List<VisionLocalizedObject> visionObjects,
+    List<CanonicalGarment> garments = const [],
   }) async {
     if (MiraApiConfig.useBackend) {
       try {
@@ -206,21 +212,29 @@ class OutfitIntelligenceService {
         );
         if (serverMap != null && serverMap.regions.isNotEmpty) {
           developer.log(
-            'Server pixel contours: ${serverMap.regions.length} regions (${serverMap.source})',
+            'Server pixel contours: ${serverMap.regions.length} regions '
+            '(${serverMap.source})',
             name: 'OutfitIntelligenceService',
           );
           final enriched = await _segmentation.enrichServerColors(
             outfitImage,
             serverMap,
           );
-          return enriched.copyWith(
-            isVisualTrusted: true,
-            validationMessage: null,
+          return _relabelWithGarments(
+            enriched.copyWith(
+              isVisualTrusted: true,
+              validationMessage: null,
+            ),
+            garments,
           );
         }
+        developer.log(
+          'Server segmentation returned empty regions — local/pose fallback',
+          name: 'OutfitIntelligenceService',
+        );
       } catch (error, stack) {
         developer.log(
-          'Server segmentation failed — local fallback',
+          'Server segmentation failed — local fallback: $error',
           error: error,
           stackTrace: stack,
           name: 'OutfitIntelligenceService',
@@ -232,18 +246,74 @@ class OutfitIntelligenceService {
       outfitImage,
       visionObjects: visionObjects,
     );
-    if (local.hasTrustedOverlay) return local;
+    if (local.hasTrustedOverlay) {
+      return _relabelWithGarments(local, garments);
+    }
 
-    // When FASHN boxes are unavailable, use declared pose-anatomy bands.
+    // Pose anatomy is body structure — never present as discovered clothing.
     final poseMap = await _segmentation.buildPoseAnatomyMap(outfitImage);
-    if (poseMap.hasTrustedOverlay) {
+    if (poseMap.regions.isNotEmpty) {
       developer.log(
-        'Using pose anatomy segment map (degraded)',
+        'Using pose anatomy (non-clothing overlay). garments=${garments.length}',
         name: 'OutfitIntelligenceService',
       );
-      return poseMap;
+      final labeled = _relabelPoseWithGarments(poseMap, garments);
+      return labeled.copyWith(
+        // Trusted for analysis colors / result gate, but not fabric recolor.
+        isVisualTrusted: true,
+        source: 'pose_anatomy',
+        validationMessage:
+            'خريطة تقريبية من وضعية الجسم — حدود الملابس الدقيقة غير متاحة حالياً.',
+      );
     }
     return local;
+  }
+
+  /// Prefer vision garment labels/colors over bare anatomy / role labels.
+  OutfitSegmentMap _relabelWithGarments(
+    OutfitSegmentMap map,
+    List<CanonicalGarment> garments,
+  ) {
+    if (garments.isEmpty) return map;
+    final dressLike = garments.any((g) {
+      final t = '${g.identity.typeId} ${g.localeLabels?.ar ?? ''}'.toLowerCase();
+      return t.contains('dress') || t.contains('gown') || t.contains('فستان');
+    });
+    if (!dressLike) return map;
+
+    final primary = garments.first;
+    final labelAr = primary.localeLabels?.ar?.trim().isNotEmpty == true
+        ? primary.localeLabels!.ar!
+        : 'فستان';
+    final colors = primary.attributes.colors;
+    final regions = map.regions.map((r) {
+      if (r.zone == OutfitSegmentZone.head ||
+          r.zone == OutfitSegmentZone.feet ||
+          r.zone == OutfitSegmentZone.accessories) {
+        return r;
+      }
+      if (OutfitSegmentMap.isAnatomyBandLabel(r) ||
+          r.labelEn.toLowerCase().contains('dress') ||
+          r.labelEn.toLowerCase() == 'top' ||
+          r.labelEn.toLowerCase() == 'pants' ||
+          r.labelEn.toLowerCase() == 'clothing') {
+        return r.copyWith(
+          labelAr: labelAr,
+          labelEn: 'Dress',
+          colors: colors.isNotEmpty ? colors : r.colors,
+        );
+      }
+      return r;
+    }).toList();
+    return map.copyWith(regions: regions);
+  }
+
+  OutfitSegmentMap _relabelPoseWithGarments(
+    OutfitSegmentMap poseMap,
+    List<CanonicalGarment> garments,
+  ) {
+    if (garments.isEmpty) return poseMap;
+    return _relabelWithGarments(poseMap, garments);
   }
 
   Future<VisionOutfitAnalyzeResult> _resolveVisionFromPlatform({

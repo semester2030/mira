@@ -17,9 +17,11 @@ abstract final class OutfitSegmentMapMapper {
     final source = json['source'] as String? ?? 'server';
     final trustedSources = {
       'fashn_geometry_contour',
+      'fashn_geometry_degraded',
       'vision_garment',
       'vision_pixel_contour',
       'server',
+      'server_segment',
     };
     final isVisualTrusted = json['isVisualTrusted'] as bool? ??
         (regions.isNotEmpty && trustedSources.contains(source));

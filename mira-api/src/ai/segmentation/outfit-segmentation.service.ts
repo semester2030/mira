@@ -18,6 +18,10 @@ import {
 } from './outfit-fashion-taxonomy';
 import { FashnGeometryProvider } from '../../vision/providers/fashn-geometry.provider';
 import { RegionRole } from '../../vision/schema/fashion-vision-document.v1';
+import {
+  degradedGeometryStub,
+  isFashnQuotaOrUnavailable,
+} from '../../vision/vision-orchestrator.service';
 
 // ─────────────────────────────────────────────────────────────────────────────
 // VISION PLATFORM — Phase 8
@@ -48,7 +52,7 @@ export class OutfitSegmentationService {
     const imageWidth = meta.width ?? 0;
     const imageHeight = meta.height ?? 0;
 
-    const objects = await this.fetchGeometryObjects(imageBuffer);
+    const { objects, degraded } = await this.fetchGeometryObjects(imageBuffer);
     const regions: OutfitSegmentRegionDto[] = [];
 
     for (const object of objects) {
@@ -81,42 +85,72 @@ export class OutfitSegmentationService {
       accessoryColors: this.colorsForZone(deduped, 'accessories'),
       imageWidth,
       imageHeight,
-      source: objects.length > 0 ? 'fashn_geometry_contour' : 'deterministic',
+      source:
+        objects.length > 0
+          ? degraded
+            ? 'fashn_geometry_degraded'
+            : 'fashn_geometry_contour'
+          : 'deterministic',
     };
   }
 
-  private async fetchGeometryObjects(imageBuffer: Buffer): Promise<VisionObject[]> {
+  private async fetchGeometryObjects(
+    imageBuffer: Buffer,
+  ): Promise<{ objects: VisionObject[]; degraded: boolean }> {
     try {
       const geometry = await this.fashnGeometry.segment(imageBuffer);
-      return geometry.segments.map((seg, index) => {
-        const name = regionRoleLabel(seg.regionRole);
-        const rect: NormalizedRect = {
-          left: seg.bbox.x,
-          top: seg.bbox.y,
-          width: seg.bbox.w,
-          height: seg.bbox.h,
-        };
-        const polygon =
-          seg.polygon.length >= 3
-            ? seg.polygon.map(([x, y]) => ({ x, y }))
-            : bboxFromVisionVertices([
-                { x: rect.left, y: rect.top },
-                { x: rect.left + rect.width, y: rect.top },
-                { x: rect.left + rect.width, y: rect.top + rect.height },
-                { x: rect.left, y: rect.top + rect.height },
-              ])?.polygon ?? [];
-
-        return {
-          name,
-          score: 0.85 - index * 0.01,
-          rect,
-          polygon,
-        };
-      });
+      return {
+        objects: this.geometryToObjects(geometry.segments),
+        degraded: false,
+      };
     } catch (error) {
+      if (isFashnQuotaOrUnavailable(error)) {
+        this.logger.warn(
+          `FASHN segmentation quota/unavailable — using degraded full-body stub: ${String(error)}`,
+        );
+        const stub = degradedGeometryStub();
+        return {
+          objects: this.geometryToObjects(stub.segments),
+          degraded: true,
+        };
+      }
       this.logger.warn(`FASHN segmentation failed: ${String(error)}`);
-      return [];
+      return { objects: [], degraded: false };
     }
+  }
+
+  private geometryToObjects(
+    segments: Array<{
+      regionRole: RegionRole;
+      bbox: { x: number; y: number; w: number; h: number };
+      polygon: number[][];
+    }>,
+  ): VisionObject[] {
+    return segments.map((seg, index) => {
+      const name = regionRoleLabel(seg.regionRole);
+      const rect: NormalizedRect = {
+        left: seg.bbox.x,
+        top: seg.bbox.y,
+        width: seg.bbox.w,
+        height: seg.bbox.h,
+      };
+      const polygon =
+        seg.polygon.length >= 3
+          ? seg.polygon.map((p) => ({ x: p[0] ?? 0, y: p[1] ?? 0 }))
+          : bboxFromVisionVertices([
+              { x: rect.left, y: rect.top },
+              { x: rect.left + rect.width, y: rect.top },
+              { x: rect.left + rect.width, y: rect.top + rect.height },
+              { x: rect.left, y: rect.top + rect.height },
+            ])?.polygon ?? [];
+
+      return {
+        name,
+        score: 0.85 - index * 0.01,
+        rect,
+        polygon,
+      };
+    });
   }
 
   private async extractColors(
