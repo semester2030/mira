@@ -143,6 +143,21 @@ FaceAnalysisJourneyError mapFaceAnalysisError({
     );
   }
 
+  if (code == 'PROVIDER_CREDITS_EXHAUSTED' ||
+      raw.contains('رصيد خدمة تحليل البشرة') ||
+      raw.contains('creditinsufficiency') ||
+      raw.contains('enough credits')) {
+    return const FaceAnalysisJourneyError(
+      code: 'PROVIDER_CREDITS_EXHAUSTED',
+      titleAr: 'رصيد التحليل غير كافٍ',
+      bodyAr:
+          'رصيد خدمة تحليل البشرة غير كافٍ حالياً. أعيدي المحاولة بعد تجديد رصيد المزود.',
+      userAction: FaceAnalysisUserAction.retry,
+      requiresRecapture: false,
+      retryable: true,
+    );
+  }
+
   if (statusCode == 503 ||
       category == 'provider' ||
       code == 'PROVIDER_UNAVAILABLE' ||

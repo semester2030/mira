@@ -36,6 +36,31 @@ class OutfitSegmentRegion {
 
   bool get hasContour => normalizedPolygon.length >= 3;
 
+  /// Real fabric mask: closed contour with enough vertices (not a 4-corner rect stub).
+  bool get hasFabricMask =>
+      normalizedPolygon.length >= 6 && _polygonArea(normalizedPolygon) > 0.002;
+
+  /// Documented clothing bounds: non-trivial rect within image, not anatomy stub.
+  bool get hasDocumentedClothingBounds {
+    final r = normalizedRect;
+    if (r.width < 0.08 || r.height < 0.08) return false;
+    if (r.left < -0.02 || r.top < -0.02 || r.right > 1.02 || r.bottom > 1.02) {
+      return false;
+    }
+    return true;
+  }
+
+  static double _polygonArea(List<Offset> pts) {
+    if (pts.length < 3) return 0;
+    var sum = 0.0;
+    for (var i = 0; i < pts.length; i++) {
+      final a = pts[i];
+      final b = pts[(i + 1) % pts.length];
+      sum += a.dx * b.dy - b.dx * a.dy;
+    }
+    return sum.abs() * 0.5;
+  }
+
   OutfitSegmentRegion copyWith({
     Rect? normalizedRect,
     String? labelAr,
@@ -87,6 +112,83 @@ class OutfitSegmentMap {
   static const empty = OutfitSegmentMap(regions: []);
 
   bool get hasTrustedOverlay => isVisualTrusted && regions.isNotEmpty;
+
+  static const _trustedGarmentSources = {
+    'vision_garment',
+    'vision_pixel_contour',
+    'server_segment',
+    'fashn_geometry_contour',
+  };
+
+  bool get _sourceAllowsFabricRecolor =>
+      _trustedGarmentSources.contains(source);
+
+  /// Map-level gate: true only if at least one **selected-capable** region exists.
+  /// Callers that recolor a piece MUST use [supportsFabricRecolorFor].
+  bool get supportsFabricRecolor {
+    if (!_sourceAllowsFabricRecolor || !hasTrustedOverlay) return false;
+    return regions.any(regionSupportsFabricRecolor);
+  }
+
+  /// Fabric recolor for the **selected** garment only.
+  /// Another valid region / high confidence / bare rect / vision-* prefix alone
+  /// do NOT unlock recolor for a different piece. Anatomy bands never unlock.
+  bool supportsFabricRecolorFor({
+    String? garmentLabelAr,
+    OutfitSegmentRegion? selectedRegion,
+  }) {
+    if (!_sourceAllowsFabricRecolor || !hasTrustedOverlay) return false;
+    final region = selectedRegion ?? regionForGarmentLabel(garmentLabelAr);
+    if (region == null) return false;
+    return regionSupportsFabricRecolor(region);
+  }
+
+  bool regionSupportsFabricRecolor(OutfitSegmentRegion region) {
+    if (!_sourceAllowsFabricRecolor || !hasTrustedOverlay) return false;
+    if (region.zone == OutfitSegmentZone.head) return false;
+    if (isAnatomyBandLabel(region)) return false;
+    // Actual fabric mask wins.
+    if (region.hasFabricMask) return true;
+    // Documented clothing bounds from trusted garment source + clothing label
+    // + geometric validity. Contour preferred; pixel-contour source may use
+    // documented bounds when polygon is present (≥3) even if area is thin.
+    if (source == 'vision_pixel_contour' &&
+        region.hasContour &&
+        region.hasDocumentedClothingBounds &&
+        region.labelAr.trim().isNotEmpty) {
+      return true;
+    }
+    // Bare rect / confidence / generic vision prefix — never enough.
+    return false;
+  }
+
+  OutfitSegmentRegion? regionForGarmentLabel(String? garmentLabelAr) {
+    final label = garmentLabelAr?.trim() ?? '';
+    if (label.isEmpty || regions.isEmpty) return null;
+    for (final r in regions) {
+      if (isAnatomyBandLabel(r)) continue;
+      if (r.labelAr == label ||
+          r.labelAr.contains(label) ||
+          label.contains(r.labelAr)) {
+        return r;
+      }
+    }
+    return null;
+  }
+
+  static bool isAnatomyBandLabel(OutfitSegmentRegion r) {
+    final l = '${r.labelAr} ${r.labelEn}'.toLowerCase().trim();
+    return l.contains('الجزء العلوي') ||
+        l.contains('الجزء السفلي') ||
+        l.contains('upper body') ||
+        l.contains('lower body') ||
+        l == 'upper' ||
+        l == 'lower' ||
+        l.contains('القدمين') ||
+        l == 'feet' ||
+        l.contains('الرأس') ||
+        l == 'head';
+  }
 
   List<String> get garmentColors => garmentPalette.ordered;
 

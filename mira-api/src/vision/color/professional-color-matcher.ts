@@ -218,11 +218,22 @@ export function matchRgb(
   return {
     id: best.id,
     nameAr: best.nameAr,
-    displayNameAr: `${best.nameAr} ${shade}`,
+    // Catalog names often already encode shade — never append conflicting shade.
+    displayNameAr: composeDisplayNameAr(best.nameAr, shade),
     hex: best.hex,
     deltaE: bestDe,
     confidence: confidenceFromDeltaE(bestDe),
     matchTierAr: tierFromDeltaE(bestDe),
     shadeAr: shade,
   };
+}
+
+const SHADE_TOKENS = /فاتح|غامق|أفتح|أغمق|متوسط|pale|light|dark|deep|mid/i;
+
+function composeDisplayNameAr(nameAr: string, shade: string): string {
+  const name = nameAr.trim();
+  const s = shade.trim();
+  if (!s || s === 'متوسط') return name;
+  if (SHADE_TOKENS.test(name)) return name;
+  return `${name} ${s}`;
 }

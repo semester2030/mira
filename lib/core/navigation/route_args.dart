@@ -3,6 +3,7 @@ import '../../features/outfit_analysis/domain/entities/outfit_analysis_mode.dart
 import '../../features/outfit_analysis/domain/entities/outfit_compare_snapshot.dart';
 import '../../features/outfit_analysis/domain/entities/outfit_analysis.dart';
 import '../../features/outfit_analysis/domain/entities/outfit_report.dart';
+import '../../features/results_experience/domain/perfect_mask_session.dart';
 import '../../features/skin_analysis/domain/entities/skin_report.dart';
 
 class RecommendationRouteArgs {
@@ -41,6 +42,9 @@ class MiraReportRouteArgs {
   final bool fromFreshAnalysis;
   /// Phase 9J — open Result Mirror for a historical analysis (read projection of that report).
   final bool fromHistory;
+  /// Same ephemeral PerfectMaskSession as the analysis that produced [report].
+  /// Propagated so Face Explorer does not re-read a cleared static.
+  final PerfectMaskSession? perfectMaskSession;
 
   const MiraReportRouteArgs({
     required this.report,
@@ -50,6 +54,7 @@ class MiraReportRouteArgs {
     this.captureImagePath,
     this.fromFreshAnalysis = false,
     this.fromHistory = false,
+    this.perfectMaskSession,
   });
 }
 

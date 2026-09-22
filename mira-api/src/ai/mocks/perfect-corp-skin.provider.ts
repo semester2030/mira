@@ -13,9 +13,11 @@ import { PerfectCorpService } from '../services/perfect-corp.service';
 import { buildYouCamImageVariants } from '../utils/youcam-image-variants';
 import {
   classifyYouCamCaptureError,
+  classifyYouCamCreditInsufficiencyError,
   isFaceBlockingYouCamError,
   isFaceQualityYouCamError,
   isFaceRecaptureImmediateYouCamError,
+  isYouCamCreditInsufficiencyError,
 } from '../face-gate/youcam-face-errors';
 import { MockSkinAnalysisProvider } from './mock-skin-analysis.provider';
 import {
@@ -124,6 +126,14 @@ export class PerfectCorpSkinProvider implements SkinAnalysisProvider {
 
         if (qualityIssue && capture) {
           throw new BadRequestException(capture);
+        }
+
+        if (isYouCamCreditInsufficiencyError(lastMessage)) {
+          const credits = classifyYouCamCreditInsufficiencyError();
+          this.logger.error(
+            `YouCam HD blocked — ${credits.code} (provider account credits)`,
+          );
+          throw new ServiceUnavailableException(credits);
         }
 
         if (allowFallback) {

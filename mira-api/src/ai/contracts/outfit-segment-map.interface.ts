@@ -38,4 +38,7 @@ export interface OutfitSegmentMapDto {
   imageWidth: number;
   imageHeight: number;
   source: string;
+  /** False for approximate / degraded stubs — never invent fabric trust. */
+  isVisualTrusted?: boolean;
+  validationMessage?: string;
 }

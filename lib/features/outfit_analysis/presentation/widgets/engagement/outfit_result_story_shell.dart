@@ -207,10 +207,18 @@ class _OutfitResultStoryShellState extends State<OutfitResultStoryShell> {
             ),
             const SizedBox(height: 10),
             Expanded(
-              child: PageView(
-                controller: _pageController,
-                onPageChanged: _onPageChanged,
-                children: [
+              child: Builder(
+                builder: (context) {
+                  final isRtl =
+                      Directionality.of(context) == TextDirection.rtl;
+                  // Want: next chapter via swipe toward the RIGHT.
+                  // RTL PageView already advances on right-swipe — do not reverse again.
+                  // LTR needs reverse:true to flip default left-swipe-next.
+                  return PageView(
+                    reverse: !isRtl,
+                    controller: _pageController,
+                    onPageChanged: _onPageChanged,
+                    children: [
                   _chapterScroll(
                     0,
                     [
@@ -236,17 +244,25 @@ class _OutfitResultStoryShellState extends State<OutfitResultStoryShell> {
                           }
                         },
                       ),
-                      if (hasPhoto && hasTrustedMap) ...[
+                      if (hasPhoto &&
+                          hasTrustedMap &&
+                          widget.analysis.segmentMap?.source !=
+                              'pose_anatomy') ...[
                         const SizedBox(height: 16),
                         _InteractivePhotoCard(
                           analysis: widget.analysis,
                           selectedZone: _selectedZone,
                           onRegionTap: _showRegionDetail,
                         ),
-                      ] else if (hasPhoto && widget.analysis.segmentMap?.validationMessage != null) ...[
+                      ] else if (hasPhoto &&
+                          (widget.analysis.segmentMap?.source ==
+                                  'pose_anatomy' ||
+                              widget.analysis.segmentMap?.validationMessage !=
+                                  null)) ...[
                         const SizedBox(height: 16),
                         _VisualValidationNotice(
-                          message: widget.analysis.segmentMap!.validationMessage!,
+                          message: widget.analysis.segmentMap?.validationMessage ??
+                              'حدود الملابس الدقيقة غير متاحة — نعرض التحليل دون خريطة قطع تقريبية.',
                         ),
                       ],
                     ],
@@ -377,14 +393,16 @@ class _OutfitResultStoryShellState extends State<OutfitResultStoryShell> {
                     ],
                   ),
                 ],
+              );
+                },
               ),
             ),
             if (_currentChapter < OutfitResultChapter.all.length - 1)
               Padding(
                 padding: const EdgeInsets.fromLTRB(20, 8, 20, 12),
                 child: PremiumButton(
-                  label: 'الفصل التالي: ${OutfitResultChapter.all[_currentChapter + 1].titleAr}',
-                  icon: Icons.arrow_back_rounded,
+                  label: 'التالي: ${OutfitResultChapter.all[_currentChapter + 1].titleAr}',
+                  icon: Icons.arrow_forward_rounded,
                   onPressed: () => _goToChapter(_currentChapter + 1),
                 ),
               ),
@@ -392,7 +410,8 @@ class _OutfitResultStoryShellState extends State<OutfitResultStoryShell> {
         ),
         if (_showStickyHero)
           Positioned(
-            top: 8,
+            // Below chapter progress (~130) so floating score never covers stage tabs.
+            top: 132,
             left: 20,
             right: 20,
             child: OutfitResultStickyHero(

@@ -94,13 +94,17 @@ class _OutfitColorAlternativePanelState extends State<OutfitColorAlternativePane
                 Expanded(
                   child: _PreviewColumn(
                     title: 'الحالي',
-                    colorName: selected.currentColorAr,
+                    colorName: selected.hasCurrentSwatch
+                        ? selected.currentColorAr
+                        : 'غير متاح',
                     scoreDelta: null,
-                    child: _AnimatedPiece(
-                      kind: _visualKind(selected.pieceKind),
-                      primary: selected.currentColor,
-                      accent: selected.currentColor.withValues(alpha: 0.7),
-                    ),
+                    child: selected.hasCurrentSwatch
+                        ? _AnimatedPiece(
+                            kind: _visualKind(selected.pieceKind),
+                            primary: selected.currentColor!,
+                            accent: selected.currentColor!.withValues(alpha: 0.7),
+                          )
+                        : const _UnavailableSwatch(),
                   ),
                 ),
                 Padding(
@@ -110,15 +114,22 @@ class _OutfitColorAlternativePanelState extends State<OutfitColorAlternativePane
                 Expanded(
                   child: _PreviewColumn(
                     title: 'المقترح',
-                    colorName: selected.alternativeColorAr,
+                    colorName: selected.hasAlternativeSwatch
+                        ? selected.alternativeColorAr
+                        : 'غير متاح',
                     scoreDelta: selected.projectedHarmonyDelta,
-                    scoreDeltaLabel: 'تحسين الانسجام',
-                    child: _AnimatedPiece(
-                      key: ValueKey(selected.alternativeColorAr),
-                      kind: _visualKind(selected.pieceKind),
-                      primary: selected.alternativeColor,
-                      accent: selected.alternativeColor.withValues(alpha: 0.72),
-                    ),
+                    scoreDeltaLabel: selected.hasMeasuredImprovement
+                        ? 'فرق قواعد الانسجام'
+                        : null,
+                    child: selected.hasAlternativeSwatch
+                        ? _AnimatedPiece(
+                            key: ValueKey(selected.alternativeColorAr),
+                            kind: _visualKind(selected.pieceKind),
+                            primary: selected.alternativeColor!,
+                            accent:
+                                selected.alternativeColor!.withValues(alpha: 0.72),
+                          )
+                        : const _UnavailableSwatch(),
                   ),
                 ),
               ],
@@ -151,20 +162,24 @@ class _OutfitColorAlternativePanelState extends State<OutfitColorAlternativePane
                       height: 46,
                       decoration: BoxDecoration(
                         shape: BoxShape.circle,
-                        color: alt.alternativeColor,
+                        color: alt.alternativeColor ?? AppColors.border,
                         border: Border.all(
                           color: isActive ? AppColors.secondary : Colors.white,
                           width: isActive ? 3 : 2,
                         ),
-                        boxShadow: isActive
+                        boxShadow: isActive && alt.alternativeColor != null
                             ? [
                                 BoxShadow(
-                                  color: alt.alternativeColor.withValues(alpha: 0.5),
+                                  color: alt.alternativeColor!
+                                      .withValues(alpha: 0.5),
                                   blurRadius: 12,
                                 ),
                               ]
                             : null,
                       ),
+                      child: alt.alternativeColor == null
+                          ? const Icon(Icons.block, size: 16, color: AppColors.textSecondary)
+                          : null,
                     ),
                   );
                 },
@@ -240,6 +255,26 @@ class _AnimatedPiece extends StatelessWidget {
           key: ValueKey('$kind-${primary.toARGB32()}'),
           painter: OutfitIllustrationPainter(kind: kind, primary: primary, accent: accent),
         ),
+      ),
+    );
+  }
+}
+
+class _UnavailableSwatch extends StatelessWidget {
+  const _UnavailableSwatch();
+
+  @override
+  Widget build(BuildContext context) {
+    return Container(
+      alignment: Alignment.center,
+      decoration: BoxDecoration(
+        color: AppColors.border.withValues(alpha: 0.35),
+        borderRadius: BorderRadius.circular(16),
+        border: Border.all(color: AppColors.border),
+      ),
+      child: Text(
+        'غير متاح',
+        style: AppTypography.labelSmall.copyWith(color: AppColors.textSecondary),
       ),
     );
   }

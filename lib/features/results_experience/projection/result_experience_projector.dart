@@ -1,12 +1,10 @@
 import '../contracts/result_enums.dart';
 import '../contracts/result_presentation_vms.dart';
-import '../flags/mira_results_experience_flag.dart';
 import '../localization/confidence_labels.dart';
 import '../localization/personalization_labels.dart';
 import '../localization/public_language_policy.dart';
 import '../semantics/score_semantics_contract.dart';
 import '../versioning/results_experience_versions.dart';
-import '../visibility/advice_ownership_policy.dart';
 import '../semantics/personal_plan_policy.dart';
 import '../semantics/metric_presentation_policy.dart';
 import '../visibility/visibility_policy.dart';
@@ -709,11 +707,11 @@ class ResultExperienceProjector {
     ResultProjectionInput input,
     ConfidenceState confidence,
   ) {
-    const title = 'خريطة إرشادية للبشرة';
-    const badge = 'توضيح إرشادي';
+    const title = 'استكشاف بشرتك';
+    const badge = 'قناع ميرا';
     const explanation =
-        'تعرض الخريطة مناطق الوجه المرتبطة بنتيجة التحليل بصورة '
-        'توضيحية، ولا تمثل قياسًا موضعيًا دقيقًا أو خريطة طبية.';
+        'تعرض الخريطة أقنعة الاكتشاف الحقيقية على صورتك، '
+        'دون خطوط أو مناطق مرسومة يدوياً.';
 
     final concerns = input.mapConcernIds
         .map(
@@ -740,12 +738,12 @@ class ResultExperienceProjector {
       interaction: input.mapEnabled
           ? InteractionState.tappable
           : InteractionState.disabled,
-      limitation: LimitationState.illustrativeOnly,
-      mode: MapPresentationMode.illustrativeUserImage,
+      limitation: LimitationState.none,
+      mode: MapPresentationMode.measuredHeatmap,
       badgeAr: badge,
       explanationAr: explanation,
       concerns: concerns,
-      overlayType: 'illustrative_regions',
+      overlayType: 'perfect_provider_mask',
       interactionEligible: input.mapEnabled,
     );
   }

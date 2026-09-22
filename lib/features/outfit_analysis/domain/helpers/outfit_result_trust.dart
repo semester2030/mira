@@ -23,13 +23,37 @@ abstract final class OutfitResultTrustPolicy {
     }
 
     final map = analysis.segmentMap;
-    if (map == null || !map.hasTrustedOverlay) {
+    if (map == null) {
       return OutfitResultTrust(
         level: OutfitResultTrustLevel.blocked,
         titleAr: blockedTitle,
-        messageAr: map?.validationMessage ?? blockedDefaultMessage,
+        messageAr: blockedDefaultMessage,
         detailAr:
             'ميرا لا تعرض درجة إلا بعد التحقق البصري من ملابسك — خصوصيتك ومصداقيتك أولاً',
+      );
+    }
+
+    if (!map.hasTrustedOverlay) {
+      // Semantic Vision path without fabric mask — show results as degraded,
+      // never invent fabric-trusted bounds.
+      final hasSemantic = analysis.detectedPieces.isNotEmpty ||
+          analysis.dominantColors.isNotEmpty ||
+          analysis.clothingType.isNotEmpty;
+      if (!hasSemantic) {
+        return OutfitResultTrust(
+          level: OutfitResultTrustLevel.blocked,
+          titleAr: blockedTitle,
+          messageAr: map.validationMessage ?? blockedDefaultMessage,
+          detailAr:
+              'ميرا لا تعرض درجة إلا بعد التحقق البصري من ملابسك — خصوصيتك ومصداقيتك أولاً',
+        );
+      }
+      return OutfitResultTrust(
+        level: OutfitResultTrustLevel.degraded,
+        titleAr: degradedTitle,
+        messageAr: map.validationMessage ??
+            'ألوان القطع من التحليل الدلالي — حدود القماش الدقيقة غير متاحة',
+        detailAr: analysis.photoTrustMessageAr,
       );
     }
 

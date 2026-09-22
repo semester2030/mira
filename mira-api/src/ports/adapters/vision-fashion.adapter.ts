@@ -1,4 +1,4 @@
-import { Injectable } from '@nestjs/common';
+import { HttpException, Injectable } from '@nestjs/common';
 import { ConfigService } from '@nestjs/config';
 import {
   VisionOrchestratorService,
@@ -126,6 +126,8 @@ export class VisionFashionAdapter implements FashionAnalysisPort {
       return result;
     } catch (err) {
       if (err instanceof ProviderPortError) throw err;
+      // Preserve Nest HTTP status/body (quota, not configured, gate rejects).
+      if (err instanceof HttpException) throw err;
       const message = err instanceof Error ? err.message : String(err);
       throw new ProviderPortError(
         classifyProviderFailure({

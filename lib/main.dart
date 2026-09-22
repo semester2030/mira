@@ -1,3 +1,5 @@
+import 'dart:typed_data';
+
 import 'package:flutter/material.dart';
 import 'package:flutter_localizations/flutter_localizations.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
@@ -18,13 +20,14 @@ import 'features/dashboard/presentation/screens/dashboard_screen.dart';
 import 'features/profile/presentation/screens/profile_screen.dart';
 import 'features/profile/presentation/screens/settings_screen.dart';
 import 'features/dev_tools/presentation/screens/fashion_icon_system_preview_screen.dart';
+import 'features/results_experience/presentation/screens/perfect_hd_mask_technical_viewer_screen.dart';
+import 'features/results_experience/presentation/poc/apple_portrait_matting_poc_screen.dart';
 import 'features/dashboard/presentation/screens/analysis_screen.dart';
 import 'features/dashboard/presentation/screens/points_screen.dart';
 import 'features/dashboard/presentation/screens/tips_screen.dart';
 import 'features/dashboard/presentation/screens/new_analysis_screen.dart';
 import 'features/skin_analysis/presentation/screens/scan_screen.dart';
 import 'features/intelligence/presentation/screens/beauty_progress_screen.dart';
-import 'features/intelligence/presentation/screens/mira_beauty_report_screen.dart';
 import 'features/results_experience/flags/mira_results_experience_flag.dart';
 import 'features/results_experience/presentation/routing/results_report_entry.dart';
 import 'features/face_analysis_experience/history/history.dart';
@@ -201,6 +204,26 @@ class MirraAppState extends State<MirraApp> {
           page: const FashionIconSystemPreviewScreen(),
           settings: settings,
         );
+      case AppRoutes.perfectHdMaskTechnicalViewer:
+        final args = settings.arguments;
+        final bytes = args is Uint8List ? args : null;
+        return PremiumPageRoute(
+          page: PerfectHdMaskTechnicalViewerScreen(initialImageBytes: bytes),
+          settings: settings,
+        );
+      case AppRoutes.applePortraitMattingPoc:
+        final args = settings.arguments;
+        final path = args is String ? args : null;
+        if (path == null || path.isEmpty) {
+          return PremiumPageRoute(
+            page: const SettingsScreen(),
+            settings: settings,
+          );
+        }
+        return PremiumPageRoute(
+          page: ApplePortraitMattingPocScreen(sourceImagePath: path),
+          settings: settings,
+        );
       case AppRoutes.analysis:
         return PremiumPageRoute(page: const AnalysisScreen(), settings: settings);
       case AppRoutes.history:
@@ -226,6 +249,7 @@ class MirraAppState extends State<MirraApp> {
               captureImagePath: args.captureImagePath,
               fromFreshAnalysis: args.fromFreshAnalysis,
               fromHistory: args.fromHistory,
+              perfectMaskSession: args.perfectMaskSession,
             ),
             settings: settings,
           );

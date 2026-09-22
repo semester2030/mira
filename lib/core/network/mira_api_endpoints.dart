@@ -11,6 +11,8 @@ abstract final class MiraApiEndpoints {
       '/consultation/sessions/$sessionId/messages';
   /// Flutter → Render only (Render → Perfect Corp). Do not call Perfect Corp from the app.
   static const skinAnalysis = '/ai/skin-analysis';
+  /// Technical acceptance — Perfect HD detection masks (not production Skin Map).
+  static const skinAnalysisHdMasks = '/ai/skin-analysis-hd-masks';
   static const skinHistory = '/skin-analysis/history';
   static const outfitAnalysis = '/ai/outfit-analysis';
   static const outfitIntelligence = '/ai/outfit-intelligence';

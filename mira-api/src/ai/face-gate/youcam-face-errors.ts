@@ -89,6 +89,34 @@ export function isFaceRecaptureImmediateYouCamError(message: string): boolean {
   );
 }
 
+/**
+ * Perfect Corp account has no task credits — not a capture issue.
+ * Must surface as explicit recoverable provider error (never silent stall).
+ */
+export function isYouCamCreditInsufficiencyError(message: string): boolean {
+  const lower = message.toLowerCase();
+  return (
+    lower.includes('creditinsufficiency') ||
+    lower.includes('enough credits') ||
+    lower.includes('out of credits') ||
+    (lower.includes('credit') && lower.includes('insufficien'))
+  );
+}
+
+export function classifyYouCamCreditInsufficiencyError(): FaceProviderClientError {
+  return {
+    code: 'PROVIDER_CREDITS_EXHAUSTED',
+    category: 'provider',
+    message:
+      'رصيد خدمة تحليل البشرة غير كافٍ حالياً. أعيدي المحاولة بعد تجديد رصيد المزود.',
+    messageEn:
+      'Skin analysis provider credits are exhausted. Retry after credits are restored.',
+    retryable: true,
+    requiresRecapture: false,
+    userAction: 'retry',
+  };
+}
+
 export function classifyYouCamCaptureError(
   message: string,
 ): FaceProviderClientError | null {

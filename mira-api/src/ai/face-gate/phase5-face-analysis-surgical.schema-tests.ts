@@ -4,8 +4,10 @@
 import assert from 'node:assert/strict';
 import {
   classifyYouCamCaptureError,
+  classifyYouCamCreditInsufficiencyError,
   isFaceQualityYouCamError,
   isFaceRecaptureImmediateYouCamError,
+  isYouCamCreditInsufficiencyError,
 } from './youcam-face-errors';
 import {
   classifyProviderFailure,
@@ -166,6 +168,19 @@ function testFilterNeverLeaksClassName(): void {
   assert.ok(!to.body.message.toLowerCase().includes('exception'));
 }
 
+function testCreditInsufficiencyIsExplicitProviderError(): void {
+  const sample =
+    'Task create 400: {"status":400,"error":"Your account doesn\'t have enough credits to complete this request.","error_code":"CreditInsufficiency"}';
+  assert.equal(isYouCamCreditInsufficiencyError(sample), true);
+  assert.equal(isYouCamCreditInsufficiencyError('error_lighting_dark'), false);
+  const credits = classifyYouCamCreditInsufficiencyError();
+  assert.equal(credits.code, 'PROVIDER_CREDITS_EXHAUSTED');
+  assert.equal(credits.category, 'provider');
+  assert.equal(credits.requiresRecapture, false);
+  assert.equal(credits.userAction, 'retry');
+  assert.ok(credits.message.includes('رصيد'));
+}
+
 function main(): void {
   testLightingDarkIsCaptureQuality();
   testFaceOutOfBoundIsCaptureQualityNot503();
@@ -173,6 +188,7 @@ function main(): void {
   testTimeoutMaps();
   testClientPayloadAlwaysHasMessage();
   testFilterNeverLeaksClassName();
+  testCreditInsufficiencyIsExplicitProviderError();
   console.log('phase5-face-analysis-surgical.schema-tests: PASS');
 }
 

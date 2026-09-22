@@ -43,7 +43,19 @@ abstract final class OutfitFashionValidator {
       );
     }
 
-    final regions = OutfitFashionTaxonomy.visibleRegions(segmentMap.regions);
+    final isPoseAnatomy = segmentMap.source == 'pose_anatomy';
+    // Pose anatomy uses structural bands with generic labels — do not strip via
+    // visibleRegions (that filter rejects "Upper body" / "الجزء العلوي").
+    final regions = isPoseAnatomy
+        ? segmentMap.regions
+            .where(
+              (r) =>
+                  !OutfitFashionTaxonomy.hiddenOverlayZones.contains(r.zone) &&
+                  r.labelAr.isNotEmpty &&
+                  r.confidence >= 0.55,
+            )
+            .toList()
+        : OutfitFashionTaxonomy.visibleRegions(segmentMap.regions);
     if (regions.length < minRegions) {
       return const OutfitFashionValidation(
         isTrusted: false,
@@ -51,19 +63,40 @@ abstract final class OutfitFashionValidator {
       );
     }
 
-    if (segmentMap.source != 'vision_garment' && segmentMap.source != 'vision_pixel_contour') {
+    if (segmentMap.source != 'vision_garment' &&
+        segmentMap.source != 'vision_pixel_contour' &&
+        segmentMap.source != 'fashn_geometry_contour' &&
+        segmentMap.source != 'server_segment' &&
+        segmentMap.source != 'server' &&
+        !isPoseAnatomy) {
       return const OutfitFashionValidation(
         isTrusted: false,
         rejectionReason: 'خريطة القطع غير مبنية على كشف بصري حقيقي',
       );
     }
 
-    final lowConf = regions.where((r) => r.confidence < minPieceConfidence).toList();
-    if (lowConf.isNotEmpty) {
+    // Pose anatomy bands are structural — never mark fabric-trusted.
+    if (isPoseAnatomy) {
+      return OutfitFashionValidation(
+        isTrusted: false,
+        rejectionReason:
+            'خريطة تقريبية من وضعية الجسم — ليست حدود قماش مكتشفة',
+        colorConfidence: palette.confidence,
+        pieceMapConfidence:
+            regions.map((r) => r.confidence).reduce((a, b) => a + b) /
+            regions.length,
+      );
+    }
+
+    // Pose anatomy bands are structural (not garment boxes) — allow lower floor.
+    final confFloor = minPieceConfidence;
+    if (regions.any((r) => r.confidence < confFloor)) {
       return OutfitFashionValidation(
         isTrusted: false,
         rejectionReason: 'ثقة كشف القطع منخفضة — أعيدي التقاط صورة أوضح',
-        pieceMapConfidence: regions.map((r) => r.confidence).reduce((a, b) => a + b) / regions.length,
+        pieceMapConfidence:
+            regions.map((r) => r.confidence).reduce((a, b) => a + b) /
+            regions.length,
       );
     }
 
@@ -72,12 +105,16 @@ abstract final class OutfitFashionValidator {
         isTrusted: false,
         rejectionReason: 'تعذّر استخراج ألوان الملابس من القطع — وليس من الخلفية',
         colorConfidence: palette.confidence,
-        pieceMapConfidence: regions.map((r) => r.confidence).reduce((a, b) => a + b) / regions.length,
+        pieceMapConfidence:
+            regions.map((r) => r.confidence).reduce((a, b) => a + b) /
+            regions.length,
       );
     }
 
-    final hasGeneric = regions.any(OutfitFashionTaxonomy.isGenericPlaceholderLabel);
-    if (hasGeneric) {
+    final hasGeneric = regions.any(
+      OutfitFashionTaxonomy.isGenericPlaceholderLabel,
+    );
+    if (hasGeneric && !isPoseAnatomy) {
       return const OutfitFashionValidation(
         isTrusted: false,
         rejectionReason: 'خريطة القطع تحتوي تسميات عامة — تم رفض العرض',

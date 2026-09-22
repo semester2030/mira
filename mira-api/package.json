@@ -22,6 +22,7 @@
     "dev": "bash scripts/stop-port.sh && bash scripts/dev.sh",
     "test:vision-schema": "npm run build && node dist/vision/schema/fashion-vision-document.schema-tests.js",
     "test:vision-geometry": "npm run build && node dist/vision/providers/fashn-geometry.schema-tests.js",
+    "test:vision-degraded": "npm run build && node dist/vision/degraded-geometry.schema-tests.js",
     "test:vision-semantic": "npm run build && node dist/vision/providers/openai-semantic.schema-tests.js",
     "test:vision-pipeline": "npm run build && node dist/vision/pipeline/vision-pipeline.schema-tests.js",
     "test:vision-conflicts": "npm run build && node dist/vision/pipeline/conflict-confidence.schema-tests.js",

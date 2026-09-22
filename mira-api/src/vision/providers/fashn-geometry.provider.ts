@@ -102,11 +102,20 @@ export class FashnGeometryProvider implements GeometryVisionProvider {
       }
 
       this.logger.error(`FASHN geometry request failed: ${String(error)}`);
+      const detail = String(error);
+      if (/HTTP 429|out of credits|quota|rate limit/i.test(detail)) {
+        throw new ServiceUnavailableException({
+          code: 'FASHN_QUOTA_EXCEEDED',
+          message: detail.slice(0, 240),
+          provider: 'fashn-geometry',
+          retryable: false,
+        });
+      }
       throw new BadGatewayException({
         code: 'VISION_PROVIDER_FAILED',
         message: 'FASHN geometry provider failed',
         provider: 'fashn-geometry',
-        detail: String(error),
+        detail: detail.slice(0, 240),
       });
     }
   }

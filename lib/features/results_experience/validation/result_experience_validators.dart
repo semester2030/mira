@@ -2,7 +2,6 @@ import '../contracts/result_enums.dart';
 import '../contracts/result_presentation_vms.dart';
 import '../laws/engineering_laws_35_36.dart';
 import '../localization/public_language_policy.dart';
-import '../semantics/score_semantics_contract.dart';
 import '../visibility/advice_ownership_policy.dart';
 import '../visibility/visibility_policy.dart';
 
@@ -265,36 +264,36 @@ abstract final class ResultExperienceValidators {
   }
 
   static void _map(ResultExperience e, List<ValidationIssue> issues) {
-    if (e.map.mode != MapPresentationMode.illustrativeUserImage) {
-      issues.add(const ValidationIssue('map', 'expected illustrative mode'));
+    // Perfect-mask Face Explorer: provider pixel masks on the user photo.
+    if (e.map.mode != MapPresentationMode.measuredHeatmap) {
+      issues.add(const ValidationIssue('map', 'expected measured mask mode'));
     }
-    if (e.map.badgeAr != 'توضيح إرشادي') {
+    if (e.map.badgeAr != 'قناع ميرا') {
       issues.add(const ValidationIssue('map', 'badge mismatch'));
     }
-    if (e.map.titleAr != 'خريطة إرشادية للبشرة') {
+    if (e.map.titleAr != 'استكشاف بشرتك') {
       issues.add(const ValidationIssue('map', 'title mismatch'));
     }
     final lower = e.map.explanationAr.toLowerCase();
     for (final bad in [
-      'قياسًا موضعيًا دقيقًا',
       'heatmap',
       'measured localization',
       'medical map',
+      'landmark',
     ]) {
-      if (bad == 'قياسًا موضعيًا دقيقًا') {
-        // explanation must DENY measured localization — presence of denial phrase is required
-        continue;
-      }
       if (lower.contains(bad)) {
         issues.add(ValidationIssue('map', 'forbidden claim: $bad'));
       }
     }
-    if (!e.map.explanationAr.contains('توضيحية') &&
-        !e.map.explanationAr.contains('إرشادي')) {
-      issues.add(const ValidationIssue('map', 'missing illustrative wording'));
+    if (!e.map.explanationAr.contains('أقنعة الاكتشاف') &&
+        !e.map.explanationAr.contains('قناع')) {
+      issues.add(const ValidationIssue('map', 'missing provider-mask wording'));
     }
-    if (e.map.limitation != LimitationState.illustrativeOnly) {
-      issues.add(const ValidationIssue('map', 'limitation must be illustrative'));
+    if (e.map.limitation != LimitationState.none) {
+      issues.add(const ValidationIssue('map', 'limitation must be none for masks'));
+    }
+    if (e.map.overlayType != 'perfect_provider_mask') {
+      issues.add(const ValidationIssue('map', 'overlayType must be perfect_provider_mask'));
     }
   }
 
