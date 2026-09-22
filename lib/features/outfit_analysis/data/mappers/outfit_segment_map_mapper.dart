@@ -15,16 +15,17 @@ abstract final class OutfitSegmentMapMapper {
         (json[key] as List<dynamic>?)?.map((e) => e.toString()).toList() ?? const [];
 
     final source = json['source'] as String? ?? 'server';
-    final trustedSources = {
+    // Approximate / degraded stubs are NOT fabric evidence — never auto-trust.
+    final fabricTrustedSources = {
       'fashn_geometry_contour',
-      'fashn_geometry_degraded',
       'vision_garment',
       'vision_pixel_contour',
       'server',
       'server_segment',
     };
-    final isVisualTrusted = json['isVisualTrusted'] as bool? ??
-        (regions.isNotEmpty && trustedSources.contains(source));
+    final explicitTrusted = json['isVisualTrusted'] as bool?;
+    final isVisualTrusted = explicitTrusted ??
+        (regions.isNotEmpty && fabricTrustedSources.contains(source));
 
     return OutfitSegmentMap(
       regions: regions,

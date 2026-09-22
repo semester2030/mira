@@ -775,7 +775,7 @@ const colorEntries = <String, FashionColorEntry>{
   'sky_pale': FashionColorEntry(
     id: 'sky_pale',
     name: 'sky pale',
-    nameAr: 'سماوي فاتح فاتح جداً',
+    nameAr: 'أزرق سماوي فاتح جداً',
     hex: '#D3E5EE',
     lab: const [89.9, -4.2, -6.4],
     hsv: const [200, 11, 93],
@@ -783,7 +783,7 @@ const colorEntries = <String, FashionColorEntry>{
   'sky_light': FashionColorEntry(
     id: 'sky_light',
     name: 'sky light',
-    nameAr: 'سماوي فاتح فاتح',
+    nameAr: 'أزرق سماوي فاتح',
     hex: '#A6CBDD',
     lab: const [79.6, -8.2, -13.0],
     hsv: const [200, 25, 87],
@@ -791,7 +791,7 @@ const colorEntries = <String, FashionColorEntry>{
   'sky_soft': FashionColorEntry(
     id: 'sky_soft',
     name: 'sky soft',
-    nameAr: 'سماوي فاتح ناعم',
+    nameAr: 'أزرق سماوي ناعم',
     hex: '#80B6D0',
     lab: const [71.3, -11.1, -18.7],
     hsv: const [200, 38, 82],
@@ -799,7 +799,7 @@ const colorEntries = <String, FashionColorEntry>{
   'sky_mid': FashionColorEntry(
     id: 'sky_mid',
     name: 'sky medium',
-    nameAr: 'سماوي فاتح متوسط',
+    nameAr: 'أزرق سماوي',
     hex: '#519CC2',
     lab: const [61.1, -12.1, -26.6],
     hsv: const [200, 58, 76],
@@ -807,7 +807,7 @@ const colorEntries = <String, FashionColorEntry>{
   'sky_deep': FashionColorEntry(
     id: 'sky_deep',
     name: 'sky deep',
-    nameAr: 'سماوي فاتح غامق',
+    nameAr: 'أزرق سماوي غامق',
     hex: '#377DA0',
     lab: const [49.5, -10.7, -25.2],
     hsv: const [200, 66, 63],
@@ -815,7 +815,7 @@ const colorEntries = <String, FashionColorEntry>{
   'sky_dark': FashionColorEntry(
     id: 'sky_dark',
     name: 'sky dark',
-    nameAr: 'سماوي فاتح غامق جداً',
+    nameAr: 'أزرق سماوي غامق جداً',
     hex: '#23546C',
     lab: const [33.5, -8.3, -18.7],
     hsv: const [200, 68, 42],

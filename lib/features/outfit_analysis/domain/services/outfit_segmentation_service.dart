@@ -194,7 +194,9 @@ class OutfitSegmentationService {
     if (map.hasTrustedOverlay) {
       return map.copyWith(
         validationMessage:
-            'خريطة تقريبية من وضعية الجسم — دقة أقل من كشف القطع الكامل',
+            'خريطة تقريبية من وضعية الجسم — دقة أقل من كشف القطع الكامل. '
+            'مناطق upper/lower تشريحية وليست قطعتين من الملابس؛ '
+            'التلوين الدقيق للقماش غير متاح بدون قناع ملابس موثوق.',
       );
     }
     return map;
@@ -206,6 +208,11 @@ class OutfitSegmentationService {
     OutfitSegmentMap map,
   ) async {
     if (map.regions.isEmpty) return map;
+    // Degraded / approximate sources must not gain fabric colors from face boxes.
+    if (map.source == 'fashn_geometry_degraded' ||
+        map.source == 'pose_anatomy') {
+      return map.copyWith(isVisualTrusted: false);
+    }
 
     final bytes = await imageFile.readAsBytes();
     final decoded = img.decodeImage(bytes);
@@ -213,21 +220,23 @@ class OutfitSegmentationService {
 
     final oriented = img.bakeOrientation(decoded);
     final pose = await _poseAnalyzer.analyzeFile(imageFile);
-    final colorMap = OutfitSegmentColorExtractor.extractAllZones(
-      oriented,
-      map.regions,
-      pose: pose,
-    );
 
-    final regionsWithColors = map.regions
-        .map(
-          (r) => r.copyWith(
-            colors: colorMap[r.zone]?.isNotEmpty == true
-                ? colorMap[r.zone]!
-                : r.colors,
-          ),
-        )
-        .toList();
+    final regionsWithColors = <OutfitSegmentRegion>[];
+    final colorMap = <OutfitSegmentZone, List<String>>{};
+    for (final r in map.regions) {
+      final colors = OutfitSegmentColorExtractor.extractRegionColors(
+        oriented,
+        region: r,
+        pose: pose,
+      );
+      final next = r.copyWith(colors: colors.isNotEmpty ? colors : r.colors);
+      regionsWithColors.add(next);
+      if (next.colors.isEmpty) continue;
+      final zoneList = colorMap.putIfAbsent(r.zone, () => <String>[]);
+      for (final c in next.colors) {
+        if (!zoneList.contains(c)) zoneList.add(c);
+      }
+    }
 
     final palette = OutfitSegmentColorExtractor.extractGarmentPalette(
       oriented,
@@ -237,10 +246,13 @@ class OutfitSegmentationService {
 
     return map.copyWith(
       regions: regionsWithColors,
-      upperBodyColors: colorMap[OutfitSegmentZone.upperBody] ?? map.upperBodyColors,
-      lowerBodyColors: colorMap[OutfitSegmentZone.lowerBody] ?? map.lowerBodyColors,
+      upperBodyColors:
+          colorMap[OutfitSegmentZone.upperBody] ?? map.upperBodyColors,
+      lowerBodyColors:
+          colorMap[OutfitSegmentZone.lowerBody] ?? map.lowerBodyColors,
       shoeColors: colorMap[OutfitSegmentZone.feet] ?? map.shoeColors,
-      accessoryColors: colorMap[OutfitSegmentZone.accessories] ?? map.accessoryColors,
+      accessoryColors:
+          colorMap[OutfitSegmentZone.accessories] ?? map.accessoryColors,
       garmentPalette: palette.isReliable ? palette : map.garmentPalette,
       imageWidth: oriented.width.toDouble(),
       imageHeight: oriented.height.toDouble(),

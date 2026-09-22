@@ -1,4 +1,5 @@
 import 'dart:convert';
+import 'dart:developer' as developer;
 import 'dart:io';
 
 import 'package:flutter/material.dart';
@@ -19,6 +20,7 @@ import '../../../domain/entities/outfit_analysis.dart';
 import '../../../domain/helpers/garment_recolor_prompt_builder.dart';
 import '../../../domain/helpers/garment_recolor_vision_context.dart';
 import '../../../domain/services/outfit_color_preview_service.dart';
+import '../../utils/fashion_color_binding.dart';
 
 /// True garment recolor via FASHN Edit — فصل «جرّبي».
 /// Includes garment picker, color chips, editable Arabic prompt, and explicit apply.
@@ -96,22 +98,22 @@ class _OutfitGarmentRecolorPanelState extends State<OutfitGarmentRecolorPanel>
     final out = <_ColorOption>[];
 
     for (final alt in alts) {
+      if (!alt.hasAlternativeSwatch) continue;
       if (seen.add(alt.alternativeColorAr)) {
         out.add(_ColorOption(
           nameAr: alt.alternativeColorAr,
-          color: alt.alternativeColor,
+          color: alt.alternativeColor!,
+          hex: alt.alternativeColorHex,
         ));
       }
     }
 
-    const extras = ['أسود', 'كحلي', 'ذهبي', 'نبيتي'];
+    const extras = ['أسود', 'كحلي', 'ذهبي', 'نبيتي', 'عنابي'];
     for (final name in extras) {
-      if (seen.add(name)) {
-        out.add(_ColorOption(
-          nameAr: name,
-          color: VisionColorMapper.toDisplayColor(name),
-        ));
-      }
+      if (!seen.add(name)) continue;
+      final color = VisionColorMapper.toDisplayColor(name);
+      if (color == null) continue;
+      out.add(_ColorOption(nameAr: name, color: color, hex: null));
     }
     return out;
   }
@@ -150,6 +152,17 @@ class _OutfitGarmentRecolorPanelState extends State<OutfitGarmentRecolorPanel>
       return;
     }
 
+    final map = widget.analysis.segmentMap;
+    if (map == null ||
+        !map.supportsFabricRecolorFor(garmentLabelAr: _garmentLabelAr)) {
+      setState(() {
+        _error = map?.source == 'pose_anatomy'
+            ? 'خريطة القطع تقريبية من وضعية الجسم — تلوين القماش يتطلب قناع قطعة موثوق.'
+            : 'قناع القطعة المختارة غير موثوق — التلوين الدقيق غير متاح لهذه القطعة.';
+      });
+      return;
+    }
+
     final colorAr = _effectiveColorAr;
     if (colorAr.isEmpty) {
       setState(() => _error = 'اختاري لوناً أو اكتبي اسمه');
@@ -170,24 +183,62 @@ class _OutfitGarmentRecolorPanelState extends State<OutfitGarmentRecolorPanel>
     });
 
     try {
+      String? targetHex;
+      for (final c in _colorOptions) {
+        if (c.nameAr == colorAr && c.hex != null && c.hex!.isNotEmpty) {
+          targetHex = c.hex;
+          break;
+        }
+      }
+      // Unify id/HEX with the same binding used for swatches.
+      final bound = FashionColorBinding.resolveDetailed(
+        hex: targetHex,
+        nameAr: colorAr,
+        source: FashionColorSource.catalog,
+      );
+      targetHex = bound.hex ??
+          GarmentRecolorPromptBuilder.colorHex[colorAr] ??
+          targetHex;
+      if (targetHex == null && bound.color != null) {
+        final v = bound.color!.toARGB32().toRadixString(16).padLeft(8, '0');
+        targetHex = '#${v.substring(2).toUpperCase()}';
+      }
+
+      developer.log(
+        'recolor_request garment=$_garmentLabelAr color=$colorAr '
+        'hex=$targetHex fabricTrusted=${_visionContext.fabricTrustedForSelected} '
+        'path=$path',
+        name: 'OutfitGarmentRecolor',
+      );
+
       final result = await _api.recolorGarment(
         imagePath: path,
         targetColorAr: colorAr,
         garmentLabelAr: _garmentLabelAr,
         customPromptAr: prompt,
         visionContextJson: _visionContext.toJsonString(),
-        targetColorHex: GarmentRecolorPromptBuilder.colorHex[colorAr],
+        targetColorHex: targetHex,
       );
 
       if (!mounted) return;
 
       if (result == null || result.imageBase64.isEmpty) {
+        developer.log(
+          'recolor_response empty_or_null garment=$_garmentLabelAr',
+          name: 'OutfitGarmentRecolor',
+        );
         setState(() {
           _loading = false;
-          _error = 'تعذّر إعادة التلوين — تأكدي من اتصال السيرفر و FASHN_API_KEY';
+          _error = 'تعذّر إكمال إعادة التلوين. أعيدي المحاولة أو اختاري لوناً آخر.';
         });
         return;
       }
+
+      developer.log(
+        'recolor_response ok attemptId=${result.recolorAttemptId} '
+        'ms=${result.processingMs} qel=${result.qel?.accepted}',
+        name: 'OutfitGarmentRecolor',
+      );
 
       HapticFeedback.lightImpact();
       if (result.recolorAttemptId != null) {
@@ -198,7 +249,13 @@ class _OutfitGarmentRecolorPanelState extends State<OutfitGarmentRecolorPanel>
         _result = result;
         _compare = 0.5;
       });
-    } catch (e) {
+    } catch (e, st) {
+      developer.log(
+        'recolor_response error=$e',
+        name: 'OutfitGarmentRecolor',
+        error: e,
+        stackTrace: st,
+      );
       if (!mounted) return;
       setState(() {
         _loading = false;
@@ -312,6 +369,8 @@ class _OutfitGarmentRecolorPanelState extends State<OutfitGarmentRecolorPanel>
                         setState(() {
                           _selectedColorAr = opt.nameAr;
                           _customColorController.clear();
+                          _result = null;
+                          _error = null;
                           _syncPromptFromSelection();
                         });
                       },
@@ -505,8 +564,13 @@ class _QelBadge extends StatelessWidget {
 class _ColorOption {
   final String nameAr;
   final Color color;
+  final String? hex;
 
-  const _ColorOption({required this.nameAr, required this.color});
+  const _ColorOption({
+    required this.nameAr,
+    required this.color,
+    this.hex,
+  });
 }
 
 class _ColorChip extends StatelessWidget {

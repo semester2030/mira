@@ -11,12 +11,19 @@ import '../entities/outfit_segment_map.dart';
 import '../helpers/outfit_person_mask.dart';
 
 /// KMeans garment color extraction — mask pixels + CIEDE2000 catalog matching.
+///
+/// Does **not** invent a fixed color count. Clusters below a share threshold
+/// (lighting/shadow folds of the same fabric) are dropped or merged.
 abstract final class OutfitSegmentColorExtractor {
   OutfitSegmentColorExtractor._();
 
   static const _sampleTarget = 5000;
-  static const _kMeansK = 4;
+  static const _kMeansMaxK = 4;
   static const _kMeansIter = 28;
+  /// Minimum share of samples for a cluster to count as a distinct fabric color.
+  static const _minClusterShare = 0.12;
+  /// RGB distance below which two clusters are treated as lighting variants.
+  static const _mergeDistSq = 48 * 48;
 
   static GarmentColorPalette extractGarmentPalette(
     img.Image image, {
@@ -25,6 +32,7 @@ abstract final class OutfitSegmentColorExtractor {
   }) {
     final samples = <List<int>>[];
     for (final region in regions) {
+      if (OutfitSegmentMap.isAnatomyBandLabel(region)) continue;
       samples.addAll(
         _sampleRegion(
           image,
@@ -36,7 +44,7 @@ abstract final class OutfitSegmentColorExtractor {
     if (samples.length < 16) return GarmentColorPalette.empty;
 
     final wb = _grayWorldAverages(samples);
-    final clusters = _kMeans(samples, k: _kMeansK);
+    final clusters = _significantClusters(samples);
     if (clusters.isEmpty) return GarmentColorPalette.empty;
 
     final detailed = <DetectedGarmentColor>[];
@@ -56,15 +64,17 @@ abstract final class OutfitSegmentColorExtractor {
       detailed.add(DetectedGarmentColor.fromMatch(match));
     }
 
-  detailed.sort((a, b) => b.confidence.compareTo(a.confidence));
+    detailed.sort((a, b) => b.confidence.compareTo(a.confidence));
 
     final named = detailed.map((d) => d.displayNameAr).toList();
     final coverage = (samples.length / _sampleTarget).clamp(0.0, 1.0);
     final spread = _clusterSpread(clusters);
     final avgConfidence = detailed.isEmpty
         ? 0.0
-        : detailed.map((d) => d.confidence).reduce((a, b) => a + b) / detailed.length;
-    final confidence = (avgConfidence * 0.7 + coverage * 0.15 + spread * 0.15).clamp(0.0, 0.99);
+        : detailed.map((d) => d.confidence).reduce((a, b) => a + b) /
+            detailed.length;
+    final confidence =
+        (avgConfidence * 0.7 + coverage * 0.15 + spread * 0.15).clamp(0.0, 0.99);
 
     return GarmentColorPalette(
       primaryColor: named.elementAtOrNull(0) ?? '',
@@ -80,17 +90,18 @@ abstract final class OutfitSegmentColorExtractor {
     img.Image image, {
     required OutfitSegmentRegion region,
     required OutfitBodyPoseMetrics pose,
-    int maxColors = 3,
+    int maxColors = 4,
   }) {
     final samples = _sampleRegion(image, region: region, pose: pose);
     if (samples.isEmpty) return const [];
 
     final wb = _grayWorldAverages(samples);
-    final clusters = _kMeans(samples, k: math.min(maxColors, _kMeansK));
+    final clusters = _significantClusters(samples);
     final out = <String>[];
     final seen = <String>{};
 
     for (final rgb in clusters) {
+      if (out.length >= maxColors) break;
       final match = ProfessionalColorMatcher.matchRgb(
         rgb[0],
         rgb[1],
@@ -113,11 +124,13 @@ abstract final class OutfitSegmentColorExtractor {
   }) {
     final map = <OutfitSegmentZone, List<String>>{};
     for (final region in regions) {
-      map[region.zone] = extractRegionColors(
+      final colors = extractRegionColors(
         image,
         region: region,
         pose: pose,
       );
+      final existing = map[region.zone] ?? const <String>[];
+      map[region.zone] = [...existing, ...colors].toSet().toList();
     }
     return map;
   }
@@ -147,13 +160,20 @@ abstract final class OutfitSegmentColorExtractor {
       math.sqrt(rect.width * rect.height / _sampleTarget).floor(),
     );
 
+    // Tall boxes often include face — skip top band when no tight contour.
+    final skipFaceBand = region.normalizedRect.height > 0.55 &&
+        (!region.hasContour || region.normalizedPolygon.length < 6);
+    final faceCutY = region.normalizedRect.top + region.normalizedRect.height * 0.18;
+
     final samples = <List<int>>[];
     for (var y = rect.top.toInt(); y < rect.bottom.toInt(); y += step) {
       for (var x = rect.left.toInt(); x < rect.right.toInt(); x += step) {
         final nx = x / image.width;
         final ny = y / image.height;
         if (!OutfitPersonMask.containsNormalized(pose, nx, ny)) continue;
-        if (region.hasContour && !_pointInPolygon(Offset(nx, ny), region.normalizedPolygon)) {
+        if (skipFaceBand && ny < faceCutY) continue;
+        if (region.hasContour &&
+            !_pointInPolygon(Offset(nx, ny), region.normalizedPolygon)) {
           continue;
         }
 
@@ -161,13 +181,68 @@ abstract final class OutfitSegmentColorExtractor {
         final r = pixel.r.toInt();
         final g = pixel.g.toInt();
         final b = pixel.b.toInt();
-        if (_isSkinTone(r, g, b) || _isBackground(r, g, b) || _isShadow(r, g, b)) continue;
+        if (_isSkinTone(r, g, b) ||
+            _isHair(r, g, b) ||
+            _isBackground(r, g, b) ||
+            _isShadow(r, g, b)) {
+          continue;
+        }
         if (ProfessionalColorMatcher.isSpecularHighlight(r, g, b)) continue;
         if (!_isGarmentPixel(r, g, b)) continue;
         samples.add([r, g, b]);
       }
     }
     return samples;
+  }
+
+  /// Adaptive K-means then drop tiny / lighting-variant clusters.
+  static List<List<int>> _significantClusters(List<List<int>> samples) {
+    if (samples.isEmpty) return const [];
+    final k = math.min(_kMeansMaxK, samples.length);
+    final raw = _kMeans(samples, k: k);
+    if (raw.isEmpty) return const [];
+
+    // Re-count membership for share filter.
+    final assignments = List<int>.filled(samples.length, 0);
+    for (var i = 0; i < samples.length; i++) {
+      assignments[i] = _nearestCentroid(samples[i], raw);
+    }
+
+    final kept = <List<int>>[];
+    for (var c = 0; c < raw.length; c++) {
+      final count = assignments.where((a) => a == c).length;
+      if (count / samples.length < _minClusterShare) continue;
+      kept.add(raw[c]);
+    }
+    if (kept.isEmpty) {
+      // Keep the single largest cluster rather than inventing fillers.
+      var best = 0;
+      var bestCount = -1;
+      for (var c = 0; c < raw.length; c++) {
+        final count = assignments.where((a) => a == c).length;
+        if (count > bestCount) {
+          bestCount = count;
+          best = c;
+        }
+      }
+      return [raw[best]];
+    }
+
+    // Merge lighting variants of the same fabric hue.
+    final merged = <List<int>>[];
+    for (final c in kept) {
+      final near = merged.indexWhere((m) => _distSq(m, c) <= _mergeDistSq);
+      if (near < 0) {
+        merged.add(c);
+      } else {
+        // Keep the brighter centroid as representative (shadow folds → base).
+        final m = merged[near];
+        final lumC = c[0] * 0.299 + c[1] * 0.587 + c[2] * 0.114;
+        final lumM = m[0] * 0.299 + m[1] * 0.587 + m[2] * 0.114;
+        if (lumC > lumM) merged[near] = c;
+      }
+    }
+    return merged;
   }
 
   static List<List<int>> _kMeans(List<List<int>> samples, {required int k}) {
@@ -223,7 +298,9 @@ abstract final class OutfitSegmentColorExtractor {
     final centroids = <List<int>>[];
     final stride = (samples.length / k).floor().clamp(1, samples.length);
     for (var i = 0; i < k; i++) {
-      centroids.add(List<int>.from(samples[(i * stride).clamp(0, samples.length - 1)]));
+      centroids.add(
+        List<int>.from(samples[(i * stride).clamp(0, samples.length - 1)]),
+      );
     }
     return centroids;
   }
@@ -273,15 +350,28 @@ abstract final class OutfitSegmentColorExtractor {
   }
 
   static Rect _pixelRect(img.Image image, Rect normalized) {
-    final left = (normalized.left * image.width).clamp(0, image.width - 1).floor();
-    final top = (normalized.top * image.height).clamp(0, image.height - 1).floor();
-    final right = (normalized.right * image.width).clamp(left + 1, image.width).floor();
-    final bottom = (normalized.bottom * image.height).clamp(top + 1, image.height).floor();
-    return Rect.fromLTRB(left.toDouble(), top.toDouble(), right.toDouble(), bottom.toDouble());
+    final left =
+        (normalized.left * image.width).clamp(0, image.width - 1).floor();
+    final top =
+        (normalized.top * image.height).clamp(0, image.height - 1).floor();
+    final right =
+        (normalized.right * image.width).clamp(left + 1, image.width).floor();
+    final bottom = (normalized.bottom * image.height)
+        .clamp(top + 1, image.height)
+        .floor();
+    return Rect.fromLTRB(
+      left.toDouble(),
+      top.toDouble(),
+      right.toDouble(),
+      bottom.toDouble(),
+    );
   }
 
   static bool _isGarmentPixel(int r, int g, int b) {
-    if (_isSkinTone(r, g, b) || _isBackground(r, g, b) || _isShadow(r, g, b)) {
+    if (_isSkinTone(r, g, b) ||
+        _isHair(r, g, b) ||
+        _isBackground(r, g, b) ||
+        _isShadow(r, g, b)) {
       return false;
     }
     final maxC = math.max(r, math.max(g, b));
@@ -294,25 +384,37 @@ abstract final class OutfitSegmentColorExtractor {
     final maxC = math.max(r, math.max(g, b));
     final minC = math.min(r, math.min(g, b));
     if (maxC - minC < 12) return false;
-    if (r > 95 && g > 40 && b > 20 && r > g && r > b && (r - g) > 12) return true;
+    if (r > 95 && g > 40 && b > 20 && r > g && r > b && (r - g) > 12) {
+      return true;
+    }
     if (r > 180 && g > 140 && b > 120 && (r - b) < 40) return true;
     return false;
+  }
+
+  static bool _isHair(int r, int g, int b) {
+    final lum = r * 0.299 + g * 0.587 + b * 0.114;
+    final spread = math.max(r, math.max(g, b)) - math.min(r, math.min(g, b));
+    return lum < 55 && spread < 35 && r >= g && g >= b && (r - b) < 45;
   }
 
   static bool _isBackground(int r, int g, int b) {
     final luminance = (r * 0.299 + g * 0.587 + b * 0.114);
     if (luminance > 245 || luminance < 8) return true;
-    final spread = math.max(r, math.max(g, b)) - math.min(r, math.min(g, b));
+    final spread =
+        math.max(r, math.max(g, b)) - math.min(r, math.min(g, b));
     return spread < 4 && luminance > 228;
   }
 
   static bool _isShadow(int r, int g, int b) {
     final luminance = (r * 0.299 + g * 0.587 + b * 0.114);
-    final spread = math.max(r, math.max(g, b)) - math.min(r, math.min(g, b));
-    return luminance < 28 && spread < 10;
+    final spread =
+        math.max(r, math.max(g, b)) - math.min(r, math.min(g, b));
+    // Deep fabric shadows only — keep true gray garments (higher luminance).
+    return luminance < 22 && spread < 10;
   }
 }
 
 extension _ElementAtOrNull<E> on List<E> {
-  E? elementAtOrNull(int index) => index >= 0 && index < length ? this[index] : null;
+  E? elementAtOrNull(int index) =>
+      index >= 0 && index < length ? this[index] : null;
 }

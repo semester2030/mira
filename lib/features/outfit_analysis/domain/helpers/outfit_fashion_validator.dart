@@ -65,6 +65,9 @@ abstract final class OutfitFashionValidator {
 
     if (segmentMap.source != 'vision_garment' &&
         segmentMap.source != 'vision_pixel_contour' &&
+        segmentMap.source != 'fashn_geometry_contour' &&
+        segmentMap.source != 'server_segment' &&
+        segmentMap.source != 'server' &&
         !isPoseAnatomy) {
       return const OutfitFashionValidation(
         isTrusted: false,
@@ -72,8 +75,21 @@ abstract final class OutfitFashionValidator {
       );
     }
 
+    // Pose anatomy bands are structural — never mark fabric-trusted.
+    if (isPoseAnatomy) {
+      return OutfitFashionValidation(
+        isTrusted: false,
+        rejectionReason:
+            'خريطة تقريبية من وضعية الجسم — ليست حدود قماش مكتشفة',
+        colorConfidence: palette.confidence,
+        pieceMapConfidence:
+            regions.map((r) => r.confidence).reduce((a, b) => a + b) /
+            regions.length,
+      );
+    }
+
     // Pose anatomy bands are structural (not garment boxes) — allow lower floor.
-    final confFloor = isPoseAnatomy ? 0.55 : minPieceConfidence;
+    final confFloor = minPieceConfidence;
     if (regions.any((r) => r.confidence < confFloor)) {
       return OutfitFashionValidation(
         isTrusted: false,

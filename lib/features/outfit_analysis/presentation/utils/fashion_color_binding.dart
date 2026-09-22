@@ -6,6 +6,7 @@ import '../../domain/catalog/fashion_color_library_data.dart';
 import '../../domain/catalog/professional_color_matcher.dart';
 import '../../domain/entities/detected_garment_color.dart';
 import '../../domain/entities/outfit_analysis.dart';
+import '../../domain/entities/outfit_segment_map.dart';
 
 /// Where a resolved swatch came from — defaults are distinguished by source,
 /// never by hex value alone.
@@ -89,6 +90,10 @@ abstract final class FashionColorBinding {
     'تركوازي': 'تركواز متوسط',
     'كحلي': 'كحلي غامق',
     'navy': 'كحلي غامق',
+    'سماوي': 'أزرق سماوي',
+    'أزرق سماوي': 'أزرق سماوي',
+    'sky blue': 'أزرق سماوي',
+    'skyblue': 'أزرق سماوي',
   };
 
   /// Resolve display color from optional hex + Arabic name.
@@ -177,7 +182,8 @@ abstract final class FashionColorBinding {
   }
 
   /// Bind current color to the **selected** garment — never pick highest
-  /// confidence from the global outfit palette.
+  /// confidence from the global outfit palette, and never borrow another
+  /// piece's color when this piece has no fabric evidence.
   static FashionColorResolve forSelectedGarment({
     required OutfitAnalysis analysis,
     required String garmentLabelAr,
@@ -200,18 +206,29 @@ abstract final class FashionColorBinding {
       );
     }
 
-    // Zone colors for the selected piece zone only (not global dominant).
-    if (region != null) {
-      final zoneColors = map?.colorsForZone(region.zone) ?? const [];
-      if (zoneColors.isNotEmpty) {
-        return resolveDetailed(
-          nameAr: zoneColors.first,
-          source: FashionColorSource.detected,
-        );
+    // Region exists but no per-piece colors — zone list only if it is the
+    // sole clothing region in that zone (avoids borrowing a neighbor piece).
+    if (region != null && map != null) {
+      final sameZone = map.regions
+          .where(
+            (r) =>
+                r.zone == region.zone &&
+                !OutfitSegmentMap.isAnatomyBandLabel(r) &&
+                r.zone != OutfitSegmentZone.head,
+          )
+          .toList();
+      if (sameZone.length == 1) {
+        final zoneColors = map.colorsForZone(region.zone);
+        if (zoneColors.isNotEmpty) {
+          return resolveDetailed(
+            nameAr: zoneColors.first,
+            source: FashionColorSource.detected,
+          );
+        }
       }
     }
 
-    // Detected pieces list label match with palette detail that shares the name.
+    // Detected piece label with palette detail that shares **this** piece name.
     final details = map?.garmentPalette.detailedColors ?? const [];
     for (final piece in analysis.detectedPieces) {
       if (piece.contains(garmentLabelAr) || garmentLabelAr.contains(piece)) {
@@ -226,26 +243,8 @@ abstract final class FashionColorBinding {
       }
     }
 
-    // Fall back to analysis garment/dominant colors for the selected clothing
-    // type when region labels are anatomy-only (pose degraded path).
-    final candidates = <String>[
-      if (analysis.clothingType.isNotEmpty) analysis.clothingType,
-      ...analysis.dominantColors,
-      ...analysis.upperBodyColors,
-      ...details.map((d) => d.nameAr),
-    ];
-    for (final name in candidates) {
-      final t = name.trim();
-      if (t.isEmpty) continue;
-      final detail = _detailMatchingName(details, t);
-      final resolved = resolveDetailed(
-        hex: detail?.hex,
-        nameAr: detail?.displayNameAr ?? t,
-        source: FashionColorSource.detected,
-      );
-      if (resolved.isAvailable) return resolved;
-    }
-
+    // No piece-linked evidence — honest unavailable (do NOT use global
+    // dominantColors / upperBodyColors / clothingType fallbacks).
     return FashionColorResolve.unavailable;
   }
 

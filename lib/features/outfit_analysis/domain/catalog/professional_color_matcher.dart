@@ -88,13 +88,29 @@ abstract final class ProfessionalColorMatcher {
     return ProfessionalColorMatch(
       id: best.id,
       nameAr: best.nameAr,
-      displayNameAr: '${best.nameAr} $shade',
+      // Catalog names often already encode shade — never append conflicting shade
+      // (e.g. «كحلي غامق فاتح» / «رمادي فاتح غامق»).
+      displayNameAr: composeDisplayNameAr(best.nameAr, shade),
       hex: best.hex,
       deltaE: bestDe,
       confidence: confidence,
       matchTierAr: tier,
       shadeAr: shade,
     );
+  }
+
+  static final _shadeTokens = RegExp(
+    r'فاتح|غامق|أفتح|أغمق|متوسط|pale|light|dark|deep|mid',
+    caseSensitive: false,
+  );
+
+  /// Honest display label: keep catalog name if it already has a shade word.
+  static String composeDisplayNameAr(String nameAr, String shade) {
+    final name = nameAr.trim();
+    final s = shade.trim();
+    if (s.isEmpty || s == 'متوسط') return name;
+    if (_shadeTokens.hasMatch(name)) return name;
+    return '$name $s';
   }
 
   /// Batch-correct samples using garment-region gray-world averages.

@@ -18,10 +18,7 @@ import {
 } from './outfit-fashion-taxonomy';
 import { FashnGeometryProvider } from '../../vision/providers/fashn-geometry.provider';
 import { RegionRole } from '../../vision/schema/fashion-vision-document.v1';
-import {
-  degradedGeometryStub,
-  isFashnQuotaOrUnavailable,
-} from '../../vision/vision-orchestrator.service';
+import { isFashnQuotaOrUnavailable } from '../../vision/vision-orchestrator.service';
 
 // ─────────────────────────────────────────────────────────────────────────────
 // VISION PLATFORM — Phase 8
@@ -53,6 +50,25 @@ export class OutfitSegmentationService {
     const imageHeight = meta.height ?? 0;
 
     const { objects, degraded } = await this.fetchGeometryObjects(imageBuffer);
+
+    // Degraded full-body stub includes face/neck/background — never paint as fabric.
+    if (degraded || objects.length === 0) {
+      return {
+        regions: [],
+        upperBodyColors: [],
+        lowerBodyColors: [],
+        shoeColors: [],
+        accessoryColors: [],
+        imageWidth,
+        imageHeight,
+        source: degraded ? 'fashn_geometry_degraded' : 'deterministic',
+        isVisualTrusted: false,
+        validationMessage: degraded
+          ? 'تجزئة الملابس الدقيقة غير متاحة — لن تُعرض حدود تقريبية كأنها قماش.'
+          : undefined,
+      };
+    }
+
     const regions: OutfitSegmentRegionDto[] = [];
 
     for (const object of objects) {
@@ -62,7 +78,7 @@ export class OutfitSegmentationService {
         object.polygon,
       );
       const rect = polygonToRect(polygon);
-      const colors = await this.extractColors(imageBuffer, rect);
+      const colors = await this.extractColors(imageBuffer, rect, polygon);
       regions.push({
         zone: zoneForObject(object.name, rect.top + rect.height / 2),
         normalizedRect: rect,
@@ -85,12 +101,8 @@ export class OutfitSegmentationService {
       accessoryColors: this.colorsForZone(deduped, 'accessories'),
       imageWidth,
       imageHeight,
-      source:
-        objects.length > 0
-          ? degraded
-            ? 'fashn_geometry_degraded'
-            : 'fashn_geometry_contour'
-          : 'deterministic',
+      source: 'fashn_geometry_contour',
+      isVisualTrusted: deduped.length > 0,
     };
   }
 
@@ -106,13 +118,11 @@ export class OutfitSegmentationService {
     } catch (error) {
       if (isFashnQuotaOrUnavailable(error)) {
         this.logger.warn(
-          `FASHN segmentation quota/unavailable — using degraded full-body stub: ${String(error)}`,
+          `FASHN segmentation quota/unavailable — empty fabric map (no stub paint): ${String(error)}`,
         );
-        const stub = degradedGeometryStub();
-        return {
-          objects: this.geometryToObjects(stub.segments),
-          degraded: true,
-        };
+        // Keep analyze-path stub elsewhere; segmentation endpoint must not
+        // return face-including bands as clothing regions.
+        return { objects: [], degraded: true };
       }
       this.logger.warn(`FASHN segmentation failed: ${String(error)}`);
       return { objects: [], degraded: false };
@@ -124,9 +134,10 @@ export class OutfitSegmentationService {
       regionRole: RegionRole;
       bbox: { x: number; y: number; w: number; h: number };
       polygon: number[][];
+      providerConfidence?: number;
     }>,
   ): VisionObject[] {
-    return segments.map((seg, index) => {
+    return segments.map((seg) => {
       const name = regionRoleLabel(seg.regionRole);
       const rect: NormalizedRect = {
         left: seg.bbox.x,
@@ -144,9 +155,17 @@ export class OutfitSegmentationService {
               { x: rect.left, y: rect.top + rect.height },
             ])?.polygon ?? [];
 
+      // No invented 0.85 - index*0.01 ladder. Use provider score when present;
+      // otherwise a single presence score (contour exists, not ranked trust).
+      const score =
+        typeof seg.providerConfidence === 'number' &&
+        Number.isFinite(seg.providerConfidence)
+          ? Math.min(1, Math.max(0, seg.providerConfidence))
+          : 0.82;
+
       return {
         name,
-        score: 0.85 - index * 0.01,
+        score,
         rect,
         polygon,
       };
@@ -156,6 +175,7 @@ export class OutfitSegmentationService {
   private async extractColors(
     imageBuffer: Buffer,
     rect: NormalizedRect,
+    polygon: Array<{ x: number; y: number }>,
   ): Promise<string[]> {
     const meta = await sharp(imageBuffer).metadata();
     const w = meta.width ?? 0;
@@ -181,13 +201,35 @@ export class OutfitSegmentationService {
     let sumB = 0;
     let pixelCount = 0;
 
+    const inPoly = (nx: number, ny: number): boolean => {
+      if (polygon.length < 3) return true;
+      let inside = false;
+      for (let i = 0, j = polygon.length - 1; i < polygon.length; j = i++) {
+        const xi = polygon[i].x;
+        const yi = polygon[i].y;
+        const xj = polygon[j].x;
+        const yj = polygon[j].y;
+        const intersect =
+          yi > ny !== yj > ny &&
+          nx < ((xj - xi) * (ny - yi)) / (yj - yi + 1e-9) + xi;
+        if (intersect) inside = !inside;
+      }
+      return inside;
+    };
+
     for (let y = 0; y < height; y += step) {
       for (let x = 0; x < width; x += step) {
+        const nx = (left + x) / w;
+        const ny = (top + y) / h;
+        if (!inPoly(nx, ny)) continue;
+        // Skip upper band of tall full-body boxes (face/hair leakage).
+        if (rect.height > 0.55 && ny < rect.top + rect.height * 0.18) continue;
         const i = (y * width + x) * 3;
         const r = data[i];
         const g = data[i + 1];
         const b = data[i + 2];
         if (isSpecularHighlight(r, g, b)) continue;
+        if (isLikelySkinOrHair(r, g, b)) continue;
         sumR += r;
         sumG += g;
         sumB += b;
@@ -195,17 +237,24 @@ export class OutfitSegmentationService {
       }
     }
 
-    const avgR = pixelCount > 0 ? sumR / pixelCount : 128;
-    const avgG = pixelCount > 0 ? sumG / pixelCount : 128;
-    const avgB = pixelCount > 0 ? sumB / pixelCount : 128;
+    if (pixelCount < 8) return [];
+
+    const avgR = sumR / pixelCount;
+    const avgG = sumG / pixelCount;
+    const avgB = sumB / pixelCount;
 
     for (let y = 0; y < height; y += step) {
       for (let x = 0; x < width; x += step) {
+        const nx = (left + x) / w;
+        const ny = (top + y) / h;
+        if (!inPoly(nx, ny)) continue;
+        if (rect.height > 0.55 && ny < rect.top + rect.height * 0.18) continue;
         const i = (y * width + x) * 3;
         const r = data[i];
         const g = data[i + 1];
         const b = data[i + 2];
         if (isSpecularHighlight(r, g, b)) continue;
+        if (isLikelySkinOrHair(r, g, b)) continue;
         const match = matchRgb(r, g, b, { avgR, avgG, avgB });
         const prev = buckets.get(match.id);
         buckets.set(match.id, {
@@ -215,9 +264,11 @@ export class OutfitSegmentationService {
       }
     }
 
-    return [...buckets.entries()]
-      .sort((a, b) => b[1].count - a[1].count)
-      .slice(0, 4)
+    const ranked = [...buckets.entries()].sort((a, b) => b[1].count - a[1].count);
+    const total = ranked.reduce((s, [, v]) => s + v.count, 0) || 1;
+    // Adaptive count: keep significant fabric colors only (no forced fill to 4).
+    return ranked
+      .filter(([, v]) => v.count / total >= 0.12)
       .map(([, v]) => v.display);
   }
 
@@ -283,4 +334,20 @@ function regionRoleLabel(role: RegionRole): string {
     default:
       return 'clothing';
   }
+}
+
+/** Exclude skin / hair from fabric color buckets (not a medical classifier). */
+function isLikelySkinOrHair(r: number, g: number, b: number): boolean {
+  const maxC = Math.max(r, g, b);
+  const minC = Math.min(r, g, b);
+  const spread = maxC - minC;
+  const lum = r * 0.299 + g * 0.587 + b * 0.114;
+  // Skin-ish: red-dominant mid tones.
+  if (r > 95 && g > 40 && b > 20 && r > g && r > b && r - g > 12 && spread > 12) {
+    return true;
+  }
+  if (r > 180 && g > 140 && b > 120 && r - b < 40) return true;
+  // Hair-ish: dark low-chroma browns/blacks.
+  if (lum < 55 && spread < 35 && r >= g && g >= b && r - b < 45) return true;
+  return false;
 }

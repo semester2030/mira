@@ -137,12 +137,24 @@ class OutfitIntelligenceService {
     }
 
     if (!segmentMap.hasTrustedOverlay) {
-      throw VisionPlatformException(
-        code: 'OUTFIT_RESULT_UNTRUSTED',
-        message: 'Segment map not visually trusted',
-        userMessageAr:
-            segmentMap.validationMessage ??
-            OutfitResultTrustPolicy.blockedDefaultMessage,
+      // Fabric overlay missing ≠ kill Vision semantics. Approximate anatomy /
+      // degraded stubs must not be forced trusted just to pass this gate.
+      final hasSemanticEvidence = visionResult.garments.isNotEmpty ||
+          analysis.detectedPieces.isNotEmpty ||
+          analysis.dominantColors.isNotEmpty;
+      if (!hasSemanticEvidence) {
+        throw VisionPlatformException(
+          code: 'OUTFIT_RESULT_UNTRUSTED',
+          message: 'Segment map not visually trusted',
+          userMessageAr:
+              segmentMap.validationMessage ??
+              OutfitResultTrustPolicy.blockedDefaultMessage,
+        );
+      }
+      developer.log(
+        'Continuing semantic analysis without fabric-trusted overlay '
+        '(source=${segmentMap.source})',
+        name: 'OutfitIntelligenceService',
       );
     }
 
@@ -175,13 +187,17 @@ class OutfitIntelligenceService {
       ),
       visualSource: segmentMap.source == 'pose_anatomy'
           ? 'vision_semantic_pose'
-          : 'canonical_garment',
-      analysisGate: segmentMap.source == 'pose_anatomy'
+          : (segmentMap.hasTrustedOverlay
+              ? 'canonical_garment'
+              : 'vision_semantic_degraded_geometry'),
+      analysisGate: !segmentMap.hasTrustedOverlay
           ? 'degraded'
-          : visionResult.analysisGate,
+          : (segmentMap.source == 'pose_anatomy'
+              ? 'degraded'
+              : visionResult.analysisGate),
       photoTrustMessageAr:
           visionResult.userMessageAr ??
-          (segmentMap.source == 'pose_anatomy'
+          (!segmentMap.hasTrustedOverlay
               ? segmentMap.validationMessage
               : null),
       visualConfidence: visionResult.confidencePercent,
@@ -220,10 +236,14 @@ class OutfitIntelligenceService {
             outfitImage,
             serverMap,
           );
+          final fabricTrusted = _isFabricTrustedSource(enriched.source);
           return _relabelWithGarments(
             enriched.copyWith(
-              isVisualTrusted: true,
-              validationMessage: null,
+              isVisualTrusted: fabricTrusted,
+              validationMessage: fabricTrusted
+                  ? null
+                  : (enriched.validationMessage ??
+                      'حدود تقريبية — ليست قناع قماش موثوق للرسم أو التلوين.'),
             ),
             garments,
           );
@@ -259,14 +279,22 @@ class OutfitIntelligenceService {
       );
       final labeled = _relabelPoseWithGarments(poseMap, garments);
       return labeled.copyWith(
-        // Trusted for analysis colors / result gate, but not fabric recolor.
-        isVisualTrusted: true,
+        // Anatomy bands are body structure — never fabric-trusted for overlay.
+        isVisualTrusted: false,
         source: 'pose_anatomy',
         validationMessage:
             'خريطة تقريبية من وضعية الجسم — حدود الملابس الدقيقة غير متاحة حالياً.',
       );
     }
     return local;
+  }
+
+  static bool _isFabricTrustedSource(String source) {
+    return source == 'fashn_geometry_contour' ||
+        source == 'vision_garment' ||
+        source == 'vision_pixel_contour' ||
+        source == 'server_segment' ||
+        source == 'server';
   }
 
   /// Prefer vision garment labels/colors over bare anatomy / role labels.
@@ -297,10 +325,14 @@ class OutfitIntelligenceService {
           r.labelEn.toLowerCase() == 'top' ||
           r.labelEn.toLowerCase() == 'pants' ||
           r.labelEn.toLowerCase() == 'clothing') {
+        // Prefer fabric-sampled colors already on the region; never overwrite
+        // with unrelated semantic palette entries.
         return r.copyWith(
           labelAr: labelAr,
           labelEn: 'Dress',
-          colors: colors.isNotEmpty ? colors : r.colors,
+          colors: r.colors.isNotEmpty
+              ? r.colors
+              : (colors.isNotEmpty ? colors : r.colors),
         );
       }
       return r;
