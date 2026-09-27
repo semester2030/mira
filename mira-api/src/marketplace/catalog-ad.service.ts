@@ -81,14 +81,18 @@ export class CatalogAdService {
       if (ad.status !== 'draft' && ad.status !== 'rejected') {
         throw new ConflictException('إعادة التقديم تكون من المسودة أو بعد الرفض فقط');
       }
+      const advertiser = await tx.partner.findUnique({ where: { id: advertiserPartnerId }, select: { type: true } });
+      const developer = advertiser?.type === 'developer';
       const changed = await tx.catalogAd.updateMany({
         where: { id, advertiserPartnerId, status: ad.status, reviewRevision: ad.reviewRevision },
-        data: {
-          status: 'in_review',
-          submittedRevision: ad.reviewRevision,
-          submittedAt: new Date(),
-          reviewNote: null,
-        },
+        data: developer
+          ? { status: 'published', reviewedBy: 'developer', reviewNote: null, submittedRevision: ad.reviewRevision, submittedAt: new Date() }
+          : {
+              status: 'in_review',
+              submittedRevision: ad.reviewRevision,
+              submittedAt: new Date(),
+              reviewNote: null,
+            },
       });
       if (changed.count !== 1) throw new ConflictException('تغيّرت النسخة قبل إرسالها');
       const next = await tx.catalogAd.findUniqueOrThrow({ where: { id } });

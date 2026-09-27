@@ -302,9 +302,10 @@ export class PartnersPortalService {
     const partner = await this.prisma.partner.findUnique({
       where: { id: partnerId },
     });
-    if (!partner || partner.type !== 'brand') {
+    if (!partner || (partner.type !== 'brand' && partner.type !== 'developer')) {
       throw new BadRequestException('المنتجات متاحة للماركات فقط');
     }
+    const developer = partner.type === 'developer';
 
     return this.prisma.product.create({
       data: {
@@ -317,9 +318,9 @@ export class PartnersPortalService {
         concernTags: dto.concernTags,
         skinTypes: dto.skinTypes ?? [],
         stepAr: dto.stepAr,
-        active: false,
-        contentStatus: 'draft',
-        reviewStatus: 'draft',
+        active: developer,
+        contentStatus: developer ? 'published' : 'draft',
+        reviewStatus: developer ? 'none' : 'draft',
       },
     });
   }
@@ -329,8 +330,10 @@ export class PartnersPortalService {
       await tx.$queryRaw`SELECT id FROM products WHERE id = ${productId} FOR UPDATE`;
       const current = await tx.product.findFirst({ where: { id: productId, partnerId } });
       if (!current) throw new NotFoundException('المنتج غير موجود');
+      const owner = await tx.partner.findUnique({ where: { id: partnerId }, select: { type: true } });
+      const developer = owner?.type === 'developer';
       const linked = await tx.catalogSourceLink.findFirst({ where: { ownerKind: 'product', ownerId: productId } });
-      const published = current.contentStatus === 'published';
+      const published = current.contentStatus === 'published' && !developer;
       const data: {
         draftNameAr?: string;
         draftNameEn?: string;
@@ -345,9 +348,12 @@ export class PartnersPortalService {
         stepAr?: string | null;
         reviewRevision: { increment: number };
         reviewStatus: string;
+        contentStatus?: string;
+        active?: boolean;
       } = {
         reviewRevision: { increment: 1 },
-        reviewStatus: current.reviewStatus === 'in_review' ? 'in_review' : 'draft',
+        reviewStatus: developer ? 'none' : current.reviewStatus === 'in_review' ? 'in_review' : 'draft',
+        ...(developer ? { contentStatus: 'published', active: true } : {}),
       };
       if (dto.nameAr !== undefined) {
         if (published) data.draftNameAr = dto.nameAr;
@@ -384,9 +390,10 @@ export class PartnersPortalService {
     const partner = await this.prisma.partner.findUnique({
       where: { id: partnerId },
     });
-    if (!partner || !['clinic', 'salon'].includes(partner.type)) {
+    if (!partner || (!['clinic', 'salon'].includes(partner.type) && partner.type !== 'developer')) {
       throw new BadRequestException('الخدمات متاحة للعيادات والصالونات فقط');
     }
+    const developer = partner.type === 'developer';
 
     return this.prisma.service.create({
       data: {
@@ -398,9 +405,9 @@ export class PartnersPortalService {
         priceHalalas: dto.priceHalalas,
         concernTags: dto.concernTags,
         bookingEnabled: dto.bookingEnabled ?? false,
-        active: false,
-        contentStatus: 'draft',
-        reviewStatus: 'draft',
+        active: developer,
+        contentStatus: developer ? 'published' : 'draft',
+        reviewStatus: developer ? 'none' : 'draft',
       },
     });
   }
@@ -410,7 +417,9 @@ export class PartnersPortalService {
       await tx.$queryRaw`SELECT id FROM services WHERE id = ${serviceId} FOR UPDATE`;
       const current = await tx.service.findFirst({ where: { id: serviceId, partnerId } });
       if (!current) throw new NotFoundException('الخدمة غير موجودة');
-      const published = current.contentStatus === 'published';
+      const owner = await tx.partner.findUnique({ where: { id: partnerId }, select: { type: true } });
+      const developer = owner?.type === 'developer';
+      const published = current.contentStatus === 'published' && !developer;
       const data: {
         draftNameAr?: string;
         draftNameEn?: string;
@@ -424,10 +433,13 @@ export class PartnersPortalService {
         bookingEnabled: boolean;
         reviewRevision: { increment: number };
         reviewStatus: string;
+        contentStatus?: string;
+        active?: boolean;
       } = {
         bookingEnabled: false,
         reviewRevision: { increment: 1 },
-        reviewStatus: current.reviewStatus === 'in_review' ? 'in_review' : 'draft',
+        reviewStatus: developer ? 'none' : current.reviewStatus === 'in_review' ? 'in_review' : 'draft',
+        ...(developer ? { contentStatus: 'published', active: true } : {}),
       };
       if (dto.nameAr !== undefined) {
         if (published) data.draftNameAr = dto.nameAr;

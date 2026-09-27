@@ -36,6 +36,13 @@
         <form id="catalogForm"></form>
       </div>
 
+      <div class="card hidden" id="serviceSection">
+        <h2 id="serviceTitle">خدمات العيادة</h2>
+        <div id="serviceList"></div>
+        <h2>إضافة خدمة</h2>
+        <form id="serviceForm"></form>
+      </div>
+
       <div class="card" id="adsSection">
         <h2>إعلانات المشاهير</h2>
         <p class="lead" id="adsNotice"></p>
@@ -73,8 +80,9 @@
         const p = data.partner;
         document.getElementById('partnerName').textContent =
           (p.logoEmoji || '') + ' ' + p.nameAr;
+        const developer = p.type === 'developer';
         document.getElementById('partnerMeta').textContent =
-          p.type + ' · ' + p.city + (p.storeUrl ? ' · ' + p.storeUrl : '');
+          (developer ? 'مطور · ميرا' : p.type) + ' · ' + p.city + (p.storeUrl ? ' · ' + p.storeUrl : '');
 
         const a = data.analytics30d;
         document.getElementById('stats').innerHTML = `
@@ -83,8 +91,17 @@
           <div class="stat"><div class="num">${data.catalog.productCount + data.catalog.serviceCount}</div><div class="lbl">عناصر الكتالوج</div></div>
         `;
 
-        renderCatalog(p.type, data.catalog);
-        renderForm(p.type);
+        if (developer) {
+          document.getElementById('serviceSection').classList.remove('hidden');
+          document.getElementById('catalogTitle').textContent = 'منتجات الملابس وماركات التجميل';
+          renderCatalog('brand', data.catalog, 'catalogList', 'catalogForm', 'catalogTitle');
+          renderForm('brand', null, 'catalogForm', 'catalogTitle');
+          renderCatalog('clinic', data.catalog, 'serviceList', 'serviceForm', 'serviceTitle');
+          renderForm('clinic', null, 'serviceForm', 'serviceTitle');
+        } else {
+          renderCatalog(p.type, data.catalog, 'catalogList', 'catalogForm', 'catalogTitle');
+          renderForm(p.type, null, 'catalogForm', 'catalogTitle');
+        }
         try {
           const ads = await PartnersApi.ads();
           renderAds(ads.items || [], null);
@@ -106,8 +123,8 @@
       return node;
     }
 
-    function renderCatalog(type, catalog) {
-      const list = document.getElementById('catalogList');
+    function renderCatalog(type, catalog, listId, formId, titleId) {
+      const list = document.getElementById(listId || 'catalogList');
       const items = type === 'brand' ? catalog.products : catalog.services;
       list.replaceChildren();
       if (!items.length) {
@@ -145,7 +162,7 @@
         edit.type = 'button';
         edit.className = 'btn btn-ghost btn-sm';
         edit.textContent = 'تعديل';
-        edit.onclick = () => renderForm(type, item);
+        edit.onclick = () => renderForm(type, item, formId, titleId);
         card.append(file, upload, submit, pull, edit);
         list.appendChild(card);
         async function showMedia() {
@@ -280,9 +297,11 @@
       return input;
     }
 
-    function renderForm(type, item) {
-      const form = document.getElementById('catalogForm');
-      document.getElementById('catalogTitle').textContent = type === 'brand' ? 'منتجاتك' : 'خدماتك';
+    function renderForm(type, item, formId, titleId) {
+      const form = document.getElementById(formId || 'catalogForm');
+      const title = document.getElementById(titleId || 'catalogTitle');
+      const fullCatalog = !document.getElementById('serviceSection').classList.contains('hidden');
+      if (title && !fullCatalog) title.textContent = type === 'brand' ? 'منتجاتك' : 'خدماتك';
       form.replaceChildren();
       const editing = Boolean(item);
       const status = text(form, editing ? 'تعديل العنصر الحالي. الحفظ يبقي المعرف نفسه.' : 'إضافة عنصر جديد.');
@@ -319,7 +338,7 @@
       const save = document.createElement('button');
       save.type = 'submit';
       save.className = 'btn btn-primary';
-      save.textContent = editing ? 'حفظ المسودة' : (type === 'brand' ? 'إضافة منتج' : 'إضافة خدمة');
+      save.textContent = editing ? 'حفظ ونشر' : (type === 'brand' ? 'إضافة منتج' : 'إضافة خدمة');
       form.appendChild(save);
       form.onsubmit = async (event) => {
         event.preventDefault();

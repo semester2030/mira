@@ -196,20 +196,29 @@ export class MarketplaceService implements OnModuleInit {
       .filter((item) => item.length > 0);
     const hint = (params.hint ?? '').trim().toLowerCase();
     const q = (params.q ?? '').trim().toLowerCase();
-    const partnerWhere = {
+    const partnerBase = {
       status: 'active' as const,
-      ...(params.type ? { type: params.type } : {}),
       ...(params.city ? { city: params.city } : {}),
       ...(params.partnerId ? { id: params.partnerId } : {}),
     };
+    const productPartner = params.type
+      ? params.type === 'brand'
+        ? { ...partnerBase, OR: [{ type: 'brand' }, { type: 'developer' }] }
+        : { ...partnerBase, type: params.type }
+      : partnerBase;
+    const servicePartner = params.type
+      ? params.type === 'clinic' || params.type === 'salon'
+        ? { ...partnerBase, OR: [{ type: params.type }, { type: 'developer' }] }
+        : { ...partnerBase, type: params.type }
+      : partnerBase;
 
     const [products, services, partners] = await Promise.all([
       this.prisma.product.findMany({
-        where: { active: true, contentStatus: 'published', catalogSource: 'catalog', partner: partnerWhere },
+        where: { active: true, contentStatus: 'published', catalogSource: 'catalog', partner: productPartner },
         include: { partner: true },
       }),
       this.prisma.service.findMany({
-        where: { active: true, contentStatus: 'published', catalogSource: 'catalog', partner: partnerWhere },
+        where: { active: true, contentStatus: 'published', catalogSource: 'catalog', partner: servicePartner },
         include: { partner: true },
       }),
       this.prisma.partner.findMany({

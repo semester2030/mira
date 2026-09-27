@@ -111,6 +111,8 @@ export class CatalogContentService {
           if (existing) return existing;
         }
         const count = await tx.catalogMedia.count({ where: { ownerKind: kind, ownerId: id } });
+        const owner = await tx.partner.findUnique({ where: { id: partnerId }, select: { type: true } });
+        const developer = owner?.type === 'developer';
         const published = locked.contentStatus === 'published';
         const firstImage = count === 0 && image;
         const created = await tx.catalogMedia.create({
@@ -118,16 +120,16 @@ export class CatalogContentService {
             ownerKind: kind,
             ownerId: id,
             sortOrder: count,
-            draftSortOrder: published ? count : null,
+            draftSortOrder: developer || !published ? null : count,
             kind: image ? 'image' : 'video',
             url: '',
-            active: false,
+            active: developer,
             mimeType: mime,
             byteSize: bytes.length,
             storageKey: key,
-            isPrimary: published ? false : firstImage,
-            draftIsPrimary: firstImage ? true : null,
-            publication: 'draft',
+            isPrimary: developer ? firstImage : published ? false : firstImage,
+            draftIsPrimary: developer ? null : firstImage ? true : null,
+            publication: developer ? 'published' : 'draft',
             sourceMediaKey: input.sourceMediaKey,
           },
         });
@@ -216,6 +218,8 @@ export class CatalogContentService {
 
   async submit(partnerId: string, kind: Kind, id: string) {
     await this.owned(partnerId, kind, id);
+    const partner = await this.prisma.partner.findUnique({ where: { id: partnerId }, select: { type: true } });
+    if (partner?.type === 'developer') return this.publishDeveloper(partnerId, kind, id);
     return this.prisma.$transaction(async (tx) => {
       const row = await this.lockOwner(tx, kind, id);
       if (row.partnerId !== partnerId) throw new NotFoundException('العنصر غير موجود');
@@ -240,6 +244,31 @@ export class CatalogContentService {
       }
       await tx.catalogReviewLog.create({ data: { ownerKind: kind, ownerId: id, actor: `partner:${partnerId}`, action: 'submit', note: null } });
       return { contentStatus: row.contentStatus, reviewStatus: 'in_review', revision, id: row.id };
+    });
+  }
+
+  private async publishDeveloper(partnerId: string, kind: Kind, id: string) {
+    return this.prisma.$transaction(async (tx) => {
+      const row = await this.lockOwner(tx, kind, id);
+      if (row.partnerId !== partnerId) throw new NotFoundException('العنصر غير موجود');
+      const published = {
+        contentStatus: 'published',
+        active: true,
+        reviewStatus: 'none',
+        reviewedAt: new Date(),
+        reviewedBy: 'developer',
+        reviewNote: null,
+      };
+      if (kind === 'product') await tx.product.update({ where: { id }, data: published });
+      else await tx.service.update({ where: { id }, data: published });
+      await tx.catalogMedia.updateMany({
+        where: { ownerKind: kind, ownerId: id, pendingRemoval: false },
+        data: { publication: 'published', active: true },
+      });
+      await tx.catalogReviewLog.create({
+        data: { ownerKind: kind, ownerId: id, actor: `partner:${partnerId}`, action: 'developer-publish', note: null },
+      });
+      return { contentStatus: 'published', reviewStatus: 'none', id };
     });
   }
 
@@ -415,7 +444,9 @@ export class CatalogContentService {
       throw new ForbiddenException('الاستيراد التجريبي غير متاح في هذا التشغيل');
     }
     const partner = await this.prisma.partner.findUnique({ where: { id: partnerId } });
-    if (!partner || partner.type !== 'brand') throw new BadRequestException('استيراد المنتجات للماركات فقط');
+    if (!partner || (partner.type !== 'brand' && partner.type !== 'developer')) {
+      throw new BadRequestException('استيراد المنتجات للماركات فقط');
+    }
     let created = 0;
     let updated = 0;
     const errors: { externalId: string; message: string }[] = [];
