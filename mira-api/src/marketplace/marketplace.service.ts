@@ -181,9 +181,18 @@ export class MarketplaceService implements OnModuleInit {
     limit?: string;
     partnerId?: string;
     category?: string;
+    lane?: string;
+    venue?: string;
+    visual?: string;
   }) {
     await this.ensureSeeded();
     if (params.type && !['brand', 'clinic', 'salon'].includes(params.type)) {
+      throw new BadRequestException('نوع الجهة غير صالح');
+    }
+    if (params.lane && !['elegance', 'beauty'].includes(params.lane)) {
+      throw new BadRequestException('المسار غير صالح');
+    }
+    if (params.venue && !['clinic', 'salon'].includes(params.venue)) {
       throw new BadRequestException('نوع الجهة غير صالح');
     }
     const parsedLimit = params.limit == null || params.limit === '' ? 8 : Number(params.limit);
@@ -201,16 +210,26 @@ export class MarketplaceService implements OnModuleInit {
       ...(params.city ? { city: params.city } : {}),
       ...(params.partnerId ? { id: params.partnerId } : {}),
     };
-    const productPartner = params.type
+    const productPartner = params.lane === 'beauty'
+      ? { ...partnerBase, id: '__none__' }
+      : params.type
       ? params.type === 'brand'
         ? { ...partnerBase, OR: [{ type: 'brand' }, { type: 'developer' }] }
         : { ...partnerBase, type: params.type }
-      : partnerBase;
-    const servicePartner = params.type
+      : params.lane === 'elegance'
+        ? { ...partnerBase, OR: [{ type: 'brand' }, { type: 'developer' }] }
+        : partnerBase;
+    const servicePartner = params.lane === 'elegance'
+      ? { ...partnerBase, id: '__none__' }
+      : params.venue
+        ? { ...partnerBase, type: params.venue }
+        : params.type
       ? params.type === 'clinic' || params.type === 'salon'
         ? { ...partnerBase, OR: [{ type: params.type }, { type: 'developer' }] }
         : { ...partnerBase, type: params.type }
-      : partnerBase;
+      : params.lane === 'beauty'
+        ? { ...partnerBase, OR: [{ type: 'clinic' }, { type: 'salon' }, { type: 'developer' }] }
+        : partnerBase;
 
     const [products, services, partners] = await Promise.all([
       this.prisma.product.findMany({
@@ -272,7 +291,27 @@ export class MarketplaceService implements OnModuleInit {
     ].sort((a, b) => compareCatalogKeys(`${a.kind}:${a.id}`, `${b.kind}:${b.id}`));
 
     const category = (params.category ?? '').trim();
+    const requireVisual = params.visual === '1';
+    const visualKeys = requireVisual
+      ? new Set(
+          (
+            await this.prisma.catalogMedia.findMany({
+              where: {
+                active: true,
+                publication: 'published',
+                pendingRemoval: false,
+                kind: { in: ['image', 'video'] },
+              },
+              select: { ownerKind: true, ownerId: true },
+            })
+          ).map((row) => `${row.ownerKind}:${row.ownerId}`),
+        )
+      : null;
     const matched = items.filter((item) => {
+      if (params.lane === 'elegance' && item.kind !== 'product') return false;
+      if (params.lane === 'beauty' && item.kind !== 'service') return false;
+      if (params.venue && item.partnerType !== params.venue) return false;
+      if (visualKeys && !visualKeys.has(`${item.kind}:${item.id}`)) return false;
       if (category && item.category !== category) return false;
       if (tags.length > 0 && !item.concernTags.some((tag) => tags.includes(tag))) return false;
       if (hint && !`${item.nameAr} ${item.nameEn}`.toLowerCase().includes(hint)) return false;

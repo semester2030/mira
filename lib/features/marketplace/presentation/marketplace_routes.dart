@@ -6,10 +6,10 @@ import '../../../core/navigation/premium_page_route.dart';
 import '../data/catalog_record_scope.dart';
 import '../domain/entities/catalog_product.dart';
 import '../domain/entities/catalog_service.dart';
+import '../data/discover_catalog_query.dart';
 import 'screens/catalog_record_page.dart';
 import 'screens/discover_hub_screen.dart';
 import 'screens/discover_presentation_screen.dart';
-import 'screens/partner_list_screen.dart';
 
 /// Discover routes. The production default keeps [MiraFeatures.marketplaceEnabled] false.
 abstract final class MarketplaceRoutes {
@@ -31,8 +31,9 @@ abstract final class MarketplaceRoutes {
         if (!MiraFeatures.marketplaceEnabled) {
           return PremiumPageRoute(page: const DiscoverHubScreen(), settings: settings);
         }
+        final lane = settings.arguments is DiscoverLane ? settings.arguments as DiscoverLane : DiscoverLane.elegance;
         return PremiumPageRoute(
-          page: const DiscoverPresentationScreen(),
+          page: DiscoverPresentationScreen(lane: lane),
           settings: settings,
         );
       case AppRoutes.discoverList:
@@ -40,8 +41,9 @@ abstract final class MarketplaceRoutes {
           return PremiumPageRoute(page: const DiscoverHubScreen(), settings: settings);
         }
         final type = settings.arguments as String? ?? 'brand';
+        final redirected = type == 'clinic' || type == 'salon' ? DiscoverLane.beauty : DiscoverLane.elegance;
         return PremiumPageRoute(
-          page: PartnerListScreen(partnerType: type),
+          page: DiscoverPresentationScreen(lane: redirected),
           settings: settings,
         );
       case AppRoutes.productDetail:

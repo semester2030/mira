@@ -26,8 +26,11 @@ export class MarketplaceController {
     @Query('limit') limit?: string,
     @Query('partnerId') partnerId?: string,
     @Query('category') category?: string,
+    @Query('lane') lane?: string,
+    @Query('venue') venue?: string,
+    @Query('visual') visual?: string,
   ) {
-    return this.marketplace.browse({ q, type, city, tag, hint, cursor, limit, partnerId, category });
+    return this.marketplace.browse({ q, type, city, tag, hint, cursor, limit, partnerId, category, lane, venue, visual });
   }
 
   @Get('catalog/:kind/:id')

@@ -161,12 +161,23 @@ class MarketplaceRepositoryImpl implements MarketplaceRepository, DiscoverCatalo
   }) async {
     if (_api == null) return _localBrowse(query, cursor: cursor, limit: limit);
     try {
+      final selected = query.lane == null
+          ? null
+          : DiscoverCatalogQueryEngine.find(
+              query.lane == DiscoverLane.elegance ? 'elegance' : 'beauty',
+              query.categoryId,
+            );
       final remote = await _api.browseCatalog(
         text: query.text,
-        partnerType: query.partnerType,
+        partnerType: query.lane == null ? query.partnerType : null,
         city: query.city,
         partnerId: query.partnerId,
-        category: query.categoryId == null || query.categoryId == 'all' ? null : query.categoryId,
+        category: query.lane == null
+            ? (query.categoryId == null || query.categoryId == 'all' ? null : query.categoryId)
+            : (selected == null || selected.matchesAll || selected.venueType != null ? null : selected.storedKey),
+        lane: query.lane?.name,
+        venue: selected?.venueType,
+        requireVisual: query.requireVisual,
         cursor: cursor,
         limit: limit,
       );

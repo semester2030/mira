@@ -50,6 +50,10 @@ class DiscoverVisualChrome extends StatelessWidget {
     this.showPurchaseLink = true,
     this.showAppointmentRequest = true,
     this.purchaseLabel = 'اشتري الآن',
+    this.appointmentLabel = 'اطلبي موعدًا',
+    this.categoryLabels,
+    this.categoryAssetFamily,
+    this.searchHintText,
   });
 
   final PresentationSlide slide;
@@ -83,22 +87,29 @@ class DiscoverVisualChrome extends StatelessWidget {
   final bool showPurchaseLink;
   final bool showAppointmentRequest;
   final String purchaseLabel;
+  final String appointmentLabel;
+  final List<String>? categoryLabels;
+  final String? categoryAssetFamily;
+  final String? searchHintText;
 
   @override
   Widget build(BuildContext context) {
     final family = visualFamilyFor(slide);
     final padding = MediaQuery.paddingOf(context);
-    final categories = switch (family) {
-      DiscoverVisualFamily.product => const ['الكل', 'الوجه', 'الجسم', 'الشعر', 'الملابس'],
-      DiscoverVisualFamily.clinic => const ['الكل', 'البشرة', 'الشعر', 'الليزر', 'الأسنان'],
-      DiscoverVisualFamily.salon => const ['الكل', 'الشعر', 'المكياج', 'الأظافر', 'العناية'],
-    };
+    final categories = categoryLabels ??
+        switch (family) {
+          DiscoverVisualFamily.product => const ['الكل', 'الوجه', 'الجسم', 'الشعر', 'الملابس'],
+          DiscoverVisualFamily.clinic => const ['الكل', 'البشرة', 'الشعر', 'الليزر', 'الأسنان'],
+          DiscoverVisualFamily.salon => const ['الكل', 'الشعر', 'المكياج', 'الأظافر', 'العناية'],
+        };
     final selected = selectedCategory.clamp(0, categories.length - 1);
-    final searchHint = switch (family) {
-      DiscoverVisualFamily.product => 'ابحثي عن منتج أو خدمة',
-      DiscoverVisualFamily.clinic => 'ابحثي عن عيادة أو خدمة',
-      DiscoverVisualFamily.salon => 'ابحثي عن مشغل أو خدمة',
-    };
+    final searchHint = searchHintText ??
+        switch (family) {
+          DiscoverVisualFamily.product => 'ابحثي عن منتج أو علامة',
+          DiscoverVisualFamily.clinic => 'ابحثي عن عيادة أو مشغل أو خدمة',
+          DiscoverVisualFamily.salon => 'ابحثي عن عيادة أو مشغل أو خدمة',
+        };
+    final assetFamily = categoryAssetFamily ?? family.name;
     final muteOnLeft = family != DiscoverVisualFamily.clinic;
 
     return Stack(
@@ -231,14 +242,6 @@ class DiscoverVisualChrome extends StatelessWidget {
                   padding: const EdgeInsets.only(bottom: 6),
                   child: Text(advertisementLabel!, style: AppTypography.labelSmall.copyWith(color: AppColors.textSecondary)),
                 ),
-              if (provenance != null)
-                ColoredBox(
-                  color: AppColors.background,
-                  child: Padding(
-                    padding: const EdgeInsets.fromLTRB(16, 4, 16, 0),
-                    child: Text(provenance!, style: AppTypography.labelSmall.copyWith(color: AppColors.textSecondary)),
-                  ),
-                ),
               ColoredBox(
                 color: AppColors.background,
                 child: Padding(
@@ -254,6 +257,7 @@ class DiscoverVisualChrome extends StatelessWidget {
                     showPurchaseLink: showPurchaseLink,
                     showAppointmentRequest: showAppointmentRequest,
                     purchaseLabel: purchaseLabel,
+                    appointmentLabel: appointmentLabel,
                   ),
                 ),
               ),
@@ -274,7 +278,7 @@ class DiscoverVisualChrome extends StatelessWidget {
                             : minSize;
                         Widget chip(int index) {
                           return _CategoryChip(
-                            family: family,
+                            assetFamily: assetFamily,
                             label: categories[index],
                             selected: index == selected,
                             size: size,
@@ -462,6 +466,7 @@ class _Actions extends StatelessWidget {
     this.showPurchaseLink = true,
     this.showAppointmentRequest = true,
     this.purchaseLabel = 'اشتري الآن',
+    this.appointmentLabel = 'اطلبي موعدًا',
   });
 
   final DiscoverVisualFamily family;
@@ -474,6 +479,7 @@ class _Actions extends StatelessWidget {
   final bool showPurchaseLink;
   final bool showAppointmentRequest;
   final String purchaseLabel;
+  final String appointmentLabel;
 
   @override
   Widget build(BuildContext context) {
@@ -534,7 +540,7 @@ class _Actions extends StatelessWidget {
               ),
               onPressed: onAppointment ?? () => onUnavailable('طلب الموعد غير مفعّل لهذه الخدمة'),
               icon: const Icon(Icons.calendar_today_outlined, size: 18),
-              label: const Text('اطلبي موعدًا'),
+              label: Text(appointmentLabel),
             ),
           ),
           const SizedBox(width: 8),
@@ -569,14 +575,14 @@ class _LabeledCircle extends StatelessWidget {
 
 class _CategoryChip extends StatelessWidget {
   const _CategoryChip({
-    required this.family,
+    required this.assetFamily,
     required this.label,
     required this.selected,
     required this.size,
     required this.onTap,
   });
 
-  final DiscoverVisualFamily family;
+  final String assetFamily;
   final String label;
   final bool selected;
   final double size;
@@ -584,7 +590,7 @@ class _CategoryChip extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final path = DiscoverCategoryAssets.thumb(family.name, label);
+    final path = DiscoverCategoryAssets.thumb(assetFamily, label);
     return InkWell(
       onTap: onTap,
       child: SizedBox(

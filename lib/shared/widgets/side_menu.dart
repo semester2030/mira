@@ -1,8 +1,7 @@
 import 'package:flutter/material.dart';
-import '../../core/config/mira_features.dart';
-import '../../core/constants/marketplace_copy.dart';
 import '../../core/navigation/analysis_navigation.dart';
 import '../../core/navigation/app_routes.dart';
+import '../../features/marketplace/data/discover_catalog_query.dart';
 import '../theme/colors.dart';
 import '../theme/gradients.dart';
 import '../theme/typography.dart';
@@ -75,12 +74,22 @@ class SideMenu extends StatelessWidget {
                   ),
                 ),
                 _MenuTile(
-                  icon: Icons.explore_outlined,
-                  title: 'اكتشفي — شركاء ميرا',
-                  subtitle: MiraFeatures.marketplaceEnabled
-                      ? null
-                      : MarketplaceCopy.dashboardTeaser,
-                  route: AppRoutes.discover,
+                  icon: Icons.checkroom_outlined,
+                  title: 'أناقتك',
+                  subtitle: 'تجميل، أزياء وإكسسوارات',
+                  onTap: () => _closeAndRun(
+                    context,
+                    (ctx) => Navigator.pushNamed(ctx, AppRoutes.discoverPresentation, arguments: DiscoverLane.elegance),
+                  ),
+                ),
+                _MenuTile(
+                  icon: Icons.spa_outlined,
+                  title: 'جمالك',
+                  subtitle: 'عيادات، مشاغل وعناية',
+                  onTap: () => _closeAndRun(
+                    context,
+                    (ctx) => Navigator.pushNamed(ctx, AppRoutes.discoverPresentation, arguments: DiscoverLane.beauty),
+                  ),
                 ),
                 _MenuTile(icon: Icons.history_rounded, title: 'سجل تحليل البشرة', route: AppRoutes.history),
                 _MenuTile(icon: Icons.inventory_2_outlined, title: 'سجل الإطلالات', route: AppRoutes.outfitHistory),

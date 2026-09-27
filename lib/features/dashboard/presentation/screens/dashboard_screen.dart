@@ -2,8 +2,6 @@ import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/material.dart';
 import '../../../../core/navigation/app_routes.dart';
-import '../../../../core/config/mira_features.dart';
-import '../../../../core/constants/marketplace_copy.dart';
 import '../../../../core/services/app_session.dart';
 import '../../../../core/navigation/analysis_navigation.dart';
 import '../../../../shared/widgets/guest_banner.dart';
@@ -17,6 +15,7 @@ import '../../../../shared/widgets/analysis_launch_card.dart';
 import '../../../../core/profile/user_level.dart';
 import '../../../profile/domain/entities/profile_entity.dart';
 import '../../../skin_analysis/presentation/widgets/face_frame_overlay.dart';
+import '../../../marketplace/presentation/widgets/discover_lane_entries.dart';
 
 class DashboardScreen extends StatelessWidget {
   const DashboardScreen({super.key});
@@ -97,41 +96,7 @@ class DashboardScreen extends StatelessWidget {
             ),
           ),
           const SizedBox(height: 24),
-          PressableScale(
-            onTap: () => Navigator.pushNamed(context, AppRoutes.discover),
-            child: PremiumCard(
-              child: Row(
-                children: [
-                  Container(
-                    padding: const EdgeInsets.all(12),
-                    decoration: BoxDecoration(
-                      color: AppColors.primaryLight,
-                      borderRadius: BorderRadius.circular(14),
-                    ),
-                    child: const Icon(Icons.storefront_rounded, color: AppColors.primary),
-                  ),
-                  const SizedBox(width: 16),
-                  Expanded(
-                    child: Column(
-                      crossAxisAlignment: CrossAxisAlignment.start,
-                      children: [
-                        Text('اكتشفي', style: AppTypography.titleMedium),
-                        Text(
-                          MiraFeatures.marketplaceEnabled
-                              ? 'ماركات · عيادات · صالونات حسب تحليلك'
-                              : MarketplaceCopy.dashboardTeaser,
-                          style: AppTypography.bodySmall.copyWith(
-                            color: AppColors.textSecondary,
-                          ),
-                        ),
-                      ],
-                    ),
-                  ),
-                  const Icon(Icons.arrow_back_ios_new_rounded, size: 16),
-                ],
-              ),
-            ),
-          ),
+          const DiscoverLaneEntries(),
           const SizedBox(height: 16),
           PremiumCard(
             child: Row(

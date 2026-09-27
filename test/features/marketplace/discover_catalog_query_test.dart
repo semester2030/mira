@@ -144,6 +144,33 @@ void main() {
     expect(store.every((offer) => offer.partnerId == 'local-loreal'), isTrue);
   });
 
+  test('elegance keeps products and beauty keeps services', () {
+    final products = DiscoverCatalogQueryEngine.filter(
+      all,
+      const DiscoverCatalogQuery(lane: DiscoverLane.elegance, categoryId: 'all'),
+    );
+    final services = DiscoverCatalogQueryEngine.filter(
+      all,
+      const DiscoverCatalogQuery(lane: DiscoverLane.beauty, categoryId: 'all'),
+    );
+    expect(products, isNotEmpty);
+    expect(services, isNotEmpty);
+    expect(products.every((offer) => offer.kind == 'product'), isTrue);
+    expect(services.every((offer) => offer.kind == 'service'), isTrue);
+    final face = DiscoverCatalogQueryEngine.filter(
+      all,
+      const DiscoverCatalogQuery(lane: DiscoverLane.elegance, categoryId: 'face'),
+    );
+    expect(face, isNotEmpty);
+    expect(face.every((offer) => offer.kind == 'product' && offer.category == 'face'), isTrue);
+    final clinics = DiscoverCatalogQueryEngine.filter(
+      all,
+      const DiscoverCatalogQuery(lane: DiscoverLane.beauty, categoryId: 'venue-clinic'),
+    );
+    expect(clinics.every((offer) => offer.kind == 'service' && offer.partnerType == 'clinic'), isTrue);
+    expect(clinics.any((offer) => offer.kind == 'product'), isFalse);
+  });
+
   test('an older response is ignored', () {
     final gate = DiscoverRequestGate();
     final first = gate.next();

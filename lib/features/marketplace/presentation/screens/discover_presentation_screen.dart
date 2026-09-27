@@ -2,7 +2,6 @@ import 'package:flutter/material.dart';
 import 'package:flutter/scheduler.dart';
 import 'package:share_plus/share_plus.dart';
 
-import '../../../../core/constants/marketplace_copy.dart';
 import '../../../../core/navigation/app_routes.dart';
 import '../../../../core/navigation/mira_route_observer.dart';
 import '../../../../core/utils/mira_url_launcher.dart';
@@ -25,7 +24,6 @@ import '../presentation/discover_presentation_catalog.dart';
 import '../presentation/discover_view_count.dart';
 import '../presentation/discover_visual_chrome.dart';
 import '../presentation/presentation_video_port.dart';
-import '../widgets/marketplace_data_banner.dart';
 import 'catalog_record_page.dart';
 import 'partner_detail_screen.dart';
 
@@ -33,6 +31,7 @@ import 'partner_detail_screen.dart';
 class DiscoverPresentationScreen extends StatefulWidget {
   const DiscoverPresentationScreen({
     super.key,
+    this.lane,
     this.slides,
     this.videoPort,
     this.verticalController,
@@ -44,6 +43,7 @@ class DiscoverPresentationScreen extends StatefulWidget {
     this.linkOutbox,
   });
 
+  final DiscoverLane? lane;
   final List<PresentationSlide>? slides;
   final PresentationVideoPort? videoPort;
   final PageController? verticalController;
@@ -101,7 +101,7 @@ class _DiscoverPresentationScreenState extends State<DiscoverPresentationScreen>
       _phase = DiscoverFeedPhase.loading;
       _feed = DiscoverFeedController(gateway: widget.gateway ?? _catalog);
       _feed!.addListener(_onFeed);
-      _feed!.load(const DiscoverCatalogQuery());
+      _feed!.load(DiscoverCatalogQuery(lane: widget.lane, requireVisual: widget.lane != null));
       _favorites = widget.favorites ?? ApiDiscoverFavoriteClient();
       _ownsFavorites = widget.favorites == null;
       _favorites!.addListener(_onFavorites);
@@ -293,22 +293,42 @@ class _DiscoverPresentationScreenState extends State<DiscoverPresentationScreen>
   Future<void> _reload(DiscoverCatalogQuery query) => _feed?.load(query) ?? Future.value();
 
   int _categoryIndexFor(PresentationSlide slide) {
-    final items = DiscoverCatalogQueryEngine.forFamily(_familyOf(slide));
-    final sameContext = _query.partnerType == null || _query.partnerType == _familyType(slide);
+    final items = DiscoverCatalogQueryEngine.forFamily(widget.lane == null ? _familyOf(slide) : _activeFamily());
+    final sameContext = widget.lane != null || _query.partnerType == null || _query.partnerType == _familyType(slide);
     final id = sameContext ? (_query.categoryId ?? 'all') : 'all';
     final index = items.indexWhere((item) => item.id == id);
     return index < 0 ? 0 : index;
   }
 
   int _categoryIndex(DiscoverCatalogQuery query) {
-    final family = switch (query.partnerType) {
-      'clinic' => 'clinic',
-      'salon' => 'salon',
-      _ => 'product',
-    };
-    final items = DiscoverCatalogQueryEngine.forFamily(family);
+    final items = DiscoverCatalogQueryEngine.forFamily(_queryFamily(query));
     final index = items.indexWhere((item) => item.id == (query.categoryId ?? 'all'));
     return index < 0 ? 0 : index;
+  }
+
+  String _queryFamily(DiscoverCatalogQuery query) {
+    return switch (query.lane) {
+      DiscoverLane.elegance => 'elegance',
+      DiscoverLane.beauty => 'beauty',
+      null => switch (query.partnerType) {
+          'clinic' => 'clinic',
+          'salon' => 'salon',
+          _ => 'product',
+        },
+    };
+  }
+
+  String _activeFamily() {
+    if (widget.lane == DiscoverLane.elegance) return 'elegance';
+    if (widget.lane == DiscoverLane.beauty) return 'beauty';
+    return _slides.isEmpty ? 'product' : _familyOf(_slides[_page.clamp(0, _slides.length - 1)]);
+  }
+
+  bool _canPurchase(PresentationSlide slide) {
+    if (slide.advertisement != null) return slide.advertisement!.openLink;
+    final url = slide.product?.externalUrl.trim() ?? '';
+    final uri = Uri.tryParse(url);
+    return slide.product != null && uri != null && uri.hasScheme && uri.host.isNotEmpty;
   }
 
   String _familyOf(PresentationSlide slide) {
@@ -319,10 +339,22 @@ class _DiscoverPresentationScreenState extends State<DiscoverPresentationScreen>
   }
 
   void _onCategory(int index) {
-    final family = _slides.isEmpty ? 'product' : _familyOf(_slides[_page.clamp(0, _slides.length - 1)]);
+    final family = _activeFamily();
     final items = DiscoverCatalogQueryEngine.forFamily(family);
     if (index < 0 || index >= items.length) return;
     final selected = items[index];
+    if (widget.lane != null) {
+      _reload(
+        _query.copyWith(
+          lane: widget.lane,
+          requireVisual: true,
+          categoryId: selected.matchesAll ? null : selected.id,
+          clearCategory: selected.matchesAll,
+          clearType: true,
+        ),
+      );
+      return;
+    }
     final type = switch (family) {
       'clinic' => 'clinic',
       'salon' => 'salon',
@@ -355,10 +387,12 @@ class _DiscoverPresentationScreenState extends State<DiscoverPresentationScreen>
           child: Column(
             mainAxisSize: MainAxisSize.min,
             children: [
-              ListTile(title: const Text('كل الأنواع'), onTap: () => Navigator.pop(context, 'all')),
-              ListTile(title: const Text('منتجات'), onTap: () => Navigator.pop(context, 'brand')),
-              ListTile(title: const Text('عيادات'), onTap: () => Navigator.pop(context, 'clinic')),
-              ListTile(title: const Text('مشاغل'), onTap: () => Navigator.pop(context, 'salon')),
+              if (widget.lane == null) ...[
+                ListTile(title: const Text('كل الأنواع'), onTap: () => Navigator.pop(context, 'all')),
+                ListTile(title: const Text('منتجات'), onTap: () => Navigator.pop(context, 'brand')),
+                ListTile(title: const Text('عيادات'), onTap: () => Navigator.pop(context, 'clinic')),
+                ListTile(title: const Text('مشاغل'), onTap: () => Navigator.pop(context, 'salon')),
+              ],
               for (final city in _cities)
                 ListTile(title: Text(city), onTap: () => Navigator.pop(context, 'city:$city')),
               ListTile(title: const Text('مسح الفلاتر'), onTap: () => Navigator.pop(context, 'clear')),
@@ -370,7 +404,7 @@ class _DiscoverPresentationScreenState extends State<DiscoverPresentationScreen>
     if (!mounted || type == null) return;
     if (type == 'clear') {
       _search.clear();
-      await _reload(const DiscoverCatalogQuery());
+      await _reload(DiscoverCatalogQuery(lane: widget.lane, requireVisual: widget.lane != null));
     } else if (type == 'all') {
       await _reload(_query.copyWith(clearType: true, clearCategory: true));
     } else if (type.startsWith('city:')) {
@@ -399,14 +433,6 @@ class _DiscoverPresentationScreenState extends State<DiscoverPresentationScreen>
     }
   }
 
-  void _requestAppointment(BuildContext context, PresentationSlide slide) {
-    if (slide.preview || slide.service == null) {
-      _tell(context, 'هذه معاينة ولا تنفّذ حجزًا');
-      return;
-    }
-    _tell(context, MarketplaceCopy.appointmentUnavailable);
-  }
-
   Future<void> _toggleFavorite(BuildContext context, PresentationSlide slide) async {
     final client = _favorites;
     if (client == null || client.accountKey == null) {
@@ -433,15 +459,18 @@ class _DiscoverPresentationScreenState extends State<DiscoverPresentationScreen>
   }
 
   Future<void> _openLocation(BuildContext context, PresentationSlide slide) async {
-    final city = slide.city ?? slide.service?.city;
-    if (city == null || city.isEmpty) {
-      _tell(context, 'لا يوجد موقع مسجّل لهذه الجهة');
+    _tell(context, 'لا توجد إحداثيات للفرع، لذلك لا تُفتح الخريطة على مركز المدينة.');
+  }
+
+  Future<void> _contactVenue(BuildContext context, PresentationSlide slide) async {
+    final phone = slide.service?.contactPhone?.trim();
+    if (phone == null || phone.isEmpty) {
+      _tell(context, 'لا توجد وسيلة تواصل مسجّلة. هذا ليس حجزًا مؤكدًا.');
       return;
     }
-    final query = Uri.encodeComponent('${slide.partnerName} $city');
-    final opened = await MiraUrlLauncher.openExternal(context, 'https://maps.apple.com/?q=$query');
+    final opened = await MiraUrlLauncher.openExternal(context, 'tel:$phone');
     if (!context.mounted || !opened) return;
-    _tell(context, 'فُتح بحث بالاسم والمدينة. لا توجد إحداثيات مسجّلة');
+    _tell(context, 'فُتح الاتصال بالجهة. هذا ليس حجزًا مؤكدًا.');
   }
 
   Future<void> _share(BuildContext context, PresentationSlide slide) async {
@@ -482,7 +511,9 @@ class _DiscoverPresentationScreenState extends State<DiscoverPresentationScreen>
                                 ? switch (_phase) {
                                     DiscoverFeedPhase.loading => 'جاري تحميل الكتالوج',
                                     DiscoverFeedPhase.failed => _loadError ?? 'تعذر تحميل الكتالوج',
-                                    _ => 'لا توجد نتائج. يمكن مسح البحث أو الفلاتر.',
+                                    _ => widget.lane == null
+                                        ? 'لا توجد نتائج. يمكن مسح البحث أو الفلاتر.'
+                                        : 'لا توجد عروض بوسائط منشورة في هذا المسار.',
                                   }
                                 : 'لا توجد عروض',
                             style: AppTypography.bodyLarge,
@@ -500,7 +531,7 @@ class _DiscoverPresentationScreenState extends State<DiscoverPresentationScreen>
                             const SizedBox(height: 12),
                             TextButton(onPressed: () {
                               _search.clear();
-                              _reload(const DiscoverCatalogQuery());
+                              _reload(DiscoverCatalogQuery(lane: widget.lane, requireVisual: widget.lane != null));
                             }, child: const Text('مسح البحث والفلاتر')),
                           ],
                         ],
@@ -536,7 +567,7 @@ class _DiscoverPresentationScreenState extends State<DiscoverPresentationScreen>
                           onCategory: _onCategory,
                           onFilter: () => _openFilters(context),
                           onStore: () => _openStore(context, _slides[index]),
-                          onAppointment: () => _requestAppointment(context, _slides[index]),
+                          onAppointment: () => _contactVenue(context, _slides[index]),
                           onLocation: () => _openLocation(context, _slides[index]),
                           onFavorite: () => _toggleFavorite(context, _slides[index]),
                           favoriteSaved: _favorites?.saved(
@@ -547,9 +578,23 @@ class _DiscoverPresentationScreenState extends State<DiscoverPresentationScreen>
                           searchFieldKey: _searchFieldKey,
                           searchFocus: _searchFocus,
                           onShare: () => _share(context, _slides[index]),
-                          provenance: _transport == null || _contentMark == null
+                          provenance: null,
+                          categoryLabels: widget.lane == null
                               ? null
-                              : MarketplaceDataBanner.labelFor(_transport!, _contentMark!),
+                              : DiscoverCatalogQueryEngine.forFamily(_activeFamily()).map((item) => item.label).toList(),
+                          categoryAssetFamily: switch (widget.lane) {
+                            DiscoverLane.elegance => 'elegance',
+                            DiscoverLane.beauty => 'beauty',
+                            null => null,
+                          },
+                          searchHint: switch (widget.lane) {
+                            DiscoverLane.elegance => 'ابحثي عن منتج أو علامة',
+                            DiscoverLane.beauty => 'ابحثي عن عيادة أو مشغل أو خدمة',
+                            null => null,
+                          },
+                          appointmentLabel: 'تواصلي',
+                          showPurchaseLink: _canPurchase(_slides[index]),
+                          showAppointmentRequest: (_slides[index].service?.contactPhone?.trim().isNotEmpty ?? false),
                         )
                       : null,
                 );
@@ -569,7 +614,7 @@ class _DiscoverPresentationScreenState extends State<DiscoverPresentationScreen>
                       ],
                     ),
                   ),
-                if (_catalogDriven) _sharedSearch(context),
+                if (_catalogDriven) const SizedBox.shrink(),
                 if (_favorites?.readFailed == true)
                   Positioned(
                     top: MediaQuery.paddingOf(context).top + 108,
@@ -614,22 +659,6 @@ class _DiscoverPresentationScreenState extends State<DiscoverPresentationScreen>
             ),
     );
   }
-
-  Widget _sharedSearch(BuildContext context) {
-    return Positioned(
-      top: MediaQuery.paddingOf(context).top + 52,
-      left: Directionality.of(context) == TextDirection.rtl ? 72 : 8,
-      right: Directionality.of(context) == TextDirection.rtl ? 8 : 72,
-      child: DiscoverSearchField(
-        hint: 'ابحثي عن منتج أو خدمة',
-        fieldKey: _searchFieldKey,
-        focusNode: _searchFocus,
-        controller: _search,
-        onSearch: (value) => _reload(_query.copyWith(text: value)),
-        onTap: () {},
-      ),
-    );
-  }
 }
 
 class _CatalogHooks {
@@ -648,6 +677,12 @@ class _CatalogHooks {
     required this.searchFocus,
     required this.onShare,
     required this.provenance,
+    this.categoryLabels,
+    this.categoryAssetFamily,
+    this.searchHint,
+    this.appointmentLabel = 'اطلبي موعدًا',
+    this.showPurchaseLink = true,
+    this.showAppointmentRequest = true,
   });
 
   final TextEditingController search;
@@ -664,6 +699,12 @@ class _CatalogHooks {
   final FocusNode searchFocus;
   final VoidCallback onShare;
   final String? provenance;
+  final List<String>? categoryLabels;
+  final String? categoryAssetFamily;
+  final String? searchHint;
+  final String appointmentLabel;
+  final bool showPurchaseLink;
+  final bool showAppointmentRequest;
 }
 
 class _PresentationPage extends StatefulWidget {
@@ -820,15 +861,19 @@ class _PresentationPageState extends State<_PresentationPage> {
           onFavorite: widget.catalog?.onFavorite,
           onShare: widget.catalog?.onShare,
           onFilter: widget.catalog?.onFilter,
-          includeSearch: widget.catalog == null,
-          provenance: widget.catalog?.provenance,
+          includeSearch: true,
+          provenance: null,
+          categoryLabels: widget.catalog?.categoryLabels,
+          categoryAssetFamily: widget.catalog?.categoryAssetFamily,
+          searchHintText: widget.catalog?.searchHint,
+          appointmentLabel: widget.catalog?.appointmentLabel ?? 'اطلبي موعدًا',
           viewCount: DiscoverViewSnapshot.disabled(
             targetKind: slide.advertisement == null ? (slide.product != null ? 'product' : 'service') : 'ad',
             targetId: slide.advertisement?.id ?? slide.entityId,
           ),
           advertisementLabel: slide.advertisement?.disclosureLine,
-          showPurchaseLink: slide.advertisement == null || slide.advertisement!.openLink,
-          showAppointmentRequest: slide.advertisement == null || slide.advertisement!.appointmentOperational,
+          showPurchaseLink: widget.catalog?.showPurchaseLink ?? (slide.advertisement == null || slide.advertisement!.openLink),
+          showAppointmentRequest: widget.catalog?.showAppointmentRequest ?? (slide.advertisement == null || slide.advertisement!.appointmentOperational),
           purchaseLabel: slide.advertisement == null ? 'اشتري الآن' : 'افتحي الرابط',
           onUnavailable: (message) {
             ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text(message)));

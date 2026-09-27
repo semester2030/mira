@@ -53,6 +53,9 @@ class DiscoverOffer {
   String get cursor => '$kind:$id';
 }
 
+/// أناقتك is products. جمالك is clinic and salon services.
+enum DiscoverLane { elegance, beauty }
+
 /// Visual labels stay. A category matches the stored category id, not a name guess.
 class DiscoverCategoryDef {
   const DiscoverCategoryDef({
@@ -61,6 +64,7 @@ class DiscoverCategoryDef {
     required this.family,
     required this.storedKey,
     this.matchesAll = false,
+    this.venueType,
   });
 
   final String id;
@@ -68,6 +72,7 @@ class DiscoverCategoryDef {
   final String family;
   final String storedKey;
   final bool matchesAll;
+  final String? venueType;
 }
 
 class DiscoverCatalogQuery {
@@ -77,6 +82,8 @@ class DiscoverCatalogQuery {
     this.categoryId,
     this.city,
     this.partnerId,
+    this.lane,
+    this.requireVisual = false,
   });
 
   final String text;
@@ -84,6 +91,8 @@ class DiscoverCatalogQuery {
   final String? categoryId;
   final String? city;
   final String? partnerId;
+  final DiscoverLane? lane;
+  final bool requireVisual;
 
   DiscoverCatalogQuery copyWith({
     String? text,
@@ -91,10 +100,13 @@ class DiscoverCatalogQuery {
     String? categoryId,
     String? city,
     String? partnerId,
+    DiscoverLane? lane,
+    bool? requireVisual,
     bool clearType = false,
     bool clearCategory = false,
     bool clearCity = false,
     bool clearPartner = false,
+    bool clearLane = false,
   }) {
     return DiscoverCatalogQuery(
       text: text ?? this.text,
@@ -102,6 +114,8 @@ class DiscoverCatalogQuery {
       categoryId: clearCategory ? null : categoryId ?? this.categoryId,
       city: clearCity ? null : city ?? this.city,
       partnerId: clearPartner ? null : partnerId ?? this.partnerId,
+      lane: clearLane ? null : lane ?? this.lane,
+      requireVisual: requireVisual ?? this.requireVisual,
     );
   }
 }
@@ -139,6 +153,20 @@ abstract final class DiscoverCatalogQueryEngine {
     DiscoverCategoryDef(id: 'makeup', label: 'المكياج', family: 'salon', storedKey: 'makeup'),
     DiscoverCategoryDef(id: 'nails', label: 'الأظافر', family: 'salon', storedKey: 'nails'),
     DiscoverCategoryDef(id: 'care', label: 'العناية', family: 'salon', storedKey: 'care'),
+    DiscoverCategoryDef(id: 'all', label: 'الكل', family: 'elegance', storedKey: '', matchesAll: true),
+    DiscoverCategoryDef(id: 'face', label: 'الوجه', family: 'elegance', storedKey: 'face'),
+    DiscoverCategoryDef(id: 'body', label: 'الجسم', family: 'elegance', storedKey: 'body'),
+    DiscoverCategoryDef(id: 'hair', label: 'الشعر', family: 'elegance', storedKey: 'hair'),
+    DiscoverCategoryDef(id: 'clothes', label: 'الملابس', family: 'elegance', storedKey: 'clothes'),
+    DiscoverCategoryDef(id: 'accessories', label: 'الإكسسوارات', family: 'elegance', storedKey: 'accessories'),
+    DiscoverCategoryDef(id: 'all', label: 'الكل', family: 'beauty', storedKey: '', matchesAll: true),
+    DiscoverCategoryDef(id: 'venue-clinic', label: 'العيادات', family: 'beauty', storedKey: '', venueType: 'clinic'),
+    DiscoverCategoryDef(id: 'venue-salon', label: 'المشاغل', family: 'beauty', storedKey: '', venueType: 'salon'),
+    DiscoverCategoryDef(id: 'hair', label: 'الشعر', family: 'beauty', storedKey: 'hair'),
+    DiscoverCategoryDef(id: 'skin', label: 'البشرة', family: 'beauty', storedKey: 'skin'),
+    DiscoverCategoryDef(id: 'makeup', label: 'المكياج', family: 'beauty', storedKey: 'makeup'),
+    DiscoverCategoryDef(id: 'nails', label: 'الأظافر', family: 'beauty', storedKey: 'nails'),
+    DiscoverCategoryDef(id: 'care', label: 'العناية', family: 'beauty', storedKey: 'care'),
   ];
 
   static List<DiscoverCategoryDef> forFamily(String family) {
@@ -176,15 +204,21 @@ abstract final class DiscoverCatalogQueryEngine {
   }
 
   static bool matches(DiscoverOffer offer, DiscoverCatalogQuery query, {String family = 'product'}) {
+    if (query.lane == DiscoverLane.elegance && offer.kind != 'product') return false;
+    if (query.lane == DiscoverLane.beauty && offer.kind != 'service') return false;
+    if (query.requireVisual && !offer.media.any((item) => (item.kind == 'image' || item.kind == 'video') && item.url.isNotEmpty)) {
+      return false;
+    }
     if (query.partnerId != null && offer.partnerId != query.partnerId) return false;
-    if (query.partnerType != null && offer.partnerType != query.partnerType) return false;
+    if (query.lane == null && query.partnerType != null && offer.partnerType != query.partnerType) return false;
     if (query.city != null && query.city!.isNotEmpty && offer.city != query.city) return false;
     final category = find(familyFor(query, offer), query.categoryId);
     if (query.categoryId != null && query.categoryId != 'all') {
       final selected = category;
       if (selected == null || selected.matchesAll) {
-        // unknown id matches nothing
         if (selected == null) return false;
+      } else if (selected.venueType != null) {
+        if (offer.partnerType != selected.venueType) return false;
       } else if (offer.category != selected.storedKey) {
         return false;
       }
@@ -196,6 +230,8 @@ abstract final class DiscoverCatalogQueryEngine {
   }
 
   static String familyFor(DiscoverCatalogQuery query, DiscoverOffer offer) {
+    if (query.lane == DiscoverLane.elegance) return 'elegance';
+    if (query.lane == DiscoverLane.beauty) return 'beauty';
     return switch (query.partnerType ?? offer.partnerType) {
       'clinic' => 'clinic',
       'salon' => 'salon',
