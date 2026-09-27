@@ -335,12 +335,14 @@
     function addStaged(fileList) {
       Array.from(fileList || []).forEach((file) => {
         const problem = mediaProblem(file);
-        staged[form.id].push({
+        const entry = {
           file: file,
-          status: problem ? 'فشل' : 'بانتظار الحفظ',
+          status: problem ? 'فشل' : (item && item.id ? 'جارٍ الرفع' : 'بانتظار الحفظ'),
           error: problem,
           url: URL.createObjectURL(file),
-        });
+        };
+        staged[form.id].push(entry);
+        if (!problem && item && item.id) uploadOne(entry);
       });
       paintMedia(null);
     }
