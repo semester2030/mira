@@ -1,0 +1,16 @@
+2026-09-27 device run. Not a commercial launch.
+Repository: https://github.com/semester2030/mira
+Branch: main
+Commit built on the phone: 36b080cb3591b5cf15ded803e02a6fc03510cfd5
+Device: fayez’s iPhone, id 00008110-00191986268BA01E, iOS 26.6
+Build: debug, development team A97F7227YM
+Defines: MIRA_MARKETPLACE_ENABLED=true USE_MIRA_API=true MIRA_API_BASE_URL=https://mira-api-n4p3.onrender.com/api/v1
+Render service: mira-api srv-d85ngcfavr4c73d3rk6g
+Deploy: dep-dasamlrncjis73ebfd0g status live, commit 36b080cb3591b5cf15ded803e02a6fc03510cfd5
+Partners portal: https://mira-partners-portal.onrender.com deploy dep-dasamlrncjis73ebfdi0 live
+No mira-admin-portal service exists in this Render account.
+API: health 200, catalog 200 with 8 published items, catalog detail 200, ads 200 with an empty list, view-counts disabled with count null, admin reviews 401, partner ads without a token 401.
+The phone screen shows Discover in Arabic and RTL for مكياج مناسبة + عناية, with no published media. That matches the published catalog item and its empty media list. It is not a generated product image.
+CI: https://github.com/semester2030/mira/actions/runs/36297687521 failed in Flutter analyze. The API build and the phone launch still succeeded. CI was not disabled.
+Deferred and still open: view rules, real counts, PH3-STORAGE-LIVE, and the MinIO integration suite.
+Screenshot: evidence/ph5/iphone-discover.png

@@ -2,14 +2,14 @@
   "package": "MIRA_DISCOVER_PHASE1_CORRECTIONS_RC2",
   "studyVersion": "RC4 بصري — تصحيح المعاينة والأدلة والتكوين",
   "studyStatus": "بانتظار إعادة المراجعة",
-  "generatedAt": "2026-09-27T08:34:33.075930+03:00",
+  "generatedAt": "2026-09-27T08:46:41.951032+03:00",
   "baselineSiteZip": "MIRA_ECOMMERCE_REFERENCE_PLACES_PLAN_UPDATE_20260924_0125.zip",
   "baselineSiteSha256": "ad7f070bbc064dcd3153428d6d5ca3712bfaec2e4ddf7da865fc47cfbe7d734d",
   "linkedSourceZip": "DAR_PLACES_TO_MIRA_SOURCE_HANDOFF_RC2_20260924_0125.zip",
   "linkedSourceSha256": "60a8d854eb609e1eef11513a1406fd1e262ac809922e889f2e7beecf76ec48e1",
   "sourceArchiveUnmodified": true,
   "limits": "يثبت اتساق ملفات هذه الحزمة فقط. لا يثبت تشغيل المنتج ولا حداثة أدلة المستودع.",
-  "fileCount": 325,
+  "fileCount": 327,
   "files": [
     {
       "path": "css/components.css",
@@ -73,8 +73,8 @@
     },
     {
       "path": "data/discover-phases.json",
-      "bytes": 284780,
-      "sha256": "96281dbcf212543217060895a7fcbac746ddb2fc8f826eb58a1bb42fd86fe1dd"
+      "bytes": 285953,
+      "sha256": "7240856d002157813c06ee39ff4bcdd614e1b24a4e86511444215bf107353fa2"
     },
     {
       "path": "data/discover-visual.json",
@@ -810,6 +810,16 @@
       "path": "evidence/ph4-rc7/suite-worktree.log",
       "bytes": 648,
       "sha256": "1b8d77408d1b231e5ded717880ea2ca502e48f1a013364d3b0a506bd07f924b1"
+    },
+    {
+      "path": "evidence/ph5/device-run.txt",
+      "bytes": 1425,
+      "sha256": "07e36b20f59fd1bd8207938288318027167df9210776965315efb94e3bf09591"
+    },
+    {
+      "path": "evidence/ph5/iphone-discover.png",
+      "bytes": 142233,
+      "sha256": "21a768feb8ede04eafd1eb009d7003c2ab764cdd411427fb3ea1f2177276272c"
     },
     {
       "path": "evidence/screenshots/desktop-1280.png",
@@ -1578,8 +1588,8 @@
     },
     {
       "path": "js/data.generated.js",
-      "bytes": 579416,
-      "sha256": "d987f31da828200a063ddcd5fc5145ca3c8fc566b194718abc19148ce27c57bb"
+      "bytes": 580589,
+      "sha256": "c854211dc37ace208a09c8ccda52c2acfaca226541fc4629ec04c047393c5558"
     },
     {
       "path": "scripts/apply_ph2_rc3_site.py",
