@@ -1,0 +1,71 @@
+# Evidence EVD-0005
+# file=mira-api/prisma/schema.prisma
+# lines=117-180
+# commit=15fe65c40d3dedb9afdd95619f2945bd84cb616a
+# sha256=01dd03c140e35698ab4b795404201f3e1ba7d23fd828de1b2ee1b5cb447a65d2
+# inspected_at=2026-09-23T03:20:00+03:00
+
+117|/// B2B partner — brand, clinic, or salon (v1 catalog + matching).
+118|model Partner {
+119|  id            String   @id @default(uuid())
+120|  type          String   // brand | clinic | salon
+121|  status        String   @default("active") // pending | active | suspended
+122|  nameAr        String   @map("name_ar")
+123|  nameEn        String   @map("name_en")
+124|  descriptionAr String?  @map("description_ar")
+125|  city          String   @default("الرياض")
+126|  logoEmoji     String?  @map("logo_emoji")
+127|  storeUrl      String?  @map("store_url")
+128|  rating        Float    @default(4.5)
+129|  createdAt     DateTime @default(now()) @map("created_at")
+130|  updatedAt     DateTime @updatedAt @map("updated_at")
+131|
+132|  products Product[]
+133|  services Service[]
+134|  applications PartnerApplication[]
+135|  users      PartnerUser[]
+136|  events     PartnerEvent[]
+137|
+138|  @@index([type, status])
+139|  @@map("partners")
+140|}
+141|
+142|model Product {
+143|  id            String   @id @default(uuid())
+144|  partnerId     String   @map("partner_id")
+145|  partner       Partner  @relation(fields: [partnerId], references: [id], onDelete: Cascade)
+146|  nameAr        String   @map("name_ar")
+147|  nameEn        String   @map("name_en")
+148|  descriptionAr String?  @map("description_ar")
+149|  priceHalalas  Int      @map("price_halalas")
+150|  externalUrl   String   @map("external_url")
+151|  concernTags   String[] @map("concern_tags")
+152|  skinTypes     String[] @map("skin_types")
+153|  stepAr        String?  @map("step_ar")
+154|  sortOrder     Int      @default(0) @map("sort_order")
+155|  active        Boolean  @default(true)
+156|  createdAt     DateTime @default(now()) @map("created_at")
+157|
+158|  @@index([partnerId, active])
+159|  @@map("products")
+160|}
+161|
+162|model Service {
+163|  id              String   @id @default(uuid())
+164|  partnerId       String   @map("partner_id")
+165|  partner         Partner  @relation(fields: [partnerId], references: [id], onDelete: Cascade)
+166|  nameAr          String   @map("name_ar")
+167|  nameEn          String   @map("name_en")
+168|  descriptionAr   String?  @map("description_ar")
+169|  durationMin     Int      @map("duration_min")
+170|  priceHalalas    Int      @map("price_halalas")
+171|  concernTags     String[] @map("concern_tags")
+172|  bookingEnabled  Boolean  @default(false) @map("booking_enabled")
+173|  sortOrder       Int      @default(0) @map("sort_order")
+174|  active          Boolean  @default(true)
+175|  createdAt       DateTime @default(now()) @map("created_at")
+176|
+177|  @@index([partnerId, active])
+178|  @@map("services")
+179|}
+180|

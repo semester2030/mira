@@ -1,0 +1,32 @@
+id=EVD-0021
+path=mira-api/src/partners-portal/partners-portal.service.ts
+commit=15fe65c40d3dedb9afdd95619f2945bd84cb616a
+sha256=dd4aaa49c38647860fe75b147a8a20de11d518f725222050674608fcfb7d6ccf
+lines=102-125
+note=الدخول يطابق البريد والرمز ثم يعيد هوية الشريك من السجل
+runtime=SOURCE_ONLY
+---
+102|  async login(email: string, accessToken: string) {
+103|    const user = await this.prisma.partnerUser.findFirst({
+104|      where: {
+105|        email: email.toLowerCase(),
+106|        accessToken: accessToken.trim(),
+107|      },
+108|      include: { partner: true },
+109|    });
+110|    if (!user || user.partner.status !== 'active') {
+111|      throw new BadRequestException('بيانات الدخول غير صحيحة');
+112|    }
+113|    return {
+114|      accessToken: user.accessToken,
+115|      email: user.email,
+116|      partner: {
+117|        id: user.partner.id,
+118|        type: user.partner.type,
+119|        nameAr: user.partner.nameAr,
+120|        nameEn: user.partner.nameEn,
+121|        city: user.partner.city,
+122|        storeUrl: user.partner.storeUrl,
+123|      },
+124|    };
+125|  }

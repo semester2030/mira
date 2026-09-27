@@ -1,0 +1,65 @@
+[
+  {
+    "path": "lib/features/results_experience/presentation/face_explorer/face_explorer_image_loader.dart",
+    "baseline_sha256": "6c8da66f7189998f69c7e40cbf6b44278c4a8e2f32d2eab231f75118840e92ca",
+    "updated_sha256": "a55404d5b52dd306224165ad20dce0e39550d5c0a92da090a08c14d4b92e2e80",
+    "delivery": "patch_and_source",
+    "baseline_archive": "MIRA_FACE_EXPLORER_REFACTOR_PARITY_REVIEW.zip"
+  },
+  {
+    "path": "lib/features/results_experience/presentation/face_explorer/face_explorer_lens_panel.dart",
+    "baseline_sha256": "02aab7c56dc8ec705e36df4ebe4e0f1548ed3cded515a0a18f7cd08e52b7f3d7",
+    "updated_sha256": "7fda3eb9cc4d200d86c9ba0661da8b22b22666ab623a4e20821d5f12e21e1470",
+    "delivery": "patch_and_source",
+    "baseline_archive": "MIRA_FACE_EXPLORER_REFACTOR_PARITY_REVIEW.zip"
+  },
+  {
+    "path": "lib/features/results_experience/presentation/face_explorer/face_explorer_mask_presentation.dart",
+    "baseline_sha256": null,
+    "updated_sha256": "01d033bc6fe173a67dfd541eb046771c8c9524771be3a52d51b050ed0f4bd24e",
+    "delivery": "patch_and_source",
+    "baseline_archive": "MIRA_FACE_EXPLORER_REFACTOR_PARITY_REVIEW.zip"
+  },
+  {
+    "path": "lib/features/results_experience/presentation/face_explorer/face_explorer_metrics.dart",
+    "baseline_sha256": "2708c207ce116512ae7bff5097b305220c75ae8fe6923fab78a016a4fe297e2f",
+    "updated_sha256": "bd229c1edd2b5c0e3a487f1c6677142a2a59d8f50d9c7f9b3b945a341390a97b",
+    "delivery": "patch_and_source",
+    "baseline_archive": "MIRA_FACE_EXPLORER_REFACTOR_PARITY_REVIEW.zip"
+  },
+  {
+    "path": "lib/features/results_experience/presentation/face_explorer/face_explorer_stage.dart",
+    "baseline_sha256": "8075fbef51c3205965f80f43f86dddc6b0c871d7f3db2b87626a834f00dc7bc5",
+    "updated_sha256": "c44a11f870d39d9ec66ed15b26a849d98d3537877dd060b47a5f93f63e28797a",
+    "delivery": "patch_and_source",
+    "baseline_archive": "MIRA_FACE_EXPLORER_REFACTOR_PARITY_REVIEW.zip"
+  },
+  {
+    "path": "lib/features/results_experience/presentation/geometry/face_explorer_lens_geometry.dart",
+    "baseline_sha256": null,
+    "updated_sha256": "15041d1a2d2a794b6af5189286fa8e01f68b0912a4a02f42253452fd35645866",
+    "delivery": "patch_and_source",
+    "baseline_archive": "MIRA_FACE_EXPLORER_REFACTOR_PARITY_REVIEW.zip"
+  },
+  {
+    "path": "lib/features/results_experience/presentation/widgets/perfect_mask_overlay.dart",
+    "baseline_sha256": "7f3f69d0e2d11c64684c70f0803e398d0818572ae40fe43f0668f26d62d34c98",
+    "updated_sha256": "eb15693cd205eda7d5f158ce8c3b6ca220581026cbca12e26235ee8ebcaf242d",
+    "delivery": "patch_only",
+    "baseline_archive": "MIRA_SKIN_MAP_VISUAL_TRUTH_REVIEW.zip"
+  },
+  {
+    "path": "lib/features/results_experience/presentation/widgets/results_skin_map_panel.dart",
+    "baseline_sha256": "108b6460765b5c20c6a7847b229a25c90bef434df293d2d650a271fb11a0ec93",
+    "updated_sha256": "182660fe573d6d84616566b0f93a13355bd3dd0ade413f5c6a67c3d7745a3cfe",
+    "delivery": "patch_and_source",
+    "baseline_archive": "MIRA_FACE_EXPLORER_REFACTOR_PARITY_REVIEW.zip"
+  },
+  {
+    "path": "test/features/results_experience/face_explorer_four_fixes_test.dart",
+    "baseline_sha256": null,
+    "updated_sha256": "86cf604e16d62dd915c6f8c464b0c1365743bc7b113a87da0d99c25353c53680",
+    "delivery": "patch_and_source",
+    "baseline_archive": "MIRA_FACE_EXPLORER_REFACTOR_PARITY_REVIEW.zip"
+  }
+]

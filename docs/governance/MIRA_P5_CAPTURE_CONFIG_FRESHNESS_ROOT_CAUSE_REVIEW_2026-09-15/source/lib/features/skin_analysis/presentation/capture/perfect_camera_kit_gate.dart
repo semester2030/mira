@@ -1,0 +1,391 @@
+import 'dart:async';
+
+import 'package:camera/camera.dart';
+import 'package:flutter/foundation.dart';
+import 'package:flutter/services.dart';
+
+/// Dart façade for the ONE Perfect CameraKit quality owner (iOS native).
+/// Preview remains Flutter [CameraController] — frames are forwarded only.
+abstract final class PerfectCameraKitGate {
+  PerfectCameraKitGate._();
+
+  static const _methods = MethodChannel('mira/perfect_camerakit');
+  static const _events = EventChannel('mira/perfect_camerakit/quality');
+
+  /// Wall-clock span of continuous fresh READY samples required for auto-capture.
+  static const stableWindow = Duration(milliseconds: 800);
+
+  /// READY older than this is treated as stale (callbacks throttle ~66ms).
+  static const qualityFreshness = Duration(milliseconds: 350);
+
+  static bool get isPlatformSupported =>
+      !kIsWeb && defaultTargetPlatform == TargetPlatform.iOS;
+
+  static bool _initialized = false;
+  static String? _initError;
+  static Map<String, dynamic>? _initMeta;
+  static StreamSubscription<dynamic>? _sub;
+  static PerfectCameraKitQuality? _latest;
+  static final Stopwatch _mono = Stopwatch()..start();
+  static int? _readySinceMonoMs;
+  static int? _latestMonoMs;
+  static int _sessionId = 0;
+  static String? _staleReason;
+  static final _listeners = <void Function(PerfectCameraKitQuality)>[];
+
+  /// Build identity for device-proof logs (not a secret).
+  static const buildProbeTag = 'CKCFG-20260915C';
+
+  static bool get isInitialized => _initialized;
+  static String? get initError => _initError;
+  static Map<String, dynamic>? get initMeta => _initMeta;
+  static PerfectCameraKitQuality? get latest => _latest;
+  static int get sessionId => _sessionId;
+  static String? get staleReason => _staleReason;
+
+  static bool get isReady {
+    final q = _latest;
+    final t = _latestMonoMs;
+    if (q == null || t == null || !q.ready) return false;
+    if (q.sessionId != _sessionId) {
+      _staleReason = 'session_mismatch';
+      return false;
+    }
+    final age = _mono.elapsedMilliseconds - t;
+    if (age > qualityFreshness.inMilliseconds) {
+      _staleReason = 'quality_stale_age_ms=$age';
+      return false;
+    }
+    _staleReason = null;
+    return true;
+  }
+
+  /// Continuous fresh READY for [stableWindow] without gaps longer than freshness.
+  static bool get isStableReady {
+    final since = _readySinceMonoMs;
+    if (!isReady || since == null) return false;
+    return _mono.elapsedMilliseconds - since >= stableWindow.inMilliseconds;
+  }
+
+  static double get stableProgress01 {
+    final since = _readySinceMonoMs;
+    if (!isReady || since == null) return 0;
+    final ms = _mono.elapsedMilliseconds - since;
+    return (ms / stableWindow.inMilliseconds).clamp(0.0, 1.0);
+  }
+
+  static void addListener(void Function(PerfectCameraKitQuality) fn) {
+    _listeners.add(fn);
+  }
+
+  static void removeListener(void Function(PerfectCameraKitQuality) fn) {
+    _listeners.remove(fn);
+  }
+
+  /// Single configuration path. Default = official MODERATE, no lighting override.
+  /// Experimental lighting lower is opt-in only and must not be the production default.
+  static Future<bool> initialize({
+    String level = 'moderate',
+    bool experimentalLightingLower = false,
+  }) async {
+    if (!isPlatformSupported) {
+      _initError = 'Perfect CameraKit is iOS-only in this build';
+      _initialized = false;
+      return false;
+    }
+    try {
+      final available = await _methods.invokeMethod<bool>('isAvailable');
+      if (available != true) {
+        _initError = 'Perfect CameraKit channel unavailable';
+        return false;
+      }
+      // ONE native configure: level first, then optional experimental overwrite.
+      // Do NOT call setLevel again after this — SDK resets overwrite on setLevel.
+      final map = await _methods.invokeMethod<Map<dynamic, dynamic>>(
+        'initialize',
+        {
+          'level': level,
+          'experimentalLightingLower': experimentalLightingLower,
+          'buildProbe': buildProbeTag,
+        },
+      );
+      if (map == null || map['ok'] != true) {
+        _initError = 'CameraKit initialize returned not ok';
+        _initialized = false;
+        return false;
+      }
+      _initMeta = Map<String, dynamic>.from(map);
+      _sessionId = (_initMeta?['sessionId'] as num?)?.toInt() ?? (_sessionId + 1);
+      _latest = null;
+      _latestMonoMs = null;
+      _readySinceMonoMs = null;
+      _staleReason = null;
+      debugPrint(
+        'Mira PerfectCameraKit FINAL_CONFIG probe=$buildProbeTag '
+        'session=$_sessionId version=${_initMeta?['version']} '
+        'level=${_initMeta?['level']} yaw=${_initMeta?['faceYaw']} '
+        'size=${_initMeta?['faceSizeRatio']} '
+        'lightL=${_initMeta?['lightingLower']} lightU=${_initMeta?['lightingUpper']} '
+        'experimentalLighting=${_initMeta?['experimentalLightingLower']} '
+        'overrideApplied=${_initMeta?['lightingOverride']}',
+      );
+      await _sub?.cancel();
+      _sub = _events.receiveBroadcastStream().listen(_onEvent, onError: (_) {});
+      _initialized = true;
+      _initError = null;
+      return true;
+    } on PlatformException catch (e) {
+      _initError = e.message ?? e.code;
+      _initialized = false;
+      return false;
+    } catch (e) {
+      _initError = e.toString();
+      _initialized = false;
+      return false;
+    }
+  }
+
+  static Future<void> onCameraOpen({required bool isFront}) async {
+    if (!_initialized) return;
+    await _methods.invokeMethod<void>('onCameraOpen', {
+      'isFront': isFront,
+      'sessionId': _sessionId,
+    });
+  }
+
+  static DateTime? _lastFrameSent;
+  static bool _frameInFlight = false;
+
+  static Future<void> sendCameraImage(
+    CameraImage image, {
+    required bool isFront,
+  }) async {
+    if (!_initialized) return;
+    if (image.format.group != ImageFormatGroup.yuv420) return;
+    if (image.planes.length < 2) return;
+    if (_frameInFlight) return;
+    final now = DateTime.now();
+    final last = _lastFrameSent;
+    if (last != null && now.difference(last) < const Duration(milliseconds: 66)) {
+      return;
+    }
+    _lastFrameSent = now;
+
+    final y = image.planes[0];
+    final u = image.planes.length > 2 ? image.planes[1] : null;
+    final v = image.planes.length > 2 ? image.planes[2] : null;
+    final uvPlane = image.planes.length == 2 ? image.planes[1] : null;
+
+    // Reject truncated plane payloads before native rebuild.
+    final minY = y.bytesPerRow * image.height;
+    if (y.bytes.length < minY) {
+      if (kDebugMode) {
+        debugPrint(
+          'Mira PerfectCameraKit drop frame: Y short '
+          'have=${y.bytes.length} need>=$minY',
+        );
+      }
+      return;
+    }
+
+    Uint8List uvBytes;
+    int uvBytesPerRow;
+    if (uvPlane != null) {
+      final minUv = uvPlane.bytesPerRow * (image.height ~/ 2);
+      if (uvPlane.bytes.length < minUv) {
+        if (kDebugMode) {
+          debugPrint(
+            'Mira PerfectCameraKit drop frame: UV short '
+            'have=${uvPlane.bytes.length} need>=$minUv',
+          );
+        }
+        return;
+      }
+      uvBytes = uvPlane.bytes;
+      uvBytesPerRow = uvPlane.bytesPerRow;
+    } else if (u != null && v != null) {
+      final uvLen = (image.width * image.height) ~/ 2;
+      final out = Uint8List(uvLen);
+      final uBytes = u.bytes;
+      final vBytes = v.bytes;
+      final count = (uvLen ~/ 2).clamp(0, uBytes.length).clamp(0, vBytes.length);
+      for (var i = 0; i < count; i++) {
+        out[i * 2] = uBytes[i];
+        out[i * 2 + 1] = vBytes[i];
+      }
+      uvBytes = out;
+      uvBytesPerRow = image.width;
+    } else {
+      return;
+    }
+
+    _frameInFlight = true;
+    try {
+      await _methods.invokeMethod<void>('sendFrameYv12', {
+        'width': image.width,
+        'height': image.height,
+        'y': y.bytes,
+        'uv': uvBytes,
+        'yBytesPerRow': y.bytesPerRow,
+        'uvBytesPerRow': uvBytesPerRow,
+        'isFront': isFront,
+        'sessionId': _sessionId,
+        'receiveMonoMs': _mono.elapsedMilliseconds,
+      });
+    } catch (e) {
+      debugPrint('Mira PerfectCameraKit sendFrame failed: $e');
+    } finally {
+      // Channel ack only — native may still process asynchronously.
+      _frameInFlight = false;
+    }
+  }
+
+  static Future<void> dispose() async {
+    final closing = _sessionId;
+    await _sub?.cancel();
+    _sub = null;
+    _latest = null;
+    _latestMonoMs = null;
+    _readySinceMonoMs = null;
+    _lastFrameSent = null;
+    _frameInFlight = false;
+    _staleReason = 'disposed';
+    if (_initialized) {
+      try {
+        await _methods.invokeMethod<void>('dispose', {'sessionId': closing});
+      } catch (_) {}
+    }
+    _initialized = false;
+    _sessionId += 1; // invalidate deferred callbacks from closed session
+  }
+
+  static void _onEvent(dynamic raw) {
+    if (raw is! Map) return;
+    final q = PerfectCameraKitQuality.fromMap(
+      Map<String, dynamic>.from(raw),
+    );
+    if (q.sessionId != 0 && q.sessionId != _sessionId) {
+      if (kDebugMode) {
+        debugPrint(
+          'Mira PerfectCameraKit drop stale callback '
+          'cbSession=${q.sessionId} live=$_sessionId',
+        );
+      }
+      return;
+    }
+    final nowMs = _mono.elapsedMilliseconds;
+    final prevMs = _latestMonoMs;
+    _latest = q;
+    _latestMonoMs = nowMs;
+    if (q.ready) {
+      if (prevMs != null &&
+          nowMs - prevMs > qualityFreshness.inMilliseconds) {
+        _readySinceMonoMs = nowMs;
+        _staleReason = 'ready_gap_reset';
+      } else {
+        _readySinceMonoMs ??= nowMs;
+        _staleReason = null;
+      }
+    } else {
+      _readySinceMonoMs = null;
+    }
+    if (kDebugMode) {
+      debugPrint(
+        'Mira PerfectCameraKit quality: session=${q.sessionId} '
+        'ready=${q.ready} valid=${q.isValid} '
+        'area=${q.faceArea} pose=${q.facePose} light=${q.lighting} '
+        'areaOk=${q.faceAreaOk} poseOk=${q.facePoseOk} lightOk=${q.lightingOk} '
+        'code=${q.guidanceCode} '
+        'deg=${q.facePoseDegree?.toString() ?? 'unavailable'} '
+        'degReliable=${q.facePoseDegreeReliable} '
+        'stable=$isStableReady freshReady=$isReady '
+        'stale=${_staleReason ?? 'none'}',
+      );
+    }
+    for (final fn in List.of(_listeners)) {
+      fn(q);
+    }
+  }
+}
+
+class PerfectCameraKitQuality {
+  const PerfectCameraKitQuality({
+    required this.ready,
+    required this.isValid,
+    required this.faceAreaOk,
+    required this.facePoseOk,
+    required this.lightingOk,
+    required this.faceArea,
+    required this.facePose,
+    required this.lighting,
+    required this.facePoseDegree,
+    required this.facePoseDegreeReliable,
+    required this.guidanceCode,
+    required this.sessionId,
+  });
+
+  final bool ready;
+  final bool isValid;
+  final bool faceAreaOk;
+  final bool facePoseOk;
+  final bool lightingOk;
+  final String faceArea;
+  final String facePose;
+  final String lighting;
+  /// Null when SDK degree is not treated as a reliable measurement.
+  final double? facePoseDegree;
+  final bool facePoseDegreeReliable;
+  final String guidanceCode;
+  final int sessionId;
+
+  factory PerfectCameraKitQuality.fromMap(Map<String, dynamic> m) {
+    final degRaw = m['facePoseDegree'];
+    final degReliable = m['facePoseDegreeReliable'] == true;
+    double? deg;
+    if (degReliable && degRaw is num) {
+      deg = degRaw.toDouble();
+    } else if (degRaw is num && m.containsKey('facePoseDegreeReliable')) {
+      // Present but marked unreliable — do not surface as a measurement.
+      deg = null;
+    } else if (degRaw is num) {
+      // Legacy payloads without reliability flag: do not invent 0 as truth.
+      deg = null;
+    }
+    return PerfectCameraKitQuality(
+      ready: m['ready'] == true,
+      isValid: m['isValid'] == true,
+      faceAreaOk: m['faceAreaOk'] == true,
+      facePoseOk: m['facePoseOk'] == true,
+      lightingOk: m['lightingOk'] == true,
+      faceArea: '${m['faceArea'] ?? 'unknown'}',
+      facePose: '${m['facePose'] ?? 'unknown'}',
+      lighting: '${m['lighting'] ?? 'unknown'}',
+      facePoseDegree: deg,
+      facePoseDegreeReliable: degReliable,
+      guidanceCode: '${m['guidanceCode'] ?? 'align'}',
+      sessionId: (m['sessionId'] as num?)?.toInt() ?? 0,
+    );
+  }
+
+  /// ONE Arabic instruction — no SDK jargon.
+  String get guidanceAr {
+    switch (guidanceCode) {
+      case 'ready':
+        return 'جاهزة';
+      case 'too_far':
+        return 'اقتربي قليلًا';
+      case 'too_close':
+        return 'ابتعدي قليلًا';
+      case 'look_straight':
+        return 'انظري مباشرة إلى الكاميرا';
+      case 'lighting_low':
+        return 'حسّني الإضاءة أمام وجهك';
+      case 'lighting_high':
+        return 'خفّفي الإضاءة القوية';
+      case 'lighting_uneven':
+        return 'اجعلي الإضاءة متساوية على الوجه';
+      default:
+        return 'ثبّتي وجهك بشكل مستقيم';
+    }
+  }
+}

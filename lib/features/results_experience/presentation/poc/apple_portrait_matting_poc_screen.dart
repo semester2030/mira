@@ -69,16 +69,18 @@ class _ApplePortraitMattingPocScreenState
       PerfectMaskArtifact? mask;
       if (session != null) {
         for (final provider in session.providersWithMaskBytes()) {
-          final metric =
-              PerfectMaskSession.consumerMetricIdForProvider(provider);
+          final metric = PerfectMaskSession.consumerMetricIdForProvider(
+            provider,
+          );
           if (metric == null) continue;
           mask = session.lookup(consumerMetricId: metric);
           if (mask?.bytes != null && mask!.bytes!.isNotEmpty) break;
         }
       }
 
-      final matte =
-          await ApplePersonMattingPocBridge.generatePersonMatte(bytes);
+      final matte = await ApplePersonMattingPocBridge.generatePersonMatte(
+        bytes,
+      );
       final alphaDims = await _decodeDims(matte.alphaPng);
       final blackDims = await _decodeDims(matte.blackCompositePng);
       int? maskW;
@@ -144,7 +146,8 @@ class _ApplePortraitMattingPocScreenState
     if (m == null || _sourceDecodedW == null || _sourceDecodedH == null) {
       return false;
     }
-    final sameMatte = m.width == _sourceDecodedW &&
+    final sameMatte =
+        m.width == _sourceDecodedW &&
         m.height == _sourceDecodedH &&
         _matteDecodedW == _sourceDecodedW &&
         _matteDecodedH == _sourceDecodedH &&
@@ -152,8 +155,7 @@ class _ApplePortraitMattingPocScreenState
         _blackDecodedH == _sourceDecodedH;
     if (!sameMatte) return false;
     if (_maskDecodedW == null || _maskDecodedH == null) return sameMatte;
-    return _maskDecodedW == _sourceDecodedW &&
-        _maskDecodedH == _sourceDecodedH;
+    return _maskDecodedW == _sourceDecodedW && _maskDecodedH == _sourceDecodedH;
   }
 
   @override
@@ -181,43 +183,43 @@ class _ApplePortraitMattingPocScreenState
                 child: CircularProgressIndicator(color: Colors.white),
               )
             : _error != null
-                ? Padding(
-                    padding: const EdgeInsets.all(20),
-                    child: Text(
-                      _error!,
-                      style: AppTypography.bodyMedium.copyWith(
-                        color: Colors.redAccent,
-                      ),
-                    ),
-                  )
-                : Column(
-                    children: [
-                      _ModeStrip(
-                        mode: _mode,
-                        onChanged: (m) {
-                          HapticFeedback.selectionClick();
-                          setState(() => _mode = m);
-                        },
-                      ),
-                      Expanded(child: _buildViewer()),
-                      _MetricsBar(
-                        matte: _matte,
-                        sourceW: _sourceDecodedW,
-                        sourceH: _sourceDecodedH,
-                        matteW: _matteDecodedW,
-                        matteH: _matteDecodedH,
-                        blackW: _blackDecodedW,
-                        blackH: _blackDecodedH,
-                        maskW: _maskDecodedW,
-                        maskH: _maskDecodedH,
-                        dimsMatch: _dimsMatch,
-                        haloRingMean: _haloRingMean,
-                        bgLeakPct: _bgLeakPct,
-                        manualOffset: _manualOffset,
-                        hasPerfect: _perfectMask?.bytes != null,
-                      ),
-                    ],
+            ? Padding(
+                padding: const EdgeInsets.all(20),
+                child: Text(
+                  _error!,
+                  style: AppTypography.bodyMedium.copyWith(
+                    color: Colors.redAccent,
                   ),
+                ),
+              )
+            : Column(
+                children: [
+                  _ModeStrip(
+                    mode: _mode,
+                    onChanged: (m) {
+                      HapticFeedback.selectionClick();
+                      setState(() => _mode = m);
+                    },
+                  ),
+                  Expanded(child: _buildViewer()),
+                  _MetricsBar(
+                    matte: _matte,
+                    sourceW: _sourceDecodedW,
+                    sourceH: _sourceDecodedH,
+                    matteW: _matteDecodedW,
+                    matteH: _matteDecodedH,
+                    blackW: _blackDecodedW,
+                    blackH: _blackDecodedH,
+                    maskW: _maskDecodedW,
+                    maskH: _maskDecodedH,
+                    dimsMatch: _dimsMatch,
+                    haloRingMean: _haloRingMean,
+                    bgLeakPct: _bgLeakPct,
+                    manualOffset: _manualOffset,
+                    hasPerfect: _perfectMask?.bytes != null,
+                  ),
+                ],
+              ),
       ),
     );
   }
@@ -297,10 +299,7 @@ class _ApplePortraitMattingPocScreenState
       child: Center(
         child: AspectRatio(
           aspectRatio: aspect,
-          child: ColoredBox(
-            color: Colors.black,
-            child: child,
-          ),
+          child: ColoredBox(color: Colors.black, child: child),
         ),
       ),
     );

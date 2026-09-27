@@ -22,14 +22,18 @@ class ResultExperienceProjector {
     final confidence = ConfidencePresentationContract.fromPercent(
       input.overallConfidencePercent,
     );
-    final confidenceSpec =
-        ConfidencePresentationContract.forState(confidence);
+    final confidenceSpec = ConfidencePresentationContract.forState(confidence);
 
     final summary = _summary(input, confidence);
     final priorities = _priorities(input);
     final metrics = _metrics(input);
     final personalPlan = _personalPlan(input, priorities, confidence);
-    final immediate = _immediateAction(input, priorities, personalPlan, confidence);
+    final immediate = _immediateAction(
+      input,
+      priorities,
+      personalPlan,
+      confidence,
+    );
     final routine = _routine(input, personalPlan, confidence);
     final progress = _progress(input, confidence);
     final map = _map(input, confidence);
@@ -199,74 +203,80 @@ class ResultExperienceProjector {
   }
 
   List<ResultMetricVM> _metrics(ResultProjectionInput input) {
-    return input.metrics.map((m) {
-      if (!m.available || m.normalizedWellnessValue == null) {
-        return ResultMetricVM(
-          id: 'metric_${m.id}',
-          titleAr: m.displayNameAr,
-          summaryAr: 'هذا المؤشر غير متاح حالياً',
-          confidence: ConfidenceState.unavailable,
-          evidenceRef: 'metric:${m.id}',
-          visibility: VisibilityState.hiddenMissingEvidence,
-          interaction: InteractionState.disabled,
-          limitation: LimitationState.missingEvidence,
-          condition: null,
-          severityOrWellness: null,
-          statusLabelAr: 'غير متاح',
-          explanationAr: 'لا نقدّر بديلاً عند غياب الدليل',
-          evidenceAvailable: false,
-          comparisonEligible: false,
-        );
-      }
+    return input.metrics
+        .map((m) {
+          if (!m.available || m.normalizedWellnessValue == null) {
+            return ResultMetricVM(
+              id: 'metric_${m.id}',
+              titleAr: m.displayNameAr,
+              summaryAr: 'هذا المؤشر غير متاح حالياً',
+              confidence: ConfidenceState.unavailable,
+              evidenceRef: 'metric:${m.id}',
+              visibility: VisibilityState.hiddenMissingEvidence,
+              interaction: InteractionState.disabled,
+              limitation: LimitationState.missingEvidence,
+              condition: null,
+              severityOrWellness: null,
+              statusLabelAr: 'غير متاح',
+              explanationAr: 'لا نقدّر بديلاً عند غياب الدليل',
+              evidenceAvailable: false,
+              comparisonEligible: false,
+            );
+          }
 
-      final wellness = m.normalizedWellnessValue!.clamp(0, 100).toDouble();
-      final severity =
-          ScoreSemanticsContract.wellnessUiToSeverity(wellness);
-      final conf =
-          ConfidencePresentationContract.fromPercent(m.confidencePercent);
-      final status = ScoreSemanticsContract.concernSeverityStatusAr(severity);
-      final explanation = PublicLanguagePolicy.sanitize(
-        m.reasonAr?.trim().isNotEmpty == true
-            ? m.reasonAr!
-            : (m.levelAr ?? status),
-      );
+          final wellness = m.normalizedWellnessValue!.clamp(0, 100).toDouble();
+          final severity = ScoreSemanticsContract.wellnessUiToSeverity(
+            wellness,
+          );
+          final conf = ConfidencePresentationContract.fromPercent(
+            m.confidencePercent,
+          );
+          final status = ScoreSemanticsContract.concernSeverityStatusAr(
+            severity,
+          );
+          final explanation = PublicLanguagePolicy.sanitize(
+            m.reasonAr?.trim().isNotEmpty == true
+                ? m.reasonAr!
+                : (m.levelAr ?? status),
+          );
 
-      return ResultMetricVM(
-        id: 'metric_${m.id}',
-        titleAr: m.displayNameAr,
-        summaryAr: explanation,
-        confidence: conf,
-        evidenceRef: 'metric:${m.id}',
-        visibility: VisibilityState.visibleDetails,
-        interaction: InteractionState.expandable,
-        limitation: LimitationState.none,
-        condition: ResultScoreView(
-          category: ScoreCategory.wellnessScore,
-          direction: ScoreDirection.higherBetter,
-          value: wellness,
-          statusLabelAr: ScoreSemanticsContract.wellnessStatusAr(wellness),
-          colorRole: ColorRole.wellness,
-          numericVisible: true,
-          accessibilityTextAr:
-              ScoreSemanticsContract.wellness.accessibilityHintAr,
-        ),
-        severityOrWellness: ResultScoreView(
-          category: ScoreCategory.concernSeverity,
-          direction: ScoreDirection.higherWorse,
-          value: severity,
-          statusLabelAr: status,
-          colorRole: ColorRole.severity,
-          numericVisible: true,
-          accessibilityTextAr:
-              ScoreSemanticsContract.concernSeverity.accessibilityHintAr,
-        ),
-        statusLabelAr: status,
-        explanationAr: explanation,
-        recommendedActionAr: MetricPresentationPolicy.actionForId(m.id),
-        evidenceAvailable: true,
-        comparisonEligible: conf != ConfidenceState.unavailable,
-      );
-    }).toList(growable: false);
+          return ResultMetricVM(
+            id: 'metric_${m.id}',
+            titleAr: m.displayNameAr,
+            summaryAr: explanation,
+            confidence: conf,
+            evidenceRef: 'metric:${m.id}',
+            visibility: VisibilityState.visibleDetails,
+            interaction: InteractionState.expandable,
+            limitation: LimitationState.none,
+            condition: ResultScoreView(
+              category: ScoreCategory.wellnessScore,
+              direction: ScoreDirection.higherBetter,
+              value: wellness,
+              statusLabelAr: ScoreSemanticsContract.wellnessStatusAr(wellness),
+              colorRole: ColorRole.wellness,
+              numericVisible: true,
+              accessibilityTextAr:
+                  ScoreSemanticsContract.wellness.accessibilityHintAr,
+            ),
+            severityOrWellness: ResultScoreView(
+              category: ScoreCategory.concernSeverity,
+              direction: ScoreDirection.higherWorse,
+              value: severity,
+              statusLabelAr: status,
+              colorRole: ColorRole.severity,
+              numericVisible: true,
+              accessibilityTextAr:
+                  ScoreSemanticsContract.concernSeverity.accessibilityHintAr,
+            ),
+            statusLabelAr: status,
+            explanationAr: explanation,
+            recommendedActionAr: MetricPresentationPolicy.actionForId(m.id),
+            evidenceAvailable: true,
+            comparisonEligible: conf != ConfidenceState.unavailable,
+          );
+        })
+        .toList(growable: false);
   }
 
   ResultActionVM? _immediateAction(
@@ -280,15 +290,18 @@ class ResultExperienceProjector {
       // No routine step — safe unavailable today action omitted (no filler).
       return null;
     }
-    final step = [...plan.morning.steps, ...plan.evening.steps]
-        .where((s) => s.id == plan.todayStepId)
-        .firstOrNull;
+    final step = [
+      ...plan.morning.steps,
+      ...plan.evening.steps,
+    ].where((s) => s.id == plan.todayStepId).firstOrNull;
     if (step == null) return null;
 
     return ResultActionVM(
       id: 'immediate_action',
       titleAr: 'خطوتك اليوم',
-      summaryAr: step.instructionAr.isNotEmpty ? step.instructionAr : step.titleAr,
+      summaryAr: step.instructionAr.isNotEmpty
+          ? step.instructionAr
+          : step.titleAr,
       confidence: step.confidence,
       evidenceRef: step.evidenceRef,
       visibility: VisibilityState.visiblePrimary,
@@ -321,12 +334,11 @@ class ResultExperienceProjector {
       visibility: has
           ? VisibilityState.visiblePrimary
           : VisibilityState.unavailable,
-      interaction:
-          has ? InteractionState.navigable : InteractionState.disabled,
+      interaction: has ? InteractionState.navigable : InteractionState.disabled,
       limitation: has
           ? (plan.isLimited
-              ? LimitationState.lowConfidence
-              : LimitationState.none)
+                ? LimitationState.lowConfidence
+                : LimitationState.none)
           : LimitationState.missingEvidence,
       morningCount: plan.morning.steps.length,
       eveningCount: plan.evening.steps.length,
@@ -364,7 +376,9 @@ class ResultExperienceProjector {
 
     // Do not invent filler when counts exist without step payloads and count is 0.
     final morningSelected = PersonalPlanPolicy.selectPeriodSteps(
-      raw: morningRaw.where((s) => s.nameAr != 'خطوة صباحية' || s.instructionAr.isNotEmpty).toList(),
+      raw: morningRaw
+          .where((s) => s.nameAr != 'خطوة صباحية' || s.instructionAr.isNotEmpty)
+          .toList(),
       confidence: confidence,
       max: PersonalPlanPolicy.maxMorningSteps,
     );
@@ -372,7 +386,10 @@ class ResultExperienceProjector {
     final morningFinal = morningSelected.isNotEmpty
         ? morningSelected
         : _synthesizeFromCount(
-            count: input.morningStepCount.clamp(0, PersonalPlanPolicy.maxMorningSteps),
+            count: input.morningStepCount.clamp(
+              0,
+              PersonalPlanPolicy.maxMorningSteps,
+            ),
             period: 'am',
             confidence: confidence,
           );
@@ -386,13 +403,16 @@ class ResultExperienceProjector {
     final eveningFinal = eveningSelected.isNotEmpty
         ? eveningSelected
         : _synthesizeFromCount(
-            count: input.eveningStepCount.clamp(0, PersonalPlanPolicy.maxEveningSteps),
+            count: input.eveningStepCount.clamp(
+              0,
+              PersonalPlanPolicy.maxEveningSteps,
+            ),
             period: 'pm',
             confidence: confidence,
           );
 
-    final hasMetricEvidence = input.metrics.any((m) => m.available) ||
-        priorities.isNotEmpty;
+    final hasMetricEvidence =
+        input.metrics.any((m) => m.available) || priorities.isNotEmpty;
 
     ResultRoutineStepVM mapStep(
       FrozenRoutineStepInput s,
@@ -434,7 +454,8 @@ class ResultExperienceProjector {
         personalization: pers,
         adviceConceptId: concept,
         completionEligible: pers != PersonalizationClass.unsupported,
-        advisorEligible: pers == PersonalizationClass.evidenceDerived ||
+        advisorEligible:
+            pers == PersonalizationClass.evidenceDerived ||
             pers == PersonalizationClass.profileDerived ||
             pers == PersonalizationClass.contextDerived,
         analyticsId: 'routine_step_${s.id}',
@@ -464,13 +485,16 @@ class ResultExperienceProjector {
 
     final allSteps = [...morningSteps, ...eveningSteps];
     final eligible = allSteps.isNotEmpty;
-    final todayStepId = eligible ? _pickTodayStepId(allSteps, priorities) : null;
+    final todayStepId = eligible
+        ? _pickTodayStepId(allSteps, priorities)
+        : null;
 
     final focus = priorities.isNotEmpty
         ? priorities.first.concernLabelAr
         : (eligible ? 'روتين لطيف ومتسق' : 'لا توجد خطة');
 
-    final limited = confidence == ConfidenceState.low ||
+    final limited =
+        confidence == ConfidenceState.low ||
         confidence == ConfidenceState.unavailable ||
         !eligible;
 
@@ -512,20 +536,21 @@ class ResultExperienceProjector {
       titleAr: 'خطتك الشخصية',
       summaryAr: eligible
           ? (limited
-              ? 'خطة مبسّطة بسبب حدود الثقة أو الأدلة. راجعي الخطوات اللطيفة أو أعيدي التحليل لاحقاً.'
-              : 'خطة عناية قصيرة: خطوات صباح ومساء مع تركيز أسبوعي واحد.')
+                ? 'خطة مبسّطة بسبب حدود الثقة أو الأدلة. راجعي الخطوات اللطيفة أو أعيدي التحليل لاحقاً.'
+                : 'خطة عناية قصيرة: خطوات صباح ومساء مع تركيز أسبوعي واحد.')
           : 'لا تتوفر أدلة كافية لإنشاء روتين شخصي كامل حالياً. يمكنك مراجعة الإرشادات العامة أو إعادة التحليل في ظروف أوضح.',
       confidence: confidence,
       evidenceRef: 'personal_plan:${input.analysisId}',
       visibility: eligible
           ? VisibilityState.visiblePrimary
           : VisibilityState.unavailable,
-      interaction:
-          eligible ? InteractionState.navigable : InteractionState.disabled,
+      interaction: eligible
+          ? InteractionState.navigable
+          : InteractionState.disabled,
       limitation: limited
           ? (eligible
-              ? LimitationState.lowConfidence
-              : LimitationState.missingEvidence)
+                ? LimitationState.lowConfidence
+                : LimitationState.missingEvidence)
           : LimitationState.none,
       focusAr: focus,
       activeStepCount: allSteps.length,
@@ -645,11 +670,11 @@ class ResultExperienceProjector {
     final comparability = _comparability(p);
     final canShowDelta =
         comparability == ProgressComparabilityState.comparable &&
-            p.deltaPoints != null;
+        p.deltaPoints != null;
     final canShowProjection =
         comparability == ProgressComparabilityState.comparable &&
-            p.projectedScore30Days != null &&
-            p.confidenceAdequate;
+        p.projectedScore30Days != null &&
+        p.confidenceAdequate;
 
     String summary;
     switch (comparability) {
@@ -692,7 +717,8 @@ class ResultExperienceProjector {
     if (p.scanCount < 2 || !p.hasBaseline) {
       return ProgressComparabilityState.insufficientHistory;
     }
-    final hardFail = !p.metricCompatible ||
+    final hardFail =
+        !p.metricCompatible ||
         !p.modelVersionCompatible ||
         !p.captureQualityCompatible ||
         !p.confidenceAdequate;
@@ -703,10 +729,7 @@ class ResultExperienceProjector {
     return ProgressComparabilityState.comparable;
   }
 
-  ResultMapVM _map(
-    ResultProjectionInput input,
-    ConfidenceState confidence,
-  ) {
+  ResultMapVM _map(ResultProjectionInput input, ConfidenceState confidence) {
     const title = 'استكشاف بشرتك';
     const badge = 'قناع ميرا';
     const explanation =
@@ -755,61 +778,69 @@ class ResultExperienceProjector {
     final out = <ResultProductVM>[];
     for (final p in input.products) {
       final disclosure = _disclosure(p.disclosure);
-      final hasEvidence = p.hasRecommendationReason &&
+      final hasEvidence =
+          p.hasRecommendationReason &&
           (p.recommendationReasonAr?.trim().isNotEmpty ?? false) &&
           (p.linkedConcernAr?.trim().isNotEmpty ?? false);
 
       if (!hasEvidence || p.matchScore <= 0) {
-        out.add(_productVm(
-          p,
-          ProductRecommendationState.insufficientEvidence,
-          VisibilityState.hiddenMissingEvidence,
-          confidence,
-          disclosure,
-          skinTypeAr: input.skinTypeAr,
-          matchVisible: false,
-          match: null,
-          qualification: 'الدليل غير كافٍ لعرض توصية',
-        ));
+        out.add(
+          _productVm(
+            p,
+            ProductRecommendationState.insufficientEvidence,
+            VisibilityState.hiddenMissingEvidence,
+            confidence,
+            disclosure,
+            skinTypeAr: input.skinTypeAr,
+            matchVisible: false,
+            match: null,
+            qualification: 'الدليل غير كافٍ لعرض توصية',
+          ),
+        );
         continue;
       }
 
       if (p.matchScore >= 75) {
-        out.add(_productVm(
-          p,
-          ProductRecommendationState.recommended,
-          VisibilityState.visibleSecondary,
-          confidence,
-          disclosure,
-          skinTypeAr: input.skinTypeAr,
-          matchVisible: true,
-          match: p.matchScore,
-        ));
+        out.add(
+          _productVm(
+            p,
+            ProductRecommendationState.recommended,
+            VisibilityState.visibleSecondary,
+            confidence,
+            disclosure,
+            skinTypeAr: input.skinTypeAr,
+            matchVisible: true,
+            match: p.matchScore,
+          ),
+        );
       } else if (p.matchScore >= 65) {
-        out.add(_productVm(
-          p,
-          ProductRecommendationState.possibleAlternative,
-          VisibilityState.visibleDetails,
-          confidence,
-          disclosure,
-          skinTypeAr: input.skinTypeAr,
-          matchVisible: true,
-          match: p.matchScore,
-          qualification:
-              'بديل محتمل — ملاءمة متوسطة، للتفاصيل فقط',
-        ));
+        out.add(
+          _productVm(
+            p,
+            ProductRecommendationState.possibleAlternative,
+            VisibilityState.visibleDetails,
+            confidence,
+            disclosure,
+            skinTypeAr: input.skinTypeAr,
+            matchVisible: true,
+            match: p.matchScore,
+            qualification: 'بديل محتمل — ملاءمة متوسطة، للتفاصيل فقط',
+          ),
+        );
       } else {
-        out.add(_productVm(
-          p,
-          ProductRecommendationState.hidden,
-          VisibilityState.hiddenIneligible,
-          confidence,
-          disclosure,
-          skinTypeAr: input.skinTypeAr,
-          matchVisible: false,
-          match: null,
-          qualification: 'أقل من حد العرض العام',
-        ));
+        out.add(
+          _productVm(
+            p,
+            ProductRecommendationState.hidden,
+            VisibilityState.hiddenIneligible,
+            confidence,
+            disclosure,
+            skinTypeAr: input.skinTypeAr,
+            matchVisible: false,
+            match: null,
+            qualification: 'أقل من حد العرض العام',
+          ),
+        );
       }
     }
     return List.unmodifiable(out);
@@ -835,7 +866,8 @@ class ResultExperienceProjector {
       confidence: confidence,
       evidenceRef: 'product:${p.id}',
       visibility: visibility,
-      interaction: visibility == VisibilityState.visibleSecondary ||
+      interaction:
+          visibility == VisibilityState.visibleSecondary ||
               visibility == VisibilityState.visibleDetails
           ? InteractionState.tappable
           : InteractionState.disabled,
@@ -882,7 +914,8 @@ class ResultExperienceProjector {
     final ageConf = ConfidencePresentationContract.fromLegacyLevel(
       input.skinAgeConfidenceLevel,
     );
-    final eligible = input.skinAgeYears != null &&
+    final eligible =
+        input.skinAgeYears != null &&
         (ageConf == ConfidenceState.high ||
             ageConf == ConfidenceState.medium) &&
         overall != ConfidenceState.unavailable;
@@ -981,8 +1014,8 @@ class ResultExperienceProjector {
         input.retakeGuidanceAr?.trim().isNotEmpty == true
             ? input.retakeGuidanceAr!
             : (suggested
-                ? 'يمكنك إعادة التحليل لتحسين وضوح النتيجة.'
-                : 'يمكنك إعادة التحليل في أي وقت بظروف إضاءة ثابتة.'),
+                  ? 'يمكنك إعادة التحليل لتحسين وضوح النتيجة.'
+                  : 'يمكنك إعادة التحليل في أي وقت بظروف إضاءة ثابتة.'),
       ),
       confidence: confidence,
       evidenceRef: 'retake:${input.analysisId}',
@@ -990,8 +1023,9 @@ class ResultExperienceProjector {
           ? VisibilityState.visibleSecondary
           : VisibilityState.visibleDetails,
       interaction: InteractionState.navigable,
-      limitation:
-          suggested ? LimitationState.retakeSuggested : LimitationState.none,
+      limitation: suggested
+          ? LimitationState.retakeSuggested
+          : LimitationState.none,
       suggested: suggested,
     );
   }
@@ -999,8 +1033,7 @@ class ResultExperienceProjector {
 
 /// Personalization helper used by validators/tests.
 abstract final class PersonalizationPolicy {
-  static String labelAr(PersonalizationClass c) =>
-      PersonalizationLabels.ar(c);
+  static String labelAr(PersonalizationClass c) => PersonalizationLabels.ar(c);
 
   static bool mayPresent(PersonalizationClass c) =>
       c != PersonalizationClass.unsupported;

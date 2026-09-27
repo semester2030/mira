@@ -1,9 +1,6 @@
 /// Feature flag: mira_results_experience_v2
 /// Default remains [legacy]. Do not activate results_v2 globally.
-enum MiraResultsExperienceVariant {
-  legacy,
-  resultsV2,
-}
+enum MiraResultsExperienceVariant { legacy, resultsV2 }
 
 /// Runtime-resolvable flag for coexistence of legacy report and v2 first surface.
 class MiraResultsExperienceFlag {
@@ -16,8 +13,9 @@ class MiraResultsExperienceFlag {
   static const String key = 'mira_results_experience_v2';
 
   /// Production default — always legacy unless explicitly overridden.
-  static const MiraResultsExperienceFlag defaults =
-      MiraResultsExperienceFlag(variant: MiraResultsExperienceVariant.legacy);
+  static const MiraResultsExperienceFlag defaults = MiraResultsExperienceFlag(
+    variant: MiraResultsExperienceVariant.legacy,
+  );
 
   bool get isResultsV2 => variant == MiraResultsExperienceVariant.resultsV2;
   bool get isLegacy => variant == MiraResultsExperienceVariant.legacy;
@@ -42,7 +40,8 @@ class MiraResultsExperienceFlag {
 /// Process-local flag store (remote config / tests may [apply]).
 /// Defaults to legacy. Never enable globally in Phase 8C.
 abstract final class MiraResultsExperienceFlagStore {
-  static MiraResultsExperienceFlag _current = MiraResultsExperienceFlag.defaults;
+  static MiraResultsExperienceFlag _current =
+      MiraResultsExperienceFlag.defaults;
 
   static MiraResultsExperienceFlag get current => _current;
 

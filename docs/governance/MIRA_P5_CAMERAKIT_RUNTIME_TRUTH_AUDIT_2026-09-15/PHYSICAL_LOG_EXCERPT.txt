@@ -1,0 +1,8 @@
+136:flutter: Mira PerfectCameraKit init: version=2.5.0.000000 level=moderate yaw=10.0 size=0.6499999761581421
+141:flutter: Mira PerfectCameraKit quality: ready=false area=unknown pose=unknown light=unknown code=align deg=0.0
+147:flutter: Mira PerfectCameraKit quality: ready=false area=unknown pose=unknown light=unknown code=align deg=0.0
+148:flutter: Mira PerfectCameraKit quality: ready=false area=unknown pose=unknown light=unknown code=align deg=0.0
+149:flutter: Mira PerfectCameraKit quality: ready=false area=unknown pose=unknown light=unknown code=align deg=0.0
+---
+450
+non_unknown_count=0

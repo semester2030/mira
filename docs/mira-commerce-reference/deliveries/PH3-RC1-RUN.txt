@@ -1,0 +1,12 @@
+إعادة التحقق من الحزمة المشتركة PH2-RC6 وPH3-RC1
+الأساس الموثق: commit 15fe65c40d3dedb9afdd95619f2945bd84cb616a. الحزمة تُركَّب فوقه وليست المستودع كاملًا.
+
+1. فك الحزمة في مجلد فارغ.
+2. انسخ المسارات الموجودة فوق الأساس: lib غير مطلوب لهذه الجولة إن لم يتغير، وmira-api/src/marketplace وmira-api/src/partners-portal وmira-api/src/admin وmira-api/src/common/guards/admin-api-key.guard.ts وmira-api/prisma وmira-api/scripts وpartners-portal/web وadmin-portal/web وdocs/mira-commerce-reference.
+3. أنشئ mira-api/.env محليًا باتصال Postgres على localhost. دور Prisma في البيئة الحالية mira ولا ينشئ القواعد. دور الإدارة هو مستخدم النظام على المضيف والمنفذ نفسهما. لا تدرج .env في الحزمة ولا تشغّل الترحيل على الإنتاج.
+4. من mira-api: npm ci ثم npm run build ثم bash scripts/run-marketplace-rc6-integration.sh
+5. السكربت ينشئ mira_ph2_rc6_test فقط، ويوقف التشغيل إذا فشل التحقق من الوجود، ويحذف قاعدة الجولة عند النجاح. فشل الحذف لا يطبع cleaned.
+6. فحص الموقع: python3 scripts/validate_package.py من نسخة docs/mira-commerce-reference.
+7. بديل Firebase في اختبار HTTP لا يثبت الخدمة الحية. الاستيراد simulated وconnected=false وليس اتصال زد.
+
+نجاح PH2-RC6 لا يعني اكتمال PH3-RC1. لا تعتمد أي مرحلة من هذا السجل.

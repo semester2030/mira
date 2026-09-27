@@ -1,0 +1,7 @@
+RC5 database target checks. No database URL or password is printed.
+check default name mira_ph2_rc5_test: exit 0 ACCEPT on localhost:5432
+check disallowed name mira_db: exit 2 REFUSE database name. mira_db was not dropped and remained present before and after.
+check disallowed host 203.0.113.10: exit 2 REFUSE host. No connection and no drop.
+check allowed renamed database mira_ph2_rc5_test_alt: exit 0 ACCEPT. The check mode does not create or drop.
+deliberate failure MIRA_RC5_EXPECT_FAIL=1 on mira_ph2_rc5_test_fail: exit 1 after the legacy migration check, then cleanup dropped only that database. fail-db-left 0.
+successful HTTP run on mira_ph2_rc5_test: exit 0, database dropped, mira_db still present.

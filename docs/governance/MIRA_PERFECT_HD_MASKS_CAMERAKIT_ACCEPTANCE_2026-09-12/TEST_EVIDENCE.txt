@@ -1,0 +1,3 @@
+Parser tests: 6/6 PASS via ts-node perfect-hd-mask.parser.spec.ts
+Live HD: fetch failed (local network)
+CameraKit: NOT AVAILABLE

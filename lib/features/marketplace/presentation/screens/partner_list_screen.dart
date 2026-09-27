@@ -4,8 +4,10 @@ import 'package:url_launcher/url_launcher.dart';
 import '../../../../shared/theme/colors.dart';
 import '../../../../shared/theme/typography.dart';
 import '../../../../shared/widgets/mira_app_bar.dart';
+import '../../data/catalog_provenance.dart';
 import '../../data/repositories/marketplace_repository_impl.dart';
 import '../../domain/entities/partner_summary.dart';
+import '../widgets/marketplace_data_banner.dart';
 import 'partner_detail_screen.dart';
 
 class PartnerListScreen extends StatefulWidget {
@@ -19,7 +21,7 @@ class PartnerListScreen extends StatefulWidget {
 
 class _PartnerListScreenState extends State<PartnerListScreen> {
   final _repo = MarketplaceRepositoryImpl();
-  late Future<List<PartnerSummary>> _future;
+  late Future<CatalogLoad<List<PartnerSummary>>> _future;
 
   String get _title {
     switch (widget.partnerType) {
@@ -37,20 +39,18 @@ class _PartnerListScreenState extends State<PartnerListScreen> {
   @override
   void initState() {
     super.initState();
-    _future = _repo.listPartners(type: widget.partnerType);
+    _future = _repo.listPartnersLoad(type: widget.partnerType);
   }
 
-  Future<void> _onPartnerTap(PartnerSummary partner) async {
-    if (partner.isBrand) {
-      final url = partner.storeUrl;
-      if (url == null || url.isEmpty) return;
-      final uri = Uri.tryParse(url);
-      if (uri == null) return;
-      await launchUrl(uri, mode: LaunchMode.externalApplication);
-      return;
-    }
+  Future<void> _openStore(PartnerSummary partner) async {
+    final url = partner.storeUrl;
+    if (url == null || url.isEmpty) return;
+    final uri = Uri.tryParse(url);
+    if (uri == null) return;
+    await launchUrl(uri, mode: LaunchMode.externalApplication);
+  }
 
-    if (!mounted) return;
+  void _openDetail(PartnerSummary partner) {
     Navigator.push(
       context,
       MaterialPageRoute<void>(
@@ -64,7 +64,7 @@ class _PartnerListScreenState extends State<PartnerListScreen> {
     return Scaffold(
       backgroundColor: AppColors.background,
       appBar: MiraAppBar(pageTitle: _title),
-      body: FutureBuilder<List<PartnerSummary>>(
+      body: FutureBuilder<CatalogLoad<List<PartnerSummary>>>(
         future: _future,
         builder: (context, snapshot) {
           if (snapshot.connectionState == ConnectionState.waiting) {
@@ -73,17 +73,24 @@ class _PartnerListScreenState extends State<PartnerListScreen> {
           if (snapshot.hasError) {
             return Center(child: Text('تعذر التحميل: ${snapshot.error}'));
           }
-          final partners = snapshot.data ?? [];
+          final load = snapshot.data;
+          final partners = load?.value ?? [];
           if (partners.isEmpty) {
             return const Center(child: Text('لا يوجد شركاء في هذه الفئة حالياً'));
           }
 
           return ListView.separated(
             padding: const EdgeInsets.all(20),
-            itemCount: partners.length,
+            itemCount: partners.length + 1,
             separatorBuilder: (_, __) => const SizedBox(height: 12),
             itemBuilder: (context, i) {
-              final p = partners[i];
+              if (i == 0 && load != null) {
+                return MarketplaceDataBanner(
+                  transport: load.transport,
+                  contentMark: load.contentMark,
+                );
+              }
+              final p = partners[i - 1];
               return ListTile(
                 shape: RoundedRectangleBorder(
                   borderRadius: BorderRadius.circular(16),
@@ -101,10 +108,14 @@ class _PartnerListScreenState extends State<PartnerListScreen> {
                   maxLines: 2,
                   overflow: TextOverflow.ellipsis,
                 ),
-                trailing: Icon(
-                  p.isBrand ? Icons.open_in_new_rounded : Icons.chevron_left_rounded,
-                ),
-                onTap: () => _onPartnerTap(p),
+                trailing: p.isBrand
+                    ? IconButton(
+                        tooltip: 'رابط المتجر الخارجي',
+                        onPressed: () => _openStore(p),
+                        icon: const Icon(Icons.open_in_new_rounded),
+                      )
+                    : const Icon(Icons.chevron_left_rounded),
+                onTap: () => _openDetail(p),
               );
             },
           );

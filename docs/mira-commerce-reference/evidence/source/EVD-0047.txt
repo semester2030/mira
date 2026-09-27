@@ -1,0 +1,2 @@
+RC5 current excerpt. DiscoverPublishedAd.tryParse copies target descriptionAr onto CatalogProduct.
+A missing value stays null. An empty string stays empty. The ad caption is not used as the description.

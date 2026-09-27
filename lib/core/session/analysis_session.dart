@@ -1,5 +1,8 @@
+import 'dart:io';
+
 import 'package:flutter/foundation.dart';
 
+import '../privacy/ephemeral_analysis_face_registry.dart';
 import '../../features/outfit_analysis/domain/entities/outfit_analysis.dart';
 import '../../features/outfit_analysis/domain/entities/outfit_report.dart';
 import '../../features/outfit_analysis/domain/entities/user_gender.dart';
@@ -48,10 +51,75 @@ abstract final class AnalysisSession {
   /// Canonical owner of PerfectMaskSession for the active Skin result.
   static PerfectMaskSession? lastPerfectMasks;
 
+  /// Canonical ephemeral face image for the active Skin analysis session.
+  /// Session-scoped temp hold only — never History / Storage / Photos.
+  static String? lastEphemeralFacePath;
+
+  /// Safe identity for diagnostics (basename only — never bytes).
+  static String? lastEphemeralFaceId;
+
+  /// Oriented pixel dimensions of the Perfect-input hold (when known).
+  static int? lastEphemeralFaceWidth;
+  static int? lastEphemeralFaceHeight;
+
   /// Last real-analysis mask creation proof (sanitized).
   static PerfectMaskCreateProof? lastMaskCreateProof;
 
   static void setSkin(SkinReport report) => lastSkin = report;
+
+  /// Bind the Perfect-input face hold for Result / Face Explorer / Apple Matte.
+  static void setEphemeralFace({
+    required String path,
+    int? width,
+    int? height,
+  }) {
+    if (path.isEmpty) return;
+    final previous = lastEphemeralFacePath;
+    if (previous != null && previous != path) {
+      // Fire-and-forget prior hold — new analysis owns the session.
+      EphemeralAnalysisFaceRegistry.release(previous);
+    }
+    lastEphemeralFacePath = path;
+    lastEphemeralFaceId = _safeFaceId(path);
+    lastEphemeralFaceWidth = width;
+    lastEphemeralFaceHeight = height;
+    EphemeralAnalysisFaceRegistry.register(path);
+    // ignore: avoid_print
+    print(
+      'FACE_EPHEMERAL owner=AnalysisSession '
+      'present=1 id=${lastEphemeralFaceId ?? "-"} '
+      'dims=${width ?? "-"}x${height ?? "-"}',
+    );
+  }
+
+  /// Drop + delete the session face hold (end of active result session).
+  static Future<void> releaseEphemeralFace() async {
+    final path = lastEphemeralFacePath;
+    lastEphemeralFacePath = null;
+    lastEphemeralFaceId = null;
+    lastEphemeralFaceWidth = null;
+    lastEphemeralFaceHeight = null;
+    if (path == null) return;
+    await EphemeralAnalysisFaceRegistry.release(path);
+    // ignore: avoid_print
+    print('FACE_EPHEMERAL release id=${_safeFaceId(path)}');
+  }
+
+  /// Detach owner pointer only when [path] is the current hold (route dispose).
+  static Future<void> releaseEphemeralFaceIfPath(String? path) async {
+    if (path == null || path.isEmpty) return;
+    if (lastEphemeralFacePath != path) {
+      // Stale arg — still delete the file if it was a hold copy.
+      await EphemeralAnalysisFaceRegistry.release(path);
+      return;
+    }
+    await releaseEphemeralFace();
+  }
+
+  static String _safeFaceId(String path) {
+    final base = path.split(Platform.pathSeparator).last;
+    return 'face_${base.hashCode.toRadixString(16)}';
+  }
 
   static void recordMaskCreateProof(PerfectMaskCreateProof proof) {
     lastMaskCreateProof = proof;
@@ -114,6 +182,15 @@ abstract final class AnalysisSession {
     lastOutfitIntelligence = null;
     lastRecolorAttemptId = null;
     userGender = UserGender.female;
+    // Best-effort sync clear of face pointer; async wipe via registry.
+    final face = lastEphemeralFacePath;
+    lastEphemeralFacePath = null;
+    lastEphemeralFaceId = null;
+    lastEphemeralFaceWidth = null;
+    lastEphemeralFaceHeight = null;
+    if (face != null) {
+      EphemeralAnalysisFaceRegistry.release(face);
+    }
   }
 
   /// Skin report available for Smart outfit mode / fusion.

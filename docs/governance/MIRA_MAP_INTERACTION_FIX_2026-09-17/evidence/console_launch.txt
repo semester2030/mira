@@ -1,0 +1,14 @@
+16:23:54  Acquired tunnel connection to device.
+16:23:54  Enabling developer disk image services.
+16:23:54  Acquired usage assertion.
+ERROR: The application failed to launch. (com.apple.dt.CoreDeviceError error 10002 (0x2712))
+       BundleIdentifier = app.mira.beauty
+       ----------------------------------------
+           The request to open "app.mira.beauty" failed. (FBSOpenApplicationServiceErrorDomain error 1 (0x01))
+           NSLocalizedFailureReason = The request was denied by service delegate (SBMainWorkspace) for reason: Locked ("Unable to launch app.mira.beauty because the device was not, or could not be, unlocked").
+           BSErrorCodeDescription = RequestDenied
+           FBSOpenApplicationRequestID = 0x1bb
+       ----------------------------------------
+               The operation couldn’t be completed. Unable to launch app.mira.beauty because the device was not, or could not be, unlocked. (FBSOpenApplicationErrorDomain error 7 (0x07))
+               BSErrorCodeDescription = Locked
+               NSLocalizedFailureReason = Unable to launch app.mira.beauty because the device was not, or could not be, unlocked.

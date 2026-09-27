@@ -1,0 +1,34 @@
+# Evidence EVD-0003
+# file=lib/features/marketplace/presentation/screens/service_detail_screen.dart
+# lines=71-97
+# commit=15fe65c40d3dedb9afdd95619f2945bd84cb616a
+# sha256=c6fb3485eb7cc65958b4af7a8acfea357b7073bb2a56502ed1f2e9e9cd417d9b
+# inspected_at=2026-09-23T03:20:00+03:00
+
+71|              PremiumCard(
+72|                child: Text(
+73|                  'الحجز الإلكتروني الكامل سيُفعّل مع بوابة الشركاء (المرحلة القادمة). '
+74|                  'حالياً تواصلي مع ${service.partnerNameAr} مباشرة أو انتظري إشعار ميرا.',
+75|                  style: AppTypography.bodyMedium.copyWith(height: 1.5),
+76|                ),
+77|              ),
+78|              const Spacer(),
+79|              PremiumButton(
+80|                label: service.bookingEnabled ? 'احجزي الآن' : 'الحجز قريباً',
+81|                icon: Icons.calendar_month_rounded,
+82|                variant: PremiumButtonVariant.gold,
+83|                onPressed: service.bookingEnabled
+84|                    ? null
+85|                    : () {
+86|                        ScaffoldMessenger.of(context).showSnackBar(
+87|                          SnackBar(
+88|                            content: Text(
+89|                              'سنُفعّل الحجز لـ ${service.partnerNameAr} قريباً ✨',
+90|                              style: AppTypography.bodyMedium.copyWith(
+91|                                color: AppColors.onPrimary,
+92|                              ),
+93|                            ),
+94|                          ),
+95|                        );
+96|                      },
+97|              ),

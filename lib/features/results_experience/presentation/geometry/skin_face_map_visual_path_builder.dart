@@ -33,13 +33,17 @@ abstract final class SkinFaceMapVisualPathBuilder {
     final shrink = _shrinkFor(exploreId);
     final target = _simplifyTarget(exploreId);
 
-    final simplified = SmoothPathBuilder.simplify(polygon.points, target: target);
+    final simplified = SmoothPathBuilder.simplify(
+      polygon.points,
+      target: target,
+    );
     final shrunk = _shrinkTowardCentroid(simplified, shrink);
     var visual = SmoothPathBuilder.fromPoints(shrunk, tension: tension);
     if (visual.getBounds().isEmpty) return hit;
 
     final centroid =
-        LandmarkAlignedFaceGeometry.polygonCentroid(hit) ?? hit.getBounds().center;
+        LandmarkAlignedFaceGeometry.polygonCentroid(hit) ??
+        hit.getBounds().center;
     final shell = _scalePathAround(hit, centroid, hitShellScale);
     try {
       final clipped = Path.combine(PathOperation.intersect, visual, shell);
@@ -70,29 +74,29 @@ abstract final class SkinFaceMapVisualPathBuilder {
   }
 
   static double _tensionFor(String exploreId) => switch (exploreId) {
-        'forehead' => 0.26,
-        'cheeks_left' || 'cheeks_right' => 0.30,
-        'nose' => 0.20,
-        'chin' => 0.28,
-        'under_eyes_left' || 'under_eyes_right' => 0.24,
-        _ => 0.26,
-      };
+    'forehead' => 0.26,
+    'cheeks_left' || 'cheeks_right' => 0.30,
+    'nose' => 0.20,
+    'chin' => 0.28,
+    'under_eyes_left' || 'under_eyes_right' => 0.24,
+    _ => 0.26,
+  };
 
   static double _shrinkFor(String exploreId) => switch (exploreId) {
-        'forehead' => 0.05,
-        'cheeks_left' || 'cheeks_right' => 0.07,
-        'nose' => 0.04,
-        'chin' => 0.06,
-        'under_eyes_left' || 'under_eyes_right' => 0.05,
-        _ => 0.05,
-      };
+    'forehead' => 0.05,
+    'cheeks_left' || 'cheeks_right' => 0.07,
+    'nose' => 0.04,
+    'chin' => 0.06,
+    'under_eyes_left' || 'under_eyes_right' => 0.05,
+    _ => 0.05,
+  };
 
   static int _simplifyTarget(String exploreId) => switch (exploreId) {
-        'nose' => 8,
-        'chin' => 8,
-        'under_eyes_left' || 'under_eyes_right' => 8,
-        _ => 10,
-      };
+    'nose' => 8,
+    'chin' => 8,
+    'under_eyes_left' || 'under_eyes_right' => 8,
+    _ => 10,
+  };
 
   static List<FaceMeshPoint> _shrinkTowardCentroid(
     List<FaceMeshPoint> points,
@@ -110,10 +114,7 @@ abstract final class SkinFaceMapVisualPathBuilder {
     final t = (1.0 - factor).clamp(0.7, 1.0);
     return [
       for (final p in points)
-        FaceMeshPoint(
-          cx + (p.x - cx) * t,
-          cy + (p.y - cy) * t,
-        ),
+        FaceMeshPoint(cx + (p.x - cx) * t, cy + (p.y - cy) * t),
     ];
   }
 

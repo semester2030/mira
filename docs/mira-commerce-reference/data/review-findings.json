@@ -1,0 +1,1092 @@
+[
+  {
+    "id": "REV-0001",
+    "parentId": null,
+    "titleAr": "أدلة الشركاء والإدارة لا تطابق حكم التفعيل",
+    "source": "مراجعة الحزمة السابقة",
+    "descriptionAr": "بوابة الشركاء وُصفت مفعلة ودليلها ملف مواصفات، ولوحة الإدارة بلا دليل.",
+    "reqIds": [
+      "REQ-0006",
+      "REQ-0016"
+    ],
+    "severity": "high",
+    "impactAr": "بوابة الشركاء وُصفت مفعلة ودليلها ملف مواصفات، ولوحة الإدارة بلا دليل.",
+    "unit": "partners-admin",
+    "files": [
+      "partners-portal/SPEC.md",
+      "admin-portal/web/js/api.js"
+    ],
+    "previousEvidenceAr": "EVD-0007 فقط لـ CAP-0007، وCAP-0008 بلا evidenceIds",
+    "actionAr": "قراءة المتحكم والحارس وعميل الويب، وتخفيض التفعيل إلى UNKNOWN",
+    "newEvidenceIds": [
+      "EVD-0011",
+      "EVD-0012",
+      "EVD-0014",
+      "EVD-0015"
+    ],
+    "verificationAr": "مقارنة الملفات بالمقتطفات وSHA-256",
+    "remainingLimitsAr": "لا تشغيل إنتاجي. البندان الفرعيان اكتملت دراستهما بانتظار المراجعة.",
+    "status": "معالجة بانتظار المراجعة",
+    "previousStatus": "مفتوحة في مراجعة الحزمة 20260923_032329",
+    "updatedAt": "2026-09-23T03:43:29+03:00",
+    "evidenceType": "source"
+  },
+  {
+    "id": "REV-0001a",
+    "parentId": "REV-0001",
+    "titleAr": "SPEC ليس دليل تنفيذ الشركاء",
+    "source": "مراجعة الحزمة السابقة",
+    "descriptionAr": "EVD-0007 مواصفات. التنفيذ في المتحكم والعميل.",
+    "reqIds": [
+      "REQ-0006"
+    ],
+    "severity": "high",
+    "impactAr": "EVD-0007 مواصفات. التنفيذ في المتحكم والعميل.",
+    "unit": "partners",
+    "files": [
+      "partners-portal/SPEC.md",
+      "mira-api/src/partners-portal/partners-portal.controller.ts"
+    ],
+    "previousEvidenceAr": "EVD-0007",
+    "actionAr": "أُبقي EVD-0007 كوثيقة وأُضيفت أدلة التنفيذ",
+    "newEvidenceIds": [
+      "EVD-0007",
+      "EVD-0011",
+      "EVD-0016"
+    ],
+    "verificationAr": "مراجعة نوع الدليل document مقابل fact",
+    "remainingLimitsAr": "التفعيل الإنتاجي UNKNOWN",
+    "status": "معالجة بانتظار المراجعة",
+    "previousStatus": "مفتوحة في مراجعة الحزمة 20260923_032329",
+    "updatedAt": "2026-09-23T03:43:29+03:00",
+    "evidenceType": "source"
+  },
+  {
+    "id": "REV-0001b",
+    "parentId": "REV-0001",
+    "titleAr": "لوحة الإدارة بلا دليل مرتبط",
+    "source": "مراجعة الحزمة السابقة",
+    "descriptionAr": "CAP-0008 كانت بلا evidenceIds.",
+    "reqIds": [
+      "REQ-0016"
+    ],
+    "severity": "high",
+    "impactAr": "CAP-0008 كانت بلا evidenceIds.",
+    "unit": "admin",
+    "files": [
+      "mira-api/src/admin/admin.controller.ts",
+      "admin-portal/web/js/api.js"
+    ],
+    "previousEvidenceAr": "مصفوفة فارغة",
+    "actionAr": "رُبطت EVD-0014 وEVD-0015 وEVD-0025",
+    "newEvidenceIds": [
+      "EVD-0014",
+      "EVD-0015",
+      "EVD-0025"
+    ],
+    "verificationAr": "وجود الملفات والمقتطفات",
+    "remainingLimitsAr": "لا يثبت ضبط المفتاح في الإنتاج",
+    "status": "معالجة بانتظار المراجعة",
+    "previousStatus": "مفتوحة في مراجعة الحزمة 20260923_032329",
+    "updatedAt": "2026-09-23T03:43:29+03:00",
+    "evidenceType": "source"
+  },
+  {
+    "id": "REV-0002",
+    "parentId": null,
+    "titleAr": "أحكام الوجود أوسع من الأدلة",
+    "source": "مراجعة الحزمة السابقة",
+    "descriptionAr": "قدرات بلا أدلة، وملخص بحث، ومقتطف مخطط يُستخدم كنفي شامل.",
+    "reqIds": [
+      "REQ-0002",
+      "REQ-0011"
+    ],
+    "severity": "high",
+    "impactAr": "قدرات بلا أدلة، وملخص بحث، ومقتطف مخطط يُستخدم كنفي شامل.",
+    "unit": "study",
+    "files": [
+      "data/capabilities.json"
+    ],
+    "previousEvidenceAr": "CAP-0008 و0010 و0011 و0013 و0014 بلا أدلة أو بملخص",
+    "actionAr": "تضييق نطاق الغياب وإرفاق أوامر الخروج",
+    "newEvidenceIds": [
+      "EVD-0018",
+      "EVD-0019",
+      "EVD-0023"
+    ],
+    "verificationAr": "مراجعة سجل الأمر وexit code",
+    "remainingLimitsAr": "البحث لا يغطي أسماءً لم تُذكر ولا مستودعات خارج ميرا",
+    "status": "معالجة بانتظار المراجعة",
+    "previousStatus": "مفتوحة في مراجعة الحزمة 20260923_032329",
+    "updatedAt": "2026-09-23T03:43:29+03:00",
+    "evidenceType": "source"
+  },
+  {
+    "id": "REV-0002a",
+    "parentId": "REV-0002",
+    "titleAr": "قدرات بلا أدلة مرتبطة",
+    "source": "مراجعة الحزمة السابقة",
+    "descriptionAr": "CAP-0008 وCAP-0010 وCAP-0011 وCAP-0013 وCAP-0014 كانت بلا أدلة.",
+    "reqIds": [
+      "REQ-0013"
+    ],
+    "severity": "high",
+    "impactAr": "CAP-0008 وCAP-0010 وCAP-0011 وCAP-0013 وCAP-0014 كانت بلا أدلة.",
+    "unit": "capabilities",
+    "files": [
+      "data/capabilities.json"
+    ],
+    "previousEvidenceAr": "evidenceIds فارغة",
+    "actionAr": "رُبط كل حكم بدليل أو صُنّف البحث بنطاقه",
+    "newEvidenceIds": [
+      "EVD-0014",
+      "EVD-0017",
+      "EVD-0020",
+      "EVD-0023"
+    ],
+    "verificationAr": "كل قدرة حقيقة لها دليل",
+    "remainingLimitsAr": "SOURCE_ONLY",
+    "status": "معالجة بانتظار المراجعة",
+    "previousStatus": "مفتوحة في مراجعة الحزمة 20260923_032329",
+    "updatedAt": "2026-09-23T03:43:29+03:00",
+    "evidenceType": "source"
+  },
+  {
+    "id": "REV-0002b",
+    "parentId": "REV-0002",
+    "titleAr": "سجل Order/Cart كان ملخصًا",
+    "source": "مراجعة الحزمة السابقة",
+    "descriptionAr": "CMD-0001 ليس مخرج أمر.",
+    "reqIds": [
+      "REQ-0011"
+    ],
+    "severity": "high",
+    "impactAr": "CMD-0001 ليس مخرج أمر.",
+    "unit": "evidence",
+    "files": [
+      "evidence/commands/CMD-0001-search-order-cart.txt"
+    ],
+    "previousEvidenceAr": "EVD-0010 ملخص",
+    "actionAr": "أُضيف CMD-RC2-0001 مع exit_code=1",
+    "newEvidenceIds": [
+      "EVD-0018",
+      "EVD-0010"
+    ],
+    "verificationAr": "قراءة ملف الأمر",
+    "remainingLimitsAr": "exit=1 يعني لا تطابق للنمط لا غيابًا كونيًا",
+    "status": "معالجة بانتظار المراجعة",
+    "previousStatus": "مفتوحة في مراجعة الحزمة 20260923_032329",
+    "updatedAt": "2026-09-23T03:43:29+03:00",
+    "evidenceType": "search"
+  },
+  {
+    "id": "REV-0002c",
+    "parentId": "REV-0002",
+    "titleAr": "مقتطف المخطط لا ينفي المشروع",
+    "source": "مراجعة الحزمة السابقة",
+    "descriptionAr": "EVD-0005 نطاقه أسطر المخطط المعروضة.",
+    "reqIds": [
+      "REQ-0002"
+    ],
+    "severity": "medium",
+    "impactAr": "EVD-0005 نطاقه أسطر المخطط المعروضة.",
+    "unit": "schema",
+    "files": [
+      "mira-api/prisma/schema.prisma"
+    ],
+    "previousEvidenceAr": "EVD-0005",
+    "actionAr": "أُضيف بحث النماذج EVD-0019 ونص doesNotProve",
+    "newEvidenceIds": [
+      "EVD-0005",
+      "EVD-0019"
+    ],
+    "verificationAr": "مقارنة حدود الدليل",
+    "remainingLimitsAr": "جداول بأسماء أخرى خارج النمط لن تُكتشف",
+    "status": "معالجة بانتظار المراجعة",
+    "previousStatus": "مفتوحة في مراجعة الحزمة 20260923_032329",
+    "updatedAt": "2026-09-23T03:43:29+03:00",
+    "evidenceType": "search"
+  },
+  {
+    "id": "REV-0003",
+    "parentId": null,
+    "titleAr": "تقرير الإيقاف يخلط المنفذ والموقوف والناقص",
+    "source": "مراجعة الحزمة السابقة",
+    "descriptionAr": "عبارة الانطلاق قريبًا ليست سببًا تشغيليًا، والشراء الداخلي لم يكن خدمة متوقفة.",
+    "reqIds": [
+      "REQ-0019"
+    ],
+    "severity": "high",
+    "impactAr": "عبارة الانطلاق قريبًا ليست سببًا تشغيليًا، والشراء الداخلي لم يكن خدمة متوقفة.",
+    "unit": "paused",
+    "files": [
+      "data/paused-services.json"
+    ],
+    "previousEvidenceAr": "PAUSE-0001 إلى 0003",
+    "actionAr": "فُصلت طبقات الإخفاء والبوابة وAPI واكتمال المنطق",
+    "newEvidenceIds": [
+      "EVD-0001",
+      "EVD-0003",
+      "EVD-0004",
+      "EVD-0018"
+    ],
+    "verificationAr": "جدول الأحكام المتغيرة",
+    "remainingLimitsAr": "وصول API الإنتاج بقي UNKNOWN",
+    "status": "معالجة بانتظار المراجعة",
+    "previousStatus": "مفتوحة في مراجعة الحزمة 20260923_032329",
+    "updatedAt": "2026-09-23T03:43:29+03:00",
+    "evidenceType": "source"
+  },
+  {
+    "id": "REV-0003a",
+    "parentId": "REV-0003",
+    "titleAr": "طبقات Discover مختلطة",
+    "source": "مراجعة الحزمة السابقة",
+    "descriptionAr": "حُكم بوصول API دون دليل تشغيل.",
+    "reqIds": [
+      "REQ-0006"
+    ],
+    "severity": "high",
+    "impactAr": "حُكم بوصول API دون دليل تشغيل.",
+    "unit": "marketplace",
+    "files": [
+      "lib/core/config/mira_features.dart",
+      "lib/main.dart"
+    ],
+    "previousEvidenceAr": "EVD-0001 وEVD-0002",
+    "actionAr": "uiHidden موثق والباقي UNKNOWN",
+    "newEvidenceIds": [
+      "EVD-0001",
+      "EVD-0002",
+      "EVD-0006"
+    ],
+    "verificationAr": "لا طلب شبكة إنتاجي في هذه المرحلة",
+    "remainingLimitsAr": "لم يُفحص البناء المنشور",
+    "status": "معالجة بانتظار المراجعة",
+    "previousStatus": "مفتوحة في مراجعة الحزمة 20260923_032329",
+    "updatedAt": "2026-09-23T03:43:29+03:00",
+    "evidenceType": "source"
+  },
+  {
+    "id": "REV-0003b",
+    "parentId": "REV-0003",
+    "titleAr": "عبارة الانطلاق قريبًا ليست سبب إيقاف",
+    "source": "مراجعة الحزمة السابقة",
+    "descriptionAr": "النص واجهة. السبب التاريخي غير موثق.",
+    "reqIds": [],
+    "severity": "medium",
+    "impactAr": "النص واجهة. السبب التاريخي غير موثق.",
+    "unit": "marketplace",
+    "files": [
+      "lib/main.dart"
+    ],
+    "previousEvidenceAr": "حقل documentedReason السابق",
+    "actionAr": "صُحح reasonClass",
+    "newEvidenceIds": [
+      "EVD-0002"
+    ],
+    "verificationAr": "قراءة النص في المقتطف",
+    "remainingLimitsAr": "لا وثيقة تشغيل إضافية داخل المستودع",
+    "status": "معالجة بانتظار المراجعة",
+    "previousStatus": "مفتوحة في مراجعة الحزمة 20260923_032329",
+    "updatedAt": "2026-09-23T03:43:29+03:00",
+    "evidenceType": "source"
+  },
+  {
+    "id": "REV-0003c",
+    "parentId": "REV-0003",
+    "titleAr": "الشراء الداخلي ليس خدمة متوقفة",
+    "source": "مراجعة الحزمة السابقة",
+    "descriptionAr": "التصميم رابط خارجي ولم يُبنَ طلب داخلي ثم يُوقف.",
+    "reqIds": [
+      "REQ-0019"
+    ],
+    "severity": "high",
+    "impactAr": "التصميم رابط خارجي ولم يُبنَ طلب داخلي ثم يُوقف.",
+    "unit": "orders",
+    "files": [
+      "product_detail_screen.dart",
+      "SPEC.md"
+    ],
+    "previousEvidenceAr": "PAUSE-0003",
+    "actionAr": "التصنيف NEVER_BUILT",
+    "newEvidenceIds": [
+      "EVD-0004",
+      "EVD-0007",
+      "EVD-0018"
+    ],
+    "verificationAr": "مقارنة التصنيف بالأدلة",
+    "remainingLimitsAr": "قرار DEC-0001 ما زال مفتوحًا",
+    "status": "معالجة بانتظار المراجعة",
+    "previousStatus": "مفتوحة في مراجعة الحزمة 20260923_032329",
+    "updatedAt": "2026-09-23T03:43:29+03:00",
+    "evidenceType": "source"
+  },
+  {
+    "id": "REV-0004",
+    "parentId": null,
+    "titleAr": "القبول والمراحل والجهد غير محددة",
+    "source": "مراجعة الحزمة السابقة",
+    "descriptionAr": "معيار قبول واحد لكل المتطلبات، ومراحل بلا خروج، ومتطلبات خارج الخطة.",
+    "reqIds": [
+      "REQ-0003",
+      "REQ-0006",
+      "REQ-0009",
+      "REQ-0015",
+      "REQ-0016",
+      "REQ-0017",
+      "REQ-0018",
+      "REQ-0020"
+    ],
+    "severity": "high",
+    "impactAr": "معيار قبول واحد لكل المتطلبات، ومراحل بلا خروج، ومتطلبات خارج الخطة.",
+    "unit": "roadmap",
+    "files": [
+      "data/requirements.json",
+      "data/roadmap.json"
+    ],
+    "previousEvidenceAr": "acceptanceAr الموحد",
+    "actionAr": "معايير لكل متطلب وخطة تغطي الكل",
+    "newEvidenceIds": [],
+    "verificationAr": "أداة التحقق ترفض المعيار العام",
+    "remainingLimitsAr": "التقديرات نطاقات بافتراضات لا عروض أسعار",
+    "status": "معالجة بانتظار المراجعة",
+    "previousStatus": "مفتوحة في مراجعة الحزمة 20260923_032329",
+    "updatedAt": "2026-09-23T03:43:29+03:00",
+    "evidenceType": "source"
+  },
+  {
+    "id": "REV-0004a",
+    "parentId": "REV-0004",
+    "titleAr": "معيار القبول العام",
+    "source": "مراجعة الحزمة السابقة",
+    "descriptionAr": "النص كان: يُثبت لاحقًا ببوابة قبول.",
+    "reqIds": [
+      "REQ-0001"
+    ],
+    "severity": "high",
+    "impactAr": "النص كان: يُثبت لاحقًا ببوابة قبول.",
+    "unit": "requirements",
+    "files": [
+      "data/requirements.json"
+    ],
+    "previousEvidenceAr": "حقل acceptanceAr",
+    "actionAr": "استُبدل بمعطى وإجراء ومتوقع وفشل واختبار ودليل",
+    "newEvidenceIds": [],
+    "verificationAr": "validate_study يرفض العبارة العامة",
+    "remainingLimitsAr": "المعايير مقترحة للدراسة وليست اختبارات منفذة على المنتج",
+    "status": "معالجة بانتظار المراجعة",
+    "previousStatus": "مفتوحة في مراجعة الحزمة 20260923_032329",
+    "updatedAt": "2026-09-23T03:43:29+03:00",
+    "evidenceType": "source"
+  },
+  {
+    "id": "REV-0004b",
+    "parentId": "REV-0004",
+    "titleAr": "شروط خروج المراحل",
+    "source": "مراجعة الحزمة السابقة",
+    "descriptionAr": "GATE-01 إلى GATE-05 بلا خروج محدد.",
+    "reqIds": [],
+    "severity": "high",
+    "impactAr": "GATE-01 إلى GATE-05 بلا خروج محدد.",
+    "unit": "roadmap",
+    "files": [
+      "data/roadmap.json"
+    ],
+    "previousEvidenceAr": "exitCriteria على GATE-00 فقط",
+    "actionAr": "لكل مرحلة دخول وخروج وجهد ومخاطر وتراجع",
+    "newEvidenceIds": [],
+    "verificationAr": "قراءة roadmap.json",
+    "remainingLimitsAr": "الجهد تقدير دراسة",
+    "status": "معالجة بانتظار المراجعة",
+    "previousStatus": "مفتوحة في مراجعة الحزمة 20260923_032329",
+    "updatedAt": "2026-09-23T03:43:29+03:00",
+    "evidenceType": "source"
+  },
+  {
+    "id": "REV-0004c",
+    "parentId": "REV-0004",
+    "titleAr": "متطلبات خارج المراحل المستقبلية",
+    "source": "مراجعة الحزمة السابقة",
+    "descriptionAr": "REQ-0003 و0006 و0009 و0015 و0016 و0017 و0018 و0020 لم تكن في GATE-01..05.",
+    "reqIds": [
+      "REQ-0003",
+      "REQ-0006",
+      "REQ-0009",
+      "REQ-0015",
+      "REQ-0016",
+      "REQ-0017",
+      "REQ-0018",
+      "REQ-0020"
+    ],
+    "severity": "high",
+    "impactAr": "REQ-0003 و0006 و0009 و0015 و0016 و0017 و0018 و0020 لم تكن في GATE-01..05.",
+    "unit": "roadmap",
+    "files": [
+      "data/roadmap.json",
+      "data/scope-decisions.json"
+    ],
+    "previousEvidenceAr": "GATE-00 كان يجمع كل المتطلبات",
+    "actionAr": "وُزعت على البوابات وREQ-0020 قرار نطاق",
+    "newEvidenceIds": [],
+    "verificationAr": "مصفوفة التغطية",
+    "remainingLimitsAr": "لم يبدأ التنفيذ",
+    "status": "معالجة بانتظار المراجعة",
+    "previousStatus": "مفتوحة في مراجعة الحزمة 20260923_032329",
+    "updatedAt": "2026-09-23T03:43:29+03:00",
+    "evidenceType": "source"
+  },
+  {
+    "id": "REV-0005",
+    "parentId": null,
+    "titleAr": "الفلاتر والوسائط والتنظيم مختصرة",
+    "source": "مراجعة الحزمة السابقة",
+    "descriptionAr": "بلا عقود أو فهرسة أو تكلفة أو مصادر رسمية.",
+    "reqIds": [
+      "REQ-0013",
+      "REQ-0004"
+    ],
+    "severity": "high",
+    "impactAr": "بلا عقود أو فهرسة أو تكلفة أو مصادر رسمية.",
+    "unit": "product-study",
+    "files": [
+      "data/categories.json",
+      "data/contracts.json"
+    ],
+    "previousEvidenceAr": "قوائم أسماء فلاتر",
+    "actionAr": "عقود مقترحة موسومة غير منفذة وبحث مصادر",
+    "newEvidenceIds": [],
+    "verificationAr": "المصادر مؤرخة بتاريخ الاطلاع",
+    "remainingLimitsAr": "الأسعار غير متحققة والدراسة ليست اعتمادًا قانونيًا",
+    "status": "معالجة بانتظار المراجعة",
+    "previousStatus": "مفتوحة في مراجعة الحزمة 20260923_032329",
+    "updatedAt": "2026-09-23T03:43:29+03:00",
+    "evidenceType": "source"
+  },
+  {
+    "id": "REV-0005a",
+    "parentId": "REV-0005",
+    "titleAr": "عقود وفلاتر قابلة للمراجعة",
+    "source": "مراجعة الحزمة السابقة",
+    "descriptionAr": "المثال المطلوب: فستان أزرق مقاس M متوفر يطابق متغيرًا واحدًا.",
+    "reqIds": [
+      "REQ-0013",
+      "REQ-0014"
+    ],
+    "severity": "high",
+    "impactAr": "المثال المطلوب: فستان أزرق مقاس M متوفر يطابق متغيرًا واحدًا.",
+    "unit": "filters",
+    "files": [
+      "data/contracts.json",
+      "data/categories.json"
+    ],
+    "previousEvidenceAr": "أسماء فلاتر فقط",
+    "actionAr": "عقود وحالات AND ومثال العدّ",
+    "newEvidenceIds": [],
+    "verificationAr": "العرض في القسم 8 ووسم مقترح غير منفذ",
+    "remainingLimitsAr": "غير مبني في المنتج",
+    "status": "معالجة بانتظار المراجعة",
+    "previousStatus": "مفتوحة في مراجعة الحزمة 20260923_032329",
+    "updatedAt": "2026-09-23T03:43:29+03:00",
+    "evidenceType": "proposal"
+  },
+  {
+    "id": "REV-0005b",
+    "parentId": "REV-0005",
+    "titleAr": "دورة الوسائط والتكلفة",
+    "source": "مراجعة الحزمة السابقة",
+    "descriptionAr": "لا دورة حياة ولا معادلة تكلفة.",
+    "reqIds": [
+      "REQ-0004",
+      "REQ-0005"
+    ],
+    "severity": "medium",
+    "impactAr": "لا دورة حياة ولا معادلة تكلفة.",
+    "unit": "media",
+    "files": [
+      "data/media-lifecycle.json",
+      "data/costs.json"
+    ],
+    "previousEvidenceAr": "قسم مختصر",
+    "actionAr": "دورة كاملة ومعادلات بلا أسعار مخترعة",
+    "newEvidenceIds": [
+      "EVD-0024"
+    ],
+    "verificationAr": "لا مشغل قائم في النطاق قبل اقتراح مزود",
+    "remainingLimitsAr": "أسعار المزود غير متحقق",
+    "status": "معالجة بانتظار المراجعة",
+    "previousStatus": "مفتوحة في مراجعة الحزمة 20260923_032329",
+    "updatedAt": "2026-09-23T03:43:29+03:00",
+    "evidenceType": "source"
+  },
+  {
+    "id": "REV-0005c",
+    "parentId": "REV-0005",
+    "titleAr": "البحث التنظيمي الرسمي",
+    "source": "مراجعة الحزمة السابقة",
+    "descriptionAr": "لم يُنجز في النسخة السابقة.",
+    "reqIds": [
+      "REQ-0017"
+    ],
+    "severity": "high",
+    "impactAr": "لم يُنجز في النسخة السابقة.",
+    "unit": "regulatory",
+    "files": [
+      "data/regulatory.json"
+    ],
+    "previousEvidenceAr": "عبارة تحتاج مراجعة",
+    "actionAr": "مصادر رسمية بتاريخ اطلاع وأثر تصميمي وأسئلة مختص",
+    "newEvidenceIds": [],
+    "verificationAr": "روابط المصادر في القسم 12",
+    "remainingLimitsAr": "ليس رأيًا قانونيًا ملزمًا",
+    "status": "معالجة بانتظار المراجعة",
+    "previousStatus": "مفتوحة في مراجعة الحزمة 20260923_032329",
+    "updatedAt": "2026-09-23T03:43:29+03:00",
+    "evidenceType": "regulatory"
+  },
+  {
+    "id": "REV-0006",
+    "parentId": null,
+    "titleAr": "أداة التحقق تقبل دراسة فاسدة",
+    "source": "مراجعة الحزمة السابقة",
+    "descriptionAr": "نجحت رغم انحراف JSON واعتماد مرحلة ناقصة وحقول دليل فارغة.",
+    "reqIds": [],
+    "severity": "high",
+    "impactAr": "نجحت رغم انحراف JSON واعتماد مرحلة ناقصة وحقول دليل فارغة.",
+    "unit": "tooling",
+    "files": [
+      "scripts/validate_study.py"
+    ],
+    "previousEvidenceAr": "PASS بعدد ثابت",
+    "actionAr": "فحوص بنيوية واختبارات سلبية على نسخة مؤقتة",
+    "newEvidenceIds": [
+      "EVD-0027"
+    ],
+    "verificationAr": "ثماني حالات FAIL بخروج غير صفري ثم PASS على النسخة السليمة. السجل EVD-0027.",
+    "remainingLimitsAr": "التحقق بنيوي. لا يغني عن قراءة الملاحظات.",
+    "status": "معالجة بانتظار المراجعة",
+    "previousStatus": "مفتوحة في مراجعة الحزمة 20260923_032329",
+    "updatedAt": "2026-09-23T03:43:29+03:00",
+    "evidenceType": "test"
+  },
+  {
+    "id": "REV-0007",
+    "parentId": null,
+    "titleAr": "مصدر الحقيقة والعرض والاختبار التفاعلي",
+    "source": "مراجعة الحزمة السابقة",
+    "descriptionAr": "نصوص الدراسة داخل app.js وأنماط مضمّنة وبلا لقطات.",
+    "reqIds": [],
+    "severity": "high",
+    "impactAr": "نصوص الدراسة داخل app.js وأنماط مضمّنة وبلا لقطات.",
+    "unit": "site",
+    "files": [
+      "js/app.js",
+      "css/components.css"
+    ],
+    "previousEvidenceAr": "لا مجلد لقطات في الحزمة السابقة",
+    "actionAr": "نقل المحتوى إلى JSON وفصل CSS",
+    "newEvidenceIds": [],
+    "verificationAr": "اختبار متصفح لاحقًا",
+    "remainingLimitsAr": "لقطات المتصفح تُستكمل في هذه الجولة أو تبقى القيد ظاهرًا",
+    "status": "قيد المعالجة",
+    "previousStatus": "مفتوحة في مراجعة الحزمة 20260923_032329",
+    "updatedAt": "2026-09-23T03:43:29+03:00",
+    "evidenceType": "source"
+  },
+  {
+    "id": "REV-0007a",
+    "parentId": "REV-0007",
+    "titleAr": "النص الموضوعي داخل app.js",
+    "source": "مراجعة الحزمة السابقة",
+    "descriptionAr": "sectionBody كان يحمل نتائج التدقيق.",
+    "reqIds": [],
+    "severity": "high",
+    "impactAr": "sectionBody كان يحمل نتائج التدقيق.",
+    "unit": "site",
+    "files": [
+      "js/app.js",
+      "data/section-content.json"
+    ],
+    "previousEvidenceAr": "سويتش النصوص",
+    "actionAr": "العرض يقرأ JSON والتوكنات {{ID}}",
+    "newEvidenceIds": [],
+    "verificationAr": "مقارنة المولد بالملف",
+    "remainingLimitsAr": "نصوص أزرار الواجهة تبقى في العرض",
+    "status": "معالجة بانتظار المراجعة",
+    "previousStatus": "مفتوحة في مراجعة الحزمة 20260923_032329",
+    "updatedAt": "2026-09-23T03:43:29+03:00",
+    "evidenceType": "source"
+  },
+  {
+    "id": "REV-0007b",
+    "parentId": "REV-0007",
+    "titleAr": "أنماط مضمّنة في القالب",
+    "source": "مراجعة الحزمة السابقة",
+    "descriptionAr": "style على بطاقات المقاييس.",
+    "reqIds": [],
+    "severity": "low",
+    "impactAr": "style على بطاقات المقاييس.",
+    "unit": "site",
+    "files": [
+      "css/layout.css"
+    ],
+    "previousEvidenceAr": "ثلاث خصائص style",
+    "actionAr": "صنف metric-compact",
+    "newEvidenceIds": [],
+    "verificationAr": "بحث style= في app.js بعد التعديل",
+    "remainingLimitsAr": "لا يشمل أنماط المتصفح الافتراضية",
+    "status": "معالجة بانتظار المراجعة",
+    "previousStatus": "مفتوحة في مراجعة الحزمة 20260923_032329",
+    "updatedAt": "2026-09-23T03:43:29+03:00",
+    "evidenceType": "source"
+  },
+  {
+    "id": "REV-0007c",
+    "parentId": "REV-0007",
+    "titleAr": "لقطات واختبار تفاعل المتصفح",
+    "source": "مراجعة الحزمة السابقة",
+    "descriptionAr": "node --check وHTTP 200 لا يثبتان التفاعل.",
+    "reqIds": [],
+    "severity": "high",
+    "impactAr": "node --check وHTTP 200 لا يثبتان التفاعل.",
+    "unit": "tests",
+    "files": [
+      "evidence/screenshots",
+      "evidence/tests"
+    ],
+    "previousEvidenceAr": "لا لقطات",
+    "actionAr": "اختبار عرض كمبيوتر وجوال وتابلت على النسخة المستخرجة إن أمكن",
+    "newEvidenceIds": [],
+    "verificationAr": "المتصفح المدمج: 22 قسمًا، RTL، فتح #REV-0001، البحث أخفى 20 قسمًا ثم أظهرها، وفلتر الحالة أظهر REV-0007 وREV-0007c. لقطة Chrome 1280 ناجحة. لقطتا 768 و390 خرجتا فارغتين وليستا دليلًا.",
+    "remainingLimitsAr": "لقطات التابلت والجوال من Chrome headless بيضاء. لا تُحتسب نجاح عرض. البند يبقى قيد المعالجة.",
+    "status": "قيد المعالجة",
+    "previousStatus": "مفتوحة في مراجعة الحزمة 20260923_032329",
+    "updatedAt": "2026-09-23T03:43:29+03:00",
+    "evidenceType": "browser"
+  },
+  {
+    "id": "REV-0008",
+    "parentId": null,
+    "titleAr": "ملفات مصدر ناقصة في RC1",
+    "source": "مراجعة حزمة الأماكن RC1",
+    "descriptionAr": "خمسة مسارات لم تكن في الحزمة السابقة.",
+    "reqIds": [
+      "REQ-0024"
+    ],
+    "severity": "medium",
+    "impactAr": "خمسة مسارات لم تكن في الحزمة السابقة.",
+    "unit": "places-handoff",
+    "files": [
+      "lib/src/features/auth/models/auth_credentials.dart",
+      "lib/src/core/geo/geo.dart",
+      "assets/fonts/Cairo-Variable.ttf"
+    ],
+    "previousEvidenceAr": "حزمة 20260924_0030",
+    "actionAr": "أُرفقت مع إغلاق الاستيراد اللازم وصُنفت اعتماديات المضيف.",
+    "newEvidenceIds": [
+      "EVD-0028"
+    ],
+    "verificationAr": "فحص حزمة RC2 بعد فكها",
+    "remainingLimitsAr": "لم يُنسخ تطبيق دار كار كاملًا. المراجعة البشرية لم تعتمد الحزمة.",
+    "status": "معالجة بانتظار المراجعة",
+    "previousStatus": "مفتوحة في مراجعة الحزمة",
+    "updatedAt": "2026-09-24T01:10:00+03:00",
+    "evidenceType": "handoff"
+  },
+  {
+    "id": "REV-0009",
+    "parentId": null,
+    "titleAr": "مدقق الحزمة كان يقبل تلفًا",
+    "source": "مراجعة حزمة الأماكن RC1",
+    "descriptionAr": "تغيير README أو إتلاف MANIFEST أو حذف سجل كان يمكن أن يمر.",
+    "reqIds": [
+      "REQ-0024"
+    ],
+    "severity": "medium",
+    "impactAr": "تغيير README أو إتلاف MANIFEST أو حذف سجل كان يمكن أن يمر.",
+    "unit": "places-handoff",
+    "files": [
+      "scripts/validate_package.py"
+    ],
+    "previousEvidenceAr": "حزمة 20260924_0030",
+    "actionAr": "أُعيدت الفحوص السلبية على نسخ مؤقتة ورُفضت.",
+    "newEvidenceIds": [
+      "EVD-0028"
+    ],
+    "verificationAr": "فحص حزمة RC2 بعد فكها",
+    "remainingLimitsAr": "البصمة تثبت الاتساق لا اكتمال جمع كل ملفات الأصل.",
+    "status": "معالجة بانتظار المراجعة",
+    "previousStatus": "مفتوحة في مراجعة الحزمة",
+    "updatedAt": "2026-09-24T01:10:00+03:00",
+    "evidenceType": "handoff"
+  },
+  {
+    "id": "REV-0010",
+    "parentId": null,
+    "titleAr": "مسار الاكتشاف نُسب إلى VenueApi",
+    "source": "مراجعة حزمة الأماكن RC1",
+    "descriptionAr": "الخلاصة في الكود عبر DiscoveryApi.",
+    "reqIds": [
+      "REQ-0024"
+    ],
+    "severity": "medium",
+    "impactAr": "الخلاصة في الكود عبر DiscoveryApi.",
+    "unit": "places-handoff",
+    "files": [
+      "lib/src/features/places/core/api/places_http_discovery_repository.dart"
+    ],
+    "previousEvidenceAr": "حزمة 20260924_0030",
+    "actionAr": "صُحح المسار في وثائق RC2 والموقع.",
+    "newEvidenceIds": [
+      "EVD-0028"
+    ],
+    "verificationAr": "فحص حزمة RC2 بعد فكها",
+    "remainingLimitsAr": "لا يثبت سلوك النسخة المنشورة.",
+    "status": "معالجة بانتظار المراجعة",
+    "previousStatus": "مفتوحة في مراجعة الحزمة",
+    "updatedAt": "2026-09-24T01:10:00+03:00",
+    "evidenceType": "handoff"
+  },
+  {
+    "id": "REV-0011",
+    "parentId": null,
+    "titleAr": "عدد أسطر git status ليس دليل عدم التعديل",
+    "source": "مراجعة حزمة الأماكن RC1",
+    "descriptionAr": "RC1 اعتمد ثبات 1151 سطرًا.",
+    "reqIds": [
+      "REQ-0024"
+    ],
+    "severity": "medium",
+    "impactAr": "RC1 اعتمد ثبات 1151 سطرًا.",
+    "unit": "places-handoff",
+    "files": [
+      "evidence/baseline/source_file_hashes_before.txt"
+    ],
+    "previousEvidenceAr": "حزمة 20260924_0030",
+    "actionAr": "RC2 يسجل بصمات الملفات قبل وبعد. لم يُدعَ إصلاح النقص بأثر رجعي.",
+    "newEvidenceIds": [
+      "EVD-0028"
+    ],
+    "verificationAr": "فحص حزمة RC2 بعد فكها",
+    "remainingLimitsAr": "دليل RC1 يبقى محدودًا بتلك الطريقة.",
+    "status": "معالجة بانتظار المراجعة",
+    "previousStatus": "مفتوحة في مراجعة الحزمة",
+    "updatedAt": "2026-09-24T01:10:00+03:00",
+    "evidenceType": "handoff"
+  },
+  {
+    "id": "REV-0012",
+    "parentId": null,
+    "titleAr": "تعارض عبارة التنقيح",
+    "source": "مراجعة حزمة الأماكن RC1",
+    "descriptionAr": "ملف قال إن شيئًا لم يُنقح والفهرس فيه نسخة منقحة.",
+    "reqIds": [
+      "REQ-0024"
+    ],
+    "severity": "medium",
+    "impactAr": "ملف قال إن شيئًا لم يُنقح والفهرس فيه نسخة منقحة.",
+    "unit": "places-handoff",
+    "files": [
+      "lib/src/core/config/app_config.dart"
+    ],
+    "previousEvidenceAr": "حزمة 20260924_0030",
+    "actionAr": "وُحّد السجل على app_config.dart فقط. auth_credentials ليس سرًا.",
+    "newEvidenceIds": [
+      "EVD-0028"
+    ],
+    "verificationAr": "فحص حزمة RC2 بعد فكها",
+    "remainingLimitsAr": "المفتاح الأصلي بقي في المستودع ولم يُمس.",
+    "status": "معالجة بانتظار المراجعة",
+    "previousStatus": "مفتوحة في مراجعة الحزمة",
+    "updatedAt": "2026-09-24T01:10:00+03:00",
+    "evidenceType": "handoff"
+  },
+  {
+    "id": "REV-0013",
+    "parentId": null,
+    "titleAr": "المرجع البصري للتصورات غير مرفق",
+    "source": "مراجعة حزمة الأماكن RC1",
+    "descriptionAr": "ثلاثة تصورات أعجب بها المالك بلا ملفات صور في التسليم.",
+    "reqIds": [
+      "REQ-0026"
+    ],
+    "severity": "medium",
+    "impactAr": "ثلاثة تصورات أعجب بها المالك بلا ملفات صور في التسليم.",
+    "unit": "places-handoff",
+    "files": [
+      "data/places-adoption.json"
+    ],
+    "previousEvidenceAr": "حزمة 20260924_0030",
+    "actionAr": "RC3 بحث في ملفات الدراسة وسطح المكتب. الصور الثلاثة غير موجودة. لم تُولَّد بدائل ولم يُستخدم رابط مكسور.",
+    "newEvidenceIds": [
+      "EVD-0029",
+      "EVD-0033"
+    ],
+    "verificationAr": "فحص حزمة RC2 بعد فكها",
+    "remainingLimitsAr": "المراجع الثلاث مرفقة في evidence/visual/references بحالة available. هذا لا يعتمد المرحلة الأولى.",
+    "status": "معالجة بانتظار المراجعة",
+    "previousStatus": "قيد المعالجة",
+    "updatedAt": "2026-09-26T03:10:00+03:00",
+    "evidenceType": "handoff"
+  },
+  {
+    "id": "REV-0014",
+    "parentId": null,
+    "titleAr": "سجل MANIFEST لا يطابق محتويات الحزمة",
+    "source": "مراجعة الموقع 0125",
+    "descriptionAr": "17 بصمة مختلفة و7 ملفات غير مسجلة وبيانات تعريف قديمة.",
+    "reqIds": [
+      "REQ-0024"
+    ],
+    "severity": "high",
+    "impactAr": "17 بصمة مختلفة و7 ملفات غير مسجلة وبيانات تعريف قديمة.",
+    "unit": "reference-site",
+    "files": [
+      "MANIFEST.json",
+      "scripts/write_manifest.py"
+    ],
+    "previousEvidenceAr": "حزمة الموقع 0125",
+    "actionAr": "يُعاد إنشاء السجل من الشجرة النهائية ويستثني نفسه فقط.",
+    "newEvidenceIds": [
+      "EVD-0030"
+    ],
+    "verificationAr": "فحص الحزمة المستقل بعد فك ZIP",
+    "remainingLimitsAr": "بانتظار مراجعة بشرية. ليس اعتماد دراسة.",
+    "status": "معالجة بانتظار المراجعة",
+    "previousStatus": "مثبتة في المراجعة",
+    "updatedAt": "2026-09-24T02:20:00+03:00",
+    "evidenceType": "correction"
+  },
+  {
+    "id": "REV-0015",
+    "parentId": null,
+    "titleAr": "فاحص الدراسة يفشل خارج مستودع ميرا",
+    "source": "مراجعة الموقع 0125",
+    "descriptionAr": "18 دليلًا من نوع fact تُفحص على ملفات التطبيق.",
+    "reqIds": [
+      "REQ-0024"
+    ],
+    "severity": "high",
+    "impactAr": "18 دليلًا من نوع fact تُفحص على ملفات التطبيق.",
+    "unit": "reference-site",
+    "files": [
+      "scripts/validate_package.py",
+      "scripts/verify_evidence_freshness.py"
+    ],
+    "previousEvidenceAr": "حزمة الموقع 0125",
+    "actionAr": "فُصل فحص الحزمة عن فحص الحداثة. غياب المستودع يُظهر BLOCKED ولا يُفشل الحزمة.",
+    "newEvidenceIds": [
+      "EVD-0001"
+    ],
+    "verificationAr": "فحص الحزمة المستقل بعد فك ZIP",
+    "remainingLimitsAr": "الحداثة تبقى فحصًا منفصلًا عند تمرير --repo.",
+    "status": "معالجة بانتظار المراجعة",
+    "previousStatus": "مثبتة في المراجعة",
+    "updatedAt": "2026-09-24T02:20:00+03:00",
+    "evidenceType": "correction"
+  },
+  {
+    "id": "REV-0016",
+    "parentId": null,
+    "titleAr": "لقطة سطح المكتب ليست بعرض 1280",
+    "source": "مراجعة الموقع 0125",
+    "descriptionAr": "places-plan-desktop-1280.png أبعادها 277×445.",
+    "reqIds": [
+      "REQ-0024"
+    ],
+    "severity": "high",
+    "impactAr": "places-plan-desktop-1280.png أبعادها 277×445.",
+    "unit": "reference-site",
+    "files": [
+      "evidence/screenshots/places-plan-desktop-1280.png",
+      "evidence/screenshots/rc3-mobile-390x844.png",
+      "evidence/screenshots/rc3-tablet-768x1024.png",
+      "evidence/screenshots/rc3-desktop-1280x900.png",
+      "evidence/tests/rc3_browser.json"
+    ],
+    "previousEvidenceAr": "حزمة الموقع 0125",
+    "actionAr": "التقطت لقطات جديدة بأبعاد 390×844 و768×1024 و1280×900. اللقطة القديمة 277×445 بقيت باسمها وليست إثبات العرض العريض.",
+    "newEvidenceIds": [
+      "EVD-0033"
+    ],
+    "verificationAr": "فحص الحزمة المستقل بعد فك ZIP",
+    "remainingLimitsAr": "لقطات RC1 ليست تكرار 445/527. قص حافة الجوال ما زال ملاحظة في REV-0019.",
+    "status": "معالجة بانتظار المراجعة",
+    "previousStatus": "مثبتة في المراجعة",
+    "updatedAt": "2026-09-24T03:18:00+03:00",
+    "evidenceType": "correction"
+  },
+  {
+    "id": "REV-0017",
+    "parentId": null,
+    "titleAr": "DEPENDENCY_MAP.json ما زال يمرر الخلاصة عبر VenueApi",
+    "source": "مراجعة الموقع 0125",
+    "descriptionAr": "سلسلة browse-media داخل أرشيف 0125.",
+    "reqIds": [
+      "REQ-0024"
+    ],
+    "severity": "high",
+    "impactAr": "سلسلة browse-media داخل أرشيف 0125.",
+    "unit": "reference-site",
+    "files": [
+      "DEPENDENCY_MAP.json"
+    ],
+    "previousEvidenceAr": "حزمة الموقع 0125",
+    "actionAr": "التصحيح موثق في الموقع. أرشيف المصدر لم يُعد تغليفه. مسار التفاصيل بقي على VenueApi.",
+    "newEvidenceIds": [
+      "EVD-0030"
+    ],
+    "verificationAr": "فحص الحزمة المستقل بعد فك ZIP",
+    "remainingLimitsAr": "الوثيقة الأصلية داخل ZIP بقيت خاطئة عمدًا لأن الأرشيف لا يُعدَّل.",
+    "status": "معالجة بانتظار المراجعة",
+    "previousStatus": "مثبتة في المراجعة",
+    "updatedAt": "2026-09-24T02:20:00+03:00",
+    "evidenceType": "correction"
+  },
+  {
+    "id": "REV-0018",
+    "parentId": null,
+    "titleAr": "سجل الاستبعاد ينفي تنقيحًا يثبته redaction_rc2",
+    "source": "مراجعة الموقع 0125",
+    "descriptionAr": "EXCLUSIONS_AND_REDACTIONS.json مقابل redaction_rc2.json.",
+    "reqIds": [
+      "REQ-0024"
+    ],
+    "severity": "high",
+    "impactAr": "EXCLUSIONS_AND_REDACTIONS.json مقابل redaction_rc2.json.",
+    "unit": "reference-site",
+    "files": [
+      "EXCLUSIONS_AND_REDACTIONS.json"
+    ],
+    "previousEvidenceAr": "حزمة الموقع 0125",
+    "actionAr": "وُثّق التعارض دون استعادة المفتاح ودون تعديل الأرشيف.",
+    "newEvidenceIds": [
+      "EVD-0031"
+    ],
+    "verificationAr": "فحص الحزمة المستقل بعد فك ZIP",
+    "remainingLimitsAr": "التصحيح لاحق داخل الموقع.",
+    "status": "معالجة بانتظار المراجعة",
+    "previousStatus": "مثبتة في المراجعة",
+    "updatedAt": "2026-09-24T02:20:00+03:00",
+    "evidenceType": "correction"
+  },
+  {
+    "id": "REV-0019",
+    "parentId": "REV-0016",
+    "titleAr": "لقطات RC3 تكرر المحتوى كل 445 و527 بكسل",
+    "source": "مراجعة لقطات RC3",
+    "descriptionAr": "الأبعاد صحيحة لكن الصفوف تتطابق كل 445 بكسل والأعمدة كل 527 في التابلت والكمبيوتر.",
+    "reqIds": [
+      "REQ-0024"
+    ],
+    "severity": "high",
+    "impactAr": "اللقطات لا تثبت سلامة العرض.",
+    "unit": "reference-site",
+    "files": [
+      "evidence/screenshots/rc3-mobile-390x844.png",
+      "evidence/screenshots/rc3-tablet-768x1024.png",
+      "evidence/screenshots/rc3-desktop-1280x900.png",
+      "evidence/tests/rc3_screenshot_tiling.txt",
+      "evidence/screenshots/rc1-mobile-390x844.png",
+      "evidence/screenshots/rc1-tablet-768x1024.png",
+      "evidence/screenshots/rc1-desktop-1280x900.png",
+      "evidence/tests/rc1_browser.json"
+    ],
+    "previousEvidenceAr": "حزمة RC3 0215",
+    "actionAr": "أُعيد الالتقاط بـ Chrome headless بدون تكرار مطابق. لقطة التمرير إلى s38 كانت فارغة ورُفضت.",
+    "newEvidenceIds": [
+      "EVD-0035"
+    ],
+    "verificationAr": "مقارنة البكسل على الإزاحة 445 و527 ثم فحص اللقطات الجديدة",
+    "remainingLimitsAr": "التكرار المطابق زال. لقطة 390 ما زال فيها حبر عند الحافة اليمنى، فلا يُعلن اكتمال خلوها من القص.",
+    "status": "معالجة بانتظار المراجعة",
+    "previousStatus": "مثبتة في المراجعة",
+    "updatedAt": "2026-09-24T03:18:00+03:00",
+    "evidenceType": "correction"
+  },
+  {
+    "id": "REV-0020",
+    "parentId": null,
+    "titleAr": "وصف مصدر التفاصيل يتغير بعد طلب قائمة آخر",
+    "source": "مراجعة تفعيل اختبار اكتشفي",
+    "descriptionAr": "حقل lastOrigin على المستودع كان يُستبدل عندما يقرأ مسار التفاصيل المحلية قائمة الشركاء.",
+    "reqIds": [
+      "REQ-0024"
+    ],
+    "severity": "high",
+    "impactAr": "تفاصيل محلية قد تُعرض على أنها من الخادم.",
+    "unit": "mira-app",
+    "files": [
+      "lib/features/marketplace/data/repositories/marketplace_repository_impl.dart",
+      "lib/features/marketplace/presentation/widgets/marketplace_data_banner.dart"
+    ],
+    "previousEvidenceAr": "حزمة تفعيل الاختبار 0319",
+    "actionAr": "أصبحت نتيجة كل طلب CatalogLoad تحمل النقل وعلامة المحتوى. مسار التفاصيل المحلية يقرأ الكتالوج مباشرة ولا يستدعي قائمة الشركاء.",
+    "newEvidenceIds": [
+      "EVD-0037"
+    ],
+    "verificationAr": "اختبار يثبت أن تفصيلة محلية تبقى محلية بعد نجاح قائمة من الخادم.",
+    "remainingLimitsAr": "استجابات الخادم بلا الحقل demoContent تبقى unmarked، وهذا ليس حكمًا بأنها حقيقية.",
+    "status": "معالجة بانتظار المراجعة",
+    "previousStatus": "مفتوحة",
+    "updatedAt": "2026-09-24T05:10:00+03:00",
+    "evidenceType": "correction"
+  },
+  {
+    "id": "REV-0021",
+    "parentId": null,
+    "titleAr": "المحتوى التجريبي كان يُستنتج من أسماء الجهات",
+    "source": "مراجعة تفعيل اختبار اكتشفي",
+    "descriptionAr": "قائمة أسماء عربية كانت تقرر أن المجموعة تجريبية.",
+    "reqIds": [
+      "REQ-0024"
+    ],
+    "severity": "high",
+    "impactAr": "اسم جهة على الخادم قد يُصنف المحتوى تجريبيًا أو العكس.",
+    "unit": "mira-app",
+    "files": [
+      "lib/features/marketplace/data/marketplace_local_catalog.dart",
+      "lib/features/marketplace/domain/entities/partner_summary.dart"
+    ],
+    "previousEvidenceAr": "حزمة تفعيل الاختبار 0319",
+    "actionAr": "الكتالوج المحلي يعلن ContentMark.explicitDemo. الخادم لا يُعلَّم تجريبيًا إلا إذا كان demoContent true. حُذف الاعتماد على الأسماء.",
+    "newEvidenceIds": [
+      "EVD-0037"
+    ],
+    "verificationAr": "اختبار يعيد اسم لوريال من الخادم بلا العلم فيبقى unmarked، وعلَم true يجعله explicitDemo.",
+    "remainingLimitsAr": "بذرة الخادم الحالية بلا الحقل، لذلك تُعرض unmarked لا حقيقية ولا تجريبية.",
+    "status": "معالجة بانتظار المراجعة",
+    "previousStatus": "مفتوحة",
+    "updatedAt": "2026-09-24T05:10:00+03:00",
+    "evidenceType": "correction"
+  },
+  {
+    "id": "REV-0022",
+    "parentId": null,
+    "titleAr": "قص محتوى الموقع على عرض الجوال",
+    "source": "مراجعة لقطات الموقع",
+    "descriptionAr": "الجداول وحاوية البحث كانت توسع عرض الصفحة، ولقطة 390 وصل حبرها إلى الحافة.",
+    "reqIds": [
+      "REQ-0024"
+    ],
+    "severity": "medium",
+    "impactAr": "النص والأزرار قد تُقص على الجوال.",
+    "unit": "reference-site",
+    "files": [
+      "css/layout.css",
+      "css/components.css",
+      "css/responsive.css"
+    ],
+    "previousEvidenceAr": "لقطات rc1 في حزمة 0319",
+    "actionAr": "أُلغي min-width الثابت للبحث وللجداول، وبطاقات المراحل والروابط تلتف. اللقطات الجديدة تُقاس في دليل هذه الجولة.",
+    "newEvidenceIds": [
+      "EVD-0038"
+    ],
+    "verificationAr": "لقطات 390 و768 و1280 وقياس الحافة والتكرار.",
+    "remainingLimitsAr": "لقطات 390 و768 و1280 صار scrollWidth فيها مساويًا لعرض النافذة، وحبر الحافة اليمنى واليسرى صفر. التكرار على 445 ليس 1.0. هذا لا يعتمد المرحلة.",
+    "status": "معالجة بانتظار المراجعة",
+    "previousStatus": "مفتوحة",
+    "updatedAt": "2026-09-24T05:10:00+03:00",
+    "evidenceType": "correction"
+  }
+]

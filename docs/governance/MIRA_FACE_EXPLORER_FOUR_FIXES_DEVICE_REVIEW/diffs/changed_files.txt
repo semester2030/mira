@@ -1,0 +1,16 @@
+ M lib/features/results_experience/presentation/geometry/landmark_aligned_face_geometry.dart
+ M lib/features/results_experience/presentation/geometry/landmark_face_region_session.dart
+ M lib/features/results_experience/presentation/geometry/skin_face_map_visual_path_builder.dart
+ M lib/features/results_experience/presentation/geometry/skin_face_map_visual_tokens.dart
+ M lib/features/results_experience/presentation/geometry/skin_report_landmark_indices.dart
+ M lib/features/results_experience/presentation/geometry/skin_report_region_builder.dart
+ M lib/features/results_experience/presentation/widgets/perfect_mask_overlay.dart
+ M lib/features/results_experience/presentation/widgets/results_skin_map_panel.dart
+ M pubspec.yaml
+?? lib/features/results_experience/presentation/face_explorer/
+?? lib/features/results_experience/presentation/geometry/face_explorer_lens_geometry.dart
+?? lib/features/results_experience/presentation/geometry/magnifier_focus_binder.dart
+?? lib/features/results_experience/presentation/geometry/shared_image_mask_fit.dart
+?? lib/features/results_experience/presentation/geometry/skin_face_explorer_layer_isolation.dart
+?? test/features/results_experience/face_explorer_four_fixes_test.dart
+?? test/results_experience/face_explorer_four_fixes_test.dart

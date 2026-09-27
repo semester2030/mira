@@ -66,8 +66,7 @@ class _PriorityCard extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final personalization = PersonalizationLabels.ar(priority.personalization);
-    final confShort =
-        ResultsConfidenceChip.shortLabelAr(priority.confidence);
+    final confShort = ResultsConfidenceChip.shortLabelAr(priority.confidence);
 
     return Material(
       color: AppColors.surface,

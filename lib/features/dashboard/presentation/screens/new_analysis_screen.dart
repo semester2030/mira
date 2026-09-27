@@ -23,6 +23,8 @@ import '../../../skin_analysis/data/repositories/skin_analysis_repository_impl.d
 import '../../../skin_analysis/presentation/blocs/skin_analysis_bloc.dart';
 import '../../../skin_analysis/presentation/blocs/skin_analysis_event.dart';
 import '../../../skin_analysis/presentation/blocs/skin_analysis_state.dart';
+import '../../../skin_analysis/presentation/capture/perfect_camera_kit_gate.dart';
+import '../../../skin_analysis/presentation/debug/mira_measure_trace.dart';
 import '../../../skin_analysis/presentation/widgets/face_capture_panel.dart';
 
 class NewAnalysisScreen extends ConsumerStatefulWidget {
@@ -41,7 +43,22 @@ class _NewAnalysisScreenState extends ConsumerState<NewAnalysisScreen> {
   FaceAnalysisJourneyPhase _journey = FaceAnalysisJourneyPhase.idle;
   FaceAnalysisJourneyError? _journeyError;
   Completer<void>? _motionHandoff;
-  String? _resultMirrorHoldPath;
+
+  /// Monotonic attempt id — stale responses / late timeouts must not win.
+  int _analysisAttemptId = 0;
+  int _activeAttemptId = 0;
+
+  /// Matches SkinAnalysisApiDataSource receiveTimeout (180s) + small slack.
+  static const _analysisTimeout = Duration(seconds: 185);
+
+  @override
+  void initState() {
+    super.initState();
+    MiraMeasureTrace.beginRun(
+      'CKMEAS-${DateTime.now().toUtc().millisecondsSinceEpoch}',
+    );
+    MiraMeasureTrace.beginSession();
+  }
 
   bool get _motionOn => FaceAnalysisMotionFlag.enabled;
 
@@ -75,17 +92,11 @@ class _NewAnalysisScreenState extends ConsumerState<NewAnalysisScreen> {
     }
   }
 
-  Future<String?> _prepareResultMirrorHold() async {
-    if (!FaceResultMirrorFlag.enabled || _capturedImage == null) return null;
-    return FaceResultMirrorImageHold.prepareFrom(_capturedImage!.path);
-  }
-
   Future<void> _onReportRouteClosed(Object? result) async {
     final retake = result == FaceRetakePolicy.popResult;
     if (retake) {
       FaceHistoryAnalytics.retakeCompleted();
     }
-    _resultMirrorHoldPath = null;
     if (!mounted) return;
     if (!retake) return;
     setState(() {
@@ -108,6 +119,7 @@ class _NewAnalysisScreenState extends ConsumerState<NewAnalysisScreen> {
   }
 
   Future<void> _clearCaptureForRecapture() async {
+    _analysisAttemptId += 1; // invalidate in-flight analysis
     setState(() {
       _capturedImage = null;
       _journey = FaceAnalysisJourneyPhase.idle;
@@ -117,9 +129,48 @@ class _NewAnalysisScreenState extends ConsumerState<NewAnalysisScreen> {
     });
   }
 
-  Future<void> _runGuestAnalysis(BuildContext context) async {
+  bool _isActiveAttempt(int attempt) => attempt == _analysisAttemptId;
+
+  /// Starts analysis for the current capture. Always callable from capture
+  /// callback — does NOT depend on build-time `onAnalyze` which was null
+  /// while `_capturedImage == null` (stale closure bug).
+  void _startAnalysisForCurrentCapture(BuildContext context) {
+    if (_submitLock || _capturedImage == null) {
+      debugPrint(
+        'Mira analysis: start SKIPPED lock=$_submitLock '
+        'hasPhoto=${_capturedImage != null} '
+        'probe=${PerfectCameraKitGate.buildProbeTag}',
+      );
+      return;
+    }
+    final attempt = ++_analysisAttemptId;
+    _activeAttemptId = attempt;
+    final t0 = DateTime.now().toUtc().toIso8601String();
+    MiraMeasureTrace.span(
+      'T4_ANALYSIS_INVOKE',
+      detail: 'attempt=$attempt guest=${AppSession.isGuest}',
+    );
+    debugPrint(
+      'Mira analysis: START attempt=$attempt t0=$t0 '
+      'guest=${AppSession.isGuest} '
+      'path=${_capturedImage!.path} '
+      'probe=${PerfectCameraKitGate.buildProbeTag}',
+    );
+    if (AppSession.isGuest) {
+      unawaited(_runGuestAnalysis(context, attempt: attempt));
+    } else {
+      unawaited(_startSignedInAnalysis(context, attempt: attempt));
+    }
+  }
+
+  Future<void> _runGuestAnalysis(
+    BuildContext context, {
+    required int attempt,
+  }) async {
+    if (!_isActiveAttempt(attempt)) return;
     if (_submitLock || _capturedImage == null) return;
     if (!await _captureStillValid()) {
+      if (!_isActiveAttempt(attempt)) return;
       await _clearCaptureForRecapture();
       if (!context.mounted) return;
       ScaffoldMessenger.of(context).showSnackBar(
@@ -130,29 +181,46 @@ class _NewAnalysisScreenState extends ConsumerState<NewAnalysisScreen> {
       );
       return;
     }
+    if (!_isActiveAttempt(attempt) || !context.mounted) return;
     _submitLock = true;
     setState(() {
       _guestAnalyzing = true;
       _journey = FaceAnalysisJourneyPhase.submitting;
       _journeyError = null;
     });
-    final mirrorHold = await _prepareResultMirrorHold();
-    _resultMirrorHoldPath = mirrorHold;
+    final sw = Stopwatch()..start();
     try {
-      final report = await _guestRepo.analyzeFromImage(
-        _capturedImage!.path,
-        onRemoteWaitStarted: () {
-          if (!mounted) return;
-          _beginProcessingMotion();
-          setState(() => _journey = FaceAnalysisJourneyPhase.processing);
-        },
-      );
+      final report = await _guestRepo
+          .analyzeFromImage(
+            _capturedImage!.path,
+            onRemoteWaitStarted: () {
+              if (!mounted || !_isActiveAttempt(attempt)) return;
+              _beginProcessingMotion();
+              setState(() => _journey = FaceAnalysisJourneyPhase.processing);
+              debugPrint(
+                'Mira analysis: PROCESSING attempt=$attempt '
+                'elapsedMs=${sw.elapsedMilliseconds}',
+              );
+            },
+          )
+          .timeout(_analysisTimeout);
+      if (!_isActiveAttempt(attempt)) {
+        debugPrint(
+          'Mira analysis: SUCCESS IGNORED stale attempt=$attempt '
+          'current=$_analysisAttemptId',
+        );
+        return;
+      }
       AnalysisSession.setSkin(report);
       if (!context.mounted) return;
+      debugPrint(
+        'Mira analysis: SUCCESS attempt=$attempt '
+        'elapsedMs=${sw.elapsedMilliseconds}',
+      );
       if (_motionOn) {
         setState(() => _journey = FaceAnalysisJourneyPhase.completed);
         await _awaitMotionHandoffIfNeeded();
-        if (!context.mounted) return;
+        if (!context.mounted || !_isActiveAttempt(attempt)) return;
       }
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(
@@ -166,12 +234,40 @@ class _NewAnalysisScreenState extends ConsumerState<NewAnalysisScreen> {
       MiraReportNavigation.openAfterAnalysis(
         context,
         report,
-        captureImagePath: mirrorHold,
+        captureImagePath: AnalysisSession.lastEphemeralFacePath,
       ).then(_onReportRouteClosed);
+      MiraMeasureTrace.span('T11_RESULT_NAV_PUSHED', detail: 'guest=1');
+    } on TimeoutException {
+      if (!context.mounted || !_isActiveAttempt(attempt)) return;
+      debugPrint(
+        'Mira analysis: TIMEOUT attempt=$attempt '
+        'elapsedMs=${sw.elapsedMilliseconds}',
+      );
+      final mapped = mapFaceAnalysisError(
+        code: 'TIMEOUT',
+        message: 'analysis_timeout',
+      );
+      setState(() {
+        _journeyError = mapped;
+        _journey = FaceAnalysisJourneyPhase.timeout;
+      });
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          content: Text(mapped.snackMessage),
+          backgroundColor: AppColors.error,
+          action: SnackBarAction(
+            label: 'إعادة المحاولة',
+            textColor: AppColors.onPrimary,
+            onPressed: () {},
+          ),
+        ),
+      );
     } catch (e) {
-      await FaceResultMirrorImageHold.release(mirrorHold);
-      _resultMirrorHoldPath = null;
-      if (!context.mounted) return;
+      if (!context.mounted || !_isActiveAttempt(attempt)) return;
+      debugPrint(
+        'Mira analysis: FAIL attempt=$attempt '
+        'elapsedMs=${sw.elapsedMilliseconds} err=${friendlyMiraError(e)}',
+      );
       final mapped = mapFaceAnalysisError(message: friendlyMiraError(e));
       setState(() {
         _journeyError = mapped;
@@ -195,7 +291,9 @@ class _NewAnalysisScreenState extends ConsumerState<NewAnalysisScreen> {
         ),
       );
     } finally {
-      if (mounted) {
+      if (!_isActiveAttempt(attempt)) {
+        // Newer attempt owns UI — do not unlock/clear.
+      } else if (mounted) {
         setState(() {
           _guestAnalyzing = false;
           _submitLock = false;
@@ -212,9 +310,14 @@ class _NewAnalysisScreenState extends ConsumerState<NewAnalysisScreen> {
     }
   }
 
-  Future<void> _startSignedInAnalysis(BuildContext context) async {
+  Future<void> _startSignedInAnalysis(
+    BuildContext context, {
+    required int attempt,
+  }) async {
+    if (!_isActiveAttempt(attempt)) return;
     if (_submitLock || _capturedImage == null) return;
     if (!await _captureStillValid()) {
+      if (!_isActiveAttempt(attempt)) return;
       await _clearCaptureForRecapture();
       if (!context.mounted) return;
       ScaffoldMessenger.of(context).showSnackBar(
@@ -225,22 +328,29 @@ class _NewAnalysisScreenState extends ConsumerState<NewAnalysisScreen> {
       );
       return;
     }
+    if (!context.mounted || !_isActiveAttempt(attempt)) return;
     if (MiraFeatures.packagesEnabled && !AppSession.isGuest) {
       final ok = await PackageCreditGate.ensureSkinCredits(context, ref);
-      if (!ok || !context.mounted) return;
+      if (!ok || !context.mounted || !_isActiveAttempt(attempt)) return;
     }
     _submitLock = true;
     setState(() {
       _journey = FaceAnalysisJourneyPhase.submitting;
       _journeyError = null;
     });
-    _resultMirrorHoldPath = await _prepareResultMirrorHold();
     if (!context.mounted) {
       _submitLock = false;
       return;
     }
+    debugPrint(
+      'Mira analysis: DISPATCH StartSkinAnalysis attempt=$attempt '
+      'path=${_capturedImage!.path}',
+    );
     context.read<SkinAnalysisBloc>().add(
-          StartSkinAnalysis(imagePath: _capturedImage!.path),
+          StartSkinAnalysis(
+            imagePath: _capturedImage!.path,
+            attemptId: attempt,
+          ),
         );
   }
 
@@ -263,7 +373,7 @@ class _NewAnalysisScreenState extends ConsumerState<NewAnalysisScreen> {
 
   String _statusCopy({required bool hasPhoto, required bool busy}) {
     if (!hasPhoto) {
-      return 'كاميرا ميرا الاحترافية — ثبّتي وجهك داخل الإطار';
+      return 'ضعي وجهك داخل الإطار واضغطي للتصوير';
     }
     switch (_journey) {
       case FaceAnalysisJourneyPhase.submitting:
@@ -280,8 +390,14 @@ class _NewAnalysisScreenState extends ConsumerState<NewAnalysisScreen> {
       case FaceAnalysisJourneyPhase.submissionFailed:
       case FaceAnalysisJourneyPhase.processingFailed:
         return _journeyError?.titleAr ?? 'تعذر بدء التحليل حاليًا';
+      case FaceAnalysisJourneyPhase.ready:
+      case FaceAnalysisJourneyPhase.captured:
+      case FaceAnalysisJourneyPhase.localValidation:
+        if (busy) return 'جاري تجهيز الصورة...';
+        // Truthful: capture accepted; analysis not yet running.
+        return 'تم التقاط الصورة';
       default:
-        return busy ? 'جاري بدء التحليل...' : 'تم التقاط الصورة';
+        return busy ? 'جاري تجهيز الصورة...' : 'تم التقاط الصورة';
     }
   }
 
@@ -296,23 +412,29 @@ class _NewAnalysisScreenState extends ConsumerState<NewAnalysisScreen> {
       }
       return 'جاري بدء التحليل...';
     }
-    if (!hasPhoto) return 'التقطي صورتك أولاً';
     if (_journeyError?.requiresRecapture == true) return 'إعادة التصوير';
     if (_journeyError != null && _journeyError!.retryable) {
       return 'إعادة المحاولة';
     }
-    return 'بدء التحليل';
+    if (hasPhoto) return 'بدء التحليل';
+    return 'التقاط صورة';
   }
 
   Widget _buildAnalysisBody({
     required bool loading,
-    required VoidCallback? onAnalyze,
+    required BuildContext analysisContext,
   }) {
     final hasPhoto = _capturedImage != null;
     final analyzing = loading || _guestAnalyzing;
     final softLaser = _softLaserActive && analyzing;
     final pipeline = pipelineStatusForSoftLaser(_journey) ??
         AnalysisPipelineStatus.idle;
+    // Show CTA while analyzing (progress), on retryable errors, or as
+    // fallback when capture exists but analysis has not started yet.
+    final showBottomCta = analyzing ||
+        hasPhoto ||
+        (_journeyError != null &&
+            (_journeyError!.requiresRecapture || _journeyError!.retryable));
 
     return Container(
       decoration: const BoxDecoration(
@@ -367,30 +489,61 @@ class _NewAnalysisScreenState extends ConsumerState<NewAnalysisScreen> {
                     softLaser ? pipeline : AnalysisPipelineStatus.idle,
                 analysisErrorMessage: _journeyError?.snackMessage,
                 onAnalysisMotionHandoff: _onMotionHandoff,
-                onImageChanged: (file) => setState(() {
-                  _capturedImage = file;
-                  _journey = file == null
-                      ? FaceAnalysisJourneyPhase.idle
-                      : FaceAnalysisJourneyPhase.ready;
-                  _journeyError = null;
-                  _submitLock = false;
-                }),
+                onImageChanged: (file) {
+                  final becameCaptured =
+                      file != null && _capturedImage == null;
+                  setState(() {
+                    _capturedImage = file;
+                    _journey = file == null
+                        ? FaceAnalysisJourneyPhase.idle
+                        : FaceAnalysisJourneyPhase.ready;
+                    _journeyError = null;
+                    if (file == null) _submitLock = false;
+                  });
+                  if (!becameCaptured) return;
+                  debugPrint(
+                    'Mira analysis: capture ACCEPTED → schedule start '
+                    'probe=${PerfectCameraKitGate.buildProbeTag}',
+                  );
+                  WidgetsBinding.instance.addPostFrameCallback((_) {
+                    if (!mounted || _capturedImage == null) {
+                      debugPrint(
+                        'Mira analysis: post-frame SKIPPED '
+                        'mounted=$mounted hasPhoto=${_capturedImage != null}',
+                      );
+                      return;
+                    }
+                    if (_submitLock || _guestAnalyzing) {
+                      debugPrint(
+                        'Mira analysis: post-frame SKIPPED already in-flight '
+                        'lock=$_submitLock guest=$_guestAnalyzing',
+                      );
+                      return;
+                    }
+                    debugPrint('Mira analysis: post-frame INVOKING start');
+                    _startAnalysisForCurrentCapture(analysisContext);
+                  });
+                },
               ),
             ),
-            Padding(
-              padding: const EdgeInsets.fromLTRB(20, 4, 20, 20),
-              child: PremiumButton(
-                label: _buttonLabel(hasPhoto: hasPhoto, busy: analyzing),
-                loading: analyzing,
-                icon: Icons.auto_awesome_rounded,
-                variant: PremiumButtonVariant.gold,
-                onPressed: analyzing || _submitLock
-                    ? null
-                    : (_journeyError?.requiresRecapture == true
-                        ? () => _clearCaptureForRecapture()
-                        : onAnalyze),
-              ),
-            ),
+            if (showBottomCta)
+              Padding(
+                padding: const EdgeInsets.fromLTRB(20, 4, 20, 20),
+                child: PremiumButton(
+                  label: _buttonLabel(hasPhoto: hasPhoto, busy: analyzing),
+                  loading: analyzing,
+                  icon: Icons.auto_awesome_rounded,
+                  variant: PremiumButtonVariant.gold,
+                  onPressed: analyzing || _submitLock
+                      ? null
+                      : (_journeyError?.requiresRecapture == true
+                          ? () => _clearCaptureForRecapture()
+                          : () =>
+                              _startAnalysisForCurrentCapture(analysisContext)),
+                ),
+              )
+            else
+              const SizedBox(height: 20),
           ],
         ),
       ),
@@ -414,8 +567,6 @@ class _NewAnalysisScreenState extends ConsumerState<NewAnalysisScreen> {
       );
     }
 
-    final canAnalyze = _capturedImage != null && !_guestAnalyzing && !_submitLock;
-
     if (isGuest) {
       return Theme(
         data: Theme.of(context).copyWith(
@@ -434,8 +585,7 @@ class _NewAnalysisScreenState extends ConsumerState<NewAnalysisScreen> {
               Expanded(
                 child: _buildAnalysisBody(
                   loading: _guestAnalyzing,
-                  onAnalyze:
-                      canAnalyze ? () => _runGuestAnalysis(context) : null,
+                  analysisContext: context,
                 ),
               ),
             ],
@@ -449,14 +599,30 @@ class _NewAnalysisScreenState extends ConsumerState<NewAnalysisScreen> {
       child: BlocConsumer<SkinAnalysisBloc, SkinAnalysisState>(
         listener: (context, state) async {
           if (state is SkinAnalysisSubmitting) {
+            if (state.attemptId != null &&
+                state.attemptId != _activeAttemptId) {
+              return;
+            }
             setState(() {
               _journey = FaceAnalysisJourneyPhase.submitting;
               _journeyError = null;
             });
           } else if (state is SkinAnalysisProcessing) {
+            if (state.attemptId != null &&
+                state.attemptId != _activeAttemptId) {
+              return;
+            }
             _beginProcessingMotion();
             setState(() => _journey = FaceAnalysisJourneyPhase.processing);
           } else if (state is SkinAnalysisSuccess) {
+            if (state.attemptId != null &&
+                state.attemptId != _activeAttemptId) {
+              debugPrint(
+                'Mira analysis: SUCCESS IGNORED stale '
+                'attempt=${state.attemptId} current=$_activeAttemptId',
+              );
+              return;
+            }
             await _onSkinAnalysisSuccess(context);
             if (!context.mounted) return;
             AnalysisSession.setSkin(state.report);
@@ -475,10 +641,11 @@ class _NewAnalysisScreenState extends ConsumerState<NewAnalysisScreen> {
                 backgroundColor: AppColors.success,
               ),
             );
+            MiraMeasureTrace.span('T11_RESULT_NAV_PUSHED', detail: 'guest=0');
             MiraReportNavigation.openAfterAnalysis(
               context,
               state.report,
-              captureImagePath: _resultMirrorHoldPath,
+              captureImagePath: AnalysisSession.lastEphemeralFacePath,
             ).then((result) async {
               await _onReportRouteClosed(result);
             });
@@ -490,9 +657,13 @@ class _NewAnalysisScreenState extends ConsumerState<NewAnalysisScreen> {
               });
             }
           } else if (state is SkinAnalysisFailure) {
-            if (_resultMirrorHoldPath != null) {
-              await FaceResultMirrorImageHold.release(_resultMirrorHoldPath);
-              _resultMirrorHoldPath = null;
+            if (state.attemptId != null &&
+                state.attemptId != _activeAttemptId) {
+              debugPrint(
+                'Mira analysis: FAILURE IGNORED stale '
+                'attempt=${state.attemptId} current=$_activeAttemptId',
+              );
+              return;
             }
             final err = state.journeyError ??
                 mapFaceAnalysisError(message: state.message);
@@ -545,9 +716,7 @@ class _NewAnalysisScreenState extends ConsumerState<NewAnalysisScreen> {
               appBar: const MiraAppBar(pageTitle: 'تحليل الوجه'),
               body: _buildAnalysisBody(
                 loading: loading,
-                onAnalyze: canAnalyze && !loading
-                    ? () => _startSignedInAnalysis(context)
-                    : null,
+                analysisContext: context,
               ),
             ),
           );

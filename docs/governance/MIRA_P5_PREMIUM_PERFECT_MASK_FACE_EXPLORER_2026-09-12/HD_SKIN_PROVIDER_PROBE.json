@@ -1,0 +1,119 @@
+{
+  "start": {
+    "phase": "start",
+    "actions": 15,
+    "dims": "1200x1680"
+  },
+  "done": {
+    "phase": "done",
+    "perfectTasks": 1,
+    "artifactCount": 27,
+    "ephemeralMaskCount": 27,
+    "masksWithBytes": 25,
+    "scoreOnlyCount": 2,
+    "sampleConcerns": [
+      {
+        "concernType": "hd_tear_trough",
+        "region": null,
+        "hasBase64": true,
+        "width": 1200,
+        "height": 1680,
+        "aligned": true,
+        "rawScore": 86.58022582530975,
+        "uiScore": 84
+      },
+      {
+        "concernType": "hd_eye_bag",
+        "region": null,
+        "hasBase64": true,
+        "width": 1200,
+        "height": 1680,
+        "aligned": true,
+        "rawScore": 76.12367868423462,
+        "uiScore": 79
+      },
+      {
+        "concernType": "hd_droopy_upper_eyelid",
+        "region": null,
+        "hasBase64": true,
+        "width": 1200,
+        "height": 1680,
+        "aligned": true,
+        "rawScore": 82.43886232376099,
+        "uiScore": 82
+      },
+      {
+        "concernType": "hd_oiliness",
+        "region": null,
+        "hasBase64": true,
+        "width": 1200,
+        "height": 1680,
+        "aligned": true,
+        "rawScore": 51.672332763671875,
+        "uiScore": 68
+      },
+      {
+        "concernType": "hd_redness",
+        "region": null,
+        "hasBase64": true,
+        "width": 1200,
+        "height": 1680,
+        "aligned": true,
+        "rawScore": 93.69667053222656,
+        "uiScore": 90
+      },
+      {
+        "concernType": "hd_droopy_lower_eyelid",
+        "region": null,
+        "hasBase64": true,
+        "width": 1200,
+        "height": 1680,
+        "aligned": true,
+        "rawScore": 70.21539211273193,
+        "uiScore": 76
+      },
+      {
+        "concernType": "hd_radiance",
+        "region": null,
+        "hasBase64": true,
+        "width": 1200,
+        "height": 1680,
+        "aligned": true,
+        "rawScore": 97.40634560585022,
+        "uiScore": 95
+      },
+      {
+        "concernType": "hd_age_spot",
+        "region": null,
+        "hasBase64": true,
+        "width": 1200,
+        "height": 1680,
+        "aligned": true,
+        "rawScore": 99.0926284790039,
+        "uiScore": 97
+      }
+    ],
+    "skinResultKeys": [
+      "beautyScore",
+      "skinTypeAr",
+      "skinTypeEn",
+      "hydration",
+      "oiliness",
+      "pores",
+      "wrinkles",
+      "acne",
+      "darkSpots",
+      "redness",
+      "undertoneAr",
+      "undertoneEn",
+      "skinToneAr",
+      "skinToneEn",
+      "recommendationsAr",
+      "recommendationsEn",
+      "concernScores",
+      "skinAge"
+    ],
+    "landmarkFallback": 0,
+    "dualPerfectCalls": 0
+  }
+}

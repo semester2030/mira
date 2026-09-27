@@ -1,0 +1,26 @@
+PH4 RC4 — بانتظار المراجعة المستقلة
+المعتمد بالكامل مرحلتان من خمس. قواعد العد بانتظار اعتماد المالك والعد غير مفعّل. PH3-STORAGE-LIVE مفتوح. اختبار الجوال في المرحلة الخامسة.
+
+RC3 تمت مراجعته ويحتاج تصحيحًا.
+البصمة الفعلية للملف المرسل: b32e13984f79710051ad156b3f898f91486f02e14e4fa1c7039697670e03689b
+ملف البصمة المرفق احتوى: b25852b5bb87e1204dddda8ab8583a0dc974a83a41e876db9e8fe95a2a908f57
+الاختلاف تاريخي ولم تُستبدل البصمة السابقة.
+
+إعادة الإنتاج من الحزمة المفكوكة:
+1. فك ZIP في مجلد مستقل. لا تستخدم شجرة العمل الأصلية خادمًا أو ملفات لإثبات هذه النسخة.
+2. من mira-api داخل النسخة: npm ci ثم npx prisma generate.
+3. السلسلة الكاملة:
+   MIRA_RC6_DB_NAME=mira_ph2_rc6_test_ph4rc4 ./scripts/run-marketplace-rc6-integration.sh
+   تحتاج ثنائي MinIO المحلي في /tmp/mira-rc6-tools/minio. في تنفيذ RC4 غاب الثنائي فوقفت السلسلة بـ spawn ENOENT قبل اختبارات الإعلان. هذا فشل للسلسلة الكاملة. نجاح الاختبارات المستهدفة بعده لا يُسجل نجاحًا لها.
+4. اختبار الإعلان المستهدف، بعد تهجير قاعدة محلية باسم mira_ph2_rc6_test_ph4rc4:
+   npx --no-install tsx src/marketplace/catalog-ad.ph4.rc3.http.integration-tests.ts
+   npx --no-install tsx src/marketplace/catalog-ad.ph4.rc4.http.integration-tests.ts
+   القاعدة تُحذف بعد التشغيل. ليس Firebase حيًا ولا تخزينًا دائمًا.
+5. من جذر الحزمة: flutter pub get ثم
+   flutter test test/features/marketplace/discover_ad_rc4_test.dart test/features/marketplace/discover_ad_feed_test.dart
+6. رحلة البوابتين من الحزمة نفسها، مع DATABASE_URL لقاعدة محلية في بيئة العملية:
+   ./mira-api/scripts/ph4-rc3-portal-journey.sh
+   السكربت يأخذ الجذر من موقعه. ليس تشغيل جوال.
+
+بصمة ZIP تُحسب بعد إغلاق الملف وتُكتب في الملف المجاور، لا داخل الحزمة.
+freshness=FAIL mismatches=17. التفصيل في evidence/ph4-rc4/freshness-mismatches.txt ونسخة القراءة خارج الحزمة MIRA_DISCOVER_PH4_RC4_FRESHNESS.txt. بصمات evidence-index لم تُحدَّث. NOT_RUN ليست PASS، وFAIL ليست PASS.

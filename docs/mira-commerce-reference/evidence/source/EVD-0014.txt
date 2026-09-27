@@ -1,0 +1,94 @@
+id=EVD-0014
+path=mira-api/src/admin/admin.controller.ts
+commit=15fe65c40d3dedb9afdd95619f2945bd84cb616a
+sha256=2af5bfd10d29da42966f8cad996c4009ff9ab88f362755dc8a51ee2d9303f9a3
+lines=24-109
+note=لوحة الإدارة محمية بمفتاح وتدير الشركاء والطلبات
+runtime=SOURCE_ONLY
+---
+24|@Controller('admin')
+25|@UseGuards(AdminApiKeyGuard)
+26|export class AdminController {
+27|  constructor(private readonly admin: AdminService) {}
+28|
+29|  @Get('stats/overview')
+30|  overview() {
+31|    return this.admin.getOverviewStats();
+32|  }
+33|
+34|  @Get('stats/analyses-trend')
+35|  analysesTrend(@Query('days') days?: string) {
+36|    const parsed = days ? Number.parseInt(days, 10) : 14;
+37|    return this.admin.getAnalysisTrend(Number.isFinite(parsed) ? parsed : 14);
+38|  }
+39|
+40|  @Get('stats/audit-actions')
+41|  auditActions() {
+42|    return this.admin.getAuditActionSummary();
+43|  }
+44|
+45|  @Get('users')
+46|  users(@Query() query: UsersQueryDto) {
+47|    return this.admin.listUsers(query.page, query.limit, query.search);
+48|  }
+49|
+50|  @Get('users/:id')
+51|  userDetail(@Param('id') id: string) {
+52|    return this.admin.getUserDetail(id);
+53|  }
+54|
+55|  @Get('audit-logs')
+56|  auditLogs(@Query() query: AuditLogsQueryDto) {
+57|    return this.admin.listAuditLogs(
+58|      query.page,
+59|      query.limit,
+60|      query.action,
+61|      query.userId,
+62|    );
+63|  }
+64|
+65|  @Get('feedback')
+66|  feedback(@Query() query: PaginationQueryDto) {
+67|    return this.admin.listFeedback(query.page, query.limit);
+68|  }
+69|
+70|  @Get('partners')
+71|  partners(@Query() query: PartnersQueryDto) {
+72|    return this.admin.listPartners(query.page, query.limit, query.status);
+73|  }
+74|
+75|  @Patch('partners/:id/status')
+76|  partnerStatus(
+77|    @Param('id') id: string,
+78|    @Body() dto: UpdatePartnerStatusDto,
+79|  ) {
+80|    return this.admin.updatePartnerStatus(id, dto.status);
+81|  }
+82|
+83|  @Get('partners/applications')
+84|  applications(@Query() query: ApplicationsQueryDto) {
+85|    return this.admin.listApplications(query.status);
+86|  }
+87|
+88|  @Post('partners/applications/:id/approve')
+89|  approveApplication(@Param('id') id: string) {
+90|    return this.admin.approveApplication(id);
+91|  }
+92|
+93|  @Post('partners/applications/:id/reject')
+94|  rejectApplication(
+95|    @Param('id') id: string,
+96|    @Body() dto: RejectApplicationDto,
+97|  ) {
+98|    return this.admin.rejectApplication(id, dto.reason);
+99|  }
+100|
+101|  @Get('leads')
+102|  leads(@Query() query: LeadsQueryDto) {
+103|    return this.admin.listWebsiteLeads(query.page, query.limit, query.type);
+104|  }
+105|
+106|  @Get('system/config')
+107|  systemConfig() {
+108|    return this.admin.getSystemConfig();
+109|  }

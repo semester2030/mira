@@ -1,0 +1,13 @@
+POC_FILES=
+ios/Runner/ApplePersonMattingChannel.swift
+ios/Runner/AppDelegate.swift (channel register only)
+ios/Runner.xcodeproj/project.pbxproj (Swift compile membership)
+lib/features/results_experience/presentation/poc/apple_person_matting_poc_bridge.dart
+lib/features/results_experience/presentation/poc/apple_portrait_matting_poc_screen.dart
+lib/core/navigation/app_routes.dart
+lib/main.dart
+lib/features/results_experience/presentation/screens/skin_interactive_report_screen.dart (POC entry button)
+
+NO_PRIVATE_FACE_IMAGES
+NO_PERFECT_MASK_BINARIES
+NO_SECRETS

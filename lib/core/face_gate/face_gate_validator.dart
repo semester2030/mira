@@ -31,6 +31,18 @@ class FaceGateValidator {
   }
 
   Future<FaceGateResult> validate(File imageFile) async {
+    return _validate(imageFile, presenceAndAreaOnly: false);
+  }
+
+  /// Manual capture path: face count + area only (no pose/center hard reject).
+  Future<FaceGateResult> validatePresenceAndArea(File imageFile) async {
+    return _validate(imageFile, presenceAndAreaOnly: true);
+  }
+
+  Future<FaceGateResult> _validate(
+    File imageFile, {
+    required bool presenceAndAreaOnly,
+  }) async {
     if (!await imageFile.exists()) {
       return const FaceGateResult.rejected(
         reasonCode: 'missing_file',
@@ -42,16 +54,27 @@ class FaceGateValidator {
       // Match on-screen preview: EXIF orientation + center crop.
       final oriented = await _orientedPreviewFile(imageFile);
       try {
-        final primary = await _detectOnFile(oriented);
+        final primary = await _detectOnFile(
+          oriented,
+          presenceAndAreaOnly: presenceAndAreaOnly,
+        );
         if (primary != null) return primary;
 
         // Fallback: raw camera file (some gallery picks).
         if (oriented.path != imageFile.path) {
-          final fallback = await _detectOnFile(imageFile);
+          final fallback = await _detectOnFile(
+            imageFile,
+            presenceAndAreaOnly: presenceAndAreaOnly,
+          );
           if (fallback != null) return fallback;
         }
 
-        return FaceGateRules.evaluate(faceCount: 0, faceAreaRatio: 0);
+        return presenceAndAreaOnly
+            ? FaceGateRules.evaluatePresenceAndArea(
+                faceCount: 0,
+                faceAreaRatio: 0,
+              )
+            : FaceGateRules.evaluate(faceCount: 0, faceAreaRatio: 0);
       } finally {
         if (oriented.path != imageFile.path) {
           if (await oriented.exists()) {
@@ -81,7 +104,10 @@ class FaceGateValidator {
     return out;
   }
 
-  Future<FaceGateResult?> _detectOnFile(File file) async {
+  Future<FaceGateResult?> _detectOnFile(
+    File file, {
+    bool presenceAndAreaOnly = false,
+  }) async {
     final inputImage = InputImage.fromFilePath(file.path);
     final faces = await _faceDetector.processImage(inputImage);
     final (imageWidth, imageHeight) = _resolveImageSize(inputImage, faces);
@@ -103,15 +129,20 @@ class FaceGateValidator {
     final centerOffsetX = (box.center.dx / imageWidth) - 0.5;
     final centerOffsetY = (box.center.dy / imageHeight) - 0.46;
 
-    final rules = FaceGateRules.evaluate(
-      faceCount: faces.length,
-      faceAreaRatio: ratio,
-      headYawDegrees: primary.headEulerAngleY,
-      headPitchDegrees: primary.headEulerAngleX,
-      headRollDegrees: primary.headEulerAngleZ,
-      centerOffsetXRatio: centerOffsetX,
-      centerOffsetYRatio: centerOffsetY,
-    );
+    final rules = presenceAndAreaOnly
+        ? FaceGateRules.evaluatePresenceAndArea(
+            faceCount: faces.length,
+            faceAreaRatio: ratio,
+          )
+        : FaceGateRules.evaluate(
+            faceCount: faces.length,
+            faceAreaRatio: ratio,
+            headYawDegrees: primary.headEulerAngleY,
+            headPitchDegrees: primary.headEulerAngleX,
+            headRollDegrees: primary.headEulerAngleZ,
+            centerOffsetXRatio: centerOffsetX,
+            centerOffsetYRatio: centerOffsetY,
+          );
 
     if (!rules.isAccepted) {
       return FaceGateResult.rejected(

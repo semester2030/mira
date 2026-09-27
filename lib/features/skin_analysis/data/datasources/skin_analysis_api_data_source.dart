@@ -1,4 +1,5 @@
 import 'dart:io';
+import 'dart:ui' as ui;
 
 import 'package:dio/dio.dart';
 
@@ -8,9 +9,11 @@ import '../../../../core/privacy/temp_image_cleanup.dart';
 import '../../../../core/services/user_stats_service.dart';
 import '../../../../core/session/analysis_session.dart';
 import '../../../../core/config/mira_api_config.dart';
+import '../../../face_analysis_experience/presentation/result/session/face_result_mirror_image_hold.dart';
 import '../../../intelligence/data/mappers/mira_beauty_report_mapper.dart';
 import '../../../results_experience/domain/perfect_mask_session.dart';
 import '../../domain/image_quality/image_quality_evaluator.dart';
+import '../../presentation/debug/mira_measure_trace.dart';
 import '../../presentation/debug/skin_start_analysis_trace.dart';
 import '../models/skin_report_model.dart';
 
@@ -20,22 +23,37 @@ class SkinAnalysisApiDataSource {
 
   SkinAnalysisApiDataSource({Dio? dio}) : _dio = dio ?? ApiClient.instance;
 
-  /// On success, deletes ephemeral prepared temps and the original capture path.
-  /// On failure, retains [imagePath] for deterministic retry/recapture UX.
+  /// On success, promotes Perfect-input bytes into [AnalysisSession] ephemeral
+  /// face hold, then deletes non-hold temps. On failure, retains [imagePath]
+  /// for deterministic retry/recapture UX.
   Future<SkinReportModel> analyzeAndSave({
     required String imagePath,
     void Function()? onRemoteWaitStarted,
   }) async {
     File? alignedTemp;
     var succeeded = false;
+    String? perfectInputPath;
 
     try {
+      final gateT0 = MiraMeasureTrace.monoMs;
+      MiraMeasureTrace.span('T5_QUALITY_GATE_BEGIN');
       final gate = await SkinCaptureQualityGate.run(File(imagePath));
+      MiraMeasureTrace.span('T5_QUALITY_GATE_END', t0Ms: gateT0);
       final sourceForPrepare = gate.readyFile;
+      perfectInputPath = sourceForPrepare.path;
       if (sourceForPrepare.path != imagePath) {
         alignedTemp = sourceForPrepare;
       }
 
+      // ignore: avoid_print
+      print(
+        'FACE_EPHEMERAL stage=ANALYSIS_INPUT present=1 '
+        'aligned=${alignedTemp != null} '
+        'id=${AnalysisSession.lastEphemeralFaceId ?? "pending"}',
+      );
+
+      final encT0 = MiraMeasureTrace.monoMs;
+      MiraMeasureTrace.span('T6_REQUEST_ENCODE_BEGIN');
       final formMap = <String, dynamic>{
         'image': await MultipartFile.fromFile(
           sourceForPrepare.path,
@@ -43,6 +61,7 @@ class SkinAnalysisApiDataSource {
         ),
         'faceIntel': gate.faceIntelJson,
       };
+      MiraMeasureTrace.span('T6_REQUEST_ENCODE_END', t0Ms: encT0);
 
       onRemoteWaitStarted?.call();
       SkinStartAnalysisTrace.mark('REQUEST_STARTED');
@@ -54,6 +73,8 @@ class SkinAnalysisApiDataSource {
         'HD_ENDPOINT_REACHED',
         detail: MiraApiEndpoints.skinAnalysis,
       );
+      final netT0 = MiraMeasureTrace.monoMs;
+      MiraMeasureTrace.span('T7_NETWORK_POST_BEGIN');
       final response = await _dio.post<Map<String, dynamic>>(
         MiraApiEndpoints.skinAnalysis,
         data: FormData.fromMap(formMap),
@@ -62,11 +83,20 @@ class SkinAnalysisApiDataSource {
           sendTimeout: const Duration(seconds: 180),
         ),
       );
+      // T8 send-body complete is NOT INSTRUMENTED precisely with Dio default;
+      // T9 is response arrival (post returns).
+      MiraMeasureTrace.span(
+        'T9_NETWORK_RESPONSE',
+        t0Ms: netT0,
+        detail: 'status=${response.statusCode} T8=NOT_INSTRUMENTED',
+      );
       SkinStartAnalysisTrace.httpStatus = response.statusCode;
       SkinStartAnalysisTrace.mark(
         'HTTP_STATUS',
         detail: '${response.statusCode}',
       );
+      final parseT0 = MiraMeasureTrace.monoMs;
+      MiraMeasureTrace.span('T10_PARSE_BEGIN');
       SkinStartAnalysisTrace.mark('RESULT_PARSED starting');
 
       final model = _parseResponse(response.data);
@@ -77,7 +107,20 @@ class SkinAnalysisApiDataSource {
             ? 'yes'
             : 'none',
       );
+      MiraMeasureTrace.span('T10_PARSE_END', t0Ms: parseT0);
       await UserStatsService.recordSkinAnalysis();
+
+      // Promote Perfect-input image → session hold BEFORE any cleanup.
+      await _promotePerfectInputToSessionHold(perfectInputPath);
+      // ignore: avoid_print
+      print(
+        'FACE_EPHEMERAL stage=ANALYSIS_SUCCESS present='
+        '${AnalysisSession.lastEphemeralFacePath != null ? 1 : 0} '
+        'id=${AnalysisSession.lastEphemeralFaceId ?? "-"} '
+        'dims=${AnalysisSession.lastEphemeralFaceWidth ?? "-"}'
+        'x${AnalysisSession.lastEphemeralFaceHeight ?? "-"}',
+      );
+
       succeeded = true;
       return model;
     } on ImageQualityException catch (e) {
@@ -97,14 +140,44 @@ class SkinAnalysisApiDataSource {
       SkinStartAnalysisTrace.fail('REQUEST_OR_PARSE', e);
       rethrow;
     } finally {
-      if (alignedTemp != null && alignedTemp.path != imagePath) {
+      final hold = AnalysisSession.lastEphemeralFacePath;
+      if (alignedTemp != null &&
+          alignedTemp.path != imagePath &&
+          alignedTemp.path != hold) {
         await TempImageCleanup.deleteIfExists(alignedTemp.path);
       }
-      // Only delete the user capture after a successful analysis.
-      if (succeeded) {
+      // Delete original capture after success — never the session hold.
+      if (succeeded && imagePath != hold) {
         await TempImageCleanup.deleteIfExists(imagePath);
       }
     }
+  }
+
+  /// Copy Perfect-input file into a session-scoped hold owned by AnalysisSession.
+  Future<void> _promotePerfectInputToSessionHold(
+    String? perfectInputPath,
+  ) async {
+    if (perfectInputPath == null || perfectInputPath.isEmpty) return;
+    final hold = await FaceResultMirrorImageHold.prepareFrom(perfectInputPath);
+    if (hold == null) {
+      // ignore: avoid_print
+      print('FACE_EPHEMERAL stage=HOLD_CREATE present=0');
+      return;
+    }
+    int? w;
+    int? h;
+    try {
+      final bytes = await File(hold).readAsBytes();
+      final codec = await ui.instantiateImageCodec(bytes);
+      final frame = await codec.getNextFrame();
+      w = frame.image.width;
+      h = frame.image.height;
+      frame.image.dispose();
+      codec.dispose();
+    } catch (_) {
+      // Dimensions optional for ownership; Face Explorer still loads bytes.
+    }
+    AnalysisSession.setEphemeralFace(path: hold, width: w, height: h);
   }
 
   SkinReportModel _parseResponse(Map<String, dynamic>? data) {

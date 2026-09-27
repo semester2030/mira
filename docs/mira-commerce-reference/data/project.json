@@ -1,0 +1,72 @@
+{
+  "studyId": "MIRA-ECOM-GATE00",
+  "studyVersion": "RC4 بصري — تصحيح المعاينة والأدلة والتكوين",
+  "studyStatus": "بانتظار إعادة المراجعة",
+  "gate": "GATE-00",
+  "titleAr": "المتاجر الإلكترونية في ميرا",
+  "updatedAt": "2026-09-27T05:20:00+03:00",
+  "timezone": "Asia/Riyadh",
+  "ownerDecisionStatus": "بانتظار إعادة المراجعة — DEC-0005 غير معتمد",
+  "baseline": {
+    "repoPath": "/Users/fayez/Desktop/mira",
+    "branch": "mira/p5-strict-frontend-recovery-2026-09-14",
+    "commitSha": "15fe65c40d3dedb9afdd95619f2945bd84cb616a",
+    "workingTreeNote": "تغييرات غير ملتزمة في iOS/skin — خارج نطاق هذه الدراسة",
+    "appVersionInPubspec": "1.0.0+2026092302",
+    "sourceVsBuildVsDeviceVsProd": {
+      "sourceExamined": "15fe65c40d3dedb9afdd95619f2945bd84cb616a",
+      "buildExamined": "غير مربوط بهذه الدراسة",
+      "deviceExamined": "غير مثبت لهذه الدراسة",
+      "productionExamined": "SOURCE_ONLY"
+    },
+    "inspectedAt": "2026-09-23T03:43:29+03:00",
+    "previousCommitSha": "15fe65c40d3dedb9afdd95619f2945bd84cb616a",
+    "deltaFromPreviousAr": "نفس commit. الفرق هو تصحيح الدراسة لا تغيير منتج. الشجرة المتسخة موثقة في EVD-0022."
+  },
+  "blockers": [
+    "GATE-00 بانتظار إعادة المراجعة",
+    "لا دليل تشغيل إنتاجي",
+    "لا متغيرات ولا طلب داخل النطاق المبحوث",
+    "تتبع الأحداث يقبل partnerId من العميل في المصدر",
+    "أسعار الوسائط غير متحققة",
+    "المعتمد بالكامل 2 من 5. PH-3 مقبولة برمجيًا وPH3-STORAGE-LIVE مفتوح. PH-4 قيد التنفيذ وقواعد العد غير معتمدة. DEC-0007 غير محسوم. لا تكامل زد."
+  ],
+  "decisionsNeeded": [
+    "DEC-0001",
+    "DEC-0002",
+    "DEC-0003",
+    "DEC-0004",
+    "DEC-0005",
+    "DEC-0007"
+  ],
+  "brandTokens": {
+    "primary": "#E86FA9",
+    "primaryLight": "#FADAE9",
+    "primaryDark": "#C95889",
+    "secondary": "#C19EE0",
+    "background": "#FFF7FA",
+    "text": "#4A3A3A",
+    "gold": "#D4AF37",
+    "source": "lib/shared/theme/colors.dart"
+  },
+  "counts": {
+    "requirements": 27,
+    "gaps": 20,
+    "evidence": 47,
+    "capabilities": 15,
+    "decisions": 7,
+    "paused": 3,
+    "gates": 10,
+    "reviewFindings": 39,
+    "scopeItems": 37
+  },
+  "previousStudyVersion": "RC1 — مراحل اكتشفي وشاشة العرض",
+  "previousPackage": "MIRA_ECOMMERCE_MASTER_STUDY_REVIEW_20260923_032329.zip",
+  "placesHandoff": {
+    "package": "DAR_PLACES_TO_MIRA_SOURCE_HANDOFF_RC2_20260924_0125.zip",
+    "sha256": "60a8d854eb609e1eef11513a1406fd1e262ac809922e889f2e7beecf76ec48e1"
+  },
+  "releaseDelivery": {
+    "rc4ReleaseId": "MIRA_DISCOVER_PHASE1_CLOSURE_RC4_20260925_2324"
+  }
+}

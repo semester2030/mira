@@ -1,0 +1,14 @@
+{
+  "version": "0.2.0",
+  "configurations": [
+    {
+      "name": "MIRA Discover Test",
+      "request": "launch",
+      "type": "dart",
+      "program": "lib/main.dart",
+      "args": [
+        "--dart-define=MIRA_MARKETPLACE_ENABLED=true"
+      ]
+    }
+  ]
+}

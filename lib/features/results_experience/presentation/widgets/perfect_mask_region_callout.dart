@@ -32,16 +32,20 @@ class PerfectMaskRegionCallout extends StatelessWidget {
         opacity: visible ? 1 : 0,
         duration: SkinFaceMapVisualTokens.calloutAppear,
         child: Container(
-          constraints: const BoxConstraints(maxWidth: 148),
-          padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
+          constraints: const BoxConstraints(maxWidth: 132),
+          padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 7),
           decoration: BoxDecoration(
-            color: AppColors.analysisCalloutSurface,
-            borderRadius: BorderRadius.circular(14),
-            boxShadow: const [
+            color: AppColors.analysisCalloutSurface.withValues(alpha: 0.94),
+            borderRadius: BorderRadius.circular(12),
+            border: Border.all(
+              color: accent.withValues(alpha: 0.35),
+              width: 0.8,
+            ),
+            boxShadow: [
               BoxShadow(
-                color: AppColors.shadow,
-                blurRadius: 10,
-                offset: Offset(0, 3),
+                color: Colors.black.withValues(alpha: 0.22),
+                blurRadius: 8,
+                offset: const Offset(0, 2),
               ),
             ],
           ),
@@ -54,6 +58,7 @@ class PerfectMaskRegionCallout extends StatelessWidget {
                 style: AppTypography.labelSmall.copyWith(
                   fontWeight: FontWeight.w800,
                   color: AppColors.textPrimary,
+                  height: 1.15,
                 ),
                 maxLines: 1,
                 overflow: TextOverflow.ellipsis,
@@ -64,17 +69,19 @@ class PerfectMaskRegionCallout extends StatelessWidget {
                 style: AppTypography.labelSmall.copyWith(
                   color: AppColors.textTertiary,
                   fontWeight: FontWeight.w600,
+                  height: 1.15,
                 ),
                 maxLines: 1,
                 overflow: TextOverflow.ellipsis,
               ),
               if (uiScore != null) ...[
-                const SizedBox(height: 4),
+                const SizedBox(height: 3),
                 Text(
                   uiScore!.round().toString(),
                   style: AppTypography.titleSmall.copyWith(
                     fontWeight: FontWeight.w800,
                     color: accent,
+                    height: 1.05,
                   ),
                 ),
               ],
@@ -88,10 +95,7 @@ class PerfectMaskRegionCallout extends StatelessWidget {
 
 /// Thin informational connector — never draws Perfect detection geometry.
 class PerfectMaskCalloutConnector extends StatelessWidget {
-  const PerfectMaskCalloutConnector({
-    super.key,
-    required this.accent,
-  });
+  const PerfectMaskCalloutConnector({super.key, required this.accent});
 
   final Color accent;
 
@@ -113,16 +117,16 @@ class _CalloutLinePainter extends CustomPainter {
   void paint(Canvas canvas, Size size) {
     final paint = Paint()
       ..color = color
-      ..strokeWidth = 1.1
+      ..strokeWidth = 0.9
       ..style = PaintingStyle.stroke
       ..strokeCap = StrokeCap.round;
     final path = Path()
-      ..moveTo(size.width * 0.15, size.height)
+      ..moveTo(size.width * 0.1, size.height * 0.92)
       ..quadraticBezierTo(
-        size.width * 0.35,
-        size.height * 0.45,
-        size.width * 0.85,
-        0,
+        size.width * 0.42,
+        size.height * 0.5,
+        size.width * 0.88,
+        size.height * 0.08,
       );
     canvas.drawPath(path, paint);
   }

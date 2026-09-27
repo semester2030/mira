@@ -1,0 +1,12 @@
+command: flutter --version
+Flutter 3.38.9 • channel stable • https://github.com/flutter/flutter.git
+Framework • revision 67323de285 (8 months ago) • 2026-01-28 13:43:12 -0800
+Engine • hash 5eb06b7ad5bb8cbc22c5230264c7a00ceac7674b (revision 587c18f873) (7 months ago) • 2026-01-27 23:23:03.000Z
+Tools • Dart 3.10.8 • DevTools 2.51.1
+exit:0
+command: uname -a
+Darwin Mac 25.4.0 Darwin Kernel Version 25.4.0: Thu Mar 19 19:31:17 PDT 2026; root:xnu-12377.101.15~1/RELEASE_ARM64_T6020 arm64
+command: flutter analyze lib/features/marketplace lib/core/navigation/mira_route_observer.dart lib/main.dart test/features/marketplace
+Analyzing 4 items...                                            
+No issues found! (ran in 4.1s)
+exit:0

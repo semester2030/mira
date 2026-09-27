@@ -29,27 +29,48 @@ OutfitAnalysis _sample() {
 
 void main() {
   group('OutfitTrustScoring', () {
-    test('raises score when occasion and style are strong', () {
+    test('does not raise raw score with psychological floors', () {
       final adjusted = OutfitTrustScoring.applyFinalScore(
         rawScore: 49,
         occasionScore: 85,
         styleScore: 78,
         colorHarmonyScore: 70,
       );
-      expect(adjusted, greaterThanOrEqualTo(70));
+      expect(adjusted, 49);
     });
 
-    test('boosts confidence when harmony is high', () {
+    test('does not boost confidence from harmony / occasion', () {
       final c = OutfitTrustScoring.applyConfidence(
         baseConfidence: 72,
         colorHarmonyScore: 90,
         occasionScore: 82,
         styleScore: 76,
       );
-      expect(c, greaterThan(72));
+      expect(c, 72);
     });
 
-    test('does not inflate weak outfits', () {
+    test('clamps to 0–100 without artificial 55–98 band', () {
+      expect(
+        OutfitTrustScoring.applyConfidence(
+          baseConfidence: 40,
+          colorHarmonyScore: 99,
+          occasionScore: 99,
+          styleScore: 99,
+        ),
+        40,
+      );
+      expect(
+        OutfitTrustScoring.applyConfidence(
+          baseConfidence: 100,
+          colorHarmonyScore: 0,
+          occasionScore: 0,
+          styleScore: 0,
+        ),
+        100,
+      );
+    });
+
+    test('passes weak outfits unchanged', () {
       final adjusted = OutfitTrustScoring.applyFinalScore(
         rawScore: 42,
         occasionScore: 55,

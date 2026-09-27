@@ -1,0 +1,57 @@
+<!DOCTYPE html>
+<html lang="ar" dir="rtl">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>المتاجر الإلكترونية في ميرا — مرجع الدراسة</title>
+  <link rel="stylesheet" href="css/tokens.css" />
+  <link rel="stylesheet" href="css/layout.css" />
+  <link rel="stylesheet" href="css/components.css" />
+  <link rel="stylesheet" href="css/responsive.css" />
+  <link rel="stylesheet" href="css/print.css" />
+</head>
+<body>
+  <a class="skip-link" href="#content">تخطي إلى المحتوى</a>
+  <div class="app-shell">
+    <aside class="sidebar" aria-label="التنقل الرئيسي">
+      <div class="brand">
+        <div class="brand-mark" aria-hidden="true">م</div>
+        <div>
+          <h1>المتاجر الإلكترونية في ميرا</h1>
+          <p id="studyMeta">تحميل…</p>
+        </div>
+      </div>
+      <nav>
+        <ul class="nav-list" id="navList"></ul>
+      </nav>
+    </aside>
+    <main class="main">
+      <div class="topbar">
+        <div class="search-wrap">
+          <label class="muted" for="studySearch">بحث داخل الدراسة</label>
+          <input id="studySearch" type="search" placeholder="ابحث عن متطلب، فجوة، دليل، قدرة…" />
+        </div>
+        <div class="toolbar">
+          <button type="button" class="primary" id="btnExportJson">تصدير JSON</button>
+          <button type="button" id="btnExportCsv">تصدير CSV</button>
+          <button type="button" id="btnPrint">طباعة / PDF</button>
+        </div>
+      </div>
+      <div id="content"></div>
+      <p class="footer-note">
+        مرجع GATE-00 — لا يغيّر سلوك منتج ميرا. الاعتماد الرسمي يتطلب قرار المالك (DEC-0005).
+        هوية الألوان من <code>lib/shared/theme/colors.dart</code>.
+      </p>
+    </main>
+  </div>
+  <dialog id="imageLightbox">
+    <form method="dialog">
+      <button type="button" id="closeLightbox" value="close">إغلاق</button>
+    </form>
+    <img id="lightboxImage" alt="" />
+    <p id="lightboxCaption"></p>
+  </dialog>
+  <script src="js/data.generated.js"></script>
+  <script src="js/app.js"></script>
+</body>
+</html>

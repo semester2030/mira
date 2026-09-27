@@ -1,0 +1,2 @@
+RC5 current excerpt. DiscoverBrowseSequence.apply appends pages that were not already shown.
+A replaced query starts a new sequence. The baseline pins are not this file.

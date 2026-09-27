@@ -35,10 +35,7 @@ abstract final class PublicLanguagePolicy {
 
   /// Standalone tokens that should not appear as internal jargon in Arabic UI.
   /// Product/ingredient commercial names are allowed elsewhere.
-  static const List<String> forbiddenLoose = [
-    'provider',
-    'concern',
-  ];
+  static const List<String> forbiddenLoose = ['provider', 'concern'];
 
   static List<PublicLanguageViolation> validate(
     String text, {

@@ -9,11 +9,15 @@ abstract class SkinAnalysisEvent extends Equatable {
 
 class StartSkinAnalysis extends SkinAnalysisEvent {
   final String imagePath;
+  final int? attemptId;
 
-  const StartSkinAnalysis({required this.imagePath});
+  const StartSkinAnalysis({
+    required this.imagePath,
+    this.attemptId,
+  });
 
   @override
-  List<Object?> get props => [imagePath];
+  List<Object?> get props => [imagePath, attemptId];
 }
 
 class LoadAnalysisHistory extends SkinAnalysisEvent {

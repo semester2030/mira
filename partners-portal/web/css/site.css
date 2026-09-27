@@ -37,6 +37,7 @@ header .wrap {
   display: flex;
   align-items: center;
   justify-content: space-between;
+  flex-wrap: wrap;
   gap: 1rem;
 }
 
@@ -197,3 +198,30 @@ th, td {
 }
 
 .list-item small { color: var(--muted); }
+
+.ad-actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.5rem;
+  max-width: 100%;
+}
+
+#adsForm,
+#adsList,
+.ad-actions,
+#adsForm input,
+#adsForm label,
+#adsList p {
+  max-width: 100%;
+  min-width: 0;
+  overflow-wrap: anywhere;
+}
+
+#adsForm input,
+.btn {
+  box-sizing: border-box;
+  max-width: 100%;
+  white-space: normal;
+}
+
+#adsForm input { width: 100%; }

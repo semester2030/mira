@@ -1,0 +1,18 @@
+RC4 package verification
+Release: MIRA_DISCOVER_PHASE1_CLOSURE_RC4_20260925_2324
+Date: 2026-09-25
+ZIP: MIRA_DISCOVER_PHASE1_CLOSURE_RC4_20260925_2324.zip
+SHA256: 8d78f327411a4f0e9ce5f373e25ac319e1014d112a259c26c6a6da7b74348593
+
+Site validate (repo): PASS — evidence/tests/rc4_validate_site_repo.txt
+Package manifest: PACKAGE_MANIFEST.json inside release folder (159 files, excludes itself)
+Site manifest: site/MANIFEST.json — independent site validate inside extracted zip
+
+Historical: rc3_validate_package_HISTORICAL.txt — old FAIL 9, not RC4 final.
+
+Device P1-RC4-04: evidence/tests/rc4_device_run.txt
+- Command: flutter drive … --device-vmservice-port=8888 --host-vmservice-port=8888
+- VM connects after long install; test prints RTL; video player not ready in logged runs
+- Do not treat as confirmed device lock/background without owner log; touch noise observed in driver output
+
+Links: evidence/tests/rc4_link_check.txt

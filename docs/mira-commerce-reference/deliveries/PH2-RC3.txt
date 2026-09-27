@@ -1,0 +1,23 @@
+المرحلة الثانية RC3 — بانتظار المراجعة
+الاسم: MIRA_DISCOVER_PHASE2_RC3.zip
+البصمة تُحسب خارج الحزمة بعد إغلاقها.
+الاعتماد: غير معتمدة. المراحل المعتمدة: 1 من 5 (المرحلة الأولى ضمن نطاق RC4 فقط).
+
+نتيجة مراجعة RC2 المثبتة:
+راجَع المراجع RC2 ولم يعتمد إغلاق المرحلة الثانية. ثبتت إصلاحات بدء تحميل الكتالوج، ومنع الرجوع للأمثلة عند فشل الخلاصة، وإلغاء نجاح الموعد الوهمي، وتحسن اللقطات. بقيت مشكلات في ربط المفضلة ووحدة السعر ومقارنة المؤشر وحالة البحث ومسارات التفاصيل واختبارات التكامل واتساق سجل الموقع.
+
+بيانات RC2:
+ZIP: MIRA_DISCOVER_PHASE2_RC2.zip
+SHA-256: 6926e128bd135b01e308c8d52c25dbbe826810249860d4b6bbdd1080d557ca9b
+فحص مستقل: 242 ملفًا بالحزمة، 204 بالموقع، validate PASS.
+
+ما عولج في RC3 (P2-RC3-01..07) ويبقى للمراجعة:
+- P2-RC3-01 مفضلة ApiDiscoverFavoriteClient على المسار الطبيعي.
+- P2-RC3-02 CatalogPrice / formatCatalogPrice.
+- P2-RC3-03 compareCatalogKeys.
+- P2-RC3-04 بحث + dispose في DiscoverFeedController.
+- P2-RC3-05 CatalogRecordScope لكل المداخل.
+- P2-RC3-06 integration test (SKIP بدون Postgres محلي).
+- P2-RC3-07 اتساق PH-1 في discover-phases.json.
+
+اختبارات: evidence/tests/rc3_flutter.txt (74 ناجحًا) و evidence/tests/rc3_api.txt.

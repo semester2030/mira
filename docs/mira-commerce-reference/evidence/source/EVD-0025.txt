@@ -1,0 +1,25 @@
+id=EVD-0025
+path=mira-api/src/common/guards/admin-api-key.guard.ts
+commit=15fe65c40d3dedb9afdd95619f2945bd84cb616a
+sha256=4d644f569c187ab61dc8f954934ed55b8078b1356630ded248fd83aab718d4bb
+lines=10-26
+note=صلاحية الإدارة مفتاح مشترك وليست دور مستخدم
+runtime=SOURCE_ONLY
+---
+10|@Injectable()
+11|export class AdminApiKeyGuard implements CanActivate {
+12|  constructor(private readonly config: ConfigService) {}
+13|
+14|  canActivate(context: ExecutionContext): boolean {
+15|    const expected = this.config.get<string>('ADMIN_API_KEY')?.trim();
+16|    if (!expected) {
+17|      throw new UnauthorizedException('Admin API key is not configured');
+18|    }
+19|    const request = context.switchToHttp().getRequest<Request>();
+20|    const key = request.headers['x-admin-key'];
+21|    if (typeof key !== 'string' || key !== expected) {
+22|      throw new UnauthorizedException('Invalid admin key');
+23|    }
+24|    return true;
+25|  }
+26|}

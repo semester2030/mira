@@ -1,0 +1,3 @@
+EVD-0044 — empty presentation exit (RC3)
+الملف: lib/features/marketplace/presentation/screens/discover_presentation_screen.dart
+الاختبار: discover_presentation_test.dart — empty presentation has an exit

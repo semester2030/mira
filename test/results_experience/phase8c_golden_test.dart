@@ -4,16 +4,16 @@ import 'package:mirra/features/results_experience/results_experience.dart';
 import 'package:mirra/features/skin_analysis/domain/entities/skin_report.dart';
 
 SkinReport _report() => const SkinReport(
-      id: 'g1',
-      skinType: 'مختلطة',
-      score: 72,
-      hydration: 55,
-      oiliness: 60,
-      pores: 58,
-      wrinkles: 70,
-      spots: 65,
-      advice: 'رطّبي بلطف',
-    );
+  id: 'g1',
+  skinType: 'مختلطة',
+  score: 72,
+  hydration: 55,
+  oiliness: 60,
+  pores: 58,
+  wrinkles: 70,
+  spots: 65,
+  advice: 'رطّبي بلطف',
+);
 
 ResultExperience _exp({int priorities = 3, int confidence = 80}) {
   return const ResultExperienceProjector().project(
@@ -71,8 +71,9 @@ Future<void> _pumpGolden(
       builder: (context, child) => Directionality(
         textDirection: TextDirection.rtl,
         child: MediaQuery(
-          data: MediaQuery.of(context)
-              .copyWith(textScaler: TextScaler.linear(textScale)),
+          data: MediaQuery.of(
+            context,
+          ).copyWith(textScaler: TextScaler.linear(textScale)),
           child: child!,
         ),
       ),
@@ -92,57 +93,39 @@ void main() {
   TestWidgetsFlutterBinding.ensureInitialized();
 
   final cases = <String, Future<void> Function(WidgetTester)>{
-    'standard_result': (t) => _pumpGolden(
-          t,
-          experience: _exp(),
-          size: const Size(390, 844),
-        ),
+    'standard_result': (t) =>
+        _pumpGolden(t, experience: _exp(), size: const Size(390, 844)),
     'one_priority': (t) => _pumpGolden(
-          t,
-          experience: _exp(priorities: 1),
-          size: const Size(390, 844),
-        ),
+      t,
+      experience: _exp(priorities: 1),
+      size: const Size(390, 844),
+    ),
     'three_priorities': (t) => _pumpGolden(
-          t,
-          experience: _exp(priorities: 3),
-          size: const Size(390, 844),
-        ),
+      t,
+      experience: _exp(priorities: 3),
+      size: const Size(390, 844),
+    ),
     'low_confidence': (t) => _pumpGolden(
-          t,
-          experience: _exp(confidence: 30),
-          size: const Size(390, 844),
-        ),
-    'no_progress': (t) => _pumpGolden(
-          t,
-          experience: _exp(),
-          size: const Size(390, 844),
-        ),
-    'small_iphone': (t) => _pumpGolden(
-          t,
-          experience: _exp(),
-          size: const Size(375, 667),
-        ),
-    'large_iphone': (t) => _pumpGolden(
-          t,
-          experience: _exp(),
-          size: const Size(430, 932),
-        ),
-    'medium_android': (t) => _pumpGolden(
-          t,
-          experience: _exp(),
-          size: const Size(360, 800),
-        ),
+      t,
+      experience: _exp(confidence: 30),
+      size: const Size(390, 844),
+    ),
+    'no_progress': (t) =>
+        _pumpGolden(t, experience: _exp(), size: const Size(390, 844)),
+    'small_iphone': (t) =>
+        _pumpGolden(t, experience: _exp(), size: const Size(375, 667)),
+    'large_iphone': (t) =>
+        _pumpGolden(t, experience: _exp(), size: const Size(430, 932)),
+    'medium_android': (t) =>
+        _pumpGolden(t, experience: _exp(), size: const Size(360, 800)),
     'large_text_scale': (t) => _pumpGolden(
-          t,
-          experience: _exp(),
-          size: const Size(390, 844),
-          textScale: 1.5,
-        ),
-    'arabic_rtl': (t) => _pumpGolden(
-          t,
-          experience: _exp(),
-          size: const Size(390, 844),
-        ),
+      t,
+      experience: _exp(),
+      size: const Size(390, 844),
+      textScale: 1.5,
+    ),
+    'arabic_rtl': (t) =>
+        _pumpGolden(t, experience: _exp(), size: const Size(390, 844)),
   };
 
   for (final entry in cases.entries) {

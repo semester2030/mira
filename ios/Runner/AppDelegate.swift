@@ -34,7 +34,9 @@ import UserNotifications
         return
       }
       ApplePersonMattingChannel.register(with: controller.binaryMessenger)
+      PerfectCameraKitChannel.register(with: controller.binaryMessenger)
       NSLog("Mira: ApplePersonMattingChannel registered (post-launch, lazy Vision)")
+      NSLog("Mira: PerfectCameraKitChannel registered (Skin quality gate)")
     }
 
     return launched

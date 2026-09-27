@@ -170,10 +170,7 @@ abstract final class ResultExperienceValidators {
     }
   }
 
-  static void _priorities(
-    ResultExperience e,
-    List<ValidationIssue> issues,
-  ) {
+  static void _priorities(ResultExperience e, List<ValidationIssue> issues) {
     if (e.priorities.length > VisibilityPolicy.maxPriorities) {
       issues.add(const ValidationIssue('priority', 'more than 3 priorities'));
     }
@@ -183,12 +180,9 @@ abstract final class ResultExperienceValidators {
       }
       if (e.priorities[i].personalization ==
           PersonalizationClass.generalEducation) {
-        issues.add(
-          ValidationIssue('priority', 'filler general advice at $i'),
-        );
+        issues.add(ValidationIssue('priority', 'filler general advice at $i'));
       }
-      if (e.priorities[i].personalization ==
-          PersonalizationClass.unsupported) {
+      if (e.priorities[i].personalization == PersonalizationClass.unsupported) {
         issues.add(ValidationIssue('priority', 'unsupported at $i'));
       }
       if (e.priorities[i].evidenceRef.isEmpty) {
@@ -197,29 +191,19 @@ abstract final class ResultExperienceValidators {
     }
   }
 
-  static void _firstSurface(
-    ResultExperience e,
-    List<ValidationIssue> issues,
-  ) {
+  static void _firstSurface(ResultExperience e, List<ValidationIssue> issues) {
     if (VisibilityPolicy.firstSurfaceIncludesSkinAge(e.firstSurfaceIds)) {
-      issues.add(
-        const ValidationIssue('surface', 'skin age on first surface'),
-      );
+      issues.add(const ValidationIssue('surface', 'skin age on first surface'));
     }
     if (e.skinAge.visibility == VisibilityState.visiblePrimary) {
-      issues.add(
-        const ValidationIssue('surface', 'skin age visible_primary'),
-      );
+      issues.add(const ValidationIssue('surface', 'skin age visible_primary'));
     }
     if (!e.firstSurfaceIds.contains('summary')) {
       issues.add(const ValidationIssue('surface', 'missing summary'));
     }
   }
 
-  static void _products(
-    ResultExperience e,
-    List<ValidationIssue> issues,
-  ) {
+  static void _products(ResultExperience e, List<ValidationIssue> issues) {
     for (final p in e.products) {
       switch (p.state) {
         case ProductRecommendationState.recommended:
@@ -228,8 +212,7 @@ abstract final class ResultExperienceValidators {
               ValidationIssue('product', '${p.id} recommended threshold'),
             );
           }
-          if (p.recommendationReasonAr.isEmpty ||
-              p.linkedConcernAr.isEmpty) {
+          if (p.recommendationReasonAr.isEmpty || p.linkedConcernAr.isEmpty) {
             issues.add(
               ValidationIssue('product', '${p.id} missing reason/concern'),
             );
@@ -238,9 +221,7 @@ abstract final class ResultExperienceValidators {
           if (p.matchPercent == null ||
               p.matchPercent! < 65 ||
               p.matchPercent! > 74) {
-            issues.add(
-              ValidationIssue('product', '${p.id} alternative band'),
-            );
+            issues.add(ValidationIssue('product', '${p.id} alternative band'));
           }
           if ((p.qualificationReasonAr ?? '').isEmpty) {
             issues.add(
@@ -249,9 +230,7 @@ abstract final class ResultExperienceValidators {
           }
         case ProductRecommendationState.hidden:
           if (p.visibility != VisibilityState.hiddenIneligible) {
-            issues.add(
-              ValidationIssue('product', '${p.id} hidden visibility'),
-            );
+            issues.add(ValidationIssue('product', '${p.id} hidden visibility'));
           }
         case ProductRecommendationState.insufficientEvidence:
           if (p.matchNumericVisible) {
@@ -290,10 +269,17 @@ abstract final class ResultExperienceValidators {
       issues.add(const ValidationIssue('map', 'missing provider-mask wording'));
     }
     if (e.map.limitation != LimitationState.none) {
-      issues.add(const ValidationIssue('map', 'limitation must be none for masks'));
+      issues.add(
+        const ValidationIssue('map', 'limitation must be none for masks'),
+      );
     }
     if (e.map.overlayType != 'perfect_provider_mask') {
-      issues.add(const ValidationIssue('map', 'overlayType must be perfect_provider_mask'));
+      issues.add(
+        const ValidationIssue(
+          'map',
+          'overlayType must be perfect_provider_mask',
+        ),
+      );
     }
   }
 
@@ -302,9 +288,7 @@ abstract final class ResultExperienceValidators {
       issues.add(const ValidationIssue('skin_age', 'missing qualification'));
     }
     if (e.skinAge.qualificationAr.contains('بيولوجي') == false) {
-      issues.add(
-        const ValidationIssue('skin_age', 'must deny biological age'),
-      );
+      issues.add(const ValidationIssue('skin_age', 'must deny biological age'));
     }
   }
 
@@ -367,7 +351,10 @@ abstract final class ResultExperienceValidators {
       final a = e.immediateAction!;
       if (a.evidenceRef.isEmpty || a.owner.name.isEmpty) {
         issues.add(
-          ValidationIssue('law35', 'action violates ${EngineeringLaw35.number}'),
+          ValidationIssue(
+            'law35',
+            'action violates ${EngineeringLaw35.number}',
+          ),
         );
       }
     }

@@ -1,0 +1,8 @@
+@media print {
+  .sidebar, .topbar, .toolbar, .skip-link, button, .btn { display: none !important; }
+  .app-shell { display: block; }
+  .main { max-width: none; padding: 0; }
+  .section { box-shadow: none; break-inside: avoid; }
+  a[href]::after { content: ""; }
+  body { background: #fff; }
+}

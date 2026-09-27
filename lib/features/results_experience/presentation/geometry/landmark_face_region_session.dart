@@ -54,7 +54,8 @@ class LandmarkFaceRegionSession {
     if (!await file.exists()) return null;
 
     final owned = meshService == null;
-    final service = meshService ??
+    final service =
+        meshService ??
         FaceMeshService(regionBuilder: const SkinReportRegionBuilder());
     try {
       await service.initialize();
@@ -87,8 +88,9 @@ class LandmarkFaceRegionSession {
       if (!LandmarkAlignedFaceGeometry.hasCriticalRegions(hit)) {
         return null;
       }
-      final visual =
-          SkinFaceMapVisualPathBuilder.visualPathsFromFrame(meshFrame);
+      final visual = SkinFaceMapVisualPathBuilder.visualPathsFromFrame(
+        meshFrame,
+      );
 
       return LandmarkFaceRegionSession(
         imagePath: imagePath,

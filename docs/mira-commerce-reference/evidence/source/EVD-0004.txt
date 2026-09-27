@@ -1,0 +1,52 @@
+# Evidence EVD-0004
+# file=lib/features/marketplace/presentation/screens/product_detail_screen.dart
+# lines=1-45
+# commit=15fe65c40d3dedb9afdd95619f2945bd84cb616a
+# sha256=192ea1ef27e3377dd6a78154262a5e716ba6ae8fc10269a7fc83a9e56e80dc02
+# inspected_at=2026-09-23T03:20:00+03:00
+
+1|import 'package:flutter/material.dart';
+2|import 'package:url_launcher/url_launcher.dart';
+3|
+4|import '../../../../core/config/mira_api_config.dart';
+5|import '../../../../shared/theme/colors.dart';
+6|import '../../../../shared/theme/typography.dart';
+7|import '../../../../shared/widgets/mira_app_bar.dart';
+8|import '../../../../shared/widgets/premium/premium_exports.dart';
+9|import '../../domain/entities/catalog_product.dart';
+10|import '../../data/datasources/marketplace_api_data_source.dart';
+11|
+12|class ProductDetailScreen extends StatelessWidget {
+13|  final CatalogProduct product;
+14|
+15|  const ProductDetailScreen({super.key, required this.product});
+16|
+17|  Future<void> _openStore(BuildContext context) async {
+18|    if (MiraApiConfig.useBackend) {
+19|      MarketplaceApiDataSource().trackClick(
+20|        partnerId: product.partnerId,
+21|        targetId: product.id,
+22|        targetType: 'product',
+23|      );
+24|    }
+25|    final uri = Uri.tryParse(product.externalUrl);
+26|    if (uri == null) return;
+27|    final ok = await launchUrl(uri, mode: LaunchMode.externalApplication);
+28|    if (!context.mounted) return;
+29|    if (!ok) {
+30|      ScaffoldMessenger.of(context).showSnackBar(
+31|        const SnackBar(content: Text('تعذر فتح رابط المتجر')),
+32|      );
+33|    }
+34|  }
+35|
+36|  @override
+37|  Widget build(BuildContext context) {
+38|    return Scaffold(
+39|      backgroundColor: AppColors.surface,
+40|      appBar: const MiraAppBar(pageTitle: 'تفاصيل المنتج'),
+41|      body: SafeArea(
+42|        child: Padding(
+43|          padding: const EdgeInsets.all(20),
+44|          child: Column(
+45|            crossAxisAlignment: CrossAxisAlignment.stretch,

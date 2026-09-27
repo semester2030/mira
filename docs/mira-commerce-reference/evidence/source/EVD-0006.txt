@@ -1,0 +1,34 @@
+# Evidence EVD-0006
+# file=mira-api/src/marketplace/marketplace.controller.ts
+# lines=1-40
+# commit=15fe65c40d3dedb9afdd95619f2945bd84cb616a
+# sha256=13833f34b202b1098b46d6666688a8f4e58a99369f2f2e60826f6b6005decac4
+# inspected_at=2026-09-23T03:20:00+03:00
+
+1|import { Body, Controller, Get, Param, Post, Query } from '@nestjs/common';
+2|import { MatchMarketplaceDto } from './dto/match-marketplace.dto';
+3|import { MarketplaceService } from './marketplace.service';
+4|
+5|/** Public catalog + skin-based matching (no auth — no PII in request). */
+6|@Controller('marketplace')
+7|export class MarketplaceController {
+8|  constructor(private readonly marketplace: MarketplaceService) {}
+9|
+10|  @Post('match')
+11|  match(@Body() dto: MatchMarketplaceDto) {
+12|    return this.marketplace.match(dto);
+13|  }
+14|
+15|  @Get('partners')
+16|  listPartners(
+17|    @Query('type') type?: string,
+18|    @Query('city') city?: string,
+19|  ) {
+20|    return this.marketplace.listPartners(type, city);
+21|  }
+22|
+23|  @Get('partners/:id')
+24|  getPartner(@Param('id') id: string) {
+25|    return this.marketplace.getPartner(id);
+26|  }
+27|}

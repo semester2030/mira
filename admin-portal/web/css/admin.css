@@ -394,13 +394,53 @@ tr:hover td { background: rgba(237, 233, 254, 0.35); }
 @keyframes pulse { 0%, 100% { opacity: 1; } 50% { opacity: 0.45; } }
 
 @media (max-width: 960px) {
+  html, body { overflow-x: hidden; }
   .app-shell { grid-template-columns: 1fr; }
+  .main { min-width: 0; padding: 1rem; }
+  .topbar { position: relative; z-index: 50; flex-wrap: wrap; align-items: flex-start; }
+  .topbar h2, .panel, .panel p { overflow-wrap: anywhere; }
+  .panel img, .panel video { max-width: min(220px, 100%); height: auto; }
+  .panel .btn, .topbar .btn { max-width: 100%; white-space: normal; }
   .sidebar {
-    position: fixed; inset-inline-start: 0; width: var(--sidebar-w);
-    transform: translateX(calc(-100% - 8px));
-    transition: transform var(--transition); z-index: 40;
+    position: fixed;
+    inset-inline-start: 0;
+    top: 0;
+    height: 100vh;
+    width: min(var(--sidebar-w), calc(100vw - 3.5rem));
+    overflow: auto;
+    z-index: 40;
+    transition: transform var(--transition);
   }
-  .sidebar.open { transform: translateX(0); }
-  .menu-toggle { display: inline-flex !important; }
+  [dir="rtl"] .sidebar { transform: translateX(calc(100% + 8px)); }
+  [dir="ltr"] .sidebar { transform: translateX(calc(-100% - 8px)); }
+  .sidebar.open { transform: none; }
+  .menu-toggle { display: inline-flex !important; position: relative; z-index: 50; }
 }
 .menu-toggle { display: none; }
+
+.ad-actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.5rem;
+  max-width: 100%;
+}
+
+.panel,
+.panel p,
+.panel input,
+.panel .btn,
+.ad-actions {
+  min-width: 0;
+  max-width: 100%;
+  overflow-wrap: anywhere;
+}
+
+.panel .btn { white-space: normal; }
+
+.ad-note {
+  width: 100%;
+  max-width: 100%;
+  min-height: 4.5rem;
+  box-sizing: border-box;
+  overflow-wrap: anywhere;
+}

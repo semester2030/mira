@@ -1,0 +1,10 @@
+مسار اكتشاف العروض كما في مصدر دار كار المنسوخ إلى حزمة RC2:
+PlacesHttpDiscoveryRepository
+→ DiscoveryApi
+→ GET /v1/feed أو POST /v1/discovery/search
+→ ConsumerController
+→ CatalogService.feed / FilterEngineService
+VenueApi للتفاصيل وليس للخلاصة.
+الحزمة: DAR_PLACES_TO_MIRA_SOURCE_HANDOFF_RC2_20260924_0125.zip
+sha256: 
+أعداد RC2: 826 ملف مصدر. أعداد RC1 التاريخية: 697.

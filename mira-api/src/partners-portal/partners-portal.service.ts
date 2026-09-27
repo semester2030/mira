@@ -1,6 +1,7 @@
 import {
   BadRequestException,
   ConflictException,
+  Inject,
   Injectable,
   NotFoundException,
 } from '@nestjs/common';
@@ -8,7 +9,7 @@ import { ConfigService } from '@nestjs/config';
 import { randomBytes } from 'crypto';
 import { PrismaService } from '../prisma/prisma.service';
 import { ApplyPartnerDto } from './dto/apply-partner.dto';
-import { UpsertProductDto, UpsertServiceDto } from './dto/catalog.dto';
+import { UpdateProductDto, UpdateServiceDto, UpsertProductDto, UpsertServiceDto } from './dto/catalog.dto';
 import { TrackPartnerEventDto } from './dto/track-event.dto';
 
 function newToken(): string {
@@ -18,8 +19,8 @@ function newToken(): string {
 @Injectable()
 export class PartnersPortalService {
   constructor(
-    private readonly prisma: PrismaService,
-    private readonly config: ConfigService,
+    @Inject(PrismaService) private readonly prisma: PrismaService,
+    @Inject(ConfigService) private readonly config: ConfigService,
   ) {}
 
   private autoApproveEnabled(): boolean {
@@ -316,26 +317,57 @@ export class PartnersPortalService {
         concernTags: dto.concernTags,
         skinTypes: dto.skinTypes ?? [],
         stepAr: dto.stepAr,
-        active: dto.active ?? true,
+        active: false,
+        contentStatus: 'draft',
+        reviewStatus: 'draft',
       },
     });
   }
 
-  async updateProduct(partnerId: string, productId: string, dto: UpsertProductDto) {
-    await this.assertProductOwner(partnerId, productId);
-    return this.prisma.product.update({
-      where: { id: productId },
-      data: {
-        nameAr: dto.nameAr,
-        nameEn: dto.nameEn,
-        descriptionAr: dto.descriptionAr,
-        priceHalalas: dto.priceHalalas,
-        externalUrl: dto.externalUrl,
-        concernTags: dto.concernTags,
-        skinTypes: dto.skinTypes ?? [],
-        stepAr: dto.stepAr,
-        active: dto.active ?? true,
-      },
+  async updateProduct(partnerId: string, productId: string, dto: UpdateProductDto) {
+    return this.prisma.$transaction(async (tx) => {
+      await tx.$queryRaw`SELECT id FROM products WHERE id = ${productId} FOR UPDATE`;
+      const current = await tx.product.findFirst({ where: { id: productId, partnerId } });
+      if (!current) throw new NotFoundException('المنتج غير موجود');
+      const linked = await tx.catalogSourceLink.findFirst({ where: { ownerKind: 'product', ownerId: productId } });
+      const published = current.contentStatus === 'published';
+      const data: {
+        draftNameAr?: string;
+        draftNameEn?: string;
+        draftDescriptionAr?: string | null;
+        nameAr?: string;
+        nameEn?: string;
+        descriptionAr?: string | null;
+        priceHalalas?: number;
+        externalUrl?: string;
+        concernTags?: string[];
+        skinTypes?: string[];
+        stepAr?: string | null;
+        reviewRevision: { increment: number };
+        reviewStatus: string;
+      } = {
+        reviewRevision: { increment: 1 },
+        reviewStatus: current.reviewStatus === 'in_review' ? 'in_review' : 'draft',
+      };
+      if (dto.nameAr !== undefined) {
+        if (published) data.draftNameAr = dto.nameAr;
+        else data.nameAr = dto.nameAr;
+      }
+      if (dto.nameEn !== undefined) {
+        if (published) data.draftNameEn = dto.nameEn;
+        else data.nameEn = dto.nameEn;
+      }
+      if (dto.descriptionAr !== undefined) {
+        const cleared = dto.descriptionAr == null || dto.descriptionAr === '';
+        if (published) data.draftDescriptionAr = cleared ? '' : dto.descriptionAr;
+        else data.descriptionAr = cleared ? null : dto.descriptionAr;
+      }
+      data.priceHalalas = linked ? current.priceHalalas : (dto.priceHalalas ?? current.priceHalalas);
+      if (dto.externalUrl !== undefined) data.externalUrl = dto.externalUrl;
+      if (dto.concernTags !== undefined) data.concernTags = dto.concernTags;
+      if (dto.skinTypes !== undefined) data.skinTypes = dto.skinTypes;
+      if (dto.stepAr !== undefined) data.stepAr = dto.stepAr === '' ? null : dto.stepAr;
+      return tx.product.update({ where: { id: productId }, data });
     });
   }
 
@@ -343,7 +375,7 @@ export class PartnersPortalService {
     await this.assertProductOwner(partnerId, productId);
     await this.prisma.product.update({
       where: { id: productId },
-      data: { active: false },
+      data: { active: false, contentStatus: 'withdrawn' },
     });
     return { ok: true };
   }
@@ -366,25 +398,54 @@ export class PartnersPortalService {
         priceHalalas: dto.priceHalalas,
         concernTags: dto.concernTags,
         bookingEnabled: dto.bookingEnabled ?? false,
-        active: dto.active ?? true,
+        active: false,
+        contentStatus: 'draft',
+        reviewStatus: 'draft',
       },
     });
   }
 
-  async updateService(partnerId: string, serviceId: string, dto: UpsertServiceDto) {
-    await this.assertServiceOwner(partnerId, serviceId);
-    return this.prisma.service.update({
-      where: { id: serviceId },
-      data: {
-        nameAr: dto.nameAr,
-        nameEn: dto.nameEn,
-        descriptionAr: dto.descriptionAr,
-        durationMin: dto.durationMin,
-        priceHalalas: dto.priceHalalas,
-        concernTags: dto.concernTags,
-        bookingEnabled: dto.bookingEnabled ?? false,
-        active: dto.active ?? true,
-      },
+  async updateService(partnerId: string, serviceId: string, dto: UpdateServiceDto) {
+    return this.prisma.$transaction(async (tx) => {
+      await tx.$queryRaw`SELECT id FROM services WHERE id = ${serviceId} FOR UPDATE`;
+      const current = await tx.service.findFirst({ where: { id: serviceId, partnerId } });
+      if (!current) throw new NotFoundException('الخدمة غير موجودة');
+      const published = current.contentStatus === 'published';
+      const data: {
+        draftNameAr?: string;
+        draftNameEn?: string;
+        draftDescriptionAr?: string | null;
+        nameAr?: string;
+        nameEn?: string;
+        descriptionAr?: string | null;
+        durationMin?: number;
+        priceHalalas?: number;
+        concernTags?: string[];
+        bookingEnabled: boolean;
+        reviewRevision: { increment: number };
+        reviewStatus: string;
+      } = {
+        bookingEnabled: false,
+        reviewRevision: { increment: 1 },
+        reviewStatus: current.reviewStatus === 'in_review' ? 'in_review' : 'draft',
+      };
+      if (dto.nameAr !== undefined) {
+        if (published) data.draftNameAr = dto.nameAr;
+        else data.nameAr = dto.nameAr;
+      }
+      if (dto.nameEn !== undefined) {
+        if (published) data.draftNameEn = dto.nameEn;
+        else data.nameEn = dto.nameEn;
+      }
+      if (dto.descriptionAr !== undefined) {
+        const cleared = dto.descriptionAr == null || dto.descriptionAr === '';
+        if (published) data.draftDescriptionAr = cleared ? '' : dto.descriptionAr;
+        else data.descriptionAr = cleared ? null : dto.descriptionAr;
+      }
+      if (dto.durationMin !== undefined) data.durationMin = dto.durationMin;
+      if (dto.priceHalalas !== undefined) data.priceHalalas = dto.priceHalalas;
+      if (dto.concernTags !== undefined) data.concernTags = dto.concernTags;
+      return tx.service.update({ where: { id: serviceId }, data });
     });
   }
 
@@ -392,7 +453,7 @@ export class PartnersPortalService {
     await this.assertServiceOwner(partnerId, serviceId);
     await this.prisma.service.update({
       where: { id: serviceId },
-      data: { active: false },
+      data: { active: false, contentStatus: 'withdrawn' },
     });
     return { ok: true };
   }
@@ -402,6 +463,7 @@ export class PartnersPortalService {
       where: { id: productId, partnerId },
     });
     if (!product) throw new NotFoundException('المنتج غير موجود');
+    return product;
   }
 
   private async assertServiceOwner(partnerId: string, serviceId: string) {
@@ -409,5 +471,6 @@ export class PartnersPortalService {
       where: { id: serviceId, partnerId },
     });
     if (!service) throw new NotFoundException('الخدمة غير موجودة');
+    return service;
   }
 }

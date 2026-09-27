@@ -1,0 +1,6 @@
+RC3 reviewed package (historical verification pointer)
+Reviewed SHA256: 0cfead38b9094768d7c44aa3bab289b5dc686118980ef65b62e9e330850ab1e8
+ZIP name: MIRA_DISCOVER_PHASE1_CLOSURE_RC3_.zip
+
+This file replaces the mismatched RC3__ / RC3___ verification filenames.
+Full RC3 ZIP may live on reviewer archive; RC4 delivery documents review outcome in PH-1 DEL-RC3.

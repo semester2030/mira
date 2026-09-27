@@ -134,7 +134,9 @@ class _PerfectHdMaskTechnicalViewerScreenState
       appBar: AppBar(
         title: Text(
           'HD Masks — قبول تقني',
-          style: AppTypography.titleMedium.copyWith(fontWeight: FontWeight.w800),
+          style: AppTypography.titleMedium.copyWith(
+            fontWeight: FontWeight.w800,
+          ),
         ),
         actions: [
           IconButton(
@@ -189,7 +191,6 @@ class _PerfectHdMaskTechnicalViewerScreenState
                       showOriginalOnly: selected == null,
                       showMaskOnly: _showMaskOnly && selected?.bytes != null,
                       applyTint: false,
-                      aspectRatio: 3 / 4,
                     ),
             ),
           ),
@@ -230,7 +231,8 @@ class _PerfectHdMaskTechnicalViewerScreenState
                 [
                   if (selected.rawScore != null)
                     'raw=${selected.rawScore!.toStringAsFixed(2)}',
-                  if (selected.uiScore != null) 'ui=${selected.uiScore!.round()}',
+                  if (selected.uiScore != null)
+                    'ui=${selected.uiScore!.round()}',
                   if (selected.width != null && selected.height != null)
                     '${selected.width}x${selected.height}',
                   if (selected.aligned == true) 'ALIGNED',

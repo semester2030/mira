@@ -1,0 +1,83 @@
+CASE json drift without regen
+exit_code=1
+needle=generated js does not match
+result=PASS_CASE
+---
+FAIL 1
+- generated js does not match data/*.json
+
+CASE missing stage dependency
+exit_code=1
+needle=bad dependency GATE-99
+result=PASS_CASE
+---
+FAIL 2
+- bad dependency GATE-99 from GATE-01
+- generated js does not match data/*.json
+
+CASE deleted evidence file
+exit_code=1
+needle=missing excerpt file
+result=PASS_CASE
+---
+FAIL 1
+- missing excerpt file evidence/source/EVD-0011.txt for EVD-0011
+
+CASE duplicate id
+exit_code=1
+needle=duplicate id
+result=PASS_CASE
+---
+FAIL 3
+- duplicate id CAP-0001 (cap vs cap)
+- count capabilities is 14 but data has 15
+- generated js does not match data/*.json
+
+CASE empty evidence field
+exit_code=1
+needle=empty evidence field proves
+result=PASS_CASE
+---
+FAIL 2
+- empty evidence field proves on EVD-0001
+- generated js does not match data/*.json
+
+CASE illegal review status
+exit_code=1
+needle=bad review status
+result=PASS_CASE
+---
+FAIL 2
+- bad review status REV-0001
+- generated js does not match data/*.json
+
+CASE requirement without acceptance
+exit_code=1
+needle=acceptanceAr is generic
+result=PASS_CASE
+---
+FAIL 8
+- REQ-0001 missing acceptance.given
+- REQ-0001 missing acceptance.action
+- REQ-0001 missing acceptance.expected
+- REQ-0001 missing acceptance.testMethod
+- REQ-0001 missing acceptance.evidenceRequired
+- REQ-0001 missing acceptance.failures
+- REQ-0001 acceptanceAr is generic
+- generated js does not match data/*.json
+
+CASE wrong-type reference
+exit_code=1
+needle=wrong type GAP-0001
+result=PASS_CASE
+---
+FAIL 3
+- wrong type GAP-0001 from CAP-0001; expected EVD-
+- CAP-0001 EXISTING without fact evidence
+- generated js does not match data/*.json
+
+CASE restored copy
+exit_code=0
+result=PASS_CASE
+---
+PASS

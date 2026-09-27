@@ -32,5 +32,8 @@ abstract final class MiraApiEndpoints {
   static const feedback = '/feedback';
   static const marketplaceMatch = '/marketplace/match';
   static const marketplacePartners = '/marketplace/partners';
+  static const marketplaceCatalog = '/marketplace/catalog';
+  static const marketplaceAds = '/marketplace/ads';
+  static const marketplaceFavorites = '/marketplace/favorites';
   static const partnersPortalTrack = '/partners-portal/track';
 }

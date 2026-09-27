@@ -1,0 +1,103 @@
+{
+  "capturedAt": "2026-09-24T02:11:37+03:00",
+  "tool": "Cursor browser tab + Chrome DevTools Protocol Emulation.setDeviceMetricsOverride and Page.captureScreenshot",
+  "urlBase": "http://127.0.0.1:8771/",
+  "rejectedPriorShot": {
+    "path": "evidence/screenshots/places-plan-desktop-1280.png",
+    "pixelWidth": 277,
+    "pixelHeight": 445,
+    "note": "أبعاد فعلية 277×445. ليست إثباتًا لعرض 1280 ولم تُعد تسميتها."
+  },
+  "failedAttempt": {
+    "tool": "Google Chrome --headless=new --screenshot --force-device-scale-factor=1",
+    "result": "لقطة 390×844 فارغة بحجم 2740 بايت بسبب فشل الرسم. استُبدلت بلقطة CDP وليست دليلًا."
+  },
+  "shots": [
+    {
+      "path": "evidence/screenshots/rc3-mobile-390x844.png",
+      "viewport": {
+        "width": 390,
+        "height": 844
+      },
+      "devicePixelRatio": 1,
+      "pixelWidth": 390,
+      "pixelHeight": 844,
+      "bytes": 63214,
+      "url": "http://127.0.0.1:8771/#s30",
+      "section": "s30",
+      "capturedAt": "2026-09-24T02:10:43+03:00",
+      "horizontalOverflow": false,
+      "dir": "rtl"
+    },
+    {
+      "path": "evidence/screenshots/rc3-tablet-768x1024.png",
+      "viewport": {
+        "width": 768,
+        "height": 1024
+      },
+      "devicePixelRatio": 1,
+      "pixelWidth": 768,
+      "pixelHeight": 1024,
+      "bytes": 103590,
+      "url": "http://127.0.0.1:8771/#s30",
+      "section": "s30",
+      "capturedAt": "2026-09-24T02:11:37+03:00",
+      "horizontalOverflow": false,
+      "dir": "rtl"
+    },
+    {
+      "path": "evidence/screenshots/rc3-desktop-1280x900.png",
+      "viewport": {
+        "width": 1280,
+        "height": 900
+      },
+      "devicePixelRatio": 1,
+      "pixelWidth": 1280,
+      "pixelHeight": 900,
+      "bytes": 104510,
+      "url": "http://127.0.0.1:8771/#s36",
+      "section": "s36",
+      "capturedAt": "2026-09-24T02:09:19+03:00",
+      "horizontalOverflow": false,
+      "dir": "rtl"
+    }
+  ],
+  "interactions": {
+    "searchViews": {
+      "query": "المشاهدات",
+      "visibleSections": [
+        "s15",
+        "s17",
+        "s18",
+        "s21",
+        "s26",
+        "s30",
+        "s32",
+        "s34",
+        "s36"
+      ]
+    },
+    "searchAuthCredentials": {
+      "query": "auth_credentials",
+      "visibleSections": [
+        "s20"
+      ],
+      "openedDetails": true
+    },
+    "placeFilter": {
+      "option": "متطلب معتمد",
+      "visibleBefore": 16,
+      "visibleAfter": 9
+    },
+    "internalLink": {
+      "href": "#s37",
+      "hashAfterClick": "#s37"
+    },
+    "stagesPresent": true,
+    "detailsCount": 90,
+    "conceptCards": 3,
+    "zoomButtons": 0,
+    "zoomNote": "لا توجد صورة مرجعية متاحة للفتح. البطاقات NEEDS_ASSET بلا رابط مكسور."
+  },
+  "limits": "اللقطات تثبت عرض الموقع المرجعي عند المقاسات المسجلة. لا تثبت تشغيل المتجر أو الدفع أو المشاهدات في المنتج."
+}

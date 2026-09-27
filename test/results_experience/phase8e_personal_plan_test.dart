@@ -5,16 +5,16 @@ import 'package:mirra/features/skin_analysis/domain/entities/skin_report.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 
 SkinReport _report() => const SkinReport(
-      id: 'u_e1',
-      skinType: 'مختلطة',
-      score: 70,
-      hydration: 50,
-      oiliness: 55,
-      pores: 60,
-      wrinkles: 65,
-      spots: 58,
-      advice: 'عناية لطيفة',
-    );
+  id: 'u_e1',
+  skinType: 'مختلطة',
+  score: 70,
+  hydration: 50,
+  oiliness: 55,
+  pores: 60,
+  wrinkles: 65,
+  spots: 58,
+  advice: 'عناية لطيفة',
+);
 
 ResultExperience _exp({
   int confidence = 80,
@@ -56,11 +56,16 @@ ResultExperience _exp({
       products: const [],
       progress: const FrozenProgressInput(scanCount: 1, hasBaseline: false),
       advisorClaims: const [
-        FrozenAdvisorClaimInput(id: 'c1', statementAr: 'ترطيب', available: true),
+        FrozenAdvisorClaimInput(
+          id: 'c1',
+          statementAr: 'ترطيب',
+          available: true,
+        ),
       ],
       morningStepCount: withSteps ? morningCount : 0,
       eveningStepCount: withSteps ? eveningCount : 0,
-      morningSteps: morning ??
+      morningSteps:
+          morning ??
           (withSteps
               ? const [
                   FrozenRoutineStepInput(
@@ -89,7 +94,8 @@ ResultExperience _exp({
                   ),
                 ]
               : const []),
-      eveningSteps: evening ??
+      eveningSteps:
+          evening ??
           (withSteps
               ? const [
                   FrozenRoutineStepInput(
@@ -140,9 +146,9 @@ Future<void> _pumpPlan(
       builder: (c, child) => Directionality(
         textDirection: TextDirection.rtl,
         child: MediaQuery(
-          data: MediaQuery.of(c).copyWith(
-            textScaler: TextScaler.linear(textScale),
-          ),
+          data: MediaQuery.of(
+            c,
+          ).copyWith(textScaler: TextScaler.linear(textScale)),
           child: child!,
         ),
       ),
@@ -239,15 +245,17 @@ void main() {
 
   test('no product or progress language in plan summary', () {
     final plan = _exp().personalPlan;
-    final blob =
-        '${plan.summaryAr} ${plan.primaryObjectiveAr} ${plan.focusAr}';
+    final blob = '${plan.summaryAr} ${plan.primaryObjectiveAr} ${plan.focusAr}';
     expect(blob.toLowerCase().contains('mce'), isFalse);
     expect(blob.toLowerCase().contains('provider'), isFalse);
     expect(blob.contains('heatmap'), isFalse);
   });
 
   test('routine ownership for cleanser moisturizer sunscreen', () {
-    expect(AdviceOwnershipPolicy.ownerFor('gentle_cleanser'), AdviceOwner.routine);
+    expect(
+      AdviceOwnershipPolicy.ownerFor('gentle_cleanser'),
+      AdviceOwner.routine,
+    );
     expect(AdviceOwnershipPolicy.ownerFor('moisturizer'), AdviceOwner.routine);
     expect(AdviceOwnershipPolicy.ownerFor('sunscreen'), AdviceOwner.routine);
   });
@@ -262,8 +270,14 @@ void main() {
 
   testWidgets('weekly and avoidance sections', (tester) async {
     await _pumpPlan(tester, experience: _exp());
-    expect(find.textContaining('تعديل الأسبوع', skipOffstage: false), findsOneWidget);
-    expect(find.textContaining('ما يجب تجنبه', skipOffstage: false), findsOneWidget);
+    expect(
+      find.textContaining('تعديل الأسبوع', skipOffstage: false),
+      findsOneWidget,
+    );
+    expect(
+      find.textContaining('ما يجب تجنبه', skipOffstage: false),
+      findsOneWidget,
+    );
   });
 
   testWidgets('no eligible plan state', (tester) async {
@@ -307,18 +321,17 @@ void main() {
     expect(Directionality.of(el), TextDirection.rtl);
   });
 
-  testWidgets('executive summary opens personal plan not marketplace dump',
-      (tester) async {
+  testWidgets('executive summary opens personal plan not marketplace dump', (
+    tester,
+  ) async {
     SharedPreferences.setMockInitialValues({});
     await tester.binding.setSurfaceSize(const Size(390, 1600));
     addTearDown(() => tester.binding.setSurfaceSize(null));
     await tester.pumpWidget(
       MaterialApp(
         locale: const Locale('ar'),
-        builder: (c, child) => Directionality(
-          textDirection: TextDirection.rtl,
-          child: child!,
-        ),
+        builder: (c, child) =>
+            Directionality(textDirection: TextDirection.rtl, child: child!),
         home: ResultsExecutiveSummaryScreen(
           report: _report(),
           experience: _exp(),

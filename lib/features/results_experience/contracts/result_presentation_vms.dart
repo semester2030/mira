@@ -148,6 +148,7 @@ class ResultActionVM extends ResultItemBase {
   final String adviceConceptId;
   final AdviceOwner owner;
   final List<String> avoidAr;
+
   /// Stable link into Personal Plan (Phase 8E). Null when no eligible step.
   final String? routineStepId;
 }
@@ -229,8 +230,7 @@ class ResultProgressPreviewVM extends ResultItemBase {
     required this.projectionVisible,
     this.deltaPoints,
     this.projectionEstimate,
-    this.projectionLabelAr =
-        'تقدير مستقبلي وليس قياساً',
+    this.projectionLabelAr = 'تقدير مستقبلي وليس قياساً',
     super.analyticsId = 'results_progress_entry',
   });
 
@@ -580,6 +580,7 @@ class ResultExperience {
   final List<ResultDisclosureVM> disclosures;
   final ResultRetakeVM retake;
   final ResultSkinAgeVM skinAge;
+
   /// Contractual first-surface item ids (future UI). Max composition enforced.
   final List<String> firstSurfaceIds;
   final List<String> ownedAdviceConceptIds;

@@ -12,12 +12,30 @@ abstract final class SkinReportLandmarkIndices {
 
   /// Brow ridge (lower forehead boundary) — anatomical, not hairline.
   static const browRidge = <int>[
-    70, 63, 105, 66, 107, 9, 336, 296, 334, 293, 300,
+    70,
+    63,
+    105,
+    66,
+    107,
+    9,
+    336,
+    296,
+    334,
+    293,
+    300,
   ];
 
   /// Upper forehead support points (NOT used at full extent — see builder lerp).
   static const foreheadTopSupport = <int>[
-    54, 103, 67, 109, 10, 338, 297, 332, 284,
+    54,
+    103,
+    67,
+    109,
+    10,
+    338,
+    297,
+    332,
+    284,
   ];
 
   /// Nose — bridge, tip, alae.
@@ -34,6 +52,18 @@ abstract final class SkinReportLandmarkIndices {
 
   /// Center chin / jaw only — no temple bleed.
   static const chinArcTight = <int>[
-    176, 149, 150, 136, 172, 152, 397, 365, 379, 378, 400, 377, 148,
+    176,
+    149,
+    150,
+    136,
+    172,
+    152,
+    397,
+    365,
+    379,
+    378,
+    400,
+    377,
+    148,
   ];
 }

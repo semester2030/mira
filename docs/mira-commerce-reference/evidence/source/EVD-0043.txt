@@ -1,0 +1,4 @@
+EVD-0043 — playback integration test corrections (RC3)
+الملف: integration_test/discover_playback_rc2_test.dart
+الملاحظة: evidence/tests/rc3_playback_integration_note.txt
+تشغيل الجهاز: evidence/tests/rc3_device_run.txt

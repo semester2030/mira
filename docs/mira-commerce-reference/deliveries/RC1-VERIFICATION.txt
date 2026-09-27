@@ -1,0 +1,9 @@
+فحص حزمة MIRA_DISCOVER_PHASE1_AND_PHASE_TRACKER_RC1_20260924_0507.zip
+أُنشئت بـ Python zipfile ثم فُكت في /tmp/mira-phase1-extract.
+فحص MANIFEST الخارجي طابق الملفات والبصمات.
+python3 site/scripts/validate_package.py --root site على النسخة المستخرجة.
+لا روابط حزمة مراجعة داخل البطاقات لأن المراجعة لم تصدر.
+SHA-256:
+ad4399482c891b28850efa12dca36cebcc9944f0103c74a547d05994f06551b4
+
+نتيجة المراجعة اللاحقة سُجّلت في deliveries/RC1.txt: قبول تسجيل المراحل كأساس للمتابعة، والمرحلة الأولى غير معتمدة.

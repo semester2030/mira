@@ -1,0 +1,17 @@
+# Test + analyze evidence
+
+```
+flutter analyze [touched presentation paths]
+→ No issues found
+
+flutter test
+  perfect_mask_face_explorer_polish_test.dart
+  perfect_mask_session_test.dart
+  skin_face_map_truthful_contract_test.dart
+  phase8d_metrics_map_test.dart
+  phase8b_results_projection_test.dart
+  skin_interactive_claim_policy_test.dart
+→ All tests passed (57)
+```
+
+Coverage: metric select/deselect, subregion labels, technical-ID suppression, stale key, missing mask, cache hits, RTL hub, projection validators.

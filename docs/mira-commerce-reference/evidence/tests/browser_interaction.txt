@@ -1,0 +1,18 @@
+BROWSER INTERACTION — 2026-09-23
+IDE browser view 0629b2 at about 293x445 CSS pixels (not a desktop viewport).
+Loaded http://127.0.0.1:8765/ after RC2 data generation.
+Results that ran in the page:
+- document.dir=rtl
+- 22 sections rendered
+- 0 elements with inline style attributes
+- hash #REV-0001 opened the details element
+- search REV-0007c hid sections s0–s19 and left s20 and s21 visible
+- clearing the search showed all sections again (hidden=0)
+- status filter قيد المعالجة hid processed notes and left REV-0007 and REV-0007c visible
+- REV-0006 was still قيد المعالجة in that session before the JSON status write was saved; later data marks REV-0006 معالجة بانتظار المراجعة
+Chrome headless:
+- desktop-1280.png written, page content visible (dashboard, RC2 status, GATE-00 not closed)
+- tablet-768.png and mobile-390.png were 4KB/2KB blank images. Deleted. They are not layout proof.
+- node --check proves syntax only
+- HTTP 200 proves the server responds only
+Limit: tablet and mobile screenshots were not captured. REV-0007c stays قيد المعالجة.

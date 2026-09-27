@@ -1,0 +1,11 @@
+partner tagged text rendered without an image or alert
+edit form reloaded an empty description and the English draft
+partner form 1280x900
+admin 1280 preview 1280x900; scroll 1280
+admin 480 menu open 480x900
+admin 480 preview 480x900; buttons 9; scroll 480
+admin 480 conflict 480x900
+narrow approve published the re-previewed revision on the same id
+narrow reject kept the submitted service description unpublished
+admin 390 menu 390x844; preview 390x844; scroll 390
+browser checks used desktop Chrome viewports only; the phone app was not launched

@@ -1,0 +1,5 @@
+name: DAR_PLACES_TO_MIRA_SOURCE_HANDOFF_RC2_20260924_0125.zip
+sha256: 
+desktop file, not embedded in the study site
+previous kept: DAR_PLACES_TO_MIRA_SOURCE_HANDOFF_20260924_0030.zip
+previous sha256: 5d45520b94a3681b7b92af1bfca0617977de39be224b3c666a257bd236dcc99a

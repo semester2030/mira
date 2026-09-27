@@ -1,0 +1,4 @@
+داخل الأرشيف 0125 دون تعديل:
+EXCLUSIONS_AND_REDACTIONS.json يقول إن الملفات لم تُعد كتابتها في هذه الجولة.
+evidence/redaction_rc2.json يقول إن app_config.dart نُقح باستبدال مفتاح خرائط Google الافتراضي بـ REDACTED_GOOGLE_MAPS_API_KEY.
+القيمة الأصلية غير مستعادة هنا.

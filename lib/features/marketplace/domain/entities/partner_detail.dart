@@ -1,3 +1,4 @@
+import '../../data/catalog_price.dart';
 import 'catalog_product.dart';
 import 'catalog_service.dart';
 import 'partner_summary.dart';
@@ -20,10 +21,12 @@ class PartnerDetail {
       nameAr: json['nameAr'] as String,
       nameEn: json['nameEn'] as String? ?? '',
       descriptionAr: json['descriptionAr'] as String?,
-      city: json['city'] as String? ?? 'الرياض',
+      city: json['city'] as String? ?? '',
       logoEmoji: json['logoEmoji'] as String?,
-      rating: (json['rating'] as num?)?.toDouble() ?? 4.5,
+      rating: (json['rating'] as num?)?.toDouble() ?? 0,
       storeUrl: json['storeUrl'] as String?,
+      contactPhone: json['contactPhone'] as String?,
+      demoContent: json['demoContent'] as bool?,
     );
 
     final productsRaw = json['products'] as List<dynamic>? ?? [];
@@ -41,11 +44,13 @@ class PartnerDetail {
           nameAr: m['nameAr'] as String,
           nameEn: m['nameEn'] as String? ?? '',
           descriptionAr: m['descriptionAr'] as String?,
-          priceHalalas: (m['priceHalalas'] as num).toInt(),
+          priceHalalas: CatalogPrice.read(m).halalas,
           priceLabel: m['priceLabel'] as String? ?? '',
+          priceKnown: CatalogPrice.read(m).known,
           externalUrl: m['externalUrl'] as String? ?? '',
           stepAr: m['stepAr'] as String?,
           matchScore: 0,
+          category: m['category'] as String?,
           concernTags: (m['concernTags'] as List<dynamic>?)
                   ?.map((t) => t.toString())
                   .toList() ??
@@ -65,9 +70,11 @@ class PartnerDetail {
           nameEn: m['nameEn'] as String? ?? '',
           descriptionAr: m['descriptionAr'] as String?,
           durationMin: (m['durationMin'] as num).toInt(),
-          priceHalalas: (m['priceHalalas'] as num).toInt(),
+          priceHalalas: CatalogPrice.read(m).halalas,
           priceLabel: m['priceLabel'] as String? ?? '',
+          priceKnown: CatalogPrice.read(m).known,
           matchScore: 0,
+          category: m['category'] as String?,
           bookingEnabled: m['bookingEnabled'] as bool? ?? false,
           concernTags: (m['concernTags'] as List<dynamic>?)
                   ?.map((t) => t.toString())

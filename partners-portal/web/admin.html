@@ -53,24 +53,37 @@
         const apps = await PartnersApi.adminList(key, 'pending');
         msg.classList.add('hidden');
 
+        list.replaceChildren();
         if (!apps.length) {
-          list.innerHTML = '<p class="lead">لا طلبات معلّقة.</p>';
+          const empty = document.createElement('p');
+          empty.className = 'lead';
+          empty.textContent = 'لا طلبات معلّقة.';
+          list.appendChild(empty);
           return;
         }
 
-        list.innerHTML = apps
-          .map(
-            (a) => `<div class="list-item" data-id="${a.id}">
-              <strong>${a.nameAr}</strong> (${a.type}) — ${a.contactEmail}
-              <br><small>${a.contactName} · ${a.contactPhone} · ${a.city}</small>
-              <div class="actions">
-                <button class="btn btn-primary approve">اعتماد</button>
-                <button class="btn btn-danger reject">رفض</button>
-              </div>
-              <div class="result hidden"></div>
-            </div>`,
-          )
-          .join('');
+        for (const application of apps) {
+          const item = document.createElement('div');
+          item.className = 'list-item';
+          item.dataset.id = application.id;
+          const title = document.createElement('strong');
+          title.textContent = application.nameAr || '';
+          const meta = document.createElement('small');
+          meta.textContent = (application.contactName || '') + ' · ' + (application.contactPhone || '') + ' · ' + (application.city || '');
+          const actions = document.createElement('div');
+          actions.className = 'actions';
+          const approve = document.createElement('button');
+          approve.className = 'btn btn-primary approve';
+          approve.textContent = 'اعتماد';
+          const reject = document.createElement('button');
+          reject.className = 'btn btn-danger reject';
+          reject.textContent = 'رفض';
+          actions.append(approve, reject);
+          const result = document.createElement('div');
+          result.className = 'result hidden';
+          item.append(title, document.createTextNode(' (' + (application.type || '') + ') — ' + (application.contactEmail || '')), document.createElement('br'), meta, actions, result);
+          list.appendChild(item);
+        }
 
         list.querySelectorAll('.approve').forEach((btn) => {
           btn.onclick = async () => {
@@ -78,13 +91,14 @@
             const id = item.dataset.id;
             try {
               const res = await PartnersApi.adminApprove(key, id);
-              item.querySelector('.result').className = 'alert ok';
-              item.querySelector('.result').innerHTML =
-                'تم! partnerId: ' +
-                res.partnerId +
-                '<br>accessToken: <div class="token-box">' +
-                res.accessToken +
-                '</div>';
+              const result = item.querySelector('.result');
+              result.className = 'alert ok';
+              result.replaceChildren();
+              result.append(document.createTextNode('تم! partnerId: ' + res.partnerId));
+              const token = document.createElement('div');
+              token.className = 'token-box';
+              token.textContent = res.accessToken || '';
+              result.append(document.createElement('br'), document.createTextNode('accessToken:'), token);
               btn.disabled = true;
             } catch (e) {
               alert(e.message);

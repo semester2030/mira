@@ -1,0 +1,5 @@
+CLAIMED_ATTACHMENT: ScreenRecording_09-21-2026 23-58-09_1.mp4 (user stated attached with prompt)
+FOUND_ON_DISK: NO
+SEARCHED: Desktop, Downloads, Movies, mdfind by name, .cursor assets/projects, Application Support/Cursor
+POLICY: Do NOT attribute any NEW_ATTEMPT logs to the historical recording.
+HISTORICAL_ZIP: /Users/fayez/Desktop/مراجع تطبيق ميرا /MIRA_OUTFIT_HISTORICAL_RUNTIME_EVIDENCE_REVIEW.zip

@@ -1,0 +1,15 @@
+PH2-RC6
+النطاق: البند المتبقي P2-RC5-05 فقط. لا يُعاد فتح بنود RC5 المقبولة، ولا يُعتمد إغلاق المرحلة الثانية من هذا السجل.
+
+المشكلة: السكربت كان يقرأ DB_HOST وDB_PORT ويتحقق منهما، ثم يستدعي psql وcreatedb وdropdb دون تمرير المضيف والمنفذ، فتستطيع PGHOST وPGPORT وPGSERVICE توجيه أوامر الإدارة إلى هدف غير هدف Prisma.
+
+الإصلاح: run-marketplace-rc6-integration.sh يلغي متغيرات اتصال libpq الموروثة، ويمرر -h و-p و-U في كل أمر إدارة. دور Prisma يبقى من DATABASE_URL وهو mira ولا يُفترض أنه ينشئ القواعد. دور الإدارة هو مستخدم النظام أو MIRA_RC6_ADMIN_USER وعلى المضيف والمنفذ نفسهما. فشل التحقق من الوجود يوقف السكربت برمز 3 ولا يُعامل كانعدام القاعدة. الحذف الفاشل لا يطبع cleaned ويبقي رمز الاختبار أو يحوّله إلى فشل إن كان النجاح. لا تُطبع كلمات المرور.
+
+الأدلة: evidence/tests/rc6_proofs.txt
+- print-admin مع PGHOST=203.0.113.10 وPGPORT=1 طبع localhost:5432 والمستخدم fayez. print_exit=0.
+- prove-port على المنفذ 1 توقف: STOP existence check failed. prove_exit=3.
+- check: prisma_role=mira وadmin=fayez على localhost:5432.
+- محاكاة فشل الحذف: cleanup failed دون كلمة cleaned، drill_exit=1، ثم حُذفت البقية بأمر صريح.
+- التشغيل الكامل في rc6_api.txt: server_port=5432، ترقية الصف السابق legacy-rc5-product|3210|NULL|published، اختبار HTTP للمرحلة الثانية، cleaned mira_ph2_rc6_test، cleanup=ok test_status=0، api_exit=0.
+
+ما بقي: مراجعة إغلاق المرحلة الثانية. الإنتاج غير مختبر. نجاح هذا البند لا يعني اكتمال المرحلة الثالثة.

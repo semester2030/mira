@@ -1,0 +1,21 @@
+# Test evidence
+
+```
+$ flutter test test/features/skin_analysis/perfect_camera_kit_gate_test.dart
+00:01 +2: All tests passed!
+```
+
+Physical device init (prior debug session on fayez's iPhone):
+```
+flutter: Mira PerfectCameraKit init: version=2.5.0.000000 level=moderate yaw=10.0 size=0.6499999761581421
+```
+
+Pod install:
+```
+Installing PerfectLibCameraKit (2.5.0)
+Pod installation complete!
+```
+
+iOS arm64 deploy: PASS (flutter run debug on UDID 00008110-00191986268BA01E)
+
+Continuous pose matrix video: NOT ATTACHED → PHYSICAL CLOSURE BLOCKED

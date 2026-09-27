@@ -1,36 +1,29 @@
 import 'package:flutter/material.dart';
-import 'package:url_launcher/url_launcher.dart';
 
-import '../../../../core/config/mira_api_config.dart';
+import '../../../../core/constants/marketplace_copy.dart';
+import '../../../../core/utils/mira_url_launcher.dart';
 import '../../../../shared/theme/colors.dart';
 import '../../../../shared/theme/typography.dart';
 import '../../../../shared/widgets/mira_app_bar.dart';
 import '../../../../shared/widgets/premium/premium_exports.dart';
+import '../../data/catalog_price.dart';
 import '../../domain/entities/catalog_product.dart';
-import '../../data/datasources/marketplace_api_data_source.dart';
-
 class ProductDetailScreen extends StatelessWidget {
   final CatalogProduct product;
+  final Widget? provenance;
 
-  const ProductDetailScreen({super.key, required this.product});
+  const ProductDetailScreen({super.key, required this.product, this.provenance});
 
   Future<void> _openStore(BuildContext context) async {
-    if (MiraApiConfig.useBackend) {
-      MarketplaceApiDataSource().trackClick(
-        partnerId: product.partnerId,
-        targetId: product.id,
-        targetType: 'product',
-      );
+    final url = product.externalUrl.trim();
+    final uri = Uri.tryParse(url);
+    if (uri == null || !uri.hasScheme || uri.host.isEmpty) {
+      ScaffoldMessenger.of(context).showSnackBar(const SnackBar(content: Text('لا يوجد رابط شراء صالح')));
+      return;
     }
-    final uri = Uri.tryParse(product.externalUrl);
-    if (uri == null) return;
-    final ok = await launchUrl(uri, mode: LaunchMode.externalApplication);
-    if (!context.mounted) return;
-    if (!ok) {
-      ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(content: Text('تعذر فتح رابط المتجر')),
-      );
-    }
+    final opened = await MiraUrlLauncher.openExternal(context, url);
+    if (!context.mounted || !opened) return;
+    ScaffoldMessenger.of(context).showSnackBar(const SnackBar(content: Text('فُتح رابط خارجي. هذا ليس شراءً مكتملًا')));
   }
 
   @override
@@ -39,11 +32,10 @@ class ProductDetailScreen extends StatelessWidget {
       backgroundColor: AppColors.surface,
       appBar: const MiraAppBar(pageTitle: 'تفاصيل المنتج'),
       body: SafeArea(
-        child: Padding(
+        child: ListView(
           padding: const EdgeInsets.all(20),
-          child: Column(
-            crossAxisAlignment: CrossAxisAlignment.stretch,
-            children: [
+          children: [
+            if (provenance != null) provenance!,
               Center(
                 child: Text(
                   product.partnerEmoji ?? '🛍️',
@@ -76,13 +68,13 @@ class ProductDetailScreen extends StatelessWidget {
                 child: Row(
                   mainAxisAlignment: MainAxisAlignment.spaceAround,
                   children: [
-                    _info('السعر', product.priceLabel),
+                    _info('السعر', CatalogPrice.text(known: product.priceKnown, halalas: product.priceHalalas)),
                     if (product.stepAr != null) _info('الخطوة', product.stepAr!),
-                    _info('التطابق', '${product.matchScore}%'),
+                    if (product.matchKnown) _info('التطابق', '${product.matchScore}%'),
                   ],
                 ),
               ),
-              const Spacer(),
+              const SizedBox(height: 24),
               PremiumButton(
                 label: 'الشراء من متجر ${product.partnerNameAr}',
                 icon: Icons.shopping_bag_outlined,
@@ -97,10 +89,17 @@ class ProductDetailScreen extends StatelessWidget {
                 ),
                 textAlign: TextAlign.center,
               ),
+              const SizedBox(height: 4),
+              Text(
+                MarketplaceCopy.externalLinkNotPurchase,
+                style: AppTypography.bodySmall.copyWith(
+                  color: AppColors.textTertiary,
+                ),
+                textAlign: TextAlign.center,
+              ),
             ],
           ),
         ),
-      ),
     );
   }
 

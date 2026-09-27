@@ -4,16 +4,16 @@ import 'package:mirra/features/results_experience/results_experience.dart';
 import 'package:mirra/features/skin_analysis/domain/entities/skin_report.dart';
 
 SkinReport _report() => const SkinReport(
-      id: 'd1',
-      skinType: 'مختلطة',
-      score: 70,
-      hydration: 50,
-      oiliness: 55,
-      pores: 60,
-      wrinkles: 65,
-      spots: 58,
-      advice: 'عناية لطيفة',
-    );
+  id: 'd1',
+  skinType: 'مختلطة',
+  score: 70,
+  hydration: 50,
+  oiliness: 55,
+  pores: 60,
+  wrinkles: 65,
+  spots: 58,
+  advice: 'عناية لطيفة',
+);
 
 ResultExperience _exp({
   bool mapEnabled = true,
@@ -113,8 +113,9 @@ Future<void> _pumpHub(
       builder: (context, child) => Directionality(
         textDirection: TextDirection.rtl,
         child: MediaQuery(
-          data: MediaQuery.of(context)
-              .copyWith(textScaler: TextScaler.linear(textScale)),
+          data: MediaQuery.of(
+            context,
+          ).copyWith(textScaler: TextScaler.linear(textScale)),
           child: child!,
         ),
       ),
@@ -171,13 +172,19 @@ void main() {
     expect(exp.metrics.length, 2);
   });
 
-  test('one owned action per metric — no duplicate concept across visible metrics', () {
-    final exp = _exp();
-    final visible = exp.metrics
-        .where((m) => VisibilityPolicy.isPubliclyVisible(m.visibility));
-    final concepts = visible.map(MetricPresentationPolicy.adviceConceptId).toList();
-    expect(AdviceOwnershipPolicy.findDuplicateOwners(concepts), isEmpty);
-  });
+  test(
+    'one owned action per metric — no duplicate concept across visible metrics',
+    () {
+      final exp = _exp();
+      final visible = exp.metrics.where(
+        (m) => VisibilityPolicy.isPubliclyVisible(m.visibility),
+      );
+      final concepts = visible
+          .map(MetricPresentationPolicy.adviceConceptId)
+          .toList();
+      expect(AdviceOwnershipPolicy.findDuplicateOwners(concepts), isEmpty);
+    },
+  );
 
   test('map Mode B labels and explanation', () {
     final exp = _exp();
@@ -191,18 +198,26 @@ void main() {
     expect(exp.map.explanationAr, contains('ولا تمثل'));
   });
 
-  test('public language has no provider/version/MCE leaks on metrics and map', () {
-    final exp = _exp();
-    for (final m in exp.metrics) {
-      expect(PublicLanguagePolicy.isPublicSafe(m.explanationAr, field: m.id), isTrue);
-      expect(m.explanationAr.toLowerCase(), isNot(contains('provider')));
-      expect(m.explanationAr.toLowerCase(), isNot(contains('mce')));
-    }
-    expect(exp.map.explanationAr.toLowerCase(), isNot(contains('mce')));
-    expect(exp.map.explanationAr.toLowerCase(), isNot(contains('svi')));
-  });
+  test(
+    'public language has no provider/version/MCE leaks on metrics and map',
+    () {
+      final exp = _exp();
+      for (final m in exp.metrics) {
+        expect(
+          PublicLanguagePolicy.isPublicSafe(m.explanationAr, field: m.id),
+          isTrue,
+        );
+        expect(m.explanationAr.toLowerCase(), isNot(contains('provider')));
+        expect(m.explanationAr.toLowerCase(), isNot(contains('mce')));
+      }
+      expect(exp.map.explanationAr.toLowerCase(), isNot(contains('mce')));
+      expect(exp.map.explanationAr.toLowerCase(), isNot(contains('svi')));
+    },
+  );
 
-  testWidgets('metrics overview renders and opens detail sheet', (tester) async {
+  testWidgets('metrics overview renders and opens detail sheet', (
+    tester,
+  ) async {
     final exp = _exp();
     await _pumpHub(tester, experience: exp);
     expect(find.text('المؤشرات', skipOffstage: false), findsWidgets);
@@ -213,16 +228,28 @@ void main() {
     await tester.pump();
     await tester.pump(const Duration(milliseconds: 100));
     expect(find.text('خطوتك المرتبطة', skipOffstage: false), findsOneWidget);
-    expect(find.textContaining('اسألي مستشار ميرا', skipOffstage: false), findsWidgets);
-    expect(find.textContaining('لماذا تهم', skipOffstage: false), findsOneWidget);
+    expect(
+      find.textContaining('اسألي مستشار ميرا', skipOffstage: false),
+      findsWidgets,
+    );
+    expect(
+      find.textContaining('لماذا تهم', skipOffstage: false),
+      findsOneWidget,
+    );
   });
 
   testWidgets('illustrative map badge and concern select', (tester) async {
     final exp = _exp();
     await _pumpHub(tester, experience: exp, tab: ResultsDetailsTab.skinMap);
-    expect(find.text('خريطة إرشادية للبشرة', skipOffstage: false), findsWidgets);
+    expect(
+      find.text('خريطة إرشادية للبشرة', skipOffstage: false),
+      findsWidgets,
+    );
     expect(find.text('توضيح إرشادي', skipOffstage: false), findsWidgets);
-    expect(find.textContaining('وجه توضيحي', skipOffstage: false), findsOneWidget);
+    expect(
+      find.textContaining('وجه توضيحي', skipOffstage: false),
+      findsOneWidget,
+    );
     expect(find.text('الاحمرار', skipOffstage: false), findsWidgets);
 
     await tester.tap(find.widgetWithText(ChoiceChip, 'الاحمرار'));
@@ -233,7 +260,10 @@ void main() {
   testWidgets('map unavailable state', (tester) async {
     final exp = _exp(mapEnabled: false, mapConcerns: const []);
     await _pumpHub(tester, experience: exp, tab: ResultsDetailsTab.skinMap);
-    expect(find.textContaining('تعذر عرض الخريطة', skipOffstage: false), findsOneWidget);
+    expect(
+      find.textContaining('تعذر عرض الخريطة', skipOffstage: false),
+      findsOneWidget,
+    );
   });
 
   testWidgets('missing image state', (tester) async {
@@ -244,7 +274,10 @@ void main() {
       tab: ResultsDetailsTab.skinMap,
       missingImage: true,
     );
-    expect(find.textContaining('صورة الوجه غير متاحة', skipOffstage: false), findsOneWidget);
+    expect(
+      find.textContaining('صورة الوجه غير متاحة', skipOffstage: false),
+      findsOneWidget,
+    );
   });
 
   testWidgets('stale map messaging', (tester) async {
@@ -255,13 +288,19 @@ void main() {
       tab: ResultsDetailsTab.skinMap,
       isStale: true,
     );
-    expect(find.textContaining('تعذر عرض الخريطة', skipOffstage: false), findsOneWidget);
+    expect(
+      find.textContaining('تعذر عرض الخريطة', skipOffstage: false),
+      findsOneWidget,
+    );
   });
 
   testWidgets('low confidence map messaging', (tester) async {
     final exp = _exp(confidence: 20, mapEnabled: false);
     await _pumpHub(tester, experience: exp, tab: ResultsDetailsTab.skinMap);
-    expect(find.textContaining('تعذر عرض الخريطة', skipOffstage: false), findsOneWidget);
+    expect(
+      find.textContaining('تعذر عرض الخريطة', skipOffstage: false),
+      findsOneWidget,
+    );
   });
 
   testWidgets('RTL on hub', (tester) async {
@@ -283,12 +322,19 @@ void main() {
   test('deterministic projection for identical input', () {
     final a = _exp();
     final b = _exp();
-    expect(a.metrics.map((m) => m.id).toList(), b.metrics.map((m) => m.id).toList());
-    expect(a.map.concerns.map((c) => c.labelAr).toList(),
-        b.map.concerns.map((c) => c.labelAr).toList());
+    expect(
+      a.metrics.map((m) => m.id).toList(),
+      b.metrics.map((m) => m.id).toList(),
+    );
+    expect(
+      a.map.concerns.map((c) => c.labelAr).toList(),
+      b.map.concerns.map((c) => c.labelAr).toList(),
+    );
   });
 
-  testWidgets('executive summary has metrics and map entry points', (tester) async {
+  testWidgets('executive summary has metrics and map entry points', (
+    tester,
+  ) async {
     MiraResultsExperienceFlagStore.apply(
       const MiraResultsExperienceFlag(
         variant: MiraResultsExperienceVariant.resultsV2,
@@ -300,10 +346,8 @@ void main() {
     await tester.pumpWidget(
       MaterialApp(
         locale: const Locale('ar'),
-        builder: (c, child) => Directionality(
-          textDirection: TextDirection.rtl,
-          child: child!,
-        ),
+        builder: (c, child) =>
+            Directionality(textDirection: TextDirection.rtl, child: child!),
         home: ResultsExecutiveSummaryScreen(
           report: _report(),
           experience: exp,
@@ -317,6 +361,9 @@ void main() {
     expect(find.text('الخريطة الإرشادية', skipOffstage: false), findsOneWidget);
     // Still not embedding map/metrics detail content on first surface
     expect(find.text('__no_skin_map__', skipOffstage: false), findsOneWidget);
-    expect(find.text('__no_metrics_detail__', skipOffstage: false), findsOneWidget);
+    expect(
+      find.text('__no_metrics_detail__', skipOffstage: false),
+      findsOneWidget,
+    );
   });
 }

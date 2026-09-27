@@ -1,0 +1,141 @@
+[
+  {
+    "id": "TR-01",
+    "titleAr": "طلب الانضمام",
+    "chain": [
+      "apply.html",
+      "PartnersApi.apply",
+      "POST /partners-portal/apply",
+      "PartnersPortalController.apply",
+      "PartnersPortalService.apply",
+      "PartnerApplication",
+      "status token"
+    ],
+    "verified": "SOURCE_ONLY",
+    "evidenceIds": [
+      "EVD-0011",
+      "EVD-0016"
+    ]
+  },
+  {
+    "id": "TR-02",
+    "titleAr": "متابعة الحالة",
+    "chain": [
+      "status.html",
+      "GET apply/status/:token",
+      "getApplicationStatus"
+    ],
+    "verified": "SOURCE_ONLY",
+    "evidenceIds": [
+      "EVD-0011"
+    ]
+  },
+  {
+    "id": "TR-03",
+    "titleAr": "الدخول والخروج",
+    "chain": [
+      "login.html",
+      "POST /partners-portal/login",
+      "email+accessToken",
+      "PartnerUser",
+      "localStorage",
+      "clearSession"
+    ],
+    "verified": "SOURCE_ONLY",
+    "noteAr": "لا كلمة مرور منفصلة في هذا المسار. partnerId من السجل.",
+    "evidenceIds": [
+      "EVD-0021",
+      "EVD-0016"
+    ]
+  },
+  {
+    "id": "TR-04",
+    "titleAr": "عزل المنتجات",
+    "chain": [
+      "Bearer",
+      "PartnerTokenGuard",
+      "partnerId من السجل",
+      "assertProductOwner where id+partnerId",
+      "رفض إن لم يُوجد"
+    ],
+    "verified": "SOURCE_PLUS_UNIT_MOCK",
+    "noteAr": "الاختبار EVD-0026 على mock. لا يثبت قاعدة حية. القراءة العامة عبر marketplace ليست لوحة الشريك.",
+    "evidenceIds": [
+      "EVD-0012",
+      "EVD-0013",
+      "EVD-0026"
+    ]
+  },
+  {
+    "id": "TR-05",
+    "titleAr": "الإدارة مقابل الشريك",
+    "chain": [
+      "الشريك: رمز شريك واحد",
+      "الإدارة: X-Admin-Key على كل مسارات /admin",
+      "اعتماد ورفض وإيقاف status"
+    ],
+    "verified": "SOURCE_ONLY",
+    "noteAr": "لا أدوار موظفين. البحث عن Employee وBranch بلا تطابق EVD-0019.",
+    "evidenceIds": [
+      "EVD-0014",
+      "EVD-0025",
+      "EVD-0019"
+    ]
+  },
+  {
+    "id": "TR-06",
+    "titleAr": "سعر ووسائط وتوفر",
+    "chain": [
+      "UpsertProductDto priceHalalas+externalUrl+active",
+      "لا حقل مخزون",
+      "لا رفع وسيط"
+    ],
+    "verified": "SOURCE_ONLY",
+    "evidenceIds": [
+      "EVD-0017"
+    ]
+  },
+  {
+    "id": "TR-07",
+    "titleAr": "حجوزات",
+    "chain": [
+      "bookingEnabled اختياري في عقد الخدمة",
+      "لا model Booking في البحث",
+      "زر التطبيق stub"
+    ],
+    "verified": "SOURCE_ONLY",
+    "evidenceIds": [
+      "EVD-0017",
+      "EVD-0003",
+      "EVD-0018"
+    ]
+  },
+  {
+    "id": "TR-08",
+    "titleAr": "تحليلات",
+    "chain": [
+      "POST /track بلا حارس",
+      "partnerId من الجسم",
+      "لوحة الشريك تعد أحداث 30 يومًا"
+    ],
+    "verified": "SOURCE_ONLY",
+    "noteAr": "هذه فجوة مسجلة لا تُصلح في هذه المرحلة.",
+    "evidenceIds": [
+      "EVD-0013"
+    ]
+  },
+  {
+    "id": "TR-09",
+    "titleAr": "إيقاف إداري",
+    "chain": [
+      "PATCH /admin/partners/:id/status",
+      "active|suspended",
+      "الحارس يرفض شريكًا غير active"
+    ],
+    "verified": "SOURCE_ONLY",
+    "evidenceIds": [
+      "EVD-0014",
+      "EVD-0012"
+    ]
+  }
+]

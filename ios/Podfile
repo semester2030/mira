@@ -29,6 +29,8 @@ target 'Runner' do
   use_frameworks!
 
   flutter_install_all_ios_pods File.dirname(File.realpath(__FILE__))
+  # Perfect Corp Mobile CameraKit 2.5.0 — Skin capture quality (official verified package).
+  pod 'PerfectLibCameraKit', :path => 'Vendor/PerfectCameraKit'
   target 'RunnerTests' do
     inherit! :search_paths
   end

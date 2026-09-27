@@ -1,0 +1,5 @@
+visual RC2 site check
+command: python3 scripts/validate_package.py --root .
+result: PASS package
+note: this file is written before the final manifest regeneration. The sealed package manifest is PACKAGE_MANIFEST.json in the release folder. The zip hash is outside the zip.
+phase: PH-1 not approved

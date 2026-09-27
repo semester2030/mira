@@ -1,0 +1,85 @@
+[
+  {
+    "id": "JDG-0001",
+    "subject": "CAP-0007",
+    "beforeAr": "موجودة ومفعلة ودليلها SPEC",
+    "afterAr": "موجودة في المصدر، التفعيل الإنتاجي UNKNOWN، والأدلة تنفيذية",
+    "reasonAr": "REV-0001: المواصفات ليست تنفيذًا",
+    "evidenceIds": [
+      "EVD-0007",
+      "EVD-0011",
+      "EVD-0012"
+    ]
+  },
+  {
+    "id": "JDG-0002",
+    "subject": "CAP-0008",
+    "beforeAr": "موجودة ومفعلة بلا دليل",
+    "afterAr": "موجودة في المصدر، التفعيل UNKNOWN، مع أدلة المتحكم والعميل",
+    "reasonAr": "REV-0001 وREV-0002",
+    "evidenceIds": [
+      "EVD-0014",
+      "EVD-0015"
+    ]
+  },
+  {
+    "id": "JDG-0003",
+    "subject": "CAP-0010 CAP-0011 CAP-0012 CAP-0014",
+    "beforeAr": "غياب أو وجود بلا أدلة مرتبطة أو بمقتطف مخطط فقط",
+    "afterAr": "غياب داخل نطاق بحث موثّق، أو وجود علم اشتراك في المصدر",
+    "reasonAr": "REV-0002",
+    "evidenceIds": [
+      "EVD-0018",
+      "EVD-0019",
+      "EVD-0020",
+      "EVD-0023"
+    ]
+  },
+  {
+    "id": "JDG-0004",
+    "subject": "CAP-0001 CAP-0002 CAP-0003 CAP-0009",
+    "beforeAr": "التفعيل ENABLED مع SOURCE_ONLY",
+    "afterAr": "التفعيل UNKNOWN لأن الشيفرة لا تثبت الإنتاج",
+    "reasonAr": "قاعدة RC2: لا ENABLED بلا دليل تشغيل",
+    "evidenceIds": [
+      "EVD-0001",
+      "EVD-0006",
+      "EVD-0008"
+    ]
+  },
+  {
+    "id": "JDG-0005",
+    "subject": "PAUSE-0001",
+    "beforeAr": "الإيقاف موثق بعبارة الانطلاق قريبًا وAPI قابل للوصول",
+    "afterAr": "إخفاء واجهة موثق. وصول API وبوابة الخادم UNKNOWN. السبب التاريخي غير موثق.",
+    "reasonAr": "REV-0003",
+    "evidenceIds": [
+      "EVD-0001",
+      "EVD-0002",
+      "EVD-0006"
+    ]
+  },
+  {
+    "id": "JDG-0006",
+    "subject": "PAUSE-0002",
+    "beforeAr": "حجز متوقف",
+    "afterAr": "مسار غير مكتمل وليس خدمة تُستأنف",
+    "reasonAr": "REV-0003",
+    "evidenceIds": [
+      "EVD-0003",
+      "EVD-0018"
+    ]
+  },
+  {
+    "id": "JDG-0007",
+    "subject": "PAUSE-0003",
+    "beforeAr": "شراء داخلي متوقف",
+    "afterAr": "غير منفذ حسب التصميم الحالي",
+    "reasonAr": "REV-0003",
+    "evidenceIds": [
+      "EVD-0004",
+      "EVD-0007",
+      "EVD-0018"
+    ]
+  }
+]

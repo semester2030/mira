@@ -1,0 +1,565 @@
+{
+  "phase": "done",
+  "apiVersion": "s2s/v2.0",
+  "endpoint": "https://yce-api-01.makeupar.com/s2s/v2.0/task/skin-analysis",
+  "requestSanitized": {
+    "src_file_id": "[redacted]",
+    "dst_actions": [
+      "hd_texture",
+      "hd_acne",
+      "hd_moisture",
+      "hd_oiliness",
+      "hd_radiance",
+      "hd_dark_circle",
+      "hd_eye_bag",
+      "hd_droopy_upper_eyelid",
+      "hd_droopy_lower_eyelid",
+      "hd_firmness",
+      "hd_tear_trough",
+      "hd_skin_type"
+    ],
+    "miniserver_args": {
+      "enable_mask_overlay": false
+    },
+    "format": "json"
+  },
+  "taskIdPrefix": "Xy78luX-EXrp",
+  "sourceWidth": 1200,
+  "sourceHeight": 1680,
+  "shortSide": 1200,
+  "enableMaskOverlay": false,
+  "hdOnly": true,
+  "unitsConsumed": "unknown",
+  "artifacts": [
+    {
+      "concernType": "hd_eye_bag",
+      "rawScore": 76.12367868423462,
+      "uiScore": 79,
+      "outputMaskName": null,
+      "skinTypeLabel": null,
+      "maskUrlCount": 1,
+      "maskUrlHosts": [
+        "yce-us.s3-accelerate.amazonaws.com"
+      ],
+      "scoreOnly": false,
+      "downloadOk": true,
+      "width": 1200,
+      "height": 1680,
+      "format": "png",
+      "hasAlpha": true,
+      "nonEmptySpatial": true,
+      "alignedWithSource": true,
+      "alignmentNotes": "mask dimensions == source (offset 0)",
+      "downloadError": null
+    },
+    {
+      "concernType": "hd_droopy_upper_eyelid",
+      "rawScore": 82.43886232376099,
+      "uiScore": 82,
+      "outputMaskName": null,
+      "skinTypeLabel": null,
+      "maskUrlCount": 1,
+      "maskUrlHosts": [
+        "yce-us.s3-accelerate.amazonaws.com"
+      ],
+      "scoreOnly": false,
+      "downloadOk": true,
+      "width": 1200,
+      "height": 1680,
+      "format": "png",
+      "hasAlpha": true,
+      "nonEmptySpatial": true,
+      "alignedWithSource": true,
+      "alignmentNotes": "mask dimensions == source (offset 0)",
+      "downloadError": null
+    },
+    {
+      "concernType": "hd_tear_trough",
+      "rawScore": 86.58022582530975,
+      "uiScore": 84,
+      "outputMaskName": null,
+      "skinTypeLabel": null,
+      "maskUrlCount": 1,
+      "maskUrlHosts": [
+        "yce-us.s3-accelerate.amazonaws.com"
+      ],
+      "scoreOnly": false,
+      "downloadOk": true,
+      "width": 1200,
+      "height": 1680,
+      "format": "png",
+      "hasAlpha": true,
+      "nonEmptySpatial": true,
+      "alignedWithSource": true,
+      "alignmentNotes": "mask dimensions == source (offset 0)",
+      "downloadError": null
+    },
+    {
+      "concernType": "hd_droopy_lower_eyelid",
+      "rawScore": 70.21539211273193,
+      "uiScore": 76,
+      "outputMaskName": null,
+      "skinTypeLabel": null,
+      "maskUrlCount": 1,
+      "maskUrlHosts": [
+        "yce-us.s3-accelerate.amazonaws.com"
+      ],
+      "scoreOnly": false,
+      "downloadOk": true,
+      "width": 1200,
+      "height": 1680,
+      "format": "png",
+      "hasAlpha": true,
+      "nonEmptySpatial": true,
+      "alignedWithSource": true,
+      "alignmentNotes": "mask dimensions == source (offset 0)",
+      "downloadError": null
+    },
+    {
+      "concernType": "hd_oiliness",
+      "rawScore": 51.672332763671875,
+      "uiScore": 68,
+      "outputMaskName": null,
+      "skinTypeLabel": null,
+      "maskUrlCount": 1,
+      "maskUrlHosts": [
+        "yce-us.s3-accelerate.amazonaws.com"
+      ],
+      "scoreOnly": false,
+      "downloadOk": true,
+      "width": 1200,
+      "height": 1680,
+      "format": "png",
+      "hasAlpha": true,
+      "nonEmptySpatial": true,
+      "alignedWithSource": true,
+      "alignmentNotes": "mask dimensions == source (offset 0)",
+      "downloadError": null
+    },
+    {
+      "concernType": "hd_radiance",
+      "rawScore": 97.40634560585022,
+      "uiScore": 95,
+      "outputMaskName": null,
+      "skinTypeLabel": null,
+      "maskUrlCount": 1,
+      "maskUrlHosts": [
+        "yce-us.s3-accelerate.amazonaws.com"
+      ],
+      "scoreOnly": false,
+      "downloadOk": true,
+      "width": 1200,
+      "height": 1680,
+      "format": "png",
+      "hasAlpha": true,
+      "nonEmptySpatial": true,
+      "alignedWithSource": true,
+      "alignmentNotes": "mask dimensions == source (offset 0)",
+      "downloadError": null
+    },
+    {
+      "concernType": "hd_dark_circle",
+      "rawScore": 87.29798197746277,
+      "uiScore": 79,
+      "outputMaskName": null,
+      "skinTypeLabel": null,
+      "maskUrlCount": 1,
+      "maskUrlHosts": [
+        "yce-us.s3-accelerate.amazonaws.com"
+      ],
+      "scoreOnly": false,
+      "downloadOk": true,
+      "width": 1200,
+      "height": 1680,
+      "format": "png",
+      "hasAlpha": true,
+      "nonEmptySpatial": true,
+      "alignedWithSource": true,
+      "alignmentNotes": "mask dimensions == source (offset 0)",
+      "downloadError": null
+    },
+    {
+      "concernType": "hd_firmness",
+      "rawScore": 96.10396027565002,
+      "uiScore": 94,
+      "outputMaskName": null,
+      "skinTypeLabel": null,
+      "maskUrlCount": 1,
+      "maskUrlHosts": [
+        "yce-us.s3-accelerate.amazonaws.com"
+      ],
+      "scoreOnly": false,
+      "downloadOk": true,
+      "width": 1200,
+      "height": 1680,
+      "format": "png",
+      "hasAlpha": true,
+      "nonEmptySpatial": true,
+      "alignedWithSource": true,
+      "alignmentNotes": "mask dimensions == source (offset 0)",
+      "downloadError": null
+    },
+    {
+      "concernType": "hd_moisture",
+      "rawScore": 69.26365494728088,
+      "uiScore": 77,
+      "outputMaskName": null,
+      "skinTypeLabel": null,
+      "maskUrlCount": 1,
+      "maskUrlHosts": [
+        "yce-us.s3-accelerate.amazonaws.com"
+      ],
+      "scoreOnly": false,
+      "downloadOk": true,
+      "width": 1200,
+      "height": 1680,
+      "format": "png",
+      "hasAlpha": true,
+      "nonEmptySpatial": true,
+      "alignedWithSource": true,
+      "alignmentNotes": "mask dimensions == source (offset 0)",
+      "downloadError": null
+    },
+    {
+      "concernType": "hd_skin_type",
+      "region": "whole",
+      "rawScore": null,
+      "uiScore": null,
+      "outputMaskName": null,
+      "skinTypeLabel": null,
+      "maskUrlCount": 1,
+      "maskUrlHosts": [
+        "yce-us.s3-accelerate.amazonaws.com"
+      ],
+      "scoreOnly": false,
+      "downloadOk": true,
+      "width": 1200,
+      "height": 1680,
+      "format": "png",
+      "hasAlpha": true,
+      "nonEmptySpatial": true,
+      "alignedWithSource": true,
+      "alignmentNotes": "mask dimensions == source (offset 0)",
+      "downloadError": null
+    },
+    {
+      "concernType": "hd_skin_type",
+      "region": "t_zone",
+      "rawScore": null,
+      "uiScore": null,
+      "outputMaskName": null,
+      "skinTypeLabel": null,
+      "maskUrlCount": 1,
+      "maskUrlHosts": [
+        "yce-us.s3-accelerate.amazonaws.com"
+      ],
+      "scoreOnly": false,
+      "downloadOk": true,
+      "width": 1200,
+      "height": 1680,
+      "format": "png",
+      "hasAlpha": true,
+      "nonEmptySpatial": true,
+      "alignedWithSource": true,
+      "alignmentNotes": "mask dimensions == source (offset 0)",
+      "downloadError": null
+    },
+    {
+      "concernType": "hd_skin_type",
+      "region": "u_zone",
+      "rawScore": null,
+      "uiScore": null,
+      "outputMaskName": null,
+      "skinTypeLabel": null,
+      "maskUrlCount": 1,
+      "maskUrlHosts": [
+        "yce-us.s3-accelerate.amazonaws.com"
+      ],
+      "scoreOnly": false,
+      "downloadOk": true,
+      "width": 1200,
+      "height": 1680,
+      "format": "png",
+      "hasAlpha": true,
+      "nonEmptySpatial": true,
+      "alignedWithSource": true,
+      "alignmentNotes": "mask dimensions == source (offset 0)",
+      "downloadError": null
+    },
+    {
+      "concernType": "hd_acne",
+      "region": "whole",
+      "rawScore": 96.40519714355469,
+      "uiScore": 97,
+      "outputMaskName": null,
+      "skinTypeLabel": null,
+      "maskUrlCount": 1,
+      "maskUrlHosts": [
+        "yce-us.s3-accelerate.amazonaws.com"
+      ],
+      "scoreOnly": false,
+      "downloadOk": true,
+      "width": 1200,
+      "height": 1680,
+      "format": "png",
+      "hasAlpha": true,
+      "nonEmptySpatial": true,
+      "alignedWithSource": true,
+      "alignmentNotes": "mask dimensions == source (offset 0)",
+      "downloadError": null
+    },
+    {
+      "concernType": "hd_texture",
+      "region": "whole",
+      "rawScore": 70.94901960784314,
+      "uiScore": 77,
+      "outputMaskName": null,
+      "skinTypeLabel": null,
+      "maskUrlCount": 1,
+      "maskUrlHosts": [
+        "yce-us.s3-accelerate.amazonaws.com"
+      ],
+      "scoreOnly": false,
+      "downloadOk": true,
+      "width": 1200,
+      "height": 1680,
+      "format": "png",
+      "hasAlpha": true,
+      "nonEmptySpatial": true,
+      "alignedWithSource": true,
+      "alignmentNotes": "mask dimensions == source (offset 0)",
+      "downloadError": null
+    },
+    {
+      "concernType": "all",
+      "rawScore": null,
+      "uiScore": null,
+      "outputMaskName": null,
+      "skinTypeLabel": null,
+      "maskUrlCount": 0,
+      "maskUrlHosts": [],
+      "scoreOnly": true,
+      "downloadOk": false,
+      "width": null,
+      "height": null,
+      "format": null,
+      "hasAlpha": null,
+      "nonEmptySpatial": null,
+      "alignedWithSource": null,
+      "alignmentNotes": "SCORE_ONLY_FOR_THIS_OUTPUT",
+      "downloadError": null
+    },
+    {
+      "concernType": "skin_age",
+      "rawScore": null,
+      "uiScore": null,
+      "outputMaskName": null,
+      "skinTypeLabel": null,
+      "maskUrlCount": 0,
+      "maskUrlHosts": [],
+      "scoreOnly": true,
+      "downloadOk": false,
+      "width": null,
+      "height": null,
+      "format": null,
+      "hasAlpha": null,
+      "nonEmptySpatial": null,
+      "alignedWithSource": null,
+      "alignmentNotes": "SCORE_ONLY_FOR_THIS_OUTPUT",
+      "downloadError": null
+    },
+    {
+      "concernType": "resize_image",
+      "rawScore": null,
+      "uiScore": null,
+      "outputMaskName": null,
+      "skinTypeLabel": null,
+      "maskUrlCount": 1,
+      "maskUrlHosts": [
+        "yce-us.s3-accelerate.amazonaws.com"
+      ],
+      "scoreOnly": false,
+      "downloadOk": true,
+      "width": 1200,
+      "height": 1680,
+      "format": "jpeg",
+      "hasAlpha": false,
+      "nonEmptySpatial": true,
+      "alignedWithSource": true,
+      "alignmentNotes": "mask dimensions == source (offset 0)",
+      "downloadError": null
+    }
+  ],
+  "matrix": [
+    {
+      "metric": "hd_texture",
+      "rawScore": 70.94901960784314,
+      "uiScore": 77,
+      "maskReturned": true,
+      "dimensions": "1200x1680",
+      "aligned": true,
+      "subregions": [
+        {
+          "region": "whole",
+          "rawScore": 70.94901960784314,
+          "uiScore": 77,
+          "maskReturned": true,
+          "dimensions": "1200x1680",
+          "aligned": true
+        }
+      ]
+    },
+    {
+      "metric": "hd_acne",
+      "rawScore": 96.40519714355469,
+      "uiScore": 97,
+      "maskReturned": true,
+      "dimensions": "1200x1680",
+      "aligned": true,
+      "subregions": [
+        {
+          "region": "whole",
+          "rawScore": 96.40519714355469,
+          "uiScore": 97,
+          "maskReturned": true,
+          "dimensions": "1200x1680",
+          "aligned": true
+        }
+      ]
+    },
+    {
+      "metric": "hd_moisture",
+      "rawScore": 69.26365494728088,
+      "uiScore": 77,
+      "maskReturned": true,
+      "dimensions": "1200x1680",
+      "aligned": true,
+      "subregions": []
+    },
+    {
+      "metric": "hd_oiliness",
+      "rawScore": 51.672332763671875,
+      "uiScore": 68,
+      "maskReturned": true,
+      "dimensions": "1200x1680",
+      "aligned": true,
+      "subregions": []
+    },
+    {
+      "metric": "hd_radiance",
+      "rawScore": 97.40634560585022,
+      "uiScore": 95,
+      "maskReturned": true,
+      "dimensions": "1200x1680",
+      "aligned": true,
+      "subregions": []
+    },
+    {
+      "metric": "hd_dark_circle",
+      "rawScore": 87.29798197746277,
+      "uiScore": 79,
+      "maskReturned": true,
+      "dimensions": "1200x1680",
+      "aligned": true,
+      "subregions": []
+    },
+    {
+      "metric": "hd_eye_bag",
+      "rawScore": 76.12367868423462,
+      "uiScore": 79,
+      "maskReturned": true,
+      "dimensions": "1200x1680",
+      "aligned": true,
+      "subregions": []
+    },
+    {
+      "metric": "hd_droopy_upper_eyelid",
+      "rawScore": 82.43886232376099,
+      "uiScore": 82,
+      "maskReturned": true,
+      "dimensions": "1200x1680",
+      "aligned": true,
+      "subregions": []
+    },
+    {
+      "metric": "hd_droopy_lower_eyelid",
+      "rawScore": 70.21539211273193,
+      "uiScore": 76,
+      "maskReturned": true,
+      "dimensions": "1200x1680",
+      "aligned": true,
+      "subregions": []
+    },
+    {
+      "metric": "hd_firmness",
+      "rawScore": 96.10396027565002,
+      "uiScore": 94,
+      "maskReturned": true,
+      "dimensions": "1200x1680",
+      "aligned": true,
+      "subregions": []
+    },
+    {
+      "metric": "hd_tear_trough",
+      "rawScore": 86.58022582530975,
+      "uiScore": 84,
+      "maskReturned": true,
+      "dimensions": "1200x1680",
+      "aligned": true,
+      "subregions": []
+    },
+    {
+      "metric": "hd_skin_type",
+      "rawScore": null,
+      "uiScore": null,
+      "maskReturned": true,
+      "dimensions": "1200x1680",
+      "aligned": true,
+      "subregions": [
+        {
+          "region": "whole",
+          "rawScore": null,
+          "uiScore": null,
+          "maskReturned": true,
+          "dimensions": "1200x1680",
+          "aligned": true
+        },
+        {
+          "region": "t_zone",
+          "rawScore": null,
+          "uiScore": null,
+          "maskReturned": true,
+          "dimensions": "1200x1680",
+          "aligned": true
+        },
+        {
+          "region": "u_zone",
+          "rawScore": null,
+          "uiScore": null,
+          "maskReturned": true,
+          "dimensions": "1200x1680",
+          "aligned": true
+        }
+      ]
+    }
+  ],
+  "classifications": {
+    "hd_texture": "A_MASK_SCORE",
+    "hd_acne": "A_MASK_SCORE",
+    "hd_moisture": "A_MASK_SCORE",
+    "hd_oiliness": "A_MASK_SCORE",
+    "hd_radiance": "A_MASK_SCORE",
+    "hd_dark_circle": "A_MASK_SCORE",
+    "hd_eye_bag": "A_MASK_SCORE",
+    "hd_droopy_upper_eyelid": "A_MASK_SCORE",
+    "hd_droopy_lower_eyelid": "A_MASK_SCORE",
+    "hd_firmness": "A_MASK_SCORE",
+    "hd_tear_trough": "A_MASK_SCORE",
+    "hd_skin_type": "B_MASK_SCORE_SUBREGIONS"
+  },
+  "passHints": {
+    "allAligned": true,
+    "maskCount": 15,
+    "scoreOnlyCount": 2
+  }
+}

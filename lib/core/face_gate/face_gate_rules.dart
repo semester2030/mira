@@ -20,14 +20,11 @@ abstract final class FaceGateRules {
   static const maxCenterOffsetXRatio = 0.13;
   static const maxCenterOffsetYRatio = 0.11;
 
-  static FaceGateResult evaluate({
+  /// Manual-capture minimal gate: face presence + area only.
+  /// Pose / centering are guidance — not local hard rejects (avoid re-friction).
+  static FaceGateResult evaluatePresenceAndArea({
     required int faceCount,
     required double faceAreaRatio,
-    double? headYawDegrees,
-    double? headPitchDegrees,
-    double? headRollDegrees,
-    double? centerOffsetXRatio,
-    double? centerOffsetYRatio,
   }) {
     if (faceCount == 0) {
       return const FaceGateResult.rejected(
@@ -63,6 +60,24 @@ abstract final class FaceGateRules {
         messageEn: 'Face too close or cropped — move back slightly.',
       );
     }
+
+    return const FaceGateResult.accepted();
+  }
+
+  static FaceGateResult evaluate({
+    required int faceCount,
+    required double faceAreaRatio,
+    double? headYawDegrees,
+    double? headPitchDegrees,
+    double? headRollDegrees,
+    double? centerOffsetXRatio,
+    double? centerOffsetYRatio,
+  }) {
+    final presence = evaluatePresenceAndArea(
+      faceCount: faceCount,
+      faceAreaRatio: faceAreaRatio,
+    );
+    if (!presence.isAccepted) return presence;
 
     if (headYawDegrees != null &&
         headYawDegrees.abs() > maxHeadYawDegrees) {

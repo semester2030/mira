@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 
 import '../../../../shared/theme/colors.dart';
 import '../../../../shared/theme/typography.dart';
+import '../../data/catalog_price.dart';
 import '../../domain/entities/catalog_product.dart';
 
 class MatchedProductTile extends StatelessWidget {
@@ -35,7 +36,7 @@ class MatchedProductTile extends StatelessWidget {
                 overflow: TextOverflow.ellipsis,
               ),
               Text(
-                product.priceLabel,
+                CatalogPrice.text(known: product.priceKnown, halalas: product.priceHalalas),
                 style: AppTypography.labelSmall.copyWith(
                   color: AppColors.primaryDark,
                   fontWeight: FontWeight.w700,
@@ -75,13 +76,13 @@ class MatchedProductTile extends StatelessWidget {
                 Row(
                   children: [
                     Text(
-                      product.priceLabel,
+                      CatalogPrice.text(known: product.priceKnown, halalas: product.priceHalalas),
                       style: AppTypography.titleSmall.copyWith(
                         color: AppColors.primaryDark,
                       ),
                     ),
                     const Spacer(),
-                    _matchBadge(),
+                    if (product.matchKnown) _matchBadge(),
                   ],
                 ),
               ],
@@ -101,10 +102,7 @@ class MatchedProductTile extends StatelessWidget {
         borderRadius: BorderRadius.circular(12),
       ),
       alignment: Alignment.center,
-      child: Text(
-        product.partnerEmoji ?? '🛍️',
-        style: TextStyle(fontSize: size * 0.45),
-      ),
+      child: Icon(Icons.shopping_bag_outlined, size: size * 0.45, color: AppColors.primaryDark),
     );
   }
 

@@ -1,0 +1,10 @@
+18:50:02  Acquired tunnel connection to device.
+18:50:02  Enabling developer disk image services.
+18:50:02  Acquired usage assertion.
+Launched application with app.mira.beauty bundle identifier.
+Waiting for the application to terminate…
+2026-09-13 18:50:02.992 Runner[41181:3361849] Cannot create a FlutterEngine instance in debug mode without Flutter tooling or Xcode.
+
+To launch in debug mode in iOS 14+, run flutter run from Flutter tools, run from an IDE with a Flutter IDE plugin or run the iOS project from Xcode.
+Alternatively profile and release mode apps can be launched from the home screen.
+App terminated due to signal 11.

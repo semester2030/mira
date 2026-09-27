@@ -277,6 +277,9 @@ class _ProductImage extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    if (assetPath.trim().isEmpty) {
+      return _ProductPlaceholder(large: large);
+    }
     return Image.asset(
       assetPath,
       fit: BoxFit.contain,
@@ -316,7 +319,7 @@ class _ProductPlaceholder extends StatelessWidget {
           if (large) ...[
             const SizedBox(height: 8),
             Text(
-              'معاينة القطعة قريباً',
+              'لا تتوفر صورة للكتالوج',
               style: AppTypography.labelSmall.copyWith(
                 color: AppColors.textSecondary,
               ),

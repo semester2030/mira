@@ -1,0 +1,2435 @@
+diff --git a/lib/features/results_experience/presentation/geometry/skin_face_map_visual_tokens.dart b/lib/features/results_experience/presentation/geometry/skin_face_map_visual_tokens.dart
+index b0f4c46..b38f944 100644
+--- a/lib/features/results_experience/presentation/geometry/skin_face_map_visual_tokens.dart
++++ b/lib/features/results_experience/presentation/geometry/skin_face_map_visual_tokens.dart
+@@ -4,6 +4,7 @@ import 'package:flutter/material.dart';
+ import 'package:image/image.dart' as im;
+ 
+ import '../../../../shared/theme/colors.dart';
++import '../../domain/face_map_overlay_decision.dart';
+ import '../../semantics/metric_presentation_policy.dart';
+ 
+ /// How Perfect RGBA is mapped to presentation alpha (geometry untouched).
+@@ -27,6 +28,7 @@ class PerfectMaskPresentationProfile {
+     required this.alphaMode,
+     required this.alphaGain,
+     required this.luminanceGateFloor,
++    this.minVisibleAlpha = 0,
+   });
+ 
+   final double opacity;
+@@ -37,113 +39,126 @@ class PerfectMaskPresentationProfile {
+   final double alphaGain;
+   final double luminanceGateFloor;
+ 
+-  /// Default Face Explorer profile — must stay stable for non-calibrated metrics.
++  /// When presentation alpha is already >0, raise to at least this (no dilation).
++  /// Clarifies sparse Perfect cores without expanding footprint into wash.
++  final int minVisibleAlpha;
++
++  /// Default Face Explorer profile — Perfect source alpha; no soft double-paint.
+   static const PerfectMaskPresentationProfile standard =
+       PerfectMaskPresentationProfile(
+-    opacity: 0.58,
+-    tintAlpha: 0.96,
+-    softPresenceFactor: 0.38,
+-    softPresenceCap: 0.26,
+-    alphaMode: PerfectMaskAlphaMode.sourceAlpha,
+-    alphaGain: 1.0,
+-    luminanceGateFloor: 0,
+-  );
+-
+-  /// التصبغات / hd_age_spot — boost lesion salience; suppress gray wash.
++        opacity: 0.58,
++        tintAlpha: 0.96,
++        softPresenceFactor: 0.0,
++        softPresenceCap: 0.0,
++        alphaMode: PerfectMaskAlphaMode.sourceAlpha,
++        alphaGain: 1.0,
++        luminanceGateFloor: 0,
++      );
++
++  /// التصبغات / hd_age_spot — sparse lesions; keep clear, avoid face paint.
+   static const PerfectMaskPresentationProfile pigmentation =
+       PerfectMaskPresentationProfile(
+-    opacity: 0.72,
+-    tintAlpha: 1.0,
+-    softPresenceFactor: 0.18,
+-    softPresenceCap: 0.16,
+-    alphaMode: PerfectMaskAlphaMode.luminanceGate,
+-    alphaGain: 1.35,
+-    luminanceGateFloor: 72,
+-  );
+-
+-  /// الحبوب / hd_acne — same encoding family as age_spot; distinct color via tokens.
++        opacity: 0.82,
++        tintAlpha: 0.98,
++        softPresenceFactor: 0.0,
++        softPresenceCap: 0.0,
++        alphaMode: PerfectMaskAlphaMode.luminanceGate,
++        alphaGain: 1.65,
++        luminanceGateFloor: 64,
++        minVisibleAlpha: 150,
++      );
++
++  /// الحبوب / hd_acne — sparse lesions; strong local marks, wash killed.
+   static const PerfectMaskPresentationProfile acne =
+       PerfectMaskPresentationProfile(
+-    opacity: 0.74,
+-    tintAlpha: 1.0,
+-    softPresenceFactor: 0.16,
+-    softPresenceCap: 0.15,
+-    alphaMode: PerfectMaskAlphaMode.luminanceGate,
+-    alphaGain: 1.45,
+-    luminanceGateFloor: 72,
+-  );
+-
+-  /// المسام / hd_pore — amplify sparse Perfect signal; suppress gray wash.
++        opacity: 0.88,
++        tintAlpha: 0.98,
++        softPresenceFactor: 0.0,
++        softPresenceCap: 0.0,
++        alphaMode: PerfectMaskAlphaMode.luminanceGate,
++        alphaGain: 1.90,
++        luminanceGateFloor: 64,
++        minVisibleAlpha: 165,
++      );
++
++  /// المسام / hd_pore — sparse Perfect signal; strong local, no wash paint.
++  /// Floor stays above Perfect gray wash (~61) so minVisibleAlpha cannot
++  /// resurrect inactive face paint while mid cores (~78+) remain.
+   static const PerfectMaskPresentationProfile pores =
+       PerfectMaskPresentationProfile(
+-    opacity: 0.76,
+-    tintAlpha: 1.0,
+-    softPresenceFactor: 0.20,
+-    softPresenceCap: 0.18,
+-    alphaMode: PerfectMaskAlphaMode.luminanceGate,
+-    alphaGain: 1.55,
+-    luminanceGateFloor: 70,
+-  );
+-
+-  /// الدهون / hd_oiliness — orange signal over gray wash (measured).
++        opacity: 0.88,
++        tintAlpha: 0.99,
++        softPresenceFactor: 0.0,
++        softPresenceCap: 0.0,
++        alphaMode: PerfectMaskAlphaMode.luminanceGate,
++        alphaGain: 2.15,
++        luminanceGateFloor: 62,
++        minVisibleAlpha: 168,
++      );
++
++  /// الدهون / hd_oiliness — amber area; clearer edges, skin still visible.
+   static const PerfectMaskPresentationProfile oiliness =
+       PerfectMaskPresentationProfile(
+-    opacity: 0.78,
+-    tintAlpha: 1.0,
+-    softPresenceFactor: 0.20,
+-    softPresenceCap: 0.18,
+-    alphaMode: PerfectMaskAlphaMode.luminanceGate,
+-    alphaGain: 1.55,
+-    luminanceGateFloor: 68,
+-  );
+-
+-  /// التجاعيد / hd_wrinkle — amplify Perfect line pixels only (no redraw).
++        opacity: 0.72,
++        tintAlpha: 0.98,
++        softPresenceFactor: 0.0,
++        softPresenceCap: 0.0,
++        alphaMode: PerfectMaskAlphaMode.luminanceGate,
++        alphaGain: 1.90,
++        luminanceGateFloor: 62,
++        minVisibleAlpha: 120,
++      );
++
++  /// التجاعيد / hd_wrinkle — thin path cores; separate from zone borders.
++  /// Floor above wash (~61) and below mid strokes (~78) so natural-size
++  /// lines stay without face-wide paint when minVisibleAlpha is applied.
+   static const PerfectMaskPresentationProfile wrinkles =
+       PerfectMaskPresentationProfile(
+-    opacity: 0.82,
+-    tintAlpha: 1.0,
+-    softPresenceFactor: 0.24,
+-    softPresenceCap: 0.22,
+-    alphaMode: PerfectMaskAlphaMode.luminanceGate,
+-    alphaGain: 1.78,
+-    luminanceGateFloor: 60,
+-  );
+-
+-  /// الاحمرار / hd_redness — wash-family → gate for tap-visible response.
++        opacity: 0.84,
++        tintAlpha: 0.99,
++        softPresenceFactor: 0.0,
++        softPresenceCap: 0.0,
++        alphaMode: PerfectMaskAlphaMode.luminanceGate,
++        alphaGain: 2.00,
++        luminanceGateFloor: 62,
++        minVisibleAlpha: 160,
++      );
++
++  /// الاحمرار / hd_redness — broad wash-family; soft highlight, not paint.
+   static const PerfectMaskPresentationProfile redness =
+       PerfectMaskPresentationProfile(
+-    opacity: 0.74,
+-    tintAlpha: 1.0,
+-    softPresenceFactor: 0.18,
+-    softPresenceCap: 0.16,
+-    alphaMode: PerfectMaskAlphaMode.luminanceGate,
+-    alphaGain: 1.42,
+-    luminanceGateFloor: 68,
+-  );
+-
+-  /// الملمس / hd_texture.
++        opacity: 0.58,
++        tintAlpha: 0.90,
++        softPresenceFactor: 0.0,
++        softPresenceCap: 0.0,
++        alphaMode: PerfectMaskAlphaMode.luminanceGate,
++        alphaGain: 1.40,
++        luminanceGateFloor: 68,
++      );
++
++  /// الملمس / hd_texture — broad; soft, skin-dominant.
+   static const PerfectMaskPresentationProfile texture =
+       PerfectMaskPresentationProfile(
+-    opacity: 0.72,
+-    tintAlpha: 1.0,
+-    softPresenceFactor: 0.18,
+-    softPresenceCap: 0.16,
+-    alphaMode: PerfectMaskAlphaMode.luminanceGate,
+-    alphaGain: 1.40,
+-    luminanceGateFloor: 70,
+-  );
+-
+-  /// الترطيب / hd_moisture.
++        opacity: 0.58,
++        tintAlpha: 0.90,
++        softPresenceFactor: 0.0,
++        softPresenceCap: 0.0,
++        alphaMode: PerfectMaskAlphaMode.luminanceGate,
++        alphaGain: 1.40,
++        luminanceGateFloor: 68,
++      );
++
++  /// الترطيب / hd_moisture — area tint readable without opaque face paint.
+   static const PerfectMaskPresentationProfile hydration =
+       PerfectMaskPresentationProfile(
+-    opacity: 0.70,
+-    tintAlpha: 1.0,
+-    softPresenceFactor: 0.16,
+-    softPresenceCap: 0.15,
+-    alphaMode: PerfectMaskAlphaMode.luminanceGate,
+-    alphaGain: 1.38,
+-    luminanceGateFloor: 70,
+-  );
++        opacity: 0.66,
++        tintAlpha: 0.92,
++        softPresenceFactor: 0.0,
++        softPresenceCap: 0.0,
++        alphaMode: PerfectMaskAlphaMode.luminanceGate,
++        alphaGain: 1.55,
++        luminanceGateFloor: 66,
++      );
+ 
+   double get softPresenceOpacity =>
+       (opacity * softPresenceFactor).clamp(0.0, softPresenceCap);
+@@ -155,22 +170,30 @@ abstract final class SkinFaceMapVisualTokens {
+   SkinFaceMapVisualTokens._();
+ 
+   static const version =
+-      'skin-face-map-tokens-v11-mask-visible-pixel-closure';
++      'skin-face-map-tokens-v19-visual-parity-layout-clarity-tune';
++
++  /// Production: diagnostic magenta / DIAG HUD must stay false.
++  static const bool maskVisibilityDiagnostic = false;
+ 
+-  /// TEMPORARY high-contrast mask proof for physical iPhone closure.
+-  /// Set to false after owner confirms visible pixels (do not ship true).
+-  static const bool maskVisibilityDiagnostic = true;
++  /// Local-only 4-pane alignment compare (raw / decoded / stage). Keep false.
++  static const bool alignmentDiagnosticCompare = false;
+ 
+   static const Color diagnosticMaskTint = Color(0xFFFF00AA);
+ 
+   static const Color idleFill = Color(0x00000000);
+ 
+-  /// Immersive explorer chrome.
+-  static const Color explorerBlack = Color(0xFF0A0A0B);
+-  /// Pure matte stage — exposes halo / leakage (Apple composite target).
++  /// Immersive explorer chrome — Mist Blush (AppColors.background).
++  static const Color explorerStage = Color(0xFFFFF7FA);
++
++  /// @Deprecated diagnostic pure black — halo leakage checks only.
+   static const Color faceOnlyBlack = Color(0xFF000000);
+-  static const Color explorerOnBlack = Color(0xFFF5F0F2);
+-  static const Color explorerOnBlackMuted = Color(0xFFB8AEB2);
++  static const Color explorerOnStage = Color(0xFF4A3A3A);
++  static const Color explorerOnStageMuted = Color(0xFF6D5C5C);
++
++  /// Legacy aliases (pre–Mist Blush). Prefer explorerOnStage*.
++  static const Color explorerBlack = explorerStage;
++  static const Color explorerOnBlack = explorerOnStage;
++  static const Color explorerOnBlackMuted = explorerOnStageMuted;
+ 
+   /// Default overlay opacity (non-calibrated metrics).
+   static double get maskOverlayOpacity =>
+@@ -258,6 +281,23 @@ abstract final class SkinFaceMapVisualTokens {
+     if (id.contains('texture') || id.contains('ملمس')) {
+       return AppColors.analysisTexture;
+     }
++    if (id.contains('radiance') ||
++        id.contains('إشراق') ||
++        id.contains('اشراق')) {
++      return AppColors.analysisRadiance;
++    }
++    if (id.contains('dark_circle') || id.contains('هالات')) {
++      return AppColors.analysisDarkCircle;
++    }
++    if (id.contains('eye_bag') || id.contains('انتفاخ')) {
++      return AppColors.analysisEyeBag;
++    }
++    if (id.contains('droopy_upper') || id.contains('جفن علوي')) {
++      return AppColors.analysisDroopyUpper;
++    }
++    if (id.contains('droopy_lower') || id.contains('جفن سفلي')) {
++      return AppColors.analysisDroopyLower;
++    }
+     return AppColors.primary;
+   }
+ 
+@@ -265,6 +305,84 @@ abstract final class SkinFaceMapVisualTokens {
+     return MetricPresentationPolicy.faceExplorerHintAr(concernId ?? '');
+   }
+ 
++  /// Short legend for Face Explorer — wording matches actual data kind shown.
++  static String mapLegendAr(
++    String? concernId, {
++    PerfectMaskMapDataKind? dataKind,
++    bool spatialVisible = true,
++  }) {
++    final kind =
++        dataKind ??
++        classifyMapDataKind(
++          consumerMetricId: concernId,
++          hasMaskBytes: spatialVisible,
++          hasScore: !spatialVisible,
++          regionRequested: false,
++          regionMaskBound: true,
++        );
++    if (!spatialVisible) {
++      switch (kind) {
++        case PerfectMaskMapDataKind.scoreOnly:
++          return 'لا خريطة مكانية — الدرجة من التحليل فقط';
++        case PerfectMaskMapDataKind.regionMaskAbsent:
++          return 'لا قناع خاص بهذه المنطقة — لم يُعرض قناع الوجه كله بديلًا';
++        case PerfectMaskMapDataKind.unavailable:
++          return 'التعيين غير متاح لهذا المؤشر حالياً';
++        case PerfectMaskMapDataKind.measurementRegionBoundary:
++          return 'حدود منطقة قياس من المزود — ليست نتائج مكتشفة';
++        case PerfectMaskMapDataKind.undetermined:
++          return 'خريطة مكانية غير مصنّفة في العقد — لا يُدعى نوع رسم محدد';
++        case PerfectMaskMapDataKind.discoveredPaths:
++        case PerfectMaskMapDataKind.discoveredPoints:
++        case PerfectMaskMapDataKind.intensityAreaMask:
++          return polarityLegendAr(concernId);
++      }
++    }
++    switch (kind) {
++      case PerfectMaskMapDataKind.discoveredPaths:
++        return 'الخطوط الخضراء = مسارات التجاعيد من قناع التحليل على صورتك';
++      case PerfectMaskMapDataKind.discoveredPoints:
++        final id = (concernId ?? '').toLowerCase();
++        if (id.contains('acne') || id.contains('حبوب')) {
++          return 'العلامات المرجانية = مواضع الحبوب من قناع التحليل';
++        }
++        if (id.contains('pore') || id.contains('مسام')) {
++          return 'العلامات السماوية = مواضع المسام من قناع التحليل';
++        }
++        return 'العلامات الأرجوانية = مواضع التصبغ من قناع التحليل';
++      case PerfectMaskMapDataKind.intensityAreaMask:
++        final id = (concernId ?? '').toLowerCase();
++        if (id.contains('oil') || id.contains('دهون') || id.contains('زهم')) {
++          return 'التلوين الكهرماني = مناطق الدهون من قناع التحليل';
++        }
++        if (id.contains('redness') || id.contains('احمرار')) {
++          return 'التلوين الوردي = مناطق الاحمرار من قناع التحليل';
++        }
++        if (id.contains('hydrat') ||
++            id.contains('moisture') ||
++            id.contains('ترطيب')) {
++          return 'التلوين الأزرق = مناطق الترطيب من قناع التحليل (دلالة الشدة كما في القناع)';
++        }
++        if (id.contains('texture') || id.contains('ملمس')) {
++          return 'التلوين الفيروزي = قناع الملمس من التحليل';
++        }
++        if (id.contains('radiance') || id.contains('إشراق')) {
++          return 'التلوين الذهبي = قناع الإشراق من التحليل (دون تفتيح البشرة)';
++        }
++        return 'التلوين الشفاف = مناطق الإشارة من قناع التحليل';
++      case PerfectMaskMapDataKind.measurementRegionBoundary:
++        return 'الإطار الهادئ = حدود منطقة القياس من المزود — ليست نتائج مكتشفة';
++      case PerfectMaskMapDataKind.scoreOnly:
++        return 'لا خريطة مكانية — الدرجة من التحليل فقط';
++      case PerfectMaskMapDataKind.regionMaskAbsent:
++        return 'لا قناع خاص بهذه المنطقة — لم يُعرض قناع الوجه كله بديلًا';
++      case PerfectMaskMapDataKind.unavailable:
++        return 'التعيين غير متاح لهذا المؤشر حالياً';
++      case PerfectMaskMapDataKind.undetermined:
++        return 'خريطة مكانية من المزود — نوع الرسم غير مؤكد في العقد لهذه المحاولة';
++    }
++  }
++
+   /// Presentation-only alpha from one Perfect RGBA pixel.
+   /// Never activates Perfect A=0. Never expands spatial footprint.
+   static int presentationAlphaFromPerfectRgba({
+@@ -283,8 +401,13 @@ abstract final class SkinFaceMapVisualTokens {
+         final lum = 0.299 * r + 0.587 * g + 0.114 * b;
+         final gated = lum - profile.luminanceGateFloor;
+         if (gated <= 0) return 0;
+-        final out = gated * profile.alphaGain * (a / 255.0);
+-        return out.clamp(0, 255).round();
++        var out = (gated * profile.alphaGain * (a / 255.0)).round();
++        if (out <= 0) return 0;
++        // Clarify sparse cores that already passed the gate — no new pixels.
++        if (profile.minVisibleAlpha > 0 && out < profile.minVisibleAlpha) {
++          out = profile.minVisibleAlpha;
++        }
++        return out.clamp(0, 255);
+     }
+   }
+ 
+@@ -354,13 +477,14 @@ abstract final class PerfectMaskMagnifierFocus {
+         final p = decoded.getPixel(x, y);
+         final a = p.a.toInt();
+         if (a <= 0) continue;
+-        final present = SkinFaceMapVisualTokens.presentationAlphaFromPerfectRgba(
+-          r: p.r.toInt(),
+-          g: p.g.toInt(),
+-          b: p.b.toInt(),
+-          a: a,
+-          profile: profile,
+-        );
++        final present =
++            SkinFaceMapVisualTokens.presentationAlphaFromPerfectRgba(
++              r: p.r.toInt(),
++              g: p.g.toInt(),
++              b: p.b.toInt(),
++              a: a,
++              profile: profile,
++            );
+         if (present < 36) continue;
+         sx += x;
+         sy += y;
+@@ -370,10 +494,7 @@ abstract final class PerfectMaskMagnifierFocus {
+     if (n < 6) return null;
+     final nx = (sx / n) / (w - 1);
+     final ny = (sy / n) / (h - 1);
+-    return Alignment(
+-      (nx * 2) - 1,
+-      (ny * 2) - 1,
+-    );
++    return Alignment((nx * 2) - 1, (ny * 2) - 1);
+   }
+ 
+   /// Sanitized sample count of presentation-visible Perfect pixels (stride).
+@@ -393,13 +514,14 @@ abstract final class PerfectMaskMagnifierFocus {
+         final p = decoded.getPixel(x, y);
+         final a = p.a.toInt();
+         if (a <= 0) continue;
+-        final present = SkinFaceMapVisualTokens.presentationAlphaFromPerfectRgba(
+-          r: p.r.toInt(),
+-          g: p.g.toInt(),
+-          b: p.b.toInt(),
+-          a: a,
+-          profile: profile,
+-        );
++        final present =
++            SkinFaceMapVisualTokens.presentationAlphaFromPerfectRgba(
++              r: p.r.toInt(),
++              g: p.g.toInt(),
++              b: p.b.toInt(),
++              a: a,
++              profile: profile,
++            );
+         if (present >= 36) n++;
+       }
+     }
+@@ -432,7 +554,9 @@ abstract final class SkinFaceMapEducationalZones {
+     if (id.contains('oil') || id.contains('sebum') || id.contains('دهون')) {
+       return const ['forehead', 'nose', 'chin'];
+     }
+-    if (id.contains('hydrat') || id.contains('moisture') || id.contains('ترطيب')) {
++    if (id.contains('hydrat') ||
++        id.contains('moisture') ||
++        id.contains('ترطيب')) {
+       return const ['cheeks_left', 'cheeks_right'];
+     }
+     if (id.contains('pore') || id.contains('مسام')) {
+diff --git a/lib/features/results_experience/presentation/widgets/perfect_mask_overlay.dart b/lib/features/results_experience/presentation/widgets/perfect_mask_overlay.dart
+index dd74984..67ac383 100644
+--- a/lib/features/results_experience/presentation/widgets/perfect_mask_overlay.dart
++++ b/lib/features/results_experience/presentation/widgets/perfect_mask_overlay.dart
+@@ -1,11 +1,19 @@
++import 'dart:ui' as ui;
++
+ import 'package:flutter/foundation.dart';
+ import 'package:flutter/material.dart';
+ 
++import '../geometry/shared_image_mask_fit.dart';
+ import '../geometry/skin_face_map_visual_tokens.dart';
+ 
+ /// ONE production Perfect-mask renderer.
+-/// Inputs: original face + Perfect alpha mask + presentation profile.
+-/// Does NOT call Perfect, parse JSON, construct landmarks, or draw strokes.
++/// Inputs: original face + Perfect mask bytes + presentation profile.
++/// Prefer [presentationDecoded] bytes from [PerfectMaskPresentationDecoder]
++/// so luminanceGate matches CPU truth (not GPU ColorFilter.matrix).
++///
++/// Image + mask share ONE destination rect derived from the **source** pixel
++/// grid (BoxFit.contain). Masks of different intrinsic size are forced into
++/// that same rect — never independently letterboxed.
+ class PerfectMaskOverlay extends StatelessWidget {
+   const PerfectMaskOverlay({
+     super.key,
+@@ -17,10 +25,16 @@ class PerfectMaskOverlay extends StatelessWidget {
+     this.showMaskOnly = false,
+     this.applyTint = true,
+     this.fit = BoxFit.contain,
+-    this.aspectRatio = 1200 / 1680,
++
++    /// Intrinsic source size. When null, decoded once via [FutureBuilder].
++    this.sourceWidth,
++    this.sourceHeight,
+     this.fadeDuration = const Duration(milliseconds: 260),
+     this.profile = PerfectMaskPresentationProfile.standard,
+     this.forceDiagnosticTint = false,
++
++    /// When true, [maskBytes] already carry presentation alpha (CPU remapped).
++    this.presentationDecoded = false,
+   });
+ 
+   final Uint8List sourceBytes;
+@@ -31,106 +45,196 @@ class PerfectMaskOverlay extends StatelessWidget {
+   final bool showMaskOnly;
+   final bool applyTint;
+   final BoxFit fit;
+-  final double aspectRatio;
++  final int? sourceWidth;
++  final int? sourceHeight;
+   final Duration fadeDuration;
+   final PerfectMaskPresentationProfile profile;
+ 
+   /// Temporary high-contrast proof (magenta srcIn). Must stay false in production.
+   final bool forceDiagnosticTint;
+ 
++  /// Mask is already Perfect→presentation remapped (same pixel grid).
++  final bool presentationDecoded;
++
++  // Decode the semantic mask first, then filter its coverage for display.
++  // Nearest-neighbour downscaling can discard thin paths between samples.
++  // Keep the raw fallback unchanged; never filter raw RGB before its gate.
++  FilterQuality get _maskFilterQuality =>
++      presentationDecoded ? FilterQuality.medium : FilterQuality.none;
++
+   @override
+   Widget build(BuildContext context) {
++    final w = sourceWidth;
++    final h = sourceHeight;
++    if (w != null && h != null && w > 0 && h > 0) {
++      return _buildWithSize(Size(w.toDouble(), h.toDouble()));
++    }
++    return FutureBuilder<Size?>(
++      future: _decodeSize(sourceBytes),
++      builder: (context, snap) {
++        final size = snap.data;
++        if (size == null || size.width <= 0 || size.height <= 0) {
++          return const SizedBox.expand();
++        }
++        return _buildWithSize(size);
++      },
++    );
++  }
++
++  Widget _buildWithSize(Size sourceSize) {
+     final hasMask = maskBytes != null && maskBytes!.isNotEmpty;
+-    final diagnostic = forceDiagnosticTint ||
+-        SkinFaceMapVisualTokens.maskVisibilityDiagnostic;
++    final diagnostic =
++        forceDiagnosticTint && SkinFaceMapVisualTokens.maskVisibilityDiagnostic;
+     final effectiveOpacity = diagnostic ? 1.0 : opacity.clamp(0.0, 1.0);
+     final softOpacity = diagnostic ? 0.0 : profile.softPresenceOpacity;
+-    // Always print (not assert-only) so profile installs prove build executed.
+-    if (kDebugMode || SkinFaceMapVisualTokens.maskVisibilityDiagnostic) {
+-      if (hasMask && !showOriginalOnly) {
+-        final t = diagnostic
+-            ? SkinFaceMapVisualTokens.diagnosticMaskTint
+-            : tint;
++    assert(() {
++      if (hasMask && !showOriginalOnly && kDebugMode) {
+         debugPrint(
+           'PERFECT_MASK_OVERLAY_BUILD hasMask=true '
+-          'showMaskOnly=$showMaskOnly diagnostic=$diagnostic '
+-          'opacity=$effectiveOpacity bytes=${maskBytes!.length} '
+-          'tint=0x${t.toARGB32().toRadixString(16)} '
+-          'layer=MASK_ABOVE_SUBJECT',
++          'opacity=$effectiveOpacity decoded=$presentationDecoded '
++          'src=${sourceSize.width.toInt()}x${sourceSize.height.toInt()} '
++          'fit=$fit sharedGrid=1',
+         );
+       }
+-    }
++      return true;
++    }());
++
++    final ar = sourceSize.width / sourceSize.height;
+     return AspectRatio(
+-      aspectRatio: aspectRatio,
+-      child: ClipRect(
+-        child: Stack(
+-          fit: StackFit.expand,
+-          children: [
+-            // LAYER: subject (Apple-matted face or original) — omitted when mask-only.
+-            if (!showMaskOnly)
+-              Image.memory(
+-                sourceBytes,
+-                fit: fit,
++      aspectRatio: ar.isFinite && ar > 0 ? ar : (3 / 4),
++      child: LayoutBuilder(
++        builder: (context, constraints) {
++          final viewport = Size(constraints.maxWidth, constraints.maxHeight);
++          if (viewport.width <= 0 || viewport.height <= 0) {
++            return const SizedBox.shrink();
++          }
++
++          final dest = switch (fit) {
++            BoxFit.cover => SharedImageMaskFit.coverRect(
++              viewport: viewport,
++              sourceSize: sourceSize,
++            ),
++            BoxFit.fill => SharedImageMaskFit.fillRect(viewport: viewport),
++            _ => SharedImageMaskFit.containRect(
++              viewport: viewport,
++              sourceSize: sourceSize,
++            ),
++          };
++
++          Widget positionedImage(Uint8List bytes, {required bool isMask}) {
++            return Positioned.fromRect(
++              rect: dest,
++              child: Image.memory(
++                bytes,
++                fit: BoxFit.fill,
++                width: dest.width,
++                height: dest.height,
+                 gaplessPlayback: true,
+-                filterQuality: FilterQuality.high,
+-              ),
+-            // LAYER: Perfect mask ABOVE subject.
+-            if (!showOriginalOnly && hasMask)
+-              AnimatedOpacity(
+-                key: ValueKey<Object>(
+-                  Object.hash(
+-                    maskBytes!.length,
+-                    tint.toARGB32(),
+-                    showMaskOnly,
+-                    diagnostic,
+-                    profile.alphaMode,
+-                    profile.alphaGain,
+-                    profile.luminanceGateFloor,
+-                  ),
+-                ),
+-                opacity: effectiveOpacity,
+-                duration: fadeDuration,
+-                curve: Curves.easeOutCubic,
+-                // applyTint must work for showMaskOnly (explicit layer stacks).
+-                child: applyTint || diagnostic
+-                    ? _tintedMask(maskBytes!, diagnostic: diagnostic)
+-                    : Image.memory(
+-                        maskBytes!,
+-                        fit: fit,
+-                        gaplessPlayback: true,
+-                        filterQuality: FilterQuality.high,
+-                      ),
++                filterQuality: isMask ? _maskFilterQuality : FilterQuality.high,
+               ),
+-            if (!showOriginalOnly &&
+-                !showMaskOnly &&
+-                applyTint &&
+-                !diagnostic &&
+-                hasMask &&
+-                softOpacity > 0)
+-              AnimatedOpacity(
+-                opacity: softOpacity,
++            );
++          }
++
++          Widget positionedTinted(
++            Uint8List bytes, {
++            required double opacity,
++            required bool diagnostic,
++          }) {
++            return Positioned.fromRect(
++              rect: dest,
++              child: AnimatedOpacity(
++                opacity: opacity,
+                 duration: fadeDuration,
+                 curve: Curves.easeOutCubic,
+-                child: _tintedMask(maskBytes!, diagnostic: false),
++                child: _tintedMask(
++                  bytes,
++                  width: dest.width,
++                  height: dest.height,
++                  diagnostic: diagnostic,
++                ),
+               ),
+-          ],
+-        ),
++            );
++          }
++
++          return ClipRect(
++            child: Stack(
++              fit: StackFit.expand,
++              children: [
++                if (!showMaskOnly) positionedImage(sourceBytes, isMask: false),
++                if (!showOriginalOnly && hasMask)
++                  KeyedSubtree(
++                    key: ValueKey<Object>(
++                      Object.hash(
++                        maskBytes!.length,
++                        tint.toARGB32(),
++                        showMaskOnly,
++                        diagnostic,
++                        presentationDecoded,
++                        profile.alphaMode,
++                        profile.alphaGain,
++                        profile.luminanceGateFloor,
++                        dest.width.round(),
++                        dest.height.round(),
++                      ),
++                    ),
++                    child: applyTint || diagnostic
++                        ? positionedTinted(
++                            maskBytes!,
++                            opacity: effectiveOpacity,
++                            diagnostic: diagnostic,
++                          )
++                        : Positioned.fromRect(
++                            rect: dest,
++                            child: AnimatedOpacity(
++                              opacity: effectiveOpacity,
++                              duration: fadeDuration,
++                              curve: Curves.easeOutCubic,
++                              child: Image.memory(
++                                maskBytes!,
++                                fit: BoxFit.fill,
++                                width: dest.width,
++                                height: dest.height,
++                                gaplessPlayback: true,
++                                filterQuality: _maskFilterQuality,
++                              ),
++                            ),
++                          ),
++                  ),
++                if (!showOriginalOnly &&
++                    !showMaskOnly &&
++                    applyTint &&
++                    !diagnostic &&
++                    hasMask &&
++                    softOpacity > 0)
++                  positionedTinted(
++                    maskBytes!,
++                    opacity: softOpacity,
++                    diagnostic: false,
++                  ),
++              ],
++            ),
++          );
++        },
+       ),
+     );
+   }
+ 
+-  Widget _tintedMask(Uint8List bytes, {required bool diagnostic}) {
++  Widget _tintedMask(
++    Uint8List bytes, {
++    required double width,
++    required double height,
++    required bool diagnostic,
++  }) {
+     Widget child = Image.memory(
+       bytes,
+-      fit: fit,
++      fit: BoxFit.fill,
++      width: width,
++      height: height,
+       gaplessPlayback: true,
+-      filterQuality: FilterQuality.high,
++      filterQuality: _maskFilterQuality,
+     );
+ 
+     if (diagnostic) {
+-      // High-contrast proof ONLY — geometry untouched.
+-      // Use Perfect source alpha (no luminance gate) so gray-wash HD masks
+-      // (A≈90 face-wide) paint solid magenta above Apple matte.
+       return ColorFiltered(
+         colorFilter: const ColorFilter.mode(
+           SkinFaceMapVisualTokens.diagnosticMaskTint,
+@@ -140,8 +244,10 @@ class PerfectMaskOverlay extends StatelessWidget {
+       );
+     }
+ 
+-    if (profile.alphaMode == PerfectMaskAlphaMode.luminanceGate ||
+-        profile.alphaGain != 1.0) {
++    // CPU-remapped presentation PNGs already hold correct alpha — srcIn only.
++    if (!presentationDecoded &&
++        (profile.alphaMode == PerfectMaskAlphaMode.luminanceGate ||
++            profile.alphaGain != 1.0)) {
+       child = ColorFiltered(
+         colorFilter: ColorFilter.matrix(_presentationAlphaMatrix(profile)),
+         child: child,
+@@ -154,8 +260,22 @@ class PerfectMaskOverlay extends StatelessWidget {
+     );
+   }
+ 
+-  /// Flutter [ColorFilter.matrix] is 0.0–1.0 space.
+-  /// Force RGB→1 so srcIn uses remapped alpha only (clean tint).
++  static Future<Size?> _decodeSize(Uint8List bytes) async {
++    try {
++      final codec = await ui.instantiateImageCodec(bytes);
++      final frame = await codec.getNextFrame();
++      final size = Size(
++        frame.image.width.toDouble(),
++        frame.image.height.toDouble(),
++      );
++      frame.image.dispose();
++      return size;
++    } catch (_) {
++      return null;
++    }
++  }
++
++  /// Legacy GPU path — retained for tests / non-remapped fallback only.
+   static List<double> _presentationAlphaMatrix(
+     PerfectMaskPresentationProfile profile,
+   ) {
+@@ -163,24 +283,34 @@ class PerfectMaskOverlay extends StatelessWidget {
+       final g = profile.alphaGain;
+       final floorN = profile.luminanceGateFloor / 255.0;
+       return <double>[
+-        0, 0, 0, 0, 1,
+-        0, 0, 0, 0, 1,
+-        0, 0, 0, 0, 1,
+-        0.299 * g, 0.587 * g, 0.114 * g, 0, -floorN * g,
++        0,
++        0,
++        0,
++        0,
++        1,
++        0,
++        0,
++        0,
++        0,
++        1,
++        0,
++        0,
++        0,
++        0,
++        1,
++        0.299 * g,
++        0.587 * g,
++        0.114 * g,
++        0,
++        -floorN * g,
+       ];
+     }
+     final g = profile.alphaGain;
+-    return <double>[
+-      0, 0, 0, 0, 1,
+-      0, 0, 0, 0, 1,
+-      0, 0, 0, 0, 1,
+-      0, 0, 0, g, 0,
+-    ];
++    return <double>[0, 0, 0, 0, 1, 0, 0, 0, 0, 1, 0, 0, 0, 0, 1, 0, 0, 0, g, 0];
+   }
+ 
+   @visibleForTesting
+   static List<double> debugPresentationAlphaMatrix(
+     PerfectMaskPresentationProfile profile,
+-  ) =>
+-      _presentationAlphaMatrix(profile);
++  ) => _presentationAlphaMatrix(profile);
+ }
+diff --git a/lib/features/results_experience/presentation/widgets/results_skin_map_panel.dart b/lib/features/results_experience/presentation/widgets/results_skin_map_panel.dart
+index 36892cc..3854711 100644
+--- a/lib/features/results_experience/presentation/widgets/results_skin_map_panel.dart
++++ b/lib/features/results_experience/presentation/widgets/results_skin_map_panel.dart
+@@ -1,30 +1,31 @@
+-import 'dart:io';
+-import 'dart:ui' as ui;
+-
+-import 'package:flutter/foundation.dart';
+ import 'package:flutter/material.dart';
+ import 'package:flutter/services.dart';
+ 
+-import '../../../../core/session/analysis_session.dart';
+ import '../../../../shared/theme/colors.dart';
+ import '../../../../shared/theme/spacing.dart';
+ import '../../../../shared/theme/typography.dart';
+ import '../../contracts/result_enums.dart';
+ import '../../contracts/result_presentation_vms.dart';
++import '../../domain/face_map_overlay_decision.dart';
++import '../../domain/face_map_session_evidence_exporter.dart';
+ import '../../domain/perfect_mask_session.dart';
+ import '../../domain/perfect_spatial_skin_concern_contract.dart';
+-import '../../semantics/metric_presentation_policy.dart';
+ import '../../truth/skin_claim_policy.dart';
+ import '../../visibility/visibility_policy.dart';
++import '../face_explorer/face_explorer_controller.dart';
++import '../face_explorer/face_explorer_details.dart';
++import '../face_explorer/face_explorer_image_loader.dart';
++import '../face_explorer/face_explorer_lens_panel.dart';
++import '../face_explorer/face_explorer_mask_presentation.dart';
++import '../face_explorer/face_explorer_metrics.dart';
++import '../face_explorer/face_explorer_stage.dart';
++import '../geometry/skin_face_explorer_layer_isolation.dart';
+ import '../geometry/skin_face_map_visual_tokens.dart';
+-import '../icons/mira_skin_glyphs.dart';
+-import '../poc/apple_person_matting_poc_bridge.dart';
+-import 'perfect_mask_overlay.dart';
+-import 'perfect_mask_region_callout.dart';
+ 
+ /// Premium Interactive Skin Intelligence — ONE Face Explorer.
+-/// Spatial truth = Perfect masks via PerfectMaskSession + PerfectMaskOverlay.
+-/// Face-only black = Apple person matte (same pixel grid) under Perfect overlay.
++///
++/// Orchestrates face_explorer modules; public API preserved for
++/// [selectConcern] + external callbacks.
+ class ResultsSkinMapPanel extends StatefulWidget {
+   const ResultsSkinMapPanel({
+     super.key,
+@@ -64,23 +65,12 @@ class ResultsSkinMapPanel extends StatefulWidget {
+ }
+ 
+ class ResultsSkinMapPanelState extends State<ResultsSkinMapPanel> {
+-  String? _selectedId;
+-  String? _selectedSubregion;
+-  var _holdingOriginal = false;
+-  var _showSubregionDetails = false;
+-  var _compareHintSeen = false;
+-  Uint8List? _sourceBytes;
+-  Uint8List? _faceOnlyBlackBytes;
+-  var _matteLoading = false;
+-  String? _matteError;
++  late final FaceExplorerController _ctrl;
++  late final FaceExplorerImageLoader _loader;
++  final GlobalKey _exportButtonKey = GlobalKey(debugLabel: 'mapEvidenceExport');
+   var _loggedUnavailable = false;
+-  Alignment? _magnifierFocus;
+-  String? _magnifierFocusKey;
+-
+-  /// Temporary on-device chain HUD (diagnostic builds only). No payloads.
+-  String? _maskChainHud;
++  Size? _stageViewportSize;
+ 
+-  /// Single carousel order — inventory-backed Perfect services; no «المزيد».
+   static const _carouselIds = <String>[
+     'pigmentation',
+     'age_spot',
+@@ -112,287 +102,114 @@ class ResultsSkinMapPanelState extends State<ResultsSkinMapPanel> {
+   @override
+   void initState() {
+     super.initState();
+-    _selectedId = widget.externalConcernId;
+-    _loadSource();
++    _ctrl = FaceExplorerController(initialSelectedId: widget.externalConcernId);
++    _loader = FaceExplorerImageLoader(
++      onChanged: () {
++        if (mounted) setState(() {});
++      },
++      isMounted: () => mounted,
++    );
++    _loader.load(
++      path: widget.ephemeralUserImagePath,
++      fromHistory: widget.fromHistory,
++      session: widget.maskSession,
++    );
++  }
++
++  @override
++  void dispose() {
++    _loader.invalidate();
++    super.dispose();
+   }
+ 
+   @override
+   void didUpdateWidget(covariant ResultsSkinMapPanel oldWidget) {
+     super.didUpdateWidget(oldWidget);
+     if (widget.externalConcernId != oldWidget.externalConcernId) {
+-      _selectedId = widget.externalConcernId;
+-      _selectedSubregion = null;
+-      _showSubregionDetails = false;
+-      _magnifierFocus = null;
+-      _magnifierFocusKey = null;
+-    }
+-    if (widget.ephemeralUserImagePath != oldWidget.ephemeralUserImagePath) {
+-      _loadSource();
++      setState(() => _ctrl.applyExternalConcern(widget.externalConcernId));
+     }
+-  }
+-
+-  Future<void> _loadSource() async {
+-    final path = widget.ephemeralUserImagePath;
+-    if (path == null || path.isEmpty || widget.fromHistory) {
+-      setState(() {
+-        _sourceBytes = null;
+-        _faceOnlyBlackBytes = null;
+-        _matteError = null;
+-        _matteLoading = false;
+-      });
+-      return;
+-    }
+-    try {
+-      final bytes = await File(path).readAsBytes();
+-      if (!mounted) return;
+-      setState(() {
+-        _sourceBytes = bytes;
+-        _faceOnlyBlackBytes = null;
+-        _matteError = null;
+-      });
+-      await _generateFaceOnlyMatte(bytes);
+-    } catch (_) {
+-      if (!mounted) return;
+-      setState(() {
+-        _sourceBytes = null;
+-        _faceOnlyBlackBytes = null;
+-      });
+-    }
+-  }
+-
+-  /// On-demand Apple person matte — same capture bytes Perfect analyzed.
+-  /// Never at app bootstrap; only when Face Explorer has an ephemeral image.
+-  Future<void> _generateFaceOnlyMatte(Uint8List bytes) async {
+-    setState(() {
+-      _matteLoading = true;
+-      _matteError = null;
+-    });
+-    Object? lastError;
+-    for (var attempt = 0; attempt < 3; attempt++) {
+-      try {
+-        final matte =
+-            await ApplePersonMattingPocBridge.generatePersonMatte(bytes);
+-        final srcDims = await _decodeDims(bytes);
+-        final blackDims = await _decodeDims(matte.blackCompositePng);
+-        // Alignment gate: matte grid must equal oriented source grid.
+-        final dimsOk = matte.width == srcDims.$1 &&
+-            matte.height == srcDims.$2 &&
+-            blackDims.$1 == srcDims.$1 &&
+-            blackDims.$2 == srcDims.$2;
+-        if (!dimsOk) {
+-          throw StateError(
+-            'matte dims mismatch src=${srcDims.$1}x${srcDims.$2} '
+-            'matte=${matte.width}x${matte.height} '
+-            'black=${blackDims.$1}x${blackDims.$2}',
+-          );
+-        }
+-        // Soft check vs Perfect mask artifact metadata when present.
+-        final session = widget.maskSession;
+-        if (session != null) {
+-          for (final provider in session.providersWithMaskBytes()) {
+-            final metric =
+-                PerfectMaskSession.consumerMetricIdForProvider(provider);
+-            if (metric == null) continue;
+-            final art = session.lookup(consumerMetricId: metric);
+-            if (art?.width != null &&
+-                art?.height != null &&
+-                (art!.width != matte.width || art.height != matte.height)) {
+-              debugPrint(
+-                'FACE_ONLY_MATTE warn perfect_meta=${art.width}x${art.height} '
+-                'matte=${matte.width}x${matte.height} — overlay uses BoxFit',
+-              );
+-            }
+-            break;
+-          }
+-        }
+-        if (!mounted) return;
+-        setState(() {
+-          _faceOnlyBlackBytes = matte.blackCompositePng;
+-          _matteLoading = false;
+-          _matteError = null;
+-        });
+-        debugPrint(
+-          'FACE_ONLY_MATTE ok ${matte.width}x${matte.height} '
+-          'ms=${matte.processingMs} api=${matte.api}',
+-        );
+-        return;
+-      } catch (e) {
+-        lastError = e;
+-        await Future<void>.delayed(Duration(milliseconds: 350 * (attempt + 1)));
+-      }
++    if (widget.ephemeralUserImagePath != oldWidget.ephemeralUserImagePath ||
++        widget.maskSession != oldWidget.maskSession ||
++        widget.fromHistory != oldWidget.fromHistory) {
++      _ctrl.applyExternalConcern(_ctrl.selectedId);
++      _ctrl.holdingOriginal = false;
++      _loader.load(
++        path: widget.ephemeralUserImagePath,
++        fromHistory: widget.fromHistory,
++        session: widget.maskSession,
++      );
+     }
+-    if (!mounted) return;
+-    setState(() {
+-      _matteLoading = false;
+-      _matteError = lastError?.toString() ?? 'matte_failed';
+-      _faceOnlyBlackBytes = null;
+-    });
+-    debugPrint('FACE_ONLY_MATTE_FAIL $lastError');
+-  }
+-
+-  Future<(int, int)> _decodeDims(Uint8List bytes) async {
+-    final codec = await ui.instantiateImageCodec(bytes);
+-    final frame = await codec.getNextFrame();
+-    final w = frame.image.width;
+-    final h = frame.image.height;
+-    frame.image.dispose();
+-    return (w, h);
+-  }
+-
+-  /// Display base: face-only black when matte ready; full ORIGINAL while hold.
+-  Uint8List? get _displaySourceBytes {
+-    if (_holdingOriginal) return _sourceBytes;
+-    return _faceOnlyBlackBytes ?? _sourceBytes;
+   }
+ 
++  /// Public API used by [SkinInteractiveReportScreen].
+   void selectConcern(String id) {
+     HapticFeedback.selectionClick();
+-    if (_selectedId == id) {
+-      _clearToOriginal();
+-      return;
+-    }
+     final carouselIds = _carouselConcerns().map((c) => c.id);
+     final next = nextSelectedMaskKey(
+-      previousKey: _selectedId,
++      previousKey: _ctrl.selectedId,
+       nextKey: id,
+       availableKeys: carouselIds,
+     );
+     final selected = next ?? id;
+-    setState(() {
+-      _selectedId = selected;
+-      _selectedSubregion = null;
+-      _showSubregionDetails = false;
+-      _holdingOriginal = false;
+-      _magnifierFocus = null;
+-      _magnifierFocusKey = null;
+-    });
+-    widget.onConcernSelected(_selectedId);
+-    _traceMaskRenderChain(selected);
+-  }
+-
+-  /// Sanitized end-to-end probe — no mask/face payloads logged.
+-  void _traceMaskRenderChain(String metricId) {
+-    final session = widget.maskSession;
+-    final provider =
+-        PerfectMaskSession.providerTypeForConsumerMetric(metricId);
+-    final art = session?.lookup(consumerMetricId: metricId);
+-    final bytes = art?.bytes;
+-    final profile =
+-        SkinFaceMapVisualTokens.presentationProfileForConcern(metricId);
+-    final floorN = profile.luminanceGateFloor / 255.0;
+-    final expectedBias = profile.alphaMode == PerfectMaskAlphaMode.luminanceGate
+-        ? -floorN * profile.alphaGain
+-        : 0.0;
+-    var nonZero = -1;
+-    var rawAlpha = -1;
+-    var decodeOk = false;
+-    if (bytes != null && bytes.isNotEmpty) {
+-      nonZero = PerfectMaskMagnifierFocus.countPresentationSignalSamples(
+-        bytes: bytes,
+-        profile: profile,
+-      );
+-      rawAlpha = PerfectMaskMagnifierFocus.countRawNonZeroAlphaSamples(bytes);
+-      decodeOk = nonZero >= 0 && rawAlpha >= 0;
+-    }
+-    const layerOrder =
+-        'L1_BLACK→L2_APPLE_SUBJECT→L3_PERFECT_MASK→L4_UI';
+-    final bytesLen = bytes?.length ?? 0;
+-    final matState = session == null
+-        ? 'NO_SESSION'
+-        : bytesLen > 0
+-            ? 'SESSION_READY'
+-            : art == null
+-                ? 'SESSION_NO_ARTIFACT'
+-                : 'SESSION_EMPTY_BYTES';
+-    final hud =
+-        '${AnalysisSession.lastMaskCreateProof?.hudLine ?? "CREATE unknown"}\n'
+-        'DIAG $metricId→$provider\n'
+-        '$matState bytes=$bytesLen\n'
+-        'rawA=$rawAlpha pres=$nonZero\n'
+-        'dims=${art?.width ?? "?"}x${art?.height ?? "?"}\n'
+-        'ephemeralKeys=${AnalysisSession.lastMaskCreateProof?.rawCount ?? 0} '
+-        'L3>L2';
+-    debugPrint(
+-      'MASK_CHAIN tap=$metricId provider=$provider '
+-      'session=${session != null} art=${art != null} '
+-      'state=$matState bytes=$bytesLen dims=${art?.width}x${art?.height} '
+-      'decode=${decodeOk ? "PASS" : "FAIL"} rawAlphaSamples=$rawAlpha '
+-      'presentationSamples=$nonZero '
+-      'diagnostic=${SkinFaceMapVisualTokens.maskVisibilityDiagnostic} '
+-      'profile=${profile.alphaMode.name} floor=${profile.luminanceGateFloor} '
+-      'matrixBiasExpected=$expectedBias '
+-      'overlayAboveMatte=YES order=$layerOrder',
+-    );
+-    if (SkinFaceMapVisualTokens.maskVisibilityDiagnostic && mounted) {
+-      setState(() => _maskChainHud = hud);
++    setState(() => _ctrl.selectConcern(selected));
++    if (_ctrl.selectedId == null) {
++      widget.onConcernSelected(null);
++    } else {
++      widget.onConcernSelected(_ctrl.selectedId);
++      _traceMaskRenderChain(_ctrl.selectedId!);
+     }
+   }
+ 
+-  void _clearToOriginal() {
++  void _selectSubregion(String region) {
+     HapticFeedback.selectionClick();
+-    setState(() {
+-      _selectedId = null;
+-      _selectedSubregion = null;
+-      _showSubregionDetails = false;
+-      _holdingOriginal = false;
+-      _magnifierFocus = null;
+-      _magnifierFocusKey = null;
+-    });
+-    widget.onConcernSelected(null);
++    setState(() => _ctrl.selectSubregion(region));
+   }
+ 
+-  void _selectSubregion(String region) {
+-    HapticFeedback.selectionClick();
+-    setState(() {
+-      _selectedSubregion = region;
+-      _magnifierFocus = null;
+-      _magnifierFocusKey = null;
+-    });
++  void _traceMaskRenderChain(String metricId) {
++    assert(() {
++      final session = widget.maskSession;
++      final provider = PerfectMaskSession.providerTypeForConsumerMetric(
++        metricId,
++      );
++      final art = session?.lookup(consumerMetricId: metricId);
++      final bytesLen = art?.bytes?.length ?? 0;
++      debugPrint(
++        'MASK_CHAIN tap=$metricId provider=$provider '
++        'session=${session != null} bytes=$bytesLen',
++      );
++      return true;
++    }());
+   }
+ 
+-  /// ONE horizontal carousel — canonical Perfect availability (map + session).
+-  /// Visibility ≠ mask-byte readiness (bytes gate rendering only).
+   List<ResultMapConcernVM> _carouselConcerns() {
+     final byId = <String, ResultMapConcernVM>{
+       for (final c in _concerns) c.id: c,
+     };
+-
+-    // Oiliness / HD services may exist in PerfectMaskSession but be absent
+-    // from report.mainConcerns → mapConcernIds. Use presence, not bytes.
+     final session = widget.maskSession;
+-    if (session != null) {
+-      for (final provider in session.providersPresent()) {
+-        final consumer =
+-            PerfectMaskSession.consumerMetricIdForProvider(provider);
+-        if (consumer == null) continue;
+-        if (byId.keys.any(
+-          (id) =>
+-              PerfectMaskSession.providerTypeForConsumerMetric(id) == provider,
+-        )) {
+-          continue;
+-        }
+-        byId[consumer] = ResultMapConcernVM(
+-          id: consumer,
+-          labelAr: MetricPresentationPolicy.publicLabelAr(consumer),
+-          evidenceRef: 'perfect_mask:$provider',
+-          visibility: VisibilityState.visibleSecondary,
+-        );
+-      }
+-    }
+-
+     final ranked = <ResultMapConcernVM>[];
+-    for (final needle in _carouselIds) {
+-      for (final c in byId.values) {
+-        if (c.id.toLowerCase().contains(needle) &&
+-            !ranked.any((x) => x.id == c.id)) {
+-          ranked.add(c);
+-        }
++    for (final id in _carouselIds) {
++      final c = byId[id];
++      if (c == null) continue;
++      if (session != null) {
++        final art = session.lookup(consumerMetricId: id);
++        final hasBytes = art?.bytes != null && art!.bytes!.isNotEmpty;
++        final hasScore = art?.uiScore != null || art?.rawScore != null;
++        if (!hasBytes && !hasScore) continue;
++      } else if (widget.fromHistory) {
++        continue;
+       }
++      ranked.add(c);
+     }
+-    for (final c in byId.values) {
+-      if (!ranked.any((x) => x.id == c.id)) ranked.add(c);
++    for (final c in _concerns) {
++      if (ranked.any((r) => r.id == c.id)) continue;
++      if (session != null) {
++        final art = session.lookup(consumerMetricId: c.id);
++        final hasBytes = art?.bytes != null && art!.bytes!.isNotEmpty;
++        final hasScore = art?.uiScore != null || art?.rawScore != null;
++        if (!hasBytes && !hasScore) continue;
++      }
++      ranked.add(c);
+     }
+-
+     final seen = <String>{};
+     final out = <ResultMapConcernVM>[];
+     for (final c in ranked) {
+@@ -402,30 +219,74 @@ class ResultsSkinMapPanelState extends State<ResultsSkinMapPanel> {
+     return out;
+   }
+ 
+-  void _ensureMagnifierFocus({
++  void _ensureAutoFocus({
+     required PerfectMaskArtifact? mask,
+-    required PerfectMaskPresentationProfile profile,
+     required String? selected,
+   }) {
+     if (selected == null ||
+         mask?.bytes == null ||
+         mask!.bytes!.isEmpty ||
+-        _holdingOriginal) {
++        _ctrl.holdingOriginal) {
++      return;
++    }
++    final profile = FaceExplorerMaskPresentation.profileForConcern(selected);
++    final binding = _ctrl.focusBindingKey(
++      mask: mask,
++      profile: profile,
++      sourceBytes: _loader.snapshot.sourceBytes,
++    );
++    if (_ctrl.magnifierBinder.shouldSkipAutoFor(binding)) return;
++    if (_ctrl.autoFocusBindingKey == binding &&
++        _ctrl.autoMagnifierSourceNorm != null) {
+       return;
+     }
+-    final key =
+-        '${mask.key}:${profile.alphaMode}:${profile.luminanceGateFloor}:${profile.alphaGain}';
+-    if (_magnifierFocusKey == key) return;
+-    _magnifierFocusKey = key;
+-    final focus = PerfectMaskMagnifierFocus.fromMaskBytes(
++    final focusAlign = PerfectMaskMagnifierFocus.fromMaskBytes(
+       bytes: mask.bytes!,
+       profile: profile,
+     );
+-    // Schedule setState after build when focus resolves.
++    if (focusAlign == null) return;
++    final focus = Offset((focusAlign.x + 1) / 2, (focusAlign.y + 1) / 2);
+     WidgetsBinding.instance.addPostFrameCallback((_) {
+-      if (!mounted || _magnifierFocusKey != key) return;
+-      if (_magnifierFocus != focus) {
+-        setState(() => _magnifierFocus = focus);
++      if (!mounted) return;
++      if (_ctrl.magnifierBinder.shouldSkipAutoFor(binding)) return;
++      setState(() {
++        _ctrl.autoFocusBindingKey = binding;
++        _ctrl.autoMagnifierSourceNorm = focus;
++      });
++    });
++  }
++
++  Future<void> _exportEvidenceZip() async {
++    final session = widget.maskSession;
++    if (session == null || _ctrl.exportBusy) return;
++    setState(() => _ctrl.markExportBusy());
++    final srcFp = FaceMapSessionEvidenceExporter.fingerprintBytes(
++      _loader.snapshot.sourceBytes,
++    );
++    final attemptId =
++        'MAP-$srcFp-${DateTime.now().toUtc().millisecondsSinceEpoch}';
++    final result = await FaceMapSessionEvidenceExporter.buildAndShare(
++      attemptId: attemptId,
++      session: session,
++      context: _exportButtonKey.currentContext ?? context,
++      sourceBytes: _loader.snapshot.sourceBytes,
++      sourceWidth: _loader.snapshot.sourceWidth,
++      sourceHeight: _loader.snapshot.sourceHeight,
++      selectedMetricId: _ctrl.selectedId,
++      selectedSubregion: _ctrl.selectedSubregion,
++      presentationSnapshot: {
++        'magnifierZoom': _ctrl.magnifierZoom,
++        'userFocus': _ctrl.magnifierBinder.hasUserFocus,
++        'holdingOriginal': _ctrl.holdingOriginal,
++        'lensPanelOpen': _ctrl.lensPanelOpen,
++      },
++    );
++    if (!mounted) return;
++    setState(() {
++      if (result.ok) {
++        _ctrl.markExportReady();
++      } else {
++        _ctrl.markExportFailed();
+       }
+     });
+   }
+@@ -443,9 +304,8 @@ class ResultsSkinMapPanelState extends State<ResultsSkinMapPanel> {
+     }
+ 
+     final carousel = _carouselConcerns();
+-    final selected = _selectedId;
+-    // Black immersive chrome + face-only matte stage (#000).
+-    const atmosphere = SkinFaceMapVisualTokens.explorerBlack;
++    final selected = _ctrl.selectedId;
++    const atmosphere = SkinFaceMapVisualTokens.explorerStage;
+ 
+     if (widget.map.visibility == VisibilityState.unavailable &&
+         carousel.isEmpty) {
+@@ -463,18 +323,61 @@ class ResultsSkinMapPanelState extends State<ResultsSkinMapPanel> {
+       );
+     }
+ 
++    FaceMapOverlayDecision? overlayDecision;
+     PerfectMaskArtifact? activeMask;
+     if (selected != null && session != null) {
+-      activeMask = session.lookup(
+-        consumerMetricId: selected,
+-        subregion: _selectedSubregion,
++      overlayDecision = FaceMapOverlayDecision.resolve(
++        selectedMetricId: selected,
++        session: session,
++        selectedSubregion: _ctrl.selectedSubregion,
++        sourceWidth: _loader.snapshot.sourceWidth,
++        sourceHeight: _loader.snapshot.sourceHeight,
++        holdingOriginal: _ctrl.holdingOriginal,
++        showPerfectMaskLayer: SkinFaceExplorerLayerIsolation.showPerfectMask,
+       );
++      activeMask = overlayDecision.boundArtifact;
++      if (overlayDecision.showSpatialOverlay) {
++        _ensureAutoFocus(mask: activeMask, selected: selected);
++      }
+     }
+ 
++    final selectedRegion = _ctrl.selectedSubregion;
++    final regionBound =
++        selectedRegion == null ||
++        selectedRegion == 'whole' ||
++        selectedRegion == 'all' ||
++        (activeMask != null && activeMask.region == selectedRegion);
++    final heroScore = regionBound ? activeMask?.uiScore : null;
++    final accent = selected == null
++        ? AppColors.primary
++        : SkinFaceMapVisualTokens.accentForConcern(selected);
++    final profile = FaceExplorerMaskPresentation.profileForConcern(selected);
++    final showSpatialOverlay =
++        overlayDecision?.showSpatialOverlay == true && !_ctrl.holdingOriginal;
++    final remappedMaskBytes = showSpatialOverlay && activeMask != null
++        ? session?.presentationBytesFor(artifact: activeMask, profile: profile)
++        : null;
++    final presentation = FaceExplorerMaskPresentation.resolve(
++      profile: profile,
++      showSpatialOverlay: showSpatialOverlay,
++      remappedBytes: remappedMaskBytes,
++      rawBytes: activeMask?.bytes,
++    );
++    final focusNorm = selected == null
++        ? null
++        : _ctrl.resolvedFocusSourceNorm(
++            mask: activeMask,
++            profile: profile,
++            sourceBytes: _loader.snapshot.sourceBytes,
++          );
++    // Compare the analysis layers on the same photograph and background.
++    final display = _loader.displayBytes(holdingOriginal: false);
++    final snap = _loader.snapshot;
++
+     return AnimatedContainer(
+       key: widget.mapKey,
+       duration: SkinFaceMapVisualTokens.metricCrossfade,
+-      padding: const EdgeInsets.fromLTRB(10, 14, 10, 16),
++      padding: const EdgeInsets.fromLTRB(12, 14, 12, 16),
+       decoration: BoxDecoration(
+         color: atmosphere,
+         borderRadius: BorderRadius.circular(28),
+@@ -489,37 +392,27 @@ class ResultsSkinMapPanelState extends State<ResultsSkinMapPanel> {
+       child: Column(
+         crossAxisAlignment: CrossAxisAlignment.stretch,
+         children: [
+-          Row(
+-            children: [
+-              Expanded(
+-                child: Text(
+-                  selected == null ? 'وجهك' : 'استكشاف بشرتك',
+-                  style: AppTypography.titleSmall.copyWith(
+-                    fontWeight: FontWeight.w800,
+-                    color: SkinFaceMapVisualTokens.explorerOnBlack,
+-                  ),
+-                ),
+-              ),
+-              if (selected != null)
+-                TextButton(
+-                  onPressed: _clearToOriginal,
+-                  style: TextButton.styleFrom(
+-                    foregroundColor: SkinFaceMapVisualTokens.explorerOnBlack,
+-                    minimumSize: const Size(48, 44),
+-                    padding: const EdgeInsets.symmetric(horizontal: 12),
+-                  ),
+-                  child: Text(
+-                    'الأصل',
+-                    style: AppTypography.labelMedium.copyWith(
+-                      fontWeight: FontWeight.w800,
+-                      color: SkinFaceMapVisualTokens.explorerOnBlack,
+-                    ),
+-                  ),
+-                ),
+-            ],
++          FaceExplorerMetricsSection(
++            concerns: carousel,
++            selectedId: selected,
++            showAll: _ctrl.showAllMetrics,
++            onSelect: selectConcern,
++            onToggleAll: () =>
++                setState(() => _ctrl.showAllMetrics = !_ctrl.showAllMetrics),
+           ),
+-          const SizedBox(height: AppSpacing.sm),
+-          if (_matteLoading)
++          if (selected != null) ...[
++            const SizedBox(height: 14),
++            FaceExplorerReadingStrip(
++              metricId: selected,
++              uiScore: heroScore,
++              accent: accent,
++              scoreRegion: _ctrl.regionStrict
++                  ? selectedRegion
++                  : activeMask?.region,
++            ),
++          ],
++          const SizedBox(height: 10),
++          if (snap.matteLoading)
+             Padding(
+               padding: const EdgeInsets.only(bottom: 8),
+               child: Text(
+@@ -530,7 +423,7 @@ class ResultsSkinMapPanelState extends State<ResultsSkinMapPanel> {
+                 textAlign: TextAlign.center,
+               ),
+             )
+-          else if (_matteError != null && _faceOnlyBlackBytes == null)
++          else if (snap.matteError != null && snap.faceOnlyBlackBytes == null)
+             Padding(
+               padding: const EdgeInsets.only(bottom: 8),
+               child: Text(
+@@ -541,38 +434,145 @@ class ResultsSkinMapPanelState extends State<ResultsSkinMapPanel> {
+                 textAlign: TextAlign.center,
+               ),
+             ),
+-          _buildFaceStage(session, selected, activeMask),
+-          if (selected != null &&
+-              !_holdingOriginal &&
+-              activeMask != null &&
+-              activeMask.bytes != null) ...[
+-            const SizedBox(height: AppSpacing.sm),
+-            _ActiveMetricHero(
+-              metricId: selected,
+-              uiScore: activeMask.uiScore,
+-              accent: SkinFaceMapVisualTokens.accentForConcern(selected),
+-              onBlack: true,
++          if (widget.missingImage || display == null || display.isEmpty)
++            Semantics(
++              label: 'صورة الوجه غير متاحة',
++              child: Container(
++                height: 280,
++                alignment: Alignment.center,
++                decoration: BoxDecoration(
++                  color: SkinFaceMapVisualTokens.explorerStage,
++                  borderRadius: BorderRadius.circular(22),
++                ),
++                child: Text(
++                  widget.fromHistory
++                      ? 'الصورة غير متاحة من السجل.'
++                      : 'صورة الوجه غير متاحة لهذه الجلسة.',
++                  style: AppTypography.bodySmall.copyWith(
++                    color: SkinFaceMapVisualTokens.explorerOnStageMuted,
++                  ),
++                  textAlign: TextAlign.center,
++                ),
++              ),
++            )
++          else if (overlayDecision != null || selected == null)
++            FaceExplorerStage(
++              displayBytes: display,
++              sourceWidth: snap.sourceWidth,
++              sourceHeight: snap.sourceHeight,
++              presentation: presentation,
++              selectedId: selected,
++              decision:
++                  overlayDecision ??
++                  FaceMapOverlayDecision.resolve(
++                    selectedMetricId: null,
++                    session: session,
++                    selectedSubregion: null,
++                    sourceWidth: snap.sourceWidth,
++                    sourceHeight: snap.sourceHeight,
++                    holdingOriginal: true,
++                    showPerfectMaskLayer: false,
++                  ),
++              holdingOriginal: _ctrl.holdingOriginal,
++              lensPanelOpen: _ctrl.lensPanelOpen,
++              focusSourceNorm: focusNorm,
++              onViewportChanged: (size) {
++                if (mounted && _stageViewportSize != size) {
++                  setState(() => _stageViewportSize = size);
++                }
++              },
++              onOpenLens: () => setState(() => _ctrl.lensPanelOpen = true),
++              onTapSourceNorm: (norm) {
++                final mask = _ctrl.boundMask(session);
++                setState(() {
++                  _ctrl.setUserFocusFromNorm(
++                    sourceNorm01: norm,
++                    mask: mask,
++                    profile: profile,
++                    sourceBytes: snap.sourceBytes,
++                  );
++                });
++              },
+             ),
+-          ],
+-          const SizedBox(height: AppSpacing.md),
+-          _MetricCarousel(
+-            concerns: carousel,
+-            selectedId: selected,
+-            onSelect: selectConcern,
+-            onBlack: true,
+-          ),
+           if (selected != null) ...[
+-            if (!_compareHintSeen) ...[
+-              const SizedBox(height: AppSpacing.sm),
+-              Text(
+-                'اضغطي مطولًا للمقارنة',
+-                style: AppTypography.labelSmall.copyWith(
+-                  color: SkinFaceMapVisualTokens.explorerOnBlackMuted,
+-                ),
+-                textAlign: TextAlign.center,
++            const SizedBox(height: 10),
++            FaceExplorerActionRow(
++              holdingOriginal: _ctrl.holdingOriginal,
++              lensPanelOpen: _ctrl.lensPanelOpen,
++              onCompareDown: () {
++                HapticFeedback.lightImpact();
++                setState(() => _ctrl.holdingOriginal = true);
++              },
++              onCompareUp: () => setState(() => _ctrl.holdingOriginal = false),
++              onToggleLens: () => setState(() {
++                _ctrl.lensPanelOpen = !_ctrl.lensPanelOpen;
++                if (_ctrl.lensPanelOpen && focusNorm == null) {
++                  _ctrl.setFocusFromSliders(
++                    nx: 0.5,
++                    ny: 0.45,
++                    session: session,
++                    sourceBytes: snap.sourceBytes,
++                  );
++                }
++              }),
++            ),
++            if (_ctrl.lensPanelOpen) ...[
++              const SizedBox(height: 12),
++              FaceExplorerLensPanel(
++                sourceBytes: display,
++                presentation: presentation,
++                tint: accent.withValues(alpha: profile.tintAlpha),
++                focusSourceNorm: focusNorm ?? const Offset(0.5, 0.45),
++                zoom: _ctrl.magnifierZoom,
++                stageViewport: _stageViewportSize,
++                sourceWidth: snap.sourceWidth,
++                sourceHeight: snap.sourceHeight,
++                onToggleZoom: () => setState(() {
++                  _ctrl.magnifierZoom = _ctrl.magnifierZoom == 2.0 ? 3.0 : 2.0;
++                }),
++                onHorizontal: (v) => setState(() {
++                  _ctrl.setFocusFromSliders(
++                    nx: v,
++                    session: session,
++                    sourceBytes: snap.sourceBytes,
++                  );
++                }),
++                onVertical: (v) => setState(() {
++                  _ctrl.setFocusFromSliders(
++                    ny: v,
++                    session: session,
++                    sourceBytes: snap.sourceBytes,
++                  );
++                }),
+               ),
+             ],
+-            ..._buildSubregionDisclosure(session, selected),
++            const SizedBox(height: 12),
++            FaceExplorerFocusShortcutsRow(
++              activeId: _ctrl.focusShortcutId,
++              onSelect: (s) {
++                HapticFeedback.selectionClick();
++                setState(() {
++                  _ctrl.applyFocusShortcut(
++                    shortcut: s,
++                    session: session,
++                    sourceBytes: snap.sourceBytes,
++                  );
++                });
++              },
++            ),
++            const SizedBox(height: 8),
++            FaceExplorerDetailsSection(
++              selectedId: selected,
++              overlayDecision: overlayDecision,
++              holdingOriginal: _ctrl.holdingOriginal,
++              session: session,
++              selectedSubregion: _ctrl.selectedSubregion,
++              showSubregionDetails: _ctrl.showSubregionDetails,
++              onToggleSubregions: () => setState(
++                () => _ctrl.showSubregionDetails = !_ctrl.showSubregionDetails,
++              ),
++              onSelectSubregion: _selectSubregion,
++            ),
+           ] else ...[
+             const SizedBox(height: AppSpacing.sm),
+             Text(
+@@ -583,656 +583,53 @@ class ResultsSkinMapPanelState extends State<ResultsSkinMapPanel> {
+               textAlign: TextAlign.center,
+             ),
+           ],
+-        ],
+-      ),
+-    );
+-  }
+-
+-  Widget _buildFaceStage(
+-    PerfectMaskSession? session,
+-    String? selected,
+-    PerfectMaskArtifact? mask,
+-  ) {
+-    final source = _sourceBytes;
+-    final display = _displaySourceBytes;
+-    if (widget.missingImage ||
+-        source == null ||
+-        source.isEmpty ||
+-        display == null ||
+-        display.isEmpty) {
+-      return Semantics(
+-        label: 'صورة الوجه غير متاحة',
+-        child: Container(
+-          height: 420,
+-          alignment: Alignment.center,
+-          decoration: BoxDecoration(
+-            color: SkinFaceMapVisualTokens.faceOnlyBlack,
+-            borderRadius: BorderRadius.circular(24),
+-          ),
+-          child: Padding(
+-            padding: const EdgeInsets.all(AppSpacing.lg),
+-            child: Text(
+-              widget.fromHistory
+-                  ? 'الصورة غير متاحة من السجل.'
+-                  : 'صورة الوجه غير متاحة لهذه الجلسة.',
+-              style: AppTypography.bodySmall.copyWith(
+-                color: SkinFaceMapVisualTokens.explorerOnBlackMuted,
+-              ),
+-              textAlign: TextAlign.center,
+-            ),
+-          ),
+-        ),
+-      );
+-    }
+-
+-    var unavailable = false;
+-    if (selected != null) {
+-      // Missing session / empty bytes ⇒ unavailable (not selected-state-only silence).
+-      if (session == null ||
+-          mask == null ||
+-          mask.bytes == null ||
+-          mask.bytes!.isEmpty) {
+-        unavailable = true;
+-      }
+-    }
+-
+-    final profile =
+-        SkinFaceMapVisualTokens.presentationProfileForConcern(selected);
+-    final tint = SkinFaceMapVisualTokens.maskTintForConcern(selected);
+-    final region = _selectedSubregion ?? 'whole';
+-    final showAnalysis = selected != null &&
+-        !_holdingOriginal &&
+-        !unavailable &&
+-        mask != null;
+-    final showRegionCallout = showAnalysis &&
+-        region != 'whole' &&
+-        region != 'all';
+-    final calloutAlign =
+-        SkinFaceMapVisualTokens.calloutAlignmentForSubregion(region);
+-    final calloutSelected = selected;
+-    final calloutMask = mask;
+-    final label = selected == null
+-        ? 'وجهك الأصلي'
+-        : MetricPresentationPolicy.publicLabelAr(selected);
+-
+-    if (showAnalysis) {
+-      _ensureMagnifierFocus(
+-        mask: mask,
+-        profile: profile,
+-        selected: selected,
+-      );
+-    }
+-
+-    final showMagnifier = showAnalysis && _magnifierFocus != null;
+-    final magnifierMaskBytes = mask?.bytes;
+-    final magnifierFocus = _magnifierFocus;
+-
+-    return Semantics(
+-      label: label,
+-      button: selected != null,
+-      child: GestureDetector(
+-        onLongPressStart: selected == null
+-            ? null
+-            : (_) {
+-                HapticFeedback.lightImpact();
+-                setState(() {
+-                  _holdingOriginal = true;
+-                  _compareHintSeen = true;
+-                });
+-              },
+-        onLongPressEnd: selected == null
+-            ? null
+-            : (_) => setState(() => _holdingOriginal = false),
+-        onLongPressCancel: () => setState(() => _holdingOriginal = false),
+-        child: Column(
+-          children: [
+-            ClipRRect(
+-              borderRadius: BorderRadius.circular(24),
+-              child: ColoredBox(
+-                // LAYER 1 — pure black
+-                color: SkinFaceMapVisualTokens.faceOnlyBlack,
+-                child: Stack(
+-                  fit: StackFit.passthrough,
+-                  children: [
+-                    // LAYER 2 — Apple-matted subject (or ORIGINAL while hold)
+-                    // LAYER 3 — Perfect mask above subject (showMaskOnly stack)
+-                    PerfectMaskOverlay(
+-                      key: ValueKey<Object>(
+-                        Object.hash(
+-                          display.length,
+-                          mask?.key,
+-                          mask?.bytes?.length,
+-                          selected,
+-                          _holdingOriginal,
+-                          SkinFaceMapVisualTokens.maskVisibilityDiagnostic,
+-                          profile.alphaMode,
+-                          profile.luminanceGateFloor,
+-                          profile.alphaGain,
+-                        ),
+-                      ),
+-                      sourceBytes: display,
+-                      maskBytes: unavailable ? null : mask?.bytes,
+-                      tint: tint,
+-                      profile: profile,
+-                      showOriginalOnly:
+-                          selected == null || _holdingOriginal || unavailable,
+-                      // Keep subject+mask in one AspectRatio so fits stay aligned;
+-                      // mask paints after subject inside PerfectMaskOverlay Stack.
+-                      showMaskOnly: false,
+-                      applyTint: true,
+-                      forceDiagnosticTint:
+-                          SkinFaceMapVisualTokens.maskVisibilityDiagnostic,
+-                      opacity: SkinFaceMapVisualTokens.maskVisibilityDiagnostic
+-                          ? 1.0
+-                          : profile.opacity,
+-                      fadeDuration: _holdingOriginal
+-                          ? SkinFaceMapVisualTokens.comparisonSnap
+-                          : SkinFaceMapVisualTokens.metricCrossfade,
+-                    ),
+-                    if (SkinFaceMapVisualTokens.maskVisibilityDiagnostic)
+-                      Positioned(
+-                        left: 8,
+-                        top: 8,
+-                        right: 8,
+-                        child: IgnorePointer(
+-                          child: DecoratedBox(
+-                            decoration: BoxDecoration(
+-                              color: const Color(0xCC000000),
+-                              borderRadius: BorderRadius.circular(10),
+-                              border: Border.all(
+-                                color: showAnalysis
+-                                    ? SkinFaceMapVisualTokens.diagnosticMaskTint
+-                                    : AppColors.warning,
+-                                width: 2,
+-                              ),
+-                            ),
+-                            child: Padding(
+-                              padding: const EdgeInsets.fromLTRB(8, 6, 8, 6),
+-                              child: Text(
+-                                _maskChainHud ??
+-                                    (unavailable
+-                                        ? 'DIAG NO_MASK_BYTES selected=$selected'
+-                                        : 'DIAG tap metric — await MASK_CHAIN'),
+-                                style: AppTypography.labelSmall.copyWith(
+-                                  color: SkinFaceMapVisualTokens
+-                                      .diagnosticMaskTint,
+-                                  fontWeight: FontWeight.w800,
+-                                  height: 1.25,
+-                                ),
+-                              ),
+-                            ),
+-                          ),
+-                        ),
+-                      ),
+-                    if (showMagnifier &&
+-                        magnifierMaskBytes != null &&
+-                        magnifierFocus != null)
+-                      Positioned.fill(
+-                        child: Align(
+-                          alignment: AlignmentDirectional.topStart,
+-                          child: Padding(
+-                            padding: const EdgeInsets.all(12),
+-                            child: Row(
+-                              mainAxisSize: MainAxisSize.min,
+-                              textDirection: TextDirection.rtl,
+-                              children: [
+-                                _RealPerfectMagnifier(
+-                                  sourceBytes: display,
+-                                  maskBytes: magnifierMaskBytes,
+-                                  tint: tint,
+-                                  profile: profile,
+-                                  focus: magnifierFocus,
+-                                  opacity: profile.opacity,
+-                                ),
+-                                PerfectMaskCalloutConnector(accent: tint),
+-                                if (showRegionCallout &&
+-                                    calloutSelected != null &&
+-                                    calloutMask != null)
+-                                  PerfectMaskRegionCallout(
+-                                    regionLabelAr:
+-                                        MetricPresentationPolicy.subregionLabelAr(
+-                                      region,
+-                                    ),
+-                                    metricLabelAr:
+-                                        MetricPresentationPolicy.publicLabelAr(
+-                                      calloutSelected,
+-                                    ),
+-                                    uiScore: calloutMask.uiScore,
+-                                    accent: tint,
+-                                  )
+-                                else if (calloutSelected != null &&
+-                                    calloutMask != null &&
+-                                    calloutMask.uiScore != null)
+-                                  PerfectMaskRegionCallout(
+-                                    regionLabelAr:
+-                                        MetricPresentationPolicy.publicLabelAr(
+-                                      calloutSelected,
+-                                    ),
+-                                    metricLabelAr: 'تفصيل حقيقي',
+-                                    uiScore: calloutMask.uiScore,
+-                                    accent: tint,
+-                                  ),
+-                              ],
+-                            ),
+-                          ),
+-                        ),
++          if (FaceMapSessionEvidenceExporter.inspectionExportEnabled &&
++              session != null &&
++              !widget.fromHistory) ...[
++            const SizedBox(height: AppSpacing.md),
++            Center(
++              child: TextButton.icon(
++                key: _exportButtonKey,
++                onPressed: _ctrl.exportBusy ? null : _exportEvidenceZip,
++                icon: _ctrl.exportBusy
++                    ? const SizedBox(
++                        width: 16,
++                        height: 16,
++                        child: CircularProgressIndicator(strokeWidth: 2),
+                       )
+-                    else if (showRegionCallout &&
+-                        calloutSelected != null &&
+-                        calloutMask != null)
+-                      Positioned.fill(
+-                        child: Align(
+-                          alignment: calloutAlign,
+-                          child: Padding(
+-                            padding: const EdgeInsets.all(14),
+-                            child: Row(
+-                              mainAxisSize: MainAxisSize.min,
+-                              textDirection: TextDirection.rtl,
+-                              children: [
+-                                PerfectMaskRegionCallout(
+-                                  regionLabelAr:
+-                                      MetricPresentationPolicy.subregionLabelAr(
+-                                    region,
+-                                  ),
+-                                  metricLabelAr:
+-                                      MetricPresentationPolicy.publicLabelAr(
+-                                    calloutSelected,
+-                                  ),
+-                                  uiScore: calloutMask.uiScore,
+-                                  accent: tint,
+-                                ),
+-                                PerfectMaskCalloutConnector(accent: tint),
+-                              ],
+-                            ),
+-                          ),
+-                        ),
+-                      ),
+-                    if (_holdingOriginal)
+-                      const Positioned(
+-                        right: 14,
+-                        top: 14,
+-                        child: _MetricPill(
+-                          label: 'الأصل',
+-                          accent: AppColors.textSecondary,
+-                        ),
+-                      ),
+-                  ],
++                    : const Icon(Icons.ios_share, size: 18),
++                label: Text(
++                  _ctrl.exportBusy
++                      ? 'جاري التجهيز…'
++                      : _ctrl.exportFailed
++                      ? 'إعادة المحاولة'
++                      : 'تصدير أدلة الفحص',
++                  style: AppTypography.labelMedium.copyWith(
++                    fontWeight: FontWeight.w700,
++                  ),
+                 ),
+-              ),
+-            ),
+-            if (unavailable && selected != null) ...[
+-              const SizedBox(height: AppSpacing.sm),
+-              Text(
+-                'التعيين غير متاح لهذا المؤشر حالياً.',
+-                style: AppTypography.labelSmall.copyWith(
+-                  color: AppColors.warning,
++                style: TextButton.styleFrom(
++                  foregroundColor: SkinFaceMapVisualTokens.explorerOnBlackMuted,
++                  minimumSize: const Size(48, 44),
+                 ),
+-                textAlign: TextAlign.center,
+               ),
+-            ],
+-          ],
+-        ),
+-      ),
+-    );
+-  }
+-
+-  List<Widget> _buildSubregionDisclosure(
+-    PerfectMaskSession? session,
+-    String selected,
+-  ) {
+-    if (session == null) return const [];
+-    final regions = session.providerSubregions(selected);
+-    if (regions.length <= 1) return const [];
+-    final provider =
+-        PerfectMaskSession.providerTypeForConsumerMetric(selected) ?? '';
+-    if (provider != 'hd_pore' && provider != 'hd_wrinkle') {
+-      return const [];
+-    }
+-    return [
+-      const SizedBox(height: AppSpacing.sm),
+-      Center(
+-        child: TextButton(
+-          onPressed: () {
+-            HapticFeedback.selectionClick();
+-            setState(() => _showSubregionDetails = !_showSubregionDetails);
+-          },
+-          style: TextButton.styleFrom(
+-            foregroundColor: SkinFaceMapVisualTokens.explorerOnBlack,
+-            minimumSize: const Size(48, 44),
+-          ),
+-          child: Text(
+-            _showSubregionDetails ? 'تم' : 'التفاصيل',
+-            style: AppTypography.labelMedium.copyWith(
+-              fontWeight: FontWeight.w700,
+-              color: SkinFaceMapVisualTokens.explorerOnBlack,
+             ),
+-          ),
+-        ),
+-      ),
+-      if (_showSubregionDetails)
+-        AnimatedContainer(
+-          duration: SkinFaceMapVisualTokens.selectionTransition,
+-          margin: const EdgeInsets.only(top: 4),
+-          padding: const EdgeInsets.fromLTRB(10, 12, 10, 12),
+-          decoration: BoxDecoration(
+-            color: AppColors.background.withValues(alpha: 0.65),
+-            borderRadius: BorderRadius.circular(18),
+-          ),
+-          child: Wrap(
+-            spacing: 8,
+-            runSpacing: 8,
+-            alignment: WrapAlignment.center,
+-            children: regions.map((r) {
+-              final on = (_selectedSubregion ?? 'whole') == r;
+-              final label = MetricPresentationPolicy.subregionLabelAr(r);
+-              final accent =
+-                  SkinFaceMapVisualTokens.accentForConcern(selected);
+-              return Semantics(
+-                selected: on,
+-                button: true,
+-                label: label,
+-                child: Material(
+-                  color: on
+-                      ? accent.withValues(alpha: 0.22)
+-                      : AppColors.surface,
+-                  borderRadius: BorderRadius.circular(16),
+-                  child: InkWell(
+-                    borderRadius: BorderRadius.circular(16),
+-                    onTap: () => _selectSubregion(r),
+-                    child: Padding(
+-                      padding: const EdgeInsets.symmetric(
+-                        horizontal: 14,
+-                        vertical: 11,
+-                      ),
+-                      child: Text(
+-                        label,
+-                        style: AppTypography.labelSmall.copyWith(
+-                          fontWeight: on ? FontWeight.w800 : FontWeight.w600,
+-                          color: on
+-                              ? AppColors.primaryDark
+-                              : AppColors.textSecondary,
+-                        ),
+-                      ),
+-                    ),
++            if (_ctrl.exportStatusMessage != null)
++              Padding(
++                padding: const EdgeInsets.only(top: 4),
++                child: Text(
++                  _ctrl.exportStatusMessage!,
++                  style: AppTypography.labelSmall.copyWith(
++                    color: _ctrl.exportFailed
++                        ? AppColors.warning
++                        : SkinFaceMapVisualTokens.explorerOnBlackMuted,
+                   ),
+-                ),
+-              );
+-            }).toList(),
+-          ),
+-        ),
+-    ];
+-  }
+-}
+-
+-/// Crop of the SAME user image + SAME Perfect mask — no generated skin.
+-class _RealPerfectMagnifier extends StatelessWidget {
+-  const _RealPerfectMagnifier({
+-    required this.sourceBytes,
+-    required this.maskBytes,
+-    required this.tint,
+-    required this.profile,
+-    required this.focus,
+-    required this.opacity,
+-  });
+-
+-  final Uint8List sourceBytes;
+-  final Uint8List maskBytes;
+-  final Color tint;
+-  final PerfectMaskPresentationProfile profile;
+-  final Alignment focus;
+-  final double opacity;
+-
+-  @override
+-  Widget build(BuildContext context) {
+-    return Semantics(
+-      label: 'تفصيل مكبر من التحليل الحقيقي',
+-      child: Container(
+-        width: 92,
+-        height: 92,
+-        decoration: BoxDecoration(
+-          shape: BoxShape.circle,
+-          border: Border.all(color: AppColors.analysisCalloutSurface, width: 2.5),
+-          boxShadow: const [
+-            BoxShadow(
+-              color: AppColors.shadow,
+-              blurRadius: 10,
+-              offset: Offset(0, 3),
+-            ),
+-          ],
+-        ),
+-        child: ClipOval(
+-          child: Transform.scale(
+-            scale: 2.55,
+-            alignment: focus,
+-            child: PerfectMaskOverlay(
+-              sourceBytes: sourceBytes,
+-              maskBytes: maskBytes,
+-              tint: tint,
+-              profile: profile,
+-              opacity: opacity,
+-              fadeDuration: Duration.zero,
+-            ),
+-          ),
+-        ),
+-      ),
+-    );
+-  }
+-}
+-
+-class _ActiveMetricHero extends StatelessWidget {
+-  const _ActiveMetricHero({
+-    required this.metricId,
+-    required this.uiScore,
+-    required this.accent,
+-    this.onBlack = false,
+-  });
+-
+-  final String metricId;
+-  final double? uiScore;
+-  final Color accent;
+-  final bool onBlack;
+-
+-  @override
+-  Widget build(BuildContext context) {
+-    final title = MetricPresentationPolicy.publicLabelAr(metricId);
+-    final status = MetricPresentationPolicy.faceExplorerStatusAr(uiScore);
+-    final scoreColor = onBlack
+-        ? SkinFaceMapVisualTokens.explorerOnBlack
+-        : AppColors.textPrimary;
+-    final statusColor = onBlack
+-        ? SkinFaceMapVisualTokens.explorerOnBlackMuted
+-        : AppColors.textSecondary;
+-    return Semantics(
+-      label: [
+-        title,
+-        if (uiScore != null) uiScore!.round().toString(),
+-        if (status.isNotEmpty) status,
+-      ].join(' '),
+-      child: Padding(
+-        padding: const EdgeInsets.symmetric(horizontal: 8),
+-        child: Column(
+-          children: [
+-            Text(
+-              title,
+-              style: AppTypography.titleSmall.copyWith(
+-                fontWeight: FontWeight.w800,
+-                color: accent,
+-              ),
+-              textAlign: TextAlign.center,
+-            ),
+-            if (uiScore != null) ...[
+-              const SizedBox(height: 2),
+-              Text(
+-                uiScore!.round().toString(),
+-                style: AppTypography.titleSmall.copyWith(
+-                  fontSize: 28,
+-                  fontWeight: FontWeight.w800,
+-                  color: scoreColor,
+-                  height: 1.05,
++                  textAlign: TextAlign.center,
+                 ),
+               ),
+-            ],
+-            if (status.isNotEmpty) ...[
+-              const SizedBox(height: 2),
+-              Text(
+-                status,
+-                style: AppTypography.labelSmall.copyWith(
+-                  color: statusColor,
+-                  fontWeight: FontWeight.w600,
+-                ),
+-              ),
+-            ],
+           ],
+-        ),
+-      ),
+-    );
+-  }
+-}
+-
+-class _MetricPill extends StatelessWidget {
+-  const _MetricPill({required this.label, required this.accent});
+-
+-  final String label;
+-  final Color accent;
+-
+-  @override
+-  Widget build(BuildContext context) {
+-    return Container(
+-      padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 6),
+-      decoration: BoxDecoration(
+-        color: AppColors.analysisCalloutSurface,
+-        borderRadius: BorderRadius.circular(999),
+-        boxShadow: const [
+-          BoxShadow(
+-            color: AppColors.shadow,
+-            blurRadius: 8,
+-            offset: Offset(0, 2),
+-          ),
+         ],
+       ),
+-      child: Text(
+-        label,
+-        style: AppTypography.labelSmall.copyWith(
+-          fontWeight: FontWeight.w800,
+-          color: accent,
+-        ),
+-      ),
+-    );
+-  }
+-}
+-
+-/// ONE RTL horizontal Beauty-Tech carousel — no «المزيد».
+-class _MetricCarousel extends StatelessWidget {
+-  const _MetricCarousel({
+-    required this.concerns,
+-    required this.selectedId,
+-    required this.onSelect,
+-    this.onBlack = false,
+-  });
+-
+-  final List<ResultMapConcernVM> concerns;
+-  final String? selectedId;
+-  final ValueChanged<String> onSelect;
+-  final bool onBlack;
+-
+-  @override
+-  Widget build(BuildContext context) {
+-    final idleFill = onBlack
+-        ? const Color(0xFF1A1A1D)
+-        : AppColors.background.withValues(alpha: 0.9);
+-    final idleBorder = onBlack
+-        ? const Color(0xFF2E2E33)
+-        : AppColors.border.withValues(alpha: 0.35);
+-    final idleLabel = onBlack
+-        ? SkinFaceMapVisualTokens.explorerOnBlackMuted
+-        : AppColors.textSecondary;
+-    final selectedLabel = onBlack
+-        ? SkinFaceMapVisualTokens.explorerOnBlack
+-        : AppColors.primaryDark;
+-
+-    return Directionality(
+-      textDirection: TextDirection.rtl,
+-      child: SingleChildScrollView(
+-        scrollDirection: Axis.horizontal,
+-        padding: const EdgeInsets.symmetric(horizontal: 2),
+-        child: Row(
+-          children: concerns.map((c) {
+-            final on = selectedId == c.id;
+-            final glyph = MiraSkinGlyphs.forConcern(c.id);
+-            final label = MetricPresentationPolicy.publicLabelAr(c.id);
+-            final accent = SkinFaceMapVisualTokens.accentForConcern(c.id);
+-            return Padding(
+-              padding: const EdgeInsets.symmetric(horizontal: 5),
+-              child: Semantics(
+-                button: true,
+-                selected: on,
+-                label: label,
+-                child: Material(
+-                  color: Colors.transparent,
+-                  child: InkWell(
+-                    borderRadius: BorderRadius.circular(18),
+-                    onTap: () => onSelect(c.id),
+-                    child: AnimatedContainer(
+-                      duration: SkinFaceMapVisualTokens.selectionTransition,
+-                      constraints: const BoxConstraints(
+-                        minWidth: 76,
+-                        minHeight: 76,
+-                      ),
+-                      padding: const EdgeInsets.symmetric(
+-                        horizontal: 10,
+-                        vertical: 10,
+-                      ),
+-                      decoration: BoxDecoration(
+-                        color: on ? accent.withValues(alpha: 0.32) : idleFill,
+-                        borderRadius: BorderRadius.circular(18),
+-                        border: Border.all(
+-                          color: on
+-                              ? accent.withValues(alpha: 0.85)
+-                              : idleBorder,
+-                          width: on ? 1.6 : 1,
+-                        ),
+-                        boxShadow: on
+-                            ? [
+-                                BoxShadow(
+-                                  color: accent.withValues(alpha: 0.22),
+-                                  blurRadius: 12,
+-                                  offset: const Offset(0, 4),
+-                                ),
+-                              ]
+-                            : null,
+-                      ),
+-                      child: Column(
+-                        mainAxisSize: MainAxisSize.min,
+-                        children: [
+-                          MiraSkinGlyphs.of(
+-                            glyph,
+-                            size: 22,
+-                            selected: on,
+-                            color: on ? accent : idleLabel,
+-                          ),
+-                          const SizedBox(height: 6),
+-                          Text(
+-                            label,
+-                            style: AppTypography.labelSmall.copyWith(
+-                              fontWeight:
+-                                  on ? FontWeight.w800 : FontWeight.w600,
+-                              color: on ? selectedLabel : idleLabel,
+-                              height: 1.1,
+-                            ),
+-                            textAlign: TextAlign.center,
+-                            maxLines: 1,
+-                            overflow: TextOverflow.ellipsis,
+-                          ),
+-                        ],
+-                      ),
+-                    ),
+-                  ),
+-                ),
+-              ),
+-            );
+-          }).toList(),
+-        ),
+-      ),
+     );
+   }
+ }
+diff --git a/pubspec.yaml b/pubspec.yaml
+index 26fcf31..a9ad08c 100644
+--- a/pubspec.yaml
++++ b/pubspec.yaml
+@@ -16,7 +16,7 @@ publish_to: 'none' # Remove this line if you wish to publish to pub.dev
+ # https://developer.apple.com/library/archive/documentation/General/Reference/InfoPlistKeyReference/Articles/CoreFoundationKeys.html
+ # In Windows, build-name is used as the major, minor, and patch parts
+ # of the product and file versions while build-number is used as the build suffix.
+-version: 1.0.0+1
++version: 1.0.0+2026091708
+ 
+ environment:
+   sdk: '>=3.8.1 <4.0.0'
+@@ -52,6 +52,9 @@ dependencies:
+   image_picker: 0.8.7
+   flutter_svg: ^2.0.10
+   url_launcher: ^6.3.1
++  archive: ^4.0.7
++  share_plus: ^10.1.4
++  path_provider: ^2.1.5
+ 
+   # The following adds the Cupertino Icons font to your application.
+   # Use with the CupertinoIcons class for iOS style icons.
+@@ -81,6 +84,12 @@ dev_dependencies:
+   flutter_lints: ^5.0.0
+   flutter_launcher_icons: ^0.13.1
+ 
++# MIRA: CameraKit 2.5 / official sample require FullRange NV12.
++# Stock camera_avfoundation maps yuv420 → VideoRange; override to FullRange.
++dependency_overrides:
++  camera_avfoundation:
++    path: packages/camera_avfoundation_fullrange
++
+ # For information on the generic Dart part of this file, see the
+ # following page: https://dart.dev/tools/pub/pubspec
+ 

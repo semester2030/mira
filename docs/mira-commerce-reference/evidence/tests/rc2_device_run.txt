@@ -1,0 +1,38 @@
+هذه محاولات تشغيل المشغّل الحقيقي. ليست قراءة مصدر.
+الجهاز: fayez’s iPhone • 00008110-00191986268BA01E • iOS 26.6
+المحاكي: MiraRC2 • iPhone 16 • 36606E21-65DE-4FF6-B6CC-CEB73506469A • iOS 26.5
+العلم: --dart-define=MIRA_MARKETPLACE_ENABLED=true
+القيمة الافتراضية للعلم لم تُغيّر.
+
+1) محاكي
+command: flutter test integration_test/discover_playback_rc2_test.dart -d 36606E21-65DE-4FF6-B6CC-CEB73506469A --dart-define=MIRA_MARKETPLACE_ENABLED=true
+environment: iOS Simulator, iPhone 16, iOS 26.5
+الناتج الأصلي المختصر:
+Failed to build iOS app
+Error (Xcode): Building for 'iOS-simulator', but linking in object file (/Users/fayez/.pub-cache/hosted/pub.dev/mediapipe_face_mesh-1.8.0/ios/Frameworks/TensorFlowLiteC.framework/TensorFlowLiteC) built for 'iOS'
+Failed to load integration_test/discover_playback_rc2_test.dart: Unable to start the app on the device.
+exit:1
+هذا فشل ربط لتطبيق ميرا الكامل على المحاكي بسبب إطار تحليل البشرة، وليس نتيجة تشغيل الفيديو.
+
+2) جهاز — flutter test
+command: flutter test integration_test/discover_playback_rc2_test.dart -d 00008110-00191986268BA01E --dart-define=MIRA_MARKETPLACE_ENABLED=true
+environment: iPhone فعلي iOS 26.6، غير مقفل
+Xcode build done. 196.6s
+The Dart VM Service was not discovered after 60 seconds. This is taking much longer than expected...
+لم يصل الاختبار إلى تأكيدات المشغّل. أُوقف الانتظار.
+exit: لم يكتمل الاتصال
+
+3) جهاز — flutter drive على منفذ ثابت
+command: flutter drive --driver=test_driver/integration_test.dart --target=integration_test/discover_playback_rc2_test.dart -d 00008110-00191986268BA01E --dart-define=MIRA_MARKETPLACE_ENABLED=true --device-vmservice-port=8888 --host-vmservice-port=8888
+environment: نفس الجهاز
+Xcode build done. 11.8s ثم إعادة 14.8s
+Installing and launching... 202.6s ثم 219.6s
+VMServiceFlutterDriver: Connected to Flutter application.
+flutter: 00:00 +0: presentation plays the sample clip and stops when covered
+The OS has terminated the Flutter debug connection for being inactive in the background for too long.
+There are no errors with your Flutter application.
+لم تُطبع RC2_MARK video ولم يُثبت isPlaying.
+المقدمة على الجهاز أثناء الالتقاط كانت تطبيقًا آخر، لذلك لا توجد لقطة لشاشة العرض ولا تسجيل لها.
+exit: الاتصال انقطع قبل اكتمال الاختبار
+
+لا يُعد هذا إغلاقًا لـ P1-RC2-04.

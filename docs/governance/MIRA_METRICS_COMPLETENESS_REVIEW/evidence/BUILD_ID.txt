@@ -1,0 +1,3 @@
+1.0.0+2026091801
+profile_xcode_ok=true
+install_launch=hung_aborted

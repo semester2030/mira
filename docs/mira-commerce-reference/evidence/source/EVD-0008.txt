@@ -1,0 +1,38 @@
+# Evidence EVD-0008
+# file=lib/features/marketplace/data/marketplace_local_catalog.dart
+# lines=90-120
+# commit=15fe65c40d3dedb9afdd95619f2945bd84cb616a
+# sha256=13ec504cf64b923268d264724366e5b1c651368bf0e61c822fa40e76be8c67c7
+# inspected_at=2026-09-23T03:20:00+03:00
+
+90|      descriptionAr: 'توحيد لون وإشراق',
+91|      priceHalalas: 8900,
+92|      priceLabel: '89 ر.س',
+93|      externalUrl: 'https://www.amazon.sa',
+94|      stepAr: 'صباحًا',
+95|      matchScore: 0,
+96|      concernTags: ['age_spot', 'texture', 'radiance'],
+97|    ),
+98|    CatalogProduct(
+99|      id: 'p-loreal-hydro',
+100|      partnerId: 'local-loreal',
+101|      partnerNameAr: 'لوريال باريس',
+102|      partnerEmoji: '💄',
+103|      nameAr: 'مرطب حمض الهيالورونيك',
+104|      nameEn: 'Hyaluronic Moisturizer',
+105|      priceHalalas: 7500,
+106|      priceLabel: '75 ر.س',
+107|      externalUrl: 'https://www.noon.com',
+108|      stepAr: 'صباحًا ومساءً',
+109|      matchScore: 0,
+110|      concernTags: ['moisture', 'texture'],
+111|    ),
+112|    CatalogProduct(
+113|      id: 'p-body-toner',
+114|      partnerId: 'local-bodyshop',
+115|      partnerNameAr: 'ذا بودي شوب',
+116|      partnerEmoji: '🌿',
+117|      nameAr: 'تونر شاي الأخضر',
+118|      nameEn: 'Green Tea Toner',
+119|      priceHalalas: 6500,
+120|      priceLabel: '65 ر.س',

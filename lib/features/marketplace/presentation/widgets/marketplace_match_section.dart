@@ -8,8 +8,7 @@ import '../../../../shared/widgets/premium/premium_exports.dart';
 import '../../../skin_analysis/domain/entities/skin_report.dart';
 import '../../data/repositories/marketplace_repository_impl.dart';
 import '../../domain/entities/marketplace_match.dart';
-import '../screens/product_detail_screen.dart';
-import '../screens/service_detail_screen.dart';
+import '../../data/catalog_record_scope.dart';
 import 'matched_product_tile.dart';
 import 'matched_service_tile.dart';
 import 'marketplace_coming_soon_view.dart';
@@ -139,7 +138,12 @@ class _MarketplaceMatchSectionState extends State<MarketplaceMatchSection> {
     Navigator.push(
       context,
       MaterialPageRoute<void>(
-        builder: (_) => ProductDetailScreen(product: product),
+        builder: (_) => CatalogRecordScope.page(
+          kind: 'product',
+          id: product.id,
+          matchKnown: product.matchKnown,
+          matchScore: product.matchScore,
+        ),
       ),
     );
   }
@@ -148,7 +152,12 @@ class _MarketplaceMatchSectionState extends State<MarketplaceMatchSection> {
     Navigator.push(
       context,
       MaterialPageRoute<void>(
-        builder: (_) => ServiceDetailScreen(service: service),
+        builder: (_) => CatalogRecordScope.page(
+          kind: 'service',
+          id: service.id,
+          matchKnown: service.matchKnown,
+          matchScore: service.matchScore,
+        ),
       ),
     );
   }

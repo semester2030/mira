@@ -1,0 +1,39 @@
+SOURCE=terminals/80179.txt (physical iPhone debug session)
+NOTE=no face images; quality telemetry only
+
+INIT_LINES:
+Mira PerfectCameraKit init: version=2.5.0.000000 level=moderate yaw=10.0 size=0.6499999761581421
+
+QUALITY_EVENT_COUNT=216
+ready_true=0
+area_good_AND_pose_good=65
+area_good_AND_pose_good_AND_under_exposed=65
+
+TOP_COMBOS area,pose,light -> count
+65	('good', 'good', 'under_exposed')
+36	('too_small', 'good', 'under_exposed')
+19	('too_small', 'bad', 'under_exposed')
+17	('unknown', 'unknown', 'unknown')
+16	('too_small', 'bad', 'backlighting')
+13	('too_small', 'bad', 'unknown')
+13	('good', 'bad', 'under_exposed')
+9	('too_small', 'bad', 'uneven')
+9	('good', 'bad', 'uneven')
+8	('too_small', 'good', 'uneven')
+6	('out_of_boundary', 'bad', 'under_exposed')
+2	('too_small', 'good', 'backlighting')
+1	('too_small', 'bad', 'normal')
+1	('too_small', 'good', 'normal')
+1	('unknown', 'unknown', 'uneven')
+
+SAMPLE_LINES (first 5 + last 5 area=good pose=good):
+Mira PerfectCameraKit quality: ready=false area=unknown pose=unknown light=unknown code=align deg=0.0
+Mira PerfectCameraKit quality: ready=false area=too_small pose=bad light=unknown code=too_far deg=0.0
+Mira PerfectCameraKit quality: ready=false area=too_small pose=bad light=unknown code=too_far deg=0.0
+Mira PerfectCameraKit quality: ready=false area=too_small pose=bad light=unknown code=too_far deg=0.0
+Mira PerfectCameraKit quality: ready=false area=too_small pose=bad light=unknown code=too_far deg=0.0
+Mira PerfectCameraKit quality: ready=false area=good pose=good light=under_exposed code=lighting_low deg=0.0
+Mira PerfectCameraKit quality: ready=false area=good pose=good light=under_exposed code=lighting_low deg=0.0
+Mira PerfectCameraKit quality: ready=false area=good pose=good light=under_exposed code=lighting_low deg=0.0
+Mira PerfectCameraKit quality: ready=false area=good pose=good light=under_exposed code=lighting_low deg=0.0
+Mira PerfectCameraKit quality: ready=false area=good pose=good light=under_exposed code=lighting_low deg=0.0

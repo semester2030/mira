@@ -47,15 +47,22 @@ class AppColors {
   static const Color glassFill = Color(0xBFFFFFFF);
   static const Color glassBorder = Color(0x66FFFFFF);
 
-  /// Face Explorer analysis accents — pigmentation/acne differentiated for clarity.
-  static const Color analysisPigmentation = Color(0xFFB83280);
-  static const Color analysisPores = Color(0xFF5B8FA8);
-  static const Color analysisWrinkles = Color(0xFFA78BFA);
-  static const Color analysisRedness = Color(0xFFE07070);
-  static const Color analysisTexture = Color(0xFF9B7FD4);
-  static const Color analysisAcne = Color(0xFFE0673A);
-  static const Color analysisHydration = Color(0xFF4A9FE0);
-  static const Color analysisOil = Color(0xFFF0A020);
+  /// Face Explorer analysis accents — clarity language (prompt + mock intent).
+  /// Oil amber, wrinkles green paths, pores cyan, acne coral, pigment purple,
+  /// redness pink-red. Used only for Perfect-mask Face Explorer tints/chips.
+  static const Color analysisPigmentation = Color(0xFF9B3DB0); // أرجواني
+  static const Color analysisPores = Color(0xFF00B7C8); // سماوي
+  static const Color analysisWrinkles = Color(0xFF2FA86A); // أخضر مسارات
+  static const Color analysisRedness = Color(0xFFE85A7A); // وردي أحمر
+  static const Color analysisTexture = Color(0xFF2AABB8); // فيروزي
+  static const Color analysisAcne = Color(0xFFFF6F61); // مرجاني
+  static const Color analysisHydration = Color(0xFF2F86D6); // أزرق واضح
+  static const Color analysisOil = Color(0xFFF0A020); // كهرماني/برتقالي
+  static const Color analysisRadiance = Color(0xFFD4A017); // ذهبي
+  static const Color analysisDarkCircle = Color(0xFF7B4DB0); // بنفسجي مشبع
+  static const Color analysisEyeBag = Color(0xFFC45B8C); // وردي توتي
+  static const Color analysisDroopyUpper = Color(0xFF4A5FBF); // نيلي
+  static const Color analysisDroopyLower = Color(0xFF6B5BA8); // بنفسجي مزرق
   static const Color analysisCalloutSurface = Color(0xF7FFFFFF);
-  static const Color analysisCalloutLine = Color(0xAAB83280);
+  static const Color analysisCalloutLine = Color(0xAA9B3DB0);
 }

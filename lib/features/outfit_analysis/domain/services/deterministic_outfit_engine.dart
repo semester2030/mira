@@ -500,20 +500,20 @@ abstract final class DeterministicOutfitEngine {
   }
 
   static int _quickConfidence(OutfitVisualProfile visual) {
-    var c = 68;
-    if (visual.dominantColors.isNotEmpty) c += 8;
-    if (visual.clothingConfidence >= 0.72) c += 6;
-    if (visual.labels.isNotEmpty) c += 4;
-    return c.clamp(55, 90);
+    var c = 40;
+    if (visual.dominantColors.isNotEmpty) c += 12;
+    if (visual.clothingConfidence >= 0.72) c += 18;
+    if (visual.labels.isNotEmpty) c += 10;
+    return c.clamp(0, 100);
   }
 
   static int _smartConfidence(SkinReport skin, OutfitVisualProfile visual) {
-    var c = 74;
-    if (skin.undertoneEn.isNotEmpty || skin.undertone.isNotEmpty) c += 8;
-    if (skin.concernScores.isNotEmpty) c += 6;
-    if (visual.dominantColors.isNotEmpty) c += 6;
-    if (visual.clothingConfidence >= 0.72) c += 4;
-    return c.clamp(55, 95);
+    var c = 45;
+    if (skin.undertoneEn.isNotEmpty || skin.undertone.isNotEmpty) c += 12;
+    if (skin.concernScores.isNotEmpty) c += 10;
+    if (visual.dominantColors.isNotEmpty) c += 10;
+    if (visual.clothingConfidence >= 0.72) c += 12;
+    return c.clamp(0, 100);
   }
 
   static int _skinCompatibilityScore(

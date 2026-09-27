@@ -56,8 +56,9 @@ class SkinReportRegionBuilder extends MediapipeRegionBuilder {
     List<FaceMeshPoint> outline,
   ) {
     final brow = mapper.mapIndices(SkinReportLandmarkIndices.browRidge);
-    final topSupport =
-        mapper.mapIndices(SkinReportLandmarkIndices.foreheadTopSupport);
+    final topSupport = mapper.mapIndices(
+      SkinReportLandmarkIndices.foreheadTopSupport,
+    );
     if (brow.length < 4 || topSupport.length < 3 || outline.length < 8) {
       return const FaceRegionPolygon(id: FaceRegionId.forehead, points: []);
     }
@@ -76,18 +77,13 @@ class SkinReportRegionBuilder extends MediapipeRegionBuilder {
     final browSorted = [...brow]..sort((a, b) => a.x.compareTo(b.x));
     final upperArc = <FaceMeshPoint>[
       for (final p in browSorted)
-        FaceMeshPoint(
-          p.x.clamp(leftX, rightX),
-          upperY + (p.y - browY) * 0.08,
-        ),
+        FaceMeshPoint(p.x.clamp(leftX, rightX), upperY + (p.y - browY) * 0.08),
     ];
 
     final lowerArc = browSorted.reversed
         .map(
-          (p) => FaceMeshPoint(
-            p.x.clamp(leftX, rightX),
-            math.min(p.y - 1.0, p.y),
-          ),
+          (p) =>
+              FaceMeshPoint(p.x.clamp(leftX, rightX), math.min(p.y - 1.0, p.y)),
         )
         .toList();
 
@@ -107,10 +103,7 @@ class SkinReportRegionBuilder extends MediapipeRegionBuilder {
     final cy = points.map((p) => p.y).reduce((a, b) => a + b) / points.length;
     final inset = points
         .map(
-          (p) => FaceMeshPoint(
-            cx + (p.x - cx) * 0.88,
-            cy + (p.y - cy) * 0.88,
-          ),
+          (p) => FaceMeshPoint(cx + (p.x - cx) * 0.88, cy + (p.y - cy) * 0.88),
         )
         .toList();
     return FaceRegionPolygon(id: FaceRegionId.nose, points: inset);
@@ -171,10 +164,7 @@ class SkinReportRegionBuilder extends MediapipeRegionBuilder {
         filtered.map((p) => p.y).reduce((a, b) => a + b) / filtered.length;
     final inset = filtered
         .map(
-          (p) => FaceMeshPoint(
-            cx + (p.x - cx) * 0.82,
-            cy + (p.y - cy) * 0.82,
-          ),
+          (p) => FaceMeshPoint(cx + (p.x - cx) * 0.82, cy + (p.y - cy) * 0.82),
         )
         .toList();
 
@@ -199,15 +189,16 @@ class SkinReportRegionBuilder extends MediapipeRegionBuilder {
     final jawMaxY = jaw.map((p) => p.y).reduce(math.max);
     final chinTopY = lipMaxY + (jawMaxY - lipMaxY) * 0.12;
 
-    final lowerJaw = jaw
-        .where(
-          (p) =>
-              p.y >= chinTopY &&
-              p.x >= lipMinX - lipW * 0.05 &&
-              p.x <= lipMaxX + lipW * 0.05,
-        )
-        .toList()
-      ..sort((a, b) => a.x.compareTo(b.x));
+    final lowerJaw =
+        jaw
+            .where(
+              (p) =>
+                  p.y >= chinTopY &&
+                  p.x >= lipMinX - lipW * 0.05 &&
+                  p.x <= lipMaxX + lipW * 0.05,
+            )
+            .toList()
+          ..sort((a, b) => a.x.compareTo(b.x));
 
     if (lowerJaw.length < 3) {
       return const FaceRegionPolygon(id: FaceRegionId.chin, points: []);
@@ -223,10 +214,7 @@ class SkinReportRegionBuilder extends MediapipeRegionBuilder {
     final cy = points.map((p) => p.y).reduce((a, b) => a + b) / points.length;
     final inset = points
         .map(
-          (p) => FaceMeshPoint(
-            cx + (p.x - cx) * 0.85,
-            cy + (p.y - cy) * 0.85,
-          ),
+          (p) => FaceMeshPoint(cx + (p.x - cx) * 0.85, cy + (p.y - cy) * 0.85),
         )
         .toList();
 

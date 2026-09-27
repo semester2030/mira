@@ -1,0 +1,198 @@
+[
+  {
+    "id": "CAP-0001",
+    "nameAr": "كتالوج الشركاء",
+    "area": "marketplace",
+    "existence": "EXISTING",
+    "activation": "UNKNOWN",
+    "verification": "SOURCE_ONLY",
+    "evidenceIds": [
+      "EVD-0005",
+      "EVD-0006"
+    ],
+    "judgmentNoteAr": "الكود موجود. تفعيل الإنتاج غير مثبت لأن التحقق SOURCE_ONLY."
+  },
+  {
+    "id": "CAP-0002",
+    "nameAr": "مطابقة البشرة",
+    "area": "marketplace",
+    "existence": "EXISTING",
+    "activation": "UNKNOWN",
+    "verification": "SOURCE_ONLY",
+    "evidenceIds": [
+      "EVD-0006"
+    ],
+    "judgmentNoteAr": "مسار مطابقة في المتحكم العام. لا دليل تشغيل."
+  },
+  {
+    "id": "CAP-0003",
+    "nameAr": "واجهة Discover",
+    "area": "flutter",
+    "existence": "EXISTING",
+    "activation": "UNKNOWN",
+    "verification": "SOURCE_ONLY",
+    "evidenceIds": [
+      "EVD-0001",
+      "EVD-0002"
+    ],
+    "judgmentNoteAr": "العلم الافتراضي false يخفي الواجهة في المصدر. وصول API الإنتاج UNKNOWN."
+  },
+  {
+    "id": "CAP-0004",
+    "nameAr": "شراء عبر رابط خارجي",
+    "area": "flutter",
+    "existence": "PARTIAL",
+    "activation": "UNKNOWN",
+    "verification": "SOURCE_ONLY",
+    "evidenceIds": [
+      "EVD-0004",
+      "EVD-0007"
+    ],
+    "judgmentNoteAr": "الشراء في الشاشة رابط خارجي. SPEC وثيقة لا تثبت التفعيل."
+  },
+  {
+    "id": "CAP-0005",
+    "nameAr": "حجز خدمة",
+    "area": "booking",
+    "existence": "PARTIAL",
+    "activation": "UNKNOWN",
+    "verification": "SOURCE_ONLY",
+    "evidenceIds": [
+      "EVD-0003"
+    ],
+    "judgmentNoteAr": "الزر stub في المصدر. ليست خدمة مكتملة متوقفة."
+  },
+  {
+    "id": "CAP-0006",
+    "nameAr": "سلة/طلب منتجات",
+    "area": "orders",
+    "existence": "ABSENT_AFTER_SEARCH",
+    "activation": "UNKNOWN",
+    "verification": "SOURCE_ONLY",
+    "evidenceIds": [
+      "EVD-0018",
+      "EVD-0010"
+    ],
+    "judgmentNoteAr": "الغياب محصور بنطاق البحث في EVD-0018. الملخص القديم EVD-0010 غير كافٍ وحده."
+  },
+  {
+    "id": "CAP-0007",
+    "nameAr": "بوابة الشركاء",
+    "area": "partners-portal",
+    "existence": "EXISTING",
+    "activation": "UNKNOWN",
+    "verification": "SOURCE_ONLY",
+    "evidenceIds": [
+      "EVD-0011",
+      "EVD-0012",
+      "EVD-0013",
+      "EVD-0016",
+      "EVD-0021",
+      "EVD-0007"
+    ],
+    "judgmentNoteAr": "التنفيذ موجود في المصدر. EVD-0007 مواصفات فقط. التفعيل الإنتاجي غير مثبت."
+  },
+  {
+    "id": "CAP-0008",
+    "nameAr": "لوحة الإدارة",
+    "area": "admin",
+    "existence": "EXISTING",
+    "activation": "UNKNOWN",
+    "verification": "SOURCE_ONLY",
+    "evidenceIds": [
+      "EVD-0014",
+      "EVD-0015",
+      "EVD-0025"
+    ],
+    "judgmentNoteAr": "أُضيف دليل المتحكم والعميل. لا يُصنف مفعّلًا في الإنتاج من الشيفرة."
+  },
+  {
+    "id": "CAP-0009",
+    "nameAr": "كتالوج محلي احتياطي",
+    "area": "marketplace",
+    "existence": "EXISTING",
+    "activation": "UNKNOWN",
+    "verification": "SOURCE_ONLY",
+    "evidenceIds": [
+      "EVD-0008"
+    ],
+    "judgmentNoteAr": "بذرة محلية في المصدر عند غياب الشبكة. ليست كتالوج إنتاج."
+  },
+  {
+    "id": "CAP-0010",
+    "nameAr": "فيديو منتج متتابع",
+    "area": "media",
+    "existence": "ABSENT_AFTER_SEARCH",
+    "activation": "UNKNOWN",
+    "verification": "SOURCE_ONLY",
+    "evidenceIds": [
+      "EVD-0023",
+      "EVD-0024"
+    ],
+    "judgmentNoteAr": "لا تطابق لأنماط الفيديو المتتابع داخل النطاق. ليس حكمًا على كل مستودع خارج الفحص."
+  },
+  {
+    "id": "CAP-0011",
+    "nameAr": "مشاهير/إعلانات منتج",
+    "area": "creators",
+    "existence": "ABSENT_AFTER_SEARCH",
+    "activation": "UNKNOWN",
+    "verification": "SOURCE_ONLY",
+    "evidenceIds": [
+      "EVD-0023",
+      "EVD-0019"
+    ],
+    "judgmentNoteAr": "لا نموذج مشاهير في النطاق المبحوث."
+  },
+  {
+    "id": "CAP-0012",
+    "nameAr": "متغيرات منتج",
+    "area": "catalog",
+    "existence": "ABSENT_AFTER_SEARCH",
+    "activation": "UNKNOWN",
+    "verification": "SOURCE_ONLY",
+    "evidenceIds": [
+      "EVD-0017",
+      "EVD-0019",
+      "EVD-0005"
+    ],
+    "judgmentNoteAr": "العقد والمخطط المبحوثان بلا متغير. المقتطف وحده لا ينفي المشروع كله؛ البحث الأوسع في EVD-0019."
+  },
+  {
+    "id": "CAP-0013",
+    "nameAr": "فلاتر متخصصة",
+    "area": "filters",
+    "existence": "PARTIAL",
+    "activation": "UNKNOWN",
+    "verification": "SOURCE_ONLY",
+    "evidenceIds": [
+      "EVD-0017",
+      "EVD-0006"
+    ],
+    "judgmentNoteAr": "concernTags وskinTypes موجودان. فلاتر المقاس واللون غير موجودة في العقد."
+  },
+  {
+    "id": "CAP-0014",
+    "nameAr": "اشتراكات رصيد (منفصل)",
+    "area": "subscriptions",
+    "existence": "EXISTING",
+    "activation": "UNKNOWN",
+    "verification": "SOURCE_ONLY",
+    "evidenceIds": [
+      "EVD-0020"
+    ],
+    "judgmentNoteAr": "مسار اشتراك رصيد منفصل عن المتجر. العلم الافتراضي false في المصدر. ليس دليل إيقاف إنتاجي مستقل."
+  },
+  {
+    "id": "CAP-0015",
+    "nameAr": "حزمة مصدر الأماكن للمراجعة",
+    "area": "places-handoff",
+    "existence": "PARTIAL",
+    "activation": "UNKNOWN",
+    "verification": "SOURCE_ONLY",
+    "evidenceIds": [
+      "EVD-0028"
+    ],
+    "judgmentNoteAr": "الحزمة مصدر مراجعة وليست تطبيقًا مدمجًا في ميرا ولا بناءً مستقلًا."
+  }
+]

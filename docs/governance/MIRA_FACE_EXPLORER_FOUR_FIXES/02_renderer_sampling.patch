@@ -1,0 +1,43 @@
+diff --git a/lib/features/results_experience/presentation/widgets/perfect_mask_overlay.dart b/lib/features/results_experience/presentation/widgets/perfect_mask_overlay.dart
+--- a/lib/features/results_experience/presentation/widgets/perfect_mask_overlay.dart
++++ b/lib/features/results_experience/presentation/widgets/perfect_mask_overlay.dart
+@@ -54,6 +54,12 @@
+   /// Mask is already Perfect→presentation remapped (same pixel grid).
+   final bool presentationDecoded;
+ 
++  // Decode the semantic mask first, then filter its coverage for display.
++  // Nearest-neighbour downscaling can discard thin paths between samples.
++  // Keep the raw fallback unchanged; never filter raw RGB before its gate.
++  FilterQuality get _maskFilterQuality =>
++      presentationDecoded ? FilterQuality.medium : FilterQuality.none;
++
+   @override
+   Widget build(BuildContext context) {
+     final w = sourceWidth;
+@@ -123,7 +129,7 @@
+               height: dest.height,
+               gaplessPlayback: true,
+               filterQuality:
+-                  isMask ? FilterQuality.none : FilterQuality.high,
++                  isMask ? _maskFilterQuality : FilterQuality.high,
+             ),
+           );
+         }
+@@ -188,7 +194,7 @@
+                                 width: dest.width,
+                                 height: dest.height,
+                                 gaplessPlayback: true,
+-                                filterQuality: FilterQuality.none,
++                                filterQuality: _maskFilterQuality,
+                               ),
+                             ),
+                           ),
+@@ -224,7 +230,7 @@
+       width: width,
+       height: height,
+       gaplessPlayback: true,
+-      filterQuality: FilterQuality.none,
++      filterQuality: _maskFilterQuality,
+     );
+ 
+     if (diagnostic) {

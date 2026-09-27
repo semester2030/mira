@@ -25,7 +25,8 @@ void main() {
       headlineAr: 'بشرتك تحتاج ترطيباً ألطف',
       summaryAr: 'ملخص واضح من التحليل',
       overallConfidencePercent: confidence,
-      priorities: priorities ??
+      priorities:
+          priorities ??
           const [
             FrozenPriorityInput(
               id: 'p1',
@@ -61,7 +62,8 @@ void main() {
               confidenceLevel: 'high',
             ),
           ],
-      metrics: metrics ??
+      metrics:
+          metrics ??
           const [
             FrozenMetricInput(
               id: 'moisture',
@@ -78,7 +80,8 @@ void main() {
               confidencePercent: 0,
             ),
           ],
-      products: products ??
+      products:
+          products ??
           const [
             FrozenProductInput(
               id: 'prod75',
@@ -120,12 +123,11 @@ void main() {
               disclosure: 'partner',
             ),
           ],
-      progress: progress ??
-          const FrozenProgressInput(
-            scanCount: 1,
-            hasBaseline: false,
-          ),
-      advisorClaims: claims ??
+      progress:
+          progress ??
+          const FrozenProgressInput(scanCount: 1, hasBaseline: false),
+      advisorClaims:
+          claims ??
           const [
             FrozenAdvisorClaimInput(
               id: 'c1',
@@ -145,10 +147,7 @@ void main() {
   test('feature flag defaults to legacy', () {
     expect(MiraResultsExperienceFlag.defaults.isLegacy, isTrue);
     expect(MiraResultsExperienceFlag.defaults.isResultsV2, isFalse);
-    expect(
-      MiraResultsExperienceFlag.fromConfigValue(null).isLegacy,
-      isTrue,
-    );
+    expect(MiraResultsExperienceFlag.fromConfigValue(null).isLegacy, isTrue);
     expect(
       MiraResultsExperienceFlag.fromConfigValue('results_v2').isResultsV2,
       isTrue,
@@ -254,14 +253,14 @@ void main() {
 
   test('internal terminology rejected', () {
     expect(
-      PublicLanguagePolicy.isPublicSafe(
-        'provider_measured raw=1',
-        field: 't',
-      ),
+      PublicLanguagePolicy.isPublicSafe('provider_measured raw=1', field: 't'),
       isFalse,
     );
     expect(PublicLanguagePolicy.sanitize('MCE Trends'), isNot(contains('MCE')));
-    expect(PublicLanguagePolicy.sanitize('MCE Trends'), isNot(contains('Trends')));
+    expect(
+      PublicLanguagePolicy.sanitize('MCE Trends'),
+      isNot(contains('Trends')),
+    );
   });
 
   test('Mode B wording and no measured heatmap claim', () {
@@ -276,14 +275,10 @@ void main() {
 
   test('product thresholds', () {
     final exp = projector.project(base(), context);
-    final rec =
-        exp.products.firstWhere((p) => p.id == 'product_prod75');
-    final alt =
-        exp.products.firstWhere((p) => p.id == 'product_prod70');
-    final hid =
-        exp.products.firstWhere((p) => p.id == 'product_prod50');
-    final noEv =
-        exp.products.firstWhere((p) => p.id == 'product_prodNoEv');
+    final rec = exp.products.firstWhere((p) => p.id == 'product_prod75');
+    final alt = exp.products.firstWhere((p) => p.id == 'product_prod70');
+    final hid = exp.products.firstWhere((p) => p.id == 'product_prod50');
+    final noEv = exp.products.firstWhere((p) => p.id == 'product_prodNoEv');
     expect(rec.state, ProductRecommendationState.recommended);
     expect(alt.state, ProductRecommendationState.possibleAlternative);
     expect(hid.state, ProductRecommendationState.hidden);
@@ -331,7 +326,10 @@ void main() {
       ),
       context,
     );
-    expect(ok.progressPreview.comparability, ProgressComparabilityState.comparable);
+    expect(
+      ok.progressPreview.comparability,
+      ProgressComparabilityState.comparable,
+    );
     expect(ok.progressPreview.deltaVisible, isTrue);
     expect(ok.progressPreview.projectionLabelAr, contains('تقدير'));
   });
@@ -369,11 +367,15 @@ void main() {
   test('deterministic projection', () {
     final a = projector.project(base(), context);
     final b = projector.project(base(), context);
-    expect(a.priorities.map((p) => p.id).toList(),
-        b.priorities.map((p) => p.id).toList());
+    expect(
+      a.priorities.map((p) => p.id).toList(),
+      b.priorities.map((p) => p.id).toList(),
+    );
     expect(a.firstSurfaceIds, b.firstSurfaceIds);
-    expect(a.products.map((p) => p.state).toList(),
-        b.products.map((p) => p.state).toList());
+    expect(
+      a.products.map((p) => p.state).toList(),
+      b.products.map((p) => p.state).toList(),
+    );
     expect(a.projectionVersion, ResultsExperienceVersions.resultsProjection);
   });
 
@@ -395,19 +397,20 @@ void main() {
     expect(result.isValid, isTrue, reason: result.issues.toString());
   });
 
-  test('validators fail on internal language injection via map title override simulation',
-      () {
-    final violations = PublicLanguagePolicy.validate(
-      'Uses provider_measured and MCE',
-      field: 'x',
-    );
-    expect(violations, isNotEmpty);
-  });
+  test(
+    'validators fail on internal language injection via map title override simulation',
+    () {
+      final violations = PublicLanguagePolicy.validate(
+        'Uses provider_measured and MCE',
+        field: 'x',
+      );
+      expect(violations, isNotEmpty);
+    },
+  );
 
   test('Arabic public copy present on summary and map', () {
     final exp = projector.project(base(), context);
     expect(exp.summary.titleAr, isNotEmpty);
     expect(exp.map.explanationAr.contains(RegExp(r'[\u0600-\u06FF]')), isTrue);
   });
-
 }

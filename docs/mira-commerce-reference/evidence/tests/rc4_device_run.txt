@@ -1,0 +1,384 @@
+Automatically signing iOS for device deployment using specified development team in Xcode project: A97F7227YM
+Running Xcode build...                                          
+Xcode build done.                                           18.4s
+Installing and launching...                                     
+The Dart VM Service was not discovered after 60 seconds. This is taking much longer than expected...
+Installing and launching...                                       228.6s
+VMServiceFlutterDriver: Connecting to Flutter application at http://127.0.0.1:8888/FAtVy6GIUDQ=/
+VMServiceFlutterDriver: Isolate found with number: 4736456983645015
+VMServiceFlutterDriver: Isolate 4736456983645015 is runnable.
+VMServiceFlutterDriver: Isolate is paused at start.
+VMServiceFlutterDriver: Attempting to resume isolate
+flutter: 00:00 +0: presentation plays the sample clip and stops when covered
+VMServiceFlutterDriver: Connected to Flutter application.
+flutter: RC3_MARK rtl=TextDirection.rtl locale=ar
+flutter: RC3_MARK square
+flutter: RC3_MARK landscape
+flutter: RC3_MARK video-slide
+flutter: Some possible finders for the widgets at Offset(376.7, 560.7):
+flutter:   find.byType(CustomMultiChildLayout)
+flutter:   find.byType(PhysicalModel)
+flutter:   find.byType(AnimatedPhysicalModel)
+flutter:   find.byType(ScrollNotificationObserver)
+flutter:   find.byType(Scaffold)
+flutter:   find.byElementType(InheritedModelElement<_ModalRouteAspect>)
+flutter:   find.byElementType(InheritedModelElement<Object>)
+flutter: Some possible finders for the widgets at Offset(367.3, 849.0):
+flutter:   find.text('التفاصيل')
+flutter:   find.widgetWithText(Align, 'التفاصيل')
+flutter:   find.widgetWithText(GestureDetector, 'التفاصيل')
+flutter:   find.widgetWithText(MouseRegion, 'التفاصيل')
+flutter:   find.widgetWithText(InkWell, 'التفاصيل')
+flutter:   find.widgetWithText(PhysicalShape, 'التفاصيل')
+flutter:   find.byType(FilledButton)
+flutter:   find.byType(Column)
+flutter:   find.byType(CustomMultiChildLayout)
+flutter:   find.byType(PhysicalModel)
+flutter:   find.byType(AnimatedPhysicalModel)
+flutter:   find.byElementType(InheritedModelElement<_ModalRouteAspect>)
+flutter:   find.byElementType(InheritedModelElement<Object>)
+flutter: Some possible finders for the widgets at Offset(362.0, 857.3):
+flutter:   find.text('التفاصيل')
+flutter:   find.widgetWithText(Align, 'التفاصيل')
+flutter:   find.widgetWithText(GestureDetector, 'التفاصيل')
+flutter:   find.widgetWithText(MouseRegion, 'التفاصيل')
+flutter:   find.widgetWithText(InkWell, 'التفاصيل')
+flutter:   find.widgetWithText(PhysicalShape, 'التفاصيل')
+flutter:   find.byType(FilledButton)
+flutter:   find.byType(Column)
+flutter:   find.byType(CustomMultiChildLayout)
+flutter:   find.byType(PhysicalModel)
+flutter:   find.byType(AnimatedPhysicalModel)
+flutter:   find.byElementType(InheritedModelElement<_ModalRouteAspect>)
+flutter:   find.byElementType(InheritedModelElement<Object>)
+flutter: Some possible finders for the widgets at Offset(354.7, 852.0):
+flutter:   find.text('التفاصيل')
+flutter:   find.widgetWithText(Align, 'التفاصيل')
+flutter:   find.widgetWithText(GestureDetector, 'التفاصيل')
+flutter:   find.widgetWithText(MouseRegion, 'التفاصيل')
+flutter:   find.widgetWithText(InkWell, 'التفاصيل')
+flutter:   find.widgetWithText(PhysicalShape, 'التفاصيل')
+flutter:   find.byType(FilledButton)
+flutter:   find.byType(Column)
+flutter:   find.byType(CustomMultiChildLayout)
+flutter:   find.byType(PhysicalModel)
+flutter:   find.byType(AnimatedPhysicalModel)
+flutter:   find.byElementType(InheritedModelElement<_ModalRouteAspect>)
+flutter:   find.byElementType(InheritedModelElement<Object>)
+flutter: Some possible finders for the widgets at Offset(359.0, 764.3):
+flutter:   find.byType(CustomMultiChildLayout)
+flutter:   find.byType(PhysicalModel)
+flutter:   find.byType(AnimatedPhysicalModel)
+flutter:   find.byType(ScrollNotificationObserver)
+flutter:   find.byType(Scaffold)
+flutter:   find.byElementType(InheritedModelElement<_ModalRouteAspect>)
+flutter:   find.byElementType(InheritedModelElement<Object>)
+flutter: Some possible finders for the widgets at Offset(371.7, 612.0):
+flutter:   find.byType(CustomMultiChildLayout)
+flutter:   find.byType(PhysicalModel)
+flutter:   find.byType(AnimatedPhysicalModel)
+flutter:   find.byType(ScrollNotificationObserver)
+flutter:   find.byType(Scaffold)
+flutter:   find.byElementType(InheritedModelElement<_ModalRouteAspect>)
+flutter:   find.byElementType(InheritedModelElement<Object>)
+flutter: Some possible finders for the widgets at Offset(304.7, 560.3):
+flutter:   find.byType(CustomMultiChildLayout)
+flutter:   find.byType(PhysicalModel)
+flutter:   find.byType(AnimatedPhysicalModel)
+flutter:   find.byType(ScrollNotificationObserver)
+flutter:   find.byType(Scaffold)
+flutter:   find.byElementType(InheritedModelElement<_ModalRouteAspect>)
+flutter:   find.byElementType(InheritedModelElement<Object>)
+flutter: Some possible finders for the widgets at Offset(364.3, 488.0):
+flutter:   find.byType(CustomMultiChildLayout)
+flutter:   find.byType(PhysicalModel)
+flutter:   find.byType(AnimatedPhysicalModel)
+flutter:   find.byType(ScrollNotificationObserver)
+flutter:   find.byType(Scaffold)
+flutter:   find.byElementType(InheritedModelElement<_ModalRouteAspect>)
+flutter:   find.byElementType(InheritedModelElement<Object>)
+flutter: Some possible finders for the widgets at Offset(81.7, 735.7):
+flutter:   find.byType(CustomMultiChildLayout)
+flutter:   find.byType(PhysicalModel)
+flutter:   find.byType(AnimatedPhysicalModel)
+flutter:   find.byType(ScrollNotificationObserver)
+flutter:   find.byType(Scaffold)
+flutter:   find.byElementType(InheritedModelElement<_ModalRouteAspect>)
+flutter:   find.byElementType(InheritedModelElement<Object>)
+flutter: Some possible finders for the widgets at Offset(78.0, 732.0):
+flutter:   find.byType(CustomMultiChildLayout)
+flutter:   find.byType(PhysicalModel)
+flutter:   find.byType(AnimatedPhysicalModel)
+flutter:   find.byType(ScrollNotificationObserver)
+flutter:   find.byType(Scaffold)
+flutter:   find.byElementType(InheritedModelElement<_ModalRouteAspect>)
+flutter:   find.byElementType(InheritedModelElement<Object>)
+flutter: Some possible finders for the widgets at Offset(328.3, 865.0):
+flutter:   find.byType(FilledButton)
+flutter:   find.byType(Column)
+flutter:   find.byType(CustomMultiChildLayout)
+flutter:   find.byType(PhysicalModel)
+flutter:   find.byType(AnimatedPhysicalModel)
+flutter:   find.byElementType(InheritedModelElement<_ModalRouteAspect>)
+flutter:   find.byElementType(InheritedModelElement<Object>)
+flutter: Some possible finders for the widgets at Offset(344.0, 846.0):
+flutter:   find.text('التفاصيل')
+flutter:   find.widgetWithText(Align, 'التفاصيل')
+flutter:   find.widgetWithText(GestureDetector, 'التفاصيل')
+flutter:   find.widgetWithText(MouseRegion, 'التفاصيل')
+flutter:   find.widgetWithText(InkWell, 'التفاصيل')
+flutter:   find.widgetWithText(PhysicalShape, 'التفاصيل')
+flutter:   find.byType(FilledButton)
+flutter:   find.byType(Column)
+flutter:   find.byType(CustomMultiChildLayout)
+flutter:   find.byType(PhysicalModel)
+flutter:   find.byType(AnimatedPhysicalModel)
+flutter:   find.byElementType(InheritedModelElement<_ModalRouteAspect>)
+flutter:   find.byElementType(InheritedModelElement<Object>)
+flutter: Some possible finders for the widgets at Offset(354.3, 843.0):
+flutter:   find.text('التفاصيل')
+flutter:   find.widgetWithText(Align, 'التفاصيل')
+flutter:   find.widgetWithText(GestureDetector, 'التفاصيل')
+flutter:   find.widgetWithText(MouseRegion, 'التفاصيل')
+flutter:   find.widgetWithText(InkWell, 'التفاصيل')
+flutter:   find.widgetWithText(PhysicalShape, 'التفاصيل')
+flutter:   find.byType(FilledButton)
+flutter:   find.byType(Column)
+flutter:   find.byType(CustomMultiChildLayout)
+flutter:   find.byType(PhysicalModel)
+flutter:   find.byType(AnimatedPhysicalModel)
+flutter:   find.byElementType(InheritedModelElement<_ModalRouteAspect>)
+flutter:   find.byElementType(InheritedModelElement<Object>)
+flutter: Some possible finders for the widgets at Offset(103.7, 725.0):
+flutter:   find.byType(CustomMultiChildLayout)
+flutter:   find.byType(PhysicalModel)
+flutter:   find.byType(AnimatedPhysicalModel)
+flutter:   find.byType(ScrollNotificationObserver)
+flutter:   find.byType(Scaffold)
+flutter:   find.byElementType(InheritedModelElement<_ModalRouteAspect>)
+flutter:   find.byElementType(InheritedModelElement<Object>)
+flutter: Some possible finders for the widgets at Offset(182.0, 67.7):
+flutter:   find.byType(Row)
+flutter:   find.byType(CustomMultiChildLayout)
+flutter:   find.byType(PhysicalModel)
+flutter:   find.byType(AnimatedPhysicalModel)
+flutter:   find.byType(ScrollNotificationObserver)
+flutter:   find.byElementType(InheritedModelElement<_ModalRouteAspect>)
+flutter:   find.byElementType(InheritedModelElement<Object>)
+flutter: Some possible finders for the widgets at Offset(188.0, 60.0):
+flutter:   find.byType(CustomMultiChildLayout)
+flutter:   find.byType(PhysicalModel)
+flutter:   find.byType(AnimatedPhysicalModel)
+flutter:   find.byType(ScrollNotificationObserver)
+flutter:   find.byType(Scaffold)
+flutter:   find.byElementType(InheritedModelElement<_ModalRouteAspect>)
+flutter:   find.byElementType(InheritedModelElement<Object>)
+flutter: Some possible finders for the widgets at Offset(167.0, 74.0):
+flutter:   find.text('العد غير مفعّل')
+flutter:   find.byType(Flexible)
+flutter:   find.byType(Row)
+flutter:   find.widgetWithText(Positioned, 'العد غير مفعّل')
+flutter:   find.widgetWithText(IndexedSemantics, 'العد غير مفعّل')
+flutter:   find.widgetWithText(NotificationListener<KeepAliveNotification>, 'العد غير مفعّل')
+flutter:   find.widgetWithText(KeepAlive, 'العد غير مفعّل')
+flutter:   find.widgetWithText(AutomaticKeepAlive, 'العد غير مفعّل')
+flutter:   find.byType(CustomMultiChildLayout)
+flutter:   find.byType(PhysicalModel)
+flutter:   find.byType(AnimatedPhysicalModel)
+flutter:   find.byElementType(InheritedModelElement<_ModalRouteAspect>)
+flutter:   find.byElementType(InheritedModelElement<Object>)
+flutter: Some possible finders for the widgets at Offset(381.0, 80.0):
+flutter:   find.byType(IconButton)
+flutter:   find.byType(Row)
+flutter:   find.byType(CustomMultiChildLayout)
+flutter:   find.byType(PhysicalModel)
+flutter:   find.byType(AnimatedPhysicalModel)
+flutter:   find.byElementType(InheritedModelElement<_ModalRouteAspect>)
+flutter:   find.byElementType(InheritedModelElement<Object>)
+flutter: Some possible finders for the widgets at Offset(367.7, 851.7):
+flutter:   find.text('التفاصيل')
+flutter:   find.widgetWithText(Align, 'التفاصيل')
+flutter:   find.widgetWithText(GestureDetector, 'التفاصيل')
+flutter:   find.widgetWithText(MouseRegion, 'التفاصيل')
+flutter:   find.widgetWithText(InkWell, 'التفاصيل')
+flutter:   find.widgetWithText(PhysicalShape, 'التفاصيل')
+flutter:   find.byType(FilledButton)
+flutter:   find.byType(Column)
+flutter:   find.byType(CustomMultiChildLayout)
+flutter:   find.byType(PhysicalModel)
+flutter:   find.byType(AnimatedPhysicalModel)
+flutter:   find.byElementType(InheritedModelElement<_ModalRouteAspect>)
+flutter:   find.byElementType(InheritedModelElement<Object>)
+flutter: Some possible finders for the widgets at Offset(371.0, 851.0):
+flutter:   find.text('التفاصيل')
+flutter:   find.widgetWithText(Align, 'التفاصيل')
+flutter:   find.widgetWithText(GestureDetector, 'التفاصيل')
+flutter:   find.widgetWithText(MouseRegion, 'التفاصيل')
+flutter:   find.widgetWithText(InkWell, 'التفاصيل')
+flutter:   find.widgetWithText(PhysicalShape, 'التفاصيل')
+flutter:   find.byType(FilledButton)
+flutter:   find.byType(Column)
+flutter:   find.byType(CustomMultiChildLayout)
+flutter:   find.byType(PhysicalModel)
+flutter:   find.byType(AnimatedPhysicalModel)
+flutter:   find.byElementType(InheritedModelElement<_ModalRouteAspect>)
+flutter:   find.byElementType(InheritedModelElement<Object>)
+flutter: Some possible finders for the widgets at Offset(380.3, 744.3):
+flutter:   find.text('لوريال باريس')
+flutter:   find.byType(Column)
+flutter:   find.widgetWithText(Padding, 'لوريال باريس')
+flutter:   find.widgetWithText(Positioned, 'لوريال باريس')
+flutter:   find.widgetWithText(IndexedSemantics, 'لوريال باريس')
+flutter:   find.widgetWithText(NotificationListener<KeepAliveNotification>, 'لوريال باريس')
+flutter:   find.widgetWithText(KeepAlive, 'لوريال باريس')
+flutter:   find.byType(CustomMultiChildLayout)
+flutter:   find.byType(PhysicalModel)
+flutter:   find.byType(AnimatedPhysicalModel)
+flutter:   find.byType(ScrollNotificationObserver)
+flutter:   find.byElementType(InheritedModelElement<_ModalRouteAspect>)
+flutter:   find.byElementType(InheritedModelElement<Object>)
+flutter: Some possible finders for the widgets at Offset(373.3, 754.7):
+flutter:   find.text('89 ر.س')
+flutter:   find.byType(Column)
+flutter:   find.widgetWithText(Padding, '89 ر.س')
+flutter:   find.widgetWithText(Positioned, '89 ر.س')
+flutter:   find.widgetWithText(IndexedSemantics, '89 ر.س')
+flutter:   find.widgetWithText(NotificationListener<KeepAliveNotification>, '89 ر.س')
+flutter:   find.widgetWithText(KeepAlive, '89 ر.س')
+flutter:   find.byType(CustomMultiChildLayout)
+flutter:   find.byType(PhysicalModel)
+flutter:   find.byType(AnimatedPhysicalModel)
+flutter:   find.byType(ScrollNotificationObserver)
+flutter:   find.byElementType(InheritedModelElement<_ModalRouteAspect>)
+flutter:   find.byElementType(InheritedModelElement<Object>)
+flutter: Some possible finders for the widgets at Offset(110.0, 655.3):
+flutter:   find.byType(CustomMultiChildLayout)
+flutter:   find.byType(PhysicalModel)
+flutter:   find.byType(AnimatedPhysicalModel)
+flutter:   find.byType(ScrollNotificationObserver)
+flutter:   find.byType(Scaffold)
+flutter:   find.byElementType(InheritedModelElement<_ModalRouteAspect>)
+flutter:   find.byElementType(InheritedModelElement<Object>)
+flutter: Some possible finders for the widgets at Offset(368.7, 753.3):
+flutter:   find.text('89 ر.س')
+flutter:   find.byType(Column)
+flutter:   find.widgetWithText(Padding, '89 ر.س')
+flutter:   find.widgetWithText(Positioned, '89 ر.س')
+flutter:   find.widgetWithText(IndexedSemantics, '89 ر.س')
+flutter:   find.widgetWithText(NotificationListener<KeepAliveNotification>, '89 ر.س')
+flutter:   find.widgetWithText(KeepAlive, '89 ر.س')
+flutter:   find.byType(CustomMultiChildLayout)
+flutter:   find.byType(PhysicalModel)
+flutter:   find.byType(AnimatedPhysicalModel)
+flutter:   find.byType(ScrollNotificationObserver)
+flutter:   find.byElementType(InheritedModelElement<_ModalRouteAspect>)
+flutter:   find.byElementType(InheritedModelElement<Object>)
+flutter: Some possible finders for the widgets at Offset(376.0, 734.0):
+flutter:   find.text('لوريال باريس')
+flutter:   find.byType(Column)
+flutter:   find.widgetWithText(Padding, 'لوريال باريس')
+flutter:   find.widgetWithText(Positioned, 'لوريال باريس')
+flutter:   find.widgetWithText(IndexedSemantics, 'لوريال باريس')
+flutter:   find.widgetWithText(NotificationListener<KeepAliveNotification>, 'لوريال باريس')
+flutter:   find.widgetWithText(KeepAlive, 'لوريال باريس')
+flutter:   find.byType(CustomMultiChildLayout)
+flutter:   find.byType(PhysicalModel)
+flutter:   find.byType(AnimatedPhysicalModel)
+flutter:   find.byType(ScrollNotificationObserver)
+flutter:   find.byElementType(InheritedModelElement<_ModalRouteAspect>)
+flutter:   find.byElementType(InheritedModelElement<Object>)
+flutter: Some possible finders for the widgets at Offset(153.0, 522.0):
+flutter:   find.byKey(const Key('assets/marketplace/samples/sample_portrait.png-0'))
+flutter:   find.byType(ColoredBox)
+flutter:   find.byType(CustomMultiChildLayout)
+flutter:   find.byType(PhysicalModel)
+flutter:   find.byType(AnimatedPhysicalModel)
+flutter:   find.byType(ScrollNotificationObserver)
+flutter:   find.byElementType(InheritedModelElement<_ModalRouteAspect>)
+flutter:   find.byElementType(InheritedModelElement<Object>)
+flutter: Some possible finders for the widgets at Offset(396.3, 71.3):
+flutter:   find.byType(IconButton)
+flutter:   find.byType(Row)
+flutter:   find.byType(CustomMultiChildLayout)
+flutter:   find.byType(PhysicalModel)
+flutter:   find.byType(AnimatedPhysicalModel)
+flutter:   find.byElementType(InheritedModelElement<_ModalRouteAspect>)
+flutter:   find.byElementType(InheritedModelElement<Object>)
+flutter: Some possible finders for the widgets at Offset(390.3, 62.0):
+flutter:   find.byType(IconButton)
+flutter:   find.byType(Row)
+flutter:   find.byType(CustomMultiChildLayout)
+flutter:   find.byType(PhysicalModel)
+flutter:   find.byType(AnimatedPhysicalModel)
+flutter:   find.byElementType(InheritedModelElement<_ModalRouteAspect>)
+flutter:   find.byElementType(InheritedModelElement<Object>)
+flutter: Some possible finders for the widgets at Offset(382.3, 72.7):
+flutter:   find.byType(IconButton)
+flutter:   find.byType(Row)
+flutter:   find.byType(CustomMultiChildLayout)
+flutter:   find.byType(PhysicalModel)
+flutter:   find.byType(AnimatedPhysicalModel)
+flutter:   find.byElementType(InheritedModelElement<_ModalRouteAspect>)
+flutter:   find.byElementType(InheritedModelElement<Object>)
+flutter: ══╡ EXCEPTION CAUGHT BY FLUTTER TEST FRAMEWORK ╞════════════════════════════════════════════════════
+flutter: The following TestFailure was thrown running a test:
+flutter: video player did not become ready
+flutter: 
+flutter: When the exception was thrown, this was the stack:
+flutter: #0      fail (package:matcher/src/expect/expect.dart:149:31)
+flutter: #1      _waitForActivePlayer (file:///Users/fayez/Desktop/mira/integration_test/discover_playback_rc2_test.dart:174:3)
+flutter: <asynchronous suspension>
+flutter: #2      main.<anonymous closure> (file:///Users/fayez/Desktop/mira/integration_test/discover_playback_rc2_test.dart:35:25)
+flutter: <asynchronous suspension>
+flutter: #3      testWidgets.<anonymous closure>.<anonymous closure> (package:flutter_test/src/widget_tester.dart:192:15)
+flutter: <asynchronous suspension>
+flutter: #4      TestWidgetsFlutterBinding._runTestBody (package:flutter_test/src/binding.dart:1059:5)
+flutter: <asynchronous suspension>
+flutter: #5      TestWidgetsFlutterBinding._createTestCompletionHandler.<anonymous closure> (package:flutter_test/src/binding.dart:814:12)
+flutter: <asynchronous suspension>
+flutter: 
+flutter: The test description was:
+flutter:   presentation plays the sample clip and stops when covered
+flutter: ════════════════════════════════════════════════════════════════════════════════════════════════════
+flutter: 00:57 +0: presentation plays the sample clip and stops when covered [E]
+flutter:   Test failed. See exception logs above.
+  The test description was: presentation plays the sample clip and stops when covered
+flutter:   
+flutter: 00:57 +0 -1: (tearDownAll)
+flutter: 00:57 +1 -1: Some tests failed.
+Failure Details:
+Failure in method: presentation plays the sample clip and stops when covered
+══╡ EXCEPTION CAUGHT BY FLUTTER TEST FRAMEWORK ╞═════════════════
+The following TestFailure was thrown running a test:
+video player did not become ready
+
+When the exception was thrown, this was the stack:
+#0      fail (package:matcher/src/expect/expect.dart:149:31)
+#1      _waitForActivePlayer (file:///Users/fayez/Desktop/mira/integration_test/discover_playback_rc2_test.dart:174:3)
+<asynchronous suspension>
+#2      main.<anonymous closure> (file:///Users/fayez/Desktop/mira/integration_test/discover_playback_rc2_test.dart:35:25)
+<asynchronous suspension>
+#3      testWidgets.<anonymous closure>.<anonymous closure> (package:flutter_test/src/widget_tester.dart:192:15)
+<asynchronous suspension>
+#4      TestWidgetsFlutterBinding._runTestBody (package:flutter_test/src/binding.dart:1059:5)
+<asynchronous suspension>
+#5      TestWidgetsFlutterBinding._createTestCompletionHandler.<anonymous closure> (package:flutter_test/src/binding.dart:814:12)
+<asynchronous suspension>
+
+The test description was:
+  presentation plays the sample clip and stops when covered
+═════════════════════════════════════════════════════════════════
+
+end of failure 1
+
+
+
+Automatically signing iOS for device deployment using specified development team in Xcode project: A97F7227YM
+Running Xcode build...                                          
+Xcode build done.                                           13.7s
+Installing and launching...                                     
+The Dart VM Service was not discovered after 60 seconds. This is taking much longer than expected...
+Installing and launching...                                       237.2s
+
+محاولة 2 (سحب RTL محسّن): أُوقفت قبل اكتمال التثبيت/الاتصال — لا نتيجة اختبار جديدة.
+المحاولة 1 أعلاه: VM اتصل؛ فشل video player did not become ready.

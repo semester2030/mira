@@ -1,0 +1,12 @@
+partner xss text rendered without an image or alert
+partner desktop 1280x2411
+partner edit 1280x2463
+draft reloaded after leaving the page
+partner narrow 480x2697
+admin preview 1280x1568
+conflict kept published name; seen revision 4
+admin conflict 1280x1568
+separate approve published the re-previewed revision on the same id
+admin narrow 480x900
+service reject 1280x1772
+other partner catalog did not list the fixture items

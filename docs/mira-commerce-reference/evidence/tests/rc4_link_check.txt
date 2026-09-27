@@ -1,0 +1,11 @@
+RC4 link check — MIRA_DISCOVER_PHASE1_CLOSURE_RC4_20260925_2324
+ZIP SHA256: 1fa072bcf79c29524d2412604250462bb1e17ff693b42507f2b47d1055c4d6c0
+
+Extracted layout (zip + sha256 + verification beside folder):
+../../MIRA_DISCOVER_PHASE1_CLOSURE_RC4_20260925_2324.zip — موجود بعد النسخ إلى مجلد الفحص
+../../MIRA_DISCOVER_PHASE1_CLOSURE_RC4_20260925_2324.zip.sha256.txt — موجود
+../../MIRA_DISCOVER_PHASE1_CLOSURE_RC4_20260925_2324_VERIFICATION.txt — موجود على سطح المكتب
+
+Repo local zip: deliveries/MIRA_DISCOVER_PHASE1_CLOSURE_RC4_20260925_2324.zip
+
+RC3 verification unified name: deliveries/MIRA_DISCOVER_PHASE1_CLOSURE_RC3_VERIFICATION.txt (نسخة مرجعية)

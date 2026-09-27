@@ -1,0 +1,581 @@
+[
+  {
+    "id": "REQ-0001",
+    "nameAr": "منتج أساسي بهوية ثابتة",
+    "area": "catalog",
+    "priority": "must",
+    "status": "proposed",
+    "existingCapabilityId": "CAP-0001",
+    "gapId": "GAP-0001",
+    "acceptanceAr": "المعطى: منتج شريك موجود بهوية ثابتة. الإجراء: إنشاء منتج ثانٍ ثم تعديل سعر الأول. المتوقع: يبقى معرف المنتج الأول وتاريخه، ويتغير السعر المسجل دون إنشاء منتج جديد.",
+    "acceptance": {
+      "given": "منتج شريك موجود بهوية ثابتة",
+      "action": "إنشاء منتج ثانٍ ثم تعديل سعر الأول",
+      "expected": "يبقى معرف المنتج الأول وتاريخه، ويتغير السعر المسجل دون إنشاء منتج جديد",
+      "failures": [
+        "رفض اسم فارغ",
+        "رفض سعر سالب"
+      ],
+      "testMethod": "اختبار خدمة على قاعدة اختبار",
+      "evidenceRequired": "سجل المنتج قبل وبعد مع المعرف"
+    },
+    "planPlacement": "future-gate"
+  },
+  {
+    "id": "REQ-0002",
+    "nameAr": "متغيرات مقاس/لون/مخزون",
+    "area": "catalog",
+    "priority": "must",
+    "status": "proposed",
+    "existingCapabilityId": "CAP-0012",
+    "gapId": "GAP-0002",
+    "acceptanceAr": "المعطى: منتج له متغيران لون×مقاس. الإجراء: طلب المتغير الأزرق M المتوفر. المتوقع: يُختار متغير واحد تتطابق خصائصه كلها.",
+    "acceptance": {
+      "given": "منتج له متغيران لون×مقاس",
+      "action": "طلب المتغير الأزرق M المتوفر",
+      "expected": "يُختار متغير واحد تتطابق خصائصه كلها",
+      "failures": [
+        "متغير بلا مخزون لا يُباع",
+        "دمج لون من متغير ومقاس من آخر"
+      ],
+      "testMethod": "اختبار استعلام المتغير",
+      "evidenceRequired": "صف المتغير المطابق فقط"
+    },
+    "planPlacement": "future-gate"
+  },
+  {
+    "id": "REQ-0003",
+    "nameAr": "خدمة + مقدم + فرع",
+    "area": "catalog",
+    "priority": "must",
+    "status": "proposed",
+    "existingCapabilityId": "CAP-0001",
+    "gapId": "GAP-0003",
+    "acceptanceAr": "المعطى: طلب انضمام عيادة. الإجراء: اعتماد الإدارة ثم إضافة خدمة وفرع. المتوقع: الخدمة ترتبط بالمنشأة والفرع لا بمنتج عام.",
+    "acceptance": {
+      "given": "طلب انضمام عيادة",
+      "action": "اعتماد الإدارة ثم إضافة خدمة وفرع",
+      "expected": "الخدمة ترتبط بالمنشأة والفرع لا بمنتج عام",
+      "failures": [
+        "عيادة بلا ترخيص موثق تبقى قيد المراجعة"
+      ],
+      "testMethod": "اختبار الاعتماد ومسار الفرع",
+      "evidenceRequired": "سجل الفرع والخدمة"
+    },
+    "planPlacement": "future-gate"
+  },
+  {
+    "id": "REQ-0004",
+    "nameAr": "محتوى مرئي للمنتج",
+    "area": "media",
+    "priority": "must",
+    "status": "proposed",
+    "existingCapabilityId": "CAP-0010",
+    "gapId": "GAP-0004",
+    "acceptanceAr": "المعطى: ملف فيديو ضمن الحدود. الإجراء: رفعه وربطه بمنتج. المتوقع: لا يُعرض قبل المراجعة، ويشير إلى المنتج الأصلي.",
+    "acceptance": {
+      "given": "ملف فيديو ضمن الحدود",
+      "action": "رفعه وربطه بمنتج",
+      "expected": "لا يُعرض قبل المراجعة، ويشير إلى المنتج الأصلي",
+      "failures": [
+        "رفض نوع غير مسموح",
+        "فشل المعالجة يبقي الحالة فشل"
+      ],
+      "testMethod": "اختبار دورة الوسائط",
+      "evidenceRequired": "حالات الوسيط"
+    },
+    "planPlacement": "future-gate"
+  },
+  {
+    "id": "REQ-0005",
+    "nameAr": "تصفح فيديو متتابع",
+    "area": "media",
+    "priority": "must",
+    "status": "proposed",
+    "existingCapabilityId": "CAP-0010",
+    "gapId": "GAP-0005",
+    "acceptanceAr": "المعطى: ثلاثة مقاطع منشورة. الإجراء: تمرير عمودي مع صوت. المتوقع: مقطع واحد مسموع، واستئناف الموضع عند العودة.",
+    "acceptance": {
+      "given": "ثلاثة مقاطع منشورة",
+      "action": "تمرير عمودي مع صوت",
+      "expected": "مقطع واحد مسموع، واستئناف الموضع عند العودة",
+      "failures": [
+        "تداخل صوت مقطعين",
+        "اقتصاص خارج الإطار"
+      ],
+      "testMethod": "اختبار واجهة على جهاز",
+      "evidenceRequired": "تسجيل شاشة ولقطات"
+    },
+    "planPlacement": "future-gate"
+  },
+  {
+    "id": "REQ-0006",
+    "nameAr": "عرض متجر رسمي",
+    "area": "partners",
+    "priority": "should",
+    "status": "proposed",
+    "existingCapabilityId": "CAP-0007",
+    "gapId": null,
+    "acceptanceAr": "المعطى: شريك معتمد. الإجراء: فتح صفحته العامة من التطبيق. المتوقع: تظهر منتجاته النشطة فقط ورابط متجره.",
+    "acceptance": {
+      "given": "شريك معتمد",
+      "action": "فتح صفحته العامة من التطبيق",
+      "expected": "تظهر منتجاته النشطة فقط ورابط متجره",
+      "failures": [
+        "منتجات شريك آخر لا تُخلط"
+      ],
+      "testMethod": "اختبار عرض المتجر",
+      "evidenceRequired": "قائمة المنتجات المعروضة"
+    },
+    "planPlacement": "future-gate"
+  },
+  {
+    "id": "REQ-0007",
+    "nameAr": "إعلانات مشاهير بلا نسخ مخزون",
+    "area": "creators",
+    "priority": "must",
+    "status": "proposed",
+    "existingCapabilityId": "CAP-0011",
+    "gapId": "GAP-0006",
+    "acceptanceAr": "المعطى: إعلان مشهور مربوط بمنتج. الإجراء: تغيير سعر المنتج ومخزونه. المتوقع: الإعلان يقرأ السعر والمخزون من المنتج ولا يخزن نسخة.",
+    "acceptance": {
+      "given": "إعلان مشهور مربوط بمنتج",
+      "action": "تغيير سعر المنتج ومخزونه",
+      "expected": "الإعلان يقرأ السعر والمخزون من المنتج ولا يخزن نسخة",
+      "failures": [
+        "رفض نشر إعلان بلا منتج"
+      ],
+      "testMethod": "اختبار عدم النسخ",
+      "evidenceRequired": "مقارنة حقول الإعلان والمنتج"
+    },
+    "planPlacement": "future-gate"
+  },
+  {
+    "id": "REQ-0008",
+    "nameAr": "فصل الناشر/البائع/المحتوى/الطلب",
+    "area": "creators",
+    "priority": "must",
+    "status": "proposed",
+    "existingCapabilityId": "CAP-0011",
+    "gapId": "GAP-0007",
+    "acceptanceAr": "المعطى: أطراف الناشر والمعلن والبائع مختلفة. الإجراء: فتح الإعلان ثم الشراء. المتوقع: الطلب يُنسب للبائع والمحتوى للناشر.",
+    "acceptance": {
+      "given": "أطراف الناشر والمعلن والبائع مختلفة",
+      "action": "فتح الإعلان ثم الشراء",
+      "expected": "الطلب يُنسب للبائع والمحتوى للناشر",
+      "failures": [
+        "خلط هوية المعلن مع البائع"
+      ],
+      "testMethod": "اختبار الإسناد",
+      "evidenceRequired": "سجل الأطراف"
+    },
+    "planPlacement": "future-gate"
+  },
+  {
+    "id": "REQ-0009",
+    "nameAr": "حالات نشر المحتوى",
+    "area": "media",
+    "priority": "should",
+    "status": "proposed",
+    "existingCapabilityId": "CAP-0010",
+    "gapId": "GAP-0008",
+    "acceptanceAr": "المعطى: وسيط قيد المراجعة. الإجراء: محاولة تشغيله في التصفح. المتوقع: لا يظهر في الخلاصة العامة.",
+    "acceptance": {
+      "given": "وسيط قيد المراجعة",
+      "action": "محاولة تشغيله في التصفح",
+      "expected": "لا يظهر في الخلاصة العامة",
+      "failures": [
+        "نشر بلا مراجعة"
+      ],
+      "testMethod": "اختبار حالات النشر",
+      "evidenceRequired": "حالة الوسيط قبل وبعد"
+    },
+    "planPlacement": "future-gate"
+  },
+  {
+    "id": "REQ-0010",
+    "nameAr": "موافقة المتجر على الإعلان",
+    "area": "creators",
+    "priority": "should",
+    "status": "proposed",
+    "existingCapabilityId": "CAP-0011",
+    "gapId": "GAP-0009",
+    "acceptanceAr": "المعطى: إعلان بانتظار موافقة المتجر. الإجراء: المتجر يرفض الربط. المتوقع: يختفي من العرض ويبقى المنتج.",
+    "acceptance": {
+      "given": "إعلان بانتظار موافقة المتجر",
+      "action": "المتجر يرفض الربط",
+      "expected": "يختفي من العرض ويبقى المنتج",
+      "failures": [
+        "ربط بلا موافقة"
+      ],
+      "testMethod": "اختبار حالة الربط",
+      "evidenceRequired": "سجل الموافقة"
+    },
+    "planPlacement": "future-gate"
+  },
+  {
+    "id": "REQ-0011",
+    "nameAr": "حفظ مرجع المنتج عند الطلب",
+    "area": "orders",
+    "priority": "must",
+    "status": "proposed",
+    "existingCapabilityId": "CAP-0006",
+    "gapId": "GAP-0010",
+    "acceptanceAr": "المعطى: طلب على متغير محدد. الإجراء: تغيير سعر المتغير لاحقًا. المتوقع: الطلب يحتفظ بسعر ونسخة المتغير وقت الإنشاء.",
+    "acceptance": {
+      "given": "طلب على متغير محدد",
+      "action": "تغيير سعر المتغير لاحقًا",
+      "expected": "الطلب يحتفظ بسعر ونسخة المتغير وقت الإنشاء",
+      "failures": [
+        "الطلب يتبع السعر الجديد صامتًا"
+      ],
+      "testMethod": "اختبار لقطة الطلب",
+      "evidenceRequired": "لقطة السعر"
+    },
+    "planPlacement": "future-gate"
+  },
+  {
+    "id": "REQ-0012",
+    "nameAr": "رحلة مشاهدة→طلب",
+    "area": "journey",
+    "priority": "must",
+    "status": "proposed",
+    "existingCapabilityId": "CAP-0004",
+    "gapId": "GAP-0011",
+    "acceptanceAr": "المعطى: مستخدم على مقطع منتج. الإجراء: يختار شراء أو حجز أو استفسار. المتوقع: كل مسار يفتح وجهته دون تحويل الكل إلى الشراء.",
+    "acceptance": {
+      "given": "مستخدم على مقطع منتج",
+      "action": "يختار شراء أو حجز أو استفسار",
+      "expected": "كل مسار يفتح وجهته دون تحويل الكل إلى الشراء",
+      "failures": [
+        "زر واحد لكل المسارات"
+      ],
+      "testMethod": "اختبار الرحلة",
+      "evidenceRequired": "سجل المسار المختار"
+    },
+    "planPlacement": "future-gate"
+  },
+  {
+    "id": "REQ-0013",
+    "nameAr": "فلاتر AND على متغير واحد",
+    "area": "filters",
+    "priority": "must",
+    "status": "proposed",
+    "existingCapabilityId": "CAP-0013",
+    "gapId": "GAP-0012",
+    "acceptanceAr": "المعطى: فستان أزرق M متوفر وفستان أزرق S غير متوفر. الإجراء: فلتر لون أزرق AND مقاس M AND متوفر. المتوقع: منتج واحد ومتغير واحد.",
+    "acceptance": {
+      "given": "فستان أزرق M متوفر وفستان أزرق S غير متوفر",
+      "action": "فلتر لون أزرق AND مقاس M AND متوفر",
+      "expected": "منتج واحد ومتغير واحد",
+      "failures": [
+        "مطابقة اللون من متغير والمقاس من آخر"
+      ],
+      "testMethod": "اختبار المثال المرجعي",
+      "evidenceRequired": "هوية المتغير المطابق"
+    },
+    "planPlacement": "future-gate"
+  },
+  {
+    "id": "REQ-0014",
+    "nameAr": "فلترة خادمية مع ترقيم",
+    "area": "filters",
+    "priority": "must",
+    "status": "proposed",
+    "existingCapabilityId": "CAP-0013",
+    "gapId": "GAP-0013",
+    "acceptanceAr": "المعطى: كتالوج أكبر من صفحة. الإجراء: فلتر مع ترتيب وترقيم. المتوقع: العدد الكلي صحيح والصفحة لا تكرر صفًا.",
+    "acceptance": {
+      "given": "كتالوج أكبر من صفحة",
+      "action": "فلتر مع ترتيب وترقيم",
+      "expected": "العدد الكلي صحيح والصفحة لا تكرر صفًا",
+      "failures": [
+        "فلترة على العميل بعد جلب الكل"
+      ],
+      "testMethod": "اختبار الاستعلام",
+      "evidenceRequired": "العد ورقم الصفحة"
+    },
+    "planPlacement": "future-gate"
+  },
+  {
+    "id": "REQ-0015",
+    "nameAr": "أحداث تحليلات",
+    "area": "analytics",
+    "priority": "should",
+    "status": "proposed",
+    "existingCapabilityId": "CAP-0007",
+    "gapId": "GAP-0014",
+    "acceptanceAr": "المعطى: حدث نقرة على منتج. الإجراء: تسجيله ثم عرضه للشريك المالك. المتوقع: الحدث مرتبط بالشريك والهدف.",
+    "acceptance": {
+      "given": "حدث نقرة على منتج",
+      "action": "تسجيله ثم عرضه للشريك المالك",
+      "expected": "الحدث مرتبط بالشريك والهدف",
+      "failures": [
+        "شريك يسجل حدثًا لشريك آخر من جسم الطلب"
+      ],
+      "testMethod": "اختبار التتبع بعد سد الثغرة",
+      "evidenceRequired": "سجل الحدث والمالك"
+    },
+    "planPlacement": "future-gate"
+  },
+  {
+    "id": "REQ-0016",
+    "nameAr": "عزل بيانات المتاجر",
+    "area": "security",
+    "priority": "must",
+    "status": "proposed",
+    "existingCapabilityId": "CAP-0007",
+    "gapId": null,
+    "acceptanceAr": "المعطى: رمزان لشريكين. الإجراء: الشريك أ يحاول تعديل منتج ب. المتوقع: الرفض دون تسريب وجود المنتج.",
+    "acceptance": {
+      "given": "رمزان لشريكين",
+      "action": "الشريك أ يحاول تعديل منتج ب",
+      "expected": "الرفض دون تسريب وجود المنتج",
+      "failures": [
+        "قبول partnerId من الجسم في الكتابة"
+      ],
+      "testMethod": "اختبار العزل على قاعدة اختبار",
+      "evidenceRequired": "استدعاء assert والنتيجة"
+    },
+    "planPlacement": "future-gate"
+  },
+  {
+    "id": "REQ-0017",
+    "nameAr": "فصل البشرة عن الإعلان المدفوع",
+    "area": "privacy",
+    "priority": "must",
+    "status": "proposed",
+    "existingCapabilityId": null,
+    "gapId": "GAP-0015",
+    "acceptanceAr": "المعطى: نتيجة تحليل بشرة وإعلان مدفوع. الإجراء: عرض التوصية. المتوقع: الإعلان موسوم مدفوعًا ولا يُقدَّم كنتيجة تحليل.",
+    "acceptance": {
+      "given": "نتيجة تحليل بشرة وإعلان مدفوع",
+      "action": "عرض التوصية",
+      "expected": "الإعلان موسوم مدفوعًا ولا يُقدَّم كنتيجة تحليل",
+      "failures": [
+        "خلط الإعلان مع درجة البشرة"
+      ],
+      "testMethod": "اختبار العرض",
+      "evidenceRequired": "لقطة التمييز"
+    },
+    "planPlacement": "future-gate"
+  },
+  {
+    "id": "REQ-0018",
+    "nameAr": "إعادة استخدام الكتالوج الحالي",
+    "area": "reuse",
+    "priority": "must",
+    "status": "proposed",
+    "existingCapabilityId": "CAP-0001",
+    "gapId": null,
+    "acceptanceAr": "المعطى: جداول Partner وProduct الحالية. الإجراء: إضافة متغير دون جدول منتج موازٍ. المتوقع: المنتجات القديمة تبقى قابلة للقراءة.",
+    "acceptance": {
+      "given": "جداول Partner وProduct الحالية",
+      "action": "إضافة متغير دون جدول منتج موازٍ",
+      "expected": "المنتجات القديمة تبقى قابلة للقراءة",
+      "failures": [
+        "نسخ الكتالوج إلى مخطط جديد"
+      ],
+      "testMethod": "مراجعة الترحيل",
+      "evidenceRequired": "خطة الترحيل والاختبار"
+    },
+    "planPlacement": "future-gate"
+  },
+  {
+    "id": "REQ-0019",
+    "nameAr": "تمييز شراء/حجز/استفسار/اتصال",
+    "area": "journey",
+    "priority": "must",
+    "status": "proposed",
+    "existingCapabilityId": "CAP-0005",
+    "gapId": "GAP-0016",
+    "acceptanceAr": "المعطى: منتج وخدمة. الإجراء: إظهار الأفعال المتاحة. المتوقع: الشراء والحجز والاستفسار والاتصال أزرار مختلفة حسب النوع.",
+    "acceptance": {
+      "given": "منتج وخدمة",
+      "action": "إظهار الأفعال المتاحة",
+      "expected": "الشراء والحجز والاستفسار والاتصال أزرار مختلفة حسب النوع",
+      "failures": [
+        "حجز على منتج مادي بلا خدمة"
+      ],
+      "testMethod": "اختبار الأفعال",
+      "evidenceRequired": "مصفوفة الأزرار"
+    },
+    "planPlacement": "future-gate"
+  },
+  {
+    "id": "REQ-0020",
+    "nameAr": "قرار البث الحي",
+    "area": "media",
+    "priority": "decision",
+    "status": "proposed",
+    "existingCapabilityId": "CAP-0010",
+    "gapId": "GAP-0017",
+    "acceptanceAr": "المعطى: قرار نطاق البث الحي ما زال مفتوحًا. الإجراء: مراجع الدراسة. المتوقع: لا تُبنى شاشة بث ولا تُغلق الدراسة بانتظارها.",
+    "acceptance": {
+      "given": "قرار نطاق البث الحي ما زال مفتوحًا",
+      "action": "مراجع الدراسة",
+      "expected": "لا تُبنى شاشة بث ولا تُغلق الدراسة بانتظارها",
+      "failures": [
+        "اعتبار البث متطلب إطلاق"
+      ],
+      "testMethod": "مراجعة DEC-0002",
+      "evidenceRequired": "نص القرار وحالته"
+    },
+    "planPlacement": "scope-decision"
+  },
+  {
+    "id": "REQ-0021",
+    "nameAr": "عداد مشاهدات صادق على العرض المنشور",
+    "area": "analytics",
+    "gapId": "GAP-0018",
+    "acceptanceAr": "المعطى: عرض منشور بفيديو أو صور. الإجراء: تحميل البيانات ثم السحب بين صور العرض نفسه دون بقاء مؤهل. المتوقع: لا يزيد العدد بالتحميل المسبق ولا بالسحب الأفقي، ولا يظهر صفر عند فشل الجلب.",
+    "acceptance": {
+      "given": "عرض منشور بفيديو أو صور",
+      "action": "تحميل البيانات ثم السحب بين صور العرض نفسه دون بقاء مؤهل",
+      "expected": "لا يزيد العدد بالتحميل المسبق ولا بالسحب الأفقي، ولا يظهر صفر عند فشل الجلب",
+      "failures": [
+        "احتساب التحميل مشاهدة",
+        "إظهار صفر عند التعذر",
+        "استبدال العدد برقم تسويقي"
+      ],
+      "testMethod": "اختبار عقد الأحداث لاحقًا؛ هذه الجولة توثيق فقط",
+      "evidenceRequired": "سجل حدث مؤهل وسجل فشل جلب"
+    },
+    "planPlacement": "future-gate",
+    "existingCapabilityId": "CAP-0015",
+    "priority": "must",
+    "status": "متطلب معتمد"
+  },
+  {
+    "id": "REQ-0022",
+    "nameAr": "استيراد كتالوج خارجي دون نشر تلقائي",
+    "area": "integration",
+    "gapId": "GAP-0019",
+    "acceptanceAr": "المعطى: تاجر لديه منتجات في متجر خارجي مربوط بصلاحيات مثبتة. الإجراء: استيراد البيانات والوسائط إلى مسودات. المتوقع: تبقى المسودات غير منشورة حتى الاعتماد، ويحتفظ كل منتج بهوية مصدره.",
+    "acceptance": {
+      "given": "تاجر لديه منتجات في متجر خارجي مربوط بصلاحيات مثبتة",
+      "action": "استيراد البيانات والوسائط إلى مسودات",
+      "expected": "تبقى المسودات غير منشورة حتى الاعتماد، ويحتفظ كل منتج بهوية مصدره",
+      "failures": [
+        "نشر تلقائي عند الاستيراد",
+        "طلب فيديو لكل منتج قبل أي استفادة"
+      ],
+      "testMethod": "عقد ربط موثق؛ المنصة غير معتمدة الآن",
+      "evidenceRequired": "سجل مسودة وحالة نشر"
+    },
+    "planPlacement": "future-gate",
+    "existingCapabilityId": "CAP-0015",
+    "priority": "must",
+    "status": "متطلب معتمد"
+  },
+  {
+    "id": "REQ-0023",
+    "nameAr": "إحصاءات إعلان المشهور مستقلة",
+    "area": "ads",
+    "gapId": "GAP-0018",
+    "acceptanceAr": "المعطى: إعلان مشهور مرتبط بعرض تاجر أصلي. الإجراء: تسجيل مشاهدة للإعلان وأخرى للأصل. المتوقع: العددان منفصلان مع رابط بين الكيانين، والسعر يبقى من المصدر الأصلي.",
+    "acceptance": {
+      "given": "إعلان مشهور مرتبط بعرض تاجر أصلي",
+      "action": "تسجيل مشاهدة للإعلان وأخرى للأصل",
+      "expected": "العددان منفصلان مع رابط بين الكيانين، والسعر يبقى من المصدر الأصلي",
+      "failures": [
+        "نسخ السعر إلى الإعلان كمصدر مستقل",
+        "دمج العددين في رقم واحد"
+      ],
+      "testMethod": "اختبار لاحق بعد وجود الكيانين",
+      "evidenceRequired": "سجل عرض أصلي وسجل إعلان"
+    },
+    "planPlacement": "future-gate",
+    "existingCapabilityId": "CAP-0015",
+    "priority": "must",
+    "status": "متطلب معتمد"
+  },
+  {
+    "id": "REQ-0024",
+    "nameAr": "عرض كامل لكل منتج أو خدمة",
+    "area": "experience",
+    "gapId": "GAP-0020",
+    "acceptanceAr": "المعطى: منتج أو خدمة له وسائط. الإجراء: فتح العرض في الاكتشاف أو داخل متجر. المتوقع: شاشة كاملة، وداخل المتجر تظهر عروضه المطابقة للفلاتر فقط.",
+    "acceptance": {
+      "given": "منتج أو خدمة له وسائط",
+      "action": "فتح العرض في الاكتشاف أو داخل متجر",
+      "expected": "شاشة كاملة، وداخل المتجر تظهر عروضه المطابقة للفلاتر فقط",
+      "failures": [
+        "قص المنتج بطريقة مضللة",
+        "خلط عروض متجر آخر"
+      ],
+      "testMethod": "اختبار واجهة لاحق ببيانات اختبار",
+      "evidenceRequired": "لقطات RTL وSafeArea"
+    },
+    "planPlacement": "future-gate",
+    "existingCapabilityId": "CAP-0015",
+    "priority": "must",
+    "status": "متطلب معتمد"
+  },
+  {
+    "id": "REQ-0025",
+    "nameAr": "فصل السحب العمودي عن الأفقي",
+    "area": "experience",
+    "gapId": "GAP-0020",
+    "acceptanceAr": "المعطى: عرض فيه أكثر من وسيط. الإجراء: سحب أفقي ثم عمودي. المتوقع: الأفقي يبدل وسيط العرض نفسه والعمودي ينتقل للعرض التالي دون فقدان سياق التفاصيل.",
+    "acceptance": {
+      "given": "عرض فيه أكثر من وسيط",
+      "action": "سحب أفقي ثم عمودي",
+      "expected": "الأفقي يبدل وسيط العرض نفسه والعمودي ينتقل للعرض التالي دون فقدان سياق التفاصيل",
+      "failures": [
+        "احتساب كل صورة مشاهدة جديدة",
+        "فقدان موضع التصفح عند الرجوع"
+      ],
+      "testMethod": "اختبار إيماءات لاحق",
+      "evidenceRequired": "سجل إيماءة ومشهد قبل وبعد"
+    },
+    "planPlacement": "future-gate",
+    "existingCapabilityId": "CAP-0015",
+    "priority": "must",
+    "status": "متطلب معتمد"
+  },
+  {
+    "id": "REQ-0026",
+    "nameAr": "معيار وسائط بلا اختراع بصري",
+    "area": "media",
+    "gapId": "GAP-0020",
+    "acceptanceAr": "المعطى: صورة مربعة أو أفقية منخفضة أو عالية الجودة. الإجراء: عرضها في الإطار العمودي. المتوقع: يظهر المنتج دون تشويه، وتُعلَّم الجودة الضعيفة للمراجعة، ولا يُولَّد لون غير موجود.",
+    "acceptance": {
+      "given": "صورة مربعة أو أفقية منخفضة أو عالية الجودة",
+      "action": "عرضها في الإطار العمودي",
+      "expected": "يظهر المنتج دون تشويه، وتُعلَّم الجودة الضعيفة للمراجعة، ولا يُولَّد لون غير موجود",
+      "failures": [
+        "BoxFit الذي يقص المنتج كمعيار ميرا",
+        "نشر المحتوى المستورد تلقائيًا"
+      ],
+      "testMethod": "مراجعة بصرية لاحقة على أكثر من مقاس",
+      "evidenceRequired": "عينات قبل وبعد دون قص مضلل"
+    },
+    "planPlacement": "future-gate",
+    "existingCapabilityId": "CAP-0015",
+    "priority": "must",
+    "status": "متطلب معتمد"
+  },
+  {
+    "id": "REQ-0027",
+    "nameAr": "مسار التاجر بلا متجر خارجي",
+    "area": "commerce",
+    "gapId": "GAP-0019",
+    "acceptanceAr": "المعطى: تاجر لا يملك متجرًا خارجيًا. الإجراء: محاولة افتراض شراء داخلي. المتوقع: يبقى المسار قرارًا مفتوحًا ولا يُعرض كقدرة جاهزة.",
+    "acceptance": {
+      "given": "تاجر لا يملك متجرًا خارجيًا",
+      "action": "محاولة افتراض شراء داخلي",
+      "expected": "يبقى المسار قرارًا مفتوحًا ولا يُعرض كقدرة جاهزة",
+      "failures": [
+        "إظهار زر شراء داخلي مؤكد",
+        "اعتبار DEC-0001 مغلقًا"
+      ],
+      "testMethod": "قرار مالك لا تنفيذ",
+      "evidenceRequired": "سجل DEC-0007"
+    },
+    "planPlacement": "future-gate",
+    "existingCapabilityId": "CAP-0015",
+    "priority": "must",
+    "status": "يحتاج قرارًا"
+  }
+]

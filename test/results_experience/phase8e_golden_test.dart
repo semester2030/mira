@@ -5,16 +5,16 @@ import 'package:mirra/features/skin_analysis/domain/entities/skin_report.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 
 SkinReport _report() => const SkinReport(
-      id: 'g8e',
-      skinType: 'مختلطة',
-      score: 70,
-      hydration: 50,
-      oiliness: 55,
-      pores: 60,
-      wrinkles: 65,
-      spots: 58,
-      advice: 'x',
-    );
+  id: 'g8e',
+  skinType: 'مختلطة',
+  score: 70,
+  hydration: 50,
+  oiliness: 55,
+  pores: 60,
+  wrinkles: 65,
+  spots: 58,
+  advice: 'x',
+);
 
 ResultExperience _exp({
   int confidence = 80,
@@ -148,9 +148,9 @@ Future<void> _pump(
       builder: (c, child) => Directionality(
         textDirection: TextDirection.rtl,
         child: MediaQuery(
-          data: MediaQuery.of(c).copyWith(
-            textScaler: TextScaler.linear(textScale),
-          ),
+          data: MediaQuery.of(
+            c,
+          ).copyWith(textScaler: TextScaler.linear(textScale)),
           child: child!,
         ),
       ),
@@ -176,80 +176,40 @@ void main() {
   TestWidgetsFlutterBinding.ensureInitialized();
 
   final cases = <String, Future<void> Function(WidgetTester)>{
-    'morning_standard': (t) => _pump(
-          t,
-          exp: _exp(),
-          size: const Size(390, 844),
-        ),
-    'evening_standard': (t) => _pump(
-          t,
-          exp: _exp(),
-          size: const Size(390, 844),
-          evening: true,
-        ),
+    'morning_standard': (t) =>
+        _pump(t, exp: _exp(), size: const Size(390, 844)),
+    'evening_standard': (t) =>
+        _pump(t, exp: _exp(), size: const Size(390, 844), evening: true),
     'one_step': (t) => _pump(
-          t,
-          exp: _exp(oneStep: true, weekly: false),
-          size: const Size(390, 844),
-        ),
+      t,
+      exp: _exp(oneStep: true, weekly: false),
+      size: const Size(390, 844),
+    ),
     'partial_evening_empty': (t) => _pump(
-          t,
-          exp: _exp(oneStep: true, weekly: true),
-          size: const Size(390, 844),
-          evening: true,
-        ),
-    'low_confidence': (t) => _pump(
-          t,
-          exp: _exp(confidence: 25),
-          size: const Size(390, 844),
-        ),
+      t,
+      exp: _exp(oneStep: true, weekly: true),
+      size: const Size(390, 844),
+      evening: true,
+    ),
+    'low_confidence': (t) =>
+        _pump(t, exp: _exp(confidence: 25), size: const Size(390, 844)),
     'no_eligible': (t) => _pump(
-          t,
-          exp: _exp(withSteps: false, weekly: false),
-          size: const Size(390, 844),
-        ),
-    'weekly_adjustment': (t) => _pump(
-          t,
-          exp: _exp(),
-          size: const Size(390, 1000),
-        ),
-    'avoidance_section': (t) => _pump(
-          t,
-          exp: _exp(),
-          size: const Size(390, 1100),
-        ),
-    'completed_step': (t) => _pump(
-          t,
-          exp: _exp(),
-          size: const Size(390, 844),
-          completeFirst: true,
-        ),
-    'small_iphone': (t) => _pump(
-          t,
-          exp: _exp(),
-          size: const Size(375, 667),
-        ),
-    'large_iphone': (t) => _pump(
-          t,
-          exp: _exp(),
-          size: const Size(430, 932),
-        ),
-    'medium_android': (t) => _pump(
-          t,
-          exp: _exp(),
-          size: const Size(360, 800),
-        ),
-    'arabic_rtl': (t) => _pump(
-          t,
-          exp: _exp(),
-          size: const Size(390, 900),
-        ),
-    'large_text_scale': (t) => _pump(
-          t,
-          exp: _exp(),
-          size: const Size(390, 1200),
-          textScale: 1.5,
-        ),
+      t,
+      exp: _exp(withSteps: false, weekly: false),
+      size: const Size(390, 844),
+    ),
+    'weekly_adjustment': (t) =>
+        _pump(t, exp: _exp(), size: const Size(390, 1000)),
+    'avoidance_section': (t) =>
+        _pump(t, exp: _exp(), size: const Size(390, 1100)),
+    'completed_step': (t) =>
+        _pump(t, exp: _exp(), size: const Size(390, 844), completeFirst: true),
+    'small_iphone': (t) => _pump(t, exp: _exp(), size: const Size(375, 667)),
+    'large_iphone': (t) => _pump(t, exp: _exp(), size: const Size(430, 932)),
+    'medium_android': (t) => _pump(t, exp: _exp(), size: const Size(360, 800)),
+    'arabic_rtl': (t) => _pump(t, exp: _exp(), size: const Size(390, 900)),
+    'large_text_scale': (t) =>
+        _pump(t, exp: _exp(), size: const Size(390, 1200), textScale: 1.5),
   };
 
   for (final e in cases.entries) {

@@ -113,7 +113,9 @@ abstract final class OutfitBodySilhouetteBuilder {
     }
 
     final headBottom = shoulderY - 0.02;
-    final headTop = (topY - 0.04).clamp(0.0, headBottom - 0.06);
+    // clamp throws if lower > upper (e.g. headBottom < 0.06 when pose is near top).
+    final headTopMax = math.max(0.0, headBottom - 0.06);
+    final headTop = (topY - 0.04).clamp(0.0, headTopMax);
 
     final lWrist = points['left_wrist'];
     final rWrist = points['right_wrist'];

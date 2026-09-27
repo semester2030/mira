@@ -4,16 +4,16 @@ import 'package:mirra/features/results_experience/results_experience.dart';
 import 'package:mirra/features/skin_analysis/domain/entities/skin_report.dart';
 
 SkinReport _report() => const SkinReport(
-      id: 't1',
-      skinType: 'مختلطة',
-      score: 72,
-      hydration: 55,
-      oiliness: 60,
-      pores: 58,
-      wrinkles: 70,
-      spots: 65,
-      advice: 'رطّبي بلطف',
-    );
+  id: 't1',
+  skinType: 'مختلطة',
+  score: 72,
+  hydration: 55,
+  oiliness: 60,
+  pores: 58,
+  wrinkles: 70,
+  spots: 65,
+  advice: 'رطّبي بلطف',
+);
 
 ResultProjectionInput _input({
   int priorityCount = 3,
@@ -101,7 +101,6 @@ ResultExperience _experience({
 Finder textAr(String value) => find.text(value, skipOffstage: false);
 
 Future<void> _pumpSurface(
-
   WidgetTester tester, {
   required ResultExperience experience,
   double textScale = 1.0,
@@ -118,7 +117,9 @@ Future<void> _pumpSurface(
         return Directionality(
           textDirection: TextDirection.rtl,
           child: MediaQuery(
-            data: MediaQuery.of(context).copyWith(textScaler: TextScaler.linear(textScale)),
+            data: MediaQuery.of(
+              context,
+            ).copyWith(textScaler: TextScaler.linear(textScale)),
             child: child!,
           ),
         );
@@ -164,7 +165,9 @@ void main() {
     expect(MiraResultsExperienceFlagStore.current.isLegacy, isTrue);
   });
 
-  testWidgets('first-surface section limits and max three priorities', (tester) async {
+  testWidgets('first-surface section limits and max three priorities', (
+    tester,
+  ) async {
     final exp = _experience(priorityCount: 4);
     expect(exp.priorities.length, 3);
     await _pumpSurface(tester, experience: exp);
@@ -175,7 +178,10 @@ void main() {
     expect(find.text('روتينك', skipOffstage: false), findsOneWidget);
     expect(find.text('تقدمك', skipOffstage: false), findsOneWidget);
     expect(find.text('مستشار ميرا', skipOffstage: false), findsOneWidget);
-    expect(find.text('عرض تفاصيل التحليل', skipOffstage: false), findsOneWidget);
+    expect(
+      find.text('عرض تفاصيل التحليل', skipOffstage: false),
+      findsOneWidget,
+    );
 
     expect(find.text('أولوية 1', skipOffstage: false), findsOneWidget);
     expect(find.text('أولوية 2', skipOffstage: false), findsOneWidget);
@@ -239,11 +245,7 @@ void main() {
   });
 
   testWidgets('stale state banner', (tester) async {
-    await _pumpSurface(
-      tester,
-      experience: _experience(),
-      isStale: true,
-    );
+    await _pumpSurface(tester, experience: _experience(), isStale: true);
     expect(find.text('نتيجة سابقة'), findsOneWidget);
   });
 
@@ -259,9 +261,7 @@ void main() {
 
   testWidgets('RTL directionality', (tester) async {
     await _pumpSurface(tester, experience: _experience());
-    final el = tester.element(
-      find.text('ملخص نتيجتك', skipOffstage: false),
-    );
+    final el = tester.element(find.text('ملخص نتيجتك', skipOffstage: false));
     expect(Directionality.of(el), TextDirection.rtl);
   });
 
@@ -308,17 +308,16 @@ void main() {
 
   test('ResultsReportEntry selects legacy when flag default', () {
     MiraResultsExperienceFlagStore.resetToDefault();
-    final entry = ResultsReportEntry(
-      report: _report(),
-      showCelebration: false,
-    );
+    final entry = ResultsReportEntry(report: _report(), showCelebration: false);
     // Build selection logic without pumping heavy legacy tree.
     expect(MiraResultsExperienceFlagStore.current.isLegacy, isTrue);
     expect(entry.forceLegacy, isFalse);
     expect(entry.showCelebration, isFalse);
   });
 
-  testWidgets('ResultsReportEntry results_v2 shows executive summary', (tester) async {
+  testWidgets('ResultsReportEntry results_v2 shows executive summary', (
+    tester,
+  ) async {
     MiraResultsExperienceFlagStore.apply(
       const MiraResultsExperienceFlag(
         variant: MiraResultsExperienceVariant.resultsV2,

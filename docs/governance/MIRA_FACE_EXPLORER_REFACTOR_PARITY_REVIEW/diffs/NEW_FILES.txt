@@ -1,0 +1,6 @@
+lib/features/results_experience/presentation/face_explorer/face_explorer_controller.dart
+lib/features/results_experience/presentation/face_explorer/face_explorer_details.dart
+lib/features/results_experience/presentation/face_explorer/face_explorer_image_loader.dart
+lib/features/results_experience/presentation/face_explorer/face_explorer_lens_panel.dart
+lib/features/results_experience/presentation/face_explorer/face_explorer_metrics.dart
+lib/features/results_experience/presentation/face_explorer/face_explorer_stage.dart

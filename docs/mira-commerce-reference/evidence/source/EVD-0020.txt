@@ -1,0 +1,41 @@
+id=EVD-0020
+path=lib/core/config/mira_features.dart
+commit=15fe65c40d3dedb9afdd95619f2945bd84cb616a
+sha256=779d099d02ebe82171122ee8313ae69479c8b22d8da64b9716bb5fd892c3729f
+lines=14-46
+note=أعلام الاشتراك والسوق افتراضيًا من بيئة البناء
+runtime=SOURCE_ONLY
+---
+14|  /// `false` = كل التحليلات مجانية بلا حدود (الوضع الحالي حتى تقرروا الاشتراك).
+15|  /// `true` = تفعيل الحدود والـ paywall عبر `--dart-define=MIRA_SUBSCRIPTIONS_ENABLED=true`
+16|  static const bool subscriptionsEnabled = bool.fromEnvironment(
+17|    'MIRA_SUBSCRIPTIONS_ENABLED',
+18|    defaultValue: false,
+19|  );
+20|
+21|  /// StoreKit / RevenueCat wired — keep false until IAP is App Review ready (PKG-C).
+22|  static const bool storeKitEnabled = bool.fromEnvironment(
+23|    'MIRA_STORE_KIT_ENABLED',
+24|    defaultValue: false,
+25|  );
+26|
+27|  /// Paywall + purchase CTAs — requires both subscription flag and real IAP.
+28|  static bool get showSubscriptionPurchaseUi =>
+29|      subscriptionsEnabled && storeKitEnabled;
+30|
+31|  /// Subscription management screen (usage, status) without purchase UI.
+32|  static bool get showSubscriptionManagementUi => subscriptionsEnabled;
+33|
+34|  /// `false` = كل التحليلات مجانية (الوضع الافتراضي).
+35|  /// `true` = باقات الرصيد (Skin + Smart Outfit) عبر `--dart-define=MIRA_PACKAGES_ENABLED=true`
+36|  static const bool packagesEnabled = bool.fromEnvironment(
+37|    'MIRA_PACKAGES_ENABLED',
+38|    defaultValue: false,
+39|  );
+40|
+41|  /// `false` = إخفاء الشركاء (منتجات · صالونات · عيادات) — «الانطلاق قريباً».
+42|  /// `true` = تفعيل Discover والـ marketplace عبر `--dart-define=MIRA_MARKETPLACE_ENABLED=true`
+43|  static const bool marketplaceEnabled = bool.fromEnvironment(
+44|    'MIRA_MARKETPLACE_ENABLED',
+45|    defaultValue: false,
+46|  );

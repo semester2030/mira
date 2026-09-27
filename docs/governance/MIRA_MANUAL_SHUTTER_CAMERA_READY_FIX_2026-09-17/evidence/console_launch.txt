@@ -1,0 +1,9 @@
+02:38:53  Acquired tunnel connection to device.
+02:38:53  Enabling developer disk image services.
+02:38:53  Acquired usage assertion.
+Launched application with app.mira.beauty bundle identifier.
+Waiting for the application to terminate…
+2026-09-17 02:38:55.280 Runner[29550:2210954] Warning: Unable to create restoration in progress marker file
+2026-09-17 02:38:55.372 Runner[29550:2210954] Mira: ApplePersonMattingChannel registered (post-launch, lazy Vision)
+2026-09-17 02:38:55.372 Runner[29550:2210954] Mira: PerfectCameraKitChannel registered (Skin quality gate)
+2026-09-17 02:38:55.376 Runner[29550:2210954] Mira: APNs registration failed (reCAPTCHA fallback): no valid “aps-environment” entitlement string found for application

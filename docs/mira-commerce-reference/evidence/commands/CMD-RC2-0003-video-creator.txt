@@ -1,0 +1,4 @@
+CMD-RC2-0003 video/creator/variant symbols
+scope=lib mira-api/src mira-api/prisma partners-portal admin-portal
+excluded=node_modules build docs/mira-commerce-reference
+exit_code=1

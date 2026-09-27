@@ -1,0 +1,10 @@
+FAIL 9
+- size mismatch data/evidence-index.json
+- sha256 mismatch data/evidence-index.json
+- size mismatch evidence/tests/rc3_device_run.txt
+- sha256 mismatch evidence/tests/rc3_device_run.txt
+- size mismatch js/data.generated.js
+- sha256 mismatch js/data.generated.js
+- unregistered file evidence/tests/rc3_validate_package.txt
+- empty evidence field limitations on EVD-0044
+- count evidence is 40 but data has 43

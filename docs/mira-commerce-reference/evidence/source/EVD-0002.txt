@@ -1,0 +1,38 @@
+# Evidence EVD-0002
+# file=lib/main.dart
+# lines=355-385
+# commit=15fe65c40d3dedb9afdd95619f2945bd84cb616a
+# sha256=ab3be120a7558dbb7822f5d0e67be9a9a12646a06fe91046353fb0b53185dd9c
+# inspected_at=2026-09-23T03:20:00+03:00
+
+355|      case AppRoutes.discover:
+356|        return PremiumPageRoute(page: const DiscoverHubScreen(), settings: settings);
+357|      case AppRoutes.discoverList:
+358|        if (!MiraFeatures.marketplaceEnabled) {
+359|          return PremiumPageRoute(page: const DiscoverHubScreen(), settings: settings);
+360|        }
+361|        final type = settings.arguments as String? ?? 'brand';
+362|        return PremiumPageRoute(
+363|          page: PartnerListScreen(partnerType: type),
+364|          settings: settings,
+365|        );
+366|      case AppRoutes.productDetail:
+367|        if (!MiraFeatures.marketplaceEnabled) {
+368|          return PremiumPageRoute(page: const DiscoverHubScreen(), settings: settings);
+369|        }
+370|        final product = settings.arguments as CatalogProduct?;
+371|        if (product == null) return null;
+372|        return PremiumPageRoute(
+373|          page: ProductDetailScreen(product: product),
+374|          settings: settings,
+375|        );
+376|      case AppRoutes.serviceDetail:
+377|        if (!MiraFeatures.marketplaceEnabled) {
+378|          return PremiumPageRoute(page: const DiscoverHubScreen(), settings: settings);
+379|        }
+380|        final service = settings.arguments as CatalogService?;
+381|        if (service == null) return null;
+382|        return PremiumPageRoute(
+383|          page: ServiceDetailScreen(service: service),
+384|          settings: settings,
+385|        );

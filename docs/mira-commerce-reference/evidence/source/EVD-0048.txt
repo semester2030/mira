@@ -1,0 +1,6 @@
+RC7 current excerpt. One link event has one active transport.
+The attempt timeout cancels that transport through AdLinkAttemptControl and Dio CancelToken.
+The next send starts only after the cancelled future settles.
+Finished statuses are capped at 32 and kept for 10 minutes.
+The previous pin 76230d79ad84c120784e91689af0512e485dc771710172c60cef0bc0f0e07fe7 described the RC6 queue before this cancel and cap.
+Abandoned is not recorded. Process exit still drops the queue.

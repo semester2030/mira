@@ -1,0 +1,21 @@
+تسليم RC4
+المعرّف: DEL-RC4
+الاسم: MIRA_DISCOVER_PHASE1_CLOSURE_RC4_20260925_2324.zip
+تاريخ الإنشاء: 2026-09-25T23:24:00+03:00
+حالة التسليم: مُسلَّم للمراجعة
+
+معرّف الإصدار (مصدر واحد للأسماء):
+MIRA_DISCOVER_PHASE1_CLOSURE_RC4_20260925_2324
+
+الملفات على سطح المكتب بجوار بعض:
+- MIRA_DISCOVER_PHASE1_CLOSURE_RC4_20260925_2324.zip
+- MIRA_DISCOVER_PHASE1_CLOSURE_RC4_20260925_2324.zip.sha256.txt
+- MIRA_DISCOVER_PHASE1_CLOSURE_RC4_20260925_2324_VERIFICATION.txt
+
+فك المجلد MIRA_DISCOVER_PHASE1_CLOSURE_RC4_20260925_2324/ ثم site/index.html
+
+RC3 التاريخي — تقرير موحّد:
+../../MIRA_DISCOVER_PHASE1_CLOSURE_RC3_VERIFICATION.txt
+
+من المستودع (http.server):
+deliveries/MIRA_DISCOVER_PHASE1_CLOSURE_RC4_20260925_2324.zip

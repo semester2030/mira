@@ -8,6 +8,10 @@ class PartnerSummary {
   final String? logoEmoji;
   final double rating;
   final String? storeUrl;
+  final String? contactPhone;
+
+  /// Explicit API flag. Null means unmarked, not real and not demo.
+  final bool? demoContent;
 
   const PartnerSummary({
     required this.id,
@@ -19,6 +23,8 @@ class PartnerSummary {
     this.logoEmoji,
     required this.rating,
     this.storeUrl,
+    this.contactPhone,
+    this.demoContent,
   });
 
   bool get isBrand => type == 'brand';

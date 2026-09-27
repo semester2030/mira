@@ -49,7 +49,8 @@ abstract final class MetricPresentationPolicy {
     return 'رقم أعلى يعني حالة أفضل';
   }
 
-  static String whyMattersAr(ResultMetricVM m) => whyMattersForId(rawMetricId(m));
+  static String whyMattersAr(ResultMetricVM m) =>
+      whyMattersForId(rawMetricId(m));
 
   static String whyMattersForId(String metricId) {
     final id = metricId.toLowerCase();
@@ -136,7 +137,9 @@ abstract final class MetricPresentationPolicy {
     if (id.contains('tear_trough')) return 'تحت العين';
     if (id.contains('firmness')) return 'الصلابة';
     if (id.contains('radiance') || id.contains('إشراق')) return 'الإشراق';
-    if (id.contains('moisture') || id.contains('hydrat') || id.contains('ترطيب')) {
+    if (id.contains('moisture') ||
+        id.contains('hydrat') ||
+        id.contains('ترطيب')) {
       return 'الترطيب';
     }
     if (id.contains('acne') || id.contains('حبوب')) return 'الحبوب';
@@ -149,7 +152,9 @@ abstract final class MetricPresentationPolicy {
       return 'التصبغات';
     }
     if (id.contains('pore') || id.contains('مسام')) return 'المسام';
-    if (id.contains('wrinkle') || id.contains('تجاعيد') || id.contains('خطوط')) {
+    if (id.contains('wrinkle') ||
+        id.contains('تجاعيد') ||
+        id.contains('خطوط')) {
       return 'التجاعيد';
     }
     if (id.contains('oil') || id.contains('دهون')) return 'الدهون';
@@ -207,7 +212,9 @@ abstract final class MetricPresentationPolicy {
     if (id.contains('acne') || id.contains('حبوب')) {
       return 'تظهر مواضع مظهر الحبوب المرصودة';
     }
-    if (id.contains('hydrat') || id.contains('moisture') || id.contains('ترطيب')) {
+    if (id.contains('hydrat') ||
+        id.contains('moisture') ||
+        id.contains('ترطيب')) {
       return 'يظهر توزيع الترطيب المرصود';
     }
     if (id.contains('oil') || id.contains('دهون')) {

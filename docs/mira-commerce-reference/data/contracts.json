@@ -1,0 +1,196 @@
+{
+  "unimplemented": true,
+  "labelAr": "مقترح غير منفذ",
+  "entities": [
+    {
+      "name": "Product",
+      "existsAr": "جدول Product: اسم وسعر وهلالة ورابط خارجي ووسوم",
+      "extendAr": "الإبقاء على المعرف وإضافة حالة النشر دون جدول موازٍ",
+      "fields": [
+        {
+          "name": "id",
+          "type": "string",
+          "required": true,
+          "source": "الخادم"
+        },
+        {
+          "name": "partnerId",
+          "type": "string",
+          "required": true,
+          "source": "من الرمز لا من العميل"
+        },
+        {
+          "name": "status",
+          "type": "enum draft|active|paused|archived",
+          "required": true,
+          "source": "الشريك والإدارة"
+        }
+      ]
+    },
+    {
+      "name": "ProductVariant",
+      "existsAr": "غير موجود في المخطط المبحوث",
+      "extendAr": "متغير جديد يرتبط بمنتج واحد",
+      "fields": [
+        {
+          "name": "id",
+          "type": "string",
+          "required": true,
+          "source": "الخادم"
+        },
+        {
+          "name": "productId",
+          "type": "string",
+          "required": true,
+          "source": "المسار"
+        },
+        {
+          "name": "color",
+          "type": "enum",
+          "required": true,
+          "source": "قاموس يديره المتجر"
+        },
+        {
+          "name": "size",
+          "type": "enum",
+          "required": true,
+          "source": "قاموس المقاسات"
+        },
+        {
+          "name": "stockQty",
+          "type": "int>=0",
+          "required": true,
+          "source": "الشريك"
+        },
+        {
+          "name": "priceHalalas",
+          "type": "int>=0",
+          "required": true,
+          "source": "الشريك"
+        },
+        {
+          "name": "active",
+          "type": "bool",
+          "required": true,
+          "source": "الشريك"
+        }
+      ]
+    },
+    {
+      "name": "ServiceOffering",
+      "existsAr": "جدول Service بلا فرع",
+      "extendAr": "ربط branchId عند تعدد الفروع",
+      "fields": [
+        {
+          "name": "facilityId",
+          "type": "string",
+          "required": true,
+          "source": "شريك من نوع عيادة أو صالون"
+        },
+        {
+          "name": "branchId",
+          "type": "string",
+          "required": true,
+          "source": "سجل الفرع"
+        },
+        {
+          "name": "bookingMode",
+          "type": "enum inquiry|appointment|external",
+          "required": true,
+          "source": "قرار المتجر"
+        }
+      ]
+    },
+    {
+      "name": "MediaAsset",
+      "existsAr": "لا نموذج في البحث EVD-0019",
+      "extendAr": "أصل يرتبط بمنتج أو متغير أو خدمة دون نسخ السعر",
+      "fields": [
+        {
+          "name": "ownerType",
+          "type": "enum product|variant|service",
+          "required": true,
+          "source": "عند الرفع"
+        },
+        {
+          "name": "ownerId",
+          "type": "string",
+          "required": true,
+          "source": "الرابط"
+        },
+        {
+          "name": "state",
+          "type": "enum uploaded|processing|in_review|published|failed|removed",
+          "required": true,
+          "source": "دورة المعالجة"
+        }
+      ]
+    },
+    {
+      "name": "AdLink",
+      "existsAr": "لا نموذج مشاهير",
+      "extendAr": "رابط إعلان يقرأ السعر والمخزون من المتغير",
+      "fields": [
+        {
+          "name": "publisherId",
+          "type": "string",
+          "required": true,
+          "source": "حساب الناشر"
+        },
+        {
+          "name": "advertiserId",
+          "type": "string",
+          "required": true,
+          "source": "المعلن"
+        },
+        {
+          "name": "sellerPartnerId",
+          "type": "string",
+          "required": true,
+          "source": "الشريك المالك"
+        },
+        {
+          "name": "variantId",
+          "type": "string",
+          "required": true,
+          "source": "المنتج الأصلي"
+        },
+        {
+          "name": "storeApproval",
+          "type": "enum pending|approved|rejected|expired",
+          "required": true,
+          "source": "المتجر"
+        }
+      ]
+    }
+  ],
+  "example": {
+    "titleAr": "فستان أزرق مقاس M متوفر",
+    "variants": [
+      {
+        "id": "V1",
+        "color": "blue",
+        "size": "M",
+        "stockQty": 5,
+        "match": true
+      },
+      {
+        "id": "V2",
+        "color": "blue",
+        "size": "S",
+        "stockQty": 0,
+        "match": false
+      },
+      {
+        "id": "V3",
+        "color": "red",
+        "size": "M",
+        "stockQty": 3,
+        "match": false
+      }
+    ],
+    "ruleAr": "AND على متغير واحد: اللون والمقاس والتوفر من الصف نفسه.",
+    "productCount": 1,
+    "clipCountAr": "مقطعان منشوران مرتبطان بالمنتج أو بـ V1 يُحسبان محتوىً مرئيًا. مقطع مرتبط بـ V3 فقط لا يظهر. عدد المنتجات 1 وعدد المقاطع قد يكون 2."
+  }
+}

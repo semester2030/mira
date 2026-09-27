@@ -1,0 +1,10 @@
+file=/tmp/mira_ckcfg_console.txt
+quality_events=111 ready_true=0 valid_true=0 canCapture_like=7
+combo (area,pose,light,valid,ready):
+  55	('good', 'good', 'under_exposed', '0', '0')
+  22	('good', 'good', 'unknown', '0', '0')
+  11	('good', 'good', 'uneven', '0', '0')
+  9	('good', 'bad', 'unknown', '0', '0')
+  7	('good', 'good', 'normal', '0', '0')
+  5	('too_small', 'good', 'under_exposed', '0', '0')
+  2	('unknown', 'unknown', 'unknown', '0', '0')

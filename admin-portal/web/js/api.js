@@ -1,14 +1,31 @@
 (function () {
   const meta = document.querySelector('meta[name="mira-api-base"]');
-  const API_BASE =
+  const API_BASE = localApiBase(
     (meta && meta.getAttribute('content')) ||
-    'http://localhost:3000/api/v1';
+    'http://localhost:3000/api/v1',
+  );
+
+  function localApiBase(fallback) {
+    const override = new URLSearchParams(location.search).get('api-base');
+    const localPage = location.hostname === '127.0.0.1' || location.hostname === 'localhost';
+    if (localPage && override && /^https?:\/\/(127\.0\.0\.1|localhost):\d+(?:\/.*)?$/.test(override)) {
+      return override.replace(/\/$/, '');
+    }
+    return fallback;
+  }
 
   function adminKey() {
     return localStorage.getItem('mira_admin_key') || '';
   }
 
+  function labeledPreview() {
+    return new URLSearchParams(location.search).get('ui-fixture') === 'labeled';
+  }
+
   async function request(method, path, body) {
+    if (labeledPreview()) {
+      throw new Error('محاكاة: لم يُرسل طلب ولم يُستخدم مفتاح الإدارة');
+    }
     const key = adminKey();
     if (!key && path !== '/health') {
       throw new Error('أدخلي مفتاح الإدارة أولاً');
@@ -25,7 +42,9 @@
     const data = await res.json().catch(() => ({}));
     if (!res.ok) {
       const msg = data.message || data.error || `HTTP ${res.status}`;
-      throw new Error(Array.isArray(msg) ? msg.join(' ') : String(msg));
+      const error = new Error(Array.isArray(msg) ? msg.join(' ') : String(msg));
+      error.status = res.status;
+      throw error;
     }
     return data;
   }
@@ -76,5 +95,13 @@
       return request('GET', `/admin/leads?${q}`);
     },
     systemConfig: () => request('GET', '/admin/system/config'),
+    catalogReviews: () => request('GET', '/admin/catalog-reviews'),
+    catalogPreview: (kind, id) => request('GET', `/admin/catalog-reviews/${kind}/${id}`),
+    catalogDecision: (kind, id, decision, note, revision) =>
+      request('POST', `/admin/catalog-reviews/${kind}/${id}/decision`, { decision, note, revision }),
+    adReviews: () => request('GET', '/admin/catalog-ads'),
+    adPreview: (id) => request('GET', `/admin/catalog-ads/${id}`),
+    adDecision: (id, decision, note, revision) =>
+      request('POST', `/admin/catalog-ads/${id}/decision`, { decision, note, revision }),
   };
 })();

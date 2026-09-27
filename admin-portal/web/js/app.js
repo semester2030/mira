@@ -5,6 +5,8 @@
     audit: { title: 'سجل التدقيق', subtitle: 'جميع الأحداث المسجّلة' },
     feedback: { title: 'التقييمات', subtitle: 'آراء وتقييمات المستخدمات' },
     applications: { title: 'طلبات الشركاء', subtitle: 'اعتماد ورفض طلبات الانضمام' },
+    reviews: { title: 'مراجعة المحتوى', subtitle: 'نشر أو رفض محتوى المنتجات والخدمات' },
+    ads: { title: 'مراجعة الإعلانات', subtitle: 'اعتماد النسخة المعروضة فقط' },
     partners: { title: 'الشركاء', subtitle: 'إدارة حالة الشركاء النشطين' },
     leads: { title: 'رسائل الموقع', subtitle: 'Leads من الموقع التعريفي' },
     system: { title: 'النظام', subtitle: 'Providers · Feature flags · Security' },
@@ -121,6 +123,7 @@
     state.view = view;
     setActiveNav(view);
     $('#sidebar').classList.remove('open');
+    $('#menuToggle').setAttribute('aria-expanded', 'false');
     render();
   }
 
@@ -584,6 +587,161 @@
     }
   }
 
+  function reviewText(parent, value, tag) {
+    const node = document.createElement(tag || 'p');
+    node.textContent = value == null ? '' : String(value);
+    parent.appendChild(node);
+    return node;
+  }
+
+  async function renderReviews() {
+    root.replaceChildren();
+    reviewText(root, 'جارٍ تحميل المراجعة');
+    try {
+      const data = await MiraAdminApi.catalogReviews();
+      const items = data.items || [];
+      root.replaceChildren();
+      if (!items.length) {
+        const panel = document.createElement('div');
+        panel.className = 'panel';
+        reviewText(panel, 'لا محتوى بانتظار المراجعة.');
+        root.appendChild(panel);
+        return;
+      }
+      for (const item of items) {
+        const panel = document.createElement('article');
+        panel.className = 'panel';
+        reviewText(panel, item.kind === 'service' ? 'خدمة' : 'منتج', 'h3');
+        reviewText(panel, item.nameAr);
+        reviewText(panel, 'السعر بالهللة: ' + item.priceHalalas);
+        const detail = document.createElement('div');
+        const status = reviewText(panel, '');
+        const previewButton = document.createElement('button');
+        previewButton.className = 'btn btn-ghost btn-sm';
+        previewButton.textContent = 'معاينة';
+        const approve = document.createElement('button');
+        approve.className = 'btn btn-primary btn-sm';
+        approve.textContent = 'اعتماد';
+        const reject = document.createElement('button');
+        reject.className = 'btn btn-ghost btn-sm';
+        reject.textContent = 'رفض';
+        panel.append(previewButton, approve, reject, detail);
+        root.appendChild(panel);
+        const blobUrls = [];
+        let shownRevision = null;
+        let previewReady = false;
+        approve.disabled = true;
+        reject.disabled = true;
+        function releaseBlobs() {
+          while (blobUrls.length) URL.revokeObjectURL(blobUrls.pop());
+        }
+        async function show() {
+          previewReady = false;
+          approve.disabled = true;
+          reject.disabled = true;
+          releaseBlobs();
+          detail.replaceChildren();
+          status.textContent = 'جارٍ تحميل المعاينة';
+          const preview = await MiraAdminApi.catalogPreview(item.kind, item.id);
+          if (preview.submittedRevision == null) throw new Error('تعذرت معاينة النسخة المطلوبة');
+          shownRevision = preview.submittedRevision;
+          reviewText(detail, 'المنشور: ' + (preview.publishedNameAr || ''));
+          reviewText(detail, 'التعديل المطلوب: ' + (preview.draftNameAr || 'لا تعديل على الاسم'));
+          reviewText(detail, 'الإنجليزية المنشورة: ' + (preview.publishedNameEn || ''));
+          reviewText(detail, 'مسودة الإنجليزية: ' + (preview.draftNameEn || 'لا تعديل'));
+          reviewText(detail, preview.draftDescriptionAr === '' ? 'المسودة تطلب مسح الوصف' : 'وصف المسودة: ' + (preview.draftDescriptionAr || 'لا تعديل على الوصف'));
+          reviewText(detail, 'الوصف المنشور: ' + (preview.publishedDescriptionAr || ''));
+          reviewText(detail, 'رقم النسخة المعروضة: ' + shownRevision);
+          let mediaFailed = false;
+          for (const media of preview.media || []) {
+            const row = document.createElement('div');
+            const primary = media.draftIsPrimary == null ? media.isPrimary : media.draftIsPrimary;
+            reviewText(row, (media.kind === 'video' ? 'فيديو' : 'صورة') + (primary ? ' · رئيسي' : '') + (media.pendingRemoval ? ' · طلب إزالة' : ''));
+            const response = await fetch(MiraAdminApi.base + '/admin/catalog-review-media/' + media.id, {
+              headers: { 'X-Admin-Key': localStorage.getItem('mira_admin_key') || '' },
+            });
+            if (response.ok) {
+              const view = document.createElement(media.kind === 'video' ? 'video' : 'img');
+              const objectUrl = URL.createObjectURL(await response.blob());
+              blobUrls.push(objectUrl);
+              view.src = objectUrl;
+              if (media.kind === 'video') view.controls = true;
+              view.style.maxWidth = '220px';
+              view.style.maxHeight = '220px';
+              row.appendChild(view);
+            } else {
+              mediaFailed = true;
+              reviewText(row, 'تعذر عرض الوسيط');
+            }
+            detail.appendChild(row);
+          }
+          if (mediaFailed) {
+            status.textContent = 'تعذرت معاينة وسيط. لا يمكن اعتماد هذه النسخة قبل إعادة المعاينة.';
+            return;
+          }
+          previewReady = true;
+          approve.disabled = false;
+          reject.disabled = false;
+          status.textContent = 'المعاينة جاهزة. القرار يخص هذه النسخة فقط.';
+        }
+        function staleDecision(error) {
+          previewReady = false;
+          shownRevision = null;
+          approve.disabled = true;
+          reject.disabled = true;
+          status.textContent = error.status === 409
+            ? 'تغير المحتوى بعد المعاينة. أعيدي المعاينة ثم اضغطي القرار من جديد.'
+            : 'تعذر القرار: ' + error.message;
+        }
+        previewButton.onclick = () => show().catch((error) => { status.textContent = error.message; });
+        approve.onclick = async () => {
+          if (!previewReady || shownRevision == null) {
+            status.textContent = 'عايني النسخة أولًا. التحديث لا يعتمدها تلقائيًا.';
+            return;
+          }
+          const revision = shownRevision;
+          status.textContent = 'جارٍ الاعتماد';
+          approve.disabled = true;
+          reject.disabled = true;
+          try {
+            await MiraAdminApi.catalogDecision(item.kind, item.id, 'approve', '', revision);
+            status.textContent = 'تم الاعتماد';
+            releaseBlobs();
+            renderReviews();
+          } catch (error) {
+            staleDecision(error);
+          }
+        };
+        reject.onclick = async () => {
+          if (!previewReady || shownRevision == null) {
+            status.textContent = 'عايني النسخة أولًا. التحديث لا يرفضها تلقائيًا.';
+            return;
+          }
+          const revision = shownRevision;
+          const note = prompt('سبب الرفض أو طلب التعديل') || 'يحتاج تعديلًا';
+          status.textContent = 'جارٍ الرفض';
+          approve.disabled = true;
+          reject.disabled = true;
+          try {
+            await MiraAdminApi.catalogDecision(item.kind, item.id, 'reject', note, revision);
+            status.textContent = 'تم الرفض';
+            releaseBlobs();
+            renderReviews();
+          } catch (error) {
+            staleDecision(error);
+          }
+        };
+        show().catch((error) => { status.textContent = error.message; });
+      }
+    } catch (error) {
+      root.replaceChildren();
+      const alert = document.createElement('div');
+      alert.className = 'alert err';
+      alert.textContent = error.message;
+      root.appendChild(alert);
+    }
+  }
+
   function render() {
     const map = {
       dashboard: renderDashboard,
@@ -591,6 +749,8 @@
       audit: renderAudit,
       feedback: renderFeedback,
       applications: renderApplications,
+      reviews: renderReviews,
+      ads: renderAdReviews,
       partners: renderPartners,
       leads: renderLeads,
       system: renderSystem,
@@ -613,16 +773,181 @@
   };
 
   $('#refreshBtn').onclick = () => render();
-  $('#menuToggle').onclick = () => $('#sidebar').classList.toggle('open');
+  $('#menuToggle').onclick = () => {
+    const sidebar = $('#sidebar');
+    sidebar.classList.toggle('open');
+    $('#menuToggle').setAttribute('aria-expanded', sidebar.classList.contains('open') ? 'true' : 'false');
+  };
 
-  if (MiraAdminApi.hasKey()) {
+  function labeledAdFixture() {
+    return {
+      items: [{
+        id: 'labeled-ad',
+        captionAr: '<script>alert(1)</script> "اقتباس"',
+        status: 'in_review',
+        reviewRevision: 3,
+        submittedRevision: 3,
+        reviewNote: null,
+        advertiser: { nameAr: 'المعلن' },
+        publisher: { nameAr: 'الناشر' },
+        seller: { nameAr: 'جهة الأصل' },
+        targetKind: 'product',
+        targetId: 'labeled-product',
+        liveTarget: { nameAr: 'فستان', priceHalalas: 1800, contentStatus: 'published', externalUrl: 'https://example.com/dress' },
+        decisions: [{ revision: 1, decision: 'reject', actor: 'admin-api-key', note: 'نسخة سابقة' }],
+      }],
+    };
+  }
+
+  async function renderAdReviews() {
+    const labeled = new URLSearchParams(location.search).get('ui-fixture') === 'labeled';
+    root.replaceChildren();
+    const banner = document.createElement('p');
+    banner.textContent = labeled
+      ? 'بيانات اختبار موسومة لعرض الواجهة. ليست كتالوجًا عامًا ولا اعتمادًا.'
+      : 'الاعتماد يخص النسخة التي اكتملت معاينتها. الاستجابة 409 لا تعتمد نسخة أحدث.';
+    root.appendChild(banner);
+    try {
+      const data = labeled ? labeledAdFixture() : await MiraAdminApi.adReviews();
+      const items = data.items || [];
+      if (!items.length) {
+        const empty = document.createElement('p');
+        empty.textContent = 'لا إعلانات بانتظار المراجعة.';
+        root.appendChild(empty);
+        return;
+      }
+      for (const item of items) {
+        const panel = document.createElement('article');
+        panel.className = 'panel';
+        function line(value) {
+          const node = document.createElement('p');
+          node.textContent = value == null ? '' : String(value);
+          panel.appendChild(node);
+          return node;
+        }
+        line(item.captionAr);
+        line('المعلن: ' + (item.advertiser && item.advertiser.nameAr || '') + ' · الناشر: ' + (item.publisher && item.publisher.nameAr || '') + ' · الجهة: ' + (item.seller && item.seller.nameAr || ''));
+        line('الهدف: ' + (item.targetKind || '') + ' ' + (item.targetId || ''));
+        if (item.liveTarget) line('الأصل الآن: ' + item.liveTarget.nameAr + ' · السعر بالهللة: ' + item.liveTarget.priceHalalas + ' · حالة الأصل: ' + item.liveTarget.contentStatus);
+        const status = line('');
+        const detail = document.createElement('div');
+        const previewButton = document.createElement('button');
+        previewButton.className = 'btn btn-ghost btn-sm';
+        previewButton.textContent = 'معاينة';
+        const approve = document.createElement('button');
+        approve.className = 'btn btn-primary btn-sm';
+        approve.textContent = 'اعتماد النسخة المعروضة';
+        const reject = document.createElement('button');
+        reject.className = 'btn btn-ghost btn-sm';
+        reject.textContent = 'رفض';
+        const withdraw = document.createElement('button');
+        withdraw.className = 'btn btn-ghost btn-sm';
+        withdraw.textContent = 'سحب';
+        const noteInput = document.createElement('textarea');
+        noteInput.className = 'ad-note';
+        noteInput.rows = 3;
+        noteInput.placeholder = 'سبب الرفض يظهر هنا قبل الإرسال';
+        approve.disabled = true;
+        reject.disabled = true;
+        withdraw.disabled = true;
+        const actions = document.createElement('div');
+        actions.className = 'ad-actions';
+        actions.append(previewButton, approve, reject, withdraw, noteInput);
+        panel.append(actions, detail);
+        root.appendChild(panel);
+        let shownRevision = null;
+        let previewReady = false;
+        function showPreview(preview) {
+          detail.replaceChildren();
+          shownRevision = preview.submittedRevision;
+          function row(value) {
+            const node = document.createElement('p');
+            node.textContent = value == null ? '' : String(value);
+            detail.appendChild(node);
+          }
+          row('رقم النسخة المعروضة: ' + shownRevision);
+          row('النص: ' + (preview.captionAr || ''));
+          row('المعلن: ' + (preview.advertiser && preview.advertiser.nameAr || ''));
+          row('الناشر: ' + (preview.publisher && preview.publisher.nameAr || ''));
+          row('الجهة: ' + (preview.seller && preview.seller.nameAr || ''));
+          if (preview.liveTarget) row('بيانات الأصل الحالية: ' + preview.liveTarget.nameAr + ' · ' + preview.liveTarget.priceHalalas);
+          for (const decision of preview.decisions || []) {
+            row('سجل: ' + decision.decision + ' · النسخة ' + decision.revision + ' · ' + decision.actor + (decision.note ? ' · ' + decision.note : ''));
+          }
+          previewReady = shownRevision != null;
+          approve.disabled = !previewReady;
+          reject.disabled = !previewReady;
+          withdraw.disabled = !previewReady;
+          status.textContent = previewReady ? 'المعاينة جاهزة. القرار يخص هذه النسخة فقط.' : 'لا توجد نسخة معروضة للاعتماد.';
+        }
+        previewButton.onclick = async () => {
+          previewReady = false;
+          approve.disabled = true;
+          reject.disabled = true;
+          withdraw.disabled = true;
+          if (labeled) {
+            showPreview(item);
+            return;
+          }
+          try {
+            showPreview(await MiraAdminApi.adPreview(item.id));
+          } catch (error) {
+            status.textContent = error.message;
+          }
+        };
+        async function send(decision) {
+          if (!previewReady || shownRevision == null) {
+            status.textContent = 'عايني النسخة أولًا. التحديث لا يعتمدها تلقائيًا.';
+            return;
+          }
+          if (labeled) {
+            status.textContent = 'محاكاة: لم يُرسل قرار الإدارة';
+            return;
+          }
+          const revision = shownRevision;
+          const note = decision === 'reject' ? (noteInput.value.trim() || 'يحتاج تعديلًا') : undefined;
+          approve.disabled = true;
+          reject.disabled = true;
+          withdraw.disabled = true;
+          try {
+            await MiraAdminApi.adDecision(item.id, decision, note, revision);
+            status.textContent = 'تم تسجيل القرار';
+            renderAdReviews();
+          } catch (error) {
+            previewReady = false;
+            shownRevision = null;
+            status.textContent = error.status === 409
+              ? 'النسخة تغيرت. أعيدي المعاينة. لم يُعتمد شيء تلقائيًا.'
+              : error.message;
+          }
+        }
+        approve.onclick = () => send('approve');
+        reject.onclick = () => send('reject');
+        withdraw.onclick = () => send('withdraw');
+        if (labeled) showPreview(item);
+      }
+    } catch (error) {
+      const alert = document.createElement('div');
+      alert.className = 'alert err';
+      alert.textContent = error.message;
+      root.appendChild(alert);
+    }
+  }
+
+  const labeledUi = new URLSearchParams(location.search).get('ui-fixture') === 'labeled';
+  if (labeledUi) {
+    showApp();
+    navigate('ads');
+  } else if (MiraAdminApi.hasKey()) {
     adminKeyInput.value = localStorage.getItem('mira_admin_key') || '';
   }
 
-  tryAutoLogin().then((ok) => {
-    if (ok) {
-      showApp();
-      navigate('dashboard');
-    }
-  });
+  if (!labeledUi) {
+    tryAutoLogin().then((ok) => {
+      if (ok) {
+        showApp();
+        navigate('dashboard');
+      }
+    });
+  }
 })();

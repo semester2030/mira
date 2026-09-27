@@ -1,0 +1,86 @@
+[
+  {
+    "id": "PAUSE-0001",
+    "nameAr": "Discover في التطبيق",
+    "previousClassificationAr": "خدمة متوقفة موثقة بسبب عبارة الانطلاق قريبًا، وAPI يمكن الوصول إليه",
+    "correctedClassificationAr": "إخفاء واجهة في المصدر عبر علم بناء. سبب الإيقاف التاريخي غير موثق تشغيليًا.",
+    "classification": "UI_FLAG_DEFAULT_OFF",
+    "uiHidden": "true-in-source",
+    "navigationBlocked": "true-in-client-routes",
+    "serverFeatureGate": "UNKNOWN",
+    "apiReachableDespiteUiHide": "UNKNOWN",
+    "logicCompleteness": "PARTIAL",
+    "externalDependencyMissing": "UNKNOWN",
+    "documentedReason": "التعليق «الانطلاق قريبًا» نص واجهة. الآلية التقنية في المصدر هي MIRA_MARKETPLACE_ENABLED الافتراضي false. لا وثيقة تشغيل تشرح سبب الإيقاف. توجيه المالك اللاحق: الإبقاء للإعداد لتجربة العرض المرئي، مع التصريح الآن بنسخة اختبار منفصلة.",
+    "reasonClass": "سبب تاريخي غير موثق؛ الآلية في المصدر موثقة",
+    "evidenceIds": [
+      "EVD-0001",
+      "EVD-0002",
+      "EVD-0006"
+    ],
+    "reactivationNeeds": [
+      "قرار مالك",
+      "معرفة قيمة العلم في البناء المنشور",
+      "مراجعة الكتالوج قبل الإظهار"
+    ],
+    "reactivationRisks": [
+      "إظهار بذرة محلية كأنها متجر حي"
+    ],
+    "ownerDirectiveAr": "توجيه المالك: أُبقيت مغلقة لتطويرها إلى تجربة العرض المرئي. هذا التوجيه منفصل عن استنتاج الكود بأن العلم الافتراضي false.",
+    "testActivationAr": "صُرّح بتفعيل نسخة اختبار بالعلم دون تغيير الافتراضي."
+  },
+  {
+    "id": "PAUSE-0002",
+    "nameAr": "الحجز الإلكتروني",
+    "previousClassificationAr": "خدمة متوقفة",
+    "correctedClassificationAr": "مسار غير مكتمل في التصميم الحالي، وليس خدمة أُوقفت بعد اكتمالها.",
+    "classification": "NEVER_COMPLETED_STUB",
+    "uiHidden": "button-disabled-or-snackbar",
+    "navigationBlocked": "UNKNOWN",
+    "serverFeatureGate": "no-booking-model-in-searched-schema",
+    "apiReachableDespiteUiHide": "UNKNOWN",
+    "logicCompleteness": "STUB",
+    "externalDependencyMissing": "UNKNOWN",
+    "documentedReason": "الزر في الشاشة لا ينشئ حجزًا. لا يوجد model Booking في البحث EVD-0018. لا سبب تشغيلي تاريخي منفصل.",
+    "reasonClass": "غير منفذ حتى الاكتمال",
+    "evidenceIds": [
+      "EVD-0003",
+      "EVD-0018",
+      "EVD-0017"
+    ],
+    "reactivationNeeds": [
+      "عقد حجز",
+      "مواعيد",
+      "لا يكفي إعادة تشغيل خادم"
+    ],
+    "reactivationRisks": [
+      "اعتبار الزر الحالي حجزًا حقيقيًا"
+    ]
+  },
+  {
+    "id": "PAUSE-0003",
+    "nameAr": "شراء داخل ميرا",
+    "previousClassificationAr": "خدمة متوقفة لأن SPEC يقول الدفع عند الشريك",
+    "correctedClassificationAr": "غير منفذ في التصميم الحالي. ليس خدمة تحتاج إعادة تشغيل.",
+    "classification": "NEVER_BUILT",
+    "uiHidden": "buy-opens-external-url",
+    "navigationBlocked": "not-applicable",
+    "serverFeatureGate": "no-order-model-in-searched-scope",
+    "apiReachableDespiteUiHide": "UNKNOWN",
+    "logicCompleteness": "NOT_IMPLEMENTED",
+    "externalDependencyMissing": "UNKNOWN",
+    "documentedReason": "الشاشة تفتح externalUrl. المواصفات تقول الدفع عند الشريك. لا سجل تشغيلي يقول إن شراءً داخليًا كان يعمل ثم أُوقف.",
+    "reasonClass": "تصميم خارجي وليس إيقافًا",
+    "evidenceIds": [
+      "EVD-0004",
+      "EVD-0007",
+      "EVD-0018"
+    ],
+    "reactivationNeeds": [
+      "DEC-0001 قبل أي بناء"
+    ],
+    "reactivationRisks": [
+      "بناء سلة فوق مسار رابط خارجي دون قرار"
+    ]
+  }
+]

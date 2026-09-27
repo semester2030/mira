@@ -1,0 +1,156 @@
+--- /Users/fayez/Desktop/مراجع تطبيق ميرا /PerfectCorp_Mobile_CameraKit_2.5.0_INSPECT/2.5.0/camerakit-ios/Sample-iOS-CameraKitDemo/CameraKitDemo/CAMERA_KIT/CameraKitViewController.swift	2026-04-08 11:13:24
++++ /Users/fayez/Desktop/mira_camerakit_official_sample_run/CameraKitDemo/CAMERA_KIT/CameraKitViewController.swift	2026-09-16 01:46:35
+@@ -72,12 +72,18 @@
+     @IBOutlet weak var importPhotoButton: UIButton!
+     
+     private var cameraKit: CameraKit?
+-    private var selectedCheckerMode: CheckerModeOption = .relaxed
++    /// Isolation comparison default: MODERATE (matches Mira). Not a threshold change.
++    private var selectedCheckerMode: CheckerModeOption = .moderate
+     private var currentCameraPosition: AVCaptureDevice.Position = .front
++    private var isolationSessionId: Int64 = 0
++    private var isolationQualityCount: Int64 = 0
++    private var isolationLastLogMs: Int64 = 0
++    private var isolationCanCaptureStreakStartMs: Int64?
++    private var isolationLongestCanCaptureMs: Int64 = 0
+     private lazy var checkerModeControl: UISegmentedControl = {
+         let control = UISegmentedControl(items: CheckerModeOption.allCases.map { $0.title })
+         control.translatesAutoresizingMaskIntoConstraints = false
+-        control.selectedSegmentIndex = CheckerModeOption.relaxed.rawValue
++        control.selectedSegmentIndex = CheckerModeOption.moderate.rawValue
+         control.backgroundColor = UIColor.black.withAlphaComponent(0.35)
+         if #available(iOS 13.0, *) {
+             control.selectedSegmentTintColor = .perfectCorpPink
+@@ -253,7 +259,9 @@
+                 }
+                 self?.cameraKit = cameraKit
+                 self?.cameraKit?.delegate = self
++                self?.isolationSessionId += 1
+                 self?.applyCheckerMode()
++                self?.logIsolationFinalConfig(reason: "after_create_applyCheckerMode")
+             }
+         } else {
+             SynchronousTool.asyncMainSafe { [weak self] in
+@@ -415,8 +423,31 @@
+ 
+     private func applyCheckerMode() {
+         cameraKit?.setCameraKitLevel(selectedCheckerMode.cameraKitLevel)
++        logIsolationFinalConfig(reason: "applyCheckerMode")
+     }
+ 
++    /// Diagnostics only — does not change acceptance thresholds.
++    private func logIsolationFinalConfig(reason: String) {
++        guard let p = cameraKit?.currentParameter else {
++            NSLog("MiraIsolation SAMPLE FINAL_CONFIG reason=%@ session=%lld level=%@ params=nil probe=CKISO-20260915A",
++                  reason, isolationSessionId, selectedCheckerMode.title)
++            return
++        }
++        NSLog(
++            "MiraIsolation SAMPLE FINAL_CONFIG reason=%@ probe=CKISO-20260915A session=%lld sdk=%@ level=%@ yaw=%.1f size=%.2f lightL=%.2f lightU=%.2f pitchU=%.1f pitchL=%.1f",
++            reason,
++            isolationSessionId,
++            PerfectLibCameraKitVer,
++            selectedCheckerMode.title,
++            p.faceYaw,
++            p.faceSizeRatio,
++            p.lightingLower,
++            p.lightingUpper,
++            p.facePitchUpper,
++            p.facePitchLower
++        )
++    }
++
+     private func presentManualParameterSettings() {
+         guard let parameter = currentCameraKitParameter() else {
+             presentSimpleAlert(title: "CameraKit Not Ready", message: "CameraKit parameters are not available yet.")
+@@ -540,12 +571,25 @@
+ 
+         isCaptureInProgress = true
+         updateCaptureButtonAvailability()
++        NSLog(
++            "MiraIsolation SAMPLE capture REQUEST session=%lld canCapture=%d isValid=%d longestCanMs=%lld",
++            isolationSessionId,
++            (latestQualityCheck?.canCapture() == true) ? 1 : 0,
++            (latestQualityCheck?.isValid == true) ? 1 : 0,
++            isolationLongestCanCaptureMs
++        )
+         photoOutput.capturePhoto(with: settings, delegate: self)
+     }
+ 
+     private func showCaptureReview(with image: UIImage) {
+         capturedImage = image
+         capturedImageView.image = image
++        NSLog(
++            "MiraIsolation SAMPLE capture SUCCESS session=%lld imageW=%.0f imageH=%.0f (no image bytes logged)",
++            isolationSessionId,
++            image.size.width,
++            image.size.height
++        )
+         session?.stopRunning()
+         captureReviewView.isHidden = false
+         view.bringSubviewToFront(captureReviewView)
+@@ -744,6 +788,64 @@
+         SynchronousTool.asyncMainSafe { [weak self] in
+             guard let self = self else { return }
+             self.latestQualityCheck = checkedResult
++            self.isolationQualityCount += 1
++            let can = checkedResult.canCapture()
++            let nowMs = Int64(Date().timeIntervalSince1970 * 1000)
++            if can {
++                if self.isolationCanCaptureStreakStartMs == nil {
++                    self.isolationCanCaptureStreakStartMs = nowMs
++                }
++                if let start = self.isolationCanCaptureStreakStartMs {
++                    self.isolationLongestCanCaptureMs = max(self.isolationLongestCanCaptureMs, nowMs - start)
++                }
++            } else {
++                self.isolationCanCaptureStreakStartMs = nil
++            }
++            // Throttle ~10Hz technical logs (no image content).
++            if nowMs - self.isolationLastLogMs >= 100 {
++                self.isolationLastLogMs = nowMs
++                let areaName: String = {
++                    switch checkedResult.faceAreaQuality {
++                    case .good: return "good"
++                    case .tooSmall: return "too_small"
++                    case .outOfBoundary: return "out_of_boundary"
++                    case .unknown: return "unknown"
++                    @unknown default: return "unknown"
++                    }
++                }()
++                let poseName: String = {
++                    switch checkedResult.facePoseQuality {
++                    case .good: return "good"
++                    case .bad: return "bad"
++                    case .unknown: return "unknown"
++                    @unknown default: return "unknown"
++                    }
++                }()
++                let lightName: String = {
++                    switch checkedResult.lightingQuality {
++                    case .good: return "good"
++                    case .normal: return "normal"
++                    case .overExposed: return "over_exposed"
++                    case .underExposed: return "under_exposed"
++                    case .backlighting: return "backlighting"
++                    case .uneven: return "uneven"
++                    case .unknown: return "unknown"
++                    @unknown default: return "unknown"
++                    }
++                }()
++                NSLog(
++                    "MiraIsolation SAMPLE quality session=%lld n=%lld canCapture=%d isValid=%d area=%@ pose=%@ light=%@ deg=%.1f longestCanMs=%lld",
++                    self.isolationSessionId,
++                    self.isolationQualityCount,
++                    can ? 1 : 0,
++                    checkedResult.isValid ? 1 : 0,
++                    areaName,
++                    poseName,
++                    lightName,
++                    checkedResult.facePoseDegree,
++                    self.isolationLongestCanCaptureMs
++                )
++            }
+             self.lightingQuality.backgroundColor = checkedResult.lightingQuality.color
+             self.faceFrontalQuality.backgroundColor = checkedResult.facePoseQuality.color
+             self.faceAreaQuality.backgroundColor = checkedResult.faceAreaQuality.color

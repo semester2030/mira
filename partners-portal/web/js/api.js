@@ -1,8 +1,18 @@
 (function () {
   const meta = document.querySelector('meta[name="mira-api-base"]');
-  const API_BASE =
+  const API_BASE = localApiBase(
     (meta && meta.getAttribute('content')) ||
-    'https://mira-api-n4p3.onrender.com/api/v1';
+    'https://mira-api-n4p3.onrender.com/api/v1',
+  );
+
+  function localApiBase(fallback) {
+    const override = new URLSearchParams(location.search).get('api-base');
+    const localPage = location.hostname === '127.0.0.1' || location.hostname === 'localhost';
+    if (localPage && override && /^https?:\/\/(127\.0\.0\.1|localhost):\d+(?:\/.*)?$/.test(override)) {
+      return override.replace(/\/$/, '');
+    }
+    return fallback;
+  }
 
   function authHeaders() {
     const token = localStorage.getItem('mira_partner_token');
@@ -11,7 +21,14 @@
       : {};
   }
 
+  function labeledPreview() {
+    return new URLSearchParams(location.search).get('ui-fixture') === 'labeled';
+  }
+
   async function request(method, path, body, extraHeaders) {
+    if (labeledPreview()) {
+      throw new Error('محاكاة: لم يُرسل طلب ولم تُستخدم الجلسة');
+    }
     const res = await fetch(`${API_BASE}${path}`, {
       method,
       headers: {
@@ -50,6 +67,25 @@
       request('PATCH', `/partners-portal/services/${id}`, payload),
     deleteService: (id) =>
       request('DELETE', `/partners-portal/services/${id}`),
+    addMedia: (kind, id, mimeType, dataBase64) =>
+      request('POST', `/partners-portal/${kind}/${id}/media`, { mimeType, dataBase64 }),
+    submitReview: (kind, id) =>
+      request('POST', `/partners-portal/${kind}/${id}/submit-review`, {}),
+    preview: (kind, id) =>
+      request('GET', `/partners-portal/${kind}/${id}/preview`),
+    reorderMedia: (kind, id, ids) =>
+      request('PATCH', `/partners-portal/${kind}/${id}/media/order`, { ids }),
+    setPrimary: (kind, id, mediaId) =>
+      request('PATCH', `/partners-portal/${kind}/${id}/media/${mediaId}/primary`, {}),
+    removeMedia: (kind, id, mediaId) =>
+      request('DELETE', `/partners-portal/${kind}/${id}/media/${mediaId}`),
+    ads: () => request('GET', '/partners-portal/ads'),
+    ad: (id) => request('GET', `/partners-portal/ads/${id}`),
+    createAd: (payload) => request('POST', '/partners-portal/ads', payload),
+    updateAd: (id, payload) => request('PATCH', `/partners-portal/ads/${id}`, payload),
+    submitAd: (id) => request('POST', `/partners-portal/ads/${id}/submit-review`, {}),
+    withdrawAd: (id) => request('POST', `/partners-portal/ads/${id}/withdraw`, {}),
+    adStats: (id) => request('GET', `/partners-portal/ads/${id}/stats`),
     track: (payload) =>
       request('POST', '/partners-portal/track', payload),
     adminList: (adminKey, status) =>

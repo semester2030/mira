@@ -1,0 +1,27 @@
+--- print-admin with conflicting PGHOST PGPORT PGSERVICE ---
+admin=fayez host=localhost port=5432 psql=-h localhost -p 5432 -U fayez
+print_exit:0
+--- prove-port stops instead of treating failure as absence ---
+STOP existence check failed for localhost:1; connection failure is not an absent database
+prove_exit:3
+--- check ---
+ACCEPT mira_ph2_rc6_test on localhost:5432 admin=fayez prisma_role=mira
+check_exit:0
+--- cleanup failure does not print cleaned ---
+GRANT
+GRANT
+ALTER SCHEMA
+server_port=5432 expected=5432
+cleanup drill ready
+cleanup=failed test_status=0
+drill_exit:1
+leftover_dropped
+--- cleanup stderr included ---
+GRANT
+GRANT
+ALTER SCHEMA
+server_port=5432 expected=5432
+cleanup drill ready
+cleanup failed mira_ph2_rc6_test_cleanup
+cleanup=failed test_status=0
+drill_exit:1

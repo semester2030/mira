@@ -1,0 +1,926 @@
+diff --git a/lib/features/results_experience/presentation/face_explorer/face_explorer_image_loader.dart b/lib/features/results_experience/presentation/face_explorer/face_explorer_image_loader.dart
+--- a/lib/features/results_experience/presentation/face_explorer/face_explorer_image_loader.dart
++++ b/lib/features/results_experience/presentation/face_explorer/face_explorer_image_loader.dart
+@@ -75,10 +75,12 @@
+     PerfectMaskSession? session,
+   }) async {
+     final gen = ++_generation;
++    if (!_stillCurrent(gen)) return;
++    // Do not pair the previous photograph with the next session's mask while
++    // the new file is being decoded (matching dimensions alone are not enough).
++    snapshot = const FaceExplorerImageSnapshot();
++    onChanged();
+     if (path == null || path.isEmpty || fromHistory) {
+-      if (!_stillCurrent(gen)) return;
+-      snapshot = const FaceExplorerImageSnapshot();
+-      onChanged();
+       return;
+     }
+     try {
+diff --git a/lib/features/results_experience/presentation/face_explorer/face_explorer_lens_panel.dart b/lib/features/results_experience/presentation/face_explorer/face_explorer_lens_panel.dart
+--- a/lib/features/results_experience/presentation/face_explorer/face_explorer_lens_panel.dart
++++ b/lib/features/results_experience/presentation/face_explorer/face_explorer_lens_panel.dart
+@@ -4,22 +4,22 @@
+ 
+ import '../../../../shared/theme/colors.dart';
+ import '../../../../shared/theme/typography.dart';
+-import '../geometry/shared_image_mask_fit.dart';
++import '../geometry/face_explorer_lens_geometry.dart';
+ import '../geometry/skin_face_map_visual_tokens.dart';
+ import '../widgets/perfect_mask_overlay.dart';
+ import 'face_explorer_controller.dart';
++import 'face_explorer_mask_presentation.dart';
+ 
+ /// Rectangular lens panel below the face (×2/×3 + H/V sliders).
+ class FaceExplorerLensPanel extends StatelessWidget {
+   const FaceExplorerLensPanel({
+     super.key,
+     required this.sourceBytes,
+-    required this.maskBytes,
+     required this.tint,
+-    required this.profile,
++    required this.presentation,
+     required this.focusSourceNorm,
+     required this.zoom,
+-    required this.presentationDecoded,
++    required this.stageViewport,
+     required this.sourceWidth,
+     required this.sourceHeight,
+     required this.onToggleZoom,
+@@ -28,12 +28,11 @@
+   });
+ 
+   final Uint8List? sourceBytes;
+-  final Uint8List? maskBytes;
+   final Color tint;
+-  final PerfectMaskPresentationProfile profile;
++  final FaceExplorerMaskPresentation presentation;
+   final Offset focusSourceNorm;
+   final double zoom;
+-  final bool presentationDecoded;
++  final Size? stageViewport;
+   final int? sourceWidth;
+   final int? sourceHeight;
+   final VoidCallback onToggleZoom;
+@@ -44,18 +43,13 @@
+   Widget build(BuildContext context) {
+     final src = sourceBytes;
+     if (src == null || src.isEmpty) return const SizedBox.shrink();
+-    const lensVp = Size(400, 150);
+     final sourceSize = (sourceWidth != null &&
+             sourceHeight != null &&
+             sourceWidth! > 0 &&
+             sourceHeight! > 0)
+         ? Size(sourceWidth!.toDouble(), sourceHeight!.toDouble())
+-        : const Size(3, 4);
+-    final focus = SharedImageMaskFit.sourceNormToViewportAlignment(
+-      viewport: lensVp,
+-      sourceSize: sourceSize,
+-      sourceNorm01: focusSourceNorm,
+-    );
++        : null;
++    final stageSize = stageViewport;
+     return Container(
+       padding: const EdgeInsets.all(12),
+       decoration: BoxDecoration(
+@@ -99,20 +93,54 @@
+             child: SizedBox(
+               height: 150,
+               width: double.infinity,
+-              child: Transform.scale(
+-                scale: zoom.clamp(2.0, 3.0),
+-                alignment: focus,
+-                child: PerfectMaskOverlay(
+-                  sourceBytes: src,
+-                  maskBytes: maskBytes,
+-                  tint: tint,
+-                  profile: profile,
+-                  opacity: profile.opacity,
+-                  presentationDecoded: presentationDecoded,
+-                  sourceWidth: sourceWidth,
+-                  sourceHeight: sourceHeight,
+-                  fadeDuration: Duration.zero,
+-                ),
++              child: LayoutBuilder(
++                builder: (context, constraints) {
++                  if (sourceSize == null || stageSize == null) {
++                    return const ColoredBox(
++                      color: SkinFaceMapVisualTokens.explorerStage,
++                    );
++                  }
++                  final imageRect = FaceExplorerLensGeometry.imageRect(
++                    sourceSize: sourceSize,
++                    stageViewport: stageSize,
++                    lensViewport: Size(
++                      constraints.maxWidth,
++                      constraints.maxHeight,
++                    ),
++                    focusSourceNorm: focusSourceNorm,
++                    zoom: zoom,
++                  );
++                  if (imageRect.isEmpty) return const SizedBox.shrink();
++                  // Position the full-resolution image and mask together.
++                  // Their viewport has the source aspect ratio; neither layer
++                  // is independently fitted into the short rectangular lens.
++                  return ColoredBox(
++                    color: SkinFaceMapVisualTokens.explorerStage,
++                    child: Stack(
++                      fit: StackFit.expand,
++                      clipBehavior: Clip.hardEdge,
++                      children: [
++                        Positioned.fromRect(
++                          rect: imageRect,
++                          child: RepaintBoundary(
++                            child: PerfectMaskOverlay(
++                              sourceBytes: src,
++                              maskBytes: presentation.maskBytes,
++                              tint: tint,
++                              profile: presentation.profile,
++                              opacity: presentation.profile.opacity,
++                              presentationDecoded:
++                                  presentation.presentationDecoded,
++                              sourceWidth: sourceWidth,
++                              sourceHeight: sourceHeight,
++                              fadeDuration: Duration.zero,
++                            ),
++                          ),
++                        ),
++                      ],
++                    ),
++                  );
++                },
+               ),
+             ),
+           ),
+diff --git a/lib/features/results_experience/presentation/face_explorer/face_explorer_mask_presentation.dart b/lib/features/results_experience/presentation/face_explorer/face_explorer_mask_presentation.dart
+new file mode 100644
+--- /dev/null
++++ b/lib/features/results_experience/presentation/face_explorer/face_explorer_mask_presentation.dart
+@@ -0,0 +1,73 @@
++import 'dart:math' as math;
++import 'dart:typed_data';
++
++import 'package:flutter/foundation.dart';
++
++import '../geometry/skin_face_map_visual_tokens.dart';
++
++/// One resolved mask and one decoding flag for the stage AND rectangular lens.
++@immutable
++class FaceExplorerMaskPresentation {
++  const FaceExplorerMaskPresentation({
++    required this.profile,
++    this.maskBytes,
++    this.presentationDecoded = false,
++  });
++
++  factory FaceExplorerMaskPresentation.resolve({
++    required PerfectMaskPresentationProfile profile,
++    required bool showSpatialOverlay,
++    Uint8List? remappedBytes,
++    Uint8List? rawBytes,
++  }) {
++    if (!showSpatialOverlay) {
++      return FaceExplorerMaskPresentation(profile: profile);
++    }
++    if (remappedBytes != null && remappedBytes.isNotEmpty) {
++      return FaceExplorerMaskPresentation(
++        profile: profile,
++        maskBytes: remappedBytes,
++        presentationDecoded: true,
++      );
++    }
++    return FaceExplorerMaskPresentation(
++      profile: profile,
++      maskBytes: rawBytes != null && rawBytes.isNotEmpty ? rawBytes : null,
++      // Raw fallback must go through the renderer's raw-mask decoding path.
++      presentationDecoded: false,
++    );
++  }
++
++  final Uint8List? maskBytes;
++  final bool presentationDecoded;
++  final PerfectMaskPresentationProfile profile;
++
++  /// Display calibration only. Keep existing signal gates and spatial support.
++  /// Never change analysis scores, add paths, expand masks, or infer regions.
++  /// These values still require acceptance with real masks on the target phone.
++  static PerfectMaskPresentationProfile profileForConcern(String? concernId) {
++    final base = SkinFaceMapVisualTokens.presentationProfileForConcern(concernId);
++    final isPath = identical(base, PerfectMaskPresentationProfile.wrinkles);
++    final isPoint = identical(base, PerfectMaskPresentationProfile.pores) ||
++        identical(base, PerfectMaskPresentationProfile.acne) ||
++        identical(base, PerfectMaskPresentationProfile.pigmentation);
++    final isOil = identical(base, PerfectMaskPresentationProfile.oiliness);
++    if (!isPath && !isPoint && !isOil) return base;
++
++    return PerfectMaskPresentationProfile(
++      opacity: math.max(base.opacity, isPath ? 0.96 : (isPoint ? 0.94 : 0.84)),
++      tintAlpha: 1.0,
++      // No second paint, glow, blur, dilation or extra contour geometry.
++      softPresenceFactor: 0.0,
++      softPresenceCap: 0.0,
++      alphaMode: base.alphaMode,
++      alphaGain: base.alphaGain,
++      luminanceGateFloor: base.luminanceGateFloor,
++      // Only already-visible point/path pixels get a stronger alpha floor.
++      // Area masks retain their gradation rather than getting a solid fill.
++      minVisibleAlpha: isPath
++          ? math.max(base.minVisibleAlpha, 210)
++          : (isPoint ? math.max(base.minVisibleAlpha, 200) : base.minVisibleAlpha),
++    );
++  }
++}
+diff --git a/lib/features/results_experience/presentation/face_explorer/face_explorer_metrics.dart b/lib/features/results_experience/presentation/face_explorer/face_explorer_metrics.dart
+--- a/lib/features/results_experience/presentation/face_explorer/face_explorer_metrics.dart
++++ b/lib/features/results_experience/presentation/face_explorer/face_explorer_metrics.dart
+@@ -101,19 +101,37 @@
+     required this.metricId,
+     required this.uiScore,
+     required this.accent,
++    this.scoreRegion,
+   });
+ 
+   final String metricId;
+   final double? uiScore;
+   final Color accent;
++  final String? scoreRegion;
+ 
+   @override
+   Widget build(BuildContext context) {
+     final title = MetricPresentationPolicy.publicLabelAr(metricId);
+-    final status = MetricPresentationPolicy.faceExplorerStatusAr(uiScore);
++    final status = uiScore == null
++        ? ''
++        : MetricPresentationPolicy.faceExplorerStatusAr(uiScore);
++    final region = scoreRegion;
++    final isRegional = region != null &&
++        region != 'whole' &&
++        region != 'all' &&
++        region != 'root';
++    final regionLabel = isRegional
++        ? MetricPresentationPolicy.subregionLabelAr(region)
++        : null;
++    final scopeLabel = regionLabel != null
++        ? (uiScore == null
++            ? '$regionLabel — لا تتوفر درجة'
++            : 'درجة $regionLabel')
++        : (uiScore == null ? 'الدرجة غير متاحة' : 'الدرجة العامة');
+     return Semantics(
+       label: [
+         title,
++        scopeLabel,
+         if (uiScore != null) '${uiScore!.round()} / 100',
+         if (status.isNotEmpty) status,
+       ].join(' '),
+@@ -133,7 +151,7 @@
+                   ),
+                 ),
+                 Text(
+-                  'الدرجة العامة',
++                  scopeLabel,
+                   style: AppTypography.labelSmall.copyWith(
+                     color: SkinFaceMapVisualTokens.explorerOnBlackMuted,
+                     fontSize: 11,
+@@ -166,27 +184,29 @@
+                 ),
+               ],
+             ),
+-          const SizedBox(width: 10),
+-          Column(
+-            crossAxisAlignment: CrossAxisAlignment.end,
+-            children: [
+-              if (status.isNotEmpty)
+-                Text(
+-                  status,
++          if (uiScore != null) ...[
++            const SizedBox(width: 10),
++            Column(
++              crossAxisAlignment: CrossAxisAlignment.end,
++              children: [
++                if (status.isNotEmpty)
++                  Text(
++                    status,
++                    style: AppTypography.labelSmall.copyWith(
++                      fontWeight: FontWeight.w700,
++                      color: SkinFaceMapVisualTokens.explorerOnBlack,
++                    ),
++                  ),
++                Text(
++                  'الأعلى أفضل',
+                   style: AppTypography.labelSmall.copyWith(
+-                    fontWeight: FontWeight.w700,
+-                    color: SkinFaceMapVisualTokens.explorerOnBlack,
+-                  ),
+-                ),
+-              Text(
+-                'الأعلى أفضل',
+-                style: AppTypography.labelSmall.copyWith(
+-                  color: SkinFaceMapVisualTokens.explorerOnBlackMuted,
+-                  fontSize: 11,
+-                ),
+-              ),
+-            ],
+-          ),
++                    color: SkinFaceMapVisualTokens.explorerOnBlackMuted,
++                    fontSize: 11,
++                  ),
++                ),
++              ],
++            ),
++          ],
+         ],
+       ),
+     );
+diff --git a/lib/features/results_experience/presentation/face_explorer/face_explorer_stage.dart b/lib/features/results_experience/presentation/face_explorer/face_explorer_stage.dart
+--- a/lib/features/results_experience/presentation/face_explorer/face_explorer_stage.dart
++++ b/lib/features/results_experience/presentation/face_explorer/face_explorer_stage.dart
+@@ -5,13 +5,14 @@
+ import '../../../../shared/theme/spacing.dart';
+ import '../../../../shared/theme/typography.dart';
+ import '../../domain/face_map_overlay_decision.dart';
+-import '../../domain/perfect_mask_session.dart';
+ import '../../semantics/metric_presentation_policy.dart';
++import '../geometry/face_explorer_lens_geometry.dart';
+ import '../geometry/shared_image_mask_fit.dart';
+ import '../geometry/skin_face_explorer_layer_isolation.dart';
+ import '../geometry/skin_face_map_visual_tokens.dart';
+ import '../widgets/perfect_mask_overlay.dart';
+ import '../widgets/perfect_mask_region_callout.dart';
++import 'face_explorer_mask_presentation.dart';
+ 
+ /// Face photo + Perfect mask stage with image-local tap mapping.
+ class FaceExplorerStage extends StatefulWidget {
+@@ -20,7 +21,7 @@
+     required this.displayBytes,
+     required this.sourceWidth,
+     required this.sourceHeight,
+-    required this.session,
++    required this.presentation,
+     required this.selectedId,
+     required this.decision,
+     required this.holdingOriginal,
+@@ -28,12 +29,13 @@
+     required this.focusSourceNorm,
+     required this.onTapSourceNorm,
+     required this.onOpenLens,
++    required this.onViewportChanged,
+   });
+ 
+   final Uint8List displayBytes;
+   final int? sourceWidth;
+   final int? sourceHeight;
+-  final PerfectMaskSession? session;
++  final FaceExplorerMaskPresentation presentation;
+   final String? selectedId;
+   final FaceMapOverlayDecision decision;
+   final bool holdingOriginal;
+@@ -41,6 +43,7 @@
+   final Offset? focusSourceNorm;
+   final ValueChanged<Offset> onTapSourceNorm;
+   final VoidCallback onOpenLens;
++  final ValueChanged<Size> onViewportChanged;
+ 
+   @override
+   State<FaceExplorerStage> createState() => _FaceExplorerStageState();
+@@ -65,7 +68,6 @@
+     );
+     if (norm == null) return;
+     HapticFeedback.selectionClick();
+-    setState(() => _viewportSize = vp);
+     widget.onTapSourceNorm(norm);
+     if (!widget.lensPanelOpen) widget.onOpenLens();
+   }
+@@ -76,9 +78,9 @@
+     final mask = overlay.boundArtifact;
+     final showAnalysis = overlay.showSpatialOverlay;
+     final selected = widget.selectedId;
+-    final profile =
+-        SkinFaceMapVisualTokens.presentationProfileForConcern(selected);
+-    final tint = SkinFaceMapVisualTokens.maskTintForConcern(selected);
++    final profile = widget.presentation.profile;
++    final tint = SkinFaceMapVisualTokens.accentForConcern(selected)
++        .withValues(alpha: profile.tintAlpha);
+     final region = mask?.region ?? 'whole';
+     final regionStrict = region != 'whole' && region != 'all';
+     final showRegionCallout = showAnalysis && regionStrict;
+@@ -88,17 +90,9 @@
+         ? 'وجهك الأصلي'
+         : MetricPresentationPolicy.publicLabelAr(selected);
+ 
+-    final remappedMaskBytes = (showAnalysis &&
+-            mask != null &&
+-            widget.session != null &&
+-            mask.bytes != null &&
+-            mask.bytes!.isNotEmpty)
+-        ? widget.session!
+-            .presentationBytesFor(artifact: mask, profile: profile)
+-        : null;
+     final overlayMaskBytes =
+-        showAnalysis ? (remappedMaskBytes ?? mask?.bytes) : null;
+-    final presentationDecoded = remappedMaskBytes != null;
++        showAnalysis ? widget.presentation.maskBytes : null;
++    final presentationDecoded = widget.presentation.presentationDecoded;
+     final showSubject = SkinFaceExplorerLayerIsolation.showSubject;
+ 
+     final srcSize = (widget.sourceWidth != null &&
+@@ -110,19 +104,10 @@
+             widget.sourceHeight!.toDouble(),
+           )
+         : null;
+-    final stageVp = _viewportSize;
+-    final focusAlign = (widget.focusSourceNorm != null &&
+-            stageVp != null &&
+-            srcSize != null)
+-        ? SharedImageMaskFit.sourceNormToViewportAlignment(
+-            viewport: stageVp,
+-            sourceSize: srcSize,
+-            sourceNorm01: widget.focusSourceNorm!,
+-          )
+-        : null;
+     final showFocusRing = widget.lensPanelOpen &&
+         showAnalysis &&
+-        focusAlign != null &&
++        widget.focusSourceNorm != null &&
++        srcSize != null &&
+         !widget.holdingOriginal;
+ 
+     return Semantics(
+@@ -146,10 +131,18 @@
+                     if (_viewportSize != next) {
+                       WidgetsBinding.instance.addPostFrameCallback((_) {
+                         if (mounted && _viewportSize != next) {
+-                          setState(() => _viewportSize = next);
++                          _viewportSize = next;
++                          widget.onViewportChanged(next);
+                         }
+                       });
+                     }
++                    final focusPoint = showFocusRing
++                        ? FaceExplorerLensGeometry.stageFocusPoint(
++                            sourceSize: srcSize!,
++                            stageViewport: next,
++                            focusSourceNorm: widget.focusSourceNorm!,
++                          )
++                        : null;
+                     return ClipRRect(
+                       borderRadius: BorderRadius.circular(22),
+                       child: ColoredBox(
+@@ -230,10 +223,13 @@
+                                     accent: AppColors.textSecondary,
+                                   ),
+                                 ),
+-                              if (showFocusRing)
+-                                IgnorePointer(
+-                                  child: Align(
+-                                    alignment: focusAlign,
++                              if (focusPoint != null)
++                                Positioned(
++                                  left: focusPoint.dx - 21,
++                                  top: focusPoint.dy - 21,
++                                  width: 42,
++                                  height: 42,
++                                  child: IgnorePointer(
+                                     child: Container(
+                                       width: 42,
+                                       height: 42,
+diff --git a/lib/features/results_experience/presentation/geometry/face_explorer_lens_geometry.dart b/lib/features/results_experience/presentation/geometry/face_explorer_lens_geometry.dart
+new file mode 100644
+--- /dev/null
++++ b/lib/features/results_experience/presentation/geometry/face_explorer_lens_geometry.dart
+@@ -0,0 +1,61 @@
++import 'dart:ui' show Offset, Rect, Size;
++
++import 'shared_image_mask_fit.dart';
++
++/// Geometry only: the same source pixel is at the centre at both zoom levels.
++/// Zoom is relative to the main photo, not a contain-fit inside the short lens.
++abstract final class FaceExplorerLensGeometry {
++  static Rect imageRect({
++    required Size sourceSize,
++    required Size stageViewport,
++    required Size lensViewport,
++    required Offset focusSourceNorm,
++    required double zoom,
++  }) {
++    if (!_valid(sourceSize) ||
++        !_valid(stageViewport) ||
++        !_valid(lensViewport) ||
++        !focusSourceNorm.dx.isFinite ||
++        !focusSourceNorm.dy.isFinite ||
++        !zoom.isFinite) {
++      return Rect.zero;
++    }
++    final stageImage = SharedImageMaskFit.containRect(
++      viewport: stageViewport,
++      sourceSize: sourceSize,
++    );
++    final scale = stageImage.width / sourceSize.width * zoom.clamp(2.0, 3.0);
++    final width = sourceSize.width * scale;
++    final height = sourceSize.height * scale;
++    final nx = focusSourceNorm.dx.clamp(0.0, 1.0);
++    final ny = focusSourceNorm.dy.clamp(0.0, 1.0);
++    return Rect.fromLTWH(
++      lensViewport.width / 2 - nx * width,
++      lensViewport.height / 2 - ny * height,
++      width,
++      height,
++    );
++  }
++
++  /// Main-photo indicator centre, independent of the indicator's diameter.
++  static Offset stageFocusPoint({
++    required Size sourceSize,
++    required Size stageViewport,
++    required Offset focusSourceNorm,
++  }) {
++    final image = SharedImageMaskFit.containRect(
++      viewport: stageViewport,
++      sourceSize: sourceSize,
++    );
++    return Offset(
++      image.left + focusSourceNorm.dx.clamp(0.0, 1.0) * image.width,
++      image.top + focusSourceNorm.dy.clamp(0.0, 1.0) * image.height,
++    );
++  }
++
++  static bool _valid(Size size) =>
++      size.width.isFinite &&
++      size.height.isFinite &&
++      size.width > 0 &&
++      size.height > 0;
++}
+diff --git a/lib/features/results_experience/presentation/widgets/results_skin_map_panel.dart b/lib/features/results_experience/presentation/widgets/results_skin_map_panel.dart
+--- a/lib/features/results_experience/presentation/widgets/results_skin_map_panel.dart
++++ b/lib/features/results_experience/presentation/widgets/results_skin_map_panel.dart
+@@ -16,6 +16,7 @@
+ import '../face_explorer/face_explorer_details.dart';
+ import '../face_explorer/face_explorer_image_loader.dart';
+ import '../face_explorer/face_explorer_lens_panel.dart';
++import '../face_explorer/face_explorer_mask_presentation.dart';
+ import '../face_explorer/face_explorer_metrics.dart';
+ import '../face_explorer/face_explorer_stage.dart';
+ import '../geometry/skin_face_explorer_layer_isolation.dart';
+@@ -68,6 +69,7 @@
+   late final FaceExplorerImageLoader _loader;
+   final GlobalKey _exportButtonKey = GlobalKey(debugLabel: 'mapEvidenceExport');
+   var _loggedUnavailable = false;
++  Size? _stageViewportSize;
+ 
+   static const _carouselIds = <String>[
+     'pigmentation',
+@@ -127,7 +129,10 @@
+       setState(() => _ctrl.applyExternalConcern(widget.externalConcernId));
+     }
+     if (widget.ephemeralUserImagePath != oldWidget.ephemeralUserImagePath ||
+-        widget.maskSession != oldWidget.maskSession) {
++        widget.maskSession != oldWidget.maskSession ||
++        widget.fromHistory != oldWidget.fromHistory) {
++      _ctrl.applyExternalConcern(_ctrl.selectedId);
++      _ctrl.holdingOriginal = false;
+       _loader.load(
+         path: widget.ephemeralUserImagePath,
+         fromHistory: widget.fromHistory,
+@@ -223,8 +228,7 @@
+         _ctrl.holdingOriginal) {
+       return;
+     }
+-    final profile =
+-        SkinFaceMapVisualTokens.presentationProfileForConcern(selected);
++    final profile = FaceExplorerMaskPresentation.profileForConcern(selected);
+     final binding = _ctrl.focusBindingKey(
+       mask: mask,
+       profile: profile,
+@@ -345,8 +349,17 @@
+     final accent = selected == null
+         ? AppColors.primary
+         : SkinFaceMapVisualTokens.accentForConcern(selected);
+-    final profile = SkinFaceMapVisualTokens.presentationProfileForConcern(
+-      selected,
++    final profile = FaceExplorerMaskPresentation.profileForConcern(selected);
++    final showSpatialOverlay = overlayDecision?.showSpatialOverlay == true &&
++        !_ctrl.holdingOriginal;
++    final remappedMaskBytes = showSpatialOverlay && activeMask != null
++        ? session?.presentationBytesFor(artifact: activeMask, profile: profile)
++        : null;
++    final presentation = FaceExplorerMaskPresentation.resolve(
++      profile: profile,
++      showSpatialOverlay: showSpatialOverlay,
++      remappedBytes: remappedMaskBytes,
++      rawBytes: activeMask?.bytes,
+     );
+     final focusNorm = selected == null
+         ? null
+@@ -355,7 +368,8 @@
+             profile: profile,
+             sourceBytes: _loader.snapshot.sourceBytes,
+           );
+-    final display = _loader.displayBytes(holdingOriginal: _ctrl.holdingOriginal);
++    // Compare the analysis layers on the same photograph and background.
++    final display = _loader.displayBytes(holdingOriginal: false);
+     final snap = _loader.snapshot;
+ 
+     return AnimatedContainer(
+@@ -390,6 +404,9 @@
+               metricId: selected,
+               uiScore: heroScore,
+               accent: accent,
++              scoreRegion: _ctrl.regionStrict
++                  ? selectedRegion
++                  : activeMask?.region,
+             ),
+           ],
+           const SizedBox(height: 10),
+@@ -443,7 +460,7 @@
+               displayBytes: display,
+               sourceWidth: snap.sourceWidth,
+               sourceHeight: snap.sourceHeight,
+-              session: session,
++              presentation: presentation,
+               selectedId: selected,
+               decision: overlayDecision ??
+                   FaceMapOverlayDecision.resolve(
+@@ -458,6 +475,11 @@
+               holdingOriginal: _ctrl.holdingOriginal,
+               lensPanelOpen: _ctrl.lensPanelOpen,
+               focusSourceNorm: focusNorm,
++              onViewportChanged: (size) {
++                if (mounted && _stageViewportSize != size) {
++                  setState(() => _stageViewportSize = size);
++                }
++              },
+               onOpenLens: () => setState(() => _ctrl.lensPanelOpen = true),
+               onTapSourceNorm: (norm) {
+                 final mask = _ctrl.boundMask(session);
+@@ -498,20 +520,11 @@
+               const SizedBox(height: 12),
+               FaceExplorerLensPanel(
+                 sourceBytes: display,
+-                maskBytes: (!_ctrl.holdingOriginal &&
+-                        overlayDecision?.showSpatialOverlay == true &&
+-                        activeMask != null)
+-                    ? (session?.presentationBytesFor(
+-                          artifact: activeMask,
+-                          profile: profile,
+-                        ) ??
+-                        activeMask.bytes)
+-                    : null,
+-                tint: SkinFaceMapVisualTokens.maskTintForConcern(selected),
+-                profile: profile,
++                presentation: presentation,
++                tint: accent.withValues(alpha: profile.tintAlpha),
+                 focusSourceNorm: focusNorm ?? const Offset(0.5, 0.45),
+                 zoom: _ctrl.magnifierZoom,
+-                presentationDecoded: true,
++                stageViewport: _stageViewportSize,
+                 sourceWidth: snap.sourceWidth,
+                 sourceHeight: snap.sourceHeight,
+                 onToggleZoom: () => setState(() {
+diff --git a/test/features/results_experience/face_explorer_four_fixes_test.dart b/test/features/results_experience/face_explorer_four_fixes_test.dart
+new file mode 100644
+--- /dev/null
++++ b/test/features/results_experience/face_explorer_four_fixes_test.dart
+@@ -0,0 +1,244 @@
++import 'dart:convert';
++import 'dart:typed_data';
++
++import 'package:flutter/material.dart';
++import 'package:flutter_test/flutter_test.dart';
++import 'package:mirra/features/results_experience/presentation/face_explorer/face_explorer_mask_presentation.dart';
++import 'package:mirra/features/results_experience/presentation/face_explorer/face_explorer_lens_panel.dart';
++import 'package:mirra/features/results_experience/presentation/face_explorer/face_explorer_image_loader.dart';
++import 'package:mirra/features/results_experience/presentation/face_explorer/face_explorer_metrics.dart';
++import 'package:mirra/features/results_experience/presentation/geometry/face_explorer_lens_geometry.dart';
++import 'package:mirra/features/results_experience/presentation/geometry/skin_face_map_visual_tokens.dart';
++import 'package:mirra/features/results_experience/presentation/widgets/perfect_mask_overlay.dart';
++
++void main() {
++  group('Lens geometry regressions', () {
++    test('off-centre selection stays centred across width, aspect and zoom', () {
++      for (final source in [
++        const Size(720, 1280),
++        const Size(1280, 720),
++        const Size(1080, 1080),
++      ]) {
++        for (final width in [220.0, 300.0, 376.0, 500.0]) {
++          for (final zoom in [2.0, 3.0]) {
++            for (final focus in [
++              const Offset(0.05, 0.05),
++              const Offset(0.22, 0.78),
++              const Offset(0.76, 0.60),
++              const Offset(0.95, 0.95),
++            ]) {
++              final rect = FaceExplorerLensGeometry.imageRect(
++                sourceSize: source,
++                stageViewport: const Size(285, 380),
++                lensViewport: Size(width, 150),
++                focusSourceNorm: focus,
++                zoom: zoom,
++              );
++              expect(rect.left + focus.dx * rect.width, closeTo(width / 2, 1e-8));
++              expect(rect.top + focus.dy * rect.height, closeTo(75, 1e-8));
++              expect(rect.width / rect.height,
++                  closeTo(source.width / source.height, 1e-8));
++            }
++          }
++        }
++      }
++    });
++
++    test('2x and 3x are relative to the MAIN photo, including letterboxing', () {
++      for (final zoom in [2.0, 3.0]) {
++        final rect = FaceExplorerLensGeometry.imageRect(
++          sourceSize: const Size(1000, 1000),
++          stageViewport: const Size(200, 400),
++          lensViewport: const Size(340, 150),
++          focusSourceNorm: const Offset(0.25, 0.75),
++          zoom: zoom,
++        );
++        expect(rect.width, 200 * zoom);
++        expect(rect.height, 200 * zoom);
++      }
++    });
++
++    test('stage ring centre follows source point rather than Align child bounds', () {
++      final point = FaceExplorerLensGeometry.stageFocusPoint(
++        sourceSize: const Size(1000, 1000),
++        stageViewport: const Size(200, 400),
++        focusSourceNorm: const Offset(0.25, 0.75),
++      );
++      expect(point, const Offset(50, 250));
++    });
++
++    test('unknown stage geometry does not fabricate a lens transform', () {
++      final rect = FaceExplorerLensGeometry.imageRect(
++        sourceSize: const Size(720, 1280),
++        stageViewport: Size.zero,
++        lensViewport: const Size(300, 150),
++        focusSourceNorm: const Offset(0.5, 0.5),
++        zoom: 2,
++      );
++      expect(rect, Rect.zero);
++    });
++  });
++
++  group('One mask presentation for both views', () {
++    test('raw fallback is never labelled already decoded', () {
++      final raw = Uint8List.fromList([1, 2, 3]);
++      for (final remapped in <Uint8List?>[null, Uint8List(0)]) {
++        final presentation = FaceExplorerMaskPresentation.resolve(
++          profile: PerfectMaskPresentationProfile.wrinkles,
++          showSpatialOverlay: true,
++          rawBytes: raw,
++          remappedBytes: remapped,
++        );
++        expect(presentation.maskBytes, same(raw));
++        expect(presentation.presentationDecoded, isFalse);
++      }
++    });
++
++    test('converted mask is reused without a second alpha conversion', () {
++      final converted = Uint8List.fromList([4, 5, 6]);
++      final presentation = FaceExplorerMaskPresentation.resolve(
++        profile: PerfectMaskPresentationProfile.wrinkles,
++        showSpatialOverlay: true,
++        rawBytes: Uint8List.fromList([1, 2, 3]),
++        remappedBytes: converted,
++      );
++      expect(presentation.maskBytes, same(converted));
++      expect(presentation.presentationDecoded, isTrue);
++    });
++
++    test('compare/unavailable decision removes both raw and converted masks', () {
++      final presentation = FaceExplorerMaskPresentation.resolve(
++        profile: PerfectMaskPresentationProfile.wrinkles,
++        showSpatialOverlay: false,
++        rawBytes: Uint8List.fromList([1, 2, 3]),
++        remappedBytes: Uint8List.fromList([4, 5, 6]),
++      );
++      expect(presentation.maskBytes, isNull);
++    });
++
++    test('clarity preserves inactive pixels and existing detection gates', () {
++      for (final id in ['wrinkles', 'pores', 'acne', 'pigmentation', 'oiliness']) {
++        final before = SkinFaceMapVisualTokens.presentationProfileForConcern(id);
++        final after = FaceExplorerMaskPresentation.profileForConcern(id);
++        expect(after.alphaMode, before.alphaMode);
++        expect(after.alphaGain, before.alphaGain);
++        expect(after.luminanceGateFloor, before.luminanceGateFloor);
++        for (final alpha in [0, 1, 32, 128, 255]) {
++          for (var channel = 0; channel <= 255; channel++) {
++            int mapped(PerfectMaskPresentationProfile profile) =>
++                SkinFaceMapVisualTokens.presentationAlphaFromPerfectRgba(
++                  r: channel,
++                  g: channel,
++                  b: channel,
++                  a: alpha,
++                  profile: profile,
++                );
++            expect(mapped(after) == 0, mapped(before) == 0,
++                reason: '$id alpha=$alpha luminance=$channel');
++          }
++        }
++        if (id == 'oiliness') {
++          expect(after.minVisibleAlpha, before.minVisibleAlpha);
++        }
++      }
++    });
++  });
++
++  test('new source load clears the old picture before the first await', () async {
++    final loader = FaceExplorerImageLoader(
++      onChanged: () {},
++      isMounted: () => true,
++    );
++    loader.snapshot = FaceExplorerImageSnapshot(
++      sourceBytes: Uint8List.fromList([1, 2, 3]),
++      sourceWidth: 720,
++      sourceHeight: 1280,
++    );
++    final loading = loader.load(
++      path: '/nonexistent-mira-four-fixes-test/photo.png',
++      fromHistory: false,
++    );
++    expect(loader.snapshot.sourceBytes, isNull);
++    expect(loader.snapshot.sourceWidth, isNull);
++    loader.invalidate();
++    await loading;
++  });
++
++  testWidgets('rectangular lens centres the selected pixel at its actual width', (tester) async {
++    final source = base64Decode(
++      'iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAYAAAAfFcSJAAAADUlEQVR42mP8z8BQDwAEhQGAhKmMIQAAAABJRU5ErkJggg==',
++    );
++    const focus = Offset(0.22, 0.78);
++    for (final width in [280.0, 360.0, 430.0]) {
++      for (final zoom in [2.0, 3.0]) {
++        await tester.pumpWidget(MaterialApp(
++          home: Center(
++            child: SizedBox(
++              width: width,
++              child: FaceExplorerLensPanel(
++                sourceBytes: source,
++                tint: Colors.green,
++                presentation: const FaceExplorerMaskPresentation(
++                  profile: PerfectMaskPresentationProfile.standard,
++                ),
++                focusSourceNorm: focus,
++                zoom: zoom,
++                stageViewport: const Size(200, 400),
++                sourceWidth: 1,
++                sourceHeight: 1,
++                onToggleZoom: () {},
++                onHorizontal: (_) {},
++                onVertical: (_) {},
++              ),
++            ),
++          ),
++        ));
++        await tester.pumpAndSettle();
++        final lens = tester.getRect(find.byType(ClipRRect));
++        final image = tester.getRect(find.byType(PerfectMaskOverlay));
++        expect(image.left + focus.dx * image.width,
++            closeTo(lens.center.dx, 1e-6));
++        expect(image.top + focus.dy * image.height,
++            closeTo(lens.center.dy, 1e-6));
++        expect(tester.takeException(), isNull);
++      }
++    }
++  });
++
++  Future<void> reading(WidgetTester tester, {String? region, double? score}) async {
++    await tester.pumpWidget(MaterialApp(
++      home: Scaffold(
++        body: Directionality(
++          textDirection: TextDirection.rtl,
++          child: FaceExplorerReadingStrip(
++            metricId: 'wrinkles',
++            uiScore: score,
++            accent: Colors.green,
++            scoreRegion: region,
++          ),
++        ),
++      ),
++    ));
++  }
++
++  testWidgets('regional score is named after the region, not whole face', (tester) async {
++    await reading(tester, region: 'forehead', score: 77);
++    expect(find.text('درجة الجبهة'), findsOneWidget);
++    expect(find.text('77'), findsOneWidget);
++    expect(find.text('الدرجة العامة'), findsNothing);
++  });
++
++  testWidgets('missing region score is not replaced by zero or a general score', (tester) async {
++    await reading(tester, region: 'forehead');
++    expect(find.text('الجبهة — لا تتوفر درجة'), findsOneWidget);
++    expect(find.text('الدرجة العامة'), findsNothing);
++    expect(find.text('0'), findsNothing);
++    expect(find.text('الأعلى أفضل'), findsNothing);
++  });
++
++  testWidgets('whole-face score keeps its general scope', (tester) async {
++    await reading(tester, region: 'whole', score: 74);
++    expect(find.text('الدرجة العامة'), findsOneWidget);
++    expect(find.text('74'), findsOneWidget);
++  });
++}

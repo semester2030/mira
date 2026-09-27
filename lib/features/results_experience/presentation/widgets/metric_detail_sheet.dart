@@ -67,9 +67,15 @@ class MetricDetailSheet extends StatelessWidget {
                 runSpacing: 8,
                 children: [
                   _Chip(label: status, tone: AppColors.primaryDark),
-                  ResultsConfidenceChip(state: metric.confidence, compact: true),
+                  ResultsConfidenceChip(
+                    state: metric.confidence,
+                    compact: true,
+                  ),
                   if (metric.comparisonEligible)
-                    const _Chip(label: 'قابل للمقارنة لاحقاً', tone: Color(0xFF4A6572)),
+                    const _Chip(
+                      label: 'قابل للمقارنة لاحقاً',
+                      tone: Color(0xFF4A6572),
+                    ),
                 ],
               ),
               const SizedBox(height: 14),
@@ -102,7 +108,10 @@ class MetricDetailSheet extends StatelessWidget {
               const SizedBox(height: 16),
               Text('خطوتك المرتبطة', style: AppTypography.titleSmall),
               const SizedBox(height: 6),
-              Text(action, style: AppTypography.bodyMedium.copyWith(height: 1.45)),
+              Text(
+                action,
+                style: AppTypography.bodyMedium.copyWith(height: 1.45),
+              ),
               if (metric.limitation != LimitationState.none) ...[
                 const SizedBox(height: 14),
                 Text(

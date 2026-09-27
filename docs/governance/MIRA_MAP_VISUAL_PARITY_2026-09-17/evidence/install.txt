@@ -1,0 +1,36 @@
+Installing app.mira.beauty to fayez’s iPhone...
+Error executing devicectl: ProcessException: Process exited abnormally with exit code 1:
+17:43:53  Acquired tunnel connection to device.
+17:43:53  Enabling developer disk image services.
+
+ERROR: The developer disk image could not be mounted on this device. (com.apple.dt.CoreDeviceError error 12040 (0x2F08))
+       DeviceIdentifier = B79649B9-0E99-5AF3-B82D-BC7FA7E47A15
+       ----------------------------------------
+           The developer disk image could not be mounted on this device. (com.apple.dt.CoreDeviceError error 12040 (0x2F08))
+           DeviceIdentifier = B79649B9-0E99-5AF3-B82D-BC7FA7E47A15
+           Options = {
+               MountedBundlePath = "file:///Library/Developer/DeveloperDiskImages/iOS_DDI/";
+               UseCredentials = 0;
+           }
+           DDIBuildUpdate = 17F113 (developerTools)
+           DDIPath = /Library/Developer/DeveloperDiskImages/iOS_DDI
+           NSURL = file:///Library/Developer/DeveloperDiskImages/iOS_DDI/
+           DeviceFusing = prod
+       ----------------------------------------
+               Error mounting image: 0xe80000e2 (kAMDMobileImageMounterDeviceLocked: The device is locked.) (com.apple.mobiledevice error -402652958 (0xE80000E2))
+               LineNumber = 2127
+               FunctionName = AMDeviceRemoteMountPersonalizedBundle
+       ----------------------------------------
+                   Failed to mount image: 0xe80000e2 (kAMDMobileImageMounterDeviceLocked: The device is locked.) (com.apple.mobiledevice error -402652958 (0xE80000E2))
+                   LineNumber = 2049
+                   FunctionName = -[PersonalizedImage mountImage:]
+       ----------------------------------------
+                       Failed to mount /Library/Developer/DeveloperDiskImages/iOS_DDI/Restore/022-21793-062.dmg: 0xe80000e2 (kAMDMobileImageMounterDeviceLocked: The device is locked.) (com.apple.mobiledevice error -402652958 (0xE80000E2))
+                       FunctionName = -[PersonalizedImage mountRemoteImage:serverTicket:imageDigest:trustCacheURL:error:]
+                       LineNumber = 1725
+  Command: /usr/bin/arch -arm64e xcrun devicectl device info apps --device 00008110-00191986268BA01E --bundle-id app.mira.beauty --json-output /var/folders/x9/m0t84f6n5q79qyfy5z4_8y4c0000gn/T/flutter_tools.PcWC6r/core_devices.vW23YD/core_device_app_list.json
+Could not install build/ios/iphoneos/Runner.app on 00008110-00191986268BA01E.
+Try launching Xcode and selecting "Product > Run" to fix the problem:
+  open ios/Runner.xcworkspace
+
+Install failed

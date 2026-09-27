@@ -1,0 +1,62 @@
+[
+  {
+    "id": "REPO-0001",
+    "path": "/Users/fayez/Desktop/mira",
+    "roleAr": "مستودع موحّد Flutter + API + بوابات",
+    "branch": "mira/p5-strict-frontend-recovery-2026-09-14",
+    "commitSha": "15fe65c40d3dedb9afdd95619f2945bd84cb616a",
+    "workingTree": "dirty (غير متعلق بالدراسة)",
+    "inspectedAt": "2026-09-23T03:20:00+03:00",
+    "dependencyFiles": [
+      "pubspec.yaml",
+      "mira-api/package.json",
+      "mira-api/prisma/schema.prisma",
+      "render.yaml"
+    ],
+    "envVarNamesOnly": [
+      "DATABASE_URL",
+      "MIRA_API_BASE_URL",
+      "MIRA_MARKETPLACE_ENABLED",
+      "PARTNER_AUTO_APPROVE",
+      "AUTH_SKIP",
+      "ADMIN_API_KEY"
+    ],
+    "runHints": [
+      "flutter run",
+      "cd mira-api && npm run start:dev"
+    ],
+    "subprojects": [
+      {
+        "id": "SP-FLUTTER",
+        "path": "lib/",
+        "role": "تطبيق العميل"
+      },
+      {
+        "id": "SP-API",
+        "path": "mira-api/",
+        "role": "NestJS"
+      },
+      {
+        "id": "SP-PARTNERS",
+        "path": "partners-portal/",
+        "role": "ويب الشركاء"
+      },
+      {
+        "id": "SP-ADMIN",
+        "path": "admin-portal/",
+        "role": "لوحة الإدارة"
+      },
+      {
+        "id": "SP-WEB",
+        "path": "website/",
+        "role": "تسويق"
+      }
+    ]
+  },
+  {
+    "id": "REPO-0002",
+    "path": "غير متاح للفحص",
+    "roleAr": "مستودع تجارة منفصل",
+    "note": "غير موجود ضمن نطاق Desktop المفحوص"
+  }
+]

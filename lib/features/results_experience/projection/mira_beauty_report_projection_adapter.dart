@@ -27,12 +27,12 @@ abstract final class MiraBeautyReportProjectionAdapter {
             // Match% alone is insufficient — require reason linkage.
             hasRecommendationReason:
                 (p.stepAr?.trim().isNotEmpty ?? false) ||
-                    report.mainConcerns.isNotEmpty,
+                report.mainConcerns.isNotEmpty,
             recommendationReasonAr: p.stepAr?.trim().isNotEmpty == true
                 ? 'مرتبط بخطوة: ${p.stepAr}'
                 : (report.mainConcerns.isNotEmpty
-                    ? 'مرتبط باحتياج: ${report.mainConcerns.first.titleAr}'
-                    : null),
+                      ? 'مرتبط باحتياج: ${report.mainConcerns.first.titleAr}'
+                      : null),
           ),
         )
         .toList(growable: false);
@@ -79,8 +79,8 @@ abstract final class MiraBeautyReportProjectionAdapter {
       summaryAr: report.summaryAdviceAr.isNotEmpty
           ? report.summaryAdviceAr
           : report.headlineAr,
-      overallConfidencePercent: skin?.confidence ??
-          _spatialToPercent(report.spatialConfidence),
+      overallConfidencePercent:
+          skin?.confidence ?? _spatialToPercent(report.spatialConfidence),
       priorities: priorities,
       metrics: metrics,
       products: products,
@@ -163,8 +163,8 @@ abstract final class MiraBeautyReportProjectionAdapter {
             available: m.isAvailable,
             normalizedWellnessValue: m.normalizedValue != null
                 ? (m.normalizedValue! <= 1.0
-                    ? m.normalizedValue! * 100
-                    : m.normalizedValue)
+                      ? m.normalizedValue! * 100
+                      : m.normalizedValue)
                 : null,
             confidencePercent: m.confidence,
             levelAr: m.levelAr,

@@ -1,0 +1,119 @@
+<!DOCTYPE html>
+<html lang="ar" dir="rtl">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>MIRA HD Masks — Technical Viewer</title>
+  <style>
+    :root { color-scheme: light; }
+    body { margin: 0; font-family: -apple-system, system-ui, sans-serif; background: #f7f4f1; color: #1c1b1a; }
+    header { padding: 12px 16px; background: #fff; border-bottom: 1px solid #e7e0d8; }
+    h1 { margin: 0; font-size: 17px; }
+    p { margin: 6px 0 0; font-size: 12px; color: #666; }
+    .stage { position: relative; width: min(100vw, 420px); margin: 12px auto; aspect-ratio: 1200/1680; background: #111; }
+    .stage img { position: absolute; inset: 0; width: 100%; height: 100%; object-fit: contain; image-rendering: auto; }
+    .mask { opacity: 0.55; }
+    .mask.only { opacity: 1; }
+    .chips { display: flex; flex-wrap: wrap; gap: 8px; padding: 8px 12px 20px; justify-content: center; }
+    button { border: 1px solid #d9d0c6; background: #fff; border-radius: 999px; padding: 8px 12px; font-size: 13px; }
+    button.active { background: #efe6dc; border-color: #c9b7a5; font-weight: 700; }
+    .meta { text-align: center; font-size: 12px; color: #555; padding: 0 12px 24px; }
+  </style>
+</head>
+<body>
+  <header>
+    <h1>عارض تقني — Perfect HD Masks</h1>
+    <p>بدون landmarks / بدون تصميم نهائي · ORIGINAL + RAW MASK فقط</p>
+  </header>
+  <div class="stage" id="stage">
+    <img id="source" alt="source" />
+    <img id="mask" class="mask" alt="mask" hidden />
+  </div>
+  <div class="chips" id="chips"></div>
+  <div class="meta" id="meta">Loading session…</div>
+  <script>
+    const labels = {
+      'hd_age_spot': 'التصبغات',
+      'hd_pore::whole': 'المسام',
+      'hd_pore::forehead': 'مسام/جبهة',
+      'hd_pore::nose': 'مسام/أنف',
+      'hd_pore::cheek': 'مسام/خد',
+      'hd_wrinkle::whole': 'التجاعيد',
+      'hd_wrinkle::forehead': 'تجاعيد/جبهة',
+      'hd_wrinkle::glabellar': 'تجاعيد/غلابيلا',
+      'hd_wrinkle::crowfeet': 'تجاعيد/عين',
+      'hd_wrinkle::periocular': 'تجاعيد/حول العين',
+      'hd_wrinkle::nasolabial': 'تجاعيد/أنفية',
+      'hd_wrinkle::marionette': 'تجاعيد/ذقن',
+      'hd_redness': 'الاحمرار',
+    };
+    function keyOf(m) {
+      if (!m.region || m.region === 'whole' || m.region === 'all') {
+        if (m.concernType === 'hd_pore') return 'hd_pore::whole';
+        if (m.concernType === 'hd_wrinkle') return 'hd_wrinkle::whole';
+        return m.concernType;
+      }
+      return m.concernType + '::' + m.region;
+    }
+    let session = null;
+    let selected = null;
+    let maskOnly = false;
+    async function boot() {
+      const res = await fetch('/session.json');
+      session = await res.json();
+      document.getElementById('source').src = 'data:' + session.sourceContentType + ';base64,' + session.sourceBase64;
+      const chips = document.getElementById('chips');
+      const add = (id, label) => {
+        const b = document.createElement('button');
+        b.textContent = label;
+        b.onclick = () => { selected = id; maskOnly = false; render(); };
+        b.dataset.id = id;
+        chips.appendChild(b);
+      };
+      add('ORIGINAL', 'ORIGINAL');
+      const preferred = ['hd_age_spot', 'hd_pore::whole', 'hd_wrinkle::whole', 'hd_redness'];
+      const byKey = new Map(session.masks.map(m => [keyOf(m), m]));
+      for (const id of preferred) if (byKey.has(id) || (id === 'hd_age_spot' && byKey.has('hd_age_spot'))) add(id, labels[id] || id);
+      for (const m of session.masks) {
+        const id = keyOf(m);
+        if (preferred.includes(id) || preferred.includes(m.concernType)) continue;
+        add(id, labels[id] || id);
+      }
+      const only = document.createElement('button');
+      only.textContent = 'MASK ONLY';
+      only.onclick = () => { maskOnly = !maskOnly; render(); };
+      only.id = 'maskOnlyBtn';
+      chips.appendChild(only);
+      selected = 'ORIGINAL';
+      render();
+    }
+    function render() {
+      [...document.querySelectorAll('.chips button')].forEach(b => {
+        b.classList.toggle('active', b.dataset.id === selected || (b.id === 'maskOnlyBtn' && maskOnly));
+      });
+      const src = document.getElementById('source');
+      const mask = document.getElementById('mask');
+      if (selected === 'ORIGINAL' || !selected) {
+        src.hidden = false;
+        mask.hidden = true;
+        document.getElementById('meta').textContent =
+          session.sourceWidth + '×' + session.sourceHeight + ' · offset 0 · no landmarks';
+        return;
+      }
+      const m = session.masks.find(x => keyOf(x) === selected || x.concernType === selected);
+      if (!m) return;
+      src.hidden = maskOnly;
+      mask.hidden = false;
+      mask.className = 'mask' + (maskOnly ? ' only' : '');
+      mask.src = 'data:' + m.contentType + ';base64,' + m.maskBase64;
+      document.getElementById('meta').textContent =
+        [m.concernType, m.region || 'root',
+         m.rawScore != null ? ('raw=' + Number(m.rawScore).toFixed(2)) : null,
+         m.uiScore != null ? ('ui=' + m.uiScore) : null,
+         (m.width && m.height) ? (m.width + '×' + m.height) : null,
+         'ALIGNED', 'offset=0'].filter(Boolean).join(' · ');
+    }
+    boot().catch(e => { document.getElementById('meta').textContent = String(e); });
+  </script>
+</body>
+</html>

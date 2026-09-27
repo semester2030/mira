@@ -1,3 +1,5 @@
+import 'dart:developer' as developer;
+
 import 'package:flutter/material.dart';
 
 import '../../../../core/config/mira_features.dart';
@@ -39,6 +41,16 @@ class AskOutfitMiraSection extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final advisorReady = MiraFeatures.fashionAdvisorV1 &&
+        MiraRuntimeEntitlementStore.fashionAdvisorModeB;
+    if (!advisorReady) {
+      developer.log(
+        'outfit_advisor_gate buildFlag=${MiraFeatures.fashionAdvisorV1} '
+        'modeB=${MiraRuntimeEntitlementStore.fashionAdvisorModeB}',
+        name: 'AskOutfitMiraSection',
+      );
+    }
+
     final cta = !AppSession.canUseCloud
         ? 'اسألي ميرا (تجريبي)'
         : 'محادثة عن الإطلالة';
@@ -69,7 +81,11 @@ class AskOutfitMiraSection extends StatelessWidget {
                       MiraFeatures.fashionAdvisorV1 &&
                               MiraRuntimeEntitlementStore.fashionAdvisorModeB
                           ? 'استشارة أسلوب ومناسبة — عبر مستشار ميرا'
-                          : 'استشارة أسلوب ومناسبة — مبنية على تحليلك',
+                          : !MiraFeatures.fashionAdvisorV1
+                              ? 'استشارة الإطلالة غير متاحة في هذا الإصدار من التطبيق.'
+                              : !MiraRuntimeEntitlementStore.fashionAdvisorModeB
+                                  ? 'استشارة الإطلالة غير مفعّلة لحسابك حالياً. يمكنك المحاولة لاحقاً أو التواصل مع الدعم.'
+                                  : 'استشارة أسلوب ومناسبة — مبنية على تحليلك',
                       style: AppTypography.bodySmall
                           .copyWith(color: AppColors.textSecondary),
                     ),

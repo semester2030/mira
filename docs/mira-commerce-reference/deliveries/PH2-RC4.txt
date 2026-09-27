@@ -1,0 +1,23 @@
+المرحلة الثانية RC4 — بانتظار المراجعة
+الاسم: MIRA_DISCOVER_PHASE2_RC4.zip
+البصمة تُحسب خارج الحزمة بعد إغلاقها.
+عدد المراحل المعتمدة يبقى 1 من 5. هذا التسليم لا يصدر اعتمادًا.
+
+نتيجة مراجعة RC3 المثبتة:
+الحزمة سليمة، وثبتت إصلاحات جزئية، ولم يُعتمد إغلاق المرحلة الثانية بسبب مشكلات البحث أثناء السحب، والمفضلة، والسعر غير المتاح، وبيانات المتجر، وأدلة التكامل، واتساق سجل المرحلة.
+ZIP: MIRA_DISCOVER_PHASE2_RC3.zip
+SHA-256: 2da3caa9ee26079113137a90448e5499e246a8749e749345692852c2dd20f725
+
+بنود RC4:
+- P2-RC4-01 حقل بحث واحد في الطبقة المشتركة أثناء السحب.
+- P2-RC4-02 جيل حساب يمنع كتابة نتيجة قديمة أو إشعار بعد dispose.
+- P2-RC4-03 حفظ صريح idempotent على الخادم وقاعدة الاختبار.
+- P2-RC4-04 null والمفتاح الغائب سعر غير متاح، والصفر معلوم.
+- P2-RC4-05 شاشة المتجر تستخدم PartnerDetail.summary بعد الجلب.
+- P2-RC4-06 تكامل HTTP على Postgres محلي mira_ph2_rc4_test ثم حذفه.
+- P2-RC4-07 سجل الموقع يشير إلى RC4 بانتظار المراجعة وRC3 تمت مراجعته ولم يُعتمد.
+
+اختبارات:
+- flutter test test/features/marketplace — 86 ناجحًا — evidence/tests/rc4_flutter.txt
+- bash mira-api/scripts/run-marketplace-rc4-integration.sh — marketplace http integration passed — evidence/tests/rc4_api.txt
+- حد المصادقة في التكامل: MIRA_AUTH_FIXTURE يستبدل verifyIdToken فقط. غياب الرمز أو رمز غير معروف يبقى 401. ليس AUTH_SKIP.

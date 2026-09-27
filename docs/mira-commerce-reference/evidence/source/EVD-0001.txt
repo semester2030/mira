@@ -1,0 +1,14 @@
+# Evidence EVD-0001
+# file=lib/core/config/mira_features.dart
+# lines=41-47
+# commit=15fe65c40d3dedb9afdd95619f2945bd84cb616a
+# sha256=779d099d02ebe82171122ee8313ae69479c8b22d8da64b9716bb5fd892c3729f
+# inspected_at=2026-09-23T03:20:00+03:00
+
+41|  /// `false` = إخفاء الشركاء (منتجات · صالونات · عيادات) — «الانطلاق قريباً».
+42|  /// `true` = تفعيل Discover والـ marketplace عبر `--dart-define=MIRA_MARKETPLACE_ENABLED=true`
+43|  static const bool marketplaceEnabled = bool.fromEnvironment(
+44|    'MIRA_MARKETPLACE_ENABLED',
+45|    defaultValue: false,
+46|  );
+47|

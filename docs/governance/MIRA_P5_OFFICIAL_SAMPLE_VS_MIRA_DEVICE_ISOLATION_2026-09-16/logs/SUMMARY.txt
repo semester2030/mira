@@ -1,0 +1,6 @@
+SAMPLE events=279 canCapture_true=83 valid_true=0
+SAMPLE top=[(('too_small', 'good', 'under_exposed', '0', '0'), 84), (('good', 'good', 'normal', '0', '1'), 65), (('too_small', 'bad', 'under_exposed', '0', '0'), 31), (('too_small', 'good', 'normal', '0', '0'), 26), (('too_small', 'bad', 'unknown', '0', '0'), 25), (('good', 'good', 'good', '0', '1'), 18), (('good', 'bad', 'normal', '0', '0'), 10), (('good', 'good', 'under_exposed', '0', '0'), 7), (('good', 'bad', 'under_exposed', '0', '0'), 6), (('too_small', 'good', 'unknown', '0', '0'), 2), (('good', 'bad', 'good', '0', '0'), 2), (('too_small', 'bad', 'normal', '0', '0'), 2)]
+MIRA events=675 ready_true=4 valid_true=0
+MIRA top=[(('good', 'bad', 'under_exposed', '0', '0'), 324), (('good', 'good', 'under_exposed', '0', '0'), 231), (('too_small', 'good', 'under_exposed', '0', '0'), 25), (('good', 'bad', 'uneven', '0', '0'), 21), (('too_small', 'bad', 'under_exposed', '0', '0'), 15), (('too_small', 'good', 'unknown', '0', '0'), 12), (('good', 'bad', 'normal', '0', '0'), 11), (('good', 'bad', 'unknown', '0', '0'), 10), (('unknown', 'unknown', 'unknown', '0', '0'), 7), (('too_small', 'bad', 'unknown', '0', '0'), 6), (('good', 'good', 'unknown', '0', '0'), 4), (('good', 'good', 'normal', '0', '1'), 4)]
+SAMPLE capture: REQUEST+SUCCESS present in SAMPLE_console_sanitized.txt
+MIRA capture: none

@@ -1,0 +1,16 @@
+RC3 API checks — 2026-09-26
+commands run from mira-api/
+
+npx tsx src/marketplace/catalog-page.schema-tests.ts
+→ catalog-page tests passed
+
+npx tsx src/marketplace/catalog-price.schema-tests.ts
+→ catalog-price tests passed
+
+npx tsx src/marketplace/catalog-favorites.schema-tests.ts
+→ catalog-favorites tests passed
+
+npx tsx src/marketplace/marketplace-favorites.integration-tests.ts
+→ SKIP marketplace favorites integration: DATABASE_URL is not a local test database
+
+Note: integration against Postgres requires local DATABASE_URL, prisma generate, and applied migration 20260926040000_discover_catalog_rc2. Not run in this environment.

@@ -1,0 +1,23 @@
+PH4 RC3 — إغلاق ملاحظات RC2 الخمس
+التاريخ: 2026-09-27
+الحالة: PH4 RC3 منفّذ — بانتظار المراجعة المستقلة.
+المعتمد بالكامل: مرحلتان من خمس.
+المرحلة الثالثة: مقبولة برمجيًا ضمن النطاق المراجع، وبانتظار إغلاق التخزين الدائم.
+مانع PH3-STORAGE-LIVE: مفتوح.
+قواعد العد: غير معتمدة، والعد غير مفعّل.
+اختبار الجوال: مؤجل للمرحلة الخامسة. لقطات البوابة من Chrome محلي، ليست تشغيل جهاز.
+RC2: 453e9e685d0a705ead6d9afa2865a0c3190ea0d9ce3bdb378b4227a9407c3f47 تمت مراجعته — يحتاج تصحيحًا.
+
+إعادة الإنتاج من الحزمة بعد فكها:
+1. من mira-api: npm ci ثم npx prisma generate.
+2. env -u NODE_ENV -u MIRA_ALLOW_SIMULATED_IMPORT -u MIRA_MEDIA_STORE -u MIRA_AD_FAIL_DECIDE MIRA_RC6_DB_NAME=mira_ph2_rc6_test_ph4rc3 bash scripts/run-marketplace-rc6-integration.sh
+3. من جذر الحزمة حيث pubspec.yaml: flutter pub get ثم flutter test test/features/marketplace/discover_ad_feed_test.dart test/features/marketplace/discover_ad_presentation_test.dart test/features/marketplace/discover_view_count_test.dart test/features/marketplace/discover_feed_controller_test.dart test/features/marketplace/discover_phase2_widget_test.dart
+4. عزل المعاينة: node docs/mira-commerce-reference/evidence/ph4-rc3/portal-isolation-check.mjs
+   هذا بديل اختبار بـ fetch مزيّف، وليس اتصال إنتاج.
+5. رحلة البوابة المحلية، إن أريدت إعادتها: bash mira-api/scripts/ph4-rc3-portal-journey.sh
+   تستخدم Postgres محليًا وChrome. بوابة الدخول في لوحة الإدارة مسار محلي للتحقق من المفتاح فقط. مسارات الإعلان هي خدمة الكتالوج. ليست تشغيل جوال ولا Firebase حيًا.
+6. من docs/mira-commerce-reference: python3 scripts/generate_data_js.py ثم python3 scripts/validate_package.py
+7. لا تضع مفاتيح في الملفات. بصمة ZIP تُحسب بعد إغلاق الحزمة ولا تُكتب داخلها.
+
+ما نُفذ: ربط الإعلان بمسار اكتشفي الفعلي، وحماية مسودات التجار عند القراءة، وعزل المعاينة الموسومة، وأهلية فتح الرابط، وعرض البوابتين الضيق.
+ما لم يُنفذ: تفعيل العد، واعتماد العتبات، والتحقق من مورد التخزين الفعلي، وتشغيل الجوال، وتكامل زد، وDEC-0007، وعمولات المشاهير.

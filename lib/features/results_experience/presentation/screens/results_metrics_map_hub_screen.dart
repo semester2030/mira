@@ -54,7 +54,9 @@ class _ResultsMetricsMapHubScreenState extends State<ResultsMetricsMapHubScreen>
       initialIndex: widget.initialTab == ResultsDetailsTab.skinMap ? 1 : 0,
     );
     _tabs.addListener(_onTab);
-    WidgetsBinding.instance.addPostFrameCallback((_) => _logForIndex(_tabs.index));
+    WidgetsBinding.instance.addPostFrameCallback(
+      (_) => _logForIndex(_tabs.index),
+    );
   }
 
   void _onTab() {
@@ -93,10 +95,7 @@ class _ResultsMetricsMapHubScreenState extends State<ResultsMetricsMapHubScreen>
               padding: const EdgeInsets.fromLTRB(20, 8, 20, 0),
               child: Align(
                 alignment: AlignmentDirectional.centerStart,
-                child: Text(
-                  'تفاصيل النتيجة',
-                  style: AppTypography.titleMedium,
-                ),
+                child: Text('تفاصيل النتيجة', style: AppTypography.titleMedium),
               ),
             ),
             TabBar(
@@ -121,7 +120,9 @@ class _ResultsMetricsMapHubScreenState extends State<ResultsMetricsMapHubScreen>
                         onOpen: (m) {
                           ResultsV2Analytics.metricOpened(metricId: m.id);
                           if (!m.evidenceAvailable) {
-                            ResultsV2Analytics.metricUnavailable(metricId: m.id);
+                            ResultsV2Analytics.metricUnavailable(
+                              metricId: m.id,
+                            );
                           }
                           showMetricDetailSheet(
                             context: context,

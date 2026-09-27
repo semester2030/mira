@@ -1,0 +1,15 @@
+=== enable_mask_overlay matches ===
+/Users/fayez/Desktop/mira/docs/governance/MIRA_PERFECT_SPATIAL_MASK_EXPERT_MODE_AUDIT_2026-09-11/02_ENABLE_MASK_OVERLAY_AUDIT.md:2
+/Users/fayez/Desktop/mira/docs/governance/MIRA_PERFECT_SPATIAL_MASK_EXPERT_MODE_AUDIT_2026-09-11/00_INTEGRATION_INVENTORY.md:1
+/Users/fayez/Desktop/mira/docs/governance/MIRA_PERFECT_SPATIAL_MASK_EXPERT_MODE_AUDIT_2026-09-11/09_PERFECT_TECHNICAL_QUESTIONS.md:1
+/Users/fayez/Desktop/mira/docs/governance/MIRA_PERFECT_SPATIAL_MASK_EXPERT_MODE_AUDIT_2026-09-11/99_FINAL_REPORT.md:1
+/Users/fayez/Desktop/mira/docs/governance/MIRA_PERFECT_SPATIAL_MASK_EXPERT_MODE_AUDIT_2026-09-11/08_GAP_ANALYSIS.md:1
+/Users/fayez/Desktop/mira/docs/governance/MIRA_PERFECT_SPATIAL_MASK_EXPERT_MODE_AUDIT_2026-09-11/11_MINIMAL_REAL_ACCEPTANCE_PLAN.md:1
+/Users/fayez/Desktop/mira/docs/governance/MIRA_PERFECT_SPATIAL_MASK_EXPERT_MODE_AUDIT_2026-09-11/PERFECT_CAPABILITY_UPGRADE_REQUIREMENTS.md:1
+=== s2s/v2.1 matches ===
+/Users/fayez/Desktop/mira/docs/governance/MIRA_PERFECT_SPATIAL_MASK_EXPERT_MODE_AUDIT_2026-09-11/01_API_VERSION_EVIDENCE.md:1
+=== Expert Mode (case insensitive, ts/md) ===
+0
+=== hd_age_spot|hd_pore ===
+/Users/fayez/Desktop/mira/docs/governance/MIRA_PERFECT_SPATIAL_MASK_EXPERT_MODE_AUDIT_2026-09-11/PERFECT_CAPABILITY_UPGRADE_REQUIREMENTS.md:1
+/Users/fayez/Desktop/mira/docs/governance/MIRA_PERFECT_SPATIAL_MASK_EXPERT_MODE_AUDIT_2026-09-11/05_HD_CONCERN_MATRIX.md:5

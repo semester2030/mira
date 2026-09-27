@@ -1,0 +1,7 @@
+source_zip=PerfectCorp_Mobile_CameraKit_8296658a-d9dd-45ce-ad4d-7cee3d03de45.zip
+sha256=18623f4db94f0d792418765efb237d4a2e943266ad2a090f9168397df3b73c44
+version=2.5.0
+build=111311844
+artifact=PerfectLibCameraKit.xcframework
+models=model/*.bin,model/*.mnn
+integrated=2026-09-15T16:47:02Z

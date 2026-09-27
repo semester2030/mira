@@ -35,21 +35,21 @@ abstract final class LandmarkAlignedFaceGeometry {
 
   /// Landmark index groups used to build critical regions (documentation + tests).
   static List<int> landmarkIndicesFor(String exploreId) => switch (exploreId) {
-        'forehead' => [
-            ...SkinReportLandmarkIndices.browRidge,
-            ...SkinReportLandmarkIndices.foreheadTopSupport,
-          ],
-        'cheeks_left' => SkinReportLandmarkIndices.leftCheek,
-        'cheeks_right' => SkinReportLandmarkIndices.rightCheek,
-        'nose' => SkinReportLandmarkIndices.nose,
-        'chin' => [
-            ...SkinReportLandmarkIndices.lowerLip,
-            ...SkinReportLandmarkIndices.chinArcTight,
-          ],
-        'under_eyes_left' => MediapipeLandmarkIndices.leftUnderEye,
-        'under_eyes_right' => MediapipeLandmarkIndices.rightUnderEye,
-        _ => const [],
-      };
+    'forehead' => [
+      ...SkinReportLandmarkIndices.browRidge,
+      ...SkinReportLandmarkIndices.foreheadTopSupport,
+    ],
+    'cheeks_left' => SkinReportLandmarkIndices.leftCheek,
+    'cheeks_right' => SkinReportLandmarkIndices.rightCheek,
+    'nose' => SkinReportLandmarkIndices.nose,
+    'chin' => [
+      ...SkinReportLandmarkIndices.lowerLip,
+      ...SkinReportLandmarkIndices.chinArcTight,
+    ],
+    'under_eyes_left' => MediapipeLandmarkIndices.leftUnderEye,
+    'under_eyes_right' => MediapipeLandmarkIndices.rightUnderEye,
+    _ => const [],
+  };
 
   /// Explore-region id → anatomical MediaPipe side mapping.
   ///
@@ -63,8 +63,7 @@ abstract final class LandmarkAlignedFaceGeometry {
       FaceRegionId.chin => 'chin',
       FaceRegionId.underEye =>
         polygon.isLeftSide ? 'under_eyes_left' : 'under_eyes_right',
-      FaceRegionId.cheek =>
-        polygon.isLeftSide ? 'cheeks_left' : 'cheeks_right',
+      FaceRegionId.cheek => polygon.isLeftSide ? 'cheeks_left' : 'cheeks_right',
       FaceRegionId.jawline => null,
     };
   }
@@ -148,10 +147,7 @@ abstract final class LandmarkAlignedFaceGeometry {
   }
 
   /// Interior samples toward centroid from bounds (safe interior, not edges).
-  static List<Offset> interiorSamplePoints(
-    Path path, {
-    int ringSamples = 8,
-  }) {
+  static List<Offset> interiorSamplePoints(Path path, {int ringSamples = 8}) {
     final centroid = polygonCentroid(path);
     final bounds = path.getBounds();
     if (centroid == null || bounds.isEmpty) return const [];
@@ -175,10 +171,7 @@ abstract final class LandmarkAlignedFaceGeometry {
       Offset(bounds.right - bounds.width * 0.25, bounds.center.dy),
     ];
     for (final m in mids) {
-      final mid = Offset(
-        (centroid.dx + m.dx) / 2,
-        (centroid.dy + m.dy) / 2,
-      );
+      final mid = Offset((centroid.dx + m.dx) / 2, (centroid.dy + m.dy) / 2);
       if (path.contains(mid)) points.add(mid);
     }
     return points;

@@ -1,11 +1,15 @@
-import { Injectable, NotFoundException, OnModuleInit } from '@nestjs/common';
+import { BadRequestException, Inject, Injectable, NotFoundException, OnModuleInit, UnauthorizedException } from '@nestjs/common';
+import { Prisma } from '@prisma/client';
 import { PrismaService } from '../prisma/prisma.service';
+import { compareCatalogKeys, pageCatalogItems } from './catalog-page';
+import { formatCatalogPrice } from './catalog-price';
 import { MatchMarketplaceDto } from './dto/match-marketplace.dto';
 import {
   ConcernMap,
   scoreProductMatch,
   scoreServiceMatch,
 } from './marketplace-matching.engine';
+import { publishedCatalogMediaWhere } from './catalog-published-media';
 import { seedMarketplaceIfEmpty } from './marketplace.seed';
 
 export type MatchedProductDto = {
@@ -56,7 +60,7 @@ export type PartnerSummaryDto = {
 
 @Injectable()
 export class MarketplaceService implements OnModuleInit {
-  constructor(private readonly prisma: PrismaService) {}
+  constructor(@Inject(PrismaService) private readonly prisma: PrismaService) {}
 
   async onModuleInit(): Promise<void> {
     try {
@@ -71,9 +75,8 @@ export class MarketplaceService implements OnModuleInit {
     await seedMarketplaceIfEmpty(this.prisma);
   }
 
-  formatPrice(halalas: number): string {
-    const sar = halalas / 100;
-    return `${sar.toFixed(0)} ر.س`;
+  formatPrice(halalas: number | null | undefined): string {
+    return formatCatalogPrice(halalas) ?? '';
   }
 
   buildConcernMap(dto: MatchMarketplaceDto): ConcernMap {
@@ -90,13 +93,14 @@ export class MarketplaceService implements OnModuleInit {
     const city = dto.city ?? 'الرياض';
 
     const products = await this.prisma.product.findMany({
-      where: { active: true, partner: { status: 'active', type: 'brand' } },
+      where: { active: true, contentStatus: 'published', catalogSource: 'catalog', partner: { status: 'active', type: 'brand' } },
       include: { partner: true },
     });
 
     const services = await this.prisma.service.findMany({
       where: {
         active: true,
+        contentStatus: 'published', catalogSource: 'catalog',
         partner: {
           status: 'active',
           type: { in: ['clinic', 'salon'] },
@@ -167,6 +171,134 @@ export class MarketplaceService implements OnModuleInit {
     };
   }
 
+  async browse(params: {
+    q?: string;
+    type?: string;
+    city?: string;
+    tag?: string;
+    hint?: string;
+    cursor?: string;
+    limit?: string;
+    partnerId?: string;
+    category?: string;
+  }) {
+    await this.ensureSeeded();
+    if (params.type && !['brand', 'clinic', 'salon'].includes(params.type)) {
+      throw new BadRequestException('نوع الجهة غير صالح');
+    }
+    const parsedLimit = params.limit == null || params.limit === '' ? 8 : Number(params.limit);
+    if (!Number.isInteger(parsedLimit)) {
+      throw new BadRequestException('حد الصفحة غير صالح');
+    }
+    const tags = (params.tag ?? '')
+      .split(',')
+      .map((item) => item.trim())
+      .filter((item) => item.length > 0);
+    const hint = (params.hint ?? '').trim().toLowerCase();
+    const q = (params.q ?? '').trim().toLowerCase();
+    const partnerWhere = {
+      status: 'active' as const,
+      ...(params.type ? { type: params.type } : {}),
+      ...(params.city ? { city: params.city } : {}),
+      ...(params.partnerId ? { id: params.partnerId } : {}),
+    };
+
+    const [products, services, partners] = await Promise.all([
+      this.prisma.product.findMany({
+        where: { active: true, contentStatus: 'published', catalogSource: 'catalog', partner: partnerWhere },
+        include: { partner: true },
+      }),
+      this.prisma.service.findMany({
+        where: { active: true, contentStatus: 'published', catalogSource: 'catalog', partner: partnerWhere },
+        include: { partner: true },
+      }),
+      this.prisma.partner.findMany({
+        where: { status: 'active' },
+        select: { city: true },
+      }),
+    ]);
+
+    const items = [
+      ...products.map((product) => ({
+        kind: 'product' as const,
+        id: product.id,
+        partnerId: product.partnerId,
+        partnerType: product.partner.type,
+        partnerNameAr: product.partner.nameAr,
+        city: product.partner.city,
+        nameAr: product.nameAr,
+        nameEn: product.nameEn,
+        descriptionAr: product.descriptionAr,
+        priceHalalas: product.priceHalalas,
+        priceLabel: this.formatPrice(product.priceHalalas),
+        externalUrl: product.externalUrl,
+        stepAr: product.stepAr,
+        partnerEmoji: product.partner.logoEmoji,
+        concernTags: product.concernTags,
+        category: product.category,
+        bookingEnabled: false,
+        durationMin: null as number | null,
+      })),
+      ...services.map((service) => ({
+        kind: 'service' as const,
+        id: service.id,
+        partnerId: service.partnerId,
+        partnerType: service.partner.type,
+        partnerNameAr: service.partner.nameAr,
+        city: service.partner.city,
+        contactPhone: service.partner.contactPhone,
+        nameAr: service.nameAr,
+        nameEn: service.nameEn,
+        descriptionAr: service.descriptionAr,
+        priceHalalas: service.priceHalalas,
+        priceLabel: this.formatPrice(service.priceHalalas),
+        externalUrl: null as string | null,
+        stepAr: null as string | null,
+        partnerEmoji: service.partner.logoEmoji,
+        concernTags: service.concernTags,
+        category: service.category,
+        bookingEnabled: service.bookingEnabled,
+        durationMin: service.durationMin,
+      })),
+    ].sort((a, b) => compareCatalogKeys(`${a.kind}:${a.id}`, `${b.kind}:${b.id}`));
+
+    const category = (params.category ?? '').trim();
+    const matched = items.filter((item) => {
+      if (category && item.category !== category) return false;
+      if (tags.length > 0 && !item.concernTags.some((tag) => tags.includes(tag))) return false;
+      if (hint && !`${item.nameAr} ${item.nameEn}`.toLowerCase().includes(hint)) return false;
+      if (!q) return true;
+      const haystack = `${item.nameAr} ${item.nameEn} ${item.partnerNameAr} ${item.descriptionAr ?? ''} ${item.city}`.toLowerCase();
+      return haystack.includes(q);
+    });
+
+    const paged = pageCatalogItems(matched, params.cursor, parsedLimit);
+    if (!paged.ok) {
+      throw new BadRequestException(paged.reason === 'invalid_cursor' ? 'مؤشر الصفحة غير صالح' : 'حد الصفحة غير صالح');
+    }
+    const media = paged.items.length
+      ? await this.prisma.catalogMedia.findMany({
+          where: {
+            active: true,
+            publication: 'published',
+            OR: paged.items.map((item) => ({ ownerKind: item.kind, ownerId: item.id })),
+          },
+          orderBy: { sortOrder: 'asc' },
+        })
+      : [];
+    const cities = [...new Set(partners.map((partner) => partner.city).filter((city) => city.length > 0))].sort();
+    return {
+      items: paged.items.map((item) => ({
+        ...item,
+        media: media
+          .filter((row) => row.ownerKind === item.kind && row.ownerId === item.id)
+          .map((row) => ({ kind: row.kind, url: row.url, sortOrder: row.sortOrder, isPrimary: row.isPrimary })),
+      })),
+      nextCursor: paged.nextCursor,
+      availableCities: cities,
+    };
+  }
+
   async listPartners(type?: string, city?: string): Promise<PartnerSummaryDto[]> {
     await this.ensureSeeded();
     const partners = await this.prisma.partner.findMany({
@@ -196,8 +328,8 @@ export class MarketplaceService implements OnModuleInit {
     const partner = await this.prisma.partner.findFirst({
       where: { id, status: 'active' },
       include: {
-        products: { where: { active: true }, orderBy: { sortOrder: 'asc' } },
-        services: { where: { active: true }, orderBy: { sortOrder: 'asc' } },
+        products: { where: { active: true, contentStatus: 'published', catalogSource: 'catalog' }, orderBy: { sortOrder: 'asc' } },
+        services: { where: { active: true, contentStatus: 'published', catalogSource: 'catalog' }, orderBy: { sortOrder: 'asc' } },
       },
     });
     if (!partner) throw new NotFoundException('الشريك غير موجود');
@@ -212,6 +344,7 @@ export class MarketplaceService implements OnModuleInit {
       logoEmoji: partner.logoEmoji,
       rating: partner.rating,
       storeUrl: partner.storeUrl,
+      contactPhone: partner.contactPhone,
       products: partner.products.map((p) => ({
         id: p.id,
         nameAr: p.nameAr,
@@ -222,6 +355,7 @@ export class MarketplaceService implements OnModuleInit {
         externalUrl: p.externalUrl,
         stepAr: p.stepAr,
         concernTags: p.concernTags,
+        category: p.category,
       })),
       services: partner.services.map((s) => ({
         id: s.id,
@@ -233,7 +367,106 @@ export class MarketplaceService implements OnModuleInit {
         priceHalalas: s.priceHalalas,
         bookingEnabled: s.bookingEnabled,
         concernTags: s.concernTags,
+        category: s.category,
       })),
     };
+  }
+
+  async getPublishedItem(kind: string, id: string) {
+    await this.ensureSeeded();
+    if (kind !== 'product' && kind !== 'service') throw new BadRequestException('نوع العنصر غير صالح');
+    if (kind === 'product') {
+      const product = await this.prisma.product.findFirst({
+        where: { id, active: true, contentStatus: 'published', catalogSource: 'catalog', partner: { status: 'active' } },
+        include: { partner: true },
+      });
+      if (!product) throw new NotFoundException('العنصر غير متاح');
+      const media = await this.prisma.catalogMedia.findMany({
+        where: publishedCatalogMediaWhere('product', product.id),
+        orderBy: { sortOrder: 'asc' },
+      });
+      return {
+        kind: 'product',
+        id: product.id,
+        partnerId: product.partnerId,
+        partnerType: product.partner.type,
+        partnerNameAr: product.partner.nameAr,
+        city: product.partner.city,
+        nameAr: product.nameAr,
+        nameEn: product.nameEn,
+        descriptionAr: product.descriptionAr,
+        priceHalalas: product.priceHalalas,
+        priceLabel: this.formatPrice(product.priceHalalas),
+        externalUrl: product.externalUrl,
+        category: product.category,
+        concernTags: product.concernTags,
+        media: media.map((row) => ({ kind: row.kind, url: row.url, sortOrder: row.sortOrder, isPrimary: row.isPrimary })),
+      };
+    }
+    const service = await this.prisma.service.findFirst({
+      where: { id, active: true, contentStatus: 'published', catalogSource: 'catalog', partner: { status: 'active' } },
+      include: { partner: true },
+    });
+    if (!service) throw new NotFoundException('العنصر غير متاح');
+    const media = await this.prisma.catalogMedia.findMany({
+      where: publishedCatalogMediaWhere('service', service.id),
+      orderBy: { sortOrder: 'asc' },
+    });
+    return {
+      kind: 'service',
+      id: service.id,
+      partnerId: service.partnerId,
+      partnerType: service.partner.type,
+      partnerNameAr: service.partner.nameAr,
+      partnerEmoji: service.partner.logoEmoji,
+      city: service.partner.city,
+      contactPhone: service.partner.contactPhone,
+      nameAr: service.nameAr,
+      nameEn: service.nameEn,
+      descriptionAr: service.descriptionAr,
+      durationMin: service.durationMin,
+      priceHalalas: service.priceHalalas,
+      priceLabel: this.formatPrice(service.priceHalalas),
+      category: service.category,
+      bookingEnabled: service.bookingEnabled,
+      concernTags: service.concernTags,
+      media: media.map((row) => ({ kind: row.kind, url: row.url, sortOrder: row.sortOrder, isPrimary: row.isPrimary })),
+    };
+  }
+
+  async listFavorites(firebaseUid: string) {
+    const user = await this.requireUser(firebaseUid);
+    const rows = await this.prisma.catalogFavorite.findMany({ where: { userId: user.id } });
+    return { items: rows.map((row) => ({ kind: row.ownerKind, id: row.ownerId })) };
+  }
+
+  async setFavorite(firebaseUid: string, kind: string, entityId: string, saved: boolean | undefined) {
+    if (saved !== true && saved !== false) throw new BadRequestException('حالة الحفظ مطلوبة');
+    if (kind !== 'product' && kind !== 'service') throw new BadRequestException('نوع العنصر غير صالح');
+    const user = await this.requireUser(firebaseUid);
+    await this.getPublishedItem(kind, entityId);
+    const where = { userId_ownerKind_ownerId: { userId: user.id, ownerKind: kind, ownerId: entityId } };
+    if (saved) {
+      try {
+        await this.prisma.catalogFavorite.upsert({
+          where,
+          create: { userId: user.id, ownerKind: kind, ownerId: entityId },
+          update: {},
+        });
+      } catch (error) {
+        if (!(error instanceof Prisma.PrismaClientKnownRequestError) || error.code !== 'P2002') throw error;
+      }
+      return { saved: true };
+    }
+    await this.prisma.catalogFavorite.deleteMany({
+      where: { userId: user.id, ownerKind: kind, ownerId: entityId },
+    });
+    return { saved: false };
+  }
+
+  private async requireUser(firebaseUid: string) {
+    const user = await this.prisma.user.findUnique({ where: { firebaseUid } });
+    if (!user) throw new UnauthorizedException('يلزم حساب ميرا');
+    return user;
   }
 }

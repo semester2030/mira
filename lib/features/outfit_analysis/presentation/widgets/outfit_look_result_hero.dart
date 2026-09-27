@@ -4,7 +4,6 @@ import 'package:flutter/material.dart';
 
 import '../../../../shared/theme/colors.dart';
 import '../../../../shared/theme/typography.dart';
-import '../../../../shared/widgets/premium/beauty_score_ring.dart';
 import '../../domain/entities/outfit_analysis.dart';
 import '../../domain/helpers/outfit_fashion_taxonomy.dart';
 import '../../domain/helpers/outfit_stylist_copy.dart';
@@ -80,12 +79,32 @@ class OutfitLookResultHero extends StatelessWidget {
                       ),
                       const SizedBox(height: 8),
                       Center(
-                        child: BeautyScoreRing(
-                          score: analysis.compatibilityScore.toDouble(),
-                          size: hasPhoto ? 118 : 156,
-                          label: 'درجة الإطلالة',
+                        child: Text(
+                          '${analysis.compatibilityScore}',
+                          style: AppTypography.displaySmall.copyWith(
+                            fontWeight: FontWeight.w800,
+                            color: AppColors.secondary,
+                          ),
                         ),
                       ),
+                      Text(
+                        'درجة الإطلالة',
+                        style: AppTypography.labelSmall.copyWith(
+                          color: AppColors.textSecondary,
+                        ),
+                        textAlign: TextAlign.center,
+                      ),
+                      if (analysis.confidence > 0) ...[
+                        const SizedBox(height: 4),
+                        Text(
+                          'ثقة التحليل ${analysis.confidence}%',
+                          style: AppTypography.labelSmall.copyWith(
+                            color: AppColors.textSecondary,
+                            fontSize: 11,
+                          ),
+                          textAlign: TextAlign.center,
+                        ),
+                      ],
                       const SizedBox(height: 8),
                       Text(
                         verdict,

@@ -1,0 +1,390 @@
+{
+  "evidence": [
+    {
+      "name": "partner-ads-form-390.png",
+      "width": 390,
+      "metrics": {
+        "viewport": {
+          "width": 390,
+          "height": 844,
+          "devicePixelRatio": 1
+        },
+        "document": {
+          "scrollWidth": 375,
+          "clientWidth": 375
+        },
+        "panel": {
+          "scrollWidth": 343,
+          "clientWidth": 343
+        },
+        "buttons": [
+          {
+            "text": "معاينة",
+            "width": 90,
+            "height": 49,
+            "top": 589,
+            "right": 320,
+            "bottom": 638
+          },
+          {
+            "text": "إرسال للمراجعة",
+            "width": 157,
+            "height": 49,
+            "top": 589,
+            "right": 223,
+            "bottom": 638
+          },
+          {
+            "text": "سحب",
+            "width": 85,
+            "height": 49,
+            "top": 646,
+            "right": 320,
+            "bottom": 695
+          },
+          {
+            "text": "تعديل المسودة",
+            "width": 155,
+            "height": 49,
+            "top": 646,
+            "right": 228,
+            "bottom": 695
+          },
+          {
+            "text": "إنشاء مسودة",
+            "width": 140,
+            "height": 47,
+            "top": 1122,
+            "right": 335,
+            "bottom": 1169
+          }
+        ]
+      }
+    },
+    {
+      "name": "admin-ads-preview-390.png",
+      "width": 390,
+      "metrics": {
+        "viewport": {
+          "width": 390,
+          "height": 844,
+          "devicePixelRatio": 1
+        },
+        "document": {
+          "scrollWidth": 375,
+          "clientWidth": 375
+        },
+        "panel": {
+          "scrollWidth": 341,
+          "clientWidth": 341
+        },
+        "buttons": [
+          {
+            "text": "معاينة",
+            "width": 65,
+            "height": 35,
+            "top": 373,
+            "right": 338,
+            "bottom": 408
+          },
+          {
+            "text": "اعتماد النسخة المعروضة",
+            "width": 173,
+            "height": 35,
+            "top": 373,
+            "right": 265,
+            "bottom": 408
+          },
+          {
+            "text": "رفض",
+            "width": 58,
+            "height": 35,
+            "top": 416,
+            "right": 338,
+            "bottom": 452
+          },
+          {
+            "text": "سحب",
+            "width": 62,
+            "height": 35,
+            "top": 416,
+            "right": 272,
+            "bottom": 452
+          }
+        ]
+      }
+    },
+    {
+      "name": "admin-ads-rejection-390.png",
+      "width": 390,
+      "metrics": {
+        "viewport": {
+          "width": 390,
+          "height": 844,
+          "devicePixelRatio": 1
+        },
+        "document": {
+          "scrollWidth": 375,
+          "clientWidth": 375
+        },
+        "panel": {
+          "scrollWidth": 341,
+          "clientWidth": 341
+        },
+        "buttons": [
+          {
+            "text": "معاينة",
+            "width": 65,
+            "height": 35,
+            "top": 373,
+            "right": 338,
+            "bottom": 408
+          },
+          {
+            "text": "اعتماد النسخة المعروضة",
+            "width": 173,
+            "height": 35,
+            "top": 373,
+            "right": 265,
+            "bottom": 408
+          },
+          {
+            "text": "رفض",
+            "width": 58,
+            "height": 35,
+            "top": 416,
+            "right": 338,
+            "bottom": 452
+          },
+          {
+            "text": "سحب",
+            "width": 62,
+            "height": 35,
+            "top": 416,
+            "right": 272,
+            "bottom": 452
+          }
+        ]
+      }
+    },
+    {
+      "name": "admin-ads-409-390.png",
+      "width": 390,
+      "metrics": {
+        "viewport": {
+          "width": 390,
+          "height": 844,
+          "devicePixelRatio": 1
+        },
+        "document": {
+          "scrollWidth": 375,
+          "clientWidth": 375
+        },
+        "panel": {
+          "scrollWidth": 341,
+          "clientWidth": 341
+        },
+        "buttons": [
+          {
+            "text": "معاينة",
+            "width": 65,
+            "height": 35,
+            "top": 398,
+            "right": 338,
+            "bottom": 434
+          },
+          {
+            "text": "اعتماد النسخة المعروضة",
+            "width": 173,
+            "height": 35,
+            "top": 398,
+            "right": 265,
+            "bottom": 434
+          },
+          {
+            "text": "رفض",
+            "width": 58,
+            "height": 35,
+            "top": 442,
+            "right": 338,
+            "bottom": 477
+          },
+          {
+            "text": "سحب",
+            "width": 62,
+            "height": 35,
+            "top": 442,
+            "right": 272,
+            "bottom": 477
+          }
+        ]
+      }
+    },
+    {
+      "name": "partner-ads-480.png",
+      "width": 480,
+      "metrics": {
+        "viewport": {
+          "width": 480,
+          "height": 900,
+          "devicePixelRatio": 1
+        },
+        "document": {
+          "scrollWidth": 465,
+          "clientWidth": 465
+        },
+        "panel": {
+          "scrollWidth": 426,
+          "clientWidth": 426
+        },
+        "buttons": [
+          {
+            "text": "معاينة",
+            "width": 90,
+            "height": 49,
+            "top": 536,
+            "right": 407,
+            "bottom": 586
+          },
+          {
+            "text": "إرسال للمراجعة",
+            "width": 157,
+            "height": 49,
+            "top": 536,
+            "right": 309,
+            "bottom": 586
+          },
+          {
+            "text": "سحب",
+            "width": 85,
+            "height": 49,
+            "top": 536,
+            "right": 144,
+            "bottom": 586
+          },
+          {
+            "text": "تعديل المسودة",
+            "width": 155,
+            "height": 49,
+            "top": 594,
+            "right": 407,
+            "bottom": 643
+          },
+          {
+            "text": "إنشاء مسودة",
+            "width": 140,
+            "height": 47,
+            "top": 1043,
+            "right": 421,
+            "bottom": 1090
+          }
+        ]
+      }
+    },
+    {
+      "name": "admin-ads-480.png",
+      "width": 480,
+      "metrics": {
+        "viewport": {
+          "width": 480,
+          "height": 900,
+          "devicePixelRatio": 1
+        },
+        "document": {
+          "scrollWidth": 480,
+          "clientWidth": 480
+        },
+        "panel": {
+          "scrollWidth": 480,
+          "clientWidth": 480
+        },
+        "buttons": []
+      }
+    },
+    {
+      "name": "partner-ads-1280.png",
+      "width": 1280,
+      "metrics": {
+        "viewport": {
+          "width": 1280,
+          "height": 800,
+          "devicePixelRatio": 1
+        },
+        "document": {
+          "scrollWidth": 1265,
+          "clientWidth": 1265
+        },
+        "panel": {
+          "scrollWidth": 958,
+          "clientWidth": 958
+        },
+        "buttons": [
+          {
+            "text": "معاينة",
+            "width": 90,
+            "height": 49,
+            "top": 404,
+            "right": 1073,
+            "bottom": 453
+          },
+          {
+            "text": "إرسال للمراجعة",
+            "width": 157,
+            "height": 49,
+            "top": 404,
+            "right": 975,
+            "bottom": 453
+          },
+          {
+            "text": "سحب",
+            "width": 85,
+            "height": 49,
+            "top": 404,
+            "right": 810,
+            "bottom": 453
+          },
+          {
+            "text": "تعديل المسودة",
+            "width": 155,
+            "height": 49,
+            "top": 404,
+            "right": 718,
+            "bottom": 453
+          },
+          {
+            "text": "إنشاء مسودة",
+            "width": 140,
+            "height": 47,
+            "top": 853,
+            "right": 1088,
+            "bottom": 900
+          }
+        ]
+      }
+    },
+    {
+      "name": "admin-ads-1280.png",
+      "width": 1280,
+      "metrics": {
+        "viewport": {
+          "width": 1280,
+          "height": 800,
+          "devicePixelRatio": 1
+        },
+        "document": {
+          "scrollWidth": 1265,
+          "clientWidth": 1265
+        },
+        "panel": {
+          "scrollWidth": 1265,
+          "clientWidth": 1265
+        },
+        "buttons": []
+      }
+    }
+  ],
+  "localApi": true,
+  "requestCount": 87,
+  "decisionCount": 4,
+  "note": "Chrome headless at the real window size. Not a phone run. Overview route is the local login gate; ad routes use the catalog ad service."
+}

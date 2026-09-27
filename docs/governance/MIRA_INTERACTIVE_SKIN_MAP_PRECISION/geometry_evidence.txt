@@ -1,0 +1,3 @@
+
+---
+GEOMETRY: LandmarkFaceRegionSession + LandmarkAlignedFaceGeometry (HIT linear / VISUAL smoothed). Educational zones share same IDs; no Perfect Corp masks.

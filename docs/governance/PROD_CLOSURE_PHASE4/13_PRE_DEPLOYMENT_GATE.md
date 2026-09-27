@@ -1,0 +1,24 @@
+# Pre-Deployment Gate
+
+Gate evaluated before the deploy request:
+
+- APPROVED CANDIDATE SHA = `MATCH`
+- CLEAN REPRODUCIBLE BUILD = `PASS`
+- RELEASE GATE TESTS = `PASS`
+- PRODUCTION SERVICE IDENTITY = `PROVEN`
+- CURRENT DEPLOYMENT = `IDENTIFIED`
+- ROLLBACK TARGET = `IDENTIFIED`
+- ROLLBACK METHOD = `AVAILABLE`
+- REQUIRED ENV = `PRESENT`
+- DATABASE MIGRATION = `NOT REQUIRED`
+- PRODUCTION HEALTH BASELINE = `CAPTURED`
+- FEATURE ACTIVATION = `SAFE`
+- SECRET LEAKAGE = `NO`
+- REMOTE EXACT SHA = `PROVEN`
+
+## Decision
+
+`PRE_DEPLOYMENT_GATE = PASS`
+
+Only after this decision was recorded internally was the one controlled
+explicit-commit deployment requested.

@@ -52,6 +52,7 @@ dependencies:
   image_picker: 0.8.7
   flutter_svg: ^2.0.10
   url_launcher: ^6.3.1
+  video_player: ^2.10.0
   archive: ^4.0.7
   share_plus: ^10.1.4
   path_provider: ^2.1.5
@@ -74,6 +75,8 @@ dependencies:
 
 dev_dependencies:
   flutter_test:
+    sdk: flutter
+  integration_test:
     sdk: flutter
 
   # The "flutter_lints" package below contains a set of recommended lints to
@@ -147,6 +150,9 @@ flutter:
 
   assets:
     - assets/images/
+    - assets/marketplace/samples/
+    - assets/marketplace/discover/
+    - assets/marketplace/discover/thumbs/
     - assets/icons/
     - assets/icons/fashion/
     - assets/fonts/

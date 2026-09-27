@@ -17,6 +17,7 @@ class GarmentRecolorVisionContext {
   final String? glossLevel;
   final Map<String, double>? garmentBbox;
   final List<List<double>>? garmentPolygon;
+  final bool fabricTrustedForSelected;
 
   const GarmentRecolorVisionContext({
     this.regionRole,
@@ -30,15 +31,25 @@ class GarmentRecolorVisionContext {
     this.glossLevel,
     this.garmentBbox,
     this.garmentPolygon,
+    this.fabricTrustedForSelected = false,
   });
 
   static GarmentRecolorVisionContext fromAnalysis(
     OutfitAnalysis analysis, {
     String? garmentLabelAr,
   }) {
-    final region = _pickGarmentRegion(analysis.segmentMap, garmentLabelAr);
+    final map = analysis.segmentMap;
+    final selected = map?.regionForGarmentLabel(garmentLabelAr);
+    final fabricTrusted = map?.supportsFabricRecolorFor(
+          garmentLabelAr: garmentLabelAr,
+          selectedRegion: selected,
+        ) ==
+        true;
+    // Never attach another region's bbox/polygon when the selected piece
+    // lacks its own fabric-trusted mask/bounds.
+    final region = fabricTrusted ? selected : null;
     final topology = OutfitTopologyInfer.infer(
-      analysis.segmentMap,
+      map,
       garmentLabelAr: garmentLabelAr,
     );
     final roleFromLabel = OutfitTopologyInfer.regionRoleForGarment(garmentLabelAr);
@@ -54,13 +65,12 @@ class GarmentRecolorVisionContext {
     final texture = analysis.styleType.isNotEmpty ? analysis.styleType : null;
 
     final polygon = region != null && region.hasContour
-        ? region.normalizedPolygon
-            .map((o) => [o.dx, o.dy])
-            .toList()
+        ? region.normalizedPolygon.map((o) => [o.dx, o.dy]).toList()
         : null;
 
     return GarmentRecolorVisionContext(
-      regionRole: roleFromLabel ?? _regionRole(region?.zone),
+      regionRole: roleFromLabel ??
+          (topology.onePiece ? 'full_body' : _regionRole(region?.zone)),
       material: null,
       materialConfidence: region?.confidence,
       fit: _inferFit(analysis),
@@ -71,6 +81,7 @@ class GarmentRecolorVisionContext {
       glossLevel: _inferGloss(analysis),
       garmentBbox: bbox,
       garmentPolygon: polygon,
+      fabricTrustedForSelected: fabricTrusted,
     );
   }
 
@@ -86,22 +97,8 @@ class GarmentRecolorVisionContext {
         if (glossLevel != null) 'glossLevel': glossLevel,
         if (garmentBbox != null) 'garmentBbox': garmentBbox,
         if (garmentPolygon != null) 'garmentPolygon': garmentPolygon,
+        'fabricTrustedForSelected': fabricTrustedForSelected,
       });
-
-  static OutfitSegmentRegion? _pickGarmentRegion(
-    OutfitSegmentMap? map,
-    String? garmentLabelAr,
-  ) {
-    if (map == null || map.regions.isEmpty) return null;
-    final label = garmentLabelAr?.trim() ?? '';
-    if (label.isNotEmpty) {
-      final match = map.regions.where((r) => r.labelAr.contains(label) || label.contains(r.labelAr));
-      if (match.isNotEmpty) return match.first;
-    }
-    final upper = map.regions.where((r) => r.zone == OutfitSegmentZone.upperBody);
-    if (upper.isNotEmpty) return upper.first;
-    return map.regions.first;
-  }
 
   static String? _regionRole(OutfitSegmentZone? zone) {
     return switch (zone) {

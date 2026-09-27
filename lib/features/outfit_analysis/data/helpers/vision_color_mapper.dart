@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 
 import '../../domain/catalog/fashion_color_library.dart';
 import '../../domain/catalog/professional_color_matcher.dart';
+import '../../presentation/utils/fashion_color_binding.dart';
 
 /// Maps garment pixels to professional catalog colors (CIEDE2000).
 abstract final class VisionColorMapper {
@@ -76,21 +77,23 @@ abstract final class VisionColorMapper {
     return enLabel;
   }
 
-  /// Arabic fashion color name → display swatch color.
-  static Color toDisplayColor(String arabicName) {
-    final entry = FashionColorLibrary.byName(arabicName);
-    if (entry != null) return entry.color;
-
-    final hex = ProfessionalColorMatcher.hexForName(arabicName);
-    final h = hex.replaceFirst('#', '');
-    if (h.length == 6) {
-      return Color(int.parse('FF$h', radix: 16));
-    }
-    return const Color(0xFFC19EE0);
+  /// Display swatch — HEX/id first via [FashionColorBinding].
+  /// Unknown names return null (never invent purple or false gray).
+  static Color? toDisplayColor(String arabicName, {String? hex}) {
+    return FashionColorBinding.resolve(hex: hex, nameAr: arabicName);
   }
 
-  static Color hexToColor(String hex) {
-    final h = hex.replaceFirst('#', '');
-    return Color(int.parse('FF$h', radix: 16));
+  /// Legacy non-null helper for call sites that still require a Color.
+  /// Prefer [toDisplayColor]. Unavailable → transparent (callers must treat
+  /// alpha==0 as "غير متاح", not as a real swatch).
+  static Color toDisplayColorOrTransparent(String arabicName, {String? hex}) {
+    return toDisplayColor(arabicName, hex: hex) ?? const Color(0x00000000);
+  }
+
+  static Color? hexToColor(String? hex) => FashionColorBinding.fromHex(hex);
+
+  /// Kept for catalog lookups that still want FashionColorEntry.color.
+  static Color? libraryColor(String arabicName) {
+    return FashionColorLibrary.byName(arabicName)?.color;
   }
 }

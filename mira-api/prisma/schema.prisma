@@ -24,6 +24,7 @@ model User {
   auditLogs       AuditLog[]
   consultationSessions ConsultationSession[]
   atelierRecolorAttempts AtelierRecolorAttempt[]
+  catalogFavorites CatalogFavorite[]
 
   @@map("users")
 }
@@ -125,6 +126,7 @@ model Partner {
   city          String   @default("الرياض")
   logoEmoji     String?  @map("logo_emoji")
   storeUrl      String?  @map("store_url")
+  contactPhone  String?  @map("contact_phone")
   rating        Float    @default(4.5)
   createdAt     DateTime @default(now()) @map("created_at")
   updatedAt     DateTime @updatedAt @map("updated_at")
@@ -134,6 +136,9 @@ model Partner {
   applications PartnerApplication[]
   users      PartnerUser[]
   events     PartnerEvent[]
+  sourceLinks CatalogSourceLink[]
+  advertisedAds CatalogAd[] @relation("AdAdvertiser")
+  publishedAds  CatalogAd[] @relation("AdPublisher")
 
   @@index([type, status])
   @@map("partners")
@@ -149,10 +154,23 @@ model Product {
   priceHalalas  Int      @map("price_halalas")
   externalUrl   String   @map("external_url")
   concernTags   String[] @map("concern_tags")
+  category      String?
   skinTypes     String[] @map("skin_types")
   stepAr        String?  @map("step_ar")
   sortOrder     Int      @default(0) @map("sort_order")
   active        Boolean  @default(true)
+  contentStatus String   @default("published") @map("content_status")
+  reviewNote    String?  @map("review_note")
+  draftNameAr   String?  @map("draft_name_ar")
+  draftNameEn   String?  @map("draft_name_en")
+  draftDescriptionAr String? @map("draft_description_ar")
+  submittedAt   DateTime? @map("submitted_at")
+  reviewedAt    DateTime? @map("reviewed_at")
+  reviewedBy    String?  @map("reviewed_by")
+  reviewStatus  String   @default("none") @map("review_status")
+  reviewRevision Int     @default(0) @map("review_revision")
+  submittedRevision Int? @map("submitted_revision")
+  catalogSource String   @default("catalog") @map("catalog_source")
   createdAt     DateTime @default(now()) @map("created_at")
 
   @@index([partnerId, active])
@@ -169,9 +187,22 @@ model Service {
   durationMin     Int      @map("duration_min")
   priceHalalas    Int      @map("price_halalas")
   concernTags     String[] @map("concern_tags")
+  category        String?
   bookingEnabled  Boolean  @default(false) @map("booking_enabled")
   sortOrder       Int      @default(0) @map("sort_order")
   active          Boolean  @default(true)
+  contentStatus   String   @default("published") @map("content_status")
+  reviewNote      String?  @map("review_note")
+  draftNameAr     String?  @map("draft_name_ar")
+  draftNameEn     String?  @map("draft_name_en")
+  draftDescriptionAr String? @map("draft_description_ar")
+  submittedAt     DateTime? @map("submitted_at")
+  reviewedAt      DateTime? @map("reviewed_at")
+  reviewedBy      String?  @map("reviewed_by")
+  reviewStatus    String   @default("none") @map("review_status")
+  reviewRevision  Int      @default(0) @map("review_revision")
+  submittedRevision Int?   @map("submitted_revision")
+  catalogSource   String   @default("catalog") @map("catalog_source")
   createdAt       DateTime @default(now()) @map("created_at")
 
   @@index([partnerId, active])
@@ -246,6 +277,127 @@ model PartnerEvent {
 
   @@index([partnerId, eventType, createdAt(sort: Desc)])
   @@map("partner_events")
+}
+
+/// Published media for an existing product or service. It does not store price or stock.
+model CatalogMedia {
+  id        String   @id @default(uuid())
+  ownerKind String   @map("owner_kind")
+  ownerId   String   @map("owner_id")
+  sortOrder Int      @default(0) @map("sort_order")
+  kind      String
+  url         String
+  active      Boolean  @default(true)
+  mimeType    String?  @map("mime_type")
+  byteSize    Int?     @map("byte_size")
+  storageKey  String?  @map("storage_key")
+  isPrimary      Boolean  @default(false) @map("is_primary")
+  publication    String   @default("published")
+  pendingRemoval Boolean  @default(false) @map("pending_removal")
+  draftSortOrder Int?     @map("draft_sort_order")
+  draftIsPrimary Boolean? @map("draft_is_primary")
+  sourceMediaKey String?  @map("source_media_key")
+  createdAt      DateTime @default(now()) @map("created_at")
+
+  @@unique([ownerKind, ownerId, sourceMediaKey])
+  @@index([ownerKind, ownerId, sortOrder])
+  @@map("catalog_media")
+}
+
+/// Celebrity ad. Price, stock, and ownership stay on the linked product or service.
+model CatalogAd {
+  id                  String   @id @default(uuid())
+  targetKind          String   @map("target_kind")
+  targetId            String   @map("target_id")
+  advertiserPartnerId String   @map("advertiser_partner_id")
+  advertiser          Partner  @relation("AdAdvertiser", fields: [advertiserPartnerId], references: [id])
+  publisherPartnerId  String   @map("publisher_partner_id")
+  publisher           Partner  @relation("AdPublisher", fields: [publisherPartnerId], references: [id])
+  captionAr           String?  @map("caption_ar")
+  status              String   @default("draft")
+  reviewRevision      Int      @default(0) @map("review_revision")
+  submittedRevision   Int?     @map("submitted_revision")
+  reviewNote          String?  @map("review_note")
+  reviewedBy          String?  @map("reviewed_by")
+  submittedAt         DateTime? @map("submitted_at")
+  createdAt           DateTime @default(now()) @map("created_at")
+  actions             CatalogAdAction[]
+  decisions           CatalogAdDecision[]
+
+  @@index([targetKind, targetId, status])
+  @@index([advertiserPartnerId, status])
+  @@map("catalog_ads")
+}
+
+/// An admin decision for one ad revision. The actor is the admin API identity, not a person's name.
+model CatalogAdDecision {
+  id        String    @id @default(uuid())
+  adId      String    @map("ad_id")
+  ad        CatalogAd @relation(fields: [adId], references: [id], onDelete: Cascade)
+  revision  Int
+  decision  String
+  actor     String
+  note      String?
+  createdAt DateTime  @default(now()) @map("created_at")
+
+  @@index([adId, createdAt])
+  @@map("catalog_ad_decisions")
+}
+
+/// A link open on an ad. It is not a qualified view and not a completed purchase.
+model CatalogAdAction {
+  id        String    @id @default(uuid())
+  eventId   String    @unique @map("event_id")
+  adId      String    @map("ad_id")
+  ad        CatalogAd @relation(fields: [adId], references: [id], onDelete: Cascade)
+  action    String
+  createdAt DateTime  @default(now()) @map("created_at")
+
+  @@index([adId, action])
+  @@map("catalog_ad_actions")
+}
+
+/// Account-scoped catalog favorite. Rows are readable only for their user.
+model CatalogFavorite {
+  id        String   @id @default(uuid())
+  userId    String   @map("user_id")
+  user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  ownerKind String   @map("owner_kind")
+  ownerId   String   @map("owner_id")
+  createdAt DateTime @default(now()) @map("created_at")
+
+  @@unique([userId, ownerKind, ownerId])
+  @@index([userId])
+  @@map("catalog_favorites")
+}
+
+/// Links an existing product or service to an external source id. It is not a second catalog.
+model CatalogSourceLink {
+  id           String    @id @default(uuid())
+  partnerId    String    @map("partner_id")
+  partner      Partner   @relation(fields: [partnerId], references: [id], onDelete: Cascade)
+  ownerKind    String    @map("owner_kind")
+  ownerId      String    @map("owner_id")
+  source       String
+  externalId   String    @map("external_id")
+  miraNoteAr   String?   @map("mira_note_ar")
+  lastSyncedAt DateTime? @map("last_synced_at")
+
+  @@unique([partnerId, source, externalId])
+  @@map("catalog_source_links")
+}
+
+model CatalogReviewLog {
+  id        String   @id @default(uuid())
+  ownerKind String   @map("owner_kind")
+  ownerId   String   @map("owner_id")
+  actor     String
+  action    String
+  note      String?
+  createdAt DateTime @default(now()) @map("created_at")
+
+  @@index([ownerKind, ownerId, createdAt])
+  @@map("catalog_review_logs")
 }
 
 /// MCE — consultation session (reference: docs/mira-vision-platform.html#mce-consultation)

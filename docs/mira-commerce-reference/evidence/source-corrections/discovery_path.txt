@@ -1,0 +1,24 @@
+مقتطف من الأرشيف غير المعدّل DAR_PLACES_TO_MIRA_SOURCE_HANDOFF_RC2_20260924_0125.zip
+SHA-256 60a8d854eb609e1eef11513a1406fd1e262ac809922e889f2e7beecf76ec48e1
+
+places_http_discovery_repository.dart
+class PlacesHttpDiscoveryRepository
+return _api.feed(...)
+
+discovery_api.dart
+class DiscoveryApi
+'/v1/feed'
+'/v1/discovery/search'
+
+consumer.controller.ts
+@Get('feed') feed -> catalog.feed
+@Post('discovery/search') discoverySearch
+@Get('venues/:id') مسار تفاصيل منفصل
+
+catalog.service.ts
+async feed -> this.filters.feedAdapter
+
+venue_api.dart
+class VenueApi
+getJson('/v1/venues/$venueId')
+getJson('/v1/venues/$venueId/gallery')

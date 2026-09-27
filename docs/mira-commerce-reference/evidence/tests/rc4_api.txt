@@ -1,0 +1,63 @@
+GRANT
+GRANT
+ALTER SCHEMA
+npm warn Unknown env config "devdir". This will stop working in the next major version of npm.
+Environment variables loaded from .env
+Prisma schema loaded from prisma/schema.prisma
+
+✔ Generated Prisma Client (v6.19.3) to ./node_modules/@prisma/client in 115ms
+
+Start by importing your Prisma Client (See: https://pris.ly/d/importing-client)
+
+Tip: Need your database queries to be 1000x faster? Accelerate offers you that and more: https://pris.ly/tip-2-accelerate
+
+npm warn Unknown env config "devdir". This will stop working in the next major version of npm.
+Environment variables loaded from .env
+Prisma schema loaded from prisma/schema.prisma
+Datasource "db": PostgreSQL database "mira_ph2_rc4_test", schema "public" at "localhost:5432"
+
+8 migrations found in prisma/migrations
+
+Applying migration `20250518000000_init`
+Applying migration `20250601120000_partners_marketplace`
+Applying migration `20250601150000_atelier_recolor_attempts`
+Applying migration `20250602120000_website_leads`
+Applying migration `20250603140000_partner_portal`
+Applying migration `20250608120000_user_birth_year`
+Applying migration `20250610120000_consultation_mce`
+Applying migration `20260926040000_discover_catalog_rc2`
+
+The following migration(s) have been applied:
+
+migrations/
+  └─ 20250518000000_init/
+    └─ migration.sql
+  └─ 20250601120000_partners_marketplace/
+    └─ migration.sql
+  └─ 20250601150000_atelier_recolor_attempts/
+    └─ migration.sql
+  └─ 20250602120000_website_leads/
+    └─ migration.sql
+  └─ 20250603140000_partner_portal/
+    └─ migration.sql
+  └─ 20250608120000_user_birth_year/
+    └─ migration.sql
+  └─ 20250610120000_consultation_mce/
+    └─ migration.sql
+  └─ 20260926040000_discover_catalog_rc2/
+    └─ migration.sql
+      
+All migrations have been successfully applied.
+npm warn Unknown env config "devdir". This will stop working in the next major version of npm.
+Environment variables loaded from .env
+Prisma schema loaded from prisma/schema.prisma
+Datasource "db": PostgreSQL database "mira_ph2_rc4_test", schema "public" at "localhost:5432"
+
+8 migrations found in prisma/migrations
+
+
+No pending migrations to apply.
+npm warn Unknown env config "devdir". This will stop working in the next major version of npm.
+npm warn exec The following package was not found and will be installed: tsx@4.23.15
+marketplace http integration passed
+rc4 integration cleaned mira_ph2_rc4_test

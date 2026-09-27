@@ -1,0 +1,392 @@
+diff --git a/lib/features/skin_analysis/presentation/widgets/face_capture_panel.dart b/lib/features/skin_analysis/presentation/widgets/face_capture_panel.dart
+index 206aa8c..dab9019 100644
+--- a/lib/features/skin_analysis/presentation/widgets/face_capture_panel.dart
++++ b/lib/features/skin_analysis/presentation/widgets/face_capture_panel.dart
+@@ -1,3 +1,4 @@
++import 'dart:async';
+ import 'dart:io';
+ 
+ import 'package:camera/camera.dart';
+@@ -5,12 +6,14 @@ import 'package:flutter/material.dart';
+ import 'package:flutter/services.dart';
+ import 'package:image_picker/image_picker.dart';
+ 
++import '../../../../core/config/mira_features.dart';
+ import '../../../../core/face_gate/face_gate_result.dart';
+ import '../../../../core/face_gate/face_gate_validator.dart';
+ import '../../../face_analysis_experience/capture/capture.dart';
+ import '../../../face_analysis_experience/presentation/analysis/analysis_motion.dart';
+ import '../../../face_analysis_experience/presentation/capture/capture_mirror.dart';
+ import '../../domain/image_quality/image_quality_evaluator.dart';
++import '../capture/perfect_camera_kit_gate.dart';
+ import '../live_face_map/face_mapping_context.dart';
+ import '../live_face_map/face_mesh_quality_gate.dart';
+ import '../live_face_map/live_face_overlay_controller.dart';
+@@ -72,6 +75,10 @@ class _FaceCapturePanelState extends State<FaceCapturePanel>
+   double _mirrorHoldProgress = 0;
+   double _captureFlashOpacity = 0;
+   bool _mirrorAutoCaptureQueued = false;
++  bool _cameraKitActive = false;
++  bool _cameraKitInitFailed = false;
++  String? _cameraKitGuidanceAr;
++  bool _cameraKitAutoQueued = false;
+ 
+   static const _tips = [
+     'ثبّتي وجهك في منتصف الدائرة',
+@@ -101,10 +108,40 @@ class _FaceCapturePanelState extends State<FaceCapturePanel>
+       duration: const Duration(milliseconds: 4200),
+     )..repeat();
+     _faceOverlayController = LiveFaceOverlayController();
+-    if (FaceCaptureMirrorFlag.enabled) {
++    // Capture Mirror remains available as HUD chrome; CameraKit owns final gate on iOS.
++    if (FaceCaptureMirrorFlag.enabled ||
++        MiraFeatures.skinInteractiveReportV1) {
+       _mirrorCoordinator = CaptureMirrorCoordinator();
+     }
+-    _initCamera();
++    PerfectCameraKitGate.addListener(_onCameraKitQuality);
++    _initCameraKitThenCamera();
++  }
++
++  Future<void> _initCameraKitThenCamera() async {
++    if (PerfectCameraKitGate.isPlatformSupported) {
++      final ok = await PerfectCameraKitGate.initialize(
++        level: 'moderate',
++        // Production default: official MODERATE only. Experimental lighting
++        // lower is opt-in and must not run unless explicitly enabled for A/B.
++        experimentalLightingLower: false,
++      );
++      if (!mounted) return;
++      setState(() {
++        _cameraKitActive = ok;
++        _cameraKitInitFailed = !ok;
++      });
++      if (!ok) {
++        // Controlled failure — do NOT silently use loose MediaPipe as Skin final gate.
++        _error = PerfectCameraKitGate.initError ??
++            'تعذر تفعيل فحص جودة الوجه — أعيدي فتح التحليل.';
++      }
++    }
++    if (!mounted) return;
++    if (_error != null && _cameraKitInitFailed) {
++      setState(() => _initializing = false);
++      return;
++    }
++    await _initCamera();
+   }
+ 
+   @override
+@@ -121,6 +158,8 @@ class _FaceCapturePanelState extends State<FaceCapturePanel>
+       _mirrorGuidance = null;
+       _mirrorHoldProgress = 0;
+       _captureFlashOpacity = 0;
++      _cameraKitAutoQueued = false;
++      _cameraKitGuidanceAr = null;
+       _resumeCamera();
+     }
+ 
+@@ -137,6 +176,8 @@ class _FaceCapturePanelState extends State<FaceCapturePanel>
+ 
+   @override
+   void dispose() {
++    PerfectCameraKitGate.removeListener(_onCameraKitQuality);
++    unawaited(PerfectCameraKitGate.dispose());
+     WidgetsBinding.instance.removeObserver(this);
+     _pulseController.dispose();
+     _scanController.dispose();
+@@ -148,6 +189,39 @@ class _FaceCapturePanelState extends State<FaceCapturePanel>
+     super.dispose();
+   }
+ 
++  void _onCameraKitQuality(PerfectCameraKitQuality q) {
++    if (!mounted || widget.capturedImage != null || _capturing) return;
++    final guidance = q.guidanceAr;
++    final progress = PerfectCameraKitGate.stableProgress01;
++    if (_cameraKitGuidanceAr != guidance ||
++        (_mirrorHoldProgress - progress).abs() > 0.02) {
++      setState(() {
++        _cameraKitGuidanceAr = guidance;
++        if (_cameraKitActive) {
++          _mirrorHoldProgress = progress;
++        }
++      });
++    }
++    if (_cameraKitActive &&
++        PerfectCameraKitGate.isStableReady &&
++        !_cameraKitAutoQueued &&
++        !_capturing &&
++        widget.capturedImage == null &&
++        widget.enabled &&
++        !widget.isAnalyzing) {
++      _cameraKitAutoQueued = true;
++      debugPrint('Mira capture: AUTO fire (CameraKit stable READY)');
++      WidgetsBinding.instance.addPostFrameCallback((_) async {
++        if (!mounted) return;
++        try {
++          await _capture(fromAuto: true);
++        } finally {
++          _cameraKitAutoQueued = false;
++        }
++      });
++    }
++  }
++
+   @override
+   void didChangeAppLifecycleState(AppLifecycleState state) {
+     final controller = _controller;
+@@ -190,7 +264,9 @@ class _FaceCapturePanelState extends State<FaceCapturePanel>
+         ResolutionPreset.high,
+         enableAudio: false,
+         imageFormatGroup: Platform.isIOS
+-            ? ImageFormatGroup.bgra8888
++            ? (_cameraKitActive
++                ? ImageFormatGroup.yuv420
++                : ImageFormatGroup.bgra8888)
+             : ImageFormatGroup.yuv420,
+       );
+ 
+@@ -201,12 +277,24 @@ class _FaceCapturePanelState extends State<FaceCapturePanel>
+       }
+ 
+       await controller.setFlashMode(FlashMode.off);
++      if (_cameraKitActive) {
++        // Correct real exposure for CameraKit — no beauty / artificial brighten.
++        try {
++          await controller.setExposureMode(ExposureMode.auto);
++        } catch (_) {}
++        try {
++          await controller.setFocusMode(FocusMode.auto);
++        } catch (_) {}
++      }
+ 
+       setState(() {
+         _controller = controller;
+         _isFrontCamera = selected.lensDirection == CameraLensDirection.front;
+         _initializing = false;
+       });
++      if (_cameraKitActive) {
++        await PerfectCameraKitGate.onCameraOpen(isFront: _isFrontCamera);
++      }
+       if (widget.capturedImage == null && !widget.isAnalyzing) {
+         await _startFaceStream(controller);
+       }
+@@ -264,8 +352,18 @@ class _FaceCapturePanelState extends State<FaceCapturePanel>
+     final controller = _controller;
+     if (!mounted || controller == null || widget.capturedImage != null) return;
+ 
++    if (_cameraKitActive) {
++      unawaited(
++        PerfectCameraKitGate.sendCameraImage(
++          image,
++          isFront: _isFrontCamera,
++        ),
++      );
++    }
++
+     if (_previewBoxSize == Size.zero) return;
+ 
++    // MediaPipe overlay only — NOT the final Skin capture gate when CameraKit active.
+     final (contentW, contentH) = _cameraPreviewDimensions(controller);
+     _faceOverlayController.processCameraImage(
+       image: image,
+@@ -342,6 +440,24 @@ class _FaceCapturePanelState extends State<FaceCapturePanel>
+       );
+     }
+ 
++    if (_cameraKitActive &&
++        !widget.isAnalyzing &&
++        widget.capturedImage == null) {
++      final ckGuidance = _cameraKitGuidanceVm;
++      if (ckGuidance != null) {
++        return InteractiveCaptureMirrorOverlay(
++          frame: _faceOverlayController.frame,
++          guidance: ckGuidance,
++          poseHint: PoseKind.good,
++          holdProgress01: _mirrorHoldProgress,
++          pulse: _pulseController.value,
++          flashOpacity: _captureFlashOpacity,
++          reduceMotion: _reduceMotion,
++          forCameraKit: true,
++        );
++      }
++    }
++
+     if (_mirrorEnabled &&
+         !widget.isAnalyzing &&
+         widget.capturedImage == null &&
+@@ -363,16 +479,46 @@ class _FaceCapturePanelState extends State<FaceCapturePanel>
+       pulse: _pulseController.value,
+       scanProgress: _scanController.value,
+       sweepProgress: _sweepController.value,
+-      hintText: canTakePhoto
+-          ? 'الإطار جاهز — اضغطي زر التصوير'
+-          : _tips[tipIndex],
++      hintText: _cameraKitActive
++          ? (_cameraKitGuidanceAr ??
++              (canTakePhoto ? 'جاهزة' : 'ثبّتي وجهك بشكل مستقيم'))
++          : (canTakePhoto
++              ? 'الإطار جاهز — اضغطي زر التصوير'
++              : _tips[tipIndex]),
+     );
+   }
+ 
+-  bool get _mirrorEnabled => FaceCaptureMirrorFlag.enabled;
++  /// Skin product path: Capture Mirror HUD/auto only when CameraKit is NOT the gate.
++  /// When Perfect CameraKit is active, it is the sole final quality + auto-capture owner.
++  bool get _mirrorEnabled =>
++      !_cameraKitActive &&
++      (FaceCaptureMirrorFlag.enabled || MiraFeatures.skinInteractiveReportV1);
++
++  FaceCaptureGuidanceVm? get _cameraKitGuidanceVm {
++    if (!_cameraKitActive || widget.capturedImage != null) return null;
++    final ready = PerfectCameraKitGate.isReady;
++    final instruction = _cameraKitGuidanceAr ?? 'ثبّتي وجهك بشكل مستقيم';
++    return FaceCaptureGuidanceVm(
++      state: ready
++          ? FaceCaptureReadinessState.ready
++          : FaceCaptureReadinessState.alignFace,
++      titleAr: ready ? 'جاهزة' : 'وجّهي وجهك',
++      instructionAr: instruction,
++      accessibilityLabel: instruction,
++      severity: ready ? 0 : 1,
++      isReady: ready,
++      canManualCapture: ready,
++      autoCaptureEligible: PerfectCameraKitGate.isStableReady,
++      truthClass: FaceCaptureTruthClass.derivedCapturePolicy,
++      reasonCode: ready ? 'camerakit_ready' : 'camerakit_guide',
++    );
++  }
+ 
+   bool get _canTakePhoto {
+     if (_previewBoxSize == Size.zero) return false;
++    if (_cameraKitActive) {
++      return PerfectCameraKitGate.isReady;
++    }
+     if (_mirrorEnabled) {
+       return _mirrorGuidance?.canManualCapture == true;
+     }
+@@ -479,6 +625,11 @@ class _FaceCapturePanelState extends State<FaceCapturePanel>
+     if (!mounted) return null;
+     setState(() => _validatingFace = true);
+     try {
++      // CameraKit already enforced face area/pose/lighting before shutter.
++      if (_cameraKitActive) {
++        return const FaceGateResult.accepted();
++      }
++
+       final gate = await FaceGateValidator.instance.validate(file);
+       if (!mounted) return null;
+       if (!gate.isAccepted) {
+@@ -520,6 +671,10 @@ class _FaceCapturePanelState extends State<FaceCapturePanel>
+   }
+ 
+   Future<File> _normalizeAcceptedCapture(File raw, FaceGateResult gate) async {
++    // CameraKit path: ZERO post-capture rotation/warp (protect Perfect mask alignment).
++    if (_cameraKitActive) {
++      return raw;
++    }
+     if (gate.faceBox == null || gate.imageSize == null) return raw;
+     final aligned = await FaceImageProcessor.alignForAnalysis(
+       raw,
+@@ -538,7 +693,32 @@ class _FaceCapturePanelState extends State<FaceCapturePanel>
+     if (controller == null || !controller.value.isInitialized || _capturing) return;
+     if (!widget.enabled || widget.isAnalyzing || _validatingFace) return;
+ 
+-    if (_mirrorEnabled) {
++    if (_cameraKitActive) {
++      if (!fromAuto && !PerfectCameraKitGate.isReady) {
++        debugPrint(
++          'Mira capture: BLOCKED manual shutter '
++          'ready=${PerfectCameraKitGate.isReady} '
++          'stable=${PerfectCameraKitGate.isStableReady} '
++          'stale=${PerfectCameraKitGate.staleReason} '
++          'session=${PerfectCameraKitGate.sessionId} '
++          'valid=${PerfectCameraKitGate.latest?.isValid} '
++          'areaOk=${PerfectCameraKitGate.latest?.faceAreaOk} '
++          'poseOk=${PerfectCameraKitGate.latest?.facePoseOk} '
++          'lightOk=${PerfectCameraKitGate.latest?.lightingOk} '
++          'area=${PerfectCameraKitGate.latest?.faceArea} '
++          'pose=${PerfectCameraKitGate.latest?.facePose} '
++          'light=${PerfectCameraKitGate.latest?.lighting}',
++        );
++        _showGateMessage(
++          _cameraKitGuidanceAr ?? 'ثبّتي وجهك حتى تصبح جاهزة.',
++        );
++        return;
++      }
++      if (fromAuto && !PerfectCameraKitGate.isStableReady) {
++        debugPrint('Mira capture: BLOCKED auto — not stable ready');
++        return;
++      }
++    } else if (_mirrorEnabled) {
+       final canManual = _mirrorGuidance?.canManualCapture == true;
+       if (!fromAuto && !canManual) {
+         _showGateMessage(
+@@ -567,12 +747,14 @@ class _FaceCapturePanelState extends State<FaceCapturePanel>
+         await HapticFeedback.mediumImpact();
+       }
+       final photo = await controller.takePicture();
++      debugPrint('Mira capture: takePicture OK path=${photo.path}');
+       _mirrorCapturedPreview = _isFrontCamera;
+       await _pauseCamera();
+       final file = File(photo.path);
+       await _detectFaceOnStill(file);
+       final gate = await _validateFile(file);
+       if (gate == null || !gate.isAccepted) {
++        debugPrint('Mira capture: validate REJECTED');
+         _faceOverlayController.reset();
+         _mirrorCoordinator?.releaseAfterFailure();
+         await _resumeCamera();
+@@ -580,6 +762,7 @@ class _FaceCapturePanelState extends State<FaceCapturePanel>
+       }
+       final normalized = await _normalizeAcceptedCapture(file, gate);
+       _mirrorCoordinator?.markCaptured();
++      debugPrint('Mira capture: ACCEPTED → onImageChanged (autoAnalysis expected)');
+       widget.onImageChanged(normalized);
+     } catch (e) {
+       _mirrorCoordinator?.releaseAfterFailure();
+@@ -789,15 +972,18 @@ class _FaceCapturePanelState extends State<FaceCapturePanel>
+                         ? LiveCameraOverlayState.faceDetected
+                         : LiveCameraOverlayState.initial;
+ 
+-            final guidance = _mirrorGuidance;
++            final guidance =
++                _cameraKitActive ? _cameraKitGuidanceVm : _mirrorGuidance;
+             final shutterEnabled = interactive &&
+                 !_initializing &&
+                 _error == null &&
+                 (widget.capturedImage != null ||
+-                    (_mirrorEnabled
+-                        ? (guidance?.canManualCapture == true ||
+-                            widget.capturedImage != null)
+-                        : canTakePhoto));
++                    (_cameraKitActive
++                        ? canTakePhoto
++                        : (_mirrorEnabled
++                            ? (guidance?.canManualCapture == true ||
++                                widget.capturedImage != null)
++                            : canTakePhoto)));
+ 
+             return Column(
+               children: [
+@@ -842,9 +1028,9 @@ class _FaceCapturePanelState extends State<FaceCapturePanel>
+                   hasCapture: widget.capturedImage != null,
+                   onCapture: () => _capture(fromAuto: false),
+                   onRetake: _retake,
+-                  onGallery: _pickFromGallery,
++                  onGallery: _cameraKitActive ? null : _pickFromGallery,
+                   onFlip: _toggleCamera,
+-                  mirrorStyle: _mirrorEnabled,
++                  mirrorStyle: _mirrorEnabled || _cameraKitActive,
+                 ),
+                 const SizedBox(height: 8),
+               ],
+@@ -971,7 +1157,7 @@ class _CaptureControls extends StatelessWidget {
+   final bool hasCapture;
+   final VoidCallback onCapture;
+   final VoidCallback onRetake;
+-  final VoidCallback onGallery;
++  final VoidCallback? onGallery;
+   final VoidCallback onFlip;
+   final bool mirrorStyle;
+ 

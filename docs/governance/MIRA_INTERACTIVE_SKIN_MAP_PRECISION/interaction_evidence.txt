@@ -1,0 +1,1 @@
+INTERACTION: face tap uses hitPaths; chips filtered by SkinFaceMapEducationalZones; sheet barrier alpha 0.18; GLOBAL_SCORE_ONLY copy.

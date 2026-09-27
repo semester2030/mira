@@ -31,14 +31,16 @@ class SecondaryEntryGroup extends StatelessWidget {
         title: 'روتينك',
         subtitle: routine.hasSteps ? 'صباح ومساء' : 'غير متاح الآن',
         icon: Icons.spa_outlined,
-        enabled: VisibilityPolicy.isPubliclyVisible(routine.visibility) &&
+        enabled:
+            VisibilityPolicy.isPubliclyVisible(routine.visibility) &&
             routine.hasSteps,
         analyticsHint: routine.analyticsId ?? 'results_routine_entry',
         onTap: onRoutine,
       ),
       _EntryTile(
         title: 'تقدمك',
-        subtitle: progress.comparability == ProgressComparabilityState.comparable
+        subtitle:
+            progress.comparability == ProgressComparabilityState.comparable
             ? 'مقارنة متاحة'
             : 'يحتاج تحليلاً إضافياً',
         icon: Icons.trending_up_rounded,
@@ -50,7 +52,8 @@ class SecondaryEntryGroup extends StatelessWidget {
         title: 'مستشار ميرا',
         subtitle: 'اسألي عن نتيجتك',
         icon: Icons.chat_bubble_outline_rounded,
-        enabled: VisibilityPolicy.isPubliclyVisible(advisor.visibility) &&
+        enabled:
+            VisibilityPolicy.isPubliclyVisible(advisor.visibility) &&
             advisor.publicNameAr == 'مستشار ميرا',
         analyticsHint: advisor.analyticsId ?? 'results_advisor_entry',
         onTap: onAdvisor,

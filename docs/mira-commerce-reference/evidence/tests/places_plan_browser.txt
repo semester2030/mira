@@ -1,0 +1,21 @@
+places plan browser check 2026-09-24
+url: http://127.0.0.1:8765/
+title: المتاجر الإلكترونية في ميرا — مرجع الدراسة
+sections: 36
+duplicate element ids: 0
+hash #PLC-0007 opened the views item
+search المشاهدات opened matching details
+search auth_credentials opened REV-0008 and REV-0012
+place status filter متطلب معتمد hid non-matching place items
+evidence files HTTP 200: EVD-0028.txt EVD-0029.txt RC2_ZIP.txt
+internal hash links missing: 0
+document overflow after CSS fix:
+- width 277 scrollWidth 262
+- width 390 scrollWidth 390
+- width 768 scrollWidth 768
+- width 1280 scrollWidth 1265
+heading overlap count at narrow width: 0
+desktop screenshot: evidence/screenshots/places-plan-desktop-1280.png shows section 30 with PLC-0007
+tablet 768 and the IDE panel capture of that width returned a blank image. Layout numbers above are from the page, not from that blank image. Visual proof for 768 and 390 is NOT claimed from a screenshot.
+validate_study.py: PASS
+no app implementation, no DAR CAR edit, no publish

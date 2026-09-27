@@ -1,0 +1,5 @@
+ .../geometry/skin_face_map_visual_tokens.dart      |  362 +++--
+ .../presentation/widgets/perfect_mask_overlay.dart |  306 +++--
+ .../widgets/results_skin_map_panel.dart            | 1377 ++++++--------------
+ pubspec.yaml                                       |   11 +-
+ 4 files changed, 858 insertions(+), 1198 deletions(-)

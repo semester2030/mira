@@ -1,0 +1,14 @@
+FAIL 13
+- size mismatch data/discover-phases.json
+- sha256 mismatch data/discover-phases.json
+- size mismatch data/project.json
+- sha256 mismatch data/project.json
+- size mismatch docs/CHANGED_FILES.md
+- sha256 mismatch docs/CHANGED_FILES.md
+- size mismatch evidence/tests/rc3_device_run.txt
+- sha256 mismatch evidence/tests/rc3_device_run.txt
+- unregistered file scripts/write_package_manifest.py
+- unregistered file deliveries/RC4.txt
+- unregistered file evidence/tests/rc3_validate_package_HISTORICAL.txt
+- unregistered file evidence/tests/rc4_device_run.txt
+- generated js does not match data/*.json

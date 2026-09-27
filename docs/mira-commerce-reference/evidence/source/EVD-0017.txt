@@ -1,0 +1,86 @@
+id=EVD-0017
+path=mira-api/src/partners-portal/dto/catalog.dto.ts
+commit=15fe65c40d3dedb9afdd95619f2945bd84cb616a
+sha256=13e94f39889a337fa0f194b9b17fef0a18a12a842415596be7d9f1a330fa2cee
+lines=13-90
+note=عقد المنتج الحالي بلا متغير أو مخزون أو وسائط
+runtime=SOURCE_ONLY
+---
+13|export class UpsertProductDto {
+14|  @IsString()
+15|  @MinLength(2)
+16|  @MaxLength(120)
+17|  nameAr!: string;
+18|
+19|  @IsString()
+20|  @MinLength(2)
+21|  @MaxLength(120)
+22|  nameEn!: string;
+23|
+24|  @IsOptional()
+25|  @IsString()
+26|  @MaxLength(400)
+27|  descriptionAr?: string;
+28|
+29|  @IsInt()
+30|  @Min(0)
+31|  priceHalalas!: number;
+32|
+33|  @IsUrl({ require_protocol: true })
+34|  externalUrl!: string;
+35|
+36|  @IsArray()
+37|  @IsString({ each: true })
+38|  concernTags!: string[];
+39|
+40|  @IsOptional()
+41|  @IsArray()
+42|  @IsString({ each: true })
+43|  skinTypes?: string[];
+44|
+45|  @IsOptional()
+46|  @IsString()
+47|  @MaxLength(80)
+48|  stepAr?: string;
+49|
+50|  @IsOptional()
+51|  @IsBoolean()
+52|  active?: boolean;
+53|}
+54|
+55|export class UpsertServiceDto {
+56|  @IsString()
+57|  @MinLength(2)
+58|  @MaxLength(120)
+59|  nameAr!: string;
+60|
+61|  @IsString()
+62|  @MinLength(2)
+63|  @MaxLength(120)
+64|  nameEn!: string;
+65|
+66|  @IsOptional()
+67|  @IsString()
+68|  @MaxLength(400)
+69|  descriptionAr?: string;
+70|
+71|  @IsInt()
+72|  @Min(5)
+73|  durationMin!: number;
+74|
+75|  @IsInt()
+76|  @Min(0)
+77|  priceHalalas!: number;
+78|
+79|  @IsArray()
+80|  @IsString({ each: true })
+81|  concernTags!: string[];
+82|
+83|  @IsOptional()
+84|  @IsBoolean()
+85|  bookingEnabled?: boolean;
+86|
+87|  @IsOptional()
+88|  @IsBoolean()
+89|  active?: boolean;
+90|}

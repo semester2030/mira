@@ -12,9 +12,7 @@ void main() {
 
   PerfectMaskSession sessionWithPore() {
     final tinyPng = base64Encode(
-      Uint8List.fromList([
-        0x89, 0x50, 0x4e, 0x47, 0x0d, 0x0a, 0x1a, 0x0a,
-      ]),
+      Uint8List.fromList([0x89, 0x50, 0x4e, 0x47, 0x0d, 0x0a, 0x1a, 0x0a]),
     );
     return PerfectMaskSession.fromApiPayload([
       {
@@ -33,7 +31,9 @@ void main() {
     AnalysisSession.setPerfectMasks(session);
     expect(AnalysisSession.lastPerfectMasks, same(session));
     expect(
-      AnalysisSession.lastPerfectMasks!.lookup(consumerMetricId: 'pores')?.bytes,
+      AnalysisSession.lastPerfectMasks!
+          .lookup(consumerMetricId: 'pores')
+          ?.bytes,
       isNotEmpty,
     );
   });
@@ -63,7 +63,9 @@ void main() {
     AnalysisSession.setPerfectMasks(session);
     AnalysisSession.setPerfectMasks(session);
     expect(
-      AnalysisSession.lastPerfectMasks!.lookup(consumerMetricId: 'pores')?.bytes,
+      AnalysisSession.lastPerfectMasks!
+          .lookup(consumerMetricId: 'pores')
+          ?.bytes,
       isNotEmpty,
     );
   });

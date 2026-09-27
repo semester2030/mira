@@ -4,6 +4,9 @@ import 'dart:ui';
 ///
 /// Matches legacy placeholder proportions used by [LiveFaceGuidePainter]
 /// so distance/center ratios stay compatible with 9B mesh thresholds.
+///
+/// [forCameraKit] sizes the oval to Perfect MODERATE faceSizeRatio (0.65):
+/// filling the guide ≈ meeting CameraKit face-area acceptance.
 abstract final class CaptureGuideGeometry {
   CaptureGuideGeometry._();
 
@@ -12,14 +15,21 @@ abstract final class CaptureGuideGeometry {
   static const widthRatio = 0.58;
   static const heightRatio = 0.68;
 
-  static Rect illustrativeOval(Size viewport) {
+  /// CameraKit MODERATE requires face width ≥ 0.65 × frame width (portrait).
+  /// Guide is slightly larger so a face that fills the oval clears the gate.
+  static const cameraKitWidthRatio = 0.72;
+  static const cameraKitHeightRatio = 0.84;
+
+  static Rect illustrativeOval(Size viewport, {bool forCameraKit = false}) {
+    final wr = forCameraKit ? cameraKitWidthRatio : widthRatio;
+    final hr = forCameraKit ? cameraKitHeightRatio : heightRatio;
     return Rect.fromCenter(
       center: Offset(
         viewport.width * centerXRatio,
         viewport.height * centerYRatio,
       ),
-      width: viewport.width * widthRatio,
-      height: viewport.height * heightRatio,
+      width: viewport.width * wr,
+      height: viewport.height * hr,
     );
   }
 

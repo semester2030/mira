@@ -1,0 +1,22 @@
+PH4 RC6 منفّذ — بانتظار المراجعة المستقلة
+المعتمد بالكامل مرحلتان من خمس. المرحلة الثالثة مقبولة برمجيًا ضمن النطاق المراجع. PH3-STORAGE-LIVE مفتوح. قواعد المشاهدات بانتظار اعتماد المالك والعد غير مفعّل. اختبار الجوال في المرحلة الخامسة.
+
+RC5 تمت مراجعته ويحتاج تصحيحًا.
+الحزمة التي وصلت للمراجع: MIRA_DISCOVER_PH4_RC5.zip
+SHA-256: 6c1bbf5411b3c7d055a7107d9a806157c19a080a133e4650eb3e9f0af00d6eee
+لم يُعدَّل ملف RC5 ولا تقاريره التاريخية.
+
+إعادة الإنتاج من حزمة RC6 المفكوكة:
+1. فك ZIP في مجلد مستقل. لا تستخدم شجرة العمل الأصلية لإثبات هذه النسخة.
+2. من مجلد الموقع: python3 scripts/validate_package.py --root .
+3. من جذر النسخة: python3 docs/mira-commerce-reference/scripts/verify_evidence_freshness.py --repo .
+   الناتج يفصل baseline عن current. BASELINE_DRIFT ليس نجاحًا للحالة الحالية. NOT_RUN وCURRENT_RECORDED ليسا نجاحًا شاملًا لحداثة الأدلة.
+4. افحص أنواع مدخلات ZIP بالسكريبت scripts/inspect_zip_package.py. لا يُستخدم is_file وحده لإعلان extra=0.
+5. flutter test للاختبارات المستهدفة من جذر الفك.
+6. السلسلة الكاملة تحتاج ثنائي MinIO في /tmp/mira-rc6-tools/minio. غيابه يوقف السلسلة. نجاح اختبارات الإعلان ليس نجاحًا للسلسلة.
+7. روابط التسليم من مجلد الموقع توضع بجانب جذر الفك:
+   ../../MIRA_DISCOVER_PH4_RC6.zip
+   ../../MIRA_DISCOVER_PH4_RC6.zip.sha256
+   ../../MIRA_DISCOVER_PH4_RC6_VERIFICATION.txt
+   ../../MIRA_DISCOVER_PH4_RC6_FINAL_CHECKS.log
+   الحزمة لا تحتوي نفسها. بصمة ZIP تُحسب بعد إغلاق الملف وتُكتب خارجه.

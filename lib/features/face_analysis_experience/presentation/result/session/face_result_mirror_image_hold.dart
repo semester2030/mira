@@ -2,12 +2,13 @@ import 'dart:io';
 
 import '../../../../../core/privacy/temp_image_cleanup.dart';
 
-/// Short-lived capture copy for Result Mirror continuity (9F).
+/// Short-lived capture copy for active Skin result continuity.
 ///
-/// Analysis pipelines delete the original temp capture in `finally`.
-/// When the Result Mirror flag is ON, [prepareFrom] copies the file before
-/// analysis so the mirror can keep visual continuity. [release] must run when
-/// the mirror screen disposes (zero local retention).
+/// Analysis pipelines delete original / aligned temps after success.
+/// [prepareFrom] copies the Perfect-input file into a session hold so
+/// Face Explorer / Apple Matte keep the SAME pixel grid. Canonical owner
+/// of the path is [AnalysisSession.lastEphemeralFacePath].
+/// [release] runs when the active result session ends (zero durable storage).
 abstract final class FaceResultMirrorImageHold {
   FaceResultMirrorImageHold._();
 

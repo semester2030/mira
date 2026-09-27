@@ -1,0 +1,52 @@
+{
+  "tool": "Google Chrome headless --screenshot --force-device-scale-factor=1 --virtual-time-budget=5000",
+  "url": "http://127.0.0.1:8771/",
+  "section": "landing viewport, not a scrolled hash",
+  "devicePixelRatio": 1,
+  "capturedAt": "2026-09-24T03:18:00+03:00",
+  "tilingCheck": {
+    "rc3_period_445_and_527": "exact 1.0 match, rejected",
+    "rc1_mobile_v445": 0.939,
+    "rc1_tablet_v445": 0.834,
+    "rc1_tablet_h527": 0.889,
+    "rc1_desktop_v445": 0.651,
+    "rc1_desktop_h527": 0.68,
+    "note": "RC1 shots are not an exact tile. A scrolled #s38 capture was blank and was discarded. DOM dump of #s38 contains the new section."
+  },
+  "shots": [
+    {
+      "path": "evidence/screenshots/rc1-mobile-390x844.png",
+      "viewport": [
+        390,
+        844
+      ],
+      "pixels": [
+        390,
+        844
+      ],
+      "edgeNote": "dark pixels reach x=389, so this file is not claimed free of right-edge contact"
+    },
+    {
+      "path": "evidence/screenshots/rc1-tablet-768x1024.png",
+      "viewport": [
+        768,
+        1024
+      ],
+      "pixels": [
+        768,
+        1024
+      ]
+    },
+    {
+      "path": "evidence/screenshots/rc1-desktop-1280x900.png",
+      "viewport": [
+        1280,
+        900
+      ],
+      "pixels": [
+        1280,
+        900
+      ]
+    }
+  ]
+}

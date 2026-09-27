@@ -17,6 +17,7 @@ class CaptureMirrorPainter extends CustomPainter {
   final double pulse;
   final bool reduceMotion;
   final PoseKind poseHint;
+  final bool forCameraKit;
 
   CaptureMirrorPainter({
     required this.contourAnchors,
@@ -26,11 +27,15 @@ class CaptureMirrorPainter extends CustomPainter {
     required this.pulse,
     required this.reduceMotion,
     this.poseHint = PoseKind.unknown,
+    this.forCameraKit = false,
   });
 
   @override
   void paint(Canvas canvas, Size size) {
-    final guide = CaptureGuideGeometry.illustrativeOval(size);
+    final guide = CaptureGuideGeometry.illustrativeOval(
+      size,
+      forCameraKit: forCameraKit,
+    );
     _drawDim(canvas, size, guide);
     _drawGuideOval(canvas, guide);
     if (contourAnchors.length >= 6) {
@@ -178,6 +183,7 @@ class CaptureMirrorPainter extends CustomPainter {
         oldDelegate.holdProgress01 != holdProgress01 ||
         oldDelegate.pulse != pulse ||
         oldDelegate.reduceMotion != reduceMotion ||
-        oldDelegate.poseHint != poseHint;
+        oldDelegate.poseHint != poseHint ||
+        oldDelegate.forCameraKit != forCameraKit;
   }
 }

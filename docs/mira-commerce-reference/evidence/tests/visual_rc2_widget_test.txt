@@ -1,0 +1,32 @@
+00:00 +0: loading /Users/fayez/Desktop/mira/test/features/marketplace/discover_visual_capture_test.dart
+00:00 +0: /Users/fayez/Desktop/mira/test/features/marketplace/discover_visual_capture_test.dart: (setUpAll)
+00:00 +0: /Users/fayez/Desktop/mira/test/features/marketplace/discover_visual_capture_test.dart: capture product chrome
+00:00 +1: /Users/fayez/Desktop/mira/test/features/marketplace/discover_visual_capture_test.dart: capture product chrome
+00:00 +2: /Users/fayez/Desktop/mira/test/features/marketplace/discover_visual_capture_test.dart: capture product chrome
+00:00 +3: /Users/fayez/Desktop/mira/test/features/marketplace/discover_visual_capture_test.dart: capture product chrome
+00:00 +4: /Users/fayez/Desktop/mira/test/features/marketplace/discover_visual_capture_test.dart: capture product chrome
+00:00 +5: /Users/fayez/Desktop/mira/test/features/marketplace/asset_video_port_test.dart: late A then B: finishing A does not play A or change B
+00:00 +6: /Users/fayez/Desktop/mira/test/features/marketplace/asset_video_port_test.dart: late A then B: finishing A does not play A or change B
+00:00 +7: /Users/fayez/Desktop/mira/test/features/marketplace/asset_video_port_test.dart: late A then B: finishing A does not play A or change B
+00:01 +8: /Users/fayez/Desktop/mira/test/features/marketplace/asset_video_port_test.dart: late A then B: finishing A does not play A or change B
+00:01 +9: /Users/fayez/Desktop/mira/test/features/marketplace/asset_video_port_test.dart: late A then B: finishing A does not play A or change B
+00:01 +10: /Users/fayez/Desktop/mira/test/features/marketplace/discover_visual_capture_test.dart: capture salon chrome
+00:01 +11: /Users/fayez/Desktop/mira/test/features/marketplace/discover_visual_capture_test.dart: capture salon chrome
+00:01 +12: /Users/fayez/Desktop/mira/test/features/marketplace/discover_visual_capture_test.dart: capture salon chrome
+00:01 +13: /Users/fayez/Desktop/mira/test/features/marketplace/discover_visual_capture_test.dart: capture salon chrome
+00:01 +14: /Users/fayez/Desktop/mira/test/features/marketplace/discover_visual_capture_test.dart: capture salon chrome
+00:01 +15: /Users/fayez/Desktop/mira/test/features/marketplace/discover_visual_capture_test.dart: capture salon chrome
+00:01 +16: /Users/fayez/Desktop/mira/test/features/marketplace/discover_visual_capture_test.dart: capture salon chrome
+00:01 +17: /Users/fayez/Desktop/mira/test/features/marketplace/discover_visual_capture_test.dart: capture salon chrome
+00:01 +18: /Users/fayez/Desktop/mira/test/features/marketplace/asset_video_port_test.dart: stale attach completion after newer slot does not play A
+00:01 +19: /Users/fayez/Desktop/mira/test/features/marketplace/asset_video_port_test.dart: stale attach completion after newer slot does not play A
+00:01 +20: /Users/fayez/Desktop/mira/test/features/marketplace/asset_video_port_test.dart: stale attach completion after newer slot does not play A
+00:01 +21: /Users/fayez/Desktop/mira/test/features/marketplace/asset_video_port_test.dart: stale attach completion after newer slot does not play A
+00:01 +22: /Users/fayez/Desktop/mira/test/features/marketplace/asset_video_port_test.dart: stale attach completion after newer slot does not play A
+00:01 +23: /Users/fayez/Desktop/mira/test/features/marketplace/asset_video_port_test.dart: release during init prevents play
+00:01 +24: /Users/fayez/Desktop/mira/test/features/marketplace/asset_video_port_test.dart: pause during init leaves player stopped
+00:01 +25: /Users/fayez/Desktop/mira/test/features/marketplace/asset_video_port_test.dart: init failure then retry succeeds
+00:01 +26: /Users/fayez/Desktop/mira/test/features/marketplace/asset_video_port_test.dart: repeated init failure stays failed
+00:01 +27: /Users/fayez/Desktop/mira/test/features/marketplace/asset_video_port_test.dart: runtime error after ready marks failed
+00:02 +28: /Users/fayez/Desktop/mira/test/features/marketplace/asset_video_port_test.dart: only one active player and dispose on release
+00:02 +29: All tests passed!

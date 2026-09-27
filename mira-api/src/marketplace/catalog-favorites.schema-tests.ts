@@ -1,0 +1,20 @@
+import assert from 'node:assert/strict';
+import { CatalogFavoriteBook } from './catalog-favorites';
+
+const book = new CatalogFavoriteBook();
+assert.deepEqual(book.toggle('', 'product', 'p1', true), { ok: false, reason: 'unauthenticated' });
+assert.deepEqual(book.toggle('user-a', 'product', 'draft', false), { ok: false, reason: 'unpublished' });
+assert.deepEqual(book.toggle('user-a', 'product', 'p1', true), { ok: true, saved: true });
+assert.deepEqual(book.toggle('user-b', 'product', 'p1', true), { ok: true, saved: true });
+assert.deepEqual(book.list('user-a').map((row) => row.userId), ['user-a']);
+assert.equal(book.list('user-b').some((row) => row.userId === 'user-a'), false);
+assert.deepEqual(book.toggle('user-a', 'product', 'p1', true), { ok: true, saved: false });
+assert.equal(book.list('user-a').length, 0);
+assert.equal(book.list('user-b').length, 1);
+assert.deepEqual(book.set('user-b', 'product', 'p1', true, true), { ok: true, saved: true });
+assert.deepEqual(book.set('user-b', 'product', 'p1', true, true), { ok: true, saved: true });
+assert.equal(book.list('user-b').length, 1);
+assert.deepEqual(book.set('user-b', 'product', 'p1', true, false), { ok: true, saved: false });
+assert.deepEqual(book.set('user-b', 'product', 'p1', true, false), { ok: true, saved: false });
+assert.equal(book.list('user-b').length, 0);
+console.log('catalog-favorites tests passed');

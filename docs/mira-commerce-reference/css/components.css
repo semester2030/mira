@@ -1,0 +1,33 @@
+.status-EXISTING { color: var(--mira-success); font-weight: 700; }
+.status-PARTIAL { color: var(--mira-warn); font-weight: 700; }
+.status-ABSENT_AFTER_SEARCH, .status-DISABLED { color: var(--mira-danger); font-weight: 700; }
+.status-ENABLED { color: var(--mira-info); font-weight: 700; }
+.status-UNKNOWN { color: var(--mira-text-3); font-weight: 700; }
+.chip-row { display: flex; flex-wrap: wrap; gap: .35rem; margin: .5rem 0; }
+.kbd { font-family: ui-monospace, monospace; font-size: .8rem; background: #f3f3f3; padding: .1rem .35rem; border-radius: 4px; }
+.id-link { font-family: ui-monospace, monospace; font-size: .85rem; }
+.empty-state {
+  text-align: center; padding: 1.5rem; color: var(--mira-text-3); border: 1px dashed var(--mira-border);
+  border-radius: 12px;
+}
+.compare {
+  display: grid; grid-template-columns: 1fr 1fr; gap: .75rem;
+}
+@media (max-width: 700px) { .compare { grid-template-columns: 1fr; } }
+.compare .now { border-top: 3px solid var(--mira-warn); }
+.compare .next { border-top: 3px solid var(--mira-secondary); }
+.concept-figure { margin: 0 0 1rem; }
+.concept-figure img { width: 100%; height: auto; object-fit: contain; background: #fff; border-radius: 12px; }
+.concept-missing { border: 1px dashed var(--mira-primary); padding: 1rem; border-radius: 12px; }
+#imageLightbox { width: min(960px, 96vw); border: 0; border-radius: 16px; padding: 1rem; }
+#imageLightbox img { width: 100%; height: auto; object-fit: contain; }
+#imageLightbox::backdrop { background: rgba(74, 58, 58, .45); }
+.phase-list { display: flex; flex-direction: column; gap: .75rem; min-width: 0; }
+.phase-card { border: 1px solid var(--mira-border); border-radius: 16px; background: #fff; min-width: 0; padding: .35rem .75rem .75rem; }
+.phase-card summary { display: flex; flex-wrap: wrap; gap: .45rem .75rem; align-items: center; cursor: pointer; }
+.phase-card summary span, .phase-card a, .phase-card code, .phase-card li { overflow-wrap: anywhere; min-width: 0; }
+.phase-note { border-top: 1px solid var(--mira-border); margin-top: .75rem; padding-top: .75rem; min-width: 0; }
+.phase-id { font-family: ui-monospace, monospace; }
+.phase-status, .phase-block { display: inline-flex; gap: .3rem; align-items: center; border: 1px solid var(--mira-border); border-radius: 999px; padding: .1rem .55rem; background: var(--mira-bg); }
+.phase-body { min-width: 0; }
+.phase-body h3 { margin: .8rem 0 .3rem; font-size: 1rem; }

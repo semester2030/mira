@@ -1,0 +1,539 @@
+[
+  {
+    "id": "SCOPE-ORIG-00",
+    "titleAr": "تدقيق مبني على الأدلة بلا إعادة بناء",
+    "sectionId": "s3",
+    "dataFiles": [
+      "capabilities.json"
+    ],
+    "evidenceIds": [
+      "EVD-0011"
+    ],
+    "status": "partial",
+    "remainingAr": "التشغيل الإنتاجي غير مفحوص",
+    "whyAr": "صلاحية الدراسة تمنع التنفيذ الحي",
+    "approvalEffectAr": "يمنع إغلاق GATE-00"
+  },
+  {
+    "id": "SCOPE-ORIG-01",
+    "titleAr": "اسم الموقع المتاجر الإلكترونية في ميرا",
+    "sectionId": "s0",
+    "dataFiles": [
+      "project.json"
+    ],
+    "evidenceIds": [],
+    "status": "complete",
+    "remainingAr": "",
+    "whyAr": "",
+    "approvalEffectAr": "لا يمنع المراجعة"
+  },
+  {
+    "id": "SCOPE-ORIG-02",
+    "titleAr": "أقسام 00 إلى 19 ومعرفات ثابتة",
+    "sectionId": "s21",
+    "dataFiles": [
+      "project.json"
+    ],
+    "evidenceIds": [],
+    "status": "complete",
+    "remainingAr": "",
+    "whyAr": "",
+    "approvalEffectAr": "لا يمنع المراجعة"
+  },
+  {
+    "id": "SCOPE-ORIG-03",
+    "titleAr": "عدم تعديل منتج ميرا",
+    "sectionId": "s2",
+    "dataFiles": [
+      "evidence/git/STATUS.txt"
+    ],
+    "evidenceIds": [
+      "EVD-0022"
+    ],
+    "status": "complete",
+    "remainingAr": "شجرة العمل كانت متسخة قبل الدراسة",
+    "whyAr": "لم تُنسب إلى RC2 ولم تُمسح",
+    "approvalEffectAr": "لا يمنع المراجعة"
+  },
+  {
+    "id": "SCOPE-ORIG-04",
+    "titleAr": "رؤية 50 منتجًا ومحتوى مرتبط بلا نسخ إعلان",
+    "sectionId": "s1",
+    "dataFiles": [
+      "contracts.json"
+    ],
+    "evidenceIds": [],
+    "status": "partial",
+    "remainingAr": "العقود مقترحة غير منفذة",
+    "whyAr": "هذه دراسة",
+    "approvalEffectAr": "يمنع بدء البناء قبل القرار"
+  },
+  {
+    "id": "SCOPE-RC2-00",
+    "titleAr": "عدم إغلاق GATE-00",
+    "sectionId": "s0",
+    "dataFiles": [
+      "project.json"
+    ],
+    "evidenceIds": [],
+    "status": "complete",
+    "remainingAr": "",
+    "whyAr": "",
+    "approvalEffectAr": "الحالة بانتظار إعادة المراجعة"
+  },
+  {
+    "id": "SCOPE-RC2-01",
+    "titleAr": "كل نتيجة داخل الموقع",
+    "sectionId": "s20",
+    "dataFiles": [
+      "section-content.json"
+    ],
+    "evidenceIds": [],
+    "status": "partial",
+    "remainingAr": "يكتمل بحزمة المتصفح",
+    "whyAr": "اللقطات بند REV-0007c",
+    "approvalEffectAr": "يبقي الملاحظة مفتوحة إن غابت اللقطات"
+  },
+  {
+    "id": "SCOPE-RC2-04",
+    "titleAr": "سجل REV-0001 إلى REV-0007",
+    "sectionId": "s20",
+    "dataFiles": [
+      "review-findings.json"
+    ],
+    "evidenceIds": [],
+    "status": "complete",
+    "remainingAr": "بعض البنود الفرعية قيد المعالجة",
+    "whyAr": "لا إخفاء للنقص",
+    "approvalEffectAr": "الملاحظة المفتوحة تمنع ادعاء الاكتمال"
+  },
+  {
+    "id": "SCOPE-RC2-05",
+    "titleAr": "تدقيق تنفيذ الشركاء والإدارة",
+    "sectionId": "s6",
+    "dataFiles": [
+      "partner-traces.json"
+    ],
+    "evidenceIds": [
+      "EVD-0011",
+      "EVD-0013",
+      "EVD-0026"
+    ],
+    "status": "partial",
+    "remainingAr": "عزل الكتابة مثبت في المصدر واختبار mock فقط",
+    "whyAr": "لا قاعدة حية",
+    "approvalEffectAr": "SOURCE_ONLY"
+  },
+  {
+    "id": "SCOPE-RC2-06",
+    "titleAr": "تصحيح الوجود والغياب والتوقف",
+    "sectionId": "s4",
+    "dataFiles": [
+      "judgment-corrections.json"
+    ],
+    "evidenceIds": [
+      "EVD-0018"
+    ],
+    "status": "complete",
+    "remainingAr": "API الإنتاج UNKNOWN",
+    "whyAr": "لم يُنفذ طلب شبكة",
+    "approvalEffectAr": "UNKNOWN لا يُغلق كحقيقة"
+  },
+  {
+    "id": "SCOPE-RC2-07",
+    "titleAr": "عقود الفلاتر والمثال المرجعي",
+    "sectionId": "s8",
+    "dataFiles": [
+      "contracts.json"
+    ],
+    "evidenceIds": [],
+    "status": "complete",
+    "remainingAr": "غير منفذ في المنتج",
+    "whyAr": "مقترح دراسة",
+    "approvalEffectAr": "لا يُحتسب ميزة مبنية"
+  },
+  {
+    "id": "SCOPE-RC2-08",
+    "titleAr": "وسائط وتكلفة وتنظيم",
+    "sectionId": "s9",
+    "dataFiles": [
+      "regulatory.json"
+    ],
+    "evidenceIds": [
+      "EVD-0024"
+    ],
+    "status": "partial",
+    "remainingAr": "الأسعار غير متحققة",
+    "whyAr": "لا سعر رسمي مجلوب لهذه الدورة",
+    "approvalEffectAr": "لا اعتماد تكلفة"
+  },
+  {
+    "id": "SCOPE-RC2-09",
+    "titleAr": "قبول ومراحل",
+    "sectionId": "s15",
+    "dataFiles": [
+      "roadmap.json"
+    ],
+    "evidenceIds": [],
+    "status": "complete",
+    "remainingAr": "الجهد نطاق تقديري",
+    "whyAr": "افتراضات مكتوبة في البوابة",
+    "approvalEffectAr": "لا يمنع المراجعة"
+  },
+  {
+    "id": "SCOPE-RC2-10",
+    "titleAr": "JSON مصدر الحقيقة",
+    "sectionId": "s19",
+    "dataFiles": [
+      "section-content.json"
+    ],
+    "evidenceIds": [],
+    "status": "complete",
+    "remainingAr": "",
+    "whyAr": "",
+    "approvalEffectAr": "يُراجع مع REV-0007a"
+  },
+  {
+    "id": "SCOPE-RC2-11",
+    "titleAr": "تحقق سلبي وإيجابي",
+    "sectionId": "s19",
+    "dataFiles": [
+      "evidence/tests"
+    ],
+    "evidenceIds": [
+      "EVD-0027"
+    ],
+    "status": "complete",
+    "remainingAr": "التحقق بنيوي ولا يغني عن المراجعة الموضوعية",
+    "whyAr": "التجارب السلبية مثبتة في السجل",
+    "approvalEffectAr": "فشل الأداة يبقي REV-0006 مفتوحة"
+  },
+  {
+    "id": "SCOPE-RC2-12",
+    "titleAr": "اختبار متصفح",
+    "sectionId": "s21",
+    "dataFiles": [
+      "evidence/screenshots"
+    ],
+    "evidenceIds": [],
+    "status": "partial",
+    "remainingAr": "لقطة سطح المكتب 1280 فقط. لقطات 768 و390 خرجت فارغة وحُذفت.",
+    "whyAr": "Chrome headless لم يرسم التابلت والجوال. التفاعل ثبت في متصفح بعرض 293.",
+    "approvalEffectAr": "لا يُسمى نجاحًا تفاعليًا قبل اللقطات"
+  },
+  {
+    "id": "SCOPE-RC2-13",
+    "titleAr": "مصفوفة التغطية",
+    "sectionId": "s21",
+    "dataFiles": [
+      "scope-coverage.json"
+    ],
+    "evidenceIds": [],
+    "status": "complete",
+    "remainingAr": "",
+    "whyAr": "",
+    "approvalEffectAr": "المراجع ينتقل من البند إلى الدليل"
+  },
+  {
+    "id": "SCOPE-RC2-14",
+    "titleAr": "حزمة RC2 وSHA",
+    "sectionId": "s18",
+    "dataFiles": [
+      "changelog.json"
+    ],
+    "evidenceIds": [],
+    "status": "partial",
+    "remainingAr": "تُختم بعد الاختبار",
+    "whyAr": "النسخ يتم في نهاية الجولة",
+    "approvalEffectAr": "الحزمة السابقة لا تُستبدل بصمت"
+  },
+  {
+    "id": "SCOPE-PLC-01",
+    "titleAr": "ملخص قرار الاستفادة",
+    "sectionId": "s22",
+    "dataFiles": [
+      "places-adoption.json"
+    ],
+    "evidenceIds": [
+      "EVD-0029"
+    ],
+    "status": "partial",
+    "remainingAr": "بانتظار مراجعة بشرية. ليس اعتمادًا نهائيًا.",
+    "whyAr": "التوثيق أُضيف إلى الموقع الحالي دون تنفيذ المنتج.",
+    "approvalEffectAr": "لا يغلق GATE-00 ولا يبدأ GATE-08 أو GATE-09"
+  },
+  {
+    "id": "SCOPE-PLC-02",
+    "titleAr": "ما وصل من الأماكن",
+    "sectionId": "s23",
+    "dataFiles": [
+      "places-adoption.json"
+    ],
+    "evidenceIds": [
+      "EVD-0028"
+    ],
+    "status": "partial",
+    "remainingAr": "بانتظار مراجعة بشرية. ليس اعتمادًا نهائيًا.",
+    "whyAr": "التوثيق أُضيف إلى الموقع الحالي دون تنفيذ المنتج.",
+    "approvalEffectAr": "لا يغلق GATE-00 ولا يبدأ GATE-08 أو GATE-09"
+  },
+  {
+    "id": "SCOPE-PLC-03",
+    "titleAr": "نتائج مراجعة الحزمة",
+    "sectionId": "s24",
+    "dataFiles": [
+      "places-adoption.json"
+    ],
+    "evidenceIds": [
+      "EVD-0028"
+    ],
+    "status": "partial",
+    "remainingAr": "بانتظار مراجعة بشرية. ليس اعتمادًا نهائيًا.",
+    "whyAr": "التوثيق أُضيف إلى الموقع الحالي دون تنفيذ المنتج.",
+    "approvalEffectAr": "لا يغلق GATE-00 ولا يبدأ GATE-08 أو GATE-09"
+  },
+  {
+    "id": "SCOPE-PLC-04",
+    "titleAr": "سجل معالجة الملاحظات",
+    "sectionId": "s25",
+    "dataFiles": [
+      "places-adoption.json"
+    ],
+    "evidenceIds": [
+      "EVD-0029"
+    ],
+    "status": "partial",
+    "remainingAr": "بانتظار مراجعة بشرية. ليس اعتمادًا نهائيًا.",
+    "whyAr": "التوثيق أُضيف إلى الموقع الحالي دون تنفيذ المنتج.",
+    "approvalEffectAr": "لا يغلق GATE-00 ولا يبدأ GATE-08 أو GATE-09"
+  },
+  {
+    "id": "SCOPE-PLC-05",
+    "titleAr": "مصفوفة إعادة الاستخدام",
+    "sectionId": "s26",
+    "dataFiles": [
+      "places-adoption.json"
+    ],
+    "evidenceIds": [
+      "EVD-0029"
+    ],
+    "status": "partial",
+    "remainingAr": "بانتظار مراجعة بشرية. ليس اعتمادًا نهائيًا.",
+    "whyAr": "التوثيق أُضيف إلى الموقع الحالي دون تنفيذ المنتج.",
+    "approvalEffectAr": "لا يغلق GATE-00 ولا يبدأ GATE-08 أو GATE-09"
+  },
+  {
+    "id": "SCOPE-PLC-06",
+    "titleAr": "تجربة المنتجات",
+    "sectionId": "s27",
+    "dataFiles": [
+      "places-adoption.json"
+    ],
+    "evidenceIds": [
+      "EVD-0029"
+    ],
+    "status": "partial",
+    "remainingAr": "بانتظار مراجعة بشرية. ليس اعتمادًا نهائيًا.",
+    "whyAr": "التوثيق أُضيف إلى الموقع الحالي دون تنفيذ المنتج.",
+    "approvalEffectAr": "لا يغلق GATE-00 ولا يبدأ GATE-08 أو GATE-09"
+  },
+  {
+    "id": "SCOPE-PLC-07",
+    "titleAr": "تجربة العيادات والمشاغل",
+    "sectionId": "s28",
+    "dataFiles": [
+      "places-adoption.json"
+    ],
+    "evidenceIds": [
+      "EVD-0029"
+    ],
+    "status": "partial",
+    "remainingAr": "بانتظار مراجعة بشرية. ليس اعتمادًا نهائيًا.",
+    "whyAr": "التوثيق أُضيف إلى الموقع الحالي دون تنفيذ المنتج.",
+    "approvalEffectAr": "لا يغلق GATE-00 ولا يبدأ GATE-08 أو GATE-09"
+  },
+  {
+    "id": "SCOPE-PLC-08",
+    "titleAr": "معيار الوسائط",
+    "sectionId": "s29",
+    "dataFiles": [
+      "places-adoption.json"
+    ],
+    "evidenceIds": [
+      "EVD-0029"
+    ],
+    "status": "partial",
+    "remainingAr": "بانتظار مراجعة بشرية. ليس اعتمادًا نهائيًا.",
+    "whyAr": "التوثيق أُضيف إلى الموقع الحالي دون تنفيذ المنتج.",
+    "approvalEffectAr": "لا يغلق GATE-00 ولا يبدأ GATE-08 أو GATE-09"
+  },
+  {
+    "id": "SCOPE-PLC-09",
+    "titleAr": "المشاهدات والإحصاءات",
+    "sectionId": "s30",
+    "dataFiles": [
+      "places-adoption.json"
+    ],
+    "evidenceIds": [
+      "EVD-0029"
+    ],
+    "status": "partial",
+    "remainingAr": "بانتظار مراجعة بشرية. ليس اعتمادًا نهائيًا.",
+    "whyAr": "التوثيق أُضيف إلى الموقع الحالي دون تنفيذ المنتج.",
+    "approvalEffectAr": "لا يغلق GATE-00 ولا يبدأ GATE-08 أو GATE-09"
+  },
+  {
+    "id": "SCOPE-PLC-10",
+    "titleAr": "ربط المتاجر وإعلانات المشاهير",
+    "sectionId": "s31",
+    "dataFiles": [
+      "places-adoption.json"
+    ],
+    "evidenceIds": [
+      "EVD-0029"
+    ],
+    "status": "partial",
+    "remainingAr": "بانتظار مراجعة بشرية. ليس اعتمادًا نهائيًا.",
+    "whyAr": "التوثيق أُضيف إلى الموقع الحالي دون تنفيذ المنتج.",
+    "approvalEffectAr": "لا يغلق GATE-00 ولا يبدأ GATE-08 أو GATE-09"
+  },
+  {
+    "id": "SCOPE-PLC-11",
+    "titleAr": "خطة التنفيذ المرحلية",
+    "sectionId": "s32",
+    "dataFiles": [
+      "places-adoption.json"
+    ],
+    "evidenceIds": [
+      "EVD-0029"
+    ],
+    "status": "partial",
+    "remainingAr": "بانتظار مراجعة بشرية. ليس اعتمادًا نهائيًا.",
+    "whyAr": "التوثيق أُضيف إلى الموقع الحالي دون تنفيذ المنتج.",
+    "approvalEffectAr": "لا يغلق GATE-00 ولا يبدأ GATE-08 أو GATE-09"
+  },
+  {
+    "id": "SCOPE-PLC-12",
+    "titleAr": "القرارات المفتوحة",
+    "sectionId": "s33",
+    "dataFiles": [
+      "places-adoption.json"
+    ],
+    "evidenceIds": [
+      "EVD-0029"
+    ],
+    "status": "partial",
+    "remainingAr": "بانتظار مراجعة بشرية. ليس اعتمادًا نهائيًا.",
+    "whyAr": "التوثيق أُضيف إلى الموقع الحالي دون تنفيذ المنتج.",
+    "approvalEffectAr": "لا يغلق GATE-00 ولا يبدأ GATE-08 أو GATE-09"
+  },
+  {
+    "id": "SCOPE-PLC-13",
+    "titleAr": "الأدلة والتنزيلات",
+    "sectionId": "s34",
+    "dataFiles": [
+      "places-adoption.json"
+    ],
+    "evidenceIds": [
+      "EVD-0028"
+    ],
+    "status": "partial",
+    "remainingAr": "بانتظار مراجعة بشرية. ليس اعتمادًا نهائيًا.",
+    "whyAr": "التوثيق أُضيف إلى الموقع الحالي دون تنفيذ المنتج.",
+    "approvalEffectAr": "لا يغلق GATE-00 ولا يبدأ GATE-08 أو GATE-09"
+  },
+  {
+    "id": "SCOPE-PLC-14",
+    "titleAr": "سجل تغييرات خطة الأماكن",
+    "sectionId": "s35",
+    "dataFiles": [
+      "places-adoption.json"
+    ],
+    "evidenceIds": [
+      "EVD-0029"
+    ],
+    "status": "partial",
+    "remainingAr": "بانتظار مراجعة بشرية. ليس اعتمادًا نهائيًا.",
+    "whyAr": "التوثيق أُضيف إلى الموقع الحالي دون تنفيذ المنتج.",
+    "approvalEffectAr": "لا يغلق GATE-00 ولا يبدأ GATE-08 أو GATE-09"
+  },
+  {
+    "id": "SCOPE-RC3-01",
+    "titleAr": "فحص الحزمة مستقل عن المستودع",
+    "sectionId": "s19",
+    "dataFiles": [
+      "project.json"
+    ],
+    "evidenceIds": [
+      "EVD-0030"
+    ],
+    "status": "partial",
+    "remainingAr": "الحداثة فحص منفصل",
+    "whyAr": "FAIL 18 كانت بسبب ملفات المستودع",
+    "approvalEffectAr": "لا يغلق GATE-00"
+  },
+  {
+    "id": "SCOPE-RC3-02",
+    "titleAr": "التصورات المرجعية",
+    "sectionId": "s36",
+    "dataFiles": [
+      "visual-references.json"
+    ],
+    "evidenceIds": [
+      "EVD-0029"
+    ],
+    "status": "partial",
+    "remainingAr": "الملفات مرفقة وحالتها available. هذا لا يعتمد المرحلة.",
+    "whyAr": "كانت NEEDS_ASSET قبل إرفاق المراجع في 2026-09-26",
+    "approvalEffectAr": "لا يُدعى اكتمال الصور"
+  },
+  {
+    "id": "SCOPE-RC3-03",
+    "titleAr": "تصحيح توثيق المصدر دون تعديل أرشيفه",
+    "sectionId": "s37",
+    "dataFiles": [
+      "source-handoff-corrections.json"
+    ],
+    "evidenceIds": [
+      "EVD-0030",
+      "EVD-0031",
+      "EVD-0032"
+    ],
+    "status": "partial",
+    "remainingAr": "الأرشيف الأصلي يبقى بنصه",
+    "whyAr": "المراجعة منعت إعادة التغليف",
+    "approvalEffectAr": "لا يغيّر SHA-256 لأرشيف 0125"
+  },
+  {
+    "id": "SCOPE-RC1-01",
+    "titleAr": "تفعيل اختبار اكتشفي وخطة الدمج",
+    "sectionId": "s38",
+    "dataFiles": [
+      "discover-integration-plan.json"
+    ],
+    "evidenceIds": [
+      "EVD-0034"
+    ],
+    "status": "partial",
+    "remainingAr": "إثبات الجهاز ولقطات الموقع البديلة يُستكملان في التقرير",
+    "whyAr": "التفعيل بالعلم وخطة منع التكرار أُضيفا دون دمج الأماكن",
+    "approvalEffectAr": "لا يغلق GATE-00 ولا ينشر الميزة"
+  },
+  {
+    "id": "SCOPE-PH1-01",
+    "titleAr": "تسجيل مراحل اكتشفي وتنفيذ شاشة العرض",
+    "sectionId": "s39",
+    "dataFiles": [
+      "discover-phases.json"
+    ],
+    "evidenceIds": [
+      "EVD-0036",
+      "EVD-0038",
+      "EVD-0039"
+    ],
+    "status": "partial",
+    "remainingAr": "المرحلة 1 قيد التنفيذ لنقص إثبات الفيديو على جهاز. المراحل 2 إلى 5 لم تبدأ.",
+    "whyAr": "التسجيل شرط التسليم، والتنفيذ اقتصر على المرحلة الأولى دون اعتمادها",
+    "approvalEffectAr": "لا يعتمد المرحلة 1 ولا يغلق GATE-00"
+  }
+]

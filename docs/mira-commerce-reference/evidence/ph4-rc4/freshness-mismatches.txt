@@ -1,0 +1,174 @@
+فحص حداثة أدلة fact — PH4 RC4
+التاريخ: 2026-09-27
+الأمر: python3 scripts/verify_evidence_freshness.py --repo <جذر النسخة>
+النتيجة: STATUS FAIL mismatches=17
+هذه ليست PASS. NOT_RUN من فحص الحزمة المستقل ليست PASS أيضًا.
+
+التثبيت: fileSha256 في data/evidence-index.json لم يُستبدل. البصمة الحالية أدناه ملاحظة قراءة فقط، وليست اعتمادًا جديدًا للادعاء.
+
+مرجع البصمة المخزنة للبنود المثبتة: commit 15fe65c40d3dedb9afdd95619f2945bd84cb616a
+شجرة العمل الحالية غير مدمجة في commit بعد ذلك. git log من ذلك commit إلى HEAD لا يُظهر commits لاحقة لهذه الملفات. الاختلاف هو تعديل أو ملف جديد غير مُودَع.
+
+لم يُعاد إثبات كل ادعاء أصلي من سطوره القديمة. اختلاف البصمة يعني أن الملف لم يعد نسخة التثبيت، لا أن الادعاء سقط ولا أنه ما زال صحيحًا.
+
+السجل الخام:
+fact_checks=21
+MATCH EVD-0001 lib/core/config/mira_features.dart
+MISMATCH EVD-0002 lib/main.dart
+MISMATCH EVD-0003 lib/features/marketplace/presentation/screens/service_detail_screen.dart
+MISMATCH EVD-0004 lib/features/marketplace/presentation/screens/product_detail_screen.dart
+MISMATCH EVD-0005 mira-api/prisma/schema.prisma
+MISMATCH EVD-0006 mira-api/src/marketplace/marketplace.controller.ts
+MISMATCH EVD-0008 lib/features/marketplace/data/marketplace_local_catalog.dart
+MISMATCH EVD-0011 mira-api/src/partners-portal/partners-portal.controller.ts
+MISMATCH EVD-0012 mira-api/src/partners-portal/guards/partner-token.guard.ts
+MISMATCH EVD-0013 mira-api/src/partners-portal/partners-portal.service.ts
+MATCH EVD-0014 mira-api/src/admin/admin.controller.ts
+MISMATCH EVD-0015 admin-portal/web/js/api.js
+MISMATCH EVD-0016 partners-portal/web/js/api.js
+MISMATCH EVD-0017 mira-api/src/partners-portal/dto/catalog.dto.ts
+MATCH EVD-0020 lib/core/config/mira_features.dart
+MISMATCH EVD-0021 mira-api/src/partners-portal/partners-portal.service.ts
+MISMATCH EVD-0025 mira-api/src/common/guards/admin-api-key.guard.ts
+MATCH EVD-0026 mira-api/src/partners-portal/partners-portal.service.spec.ts
+UNHASHED EVD-0042 test/features/marketplace/asset_video_port_test.dart
+UNHASHED EVD-0043 integration_test/discover_playback_rc2_test.dart
+UNHASHED EVD-0044 lib/features/marketplace/presentation/screens/discover_presentation_screen.dart
+
+1. EVD-0002 MISMATCH
+الملف: lib/main.dart
+الادعاء المثبت: Route gates redirect when marketplace disabled. السطور المثبتة 355-385.
+البصمة المثبتة: ab3be120a7558dbb7822f5d0e67be9a9a12646a06fe91046353fb0b53185dd9c
+البصمة الحالية للملاحظة فقط: f3a4ab70241bf056f98aee5a9efc25461851ad7d8136f36face102e5ca147b3c
+السبب: بوابات اكتشفي وقوائم الشركاء وتفاصيل المنتج والخدمة نُقلت من main.dart إلى MarketplaceRoutes، وأُضيف مراقب المسار. المقتطف القديم لم يعد يطابق موضع السطور.
+الربط: مرحلة اكتشفي بعد خط الأساس. الدليل المرفق بالادعاء ما زال evidence/source/EVD-0002.txt وهو مقتطف التثبيت لا الملف الحالي.
+
+2. EVD-0003 MISMATCH
+الملف: lib/features/marketplace/presentation/screens/service_detail_screen.dart
+الادعاء المثبت: Booking button stubbed. السطور 71-97.
+البصمة المثبتة: c6fb3485eb7cc65958b4af7a8acfea357b7073bb2a56502ed1f2e9e9cd417d9b
+البصمة الحالية للملاحظة فقط: 3e913d840fad5398d4e284e5efed6b2380f84f5bb020057bcdab9414026d659a
+السبب: الشاشة عدّلت مع سعر الكتالوج ومسار العرض اللاحق. هذا ليس إثباتًا أن زر الحجز بقي معطلاً أو صار تشغيليًا.
+الربط: evidence/source/EVD-0003.txt يبقى مقتطف التثبيت.
+
+3. EVD-0004 MISMATCH
+الملف: lib/features/marketplace/presentation/screens/product_detail_screen.dart
+الادعاء المثبت: Product buy = external launchUrl. السطور 1-45.
+البصمة المثبتة: 192ea1ef27e3377dd6a78154262a5e716ba6ae8fc10269a7fc83a9e56e80dc02
+البصمة الحالية للملاحظة فقط: 7d2de93612d42a441ddf2bb4313596af59834f7a2a60f90b0e55f5556ca5a6cb
+السبب: الشاشة عدّلت مع سعر الكتالوج ومسار العرض اللاحق.
+الربط: evidence/source/EVD-0004.txt
+
+4. EVD-0005 MISMATCH
+الملف: mira-api/prisma/schema.prisma
+الادعاء المثبت: Partner/Product/Service; no Order/Cart. السطور 117-180.
+البصمة المثبتة: 01dd03c140e35698ab4b795404201f3e1ba7d23fd828de1b2ee1b5cb447a65d2
+البصمة الحالية للملاحظة فقط: fdaf4e95db9f376a9d6ada51b64e7d21fda75a27c199be071be8b51053147c73
+السبب: أُضيفت جداول الكتالوج والإعلان إلى المخطط: CatalogMedia وCatalogAd وCatalogAdDecision وCatalogAdAction وCatalogFavorite وCatalogSourceLink وCatalogReviewLog، وحقل contentStatus. الادعاء عن غياب Order/Cart لم يُعاد بحثه هنا، والمخطط لم يعد الملف المثبت.
+الربط: مراحل الكتالوج والإعلانات. EVD-0010 يستخدم البصمة المثبتة نفسها وهو search-summary وليس من بنود fact السبعة عشر.
+
+5. EVD-0006 MISMATCH
+الملف: mira-api/src/marketplace/marketplace.controller.ts
+الادعاء المثبت: Public marketplace APIs. السطور 1-40.
+البصمة المثبتة: 13833f34b202b1098b46d6666688a8f4e58a99369f2f2e60826f6b6005decac4
+البصمة الحالية للملاحظة فقط: 239346b2d8857754022bd6905e3b3d4607f180684fe58bbcdf47696ffe31dd8f
+السبب: أُضيفت مسارات الكتالوج العام والمفضلة.
+الربط: evidence/source/EVD-0006.txt لخط الأساس. مسارات الإعلان اللاحقة في خدمات الكتالوج.
+
+6. EVD-0008 MISMATCH
+الملف: lib/features/marketplace/data/marketplace_local_catalog.dart
+الادعاء المثبت: Local offline seed catalog. السطور 90-120.
+البصمة المثبتة: 13ec504cf64b923268d264724366e5b1c651368bf0e61c822fa40e76be8c67c7
+البصمة الحالية للملاحظة فقط: 9d8b2d10ee32b9ca13c126d1d4ea264d936caef3890e016c85263db138ebba01
+السبب: أُضيف وسم مصدر الكتالوج المحلي.
+الربط: evidence/source/EVD-0008.txt
+
+7. EVD-0011 MISMATCH
+الملف: mira-api/src/partners-portal/partners-portal.controller.ts
+الادعاء المثبت: متحكم بوابة الشركاء ينفذ التقديم والدخول وCRUD والاعتماد. السطور 38-130.
+البصمة المثبتة: 915b7b3406f94e56dbb75dfb5da0cc14ddc7ab2de189dc7d385655d45b8af7c2
+البصمة الحالية للملاحظة فقط: 8e3f490dfa7c1c342f16b8451d5f143e91448216b38eda56df911f381c38e6df
+السبب: أُضيفت مسارات وسائط الكتالوج ومسارات إعلانات الشريك فوق المتحكم الأصلي.
+الربط: evidence/source/EVD-0011.txt لخط الأساس، ومسارات المرحلة الثالثة والرابعة في ملف المتحكم الحالي.
+
+8. EVD-0012 MISMATCH
+الملف: mira-api/src/partners-portal/guards/partner-token.guard.ts
+الادعاء المثبت: partnerId يُؤخذ من الرمز المخزن وليس من جسم طلب الكتالوج. السطور 14-38.
+البصمة المثبتة: 9df2c6069dd225a6318f9ddf202537e02d5fdfe35b3e16028ac9573ce6217974
+البصمة الحالية للملاحظة فقط: 7e67ca2965e48a12cd778a03094045ced691b623214c29c2d8bb637ae81502ff
+السبب: حقن PrismaService صار عبر @Inject. منطق قراءة الرمز لم يُراجع من جديد في هذا السجل.
+الربط: evidence/source/EVD-0012.txt
+
+9. EVD-0013 MISMATCH
+الملف: mira-api/src/partners-portal/partners-portal.service.ts
+الادعاء المثبت: تعديل وحذف المنتج والخدمة يشترطان partnerId المالك؛ التتبع يقبل معرف العميل. السطور 282-412.
+البصمة المثبتة: dd4aaa49c38647860fe75b147a8a20de11d518f725222050674608fcfb7d6ccf
+البصمة الحالية للملاحظة فقط: 762b4d1b0e5f04d29a3da67782c85bb4b67ba43c62e2cb724c847729da8f292c
+السبب: الخدمة توسعت بمسارات المحتوى والإعلان. نفس الملف والبصمتان في EVD-0021.
+الربط: evidence/source/EVD-0013.txt
+
+10. EVD-0015 MISMATCH
+الملف: admin-portal/web/js/api.js
+الادعاء المثبت: واجهة الإدارة الثابتة تستدعي /admin بمفتاح محلي. السطور 1-79.
+البصمة المثبتة: 06b8ff8af6d4b96987245826121a69e4d57bc682e4451331dc206f04073be247
+البصمة الحالية للملاحظة فقط: 232d071a019d3940bd4e2e5c131aebce028dbc36995dca118f035fd45f37f74c
+السبب: أُضيف عميل مراجعة الكتالوج وعميل مراجعة الإعلانات.
+الربط: evidence/source/EVD-0015.txt لخط الأساس. رحلة البوابة في evidence/ph4-rc4/portal-metrics.json تختبر الواجهة الحالية لا هذا المقتطف.
+
+11. EVD-0016 MISMATCH
+الملف: partners-portal/web/js/api.js
+الادعاء المثبت: واجهة الشركاء تستدعي مسارات partners-portal. السطور 1-79.
+البصمة المثبتة: 93548cfbd8122f7c19ca15f8f8a1598554f011cd3ad6f949e0b787271cfa1cdc
+البصمة الحالية للملاحظة فقط: a4d765b7a9a66b2285ffc0abb304150a12d46392f3857a167578df31a082e1c9
+السبب: أُضيف عميل وسائط الكتالوج وعميل إعلانات الشريك.
+الربط: evidence/source/EVD-0016.txt
+
+12. EVD-0017 MISMATCH
+الملف: mira-api/src/partners-portal/dto/catalog.dto.ts
+الادعاء المثبت: عقد إنشاء المنتج بلا مقاس أو لون أو مخزون أو وسيط. السطور 13-90.
+البصمة المثبتة: 13e94f39889a337fa0f194b9b17fef0a18a12a842415596be7d9f1a330fa2cee
+البصمة الحالية للملاحظة فقط: db93961566a9a2f9416a7870e844c939c0770ae2f087d5248e36aaf47a534eca
+السبب: العقد توسع مع حقول المحتوى والوسائط. الادعاء عن غياب المقاس واللون والمخزون لم يُعاد إثباته من الملف الحالي.
+الربط: evidence/source/EVD-0017.txt
+
+13. EVD-0021 MISMATCH
+الملف: mira-api/src/partners-portal/partners-portal.service.ts
+الادعاء المثبت: الدخول يربط الجلسة بسجل PartnerUser. السطور 102-125.
+البصمة المثبتة: dd4aaa49c38647860fe75b147a8a20de11d518f725222050674608fcfb7d6ccf
+البصمة الحالية للملاحظة فقط: 762b4d1b0e5f04d29a3da67782c85bb4b67ba43c62e2cb724c847729da8f292c
+السبب: نفس اختلاف EVD-0013. البصمتان المشتركتان لم تُحدَّثا معًا ولا كلٌّ على حدة.
+الربط: evidence/source/EVD-0021.txt
+
+14. EVD-0025 MISMATCH
+الملف: mira-api/src/common/guards/admin-api-key.guard.ts
+الادعاء المثبت: الإدارة تُفوَّض بمفتاح API مشترك. السطور 10-26.
+البصمة المثبتة: 4d644f569c187ab61dc8f954934ed55b8078b1356630ded248fd83aab718d4bb
+البصمة الحالية للملاحظة فقط: 3b17ae05dfee0a81afa61adb970be1929f74787f162fbd5055c6707f6b668851
+السبب: الحقن صار عبر @Inject، وقراءة المفتاح تقبل ConfigService أو متغير البيئة. هذا تغيير صغير عن التثبيت وليس مراجعة لتخزين المفتاح.
+الربط: evidence/source/EVD-0025.txt
+
+15. EVD-0042 UNHASHED
+الملف: test/features/marketplace/asset_video_port_test.dart
+الادعاء: RC3 AssetVideoPort unit coverage
+البصمة المثبتة: غير موجودة في الفهرس
+البصمة الحالية للملاحظة فقط: 2379508e8ee86981c34491bd12491d363a167e663a23f3272962352b174467af
+السبب: الملف غير متتبع في git وأُضيف بعد التثبيت، والفهرس لم يخزن له fileSha256. غيابه من البصمة يُحسب اختلافًا. لم تُملأ البصمة لإخفاء الحالة.
+الربط: evidence/tests/rc3_asset_video_port.txt
+
+16. EVD-0043 UNHASHED
+الملف: integration_test/discover_playback_rc2_test.dart
+الادعاء: RC3 playback integration test corrections
+البصمة المثبتة: غير موجودة في الفهرس
+البصمة الحالية للملاحظة فقط: 71bed0cc027a22879e894f38c275b863c298aae113869cbc4a4e89e959bfeebc
+السبب: ملف غير متتبع بلا بصمة مثبتة.
+الربط: evidence/tests/rc3_playback_integration_note.txt
+
+17. EVD-0044 UNHASHED
+الملف: lib/features/marketplace/presentation/screens/discover_presentation_screen.dart
+الادعاء: RC3 empty presentation exit
+البصمة المثبتة: غير موجودة في الفهرس
+البصمة الحالية للملاحظة فقط: fa54da2d6986373b2eb86b39053b94675621696a395167a53f3f838d7f8f9989
+السبب: ملف غير متتبع. شاشة اكتشفي أُضيفت بعد التثبيت وتوسعت في المراحل اللاحقة بما فيها إعلانات RC4. الفهرس بلا fileSha256، ولم تُكتب بصمة لتطابق الملف الحالي.
+الربط: evidence/source/EVD-0044.txt لمقتطف الادعاء الأصلي. سلوك RC4 موثق في evidence/ph4-rc4/flutter-ad-rc4.log وليس بديلاً عن بصمة هذا البند.
+
+ما طابق التثبيت ولم يدخل في السبعة عشر: EVD-0001 وEVD-0020 لملف mira_features.dart، وEVD-0014 لـ admin.controller.ts، وEVD-0026 لاختبار وحدة بوابة الشركاء.

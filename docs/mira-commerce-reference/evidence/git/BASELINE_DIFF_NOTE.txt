@@ -1,0 +1,5 @@
+previousBaselineCommit=15fe65c40d3dedb9afdd95619f2945bd84cb616a
+rc2InspectedCommit=15fe65c40d3dedb9afdd95619f2945bd84cb616a
+inspectedAt=2026-09-23T03:43:29+03:00
+workingTree=dirty files listed in STATUS.txt are outside this study task.
+This study must not attribute those edits to RC2 and must not reset them.

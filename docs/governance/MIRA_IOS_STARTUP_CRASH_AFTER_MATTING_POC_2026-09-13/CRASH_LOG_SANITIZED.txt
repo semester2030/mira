@@ -1,0 +1,15 @@
+EXCEPTION: {"codes": "0x0000000000000001, 0x0000000000000000", "rawCodes": [1, 0], "type": "EXC_BAD_ACCESS", "signal": "SIGSEGV", "subtype": "KERN_INVALID_ADDRESS at 0x0000000000000000"}
+TERMINATION: {"flags": 0, "code": 11, "namespace": "SIGNAL", "indicator": "Segmentation fault: 11", "byProc": "exc handler", "byPid": 41181}
+FRAMES:
+libswiftCore.dylib :: swift_getObjectType
+camera_avfoundation :: static CameraPlugin.register(with:)
+camera_avfoundation :: @objc static CameraPlugin.register(with:)
+Runner.debug.dylib :: +[GeneratedPluginRegistrant registerWithRegistry:]
+Runner.debug.dylib :: AppDelegate.application(_:didFinishLaunchingWithOptions:)
+Runner.debug.dylib :: @objc AppDelegate.application(_:didFinishLaunchingWithOptions:)
+UIKitCore :: -[UIApplication _handleDelegateCallbacksWithOptions:isSuspended:restoreState:]
+UIKitCore :: -[UIApplication _callInitializationDelegatesWithActions:forScene:payload:fromOriginatingProcess:]
+UIKitCore :: -[UIApplication _runWithMainScene:transitionContext:completion:]
+UIKitCore :: -[_UISceneLifecycleMultiplexer completeApplicationLaunchWithFBSScene:transitionContext:]
+UIKitCore :: _UIScenePerformActionsWithLifecycleActionMask
+UIKitCore :: __101-[_UISceneLifecycleMultiplexer _evalTransitionToSettings:fromSettings:forceExit:withTransitionStore:]_block_invoke

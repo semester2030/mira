@@ -1,0 +1,283 @@
+{
+  "task": "MIRA-PERFECT-HD-FULL-MASK-INVENTORY-2026-09-12",
+  "sourceSha": "248e7ccfd3a5a13001964d788c63703776c98f3f",
+  "inventoryTaskIdPrefix": "Xy78luX-EXrp",
+  "inventoryRequest": {
+    "src_file_id": "[redacted]",
+    "dst_actions": [
+      "hd_texture",
+      "hd_acne",
+      "hd_moisture",
+      "hd_oiliness",
+      "hd_radiance",
+      "hd_dark_circle",
+      "hd_eye_bag",
+      "hd_droopy_upper_eyelid",
+      "hd_droopy_lower_eyelid",
+      "hd_firmness",
+      "hd_tear_trough",
+      "hd_skin_type"
+    ],
+    "miniserver_args": {
+      "enable_mask_overlay": false
+    },
+    "format": "json"
+  },
+  "hdTasksThisAcceptance": 1,
+  "priorCoreTasksPreserved": true,
+  "unitsConsumed": "unknown",
+  "sourceDimensions": {
+    "width": 1200,
+    "height": 1680
+  },
+  "allSpatialMasksAligned": true,
+  "fakeSpatialOutput": 0,
+  "landmarkConcernFallback": 0,
+  "matrix": [
+    {
+      "concern": "age_spot",
+      "providerType": "hd_age_spot",
+      "evidenceSource": "proven_oneshot_LrLKjuSmfkde",
+      "raw": 99.0926284790039,
+      "ui": 97,
+      "mask": true,
+      "subregions": [],
+      "dimensions": "1200x1680",
+      "aligned": true,
+      "classification": "A_MASK_SCORE",
+      "spatialMode": "PROVIDER_PIXEL_MASK",
+      "faceExplorer": "PRIMARY"
+    },
+    {
+      "concern": "pore",
+      "providerType": "hd_pore",
+      "evidenceSource": "proven_oneshot_LrLKjuSmfkde",
+      "raw": 99.90237426757812,
+      "ui": 99,
+      "mask": true,
+      "subregions": [
+        "forehead",
+        "nose",
+        "cheek",
+        "whole"
+      ],
+      "dimensions": "1200x1680",
+      "aligned": true,
+      "classification": "B_MASK_SCORE_SUBREGIONS",
+      "spatialMode": "PROVIDER_SUBREGION_MASKS",
+      "faceExplorer": "PRIMARY"
+    },
+    {
+      "concern": "wrinkle",
+      "providerType": "hd_wrinkle",
+      "evidenceSource": "proven_oneshot_LrLKjuSmfkde",
+      "raw": 83.89999985694885,
+      "ui": 78,
+      "mask": true,
+      "subregions": [
+        "forehead",
+        "glabellar",
+        "crowfeet",
+        "periocular",
+        "nasolabial",
+        "marionette",
+        "whole"
+      ],
+      "dimensions": "1200x1680",
+      "aligned": true,
+      "classification": "B_MASK_SCORE_SUBREGIONS",
+      "spatialMode": "PROVIDER_SUBREGION_MASKS",
+      "faceExplorer": "PRIMARY"
+    },
+    {
+      "concern": "redness",
+      "providerType": "hd_redness",
+      "evidenceSource": "proven_oneshot_LrLKjuSmfkde",
+      "raw": 93.69667053222656,
+      "ui": 90,
+      "mask": true,
+      "subregions": [],
+      "dimensions": "1200x1680",
+      "aligned": true,
+      "classification": "A_MASK_SCORE",
+      "spatialMode": "PROVIDER_PIXEL_MASK",
+      "faceExplorer": "PRIMARY"
+    },
+    {
+      "concern": "texture",
+      "providerType": "hd_texture",
+      "evidenceSource": "inventory_task_Xy78luX-EXrp",
+      "raw": 70.94901960784314,
+      "ui": 77,
+      "mask": true,
+      "subregions": [
+        "whole"
+      ],
+      "dimensions": "1200x1680",
+      "aligned": true,
+      "classification": "A_MASK_SCORE",
+      "spatialMode": "PROVIDER_PIXEL_MASK",
+      "faceExplorer": "PRIMARY"
+    },
+    {
+      "concern": "acne",
+      "providerType": "hd_acne",
+      "evidenceSource": "inventory_task_Xy78luX-EXrp",
+      "raw": 96.40519714355469,
+      "ui": 97,
+      "mask": true,
+      "subregions": [
+        "whole"
+      ],
+      "dimensions": "1200x1680",
+      "aligned": true,
+      "classification": "A_MASK_SCORE",
+      "spatialMode": "PROVIDER_PIXEL_MASK",
+      "faceExplorer": "PRIMARY"
+    },
+    {
+      "concern": "moisture",
+      "providerType": "hd_moisture",
+      "evidenceSource": "inventory_task_Xy78luX-EXrp",
+      "raw": 69.26365494728088,
+      "ui": 77,
+      "mask": true,
+      "subregions": [],
+      "dimensions": "1200x1680",
+      "aligned": true,
+      "classification": "A_MASK_SCORE",
+      "spatialMode": "PROVIDER_PIXEL_MASK",
+      "faceExplorer": "PRIMARY"
+    },
+    {
+      "concern": "oiliness",
+      "providerType": "hd_oiliness",
+      "evidenceSource": "inventory_task_Xy78luX-EXrp",
+      "raw": 51.672332763671875,
+      "ui": 68,
+      "mask": true,
+      "subregions": [],
+      "dimensions": "1200x1680",
+      "aligned": true,
+      "classification": "A_MASK_SCORE",
+      "spatialMode": "PROVIDER_PIXEL_MASK",
+      "faceExplorer": "SECONDARY"
+    },
+    {
+      "concern": "radiance",
+      "providerType": "hd_radiance",
+      "evidenceSource": "inventory_task_Xy78luX-EXrp",
+      "raw": 97.40634560585022,
+      "ui": 95,
+      "mask": true,
+      "subregions": [],
+      "dimensions": "1200x1680",
+      "aligned": true,
+      "classification": "A_MASK_SCORE",
+      "spatialMode": "PROVIDER_PIXEL_MASK",
+      "faceExplorer": "SECONDARY"
+    },
+    {
+      "concern": "dark_circle",
+      "providerType": "hd_dark_circle",
+      "evidenceSource": "inventory_task_Xy78luX-EXrp",
+      "raw": 87.29798197746277,
+      "ui": 79,
+      "mask": true,
+      "subregions": [],
+      "dimensions": "1200x1680",
+      "aligned": true,
+      "classification": "A_MASK_SCORE",
+      "spatialMode": "PROVIDER_PIXEL_MASK",
+      "faceExplorer": "SECONDARY"
+    },
+    {
+      "concern": "eye_bag",
+      "providerType": "hd_eye_bag",
+      "evidenceSource": "inventory_task_Xy78luX-EXrp",
+      "raw": 76.12367868423462,
+      "ui": 79,
+      "mask": true,
+      "subregions": [],
+      "dimensions": "1200x1680",
+      "aligned": true,
+      "classification": "A_MASK_SCORE",
+      "spatialMode": "PROVIDER_PIXEL_MASK",
+      "faceExplorer": "SECONDARY"
+    },
+    {
+      "concern": "droopy_upper_eyelid",
+      "providerType": "hd_droopy_upper_eyelid",
+      "evidenceSource": "inventory_task_Xy78luX-EXrp",
+      "raw": 82.43886232376099,
+      "ui": 82,
+      "mask": true,
+      "subregions": [],
+      "dimensions": "1200x1680",
+      "aligned": true,
+      "classification": "A_MASK_SCORE",
+      "spatialMode": "PROVIDER_PIXEL_MASK",
+      "faceExplorer": "SECONDARY"
+    },
+    {
+      "concern": "droopy_lower_eyelid",
+      "providerType": "hd_droopy_lower_eyelid",
+      "evidenceSource": "inventory_task_Xy78luX-EXrp",
+      "raw": 70.21539211273193,
+      "ui": 76,
+      "mask": true,
+      "subregions": [],
+      "dimensions": "1200x1680",
+      "aligned": true,
+      "classification": "A_MASK_SCORE",
+      "spatialMode": "PROVIDER_PIXEL_MASK",
+      "faceExplorer": "SECONDARY"
+    },
+    {
+      "concern": "firmness",
+      "providerType": "hd_firmness",
+      "evidenceSource": "inventory_task_Xy78luX-EXrp",
+      "raw": 96.10396027565002,
+      "ui": 94,
+      "mask": true,
+      "subregions": [],
+      "dimensions": "1200x1680",
+      "aligned": true,
+      "classification": "A_MASK_SCORE",
+      "spatialMode": "PROVIDER_PIXEL_MASK",
+      "faceExplorer": "SECONDARY"
+    },
+    {
+      "concern": "tear_trough",
+      "providerType": "hd_tear_trough",
+      "evidenceSource": "inventory_task_Xy78luX-EXrp",
+      "raw": 86.58022582530975,
+      "ui": 84,
+      "mask": true,
+      "subregions": [],
+      "dimensions": "1200x1680",
+      "aligned": true,
+      "classification": "A_MASK_SCORE",
+      "spatialMode": "PROVIDER_PIXEL_MASK",
+      "faceExplorer": "SECONDARY"
+    },
+    {
+      "concern": "skin_type",
+      "providerType": "hd_skin_type",
+      "evidenceSource": "inventory_task_Xy78luX-EXrp",
+      "raw": null,
+      "ui": null,
+      "mask": true,
+      "subregions": [
+        "whole",
+        "t_zone",
+        "u_zone"
+      ],
+      "dimensions": "1200x1680",
+      "aligned": true,
+      "classification": "B_MASK_SCORE_SUBREGIONS",
+      "spatialMode": "PROVIDER_SUBREGION_MASKS",
+      "faceExplorer": "SEPARATE_COMPONENT"
+    }
+  ]
+}

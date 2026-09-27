@@ -7,6 +7,7 @@ import 'package:firebase_core/firebase_core.dart';
 import 'firebase_options.dart';
 import 'core/config/mira_features.dart';
 import 'core/navigation/app_navigator.dart';
+import 'core/navigation/mira_route_observer.dart';
 import 'core/navigation/app_routes.dart';
 import 'core/navigation/route_args.dart';
 import 'core/navigation/premium_page_route.dart';
@@ -56,12 +57,7 @@ import 'features/feedback/presentation/screens/feedback_screen.dart';
 import 'features/settings/presentation/screens/notifications_settings_screen.dart';
 import 'features/settings/presentation/screens/help_screen.dart';
 import 'features/settings/presentation/screens/about_screen.dart';
-import 'features/marketplace/presentation/screens/discover_hub_screen.dart';
-import 'features/marketplace/presentation/screens/partner_list_screen.dart';
-import 'features/marketplace/presentation/screens/product_detail_screen.dart';
-import 'features/marketplace/presentation/screens/service_detail_screen.dart';
-import 'features/marketplace/domain/entities/catalog_product.dart';
-import 'features/marketplace/domain/entities/catalog_service.dart';
+import 'features/marketplace/presentation/marketplace_routes.dart';
 import 'shared/theme/theme.dart';
 
 void main() async {
@@ -177,11 +173,15 @@ class MirraAppState extends State<MirraApp> {
         );
       },
       home: widget.showOnboarding ? const OnboardingScreen() : const SplashScreen(),
+      navigatorObservers: [miraRouteObserver],
       onGenerateRoute: _onGenerateRoute,
     );
   }
 
   Route<dynamic>? _onGenerateRoute(RouteSettings settings) {
+    if (MarketplaceRoutes.handles(settings.name)) {
+      return MarketplaceRoutes.onGenerate(settings);
+    }
     switch (settings.name) {
       case AppRoutes.splash:
         return PremiumPageRoute(page: const SplashScreen(), settings: settings);
@@ -352,37 +352,6 @@ class MirraAppState extends State<MirraApp> {
         return PremiumPageRoute(page: const HelpScreen(), settings: settings);
       case AppRoutes.about:
         return PremiumPageRoute(page: const AboutScreen(), settings: settings);
-      case AppRoutes.discover:
-        return PremiumPageRoute(page: const DiscoverHubScreen(), settings: settings);
-      case AppRoutes.discoverList:
-        if (!MiraFeatures.marketplaceEnabled) {
-          return PremiumPageRoute(page: const DiscoverHubScreen(), settings: settings);
-        }
-        final type = settings.arguments as String? ?? 'brand';
-        return PremiumPageRoute(
-          page: PartnerListScreen(partnerType: type),
-          settings: settings,
-        );
-      case AppRoutes.productDetail:
-        if (!MiraFeatures.marketplaceEnabled) {
-          return PremiumPageRoute(page: const DiscoverHubScreen(), settings: settings);
-        }
-        final product = settings.arguments as CatalogProduct?;
-        if (product == null) return null;
-        return PremiumPageRoute(
-          page: ProductDetailScreen(product: product),
-          settings: settings,
-        );
-      case AppRoutes.serviceDetail:
-        if (!MiraFeatures.marketplaceEnabled) {
-          return PremiumPageRoute(page: const DiscoverHubScreen(), settings: settings);
-        }
-        final service = settings.arguments as CatalogService?;
-        if (service == null) return null;
-        return PremiumPageRoute(
-          page: ServiceDetailScreen(service: service),
-          settings: settings,
-        );
       default:
         return null;
     }

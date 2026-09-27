@@ -1,0 +1,4 @@
+EVD-0042 — AssetVideoPort unit tests (RC3)
+الملف: test/features/marketplace/asset_video_port_test.dart
+السجل: evidence/tests/rc3_asset_video_port.txt
+10 حالات على AssetVideoPort مع حقن مصنع ControllableVideoController.

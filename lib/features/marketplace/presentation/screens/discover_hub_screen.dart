@@ -50,7 +50,26 @@ class DiscoverHubScreen extends StatelessWidget {
                   color: AppColors.textSecondary,
                 ),
               ),
+              const SizedBox(height: 12),
+              Text(
+                MarketplaceCopy.testBuildNotice,
+                style: AppTypography.bodySmall.copyWith(
+                  color: AppColors.textSecondary,
+                  height: 1.5,
+                ),
+              ),
               const SizedBox(height: 24),
+              _CategoryCard(
+                emoji: '▶',
+                title: 'العرض المرئي',
+                subtitle: 'فيديو وصور بشاشة كاملة',
+                color: AppColors.surface,
+                onTap: () => Navigator.pushNamed(
+                  context,
+                  AppRoutes.discoverPresentation,
+                ),
+              ),
+              const SizedBox(height: 12),
               _CategoryCard(
                 emoji: '💄',
                 title: 'ماركات التجميل',

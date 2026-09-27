@@ -1,0 +1,12 @@
+إعادة التحقق من حزمة RC5
+الأساس الموثق: commit 15fe65c40d3dedb9afdd95619f2945bd84cb616a في مستودع ميرا. الحزمة ليست مستودعًا كاملًا؛ تُركَّب ملفاتها فوق ذلك الأساس.
+
+1. فك الحزمة في مجلد فارغ.
+2. انسخ المسارات الموجودة فيها فوق نسخة الأساس نفسها: lib/features/marketplace وtest/features/marketplace وmira-api/src/marketplace وmira-api/src/common وmira-api/src/prisma وmira-api/prisma وmira-api/scripts/run-marketplace-rc5-integration.sh وملفات package.json وpackage-lock.json وtsconfig وnest-cli وpubspec.
+3. أنشئ mira-api/.env محليًا باتصال Postgres على localhost لدور يستطيع Prisma استخدامه بعد GRANT. لا تضع إنتاجًا، ولا تُدرج هذا الملف في الحزمة.
+4. من mira-api: npm ci ثم npm run build ثم bash scripts/run-marketplace-rc5-integration.sh
+5. السكربت ينشئ mira_ph2_rc5_test فقط على المضيف المحلي، ويرفض الأسماء والمضيفات الأخرى، ويحذف قاعدة هذه الجولة عند النجاح والفشل.
+6. من جذر التطبيق بعد التركيب: flutter test test/features/marketplace
+7. فحص الموقع من نسخة docs/mira-commerce-reference داخل الحزمة: python3 scripts/validate_package.py
+
+بديل المزود في اختبار HTTP لا يثبت Firebase الحي. AUTH_SKIP ليس مسار الإثبات. الإنتاج غير مختبر.

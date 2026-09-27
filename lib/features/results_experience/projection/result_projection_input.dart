@@ -34,6 +34,7 @@ class FrozenMetricInput {
   final String id;
   final String displayNameAr;
   final bool available;
+
   /// Wellness-oriented normalized 0–100 when available (higher better).
   final double? normalizedWellnessValue;
   final int confidencePercent;
@@ -117,6 +118,7 @@ class FrozenRoutineStepInput {
   final String id;
   final String nameAr;
   final String instructionAr;
+
   /// `am` | `pm`
   final String period;
 }
@@ -145,8 +147,7 @@ class ResultProjectionInput {
     this.skinAgeConfidenceLevel,
     this.mapEnabled = false,
     this.mapConcernIds = const [],
-    this.disclaimerAr =
-        'هذا التحليل تجميلي وإرشادي، وليس تشخيصاً طبياً.',
+    this.disclaimerAr = 'هذا التحليل تجميلي وإرشادي، وليس تشخيصاً طبياً.',
     this.retakeGuidanceAr,
     this.tipsAr = const [],
   });

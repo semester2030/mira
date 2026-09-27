@@ -93,7 +93,9 @@ class _MetricCard extends StatelessWidget {
             padding: const EdgeInsets.all(14),
             decoration: BoxDecoration(
               borderRadius: BorderRadius.circular(14),
-              border: Border.all(color: AppColors.border.withValues(alpha: 0.5)),
+              border: Border.all(
+                color: AppColors.border.withValues(alpha: 0.5),
+              ),
             ),
             child: Row(
               children: [
@@ -168,7 +170,10 @@ class _MetricCard extends StatelessWidget {
                       ),
                     ),
                   ),
-                const Icon(Icons.chevron_left_rounded, color: AppColors.textTertiary),
+                const Icon(
+                  Icons.chevron_left_rounded,
+                  color: AppColors.textTertiary,
+                ),
               ],
             ),
           ),

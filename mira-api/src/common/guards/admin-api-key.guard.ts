@@ -1,6 +1,7 @@
 import {
   CanActivate,
   ExecutionContext,
+  Inject,
   Injectable,
   UnauthorizedException,
 } from '@nestjs/common';
@@ -9,10 +10,10 @@ import { Request } from 'express';
 
 @Injectable()
 export class AdminApiKeyGuard implements CanActivate {
-  constructor(private readonly config: ConfigService) {}
+  constructor(@Inject(ConfigService) private readonly config: ConfigService) {}
 
   canActivate(context: ExecutionContext): boolean {
-    const expected = this.config.get<string>('ADMIN_API_KEY')?.trim();
+    const expected = (this.config?.get<string>('ADMIN_API_KEY') ?? process.env.ADMIN_API_KEY)?.trim();
     if (!expected) {
       throw new UnauthorizedException('Admin API key is not configured');
     }

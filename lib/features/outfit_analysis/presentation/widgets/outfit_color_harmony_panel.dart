@@ -3,9 +3,9 @@ import 'package:flutter/material.dart';
 import '../../../../core/session/analysis_session.dart';
 import '../../../../shared/theme/colors.dart';
 import '../../../../shared/theme/typography.dart';
-import '../../data/helpers/vision_color_mapper.dart';
 import '../../domain/entities/outfit_analysis.dart';
 import '../../domain/helpers/outfit_stylist_copy.dart';
+import '../utils/fashion_color_binding.dart';
 import 'outfit_result_motion.dart';
 
 /// Section 3 — professional color harmony (CIEDE2000 + confidence).
@@ -153,9 +153,10 @@ class _ColorInsightRow extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final hex = insight.hex;
-    final swatchColor = hex != null
-        ? VisionColorMapper.hexToColor(hex)
-        : VisionColorMapper.toDisplayColor(insight.colorNameAr);
+    final swatchColor = FashionColorBinding.resolve(
+      hex: hex,
+      nameAr: insight.colorNameAr,
+    );
 
     return Padding(
       padding: const EdgeInsets.only(bottom: 10),
@@ -167,15 +168,20 @@ class _ColorInsightRow extends StatelessWidget {
             height: 40,
             decoration: BoxDecoration(
               shape: BoxShape.circle,
-              color: swatchColor,
+              color: swatchColor ?? AppColors.border,
               border: Border.all(color: Colors.white, width: 2),
-              boxShadow: [
-                BoxShadow(
-                  color: swatchColor.withValues(alpha: 0.35),
-                  blurRadius: 8,
-                ),
-              ],
+              boxShadow: swatchColor == null
+                  ? null
+                  : [
+                      BoxShadow(
+                        color: swatchColor.withValues(alpha: 0.35),
+                        blurRadius: 8,
+                      ),
+                    ],
             ),
+            child: swatchColor == null
+                ? const Icon(Icons.block, size: 16, color: AppColors.textSecondary)
+                : null,
           ),
           const SizedBox(width: 12),
           Expanded(

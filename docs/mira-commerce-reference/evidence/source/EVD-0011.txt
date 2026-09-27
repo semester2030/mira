@@ -1,0 +1,101 @@
+id=EVD-0011
+path=mira-api/src/partners-portal/partners-portal.controller.ts
+commit=15fe65c40d3dedb9afdd95619f2945bd84cb616a
+sha256=915b7b3406f94e56dbb75dfb5da0cc14ddc7ab2de189dc7d385655d45b8af7c2
+lines=38-130
+note=مسارات التسجيل والدخول والكتالوج والإدارة على المتحكم
+runtime=SOURCE_ONLY
+---
+38|/** Public + partner + admin routes for partners.mira.app */
+39|@Controller('partners-portal')
+40|export class PartnersPortalController {
+41|  constructor(private readonly portal: PartnersPortalService) {}
+42|
+43|  @Post('apply')
+44|  apply(@Body() dto: ApplyPartnerDto) {
+45|    return this.portal.apply(dto);
+46|  }
+47|
+48|  @Get('apply/status/:token')
+49|  applicationStatus(@Param('token') token: string) {
+50|    return this.portal.getApplicationStatus(token);
+51|  }
+52|
+53|  @Post('login')
+54|  login(@Body() dto: PartnerLoginDto) {
+55|    return this.portal.login(dto.email, dto.accessToken);
+56|  }
+57|
+58|  @Post('track')
+59|  track(@Body() dto: TrackPartnerEventDto) {
+60|    return this.portal.trackEvent(dto);
+61|  }
+62|
+63|  @Get('me')
+64|  @UseGuards(PartnerTokenGuard)
+65|  dashboard(@Req() req: PartnerRequest) {
+66|    return this.portal.getDashboard(req.partnerUser.partnerId);
+67|  }
+68|
+69|  @Post('products')
+70|  @UseGuards(PartnerTokenGuard)
+71|  createProduct(@Req() req: PartnerRequest, @Body() dto: UpsertProductDto) {
+72|    return this.portal.createProduct(req.partnerUser.partnerId, dto);
+73|  }
+74|
+75|  @Patch('products/:id')
+76|  @UseGuards(PartnerTokenGuard)
+77|  updateProduct(
+78|    @Req() req: PartnerRequest,
+79|    @Param('id') id: string,
+80|    @Body() dto: UpsertProductDto,
+81|  ) {
+82|    return this.portal.updateProduct(req.partnerUser.partnerId, id, dto);
+83|  }
+84|
+85|  @Delete('products/:id')
+86|  @UseGuards(PartnerTokenGuard)
+87|  deleteProduct(@Req() req: PartnerRequest, @Param('id') id: string) {
+88|    return this.portal.deleteProduct(req.partnerUser.partnerId, id);
+89|  }
+90|
+91|  @Post('services')
+92|  @UseGuards(PartnerTokenGuard)
+93|  createService(@Req() req: PartnerRequest, @Body() dto: UpsertServiceDto) {
+94|    return this.portal.createService(req.partnerUser.partnerId, dto);
+95|  }
+96|
+97|  @Patch('services/:id')
+98|  @UseGuards(PartnerTokenGuard)
+99|  updateService(
+100|    @Req() req: PartnerRequest,
+101|    @Param('id') id: string,
+102|    @Body() dto: UpsertServiceDto,
+103|  ) {
+104|    return this.portal.updateService(req.partnerUser.partnerId, id, dto);
+105|  }
+106|
+107|  @Delete('services/:id')
+108|  @UseGuards(PartnerTokenGuard)
+109|  deleteService(@Req() req: PartnerRequest, @Param('id') id: string) {
+110|    return this.portal.deleteService(req.partnerUser.partnerId, id);
+111|  }
+112|
+113|  @Get('admin/applications')
+114|  @UseGuards(AdminApiKeyGuard)
+115|  listApplications(@Query('status') status?: string) {
+116|    return this.portal.listApplications(status ?? 'pending');
+117|  }
+118|
+119|  @Post('admin/applications/:id/approve')
+120|  @UseGuards(AdminApiKeyGuard)
+121|  approve(@Param('id') id: string) {
+122|    return this.portal.approveApplication(id);
+123|  }
+124|
+125|  @Post('admin/applications/:id/reject')
+126|  @UseGuards(AdminApiKeyGuard)
+127|  reject(@Param('id') id: string, @Body() dto: RejectApplicationDto) {
+128|    return this.portal.rejectApplication(id, dto.reason);
+129|  }
+130|}

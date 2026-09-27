@@ -48,7 +48,7 @@
       try {
         const res = await PartnersApi.login(fd.get('email'), fd.get('accessToken'));
         PartnersApi.saveSession(res.email, res.accessToken);
-        location.href = 'dashboard.html';
+        location.href = 'dashboard.html' + location.search;
       } catch (err) {
         msg.className = 'alert err';
         msg.textContent = err.message;

@@ -1,0 +1,17 @@
+file=/tmp/mira_ckcfg_c_console.txt
+quality_events=620 ready_true=0 valid_true=0 canCapture_like=0
+combo (area,pose,light,valid,ready):
+  335	('too_small', 'good', 'under_exposed', '0', '0')
+  141	('too_small', 'bad', 'under_exposed', '0', '0')
+  55	('good', 'bad', 'under_exposed', '0', '0')
+  17	('too_small', 'good', 'unknown', '0', '0')
+  16	('out_of_boundary', 'bad', 'under_exposed', '0', '0')
+  15	('too_small', 'bad', 'unknown', '0', '0')
+  13	('unknown', 'unknown', 'unknown', '0', '0')
+  10	('too_small', 'bad', 'uneven', '0', '0')
+  5	('too_small', 'good', 'normal', '0', '0')
+  4	('too_small', 'good', 'uneven', '0', '0')
+  4	('out_of_boundary', 'good', 'under_exposed', '0', '0')
+  2	('good', 'bad', 'unknown', '0', '0')
+  2	('good', 'bad', 'uneven', '0', '0')
+  1	('unknown', 'unknown', 'backlighting', '0', '0')

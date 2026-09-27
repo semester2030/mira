@@ -1,0 +1,26 @@
+  static String? providerTypeForConsumerMetric(String metricId) {
+    final id = metricId.toLowerCase().replaceFirst('metric_', '');
+    if (id.contains('pigment') ||
+        id.contains('age_spot') ||
+        id.contains('dark_spot') ||
+        (id.contains('spot') && !id.contains('dark_circle'))) {
+      return 'hd_age_spot';
+    }
+    if (id.contains('pore')) return 'hd_pore';
+    if (id.contains('wrinkle')) return 'hd_wrinkle';
+    if (id.contains('redness') || id.contains('red')) return 'hd_redness';
+    if (id.contains('texture')) return 'hd_texture';
+    if (id.contains('acne')) return 'hd_acne';
+    if (id.contains('hydrat') || id.contains('moisture')) return 'hd_moisture';
+    if (id.contains('oil')) return 'hd_oiliness';
+    if (id.contains('radiance')) return 'hd_radiance';
+    if (id.contains('dark_circle')) return 'hd_dark_circle';
+    if (id.contains('eye_bag')) return 'hd_eye_bag';
+    if (id.contains('droopy_upper')) return 'hd_droopy_upper_eyelid';
+    if (id.contains('droopy_lower')) return 'hd_droopy_lower_eyelid';
+    if (id.contains('firmness')) return 'hd_firmness';
+    if (id.contains('tear_trough')) return 'hd_tear_trough';
+    if (id.contains('skin_type')) return 'hd_skin_type';
+    if (id.startsWith('hd_')) return id;
+    return null;
+  }

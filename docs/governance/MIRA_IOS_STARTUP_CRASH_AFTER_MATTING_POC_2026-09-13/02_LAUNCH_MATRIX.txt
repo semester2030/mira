@@ -1,0 +1,17 @@
+# Launch matrix evidence
+
+Device: fayez’s iPhone 00008110-00191986268BA01E
+Build: ios-profile Runner.app installed via devicectl
+
+COLD_1 PASS alive
+COLD_2 PASS alive
+COLD_3 PASS alive
+WARM_1 PASS alive
+WARM_2 PASS alive
+WARM_3 PASS alive
+RESUME_1 PASS alive
+RESUME_2 PASS alive
+RESUME_3 PASS alive
+
+WHITE_SCREEN_CRASH_COUNT: 0
+STARTUP_CRASH_COUNT: 0

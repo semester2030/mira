@@ -5,8 +5,9 @@ import 'package:flutter/services.dart';
 abstract final class ApplePersonMattingPocBridge {
   ApplePersonMattingPocBridge._();
 
-  static const MethodChannel _channel =
-      MethodChannel('mira/apple_person_matting');
+  static const MethodChannel _channel = MethodChannel(
+    'mira/apple_person_matting',
+  );
 
   static Future<ApplePersonMattePocResult> generatePersonMatte(
     Uint8List imageBytes,

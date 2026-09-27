@@ -1,0 +1,139 @@
+{
+  "titleAr": "تفعيل اختبار اكتشفي وخطة الدمج",
+  "ownerDirectiveAr": "سبب الإبقاء على الإغلاق، بحسب توجيه مالك المشروع، هو تطوير اكتشفي إلى تجربة العرض المرئي. هذا توجيه منتج، وهو منفصل عن الاستنتاج السابق من الكود بأن العلم الافتراضي false ولا توجد وثيقة تشغيل تشرح الإيقاف.",
+  "testAuthorizationAr": "صُرّح بتفعيل نسخة الاختبار الآن عبر --dart-define=MIRA_MARKETPLACE_ENABLED=true. القيمة الافتراضية في الكود تبقى false، ولم يُفعَّل العلم لبناء الإنتاج.",
+  "run": {
+    "name": "MIRA Discover Test",
+    "command": "flutter run --dart-define=MIRA_MARKETPLACE_ENABLED=true",
+    "script": "scripts/run_mira_discover_test.sh",
+    "launchConfig": ".vscode/launch.json",
+    "defaultRemainsFalse": true
+  },
+  "independenceAr": [
+    "ميرا مستقلة عن دار كار والأماكن في الكود والخدمات والبيانات والنشر.",
+    "أي دمج لاحق يأخذ نسخة مستقلة داخل مستودع ميرا. لا روابط ملفات ولا symlinks ولا Git submodules ولا حزمة داخلية مشتركة.",
+    "اكتشفي لا تتصل بباك إند الأماكن ولا بقاعدة بياناتها ولا بمفاتيحها، ولا يحتاج تشغيلها بناء دار كار.",
+    "هذه الجولة لا تدمج مكونات الأماكن."
+  ],
+  "dataSource": {
+    "probedAt": "2026-09-24T03:07:00+03:00",
+    "endpoint": "https://mira-api-n4p3.onrender.com/api/v1/marketplace/partners",
+    "result": "HTTP 200 من خادم ميرا. الأسماء هي بذرة marketplace.seed وليست متاجر شركاء مُدخلة من البوابة.",
+    "localFallback": "إذا تعذر طلب التفاصيل يُقرأ الكتالوج المحلي مباشرة. وصف النقل مرتبط بنتيجة ذلك الطلب، والعلامة التجريبية معلنة في الكتالوج لا مستنتجة من الأسماء."
+  },
+  "functions": [
+    {
+      "id": "ACT-0001",
+      "nameAr": "فتح اكتشفي من الرئيسية",
+      "state": "منفذة وكانت محجوبة",
+      "detailAr": "البطاقة تفتح DiscoverHubScreen. مع العلم تُعرض الأقسام الثلاثة بدل شاشة الانطلاق قريبًا.",
+      "tested": "اختبار ودجت مع العلم وبدونه"
+    },
+    {
+      "id": "ACT-0002",
+      "nameAr": "قوائم الماركات والعيادات والصالونات",
+      "state": "منفذة وتحتاج أن يُفهم أن البيانات بذرة",
+      "detailAr": "PartnerListScreen يستدعي خادم ميرا ثم يسقط إلى البذرة المحلية. الخادم أعاد البذرة نفسها.",
+      "tested": "فحص HTTP للقوائم الثلاث، واختبار سقوط الخادم إلى البذرة المحلية"
+    },
+    {
+      "id": "ACT-0003",
+      "nameAr": "صفحة الجهة وتفاصيل المنتج",
+      "state": "منفذة",
+      "detailAr": "النقر يفتح صفحة الجهة. أيقونة الرابط الخارجي تبقى للماركات. تفاصيل المنتج تعرض السعر ورابط المتجر وتصرّح أن الفتح ليس شراءً مؤكدًا.",
+      "tested": "اختبار ودجت لتفاصيل المنتج، واستجابة الخادم لمنتجات لوريال"
+    },
+    {
+      "id": "ACT-0004",
+      "nameAr": "تفاصيل الخدمة والحجز",
+      "state": "جزئية",
+      "detailAr": "التفاصيل والسعر والمدة موجودة. bookingEnabled قيمته false في البذرة. الزر يعرض «الحجز قريباً» ورسالة انتظار، وليس «تم الحجز».",
+      "tested": "اختبار ودجت يمنع نص إتمام الحجز، واستجابة الخادم لخدمات عيادة نور"
+    },
+    {
+      "id": "ACT-0005",
+      "nameAr": "الصور",
+      "state": "جزئية",
+      "detailAr": "العرض الحالي رموز تعبيرية. لا صور منتجات في هذه البذرة.",
+      "tested": "قراءة واجهة التفاصيل والكتالوج"
+    },
+    {
+      "id": "ACT-0006",
+      "nameAr": "الاتصال والموقع",
+      "state": "غير منفذة",
+      "detailAr": "لا مسار هاتف أو خريطة داخل شاشات اكتشفي الحالية.",
+      "tested": "بحث في ملفات marketplace عن tel أو خريطة ولم يوجد"
+    },
+    {
+      "id": "ACT-0007",
+      "nameAr": "المطابقة حسب تحليل البشرة",
+      "state": "منفذة وتحتاج تقرير بشرة",
+      "detailAr": "MarketplaceMatchedSection على شاشة الروتين، وتستخدم الخادم ثم البذرة المحلية. لم تُختبر على الجهاز في هذه الجولة.",
+      "tested": "قراءة الاستدعاء في skin_routine_screen.dart"
+    },
+    {
+      "id": "ACT-0008",
+      "nameAr": "المشاهدات",
+      "state": "غير منفذة",
+      "detailAr": "متطلب لاحق. لم يُضف رقم وهمي.",
+      "tested": "لا عداد في شاشات اكتشفي الحالية"
+    }
+  ],
+  "fileMap": [
+    {
+      "id": "MAP-0001",
+      "functionAr": "علم الإغلاق والاختبار",
+      "unit": "lib/core/config/mira_features.dart",
+      "responsibilityAr": "القيمة الافتراضية false وخيار البناء true",
+      "calledByAr": "المسارات والرئيسية وشاشة اكتشفي",
+      "decision": "استخدام كما هي",
+      "reasonAr": "الآلية موجودة. لا تُقلب القيمة الافتراضية من أجل الاختبار.",
+      "affectedAr": ".vscode/launch.json وscripts/run_mira_discover_test.sh",
+      "testAr": "discover_activation_test.dart يُشغَّل مرتين"
+    },
+    {
+      "id": "MAP-0002",
+      "functionAr": "مسارات اكتشفي",
+      "unit": "lib/features/marketplace/presentation/marketplace_routes.dart",
+      "responsibilityAr": "البوابة والقوائم والتفاصيل",
+      "calledByAr": "lib/main.dart",
+      "decision": "استخراج مكون",
+      "reasonAr": "نفس السلوك السابق في ملف قابل للاختبار دون إعادة هيكلة التطبيق.",
+      "affectedAr": "lib/main.dart",
+      "testAr": "اختبار نوع الصفحة عند إغلاق العلم وفتحه"
+    },
+    {
+      "id": "MAP-0003",
+      "functionAr": "الكتالوج",
+      "unit": "lib/features/marketplace/data/repositories/marketplace_repository_impl.dart",
+      "responsibilityAr": "خادم ميرا ثم البذرة المحلية",
+      "calledByAr": "قوائم الجهات وصفحة الجهة والمطابقة",
+      "decision": "تطوير",
+      "reasonAr": "إظهار مصدر البيانات حتى لا تُعرض البذرة كمتاجر حقيقية.",
+      "affectedAr": "marketplace_data_banner.dart وpartner_list_screen.dart",
+      "testAr": "سقوط Dio إلى البذرة المحلية"
+    },
+    {
+      "id": "MAP-0004",
+      "functionAr": "واجهة الخادم",
+      "unit": "mira-api/src/marketplace/marketplace.controller.ts",
+      "responsibilityAr": "قوائم الجهات والتفاصيل والمطابقة",
+      "calledByAr": "MarketplaceApiDataSource",
+      "decision": "استخدام كما هي",
+      "reasonAr": "لا يُنشأ باك إند تجارة موازٍ.",
+      "affectedAr": "لا تعديل على الخادم في هذه الجولة",
+      "testAr": "فحص HTTP للقوائم والتفاصيل"
+    },
+    {
+      "id": "MAP-0005",
+      "functionAr": "تجربة العرض المرئي لاحقًا",
+      "unit": "غير موجودة بعد داخل ميرا",
+      "responsibilityAr": "عرض كامل وفيديو وفلاتر ومشاهدات",
+      "calledByAr": "لا مستدعٍ حالي",
+      "decision": "إضافة جديدة لاحقًا",
+      "reasonAr": "لا تُنسخ بيانات السعر إلى سجل فيديو ثانٍ، ولا تُدمج الأماكن في هذه الجولة.",
+      "affectedAr": "لا ملفات جديدة للعرض المرئي الآن",
+      "testAr": "لا اختبار منتج للمشاهدات لأنها غير منفذة"
+    }
+  ]
+}

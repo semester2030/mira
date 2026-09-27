@@ -1,4 +1,3 @@
-import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 
@@ -11,7 +10,6 @@ import '../../../../shared/theme/typography.dart';
 import '../../../../shared/widgets/mira_app_bar.dart';
 import '../../../../shared/widgets/premium/premium_exports.dart';
 import '../../../advisor/domain/services/local_advisor_engine.dart';
-import '../../../face_analysis_experience/presentation/result/session/face_result_mirror_image_hold.dart';
 import '../../../intelligence/presentation/widgets/mira_report_helpers.dart';
 import '../../../skin_analysis/domain/entities/skin_report.dart';
 import '../../contracts/result_enums.dart';
@@ -52,6 +50,7 @@ class SkinInteractiveReportScreen extends StatefulWidget {
   final ResultExperience? experience;
   final DateTime? projectionNow;
   final bool fromHistory;
+
   /// Bound Perfect mask session for this result route (same analysis).
   final PerfectMaskSession? perfectMaskSession;
 
@@ -69,6 +68,7 @@ class _SkinInteractiveReportScreenState
   String? _focusedConcernId;
   var _transparencyOpen = false;
   var _releasedHold = false;
+
   /// Stable for this screen lifetime — do not re-read cleared static on rebuild.
   PerfectMaskSession? _boundMaskSession;
 
@@ -123,7 +123,7 @@ class _SkinInteractiveReportScreenState
     if (_releasedHold) return;
     _releasedHold = true;
     if (!widget.fromHistory) {
-      await FaceResultMirrorImageHold.release(widget.captureImagePath);
+      await AnalysisSession.releaseEphemeralFaceIfPath(widget.captureImagePath);
       // Detach owner only — do not dispose bytes (stacked result routes may hold).
       AnalysisSession.detachPerfectMasksIfCurrent(_boundMaskSession);
       _boundMaskSession = null;
@@ -143,23 +143,26 @@ class _SkinInteractiveReportScreenState
   }
 
   List<ResultMetricVM> get _visibleMetrics => _experience.metrics
-      .where((m) =>
-          m.visibility == VisibilityState.visiblePrimary ||
-          m.visibility == VisibilityState.visibleSecondary)
+      .where(
+        (m) =>
+            m.visibility == VisibilityState.visiblePrimary ||
+            m.visibility == VisibilityState.visibleSecondary,
+      )
       .where((m) => m.evidenceAvailable)
       .toList();
 
   @override
   Widget build(BuildContext context) {
     final e = _experience;
-    final hasUserImage = !widget.fromHistory &&
+    final hasUserImage =
+        !widget.fromHistory &&
         widget.captureImagePath != null &&
         widget.captureImagePath!.isNotEmpty;
     final missingImage = !widget.fromHistory && !hasUserImage;
 
     return Scaffold(
       backgroundColor: AppColors.background,
-      appBar: const MiraAppBar(pageTitle: 'بشرتك'),
+      appBar: const MiraAppBar(pageTitle: 'تفاصيل بشرتك'),
       body: SafeArea(
         child: ListView(
           controller: _scroll,
@@ -181,37 +184,19 @@ class _SkinInteractiveReportScreenState
               isStale: widget.isStale,
               missingImage: missingImage,
               fromHistory: widget.fromHistory,
-              ephemeralUserImagePath:
-                  widget.fromHistory ? null : widget.captureImagePath,
+              ephemeralUserImagePath: widget.fromHistory
+                  ? null
+                  : widget.captureImagePath,
               externalConcernId: _focusedConcernId,
-              maskSession:
-                  widget.fromHistory ? null : _boundMaskSession,
+              maskSession: widget.fromHistory ? null : _boundMaskSession,
               onAskMira: (q) => _openAdvisor(initialQuestion: q),
               onInfoOpened: () {},
               onConcernSelected: (id) => setState(() => _focusedConcernId = id),
               onUnavailable: () {},
               onOpenRoutine: () => _openRoutine(),
             ),
-            if (!widget.fromHistory &&
-                widget.captureImagePath != null &&
-                _boundMaskSession?.hasAnyMask == true) ...[
-              const SizedBox(height: 10),
-              OutlinedButton.icon(
-                onPressed: () {
-                  Navigator.of(context).pushNamed(
-                    AppRoutes.applePortraitMattingPoc,
-                    arguments: widget.captureImagePath,
-                  );
-                },
-                icon: const Icon(Icons.cut_outlined, size: 18),
-                label: const Text('POC Apple Matte (داخلي)'),
-              ),
-            ],
             const SizedBox(height: 28),
-            Divider(
-              height: 1,
-              color: AppColors.border.withValues(alpha: 0.28),
-            ),
+            Divider(height: 1, color: AppColors.border.withValues(alpha: 0.28)),
             const SizedBox(height: 20),
             Text(
               'ملخص التحليل',
@@ -229,7 +214,9 @@ class _SkinInteractiveReportScreenState
             const SizedBox(height: 16),
             Text(
               'أهم الملاحظات',
-              style: AppTypography.titleSmall.copyWith(fontWeight: FontWeight.w800),
+              style: AppTypography.titleSmall.copyWith(
+                fontWeight: FontWeight.w800,
+              ),
             ),
             const SizedBox(height: 8),
             PriorityCardsSection(
@@ -237,10 +224,7 @@ class _SkinInteractiveReportScreenState
               onOpen: (p) => _focusInsightOnMap(p),
             ),
             const SizedBox(height: 16),
-            _RoutinePreview(
-              plan: e.personalPlan,
-              onOpen: _openRoutine,
-            ),
+            _RoutinePreview(plan: e.personalPlan, onOpen: _openRoutine),
             const SizedBox(height: 14),
             _SkinJourneyCard(progress: e.progressPreview),
             const SizedBox(height: 14),
@@ -251,18 +235,21 @@ class _SkinInteractiveReportScreenState
             ),
             const SizedBox(height: 10),
             Theme(
-              data: Theme.of(context).copyWith(dividerColor: Colors.transparent),
+              data: Theme.of(
+                context,
+              ).copyWith(dividerColor: Colors.transparent),
               child: ExpansionTile(
                 initiallyExpanded: _transparencyOpen,
-                onExpansionChanged: (v) => setState(() => _transparencyOpen = v),
+                onExpansionChanged: (v) =>
+                    setState(() => _transparencyOpen = v),
                 tilePadding: EdgeInsets.zero,
                 title: Text(
                   'كيف توصلت ميرا لهذه النتيجة؟',
-                  style: AppTypography.titleSmall.copyWith(fontWeight: FontWeight.w800),
+                  style: AppTypography.titleSmall.copyWith(
+                    fontWeight: FontWeight.w800,
+                  ),
                 ),
-                children: [
-                  _TransparencyPanel(experience: e),
-                ],
+                children: [_TransparencyPanel(experience: e)],
               ),
             ),
             const SizedBox(height: 12),
@@ -331,19 +318,17 @@ class _SkinInteractiveReportScreenState
   void _openAdvisor({String? initialQuestion}) {
     HapticFeedback.selectionClick();
     final focus = _focusedConcernId;
-    final seed = initialQuestion ??
+    final seed =
+        initialQuestion ??
         (focus == null
             ? null
             : 'اشرحي لي مؤشر ${MetricPresentationPolicy.publicLabelAr(focus)} '
-                'بناءً على تقريري، مع العلم أن المواقع المكانية من أقنعة الاكتشاف '
-                '(${SkinClaimPolicy.mapTruthVerdict}).');
+                  'بناءً على تقريري، مع العلم أن المواقع المكانية من أقنعة الاكتشاف '
+                  '(${SkinClaimPolicy.mapTruthVerdict}).');
     Navigator.pushNamed(
       context,
       AppRoutes.miraAdvisor,
-      arguments: AdvisorRouteArgs.skin(
-        widget.report,
-        initialQuestion: seed,
-      ),
+      arguments: AdvisorRouteArgs.skin(widget.report, initialQuestion: seed),
     );
   }
 
@@ -356,7 +341,10 @@ class _SkinInteractiveReportScreenState
       backgroundColor: Colors.transparent,
       builder: (ctx) => _ElegantSheet(
         title: 'إخلاء مسؤولية',
-        child: Text(text, style: AppTypography.bodyMedium.copyWith(height: 1.5)),
+        child: Text(
+          text,
+          style: AppTypography.bodyMedium.copyWith(height: 1.5),
+        ),
       ),
     );
   }
@@ -412,10 +400,12 @@ class _RoutinePreview extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final List<ResultRoutineStepVM> morning =
-        plan.eligible ? plan.morning.steps.take(2).toList() : <ResultRoutineStepVM>[];
-    final List<ResultRoutineStepVM> evening =
-        plan.eligible ? plan.evening.steps.take(2).toList() : <ResultRoutineStepVM>[];
+    final List<ResultRoutineStepVM> morning = plan.eligible
+        ? plan.morning.steps.take(2).toList()
+        : <ResultRoutineStepVM>[];
+    final List<ResultRoutineStepVM> evening = plan.eligible
+        ? plan.evening.steps.take(2).toList()
+        : <ResultRoutineStepVM>[];
 
     return Column(
       crossAxisAlignment: CrossAxisAlignment.stretch,
@@ -428,12 +418,22 @@ class _RoutinePreview extends StatelessWidget {
         if (!plan.eligible)
           Text(
             'الروتين غير متاح لهذا التحليل',
-            style: AppTypography.bodySmall.copyWith(color: AppColors.textSecondary),
+            style: AppTypography.bodySmall.copyWith(
+              color: AppColors.textSecondary,
+            ),
           )
         else ...[
-          _RoutineLane(label: 'صباحًا', glyph: MiraSkinGlyphId.morning, steps: morning),
+          _RoutineLane(
+            label: 'صباحًا',
+            glyph: MiraSkinGlyphId.morning,
+            steps: morning,
+          ),
           const SizedBox(height: 8),
-          _RoutineLane(label: 'مساءً', glyph: MiraSkinGlyphId.evening, steps: evening),
+          _RoutineLane(
+            label: 'مساءً',
+            glyph: MiraSkinGlyphId.evening,
+            steps: evening,
+          ),
         ],
         Align(
           alignment: Alignment.centerLeft,
@@ -506,7 +506,9 @@ class _RoutineLane extends StatelessWidget {
                             reason.isEmpty
                                 ? 'خطوة عناية مرتبطة بمؤشرات تحليلك المتاحة.'
                                 : reason,
-                            style: AppTypography.bodyMedium.copyWith(height: 1.45),
+                            style: AppTypography.bodyMedium.copyWith(
+                              height: 1.45,
+                            ),
                           ),
                         ],
                       ),
@@ -514,7 +516,10 @@ class _RoutineLane extends StatelessWidget {
                   );
                 },
                 child: Padding(
-                  padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 10),
+                  padding: const EdgeInsets.symmetric(
+                    horizontal: 12,
+                    vertical: 10,
+                  ),
                   child: Row(
                     children: [
                       Expanded(
@@ -548,7 +553,9 @@ class _SkinJourneyCard extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final projection = SkinClaimPolicy.linearProjectionCopyAr(progress);
-    final headline = SkinClaimPolicy.sanitizeJourneyHeadlineAr(progress.summaryAr);
+    final headline = SkinClaimPolicy.sanitizeJourneyHeadlineAr(
+      progress.summaryAr,
+    );
 
     return Container(
       width: double.infinity,
@@ -567,13 +574,16 @@ class _SkinJourneyCard extends StatelessWidget {
               const SizedBox(width: 8),
               Text(
                 'رحلة بشرتك',
-                style: AppTypography.labelLarge.copyWith(fontWeight: FontWeight.w800),
+                style: AppTypography.labelLarge.copyWith(
+                  fontWeight: FontWeight.w800,
+                ),
               ),
             ],
           ),
           const SizedBox(height: 8),
           Text(
-            progress.comparability == ProgressComparabilityState.insufficientHistory
+            progress.comparability ==
+                    ProgressComparabilityState.insufficientHistory
                 ? 'هذه نقطة البداية لرحلتك'
                 : 'مقارنة تاريخية',
             style: AppTypography.labelSmall.copyWith(
@@ -594,7 +604,9 @@ class _SkinJourneyCard extends StatelessWidget {
             Text(
               'تغيّر رقمي ضمن مقارنة صالحة: ${progress.deltaPoints} نقطة — '
               'لا نسمّيه تلقائياً «تحسناً».',
-              style: AppTypography.labelSmall.copyWith(color: AppColors.textTertiary),
+              style: AppTypography.labelSmall.copyWith(
+                color: AppColors.textTertiary,
+              ),
             ),
           ],
           if (projection != null) ...[
@@ -712,7 +724,8 @@ class _TransparencyPanel extends StatelessWidget {
     if (SkinClaimPolicy.allowSkinAgeInTransparency(experience.skinAge)) {
       rows.add((
         t: 'تقدير المظهر العمري',
-        s: 'محسوب تقريباً (${experience.skinAge.estimateYears} تقريباً) — '
+        s:
+            'محسوب تقريباً (${experience.skinAge.estimateYears} تقريباً) — '
             '${experience.skinAge.qualificationAr}',
       ));
     } else {
@@ -738,7 +751,9 @@ class _TransparencyPanel extends StatelessWidget {
               alignment: AlignmentDirectional.centerStart,
               child: Text(
                 rows[i].t,
-                style: AppTypography.labelLarge.copyWith(fontWeight: FontWeight.w800),
+                style: AppTypography.labelLarge.copyWith(
+                  fontWeight: FontWeight.w800,
+                ),
               ),
             ),
             const SizedBox(height: 4),
@@ -780,7 +795,9 @@ class _ElegantSheet extends StatelessWidget {
         children: [
           Text(
             title,
-            style: AppTypography.titleMedium.copyWith(fontWeight: FontWeight.w800),
+            style: AppTypography.titleMedium.copyWith(
+              fontWeight: FontWeight.w800,
+            ),
           ),
           const SizedBox(height: 12),
           child,

@@ -1,0 +1,87 @@
+id=EVD-0015
+path=admin-portal/web/js/api.js
+commit=15fe65c40d3dedb9afdd95619f2945bd84cb616a
+sha256=06b8ff8af6d4b96987245826121a69e4d57bc682e4451331dc206f04073be247
+lines=1-79
+note=عميل لوحة الإدارة يرسل X-Admin-Key ولا يرسل partnerId للكتابة
+runtime=SOURCE_ONLY
+---
+1|(function () {
+2|  const meta = document.querySelector('meta[name="mira-api-base"]');
+3|  const API_BASE =
+4|    (meta && meta.getAttribute('content')) ||
+5|    'http://localhost:3000/api/v1';
+6|
+7|  function adminKey() {
+8|    return localStorage.getItem('mira_admin_key') || '';
+9|  }
+10|
+11|  async function request(method, path, body) {
+12|    const key = adminKey();
+13|    if (!key && path !== '/health') {
+14|      throw new Error('أدخلي مفتاح الإدارة أولاً');
+15|    }
+16|    const res = await fetch(`${API_BASE}${path}`, {
+17|      method,
+18|      headers: {
+19|        Accept: 'application/json',
+20|        'X-Admin-Key': key,
+21|        ...(body ? { 'Content-Type': 'application/json' } : {}),
+22|      },
+23|      body: body ? JSON.stringify(body) : undefined,
+24|    });
+25|    const data = await res.json().catch(() => ({}));
+26|    if (!res.ok) {
+27|      const msg = data.message || data.error || `HTTP ${res.status}`;
+28|      throw new Error(Array.isArray(msg) ? msg.join(' ') : String(msg));
+29|    }
+30|    return data;
+31|  }
+32|
+33|  window.MiraAdminApi = {
+34|    base: API_BASE,
+35|    setKey: (key) => localStorage.setItem('mira_admin_key', key),
+36|    clearKey: () => localStorage.removeItem('mira_admin_key'),
+37|    hasKey: () => !!adminKey(),
+38|    verifyKey: () => request('GET', '/admin/stats/overview'),
+39|    overview: () => request('GET', '/admin/stats/overview'),
+40|    analysesTrend: (days) =>
+41|      request('GET', `/admin/stats/analyses-trend?days=${days || 14}`),
+42|    auditActions: () => request('GET', '/admin/stats/audit-actions'),
+43|    users: (page, limit, search) => {
+44|      const q = new URLSearchParams({ page: page || 1, limit: limit || 20 });
+45|      if (search) q.set('search', search);
+46|      return request('GET', `/admin/users?${q}`);
+47|    },
+48|    userDetail: (id) => request('GET', `/admin/users/${id}`),
+49|    auditLogs: (page, limit, action, userId) => {
+50|      const q = new URLSearchParams({ page: page || 1, limit: limit || 30 });
+51|      if (action) q.set('action', action);
+52|      if (userId) q.set('userId', userId);
+53|      return request('GET', `/admin/audit-logs?${q}`);
+54|    },
+55|    feedback: (page, limit) =>
+56|      request('GET', `/admin/feedback?page=${page || 1}&limit=${limit || 20}`),
+57|    partners: (page, limit, status) => {
+58|      const q = new URLSearchParams({ page: page || 1, limit: limit || 20 });
+59|      if (status) q.set('status', status);
+60|      return request('GET', `/admin/partners?${q}`);
+61|    },
+62|    partnerStatus: (id, status) =>
+63|      request('PATCH', `/admin/partners/${id}/status`, { status }),
+64|    applications: (status) =>
+65|      request(
+66|        'GET',
+67|        `/admin/partners/applications?status=${encodeURIComponent(status || 'pending')}`,
+68|      ),
+69|    approveApplication: (id) =>
+70|      request('POST', `/admin/partners/applications/${id}/approve`, {}),
+71|    rejectApplication: (id, reason) =>
+72|      request('POST', `/admin/partners/applications/${id}/reject`, { reason }),
+73|    leads: (page, limit, type) => {
+74|      const q = new URLSearchParams({ page: page || 1, limit: limit || 20 });
+75|      if (type) q.set('type', type);
+76|      return request('GET', `/admin/leads?${q}`);
+77|    },
+78|    systemConfig: () => request('GET', '/admin/system/config'),
+79|  };

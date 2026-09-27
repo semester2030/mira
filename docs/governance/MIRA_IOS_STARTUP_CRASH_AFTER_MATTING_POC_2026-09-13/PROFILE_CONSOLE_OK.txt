@@ -1,0 +1,17 @@
+19:01:35  Acquired tunnel connection to device.
+19:01:35  Enabling developer disk image services.
+19:01:35  Acquired usage assertion.
+Launched application with app.mira.beauty bundle identifier.
+Waiting for the application to terminate…
+2026-09-13 19:01:36.719 Runner[41295:3373376] Mira: ApplePersonMattingChannel registered (post-launch, lazy Vision)
+2026-09-13 19:01:36.719 Runner[41295:3373376] Mira: APNs registration failed (reCAPTCHA fallback): no valid “aps-environment” entitlement string found for application
+INFO: Created TensorFlow Lite XNNPACK delegate for CPU.
+[INFO] XNNPACK delegate enabled.
+INFO: Initialized TensorFlow Lite runtime.
+[INFO] Face detector initialized: input=192x192 boxes=2304 classes=1
+[INFO] Initialize start: model=/private/var/mobile/Containers/Data/Application/8253002B-82EE-4FEA-B12B-147DE263D0C4/tmp/mediapipe_face_mesh_cache/packages_mediapipe_face_mesh_assets_models_mediapipe_face_mesh.tflite threads=2
+[INFO] XNNPACK delegate enabled.
+[INFO] Iris XNNPACK delegate enabled.
+[INFO] Iris initialize success
+[INFO] Initialize success
+App terminated due to signal 15.

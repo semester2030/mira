@@ -1,0 +1,9 @@
+RC3 screenshot periodicity, measured from the PNG pixels.
+
+rc3-mobile-390x844.png 390x844 vertical period 445 match 1.0
+rc3-tablet-768x1024.png 768x1024 vertical period 445 match 1.0; horizontal period 527 match 1.0
+rc3-desktop-1280x900.png 1280x900 vertical period 445 match 1.0; horizontal period 527 match 1.0
+
+The same pixels repeat. A page with one heading in the DOM cannot produce a perfect pixel period of 445 and 527 at every sampled point. The capture used Cursor's browser after Emulation.setDeviceMetricsOverride, and Page.captureScreenshot tiled the panel buffer. The site layout is not the source of this repeat.
+
+These files are kept as the defective evidence. Replacement shots must fail this same period check before they are accepted.

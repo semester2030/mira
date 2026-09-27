@@ -1,0 +1,49 @@
+  /// Hard composite onto #000000 — exposes halo / leakage (no soft edge paint).
+  private static func renderBlackComposite(
+    source: CGImage,
+    mask: CGImage,
+    width: Int,
+    height: Int
+  ) throws -> Data {
+    let colorSpace = CGColorSpaceCreateDeviceRGB()
+    let bytesPerPixel = 4
+    let bytesPerRow = width * bytesPerPixel
+    var srcPixels = [UInt8](repeating: 0, count: height * bytesPerRow)
+    var maskPixels = [UInt8](repeating: 0, count: height * width)
+    var outPixels = [UInt8](repeating: 0, count: height * bytesPerRow)
+
+    guard
+      let srcCtx = CGContext(
+        data: &srcPixels,
+        width: width,
+        height: height,
+        bitsPerComponent: 8,
+        bytesPerRow: bytesPerRow,
+        space: colorSpace,
+        bitmapInfo: CGImageAlphaInfo.premultipliedLast.rawValue
+      ),
+      let maskCtx = CGContext(
+        data: &maskPixels,
+        width: width,
+        height: height,
+        bitsPerComponent: 8,
+        bytesPerRow: width,
+        space: CGColorSpaceCreateDeviceGray(),
+        bitmapInfo: CGImageAlphaInfo.none.rawValue
+      )
+    else {
+      throw MatteError.renderFailed
+    }
+
+    srcCtx.interpolationQuality = .none
+    maskCtx.interpolationQuality = .high
+    srcCtx.draw(source, in: CGRect(x: 0, y: 0, width: width, height: height))
+    maskCtx.draw(mask, in: CGRect(x: 0, y: 0, width: width, height: height))
+
+    for i in 0..<(width * height) {
+      let a = Float(maskPixels[i]) / 255.0
+      let o = i * 4
+      // Straight (non-premultiplied) composite over pure black.
+      outPixels[o] = UInt8(Float(srcPixels[o]) * a)
+      outPixels[o + 1] = UInt8(Float(srcPixels[o + 1]) * a)
+      outPixels[o + 2] = UInt8(Float(srcPixels[o + 2]) * a)

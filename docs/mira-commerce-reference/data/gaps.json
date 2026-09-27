@@ -1,0 +1,311 @@
+[
+  {
+    "id": "GAP-0001",
+    "titleAr": "منتج بلا وسائط غنية",
+    "severity": "high",
+    "reqIds": [
+      "REQ-0001"
+    ],
+    "impactAr": "عرض ضعيف",
+    "reuseAr": "Product موجود",
+    "proposalAr": "توسيع العقد",
+    "evidenceIds": [
+      "EVD-0005"
+    ],
+    "verification": "SOURCE_ONLY"
+  },
+  {
+    "id": "GAP-0002",
+    "titleAr": "لا Variant",
+    "severity": "critical",
+    "reqIds": [
+      "REQ-0002",
+      "REQ-0013"
+    ],
+    "impactAr": "فلاتر مضللة",
+    "reuseAr": "—",
+    "proposalAr": "ProductVariant",
+    "evidenceIds": [
+      "EVD-0019",
+      "EVD-0017",
+      "EVD-0005"
+    ],
+    "verification": "SOURCE_ONLY",
+    "limitationAr": "الغياب داخل نطاق البحث لا خارج المستودع."
+  },
+  {
+    "id": "GAP-0003",
+    "titleAr": "فروع/مواعيد ناقصة",
+    "severity": "high",
+    "reqIds": [
+      "REQ-0003"
+    ],
+    "impactAr": "لا حجز",
+    "reuseAr": "Service",
+    "proposalAr": "Branch+Schedule",
+    "evidenceIds": [
+      "EVD-0003"
+    ],
+    "verification": "SOURCE_ONLY"
+  },
+  {
+    "id": "GAP-0004",
+    "titleAr": "لا خط فيديو منتج",
+    "severity": "critical",
+    "reqIds": [
+      "REQ-0004"
+    ],
+    "impactAr": "لا محتوى مرئي",
+    "reuseAr": "—",
+    "proposalAr": "MediaAsset",
+    "evidenceIds": [
+      "EVD-0024",
+      "EVD-0019"
+    ],
+    "verification": "SOURCE_ONLY"
+  },
+  {
+    "id": "GAP-0005",
+    "titleAr": "لا مشغل متتابع",
+    "severity": "high",
+    "reqIds": [
+      "REQ-0005"
+    ],
+    "impactAr": "لا Feed",
+    "reuseAr": "—",
+    "proposalAr": "Vertical feed",
+    "evidenceIds": [
+      "EVD-0024",
+      "EVD-0023"
+    ],
+    "verification": "SOURCE_ONLY"
+  },
+  {
+    "id": "GAP-0006",
+    "titleAr": "لا كيان إعلان",
+    "severity": "critical",
+    "reqIds": [
+      "REQ-0007"
+    ],
+    "impactAr": "لا مشاهير",
+    "reuseAr": "—",
+    "proposalAr": "Promotion→productId",
+    "evidenceIds": [
+      "EVD-0023",
+      "EVD-0019"
+    ],
+    "verification": "SOURCE_ONLY"
+  },
+  {
+    "id": "GAP-0007",
+    "titleAr": "لا فصل أدوار",
+    "severity": "high",
+    "reqIds": [
+      "REQ-0008"
+    ],
+    "impactAr": "تضارب أسعار",
+    "reuseAr": "Partner",
+    "proposalAr": "أدوار صريحة",
+    "evidenceIds": [
+      "EVD-0023"
+    ],
+    "verification": "SOURCE_ONLY"
+  },
+  {
+    "id": "GAP-0008",
+    "titleAr": "حالات محتوى ناقصة",
+    "severity": "medium",
+    "reqIds": [
+      "REQ-0009"
+    ],
+    "impactAr": "مراجعة ضعيفة",
+    "reuseAr": "Partner.status",
+    "proposalAr": "Media states",
+    "evidenceIds": [
+      "EVD-0024"
+    ],
+    "verification": "SOURCE_ONLY"
+  },
+  {
+    "id": "GAP-0009",
+    "titleAr": "لا موافقة ربط",
+    "severity": "medium",
+    "reqIds": [
+      "REQ-0010"
+    ],
+    "impactAr": "امتثال",
+    "reuseAr": "—",
+    "proposalAr": "Approval flow",
+    "evidenceIds": [
+      "EVD-0023"
+    ],
+    "verification": "SOURCE_ONLY"
+  },
+  {
+    "id": "GAP-0010",
+    "titleAr": "لا طلب داخلي",
+    "severity": "critical",
+    "reqIds": [
+      "REQ-0011"
+    ],
+    "impactAr": "لا إثبات شراء",
+    "reuseAr": "externalUrl",
+    "proposalAr": "حسب DEC-0001",
+    "evidenceIds": [
+      "EVD-0010"
+    ],
+    "verification": "SOURCE_ONLY"
+  },
+  {
+    "id": "GAP-0011",
+    "titleAr": "رحلة متوقفة",
+    "severity": "high",
+    "reqIds": [
+      "REQ-0012"
+    ],
+    "impactAr": "لا تجربة",
+    "reuseAr": "Discover screens",
+    "proposalAr": "تفعيل مرحلي",
+    "evidenceIds": [
+      "EVD-0001"
+    ],
+    "verification": "SOURCE_ONLY"
+  },
+  {
+    "id": "GAP-0012",
+    "titleAr": "فلاتر بلا متغير متسق",
+    "severity": "critical",
+    "reqIds": [
+      "REQ-0013"
+    ],
+    "impactAr": "نتائج خاطئة",
+    "reuseAr": "concernTags",
+    "proposalAr": "فهرسة variants",
+    "evidenceIds": [
+      "EVD-0017"
+    ],
+    "verification": "SOURCE_ONLY"
+  },
+  {
+    "id": "GAP-0013",
+    "titleAr": "فلترة خادمية غير مثبتة للخصائص المتقدمة",
+    "severity": "medium",
+    "reqIds": [
+      "REQ-0014"
+    ],
+    "impactAr": "تصفية صفحة",
+    "reuseAr": "listPartners",
+    "proposalAr": "API filters",
+    "evidenceIds": [
+      "EVD-0006"
+    ],
+    "verification": "SOURCE_ONLY"
+  },
+  {
+    "id": "GAP-0014",
+    "titleAr": "أحداث محدودة",
+    "severity": "medium",
+    "reqIds": [
+      "REQ-0015"
+    ],
+    "impactAr": "إسناد ضعيف",
+    "reuseAr": "PartnerEvent",
+    "proposalAr": "توسيع الأحداث",
+    "evidenceIds": [
+      "EVD-0013"
+    ],
+    "verification": "SOURCE_ONLY"
+  },
+  {
+    "id": "GAP-0015",
+    "titleAr": "سياسة إعلان×بشرة",
+    "severity": "high",
+    "reqIds": [
+      "REQ-0017"
+    ],
+    "impactAr": "خصوصية",
+    "reuseAr": "مطابقة غير مدفوعة",
+    "proposalAr": "حظر استهداف",
+    "evidenceIds": [],
+    "verification": "UNVERIFIED",
+    "limitationAr": "لا بحث يثبت غياب فصل الإعلان عن تحليل البشرة؛ المتطلب مقترح لأن المسار غير موصوف في الأدلة المرفقة."
+  },
+  {
+    "id": "GAP-0016",
+    "titleAr": "خلط أنواع التحويل",
+    "severity": "medium",
+    "reqIds": [
+      "REQ-0019"
+    ],
+    "impactAr": "توقعات خاطئة",
+    "reuseAr": "نصوص قريبًا",
+    "proposalAr": "مفردات صارمة",
+    "evidenceIds": [
+      "EVD-0003"
+    ],
+    "verification": "SOURCE_ONLY"
+  },
+  {
+    "id": "GAP-0017",
+    "titleAr": "بث حي غير محسوم",
+    "severity": "low",
+    "reqIds": [
+      "REQ-0020"
+    ],
+    "impactAr": "نطاق",
+    "reuseAr": "—",
+    "proposalAr": "خارج المرحلة الأولى",
+    "evidenceIds": [
+      "EVD-0023"
+    ],
+    "verification": "SOURCE_ONLY"
+  },
+  {
+    "id": "GAP-0018",
+    "titleAr": "لا قياس مشاهدات معتمد في تجربة ميرا",
+    "severity": "high",
+    "reqIds": [
+      "REQ-0021",
+      "REQ-0023"
+    ],
+    "impactAr": "لا عدد صادق على العرض",
+    "reuseAr": "لا يُفترض وجوده في الأماكن",
+    "proposalAr": "مواصفة ثم تنفيذ لاحق بعد المراجعة",
+    "evidenceIds": [
+      "EVD-0029"
+    ],
+    "verification": "SOURCE_ONLY"
+  },
+  {
+    "id": "GAP-0019",
+    "titleAr": "ربط المتجر الخارجي غير متحقق على منصة محددة",
+    "severity": "high",
+    "reqIds": [
+      "REQ-0022"
+    ],
+    "impactAr": "لا ادعاء دعم زد أو غيرها",
+    "reuseAr": "رابط الشراء الخارجي الحالي إن وُجد لا يكفي للمزامنة",
+    "proposalAr": "عقد ربط بعد وثائق أو اختبار",
+    "evidenceIds": [
+      "EVD-0029"
+    ],
+    "verification": "UNVERIFIED"
+  },
+  {
+    "id": "GAP-0020",
+    "titleAr": "العرض العمودي متعدد الوسائط يحتاج تكييفًا",
+    "severity": "medium",
+    "reqIds": [
+      "REQ-0024",
+      "REQ-0025",
+      "REQ-0026"
+    ],
+    "impactAr": "نسخ الأماكن كما هي يقص المنتج أو يحصر العرض في الفيديو",
+    "reuseAr": "PageView ومعرض التفاصيل مرجع سلوك",
+    "proposalAr": "معيار عرض ميرا",
+    "evidenceIds": [
+      "EVD-0028"
+    ],
+    "verification": "SOURCE_ONLY"
+  }
+]

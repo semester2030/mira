@@ -1,0 +1,73 @@
+RC3 negative tests. Mutations were applied only to temporary copies.
+
+CASE modify
+command: python3 scripts/validate_package.py --root /tmp/mira-rc3-neg-modify
+exit: 1
+expected fragment: sha256 mismatch docs/README.md
+matched: yes
+output:
+FAIL 2
+- size mismatch docs/README.md
+- sha256 mismatch docs/README.md
+
+CASE delete
+command: python3 scripts/validate_package.py --root /tmp/mira-rc3-neg-delete
+exit: 1
+expected fragment: missing recorded file docs/README.md
+matched: yes
+output:
+FAIL 1
+- missing recorded file docs/README.md
+
+CASE extra
+command: python3 scripts/validate_package.py --root /tmp/mira-rc3-neg-extra
+exit: 1
+expected fragment: unregistered file UNREGISTERED.txt
+matched: yes
+output:
+FAIL 1
+- unregistered file UNREGISTERED.txt
+
+CASE manifest
+command: python3 scripts/validate_package.py --root /tmp/mira-rc3-neg-manifest
+exit: 1
+expected fragment: MANIFEST.json invalid
+matched: yes
+output:
+FAIL 1
+- MANIFEST.json invalid: Expecting property name enclosed in double quotes: line 1 column 2 (char 1)
+
+CASE broken-ref
+command: python3 scripts/validate_package.py --root /tmp/mira-rc3-neg-broken-ref
+exit: 1
+expected fragment: broken internal reference REQ-9999
+matched: yes
+output:
+FAIL 1
+- broken internal reference REQ-9999 in section-content.json
+
+CASE json-js-drift
+command: python3 scripts/validate_package.py --root /tmp/mira-rc3-neg-json-js-drift
+exit: 1
+expected fragment: generated js does not match data/*.json
+matched: yes
+output:
+FAIL 1
+- generated js does not match data/*.json
+
+CASE missing-image
+command: python3 scripts/validate_package.py --root /tmp/mira-rc3-neg-missing-image
+exit: 1
+expected fragment: missing referenced image evidence/screenshots/missing-approved-concept.png
+matched: yes
+output:
+FAIL 1
+- missing referenced image evidence/screenshots/missing-approved-concept.png for VIS-PRODUCTS
+
+INTACT
+command: python3 scripts/validate_package.py --root /tmp/mira-rc3-neg-base
+exit: 0
+PASS package
+freshness=NOT_RUN independent package check does not read a repository
+
+ALL_EXPECTED=yes

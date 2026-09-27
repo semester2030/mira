@@ -1,0 +1,4 @@
+Independent folder: /Users/fayez/Desktop/rc3_link_verify_44314
+ZIP sha256 expected=0cfead38b9094768d7c44aa3bab289b5dc686118980ef65b62e9e330850ab1e8 actual=0cfead38b9094768d7c44aa3bab289b5dc686118980ef65b62e9e330850ab1e8 match=yes
+Relative links from extracted MIRA_DISCOVER_PHASE1_CLOSURE_RC3_/site/: zip=../../MIRA_DISCOVER_PHASE1_CLOSURE_RC3_.zip sha=../../MIRA_DISCOVER_PHASE1_CLOSURE_RC3_.zip.sha256.txt verify=../../MIRA_DISCOVER_PHASE1_CLOSURE_RC3___VERIFICATION.txt — files exist when zip trio on Desktop
+Repo copy: deliveries/MIRA_DISCOVER_PHASE1_CLOSURE_RC3_.zip

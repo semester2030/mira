@@ -1,6 +1,9 @@
 import 'dart:convert';
 import 'dart:typed_data';
 
+import 'perfect_mask_presentation_decoder.dart';
+import '../presentation/geometry/skin_face_map_visual_tokens.dart';
+
 /// In-memory Perfect HD mask lifecycle for one Skin analysis session.
 /// Canonical owner — decode once, reuse on tap/rebuild. Never persist.
 class PerfectMaskSession {
@@ -8,6 +11,9 @@ class PerfectMaskSession {
 
   final Map<String, PerfectMaskArtifact> _byKey;
   final Map<String, int> _hitCounts = {};
+
+  /// CPU presentation remaps (Perfect RGB/A → presentation alpha PNG).
+  final Map<String, Uint8List> _presentationCache = {};
 
   static PerfectMaskSession? fromApiPayload(List<dynamic>? raw) {
     if (raw == null || raw.isEmpty) return null;
@@ -51,16 +57,39 @@ class PerfectMaskSession {
   PerfectMaskArtifact? lookup({
     required String consumerMetricId,
     String? subregion,
+    bool requireExactRegion = false,
   }) {
     final provider = providerTypeForConsumerMetric(consumerMetricId);
     if (provider == null) return null;
     final region = subregion ?? _defaultRegion(provider);
+
+    // Strict region: never substitute whole-face / root for a tapped subregion.
+    if (requireExactRegion &&
+        region != null &&
+        region != 'whole' &&
+        region != 'all') {
+      final exactKey = '$provider::$region';
+      final exact = _byKey[exactKey];
+      if (exact != null && exact.bytes != null && exact.bytes!.isNotEmpty) {
+        _hitCounts[exactKey] = (_hitCounts[exactKey] ?? 0) + 1;
+        return exact;
+      }
+      bool hasScore(PerfectMaskArtifact a) =>
+          a.uiScore != null || a.rawScore != null || a.scoreOnly;
+      if (exact != null && hasScore(exact)) {
+        _hitCounts[exactKey] = (_hitCounts[exactKey] ?? 0) + 1;
+        return exact;
+      }
+      return null;
+    }
+
     final keys = <String>[
       if (region != null) '$provider::$region',
       '$provider::root',
       if (region == 'whole' || region == null) '$provider::whole',
       if (region == 'whole' || region == null) '$provider::all',
     ];
+    // Prefer real Perfect mask bytes (spatial truth).
     for (final k in keys) {
       final hit = _byKey[k];
       if (hit != null && hit.bytes != null && hit.bytes!.isNotEmpty) {
@@ -78,6 +107,23 @@ class PerfectMaskSession {
           _hitCounts[a.key] = (_hitCounts[a.key] ?? 0) + 1;
           return a;
         }
+      }
+    }
+    // Score-only / score-bearing without usable mask — truthful non-spatial.
+    bool hasScore(PerfectMaskArtifact a) =>
+        a.uiScore != null || a.rawScore != null || a.scoreOnly;
+    for (final k in keys) {
+      final hit = _byKey[k];
+      if (hit != null && hasScore(hit)) {
+        _hitCounts[k] = (_hitCounts[k] ?? 0) + 1;
+        return hit;
+      }
+    }
+    for (final a in _byKey.values) {
+      if (a.concernType != provider) continue;
+      if (hasScore(a)) {
+        _hitCounts[a.key] = (_hitCounts[a.key] ?? 0) + 1;
+        return a;
       }
     }
     return null;
@@ -99,24 +145,50 @@ class PerfectMaskSession {
     final order = provider == 'hd_pore'
         ? const ['whole', 'forehead', 'nose', 'cheek']
         : provider == 'hd_wrinkle'
-            ? const [
-                'whole',
-                'forehead',
-                'glabellar',
-                'crowfeet',
-                'periocular',
-                'nasolabial',
-                'marionette',
-              ]
-            : (regions.toList()..sort());
+        ? const [
+            'whole',
+            'forehead',
+            'glabellar',
+            'crowfeet',
+            'periocular',
+            'nasolabial',
+            'marionette',
+          ]
+        : (regions.toList()..sort());
     return order.where(regions.contains).toList(growable: false);
   }
 
   int cacheHitsFor(String key) => _hitCounts[key] ?? 0;
 
+  /// Perfect PNG remapped to presentation-alpha PNG (same W×H). Cached.
+  /// Returns null if no bytes / decode failure — caller must not invent geometry.
+  Uint8List? presentationBytesFor({
+    required PerfectMaskArtifact artifact,
+    required PerfectMaskPresentationProfile profile,
+  }) {
+    final raw = artifact.bytes;
+    if (raw == null || raw.isEmpty) return null;
+    final cacheKey =
+        '${artifact.key}|${profile.alphaMode.name}|${profile.alphaGain}|${profile.luminanceGateFloor}|${profile.minVisibleAlpha}|${profile.opacity}';
+    final cached = _presentationCache[cacheKey];
+    if (cached != null) {
+      _hitCounts[cacheKey] = (_hitCounts[cacheKey] ?? 0) + 1;
+      return cached;
+    }
+    final remapped = PerfectMaskPresentationDecoder.remapToPresentationPng(
+      perfectPngBytes: raw,
+      profile: profile,
+    );
+    if (remapped != null) {
+      _presentationCache[cacheKey] = remapped;
+    }
+    return remapped;
+  }
+
   void dispose() {
     _byKey.clear();
     _hitCounts.clear();
+    _presentationCache.clear();
   }
 
   static String? _defaultRegion(String provider) {
@@ -216,6 +288,20 @@ class PerfectMaskSession {
       if (a.bytes != null && a.bytes!.isNotEmpty) {
         out.add(a.concernType);
       }
+    }
+    return out;
+  }
+
+  /// Carousel eligibility: Perfect score and/or usable mask bytes.
+  /// Excludes presence-only rows that would render as dead icons.
+  Set<String> providersWithLegitimateResult() {
+    final out = <String>{};
+    for (final a in _byKey.values) {
+      if (a.concernType == 'resize_image') continue;
+      if (a.concernType == 'hd_skin_type') continue;
+      final hasBytes = a.bytes != null && a.bytes!.isNotEmpty;
+      final hasScore = a.uiScore != null || a.rawScore != null;
+      if (hasBytes || hasScore) out.add(a.concernType);
     }
     return out;
   }

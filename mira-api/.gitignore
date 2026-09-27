@@ -4,5 +4,6 @@ dist/
 .env.local
 .env.qa
 .env.*.local
+var/
 *.log
 .DS_Store

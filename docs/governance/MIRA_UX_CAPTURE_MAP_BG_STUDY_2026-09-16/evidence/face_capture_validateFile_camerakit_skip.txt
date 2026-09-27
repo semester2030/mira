@@ -1,0 +1,18 @@
+  Future<FaceGateResult?> _validateFile(File file) async {
+    if (!mounted) return null;
+    setState(() => _validatingFace = true);
+    try {
+      // CameraKit already enforced face area/pose/lighting before shutter.
+      if (_cameraKitActive) {
+        return const FaceGateResult.accepted();
+      }
+
+      final gate = await FaceGateValidator.instance.validate(file);
+      if (!mounted) return null;
+      if (!gate.isAccepted) {
+        _showGateMessage(gate.messageAr);
+        return gate;
+      }
+
+      // Phase 2: real blur/brightness/exposure before accepting capture.
+      final quality = await ImageQualityEvaluator.evaluateFile(

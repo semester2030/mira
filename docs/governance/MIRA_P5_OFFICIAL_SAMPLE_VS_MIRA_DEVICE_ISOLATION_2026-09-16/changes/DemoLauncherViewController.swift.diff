@@ -1,0 +1,14 @@
+--- /Users/fayez/Desktop/مراجع تطبيق ميرا /PerfectCorp_Mobile_CameraKit_2.5.0_INSPECT/2.5.0/camerakit-ios/Sample-iOS-CameraKitDemo/CameraKitDemo/DemoLauncherViewController.swift	2026-04-08 11:13:24
++++ /Users/fayez/Desktop/mira_camerakit_official_sample_run/CameraKitDemo/DemoLauncherViewController.swift	2026-09-16 01:48:26
+@@ -23,7 +23,10 @@
+     override func viewDidLoad() {
+         super.viewDidLoad()
+         MemoryUtility.displayMemoryUsage()
+-        // Do any additional setup after loading the view.
++        // Isolation run: skip menu and open CameraKit immediately.
++        DispatchQueue.main.async { [weak self] in
++            self?.navigateTo(.CameraKit)
++        }
+     }
+     
+     func tableView(_ tableView: UITableView, numberOfRowsInSection section: Int) -> Int {

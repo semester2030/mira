@@ -1,0 +1,12 @@
+OFFICIAL_ZIP_SHA256=18623f4db94f0d792418765efb237d4a2e943266ad2a090f9168397df3b73c44
+CAMERAKIT_VERSION=2.5.0.000000
+XCFRAMEWORK=ios/Vendor/PerfectCameraKit/PerfectLibCameraKit.xcframework
+MODELS=ios/Vendor/PerfectCameraKit/model
+MODEL_FILE=ios/Vendor/PerfectCameraKit/model/uneven_lighting_net_20190808.bin
+MODEL_FILE=ios/Vendor/PerfectCameraKit/model/YMK_Davinci_20200512_fp16.mnn
+MODEL_FILE=ios/Vendor/PerfectCameraKit/model/backlighting_net_20190808.bin
+MODEL_FILE=ios/Vendor/PerfectCameraKit/model/YMK_Venus_20210709_fp16_alignmodel.mnn
+MODEL_FILE=ios/Vendor/PerfectCameraKit/model/exposure_net_20190808.bin
+NATIVE=ios/Runner/PerfectCameraKitChannel.swift
+DART_GATE=lib/features/skin_analysis/presentation/capture/perfect_camera_kit_gate.dart
+CAPTURE_UI=lib/features/skin_analysis/presentation/widgets/face_capture_panel.dart

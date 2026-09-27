@@ -1,0 +1,6 @@
+- lib/features/results_experience/domain/perfect_mask_session.dart
+- lib/features/results_experience/presentation/widgets/results_skin_map_panel.dart
+- lib/features/skin_analysis/presentation/widgets/face_capture_panel.dart
+- lib/features/dashboard/presentation/screens/new_analysis_screen.dart
+- lib/features/skin_analysis/presentation/live_face_map/face_mesh_quality_gate.dart
+- test/results_experience/perfect_mask_face_explorer_polish_test.dart

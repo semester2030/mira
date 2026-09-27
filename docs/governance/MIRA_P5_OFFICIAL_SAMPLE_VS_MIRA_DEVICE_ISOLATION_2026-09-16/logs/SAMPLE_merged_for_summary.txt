@@ -1,0 +1,290 @@
+2026-09-16 01:51:10.005822+0300 CameraKitDemo[18116:1347517] Create CameraKit with path (/private/var/containers/Bundle/Application/57864C27-FBC1-4C59-8905-06228665EE14/CameraKitDemo.app/model)
+2026-09-16 01:51:10.016354+0300 CameraKitDemo[18116:1347517] Set CameraKit Level : Relaxed
+2026-09-16 01:51:10.016359+0300 CameraKitDemo[18116:1347517] Set CameraKit Level values : faceSizeRatio=0.55, faceYaw=15.00, facePitchUpper=10.00, facePitchLower=-20.00, lightingUpper=0.80, lightingLower=0.55
+2026-09-16 01:51:10.016374+0300 CameraKitDemo[18116:1347517] Set CameraKit Level : Moderate
+2026-09-16 01:51:10.016378+0300 CameraKitDemo[18116:1347517] Set CameraKit Level values : faceSizeRatio=0.65, faceYaw=10.00, facePitchUpper=5.00, facePitchLower=-15.00, lightingUpper=0.85, lightingLower=0.70
+2026-09-16 01:51:10.016424+0300 CameraKitDemo[18116:1347517] MiraIsolation SAMPLE FINAL_CONFIG reason=applyCheckerMode probe=CKISO-20260915A session=1 sdk=2.5.0.000000 level=Moderate yaw=10.0 size=0.65 lightL=0.70 lightU=0.85 pitchU=5.0 pitchL=-15.0
+2026-09-16 01:51:10.016440+0300 CameraKitDemo[18116:1347517] MiraIsolation SAMPLE FINAL_CONFIG reason=after_create_applyCheckerMode probe=CKISO-20260915A session=1 sdk=2.5.0.000000 level=Moderate yaw=10.0 size=0.65 lightL=0.70 lightU=0.85 pitchU=5.0 pitchL=-15.0
+2026-09-16 01:51:10.019381+0300 CameraKitDemo[18116:1347533] Set CameraKit core mode success, Mode: 1
+2026-09-16 01:51:10.297005+0300 CameraKitDemo[18116:1347517] MiraIsolation SAMPLE quality session=1 n=1 canCapture=0 isValid=0 area=unknown pose=unknown light=unknown deg=0.0 longestCanMs=0
+2026-09-16 01:51:10.423148+0300 CameraKitDemo[18116:1347517] MiraIsolation SAMPLE quality session=1 n=5 canCapture=0 isValid=0 area=too_small pose=bad light=unknown deg=0.0 longestCanMs=0
+2026-09-16 01:51:10.545520+0300 CameraKitDemo[18116:1347517] MiraIsolation SAMPLE quality session=1 n=8 canCapture=0 isValid=0 area=too_small pose=bad light=unknown deg=0.0 longestCanMs=0
+2026-09-16 01:51:10.656323+0300 CameraKitDemo[18116:1347517] MiraIsolation SAMPLE quality session=1 n=12 canCapture=0 isValid=0 area=too_small pose=bad light=unknown deg=0.0 longestCanMs=0
+2026-09-16 01:51:10.775916+0300 CameraKitDemo[18116:1347517] MiraIsolation SAMPLE quality session=1 n=15 canCapture=0 isValid=0 area=too_small pose=bad light=unknown deg=0.0 longestCanMs=0
+2026-09-16 01:51:10.892829+0300 CameraKitDemo[18116:1347517] MiraIsolation SAMPLE quality session=1 n=19 canCapture=0 isValid=0 area=too_small pose=bad light=unknown deg=0.0 longestCanMs=0
+2026-09-16 01:51:10.992938+0300 CameraKitDemo[18116:1347517] MiraIsolation SAMPLE quality session=1 n=22 canCapture=0 isValid=0 area=too_small pose=bad light=unknown deg=0.0 longestCanMs=0
+2026-09-16 01:51:11.101474+0300 CameraKitDemo[18116:1347517] MiraIsolation SAMPLE quality session=1 n=24 canCapture=0 isValid=0 area=too_small pose=bad light=unknown deg=0.0 longestCanMs=0
+2026-09-16 01:51:11.202000+0300 CameraKitDemo[18116:1347517] MiraIsolation SAMPLE quality session=1 n=28 canCapture=0 isValid=0 area=too_small pose=bad light=unknown deg=0.0 longestCanMs=0
+2026-09-16 01:51:11.304527+0300 CameraKitDemo[18116:1347517] MiraIsolation SAMPLE quality session=1 n=31 canCapture=0 isValid=0 area=too_small pose=bad light=unknown deg=0.0 longestCanMs=0
+2026-09-16 01:51:11.404950+0300 CameraKitDemo[18116:1347517] MiraIsolation SAMPLE quality session=1 n=34 canCapture=0 isValid=0 area=too_small pose=bad light=unknown deg=0.0 longestCanMs=0
+2026-09-16 01:51:11.504544+0300 CameraKitDemo[18116:1347517] MiraIsolation SAMPLE quality session=1 n=37 canCapture=0 isValid=0 area=too_small pose=bad light=unknown deg=0.0 longestCanMs=0
+2026-09-16 01:51:11.625609+0300 CameraKitDemo[18116:1347517] MiraIsolation SAMPLE quality session=1 n=40 canCapture=0 isValid=0 area=too_small pose=bad light=unknown deg=0.0 longestCanMs=0
+2026-09-16 01:51:11.734353+0300 CameraKitDemo[18116:1347517] MiraIsolation SAMPLE quality session=1 n=44 canCapture=0 isValid=0 area=too_small pose=bad light=unknown deg=0.0 longestCanMs=0
+2026-09-16 01:51:11.836771+0300 CameraKitDemo[18116:1347517] MiraIsolation SAMPLE quality session=1 n=47 canCapture=0 isValid=0 area=too_small pose=bad light=unknown deg=0.0 longestCanMs=0
+2026-09-16 01:51:11.937400+0300 CameraKitDemo[18116:1347517] MiraIsolation SAMPLE quality session=1 n=50 canCapture=0 isValid=0 area=too_small pose=bad light=unknown deg=0.0 longestCanMs=0
+2026-09-16 01:51:12.037191+0300 CameraKitDemo[18116:1347517] MiraIsolation SAMPLE quality session=1 n=53 canCapture=0 isValid=0 area=too_small pose=bad light=unknown deg=0.0 longestCanMs=0
+2026-09-16 01:51:12.162414+0300 CameraKitDemo[18116:1347517] MiraIsolation SAMPLE quality session=1 n=56 canCapture=0 isValid=0 area=too_small pose=bad light=unknown deg=0.0 longestCanMs=0
+2026-09-16 01:51:12.268523+0300 CameraKitDemo[18116:1347517] MiraIsolation SAMPLE quality session=1 n=60 canCapture=0 isValid=0 area=too_small pose=bad light=unknown deg=0.0 longestCanMs=0
+2026-09-16 01:51:12.370222+0300 CameraKitDemo[18116:1347517] MiraIsolation SAMPLE quality session=1 n=63 canCapture=0 isValid=0 area=too_small pose=bad light=unknown deg=0.0 longestCanMs=0
+2026-09-16 01:51:12.471225+0300 CameraKitDemo[18116:1347517] MiraIsolation SAMPLE quality session=1 n=66 canCapture=0 isValid=0 area=too_small pose=bad light=unknown deg=0.0 longestCanMs=0
+2026-09-16 01:51:12.603747+0300 CameraKitDemo[18116:1347517] MiraIsolation SAMPLE quality session=1 n=70 canCapture=0 isValid=0 area=too_small pose=bad light=unknown deg=0.0 longestCanMs=0
+2026-09-16 01:51:12.732876+0300 CameraKitDemo[18116:1347517] MiraIsolation SAMPLE quality session=1 n=74 canCapture=0 isValid=0 area=too_small pose=bad light=unknown deg=0.0 longestCanMs=0
+2026-09-16 01:51:12.835342+0300 CameraKitDemo[18116:1347517] MiraIsolation SAMPLE quality session=1 n=77 canCapture=0 isValid=0 area=too_small pose=bad light=unknown deg=0.0 longestCanMs=0
+2026-09-16 01:51:12.938185+0300 CameraKitDemo[18116:1347517] MiraIsolation SAMPLE quality session=1 n=80 canCapture=0 isValid=0 area=too_small pose=bad light=unknown deg=0.0 longestCanMs=0
+2026-09-16 01:51:13.038427+0300 CameraKitDemo[18116:1347517] MiraIsolation SAMPLE quality session=1 n=83 canCapture=0 isValid=0 area=too_small pose=bad light=unknown deg=0.0 longestCanMs=0
+2026-09-16 01:51:13.194511+0300 CameraKitDemo[18116:1347517] MiraIsolation SAMPLE quality session=1 n=87 canCapture=0 isValid=0 area=too_small pose=good light=unknown deg=0.0 longestCanMs=0
+2026-09-16 01:51:13.308397+0300 CameraKitDemo[18116:1347517] MiraIsolation SAMPLE quality session=1 n=91 canCapture=0 isValid=0 area=too_small pose=good light=unknown deg=0.0 longestCanMs=0
+2026-09-16 01:51:13.417963+0300 CameraKitDemo[18116:1347517] MiraIsolation SAMPLE quality session=1 n=94 canCapture=0 isValid=0 area=too_small pose=good light=under_exposed deg=0.0 longestCanMs=0
+2026-09-16 01:51:13.551766+0300 CameraKitDemo[18116:1347517] MiraIsolation SAMPLE quality session=1 n=97 canCapture=0 isValid=0 area=too_small pose=good light=under_exposed deg=0.0 longestCanMs=0
+2026-09-16 01:51:13.669734+0300 CameraKitDemo[18116:1347517] MiraIsolation SAMPLE quality session=1 n=100 canCapture=0 isValid=0 area=too_small pose=good light=under_exposed deg=0.0 longestCanMs=0
+2026-09-16 01:51:13.772742+0300 CameraKitDemo[18116:1347517] MiraIsolation SAMPLE quality session=1 n=103 canCapture=0 isValid=0 area=too_small pose=good light=under_exposed deg=0.0 longestCanMs=0
+2026-09-16 01:51:13.902769+0300 CameraKitDemo[18116:1347517] MiraIsolation SAMPLE quality session=1 n=106 canCapture=0 isValid=0 area=too_small pose=good light=under_exposed deg=0.0 longestCanMs=0
+2026-09-16 01:51:14.052936+0300 CameraKitDemo[18116:1347517] MiraIsolation SAMPLE quality session=1 n=109 canCapture=0 isValid=0 area=too_small pose=good light=under_exposed deg=0.0 longestCanMs=0
+2026-09-16 01:51:14.191254+0300 CameraKitDemo[18116:1347517] MiraIsolation SAMPLE quality session=1 n=112 canCapture=0 isValid=0 area=too_small pose=good light=under_exposed deg=0.0 longestCanMs=0
+2026-09-16 01:51:14.339077+0300 CameraKitDemo[18116:1347517] MiraIsolation SAMPLE quality session=1 n=115 canCapture=0 isValid=0 area=too_small pose=good light=under_exposed deg=0.0 longestCanMs=0
+2026-09-16 01:51:14.490138+0300 CameraKitDemo[18116:1347517] MiraIsolation SAMPLE quality session=1 n=118 canCapture=0 isValid=0 area=too_small pose=good light=under_exposed deg=0.0 longestCanMs=0
+2026-09-16 01:51:14.595581+0300 CameraKitDemo[18116:1347517] MiraIsolation SAMPLE quality session=1 n=120 canCapture=0 isValid=0 area=too_small pose=bad light=under_exposed deg=0.0 longestCanMs=0
+2026-09-16 01:51:14.699250+0300 CameraKitDemo[18116:1347517] MiraIsolation SAMPLE quality session=1 n=122 canCapture=0 isValid=0 area=too_small pose=bad light=under_exposed deg=0.0 longestCanMs=0
+2026-09-16 01:51:14.838270+0300 CameraKitDemo[18116:1347517] MiraIsolation SAMPLE quality session=1 n=125 canCapture=0 isValid=0 area=too_small pose=bad light=under_exposed deg=0.0 longestCanMs=0
+2026-09-16 01:51:14.950246+0300 CameraKitDemo[18116:1347517] MiraIsolation SAMPLE quality session=1 n=127 canCapture=0 isValid=0 area=too_small pose=bad light=under_exposed deg=0.0 longestCanMs=0
+2026-09-16 01:51:15.050778+0300 CameraKitDemo[18116:1347517] MiraIsolation SAMPLE quality session=1 n=129 canCapture=0 isValid=0 area=too_small pose=good light=under_exposed deg=0.0 longestCanMs=0
+2026-09-16 01:51:15.195722+0300 CameraKitDemo[18116:1347517] MiraIsolation SAMPLE quality session=1 n=132 canCapture=0 isValid=0 area=too_small pose=good light=under_exposed deg=0.0 longestCanMs=0
+2026-09-16 01:51:15.344656+0300 CameraKitDemo[18116:1347517] MiraIsolation SAMPLE quality session=1 n=135 canCapture=0 isValid=0 area=too_small pose=good light=under_exposed deg=0.0 longestCanMs=0
+2026-09-16 01:51:15.449886+0300 CameraKitDemo[18116:1347517] MiraIsolation SAMPLE quality session=1 n=137 canCapture=0 isValid=0 area=too_small pose=good light=under_exposed deg=0.0 longestCanMs=0
+2026-09-16 01:51:15.599484+0300 CameraKitDemo[18116:1347517] MiraIsolation SAMPLE quality session=1 n=140 canCapture=0 isValid=0 area=too_small pose=good light=under_exposed deg=0.0 longestCanMs=0
+2026-09-16 01:51:15.703085+0300 CameraKitDemo[18116:1347517] MiraIsolation SAMPLE quality session=1 n=142 canCapture=0 isValid=0 area=too_small pose=good light=under_exposed deg=0.0 longestCanMs=0
+2026-09-16 01:51:15.837136+0300 CameraKitDemo[18116:1347517] MiraIsolation SAMPLE quality session=1 n=145 canCapture=0 isValid=0 area=too_small pose=good light=under_exposed deg=0.0 longestCanMs=0
+2026-09-16 01:51:15.943033+0300 CameraKitDemo[18116:1347517] MiraIsolation SAMPLE quality session=1 n=147 canCapture=0 isValid=0 area=too_small pose=good light=under_exposed deg=0.0 longestCanMs=0
+2026-09-16 01:51:16.056268+0300 CameraKitDemo[18116:1347517] MiraIsolation SAMPLE quality session=1 n=149 canCapture=0 isValid=0 area=too_small pose=good light=under_exposed deg=0.0 longestCanMs=0
+2026-09-16 01:51:16.206670+0300 CameraKitDemo[18116:1347517] MiraIsolation SAMPLE quality session=1 n=152 canCapture=0 isValid=0 area=good pose=good light=under_exposed deg=0.0 longestCanMs=0
+2026-09-16 01:51:16.350160+0300 CameraKitDemo[18116:1347517] MiraIsolation SAMPLE quality session=1 n=155 canCapture=0 isValid=0 area=good pose=good light=under_exposed deg=0.0 longestCanMs=0
+2026-09-16 01:51:16.457189+0300 CameraKitDemo[18116:1347517] MiraIsolation SAMPLE quality session=1 n=157 canCapture=0 isValid=0 area=good pose=good light=under_exposed deg=0.0 longestCanMs=0
+2026-09-16 01:51:16.559170+0300 CameraKitDemo[18116:1347517] MiraIsolation SAMPLE quality session=1 n=159 canCapture=0 isValid=0 area=too_small pose=good light=normal deg=0.0 longestCanMs=0
+2026-09-16 01:51:16.712573+0300 CameraKitDemo[18116:1347517] MiraIsolation SAMPLE quality session=1 n=162 canCapture=1 isValid=0 area=good pose=good light=normal deg=0.0 longestCanMs=57
+2026-09-16 01:51:16.852895+0300 CameraKitDemo[18116:1347517] MiraIsolation SAMPLE quality session=1 n=165 canCapture=1 isValid=0 area=good pose=good light=normal deg=0.0 longestCanMs=197
+2026-09-16 01:51:16.960520+0300 CameraKitDemo[18116:1347517] MiraIsolation SAMPLE quality session=1 n=167 canCapture=1 isValid=0 area=good pose=good light=normal deg=0.0 longestCanMs=305
+2026-09-16 01:51:17.060718+0300 CameraKitDemo[18116:1347517] MiraIsolation SAMPLE quality session=1 n=169 canCapture=1 isValid=0 area=good pose=good light=normal deg=0.0 longestCanMs=405
+2026-09-16 01:51:17.164168+0300 CameraKitDemo[18116:1347517] MiraIsolation SAMPLE quality session=1 n=171 canCapture=1 isValid=0 area=good pose=good light=normal deg=0.0 longestCanMs=509
+2026-09-16 01:51:17.296112+0300 CameraKitDemo[18116:1347517] MiraIsolation SAMPLE quality session=1 n=173 canCapture=1 isValid=0 area=good pose=good light=normal deg=0.0 longestCanMs=641
+2026-09-16 01:51:17.409305+0300 CameraKitDemo[18116:1347517] MiraIsolation SAMPLE quality session=1 n=176 canCapture=1 isValid=0 area=good pose=good light=normal deg=0.0 longestCanMs=754
+2026-09-16 01:51:17.514365+0300 CameraKitDemo[18116:1347517] MiraIsolation SAMPLE quality session=1 n=178 canCapture=1 isValid=0 area=good pose=good light=normal deg=0.0 longestCanMs=859
+2026-09-16 01:51:17.616044+0300 CameraKitDemo[18116:1347517] MiraIsolation SAMPLE quality session=1 n=180 canCapture=1 isValid=0 area=good pose=good light=normal deg=0.0 longestCanMs=960
+2026-09-16 01:51:17.717485+0300 CameraKitDemo[18116:1347517] MiraIsolation SAMPLE quality session=1 n=182 canCapture=1 isValid=0 area=good pose=good light=normal deg=0.0 longestCanMs=1062
+2026-09-16 01:51:17.859073+0300 CameraKitDemo[18116:1347517] MiraIsolation SAMPLE quality session=1 n=185 canCapture=1 isValid=0 area=good pose=good light=normal deg=0.0 longestCanMs=1204
+2026-09-16 01:51:17.966078+0300 CameraKitDemo[18116:1347517] MiraIsolation SAMPLE quality session=1 n=187 canCapture=1 isValid=0 area=good pose=good light=normal deg=0.0 longestCanMs=1311
+2026-09-16 01:51:18.067193+0300 CameraKitDemo[18116:1347517] MiraIsolation SAMPLE quality session=1 n=189 canCapture=1 isValid=0 area=good pose=good light=normal deg=0.0 longestCanMs=1412
+2026-09-16 01:51:18.170310+0300 CameraKitDemo[18116:1347517] MiraIsolation SAMPLE quality session=1 n=191 canCapture=1 isValid=0 area=good pose=good light=normal deg=0.0 longestCanMs=1515
+2026-09-16 01:51:18.300802+0300 CameraKitDemo[18116:1347517] MiraIsolation SAMPLE quality session=1 n=193 canCapture=1 isValid=0 area=good pose=good light=normal deg=0.0 longestCanMs=1645
+2026-09-16 01:51:18.415545+0300 CameraKitDemo[18116:1347517] MiraIsolation SAMPLE quality session=1 n=196 canCapture=1 isValid=0 area=good pose=good light=normal deg=0.0 longestCanMs=1760
+2026-09-16 01:51:18.520602+0300 CameraKitDemo[18116:1347517] MiraIsolation SAMPLE quality session=1 n=198 canCapture=1 isValid=0 area=good pose=good light=normal deg=0.0 longestCanMs=1865
+2026-09-16 01:51:18.620859+0300 CameraKitDemo[18116:1347517] MiraIsolation SAMPLE quality session=1 n=200 canCapture=0 isValid=0 area=too_small pose=good light=normal deg=0.0 longestCanMs=1916
+2026-09-16 01:51:18.720222+0300 CameraKitDemo[18116:1347517] MiraIsolation SAMPLE quality session=1 n=202 canCapture=0 isValid=0 area=too_small pose=good light=normal deg=0.0 longestCanMs=1916
+2026-09-16 01:51:18.856137+0300 CameraKitDemo[18116:1347517] MiraIsolation SAMPLE quality session=1 n=204 canCapture=0 isValid=0 area=too_small pose=good light=normal deg=0.0 longestCanMs=1916
+2026-09-16 01:51:18.968063+0300 CameraKitDemo[18116:1347517] MiraIsolation SAMPLE quality session=1 n=207 canCapture=0 isValid=0 area=too_small pose=good light=normal deg=0.0 longestCanMs=1916
+2026-09-16 01:51:19.072586+0300 CameraKitDemo[18116:1347517] MiraIsolation SAMPLE quality session=1 n=209 canCapture=0 isValid=0 area=too_small pose=good light=normal deg=0.0 longestCanMs=1916
+2026-09-16 01:51:19.176065+0300 CameraKitDemo[18116:1347517] MiraIsolation SAMPLE quality session=1 n=211 canCapture=0 isValid=0 area=too_small pose=good light=normal deg=0.0 longestCanMs=1916
+2026-09-16 01:51:19.276270+0300 CameraKitDemo[18116:1347517] MiraIsolation SAMPLE quality session=1 n=213 canCapture=1 isValid=0 area=good pose=good light=normal deg=0.0 longestCanMs=1916
+2026-09-16 01:51:19.418409+0300 CameraKitDemo[18116:1347517] MiraIsolation SAMPLE quality session=1 n=216 canCapture=1 isValid=0 area=good pose=good light=normal deg=0.0 longestCanMs=1916
+2026-09-16 01:51:19.524867+0300 CameraKitDemo[18116:1347517] MiraIsolation SAMPLE quality session=1 n=218 canCapture=1 isValid=0 area=good pose=good light=normal deg=0.0 longestCanMs=1916
+2026-09-16 01:51:19.626573+0300 CameraKitDemo[18116:1347517] MiraIsolation SAMPLE quality session=1 n=220 canCapture=1 isValid=0 area=good pose=good light=normal deg=0.0 longestCanMs=1916
+2026-09-16 01:51:19.728266+0300 CameraKitDemo[18116:1347517] MiraIsolation SAMPLE quality session=1 n=222 canCapture=1 isValid=0 area=good pose=good light=normal deg=0.0 longestCanMs=1916
+2026-09-16 01:51:19.860783+0300 CameraKitDemo[18116:1347517] MiraIsolation SAMPLE quality session=1 n=224 canCapture=1 isValid=0 area=good pose=good light=normal deg=0.0 longestCanMs=1916
+2026-09-16 01:51:19.974688+0300 CameraKitDemo[18116:1347517] MiraIsolation SAMPLE quality session=1 n=227 canCapture=1 isValid=0 area=good pose=good light=normal deg=0.0 longestCanMs=1916
+2026-09-16 01:51:20.078806+0300 CameraKitDemo[18116:1347517] MiraIsolation SAMPLE quality session=1 n=229 canCapture=1 isValid=0 area=good pose=good light=normal deg=0.0 longestCanMs=1916
+2026-09-16 01:51:20.181690+0300 CameraKitDemo[18116:1347517] MiraIsolation SAMPLE quality session=1 n=231 canCapture=1 isValid=0 area=good pose=good light=normal deg=0.0 longestCanMs=1916
+2026-09-16 01:51:20.362532+0300 CameraKitDemo[18116:1347517] MiraIsolation SAMPLE quality session=1 n=234 canCapture=1 isValid=0 area=good pose=good light=normal deg=0.0 longestCanMs=1916
+2026-09-16 01:51:20.402914+0300 CameraKitDemo[18116:1347517] MiraIsolation SAMPLE capture REQUEST session=1 canCapture=1 isValid=0 longestCanMs=1916
+2026-09-16 01:51:20.471632+0300 CameraKitDemo[18116:1347517] MiraIsolation SAMPLE quality session=1 n=237 canCapture=1 isValid=0 area=good pose=good light=normal deg=0.0 longestCanMs=1916
+2026-09-16 01:51:20.711924+0300 CameraKitDemo[18116:1347517] MiraIsolation SAMPLE quality session=1 n=240 canCapture=1 isValid=0 area=good pose=good light=normal deg=0.0 longestCanMs=1916
+2026-09-16 01:51:20.880754+0300 CameraKitDemo[18116:1347517] MiraIsolation SAMPLE quality session=1 n=243 canCapture=1 isValid=0 area=good pose=good light=normal deg=0.0 longestCanMs=1916
+2026-09-16 01:51:21.008857+0300 CameraKitDemo[18116:1347517] MiraIsolation SAMPLE quality session=1 n=246 canCapture=1 isValid=0 area=good pose=good light=normal deg=0.0 longestCanMs=1916
+2026-09-16 01:51:21.109765+0300 CameraKitDemo[18116:1347517] MiraIsolation SAMPLE quality session=1 n=248 canCapture=1 isValid=0 area=good pose=good light=normal deg=0.0 longestCanMs=1916
+2026-09-16 01:51:21.336404+0300 CameraKitDemo[18116:1347517] MiraIsolation SAMPLE capture SUCCESS session=1 imageW=3024 imageH=4032 (no image bytes logged)
+2026-09-16 01:51:21.561938+0300 CameraKitDemo[18116:1347517] MiraIsolation SAMPLE quality session=1 n=249 canCapture=1 isValid=0 area=good pose=good light=normal deg=0.0 longestCanMs=2285
+2026-09-16 01:51:25.386693+0300 CameraKitDemo[18116:1347517] MiraIsolation SAMPLE quality session=1 n=253 canCapture=0 isValid=0 area=too_small pose=good light=normal deg=0.0 longestCanMs=2286
+2026-09-16 01:51:25.515205+0300 CameraKitDemo[18116:1347517] MiraIsolation SAMPLE quality session=1 n=257 canCapture=0 isValid=0 area=too_small pose=good light=under_exposed deg=0.0 longestCanMs=2286
+2026-09-16 01:51:25.616531+0300 CameraKitDemo[18116:1347517] MiraIsolation SAMPLE quality session=1 n=259 canCapture=0 isValid=0 area=too_small pose=good light=under_exposed deg=0.0 longestCanMs=2286
+2026-09-16 01:51:25.754921+0300 CameraKitDemo[18116:1347517] MiraIsolation SAMPLE quality session=1 n=262 canCapture=0 isValid=0 area=too_small pose=good light=under_exposed deg=0.0 longestCanMs=2286
+2026-09-16 01:51:25.860525+0300 CameraKitDemo[18116:1347517] MiraIsolation SAMPLE quality session=1 n=264 canCapture=0 isValid=0 area=too_small pose=good light=under_exposed deg=0.0 longestCanMs=2286
+2026-09-16 01:51:26.010006+0300 CameraKitDemo[18116:1347517] MiraIsolation SAMPLE quality session=1 n=267 canCapture=0 isValid=0 area=too_small pose=good light=under_exposed deg=0.0 longestCanMs=2286
+2026-09-16 01:51:26.112769+0300 CameraKitDemo[18116:1347517] MiraIsolation SAMPLE quality session=1 n=269 canCapture=0 isValid=0 area=too_small pose=good light=normal deg=0.0 longestCanMs=2286
+2026-09-16 01:51:26.220162+0300 CameraKitDemo[18116:1347517] MiraIsolation SAMPLE quality session=1 n=271 canCapture=0 isValid=0 area=too_small pose=good light=normal deg=0.0 longestCanMs=2286
+2026-09-16 01:51:26.324152+0300 CameraKitDemo[18116:1347517] MiraIsolation SAMPLE quality session=1 n=273 canCapture=0 isValid=0 area=too_small pose=good light=under_exposed deg=0.0 longestCanMs=2286
+2026-09-16 01:51:26.457067+0300 CameraKitDemo[18116:1347517] MiraIsolation SAMPLE quality session=1 n=275 canCapture=0 isValid=0 area=too_small pose=good light=under_exposed deg=0.0 longestCanMs=2286
+2026-09-16 01:51:26.571538+0300 CameraKitDemo[18116:1347517] MiraIsolation SAMPLE quality session=1 n=278 canCapture=0 isValid=0 area=too_small pose=good light=under_exposed deg=0.0 longestCanMs=2286
+2026-09-16 01:51:26.674570+0300 CameraKitDemo[18116:1347517] MiraIsolation SAMPLE quality session=1 n=280 canCapture=0 isValid=0 area=too_small pose=good light=under_exposed deg=0.0 longestCanMs=2286
+2026-09-16 01:51:26.777823+0300 CameraKitDemo[18116:1347517] MiraIsolation SAMPLE quality session=1 n=282 canCapture=0 isValid=0 area=too_small pose=good light=under_exposed deg=0.0 longestCanMs=2286
+2026-09-16 01:51:26.932051+0300 CameraKitDemo[18116:1347517] MiraIsolation SAMPLE quality session=1 n=285 canCapture=0 isValid=0 area=too_small pose=good light=under_exposed deg=0.0 longestCanMs=2286
+2026-09-16 01:51:27.063019+0300 CameraKitDemo[18116:1347517] MiraIsolation SAMPLE quality session=1 n=288 canCapture=0 isValid=0 area=too_small pose=good light=under_exposed deg=0.0 longestCanMs=2286
+2026-09-16 01:51:27.163464+0300 CameraKitDemo[18116:1347517] MiraIsolation SAMPLE quality session=1 n=290 canCapture=0 isValid=0 area=too_small pose=good light=under_exposed deg=0.0 longestCanMs=2286
+2026-09-16 01:51:27.268517+0300 CameraKitDemo[18116:1347517] MiraIsolation SAMPLE quality session=1 n=292 canCapture=0 isValid=0 area=too_small pose=good light=under_exposed deg=0.0 longestCanMs=2286
+2026-09-16 01:51:27.378713+0300 CameraKitDemo[18116:1347517] MiraIsolation SAMPLE quality session=1 n=294 canCapture=0 isValid=0 area=too_small pose=good light=under_exposed deg=0.0 longestCanMs=2286
+2026-09-16 01:51:27.512049+0300 CameraKitDemo[18116:1347517] MiraIsolation SAMPLE quality session=1 n=296 canCapture=0 isValid=0 area=too_small pose=good light=under_exposed deg=0.0 longestCanMs=2286
+2026-09-16 01:51:27.622886+0300 CameraKitDemo[18116:1347517] MiraIsolation SAMPLE quality session=1 n=299 canCapture=0 isValid=0 area=too_small pose=good light=under_exposed deg=0.0 longestCanMs=2286
+2026-09-16 01:51:27.731713+0300 CameraKitDemo[18116:1347517] MiraIsolation SAMPLE quality session=1 n=301 canCapture=0 isValid=0 area=too_small pose=good light=under_exposed deg=0.0 longestCanMs=2286
+2026-09-16 01:51:27.834917+0300 CameraKitDemo[18116:1347517] MiraIsolation SAMPLE quality session=1 n=303 canCapture=0 isValid=0 area=too_small pose=good light=under_exposed deg=0.0 longestCanMs=2286
+2026-09-16 01:51:27.979341+0300 CameraKitDemo[18116:1347517] MiraIsolation SAMPLE quality session=1 n=306 canCapture=0 isValid=0 area=too_small pose=good light=under_exposed deg=0.0 longestCanMs=2286
+2026-09-16 01:51:28.127052+0300 CameraKitDemo[18116:1347517] MiraIsolation SAMPLE quality session=1 n=309 canCapture=0 isValid=0 area=too_small pose=good light=under_exposed deg=0.0 longestCanMs=2286
+2026-09-16 01:51:28.232302+0300 CameraKitDemo[18116:1347517] MiraIsolation SAMPLE quality session=1 n=311 canCapture=0 isValid=0 area=too_small pose=bad light=under_exposed deg=0.0 longestCanMs=2286
+2026-09-16 01:51:28.336024+0300 CameraKitDemo[18116:1347517] MiraIsolation SAMPLE quality session=1 n=313 canCapture=0 isValid=0 area=too_small pose=bad light=under_exposed deg=0.0 longestCanMs=2286
+2026-09-16 01:51:28.437758+0300 CameraKitDemo[18116:1347517] MiraIsolation SAMPLE quality session=1 n=315 canCapture=0 isValid=0 area=too_small pose=bad light=under_exposed deg=0.0 longestCanMs=2286
+2026-09-16 01:51:28.564308+0300 CameraKitDemo[18116:1347517] MiraIsolation SAMPLE quality session=1 n=317 canCapture=0 isValid=0 area=too_small pose=bad light=under_exposed deg=0.0 longestCanMs=2286
+2026-09-16 01:51:28.686516+0300 CameraKitDemo[18116:1347517] MiraIsolation SAMPLE quality session=1 n=320 canCapture=0 isValid=0 area=too_small pose=bad light=under_exposed deg=0.0 longestCanMs=2286
+2026-09-16 01:51:28.788342+0300 CameraKitDemo[18116:1347517] MiraIsolation SAMPLE quality session=1 n=322 canCapture=0 isValid=0 area=too_small pose=bad light=under_exposed deg=0.0 longestCanMs=2286
+2026-09-16 01:51:28.888688+0300 CameraKitDemo[18116:1347517] MiraIsolation SAMPLE quality session=1 n=324 canCapture=0 isValid=0 area=too_small pose=bad light=under_exposed deg=0.0 longestCanMs=2286
+2026-09-16 01:51:28.991733+0300 CameraKitDemo[18116:1347517] MiraIsolation SAMPLE quality session=1 n=326 canCapture=0 isValid=0 area=too_small pose=bad light=under_exposed deg=0.0 longestCanMs=2286
+2026-09-16 01:51:29.133938+0300 CameraKitDemo[18116:1347517] MiraIsolation SAMPLE quality session=1 n=329 canCapture=0 isValid=0 area=too_small pose=bad light=under_exposed deg=0.0 longestCanMs=2286
+2026-09-16 01:51:29.242048+0300 CameraKitDemo[18116:1347517] MiraIsolation SAMPLE quality session=1 n=331 canCapture=0 isValid=0 area=too_small pose=bad light=under_exposed deg=0.0 longestCanMs=2286
+2026-09-16 01:51:29.394204+0300 CameraKitDemo[18116:1347517] MiraIsolation SAMPLE quality session=1 n=334 canCapture=0 isValid=0 area=too_small pose=bad light=under_exposed deg=0.0 longestCanMs=2286
+2026-09-16 01:51:29.494099+0300 CameraKitDemo[18116:1347517] MiraIsolation SAMPLE quality session=1 n=336 canCapture=0 isValid=0 area=too_small pose=bad light=under_exposed deg=0.0 longestCanMs=2286
+2026-09-16 01:51:29.618917+0300 CameraKitDemo[18116:1347517] MiraIsolation SAMPLE quality session=1 n=338 canCapture=0 isValid=0 area=too_small pose=bad light=under_exposed deg=0.0 longestCanMs=2286
+2026-09-16 01:51:29.730468+0300 CameraKitDemo[18116:1347517] MiraIsolation SAMPLE quality session=1 n=341 canCapture=0 isValid=0 area=too_small pose=bad light=under_exposed deg=0.0 longestCanMs=2286
+2026-09-16 01:51:29.852769+0300 CameraKitDemo[18116:1347517] MiraIsolation SAMPLE quality session=1 n=344 canCapture=0 isValid=0 area=too_small pose=bad light=under_exposed deg=0.0 longestCanMs=2286
+2026-09-16 01:51:29.970690+0300 CameraKitDemo[18116:1347517] MiraIsolation SAMPLE quality session=1 n=347 canCapture=0 isValid=0 area=too_small pose=good light=under_exposed deg=0.0 longestCanMs=2286
+2026-09-16 01:51:30.089100+0300 CameraKitDemo[18116:1347517] MiraIsolation SAMPLE quality session=1 n=350 canCapture=0 isValid=0 area=too_small pose=good light=under_exposed deg=0.0 longestCanMs=2286
+2026-09-16 01:51:30.202445+0300 CameraKitDemo[18116:1347517] MiraIsolation SAMPLE quality session=1 n=353 canCapture=0 isValid=0 area=too_small pose=good light=under_exposed deg=0.0 longestCanMs=2286
+2026-09-16 01:51:30.326009+0300 CameraKitDemo[18116:1347517] MiraIsolation SAMPLE quality session=1 n=356 canCapture=0 isValid=0 area=too_small pose=good light=under_exposed deg=0.0 longestCanMs=2286
+2026-09-16 01:51:30.447753+0300 CameraKitDemo[18116:1347517] MiraIsolation SAMPLE quality session=1 n=359 canCapture=0 isValid=0 area=too_small pose=good light=under_exposed deg=0.0 longestCanMs=2286
+2026-09-16 01:51:30.566281+0300 CameraKitDemo[18116:1347517] MiraIsolation SAMPLE quality session=1 n=362 canCapture=0 isValid=0 area=too_small pose=good light=under_exposed deg=0.0 longestCanMs=2286
+2026-09-16 01:51:30.667726+0300 CameraKitDemo[18116:1347517] MiraIsolation SAMPLE quality session=1 n=364 canCapture=0 isValid=0 area=too_small pose=good light=under_exposed deg=0.0 longestCanMs=2286
+2026-09-16 01:51:30.802081+0300 CameraKitDemo[18116:1347517] MiraIsolation SAMPLE quality session=1 n=368 canCapture=0 isValid=0 area=too_small pose=good light=under_exposed deg=0.0 longestCanMs=2286
+2026-09-16 01:51:30.910100+0300 CameraKitDemo[18116:1347517] MiraIsolation SAMPLE quality session=1 n=371 canCapture=0 isValid=0 area=too_small pose=good light=under_exposed deg=0.0 longestCanMs=2286
+2026-09-16 01:51:31.040941+0300 CameraKitDemo[18116:1347517] MiraIsolation SAMPLE quality session=1 n=374 canCapture=0 isValid=0 area=too_small pose=good light=under_exposed deg=0.0 longestCanMs=2286
+2026-09-16 01:51:31.188173+0300 CameraKitDemo[18116:1347517] MiraIsolation SAMPLE quality session=1 n=377 canCapture=0 isValid=0 area=too_small pose=good light=under_exposed deg=0.0 longestCanMs=2286
+2026-09-16 01:51:31.304849+0300 CameraKitDemo[18116:1347517] MiraIsolation SAMPLE quality session=1 n=381 canCapture=0 isValid=0 area=too_small pose=good light=under_exposed deg=0.0 longestCanMs=2286
+2026-09-16 01:51:31.427545+0300 CameraKitDemo[18116:1347517] MiraIsolation SAMPLE quality session=1 n=384 canCapture=0 isValid=0 area=too_small pose=good light=under_exposed deg=0.0 longestCanMs=2286
+2026-09-16 01:51:31.557030+0300 CameraKitDemo[18116:1347517] MiraIsolation SAMPLE quality session=1 n=387 canCapture=0 isValid=0 area=too_small pose=good light=under_exposed deg=0.0 longestCanMs=2286
+2026-09-16 01:51:31.683783+0300 CameraKitDemo[18116:1347517] MiraIsolation SAMPLE quality session=1 n=390 canCapture=0 isValid=0 area=too_small pose=good light=under_exposed deg=0.0 longestCanMs=2286
+2026-09-16 01:51:31.789954+0300 CameraKitDemo[18116:1347517] MiraIsolation SAMPLE quality session=1 n=393 canCapture=0 isValid=0 area=too_small pose=good light=under_exposed deg=0.0 longestCanMs=2286
+2026-09-16 01:51:31.913618+0300 CameraKitDemo[18116:1347517] MiraIsolation SAMPLE quality session=1 n=396 canCapture=0 isValid=0 area=too_small pose=good light=under_exposed deg=0.0 longestCanMs=2286
+2026-09-16 01:51:32.028303+0300 CameraKitDemo[18116:1347517] MiraIsolation SAMPLE quality session=1 n=399 canCapture=0 isValid=0 area=too_small pose=good light=under_exposed deg=0.0 longestCanMs=2286
+2026-09-16 01:51:32.150171+0300 CameraKitDemo[18116:1347517] MiraIsolation SAMPLE quality session=1 n=402 canCapture=0 isValid=0 area=too_small pose=good light=under_exposed deg=0.0 longestCanMs=2286
+2026-09-16 01:51:32.264766+0300 CameraKitDemo[18116:1347517] MiraIsolation SAMPLE quality session=1 n=405 canCapture=0 isValid=0 area=too_small pose=bad light=under_exposed deg=0.0 longestCanMs=2286
+2026-09-16 01:51:32.379993+0300 CameraKitDemo[18116:1347517] MiraIsolation SAMPLE quality session=1 n=408 canCapture=0 isValid=0 area=too_small pose=bad light=under_exposed deg=0.0 longestCanMs=2286
+2026-09-16 01:51:32.507994+0300 CameraKitDemo[18116:1347517] MiraIsolation SAMPLE quality session=1 n=411 canCapture=0 isValid=0 area=too_small pose=bad light=under_exposed deg=0.0 longestCanMs=2286
+2026-09-16 01:51:32.627116+0300 CameraKitDemo[18116:1347517] MiraIsolation SAMPLE quality session=1 n=414 canCapture=0 isValid=0 area=too_small pose=bad light=under_exposed deg=0.0 longestCanMs=2286
+2026-09-16 01:51:32.732278+0300 CameraKitDemo[18116:1347517] MiraIsolation SAMPLE quality session=1 n=417 canCapture=0 isValid=0 area=too_small pose=bad light=under_exposed deg=0.0 longestCanMs=2286
+2026-09-16 01:51:32.857167+0300 CameraKitDemo[18116:1347517] MiraIsolation SAMPLE quality session=1 n=420 canCapture=0 isValid=0 area=too_small pose=bad light=under_exposed deg=0.0 longestCanMs=2286
+2026-09-16 01:51:32.982498+0300 CameraKitDemo[18116:1347517] MiraIsolation SAMPLE quality session=1 n=423 canCapture=0 isValid=0 area=too_small pose=bad light=under_exposed deg=0.0 longestCanMs=2286
+2026-09-16 01:51:33.094629+0300 CameraKitDemo[18116:1347517] MiraIsolation SAMPLE quality session=1 n=426 canCapture=0 isValid=0 area=too_small pose=bad light=under_exposed deg=0.0 longestCanMs=2286
+2026-09-16 01:51:33.248600+0300 CameraKitDemo[18116:1347517] MiraIsolation SAMPLE quality session=1 n=429 canCapture=0 isValid=0 area=too_small pose=bad light=under_exposed deg=0.0 longestCanMs=2286
+2026-09-16 01:51:33.373116+0300 CameraKitDemo[18116:1347517] MiraIsolation SAMPLE quality session=1 n=433 canCapture=0 isValid=0 area=too_small pose=bad light=under_exposed deg=0.0 longestCanMs=2286
+2026-09-16 01:51:33.497305+0300 CameraKitDemo[18116:1347517] MiraIsolation SAMPLE quality session=1 n=436 canCapture=0 isValid=0 area=too_small pose=good light=under_exposed deg=0.0 longestCanMs=2286
+2026-09-16 01:51:33.621477+0300 CameraKitDemo[18116:1347517] MiraIsolation SAMPLE quality session=1 n=439 canCapture=0 isValid=0 area=too_small pose=good light=under_exposed deg=0.0 longestCanMs=2286
+2026-09-16 01:51:33.747285+0300 CameraKitDemo[18116:1347517] MiraIsolation SAMPLE quality session=1 n=442 canCapture=0 isValid=0 area=too_small pose=good light=under_exposed deg=0.0 longestCanMs=2286
+2026-09-16 01:51:33.885826+0300 CameraKitDemo[18116:1347517] MiraIsolation SAMPLE quality session=1 n=446 canCapture=0 isValid=0 area=too_small pose=good light=under_exposed deg=0.0 longestCanMs=2286
+2026-09-16 01:51:34.017402+0300 CameraKitDemo[18116:1347517] MiraIsolation SAMPLE quality session=1 n=449 canCapture=0 isValid=0 area=too_small pose=good light=under_exposed deg=0.0 longestCanMs=2286
+2026-09-16 01:51:34.129382+0300 CameraKitDemo[18116:1347517] MiraIsolation SAMPLE quality session=1 n=452 canCapture=0 isValid=0 area=too_small pose=good light=under_exposed deg=0.0 longestCanMs=2286
+2026-09-16 01:51:34.277037+0300 CameraKitDemo[18116:1347517] MiraIsolation SAMPLE quality session=1 n=455 canCapture=0 isValid=0 area=too_small pose=good light=under_exposed deg=0.0 longestCanMs=2286
+2026-09-16 01:51:34.411479+0300 CameraKitDemo[18116:1347517] MiraIsolation SAMPLE quality session=1 n=459 canCapture=0 isValid=0 area=too_small pose=good light=under_exposed deg=0.0 longestCanMs=2286
+2026-09-16 01:51:34.522517+0300 CameraKitDemo[18116:1347517] MiraIsolation SAMPLE quality session=1 n=462 canCapture=0 isValid=0 area=too_small pose=good light=under_exposed deg=0.0 longestCanMs=2286
+2026-09-16 01:51:34.648922+0300 CameraKitDemo[18116:1347517] MiraIsolation SAMPLE quality session=1 n=465 canCapture=0 isValid=0 area=too_small pose=good light=under_exposed deg=0.0 longestCanMs=2286
+2026-09-16 01:51:34.797514+0300 CameraKitDemo[18116:1347517] MiraIsolation SAMPLE quality session=1 n=468 canCapture=0 isValid=0 area=too_small pose=good light=under_exposed deg=0.0 longestCanMs=2286
+2026-09-16 01:51:34.944071+0300 CameraKitDemo[18116:1347517] MiraIsolation SAMPLE quality session=1 n=472 canCapture=0 isValid=0 area=too_small pose=bad light=under_exposed deg=0.0 longestCanMs=2286
+2026-09-16 01:51:35.097804+0300 CameraKitDemo[18116:1347517] MiraIsolation SAMPLE quality session=1 n=475 canCapture=0 isValid=0 area=too_small pose=bad light=under_exposed deg=0.0 longestCanMs=2286
+2026-09-16 01:51:35.240014+0300 CameraKitDemo[18116:1347517] MiraIsolation SAMPLE quality session=1 n=478 canCapture=0 isValid=0 area=too_small pose=good light=under_exposed deg=0.0 longestCanMs=2286
+2026-09-16 01:51:35.390274+0300 CameraKitDemo[18116:1347517] MiraIsolation SAMPLE quality session=1 n=481 canCapture=0 isValid=0 area=too_small pose=good light=under_exposed deg=0.0 longestCanMs=2286
+2026-09-16 01:51:35.494890+0300 CameraKitDemo[18116:1347517] MiraIsolation SAMPLE quality session=1 n=483 canCapture=0 isValid=0 area=too_small pose=good light=under_exposed deg=0.0 longestCanMs=2286
+2026-09-16 01:51:35.644551+0300 CameraKitDemo[18116:1347517] MiraIsolation SAMPLE quality session=1 n=486 canCapture=0 isValid=0 area=too_small pose=good light=under_exposed deg=0.0 longestCanMs=2286
+2026-09-16 01:51:35.749733+0300 CameraKitDemo[18116:1347517] MiraIsolation SAMPLE quality session=1 n=488 canCapture=0 isValid=0 area=too_small pose=good light=under_exposed deg=0.0 longestCanMs=2286
+2026-09-16 01:51:35.893759+0300 CameraKitDemo[18116:1347517] MiraIsolation SAMPLE quality session=1 n=491 canCapture=0 isValid=0 area=too_small pose=good light=under_exposed deg=0.0 longestCanMs=2286
+2026-09-16 01:51:35.998732+0300 CameraKitDemo[18116:1347517] MiraIsolation SAMPLE quality session=1 n=493 canCapture=0 isValid=0 area=too_small pose=good light=under_exposed deg=0.0 longestCanMs=2286
+2026-09-16 01:51:36.101129+0300 CameraKitDemo[18116:1347517] MiraIsolation SAMPLE quality session=1 n=495 canCapture=0 isValid=0 area=too_small pose=good light=under_exposed deg=0.0 longestCanMs=2286
+2026-09-16 01:51:36.203870+0300 CameraKitDemo[18116:1347517] MiraIsolation SAMPLE quality session=1 n=497 canCapture=0 isValid=0 area=too_small pose=good light=under_exposed deg=0.0 longestCanMs=2286
+2026-09-16 01:51:36.391197+0300 CameraKitDemo[18116:1347517] MiraIsolation SAMPLE quality session=1 n=500 canCapture=0 isValid=0 area=too_small pose=good light=under_exposed deg=0.0 longestCanMs=2286
+2026-09-16 01:51:36.496224+0300 CameraKitDemo[18116:1347517] MiraIsolation SAMPLE quality session=1 n=503 canCapture=0 isValid=0 area=too_small pose=good light=under_exposed deg=0.0 longestCanMs=2286
+2026-09-16 01:51:36.603755+0300 CameraKitDemo[18116:1347517] MiraIsolation SAMPLE quality session=1 n=505 canCapture=0 isValid=0 area=too_small pose=good light=under_exposed deg=0.0 longestCanMs=2286
+2026-09-16 01:51:36.703209+0300 CameraKitDemo[18116:1347517] MiraIsolation SAMPLE quality session=1 n=507 canCapture=0 isValid=0 area=good pose=good light=under_exposed deg=0.0 longestCanMs=2286
+2026-09-16 01:51:36.895045+0300 CameraKitDemo[18116:1347517] MiraIsolation SAMPLE quality session=1 n=510 canCapture=0 isValid=0 area=good pose=good light=under_exposed deg=0.0 longestCanMs=2286
+2026-09-16 01:51:37.002360+0300 CameraKitDemo[18116:1347517] MiraIsolation SAMPLE quality session=1 n=513 canCapture=0 isValid=0 area=good pose=bad light=under_exposed deg=0.0 longestCanMs=2286
+2026-09-16 01:51:37.108693+0300 CameraKitDemo[18116:1347517] MiraIsolation SAMPLE quality session=1 n=515 canCapture=0 isValid=0 area=good pose=bad light=under_exposed deg=0.0 longestCanMs=2286
+2026-09-16 01:51:37.210130+0300 CameraKitDemo[18116:1347517] MiraIsolation SAMPLE quality session=1 n=517 canCapture=0 isValid=0 area=good pose=bad light=under_exposed deg=0.0 longestCanMs=2286
+2026-09-16 01:51:37.360100+0300 CameraKitDemo[18116:1347517] MiraIsolation SAMPLE quality session=1 n=520 canCapture=0 isValid=0 area=good pose=bad light=good deg=0.0 longestCanMs=2286
+2026-09-16 01:51:37.502612+0300 CameraKitDemo[18116:1347517] MiraIsolation SAMPLE quality session=1 n=523 canCapture=1 isValid=0 area=good pose=good light=good deg=0.0 longestCanMs=2286
+2026-09-16 01:51:37.609150+0300 CameraKitDemo[18116:1347517] MiraIsolation SAMPLE quality session=1 n=525 canCapture=1 isValid=0 area=good pose=good light=good deg=0.0 longestCanMs=2286
+2026-09-16 01:51:37.711976+0300 CameraKitDemo[18116:1347517] MiraIsolation SAMPLE quality session=1 n=527 canCapture=1 isValid=0 area=good pose=good light=good deg=0.0 longestCanMs=2286
+2026-09-16 01:51:37.860754+0300 CameraKitDemo[18116:1347517] MiraIsolation SAMPLE quality session=1 n=530 canCapture=1 isValid=0 area=good pose=good light=good deg=0.0 longestCanMs=2286
+2026-09-16 01:51:37.998449+0300 CameraKitDemo[18116:1347517] MiraIsolation SAMPLE quality session=1 n=532 canCapture=1 isValid=0 area=good pose=good light=good deg=0.0 longestCanMs=2286
+2026-09-16 01:51:38.110324+0300 CameraKitDemo[18116:1347517] MiraIsolation SAMPLE quality session=1 n=535 canCapture=1 isValid=0 area=good pose=good light=good deg=0.0 longestCanMs=2286
+2026-09-16 01:51:38.214033+0300 CameraKitDemo[18116:1347517] MiraIsolation SAMPLE quality session=1 n=537 canCapture=1 isValid=0 area=good pose=good light=good deg=0.0 longestCanMs=2286
+2026-09-16 01:51:38.315118+0300 CameraKitDemo[18116:1347517] MiraIsolation SAMPLE quality session=1 n=539 canCapture=1 isValid=0 area=good pose=good light=good deg=0.0 longestCanMs=2286
+2026-09-16 01:51:38.417318+0300 CameraKitDemo[18116:1347517] MiraIsolation SAMPLE quality session=1 n=541 canCapture=1 isValid=0 area=good pose=good light=good deg=0.0 longestCanMs=2286
+2026-09-16 01:51:38.548690+0300 CameraKitDemo[18116:1347517] MiraIsolation SAMPLE quality session=1 n=544 canCapture=1 isValid=0 area=good pose=good light=normal deg=0.0 longestCanMs=2286
+2026-09-16 01:51:38.656100+0300 CameraKitDemo[18116:1347517] MiraIsolation SAMPLE quality session=1 n=546 canCapture=1 isValid=0 area=good pose=good light=normal deg=0.0 longestCanMs=2286
+2026-09-16 01:51:38.766828+0300 CameraKitDemo[18116:1347517] MiraIsolation SAMPLE quality session=1 n=548 canCapture=1 isValid=0 area=good pose=good light=normal deg=0.0 longestCanMs=2286
+2026-09-16 01:51:38.868255+0300 CameraKitDemo[18116:1347517] MiraIsolation SAMPLE quality session=1 n=550 canCapture=1 isValid=0 area=good pose=good light=normal deg=0.0 longestCanMs=2286
+2026-09-16 01:51:39.040328+0300 CameraKitDemo[18116:1347517] MiraIsolation SAMPLE quality session=1 n=553 canCapture=1 isValid=0 area=good pose=good light=normal deg=0.0 longestCanMs=2286
+2026-09-16 01:51:39.166298+0300 CameraKitDemo[18116:1347517] MiraIsolation SAMPLE quality session=1 n=556 canCapture=1 isValid=0 area=good pose=good light=normal deg=0.0 longestCanMs=2286
+2026-09-16 01:51:39.268591+0300 CameraKitDemo[18116:1347517] MiraIsolation SAMPLE quality session=1 n=558 canCapture=1 isValid=0 area=good pose=good light=normal deg=0.0 longestCanMs=2286
+2026-09-16 01:51:39.372227+0300 CameraKitDemo[18116:1347517] MiraIsolation SAMPLE quality session=1 n=560 canCapture=1 isValid=0 area=good pose=good light=normal deg=0.0 longestCanMs=2286
+2026-09-16 01:51:39.473786+0300 CameraKitDemo[18116:1347517] MiraIsolation SAMPLE quality session=1 n=562 canCapture=1 isValid=0 area=good pose=good light=normal deg=0.0 longestCanMs=2286
+2026-09-16 01:51:39.614539+0300 CameraKitDemo[18116:1347517] MiraIsolation SAMPLE quality session=1 n=565 canCapture=1 isValid=0 area=good pose=good light=normal deg=0.0 longestCanMs=2286
+2026-09-16 01:51:39.720502+0300 CameraKitDemo[18116:1347517] MiraIsolation SAMPLE quality session=1 n=567 canCapture=1 isValid=0 area=good pose=good light=normal deg=0.0 longestCanMs=2286
+2026-09-16 01:51:39.825496+0300 CameraKitDemo[18116:1347517] MiraIsolation SAMPLE quality session=1 n=569 canCapture=1 isValid=0 area=good pose=good light=normal deg=0.0 longestCanMs=2323
+2026-09-16 01:51:39.925456+0300 CameraKitDemo[18116:1347517] MiraIsolation SAMPLE quality session=1 n=571 canCapture=1 isValid=0 area=good pose=good light=normal deg=0.0 longestCanMs=2423
+2026-09-16 01:51:40.057929+0300 CameraKitDemo[18116:1347517] MiraIsolation SAMPLE quality session=1 n=573 canCapture=1 isValid=0 area=good pose=good light=normal deg=0.0 longestCanMs=2555
+2026-09-16 01:51:40.168973+0300 CameraKitDemo[18116:1347517] MiraIsolation SAMPLE quality session=1 n=576 canCapture=0 isValid=0 area=good pose=bad light=normal deg=0.0 longestCanMs=2555
+2026-09-16 01:51:40.274583+0300 CameraKitDemo[18116:1347517] MiraIsolation SAMPLE quality session=1 n=578 canCapture=0 isValid=0 area=good pose=bad light=normal deg=0.0 longestCanMs=2555
+2026-09-16 01:51:40.377346+0300 CameraKitDemo[18116:1347517] MiraIsolation SAMPLE quality session=1 n=580 canCapture=0 isValid=0 area=good pose=bad light=normal deg=0.0 longestCanMs=2555
+2026-09-16 01:51:40.477596+0300 CameraKitDemo[18116:1347517] MiraIsolation SAMPLE quality session=1 n=582 canCapture=0 isValid=0 area=good pose=bad light=normal deg=0.0 longestCanMs=2555
+2026-09-16 01:51:40.619781+0300 CameraKitDemo[18116:1347517] MiraIsolation SAMPLE quality session=1 n=585 canCapture=1 isValid=0 area=good pose=good light=normal deg=0.0 longestCanMs=2555
+2026-09-16 01:51:40.726314+0300 CameraKitDemo[18116:1347517] MiraIsolation SAMPLE quality session=1 n=587 canCapture=0 isValid=0 area=good pose=bad light=normal deg=0.0 longestCanMs=2555
+2026-09-16 01:51:40.830092+0300 CameraKitDemo[18116:1347517] MiraIsolation SAMPLE quality session=1 n=589 canCapture=1 isValid=0 area=good pose=good light=normal deg=0.0 longestCanMs=2555
+2026-09-16 01:51:40.930521+0300 CameraKitDemo[18116:1347517] MiraIsolation SAMPLE quality session=1 n=591 canCapture=0 isValid=0 area=too_small pose=good light=normal deg=0.0 longestCanMs=2555
+2026-09-16 01:51:41.062245+0300 CameraKitDemo[18116:1347517] MiraIsolation SAMPLE quality session=1 n=593 canCapture=0 isValid=0 area=too_small pose=good light=normal deg=0.0 longestCanMs=2555
+2026-09-16 01:51:41.177738+0300 CameraKitDemo[18116:1347517] MiraIsolation SAMPLE quality session=1 n=596 canCapture=0 isValid=0 area=too_small pose=good light=normal deg=0.0 longestCanMs=2555
+2026-09-16 01:51:41.281213+0300 CameraKitDemo[18116:1347517] MiraIsolation SAMPLE quality session=1 n=598 canCapture=0 isValid=0 area=too_small pose=good light=normal deg=0.0 longestCanMs=2555
+2026-09-16 01:51:41.384779+0300 CameraKitDemo[18116:1347517] MiraIsolation SAMPLE quality session=1 n=600 canCapture=0 isValid=0 area=too_small pose=good light=normal deg=0.0 longestCanMs=2555
+2026-09-16 01:51:41.484836+0300 CameraKitDemo[18116:1347517] MiraIsolation SAMPLE quality session=1 n=602 canCapture=0 isValid=0 area=too_small pose=good light=normal deg=0.0 longestCanMs=2555
+2026-09-16 01:51:41.626954+0300 CameraKitDemo[18116:1347517] MiraIsolation SAMPLE quality session=1 n=605 canCapture=0 isValid=0 area=too_small pose=good light=normal deg=0.0 longestCanMs=2555
+2026-09-16 01:51:41.733138+0300 CameraKitDemo[18116:1347517] MiraIsolation SAMPLE quality session=1 n=607 canCapture=0 isValid=0 area=too_small pose=good light=normal deg=0.0 longestCanMs=2555
+2026-09-16 01:51:41.836465+0300 CameraKitDemo[18116:1347517] MiraIsolation SAMPLE quality session=1 n=609 canCapture=0 isValid=0 area=too_small pose=bad light=normal deg=0.0 longestCanMs=2555
+
+Sep 16 01:51:36.392336 CameraKitDemo(Foundation)[18116] <Notice>: MiraIsolation SAMPLE quality session=1 n=500 canCapture=0 isValid=0 area=too_small pose=good light=under_exposed deg=0.0 longestCanMs=2286
+Sep 16 01:51:36.496323 CameraKitDemo(Foundation)[18116] <Notice>: MiraIsolation SAMPLE quality session=1 n=503 canCapture=0 isValid=0 area=too_small pose=good light=under_exposed deg=0.0 longestCanMs=2286
+Sep 16 01:51:36.604055 CameraKitDemo(Foundation)[18116] <Notice>: MiraIsolation SAMPLE quality session=1 n=505 canCapture=0 isValid=0 area=too_small pose=good light=under_exposed deg=0.0 longestCanMs=2286
+Sep 16 01:51:36.704084 CameraKitDemo(Foundation)[18116] <Notice>: MiraIsolation SAMPLE quality session=1 n=507 canCapture=0 isValid=0 area=good pose=good light=under_exposed deg=0.0 longestCanMs=2286
+Sep 16 01:51:36.895318 CameraKitDemo(Foundation)[18116] <Notice>: MiraIsolation SAMPLE quality session=1 n=510 canCapture=0 isValid=0 area=good pose=good light=under_exposed deg=0.0 longestCanMs=2286
+Sep 16 01:51:37.002598 CameraKitDemo(Foundation)[18116] <Notice>: MiraIsolation SAMPLE quality session=1 n=513 canCapture=0 isValid=0 area=good pose=bad light=under_exposed deg=0.0 longestCanMs=2286
+Sep 16 01:51:37.108904 CameraKitDemo(Foundation)[18116] <Notice>: MiraIsolation SAMPLE quality session=1 n=515 canCapture=0 isValid=0 area=good pose=bad light=under_exposed deg=0.0 longestCanMs=2286
+Sep 16 01:51:37.210445 CameraKitDemo(Foundation)[18116] <Notice>: MiraIsolation SAMPLE quality session=1 n=517 canCapture=0 isValid=0 area=good pose=bad light=under_exposed deg=0.0 longestCanMs=2286
+Sep 16 01:51:37.360401 CameraKitDemo(Foundation)[18116] <Notice>: MiraIsolation SAMPLE quality session=1 n=520 canCapture=0 isValid=0 area=good pose=bad light=good deg=0.0 longestCanMs=2286
+Sep 16 01:51:37.502698 CameraKitDemo(Foundation)[18116] <Notice>: MiraIsolation SAMPLE quality session=1 n=523 canCapture=1 isValid=0 area=good pose=good light=good deg=0.0 longestCanMs=2286
+Sep 16 01:51:37.609241 CameraKitDemo(Foundation)[18116] <Notice>: MiraIsolation SAMPLE quality session=1 n=525 canCapture=1 isValid=0 area=good pose=good light=good deg=0.0 longestCanMs=2286
+Sep 16 01:51:37.712348 CameraKitDemo(Foundation)[18116] <Notice>: MiraIsolation SAMPLE quality session=1 n=527 canCapture=1 isValid=0 area=good pose=good light=good deg=0.0 longestCanMs=2286
+Sep 16 01:51:37.860961 CameraKitDemo(Foundation)[18116] <Notice>: MiraIsolation SAMPLE quality session=1 n=530 canCapture=1 isValid=0 area=good pose=good light=good deg=0.0 longestCanMs=2286
+Sep 16 01:51:37.998658 CameraKitDemo(Foundation)[18116] <Notice>: MiraIsolation SAMPLE quality session=1 n=532 canCapture=1 isValid=0 area=good pose=good light=good deg=0.0 longestCanMs=2286
+Sep 16 01:51:38.110516 CameraKitDemo(Foundation)[18116] <Notice>: MiraIsolation SAMPLE quality session=1 n=535 canCapture=1 isValid=0 area=good pose=good light=good deg=0.0 longestCanMs=2286
+Sep 16 01:51:38.214352 CameraKitDemo(Foundation)[18116] <Notice>: MiraIsolation SAMPLE quality session=1 n=537 canCapture=1 isValid=0 area=good pose=good light=good deg=0.0 longestCanMs=2286
+Sep 16 01:51:38.315462 CameraKitDemo(Foundation)[18116] <Notice>: MiraIsolation SAMPLE quality session=1 n=539 canCapture=1 isValid=0 area=good pose=good light=good deg=0.0 longestCanMs=2286
+Sep 16 01:51:38.417676 CameraKitDemo(Foundation)[18116] <Notice>: MiraIsolation SAMPLE quality session=1 n=541 canCapture=1 isValid=0 area=good pose=good light=good deg=0.0 longestCanMs=2286
+Sep 16 01:51:38.548753 CameraKitDemo(Foundation)[18116] <Notice>: MiraIsolation SAMPLE quality session=1 n=544 canCapture=1 isValid=0 area=good pose=good light=normal deg=0.0 longestCanMs=2286
+Sep 16 01:51:38.656287 CameraKitDemo(Foundation)[18116] <Notice>: MiraIsolation SAMPLE quality session=1 n=546 canCapture=1 isValid=0 area=good pose=good light=normal deg=0.0 longestCanMs=2286
+Sep 16 01:51:38.767023 CameraKitDemo(Foundation)[18116] <Notice>: MiraIsolation SAMPLE quality session=1 n=548 canCapture=1 isValid=0 area=good pose=good light=normal deg=0.0 longestCanMs=2286
+Sep 16 01:51:38.868502 CameraKitDemo(Foundation)[18116] <Notice>: MiraIsolation SAMPLE quality session=1 n=550 canCapture=1 isValid=0 area=good pose=good light=normal deg=0.0 longestCanMs=2286
+Sep 16 01:51:39.040416 CameraKitDemo(Foundation)[18116] <Notice>: MiraIsolation SAMPLE quality session=1 n=553 canCapture=1 isValid=0 area=good pose=good light=normal deg=0.0 longestCanMs=2286
+Sep 16 01:51:39.166481 CameraKitDemo(Foundation)[18116] <Notice>: MiraIsolation SAMPLE quality session=1 n=556 canCapture=1 isValid=0 area=good pose=good light=normal deg=0.0 longestCanMs=2286
+Sep 16 01:51:39.268800 CameraKitDemo(Foundation)[18116] <Notice>: MiraIsolation SAMPLE quality session=1 n=558 canCapture=1 isValid=0 area=good pose=good light=normal deg=0.0 longestCanMs=2286
+Sep 16 01:51:39.372473 CameraKitDemo(Foundation)[18116] <Notice>: MiraIsolation SAMPLE quality session=1 n=560 canCapture=1 isValid=0 area=good pose=good light=normal deg=0.0 longestCanMs=2286
+Sep 16 01:51:39.473997 CameraKitDemo(Foundation)[18116] <Notice>: MiraIsolation SAMPLE quality session=1 n=562 canCapture=1 isValid=0 area=good pose=good light=normal deg=0.0 longestCanMs=2286
+Sep 16 01:51:39.614824 CameraKitDemo(Foundation)[18116] <Notice>: MiraIsolation SAMPLE quality session=1 n=565 canCapture=1 isValid=0 area=good pose=good light=normal deg=0.0 longestCanMs=2286
+Sep 16 01:51:39.720706 CameraKitDemo(Foundation)[18116] <Notice>: MiraIsolation SAMPLE quality session=1 n=567 canCapture=1 isValid=0 area=good pose=good light=normal deg=0.0 longestCanMs=2286
+Sep 16 01:51:39.825854 CameraKitDemo(Foundation)[18116] <Notice>: MiraIsolation SAMPLE quality session=1 n=569 canCapture=1 isValid=0 area=good pose=good light=normal deg=0.0 longestCanMs=2323
+Sep 16 01:51:39.925825 CameraKitDemo(Foundation)[18116] <Notice>: MiraIsolation SAMPLE quality session=1 n=571 canCapture=1 isValid=0 area=good pose=good light=normal deg=0.0 longestCanMs=2423
+Sep 16 01:51:40.058164 CameraKitDemo(Foundation)[18116] <Notice>: MiraIsolation SAMPLE quality session=1 n=573 canCapture=1 isValid=0 area=good pose=good light=normal deg=0.0 longestCanMs=2555
+Sep 16 01:51:40.169146 CameraKitDemo(Foundation)[18116] <Notice>: MiraIsolation SAMPLE quality session=1 n=576 canCapture=0 isValid=0 area=good pose=bad light=normal deg=0.0 longestCanMs=2555
+Sep 16 01:51:40.274830 CameraKitDemo(Foundation)[18116] <Notice>: MiraIsolation SAMPLE quality session=1 n=578 canCapture=0 isValid=0 area=good pose=bad light=normal deg=0.0 longestCanMs=2555
+Sep 16 01:51:40.377678 CameraKitDemo(Foundation)[18116] <Notice>: MiraIsolation SAMPLE quality session=1 n=580 canCapture=0 isValid=0 area=good pose=bad light=normal deg=0.0 longestCanMs=2555
+Sep 16 01:51:40.477898 CameraKitDemo(Foundation)[18116] <Notice>: MiraIsolation SAMPLE quality session=1 n=582 canCapture=0 isValid=0 area=good pose=bad light=normal deg=0.0 longestCanMs=2555
+Sep 16 01:51:40.620036 CameraKitDemo(Foundation)[18116] <Notice>: MiraIsolation SAMPLE quality session=1 n=585 canCapture=1 isValid=0 area=good pose=good light=normal deg=0.0 longestCanMs=2555
+Sep 16 01:51:40.726408 CameraKitDemo(Foundation)[18116] <Notice>: MiraIsolation SAMPLE quality session=1 n=587 canCapture=0 isValid=0 area=good pose=bad light=normal deg=0.0 longestCanMs=2555
+Sep 16 01:51:40.830407 CameraKitDemo(Foundation)[18116] <Notice>: MiraIsolation SAMPLE quality session=1 n=589 canCapture=1 isValid=0 area=good pose=good light=normal deg=0.0 longestCanMs=2555
+Sep 16 01:51:40.930860 CameraKitDemo(Foundation)[18116] <Notice>: MiraIsolation SAMPLE quality session=1 n=591 canCapture=0 isValid=0 area=too_small pose=good light=normal deg=0.0 longestCanMs=2555
+Sep 16 01:51:41.062411 CameraKitDemo(Foundation)[18116] <Notice>: MiraIsolation SAMPLE quality session=1 n=593 canCapture=0 isValid=0 area=too_small pose=good light=normal deg=0.0 longestCanMs=2555
+Sep 16 01:51:41.177930 CameraKitDemo(Foundation)[18116] <Notice>: MiraIsolation SAMPLE quality session=1 n=596 canCapture=0 isValid=0 area=too_small pose=good light=normal deg=0.0 longestCanMs=2555
+Sep 16 01:51:41.281423 CameraKitDemo(Foundation)[18116] <Notice>: MiraIsolation SAMPLE quality session=1 n=598 canCapture=0 isValid=0 area=too_small pose=good light=normal deg=0.0 longestCanMs=2555
+Sep 16 01:51:41.385317 CameraKitDemo(Foundation)[18116] <Notice>: MiraIsolation SAMPLE quality session=1 n=600 canCapture=0 isValid=0 area=too_small pose=good light=normal deg=0.0 longestCanMs=2555
+Sep 16 01:51:41.485361 CameraKitDemo(Foundation)[18116] <Notice>: MiraIsolation SAMPLE quality session=1 n=602 canCapture=0 isValid=0 area=too_small pose=good light=normal deg=0.0 longestCanMs=2555
+Sep 16 01:51:41.627160 CameraKitDemo(Foundation)[18116] <Notice>: MiraIsolation SAMPLE quality session=1 n=605 canCapture=0 isValid=0 area=too_small pose=good light=normal deg=0.0 longestCanMs=2555
+Sep 16 01:51:41.733347 CameraKitDemo(Foundation)[18116] <Notice>: MiraIsolation SAMPLE quality session=1 n=607 canCapture=0 isValid=0 area=too_small pose=good light=normal deg=0.0 longestCanMs=2555
+Sep 16 01:51:41.836826 CameraKitDemo(Foundation)[18116] <Notice>: MiraIsolation SAMPLE quality session=1 n=609 canCapture=0 isValid=0 area=too_small pose=bad light=normal deg=0.0 longestCanMs=2555

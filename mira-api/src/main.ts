@@ -1,16 +1,22 @@
 import { ValidationPipe } from '@nestjs/common';
 import { ConfigService } from '@nestjs/config';
 import { NestFactory } from '@nestjs/core';
+import { json, type NextFunction, type Request, type Response } from 'express';
 import { AppModule } from './app.module';
 import { HttpExceptionFilter } from './common/filters/http-exception.filter';
 import { assertProviderPortsConfig } from './ports/config/provider-ports.config';
 import { assertProductionIntegrity } from './config/production-integrity';
+import { catalogRequestLimit } from './marketplace/catalog-content.policy';
 
 async function bootstrap(): Promise<void> {
   assertProductionIntegrity(process.env);
   assertProviderPortsConfig(process.env);
 
-  const app = await NestFactory.create(AppModule);
+  const app = await NestFactory.create(AppModule, { bodyParser: false });
+  app.use((req: Request, res: Response, next: NextFunction) => {
+    const path = (req.originalUrl || req.url || '').split('?')[0];
+    return json({ limit: catalogRequestLimit(req.method, path) })(req, res, next);
+  });
 
   const config = app.get(ConfigService);
   const prefix = config.get<string>('API_PREFIX', 'api/v1');

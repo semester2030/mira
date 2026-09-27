@@ -1,0 +1,92 @@
+GRANT
+GRANT
+ALTER SCHEMA
+server_port=5432 expected=5432
+npm warn Unknown env config "devdir". This will stop working in the next major version of npm.
+Environment variables loaded from .env
+Prisma schema loaded from ../../../../../var/folders/x9/m0t84f6n5q79qyfy5z4_8y4c0000gn/T/tmp.i8GxU1Ribk/schema.prisma
+Datasource "db": PostgreSQL database "mira_ph2_rc6_test", schema "public" at "localhost:5432"
+
+7 migrations found in prisma/migrations
+
+Applying migration `20250518000000_init`
+Applying migration `20250601120000_partners_marketplace`
+Applying migration `20250601150000_atelier_recolor_attempts`
+Applying migration `20250602120000_website_leads`
+Applying migration `20250603140000_partner_portal`
+Applying migration `20250608120000_user_birth_year`
+Applying migration `20250610120000_consultation_mce`
+
+The following migration(s) have been applied:
+
+migrations/
+  └─ 20250518000000_init/
+    └─ migration.sql
+  └─ 20250601120000_partners_marketplace/
+    └─ migration.sql
+  └─ 20250601150000_atelier_recolor_attempts/
+    └─ migration.sql
+  └─ 20250602120000_website_leads/
+    └─ migration.sql
+  └─ 20250603140000_partner_portal/
+    └─ migration.sql
+  └─ 20250608120000_user_birth_year/
+    └─ migration.sql
+  └─ 20250610120000_consultation_mce/
+    └─ migration.sql
+      
+All migrations have been successfully applied.
+INSERT 0 1
+INSERT 0 1
+INSERT 0 1
+npm warn Unknown env config "devdir". This will stop working in the next major version of npm.
+Environment variables loaded from .env
+Prisma schema loaded from prisma/schema.prisma
+Datasource "db": PostgreSQL database "mira_ph2_rc6_test", schema "public" at "localhost:5432"
+
+9 migrations found in prisma/migrations
+
+Applying migration `20260926040000_discover_catalog_rc2`
+Applying migration `20260926120000_discover_content_ph3`
+
+The following migration(s) have been applied:
+
+migrations/
+  └─ 20260926040000_discover_catalog_rc2/
+    └─ migration.sql
+  └─ 20260926120000_discover_content_ph3/
+    └─ migration.sql
+      
+All migrations have been successfully applied.
+legacy-product legacy-rc5-product|3210|NULL|published
+legacy-service legacy-rc5-service|4500|NULL|published
+DELETE 1
+npm warn Unknown env config "devdir". This will stop working in the next major version of npm.
+Environment variables loaded from .env
+Prisma schema loaded from prisma/schema.prisma
+
+✔ Generated Prisma Client (v6.19.3) to ./node_modules/@prisma/client in 124ms
+
+Start by importing your Prisma Client (See: https://pris.ly/d/importing-client)
+
+Tip: Interested in query caching in just a few lines of code? Try Accelerate today! https://pris.ly/tip-3-accelerate
+
+npm warn Unknown env config "devdir". This will stop working in the next major version of npm.
+Environment variables loaded from .env
+Prisma schema loaded from prisma/schema.prisma
+Datasource "db": PostgreSQL database "mira_ph2_rc6_test", schema "public" at "localhost:5432"
+
+9 migrations found in prisma/migrations
+
+
+No pending migrations to apply.
+npm warn Unknown env config "devdir". This will stop working in the next major version of npm.
+marketplace http integration passed
+Firebase verifier in this run is a test double and does not prove a live Firebase connection
+npm warn Unknown env config "devdir". This will stop working in the next major version of npm.
+ph3 content http passed
+import source: simulated, connected false
+rc6 integration passed
+cleaned mira_ph2_rc6_test
+cleanup=ok test_status=0
+api_exit:0

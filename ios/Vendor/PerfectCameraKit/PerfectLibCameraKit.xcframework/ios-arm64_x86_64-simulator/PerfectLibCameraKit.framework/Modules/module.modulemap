@@ -1,0 +1,6 @@
+framework module PerfectLibCameraKit {
+  umbrella header "PerfectLibCameraKit.h"
+  export *
+
+  module * { export * }
+}

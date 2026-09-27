@@ -1,0 +1,194 @@
+ M ios/Podfile
+ M ios/Podfile.lock
+ M ios/Runner.xcodeproj/project.pbxproj
+ M ios/Runner/AppDelegate.swift
+ M ios/Runner/ApplePersonMattingChannel.swift
+ M lib/core/face_gate/face_gate_rules.dart
+ M lib/core/face_gate/face_gate_validator.dart
+ M lib/core/navigation/mira_report_navigation.dart
+ M lib/core/session/analysis_session.dart
+ M lib/features/dashboard/presentation/screens/new_analysis_screen.dart
+ M lib/features/face_analysis_experience/presentation/capture/contour/capture_mirror_painter.dart
+ M lib/features/face_analysis_experience/presentation/capture/geometry/capture_guide_geometry.dart
+ M lib/features/face_analysis_experience/presentation/capture/overlay/interactive_capture_mirror_overlay.dart
+ M lib/features/face_analysis_experience/presentation/result/session/face_result_mirror_image_hold.dart
+ M lib/features/results_experience/domain/perfect_mask_session.dart
+ M lib/features/results_experience/presentation/geometry/skin_face_map_visual_tokens.dart
+ M lib/features/results_experience/presentation/screens/perfect_hd_mask_technical_viewer_screen.dart
+ M lib/features/results_experience/presentation/screens/skin_interactive_report_screen.dart
+ M lib/features/results_experience/presentation/widgets/perfect_mask_overlay.dart
+ M lib/features/results_experience/presentation/widgets/perfect_mask_region_callout.dart
+ M lib/features/results_experience/presentation/widgets/results_skin_map_panel.dart
+ M lib/features/skin_analysis/data/datasources/skin_analysis_api_data_source.dart
+ M lib/features/skin_analysis/presentation/blocs/skin_analysis_bloc.dart
+ M lib/features/skin_analysis/presentation/blocs/skin_analysis_event.dart
+ M lib/features/skin_analysis/presentation/blocs/skin_analysis_state.dart
+ M lib/features/skin_analysis/presentation/live_face_map/face_mesh_quality_gate.dart
+ M lib/features/skin_analysis/presentation/widgets/face_capture_panel.dart
+ M lib/shared/theme/colors.dart
+ M linux/flutter/generated_plugins.cmake
+ M macos/Flutter/GeneratedPluginRegistrant.swift
+ M pubspec.lock
+ M pubspec.yaml
+ M windows/flutter/generated_plugin_registrant.cc
+ M windows/flutter/generated_plugins.cmake
+?? docs/governance/MIRA_FACE_EXPLORER_REFACTOR_PARITY_REVIEW/
+?? docs/governance/MIRA_FINAL_SKIN_ANALYSIS_PRODUCTION_CLOSURE_2026-09-15.zip
+?? docs/governance/MIRA_FINAL_SKIN_ANALYSIS_PRODUCTION_CLOSURE_2026-09-15/
+?? docs/governance/MIRA_INTERACTIVE_SKIN_MAP_PRECISION/
+?? docs/governance/MIRA_IOS_STARTUP_CRASH_AFTER_MATTING_POC_2026-09-13/
+?? docs/governance/MIRA_MANUAL_CAPTURE_DEVICE_CLOSURE_REVIEW/
+?? docs/governance/MIRA_MANUAL_SHUTTER_CAMERA_READY_FIX_2026-09-17/
+?? docs/governance/MIRA_MAP_APPROVED_INPUTS_AND_REVIEW/
+?? docs/governance/MIRA_MAP_INTERACTION_FIX_2026-09-17/
+?? docs/governance/MIRA_MAP_VISUAL_PARITY_2026-09-17/
+?? docs/governance/MIRA_P5_APPLE_PORTRAIT_MATTING_POC_2026-09-13/
+?? docs/governance/MIRA_P5_BLACK_IMMERSIVE_SKIN_EXPLORER_2026-09-13/
+?? docs/governance/MIRA_P5_CAMERAKIT_CAPTURE_USABILITY_CLOSURE_2026-09-15/
+?? docs/governance/MIRA_P5_CAMERAKIT_RUNTIME_TRUTH_AUDIT_2026-09-15/
+?? docs/governance/MIRA_P5_CAPTURE_CONFIG_FRESHNESS_ROOT_CAUSE_REVIEW_2026-09-15/
+?? docs/governance/MIRA_P5_CAPTURE_ROOT_CAUSE_AND_DEVICE_PROOF_2026-09-15/
+?? docs/governance/MIRA_P5_FACE_ONLY_BLACK_REAL_MASK_CLOSURE_2026-09-13/
+?? docs/governance/MIRA_P5_FINAL_SKIN_EXPLORER_2026-09-13.zip
+?? docs/governance/MIRA_P5_FINAL_SKIN_EXPLORER_2026-09-13/
+?? docs/governance/MIRA_P5_METRIC_CAROUSEL_AVAILABILITY_FIX_2026-09-13/
+?? docs/governance/MIRA_P5_OFFICIAL_SAMPLE_VS_MIRA_DEVICE_ISOLATION_2026-09-16/
+?? docs/governance/MIRA_P5_PERFECT_CAMERAKIT_2_5_PRODUCTION_INTEGRATION_2026-09-15/
+?? docs/governance/MIRA_P5_PERFECT_CAMERAKIT_FRONT_FACE_CLOSURE_2026-09-15.zip
+?? docs/governance/MIRA_P5_PERFECT_CAMERAKIT_FRONT_FACE_CLOSURE_2026-09-15/
+?? docs/governance/MIRA_P5_PERFECT_MASK_RENDER_CHAIN_FIX_2026-09-13/
+?? docs/governance/MIRA_P5_PERFECT_MASK_SESSION_LIFECYCLE_2026-09-14/
+?? docs/governance/MIRA_P5_PERFECT_MASK_VISIBLE_PIXEL_CLOSURE_2026-09-13/
+?? docs/governance/MIRA_P5_PIGMENTATION_ACNE_MASK_VISIBILITY_2026-09-13/
+?? docs/governance/MIRA_P5_PORTRAIT_HAIR_MATTING_STUDY_2026-09-13/
+?? docs/governance/MIRA_P5_PREMIUM_INTERACTIVE_SKIN_INTELLIGENCE_2026-09-13/
+?? docs/governance/MIRA_P5_PREMIUM_PERFECT_MASK_FACE_EXPLORER_2026-09-12/
+?? docs/governance/MIRA_P5_PREMIUM_PERFECT_MASK_FACE_EXPLORER_POLISH_2026-09-12/
+?? docs/governance/MIRA_P5_PROVIDER_RAW_MASK_LAYER_FORENSICS_2026-09-15.zip
+?? docs/governance/MIRA_P5_PROVIDER_RAW_MASK_LAYER_FORENSICS_2026-09-15/
+?? docs/governance/MIRA_P5_SKIN_INTELLIGENCE_STRICT_VISUAL_CLOSURE_2026-09-13/
+?? docs/governance/MIRA_PERFECT_HD_FULL_MASK_INVENTORY_2026-09-12/
+?? docs/governance/MIRA_PERFECT_HD_MASKS_CAMERAKIT_ACCEPTANCE_2026-09-12/
+?? docs/governance/MIRA_PERFECT_HD_MASKS_REAL_ONE_SHOT_2026-09-12/
+?? docs/governance/MIRA_PERFECT_SPATIAL_MASK_EXPERT_MODE_AUDIT_2026-09-11/
+?? docs/governance/MIRA_UX_CAPTURE_MAP_BG_IMPL_2026-09-17/
+?? docs/governance/MIRA_UX_CAPTURE_MAP_BG_STUDY_2026-09-16/
+?? docs/governance/PRODUCTION_CLOSURE_MASTER_ROADMAP/
+?? docs/governance/PROD_CLOSURE_PHASE2_FINAL/05_SOURCE_IDENTITY_COMMIT.md
+?? docs/governance/PROD_CLOSURE_PHASE2_FINAL/06_POSTCOMMIT_WORKTREE.md
+?? docs/governance/PROD_CLOSURE_PHASE2_FINAL/07_CLEAN_CHECKOUT_INTEGRITY.md
+?? docs/governance/PROD_CLOSURE_PHASE2_FINAL/08_CLEAN_BACKEND_VERIFICATION.md
+?? docs/governance/PROD_CLOSURE_PHASE2_FINAL/09_CLEAN_FLUTTER_VERIFICATION.md
+?? docs/governance/PROD_CLOSURE_PHASE2_FINAL/10_FINAL_REPRODUCIBILITY_VERDICT.md
+?? docs/governance/PROD_CLOSURE_PHASE2_FINAL/11_LIVE_VS_COMMITTED_CANDIDATE.md
+?? docs/governance/PROD_CLOSURE_PHASE2_FINAL/12_SOURCE_IDENTITY_BLOCKER_CLOSURE.md
+?? docs/governance/PROD_CLOSURE_PHASE2_FINAL/14_PHASE2_FINAL_CLOSURE_VERDICT.md
+?? docs/governance/PROD_CLOSURE_PHASE3/
+?? docs/governance/PROD_CLOSURE_PHASE3B_FINAL/06_PHASE3B_SOURCE_IDENTITY.md
+?? docs/governance/PROD_CLOSURE_PHASE3B_FINAL/07_POSTCOMMIT_WORKTREE.md
+?? docs/governance/PROD_CLOSURE_PHASE3B_FINAL/08_CLEAN_CHECKOUT_INTEGRITY.md
+?? docs/governance/PROD_CLOSURE_PHASE3B_FINAL/09_CLEAN_BACKEND_VERIFICATION.md
+?? docs/governance/PROD_CLOSURE_PHASE3B_FINAL/10_CLEAN_FLUTTER_VERIFICATION.md
+?? docs/governance/PROD_CLOSURE_PHASE3B_FINAL/11_CLEAN_FIREBASE_RULES_VERIFICATION.md
+?? docs/governance/PROD_CLOSURE_PHASE3B_FINAL/12_CLEAN_ADVERSARIAL_VERIFICATION.md
+?? docs/governance/PROD_CLOSURE_PHASE3B_FINAL/13_FROZEN_CONTRACT_REGRESSION.md
+?? docs/governance/PROD_CLOSURE_PHASE3B_FINAL/14_PHASE3B_REPRODUCIBILITY.md
+?? docs/governance/PROD_CLOSURE_PHASE3B_FINAL/15_LIVE_VS_PHASE3B_CANDIDATE.md
+?? docs/governance/PROD_CLOSURE_PHASE3B_FINAL/16_PHASE3B_FINAL_CLOSURE.md
+?? docs/governance/PROD_CLOSURE_PHASE3C/
+?? docs/governance/PROD_CLOSURE_PHASE3C_FINAL/
+?? docs/governance/PROD_CLOSURE_PHASE4/
+?? docs/governance/PROD_CLOSURE_PHASE5/00_PRODUCTION_PREFLIGHT.md
+?? docs/governance/PROD_CLOSURE_PHASE5/01_IOS_PRODUCTION_CONFIGURATION.md
+?? docs/governance/PROD_CLOSURE_PHASE5/02_PHYSICAL_IPHONE_AND_LAUNCH.md
+?? docs/governance/PROD_CLOSURE_PHASE5/DESIGN_SYSTEM_CURRENT_STATE.md
+?? docs/governance/PROD_CLOSURE_PHASE5/FASHION_WAVE2_BEFORE_AFTER.md
+?? docs/governance/PROD_CLOSURE_PHASE5/FASHION_WAVE2_CARD_INVENTORY.md
+?? docs/governance/PROD_CLOSURE_PHASE5/FASHION_WAVE2_COLOR_TOKEN_MAP.md
+?? docs/governance/PROD_CLOSURE_PHASE5/FASHION_WAVE2_DESIGN_SYSTEM_COMPLIANCE.md
+?? docs/governance/PROD_CLOSURE_PHASE5/FASHION_WAVE2_RECOMMENDATION_IMAGE_AUDIT.md
+?? docs/governance/PROD_CLOSURE_PHASE5/FASHION_WAVE2_SOURCE_IDENTITY.md
+?? docs/governance/PROD_CLOSURE_PHASE5/MIRA_P5_SKIN_CAPTURE_GATE_DIAGNOSTIC_2026-09-10.md
+?? docs/governance/PROD_CLOSURE_PHASE5/MIRA_P5_SKIN_CAPTURE_MESH_GATE_CLOSURE_2026-09-10.md
+?? docs/governance/PROD_CLOSURE_PHASE5/MIRA_P5_SKIN_CAPTURE_PRECISION_EASE_FINAL_2026-09-11.md
+?? docs/governance/PROD_CLOSURE_PHASE5/MIRA_P5_SKIN_CAPTURE_UX_AUTOCAPTURE_2026-09-11.md
+?? docs/governance/PROD_CLOSURE_PHASE5/MIRA_P5_SKIN_FACE_MAP_PREMIUM_INTERACTION_2026-09-11.md
+?? docs/governance/PROD_CLOSURE_PHASE5/P5_FASHION_EXPERIENCE_UI_RESTRUCTURE.md
+?? docs/governance/PROD_CLOSURE_PHASE5/P5_FASHION_EXPERIENCE_UX_FORENSIC_AUDIT.md
+?? docs/governance/PROD_CLOSURE_PHASE5/P5_FASHION_EXPERIENCE_UX_FORENSIC_INVENTORIES.md
+?? docs/governance/PROD_CLOSURE_PHASE5/P5_FASHION_UI_PHYSICAL_IPHONE_VISUAL_ACCEPTANCE.md
+?? docs/governance/PROD_CLOSURE_PHASE5/P5_FASHION_VISUAL_REFINEMENT_WAVE2.md
+?? docs/governance/PROD_CLOSURE_PHASE5/P5_SKIN_CAPTURE_TAP_CLOSURE.md
+?? docs/governance/PROD_CLOSURE_PHASE5/P5_SKIN_FACE_FIRST_PREMIUM_RECOMPOSITION.md
+?? docs/governance/PROD_CLOSURE_PHASE5/P5_SKIN_FACE_GEOMETRY_PRECISION_FINAL.md
+?? docs/governance/PROD_CLOSURE_PHASE5/P5_SKIN_FACE_MAP_5REGION_CLOSURE.md
+?? docs/governance/PROD_CLOSURE_PHASE5/P5_SKIN_FACE_MAP_LANDMARK_PRECISION_FINAL.md
+?? docs/governance/PROD_CLOSURE_PHASE5/P5_SKIN_INTERACTIVE_REPORT_TRUTH_AND_REBUILD.md
+?? docs/governance/PROD_CLOSURE_PHASE5/P5_SKIN_INTERACTIVE_VISUAL_POLISH.md
+?? docs/governance/PROD_CLOSURE_PHASE5/P5_SKIN_STRICT_FRONTAL_GEOMETRY.md
+?? docs/governance/PROD_CLOSURE_PHASE5/PHYSICAL_MATRIX_SKIN_CAPTURE_GATE.md
+?? docs/governance/PROD_CLOSURE_PHASE5/SKIN_FACE_REGION_LANDMARK_SPEC.md
+?? docs/governance/PROD_CLOSURE_PHASE5/evidence/fashion_wave2/
+?? docs/governance/PROD_CLOSURE_PHASE5/evidence/skin_capture_tap/
+?? docs/governance/PROD_CLOSURE_PHASE5/evidence/skin_face_first/
+?? docs/governance/PROD_CLOSURE_PHASE5/evidence/skin_face_map_5region/
+?? docs/governance/PROD_CLOSURE_PHASE5/evidence/skin_face_map_landmark_precision/
+?? docs/governance/PROD_CLOSURE_PHASE5/evidence/skin_interactive_report/
+?? docs/governance/PROD_CLOSURE_PHASE5/evidence/skin_interactive_visual_polish/
+?? docs/governance/PROD_CLOSURE_PHASE5/evidence/skin_strict_frontal_geometry/
+?? ios/Runner/PerfectCameraKitChannel.swift
+?? ios/Vendor/
+?? lib/core/json/
+?? lib/core/privacy/ephemeral_analysis_face_registry.dart
+?? lib/features/face_analysis_experience/capture/policy/strict_frontal_capture_policy.dart
+?? lib/features/outfit_analysis/presentation/utils/fashion_color_binding.dart
+?? lib/features/outfit_analysis/presentation/utils/fashion_compatibility_label.dart
+?? lib/features/outfit_analysis/presentation/widgets/outfit_garment_color_strip.dart
+?? lib/features/results_experience/domain/face_map_overlay_decision.dart
+?? lib/features/results_experience/domain/face_map_session_evidence_exporter.dart
+?? lib/features/results_experience/domain/face_map_session_provenance.dart
+?? lib/features/results_experience/domain/mask_source_alignment_contract.dart
+?? lib/features/results_experience/domain/perfect_mask_data_kind_contract.dart
+?? lib/features/results_experience/domain/perfect_mask_presentation_decoder.dart
+?? lib/features/results_experience/presentation/face_explorer/
+?? lib/features/results_experience/presentation/geometry/magnifier_focus_binder.dart
+?? lib/features/results_experience/presentation/geometry/shared_image_mask_fit.dart
+?? lib/features/results_experience/presentation/geometry/skin_face_explorer_layer_isolation.dart
+?? lib/features/results_experience/presentation/widgets/perfect_mask_alignment_diagnostic.dart
+?? lib/features/skin_analysis/domain/image_quality/post_capture_minimal_gate.dart
+?? lib/features/skin_analysis/presentation/capture/
+?? lib/features/skin_analysis/presentation/debug/
+?? lib/features/skin_analysis/presentation/live_face_map/face_mesh_head_pose.dart
+?? lib/features/skin_analysis/presentation/live_face_map/painters/cheek_midline_forensic_painter.dart
+?? lib/features/skin_analysis/presentation/live_face_map/utils/cheek_midline_crossing.dart
+?? mira-api/scripts/lan-forward.py
+?? mira-api/src/ai/contracts/perfect-spatial-skin-concern.ts
+?? mira-api/src/ai/scripts/
+?? packages/
+?? test/advisor/double_string_cast_regression_test.dart
+?? test/face_analysis_experience/failures/
+?? test/face_analysis_experience/strict_frontal_geometry_contract_test.dart
+?? test/features/
+?? test/outfit_analysis/
+?? test/results_experience/ephemeral_face_session_lifecycle_test.dart
+?? test/results_experience/face_explorer_controller_test.dart
+?? test/results_experience/face_map_overlay_decision_test.dart
+?? test/results_experience/failures/
+?? test/results_experience/landmark_aligned_face_geometry_test.dart
+?? test/results_experience/magnifier_focus_and_tap_test.dart
+?? test/results_experience/mask_source_alignment_contract_test.dart
+?? test/results_experience/perfect_hd_mask_viewer_smoke_test.dart
+?? test/results_experience/perfect_mask_face_explorer_polish_test.dart
+?? test/results_experience/perfect_mask_overlay_geometry_test.dart
+?? test/results_experience/perfect_mask_session_test.dart
+?? test/results_experience/perfect_mask_spatial_decode_test.dart
+?? test/results_experience/perfect_spatial_skin_concern_contract_test.dart
+?? test/results_experience/shared_image_mask_fit_test.dart
+?? test/results_experience/skin_face_first_privacy_contract_test.dart
+?? test/results_experience/skin_face_map_landmark_precision_test.dart
+?? test/results_experience/skin_face_map_premium_visual_test.dart
+?? test/results_experience/skin_face_map_truthful_contract_test.dart
+?? test/results_experience/skin_interactive_claim_policy_test.dart
+?? test/results_experience/skin_interactive_visual_polish_test.dart
+?? test/results_experience/skin_map_clarity_before_after_evidence_test.dart
+?? test/skin_analysis/

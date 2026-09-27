@@ -31,20 +31,27 @@ abstract final class PersonalPlanPolicy {
   ];
 
   static String conceptForStep(FrozenRoutineStepInput step) {
-    final blob = '${step.id} ${step.nameAr} ${step.instructionAr}'.toLowerCase();
+    final blob = '${step.id} ${step.nameAr} ${step.instructionAr}'
+        .toLowerCase();
     if (blob.contains('sun') || blob.contains('spf') || blob.contains('واقي')) {
       return 'sunscreen';
     }
     if (blob.contains('clean') || blob.contains('غسول')) {
       return 'gentle_cleanser';
     }
-    if (blob.contains('acne') || blob.contains('حبوب') || blob.contains('نياسين')) {
+    if (blob.contains('acne') ||
+        blob.contains('حبوب') ||
+        blob.contains('نياسين')) {
       return 'acne_care';
     }
-    if (blob.contains('red') || blob.contains('احمرار') || blob.contains('مهدئ')) {
+    if (blob.contains('red') ||
+        blob.contains('احمرار') ||
+        blob.contains('مهدئ')) {
       return 'redness_care';
     }
-    if (blob.contains('pore') || blob.contains('مسام') || blob.contains('bha')) {
+    if (blob.contains('pore') ||
+        blob.contains('مسام') ||
+        blob.contains('bha')) {
       return 'pore_care';
     }
     if (blob.contains('serum') ||
@@ -58,7 +65,8 @@ abstract final class PersonalPlanPolicy {
   }
 
   static bool isAggressive(FrozenRoutineStepInput step) {
-    final blob = '${step.id} ${step.nameAr} ${step.instructionAr}'.toLowerCase();
+    final blob = '${step.id} ${step.nameAr} ${step.instructionAr}'
+        .toLowerCase();
     return _aggressiveTokens.any(blob.contains);
   }
 
@@ -133,7 +141,8 @@ abstract final class PersonalPlanPolicy {
           return 'مرتبطة بأولوية الترطيب في تحليلك.';
         }
       }
-      if (concept == 'acne_care' && (t.contains('حبوب') || t.contains('acne'))) {
+      if (concept == 'acne_care' &&
+          (t.contains('حبوب') || t.contains('acne'))) {
         return 'مرتبطة بأولوية مظهر الحبوب في تحليلك.';
       }
       if (concept == 'redness_care' && t.contains('احمرار')) {
@@ -173,8 +182,7 @@ abstract final class PersonalPlanPolicy {
     String reason;
     PersonalizationClass pers;
 
-    if (input.weeklyPlanEnabled &&
-        input.weeklyHeadlineAr.trim().isNotEmpty) {
+    if (input.weeklyPlanEnabled && input.weeklyHeadlineAr.trim().isNotEmpty) {
       title = PublicLanguagePolicy.sanitize(input.weeklyHeadlineAr);
       reason = PublicLanguagePolicy.sanitize(
         input.weeklySummaryAr.isNotEmpty

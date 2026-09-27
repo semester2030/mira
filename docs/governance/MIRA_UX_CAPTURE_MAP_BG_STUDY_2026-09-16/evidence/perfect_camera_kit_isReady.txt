@@ -1,0 +1,23 @@
+  static bool get isReady {
+    final q = _latest;
+    final t = _latestMonoMs;
+    if (q == null || t == null || !q.ready) return false;
+    if (q.sessionId != _sessionId) {
+      _staleReason = 'session_mismatch';
+      return false;
+    }
+    final age = _mono.elapsedMilliseconds - t;
+    if (age > qualityFreshness.inMilliseconds) {
+      _staleReason = 'quality_stale_age_ms=$age';
+      return false;
+    }
+    _staleReason = null;
+    return true;
+  }
+
+  /// Continuous fresh READY for [stableWindow] without gaps longer than freshness.
+  static bool get isStableReady {
+    final since = _readySinceMonoMs;
+    if (!isReady || since == null) return false;
+    return _mono.elapsedMilliseconds - since >= stableWindow.inMilliseconds;
+  }

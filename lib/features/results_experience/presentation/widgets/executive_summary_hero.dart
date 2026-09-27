@@ -29,8 +29,9 @@ class ExecutiveSummaryHero extends StatelessWidget {
     final status = summary.vitality.statusLabelAr;
     final score = summary.vitality.value;
     final showScore = summary.vitality.numericVisible && score != null;
-    final confSpec =
-        ConfidencePresentationContract.forState(confidence.overall);
+    final confSpec = ConfidencePresentationContract.forState(
+      confidence.overall,
+    );
 
     return Semantics(
       header: true,
@@ -58,10 +59,8 @@ class ExecutiveSummaryHero extends StatelessWidget {
             const SizedBox(height: 10),
             LayoutBuilder(
               builder: (context, constraints) {
-                final scale =
-                    MediaQuery.textScalerOf(context).scale(14) / 14;
-                final stacked =
-                    constraints.maxWidth < 320 || scale > 1.3;
+                final scale = MediaQuery.textScalerOf(context).scale(14) / 14;
+                final stacked = constraints.maxWidth < 320 || scale > 1.3;
                 final textCol = Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
@@ -89,19 +88,14 @@ class ExecutiveSummaryHero extends StatelessWidget {
                     ? _VitalityBadge(
                         value: score!.round(),
                         status: status,
-                        accessibility:
-                            summary.vitality.accessibilityTextAr,
+                        accessibility: summary.vitality.accessibilityTextAr,
                       )
                     : null;
                 if (badge == null) return textCol;
                 if (stacked) {
                   return Column(
                     crossAxisAlignment: CrossAxisAlignment.start,
-                    children: [
-                      textCol,
-                      const SizedBox(height: 12),
-                      badge,
-                    ],
+                    children: [textCol, const SizedBox(height: 12), badge],
                   );
                 }
                 return Row(
@@ -131,15 +125,9 @@ class ExecutiveSummaryHero extends StatelessWidget {
               children: [
                 ResultsConfidenceChip(state: confidence.overall),
                 if (isStale)
-                  _SoftTag(
-                    label: 'نتيجة سابقة',
-                    color: AppColors.warning,
-                  ),
+                  _SoftTag(label: 'نتيجة سابقة', color: AppColors.warning),
                 if (isPartial)
-                  _SoftTag(
-                    label: 'نتيجة جزئية',
-                    color: AppColors.info,
-                  ),
+                  _SoftTag(label: 'نتيجة جزئية', color: AppColors.info),
               ],
             ),
             if (confidence.overall == ConfidenceState.low ||

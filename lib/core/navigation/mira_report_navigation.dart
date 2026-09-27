@@ -43,11 +43,19 @@ abstract final class MiraReportNavigation {
     SkinReport report, {
     String? captureImagePath,
   }) {
+    final facePath =
+        captureImagePath ?? AnalysisSession.lastEphemeralFacePath;
+    // ignore: avoid_print
+    print(
+      'FACE_EPHEMERAL stage=RESULT_ROUTE present='
+      '${facePath != null && facePath.isNotEmpty ? 1 : 0} '
+      'id=${AnalysisSession.lastEphemeralFaceId ?? "-"}',
+    );
     return open(
       context,
       report,
       celebrate: true,
-      captureImagePath: captureImagePath,
+      captureImagePath: facePath,
       fromFreshAnalysis: true,
       perfectMaskSession: AnalysisSession.lastPerfectMasks,
     );

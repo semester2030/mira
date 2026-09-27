@@ -13,12 +13,7 @@ enum VisibilityState {
   unavailable,
 }
 
-enum ConfidenceState {
-  high,
-  medium,
-  low,
-  unavailable,
-}
+enum ConfidenceState { high, medium, low, unavailable }
 
 enum PersonalizationClass {
   evidenceDerived,
@@ -39,11 +34,7 @@ enum ScoreCategory {
   nonPublicTechnicalScore,
 }
 
-enum ScoreDirection {
-  higherBetter,
-  higherWorse,
-  neutral,
-}
+enum ScoreDirection { higherBetter, higherWorse, neutral }
 
 enum ColorRole {
   wellness,
@@ -75,12 +66,7 @@ enum ProductRecommendationState {
   insufficientEvidence,
 }
 
-enum ProductDisclosure {
-  independent,
-  partner,
-  sponsored,
-  unknown,
-}
+enum ProductDisclosure { independent, partner, sponsored, unknown }
 
 enum AdviceOwner {
   immediateAction,
@@ -90,13 +76,7 @@ enum AdviceOwner {
   advisorContext,
 }
 
-enum InteractionState {
-  none,
-  expandable,
-  tappable,
-  navigable,
-  disabled,
-}
+enum InteractionState { none, expandable, tappable, navigable, disabled }
 
 enum LimitationState {
   none,
@@ -109,8 +89,4 @@ enum LimitationState {
 }
 
 /// Morning / evening / weekly period for personal plan steps.
-enum RoutinePeriod {
-  morning,
-  evening,
-  weekly,
-}
+enum RoutinePeriod { morning, evening, weekly }

@@ -15,12 +15,22 @@ class SkinAnalysisInitial extends SkinAnalysisState {
 
 /// Local prep / upload not yet dispatched — Soft Laser must NOT run.
 class SkinAnalysisSubmitting extends SkinAnalysisState {
-  const SkinAnalysisSubmitting();
+  final int? attemptId;
+
+  const SkinAnalysisSubmitting({this.attemptId});
+
+  @override
+  List<Object?> get props => [attemptId];
 }
 
 /// Remote Face pipeline wait — Soft Laser may run (presentation group).
 class SkinAnalysisProcessing extends SkinAnalysisState {
-  const SkinAnalysisProcessing();
+  final int? attemptId;
+
+  const SkinAnalysisProcessing({this.attemptId});
+
+  @override
+  List<Object?> get props => [attemptId];
 }
 
 class SkinAnalysisLoading extends SkinAnalysisState {
@@ -29,23 +39,29 @@ class SkinAnalysisLoading extends SkinAnalysisState {
 
 class SkinAnalysisSuccess extends SkinAnalysisState {
   final SkinReport report;
+  final int? attemptId;
 
-  const SkinAnalysisSuccess(this.report);
+  const SkinAnalysisSuccess(this.report, {this.attemptId});
 
   @override
-  List<Object?> get props => [report];
+  List<Object?> get props => [report, attemptId];
 }
 
 class SkinAnalysisFailure extends SkinAnalysisState {
   final String message;
   final FaceAnalysisJourneyError? journeyError;
+  final int? attemptId;
 
-  const SkinAnalysisFailure(this.message, {this.journeyError});
+  const SkinAnalysisFailure(
+    this.message, {
+    this.journeyError,
+    this.attemptId,
+  });
 
   bool get requiresRecapture => journeyError?.requiresRecapture ?? false;
 
   @override
-  List<Object?> get props => [message, journeyError?.code];
+  List<Object?> get props => [message, journeyError?.code, attemptId];
 }
 
 class SkinAnalysisHistoryLoaded extends SkinAnalysisState {

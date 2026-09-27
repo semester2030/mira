@@ -1,0 +1,22 @@
+:root {
+  --mira-primary: #e86fa9;
+  --mira-primary-light: #fadae9;
+  --mira-primary-dark: #c95889;
+  --mira-secondary: #c19ee0;
+  --mira-bg: #fff7fa;
+  --mira-surface: #ffffff;
+  --mira-text: #4a3a3a;
+  --mira-text-2: #524343;
+  --mira-text-3: #6d5c5c;
+  --mira-border: #f8bbd0;
+  --mira-gold: #d4af37;
+  --mira-success: #2e7d4f;
+  --mira-warn: #b26a00;
+  --mira-danger: #c62828;
+  --mira-info: #1565c0;
+  --radius: 14px;
+  --shadow: 0 8px 24px rgba(0, 0, 0, 0.08);
+  --font: "Segoe UI", "Tahoma", "Arial", sans-serif;
+  --nav-w: 280px;
+  --focus: 0 0 0 3px rgba(232, 111, 169, 0.45);
+}

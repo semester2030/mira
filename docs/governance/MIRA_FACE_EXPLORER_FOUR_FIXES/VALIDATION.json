@@ -1,0 +1,12 @@
+{
+  "dart_syntax_parse": "PASS",
+  "dart_files_parsed": 11,
+  "patch_apply_check": "PASS on supplied baselines",
+  "patch_roundtrip_bytes": "PASS",
+  "changed_or_added_files": 9,
+  "flutter_analyze": "NOT RUN — Flutter SDK/full project unavailable",
+  "flutter_test": "NOT RUN — 13 targeted tests supplied for project execution",
+  "ios_build": "NOT RUN",
+  "device_visual_parity": "NOT VERIFIED",
+  "real_mask_calibration": "NOT VERIFIED — no current raw masks supplied"
+}

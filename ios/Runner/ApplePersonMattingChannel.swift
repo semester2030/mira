@@ -168,7 +168,7 @@ enum ApplePersonMattingChannel {
     return try pngData(from: out)
   }
 
-  /// Hard composite onto #000000 — exposes halo / leakage (no soft edge paint).
+  /// Hard composite onto Mist Blush (#FFF7FA) — display-only stage (skin pixels preserved).
   private static func renderBlackComposite(
     source: CGImage,
     mask: CGImage,
@@ -181,6 +181,11 @@ enum ApplePersonMattingChannel {
     var srcPixels = [UInt8](repeating: 0, count: height * bytesPerRow)
     var maskPixels = [UInt8](repeating: 0, count: height * width)
     var outPixels = [UInt8](repeating: 0, count: height * bytesPerRow)
+
+    // AppColors.background / Mist Blush — display matte only (analysis uses original).
+    let bgR: Float = 255
+    let bgG: Float = 247
+    let bgB: Float = 250
 
     guard
       let srcCtx = CGContext(
@@ -212,11 +217,12 @@ enum ApplePersonMattingChannel {
 
     for i in 0..<(width * height) {
       let a = Float(maskPixels[i]) / 255.0
+      let inv = 1.0 - a
       let o = i * 4
-      // Straight (non-premultiplied) composite over pure black.
-      outPixels[o] = UInt8(Float(srcPixels[o]) * a)
-      outPixels[o + 1] = UInt8(Float(srcPixels[o + 1]) * a)
-      outPixels[o + 2] = UInt8(Float(srcPixels[o + 2]) * a)
+      // Straight composite: preserve source skin where mask≈1; brand bg elsewhere.
+      outPixels[o] = UInt8(Float(srcPixels[o]) * a + bgR * inv)
+      outPixels[o + 1] = UInt8(Float(srcPixels[o + 1]) * a + bgG * inv)
+      outPixels[o + 2] = UInt8(Float(srcPixels[o + 2]) * a + bgB * inv)
       outPixels[o + 3] = 255
     }
 

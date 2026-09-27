@@ -1,0 +1,87 @@
+id=EVD-0016
+path=partners-portal/web/js/api.js
+commit=15fe65c40d3dedb9afdd95619f2945bd84cb616a
+sha256=93548cfbd8122f7c19ca15f8f8a1598554f011cd3ad6f949e0b787271cfa1cdc
+lines=1-79
+note=عميل بوابة الشركاء: الجلسة محلية والكتابة عبر Bearer
+runtime=SOURCE_ONLY
+---
+1|(function () {
+2|  const meta = document.querySelector('meta[name="mira-api-base"]');
+3|  const API_BASE =
+4|    (meta && meta.getAttribute('content')) ||
+5|    'https://mira-api-n4p3.onrender.com/api/v1';
+6|
+7|  function authHeaders() {
+8|    const token = localStorage.getItem('mira_partner_token');
+9|    return token
+10|      ? { Authorization: `Bearer ${token}` }
+11|      : {};
+12|  }
+13|
+14|  async function request(method, path, body, extraHeaders) {
+15|    const res = await fetch(`${API_BASE}${path}`, {
+16|      method,
+17|      headers: {
+18|        Accept: 'application/json',
+19|        ...(body ? { 'Content-Type': 'application/json' } : {}),
+20|        ...extraHeaders,
+21|        ...authHeaders(),
+22|      },
+23|      body: body ? JSON.stringify(body) : undefined,
+24|    });
+25|    const data = await res.json().catch(() => ({}));
+26|    if (!res.ok) {
+27|      const msg = data.message || data.error || `HTTP ${res.status}`;
+28|      throw new Error(Array.isArray(msg) ? msg.join(' ') : msg);
+29|    }
+30|    return data;
+31|  }
+32|
+33|  window.PartnersApi = {
+34|    base: API_BASE,
+35|    apply: (payload) => request('POST', '/partners-portal/apply', payload),
+36|    status: (token) =>
+37|      request('GET', `/partners-portal/apply/status/${encodeURIComponent(token)}`),
+38|    login: (email, accessToken) =>
+39|      request('POST', '/partners-portal/login', { email, accessToken }),
+40|    dashboard: () => request('GET', '/partners-portal/me'),
+41|    createProduct: (payload) =>
+42|      request('POST', '/partners-portal/products', payload),
+43|    updateProduct: (id, payload) =>
+44|      request('PATCH', `/partners-portal/products/${id}`, payload),
+45|    deleteProduct: (id) =>
+46|      request('DELETE', `/partners-portal/products/${id}`),
+47|    createService: (payload) =>
+48|      request('POST', '/partners-portal/services', payload),
+49|    updateService: (id, payload) =>
+50|      request('PATCH', `/partners-portal/services/${id}`, payload),
+51|    deleteService: (id) =>
+52|      request('DELETE', `/partners-portal/services/${id}`),
+53|    track: (payload) =>
+54|      request('POST', '/partners-portal/track', payload),
+55|    adminList: (adminKey, status) =>
+56|      request(
+57|        'GET',
+58|        `/partners-portal/admin/applications?status=${encodeURIComponent(status || 'pending')}`,
+59|        null,
+60|        { 'X-Admin-Key': adminKey },
+61|      ),
+62|    adminApprove: (adminKey, id) =>
+63|      request('POST', `/partners-portal/admin/applications/${id}/approve`, {}, {
+64|        'X-Admin-Key': adminKey,
+65|      }),
+66|    adminReject: (adminKey, id, reason) =>
+67|      request('POST', `/partners-portal/admin/applications/${id}/reject`, { reason }, {
+68|        'X-Admin-Key': adminKey,
+69|      }),
+70|    saveSession: (email, token) => {
+71|      localStorage.setItem('mira_partner_email', email);
+72|      localStorage.setItem('mira_partner_token', token);
+73|    },
+74|    clearSession: () => {
+75|      localStorage.removeItem('mira_partner_email');
+76|      localStorage.removeItem('mira_partner_token');
+77|    },
+78|    isLoggedIn: () => !!localStorage.getItem('mira_partner_token'),
+79|  };

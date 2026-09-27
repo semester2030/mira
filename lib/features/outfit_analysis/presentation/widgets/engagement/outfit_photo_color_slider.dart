@@ -5,7 +5,6 @@ import 'package:flutter/services.dart';
 
 import '../../../../../shared/theme/colors.dart';
 import '../../../../../shared/theme/typography.dart';
-import '../../../data/helpers/vision_color_mapper.dart';
 import '../../../domain/entities/outfit_analysis.dart';
 import '../../../domain/entities/outfit_segment_map.dart';
 import '../../../domain/services/outfit_color_preview_service.dart';
@@ -29,17 +28,50 @@ class _OutfitPhotoColorSliderState extends State<OutfitPhotoColorSlider> {
     final path = widget.analysis.frozenImagePath;
     if (path == null || !File(path).existsSync()) return const SizedBox.shrink();
 
+    final map = widget.analysis.segmentMap;
     final alternatives = OutfitColorPreviewService.alternatives(widget.analysis, max: 4);
+    final selectedLabel = alternatives.isNotEmpty
+        ? alternatives[_altIndex.clamp(0, alternatives.length - 1)].pieceLabelAr
+        : null;
+    // Approximate pose bands / wrong piece must not tint fabric.
+    if (map == null ||
+        !map.supportsFabricRecolorFor(garmentLabelAr: selectedLabel)) {
+      return Container(
+        decoration: BoxDecoration(
+          color: AppColors.surface,
+          borderRadius: BorderRadius.circular(24),
+          border: Border.all(color: AppColors.border.withValues(alpha: 0.35)),
+        ),
+        padding: const EdgeInsets.fromLTRB(16, 16, 16, 18),
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.stretch,
+          children: [
+            Text(
+              'معاينة على صورتك',
+              style: AppTypography.titleSmall.copyWith(fontWeight: FontWeight.w800),
+            ),
+            const SizedBox(height: 8),
+            Text(
+              map?.source == 'pose_anatomy'
+                  ? 'خريطة القطع تقريبية من وضعية الجسم — لا نعرض تلوين قماش دقيق بدون قناع ملابس موثوق.'
+                  : 'لا يتوفر قناع موثوق للقطعة المختارة — معاينة التلوين غير متاحة.',
+              style: AppTypography.bodySmall.copyWith(color: AppColors.textSecondary),
+            ),
+          ],
+        ),
+      );
+    }
+
     if (alternatives.isEmpty) return const SizedBox.shrink();
 
     final alt = alternatives[_altIndex.clamp(0, alternatives.length - 1)];
-    final tint = Color.lerp(
-      alt.currentColor,
-      alt.alternativeColor,
-      _blend,
-    )!;
+    if (!alt.hasCurrentSwatch || !alt.hasAlternativeSwatch) {
+      return const SizedBox.shrink();
+    }
+    final tint = Color.lerp(alt.currentColor!, alt.alternativeColor!, _blend)!;
 
-    final garmentRegion = _garmentRegion(widget.analysis.segmentMap);
+    final garmentRegion = map.regionForGarmentLabel(alt.pieceLabelAr) ??
+        _garmentRegion(map);
 
     return Container(
       decoration: BoxDecoration(
@@ -82,12 +114,18 @@ class _OutfitPhotoColorSliderState extends State<OutfitPhotoColorSlider> {
                   Positioned(
                     left: 12,
                     bottom: 12,
-                    child: _ColorBadge(label: alt.currentColorAr, color: alt.currentColor),
+                    child: _ColorBadge(
+                      label: alt.currentColorAr,
+                      color: alt.currentColor!,
+                    ),
                   ),
                   Positioned(
                     right: 12,
                     bottom: 12,
-                    child: _ColorBadge(label: alt.alternativeColorAr, color: alt.alternativeColor),
+                    child: _ColorBadge(
+                      label: alt.alternativeColorAr,
+                      color: alt.alternativeColor!,
+                    ),
                   ),
                 ],
               ),
@@ -135,12 +173,15 @@ class _OutfitPhotoColorSliderState extends State<OutfitPhotoColorSlider> {
                       height: 36,
                       decoration: BoxDecoration(
                         shape: BoxShape.circle,
-                        color: VisionColorMapper.toDisplayColor(item.alternativeColorAr),
+                        color: item.alternativeColor ?? AppColors.border,
                         border: Border.all(
                           color: active ? AppColors.secondary : Colors.white,
                           width: active ? 2.5 : 1.5,
                         ),
                       ),
+                      child: item.alternativeColor == null
+                          ? const Icon(Icons.block, size: 14, color: AppColors.textSecondary)
+                          : null,
                     ),
                   );
                 },
@@ -183,8 +224,9 @@ class _GarmentPolygonClipper extends CustomClipper<Path> {
   @override
   Path getClip(Size size) {
     final r = region;
+    // No approximate full-body fallback — empty path = no fabric paint.
     if (r == null) {
-      return Path()..addRect(Rect.fromLTWH(0, size.height * 0.18, size.width, size.height * 0.72));
+      return Path();
     }
 
     if (r.hasContour) {
@@ -198,19 +240,8 @@ class _GarmentPolygonClipper extends CustomClipper<Path> {
       return path;
     }
 
-    final rect = r.normalizedRect;
-    return Path()
-      ..addRRect(
-        RRect.fromRectAndRadius(
-          Rect.fromLTWH(
-            rect.left * size.width,
-            rect.top * size.height,
-            rect.width * size.width,
-            rect.height * size.height,
-          ),
-          const Radius.circular(8),
-        ),
-      );
+    // Bare rect is not a fabric mask — never tint skin/background via AABB.
+    return Path();
   }
 
   @override

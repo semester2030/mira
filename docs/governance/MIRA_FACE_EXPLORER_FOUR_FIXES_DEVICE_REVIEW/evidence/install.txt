@@ -1,0 +1,9 @@
+INSTALL STATUS: NOT EXECUTED IN THIS SESSION
+--------------------------------------------
+Profile build succeeded: build/ios/iphoneos/Runner.app (1.0.0+2026091708).
+Connected device detected: fayez’s iPhone (00008110-00191986268BA01E), iOS 26.6.
+`flutter install --profile` was blocked by the environment approval gate
+(ComposerDecisionsService bubble lookup failure after smart-mode prompt).
+No Runner.app was pushed to the device in this session.
+Therefore: no on-device screenshots, no clarity proof for oil/wrinkle/pore,
+no centering/zoom/compare visual parity against MIRA_MAP_APPROVED_INPUTS_AND_REVIEW.

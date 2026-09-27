@@ -6,6 +6,7 @@ import '../../../../shared/theme/animations.dart';
 import '../../../../shared/theme/colors.dart';
 import '../../../../shared/theme/typography.dart';
 import '../../domain/entities/outfit_segment_map.dart';
+import '../geometry/outfit_image_mask_alignment.dart';
 
 /// Premium contour overlay — pixel-refined polygons when available.
 class OutfitSegmentMapOverlay extends StatelessWidget {
@@ -28,32 +29,50 @@ class OutfitSegmentMapOverlay extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final aspect = segmentMap.imageWidth > 0 && segmentMap.imageHeight > 0
+        ? segmentMap.imageWidth / segmentMap.imageHeight
+        : 3 / 4;
     return ClipRRect(
       borderRadius: BorderRadius.circular(24),
       child: AspectRatio(
-        aspectRatio: segmentMap.imageWidth > 0 && segmentMap.imageHeight > 0
-            ? segmentMap.imageWidth / segmentMap.imageHeight
-            : 3 / 4,
-        child: Stack(
-          fit: StackFit.expand,
-          children: [
-            Image.file(imageFile, fit: BoxFit.cover),
-            ...segmentMap.regions
-                .where((r) => r.zone != OutfitSegmentZone.head)
-                .toList()
-                .asMap()
-                .entries
-                .map(
-              (entry) => _RegionOverlay(
-                region: entry.value,
-                index: entry.key,
-                interactive: interactive,
-                outlineOnly: outlineOnly,
-                selected: selectedZone == entry.value.zone,
-                onTap: onRegionTap == null ? null : () => onRegionTap!(entry.value),
-              ),
-            ),
-          ],
+        aspectRatio: aspect,
+        child: LayoutBuilder(
+          builder: (context, constraints) {
+            final viewport = Size(constraints.maxWidth, constraints.maxHeight);
+            final dest = OutfitImageMaskAlignment.destRect(
+              viewport: viewport,
+              map: segmentMap,
+              fit: BoxFit.contain,
+            );
+            return Stack(
+              fit: StackFit.expand,
+              children: [
+                Positioned.fromRect(
+                  rect: dest,
+                  child: Image.file(imageFile, fit: BoxFit.fill),
+                ),
+                ...segmentMap.regions
+                    .where((r) => r.zone != OutfitSegmentZone.head)
+                    .toList()
+                    .asMap()
+                    .entries
+                    .map(
+                  (entry) => _RegionOverlay(
+                    region: entry.value,
+                    index: entry.key,
+                    map: segmentMap,
+                    viewport: viewport,
+                    interactive: interactive,
+                    outlineOnly: outlineOnly,
+                    selected: selectedZone == entry.value.zone,
+                    onTap: onRegionTap == null
+                        ? null
+                        : () => onRegionTap!(entry.value),
+                  ),
+                ),
+              ],
+            );
+          },
         ),
       ),
     );
@@ -63,6 +82,8 @@ class OutfitSegmentMapOverlay extends StatelessWidget {
 class _RegionOverlay extends StatefulWidget {
   final OutfitSegmentRegion region;
   final int index;
+  final OutfitSegmentMap map;
+  final Size viewport;
   final bool interactive;
   final bool outlineOnly;
   final bool selected;
@@ -70,6 +91,8 @@ class _RegionOverlay extends StatefulWidget {
 
   const _RegionOverlay({
     required this.region,
+    required this.map,
+    required this.viewport,
     this.index = 0,
     this.interactive = false,
     this.outlineOnly = false,
@@ -107,62 +130,62 @@ class _RegionOverlayState extends State<_RegionOverlay>
 
   @override
   Widget build(BuildContext context) {
-    return LayoutBuilder(
-      builder: (context, constraints) {
-        final w = constraints.maxWidth;
-        final h = constraints.maxHeight;
-        final box = Rect.fromLTRB(
-          widget.region.normalizedRect.left * w,
-          widget.region.normalizedRect.top * h,
-          widget.region.normalizedRect.right * w,
-          widget.region.normalizedRect.bottom * h,
-        );
+    final dest = OutfitImageMaskAlignment.destRect(
+      viewport: widget.viewport,
+      map: widget.map,
+      fit: BoxFit.contain,
+    );
+    final box = OutfitImageMaskAlignment.normRectToViewport(
+      viewport: widget.viewport,
+      map: widget.map,
+      normalized: widget.region.normalizedRect,
+      fit: BoxFit.contain,
+    );
 
-        return AnimatedBuilder(
-          animation: _reveal,
-          builder: (context, _) {
-            final labelOpacity = ((_reveal.value - 0.55) / 0.45).clamp(0.0, 1.0);
-            final content = Stack(
-              children: [
-                Positioned.fill(
-                  child: CustomPaint(
-                    painter: _ContourPainter(
-                      region: widget.region,
-                      canvasSize: Size(w, h),
-                      revealProgress: _reveal.value,
-                      emphasize: widget.selected,
-                      outlineOnly: widget.outlineOnly,
-                    ),
+    return AnimatedBuilder(
+      animation: _reveal,
+      builder: (context, _) {
+        final labelOpacity = ((_reveal.value - 0.55) / 0.45).clamp(0.0, 1.0);
+        return Stack(
+          children: [
+            Positioned.fromRect(
+              rect: dest,
+              child: CustomPaint(
+                size: dest.size,
+                painter: _ContourPainter(
+                  region: widget.region,
+                  canvasSize: dest.size,
+                  revealProgress: _reveal.value,
+                  emphasize: widget.selected,
+                  outlineOnly: widget.outlineOnly,
+                ),
+              ),
+            ),
+            if (widget.interactive)
+              Positioned.fromRect(
+                rect: box,
+                child: Material(
+                  color: Colors.transparent,
+                  child: InkWell(onTap: widget.onTap),
+                ),
+              ),
+            Positioned(
+              left: box.left + 6,
+              top: (box.top - 28).clamp(0.0, widget.viewport.height - 28),
+              child: Opacity(
+                opacity: labelOpacity,
+                child: Transform.scale(
+                  scale: 0.85 + labelOpacity * 0.15,
+                  child: _LabelChip(
+                    label: widget.region.labelAr,
+                    category: _categoryAr(widget.region.zone),
+                    confidence: widget.region.confidence,
+                    interactive: widget.interactive,
                   ),
                 ),
-                if (widget.interactive)
-                  Positioned.fromRect(
-                    rect: box,
-                    child: Material(
-                      color: Colors.transparent,
-                      child: InkWell(onTap: widget.onTap),
-                    ),
-                  ),
-                Positioned(
-                  left: box.left + 6,
-                  top: (box.top - 28).clamp(0.0, h - 28),
-                  child: Opacity(
-                    opacity: labelOpacity,
-                    child: Transform.scale(
-                      scale: 0.85 + labelOpacity * 0.15,
-                      child: _LabelChip(
-                        label: widget.region.labelAr,
-                        category: _categoryAr(widget.region.zone),
-                        confidence: widget.region.confidence,
-                        interactive: widget.interactive,
-                      ),
-                    ),
-                  ),
-                ),
-              ],
-            );
-            return content;
-          },
+              ),
+            ),
+          ],
         );
       },
     );

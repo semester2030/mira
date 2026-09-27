@@ -18,6 +18,7 @@ class InteractiveCaptureMirrorOverlay extends StatefulWidget {
   final double flashOpacity;
   final bool reduceMotion;
   final bool showGuidance;
+  final bool forCameraKit;
 
   const InteractiveCaptureMirrorOverlay({
     super.key,
@@ -29,6 +30,7 @@ class InteractiveCaptureMirrorOverlay extends StatefulWidget {
     this.flashOpacity = 0,
     this.reduceMotion = false,
     this.showGuidance = true,
+    this.forCameraKit = false,
   });
 
   @override
@@ -75,6 +77,7 @@ class _InteractiveCaptureMirrorOverlayState
               pulse: widget.reduceMotion ? 0 : widget.pulse,
               reduceMotion: widget.reduceMotion,
               poseHint: widget.poseHint,
+              forCameraKit: widget.forCameraKit,
             ),
           ),
         ),

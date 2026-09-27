@@ -34,7 +34,8 @@ class OutfitTopologyResult {
   });
 }
 
-/// Infer outfit topology from segment map + optional garment label (Arabic).
+/// Infer outfit topology from **detected clothing**, not anatomy bands.
+/// Feet / head / accessories never invent a second clothing piece.
 abstract final class OutfitTopologyInfer {
   static const _pieceMeta = <String, OutfitPieceMeta>{
     'فستان': OutfitPieceMeta(
@@ -83,18 +84,29 @@ abstract final class OutfitTopologyInfer {
       return _fromMeta(labelMeta) ??
           const OutfitTopologyResult(
             silhouetteHint: OutfitSilhouetteHint.unknown,
-            pieceCount: 1,
+            pieceCount: 0,
             onePiece: false,
           );
     }
 
-    final hasUpper = map.regions.any((r) => r.zone == OutfitSegmentZone.upperBody);
-    final hasLower = map.regions.any((r) => r.zone == OutfitSegmentZone.lowerBody);
-    final hasOuter = map.regions.any(_isOuterwearLabel);
-    final dressLike = map.regions.any(_isDressLabel) ||
-        (garmentLabelAr?.contains('فستان') ?? false);
+    final clothing = _clothingRegions(map);
+    final hasOuter = clothing.any(_isOuterwearLabel) ||
+        (garmentLabelAr != null && _isOuterwearText(garmentLabelAr));
+    final dressLike = clothing.any(_isDressLabel) ||
+        _isDressText(garmentLabelAr) ||
+        labelMeta?.topology == OutfitSilhouetteHint.onePiece;
 
-    if (dressLike && !hasLower) {
+    // Dress + jacket/outerwear is layered — distinct from dress alone.
+    if (dressLike && hasOuter) {
+      return OutfitTopologyResult(
+        silhouetteHint: OutfitSilhouetteHint.layered,
+        pieceCount: 2,
+        onePiece: false,
+        regionRole: 'outerwear',
+      );
+    }
+
+    if (dressLike) {
       return OutfitTopologyResult(
         silhouetteHint: OutfitSilhouetteHint.onePiece,
         pieceCount: 1,
@@ -103,21 +115,45 @@ abstract final class OutfitTopologyInfer {
       );
     }
 
-    if (hasOuter && (hasUpper || hasLower)) {
+    final distinct = _distinctClothingPieceLabels(clothing);
+    final hasUpperClothing = clothing.any(
+      (r) =>
+          r.zone == OutfitSegmentZone.upperBody ||
+          r.zone == OutfitSegmentZone.waist,
+    );
+    final hasLowerClothing = clothing.any(
+      (r) => r.zone == OutfitSegmentZone.lowerBody,
+    );
+
+    if (hasOuter && distinct.length >= 2) {
       return OutfitTopologyResult(
         silhouetteHint: OutfitSilhouetteHint.layered,
-        pieceCount: 3,
+        pieceCount: distinct.length.clamp(2, 4),
         onePiece: false,
         regionRole: labelMeta?.regionRole ?? 'outerwear',
       );
     }
 
-    if (hasUpper && hasLower) {
+    if (distinct.length >= 2 && hasUpperClothing && hasLowerClothing) {
       return OutfitTopologyResult(
         silhouetteHint: OutfitSilhouetteHint.twoPiece,
         pieceCount: 2,
         onePiece: false,
-        regionRole: labelMeta?.regionRole ?? _roleFromZones(hasUpper, hasLower),
+        regionRole: labelMeta?.regionRole ?? 'upper',
+      );
+    }
+
+    if (labelMeta != null && distinct.isNotEmpty) {
+      return _fromMeta(labelMeta)!;
+    }
+
+    // Anatomy bands (± feet/head/accessories) without clothing evidence → unknown.
+    if (distinct.isEmpty) {
+      return OutfitTopologyResult(
+        silhouetteHint: OutfitSilhouetteHint.unknown,
+        pieceCount: 0,
+        onePiece: false,
+        regionRole: labelMeta?.regionRole,
       );
     }
 
@@ -125,11 +161,10 @@ abstract final class OutfitTopologyInfer {
       return _fromMeta(labelMeta)!;
     }
 
-    return OutfitTopologyResult(
+    return const OutfitTopologyResult(
       silhouetteHint: OutfitSilhouetteHint.unknown,
-      pieceCount: map.regions.length.clamp(1, 4),
+      pieceCount: 0,
       onePiece: false,
-      regionRole: _roleFromZones(hasUpper, hasLower),
     );
   }
 
@@ -156,25 +191,51 @@ abstract final class OutfitTopologyInfer {
     );
   }
 
-  static bool _isOuterwearLabel(OutfitSegmentRegion r) {
-    final l = '${r.labelAr} ${r.labelEn}'.toLowerCase();
+  /// Clothing only — exclude head/feet/accessories and anatomy band labels.
+  static List<OutfitSegmentRegion> _clothingRegions(OutfitSegmentMap map) {
+    return map.regions.where((r) {
+      if (r.zone == OutfitSegmentZone.head ||
+          r.zone == OutfitSegmentZone.feet ||
+          r.zone == OutfitSegmentZone.accessories) {
+        return false;
+      }
+      if (OutfitSegmentMap.isAnatomyBandLabel(r)) return false;
+      return r.labelAr.trim().isNotEmpty;
+    }).toList();
+  }
+
+  static bool _isOuterwearLabel(OutfitSegmentRegion r) =>
+      _isOuterwearText('${r.labelAr} ${r.labelEn}');
+
+  static bool _isOuterwearText(String? raw) {
+    final l = (raw ?? '').toLowerCase();
     return l.contains('جاك') ||
         l.contains('عب') ||
         l.contains('jacket') ||
         l.contains('coat') ||
         l.contains('blazer') ||
-        l.contains('abaya');
+        l.contains('abaya') ||
+        l.contains('كارديجان') ||
+        l.contains('cardigan');
   }
 
-  static bool _isDressLabel(OutfitSegmentRegion r) {
-    final l = '${r.labelAr} ${r.labelEn}'.toLowerCase();
+  static bool _isDressLabel(OutfitSegmentRegion r) =>
+      _isDressText('${r.labelAr} ${r.labelEn}');
+
+  static bool _isDressText(String? raw) {
+    final l = (raw ?? '').toLowerCase();
     return l.contains('فستان') || l.contains('dress') || l.contains('gown');
   }
 
-  static String? _roleFromZones(bool hasUpper, bool hasLower) {
-    if (hasUpper && hasLower) return 'upper';
-    if (hasLower) return 'lower';
-    if (hasUpper) return 'upper';
-    return null;
+  static List<String> _distinctClothingPieceLabels(
+    List<OutfitSegmentRegion> clothing,
+  ) {
+    final out = <String>[];
+    for (final r in clothing) {
+      final key = r.labelAr.trim();
+      if (key.isEmpty) continue;
+      if (!out.contains(key)) out.add(key);
+    }
+    return out;
   }
 }

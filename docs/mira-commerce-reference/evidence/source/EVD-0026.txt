@@ -1,0 +1,25 @@
+id=EVD-0026
+path=mira-api/src/partners-portal/partners-portal.service.spec.ts
+commit=15fe65c40d3dedb9afdd95619f2945bd84cb616a
+sha256=6087e75e8c3817dd934c10c36456a23f7fdcb08b0fbfe5e18c1742e1838b957a
+lines=105-121
+note=اختبار وحدة يرفض تحديث منتج شريك آخر عبر mock
+runtime=SOURCE_ONLY
+---
+105|  it('preserves owner scope when updating partner products', async () => {
+106|    prisma.product.findFirst.mockResolvedValue(null);
+107|
+108|    await expect(
+109|      service.updateProduct('partner-a', 'product-of-partner-b', {
+110|        nameAr: 'منتج',
+111|        nameEn: 'Product',
+112|        priceHalalas: 1000,
+113|        externalUrl: 'https://example.com/product',
+114|        concernTags: [],
+115|      }),
+116|    ).rejects.toThrow('المنتج غير موجود');
+117|    expect(prisma.product.findFirst).toHaveBeenCalledWith({
+118|      where: { id: 'product-of-partner-b', partnerId: 'partner-a' },
+119|    });
+120|    expect(prisma.product.update).not.toHaveBeenCalled();
+121|  });

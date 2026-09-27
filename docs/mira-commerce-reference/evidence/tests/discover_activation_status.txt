@@ -1,0 +1,31 @@
+Discover test activation, 2026-09-24.
+
+Flag default remains false in lib/core/config/mira_features.dart.
+Test command: flutter run --dart-define=MIRA_MARKETPLACE_ENABLED=true
+Launch name: MIRA Discover Test
+Script: scripts/run_mira_discover_test.sh
+
+Widget and unit tests, flag off:
+flutter test test/features/marketplace/discover_activation_test.dart
+exit 0, 5 tests passed. Hub shows الانطلاق قريباً. List and product routes return DiscoverHubScreen.
+
+Same file with --dart-define=MIRA_MARKETPLACE_ENABLED=true:
+exit 0, 5 tests passed. Hub shows the three categories and the test notice. List route returns PartnerListScreen.
+
+Local fallback test: a Dio connection error returns the on-device seed and MarketplaceDataOrigin.localSeed.
+
+Mira API probe, no admin key:
+GET https://mira-api-n4p3.onrender.com/api/v1/marketplace/partners?type=brand HTTP 200
+brands: لوريال باريس، ذا بودي شوب، نيتروجينا
+clinics: عيادة نور الجلد، مركز لاميرا الطبي
+salons: صالون روز بيوتي، ستوديو جلام
+Brand detail products include سيروم فيتامين C with an external URL.
+Clinic services include استشارة جلدية with bookingEnabled false.
+This is the marketplace.seed content stored on Mira's server, not a live contracted catalog and not the Places backend.
+
+Device run was started on fayez’s iPhone (00008110-00191986268BA01E), debug, the same dart-define. The device result is appended only after the process reports a launch.
+
+Device:
+flutter run -d 00008110-00191986268BA01E --dart-define=MIRA_MARKETPLACE_ENABLED=true
+Result: debug build installed and launched on fayez’s iPhone (iOS 26.6). The Dart VM service came up.
+Not done on the device: tapping Discover, brands, clinics, salons, and details. flutter screenshot is unsupported for this iPhone, and devicectl on this Mac has no screenshot command. Those paths are covered by widget tests and the Mira API probe, not by a device photo.

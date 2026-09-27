@@ -18,8 +18,8 @@ abstract final class MiraSkinGlyphs {
     Color? color,
     bool selected = false,
   }) {
-    final c = color ??
-        (selected ? AppColors.primaryDark : AppColors.textSecondary);
+    final c =
+        color ?? (selected ? AppColors.primaryDark : AppColors.textSecondary);
     return SizedBox(
       width: size,
       height: size,
@@ -31,7 +31,9 @@ abstract final class MiraSkinGlyphs {
 
   static MiraSkinGlyphId forConcern(String concernOrMetricId) {
     final id = concernOrMetricId.toLowerCase();
-    if (id.contains('hydrat') || id.contains('moisture') || id.contains('ترطيب')) {
+    if (id.contains('hydrat') ||
+        id.contains('moisture') ||
+        id.contains('ترطيب')) {
       return MiraSkinGlyphId.hydration;
     }
     if (id.contains('pigment') || id.contains('spot') || id.contains('تصبغ')) {
@@ -161,7 +163,9 @@ class _SkinGlyphPainter extends CustomPainter {
         canvas.drawCircle(c.translate(-r * 0.2, r * 0.55), r * 0.13, stroke);
       case MiraSkinGlyphId.redness:
         final blush = Path()
-          ..addOval(Rect.fromCenter(center: c, width: r * 1.6, height: r * 1.1));
+          ..addOval(
+            Rect.fromCenter(center: c, width: r * 1.6, height: r * 1.1),
+          );
         canvas.drawPath(blush, fill);
         canvas.drawPath(blush, stroke);
       case MiraSkinGlyphId.sebum:
@@ -209,11 +213,17 @@ class _SkinGlyphPainter extends CustomPainter {
         }
       case MiraSkinGlyphId.evening:
         final moon = Path()
-          ..addOval(Rect.fromCircle(center: c.translate(-r * 0.1, 0), radius: r * 0.7));
+          ..addOval(
+            Rect.fromCircle(center: c.translate(-r * 0.1, 0), radius: r * 0.7),
+          );
         canvas.drawPath(moon, stroke);
-        canvas.drawCircle(c.translate(r * 0.25, -r * 0.1), r * 0.55, Paint()
-          ..color = AppColors.background
-          ..style = PaintingStyle.fill);
+        canvas.drawCircle(
+          c.translate(r * 0.25, -r * 0.1),
+          r * 0.55,
+          Paint()
+            ..color = AppColors.background
+            ..style = PaintingStyle.fill,
+        );
         canvas.drawCircle(c.translate(r * 0.25, -r * 0.1), r * 0.55, stroke);
       case MiraSkinGlyphId.routine:
         canvas.drawCircle(c, r * 0.75, stroke);
@@ -227,7 +237,12 @@ class _SkinGlyphPainter extends CustomPainter {
       case MiraSkinGlyphId.journey:
         final path = Path()
           ..moveTo(c.dx - r, c.dy + r * 0.4)
-          ..quadraticBezierTo(c.dx - r * 0.2, c.dy - r, c.dx + r, c.dy - r * 0.2);
+          ..quadraticBezierTo(
+            c.dx - r * 0.2,
+            c.dy - r,
+            c.dx + r,
+            c.dy - r * 0.2,
+          );
         canvas.drawPath(path, stroke);
         canvas.drawCircle(Offset(c.dx + r, c.dy - r * 0.2), r * 0.14, fill);
         canvas.drawCircle(Offset(c.dx + r, c.dy - r * 0.2), r * 0.14, stroke);
@@ -262,7 +277,11 @@ class _SkinGlyphPainter extends CustomPainter {
         canvas.drawCircle(c, r * 0.35, fill);
       case MiraSkinGlyphId.askMira:
         final bubble = RRect.fromRectAndRadius(
-          Rect.fromCenter(center: c.translate(0, -r * 0.1), width: r * 1.6, height: r * 1.15),
+          Rect.fromCenter(
+            center: c.translate(0, -r * 0.1),
+            width: r * 1.6,
+            height: r * 1.15,
+          ),
           Radius.circular(r * 0.35),
         );
         canvas.drawRRect(bubble, fill);

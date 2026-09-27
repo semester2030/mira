@@ -1,15 +1,18 @@
 import 'package:flutter/material.dart';
 
+import '../../../../core/constants/marketplace_copy.dart';
 import '../../../../shared/theme/colors.dart';
 import '../../../../shared/theme/typography.dart';
 import '../../../../shared/widgets/mira_app_bar.dart';
 import '../../../../shared/widgets/premium/premium_exports.dart';
+import '../../data/catalog_price.dart';
 import '../../domain/entities/catalog_service.dart';
 
 class ServiceDetailScreen extends StatelessWidget {
   final CatalogService service;
+  final Widget? provenance;
 
-  const ServiceDetailScreen({super.key, required this.service});
+  const ServiceDetailScreen({super.key, required this.service, this.provenance});
 
   @override
   Widget build(BuildContext context) {
@@ -19,11 +22,10 @@ class ServiceDetailScreen extends StatelessWidget {
       backgroundColor: AppColors.surface,
       appBar: const MiraAppBar(pageTitle: 'تفاصيل الخدمة'),
       body: SafeArea(
-        child: Padding(
+        child: ListView(
           padding: const EdgeInsets.all(20),
-          child: Column(
-            crossAxisAlignment: CrossAxisAlignment.stretch,
-            children: [
+          children: [
+            if (provenance != null) provenance!,
               Center(
                 child: Text(
                   service.partnerEmoji ?? '✨',
@@ -62,43 +64,37 @@ class ServiceDetailScreen extends StatelessWidget {
                   mainAxisAlignment: MainAxisAlignment.spaceAround,
                   children: [
                     _info('المدة', '${service.durationMin} د'),
-                    _info('السعر', service.priceLabel),
-                    _info('التطابق', '${service.matchScore}%'),
+                    _info('السعر', CatalogPrice.text(known: service.priceKnown, halalas: service.priceHalalas)),
+                    if (service.matchKnown) _info('التطابق', '${service.matchScore}%'),
                   ],
                 ),
               ),
               const SizedBox(height: 16),
-              PremiumCard(
-                child: Text(
-                  'الحجز الإلكتروني الكامل سيُفعّل مع بوابة الشركاء (المرحلة القادمة). '
-                  'حالياً تواصلي مع ${service.partnerNameAr} مباشرة أو انتظري إشعار ميرا.',
-                  style: AppTypography.bodyMedium.copyWith(height: 1.5),
-                ),
+              Text(
+                service.city.isEmpty ? 'لا توجد مدينة منشورة' : 'المدينة المسجّلة: ${service.city}. هذا ليس موقع فرع بإحداثيات.',
+                style: AppTypography.bodyMedium,
+                textAlign: TextAlign.center,
               ),
-              const Spacer(),
+              const SizedBox(height: 8),
+              Text(
+                (service.contactPhone ?? '').isEmpty ? 'لا توجد وسيلة تواصل منشورة لهذه الجهة.' : service.contactPhone!,
+                style: AppTypography.bodyMedium,
+                textAlign: TextAlign.center,
+              ),
+              const SizedBox(height: 24),
               PremiumButton(
-                label: service.bookingEnabled ? 'احجزي الآن' : 'الحجز قريباً',
+                label: 'اطلبي موعدًا',
                 icon: Icons.calendar_month_rounded,
                 variant: PremiumButtonVariant.gold,
-                onPressed: service.bookingEnabled
-                    ? null
-                    : () {
-                        ScaffoldMessenger.of(context).showSnackBar(
-                          SnackBar(
-                            content: Text(
-                              'سنُفعّل الحجز لـ ${service.partnerNameAr} قريباً ✨',
-                              style: AppTypography.bodyMedium.copyWith(
-                                color: AppColors.onPrimary,
-                              ),
-                            ),
-                          ),
-                        );
-                      },
+                onPressed: () {
+                  ScaffoldMessenger.of(context).showSnackBar(
+                    const SnackBar(content: Text(MarketplaceCopy.appointmentUnavailable)),
+                  );
+                },
               ),
             ],
           ),
         ),
-      ),
     );
   }
 

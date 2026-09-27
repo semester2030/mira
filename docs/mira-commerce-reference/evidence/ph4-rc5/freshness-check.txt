@@ -1,0 +1,52 @@
+fact_checks=24
+FACT EVD-0001 lib/core/config/mira_features.dart
+FACT EVD-0002 lib/main.dart
+FACT EVD-0003 lib/features/marketplace/presentation/screens/service_detail_screen.dart
+FACT EVD-0004 lib/features/marketplace/presentation/screens/product_detail_screen.dart
+FACT EVD-0005 mira-api/prisma/schema.prisma
+FACT EVD-0006 mira-api/src/marketplace/marketplace.controller.ts
+FACT EVD-0008 lib/features/marketplace/data/marketplace_local_catalog.dart
+FACT EVD-0011 mira-api/src/partners-portal/partners-portal.controller.ts
+FACT EVD-0012 mira-api/src/partners-portal/guards/partner-token.guard.ts
+FACT EVD-0013 mira-api/src/partners-portal/partners-portal.service.ts
+FACT EVD-0014 mira-api/src/admin/admin.controller.ts
+FACT EVD-0015 admin-portal/web/js/api.js
+FACT EVD-0016 partners-portal/web/js/api.js
+FACT EVD-0017 mira-api/src/partners-portal/dto/catalog.dto.ts
+FACT EVD-0020 lib/core/config/mira_features.dart
+FACT EVD-0021 mira-api/src/partners-portal/partners-portal.service.ts
+FACT EVD-0025 mira-api/src/common/guards/admin-api-key.guard.ts
+FACT EVD-0026 mira-api/src/partners-portal/partners-portal.service.spec.ts
+FACT EVD-0042 test/features/marketplace/asset_video_port_test.dart
+FACT EVD-0043 integration_test/discover_playback_rc2_test.dart
+FACT EVD-0044 lib/features/marketplace/presentation/screens/discover_presentation_screen.dart
+FACT EVD-0045 lib/features/marketplace/presentation/discover_browse_sequence.dart
+FACT EVD-0046 lib/features/marketplace/presentation/screens/discover_presentation_screen.dart
+FACT EVD-0047 lib/features/marketplace/data/discover_published_ad.dart
+BASELINE_MATCH EVD-0001 lib/core/config/mira_features.dart
+BASELINE_DRIFT EVD-0002 lib/main.dart
+BASELINE_DRIFT EVD-0003 lib/features/marketplace/presentation/screens/service_detail_screen.dart
+BASELINE_DRIFT EVD-0004 lib/features/marketplace/presentation/screens/product_detail_screen.dart
+BASELINE_DRIFT EVD-0005 mira-api/prisma/schema.prisma
+BASELINE_DRIFT EVD-0006 mira-api/src/marketplace/marketplace.controller.ts
+BASELINE_DRIFT EVD-0008 lib/features/marketplace/data/marketplace_local_catalog.dart
+BASELINE_DRIFT EVD-0011 mira-api/src/partners-portal/partners-portal.controller.ts
+BASELINE_DRIFT EVD-0012 mira-api/src/partners-portal/guards/partner-token.guard.ts
+BASELINE_DRIFT EVD-0013 mira-api/src/partners-portal/partners-portal.service.ts
+BASELINE_MATCH EVD-0014 mira-api/src/admin/admin.controller.ts
+BASELINE_DRIFT EVD-0015 admin-portal/web/js/api.js
+BASELINE_DRIFT EVD-0016 partners-portal/web/js/api.js
+BASELINE_DRIFT EVD-0017 mira-api/src/partners-portal/dto/catalog.dto.ts
+BASELINE_MATCH EVD-0020 lib/core/config/mira_features.dart
+BASELINE_DRIFT EVD-0021 mira-api/src/partners-portal/partners-portal.service.ts
+BASELINE_DRIFT EVD-0025 mira-api/src/common/guards/admin-api-key.guard.ts
+BASELINE_MATCH EVD-0026 mira-api/src/partners-portal/partners-portal.service.spec.ts
+BASELINE_UNHASHED EVD-0042 test/features/marketplace/asset_video_port_test.dart
+BASELINE_UNHASHED EVD-0043 integration_test/discover_playback_rc2_test.dart
+BASELINE_UNHASHED EVD-0044 lib/features/marketplace/presentation/screens/discover_presentation_screen.dart
+CURRENT_MATCH EVD-0045 lib/features/marketplace/presentation/discover_browse_sequence.dart
+CURRENT_MATCH EVD-0046 lib/features/marketplace/presentation/screens/discover_presentation_screen.dart
+CURRENT_MATCH EVD-0047 lib/features/marketplace/data/discover_published_ad.dart
+STATUS CURRENT_RECORDED baseline_match=4 baseline_drift=14 baseline_unhashed=3 baseline_missing=0 current_match=3 current_mismatch=0 current_unverified=0 unclassified=0
+baseline drift is recorded and is not a current-state pass
+NOT_RUN is not PASS. CURRENT_RECORDED is not a pass of baseline pins

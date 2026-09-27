@@ -1,0 +1,9 @@
+Chrome DevTools Emulation.setDeviceMetricsOverride then one Page.captureScreenshot.
+These are browser captures, not an iPhone screenshot.
+
+phase1-mobile-390x844.png 390x844 scrollWidth=390 right_dark=0 left_dark=0 vertical_period_445=0.877
+phase1-tablet-768x1024.png 768x1024 scrollWidth=768 right_dark=0 left_dark=0 vertical_period_445=0.834 horizontal_period_527=0.882
+phase1-desktop-1280x900.png 1280x900 scrollWidth=1280 right_dark=0 left_dark=0 vertical_period_445=0.647 horizontal_period_527=0.706
+phase1-mobile-phases-390x844.png 390x844 scrollWidth=390 right_dark=0 left_dark=0 vertical_period_445=0.772
+The phases shot is scrolled to section 39 with PH-1 expanded. Text wraps inside the viewport.
+A discarded 390x4200 hash capture was blank and is not evidence.

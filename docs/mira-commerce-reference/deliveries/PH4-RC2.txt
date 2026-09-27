@@ -1,0 +1,19 @@
+PH4 RC2 — تصحيح ملاحظات RC1
+التاريخ: 2026-09-27
+الحالة: بانتظار المراجعة المستقلة.
+المعتمد بالكامل: مرحلتان من خمس.
+المرحلة الثالثة: مقبولة برمجيًا ضمن النطاق المراجع، وبانتظار إغلاق التخزين الدائم.
+مانع PH3-STORAGE-LIVE: مفتوح.
+قواعد العد: غير معتمدة، والعد غير مفعّل.
+RC1: 4d31fb3656f92053781326baaa3fbe69d86a85ae307be11004b416adb1af1ae9 غير معتمد. حزمته خلت من ملفات Dart رغم وجودها في شجرة العمل؛ هذه الحزمة تضمّنها.
+
+الأساس ثم RC6: 15fe65c40d3dedb9afdd95619f2945bd84cb616a ثم 74ba49c4dcaa334f6c35ecf415a0e6353ca18dc4e752a985eb0e4a0de1e968d5 ثم adcdf63b8917783df7d3168e3b982b0d380be3cda14d682108e69783a0de15ea ثم afa097b042c1c0d1b1dcfec64dbe73949117940212f62c36f09085b60b9b6558 ثم fa92fa699f32e34759be3ab105cdd4fa00622aad5c16506f8f376f6939d68350 ثم d42df99bbe6f3819ade9efed70c8f8eff989fd00af22bdd18519d2885ef37a80 ثم f30b475b54bfbddaa75f59e0c4f93b8a630bfad41a0c504377e51ca2f66042fe ثم 4e7751e7179b32f6d43bc88e8a6c341857694fec3d14c352b847789188372f63 ثم حزمة RC1 أعلاه ثم هذه الحزمة.
+
+إعادة الإنتاج من الحزمة بعد فكها:
+1. من mira-api: npm ci ثم npx prisma generate.
+2. env -u NODE_ENV -u MIRA_ALLOW_SIMULATED_IMPORT -u MIRA_MEDIA_STORE -u MIRA_AD_FAIL_DECIDE MIRA_RC6_DB_NAME=mira_ph2_rc6_test_ph4rc2 bash scripts/run-marketplace-rc6-integration.sh
+3. من جذر الحزمة حيث pubspec.yaml: flutter pub get ثم flutter test test/features/marketplace/discover_view_count_test.dart test/features/marketplace/discover_ad_presentation_test.dart
+4. لا تضع مفاتيح في الملفات. بصمة ZIP تُحسب بعد إغلاق الحزمة.
+
+ما نُفذ: تضمين مصدر Flutter واختباراته، وقفل نسخة الإعلان، ومنع ناشر بلا تفويض، وأهلية الأطراف، ومسارات البوابة والإدارة وشاشة اكتشفي، وتصحيح تعريف المقياسين.
+ما لم يُنفذ: تفعيل العد، واعتماد العتبات، والتحقق من مورد التخزين الفعلي، وتشغيل الجوال، وتكامل زد، وDEC-0007، وعمولات المشاهير.

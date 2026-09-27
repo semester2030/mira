@@ -1,0 +1,10 @@
+  bool get _canTakePhoto {
+    if (_previewBoxSize == Size.zero) return false;
+    if (_cameraKitActive) {
+      return PerfectCameraKitGate.isReady;
+    }
+    if (_mirrorEnabled) {
+      return _mirrorGuidance?.canManualCapture == true;
+    }
+    return FaceMeshQualityGate.canTakePhoto(_faceOverlayController.frame);
+  }

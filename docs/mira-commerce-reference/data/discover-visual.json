@@ -1,0 +1,86 @@
+{
+  "titleAr": "التصميم المعتمد لاكتشفي",
+  "decisionDate": "2026-09-26",
+  "decisionTitleAr": "التكوين من الصور، والهوية من ثيم ميرا",
+  "decisionAr": "الصور المرجعية الثلاث مرجع للتكوين وطريقة العرض وتوزيع العناصر وتفاصيل التصفح. الثيم الحالي لميرا هو المرجع للألوان والخطوط والمكونات وحالاتها. هذا القرار يحدّث أي تعليمات سابقة تطلب نسخ ألوان الصور وخطوطها حرفيًا. لا يُنشأ ثيم مستقل لاكتشفي، ولا يُغيَّر الثيم العام للتطبيق كي يشبه الصور. عند تعارض تفصيل بصري مع مكوّن ميرا الموحّد يُحفظ اتساق ميرا ويُسجَّل الفرق وسببه. اختلاف الألوان والخطوط الناتج عن الثيم تطبيق للقرار، وليس نقص مطابقة.",
+  "deviceDeferralAr": "اختبار الجوال مؤجل إلى المرحلة الخامسة بقرار المالك، بعد اكتمال التطوير والتكامل وقبل الإطلاق العام. التأجيل ليس إثباتًا أن المشغّل الحقيقي اشتغل.",
+  "historicalPhaseApprovalAr": "المرحلة الأولى غير معتمدة. هذه الجولة للمراجعة فقط.",
+  "phaseApprovalAr": "المعتمد بالكامل مرحلتان من خمس. 2026-09-27: المالك أجّل اعتماد المشاهدات والعد الحقيقي وتخزين PH3-STORAGE-LIVE وسلسلة MinIO، وسمح ببدء المرحلة الخامسة لاختبار النسخة الحالية. التصحيحات البرمجية لـRC7 محفوظة. لا جاهزية تجارية.",
+  "priorVisualRc1Ar": "الحزمة البصرية الأولى بُنيت من وصف نصي قبل فتح الصور، ورُفضت كمطابقة بصرية. تبقى سجلًا للهيكل الأولي وليست مطابقة.",
+  "themeSources": [
+    {
+      "path": "lib/shared/theme/colors.dart",
+      "roleAr": "ألوان الواجهة: primary #E86FA9 وbackground #FFF7FA وtextPrimary #4A3A3A وborder #F8BBD0 وglassFill"
+    },
+    {
+      "path": "lib/shared/theme/typography.dart",
+      "roleAr": "Tajawal لنص الواجهة، وPlayfair Display لكلمة MIRA"
+    },
+    {
+      "path": "assets/fonts/Tajawal-Regular.ttf",
+      "roleAr": "ملف خط الواجهة"
+    },
+    {
+      "path": "assets/fonts/PlayfairDisplay-Variable.ttf",
+      "roleAr": "ملف خط الشعار"
+    },
+    {
+      "path": "lib/features/marketplace/presentation/presentation/discover_visual_chrome.dart",
+      "roleAr": "تكوين اكتشفي فوق المكوّنات المشتركة دون ثيم موازٍ"
+    }
+  ],
+  "references": [
+    {
+      "file": "evidence/visual/references/3856406F-4363-4706-8F2C-D7E44477AFFA.jpeg",
+      "screenAr": "المنتجات",
+      "pixels": "711×1536",
+      "sha256": "75c8ded57a6726e320cd3154ed49b923764e8e0c9eb0251b20bea18fc244f6d6",
+      "statusAr": "فُتحت الصورة وتحققت البصمة. التكوين: شعار وسط، رجوع يمين، بحث ثم فلتر يسار، صوت يسار الوسائط، معلومات يمين، قلب ومشاركة عموديان يسار، إجراءات التفاصيل ثم اشتري الآن ثم المتجر، تصنيفات من اليمين: الكل محددة ثم الوجه والجسم والشعر والملابس."
+    },
+    {
+      "file": "evidence/visual/references/C29F7690-9EB9-45CA-A167-D212A90D0A6C.jpeg",
+      "screenAr": "العيادات",
+      "pixels": "707×1536",
+      "sha256": "3f6c34fc86508b041351de2a5dd5d836556ea308862712d9bcbdd1551b45ed9c",
+      "statusAr": "فُتحت الصورة وتحققت البصمة. صوت يمين الوسائط. العنوان ثم العيادة ثم المدينة. قلب ومشاركة في صف. أزرار التفاصيل واطلبي موعدًا والموقع بانحناء أوضح. التصنيف المحدد البشرة."
+    },
+    {
+      "file": "evidence/visual/references/617733F4-AC10-49C7-9768-0D8C3883850C.jpeg",
+      "screenAr": "المشاغل",
+      "pixels": "711×1536",
+      "sha256": "a5ed531d24ec2f06e17e66e6ab333bd19b0c53ffbb04d036b365bccc3894e2c7",
+      "statusAr": "فُتحت الصورة وتحققت البصمة. صوت يسار الوسائط. صف خدمة مثل العيادة مع انحناء أزرار أقل. التصنيف المحدد الشعر، ثم المكياج والأظافر والعناية."
+    }
+  ],
+  "implementationShots": [
+    "evidence/visual/implementation/product.png",
+    "evidence/visual/implementation/clinic.png",
+    "evidence/visual/implementation/salon.png",
+    "evidence/visual/implementation/ratio-portrait.png",
+    "evidence/visual/implementation/ratio-square.png",
+    "evidence/visual/implementation/ratio-landscape.png",
+    "evidence/visual/implementation/video.png"
+  ],
+  "comparisons": [
+    "evidence/visual/comparisons/product.png",
+    "evidence/visual/comparisons/clinic.png",
+    "evidence/visual/comparisons/salon.png"
+  ],
+  "intentionalThemeDeltasAr": [
+    "أزرار البحث والفلاتر والإجراءات والتصنيفات بلون ميرا الوردي #E86FA9 وحدود #F8BBD0، لا بالبني الظاهر في الصور.",
+    "النصوص بخط Tajawal والشعار بخط Playfair Display، لا بخط الصورة.",
+    "حقل البحث حبة Material وInkWell من مكوّنات Flutter، وليس حقل كتابة مفعّلًا؛ النقر يوضح أن البحث غير متاح الآن.",
+    "أيقونة العين بقيت في طرف الشريط وفق الثيم، بلا عدد. المشاهدات الحقيقية مؤجلة إلى المرحلة الرابعة."
+  ],
+  "remainingAr": [
+    "لا نسبة مطابقة رقمية. المقارنة في evidence/visual/comparisons.",
+    "صور المعاينة مولّدة ومنفصلة عن التجار، ولا تُعرض إلا عند تمرير previewSlides صراحة. الدخول العادي يستخدم slides() من الكتالوج.",
+    "العينات الهندسية تُعرض كاملة بـ BoxFit.contain. ملف العينة المربعة ينتهي بنصف خلية، وملف العينة الأفقية ينتهي بشريط أبيض أقصر؛ اللقطة تُظهر هذا الحد ولا تقصّه زيادة.",
+    "لقطة video.png دليل تكوين وزر صوت فقط. _QuietVideoPort يعيد SizedBox.expand ولا يشغّل video_player. اختبارات الملكية والكتم والإيقاف منفصلة. التشغيل على الجوال في المرحلة الخامسة.",
+    "البحث والفلاتر والمتجر والموعد والموقع والمفضلة والمشاركة غير منفذة. إطار التصنيف المحدد ليس فلترًا.",
+    "شريط النظام ظاهر في المراجع وغير مرسوم في التطبيق.",
+    "اختبار الجوال لم يُشغَّل في RC4. موضعه المرحلة الخامسة."
+  ],
+  "implementationAr": "RC4: المسار العادي على شرائح الكتالوج، والمعاينة اختيار صريح بالشاشة نفسها. شرائط الوسائط أعلى اليمين وعددها من الوسائط الفعلية. صف التصنيفات يتسع مع العرض ويتمرر أفقيًا عند الضيق. صورة الملابس فستان وردي كامل الشكل. أدلة النسب معزولة. لقطة الفيديو تثبت الكروم وزر الصوت فقط.",
+  "generatedRegister": "evidence/visual/generated/assets.json"
+}

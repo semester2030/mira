@@ -28,23 +28,34 @@
       </div>
 
       <div class="card" id="catalogSection">
-        <h2 id="catalogTitle">الكتalog</h2>
+        <h2 id="catalogTitle">الكتالوج</h2>
+        <p class="lead">فتح رابط المتجر ليس شراءً مكتملًا. طلب الموعد ليس حجزًا مؤكدًا.</p>
         <div id="catalogList"></div>
 
         <h2>إضافة جديد</h2>
         <form id="catalogForm"></form>
       </div>
+
+      <div class="card" id="adsSection">
+        <h2>إعلانات المشاهير</h2>
+        <p class="lead" id="adsNotice"></p>
+        <div id="adsList"></div>
+        <h2>مسودة إعلان</h2>
+        <form id="adsForm"></form>
+      </div>
     </div>
   </main>
 
   <script src="js/api.js"></script>
+  <script src="js/ads.js"></script>
   <script>
-    if (!PartnersApi.isLoggedIn()) location.href = 'login.html';
+    const labeledUi = new URLSearchParams(location.search).get('ui-fixture') === 'labeled';
+    if (!labeledUi && !PartnersApi.isLoggedIn()) location.href = 'login.html' + location.search;
 
     document.getElementById('logout').onclick = (e) => {
       e.preventDefault();
       PartnersApi.clearSession();
-      location.href = 'login.html';
+      location.href = 'login.html' + location.search;
     };
 
     const CONCERNS = 'moisture,pore,acne,wrinkle,redness,oiliness,texture,age_spot';
@@ -69,123 +80,289 @@
         document.getElementById('stats').innerHTML = `
           <div class="stat"><div class="num">${a.impressions}</div><div class="lbl">مشاهدات (30 يوم)</div></div>
           <div class="stat"><div class="num">${a.clicks}</div><div class="lbl">نقرات</div></div>
-          <div class="stat"><div class="num">${data.catalog.productCount + data.catalog.serviceCount}</div><div class="lbl">عناصر الكتalog</div></div>
+          <div class="stat"><div class="num">${data.catalog.productCount + data.catalog.serviceCount}</div><div class="lbl">عناصر الكتالوج</div></div>
         `;
 
         renderCatalog(p.type, data.catalog);
         renderForm(p.type);
+        try {
+          const ads = await PartnersApi.ads();
+          renderAds(ads.items || [], null);
+        } catch (adsError) {
+          renderAds([], null);
+          const notice = document.getElementById('adsNotice');
+          if (notice) notice.textContent = adsError.message;
+        }
       } catch (err) {
         document.getElementById('loading').className = 'alert err';
         document.getElementById('loading').textContent = err.message;
       }
     }
 
+    function text(parent, value, tag) {
+      const node = document.createElement(tag || 'div');
+      node.textContent = value == null ? '' : String(value);
+      parent.appendChild(node);
+      return node;
+    }
+
     function renderCatalog(type, catalog) {
       const list = document.getElementById('catalogList');
-      const items =
-        type === 'brand' ? catalog.products : catalog.services;
-
+      const items = type === 'brand' ? catalog.products : catalog.services;
+      list.replaceChildren();
       if (!items.length) {
-        list.innerHTML = '<p class="lead">لا عناصر بعد — أضف أول منتج/خدمة.</p>';
+        text(list, 'لا عناصر بعد — أضف أول منتج/خدمة.', 'p');
         return;
       }
-
-      list.innerHTML = items
-        .map((item) => {
-          const price = formatPrice(item.priceHalalas);
-          const extra =
-            type === 'brand'
-              ? item.externalUrl
-              : item.durationMin + ' د · حجز: ' + (item.bookingEnabled ? 'نعم' : 'لا');
-          return `<div class="list-item">
-            <strong>${item.nameAr}</strong> ${item.active ? '' : '(معطّل)'}
-            <br><small>${price} · ${item.concernTags.join(', ')}</small>
-            <br><small>${extra}</small>
-            ${!item.active ? '' : `<div class="actions"><button class="btn btn-ghost btn-sm" data-del="${item.id}">إخفاء</button></div>`}
-          </div>`;
-        })
-        .join('');
-
-      list.querySelectorAll('[data-del]').forEach((btn) => {
-        btn.onclick = async () => {
-          if (!confirm('إخفاء هذا العنصر من التطبيق؟')) return;
-          const id = btn.dataset.del;
-          if (type === 'brand') await PartnersApi.deleteProduct(id);
-          else await PartnersApi.deleteService(id);
-          load();
+      const kind = type === 'brand' ? 'products' : 'services';
+      items.forEach((item) => {
+        const card = document.createElement('div');
+        card.className = 'list-item';
+        text(card, item.nameAr, 'strong');
+        text(card, 'الحالة المنشورة: ' + (item.contentStatus || 'published') + ' · المراجعة: ' + (item.reviewStatus || 'none'));
+        text(card, 'المنشور: ' + (item.nameAr || '') + (item.draftNameAr ? ' · المسودة: ' + item.draftNameAr : ''));
+        text(card, formatPrice(item.priceHalalas));
+        if (item.reviewNote) text(card, 'سبب المراجعة: ' + item.reviewNote);
+        const status = text(card, '');
+        const mediaBox = document.createElement('div');
+        card.appendChild(mediaBox);
+        const file = document.createElement('input');
+        file.type = 'file';
+        file.accept = 'image/png,image/jpeg,image/webp,video/mp4';
+        const upload = document.createElement('button');
+        upload.type = 'button';
+        upload.className = 'btn btn-ghost btn-sm';
+        upload.textContent = 'رفع وسيط';
+        const submit = document.createElement('button');
+        submit.type = 'button';
+        submit.className = 'btn btn-ghost btn-sm';
+        submit.textContent = 'إرسال للمراجعة';
+        const pull = document.createElement('button');
+        pull.type = 'button';
+        pull.className = 'btn btn-ghost btn-sm';
+        pull.textContent = 'سحب';
+        const edit = document.createElement('button');
+        edit.type = 'button';
+        edit.className = 'btn btn-ghost btn-sm';
+        edit.textContent = 'تعديل';
+        edit.onclick = () => renderForm(type, item);
+        card.append(file, upload, submit, pull, edit);
+        list.appendChild(card);
+        async function showMedia() {
+          mediaBox.replaceChildren();
+          const preview = await PartnersApi.preview(kind, item.id);
+          text(mediaBox, 'المنشور: ' + (preview.publishedNameAr || '') + (preview.draftNameAr ? ' · المسودة: ' + preview.draftNameAr : ''));
+          if (preview.reviewNote) text(mediaBox, 'سبب المراجعة: ' + preview.reviewNote);
+          const ids = (preview.media || []).map((media) => media.id);
+          for (const media of preview.media || []) {
+            const row = document.createElement('div');
+            const primary = media.draftIsPrimary == null ? media.isPrimary : media.draftIsPrimary;
+            text(row, (media.kind === 'video' ? 'فيديو' : 'صورة') + (primary ? ' · رئيسي' : '') + (media.pendingRemoval ? ' · طلب إزالة' : ' · ' + media.publication));
+            try {
+              const response = await fetch(PartnersApi.base + '/partners-portal/media/' + media.id, {
+                headers: { Authorization: 'Bearer ' + localStorage.getItem('mira_partner_token') },
+              });
+              if (!response.ok) throw new Error('تعذر المعاينة');
+              const blob = await response.blob();
+              const objectUrl = URL.createObjectURL(blob);
+              const view = document.createElement(media.kind === 'video' ? 'video' : 'img');
+              view.src = objectUrl;
+              if (media.kind === 'video') view.controls = true;
+              view.style.maxWidth = '160px';
+              view.style.maxHeight = '160px';
+              row.appendChild(view);
+            } catch (error) {
+              text(row, 'تعذر عرض الوسيط');
+            }
+            const up = document.createElement('button');
+            up.type = 'button';
+            up.textContent = 'أعلى';
+            up.disabled = ids.indexOf(media.id) === 0;
+            up.onclick = async () => {
+              const order = ids.slice();
+              const at = order.indexOf(media.id);
+              if (at < 1) return;
+              status.textContent = 'جارٍ الترتيب';
+              const swap = order[at - 1];
+              order[at - 1] = order[at];
+              order[at] = swap;
+              try {
+                await PartnersApi.reorderMedia(kind, item.id, order);
+                status.textContent = 'تم الترتيب كمسودة';
+                await showMedia();
+              } catch (error) {
+                status.textContent = 'تعذر الترتيب: ' + error.message;
+              }
+            };
+            const makePrimary = document.createElement('button');
+            makePrimary.type = 'button';
+            makePrimary.textContent = 'رئيسي';
+            makePrimary.onclick = async () => {
+              status.textContent = 'جارٍ التحديد';
+              try {
+                await PartnersApi.setPrimary(kind, item.id, media.id);
+                status.textContent = 'حُفظ الرئيسي كمسودة';
+                await showMedia();
+              } catch (error) {
+                status.textContent = 'تعذر التحديد: ' + error.message;
+              }
+            };
+            const remove = document.createElement('button');
+            remove.type = 'button';
+            remove.textContent = 'إزالة';
+            remove.onclick = async () => {
+              status.textContent = 'جارٍ طلب الإزالة';
+              try {
+                await PartnersApi.removeMedia(kind, item.id, media.id);
+                status.textContent = 'طُلبت الإزالة ضمن المراجعة';
+                await showMedia();
+              } catch (error) {
+                status.textContent = 'تعذرت الإزالة: ' + error.message;
+              }
+            };
+            row.append(up, makePrimary, remove);
+            mediaBox.appendChild(row);
+          }
+        }
+        showMedia().catch((error) => { status.textContent = error.message; });
+        upload.onclick = async () => {
+          const chosen = file.files && file.files[0];
+          if (!chosen) { status.textContent = 'اختاري ملفًا أولًا'; return; }
+          status.textContent = 'جارٍ الرفع';
+          try {
+            const dataBase64 = await new Promise((resolve, reject) => {
+              const reader = new FileReader();
+              reader.onload = () => resolve(String(reader.result).split(',')[1]);
+              reader.onerror = () => reject(reader.error);
+              reader.readAsDataURL(chosen);
+            });
+            await PartnersApi.addMedia(kind, item.id, chosen.type, dataBase64);
+            status.textContent = 'تم حفظ الوسيط كمسودة';
+            await showMedia();
+          } catch (error) {
+            status.textContent = 'فشل الرفع: ' + error.message;
+          }
+        };
+        submit.onclick = async () => {
+          status.textContent = 'جارٍ الإرسال';
+          try {
+            await PartnersApi.submitReview(kind, item.id);
+            status.textContent = 'أُرسل للمراجعة';
+            load();
+          } catch (error) {
+            status.textContent = 'تعذر الإرسال: ' + error.message;
+          }
+        };
+        pull.onclick = async () => {
+          if (!confirm('سحب هذا العنصر من النشر؟')) return;
+          status.textContent = 'جارٍ السحب';
+          try {
+            if (type === 'brand') await PartnersApi.deleteProduct(item.id);
+            else await PartnersApi.deleteService(item.id);
+            load();
+          } catch (error) {
+            status.textContent = 'تعذر السحب: ' + error.message;
+          }
         };
       });
     }
 
-    function renderForm(type) {
-      const form = document.getElementById('catalogForm');
-      document.getElementById('catalogTitle').textContent =
-        type === 'brand' ? 'منتجاتك' : 'خدماتك';
-
-      if (type === 'brand') {
-        form.innerHTML = `
-          <div class="grid-2">
-            <div><label>اسم عربي</label><input name="nameAr" required /></div>
-            <div><label>اسم English</label><input name="nameEn" required /></div>
-          </div>
-          <label>الوصف</label><textarea name="descriptionAr"></textarea>
-          <div class="grid-2">
-            <div><label>السعر (هللة)</label><input name="priceHalalas" type="number" required placeholder="8900 = 89 ر.س" /></div>
-            <div><label>رابط المتجر</label><input name="externalUrl" type="url" required /></div>
-          </div>
-          <label>concern tags (مفصولة بفاصلة)</label><input name="concernTags" value="${CONCERNS.split(',')[0]},${CONCERNS.split(',')[2]}" required />
-          <label>نوع البشرة (مفصولة بفاصلة)</label><input name="skinTypes" value="مختلطة,دهنية" />
-          <label>خطوة الروتين</label><input name="stepAr" placeholder="سيروم" />
-          <div class="actions"><button type="submit" class="btn btn-primary">إضافة منتج</button></div>
-        `;
-        form.onsubmit = async (e) => {
-          e.preventDefault();
-          const fd = new FormData(form);
-          await PartnersApi.createProduct({
-            nameAr: fd.get('nameAr'),
-            nameEn: fd.get('nameEn'),
-            descriptionAr: fd.get('descriptionAr') || undefined,
-            priceHalalas: parseInt(fd.get('priceHalalas'), 10),
-            externalUrl: fd.get('externalUrl'),
-            concernTags: fd.get('concernTags').split(',').map((s) => s.trim()),
-            skinTypes: fd.get('skinTypes').split(',').map((s) => s.trim()),
-            stepAr: fd.get('stepAr') || undefined,
-          });
-          form.reset();
-          load();
-        };
-      } else {
-        form.innerHTML = `
-          <div class="grid-2">
-            <div><label>اسم عربي</label><input name="nameAr" required /></div>
-            <div><label>اسم English</label><input name="nameEn" required /></div>
-          </div>
-          <label>الوصف</label><textarea name="descriptionAr"></textarea>
-          <div class="grid-2">
-            <div><label>المدة (دقيقة)</label><input name="durationMin" type="number" value="45" required /></div>
-            <div><label>السعر (هللة)</label><input name="priceHalalas" type="number" required placeholder="35000" /></div>
-          </div>
-          <label>concern tags</label><input name="concernTags" value="acne,pore" required />
-          <div class="actions"><button type="submit" class="btn btn-primary">إضافة خدمة</button></div>
-        `;
-        form.onsubmit = async (e) => {
-          e.preventDefault();
-          const fd = new FormData(form);
-          await PartnersApi.createService({
-            nameAr: fd.get('nameAr'),
-            nameEn: fd.get('nameEn'),
-            descriptionAr: fd.get('descriptionAr') || undefined,
-            durationMin: parseInt(fd.get('durationMin'), 10),
-            priceHalalas: parseInt(fd.get('priceHalalas'), 10),
-            concernTags: fd.get('concernTags').split(',').map((s) => s.trim()),
-          });
-          form.reset();
-          load();
-        };
-      }
+    function field(form, label, name, value, type) {
+      const wrap = document.createElement('div');
+      const caption = document.createElement('label');
+      caption.textContent = label;
+      const input = document.createElement(type === 'textarea' ? 'textarea' : 'input');
+      input.name = name;
+      if (type && type !== 'textarea') input.type = type;
+      input.value = value == null ? '' : String(value);
+      wrap.append(caption, input);
+      form.appendChild(wrap);
+      return input;
     }
 
-    load();
+    function renderForm(type, item) {
+      const form = document.getElementById('catalogForm');
+      document.getElementById('catalogTitle').textContent = type === 'brand' ? 'منتجاتك' : 'خدماتك';
+      form.replaceChildren();
+      const editing = Boolean(item);
+      const status = text(form, editing ? 'تعديل العنصر الحالي. الحفظ يبقي المعرف نفسه.' : 'إضافة عنصر جديد.');
+      if (editing) {
+        text(form, 'المنشور: ' + (item.nameAr || ''));
+        text(form, 'المسودة: ' + (item.draftNameAr || 'لا مسودة اسم'));
+        text(form, 'الإنجليزية المنشورة: ' + (item.nameEn || ''));
+        text(form, 'مسودة الإنجليزية: ' + (item.draftNameEn || 'لا مسودة'));
+        text(form, item.draftDescriptionAr === '' ? 'المسودة تطلب مسح الوصف' : 'وصف المسودة: ' + (item.draftDescriptionAr || 'لا مسودة وصف'));
+        if (item.reviewNote) text(form, 'سبب المراجعة: ' + item.reviewNote);
+      }
+      const nameAr = field(form, 'اسم عربي', 'nameAr', editing ? (item.draftNameAr || item.nameAr) : '', 'text');
+      nameAr.required = true;
+      const nameEn = field(form, 'اسم English', 'nameEn', editing ? (item.draftNameEn != null ? item.draftNameEn : item.nameEn) : '', 'text');
+      nameEn.required = true;
+      field(form, 'الوصف', 'descriptionAr', editing ? (item.draftDescriptionAr != null ? item.draftDescriptionAr : (item.descriptionAr || '')) : '', 'textarea');
+      if (type === 'brand') {
+        const price = field(form, 'السعر (هللة)', 'priceHalalas', editing ? item.priceHalalas : '', 'number');
+        price.required = true;
+        const url = field(form, 'رابط المتجر', 'externalUrl', editing ? item.externalUrl : '', 'url');
+        url.required = true;
+        const tags = field(form, 'وسوم الاهتمام', 'concernTags', editing ? (item.concernTags || []).join(',') : 'لون', 'text');
+        tags.required = true;
+        field(form, 'نوع البشرة', 'skinTypes', editing ? (item.skinTypes || []).join(',') : '', 'text');
+        field(form, 'خطوة الروتين', 'stepAr', editing ? (item.stepAr || '') : '', 'text');
+      } else {
+        const duration = field(form, 'المدة (دقيقة)', 'durationMin', editing ? item.durationMin : 45, 'number');
+        duration.required = true;
+        const price = field(form, 'السعر (هللة)', 'priceHalalas', editing ? item.priceHalalas : '', 'number');
+        price.required = true;
+        const tags = field(form, 'وسوم الاهتمام', 'concernTags', editing ? (item.concernTags || []).join(',') : 'عناية', 'text');
+        tags.required = true;
+      }
+      const save = document.createElement('button');
+      save.type = 'submit';
+      save.className = 'btn btn-primary';
+      save.textContent = editing ? 'حفظ المسودة' : (type === 'brand' ? 'إضافة منتج' : 'إضافة خدمة');
+      form.appendChild(save);
+      form.onsubmit = async (event) => {
+        event.preventDefault();
+        status.textContent = 'جارٍ الحفظ';
+        save.disabled = true;
+        const data = new FormData(form);
+        const payload = {
+          nameAr: data.get('nameAr'),
+          nameEn: data.get('nameEn'),
+          descriptionAr: data.get('descriptionAr') == null ? '' : String(data.get('descriptionAr')),
+          priceHalalas: parseInt(data.get('priceHalalas'), 10),
+          concernTags: String(data.get('concernTags') || '').split(',').map((part) => part.trim()).filter(Boolean),
+        };
+        try {
+          if (type === 'brand') {
+            payload.externalUrl = data.get('externalUrl');
+            payload.skinTypes = String(data.get('skinTypes') || '').split(',').map((part) => part.trim()).filter(Boolean);
+            payload.stepAr = data.get('stepAr') || undefined;
+            if (editing) await PartnersApi.updateProduct(item.id, payload);
+            else await PartnersApi.createProduct(payload);
+          } else {
+            payload.durationMin = parseInt(data.get('durationMin'), 10);
+            if (editing) await PartnersApi.updateService(item.id, payload);
+            else await PartnersApi.createService(payload);
+          }
+          status.textContent = editing ? 'حُفظت المسودة على العنصر نفسه' : 'أُضيف العنصر كمسودة';
+          load();
+        } catch (error) {
+          status.textContent = 'تعذر الحفظ: ' + error.message;
+          save.disabled = false;
+        }
+      };
+    }
+
+    if (labeledUi) {
+      document.getElementById('loading').classList.add('hidden');
+      document.getElementById('app').classList.remove('hidden');
+      document.getElementById('partnerName').textContent = 'عرض واجهة موسوم';
+      document.getElementById('partnerMeta').textContent = 'بيانات اختبار موسومة. ليست كتالوجًا عامًا.';
+      renderAds(labeledAdsFixture(), null);
+    } else {
+      load();
+    }
   </script>
 </body>
 </html>

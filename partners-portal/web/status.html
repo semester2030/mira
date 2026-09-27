@@ -39,23 +39,41 @@
       const token = tokenInput.value.trim();
       const box = document.getElementById('result');
       box.classList.remove('hidden');
-      box.innerHTML = '<div class="alert warn">جاري التحقق...</div>';
+      box.replaceChildren();
+      const pending = document.createElement('div');
+      pending.className = 'alert warn';
+      pending.textContent = 'جاري التحقق...';
+      box.appendChild(pending);
 
       try {
         const s = await PartnersApi.status(token);
-        let html = '<div class="alert ok">الحالة: <strong>' + s.status + '</strong></div>';
-        html += '<p><strong>' + s.nameAr + '</strong> (' + s.type + ')</p>';
-
-        if (s.status === 'approved') {
-          html += '<p class="lead">تم تفعيل الطلب. ستصلك بيانات الدخول عبر قناة التواصل المعتمدة.</p>';
-        } else if (s.status === 'rejected') {
-          html = '<div class="alert err">مرفوض: ' + (s.rejectReason || '') + '</div>';
+        box.replaceChildren();
+        const alert = document.createElement('div');
+        const name = document.createElement('p');
+        const nameStrong = document.createElement('strong');
+        nameStrong.textContent = s.nameAr || '';
+        name.append(nameStrong, document.createTextNode(' (' + (s.type || '') + ')'));
+        if (s.status === 'rejected') {
+          alert.className = 'alert err';
+          alert.textContent = 'مرفوض: ' + (s.rejectReason || '');
+          box.appendChild(alert);
         } else {
-          html += '<p class="lead">طلبك قيد المراجعة — عادة 1–3 أيام عمل.</p>';
+          alert.className = 'alert ok';
+          alert.textContent = 'الحالة: ' + (s.status || '');
+          box.append(alert, name);
+          const lead = document.createElement('p');
+          lead.className = 'lead';
+          lead.textContent = s.status === 'approved'
+            ? 'تم تفعيل الطلب. ستصلك بيانات الدخول عبر قناة التواصل المعتمدة.'
+            : 'طلبك قيد المراجعة — عادة 1–3 أيام عمل.';
+          box.appendChild(lead);
         }
-        box.innerHTML = html;
       } catch (err) {
-        box.innerHTML = '<div class="alert err">' + err.message + '</div>';
+        box.replaceChildren();
+        const alert = document.createElement('div');
+        alert.className = 'alert err';
+        alert.textContent = err.message;
+        box.appendChild(alert);
       }
     }
 

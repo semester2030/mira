@@ -1,0 +1,4 @@
+RC6 current excerpt. Each independent link open receives a UUID event id.
+The previous pin c1e0f8dc8f9ff0630cd5a4282ecf2cea9e38d82e653802b4aea48fab1201a812 was the RC5 screen counter.
+That counter repeated link-{adId}-1 across two fresh screen instances, so it does not prove uniqueness.
+A resend keeps the id created for that attempt. Opening the browser is not a purchase or a view.

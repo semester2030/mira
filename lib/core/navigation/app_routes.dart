@@ -41,6 +41,7 @@ abstract final class AppRoutes {
   static const help = '/help';
   static const about = '/about';
   static const discover = '/discover';
+  static const discoverPresentation = '/discover-presentation';
   static const discoverList = '/discover-list';
   static const productDetail = '/product-detail';
   static const serviceDetail = '/service-detail';

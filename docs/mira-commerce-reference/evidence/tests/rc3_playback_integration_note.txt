@@ -1,0 +1,14 @@
+P1-RC3-01 — ما يثبته كل مسار
+================================
+
+1) اختبار التكامل (integration_test/discover_playback_rc2_test.dart)
+   - MaterialApp بـ locale=ar و Directionality RTL صريح.
+   - بعد فتح التفاصيل: إيقاف المشغّل القديم.
+   - بعد pop: مشغّل جديد (ليس identical) ويعمل.
+   - تقدم التشغيل: عينات position متعددة خلال 3s (يتسامح مع تكرار الفيديو).
+   - RC3_LIFECYCLE: محاكاة AppLifecycleState برمجيًا (ليست إرسال OS للخلفية).
+   - covered-resume: العودة للمقدمة والتفاصيل ما زالت فوق العرض → لا تشغيل.
+
+2) تشغيل الجهاز
+   - evidence/tests/rc3_device_run.txt
+   - يلزم نجاح VM Service وطباعة RC3_MARK* لإثبات video_player الحقيقي.

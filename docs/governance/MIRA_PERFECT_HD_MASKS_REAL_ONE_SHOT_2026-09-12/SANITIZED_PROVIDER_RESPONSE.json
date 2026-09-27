@@ -1,0 +1,489 @@
+{
+  "phase": "done",
+  "apiVersion": "s2s/v2.0",
+  "endpoint": "https://yce-api-01.makeupar.com/s2s/v2.0/task/skin-analysis",
+  "requestSanitized": {
+    "src_file_id": "[redacted]",
+    "dst_actions": [
+      "hd_age_spot",
+      "hd_pore",
+      "hd_wrinkle",
+      "hd_redness"
+    ],
+    "miniserver_args": {
+      "enable_mask_overlay": false
+    },
+    "format": "json"
+  },
+  "taskIdPrefix": "LrLKjuSmfkde",
+  "sourceWidth": 1200,
+  "sourceHeight": 1680,
+  "shortSide": 1200,
+  "enableMaskOverlay": false,
+  "hdOnly": true,
+  "unitsConsumed": "unknown",
+  "artifacts": [
+    {
+      "concernType": "hd_age_spot",
+      "rawScore": 99.0926284790039,
+      "uiScore": 97,
+      "outputMaskName": null,
+      "maskUrlCount": 1,
+      "maskUrlHosts": [
+        "yce-us.s3-accelerate.amazonaws.com"
+      ],
+      "scoreOnly": false,
+      "downloadOk": true,
+      "width": 1200,
+      "height": 1680,
+      "format": "png",
+      "hasAlpha": true,
+      "nonEmptySpatial": true,
+      "alignedWithSource": true,
+      "alignmentNotes": "mask dimensions == source (offset 0)",
+      "downloadError": null
+    },
+    {
+      "concernType": "hd_redness",
+      "rawScore": 93.69667053222656,
+      "uiScore": 90,
+      "outputMaskName": null,
+      "maskUrlCount": 1,
+      "maskUrlHosts": [
+        "yce-us.s3-accelerate.amazonaws.com"
+      ],
+      "scoreOnly": false,
+      "downloadOk": true,
+      "width": 1200,
+      "height": 1680,
+      "format": "png",
+      "hasAlpha": true,
+      "nonEmptySpatial": true,
+      "alignedWithSource": true,
+      "alignmentNotes": "mask dimensions == source (offset 0)",
+      "downloadError": null
+    },
+    {
+      "concernType": "hd_pore",
+      "region": "forehead",
+      "rawScore": 100,
+      "uiScore": 99,
+      "outputMaskName": null,
+      "maskUrlCount": 1,
+      "maskUrlHosts": [
+        "yce-us.s3-accelerate.amazonaws.com"
+      ],
+      "scoreOnly": false,
+      "downloadOk": true,
+      "width": 1200,
+      "height": 1680,
+      "format": "png",
+      "hasAlpha": true,
+      "nonEmptySpatial": true,
+      "alignedWithSource": true,
+      "alignmentNotes": "mask dimensions == source (offset 0)",
+      "downloadError": null
+    },
+    {
+      "concernType": "hd_pore",
+      "region": "nose",
+      "rawScore": 99.60948181152344,
+      "uiScore": 98,
+      "outputMaskName": null,
+      "maskUrlCount": 1,
+      "maskUrlHosts": [
+        "yce-us.s3-accelerate.amazonaws.com"
+      ],
+      "scoreOnly": false,
+      "downloadOk": true,
+      "width": 1200,
+      "height": 1680,
+      "format": "png",
+      "hasAlpha": true,
+      "nonEmptySpatial": true,
+      "alignedWithSource": true,
+      "alignmentNotes": "mask dimensions == source (offset 0)",
+      "downloadError": null
+    },
+    {
+      "concernType": "hd_pore",
+      "region": "cheek",
+      "rawScore": 100,
+      "uiScore": 99,
+      "outputMaskName": null,
+      "maskUrlCount": 1,
+      "maskUrlHosts": [
+        "yce-us.s3-accelerate.amazonaws.com"
+      ],
+      "scoreOnly": false,
+      "downloadOk": true,
+      "width": 1200,
+      "height": 1680,
+      "format": "png",
+      "hasAlpha": true,
+      "nonEmptySpatial": true,
+      "alignedWithSource": true,
+      "alignmentNotes": "mask dimensions == source (offset 0)",
+      "downloadError": null
+    },
+    {
+      "concernType": "hd_pore",
+      "region": "whole",
+      "rawScore": 99.90237426757812,
+      "uiScore": 99,
+      "outputMaskName": null,
+      "maskUrlCount": 1,
+      "maskUrlHosts": [
+        "yce-us.s3-accelerate.amazonaws.com"
+      ],
+      "scoreOnly": false,
+      "downloadOk": true,
+      "width": 1200,
+      "height": 1680,
+      "format": "png",
+      "hasAlpha": true,
+      "nonEmptySpatial": true,
+      "alignedWithSource": true,
+      "alignmentNotes": "mask dimensions == source (offset 0)",
+      "downloadError": null
+    },
+    {
+      "concernType": "hd_wrinkle",
+      "region": "forehead",
+      "rawScore": 93.14027726650238,
+      "uiScore": 86,
+      "outputMaskName": null,
+      "maskUrlCount": 1,
+      "maskUrlHosts": [
+        "yce-us.s3-accelerate.amazonaws.com"
+      ],
+      "scoreOnly": false,
+      "downloadOk": true,
+      "width": 1200,
+      "height": 1680,
+      "format": "png",
+      "hasAlpha": true,
+      "nonEmptySpatial": true,
+      "alignedWithSource": true,
+      "alignmentNotes": "mask dimensions == source (offset 0)",
+      "downloadError": null
+    },
+    {
+      "concernType": "hd_wrinkle",
+      "region": "glabellar",
+      "rawScore": 97.95307964086533,
+      "uiScore": 95,
+      "outputMaskName": null,
+      "maskUrlCount": 1,
+      "maskUrlHosts": [
+        "yce-us.s3-accelerate.amazonaws.com"
+      ],
+      "scoreOnly": false,
+      "downloadOk": true,
+      "width": 1200,
+      "height": 1680,
+      "format": "png",
+      "hasAlpha": true,
+      "nonEmptySpatial": true,
+      "alignedWithSource": true,
+      "alignmentNotes": "mask dimensions == source (offset 0)",
+      "downloadError": null
+    },
+    {
+      "concernType": "hd_wrinkle",
+      "region": "crowfeet",
+      "rawScore": 99,
+      "uiScore": 97,
+      "outputMaskName": null,
+      "maskUrlCount": 1,
+      "maskUrlHosts": [
+        "yce-us.s3-accelerate.amazonaws.com"
+      ],
+      "scoreOnly": false,
+      "downloadOk": true,
+      "width": 1200,
+      "height": 1680,
+      "format": "png",
+      "hasAlpha": true,
+      "nonEmptySpatial": true,
+      "alignedWithSource": true,
+      "alignmentNotes": "mask dimensions == source (offset 0)",
+      "downloadError": null
+    },
+    {
+      "concernType": "hd_wrinkle",
+      "region": "periocular",
+      "rawScore": 85.75098991394043,
+      "uiScore": 78,
+      "outputMaskName": null,
+      "maskUrlCount": 1,
+      "maskUrlHosts": [
+        "yce-us.s3-accelerate.amazonaws.com"
+      ],
+      "scoreOnly": false,
+      "downloadOk": true,
+      "width": 1200,
+      "height": 1680,
+      "format": "png",
+      "hasAlpha": true,
+      "nonEmptySpatial": true,
+      "alignedWithSource": true,
+      "alignmentNotes": "mask dimensions == source (offset 0)",
+      "downloadError": null
+    },
+    {
+      "concernType": "hd_wrinkle",
+      "region": "nasolabial",
+      "rawScore": 89.34813261032104,
+      "uiScore": 80,
+      "outputMaskName": null,
+      "maskUrlCount": 1,
+      "maskUrlHosts": [
+        "yce-us.s3-accelerate.amazonaws.com"
+      ],
+      "scoreOnly": false,
+      "downloadOk": true,
+      "width": 1200,
+      "height": 1680,
+      "format": "png",
+      "hasAlpha": true,
+      "nonEmptySpatial": true,
+      "alignedWithSource": true,
+      "alignmentNotes": "mask dimensions == source (offset 0)",
+      "downloadError": null
+    },
+    {
+      "concernType": "hd_wrinkle",
+      "region": "marionette",
+      "rawScore": 99,
+      "uiScore": 97,
+      "outputMaskName": null,
+      "maskUrlCount": 1,
+      "maskUrlHosts": [
+        "yce-us.s3-accelerate.amazonaws.com"
+      ],
+      "scoreOnly": false,
+      "downloadOk": true,
+      "width": 1200,
+      "height": 1680,
+      "format": "png",
+      "hasAlpha": true,
+      "nonEmptySpatial": true,
+      "alignedWithSource": true,
+      "alignmentNotes": "mask dimensions == source (offset 0)",
+      "downloadError": null
+    },
+    {
+      "concernType": "hd_wrinkle",
+      "region": "whole",
+      "rawScore": 83.89999985694885,
+      "uiScore": 78,
+      "outputMaskName": null,
+      "maskUrlCount": 1,
+      "maskUrlHosts": [
+        "yce-us.s3-accelerate.amazonaws.com"
+      ],
+      "scoreOnly": false,
+      "downloadOk": true,
+      "width": 1200,
+      "height": 1680,
+      "format": "png",
+      "hasAlpha": true,
+      "nonEmptySpatial": true,
+      "alignedWithSource": true,
+      "alignmentNotes": "mask dimensions == source (offset 0)",
+      "downloadError": null
+    },
+    {
+      "concernType": "all",
+      "rawScore": null,
+      "uiScore": null,
+      "outputMaskName": null,
+      "maskUrlCount": 0,
+      "maskUrlHosts": [],
+      "scoreOnly": true,
+      "downloadOk": false,
+      "width": null,
+      "height": null,
+      "format": null,
+      "hasAlpha": null,
+      "nonEmptySpatial": null,
+      "alignedWithSource": null,
+      "alignmentNotes": "SCORE_ONLY_FOR_THIS_OUTPUT",
+      "downloadError": null
+    },
+    {
+      "concernType": "skin_age",
+      "rawScore": null,
+      "uiScore": null,
+      "outputMaskName": null,
+      "maskUrlCount": 0,
+      "maskUrlHosts": [],
+      "scoreOnly": true,
+      "downloadOk": false,
+      "width": null,
+      "height": null,
+      "format": null,
+      "hasAlpha": null,
+      "nonEmptySpatial": null,
+      "alignedWithSource": null,
+      "alignmentNotes": "SCORE_ONLY_FOR_THIS_OUTPUT",
+      "downloadError": null
+    },
+    {
+      "concernType": "resize_image",
+      "rawScore": null,
+      "uiScore": null,
+      "outputMaskName": null,
+      "maskUrlCount": 1,
+      "maskUrlHosts": [
+        "yce-us.s3-accelerate.amazonaws.com"
+      ],
+      "scoreOnly": false,
+      "downloadOk": true,
+      "width": 1200,
+      "height": 1680,
+      "format": "jpeg",
+      "hasAlpha": false,
+      "nonEmptySpatial": true,
+      "alignedWithSource": true,
+      "alignmentNotes": "mask dimensions == source (offset 0)",
+      "downloadError": null
+    }
+  ],
+  "matrix": [
+    {
+      "metric": "hd_age_spot",
+      "rawScore": 99.0926284790039,
+      "uiScore": 97,
+      "maskReturned": true,
+      "dimensions": "1200x1680",
+      "aligned": true,
+      "subregions": []
+    },
+    {
+      "metric": "hd_pore",
+      "rawScore": 99.90237426757812,
+      "uiScore": 99,
+      "maskReturned": true,
+      "dimensions": "1200x1680",
+      "aligned": true,
+      "subregions": [
+        {
+          "region": "forehead",
+          "rawScore": 100,
+          "uiScore": 99,
+          "maskReturned": true,
+          "dimensions": "1200x1680",
+          "aligned": true
+        },
+        {
+          "region": "nose",
+          "rawScore": 99.60948181152344,
+          "uiScore": 98,
+          "maskReturned": true,
+          "dimensions": "1200x1680",
+          "aligned": true
+        },
+        {
+          "region": "cheek",
+          "rawScore": 100,
+          "uiScore": 99,
+          "maskReturned": true,
+          "dimensions": "1200x1680",
+          "aligned": true
+        },
+        {
+          "region": "whole",
+          "rawScore": 99.90237426757812,
+          "uiScore": 99,
+          "maskReturned": true,
+          "dimensions": "1200x1680",
+          "aligned": true
+        }
+      ]
+    },
+    {
+      "metric": "hd_wrinkle",
+      "rawScore": 83.89999985694885,
+      "uiScore": 78,
+      "maskReturned": true,
+      "dimensions": "1200x1680",
+      "aligned": true,
+      "subregions": [
+        {
+          "region": "forehead",
+          "rawScore": 93.14027726650238,
+          "uiScore": 86,
+          "maskReturned": true,
+          "dimensions": "1200x1680",
+          "aligned": true
+        },
+        {
+          "region": "glabellar",
+          "rawScore": 97.95307964086533,
+          "uiScore": 95,
+          "maskReturned": true,
+          "dimensions": "1200x1680",
+          "aligned": true
+        },
+        {
+          "region": "crowfeet",
+          "rawScore": 99,
+          "uiScore": 97,
+          "maskReturned": true,
+          "dimensions": "1200x1680",
+          "aligned": true
+        },
+        {
+          "region": "periocular",
+          "rawScore": 85.75098991394043,
+          "uiScore": 78,
+          "maskReturned": true,
+          "dimensions": "1200x1680",
+          "aligned": true
+        },
+        {
+          "region": "nasolabial",
+          "rawScore": 89.34813261032104,
+          "uiScore": 80,
+          "maskReturned": true,
+          "dimensions": "1200x1680",
+          "aligned": true
+        },
+        {
+          "region": "marionette",
+          "rawScore": 99,
+          "uiScore": 97,
+          "maskReturned": true,
+          "dimensions": "1200x1680",
+          "aligned": true
+        },
+        {
+          "region": "whole",
+          "rawScore": 83.89999985694885,
+          "uiScore": 78,
+          "maskReturned": true,
+          "dimensions": "1200x1680",
+          "aligned": true
+        }
+      ]
+    },
+    {
+      "metric": "hd_redness",
+      "rawScore": 93.69667053222656,
+      "uiScore": 90,
+      "maskReturned": true,
+      "dimensions": "1200x1680",
+      "aligned": true,
+      "subregions": []
+    }
+  ],
+  "passHints": {
+    "ageSpotMask": true,
+    "poreMask": true,
+    "wrinkleMask": true,
+    "rednessMask": true,
+    "allAligned": true
+  }
+}

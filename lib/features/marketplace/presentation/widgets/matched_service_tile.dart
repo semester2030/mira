@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 
 import '../../../../shared/theme/colors.dart';
 import '../../../../shared/theme/typography.dart';
+import '../../data/catalog_price.dart';
 import '../../domain/entities/catalog_service.dart';
 
 class MatchedServiceTile extends StatelessWidget {
@@ -40,7 +41,7 @@ class MatchedServiceTile extends StatelessWidget {
                   borderRadius: BorderRadius.circular(12),
                 ),
                 alignment: Alignment.center,
-                child: Text(service.partnerEmoji ?? '✨', style: const TextStyle(fontSize: 26)),
+                child: const Icon(Icons.storefront_outlined, size: 26, color: AppColors.primaryDark),
               ),
               const SizedBox(width: 12),
               Expanded(
@@ -69,7 +70,7 @@ class MatchedServiceTile extends StatelessWidget {
                     const SizedBox(height: 4),
                     Text(service.nameAr, style: AppTypography.titleMedium),
                     Text(
-                      '${service.partnerNameAr} · ${service.durationMin} د · ${service.priceLabel}',
+                      '${service.partnerNameAr} · ${service.durationMin} د · ${CatalogPrice.text(known: service.priceKnown, halalas: service.priceHalalas)}',
                       style: AppTypography.bodySmall.copyWith(
                         color: AppColors.textSecondary,
                       ),

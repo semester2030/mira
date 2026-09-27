@@ -15,6 +15,7 @@ abstract final class GarmentRecolorPromptBuilder {
     'وردي': '#E699B0',
     'أحمر': '#B42832',
     'نبيتي': '#781828',
+    'عنابي': '#781828',
     'بني': '#785032',
     'فضي': '#BEBEC8',
     'تركواز': '#3CAAA0',

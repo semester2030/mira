@@ -1,0 +1,12 @@
+# source file hashes at RC2 collection — repo not modified
+when=2026-09-24T00:59:07.164318+03:00
+commit=3ae70f296d7a42e096f55650ea45b9845616c474
+fa69aaf75032b8b68d8ac2a9c70c537211d9a91d367d56c1fb1044d59e4a08a4  lib/src/features/auth/models/auth_credentials.dart
+59d5891789c81396d37101b4b2b5f26d1f342e3aa974f7f2b53146f863efed02  lib/src/features/map/screens/map_filter_screen.dart
+ea9ae17b0dd8dafae9053c386834e8e5fd047f07ddbfe4e5dc2dbf6cbe5700ee  lib/src/features/spotlight/screens/spotlight_category_screen.dart
+6e62a52de39fe6eccfa0d155f4958eecc219243d3ccc5b4c5e81a6a582dfc647  lib/src/core/geo/geo.dart
+e563fb9b53e2b2ede9f3594560bea5709fd92a3e4a28435235b623bdc390b9b8  lib/src/core/config/app_config.dart
+667c987182391c91f4e57a2f455b1794fb5e3ee6ca4ef3383e86bb690fa9c964  assets/fonts/Cairo-Variable.ttf
+6e91621ebe05fea0f5eb3f0f2ebe31001c713e4ce5ccef58129eab975d458cd7  lib/src/features/places/core/api/places_http_discovery_repository.dart
+1bd79a94972a838df13523197f6d0fe7823f9ffc58ee776e6936e91945476b88  lib/src/features/places/core/api/discovery_api.dart
+47aa5a7b361f62bd22fc07476d0dc3d2d9f9ac537d6f91cec30941d59082e64a  services/places-core/src/modules/consumer/api/consumer.controller.ts

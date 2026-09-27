@@ -1,11 +1,7 @@
 /// Perfect HD spatial truth contract for Face Explorer (no landmark fallback).
 library;
 
-enum PerfectSpatialMode {
-  providerPixelMask,
-  providerSubregionMasks,
-  scoreOnly,
-}
+enum PerfectSpatialMode { providerPixelMask, providerSubregionMasks, scoreOnly }
 
 enum FaceExplorerRole {
   primary,

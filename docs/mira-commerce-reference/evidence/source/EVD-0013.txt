@@ -1,0 +1,139 @@
+id=EVD-0013
+path=mira-api/src/partners-portal/partners-portal.service.ts
+commit=15fe65c40d3dedb9afdd95619f2945bd84cb616a
+sha256=dd4aaa49c38647860fe75b147a8a20de11d518f725222050674608fcfb7d6ccf
+lines=282-412
+note=عزل المالك في التعديل والحذف؛ trackEvent يأخذ partnerId من الجسم
+runtime=SOURCE_ONLY
+---
+282|  async trackEvent(dto: TrackPartnerEventDto) {
+283|    const partner = await this.prisma.partner.findFirst({
+284|      where: { id: dto.partnerId, status: 'active' },
+285|    });
+286|    if (!partner) throw new NotFoundException('الشريك غير موجود');
+287|
+288|    await this.prisma.partnerEvent.create({
+289|      data: {
+290|        partnerId: dto.partnerId,
+291|        eventType: dto.eventType,
+292|        targetId: dto.targetId,
+293|        targetType: dto.targetType,
+294|      },
+295|    });
+296|
+297|    return { ok: true };
+298|  }
+299|
+300|  async createProduct(partnerId: string, dto: UpsertProductDto) {
+301|    const partner = await this.prisma.partner.findUnique({
+302|      where: { id: partnerId },
+303|    });
+304|    if (!partner || partner.type !== 'brand') {
+305|      throw new BadRequestException('المنتجات متاحة للماركات فقط');
+306|    }
+307|
+308|    return this.prisma.product.create({
+309|      data: {
+310|        partnerId,
+311|        nameAr: dto.nameAr,
+312|        nameEn: dto.nameEn,
+313|        descriptionAr: dto.descriptionAr,
+314|        priceHalalas: dto.priceHalalas,
+315|        externalUrl: dto.externalUrl,
+316|        concernTags: dto.concernTags,
+317|        skinTypes: dto.skinTypes ?? [],
+318|        stepAr: dto.stepAr,
+319|        active: dto.active ?? true,
+320|      },
+321|    });
+322|  }
+323|
+324|  async updateProduct(partnerId: string, productId: string, dto: UpsertProductDto) {
+325|    await this.assertProductOwner(partnerId, productId);
+326|    return this.prisma.product.update({
+327|      where: { id: productId },
+328|      data: {
+329|        nameAr: dto.nameAr,
+330|        nameEn: dto.nameEn,
+331|        descriptionAr: dto.descriptionAr,
+332|        priceHalalas: dto.priceHalalas,
+333|        externalUrl: dto.externalUrl,
+334|        concernTags: dto.concernTags,
+335|        skinTypes: dto.skinTypes ?? [],
+336|        stepAr: dto.stepAr,
+337|        active: dto.active ?? true,
+338|      },
+339|    });
+340|  }
+341|
+342|  async deleteProduct(partnerId: string, productId: string) {
+343|    await this.assertProductOwner(partnerId, productId);
+344|    await this.prisma.product.update({
+345|      where: { id: productId },
+346|      data: { active: false },
+347|    });
+348|    return { ok: true };
+349|  }
+350|
+351|  async createService(partnerId: string, dto: UpsertServiceDto) {
+352|    const partner = await this.prisma.partner.findUnique({
+353|      where: { id: partnerId },
+354|    });
+355|    if (!partner || !['clinic', 'salon'].includes(partner.type)) {
+356|      throw new BadRequestException('الخدمات متاحة للعيادات والصالونات فقط');
+357|    }
+358|
+359|    return this.prisma.service.create({
+360|      data: {
+361|        partnerId,
+362|        nameAr: dto.nameAr,
+363|        nameEn: dto.nameEn,
+364|        descriptionAr: dto.descriptionAr,
+365|        durationMin: dto.durationMin,
+366|        priceHalalas: dto.priceHalalas,
+367|        concernTags: dto.concernTags,
+368|        bookingEnabled: dto.bookingEnabled ?? false,
+369|        active: dto.active ?? true,
+370|      },
+371|    });
+372|  }
+373|
+374|  async updateService(partnerId: string, serviceId: string, dto: UpsertServiceDto) {
+375|    await this.assertServiceOwner(partnerId, serviceId);
+376|    return this.prisma.service.update({
+377|      where: { id: serviceId },
+378|      data: {
+379|        nameAr: dto.nameAr,
+380|        nameEn: dto.nameEn,
+381|        descriptionAr: dto.descriptionAr,
+382|        durationMin: dto.durationMin,
+383|        priceHalalas: dto.priceHalalas,
+384|        concernTags: dto.concernTags,
+385|        bookingEnabled: dto.bookingEnabled ?? false,
+386|        active: dto.active ?? true,
+387|      },
+388|    });
+389|  }
+390|
+391|  async deleteService(partnerId: string, serviceId: string) {
+392|    await this.assertServiceOwner(partnerId, serviceId);
+393|    await this.prisma.service.update({
+394|      where: { id: serviceId },
+395|      data: { active: false },
+396|    });
+397|    return { ok: true };
+398|  }
+399|
+400|  private async assertProductOwner(partnerId: string, productId: string) {
+401|    const product = await this.prisma.product.findFirst({
+402|      where: { id: productId, partnerId },
+403|    });
+404|    if (!product) throw new NotFoundException('المنتج غير موجود');
+405|  }
+406|
+407|  private async assertServiceOwner(partnerId: string, serviceId: string) {
+408|    const service = await this.prisma.service.findFirst({
+409|      where: { id: serviceId, partnerId },
+410|    });
+411|    if (!service) throw new NotFoundException('الخدمة غير موجودة');
+412|  }

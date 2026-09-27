@@ -1,10 +1,9 @@
 import 'package:flutter/material.dart';
 
-import '../../../data/helpers/vision_color_mapper.dart';
-import '../../../domain/catalog/fashion_color_library.dart';
 import '../../../domain/entities/outfit_analysis.dart';
 import '../../../domain/entities/suggested_piece_model.dart';
 import '../../../domain/services/fashion_recommendation_engine.dart';
+import '../../utils/fashion_color_binding.dart';
 import 'outfit_insight_item.dart';
 
 /// Builds luxury insight tiles from deterministic stylist engine.
@@ -12,31 +11,51 @@ abstract final class OutfitInsightBuilder {
   OutfitInsightBuilder._();
 
   static List<OutfitPaletteSwatch> palette(OutfitAnalysis analysis) {
+    final detailed =
+        analysis.segmentMap?.garmentPalette.detailedColors ?? const [];
+    final out = <OutfitPaletteSwatch>[];
+    final seen = <String>{};
+
+    // Detected colors only — never mix recommended/suggested into "current".
+    for (final d in detailed) {
+      final key = d.hex.isNotEmpty ? d.hex : d.nameAr;
+      if (key.isEmpty || !seen.add(key)) continue;
+      final color = FashionColorBinding.resolve(
+        hex: d.hex,
+        nameAr: d.nameAr,
+        source: FashionColorSource.detected,
+      );
+      if (color == null) continue;
+      out.add(OutfitPaletteSwatch(nameAr: d.displayNameAr, color: color));
+      if (out.length >= 5) break;
+    }
+
+    if (out.isNotEmpty) return out;
+
     final names = <String>[
       ...analysis.upperBodyColors,
       ...analysis.dominantColors,
       ...analysis.lowerBodyColors,
       ...analysis.shoeColors,
-      ...analysis.recommendedColors,
     ];
-    final seen = <String>{};
-    final out = <OutfitPaletteSwatch>[];
     for (final name in names) {
       final t = name.trim();
       if (t.isEmpty || seen.contains(t)) continue;
       seen.add(t);
-      out.add(
-        OutfitPaletteSwatch(
-          nameAr: t,
-          color: _colorFromName(t),
-        ),
+      final color = FashionColorBinding.resolve(
+        nameAr: t,
+        source: FashionColorSource.detected,
       );
+      if (color == null) continue;
+      out.add(OutfitPaletteSwatch(nameAr: t, color: color));
       if (out.length >= 5) break;
     }
     return out;
   }
 
   static List<SuggestedPieceModel> clothingPieces(OutfitAnalysis analysis) {
+    // Keep catalog rows even when asset load fails — UI shows honest placeholder.
+    // Filtering missing assets is not a substitute for fixing image sources.
     return FashionRecommendationEngine.suggestClothing(analysis);
   }
 
@@ -45,12 +64,17 @@ abstract final class OutfitInsightBuilder {
   }
 
   static List<OutfitInsightItem> makeup(OutfitAnalysis analysis) {
-    if (!analysis.isSmartMode && analysis.suggestedMakeup.isEmpty) return const [];
+    if (!analysis.isSmartMode && analysis.suggestedMakeup.isEmpty) {
+      return const [];
+    }
 
     final swatches = palette(analysis);
-    final c1 = swatches.isNotEmpty ? swatches[0].color : const Color(0xFFE8A0B0);
-    final c2 = swatches.length > 1 ? swatches[1].color : const Color(0xFFC96BB2);
-    final c3 = swatches.length > 2 ? swatches[2].color : const Color(0xFF8B5E6B);
+    final c1 =
+        swatches.isNotEmpty ? swatches[0].color : const Color(0xFFE8A0B0);
+    final c2 =
+        swatches.length > 1 ? swatches[1].color : const Color(0xFFC96BB2);
+    final c3 =
+        swatches.length > 2 ? swatches[2].color : const Color(0xFF8B5E6B);
 
     return [
       OutfitInsightItem(
@@ -75,11 +99,5 @@ abstract final class OutfitInsightBuilder {
         accent: c2,
       ),
     ];
-  }
-
-  static Color _colorFromName(String name) {
-    final entry = FashionColorLibrary.byName(name);
-    if (entry != null) return entry.color;
-    return VisionColorMapper.toDisplayColor(name);
   }
 }

@@ -1,0 +1,8 @@
+# Test evidence
+
+```
+flutter analyze [touched paths] → No issues found
+flutter test polish + session + truthful + phase8d + phase8b → All tests passed
+```
+
+Coverage: mapping, technical-ID suppression, callout anchors, stale key, missing mask, cache hits, metric select/الأصل, RTL hub.

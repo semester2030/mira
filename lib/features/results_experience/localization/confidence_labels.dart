@@ -14,6 +14,7 @@ class ConfidencePresentationSpec {
   final ConfidenceState state;
   final String labelAr;
   final String explanationAr;
+
   /// 0–3 claim strength budget for public copy.
   final int allowedClaimStrength;
   final bool numericVisible;

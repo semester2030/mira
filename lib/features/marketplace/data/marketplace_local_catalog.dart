@@ -1,10 +1,16 @@
 import '../domain/entities/catalog_product.dart';
 import '../domain/entities/catalog_service.dart';
 import '../domain/entities/partner_summary.dart';
+import 'catalog_provenance.dart';
 
 /// Offline catalog — mirrors `mira-api/src/marketplace/marketplace.seed.ts`.
+///
+/// Every record in this file is explicitly demo content. That mark is declared
+/// here; it is not inferred from partner names.
 abstract final class MarketplaceLocalCatalog {
   MarketplaceLocalCatalog._();
+
+  static const contentMark = ContentMark.explicitDemo;
 
   static const partners = <PartnerSummary>[
     PartnerSummary(
@@ -93,6 +99,7 @@ abstract final class MarketplaceLocalCatalog {
       externalUrl: 'https://www.amazon.sa',
       stepAr: 'صباحًا',
       matchScore: 0,
+      category: 'face',
       concernTags: ['age_spot', 'texture', 'radiance'],
     ),
     CatalogProduct(
@@ -107,6 +114,7 @@ abstract final class MarketplaceLocalCatalog {
       externalUrl: 'https://www.noon.com',
       stepAr: 'صباحًا ومساءً',
       matchScore: 0,
+      category: 'face',
       concernTags: ['moisture', 'texture'],
     ),
     CatalogProduct(
@@ -121,6 +129,7 @@ abstract final class MarketplaceLocalCatalog {
       externalUrl: 'https://www.namshi.com',
       stepAr: 'بعد التنظيف',
       matchScore: 0,
+      category: 'face',
       concernTags: ['oiliness', 'pore', 'redness'],
     ),
     CatalogProduct(
@@ -135,6 +144,7 @@ abstract final class MarketplaceLocalCatalog {
       externalUrl: 'https://www.noon.com',
       stepAr: '1–2 مرات أسبوعيًا',
       matchScore: 0,
+      category: 'face',
       concernTags: ['pore', 'acne', 'texture'],
     ),
     CatalogProduct(
@@ -149,6 +159,7 @@ abstract final class MarketplaceLocalCatalog {
       externalUrl: 'https://www.amazon.sa',
       stepAr: 'كل صباح',
       matchScore: 0,
+      category: 'face',
       concernTags: ['age_spot', 'wrinkle', 'texture'],
     ),
     CatalogProduct(
@@ -163,6 +174,7 @@ abstract final class MarketplaceLocalCatalog {
       externalUrl: 'https://www.noon.com',
       stepAr: 'صباحًا ومساءً',
       matchScore: 0,
+      category: 'face',
       concernTags: ['moisture', 'oiliness'],
     ),
   ];
@@ -181,6 +193,7 @@ abstract final class MarketplaceLocalCatalog {
       priceHalalas: 25000,
       priceLabel: '250 ر.س',
       matchScore: 0,
+      category: 'skin',
       bookingEnabled: false,
       concernTags: ['acne', 'redness', 'age_spot'],
     ),
@@ -197,6 +210,7 @@ abstract final class MarketplaceLocalCatalog {
       priceHalalas: 45000,
       priceLabel: '450 ر.س',
       matchScore: 0,
+      category: 'skin',
       bookingEnabled: false,
       concernTags: ['texture', 'age_spot', 'pore'],
     ),
@@ -213,6 +227,7 @@ abstract final class MarketplaceLocalCatalog {
       priceHalalas: 15000,
       priceLabel: '150 ر.س',
       matchScore: 0,
+      category: 'skin',
       bookingEnabled: false,
       concernTags: ['moisture', 'wrinkle', 'pore'],
     ),
@@ -229,6 +244,7 @@ abstract final class MarketplaceLocalCatalog {
       priceHalalas: 35000,
       priceLabel: '350 ر.س',
       matchScore: 0,
+      category: 'care',
       bookingEnabled: false,
       concernTags: ['moisture', 'texture', 'radiance'],
     ),
@@ -245,6 +261,7 @@ abstract final class MarketplaceLocalCatalog {
       priceHalalas: 42000,
       priceLabel: '420 ر.س',
       matchScore: 0,
+      category: 'care',
       bookingEnabled: false,
       concernTags: ['pore', 'oiliness', 'acne'],
     ),
@@ -261,6 +278,7 @@ abstract final class MarketplaceLocalCatalog {
       priceHalalas: 55000,
       priceLabel: '550 ر.س',
       matchScore: 0,
+      category: 'makeup',
       bookingEnabled: false,
       concernTags: ['radiance', 'texture'],
     ),

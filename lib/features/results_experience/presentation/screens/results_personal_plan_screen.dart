@@ -30,6 +30,7 @@ class ResultsPersonalPlanScreen extends StatefulWidget {
   final ResultExperience experience;
   final bool isStale;
   final String? initialStepId;
+
   /// Explicit clock for deterministic period/completion day.
   final DateTime? clock;
   final String? userId;
@@ -55,7 +56,8 @@ class _ResultsPersonalPlanScreenState extends State<ResultsPersonalPlanScreen> {
     super.initState();
     _day = widget.clock ?? DateTime.now();
     final uid = widget.userId ?? widget.report.id ?? 'local_user';
-    _store = widget.completionStore ??
+    _store =
+        widget.completionStore ??
         RoutineCompletionStore(
           userId: uid.isEmpty ? 'local_user' : uid,
           analysisId: widget.experience.id,
@@ -98,8 +100,9 @@ class _ResultsPersonalPlanScreenState extends State<ResultsPersonalPlanScreen> {
     });
   }
 
-  List<ResultRoutineStepVM> get _steps =>
-      _period == RoutinePeriod.evening ? _plan.evening.steps : _plan.morning.steps;
+  List<ResultRoutineStepVM> get _steps => _period == RoutinePeriod.evening
+      ? _plan.evening.steps
+      : _plan.morning.steps;
 
   Future<void> _toggle(ResultRoutineStepVM step) async {
     if (!step.completionEligible) return;
@@ -126,15 +129,11 @@ class _ResultsPersonalPlanScreenState extends State<ResultsPersonalPlanScreen> {
     final qs = _plan.advisorEntry.suggestedQuestions
         .where((q) => q.personalization != PersonalizationClass.unsupported)
         .toList();
-    final initial = question ??
-        (qs.isNotEmpty ? qs.first.textAr : null);
+    final initial = question ?? (qs.isNotEmpty ? qs.first.textAr : null);
     Navigator.pushNamed(
       context,
       AppRoutes.miraAdvisor,
-      arguments: AdvisorRouteArgs.skin(
-        widget.report,
-        initialQuestion: initial,
-      ),
+      arguments: AdvisorRouteArgs.skin(widget.report, initialQuestion: initial),
     );
   }
 
@@ -239,7 +238,8 @@ class _ResultsPersonalPlanScreenState extends State<ResultsPersonalPlanScreen> {
                       ),
                       child: const Text('اسألي مستشار ميرا عن روتينك'),
                     ),
-                    if (plan.isLimited || widget.experience.retake.suggested) ...[
+                    if (plan.isLimited ||
+                        widget.experience.retake.suggested) ...[
                       const SizedBox(height: 10),
                       TextButton(
                         onPressed: _retake,
@@ -323,10 +323,7 @@ class _PlanSummary extends StatelessWidget {
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.stretch,
         children: [
-          Text(
-            'التركيز: ${plan.focusAr}',
-            style: AppTypography.titleSmall,
-          ),
+          Text('التركيز: ${plan.focusAr}', style: AppTypography.titleSmall),
           const SizedBox(height: 6),
           Text(
             plan.primaryObjectiveAr,
@@ -440,8 +437,9 @@ class _StepCard extends StatelessWidget {
                     Text(
                       '${step.sequence}. ${step.titleAr}',
                       style: AppTypography.titleSmall.copyWith(
-                        decoration:
-                            completed ? TextDecoration.lineThrough : null,
+                        decoration: completed
+                            ? TextDecoration.lineThrough
+                            : null,
                       ),
                     ),
                     const SizedBox(height: 4),

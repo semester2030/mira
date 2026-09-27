@@ -1,0 +1,43 @@
+{
+  "originalArchive": {
+    "name": "DAR_PLACES_TO_MIRA_SOURCE_HANDOFF_RC2_20260924_0125.zip",
+    "sha256": "60a8d854eb609e1eef11513a1406fd1e262ac809922e889f2e7beecf76ec48e1",
+    "unchanged": true
+  },
+  "historicalArchive": {
+    "name": "DAR_PLACES_TO_MIRA_SOURCE_HANDOFF_RC2_20260924_0059.zip",
+    "sha256": "fa752eea3627e88b62f369aa6af0e661891d84ad845fc4613cb6b3333617119d",
+    "hashFiles": [
+      "evidence/historical/rc2-0059/source_file_hashes_before.txt",
+      "evidence/historical/rc2-0059/source_file_hashes_after.txt"
+    ],
+    "coverage": "تسعة ملفات فقط، وليست إثباتًا لثبات المستودع كاملًا"
+  },
+  "historicalNoteAr": "ملفات البصمة قبل/بعد نُسخت من أرشيف 0059 إلى أدلة هذا الموقع. أرشيف 0125 لم يُعد تغليفه.",
+  "corrections": [
+    {
+      "id": "SRC-CORR-001",
+      "topic": "مسار الخلاصة",
+      "originalFile": "DEPENDENCY_MAP.json chain browse-media",
+      "originalStatement": "السلسلة تمر من places_live_core.dart إلى venue_api.dart ثم وحدات catalog.",
+      "correctedStatement": "الخلاصة: PlacesHttpDiscoveryRepository ثم DiscoveryApi ثم GET /v1/feed أو POST /v1/discovery/search ثم ConsumerController.feed ثم CatalogService.feed ثم FilterEngineService.feedAdapter.",
+      "status": "تصحيح لاحق موثق؛ الأرشيف الأصلي بقي كما هو"
+    },
+    {
+      "id": "SRC-CORR-002",
+      "topic": "تفاصيل المكان",
+      "originalFile": "DEPENDENCY_MAP.json chain details و venue_api.dart",
+      "originalStatement": "VenueApi يخدم التفاصيل والمعرض.",
+      "correctedStatement": "هذا المسار يبقى على VenueApi وGET /v1/venues/:id. التصحيح لا يُعمم على كل السلاسل.",
+      "status": "مثبت ويبقى كما هو"
+    },
+    {
+      "id": "SRC-CORR-003",
+      "topic": "التنقيح",
+      "originalFile": "EXCLUSIONS_AND_REDACTIONS.json",
+      "originalStatement": "النص يقول إنه لم تُعد كتابة الملفات في هذه الجولة.",
+      "correctedStatement": "evidence/redaction_rc2.json داخل الأرشيف نفسه يثبت تنقيح app_config.dart فقط، باستبدال مفتاح الخرائط بنص REDACTED_GOOGLE_MAPS_API_KEY.",
+      "status": "تعارض موثق؛ الأرشيف لم يُعدَّل"
+    }
+  ]
+}

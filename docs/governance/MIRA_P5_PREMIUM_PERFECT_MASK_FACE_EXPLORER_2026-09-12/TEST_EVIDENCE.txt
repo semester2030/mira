@@ -1,0 +1,44 @@
+# Test evidence
+
+## Flutter
+
+```
+flutter test test/results_experience/phase8b_results_projection_test.dart \
+  test/results_experience/phase8d_metrics_map_test.dart \
+  test/results_experience/skin_interactive_claim_policy_test.dart \
+  test/results_experience/perfect_mask_session_test.dart
+→ All tests passed
+```
+
+## Analyze (touched paths)
+
+```
+flutter analyze …Face Explorer paths…
+→ 0 new warnings (1 pre-existing info: unrelated_type_equality_checks in validators)
+```
+
+## Backend
+
+```
+npx ts-node --transpile-only src/ai/services/perfect-hd-mask.parser.spec.ts
+→ PASS (incl. normalize_hd_concern_type + face_explorer_actions_are_hd_only)
+```
+
+## HD Skin provider probe
+
+```
+NODE_OPTIONS=--dns-result-order=ipv4first \
+  npx ts-node -r dotenv/config src/ai/scripts/probe-hd-skin-provider.ts <hd_input>
+→ perfectTasks=1, masksWithBytes=25, landmarkFallback=0, dualPerfectCalls=0
+```
+
+Sanitized: `HD_SKIN_PROVIDER_PROBE.json` (no face/mask bytes, no secrets).
+
+## iPhone
+
+```
+flutter run -d 00008110-00191986268BA01E --release \
+  --dart-define=USE_MIRA_API=true \
+  --dart-define=MIRA_API_BASE_URL=http://172.20.10.6:3000/api/v1
+→ Xcode build done; Installing and launching… success
+```

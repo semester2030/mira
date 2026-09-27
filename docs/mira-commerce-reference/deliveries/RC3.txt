@@ -1,0 +1,23 @@
+تسليم RC3 — إغلاق نواقص المرحلة الأولى
+المعرّف: DEL-RC3
+الاسم: MIRA_DISCOVER_PHASE1_CLOSURE_RC3_.zip
+تاريخ الإنشاء: 2026-09-25T04:30:00+03:00
+حالة التسليم: مُسلَّم للمراجعة
+نتيجة المراجعة: لم تصدر بعد
+الاعتماد: غير معتمدة
+
+ترتيب الفتح (بجوار ZIP على سطح المكتب):
+1) MIRA_DISCOVER_PHASE1_CLOSURE_RC3_.zip
+2) MIRA_DISCOVER_PHASE1_CLOSURE_RC3_.zip.sha256.txt
+3) MIRA_DISCOVER_PHASE1_CLOSURE_RC3__VERIFICATION.txt
+4) فك المجلد MIRA_DISCOVER_PHASE1_CLOSURE_RC3_/ ثم افتح site/index.html
+
+روابط التنزيل من site (مسارات نسبية):
+ZIP: ../../MIRA_DISCOVER_PHASE1_CLOSURE_RC3_.zip
+البصمة: ../../MIRA_DISCOVER_PHASE1_CLOSURE_RC3_.zip.sha256.txt
+التحقق: ../../MIRA_DISCOVER_PHASE1_CLOSURE_RC3__VERIFICATION.txt
+
+من داخل المستودع (python3 -m http.server من docs/mira-commerce-reference):
+deliveries/MIRA_DISCOVER_PHASE1_CLOSURE_RC3_.zip
+
+البصمة النهائية تُكتب في ملف sha256 خارج ZIP بعد إغلاق الحزمة.

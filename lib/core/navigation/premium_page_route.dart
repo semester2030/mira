@@ -1,7 +1,7 @@
 import 'package:flutter/material.dart';
 
 class PremiumPageRoute<T> extends PageRouteBuilder<T> {
-  PremiumPageRoute({required Widget page, super.settings})
+  PremiumPageRoute({required this.page, super.settings})
       : super(
           pageBuilder: (context, animation, secondaryAnimation) => page,
           transitionsBuilder: (context, animation, secondaryAnimation, child) {
@@ -17,4 +17,6 @@ class PremiumPageRoute<T> extends PageRouteBuilder<T> {
           },
           transitionDuration: const Duration(milliseconds: 320),
         );
+
+  final Widget page;
 }

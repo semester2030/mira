@@ -1,3 +1,5 @@
+import 'dart:async';
+
 import 'package:dio/dio.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 
@@ -12,6 +14,10 @@ import 'skin_analysis_state.dart';
 class SkinAnalysisBloc extends Bloc<SkinAnalysisEvent, SkinAnalysisState> {
   final SkinAnalysisRepository repository;
   bool _inFlight = false;
+  int? _activeAttemptId;
+
+  /// Matches API Dio receiveTimeout (180s) + slack so the UI never hangs forever.
+  static const analysisTimeout = Duration(seconds: 185);
 
   SkinAnalysisBloc({SkinAnalysisRepository? repository})
       : repository = repository ?? SkinAnalysisRepositoryImpl(),
@@ -24,26 +30,63 @@ class SkinAnalysisBloc extends Bloc<SkinAnalysisEvent, SkinAnalysisState> {
     StartSkinAnalysis event,
     Emitter<SkinAnalysisState> emit,
   ) async {
-    if (_inFlight) return;
-    _inFlight = true;
-    SkinStartAnalysisTrace.mark('BLOC_START_ENTERED');
-    emit(const SkinAnalysisSubmitting());
-    try {
-      final report = await repository.analyzeAndSave(
-        imagePath: event.imagePath,
-        onRemoteWaitStarted: () {
-          SkinStartAnalysisTrace.mark('BACKEND_WAIT_STARTED');
-          if (!emit.isDone) {
-            emit(const SkinAnalysisProcessing());
-          }
-        },
+    if (_inFlight) {
+      SkinStartAnalysisTrace.mark(
+        'BLOC_START_DEDUPED attempt=${event.attemptId}',
       );
+      return;
+    }
+    _inFlight = true;
+    _activeAttemptId = event.attemptId;
+    SkinStartAnalysisTrace.mark(
+      'BLOC_START_ENTERED attempt=${event.attemptId}',
+    );
+    emit(SkinAnalysisSubmitting(attemptId: event.attemptId));
+    try {
+      final report = await repository
+          .analyzeAndSave(
+            imagePath: event.imagePath,
+            onRemoteWaitStarted: () {
+              SkinStartAnalysisTrace.mark('BACKEND_WAIT_STARTED');
+              if (!emit.isDone) {
+                emit(SkinAnalysisProcessing(attemptId: event.attemptId));
+              }
+            },
+          )
+          .timeout(analysisTimeout);
+      if (event.attemptId != null && event.attemptId != _activeAttemptId) {
+        SkinStartAnalysisTrace.mark(
+          'BLOC_SUCCESS_STALE ignored attempt=${event.attemptId}',
+        );
+        return;
+      }
       SkinStartAnalysisTrace.mark('NAVIGATION_TO_RESULT ready');
-      emit(SkinAnalysisSuccess(report));
+      emit(SkinAnalysisSuccess(report, attemptId: event.attemptId));
+    } on TimeoutException {
+      SkinStartAnalysisTrace.fail('BLOC_TIMEOUT', 'analysis_timeout');
+      if (event.attemptId != null && event.attemptId != _activeAttemptId) {
+        return;
+      }
+      final mapped = mapFaceAnalysisError(
+        code: 'TIMEOUT',
+        message: 'analysis_timeout',
+      );
+      emit(SkinAnalysisFailure(
+        mapped.snackMessage,
+        journeyError: mapped,
+        attemptId: event.attemptId,
+      ));
     } catch (e) {
       SkinStartAnalysisTrace.fail('BLOC_CATCH', e);
+      if (event.attemptId != null && event.attemptId != _activeAttemptId) {
+        return;
+      }
       final mapped = _mapError(e);
-      emit(SkinAnalysisFailure(mapped.snackMessage, journeyError: mapped));
+      emit(SkinAnalysisFailure(
+        mapped.snackMessage,
+        journeyError: mapped,
+        attemptId: event.attemptId,
+      ));
     } finally {
       _inFlight = false;
     }
