@@ -463,7 +463,7 @@ class _DiscoverPresentationScreenState extends State<DiscoverPresentationScreen>
   }
 
   Future<void> _contactVenue(BuildContext context, PresentationSlide slide) async {
-    final phone = slide.service?.contactPhone?.trim();
+    final phone = (slide.service?.contactPhone ?? slide.product?.contactPhone)?.trim();
     if (phone == null || phone.isEmpty) {
       _tell(context, 'لا توجد وسيلة تواصل مسجّلة. هذا ليس حجزًا مؤكدًا.');
       return;
@@ -594,7 +594,8 @@ class _DiscoverPresentationScreenState extends State<DiscoverPresentationScreen>
                           },
                           appointmentLabel: 'تواصلي',
                           showPurchaseLink: _canPurchase(_slides[index]),
-                          showAppointmentRequest: (_slides[index].service?.contactPhone?.trim().isNotEmpty ?? false),
+                          showAppointmentRequest: !_canPurchase(_slides[index]) &&
+                              (((_slides[index].service?.contactPhone ?? _slides[index].product?.contactPhone)?.trim().isNotEmpty) ?? false),
                         )
                       : null,
                 );

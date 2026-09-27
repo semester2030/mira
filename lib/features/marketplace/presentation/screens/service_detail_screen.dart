@@ -1,6 +1,6 @@
 import 'package:flutter/material.dart';
 
-import '../../../../core/constants/marketplace_copy.dart';
+import '../../../../core/utils/mira_url_launcher.dart';
 import '../../../../shared/theme/colors.dart';
 import '../../../../shared/theme/typography.dart';
 import '../../../../shared/widgets/mira_app_bar.dart';
@@ -63,7 +63,7 @@ class ServiceDetailScreen extends StatelessWidget {
                 child: Row(
                   mainAxisAlignment: MainAxisAlignment.spaceAround,
                   children: [
-                    _info('المدة', '${service.durationMin} د'),
+                    if (service.durationMin > 0) _info('المدة', '${service.durationMin} د'),
                     _info('السعر', CatalogPrice.text(known: service.priceKnown, halalas: service.priceHalalas)),
                     if (service.matchKnown) _info('التطابق', '${service.matchScore}%'),
                   ],
@@ -82,16 +82,13 @@ class ServiceDetailScreen extends StatelessWidget {
                 textAlign: TextAlign.center,
               ),
               const SizedBox(height: 24),
-              PremiumButton(
-                label: 'اطلبي موعدًا',
-                icon: Icons.calendar_month_rounded,
-                variant: PremiumButtonVariant.gold,
-                onPressed: () {
-                  ScaffoldMessenger.of(context).showSnackBar(
-                    const SnackBar(content: Text(MarketplaceCopy.appointmentUnavailable)),
-                  );
-                },
-              ),
+              if ((service.contactPhone ?? '').trim().isNotEmpty)
+                PremiumButton(
+                  label: 'تواصلي',
+                  icon: Icons.phone_outlined,
+                  variant: PremiumButtonVariant.gold,
+                  onPressed: () => MiraUrlLauncher.openExternal(context, 'tel:${service.contactPhone!.trim()}'),
+                ),
             ],
           ),
         ),

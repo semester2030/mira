@@ -8,6 +8,7 @@ import {
   MaxLength,
   Min,
   MinLength,
+  ValidateIf,
 } from 'class-validator';
 
 export class UpsertProductDto {
@@ -16,10 +17,12 @@ export class UpsertProductDto {
   @MaxLength(120)
   nameAr!: string;
 
+  @IsOptional()
+  @ValidateIf((_, value) => typeof value === 'string' && value.trim().length > 0)
   @IsString()
   @MinLength(2)
   @MaxLength(120)
-  nameEn!: string;
+  nameEn?: string;
 
   @IsOptional()
   @IsString()
@@ -30,12 +33,20 @@ export class UpsertProductDto {
   @Min(0)
   priceHalalas!: number;
 
+  @IsOptional()
+  @ValidateIf((_, value) => typeof value === 'string' && value.trim().length > 0)
   @IsUrl({ require_protocol: true })
-  externalUrl!: string;
+  externalUrl?: string;
 
+  @IsOptional()
   @IsArray()
   @IsString({ each: true })
-  concernTags!: string[];
+  concernTags?: string[];
+
+  @IsOptional()
+  @IsString()
+  @MaxLength(40)
+  category?: string;
 
   @IsOptional()
   @IsArray()
@@ -60,6 +71,7 @@ export class UpdateProductDto {
   nameAr?: string;
 
   @IsOptional()
+  @ValidateIf((_, value) => typeof value === 'string' && value.trim().length > 0)
   @IsString()
   @MinLength(2)
   @MaxLength(120)
@@ -76,6 +88,7 @@ export class UpdateProductDto {
   priceHalalas?: number;
 
   @IsOptional()
+  @ValidateIf((_, value) => typeof value === 'string' && value.trim().length > 0)
   @IsUrl({ require_protocol: true })
   externalUrl?: string;
 
@@ -83,6 +96,11 @@ export class UpdateProductDto {
   @IsArray()
   @IsString({ each: true })
   concernTags?: string[];
+
+  @IsOptional()
+  @IsString()
+  @MaxLength(40)
+  category?: string;
 
   @IsOptional()
   @IsArray()
@@ -127,6 +145,11 @@ export class UpdateServiceDto {
   @IsArray()
   @IsString({ each: true })
   concernTags?: string[];
+
+  @IsOptional()
+  @IsString()
+  @MaxLength(40)
+  category?: string;
 }
 
 export class UpsertServiceDto {
@@ -135,27 +158,36 @@ export class UpsertServiceDto {
   @MaxLength(120)
   nameAr!: string;
 
+  @IsOptional()
+  @ValidateIf((_, value) => typeof value === 'string' && value.trim().length > 0)
   @IsString()
   @MinLength(2)
   @MaxLength(120)
-  nameEn!: string;
+  nameEn?: string;
 
   @IsOptional()
   @IsString()
   @MaxLength(400)
   descriptionAr?: string;
 
+  @IsOptional()
   @IsInt()
   @Min(5)
-  durationMin!: number;
+  durationMin?: number;
 
   @IsInt()
   @Min(0)
   priceHalalas!: number;
 
+  @IsOptional()
   @IsArray()
   @IsString({ each: true })
-  concernTags!: string[];
+  concernTags?: string[];
+
+  @IsOptional()
+  @IsString()
+  @MaxLength(40)
+  category?: string;
 
   @IsOptional()
   @IsBoolean()

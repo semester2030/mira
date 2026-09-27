@@ -28,10 +28,13 @@
       </div>
 
       <div class="card">
-        <h2>طريقتان لإضافة المحتوى</h2>
-        <p class="lead">الإضافة اليدوية تعمل من هذه اللوحة دون متجر خارجي. لا يوجد الآن موصل متجر خارجي مختبر، لذلك الربط الخارجي لا يُعرض كاتصال ناجح.</p>
-        <p><strong>إضافة منتجات وخدمات داخل ميرا</strong> — النماذج أدناه تحفظ مسودة ثم تُرسل للمراجعة.</p>
-        <p><strong>ربط متجر خارجي</strong> — غير منفّذ كتكامل حي. زد وغيره لا يُعلنان متصلين.</p>
+        <h2>إضافة محتوى</h2>
+        <p class="lead">المنتج والخدمة يُحفظان يدويًا من هذه الصفحة. لا يُشترط متجر خارجي ولا حساب زد.</p>
+        <div class="journey-actions">
+          <button type="button" class="btn btn-primary" id="goProduct">إضافة منتج</button>
+          <button type="button" class="btn btn-primary" id="goService">إضافة خدمة</button>
+        </div>
+        <p id="storeLinkState"><strong>ربط متجر خارجي:</strong> غير متصل. لا يوجد تكامل API، وغيابه لا يمنع المسودة.</p>
       </div>
 
       <div class="card" id="catalogSection">
@@ -62,6 +65,7 @@
 
   <script src="js/api.js"></script>
   <script src="js/ads.js"></script>
+  <script src="js/catalog-journey.js"></script>
   <script>
     const labeledUi = new URLSearchParams(location.search).get('ui-fixture') === 'labeled';
     if (!labeledUi && !PartnersApi.isLoggedIn()) location.href = 'login.html' + location.search;
@@ -72,13 +76,13 @@
       location.href = 'login.html' + location.search;
     };
 
-    const CONCERNS = 'moisture,pore,acne,wrinkle,redness,oiliness,texture,age_spot';
-
-    function formatPrice(h) {
-      return (h / 100).toFixed(0) + ' ر.س';
+    function renderCatalog(type, catalog, listId, formId, titleId) {
+      CatalogJourney.renderCatalog(type, catalog, listId, formId, titleId);
     }
-
-    async function load() {
+    function renderForm() {
+      CatalogJourney.renderForm.apply(null, arguments);
+    }
+    async function load(options) {
       try {
         const data = await PartnersApi.dashboard();
         document.getElementById('loading').classList.add('hidden');
@@ -98,16 +102,27 @@
           <div class="stat"><div class="num">${data.catalog.productCount + data.catalog.serviceCount}</div><div class="lbl">عناصر الكتالوج</div></div>
         `;
 
+        window.sessionPartner = p;
+        const serviceButton = document.getElementById('goService');
+        const productButton = document.getElementById('goProduct');
+        const showServices = developer || p.type === 'clinic' || p.type === 'salon';
+        const showProducts = developer || p.type === 'brand';
+        serviceButton.hidden = !showServices;
+        productButton.hidden = !showProducts;
+        serviceButton.onclick = () => document.getElementById('serviceForm').scrollIntoView({ behavior: 'smooth' });
+        productButton.onclick = () => document.getElementById('catalogForm').scrollIntoView({ behavior: 'smooth' });
         if (developer) {
           document.getElementById('serviceSection').classList.remove('hidden');
           document.getElementById('catalogTitle').textContent = 'منتجات الملابس وماركات التجميل';
+          document.getElementById('serviceTitle').textContent = 'خدمات جمالك';
           renderCatalog('brand', data.catalog, 'catalogList', 'catalogForm', 'catalogTitle');
-          renderForm('brand', null, 'catalogForm', 'catalogTitle');
+          if (!options || !options.preserveForms) renderForm('brand', null, 'catalogForm', 'catalogTitle');
           renderCatalog('clinic', data.catalog, 'serviceList', 'serviceForm', 'serviceTitle');
-          renderForm('clinic', null, 'serviceForm', 'serviceTitle');
+          if (!options || !options.preserveForms) renderForm('clinic', null, 'serviceForm', 'serviceTitle');
         } else {
+          if (showServices) document.getElementById('serviceSection').classList.remove('hidden');
           renderCatalog(p.type, data.catalog, 'catalogList', 'catalogForm', 'catalogTitle');
-          renderForm(p.type, null, 'catalogForm', 'catalogTitle');
+          if (!options || !options.preserveForms) renderForm(p.type, null, 'catalogForm', 'catalogTitle');
         }
         try {
           const ads = await PartnersApi.ads();
@@ -122,263 +137,7 @@
         document.getElementById('loading').textContent = err.message;
       }
     }
-
-    function text(parent, value, tag) {
-      const node = document.createElement(tag || 'div');
-      node.textContent = value == null ? '' : String(value);
-      parent.appendChild(node);
-      return node;
-    }
-
-    function renderCatalog(type, catalog, listId, formId, titleId) {
-      const list = document.getElementById(listId || 'catalogList');
-      const items = type === 'brand' ? catalog.products : catalog.services;
-      list.replaceChildren();
-      if (!items.length) {
-        text(list, 'لا عناصر بعد — أضف أول منتج/خدمة.', 'p');
-        return;
-      }
-      const kind = type === 'brand' ? 'products' : 'services';
-      items.forEach((item) => {
-        const card = document.createElement('div');
-        card.className = 'list-item';
-        text(card, item.nameAr, 'strong');
-        text(card, 'الحالة المنشورة: ' + (item.contentStatus || 'published') + ' · المراجعة: ' + (item.reviewStatus || 'none'));
-        text(card, 'المنشور: ' + (item.nameAr || '') + (item.draftNameAr ? ' · المسودة: ' + item.draftNameAr : ''));
-        text(card, formatPrice(item.priceHalalas));
-        if (item.reviewNote) text(card, 'سبب المراجعة: ' + item.reviewNote);
-        const status = text(card, '');
-        const mediaBox = document.createElement('div');
-        card.appendChild(mediaBox);
-        const file = document.createElement('input');
-        file.type = 'file';
-        file.accept = 'image/png,image/jpeg,image/webp,video/mp4';
-        const upload = document.createElement('button');
-        upload.type = 'button';
-        upload.className = 'btn btn-ghost btn-sm';
-        upload.textContent = 'رفع وسيط';
-        const submit = document.createElement('button');
-        submit.type = 'button';
-        submit.className = 'btn btn-ghost btn-sm';
-        submit.textContent = 'إرسال للمراجعة';
-        const pull = document.createElement('button');
-        pull.type = 'button';
-        pull.className = 'btn btn-ghost btn-sm';
-        pull.textContent = 'سحب';
-        const edit = document.createElement('button');
-        edit.type = 'button';
-        edit.className = 'btn btn-ghost btn-sm';
-        edit.textContent = 'تعديل';
-        edit.onclick = () => renderForm(type, item, formId, titleId);
-        card.append(file, upload, submit, pull, edit);
-        list.appendChild(card);
-        async function showMedia() {
-          mediaBox.replaceChildren();
-          const preview = await PartnersApi.preview(kind, item.id);
-          text(mediaBox, 'المنشور: ' + (preview.publishedNameAr || '') + (preview.draftNameAr ? ' · المسودة: ' + preview.draftNameAr : ''));
-          if (preview.reviewNote) text(mediaBox, 'سبب المراجعة: ' + preview.reviewNote);
-          const ids = (preview.media || []).map((media) => media.id);
-          for (const media of preview.media || []) {
-            const row = document.createElement('div');
-            const primary = media.draftIsPrimary == null ? media.isPrimary : media.draftIsPrimary;
-            text(row, (media.kind === 'video' ? 'فيديو' : 'صورة') + (primary ? ' · رئيسي' : '') + (media.pendingRemoval ? ' · طلب إزالة' : ' · ' + media.publication));
-            try {
-              const response = await fetch(PartnersApi.base + '/partners-portal/media/' + media.id, {
-                headers: { Authorization: 'Bearer ' + localStorage.getItem('mira_partner_token') },
-              });
-              if (!response.ok) throw new Error('تعذر المعاينة');
-              const blob = await response.blob();
-              const objectUrl = URL.createObjectURL(blob);
-              const view = document.createElement(media.kind === 'video' ? 'video' : 'img');
-              view.src = objectUrl;
-              if (media.kind === 'video') view.controls = true;
-              view.style.maxWidth = '160px';
-              view.style.maxHeight = '160px';
-              row.appendChild(view);
-            } catch (error) {
-              text(row, 'تعذر عرض الوسيط');
-            }
-            const up = document.createElement('button');
-            up.type = 'button';
-            up.textContent = 'أعلى';
-            up.disabled = ids.indexOf(media.id) === 0;
-            up.onclick = async () => {
-              const order = ids.slice();
-              const at = order.indexOf(media.id);
-              if (at < 1) return;
-              status.textContent = 'جارٍ الترتيب';
-              const swap = order[at - 1];
-              order[at - 1] = order[at];
-              order[at] = swap;
-              try {
-                await PartnersApi.reorderMedia(kind, item.id, order);
-                status.textContent = 'تم الترتيب كمسودة';
-                await showMedia();
-              } catch (error) {
-                status.textContent = 'تعذر الترتيب: ' + error.message;
-              }
-            };
-            const makePrimary = document.createElement('button');
-            makePrimary.type = 'button';
-            makePrimary.textContent = 'رئيسي';
-            makePrimary.onclick = async () => {
-              status.textContent = 'جارٍ التحديد';
-              try {
-                await PartnersApi.setPrimary(kind, item.id, media.id);
-                status.textContent = 'حُفظ الرئيسي كمسودة';
-                await showMedia();
-              } catch (error) {
-                status.textContent = 'تعذر التحديد: ' + error.message;
-              }
-            };
-            const remove = document.createElement('button');
-            remove.type = 'button';
-            remove.textContent = 'إزالة';
-            remove.onclick = async () => {
-              status.textContent = 'جارٍ طلب الإزالة';
-              try {
-                await PartnersApi.removeMedia(kind, item.id, media.id);
-                status.textContent = 'طُلبت الإزالة ضمن المراجعة';
-                await showMedia();
-              } catch (error) {
-                status.textContent = 'تعذرت الإزالة: ' + error.message;
-              }
-            };
-            row.append(up, makePrimary, remove);
-            mediaBox.appendChild(row);
-          }
-        }
-        showMedia().catch((error) => { status.textContent = error.message; });
-        upload.onclick = async () => {
-          const chosen = file.files && file.files[0];
-          if (!chosen) { status.textContent = 'اختاري ملفًا أولًا'; return; }
-          status.textContent = 'جارٍ الرفع';
-          try {
-            const dataBase64 = await new Promise((resolve, reject) => {
-              const reader = new FileReader();
-              reader.onload = () => resolve(String(reader.result).split(',')[1]);
-              reader.onerror = () => reject(reader.error);
-              reader.readAsDataURL(chosen);
-            });
-            await PartnersApi.addMedia(kind, item.id, chosen.type, dataBase64);
-            status.textContent = 'تم حفظ الوسيط كمسودة';
-            await showMedia();
-          } catch (error) {
-            status.textContent = 'فشل الرفع: ' + error.message;
-          }
-        };
-        submit.onclick = async () => {
-          status.textContent = 'جارٍ الإرسال';
-          try {
-            await PartnersApi.submitReview(kind, item.id);
-            status.textContent = 'أُرسل للمراجعة';
-            load();
-          } catch (error) {
-            status.textContent = 'تعذر الإرسال: ' + error.message;
-          }
-        };
-        pull.onclick = async () => {
-          if (!confirm('سحب هذا العنصر من النشر؟')) return;
-          status.textContent = 'جارٍ السحب';
-          try {
-            if (type === 'brand') await PartnersApi.deleteProduct(item.id);
-            else await PartnersApi.deleteService(item.id);
-            load();
-          } catch (error) {
-            status.textContent = 'تعذر السحب: ' + error.message;
-          }
-        };
-      });
-    }
-
-    function field(form, label, name, value, type) {
-      const wrap = document.createElement('div');
-      const caption = document.createElement('label');
-      caption.textContent = label;
-      const input = document.createElement(type === 'textarea' ? 'textarea' : 'input');
-      input.name = name;
-      if (type && type !== 'textarea') input.type = type;
-      input.value = value == null ? '' : String(value);
-      wrap.append(caption, input);
-      form.appendChild(wrap);
-      return input;
-    }
-
-    function renderForm(type, item, formId, titleId) {
-      const form = document.getElementById(formId || 'catalogForm');
-      const title = document.getElementById(titleId || 'catalogTitle');
-      const fullCatalog = !document.getElementById('serviceSection').classList.contains('hidden');
-      if (title && !fullCatalog) title.textContent = type === 'brand' ? 'منتجاتك' : 'خدماتك';
-      form.replaceChildren();
-      const editing = Boolean(item);
-      const status = text(form, editing ? 'تعديل العنصر الحالي. الحفظ يبقي المعرف نفسه.' : 'إضافة عنصر جديد.');
-      if (editing) {
-        text(form, 'المنشور: ' + (item.nameAr || ''));
-        text(form, 'المسودة: ' + (item.draftNameAr || 'لا مسودة اسم'));
-        text(form, 'الإنجليزية المنشورة: ' + (item.nameEn || ''));
-        text(form, 'مسودة الإنجليزية: ' + (item.draftNameEn || 'لا مسودة'));
-        text(form, item.draftDescriptionAr === '' ? 'المسودة تطلب مسح الوصف' : 'وصف المسودة: ' + (item.draftDescriptionAr || 'لا مسودة وصف'));
-        if (item.reviewNote) text(form, 'سبب المراجعة: ' + item.reviewNote);
-      }
-      const nameAr = field(form, 'اسم عربي', 'nameAr', editing ? (item.draftNameAr || item.nameAr) : '', 'text');
-      nameAr.required = true;
-      const nameEn = field(form, 'اسم English', 'nameEn', editing ? (item.draftNameEn != null ? item.draftNameEn : item.nameEn) : '', 'text');
-      nameEn.required = true;
-      field(form, 'الوصف', 'descriptionAr', editing ? (item.draftDescriptionAr != null ? item.draftDescriptionAr : (item.descriptionAr || '')) : '', 'textarea');
-      if (type === 'brand') {
-        const price = field(form, 'السعر (هللة)', 'priceHalalas', editing ? item.priceHalalas : '', 'number');
-        price.required = true;
-        const url = field(form, 'رابط المتجر', 'externalUrl', editing ? item.externalUrl : '', 'url');
-        url.required = true;
-        const tags = field(form, 'وسوم الاهتمام', 'concernTags', editing ? (item.concernTags || []).join(',') : 'لون', 'text');
-        tags.required = true;
-        field(form, 'نوع البشرة', 'skinTypes', editing ? (item.skinTypes || []).join(',') : '', 'text');
-        field(form, 'خطوة الروتين', 'stepAr', editing ? (item.stepAr || '') : '', 'text');
-      } else {
-        const duration = field(form, 'المدة (دقيقة)', 'durationMin', editing ? item.durationMin : 45, 'number');
-        duration.required = true;
-        const price = field(form, 'السعر (هللة)', 'priceHalalas', editing ? item.priceHalalas : '', 'number');
-        price.required = true;
-        const tags = field(form, 'وسوم الاهتمام', 'concernTags', editing ? (item.concernTags || []).join(',') : 'عناية', 'text');
-        tags.required = true;
-      }
-      const save = document.createElement('button');
-      save.type = 'submit';
-      save.className = 'btn btn-primary';
-      save.textContent = editing ? 'حفظ ونشر' : (type === 'brand' ? 'إضافة منتج' : 'إضافة خدمة');
-      form.appendChild(save);
-      form.onsubmit = async (event) => {
-        event.preventDefault();
-        status.textContent = 'جارٍ الحفظ';
-        save.disabled = true;
-        const data = new FormData(form);
-        const payload = {
-          nameAr: data.get('nameAr'),
-          nameEn: data.get('nameEn'),
-          descriptionAr: data.get('descriptionAr') == null ? '' : String(data.get('descriptionAr')),
-          priceHalalas: parseInt(data.get('priceHalalas'), 10),
-          concernTags: String(data.get('concernTags') || '').split(',').map((part) => part.trim()).filter(Boolean),
-        };
-        try {
-          if (type === 'brand') {
-            payload.externalUrl = data.get('externalUrl');
-            payload.skinTypes = String(data.get('skinTypes') || '').split(',').map((part) => part.trim()).filter(Boolean);
-            payload.stepAr = data.get('stepAr') || undefined;
-            if (editing) await PartnersApi.updateProduct(item.id, payload);
-            else await PartnersApi.createProduct(payload);
-          } else {
-            payload.durationMin = parseInt(data.get('durationMin'), 10);
-            if (editing) await PartnersApi.updateService(item.id, payload);
-            else await PartnersApi.createService(payload);
-          }
-          status.textContent = editing ? 'حُفظت المسودة على العنصر نفسه' : 'أُضيف العنصر كمسودة';
-          load();
-        } catch (error) {
-          status.textContent = 'تعذر الحفظ: ' + error.message;
-          save.disabled = false;
-        }
-      };
-    }
+    window.reloadPartnerDashboard = load;
 
     if (labeledUi) {
       document.getElementById('loading').classList.add('hidden');

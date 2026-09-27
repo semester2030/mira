@@ -70,7 +70,9 @@ class MatchedServiceTile extends StatelessWidget {
                     const SizedBox(height: 4),
                     Text(service.nameAr, style: AppTypography.titleMedium),
                     Text(
-                      '${service.partnerNameAr} · ${service.durationMin} د · ${CatalogPrice.text(known: service.priceKnown, halalas: service.priceHalalas)}',
+                      service.durationMin > 0
+                          ? '${service.partnerNameAr} · ${service.durationMin} د · ${CatalogPrice.text(known: service.priceKnown, halalas: service.priceHalalas)}'
+                          : '${service.partnerNameAr} · ${CatalogPrice.text(known: service.priceKnown, halalas: service.priceHalalas)}',
                       style: AppTypography.bodySmall.copyWith(
                         color: AppColors.textSecondary,
                       ),

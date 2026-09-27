@@ -16,6 +16,9 @@ function newToken(): string {
   return randomBytes(32).toString('hex');
 }
 
+const PRODUCT_CATEGORIES = new Set(['face', 'body', 'hair', 'clothes', 'accessories']);
+const SERVICE_CATEGORIES = new Set(['hair', 'skin', 'makeup', 'nails', 'care']);
+
 @Injectable()
 export class PartnersPortalService {
   constructor(
@@ -264,6 +267,7 @@ export class PartnersPortalService {
         city: partner.city,
         logoEmoji: partner.logoEmoji,
         storeUrl: partner.storeUrl,
+        contactPhone: partner.contactPhone,
         rating: partner.rating,
       },
       catalog: {
@@ -305,22 +309,25 @@ export class PartnersPortalService {
     if (!partner || (partner.type !== 'brand' && partner.type !== 'developer')) {
       throw new BadRequestException('المنتجات متاحة للماركات فقط');
     }
-    const developer = partner.type === 'developer';
+    const category = this.optionalCategory(dto.category, PRODUCT_CATEGORIES);
+    const cosmetic = category === 'face' || category === 'body' || category === 'hair';
+    const nameAr = dto.nameAr.trim();
 
     return this.prisma.product.create({
       data: {
         partnerId,
-        nameAr: dto.nameAr,
-        nameEn: dto.nameEn,
-        descriptionAr: dto.descriptionAr,
+        nameAr,
+        nameEn: dto.nameEn?.trim() || nameAr,
+        descriptionAr: dto.descriptionAr?.trim() || null,
         priceHalalas: dto.priceHalalas,
-        externalUrl: dto.externalUrl,
-        concernTags: dto.concernTags,
-        skinTypes: dto.skinTypes ?? [],
-        stepAr: dto.stepAr,
-        active: developer,
-        contentStatus: developer ? 'published' : 'draft',
-        reviewStatus: developer ? 'none' : 'draft',
+        externalUrl: dto.externalUrl?.trim() || '',
+        concernTags: dto.concernTags ?? [],
+        category,
+        skinTypes: cosmetic ? (dto.skinTypes ?? []) : [],
+        stepAr: cosmetic ? (dto.stepAr?.trim() || null) : null,
+        active: false,
+        contentStatus: 'draft',
+        reviewStatus: 'draft',
       },
     });
   }
@@ -330,10 +337,8 @@ export class PartnersPortalService {
       await tx.$queryRaw`SELECT id FROM products WHERE id = ${productId} FOR UPDATE`;
       const current = await tx.product.findFirst({ where: { id: productId, partnerId } });
       if (!current) throw new NotFoundException('المنتج غير موجود');
-      const owner = await tx.partner.findUnique({ where: { id: partnerId }, select: { type: true } });
-      const developer = owner?.type === 'developer';
       const linked = await tx.catalogSourceLink.findFirst({ where: { ownerKind: 'product', ownerId: productId } });
-      const published = current.contentStatus === 'published' && !developer;
+      const published = current.contentStatus === 'published';
       const data: {
         draftNameAr?: string;
         draftNameEn?: string;
@@ -344,24 +349,23 @@ export class PartnersPortalService {
         priceHalalas?: number;
         externalUrl?: string;
         concernTags?: string[];
+        category?: string | null;
         skinTypes?: string[];
         stepAr?: string | null;
         reviewRevision: { increment: number };
         reviewStatus: string;
-        contentStatus?: string;
-        active?: boolean;
       } = {
         reviewRevision: { increment: 1 },
-        reviewStatus: developer ? 'none' : current.reviewStatus === 'in_review' ? 'in_review' : 'draft',
-        ...(developer ? { contentStatus: 'published', active: true } : {}),
+        reviewStatus: current.reviewStatus === 'in_review' ? 'in_review' : 'draft',
       };
       if (dto.nameAr !== undefined) {
         if (published) data.draftNameAr = dto.nameAr;
         else data.nameAr = dto.nameAr;
       }
       if (dto.nameEn !== undefined) {
-        if (published) data.draftNameEn = dto.nameEn;
-        else data.nameEn = dto.nameEn;
+        const nextName = dto.nameEn.trim() || (published ? (data.draftNameAr || current.nameAr) : (data.nameAr || current.nameAr));
+        if (published) data.draftNameEn = nextName;
+        else data.nameEn = nextName;
       }
       if (dto.descriptionAr !== undefined) {
         const cleared = dto.descriptionAr == null || dto.descriptionAr === '';
@@ -369,10 +373,18 @@ export class PartnersPortalService {
         else data.descriptionAr = cleared ? null : dto.descriptionAr;
       }
       data.priceHalalas = linked ? current.priceHalalas : (dto.priceHalalas ?? current.priceHalalas);
-      if (dto.externalUrl !== undefined) data.externalUrl = dto.externalUrl;
+      if (dto.externalUrl !== undefined) data.externalUrl = dto.externalUrl.trim();
       if (dto.concernTags !== undefined) data.concernTags = dto.concernTags;
-      if (dto.skinTypes !== undefined) data.skinTypes = dto.skinTypes;
-      if (dto.stepAr !== undefined) data.stepAr = dto.stepAr === '' ? null : dto.stepAr;
+      if (dto.category !== undefined) data.category = this.optionalCategory(dto.category, PRODUCT_CATEGORIES);
+      const category = data.category === undefined ? current.category : data.category;
+      const cosmetic = category === 'face' || category === 'body' || category === 'hair';
+      if (!cosmetic) {
+        data.skinTypes = [];
+        data.stepAr = null;
+      } else {
+        if (dto.skinTypes !== undefined) data.skinTypes = dto.skinTypes;
+        if (dto.stepAr !== undefined) data.stepAr = dto.stepAr === '' ? null : dto.stepAr;
+      }
       return tx.product.update({ where: { id: productId }, data });
     });
   }
@@ -393,21 +405,22 @@ export class PartnersPortalService {
     if (!partner || (!['clinic', 'salon'].includes(partner.type) && partner.type !== 'developer')) {
       throw new BadRequestException('الخدمات متاحة للعيادات والصالونات فقط');
     }
-    const developer = partner.type === 'developer';
+    const nameAr = dto.nameAr.trim();
 
     return this.prisma.service.create({
       data: {
         partnerId,
-        nameAr: dto.nameAr,
-        nameEn: dto.nameEn,
-        descriptionAr: dto.descriptionAr,
-        durationMin: dto.durationMin,
+        nameAr,
+        nameEn: dto.nameEn?.trim() || nameAr,
+        descriptionAr: dto.descriptionAr?.trim() || null,
+        durationMin: dto.durationMin ?? 0,
         priceHalalas: dto.priceHalalas,
-        concernTags: dto.concernTags,
-        bookingEnabled: dto.bookingEnabled ?? false,
-        active: developer,
-        contentStatus: developer ? 'published' : 'draft',
-        reviewStatus: developer ? 'none' : 'draft',
+        concernTags: dto.concernTags ?? [],
+        category: this.optionalCategory(dto.category, SERVICE_CATEGORIES),
+        bookingEnabled: false,
+        active: false,
+        contentStatus: 'draft',
+        reviewStatus: 'draft',
       },
     });
   }
@@ -417,9 +430,7 @@ export class PartnersPortalService {
       await tx.$queryRaw`SELECT id FROM services WHERE id = ${serviceId} FOR UPDATE`;
       const current = await tx.service.findFirst({ where: { id: serviceId, partnerId } });
       if (!current) throw new NotFoundException('الخدمة غير موجودة');
-      const owner = await tx.partner.findUnique({ where: { id: partnerId }, select: { type: true } });
-      const developer = owner?.type === 'developer';
-      const published = current.contentStatus === 'published' && !developer;
+      const published = current.contentStatus === 'published';
       const data: {
         draftNameAr?: string;
         draftNameEn?: string;
@@ -430,24 +441,23 @@ export class PartnersPortalService {
         durationMin?: number;
         priceHalalas?: number;
         concernTags?: string[];
+        category?: string | null;
         bookingEnabled: boolean;
         reviewRevision: { increment: number };
         reviewStatus: string;
-        contentStatus?: string;
-        active?: boolean;
       } = {
         bookingEnabled: false,
         reviewRevision: { increment: 1 },
-        reviewStatus: developer ? 'none' : current.reviewStatus === 'in_review' ? 'in_review' : 'draft',
-        ...(developer ? { contentStatus: 'published', active: true } : {}),
+        reviewStatus: current.reviewStatus === 'in_review' ? 'in_review' : 'draft',
       };
       if (dto.nameAr !== undefined) {
         if (published) data.draftNameAr = dto.nameAr;
         else data.nameAr = dto.nameAr;
       }
       if (dto.nameEn !== undefined) {
-        if (published) data.draftNameEn = dto.nameEn;
-        else data.nameEn = dto.nameEn;
+        const nextName = dto.nameEn.trim() || (published ? (data.draftNameAr || current.nameAr) : (data.nameAr || current.nameAr));
+        if (published) data.draftNameEn = nextName;
+        else data.nameEn = nextName;
       }
       if (dto.descriptionAr !== undefined) {
         const cleared = dto.descriptionAr == null || dto.descriptionAr === '';
@@ -457,6 +467,7 @@ export class PartnersPortalService {
       if (dto.durationMin !== undefined) data.durationMin = dto.durationMin;
       if (dto.priceHalalas !== undefined) data.priceHalalas = dto.priceHalalas;
       if (dto.concernTags !== undefined) data.concernTags = dto.concernTags;
+      if (dto.category !== undefined) data.category = this.optionalCategory(dto.category, SERVICE_CATEGORIES);
       return tx.service.update({ where: { id: serviceId }, data });
     });
   }
@@ -468,6 +479,13 @@ export class PartnersPortalService {
       data: { active: false, contentStatus: 'withdrawn' },
     });
     return { ok: true };
+  }
+
+  private optionalCategory(value: string | undefined, allowed: Set<string>): string | null {
+    const category = value?.trim() || '';
+    if (!category) return null;
+    if (!allowed.has(category)) throw new BadRequestException('التصنيف غير معروف');
+    return category;
   }
 
   private async assertProductOwner(partnerId: string, productId: string) {

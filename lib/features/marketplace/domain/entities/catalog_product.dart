@@ -20,6 +20,7 @@ class CatalogProduct {
   final bool priceKnown;
   final String externalUrl;
   final String? stepAr;
+  final String? contactPhone;
   final int matchScore;
   final bool matchKnown;
   final String? category;
@@ -40,6 +41,7 @@ class CatalogProduct {
       priceKnown: priceKnown,
       externalUrl: externalUrl,
       stepAr: stepAr,
+      contactPhone: contactPhone,
       matchScore: score,
       matchKnown: true,
       category: category,
@@ -61,6 +63,7 @@ class CatalogProduct {
     this.priceKnown = true,
     required this.externalUrl,
     this.stepAr,
+    this.contactPhone,
     required this.matchScore,
     this.matchKnown = false,
     this.category,

@@ -14,13 +14,14 @@ class ProductDetailScreen extends StatelessWidget {
 
   const ProductDetailScreen({super.key, required this.product, this.provenance});
 
-  Future<void> _openStore(BuildContext context) async {
+  bool get _hasPurchaseLink {
     final url = product.externalUrl.trim();
     final uri = Uri.tryParse(url);
-    if (uri == null || !uri.hasScheme || uri.host.isEmpty) {
-      ScaffoldMessenger.of(context).showSnackBar(const SnackBar(content: Text('لا يوجد رابط شراء صالح')));
-      return;
-    }
+    return uri != null && uri.hasScheme && uri.host.isNotEmpty;
+  }
+
+  Future<void> _openStore(BuildContext context) async {
+    final url = product.externalUrl.trim();
     final opened = await MiraUrlLauncher.openExternal(context, url);
     if (!context.mounted || !opened) return;
     ScaffoldMessenger.of(context).showSnackBar(const SnackBar(content: Text('فُتح رابط خارجي. هذا ليس شراءً مكتملًا')));
@@ -75,28 +76,47 @@ class ProductDetailScreen extends StatelessWidget {
                 ),
               ),
               const SizedBox(height: 24),
-              PremiumButton(
-                label: 'الشراء من متجر ${product.partnerNameAr}',
-                icon: Icons.shopping_bag_outlined,
-                variant: PremiumButtonVariant.gold,
-                onPressed: () => _openStore(context),
-              ),
-              const SizedBox(height: 8),
-              Text(
-                'الدفع والشحن عبر متجر الشريك — ميرا لا تحفظ بيانات بطاقتك.',
-                style: AppTypography.bodySmall.copyWith(
-                  color: AppColors.textTertiary,
+              if (_hasPurchaseLink) ...[
+                PremiumButton(
+                  label: 'الشراء من متجر ${product.partnerNameAr}',
+                  icon: Icons.shopping_bag_outlined,
+                  variant: PremiumButtonVariant.gold,
+                  onPressed: () => _openStore(context),
                 ),
-                textAlign: TextAlign.center,
-              ),
-              const SizedBox(height: 4),
-              Text(
-                MarketplaceCopy.externalLinkNotPurchase,
-                style: AppTypography.bodySmall.copyWith(
-                  color: AppColors.textTertiary,
+                const SizedBox(height: 8),
+                Text(
+                  'الدفع والشحن عبر متجر الشريك — ميرا لا تحفظ بيانات بطاقتك.',
+                  style: AppTypography.bodySmall.copyWith(
+                    color: AppColors.textTertiary,
+                  ),
+                  textAlign: TextAlign.center,
                 ),
-                textAlign: TextAlign.center,
-              ),
+                const SizedBox(height: 4),
+                Text(
+                  MarketplaceCopy.externalLinkNotPurchase,
+                  style: AppTypography.bodySmall.copyWith(
+                    color: AppColors.textTertiary,
+                  ),
+                  textAlign: TextAlign.center,
+                ),
+              ] else ...[
+                Text(
+                  (product.contactPhone ?? '').trim().isEmpty
+                      ? 'لا يوجد مسار شراء أو وسيلة تواصل منشورة لهذا المنتج.'
+                      : 'للتواصل: ${product.contactPhone}',
+                  style: AppTypography.bodyMedium,
+                  textAlign: TextAlign.center,
+                ),
+                if ((product.contactPhone ?? '').trim().isNotEmpty) ...[
+                  const SizedBox(height: 12),
+                  PremiumButton(
+                    label: 'تواصلي',
+                    icon: Icons.phone_outlined,
+                    variant: PremiumButtonVariant.gold,
+                    onPressed: () => MiraUrlLauncher.openExternal(context, 'tel:${product.contactPhone!.trim()}'),
+                  ),
+                ],
+              ],
             ],
           ),
         ),

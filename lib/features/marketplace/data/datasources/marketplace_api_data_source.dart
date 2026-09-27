@@ -140,6 +140,7 @@ class MarketplaceApiDataSource {
       priceKnown: CatalogPrice.read(json).known,
       externalUrl: json['externalUrl'] as String,
       stepAr: json['stepAr'] as String?,
+      contactPhone: json['contactPhone'] as String?,
       matchScore: (json['matchScore'] as num?)?.toInt() ?? 0,
       matchKnown: json.containsKey('matchScore'),
       concernTags: (json['concernTags'] as List<dynamic>?)
@@ -275,6 +276,7 @@ class MarketplaceApiDataSource {
         priceLabel: json['priceLabel'] as String? ?? '',
         priceKnown: CatalogPrice.read(json).known,
         externalUrl: json['externalUrl'] as String? ?? '',
+        contactPhone: json['contactPhone'] as String?,
         category: json['category'] as String?,
         media: _media(json),
         stepAr: json['stepAr'] as String?,

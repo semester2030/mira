@@ -103,7 +103,12 @@ describe('PartnersPortalService', () => {
   });
 
   it('preserves owner scope when updating partner products', async () => {
-    prisma.product.findFirst.mockResolvedValue(null);
+    const tx = {
+      $queryRaw: jest.fn(),
+      product: { findFirst: jest.fn().mockResolvedValue(null), update: jest.fn() },
+      catalogSourceLink: { findFirst: jest.fn() },
+    };
+    prisma.$transaction.mockImplementation(async (fn: (client: typeof tx) => unknown) => fn(tx));
 
     await expect(
       service.updateProduct('partner-a', 'product-of-partner-b', {
@@ -114,9 +119,28 @@ describe('PartnersPortalService', () => {
         concernTags: [],
       }),
     ).rejects.toThrow('المنتج غير موجود');
-    expect(prisma.product.findFirst).toHaveBeenCalledWith({
+    expect(tx.product.findFirst).toHaveBeenCalledWith({
       where: { id: 'product-of-partner-b', partnerId: 'partner-a' },
     });
-    expect(prisma.product.update).not.toHaveBeenCalled();
+    expect(tx.product.update).not.toHaveBeenCalled();
+  });
+
+  it('stores a manual product draft without an external store link', async () => {
+    prisma.partner.findUnique.mockResolvedValue({ id: 'partner-1', type: 'developer' });
+    prisma.product.create.mockImplementation(async ({ data }: { data: Record<string, unknown> }) => data);
+
+    const result = await service.createProduct('partner-1', {
+      nameAr: 'قطعة',
+      priceHalalas: 5200,
+    });
+
+    expect(result).toMatchObject({
+      nameEn: 'قطعة',
+      externalUrl: '',
+      priceHalalas: 5200,
+      contentStatus: 'draft',
+      reviewStatus: 'draft',
+      active: false,
+    });
   });
 });
