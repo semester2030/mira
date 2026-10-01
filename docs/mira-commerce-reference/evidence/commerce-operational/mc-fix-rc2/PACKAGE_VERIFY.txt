@@ -1,0 +1,9 @@
+package=MIRA_COMMERCE_MC_FIX_RC2.zip
+location=/Users/fayez/Desktop/MIRA_COMMERCE_MC_FIX_RC2.zip
+bytes=2231482
+sha256=0ae77ad1571856f57be101924da7450131808b17a25a24adcf04cd8b11db3716
+source_commit=bbbfa84f647a1aa56864060b960f08e946c88cd1
+unpack_verify=OK
+clean_test=npm run test:commerce EXIT 0 from /tmp/MIRA_COMMERCE_MC_FIX_RC2_verify (pre-hash rebuild run)
+portal_options=catalog-options-rc2-tests passed
+admin_render=srv-dav2ih0jo6nc73f7d9rg https://mira-admin-portal.onrender.com (rootDir may need admin-portal/web in dashboard)

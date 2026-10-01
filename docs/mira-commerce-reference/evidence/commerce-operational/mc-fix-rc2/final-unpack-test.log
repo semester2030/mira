@@ -1,0 +1,13 @@
+npm warn Unknown env config "devdir". This will stop working in the next major version of npm.
+Environment variables loaded from .env
+npm warn Unknown env config "devdir". This will stop working in the next major version of npm.
+
+> mira-api@1.0.0 test:commerce
+> tsx src/marketplace/commerce.types.schema-tests.ts && tsx src/marketplace/commerce-public.schema-tests.ts && tsx src/marketplace/commerce.service.schema-tests.ts && tsx src/marketplace/commerce.http.integration-tests.ts
+
+commerce.types schema tests passed
+commerce-public schema tests passed
+commerce.service schema tests passed
+commerce HTTP integration tests passed
+EXIT=0
+catalog-options-rc2-tests passed
