@@ -142,7 +142,7 @@ async function main() {
     assert.equal(quote.deliveryFeeHalalas, null);
     assert.equal(quote.deliveryFeeKnown, false);
     assert.equal(quote.canConfirmOrder, false);
-    assert.notEqual(quote.requiresDeliveryFeeAcknowledgement, true, 'ack path is not offered');
+    assert.equal('requiresDeliveryFeeAcknowledgement' in quote, false, 'ack path is not offered');
     assert.equal(quote.totalHalalas, 10000);
     await failure(place(alice, `${run}-unknown-fee`), 422, 'DELIVERY_FEE_UNKNOWN');
     await failure(
