@@ -469,12 +469,65 @@ export function bookingRequestFingerprint(input: {
   });
 }
 
+/**
+ * Stable resource key used in availability and booking.
+ * Allows Arabic letters so portal labels like «غرفة-أ» round-trip; rejects spaces/control chars.
+ */
 export function normalizeResourceId(value: unknown): string {
   if (value == null || value === '') return '';
   if (typeof value !== 'string') throw badRequest('RESOURCE_INVALID', 'معرّف المورد غير صالح');
   const id = value.trim().slice(0, 64);
-  if (id && !/^[A-Za-z0-9._:\-]+$/.test(id)) throw badRequest('RESOURCE_INVALID', 'معرّف المورد غير صالح');
+  // Letters (any script), numbers, and a small set of separators — same rule for save and book.
+  if (id && !/^[\p{L}\p{N}._:\-]+$/u.test(id)) {
+    throw badRequest('RESOURCE_INVALID', 'معرّف المورد غير صالح. استخدمي حروفًا أو أرقامًا دون مسافات');
+  }
   return id;
+}
+
+/** Min capacity declared for each non-empty resourceId across a partner's windows. */
+export function partnerResourceCapacities(windowsLists: ReadonlyArray<ReadonlyArray<AvailabilityWindow>>): Map<string, number> {
+  const caps = new Map<string, number>();
+  for (const windows of windowsLists) {
+    for (const w of windows) {
+      if (!w.resourceId) continue;
+      const prev = caps.get(w.resourceId);
+      caps.set(w.resourceId, prev == null ? w.capacity : Math.min(prev, w.capacity));
+    }
+  }
+  return caps;
+}
+
+/** Apply partner-wide min capacity to service windows (legacy empty resourceId unchanged). */
+export function withPartnerResourceCaps(
+  windows: AvailabilityWindow[],
+  partnerCaps: ReadonlyMap<string, number>,
+): AvailabilityWindow[] {
+  return windows.map((w) => {
+    if (!w.resourceId) return w;
+    const cap = partnerCaps.get(w.resourceId);
+    if (cap == null) return w;
+    return cap === w.capacity ? w : { ...w, capacity: cap };
+  });
+}
+
+/** Same resourceId must not declare differing capacities (within one payload or across services). */
+export function assertResourceCapacitiesConsistent(
+  windows: AvailabilityWindow[],
+  otherWindows: ReadonlyArray<AvailabilityWindow> = [],
+): void {
+  const seen = new Map<string, number>();
+  for (const w of [...windows, ...otherWindows]) {
+    if (!w.resourceId) continue;
+    const prev = seen.get(w.resourceId);
+    if (prev != null && prev !== w.capacity) {
+      throw badRequest(
+        'RESOURCE_CAPACITY_CONFLICT',
+        `سعة المورد «${w.resourceId}» غير متسقة (${prev} مقابل ${w.capacity}). وحّدي السعة لكل موارد الجهة قبل الحفظ`,
+        { resourceId: w.resourceId, capacities: [prev, w.capacity] },
+      );
+    }
+    seen.set(w.resourceId, w.capacity);
+  }
 }
 
 function text(value: unknown, field: string, min: number, max: number, code: string, messageAr: string): string {
@@ -554,8 +607,12 @@ export function parseAvailability(json: unknown): AvailabilityWindow[] {
   for (const raw of json) {
     if (!isRecord(raw)) continue;
     const { weekday, startMin, endMin, capacity } = raw;
-    const resourceId =
-      typeof raw.resourceId === 'string' && raw.resourceId.trim() ? raw.resourceId.trim().slice(0, 64) : '';
+    let resourceId = '';
+    try {
+      resourceId = normalizeResourceId(raw.resourceId);
+    } catch {
+      continue; // invalid id skipped at parse; writers must validate via normalizeResourceId first
+    }
     if (
       typeof weekday === 'number' && Number.isInteger(weekday) && weekday >= 0 && weekday <= 6 &&
       typeof startMin === 'number' && Number.isInteger(startMin) && startMin >= 0 && startMin < 1440 &&

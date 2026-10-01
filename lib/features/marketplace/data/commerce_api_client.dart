@@ -35,6 +35,7 @@ class CommerceApiException implements Exception {
   bool get isDeliveryFeeUnknown => code == deliveryFeeUnknown;
   bool get isQuoteStale => code == 'QUOTE_STALE';
   bool get isIdempotencyConflict => code == 'IDEMPOTENCY_CONFLICT';
+  bool get isIdempotencyAmbiguous => code == 'IDEMPOTENCY_AMBIGUOUS';
 
   @override
   String toString() => 'CommerceApiException($code, $status)';

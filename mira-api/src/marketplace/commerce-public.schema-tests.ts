@@ -46,4 +46,24 @@ assert.deepEqual(normalizeProductCommerce({ purchaseMode: 'internal_cod', stockQ
 assert.equal(normalizeProductCommerce({ optionsJson: [] }, null, 100).optionsJson, null);
 assert.deepEqual(normalizeProductCommerce({}, null, 0), {});
 
+// MC-FIX-04/05: preserve variant identity fields; clearing options clears variants; bad links rejected.
+const sizeGroup = [{ id: 'size', labelAr: 'المقاس', values: [{ id: 'm', labelAr: 'M' }, { id: 's', labelAr: 'S' }] }];
+const skuM = [{ id: 'sku-M', selections: { size: 'm' }, priceHalalas: 9900, available: false }];
+const saved = normalizeProductCommerce({ optionsJson: sizeGroup, variantsJson: skuM }, null, 6400);
+assert.deepEqual(saved.variantsJson, skuM);
+assert.equal((saved.variantsJson as typeof skuM)[0].id, 'sku-M');
+assert.equal((saved.variantsJson as typeof skuM)[0].priceHalalas, 9900);
+assert.equal((saved.variantsJson as typeof skuM)[0].available, false);
+const cleared = normalizeProductCommerce({ optionsJson: null }, null, 6400);
+assert.equal(cleared.optionsJson, null);
+assert.equal(cleared.variantsJson, null);
+bad(() => normalizeProductCommerce({ optionsJson: sizeGroup, variantsJson: [{ id: 'sku-M', selections: { size: 'xl' }, priceHalalas: 1 }] }, null, 6400));
+bad(() => normalizeProductCommerce({
+  optionsJson: sizeGroup,
+  variantsJson: [
+    { id: 'sku-M', selections: { size: 'm' } },
+    { id: 'sku-M', selections: { size: 's' } },
+  ],
+}, null, 6400));
+
 console.log('commerce-public schema tests passed');

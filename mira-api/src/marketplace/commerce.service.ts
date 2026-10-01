@@ -36,6 +36,7 @@ import {
   normalizeResourceId,
   notFound,
   orderRequestFingerprint,
+  partnerResourceCapacities,
   parseAvailability,
   parseContact,
   parseDelivery,
@@ -44,6 +45,7 @@ import {
   releasesStock,
   resolveSelection,
   unprocessable,
+  withPartnerResourceCaps,
 } from './commerce.types';
 
 /** Who is acting. `scope` limits which rows they can see or change. */
@@ -388,16 +390,46 @@ export class CommerceService {
     return lines;
   }
 
-  private async pricedCart(cart: { partnerId: string | null; items: CartItemRow[] } | null, db: Tx | PrismaService = this.prisma) {
+  private async pricedCart(
+    cart: { partnerId: string | null; items: CartItemRow[] } | null,
+    db: Tx | PrismaService = this.prisma,
+    opts: { lockProducts?: boolean } = {},
+  ) {
     const items = cart?.items ?? [];
-    const ids = [...new Set(items.map((i) => i.productId))];
+    const ids = [...new Set(items.map((i) => i.productId))].sort();
     const products = new Map<string, ProductWithPartner>();
     if (ids.length > 0) {
+      if (opts.lockProducts) {
+        // Stable lock order prevents deadlocks with concurrent merchant edits.
+        for (const id of ids) {
+          await db.$queryRaw`SELECT id FROM products WHERE id = ${id} FOR UPDATE`;
+        }
+      }
       const rows = await db.product.findMany({
         where: { id: { in: ids }, ...PURCHASABLE_PRODUCT },
         include: { partner: true },
       });
       for (const row of rows) products.set(row.id, row);
+      // Products that vanished / unpublished still get PRODUCT_UNAVAILABLE via missing map entries.
+      // Locked rows that flipped to external stay in the map only if still purchasable filter matches —
+      // re-read without filter for locked path so purchaseMode changes surface as EXTERNAL_*.
+      if (opts.lockProducts) {
+        const locked = await db.product.findMany({
+          where: { id: { in: ids } },
+          include: { partner: true },
+        });
+        products.clear();
+        for (const row of locked) {
+          if (
+            row.active &&
+            row.contentStatus === 'published' &&
+            row.catalogSource === 'catalog' &&
+            row.partner.status === 'active'
+          ) {
+            products.set(row.id, row);
+          }
+        }
+      }
     }
     const partnerId = cart?.partnerId ?? [...products.values()][0]?.partnerId ?? null;
     const lines = this.priceLines(items, products, partnerId);
@@ -465,16 +497,83 @@ export class CommerceService {
     existingFingerprint: string | null | undefined,
     nextFingerprint: string,
     kind: 'order' | 'booking',
+    reconstructedFingerprint?: string | null,
   ): void {
-    if (existingFingerprint && existingFingerprint !== nextFingerprint) {
+    const baseline = existingFingerprint || reconstructedFingerprint || null;
+    if (!baseline) {
+      throw conflict(
+        'IDEMPOTENCY_AMBIGUOUS',
+        kind === 'order'
+          ? 'يوجد طلب سابق بنفس المفتاح دون بصمة مطابقة موثوقة. افتحي الطلب من قائمة طلباتك بدل إنشاء طلب جديد'
+          : 'يوجد حجز سابق بنفس المفتاح دون بصمة مطابقة موثوقة. راجعي حجوزاتك قبل إعادة المحاولة',
+        { existingFingerprint: false },
+      );
+    }
+    if (baseline !== nextFingerprint) {
       throw conflict(
         'IDEMPOTENCY_CONFLICT',
         kind === 'order'
           ? 'مفتاح منع التكرار استُخدم لطلب مختلف. أكملي الطلب السابق أو استخدمي مفتاحًا جديدًا بعد تغيير العنوان أو السلة'
           : 'مفتاح منع التكرار استُخدم لحجز مختلف. لا يمكن إعادة استخدامه مع خدمة أو موعد أو مورد مختلف',
-        { existingFingerprint: true },
+        { existingFingerprint: Boolean(existingFingerprint) },
       );
     }
+  }
+
+  /** Rebuild the confirmation+delivery fingerprint from a stored order (never from live catalog). */
+  private orderFingerprintFromRow(row: {
+    partnerId: string;
+    subtotalHalalas: number;
+    deliveryFeeHalalas: number | null;
+    totalHalalas: number;
+    contactName: string;
+    contactPhone: string;
+    addressLine: string;
+    city: string;
+    notes: string | null;
+    items: Array<{ productId: string; variantKey: string; quantity: number; unitPriceHalalas: number }>;
+  }): string | null {
+    if (row.deliveryFeeHalalas == null || !row.items?.length) return null;
+    const confirmationFingerprint = cartConfirmationFingerprint({
+      partnerId: row.partnerId,
+      lines: row.items.map((i) => ({
+        productId: i.productId,
+        variantKey: i.variantKey,
+        quantity: i.quantity,
+        unitPriceHalalas: i.unitPriceHalalas,
+      })),
+      deliveryFeeHalalas: row.deliveryFeeHalalas,
+      subtotalHalalas: row.subtotalHalalas,
+      totalHalalas: row.totalHalalas,
+    });
+    return orderRequestFingerprint(
+      {
+        contactName: row.contactName,
+        contactPhone: row.contactPhone,
+        addressLine: row.addressLine,
+        city: row.city,
+        notes: row.notes,
+      },
+      confirmationFingerprint,
+    );
+  }
+
+  private bookingFingerprintFromRow(row: {
+    serviceId: string;
+    startsAt: Date;
+    resourceId: string;
+    contactName: string;
+    contactPhone: string;
+    notes: string | null;
+  }): string {
+    return bookingRequestFingerprint({
+      serviceId: row.serviceId,
+      startsAt: row.startsAt.toISOString(),
+      resourceId: row.resourceId || '',
+      contactName: row.contactName,
+      contactPhone: row.contactPhone,
+      notes: row.notes,
+    });
   }
 
   // =========================================================================
@@ -507,16 +606,19 @@ export class CommerceService {
             include: ORDER_INCLUDE,
           });
           if (again) {
-            // Replay uses the original attempt fingerprint — not the (possibly empty) current cart.
-            this.assertIdempotentMatch(again.requestFingerprint, orderRequestFingerprint(delivery, offeredFingerprint), 'order');
+            const nextFp = orderRequestFingerprint(delivery, offeredFingerprint);
+            const reconstructed = again.requestFingerprint
+              ? null
+              : this.orderFingerprintFromRow(again);
+            this.assertIdempotentMatch(again.requestFingerprint, nextFp, 'order', reconstructed);
             return { row: again, replay: true };
           }
 
           const items = await tx.commerceCartItem.findMany({ where: { cartId: cart.id }, orderBy: { createdAt: 'asc' } });
           if (items.length === 0) throw conflict('CART_EMPTY', 'السلة فارغة');
 
-          // Re-read price/stock inside the transaction. Cart prices are never trusted.
-          const priced = await this.pricedCart({ partnerId: cart.partnerId, items }, tx);
+          // Lock products then re-read purchase mode / price / variants under the same transaction.
+          const priced = await this.pricedCart({ partnerId: cart.partnerId, items }, tx, { lockProducts: true });
           const firstIssue = priced.issues[0];
           if (firstIssue) {
             throw commerceError(
@@ -641,7 +743,9 @@ export class CommerceService {
         if (target?.includes('idempotency_key')) {
           const existing = await this.findOrderByKey(actor.userId, idempotencyKey);
           if (existing) {
-            this.assertIdempotentMatch(existing.requestFingerprint, orderRequestFingerprint(delivery, offeredFingerprint), 'order');
+            const nextFp = orderRequestFingerprint(delivery, offeredFingerprint);
+            const reconstructed = existing.requestFingerprint ? null : this.orderFingerprintFromRow(existing);
+            this.assertIdempotentMatch(existing.requestFingerprint, nextFp, 'order', reconstructed);
             return { order: this.orderDto(existing, 'customer'), idempotentReplay: true };
           }
         }
@@ -1035,7 +1139,8 @@ export class CommerceService {
           include: BOOKING_INCLUDE,
         });
         if (again) {
-          this.assertIdempotentMatch(again.requestFingerprint, requestFingerprint, 'booking');
+          const reconstructed = again.requestFingerprint ? null : this.bookingFingerprintFromRow(again);
+          this.assertIdempotentMatch(again.requestFingerprint, requestFingerprint, 'booking', reconstructed);
           return { row: again, replay: true };
         }
 
@@ -1057,13 +1162,14 @@ export class CommerceService {
           throw unprocessable('SERVICE_NOT_BOOKABLE', 'بيانات الخدمة غير مكتملة للحجز');
         }
 
-        const windows = parseAvailability(service.availabilityJson);
+        const baseWindows = parseAvailability(service.availabilityJson);
         if (resourceId) {
-          const known = new Set(windows.map((w) => w.resourceId));
+          const known = new Set(baseWindows.map((w) => w.resourceId));
           if (!known.has(resourceId)) {
             throw unprocessable('RESOURCE_NOT_AVAILABLE', 'هذا المورد غير مرتبط بجدول توفر هذه الخدمة');
           }
         }
+        const windows = await this.windowsWithPartnerCaps(tx, service.partnerId, baseWindows);
 
         const lockedSlot = checkSlot(startsAt, service.durationMin, windows, new Date(), resourceId);
         if (!lockedSlot.ok) throw this.slotError(lockedSlot.code);
@@ -1118,7 +1224,8 @@ export class CommerceService {
       if (p2002Target(error)?.includes('idempotency_key')) {
         const existing = await this.findBookingByKey(actor.userId, idempotencyKey);
         if (existing) {
-          this.assertIdempotentMatch(existing.requestFingerprint, requestFingerprint, 'booking');
+          const reconstructed = existing.requestFingerprint ? null : this.bookingFingerprintFromRow(existing);
+          this.assertIdempotentMatch(existing.requestFingerprint, requestFingerprint, 'booking', reconstructed);
           return { booking: this.bookingDto(existing), idempotentReplay: true };
         }
       }
@@ -1145,6 +1252,22 @@ export class CommerceService {
     });
   }
 
+  /** Apply partner-wide min capacity for shared resources (legacy empty resourceId stays service-local). */
+  private async windowsWithPartnerCaps(
+    db: Tx | PrismaService,
+    partnerId: string,
+    serviceWindows: ReturnType<typeof parseAvailability>,
+  ) {
+    const resourceIds = [...new Set(serviceWindows.map((w) => w.resourceId).filter(Boolean))];
+    if (resourceIds.length === 0) return serviceWindows;
+    const siblings = await db.service.findMany({
+      where: { partnerId, active: true },
+      select: { availabilityJson: true },
+    });
+    const caps = partnerResourceCapacities(siblings.map((s) => parseAvailability(s.availabilityJson)));
+    return withPartnerResourceCaps(serviceWindows, caps);
+  }
+
   /** Slots for one local (Asia/Riyadh) day. Partner callers may only read their own services. */
   async serviceAvailability(serviceId: string, date: unknown, partnerId?: string) {
     if (typeof date !== 'string' || !localInstant(date, 0)) throw badRequest('DATE_INVALID', 'التاريخ غير صالح (YYYY-MM-DD)');
@@ -1154,7 +1277,7 @@ export class CommerceService {
         : { id: serviceId, active: true, contentStatus: 'published', catalogSource: 'catalog', bookingEnabled: true, partner: { status: 'active' } },
     });
     if (!service) throw notFound('SERVICE_NOT_FOUND', 'الخدمة غير متاحة');
-    const windows = parseAvailability(service.availabilityJson);
+    const windows = await this.windowsWithPartnerCaps(this.prisma, service.partnerId, parseAvailability(service.availabilityJson));
     const dayStart = localInstant(date, 0)!;
     const dayEnd = new Date(dayStart.getTime() + 86_400_000);
     const resourceIds = [...new Set(windows.map((w) => w.resourceId))];

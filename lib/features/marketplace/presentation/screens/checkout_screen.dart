@@ -138,13 +138,23 @@ class _CheckoutScreenState extends State<CheckoutScreen> {
     } on CommerceApiException catch (error) {
       if (!mounted) return;
       setState(() => _submitError = error.messageAr);
+      if (error.isIdempotencyAmbiguous || error.isIdempotencyConflict) {
+        // Do not mint a new key or start a second create — send the customer to their orders.
+        _idempotencyKey = null;
+        _keySignature = null;
+        await Navigator.of(context).pushReplacementNamed(AppRoutes.myOrders);
+        return;
+      }
       if (error.isQuoteStale ||
           error.isDeliveryFeeUnknown ||
           error.code == 'OUT_OF_STOCK' ||
           error.code == 'CART_EMPTY' ||
           error.code == 'PRODUCT_UNAVAILABLE') {
+        _idempotencyKey = null;
+        _keySignature = null;
         _load();
       }
+      // Network / unknown: keep idempotency key so a retry cannot create a second order blindly.
     } catch (error) {
       if (mounted) setState(() => _submitError = commerceErrorText(error));
     } finally {

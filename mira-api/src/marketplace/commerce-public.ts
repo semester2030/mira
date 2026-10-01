@@ -1,5 +1,54 @@
 import { BadRequestException } from '@nestjs/common';
-import { PURCHASE_MODE_EXTERNAL, PURCHASE_MODE_INTERNAL_COD, parseAvailability, parseOptionGroups, parseVariants } from './commerce.types';
+import {
+  PURCHASE_MODE_EXTERNAL,
+  PURCHASE_MODE_INTERNAL_COD,
+  parseAvailability,
+  parseOptionGroups,
+  parseVariants,
+} from './commerce.types';
+
+function assertVariantIdsUnique(variantsJson: unknown[]): void {
+  const parsed = parseVariants(variantsJson);
+  const ids = new Set<string>();
+  const selectionKeys = new Set<string>();
+  for (const variant of parsed) {
+    if (ids.has(variant.id)) throw new BadRequestException(`معرّف التركيبة مكرر: ${variant.id}`);
+    ids.add(variant.id);
+    const key = Object.keys(variant.selections)
+      .sort()
+      .map((g) => `${g}=${variant.selections[g]}`)
+      .join('|');
+    if (selectionKeys.has(key)) throw new BadRequestException('تركيبتان بنفس الاختيارات');
+    selectionKeys.add(key);
+  }
+}
+
+/** Variant selections must point at known group/value ids; ids and selection maps must be unique. */
+export function assertVariantsMatchOptions(optionsJson: unknown[] | null, variantsJson: unknown[]): void {
+  assertVariantIdsUnique(variantsJson);
+  if (optionsJson == null || optionsJson.length === 0) {
+    if (variantsJson.length > 0) throw new BadRequestException('لا يمكن الإبقاء على تركيبات بعد مسح الخيارات');
+    return;
+  }
+  const groups = parseOptionGroups(optionsJson);
+  if (groups.length === 0 && variantsJson.length > 0) {
+    throw new BadRequestException('التركيبات تشير إلى خيارات غير صالحة');
+  }
+  const valueIds = new Map(groups.map((g) => [g.id, new Set(g.values.map((v) => v.id))] as const));
+  for (const variant of parseVariants(variantsJson)) {
+    for (const [groupId, valueId] of Object.entries(variant.selections)) {
+      const allowed = valueIds.get(groupId);
+      if (!allowed || !allowed.has(valueId)) {
+        throw new BadRequestException(`التركيبة ${variant.id} تشير إلى خيار غير موجود`);
+      }
+    }
+    for (const group of groups) {
+      if (!(group.id in variant.selections)) {
+        throw new BadRequestException(`التركيبة ${variant.id} ناقصة اختيار «${group.labelAr}»`);
+      }
+    }
+  }
+}
 
 /**
  * Public (customer-visible) commerce fields for catalog rows, and merchant input checks.
@@ -113,6 +162,14 @@ export function normalizeProductCommerce(
       throw new BadRequestException('نسخ المنتج غير صالحة: لكل نسخة معرّف واختيارات');
     }
     out.variantsJson = input.variantsJson && input.variantsJson.length > 0 ? input.variantsJson : null;
+  }
+  if (out.optionsJson !== undefined && out.variantsJson !== undefined) {
+    assertVariantsMatchOptions(out.optionsJson, out.variantsJson ?? []);
+  } else if (out.variantsJson !== undefined && out.variantsJson !== null) {
+    assertVariantIdsUnique(out.variantsJson);
+  } else if (out.optionsJson === null && out.variantsJson === undefined) {
+    // Clearing options without an explicit variants field: force variants clear on the write path.
+    out.variantsJson = null;
   }
 
   const mode = out.purchaseMode ?? current?.purchaseMode ?? PURCHASE_MODE_EXTERNAL;

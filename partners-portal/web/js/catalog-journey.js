@@ -300,9 +300,10 @@
         cap.onchange = () => { availState[weekday].capacity = cap.value; };
         const res = document.createElement('input');
         res.type = 'text';
-        res.placeholder = 'مورد/فرع (اختياري)';
+        res.placeholder = 'معرّف المورد (اختياري، مثل غرفة-أ)';
         res.value = availState[weekday].resourceId;
         res.onchange = () => { availState[weekday].resourceId = res.value.trim(); };
+        res.title = 'نفس المعرّف يُستخدم في التوفر والحجز. حروف عربية مسموحة دون مسافات.';
         row.append(on, document.createTextNode(' ' + name + ' '), start, document.createTextNode(' — '), end, document.createTextNode(' سعة '), cap, res);
         availBox.appendChild(row);
       });
@@ -723,32 +724,88 @@
       return { groups: [], traits: [] };
     }
 
-    /** Hydrate easy UI from server options (draft pending review wins over live published). */
+    /**
+     * Hydrate easy UI from server options.
+     * draftOptionsSet/draftVariantsSet distinguish: no change / new value / explicit clear (null).
+     * Never resurrect published options when a clear draft is pending.
+     */
     function optionsStateFromServer(row) {
-      const empty = { selected: {}, customs: {}, variantsText: '', traits: {} };
+      const empty = {
+        selected: {},
+        customs: {},
+        traits: {},
+        variants: [],
+        valueIds: {},
+        clearingOptions: false,
+        clearingVariants: false,
+        invalidVariantNote: '',
+      };
       if (!row) return empty;
-      const groups = Array.isArray(row.draftOptionsJson) && row.draftOptionsJson.length
-        ? row.draftOptionsJson
-        : (Array.isArray(row.optionsJson) ? row.optionsJson : []);
-      const variants = Array.isArray(row.draftVariantsJson) && row.draftVariantsJson.length
-        ? row.draftVariantsJson
-        : (Array.isArray(row.variantsJson) ? row.variantsJson : []);
+
+      let groups = [];
+      let clearingOptions = false;
+      if (row.draftOptionsSet) {
+        if (row.draftOptionsJson == null) clearingOptions = true;
+        else groups = Array.isArray(row.draftOptionsJson) ? row.draftOptionsJson : [];
+      } else if (Array.isArray(row.optionsJson)) {
+        groups = row.optionsJson;
+      }
+
+      let variants = [];
+      let clearingVariants = false;
+      if (row.draftVariantsSet) {
+        if (row.draftVariantsJson == null) clearingVariants = true;
+        else variants = Array.isArray(row.draftVariantsJson) ? row.draftVariantsJson : [];
+      } else if (Array.isArray(row.variantsJson)) {
+        variants = row.variantsJson;
+      }
+      // Clear options implies clear variants in the UI.
+      if (clearingOptions) {
+        clearingVariants = true;
+        variants = [];
+        groups = [];
+      }
+
       const selected = {};
       const customs = {};
+      const valueIds = {};
       groups.forEach((group) => {
         if (!group || !group.id) return;
         selected[group.id] = (group.values || []).map((v) => v.labelAr || v.id).filter(Boolean);
         customs[group.id] = '';
+        valueIds[group.id] = {};
+        (group.values || []).forEach((v) => {
+          if (v && v.labelAr) valueIds[group.id][v.labelAr] = v.id;
+        });
       });
-      const variantsText = variants.map((variant) => {
-        if (!variant || !variant.selections) return '';
-        return groups.map((g) => {
+
+      const variantRows = variants.map((variant) => {
+        if (!variant || !variant.selections) return null;
+        const labels = {};
+        groups.forEach((g) => {
           const valueId = variant.selections[g.id];
           const value = (g.values || []).find((v) => v.id === valueId);
-          return value ? value.labelAr : valueId;
-        }).join('|');
-      }).filter(Boolean).join('\n');
-      return { selected: selected, customs: customs, variantsText: variantsText, traits: {} };
+          labels[g.id] = value ? value.labelAr : valueId;
+        });
+        return {
+          id: variant.id,
+          selections: Object.assign({}, variant.selections),
+          labels: labels,
+          priceHalalas: typeof variant.priceHalalas === 'number' ? variant.priceHalalas : null,
+          available: variant.available !== false,
+        };
+      }).filter(Boolean);
+
+      return {
+        selected: selected,
+        customs: customs,
+        traits: {},
+        variants: variantRows,
+        valueIds: valueIds,
+        clearingOptions: clearingOptions,
+        clearingVariants: clearingVariants,
+        invalidVariantNote: '',
+      };
     }
 
     function saveOptionsDraft() {
@@ -789,6 +846,7 @@
             const at = list.indexOf(label);
             if (input.checked && at < 0) list.push(label);
             if (!input.checked && at >= 0) list.splice(at, 1);
+            optionsState.clearingOptions = false;
             saveOptionsDraft();
             paintOptionsPreview();
           };
@@ -817,13 +875,147 @@
         });
         optionsBody.appendChild(traitBox);
       }
-      const variants = field(optionsBody, 'التركيبات المتاحة (سطر لكل تركيبة، مثال: وردي|M)', 'variantsText', optionsState.variantsText || '', 'textarea');
-      variants.placeholder = 'وردي|M\nأسود|S\nأسود|L';
-      variants.oninput = () => {
-        optionsState.variantsText = variants.value;
+      if (optionsState.clearingOptions) {
+        const banner = document.createElement('p');
+        banner.className = 'field-error';
+        banner.textContent = 'مسودة قيد المراجعة تطلب مسح الخيارات والتركيبات المنشورة. الحفظ دون إضافة خيارات يبقي طلب المسح.';
+        optionsBody.appendChild(banner);
+        const restore = document.createElement('button');
+        restore.type = 'button';
+        restore.className = 'btn btn-ghost btn-sm';
+        restore.textContent = 'إلغاء طلب المسح والعودة للمنشور';
+        restore.onclick = () => {
+          optionsState.clearingOptions = false;
+          optionsState.clearingVariants = false;
+          if (editing && Array.isArray(item.optionsJson)) {
+            Object.assign(optionsState, optionsStateFromServer(Object.assign({}, item, {
+              draftOptionsSet: false,
+              draftVariantsSet: false,
+              draftOptionsJson: null,
+              draftVariantsJson: null,
+            })));
+          }
+          paintOptions();
+        };
+        optionsBody.appendChild(restore);
+      }
+
+      text(optionsBody, 'التركيبات (لا تُنشأ تلقائيًا من كل الاحتمالات)', 'h4');
+      const variantList = document.createElement('div');
+      variantList.className = 'variant-list';
+      optionsState.variants.forEach((variant, index) => {
+        const row = document.createElement('div');
+        row.className = 'check-row';
+        const label = document.createElement('span');
+        label.textContent = Object.values(variant.labels || {}).join(' · ') + ' · id=' + variant.id;
+        const price = document.createElement('input');
+        price.type = 'text';
+        price.placeholder = 'سعر خاص (ريال)';
+        price.style.width = '6rem';
+        price.value = variant.priceHalalas == null ? '' : String(variant.priceHalalas / 100);
+        price.oninput = () => {
+          const h = riyalsToHalalas(price.value);
+          variant.priceHalalas = h;
+          saveOptionsDraft();
+          paintOptionsPreview();
+        };
+        const avail = document.createElement('label');
+        const availInput = document.createElement('input');
+        availInput.type = 'checkbox';
+        availInput.checked = variant.available !== false;
+        availInput.onchange = () => {
+          variant.available = availInput.checked;
+          saveOptionsDraft();
+          paintOptionsPreview();
+        };
+        avail.append(availInput, document.createTextNode(' متاحة'));
+        const remove = document.createElement('button');
+        remove.type = 'button';
+        remove.className = 'btn btn-ghost btn-sm';
+        remove.textContent = 'حذف';
+        remove.onclick = () => {
+          optionsState.variants.splice(index, 1);
+          optionsState.clearingOptions = false;
+          saveOptionsDraft();
+          paintOptions();
+        };
+        row.append(label, price, avail, remove);
+        variantList.appendChild(row);
+      });
+      optionsBody.appendChild(variantList);
+
+      const addBox = document.createElement('div');
+      addBox.className = 'form-section';
+      text(addBox, 'إضافة تركيبة بالاختيار من القيم المحددة (مثال سريع: وردي|M)');
+      const addLine = field(addBox, 'قيم التركيبة بالترتيب (افصلي بـ |)', 'variantAddLine', '', 'text');
+      const addPrice = field(addBox, 'سعر التركيبة بالريال (اختياري)', 'variantAddPrice', '', 'text');
+      const addAvail = document.createElement('label');
+      addAvail.className = 'check-row';
+      const addAvailInput = document.createElement('input');
+      addAvailInput.type = 'checkbox';
+      addAvailInput.checked = true;
+      addAvail.append(addAvailInput, document.createTextNode(' متاحة للشراء'));
+      addBox.appendChild(addAvail);
+      const addBtn = document.createElement('button');
+      addBtn.type = 'button';
+      addBtn.className = 'btn btn-ghost';
+      addBtn.textContent = 'إضافة التركيبة';
+      addBtn.onclick = () => {
+        const builtGroups = buildOptionGroups();
+        const parts = String(addLine.value || '').split('|').map((p) => p.trim()).filter(Boolean);
+        optionsState.invalidVariantNote = '';
+        if (!builtGroups.length) {
+          optionsState.invalidVariantNote = 'حددي قيم الخيارات قبل إضافة تركيبة.';
+          paintOptionsPreview();
+          return;
+        }
+        if (parts.length !== builtGroups.length) {
+          optionsState.invalidVariantNote = 'عدد القيم لا يطابق مجموعات الخيارات (' + builtGroups.map((g) => g.labelAr).join('، ') + ').';
+          paintOptionsPreview();
+          return;
+        }
+        const selections = {};
+        const labels = {};
+        for (let i = 0; i < builtGroups.length; i += 1) {
+          const group = builtGroups[i];
+          const value = group.values.find((v) => v.labelAr === parts[i]);
+          if (!value) {
+            optionsState.invalidVariantNote = 'القيمة «' + parts[i] + '» غير محددة في «' + group.labelAr + '».';
+            paintOptionsPreview();
+            return;
+          }
+          selections[group.id] = value.id;
+          labels[group.id] = value.labelAr;
+        }
+        const dup = optionsState.variants.some((v) => {
+          return builtGroups.every((g) => v.selections[g.id] === selections[g.id]);
+        });
+        if (dup) {
+          optionsState.invalidVariantNote = 'هذه التركيبة موجودة مسبقًا.';
+          paintOptionsPreview();
+          return;
+        }
+        const priceH = addPrice.value.trim() === '' ? null : riyalsToHalalas(addPrice.value);
+        if (addPrice.value.trim() !== '' && priceH == null) {
+          optionsState.invalidVariantNote = 'سعر التركيبة غير صالح.';
+          paintOptionsPreview();
+          return;
+        }
+        optionsState.variants.push({
+          id: 'sku-' + Date.now().toString(36) + '-' + Math.random().toString(36).slice(2, 6),
+          selections: selections,
+          labels: labels,
+          priceHalalas: priceH,
+          available: addAvailInput.checked,
+        });
+        optionsState.clearingOptions = false;
+        optionsState.clearingVariants = false;
+        addLine.value = '';
         saveOptionsDraft();
-        paintOptionsPreview();
+        paintOptions();
       };
+      addBox.appendChild(addBtn);
+      optionsBody.appendChild(addBox);
       paintOptionsPreview();
     }
 
@@ -837,10 +1029,10 @@
       return base || ('v' + (index + 1));
     }
 
-    /** Structured options from the easy UI → backend optionsJson / variantsJson (not localStorage-only). */
-    function structuredOptionsPayload() {
+    function buildOptionGroups() {
       const preset = optionPresets(category.value);
       const groups = [];
+      if (!optionsState.valueIds) optionsState.valueIds = {};
       preset.groups.forEach((group) => {
         const labels = (optionsState.selected[group.id] || []).slice();
         String(optionsState.customs[group.id] || '')
@@ -851,41 +1043,80 @@
             if (labels.indexOf(part) < 0) labels.push(part);
           });
         if (!labels.length) return;
+        if (!optionsState.valueIds[group.id]) optionsState.valueIds[group.id] = {};
         groups.push({
           id: group.id,
           labelAr: group.label,
           kind: group.kind,
-          values: labels.map((label, index) => ({ id: slugValue(label, index), labelAr: label })),
+          values: labels.map((label, index) => {
+            const existing = optionsState.valueIds[group.id][label];
+            const id = existing || slugValue(label, index);
+            optionsState.valueIds[group.id][label] = id;
+            return { id: id, labelAr: label };
+          }),
         });
       });
+      return groups;
+    }
+
+    /** Structured options from the easy UI → backend optionsJson / variantsJson (not localStorage-only). */
+    function structuredOptionsPayload() {
+      if (optionsState.clearingOptions) {
+        return { optionsJson: null, variantsJson: null, clearing: true, error: null };
+      }
+      const groups = buildOptionGroups();
       const variants = [];
-      String(optionsState.variantsText || '')
-        .split('\n')
-        .map((line) => line.trim())
-        .filter(Boolean)
-        .forEach((line, index) => {
-          const parts = line.split('|').map((part) => part.trim()).filter(Boolean);
-          if (!parts.length || parts.length !== groups.length) return;
-          const selections = {};
-          let ok = true;
-          groups.forEach((group, gi) => {
-            const label = parts[gi];
-            const value = group.values.find((entry) => entry.labelAr === label);
-            if (!value) {
-              ok = false;
-              return;
-            }
-            selections[group.id] = value.id;
-          });
-          if (!ok) return;
-          variants.push({ id: 'var-' + (index + 1), selections: selections });
+      const errors = [];
+      optionsState.variants.forEach((variant) => {
+        if (!variant || !variant.id) {
+          errors.push('تركيبة بلا معرف ثابت.');
+          return;
+        }
+        const selections = {};
+        let ok = true;
+        groups.forEach((group) => {
+          const label = variant.labels && variant.labels[group.id];
+          const byId = variant.selections && variant.selections[group.id];
+          const value = group.values.find((entry) => entry.id === byId) ||
+            group.values.find((entry) => entry.labelAr === label);
+          if (!value) {
+            ok = false;
+            errors.push('التركيبة ' + variant.id + ' تشير إلى قيمة غير موجودة في «' + group.labelAr + '».');
+            return;
+          }
+          selections[group.id] = value.id;
+          if (!variant.labels) variant.labels = {};
+          variant.labels[group.id] = value.labelAr;
+          variant.selections = Object.assign({}, variant.selections, selections);
         });
-      return { optionsJson: groups, variantsJson: variants };
+        if (!ok) return;
+        if (Object.keys(selections).length !== groups.length) {
+          errors.push('التركيبة ' + variant.id + ' ناقصة اختيارات.');
+          return;
+        }
+        variants.push({
+          id: variant.id,
+          selections: selections,
+          priceHalalas: typeof variant.priceHalalas === 'number' ? variant.priceHalalas : null,
+          available: variant.available !== false,
+        });
+      });
+      return {
+        optionsJson: groups,
+        variantsJson: variants,
+        clearing: false,
+        error: errors[0] || null,
+      };
     }
 
     function paintOptionsPreview() {
       optionsPreview.replaceChildren();
       text(optionsPreview, 'معاينة الظهور في التفاصيل', 'h4');
+      if (optionsState.clearingOptions) {
+        text(optionsPreview, 'طلب مسح: ستُحذف الخيارات والتركيبات المنشورة بعد اعتماد الإدارة.');
+        if (editing && item.optionsJson) text(optionsPreview, 'المنشور الحالي ما زال ظاهرًا للعميلات حتى الاعتماد.');
+        return;
+      }
       const preset = optionPresets(category.value);
       preset.groups.forEach((group) => {
         const selected = (optionsState.selected[group.id] || []).slice();
@@ -904,16 +1135,28 @@
         });
         optionsPreview.appendChild(row);
       });
-      const lines = String(optionsState.variantsText || '').split('\n').map((line) => line.trim()).filter(Boolean);
-      if (lines.length) text(optionsPreview, 'التركيبات المسجّلة: ' + lines.join(' · '));
-      else text(optionsPreview, 'لا تُنشأ تركيبات تلقائيًا من حاصل ضرب الخيارات.');
+      if (optionsState.variants.length) {
+        text(
+          optionsPreview,
+          'التركيبات: ' + optionsState.variants.map((v) => {
+            const price = v.priceHalalas == null ? 'السعر الأساسي' : (v.priceHalalas / 100) + ' ر.س';
+            return Object.values(v.labels || {}).join('/') + ' (' + v.id + ', ' + price + (v.available === false ? ', غير متاحة' : '') + ')';
+          }).join(' · '),
+        );
+      } else {
+        text(optionsPreview, 'لا تُنشأ تركيبات تلقائيًا من حاصل ضرب الخيارات.');
+      }
+      if (optionsState.invalidVariantNote) text(optionsPreview, optionsState.invalidVariantNote);
       const built = structuredOptionsPayload();
-      text(
-        optionsPreview,
-        built.optionsJson.length
-          ? 'عند الحفظ تُرسل الخيارات إلى الخادم (' + built.optionsJson.length + ' مجموعة، ' + built.variantsJson.length + ' تركيبة).'
-          : 'لا خيارات منظمة للإرسال بعد.',
-      );
+      if (built.error) text(optionsPreview, built.error);
+      else {
+        text(
+          optionsPreview,
+          built.optionsJson && built.optionsJson.length
+            ? 'عند الحفظ تُرسل الخيارات إلى الخادم (' + built.optionsJson.length + ' مجموعة، ' + built.variantsJson.length + ' تركيبة) مع الحفاظ على المعرفات والأسعار.'
+            : 'لا خيارات منظمة للإرسال بعد.',
+        );
+      }
     }
 
     paintOptions();
@@ -1147,10 +1390,17 @@
         if (variants.value !== undefined) value.variantsJson = variants.value;
       } else {
         // Easy UI is the source of truth. Never let a stale JSON textarea override it.
-        if (built.optionsJson.length) value.optionsJson = built.optionsJson;
-        else if (editing && (item.draftOptionsSet || item.optionsJson)) value.optionsJson = null;
-        if (built.variantsJson.length) value.variantsJson = built.variantsJson;
-        else if (editing && (item.draftVariantsSet || item.variantsJson)) value.variantsJson = null;
+        if (built.error) return { error: { field: 'variantsJson', message: built.error } };
+        if (built.clearing) {
+          value.optionsJson = null;
+          value.variantsJson = null;
+        } else if (built.optionsJson && built.optionsJson.length) {
+          value.optionsJson = built.optionsJson;
+          value.variantsJson = built.variantsJson;
+        } else if (editing && (item.draftOptionsSet || item.optionsJson || optionsState.clearingOptions)) {
+          value.optionsJson = null;
+          value.variantsJson = null;
+        }
       }
 
       if (value.optionsJson === undefined) delete value.optionsJson;

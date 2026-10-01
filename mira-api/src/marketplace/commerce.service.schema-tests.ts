@@ -1,7 +1,7 @@
 import 'reflect-metadata';
 import assert from 'node:assert/strict';
 import { HttpException } from '@nestjs/common';
-import { PrismaClient } from '@prisma/client';
+import { Prisma, PrismaClient } from '@prisma/client';
 import { PrismaService } from '../prisma/prisma.service';
 import { CommerceActor, CommerceService, ADMIN_ACTOR, partnerActor } from './commerce.service';
 import { localInstant, localParts } from './commerce.types';
@@ -339,8 +339,14 @@ async function main() {
     const item1 = await prisma.commerceOrderItem.findFirstOrThrow({ where: { orderId: o1.id } });
     assert.equal(item1.stockState, 'released');
     // repeat after the fact: terminal -> no-op or conflict, never a second release
-    await commerce.transitionOrderFor(actorA, o1.id, { fulfillmentStatus: 'rejected' });
-    await failure(commerce.transitionOrderFor(actorA, o1.id, { fulfillmentStatus: 'cancelled' }), 409, 'TRANSITION_NOT_ALLOWED');
+    const o1Status = (await commerce.getOrder(actorA, o1.id)).fulfillmentStatus;
+    if (o1Status === 'rejected') {
+      await commerce.transitionOrderFor(actorA, o1.id, { fulfillmentStatus: 'rejected' }); // idempotent same-status
+      await failure(commerce.transitionOrderFor(actorA, o1.id, { fulfillmentStatus: 'cancelled' }), 409, 'TRANSITION_NOT_ALLOWED');
+    } else {
+      assert.equal(o1Status, 'cancelled');
+      await failure(commerce.transitionOrderFor(actorA, o1.id, { fulfillmentStatus: 'rejected' }), 409, 'TRANSITION_NOT_ALLOWED');
+    }
     assert.equal((await product(shelf.id)).reservedQty, 1);
     const o1Detail = await commerce.getOrder(actorA, o1.id);
     assert.equal(o1Detail.deliveryStatus, 'none');
@@ -803,6 +809,167 @@ async function main() {
       409,
       'BOOKING_SLOT_FULL',
     );
+
+    // =====================================================================
+    // MC-FIX RC2: Arabic resource id, partner capacity min, legacy idempotency,
+    // locked purchaseMode flip, draft clear flags migration semantics
+    // =====================================================================
+    const arabicWindows = [0, 1, 2, 3, 4, 5, 6].map((weekday) => ({
+      weekday,
+      startMin: 600,
+      endMin: 720,
+      capacity: 1,
+      resourceId: 'غرفة-أ',
+    }));
+    const arabicSvc = await prisma.service.create({
+      data: {
+        partnerId: clinic.id,
+        nameAr: 'غرفة عربية',
+        nameEn: `${run}-ar-room`,
+        durationMin: 60,
+        priceHalalas: 15000,
+        concernTags: [],
+        bookingEnabled: true,
+        availabilityJson: arabicWindows,
+      },
+    });
+    const arDay = localParts(new Date(Date.now() + 8 * 86_400_000)).dateKey;
+    const arAt = (m: number) => localInstant(arDay, m)!.toISOString();
+    const arAvail = await commerce.serviceAvailability(arabicSvc.id, arDay);
+    assert.ok(arAvail.slots.some((s) => s.resourceId === 'غرفة-أ' && s.available));
+    const arBook = await commerce.createBooking(alice, {
+      serviceId: arabicSvc.id,
+      startsAt: arAt(600),
+      resourceId: 'غرفة-أ',
+      contactName: 'سارة',
+      contactPhone: PHONE,
+      idempotencyKey: `${run}-ar-book`,
+    });
+    assert.equal(arBook.booking.resourceId, 'غرفة-أ');
+
+    // Conflicting capacities across services → partner min capacity (1) blocks second booking.
+    const conflictA = await prisma.service.create({
+      data: {
+        partnerId: clinic.id,
+        nameAr: 'سعة1',
+        nameEn: `${run}-cap1`,
+        durationMin: 60,
+        priceHalalas: 10000,
+        concernTags: [],
+        bookingEnabled: true,
+        availabilityJson: [0, 1, 2, 3, 4, 5, 6].map((weekday) => ({
+          weekday,
+          startMin: 600,
+          endMin: 720,
+          capacity: 1,
+          resourceId: 'staff-shared',
+        })),
+      },
+    });
+    const conflictB = await prisma.service.create({
+      data: {
+        partnerId: clinic.id,
+        nameAr: 'سعة2',
+        nameEn: `${run}-cap2`,
+        durationMin: 60,
+        priceHalalas: 11000,
+        concernTags: [],
+        bookingEnabled: true,
+        availabilityJson: [0, 1, 2, 3, 4, 5, 6].map((weekday) => ({
+          weekday,
+          startMin: 600,
+          endMin: 720,
+          capacity: 2,
+          resourceId: 'staff-shared',
+        })),
+      },
+    });
+    const capDay = localParts(new Date(Date.now() + 9 * 86_400_000)).dateKey;
+    const capAt = (m: number) => localInstant(capDay, m)!.toISOString();
+    await commerce.createBooking(alice, {
+      serviceId: conflictA.id,
+      startsAt: capAt(600),
+      resourceId: 'staff-shared',
+      contactName: 'سارة',
+      contactPhone: PHONE,
+      idempotencyKey: `${run}-cap-a`,
+    });
+    const bSlots = await commerce.serviceAvailability(conflictB.id, capDay);
+    const b600 = bSlots.slots.find((s) => s.startsAt === capAt(600) && s.resourceId === 'staff-shared');
+    assert.ok(b600);
+    assert.equal(b600!.capacity, 1, 'partner min capacity, not service B capacity 2');
+    assert.equal(b600!.available, false);
+    await failure(
+      commerce.createBooking(bob, {
+        serviceId: conflictB.id,
+        startsAt: capAt(600),
+        resourceId: 'staff-shared',
+        contactName: 'بوب',
+        contactPhone: PHONE,
+        idempotencyKey: `${run}-cap-b`,
+      }),
+      409,
+      'BOOKING_SLOT_FULL',
+    );
+
+    // Legacy order without requestFingerprint: reconstruct from stored lines/address.
+    await fill(alice, feeProd.id, 1);
+    const legacyQuote = await commerce.quote(alice);
+    const legacy = await commerce.createOrder(
+      alice,
+      delivery(`${run}-legacy-fp`, { confirmationFingerprint: legacyQuote.confirmationFingerprint }),
+    );
+    await prisma.commerceOrder.update({ where: { id: legacy.order.id }, data: { requestFingerprint: null } });
+    const legacyReplay = await commerce.createOrder(
+      alice,
+      delivery(`${run}-legacy-fp`, { confirmationFingerprint: legacyQuote.confirmationFingerprint }),
+    );
+    assert.equal(legacyReplay.idempotentReplay, true);
+    assert.equal(legacyReplay.order.id, legacy.order.id);
+    await failure(
+      commerce.createOrder(
+        alice,
+        delivery(`${run}-legacy-fp`, { confirmationFingerprint: legacyQuote.confirmationFingerprint, city: 'جدة' }),
+      ),
+      409,
+      'IDEMPOTENCY_CONFLICT',
+    );
+
+    // Locked createOrder sees purchaseMode flip to external (no COD order).
+    const flip = await mkProduct(pA.id, 'يتحول لخارجي', { stockQty: null, deliveryFeeHalalas: 500 });
+    await fill(bob, flip.id, 1);
+    const flipQuote = await commerce.quote(bob);
+    await prisma.product.update({ where: { id: flip.id }, data: { purchaseMode: 'external' } });
+    await failure(
+      commerce.createOrder(bob, delivery(`${run}-flip-ext`, { confirmationFingerprint: flipQuote.confirmationFingerprint })),
+      422,
+      'EXTERNAL_PRODUCT_NOT_PURCHASABLE',
+    );
+    assert.equal(await prisma.commerceOrder.count({ where: { userId: bob.userId, idempotencyKey: `${run}-flip-ext` } }), 0);
+    assert.equal((await commerce.getCart(bob)).items.length, 1);
+
+    // Draft clear flags: draftOptionsSet + null must not be treated as "no change" on approve path preview.
+    const clearProd = await mkProduct(pA.id, 'خيارات للمسح', {
+      optionsJson: [{ id: 'size', labelAr: 'المقاس', values: [{ id: 's', labelAr: 'S' }] }],
+      variantsJson: [{ id: 'sku-S', selections: { size: 's' }, priceHalalas: 6400, available: true }],
+    });
+    await prisma.product.update({
+      where: { id: clearProd.id },
+      data: {
+        draftOptionsSet: true,
+        draftOptionsJson: Prisma.DbNull,
+        draftVariantsSet: true,
+        draftVariantsJson: Prisma.DbNull,
+        contentStatus: 'published',
+        reviewStatus: 'pending_review',
+        reviewRevision: 1,
+        submittedRevision: 1,
+      },
+    });
+    const cleared = await prisma.product.findUniqueOrThrow({ where: { id: clearProd.id } });
+    assert.equal(cleared.draftOptionsSet, true);
+    assert.equal(cleared.draftOptionsJson, null);
+    assert.ok(cleared.optionsJson);
 
     console.log('commerce.service schema tests passed');
   } finally {

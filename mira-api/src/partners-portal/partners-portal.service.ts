@@ -9,7 +9,12 @@ import { ConfigService } from '@nestjs/config';
 import { Prisma } from '@prisma/client';
 import { randomBytes } from 'crypto';
 import { normalizeProductCommerce, ProductCommerceData } from '../marketplace/commerce-public';
-import { assertAvailabilityConsistent, parseAvailability } from '../marketplace/commerce.types';
+import {
+  assertAvailabilityConsistent,
+  assertResourceCapacitiesConsistent,
+  normalizeResourceId,
+  parseAvailability,
+} from '../marketplace/commerce.types';
 import { PrismaService } from '../prisma/prisma.service';
 import { ApplyPartnerDto } from './dto/apply-partner.dto';
 import { UpdateProductDto, UpdateServiceDto, UpsertProductDto, UpsertServiceDto } from './dto/catalog.dto';
@@ -456,6 +461,10 @@ export class PartnersPortalService {
     }
     const nameAr = dto.nameAr.trim();
 
+    const availabilityJson =
+      dto.availabilityJson !== undefined
+        ? await this.availabilityWrite(partnerId, null, dto.availabilityJson)
+        : undefined;
     return this.prisma.service.create({
       data: {
         partnerId,
@@ -468,9 +477,7 @@ export class PartnersPortalService {
         category: this.optionalCategory(dto.category, SERVICE_CATEGORIES),
         bookingEnabled: dto.bookingEnabled === true,
         payMode: 'pay_at_venue',
-        ...(dto.availabilityJson !== undefined
-          ? { availabilityJson: this.availabilityWrite(dto.availabilityJson) }
-          : {}),
+        ...(availabilityJson !== undefined ? { availabilityJson } : {}),
         active: false,
         contentStatus: 'draft',
         reviewStatus: 'draft',
@@ -525,18 +532,51 @@ export class PartnersPortalService {
       if (dto.bookingEnabled !== undefined) data.bookingEnabled = dto.bookingEnabled === true;
       if (dto.payMode !== undefined) data.payMode = dto.payMode === 'pay_at_venue' ? 'pay_at_venue' : current.payMode;
       if (dto.availabilityJson !== undefined) {
-        data.availabilityJson = this.availabilityWrite(dto.availabilityJson);
+        data.availabilityJson = await this.availabilityWrite(partnerId, serviceId, dto.availabilityJson, tx);
       }
       return tx.service.update({ where: { id: serviceId }, data });
     });
   }
 
-  /** Persist availability after rejecting overlapping windows for the same resource. */
-  private availabilityWrite(raw: unknown): Prisma.InputJsonValue | typeof Prisma.DbNull {
+  /** Persist availability after rejecting overlaps and partner-wide resource capacity conflicts. */
+  private async availabilityWrite(
+    partnerId: string,
+    serviceId: string | null,
+    raw: unknown,
+    db: { service: PrismaService['service'] } = this.prisma,
+  ): Promise<Prisma.InputJsonValue | typeof Prisma.DbNull> {
     if (raw == null) return Prisma.DbNull;
-    const windows = parseAvailability(raw);
-    assertAvailabilityConsistent(windows);
-    return windows as unknown as Prisma.InputJsonValue;
+    if (!Array.isArray(raw)) throw new BadRequestException('جدول التوفر غير صالح');
+    const windows = [];
+    for (const entry of raw) {
+      if (!entry || typeof entry !== 'object') throw new BadRequestException('فترة توفر غير صالحة');
+      const row = entry as Record<string, unknown>;
+      const resourceId = normalizeResourceId(row.resourceId);
+      const weekday = row.weekday;
+      const startMin = row.startMin;
+      const endMin = row.endMin;
+      const capacity = row.capacity;
+      if (
+        typeof weekday !== 'number' ||
+        typeof startMin !== 'number' ||
+        typeof endMin !== 'number' ||
+        typeof capacity !== 'number'
+      ) {
+        throw new BadRequestException('فترة توفر غير صالحة');
+      }
+      windows.push({ weekday, startMin, endMin, capacity, resourceId });
+    }
+    const parsed = parseAvailability(windows);
+    if (parsed.length !== windows.length) throw new BadRequestException('فترة توفر غير صالحة');
+    assertAvailabilityConsistent(parsed);
+    assertResourceCapacitiesConsistent(parsed);
+    const siblings = await db.service.findMany({
+      where: { partnerId, active: true, ...(serviceId ? { id: { not: serviceId } } : {}) },
+      select: { availabilityJson: true, nameAr: true },
+    });
+    const otherWindows = siblings.flatMap((s) => parseAvailability(s.availabilityJson));
+    assertResourceCapacitiesConsistent(parsed, otherWindows);
+    return parsed as unknown as Prisma.InputJsonValue;
   }
 
   async deleteService(partnerId: string, serviceId: string) {

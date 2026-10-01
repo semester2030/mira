@@ -9676,7 +9676,7 @@ window.MIRA_STUDY = {
           }
         ],
         "expectedAr": "أدلة اختبار شاملة، وحالة واضحة لكل مانع، وقرار جاهزية مبني على النتائج.",
-        "actualAr": "2026-10-01: نُشر commit 338c26d على mira-api (dep-dav20o5g1s2s73d7fqd0 LIVE). حزمة MIRA_COMMERCE_MC_FIX_338c26d.zip على سطح المكتب. MC-FIX-01…03 مختبرة محليًا. الإدارة الحية ورحلات الجهاز مفتوحة. 2026-10-01: بعد مراجعة 8ebbf54 (يحتاج تصحيحًا واستكمال أدلة) فُتحت بطاقات MC-FIX-01…09 على المرحلة الخامسة دون اعتماد المرحلة. الكود التصحيحي قيد التنفيذ فوق HEAD الحالي مع الحفاظ على أعمال المستخدم. 2026-09-27: رُفع commit 36b080cb3591b5cf15ded803e02a6fc03510cfd5 إلى origin/main. mira-api نُشر حيًا على Render بنفس الـSHA. التطبيق اشتغل على آيفون fayez بنمط debug وظهر اكتشفي بالعربية وRTL. الكتالوج المنشور أعاد 8 عناصر. وسائط العرض الظاهر فارغة. البنود الأربعة ما زالت مؤجلة.",
+        "actualAr": "2026-10-01: مراجعة مستقلة لـ MIRA_COMMERCE_MC_FIX_338c26d → يحتاج تصحيحًا. فُتحت جولة RC2 على بطاقات MC-FIX دون اعتماد المرحلة. 2026-10-01: نُشر commit 338c26d على mira-api (dep-dav20o5g1s2s73d7fqd0 LIVE). حزمة MIRA_COMMERCE_MC_FIX_338c26d.zip على سطح المكتب. MC-FIX-01…03 مختبرة محليًا. الإدارة الحية ورحلات الجهاز مفتوحة. 2026-10-01: بعد مراجعة 8ebbf54 (يحتاج تصحيحًا واستكمال أدلة) فُتحت بطاقات MC-FIX-01…09 على المرحلة الخامسة دون اعتماد المرحلة. الكود التصحيحي قيد التنفيذ فوق HEAD الحالي مع الحفاظ على أعمال المستخدم. 2026-09-27: رُفع commit 36b080cb3591b5cf15ded803e02a6fc03510cfd5 إلى origin/main. mira-api نُشر حيًا على Render بنفس الـSHA. التطبيق اشتغل على آيفون fayez بنمط debug وظهر اكتشفي بالعربية وRTL. الكتالوج المنشور أعاد 8 عناصر. وسائط العرض الظاهر فارغة. البنود الأربعة ما زالت مؤجلة.",
         "status": "قيد التنفيذ — نشر وتشغيل واختبار النسخة الحالية",
         "dependenciesAr": "اكتمال المراحل السابقة التي تدخل في قرار الجاهزية. تجهيز الإطلاق لا يعني النشر.",
         "notesAr": "سجل التصحيح التشغيلي: evidence/commerce-operational/MC_FIX_TRACKER.md و CORRECTION_DELIVERY.md. لا اعتماد ذاتي للمرحلة الخامسة. المستودع https://github.com/semester2030/mira الفرع main. خدمة mira-api srv-d85ngcfavr4c73d3rk6g والرابط https://mira-api-n4p3.onrender.com. النشر dep-dasamlrncjis73ebfd0g. بوابة الشركاء https://mira-partners-portal.onrender.com. لا توجد خدمة إدارة منشورة. CI Mira CI فشل في التحليل ولا يمنع النسخة العاملة. لقطة الجهاز: evidence/ph5/iphone-discover.png.",
@@ -9685,7 +9685,7 @@ window.MIRA_STUDY = {
         "evidenceIds": [],
         "reviewPackage": "",
         "verificationReport": "",
-        "reviewResultAr": "قيد التنفيذ بعد مراجعة 8ebbf54. ليس اعتمادًا للمرحلة.",
+        "reviewResultAr": "مراجعة 338c26d: يحتاج تصحيحًا واستكمال أدلة. جولة RC2 قيد التنفيذ. ليس اعتمادًا للمرحلة.",
         "reviewDate": "",
         "launchBlockerIds": [
           "PH3-STORAGE-LIVE"
@@ -9762,11 +9762,11 @@ window.MIRA_STUDY = {
             "id": "DEL-MC-FIX-RC1",
             "name": "MIRA_COMMERCE_MC_FIX_338c26d.zip",
             "createdAt": "2026-10-01T12:00:00+03:00",
-            "deliveryStatus": "منفّذ ومختبر محليًا ومنشور API — بانتظار المراجعة المستقلة",
+            "deliveryStatus": "تمت المراجعة — يحتاج تصحيحًا واستكمال أدلة",
             "logHref": "evidence/commerce-operational/MC_FIX_TRACKER.md",
             "logLabel": "متتبع MC-FIX",
             "sha256": "3e83525dee781bc5fd738bd35c79dabbaf417b11f3af2ef44780afe6adf45ddc",
-            "reviewResultAr": "لم تصدر بعد. API منشور 338c26d. رحلات الجهاز ولوحة الإدارة الحية غير مكتملة.",
+            "reviewResultAr": "مراجعة مستقلة لـ MIRA_COMMERCE_MC_FIX_338c26d: يحتاج تصحيحًا واستكمال أدلة. سلامة ZIP مثبتة. ثبت تحسن عرض السعر/منع التكرار في فحوص معزولة. بقيت أخطاء: حفظ التركيبات، مسودات المسح، السعة المشتركة، التزامن، التوافق مع السجلات السابقة، واكتمال الحزمة للتشغيل بعد الفك.",
             "approvalAr": "غير معتمدة",
             "zipHref": "../../MIRA_COMMERCE_MC_FIX_338c26d.zip",
             "zipLabel": "حزمة MC-FIX 338c26d (سطح المكتب)",
@@ -9774,6 +9774,17 @@ window.MIRA_STUDY = {
             "sha256Label": "بصمة الحزمة",
             "verificationHref": "evidence/commerce-operational/mc-fix/PACKAGE_VERIFY.txt",
             "verificationLabel": "فحص الفك"
+          },
+          {
+            "id": "DEL-MC-FIX-RC2",
+            "name": "MIRA_COMMERCE_MC_FIX_RC2.zip",
+            "createdAt": "2026-10-01T12:20:00+03:00",
+            "deliveryStatus": "قيد الإغلاق — اختبارات محلية وفك نظيف نجحا",
+            "logHref": "evidence/commerce-operational/MC_FIX_RC2_TRACKER.md",
+            "logLabel": "متتبع جولة RC2",
+            "sha256": "تُحسب بعد إغلاق الحزمة",
+            "reviewResultAr": "لم تصدر بعد",
+            "approvalAr": "غير معتمدة"
           }
         ],
         "corrections": [
@@ -9797,7 +9808,7 @@ window.MIRA_STUDY = {
               "lib/features/marketplace/data/commerce_api_client.dart"
             ],
             "acceptanceAr": "74→109 يرفض؛ تغير الرسوم؛ تغير كمية/خيار؛ نفاد؛ فشل المعاملة بلا جزئي.",
-            "resultAr": "PASS على Postgres+HTTP المحلي. سجلات mc-fix/test-commerce.log. رحلة الجهاز والمنشور متبقية.",
+            "resultAr": "جولة RC2: PASS على Postgres/HTTP والفك النظيف حيث ينطبق. لا اعتماد مرحلة.",
             "evidenceAr": "evidence/commerce-operational/mc-fix/test-commerce.log ؛ evidence/commerce-operational/mc-fix/flutter-marketplace.log ؛ evidence/commerce-operational/MC_FIX_TRACKER.md",
             "evidenceLinks": [
               {
@@ -9813,7 +9824,7 @@ window.MIRA_STUDY = {
                 "label": "متتبع MC-FIX"
               }
             ],
-            "remainingAr": "سجل اختبار محلي + رحلة منشورة على الجهاز."
+            "remainingAr": "مراجعة 338c26d: حماية التزامن أثناء الشراء ناقصة (تحويل لخارجي بعد القراءة). (حالة سابقة بعد 338c26d: مختبر محليًا — بانتظار المراجعة المستقلة)"
           },
           {
             "id": "MC-FIX-02",
@@ -9832,7 +9843,7 @@ window.MIRA_STUDY = {
               "mira-api/prisma/migrations/20261001140000_commerce_mc_fix/migration.sql"
             ],
             "acceptanceAr": "نقر مزدوج؛ ضياع الرد؛ تعارض عنوان/موعد/مورد؛ عزل الحسابات.",
-            "resultAr": "PASS محلي للأوامر والحجوزات. IDEMPOTENCY_CONFLICT مثبت.",
+            "resultAr": "جولة RC2: PASS على Postgres/HTTP والفك النظيف حيث ينطبق. لا اعتماد مرحلة.",
             "evidenceAr": "evidence/commerce-operational/mc-fix/test-commerce.log ؛ evidence/commerce-operational/mc-fix/flutter-marketplace.log ؛ evidence/commerce-operational/MC_FIX_TRACKER.md",
             "evidenceLinks": [
               {
@@ -9848,7 +9859,7 @@ window.MIRA_STUDY = {
                 "label": "متتبع MC-FIX"
               }
             ],
-            "remainingAr": "سجل اختبار محلي منشور."
+            "remainingAr": "مراجعة 338c26d: assertIdempotentMatch يتجاوز عند fingerprint فارغة. (حالة سابقة بعد 338c26d: مختبر محليًا — بانتظار المراجعة المستقلة)"
           },
           {
             "id": "MC-FIX-03",
@@ -9869,7 +9880,7 @@ window.MIRA_STUDY = {
               "lib/features/marketplace/presentation/screens/booking_request_screen.dart"
             ],
             "acceptanceAr": "غرفتين؛ سباق سعة؛ إلغاء يحرّر؛ خدمات بلا مورد.",
-            "resultAr": "PASS محلي لـ room-A/B والسعة المشتركة. رحلة بوابة منشورة متبقية.",
+            "resultAr": "جولة RC2: PASS على Postgres/HTTP والفك النظيف حيث ينطبق. لا اعتماد مرحلة.",
             "evidenceAr": "evidence/commerce-operational/mc-fix/test-commerce.log ؛ evidence/commerce-operational/mc-fix/flutter-marketplace.log ؛ evidence/commerce-operational/MC_FIX_TRACKER.md",
             "evidenceLinks": [
               {
@@ -9885,7 +9896,7 @@ window.MIRA_STUDY = {
                 "label": "متتبع MC-FIX"
               }
             ],
-            "remainingAr": "رحلة بوابة تاجر → تطبيق على البيئة المنشورة."
+            "remainingAr": "مراجعة 338c26d: سعات متعارضة لنفس المورد؛ معرف عربي يُرفض عند الحجز. (حالة سابقة بعد 338c26d: مختبر محليًا — بانتظار المراجعة المستقلة)"
           },
           {
             "id": "MC-FIX-04",
@@ -9893,7 +9904,7 @@ window.MIRA_STUDY = {
             "relatedTaskIds": [
               "P5-CREATE-01"
             ],
-            "status": "قيد التنفيذ",
+            "status": "مختبر محليًا — بانتظار المراجعة المستقلة",
             "problemAr": "تعديل S→M قد يُرسل S لأن JSON القديم له الأولوية.",
             "goalAr": "الواجهة المبسّطة مصدر التعديل؛ JSON متقدم صريح فقط.",
             "impactAr": "حفظ خاطئ لخيارات التاجر.",
@@ -9904,7 +9915,7 @@ window.MIRA_STUDY = {
               "mira-api/src/partners-portal/partners-portal.service.ts"
             ],
             "acceptanceAr": "S→M يحفظ ويعيد التحميل؛ ترتيب التركيبات يحافظ على الهويات.",
-            "resultAr": "منفّذ في المصدر. اختبار متصفح/لقطة NOT_RUN.",
+            "resultAr": "جولة RC2: PASS على Postgres/HTTP والفك النظيف حيث ينطبق. لا اعتماد مرحلة.",
             "evidenceAr": "evidence/commerce-operational/mc-fix/test-commerce.log ؛ evidence/commerce-operational/mc-fix/flutter-marketplace.log ؛ evidence/commerce-operational/MC_FIX_TRACKER.md",
             "evidenceLinks": [
               {
@@ -9920,7 +9931,7 @@ window.MIRA_STUDY = {
                 "label": "متتبع MC-FIX"
               }
             ],
-            "remainingAr": "اختبار متصفح يدوي + لقطة."
+            "remainingAr": "مراجعة 338c26d: إعادة توليد var-1 وفقد السعر/التوافر. (حالة سابقة بعد 338c26d: قيد التنفيذ)"
           },
           {
             "id": "MC-FIX-05",
@@ -9928,7 +9939,7 @@ window.MIRA_STUDY = {
             "relatedTaskIds": [
               "P5-CREATE-01"
             ],
-            "status": "قيد التنفيذ",
+            "status": "مختبر محليًا — بانتظار المراجعة المستقلة",
             "problemAr": "null يُفسَّر كغياب تعديل؛ المعاينة لا تعرض مسودة الخيارات.",
             "goalAr": "draftOptionsSet / draftVariantsSet؛ معاينة منشور vs مقترح؛ 409 عند تغيّر المسودة.",
             "impactAr": "فشل مسح الخيارات أو اعتماد أعمى.",
@@ -9940,7 +9951,7 @@ window.MIRA_STUDY = {
               "mira-api/prisma/migrations/20261001140000_commerce_mc_fix/migration.sql"
             ],
             "acceptanceAr": "رفض/اعتماد/مسح/رفض المسح/409 بعد تغيّر المسودة.",
-            "resultAr": "منفّذ في المصدر. إثبات حي NOT_RUN.",
+            "resultAr": "جولة RC2: PASS على Postgres/HTTP والفك النظيف حيث ينطبق. لا اعتماد مرحلة.",
             "evidenceAr": "evidence/commerce-operational/mc-fix/test-commerce.log ؛ evidence/commerce-operational/mc-fix/flutter-marketplace.log ؛ evidence/commerce-operational/MC_FIX_TRACKER.md",
             "evidenceLinks": [
               {
@@ -9956,7 +9967,7 @@ window.MIRA_STUDY = {
                 "label": "متتبع MC-FIX"
               }
             ],
-            "remainingAr": "إثبات متصفح على النسخة المنشورة."
+            "remainingAr": "مراجعة 338c26d: إحياء المنشور عند مسودة مسح؛ ترحيل الأعلام false بلا تهيئة. (حالة سابقة بعد 338c26d: قيد التنفيذ)"
           },
           {
             "id": "MC-FIX-06",
@@ -9964,7 +9975,7 @@ window.MIRA_STUDY = {
             "relatedTaskIds": [
               "P5-T1"
             ],
-            "status": "مفتوح",
+            "status": "قيد التنفيذ",
             "problemAr": "وجود أزرار في JS أو نجاح API وحده لا يثبت اكتمال اللوحات المنشورة.",
             "goalAr": "تحقق واجهات منشورة للطلبات والحجوزات والتحصيل والعزل.",
             "impactAr": "فجوة تشغيلية بين الأطراف الثلاثة.",
@@ -9975,7 +9986,7 @@ window.MIRA_STUDY = {
               "partners-portal/web/js/catalog-journey.js"
             ],
             "acceptanceAr": "ظهور الطلب/الحجز لدى الثلاثة؛ انتقالات؛ تحصيل بعد تسليم؛ عزل تاجر.",
-            "resultAr": "لم يُختبر على البيئة المنشورة بعد في هذه الجولة.",
+            "resultAr": "إنشاء خدمة إدارة Render ضمن الجولة إن نجحت.",
             "evidenceAr": "evidence/commerce-operational/MC_FIX_TRACKER.md",
             "evidenceLinks": [
               {
@@ -10054,7 +10065,7 @@ window.MIRA_STUDY = {
             "relatedTaskIds": [
               "P5-T3"
             ],
-            "status": "بانتظار المراجعة المستقلة",
+            "status": "مختبر محليًا — بانتظار المراجعة المستقلة",
             "problemAr": "حزم سابقة رقيقة أو بلا اختبارات قابلة لإعادة التشغيل.",
             "goalAr": "شجرة بناء + اختبارات + بيان + SHA + فحص فك.",
             "impactAr": "المراجع لا يستطيع إعادة التحقق.",
@@ -10064,7 +10075,7 @@ window.MIRA_STUDY = {
               "docs/mira-commerce-reference/scripts/"
             ],
             "acceptanceAr": "PACKAGE_MANIFEST + SHA مستقل + فحص فك بلا فرق.",
-            "resultAr": "حزمة 328 ملفًا، بصمة مستقلة، فحص فك OK من مسار نظيف.",
+            "resultAr": "جولة RC2: PASS على Postgres/HTTP والفك النظيف حيث ينطبق. لا اعتماد مرحلة.",
             "evidenceAr": "evidence/commerce-operational/MC_FIX_TRACKER.md",
             "evidenceLinks": [
               {
@@ -10072,7 +10083,7 @@ window.MIRA_STUDY = {
                 "label": "متتبع التصحيح"
               }
             ],
-            "remainingAr": "مراجعة مستقلة. الجهاز والإدارة الحية خارج اكتمال الحزمة."
+            "remainingAr": "مراجعة 338c26d: الحزمة غير قابلة لإعادة التشغيل بعد الفك (prisma/main/theme/camera). (حالة سابقة بعد 338c26d: بانتظار المراجعة المستقلة)"
           }
         ]
       }

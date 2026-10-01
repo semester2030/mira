@@ -2,6 +2,7 @@ import assert from 'node:assert/strict';
 import { HttpException } from '@nestjs/common';
 import {
   assertAvailabilityConsistent,
+  assertResourceCapacitiesConsistent,
   buildDaySlots,
   canCollectPayment,
   canonicalVariantKey,
@@ -16,10 +17,13 @@ import {
   localParts,
   makePublicNumber,
   normalizeIdempotencyKey,
+  normalizeResourceId,
   parseAvailability,
   parseContact,
+  partnerResourceCapacities,
   releasesStock,
   resolveSelection,
+  withPartnerResourceCaps,
   FULFILLMENT_STATUSES,
   FULFILLMENT_TRANSITIONS,
 } from './commerce.types';
@@ -200,5 +204,33 @@ assertAvailabilityConsistent(
     { weekday: 0, startMin: 600, endMin: 660, capacity: 2, resourceId: 'room-b' },
   ]),
 );
+
+// Arabic resource ids round-trip through normalize + parse.
+assert.equal(normalizeResourceId('غرفة-أ'), 'غرفة-أ');
+const arabicWindows = parseAvailability([
+  { weekday: 0, startMin: 600, endMin: 720, capacity: 1, resourceId: 'غرفة-أ' },
+]);
+assert.equal(arabicWindows[0]?.resourceId, 'غرفة-أ');
+assert.throws(() => normalizeResourceId('غرفة أ'), (e: { getResponse?: () => { code?: string } }) => {
+  return (e.getResponse?.() as { code?: string })?.code === 'RESOURCE_INVALID';
+});
+
+// Partner-wide min capacity for shared resources.
+const caps = partnerResourceCapacities([
+  parseAvailability([{ weekday: 0, startMin: 600, endMin: 720, capacity: 1, resourceId: 'staff-1' }]),
+  parseAvailability([{ weekday: 1, startMin: 600, endMin: 720, capacity: 2, resourceId: 'staff-1' }]),
+]);
+assert.equal(caps.get('staff-1'), 1);
+const adjusted = withPartnerResourceCaps(
+  parseAvailability([{ weekday: 1, startMin: 600, endMin: 720, capacity: 2, resourceId: 'staff-1' }]),
+  caps,
+);
+assert.equal(adjusted[0]?.capacity, 1);
+assert.throws(() => assertResourceCapacitiesConsistent(
+  parseAvailability([{ weekday: 0, startMin: 600, endMin: 720, capacity: 1, resourceId: 'staff-1' }]),
+  parseAvailability([{ weekday: 1, startMin: 600, endMin: 720, capacity: 2, resourceId: 'staff-1' }]),
+), (e: { getResponse?: () => { code?: string } }) => {
+  return (e.getResponse?.() as { code?: string })?.code === 'RESOURCE_CAPACITY_CONFLICT';
+});
 
 console.log('commerce.types schema tests passed');
