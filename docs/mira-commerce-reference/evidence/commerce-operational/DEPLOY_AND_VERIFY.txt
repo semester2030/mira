@@ -1,25 +1,31 @@
-NOMAS→MIRA commerce operational slice — deploy verification
+Correction deploy verification (after c98decb review)
 Date: 2026-10-01
-Commit: c98decb
-Branch: mira/p5-strict-frontend-recovery-2026-09-14
 
-GitHub: pushed c98decb to origin
-Render mira-api: deploy dep-dav0si7pn0mc739j3ls0 SUCCEEDED (migrate deploy on start)
-Render mira-partners-portal: deploy dep-dav0tag473hc73d1u9t0 created
+Baseline reviewed: c98decb (thin ZIP — not operationally sufficient)
+Correction commits on main:
+- b16c2ed Correct commerce operations after the c98decb review.
+- 8ebbf54 Fix Nest build: drop typed access to removed fee-ack field.
 
-Live checks (no secrets):
-- GET /api/v1/marketplace/catalog?limit=1 → 200, fields include purchaseMode, stockQty, deliveryFeeHalalas
-- GET /api/v1/marketplace/commerce/cart → 401 Missing Authorization (route mounted)
-- GET /api/v1/marketplace/commerce/services/:id/availability → Arabic DATE_INVALID (route mounted)
+Render:
+- mira-api srv-d85ngcfavr4c73d3rk6g deploy dep-dav1d960tbcc73e9l990 LIVE commit 8ebbf54
+  (prior b16c2ed deploy dep-dav1c3u417fc73fslet0 build_failed — Nest compiled schema-tests)
+- mira-partners-portal srv-d8g4tl5ckfvc73e3gslg LIVE on auto-deploy for the same main tip
+- No service named mira-admin in the workspace list; admin-portal/web changes are in git.
+  Do not create a duplicate paid service without an explicit owner request.
 
-App build for device requires:
-  --dart-define=MIRA_MARKETPLACE_ENABLED=true
-  --dart-define=USE_MIRA_API=true
-  --dart-define=MIRA_API_BASE_URL=https://mira-api-n4p3.onrender.com/api/v1
+Live smoke (no secrets / not a purchase journey):
+- GET /api/v1/marketplace/catalog?limit=1 → 200 (purchaseMode, stockQty, deliveryFeeHalalas present)
+- GET /api/v1/marketplace/commerce/cart → 401 Missing Authorization Bearer token
+- GET https://mira-partners-portal.onrender.com/ → 200
 
-Operational trial needs a published product with purchaseMode=internal_cod (set from partner portal)
-and a published service with bookingEnabled=true + availabilityJson.
+Local proofs:
+- npm run test:commerce → PASS (types + public + service DB + HTTP)
+- flutter test test/features/marketplace → 164 passed
 
-Views counting: still deferred — not enabled.
-Deep link open of share URL: not implemented.
-Admin portal static service may need separate Render service create from blueprint (not in CLI list as mira-admin).
+NOT RUN on published environment with authenticated test accounts:
+- Full COD order journey (app → cart → partner → admin → collect)
+- Full booking journey (partner availability → app → confirm)
+- Cold-start Universal Link / App Link open of share URL
+
+Views counting: still deferred / open policy.
+Package: Desktop/MIRA_COMMERCE_CORRECTION_8ebbf54.zip (+ .sha256)
