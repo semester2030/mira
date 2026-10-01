@@ -1,0 +1,12 @@
+package=MIRA_COMMERCE_MC_FIX_338c26d.zip
+location=/Users/fayez/Desktop/MIRA_COMMERCE_MC_FIX_338c26d.zip
+bytes=1092059
+sha256=3e83525dee781bc5fd738bd35c79dabbaf417b11f3af2ef44780afe6adf45ddc
+source_commit=338c26db2ad35729aa2faf885111cb98ef47a5eb
+manifest_files=328
+unpack_verify=OK missing=0 extra=0 mismatch=0
+clean_unpack_path=/tmp/MIRA_COMMERCE_MC_FIX_338c26d_verify/MIRA_COMMERCE_MC_FIX_338c26d
+deploy_api=dep-dav20o5g1s2s73d7fqd0 LIVE
+partners=https://mira-partners-portal.onrender.com HTTP 200
+admin_render_service=ABSENT
+device_journey=NOT_RUN

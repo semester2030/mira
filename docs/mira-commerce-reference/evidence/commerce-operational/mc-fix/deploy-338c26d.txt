@@ -1,0 +1,6 @@
+deploy_id=dep-dav20o5g1s2s73d7fqd0
+commit=338c26d
+api=https://mira-api-n4p3.onrender.com
+partners=https://mira-partners-portal.onrender.com
+admin_service=NOT_IN_RENDER_LIST
+verified_at=2026-10-01T08:58:57Z

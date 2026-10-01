@@ -1,30 +1,29 @@
 # متتبع MC-FIX — بعد مراجعة 8ebbf54
 
 تاريخ البدء: 2026-10-01  
-أساس المراجعة: `8ebbf54` (كود التشغيل مطابق `b16c2ed`)  
-نتيجة المراجعة المستقلة: **تمت المراجعة — يحتاج تصحيحًا واستكمال أدلة**  
-HEAD عند بدء التنفيذ: `0d69e0c`
+أساس المراجعة: `8ebbf54` (كود مطابق `b16c2ed`) → تصحيح MC-FIX على `338c26d`  
+نتيجة المراجعة المستقلة لـ 8ebbf54: **تمت المراجعة — يحتاج تصحيحًا واستكمال أدلة**
 
-| معرف | المشكلة المثبتة | أثر المستخدم | التصحيح المنفذ | الاختبار الفعلي | النتيجة | دليل | نسخة مختبرة | الحالة | المتبقي |
-| --- | --- | --- | --- | --- | --- | --- | --- | --- | --- |
-| MC-FIX-01 | تأكيد بسعر قديم (74→109) | مبلغ لم تراجعه العميلة | `confirmationFingerprint` + `QUOTE_STALE` | `npm run test:commerce` EXIT 0؛ HTTP stale | PASS محلي | `mc-fix/test-commerce.log` | WIP فوق 0d69e0c | مختبر محليًا | رحلة جهاز منشور |
-| MC-FIX-02 | مفتاح تكرار بلا ربط محتوى | إعادة نتيجة مختلفة | `requestFingerprint` + `IDEMPOTENCY_CONFLICT` | نفس السجل (orders+bookings) | PASS محلي | `mc-fix/test-commerce.log` | WIP | مختبر محليًا | إثبات منشور |
-| MC-FIX-03 | حجز بلا `resourceId` | رفض موعد ظاهر | resourceId في التوفر/الحجز/السعة | نفس السجل (room-A/B + shared) | PASS محلي | `mc-fix/test-commerce.log` | WIP | مختبر محليًا | رحلة بوابة→تطبيق منشورة |
-| MC-FIX-04 | JSON يتجاوز النموذج المبسّط | حفظ مقاس/لون خاطئ | أولوية easy UI | كود + لا لقطة متصفح بعد | منفّذ؛ اختبار متصفح NOT_RUN | `partners-portal/web/js/catalog-journey.js` | WIP | قيد التنفيذ | لقطة متصفح |
-| MC-FIX-05 | null≠مسح؛ معاينة بلا مسودة | مسح لا يطبّق | `draftOptionsSet` + معاينة إدارة | كود؛ متصفح NOT_RUN | منفّذ؛ إثبات حي NOT_RUN | admin + migration | WIP | قيد التنفيذ | إثبات نشر |
-| MC-FIX-06 | متابعة تاجر/إدارة غير مثبتة على الحي | فجوة تشغيل | واجهات موجودة | NOT_RUN على الحي | مفتوح | — | — | مفتوح | عناوين حية + حسابات اختبار |
-| MC-FIX-07 | مشاركة/مفضلة/مشاهدات | أيقونات غير مكتملة | deep link + مفضلة API؛ العد معطّل | flutter marketplace 164 PASS (وحدة) | جزئي؛ مشاهدات مؤجلة | `flutter-marketplace.log` + viewCountPolicy | WIP | مفتوح / مؤجل (مشاهدات) | جهاز + Universal Links + قرار مشاهدات |
-| MC-FIX-08 | نشر ورحلة جهاز | لا إثبات تشغيل | اختبارات→نشر→جهاز | commerce+flutter محلي PASS؛ نشر/جهاز قيد | قيد التنفيذ | `mc-fix/` | — | قيد التنفيذ | نشر Render + جهاز |
-| MC-FIX-09 | حزمة مراجعة كاملة | مراجع بلا إعادة اختبار | ZIP+SHA بعد الإغلاق | NOT_RUN | مفتوح | — | — | مفتوح | بعد commit والنشر |
+| معرف | التصحيح | الاختبار الفعلي | النتيجة | دليل | الحالة | المتبقي |
+| --- | --- | --- | --- | --- | --- | --- |
+| MC-FIX-01 | confirmationFingerprint + QUOTE_STALE | npm run test:commerce EXIT 0 | PASS محلي | mc-fix/test-commerce.log | مختبر محليًا — بانتظار المراجعة المستقلة | رحلة جهاز |
+| MC-FIX-02 | requestFingerprint + IDEMPOTENCY_CONFLICT | نفس السجل | PASS محلي | mc-fix/test-commerce.log | مختبر محليًا — بانتظار المراجعة المستقلة | إثبات منشور تفاعلي |
+| MC-FIX-03 | resourceId سعة/حجز | نفس السجل room-A/B + shared | PASS محلي | mc-fix/test-commerce.log | مختبر محليًا — بانتظار المراجعة المستقلة | رحلة بوابة→تطبيق منشورة |
+| MC-FIX-04 | easy UI فوق JSON | كود بوابة؛ متصفح NOT_RUN | منفّذ مصدرًا | partners-portal/.../catalog-journey.js | قيد التنفيذ | لقطة متصفح |
+| MC-FIX-05 | draftOptionsSet + معاينة | كود؛ حي NOT_RUN | منفّذ مصدرًا | admin + catalog-content | قيد التنفيذ | إثبات إدارة حية |
+| MC-FIX-06 | متابعة تاجر/إدارة | NOT_RUN على الحي | مفتوح | deploy-338c26d.txt (admin ABSENT) | مفتوح | إنشاء/عنوان لوحة الإدارة |
+| MC-FIX-07 | مشاركة/مفضلة/مشاهدات | flutter 164 PASS وحدة؛ مشاهدات مؤجلة | جزئي | flutter-marketplace.log | مفتوح / مؤجل (مشاهدات) | جهاز + قرار مشاهدات |
+| MC-FIX-08 | نشر ورحلة | API LIVE؛ جهاز NOT_RUN | جزئي | deploy-338c26d.txt | قيد التنفيذ | رحلات جهاز |
+| MC-FIX-09 | حزمة مراجعة | unpack OK 328 ملف | جاهزة للمراجعة | PACKAGE_VERIFY.txt + Desktop ZIP | بانتظار المراجعة المستقلة | قرار المراجع |
 
-## تسليمات سابقة (محفوظة)
+## نشر
 
-| التسليم | النتيجة |
-| --- | --- |
-| `MIRA_COMMERCE_OPERATIONAL_REVIEW_c98decb` | تمت المراجعة — يحتاج تصحيحًا |
-| `MIRA_COMMERCE_CORRECTION_b16c2ed` / `8ebbf54` | كود متطابق؛ مراجعة 8ebbf54: يحتاج تصحيحًا واستكمال أدلة |
+- commit المختبر: `338c26d`
+- mira-api: https://mira-api-n4p3.onrender.com — deploy `dep-dav20o5g1s2s73d7fqd0` LIVE
+- partners: https://mira-partners-portal.onrender.com
+- admin Render service: **غير موجود** في الحساب
 
 ## قرارات مفتوحة
 
-- عدّ المشاهدات: **مؤجل بقرار المالك** — العد غير مفعّل؛ لا يُعرض صفر كنجاح.
+- عدّ المشاهدات: مؤجل بقرار المالك (غير مفعّل).
 - تخزين الوسائط الدائم: مؤجل سابقًا.
