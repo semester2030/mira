@@ -6,7 +6,9 @@ import {
   NotFoundException,
 } from '@nestjs/common';
 import { ConfigService } from '@nestjs/config';
+import { Prisma } from '@prisma/client';
 import { randomBytes } from 'crypto';
+import { normalizeProductCommerce, ProductCommerceData } from '../marketplace/commerce-public';
 import { PrismaService } from '../prisma/prisma.service';
 import { ApplyPartnerDto } from './dto/apply-partner.dto';
 import { UpdateProductDto, UpdateServiceDto, UpsertProductDto, UpsertServiceDto } from './dto/catalog.dto';
@@ -14,6 +16,16 @@ import { TrackPartnerEventDto } from './dto/track-event.dto';
 
 function newToken(): string {
   return randomBytes(32).toString('hex');
+}
+
+/** Maps validated commerce input to Prisma writes (`null` JSON clears the column). */
+function commerceWrite(commerce: ProductCommerceData) {
+  const { optionsJson, variantsJson, ...rest } = commerce;
+  return {
+    ...rest,
+    ...(optionsJson !== undefined ? { optionsJson: optionsJson === null ? Prisma.DbNull : (optionsJson as Prisma.InputJsonValue) } : {}),
+    ...(variantsJson !== undefined ? { variantsJson: variantsJson === null ? Prisma.DbNull : (variantsJson as Prisma.InputJsonValue) } : {}),
+  };
 }
 
 const PRODUCT_CATEGORIES = new Set(['face', 'body', 'hair', 'clothes', 'accessories']);
@@ -312,9 +324,11 @@ export class PartnersPortalService {
     const category = this.optionalCategory(dto.category, PRODUCT_CATEGORIES);
     const cosmetic = category === 'face' || category === 'body' || category === 'hair';
     const nameAr = dto.nameAr.trim();
+    const commerce = normalizeProductCommerce(dto, null, dto.priceHalalas);
 
     return this.prisma.product.create({
       data: {
+        ...commerceWrite(commerce),
         partnerId,
         nameAr,
         nameEn: dto.nameEn?.trim() || nameAr,
@@ -354,6 +368,11 @@ export class PartnersPortalService {
         stepAr?: string | null;
         reviewRevision: { increment: number };
         reviewStatus: string;
+        purchaseMode?: string;
+        stockQty?: number | null;
+        deliveryFeeHalalas?: number | null;
+        optionsJson?: Prisma.InputJsonValue | typeof Prisma.DbNull;
+        variantsJson?: Prisma.InputJsonValue | typeof Prisma.DbNull;
       } = {
         reviewRevision: { increment: 1 },
         reviewStatus: current.reviewStatus === 'in_review' ? 'in_review' : 'draft',
@@ -385,6 +404,9 @@ export class PartnersPortalService {
         if (dto.skinTypes !== undefined) data.skinTypes = dto.skinTypes;
         if (dto.stepAr !== undefined) data.stepAr = dto.stepAr === '' ? null : dto.stepAr;
       }
+      // Operational commerce fields (purchase mode, stock, delivery fee, options) apply to the live row.
+      const commerce = normalizeProductCommerce(dto, current, data.priceHalalas ?? current.priceHalalas);
+      Object.assign(data, commerceWrite(commerce));
       return tx.product.update({ where: { id: productId }, data });
     });
   }
@@ -417,7 +439,9 @@ export class PartnersPortalService {
         priceHalalas: dto.priceHalalas,
         concernTags: dto.concernTags ?? [],
         category: this.optionalCategory(dto.category, SERVICE_CATEGORIES),
-        bookingEnabled: false,
+        bookingEnabled: dto.bookingEnabled === true,
+        payMode: 'pay_at_venue',
+        availabilityJson: dto.availabilityJson ?? undefined,
         active: false,
         contentStatus: 'draft',
         reviewStatus: 'draft',
@@ -442,11 +466,12 @@ export class PartnersPortalService {
         priceHalalas?: number;
         concernTags?: string[];
         category?: string | null;
-        bookingEnabled: boolean;
+        bookingEnabled?: boolean;
+        payMode?: string;
+        availabilityJson?: Prisma.InputJsonValue | typeof Prisma.DbNull;
         reviewRevision: { increment: number };
         reviewStatus: string;
       } = {
-        bookingEnabled: false,
         reviewRevision: { increment: 1 },
         reviewStatus: current.reviewStatus === 'in_review' ? 'in_review' : 'draft',
       };
@@ -468,6 +493,11 @@ export class PartnersPortalService {
       if (dto.priceHalalas !== undefined) data.priceHalalas = dto.priceHalalas;
       if (dto.concernTags !== undefined) data.concernTags = dto.concernTags;
       if (dto.category !== undefined) data.category = this.optionalCategory(dto.category, SERVICE_CATEGORIES);
+      if (dto.bookingEnabled !== undefined) data.bookingEnabled = dto.bookingEnabled === true;
+      if (dto.payMode !== undefined) data.payMode = dto.payMode === 'pay_at_venue' ? 'pay_at_venue' : current.payMode;
+      if (dto.availabilityJson !== undefined) {
+        data.availabilityJson = dto.availabilityJson === null ? Prisma.DbNull : (dto.availabilityJson as Prisma.InputJsonValue);
+      }
       return tx.service.update({ where: { id: serviceId }, data });
     });
   }

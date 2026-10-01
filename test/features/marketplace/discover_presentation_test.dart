@@ -552,7 +552,7 @@ void main() {
     ]);
     expect(find.text('اشتري الآن'), findsOneWidget);
     expect(find.text('المتجر'), findsOneWidget);
-    expect(find.text('MIRA'), findsOneWidget);
+    expect(find.bySemanticsLabel('ميرَا'), findsOneWidget);
     expect(find.textContaining('العد غير مفعّل'), findsNothing);
     tester.binding.defaultBinaryMessenger.setMockMethodCallHandler(
       const MethodChannel('plugins.flutter.io/url_launcher'),
@@ -607,7 +607,7 @@ void main() {
         final provider = widget is Image ? widget.image : null;
         return provider is AssetImage && provider.assetName == preview.media.first.assetPath;
       }),
-      findsOneWidget,
+      findsAtLeastNWidgets(1),
     );
   });
 

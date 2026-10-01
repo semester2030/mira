@@ -1,0 +1,29 @@
+P5-VISUAL-04 — media fit + product options
+Date: 2026-09-30
+Device target: fayez’s iPhone 00008110-00191986268BA01E
+Defines: MIRA_MARKETPLACE_ENABLED=true USE_MIRA_API=true MIRA_API_BASE_URL=https://mira-api-n4p3.onrender.com/api/v1 MIRA_DISCOVER_VISUAL_PREVIEW=true
+
+Root cause of dress/serum mismatch
+- preview-silk-dress main slides incorrectly included assets/marketplace/discover/hero_product.jpg (serum portrait 720×1280).
+- Square clothes/face assets (1024×1024) with BoxFit.contain on a dark letterbox looked like a mid-screen rectangle.
+- Portrait hero filled the scene like the owner’s second frame.
+
+Fixes shipped
+- DiscoverSceneStill: blurred derived backdrop + sharp BoxFit.contain (no stretch, no blanket cover crop).
+- Horizontal page resets to 0 on slotId change; media frame keyed by asset path.
+- Preview catalog: dress uses only clothes assets; serum owns hero_product + product_face; no cross-product main reuse.
+- CatalogOptionGroup / Variant / Matrix + ProductOptionSelector (size/color/volume/finish).
+- Partner portal category-driven option chips with local draft storage (durable option fields still deferred with storage).
+
+Automated tests
+- catalog_product_options_test: PASS
+- catalog_offer_media_test: PASS
+- discover_catalog_query_test: PASS (prior run)
+
+Device
+- 2026-09-30: flutter run --release on fayez’s iPhone (00008110-00191986268BA01E) succeeded (Xcode ~39s, install+launch ~6s). App left running in release with visual preview defines.
+- Manual screen recording still required for interactive option + swipe proof.
+- Automatic screenshot tools may lack Developer Disk Image.
+
+Deferred (unchanged)
+- PH3-STORAGE-LIVE, Cloudflare durable media, P4-T1/T2 real views, Zid connectors, cart/payment.

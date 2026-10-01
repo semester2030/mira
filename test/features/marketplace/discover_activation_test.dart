@@ -75,13 +75,13 @@ void main() {
     );
     await tester.pump();
 
-    expect(find.text('اطلبي موعدًا'), findsOneWidget);
+    expect(find.text('طلب الموعد'), findsOneWidget);
     expect(find.textContaining('تم الحجز'), findsNothing);
     expect(find.textContaining('سيُفعّل'), findsNothing);
 
-    await tester.tap(find.text('اطلبي موعدًا'));
+    await tester.tap(find.text('طلب الموعد'));
     await tester.pump();
-    expect(find.textContaining('طلب الموعد غير متاح'), findsOneWidget);
+    expect(find.textContaining('طلب الموعد غير متاح'), findsWidgets);
     expect(find.textContaining('تم الحجز'), findsNothing);
   });
 

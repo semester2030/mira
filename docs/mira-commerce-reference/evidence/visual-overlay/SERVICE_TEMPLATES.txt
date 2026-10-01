@@ -1,0 +1,26 @@
+قوالب تسجيل الخدمات وتوليد تفاصيلها — P5-SERVICE-01
+التاريخ: 2026-09-30
+
+المصدر المرجعي
+- Dart: lib/features/marketplace/domain/catalog_service_template.dart
+- بوابة: partners-portal/web/js/service-templates.js (مرافق للإدخال؛ التعريف المعتمد للعرض في التطبيق هو Dart)
+
+القوالب المغطاة
+- salon_hair_cut، salon_hair_color، salon_nails، salon_makeup، salon_care
+- clinic_skin، clinic_laser، clinic_consult، clinic_teeth (محدود)
+- غير مغطى بقالب غني مستقل: أي تصنيف خارج القائمة أعلاه
+
+الخدمات القديمة
+- بدون profile/templateId تُعرض المدة والسعر والوصف والوسائط فقط؛ لا اختلاق أقسام.
+
+المعاينة مقابل الحفظ الفعلي
+- المعاينة: DiscoverVisualPreviewCatalog + تفاصيل التطبيق.
+- الحفظ الفعلي للمسودة: name/duration/price/category عبر API كما قبل.
+- إجابات القالب في البوابة: localStorage حتى يتوفر عمود/عقد تخزين دائم (مؤجل).
+
+الجهاز
+- 2026-09-30: flutter run --release على fayez’s iPhone (00008110-00191986268BA01E) نجح (Xcode ~40s، تثبيت+إطلاق ~6s) مع MIRA_DISCOVER_VISUAL_PREVIEW.
+- التسجيل اليدوي لرحلة جمالك → تفاصيل قوالب مختلفة ما زال مطلوبًا من الجهاز.
+
+مؤجل دون إنجاز
+- PH3-STORAGE-LIVE، Cloudflare، الحجز التشغيلي، اعتماد المراحل السابقة دون تغيير.

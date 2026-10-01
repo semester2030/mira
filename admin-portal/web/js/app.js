@@ -7,6 +7,7 @@
     applications: { title: 'طلبات الشركاء', subtitle: 'اعتماد ورفض طلبات الانضمام' },
     reviews: { title: 'مراجعة المحتوى', subtitle: 'نشر أو رفض محتوى المنتجات والخدمات' },
     ads: { title: 'مراجعة الإعلانات', subtitle: 'اعتماد النسخة المعروضة فقط' },
+    orders: { title: 'الطلبات', subtitle: 'طلبات الدفع عند الاستلام داخل ميرا (قراءة فقط)' },
     partners: { title: 'الشركاء', subtitle: 'إدارة حالة الشركاء النشطين' },
     leads: { title: 'رسائل الموقع', subtitle: 'Leads من الموقع التعريفي' },
     system: { title: 'النظام', subtitle: 'Providers · Feature flags · Security' },
@@ -23,6 +24,8 @@
     partnersStatus: '',
     leadsPage: 1,
     appStatus: 'pending',
+    ordersStatus: '',
+    ordersQuery: '',
   };
 
   const $ = (sel) => document.querySelector(sel);
@@ -742,6 +745,102 @@
     }
   }
 
+  const ORDER_STATUS_LABELS = {
+    new: 'جديد',
+    accepted: 'مقبول',
+    preparing: 'قيد التجهيز',
+    out_for_delivery: 'في الطريق',
+    delivered: 'تم التسليم',
+    rejected: 'مرفوض',
+    cancelled: 'ملغي',
+    failed_delivery: 'تعذر التسليم',
+  };
+  const PAYMENT_STATUS_LABELS = { uncollected: 'لم يُحصَّل', collected: 'حُصِّل', waived: 'أُعفي' };
+
+  async function renderOrders() {
+    root.replaceChildren();
+    const toolbar = document.createElement('div');
+    toolbar.className = 'toolbar';
+    const select = document.createElement('select');
+    const all = document.createElement('option');
+    all.value = '';
+    all.textContent = 'كل الحالات';
+    select.appendChild(all);
+    Object.keys(ORDER_STATUS_LABELS).forEach((key) => {
+      const option = document.createElement('option');
+      option.value = key;
+      option.textContent = ORDER_STATUS_LABELS[key];
+      select.appendChild(option);
+    });
+    select.value = state.ordersStatus;
+    const search = document.createElement('input');
+    search.placeholder = 'رقم الطلب أو الاسم أو الجوال';
+    search.value = state.ordersQuery;
+    const apply = document.createElement('button');
+    apply.className = 'btn btn-primary btn-sm';
+    apply.textContent = 'تطبيق';
+    apply.onclick = () => {
+      state.ordersStatus = select.value;
+      state.ordersQuery = search.value.trim();
+      renderOrders();
+    };
+    toolbar.append(select, search, apply);
+    root.appendChild(toolbar);
+
+    const panel = document.createElement('div');
+    panel.className = 'panel';
+    root.appendChild(panel);
+    reviewText(panel, 'جارٍ تحميل الطلبات');
+    try {
+      const data = await MiraAdminApi.commerceOrders(state.ordersStatus, state.ordersQuery);
+      const items = data.items || [];
+      panel.replaceChildren();
+      if (!items.length) {
+        reviewText(panel, 'لا طلبات.');
+        return;
+      }
+      const wrap = document.createElement('div');
+      wrap.className = 'table-wrap';
+      const table = document.createElement('table');
+      const head = document.createElement('tr');
+      ['الرقم', 'الشريك', 'العميلة', 'التنفيذ', 'التحصيل', 'المجموع (ر.س)', 'التاريخ'].forEach((label) => {
+        const th = document.createElement('th');
+        th.textContent = label;
+        head.appendChild(th);
+      });
+      const thead = document.createElement('thead');
+      thead.appendChild(head);
+      const tbody = document.createElement('tbody');
+      items.forEach((order) => {
+        const row = document.createElement('tr');
+        [
+          order.publicNumber,
+          order.partner && order.partner.nameAr,
+          order.contactName + ' · ' + order.contactPhone,
+          ORDER_STATUS_LABELS[order.fulfillmentStatus] || order.fulfillmentStatus,
+          PAYMENT_STATUS_LABELS[order.paymentCollectionStatus] || order.paymentCollectionStatus,
+          (order.totalHalalas / 100).toFixed(2) + (order.deliveryFeeKnown ? '' : ' + توصيل غير محدد'),
+          fmtDate(order.createdAt),
+        ].forEach((value) => {
+          const td = document.createElement('td');
+          td.textContent = value == null ? '' : String(value);
+          row.appendChild(td);
+        });
+        tbody.appendChild(row);
+      });
+      table.append(thead, tbody);
+      wrap.appendChild(table);
+      panel.appendChild(wrap);
+      if (data.nextCursor) reviewText(panel, 'يوجد المزيد. تظهر آخر ٥٠ طلبًا فقط.');
+    } catch (error) {
+      panel.replaceChildren();
+      const alert = document.createElement('div');
+      alert.className = 'alert err';
+      alert.textContent = error.message;
+      panel.appendChild(alert);
+    }
+  }
+
   function render() {
     const map = {
       dashboard: renderDashboard,
@@ -751,6 +850,7 @@
       applications: renderApplications,
       reviews: renderReviews,
       ads: renderAdReviews,
+      orders: renderOrders,
       partners: renderPartners,
       leads: renderLeads,
       system: renderSystem,

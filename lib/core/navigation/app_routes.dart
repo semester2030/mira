@@ -45,6 +45,13 @@ abstract final class AppRoutes {
   static const discoverList = '/discover-list';
   static const productDetail = '/product-detail';
   static const serviceDetail = '/service-detail';
+  static const cart = '/cart';
+  static const checkout = '/checkout';
+  static const myOrders = '/my-orders';
+  static const orderDetail = '/order-detail';
+  static const myBookings = '/my-bookings';
+  static const bookingRequest = '/booking-request';
+  static const favorites = '/favorites';
 
   /// Internal Owner Preview — Fashion Icon System (not production migration).
   static const fashionIconSystemPreview = '/dev/fashion-icon-system-preview';

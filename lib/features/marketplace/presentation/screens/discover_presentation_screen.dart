@@ -2,6 +2,8 @@ import 'package:flutter/material.dart';
 import 'package:flutter/scheduler.dart';
 import 'package:share_plus/share_plus.dart';
 
+import '../../../../core/constants/marketplace_copy.dart';
+import '../../../../core/constants/mira_public_urls.dart';
 import '../../../../core/navigation/app_routes.dart';
 import '../../../../core/navigation/mira_route_observer.dart';
 import '../../../../core/utils/mira_url_launcher.dart';
@@ -10,20 +12,23 @@ import '../../../../shared/theme/typography.dart';
 import '../../data/catalog_provenance.dart';
 import '../../data/discover_catalog_gateway.dart';
 import '../../data/catalog_record_scope.dart';
+import '../../data/commerce_api_client.dart';
 import '../../data/discover_favorite_client.dart';
 import '../../data/discover_catalog_query.dart';
-import '../../data/discover_published_ad.dart';
+import '../../domain/catalog_offer_media.dart';
 import '../presentation/discover_ad.dart';
 import '../presentation/presentation_models.dart';
 import '../../data/repositories/marketplace_repository_impl.dart';
 import '../../data/ad_link_record.dart';
 import '../ad_link_open_outbox.dart';
+import '../commerce_cart_actions.dart';
 import '../discover_browse_sequence.dart';
 import '../discover_feed_controller.dart';
 import '../presentation/discover_presentation_catalog.dart';
 import '../presentation/discover_view_count.dart';
 import '../presentation/discover_visual_chrome.dart';
 import '../presentation/presentation_video_port.dart';
+import '../widgets/discover_scene_still.dart';
 import 'catalog_record_page.dart';
 import 'partner_detail_screen.dart';
 
@@ -41,6 +46,7 @@ class DiscoverPresentationScreen extends StatefulWidget {
     this.confirmAdLink,
     this.openExternal,
     this.linkOutbox,
+    this.commerce,
   });
 
   final DiscoverLane? lane;
@@ -53,6 +59,9 @@ class DiscoverPresentationScreen extends StatefulWidget {
   final AdLinkOpenOutbox? linkOutbox;
   final Future<bool> Function({required String adId, required String url})? confirmAdLink;
   final Future<bool> Function(Uri uri)? openExternal;
+
+  /// Cart client for `internal_cod` products. Defaults to the signed-in account's API client.
+  final CommerceClient? commerce;
 
   @override
   State<DiscoverPresentationScreen> createState() => _DiscoverPresentationScreenState();
@@ -71,6 +80,7 @@ class _DiscoverPresentationScreenState extends State<DiscoverPresentationScreen>
   bool _covered = false;
   bool _released = false;
   final _catalog = MarketplaceRepositoryImpl();
+  late final CommerceClient _commerce = widget.commerce ?? ApiCommerceClient();
   final _search = TextEditingController();
   final _searchFieldKey = GlobalKey();
   final _searchFocus = FocusNode();
@@ -86,7 +96,6 @@ class _DiscoverPresentationScreenState extends State<DiscoverPresentationScreen>
   DiscoverFeedPhase _phase = DiscoverFeedPhase.ready;
   String? _loadError;
   String? _loadMoreError;
-  String? _adsNote;
   int _replacement = 0;
 
   bool get _catalogDriven => widget.slides == null;
@@ -253,7 +262,6 @@ class _DiscoverPresentationScreenState extends State<DiscoverPresentationScreen>
           ],
           replaced: replaced,
         );
-        _adsNote = next.adsFailed ? 'تعذر تحميل الإعلانات. لم يُعرض إعلان بديل.' : null;
         _nextCursor = next.nextCursor;
         _cities = next.cities;
         _transport = next.transport;
@@ -326,6 +334,7 @@ class _DiscoverPresentationScreenState extends State<DiscoverPresentationScreen>
 
   bool _canPurchase(PresentationSlide slide) {
     if (slide.advertisement != null) return slide.advertisement!.openLink;
+    if (slide.product?.isInternalCod == true) return true;
     final url = slide.product?.externalUrl.trim() ?? '';
     final uri = Uri.tryParse(url);
     return slide.product != null && uri != null && uri.hasScheme && uri.host.isNotEmpty;
@@ -459,26 +468,31 @@ class _DiscoverPresentationScreenState extends State<DiscoverPresentationScreen>
   }
 
   Future<void> _openLocation(BuildContext context, PresentationSlide slide) async {
+    if (slide.preview) {
+      _tell(context, 'موقع المعاينة ليس موقعك ولا فرعًا حقيقيًا.');
+      return;
+    }
     _tell(context, 'لا توجد إحداثيات للفرع، لذلك لا تُفتح الخريطة على مركز المدينة.');
   }
 
+  /// Appointment only: never a purchase. Phone contact lives on the detail page.
   Future<void> _contactVenue(BuildContext context, PresentationSlide slide) async {
-    final phone = (slide.service?.contactPhone ?? slide.product?.contactPhone)?.trim();
-    if (phone == null || phone.isEmpty) {
-      _tell(context, 'لا توجد وسيلة تواصل مسجّلة. هذا ليس حجزًا مؤكدًا.');
+    if (slide.preview) {
+      _tell(context, MarketplaceCopy.previewAppointment);
       return;
     }
-    final opened = await MiraUrlLauncher.openExternal(context, 'tel:$phone');
-    if (!context.mounted || !opened) return;
-    _tell(context, 'فُتح الاتصال بالجهة. هذا ليس حجزًا مؤكدًا.');
+    final service = slide.service;
+    if (service == null || !service.bookingEnabled) {
+      _tell(context, MarketplaceCopy.appointmentUnavailable);
+      return;
+    }
+    await Navigator.of(context).pushNamed(AppRoutes.bookingRequest, arguments: service);
   }
 
   Future<void> _share(BuildContext context, PresentationSlide slide) async {
-    final url = slide.product?.externalUrl.trim();
-    final lines = <String>[slide.title, slide.partnerName];
-    if (url != null && url.isNotEmpty) lines.add(url);
     try {
-      await Share.share(lines.join('\n'));
+      // Dismissing the sheet is not an error and not a completed share, so nothing is claimed.
+      await Share.share(discoverShareText(slide));
     } catch (_) {
       if (context.mounted) _tell(context, 'تعذرت المشاركة');
     }
@@ -496,7 +510,7 @@ class _DiscoverPresentationScreenState extends State<DiscoverPresentationScreen>
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      backgroundColor: AppColors.background,
+      backgroundColor: const Color(0xFF2C2428),
       body: Stack(
               children: [
                 if (_slides.isEmpty)
@@ -516,13 +530,9 @@ class _DiscoverPresentationScreenState extends State<DiscoverPresentationScreen>
                                         : 'لا توجد عروض بوسائط منشورة في هذا المسار.',
                                   }
                                 : 'لا توجد عروض',
-                            style: AppTypography.bodyLarge,
+                            style: AppTypography.bodyLarge.copyWith(color: Colors.white),
                             textAlign: TextAlign.center,
                           ),
-                          if (_adsNote != null) ...[
-                            const SizedBox(height: 12),
-                            Text(_adsNote!, style: AppTypography.bodyMedium, textAlign: TextAlign.center),
-                          ],
                           if (_catalogDriven && _phase == DiscoverFeedPhase.failed) ...[
                             const SizedBox(height: 12),
                             OutlinedButton(onPressed: () => _feed?.retry(), child: const Text('إعادة المحاولة')),
@@ -552,6 +562,7 @@ class _DiscoverPresentationScreenState extends State<DiscoverPresentationScreen>
                   linkOutbox: widget.linkOutbox ?? AdLinkOpenOutbox.shared,
                   confirmAdLink: widget.confirmAdLink ?? _catalog.confirmAdLink,
                   openExternal: widget.openExternal,
+                  commerce: _commerce,
                   active: index == _page,
                   playable: _playable && index == _page,
                   epoch: _epoch,
@@ -575,8 +586,8 @@ class _DiscoverPresentationScreenState extends State<DiscoverPresentationScreen>
                                 _slides[index].entityId,
                               ) ??
                               false,
-                          searchFieldKey: _searchFieldKey,
-                          searchFocus: _searchFocus,
+                          searchFieldKey: index == _page ? _searchFieldKey : null,
+                          searchFocus: index == _page ? _searchFocus : null,
                           onShare: () => _share(context, _slides[index]),
                           provenance: null,
                           categoryLabels: widget.lane == null
@@ -592,30 +603,89 @@ class _DiscoverPresentationScreenState extends State<DiscoverPresentationScreen>
                             DiscoverLane.beauty => 'ابحثي عن عيادة أو مشغل أو خدمة',
                             null => null,
                           },
-                          appointmentLabel: 'تواصلي',
-                          showPurchaseLink: _canPurchase(_slides[index]),
-                          showAppointmentRequest: !_canPurchase(_slides[index]) &&
-                              (((_slides[index].service?.contactPhone ?? _slides[index].product?.contactPhone)?.trim().isNotEmpty) ?? false),
+                          appointmentLabel: widget.lane == DiscoverLane.beauty ? 'تواصلي' : 'اطلبي موعدًا',
+                          showPurchaseLink: (_slides[index].preview && _slides[index].product != null) || _canPurchase(_slides[index]),
+                          showAppointmentRequest: _slides[index].service != null,
+                          includeSearch: false,
                         )
                       : null,
                 );
               },
             ),
-                if (_slides.isEmpty)
+                if (_catalogDriven)
                   Positioned(
-                    top: MediaQuery.paddingOf(context).top + 8,
-                    right: 12,
-                    left: 12,
-                    child: Row(
+                    top: MediaQuery.paddingOf(context).top + 4,
+                    left: 10,
+                    right: 10,
+                    child: Column(
+                      mainAxisSize: MainAxisSize.min,
                       children: [
-                        IconButton(
-                          onPressed: () => _exitPresentation(context),
-                          icon: const Icon(Icons.close, color: AppColors.textPrimary),
+                        SizedBox(
+                          height: 40,
+                          child: Row(
+                            children: [
+                              IconButton(
+                                onPressed: () => _exitPresentation(context),
+                                icon: const Icon(Icons.chevron_right, color: Colors.white),
+                              ),
+                              const Spacer(),
+                              Image.asset(
+                                'assets/images/mira_logo_icon.png',
+                                height: 28,
+                                errorBuilder: (_, __, ___) => Text(
+                                  'MIRA',
+                                  style: AppTypography.titleMedium.copyWith(color: Colors.white, letterSpacing: 1.6),
+                                ),
+                              ),
+                              const Spacer(),
+                              const SizedBox(width: 40),
+                            ],
+                          ),
+                        ),
+                        if (_slides.isNotEmpty && _slides[_page.clamp(0, _slides.length - 1)].preview)
+                          Align(
+                            alignment: AlignmentDirectional.centerStart,
+                            child: Text(
+                              'معاينة تجريبية',
+                              style: AppTypography.labelSmall.copyWith(color: Colors.white.withValues(alpha: 0.92)),
+                            ),
+                          ),
+                        const SizedBox(height: 6),
+                        Row(
+                          children: [
+                            Expanded(
+                              child: DiscoverSearchField(
+                                hint: switch (widget.lane) {
+                                  DiscoverLane.elegance => 'ابحثي عن منتج أو علامة',
+                                  DiscoverLane.beauty => 'ابحثي عن عيادة أو مشغل أو خدمة',
+                                  null => 'ابحثي في العروض',
+                                },
+                                fieldKey: _searchFieldKey,
+                                focusNode: _searchFocus,
+                                controller: _search,
+                                onSearch: (value) => _reload(_query.copyWith(text: value)),
+                                onTap: () {},
+                              ),
+                            ),
+                            const SizedBox(width: 8),
+                            IconButton(
+                              onPressed: () => _openFilters(context),
+                              icon: const Icon(Icons.tune, color: Colors.white),
+                            ),
+                          ],
                         ),
                       ],
                     ),
+                  )
+                else if (_slides.isEmpty)
+                  Positioned(
+                    top: MediaQuery.paddingOf(context).top + 8,
+                    left: 12,
+                    child: IconButton(
+                      onPressed: () => _exitPresentation(context),
+                      icon: const Icon(Icons.close, color: Colors.white),
+                    ),
                   ),
-                if (_catalogDriven) const SizedBox.shrink(),
                 if (_favorites?.readFailed == true)
                   Positioned(
                     top: MediaQuery.paddingOf(context).top + 108,
@@ -633,13 +703,6 @@ class _DiscoverPresentationScreenState extends State<DiscoverPresentationScreen>
                         ],
                       ),
                     ),
-                  ),
-                if (_adsNote != null && _slides.isNotEmpty)
-                  Positioned(
-                    top: MediaQuery.paddingOf(context).top + 8,
-                    left: 16,
-                    right: 16,
-                    child: Text(_adsNote!, textAlign: TextAlign.center, style: AppTypography.bodyMedium),
                   ),
                 if (_loadMoreError != null)
                   Positioned(
@@ -674,8 +737,8 @@ class _CatalogHooks {
     required this.onLocation,
     required this.onFavorite,
     required this.favoriteSaved,
-    required this.searchFieldKey,
-    required this.searchFocus,
+    this.searchFieldKey,
+    this.searchFocus,
     required this.onShare,
     required this.provenance,
     this.categoryLabels,
@@ -684,6 +747,7 @@ class _CatalogHooks {
     this.appointmentLabel = 'اطلبي موعدًا',
     this.showPurchaseLink = true,
     this.showAppointmentRequest = true,
+    this.includeSearch = true,
   });
 
   final TextEditingController search;
@@ -696,8 +760,8 @@ class _CatalogHooks {
   final VoidCallback onLocation;
   final VoidCallback onFavorite;
   final bool favoriteSaved;
-  final Key searchFieldKey;
-  final FocusNode searchFocus;
+  final Key? searchFieldKey;
+  final FocusNode? searchFocus;
   final VoidCallback onShare;
   final String? provenance;
   final List<String>? categoryLabels;
@@ -706,6 +770,7 @@ class _CatalogHooks {
   final String appointmentLabel;
   final bool showPurchaseLink;
   final bool showAppointmentRequest;
+  final bool includeSearch;
 }
 
 class _PresentationPage extends StatefulWidget {
@@ -723,9 +788,11 @@ class _PresentationPage extends StatefulWidget {
     this.recordAdLink,
     this.confirmAdLink,
     this.openExternal,
+    this.commerce,
     required this.linkOutbox,
   });
 
+  final CommerceClient? commerce;
   final PresentationSlide slide;
   final bool active;
   final _CatalogHooks? catalog;
@@ -770,6 +837,9 @@ class _PresentationPageState extends State<_PresentationPage> {
     if (oldWidget.slide.slotId != widget.slide.slotId) {
       _media = 0;
       _category = 0;
+      if (_horizontal.hasClients) {
+        _horizontal.jumpToPage(0);
+      }
     }
   }
 
@@ -833,6 +903,7 @@ class _PresentationPageState extends State<_PresentationPage> {
                 media: slide.media[index],
                 slot: PresentationSlot(slide.slotId, index),
                 video: widget.video,
+                coverPath: slide.mainOfferKind == CatalogMainOfferKind.video ? slide.videoCoverPath : null,
               );
             },
           ),
@@ -862,7 +933,7 @@ class _PresentationPageState extends State<_PresentationPage> {
           onFavorite: widget.catalog?.onFavorite,
           onShare: widget.catalog?.onShare,
           onFilter: widget.catalog?.onFilter,
-          includeSearch: true,
+          includeSearch: widget.catalog?.includeSearch ?? true,
           provenance: null,
           categoryLabels: widget.catalog?.categoryLabels,
           categoryAssetFamily: widget.catalog?.categoryAssetFamily,
@@ -875,7 +946,9 @@ class _PresentationPageState extends State<_PresentationPage> {
           advertisementLabel: slide.advertisement?.disclosureLine,
           showPurchaseLink: widget.catalog?.showPurchaseLink ?? (slide.advertisement == null || slide.advertisement!.openLink),
           showAppointmentRequest: widget.catalog?.showAppointmentRequest ?? (slide.advertisement == null || slide.advertisement!.appointmentOperational),
-          purchaseLabel: slide.advertisement == null ? 'اشتري الآن' : 'افتحي الرابط',
+          purchaseLabel: slide.advertisement != null
+              ? 'افتحي الرابط'
+              : (slide.product?.isInternalCod == true && !slide.preview ? MarketplaceCopy.addToCart : 'اشتري الآن'),
           onUnavailable: (message) {
             ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text(message)));
           },
@@ -949,23 +1022,32 @@ class _PresentationPageState extends State<_PresentationPage> {
       }
       return;
     }
-    if (widget.slide.preview || widget.slide.product == null) {
-      tell('هذه معاينة ولا تنفّذ شراءً');
-      return;
+    final product = widget.slide.product;
+    switch (decideBuyRoute(product: product, preview: widget.slide.preview)) {
+      case BuyRoute.preview:
+        tell(MarketplaceCopy.previewBuy);
+      case BuyRoute.outOfStock:
+        tell(MarketplaceCopy.outOfStock);
+      case BuyRoute.unavailable:
+        tell('الطلب داخل ميرا غير متاح لهذا المنتج الآن.');
+      case BuyRoute.none:
+        tell('لا يوجد رابط شراء صالح');
+      case BuyRoute.inApp:
+        // Options are chosen on the detail page, so a blind add never reaches the cart.
+        if (product!.optionGroups.isNotEmpty) {
+          tell(MarketplaceCopy.chooseOptionsFirst);
+          _openDetails(context);
+          return;
+        }
+        await CommerceCartActions.addToCart(context, client: widget.commerce ?? ApiCommerceClient(), product: product);
+      case BuyRoute.external:
+        final opened = await MiraUrlLauncher.openExternal(context, product!.externalUrl.trim());
+        if (!context.mounted || !opened) return;
+        tell('فُتح رابط خارجي. هذا ليس شراءً مكتملًا');
     }
-    final url = widget.slide.product!.externalUrl.trim();
-    final uri = Uri.tryParse(url);
-    if (uri == null || !uri.hasScheme || uri.host.isEmpty) {
-      tell('لا يوجد رابط شراء صالح');
-      return;
-    }
-    final opened = await MiraUrlLauncher.openExternal(context, url);
-    if (!context.mounted || !opened) return;
-    tell('فُتح رابط خارجي. هذا ليس شراءً مكتملًا');
   }
 
   void _openDetails(BuildContext context) {
-    if (widget.slide.preview) return;
     final kind = widget.slide.product != null ? 'product' : 'service';
     Navigator.of(context).push(
       MaterialPageRoute<void>(
@@ -985,11 +1067,13 @@ class _MediaFrame extends StatefulWidget {
     required this.media,
     required this.slot,
     required this.video,
+    this.coverPath,
   });
 
   final PresentationMedia media;
   final PresentationSlot slot;
   final PresentationVideoPort video;
+  final String? coverPath;
 
   @override
   State<_MediaFrame> createState() => _MediaFrameState();
@@ -1036,76 +1120,30 @@ class _MediaFrameState extends State<_MediaFrame> {
         );
       }
       final view = owns ? video.buildView() : null;
+      final cover = widget.coverPath;
       return ColoredBox(
-        color: AppColors.background,
-        child: Center(
-          child: view ??
-              Text(
-                owns && video.playback == PresentationPlayback.loading ? 'جاري تجهيز الفيديو' : '',
-                style: AppTypography.bodyMedium,
+        color: const Color(0xFF2C2428),
+        child: Stack(
+          fit: StackFit.expand,
+          children: [
+            if (view == null && cover != null)
+              DiscoverSceneCover(path: cover)
+            else if (view != null)
+              Center(child: view)
+            else
+              Center(
+                child: Text(
+                  owns && video.playback == PresentationPlayback.loading ? 'جاري تجهيز الفيديو' : '',
+                  style: AppTypography.bodyMedium.copyWith(color: Colors.white70),
+                ),
               ),
+            if (view == null && cover != null && owns && video.playback == PresentationPlayback.loading)
+              const Center(child: CircularProgressIndicator(color: Colors.white70)),
+          ],
         ),
       );
     }
-    return _StillImage(media: media);
-  }
-}
-
-class _StillImage extends StatefulWidget {
-  const _StillImage({required this.media});
-
-  final PresentationMedia media;
-
-  @override
-  State<_StillImage> createState() => _StillImageState();
-}
-
-class _StillImageState extends State<_StillImage> {
-  Object? _error;
-  var _attempt = 0;
-
-  @override
-  Widget build(BuildContext context) {
-    if (_error != null) {
-      return _Failure(
-        message: 'تعذر تحميل الصورة',
-        onRetry: () => setState(() {
-          _error = null;
-          _attempt += 1;
-        }),
-      );
-    }
-    final image = widget.media.network
-        ? Image.network(
-            widget.media.assetPath,
-            key: ValueKey('${widget.media.assetPath}-$_attempt'),
-            fit: BoxFit.contain,
-            loadingBuilder: (context, child, progress) {
-              if (progress == null) return child;
-              return Text('جاري تحميل الصورة', style: AppTypography.bodyMedium);
-            },
-            errorBuilder: (_, error, __) {
-              WidgetsBinding.instance.addPostFrameCallback((_) {
-                if (mounted && _error == null) setState(() => _error = error);
-              });
-              return const SizedBox.shrink();
-            },
-          )
-        : Image.asset(
-            widget.media.assetPath,
-            key: ValueKey('${widget.media.assetPath}-$_attempt'),
-            fit: BoxFit.contain,
-            errorBuilder: (_, error, __) {
-              WidgetsBinding.instance.addPostFrameCallback((_) {
-                if (mounted && _error == null) setState(() => _error = error);
-              });
-              return const SizedBox.shrink();
-            },
-          );
-    return ColoredBox(
-      color: AppColors.background,
-      child: Center(child: image),
-    );
+    return DiscoverSceneStill(key: ValueKey(media.assetPath), media: media);
   }
 }
 
@@ -1131,4 +1169,14 @@ class _Failure extends StatelessWidget {
       ),
     );
   }
+}
+
+/// Share text for one slide. Preview slides are not real records, so they carry no link.
+String discoverShareText(PresentationSlide slide) {
+  final lines = <String>[slide.title, slide.partnerName];
+  if (!slide.preview && slide.advertisement == null && slide.entityId.isNotEmpty) {
+    final kind = slide.product != null ? 'product' : 'service';
+    lines.add('${MiraPublicUrls.siteBase}/discover/$kind/${Uri.encodeComponent(slide.entityId)}');
+  }
+  return lines.join('\n');
 }

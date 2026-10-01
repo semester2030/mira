@@ -74,7 +74,7 @@ void main() {
     await tester.pump();
     expect(find.text(caption), findsOneWidget);
     expect(find.textContaining('إعلان · المعلن: المعلن · الجهة: الجهة · الناشر: الناشر'), findsOneWidget);
-    expect(find.bySemanticsLabel('العد غير مفعّل'), findsOneWidget);
+    expect(find.bySemanticsLabel('المشاهدات غير مفعلة'), findsOneWidget);
     expect(find.text('0'), findsNothing);
     expect(find.text('اطلبي موعدًا'), findsNothing);
     expect(find.text('اشتري الآن'), findsNothing);

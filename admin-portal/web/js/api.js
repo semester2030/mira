@@ -99,6 +99,12 @@
     catalogPreview: (kind, id) => request('GET', `/admin/catalog-reviews/${kind}/${id}`),
     catalogDecision: (kind, id, decision, note, revision) =>
       request('POST', `/admin/catalog-reviews/${kind}/${id}/decision`, { decision, note, revision }),
+    commerceOrders: (status, q) => {
+      const params = new URLSearchParams({ limit: '50' });
+      if (status) params.set('status', status);
+      if (q) params.set('q', q);
+      return request('GET', `/admin/commerce/orders?${params}`);
+    },
     adReviews: () => request('GET', '/admin/catalog-ads'),
     adPreview: (id) => request('GET', `/admin/catalog-ads/${id}`),
     adDecision: (id, decision, note, revision) =>

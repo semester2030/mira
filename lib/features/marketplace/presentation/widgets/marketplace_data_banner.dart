@@ -40,6 +40,7 @@ class MarketplaceDataBanner extends StatelessWidget {
       (CatalogTransport.server, _) => MarketplaceCopy.serverUnmarkedBanner,
       (CatalogTransport.localCatalog, ContentMark.explicitDemo) => MarketplaceCopy.localDemoBanner,
       (CatalogTransport.localCatalog, _) => MarketplaceCopy.localUnmarkedBanner,
+      (CatalogTransport.visualPreview, _) => 'معاينة تجريبية. ليست بيانات تجار.',
     };
   }
 }

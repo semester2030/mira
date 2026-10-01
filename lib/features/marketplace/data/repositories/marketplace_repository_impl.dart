@@ -14,6 +14,8 @@ import '../datasources/marketplace_api_data_source.dart';
 import '../marketplace_local_catalog.dart';
 import '../marketplace_matching.dart';
 import '../../../../core/config/mira_api_config.dart';
+import '../../../../core/config/mira_features.dart';
+import '../discover_visual_preview_catalog.dart';
 
 class MarketplaceRepositoryImpl implements MarketplaceRepository, DiscoverCatalogGateway {
   final MarketplaceApiDataSource? _api;
@@ -159,6 +161,9 @@ class MarketplaceRepositoryImpl implements MarketplaceRepository, DiscoverCatalo
     String? cursor,
     int limit = 8,
   }) async {
+    if (MiraFeatures.discoverVisualPreview && query.lane != null) {
+      return DiscoverVisualPreviewCatalog.browse(query, cursor: cursor, limit: limit);
+    }
     if (_api == null) return _localBrowse(query, cursor: cursor, limit: limit);
     try {
       final selected = query.lane == null
@@ -252,6 +257,17 @@ class MarketplaceRepositoryImpl implements MarketplaceRepository, DiscoverCatalo
     required String id,
     required CatalogTransport? transport,
   }) async {
+    if (MiraFeatures.discoverVisualPreview && DiscoverVisualPreviewCatalog.owns(id)) {
+      final offer = DiscoverVisualPreviewCatalog.find(kind, id);
+      if (offer == null) return const CatalogRecordResult(status: CatalogRecordStatus.missing);
+      return CatalogRecordResult(
+        status: CatalogRecordStatus.ready,
+        product: offer.product,
+        service: offer.service,
+        transport: CatalogTransport.visualPreview,
+        contentMark: ContentMark.explicitDemo,
+      );
+    }
     if (_api != null && transport != CatalogTransport.localCatalog) {
       try {
         final remote = await _api.loadPublished(kind: kind, id: id);

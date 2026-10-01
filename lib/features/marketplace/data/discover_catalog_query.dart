@@ -1,3 +1,4 @@
+import '../domain/catalog_offer_media.dart';
 import '../domain/entities/catalog_product.dart';
 import '../domain/entities/catalog_service.dart';
 import 'marketplace_local_catalog.dart';
@@ -51,6 +52,8 @@ class DiscoverOffer {
   final CatalogService? service;
 
   String get cursor => '$kind:$id';
+
+  CatalogMainOfferKind? get mainOfferKind => product?.mainOfferKind ?? service?.mainOfferKind;
 }
 
 /// أناقتك is products. جمالك is clinic and salon services.

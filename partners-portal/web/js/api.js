@@ -86,6 +86,17 @@
     submitAd: (id) => request('POST', `/partners-portal/ads/${id}/submit-review`, {}),
     withdrawAd: (id) => request('POST', `/partners-portal/ads/${id}/withdraw`, {}),
     adStats: (id) => request('GET', `/partners-portal/ads/${id}/stats`),
+    commerceOrders: (query) =>
+      request('GET', `/partners/me/commerce/orders${query ? '?' + query : ''}`),
+    commerceOrder: (id) => request('GET', `/partners/me/commerce/orders/${id}`),
+    commerceOrderTransition: (id, body) =>
+      request('POST', `/partners/me/commerce/orders/${id}/transition`, body),
+    commerceCollectPayment: (id, body) =>
+      request('POST', `/partners/me/commerce/orders/${id}/collect-payment`, body || {}),
+    commerceBookings: (query) =>
+      request('GET', `/partners/me/commerce/bookings${query ? '?' + query : ''}`),
+    commerceBookingTransition: (id, body) =>
+      request('POST', `/partners/me/commerce/bookings/${id}/transition`, body),
     track: (payload) =>
       request('POST', '/partners-portal/track', payload),
     adminList: (adminKey, status) =>

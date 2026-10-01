@@ -48,7 +48,7 @@ void main() {
     expect(latch.current.count, isNull);
   });
 
-  testWidgets('disabled and failed counts do not show zero, and a confirmed zero does', (tester) async {
+  testWidgets('the eye stays without a zero count', (tester) async {
     Future<void> pump(DiscoverViewSnapshot snapshot) async {
       await tester.pumpWidget(MaterialApp(
         theme: AppTheme.lightTheme,
@@ -81,15 +81,18 @@ void main() {
     }
 
     await pump(const DiscoverViewSnapshot.disabled(targetKind: 'product', targetId: 'dress'));
-    expect(find.bySemanticsLabel('العد غير مفعّل'), findsOneWidget);
+    expect(find.bySemanticsLabel('المشاهدات غير مفعلة'), findsOneWidget);
     expect(find.text('0'), findsNothing);
+    expect(find.text('—'), findsOneWidget);
     expect(find.byIcon(Icons.visibility_outlined), findsOneWidget);
     expect(find.text('إعلان · المعلن: المعلن · الجهة: البائع'), findsOneWidget);
 
     await pump(const DiscoverViewSnapshot(state: DiscoverViewState.unavailable, targetKind: 'product', targetId: 'dress'));
     expect(find.text('0'), findsNothing);
+    expect(find.text('—'), findsWidgets);
 
     await pump(const DiscoverViewSnapshot(state: DiscoverViewState.available, targetKind: 'product', targetId: 'dress', count: 0));
-    expect(find.text('0'), findsOneWidget);
+    expect(find.text('0'), findsNothing);
+    expect(find.byIcon(Icons.visibility_outlined), findsOneWidget);
   });
 }

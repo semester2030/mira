@@ -10,6 +10,7 @@ import {
   scoreServiceMatch,
 } from './marketplace-matching.engine';
 import { publishedCatalogMediaWhere } from './catalog-published-media';
+import { publicProductCommerce, publicServiceCommerce } from './commerce-public';
 import { seedMarketplaceIfEmpty } from './marketplace.seed';
 
 export type MatchedProductDto = {
@@ -26,7 +27,7 @@ export type MatchedProductDto = {
   stepAr: string | null;
   matchScore: number;
   concernTags: string[];
-};
+} & ReturnType<typeof publicProductCommerce>;
 
 export type MatchedServiceDto = {
   id: string;
@@ -42,9 +43,8 @@ export type MatchedServiceDto = {
   priceHalalas: number;
   priceLabel: string;
   matchScore: number;
-  bookingEnabled: boolean;
   concernTags: string[];
-};
+} & ReturnType<typeof publicServiceCommerce>;
 
 export type PartnerSummaryDto = {
   id: string;
@@ -132,6 +132,7 @@ export class MarketplaceService implements OnModuleInit {
           dto.userAge,
         ),
         concernTags: p.concernTags,
+        ...publicProductCommerce(p),
       }))
       .filter((p) => p.matchScore >= 35)
       .sort((a, b) => b.matchScore - a.matchScore)
@@ -152,8 +153,8 @@ export class MarketplaceService implements OnModuleInit {
         priceHalalas: s.priceHalalas,
         priceLabel: this.formatPrice(s.priceHalalas),
         matchScore: scoreServiceMatch(s.concernTags, concerns),
-        bookingEnabled: s.bookingEnabled,
         concernTags: s.concernTags,
+        ...publicServiceCommerce(s),
       }))
       .filter((s) => s.matchScore >= 30)
       .sort((a, b) => b.matchScore - a.matchScore)
@@ -265,8 +266,11 @@ export class MarketplaceService implements OnModuleInit {
         partnerEmoji: product.partner.logoEmoji,
         concernTags: product.concernTags,
         category: product.category,
-        bookingEnabled: false,
         durationMin: null as number | null,
+        ...publicProductCommerce(product),
+        bookingEnabled: false,
+        payMode: null as string | null,
+        availabilityPresent: false,
       })),
       ...services.map((service) => ({
         kind: 'service' as const,
@@ -286,8 +290,14 @@ export class MarketplaceService implements OnModuleInit {
         partnerEmoji: service.partner.logoEmoji,
         concernTags: service.concernTags,
         category: service.category,
-        bookingEnabled: service.bookingEnabled,
         durationMin: service.durationMin,
+        ...publicServiceCommerce(service),
+        purchaseMode: null as string | null,
+        stockQty: null as number | null,
+        stockAvailable: false,
+        deliveryFeeHalalas: null as number | null,
+        optionsJson: null as unknown,
+        variantsJson: null as unknown,
       })),
     ].sort((a, b) => compareCatalogKeys(`${a.kind}:${a.id}`, `${b.kind}:${b.id}`));
 
@@ -405,6 +415,7 @@ export class MarketplaceService implements OnModuleInit {
         stepAr: p.stepAr,
         concernTags: p.concernTags,
         category: p.category,
+        ...publicProductCommerce(p),
       })),
       services: partner.services.map((s) => ({
         id: s.id,
@@ -414,9 +425,9 @@ export class MarketplaceService implements OnModuleInit {
         durationMin: s.durationMin,
         priceLabel: this.formatPrice(s.priceHalalas),
         priceHalalas: s.priceHalalas,
-        bookingEnabled: s.bookingEnabled,
         concernTags: s.concernTags,
         category: s.category,
+        ...publicServiceCommerce(s),
       })),
     };
   }
@@ -450,6 +461,7 @@ export class MarketplaceService implements OnModuleInit {
         externalUrl: product.externalUrl,
         category: product.category,
         concernTags: product.concernTags,
+        ...publicProductCommerce(product),
         media: media.map((row) => ({ kind: row.kind, url: row.url, sortOrder: row.sortOrder, isPrimary: row.isPrimary })),
       };
     }
@@ -478,8 +490,8 @@ export class MarketplaceService implements OnModuleInit {
       priceHalalas: service.priceHalalas,
       priceLabel: this.formatPrice(service.priceHalalas),
       category: service.category,
-      bookingEnabled: service.bookingEnabled,
       concernTags: service.concernTags,
+      ...publicServiceCommerce(service),
       media: media.map((row) => ({ kind: row.kind, url: row.url, sortOrder: row.sortOrder, isPrimary: row.isPrimary })),
     };
   }

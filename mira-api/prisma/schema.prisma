@@ -25,6 +25,9 @@ model User {
   consultationSessions ConsultationSession[]
   atelierRecolorAttempts AtelierRecolorAttempt[]
   catalogFavorites CatalogFavorite[]
+  commerceCart     CommerceCart?
+  commerceOrders   CommerceOrder[]
+  commerceBookings CommerceBooking[]
 
   @@map("users")
 }
@@ -139,6 +142,9 @@ model Partner {
   sourceLinks CatalogSourceLink[]
   advertisedAds CatalogAd[] @relation("AdAdvertiser")
   publishedAds  CatalogAd[] @relation("AdPublisher")
+  commerceCarts    CommerceCart[]
+  commerceOrders   CommerceOrder[]
+  commerceBookings CommerceBooking[]
 
   @@index([type, status])
   @@map("partners")
@@ -171,6 +177,15 @@ model Product {
   reviewRevision Int     @default(0) @map("review_revision")
   submittedRevision Int? @map("submitted_revision")
   catalogSource String   @default("catalog") @map("catalog_source")
+  /// external = open externalUrl (not a purchase) | internal_cod = in-Mira cart/order + cash on delivery
+  purchaseMode  String   @default("external") @map("purchase_mode")
+  /// null = unlimited / untracked
+  stockQty      Int?     @map("stock_qty")
+  reservedQty   Int      @default(0) @map("reserved_qty")
+  optionsJson   Json?    @map("options_json")
+  variantsJson  Json?    @map("variants_json")
+  /// null = fee unknown (NOT free)
+  deliveryFeeHalalas Int? @map("delivery_fee_halalas")
   createdAt     DateTime @default(now()) @map("created_at")
 
   @@index([partnerId, active])
@@ -203,6 +218,9 @@ model Service {
   reviewRevision  Int      @default(0) @map("review_revision")
   submittedRevision Int?   @map("submitted_revision")
   catalogSource   String   @default("catalog") @map("catalog_source")
+  payMode         String   @default("pay_at_venue") @map("pay_mode")
+  /// [{ weekday: 0-6 (0=Sunday), startMin, endMin, capacity }]
+  availabilityJson Json?   @map("availability_json")
   createdAt       DateTime @default(now()) @map("created_at")
 
   @@index([partnerId, active])
@@ -503,4 +521,164 @@ model AtelierRecolorAttempt {
 
   @@index([userId, createdAt(sort: Desc)])
   @@map("atelier_recolor_attempts")
+}
+
+/// One open cart per user. A cart belongs to a single partner.
+model CommerceCart {
+  id        String   @id @default(uuid())
+  userId    String   @unique @map("user_id")
+  user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  partnerId String?  @map("partner_id")
+  partner   Partner? @relation(fields: [partnerId], references: [id], onDelete: SetNull)
+  updatedAt DateTime @updatedAt @map("updated_at")
+
+  items CommerceCartItem[]
+
+  @@map("commerce_carts")
+}
+
+model CommerceCartItem {
+  id             String       @id @default(uuid())
+  cartId         String       @map("cart_id")
+  cart           CommerceCart @relation(fields: [cartId], references: [id], onDelete: Cascade)
+  productId      String       @map("product_id")
+  variantKey     String       @default("") @map("variant_key")
+  selectionsJson Json?        @map("selections_json")
+  quantity       Int
+  createdAt      DateTime     @default(now()) @map("created_at")
+
+  @@unique([cartId, productId, variantKey])
+  @@map("commerce_cart_items")
+}
+
+/// Cash-on-delivery order. fulfillmentStatus, deliveryStatus and paymentCollectionStatus are independent axes.
+model CommerceOrder {
+  id           String  @id @default(uuid())
+  publicNumber String  @unique @map("public_number")
+  userId       String  @map("user_id")
+  user         User    @relation(fields: [userId], references: [id], onDelete: Cascade)
+  partnerId    String  @map("partner_id")
+  partner      Partner @relation(fields: [partnerId], references: [id])
+
+  /// new | accepted | preparing | out_for_delivery | delivered | rejected | cancelled | failed_delivery
+  fulfillmentStatus       String    @default("new") @map("fulfillment_status")
+  /// pending | out_for_delivery | delivered | failed | none
+  deliveryStatus          String    @default("pending") @map("delivery_status")
+  /// cod
+  paymentMethod           String    @default("cod") @map("payment_method")
+  /// uncollected | collected | waived
+  paymentCollectionStatus String    @default("uncollected") @map("payment_collection_status")
+  collectionActor         String?   @map("collection_actor")
+  collectedAt             DateTime? @map("collected_at")
+
+  subtotalHalalas    Int    @map("subtotal_halalas")
+  /// null = delivery fee unknown at order time
+  deliveryFeeHalalas Int?   @map("delivery_fee_halalas")
+  totalHalalas       Int    @map("total_halalas")
+  currency           String @default("SAR")
+
+  contactName  String  @map("contact_name")
+  contactPhone String  @map("contact_phone")
+  addressLine  String  @map("address_line")
+  city         String
+  notes        String?
+
+  idempotencyKey  String?  @map("idempotency_key")
+  clientRequestId String?  @map("client_request_id")
+  createdAt       DateTime @default(now()) @map("created_at")
+  updatedAt       DateTime @updatedAt @map("updated_at")
+
+  items  CommerceOrderItem[]
+  events CommerceOrderEvent[]
+
+  @@unique([userId, idempotencyKey])
+  @@index([partnerId, createdAt(sort: Desc)])
+  @@index([userId, createdAt(sort: Desc)])
+  @@map("commerce_orders")
+}
+
+model CommerceOrderItem {
+  id               String        @id @default(uuid())
+  orderId          String        @map("order_id")
+  order            CommerceOrder @relation(fields: [orderId], references: [id], onDelete: Cascade)
+  productId        String        @map("product_id")
+  productNameAr    String        @map("product_name_ar")
+  variantKey       String        @default("") @map("variant_key")
+  selectionsJson   Json?         @map("selections_json")
+  unitPriceHalalas Int           @map("unit_price_halalas")
+  quantity         Int
+  lineTotalHalalas Int           @map("line_total_halalas")
+  /// Units held against Product.reservedQty at order create (0 when stock is untracked).
+  reservedQty      Int           @default(0) @map("reserved_qty")
+  /// none | reserved | released | consumed — guards against double release.
+  stockState       String        @default("none") @map("stock_state")
+
+  @@index([orderId])
+  @@map("commerce_order_items")
+}
+
+model CommerceOrderEvent {
+  id         String        @id @default(uuid())
+  orderId    String        @map("order_id")
+  order      CommerceOrder @relation(fields: [orderId], references: [id], onDelete: Cascade)
+  /// customer | partner | admin | system
+  actorType  String        @map("actor_type")
+  actorId    String?       @map("actor_id")
+  fromStatus String?       @map("from_status")
+  toStatus   String?       @map("to_status")
+  /// fulfillment | delivery | payment | note
+  field      String
+  note       String?
+  createdAt  DateTime      @default(now()) @map("created_at")
+
+  @@index([orderId, createdAt])
+  @@map("commerce_order_events")
+}
+
+/// Independent service booking. Customer pays at the venue; Mira does not collect.
+model CommerceBooking {
+  id             String   @id @default(uuid())
+  publicNumber   String   @unique @map("public_number")
+  userId         String   @map("user_id")
+  user           User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  partnerId      String   @map("partner_id")
+  partner        Partner  @relation(fields: [partnerId], references: [id])
+  serviceId      String   @map("service_id")
+  serviceNameAr  String   @map("service_name_ar")
+  branchLabel    String?  @map("branch_label")
+  startsAt       DateTime @map("starts_at")
+  endsAt         DateTime @map("ends_at")
+  durationMin    Int      @map("duration_min")
+  priceHalalas   Int      @map("price_halalas")
+  payMode        String   @default("pay_at_venue") @map("pay_mode")
+  /// requested | confirmed | completed | cancelled | rejected
+  status         String   @default("requested")
+  contactName    String   @map("contact_name")
+  contactPhone   String   @map("contact_phone")
+  notes          String?
+  idempotencyKey String?  @map("idempotency_key")
+  createdAt      DateTime @default(now()) @map("created_at")
+  updatedAt      DateTime @updatedAt @map("updated_at")
+
+  events CommerceBookingEvent[]
+
+  @@unique([userId, idempotencyKey])
+  @@index([partnerId, serviceId, startsAt])
+  @@index([userId, createdAt(sort: Desc)])
+  @@map("commerce_bookings")
+}
+
+model CommerceBookingEvent {
+  id         String          @id @default(uuid())
+  bookingId  String          @map("booking_id")
+  booking    CommerceBooking @relation(fields: [bookingId], references: [id], onDelete: Cascade)
+  actorType  String          @map("actor_type")
+  actorId    String?         @map("actor_id")
+  fromStatus String?         @map("from_status")
+  toStatus   String?         @map("to_status")
+  note       String?
+  createdAt  DateTime        @default(now()) @map("created_at")
+
+  @@index([bookingId, createdAt])
+  @@map("commerce_booking_events")
 }

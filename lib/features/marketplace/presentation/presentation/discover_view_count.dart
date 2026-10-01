@@ -1,3 +1,5 @@
+import 'dart:ui';
+
 import 'package:flutter/material.dart';
 
 import '../../../../shared/theme/colors.dart';
@@ -27,10 +29,17 @@ class DiscoverViewSnapshot {
   final int generation;
 
   String get label => switch (state) {
-        DiscoverViewState.disabled => 'العد غير مفعّل',
+        DiscoverViewState.disabled => 'المشاهدات غير مفعلة',
         DiscoverViewState.loading => 'جارٍ جلب العدد',
-        DiscoverViewState.available => '${count ?? 0}',
+        DiscoverViewState.available => (count != null && count! > 0) ? '$count' : 'العدد غير متاح',
         DiscoverViewState.unavailable => 'تعذر جلب العدد',
+      };
+
+  String get displayMark => switch (state) {
+        DiscoverViewState.disabled => '—',
+        DiscoverViewState.loading => '',
+        DiscoverViewState.available => (count != null && count! > 0) ? '$count' : '—',
+        DiscoverViewState.unavailable => '—',
       };
 }
 
@@ -74,35 +83,60 @@ class DiscoverViewLatch {
   }
 }
 
+/// Eye badge for the mid-right interaction column. Zero is never shown as a real count.
 class DiscoverViewBadge extends StatelessWidget {
-  const DiscoverViewBadge({super.key, required this.snapshot, required this.onTap});
+  const DiscoverViewBadge({super.key, required this.snapshot, this.onTap});
 
   final DiscoverViewSnapshot snapshot;
-  final VoidCallback onTap;
+  final VoidCallback? onTap;
 
   @override
   Widget build(BuildContext context) {
-    final showNumber = snapshot.state == DiscoverViewState.available && snapshot.count != null;
+    final showNumber = snapshot.state == DiscoverViewState.available && snapshot.count != null && snapshot.count! > 0;
+    final interactive = onTap != null;
+    final mark = showNumber ? '${snapshot.count}' : snapshot.displayMark;
+
+    final body = Column(
+      mainAxisSize: MainAxisSize.min,
+      children: [
+        if (snapshot.state == DiscoverViewState.loading)
+          const SizedBox(
+            width: 12,
+            height: 12,
+            child: CircularProgressIndicator(strokeWidth: 2),
+          )
+        else
+          Text(
+            mark.isEmpty ? '—' : mark,
+            style: AppTypography.labelSmall.copyWith(color: AppColors.textPrimary),
+          ),
+        const SizedBox(height: 2),
+        Icon(Icons.visibility_outlined, color: AppColors.textPrimary, size: 20),
+      ],
+    );
+
     return Semantics(
+      container: true,
       label: snapshot.label,
-      button: true,
-      child: InkWell(
-        onTap: onTap,
-        child: Row(
-          mainAxisSize: MainAxisSize.min,
-          children: [
-            if (showNumber)
-              Padding(
-                padding: const EdgeInsetsDirectional.only(end: 4),
-                child: Text('${snapshot.count}', style: AppTypography.labelSmall.copyWith(color: AppColors.textPrimary)),
+      button: interactive,
+      child: ExcludeSemantics(
+        child: ClipOval(
+          child: BackdropFilter(
+            filter: ImageFilter.blur(sigmaX: 6, sigmaY: 6),
+            child: Material(
+              color: AppColors.glassFill.withValues(alpha: 0.45),
+              shape: CircleBorder(side: BorderSide(color: AppColors.border.withValues(alpha: 0.55))),
+              child: InkWell(
+                customBorder: const CircleBorder(),
+                onTap: onTap,
+                child: SizedBox(
+                  width: 44,
+                  height: 52,
+                  child: Center(child: body),
+                ),
               ),
-            if (snapshot.state == DiscoverViewState.loading)
-              const Padding(
-                padding: EdgeInsetsDirectional.only(end: 4),
-                child: SizedBox(width: 12, height: 12, child: CircularProgressIndicator(strokeWidth: 2)),
-              ),
-            Icon(Icons.visibility_outlined, color: AppColors.textPrimary, size: 20),
-          ],
+            ),
+          ),
         ),
       ),
     );

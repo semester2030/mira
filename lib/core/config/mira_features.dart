@@ -45,6 +45,14 @@ abstract final class MiraFeatures {
     defaultValue: false,
   );
 
+  /// Explicit visual samples for أناقتك and جمالك.
+  /// Default false. An API failure must not turn this on.
+  /// Test launch: `--dart-define=MIRA_DISCOVER_VISUAL_PREVIEW=true`
+  static const bool discoverVisualPreview = bool.fromEnvironment(
+    'MIRA_DISCOVER_VISUAL_PREVIEW',
+    defaultValue: false,
+  );
+
   /// AT-3 / PROD-FINAL-1 — Build inclusion for Fashion Advisor route.
   /// Default `false`. Release binary may set dart-define true for inclusion.
   /// Runtime server entitlement `fashionAdvisorModeB` is also required

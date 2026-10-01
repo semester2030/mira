@@ -1,6 +1,7 @@
 import {
   IsArray,
   IsBoolean,
+  IsIn,
   IsInt,
   IsOptional,
   IsString,
@@ -61,6 +62,30 @@ export class UpsertProductDto {
   @IsOptional()
   @IsBoolean()
   active?: boolean;
+
+  @IsOptional()
+  @IsIn(['external', 'internal_cod'])
+  purchaseMode?: string;
+
+  /** null = stock not tracked. */
+  @IsOptional()
+  @IsInt()
+  @Min(0)
+  stockQty?: number | null;
+
+  /** null = delivery fee unknown (never shown as free). */
+  @IsOptional()
+  @IsInt()
+  @Min(0)
+  deliveryFeeHalalas?: number | null;
+
+  @IsOptional()
+  @IsArray()
+  optionsJson?: unknown[] | null;
+
+  @IsOptional()
+  @IsArray()
+  variantsJson?: unknown[] | null;
 }
 
 export class UpdateProductDto {
@@ -111,6 +136,30 @@ export class UpdateProductDto {
   @IsString()
   @MaxLength(80)
   stepAr?: string | null;
+
+  @IsOptional()
+  @IsIn(['external', 'internal_cod'])
+  purchaseMode?: string;
+
+  /** null = stock not tracked. */
+  @IsOptional()
+  @IsInt()
+  @Min(0)
+  stockQty?: number | null;
+
+  /** null = delivery fee unknown (never shown as free). */
+  @IsOptional()
+  @IsInt()
+  @Min(0)
+  deliveryFeeHalalas?: number | null;
+
+  @IsOptional()
+  @IsArray()
+  optionsJson?: unknown[] | null;
+
+  @IsOptional()
+  @IsArray()
+  variantsJson?: unknown[] | null;
 }
 
 export class UpdateServiceDto {
@@ -150,6 +199,17 @@ export class UpdateServiceDto {
   @IsString()
   @MaxLength(40)
   category?: string;
+
+  @IsOptional()
+  @IsBoolean()
+  bookingEnabled?: boolean;
+
+  @IsOptional()
+  @IsString()
+  payMode?: string;
+
+  @IsOptional()
+  availabilityJson?: object | null;
 }
 
 export class UpsertServiceDto {
@@ -192,6 +252,13 @@ export class UpsertServiceDto {
   @IsOptional()
   @IsBoolean()
   bookingEnabled?: boolean;
+
+  @IsOptional()
+  @IsString()
+  payMode?: string;
+
+  @IsOptional()
+  availabilityJson?: object | null;
 
   @IsOptional()
   @IsBoolean()

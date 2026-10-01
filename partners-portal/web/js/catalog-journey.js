@@ -12,6 +12,20 @@
     ['makeup', 'المكياج'],
     ['nails', 'الأظافر'],
     ['care', 'العناية'],
+    ['laser', 'الليزر'],
+    ['teeth', 'الأسنان'],
+  ];
+  const CLINIC_CATEGORIES = [
+    ['skin', 'البشرة'],
+    ['hair', 'الشعر'],
+    ['laser', 'الليزر'],
+    ['teeth', 'الأسنان'],
+  ];
+  const SALON_CATEGORIES = [
+    ['hair', 'الشعر'],
+    ['makeup', 'المكياج'],
+    ['nails', 'الأظافر'],
+    ['care', 'العناية'],
   ];
   const IMAGE_TYPES = ['image/jpeg', 'image/png', 'image/webp'];
   const staged = { catalogForm: [], serviceForm: [] };
@@ -213,7 +227,9 @@
     const nameAr = field(basics, 'الاسم', 'nameAr', editing ? (item.draftNameAr || item.nameAr) : '', 'text');
     field(basics, 'الاسم بالإنجليزية (اختياري)', 'nameEn', editing ? (item.draftNameEn != null ? item.draftNameEn : (item.nameEn || '')) : '', 'text');
     field(basics, 'الوصف', 'descriptionAr', editing ? (item.draftDescriptionAr != null ? item.draftDescriptionAr : (item.descriptionAr || '')) : '', 'textarea');
-    const categories = type === 'brand' ? PRODUCT_CATEGORIES : SERVICE_CATEGORIES;
+    const categories = type === 'brand'
+      ? PRODUCT_CATEGORIES
+      : (type === 'clinic' ? CLINIC_CATEGORIES : (type === 'salon' ? SALON_CATEGORIES : SERVICE_CATEGORIES));
     const category = selectField(basics, 'التصنيف', 'category', editing ? (item.category || '') : '', categories);
     const price = field(basics, 'السعر بالريال', 'priceSar', editing ? halalasToInput(item.priceHalalas) : '', 'text');
     price.inputMode = 'decimal';
@@ -225,13 +241,264 @@
     if (type === 'brand') basics.appendChild(cosmetic);
 
     let duration = null;
+    let bookingToggle = null;
+    let availabilityJson = null;
     if (type !== 'brand') {
       duration = field(basics, 'المدة بالدقائق (اختياري)', 'durationMin', editing && item.durationMin ? item.durationMin : '', 'number');
       duration.min = '5';
       const partner = window.sessionPartner || {};
       text(basics, 'الفرع والمدينة المسجّلة: ' + (partner.city || 'غير مسجّلة') + '. لا توجد إحداثيات فرع.');
       text(basics, partner.contactPhone ? 'وسيلة التواصل: ' + partner.contactPhone : 'لا توجد وسيلة تواصل مسجّلة على حساب الجهة.');
+      const bookingWrap = document.createElement('label');
+      bookingWrap.className = 'check-row';
+      bookingToggle = document.createElement('input');
+      bookingToggle.type = 'checkbox';
+      bookingToggle.name = 'bookingEnabled';
+      bookingToggle.checked = Boolean(editing && item.bookingEnabled);
+      bookingWrap.append(bookingToggle, document.createTextNode(' تفعيل طلب الموعد داخل ميرا (بانتظار قبول الجهة)'));
+      basics.appendChild(bookingWrap);
+      text(basics, 'الدفع لدى الجهة عند الموعد. لا تُطبَّق عبارة الدفع عند الاستلام الخاصة بالمنتجات على الخدمات.');
+      availabilityJson = field(
+        basics,
+        'جدول التوفر JSON (اختياري)',
+        'availabilityJson',
+        editing && item.availabilityJson ? JSON.stringify(item.availabilityJson) : '[{"weekday":0,"startMin":540,"endMin":1020,"capacity":1},{"weekday":1,"startMin":540,"endMin":1020,"capacity":1},{"weekday":2,"startMin":540,"endMin":1020,"capacity":1},{"weekday":3,"startMin":540,"endMin":1020,"capacity":1},{"weekday":4,"startMin":540,"endMin":1020,"capacity":1}]',
+        'textarea',
+      );
+      text(basics, 'weekday: 0=الأحد … 6=السبت. startMin/endMin من منتصف الليل بتوقيت الرياض. capacity=عدد الحجوزات المتزامنة.');
     }
+
+    const templateSection = document.createElement('div');
+    templateSection.className = 'form-section';
+    templateSection.hidden = type === 'brand';
+    text(templateSection, 'قالب الخدمة وخصائصها', 'h3');
+    text(templateSection, 'الحقول تتغير حسب نوع الخدمة. لا تُحدد الخدمات المشمولة أو المتطلبات تلقائيًا. الحفظ المحلي للخصائص حتى يتوفر تخزين دائم للحقول.');
+    const templateSelect = document.createElement('select');
+    templateSelect.name = 'serviceTemplateId';
+    const templateBody = document.createElement('div');
+    const templatePreview = document.createElement('div');
+    templatePreview.className = 'options-preview';
+    templateSection.append(templateSelect, templateBody, templatePreview);
+    // inserted before media once mediaSection exists
+
+    const templateState = loadServiceTemplateDraft(editing ? item.id : null);
+
+    function loadServiceTemplateDraft(id) {
+      try {
+        const raw = localStorage.getItem('mira-service-template:' + (id || 'new'));
+        if (!raw) return { templateId: '', answers: {}, priceMode: 'fixed' };
+        return Object.assign({ templateId: '', answers: {}, priceMode: 'fixed' }, JSON.parse(raw));
+      } catch (error) {
+        return { templateId: '', answers: {}, priceMode: 'fixed' };
+      }
+    }
+
+    function saveServiceTemplateDraft() {
+      const key = 'mira-service-template:' + ((item && item.id) || 'new');
+      localStorage.setItem(key, JSON.stringify(templateState));
+    }
+
+    function partnerTypeForTemplates() {
+      if (type === 'clinic' || type === 'salon') return type;
+      const partner = window.sessionPartner || {};
+      return partner.type === 'clinic' ? 'clinic' : 'salon';
+    }
+
+    function paintServiceTemplates() {
+      templateBody.replaceChildren();
+      templatePreview.replaceChildren();
+      if (type === 'brand' || !window.ServiceTemplates) {
+        templateSection.hidden = true;
+        return;
+      }
+      templateSection.hidden = false;
+      const list = window.ServiceTemplates.forPartner(partnerTypeForTemplates(), category.value);
+      templateSelect.replaceChildren();
+      const empty = document.createElement('option');
+      empty.value = '';
+      empty.textContent = 'اختاري نوع الخدمة (القالب)';
+      templateSelect.appendChild(empty);
+      list.forEach((tpl) => {
+        const opt = document.createElement('option');
+        opt.value = tpl.id;
+        opt.textContent = tpl.label;
+        if (tpl.id === templateState.templateId) opt.selected = true;
+        templateSelect.appendChild(opt);
+      });
+      const selected = window.ServiceTemplates.byId(templateSelect.value);
+      if (!selected) {
+        text(templateBody, 'اختاري قالبًا مناسبًا لتصنيف الخدمة. القالب لا يمنح صلاحية نشاط غير مصرح.');
+        return;
+      }
+      if (!nameAr.value.trim()) nameAr.value = selected.suggestedName;
+      const priceMode = selectField(templateBody, 'طريقة عرض السعر', 'priceMode', templateState.priceMode || 'fixed', [
+        ['fixed', 'سعر ثابت'],
+        ['from', 'يبدأ من'],
+        ['afterAssessment', 'يُحدد بعد التقييم'],
+        ['unknown', 'غير محدد'],
+      ]);
+      priceMode.onchange = () => {
+        templateState.priceMode = priceMode.value;
+        saveServiceTemplateDraft();
+        paintTemplatePreview(selected);
+      };
+      window.ServiceTemplates.sections.forEach((section) => {
+        const fields = selected.fields.filter((f) => f.sectionId === section.id && window.ServiceTemplates.isVisible(f, templateState.answers));
+        if (!fields.length) return;
+        const block = document.createElement('div');
+        block.className = 'option-group';
+        text(block, section.title, 'h4');
+        fields.forEach((f) => {
+          renderTemplateField(block, f);
+        });
+        templateBody.appendChild(block);
+      });
+      paintTemplatePreview(selected);
+    }
+
+    function renderTemplateField(parent, f) {
+      const wrap = document.createElement('div');
+      wrap.style.marginBottom = '0.6rem';
+      text(wrap, f.label + (f.required ? ' *' : ''));
+      const current = templateState.answers[f.id];
+      if (f.type === 'single') {
+        const row = document.createElement('div');
+        row.className = 'choice-row';
+        f.options.forEach((opt) => {
+          const label = document.createElement('label');
+          const input = document.createElement('input');
+          input.type = 'radio';
+          input.name = 'tpl-' + f.id;
+          input.value = opt[0];
+          input.checked = current === opt[0];
+          input.onchange = () => {
+            templateState.answers[f.id] = opt[0];
+            saveServiceTemplateDraft();
+            paintServiceTemplates();
+          };
+          label.append(input, document.createTextNode(' ' + opt[1]));
+          row.appendChild(label);
+        });
+        wrap.appendChild(row);
+      } else if (f.type === 'multi') {
+        const row = document.createElement('div');
+        row.className = 'choice-row';
+        const selected = Array.isArray(current) ? current.slice() : [];
+        f.options.forEach((opt) => {
+          const label = document.createElement('label');
+          const input = document.createElement('input');
+          input.type = 'checkbox';
+          input.checked = selected.indexOf(opt[0]) >= 0;
+          input.onchange = () => {
+            const list = Array.isArray(templateState.answers[f.id]) ? templateState.answers[f.id].slice() : [];
+            const at = list.indexOf(opt[0]);
+            if (input.checked && at < 0) list.push(opt[0]);
+            if (!input.checked && at >= 0) list.splice(at, 1);
+            templateState.answers[f.id] = list;
+            saveServiceTemplateDraft();
+            paintTemplatePreview(window.ServiceTemplates.byId(templateSelect.value));
+          };
+          label.append(input, document.createTextNode(' ' + opt[1]));
+          row.appendChild(label);
+        });
+        wrap.appendChild(row);
+      } else if (f.type === 'boolean') {
+        const row = document.createElement('div');
+        row.className = 'choice-row';
+        ;[['true', 'نعم'], ['false', 'لا']].forEach((opt) => {
+          const label = document.createElement('label');
+          const input = document.createElement('input');
+          input.type = 'radio';
+          input.name = 'tpl-' + f.id;
+          input.value = opt[0];
+          input.checked = String(current) === opt[0] || current === (opt[0] === 'true');
+          input.onchange = () => {
+            templateState.answers[f.id] = opt[0] === 'true';
+            saveServiceTemplateDraft();
+            paintServiceTemplates();
+          };
+          label.append(input, document.createTextNode(' ' + opt[1]));
+          row.appendChild(label);
+        });
+        wrap.appendChild(row);
+      } else if (f.type === 'number') {
+        const input = document.createElement('input');
+        input.type = 'number';
+        input.min = '1';
+        input.value = current == null ? '' : current;
+        input.oninput = () => {
+          templateState.answers[f.id] = input.value === '' ? null : Number(input.value);
+          saveServiceTemplateDraft();
+          paintTemplatePreview(window.ServiceTemplates.byId(templateSelect.value));
+        };
+        wrap.appendChild(input);
+        if (f.unit) text(wrap, f.unit);
+      } else {
+        const input = document.createElement('textarea');
+        input.rows = 2;
+        input.value = current == null ? '' : String(current);
+        input.oninput = () => {
+          templateState.answers[f.id] = input.value;
+          saveServiceTemplateDraft();
+          paintTemplatePreview(window.ServiceTemplates.byId(templateSelect.value));
+        };
+        wrap.appendChild(input);
+      }
+      parent.appendChild(wrap);
+    }
+
+    function paintTemplatePreview(selected) {
+      templatePreview.replaceChildren();
+      if (!selected) return;
+      text(templatePreview, 'معاينة أقسام التفاصيل', 'h4');
+      window.ServiceTemplates.sections.forEach((section) => {
+        const fields = selected.fields.filter((f) => f.sectionId === section.id && window.ServiceTemplates.isVisible(f, templateState.answers));
+        const filled = fields.filter((f) => {
+          const v = templateState.answers[f.id];
+          return v != null && v !== '' && !(Array.isArray(v) && !v.length);
+        });
+        if (!filled.length) return;
+        text(templatePreview, section.title);
+        filled.forEach((f) => {
+          const v = templateState.answers[f.id];
+          let label = v;
+          if (Array.isArray(v)) {
+            label = v.map((id) => {
+              const opt = (f.options || []).find((row) => row[0] === id);
+              return opt ? opt[1] : id;
+            }).join('، ');
+          } else if (typeof v === 'boolean') {
+            label = v ? 'نعم' : 'لا';
+          } else if (f.options && f.options.length) {
+            const opt = f.options.find((row) => row[0] === v);
+            if (opt) label = opt[1];
+          }
+          text(templatePreview, f.label + ': ' + label);
+        });
+      });
+      text(templatePreview, 'طريقة السعر: ' + (templateState.priceMode || 'fixed') + ' · الخصائص تُحفظ محليًا مع المسودة.');
+    }
+
+    templateSelect.onchange = () => {
+      const previous = templateState.templateId;
+      templateState.templateId = templateSelect.value;
+      if (previous && previous !== templateState.templateId) {
+        status.textContent = 'تغيّر القالب. راجعي الإجابات القديمة غير المنطبقة قبل الإرسال.';
+      }
+      const selected = window.ServiceTemplates.byId(templateSelect.value);
+      if (selected && (!nameAr.value.trim() || nameAr.value === (window.ServiceTemplates.byId(previous) || {}).suggestedName)) {
+        nameAr.value = selected.suggestedName;
+      }
+      saveServiceTemplateDraft();
+      paintServiceTemplates();
+    };
+
+    const previousCategoryOnChange = category.onchange;
+    category.onchange = function () {
+      if (previousCategoryOnChange) previousCategoryOnChange();
+      if (type !== 'brand') paintServiceTemplates();
+    };
+    if (type !== 'brand') paintServiceTemplates();
 
     const mediaSection = document.createElement('div');
     mediaSection.className = 'form-section';
@@ -252,6 +519,7 @@
     const mediaBox = document.createElement('div');
     mediaSection.append(imageLabel, images, videoLabel, videos, mediaBox);
     form.appendChild(mediaSection);
+    form.insertBefore(templateSection, mediaSection);
 
     const detail = document.createElement('div');
     detail.className = 'form-section';
@@ -264,6 +532,11 @@
     text(action, 'الإجراء', 'h3');
     form.appendChild(action);
     let url = null;
+    let internalToggle = null;
+    let stockInput = null;
+    let feeInput = null;
+    let optionsJsonInput = null;
+    let variantsJsonInput = null;
     if (type === 'brand') {
       const choices = document.createElement('div');
       choices.className = 'choice-row';
@@ -272,6 +545,26 @@
       url = field(action, 'رابط الشراء (فقط عند اختيار الرابط)', 'externalUrl', editing && item.externalUrl ? item.externalUrl : '', 'url');
       url.required = false;
       if (editing && validUrl(item.externalUrl)) choices.querySelector('input[value="link"]').checked = true;
+
+      // Operational commerce: in-Mira cart + cash on delivery. External URL stays the default.
+      text(action, 'الشراء داخل ميرا (الدفع عند الاستلام)', 'h4');
+      const internal = document.createElement('label');
+      internalToggle = document.createElement('input');
+      internalToggle.type = 'checkbox';
+      internalToggle.name = 'internalCod';
+      internalToggle.checked = Boolean(editing && item.purchaseMode === 'internal_cod');
+      internal.append(internalToggle, document.createTextNode(' تفعيل الطلب داخل ميرا (دفع نقدًا عند الاستلام). رابط الشراء الخارجي يبقى للمنتجات الخارجية فقط.'));
+      action.appendChild(internal);
+      stockInput = field(action, 'المخزون (اتركيه فارغًا إذا لا يُتتبع)', 'stockQty', editing && item.stockQty != null ? item.stockQty : '', 'number');
+      stockInput.min = '0';
+      stockInput.step = '1';
+      feeInput = field(action, 'رسوم التوصيل بالريال (اتركيها فارغة إذا غير محددة، ولا تُعرض كمجانية)', 'deliveryFeeSar', editing && item.deliveryFeeHalalas != null ? halalasToInput(item.deliveryFeeHalalas) : '', 'text');
+      feeInput.inputMode = 'decimal';
+      optionsJsonInput = field(action, 'خيارات المنتج JSON (اختياري، متقدم)', 'optionsJson', editing && item.optionsJson ? JSON.stringify(item.optionsJson) : '', 'textarea');
+      optionsJsonInput.placeholder = '[{"id":"size","labelAr":"المقاس","kind":"size","values":[{"id":"m","labelAr":"M"}]}]';
+      variantsJsonInput = field(action, 'التركيبات JSON (اختياري، متقدم)', 'variantsJson', editing && item.variantsJson ? JSON.stringify(item.variantsJson) : '', 'textarea');
+      variantsJsonInput.placeholder = '[{"id":"m-black","selections":{"size":"m"},"priceHalalas":5200,"available":true}]';
+      text(action, 'الطلب داخل ميرا يتطلب سعرًا أكبر من صفر. تغيير هذه الحقول يسري مباشرة على المنتج المنشور ولا يمر بمراجعة المحتوى.');
     }
 
     const preview = document.createElement('div');
@@ -306,8 +599,162 @@
       cosmetic.hidden = !show;
       return show;
     }
-    category.onchange = cosmeticVisible;
+    category.onchange = function () {
+      cosmeticVisible();
+      if (type === 'brand') paintOptions();
+      else paintServiceTemplates();
+    };
     cosmeticVisible();
+
+    const optionsSection = document.createElement('div');
+    optionsSection.className = 'form-section';
+    optionsSection.hidden = type !== 'brand';
+    text(optionsSection, 'خيارات المنتج', 'h3');
+    text(optionsSection, 'الحقول تتغير حسب التصنيف. الخيارات الجاهزة اقتراحات فقط وليست محددة تلقائيًا. التركيبات المتاحة تُختار يدويًا دون إنشاء كل الاحتمالات.');
+    const optionsBody = document.createElement('div');
+    const optionsPreview = document.createElement('div');
+    optionsPreview.className = 'options-preview';
+    optionsSection.append(optionsBody, optionsPreview);
+    form.insertBefore(optionsSection, mediaSection);
+
+    const optionsState = loadOptionsDraft(editing ? item.id : null);
+
+    function optionPresets(cat) {
+      if (cat === 'clothes') {
+        return {
+          groups: [
+            { id: 'size', label: 'المقاس', kind: 'size', presets: ['XS', 'S', 'M', 'L', 'XL'] },
+            { id: 'color', label: 'اللون', kind: 'color', presets: [] },
+          ],
+          traits: ['الخامة', 'العناية', 'دليل المقاسات'],
+        };
+      }
+      if (cat === 'face' || cat === 'body' || cat === 'hair') {
+        return {
+          groups: [{ id: 'volume', label: 'الحجم', kind: 'volume', presets: ['50 مل', '100 مل'] }],
+          traits: ['المكونات', 'طريقة الاستخدام', 'الخامة'],
+        };
+      }
+      if (cat === 'accessories') {
+        return {
+          groups: [{ id: 'finish', label: 'التشطيب', kind: 'finish', presets: ['ذهبي', 'فضي'] }],
+          traits: ['الخامة', 'الأبعاد'],
+        };
+      }
+      return { groups: [], traits: [] };
+    }
+
+    function loadOptionsDraft(id) {
+      try {
+        const raw = localStorage.getItem('mira-product-options:' + (id || 'new'));
+        if (!raw) return { selected: {}, customs: {}, variantsText: '', traits: {} };
+        return Object.assign({ selected: {}, customs: {}, variantsText: '', traits: {} }, JSON.parse(raw));
+      } catch (error) {
+        return { selected: {}, customs: {}, variantsText: '', traits: {} };
+      }
+    }
+
+    function saveOptionsDraft() {
+      const key = 'mira-product-options:' + ((item && item.id) || 'new');
+      localStorage.setItem(key, JSON.stringify(optionsState));
+    }
+
+    function paintOptions() {
+      optionsBody.replaceChildren();
+      optionsPreview.replaceChildren();
+      if (type !== 'brand') {
+        optionsSection.hidden = true;
+        return;
+      }
+      optionsSection.hidden = false;
+      const preset = optionPresets(category.value);
+      if (!preset.groups.length && !preset.traits.length) {
+        text(optionsBody, 'هذا التصنيف لا يحتاج خيارات مقاس أو لون أو حجم.');
+        return;
+      }
+      preset.groups.forEach((group) => {
+        const block = document.createElement('div');
+        block.className = 'option-group';
+        text(block, group.label, 'h4');
+        const chips = document.createElement('div');
+        chips.className = 'choice-row';
+        if (!optionsState.selected[group.id]) optionsState.selected[group.id] = [];
+        group.presets.forEach((label) => {
+          const wrap = document.createElement('label');
+          const input = document.createElement('input');
+          input.type = 'checkbox';
+          input.checked = optionsState.selected[group.id].indexOf(label) >= 0;
+          input.onchange = () => {
+            const list = optionsState.selected[group.id];
+            const at = list.indexOf(label);
+            if (input.checked && at < 0) list.push(label);
+            if (!input.checked && at >= 0) list.splice(at, 1);
+            saveOptionsDraft();
+            paintOptionsPreview();
+          };
+          wrap.append(input, document.createTextNode(' ' + label));
+          chips.appendChild(wrap);
+        });
+        block.appendChild(chips);
+        const custom = field(block, 'قيم خاصة (افصلي بفاصلة)', 'custom-' + group.id, optionsState.customs[group.id] || '', 'text');
+        custom.oninput = () => {
+          optionsState.customs[group.id] = custom.value;
+          saveOptionsDraft();
+          paintOptionsPreview();
+        };
+        optionsBody.appendChild(block);
+      });
+      if (preset.traits.length) {
+        const traitBox = document.createElement('details');
+        text(traitBox, 'تفاصيل إضافية (خصائص وصفية)', 'summary');
+        preset.traits.forEach((key) => {
+          const input = field(traitBox, key, 'trait-' + key, optionsState.traits[key] || '', 'text');
+          input.oninput = () => {
+            optionsState.traits[key] = input.value;
+            saveOptionsDraft();
+            paintOptionsPreview();
+          };
+        });
+        optionsBody.appendChild(traitBox);
+      }
+      const variants = field(optionsBody, 'التركيبات المتاحة (سطر لكل تركيبة، مثال: وردي|M)', 'variantsText', optionsState.variantsText || '', 'textarea');
+      variants.placeholder = 'وردي|M\nأسود|S\nأسود|L';
+      variants.oninput = () => {
+        optionsState.variantsText = variants.value;
+        saveOptionsDraft();
+        paintOptionsPreview();
+      };
+      paintOptionsPreview();
+    }
+
+    function paintOptionsPreview() {
+      optionsPreview.replaceChildren();
+      text(optionsPreview, 'معاينة الظهور في التفاصيل', 'h4');
+      const preset = optionPresets(category.value);
+      preset.groups.forEach((group) => {
+        const selected = (optionsState.selected[group.id] || []).slice();
+        String(optionsState.customs[group.id] || '').split(',').map((part) => part.trim()).filter(Boolean).forEach((part) => {
+          if (selected.indexOf(part) < 0) selected.push(part);
+        });
+        if (!selected.length) return;
+        text(optionsPreview, group.label);
+        const row = document.createElement('div');
+        row.className = 'choice-row';
+        selected.forEach((label) => {
+          const chip = document.createElement('span');
+          chip.className = 'option-chip';
+          chip.textContent = label;
+          row.appendChild(chip);
+        });
+        optionsPreview.appendChild(row);
+      });
+      const lines = String(optionsState.variantsText || '').split('\n').map((line) => line.trim()).filter(Boolean);
+      if (lines.length) text(optionsPreview, 'التركيبات المسجّلة: ' + lines.join(' · '));
+      else text(optionsPreview, 'لا تُنشأ تركيبات تلقائيًا من حاصل ضرب الخيارات.');
+      text(optionsPreview, 'حفظ الخيارات محليًا للمسودة حتى يتوفر تخزين دائم للحقول.');
+    }
+
+    paintOptions();
 
     function purchaseMode() {
       const selected = form.querySelector('input[name="purchaseMode"]:checked');
@@ -499,6 +946,45 @@
       }
     };
 
+    function parseJsonList(raw, field, label) {
+      const trimmed = raw.trim();
+      if (!trimmed) return { value: undefined };
+      try {
+        const parsed = JSON.parse(trimmed);
+        if (!Array.isArray(parsed)) throw new Error('not array');
+        return { value: parsed };
+      } catch (error) {
+        return { error: { field: field, message: label + ' يجب أن تكون قائمة JSON صالحة.' } };
+      }
+    }
+
+    // Builds the commerce part of the payload. `null` clears a column on the server.
+    function readCommerce() {
+      const value = { purchaseMode: internalToggle.checked ? 'internal_cod' : 'external' };
+      const stockRaw = stockInput.value.trim();
+      if (stockRaw === '') value.stockQty = null;
+      else if (/^\d+$/.test(stockRaw)) value.stockQty = parseInt(stockRaw, 10);
+      else return { error: { field: 'stockQty', message: 'المخزون عدد صحيح أو فارغ.' } };
+
+      const feeRaw = feeInput.value.trim();
+      if (feeRaw === '') value.deliveryFeeHalalas = null;
+      else {
+        const fee = riyalsToHalalas(feeRaw);
+        if (fee == null) return { error: { field: 'deliveryFeeSar', message: 'رسوم التوصيل بالريال، مثل 15، أو اتركيها فارغة.' } };
+        value.deliveryFeeHalalas = fee;
+      }
+
+      const options = parseJsonList(optionsJsonInput.value, 'optionsJson', 'الخيارات');
+      if (options.error) return options;
+      const variants = parseJsonList(variantsJsonInput.value, 'variantsJson', 'التركيبات');
+      if (variants.error) return variants;
+      value.optionsJson = options.value === undefined ? (editing && item.optionsJson ? null : undefined) : options.value;
+      value.variantsJson = variants.value === undefined ? (editing && item.variantsJson ? null : undefined) : variants.value;
+      if (value.optionsJson === undefined) delete value.optionsJson;
+      if (value.variantsJson === undefined) delete value.variantsJson;
+      return { value: value };
+    }
+
     form.onsubmit = async (event) => {
       event.preventDefault();
       ['nameAr', 'priceSar', 'category', 'externalUrl', 'durationMin'].forEach((name) => setFieldError(form, name, ''));
@@ -528,6 +1014,18 @@
         setFieldError(form, 'durationMin', 'المدة 5 دقائق على الأقل، أو اتركيها فارغة.');
         blocked = true;
       }
+      let commerce = null;
+      if (type === 'brand') {
+        ['stockQty', 'deliveryFeeSar', 'optionsJson', 'variantsJson'].forEach((name) => setFieldError(form, name, ''));
+        commerce = readCommerce();
+        if (commerce.error) {
+          setFieldError(form, commerce.error.field, commerce.error.message);
+          blocked = true;
+        } else if (commerce.value.purchaseMode === 'internal_cod' && halalas != null && halalas <= 0) {
+          setFieldError(form, 'priceSar', 'الطلب داخل ميرا يتطلب سعرًا أكبر من صفر.');
+          blocked = true;
+        }
+      }
       if (blocked) {
         status.textContent = 'لم يُرسل الحفظ. البيانات التي كتبتها ما زالت في النموذج.';
         return;
@@ -542,6 +1040,7 @@
       payload.nameEn = String(new FormData(form).get('nameEn') || '').trim();
       if (type === 'brand') {
         payload.externalUrl = purchaseMode() === 'link' ? url.value.trim() : '';
+        Object.assign(payload, commerce.value);
         if (cosmeticVisible()) {
           payload.skinTypes = skin.value.split(',').map((part) => part.trim()).filter(Boolean);
           payload.stepAr = step.value.trim();
@@ -549,8 +1048,19 @@
           payload.skinTypes = [];
           payload.stepAr = '';
         }
-      } else if (duration && duration.value) {
-        payload.durationMin = parseInt(duration.value, 10);
+      } else {
+        if (duration && duration.value) payload.durationMin = parseInt(duration.value, 10);
+        if (bookingToggle) payload.bookingEnabled = Boolean(bookingToggle.checked);
+        payload.payMode = 'pay_at_venue';
+        if (availabilityJson && availabilityJson.value.trim()) {
+          try {
+            payload.availabilityJson = JSON.parse(availabilityJson.value.trim());
+          } catch (error) {
+            setFieldError(form, 'availabilityJson', 'JSON غير صالح لجدول التوفر');
+            status.textContent = 'لم يُرسل الحفظ. أصلحي جدول التوفر.';
+            return;
+          }
+        }
       }
       save.disabled = true;
       status.textContent = 'جارٍ حفظ المسودة';
@@ -558,6 +1068,20 @@
         const saved = editing
           ? await (type === 'brand' ? PartnersApi.updateProduct(item.id, payload) : PartnersApi.updateService(item.id, payload))
           : await (type === 'brand' ? PartnersApi.createProduct(payload) : PartnersApi.createService(payload));
+        if (type === 'brand' && !editing) {
+          try {
+            const fresh = localStorage.getItem('mira-product-options:new');
+            if (fresh && saved && saved.id) {
+              localStorage.setItem('mira-product-options:' + saved.id, fresh);
+              localStorage.removeItem('mira-product-options:new');
+            }
+            const svcFresh = localStorage.getItem('mira-service-template:new');
+            if (svcFresh && saved && saved.id) {
+              localStorage.setItem('mira-service-template:' + saved.id, svcFresh);
+              localStorage.removeItem('mira-service-template:new');
+            }
+          } catch (error) {}
+        }
         item = Object.assign({}, item || {}, saved);
         staged[form.id].ownerId = item.id;
         status.textContent = 'حُفظت المسودة. السعر المخزن ' + item.priceHalalas + ' هللة (' + formatPrice(item.priceHalalas) + ').';

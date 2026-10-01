@@ -35,5 +35,7 @@ abstract final class MiraApiEndpoints {
   static const marketplaceCatalog = '/marketplace/catalog';
   static const marketplaceAds = '/marketplace/ads';
   static const marketplaceFavorites = '/marketplace/favorites';
+  /// Customer cart, COD orders and service bookings (Firebase auth).
+  static const marketplaceCommerce = '/marketplace/commerce';
   static const partnersPortalTrack = '/partners-portal/track';
 }

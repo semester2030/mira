@@ -88,6 +88,9 @@ export class HttpExceptionFilter implements ExceptionFilter {
           code = obj.captureCode;
         }
         if (obj.qel !== undefined) extra = { qel: obj.qel };
+        // Commerce errors carry a user-facing Arabic message and structured details.
+        if (typeof obj.messageAr === 'string') extra = { ...extra, messageAr: obj.messageAr };
+        if (typeof obj.details === 'object' && obj.details !== null) extra = { ...extra, details: obj.details };
       } else {
         message = exception.message;
       }

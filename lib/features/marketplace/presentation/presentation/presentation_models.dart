@@ -1,3 +1,4 @@
+import '../../domain/catalog_offer_media.dart';
 import '../../domain/entities/catalog_product.dart';
 import '../../domain/entities/catalog_service.dart';
 import 'discover_ad.dart';
@@ -34,6 +35,8 @@ class PresentationSlide {
     this.layoutNote,
     this.city,
     this.advertisement,
+    this.mainOfferKind = CatalogMainOfferKind.images,
+    this.videoCoverPath,
   });
 
   final String entityId;
@@ -54,6 +57,11 @@ class PresentationSlide {
 
   /// Present only when this slide is a celebrity ad for the original entity.
   final DiscoverAdLink? advertisement;
+
+  final CatalogMainOfferKind mainOfferKind;
+
+  /// Optional poster for a main video. Not a horizontal slide.
+  final String? videoCoverPath;
 
   /// Ad identity stays separate from the original when two ads share one target.
   String get slotId => advertisement?.id ?? entityId;

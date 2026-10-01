@@ -5,6 +5,7 @@ import '../../../../core/network/mira_api_endpoints.dart';
 import '../ad_link_record.dart';
 import '../catalog_media_url.dart';
 import '../catalog_price.dart';
+import '../../domain/catalog_offer_media.dart';
 import '../../domain/entities/catalog_product.dart';
 import '../../domain/entities/catalog_service.dart';
 import '../../domain/entities/marketplace_match.dart';
@@ -143,10 +144,18 @@ class MarketplaceApiDataSource {
       contactPhone: json['contactPhone'] as String?,
       matchScore: (json['matchScore'] as num?)?.toInt() ?? 0,
       matchKnown: json.containsKey('matchScore'),
+      category: json['category'] as String?,
       concernTags: (json['concernTags'] as List<dynamic>?)
               ?.map((e) => e.toString())
               .toList() ??
           const [],
+      media: _media(json),
+      mainOfferKind: CatalogMainOfferKindCodec.tryParse(json['mainOfferKind'] as String?),
+      optionGroups: CatalogOptionJson.groups(json['optionsJson']),
+      variants: CatalogOptionJson.variants(json['variantsJson']),
+      purchaseMode: CatalogPurchaseMode.parse(json['purchaseMode']),
+      stockQty: (json['stockQty'] as num?)?.toInt(),
+      deliveryFeeHalalas: (json['deliveryFeeHalalas'] as num?)?.toInt(),
     );
   }
 
@@ -158,6 +167,7 @@ class MarketplaceApiDataSource {
       partnerEmoji: json['partnerEmoji'] as String?,
       partnerType: json['partnerType'] as String? ?? 'salon',
       city: json['city'] as String? ?? 'الرياض',
+      contactPhone: json['contactPhone'] as String?,
       nameAr: json['nameAr'] as String,
       nameEn: json['nameEn'] as String? ?? '',
       descriptionAr: json['descriptionAr'] as String?,
@@ -167,11 +177,16 @@ class MarketplaceApiDataSource {
       priceKnown: CatalogPrice.read(json).known,
       matchScore: (json['matchScore'] as num?)?.toInt() ?? 0,
       matchKnown: json.containsKey('matchScore'),
+      category: json['category'] as String?,
       bookingEnabled: json['bookingEnabled'] as bool? ?? false,
       concernTags: (json['concernTags'] as List<dynamic>?)
               ?.map((e) => e.toString())
               .toList() ??
           const [],
+      media: _media(json),
+      mainOfferKind: CatalogMainOfferKindCodec.tryParse(json['mainOfferKind'] as String?),
+      payMode: json['payMode'] as String? ?? 'pay_at_venue',
+      availabilityPresent: json['availabilityPresent'] == true,
     );
   }
 
@@ -259,7 +274,10 @@ class MarketplaceApiDataSource {
           category: json['category'] as String?,
           bookingEnabled: json['bookingEnabled'] as bool? ?? false,
           media: _media(json),
+          mainOfferKind: CatalogMainOfferKindCodec.tryParse(json['mainOfferKind'] as String?),
           concernTags: (json['concernTags'] as List<dynamic>? ?? const []).map((item) => item.toString()).toList(),
+          payMode: json['payMode'] as String? ?? 'pay_at_venue',
+          availabilityPresent: json['availabilityPresent'] == true,
         ),
       );
     }
@@ -279,9 +297,15 @@ class MarketplaceApiDataSource {
         contactPhone: json['contactPhone'] as String?,
         category: json['category'] as String?,
         media: _media(json),
+        mainOfferKind: CatalogMainOfferKindCodec.tryParse(json['mainOfferKind'] as String?),
         stepAr: json['stepAr'] as String?,
         matchScore: 0,
         concernTags: (json['concernTags'] as List<dynamic>? ?? const []).map((item) => item.toString()).toList(),
+        optionGroups: CatalogOptionJson.groups(json['optionsJson']),
+        variants: CatalogOptionJson.variants(json['variantsJson']),
+        purchaseMode: CatalogPurchaseMode.parse(json['purchaseMode']),
+        stockQty: (json['stockQty'] as num?)?.toInt(),
+        deliveryFeeHalalas: (json['deliveryFeeHalalas'] as num?)?.toInt(),
       ),
       city: json['city'] as String? ?? '',
     );
@@ -379,6 +403,7 @@ class MarketplaceApiDataSource {
             url: resolveCatalogMediaUrl(item['url'] as String, _dio.options.baseUrl),
             sortOrder: (item['sortOrder'] as num?)?.toInt() ?? 0,
             isPrimary: item['isPrimary'] == true,
+            placement: item['placement'] as String? ?? CatalogMediaPlacement.main,
           ),
     ];
   }

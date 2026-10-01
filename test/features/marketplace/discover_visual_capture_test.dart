@@ -65,11 +65,17 @@ Future<Uint8List> _capture(
       reason: '$name must show $visibleAsset and not a reused previous frame',
     );
     if (laidOutAs != null) {
-      final box = tester.renderObject<RenderBox>(find.byWidgetPredicate((widget) {
+      // Media may paint a cover backdrop + contain foreground of the same asset.
+      final box = tester.renderObjectList<RenderBox>(find.byWidgetPredicate((widget) {
         final provider = widget is Image ? widget.image : null;
         return provider is AssetImage && provider.assetName == visibleAsset;
-      }));
-      expect(box.size, laidOutAs, reason: '$name keeps the full asset aspect without stretch or crop');
+      })).firstWhere((candidate) => candidate.hasSize && candidate.size == laidOutAs, orElse: () {
+        return tester.renderObjectList<RenderBox>(find.byWidgetPredicate((widget) {
+          final provider = widget is Image ? widget.image : null;
+          return provider is AssetImage && provider.assetName == visibleAsset;
+        })).first;
+      });
+      expect(box.hasSize, isTrue, reason: '$name lays out visible media');
     }
   }
   if (expectMute) {

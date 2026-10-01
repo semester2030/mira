@@ -1,0 +1,15 @@
+# دمج عناصر العرض فوق الوسائط — دليل تشغيل الجوال
+
+- التاريخ: 2026-09-30
+- الجهاز: fayez’s iPhone (00008110-00191986268BA01E) · iOS 26.6
+- البناء: release مع
+  - MIRA_MARKETPLACE_ENABLED=true
+  - USE_MIRA_API=true
+  - MIRA_API_BASE_URL=https://mira-api-n4p3.onrender.com/api/v1
+  - MIRA_DISCOVER_VISUAL_PREVIEW=true
+- النتيجة: تثبيت وإطلاق ناجحان (Xcode ~43s، تثبيت ~8s). العملية Runner شغّالة.
+- لقطة تلقائية: تعذّرت (screenshotr / Developer Disk Image غير متاح عبر idevicescreenshot).
+- تسجيل فيديو تلقائي: غير متاح من هذه الجلسة. يلزم تسجيل يدوي من الجهاز لإثبات الفيديو المتحرك.
+- اختبارات الوحدة ذات الصلة: ناجحة (phase2، view count، ad presentation).
+
+ما بقي للمالك على الجهاز: فتح أناقتك وجمالك، التحقق من امتداد الوسائط وعمود اليمين (مفضلة / مشاركة / عين —)، والبحث فوق المشهد، وتسجيل فيديو قصير.

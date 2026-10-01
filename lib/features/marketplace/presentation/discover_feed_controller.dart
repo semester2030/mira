@@ -126,7 +126,7 @@ class DiscoverFeedController extends ChangeNotifier {
     }
     if (_disposed || generation != _queryGeneration) return;
     DiscoverAdFeed ads = DiscoverAdFeed.empty;
-    if (response.succeeded) {
+    if (response.succeeded && response.transport != CatalogTransport.visualPreview) {
       try {
         ads = await _gateway.publishedAds();
       } catch (_) {

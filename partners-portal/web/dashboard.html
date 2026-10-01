@@ -53,6 +53,18 @@
         <form id="serviceForm"></form>
       </div>
 
+      <div class="card" id="commerceSection">
+        <h2>الطلبات والحجوزات</h2>
+        <p class="lead">طلبات الدفع عند الاستلام داخل ميرا وطلبات المواعيد. «طلب موعد» ليس حجزًا مؤكدًا حتى تؤكديه.</p>
+        <div class="journey-actions">
+          <button type="button" class="btn btn-ghost" id="commerceTabOrders">الطلبات</button>
+          <button type="button" class="btn btn-ghost" id="commerceTabBookings">الحجوزات</button>
+          <button type="button" class="btn btn-ghost" id="commerceRefresh">تحديث</button>
+        </div>
+        <p id="commerceStatus" class="lead"></p>
+        <div id="commerceList"></div>
+      </div>
+
       <div class="card" id="adsSection">
         <h2>إعلانات المشاهير</h2>
         <p class="lead" id="adsNotice"></p>
@@ -65,7 +77,9 @@
 
   <script src="js/api.js"></script>
   <script src="js/ads.js"></script>
+  <script src="js/service-templates.js"></script>
   <script src="js/catalog-journey.js"></script>
+  <script src="js/commerce-orders.js"></script>
   <script>
     const labeledUi = new URLSearchParams(location.search).get('ui-fixture') === 'labeled';
     if (!labeledUi && !PartnersApi.isLoggedIn()) location.href = 'login.html' + location.search;
@@ -124,6 +138,7 @@
           renderCatalog(p.type, data.catalog, 'catalogList', 'catalogForm', 'catalogTitle');
           if (!options || !options.preserveForms) renderForm(p.type, null, 'catalogForm', 'catalogTitle');
         }
+        if (window.CommerceOrders) CommerceOrders.init();
         try {
           const ads = await PartnersApi.ads();
           renderAds(ads.items || [], null);

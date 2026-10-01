@@ -1,5 +1,5 @@
 /// How a payload was transported, separate from whether the content is demo.
-enum CatalogTransport { server, localCatalog }
+enum CatalogTransport { server, localCatalog, visualPreview }
 
 /// Explicit content mark. Absence of a mark is [unmarked], not "real".
 enum ContentMark { explicitDemo, unmarked, mixed }

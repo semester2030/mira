@@ -9606,6 +9606,56 @@ window.MIRA_STUDY = {
             "remainingAr": "PH3-STORAGE-LIVE ما زال مؤجلًا. إذا لم يُهيأ التخزين يظهر فشل الرفع وتبقى المسودة، ولا يُعلَن الرفع ناجحًا."
           },
           {
+            "id": "P5-VISUAL-01",
+            "nameAr": "اختبار الأيقونتين وتجربة العرض المرئي — التخزين الدائم مؤجل",
+            "status": "معاينة صريحة داخل التطبيق. التخزين الدائم مؤجل",
+            "goalAr": "تحسين أيقونتي أناقتك وجمالك وتجربة العرض نفسها ببيانات وأصول تجريبية مضمّنة، دون تفعيلها للمستخدم العام ودون الاعتماد على التخزين أو بوابة التاجر.",
+            "implementationAr": "الأيقونتان تبقيان دائريتين: أناقتك يمينًا وجمالك يسارًا. المعاينة تُفتح فقط بـ --dart-define=MIRA_DISCOVER_VISUAL_PREVIEW=true. فشل الواجهة لا يشغّلها. العينات بمعرفات preview- وأسماء بيت المعاينة وعيادة المعاينة ومشغل المعاينة، ووسائطها ملفات التطبيق ومنها sample_clip.mp4. الشراء والموعد والموقع في المعاينة لا يُعلنان تنفيذًا.",
+            "testsAr": "اختبار discover_catalog_query_test نجح: 14 اختبارًا، منها فصل المسارين وتعدد الصور والفيديو وفلتر الملابس. تشغيل الجوال: الجهاز fayez’s iPhone متصل على iOS 26.6، لكن تثبيت بناء المعاينة لم يكتمل. flutter run توقف بعد 639 ثانية برسالة Error launching application، وdevicectl device install app تجاوز مهلة 90 ثانية بعد usage assertion. لم يُلتقط تسجيل ولا لقطات من الجوال.",
+            "evidenceAr": "أصول الأيقونتين assets/marketplace/discover/elegance_lane.png و beauty_lane.png. الكود المختبر محلي فوق 6a5bff2 وغير مُودَع. التفعيل: flutter run مع --dart-define=MIRA_DISCOVER_VISUAL_PREVIEW=true إلى جانب MIRA_MARKETPLACE_ENABLED وUSE_MIRA_API وMIRA_API_BASE_URL. الخروج: إعادة التشغيل دون التعريف، والافتراضي false.",
+            "remainingAr": "اختبار الجوال للتدفق لم يُنجز لأن التثبيت لم يكتمل. التخزين الدائم مؤجل. المعاينة ليست كتالوج التجار. عدد المراحل المعتمدة لم يتغير."
+          },
+          {
+            "id": "P5-VISUAL-02",
+            "nameAr": "دمج عناصر العرض فوق الوسائط ونقل التفاعل إلى منتصف اليمين",
+            "status": "منفّذ في الواجهة. التشغيل على الجوال نجح؛ التسجيل اليدوي مطلوب",
+            "goalAr": "جعل الصورة أو الفيديو خلفية التجربة كاملة، ووضع البحث والشعار والأيقونات والمعلومات فوق المشهد، مع عمود تفاعل واحد في منتصف اليمين.",
+            "implementationAr": "discover_visual_chrome.dart أعيد بناؤه كطبقات فوق الوسائط: تدرج خفيف أعلى وأسفل، بحث ثابت فوق المسار، شعار MIRA من assets/images/mira_logo_icon.png بلا إطار بيضاوي، وعمود يمين (مفضلة ثم مشاركة ثم عين). أزيلت النسخ المكررة من صف المعلومات. خلفية الوسائط Complementary داكنة مع BoxFit.contain. العين تعرض — عند تعطيل العد.",
+            "testsAr": "discover_phase2_widget_test وdiscover_view_count_test وdiscover_ad_presentation_test نجحت. تشغيل release على fayez’s iPhone نجح.",
+            "evidenceAr": "docs/mira-commerce-reference/evidence/visual-overlay/DEVICE_RUN.txt. اللقطة والتسجيل التلقائيان تعذّرا من الأدوات؛ يلزم تسجيل يدوي من الجهاز.",
+            "remainingAr": "تسجيل يدوي لفيديو متحرك من أناقتك وجمالك. التخزين والعد الحقيقي مؤجلان."
+          },
+          {
+            "id": "P5-VISUAL-03",
+            "nameAr": "فصل وسائط العرض الرئيسي عن محتوى التفاصيل",
+            "status": "منفّذ في المعاينة والواجهات. التشغيل على الجوال نجح؛ التسجيل اليدوي مطلوب",
+            "goalAr": "العرض الرئيسي صور فقط أو فيديو واحد. التفاصيل تسمح بالمحتوى المختلط. يستبدل السماح السابق بخلط الوسائط في العرض الرئيسي.",
+            "implementationAr": "CatalogMainOfferKind وplacement (main|detail|cover). slideForOffer يعرض mainSlides فقط؛ الغلاف ليس شريحة. ProductDetailScreen وServiceDetailScreen تعرضان detailMedia مع تشغيل فيديو واحد. بيانات المعاينة صُححت للحالات المطلوبة. البيانات القديمة المختلطة: الفيديو يُستبعد من الخلاصة ويُبقى في التفاصيل دون حذف.",
+            "testsAr": "catalog_offer_media_test وdiscover_catalog_query_test وdiscover_phase2_widget_test نجحت. release على fayez’s iPhone نجح.",
+            "evidenceAr": "docs/mira-commerce-reference/evidence/visual-overlay/MEDIA_SPLIT_DEVICE.txt. التسجيل التلقائي تعذّر؛ يلزم يدوي.",
+            "remainingAr": "تسجيل يدوي: مجموعة صور → تفاصيل مختلطة → فيديو رئيسي → خدمة. نموذج التاجر الكامل مؤجل مع التخزين."
+          },
+          {
+            "id": "P5-VISUAL-04",
+            "nameAr": "تصحيح ملاءمة الوسائط وإضافة خيارات المنتجات",
+            "status": "منفّذ في المعاينة والواجهات. الاختبار الآلي وrelease على الجوال نجحا؛ التسجيل اليدوي مطلوب",
+            "goalAr": "اعتماد تكوين الصورة الثانية في التسجيل (وسائط ممتدة خلف الواجهة)، تصحيح ارتباط الوسائط بالمنتج، والحفاظ على فصل العرض الرئيسي عن التفاصيل، مع إدخال وعرض أنيق للمقاسات والأحجام والألوان دون اختلاق مخزون.",
+            "implementationAr": "DiscoverSceneStill: خلفية مشتقة مموّهة + تحتوي المنتج بلا تمديد. أُزيلت letterbox الداكنة الكبيرة. إصلاح هوية المعاينة: فستان المعاينة لم يعد يستخدم hero_product (السيروم). السيروم يبدأ بصورة رأسية 720×1280. CatalogOptionGroup/Variant/Matrix مع واجهة ProductOptionSelector. بيانات معاينة: ملابس بتركيبات ناقصة، عناية 50/100 مل، إكسسوار تشطيبين، منتج بلا خيارات، وخدمات جمالك. بوابة التاجر تعرض حقولًا حسب التصنيف مع معاينة شرائح وحفظ محلي حتى التخزين الدائم. sample_clip بقي خارج مسار المالك كمقطع تقني فقط داخل التفاصيل/غلاف الفيديو.",
+            "testsAr": "catalog_product_options_test وcatalog_offer_media_test وdiscover_catalog_query_test نجحت.",
+            "evidenceAr": "docs/mira-commerce-reference/evidence/visual-overlay/MEDIA_FIT_OPTIONS.txt. release على fayez’s iPhone نجح. التسجيل اليدوي مطلوب لتأكيد التفاعل.",
+            "remainingAr": "تسجيل يدوي لرحلة المعاينة والخيارات. تخزين خيارات المنتج دائمًا، Cloudflare، المشاهدات الحقيقية، وتكامل زد. لا تُغيَّر حالات اعتماد المراحل السابقة."
+          },
+          {
+            "id": "P5-SERVICE-01",
+            "nameAr": "قوالب تسجيل الخدمات وتوليد تفاصيلها",
+            "status": "منفّذ في المعاينة والواجهات. الاختبار الآلي وrelease على الجوال نجحا؛ التسجيل اليدوي مطلوب",
+            "goalAr": "مقدم الخدمة يجد الحقول المناسبة لنوع خدمته، وصفحة التفاصيل تُبنى من البيانات نفسها دون اختلاق طبي أو حجز تشغيلي.",
+            "implementationAr": "مصدر مرجعي واحد: catalog_service_template.dart (ومرافقته service-templates.js للبوابة). قوالب: قص، صبغة، أظافر، مكياج، بشرة، ليزر، استشارة، عناية، أسنان محدود. CatalogService.profile يحمل templateId والإجابات وحالة السعر. ServiceDetailScreen يعرض أقسامًا حسب الانطباق. بوابة الشركاء: اختيار قالب حسب التصنيف/نوع الجهة مع حقول مشروطة وحفظ محلي. بيانات معاينة جمالك تغطي الحالات المطلوبة.",
+            "testsAr": "catalog_service_template_test وcatalog_offer_media_test وdiscover_catalog_query_test نجحت.",
+            "evidenceAr": "docs/mira-commerce-reference/evidence/visual-overlay/SERVICE_TEMPLATES.txt. release على fayez’s iPhone نجح.",
+            "remainingAr": "تسجيل يدوي لجمالك→تفاصيل. تخزين خصائص القالب في API، حجز تشغيلي، Cloudflare. الخدمات القديمة بلا profile تبقى تعمل بحقولها الأساسية فقط."
+          },
+          {
             "id": "P5-CREATE-01",
             "nameAr": "رحلة إضافة المنتج والخدمة من لوحة التاجر",
             "status": "منفذ في الواجهة والعقد. ظهور التطبيق ينتظر وسائط منشورة واعتماد الإدارة",

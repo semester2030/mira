@@ -1,3 +1,5 @@
+import 'dart:ui';
+
 import 'package:flutter/material.dart';
 
 import '../../../../shared/theme/colors.dart';
@@ -96,6 +98,7 @@ class DiscoverVisualChrome extends StatelessWidget {
   Widget build(BuildContext context) {
     final family = visualFamilyFor(slide);
     final padding = MediaQuery.paddingOf(context);
+    final textScale = MediaQuery.textScalerOf(context).scale(1).clamp(1.0, 1.4);
     final categories = categoryLabels ??
         switch (family) {
           DiscoverVisualFamily.product => const ['الكل', 'الوجه', 'الجسم', 'الشعر', 'الملابس'],
@@ -110,143 +113,169 @@ class DiscoverVisualChrome extends StatelessWidget {
           DiscoverVisualFamily.salon => 'ابحثي عن عيادة أو مشغل أو خدمة',
         };
     final assetFamily = categoryAssetFamily ?? family.name;
-    final muteOnLeft = family != DiscoverVisualFamily.clinic;
+    final bottomBand = (248 * textScale) + padding.bottom;
+    final topBand = padding.top + 96.0;
 
     return Stack(
+      fit: StackFit.expand,
       children: [
         Positioned(
-          top: padding.top + 4,
-          left: 8,
-          right: 8,
-          child: Column(
-            mainAxisSize: MainAxisSize.min,
-            children: [
-              SizedBox(
-                height: 48,
-                child: Stack(
-                  alignment: Alignment.center,
-                  children: [
-                    Align(
-                      alignment: AlignmentDirectional.centerStart,
-                      child: _CircleButton(icon: Icons.chevron_right, onTap: onBack),
-                    ),
-                    DecoratedBox(
-                      decoration: BoxDecoration(
-                        color: AppColors.glassFill,
-                        borderRadius: BorderRadius.circular(16),
-                        border: Border.all(color: AppColors.border),
-                      ),
-                      child: Padding(
-                        padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 2),
-                        child: Text(
-                          'MIRA',
-                          style: AppTypography.displaySmall.copyWith(letterSpacing: 2, color: AppColors.textPrimary),
-                        ),
-                      ),
-                    ),
-                    Align(
-                      alignment: AlignmentDirectional.centerEnd,
-                      child: DiscoverViewBadge(
-                        snapshot: viewCount,
-                        onTap: () => onUnavailable(viewCount.label),
-                      ),
-                    ),
+          top: 0,
+          left: 0,
+          right: 0,
+          child: IgnorePointer(
+            child: DecoratedBox(
+              decoration: BoxDecoration(
+                gradient: LinearGradient(
+                  begin: Alignment.topCenter,
+                  end: Alignment.bottomCenter,
+                  colors: [
+                    Colors.black.withValues(alpha: 0.28),
+                    Colors.transparent,
                   ],
+                  stops: const [0, 1],
                 ),
               ),
-              Row(
-                children: [
-                  Expanded(
-                    child: includeSearch
-                        ? DiscoverSearchField(
+              child: SizedBox(height: topBand + 12),
+            ),
+          ),
+        ),
+        Positioned(
+          top: padding.top + 4,
+          left: 10,
+          right: 10,
+          child: includeSearch
+              ? Column(
+                  mainAxisSize: MainAxisSize.min,
+                  children: [
+                    SizedBox(
+                      height: 40,
+                      child: Row(
+                        children: [
+                          _GlassIconButton(icon: Icons.chevron_right, onTap: onBack, semanticLabel: 'رجوع'),
+                          const Spacer(),
+                          const _MiraMark(),
+                          const Spacer(),
+                          const SizedBox(width: 40),
+                        ],
+                      ),
+                    ),
+                    if (slide.preview)
+                      Align(
+                        alignment: AlignmentDirectional.centerStart,
+                        child: Padding(
+                          padding: const EdgeInsets.only(top: 2),
+                          child: Text(
+                            'معاينة تجريبية',
+                            style: AppTypography.labelSmall.copyWith(
+                              color: Colors.white.withValues(alpha: 0.92),
+                              shadows: const [Shadow(blurRadius: 6, color: Colors.black54)],
+                            ),
+                          ),
+                        ),
+                      ),
+                    const SizedBox(height: 6),
+                    Row(
+                      children: [
+                        Expanded(
+                          child: DiscoverSearchField(
                             hint: searchHint,
                             fieldKey: searchFieldKey,
                             focusNode: searchFocus,
                             controller: searchController,
                             onSearch: onSearch,
                             onTap: () => onUnavailable('البحث من هذه الشاشة غير متاح الآن'),
-                          )
-                        : const SizedBox(height: 48),
-                  ),
-                  const SizedBox(width: 8),
-                  _CircleButton(
-                    icon: Icons.tune,
-                    onTap: onFilter ?? () => onUnavailable('الفلاتر غير متاحة الآن'),
-                  ),
-                ],
-              ),
-              if (mediaCount > 1)
-                IgnorePointer(
-                  child: Padding(
-                    padding: const EdgeInsets.only(top: 8),
-                    child: Align(
-                      alignment: Alignment.centerRight,
-                      child: _MediaDots(count: mediaCount, index: mediaIndex),
+                          ),
+                        ),
+                        const SizedBox(width: 8),
+                        _GlassIconButton(
+                          icon: Icons.tune,
+                          onTap: onFilter ?? () => onUnavailable('الفلاتر غير متاحة الآن'),
+                          semanticLabel: 'الفلاتر',
+                        ),
+                      ],
                     ),
-                  ),
-                ),
-            ],
-          ),
+                    if (mediaCount > 1)
+                      IgnorePointer(
+                        child: Padding(
+                          padding: const EdgeInsets.only(top: 8),
+                          child: Align(
+                            alignment: Alignment.centerRight,
+                            child: _MediaDots(count: mediaCount, index: mediaIndex),
+                          ),
+                        ),
+                      ),
+                  ],
+                )
+              : (mediaCount > 1
+                  ? IgnorePointer(
+                      child: Align(
+                        alignment: Alignment.centerRight,
+                        child: _MediaDots(count: mediaCount, index: mediaIndex),
+                      ),
+                    )
+                  : const SizedBox.shrink()),
         ),
         if (showMute)
           Positioned(
-            top: padding.top + 148,
-            left: muteOnLeft ? 12 : null,
-            right: muteOnLeft ? null : 12,
-            child: _CircleButton(
+            top: topBand + 8,
+            left: 12,
+            child: _GlassIconButton(
               icon: muted ? Icons.volume_off_outlined : Icons.volume_up_outlined,
               onTap: onMute,
+              semanticLabel: muted ? 'تشغيل الصوت' : 'كتم الصوت',
             ),
           ),
+        Positioned(
+          right: 10,
+          top: topBand,
+          bottom: bottomBand,
+          child: Align(
+            alignment: Alignment.center,
+            child: _InteractionColumn(
+              favoriteSaved: favoriteSaved,
+              onFavorite: onFavorite ?? () => onUnavailable('المفضلة غير متاحة الآن'),
+              onShare: onShare ?? () => onUnavailable('المشاركة غير متاحة الآن'),
+              viewCount: viewCount,
+              onViewTap: viewCount.state == DiscoverViewState.disabled || viewCount.state == DiscoverViewState.unavailable
+                  ? null
+                  : () => onUnavailable(viewCount.label),
+            ),
+          ),
+        ),
         Positioned(
           left: 0,
           right: 0,
           bottom: 0,
-          child: Column(
-            mainAxisSize: MainAxisSize.min,
-            children: [
-              Stack(
-                children: [
-                  const Positioned.fill(
-                    child: IgnorePointer(
-                      child: DecoratedBox(
-                        decoration: BoxDecoration(
-                          gradient: LinearGradient(
-                            begin: Alignment.topCenter,
-                            end: Alignment.bottomCenter,
-                            colors: [Color(0x00FFF7FA), AppColors.background],
-                          ),
-                        ),
-                      ),
-                    ),
-                  ),
-                  Padding(
-                    padding: const EdgeInsets.fromLTRB(16, 28, 16, 4),
-                    child: Column(
-                      children: [
-                        _InfoRow(
-                          slide: slide,
-                          family: family,
-                          onUnavailable: onUnavailable,
-                          onFavorite: onFavorite,
-                          favoriteSaved: favoriteSaved,
-                          onShare: onShare,
-                        ),
-                      ],
-                    ),
-                  ),
+          child: DecoratedBox(
+            decoration: BoxDecoration(
+              gradient: LinearGradient(
+                begin: Alignment.topCenter,
+                end: Alignment.bottomCenter,
+                colors: [
+                  Colors.transparent,
+                  AppColors.background.withValues(alpha: 0.55),
+                  AppColors.background.withValues(alpha: 0.92),
                 ],
+                stops: const [0, 0.35, 1],
               ),
-              if (advertisementLabel != null)
-                Padding(
-                  padding: const EdgeInsets.only(bottom: 6),
-                  child: Text(advertisementLabel!, style: AppTypography.labelSmall.copyWith(color: AppColors.textSecondary)),
-                ),
-              ColoredBox(
-                color: AppColors.background,
-                child: Padding(
-                  padding: EdgeInsets.fromLTRB(16, 8, 16, 8),
-                  child: _Actions(
+            ),
+            child: Padding(
+              padding: EdgeInsets.fromLTRB(16, 36, 16, padding.bottom + 8),
+              child: Column(
+                mainAxisSize: MainAxisSize.min,
+                crossAxisAlignment: CrossAxisAlignment.stretch,
+                children: [
+                  _OfferCopy(slide: slide, family: family),
+                  if (advertisementLabel != null) ...[
+                    const SizedBox(height: 4),
+                    Text(
+                      advertisementLabel!,
+                      style: AppTypography.labelSmall.copyWith(color: AppColors.textSecondary),
+                    ),
+                  ],
+                  const SizedBox(height: 10),
+                  _Actions(
                     family: family,
                     onDetails: onDetails,
                     onBuy: onBuy,
@@ -259,13 +288,8 @@ class DiscoverVisualChrome extends StatelessWidget {
                     purchaseLabel: purchaseLabel,
                     appointmentLabel: appointmentLabel,
                   ),
-                ),
-              ),
-              ColoredBox(
-                color: AppColors.background,
-                child: Padding(
-                  padding: EdgeInsets.fromLTRB(8, 4, 8, padding.bottom + 8),
-                  child: SizedBox(
+                  const SizedBox(height: 10),
+                  SizedBox(
                     height: 108,
                     child: LayoutBuilder(
                       builder: (context, constraints) {
@@ -306,11 +330,120 @@ class DiscoverVisualChrome extends StatelessWidget {
                       },
                     ),
                   ),
-                ),
+                ],
               ),
-            ],
+            ),
           ),
         ),
+      ],
+    );
+  }
+}
+
+class _MiraMark extends StatelessWidget {
+  const _MiraMark();
+
+  @override
+  Widget build(BuildContext context) {
+    return Semantics(
+      label: 'ميرَا',
+      image: true,
+      child: Image.asset(
+        'assets/images/mira_logo_icon.png',
+        height: 28,
+        fit: BoxFit.contain,
+        errorBuilder: (_, __, ___) => Text(
+          'MIRA',
+          style: AppTypography.titleMedium.copyWith(
+            letterSpacing: 1.6,
+            color: Colors.white,
+            shadows: const [Shadow(blurRadius: 8, color: Colors.black54)],
+          ),
+        ),
+      ),
+    );
+  }
+}
+
+class _InteractionColumn extends StatelessWidget {
+  const _InteractionColumn({
+    required this.favoriteSaved,
+    required this.onFavorite,
+    required this.onShare,
+    required this.viewCount,
+    this.onViewTap,
+  });
+
+  final bool favoriteSaved;
+  final VoidCallback onFavorite;
+  final VoidCallback onShare;
+  final DiscoverViewSnapshot viewCount;
+  final VoidCallback? onViewTap;
+
+  @override
+  Widget build(BuildContext context) {
+    return Column(
+      mainAxisSize: MainAxisSize.min,
+      children: [
+        _GlassIconButton(
+          icon: favoriteSaved ? Icons.favorite : Icons.favorite_border,
+          onTap: onFavorite,
+          semanticLabel: favoriteSaved ? 'إزالة من المفضلة' : 'إضافة إلى المفضلة',
+          iconColor: favoriteSaved ? AppColors.primary : AppColors.textPrimary,
+        ),
+        const SizedBox(height: 12),
+        _GlassIconButton(
+          icon: Icons.share_outlined,
+          onTap: onShare,
+          semanticLabel: 'مشاركة',
+        ),
+        const SizedBox(height: 12),
+        DiscoverViewBadge(snapshot: viewCount, onTap: onViewTap),
+      ],
+    );
+  }
+}
+
+class _OfferCopy extends StatelessWidget {
+  const _OfferCopy({required this.slide, required this.family});
+
+  final PresentationSlide slide;
+  final DiscoverVisualFamily family;
+
+  @override
+  Widget build(BuildContext context) {
+    final partner = Text(
+      slide.partnerName,
+      maxLines: 1,
+      overflow: TextOverflow.ellipsis,
+      style: AppTypography.bodySmall.copyWith(color: AppColors.textSecondary),
+    );
+    final title = Text(
+      slide.title,
+      maxLines: 2,
+      overflow: TextOverflow.ellipsis,
+      style: AppTypography.headlineSmall,
+    );
+    if (family == DiscoverVisualFamily.product) {
+      return Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          partner,
+          title,
+          if (slide.priceLabel != null)
+            Text(slide.priceLabel!, style: AppTypography.titleLarge.copyWith(color: AppColors.primaryDark)),
+        ],
+      );
+    }
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        title,
+        partner,
+        if (slide.service != null)
+          Text(slide.service!.city, style: AppTypography.bodySmall.copyWith(color: AppColors.textSecondary)),
+        if (slide.priceLabel != null)
+          Text(slide.priceLabel!, style: AppTypography.titleMedium.copyWith(color: AppColors.primaryDark)),
       ],
     );
   }
@@ -328,39 +461,46 @@ class DiscoverSearchField extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return Material(
-      color: AppColors.glassFill,
-      shape: RoundedRectangleBorder(
-        borderRadius: BorderRadius.circular(28),
-        side: const BorderSide(color: AppColors.border),
-      ),
-      child: InkWell(
-        onTap: controller == null ? onTap : null,
-        borderRadius: BorderRadius.circular(28),
-        child: Padding(
-          padding: EdgeInsets.symmetric(horizontal: 14, vertical: controller == null ? 10 : 0),
-          child: Row(
-            children: [
-              const Icon(Icons.search, color: AppColors.textTertiary, size: 20),
-              const SizedBox(width: 8),
-              Expanded(
-                child: controller == null
-                    ? Text(hint, style: AppTypography.bodyMedium.copyWith(color: AppColors.textTertiary))
-                    : TextField(
-                        key: fieldKey,
-                        focusNode: focusNode,
-                        controller: controller,
-                        onChanged: onSearch,
-                        style: AppTypography.bodyMedium,
-                        decoration: InputDecoration(
-                          hintText: hint,
-                          hintStyle: AppTypography.bodyMedium.copyWith(color: AppColors.textTertiary),
-                          border: InputBorder.none,
-                          isDense: true,
-                        ),
-                      ),
+    return ClipRRect(
+      borderRadius: BorderRadius.circular(24),
+      child: BackdropFilter(
+        filter: ImageFilter.blur(sigmaX: 8, sigmaY: 8),
+        child: Material(
+          color: AppColors.glassFill.withValues(alpha: 0.62),
+          child: InkWell(
+            onTap: controller == null ? onTap : null,
+            child: Padding(
+              padding: EdgeInsets.symmetric(horizontal: 12, vertical: controller == null ? 8 : 0),
+              child: Row(
+                children: [
+                  const Icon(Icons.search, color: AppColors.textTertiary, size: 18),
+                  const SizedBox(width: 6),
+                  Expanded(
+                    child: controller == null
+                        ? Text(hint, style: AppTypography.bodyMedium.copyWith(color: AppColors.textTertiary))
+                        : TextField(
+                            key: fieldKey,
+                            focusNode: focusNode,
+                            controller: controller,
+                            onChanged: onSearch,
+                            style: AppTypography.bodyMedium,
+                            decoration: InputDecoration(
+                              hintText: hint,
+                              hintStyle: AppTypography.bodyMedium.copyWith(color: AppColors.textTertiary),
+                              border: InputBorder.none,
+                              enabledBorder: InputBorder.none,
+                              focusedBorder: InputBorder.none,
+                              disabledBorder: InputBorder.none,
+                              errorBorder: InputBorder.none,
+                              focusedErrorBorder: InputBorder.none,
+                              isDense: true,
+                              contentPadding: const EdgeInsets.symmetric(vertical: 10),
+                            ),
+                          ),
+                  ),
+                ],
               ),
-            ],
+            ),
           ),
         ),
       ),
@@ -368,88 +508,42 @@ class DiscoverSearchField extends StatelessWidget {
   }
 }
 
-class _CircleButton extends StatelessWidget {
-  const _CircleButton({required this.icon, required this.onTap, this.tooltip});
+class _GlassIconButton extends StatelessWidget {
+  const _GlassIconButton({
+    required this.icon,
+    required this.onTap,
+    this.semanticLabel,
+    this.iconColor,
+  });
 
   final IconData icon;
   final VoidCallback onTap;
-  final String? tooltip;
+  final String? semanticLabel;
+  final Color? iconColor;
 
   @override
   Widget build(BuildContext context) {
-    return Material(
-      color: AppColors.glassFill,
-      shape: const CircleBorder(side: BorderSide(color: AppColors.border)),
-      child: IconButton(
-        tooltip: tooltip,
-        onPressed: onTap,
-        icon: Icon(icon, color: AppColors.textPrimary, size: 20),
+    return Semantics(
+      button: true,
+      label: semanticLabel,
+      child: ClipOval(
+        child: BackdropFilter(
+          filter: ImageFilter.blur(sigmaX: 6, sigmaY: 6),
+          child: Material(
+            color: AppColors.glassFill.withValues(alpha: 0.45),
+            shape: CircleBorder(side: BorderSide(color: AppColors.border.withValues(alpha: 0.55))),
+            child: InkWell(
+              customBorder: const CircleBorder(),
+              onTap: onTap,
+              child: SizedBox(
+                width: 44,
+                height: 44,
+                child: Icon(icon, color: iconColor ?? AppColors.textPrimary, size: 22),
+              ),
+            ),
+          ),
+        ),
       ),
-    );
-  }
-}
-
-class _InfoRow extends StatelessWidget {
-  const _InfoRow({
-    required this.slide,
-    required this.family,
-    required this.onUnavailable,
-    this.onFavorite,
-    this.favoriteSaved = false,
-    this.onShare,
-  });
-
-  final PresentationSlide slide;
-  final DiscoverVisualFamily family;
-  final void Function(String message) onUnavailable;
-  final VoidCallback? onFavorite;
-  final bool favoriteSaved;
-  final VoidCallback? onShare;
-
-  @override
-  Widget build(BuildContext context) {
-    final text = Column(
-      crossAxisAlignment: CrossAxisAlignment.start,
-      children: [
-        if (family == DiscoverVisualFamily.product) ...[
-          Text(slide.partnerName, style: AppTypography.bodySmall.copyWith(color: AppColors.textSecondary)),
-          Text(slide.title, style: AppTypography.headlineSmall),
-          if (slide.priceLabel != null) Text(slide.priceLabel!, style: AppTypography.titleLarge.copyWith(color: AppColors.primaryDark)),
-        ] else ...[
-          Text(slide.title, style: AppTypography.headlineSmall),
-          Text(slide.partnerName, style: AppTypography.bodyMedium),
-          if (slide.service != null)
-            Text(slide.service!.city, style: AppTypography.bodySmall.copyWith(color: AppColors.textSecondary)),
-        ],
-      ],
-    );
-    final actions = family == DiscoverVisualFamily.product
-        ? Column(
-            children: [
-              _CircleButton(
-                icon: favoriteSaved ? Icons.favorite : Icons.favorite_border,
-                onTap: onFavorite ?? () => onUnavailable('المفضلة غير متاحة الآن'),
-              ),
-              const SizedBox(height: 8),
-              _CircleButton(icon: Icons.share_outlined, onTap: onShare ?? () => onUnavailable('المشاركة غير متاحة الآن')),
-            ],
-          )
-        : Row(
-            children: [
-              _CircleButton(
-                icon: favoriteSaved ? Icons.favorite : Icons.favorite_border,
-                onTap: onFavorite ?? () => onUnavailable('المفضلة غير متاحة الآن'),
-              ),
-              const SizedBox(width: 8),
-              _CircleButton(icon: Icons.share_outlined, onTap: onShare ?? () => onUnavailable('المشاركة غير متاحة الآن')),
-            ],
-          );
-    return Row(
-      crossAxisAlignment: CrossAxisAlignment.end,
-      children: [
-        Expanded(child: text),
-        actions,
-      ],
     );
   }
 }
@@ -514,6 +608,7 @@ class _Actions extends StatelessWidget {
       return OutlinedButton.icon(
         style: OutlinedButton.styleFrom(
           foregroundColor: AppColors.textPrimary,
+          backgroundColor: AppColors.glassFill.withValues(alpha: 0.55),
           side: const BorderSide(color: AppColors.border),
           shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(radius)),
           padding: const EdgeInsets.symmetric(vertical: 12, horizontal: 8),
@@ -564,7 +659,7 @@ class _LabeledCircle extends StatelessWidget {
       onTap: onTap,
       child: Column(
         children: [
-          _CircleButton(icon: icon, onTap: onTap),
+          _GlassIconButton(icon: icon, onTap: onTap),
           const SizedBox(height: 4),
           Text(label, style: AppTypography.labelSmall),
         ],
@@ -651,9 +746,9 @@ class _MediaDots extends StatelessWidget {
               height: 4,
               margin: const EdgeInsets.only(left: 4),
               decoration: BoxDecoration(
-                color: i == index ? AppColors.primary : AppColors.glassFill,
+                color: i == index ? AppColors.primary : Colors.white.withValues(alpha: 0.45),
                 borderRadius: BorderRadius.circular(2),
-                border: Border.all(color: i == index ? AppColors.primaryDark : AppColors.border),
+                border: Border.all(color: i == index ? AppColors.primaryDark : Colors.white54),
               ),
             ),
         ],

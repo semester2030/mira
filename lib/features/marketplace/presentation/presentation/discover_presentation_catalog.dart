@@ -1,6 +1,7 @@
 import '../../data/catalog_price.dart';
 import '../../data/discover_catalog_query.dart';
 import '../../data/marketplace_local_catalog.dart';
+import '../../domain/catalog_offer_media.dart';
 import '../../domain/entities/catalog_product.dart';
 import '../../domain/entities/catalog_service.dart';
 import 'presentation_models.dart';
@@ -160,10 +161,14 @@ abstract final class DiscoverPresentationCatalog {
   }
 
   /// Catalog rows do not receive generated hero images. Missing media stays missing.
+  /// Main slides follow [CatalogMainOfferKind]: images only, or one video (cover is not a slide).
   static PresentationSlide slideForOffer(DiscoverOffer offer) {
     final known = offer.product?.priceKnown ?? offer.service?.priceKnown ?? false;
     final halalas = offer.product?.priceHalalas ?? offer.service?.priceHalalas ?? 0;
     final price = known ? CatalogPrice.text(known: true, halalas: halalas) : null;
+    final kind = CatalogOfferMedia.resolveKind(offer.media, offer.mainOfferKind);
+    final mains = CatalogOfferMedia.mainSlides(offer.media, kind: kind);
+    final cover = kind == CatalogMainOfferKind.video ? CatalogOfferMedia.videoCover(offer.media) : null;
     return PresentationSlide(
       entityId: offer.id,
       partnerId: offer.partnerId,
@@ -175,12 +180,15 @@ abstract final class DiscoverPresentationCatalog {
       service: offer.service,
       city: offer.city,
       sampleMedia: false,
+      preview: offer.id.startsWith('preview-'),
+      mainOfferKind: kind,
+      videoCoverPath: cover?.url,
       media: [
-        for (final item in offer.media)
+        for (final item in mains)
           PresentationMedia(
             kind: item.kind == 'video' ? PresentationMediaKind.video : PresentationMediaKind.image,
             assetPath: item.url,
-            network: true,
+            network: item.url.startsWith('http://') || item.url.startsWith('https://'),
           ),
       ],
     );

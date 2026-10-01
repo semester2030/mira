@@ -1,5 +1,6 @@
 import 'package:flutter_test/flutter_test.dart';
 import 'package:mirra/features/marketplace/data/discover_catalog_query.dart';
+import 'package:mirra/features/marketplace/data/discover_visual_preview_catalog.dart';
 import 'package:mirra/features/marketplace/domain/entities/catalog_product.dart';
 import 'package:mirra/features/marketplace/presentation/presentation/discover_presentation_catalog.dart';
 
@@ -185,6 +186,27 @@ void main() {
     expect(slide.product?.id, all.first.id);
     expect(slide.media, isEmpty);
     expect(slide.preview, isFalse);
+  });
+
+  test('explicit visual preview stays inside its lane and keeps media', () {
+    const elegance = DiscoverCatalogQuery(lane: DiscoverLane.elegance, requireVisual: true);
+    const beauty = DiscoverCatalogQuery(lane: DiscoverLane.beauty, requireVisual: true);
+    final products = DiscoverCatalogQueryEngine.filter(DiscoverVisualPreviewCatalog.offers, elegance);
+    final services = DiscoverCatalogQueryEngine.filter(DiscoverVisualPreviewCatalog.offers, beauty);
+    expect(products, isNotEmpty);
+    expect(services, isNotEmpty);
+    expect(products.every((offer) => offer.kind == 'product'), isTrue);
+    expect(services.every((offer) => offer.kind == 'service'), isTrue);
+    expect(products.map((offer) => offer.category), containsAll(['face', 'body', 'hair', 'clothes', 'accessories']));
+    expect(services.map((offer) => offer.category), containsAll(['skin', 'hair', 'makeup', 'nails', 'care']));
+    final serum = products.singleWhere((offer) => offer.id == 'preview-face-serum');
+    expect(serum.media.where((item) => item.kind == 'image').length, greaterThan(1));
+    expect(serum.media.any((item) => item.kind == 'video' && item.placement == 'detail'), isTrue);
+    final slide = DiscoverPresentationCatalog.slideForOffer(serum);
+    expect(slide.preview, isTrue);
+    expect(slide.media.every((item) => item.kind.toString().contains('image')), isTrue);
+    expect(slide.media.first.network, isFalse);
+    expect(DiscoverCatalogQueryEngine.filter(products, elegance.copyWith(categoryId: 'clothes')).single.id, 'preview-silk-dress');
   });
 
   test('cities come from partner records', () {
