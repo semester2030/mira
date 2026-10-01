@@ -43,6 +43,8 @@ type OwnerRow = {
   draftNameAr: string | null;
   draftNameEn: string | null;
   draftDescriptionAr: string | null;
+  draftOptionsJson?: Prisma.JsonValue | null;
+  draftVariantsJson?: Prisma.JsonValue | null;
 };
 
 @Injectable()
@@ -310,7 +312,7 @@ export class CatalogContentService {
         console.error('catalog-publish-failpoint-after-write');
         throw new Error('فشل الكتابة داخل معاملة النشر بعد بدء الكتابة');
       }
-      const published = {
+      const publishedBase = {
         contentStatus: 'published',
         active: true,
         reviewStatus: 'none',
@@ -328,11 +330,19 @@ export class CatalogContentService {
       const changed = typedKind === 'product'
         ? await tx.product.updateMany({
           where: { id, reviewStatus: 'in_review', reviewRevision: revision, submittedRevision: revision, contentStatus: { not: 'withdrawn' } },
-          data: published,
+          data: {
+            ...publishedBase,
+            ...(row.draftOptionsJson != null
+              ? { optionsJson: row.draftOptionsJson as Prisma.InputJsonValue, draftOptionsJson: Prisma.DbNull }
+              : { draftOptionsJson: Prisma.DbNull }),
+            ...(row.draftVariantsJson != null
+              ? { variantsJson: row.draftVariantsJson as Prisma.InputJsonValue, draftVariantsJson: Prisma.DbNull }
+              : { draftVariantsJson: Prisma.DbNull }),
+          },
         })
         : await tx.service.updateMany({
           where: { id, reviewStatus: 'in_review', reviewRevision: revision, submittedRevision: revision, contentStatus: { not: 'withdrawn' } },
-          data: published,
+          data: publishedBase,
         });
       if (changed.count !== 1) throw new ConflictException('المسودة تغيرت بعد النسخة التي عُوينت');
       await tx.catalogReviewLog.create({ data: { ownerKind: typedKind, ownerId: id, actor, action: 'approve', note: note ?? null } });

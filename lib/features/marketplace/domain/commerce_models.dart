@@ -116,22 +116,27 @@ class CommerceCart {
 class CommerceQuote {
   const CommerceQuote({
     required this.cart,
-    required this.requiresDeliveryFeeAcknowledgement,
+    required this.canConfirmOrder,
     this.deliveryFeeNoteAr,
     this.paymentNoteAr,
   });
 
   final CommerceCart cart;
-  final bool requiresDeliveryFeeAcknowledgement;
+  /// False when delivery fee is unknown — no final COD total / order confirm.
+  final bool canConfirmOrder;
   final String? deliveryFeeNoteAr;
   final String? paymentNoteAr;
 
-  factory CommerceQuote.fromJson(Map<String, dynamic> json) => CommerceQuote(
-        cart: CommerceCart.fromJson(json),
-        requiresDeliveryFeeAcknowledgement: json['requiresDeliveryFeeAcknowledgement'] == true,
-        deliveryFeeNoteAr: json['deliveryFeeNoteAr'] as String?,
-        paymentNoteAr: json['paymentNoteAr'] as String?,
-      );
+  factory CommerceQuote.fromJson(Map<String, dynamic> json) {
+    final cart = CommerceCart.fromJson(json);
+    final canConfirm = json['canConfirmOrder'] == true || (cart.deliveryFeeKnown && cart.canCheckout);
+    return CommerceQuote(
+      cart: cart,
+      canConfirmOrder: canConfirm,
+      deliveryFeeNoteAr: json['deliveryFeeNoteAr'] as String?,
+      paymentNoteAr: json['paymentNoteAr'] as String?,
+    );
+  }
 }
 
 /// Delivery and contact details typed by the customer at checkout.

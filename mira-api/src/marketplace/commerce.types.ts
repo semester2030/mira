@@ -72,13 +72,16 @@ type ActorMap = Partial<Record<FulfillmentStatus, readonly ActorType[]>>;
 
 /**
  * from -> to -> actors allowed to make the move.
- * Customers may only cancel before the partner accepts. Terminal: delivered, rejected, cancelled.
+ * Customers may only cancel while `new`.
+ * `failed_delivery` keeps stock reserved until cancel (restock) or explicit retry delivery.
+ * Terminal with no further move: delivered, rejected, cancelled.
  */
 export const FULFILLMENT_TRANSITIONS: Record<FulfillmentStatus, ActorMap> = {
   new: { accepted: ['partner', 'admin'], rejected: ['partner', 'admin'], cancelled: ['customer', 'admin'] },
-  accepted: { preparing: ['partner', 'admin'], cancelled: ['partner', 'admin'] },
+  accepted: { preparing: ['partner', 'admin'], rejected: ['partner', 'admin'], cancelled: ['partner', 'admin'] },
   preparing: { out_for_delivery: ['partner', 'admin'], cancelled: ['partner', 'admin'] },
   out_for_delivery: { delivered: ['partner', 'admin'], failed_delivery: ['partner', 'admin'] },
+  // Retry delivery or cancel+release — not an automatic return to sellable stock.
   failed_delivery: { out_for_delivery: ['partner', 'admin'], cancelled: ['partner', 'admin'] },
   delivered: {},
   rejected: {},
@@ -148,9 +151,12 @@ export function consumesStock(to: FulfillmentStatus): boolean {
   return to === 'delivered';
 }
 
-/** Cash can be taken at the door: only once the order is on its way or delivered. */
+/**
+ * COD collection is recorded only after delivery succeeds.
+ * Creating the order, accepting it, or marking out_for_delivery never implies collection.
+ */
 export function canCollectPayment(fulfillment: string, collection: string): boolean {
-  return collection === 'uncollected' && (fulfillment === 'out_for_delivery' || fulfillment === 'delivered');
+  return collection === 'uncollected' && fulfillment === 'delivered';
 }
 
 // ---------------------------------------------------------------------------
@@ -231,11 +237,24 @@ export function sameSelections(a: Record<string, string>, b: Record<string, stri
   return ak.every((k) => a[k] === b[k]);
 }
 
+/**
+ * Deterministic key from selections. Uses length-prefixed pairs so values may
+ * contain `=`, `|`, or JSON punctuation without colliding with another map.
+ * Prefer a stable variant `id` from the catalog when one exists (see resolveSelection).
+ */
 export function canonicalVariantKey(selections: Record<string, string>): string {
   return Object.keys(selections)
     .sort()
-    .map((k) => `${k}=${selections[k]}`)
-    .join('|');
+    .map((k) => {
+      const v = selections[k] ?? '';
+      return `${k.length}:${k}${v.length}:${v}`;
+    })
+    .join(';');
+}
+
+/** True when two selection maps are the same choice (order-independent). */
+export function selectionIdentity(a: Record<string, string>, b: Record<string, string>): boolean {
+  return canonicalVariantKey(a) === canonicalVariantKey(b);
 }
 
 export type ResolvedSelection = {
@@ -335,17 +354,21 @@ function assertPrice(halalas: number): number {
 export type DeliveryFeeResult = { feeHalalas: number | null; known: boolean };
 
 /**
- * One delivery per order: the highest per-product fee applies.
- * A product with a null fee means "unknown" (never free), which makes the whole order fee unknown.
+ * Delivery fee for an order.
+ * - null/missing on any line → unknown (never treated as free).
+ * - all lines share the same non-negative integer → that fee.
+ * - differing known fees → unknown (partner must set one coherent fee; no auto max/sum).
+ * This helper is a technical consistency rule, not an owner commercial policy.
  */
 export function computeDeliveryFee(fees: ReadonlyArray<number | null | undefined>): DeliveryFeeResult {
   if (fees.length === 0) return { feeHalalas: null, known: false };
-  let max = 0;
+  let first: number | null = null;
   for (const fee of fees) {
     if (fee == null || !Number.isSafeInteger(fee) || fee < 0) return { feeHalalas: null, known: false };
-    if (fee > max) max = fee;
+    if (first == null) first = fee;
+    else if (fee !== first) return { feeHalalas: null, known: false };
   }
-  return { feeHalalas: max, known: true };
+  return { feeHalalas: first!, known: true };
 }
 
 export function lineTotal(unitPriceHalalas: number, quantity: number): number {
@@ -430,7 +453,18 @@ export function makePublicNumber(prefix: 'MO' | 'MB', now: Date = new Date()): s
 // Service availability / slots
 // ---------------------------------------------------------------------------
 
-export type AvailabilityWindow = { weekday: number; startMin: number; endMin: number; capacity: number };
+/**
+ * One operating window. Optional `resourceId` separates rooms/staff.
+ * Overlapping windows for the **same** resource are rejected at save time.
+ * Legacy overlaps are never capacity-summed: covering capacity uses MIN.
+ */
+export type AvailabilityWindow = {
+  weekday: number;
+  startMin: number;
+  endMin: number;
+  capacity: number;
+  resourceId: string;
+};
 
 export function parseAvailability(json: unknown): AvailabilityWindow[] {
   if (!Array.isArray(json)) return [];
@@ -438,16 +472,68 @@ export function parseAvailability(json: unknown): AvailabilityWindow[] {
   for (const raw of json) {
     if (!isRecord(raw)) continue;
     const { weekday, startMin, endMin, capacity } = raw;
+    const resourceId =
+      typeof raw.resourceId === 'string' && raw.resourceId.trim() ? raw.resourceId.trim().slice(0, 64) : '';
     if (
       typeof weekday === 'number' && Number.isInteger(weekday) && weekday >= 0 && weekday <= 6 &&
       typeof startMin === 'number' && Number.isInteger(startMin) && startMin >= 0 && startMin < 1440 &&
       typeof endMin === 'number' && Number.isInteger(endMin) && endMin > startMin && endMin <= 1440 &&
       typeof capacity === 'number' && Number.isInteger(capacity) && capacity >= 1 && capacity <= 100
     ) {
-      windows.push({ weekday, startMin, endMin, capacity });
+      windows.push({ weekday, startMin, endMin, capacity, resourceId });
     }
   }
   return windows;
+}
+
+/** Reject overlapping windows for the same resource (adjacent end===start is allowed). */
+export function assertAvailabilityConsistent(windows: AvailabilityWindow[]): void {
+  const groups = new Map<string, AvailabilityWindow[]>();
+  for (const w of windows) {
+    const key = `${w.resourceId}|${w.weekday}`;
+    const list = groups.get(key) ?? [];
+    list.push(w);
+    groups.set(key, list);
+  }
+  for (const list of groups.values()) {
+    const sorted = [...list].sort((a, b) => a.startMin - b.startMin || a.endMin - b.endMin);
+    for (let i = 0; i < sorted.length; i += 1) {
+      for (let j = i + 1; j < sorted.length; j += 1) {
+        const a = sorted[i]!;
+        const b = sorted[j]!;
+        if (a.startMin < b.endMin && b.startMin < a.endMin) {
+          throw badRequest(
+            'AVAILABILITY_OVERLAP',
+            'فترات التوفر متداخلة لنفس المورد. صحّحي الجدول أو عيّني معرّف مورد مختلفًا لكل فترة',
+            { weekday: a.weekday, resourceId: a.resourceId, a: [a.startMin, a.endMin], b: [b.startMin, b.endMin] },
+          );
+        }
+      }
+    }
+  }
+}
+
+/**
+ * Capacity covering a candidate slot. Never sums overlapping legacy windows:
+ * uses the minimum capacity among covering windows of the same resource.
+ */
+export function capacityCovering(
+  weekday: number,
+  slotStartMin: number,
+  slotEndMin: number,
+  windows: AvailabilityWindow[],
+  resourceId = '',
+): number | null {
+  if (!Number.isInteger(slotStartMin) || !Number.isInteger(slotEndMin) || slotEndMin <= slotStartMin) return null;
+  const covering = windows.filter(
+    (w) =>
+      w.resourceId === resourceId &&
+      w.weekday === weekday &&
+      w.startMin <= slotStartMin &&
+      w.endMin >= slotEndMin,
+  );
+  if (covering.length === 0) return null;
+  return Math.min(...covering.map((w) => w.capacity));
 }
 
 /** Local (Asia/Riyadh) weekday (0 = Sunday) and minute-of-day for an instant. */
@@ -470,63 +556,115 @@ export function localInstant(dateKey: string, minuteOfDay: number): Date | null 
 }
 
 export type SlotCheck =
-  | { ok: true; window: AvailabilityWindow; endsAt: Date }
-  | { ok: false; code: 'SLOT_IN_PAST' | 'SLOT_TOO_FAR' | 'SLOT_MISALIGNED' | 'SLOT_OUTSIDE_AVAILABILITY' | 'AVAILABILITY_NOT_CONFIGURED' };
+  | { ok: true; capacity: number; endsAt: Date; resourceId: string }
+  | { ok: false; code: 'SLOT_IN_PAST' | 'SLOT_TOO_FAR' | 'SLOT_MISALIGNED' | 'SLOT_OUTSIDE_AVAILABILITY' | 'AVAILABILITY_NOT_CONFIGURED' | 'DURATION_INVALID' };
 
-/** Is `startsAt` a bookable instant for a service with this availability and duration? */
+/** Shared bookability check used by listing and create booking. */
 export function checkSlot(
   startsAt: Date,
   durationMin: number,
   windows: AvailabilityWindow[],
   now: Date = new Date(),
+  resourceId = '',
 ): SlotCheck {
+  if (!Number.isInteger(durationMin) || durationMin < 5 || durationMin > 12 * 60) {
+    return { ok: false, code: 'DURATION_INVALID' };
+  }
   if (windows.length === 0) return { ok: false, code: 'AVAILABILITY_NOT_CONFIGURED' };
   if (startsAt.getTime() < now.getTime() + BOOKING_LEAD_MINUTES * 60_000) return { ok: false, code: 'SLOT_IN_PAST' };
   if (startsAt.getTime() > now.getTime() + BOOKING_HORIZON_DAYS * 86_400_000) return { ok: false, code: 'SLOT_TOO_FAR' };
   const { weekday, minuteOfDay } = localParts(startsAt);
   if (startsAt.getUTCSeconds() !== 0 || startsAt.getUTCMilliseconds() !== 0) return { ok: false, code: 'SLOT_MISALIGNED' };
-  const window = windows.find(
-    (w) => w.weekday === weekday && minuteOfDay >= w.startMin && minuteOfDay + durationMin <= w.endMin,
+  const slotEnd = minuteOfDay + durationMin;
+  const capacity = capacityCovering(weekday, minuteOfDay, slotEnd, windows, resourceId);
+  if (capacity == null) return { ok: false, code: 'SLOT_OUTSIDE_AVAILABILITY' };
+  // Align to a grid from any covering window start for this resource.
+  const covering = windows.filter(
+    (w) =>
+      w.resourceId === resourceId &&
+      w.weekday === weekday &&
+      w.startMin <= minuteOfDay &&
+      w.endMin >= slotEnd,
   );
-  if (!window) return { ok: false, code: 'SLOT_OUTSIDE_AVAILABILITY' };
-  // Slots sit on a grid that starts at the window start and steps by the service duration.
-  if ((minuteOfDay - window.startMin) % durationMin !== 0) return { ok: false, code: 'SLOT_MISALIGNED' };
-  return { ok: true, window, endsAt: new Date(startsAt.getTime() + durationMin * 60_000) };
+  const aligned = covering.some((w) => (minuteOfDay - w.startMin) % durationMin === 0);
+  if (!aligned) return { ok: false, code: 'SLOT_MISALIGNED' };
+  return { ok: true, capacity, endsAt: new Date(startsAt.getTime() + durationMin * 60_000), resourceId };
 }
 
 export function intervalsOverlap(aStart: Date, aEnd: Date, bStart: Date, bEnd: Date): boolean {
   return aStart.getTime() < bEnd.getTime() && bStart.getTime() < aEnd.getTime();
 }
 
-export type SlotView = { startsAt: string; endsAt: string; capacity: number; remaining: number; available: boolean };
+export type SlotView = {
+  startsAt: string;
+  endsAt: string;
+  capacity: number;
+  remaining: number;
+  available: boolean;
+  resourceId: string;
+};
 
-/** Slots of one local day, with remaining capacity given the already-held bookings. */
+/**
+ * One local day of slots. Each start time appears once per resource.
+ * Capacity/remaining use the same covering rule as checkSlot (never double-list).
+ */
 export function buildDaySlots(
   dateKey: string,
   durationMin: number,
   windows: AvailabilityWindow[],
-  held: ReadonlyArray<{ startsAt: Date; endsAt: Date }>,
+  held: ReadonlyArray<{ startsAt: Date; endsAt: Date; resourceId?: string }>,
   now: Date = new Date(),
 ): SlotView[] {
+  if (!Number.isInteger(durationMin) || durationMin < 5) return [];
   const dayStart = localInstant(dateKey, 0);
   if (!dayStart) return [];
   const weekday = localParts(new Date(dayStart.getTime() + 12 * 3_600_000)).weekday;
+  const resourceIds = [...new Set(windows.filter((w) => w.weekday === weekday).map((w) => w.resourceId))];
+  if (resourceIds.length === 0) return [];
+
   const slots: SlotView[] = [];
-  for (const w of windows.filter((x) => x.weekday === weekday)) {
-    for (let m = w.startMin; m + durationMin <= w.endMin; m += durationMin) {
+  for (const resourceId of resourceIds) {
+    const dayWindows = windows.filter((w) => w.weekday === weekday && w.resourceId === resourceId);
+    const starts = new Set<number>();
+    for (const w of dayWindows) {
+      for (let m = w.startMin; m + durationMin <= w.endMin; m += durationMin) {
+        if ((m - w.startMin) % durationMin === 0) starts.add(m);
+      }
+    }
+    for (const m of [...starts].sort((a, b) => a - b)) {
       const startsAt = localInstant(dateKey, m)!;
-      const endsAt = new Date(startsAt.getTime() + durationMin * 60_000);
-      const taken = held.filter((h) => intervalsOverlap(startsAt, endsAt, h.startsAt, h.endsAt)).length;
-      const remaining = Math.max(w.capacity - taken, 0);
-      const bookable = checkSlot(startsAt, durationMin, windows, now).ok;
+      const check = checkSlot(startsAt, durationMin, windows, now, resourceId);
+      if (!check.ok) {
+        // Still show past/outside as unavailable rows only when capacity exists for the window.
+        const cap = capacityCovering(weekday, m, m + durationMin, windows, resourceId);
+        if (cap == null) continue;
+        const endsAt = new Date(startsAt.getTime() + durationMin * 60_000);
+        const taken = held.filter(
+          (h) => (h.resourceId ?? '') === resourceId && intervalsOverlap(startsAt, endsAt, h.startsAt, h.endsAt),
+        ).length;
+        slots.push({
+          startsAt: startsAt.toISOString(),
+          endsAt: endsAt.toISOString(),
+          capacity: cap,
+          remaining: Math.max(cap - taken, 0),
+          available: false,
+          resourceId,
+        });
+        continue;
+      }
+      const taken = held.filter(
+        (h) => (h.resourceId ?? '') === resourceId && intervalsOverlap(startsAt, check.endsAt, h.startsAt, h.endsAt),
+      ).length;
+      const remaining = Math.max(check.capacity - taken, 0);
       slots.push({
         startsAt: startsAt.toISOString(),
-        endsAt: endsAt.toISOString(),
-        capacity: w.capacity,
+        endsAt: check.endsAt.toISOString(),
+        capacity: check.capacity,
         remaining,
-        available: bookable && remaining > 0,
+        available: remaining > 0,
+        resourceId,
       });
     }
   }
-  return slots.sort((a, b) => a.startsAt.localeCompare(b.startsAt));
+  return slots.sort((a, b) => a.startsAt.localeCompare(b.startsAt) || a.resourceId.localeCompare(b.resourceId));
 }

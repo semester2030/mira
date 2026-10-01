@@ -431,9 +431,11 @@ export class CommerceService {
     const view = await this.cartView(cart);
     return {
       ...view,
-      requiresDeliveryFeeAcknowledgement: !view.deliveryFeeKnown,
-      deliveryFeeNoteAr: view.deliveryFeeKnown ? null : 'رسوم التوصيل غير محددة وسيؤكدها المتجر عند التواصل',
-      paymentNoteAr: 'الدفع نقدًا عند الاستلام',
+      canConfirmOrder: view.deliveryFeeKnown && view.canCheckout,
+      deliveryFeeNoteAr: view.deliveryFeeKnown
+        ? null
+        : 'رسوم التوصيل غير محددة من المتجر. لا يُعرض مبلغ نهائي للدفع عند الاستلام حتى يحدد المتجر الرسوم',
+      paymentNoteAr: 'الدفع نقدًا عند الاستلام بعد تسليم الطلب وتسجيل التحصيل منفصلًا',
     };
   }
 
@@ -445,7 +447,6 @@ export class CommerceService {
     const data = record(body);
     const idempotencyKey = normalizeIdempotencyKey(headerKey, data.idempotencyKey);
     const delivery = parseDelivery(data);
-    const acknowledgeUnknownFee = data.acknowledgeUnknownDeliveryFee === true;
     const clientRequestId = typeof data.clientRequestId === 'string' ? data.clientRequestId.slice(0, 128) : null;
 
     const replay = await this.findOrderByKey(actor.userId, idempotencyKey);
@@ -480,10 +481,13 @@ export class CommerceService {
             );
           }
           if (!priced.partnerId) throw conflict('CART_EMPTY', 'السلة فارغة');
-          if (!priced.fee.known && !acknowledgeUnknownFee) {
-            throw unprocessable('DELIVERY_FEE_UNKNOWN', 'رسوم التوصيل غير محددة. يرجى تأكيد المتابعة بدون رسوم محددة', {
-              requiresDeliveryFeeAcknowledgement: true,
-            });
+          // No final COD total without a known fee. Empty fee is never "free".
+          if (!priced.fee.known || priced.fee.feeHalalas == null) {
+            throw unprocessable(
+              'DELIVERY_FEE_UNKNOWN',
+              'رسوم التوصيل غير محددة من المتجر. لا يمكن تأكيد مبلغ الدفع عند الاستلام حتى يحدد المتجر الرسوم',
+              { requiresKnownDeliveryFee: true },
+            );
           }
 
           // Reserve stock: one conditional UPDATE per product, ordered by id to avoid deadlocks.
@@ -804,7 +808,7 @@ export class CommerceService {
     }
     await this.prisma.$transaction(async (tx) => {
       const marked = await tx.commerceOrder.updateMany({
-        where: { id: order.id, paymentCollectionStatus: 'uncollected', fulfillmentStatus: { in: ['out_for_delivery', 'delivered'] } },
+        where: { id: order.id, paymentCollectionStatus: 'uncollected', fulfillmentStatus: 'delivered' },
         data: { paymentCollectionStatus: 'collected', collectionActor: `${actor.type}:${actor.id}`, collectedAt: new Date() },
       });
       if (marked.count !== 1) throw conflict('ORDER_STATE_CHANGED', 'تغيرت حالة الطلب، حدّث الصفحة وحاول مرة أخرى');
@@ -940,10 +944,11 @@ export class CommerceService {
       throw unprocessable('SERVICE_NOT_BOOKABLE', 'بيانات الخدمة غير مكتملة للحجز');
     }
 
-    const slot = checkSlot(startsAt, service.durationMin, parseAvailability(service.availabilityJson));
+    const windows = parseAvailability(service.availabilityJson);
+    const slot = checkSlot(startsAt, service.durationMin, windows);
     if (!slot.ok) throw this.slotError(slot.code);
     const endsAt = slot.endsAt;
-    const capacity = slot.window.capacity;
+    const capacity = slot.capacity;
 
     try {
       const created = await this.prisma.$transaction(async (tx) => {
@@ -956,11 +961,15 @@ export class CommerceService {
         });
         if (again) return { row: again, replay: true };
 
+        // Re-check with the same capacity source as the public slot list.
+        const lockedSlot = checkSlot(startsAt, service.durationMin, windows);
+        if (!lockedSlot.ok) throw this.slotError(lockedSlot.code);
+
         const overlapping = await tx.commerceBooking.findMany({
           where: {
             serviceId: service.id,
             status: { in: [...ACTIVE_BOOKING_STATUSES] },
-            startsAt: { lt: endsAt },
+            startsAt: { lt: lockedSlot.endsAt },
             endsAt: { gt: startsAt },
           },
           select: { userId: true },
@@ -968,7 +977,7 @@ export class CommerceService {
         if (overlapping.some((b) => b.userId === actor.userId)) {
           throw conflict('BOOKING_USER_OVERLAP', 'لديك حجز آخر لنفس الخدمة في هذا الوقت');
         }
-        if (overlapping.length >= capacity) {
+        if (overlapping.length >= lockedSlot.capacity) {
           throw conflict('BOOKING_SLOT_FULL', 'هذا الموعد غير متاح، اختر وقتًا آخر');
         }
 
@@ -1013,6 +1022,7 @@ export class CommerceService {
       SLOT_MISALIGNED: 'وقت الحجز لا يطابق المواعيد المتاحة',
       SLOT_OUTSIDE_AVAILABILITY: 'هذا الوقت خارج أوقات عمل الخدمة',
       AVAILABILITY_NOT_CONFIGURED: 'مواعيد هذه الخدمة غير محددة بعد',
+      DURATION_INVALID: 'مدة الخدمة غير صالحة للحجز',
     };
     return unprocessable(code, messages[code] ?? 'الموعد غير متاح');
   }

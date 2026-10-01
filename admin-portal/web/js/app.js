@@ -7,7 +7,7 @@
     applications: { title: 'طلبات الشركاء', subtitle: 'اعتماد ورفض طلبات الانضمام' },
     reviews: { title: 'مراجعة المحتوى', subtitle: 'نشر أو رفض محتوى المنتجات والخدمات' },
     ads: { title: 'مراجعة الإعلانات', subtitle: 'اعتماد النسخة المعروضة فقط' },
-    orders: { title: 'الطلبات', subtitle: 'طلبات الدفع عند الاستلام داخل ميرا (قراءة فقط)' },
+    orders: { title: 'الطلبات والحجوزات', subtitle: 'متابعة COD والتحصيل والحجوزات مع سبب لكل تدخل' },
     partners: { title: 'الشركاء', subtitle: 'إدارة حالة الشركاء النشطين' },
     leads: { title: 'رسائل الموقع', subtitle: 'Leads من الموقع التعريفي' },
     system: { title: 'النظام', subtitle: 'Providers · Feature flags · Security' },
@@ -757,8 +757,44 @@
   };
   const PAYMENT_STATUS_LABELS = { uncollected: 'لم يُحصَّل', collected: 'حُصِّل', waived: 'أُعفي' };
 
+  const BOOKING_STATUS_LABELS = {
+    requested: 'طلب موعد',
+    confirmed: 'مؤكد',
+    completed: 'مكتمل',
+    cancelled: 'ملغي',
+    rejected: 'مرفوض',
+  };
+  const ORDER_NEXT_ADMIN = {
+    new: [['accepted', 'قبول'], ['rejected', 'رفض'], ['cancelled', 'إلغاء']],
+    accepted: [['preparing', 'تجهيز'], ['rejected', 'رفض'], ['cancelled', 'إلغاء']],
+    preparing: [['out_for_delivery', 'خرج للتوصيل'], ['cancelled', 'إلغاء']],
+    out_for_delivery: [['delivered', 'تسليم'], ['failed_delivery', 'تعذر التسليم']],
+    failed_delivery: [['out_for_delivery', 'إعادة توصيل'], ['cancelled', 'إلغاء']],
+  };
+  const BOOKING_NEXT_ADMIN = {
+    requested: [['confirmed', 'تأكيد'], ['rejected', 'رفض']],
+    confirmed: [['completed', 'إتمام'], ['cancelled', 'إلغاء']],
+  };
+
   async function renderOrders() {
     root.replaceChildren();
+    if (!state.ordersTab) state.ordersTab = 'orders';
+    const tabs = document.createElement('div');
+    tabs.className = 'toolbar';
+    [['orders', 'الطلبات'], ['bookings', 'الحجوزات']].forEach(([id, label]) => {
+      const btn = document.createElement('button');
+      btn.className = 'btn btn-sm' + (state.ordersTab === id ? ' btn-primary' : '');
+      btn.textContent = label;
+      btn.onclick = () => { state.ordersTab = id; state.ordersDetail = null; renderOrders(); };
+      tabs.appendChild(btn);
+    });
+    root.appendChild(tabs);
+
+    if (state.ordersDetail && state.ordersTab === 'orders') {
+      await renderOrderDetail(state.ordersDetail);
+      return;
+    }
+
     const toolbar = document.createElement('div');
     toolbar.className = 'toolbar';
     const select = document.createElement('select');
@@ -766,15 +802,16 @@
     all.value = '';
     all.textContent = 'كل الحالات';
     select.appendChild(all);
-    Object.keys(ORDER_STATUS_LABELS).forEach((key) => {
+    const labels = state.ordersTab === 'orders' ? ORDER_STATUS_LABELS : BOOKING_STATUS_LABELS;
+    Object.keys(labels).forEach((key) => {
       const option = document.createElement('option');
       option.value = key;
-      option.textContent = ORDER_STATUS_LABELS[key];
+      option.textContent = labels[key];
       select.appendChild(option);
     });
     select.value = state.ordersStatus;
     const search = document.createElement('input');
-    search.placeholder = 'رقم الطلب أو الاسم أو الجوال';
+    search.placeholder = state.ordersTab === 'orders' ? 'رقم الطلب أو الجهة أو الجوال' : 'رقم الحجز أو الجهة';
     search.value = state.ordersQuery;
     const apply = document.createElement('button');
     apply.className = 'btn btn-primary btn-sm';
@@ -790,20 +827,25 @@
     const panel = document.createElement('div');
     panel.className = 'panel';
     root.appendChild(panel);
-    reviewText(panel, 'جارٍ تحميل الطلبات');
+    reviewText(panel, 'جارٍ التحميل');
     try {
-      const data = await MiraAdminApi.commerceOrders(state.ordersStatus, state.ordersQuery);
+      const data = state.ordersTab === 'orders'
+        ? await MiraAdminApi.commerceOrders(state.ordersStatus, state.ordersQuery)
+        : await MiraAdminApi.commerceBookings(state.ordersStatus, state.ordersQuery);
       const items = data.items || [];
       panel.replaceChildren();
       if (!items.length) {
-        reviewText(panel, 'لا طلبات.');
+        reviewText(panel, state.ordersTab === 'orders' ? 'لا طلبات.' : 'لا حجوزات.');
         return;
       }
       const wrap = document.createElement('div');
       wrap.className = 'table-wrap';
       const table = document.createElement('table');
       const head = document.createElement('tr');
-      ['الرقم', 'الشريك', 'العميلة', 'التنفيذ', 'التحصيل', 'المجموع (ر.س)', 'التاريخ'].forEach((label) => {
+      const headers = state.ordersTab === 'orders'
+        ? ['الرقم', 'الشريك', 'العميلة', 'التنفيذ', 'التحصيل', 'المجموع (ر.س)', 'التاريخ', '']
+        : ['الرقم', 'الشريك', 'الخدمة', 'الحالة', 'الموعد', 'التاريخ', ''];
+      headers.forEach((label) => {
         const th = document.createElement('th');
         th.textContent = label;
         head.appendChild(th);
@@ -811,27 +853,141 @@
       const thead = document.createElement('thead');
       thead.appendChild(head);
       const tbody = document.createElement('tbody');
-      items.forEach((order) => {
-        const row = document.createElement('tr');
-        [
-          order.publicNumber,
-          order.partner && order.partner.nameAr,
-          order.contactName + ' · ' + order.contactPhone,
-          ORDER_STATUS_LABELS[order.fulfillmentStatus] || order.fulfillmentStatus,
-          PAYMENT_STATUS_LABELS[order.paymentCollectionStatus] || order.paymentCollectionStatus,
-          (order.totalHalalas / 100).toFixed(2) + (order.deliveryFeeKnown ? '' : ' + توصيل غير محدد'),
-          fmtDate(order.createdAt),
-        ].forEach((value) => {
+      items.forEach((row) => {
+        const tr = document.createElement('tr');
+        const cells = state.ordersTab === 'orders'
+          ? [
+              row.publicNumber,
+              row.partner && row.partner.nameAr,
+              row.contactName + ' · ' + row.contactPhone,
+              ORDER_STATUS_LABELS[row.fulfillmentStatus] || row.fulfillmentStatus,
+              PAYMENT_STATUS_LABELS[row.paymentCollectionStatus] || row.paymentCollectionStatus,
+              (row.totalHalalas / 100).toFixed(2) + (row.deliveryFeeKnown === false ? ' (رسوم غير مؤكدة)' : ''),
+              fmtDate(row.createdAt),
+            ]
+          : [
+              row.publicNumber,
+              row.partner && row.partner.nameAr,
+              row.serviceNameAr,
+              BOOKING_STATUS_LABELS[row.status] || row.status,
+              fmtDate(row.startsAt),
+              fmtDate(row.createdAt),
+            ];
+        cells.forEach((value) => {
           const td = document.createElement('td');
           td.textContent = value == null ? '' : String(value);
-          row.appendChild(td);
+          tr.appendChild(td);
         });
-        tbody.appendChild(row);
+        const actionTd = document.createElement('td');
+        if (state.ordersTab === 'orders') {
+          const open = document.createElement('button');
+          open.className = 'btn btn-sm';
+          open.textContent = 'تفاصيل';
+          open.onclick = () => { state.ordersDetail = row.id; renderOrders(); };
+          actionTd.appendChild(open);
+        } else {
+          (BOOKING_NEXT_ADMIN[row.status] || []).forEach((step) => {
+            const b = document.createElement('button');
+            b.className = 'btn btn-sm';
+            b.textContent = step[1];
+            b.onclick = async () => {
+              const note = prompt('سبب التدخل الإداري (مطلوب)');
+              if (!note) return;
+              try {
+                await MiraAdminApi.commerceBookingTransition(row.id, { status: step[0], note });
+                renderOrders();
+              } catch (error) {
+                alert(error.message);
+              }
+            };
+            actionTd.appendChild(b);
+          });
+        }
+        tr.appendChild(actionTd);
+        tbody.appendChild(tr);
       });
       table.append(thead, tbody);
       wrap.appendChild(table);
       panel.appendChild(wrap);
-      if (data.nextCursor) reviewText(panel, 'يوجد المزيد. تظهر آخر ٥٠ طلبًا فقط.');
+      if (data.nextCursor) reviewText(panel, 'يوجد المزيد. تظهر آخر ٥٠ فقط.');
+    } catch (error) {
+      panel.replaceChildren();
+      const alert = document.createElement('div');
+      alert.className = 'alert err';
+      alert.textContent = error.message;
+      panel.appendChild(alert);
+    }
+  }
+
+  async function renderOrderDetail(orderId) {
+    const panel = document.createElement('div');
+    panel.className = 'panel';
+    root.appendChild(panel);
+    reviewText(panel, 'جارٍ تحميل التفاصيل');
+    try {
+      const order = await MiraAdminApi.commerceOrder(orderId);
+      panel.replaceChildren();
+      const back = document.createElement('button');
+      back.className = 'btn btn-sm';
+      back.textContent = 'رجوع للقائمة';
+      back.onclick = () => { state.ordersDetail = null; renderOrders(); };
+      panel.appendChild(back);
+      reviewText(panel, 'طلب ' + order.publicNumber);
+      reviewText(panel, 'التنفيذ: ' + (ORDER_STATUS_LABELS[order.fulfillmentStatus] || order.fulfillmentStatus));
+      reviewText(panel, 'التوصيل: ' + (order.deliveryStatus || '—'));
+      reviewText(panel, 'التحصيل: ' + (PAYMENT_STATUS_LABELS[order.paymentCollectionStatus] || order.paymentCollectionStatus));
+      reviewText(panel, 'الشريك: ' + ((order.partner && order.partner.nameAr) || order.partnerId));
+      reviewText(panel, 'العميلة: ' + order.contactName + ' · ' + order.contactPhone);
+      reviewText(panel, 'العنوان: ' + order.city + ' · ' + order.addressLine);
+      (order.items || []).forEach((item) => {
+        reviewText(panel, item.productNameAr + ' × ' + item.quantity + ' = ' + (item.lineTotalHalalas / 100).toFixed(2) + ' ر.س');
+      });
+      reviewText(panel, 'المجموع: ' + (order.totalHalalas / 100).toFixed(2) + ' ر.س (منتجات ' + (order.subtotalHalalas / 100).toFixed(2) + ' + توصيل ' + (order.deliveryFeeHalalas == null ? 'غير محدد' : (order.deliveryFeeHalalas / 100).toFixed(2)) + ')');
+
+      const actions = document.createElement('div');
+      actions.className = 'toolbar';
+      (ORDER_NEXT_ADMIN[order.fulfillmentStatus] || []).forEach((step) => {
+        const b = document.createElement('button');
+        b.className = 'btn btn-sm btn-primary';
+        b.textContent = step[1];
+        b.onclick = async () => {
+          const note = prompt('سبب التدخل الإداري (مطلوب)');
+          if (!note) return;
+          try {
+            await MiraAdminApi.commerceOrderTransition(order.id, { fulfillmentStatus: step[0], note });
+            renderOrders();
+          } catch (error) {
+            alert(error.message);
+          }
+        };
+        actions.appendChild(b);
+      });
+      if (order.paymentCollectionStatus === 'uncollected' && order.fulfillmentStatus === 'delivered') {
+        const collect = document.createElement('button');
+        collect.className = 'btn btn-sm';
+        collect.textContent = 'تسجيل التحصيل';
+        collect.onclick = async () => {
+          const note = prompt('ملاحظة التحصيل (مطلوبة للإدارة)');
+          if (!note) return;
+          try {
+            await MiraAdminApi.commerceCollectPayment(order.id, note);
+            renderOrders();
+          } catch (error) {
+            alert(error.message);
+          }
+        };
+        actions.appendChild(collect);
+      }
+      panel.appendChild(actions);
+
+      reviewText(panel, 'الخط الزمني');
+      (order.events || []).forEach((ev) => {
+        reviewText(
+          panel,
+          fmtDate(ev.createdAt) + ' · ' + (ev.field || '') + ' · ' + (ev.fromStatus || '') + ' → ' + (ev.toStatus || '') +
+            (ev.actorType ? ' · ' + ev.actorType : '') + (ev.note ? ' · ' + ev.note : ''),
+        );
+      });
     } catch (error) {
       panel.replaceChildren();
       const alert = document.createElement('div');

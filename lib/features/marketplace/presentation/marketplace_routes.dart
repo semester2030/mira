@@ -34,10 +34,36 @@ abstract final class MarketplaceRoutes {
         name == AppRoutes.orderDetail ||
         name == AppRoutes.myBookings ||
         name == AppRoutes.bookingRequest ||
-        name == AppRoutes.favorites;
+        name == AppRoutes.favorites ||
+        parseDiscoverDeepLink(name) != null;
+  }
+
+  /// Share / web link: `/discover/product|service/{id}` (absolute or path-only).
+  static ({String kind, String id})? parseDiscoverDeepLink(String? name) {
+    if (name == null || name.isEmpty) return null;
+    final uri = Uri.tryParse(name.contains('://') ? name : 'https://mira.local$name');
+    if (uri == null) return null;
+    final parts = uri.pathSegments.where((s) => s.isNotEmpty).toList();
+    // Accept …/discover/product|service/{id} even when preceded by a locale or site prefix.
+    final idx = parts.indexOf('discover');
+    if (idx < 0 || parts.length < idx + 3) return null;
+    final kind = parts[idx + 1];
+    final id = Uri.decodeComponent(parts[idx + 2]);
+    if ((kind != 'product' && kind != 'service') || id.isEmpty) return null;
+    return (kind: kind, id: id);
   }
 
   static Route<dynamic>? onGenerate(RouteSettings settings) {
+    final deep = parseDiscoverDeepLink(settings.name);
+    if (deep != null) {
+      if (!MiraFeatures.marketplaceEnabled) {
+        return PremiumPageRoute(page: const DiscoverHubScreen(), settings: settings);
+      }
+      return PremiumPageRoute(
+        page: _record(deep.kind, deep.id, false, 0),
+        settings: settings,
+      );
+    }
     switch (settings.name) {
       case AppRoutes.discover:
         return PremiumPageRoute(page: const DiscoverHubScreen(), settings: settings);

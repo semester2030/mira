@@ -10,14 +10,15 @@
 | delivered | تم التسليم | — | نهائي |
 | rejected | مرفوض | — | نهائي (يحرر المخزون مرة) |
 | cancelled | ملغى | — | نهائي (يحرر المخزون مرة) |
-| failed_delivery | تعذر التسليم | — | نهائي |
+| failed_delivery | تعذر التسليم | out_for_delivery, cancelled | شريك/إدارة — **ليست نهائية**. المخزون يبقى محجوزًا حتى الإلغاء (تحرير) أو إعادة التوصيل. لا عودة تلقائية للمخزون القابل للبيع |
 
 ## التوصيل (deliveryStatus) منفصل عن التنفيذ
-pending | out_for_delivery | delivered | failed | none
+pending | out_for_delivery | delivered | failed | none  
+تغيير التوصيل لا يسجّل التحصيل. المحاور الثلاثة مستقلة.
 
 ## التحصيل (paymentCollectionStatus) — COD
 uncollected | collected | waived  
-التحصيل ليس تلقائيًا عند التسليم. التسجيل بفاعل وتوقيت.
+التحصيل يُسمح به فقط بعد `delivered`، بفاعل وتوقيت وسبب للإدارة. ليس أثناء التوصيل.
 
 ## حجز خدمة (status)
 | حالة | معنى |

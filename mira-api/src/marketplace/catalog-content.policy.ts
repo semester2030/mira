@@ -4,8 +4,14 @@ export const IMAGE_MAX_BYTES = 5 * 1024 * 1024;
 export const VIDEO_MAX_BYTES = 20 * 1024 * 1024;
 
 export const FIELD_OWNERSHIP = [
-  { field: 'priceHalalas', ownerAr: 'المصدر المعتمد', reviewAr: 'يُحدَّث على الصف نفسه دون نسخة سعر ثانية' },
-  { field: 'availability', ownerAr: 'المصدر المعتمد', reviewAr: 'التعطل يسحب الظهور. فشل المزامنة لا يعني سعرًا صفرًا ولا مخزونًا صفرًا' },
+  { field: 'priceHalalas', ownerAr: 'تشغيلي (شريك/مصدر)', reviewAr: 'يُحدَّث على الصف المنشور دون مراجعة محتوى' },
+  { field: 'stockQty', ownerAr: 'تشغيلي (شريك)', reviewAr: 'مخزون يومي على الصف المنشور دون مراجعة محتوى' },
+  { field: 'deliveryFeeHalalas', ownerAr: 'تشغيلي (شريك)', reviewAr: 'رسوم التوصيل على الصف المنشور؛ الفراغ ليس مجانيًا' },
+  { field: 'purchaseMode', ownerAr: 'تشغيلي (شريك)', reviewAr: 'external | internal_cod على الصف المنشور' },
+  { field: 'availabilityJson', ownerAr: 'تشغيلي (شريك)', reviewAr: 'توفر المواعيد على الصف المنشور بعد تحقق عدم التداخل' },
+  { field: 'bookingEnabled', ownerAr: 'تشغيلي (شريك)', reviewAr: 'تفعيل طلب الموعد على الصف المنشور' },
+  { field: 'optionsJson', ownerAr: 'تحرير الشريك', reviewAr: 'مسودة draftOptionsJson حتى اعتماد الإدارة؛ لا تُكتب مباشرة على المنشور' },
+  { field: 'variantsJson', ownerAr: 'تحرير الشريك', reviewAr: 'مسودة draftVariantsJson حتى اعتماد الإدارة' },
   { field: 'nameAr', ownerAr: 'تحرير الشريك', reviewAr: 'مسودة حتى اعتماد الإدارة، والنسخة المنشورة تبقى ظاهرة' },
   { field: 'descriptionAr', ownerAr: 'تحرير الشريك', reviewAr: 'مسودة حتى اعتماد الإدارة' },
   { field: 'media', ownerAr: 'تحرير الشريك', reviewAr: 'لا يظهر في الخلاصة قبل النشر، والحذف المؤكد يتم بعد الاعتماد' },

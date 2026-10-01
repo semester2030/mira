@@ -258,14 +258,76 @@
       bookingWrap.append(bookingToggle, document.createTextNode(' تفعيل طلب الموعد داخل ميرا (بانتظار قبول الجهة)'));
       basics.appendChild(bookingWrap);
       text(basics, 'الدفع لدى الجهة عند الموعد. لا تُطبَّق عبارة الدفع عند الاستلام الخاصة بالمنتجات على الخدمات.');
-      availabilityJson = field(
-        basics,
-        'جدول التوفر JSON (اختياري)',
-        'availabilityJson',
-        editing && item.availabilityJson ? JSON.stringify(item.availabilityJson) : '[{"weekday":0,"startMin":540,"endMin":1020,"capacity":1},{"weekday":1,"startMin":540,"endMin":1020,"capacity":1},{"weekday":2,"startMin":540,"endMin":1020,"capacity":1},{"weekday":3,"startMin":540,"endMin":1020,"capacity":1},{"weekday":4,"startMin":540,"endMin":1020,"capacity":1}]',
-        'textarea',
-      );
-      text(basics, 'weekday: 0=الأحد … 6=السبت. startMin/endMin من منتصف الليل بتوقيت الرياض. capacity=عدد الحجوزات المتزامنة.');
+      const availBox = document.createElement('div');
+      availBox.className = 'form-section';
+      text(availBox, 'أيام العمل والفترات والسعة', 'h3');
+      text(availBox, 'كل يوم يعمل بفترة واحدة وسعة واحدة. الفترات المتداخلة لنفس المورد تُرفض عند الحفظ. لا حاجة لتعديل قاعدة البيانات يدويًا.');
+      const dayNames = ['الأحد', 'الإثنين', 'الثلاثاء', 'الأربعاء', 'الخميس', 'الجمعة', 'السبت'];
+      const defaultWindows = editing && Array.isArray(item.availabilityJson) && item.availabilityJson.length
+        ? item.availabilityJson
+        : [0, 1, 2, 3, 4].map((d) => ({ weekday: d, startMin: 540, endMin: 1020, capacity: 1, resourceId: '' }));
+      const availState = dayNames.map((_, weekday) => {
+        const hit = defaultWindows.find((w) => Number(w.weekday) === weekday);
+        return {
+          on: Boolean(hit),
+          start: hit ? String(Math.floor(hit.startMin / 60)).padStart(2, '0') + ':' + String(hit.startMin % 60).padStart(2, '0') : '09:00',
+          end: hit ? String(Math.floor(hit.endMin / 60)).padStart(2, '0') + ':' + String(hit.endMin % 60).padStart(2, '0') : '17:00',
+          capacity: hit ? String(hit.capacity || 1) : '1',
+          resourceId: hit && hit.resourceId ? String(hit.resourceId) : '',
+        };
+      });
+      dayNames.forEach((name, weekday) => {
+        const row = document.createElement('div');
+        row.className = 'check-row';
+        const on = document.createElement('input');
+        on.type = 'checkbox';
+        on.checked = availState[weekday].on;
+        on.onchange = () => { availState[weekday].on = on.checked; };
+        const start = document.createElement('input');
+        start.type = 'time';
+        start.value = availState[weekday].start;
+        start.onchange = () => { availState[weekday].start = start.value; };
+        const end = document.createElement('input');
+        end.type = 'time';
+        end.value = availState[weekday].end;
+        end.onchange = () => { availState[weekday].end = end.value; };
+        const cap = document.createElement('input');
+        cap.type = 'number';
+        cap.min = '1';
+        cap.max = '100';
+        cap.value = availState[weekday].capacity;
+        cap.style.width = '4rem';
+        cap.onchange = () => { availState[weekday].capacity = cap.value; };
+        const res = document.createElement('input');
+        res.type = 'text';
+        res.placeholder = 'مورد/فرع (اختياري)';
+        res.value = availState[weekday].resourceId;
+        res.onchange = () => { availState[weekday].resourceId = res.value.trim(); };
+        row.append(on, document.createTextNode(' ' + name + ' '), start, document.createTextNode(' — '), end, document.createTextNode(' سعة '), cap, res);
+        availBox.appendChild(row);
+      });
+      basics.appendChild(availBox);
+      availabilityJson = {
+        build: function () {
+          const windows = [];
+          availState.forEach((day, weekday) => {
+            if (!day.on) return;
+            const sm = day.start.split(':').map(Number);
+            const em = day.end.split(':').map(Number);
+            const startMin = sm[0] * 60 + sm[1];
+            const endMin = em[0] * 60 + em[1];
+            const capacity = parseInt(day.capacity, 10);
+            if (!Number.isInteger(startMin) || !Number.isInteger(endMin) || endMin <= startMin) {
+              throw new Error('وقت غير صالح ليوم ' + dayNames[weekday]);
+            }
+            if (!Number.isInteger(capacity) || capacity < 1) {
+              throw new Error('السعة يجب أن تكون عددًا ≥ 1 ليوم ' + dayNames[weekday]);
+            }
+            windows.push({ weekday: weekday, startMin: startMin, endMin: endMin, capacity: capacity, resourceId: day.resourceId || '' });
+          });
+          return windows;
+        },
+      };
     }
 
     const templateSection = document.createElement('div');
@@ -617,7 +679,7 @@
     optionsSection.append(optionsBody, optionsPreview);
     form.insertBefore(optionsSection, mediaSection);
 
-    const optionsState = loadOptionsDraft(editing ? item.id : null);
+    const optionsState = optionsStateFromServer(editing ? item : null);
 
     function optionPresets(cat) {
       if (cat === 'clothes') {
@@ -644,19 +706,40 @@
       return { groups: [], traits: [] };
     }
 
-    function loadOptionsDraft(id) {
-      try {
-        const raw = localStorage.getItem('mira-product-options:' + (id || 'new'));
-        if (!raw) return { selected: {}, customs: {}, variantsText: '', traits: {} };
-        return Object.assign({ selected: {}, customs: {}, variantsText: '', traits: {} }, JSON.parse(raw));
-      } catch (error) {
-        return { selected: {}, customs: {}, variantsText: '', traits: {} };
-      }
+    /** Hydrate easy UI from server options (draft pending review wins over live published). */
+    function optionsStateFromServer(row) {
+      const empty = { selected: {}, customs: {}, variantsText: '', traits: {} };
+      if (!row) return empty;
+      const groups = Array.isArray(row.draftOptionsJson) && row.draftOptionsJson.length
+        ? row.draftOptionsJson
+        : (Array.isArray(row.optionsJson) ? row.optionsJson : []);
+      const variants = Array.isArray(row.draftVariantsJson) && row.draftVariantsJson.length
+        ? row.draftVariantsJson
+        : (Array.isArray(row.variantsJson) ? row.variantsJson : []);
+      const selected = {};
+      const customs = {};
+      groups.forEach((group) => {
+        if (!group || !group.id) return;
+        selected[group.id] = (group.values || []).map((v) => v.labelAr || v.id).filter(Boolean);
+        customs[group.id] = '';
+      });
+      const variantsText = variants.map((variant) => {
+        if (!variant || !variant.selections) return '';
+        return groups.map((g) => {
+          const valueId = variant.selections[g.id];
+          const value = (g.values || []).find((v) => v.id === valueId);
+          return value ? value.labelAr : valueId;
+        }).join('|');
+      }).filter(Boolean).join('\n');
+      return { selected: selected, customs: customs, variantsText: variantsText, traits: {} };
     }
 
     function saveOptionsDraft() {
-      const key = 'mira-product-options:' + ((item && item.id) || 'new');
-      localStorage.setItem(key, JSON.stringify(optionsState));
+      // localStorage is a UI convenience only; authoritative copy is optionsJson on the API.
+      try {
+        const key = 'mira-product-options:' + ((item && item.id) || 'new');
+        localStorage.setItem(key, JSON.stringify(optionsState));
+      } catch (error) {}
     }
 
     function paintOptions() {
@@ -727,6 +810,62 @@
       paintOptionsPreview();
     }
 
+    function slugValue(label, index) {
+      const base = String(label || '')
+        .trim()
+        .toLowerCase()
+        .replace(/\s+/g, '-')
+        .replace(/[^a-z0-9\u0600-\u06FF\-]/g, '')
+        .slice(0, 40);
+      return base || ('v' + (index + 1));
+    }
+
+    /** Structured options from the easy UI → backend optionsJson / variantsJson (not localStorage-only). */
+    function structuredOptionsPayload() {
+      const preset = optionPresets(category.value);
+      const groups = [];
+      preset.groups.forEach((group) => {
+        const labels = (optionsState.selected[group.id] || []).slice();
+        String(optionsState.customs[group.id] || '')
+          .split(',')
+          .map((part) => part.trim())
+          .filter(Boolean)
+          .forEach((part) => {
+            if (labels.indexOf(part) < 0) labels.push(part);
+          });
+        if (!labels.length) return;
+        groups.push({
+          id: group.id,
+          labelAr: group.label,
+          kind: group.kind,
+          values: labels.map((label, index) => ({ id: slugValue(label, index), labelAr: label })),
+        });
+      });
+      const variants = [];
+      String(optionsState.variantsText || '')
+        .split('\n')
+        .map((line) => line.trim())
+        .filter(Boolean)
+        .forEach((line, index) => {
+          const parts = line.split('|').map((part) => part.trim()).filter(Boolean);
+          if (!parts.length || parts.length !== groups.length) return;
+          const selections = {};
+          let ok = true;
+          groups.forEach((group, gi) => {
+            const label = parts[gi];
+            const value = group.values.find((entry) => entry.labelAr === label);
+            if (!value) {
+              ok = false;
+              return;
+            }
+            selections[group.id] = value.id;
+          });
+          if (!ok) return;
+          variants.push({ id: 'var-' + (index + 1), selections: selections });
+        });
+      return { optionsJson: groups, variantsJson: variants };
+    }
+
     function paintOptionsPreview() {
       optionsPreview.replaceChildren();
       text(optionsPreview, 'معاينة الظهور في التفاصيل', 'h4');
@@ -751,7 +890,13 @@
       const lines = String(optionsState.variantsText || '').split('\n').map((line) => line.trim()).filter(Boolean);
       if (lines.length) text(optionsPreview, 'التركيبات المسجّلة: ' + lines.join(' · '));
       else text(optionsPreview, 'لا تُنشأ تركيبات تلقائيًا من حاصل ضرب الخيارات.');
-      text(optionsPreview, 'حفظ الخيارات محليًا للمسودة حتى يتوفر تخزين دائم للحقول.');
+      const built = structuredOptionsPayload();
+      text(
+        optionsPreview,
+        built.optionsJson.length
+          ? 'عند الحفظ تُرسل الخيارات إلى الخادم (' + built.optionsJson.length + ' مجموعة، ' + built.variantsJson.length + ' تركيبة).'
+          : 'لا خيارات منظمة للإرسال بعد.',
+      );
     }
 
     paintOptions();
@@ -978,8 +1123,16 @@
       if (options.error) return options;
       const variants = parseJsonList(variantsJsonInput.value, 'variantsJson', 'التركيبات');
       if (variants.error) return variants;
-      value.optionsJson = options.value === undefined ? (editing && item.optionsJson ? null : undefined) : options.value;
-      value.variantsJson = variants.value === undefined ? (editing && item.variantsJson ? null : undefined) : variants.value;
+      const built = structuredOptionsPayload();
+      // Prefer explicit JSON when provided; otherwise send the easy UI structure to the API.
+      if (options.value !== undefined) value.optionsJson = options.value;
+      else if (built.optionsJson.length) value.optionsJson = built.optionsJson;
+      else if (editing && item.optionsJson) value.optionsJson = null;
+
+      if (variants.value !== undefined) value.variantsJson = variants.value;
+      else if (built.variantsJson.length) value.variantsJson = built.variantsJson;
+      else if (editing && item.variantsJson) value.variantsJson = null;
+
       if (value.optionsJson === undefined) delete value.optionsJson;
       if (value.variantsJson === undefined) delete value.variantsJson;
       return { value: value };
@@ -1052,12 +1205,11 @@
         if (duration && duration.value) payload.durationMin = parseInt(duration.value, 10);
         if (bookingToggle) payload.bookingEnabled = Boolean(bookingToggle.checked);
         payload.payMode = 'pay_at_venue';
-        if (availabilityJson && availabilityJson.value.trim()) {
+        if (availabilityJson && typeof availabilityJson.build === 'function') {
           try {
-            payload.availabilityJson = JSON.parse(availabilityJson.value.trim());
+            payload.availabilityJson = availabilityJson.build();
           } catch (error) {
-            setFieldError(form, 'availabilityJson', 'JSON غير صالح لجدول التوفر');
-            status.textContent = 'لم يُرسل الحفظ. أصلحي جدول التوفر.';
+            status.textContent = 'لم يُرسل الحفظ. ' + (error.message || 'أصلحي جدول التوفر.');
             return;
           }
         }

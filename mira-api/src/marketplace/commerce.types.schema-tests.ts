@@ -1,8 +1,10 @@
 import assert from 'node:assert/strict';
 import { HttpException } from '@nestjs/common';
 import {
+  assertAvailabilityConsistent,
   buildDaySlots,
   canCollectPayment,
+  canonicalVariantKey,
   checkBookingTransition,
   checkFulfillmentTransition,
   checkSlot,
@@ -45,6 +47,7 @@ for (const terminal of ['delivered', 'rejected', 'cancelled'] as const) {
   assert.deepEqual(FULFILLMENT_TRANSITIONS[terminal], {}, `${terminal} is terminal`);
 }
 assert.deepEqual(checkFulfillmentTransition('failed_delivery', 'out_for_delivery', 'partner'), { ok: true });
+assert.deepEqual(checkFulfillmentTransition('accepted', 'rejected', 'partner'), { ok: true });
 assert.equal(FULFILLMENT_STATUSES.length, 8);
 
 // --- delivery axis ------------------------------------------------------------
@@ -70,7 +73,7 @@ assert.equal(consumesStock('cancelled'), false);
 // --- payment collection is its own axis ---------------------------------------
 assert.equal(canCollectPayment('new', 'uncollected'), false);
 assert.equal(canCollectPayment('preparing', 'uncollected'), false);
-assert.equal(canCollectPayment('out_for_delivery', 'uncollected'), true);
+assert.equal(canCollectPayment('out_for_delivery', 'uncollected'), false, 'collection only after delivery');
 assert.equal(canCollectPayment('delivered', 'uncollected'), true);
 assert.equal(canCollectPayment('delivered', 'collected'), false);
 assert.equal(canCollectPayment('cancelled', 'uncollected'), false);
@@ -84,8 +87,9 @@ assert.deepEqual(checkBookingTransition('confirmed', 'completed', 'partner'), { 
 assert.deepEqual(checkBookingTransition('completed', 'cancelled', 'admin'), { ok: false, reason: 'not_allowed' });
 assert.deepEqual(checkBookingTransition('rejected', 'confirmed', 'admin'), { ok: false, reason: 'not_allowed' });
 
-// --- delivery fee: null is unknown, never free --------------------------------
-assert.deepEqual(computeDeliveryFee([1500, 2000]), { feeHalalas: 2000, known: true });
+// --- delivery fee: null unknown; differing known fees unknown; no auto-max ----
+assert.deepEqual(computeDeliveryFee([1500, 2000]), { feeHalalas: null, known: false });
+assert.deepEqual(computeDeliveryFee([1500, 1500]), { feeHalalas: 1500, known: true });
 assert.deepEqual(computeDeliveryFee([0, 0]), { feeHalalas: 0, known: true });
 assert.deepEqual(computeDeliveryFee([1500, null]), { feeHalalas: null, known: false });
 assert.deepEqual(computeDeliveryFee([undefined]), { feeHalalas: null, known: false });
@@ -113,7 +117,12 @@ assert.equal(code(() => resolveSelection({ basePriceHalalas: 5000, optionsJson: 
 assert.equal(code(() => resolveSelection({ basePriceHalalas: 5000, optionsJson: options, variantsJson: variants, variantKey: 'nope' })), 'VARIANT_NOT_FOUND');
 assert.equal(code(() => resolveSelection({ basePriceHalalas: 0, optionsJson: null, variantsJson: null })), 'PRICE_UNAVAILABLE');
 const noVariantRows = resolveSelection({ basePriceHalalas: 5000, optionsJson: options, variantsJson: null, selections: { size: 'm' } });
-assert.equal(noVariantRows.variantKey, 'size=m');
+assert.equal(noVariantRows.variantKey, canonicalVariantKey({ size: 'm' }));
+// Delimiter collision proof: distinct maps must not share a key.
+const keyA = canonicalVariantKey({ a: 'x|b=y', b: 'z' });
+const keyB = canonicalVariantKey({ a: 'x', b: 'y|b=z' });
+assert.notEqual(keyA, keyB);
+assert.equal(canonicalVariantKey({ b: '1', a: '2' }), canonicalVariantKey({ a: '2', b: '1' }));
 
 // --- idempotency key + contact ------------------------------------------------
 assert.equal(normalizeIdempotencyKey(undefined, ' key-1 '), 'key-1');
@@ -155,5 +164,41 @@ assert.equal(slots[0].remaining, 1);
 assert.equal(slots[0].available, true);
 assert.equal(slots[1].remaining, 2);
 assert.equal(buildDaySlots('2026-10-02', 60, windows, [], now).length, 0);
+
+// Overlapping same-resource windows: rejected on save; listing never double-lists.
+assert.equal(
+  code(() =>
+    assertAvailabilityConsistent(
+      parseAvailability([
+        { weekday: 0, startMin: 600, endMin: 660, capacity: 1 },
+        { weekday: 0, startMin: 600, endMin: 660, capacity: 2 },
+      ]),
+    ),
+  ),
+  'AVAILABILITY_OVERLAP',
+);
+const legacyOverlap = parseAvailability([
+  { weekday: 0, startMin: 600, endMin: 660, capacity: 1 },
+  { weekday: 0, startMin: 600, endMin: 660, capacity: 2 },
+]);
+const sun = localInstant('2026-10-04', 600)!; // Sunday
+const nowSun = new Date('2026-10-01T08:00:00Z');
+const heldHalf = [{ startsAt: sun, endsAt: new Date(sun.getTime() + 30 * 60_000) }];
+const sunSlots = buildDaySlots('2026-10-04', 60, legacyOverlap, heldHalf, nowSun);
+const atTen = sunSlots.filter((s) => s.startsAt === sun.toISOString());
+assert.equal(atTen.length, 1, 'one identity for 10:00');
+assert.equal(atTen[0].capacity, 1, 'MIN capacity, never sum');
+assert.equal(atTen[0].remaining, 0);
+assert.equal(atTen[0].available, false);
+const okSlot = checkSlot(sun, 60, legacyOverlap, nowSun);
+assert.equal(okSlot.ok, true);
+if (okSlot.ok) assert.equal(okSlot.capacity, 1);
+// Distinct resources may overlap.
+assertAvailabilityConsistent(
+  parseAvailability([
+    { weekday: 0, startMin: 600, endMin: 660, capacity: 1, resourceId: 'room-a' },
+    { weekday: 0, startMin: 600, endMin: 660, capacity: 2, resourceId: 'room-b' },
+  ]),
+);
 
 console.log('commerce.types schema tests passed');

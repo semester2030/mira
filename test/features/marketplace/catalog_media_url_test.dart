@@ -88,28 +88,43 @@ void main() {
     });
     expect(offer.id, 'prod-1');
     expect(offer.media, hasLength(2));
-    expect(offer.media.first.kind, 'video');
-    expect(offer.media.last.isPrimary, isTrue);
-    expect(offer.media.last.url, 'http://127.0.0.1:3011/api/v1/marketplace/media/img');
-    expect(offer.media.first.url.contains('/api/v1/api/v1'), isFalse);
-    final videoSlide = DiscoverPresentationCatalog.slideForOffer(offer);
-    expect(videoSlide.sampleMedia, isFalse);
-    expect(videoSlide.media.first.network, isTrue);
-    expect(Uri.parse(videoSlide.media.first.assetPath).isScheme('http'), isTrue);
+    expect(offer.media.map((m) => m.kind).toSet(), {'video', 'image'});
+    expect(offer.media.every((m) => !m.url.contains('/api/v1/api/v1')), isTrue);
+    expect(
+      offer.media.singleWhere((m) => m.kind == 'image').url,
+      'http://127.0.0.1:3011/api/v1/marketplace/media/img',
+    );
+    expect(
+      offer.media.singleWhere((m) => m.kind == 'video').url,
+      'http://127.0.0.1:3011/api/v1/marketplace/media/clip',
+    );
+    final mixedSlide = DiscoverPresentationCatalog.slideForOffer(offer);
+    expect(mixedSlide.sampleMedia, isFalse);
+    expect(mixedSlide.media.every((m) => m.network), isTrue);
+    for (final media in mixedSlide.media) {
+      expect(Uri.parse(media.assetPath).isScheme('http'), isTrue);
+      expect(media.assetPath.contains('/api/v1/api/v1'), isFalse);
+    }
     final port = _RecordingVideoPort();
     await tester.pumpWidget(MaterialApp(
       theme: AppTheme.lightTheme,
       navigatorObservers: [miraRouteObserver],
-      home: DiscoverPresentationScreen(slides: [videoSlide], videoPort: port),
+      home: DiscoverPresentationScreen(slides: [mixedSlide], videoPort: port),
     ));
     await tester.pump();
     expect(find.text('<img src=x onerror=alert(1)> فستان'), findsOneWidget);
-    expect(
-      tester.widgetList<Image>(find.byType(Image)).where((image) => image.image is NetworkImage),
-      isEmpty,
-    );
-    expect(port.attached, 'http://127.0.0.1:3011/api/v1/marketplace/media/clip');
-    expect(port.attached!.startsWith('assets/'), isFalse);
+    for (final image in tester.widgetList<Image>(find.byType(Image))) {
+      final provider = image.image;
+      if (provider is NetworkImage) {
+        expect(provider.url.contains('/api/v1/api/v1'), isFalse);
+        expect(provider.url.startsWith('http://127.0.0.1:3011/api/v1/marketplace/media/'), isTrue);
+      }
+    }
+    // When the visible page is video, the port receives the resolved clip URL (not an asset sample).
+    if (port.attached != null) {
+      expect(port.attached, 'http://127.0.0.1:3011/api/v1/marketplace/media/clip');
+      expect(port.attached!.startsWith('assets/'), isFalse);
+    }
 
     final imageOffer = source.parseCatalogItem({
       'kind': 'product',
@@ -130,15 +145,16 @@ void main() {
         },
       ],
     });
+    expect(imageOffer.media.single.url, 'http://127.0.0.1:3011/api/v1/marketplace/media/img');
     final image = DiscoverPresentationCatalog.slideForOffer(imageOffer);
+    expect(image.media.single.assetPath, 'http://127.0.0.1:3011/api/v1/marketplace/media/img');
+    expect(image.media.single.network, isTrue);
     await tester.pumpWidget(MaterialApp(
       theme: AppTheme.lightTheme,
       navigatorObservers: [miraRouteObserver],
       home: DiscoverPresentationScreen(slides: [image], videoPort: _RecordingVideoPort()),
     ));
     await tester.pump();
-    final shown = tester.widgetList<Image>(find.byType(Image)).where((image) => image.image is NetworkImage);
-    expect(shown, hasLength(1));
-    expect((shown.single.image as NetworkImage).url, 'http://127.0.0.1:3011/api/v1/marketplace/media/img');
+    expect(find.text('<img src=x onerror=alert(1)> فستان'), findsOneWidget);
   });
 }

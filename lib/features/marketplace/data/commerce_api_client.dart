@@ -66,7 +66,6 @@ abstract class CommerceClient {
   Future<CommerceOrderResult> createOrder({
     required String idempotencyKey,
     required CommerceDelivery delivery,
-    bool acknowledgeUnknownDeliveryFee = false,
   });
   Future<CommercePage<CommerceOrder>> listOrders({String? cursor});
   Future<CommerceOrder> getOrder(String id);
@@ -186,7 +185,6 @@ class ApiCommerceClient implements CommerceClient {
   Future<CommerceOrderResult> createOrder({
     required String idempotencyKey,
     required CommerceDelivery delivery,
-    bool acknowledgeUnknownDeliveryFee = false,
   }) async {
     final json = await _send(
       'POST',
@@ -195,7 +193,6 @@ class ApiCommerceClient implements CommerceClient {
       data: {
         ...delivery.toJson(),
         'idempotencyKey': idempotencyKey,
-        if (acknowledgeUnknownDeliveryFee) 'acknowledgeUnknownDeliveryFee': true,
       },
     );
     return CommerceOrderResult(

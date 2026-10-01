@@ -1,0 +1,1 @@
+commerce types/public/service/HTTP: PASS (local Postgres 2026-10-01)

@@ -55,8 +55,8 @@ abstract final class MarketplaceCopy {
   static const cancel = 'إلغاء';
   static const codOnly = 'الدفع نقدًا عند الاستلام فقط. لا يوجد دفع داخل التطبيق.';
   static const deliveryFeeUnknown =
-      'رسوم التوصيل غير محددة وسيؤكدها المتجر عند التواصل. هذا لا يعني أن التوصيل مجاني.';
-  static const deliveryFeeUnknownAck = 'أوافق على المتابعة دون رسوم توصيل محددة';
+      'رسوم التوصيل غير محددة من المتجر. لا يُعرض مبلغ نهائي للدفع عند الاستلام، والفراغ لا يعني توصيلًا مجانيًا.';
+
   static const orderRequested = 'أُنشئ الطلب. المتجر لم يقبله بعد، والدفع نقدًا عند الاستلام.';
   static const bookingPayAtVenue = 'الدفع في الفرع. لا يوجد دفع داخل التطبيق.';
   static const bookingRequested = 'أُرسل طلب موعد. ليس مؤكدًا حتى توافق الجهة.';

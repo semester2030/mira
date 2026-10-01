@@ -184,6 +184,9 @@ model Product {
   reservedQty   Int      @default(0) @map("reserved_qty")
   optionsJson   Json?    @map("options_json")
   variantsJson  Json?    @map("variants_json")
+  /// Pending options/variants for published rows — applied on content approve only.
+  draftOptionsJson  Json? @map("draft_options_json")
+  draftVariantsJson Json? @map("draft_variants_json")
   /// null = fee unknown (NOT free)
   deliveryFeeHalalas Int? @map("delivery_fee_halalas")
   createdAt     DateTime @default(now()) @map("created_at")

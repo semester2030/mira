@@ -9,6 +9,7 @@ import { ConfigService } from '@nestjs/config';
 import { Prisma } from '@prisma/client';
 import { randomBytes } from 'crypto';
 import { normalizeProductCommerce, ProductCommerceData } from '../marketplace/commerce-public';
+import { assertAvailabilityConsistent, parseAvailability } from '../marketplace/commerce.types';
 import { PrismaService } from '../prisma/prisma.service';
 import { ApplyPartnerDto } from './dto/apply-partner.dto';
 import { UpdateProductDto, UpdateServiceDto, UpsertProductDto, UpsertServiceDto } from './dto/catalog.dto';
@@ -373,6 +374,8 @@ export class PartnersPortalService {
         deliveryFeeHalalas?: number | null;
         optionsJson?: Prisma.InputJsonValue | typeof Prisma.DbNull;
         variantsJson?: Prisma.InputJsonValue | typeof Prisma.DbNull;
+        draftOptionsJson?: Prisma.InputJsonValue | typeof Prisma.DbNull;
+        draftVariantsJson?: Prisma.InputJsonValue | typeof Prisma.DbNull;
       } = {
         reviewRevision: { increment: 1 },
         reviewStatus: current.reviewStatus === 'in_review' ? 'in_review' : 'draft',
@@ -404,9 +407,23 @@ export class PartnersPortalService {
         if (dto.skinTypes !== undefined) data.skinTypes = dto.skinTypes;
         if (dto.stepAr !== undefined) data.stepAr = dto.stepAr === '' ? null : dto.stepAr;
       }
-      // Operational commerce fields (purchase mode, stock, delivery fee, options) apply to the live row.
       const commerce = normalizeProductCommerce(dto, current, data.priceHalalas ?? current.priceHalalas);
-      Object.assign(data, commerceWrite(commerce));
+      if (published) {
+        // Operational fields on the live row. Options/variants go to draft* until admin approve.
+        if (commerce.purchaseMode !== undefined) data.purchaseMode = commerce.purchaseMode;
+        if (commerce.stockQty !== undefined) data.stockQty = commerce.stockQty;
+        if (commerce.deliveryFeeHalalas !== undefined) data.deliveryFeeHalalas = commerce.deliveryFeeHalalas;
+        if (commerce.optionsJson !== undefined) {
+          data.draftOptionsJson = commerce.optionsJson === null ? Prisma.DbNull : (commerce.optionsJson as Prisma.InputJsonValue);
+        }
+        if (commerce.variantsJson !== undefined) {
+          data.draftVariantsJson = commerce.variantsJson === null ? Prisma.DbNull : (commerce.variantsJson as Prisma.InputJsonValue);
+        }
+      } else {
+        Object.assign(data, commerceWrite(commerce));
+        if (commerce.optionsJson !== undefined) data.draftOptionsJson = Prisma.DbNull;
+        if (commerce.variantsJson !== undefined) data.draftVariantsJson = Prisma.DbNull;
+      }
       return tx.product.update({ where: { id: productId }, data });
     });
   }
@@ -441,7 +458,9 @@ export class PartnersPortalService {
         category: this.optionalCategory(dto.category, SERVICE_CATEGORIES),
         bookingEnabled: dto.bookingEnabled === true,
         payMode: 'pay_at_venue',
-        availabilityJson: dto.availabilityJson ?? undefined,
+        ...(dto.availabilityJson !== undefined
+          ? { availabilityJson: this.availabilityWrite(dto.availabilityJson) }
+          : {}),
         active: false,
         contentStatus: 'draft',
         reviewStatus: 'draft',
@@ -496,10 +515,18 @@ export class PartnersPortalService {
       if (dto.bookingEnabled !== undefined) data.bookingEnabled = dto.bookingEnabled === true;
       if (dto.payMode !== undefined) data.payMode = dto.payMode === 'pay_at_venue' ? 'pay_at_venue' : current.payMode;
       if (dto.availabilityJson !== undefined) {
-        data.availabilityJson = dto.availabilityJson === null ? Prisma.DbNull : (dto.availabilityJson as Prisma.InputJsonValue);
+        data.availabilityJson = this.availabilityWrite(dto.availabilityJson);
       }
       return tx.service.update({ where: { id: serviceId }, data });
     });
+  }
+
+  /** Persist availability after rejecting overlapping windows for the same resource. */
+  private availabilityWrite(raw: unknown): Prisma.InputJsonValue | typeof Prisma.DbNull {
+    if (raw == null) return Prisma.DbNull;
+    const windows = parseAvailability(raw);
+    assertAvailabilityConsistent(windows);
+    return windows as unknown as Prisma.InputJsonValue;
   }
 
   async deleteService(partnerId: string, serviceId: string) {

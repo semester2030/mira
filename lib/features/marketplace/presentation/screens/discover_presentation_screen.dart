@@ -94,6 +94,7 @@ class _DiscoverPresentationScreenState extends State<DiscoverPresentationScreen>
   int _category = 0;
   DiscoverFeedController? _feed;
   DiscoverFeedPhase _phase = DiscoverFeedPhase.ready;
+  bool _adsFailed = false;
   String? _loadError;
   String? _loadMoreError;
   int _replacement = 0;
@@ -268,6 +269,7 @@ class _DiscoverPresentationScreenState extends State<DiscoverPresentationScreen>
         _contentMark = next.contentMark;
         _loadError = next.loadError;
         _loadMoreError = next.loadMoreError;
+        _adsFailed = next.adsFailed;
         _category = _categoryIndex(next.query);
         _replacement = next.replacement;
         if (replaced) {
@@ -605,7 +607,8 @@ class _DiscoverPresentationScreenState extends State<DiscoverPresentationScreen>
                           },
                           appointmentLabel: widget.lane == DiscoverLane.beauty ? 'تواصلي' : 'اطلبي موعدًا',
                           showPurchaseLink: (_slides[index].preview && _slides[index].product != null) || _canPurchase(_slides[index]),
-                          showAppointmentRequest: _slides[index].service != null,
+                          showAppointmentRequest: _slides[index].service != null &&
+                              (_slides[index].advertisement == null || _slides[index].advertisement!.appointmentOperational),
                           includeSearch: false,
                         )
                       : null,
@@ -684,6 +687,19 @@ class _DiscoverPresentationScreenState extends State<DiscoverPresentationScreen>
                     child: IconButton(
                       onPressed: () => _exitPresentation(context),
                       icon: const Icon(Icons.close, color: Colors.white),
+                    ),
+                  ),
+                if (_adsFailed)
+                  Positioned(
+                    top: MediaQuery.paddingOf(context).top + (_catalogDriven ? 96 : 8),
+                    left: 16,
+                    right: 16,
+                    child: Material(
+                      color: AppColors.surface,
+                      child: const Padding(
+                        padding: EdgeInsets.all(12),
+                        child: Text('تعذر تحميل الإعلانات. لم يُعرض إعلان بديل.'),
+                      ),
                     ),
                   ),
                 if (_favorites?.readFailed == true)

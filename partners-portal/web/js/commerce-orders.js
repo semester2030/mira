@@ -102,8 +102,7 @@
       });
     });
     const canCollect =
-      order.paymentCollectionStatus === 'uncollected' &&
-      (order.fulfillmentStatus === 'out_for_delivery' || order.fulfillmentStatus === 'delivered');
+      order.paymentCollectionStatus === 'uncollected' && order.fulfillmentStatus === 'delivered';
     if (canCollect) {
       button(actions, 'تأكيد استلام النقد', async () => {
         statusLine().textContent = 'جارٍ تسجيل التحصيل';

@@ -6,12 +6,12 @@ import '../../../../core/utils/saudi_phone.dart';
 import '../../../../shared/theme/colors.dart';
 import '../../../../shared/theme/typography.dart';
 import '../../../../shared/widgets/mira_app_bar.dart';
-import '../../../../shared/widgets/premium/premium_card.dart';
+import '../../../../shared/widgets/premium/premium_exports.dart';
 import '../../data/commerce_api_client.dart';
 import '../../domain/commerce_models.dart';
 import '../widgets/commerce_common.dart';
 
-/// Address and contact, cash on delivery only. The server re-prices the cart on confirm.
+/// COD checkout. Blocks confirm when delivery fee is unknown (no fake final total).
 class CheckoutScreen extends StatefulWidget {
   const CheckoutScreen({super.key, this.client});
 
@@ -26,20 +26,16 @@ class _CheckoutScreenState extends State<CheckoutScreen> {
   final _form = GlobalKey<FormState>();
   final _name = TextEditingController();
   final _phone = TextEditingController();
+  final _city = TextEditingController(text: 'الرياض');
   final _address = TextEditingController();
-  final _city = TextEditingController();
   final _notes = TextEditingController();
 
   CommerceQuote? _quote;
   String? _loadError;
   String? _submitError;
   bool _loading = true;
-  bool _needsLogin = false;
   bool _submitting = false;
-  bool _acknowledgedFee = false;
-
-  // One key per confirm session. It is reused when the same request is retried after a network
-  // failure, and replaced as soon as the typed data changes, so the server never replays a stale order.
+  bool _needsLogin = false;
   String? _idempotencyKey;
   String? _keySignature;
 
@@ -53,8 +49,8 @@ class _CheckoutScreenState extends State<CheckoutScreen> {
   void dispose() {
     _name.dispose();
     _phone.dispose();
-    _address.dispose();
     _city.dispose();
+    _address.dispose();
     _notes.dispose();
     super.dispose();
   }
@@ -70,6 +66,7 @@ class _CheckoutScreenState extends State<CheckoutScreen> {
     setState(() {
       _loading = true;
       _loadError = null;
+      _needsLogin = false;
     });
     try {
       final quote = await _client.quote();
@@ -108,14 +105,14 @@ class _CheckoutScreenState extends State<CheckoutScreen> {
     if (!_form.currentState!.validate()) return;
     final quote = _quote;
     if (quote == null) return;
-    if (quote.requiresDeliveryFeeAcknowledgement && !_acknowledgedFee) {
+    if (!quote.canConfirmOrder || !quote.cart.deliveryFeeKnown) {
       setState(() => _submitError = MarketplaceCopy.deliveryFeeUnknown);
       return;
     }
     final phone = SaudiPhone.toE164(_phone.text);
     if (phone == null) return;
     final delivery = _delivery(phone);
-    final signature = '${delivery.toJson()}|$_acknowledgedFee';
+    final signature = delivery.toJson().toString();
     if (_idempotencyKey == null || _keySignature != signature) {
       _idempotencyKey = newIdempotencyKey();
       _keySignature = signature;
@@ -128,7 +125,6 @@ class _CheckoutScreenState extends State<CheckoutScreen> {
       final result = await _client.createOrder(
         idempotencyKey: _idempotencyKey!,
         delivery: delivery,
-        acknowledgeUnknownDeliveryFee: _acknowledgedFee,
       );
       _idempotencyKey = null;
       _keySignature = null;
@@ -139,11 +135,7 @@ class _CheckoutScreenState extends State<CheckoutScreen> {
       if (mounted) setState(() => _needsLogin = true);
     } on CommerceApiException catch (error) {
       if (!mounted) return;
-      setState(() {
-        _submitError = error.messageAr;
-        // The server needs an explicit yes before an order with an unknown delivery fee is created.
-        if (error.isDeliveryFeeUnknown) _acknowledgedFee = false;
-      });
+      setState(() => _submitError = error.messageAr);
       if (error.isDeliveryFeeUnknown || error.code == 'OUT_OF_STOCK' || error.code == 'CART_EMPTY') _load();
     } catch (error) {
       if (mounted) setState(() => _submitError = commerceErrorText(error));
@@ -169,6 +161,7 @@ class _CheckoutScreenState extends State<CheckoutScreen> {
     if (_loadError != null) return CommerceErrorRetry(message: _loadError!, onRetry: _load);
     final quote = _quote!;
     final cart = quote.cart;
+    final canConfirm = quote.canConfirmOrder && cart.canCheckout && cart.deliveryFeeKnown;
     return Form(
       key: _form,
       child: ListView(
@@ -191,7 +184,16 @@ class _CheckoutScreenState extends State<CheckoutScreen> {
                   cart.deliveryFeeKnown ? 'التوصيل: ${CommerceLabels.money(cart.deliveryFeeHalalas ?? 0)}' : 'التوصيل: غير محدد',
                   style: AppTypography.bodyMedium,
                 ),
-                Text('الإجمالي: ${CommerceLabels.money(cart.totalHalalas)}', style: AppTypography.titleMedium),
+                if (cart.deliveryFeeKnown)
+                  Text(
+                    'المبلغ عند الاستلام: ${CommerceLabels.money(cart.totalHalalas)}',
+                    style: AppTypography.titleMedium,
+                  )
+                else
+                  Text(
+                    quote.deliveryFeeNoteAr ?? MarketplaceCopy.deliveryFeeUnknown,
+                    style: AppTypography.bodySmall.copyWith(color: AppColors.textSecondary),
+                  ),
                 const SizedBox(height: 6),
                 Text(quote.paymentNoteAr ?? MarketplaceCopy.codOnly, style: AppTypography.bodySmall.copyWith(color: AppColors.textSecondary)),
               ],
@@ -228,16 +230,6 @@ class _CheckoutScreenState extends State<CheckoutScreen> {
             decoration: const InputDecoration(labelText: 'ملاحظات (اختياري)'),
             maxLength: 500,
           ),
-          if (quote.requiresDeliveryFeeAcknowledgement) ...[
-            Text(quote.deliveryFeeNoteAr ?? MarketplaceCopy.deliveryFeeUnknown, style: AppTypography.bodySmall),
-            CheckboxListTile(
-              contentPadding: EdgeInsets.zero,
-              value: _acknowledgedFee,
-              onChanged: (value) => setState(() => _acknowledgedFee = value ?? false),
-              title: const Text(MarketplaceCopy.deliveryFeeUnknownAck),
-              controlAffinity: ListTileControlAffinity.leading,
-            ),
-          ],
           if (_submitError != null)
             Padding(
               padding: const EdgeInsets.symmetric(vertical: 8),
@@ -245,7 +237,7 @@ class _CheckoutScreenState extends State<CheckoutScreen> {
             ),
           const SizedBox(height: 8),
           FilledButton(
-            onPressed: _submitting || !cart.canCheckout ? null : _confirm,
+            onPressed: _submitting || !canConfirm ? null : _confirm,
             child: Text(_submitting ? 'جارٍ إرسال الطلب' : 'تأكيد الطلب (الدفع عند الاستلام)'),
           ),
         ],

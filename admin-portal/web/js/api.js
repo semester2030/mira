@@ -105,6 +105,19 @@
       if (q) params.set('q', q);
       return request('GET', `/admin/commerce/orders?${params}`);
     },
+    commerceOrder: (id) => request('GET', `/admin/commerce/orders/${id}`),
+    commerceOrderTransition: (id, body) =>
+      request('POST', `/admin/commerce/orders/${id}/transition`, body),
+    commerceCollectPayment: (id, note) =>
+      request('POST', `/admin/commerce/orders/${id}/collect-payment`, { note }),
+    commerceBookings: (status, q) => {
+      const params = new URLSearchParams({ limit: '50' });
+      if (status) params.set('status', status);
+      if (q) params.set('q', q);
+      return request('GET', `/admin/commerce/bookings?${params}`);
+    },
+    commerceBookingTransition: (id, body) =>
+      request('POST', `/admin/commerce/bookings/${id}/transition`, body),
     adReviews: () => request('GET', '/admin/catalog-ads'),
     adPreview: (id) => request('GET', `/admin/catalog-ads/${id}`),
     adDecision: (id, decision, note, revision) =>

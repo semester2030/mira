@@ -141,22 +141,28 @@ async function main() {
     const quote = await commerce.quote(alice);
     assert.equal(quote.deliveryFeeHalalas, null);
     assert.equal(quote.deliveryFeeKnown, false);
-    assert.equal(quote.requiresDeliveryFeeAcknowledgement, true);
+    assert.equal(quote.canConfirmOrder, false);
+    assert.notEqual(quote.requiresDeliveryFeeAcknowledgement, true, 'ack path is not offered');
     assert.equal(quote.totalHalalas, 10000);
     await failure(place(alice, `${run}-unknown-fee`), 422, 'DELIVERY_FEE_UNKNOWN');
+    await failure(
+      place(alice, `${run}-unknown-fee-ack`, { acknowledgeUnknownDeliveryFee: true, totalHalalas: 1 }),
+      422,
+      'DELIVERY_FEE_UNKNOWN',
+    );
     assert.equal((await commerce.getCart(alice)).items.length, 1, 'failed checkout keeps the cart');
 
-    // body price/total fields from a client are ignored; snapshot is server data
-    const forged = await place(alice, `${run}-unknown-fee-ack`, {
-      acknowledgeUnknownDeliveryFee: true,
+    // Partner sets a known fee; body price/total fields from a client are ignored
+    await prisma.product.update({ where: { id: untracked.id }, data: { deliveryFeeHalalas: 1500 } });
+    const forged = await place(alice, `${run}-known-fee`, {
       totalHalalas: 1,
       priceHalalas: 1,
       items: [{ productId: untracked.id, unitPriceHalalas: 1 }],
     });
     assert.equal(forged.order.subtotalHalalas, 10000);
-    assert.equal(forged.order.deliveryFeeHalalas, null);
-    assert.equal(forged.order.deliveryFeeKnown, false);
-    assert.equal(forged.order.totalHalalas, 10000);
+    assert.equal(forged.order.deliveryFeeHalalas, 1500);
+    assert.equal(forged.order.deliveryFeeKnown, true);
+    assert.equal(forged.order.totalHalalas, 11500);
     assert.equal(forged.order.items[0].unitPriceHalalas, 5000);
     assert.equal(forged.order.paymentMethod, 'cod');
     assert.equal(forged.order.fulfillmentStatus, 'new');
@@ -278,7 +284,7 @@ async function main() {
     // 7. Transition rules + separate axes
     // =====================================================================
     await fill(alice, untracked.id, 1);
-    const flow = (await place(alice, `${run}-flow`, { acknowledgeUnknownDeliveryFee: true })).order;
+    const flow = (await place(alice, `${run}-flow`)).order;
     await failure(commerce.transitionOrderFor(actorA, flow.id, { fulfillmentStatus: 'delivered' }), 409, 'TRANSITION_NOT_ALLOWED');
     await failure(commerce.transitionOrderFor(actorA, flow.id, { fulfillmentStatus: 'nonsense' }), 400, 'STATUS_INVALID');
     await failure(commerce.transitionOrderFor(actorA, flow.id, {}), 400, 'TRANSITION_EMPTY');
@@ -295,29 +301,32 @@ async function main() {
       'STATUS_MISMATCH',
     );
 
-    await failure(commerce.collectPayment(actorA, flow.id, {}), 409, 'PAYMENT_NOT_COLLECTABLE'); // not out for delivery yet
+    await failure(commerce.collectPayment(actorA, flow.id, {}), 409, 'PAYMENT_NOT_COLLECTABLE');
     await commerce.transitionOrderFor(actorA, flow.id, { fulfillmentStatus: 'accepted' });
     await failure(commerce.cancelCustomerOrder(alice, flow.id, {}), 403, 'TRANSITION_FORBIDDEN'); // customer can no longer cancel
     await commerce.transitionOrderFor(actorA, flow.id, { fulfillmentStatus: 'preparing', note: 'جاري التجهيز' });
     const moving = await commerce.transitionOrderFor(actorA, flow.id, { deliveryStatus: 'out_for_delivery' });
     assert.equal(moving.fulfillmentStatus, 'out_for_delivery');
     assert.equal(moving.deliveryStatus, 'out_for_delivery');
+    await failure(commerce.collectPayment(actorA, flow.id, { note: 'مبكر' }), 409, 'PAYMENT_NOT_COLLECTABLE');
     const failed = await commerce.transitionOrderFor(actorA, flow.id, { fulfillmentStatus: 'failed_delivery', deliveryStatus: 'failed' });
     assert.equal(failed.deliveryStatus, 'failed');
     assert.equal((await product(untracked.id)).reservedQty, 0);
     const retryOut = await commerce.transitionOrderFor(actorA, flow.id, { fulfillmentStatus: 'out_for_delivery' });
     assert.equal(retryOut.deliveryStatus, 'out_for_delivery');
-
-    // payment collection is its own axis and idempotent
     const same = await commerce.transitionOrderFor(actorA, flow.id, { fulfillmentStatus: 'out_for_delivery' });
     assert.equal((same as { unchanged?: boolean }).unchanged, true);
+    await commerce.transitionOrderFor(actorA, flow.id, { fulfillmentStatus: 'delivered' });
+    assert.equal((await commerce.getOrder(actorA, flow.id)).paymentCollectionStatus, 'uncollected', 'delivery does not collect');
+
+    // payment collection only after delivered; dual click is idempotent
     const dualCollect = await Promise.all([
       commerce.collectPayment(actorA, flow.id, { note: 'نقدًا' }),
       commerce.collectPayment(actorA, flow.id, { note: 'نقدًا' }),
     ]);
     assert.ok(dualCollect.every((o) => o.paymentCollectionStatus === 'collected'));
     const collected = await commerce.getOrder(actorA, flow.id);
-    assert.equal(collected.fulfillmentStatus, 'out_for_delivery', 'collecting does not change fulfillment');
+    assert.equal(collected.fulfillmentStatus, 'delivered', 'collecting does not change fulfillment');
     assert.equal(collected.collectionActor, 'partner:pu-a');
     assert.ok(collected.collectedAt);
     assert.equal(collected.events.filter((e) => e.field === 'payment' && e.toStatus === 'collected').length, 1, 'one collect event');
@@ -325,7 +334,6 @@ async function main() {
     assert.equal((again as { alreadyCollected?: boolean }).alreadyCollected, true);
     await failure(commerce.waivePayment(ADMIN_ACTOR, flow.id, { note: 'سبب' }), 409, 'PAYMENT_NOT_COLLECTABLE');
     await failure(commerce.collectPayment({ type: 'customer', id: alice.id, userId: alice.userId }, flow.id, {}), 403, 'PAYMENT_FORBIDDEN');
-    await commerce.transitionOrderFor(ADMIN_ACTOR, flow.id, { fulfillmentStatus: 'delivered', note: 'تأكيد إداري' });
     assert.equal(collected.events.some((e) => e.field === 'fulfillment' && e.toStatus === 'preparing' && e.note === 'جاري التجهيز'), true);
     const customerView = await commerce.getCustomerOrder(alice, flow.id);
     assert.ok(customerView.events.every((e) => e.actorId === undefined), 'customer timeline hides actor ids');
