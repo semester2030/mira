@@ -1,0 +1,6 @@
+2026-10-01 device attempt after RC2 deploy 9bfd3a6 / code bbbfa84
+Device: fayez’s iPhone 00008110-00191986268BA01E iOS 26.6
+Command: flutter run with MIRA_MARKETPLACE_ENABLED USE_MIRA_API MIRA_API_BASE_URL=https://mira-api-n4p3.onrender.com/api/v1
+Result: reached "Launching lib/main.dart on fayez’s iPhone in debug mode..." then stalled without Xcode build done in the monitored window (~3+ min). No on-device screenshot captured in this pass.
+Share open/closed and dual-account favorites isolation remain NOT_RUN on device.
+HTTP live journeys for product/order/booking/favorites/admin are in LIVE_JOURNEY.txt.

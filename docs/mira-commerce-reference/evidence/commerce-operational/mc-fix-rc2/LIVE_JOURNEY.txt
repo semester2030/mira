@@ -1,0 +1,50 @@
+MC-FIX RC2 live journey — 2026-10-01
+source_commit_code=bbbfa84
+source_commit_docs_tip=9bfd3a6 (then this docs update)
+api=https://mira-api-n4p3.onrender.com deploy dep-dav2nlvf3r2c738gf910 LIVE commit 9bfd3a6 (includes bbbfa84)
+partners=https://mira-partners-portal.onrender.com LIVE
+admin=https://mira-admin-portal.onrender.com srv-dav2ih0jo6nc73f7d9rg rootDir=admin-portal/web publishPath=. LIVE HTTP 200
+
+AUTH note: customer ID token minted via Render job + firebase-admin credential.cert(/etc/secrets/firebase-sa.json)
+then Identity Toolkit signInWithCustomToken (web API key). Not AUTH_SKIP.
+
+PRODUCT
+- partner create COD product 5cea12ba-7ef2-4323-9f9a-865e685712da
+  variants preserved: sku-M available=false price=9900; sku-L available=true price=9900; base 6400
+- media upload API returned 503 (durable media deferred by owner)
+- draft catalog_media row inserted so review submit could proceed (workaround documented)
+- submit+admin approve → published active
+- public catalog GET /marketplace/catalog/product/{id} returns same variant ids/prices/availability
+- cart add sku-M → 409 VARIANT_UNAVAILABLE
+- cart add sku-L → 201 unitPriceHalalas=9900
+- quote totalHalalas=11400 (9900+1500)
+- order MO-261001-E8AYP5 id=b6ca86b8-4098-4c38-9b1b-ca47c9f51d88
+- partner transitions /partners/me/commerce/orders/{id}/transition fulfillmentStatus:
+  accepted → preparing → out_for_delivery → delivered
+- admin collect-payment → paymentCollectionStatus=collected
+- admin list orders includes the order
+
+BOOKING
+- service 6365d01c-d445-411f-83f0-8ba78e607b86 with resourceId غرفة-أ capacity 1
+- publish via draft media workaround + approve
+- availability?date=YYYY-MM-DD slots include resourceId غرفة-أ
+- booking MB-261001-VWBG2A resourceId=غرفة-أ
+- after booking, slot remaining=0 available=false
+- partner confirm → status=confirmed
+- admin bookings list includes booking
+
+FAVORITES
+- POST /marketplace/favorites {kind:product,id,saved:true} → 201
+- GET favorites includes product id
+- second-account isolation: NOT_RUN with a second real human account on device (HTTP used one synthetic Firebase uid)
+
+SHARE
+- public catalog product URL reachable (HTTP 200) with variants; deep-link/app open/closed share NOT_RUN on device in this pass
+
+DEVICE
+- flutter run targeting fayez’s iPhone started (build in progress / see device-run logs)
+- views remain deferred by owner decision
+
+PACKAGE
+- resealed /Users/fayez/Desktop/MIRA_COMMERCE_MC_FIX_RC2.zip
+- see PACKAGE_VERIFY.txt for sha256/bytes and unpack test:commerce EXIT 0

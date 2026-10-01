@@ -1,9 +1,12 @@
 package=MIRA_COMMERCE_MC_FIX_RC2.zip
 location=/Users/fayez/Desktop/MIRA_COMMERCE_MC_FIX_RC2.zip
-bytes=2231482
-sha256=0ae77ad1571856f57be101924da7450131808b17a25a24adcf04cd8b11db3716
+bytes=2775174
+sha256=e31ec1d1615d9c26b4ca298d12613e294817e9ec63b0117dc6dd9cd32beb87b6
 source_commit=bbbfa84f647a1aa56864060b960f08e946c88cd1
 unpack_verify=OK
-clean_test=npm run test:commerce EXIT 0 from /tmp/MIRA_COMMERCE_MC_FIX_RC2_verify (pre-hash rebuild run)
-portal_options=catalog-options-rc2-tests passed
-admin_render=srv-dav2ih0jo6nc73f7d9rg https://mira-admin-portal.onrender.com (rootDir may need admin-portal/web in dashboard)
+clean_test=npm run test:commerce EXIT 0 from /tmp/MIRA_COMMERCE_MC_FIX_RC2_reverify/MIRA_COMMERCE_MC_FIX_RC2/mira-api
+portal_options=catalog-options-rc2-tests passed (earlier RC2 local)
+admin_render=srv-dav2ih0jo6nc73f7d9rg https://mira-admin-portal.onrender.com rootDir=admin-portal/web publishPath=. LIVE HTTP 200
+api_deploy=dep-dav2nlvf3r2c738gf910 LIVE commit 9bfd3a6
+partners=https://mira-partners-portal.onrender.com HTTP 200
+note=Archive resealed after Desktop copy was missing; contents match unpack tree with prisma + packages; hash computed after zip complete; archive not modified after hashing.
