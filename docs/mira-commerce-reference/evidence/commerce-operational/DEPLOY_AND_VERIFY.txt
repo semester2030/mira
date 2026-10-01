@@ -1,0 +1,25 @@
+NOMAS→MIRA commerce operational slice — deploy verification
+Date: 2026-10-01
+Commit: c98decb
+Branch: mira/p5-strict-frontend-recovery-2026-09-14
+
+GitHub: pushed c98decb to origin
+Render mira-api: deploy dep-dav0si7pn0mc739j3ls0 SUCCEEDED (migrate deploy on start)
+Render mira-partners-portal: deploy dep-dav0tag473hc73d1u9t0 created
+
+Live checks (no secrets):
+- GET /api/v1/marketplace/catalog?limit=1 → 200, fields include purchaseMode, stockQty, deliveryFeeHalalas
+- GET /api/v1/marketplace/commerce/cart → 401 Missing Authorization (route mounted)
+- GET /api/v1/marketplace/commerce/services/:id/availability → Arabic DATE_INVALID (route mounted)
+
+App build for device requires:
+  --dart-define=MIRA_MARKETPLACE_ENABLED=true
+  --dart-define=USE_MIRA_API=true
+  --dart-define=MIRA_API_BASE_URL=https://mira-api-n4p3.onrender.com/api/v1
+
+Operational trial needs a published product with purchaseMode=internal_cod (set from partner portal)
+and a published service with bookingEnabled=true + availabilityJson.
+
+Views counting: still deferred — not enabled.
+Deep link open of share URL: not implemented.
+Admin portal static service may need separate Render service create from blueprint (not in CLI list as mira-admin).
