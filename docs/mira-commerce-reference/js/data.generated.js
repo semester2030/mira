@@ -9795,10 +9795,10 @@ window.MIRA_STUDY = {
             "id": "DEL-MC-FIX-RC3",
             "name": "MIRA_COMMERCE_MC_FIX_RC3.zip",
             "createdAt": "2026-10-01T15:00:00+03:00",
-            "deliveryStatus": "قيد التنفيذ — إصلاحات واختبارات جارية؛ الحزمة تُختم بعد الفك والرحلات",
+            "deliveryStatus": "منفّذ ومختبر محليًا ومن الفك — بانتظار المراجعة المستقلة",
             "logHref": "evidence/commerce-operational/MC_FIX_RC3_TRACKER.md",
             "logLabel": "متتبع جولة RC3",
-            "sha256": "PENDING_SEAL",
+            "sha256": "d33a94cbbe41b523aa0bf8737180c327c103c42894d128e536bf6c1902a62d7d",
             "reviewResultAr": "لم تصدر بعد",
             "approvalAr": "غير معتمدة",
             "zipHref": "../../MIRA_COMMERCE_MC_FIX_RC3.zip",
@@ -10066,7 +10066,7 @@ window.MIRA_STUDY = {
             "relatedTaskIds": [
               "P5-T3"
             ],
-            "status": "قيد التنفيذ",
+            "status": "منفّذ ومختبر — بانتظار المراجعة المستقلة",
             "problemAr": "حزم سابقة رقيقة أو بلا اختبارات قابلة لإعادة التشغيل.",
             "goalAr": "شجرة بناء + اختبارات + بيان + SHA + فحص فك.",
             "impactAr": "المراجع لا يستطيع إعادة التحقق.",
@@ -10076,7 +10076,7 @@ window.MIRA_STUDY = {
               "docs/mira-commerce-reference/scripts/"
             ],
             "acceptanceAr": "PACKAGE_MANIFEST + SHA مستقل + فحص فك بلا فرق.",
-            "resultAr": "RC3: بناء حزمة كاملة مع assets/fonts وpackages/camera ونقاط تشغيل؛ PACKAGE_VERIFY من فك نظيف.",
+            "resultAr": "RC3: حزمة MIRA_COMMERCE_MC_FIX_RC3.zip؛ فك مستقل missing=0؛ test:commerce وportal وflutter marketplace من النسخة المفكوكة EXIT 0. لا اعتماد مرحلة.",
             "evidenceAr": "evidence/commerce-operational/mc-fix-rc3/PACKAGE_VERIFY.txt ؛ evidence/commerce-operational/MC_FIX_RC3_TRACKER.md",
             "evidenceLinks": [
               {
@@ -10088,7 +10088,7 @@ window.MIRA_STUDY = {
                 "label": "متتبع RC3"
               }
             ],
-            "remainingAr": "ختم ZIP بعد نجاح الفك النظيف."
+            "remainingAr": "مراجعة مستقلة للحزمة."
           }
         ]
       }

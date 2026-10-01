@@ -5,13 +5,13 @@
 
 | البند | المشكلة | أثرها | التصحيح | الاختبار الفعلي | النتيجة | الدليل | commit المصدر المختبر | المتبقي |
 | --- | --- | --- | --- | --- | --- | --- | --- | --- |
-| MC-FIX-04/05 | تحقق التركيبات عند إرسال الحقلين معًا فقط | مسودة/منشور غير متسق | `effectiveOptionsVariants` + تحقق الحالة النهائية؛ اعتماد يعيد التحقق | schema + test:commerce | منفّذ ومختبر — بانتظار المراجعة المستقلة | mc-fix-rc3/test-commerce.log | يُحدَّث عند الختم | مراجعة مستقلة |
-| MC-FIX-04 UI | إدخال `|` للتركيبات | مسار تقني للتاجر | صفوف اختيار (select) لكل مجموعة | اختبار وحدة مشتركة + متصفح مطلوب | منفّذ مصدرًا / متصفح يُسجَّل | catalog-options-core.js + portal-options.log | يُحدَّث عند الختم | لقطات متصفح إن لم تكتمل |
-| MC-FIX-03 | MIN صامت للسعة المتعارضة | حجوزات على تعريف ملتبس | `findResourceCapacityConflicts` + رفض حجز؛ `unifySharedResources` | test:commerce تعارض staff-shared | منفّذ ومختبر — بانتظار المراجعة المستقلة | mc-fix-rc3/test-commerce.log | يُحدَّث عند الختم | رحلة بوابة حية للتوحيد |
-| MC-FIX-01/03 تزامن | نوم/سباق بلا حاجز | إثبات ضعيف | اتصالان + `pg_locks` + FOR UPDATE/advisory | commerce.concurrency.schema-tests | منفّذ ومختبر — بانتظار المراجعة المستقلة | سجل ترتيب الأحداث في test-commerce.log | يُحدَّث عند الختم | — |
-| بوابة اختبارات | نسخ دوال في الاختبار | اختبار لا يمس التنفيذ | `catalog-options-core.js` مشترك | portal-options.log | منفّذ ومختبر — بانتظار المراجعة المستقلة | mc-fix-rc3/portal-options.log | يُحدَّث عند الختم | رحلة DOM متصفح |
-| منع التكرار | انحدار | — | إعادة تحقق ضمن test:commerce | PASS | منفّذ ومختبر — بانتظار المراجعة المستقلة | test-commerce.log | يُحدَّث عند الختم | — |
-| MC-FIX-09 | أصول/خطوط ناقصة بعد الفك | لا تشغيل نظيف | حزمة RC3 كاملة + PACKAGE_VERIFY | يُنفَّذ عند التسليم | قيد التنفيذ حتى الفك | mc-fix-rc3/PACKAGE_VERIFY.txt | يُحدَّث عند الختم | — |
-| نشر/رحلات | — | — | Render + رحلات HTTP/جهاز | يُنفَّذ بعد الحزمة | قيد التنفيذ | LIVE_JOURNEY.txt | يُحدَّث عند الختم | جهاز إن تعذّر |
+| MC-FIX-04/05 | تحقق التركيبات عند إرسال الحقلين معًا فقط | مسودة/منشور غير متسق | `effectiveOptionsVariants` + تحقق الحالة النهائية؛ اعتماد يعيد التحقق | schema + test:commerce | منفّذ ومختبر — بانتظار المراجعة المستقلة | mc-fix-rc3/test-commerce.log | 2e438fd | مراجعة مستقلة |
+| MC-FIX-04 UI | إدخال `|` للتركيبات | مسار تقني للتاجر | صفوف اختيار (select) لكل مجموعة | اختبار وحدة مشتركة + متصفح مطلوب | منفّذ مصدرًا / متصفح يُسجَّل | catalog-options-core.js + portal-options.log | 2e438fd | لقطات متصفح إن لم تكتمل |
+| MC-FIX-03 | MIN صامت للسعة المتعارضة | حجوزات على تعريف ملتبس | `findResourceCapacityConflicts` + رفض حجز؛ `unifySharedResources` | test:commerce تعارض staff-shared | منفّذ ومختبر — بانتظار المراجعة المستقلة | mc-fix-rc3/test-commerce.log | 2e438fd | رحلة بوابة حية للتوحيد |
+| MC-FIX-01/03 تزامن | نوم/سباق بلا حاجز | إثبات ضعيف | اتصالان + `pg_locks` + FOR UPDATE/advisory | commerce.concurrency.schema-tests | منفّذ ومختبر — بانتظار المراجعة المستقلة | سجل ترتيب الأحداث في test-commerce.log | 2e438fd | — |
+| بوابة اختبارات | نسخ دوال في الاختبار | اختبار لا يمس التنفيذ | `catalog-options-core.js` مشترك | portal-options.log | منفّذ ومختبر — بانتظار المراجعة المستقلة | mc-fix-rc3/portal-options.log | 2e438fd | رحلة DOM متصفح |
+| منع التكرار | انحدار | — | إعادة تحقق ضمن test:commerce | PASS | منفّذ ومختبر — بانتظار المراجعة المستقلة | test-commerce.log | 2e438fd | — |
+| MC-FIX-09 | أصول/خطوط ناقصة بعد الفك | لا تشغيل نظيف | حزمة RC3 كاملة + PACKAGE_VERIFY | فك نظيف + test:commerce/portal/flutter من unpack | منفّذ ومختبر — بانتظار المراجعة المستقلة | mc-fix-rc3/PACKAGE_VERIFY.txt | 2e438fd | مراجعة مستقلة |
+| نشر/رحلات | — | — | Render + رحلات HTTP/جهاز | يُنفَّذ بعد الحزمة | قيد التنفيذ | LIVE_JOURNEY.txt | 2e438fd | جهاز إن تعذّر |
 
 ملاحظة: اختبارات المتصفح وحواجز التزامن **مطلوبة** لقبول الإغلاق — ليست اختيارية.

@@ -1,0 +1,15 @@
+package=MIRA_COMMERCE_MC_FIX_RC3.zip
+location=/Users/fayez/Desktop/MIRA_COMMERCE_MC_FIX_RC3.zip
+bytes=14970246
+sha256=d33a94cbbe41b523aa0bf8737180c327c103c42894d128e536bf6c1902a62d7d
+source_commit=2e438fd7f2af32638a48d403d3845cae807702e6
+unpack_path=/tmp/MIRA_COMMERCE_MC_FIX_RC3_verify/MIRA_COMMERCE_MC_FIX_RC3
+manifest_files=1974
+inspect=missing=0 mismatches=0 extra=0
+clean_test_commerce=npm run test:commerce EXIT 0 from unpack mira-api (includes concurrency barriers)
+portal_options=catalog-options-rc2-tests passed from unpack (shared MiraCatalogOptions)
+flutter_pub_get=EXIT 0 from unpack
+flutter_marketplace_tests=All tests passed from unpack test/features/marketplace
+assets_fonts=Tajawal + Playfair present in unpack
+camera_package=packages/camera_avfoundation_fullrange present
+note=Tests above ran from the unpacked tree, not the original checkout. Archive hashed after zip complete; not modified after hashing.
