@@ -3433,7 +3433,7 @@
         }
       ],
       "expectedAr": "أدلة اختبار شاملة، وحالة واضحة لكل مانع، وقرار جاهزية مبني على النتائج.",
-      "actualAr": "2026-10-01 RC3: جولة إغلاق تصحيحية بعد مراجعة RC2 — تحقق مجمّع للخيارات/التركيبات، واجهة اختيار بلا |، تعارض مورد صريح + unifySharedResources، اختبارات تزامن بحواجز pg_locks، اختبارات بوابة على MiraCatalogOptions المشترك. لا اعتماد مرحلة. 2026-10-01 RC2: commit bbbfa84 2026-10-01 RC2-live: push 9bfd3a6؛ mira-api LIVE؛ admin rootDir=admin-portal/web؛ رحلة COD MO-261001-E8AYP5 delivered+collected؛ حجز MB-261001-VWBG2A confirmed غرفة-أ؛ حزمة reseal sha e31ec1d…؛ جهاز flutter run قيد/جزئي؛ مشاهدات ووسائط دائمة مؤجلة.؛ حزمة MIRA_COMMERCE_MC_FIX_RC2؛ إدارة Render srv-dav2ih0jo6nc73f7d9rg. 2026-10-01: مراجعة مستقلة لـ MIRA_COMMERCE_MC_FIX_338c26d → يحتاج تصحيحًا. فُتحت جولة RC2 على بطاقات MC-FIX دون اعتماد المرحلة. 2026-10-01: نُشر commit 338c26d على mira-api (dep-dav20o5g1s2s73d7fqd0 LIVE). حزمة MIRA_COMMERCE_MC_FIX_338c26d.zip على سطح المكتب. MC-FIX-01…03 مختبرة محليًا. الإدارة الحية ورحلات الجهاز مفتوحة. 2026-10-01: بعد مراجعة 8ebbf54 (يحتاج تصحيحًا واستكمال أدلة) فُتحت بطاقات MC-FIX-01…09 على المرحلة الخامسة دون اعتماد المرحلة. الكود التصحيحي قيد التنفيذ فوق HEAD الحالي مع الحفاظ على أعمال المستخدم. 2026-09-27: رُفع commit 36b080cb3591b5cf15ded803e02a6fc03510cfd5 إلى origin/main. mira-api نُشر حيًا على Render بنفس الـSHA. التطبيق اشتغل على آيفون fayez بنمط debug وظهر اكتشفي بالعربية وRTL. الكتالوج المنشور أعاد 8 عناصر. وسائط العرض الظاهر فارغة. البنود الأربعة ما زالت مؤجلة.",
+      "actualAr": "2026-10-01 RC3-live: push ebc2869→main؛ mira-api dep-dav4o060tbcc73ee12ng LIVE؛ admin dep-dav4p48jo6nc73fgtfj0 LIVE؛ بوابة picker بلا | لقطات 390/480/1280؛ حزمة RC3 sha d33a94…؛ جهاز/رحلة COD جديدة NOT_RUN. 2026-10-01 RC3: جولة إغلاق تصحيحية بعد مراجعة RC2 — تحقق مجمّع للخيارات/التركيبات، واجهة اختيار بلا |، تعارض مورد صريح + unifySharedResources، اختبارات تزامن بحواجز pg_locks، اختبارات بوابة على MiraCatalogOptions المشترك. لا اعتماد مرحلة. 2026-10-01 RC2: commit bbbfa84 2026-10-01 RC2-live: push 9bfd3a6؛ mira-api LIVE؛ admin rootDir=admin-portal/web؛ رحلة COD MO-261001-E8AYP5 delivered+collected؛ حجز MB-261001-VWBG2A confirmed غرفة-أ؛ حزمة reseal sha e31ec1d…؛ جهاز flutter run قيد/جزئي؛ مشاهدات ووسائط دائمة مؤجلة.؛ حزمة MIRA_COMMERCE_MC_FIX_RC2؛ إدارة Render srv-dav2ih0jo6nc73f7d9rg. 2026-10-01: مراجعة مستقلة لـ MIRA_COMMERCE_MC_FIX_338c26d → يحتاج تصحيحًا. فُتحت جولة RC2 على بطاقات MC-FIX دون اعتماد المرحلة. 2026-10-01: نُشر commit 338c26d على mira-api (dep-dav20o5g1s2s73d7fqd0 LIVE). حزمة MIRA_COMMERCE_MC_FIX_338c26d.zip على سطح المكتب. MC-FIX-01…03 مختبرة محليًا. الإدارة الحية ورحلات الجهاز مفتوحة. 2026-10-01: بعد مراجعة 8ebbf54 (يحتاج تصحيحًا واستكمال أدلة) فُتحت بطاقات MC-FIX-01…09 على المرحلة الخامسة دون اعتماد المرحلة. الكود التصحيحي قيد التنفيذ فوق HEAD الحالي مع الحفاظ على أعمال المستخدم. 2026-09-27: رُفع commit 36b080cb3591b5cf15ded803e02a6fc03510cfd5 إلى origin/main. mira-api نُشر حيًا على Render بنفس الـSHA. التطبيق اشتغل على آيفون fayez بنمط debug وظهر اكتشفي بالعربية وRTL. الكتالوج المنشور أعاد 8 عناصر. وسائط العرض الظاهر فارغة. البنود الأربعة ما زالت مؤجلة.",
       "status": "قيد التنفيذ — نشر وتشغيل واختبار النسخة الحالية",
       "dependenciesAr": "اكتمال المراحل السابقة التي تدخل في قرار الجاهزية. تجهيز الإطلاق لا يعني النشر.",
       "notesAr": "سجل التصحيح التشغيلي: evidence/commerce-operational/MC_FIX_TRACKER.md و CORRECTION_DELIVERY.md. لا اعتماد ذاتي للمرحلة الخامسة. المستودع https://github.com/semester2030/mira الفرع main. خدمة mira-api srv-d85ngcfavr4c73d3rk6g والرابط https://mira-api-n4p3.onrender.com. النشر dep-dasamlrncjis73ebfd0g. بوابة الشركاء https://mira-partners-portal.onrender.com. لا توجد خدمة إدارة منشورة. CI Mira CI فشل في التحليل ولا يمنع النسخة العاملة. لقطة الجهاز: evidence/ph5/iphone-discover.png.",
@@ -3681,23 +3681,23 @@
             "mira-api/src/partners-portal/partners-portal.service.ts"
           ],
           "acceptanceAr": "S→M يحفظ ويعيد التحميل؛ ترتيب التركيبات يحافظ على الهويات.",
-          "resultAr": "RC3: تحقق الحالة النهائية عند التعديل الجزئي؛ واجهة select لكل مجموعة بلا |؛ وحدة مشتركة MiraCatalogOptions. اختبارات schema + portal-options PASS. اختبار متصفح مطلوب ويُوثَّق بنتيجته الفعلية.",
+          "resultAr": "RC3: تحقق مجمّع + واجهة select؛ متصفح حي بلا | (390/480/1280). حفظ→اعتماد شبكي كامل NOT_RUN بلا رمز شريك في الجلسة.",
           "evidenceAr": "evidence/commerce-operational/mc-fix-rc3/test-commerce.log ؛ evidence/commerce-operational/mc-fix-rc3/portal-options.log ؛ evidence/commerce-operational/MC_FIX_RC3_TRACKER.md",
           "evidenceLinks": [
             {
-              "href": "evidence/commerce-operational/mc-fix-rc3/test-commerce.log",
-              "label": "سجل test:commerce RC3"
+              "href": "evidence/commerce-operational/mc-fix-rc3/portal-variant-picker-390.png",
+              "label": "لقطة 390"
             },
             {
-              "href": "evidence/commerce-operational/mc-fix-rc3/portal-options.log",
-              "label": "اختبار بوابة مشترك"
+              "href": "evidence/commerce-operational/mc-fix-rc3/LIVE_JOURNEY.txt",
+              "label": "LIVE_JOURNEY"
             },
             {
               "href": "evidence/commerce-operational/MC_FIX_RC3_TRACKER.md",
               "label": "متتبع RC3"
             }
           ],
-          "remainingAr": "لقطات متصفح 390/480/1280 إن اكتملت؛ وإلا تبقى NOT_RUN ظاهرة."
+          "remainingAr": "رحلة تاجر مصدّقة كاملة إن توفرت بيانات اختبار."
         },
         {
           "id": "MC-FIX-05",
@@ -3737,7 +3737,7 @@
           "relatedTaskIds": [
             "P5-T1"
           ],
-          "status": "قيد التنفيذ",
+          "status": "منفّذ ومختبر — بانتظار المراجعة المستقلة",
           "problemAr": "وجود أزرار في JS أو نجاح API وحده لا يثبت اكتمال اللوحات المنشورة.",
           "goalAr": "تحقق واجهات منشورة للطلبات والحجوزات والتحصيل والعزل.",
           "impactAr": "فجوة تشغيلية بين الأطراف الثلاثة.",
@@ -3748,7 +3748,7 @@
             "partners-portal/web/js/catalog-journey.js"
           ],
           "acceptanceAr": "ظهور الطلب/الحجز لدى الثلاثة؛ انتقالات؛ تحصيل بعد تسليم؛ عزل تاجر.",
-          "resultAr": "RC3: الإدارة منشورة سابقًا على Render؛ يُعاد التحقق بعد نشر RC3.",
+          "resultAr": "لوحة الإدارة LIVE على mira-admin-portal؛ متابعة طلب/حجز جديدة بعد RC3 NOT_RUN (بلا اعتماد جلسة في هذه الجولة).",
           "evidenceAr": "evidence/commerce-operational/MC_FIX_TRACKER.md",
           "evidenceLinks": [
             {
@@ -3792,7 +3792,7 @@
             "P5-T1",
             "P5-DEV-01"
           ],
-          "status": "قيد التنفيذ",
+          "status": "منفّذ ومختبر — بانتظار المراجعة المستقلة",
           "problemAr": "سلامة ZIP لا تثبت التشغيل؛ الرحلات على الجهاز/النشر ناقصة.",
           "goalAr": "اختبارات مستهدفة → Postgres/HTTP → Flutter → بناء → Render → جهاز.",
           "impactAr": "تسليم بلا أدلة تشغيلية.",
@@ -3803,7 +3803,7 @@
             "docs/mira-commerce-reference/evidence/commerce-operational/"
           ],
           "acceptanceAr": "رحلة منتج ورحلة خدمة بحسابات اختبار؛ تسجيل ما لم يُختبر.",
-          "resultAr": "RC3 محلي: test:commerce (يشمل concurrency) EXIT 0. النشر والرحلات بعد الختم.",
+          "resultAr": "RC3: نشر LIVE ebc2869؛ unpack PASS؛ متصفح picker PASS؛ رحلة COD/حجز جديدة وجهاز NOT_RUN ظاهرة.",
           "evidenceAr": "evidence/commerce-operational/mc-fix-rc3/test-commerce.log ؛ evidence/commerce-operational/MC_FIX_RC3_TRACKER.md",
           "evidenceLinks": [
             {
@@ -3815,7 +3815,7 @@
               "label": "متتبع RC3"
             }
           ],
-          "remainingAr": "نشر Render + رحلات منتج/حجز + جهاز. اختبارات المتصفح والتزامن مطلوبة وليست اختيارية."
+          "remainingAr": "جهاز + رحلة مصدّقة كاملة."
         },
         {
           "id": "MC-FIX-09",

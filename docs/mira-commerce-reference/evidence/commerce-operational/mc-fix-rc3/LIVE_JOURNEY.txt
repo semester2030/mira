@@ -1,0 +1,37 @@
+MC-FIX RC3 live journey — 2026-10-01
+source_commit_code=2e438fd7f2af32638a48d403d3845cae807702e6
+source_commit_docs=ebc2869020cc026deed2af6551dc47191b03914d (+ this LIVE update)
+api=https://mira-api-n4p3.onrender.com deploy dep-dav4o060tbcc73ee12ng LIVE commit ebc2869 (includes 2e438fd)
+partners=https://mira-partners-portal.onrender.com LIVE catalog-options-core.js HTTP 200
+admin=https://mira-admin-portal.onrender.com deploy dep-dav4p48jo6nc73fgtfj0 LIVE commit ebc2869
+
+PRODUCT (HTTP against live API after RC3 deploy)
+- catalog product 5cea12ba-7ef2-4323-9f9a-865e685712da HTTP 200
+- variants preserved: sku-M available=false priceHalalas=9900; sku-L available=true priceHalalas=9900; base priceHalalas=6400
+- options size m/l present
+- NEW authenticated create→approve→COD order cycle: NOT_RUN in this pass (partner/customer credentials not available in agent session without secret inspection)
+- prior RC2 order MO-261001-E8AYP5 remains historical evidence from previous live pass
+
+BOOKING (HTTP)
+- service 6365d01c-d445-411f-83f0-8ba78e607b86 HTTP 200
+- NEW booking after capacity-conflict fix: NOT_RUN authenticated (same credential limit)
+- Arabic resource path covered in local/unpack concurrency + schema tests
+
+PORTAL BROWSER (required acceptance — not optional)
+- dashboard?ui-fixture=labeled + CatalogJourney.renderForm clothes product
+- select pickers for المقاس/اللون present; pipe prompt absent; إضافة التركيبة present
+- viewports 390 / 480 / 1280 screenshots: portal-variant-picker-*.png
+- full merchant save→admin approve network journey: NOT_RUN (fixture has no live partner token)
+
+FAVORITES / SHARE / DEVICE
+- favorites dual-account: NOT_RUN
+- share deep-link open/closed on device: NOT_RUN
+- flutter run on device: NOT_RUN
+- views: deferred (not enabled)
+
+PACKAGE
+- /Users/fayez/Desktop/MIRA_COMMERCE_MC_FIX_RC3.zip
+- sha256 d33a94cbbe41b523aa0bf8737180c327c103c42894d128e536bf6c1902a62d7d
+- unpack path /tmp/MIRA_COMMERCE_MC_FIX_RC3_verify/MIRA_COMMERCE_MC_FIX_RC3
+- unpack test:commerce EXIT 0; portal-options EXIT 0; flutter marketplace All tests passed
+- flutter build apk --debug FAIL (Kotlin/camera_android) — remains FAIL
