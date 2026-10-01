@@ -76,8 +76,15 @@ async function main() {
   const product = (id: string) => prisma.product.findUniqueOrThrow({ where: { id } });
   const fill = async (user: Customer, productId: string, quantity = 1, extra: Record<string, unknown> = {}) =>
     commerce.addCartItem(user, { productId, quantity, ...extra });
-  const place = (user: Customer, key: string, extra: Record<string, unknown> = {}) =>
-    commerce.createOrder(user, delivery(key, extra));
+  const place = async (user: Customer, key: string, extra: Record<string, unknown> = {}) => {
+    const offered =
+      typeof extra.confirmationFingerprint === 'string' && extra.confirmationFingerprint
+        ? (extra.confirmationFingerprint as string)
+        : null;
+    const quote = offered ? null : await commerce.quote(user);
+    const confirmationFingerprint = offered ?? quote?.confirmationFingerprint ?? undefined;
+    return commerce.createOrder(user, delivery(key, { ...extra, ...(confirmationFingerprint ? { confirmationFingerprint } : {}) }));
+  };
 
   try {
     const alice = await mkUser('alice');
@@ -142,11 +149,17 @@ async function main() {
     assert.equal(quote.deliveryFeeHalalas, null);
     assert.equal(quote.deliveryFeeKnown, false);
     assert.equal(quote.canConfirmOrder, false);
+    assert.equal(quote.confirmationFingerprint, null, 'no confirmable fingerprint while fee unknown');
     assert.equal('requiresDeliveryFeeAcknowledgement' in quote, false, 'ack path is not offered');
     assert.equal(quote.totalHalalas, 10000);
-    await failure(place(alice, `${run}-unknown-fee`), 422, 'DELIVERY_FEE_UNKNOWN');
+    // Without a reviewed fingerprint the server refuses before treating unknown fee as free.
+    await failure(commerce.createOrder(alice, delivery(`${run}-unknown-fee`)), 400, 'QUOTE_REQUIRED');
     await failure(
-      place(alice, `${run}-unknown-fee-ack`, { acknowledgeUnknownDeliveryFee: true, totalHalalas: 1 }),
+      commerce.createOrder(alice, delivery(`${run}-unknown-fee-ack`, {
+        acknowledgeUnknownDeliveryFee: true,
+        totalHalalas: 1,
+        confirmationFingerprint: 'not-a-real-quote-fingerprint',
+      })),
       422,
       'DELIVERY_FEE_UNKNOWN',
     );
@@ -179,28 +192,94 @@ async function main() {
     await prisma.product.update({ where: { id: untracked.id }, data: { priceHalalas: 5000, nameAr: 'بدون تتبع' } });
 
     // =====================================================================
-    // 4. Dual click: same idempotency key -> exactly one order, one reservation
+    // 4. Dual click + MC-FIX-01 quote bind + MC-FIX-02 idempotency content
     // =====================================================================
     const hot = await mkProduct(pA.id, 'مخزون للنقر المزدوج', { stockQty: 10 });
     await fill(alice, hot.id, 2);
+    const quoted = await commerce.quote(alice);
+    assert.ok(quoted.confirmationFingerprint);
+    assert.equal(quoted.totalHalalas, 11500);
+    const confirmFp = quoted.confirmationFingerprint as string;
     const key = `${run}-dual-click`;
-    const clicks = await Promise.allSettled([place(alice, key), place(alice, key), place(alice, key)]);
+    const clicks = await Promise.allSettled([
+      commerce.createOrder(alice, delivery(key, { confirmationFingerprint: confirmFp })),
+      commerce.createOrder(alice, delivery(key, { confirmationFingerprint: confirmFp })),
+      commerce.createOrder(alice, delivery(key, { confirmationFingerprint: confirmFp })),
+    ]);
     assert.ok(clicks.every((c) => c.status === 'fulfilled'), JSON.stringify(clicks.map((c) => (c as PromiseRejectedResult).reason?.response)));
-    const orders = clicks.map((c) => (c as PromiseFulfilledResult<Awaited<ReturnType<typeof place>>>).value);
+    const orders = clicks.map((c) => (c as PromiseFulfilledResult<Awaited<ReturnType<typeof commerce.createOrder>>>).value);
     assert.equal(new Set(orders.map((o) => o.order.id)).size, 1, 'all clicks return the same order');
     assert.equal(orders.filter((o) => !o.idempotentReplay).length, 1, 'exactly one real creation');
     assert.equal(await prisma.commerceOrder.count({ where: { userId: alice.userId, idempotencyKey: key } }), 1);
     assert.equal((await product(hot.id)).reservedQty, 2, 'stock reserved once');
     assert.equal(orders[0].order.deliveryFeeHalalas, 1500);
     assert.equal(orders[0].order.totalHalalas, 11500);
-    // later retry (cart now empty) still replays, even with a different body
-    const retry = await place(alice, key, { city: 'جدة' });
-    assert.equal(retry.idempotentReplay, true);
-    assert.equal(retry.order.id, orders[0].order.id);
-    assert.equal(retry.order.city, 'الرياض');
+
+    // Lost response: same key + same delivery + same confirmationFingerprint → replay (cart empty, price may rise).
+    await prisma.product.update({ where: { id: hot.id }, data: { priceHalalas: 99900 } });
+    const retrySame = await commerce.createOrder(alice, delivery(key, { confirmationFingerprint: confirmFp }));
+    assert.equal(retrySame.idempotentReplay, true);
+    assert.equal(retrySame.order.id, orders[0].order.id);
+    assert.equal(retrySame.order.totalHalalas, 11500);
+    await prisma.product.update({ where: { id: hot.id }, data: { priceHalalas: 5000 } });
+
+    // Same key + different address → conflict, no new order.
+    await failure(
+      commerce.createOrder(alice, delivery(key, { confirmationFingerprint: confirmFp, city: 'جدة' })),
+      409,
+      'IDEMPOTENCY_CONFLICT',
+    );
+    assert.equal(await prisma.commerceOrder.count({ where: { userId: alice.userId, idempotencyKey: key } }), 1);
+
     await failure(commerce.createOrder(alice, { ...delivery('x'), idempotencyKey: undefined }), 400, 'IDEMPOTENCY_KEY_REQUIRED');
-    assert.equal((await commerce.createOrder(alice, { ...delivery('ignored-body') , idempotencyKey: 'body-key' }, key).catch((e) => e)).idempotentReplay, true, 'header key wins');
+    // Header Idempotency-Key wins; cart empty does not block replay of a completed attempt.
+    {
+      const headerReplay = await commerce.createOrder(
+        alice,
+        { ...delivery('ignored-body'), confirmationFingerprint: confirmFp, idempotencyKey: 'body-key' },
+        key,
+      );
+      assert.equal(headerReplay.idempotentReplay, true);
+      assert.equal(headerReplay.order.id, orders[0].order.id);
+    }
     await failure(place(alice, `${run}-empty`), 409, 'CART_EMPTY');
+
+    // QUOTE_STALE: price changes after customer reviewed the quote (74 → 109 style).
+    const staleProd = await mkProduct(pA.id, 'سعر متغير', { stockQty: 5, priceHalalas: 7400, deliveryFeeHalalas: 0 });
+    await fill(alice, staleProd.id, 1);
+    const staleQuote = await commerce.quote(alice);
+    assert.equal(staleQuote.totalHalalas, 7400);
+    assert.ok(staleQuote.confirmationFingerprint);
+    await prisma.product.update({ where: { id: staleProd.id }, data: { priceHalalas: 10900 } });
+    await failure(
+      commerce.createOrder(alice, delivery(`${run}-stale`, { confirmationFingerprint: staleQuote.confirmationFingerprint })),
+      409,
+      'QUOTE_STALE',
+    );
+    assert.equal(await prisma.commerceOrder.count({ where: { userId: alice.userId, idempotencyKey: `${run}-stale` } }), 0);
+    assert.equal((await product(staleProd.id)).reservedQty, 0);
+    assert.equal((await commerce.getCart(alice)).items.length, 1);
+    const freshQuote = await commerce.quote(alice);
+    assert.equal(freshQuote.totalHalalas, 10900);
+    const afterConfirm = await commerce.createOrder(
+      alice,
+      delivery(`${run}-stale-ok`, { confirmationFingerprint: freshQuote.confirmationFingerprint }),
+    );
+    assert.equal(afterConfirm.order.totalHalalas, 10900);
+    await commerce.clearCart(alice);
+
+    // Fee-only change also invalidates the confirmation fingerprint.
+    const feeProd = await mkProduct(pA.id, 'رسوم متغيرة', { stockQty: 5, deliveryFeeHalalas: 1000 });
+    await fill(alice, feeProd.id, 1);
+    const feeQuote = await commerce.quote(alice);
+    await prisma.product.update({ where: { id: feeProd.id }, data: { deliveryFeeHalalas: 2500 } });
+    await failure(
+      commerce.createOrder(alice, delivery(`${run}-fee-stale`, { confirmationFingerprint: feeQuote.confirmationFingerprint })),
+      409,
+      'QUOTE_STALE',
+    );
+    await commerce.clearCart(alice);
+
     // same key from another user is a different order space
     await fill(bob, hot.id, 1);
     const bobOrder = await place(bob, key);
@@ -415,6 +494,8 @@ async function main() {
     assert.equal(shirtCart.items[0].unitPriceHalalas, 6500);
     assert.equal(shirtCart.items[0].variantKey, 'v-s');
     assert.equal(shirtCart.items[0].selections[0].valueLabelAr, 'S');
+    const shirtQuote = await commerce.quote(carol);
+    assert.ok(shirtQuote.confirmationFingerprint);
     // variant becomes unavailable after being carted: checkout is blocked, nothing reserved
     await prisma.product.update({
       where: { id: shirt.id },
@@ -423,21 +504,36 @@ async function main() {
     const blocked = await commerce.getCart(carol);
     assert.equal(blocked.canCheckout, false);
     assert.equal(blocked.issues[0].code, 'VARIANT_UNAVAILABLE');
-    await failure(place(carol, `${run}-variant-blocked`), 422, 'VARIANT_UNAVAILABLE');
+    await failure(
+      place(carol, `${run}-variant-blocked`, { confirmationFingerprint: shirtQuote.confirmationFingerprint }),
+      422,
+      'VARIANT_UNAVAILABLE',
+    );
     assert.equal((await product(shirt.id)).reservedQty, 0);
-    // a price change after carting is picked up at order time
+    // a price change after carting requires a fresh confirmation (QUOTE_STALE), then succeeds
     await prisma.product.update({
       where: { id: shirt.id },
       data: { variantsJson: [{ id: 'v-s', selections: { size: 's' }, priceHalalas: 7000 }] },
     });
+    await failure(
+      place(carol, `${run}-variant-price-stale`, { confirmationFingerprint: shirtQuote.confirmationFingerprint }),
+      409,
+      'QUOTE_STALE',
+    );
     const repriced = (await place(carol, `${run}-variant-price`)).order;
     assert.equal(repriced.items[0].unitPriceHalalas, 7000);
     assert.equal(repriced.subtotalHalalas, 7000);
     assert.equal(repriced.items[0].selections && (repriced.items[0].selections as Array<{ valueLabelAr: string }>)[0].valueLabelAr, 'S');
     // product pulled from the catalog after carting
     await fill(bob, tracked.id, 1);
+    const bobTrackedQuote = await commerce.quote(bob);
+    assert.ok(bobTrackedQuote.confirmationFingerprint);
     await prisma.product.update({ where: { id: tracked.id }, data: { purchaseMode: 'external' } });
-    await failure(place(bob, `${run}-went-external`), 422, 'EXTERNAL_PRODUCT_NOT_PURCHASABLE');
+    await failure(
+      place(bob, `${run}-went-external`, { confirmationFingerprint: bobTrackedQuote.confirmationFingerprint }),
+      422,
+      'EXTERNAL_PRODUCT_NOT_PURCHASABLE',
+    );
     await prisma.product.update({ where: { id: tracked.id }, data: { purchaseMode: 'internal_cod' } });
     await commerce.clearCart(bob);
 
@@ -490,11 +586,18 @@ async function main() {
     assert.equal(b1.booking.durationMin, 60);
     assert.equal(b1.booking.endsAt, slotAt(660));
     assert.equal(b1.booking.serviceNameAr, 'جلسة عناية');
-    // dual click
-    const bookClicks = await Promise.allSettled([book(alice, 600, `${run}-bk-1`), book(alice, 600, `${run}-bk-1`)]);
-    assert.ok(bookClicks.every((c) => c.status === 'fulfilled'));
+    // dual click / lost-response replay must use the same request content (notes included).
+    const bookClicks = await Promise.allSettled([
+      book(alice, 600, `${run}-bk-1`, { notes: 'أول مرة' }),
+      book(alice, 600, `${run}-bk-1`, { notes: 'أول مرة' }),
+    ]);
+    assert.ok(
+      bookClicks.every((c) => c.status === 'fulfilled'),
+      JSON.stringify(bookClicks.map((c) => (c.status === 'rejected' ? (c.reason as { getResponse?: () => unknown }).getResponse?.() : 'ok'))),
+    );
     assert.ok(bookClicks.every((c) => (c as PromiseFulfilledResult<{ booking: { id: string }; idempotentReplay: boolean }>).value.booking.id === b1.booking.id));
     assert.equal(await prisma.commerceBooking.count({ where: { userId: alice.userId, serviceId: service.id } }), 1);
+    await failure(book(alice, 600, `${run}-bk-1`, { notes: 'ملاحظات مختلفة' }), 409, 'IDEMPOTENCY_CONFLICT');
 
     // capacity 1: same slot is taken, neighbours are free
     await failure(book(bob, 600, `${run}-bk-2`), 409, 'BOOKING_SLOT_FULL');
@@ -579,6 +682,127 @@ async function main() {
     // service pay mode other than pay_at_venue is rejected
     await prisma.service.update({ where: { id: service.id }, data: { payMode: 'online' } });
     await failure(book(carol, 780, `${run}-bk-pm`), 422, 'PAY_MODE_UNSUPPORTED');
+    await prisma.service.update({ where: { id: service.id }, data: { payMode: 'pay_at_venue' } });
+
+    // =====================================================================
+    // MC-FIX-03: resourceId capacity is per resource; legacy empty resource still works
+    // =====================================================================
+    const clinic = await mkPartner('Clinic', 'clinic');
+    const actorClinic = partnerActor('pu-clinic', clinic.id);
+    const dualRooms = [0, 1, 2, 3, 4, 5, 6].flatMap((weekday) => [
+      { weekday, startMin: 600, endMin: 720, capacity: 1, resourceId: 'room-A' },
+      { weekday, startMin: 600, endMin: 720, capacity: 1, resourceId: 'room-B' },
+    ]);
+    const roomService = await prisma.service.create({
+      data: {
+        partnerId: clinic.id,
+        nameAr: 'جلسة غرفتين',
+        nameEn: `${run}-rooms`,
+        durationMin: 60,
+        priceHalalas: 18000,
+        concernTags: [],
+        bookingEnabled: true,
+        availabilityJson: dualRooms,
+      },
+    });
+    const roomDay = localParts(new Date(Date.now() + 6 * 86_400_000)).dateKey;
+    const roomSlot = (minute: number) => localInstant(roomDay, minute)!.toISOString();
+    const roomAvail = await commerce.serviceAvailability(roomService.id, roomDay);
+    const at600 = roomAvail.slots.filter((s) => s.startsAt === roomSlot(600));
+    assert.equal(at600.length, 2, 'same start time for two resources');
+    assert.ok(at600.every((s) => s.available && (s.resourceId === 'room-A' || s.resourceId === 'room-B')));
+
+    const bookRoom = (user: Customer, resourceId: string, key: string) =>
+      commerce.createBooking(user, {
+        serviceId: roomService.id,
+        startsAt: roomSlot(600),
+        resourceId,
+        contactName: 'سارة',
+        contactPhone: PHONE,
+        idempotencyKey: key,
+      });
+
+    const roomA = await bookRoom(alice, 'room-A', `${run}-room-a`);
+    assert.equal(roomA.booking.resourceId, 'room-A');
+    assert.equal(roomA.booking.status, 'requested');
+    // Independent resource at the same time stays free.
+    const roomB = await bookRoom(bob, 'room-B', `${run}-room-b`);
+    assert.equal(roomB.booking.resourceId, 'room-B');
+    await failure(bookRoom(carol, 'room-A', `${run}-room-a2`), 409, 'BOOKING_SLOT_FULL');
+    // Unknown resource is not trusted from the client.
+    await failure(bookRoom(carol, 'room-Z', `${run}-room-z`), 422, 'RESOURCE_NOT_AVAILABLE');
+    // Same idempotency key with different resource → conflict.
+    await failure(
+      commerce.createBooking(alice, {
+        serviceId: roomService.id,
+        startsAt: roomSlot(600),
+        resourceId: 'room-B',
+        contactName: 'سارة',
+        contactPhone: PHONE,
+        idempotencyKey: `${run}-room-a`,
+      }),
+      409,
+      'IDEMPOTENCY_CONFLICT',
+    );
+    // Cancel frees capacity once.
+    await commerce.cancelCustomerBooking(alice, roomA.booking.id, {});
+    const retake = await bookRoom(carol, 'room-A', `${run}-room-retake`);
+    assert.equal(retake.booking.resourceId, 'room-A');
+    await commerce.transitionBookingFor(actorClinic, retake.booking.id, { status: 'rejected', note: 'مغلق' });
+    // Shared resource across two services must not exceed capacity.
+    const sharedWindows = [0, 1, 2, 3, 4, 5, 6].map((weekday) => ({
+      weekday,
+      startMin: 600,
+      endMin: 720,
+      capacity: 1,
+      resourceId: 'staff-1',
+    }));
+    const sharedA = await prisma.service.create({
+      data: {
+        partnerId: clinic.id,
+        nameAr: 'خدمة مشتركة أ',
+        nameEn: `${run}-share-a`,
+        durationMin: 60,
+        priceHalalas: 10000,
+        concernTags: [],
+        bookingEnabled: true,
+        availabilityJson: sharedWindows,
+      },
+    });
+    const sharedB = await prisma.service.create({
+      data: {
+        partnerId: clinic.id,
+        nameAr: 'خدمة مشتركة ب',
+        nameEn: `${run}-share-b`,
+        durationMin: 60,
+        priceHalalas: 12000,
+        concernTags: [],
+        bookingEnabled: true,
+        availabilityJson: sharedWindows,
+      },
+    });
+    const sharedDay = localParts(new Date(Date.now() + 7 * 86_400_000)).dateKey;
+    const sharedAt = (m: number) => localInstant(sharedDay, m)!.toISOString();
+    await commerce.createBooking(alice, {
+      serviceId: sharedA.id,
+      startsAt: sharedAt(600),
+      resourceId: 'staff-1',
+      contactName: 'سارة',
+      contactPhone: PHONE,
+      idempotencyKey: `${run}-share-1`,
+    });
+    await failure(
+      commerce.createBooking(bob, {
+        serviceId: sharedB.id,
+        startsAt: sharedAt(600),
+        resourceId: 'staff-1',
+        contactName: 'بوب',
+        contactPhone: PHONE,
+        idempotencyKey: `${run}-share-2`,
+      }),
+      409,
+      'BOOKING_SLOT_FULL',
+    );
 
     console.log('commerce.service schema tests passed');
   } finally {

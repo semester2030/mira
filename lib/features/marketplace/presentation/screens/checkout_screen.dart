@@ -105,14 +105,15 @@ class _CheckoutScreenState extends State<CheckoutScreen> {
     if (!_form.currentState!.validate()) return;
     final quote = _quote;
     if (quote == null) return;
-    if (!quote.canConfirmOrder || !quote.cart.deliveryFeeKnown) {
+    final fingerprint = quote.confirmationFingerprint;
+    if (!quote.canConfirmOrder || !quote.cart.deliveryFeeKnown || fingerprint == null || fingerprint.isEmpty) {
       setState(() => _submitError = MarketplaceCopy.deliveryFeeUnknown);
       return;
     }
     final phone = SaudiPhone.toE164(_phone.text);
     if (phone == null) return;
     final delivery = _delivery(phone);
-    final signature = delivery.toJson().toString();
+    final signature = '${delivery.toJson()}|$fingerprint';
     if (_idempotencyKey == null || _keySignature != signature) {
       _idempotencyKey = newIdempotencyKey();
       _keySignature = signature;
@@ -125,6 +126,7 @@ class _CheckoutScreenState extends State<CheckoutScreen> {
       final result = await _client.createOrder(
         idempotencyKey: _idempotencyKey!,
         delivery: delivery,
+        confirmationFingerprint: fingerprint,
       );
       _idempotencyKey = null;
       _keySignature = null;
@@ -136,7 +138,13 @@ class _CheckoutScreenState extends State<CheckoutScreen> {
     } on CommerceApiException catch (error) {
       if (!mounted) return;
       setState(() => _submitError = error.messageAr);
-      if (error.isDeliveryFeeUnknown || error.code == 'OUT_OF_STOCK' || error.code == 'CART_EMPTY') _load();
+      if (error.isQuoteStale ||
+          error.isDeliveryFeeUnknown ||
+          error.code == 'OUT_OF_STOCK' ||
+          error.code == 'CART_EMPTY' ||
+          error.code == 'PRODUCT_UNAVAILABLE') {
+        _load();
+      }
     } catch (error) {
       if (mounted) setState(() => _submitError = commerceErrorText(error));
     } finally {

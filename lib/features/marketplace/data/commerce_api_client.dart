@@ -33,6 +33,8 @@ class CommerceApiException implements Exception {
 
   bool get isPartnerConflict => code == partnerConflict;
   bool get isDeliveryFeeUnknown => code == deliveryFeeUnknown;
+  bool get isQuoteStale => code == 'QUOTE_STALE';
+  bool get isIdempotencyConflict => code == 'IDEMPOTENCY_CONFLICT';
 
   @override
   String toString() => 'CommerceApiException($code, $status)';
@@ -66,6 +68,7 @@ abstract class CommerceClient {
   Future<CommerceOrderResult> createOrder({
     required String idempotencyKey,
     required CommerceDelivery delivery,
+    required String confirmationFingerprint,
   });
   Future<CommercePage<CommerceOrder>> listOrders({String? cursor});
   Future<CommerceOrder> getOrder(String id);
@@ -78,6 +81,7 @@ abstract class CommerceClient {
     required DateTime startsAt,
     required String contactName,
     required String contactPhone,
+    String resourceId = '',
     String? notes,
   });
   Future<CommercePage<CommerceBooking>> listBookings({String? cursor});
@@ -185,6 +189,7 @@ class ApiCommerceClient implements CommerceClient {
   Future<CommerceOrderResult> createOrder({
     required String idempotencyKey,
     required CommerceDelivery delivery,
+    required String confirmationFingerprint,
   }) async {
     final json = await _send(
       'POST',
@@ -193,6 +198,7 @@ class ApiCommerceClient implements CommerceClient {
       data: {
         ...delivery.toJson(),
         'idempotencyKey': idempotencyKey,
+        'confirmationFingerprint': confirmationFingerprint,
       },
     );
     return CommerceOrderResult(
@@ -230,6 +236,7 @@ class ApiCommerceClient implements CommerceClient {
     required DateTime startsAt,
     required String contactName,
     required String contactPhone,
+    String resourceId = '',
     String? notes,
   }) async {
     final json = await _send(
@@ -242,6 +249,7 @@ class ApiCommerceClient implements CommerceClient {
         'startsAt': startsAt.toUtc().toIso8601String(),
         'contactName': contactName,
         'contactPhone': contactPhone,
+        if (resourceId.isNotEmpty) 'resourceId': resourceId,
         if (notes != null && notes.trim().isNotEmpty) 'notes': notes.trim(),
       },
     );

@@ -376,6 +376,8 @@ export class PartnersPortalService {
         variantsJson?: Prisma.InputJsonValue | typeof Prisma.DbNull;
         draftOptionsJson?: Prisma.InputJsonValue | typeof Prisma.DbNull;
         draftVariantsJson?: Prisma.InputJsonValue | typeof Prisma.DbNull;
+        draftOptionsSet?: boolean;
+        draftVariantsSet?: boolean;
       } = {
         reviewRevision: { increment: 1 },
         reviewStatus: current.reviewStatus === 'in_review' ? 'in_review' : 'draft',
@@ -414,15 +416,23 @@ export class PartnersPortalService {
         if (commerce.stockQty !== undefined) data.stockQty = commerce.stockQty;
         if (commerce.deliveryFeeHalalas !== undefined) data.deliveryFeeHalalas = commerce.deliveryFeeHalalas;
         if (commerce.optionsJson !== undefined) {
+          data.draftOptionsSet = true;
           data.draftOptionsJson = commerce.optionsJson === null ? Prisma.DbNull : (commerce.optionsJson as Prisma.InputJsonValue);
         }
         if (commerce.variantsJson !== undefined) {
+          data.draftVariantsSet = true;
           data.draftVariantsJson = commerce.variantsJson === null ? Prisma.DbNull : (commerce.variantsJson as Prisma.InputJsonValue);
         }
       } else {
         Object.assign(data, commerceWrite(commerce));
-        if (commerce.optionsJson !== undefined) data.draftOptionsJson = Prisma.DbNull;
-        if (commerce.variantsJson !== undefined) data.draftVariantsJson = Prisma.DbNull;
+        if (commerce.optionsJson !== undefined) {
+          data.draftOptionsJson = Prisma.DbNull;
+          data.draftOptionsSet = false;
+        }
+        if (commerce.variantsJson !== undefined) {
+          data.draftVariantsJson = Prisma.DbNull;
+          data.draftVariantsSet = false;
+        }
       }
       return tx.product.update({ where: { id: productId }, data });
     });

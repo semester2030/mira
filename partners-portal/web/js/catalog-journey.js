@@ -622,11 +622,28 @@
       stockInput.step = '1';
       feeInput = field(action, 'رسوم التوصيل بالريال (اتركيها فارغة إذا غير محددة، ولا تُعرض كمجانية)', 'deliveryFeeSar', editing && item.deliveryFeeHalalas != null ? halalasToInput(item.deliveryFeeHalalas) : '', 'text');
       feeInput.inputMode = 'decimal';
-      optionsJsonInput = field(action, 'خيارات المنتج JSON (اختياري، متقدم)', 'optionsJson', editing && item.optionsJson ? JSON.stringify(item.optionsJson) : '', 'textarea');
+      const advancedWrap = document.createElement('label');
+      advancedWrap.className = 'check-row';
+      const advancedToggle = document.createElement('input');
+      advancedToggle.type = 'checkbox';
+      advancedToggle.name = 'optionsAdvancedJson';
+      advancedWrap.append(advancedToggle, document.createTextNode(' تعديل متقدم بصيغة JSON (يستبدل النموذج المبسّط عند التفعيل)'));
+      action.appendChild(advancedWrap);
+      optionsJsonInput = field(action, 'خيارات المنتج JSON (متقدم)', 'optionsJson', '', 'textarea');
       optionsJsonInput.placeholder = '[{"id":"size","labelAr":"المقاس","kind":"size","values":[{"id":"m","labelAr":"M"}]}]';
-      variantsJsonInput = field(action, 'التركيبات JSON (اختياري، متقدم)', 'variantsJson', editing && item.variantsJson ? JSON.stringify(item.variantsJson) : '', 'textarea');
+      variantsJsonInput = field(action, 'التركيبات JSON (متقدم)', 'variantsJson', '', 'textarea');
       variantsJsonInput.placeholder = '[{"id":"m-black","selections":{"size":"m"},"priceHalalas":5200,"available":true}]';
-      text(action, 'الطلب داخل ميرا يتطلب سعرًا أكبر من صفر. تغيير هذه الحقول يسري مباشرة على المنتج المنشور ولا يمر بمراجعة المحتوى.');
+      function setAdvancedVisible(on) {
+        [optionsJsonInput, variantsJsonInput].forEach((input) => {
+          const box = input.closest('.field') || input.parentElement;
+          if (box) box.hidden = !on;
+          if (!on) input.value = '';
+        });
+      }
+      setAdvancedVisible(false);
+      advancedToggle.onchange = () => setAdvancedVisible(advancedToggle.checked);
+      optionsJsonInput._advancedToggle = advancedToggle;
+      text(action, 'المقاسات والألوان والأحجام تُحفظ من النموذج المبسّط أعلاه. المخزون ورسوم التوصيل ووضع الشراء يسري مباشرة؛ الخيارات للمنشور تمر بمسودة مراجعة.');
     }
 
     const preview = document.createElement('div');
@@ -1119,19 +1136,22 @@
         value.deliveryFeeHalalas = fee;
       }
 
-      const options = parseJsonList(optionsJsonInput.value, 'optionsJson', 'الخيارات');
-      if (options.error) return options;
-      const variants = parseJsonList(variantsJsonInput.value, 'variantsJson', 'التركيبات');
-      if (variants.error) return variants;
       const built = structuredOptionsPayload();
-      // Prefer explicit JSON when provided; otherwise send the easy UI structure to the API.
-      if (options.value !== undefined) value.optionsJson = options.value;
-      else if (built.optionsJson.length) value.optionsJson = built.optionsJson;
-      else if (editing && item.optionsJson) value.optionsJson = null;
-
-      if (variants.value !== undefined) value.variantsJson = variants.value;
-      else if (built.variantsJson.length) value.variantsJson = built.variantsJson;
-      else if (editing && item.variantsJson) value.variantsJson = null;
+      const advancedOn = Boolean(optionsJsonInput._advancedToggle && optionsJsonInput._advancedToggle.checked);
+      if (advancedOn) {
+        const options = parseJsonList(optionsJsonInput.value, 'optionsJson', 'الخيارات');
+        if (options.error) return options;
+        const variants = parseJsonList(variantsJsonInput.value, 'variantsJson', 'التركيبات');
+        if (variants.error) return variants;
+        if (options.value !== undefined) value.optionsJson = options.value;
+        if (variants.value !== undefined) value.variantsJson = variants.value;
+      } else {
+        // Easy UI is the source of truth. Never let a stale JSON textarea override it.
+        if (built.optionsJson.length) value.optionsJson = built.optionsJson;
+        else if (editing && (item.draftOptionsSet || item.optionsJson)) value.optionsJson = null;
+        if (built.variantsJson.length) value.variantsJson = built.variantsJson;
+        else if (editing && (item.draftVariantsSet || item.variantsJson)) value.variantsJson = null;
+      }
 
       if (value.optionsJson === undefined) delete value.optionsJson;
       if (value.variantsJson === undefined) delete value.variantsJson;

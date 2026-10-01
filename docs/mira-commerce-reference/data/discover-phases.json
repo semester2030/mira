@@ -3433,16 +3433,16 @@
         }
       ],
       "expectedAr": "أدلة اختبار شاملة، وحالة واضحة لكل مانع، وقرار جاهزية مبني على النتائج.",
-      "actualAr": "2026-09-27: رُفع commit 36b080cb3591b5cf15ded803e02a6fc03510cfd5 إلى origin/main. mira-api نُشر حيًا على Render بنفس الـSHA. التطبيق اشتغل على آيفون fayez بنمط debug وظهر اكتشفي بالعربية وRTL. الكتالوج المنشور أعاد 8 عناصر. وسائط العرض الظاهر فارغة. البنود الأربعة ما زالت مؤجلة.",
+      "actualAr": "2026-10-01: بعد مراجعة 8ebbf54 (يحتاج تصحيحًا واستكمال أدلة) فُتحت بطاقات MC-FIX-01…09 على المرحلة الخامسة دون اعتماد المرحلة. الكود التصحيحي قيد التنفيذ فوق HEAD الحالي مع الحفاظ على أعمال المستخدم. 2026-09-27: رُفع commit 36b080cb3591b5cf15ded803e02a6fc03510cfd5 إلى origin/main. mira-api نُشر حيًا على Render بنفس الـSHA. التطبيق اشتغل على آيفون fayez بنمط debug وظهر اكتشفي بالعربية وRTL. الكتالوج المنشور أعاد 8 عناصر. وسائط العرض الظاهر فارغة. البنود الأربعة ما زالت مؤجلة.",
       "status": "قيد التنفيذ — نشر وتشغيل واختبار النسخة الحالية",
       "dependenciesAr": "اكتمال المراحل السابقة التي تدخل في قرار الجاهزية. تجهيز الإطلاق لا يعني النشر.",
-      "notesAr": "المستودع https://github.com/semester2030/mira الفرع main. خدمة mira-api srv-d85ngcfavr4c73d3rk6g والرابط https://mira-api-n4p3.onrender.com. النشر dep-dasamlrncjis73ebfd0g. بوابة الشركاء https://mira-partners-portal.onrender.com. لا توجد خدمة إدارة منشورة. CI Mira CI فشل في التحليل ولا يمنع النسخة العاملة. لقطة الجهاز: evidence/ph5/iphone-discover.png.",
+      "notesAr": "سجل التصحيح التشغيلي: evidence/commerce-operational/MC_FIX_TRACKER.md و CORRECTION_DELIVERY.md. لا اعتماد ذاتي للمرحلة الخامسة. المستودع https://github.com/semester2030/mira الفرع main. خدمة mira-api srv-d85ngcfavr4c73d3rk6g والرابط https://mira-api-n4p3.onrender.com. النشر dep-dasamlrncjis73ebfd0g. بوابة الشركاء https://mira-partners-portal.onrender.com. لا توجد خدمة إدارة منشورة. CI Mira CI فشل في التحليل ولا يمنع النسخة العاملة. لقطة الجهاز: evidence/ph5/iphone-discover.png.",
       "blockersAr": "لا شرط يمنع تشغيل النسخة الحالية بسبب البنود التي أجّلها المالك. التخزين الدائم والعد ما زالا غير مكتملين ولا يُعلنان جاهزين.",
       "acceptanceAr": "أدلة اختبار شاملة، وحالة واضحة لكل مانع، وقرار جاهزية مبني على النتائج. تجهيز الإطلاق لا يعني النشر العام تلقائيًا.",
       "evidenceIds": [],
       "reviewPackage": "",
       "verificationReport": "",
-      "reviewResultAr": "قيد التنفيذ. ليس اعتمادًا للمرحلة ولا جاهزية تجارية.",
+      "reviewResultAr": "قيد التنفيذ بعد مراجعة 8ebbf54. ليس اعتمادًا للمرحلة.",
       "reviewDate": "",
       "launchBlockerIds": [
         "PH3-STORAGE-LIVE"
@@ -3497,6 +3497,333 @@
           "id": "P5-CHECK-10",
           "titleAr": "الاختبار النهائي على الجوال وخطة التراجع",
           "status": "التطبيق اشتغل على الجوال. خطة التراجع لم تُنفذ."
+        }
+      ],
+      "deliveries": [
+        {
+          "id": "DEL-MC-CORR-8ebbf54",
+          "name": "MIRA_COMMERCE_CORRECTION_8ebbf54.zip",
+          "createdAt": "2026-10-01T10:00:00+03:00",
+          "deliveryStatus": "تمت المراجعة — يحتاج تصحيحًا واستكمال أدلة",
+          "logHref": "evidence/commerce-operational/CORRECTION_DELIVERY.md",
+          "logLabel": "سجل التصحيح التشغيلي",
+          "zipHref": "evidence/commerce-operational/MIRA_COMMERCE_CORRECTION_8ebbf54.zip",
+          "zipLabel": "حزمة تصحيح 8ebbf54",
+          "sha256Href": "evidence/commerce-operational/MIRA_COMMERCE_CORRECTION_8ebbf54.zip.sha256",
+          "sha256Label": "بصمة الحزمة",
+          "sha256": "انظر ملف البصمة المستقل",
+          "reviewResultAr": "مراجعة مستقلة لحزمة 8ebbf54 (وكودها المطابق b16c2ed): تمت المراجعة — يحتاج تصحيحًا واستكمال أدلة. سلامة ZIP لا تثبت صحة التشغيل. البنود MC-FIX-01…09 تفتح من هذه النتيجة.",
+          "approvalAr": "غير معتمدة"
+        },
+        {
+          "id": "DEL-MC-FIX-RC1",
+          "name": "MIRA_COMMERCE_MC_FIX_RC1 (قيد الإعداد)",
+          "createdAt": "2026-10-01T12:00:00+03:00",
+          "deliveryStatus": "قيد التنفيذ — بانتظار إغلاق الاختبارات والحزمة",
+          "logHref": "evidence/commerce-operational/MC_FIX_TRACKER.md",
+          "logLabel": "متتبع MC-FIX",
+          "sha256": "تُحسب خارج الحزمة بعد إغلاقها",
+          "reviewResultAr": "لم تصدر بعد",
+          "approvalAr": "غير معتمدة"
+        }
+      ],
+      "corrections": [
+        {
+          "id": "MC-FIX-01",
+          "titleAr": "منع إنشاء الطلب بسعر لم تؤكده العميلة",
+          "relatedTaskIds": [
+            "P5-T1",
+            "P5-CREATE-01"
+          ],
+          "status": "مختبر محليًا",
+          "problemAr": "عرض سعر 74 ريالًا ثم إنشاء طلب بإجمالي 109 دون إعادة موافقة.",
+          "goalAr": "ربط التأكيد ببصمة عرض السعر؛ رفض التأكيد القديم عند تغيّر السعر أو الرسوم أو المحتوى.",
+          "impactAr": "قد تُحصّل العميلة مبلغًا لم تراجعه.",
+          "taskAr": "confirmationFingerprint + QUOTE_STALE داخل المعاملة",
+          "fixAr": "quote يعيد confirmationFingerprint؛ createOrder يرفض عند اختلاف البصمة دون حجز أو إنشاء؛ Flutter يمرّر البصمة ويعيد التحميل عند QUOTE_STALE.",
+          "filesAr": [
+            "mira-api/src/marketplace/commerce.service.ts",
+            "mira-api/src/marketplace/commerce.types.ts",
+            "lib/features/marketplace/presentation/screens/checkout_screen.dart",
+            "lib/features/marketplace/data/commerce_api_client.dart"
+          ],
+          "acceptanceAr": "74→109 يرفض؛ تغير الرسوم؛ تغير كمية/خيار؛ نفاد؛ فشل المعاملة بلا جزئي.",
+          "resultAr": "PASS على Postgres+HTTP المحلي. سجلات mc-fix/test-commerce.log. رحلة الجهاز والمنشور متبقية.",
+          "evidenceAr": "evidence/commerce-operational/mc-fix/test-commerce.log ؛ evidence/commerce-operational/mc-fix/flutter-marketplace.log ؛ evidence/commerce-operational/MC_FIX_TRACKER.md",
+          "evidenceLinks": [
+            {
+              "href": "evidence/commerce-operational/mc-fix/test-commerce.log",
+              "label": "سجل test:commerce"
+            },
+            {
+              "href": "evidence/commerce-operational/mc-fix/flutter-marketplace.log",
+              "label": "سجل Flutter marketplace"
+            },
+            {
+              "href": "evidence/commerce-operational/MC_FIX_TRACKER.md",
+              "label": "متتبع MC-FIX"
+            }
+          ],
+          "remainingAr": "سجل اختبار محلي + رحلة منشورة على الجهاز."
+        },
+        {
+          "id": "MC-FIX-02",
+          "titleAr": "منع التكرار مربوط بمحتوى أمر الإنشاء",
+          "relatedTaskIds": [
+            "P5-T1"
+          ],
+          "status": "مختبر محليًا",
+          "problemAr": "المفتاح نفسه يعيد الطلب/الحجز القديم حتى مع تغيّر العنوان أو الخدمة أو الموعد.",
+          "goalAr": "مطابقة المحتوى → إعادة السجل؛ اختلاف المحتوى → IDEMPOTENCY_CONFLICT.",
+          "impactAr": "قد تُعاد نتيجة طلب مختلف أو يُنشأ التباس تشغيلي.",
+          "taskAr": "requestFingerprint للأوامر والحجوزات",
+          "fixAr": "orderRequestFingerprint / bookingRequestFingerprint مع فحص قبل الإنشاء وعند P2002.",
+          "filesAr": [
+            "mira-api/src/marketplace/commerce.service.ts",
+            "mira-api/prisma/migrations/20261001140000_commerce_mc_fix/migration.sql"
+          ],
+          "acceptanceAr": "نقر مزدوج؛ ضياع الرد؛ تعارض عنوان/موعد/مورد؛ عزل الحسابات.",
+          "resultAr": "PASS محلي للأوامر والحجوزات. IDEMPOTENCY_CONFLICT مثبت.",
+          "evidenceAr": "evidence/commerce-operational/mc-fix/test-commerce.log ؛ evidence/commerce-operational/mc-fix/flutter-marketplace.log ؛ evidence/commerce-operational/MC_FIX_TRACKER.md",
+          "evidenceLinks": [
+            {
+              "href": "evidence/commerce-operational/mc-fix/test-commerce.log",
+              "label": "سجل test:commerce"
+            },
+            {
+              "href": "evidence/commerce-operational/mc-fix/flutter-marketplace.log",
+              "label": "سجل Flutter marketplace"
+            },
+            {
+              "href": "evidence/commerce-operational/MC_FIX_TRACKER.md",
+              "label": "متتبع MC-FIX"
+            }
+          ],
+          "remainingAr": "سجل اختبار محلي منشور."
+        },
+        {
+          "id": "MC-FIX-03",
+          "titleAr": "تمرير معرف المورد من التوفر إلى الحجز",
+          "relatedTaskIds": [
+            "P5-T1",
+            "P5-SERVICE-01"
+          ],
+          "status": "مختبر محليًا",
+          "problemAr": "موعد room-A يظهر ثم يُرفض SLOT_OUTSIDE_AVAILABILITY لأن الحجز لا يستخدم resourceId.",
+          "goalAr": "resourceId من التوفر → Flutter → API → السعة والإشغال.",
+          "impactAr": "فشل حجز مواعيد صحيحة أو احتساب موارد مختلفة كمورد واحد.",
+          "taskAr": "resourceId في الجداول والسعة المشتركة",
+          "fixAr": "مواعيد مع resourceId؛ حجز يتحقق من انتماء المورد؛ سعة شريك للمورد المشترك؛ توافق resourceId فارغ.",
+          "filesAr": [
+            "mira-api/src/marketplace/commerce.types.ts",
+            "mira-api/src/marketplace/commerce.service.ts",
+            "lib/features/marketplace/presentation/screens/booking_request_screen.dart"
+          ],
+          "acceptanceAr": "غرفتين؛ سباق سعة؛ إلغاء يحرّر؛ خدمات بلا مورد.",
+          "resultAr": "PASS محلي لـ room-A/B والسعة المشتركة. رحلة بوابة منشورة متبقية.",
+          "evidenceAr": "evidence/commerce-operational/mc-fix/test-commerce.log ؛ evidence/commerce-operational/mc-fix/flutter-marketplace.log ؛ evidence/commerce-operational/MC_FIX_TRACKER.md",
+          "evidenceLinks": [
+            {
+              "href": "evidence/commerce-operational/mc-fix/test-commerce.log",
+              "label": "سجل test:commerce"
+            },
+            {
+              "href": "evidence/commerce-operational/mc-fix/flutter-marketplace.log",
+              "label": "سجل Flutter marketplace"
+            },
+            {
+              "href": "evidence/commerce-operational/MC_FIX_TRACKER.md",
+              "label": "متتبع MC-FIX"
+            }
+          ],
+          "remainingAr": "رحلة بوابة تاجر → تطبيق على البيئة المنشورة."
+        },
+        {
+          "id": "MC-FIX-04",
+          "titleAr": "النموذج المبسّط مصدر المقاسات والألوان",
+          "relatedTaskIds": [
+            "P5-CREATE-01"
+          ],
+          "status": "قيد التنفيذ",
+          "problemAr": "تعديل S→M قد يُرسل S لأن JSON القديم له الأولوية.",
+          "goalAr": "الواجهة المبسّطة مصدر التعديل؛ JSON متقدم صريح فقط.",
+          "impactAr": "حفظ خاطئ لخيارات التاجر.",
+          "taskAr": "أولوية easy UI في catalog-journey",
+          "fixAr": "structuredOptionsPayload عند إيقاف المتقدم؛ لا تجاوز من textarea قديم.",
+          "filesAr": [
+            "partners-portal/web/js/catalog-journey.js",
+            "mira-api/src/partners-portal/partners-portal.service.ts"
+          ],
+          "acceptanceAr": "S→M يحفظ ويعيد التحميل؛ ترتيب التركيبات يحافظ على الهويات.",
+          "resultAr": "منفّذ في المصدر. اختبار متصفح/لقطة NOT_RUN.",
+          "evidenceAr": "evidence/commerce-operational/mc-fix/test-commerce.log ؛ evidence/commerce-operational/mc-fix/flutter-marketplace.log ؛ evidence/commerce-operational/MC_FIX_TRACKER.md",
+          "evidenceLinks": [
+            {
+              "href": "evidence/commerce-operational/mc-fix/test-commerce.log",
+              "label": "سجل test:commerce"
+            },
+            {
+              "href": "evidence/commerce-operational/mc-fix/flutter-marketplace.log",
+              "label": "سجل Flutter marketplace"
+            },
+            {
+              "href": "evidence/commerce-operational/MC_FIX_TRACKER.md",
+              "label": "متتبع MC-FIX"
+            }
+          ],
+          "remainingAr": "اختبار متصفح يدوي + لقطة."
+        },
+        {
+          "id": "MC-FIX-05",
+          "titleAr": "تمييز مسح الخيارات ومعاينة الإدارة",
+          "relatedTaskIds": [
+            "P5-CREATE-01"
+          ],
+          "status": "قيد التنفيذ",
+          "problemAr": "null يُفسَّر كغياب تعديل؛ المعاينة لا تعرض مسودة الخيارات.",
+          "goalAr": "draftOptionsSet / draftVariantsSet؛ معاينة منشور vs مقترح؛ 409 عند تغيّر المسودة.",
+          "impactAr": "فشل مسح الخيارات أو اعتماد أعمى.",
+          "taskAr": "أعلام المسودة + معاينة الإدارة",
+          "fixAr": "ترحيل draft_*_set؛ preview يعرض cleared؛ اعتماد يطبّق المسح.",
+          "filesAr": [
+            "mira-api/src/marketplace/catalog-content.service.ts",
+            "admin-portal/web/js/app.js",
+            "mira-api/prisma/migrations/20261001140000_commerce_mc_fix/migration.sql"
+          ],
+          "acceptanceAr": "رفض/اعتماد/مسح/رفض المسح/409 بعد تغيّر المسودة.",
+          "resultAr": "منفّذ في المصدر. إثبات حي NOT_RUN.",
+          "evidenceAr": "evidence/commerce-operational/mc-fix/test-commerce.log ؛ evidence/commerce-operational/mc-fix/flutter-marketplace.log ؛ evidence/commerce-operational/MC_FIX_TRACKER.md",
+          "evidenceLinks": [
+            {
+              "href": "evidence/commerce-operational/mc-fix/test-commerce.log",
+              "label": "سجل test:commerce"
+            },
+            {
+              "href": "evidence/commerce-operational/mc-fix/flutter-marketplace.log",
+              "label": "سجل Flutter marketplace"
+            },
+            {
+              "href": "evidence/commerce-operational/MC_FIX_TRACKER.md",
+              "label": "متتبع MC-FIX"
+            }
+          ],
+          "remainingAr": "إثبات متصفح على النسخة المنشورة."
+        },
+        {
+          "id": "MC-FIX-06",
+          "titleAr": "إثبات متابعة التاجر والإدارة",
+          "relatedTaskIds": [
+            "P5-T1"
+          ],
+          "status": "مفتوح",
+          "problemAr": "وجود أزرار في JS أو نجاح API وحده لا يثبت اكتمال اللوحات المنشورة.",
+          "goalAr": "تحقق واجهات منشورة للطلبات والحجوزات والتحصيل والعزل.",
+          "impactAr": "فجوة تشغيلية بين الأطراف الثلاثة.",
+          "taskAr": "رحلات منشورة + لقطات",
+          "fixAr": "لم يُغلق بعد — ينتظر النشر والتحقق على العناوين الحية.",
+          "filesAr": [
+            "admin-portal/web/js/app.js",
+            "partners-portal/web/js/catalog-journey.js"
+          ],
+          "acceptanceAr": "ظهور الطلب/الحجز لدى الثلاثة؛ انتقالات؛ تحصيل بعد تسليم؛ عزل تاجر.",
+          "resultAr": "لم يُختبر على البيئة المنشورة بعد في هذه الجولة.",
+          "evidenceAr": "evidence/commerce-operational/MC_FIX_TRACKER.md",
+          "evidenceLinks": [
+            {
+              "href": "evidence/commerce-operational/MC_FIX_TRACKER.md",
+              "label": "متتبع التصحيح"
+            }
+          ],
+          "remainingAr": "عنوان لوحة الإدارة الحي + رحلات حسابات اختبار."
+        },
+        {
+          "id": "MC-FIX-07",
+          "titleAr": "المشاركة والمفضلة والمشاهدات",
+          "relatedTaskIds": [
+            "P5-T2"
+          ],
+          "status": "مفتوح",
+          "problemAr": "المشاركة/المفضلة تحتاج إثبات حساب حقيقي؛ المشاهدات بلا قرار مالك.",
+          "goalAr": "روابط صحيحة؛ مفضلة دائمة؛ مشاهدات غير مفعّلة حتى القرار.",
+          "impactAr": "ادعاء اكتمال أيقونات بينما المشاهدات معلّقة.",
+          "taskAr": "اختبار مشاركة منسوخة + مفضلة حقيقية؛ إبقاء العد غير مفعّل",
+          "fixAr": "مسار deep link قائم؛ العد يبقى غير مفعّل بانتظار القرار.",
+          "filesAr": [
+            "lib/features/marketplace/",
+            "docs/mira-commerce-reference/data/discover-phases.json"
+          ],
+          "acceptanceAr": "رابط منسوخ يفتح المنتج؛ مفضلة عبر جلسات؛ مشاهدات معلّقة صراحة.",
+          "resultAr": "المشاهدات: مؤجل بقرار المالك. المشاركة/المفضلة بانتظار إثبات جهاز.",
+          "evidenceAr": "evidence/commerce-operational/MC_FIX_TRACKER.md",
+          "evidenceLinks": [
+            {
+              "href": "evidence/commerce-operational/MC_FIX_TRACKER.md",
+              "label": "متتبع التصحيح"
+            }
+          ],
+          "remainingAr": "Universal/App Links وجهاز حقيقي؛ قرار المشاهدات."
+        },
+        {
+          "id": "MC-FIX-08",
+          "titleAr": "الاختبار والنشر والرحلة على الجهاز",
+          "relatedTaskIds": [
+            "P5-T1",
+            "P5-DEV-01"
+          ],
+          "status": "قيد التنفيذ",
+          "problemAr": "سلامة ZIP لا تثبت التشغيل؛ الرحلات على الجهاز/النشر ناقصة.",
+          "goalAr": "اختبارات مستهدفة → Postgres/HTTP → Flutter → بناء → Render → جهاز.",
+          "impactAr": "تسليم بلا أدلة تشغيلية.",
+          "taskAr": "تشغيل أوامر الاختبار والنشر والتوثيق",
+          "fixAr": "جارٍ تشغيل test:commerce وFlutter؛ النشر بعد نجاح الاختبارات.",
+          "filesAr": [
+            "mira-api/package.json",
+            "docs/mira-commerce-reference/evidence/commerce-operational/"
+          ],
+          "acceptanceAr": "رحلة منتج ورحلة خدمة بحسابات اختبار؛ تسجيل ما لم يُختبر.",
+          "resultAr": "commerce + flutter marketplace 164 PASS محليًا. النشر والجهاز قيد.",
+          "evidenceAr": "evidence/commerce-operational/mc-fix/test-commerce.log ؛ evidence/commerce-operational/mc-fix/flutter-marketplace.log ؛ evidence/commerce-operational/MC_FIX_TRACKER.md",
+          "evidenceLinks": [
+            {
+              "href": "evidence/commerce-operational/mc-fix/test-commerce.log",
+              "label": "سجل test:commerce"
+            },
+            {
+              "href": "evidence/commerce-operational/mc-fix/flutter-marketplace.log",
+              "label": "سجل Flutter marketplace"
+            },
+            {
+              "href": "evidence/commerce-operational/MC_FIX_TRACKER.md",
+              "label": "متتبع MC-FIX"
+            }
+          ],
+          "remainingAr": "سجلات الأوامر + نشر + جهاز."
+        },
+        {
+          "id": "MC-FIX-09",
+          "titleAr": "حزمة قابلة للمراجعة وإعادة الاختبار",
+          "relatedTaskIds": [
+            "P5-T3"
+          ],
+          "status": "مفتوح",
+          "problemAr": "حزم سابقة رقيقة أو بلا اختبارات قابلة لإعادة التشغيل.",
+          "goalAr": "شجرة بناء + اختبارات + بيان + SHA + فحص فك.",
+          "impactAr": "المراجع لا يستطيع إعادة التحقق.",
+          "taskAr": "تعبئة ZIP كامل بعد إغلاق الاختبارات",
+          "fixAr": "لم تُغلق الحزمة بعد.",
+          "filesAr": [
+            "docs/mira-commerce-reference/scripts/"
+          ],
+          "acceptanceAr": "PACKAGE_MANIFEST + SHA مستقل + فحص فك بلا فرق.",
+          "resultAr": "لم تُسلَّم بعد.",
+          "evidenceAr": "evidence/commerce-operational/MC_FIX_TRACKER.md",
+          "evidenceLinks": [
+            {
+              "href": "evidence/commerce-operational/MC_FIX_TRACKER.md",
+              "label": "متتبع التصحيح"
+            }
+          ],
+          "remainingAr": "بناء الحزمة بعد نجاح الاختبارات المتاحة."
         }
       ]
     }

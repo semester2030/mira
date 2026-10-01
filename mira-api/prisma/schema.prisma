@@ -187,6 +187,9 @@ model Product {
   /// Pending options/variants for published rows — applied on content approve only.
   draftOptionsJson  Json? @map("draft_options_json")
   draftVariantsJson Json? @map("draft_variants_json")
+  /// True when a published-row options draft is pending (including an explicit clear).
+  draftOptionsSet   Boolean @default(false) @map("draft_options_set")
+  draftVariantsSet  Boolean @default(false) @map("draft_variants_set")
   /// null = fee unknown (NOT free)
   deliveryFeeHalalas Int? @map("delivery_fee_halalas")
   createdAt     DateTime @default(now()) @map("created_at")
@@ -587,6 +590,8 @@ model CommerceOrder {
   notes        String?
 
   idempotencyKey  String?  @map("idempotency_key")
+  /// Hash of the normalized create attempt (delivery + confirmed cart). Used for IDEMPOTENCY_CONFLICT.
+  requestFingerprint String? @map("request_fingerprint")
   clientRequestId String?  @map("client_request_id")
   createdAt       DateTime @default(now()) @map("created_at")
   updatedAt       DateTime @updatedAt @map("updated_at")
@@ -649,6 +654,8 @@ model CommerceBooking {
   serviceId      String   @map("service_id")
   serviceNameAr  String   @map("service_name_ar")
   branchLabel    String?  @map("branch_label")
+  /// Empty string = legacy / no explicit resource. Same resource across services shares capacity.
+  resourceId     String   @default("") @map("resource_id")
   startsAt       DateTime @map("starts_at")
   endsAt         DateTime @map("ends_at")
   durationMin    Int      @map("duration_min")
@@ -660,6 +667,7 @@ model CommerceBooking {
   contactPhone   String   @map("contact_phone")
   notes          String?
   idempotencyKey String?  @map("idempotency_key")
+  requestFingerprint String? @map("request_fingerprint")
   createdAt      DateTime @default(now()) @map("created_at")
   updatedAt      DateTime @updatedAt @map("updated_at")
 
@@ -667,6 +675,7 @@ model CommerceBooking {
 
   @@unique([userId, idempotencyKey])
   @@index([partnerId, serviceId, startsAt])
+  @@index([partnerId, resourceId, startsAt])
   @@index([userId, createdAt(sort: Desc)])
   @@map("commerce_bookings")
 }

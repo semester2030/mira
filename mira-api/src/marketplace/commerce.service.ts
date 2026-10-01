@@ -13,8 +13,10 @@ import {
   PURCHASE_MODE_INTERNAL_COD,
   SelectionSnapshot,
   badRequest,
+  bookingRequestFingerprint,
   buildDaySlots,
   canCollectPayment,
+  cartConfirmationFingerprint,
   checkBookingTransition,
   checkFulfillmentTransition,
   checkSlot,
@@ -31,7 +33,9 @@ import {
   localInstant,
   makePublicNumber,
   normalizeIdempotencyKey,
+  normalizeResourceId,
   notFound,
+  orderRequestFingerprint,
   parseAvailability,
   parseContact,
   parseDelivery,
@@ -429,14 +433,48 @@ export class CommerceService {
     });
     if (!cart || cart.items.length === 0) throw conflict('CART_EMPTY', 'السلة فارغة');
     const view = await this.cartView(cart);
+    const canConfirm = view.deliveryFeeKnown && view.canCheckout && view.partnerId != null && view.deliveryFeeHalalas != null;
+    const confirmationFingerprint = canConfirm
+      ? cartConfirmationFingerprint({
+          partnerId: view.partnerId!,
+          lines: view.items
+            .filter((l) => l.unitPriceHalalas != null)
+            .map((l) => ({
+              productId: l.productId,
+              variantKey: l.variantKey,
+              quantity: l.quantity,
+              unitPriceHalalas: l.unitPriceHalalas!,
+            })),
+          deliveryFeeHalalas: view.deliveryFeeHalalas!,
+          subtotalHalalas: view.subtotalHalalas,
+          totalHalalas: view.totalHalalas,
+        })
+      : null;
     return {
       ...view,
-      canConfirmOrder: view.deliveryFeeKnown && view.canCheckout,
+      canConfirmOrder: canConfirm,
+      confirmationFingerprint,
       deliveryFeeNoteAr: view.deliveryFeeKnown
         ? null
         : 'رسوم التوصيل غير محددة من المتجر. لا يُعرض مبلغ نهائي للدفع عند الاستلام حتى يحدد المتجر الرسوم',
       paymentNoteAr: 'الدفع نقدًا عند الاستلام بعد تسليم الطلب وتسجيل التحصيل منفصلًا',
     };
+  }
+
+  private assertIdempotentMatch(
+    existingFingerprint: string | null | undefined,
+    nextFingerprint: string,
+    kind: 'order' | 'booking',
+  ): void {
+    if (existingFingerprint && existingFingerprint !== nextFingerprint) {
+      throw conflict(
+        'IDEMPOTENCY_CONFLICT',
+        kind === 'order'
+          ? 'مفتاح منع التكرار استُخدم لطلب مختلف. أكملي الطلب السابق أو استخدمي مفتاحًا جديدًا بعد تغيير العنوان أو السلة'
+          : 'مفتاح منع التكرار استُخدم لحجز مختلف. لا يمكن إعادة استخدامه مع خدمة أو موعد أو مورد مختلف',
+        { existingFingerprint: true },
+      );
+    }
   }
 
   // =========================================================================
@@ -448,9 +486,13 @@ export class CommerceService {
     const idempotencyKey = normalizeIdempotencyKey(headerKey, data.idempotencyKey);
     const delivery = parseDelivery(data);
     const clientRequestId = typeof data.clientRequestId === 'string' ? data.clientRequestId.slice(0, 128) : null;
-
-    const replay = await this.findOrderByKey(actor.userId, idempotencyKey);
-    if (replay) return { order: this.orderDto(replay, 'customer'), idempotentReplay: true };
+    const offeredFingerprint =
+      typeof data.confirmationFingerprint === 'string' && data.confirmationFingerprint.trim()
+        ? data.confirmationFingerprint.trim()
+        : '';
+    if (!offeredFingerprint || offeredFingerprint.length > 128) {
+      throw badRequest('QUOTE_REQUIRED', 'يجب مراجعة عرض السعر الحالي قبل تأكيد الطلب', { field: 'confirmationFingerprint' });
+    }
 
     for (let attempt = 0; attempt < 3; attempt += 1) {
       try {
@@ -464,7 +506,11 @@ export class CommerceService {
             where: { userId_idempotencyKey: { userId: actor.userId, idempotencyKey } },
             include: ORDER_INCLUDE,
           });
-          if (again) return { row: again, replay: true };
+          if (again) {
+            // Replay uses the original attempt fingerprint — not the (possibly empty) current cart.
+            this.assertIdempotentMatch(again.requestFingerprint, orderRequestFingerprint(delivery, offeredFingerprint), 'order');
+            return { row: again, replay: true };
+          }
 
           const items = await tx.commerceCartItem.findMany({ where: { cartId: cart.id }, orderBy: { createdAt: 'asc' } });
           if (items.length === 0) throw conflict('CART_EMPTY', 'السلة فارغة');
@@ -490,6 +536,35 @@ export class CommerceService {
             );
           }
 
+          const subtotal = priced.subtotal;
+          const fee = priced.fee.feeHalalas;
+          const total = subtotal + fee;
+          const currentFingerprint = cartConfirmationFingerprint({
+            partnerId: priced.partnerId,
+            lines: priced.lines.map((l) => ({
+              productId: l.productId,
+              variantKey: l.variantKey,
+              quantity: l.quantity,
+              unitPriceHalalas: l.unitPriceHalalas!,
+            })),
+            deliveryFeeHalalas: fee,
+            subtotalHalalas: subtotal,
+            totalHalalas: total,
+          });
+          if (currentFingerprint !== offeredFingerprint) {
+            throw conflict(
+              'QUOTE_STALE',
+              'تغير السعر أو الرسوم أو محتوى السلة بعد مراجعتك. راجعي المبلغ الجديد ثم أكّدي مرة أخرى',
+              {
+                confirmationFingerprint: currentFingerprint,
+                subtotalHalalas: subtotal,
+                deliveryFeeHalalas: fee,
+                totalHalalas: total,
+              },
+            );
+          }
+          const requestFingerprint = orderRequestFingerprint(delivery, currentFingerprint);
+
           // Reserve stock: one conditional UPDATE per product, ordered by id to avoid deadlocks.
           const qtyByProduct = new Map<string, number>();
           for (const line of priced.lines) qtyByProduct.set(line.productId, (qtyByProduct.get(line.productId) ?? 0) + line.quantity);
@@ -500,15 +575,17 @@ export class CommerceService {
             const qty = qtyByProduct.get(productId)!;
             const affected = await tx.$executeRaw`
               UPDATE products SET reserved_qty = reserved_qty + ${qty}
-              WHERE id = ${productId} AND stock_qty IS NOT NULL AND stock_qty - reserved_qty >= ${qty}`;
+              WHERE id = ${productId}
+                AND active = true
+                AND content_status = 'published'
+                AND stock_qty IS NOT NULL
+                AND stock_qty - reserved_qty >= ${qty}`;
             if (affected !== 1) {
               throw conflict('OUT_OF_STOCK', `الكمية المطلوبة من "${product.nameAr}" غير متوفرة حاليًا`, { productId });
             }
             tracked.add(productId);
           }
 
-          const subtotal = priced.subtotal;
-          const fee = priced.fee.feeHalalas;
           const row = await tx.commerceOrder.create({
             data: {
               publicNumber: makePublicNumber('MO'),
@@ -520,7 +597,7 @@ export class CommerceService {
               paymentCollectionStatus: 'uncollected',
               subtotalHalalas: subtotal,
               deliveryFeeHalalas: fee,
-              totalHalalas: subtotal + (fee ?? 0),
+              totalHalalas: total,
               currency: 'SAR',
               contactName: delivery.contactName,
               contactPhone: delivery.contactPhone,
@@ -528,6 +605,7 @@ export class CommerceService {
               city: delivery.city,
               notes: delivery.notes,
               idempotencyKey,
+              requestFingerprint,
               clientRequestId,
               items: {
                 create: priced.lines.map((line) => ({
@@ -562,7 +640,10 @@ export class CommerceService {
         const target = p2002Target(error);
         if (target?.includes('idempotency_key')) {
           const existing = await this.findOrderByKey(actor.userId, idempotencyKey);
-          if (existing) return { order: this.orderDto(existing, 'customer'), idempotentReplay: true };
+          if (existing) {
+            this.assertIdempotentMatch(existing.requestFingerprint, orderRequestFingerprint(delivery, offeredFingerprint), 'order');
+            return { order: this.orderDto(existing, 'customer'), idempotentReplay: true };
+          }
         }
         if (target?.includes('public_number')) continue;
         throw error;
@@ -925,56 +1006,81 @@ export class CommerceService {
     const idempotencyKey = normalizeIdempotencyKey(headerKey, data.idempotencyKey);
     if (typeof data.serviceId !== 'string' || !data.serviceId) throw badRequest('SERVICE_REQUIRED', 'الخدمة مطلوبة');
     if (typeof data.startsAt !== 'string' || !data.startsAt) throw badRequest('STARTS_AT_REQUIRED', 'وقت الحجز مطلوب');
+    const serviceId = data.serviceId;
     const startsAt = new Date(data.startsAt);
     if (Number.isNaN(startsAt.getTime())) throw badRequest('STARTS_AT_INVALID', 'وقت الحجز غير صالح');
     const contact = parseContact(data);
     const notes = parseOptionalNotes(data.notes);
-
-    const replay = await this.findBookingByKey(actor.userId, idempotencyKey);
-    if (replay) return { booking: this.bookingDto(replay), idempotentReplay: true };
-
-    const service = await this.prisma.service.findFirst({
-      where: { id: data.serviceId, active: true, contentStatus: 'published', catalogSource: 'catalog', partner: { status: 'active' } },
-      include: { partner: true },
+    const resourceId = normalizeResourceId(data.resourceId);
+    const startsAtIso = startsAt.toISOString();
+    const requestFingerprint = bookingRequestFingerprint({
+      serviceId,
+      startsAt: startsAtIso,
+      resourceId,
+      contactName: contact.contactName,
+      contactPhone: contact.contactPhone,
+      notes,
     });
-    if (!service) throw notFound('SERVICE_NOT_FOUND', 'الخدمة غير متاحة');
-    if (!service.bookingEnabled) throw unprocessable('BOOKING_NOT_ENABLED', 'الحجز غير متاح لهذه الخدمة');
-    if (service.payMode !== 'pay_at_venue') throw unprocessable('PAY_MODE_UNSUPPORTED', 'طريقة الدفع غير مدعومة لهذه الخدمة');
-    if (!Number.isSafeInteger(service.priceHalalas) || service.priceHalalas <= 0 || service.durationMin <= 0) {
-      throw unprocessable('SERVICE_NOT_BOOKABLE', 'بيانات الخدمة غير مكتملة للحجز');
-    }
-
-    const windows = parseAvailability(service.availabilityJson);
-    const slot = checkSlot(startsAt, service.durationMin, windows);
-    if (!slot.ok) throw this.slotError(slot.code);
-    const endsAt = slot.endsAt;
-    const capacity = slot.capacity;
 
     try {
       const created = await this.prisma.$transaction(async (tx) => {
-        // One calendar per service: serialise bookings with a transaction-scoped advisory lock.
-        await tx.$executeRaw`SELECT pg_advisory_xact_lock(hashtext(${`commerce-booking:${service.id}`}))`;
+        // Lock partner resource calendar (legacy empty resource still keyed by service).
+        const lockKey = resourceId
+          ? `commerce-booking-resource:${resourceId}`
+          : `commerce-booking:${serviceId}`;
+        await tx.$executeRaw`SELECT pg_advisory_xact_lock(hashtext(${lockKey}))`;
 
         const again = await tx.commerceBooking.findUnique({
           where: { userId_idempotencyKey: { userId: actor.userId, idempotencyKey } },
           include: BOOKING_INCLUDE,
         });
-        if (again) return { row: again, replay: true };
+        if (again) {
+          this.assertIdempotentMatch(again.requestFingerprint, requestFingerprint, 'booking');
+          return { row: again, replay: true };
+        }
 
-        // Re-check with the same capacity source as the public slot list.
-        const lockedSlot = checkSlot(startsAt, service.durationMin, windows);
+        // Re-read service under the lock so concurrent schedule edits are visible.
+        const service = await tx.service.findFirst({
+          where: {
+            id: serviceId,
+            active: true,
+            contentStatus: 'published',
+            catalogSource: 'catalog',
+            partner: { status: 'active' },
+          },
+          include: { partner: true },
+        });
+        if (!service) throw notFound('SERVICE_NOT_FOUND', 'الخدمة غير متاحة');
+        if (!service.bookingEnabled) throw unprocessable('BOOKING_NOT_ENABLED', 'الحجز غير متاح لهذه الخدمة');
+        if (service.payMode !== 'pay_at_venue') throw unprocessable('PAY_MODE_UNSUPPORTED', 'طريقة الدفع غير مدعومة لهذه الخدمة');
+        if (!Number.isSafeInteger(service.priceHalalas) || service.priceHalalas <= 0 || service.durationMin <= 0) {
+          throw unprocessable('SERVICE_NOT_BOOKABLE', 'بيانات الخدمة غير مكتملة للحجز');
+        }
+
+        const windows = parseAvailability(service.availabilityJson);
+        if (resourceId) {
+          const known = new Set(windows.map((w) => w.resourceId));
+          if (!known.has(resourceId)) {
+            throw unprocessable('RESOURCE_NOT_AVAILABLE', 'هذا المورد غير مرتبط بجدول توفر هذه الخدمة');
+          }
+        }
+
+        const lockedSlot = checkSlot(startsAt, service.durationMin, windows, new Date(), resourceId);
         if (!lockedSlot.ok) throw this.slotError(lockedSlot.code);
 
+        const overlapWhere: Prisma.CommerceBookingWhereInput = {
+          status: { in: [...ACTIVE_BOOKING_STATUSES] },
+          startsAt: { lt: lockedSlot.endsAt },
+          endsAt: { gt: startsAt },
+          ...(resourceId
+            ? { partnerId: service.partnerId, resourceId }
+            : { serviceId: service.id, resourceId: '' }),
+        };
         const overlapping = await tx.commerceBooking.findMany({
-          where: {
-            serviceId: service.id,
-            status: { in: [...ACTIVE_BOOKING_STATUSES] },
-            startsAt: { lt: lockedSlot.endsAt },
-            endsAt: { gt: startsAt },
-          },
-          select: { userId: true },
+          where: overlapWhere,
+          select: { userId: true, serviceId: true },
         });
-        if (overlapping.some((b) => b.userId === actor.userId)) {
+        if (overlapping.some((b) => b.userId === actor.userId && b.serviceId === service.id)) {
           throw conflict('BOOKING_USER_OVERLAP', 'لديك حجز آخر لنفس الخدمة في هذا الوقت');
         }
         if (overlapping.length >= lockedSlot.capacity) {
@@ -989,8 +1095,9 @@ export class CommerceService {
             serviceId: service.id,
             serviceNameAr: service.nameAr,
             branchLabel: `${service.partner.nameAr} - ${service.partner.city}`,
+            resourceId,
             startsAt,
-            endsAt,
+            endsAt: lockedSlot.endsAt,
             durationMin: service.durationMin,
             priceHalalas: service.priceHalalas,
             payMode: service.payMode,
@@ -999,6 +1106,7 @@ export class CommerceService {
             contactPhone: contact.contactPhone,
             notes,
             idempotencyKey,
+            requestFingerprint,
             events: { create: [{ actorType: 'customer', actorId: actor.id, toStatus: 'requested' }] },
           },
           include: BOOKING_INCLUDE,
@@ -1009,7 +1117,10 @@ export class CommerceService {
     } catch (error) {
       if (p2002Target(error)?.includes('idempotency_key')) {
         const existing = await this.findBookingByKey(actor.userId, idempotencyKey);
-        if (existing) return { booking: this.bookingDto(existing), idempotentReplay: true };
+        if (existing) {
+          this.assertIdempotentMatch(existing.requestFingerprint, requestFingerprint, 'booking');
+          return { booking: this.bookingDto(existing), idempotentReplay: true };
+        }
       }
       throw error;
     }
@@ -1046,9 +1157,20 @@ export class CommerceService {
     const windows = parseAvailability(service.availabilityJson);
     const dayStart = localInstant(date, 0)!;
     const dayEnd = new Date(dayStart.getTime() + 86_400_000);
+    const resourceIds = [...new Set(windows.map((w) => w.resourceId))];
     const held = await this.prisma.commerceBooking.findMany({
-      where: { serviceId: service.id, status: { in: [...ACTIVE_BOOKING_STATUSES] }, startsAt: { lt: dayEnd }, endsAt: { gt: dayStart } },
-      select: { startsAt: true, endsAt: true },
+      where: {
+        status: { in: [...ACTIVE_BOOKING_STATUSES] },
+        startsAt: { lt: dayEnd },
+        endsAt: { gt: dayStart },
+        OR: [
+          { serviceId: service.id, resourceId: '' },
+          ...(resourceIds.filter(Boolean).length
+            ? [{ partnerId: service.partnerId, resourceId: { in: resourceIds.filter(Boolean) } }]
+            : []),
+        ],
+      },
+      select: { startsAt: true, endsAt: true, resourceId: true },
     });
     return {
       serviceId: service.id,
@@ -1188,6 +1310,7 @@ export class CommerceService {
       serviceId: row.serviceId,
       serviceNameAr: row.serviceNameAr,
       branchLabel: row.branchLabel,
+      resourceId: row.resourceId || '',
       startsAt: row.startsAt.toISOString(),
       endsAt: row.endsAt.toISOString(),
       durationMin: row.durationMin,

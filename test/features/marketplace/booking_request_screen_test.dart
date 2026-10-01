@@ -34,9 +34,10 @@ class _FakeBookings implements CommerceClient {
     required DateTime startsAt,
     required String contactName,
     required String contactPhone,
+    String resourceId = '',
     String? notes,
   }) async {
-    created.add('$serviceId|${startsAt.toUtc().toIso8601String()}|$contactPhone');
+    created.add('$serviceId|$resourceId|${startsAt.toUtc().toIso8601String()}|$contactPhone');
     keys.add(idempotencyKey);
     return CommerceBookingResult(
       idempotentReplay: false,
@@ -128,7 +129,7 @@ void main() {
     await tester.pump();
     await tester.pump(const Duration(milliseconds: 400));
 
-    expect(client.created, ['svc-1|2026-10-01T10:00:00.000Z|+966501234567']);
+    expect(client.created, ['svc-1||2026-10-01T10:00:00.000Z|+966501234567']);
     expect(client.keys.single, matches(RegExp(r'^[0-9a-f]{8}-[0-9a-f]{4}-4[0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$')));
     expect(find.text(MarketplaceCopy.bookingRequested), findsOneWidget);
     expect(opened, contains(AppRoutes.myBookings));

@@ -128,15 +128,49 @@ async function main() {
     const quote = await call('POST', '/marketplace/commerce/checkout/quote', { token: 'tok-a' });
     assert.equal(quote.status, 201);
     assert.equal(quote.json.totalHalalas, 16000);
+    assert.ok(quote.json.confirmationFingerprint);
     const patched = await call('PATCH', `/marketplace/commerce/cart/items/${added.json.items[0].id}`, { token: 'tok-a', body: { quantity: 1 } });
     assert.equal(patched.status, 200);
     assert.equal(patched.json.items[0].quantity, 1);
+    const quoteAfterPatch = await call('POST', '/marketplace/commerce/checkout/quote', { token: 'tok-a' });
+    assert.equal(quoteAfterPatch.status, 201);
+    assert.ok(quoteAfterPatch.json.confirmationFingerprint);
+    assert.notEqual(quoteAfterPatch.json.confirmationFingerprint, quote.json.confirmationFingerprint);
 
-    const noKey = await call('POST', '/marketplace/commerce/orders', { token: 'tok-a', body: { contactName: 'سارة', contactPhone: '0501234567', addressLine: 'الرياض حي النخيل', city: 'الرياض' } });
+    const noKey = await call('POST', '/marketplace/commerce/orders', {
+      token: 'tok-a',
+      body: {
+        contactName: 'سارة',
+        contactPhone: '0501234567',
+        addressLine: 'الرياض حي النخيل',
+        city: 'الرياض',
+        confirmationFingerprint: quoteAfterPatch.json.confirmationFingerprint,
+      },
+    });
     assert.equal(noKey.status, 400);
     assert.equal(noKey.json.code, 'IDEMPOTENCY_KEY_REQUIRED');
 
-    const body = { contactName: 'سارة', contactPhone: '0501234567', addressLine: 'الرياض حي النخيل', city: 'الرياض' };
+    const stale = await call('POST', '/marketplace/commerce/orders', {
+      token: 'tok-a',
+      body: {
+        contactName: 'سارة',
+        contactPhone: '0501234567',
+        addressLine: 'الرياض حي النخيل',
+        city: 'الرياض',
+        confirmationFingerprint: quote.json.confirmationFingerprint,
+      },
+      headers: { 'idempotency-key': `${run}-stale` },
+    });
+    assert.equal(stale.status, 409, JSON.stringify(stale.json));
+    assert.equal(stale.json.code, 'QUOTE_STALE');
+
+    const body = {
+      contactName: 'سارة',
+      contactPhone: '0501234567',
+      addressLine: 'الرياض حي النخيل',
+      city: 'الرياض',
+      confirmationFingerprint: quoteAfterPatch.json.confirmationFingerprint,
+    };
     const key = { 'idempotency-key': `${run}-k1` };
     const [o1, o2] = await Promise.all([
       call('POST', '/marketplace/commerce/orders', { token: 'tok-a', body, headers: key }),

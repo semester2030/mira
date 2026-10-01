@@ -597,6 +597,26 @@
     return node;
   }
 
+  function summarizeOptions(json) {
+    if (json == null) return 'لا خيارات';
+    if (!Array.isArray(json) || !json.length) return 'فارغة';
+    return json.map((group) => {
+      const values = (group.values || []).map((v) => v.labelAr || v.id).join('، ');
+      return (group.labelAr || group.id) + (values ? ': ' + values : '');
+    }).join(' · ');
+  }
+
+  function summarizeVariants(json) {
+    if (json == null) return 'لا تركيبات';
+    if (!Array.isArray(json) || !json.length) return 'فارغة';
+    return json.map((variant) => {
+      const sel = variant.selections ? Object.values(variant.selections).join('/') : variant.id;
+      const price = variant.priceHalalas != null ? ' (' + (variant.priceHalalas / 100) + ' ر.س)' : '';
+      const avail = variant.available === false ? ' غير متاحة' : '';
+      return sel + price + avail;
+    }).join(' · ');
+  }
+
   async function renderReviews() {
     root.replaceChildren();
     reviewText(root, 'جارٍ تحميل المراجعة');
@@ -654,6 +674,16 @@
           reviewText(detail, 'مسودة الإنجليزية: ' + (preview.draftNameEn || 'لا تعديل'));
           reviewText(detail, preview.draftDescriptionAr === '' ? 'المسودة تطلب مسح الوصف' : 'وصف المسودة: ' + (preview.draftDescriptionAr || 'لا تعديل على الوصف'));
           reviewText(detail, 'الوصف المنشور: ' + (preview.publishedDescriptionAr || ''));
+          if (item.kind === 'product') {
+            reviewText(detail, 'خيارات منشورة: ' + summarizeOptions(preview.publishedOptionsJson));
+            if (preview.draftOptionsCleared) reviewText(detail, 'مسودة الخيارات: طلب مسح الخيارات المنشورة');
+            else if (preview.draftOptionsJson !== undefined) reviewText(detail, 'مسودة الخيارات: ' + summarizeOptions(preview.draftOptionsJson));
+            else reviewText(detail, 'مسودة الخيارات: لا تغيير');
+            reviewText(detail, 'تركيبات منشورة: ' + summarizeVariants(preview.publishedVariantsJson));
+            if (preview.draftVariantsCleared) reviewText(detail, 'مسودة التركيبات: طلب مسح التركيبات المنشورة');
+            else if (preview.draftVariantsJson !== undefined) reviewText(detail, 'مسودة التركيبات: ' + summarizeVariants(preview.draftVariantsJson));
+            else reviewText(detail, 'مسودة التركيبات: لا تغيير');
+          }
           reviewText(detail, 'رقم النسخة المعروضة: ' + shownRevision);
           let mediaFailed = false;
           for (const media of preview.media || []) {

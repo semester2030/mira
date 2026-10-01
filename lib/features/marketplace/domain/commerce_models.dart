@@ -117,6 +117,7 @@ class CommerceQuote {
   const CommerceQuote({
     required this.cart,
     required this.canConfirmOrder,
+    this.confirmationFingerprint,
     this.deliveryFeeNoteAr,
     this.paymentNoteAr,
   });
@@ -124,15 +125,19 @@ class CommerceQuote {
   final CommerceCart cart;
   /// False when delivery fee is unknown — no final COD total / order confirm.
   final bool canConfirmOrder;
+  /// Server hash of the priced cart the customer reviewed. Required to place the order.
+  final String? confirmationFingerprint;
   final String? deliveryFeeNoteAr;
   final String? paymentNoteAr;
 
   factory CommerceQuote.fromJson(Map<String, dynamic> json) {
     final cart = CommerceCart.fromJson(json);
     final canConfirm = json['canConfirmOrder'] == true || (cart.deliveryFeeKnown && cart.canCheckout);
+    final fingerprint = json['confirmationFingerprint'] as String?;
     return CommerceQuote(
       cart: cart,
-      canConfirmOrder: canConfirm,
+      canConfirmOrder: canConfirm && fingerprint != null && fingerprint.isNotEmpty,
+      confirmationFingerprint: fingerprint,
       deliveryFeeNoteAr: json['deliveryFeeNoteAr'] as String?,
       paymentNoteAr: json['paymentNoteAr'] as String?,
     );
@@ -285,12 +290,19 @@ class CommerceOrderResult {
 }
 
 class CommerceSlot {
-  const CommerceSlot({required this.startsAt, required this.endsAt, required this.remaining, required this.available});
+  const CommerceSlot({
+    required this.startsAt,
+    required this.endsAt,
+    required this.remaining,
+    required this.available,
+    this.resourceId = '',
+  });
 
   final DateTime startsAt;
   final DateTime endsAt;
   final int remaining;
   final bool available;
+  final String resourceId;
 
   static CommerceSlot? tryParse(Map<String, dynamic> json) {
     final start = DateTime.tryParse(_str(json['startsAt']));
@@ -301,6 +313,7 @@ class CommerceSlot {
       endsAt: end,
       remaining: _int(json['remaining']),
       available: json['available'] == true,
+      resourceId: _str(json['resourceId']),
     );
   }
 }

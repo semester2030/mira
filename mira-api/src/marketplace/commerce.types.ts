@@ -1,5 +1,5 @@
 import { HttpException, HttpStatus } from '@nestjs/common';
-import { randomBytes } from 'node:crypto';
+import { createHash, randomBytes } from 'node:crypto';
 
 /**
  * Operational commerce rules (cart / COD order / service booking).
@@ -392,8 +392,90 @@ export function normalizeIdempotencyKey(...candidates: unknown[]): string {
   throw badRequest('IDEMPOTENCY_KEY_REQUIRED', 'مفتاح منع التكرار مطلوب');
 }
 
+/** Stable SHA-256 hex of a JSON-serializable value (sorted object keys). */
+export function stableFingerprint(value: unknown): string {
+  return createHash('sha256').update(canonicalJson(value)).digest('hex');
+}
+
+function canonicalJson(value: unknown): string {
+  if (value === null || typeof value !== 'object') return JSON.stringify(value);
+  if (Array.isArray(value)) return `[${value.map((item) => canonicalJson(item)).join(',')}]`;
+  const obj = value as Record<string, unknown>;
+  const keys = Object.keys(obj).sort();
+  return `{${keys.map((k) => `${JSON.stringify(k)}:${canonicalJson(obj[k])}`).join(',')}}`;
+}
+
+export type QuoteLineFingerprint = {
+  productId: string;
+  variantKey: string;
+  quantity: number;
+  unitPriceHalalas: number;
+};
+
+/** Server-owned cart state the customer must re-confirm if it changes. */
+export function cartConfirmationFingerprint(input: {
+  partnerId: string;
+  lines: QuoteLineFingerprint[];
+  deliveryFeeHalalas: number;
+  subtotalHalalas: number;
+  totalHalalas: number;
+}): string {
+  const lines = [...input.lines]
+    .map((l) => ({
+      productId: l.productId,
+      variantKey: l.variantKey,
+      quantity: l.quantity,
+      unitPriceHalalas: l.unitPriceHalalas,
+    }))
+    .sort((a, b) => a.productId.localeCompare(b.productId) || a.variantKey.localeCompare(b.variantKey));
+  return stableFingerprint({
+    partnerId: input.partnerId,
+    lines,
+    deliveryFeeHalalas: input.deliveryFeeHalalas,
+    subtotalHalalas: input.subtotalHalalas,
+    totalHalalas: input.totalHalalas,
+  });
+}
+
 export type ContactInput = { contactName: string; contactPhone: string };
 export type DeliveryInput = ContactInput & { addressLine: string; city: string; notes: string | null };
+
+export function orderRequestFingerprint(delivery: DeliveryInput, confirmationFingerprint: string): string {
+  return stableFingerprint({
+    confirmationFingerprint,
+    contactName: delivery.contactName,
+    contactPhone: delivery.contactPhone,
+    addressLine: delivery.addressLine,
+    city: delivery.city,
+    notes: delivery.notes ?? '',
+  });
+}
+
+export function bookingRequestFingerprint(input: {
+  serviceId: string;
+  startsAt: string;
+  resourceId: string;
+  contactName: string;
+  contactPhone: string;
+  notes: string | null;
+}): string {
+  return stableFingerprint({
+    serviceId: input.serviceId,
+    startsAt: input.startsAt,
+    resourceId: input.resourceId || '',
+    contactName: input.contactName,
+    contactPhone: input.contactPhone,
+    notes: input.notes ?? '',
+  });
+}
+
+export function normalizeResourceId(value: unknown): string {
+  if (value == null || value === '') return '';
+  if (typeof value !== 'string') throw badRequest('RESOURCE_INVALID', 'معرّف المورد غير صالح');
+  const id = value.trim().slice(0, 64);
+  if (id && !/^[A-Za-z0-9._:\-]+$/.test(id)) throw badRequest('RESOURCE_INVALID', 'معرّف المورد غير صالح');
+  return id;
+}
 
 function text(value: unknown, field: string, min: number, max: number, code: string, messageAr: string): string {
   if (typeof value !== 'string') throw badRequest(code, messageAr, { field });

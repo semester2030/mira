@@ -45,6 +45,10 @@ type OwnerRow = {
   draftDescriptionAr: string | null;
   draftOptionsJson?: Prisma.JsonValue | null;
   draftVariantsJson?: Prisma.JsonValue | null;
+  draftOptionsSet?: boolean;
+  draftVariantsSet?: boolean;
+  optionsJson?: Prisma.JsonValue | null;
+  variantsJson?: Prisma.JsonValue | null;
 };
 
 @Injectable()
@@ -332,12 +336,20 @@ export class CatalogContentService {
           where: { id, reviewStatus: 'in_review', reviewRevision: revision, submittedRevision: revision, contentStatus: { not: 'withdrawn' } },
           data: {
             ...publishedBase,
-            ...(row.draftOptionsJson != null
-              ? { optionsJson: row.draftOptionsJson as Prisma.InputJsonValue, draftOptionsJson: Prisma.DbNull }
-              : { draftOptionsJson: Prisma.DbNull }),
-            ...(row.draftVariantsJson != null
-              ? { variantsJson: row.draftVariantsJson as Prisma.InputJsonValue, draftVariantsJson: Prisma.DbNull }
-              : { draftVariantsJson: Prisma.DbNull }),
+            ...(row.draftOptionsSet
+              ? {
+                  optionsJson: row.draftOptionsJson == null ? Prisma.DbNull : (row.draftOptionsJson as Prisma.InputJsonValue),
+                  draftOptionsJson: Prisma.DbNull,
+                  draftOptionsSet: false,
+                }
+              : {}),
+            ...(row.draftVariantsSet
+              ? {
+                  variantsJson: row.draftVariantsJson == null ? Prisma.DbNull : (row.draftVariantsJson as Prisma.InputJsonValue),
+                  draftVariantsJson: Prisma.DbNull,
+                  draftVariantsSet: false,
+                }
+              : {}),
           },
         })
         : await tx.service.updateMany({
@@ -398,6 +410,12 @@ export class CatalogContentService {
       publishedDescriptionAr: row.descriptionAr,
       draftDescriptionAr: row.draftDescriptionAr,
       priceHalalas: row.priceHalalas,
+      publishedOptionsJson: kind === 'product' ? row.optionsJson ?? null : undefined,
+      draftOptionsJson: kind === 'product' ? (row.draftOptionsSet ? row.draftOptionsJson ?? null : undefined) : undefined,
+      draftOptionsCleared: kind === 'product' ? Boolean(row.draftOptionsSet && row.draftOptionsJson == null) : undefined,
+      publishedVariantsJson: kind === 'product' ? row.variantsJson ?? null : undefined,
+      draftVariantsJson: kind === 'product' ? (row.draftVariantsSet ? row.draftVariantsJson ?? null : undefined) : undefined,
+      draftVariantsCleared: kind === 'product' ? Boolean(row.draftVariantsSet && row.draftVariantsJson == null) : undefined,
       media: ordered.map((item) => ({
         id: item.id,
         kind: item.kind,

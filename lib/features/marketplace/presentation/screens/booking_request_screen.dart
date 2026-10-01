@@ -117,7 +117,8 @@ class _BookingRequestScreenState extends State<BookingRequestScreen> {
     }
     final phone = SaudiPhone.toE164(_phone.text);
     if (phone == null) return;
-    final signature = '${service.id}|${slot.startsAt.toIso8601String()}|${_name.text.trim()}|$phone|${_notes.text.trim()}';
+    final signature =
+        '${service.id}|${slot.resourceId}|${slot.startsAt.toIso8601String()}|${_name.text.trim()}|$phone|${_notes.text.trim()}';
     if (_idempotencyKey == null || _keySignature != signature) {
       _idempotencyKey = newIdempotencyKey();
       _keySignature = signature;
@@ -133,6 +134,7 @@ class _BookingRequestScreenState extends State<BookingRequestScreen> {
         startsAt: slot.startsAt,
         contactName: _name.text.trim(),
         contactPhone: phone,
+        resourceId: slot.resourceId,
         notes: _notes.text,
       );
       _idempotencyKey = null;
@@ -270,9 +272,13 @@ class _BookingRequestScreenState extends State<BookingRequestScreen> {
       children: [
         for (final slot in availability.slots)
           ChoiceChip(
-            key: ValueKey('slot-${slot.startsAt.toIso8601String()}'),
-            selected: _slot?.startsAt == slot.startsAt,
-            label: Text(riyadhClock(slot.startsAt)),
+            key: ValueKey('slot-${slot.resourceId}-${slot.startsAt.toIso8601String()}'),
+            selected: _slot?.startsAt == slot.startsAt && _slot?.resourceId == slot.resourceId,
+            label: Text(
+              slot.resourceId.isEmpty
+                  ? riyadhClock(slot.startsAt)
+                  : '${riyadhClock(slot.startsAt)} · ${slot.resourceId}',
+            ),
             onSelected: slot.available ? (_) => setState(() => _slot = slot) : null,
           ),
       ],
