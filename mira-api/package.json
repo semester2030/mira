@@ -20,7 +20,7 @@
     "db:setup": "bash scripts/setup-local-db.sh",
     "stop": "bash scripts/stop-port.sh",
     "dev": "bash scripts/stop-port.sh && bash scripts/dev.sh",
-    "test:commerce": "tsx src/marketplace/commerce.types.schema-tests.ts && tsx src/marketplace/commerce-public.schema-tests.ts && tsx src/marketplace/commerce.service.schema-tests.ts && tsx src/marketplace/commerce.http.integration-tests.ts",
+    "test:commerce": "tsx src/marketplace/commerce.types.schema-tests.ts && tsx src/marketplace/commerce-public.schema-tests.ts && tsx src/marketplace/commerce.service.schema-tests.ts && tsx src/marketplace/commerce.concurrency.schema-tests.ts && tsx src/marketplace/commerce.http.integration-tests.ts",
     "test:commerce-pure": "tsx src/marketplace/commerce.types.schema-tests.ts && tsx src/marketplace/commerce-public.schema-tests.ts",
     "test:vision-schema": "npm run build && node dist/vision/schema/fashion-vision-document.schema-tests.js",
     "test:vision-geometry": "npm run build && node dist/vision/providers/fashn-geometry.schema-tests.js",

@@ -9,6 +9,7 @@ import {
   CatalogMediaStorage,
   CatalogMediaUnavailable,
 } from './catalog-media.storage';
+import { assertVariantsMatchOptions } from './commerce-public';
 
 type Kind = 'product' | 'service';
 const DECISIONS = new Set(['approve', 'reject', 'withdraw']);
@@ -290,6 +291,39 @@ export class CatalogContentService {
         });
         await tx.catalogReviewLog.create({ data: { ownerKind: typedKind, ownerId: id, actor, action: 'reject', note: note ?? null } });
         return { contentStatus: row.contentStatus, reviewStatus: 'rejected', id };
+      }
+      if (typedKind === 'product') {
+        const finalOptions = row.draftOptionsSet
+          ? row.draftOptionsJson == null
+            ? null
+            : Array.isArray(row.draftOptionsJson)
+              ? row.draftOptionsJson
+              : null
+          : Array.isArray(row.optionsJson)
+            ? row.optionsJson
+            : null;
+        const finalVariants = row.draftOptionsSet && row.draftOptionsJson == null && !row.draftVariantsSet
+          ? []
+          : row.draftVariantsSet
+            ? row.draftVariantsJson == null
+              ? []
+              : Array.isArray(row.draftVariantsJson)
+                ? row.draftVariantsJson
+                : []
+            : Array.isArray(row.variantsJson)
+              ? row.variantsJson
+              : [];
+        try {
+          assertVariantsMatchOptions(finalOptions, finalVariants);
+        } catch (error) {
+          const message =
+            error instanceof BadRequestException
+              ? typeof error.getResponse() === 'string'
+                ? String(error.getResponse())
+                : String((error.getResponse() as { message?: string }).message ?? error.message)
+              : 'خيارات أو تركيبات المسودة غير متسقة ولا يمكن اعتمادها';
+          throw new BadRequestException(message);
+        }
       }
       const media = await tx.catalogMedia.findMany({ where: { ownerKind: typedKind, ownerId: id } });
       const images = media.filter((item) => item.kind === 'image' && !item.pendingRemoval);

@@ -307,8 +307,20 @@
         row.append(on, document.createTextNode(' ' + name + ' '), start, document.createTextNode(' — '), end, document.createTextNode(' سعة '), cap, res);
         availBox.appendChild(row);
       });
+      const unifyWrap = document.createElement('label');
+      unifyWrap.className = 'check-row';
+      const unifyToggle = document.createElement('input');
+      unifyToggle.type = 'checkbox';
+      unifyToggle.name = 'unifySharedResources';
+      unifyWrap.append(
+        unifyToggle,
+        document.createTextNode(' توحيد سعة المورد المشترك في كل خدمات الجهة عند التعارض (معاملة واحدة)'),
+      );
+      availBox.appendChild(unifyWrap);
+      text(availBox, 'عند تعارض سعات قديمة لنفس المورد تُرفض الحجوزات الجديدة حتى التوحيد. لا تُلغى الحجوزات القائمة تلقائيًا.');
       basics.appendChild(availBox);
       availabilityJson = {
+        unifyToggle: unifyToggle,
         build: function () {
           const windows = [];
           availState.forEach((day, weekday) => {
@@ -725,87 +737,13 @@
     }
 
     /**
-     * Hydrate easy UI from server options.
-     * draftOptionsSet/draftVariantsSet distinguish: no change / new value / explicit clear (null).
-     * Never resurrect published options when a clear draft is pending.
+     * Hydrate easy UI from server options (shared MiraCatalogOptions implementation).
      */
     function optionsStateFromServer(row) {
-      const empty = {
-        selected: {},
-        customs: {},
-        traits: {},
-        variants: [],
-        valueIds: {},
-        clearingOptions: false,
-        clearingVariants: false,
-        invalidVariantNote: '',
-      };
-      if (!row) return empty;
-
-      let groups = [];
-      let clearingOptions = false;
-      if (row.draftOptionsSet) {
-        if (row.draftOptionsJson == null) clearingOptions = true;
-        else groups = Array.isArray(row.draftOptionsJson) ? row.draftOptionsJson : [];
-      } else if (Array.isArray(row.optionsJson)) {
-        groups = row.optionsJson;
+      if (!window.MiraCatalogOptions || typeof window.MiraCatalogOptions.optionsStateFromServer !== 'function') {
+        throw new Error('MiraCatalogOptions غير محمّل');
       }
-
-      let variants = [];
-      let clearingVariants = false;
-      if (row.draftVariantsSet) {
-        if (row.draftVariantsJson == null) clearingVariants = true;
-        else variants = Array.isArray(row.draftVariantsJson) ? row.draftVariantsJson : [];
-      } else if (Array.isArray(row.variantsJson)) {
-        variants = row.variantsJson;
-      }
-      // Clear options implies clear variants in the UI.
-      if (clearingOptions) {
-        clearingVariants = true;
-        variants = [];
-        groups = [];
-      }
-
-      const selected = {};
-      const customs = {};
-      const valueIds = {};
-      groups.forEach((group) => {
-        if (!group || !group.id) return;
-        selected[group.id] = (group.values || []).map((v) => v.labelAr || v.id).filter(Boolean);
-        customs[group.id] = '';
-        valueIds[group.id] = {};
-        (group.values || []).forEach((v) => {
-          if (v && v.labelAr) valueIds[group.id][v.labelAr] = v.id;
-        });
-      });
-
-      const variantRows = variants.map((variant) => {
-        if (!variant || !variant.selections) return null;
-        const labels = {};
-        groups.forEach((g) => {
-          const valueId = variant.selections[g.id];
-          const value = (g.values || []).find((v) => v.id === valueId);
-          labels[g.id] = value ? value.labelAr : valueId;
-        });
-        return {
-          id: variant.id,
-          selections: Object.assign({}, variant.selections),
-          labels: labels,
-          priceHalalas: typeof variant.priceHalalas === 'number' ? variant.priceHalalas : null,
-          available: variant.available !== false,
-        };
-      }).filter(Boolean);
-
-      return {
-        selected: selected,
-        customs: customs,
-        traits: {},
-        variants: variantRows,
-        valueIds: valueIds,
-        clearingOptions: clearingOptions,
-        clearingVariants: clearingVariants,
-        invalidVariantNote: '',
-      };
+      return window.MiraCatalogOptions.optionsStateFromServer(row);
     }
 
     function saveOptionsDraft() {
@@ -946,8 +884,34 @@
 
       const addBox = document.createElement('div');
       addBox.className = 'form-section';
-      text(addBox, 'إضافة تركيبة بالاختيار من القيم المحددة (مثال سريع: وردي|M)');
-      const addLine = field(addBox, 'قيم التركيبة بالترتيب (افصلي بـ |)', 'variantAddLine', '', 'text');
+      text(addBox, 'إضافة تركيبة بالاختيار من القيم التي حددتها');
+      const pickers = {};
+      const builtForPick = buildOptionGroups();
+      builtForPick.forEach((group) => {
+        const wrap = document.createElement('label');
+        wrap.className = 'field';
+        const title = document.createElement('span');
+        title.textContent = group.labelAr;
+        const select = document.createElement('select');
+        select.name = 'variantPick-' + group.id;
+        select.setAttribute('aria-label', group.labelAr);
+        const placeholder = document.createElement('option');
+        placeholder.value = '';
+        placeholder.textContent = 'اختاري ' + group.labelAr;
+        select.appendChild(placeholder);
+        group.values.forEach((value) => {
+          const opt = document.createElement('option');
+          opt.value = value.id;
+          opt.textContent = value.labelAr;
+          select.appendChild(opt);
+        });
+        wrap.append(title, select);
+        addBox.appendChild(wrap);
+        pickers[group.id] = select;
+      });
+      if (!builtForPick.length) {
+        text(addBox, 'حددي قيم الخيارات أعلاه قبل إضافة تركيبة.');
+      }
       const addPrice = field(addBox, 'سعر التركيبة بالريال (اختياري)', 'variantAddPrice', '', 'text');
       const addAvail = document.createElement('label');
       addAvail.className = 'check-row';
@@ -956,21 +920,21 @@
       addAvailInput.checked = true;
       addAvail.append(addAvailInput, document.createTextNode(' متاحة للشراء'));
       addBox.appendChild(addAvail);
+      const dupNote = document.createElement('p');
+      dupNote.className = 'field-error';
+      dupNote.setAttribute('role', 'status');
+      addBox.appendChild(dupNote);
       const addBtn = document.createElement('button');
       addBtn.type = 'button';
       addBtn.className = 'btn btn-ghost';
       addBtn.textContent = 'إضافة التركيبة';
       addBtn.onclick = () => {
         const builtGroups = buildOptionGroups();
-        const parts = String(addLine.value || '').split('|').map((p) => p.trim()).filter(Boolean);
         optionsState.invalidVariantNote = '';
+        dupNote.textContent = '';
         if (!builtGroups.length) {
           optionsState.invalidVariantNote = 'حددي قيم الخيارات قبل إضافة تركيبة.';
-          paintOptionsPreview();
-          return;
-        }
-        if (parts.length !== builtGroups.length) {
-          optionsState.invalidVariantNote = 'عدد القيم لا يطابق مجموعات الخيارات (' + builtGroups.map((g) => g.labelAr).join('، ') + ').';
+          dupNote.textContent = optionsState.invalidVariantNote;
           paintOptionsPreview();
           return;
         }
@@ -978,26 +942,31 @@
         const labels = {};
         for (let i = 0; i < builtGroups.length; i += 1) {
           const group = builtGroups[i];
-          const value = group.values.find((v) => v.labelAr === parts[i]);
+          const select = pickers[group.id];
+          const valueId = select ? String(select.value || '') : '';
+          const value = group.values.find((v) => v.id === valueId);
           if (!value) {
-            optionsState.invalidVariantNote = 'القيمة «' + parts[i] + '» غير محددة في «' + group.labelAr + '».';
+            optionsState.invalidVariantNote = 'اختاري قيمة لـ «' + group.labelAr + '».';
+            dupNote.textContent = optionsState.invalidVariantNote;
             paintOptionsPreview();
             return;
           }
           selections[group.id] = value.id;
           labels[group.id] = value.labelAr;
         }
-        const dup = optionsState.variants.some((v) => {
-          return builtGroups.every((g) => v.selections[g.id] === selections[g.id]);
-        });
+        const dup = window.MiraCatalogOptions && window.MiraCatalogOptions.isDuplicateVariant
+          ? window.MiraCatalogOptions.isDuplicateVariant(optionsState.variants, selections)
+          : optionsState.variants.some((v) => builtGroups.every((g) => v.selections[g.id] === selections[g.id]));
         if (dup) {
           optionsState.invalidVariantNote = 'هذه التركيبة موجودة مسبقًا.';
+          dupNote.textContent = optionsState.invalidVariantNote;
           paintOptionsPreview();
           return;
         }
         const priceH = addPrice.value.trim() === '' ? null : riyalsToHalalas(addPrice.value);
         if (addPrice.value.trim() !== '' && priceH == null) {
           optionsState.invalidVariantNote = 'سعر التركيبة غير صالح.';
+          dupNote.textContent = optionsState.invalidVariantNote;
           paintOptionsPreview();
           return;
         }
@@ -1010,7 +979,7 @@
         });
         optionsState.clearingOptions = false;
         optionsState.clearingVariants = false;
-        addLine.value = '';
+        Object.keys(pickers).forEach((id) => { pickers[id].value = ''; });
         saveOptionsDraft();
         paintOptions();
       };
@@ -1478,6 +1447,9 @@
         if (availabilityJson && typeof availabilityJson.build === 'function') {
           try {
             payload.availabilityJson = availabilityJson.build();
+            if (availabilityJson.unifyToggle && availabilityJson.unifyToggle.checked) {
+              payload.unifySharedResources = true;
+            }
           } catch (error) {
             status.textContent = 'لم يُرسل الحفظ. ' + (error.message || 'أصلحي جدول التوفر.');
             return;

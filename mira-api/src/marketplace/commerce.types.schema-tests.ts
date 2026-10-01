@@ -12,6 +12,7 @@ import {
   computeDeliveryFee,
   consumesStock,
   deliveryForFulfillment,
+  findResourceCapacityConflicts,
   fulfillmentForDelivery,
   localInstant,
   localParts,
@@ -23,6 +24,7 @@ import {
   partnerResourceCapacities,
   releasesStock,
   resolveSelection,
+  unifyResourceCapacities,
   withPartnerResourceCaps,
   FULFILLMENT_STATUSES,
   FULFILLMENT_TRANSITIONS,
@@ -215,22 +217,33 @@ assert.throws(() => normalizeResourceId('غرفة أ'), (e: { getResponse?: () =
   return (e.getResponse?.() as { code?: string })?.code === 'RESOURCE_INVALID';
 });
 
-// Partner-wide min capacity for shared resources.
-const caps = partnerResourceCapacities([
+// Conflicting capacities are detected — never collapsed via silent MIN.
+const conflictLists = [
   parseAvailability([{ weekday: 0, startMin: 600, endMin: 720, capacity: 1, resourceId: 'staff-1' }]),
   parseAvailability([{ weekday: 1, startMin: 600, endMin: 720, capacity: 2, resourceId: 'staff-1' }]),
+];
+assert.deepEqual(findResourceCapacityConflicts(conflictLists), [{ resourceId: 'staff-1', capacities: [1, 2] }]);
+assert.equal(partnerResourceCapacities(conflictLists).has('staff-1'), false);
+const agreed = partnerResourceCapacities([
+  parseAvailability([{ weekday: 0, startMin: 600, endMin: 720, capacity: 2, resourceId: 'staff-1' }]),
+  parseAvailability([{ weekday: 1, startMin: 600, endMin: 720, capacity: 2, resourceId: 'staff-1' }]),
 ]);
-assert.equal(caps.get('staff-1'), 1);
+assert.equal(agreed.get('staff-1'), 2);
 const adjusted = withPartnerResourceCaps(
   parseAvailability([{ weekday: 1, startMin: 600, endMin: 720, capacity: 2, resourceId: 'staff-1' }]),
-  caps,
+  agreed,
 );
-assert.equal(adjusted[0]?.capacity, 1);
+assert.equal(adjusted[0]?.capacity, 2);
 assert.throws(() => assertResourceCapacitiesConsistent(
   parseAvailability([{ weekday: 0, startMin: 600, endMin: 720, capacity: 1, resourceId: 'staff-1' }]),
   parseAvailability([{ weekday: 1, startMin: 600, endMin: 720, capacity: 2, resourceId: 'staff-1' }]),
 ), (e: { getResponse?: () => { code?: string } }) => {
   return (e.getResponse?.() as { code?: string })?.code === 'RESOURCE_CAPACITY_CONFLICT';
 });
+const unified = unifyResourceCapacities(
+  parseAvailability([{ weekday: 1, startMin: 600, endMin: 720, capacity: 2, resourceId: 'staff-1' }]),
+  new Map([['staff-1', 1]]),
+);
+assert.equal(unified[0]?.capacity, 1);
 
 console.log('commerce.types schema tests passed');

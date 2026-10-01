@@ -210,6 +210,11 @@ export class UpdateServiceDto {
 
   @IsOptional()
   availabilityJson?: object | null;
+
+  /** When true, rewrite sibling services' windows for resources in this payload to match. */
+  @IsOptional()
+  @IsBoolean()
+  unifySharedResources?: boolean;
 }
 
 export class UpsertServiceDto {
@@ -259,6 +264,10 @@ export class UpsertServiceDto {
 
   @IsOptional()
   availabilityJson?: object | null;
+
+  @IsOptional()
+  @IsBoolean()
+  unifySharedResources?: boolean;
 
   @IsOptional()
   @IsBoolean()

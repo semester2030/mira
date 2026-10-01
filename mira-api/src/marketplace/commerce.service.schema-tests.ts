@@ -847,7 +847,7 @@ async function main() {
     });
     assert.equal(arBook.booking.resourceId, 'غرفة-أ');
 
-    // Conflicting capacities across services → partner min capacity (1) blocks second booking.
+    // Conflicting capacities across services → explicit conflict; no silent MIN; no new bookings.
     const conflictA = await prisma.service.create({
       data: {
         partnerId: clinic.id,
@@ -886,19 +886,25 @@ async function main() {
     });
     const capDay = localParts(new Date(Date.now() + 9 * 86_400_000)).dateKey;
     const capAt = (m: number) => localInstant(capDay, m)!.toISOString();
-    await commerce.createBooking(alice, {
-      serviceId: conflictA.id,
-      startsAt: capAt(600),
-      resourceId: 'staff-shared',
-      contactName: 'سارة',
-      contactPhone: PHONE,
-      idempotencyKey: `${run}-cap-a`,
-    });
     const bSlots = await commerce.serviceAvailability(conflictB.id, capDay);
-    const b600 = bSlots.slots.find((s) => s.startsAt === capAt(600) && s.resourceId === 'staff-shared');
-    assert.ok(b600);
-    assert.equal(b600!.capacity, 1, 'partner min capacity, not service B capacity 2');
-    assert.equal(b600!.available, false);
+    assert.ok(bSlots.resourceCapacityConflicts?.some((c) => c.resourceId === 'staff-shared'));
+    assert.equal(
+      bSlots.slots.filter((s) => s.resourceId === 'staff-shared').length,
+      0,
+      'conflicting resource slots are withheld',
+    );
+    await failure(
+      commerce.createBooking(alice, {
+        serviceId: conflictA.id,
+        startsAt: capAt(600),
+        resourceId: 'staff-shared',
+        contactName: 'سارة',
+        contactPhone: PHONE,
+        idempotencyKey: `${run}-cap-a`,
+      }),
+      409,
+      'RESOURCE_CAPACITY_CONFLICT',
+    );
     await failure(
       commerce.createBooking(bob, {
         serviceId: conflictB.id,
@@ -909,8 +915,10 @@ async function main() {
         idempotencyKey: `${run}-cap-b`,
       }),
       409,
-      'BOOKING_SLOT_FULL',
+      'RESOURCE_CAPACITY_CONFLICT',
     );
+    // Independent resource on another partner is unaffected.
+    void conflictA;
 
     // Legacy order without requestFingerprint: reconstruct from stored lines/address.
     await fill(alice, feeProd.id, 1);

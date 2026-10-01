@@ -35,6 +35,7 @@ import {
   normalizeIdempotencyKey,
   normalizeResourceId,
   notFound,
+  findResourceCapacityConflicts,
   orderRequestFingerprint,
   partnerResourceCapacities,
   parseAvailability,
@@ -1169,7 +1170,17 @@ export class CommerceService {
             throw unprocessable('RESOURCE_NOT_AVAILABLE', 'هذا المورد غير مرتبط بجدول توفر هذه الخدمة');
           }
         }
-        const windows = await this.windowsWithPartnerCaps(tx, service.partnerId, baseWindows);
+        const { windows, conflicts } = await this.windowsWithPartnerCaps(tx, service.partnerId, baseWindows);
+        const conflictHit = conflicts.find((c) =>
+          resourceId ? c.resourceId === resourceId : baseWindows.some((w) => w.resourceId === c.resourceId),
+        );
+        if (conflictHit) {
+          throw conflict(
+            'RESOURCE_CAPACITY_CONFLICT',
+            `سعة المورد «${conflictHit.resourceId}» غير متسقة بين خدمات الجهة (${conflictHit.capacities.join(' مقابل ')}). صحّحي التعريف قبل قبول حجوزات جديدة`,
+            { resourceId: conflictHit.resourceId, capacities: conflictHit.capacities },
+          );
+        }
 
         const lockedSlot = checkSlot(startsAt, service.durationMin, windows, new Date(), resourceId);
         if (!lockedSlot.ok) throw this.slotError(lockedSlot.code);
@@ -1252,20 +1263,26 @@ export class CommerceService {
     });
   }
 
-  /** Apply partner-wide min capacity for shared resources (legacy empty resourceId stays service-local). */
+  /**
+   * Partner-wide capacities for shared resources. Conflicting resourceIds are reported
+   * and never silently reduced via MIN — booking/slots must refuse those resources.
+   */
   private async windowsWithPartnerCaps(
     db: Tx | PrismaService,
     partnerId: string,
     serviceWindows: ReturnType<typeof parseAvailability>,
   ) {
     const resourceIds = [...new Set(serviceWindows.map((w) => w.resourceId).filter(Boolean))];
-    if (resourceIds.length === 0) return serviceWindows;
+    if (resourceIds.length === 0) return { windows: serviceWindows, conflicts: [] as ReturnType<typeof findResourceCapacityConflicts> };
     const siblings = await db.service.findMany({
       where: { partnerId, active: true },
-      select: { availabilityJson: true },
+      select: { id: true, nameAr: true, availabilityJson: true },
     });
-    const caps = partnerResourceCapacities(siblings.map((s) => parseAvailability(s.availabilityJson)));
-    return withPartnerResourceCaps(serviceWindows, caps);
+    const lists = siblings.map((s) => parseAvailability(s.availabilityJson));
+    const conflicts = findResourceCapacityConflicts(lists).filter((c) => resourceIds.includes(c.resourceId));
+    const caps = partnerResourceCapacities(lists);
+    const windows = withPartnerResourceCaps(serviceWindows, caps).filter((w) => !conflicts.some((c) => c.resourceId === w.resourceId));
+    return { windows, conflicts };
   }
 
   /** Slots for one local (Asia/Riyadh) day. Partner callers may only read their own services. */
@@ -1277,7 +1294,11 @@ export class CommerceService {
         : { id: serviceId, active: true, contentStatus: 'published', catalogSource: 'catalog', bookingEnabled: true, partner: { status: 'active' } },
     });
     if (!service) throw notFound('SERVICE_NOT_FOUND', 'الخدمة غير متاحة');
-    const windows = await this.windowsWithPartnerCaps(this.prisma, service.partnerId, parseAvailability(service.availabilityJson));
+    const { windows, conflicts } = await this.windowsWithPartnerCaps(
+      this.prisma,
+      service.partnerId,
+      parseAvailability(service.availabilityJson),
+    );
     const dayStart = localInstant(date, 0)!;
     const dayEnd = new Date(dayStart.getTime() + 86_400_000);
     const resourceIds = [...new Set(windows.map((w) => w.resourceId))];
@@ -1303,6 +1324,11 @@ export class CommerceService {
       payMode: service.payMode,
       priceHalalas: service.priceHalalas,
       slots: buildDaySlots(date, service.durationMin, windows, held),
+      resourceCapacityConflicts: conflicts.map((c) => ({
+        resourceId: c.resourceId,
+        capacities: c.capacities,
+        messageAr: `سعة المورد «${c.resourceId}» غير متسقة (${c.capacities.join(' مقابل ')}). وحّدي التعريف قبل الحجز`,
+      })),
     };
   }
 

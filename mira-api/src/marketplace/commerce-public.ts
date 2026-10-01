@@ -2,6 +2,7 @@ import { BadRequestException } from '@nestjs/common';
 import {
   PURCHASE_MODE_EXTERNAL,
   PURCHASE_MODE_INTERNAL_COD,
+  canonicalVariantKey,
   parseAvailability,
   parseOptionGroups,
   parseVariants,
@@ -14,13 +15,49 @@ function assertVariantIdsUnique(variantsJson: unknown[]): void {
   for (const variant of parsed) {
     if (ids.has(variant.id)) throw new BadRequestException(`معرّف التركيبة مكرر: ${variant.id}`);
     ids.add(variant.id);
-    const key = Object.keys(variant.selections)
-      .sort()
-      .map((g) => `${g}=${variant.selections[g]}`)
-      .join('|');
+    const key = canonicalVariantKey(variant.selections);
     if (selectionKeys.has(key)) throw new BadRequestException('تركيبتان بنفس الاختيارات');
     selectionKeys.add(key);
   }
+}
+
+/** Effective merchant-facing options/variants: draft flags win over published rows. */
+export function effectiveOptionsVariants(row: {
+  optionsJson?: unknown;
+  variantsJson?: unknown;
+  draftOptionsSet?: boolean;
+  draftOptionsJson?: unknown;
+  draftVariantsSet?: boolean;
+  draftVariantsJson?: unknown;
+}): { optionsJson: unknown[] | null; variantsJson: unknown[] | null } {
+  let optionsJson: unknown[] | null = null;
+  if (row.draftOptionsSet) {
+    optionsJson =
+      row.draftOptionsJson == null
+        ? null
+        : Array.isArray(row.draftOptionsJson)
+          ? row.draftOptionsJson
+          : null;
+  } else if (Array.isArray(row.optionsJson) && row.optionsJson.length > 0) {
+    optionsJson = row.optionsJson;
+  }
+
+  let variantsJson: unknown[] | null = null;
+  if (row.draftVariantsSet) {
+    variantsJson =
+      row.draftVariantsJson == null
+        ? null
+        : Array.isArray(row.draftVariantsJson)
+          ? row.draftVariantsJson
+          : null;
+  } else if (Array.isArray(row.variantsJson) && row.variantsJson.length > 0) {
+    variantsJson = row.variantsJson;
+  }
+
+  if (row.draftOptionsSet && row.draftOptionsJson == null) {
+    variantsJson = row.draftVariantsSet ? variantsJson : null;
+  }
+  return { optionsJson, variantsJson };
 }
 
 /** Variant selections must point at known group/value ids; ids and selection maps must be unique. */
@@ -117,11 +154,20 @@ export type ProductCommerceData = {
   variantsJson?: unknown[] | null;
 };
 
-type CurrentProductCommerce = Pick<ProductCommerceRow, 'purchaseMode' | 'reservedQty'> & { priceHalalas: number };
+type CurrentProductCommerce = Pick<ProductCommerceRow, 'purchaseMode' | 'reservedQty'> & {
+  priceHalalas: number;
+  optionsJson?: unknown;
+  variantsJson?: unknown;
+  draftOptionsSet?: boolean;
+  draftOptionsJson?: unknown;
+  draftVariantsSet?: boolean;
+  draftVariantsJson?: unknown;
+};
 
 /**
  * Validates merchant commerce fields and returns only what should be written.
  * `undefined` = leave unchanged, `null` = clear. Throws an Arabic 400 on bad data.
+ * Partial updates are checked against the effective (draft-or-published) final state.
  */
 export function normalizeProductCommerce(
   input: ProductCommerceInput,
@@ -163,13 +209,18 @@ export function normalizeProductCommerce(
     }
     out.variantsJson = input.variantsJson && input.variantsJson.length > 0 ? input.variantsJson : null;
   }
-  if (out.optionsJson !== undefined && out.variantsJson !== undefined) {
-    assertVariantsMatchOptions(out.optionsJson, out.variantsJson ?? []);
-  } else if (out.variantsJson !== undefined && out.variantsJson !== null) {
-    assertVariantIdsUnique(out.variantsJson);
-  } else if (out.optionsJson === null && out.variantsJson === undefined) {
+  if (out.optionsJson === null && out.variantsJson === undefined) {
     // Clearing options without an explicit variants field: force variants clear on the write path.
     out.variantsJson = null;
+  }
+
+  if (out.optionsJson !== undefined || out.variantsJson !== undefined) {
+    const baseline = current
+      ? effectiveOptionsVariants(current)
+      : { optionsJson: null as unknown[] | null, variantsJson: null as unknown[] | null };
+    const finalOptions = out.optionsJson !== undefined ? out.optionsJson : baseline.optionsJson;
+    const finalVariants = out.variantsJson !== undefined ? out.variantsJson : baseline.variantsJson;
+    assertVariantsMatchOptions(finalOptions, finalVariants ?? []);
   }
 
   const mode = out.purchaseMode ?? current?.purchaseMode ?? PURCHASE_MODE_EXTERNAL;

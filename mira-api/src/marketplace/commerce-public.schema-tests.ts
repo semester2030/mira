@@ -66,4 +66,53 @@ bad(() => normalizeProductCommerce({
   ],
 }, null, 6400));
 
+// MC-FIX RC3: partial updates validate against effective draft/published final state.
+const publishedBase = {
+  purchaseMode: 'internal_cod' as const,
+  reservedQty: 0,
+  priceHalalas: 6400,
+  optionsJson: sizeGroup,
+  variantsJson: skuM,
+  draftOptionsSet: false,
+  draftVariantsSet: false,
+};
+bad(() => normalizeProductCommerce(
+  { optionsJson: [{ id: 'size', labelAr: 'المقاس', values: [{ id: 's', labelAr: 'S' }] }] },
+  publishedBase,
+  6400,
+));
+bad(() => normalizeProductCommerce(
+  { variantsJson: [{ id: 'sku-X', selections: { size: 'xl' }, priceHalalas: 100 }] },
+  publishedBase,
+  6400,
+));
+const draftPartial = normalizeProductCommerce(
+  { variantsJson: [{ id: 'sku-M', selections: { size: 'm' }, priceHalalas: 9900, available: false }] },
+  {
+    ...publishedBase,
+    draftOptionsSet: true,
+    draftOptionsJson: sizeGroup,
+    draftVariantsSet: true,
+    draftVariantsJson: skuM,
+  },
+  6400,
+);
+assert.deepEqual(draftPartial.variantsJson, skuM);
+const fromPublished = normalizeProductCommerce(
+  { variantsJson: [{ id: 'sku-M', selections: { size: 'm' }, priceHalalas: 8800, available: true }] },
+  publishedBase,
+  6400,
+);
+assert.equal((fromPublished.variantsJson as typeof skuM)[0].priceHalalas, 8800);
+const commaSafe = [
+  { id: 'size', labelAr: 'المقاس', values: [{ id: 'a', labelAr: 'x|b=y' }, { id: 'b', labelAr: 'z' }] },
+];
+assert.ok(normalizeProductCommerce({
+  optionsJson: commaSafe,
+  variantsJson: [
+    { id: 'v1', selections: { size: 'a' } },
+    { id: 'v2', selections: { size: 'b' } },
+  ],
+}, null, 6400).variantsJson);
+
 console.log('commerce-public schema tests passed');

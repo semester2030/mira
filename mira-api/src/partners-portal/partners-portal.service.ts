@@ -12,8 +12,10 @@ import { normalizeProductCommerce, ProductCommerceData } from '../marketplace/co
 import {
   assertAvailabilityConsistent,
   assertResourceCapacitiesConsistent,
+  findResourceCapacityConflicts,
   normalizeResourceId,
   parseAvailability,
+  unifyResourceCapacities,
 } from '../marketplace/commerce.types';
 import { PrismaService } from '../prisma/prisma.service';
 import { ApplyPartnerDto } from './dto/apply-partner.dto';
@@ -463,7 +465,7 @@ export class PartnersPortalService {
 
     const availabilityJson =
       dto.availabilityJson !== undefined
-        ? await this.availabilityWrite(partnerId, null, dto.availabilityJson)
+        ? await this.availabilityWrite(partnerId, null, dto.availabilityJson, this.prisma, dto.unifySharedResources === true)
         : undefined;
     return this.prisma.service.create({
       data: {
@@ -532,7 +534,13 @@ export class PartnersPortalService {
       if (dto.bookingEnabled !== undefined) data.bookingEnabled = dto.bookingEnabled === true;
       if (dto.payMode !== undefined) data.payMode = dto.payMode === 'pay_at_venue' ? 'pay_at_venue' : current.payMode;
       if (dto.availabilityJson !== undefined) {
-        data.availabilityJson = await this.availabilityWrite(partnerId, serviceId, dto.availabilityJson, tx);
+        data.availabilityJson = await this.availabilityWrite(
+          partnerId,
+          serviceId,
+          dto.availabilityJson,
+          tx,
+          dto.unifySharedResources === true,
+        );
       }
       return tx.service.update({ where: { id: serviceId }, data });
     });
@@ -544,6 +552,7 @@ export class PartnersPortalService {
     serviceId: string | null,
     raw: unknown,
     db: { service: PrismaService['service'] } = this.prisma,
+    unifySharedResources = false,
   ): Promise<Prisma.InputJsonValue | typeof Prisma.DbNull> {
     if (raw == null) return Prisma.DbNull;
     if (!Array.isArray(raw)) throw new BadRequestException('جدول التوفر غير صالح');
@@ -572,10 +581,43 @@ export class PartnersPortalService {
     assertResourceCapacitiesConsistent(parsed);
     const siblings = await db.service.findMany({
       where: { partnerId, active: true, ...(serviceId ? { id: { not: serviceId } } : {}) },
-      select: { availabilityJson: true, nameAr: true },
+      select: { id: true, availabilityJson: true, nameAr: true },
     });
+    if (unifySharedResources) {
+      const capacityByResource = new Map<string, number>();
+      for (const w of parsed) {
+        if (w.resourceId) capacityByResource.set(w.resourceId, w.capacity);
+      }
+      for (const sibling of siblings) {
+        const siblingWindows = parseAvailability(sibling.availabilityJson);
+        const needs = siblingWindows.some((w) => w.resourceId && capacityByResource.has(w.resourceId) && capacityByResource.get(w.resourceId) !== w.capacity);
+        if (!needs) continue;
+        const unified = unifyResourceCapacities(siblingWindows, capacityByResource);
+        assertAvailabilityConsistent(unified);
+        await db.service.update({
+          where: { id: sibling.id },
+          data: { availabilityJson: unified as unknown as Prisma.InputJsonValue },
+        });
+      }
+      return parsed as unknown as Prisma.InputJsonValue;
+    }
     const otherWindows = siblings.flatMap((s) => parseAvailability(s.availabilityJson));
-    assertResourceCapacitiesConsistent(parsed, otherWindows);
+    const conflicts = findResourceCapacityConflicts([parsed, otherWindows]);
+    if (conflicts.length > 0) {
+      const first = conflicts[0]!;
+      const names = siblings
+        .filter((s) => findResourceCapacityConflicts([parsed, parseAvailability(s.availabilityJson)]).length > 0)
+        .map((s) => s.nameAr)
+        .slice(0, 5);
+      throw new BadRequestException({
+        statusCode: 400,
+        code: 'RESOURCE_CAPACITY_CONFLICT',
+        message: `سعة المورد «${first.resourceId}» غير متسقة (${first.capacities.join(' مقابل ')}). تعارض مع: ${names.join('، ') || 'خدمات أخرى'}. أرسلي unifySharedResources: true لتوحيد السعة في معاملة واحدة.`,
+        messageAr: `سعة المورد «${first.resourceId}» غير متسقة (${first.capacities.join(' مقابل ')}). تعارض مع: ${names.join('، ') || 'خدمات أخرى'}. أرسلي unifySharedResources: true لتوحيد السعة في معاملة واحدة.`,
+        conflicts,
+        unifyHintAr: 'أرسلي unifySharedResources: true مع جدول التوفر لتوحيد سعة المورد في كل خدمات الجهة دفعة واحدة',
+      });
+    }
     return parsed as unknown as Prisma.InputJsonValue;
   }
 

@@ -484,20 +484,51 @@ export function normalizeResourceId(value: unknown): string {
   return id;
 }
 
-/** Min capacity declared for each non-empty resourceId across a partner's windows. */
-export function partnerResourceCapacities(windowsLists: ReadonlyArray<ReadonlyArray<AvailabilityWindow>>): Map<string, number> {
-  const caps = new Map<string, number>();
+export type ResourceCapacityConflict = {
+  resourceId: string;
+  capacities: number[];
+};
+
+/**
+ * Detect differing capacities for the same resourceId across window lists.
+ * Does not pick MIN/MAX/SUM — conflicting resources are listed for explicit correction.
+ */
+export function findResourceCapacityConflicts(
+  windowsLists: ReadonlyArray<ReadonlyArray<AvailabilityWindow>>,
+): ResourceCapacityConflict[] {
+  const seen = new Map<string, Set<number>>();
   for (const windows of windowsLists) {
     for (const w of windows) {
       if (!w.resourceId) continue;
-      const prev = caps.get(w.resourceId);
-      caps.set(w.resourceId, prev == null ? w.capacity : Math.min(prev, w.capacity));
+      const set = seen.get(w.resourceId) ?? new Set<number>();
+      set.add(w.capacity);
+      seen.set(w.resourceId, set);
+    }
+  }
+  const out: ResourceCapacityConflict[] = [];
+  for (const [resourceId, caps] of seen) {
+    if (caps.size > 1) out.push({ resourceId, capacities: [...caps].sort((a, b) => a - b) });
+  }
+  return out;
+}
+
+/** Consistent capacity per resourceId, or empty map when any conflict exists for that id. */
+export function partnerResourceCapacities(windowsLists: ReadonlyArray<ReadonlyArray<AvailabilityWindow>>): Map<string, number> {
+  const caps = new Map<string, number>();
+  const conflicts = new Set(findResourceCapacityConflicts(windowsLists).map((c) => c.resourceId));
+  for (const windows of windowsLists) {
+    for (const w of windows) {
+      if (!w.resourceId || conflicts.has(w.resourceId)) continue;
+      caps.set(w.resourceId, w.capacity);
     }
   }
   return caps;
 }
 
-/** Apply partner-wide min capacity to service windows (legacy empty resourceId unchanged). */
+/**
+ * Apply only agreed partner-wide capacities. Conflicting resources are left unchanged
+ * here — callers must refuse booking/slots for those ids via findResourceCapacityConflicts.
+ */
 export function withPartnerResourceCaps(
   windows: AvailabilityWindow[],
   partnerCaps: ReadonlyMap<string, number>,
@@ -515,19 +546,26 @@ export function assertResourceCapacitiesConsistent(
   windows: AvailabilityWindow[],
   otherWindows: ReadonlyArray<AvailabilityWindow> = [],
 ): void {
-  const seen = new Map<string, number>();
-  for (const w of [...windows, ...otherWindows]) {
-    if (!w.resourceId) continue;
-    const prev = seen.get(w.resourceId);
-    if (prev != null && prev !== w.capacity) {
-      throw badRequest(
-        'RESOURCE_CAPACITY_CONFLICT',
-        `سعة المورد «${w.resourceId}» غير متسقة (${prev} مقابل ${w.capacity}). وحّدي السعة لكل موارد الجهة قبل الحفظ`,
-        { resourceId: w.resourceId, capacities: [prev, w.capacity] },
-      );
-    }
-    seen.set(w.resourceId, w.capacity);
-  }
+  const conflicts = findResourceCapacityConflicts([windows, otherWindows]);
+  if (conflicts.length === 0) return;
+  const first = conflicts[0]!;
+  throw badRequest(
+    'RESOURCE_CAPACITY_CONFLICT',
+    `سعة المورد «${first.resourceId}» غير متسقة (${first.capacities.join(' مقابل ')}). وحّدي السعة لكل موارد الجهة قبل الحفظ أو أرسلي unifySharedResources`,
+    { resourceId: first.resourceId, capacities: first.capacities, conflicts },
+  );
+}
+
+/** Rewrite capacity for listed resourceIds on every window that uses them. */
+export function unifyResourceCapacities(
+  windows: AvailabilityWindow[],
+  capacityByResource: ReadonlyMap<string, number>,
+): AvailabilityWindow[] {
+  return windows.map((w) => {
+    if (!w.resourceId) return w;
+    const next = capacityByResource.get(w.resourceId);
+    return next == null || next === w.capacity ? w : { ...w, capacity: next };
+  });
 }
 
 function text(value: unknown, field: string, min: number, max: number, code: string, messageAr: string): string {

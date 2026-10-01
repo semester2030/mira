@@ -1,0 +1,42 @@
+npm warn Unknown env config "devdir". This will stop working in the next major version of npm.
+
+> mira-api@1.0.0 test:commerce
+> tsx src/marketplace/commerce.types.schema-tests.ts && tsx src/marketplace/commerce-public.schema-tests.ts && tsx src/marketplace/commerce.service.schema-tests.ts && tsx src/marketplace/commerce.concurrency.schema-tests.ts && tsx src/marketplace/commerce.http.integration-tests.ts
+
+commerce.types schema tests passed
+commerce-public schema tests passed
+commerce.service schema tests passed
+[concurrency] A: seed product + cart
+[concurrency] A: holder begins FOR UPDATE
+[concurrency] A: holder acquired lock
+[concurrency] B: createOrder starts (must wait on product lock)
+[concurrency] B: observed waiting lock in pg_locks
+[concurrency] A: holder committed price=9000
+[concurrency] A PASS: waiter saw new price via QUOTE_STALE
+[concurrency] B: flipped to external under lock
+[concurrency] B PASS: EXTERNAL under protected verify
+[concurrency] D PASS: single winner on last unit
+[concurrency] F PASS: one booking on shared Arabic resource capacity
+[concurrency] E: advisory lock held
+[concurrency] E: booking disabled
+[concurrency] E PASS: disable under same advisory protection
+[concurrency] H PASS: historical booking snapshot retained
+commerce.concurrency schema tests passed
+--- event order ---
+2026-10-01T11:44:42.454Z A: seed product + cart
+2026-10-01T11:44:42.466Z A: holder begins FOR UPDATE
+2026-10-01T11:44:42.466Z A: holder acquired lock
+2026-10-01T11:44:42.466Z B: createOrder starts (must wait on product lock)
+2026-10-01T11:44:42.492Z B: observed waiting lock in pg_locks
+2026-10-01T11:44:42.493Z A: holder committed price=9000
+2026-10-01T11:44:42.497Z A PASS: waiter saw new price via QUOTE_STALE
+2026-10-01T11:44:42.530Z B: flipped to external under lock
+2026-10-01T11:44:42.532Z B PASS: EXTERNAL under protected verify
+2026-10-01T11:44:42.557Z D PASS: single winner on last unit
+2026-10-01T11:44:42.570Z F PASS: one booking on shared Arabic resource capacity
+2026-10-01T11:44:42.572Z E: advisory lock held
+2026-10-01T11:44:42.595Z E: booking disabled
+2026-10-01T11:44:42.597Z E PASS: disable under same advisory protection
+2026-10-01T11:44:42.604Z H PASS: historical booking snapshot retained
+commerce HTTP integration tests passed
+EXIT:0
