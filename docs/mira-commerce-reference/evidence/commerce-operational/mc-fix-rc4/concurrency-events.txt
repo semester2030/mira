@@ -1,0 +1,47 @@
+date=2026-10-04T19:21:48Z
+cwd=/Users/fayez/Desktop/mira
+commit=8383b44e007dab3bcf2cf2ca16c239882bf0513e
+env=local PostgreSQL mira_db
+note=event order excerpt from test-commerce.log
+---
+14:[concurrency] A: seed product + cart
+15:[concurrency] A: holder begins FOR UPDATE
+16:[concurrency] A: holder acquired lock
+17:[concurrency] B: createOrder starts (must wait on product lock)
+18:[concurrency] B: observed waiting lock in pg_locks
+19:[concurrency] A: holder committed price=9000
+20:[concurrency] A PASS: waiter saw new price via QUOTE_STALE
+21:[concurrency] B: flipped to external under lock
+22:[concurrency] B PASS: EXTERNAL under protected verify
+23:[concurrency] D PASS: single winner on last unit
+24:[concurrency] F PASS: one booking on shared Arabic resource capacity
+25:[concurrency] E1: schedule locks held commerce-booking-resource:bdf3c6ea-16e9-4c72-8ede-5761cc3a7e7b:غرفة-تعطيل | commerce-booking-service:2ede0f12-db67-46a6-9871-4d977130445d
+26:[concurrency] E1: createBooking waiting on partner-scoped resource advisory
+27:[concurrency] E1: bookingEnabled=false under held schedule locks
+28:[concurrency] E1 PASS: booking waited then rejected after disable under shared keys
+29:[concurrency] E2: locks held before updateService
+30:[concurrency] E2: production updateService waiting on same resource advisory
+31:[concurrency] E2 PASS: updateService shared schedule lock protocol
+32:[concurrency] E3: booking-side locks held
+33:[concurrency] E3: capacity/duration update waiting
+34:[concurrency] E3 PASS: schedule/capacity update synchronized with booking locks
+35:[concurrency] E4 PASS: production updateService won; booking rejected
+36:[concurrency] H PASS: historical booking snapshot retained after portal price edit
+37:[concurrency] I PASS: two partners same resource name book independently
+39:--- event order ---
+46:2026-10-04T19:21:28.647Z A PASS: waiter saw new price via QUOTE_STALE
+48:2026-10-04T19:21:28.686Z B PASS: EXTERNAL under protected verify
+49:2026-10-04T19:21:28.726Z D PASS: single winner on last unit
+50:2026-10-04T19:21:28.752Z F PASS: one booking on shared Arabic resource capacity
+54:2026-10-04T19:21:28.761Z E1 PASS: booking waited then rejected after disable under shared keys
+57:2026-10-04T19:21:28.797Z E2 PASS: updateService shared schedule lock protocol
+60:2026-10-04T19:21:28.829Z E3 PASS: schedule/capacity update synchronized with booking locks
+61:2026-10-04T19:21:28.839Z E4 PASS: production updateService won; booking rejected
+62:2026-10-04T19:21:28.853Z H PASS: historical booking snapshot retained after portal price edit
+63:2026-10-04T19:21:28.864Z I PASS: two partners same resource name book independently
+64:1 PASS: invalid category + unify — no sibling mutation
+65:2 PASS: injected mid-unify failure rolls back
+66:3 PASS: atomic success unify + create
+67:4 PASS: concurrent unify — no mixed capacities 4
+68:5 PASS: other partner untouched
+69:6 PASS: booking snapshot unchanged after failed unify

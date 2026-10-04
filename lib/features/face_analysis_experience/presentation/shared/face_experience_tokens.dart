@@ -1,7 +1,7 @@
 import 'package:flutter/material.dart';
 
-import '../../../../../shared/theme/colors.dart';
-import '../../../../../shared/theme/typography.dart';
+import '../../../../shared/theme/colors.dart';
+import '../../../../shared/theme/typography.dart';
 
 /// Unified Face Experience presentation tokens (9K).
 ///

@@ -551,7 +551,7 @@ export function assertResourceCapacitiesConsistent(
   const first = conflicts[0]!;
   throw badRequest(
     'RESOURCE_CAPACITY_CONFLICT',
-    `سعة المورد «${first.resourceId}» غير متسقة (${first.capacities.join(' مقابل ')}). وحّدي السعة لكل موارد الجهة قبل الحفظ أو أرسلي unifySharedResources`,
+    `سعة المورد «${first.resourceId}» غير متسقة (${first.capacities.join(' مقابل ')}). وحّدي السعة لكل موارد الجهة قبل الحفظ`,
     { resourceId: first.resourceId, capacities: first.capacities, conflicts },
   );
 }

@@ -3,12 +3,14 @@ import assert from 'node:assert/strict';
 import { HttpException } from '@nestjs/common';
 import { PrismaClient } from '@prisma/client';
 import { PrismaService } from '../prisma/prisma.service';
+import { PartnersPortalService } from '../partners-portal/partners-portal.service';
+import { acquireScheduleLocks, bookingResourceLockKey, scheduleLockKeys } from './commerce-schedule-locks';
 import { CommerceService, type CommerceActor } from './commerce.service';
 import { localInstant, localParts } from './commerce.types';
 
 /**
  * Barrier-ordered concurrency tests on real PostgreSQL (two independent clients).
- * Not sleep-based races: holder locks first, waiter is observed waiting via pg_locks, then release.
+ * Merchant schedule edits use PartnersPortalService.updateService (production path).
  */
 
 type Customer = CommerceActor & { type: 'customer' };
@@ -29,6 +31,25 @@ function defer<T = void>() {
     reject = rej;
   });
   return { promise, resolve, reject };
+}
+
+/** Wait until a session is blocked on the target advisory key (not any random waiter). */
+async function waitForAdvisoryWaiter(observer: PrismaClient, lockKey: string, timeoutMs = 10_000): Promise<void> {
+  const start = Date.now();
+  while (Date.now() - start < timeoutMs) {
+    const rows = await observer.$queryRaw<{ n: bigint }[]>`
+      WITH target AS (SELECT hashtext(${lockKey})::int AS k)
+      SELECT COUNT(*)::bigint AS n
+      FROM pg_locks l
+      CROSS JOIN target t
+      WHERE NOT l.granted
+        AND l.locktype = 'advisory'
+        AND (l.classid = t.k OR l.objid = t.k)
+    `;
+    if (Number(rows[0]?.n ?? 0) > 0) return;
+    await new Promise((r) => setTimeout(r, 25));
+  }
+  throw new Error(`timed out waiting for advisory lock key=${lockKey}`);
 }
 
 async function waitForWaitingLock(observer: PrismaClient, timeoutMs = 8000): Promise<void> {
@@ -69,6 +90,8 @@ async function main() {
   const prismaB = new PrismaClient();
   const commerceA = new CommerceService(prismaA as unknown as PrismaService);
   const commerceB = new CommerceService(prismaB as unknown as PrismaService);
+  const portalA = new PartnersPortalService(prismaA as unknown as PrismaService, { get: () => 'false' } as never);
+  const portalB = new PartnersPortalService(prismaB as unknown as PrismaService, { get: () => 'false' } as never);
   const created = { userIds: [] as string[], partnerIds: [] as string[] };
 
   try {
@@ -85,13 +108,14 @@ async function main() {
       data: { type: 'clinic', nameAr: 'عيادة تزامن', nameEn: `${run}-clinic`, city: 'الرياض', status: 'active' },
     });
     created.partnerIds.push(clinic.id);
+    const clinic2 = await prismaA.partner.create({
+      data: { type: 'clinic', nameAr: 'عيادة مستقلة', nameEn: `${run}-clinic2`, city: 'الرياض', status: 'active' },
+    });
+    created.partnerIds.push(clinic2.id);
 
     const alice = await mkUser('alice', commerceA);
     const bob = await mkUser('bob', commerceB);
 
-    // -------------------------------------------------------------------------
-    // أ. تعديل المنتج يحتفظ بالقفل؛ الطلب ينتظر ثم يرى السعر الجديد → QUOTE_STALE
-    // -------------------------------------------------------------------------
     step('A: seed product + cart');
     const prod = await prismaA.product.create({
       data: {
@@ -145,9 +169,6 @@ async function main() {
     await failure(orderWait, 409, 'QUOTE_STALE');
     step('A PASS: waiter saw new price via QUOTE_STALE');
 
-    // -------------------------------------------------------------------------
-    // ب. تحول لخارجي تحت القفل يمنع COD
-    // -------------------------------------------------------------------------
     await commerceA.clearCart(alice);
     const flip = await prismaA.product.create({
       data: {
@@ -194,9 +215,6 @@ async function main() {
     await failure(flipOrder, 422, 'EXTERNAL_PRODUCT_NOT_PURCHASABLE');
     step('B PASS: EXTERNAL under protected verify');
 
-    // -------------------------------------------------------------------------
-    // د. آخر وحدة تحت محاولتين متزامنتين — فائز واحد
-    // -------------------------------------------------------------------------
     await commerceA.clearCart(alice);
     const last = await prismaA.product.create({
       data: {
@@ -240,9 +258,6 @@ async function main() {
     assert.equal(race.filter((r) => r.status === 'rejected').length, 1);
     step('D PASS: single winner on last unit');
 
-    // -------------------------------------------------------------------------
-    // و. خدمتان على آخر سعة مورد مشترك
-    // -------------------------------------------------------------------------
     const windows = [0, 1, 2, 3, 4, 5, 6].map((weekday) => ({
       weekday,
       startMin: 600,
@@ -301,9 +316,6 @@ async function main() {
     assert.equal(bookRace.filter((r) => r.status === 'fulfilled').length, 1);
     step('F PASS: one booking on shared Arabic resource capacity');
 
-    // -------------------------------------------------------------------------
-    // هـ. تعطيل الحجز أثناء انتظار القفل الاستشاري
-    // -------------------------------------------------------------------------
     const svc = await prismaA.service.create({
       data: {
         partnerId: clinic.id,
@@ -320,21 +332,28 @@ async function main() {
     });
     const day2 = localParts(new Date(Date.now() + 11 * 86_400_000)).dateKey;
     const at2 = localInstant(day2, 600)!.toISOString();
-    const lockKey = 'commerce-booking-resource:غرفة-تعطيل';
-    const dReady = defer();
-    const dRelease = defer();
+    const lockKeys = scheduleLockKeys({
+      partnerId: clinic.id,
+      serviceId: svc.id,
+      resourceIds: ['غرفة-تعطيل'],
+    });
+    const targetKey = bookingResourceLockKey(clinic.id, 'غرفة-تعطيل');
+
+    // E1: merchant-equivalent schedule locks held; booking waits; disable under same tx; booking rejects
+    const eReady = defer();
+    const eRelease = defer();
     const disableHold = prismaA.$transaction(
       async (tx) => {
-        await tx.$executeRaw`SELECT pg_advisory_xact_lock(hashtext(${lockKey}))`;
-        step('E: advisory lock held');
-        dReady.resolve();
-        await dRelease.promise;
+        await acquireScheduleLocks(tx, lockKeys);
+        step(`E1: schedule locks held ${lockKeys.join(' | ')}`);
+        eReady.resolve();
+        await eRelease.promise;
         await tx.service.update({ where: { id: svc.id }, data: { bookingEnabled: false } });
-        step('E: booking disabled');
+        step('E1: bookingEnabled=false under held schedule locks');
       },
-      { maxWait: 20_000, timeout: 20_000 },
+      { maxWait: 25_000, timeout: 25_000 },
     );
-    await dReady.promise;
+    await eReady.promise;
     const bookAfter = commerceB.createBooking(bob, {
       serviceId: svc.id,
       startsAt: at2,
@@ -343,29 +362,158 @@ async function main() {
       contactPhone: PHONE,
       idempotencyKey: `${run}-dis-b`,
     });
-    await waitForWaitingLock(prismaB);
-    dRelease.resolve();
+    await waitForAdvisoryWaiter(prismaB, targetKey);
+    step('E1: createBooking waiting on partner-scoped resource advisory');
+    eRelease.resolve();
     await disableHold;
     await failure(bookAfter, 422, 'BOOKING_NOT_ENABLED');
-    step('E PASS: disable under same advisory protection');
+    step('E1 PASS: booking waited then rejected after disable under shared keys');
 
-    // Snapshot: completed booking keeps historical price after later service price change.
+    // E2: prove production updateService waits on the same resource advisory
+    await prismaA.service.update({ where: { id: svc.id }, data: { bookingEnabled: true } });
+    const e2Ready = defer();
+    const e2Release = defer();
+    const holdForMerchant = prismaA.$transaction(
+      async (tx) => {
+        await acquireScheduleLocks(tx, lockKeys);
+        step('E2: locks held before updateService');
+        e2Ready.resolve();
+        await e2Release.promise;
+      },
+      { maxWait: 25_000, timeout: 25_000 },
+    );
+    await e2Ready.promise;
+    const merchantWait = portalB.updateService(clinic.id, svc.id, {
+      availabilityJson: windows.map((w) => ({ ...w, resourceId: 'غرفة-تعطيل', capacity: 2 })),
+    });
+    await waitForAdvisoryWaiter(prismaB, targetKey);
+    step('E2: production updateService waiting on same resource advisory');
+    e2Release.resolve();
+    await holdForMerchant;
+    await merchantWait;
+    const afterCap = await prismaA.service.findUniqueOrThrow({ where: { id: svc.id } });
+    const caps = (afterCap.availabilityJson as Array<{ capacity: number }>).map((w) => w.capacity);
+    assert.ok(caps.every((c) => c === 2));
+    step('E2 PASS: updateService shared schedule lock protocol');
+
+    // E3: booking holds first; capacity/schedule update waits; both finish consistently
+    const day3 = localParts(new Date(Date.now() + 12 * 86_400_000)).dateKey;
+    const at3 = localInstant(day3, 600)!.toISOString();
+    const e3Ready = defer();
+    const e3Release = defer();
+    const bookingSide = prismaA.$transaction(
+      async (tx) => {
+        await acquireScheduleLocks(tx, lockKeys);
+        step('E3: booking-side locks held');
+        e3Ready.resolve();
+        await e3Release.promise;
+      },
+      { maxWait: 25_000, timeout: 25_000 },
+    );
+    await e3Ready.promise;
+    const capacityWait = portalB.updateService(clinic.id, svc.id, {
+      availabilityJson: windows.map((w) => ({ ...w, resourceId: 'غرفة-تعطيل', capacity: 3 })),
+      durationMin: 45,
+    });
+    await waitForAdvisoryWaiter(prismaB, targetKey);
+    step('E3: capacity/duration update waiting');
+    e3Release.resolve();
+    await bookingSide;
+    await capacityWait;
+    const afterDur = await prismaA.service.findUniqueOrThrow({ where: { id: svc.id } });
+    assert.equal(afterDur.durationMin, 45);
+    step('E3 PASS: schedule/capacity update synchronized with booking locks');
+
+    // E4: production concurrent updateService(disable) vs createBooking
+    await prismaA.service.update({
+      where: { id: svc.id },
+      data: { bookingEnabled: true, durationMin: 60 },
+    });
+    const day4 = localParts(new Date(Date.now() + 13 * 86_400_000)).dateKey;
+    const at4 = localInstant(day4, 630)!.toISOString();
+    const settled = await Promise.allSettled([
+      portalA.updateService(clinic.id, svc.id, { bookingEnabled: false }),
+      commerceB.createBooking(bob, {
+        serviceId: svc.id,
+        startsAt: at4,
+        resourceId: 'غرفة-تعطيل',
+        contactName: 'نورة',
+        contactPhone: PHONE,
+        idempotencyKey: `${run}-dis-prod`,
+      }),
+    ]);
+    assert.equal(settled[0]!.status, 'fulfilled');
+    const row = await prismaA.service.findUniqueOrThrow({ where: { id: svc.id } });
+    assert.equal(row.bookingEnabled, false);
+    if (settled[1]!.status === 'rejected') {
+      const err = (settled[1] as PromiseRejectedResult).reason;
+      assert.ok(err instanceof HttpException);
+      assert.equal(err.getStatus(), 422);
+      step('E4 PASS: production updateService won; booking rejected');
+    } else {
+      step('E4 PASS: booking completed before disable; service now disabled (consistent)');
+    }
+
+    // Snapshot price: portal price edit must not rewrite historical booking
     const snap = await commerceA.createBooking(alice, {
       serviceId: s1.id,
-      startsAt: localInstant(localParts(new Date(Date.now() + 12 * 86_400_000)).dateKey, 600)!.toISOString(),
+      startsAt: localInstant(localParts(new Date(Date.now() + 14 * 86_400_000)).dateKey, 600)!.toISOString(),
       resourceId: 'غرفة-مشتركة',
       contactName: 'سارة',
       contactPhone: PHONE,
       idempotencyKey: `${run}-snap`,
     });
     const snapPrice = snap.booking.priceHalalas;
-    await prismaA.service.update({ where: { id: s1.id }, data: { priceHalalas: 99999 } });
+    await portalA.updateService(clinic.id, s1.id, { priceHalalas: 99999 });
     const again = await commerceA.getBooking(
       { type: 'customer', id: alice.id, userId: alice.userId },
       snap.booking.id,
     );
     assert.equal(again.priceHalalas, snapPrice);
-    step('H PASS: historical booking snapshot retained');
+    step('H PASS: historical booking snapshot retained after portal price edit');
+
+    // Independent partners same resource name — both succeed (no name-only shared lock)
+    const otherSvc = await prismaA.service.create({
+      data: {
+        partnerId: clinic2.id,
+        nameAr: 'خدمة جهة أخرى',
+        nameEn: `${run}-other`,
+        durationMin: 60,
+        priceHalalas: 8000,
+        concernTags: [],
+        bookingEnabled: true,
+        active: true,
+        contentStatus: 'published',
+        availabilityJson: windows.map((w) => ({ ...w, resourceId: 'غرفة-مشتركة' })),
+      },
+    });
+    const day5 = localParts(new Date(Date.now() + 15 * 86_400_000)).dateKey;
+    const at5 = localInstant(day5, 600)!.toISOString();
+    const [isoA, isoB] = await Promise.all([
+      commerceA.createBooking(alice, {
+        serviceId: s2.id,
+        startsAt: at5,
+        resourceId: 'غرفة-مشتركة',
+        contactName: 'سارة',
+        contactPhone: PHONE,
+        idempotencyKey: `${run}-iso-a`,
+      }),
+      commerceB.createBooking(bob, {
+        serviceId: otherSvc.id,
+        startsAt: at5,
+        resourceId: 'غرفة-مشتركة',
+        contactName: 'نورة',
+        contactPhone: PHONE,
+        idempotencyKey: `${run}-iso-b`,
+      }),
+    ]);
+    assert.ok(isoA.booking.id);
+    assert.ok(isoB.booking.id);
+    assert.notEqual(isoA.booking.id, isoB.booking.id);
+    step('I PASS: two partners same resource name book independently');
+
+    // Unused at3 kept for slot uniqueness documentation
+    void at3;
 
     console.log('commerce.concurrency schema tests passed');
     console.log('--- event order ---');
@@ -385,7 +533,7 @@ async function main() {
   }
 }
 
-main().catch((error) => {
-  console.error(error);
+main().catch((err) => {
+  console.error(err);
   process.exit(1);
 });

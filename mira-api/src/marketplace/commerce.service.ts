@@ -48,6 +48,7 @@ import {
   unprocessable,
   withPartnerResourceCaps,
 } from './commerce.types';
+import { acquireScheduleLocks, scheduleLockKeys } from './commerce-schedule-locks';
 
 /** Who is acting. `scope` limits which rows they can see or change. */
 export type CommerceActor =
@@ -1129,11 +1130,24 @@ export class CommerceService {
 
     try {
       const created = await this.prisma.$transaction(async (tx) => {
-        // Lock partner resource calendar (legacy empty resource still keyed by service).
-        const lockKey = resourceId
-          ? `commerce-booking-resource:${resourceId}`
-          : `commerce-booking:${serviceId}`;
-        await tx.$executeRaw`SELECT pg_advisory_xact_lock(hashtext(${lockKey}))`;
+        // Peek ownership + resources, then take partner-scoped schedule locks before re-read.
+        const peek = await tx.service.findFirst({
+          where: { id: serviceId },
+          select: { id: true, partnerId: true, availabilityJson: true },
+        });
+        if (!peek) throw notFound('SERVICE_NOT_FOUND', 'الخدمة غير متاحة');
+        const peekWindows = parseAvailability(peek.availabilityJson);
+        const resourceIds = new Set<string>();
+        for (const w of peekWindows) {
+          if (w.resourceId) resourceIds.add(w.resourceId);
+        }
+        if (resourceId) resourceIds.add(resourceId);
+        const lockKeys = scheduleLockKeys({
+          partnerId: peek.partnerId,
+          serviceId,
+          resourceIds: [...resourceIds],
+        });
+        await acquireScheduleLocks(tx, lockKeys);
 
         const again = await tx.commerceBooking.findUnique({
           where: { userId_idempotencyKey: { userId: actor.userId, idempotencyKey } },

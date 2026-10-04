@@ -1,0 +1,11 @@
+RC4 LIVE_JOURNEY
+date=2026-10-04T19:21:48Z
+commit_tested=8383b44e007dab3bcf2cf2ca16c239882bf0513e (working tree ahead of 8383b44 with RC4 fixes; final commit filled at seal)
+views=DEFERRED_BY_OWNER
+durable_storage=DEFERRED_BY_OWNER (PH3-STORAGE-LIVE)
+COD_journey=NOT_RUN_YET
+booking_journey=NOT_RUN_YET
+partner_followup=NOT_RUN_YET
+admin_followup=NOT_RUN_YET
+favorites_share=NOT_RUN_YET
+note=Will update after deploy + authenticated test accounts.

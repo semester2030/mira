@@ -1,0 +1,15 @@
+{
+  "kind": "isolated_ui_harness_not_authenticated_save",
+  "url": "http://127.0.0.1:8765/docs/mira-commerce-reference/evidence/commerce-operational/mc-fix-rc4/variant-picker-harness.html",
+  "assertions": [
+    "size select refreshed after chip change without reopening form",
+    "M/L/XL appeared in size picker",
+    "color picker showed أسود/وردي"
+  ],
+  "viewport_titles_observed": [
+    "RC4 harness PASS 392",
+    "RC4 harness PASS 1280",
+    "RC4 harness PASS 981"
+  ],
+  "note": "Authenticated portal save journey remains separate; this proves picker refresh using MiraCatalogOptions."
+}

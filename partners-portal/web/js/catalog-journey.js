@@ -314,9 +314,14 @@
       unifyToggle.name = 'unifySharedResources';
       unifyWrap.append(
         unifyToggle,
-        document.createTextNode(' توحيد سعة المورد المشترك في كل خدمات الجهة عند التعارض (معاملة واحدة)'),
+        document.createTextNode(' توحيد سعة المورد المشترك في كل خدمات جهتي عند التعارض'),
       );
       availBox.appendChild(unifyWrap);
+      const unifyPreview = document.createElement('p');
+      unifyPreview.className = 'muted';
+      unifyPreview.setAttribute('data-unify-preview', '1');
+      unifyPreview.textContent = 'عند التفعيل تُحدَّث سعة المورد في كل خدمات جهتك التي تشارك نفس معرّف المورد، ضمن حفظ واحد. راجعي أسماء الخدمات في رسالة التعارض قبل التأكيد.';
+      availBox.appendChild(unifyPreview);
       text(availBox, 'عند تعارض سعات قديمة لنفس المورد تُرفض الحجوزات الجديدة حتى التوحيد. لا تُلغى الحجوزات القائمة تلقائيًا.');
       basics.appendChild(availBox);
       availabilityJson = {
@@ -785,8 +790,7 @@
             if (input.checked && at < 0) list.push(label);
             if (!input.checked && at >= 0) list.splice(at, 1);
             optionsState.clearingOptions = false;
-            saveOptionsDraft();
-            paintOptionsPreview();
+            onOptionsValuesChanged();
           };
           wrap.append(input, document.createTextNode(' ' + label));
           chips.appendChild(wrap);
@@ -795,8 +799,7 @@
         const custom = field(block, 'قيم خاصة (افصلي بفاصلة)', 'custom-' + group.id, optionsState.customs[group.id] || '', 'text');
         custom.oninput = () => {
           optionsState.customs[group.id] = custom.value;
-          saveOptionsDraft();
-          paintOptionsPreview();
+          onOptionsValuesChanged();
         };
         optionsBody.appendChild(block);
       });
@@ -884,34 +887,72 @@
 
       const addBox = document.createElement('div');
       addBox.className = 'form-section';
+      addBox.setAttribute('data-variant-add-box', '1');
       text(addBox, 'إضافة تركيبة بالاختيار من القيم التي حددتها');
+      const conflictBanner = document.createElement('p');
+      conflictBanner.className = 'field-error';
+      conflictBanner.setAttribute('role', 'alert');
+      conflictBanner.setAttribute('data-variant-conflicts', '1');
+      addBox.appendChild(conflictBanner);
+      const pickersHost = document.createElement('div');
+      pickersHost.setAttribute('data-variant-pickers', '1');
+      addBox.appendChild(pickersHost);
       const pickers = {};
-      const builtForPick = buildOptionGroups();
-      builtForPick.forEach((group) => {
-        const wrap = document.createElement('label');
-        wrap.className = 'field';
-        const title = document.createElement('span');
-        title.textContent = group.labelAr;
-        const select = document.createElement('select');
-        select.name = 'variantPick-' + group.id;
-        select.setAttribute('aria-label', group.labelAr);
-        const placeholder = document.createElement('option');
-        placeholder.value = '';
-        placeholder.textContent = 'اختاري ' + group.labelAr;
-        select.appendChild(placeholder);
-        group.values.forEach((value) => {
-          const opt = document.createElement('option');
-          opt.value = value.id;
-          opt.textContent = value.labelAr;
-          select.appendChild(opt);
+      function refreshVariantPickers() {
+        const builtForPick = buildOptionGroups();
+        const previous = {};
+        Object.keys(pickers).forEach((id) => {
+          previous[id] = pickers[id] ? String(pickers[id].value || '') : '';
         });
-        wrap.append(title, select);
-        addBox.appendChild(wrap);
-        pickers[group.id] = select;
-      });
-      if (!builtForPick.length) {
-        text(addBox, 'حددي قيم الخيارات أعلاه قبل إضافة تركيبة.');
+        const active = document.activeElement;
+        const activeName = active && active.getAttribute ? active.getAttribute('name') : null;
+        pickersHost.replaceChildren();
+        Object.keys(pickers).forEach((id) => { delete pickers[id]; });
+        if (!builtForPick.length) {
+          text(pickersHost, 'حددي قيم الخيارات أعلاه قبل إضافة تركيبة.');
+        }
+        builtForPick.forEach((group) => {
+          const wrap = document.createElement('label');
+          wrap.className = 'field';
+          const title = document.createElement('span');
+          title.textContent = group.labelAr;
+          const select = document.createElement('select');
+          select.name = 'variantPick-' + group.id;
+          select.setAttribute('aria-label', group.labelAr);
+          select.setAttribute('data-placeholder', 'اختاري ' + group.labelAr);
+          if (window.MiraCatalogOptions && window.MiraCatalogOptions.syncPickerOptions) {
+            window.MiraCatalogOptions.syncPickerOptions(select, group.values, previous[group.id] || '');
+          } else {
+            const placeholder = document.createElement('option');
+            placeholder.value = '';
+            placeholder.textContent = 'اختاري ' + group.labelAr;
+            select.appendChild(placeholder);
+            group.values.forEach((value) => {
+              const opt = document.createElement('option');
+              opt.value = value.id;
+              opt.textContent = value.labelAr;
+              select.appendChild(opt);
+            });
+            if (group.values.some((v) => v.id === previous[group.id])) select.value = previous[group.id];
+          }
+          wrap.append(title, select);
+          pickersHost.appendChild(wrap);
+          pickers[group.id] = select;
+        });
+        if (activeName) {
+          const restore = pickersHost.querySelector('[name="' + activeName + '"]');
+          if (restore && typeof restore.focus === 'function') restore.focus();
+        }
+        const built = structuredOptionsPayload();
+        conflictBanner.textContent = '';
+        if (built.conflicts && built.conflicts.length) {
+          conflictBanner.textContent = built.conflicts.map((c) => c.messageAr || c.message).join(' ');
+        } else if (built.error) {
+          conflictBanner.textContent = built.error;
+        }
+        return builtForPick;
       }
+      refreshVariantPickers();
       const addPrice = field(addBox, 'سعر التركيبة بالريال (اختياري)', 'variantAddPrice', '', 'text');
       const addAvail = document.createElement('label');
       addAvail.className = 'check-row';
@@ -985,21 +1026,21 @@
       };
       addBox.appendChild(addBtn);
       optionsBody.appendChild(addBox);
+      optionsBody._refreshVariantPickers = refreshVariantPickers;
       paintOptionsPreview();
     }
 
-    function slugValue(label, index) {
-      const base = String(label || '')
-        .trim()
-        .toLowerCase()
-        .replace(/\s+/g, '-')
-        .replace(/[^a-z0-9\u0600-\u06FF\-]/g, '')
-        .slice(0, 40);
-      return base || ('v' + (index + 1));
+    function onOptionsValuesChanged() {
+      saveOptionsDraft();
+      if (typeof optionsBody._refreshVariantPickers === 'function') optionsBody._refreshVariantPickers();
+      paintOptionsPreview();
     }
 
     function buildOptionGroups() {
       const preset = optionPresets(category.value);
+      if (window.MiraCatalogOptions && window.MiraCatalogOptions.buildOptionGroups) {
+        return window.MiraCatalogOptions.buildOptionGroups(preset.groups, optionsState);
+      }
       const groups = [];
       if (!optionsState.valueIds) optionsState.valueIds = {};
       preset.groups.forEach((group) => {
@@ -1019,7 +1060,9 @@
           kind: group.kind,
           values: labels.map((label, index) => {
             const existing = optionsState.valueIds[group.id][label];
-            const id = existing || slugValue(label, index);
+            const id = existing || (window.MiraCatalogOptions && window.MiraCatalogOptions.slugValue
+              ? window.MiraCatalogOptions.slugValue(label, index)
+              : ('v' + (index + 1)));
             optionsState.valueIds[group.id][label] = id;
             return { id: id, labelAr: label };
           }),
@@ -1030,12 +1073,17 @@
 
     /** Structured options from the easy UI → backend optionsJson / variantsJson (not localStorage-only). */
     function structuredOptionsPayload() {
-      if (optionsState.clearingOptions) {
-        return { optionsJson: null, variantsJson: null, clearing: true, error: null };
-      }
       const groups = buildOptionGroups();
+      optionsState._builtGroups = groups;
+      if (window.MiraCatalogOptions && window.MiraCatalogOptions.structuredOptionsPayload) {
+        return window.MiraCatalogOptions.structuredOptionsPayload(optionsState);
+      }
+      if (optionsState.clearingOptions) {
+        return { optionsJson: null, variantsJson: null, clearing: true, error: null, conflicts: [] };
+      }
       const variants = [];
       const errors = [];
+      const conflicts = [];
       optionsState.variants.forEach((variant) => {
         if (!variant || !variant.id) {
           errors.push('تركيبة بلا معرف ثابت.');
@@ -1050,7 +1098,9 @@
             group.values.find((entry) => entry.labelAr === label);
           if (!value) {
             ok = false;
-            errors.push('التركيبة ' + variant.id + ' تشير إلى قيمة غير موجودة في «' + group.labelAr + '».');
+            const msg = 'التركيبة ' + variant.id + ' تشير إلى قيمة غير موجودة في «' + group.labelAr + '».';
+            errors.push(msg);
+            conflicts.push({ variantId: variant.id, groupId: group.id, messageAr: msg });
             return;
           }
           selections[group.id] = value.id;
@@ -1075,6 +1125,7 @@
         variantsJson: variants,
         clearing: false,
         error: errors[0] || null,
+        conflicts: conflicts,
       };
     }
 

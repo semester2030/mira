@@ -1,7 +1,7 @@
 import 'package:flutter/material.dart';
 
-import '../../../../shared/theme/colors.dart';
-import '../../../../shared/theme/typography.dart';
+import '../theme/colors.dart';
+import '../theme/typography.dart';
 
 class ConfidenceBadge extends StatelessWidget {
   final String level;

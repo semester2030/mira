@@ -17,6 +17,7 @@ import {
   parseAvailability,
   unifyResourceCapacities,
 } from '../marketplace/commerce.types';
+import { acquireScheduleLocks, scheduleLockKeys } from '../marketplace/commerce-schedule-locks';
 import { PrismaService } from '../prisma/prisma.service';
 import { ApplyPartnerDto } from './dto/apply-partner.dto';
 import { UpdateProductDto, UpdateServiceDto, UpsertProductDto, UpsertServiceDto } from './dto/catalog.dto';
@@ -24,6 +25,18 @@ import { TrackPartnerEventDto } from './dto/track-event.dto';
 
 function newToken(): string {
   return randomBytes(32).toString('hex');
+}
+
+function resourceIdsFromAvailability(raw: unknown): string[] {
+  if (raw == null) return [];
+  if (!Array.isArray(raw)) return [];
+  const ids = new Set<string>();
+  for (const entry of raw) {
+    if (!entry || typeof entry !== 'object') continue;
+    const id = normalizeResourceId((entry as Record<string, unknown>).resourceId);
+    if (id) ids.add(id);
+  }
+  return [...ids];
 }
 
 /** Maps validated commerce input to Prisma writes (`null` JSON clears the column). */
@@ -462,37 +475,65 @@ export class PartnersPortalService {
       throw new BadRequestException('الخدمات متاحة للعيادات والصالونات فقط');
     }
     const nameAr = dto.nameAr.trim();
+    // Validate category before any availability side effects.
+    const category = this.optionalCategory(dto.category, SERVICE_CATEGORIES);
 
-    const availabilityJson =
-      dto.availabilityJson !== undefined
-        ? await this.availabilityWrite(partnerId, null, dto.availabilityJson, this.prisma, dto.unifySharedResources === true)
-        : undefined;
-    return this.prisma.service.create({
-      data: {
+    return this.prisma.$transaction(async (tx) => {
+      const resourceIds = resourceIdsFromAvailability(dto.availabilityJson);
+      const lockKeys = scheduleLockKeys({
         partnerId,
-        nameAr,
-        nameEn: dto.nameEn?.trim() || nameAr,
-        descriptionAr: dto.descriptionAr?.trim() || null,
-        durationMin: dto.durationMin ?? 0,
-        priceHalalas: dto.priceHalalas,
-        concernTags: dto.concernTags ?? [],
-        category: this.optionalCategory(dto.category, SERVICE_CATEGORIES),
-        bookingEnabled: dto.bookingEnabled === true,
-        payMode: 'pay_at_venue',
-        ...(availabilityJson !== undefined ? { availabilityJson } : {}),
-        active: false,
-        contentStatus: 'draft',
-        reviewStatus: 'draft',
-      },
+        serviceId: `create:${partnerId}`,
+        resourceIds,
+      });
+      await acquireScheduleLocks(tx, lockKeys);
+
+      const availabilityJson =
+        dto.availabilityJson !== undefined
+          ? await this.availabilityWrite(partnerId, null, dto.availabilityJson, tx, dto.unifySharedResources === true)
+          : undefined;
+
+      return tx.service.create({
+        data: {
+          partnerId,
+          nameAr,
+          nameEn: dto.nameEn?.trim() || nameAr,
+          descriptionAr: dto.descriptionAr?.trim() || null,
+          durationMin: dto.durationMin ?? 0,
+          priceHalalas: dto.priceHalalas,
+          concernTags: dto.concernTags ?? [],
+          category,
+          bookingEnabled: dto.bookingEnabled === true,
+          payMode: 'pay_at_venue',
+          ...(availabilityJson !== undefined ? { availabilityJson } : {}),
+          active: false,
+          contentStatus: 'draft',
+          reviewStatus: 'draft',
+        },
+      });
     });
   }
 
   async updateService(partnerId: string, serviceId: string, dto: UpdateServiceDto) {
     return this.prisma.$transaction(async (tx) => {
-      await tx.$queryRaw`SELECT id FROM services WHERE id = ${serviceId} FOR UPDATE`;
       const current = await tx.service.findFirst({ where: { id: serviceId, partnerId } });
       if (!current) throw new NotFoundException('الخدمة غير موجودة');
-      const published = current.contentStatus === 'published';
+
+      const oldResourceIds = resourceIdsFromAvailability(current.availabilityJson);
+      const newResourceIds =
+        dto.availabilityJson !== undefined
+          ? resourceIdsFromAvailability(dto.availabilityJson)
+          : oldResourceIds;
+      const lockKeys = scheduleLockKeys({
+        partnerId,
+        serviceId,
+        resourceIds: [...new Set([...oldResourceIds, ...newResourceIds])],
+      });
+      await acquireScheduleLocks(tx, lockKeys);
+      await tx.$queryRaw`SELECT id FROM services WHERE id = ${serviceId} FOR UPDATE`;
+
+      const locked = await tx.service.findFirst({ where: { id: serviceId, partnerId } });
+      if (!locked) throw new NotFoundException('الخدمة غير موجودة');
+      const published = locked.contentStatus === 'published';
       const data: {
         draftNameAr?: string;
         draftNameEn?: string;
@@ -511,14 +552,14 @@ export class PartnersPortalService {
         reviewStatus: string;
       } = {
         reviewRevision: { increment: 1 },
-        reviewStatus: current.reviewStatus === 'in_review' ? 'in_review' : 'draft',
+        reviewStatus: locked.reviewStatus === 'in_review' ? 'in_review' : 'draft',
       };
       if (dto.nameAr !== undefined) {
         if (published) data.draftNameAr = dto.nameAr;
         else data.nameAr = dto.nameAr;
       }
       if (dto.nameEn !== undefined) {
-        const nextName = dto.nameEn.trim() || (published ? (data.draftNameAr || current.nameAr) : (data.nameAr || current.nameAr));
+        const nextName = dto.nameEn.trim() || (published ? (data.draftNameAr || locked.nameAr) : (data.nameAr || locked.nameAr));
         if (published) data.draftNameEn = nextName;
         else data.nameEn = nextName;
       }
@@ -532,7 +573,7 @@ export class PartnersPortalService {
       if (dto.concernTags !== undefined) data.concernTags = dto.concernTags;
       if (dto.category !== undefined) data.category = this.optionalCategory(dto.category, SERVICE_CATEGORIES);
       if (dto.bookingEnabled !== undefined) data.bookingEnabled = dto.bookingEnabled === true;
-      if (dto.payMode !== undefined) data.payMode = dto.payMode === 'pay_at_venue' ? 'pay_at_venue' : current.payMode;
+      if (dto.payMode !== undefined) data.payMode = dto.payMode === 'pay_at_venue' ? 'pay_at_venue' : locked.payMode;
       if (dto.availabilityJson !== undefined) {
         data.availabilityJson = await this.availabilityWrite(
           partnerId,
@@ -551,7 +592,10 @@ export class PartnersPortalService {
     partnerId: string,
     serviceId: string | null,
     raw: unknown,
-    db: { service: PrismaService['service'] } = this.prisma,
+    db: {
+      service: PrismaService['service'];
+      $executeRaw?: PrismaService['$executeRaw'];
+    } = this.prisma,
     unifySharedResources = false,
   ): Promise<Prisma.InputJsonValue | typeof Prisma.DbNull> {
     if (raw == null) return Prisma.DbNull;
@@ -588,6 +632,8 @@ export class PartnersPortalService {
       for (const w of parsed) {
         if (w.resourceId) capacityByResource.set(w.resourceId, w.capacity);
       }
+      const affected: string[] = [];
+      let unifiedCount = 0;
       for (const sibling of siblings) {
         const siblingWindows = parseAvailability(sibling.availabilityJson);
         const needs = siblingWindows.some((w) => w.resourceId && capacityByResource.has(w.resourceId) && capacityByResource.get(w.resourceId) !== w.capacity);
@@ -598,6 +644,11 @@ export class PartnersPortalService {
           where: { id: sibling.id },
           data: { availabilityJson: unified as unknown as Prisma.InputJsonValue },
         });
+        affected.push(sibling.nameAr);
+        unifiedCount += 1;
+        if (process.env.MIRA_TEST_UNIFY_FAIL_AFTER === '1' && unifiedCount === 1) {
+          throw new BadRequestException('حقن فشل اختبار بعد أول توحيد');
+        }
       }
       return parsed as unknown as Prisma.InputJsonValue;
     }
@@ -612,10 +663,11 @@ export class PartnersPortalService {
       throw new BadRequestException({
         statusCode: 400,
         code: 'RESOURCE_CAPACITY_CONFLICT',
-        message: `سعة المورد «${first.resourceId}» غير متسقة (${first.capacities.join(' مقابل ')}). تعارض مع: ${names.join('، ') || 'خدمات أخرى'}. أرسلي unifySharedResources: true لتوحيد السعة في معاملة واحدة.`,
-        messageAr: `سعة المورد «${first.resourceId}» غير متسقة (${first.capacities.join(' مقابل ')}). تعارض مع: ${names.join('، ') || 'خدمات أخرى'}. أرسلي unifySharedResources: true لتوحيد السعة في معاملة واحدة.`,
+        message: `سعة المورد «${first.resourceId}» غير متسقة (${first.capacities.join(' مقابل ')}). الخدمات المتأثرة: ${names.join('، ') || 'خدمات أخرى'}. فعّلي خيار توحيد سعة المورد في نموذج الخدمة قبل الحفظ إن أردت تطبيق السعة الجديدة على كل خدمات جهتك دفعة واحدة.`,
+        messageAr: `سعة المورد «${first.resourceId}» غير متسقة (${first.capacities.join(' مقابل ')}). الخدمات المتأثرة: ${names.join('، ') || 'خدمات أخرى'}. فعّلي خيار توحيد سعة المورد في نموذج الخدمة قبل الحفظ إن أردت تطبيق السعة الجديدة على كل خدمات جهتك دفعة واحدة.`,
         conflicts,
-        unifyHintAr: 'أرسلي unifySharedResources: true مع جدول التوفر لتوحيد سعة المورد في كل خدمات الجهة دفعة واحدة',
+        affectedServices: names,
+        unifyHintAr: 'فعّلي خيار «توحيد سعة المورد المشترك» في نموذج الخدمة ثم احفظي مرة أخرى',
       });
     }
     return parsed as unknown as Prisma.InputJsonValue;

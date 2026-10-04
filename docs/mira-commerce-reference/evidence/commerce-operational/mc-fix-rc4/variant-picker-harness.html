@@ -1,0 +1,129 @@
+<!DOCTYPE html>
+<html lang="ar" dir="rtl">
+<head>
+  <meta charset="utf-8" />
+  <title>RC4 variant pickers harness</title>
+  <style>
+    body { font-family: sans-serif; margin: 1rem; max-width: 40rem; }
+    .option-group, .form-section { margin: 0.75rem 0; padding: 0.5rem; border: 1px solid #ccc; }
+    .field-error { color: #b00020; }
+    select { min-width: 10rem; display: block; margin: 0.25rem 0; }
+  </style>
+</head>
+<body>
+  <h1>RC4-01 harness — قوائم التركيبة</h1>
+  <p id="meta"></p>
+  <div id="optionsBody"></div>
+  <div id="optionsPreview"></div>
+  <pre id="assertLog"></pre>
+  <script src="../../../../../partners-portal/web/js/catalog-options-core.js"></script>
+  <script>
+    const log = [];
+    function assert(cond, msg) {
+      log.push((cond ? 'PASS' : 'FAIL') + ': ' + msg);
+      if (!cond) throw new Error(msg);
+    }
+    document.getElementById('meta').textContent =
+      'viewport ' + window.innerWidth + 'x' + window.innerHeight + ' @ ' + new Date().toISOString();
+
+    const apparel = [
+      { id: 'size', label: 'المقاس', kind: 'size', presets: ['S', 'M', 'L', 'XL'] },
+      { id: 'color', label: 'اللون', kind: 'color', presets: ['أسود', 'وردي'] },
+    ];
+    const state = {
+      selected: { size: [], color: [] },
+      customs: {},
+      traits: {},
+      variants: [],
+      valueIds: {},
+      clearingOptions: false,
+    };
+    const body = document.getElementById('optionsBody');
+    const pickers = {};
+    let pickersHost;
+    let conflictBanner;
+
+    function buildGroups() {
+      return MiraCatalogOptions.buildOptionGroups(apparel, state);
+    }
+    function refreshPickers() {
+      const groups = buildGroups();
+      const previous = {};
+      Object.keys(pickers).forEach((id) => { previous[id] = pickers[id] ? pickers[id].value : ''; });
+      pickersHost.replaceChildren();
+      Object.keys(pickers).forEach((id) => delete pickers[id]);
+      groups.forEach((group) => {
+        const label = document.createElement('label');
+        label.textContent = group.labelAr + ' ';
+        const select = document.createElement('select');
+        select.name = 'variantPick-' + group.id;
+        select.setAttribute('aria-label', group.labelAr);
+        MiraCatalogOptions.syncPickerOptions(select, group.values, previous[group.id] || '');
+        label.appendChild(select);
+        pickersHost.appendChild(label);
+        pickers[group.id] = select;
+      });
+      state._builtGroups = groups;
+      const built = MiraCatalogOptions.structuredOptionsPayload(state);
+      conflictBanner.textContent = (built.conflicts || []).map((c) => c.messageAr).join(' ') || (built.error || '');
+    }
+
+    apparel.forEach((group) => {
+      const block = document.createElement('div');
+      block.className = 'option-group';
+      const h = document.createElement('h3');
+      h.textContent = group.label;
+      block.appendChild(h);
+      group.presets.forEach((label) => {
+        const wrap = document.createElement('label');
+        const input = document.createElement('input');
+        input.type = 'checkbox';
+        input.onchange = () => {
+          const list = state.selected[group.id];
+          const at = list.indexOf(label);
+          if (input.checked && at < 0) list.push(label);
+          if (!input.checked && at >= 0) list.splice(at, 1);
+          refreshPickers();
+        };
+        wrap.append(input, document.createTextNode(' ' + label));
+        block.appendChild(wrap);
+      });
+      body.appendChild(block);
+    });
+
+    const addBox = document.createElement('div');
+    addBox.className = 'form-section';
+    conflictBanner = document.createElement('p');
+    conflictBanner.className = 'field-error';
+    conflictBanner.setAttribute('data-variant-conflicts', '1');
+    pickersHost = document.createElement('div');
+    pickersHost.setAttribute('data-variant-pickers', '1');
+    addBox.append(conflictBanner, pickersHost);
+    body.appendChild(addBox);
+    refreshPickers();
+
+    // Simulate RC4-01: check M then ensure size select has M
+    const sizeChecks = [...body.querySelectorAll('.option-group')[0].querySelectorAll('input')];
+    sizeChecks.find((el) => el.parentNode.textContent.includes('M')).checked = true;
+    sizeChecks.find((el) => el.parentNode.textContent.includes('M')).onchange();
+    sizeChecks.find((el) => el.parentNode.textContent.includes('L')).checked = true;
+    sizeChecks.find((el) => el.parentNode.textContent.includes('L')).onchange();
+    const colorChecks = [...body.querySelectorAll('.option-group')[1].querySelectorAll('input')];
+    colorChecks[0].checked = true; colorChecks[0].onchange();
+    colorChecks[1].checked = true; colorChecks[1].onchange();
+
+    const sizeSelect = pickers.size;
+    assert(sizeSelect.options.length >= 3, 'size select has placeholder + values after chip change');
+    assert([...sizeSelect.options].some((o) => o.textContent === 'M'), 'M appears in size picker without reopening form');
+    assert([...sizeSelect.options].some((o) => o.textContent === 'L'), 'L appears in size picker');
+
+    // Add XL after lists exist
+    sizeChecks.find((el) => el.parentNode.textContent.includes('XL')).checked = true;
+    sizeChecks.find((el) => el.parentNode.textContent.includes('XL')).onchange();
+    assert([...pickers.size.options].some((o) => o.textContent === 'XL'), 'XL appears immediately');
+
+    document.getElementById('assertLog').textContent = log.join('\n') + '\nscrollWidth=' + document.documentElement.scrollWidth + ' clientWidth=' + document.documentElement.clientWidth;
+    document.title = 'RC4 harness PASS ' + window.innerWidth;
+  </script>
+</body>
+</html>
