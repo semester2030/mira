@@ -9814,7 +9814,7 @@ window.MIRA_STUDY = {
             "deliveryStatus": "منفّذ ومختبر — بانتظار المراجعة المستقلة",
             "logHref": "evidence/commerce-operational/MC_FIX_RC4_TRACKER.md",
             "logLabel": "متتبع جولة RC4",
-            "sha256": "يُحدَّث عند الختم",
+            "sha256": "b87f4915748ffbdb42e9ad51b1ebf3bb4979b247cbd1606017a22f143fef88d4",
             "reviewResultAr": "لم تصدر بعد",
             "approvalAr": "غير معتمدة",
             "zipHref": "../../MIRA_COMMERCE_MC_FIX_RC4.zip",
@@ -9906,11 +9906,11 @@ window.MIRA_STUDY = {
               "P5-T2",
               "P5-DEV-01"
             ],
-            "status": "منفّذ ومختبر محليًا (APK debug) — بانتظار المراجعة المستقلة",
+            "status": "منفّذ ومختبر محليًا ومن الفك (APK) — بانتظار المراجعة المستقلة",
             "problemAr": "استيرادات نسبية مكسورة في confidence_badge وface_experience_tokens؛ فشل APK Kotlin/camera في RC3.",
             "impactAr": "لا بناء APK debug نظيف من المصدر.",
             "fixAr": "تصحيح مسارات الثيم؛ Kotlin 2.1.0؛ الإبقاء على الكاميرا.",
-            "resultAr": "flutter analyze للملفين No issues؛ flutter build apk --debug PASS (Kotlin 2.1.0 + AGP 8.9.1 + NDK 28.2)؛ marketplace tests 164 PASS. iOS/جهاز يُسجَّلان في device-run.",
+            "resultAr": "analyze No issues؛ APK debug PASS من المستودع ومن الفك؛ iOS build PASS؛ تشغيل الجهاز جزئي (VM Service).",
             "evidenceAr": "evidence/commerce-operational/mc-fix-rc4/flutter-analyze.log ؛ flutter-apk.log ؛ device-run.txt",
             "evidenceLinks": [
               {
@@ -9930,11 +9930,11 @@ window.MIRA_STUDY = {
             "relatedTaskIds": [
               "P5-T3"
             ],
-            "status": "قيد التنفيذ — التجميع بعد اكتمال الأدلة",
+            "status": "منفّذ ومختبر — بانتظار المراجعة المستقلة",
             "problemAr": "RC3 سليمة البصمة لكن أدلة معلنة ناقصة في عملية التجميع.",
             "impactAr": "مراجعة لا تستطيع مطابقة الكود المختبر بالمنشور والأدلة.",
             "fixAr": "فك→اختبار→أدلة→manifest→ZIP→sha خارجي→تحقق فك؛ ربط commits الخدمات الثلاث.",
-            "resultAr": "يُحدَّث عند الختم بقيم الحجم والبصمة وعدد الملفات.",
+            "resultAr": "حزمة MIRA_COMMERCE_MC_FIX_RC4.zip؛ sha b87f4915748f…؛ ملفات 2277؛ نشر 012feb1 على الخدمات الثلاث. رحلات COD/حجز مصدّقة NOT_RUN.",
             "evidenceAr": "evidence/commerce-operational/mc-fix-rc4/PACKAGE_VERIFY.txt ؛ LIVE_JOURNEY.txt",
             "evidenceLinks": [
               {
@@ -9950,7 +9950,7 @@ window.MIRA_STUDY = {
             "relatedTaskIds": [
               "P5-T3"
             ],
-            "status": "منفّذ مصدرًا — بانتظار إعادة توليد الموقع وفحص الروابط من الفك",
+            "status": "منفّذ ومختبر من المصدر والحزمة — بانتظار المراجعة المستقلة",
             "problemAr": "حزمة RC3 تضمّنت أدلة دون صفحات/بيانات الموقع الكاملة.",
             "impactAr": "المراجع لا يرى بطاقات الجولة داخل الموقع الرسمي.",
             "fixAr": "بطاقة RC4 في PH-5؛ تحديث RC3 إلى «تمت مراجعته — يحتاج تصحيحًا»؛ التمييز بين حالات الاختبار؛ المرحلة غير معتمدة.",
