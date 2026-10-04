@@ -334,7 +334,7 @@ async function main() {
     const at2 = localInstant(day2, 600)!.toISOString();
     const lockKeys = scheduleLockKeys({
       partnerId: clinic.id,
-      serviceId: svc.id,
+      serviceIds: [svc.id],
       resourceIds: ['غرفة-تعطيل'],
     });
     const targetKey = bookingResourceLockKey(clinic.id, 'غرفة-تعطيل');
@@ -453,6 +453,89 @@ async function main() {
     } else {
       step('E4 PASS: booking completed before disable; service now disabled (consistent)');
     }
+
+    // E5: deleteService (withdraw) first under shared protocol — later booking rejects
+    await prismaA.service.update({
+      where: { id: svc.id },
+      data: { bookingEnabled: true, active: true, contentStatus: 'published' },
+    });
+    const dayW = localParts(new Date(Date.now() + 13.5 * 86_400_000)).dateKey;
+    const atW = localInstant(dayW, 600)!.toISOString();
+    const wReady = defer();
+    const wRelease = defer();
+    const withdrawHold = prismaA.$transaction(
+      async (tx) => {
+        await acquireScheduleLocks(tx, lockKeys);
+        step('E5: withdraw-equivalent locks held');
+        wReady.resolve();
+        await wRelease.promise;
+        await tx.service.update({
+          where: { id: svc.id },
+          data: { active: false, contentStatus: 'withdrawn' },
+        });
+        step('E5: withdrawn under held locks');
+      },
+      { maxWait: 25_000, timeout: 25_000 },
+    );
+    await wReady.promise;
+    const bookWithdraw = commerceB.createBooking(bob, {
+      serviceId: svc.id,
+      startsAt: atW,
+      resourceId: 'غرفة-تعطيل',
+      contactName: 'نورة',
+      contactPhone: PHONE,
+      idempotencyKey: `${run}-wd-b`,
+    });
+    await waitForAdvisoryWaiter(prismaB, targetKey);
+    step('E5: createBooking waiting during withdraw barrier');
+    wRelease.resolve();
+    await withdrawHold;
+    await failure(bookWithdraw, 404, 'SERVICE_NOT_FOUND');
+    step('E5 PASS: withdraw committed first; booking rejected');
+
+    // E6: booking holds first; production deleteService waits then applies
+    const svc2 = await prismaA.service.create({
+      data: {
+        partnerId: clinic.id,
+        nameAr: 'سحب2',
+        nameEn: `${run}-wd2`,
+        durationMin: 60,
+        priceHalalas: 9000,
+        concernTags: [],
+        bookingEnabled: true,
+        active: true,
+        contentStatus: 'published',
+        availabilityJson: windows.map((w) => ({ ...w, resourceId: 'غرفة-سحب' })),
+      },
+    });
+    const wdKeys = scheduleLockKeys({
+      partnerId: clinic.id,
+      serviceIds: [svc2.id],
+      resourceIds: ['غرفة-سحب'],
+    });
+    const wdTarget = bookingResourceLockKey(clinic.id, 'غرفة-سحب');
+    const w2Ready = defer();
+    const w2Release = defer();
+    const bookHold = prismaA.$transaction(
+      async (tx) => {
+        await acquireScheduleLocks(tx, wdKeys);
+        step('E6: booking-side locks held before deleteService');
+        w2Ready.resolve();
+        await w2Release.promise;
+      },
+      { maxWait: 25_000, timeout: 25_000 },
+    );
+    await w2Ready.promise;
+    const deleteWait = portalB.deleteService(clinic.id, svc2.id);
+    await waitForAdvisoryWaiter(prismaB, wdTarget);
+    step('E6: production deleteService waiting');
+    w2Release.resolve();
+    await bookHold;
+    await deleteWait;
+    const gone = await prismaA.service.findUniqueOrThrow({ where: { id: svc2.id } });
+    assert.equal(gone.contentStatus, 'withdrawn');
+    assert.equal(gone.active, false);
+    step('E6 PASS: deleteService shared schedule lock protocol');
 
     // Snapshot price: portal price edit must not rewrite historical booking
     const snap = await commerceA.createBooking(alice, {

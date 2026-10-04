@@ -1,0 +1,6 @@
+RC5 real CatalogJourney form probe (dashboard shell; PartnersApi save blocked — no AUTH_SKIP)
+modules=catalog-options-core.js + catalog-journey.js
+note=Authenticated partner save/submit/admin approve remains NOT_RUN without isolated test credentials
+width=390 overflowX=false clientWidth=390 scrollWidth=390 conflict= buttons=إضافة التركيبة|حفظ المسودة|إرسال للمراجعة
+width=480 overflowX=false clientWidth=480 scrollWidth=480 conflict= buttons=إضافة التركيبة|حفظ المسودة|إرسال للمراجعة
+width=1280 overflowX=false clientWidth=1280 scrollWidth=1280 conflict= buttons=إضافة التركيبة|حفظ المسودة|إرسال للمراجعة

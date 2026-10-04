@@ -48,7 +48,7 @@ import {
   unprocessable,
   withPartnerResourceCaps,
 } from './commerce.types';
-import { acquireScheduleLocks, scheduleLockKeys } from './commerce-schedule-locks';
+import { acquireScheduleLocks, expandScheduleScope, lockServiceRows, scheduleLockKeys } from './commerce-schedule-locks';
 
 /** Who is acting. `scope` limits which rows they can see or change. */
 export type CommerceActor =
@@ -1137,17 +1137,30 @@ export class CommerceService {
         });
         if (!peek) throw notFound('SERVICE_NOT_FOUND', 'الخدمة غير متاحة');
         const peekWindows = parseAvailability(peek.availabilityJson);
-        const resourceIds = new Set<string>();
+        const seedResources = new Set<string>();
         for (const w of peekWindows) {
-          if (w.resourceId) resourceIds.add(w.resourceId);
+          if (w.resourceId) seedResources.add(w.resourceId);
         }
-        if (resourceId) resourceIds.add(resourceId);
+        if (resourceId) seedResources.add(resourceId);
+        const partnerServices = await tx.service.findMany({
+          where: { partnerId: peek.partnerId, active: true },
+          select: { id: true, availabilityJson: true },
+        });
+        const scope = expandScheduleScope(
+          partnerServices.map((s) => ({
+            id: s.id,
+            resourceIds: parseAvailability(s.availabilityJson).map((w) => w.resourceId).filter(Boolean) as string[],
+          })),
+          [serviceId],
+          [...seedResources],
+        );
         const lockKeys = scheduleLockKeys({
           partnerId: peek.partnerId,
-          serviceId,
-          resourceIds: [...resourceIds],
+          serviceIds: scope.serviceIds,
+          resourceIds: scope.resourceIds,
         });
         await acquireScheduleLocks(tx, lockKeys);
+        await lockServiceRows(tx, scope.serviceIds);
 
         const again = await tx.commerceBooking.findUnique({
           where: { userId_idempotencyKey: { userId: actor.userId, idempotencyKey } },

@@ -17,7 +17,7 @@ import {
   parseAvailability,
   unifyResourceCapacities,
 } from '../marketplace/commerce.types';
-import { acquireScheduleLocks, scheduleLockKeys } from '../marketplace/commerce-schedule-locks';
+import { acquireScheduleLocks, expandScheduleScope, lockServiceRows, scheduleLockKeys } from '../marketplace/commerce-schedule-locks';
 import { PrismaService } from '../prisma/prisma.service';
 import { ApplyPartnerDto } from './dto/apply-partner.dto';
 import { UpdateProductDto, UpdateServiceDto, UpsertProductDto, UpsertServiceDto } from './dto/catalog.dto';
@@ -479,14 +479,33 @@ export class PartnersPortalService {
     const category = this.optionalCategory(dto.category, SERVICE_CATEGORIES);
 
     return this.prisma.$transaction(async (tx) => {
-      const resourceIds = resourceIdsFromAvailability(dto.availabilityJson);
+      const seedResources = resourceIdsFromAvailability(dto.availabilityJson);
+      const partnerServices = await tx.service.findMany({
+        where: { partnerId, active: true },
+        select: { id: true, availabilityJson: true },
+      });
+      const scope = expandScheduleScope(
+        [
+          ...partnerServices.map((s) => ({
+            id: s.id,
+            resourceIds: parseAvailability(s.availabilityJson).map((w) => w.resourceId).filter(Boolean) as string[],
+          })),
+          { id: `create:${partnerId}`, resourceIds: seedResources },
+        ],
+        [`create:${partnerId}`],
+        seedResources,
+      );
+      // create:* is advisory-only; row locks apply to real sibling ids.
+      const realServiceIds = scope.serviceIds.filter((id) => !id.startsWith('create:'));
       const lockKeys = scheduleLockKeys({
         partnerId,
-        serviceId: `create:${partnerId}`,
-        resourceIds,
+        serviceIds: scope.serviceIds,
+        resourceIds: scope.resourceIds,
       });
       await acquireScheduleLocks(tx, lockKeys);
+      await lockServiceRows(tx, realServiceIds);
 
+      // Re-read siblings under locks before any unify write.
       const availabilityJson =
         dto.availabilityJson !== undefined
           ? await this.availabilityWrite(partnerId, null, dto.availabilityJson, tx, dto.unifySharedResources === true)
@@ -523,16 +542,57 @@ export class PartnersPortalService {
         dto.availabilityJson !== undefined
           ? resourceIdsFromAvailability(dto.availabilityJson)
           : oldResourceIds;
+      const partnerServices = await tx.service.findMany({
+        where: { partnerId, active: true },
+        select: { id: true, availabilityJson: true },
+      });
+      const scope = expandScheduleScope(
+        partnerServices.map((s) => ({
+          id: s.id,
+          resourceIds: parseAvailability(s.availabilityJson).map((w) => w.resourceId).filter(Boolean) as string[],
+        })),
+        [serviceId],
+        [...new Set([...oldResourceIds, ...newResourceIds])],
+      );
+      // Include resources from the incoming payload even if not yet on siblings.
+      const resourceIds = [...new Set([...scope.resourceIds, ...newResourceIds])].sort();
       const lockKeys = scheduleLockKeys({
         partnerId,
-        serviceId,
-        resourceIds: [...new Set([...oldResourceIds, ...newResourceIds])],
+        serviceIds: scope.serviceIds,
+        resourceIds,
       });
       await acquireScheduleLocks(tx, lockKeys);
-      await tx.$queryRaw`SELECT id FROM services WHERE id = ${serviceId} FOR UPDATE`;
+      await lockServiceRows(tx, scope.serviceIds);
 
       const locked = await tx.service.findFirst({ where: { id: serviceId, partnerId } });
       if (!locked) throw new NotFoundException('الخدمة غير موجودة');
+
+      // If the sharing graph grew after waiting, take any additional locks before writes.
+      const freshPartners = await tx.service.findMany({
+        where: { partnerId, active: true },
+        select: { id: true, availabilityJson: true },
+      });
+      const freshScope = expandScheduleScope(
+        freshPartners.map((s) => ({
+          id: s.id,
+          resourceIds: parseAvailability(s.availabilityJson).map((w) => w.resourceId).filter(Boolean) as string[],
+        })),
+        [serviceId],
+        [
+          ...resourceIdsFromAvailability(locked.availabilityJson),
+          ...(dto.availabilityJson !== undefined ? resourceIdsFromAvailability(dto.availabilityJson) : []),
+        ],
+      );
+      const extraServices = freshScope.serviceIds.filter((id) => !scope.serviceIds.includes(id));
+      const extraResources = freshScope.resourceIds.filter((id) => !resourceIds.includes(id));
+      if (extraServices.length || extraResources.length) {
+        await acquireScheduleLocks(
+          tx,
+          scheduleLockKeys({ partnerId, serviceIds: extraServices, resourceIds: extraResources }),
+        );
+        await lockServiceRows(tx, extraServices);
+      }
+
       const published = locked.contentStatus === 'published';
       const data: {
         draftNameAr?: string;
@@ -595,6 +655,7 @@ export class PartnersPortalService {
     db: {
       service: PrismaService['service'];
       $executeRaw?: PrismaService['$executeRaw'];
+      $queryRaw?: PrismaService['$queryRaw'];
     } = this.prisma,
     unifySharedResources = false,
   ): Promise<Prisma.InputJsonValue | typeof Prisma.DbNull> {
@@ -623,6 +684,7 @@ export class PartnersPortalService {
     if (parsed.length !== windows.length) throw new BadRequestException('فترة توفر غير صالحة');
     assertAvailabilityConsistent(parsed);
     assertResourceCapacitiesConsistent(parsed);
+    // Always re-read siblings under the caller's transaction/locks — never reuse a pre-lock snapshot.
     const siblings = await db.service.findMany({
       where: { partnerId, active: true, ...(serviceId ? { id: { not: serviceId } } : {}) },
       select: { id: true, availabilityJson: true, nameAr: true },
@@ -634,17 +696,27 @@ export class PartnersPortalService {
       }
       const affected: string[] = [];
       let unifiedCount = 0;
-      for (const sibling of siblings) {
-        const siblingWindows = parseAvailability(sibling.availabilityJson);
-        const needs = siblingWindows.some((w) => w.resourceId && capacityByResource.has(w.resourceId) && capacityByResource.get(w.resourceId) !== w.capacity);
+      const siblingIds = siblings.map((s) => s.id).sort();
+      for (const siblingId of siblingIds) {
+        // Re-read each sibling immediately before write so a prior unify in this tx is visible
+        // and a stale pre-lock copy cannot wipe another resource's capacity.
+        const fresh = await db.service.findFirst({
+          where: { id: siblingId, partnerId },
+          select: { id: true, availabilityJson: true, nameAr: true },
+        });
+        if (!fresh) continue;
+        const siblingWindows = parseAvailability(fresh.availabilityJson);
+        const needs = siblingWindows.some(
+          (w) => w.resourceId && capacityByResource.has(w.resourceId) && capacityByResource.get(w.resourceId) !== w.capacity,
+        );
         if (!needs) continue;
         const unified = unifyResourceCapacities(siblingWindows, capacityByResource);
         assertAvailabilityConsistent(unified);
         await db.service.update({
-          where: { id: sibling.id },
+          where: { id: fresh.id },
           data: { availabilityJson: unified as unknown as Prisma.InputJsonValue },
         });
-        affected.push(sibling.nameAr);
+        affected.push(fresh.nameAr);
         unifiedCount += 1;
         if (process.env.MIRA_TEST_UNIFY_FAIL_AFTER === '1' && unifiedCount === 1) {
           throw new BadRequestException('حقن فشل اختبار بعد أول توحيد');
@@ -674,12 +746,35 @@ export class PartnersPortalService {
   }
 
   async deleteService(partnerId: string, serviceId: string) {
-    await this.assertServiceOwner(partnerId, serviceId);
-    await this.prisma.service.update({
-      where: { id: serviceId },
-      data: { active: false, contentStatus: 'withdrawn' },
+    return this.prisma.$transaction(async (tx) => {
+      const current = await tx.service.findFirst({ where: { id: serviceId, partnerId } });
+      if (!current) throw new NotFoundException('الخدمة غير موجودة');
+      const resources = resourceIdsFromAvailability(current.availabilityJson);
+      const partnerServices = await tx.service.findMany({
+        where: { partnerId, active: true },
+        select: { id: true, availabilityJson: true },
+      });
+      const scope = expandScheduleScope(
+        partnerServices.map((s) => ({
+          id: s.id,
+          resourceIds: parseAvailability(s.availabilityJson).map((w) => w.resourceId).filter(Boolean) as string[],
+        })),
+        [serviceId],
+        resources,
+      );
+      await acquireScheduleLocks(
+        tx,
+        scheduleLockKeys({ partnerId, serviceIds: scope.serviceIds, resourceIds: scope.resourceIds }),
+      );
+      await lockServiceRows(tx, scope.serviceIds);
+      const locked = await tx.service.findFirst({ where: { id: serviceId, partnerId } });
+      if (!locked) throw new NotFoundException('الخدمة غير موجودة');
+      await tx.service.update({
+        where: { id: serviceId },
+        data: { active: false, contentStatus: 'withdrawn' },
+      });
+      return { ok: true };
     });
-    return { ok: true };
   }
 
   private optionalCategory(value: string | undefined, allowed: Set<string>): string | null {

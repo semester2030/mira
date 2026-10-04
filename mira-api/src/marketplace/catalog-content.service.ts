@@ -10,6 +10,8 @@ import {
   CatalogMediaUnavailable,
 } from './catalog-media.storage';
 import { assertVariantsMatchOptions } from './commerce-public';
+import { acquireScheduleLocks, expandScheduleScope, lockServiceRows, scheduleLockKeys } from './commerce-schedule-locks';
+import { parseAvailability } from './commerce.types';
 
 type Kind = 'product' | 'service';
 const DECISIONS = new Set(['approve', 'reject', 'withdraw']);
@@ -50,6 +52,7 @@ type OwnerRow = {
   draftVariantsSet?: boolean;
   optionsJson?: Prisma.JsonValue | null;
   variantsJson?: Prisma.JsonValue | null;
+  availabilityJson?: Prisma.JsonValue | null;
 };
 
 @Injectable()
@@ -65,7 +68,7 @@ export class CatalogContentService {
       imagesAloneCanPublish: true,
       purchaseAr: 'فتح الرابط ليس شراءً مكتملًا. لا توجد سلة أو محفظة داخل ميرا في هذه المرحلة.',
       appointmentAr: 'طلب الموعد غير متاح تشغيليًا وليس حجزًا مؤكدًا.',
-      merchantWithoutStoreAr: 'DEC-0007 ما زال يحتاج قرار المالك. إدارة المحتوى لا تنشئ طلبات أو دفعًا.',
+      merchantWithoutStoreAr: 'مسار يدوي داخلي معتمد (DEC-0007 لاحق): إضافة يدوية وشراء COD ومتابعة الطلبات. التخزين الدائم والتكامل الخارجي والمدفوعات الإلكترونية مؤجلة أو خارج النطاق.',
       importAr: 'لا تكامل متجر خارجي معتمد. الاستيراد التجريبي موسوم simulated وليس اتصالًا حقيقيًا.',
       fields: FIELD_OWNERSHIP,
     };
@@ -258,6 +261,35 @@ export class CatalogContentService {
     const exists = await this.ownedRow(typedKind, id);
     if (!exists) throw new NotFoundException('العنصر غير موجود');
     const outcome = await this.prisma.$transaction(async (tx) => {
+      if (decision === 'withdraw' && typedKind === 'service') {
+        const peek = await tx.service.findFirst({
+          where: { id },
+          select: { partnerId: true, availabilityJson: true, contentStatus: true },
+        });
+        if (!peek) throw new NotFoundException('العنصر غير موجود');
+        if (peek.contentStatus !== 'withdrawn') {
+          const resources = parseAvailability(peek.availabilityJson)
+            .map((w) => w.resourceId)
+            .filter(Boolean) as string[];
+          const partnerServices = await tx.service.findMany({
+            where: { partnerId: peek.partnerId, active: true },
+            select: { id: true, availabilityJson: true },
+          });
+          const scope = expandScheduleScope(
+            partnerServices.map((s) => ({
+              id: s.id,
+              resourceIds: parseAvailability(s.availabilityJson).map((w) => w.resourceId).filter(Boolean) as string[],
+            })),
+            [id],
+            resources,
+          );
+          await acquireScheduleLocks(
+            tx,
+            scheduleLockKeys({ partnerId: peek.partnerId, serviceIds: scope.serviceIds, resourceIds: scope.resourceIds }),
+          );
+          await lockServiceRows(tx, scope.serviceIds);
+        }
+      }
       const row = await this.lockOwner(tx, typedKind, id);
       if (decision === 'withdraw') {
         if (row.contentStatus === 'withdrawn') return { contentStatus: 'withdrawn', alreadyApplied: true, id };

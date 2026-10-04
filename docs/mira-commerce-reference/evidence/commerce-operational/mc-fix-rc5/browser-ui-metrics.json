@@ -1,0 +1,233 @@
+[
+  {
+    "width": 390,
+    "metrics": {
+      "tag": "after-remove-attempt",
+      "title": "RC5 portal form — real CatalogJourney (dashboard shell)",
+      "modules": {
+        "MiraCatalogOptions": true,
+        "CatalogJourney": true
+      },
+      "innerWidth": 390,
+      "clientWidth": 390,
+      "scrollWidth": 390,
+      "overflowX": false,
+      "formClientWidth": 309,
+      "formScrollWidth": 316,
+      "conflictText": "",
+      "buttons": [
+        {
+          "text": "إضافة التركيبة",
+          "disabled": false,
+          "w": 139,
+          "h": 49,
+          "visible": true
+        },
+        {
+          "text": "حفظ المسودة",
+          "disabled": false,
+          "w": 138,
+          "h": 47,
+          "visible": true
+        },
+        {
+          "text": "إرسال للمراجعة",
+          "disabled": false,
+          "w": 149,
+          "h": 49,
+          "visible": true
+        }
+      ],
+      "optionLabels": [
+        "الاسم",
+        "الاسم بالإنجليزية (اختياري)",
+        "الوصف",
+        "التصنيف",
+        "اختاريالوجهالجسمالشعرالملابسالإكسسوارات",
+        "السعر بالريال",
+        "نوع البشرة (اختياري)",
+        "خطوة الروتين (اختياري)",
+        "",
+        "50 مل",
+        "100 مل",
+        "قيم خاصة (افصلي بفاصلة)",
+        "المكونات",
+        "طريقة الاستخدام",
+        "الخامة",
+        "سعر التركيبة بالريال (اختياري)",
+        "متاحة للشراء",
+        "إضافة التركيبة",
+        "اختيار صور",
+        "اختيار فيديو",
+        "وسوم اختيارية",
+        "بدون شراء الآن",
+        "شراء عبر رابط",
+        "تواصل",
+        "رابط الشراء (فقط عند اختيار الرابط)",
+        "تفعيل الطلب داخل ميرا (دفع نقدًا عند الا",
+        "المخزون (اتركيه فارغًا إذا لا يُتتبع)",
+        "رسوم التوصيل بالريال (اتركيها فارغة إذا ",
+        "تعديل متقدم بصيغة JSON (يستبدل النموذج ا",
+        "خيارات المنتج JSON (متقدم)",
+        "التركيبات JSON (متقدم)",
+        "حفظ المسودة",
+        "إرسال للمراجعة"
+      ]
+    },
+    "shot": "/Users/fayez/Desktop/mira/docs/mira-commerce-reference/evidence/commerce-operational/mc-fix-rc5/portal-form-390.png"
+  },
+  {
+    "width": 480,
+    "metrics": {
+      "tag": "after-remove-attempt",
+      "title": "RC5 portal form — real CatalogJourney (dashboard shell)",
+      "modules": {
+        "MiraCatalogOptions": true,
+        "CatalogJourney": true
+      },
+      "innerWidth": 480,
+      "clientWidth": 480,
+      "scrollWidth": 480,
+      "overflowX": false,
+      "formClientWidth": 392,
+      "formScrollWidth": 399,
+      "conflictText": "",
+      "buttons": [
+        {
+          "text": "إضافة التركيبة",
+          "disabled": false,
+          "w": 139,
+          "h": 49,
+          "visible": true
+        },
+        {
+          "text": "حفظ المسودة",
+          "disabled": false,
+          "w": 138,
+          "h": 47,
+          "visible": true
+        },
+        {
+          "text": "إرسال للمراجعة",
+          "disabled": false,
+          "w": 149,
+          "h": 49,
+          "visible": true
+        }
+      ],
+      "optionLabels": [
+        "الاسم",
+        "الاسم بالإنجليزية (اختياري)",
+        "الوصف",
+        "التصنيف",
+        "اختاريالوجهالجسمالشعرالملابسالإكسسوارات",
+        "السعر بالريال",
+        "نوع البشرة (اختياري)",
+        "خطوة الروتين (اختياري)",
+        "",
+        "50 مل",
+        "100 مل",
+        "قيم خاصة (افصلي بفاصلة)",
+        "المكونات",
+        "طريقة الاستخدام",
+        "الخامة",
+        "سعر التركيبة بالريال (اختياري)",
+        "متاحة للشراء",
+        "إضافة التركيبة",
+        "اختيار صور",
+        "اختيار فيديو",
+        "وسوم اختيارية",
+        "بدون شراء الآن",
+        "شراء عبر رابط",
+        "تواصل",
+        "رابط الشراء (فقط عند اختيار الرابط)",
+        "تفعيل الطلب داخل ميرا (دفع نقدًا عند الا",
+        "المخزون (اتركيه فارغًا إذا لا يُتتبع)",
+        "رسوم التوصيل بالريال (اتركيها فارغة إذا ",
+        "تعديل متقدم بصيغة JSON (يستبدل النموذج ا",
+        "خيارات المنتج JSON (متقدم)",
+        "التركيبات JSON (متقدم)",
+        "حفظ المسودة",
+        "إرسال للمراجعة"
+      ]
+    },
+    "shot": "/Users/fayez/Desktop/mira/docs/mira-commerce-reference/evidence/commerce-operational/mc-fix-rc5/portal-form-480.png"
+  },
+  {
+    "width": 1280,
+    "metrics": {
+      "tag": "after-remove-attempt",
+      "title": "RC5 portal form — real CatalogJourney (dashboard shell)",
+      "modules": {
+        "MiraCatalogOptions": true,
+        "CatalogJourney": true
+      },
+      "innerWidth": 1280,
+      "clientWidth": 1280,
+      "scrollWidth": 1280,
+      "overflowX": false,
+      "formClientWidth": 910,
+      "formScrollWidth": 917,
+      "conflictText": "",
+      "buttons": [
+        {
+          "text": "إضافة التركيبة",
+          "disabled": false,
+          "w": 139,
+          "h": 49,
+          "visible": true
+        },
+        {
+          "text": "حفظ المسودة",
+          "disabled": false,
+          "w": 138,
+          "h": 47,
+          "visible": true
+        },
+        {
+          "text": "إرسال للمراجعة",
+          "disabled": false,
+          "w": 149,
+          "h": 49,
+          "visible": true
+        }
+      ],
+      "optionLabels": [
+        "الاسم",
+        "الاسم بالإنجليزية (اختياري)",
+        "الوصف",
+        "التصنيف",
+        "اختاريالوجهالجسمالشعرالملابسالإكسسوارات",
+        "السعر بالريال",
+        "نوع البشرة (اختياري)",
+        "خطوة الروتين (اختياري)",
+        "",
+        "50 مل",
+        "100 مل",
+        "قيم خاصة (افصلي بفاصلة)",
+        "المكونات",
+        "طريقة الاستخدام",
+        "الخامة",
+        "سعر التركيبة بالريال (اختياري)",
+        "متاحة للشراء",
+        "إضافة التركيبة",
+        "اختيار صور",
+        "اختيار فيديو",
+        "وسوم اختيارية",
+        "بدون شراء الآن",
+        "شراء عبر رابط",
+        "تواصل",
+        "رابط الشراء (فقط عند اختيار الرابط)",
+        "تفعيل الطلب داخل ميرا (دفع نقدًا عند الا",
+        "المخزون (اتركيه فارغًا إذا لا يُتتبع)",
+        "رسوم التوصيل بالريال (اتركيها فارغة إذا ",
+        "تعديل متقدم بصيغة JSON (يستبدل النموذج ا",
+        "خيارات المنتج JSON (متقدم)",
+        "التركيبات JSON (متقدم)",
+        "حفظ المسودة",
+        "إرسال للمراجعة"
+      ]
+    },
+    "shot": "/Users/fayez/Desktop/mira/docs/mira-commerce-reference/evidence/commerce-operational/mc-fix-rc5/portal-form-1280.png"
+  }
+]

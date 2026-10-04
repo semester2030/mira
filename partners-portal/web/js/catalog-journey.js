@@ -698,8 +698,11 @@
     }
     category.onchange = function () {
       cosmeticVisible();
-      if (type === 'brand') paintOptions();
-      else paintServiceTemplates();
+      if (type === 'brand') {
+        // Keep selected values/variants already chosen; only repaint presets for the new category.
+        // Silent drop of saved groups is blocked by structuredOptionsPayload conflicts.
+        paintOptions();
+      } else paintServiceTemplates();
     };
     cosmeticVisible();
 
@@ -1075,8 +1078,9 @@
     function structuredOptionsPayload() {
       const groups = buildOptionGroups();
       optionsState._builtGroups = groups;
+      const preset = optionPresets(category.value);
       if (window.MiraCatalogOptions && window.MiraCatalogOptions.structuredOptionsPayload) {
-        return window.MiraCatalogOptions.structuredOptionsPayload(optionsState);
+        return window.MiraCatalogOptions.structuredOptionsPayload(optionsState, preset.groups);
       }
       if (optionsState.clearingOptions) {
         return { optionsJson: null, variantsJson: null, clearing: true, error: null, conflicts: [] };

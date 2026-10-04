@@ -1,0 +1,13 @@
+RC5 LIVE_JOURNEY
+date=2026-10-04T20:25:00Z
+commit_tested=PENDING_COMMIT
+portal_form_modules=PASS (CatalogJourney+MiraCatalogOptions at 390/480/1280; overflowX=false; buttons reachable)
+portal_authenticated_save_submit_admin=NOT_RUN (no isolated partner/admin test credentials in this environment; AUTH_SKIP forbidden for live proof)
+COD_journey=NOT_RUN
+booking_journey=NOT_RUN
+partner_followup=NOT_RUN
+admin_followup=NOT_RUN
+favorites_share=NOT_RUN
+device_run=PENDING
+views=DEFERRED_BY_OWNER
+durable_storage=DEFERRED_BY_OWNER

@@ -1,0 +1,40 @@
+4:> tsx src/marketplace/commerce.types.schema-tests.ts && tsx src/marketplace/commerce-public.schema-tests.ts && tsx src/marketplace/commerce.service.schema-tests.ts && tsx src/marketplace/commerce.concurrency.schema-tests.ts && tsx src/marketplace/commerce.create-service-atomic.schema-tests.ts && tsx src/marketplace/commerce.lost-update.schema-tests.ts && tsx src/marketplace/commerce.http.integration-tests.ts
+15:[concurrency] A PASS: waiter saw new price via QUOTE_STALE
+17:[concurrency] B PASS: EXTERNAL under protected verify
+18:[concurrency] D PASS: single winner on last unit
+19:[concurrency] F PASS: one booking on shared Arabic resource capacity
+23:[concurrency] E1 PASS: booking waited then rejected after disable under shared keys
+26:[concurrency] E2 PASS: updateService shared schedule lock protocol
+29:[concurrency] E3 PASS: schedule/capacity update synchronized with booking locks
+30:[concurrency] E4 PASS: production updateService won; booking rejected
+31:[concurrency] E5: withdraw-equivalent locks held
+32:[concurrency] E5: createBooking waiting during withdraw barrier
+33:[concurrency] E5: withdrawn under held locks
+34:[concurrency] E5 PASS: withdraw committed first; booking rejected
+35:[concurrency] E6: booking-side locks held before deleteService
+36:[concurrency] E6: production deleteService waiting
+37:[concurrency] E6 PASS: deleteService shared schedule lock protocol
+38:[concurrency] H PASS: historical booking snapshot retained after portal price edit
+39:[concurrency] I PASS: two partners same resource name book independently
+48:2026-10-04T20:08:34.357Z A PASS: waiter saw new price via QUOTE_STALE
+50:2026-10-04T20:08:34.391Z B PASS: EXTERNAL under protected verify
+51:2026-10-04T20:08:34.416Z D PASS: single winner on last unit
+52:2026-10-04T20:08:34.432Z F PASS: one booking on shared Arabic resource capacity
+56:2026-10-04T20:08:34.463Z E1 PASS: booking waited then rejected after disable under shared keys
+59:2026-10-04T20:08:34.517Z E2 PASS: updateService shared schedule lock protocol
+62:2026-10-04T20:08:34.547Z E3 PASS: schedule/capacity update synchronized with booking locks
+63:2026-10-04T20:08:34.554Z E4 PASS: production updateService won; booking rejected
+64:2026-10-04T20:08:34.555Z E5: withdraw-equivalent locks held
+65:2026-10-04T20:08:34.582Z E5: createBooking waiting during withdraw barrier
+66:2026-10-04T20:08:34.583Z E5: withdrawn under held locks
+67:2026-10-04T20:08:34.585Z E5 PASS: withdraw committed first; booking rejected
+68:2026-10-04T20:08:34.586Z E6: booking-side locks held before deleteService
+69:2026-10-04T20:08:34.613Z E6: production deleteService waiting
+70:2026-10-04T20:08:34.617Z E6 PASS: deleteService shared schedule lock protocol
+71:2026-10-04T20:08:34.627Z H PASS: historical booking snapshot retained after portal price edit
+72:2026-10-04T20:08:34.635Z I PASS: two partners same resource name book independently
+73:1 PASS: invalid category + unify — no sibling mutation
+74:2 PASS: injected mid-unify failure rolls back
+75:3 PASS: atomic success unify + create
+76:4 PASS: concurrent unify — no mixed capacities 4
+77:5 PASS: other partner untouched

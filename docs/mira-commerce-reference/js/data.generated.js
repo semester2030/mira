@@ -1391,7 +1391,7 @@ window.MIRA_STUDY = {
     {
       "id": "DEC-0007",
       "titleAr": "مسار التاجر الذي لا يملك متجرًا خارجيًا",
-      "status": "يحتاج قرارًا",
+      "status": "مقرّر جزئيًا — مسار يدوي داخلي معتمد؛ التكامل الخارجي والمدفوعات الأخرى مؤجلة",
       "owner": "مالك المشروع",
       "options": [
         "يبقى بلا شراء داخلي حتى قرار الدفع",
@@ -1399,7 +1399,9 @@ window.MIRA_STUDY = {
       ],
       "evidenceIds": [
         "EVD-0029"
-      ]
+      ],
+      "decisionAr": "قرار لاحق معتمد للتشغيل: الإضافة اليدوية للمنتجات/الخدمات داخل ميرا، ومسار الشراء الداخلي بالدفع عند الاستلام، ومتابعة الطلبات عبر بوابة التاجر ولوحة الإدارة. التخزين الدائم وعدّ المشاهدات والمدفوعات الإلكترونية وتكامل الشحن/المتاجر الخارجية تبقى خارج هذا القرار أو مؤجلة حسب حالتها.",
+      "remainingAr": "التخزين الدائم والتكامل الخارجي والمدفوعات الإلكترونية ليست ضمن هذا القرار التشغيلي."
     }
   ],
   "roadmap": [
@@ -2577,7 +2579,7 @@ window.MIRA_STUDY = {
       "symbol": "_openAdLink",
       "lines": "",
       "commitSha": "",
-      "fileSha256": "16e86ba569200da3e0c6adbdde816886cd8fcdc00ac1eed57df6355ac0f4520a",
+      "fileSha256": "52fa679f13244c97152606a871b5b2ab2945023a3dbf9cf386d5538bc2cc3614",
       "excerptFile": "evidence/source/EVD-0046.txt",
       "proves": "كل فتح مستقل يحصل على معرف جديد، وإعادة الإرسال تحتفظ بمعرف المحاولة نفسها",
       "doesNotProve": "لا يثبت شراءً ولا مشاهدة، ولا يثبت أن عداد RC5 كان فريدًا عبر المثيلات",
@@ -9676,7 +9678,7 @@ window.MIRA_STUDY = {
           }
         ],
         "expectedAr": "أدلة اختبار شاملة، وحالة واضحة لكل مانع، وقرار جاهزية مبني على النتائج.",
-        "actualAr": "2026-10-04 RC4: جولة إغلاق بعد مراجعة RC3 — قوائم تركيبة حيّة، أقفال جدول موحّدة partner-scoped، createService ذري، إصلاح استيرادات Flutter/Kotlin، تحديث موقع PH-5 دون اعتماد المرحلة. المشاهدات والتخزين الدائم مؤجلان بقرار المالك. 2026-10-01 RC3-live: push ebc2869→main؛ mira-api dep-dav4o060tbcc73ee12ng LIVE؛ admin dep-dav4p48jo6nc73fgtfj0 LIVE؛ بوابة picker بلا | لقطات 390/480/1280؛ حزمة RC3 sha d33a94…؛ جهاز/رحلة COD جديدة NOT_RUN. 2026-10-01 RC3: جولة إغلاق تصحيحية بعد مراجعة RC2 — تحقق مجمّع للخيارات/التركيبات، واجهة اختيار بلا |، تعارض مورد صريح + unifySharedResources، اختبارات تزامن بحواجز pg_locks، اختبارات بوابة على MiraCatalogOptions المشترك. لا اعتماد مرحلة. 2026-10-01 RC2: commit bbbfa84 2026-10-01 RC2-live: push 9bfd3a6؛ mira-api LIVE؛ admin rootDir=admin-portal/web؛ رحلة COD MO-261001-E8AYP5 delivered+collected؛ حجز MB-261001-VWBG2A confirmed غرفة-أ؛ حزمة reseal sha e31ec1d…؛ جهاز flutter run قيد/جزئي؛ مشاهدات ووسائط دائمة مؤجلة.؛ حزمة MIRA_COMMERCE_MC_FIX_RC2؛ إدارة Render srv-dav2ih0jo6nc73f7d9rg. 2026-10-01: مراجعة مستقلة لـ MIRA_COMMERCE_MC_FIX_338c26d → يحتاج تصحيحًا. فُتحت جولة RC2 على بطاقات MC-FIX دون اعتماد المرحلة. 2026-10-01: نُشر commit 338c26d على mira-api (dep-dav20o5g1s2s73d7fqd0 LIVE). حزمة MIRA_COMMERCE_MC_FIX_338c26d.zip على سطح المكتب. MC-FIX-01…03 مختبرة محليًا. الإدارة الحية ورحلات الجهاز مفتوحة. 2026-10-01: بعد مراجعة 8ebbf54 (يحتاج تصحيحًا واستكمال أدلة) فُتحت بطاقات MC-FIX-01…09 على المرحلة الخامسة دون اعتماد المرحلة. الكود التصحيحي قيد التنفيذ فوق HEAD الحالي مع الحفاظ على أعمال المستخدم. 2026-09-27: رُفع commit 36b080cb3591b5cf15ded803e02a6fc03510cfd5 إلى origin/main. mira-api نُشر حيًا على Render بنفس الـSHA. التطبيق اشتغل على آيفون fayez بنمط debug وظهر اكتشفي بالعربية وRTL. الكتالوج المنشور أعاد 8 عناصر. وسائط العرض الظاهر فارغة. البنود الأربعة ما زالت مؤجلة.",
+        "actualAr": "2026-10-04 RC5: جولة إغلاق بعد مراجعة RC4 — منع تصغير التركيبة بصمت، توسيع أقفال الموارد المشتركة، سحب الخدمة ضمن بروتوكول الحجز، بوابة/جهاز/موقع قيد الاستكمال. لا اعتماد مرحلة. 2026-10-04 RC4: جولة إغلاق بعد مراجعة RC3 — قوائم تركيبة حيّة، أقفال جدول موحّدة partner-scoped، createService ذري، إصلاح استيرادات Flutter/Kotlin، تحديث موقع PH-5 دون اعتماد المرحلة. المشاهدات والتخزين الدائم مؤجلان بقرار المالك. 2026-10-01 RC3-live: push ebc2869→main؛ mira-api dep-dav4o060tbcc73ee12ng LIVE؛ admin dep-dav4p48jo6nc73fgtfj0 LIVE؛ بوابة picker بلا | لقطات 390/480/1280؛ حزمة RC3 sha d33a94…؛ جهاز/رحلة COD جديدة NOT_RUN. 2026-10-01 RC3: جولة إغلاق تصحيحية بعد مراجعة RC2 — تحقق مجمّع للخيارات/التركيبات، واجهة اختيار بلا |، تعارض مورد صريح + unifySharedResources، اختبارات تزامن بحواجز pg_locks، اختبارات بوابة على MiraCatalogOptions المشترك. لا اعتماد مرحلة. 2026-10-01 RC2: commit bbbfa84 2026-10-01 RC2-live: push 9bfd3a6؛ mira-api LIVE؛ admin rootDir=admin-portal/web؛ رحلة COD MO-261001-E8AYP5 delivered+collected؛ حجز MB-261001-VWBG2A confirmed غرفة-أ؛ حزمة reseal sha e31ec1d…؛ جهاز flutter run قيد/جزئي؛ مشاهدات ووسائط دائمة مؤجلة.؛ حزمة MIRA_COMMERCE_MC_FIX_RC2؛ إدارة Render srv-dav2ih0jo6nc73f7d9rg. 2026-10-01: مراجعة مستقلة لـ MIRA_COMMERCE_MC_FIX_338c26d → يحتاج تصحيحًا. فُتحت جولة RC2 على بطاقات MC-FIX دون اعتماد المرحلة. 2026-10-01: نُشر commit 338c26d على mira-api (dep-dav20o5g1s2s73d7fqd0 LIVE). حزمة MIRA_COMMERCE_MC_FIX_338c26d.zip على سطح المكتب. MC-FIX-01…03 مختبرة محليًا. الإدارة الحية ورحلات الجهاز مفتوحة. 2026-10-01: بعد مراجعة 8ebbf54 (يحتاج تصحيحًا واستكمال أدلة) فُتحت بطاقات MC-FIX-01…09 على المرحلة الخامسة دون اعتماد المرحلة. الكود التصحيحي قيد التنفيذ فوق HEAD الحالي مع الحفاظ على أعمال المستخدم. 2026-09-27: رُفع commit 36b080cb3591b5cf15ded803e02a6fc03510cfd5 إلى origin/main. mira-api نُشر حيًا على Render بنفس الـSHA. التطبيق اشتغل على آيفون fayez بنمط debug وظهر اكتشفي بالعربية وRTL. الكتالوج المنشور أعاد 8 عناصر. وسائط العرض الظاهر فارغة. البنود الأربعة ما زالت مؤجلة.",
         "status": "قيد التنفيذ — نشر وتشغيل واختبار النسخة الحالية",
         "dependenciesAr": "اكتمال المراحل السابقة التي تدخل في قرار الجاهزية. تجهيز الإطلاق لا يعني النشر.",
         "notesAr": "سجل التصحيح التشغيلي: evidence/commerce-operational/MC_FIX_TRACKER.md و CORRECTION_DELIVERY.md. لا اعتماد ذاتي للمرحلة الخامسة. المستودع https://github.com/semester2030/mira الفرع main. خدمة mira-api srv-d85ngcfavr4c73d3rk6g والرابط https://mira-api-n4p3.onrender.com. النشر dep-dasamlrncjis73ebfd0g. بوابة الشركاء https://mira-partners-portal.onrender.com. لا توجد خدمة إدارة منشورة. CI Mira CI فشل في التحليل ولا يمنع النسخة العاملة. لقطة الجهاز: evidence/ph5/iphone-discover.png.",
@@ -9811,20 +9813,151 @@ window.MIRA_STUDY = {
             "id": "DEL-MC-FIX-RC4",
             "name": "MIRA_COMMERCE_MC_FIX_RC4.zip",
             "createdAt": "2026-10-04T22:00:00+03:00",
-            "deliveryStatus": "منفّذ ومختبر — بانتظار المراجعة المستقلة",
+            "deliveryStatus": "تمت مراجعته — يحتاج تصحيحًا",
             "logHref": "evidence/commerce-operational/MC_FIX_RC4_TRACKER.md",
             "logLabel": "متتبع جولة RC4",
             "sha256": "b87f4915748ffbdb42e9ad51b1ebf3bb4979b247cbd1606017a22f143fef88d4",
-            "reviewResultAr": "لم تصدر بعد",
+            "reviewResultAr": "مراجعة مستقلة لحزمة RC4 (sha b87f49…، مصدر 012feb1): سلامة ZIP مثبتة. ملاحظات إغلاق: (1) حذف آخر قيمة لمجموعة مستخدمة يصغّر التركيبة بصمت؛ (2) تزامن unify على خدمة مشتركة يمحو سعة مورد آخر؛ (3) deleteService خارج بروتوكول الحجز؛ (4) harness بصري بدل النموذج الحقيقي + مسار analyze خاطئ؛ (5) رحلات جهاز/COD ناقصة؛ (6) validate_package/freshness وWIP وDEC-0007. فُتحت جولة RC5 دون اعتماد المرحلة.",
             "approvalAr": "غير معتمدة",
             "zipHref": "../../MIRA_COMMERCE_MC_FIX_RC4.zip",
             "zipLabel": "حزمة RC4 على سطح المكتب",
             "sha256Href": "evidence/commerce-operational/mc-fix-rc4/MIRA_COMMERCE_MC_FIX_RC4.zip.sha256",
             "verificationHref": "evidence/commerce-operational/mc-fix-rc4/PACKAGE_VERIFY.txt",
             "verificationLabel": "تحقق الحزمة"
+          },
+          {
+            "id": "DEL-MC-FIX-RC5",
+            "name": "MIRA_COMMERCE_MC_FIX_RC5.zip",
+            "createdAt": "2026-10-04T23:00:00+03:00",
+            "deliveryStatus": "قيد التنفيذ — بانتظار اكتمال الأدلة والختم",
+            "logHref": "evidence/commerce-operational/MC_FIX_RC5_TRACKER.md",
+            "logLabel": "متتبع جولة RC5",
+            "sha256": "يُحدَّث عند الختم",
+            "reviewResultAr": "لم تصدر بعد",
+            "approvalAr": "غير معتمدة",
+            "zipHref": "../../MIRA_COMMERCE_MC_FIX_RC5.zip",
+            "zipLabel": "حزمة RC5 على سطح المكتب",
+            "sha256Href": "evidence/commerce-operational/mc-fix-rc5/MIRA_COMMERCE_MC_FIX_RC5.zip.sha256",
+            "verificationHref": "evidence/commerce-operational/mc-fix-rc5/PACKAGE_VERIFY.txt",
+            "verificationLabel": "تحقق الحزمة"
           }
         ],
         "corrections": [
+          {
+            "id": "RC5-01",
+            "titleAr": "منع حذف خصائص التركيبة بصمت",
+            "relatedTaskIds": [
+              "P5-CREATE-01",
+              "P5-T1"
+            ],
+            "status": "منفّذ ومختبر محليًا — بانتظار المراجعة المستقلة",
+            "problemAr": "حذف آخر قيمة من مجموعة مستخدمة يسقط المجموعة من buildOptionGroups فيُعاد بناء التركيبة بالمجموعات المتبقية فقط.",
+            "fixAr": "structuredOptionsPayload يتحقق من المجموعات التي تشير إليها التركيبات؛ تعارض واضح وvariantsJson فارغ عند التعارض.",
+            "resultAr": "catalog-options-rc5-tests PASS؛ يبقى مسار المسح الصريح working.",
+            "evidenceAr": "evidence/commerce-operational/mc-fix-rc5/portal-options.log",
+            "evidenceLinks": [
+              {
+                "href": "evidence/commerce-operational/MC_FIX_RC5_TRACKER.md",
+                "label": "متتبع RC5"
+              }
+            ],
+            "remainingAr": "رحلة بوابة مصدّقة 390/480/1280"
+          },
+          {
+            "id": "RC5-02",
+            "titleAr": "منع ضياع تعديلات الموارد المشتركة",
+            "relatedTaskIds": [
+              "P5-SERVICE-01"
+            ],
+            "status": "منفّذ ومختبر محليًا على PostgreSQL — بانتظار المراجعة المستقلة",
+            "problemAr": "تعديلان متزامنان يوحّدان موارد مختلفة يقرآن C قديمًا فيمحو أحدهما سعة الآخر.",
+            "fixAr": "expandScheduleScope + أقفال خدمات/موارد مشتركة + إعادة قراءة قبل الكتابة.",
+            "resultAr": "commerce.lost-update.schema-tests PASS؛ atomic RC4 ما زال PASS.",
+            "evidenceAr": "evidence/commerce-operational/mc-fix-rc5/test-commerce.log",
+            "evidenceLinks": [
+              {
+                "href": "evidence/commerce-operational/MC_FIX_RC5_TRACKER.md",
+                "label": "متتبع RC5"
+              }
+            ],
+            "remainingAr": "توحيد حي من البوابة"
+          },
+          {
+            "id": "RC5-03",
+            "titleAr": "إدخال سحب الخدمة في بروتوكول الحجز",
+            "relatedTaskIds": [
+              "P5-SERVICE-01"
+            ],
+            "status": "منفّذ ومختبر محليًا على PostgreSQL — بانتظار المراجعة المستقلة",
+            "problemAr": "deleteService/withdraw خارج الأقفال المشتركة مع createBooking.",
+            "fixAr": "deleteService وقرار withdraw الإداري يستخدمان schedule locks؛ اختبارات E5/E6.",
+            "resultAr": "concurrency E5/E6 PASS",
+            "evidenceAr": "evidence/commerce-operational/mc-fix-rc5/test-commerce.log",
+            "evidenceLinks": [
+              {
+                "href": "evidence/commerce-operational/MC_FIX_RC5_TRACKER.md",
+                "label": "متتبع RC5"
+              }
+            ],
+            "remainingAr": "—"
+          },
+          {
+            "id": "RC5-04",
+            "titleAr": "اختبار البوابة الفعلية والبناء",
+            "relatedTaskIds": [
+              "P5-T2"
+            ],
+            "status": "قيد التنفيذ",
+            "problemAr": "harness معزول؛ analyze بمسار خاطئ في RC4.",
+            "fixAr": "analyze من جذر Flutter؛ بوابة حقيقية؛ بناء APK من الفك.",
+            "resultAr": "يُحدَّث بالأدلة",
+            "evidenceAr": "mc-fix-rc5/",
+            "evidenceLinks": [],
+            "remainingAr": "بوابة مصدّقة + الجهاز"
+          },
+          {
+            "id": "RC5-05",
+            "titleAr": "النشر ورحلات الجهاز والبوابات",
+            "relatedTaskIds": [
+              "P5-T1",
+              "P5-T3"
+            ],
+            "status": "قيد التنفيذ",
+            "problemAr": "رحلات RC4 NOT_RUN/PARTIAL",
+            "fixAr": "نشر  + رحلات حسابات اختبار",
+            "resultAr": "يُحدَّث",
+            "evidenceAr": "LIVE_JOURNEY.txt ؛ device-run.txt",
+            "evidenceLinks": [],
+            "remainingAr": "حسابات اختبار إن تعذرت تُسجَّل NOT_RUN"
+          },
+          {
+            "id": "RC5-06",
+            "titleAr": "إغلاق ملاحظات الموقع وسجل المراحل",
+            "relatedTaskIds": [
+              "P5-T3"
+            ],
+            "status": "قيد التنفيذ",
+            "problemAr": "validate_package/freshness؛ WIP؛ PACKAGE_VERIFY مفقود في الوجهة؛ DEC-0007",
+            "fixAr": "تصحيح الروابط والأدلة وDEC-0007",
+            "resultAr": "يُحدَّث بنتيجة الفحص من الفك",
+            "evidenceAr": "mc-fix-rc5/site-validate.txt",
+            "evidenceLinks": [],
+            "remainingAr": "فحص من الفك النهائي"
+          },
+          {
+            "id": "RC5-07",
+            "titleAr": "حزمة مراجعة قابلة لإعادة التحقق",
+            "relatedTaskIds": [
+              "P5-T3"
+            ],
+            "status": "قيد التنفيذ",
+            "problemAr": "تسليم RC5",
+            "fixAr": "ZIP + sha + verification خارجي",
+            "resultAr": "يُحدَّث عند الختم",
+            "evidenceAr": "PACKAGE_VERIFY.txt",
+            "evidenceLinks": [],
+            "remainingAr": "الختم بعد اكتمال الأدلة"
+          },
           {
             "id": "RC4-01",
             "titleAr": "إصلاح قوائم التركيبات المتغيرة",

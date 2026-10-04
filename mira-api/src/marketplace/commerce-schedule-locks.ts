@@ -10,27 +10,76 @@ export function bookingServiceLockKey(serviceId: string): string {
   return `commerce-booking-service:${serviceId}`;
 }
 
-/** Stable lock keys for a service schedule write or booking against its windows. */
+/** Stable lock keys for schedule writes/bookings. Include every affected service id. */
 export function scheduleLockKeys(opts: {
   partnerId: string;
-  serviceId: string;
+  serviceIds: ReadonlyArray<string>;
   resourceIds: ReadonlyArray<string>;
 }): string[] {
   const keys = new Set<string>();
-  keys.add(bookingServiceLockKey(opts.serviceId));
+  for (const serviceId of opts.serviceIds) {
+    if (serviceId) keys.add(bookingServiceLockKey(serviceId));
+  }
   for (const resourceId of opts.resourceIds) {
     if (resourceId) keys.add(bookingResourceLockKey(opts.partnerId, resourceId));
   }
   return [...keys].sort();
 }
 
+/**
+ * Expand seed service/resources to the full partner-local sharing graph
+ * (services sharing a resource, then resources on those services, transitively).
+ * Independent partners never appear here — caller scopes the service list by partnerId.
+ */
+export function expandScheduleScope(
+  services: ReadonlyArray<{ id: string; resourceIds: ReadonlyArray<string> }>,
+  seedServiceIds: ReadonlyArray<string>,
+  seedResourceIds: ReadonlyArray<string>,
+): { serviceIds: string[]; resourceIds: string[] } {
+  const serviceIds = new Set(seedServiceIds.filter(Boolean));
+  const resourceIds = new Set(seedResourceIds.filter(Boolean));
+  let changed = true;
+  while (changed) {
+    changed = false;
+    for (const svc of services) {
+      const overlapsResource = svc.resourceIds.some((r) => r && resourceIds.has(r));
+      const overlapsService = serviceIds.has(svc.id);
+      if (!overlapsResource && !overlapsService) continue;
+      if (!serviceIds.has(svc.id)) {
+        serviceIds.add(svc.id);
+        changed = true;
+      }
+      for (const r of svc.resourceIds) {
+        if (r && !resourceIds.has(r)) {
+          resourceIds.add(r);
+          changed = true;
+        }
+      }
+    }
+  }
+  return {
+    serviceIds: [...serviceIds].sort(),
+    resourceIds: [...resourceIds].sort(),
+  };
+}
+
 type TxLike = {
   $executeRaw: (query: TemplateStringsArray, ...values: unknown[]) => Promise<unknown>;
+  $queryRaw?: (query: TemplateStringsArray, ...values: unknown[]) => Promise<unknown>;
 };
 
 /** Acquire advisory xact locks in sorted order to avoid deadlocks. */
 export async function acquireScheduleLocks(tx: TxLike, keys: ReadonlyArray<string>): Promise<void> {
   for (const key of keys) {
     await tx.$executeRaw`SELECT pg_advisory_xact_lock(hashtext(${key}))`;
+  }
+}
+
+/** Lock service rows in sorted id order after advisory keys. */
+export async function lockServiceRows(tx: TxLike, serviceIds: ReadonlyArray<string>): Promise<void> {
+  const ids = [...new Set(serviceIds.filter(Boolean))].sort();
+  for (const id of ids) {
+    if (!tx.$queryRaw) continue;
+    await tx.$queryRaw`SELECT id FROM services WHERE id = ${id} FOR UPDATE`;
   }
 }

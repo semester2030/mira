@@ -1,0 +1,160 @@
+<!DOCTYPE html>
+<html lang="ar" dir="rtl">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>RC5 portal form — real CatalogJourney (dashboard shell)</title>
+  <link href="https://fonts.googleapis.com/css2?family=Tajawal:wght@400;700;800&display=swap" rel="stylesheet" />
+  <link rel="stylesheet" href="/css/site.css" />
+  <style>
+    #metrics { font: 12px/1.4 monospace; white-space: pre-wrap; padding: 8px; background: #111; color: #9f9; max-height: 220px; overflow: auto; }
+  </style>
+</head>
+<body>
+  <pre id="metrics">loading…</pre>
+  <!-- Minimal real dashboard shell required by CatalogJourney.renderForm -->
+  <main class="container">
+    <div class="card" id="catalogSection">
+      <h2 id="catalogTitle">الكتالوج</h2>
+      <div id="catalogList"></div>
+      <h2>إضافة جديد</h2>
+      <form id="catalogForm"></form>
+    </div>
+    <div class="card hidden" id="serviceSection">
+      <h2 id="serviceTitle">خدمات</h2>
+      <div id="serviceList"></div>
+      <form id="serviceForm"></form>
+    </div>
+  </main>
+  <script>
+    window.PartnersApi = {
+      dashboard: async () => ({ partner: window.sessionPartner, catalog: { products: [], services: [] } }),
+      createProduct: async () => { throw new Error('blocked-in-rc5-ui-probe-no-auth-save'); },
+      updateProduct: async () => { throw new Error('blocked-in-rc5-ui-probe-no-auth-save'); },
+      createService: async () => { throw new Error('blocked-in-rc5-ui-probe-no-auth-save'); },
+      updateService: async () => { throw new Error('blocked-in-rc5-ui-probe-no-auth-save'); },
+    };
+    window.sessionPartner = { id: 'rc5-probe', type: 'brand', nameAr: 'RC5 Probe', contactPhone: '0500000000' };
+  </script>
+  <script src="/js/catalog-options-core.js"></script>
+  <script src="/js/catalog-journey.js"></script>
+  <script>
+    function recordMetrics(tag) {
+      const el = document.documentElement;
+      const form = document.getElementById('catalogForm');
+      const conflict = form.querySelector('[data-variant-conflicts]');
+      const buttons = [...form.querySelectorAll('button')].map((b) => {
+        const r = b.getBoundingClientRect();
+        return {
+          text: (b.textContent || '').trim().slice(0, 48),
+          disabled: !!b.disabled,
+          w: Math.round(r.width),
+          h: Math.round(r.height),
+          visible: r.width > 0 && r.height > 0,
+        };
+      });
+      const payload = {
+        tag,
+        title: document.title,
+        modules: {
+          MiraCatalogOptions: !!window.MiraCatalogOptions,
+          CatalogJourney: !!window.CatalogJourney,
+        },
+        innerWidth: window.innerWidth,
+        clientWidth: el.clientWidth,
+        scrollWidth: el.scrollWidth,
+        overflowX: el.scrollWidth > el.clientWidth + 1,
+        formClientWidth: form.clientWidth,
+        formScrollWidth: form.scrollWidth,
+        conflictText: conflict ? conflict.textContent : '',
+        buttons,
+        optionLabels: [...form.querySelectorAll('label, button, select')].slice(0, 40).map((n) => (n.textContent || '').trim().slice(0, 40)),
+      };
+      document.getElementById('metrics').textContent = JSON.stringify(payload, null, 2);
+      window.__RC5_METRICS__ = payload;
+      return payload;
+    }
+
+    function clickText(re) {
+      const btn = [...document.querySelectorAll('#catalogForm button')].find((b) => re.test((b.textContent || '').trim()));
+      if (btn) btn.click();
+      return !!btn;
+    }
+
+    async function runProbe() {
+      window.CatalogJourney.renderForm('brand', null, 'catalogForm', 'catalogTitle');
+      await new Promise((r) => setTimeout(r, 30));
+
+      // Enable internal COD so options UI is active.
+      const cod = document.querySelector('#catalogForm input[name="internalCod"]');
+      if (cod && !cod.checked) {
+        cod.checked = true;
+        cod.dispatchEvent(new Event('change', { bubbles: true }));
+      }
+
+      // Select face category for cosmetic option groups if present.
+      const category = document.querySelector('#catalogForm select[name="category"]');
+      if (category) {
+        const face = [...category.options].find((o) => o.value === 'face' || /وجه|face/i.test(o.textContent));
+        if (face) {
+          category.value = face.value;
+          category.dispatchEvent(new Event('change', { bubbles: true }));
+        }
+      }
+      await new Promise((r) => setTimeout(r, 30));
+
+      // Add size chips via visible inputs/buttons in the real form.
+      const addValue = (groupHint, label) => {
+        const sections = [...document.querySelectorAll('#catalogForm .form-section, #catalogForm div')];
+        // Find text input near a heading containing groupHint
+        const headings = [...document.querySelectorAll('#catalogForm h3, #catalogForm h4, #catalogForm strong, #catalogForm label')];
+        const head = headings.find((h) => groupHint.test(h.textContent || ''));
+        if (!head) return false;
+        let root = head.parentElement;
+        for (let i = 0; i < 4 && root; i++) {
+          const input = root.querySelector('input[type="text"], input:not([type])');
+          const addBtn = [...root.querySelectorAll('button')].find((b) => /إضافة|أضف|add|\+/i.test(b.textContent || ''));
+          if (input && addBtn) {
+            input.value = label;
+            input.dispatchEvent(new Event('input', { bubbles: true }));
+            addBtn.click();
+            return true;
+          }
+          root = root.parentElement;
+        }
+        return false;
+      };
+
+      addValue(/مقاس|size/i, 'M');
+      addValue(/مقاس|size/i, 'L');
+      addValue(/لون|color/i, 'أسود');
+      addValue(/لون|color/i, 'أبيض');
+      await new Promise((r) => setTimeout(r, 40));
+      addValue(/مقاس|size/i, 'XL');
+      await new Promise((r) => setTimeout(r, 40));
+
+      // Capture picker options after XL
+      const beforeConflict = recordMetrics('after-chips');
+
+      // Force a used-group last-value delete conflict via MiraCatalogOptions path used by save.
+      if (window.MiraCatalogOptions && beforeConflict) {
+        // Find options state through open form internals if exposed
+      }
+
+      // Try removing last color chip button if present
+      const colorRemove = [...document.querySelectorAll('#catalogForm button')].filter((b) => /حذف|إزالة|×|x/i.test(b.textContent || ''));
+      if (colorRemove.length) colorRemove[colorRemove.length - 1].click();
+      await new Promise((r) => setTimeout(r, 40));
+      recordMetrics('after-remove-attempt');
+
+      window.__RC5_READY__ = true;
+    }
+
+    runProbe().catch((e) => {
+      document.getElementById('metrics').textContent = 'FAIL ' + (e && e.stack ? e.stack : e);
+      window.__RC5_READY__ = false;
+      window.__RC5_ERROR__ = String(e);
+    });
+  </script>
+</body>
+</html>

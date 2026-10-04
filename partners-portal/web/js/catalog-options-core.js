@@ -56,10 +56,11 @@
       id: variant.id,
       selections: Object.assign({}, variant.selections),
       labels: Object.fromEntries(
-        groups.map((g) => {
-          const valueId = variant.selections && variant.selections[g.id];
-          const value = (g.values || []).find((v) => v.id === valueId);
-          return [g.id, value ? value.labelAr : valueId];
+        Object.keys(variant.selections || {}).map((groupId) => {
+          const group = groups.find((g) => g.id === groupId);
+          const valueId = variant.selections[groupId];
+          const value = group && (group.values || []).find((v) => v.id === valueId);
+          return [groupId, value ? value.labelAr : valueId];
         }),
       ),
       priceHalalas: typeof variant.priceHalalas === 'number' ? variant.priceHalalas : null,
@@ -133,44 +134,110 @@
     return (variants || []).some((v) => selectionKey(v.selections) === key);
   }
 
-  /** Same payload builder the save path uses. */
-  function structuredOptionsPayload(state) {
+  function groupLabel(presetGroups, groupId) {
+    const hit = (presetGroups || []).find((g) => g.id === groupId);
+    return (hit && (hit.label || hit.labelAr)) || groupId;
+  }
+
+  /**
+   * Same payload builder the save path uses.
+   * Validates against groups the variants still reference — not only remaining UI groups —
+   * so removing the last value of a used option group cannot silently shrink a SKU.
+   */
+  function structuredOptionsPayload(state, presetGroups) {
     if (state.clearingOptions) {
       return { optionsJson: null, variantsJson: null, clearing: true, error: null, conflicts: [] };
     }
     const groups = state._builtGroups || [];
+    const groupById = Object.fromEntries(groups.map((g) => [g.id, g]));
     const variants = [];
     const errors = [];
     const conflicts = [];
+
     (state.variants || []).forEach((variant) => {
       if (!variant || !variant.id) {
         errors.push('تركيبة بلا معرف ثابت.');
         return;
       }
+      const referencedGroupIds = new Set([
+        ...Object.keys(variant.selections || {}),
+        ...Object.keys(variant.labels || {}),
+      ]);
+      if (!referencedGroupIds.size && groups.length) {
+        const msg = 'التركيبة ' + variant.id + ' بلا اختيارات.';
+        errors.push(msg);
+        conflicts.push({ variantId: variant.id, groupId: null, messageAr: msg });
+        return;
+      }
+
       const selections = {};
       let ok = true;
-      groups.forEach((group) => {
-        const label = variant.labels && variant.labels[group.id];
-        const byId = variant.selections && variant.selections[group.id];
-        const value = group.values.find((entry) => entry.id === byId) ||
+      referencedGroupIds.forEach((groupId) => {
+        const group = groupById[groupId];
+        const label = variant.labels && variant.labels[groupId];
+        const byId = variant.selections && variant.selections[groupId];
+        if (!group) {
+          ok = false;
+          const msg =
+            'التركيبة ' +
+            variant.id +
+            ' ما زالت تستخدم مجموعة «' +
+            groupLabel(presetGroups, groupId) +
+            '» التي حُذفت قيمها. استعيدي قيمة أو عدّلي التركيبة أو احذفيها صراحةً قبل الحفظ.';
+          errors.push(msg);
+          conflicts.push({ variantId: variant.id, groupId: groupId, messageAr: msg, kind: 'group_removed' });
+          return;
+        }
+        const value =
+          group.values.find((entry) => entry.id === byId) ||
           group.values.find((entry) => entry.labelAr === label);
         if (!value) {
           ok = false;
-          const msg = 'التركيبة ' + variant.id + ' تشير إلى قيمة غير موجودة في «' + group.labelAr + '».';
+          const msg =
+            'التركيبة ' +
+            variant.id +
+            ' تشير إلى قيمة غير موجودة في «' +
+            group.labelAr +
+            '». استعيدي القيمة أو عدّلي التركيبة أو احذفيها صراحةً.';
           errors.push(msg);
-          conflicts.push({ variantId: variant.id, groupId: group.id, messageAr: msg });
+          conflicts.push({ variantId: variant.id, groupId: group.id, messageAr: msg, kind: 'value_missing' });
+        }
+      });
+      if (!ok) return;
+
+      // Every remaining option group must still be selected (no silent shrink the other way).
+      groups.forEach((group) => {
+        const label = variant.labels && variant.labels[group.id];
+        const byId = variant.selections && variant.selections[group.id];
+        const value =
+          group.values.find((entry) => entry.id === byId) ||
+          group.values.find((entry) => entry.labelAr === label);
+        if (!value) {
+          ok = false;
+          const msg = 'التركيبة ' + variant.id + ' ناقصة اختيار «' + group.labelAr + '».';
+          errors.push(msg);
+          conflicts.push({ variantId: variant.id, groupId: group.id, messageAr: msg, kind: 'incomplete' });
           return;
         }
         selections[group.id] = value.id;
-        if (!variant.labels) variant.labels = {};
-        variant.labels[group.id] = value.labelAr;
-        variant.selections = Object.assign({}, variant.selections, selections);
       });
       if (!ok) return;
+
       if (Object.keys(selections).length !== groups.length) {
-        errors.push('التركيبة ' + variant.id + ' ناقصة اختيارات.');
+        const msg = 'التركيبة ' + variant.id + ' ناقصة اختيارات.';
+        errors.push(msg);
+        conflicts.push({ variantId: variant.id, groupId: null, messageAr: msg, kind: 'incomplete' });
         return;
       }
+
+      // Keep UI labels in sync only after validation succeeds — never strip removed groups silently.
+      if (!variant.labels) variant.labels = {};
+      groups.forEach((group) => {
+        const value = group.values.find((entry) => entry.id === selections[group.id]);
+        if (value) variant.labels[group.id] = value.labelAr;
+      });
+      variant.selections = Object.assign({}, selections);
+
       variants.push({
         id: variant.id,
         selections: selections,
@@ -178,9 +245,17 @@
         available: variant.available !== false,
       });
     });
+
+    if ((state.variants || []).length > 0 && groups.length === 0 && !state.clearingOptions) {
+      const msg =
+        'حُذفت كل قيم الخيارات بينما ما زالت هناك تركيبات. استخدمي مسح الخيارات الصريح أو احذفي التركيبات أولًا.';
+      errors.push(msg);
+      conflicts.push({ variantId: null, groupId: null, messageAr: msg, kind: 'all_values_cleared' });
+    }
+
     return {
       optionsJson: groups,
-      variantsJson: variants,
+      variantsJson: conflicts.length ? [] : variants,
       clearing: false,
       error: errors[0] || null,
       conflicts: conflicts,
@@ -189,13 +264,12 @@
 
   function buildCommercePayload(state, groups) {
     if (state.clearingOptions) return { optionsJson: null, variantsJson: null };
-    const variants = (state.variants || []).map((v) => ({
-      id: v.id,
-      selections: v.selections,
-      priceHalalas: v.priceHalalas,
-      available: v.available !== false,
-    }));
-    return { optionsJson: groups, variantsJson: variants };
+    state._builtGroups = groups;
+    const built = structuredOptionsPayload(state);
+    if (built.error) {
+      return { optionsJson: groups, variantsJson: null, error: built.error, conflicts: built.conflicts };
+    }
+    return { optionsJson: built.optionsJson, variantsJson: built.variantsJson };
   }
 
   /** Refresh select options; keep still-valid chosen values. */

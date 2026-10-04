@@ -741,7 +741,7 @@
     "symbol": "_openAdLink",
     "lines": "",
     "commitSha": "",
-    "fileSha256": "16e86ba569200da3e0c6adbdde816886cd8fcdc00ac1eed57df6355ac0f4520a",
+    "fileSha256": "52fa679f13244c97152606a871b5b2ab2945023a3dbf9cf386d5538bc2cc3614",
     "excerptFile": "evidence/source/EVD-0046.txt",
     "proves": "كل فتح مستقل يحصل على معرف جديد، وإعادة الإرسال تحتفظ بمعرف المحاولة نفسها",
     "doesNotProve": "لا يثبت شراءً ولا مشاهدة، ولا يثبت أن عداد RC5 كان فريدًا عبر المثيلات",
