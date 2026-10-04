@@ -1,6 +1,6 @@
 RC5 LIVE_JOURNEY
 date=2026-10-04T20:25:00Z
-commit_tested=PENDING_COMMIT
+commit_tested=a77d05062ad804be111d600c1d756d5b53b10eec
 portal_form_modules=PASS (CatalogJourney+MiraCatalogOptions at 390/480/1280; overflowX=false; buttons reachable)
 portal_authenticated_save_submit_admin=NOT_RUN (no isolated partner/admin test credentials in this environment; AUTH_SKIP forbidden for live proof)
 COD_journey=NOT_RUN

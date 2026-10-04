@@ -1,0 +1,12 @@
+date=2026-10-04T20:07:49Z
+cwd=/Users/fayez/Desktop/mira
+commit=25f9f149a3b22878fc074fc7d9cdd49676c3d1fe
+cmd=flutter analyze (repo root)
+tool=Flutter 3.38.9 • channel stable • https://github.com/flutter/flutter.git
+  error • The method 'suppressReason' isn't defined for the type 'RegionPathUtils' • test/skin_analysis/skin_cheek_midline_pitch_calibration_test.dart:113:25 • undefined_method
+  error • The method 'suppressReason' isn't defined for the type 'RegionPathUtils' • test/skin_analysis/skin_cheek_midline_pitch_calibration_test.dart:125:25 • undefined_method
+  error • The method 'suppressReason' isn't defined for the type 'RegionPathUtils' • test/skin_analysis/skin_cheek_midline_visual_forensic_test.dart:71:25 • undefined_method
+
+2224 issues found. (ran in 6.3s)
+exit=0
+note=Full-tree analyze reports many pre-existing issues outside RC5 commerce scope (results_experience/skin_analysis tests). Scoped marketplace analyze is the RC5 closure gate.
