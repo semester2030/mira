@@ -52,18 +52,83 @@ async function waitForAdvisoryWaiter(observer: PrismaClient, lockKey: string, ti
   throw new Error(`timed out waiting for advisory lock key=${lockKey}`);
 }
 
-async function waitForWaitingLock(observer: PrismaClient, timeoutMs = 8000): Promise<void> {
+/**
+ * Wait until a backend is blocked by holderPid while that holder still owns a
+ * products relation lock. Postgres row-lock waiters appear on transactionid,
+ * not as ungranted tuple locks on products — so match blocker PID + products hold.
+ */
+async function waitForProductRowWaiter(
+  observer: PrismaClient,
+  holderPid: number,
+  timeoutMs = 8000,
+): Promise<void> {
   const start = Date.now();
   while (Date.now() - start < timeoutMs) {
-    const rows = await observer.$queryRaw<{ n: bigint }[]>`
+    const holdsProduct = await observer.$queryRaw<{ n: bigint }[]>`
       SELECT COUNT(*)::bigint AS n
-      FROM pg_locks
-      WHERE NOT granted AND locktype IN ('transactionid', 'relation', 'tuple', 'advisory')
+      FROM pg_locks l
+      JOIN pg_class c ON c.oid = l.relation
+      WHERE l.pid = ${holderPid}
+        AND l.granted
+        AND c.relname = 'products'
     `;
-    if (Number(rows[0]?.n ?? 0) > 0) return;
-    await new Promise((r) => setTimeout(r, 20));
+    if (Number(holdsProduct[0]?.n ?? 0) === 0) {
+      await new Promise((r) => setTimeout(r, 25));
+      continue;
+    }
+    const rows = await observer.$queryRaw<{ waiter_pid: number; locktype: string }[]>`
+      SELECT blocked.pid::int AS waiter_pid, blocked.locktype::text AS locktype
+      FROM pg_locks blocked
+      JOIN pg_locks blocking
+        ON blocking.locktype = blocked.locktype
+       AND blocking.database IS NOT DISTINCT FROM blocked.database
+       AND blocking.relation IS NOT DISTINCT FROM blocked.relation
+       AND blocking.page IS NOT DISTINCT FROM blocked.page
+       AND blocking.tuple IS NOT DISTINCT FROM blocked.tuple
+       AND blocking.virtualxid IS NOT DISTINCT FROM blocked.virtualxid
+       AND blocking.transactionid IS NOT DISTINCT FROM blocked.transactionid
+       AND blocking.classid IS NOT DISTINCT FROM blocked.classid
+       AND blocking.objid IS NOT DISTINCT FROM blocked.objid
+       AND blocking.objsubid IS NOT DISTINCT FROM blocked.objsubid
+       AND blocking.pid IS DISTINCT FROM blocked.pid
+      WHERE NOT blocked.granted
+        AND blocking.granted
+        AND blocking.pid = ${holderPid}
+      LIMIT 5
+    `;
+    if (rows.length > 0) {
+      step(
+        `product-row contention holder_pid=${holderPid} waiters=${rows
+          .map((r) => `${r.waiter_pid}/${r.locktype}`)
+          .join(',')}`,
+      );
+      return;
+    }
+    await new Promise((r) => setTimeout(r, 25));
   }
-  throw new Error('timed out waiting for a blocked lock (pg_locks)');
+  throw new Error(`timed out waiting for blocked lock behind holder_pid=${holderPid} on products`);
+}
+
+async function settleFailure(
+  settled: Promise<{ status: 'fulfilled' | 'rejected'; reason?: unknown; value?: unknown }>,
+  status: number,
+  code: string,
+) {
+  const outcome = await settled;
+  if (outcome.status !== 'rejected') assert.fail(`expected ${code}`);
+  const error = outcome.reason;
+  assert.ok(error instanceof HttpException);
+  const body = error.getResponse() as Record<string, unknown>;
+  assert.equal(error.getStatus(), status);
+  assert.equal(body.code, code);
+  return body;
+}
+
+function trackPromise(promise: Promise<unknown>) {
+  return promise.then(
+    (value) => ({ status: 'fulfilled' as const, value }),
+    (reason) => ({ status: 'rejected' as const, reason }),
+  );
 }
 
 async function failure(promise: Promise<unknown>, status: number, code: string) {
@@ -137,14 +202,16 @@ async function main() {
     const quote = await commerceA.quote(alice);
     assert.equal(quote.totalHalalas, 6000);
 
-    const aReady = defer();
+    const aReady = defer<number>();
     const aRelease = defer();
     step('A: holder begins FOR UPDATE');
     const holder = prismaA.$transaction(
       async (tx) => {
+        const pidRows = await tx.$queryRaw<{ pid: number }[]>`SELECT pg_backend_pid()::int AS pid`;
+        const holderPid = pidRows[0]!.pid;
         await tx.$queryRaw`SELECT id FROM products WHERE id = ${prod.id} FOR UPDATE`;
-        step('A: holder acquired lock');
-        aReady.resolve();
+        step(`A: holder acquired lock pid=${holderPid}`);
+        aReady.resolve(holderPid);
         await aRelease.promise;
         await tx.product.update({ where: { id: prod.id }, data: { priceHalalas: 9000 } });
         step('A: holder committed price=9000');
@@ -152,21 +219,26 @@ async function main() {
       { maxWait: 20_000, timeout: 20_000 },
     );
 
-    await aReady.promise;
+    const holderPid = await aReady.promise;
     step('B: createOrder starts (must wait on product lock)');
-    const orderWait = commerceB.createOrder(alice, {
-      idempotencyKey: `${run}-lock-order`,
-      contactName: 'سارة',
-      contactPhone: PHONE,
-      addressLine: 'حي الياسمين، شارع الأمير',
-      city: 'الرياض',
-      confirmationFingerprint: quote.confirmationFingerprint,
-    });
-    await waitForWaitingLock(prismaB);
-    step('B: observed waiting lock in pg_locks');
-    aRelease.resolve();
+    const orderWait = trackPromise(
+      commerceB.createOrder(alice, {
+        idempotencyKey: `${run}-lock-order`,
+        contactName: 'سارة',
+        contactPhone: PHONE,
+        addressLine: 'حي الياسمين، شارع الأمير',
+        city: 'الرياض',
+        confirmationFingerprint: quote.confirmationFingerprint,
+      }),
+    );
+    try {
+      await waitForProductRowWaiter(prismaB, holderPid);
+      step('B: observed waiting lock behind products holder');
+    } finally {
+      aRelease.resolve();
+    }
     await holder;
-    await failure(orderWait, 409, 'QUOTE_STALE');
+    await settleFailure(orderWait, 409, 'QUOTE_STALE');
     step('A PASS: waiter saw new price via QUOTE_STALE');
 
     await commerceA.clearCart(alice);
@@ -188,31 +260,38 @@ async function main() {
     });
     await commerceA.addCartItem(alice, { productId: flip.id, quantity: 1 });
     const q2 = await commerceA.quote(alice);
-    const fReady = defer();
+    const fReady = defer<number>();
     const fRelease = defer();
     const flipHold = prismaA.$transaction(
       async (tx) => {
+        const pidRows = await tx.$queryRaw<{ pid: number }[]>`SELECT pg_backend_pid()::int AS pid`;
+        const flipPid = pidRows[0]!.pid;
         await tx.$queryRaw`SELECT id FROM products WHERE id = ${flip.id} FOR UPDATE`;
-        fReady.resolve();
+        fReady.resolve(flipPid);
         await fRelease.promise;
         await tx.product.update({ where: { id: flip.id }, data: { purchaseMode: 'external' } });
-        step('B: flipped to external under lock');
+        step(`B: flipped to external under lock pid=${flipPid}`);
       },
       { maxWait: 20_000, timeout: 20_000 },
     );
-    await fReady.promise;
-    const flipOrder = commerceB.createOrder(alice, {
-      idempotencyKey: `${run}-flip`,
-      contactName: 'سارة',
-      contactPhone: PHONE,
-      addressLine: 'حي الياسمين، شارع الأمير',
-      city: 'الرياض',
-      confirmationFingerprint: q2.confirmationFingerprint,
-    });
-    await waitForWaitingLock(prismaB);
-    fRelease.resolve();
+    const flipPid = await fReady.promise;
+    const flipOrder = trackPromise(
+      commerceB.createOrder(alice, {
+        idempotencyKey: `${run}-flip`,
+        contactName: 'سارة',
+        contactPhone: PHONE,
+        addressLine: 'حي الياسمين، شارع الأمير',
+        city: 'الرياض',
+        confirmationFingerprint: q2.confirmationFingerprint,
+      }),
+    );
+    try {
+      await waitForProductRowWaiter(prismaB, flipPid);
+    } finally {
+      fRelease.resolve();
+    }
     await flipHold;
-    await failure(flipOrder, 422, 'EXTERNAL_PRODUCT_NOT_PURCHASABLE');
+    await settleFailure(flipOrder, 422, 'EXTERNAL_PRODUCT_NOT_PURCHASABLE');
     step('B PASS: EXTERNAL under protected verify');
 
     await commerceA.clearCart(alice);

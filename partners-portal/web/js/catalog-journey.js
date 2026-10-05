@@ -205,7 +205,8 @@
   function renderForm(type, item, formId, titleId, note) {
     const form = document.getElementById(formId || 'catalogForm');
     const title = document.getElementById(titleId || 'catalogTitle');
-    const fullCatalog = !document.getElementById('serviceSection').classList.contains('hidden');
+    const serviceSection = document.getElementById('serviceSection');
+    const fullCatalog = Boolean(serviceSection && !serviceSection.classList.contains('hidden'));
     if (title && !fullCatalog) title.textContent = type === 'brand' ? 'منتجاتك' : 'خدماتك';
     const previous = staged[form.id] || [];
     const sameItem = item && previous.ownerId === item.id;
@@ -812,8 +813,84 @@
         };
         optionsBody.appendChild(revert);
       }
+
+      // RC7-01: explicit clear action in the simplified UI (no JSON required).
+      const hasOptionValues = Object.keys(optionsState.selected || {}).some(
+        (gid) => (optionsState.selected[gid] || []).length > 0 || String(optionsState.customs[gid] || '').trim(),
+      );
+      const hasPublishedOptions =
+        editing &&
+        ((Array.isArray(item.optionsJson) && item.optionsJson.length > 0) ||
+          (Array.isArray(item.variantsJson) && item.variantsJson.length > 0));
+      if (!optionsState.clearingOptions && (hasOptionValues || hasPublishedOptions || (optionsState.variants || []).length)) {
+        const clearBtn = document.createElement('button');
+        clearBtn.type = 'button';
+        clearBtn.className = 'btn btn-ghost btn-sm';
+        clearBtn.setAttribute('data-clear-product-options', '1');
+        clearBtn.textContent = 'مسح خيارات المنتج';
+        clearBtn.onclick = () => {
+          const variantCount = (optionsState.variants || []).length;
+          const publishedVariantCount =
+            editing && Array.isArray(item.variantsJson) ? item.variantsJson.length : 0;
+          const msg =
+            'مسح خيارات المنتج يطلب حذف كل الخيارات والتركيبات المرتبطة بها بعد اعتماد الإدارة.\n' +
+            'المنشور الحالي يبقى ظاهرًا للعميلات حتى الاعتماد.\n' +
+            (variantCount || publishedVariantCount
+              ? 'عدد التركيبات المتأثرة في المسودة/المنشور: ' +
+                Math.max(variantCount, publishedVariantCount) +
+                '.\n'
+              : '') +
+            'هل تريدين المتابعة؟';
+          if (!window.confirm(msg)) return;
+          optionsState.clearingOptions = true;
+          optionsState.clearingVariants = true;
+          optionsState.selected = {};
+          optionsState.customs = {};
+          optionsState.traits = {};
+          optionsState.variants = [];
+          optionsState.valueIds = {};
+          optionsState.categoryConflict = null;
+          optionsState.invalidVariantNote = '';
+          saveOptionsDraft();
+          paintOptions();
+        };
+        optionsBody.appendChild(clearBtn);
+      }
+
       if (!preset.groups.length && !preset.traits.length) {
         text(optionsBody, 'هذا التصنيف لا يحتاج خيارات مقاس أو لون أو حجم.');
+        if (optionsState.clearingOptions) {
+          const banner = document.createElement('p');
+          banner.className = 'field-error';
+          banner.setAttribute('data-clear-options-pending', '1');
+          banner.textContent =
+            'مسودة قيد المراجعة تطلب مسح الخيارات والتركيبات المنشورة. الحفظ دون إضافة خيارات يبقي طلب المسح.';
+          optionsBody.appendChild(banner);
+          const restore = document.createElement('button');
+          restore.type = 'button';
+          restore.className = 'btn btn-ghost btn-sm';
+          restore.setAttribute('data-cancel-clear-options', '1');
+          restore.textContent = 'إلغاء طلب المسح والعودة للمنشور';
+          restore.onclick = () => {
+            optionsState.clearingOptions = false;
+            optionsState.clearingVariants = false;
+            if (editing && Array.isArray(item.optionsJson)) {
+              Object.assign(
+                optionsState,
+                optionsStateFromServer(
+                  Object.assign({}, item, {
+                    draftOptionsSet: false,
+                    draftVariantsSet: false,
+                    draftOptionsJson: null,
+                    draftVariantsJson: null,
+                  }),
+                ),
+              );
+            }
+            paintOptions();
+          };
+          optionsBody.appendChild(restore);
+        }
         paintOptionsPreview();
         return;
       }
@@ -864,11 +941,13 @@
       if (optionsState.clearingOptions) {
         const banner = document.createElement('p');
         banner.className = 'field-error';
+        banner.setAttribute('data-clear-options-pending', '1');
         banner.textContent = 'مسودة قيد المراجعة تطلب مسح الخيارات والتركيبات المنشورة. الحفظ دون إضافة خيارات يبقي طلب المسح.';
         optionsBody.appendChild(banner);
         const restore = document.createElement('button');
         restore.type = 'button';
         restore.className = 'btn btn-ghost btn-sm';
+        restore.setAttribute('data-cancel-clear-options', '1');
         restore.textContent = 'إلغاء طلب المسح والعودة للمنشور';
         restore.onclick = () => {
           optionsState.clearingOptions = false;

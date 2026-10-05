@@ -1,0 +1,40 @@
+13:[concurrency] product-row contention holder_pid=3345 waiters=3347/transactionid
+16:[concurrency] A PASS: waiter saw new price via QUOTE_STALE
+17:[concurrency] product-row contention holder_pid=3345 waiters=3347/transactionid
+19:[concurrency] B PASS: EXTERNAL under protected verify
+20:[concurrency] D PASS: single winner on last unit
+21:[concurrency] F PASS: one booking on shared Arabic resource capacity
+25:[concurrency] E1 PASS: booking waited then rejected after disable under shared keys
+28:[concurrency] E2 PASS: updateService shared schedule lock protocol
+31:[concurrency] E3 PASS: schedule/capacity update synchronized with booking locks
+32:[concurrency] E4 PASS: production updateService won; booking rejected
+36:[concurrency] E5 PASS: withdraw committed first; booking rejected
+39:[concurrency] E6 PASS: deleteService shared schedule lock protocol
+40:[concurrency] H PASS: historical booking snapshot retained after portal price edit
+41:[concurrency] I PASS: two partners same resource name book independently
+48:2026-10-05T11:38:23.700Z product-row contention holder_pid=3345 waiters=3347/transactionid
+51:2026-10-05T11:38:23.704Z A PASS: waiter saw new price via QUOTE_STALE
+52:2026-10-05T11:38:23.742Z product-row contention holder_pid=3345 waiters=3347/transactionid
+54:2026-10-05T11:38:23.747Z B PASS: EXTERNAL under protected verify
+55:2026-10-05T11:38:23.775Z D PASS: single winner on last unit
+56:2026-10-05T11:38:23.793Z F PASS: one booking on shared Arabic resource capacity
+60:2026-10-05T11:38:23.826Z E1 PASS: booking waited then rejected after disable under shared keys
+63:2026-10-05T11:38:23.860Z E2 PASS: updateService shared schedule lock protocol
+66:2026-10-05T11:38:23.892Z E3 PASS: schedule/capacity update synchronized with booking locks
+67:2026-10-05T11:38:23.901Z E4 PASS: production updateService won; booking rejected
+71:2026-10-05T11:38:23.934Z E5 PASS: withdraw committed first; booking rejected
+74:2026-10-05T11:38:23.966Z E6 PASS: deleteService shared schedule lock protocol
+75:2026-10-05T11:38:23.980Z H PASS: historical booking snapshot retained after portal price edit
+76:2026-10-05T11:38:23.989Z I PASS: two partners same resource name book independently
+77:1 PASS: invalid category + unify — no sibling mutation
+78:2 PASS: injected mid-unify failure rolls back
+79:3 PASS: atomic success unify + create
+80:4 PASS: concurrent unify — no mixed capacities 4
+81:5 PASS: other partner untouched
+82:6 PASS: booking snapshot unchanged after failed unify
+84:RC5-02 lost-update scenario PASS
+91:2026-10-05T11:38:26.110Z RC6-02 PASS: concurrent production updateService after scope growth — no deadlock, both capacities kept
+96:2026-10-05T11:38:26.226Z E5b PASS: production deleteService committed first; createBooking rejected; no new booking
+101:2026-10-05T11:38:26.424Z E6b PASS: createBooking committed first; deleteService applied; historical booking retained
+104:2026-10-05T11:38:26.568Z ADMIN-WD PASS: catalog decide(withdraw) vs createBooking — withdraw wins, booking rejected
+105:2026-10-05T11:38:26.689Z ADMIN-E6 PASS: booking committed then admin withdraw; historical booking retained

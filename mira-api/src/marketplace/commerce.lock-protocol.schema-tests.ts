@@ -69,27 +69,52 @@ function nextOpenDay(minOffsetDays = 1) {
   throw new Error('no open weekday in window');
 }
 
-async function waitForAdvisoryWaiter(prisma: PrismaClient, key: string, timeoutMs = 12_000) {
+/** Backend PID for an interactive connection (logged for RC7 barrier evidence). */
+async function backendPid(prisma: PrismaClient): Promise<number> {
+  const rows = await prisma.$queryRaw<Array<{ pid: number }>>`SELECT pg_backend_pid()::int AS pid`;
+  return Number(rows[0]?.pid);
+}
+
+/**
+ * Wait until SOME session is blocked on hashtext(lockKey) advisory.
+ * Uses lock classid/objid from hashtext — not query-text ILIKE, not "any waiter".
+ */
+async function waitForAdvisoryWaiter(
+  observer: PrismaClient,
+  lockKey: string,
+  opts?: { expectedWaiterPid?: number; timeoutMs?: number },
+) {
+  const timeoutMs = opts?.timeoutMs ?? 12_000;
   const started = Date.now();
   while (Date.now() - started < timeoutMs) {
-    const rows = await prisma.$queryRaw<Array<{ granted: boolean; query: string | null }>>`
-      SELECT l.granted, a.query
+    const rows = await observer.$queryRaw<Array<{ pid: number; granted: boolean }>>`
+      WITH target AS (SELECT hashtext(${lockKey})::int AS k)
+      SELECT a.pid::int AS pid, l.granted
       FROM pg_locks l
       JOIN pg_stat_activity a ON a.pid = l.pid
+      CROSS JOIN target t
       WHERE l.locktype = 'advisory'
         AND NOT l.granted
-        AND a.query ILIKE ${'%' + key.split(':').slice(-1)[0] + '%'}
+        AND (l.classid = t.k OR l.objid = t.k)
     `;
-    // Fallback: any ungranted advisory wait on this connection set
-    const any = await prisma.$queryRaw<Array<{ pid: number }>>`
-      SELECT l.pid FROM pg_locks l
-      WHERE l.locktype = 'advisory' AND NOT l.granted
-      LIMIT 1
-    `;
-    if (rows.length || any.length) return;
+    if (rows.length) {
+      if (opts?.expectedWaiterPid != null) {
+        const hit = rows.find((r) => r.pid === opts.expectedWaiterPid);
+        if (!hit) {
+          await new Promise((r) => setTimeout(r, 40));
+          continue;
+        }
+      }
+      step(
+        `advisory wait confirmed key=${lockKey} waiters=${rows.map((r) => r.pid).join(',')} expected=${opts?.expectedWaiterPid ?? 'any'}`,
+      );
+      return rows;
+    }
     await new Promise((r) => setTimeout(r, 40));
   }
-  throw new Error(`timeout waiting for advisory waiter involving ${key}`);
+  throw new Error(
+    `timed out waiting for advisory lock key=${lockKey} expectedWaiterPid=${opts?.expectedWaiterPid ?? 'any'}`,
+  );
 }
 
 async function main() {
@@ -181,7 +206,16 @@ async function main() {
       )
       .catch((err) => {
         oldDeadlock = true;
-        step(`OLD-T1 failed as expected under inverted lock order: ${String(err).split('\n')[0]}`);
+        const msg = String(err);
+        const isDeadlock = /deadlock detected/i.test(msg);
+        const isTxTimeout = /Transaction already closed|timed out|timeout/i.test(msg);
+        assert.ok(
+          isDeadlock || isTxTimeout,
+          `control must fail with deadlock or tx timeout, got: ${msg.split('\n')[0]}`,
+        );
+        step(
+          `OLD-T1 failed as expected (${isDeadlock ? 'deadlock' : 'timeout'}): ${msg.split('\n')[0]}`,
+        );
       });
     await t1Ready.promise;
     const oldT2 = prismaB
@@ -197,7 +231,14 @@ async function main() {
       )
       .catch((err) => {
         oldDeadlock = true;
-        step(`OLD-T2 failed as expected: ${String(err).split('\n')[0]}`);
+        const msg = String(err);
+        const isDeadlock = /deadlock detected/i.test(msg);
+        const isTxTimeout = /Transaction already closed|timed out|timeout|P2028/i.test(msg);
+        assert.ok(
+          isDeadlock || isTxTimeout,
+          `control must fail with deadlock or tx timeout, got: ${msg.split('\n')[0]}`,
+        );
+        step(`OLD-T2 failed as expected (${isDeadlock ? 'deadlock' : 'timeout'}): ${msg.split('\n')[0]}`);
       });
     // Let the circular wait form, then release T1's second acquire so timeouts can surface cleanly.
     await new Promise((r) => setTimeout(r, 200));
@@ -248,6 +289,8 @@ async function main() {
     step(`E5b slot day=${day} weekday=${new Date(day + 'T12:00:00').getDay()}`);
 
     // Withdraw first (production), then booking rejects
+    const pidObserver = await backendPid(prismaC);
+    step(`E5b observer pid=${pidObserver}`);
     process.env.MIRA_TEST_SCHEDULE_GATE = 'hold';
     const withdrawP = portalA.deleteService(clinic.id, s1.id).then(
       (v) => ({ ok: v as { ok: boolean } }),
@@ -265,7 +308,7 @@ async function main() {
       (v) => ({ ok: v }),
       (err: unknown) => ({ err }),
     );
-    await waitForAdvisoryWaiter(prismaB, partnerScheduleCoordKey(clinic.id)).catch(() => undefined);
+    await waitForAdvisoryWaiter(prismaC, partnerScheduleCoordKey(clinic.id));
     step('E5b: booking waiting while production deleteService holds schedule protocol');
     delete process.env.MIRA_TEST_SCHEDULE_GATE;
     const wdRes = await withdrawP;
@@ -303,8 +346,8 @@ async function main() {
       (v) => ({ ok: v as { ok: boolean } }),
       (err: unknown) => ({ err }),
     );
-    await waitForAdvisoryWaiter(prismaB, partnerScheduleCoordKey(clinic.id)).catch(() => undefined);
-    step(`E6b: deleteService waiting; booking pid gate; target=${partnerScheduleCoordKey(clinic.id)}`);
+    await waitForAdvisoryWaiter(prismaC, partnerScheduleCoordKey(clinic.id));
+    step(`E6b: deleteService waiting; booking holds gate; target=${partnerScheduleCoordKey(clinic.id)}`);
     delete process.env.MIRA_TEST_SCHEDULE_GATE;
     const bookedWrap = await bookFirst;
     assert.ok(!('err' in bookedWrap), `booking must commit: ${String((bookedWrap as { err?: unknown }).err)}`);
@@ -355,6 +398,8 @@ async function main() {
         (v) => ({ ok: v }),
         (err: unknown) => ({ err }),
       );
+    await waitForAdvisoryWaiter(prismaC, partnerScheduleCoordKey(clinic.id));
+    step('ADMIN-WD: booking waiting on partner schedule coord while admin withdraw holds gate');
     delete process.env.MIRA_TEST_SCHEDULE_GATE;
     const adminRes = await adminWd;
     assert.ok(!('err' in adminRes), `admin withdraw must commit: ${String((adminRes as { err?: unknown }).err)}`);

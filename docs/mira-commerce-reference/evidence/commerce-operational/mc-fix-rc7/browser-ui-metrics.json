@@ -1,0 +1,77 @@
+[
+  {
+    "width": 390,
+    "tags": [
+      "published-open",
+      "clear-cancelled",
+      "clear-accepted",
+      "clear-request-cancelled",
+      "category-conflict",
+      "clear-resolves-conflict"
+    ],
+    "metrics": {
+      "tag": "clear-resolves-conflict",
+      "overflowX": false,
+      "confirmCount": 3,
+      "lastConfirm": "مسح خيارات المنتج يطلب حذف كل الخيارات والتركيبات المرتبطة بها بعد اعتماد الإدارة.\nالمنشور الحالي يبقى ظاهرًا للعميلات حتى الاعتماد.\nهل تريدين المتابعة؟",
+      "clearBtn": false,
+      "cancelClearBtn": true,
+      "pendingBanner": true,
+      "checked": [
+        "متاحة للشراء",
+        "تفعيل الطلب داخل ميرا (دفع نقدًا عند الاستلام). رابط الشراء الخارجي يبقى للمنتجات الخارجية فقط."
+      ]
+    },
+    "shot": "/Users/fayez/Desktop/mira/docs/mira-commerce-reference/evidence/commerce-operational/mc-fix-rc7/portal-clear-390.png"
+  },
+  {
+    "width": 480,
+    "tags": [
+      "published-open",
+      "clear-cancelled",
+      "clear-accepted",
+      "clear-request-cancelled",
+      "category-conflict",
+      "clear-resolves-conflict"
+    ],
+    "metrics": {
+      "tag": "clear-resolves-conflict",
+      "overflowX": false,
+      "confirmCount": 3,
+      "lastConfirm": "مسح خيارات المنتج يطلب حذف كل الخيارات والتركيبات المرتبطة بها بعد اعتماد الإدارة.\nالمنشور الحالي يبقى ظاهرًا للعميلات حتى الاعتماد.\nهل تريدين المتابعة؟",
+      "clearBtn": false,
+      "cancelClearBtn": true,
+      "pendingBanner": true,
+      "checked": [
+        "متاحة للشراء",
+        "تفعيل الطلب داخل ميرا (دفع نقدًا عند الاستلام). رابط الشراء الخارجي يبقى للمنتجات الخارجية فقط."
+      ]
+    },
+    "shot": "/Users/fayez/Desktop/mira/docs/mira-commerce-reference/evidence/commerce-operational/mc-fix-rc7/portal-clear-480.png"
+  },
+  {
+    "width": 1280,
+    "tags": [
+      "published-open",
+      "clear-cancelled",
+      "clear-accepted",
+      "clear-request-cancelled",
+      "category-conflict",
+      "clear-resolves-conflict"
+    ],
+    "metrics": {
+      "tag": "clear-resolves-conflict",
+      "overflowX": false,
+      "confirmCount": 3,
+      "lastConfirm": "مسح خيارات المنتج يطلب حذف كل الخيارات والتركيبات المرتبطة بها بعد اعتماد الإدارة.\nالمنشور الحالي يبقى ظاهرًا للعميلات حتى الاعتماد.\nهل تريدين المتابعة؟",
+      "clearBtn": false,
+      "cancelClearBtn": true,
+      "pendingBanner": true,
+      "checked": [
+        "متاحة للشراء",
+        "تفعيل الطلب داخل ميرا (دفع نقدًا عند الاستلام). رابط الشراء الخارجي يبقى للمنتجات الخارجية فقط."
+      ]
+    },
+    "shot": "/Users/fayez/Desktop/mira/docs/mira-commerce-reference/evidence/commerce-operational/mc-fix-rc7/portal-clear-1280.png"
+  }
+]

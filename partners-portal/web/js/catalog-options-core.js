@@ -154,9 +154,12 @@
   /**
    * Group ids that still have values in UI state but are absent from the current category preset.
    * Changing category must not treat this as consent to delete those options.
+   * `presetGroups` is optional: omit / null / undefined = no category-constraint check
+   * (rehydrate / save-replay paths). An explicit array (even empty) enables the check.
    */
   function incompatibleGroupIds(state, presetGroups) {
-    const presetIds = new Set((presetGroups || []).map((g) => g.id));
+    if (!Array.isArray(presetGroups)) return [];
+    const presetIds = new Set(presetGroups.map((g) => g.id));
     const orphans = [];
     const selected = state.selected || {};
     Object.keys(selected).forEach((groupId) => {
@@ -333,6 +336,11 @@
     };
   }
 
+  /**
+   * @param {object} state
+   * @param {Array} groups built option groups (optionsJson shape)
+   * @param {Array|undefined} presetGroups optional category presets; omit to skip category_incompatible
+   */
   function buildCommercePayload(state, groups, presetGroups) {
     if (state.clearingOptions) return { optionsJson: null, variantsJson: null };
     state._builtGroups = groups;

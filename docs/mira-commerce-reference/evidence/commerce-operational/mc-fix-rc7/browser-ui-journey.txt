@@ -1,0 +1,4 @@
+RC7 CatalogJourney clear-options UI probe (confirm mocked; PartnersApi save blocked)
+width=390 overflowX=false tags=published-open,clear-cancelled,clear-accepted,clear-request-cancelled,category-conflict,clear-resolves-conflict
+width=480 overflowX=false tags=published-open,clear-cancelled,clear-accepted,clear-request-cancelled,category-conflict,clear-resolves-conflict
+width=1280 overflowX=false tags=published-open,clear-cancelled,clear-accepted,clear-request-cancelled,category-conflict,clear-resolves-conflict

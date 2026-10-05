@@ -1,0 +1,7 @@
+RC6 packaging defect (closed in RC7 packer):
+- Symptom: test/features/marketplace/*.dart appeared at package-root marketplace/ instead of test/features/marketplace/.
+- Effect: evidence that referenced test/features/marketplace/... could not be re-run from unpacked RC6; Flutter suite path missing.
+- RC7 fix: docs/mira-commerce-reference/scripts/pack_mc_fix_rc7.py copies test/features/marketplace and integration_test explicitly and refuses a top-level marketplace/ stage.
+- Current workspace paths (unchanged):
+  test/features/marketplace/asset_video_port_test.dart
+  integration_test/discover_playback_rc2_test.dart

@@ -1,0 +1,158 @@
+<!DOCTYPE html>
+<html lang="ar" dir="rtl">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>RC7 portal — clear options button</title>
+  <link href="https://fonts.googleapis.com/css2?family=Tajawal:wght@400;700;800&display=swap" rel="stylesheet" />
+  <link rel="stylesheet" href="/css/site.css" />
+  <style>
+    #metrics { font: 12px/1.4 monospace; white-space: pre-wrap; padding: 8px; background: #111; color: #9f9; max-height: 280px; overflow: auto; }
+  </style>
+</head>
+<body>
+  <pre id="metrics">loading…</pre>
+  <main class="container">
+    <div class="card" id="catalogSection">
+      <h2 id="catalogTitle">الكتالوج</h2>
+      <div id="catalogList"></div>
+      <form id="catalogForm"></form>
+    </div>
+    <div class="card hidden" id="serviceSection"></div>
+  </main>
+  <script>
+    window.__CONFIRMS__ = [];
+    window.confirm = function (msg) {
+      window.__CONFIRMS__.push(String(msg || ''));
+      return window.__CONFIRM_RESULT__ !== false;
+    };
+    window.PartnersApi = {
+      dashboard: async () => ({ partner: window.sessionPartner, catalog: { products: [], services: [] } }),
+      createProduct: async () => { throw new Error('blocked-rc7-probe'); },
+      updateProduct: async () => { throw new Error('blocked-rc7-probe'); },
+    };
+    window.sessionPartner = { id: 'rc7-probe', type: 'brand', nameAr: 'RC7', contactPhone: '0500000000' };
+  </script>
+  <script src="/js/catalog-options-core.js"></script>
+  <script src="/js/catalog-journey.js"></script>
+  <script>
+    function fail(m) { throw new Error(m); }
+    function form() { return document.getElementById('catalogForm'); }
+    function record(tag, extra) {
+      const el = document.documentElement;
+      const f = form();
+      const payload = {
+        tag,
+        overflowX: el.scrollWidth > el.clientWidth + 1,
+        confirmCount: (window.__CONFIRMS__ || []).length,
+        lastConfirm: (window.__CONFIRMS__ || []).slice(-1)[0] || '',
+        clearBtn: !!f.querySelector('[data-clear-product-options]'),
+        cancelClearBtn: !!f.querySelector('[data-cancel-clear-options]'),
+        pendingBanner: !!f.querySelector('[data-clear-options-pending]'),
+        checked: [...f.querySelectorAll('input[type=checkbox]')].filter((c) => c.checked).map((c) => (c.parentElement.textContent || '').trim()),
+        ...(extra || {}),
+      };
+      document.getElementById('metrics').textContent = JSON.stringify(payload, null, 2);
+      window.__RC7_METRICS__ = payload;
+      window.__RC7_RESULTS__ = window.__RC7_RESULTS__ || [];
+      window.__RC7_RESULTS__.push(payload);
+      return payload;
+    }
+    function enableCod() {
+      const cod = form().querySelector('input[name="internalCod"]');
+      if (!cod) fail('missing internalCod');
+      if (!cod.checked) { cod.checked = true; cod.dispatchEvent(new Event('change', { bubbles: true })); }
+    }
+    function setCategory(v) {
+      const category = form().querySelector('select[name="category"]');
+      if (!category) fail('missing category');
+      category.value = v;
+      category.dispatchEvent(new Event('change', { bubbles: true }));
+    }
+    function checkPreset(labelExact) {
+      const hit = [...form().querySelectorAll('label')].find((l) => (l.textContent || '').replace(/\s+/g, ' ').trim() === labelExact);
+      if (!hit) fail('preset missing ' + labelExact);
+      const input = hit.querySelector('input[type=checkbox]');
+      if (!input.checked) { input.checked = true; input.dispatchEvent(new Event('change', { bubbles: true })); }
+    }
+    async function run() {
+      // Published product with options → clear button must appear
+      const published = {
+        id: 'prod-rc7',
+        nameAr: 'منتج منشور',
+        priceHalalas: 5000,
+        category: 'clothes',
+        purchaseMode: 'internal_cod',
+        optionsJson: [
+          { id: 'size', labelAr: 'المقاس', values: [{ id: 'm', labelAr: 'M' }, { id: 'l', labelAr: 'L' }] },
+          { id: 'color', labelAr: 'اللون', values: [{ id: 'black', labelAr: 'أسود' }] },
+        ],
+        variantsJson: [
+          { id: 'sku-m-black', selections: { size: 'm', color: 'black' }, priceHalalas: 5000, available: true },
+        ],
+        active: true,
+        contentStatus: 'published',
+      };
+      window.CatalogJourney.renderForm('brand', published, 'catalogForm', 'catalogTitle');
+      await new Promise((r) => setTimeout(r, 50));
+      enableCod();
+      let m = record('published-open');
+      if (!m.clearBtn) fail('clear button missing on published product with options');
+
+      // Cancel confirm → no clear
+      window.__CONFIRM_RESULT__ = false;
+      form().querySelector('[data-clear-product-options]').click();
+      await new Promise((r) => setTimeout(r, 40));
+      m = record('clear-cancelled');
+      if (m.pendingBanner || m.cancelClearBtn) fail('clear applied despite cancel confirm');
+      if (!(m.checked || []).includes('M')) fail('options lost after cancel confirm');
+
+      // Accept confirm → clearing pending
+      window.__CONFIRM_RESULT__ = true;
+      form().querySelector('[data-clear-product-options]').click();
+      await new Promise((r) => setTimeout(r, 40));
+      m = record('clear-accepted');
+      if (!m.pendingBanner || !m.cancelClearBtn) fail('clear pending UI missing');
+      if (!/تركيبات|اعتماد|مسح/.test(m.lastConfirm)) fail('confirm text must explain impact');
+      if ((m.checked || []).includes('M')) fail('UI values must clear after explicit clear');
+
+      // Cancel clear request → restore published
+      form().querySelector('[data-cancel-clear-options]').click();
+      await new Promise((r) => setTimeout(r, 40));
+      m = record('clear-request-cancelled');
+      if (m.pendingBanner) fail('pending banner remained after cancel');
+      if (!(m.checked || []).includes('M') || !(m.checked || []).includes('L')) fail('published options not restored');
+
+      // New product: set options, clear, category conflict path
+      window.CatalogJourney.renderForm('brand', null, 'catalogForm', 'catalogTitle');
+      await new Promise((r) => setTimeout(r, 40));
+      enableCod();
+      setCategory('face');
+      await new Promise((r) => setTimeout(r, 40));
+      checkPreset('50 مل');
+      checkPreset('100 مل');
+      setCategory('clothes');
+      await new Promise((r) => setTimeout(r, 60));
+      m = record('category-conflict');
+      if (!form().querySelector('[data-category-conflict]')) fail('category conflict missing');
+      const clearBtn = form().querySelector('[data-clear-product-options]');
+      if (!clearBtn) fail('clear button must be available during category conflict');
+      window.__CONFIRM_RESULT__ = true;
+      clearBtn.click();
+      await new Promise((r) => setTimeout(r, 40));
+      m = record('clear-resolves-conflict');
+      if (form().querySelector('[data-category-conflict]')) fail('category conflict should clear after explicit clear');
+      if (!m.pendingBanner) fail('clear pending after resolving conflict');
+
+      if (m.overflowX) fail('horizontal overflow');
+      window.__RC7_READY__ = true;
+    }
+    run().catch((e) => {
+      window.__RC7_READY__ = false;
+      window.__RC7_ERROR__ = String(e && e.message ? e.message : e);
+      document.getElementById('metrics').textContent = 'FAIL ' + window.__RC7_ERROR__;
+      try { record('failed', { error: window.__RC7_ERROR__ }); } catch (_) {}
+    });
+  </script>
+</body>
+</html>
