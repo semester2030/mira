@@ -1,0 +1,3 @@
+commit c98decb
+api https://mira-api-n4p3.onrender.com/api/v1
+partners https://mira-partners-portal.onrender.com

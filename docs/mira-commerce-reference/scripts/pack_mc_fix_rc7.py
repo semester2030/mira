@@ -15,6 +15,8 @@ import hashlib
 from pathlib import Path
 
 FORBIDDEN_DIR_NAMES = {
+    "dist",
+    "coverage",
     ".git",
     ".dart_tool",
     "build",
@@ -73,6 +75,7 @@ def main() -> int:
 
     roots = [
         "lib",
+        "assets",
         "android",
         "ios",
         "packages",

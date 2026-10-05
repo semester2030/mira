@@ -1,0 +1,27 @@
+RC7 LIVE_JOURNEY
+date=2026-10-05
+code_commit=affa4831d2898c9cb021d0d746d50fa964077c2c
+base_rc6_commit=b60274435d531721986c396d5b5ede2f1d931490
+zip_sha256=720caa1891f10cb44decab660f9b6dc9333396ebcfd595813f863f25f3ebf402
+zip_bytes=50320044
+
+api_health_http=200 (not functional proof)
+partners_http=200
+admin_http=200
+
+portal_clear_options_ui_local=PASS
+portal_authenticated_save_submit_admin=NOT_RUN (no isolated partner/admin test credentials; AUTH_SKIP forbidden)
+COD_journey=NOT_RUN
+booking_journey=NOT_RUN
+favorites_share=NOT_RUN
+device_run=NOT_RUN
+views=DEFERRED_BY_OWNER
+durable_storage=DEFERRED_BY_OWNER
+
+local_options_rc2_rc7=PASS
+local_test_commerce=PASS
+local_flutter_marketplace=PASS (164)
+unpack_options=PASS
+unpack_commerce=PASS
+unpack_flutter=PASS (164)
+deploy_mira_api=dep-db1pdv0jo6nc73arq120 (see Render status)

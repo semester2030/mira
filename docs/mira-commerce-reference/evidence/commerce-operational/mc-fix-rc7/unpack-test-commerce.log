@@ -1,0 +1,137 @@
+cwd=/tmp/mira-mc-fix-rc7-unpack/MIRA_COMMERCE_MC_FIX_RC7/mira-api
+sourceCommit=affa4831d2898c9cb021d0d746d50fa964077c2c
+zipSha=720caa1891f10cb44decab660f9b6dc9333396ebcfd595813f863f25f3ebf402
+startedAt=2026-10-05T12:27:35Z
+note=FROM FINAL UNPACKED package
+npm warn Unknown env config "devdir". This will stop working in the next major version of npm.
+
+> mira-api@1.0.0 test:commerce
+> tsx src/marketplace/commerce.types.schema-tests.ts && tsx src/marketplace/commerce-public.schema-tests.ts && tsx src/marketplace/commerce.service.schema-tests.ts && tsx src/marketplace/commerce.concurrency.schema-tests.ts && tsx src/marketplace/commerce.create-service-atomic.schema-tests.ts && tsx src/marketplace/commerce.lost-update.schema-tests.ts && tsx src/marketplace/commerce.lock-protocol.schema-tests.ts && tsx src/marketplace/commerce.http.integration-tests.ts
+
+commerce.types schema tests passed
+commerce-public schema tests passed
+commerce.service schema tests passed
+[concurrency] A: seed product + cart
+[concurrency] A: holder begins FOR UPDATE
+[concurrency] A: holder acquired lock pid=32659
+[concurrency] B: createOrder starts (must wait on product lock)
+[concurrency] product-row contention holder_pid=32659 waiters=32660/transactionid
+[concurrency] B: observed waiting lock behind products holder
+[concurrency] A: holder committed price=9000
+[concurrency] A PASS: waiter saw new price via QUOTE_STALE
+[concurrency] product-row contention holder_pid=32659 waiters=32660/transactionid
+[concurrency] B: flipped to external under lock pid=32659
+[concurrency] B PASS: EXTERNAL under protected verify
+[concurrency] D PASS: single winner on last unit
+[concurrency] F PASS: one booking on shared Arabic resource capacity
+[concurrency] E1: schedule locks held commerce-booking-resource:66fd553d-51a7-46fa-8024-fd5371dcfe02:غرفة-تعطيل | commerce-booking-service:91813132-88fe-44e9-8ca9-931bff5111ed
+[concurrency] E1: createBooking waiting on partner-scoped resource advisory
+[concurrency] E1: bookingEnabled=false under held schedule locks
+[concurrency] E1 PASS: booking waited then rejected after disable under shared keys
+[concurrency] E2: locks held before updateService
+[concurrency] E2: production updateService waiting on same resource advisory
+[concurrency] E2 PASS: updateService shared schedule lock protocol
+[concurrency] E3: booking-side locks held
+[concurrency] E3: capacity/duration update waiting
+[concurrency] E3 PASS: schedule/capacity update synchronized with booking locks
+[concurrency] E4 PASS: production updateService won; booking rejected
+[concurrency] E5: withdraw-equivalent locks held
+[concurrency] E5: createBooking waiting during withdraw barrier
+[concurrency] E5: withdrawn under held locks
+[concurrency] E5 PASS: withdraw committed first; booking rejected
+[concurrency] E6: booking-side locks held before deleteService
+[concurrency] E6: production deleteService waiting
+[concurrency] E6 PASS: deleteService shared schedule lock protocol
+[concurrency] H PASS: historical booking snapshot retained after portal price edit
+[concurrency] I PASS: two partners same resource name book independently
+commerce.concurrency schema tests passed
+--- event order ---
+2026-10-05T12:27:41.918Z A: seed product + cart
+2026-10-05T12:27:41.935Z A: holder begins FOR UPDATE
+2026-10-05T12:27:41.936Z A: holder acquired lock pid=32659
+2026-10-05T12:27:41.936Z B: createOrder starts (must wait on product lock)
+2026-10-05T12:27:41.943Z product-row contention holder_pid=32659 waiters=32660/transactionid
+2026-10-05T12:27:41.944Z B: observed waiting lock behind products holder
+2026-10-05T12:27:41.944Z A: holder committed price=9000
+2026-10-05T12:27:41.949Z A PASS: waiter saw new price via QUOTE_STALE
+2026-10-05T12:27:41.989Z product-row contention holder_pid=32659 waiters=32660/transactionid
+2026-10-05T12:27:41.990Z B: flipped to external under lock pid=32659
+2026-10-05T12:27:41.993Z B PASS: EXTERNAL under protected verify
+2026-10-05T12:27:42.025Z D PASS: single winner on last unit
+2026-10-05T12:27:42.046Z F PASS: one booking on shared Arabic resource capacity
+2026-10-05T12:27:42.047Z E1: schedule locks held commerce-booking-resource:66fd553d-51a7-46fa-8024-fd5371dcfe02:غرفة-تعطيل | commerce-booking-service:91813132-88fe-44e9-8ca9-931bff5111ed
+2026-10-05T12:27:42.076Z E1: createBooking waiting on partner-scoped resource advisory
+2026-10-05T12:27:42.077Z E1: bookingEnabled=false under held schedule locks
+2026-10-05T12:27:42.081Z E1 PASS: booking waited then rejected after disable under shared keys
+2026-10-05T12:27:42.082Z E2: locks held before updateService
+2026-10-05T12:27:42.109Z E2: production updateService waiting on same resource advisory
+2026-10-05T12:27:42.116Z E2 PASS: updateService shared schedule lock protocol
+2026-10-05T12:27:42.117Z E3: booking-side locks held
+2026-10-05T12:27:42.144Z E3: capacity/duration update waiting
+2026-10-05T12:27:42.148Z E3 PASS: schedule/capacity update synchronized with booking locks
+2026-10-05T12:27:42.157Z E4 PASS: production updateService won; booking rejected
+2026-10-05T12:27:42.159Z E5: withdraw-equivalent locks held
+2026-10-05T12:27:42.186Z E5: createBooking waiting during withdraw barrier
+2026-10-05T12:27:42.187Z E5: withdrawn under held locks
+2026-10-05T12:27:42.190Z E5 PASS: withdraw committed first; booking rejected
+2026-10-05T12:27:42.192Z E6: booking-side locks held before deleteService
+2026-10-05T12:27:42.218Z E6: production deleteService waiting
+2026-10-05T12:27:42.222Z E6 PASS: deleteService shared schedule lock protocol
+2026-10-05T12:27:42.236Z H PASS: historical booking snapshot retained after portal price edit
+2026-10-05T12:27:42.245Z I PASS: two partners same resource name book independently
+1 PASS: invalid category + unify — no sibling mutation
+2 PASS: injected mid-unify failure rolls back
+3 PASS: atomic success unify + create
+4 PASS: concurrent unify — no mixed capacities 4
+5 PASS: other partner untouched
+6 PASS: booking snapshot unchanged after failed unify
+commerce.create-service-atomic schema tests passed
+RC5-02 lost-update scenario PASS
+2026-10-05T12:27:43.295Z OLD-T1 held commerce-booking-resource:cbd7bad3-a6d1-45d1-97a3-9c34edebbe95:Z
+2026-10-05T12:27:43.297Z OLD-T2 held commerce-booking-resource:cbd7bad3-a6d1-45d1-97a3-9c34edebbe95:A; waiting for Z held by T1
+2026-10-05T12:27:44.402Z OLD-T1 acquired A after Z (unexpected — no circular wait)
+2026-10-05T12:27:44.403Z OLD-T2 failed as expected (deadlock): PrismaClientKnownRequestError: 
+2026-10-05T12:27:44.404Z RC6-02 control: inverted partial locks exercised (deadlock/timeout observed)
+2026-10-05T12:27:44.435Z T0 committed S1→A+Z
+2026-10-05T12:27:44.452Z RC6-02 PASS: concurrent production updateService after scope growth — no deadlock, both capacities kept
+2026-10-05T12:27:44.452Z E5b slot day=2026-10-08 weekday=4
+2026-10-05T12:27:44.458Z E5b observer pid=32703
+2026-10-05T12:27:44.544Z advisory wait confirmed key=commerce-schedule-partner:cbd7bad3-a6d1-45d1-97a3-9c34edebbe95 waiters=32687 expected=any
+2026-10-05T12:27:44.544Z E5b: booking waiting while production deleteService holds schedule protocol
+2026-10-05T12:27:44.570Z E5b PASS: production deleteService committed first; createBooking rejected; no new booking
+2026-10-05T12:27:44.570Z E6b slot day=2026-10-11 weekday=0
+2026-10-05T12:27:44.734Z advisory wait confirmed key=commerce-schedule-partner:cbd7bad3-a6d1-45d1-97a3-9c34edebbe95 waiters=32687 expected=any
+2026-10-05T12:27:44.734Z E6b: deleteService waiting; booking holds gate; target=commerce-schedule-partner:cbd7bad3-a6d1-45d1-97a3-9c34edebbe95
+2026-10-05T12:27:44.757Z E6b: booking committed id=a82f687d-ef16-43e7-84bb-bf919a0cdcff
+2026-10-05T12:27:44.763Z E6b PASS: createBooking committed first; deleteService applied; historical booking retained
+2026-10-05T12:27:44.888Z advisory wait confirmed key=commerce-schedule-partner:cbd7bad3-a6d1-45d1-97a3-9c34edebbe95 waiters=32687 expected=any
+2026-10-05T12:27:44.888Z ADMIN-WD: booking waiting on partner schedule coord while admin withdraw holds gate
+2026-10-05T12:27:44.904Z ADMIN-WD PASS: catalog decide(withdraw) vs createBooking — withdraw wins, booking rejected
+2026-10-05T12:27:45.038Z ADMIN-E6 PASS: booking committed then admin withdraw; historical booking retained
+2026-10-05T12:27:45.064Z CAP1 PASS: one booking on capacity-1 shared resource
+commerce.lock-protocol schema tests passed
+--- event order ---
+2026-10-05T12:27:43.295Z OLD-T1 held commerce-booking-resource:cbd7bad3-a6d1-45d1-97a3-9c34edebbe95:Z
+2026-10-05T12:27:43.297Z OLD-T2 held commerce-booking-resource:cbd7bad3-a6d1-45d1-97a3-9c34edebbe95:A; waiting for Z held by T1
+2026-10-05T12:27:44.402Z OLD-T1 acquired A after Z (unexpected — no circular wait)
+2026-10-05T12:27:44.403Z OLD-T2 failed as expected (deadlock): PrismaClientKnownRequestError: 
+2026-10-05T12:27:44.404Z RC6-02 control: inverted partial locks exercised (deadlock/timeout observed)
+2026-10-05T12:27:44.435Z T0 committed S1→A+Z
+2026-10-05T12:27:44.452Z RC6-02 PASS: concurrent production updateService after scope growth — no deadlock, both capacities kept
+2026-10-05T12:27:44.452Z E5b slot day=2026-10-08 weekday=4
+2026-10-05T12:27:44.458Z E5b observer pid=32703
+2026-10-05T12:27:44.544Z advisory wait confirmed key=commerce-schedule-partner:cbd7bad3-a6d1-45d1-97a3-9c34edebbe95 waiters=32687 expected=any
+2026-10-05T12:27:44.544Z E5b: booking waiting while production deleteService holds schedule protocol
+2026-10-05T12:27:44.570Z E5b PASS: production deleteService committed first; createBooking rejected; no new booking
+2026-10-05T12:27:44.570Z E6b slot day=2026-10-11 weekday=0
+2026-10-05T12:27:44.734Z advisory wait confirmed key=commerce-schedule-partner:cbd7bad3-a6d1-45d1-97a3-9c34edebbe95 waiters=32687 expected=any
+2026-10-05T12:27:44.734Z E6b: deleteService waiting; booking holds gate; target=commerce-schedule-partner:cbd7bad3-a6d1-45d1-97a3-9c34edebbe95
+2026-10-05T12:27:44.757Z E6b: booking committed id=a82f687d-ef16-43e7-84bb-bf919a0cdcff
+2026-10-05T12:27:44.763Z E6b PASS: createBooking committed first; deleteService applied; historical booking retained
+2026-10-05T12:27:44.888Z advisory wait confirmed key=commerce-schedule-partner:cbd7bad3-a6d1-45d1-97a3-9c34edebbe95 waiters=32687 expected=any
+2026-10-05T12:27:44.888Z ADMIN-WD: booking waiting on partner schedule coord while admin withdraw holds gate
+2026-10-05T12:27:44.904Z ADMIN-WD PASS: catalog decide(withdraw) vs createBooking — withdraw wins, booking rejected
+2026-10-05T12:27:45.038Z ADMIN-E6 PASS: booking committed then admin withdraw; historical booking retained
+2026-10-05T12:27:45.064Z CAP1 PASS: one booking on capacity-1 shared resource
+commerce HTTP integration tests passed
+EXIT:0

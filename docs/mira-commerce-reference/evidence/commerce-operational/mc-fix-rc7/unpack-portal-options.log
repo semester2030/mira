@@ -1,0 +1,20 @@
+cwd=/tmp/mira-mc-fix-rc7-unpack/MIRA_COMMERCE_MC_FIX_RC7/partners-portal/web/js
+sourceCommit=affa4831d2898c9cb021d0d746d50fa964077c2c
+zipSha=720caa1891f10cb44decab660f9b6dc9333396ebcfd595813f863f25f3ebf402
+startedAt=2026-10-05T12:27:18Z
+note=FROM FINAL UNPACKED package
+=== catalog-options-rc2-tests.mjs ===
+catalog-options-rc2-tests passed
+EXIT:0
+=== catalog-options-rc4-tests.mjs ===
+catalog-options-rc4-tests passed
+EXIT:0
+=== catalog-options-rc5-tests.mjs ===
+catalog-options-rc5-tests passed
+EXIT:0
+=== catalog-options-rc6-tests.mjs ===
+catalog-options-rc6-tests passed
+EXIT:0
+=== catalog-options-rc7-tests.mjs ===
+catalog-options-rc7-tests passed
+EXIT:0

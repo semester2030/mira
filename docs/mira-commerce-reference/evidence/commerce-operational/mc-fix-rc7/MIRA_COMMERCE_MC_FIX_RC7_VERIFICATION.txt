@@ -1,0 +1,20 @@
+MIRA_COMMERCE_MC_FIX_RC7 verification (external to ZIP)
+date=2026-10-05
+zip=MIRA_COMMERCE_MC_FIX_RC7.zip
+bytes=50320044
+sha256=720caa1891f10cb44decab660f9b6dc9333396ebcfd595813f863f25f3ebf402
+source_commit=affa4831d2898c9cb021d0d746d50fa964077c2c
+seal_sequence:
+  1) code+evidence commit affa483 tested locally
+  2) staged via pack_mc_fix_rc7.py (test/features/marketplace + assets; no top-level marketplace/)
+  3) PACKAGE_MANIFEST.json written
+  4) ZIP sealed; sha256 written externally only
+  5) unpacked to /tmp/mira-mc-fix-rc7-unpack/MIRA_COMMERCE_MC_FIX_RC7
+  6) re-ran options RC2–RC7, test:commerce, flutter marketplace FROM unpack cwd
+  7) ZIP not modified after sha256
+verify_commands:
+  shasum -a 256 -c MIRA_COMMERCE_MC_FIX_RC7.zip.sha256
+  see docs/mira-commerce-reference/evidence/commerce-operational/mc-fix-rc7/PACKAGE_VERIFY.txt
+live_auth_journeys=NOT_RUN (no isolated partner/admin credentials)
+device_journeys=NOT_RUN
+phase_approval=NOT claimed (2/5 only)

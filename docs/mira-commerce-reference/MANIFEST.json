@@ -2,14 +2,14 @@
   "package": "MIRA_DISCOVER_PHASE1_CORRECTIONS_RC2",
   "studyVersion": "MC-FIX RC6 — إغلاق ملاحظات مراجعة RC5 دون اعتماد المرحلة",
   "studyStatus": "قيد التنفيذ — بانتظار المراجعة المستقلة",
-  "generatedAt": "2026-10-05T13:02:01.187087+03:00",
+  "generatedAt": "2026-10-05T15:27:58.344331+03:00",
   "baselineSiteZip": "MIRA_ECOMMERCE_REFERENCE_PLACES_PLAN_UPDATE_20260924_0125.zip",
   "baselineSiteSha256": "ad7f070bbc064dcd3153428d6d5ca3712bfaec2e4ddf7da865fc47cfbe7d734d",
   "linkedSourceZip": "DAR_PLACES_TO_MIRA_SOURCE_HANDOFF_RC2_20260924_0125.zip",
   "linkedSourceSha256": "60a8d854eb609e1eef11513a1406fd1e262ac809922e889f2e7beecf76ec48e1",
   "sourceArchiveUnmodified": true,
   "limits": "يثبت اتساق ملفات هذه الحزمة فقط. لا يثبت تشغيل المنتج ولا حداثة أدلة المستودع.",
-  "fileCount": 452,
+  "fileCount": 475,
   "files": [
     {
       "path": "css/components.css",
@@ -73,8 +73,8 @@
     },
     {
       "path": "data/discover-phases.json",
-      "bytes": 355531,
-      "sha256": "d3308dec5715a76ff82b1fcc4503e1d55eb644a34110ec65e33497c8ca17b901"
+      "bytes": 364005,
+      "sha256": "43d0fc54b3babf82eaa7ef569fdc624ca2218f3fa157ab64983fc1f173291287"
     },
     {
       "path": "data/discover-visual.json",
@@ -465,6 +465,11 @@
       "path": "evidence/commerce-operational/MC_FIX_RC6_TRACKER.md",
       "bytes": 4469,
       "sha256": "2d01603c23fb9a84445cda87ae877ff7efd0bdd0cbe5c3948875e1300d798765"
+    },
+    {
+      "path": "evidence/commerce-operational/MC_FIX_RC7_TRACKER.md",
+      "bytes": 1340,
+      "sha256": "6c492bf60639ea3512424de69ce0bd3aaddbb06c64c2945f8f0b59175bd87cb9"
     },
     {
       "path": "evidence/commerce-operational/MC_FIX_TRACKER.md",
@@ -1005,6 +1010,111 @@
       "path": "evidence/commerce-operational/mc-fix-rc6/test-commerce.log",
       "bytes": 8830,
       "sha256": "64c2e0b8e897824c641b4f1850252e5d2cd4399d8ae823013b6fc16bfcb46f6a"
+    },
+    {
+      "path": "evidence/commerce-operational/mc-fix-rc7/LIVE_JOURNEY.txt",
+      "bytes": 827,
+      "sha256": "833f047fc8e8f624f8052d6a8d2fd53db174fb757de881cf62672bc95db4550f"
+    },
+    {
+      "path": "evidence/commerce-operational/mc-fix-rc7/MIRA_COMMERCE_MC_FIX_RC7.zip.sha256",
+      "bytes": 95,
+      "sha256": "b95973d0403108cfc09c67f88f102c854db44476fe23532f34251c590321fa3d"
+    },
+    {
+      "path": "evidence/commerce-operational/mc-fix-rc7/MIRA_COMMERCE_MC_FIX_RC7_VERIFICATION.txt",
+      "bytes": 976,
+      "sha256": "264db21553a280fd4915984847e249e09e7cdee3f96877236446a2e116bcb8b6"
+    },
+    {
+      "path": "evidence/commerce-operational/mc-fix-rc7/PACKAGE_VERIFY.txt",
+      "bytes": 824,
+      "sha256": "24660c99642519ee70dbde14c088f926dec937374f51d81d073d32ca75e46be3"
+    },
+    {
+      "path": "evidence/commerce-operational/mc-fix-rc7/PACKAGING_RC6_PATH_BUG.txt",
+      "bytes": 619,
+      "sha256": "78ed71dce40962a25d8c81afd7c79a1b3ef2351b952b20235e204b6248f5d9d8"
+    },
+    {
+      "path": "evidence/commerce-operational/mc-fix-rc7/browser-ui-journey-raw.log",
+      "bytes": 640,
+      "sha256": "9c211ca162c1c49748b1968075baa3db87faa6905abc05fc460e9b39712edd97"
+    },
+    {
+      "path": "evidence/commerce-operational/mc-fix-rc7/browser-ui-journey.txt",
+      "bytes": 515,
+      "sha256": "81f6aad4e2d7247d8eee4c75381ab4db3421cd4eb05fd728bec735ebfefbe98b"
+    },
+    {
+      "path": "evidence/commerce-operational/mc-fix-rc7/browser-ui-metrics.json",
+      "bytes": 3289,
+      "sha256": "fe353b2ebf1e29e4bea4cdf53706f19203bc416a208a6d720ac577d3c3d7e093"
+    },
+    {
+      "path": "evidence/commerce-operational/mc-fix-rc7/concurrency-waiters.txt",
+      "bytes": 3139,
+      "sha256": "61cd447d162670f2fc41d8842848868d1bb07a4c047c0ec532dc6eb3d64974bb"
+    },
+    {
+      "path": "evidence/commerce-operational/mc-fix-rc7/flutter-marketplace-test.log",
+      "bytes": 56628,
+      "sha256": "c79d197725507d2af07a66d0c0540c550daefd340a01989654013e0a27852101"
+    },
+    {
+      "path": "evidence/commerce-operational/mc-fix-rc7/portal-clear-1280.png",
+      "bytes": 254962,
+      "sha256": "869d3645625890b18707e22d2b998cdef88eaa8a4a858ac85bbc1d47ca51e140"
+    },
+    {
+      "path": "evidence/commerce-operational/mc-fix-rc7/portal-clear-390.png",
+      "bytes": 237176,
+      "sha256": "4f44da527f4cbcd1697af848250799ec69037ac61ffcfa1ee98b78eada2fb538"
+    },
+    {
+      "path": "evidence/commerce-operational/mc-fix-rc7/portal-clear-480.png",
+      "bytes": 239581,
+      "sha256": "a7c2e713f8a8d97ff968d3ab621abb897262dee8fbfa4ec4584396ab20013022"
+    },
+    {
+      "path": "evidence/commerce-operational/mc-fix-rc7/portal-form-probe.cjs",
+      "bytes": 2069,
+      "sha256": "7338211aba7b9f17cf9695efa7bc6b8408d16b682acd72b82de95881bb90f134"
+    },
+    {
+      "path": "evidence/commerce-operational/mc-fix-rc7/portal-options.log",
+      "bytes": 528,
+      "sha256": "35d8d83dc84611615eb353b573f20e85d49f225563581bd70241bb8692de8de7"
+    },
+    {
+      "path": "evidence/commerce-operational/mc-fix-rc7/portal-probe.log",
+      "bytes": 640,
+      "sha256": "9c211ca162c1c49748b1968075baa3db87faa6905abc05fc460e9b39712edd97"
+    },
+    {
+      "path": "evidence/commerce-operational/mc-fix-rc7/site-validate.txt",
+      "bytes": 84,
+      "sha256": "4e5ba38ce5f43bf739dae665b0125417a5a9ef8b5889371281ce408f18cf91ab"
+    },
+    {
+      "path": "evidence/commerce-operational/mc-fix-rc7/test-commerce.log",
+      "bytes": 10420,
+      "sha256": "4c80a1534298e366ace1eb81cbea86308ac3613c5e0f10187d0c09b18b14feb1"
+    },
+    {
+      "path": "evidence/commerce-operational/mc-fix-rc7/unpack-flutter-marketplace.log",
+      "bytes": 55824,
+      "sha256": "aaa1959cfeff7f8883450bd53d0d1e9bde7f39616942afa3dc4fef01cdd80fb6"
+    },
+    {
+      "path": "evidence/commerce-operational/mc-fix-rc7/unpack-portal-options.log",
+      "bytes": 660,
+      "sha256": "349c9ac51f0dce3f33dfabc4ed21f026b295ea92cafa2c5df03900e5ac44f6f2"
+    },
+    {
+      "path": "evidence/commerce-operational/mc-fix-rc7/unpack-test-commerce.log",
+      "bytes": 10703,
+      "sha256": "918fd969b72df06a632c99532f704a55cb441c288a92983848057038a14d9f30"
     },
     {
       "path": "evidence/contracts/marketplace-catalog.md",
@@ -2068,18 +2178,18 @@
     },
     {
       "path": "evidence/visual/phase2/catalog-error.png",
-      "bytes": 16325,
-      "sha256": "0ba6a19a97b3c174da0282fbc2bf571d12714466ec55c3a3413140b2adf598ed"
+      "bytes": 16932,
+      "sha256": "9eee207a50bd9dd8bfdbed5b0aba97e2bcfd609db103a789426ed633717a3aa7"
     },
     {
       "path": "evidence/visual/phase2/catalog-feed.png",
-      "bytes": 76405,
-      "sha256": "ed875e07870dc9e46abd005cdd40807e0529e8e1f73deaf5fb813d04435c3307"
+      "bytes": 69483,
+      "sha256": "7f1b5bc6a7f5ca8a72396030c63434a424e753d473f8720d59b595e4ce0cfd11"
     },
     {
       "path": "evidence/visual/phase2/catalog-loading.png",
-      "bytes": 13814,
-      "sha256": "94d4f5dbb7be5cb75d8e32a84396e5919f64180f325c71fac71c411f1ab4c36d"
+      "bytes": 14377,
+      "sha256": "6cb211d1d54f96939ab7a460b507f393982529bf8f67efa3532119ca114f6763"
     },
     {
       "path": "evidence/visual/phase2/details-missing.png",
@@ -2088,8 +2198,8 @@
     },
     {
       "path": "evidence/visual/phase2/empty-results.png",
-      "bytes": 15489,
-      "sha256": "4e9f9b7ffb9275af9f184af3705986660c835cbc35a478418e289c2d5d568e99"
+      "bytes": 16207,
+      "sha256": "4e258733dfb246d4c9953685326dd0383e93a1b20e4b91bd0d5eb65815eb2913"
     },
     {
       "path": "evidence/visual/phase2/filters.png",
@@ -2098,33 +2208,33 @@
     },
     {
       "path": "evidence/visual/phase2/rc5-search-empty.png",
-      "bytes": 13889,
-      "sha256": "a733104600b417728c0a235ede9e345f2227a4f78d552f6f1675f3441e997747"
+      "bytes": 14632,
+      "sha256": "d382826ab1a0fb28b244e23a7d487930143ba7e1dca8df54a8f56e81a446c9e1"
     },
     {
       "path": "evidence/visual/phase2/rc5-search-failed.png",
-      "bytes": 15040,
-      "sha256": "ad3b3c1b24e860ccf9a048451f61eb6427c23e49ed032bfe4e772ee7922acef9"
+      "bytes": 15848,
+      "sha256": "d6a08a2870f11ab4ccfcf66c49e92d8c0855a296685cada71eb665777b63eb2e"
     },
     {
       "path": "evidence/visual/phase2/rc5-search-loading.png",
-      "bytes": 13814,
-      "sha256": "0038b619dcb53fedd832bf55403e10a69af927d54a43c5ed9fe245beec518903"
+      "bytes": 14378,
+      "sha256": "ecec563eb2627331125870084c4e194ec841a23c0c2b2e2d49991f676dbd4210"
     },
     {
       "path": "evidence/visual/phase2/rc5-search-results.png",
-      "bytes": 74950,
-      "sha256": "f8c6d24f2d3e66d165b5505845e1d256984266a8eaf66c64114785926d51eaad"
+      "bytes": 68406,
+      "sha256": "6c387318900bcf1ddd96fb49b1a0d1d77d03c7c922cb4a4a74e10d22ff4e3b36"
     },
     {
       "path": "evidence/visual/phase2/search-makeup.png",
-      "bytes": 81819,
-      "sha256": "46da134596f2c0fc25e4f004e969f51a3c5ce9a975f6681044d8a713e7b3c79b"
+      "bytes": 75694,
+      "sha256": "332b99792e7067c35bad2d1d458181a20cc7f3a37f6801064dcfc72f7af4706c"
     },
     {
       "path": "evidence/visual/phase2/server-loaded.png",
-      "bytes": 76339,
-      "sha256": "85ce4e801c4d21c8e6591cfa7a691b4d6832a9b030def932e0fcbed92a82abcc"
+      "bytes": 69677,
+      "sha256": "727a4096d4f89fbeb7195157adf1c696cab70105b34f5143fec9c48f75baa95e"
     },
     {
       "path": "evidence/visual/phase2/store-loreal.png",
@@ -2213,8 +2323,8 @@
     },
     {
       "path": "js/data.generated.js",
-      "bytes": 653221,
-      "sha256": "fdca0618763f05139a004be9c03c5c484576a81058113fe32bcafcc5238bd828"
+      "bytes": 661947,
+      "sha256": "7c3afdbc7dcc6b152cf76c0b47eb129def2870ca15c124f1a8ff91c142e27158"
     },
     {
       "path": "scripts/apply_ph2_rc3_site.py",
@@ -2245,6 +2355,11 @@
       "path": "scripts/inspect_zip_package.py",
       "bytes": 3519,
       "sha256": "0e8edb385cb7ee3bbbb78c9732c57a2fe4bd17e60401da8200c9cf4f58feb965"
+    },
+    {
+      "path": "scripts/pack_mc_fix_rc7.py",
+      "bytes": 3734,
+      "sha256": "09c09d041ea21565e53badd5dd4e9cbd2fc01093fd50f0a35c274f06297341dd"
     },
     {
       "path": "scripts/validate_package.py",

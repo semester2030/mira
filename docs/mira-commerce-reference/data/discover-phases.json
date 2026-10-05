@@ -3433,7 +3433,7 @@
         }
       ],
       "expectedAr": "أدلة اختبار شاملة، وحالة واضحة لكل مانع، وقرار جاهزية مبني على النتائج.",
-      "actualAr": "2026-10-05 RC6: جولة إغلاق بعد مراجعة RC5 — حماية خيارات التصنيف، قفل تنسيق جهة قبل توسيع الموارد، اختبارات deleteService↔createBooking إنتاجية، مجس ملابس/تعارض 390/480/1280، تحليل صريح. لا اعتماد مرحلة. 2026-10-04 RC5: جولة إغلاق بعد مراجعة RC4 — منع تصغير التركيبة بصمت، توسيع أقفال الموارد المشتركة، سحب الخدمة ضمن بروتوكول الحجز، بوابة/جهاز/موقع قيد الاستكمال. لا اعتماد مرحلة. 2026-10-04 RC4: جولة إغلاق بعد مراجعة RC3 — قوائم تركيبة حيّة، أقفال جدول موحّدة partner-scoped، createService ذري، إصلاح استيرادات Flutter/Kotlin، تحديث موقع PH-5 دون اعتماد المرحلة. المشاهدات والتخزين الدائم مؤجلان بقرار المالك. 2026-10-01 RC3-live: push ebc2869→main؛ mira-api dep-dav4o060tbcc73ee12ng LIVE؛ admin dep-dav4p48jo6nc73fgtfj0 LIVE؛ بوابة picker بلا | لقطات 390/480/1280؛ حزمة RC3 sha d33a94…؛ جهاز/رحلة COD جديدة NOT_RUN. 2026-10-01 RC3: جولة إغلاق تصحيحية بعد مراجعة RC2 — تحقق مجمّع للخيارات/التركيبات، واجهة اختيار بلا |، تعارض مورد صريح + unifySharedResources، اختبارات تزامن بحواجز pg_locks، اختبارات بوابة على MiraCatalogOptions المشترك. لا اعتماد مرحلة. 2026-10-01 RC2: commit bbbfa84 2026-10-01 RC2-live: push 9bfd3a6؛ mira-api LIVE؛ admin rootDir=admin-portal/web؛ رحلة COD MO-261001-E8AYP5 delivered+collected؛ حجز MB-261001-VWBG2A confirmed غرفة-أ؛ حزمة reseal sha e31ec1d…؛ جهاز flutter run قيد/جزئي؛ مشاهدات ووسائط دائمة مؤجلة.؛ حزمة MIRA_COMMERCE_MC_FIX_RC2؛ إدارة Render srv-dav2ih0jo6nc73f7d9rg. 2026-10-01: مراجعة مستقلة لـ MIRA_COMMERCE_MC_FIX_338c26d → يحتاج تصحيحًا. فُتحت جولة RC2 على بطاقات MC-FIX دون اعتماد المرحلة. 2026-10-01: نُشر commit 338c26d على mira-api (dep-dav20o5g1s2s73d7fqd0 LIVE). حزمة MIRA_COMMERCE_MC_FIX_338c26d.zip على سطح المكتب. MC-FIX-01…03 مختبرة محليًا. الإدارة الحية ورحلات الجهاز مفتوحة. 2026-10-01: بعد مراجعة 8ebbf54 (يحتاج تصحيحًا واستكمال أدلة) فُتحت بطاقات MC-FIX-01…09 على المرحلة الخامسة دون اعتماد المرحلة. الكود التصحيحي قيد التنفيذ فوق HEAD الحالي مع الحفاظ على أعمال المستخدم. 2026-09-27: رُفع commit 36b080cb3591b5cf15ded803e02a6fc03510cfd5 إلى origin/main. mira-api نُشر حيًا على Render بنفس الـSHA. التطبيق اشتغل على آيفون fayez بنمط debug وظهر اكتشفي بالعربية وRTL. الكتالوج المنشور أعاد 8 عناصر. وسائط العرض الظاهر فارغة. البنود الأربعة ما زالت مؤجلة.",
+      "actualAr": "2026-10-05 RC7: جولة إغلاق بعد مراجعة RC6 — زر مسح الخيارات، إصلاح RC2/RC4 وpresetGroups، حواجز انتظار قفل بـPID، إعادة مسار test/features/marketplace، نشر قيد التنفيذ؛ رحلات مصدّقة/جهاز NOT_RUN بلا حسابات. لا اعتماد مرحلة. 2026-10-05 RC6: جولة إغلاق بعد مراجعة RC5 — حماية خيارات التصنيف، قفل تنسيق جهة قبل توسيع الموارد، اختبارات deleteService↔createBooking إنتاجية، مجس ملابس/تعارض 390/480/1280، تحليل صريح. لا اعتماد مرحلة. 2026-10-04 RC5: جولة إغلاق بعد مراجعة RC4 — منع تصغير التركيبة بصمت، توسيع أقفال الموارد المشتركة، سحب الخدمة ضمن بروتوكول الحجز، بوابة/جهاز/موقع قيد الاستكمال. لا اعتماد مرحلة. 2026-10-04 RC4: جولة إغلاق بعد مراجعة RC3 — قوائم تركيبة حيّة، أقفال جدول موحّدة partner-scoped، createService ذري، إصلاح استيرادات Flutter/Kotlin، تحديث موقع PH-5 دون اعتماد المرحلة. المشاهدات والتخزين الدائم مؤجلان بقرار المالك. 2026-10-01 RC3-live: push ebc2869→main؛ mira-api dep-dav4o060tbcc73ee12ng LIVE؛ admin dep-dav4p48jo6nc73fgtfj0 LIVE؛ بوابة picker بلا | لقطات 390/480/1280؛ حزمة RC3 sha d33a94…؛ جهاز/رحلة COD جديدة NOT_RUN. 2026-10-01 RC3: جولة إغلاق تصحيحية بعد مراجعة RC2 — تحقق مجمّع للخيارات/التركيبات، واجهة اختيار بلا |، تعارض مورد صريح + unifySharedResources، اختبارات تزامن بحواجز pg_locks، اختبارات بوابة على MiraCatalogOptions المشترك. لا اعتماد مرحلة. 2026-10-01 RC2: commit bbbfa84 2026-10-01 RC2-live: push 9bfd3a6؛ mira-api LIVE؛ admin rootDir=admin-portal/web؛ رحلة COD MO-261001-E8AYP5 delivered+collected؛ حجز MB-261001-VWBG2A confirmed غرفة-أ؛ حزمة reseal sha e31ec1d…؛ جهاز flutter run قيد/جزئي؛ مشاهدات ووسائط دائمة مؤجلة.؛ حزمة MIRA_COMMERCE_MC_FIX_RC2؛ إدارة Render srv-dav2ih0jo6nc73f7d9rg. 2026-10-01: مراجعة مستقلة لـ MIRA_COMMERCE_MC_FIX_338c26d → يحتاج تصحيحًا. فُتحت جولة RC2 على بطاقات MC-FIX دون اعتماد المرحلة. 2026-10-01: نُشر commit 338c26d على mira-api (dep-dav20o5g1s2s73d7fqd0 LIVE). حزمة MIRA_COMMERCE_MC_FIX_338c26d.zip على سطح المكتب. MC-FIX-01…03 مختبرة محليًا. الإدارة الحية ورحلات الجهاز مفتوحة. 2026-10-01: بعد مراجعة 8ebbf54 (يحتاج تصحيحًا واستكمال أدلة) فُتحت بطاقات MC-FIX-01…09 على المرحلة الخامسة دون اعتماد المرحلة. الكود التصحيحي قيد التنفيذ فوق HEAD الحالي مع الحفاظ على أعمال المستخدم. 2026-09-27: رُفع commit 36b080cb3591b5cf15ded803e02a6fc03510cfd5 إلى origin/main. mira-api نُشر حيًا على Render بنفس الـSHA. التطبيق اشتغل على آيفون fayez بنمط debug وظهر اكتشفي بالعربية وRTL. الكتالوج المنشور أعاد 8 عناصر. وسائط العرض الظاهر فارغة. البنود الأربعة ما زالت مؤجلة.",
       "status": "قيد التنفيذ — نشر وتشغيل واختبار النسخة الحالية",
       "dependenciesAr": "اكتمال المراحل السابقة التي تدخل في قرار الجاهزية. تجهيز الإطلاق لا يعني النشر.",
       "notesAr": "سجل التصحيح التشغيلي: evidence/commerce-operational/MC_FIX_TRACKER.md و CORRECTION_DELIVERY.md. لا اعتماد ذاتي للمرحلة الخامسة. المستودع https://github.com/semester2030/mira الفرع main. خدمة mira-api srv-d85ngcfavr4c73d3rk6g والرابط https://mira-api-n4p3.onrender.com. النشر dep-dasamlrncjis73ebfd0g. بوابة الشركاء https://mira-partners-portal.onrender.com. لا توجد خدمة إدارة منشورة. CI Mira CI فشل في التحليل ولا يمنع النسخة العاملة. لقطة الجهاز: evidence/ph5/iphone-discover.png.",
@@ -3604,12 +3604,28 @@
           "logHref": "evidence/commerce-operational/MC_FIX_RC6_TRACKER.md",
           "logLabel": "متتبع جولة RC6",
           "sha256": "c53e01faffc0f0bf03d46541b1c3720d071648f3729510951b2bb85f6ed8586f",
-          "reviewResultAr": "تسليم تنفيذ RC6 (مصدر b602744، sha c53e01fa…، 42445539 بايت): RC6-01…03 PASS؛ بوابة نموذج ملابس/تعارض PASS؛ نشر LIVE؛ رحلات COD/حجز مصدّقة NOT_RUN؛ جهاز PARTIAL؛ لا اعتماد مرحلة.",
+          "reviewResultAr": "مراجعة RC6: RC6-01…03 مقبولة؛ RC7 فُتحت لزر مسح الخيارات، اكتمال حزمة Flutter (marketplace تحت مسار خاطئ)، حواجز انتظار قفل حاسمة، ورحلات حي/جهاز. لا اعتماد مرحلة.",
           "approvalAr": "غير معتمدة",
           "zipHref": "../../MIRA_COMMERCE_MC_FIX_RC6.zip",
           "zipLabel": "حزمة RC6 على سطح المكتب",
           "sha256Href": "evidence/commerce-operational/mc-fix-rc6/MIRA_COMMERCE_MC_FIX_RC6.zip.sha256",
           "verificationHref": "evidence/commerce-operational/mc-fix-rc6/PACKAGE_VERIFY.txt",
+          "verificationLabel": "تحقق الحزمة"
+        },
+        {
+          "id": "DEL-MC-FIX-RC7",
+          "name": "MIRA_COMMERCE_MC_FIX_RC7.zip",
+          "createdAt": "2026-10-05T15:00:00+03:00",
+          "deliveryStatus": "منفّذ ومتحقق ضمن النطاق — بانتظار المراجعة المستقلة",
+          "logHref": "evidence/commerce-operational/MC_FIX_RC7_TRACKER.md",
+          "logLabel": "متتبع جولة RC7",
+          "sha256": "720caa1891f10cb44decab660f9b6dc9333396ebcfd595813f863f25f3ebf402",
+          "reviewResultAr": "تسليم تنفيذ RC7 (مصدر affa483، sha 720caa18…، 50320044 بايت): RC7-01…03 PASS محليًا ومن الفك؛ تغليف Flutter تحت test/features/marketplace؛ نشر affa483 قيد/بعد Render؛ رحلات COD/حجز مصدّقة NOT_RUN؛ لا اعتماد مرحلة.",
+          "approvalAr": "غير معتمدة",
+          "zipHref": "../../MIRA_COMMERCE_MC_FIX_RC7.zip",
+          "zipLabel": "حزمة RC7 على سطح المكتب",
+          "sha256Href": "evidence/commerce-operational/mc-fix-rc7/MIRA_COMMERCE_MC_FIX_RC7.zip.sha256",
+          "verificationHref": "evidence/commerce-operational/mc-fix-rc7/PACKAGE_VERIFY.txt",
           "verificationLabel": "تحقق الحزمة"
         }
       ],
@@ -3683,13 +3699,13 @@
             "RC5-04",
             "RC5-05"
           ],
-          "status": "جزئي — نموذج حقيقي PASS؛ مصادقة/جهاز قيد الاستكمال",
+          "status": "تمت مراجعته — يحتاج تصحيحًا (RC7-01/04)",
           "problemAr": "RC5 اختار الوجه ولم يثبت تعارض التصنيف؛ الحفظ محجوب في صفحة الاختبار.",
           "fixAr": "مجس ملابس+تعارض تصنيف+revert على CatalogJourney؛ رحلات مصدّقة منفصلة.",
           "resultAr": "Playwright 390/480/1280 PASS؛ overflowX=false؛ AUTH/COD/booking device NOT_RUN أو PARTIAL حتى الحسابات.",
           "evidenceAr": "mc-fix-rc6/browser-ui-* ؛ LIVE_JOURNEY.txt",
           "evidenceLinks": [],
-          "remainingAr": "حسابات اختبار معزولة + iPhone"
+          "remainingAr": "يُغلق في RC7: زر مسح الخيارات + رحلات مصدّقة/جهاز"
         },
         {
           "id": "RC6-05",
@@ -3728,13 +3744,13 @@
             "P5-T3",
             "RC5-07"
           ],
-          "status": "حُتمت الروابط/الحزمة — بانتظار المراجعة المستقلة",
+          "status": "تمت مراجعته — يحتاج تصحيحًا (RC7-02)",
           "problemAr": "تسليم RC6 قابل لإعادة التحقق.",
           "fixAr": "ZIP+sha خارجي+verification+unpack.",
           "resultAr": "يُستكمل عند الختم.",
           "evidenceAr": "PACKAGE_VERIFY.txt",
           "evidenceLinks": [],
-          "remainingAr": "ختم ZIP ومراجعة مستقلة"
+          "remainingAr": "مسار اختبارات Flutter أُصلح في RC7 packer"
         },
         {
           "id": "RC5-01",
@@ -4273,6 +4289,116 @@
             }
           ],
           "remainingAr": "مراجعة مستقلة للحزمة."
+        },
+        {
+          "id": "RC7-01",
+          "titleAr": "إجراء مسح خيارات المنتج في النموذج المبسط",
+          "relatedTaskIds": [
+            "RC6-04",
+            "P5-CREATE-01"
+          ],
+          "status": "منفّذ ومختبر محليًا (مجس UI) — بانتظار المراجعة المستقلة",
+          "problemAr": "النموذج يطلب مسحًا صريحًا دون زر يبدأ المسح؛ الاختبارات كانت تضبط clearingOptions برمجيًا فقط.",
+          "fixAr": "زر «مسح خيارات المنتج» مع تأكيد الأثر وإلغاء؛ pending في المسودة؛ لا تغيير للمنشور قبل اعتماد الإدارة؛ إلغاء طلب المسح يعيد المنشور؛ فرق حقل غير مُرسل / فارغ / مسح صريح.",
+          "resultAr": "Playwright rc7-portal-form-probe 390/480/1280 PASS؛ catalog-options-rc7 PASS.",
+          "evidenceAr": "evidence/commerce-operational/mc-fix-rc7/browser-ui-journey.txt ؛ portal-options.log ؛ portal-clear-*.png",
+          "evidenceLinks": [
+            {
+              "href": "evidence/commerce-operational/mc-fix-rc7/browser-ui-journey.txt",
+              "label": "مجس الواجهة"
+            }
+          ],
+          "remainingAr": "رحلة حفظ/رفض/اعتماد مصدّقة على الحي عند توفر حسابات",
+          "independentReviewAr": "بانتظار المراجعة المستقلة"
+        },
+        {
+          "id": "RC7-02",
+          "titleAr": "إصلاح انحدار الخيارات واكتمال حزمة Flutter",
+          "relatedTaskIds": [
+            "RC6-07",
+            "RC6-01"
+          ],
+          "status": "منفّذ ومختبر محليًا — بانتظار المراجعة المستقلة",
+          "problemAr": "RC2/RC4 يفشلان مع presetGroups؛ RC6 وضع test/features/marketplace تحت marketplace/.",
+          "fixAr": "presetGroups اختياري (Array.isArray فقط)؛ pack_mc_fix_rc7.py ينسخ test/features/marketplace وintegration_test ويرفض marketplace/ جذري.",
+          "resultAr": "catalog-options-rc2/4/5/6/7 EXIT0؛ flutter test test/features/marketplace EXIT0 (164)؛ PACKAGING_RC6_PATH_BUG موثّق.",
+          "evidenceAr": "mc-fix-rc7/portal-options.log ؛ flutter-marketplace-test.log ؛ PACKAGING_RC6_PATH_BUG.txt",
+          "evidenceLinks": [
+            {
+              "href": "evidence/commerce-operational/mc-fix-rc7/PACKAGING_RC6_PATH_BUG.txt",
+              "label": "خلل مسار RC6"
+            }
+          ],
+          "remainingAr": "تحقق إعادة التشغيل من الحزمة المفكوكة بعد الختم",
+          "independentReviewAr": "بانتظار المراجعة المستقلة"
+        },
+        {
+          "id": "RC7-03",
+          "titleAr": "اختبارات انتظار قفل حاسمة وقابلة للتكرار",
+          "relatedTaskIds": [
+            "RC6-02",
+            "RC6-03"
+          ],
+          "status": "منفّذ ومختبر على PostgreSQL — بانتظار المراجعة المستقلة",
+          "problemAr": "انتظار القفل يُبتلع بـcatch أو يُقبل أي قفل منتظر؛ صف المنتجات يظهر كـtransactionid لا relation.",
+          "fixAr": "hashtext للمفاتيح الاستشارية؛ PID الحامل؛ إثبات waiter خلف holder مع قفل products؛ لا تجاهل أخطاء الانتظار؛ تمييز deadlock.",
+          "resultAr": "npm run test:commerce EXIT0؛ product-row contention holder_pid=… waiters=…/transactionid مسجّل.",
+          "evidenceAr": "mc-fix-rc7/test-commerce.log ؛ concurrency-waiters.txt",
+          "evidenceLinks": [
+            {
+              "href": "evidence/commerce-operational/mc-fix-rc7/test-commerce.log",
+              "label": "سجل التجارة"
+            }
+          ],
+          "remainingAr": "—",
+          "independentReviewAr": "بانتظار المراجعة المستقلة"
+        },
+        {
+          "id": "RC7-04",
+          "titleAr": "رحلات النسخة المنشورة والجهاز",
+          "relatedTaskIds": [
+            "RC6-04",
+            "P5-T2"
+          ],
+          "status": "NOT_RUN / BLOCKED جزئيًا — بانتظار حسابات واختبار جهاز مكتمل",
+          "problemAr": "RC6 ترك COD/حجز/مفضلة/مشاركة بلا إثبات مصدّق.",
+          "fixAr": "نشر الالتزام المختبر ثم رحلات حي؛ بدون AUTH_SKIP.",
+          "resultAr": "حتى هذا السجل: لا حسابات شريك/إدارة معزولة في البيئة؛ رحلات مصدّقة NOT_RUN؛ HTTP 200 وحده لا يكفي.",
+          "evidenceAr": "mc-fix-rc7/LIVE_JOURNEY.txt",
+          "evidenceLinks": [],
+          "remainingAr": "حسابات اختبار + إتمام رحلات الجهاز",
+          "independentReviewAr": "بانتظار المراجعة المستقلة"
+        },
+        {
+          "id": "RC7-05",
+          "titleAr": "بطاقات الموقع والروابط",
+          "relatedTaskIds": [
+            "RC6-06",
+            "P5-T3"
+          ],
+          "status": "منفّذ — بانتظار المراجعة المستقلة",
+          "problemAr": "يحتاج بطاقات RC7 مرتبطة بملاحظات RC6 دون حذف التاريخ.",
+          "fixAr": "إضافة RC7-* تحت PH-5 وتحديث حالة RC6 ذات الصلة.",
+          "resultAr": "بطاقات RC7 + روابط ZIP/SHA/VERIFY محدّثة",
+          "evidenceAr": "data/discover-phases.json",
+          "evidenceLinks": [],
+          "remainingAr": "—",
+          "independentReviewAr": "بانتظار المراجعة المستقلة"
+        },
+        {
+          "id": "RC7-06",
+          "titleAr": "ختم حزمة المراجعة RC7",
+          "relatedTaskIds": [
+            "RC6-07"
+          ],
+          "status": "منفّذ ومتحقق من الفك — بانتظار المراجعة المستقلة",
+          "problemAr": "حزمة RC6 ناقصة مسارات اختبار Flutter الصحيحة.",
+          "fixAr": "MIRA_COMMERCE_MC_FIX_RC7.zip عبر pack_mc_fix_rc7 ثم فحص فك وإعادة اختبار.",
+          "resultAr": "MIRA_COMMERCE_MC_FIX_RC7.zip bytes=50320044 sha=720caa1891f10cb44decab660f9b6dc9333396ebcfd595813f863f25f3ebf402; unpack options/commerce/flutter EXIT0; marketplace_dart=27",
+          "evidenceAr": "mc-fix-rc7/PACKAGE_VERIFY.txt ؛ MIRA_COMMERCE_MC_FIX_RC7_VERIFICATION.txt",
+          "evidenceLinks": [],
+          "remainingAr": "المراجعة المستقلة",
+          "independentReviewAr": "بانتظار المراجعة المستقلة"
         }
       ]
     }

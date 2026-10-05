@@ -1,0 +1,16 @@
+RC7 unpack verification (external; does not modify ZIP)
+zip=/Users/fayez/Desktop/mira/MIRA_COMMERCE_MC_FIX_RC7.zip
+bytes=50320044
+sha256=720caa1891f10cb44decab660f9b6dc9333396ebcfd595813f863f25f3ebf402
+source_commit=affa4831d2898c9cb021d0d746d50fa964077c2c
+manifest_vs_unpacked: missing=0 mismatches=0 disk_extra=0
+symlinks_excluded=ios/.symlinks
+marketplace_dart=27
+assets=included
+integration_test/discover_playback_rc2_test.dart=present
+no top-level marketplace/ tests
+unpack_portal_options: EXIT0 (cwd=/tmp/mira-mc-fix-rc7-unpack/.../partners-portal/web/js)
+unpack_test_commerce: EXIT0 (cwd=/tmp/mira-mc-fix-rc7-unpack/.../mira-api)
+unpack_flutter_marketplace: EXIT0 164 tests (cwd=/tmp/mira-mc-fix-rc7-unpack/MIRA_COMMERCE_MC_FIX_RC7)
+PASS package
+freshness=NOT_RUN independent package check does not read a repository

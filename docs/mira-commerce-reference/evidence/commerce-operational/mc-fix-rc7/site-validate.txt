@@ -1,0 +1,2 @@
+PASS package
+freshness=NOT_RUN independent package check does not read a repository
