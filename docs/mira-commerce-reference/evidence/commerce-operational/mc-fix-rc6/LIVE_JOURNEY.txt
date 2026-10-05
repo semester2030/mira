@@ -1,0 +1,26 @@
+RC6 LIVE_JOURNEY
+date=2026-10-05
+base_rc5_commit=a3fc689fdc403b412c313b0594cf7a5bcf594626
+base_rc5_sha256=5860901d59b028c994ee34cb95b6447ad1d96fe85240fa4e851c27352297b217
+commit_tested=(pending seal commit)
+deploy_mira_api=(pending push/deploy)
+deploy_partners=(pending)
+deploy_admin=(pending)
+
+portal_form_modules=PASS CatalogJourney clothes M/L/XL + colors; face→clothes category_incompatible + revert; group_removed; 390/480/1280 overflowX=false
+portal_authenticated_save_submit_admin=NOT_RUN (no isolated partner/admin test credentials in this pass; AUTH_SKIP forbidden)
+COD_journey=NOT_RUN
+booking_journey=NOT_RUN
+partner_followup=NOT_RUN
+admin_followup=NOT_RUN
+favorites_share=NOT_RUN
+device_run=NOT_RUN (wireless iPhone listed; journey not completed this pass)
+views=DEFERRED_BY_OWNER
+durable_storage=DEFERRED_BY_OWNER
+
+local_postgres=PASS test:commerce + lock-protocol E5b/E6b/ADMIN/CAP1
+flutter_analyze_full=EXIT 1 (pre-existing errors outside marketplace; marketplace error count 0)
+flutter_analyze_scoped=EXIT 1 warnings/info only; error count 0
+flutter_marketplace_tests=EXIT 0
+flutter_apk=EXIT 0
+flutter_ios_nocodesign=EXIT 0

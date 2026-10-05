@@ -1,0 +1,297 @@
+<!DOCTYPE html>
+<html lang="ar" dir="rtl">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>RC6 portal form — clothes + category conflict</title>
+  <link href="https://fonts.googleapis.com/css2?family=Tajawal:wght@400;700;800&display=swap" rel="stylesheet" />
+  <link rel="stylesheet" href="/css/site.css" />
+  <style>
+    #metrics { font: 12px/1.4 monospace; white-space: pre-wrap; padding: 8px; background: #111; color: #9f9; max-height: 280px; overflow: auto; }
+  </style>
+</head>
+<body>
+  <pre id="metrics">loading…</pre>
+  <main class="container">
+    <div class="card" id="catalogSection">
+      <h2 id="catalogTitle">الكتالوج</h2>
+      <div id="catalogList"></div>
+      <h2>إضافة جديد</h2>
+      <form id="catalogForm"></form>
+    </div>
+    <div class="card hidden" id="serviceSection">
+      <h2 id="serviceTitle">خدمات</h2>
+      <div id="serviceList"></div>
+      <form id="serviceForm"></form>
+    </div>
+  </main>
+  <script>
+    window.PartnersApi = {
+      dashboard: async () => ({ partner: window.sessionPartner, catalog: { products: [], services: [] } }),
+      createProduct: async () => { throw new Error('blocked-in-rc6-ui-probe-no-auth-save'); },
+      updateProduct: async () => { throw new Error('blocked-in-rc6-ui-probe-no-auth-save'); },
+      createService: async () => { throw new Error('blocked-in-rc6-ui-probe-no-auth-save'); },
+      updateService: async () => { throw new Error('blocked-in-rc6-ui-probe-no-auth-save'); },
+    };
+    window.sessionPartner = { id: 'rc6-probe', type: 'brand', nameAr: 'RC6 Probe', contactPhone: '0500000000' };
+  </script>
+  <script src="/js/catalog-options-core.js"></script>
+  <script src="/js/catalog-journey.js"></script>
+  <script>
+    function fail(msg) {
+      throw new Error(msg);
+    }
+
+    function formEl() {
+      return document.getElementById('catalogForm');
+    }
+
+    function recordMetrics(tag, extra) {
+      const el = document.documentElement;
+      const form = formEl();
+      const conflictNodes = [...form.querySelectorAll('p, div, button')].filter((n) =>
+        /تغيير التصنيف|العودة للتصنيف|امسحي الخيارات|group_removed|تعارض/i.test(n.textContent || ''),
+      );
+      const buttons = [...form.querySelectorAll('button')].map((b) => {
+        const r = b.getBoundingClientRect();
+        return {
+          text: (b.textContent || '').trim().slice(0, 48),
+          disabled: !!b.disabled,
+          w: Math.round(r.width),
+          h: Math.round(r.height),
+          visible: r.width > 0 && r.height > 0,
+        };
+      });
+      const checked = [...form.querySelectorAll('input[type="checkbox"]')]
+        .filter((c) => c.checked)
+        .map((c) => (c.parentElement && c.parentElement.textContent ? c.parentElement.textContent.trim() : c.value));
+      const buttonRects = [...form.querySelectorAll('button')].map((b) => {
+        const r = b.getBoundingClientRect();
+        return {
+          text: (b.textContent || '').trim().slice(0, 48),
+          left: Math.round(r.left),
+          right: Math.round(r.right),
+          clipped: r.right > window.innerWidth + 1 || r.left < -1,
+          visible: r.width > 0 && r.height > 0,
+        };
+      });
+      const payload = {
+        tag,
+        modules: {
+          MiraCatalogOptions: !!window.MiraCatalogOptions,
+          CatalogJourney: !!window.CatalogJourney,
+        },
+        innerWidth: window.innerWidth,
+        clientWidth: el.clientWidth,
+        scrollWidth: el.scrollWidth,
+        overflowX: el.scrollWidth > el.clientWidth + 1,
+        formClientWidth: form.clientWidth,
+        formScrollWidth: form.scrollWidth,
+        // Internal box-model quirks (padding) can make scrollWidth>clientWidth by a few px;
+        // fail only if content extends past the viewport or page scrolls horizontally.
+        formPastViewport: form.getBoundingClientRect().right > window.innerWidth + 1,
+        conflictText: conflictNodes.map((n) => (n.textContent || '').trim().slice(0, 120)).join(' | '),
+        checked,
+        buttons,
+        buttonRects,
+        clippedButtons: buttonRects.filter((b) => b.clipped),
+        ...(extra || {}),
+      };
+      document.getElementById('metrics').textContent = JSON.stringify(payload, null, 2);
+      window.__RC6_METRICS__ = payload;
+      window.__RC6_RESULTS__ = window.__RC6_RESULTS__ || [];
+      window.__RC6_RESULTS__.push(payload);
+      return payload;
+    }
+
+    function enableCod() {
+      const cod = formEl().querySelector('input[name="internalCod"]');
+      if (!cod) fail('missing internalCod field');
+      if (!cod.checked) {
+        cod.checked = true;
+        cod.dispatchEvent(new Event('change', { bubbles: true }));
+      }
+    }
+
+    function setCategory(value) {
+      const category = formEl().querySelector('select[name="category"]');
+      if (!category) fail('missing category select');
+      const opt = [...category.options].find((o) => o.value === value);
+      if (!opt) fail('category option missing: ' + value);
+      category.value = value;
+      category.dispatchEvent(new Event('change', { bubbles: true }));
+      return value;
+    }
+
+    function checkPreset(labelExact) {
+      const labels = [...formEl().querySelectorAll('label')];
+      const wrap = labels.find((l) => (l.textContent || '').trim() === labelExact || (l.textContent || '').trim() === ' ' + labelExact);
+      // labels are " M" style with leading space from text node
+      const hit =
+        wrap ||
+        labels.find((l) => {
+          const t = (l.textContent || '').replace(/\s+/g, ' ').trim();
+          return t === labelExact;
+        });
+      if (!hit) fail('preset checkbox not found: ' + labelExact);
+      const input = hit.querySelector('input[type="checkbox"]');
+      if (!input) fail('checkbox missing for ' + labelExact);
+      if (!input.checked) {
+        input.checked = true;
+        input.dispatchEvent(new Event('change', { bubbles: true }));
+      }
+      return true;
+    }
+
+    function setCustomValues(groupLabel, csv) {
+      const headings = [...formEl().querySelectorAll('h4')];
+      const head = headings.find((h) => (h.textContent || '').trim() === groupLabel);
+      if (!head) fail('group heading missing: ' + groupLabel);
+      const block = head.parentElement;
+      const custom = block.querySelector('input[name^="custom-"]');
+      if (!custom) fail('custom values input missing for ' + groupLabel);
+      custom.value = csv;
+      custom.dispatchEvent(new Event('input', { bubbles: true }));
+    }
+
+    function formHasText(re) {
+      return re.test(formEl().textContent || '');
+    }
+
+    async function scenarioClothing() {
+      window.CatalogJourney.renderForm('brand', null, 'catalogForm', 'catalogTitle');
+      await new Promise((r) => setTimeout(r, 40));
+      enableCod();
+      setCategory('clothes');
+      await new Promise((r) => setTimeout(r, 40));
+      checkPreset('M');
+      checkPreset('L');
+      setCustomValues('اللون', 'أسود, أبيض');
+      await new Promise((r) => setTimeout(r, 40));
+      checkPreset('XL');
+      await new Promise((r) => setTimeout(r, 40));
+      const m = recordMetrics('clothing-ml-xl');
+      if (!(m.checked || []).includes('M') || !(m.checked || []).includes('L') || !(m.checked || []).includes('XL')) {
+        fail('expected M/L/XL checked; got ' + JSON.stringify(m.checked));
+      }
+      if (!formHasText(/أسود/) || !formHasText(/أبيض/)) fail('colors not present');
+      if (m.overflowX || m.formPastViewport) fail('horizontal overflow on clothing form');
+      if ((m.clippedButtons || []).length) fail('action button clipped: ' + m.clippedButtons.map((b) => b.text).join('|'));
+      const hiddenBtn = (m.buttons || []).find((b) => /حفظ|مسودة|إرسال/.test(b.text) && (!b.visible || b.w < 8));
+      if (hiddenBtn) fail('action button obscured: ' + hiddenBtn.text);
+      return m;
+    }
+
+    async function scenarioCategoryChangeNoVariants() {
+      window.CatalogJourney.renderForm('brand', null, 'catalogForm', 'catalogTitle');
+      await new Promise((r) => setTimeout(r, 40));
+      enableCod();
+      setCategory('face');
+      await new Promise((r) => setTimeout(r, 40));
+      checkPreset('50 مل');
+      checkPreset('100 مل');
+      await new Promise((r) => setTimeout(r, 40));
+      if (!formHasText(/50\s*مل/) || !formHasText(/100\s*مل/)) fail('care sizes not visible');
+      setCategory('clothes');
+      await new Promise((r) => setTimeout(r, 80));
+      const m = recordMetrics('category-change-no-variants');
+      if (!/تغيير التصنيف|العودة للتصنيف السابق|امسحي الخيارات/i.test(m.conflictText)) {
+        fail('expected category conflict banner; got: ' + m.conflictText);
+      }
+      const revert = [...formEl().querySelectorAll('button')].find((b) =>
+        /العودة للتصنيف السابق/.test(b.textContent || ''),
+      );
+      if (!revert) fail('revert button missing');
+      if (!revert.getBoundingClientRect().width) fail('revert button not visible');
+      revert.click();
+      await new Promise((r) => setTimeout(r, 80));
+      const after = recordMetrics('after-revert');
+      if (!(after.checked || []).includes('50 مل') || !(after.checked || []).includes('100 مل')) {
+        fail('volume options lost after revert; checked=' + JSON.stringify(after.checked));
+      }
+      const cat = formEl().querySelector('select[name="category"]');
+      if (cat.value !== 'face') fail('category not restored to face');
+      return after;
+    }
+
+    async function scenarioGroupRemovedConflict() {
+      const state = window.MiraCatalogOptions.optionsStateFromServer(null);
+      state.selected = { size: ['M', 'L'], color: ['أسود'] };
+      state.valueIds = {
+        size: { M: 'size-m', L: 'size-l' },
+        color: { أسود: 'color-black' },
+      };
+      const preset = [
+        { id: 'size', label: 'المقاس', kind: 'size' },
+        { id: 'color', label: 'اللون', kind: 'color' },
+      ];
+      state.variants = [
+        {
+          id: 'v1',
+          selections: { size: 'size-m', color: 'color-black' },
+          labels: { size: 'M', color: 'أسود' },
+          priceHalalas: 1000,
+          available: true,
+        },
+      ];
+      state._builtGroups = window.MiraCatalogOptions.buildOptionGroups(preset, state);
+      state.selected.size = [];
+      state._builtGroups = window.MiraCatalogOptions.buildOptionGroups(preset, state);
+      const payload = window.MiraCatalogOptions.structuredOptionsPayload(state, preset);
+      if (!payload.conflicts || !payload.conflicts.some((c) => c.kind === 'group_removed')) {
+        fail('expected group_removed conflict; payload=' + JSON.stringify(payload));
+      }
+      recordMetrics('group-removed-core', {
+        conflictKinds: payload.conflicts.map((c) => c.kind),
+        error: payload.error,
+      });
+      return payload;
+    }
+
+    async function scenarioCategoryPayloadNotNull() {
+      const state = window.MiraCatalogOptions.optionsStateFromServer(null);
+      state.selected = { volume: ['50 مل', '100 مل'] };
+      state.valueIds = { volume: { '50 مل': 'v50', '100 مل': 'v100' } };
+      const clothesPreset = [
+        { id: 'size', label: 'المقاس', kind: 'size' },
+        { id: 'color', label: 'اللون', kind: 'color' },
+      ];
+      state._builtGroups = window.MiraCatalogOptions.buildOptionGroups(clothesPreset, state);
+      const payload = window.MiraCatalogOptions.structuredOptionsPayload(state, clothesPreset);
+      if (!payload.conflicts || !payload.conflicts.some((c) => c.kind === 'category_incompatible')) {
+        fail('expected category_incompatible in payload');
+      }
+      if (payload.optionsJson === null && !payload.clearing) {
+        fail('must not null optionsJson without clearingOptions');
+      }
+      // Explicit clear still allowed
+      state.clearingOptions = true;
+      const cleared = window.MiraCatalogOptions.structuredOptionsPayload(state, clothesPreset);
+      if (cleared.optionsJson !== null || !cleared.clearing) fail('explicit clear must null options');
+      recordMetrics('category-payload', { conflictKinds: payload.conflicts.map((c) => c.kind) });
+    }
+
+    async function runProbe() {
+      if (!window.MiraCatalogOptions || !window.CatalogJourney) fail('modules missing');
+      await scenarioClothing();
+      await scenarioCategoryChangeNoVariants();
+      await scenarioGroupRemovedConflict();
+      await scenarioCategoryPayloadNotNull();
+      const last = recordMetrics('final');
+      if (last.overflowX || last.formPastViewport || (last.clippedButtons || []).length) {
+        fail('page/form horizontal overflow or clipped controls');
+      }
+      window.__RC6_READY__ = true;
+    }
+
+    runProbe().catch((e) => {
+      document.getElementById('metrics').textContent = 'FAIL ' + (e && e.stack ? e.stack : e);
+      window.__RC6_READY__ = false;
+      window.__RC6_ERROR__ = String(e && e.message ? e.message : e);
+      try {
+        recordMetrics('failed', { error: window.__RC6_ERROR__ });
+      } catch (_) {}
+    });
+  </script>
+</body>
+</html>

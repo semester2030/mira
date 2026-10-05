@@ -1,7 +1,20 @@
 /**
  * Shared partner-scoped schedule locks for bookings and merchant service edits.
  * Keys always include partnerId so independent partners never serialize on the same name.
+ *
+ * Protocol (RC6):
+ * 1. Acquire partner coordination advisory lock first.
+ * 2. Re-read that partner's services and expand the sharing graph.
+ * 3. Acquire the full sorted set of service/resource advisories once.
+ * 4. FOR UPDATE service rows in sorted id order.
+ * Never acquire additional resource/service locks after holding a partial set —
+ * that ordering inversion causes deadlock when the graph grows during wait.
  */
+
+export function partnerScheduleCoordKey(partnerId: string): string {
+  return `commerce-schedule-partner:${partnerId}`;
+}
+
 export function bookingResourceLockKey(partnerId: string, resourceId: string): string {
   return `commerce-booking-resource:${partnerId}:${resourceId}`;
 }
@@ -81,5 +94,51 @@ export async function lockServiceRows(tx: TxLike, serviceIds: ReadonlyArray<stri
   for (const id of ids) {
     if (!tx.$queryRaw) continue;
     await tx.$queryRaw`SELECT id FROM services WHERE id = ${id} FOR UPDATE`;
+  }
+}
+
+/**
+ * Full partner schedule protocol: coordination → re-read → expand → sorted locks once.
+ * `loadServices` must read from the same transaction after the coordination lock is held.
+ */
+export async function lockPartnerScheduleScope(
+  tx: TxLike,
+  opts: {
+    partnerId: string;
+    seedServiceIds: ReadonlyArray<string>;
+    seedResourceIds: ReadonlyArray<string>;
+    loadServices: () => Promise<Array<{ id: string; resourceIds: ReadonlyArray<string> }>>;
+  },
+): Promise<{ serviceIds: string[]; resourceIds: string[] }> {
+  if (!opts.partnerId) {
+    throw new Error('partnerId required for schedule protocol');
+  }
+  await acquireScheduleLocks(tx, [partnerScheduleCoordKey(opts.partnerId)]);
+  const services = await opts.loadServices();
+  const scope = expandScheduleScope(services, opts.seedServiceIds, opts.seedResourceIds);
+  await acquireScheduleLocks(
+    tx,
+    scheduleLockKeys({
+      partnerId: opts.partnerId,
+      serviceIds: scope.serviceIds,
+      resourceIds: scope.resourceIds,
+    }),
+  );
+  const rowIds = scope.serviceIds.filter((id) => id && !String(id).startsWith('create:'));
+  await lockServiceRows(tx, rowIds);
+  // Test-only barrier AFTER full protocol locks — never used in production.
+  await maybeTestScheduleGate();
+  return scope;
+}
+
+/** Spin until MIRA_TEST_SCHEDULE_GATE is cleared. Empty/unset = no-op. */
+export async function maybeTestScheduleGate(): Promise<void> {
+  if (process.env.MIRA_TEST_SCHEDULE_GATE !== 'hold') return;
+  const started = Date.now();
+  while (process.env.MIRA_TEST_SCHEDULE_GATE === 'hold') {
+    if (Date.now() - started > 20_000) {
+      throw new Error('MIRA_TEST_SCHEDULE_GATE hold timed out');
+    }
+    await new Promise((r) => setTimeout(r, 15));
   }
 }

@@ -1,0 +1,7 @@
+RC6 real CatalogJourney form probe — clothes + category conflict + group_removed
+modules=catalog-options-core.js + catalog-journey.js
+AUTH_SKIP=forbidden; PartnersApi save blocked in probe shell
+authenticated partner save/submit/admin approve = separate LIVE_JOURNEY
+width=390 overflowX=false formOverflowX=undefined clientWidth=390 scrollWidth=390 tags=clothing-ml-xl,category-change-no-variants,after-revert,group-removed-core,category-payload,final conflictSnippet=
+width=480 overflowX=false formOverflowX=undefined clientWidth=480 scrollWidth=480 tags=clothing-ml-xl,category-change-no-variants,after-revert,group-removed-core,category-payload,final conflictSnippet=
+width=1280 overflowX=false formOverflowX=undefined clientWidth=1280 scrollWidth=1280 tags=clothing-ml-xl,category-change-no-variants,after-revert,group-removed-core,category-payload,final conflictSnippet=

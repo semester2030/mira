@@ -1,0 +1,117 @@
+npm warn Unknown env config "devdir". This will stop working in the next major version of npm.
+
+> mira-api@1.0.0 test:commerce
+> tsx src/marketplace/commerce.types.schema-tests.ts && tsx src/marketplace/commerce-public.schema-tests.ts && tsx src/marketplace/commerce.service.schema-tests.ts && tsx src/marketplace/commerce.concurrency.schema-tests.ts && tsx src/marketplace/commerce.create-service-atomic.schema-tests.ts && tsx src/marketplace/commerce.lost-update.schema-tests.ts && tsx src/marketplace/commerce.lock-protocol.schema-tests.ts && tsx src/marketplace/commerce.http.integration-tests.ts
+
+commerce.types schema tests passed
+commerce-public schema tests passed
+commerce.service schema tests passed
+[concurrency] A: seed product + cart
+[concurrency] A: holder begins FOR UPDATE
+[concurrency] A: holder acquired lock
+[concurrency] B: createOrder starts (must wait on product lock)
+[concurrency] B: observed waiting lock in pg_locks
+[concurrency] A: holder committed price=9000
+[concurrency] A PASS: waiter saw new price via QUOTE_STALE
+[concurrency] B: flipped to external under lock
+[concurrency] B PASS: EXTERNAL under protected verify
+[concurrency] D PASS: single winner on last unit
+[concurrency] F PASS: one booking on shared Arabic resource capacity
+[concurrency] E1: schedule locks held commerce-booking-resource:579ea401-7904-47cc-b079-b9e8e07bdb6b:غرفة-تعطيل | commerce-booking-service:9c81e3aa-23f4-492e-83e8-b62bd6738774
+[concurrency] E1: createBooking waiting on partner-scoped resource advisory
+[concurrency] E1: bookingEnabled=false under held schedule locks
+[concurrency] E1 PASS: booking waited then rejected after disable under shared keys
+[concurrency] E2: locks held before updateService
+[concurrency] E2: production updateService waiting on same resource advisory
+[concurrency] E2 PASS: updateService shared schedule lock protocol
+[concurrency] E3: booking-side locks held
+[concurrency] E3: capacity/duration update waiting
+[concurrency] E3 PASS: schedule/capacity update synchronized with booking locks
+[concurrency] E4 PASS: production updateService won; booking rejected
+[concurrency] E5: withdraw-equivalent locks held
+[concurrency] E5: createBooking waiting during withdraw barrier
+[concurrency] E5: withdrawn under held locks
+[concurrency] E5 PASS: withdraw committed first; booking rejected
+[concurrency] E6: booking-side locks held before deleteService
+[concurrency] E6: production deleteService waiting
+[concurrency] E6 PASS: deleteService shared schedule lock protocol
+[concurrency] H PASS: historical booking snapshot retained after portal price edit
+[concurrency] I PASS: two partners same resource name book independently
+commerce.concurrency schema tests passed
+--- event order ---
+2026-10-05T09:48:29.932Z A: seed product + cart
+2026-10-05T09:48:29.947Z A: holder begins FOR UPDATE
+2026-10-05T09:48:29.948Z A: holder acquired lock
+2026-10-05T09:48:29.948Z B: createOrder starts (must wait on product lock)
+2026-10-05T09:48:29.974Z B: observed waiting lock in pg_locks
+2026-10-05T09:48:29.975Z A: holder committed price=9000
+2026-10-05T09:48:29.980Z A PASS: waiter saw new price via QUOTE_STALE
+2026-10-05T09:48:30.012Z B: flipped to external under lock
+2026-10-05T09:48:30.015Z B PASS: EXTERNAL under protected verify
+2026-10-05T09:48:30.046Z D PASS: single winner on last unit
+2026-10-05T09:48:30.066Z F PASS: one booking on shared Arabic resource capacity
+2026-10-05T09:48:30.067Z E1: schedule locks held commerce-booking-resource:579ea401-7904-47cc-b079-b9e8e07bdb6b:غرفة-تعطيل | commerce-booking-service:9c81e3aa-23f4-492e-83e8-b62bd6738774
+2026-10-05T09:48:30.095Z E1: createBooking waiting on partner-scoped resource advisory
+2026-10-05T09:48:30.096Z E1: bookingEnabled=false under held schedule locks
+2026-10-05T09:48:30.098Z E1 PASS: booking waited then rejected after disable under shared keys
+2026-10-05T09:48:30.100Z E2: locks held before updateService
+2026-10-05T09:48:30.128Z E2: production updateService waiting on same resource advisory
+2026-10-05T09:48:30.133Z E2 PASS: updateService shared schedule lock protocol
+2026-10-05T09:48:30.133Z E3: booking-side locks held
+2026-10-05T09:48:30.161Z E3: capacity/duration update waiting
+2026-10-05T09:48:30.165Z E3 PASS: schedule/capacity update synchronized with booking locks
+2026-10-05T09:48:30.174Z E4 PASS: production updateService won; booking rejected
+2026-10-05T09:48:30.176Z E5: withdraw-equivalent locks held
+2026-10-05T09:48:30.203Z E5: createBooking waiting during withdraw barrier
+2026-10-05T09:48:30.204Z E5: withdrawn under held locks
+2026-10-05T09:48:30.206Z E5 PASS: withdraw committed first; booking rejected
+2026-10-05T09:48:30.208Z E6: booking-side locks held before deleteService
+2026-10-05T09:48:30.237Z E6: production deleteService waiting
+2026-10-05T09:48:30.241Z E6 PASS: deleteService shared schedule lock protocol
+2026-10-05T09:48:30.256Z H PASS: historical booking snapshot retained after portal price edit
+2026-10-05T09:48:30.268Z I PASS: two partners same resource name book independently
+1 PASS: invalid category + unify — no sibling mutation
+2 PASS: injected mid-unify failure rolls back
+3 PASS: atomic success unify + create
+4 PASS: concurrent unify — no mixed capacities 4
+5 PASS: other partner untouched
+6 PASS: booking snapshot unchanged after failed unify
+commerce.create-service-atomic schema tests passed
+RC5-02 lost-update scenario PASS
+2026-10-05T09:48:31.261Z OLD-T1 held commerce-booking-resource:e6a410ff-363c-43b8-84a8-1b8bed1c2d8b:Z
+2026-10-05T09:48:31.262Z OLD-T2 held commerce-booking-resource:e6a410ff-363c-43b8-84a8-1b8bed1c2d8b:A; waiting for Z held by T1
+2026-10-05T09:48:32.366Z OLD-T1 acquired A after Z (unexpected — no circular wait)
+2026-10-05T09:48:32.366Z OLD-T2 failed as expected: PrismaClientKnownRequestError: 
+2026-10-05T09:48:32.367Z RC6-02 control: inverted partial locks exercised (deadlock/timeout observed)
+2026-10-05T09:48:32.380Z T0 committed S1→A+Z
+2026-10-05T09:48:32.395Z RC6-02 PASS: concurrent production updateService after scope growth — no deadlock, both capacities kept
+2026-10-05T09:48:32.395Z E5b slot day=2026-10-08 weekday=4
+2026-10-05T09:48:32.524Z E5b: booking waiting while production deleteService holds schedule protocol
+2026-10-05T09:48:32.556Z E5b PASS: production deleteService committed first; createBooking rejected; no new booking
+2026-10-05T09:48:32.556Z E6b slot day=2026-10-11 weekday=0
+2026-10-05T09:48:32.722Z E6b: deleteService waiting; booking pid gate; target=commerce-schedule-partner:e6a410ff-363c-43b8-84a8-1b8bed1c2d8b
+2026-10-05T09:48:32.746Z E6b: booking committed id=8f207d05-4a68-4af2-a8b1-b082a5908c35
+2026-10-05T09:48:32.753Z E6b PASS: createBooking committed first; deleteService applied; historical booking retained
+2026-10-05T09:48:32.852Z ADMIN-WD PASS: catalog decide(withdraw) vs createBooking — withdraw wins, booking rejected
+2026-10-05T09:48:32.982Z ADMIN-E6 PASS: booking committed then admin withdraw; historical booking retained
+2026-10-05T09:48:33.009Z CAP1 PASS: one booking on capacity-1 shared resource
+commerce.lock-protocol schema tests passed
+--- event order ---
+2026-10-05T09:48:31.261Z OLD-T1 held commerce-booking-resource:e6a410ff-363c-43b8-84a8-1b8bed1c2d8b:Z
+2026-10-05T09:48:31.262Z OLD-T2 held commerce-booking-resource:e6a410ff-363c-43b8-84a8-1b8bed1c2d8b:A; waiting for Z held by T1
+2026-10-05T09:48:32.366Z OLD-T1 acquired A after Z (unexpected — no circular wait)
+2026-10-05T09:48:32.366Z OLD-T2 failed as expected: PrismaClientKnownRequestError: 
+2026-10-05T09:48:32.367Z RC6-02 control: inverted partial locks exercised (deadlock/timeout observed)
+2026-10-05T09:48:32.380Z T0 committed S1→A+Z
+2026-10-05T09:48:32.395Z RC6-02 PASS: concurrent production updateService after scope growth — no deadlock, both capacities kept
+2026-10-05T09:48:32.395Z E5b slot day=2026-10-08 weekday=4
+2026-10-05T09:48:32.524Z E5b: booking waiting while production deleteService holds schedule protocol
+2026-10-05T09:48:32.556Z E5b PASS: production deleteService committed first; createBooking rejected; no new booking
+2026-10-05T09:48:32.556Z E6b slot day=2026-10-11 weekday=0
+2026-10-05T09:48:32.722Z E6b: deleteService waiting; booking pid gate; target=commerce-schedule-partner:e6a410ff-363c-43b8-84a8-1b8bed1c2d8b
+2026-10-05T09:48:32.746Z E6b: booking committed id=8f207d05-4a68-4af2-a8b1-b082a5908c35
+2026-10-05T09:48:32.753Z E6b PASS: createBooking committed first; deleteService applied; historical booking retained
+2026-10-05T09:48:32.852Z ADMIN-WD PASS: catalog decide(withdraw) vs createBooking — withdraw wins, booking rejected
+2026-10-05T09:48:32.982Z ADMIN-E6 PASS: booking committed then admin withdraw; historical booking retained
+2026-10-05T09:48:33.009Z CAP1 PASS: one booking on capacity-1 shared resource
+commerce HTTP integration tests passed

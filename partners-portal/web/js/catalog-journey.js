@@ -696,11 +696,28 @@
       cosmetic.hidden = !show;
       return show;
     }
+    let lastCompatibleCategory = category.value;
     category.onchange = function () {
       cosmeticVisible();
       if (type === 'brand') {
-        // Keep selected values/variants already chosen; only repaint presets for the new category.
-        // Silent drop of saved groups is blocked by structuredOptionsPayload conflicts.
+        // Keep selected values/variants; category drop of saved groups is a conflict (RC6-01).
+        // Do not clear optionsState — merchant must revert category or explicit-clear.
+        const next = category.value;
+        const preset = optionPresets(next);
+        const orphans =
+          window.MiraCatalogOptions && window.MiraCatalogOptions.incompatibleGroupIds
+            ? window.MiraCatalogOptions.incompatibleGroupIds(optionsState, preset.groups)
+            : [];
+        if (orphans.length && !optionsState.clearingOptions) {
+          optionsState.categoryConflict = {
+            from: lastCompatibleCategory,
+            to: next,
+            groupIds: orphans,
+          };
+        } else {
+          optionsState.categoryConflict = null;
+          lastCompatibleCategory = next;
+        }
         paintOptions();
       } else paintServiceTemplates();
     };
@@ -771,8 +788,33 @@
       }
       optionsSection.hidden = false;
       const preset = optionPresets(category.value);
+      if (optionsState.categoryConflict && optionsState.categoryConflict.groupIds && optionsState.categoryConflict.groupIds.length) {
+        const banner = document.createElement('p');
+        banner.className = 'field-error';
+        banner.setAttribute('role', 'alert');
+        banner.setAttribute('data-category-conflict', '1');
+        banner.textContent =
+          'تغيير التصنيف سيُسقط مجموعات خيارات محفوظة دون مسح صريح. ارجعي للتصنيف السابق أو امسحي الخيارات صراحةً قبل الحفظ.';
+        optionsBody.appendChild(banner);
+        const revert = document.createElement('button');
+        revert.type = 'button';
+        revert.className = 'btn btn-ghost btn-sm';
+        revert.textContent = 'العودة للتصنيف السابق';
+        revert.onclick = () => {
+          const prev = optionsState.categoryConflict && optionsState.categoryConflict.from;
+          if (prev) {
+            category.value = prev;
+            optionsState.categoryConflict = null;
+            lastCompatibleCategory = prev;
+            cosmeticVisible();
+            paintOptions();
+          }
+        };
+        optionsBody.appendChild(revert);
+      }
       if (!preset.groups.length && !preset.traits.length) {
         text(optionsBody, 'هذا التصنيف لا يحتاج خيارات مقاس أو لون أو حجم.');
+        paintOptionsPreview();
         return;
       }
       preset.groups.forEach((group) => {
@@ -1414,17 +1456,26 @@
         if (variants.value !== undefined) value.variantsJson = variants.value;
       } else {
         // Easy UI is the source of truth. Never let a stale JSON textarea override it.
-        if (built.error) return { error: { field: 'variantsJson', message: built.error } };
+        // Category change that would drop saved groups must not become optionsJson=null (RC6-01).
+        if (built.error || (built.conflicts && built.conflicts.length)) {
+          return {
+            error: {
+              field: 'variantsJson',
+              message: built.error || (built.conflicts[0] && built.conflicts[0].messageAr) || 'تعارض في الخيارات',
+            },
+          };
+        }
         if (built.clearing) {
           value.optionsJson = null;
           value.variantsJson = null;
         } else if (built.optionsJson && built.optionsJson.length) {
           value.optionsJson = built.optionsJson;
           value.variantsJson = built.variantsJson;
-        } else if (editing && (item.draftOptionsSet || item.optionsJson || optionsState.clearingOptions)) {
+        } else if (optionsState.clearingOptions) {
           value.optionsJson = null;
           value.variantsJson = null;
         }
+        // If empty without explicit clear: omit fields (keep server state). Never silent-null.
       }
 
       if (value.optionsJson === undefined) delete value.optionsJson;

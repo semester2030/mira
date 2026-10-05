@@ -65,6 +65,22 @@ nav a:hover { color: var(--primary-strong); }
   padding: 1.5rem;
   box-shadow: var(--shadow);
   margin-bottom: 1rem;
+  max-width: 100%;
+  min-width: 0;
+  overflow-x: clip;
+}
+
+@media (max-width: 480px) {
+  .card { padding: 1rem; }
+}
+
+.check-row {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: flex-start;
+  gap: 0.4rem;
+  max-width: 100%;
+  overflow-wrap: anywhere;
 }
 
 h1 { margin: 0 0 0.5rem; font-size: 1.75rem; }
@@ -191,8 +207,8 @@ th, td {
 .hero .emoji { font-size: 2.5rem; }
 
 .journey-actions { display: flex; flex-wrap: wrap; gap: 0.5rem; }
-.choice-row { display: flex; flex-wrap: wrap; gap: 0.75rem; margin: 0.4rem 0; }
-.choice-row label { font-weight: 400; }
+.choice-row { display: flex; flex-wrap: wrap; gap: 0.75rem; margin: 0.4rem 0; max-width: 100%; }
+.choice-row label { font-weight: 400; max-width: 100%; }
 .choice-row input { width: auto; }
 .option-chip {
   display: inline-block;
@@ -202,10 +218,36 @@ th, td {
   background: #fadae9;
   color: var(--primary-strong);
   font-size: 0.92rem;
+  max-width: 100%;
+  box-sizing: border-box;
+  word-break: break-word;
 }
-.options-preview { margin-top: 0.75rem; padding: 0.75rem; border: 1px dashed var(--border); border-radius: 12px; }
-.field-error { color: var(--err); min-height: 1.2em; font-size: 0.85rem; }
-.form-section { margin-top: 1rem; padding-top: 0.25rem; border-top: 1px solid var(--border); }
+.options-preview { margin-top: 0.75rem; padding: 0.75rem; border: 1px dashed var(--border); border-radius: 12px; max-width: 100%; overflow-wrap: anywhere; }
+.field-error { color: var(--err); min-height: 1.2em; font-size: 0.85rem; overflow-wrap: anywhere; }
+.form-section { margin-top: 1rem; padding-top: 0.25rem; border-top: 1px solid var(--border); max-width: 100%; min-width: 0; }
+#catalogForm,
+#serviceForm {
+  max-width: 100%;
+  min-width: 0;
+  overflow-x: clip;
+  box-sizing: border-box;
+}
+#catalogForm input[type="text"],
+#catalogForm input:not([type]),
+#catalogForm select,
+#catalogForm textarea,
+#serviceForm input[type="text"],
+#serviceForm input:not([type]),
+#serviceForm select,
+#serviceForm textarea {
+  max-width: 100%;
+  box-sizing: border-box;
+}
+#catalogForm label,
+#serviceForm label {
+  max-width: 100%;
+  overflow-wrap: anywhere;
+}
 .media-card { border: 1px solid var(--border); border-radius: 12px; padding: 0.6rem; margin: 0.4rem 0; }
 .media-card img, .media-card video { max-width: 160px; max-height: 160px; display: block; }
 .list-item {

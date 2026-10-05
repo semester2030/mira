@@ -48,7 +48,7 @@ import {
   unprocessable,
   withPartnerResourceCaps,
 } from './commerce.types';
-import { acquireScheduleLocks, expandScheduleScope, lockServiceRows, scheduleLockKeys } from './commerce-schedule-locks';
+import { lockPartnerScheduleScope } from './commerce-schedule-locks';
 
 /** Who is acting. `scope` limits which rows they can see or change. */
 export type CommerceActor =
@@ -1142,25 +1142,22 @@ export class CommerceService {
           if (w.resourceId) seedResources.add(w.resourceId);
         }
         if (resourceId) seedResources.add(resourceId);
-        const partnerServices = await tx.service.findMany({
-          where: { partnerId: peek.partnerId, active: true },
-          select: { id: true, availabilityJson: true },
-        });
-        const scope = expandScheduleScope(
-          partnerServices.map((s) => ({
-            id: s.id,
-            resourceIds: parseAvailability(s.availabilityJson).map((w) => w.resourceId).filter(Boolean) as string[],
-          })),
-          [serviceId],
-          [...seedResources],
-        );
-        const lockKeys = scheduleLockKeys({
+        // Partner id from DB row only — never from client payload.
+        await lockPartnerScheduleScope(tx, {
           partnerId: peek.partnerId,
-          serviceIds: scope.serviceIds,
-          resourceIds: scope.resourceIds,
+          seedServiceIds: [serviceId],
+          seedResourceIds: [...seedResources],
+          loadServices: async () => {
+            const partnerServices = await tx.service.findMany({
+              where: { partnerId: peek.partnerId, active: true },
+              select: { id: true, availabilityJson: true },
+            });
+            return partnerServices.map((s) => ({
+              id: s.id,
+              resourceIds: parseAvailability(s.availabilityJson).map((w) => w.resourceId).filter(Boolean) as string[],
+            }));
+          },
         });
-        await acquireScheduleLocks(tx, lockKeys);
-        await lockServiceRows(tx, scope.serviceIds);
 
         const again = await tx.commerceBooking.findUnique({
           where: { userId_idempotencyKey: { userId: actor.userId, idempotencyKey } },

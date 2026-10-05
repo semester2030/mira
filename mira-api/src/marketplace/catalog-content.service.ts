@@ -10,7 +10,7 @@ import {
   CatalogMediaUnavailable,
 } from './catalog-media.storage';
 import { assertVariantsMatchOptions } from './commerce-public';
-import { acquireScheduleLocks, expandScheduleScope, lockServiceRows, scheduleLockKeys } from './commerce-schedule-locks';
+import { lockPartnerScheduleScope } from './commerce-schedule-locks';
 import { parseAvailability } from './commerce.types';
 
 type Kind = 'product' | 'service';
@@ -271,23 +271,21 @@ export class CatalogContentService {
           const resources = parseAvailability(peek.availabilityJson)
             .map((w) => w.resourceId)
             .filter(Boolean) as string[];
-          const partnerServices = await tx.service.findMany({
-            where: { partnerId: peek.partnerId, active: true },
-            select: { id: true, availabilityJson: true },
+          await lockPartnerScheduleScope(tx, {
+            partnerId: peek.partnerId,
+            seedServiceIds: [id],
+            seedResourceIds: resources,
+            loadServices: async () => {
+              const partnerServices = await tx.service.findMany({
+                where: { partnerId: peek.partnerId, active: true },
+                select: { id: true, availabilityJson: true },
+              });
+              return partnerServices.map((s) => ({
+                id: s.id,
+                resourceIds: parseAvailability(s.availabilityJson).map((w) => w.resourceId).filter(Boolean) as string[],
+              }));
+            },
           });
-          const scope = expandScheduleScope(
-            partnerServices.map((s) => ({
-              id: s.id,
-              resourceIds: parseAvailability(s.availabilityJson).map((w) => w.resourceId).filter(Boolean) as string[],
-            })),
-            [id],
-            resources,
-          );
-          await acquireScheduleLocks(
-            tx,
-            scheduleLockKeys({ partnerId: peek.partnerId, serviceIds: scope.serviceIds, resourceIds: scope.resourceIds }),
-          );
-          await lockServiceRows(tx, scope.serviceIds);
         }
       }
       const row = await this.lockOwner(tx, typedKind, id);

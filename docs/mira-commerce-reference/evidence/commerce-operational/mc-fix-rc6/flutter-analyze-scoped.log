@@ -1,0 +1,136 @@
+Resolving dependencies...
+Downloading packages...
+  _flutterfire_internals 1.3.59 (1.3.77 available)
+  archive 4.0.7 (4.3.0 available)
+  async 2.13.0 (2.13.1 available)
+  bloc 8.1.4 (9.2.1 available)
+  camera 0.12.0+1 (0.12.1 available)
+  camera_android_camerax 0.7.2 (0.7.5+1 available)
+! camera_avfoundation 0.10.1 from path packages/camera_avfoundation_fullrange (overridden)
+  camera_platform_interface 2.13.0 (2.14.0 available)
+  camera_web 0.3.5+3 (0.3.5+6 available)
+  characters 1.4.0 (1.4.1 available)
+  cli_util 0.4.2 (0.6.0 available)
+  clock 1.1.2 (1.1.3 available)
+  cloud_firestore 5.6.12 (6.10.0 available)
+  cloud_firestore_platform_interface 6.6.12 (8.0.7 available)
+  cloud_firestore_web 4.4.12 (5.7.3 available)
+  code_assets 1.2.1 (2.1.0 available)
+  cross_file 0.3.4+2 (0.4.0 available)
+  crypto 3.0.6 (3.0.7 available)
+  cupertino_icons 1.0.8 (2.0.0 available)
+  dio 5.9.2 (5.11.1 available)
+  dio_web_adapter 2.1.2 (2.2.2 available)
+  equatable 2.0.7 (3.0.0 available)
+  ffi 2.1.4 (2.2.0 available)
+  firebase_auth 5.7.0 (6.7.0 available)
+  firebase_auth_platform_interface 7.7.3 (9.1.0 available)
+  firebase_auth_web 5.15.3 (6.3.0 available)
+  firebase_core 3.15.2 (4.15.0 available)
+  firebase_core_platform_interface 6.0.3 (8.1.1 available)
+  firebase_core_web 2.24.1 (3.12.0 available)
+  firebase_storage 12.4.10 (13.6.0 available)
+  firebase_storage_platform_interface 5.2.10 (6.0.7 available)
+  firebase_storage_web 3.10.17 (3.11.13 available)
+  flutter_bloc 8.1.6 (9.1.1 available)
+  flutter_launcher_icons 0.13.1 (0.14.4 available)
+  flutter_lints 5.0.0 (6.0.0 available)
+  flutter_plugin_android_lifecycle 2.0.28 (2.0.35 available)
+  flutter_riverpod 2.6.1 (3.4.3 available)
+  flutter_svg 2.1.0 (2.3.0 available)
+  google_mlkit_commons 0.11.1 (0.13.0 available)
+  google_mlkit_face_detection 0.13.2 (0.15.1 available)
+  google_mlkit_pose_detection 0.14.1 (0.16.1 available)
+  hooks 2.0.2 (2.2.0 available)
+  http 1.4.0 (1.6.0 available)
+  image 4.8.0 (4.10.1 available)
+  image_picker 0.8.7 (1.2.3 available)
+  image_picker_android 0.8.12+23 (0.8.13+25 available)
+  image_picker_for_web 2.2.0 (3.1.1 available)
+  image_picker_ios 0.8.12+2 (0.8.13+9 available)
+  image_picker_platform_interface 2.10.1 (2.11.1 available)
+  intl 0.20.2 (0.20.3 available)
+  jni 1.0.3 (1.1.0 available)
+  json_annotation 4.9.0 (4.12.0 available)
+  lints 5.1.1 (6.1.0 available)
+  logger 2.5.0 (2.8.0 available)
+  matcher 0.12.17 (0.12.20 available)
+  material_color_utilities 0.11.1 (0.13.1 available)
+  mediapipe_face_mesh 1.8.0 (3.2.1 available)
+  meta 1.17.0 (1.19.0 available)
+  mime 1.0.6 (2.1.0 available)
+  objective_c 9.5.0 (9.6.2 available)
+  package_config 2.2.0 (3.0.0 available)
+  path_provider_linux 2.2.1 (2.2.2 available)
+  path_provider_platform_interface 2.1.2 (2.1.3 available)
+  petitparser 6.1.0 (7.1.0 available)
+  platform 3.1.6 (3.2.0 available)
+  posix 6.0.3 (6.5.2 available)
+  provider 6.1.5 (6.1.5+1 available)
+  record_use 0.6.0 (1.1.1 available)
+  riverpod 2.6.1 (3.4.3 available)
+  share_plus 10.1.4 (13.3.1 available)
+  share_plus_platform_interface 5.0.2 (7.2.0 available)
+  shared_preferences_android 2.4.23 (2.4.28 available)
+  shared_preferences_foundation 2.5.6 (2.5.7 available)
+  source_span 1.10.1 (1.10.2 available)
+  stack_trace 1.12.1 (1.12.2 available)
+  stream_transform 2.1.1 (2.1.2 available)
+  test_api 0.7.7 (0.7.14 available)
+  url_launcher 6.3.2 (6.3.3 available)
+  url_launcher_android 6.3.30 (6.3.33 available)
+  url_launcher_ios 6.4.1 (6.4.2 available)
+  url_launcher_linux 3.2.2 (3.2.3 available)
+  url_launcher_macos 3.2.5 (3.2.6 available)
+  url_launcher_windows 3.1.5 (3.1.6 available)
+  vector_graphics 1.1.18 (1.2.3 available)
+  vector_graphics_compiler 1.1.17 (1.3.0 available)
+  vector_math 2.2.0 (2.4.3 available)
+  video_player 2.11.1 (2.14.1 available)
+  video_player_android 2.9.5 (2.12.2 available)
+  vm_service 15.0.0 (15.3.0 available)
+  win32 5.15.0 (6.4.0 available)
+  xml 6.5.0 (7.1.0 available)
+  yaml 3.1.3 (3.1.4 available)
+Got dependencies!
+91 packages have newer versions incompatible with dependency constraints.
+Try `flutter pub outdated` for more information.
+Analyzing 2 items...                                            
+
+   info • The import of '../../domain/catalog_offer_media.dart' is unnecessary because all of the used elements are also provided by the import of '../../domain/entities/catalog_product.dart' • lib/features/marketplace/data/datasources/marketplace_api_data_source.dart:8:8 • unnecessary_import
+   info • The import of '../domain/catalog_offer_media.dart' is unnecessary because all of the used elements are also provided by the import of '../domain/entities/catalog_product.dart' • lib/features/marketplace/data/discover_catalog_query.dart:1:8 • unnecessary_import
+   info • Use an initializing formal to assign a parameter to a field • lib/features/marketplace/data/discover_catalog_query.dart:9:9 • prefer_initializing_formals
+   info • Use an initializing formal to assign a parameter to a field • lib/features/marketplace/data/discover_catalog_query.dart:24:9 • prefer_initializing_formals
+   info • The import of '../domain/catalog_offer_media.dart' is unnecessary because all of the used elements are also provided by the import of '../domain/entities/catalog_product.dart' • lib/features/marketplace/data/discover_visual_preview_catalog.dart:1:8 • unnecessary_import
+   info • The import of '../domain/catalog_product_options.dart' is unnecessary because all of the used elements are also provided by the import of '../domain/entities/catalog_product.dart' • lib/features/marketplace/data/discover_visual_preview_catalog.dart:2:8 • unnecessary_import
+   info • The import of '../domain/catalog_service_template.dart' is unnecessary because all of the used elements are also provided by the import of '../domain/entities/catalog_service.dart' • lib/features/marketplace/data/discover_visual_preview_catalog.dart:3:8 • unnecessary_import
+   info • Dangling library doc comment • lib/features/marketplace/domain/commerce_models.dart:1:1 • dangling_library_doc_comments
+   info • The import of '../../domain/catalog_offer_media.dart' is unnecessary because all of the used elements are also provided by the import of '../../domain/entities/catalog_product.dart' • lib/features/marketplace/presentation/presentation/discover_presentation_catalog.dart:4:8 • unnecessary_import
+   info • The import of '../../domain/catalog_offer_media.dart' is unnecessary because all of the used elements are also provided by the import of '../../domain/entities/catalog_product.dart' • lib/features/marketplace/presentation/presentation/presentation_models.dart:1:8 • unnecessary_import
+warning • Unused import: '../../../../core/constants/marketplace_copy.dart' • lib/features/marketplace/presentation/screens/catalog_record_page.dart:3:8 • unused_import
+warning • Unused import: '../../data/ad_link_record.dart' • lib/features/marketplace/presentation/screens/discover_presentation_screen.dart:22:8 • unused_import
+warning • Unused import: 'catalog_record_page.dart' • lib/features/marketplace/presentation/screens/discover_presentation_screen.dart:32:8 • unused_import
+warning • The value of the field '_contentMark' isn't used • lib/features/marketplace/presentation/screens/discover_presentation_screen.dart:93:16 • unused_field
+warning • The value of the field '_category' isn't used • lib/features/marketplace/presentation/screens/discover_presentation_screen.dart:94:7 • unused_field
+   info • The import of '../../domain/catalog_offer_media.dart' is unnecessary because all of the used elements are also provided by the import of '../../domain/entities/catalog_product.dart' • lib/features/marketplace/presentation/screens/product_detail_screen.dart:12:8 • unnecessary_import
+   info • The import of '../../domain/catalog_product_options.dart' is unnecessary because all of the used elements are also provided by the import of '../../domain/entities/catalog_product.dart' • lib/features/marketplace/presentation/screens/product_detail_screen.dart:14:8 • unnecessary_import
+   info • The import of '../../domain/catalog_offer_media.dart' is unnecessary because all of the used elements are also provided by the import of '../../domain/entities/catalog_service.dart' • lib/features/marketplace/presentation/screens/service_detail_screen.dart:11:8 • unnecessary_import
+   info • The import of '../../domain/catalog_service_template.dart' is unnecessary because all of the used elements are also provided by the import of '../../domain/entities/catalog_service.dart' • lib/features/marketplace/presentation/screens/service_detail_screen.dart:12:8 • unnecessary_import
+   info • The import of '../../domain/catalog_product_options.dart' is unnecessary because all of the used elements are also provided by the import of '../../domain/entities/catalog_product.dart' • lib/features/marketplace/presentation/widgets/product_option_selector.dart:5:8 • unnecessary_import
+warning • Unused import: 'package:mirra/features/marketplace/presentation/presentation/discover_presentation_catalog.dart' • test/features/marketplace/asset_video_port_test.dart:4:8 • unused_import
+warning • The value of the local variable 'port' isn't used • test/features/marketplace/asset_video_port_test.dart:39:11 • unused_local_variable
+warning • The value of the local variable 'port' isn't used • test/features/marketplace/asset_video_port_test.dart:135:11 • unused_local_variable
+warning • Unused import: 'package:mirra/features/marketplace/presentation/presentation/presentation_models.dart' • test/features/marketplace/catalog_media_url_test.dart:8:8 • unused_import
+   info • The import of 'package:flutter/foundation.dart' is unnecessary because all of the used elements are also provided by the import of 'package:flutter/material.dart' • test/features/marketplace/controllable_video_controller.dart:3:8 • unnecessary_import
+   info • The import of 'dart:async' is unnecessary because all of the used elements are also provided by the import of 'package:flutter_test/flutter_test.dart' • test/features/marketplace/discover_ad_feed_test.dart:1:8 • unnecessary_import
+warning • Unused import: 'package:mirra/features/marketplace/presentation/presentation/discover_view_count.dart' • test/features/marketplace/discover_ad_presentation_test.dart:6:8 • unused_import
+warning • Unused import: 'package:mirra/features/marketplace/presentation/presentation/discover_visual_chrome.dart' • test/features/marketplace/discover_ad_presentation_test.dart:7:8 • unused_import
+warning • The '!' will have no effect because the receiver can't be null • test/features/marketplace/discover_ad_rc4_test.dart:214:47 • unnecessary_non_null_assertion
+warning • The '!' will have no effect because the receiver can't be null • test/features/marketplace/discover_ad_rc5_test.dart:188:51 • unnecessary_non_null_assertion
+warning • The '!' will have no effect because the receiver can't be null • test/features/marketplace/discover_ad_rc5_test.dart:192:47 • unnecessary_non_null_assertion
+warning • The '!' will have no effect because the receiver can't be null • test/features/marketplace/discover_ad_rc6_test.dart:211:47 • unnecessary_non_null_assertion
+   info • The import of 'dart:typed_data' is unnecessary because all of the used elements are also provided by the import of 'package:flutter/services.dart' • test/features/marketplace/discover_fonts.dart:2:8 • unnecessary_import
+   info • The import of 'dart:typed_data' is unnecessary because all of the used elements are also provided by the import of 'package:flutter/services.dart' • test/features/marketplace/discover_visual_capture_test.dart:2:8 • unnecessary_import
+
+34 issues found. (ran in 1.6s)
+SCOPED_EXIT:1

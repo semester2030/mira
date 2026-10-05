@@ -139,10 +139,39 @@
     return (hit && (hit.label || hit.labelAr)) || groupId;
   }
 
+  function labelsForGroup(state, groupId) {
+    const labels = ((state.selected && state.selected[groupId]) || []).slice();
+    String((state.customs && state.customs[groupId]) || '')
+      .split(',')
+      .map((part) => part.trim())
+      .filter(Boolean)
+      .forEach((part) => {
+        if (labels.indexOf(part) < 0) labels.push(part);
+      });
+    return labels;
+  }
+
+  /**
+   * Group ids that still have values in UI state but are absent from the current category preset.
+   * Changing category must not treat this as consent to delete those options.
+   */
+  function incompatibleGroupIds(state, presetGroups) {
+    const presetIds = new Set((presetGroups || []).map((g) => g.id));
+    const orphans = [];
+    const selected = state.selected || {};
+    Object.keys(selected).forEach((groupId) => {
+      if (!labelsForGroup(state, groupId).length) return;
+      if (!presetIds.has(groupId)) orphans.push(groupId);
+    });
+    return orphans.sort();
+  }
+
   /**
    * Same payload builder the save path uses.
    * Validates against groups the variants still reference — not only remaining UI groups —
    * so removing the last value of a used option group cannot silently shrink a SKU.
+   * Also blocks silent nulling when a category change would drop saved option groups
+   * even when there are no SKU variants yet (RC6-01).
    */
   function structuredOptionsPayload(state, presetGroups) {
     if (state.clearingOptions) {
@@ -153,6 +182,24 @@
     const variants = [];
     const errors = [];
     const conflicts = [];
+
+    const orphans = incompatibleGroupIds(state, presetGroups);
+    if (orphans.length) {
+      const names = orphans.map((id) => groupLabel(presetGroups, id) || id).join('، ');
+      const msg =
+        'تغيير التصنيف سيُسقط مجموعات الخيارات المحفوظة («' +
+        names +
+        '») دون مسح صريح. ارجعي للتصنيف السابق أو امسحي الخيارات صراحةً قبل الحفظ.';
+      errors.push(msg);
+      orphans.forEach((groupId) => {
+        conflicts.push({
+          variantId: null,
+          groupId: groupId,
+          messageAr: msg,
+          kind: 'category_incompatible',
+        });
+      });
+    }
 
     (state.variants || []).forEach((variant) => {
       if (!variant || !variant.id) {
@@ -253,21 +300,50 @@
       conflicts.push({ variantId: null, groupId: null, messageAr: msg, kind: 'all_values_cleared' });
     }
 
+    // On category-incompatible conflict, do not return an empty options list that
+    // the save path would treat as a silent clear — keep retained selection groups.
+    let optionsOut = groups;
+    if (orphans.length) {
+      if (!state.valueIds) state.valueIds = {};
+      const retained = orphans.map((groupId) => {
+        const labels = labelsForGroup(state, groupId);
+        if (!state.valueIds[groupId]) state.valueIds[groupId] = {};
+        return {
+          id: groupId,
+          labelAr: groupLabel(presetGroups, groupId) || groupId,
+          kind: groupId,
+          values: labels.map((label, index) => {
+            const existing = state.valueIds[groupId][label];
+            const id = existing || slugValue(label, index);
+            state.valueIds[groupId][label] = id;
+            return { id: id, labelAr: label };
+          }),
+        };
+      });
+      optionsOut = retained.concat(groups);
+    }
+
     return {
-      optionsJson: groups,
+      optionsJson: optionsOut,
       variantsJson: conflicts.length ? [] : variants,
       clearing: false,
       error: errors[0] || null,
       conflicts: conflicts,
+      incompatibleGroupIds: orphans,
     };
   }
 
-  function buildCommercePayload(state, groups) {
+  function buildCommercePayload(state, groups, presetGroups) {
     if (state.clearingOptions) return { optionsJson: null, variantsJson: null };
     state._builtGroups = groups;
-    const built = structuredOptionsPayload(state);
+    const built = structuredOptionsPayload(state, presetGroups);
     if (built.error) {
-      return { optionsJson: groups, variantsJson: null, error: built.error, conflicts: built.conflicts };
+      return {
+        optionsJson: built.optionsJson,
+        variantsJson: null,
+        error: built.error,
+        conflicts: built.conflicts,
+      };
     }
     return { optionsJson: built.optionsJson, variantsJson: built.variantsJson };
   }
@@ -295,6 +371,7 @@
     buildOptionGroups: buildOptionGroups,
     structuredOptionsPayload: structuredOptionsPayload,
     buildCommercePayload: buildCommercePayload,
+    incompatibleGroupIds: incompatibleGroupIds,
     selectionKey: selectionKey,
     isDuplicateVariant: isDuplicateVariant,
     slugValue: slugValue,

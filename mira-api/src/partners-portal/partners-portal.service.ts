@@ -17,7 +17,7 @@ import {
   parseAvailability,
   unifyResourceCapacities,
 } from '../marketplace/commerce.types';
-import { acquireScheduleLocks, expandScheduleScope, lockServiceRows, scheduleLockKeys } from '../marketplace/commerce-schedule-locks';
+import { lockPartnerScheduleScope } from '../marketplace/commerce-schedule-locks';
 import { PrismaService } from '../prisma/prisma.service';
 import { ApplyPartnerDto } from './dto/apply-partner.dto';
 import { UpdateProductDto, UpdateServiceDto, UpsertProductDto, UpsertServiceDto } from './dto/catalog.dto';
@@ -480,30 +480,24 @@ export class PartnersPortalService {
 
     return this.prisma.$transaction(async (tx) => {
       const seedResources = resourceIdsFromAvailability(dto.availabilityJson);
-      const partnerServices = await tx.service.findMany({
-        where: { partnerId, active: true },
-        select: { id: true, availabilityJson: true },
-      });
-      const scope = expandScheduleScope(
-        [
-          ...partnerServices.map((s) => ({
-            id: s.id,
-            resourceIds: parseAvailability(s.availabilityJson).map((w) => w.resourceId).filter(Boolean) as string[],
-          })),
-          { id: `create:${partnerId}`, resourceIds: seedResources },
-        ],
-        [`create:${partnerId}`],
-        seedResources,
-      );
-      // create:* is advisory-only; row locks apply to real sibling ids.
-      const realServiceIds = scope.serviceIds.filter((id) => !id.startsWith('create:'));
-      const lockKeys = scheduleLockKeys({
+      await lockPartnerScheduleScope(tx, {
         partnerId,
-        serviceIds: scope.serviceIds,
-        resourceIds: scope.resourceIds,
+        seedServiceIds: [`create:${partnerId}`],
+        seedResourceIds: seedResources,
+        loadServices: async () => {
+          const partnerServices = await tx.service.findMany({
+            where: { partnerId, active: true },
+            select: { id: true, availabilityJson: true },
+          });
+          return [
+            ...partnerServices.map((s) => ({
+              id: s.id,
+              resourceIds: parseAvailability(s.availabilityJson).map((w) => w.resourceId).filter(Boolean) as string[],
+            })),
+            { id: `create:${partnerId}`, resourceIds: seedResources },
+          ];
+        },
       });
-      await acquireScheduleLocks(tx, lockKeys);
-      await lockServiceRows(tx, realServiceIds);
 
       // Re-read siblings under locks before any unify write.
       const availabilityJson =
@@ -542,56 +536,25 @@ export class PartnersPortalService {
         dto.availabilityJson !== undefined
           ? resourceIdsFromAvailability(dto.availabilityJson)
           : oldResourceIds;
-      const partnerServices = await tx.service.findMany({
-        where: { partnerId, active: true },
-        select: { id: true, availabilityJson: true },
-      });
-      const scope = expandScheduleScope(
-        partnerServices.map((s) => ({
-          id: s.id,
-          resourceIds: parseAvailability(s.availabilityJson).map((w) => w.resourceId).filter(Boolean) as string[],
-        })),
-        [serviceId],
-        [...new Set([...oldResourceIds, ...newResourceIds])],
-      );
-      // Include resources from the incoming payload even if not yet on siblings.
-      const resourceIds = [...new Set([...scope.resourceIds, ...newResourceIds])].sort();
-      const lockKeys = scheduleLockKeys({
+      // Partner coordination first, then a single full sorted lock set (no mid-tx extras).
+      await lockPartnerScheduleScope(tx, {
         partnerId,
-        serviceIds: scope.serviceIds,
-        resourceIds,
+        seedServiceIds: [serviceId],
+        seedResourceIds: [...new Set([...oldResourceIds, ...newResourceIds])],
+        loadServices: async () => {
+          const partnerServices = await tx.service.findMany({
+            where: { partnerId, active: true },
+            select: { id: true, availabilityJson: true },
+          });
+          return partnerServices.map((s) => ({
+            id: s.id,
+            resourceIds: parseAvailability(s.availabilityJson).map((w) => w.resourceId).filter(Boolean) as string[],
+          }));
+        },
       });
-      await acquireScheduleLocks(tx, lockKeys);
-      await lockServiceRows(tx, scope.serviceIds);
 
       const locked = await tx.service.findFirst({ where: { id: serviceId, partnerId } });
       if (!locked) throw new NotFoundException('الخدمة غير موجودة');
-
-      // If the sharing graph grew after waiting, take any additional locks before writes.
-      const freshPartners = await tx.service.findMany({
-        where: { partnerId, active: true },
-        select: { id: true, availabilityJson: true },
-      });
-      const freshScope = expandScheduleScope(
-        freshPartners.map((s) => ({
-          id: s.id,
-          resourceIds: parseAvailability(s.availabilityJson).map((w) => w.resourceId).filter(Boolean) as string[],
-        })),
-        [serviceId],
-        [
-          ...resourceIdsFromAvailability(locked.availabilityJson),
-          ...(dto.availabilityJson !== undefined ? resourceIdsFromAvailability(dto.availabilityJson) : []),
-        ],
-      );
-      const extraServices = freshScope.serviceIds.filter((id) => !scope.serviceIds.includes(id));
-      const extraResources = freshScope.resourceIds.filter((id) => !resourceIds.includes(id));
-      if (extraServices.length || extraResources.length) {
-        await acquireScheduleLocks(
-          tx,
-          scheduleLockKeys({ partnerId, serviceIds: extraServices, resourceIds: extraResources }),
-        );
-        await lockServiceRows(tx, extraServices);
-      }
 
       const published = locked.contentStatus === 'published';
       const data: {
@@ -750,23 +713,21 @@ export class PartnersPortalService {
       const current = await tx.service.findFirst({ where: { id: serviceId, partnerId } });
       if (!current) throw new NotFoundException('الخدمة غير موجودة');
       const resources = resourceIdsFromAvailability(current.availabilityJson);
-      const partnerServices = await tx.service.findMany({
-        where: { partnerId, active: true },
-        select: { id: true, availabilityJson: true },
+      await lockPartnerScheduleScope(tx, {
+        partnerId,
+        seedServiceIds: [serviceId],
+        seedResourceIds: resources,
+        loadServices: async () => {
+          const partnerServices = await tx.service.findMany({
+            where: { partnerId, active: true },
+            select: { id: true, availabilityJson: true },
+          });
+          return partnerServices.map((s) => ({
+            id: s.id,
+            resourceIds: parseAvailability(s.availabilityJson).map((w) => w.resourceId).filter(Boolean) as string[],
+          }));
+        },
       });
-      const scope = expandScheduleScope(
-        partnerServices.map((s) => ({
-          id: s.id,
-          resourceIds: parseAvailability(s.availabilityJson).map((w) => w.resourceId).filter(Boolean) as string[],
-        })),
-        [serviceId],
-        resources,
-      );
-      await acquireScheduleLocks(
-        tx,
-        scheduleLockKeys({ partnerId, serviceIds: scope.serviceIds, resourceIds: scope.resourceIds }),
-      );
-      await lockServiceRows(tx, scope.serviceIds);
       const locked = await tx.service.findFirst({ where: { id: serviceId, partnerId } });
       if (!locked) throw new NotFoundException('الخدمة غير موجودة');
       await tx.service.update({

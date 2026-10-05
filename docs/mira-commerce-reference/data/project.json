@@ -1,10 +1,10 @@
 {
   "studyId": "MIRA-ECOM-GATE00",
-  "studyVersion": "RC4 بصري — تصحيح المعاينة والأدلة والتكوين",
-  "studyStatus": "بانتظار إعادة المراجعة",
+  "studyVersion": "MC-FIX RC6 — إغلاق ملاحظات مراجعة RC5 دون اعتماد المرحلة",
+  "studyStatus": "قيد التنفيذ — بانتظار المراجعة المستقلة",
   "gate": "GATE-00",
   "titleAr": "المتاجر الإلكترونية في ميرا",
-  "updatedAt": "2026-09-27T05:20:00+03:00",
+  "updatedAt": "2026-10-05T13:00:00+03:00",
   "timezone": "Asia/Riyadh",
   "ownerDecisionStatus": "بانتظار إعادة المراجعة — DEC-0005 غير معتمد",
   "baseline": {

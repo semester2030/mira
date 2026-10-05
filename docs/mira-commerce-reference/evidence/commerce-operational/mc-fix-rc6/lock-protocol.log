@@ -1,0 +1,37 @@
+npm warn Unknown env config "devdir". This will stop working in the next major version of npm.
+2026-10-05T09:48:08.726Z OLD-T1 held commerce-booking-resource:4bd14a31-02bd-439d-805a-a4b75f0b740b:Z
+2026-10-05T09:48:08.727Z OLD-T2 held commerce-booking-resource:4bd14a31-02bd-439d-805a-a4b75f0b740b:A; waiting for Z held by T1
+2026-10-05T09:48:09.830Z OLD-T1 acquired A after Z (unexpected — no circular wait)
+2026-10-05T09:48:09.830Z OLD-T2 failed as expected: PrismaClientKnownRequestError: 
+2026-10-05T09:48:09.831Z RC6-02 control: inverted partial locks exercised (deadlock/timeout observed)
+2026-10-05T09:48:09.847Z T0 committed S1→A+Z
+2026-10-05T09:48:09.859Z RC6-02 PASS: concurrent production updateService after scope growth — no deadlock, both capacities kept
+2026-10-05T09:48:09.859Z E5b slot day=2026-10-08 weekday=4
+2026-10-05T09:48:09.950Z E5b: booking waiting while production deleteService holds schedule protocol
+2026-10-05T09:48:09.969Z E5b PASS: production deleteService committed first; createBooking rejected; no new booking
+2026-10-05T09:48:09.969Z E6b slot day=2026-10-11 weekday=0
+2026-10-05T09:48:10.134Z E6b: deleteService waiting; booking pid gate; target=commerce-schedule-partner:4bd14a31-02bd-439d-805a-a4b75f0b740b
+2026-10-05T09:48:10.167Z E6b: booking committed id=84f5a264-7b36-46d2-99d1-1827bf127bfe
+2026-10-05T09:48:10.174Z E6b PASS: createBooking committed first; deleteService applied; historical booking retained
+2026-10-05T09:48:10.272Z ADMIN-WD PASS: catalog decide(withdraw) vs createBooking — withdraw wins, booking rejected
+2026-10-05T09:48:10.404Z ADMIN-E6 PASS: booking committed then admin withdraw; historical booking retained
+2026-10-05T09:48:10.426Z CAP1 PASS: one booking on capacity-1 shared resource
+commerce.lock-protocol schema tests passed
+--- event order ---
+2026-10-05T09:48:08.726Z OLD-T1 held commerce-booking-resource:4bd14a31-02bd-439d-805a-a4b75f0b740b:Z
+2026-10-05T09:48:08.727Z OLD-T2 held commerce-booking-resource:4bd14a31-02bd-439d-805a-a4b75f0b740b:A; waiting for Z held by T1
+2026-10-05T09:48:09.830Z OLD-T1 acquired A after Z (unexpected — no circular wait)
+2026-10-05T09:48:09.830Z OLD-T2 failed as expected: PrismaClientKnownRequestError: 
+2026-10-05T09:48:09.831Z RC6-02 control: inverted partial locks exercised (deadlock/timeout observed)
+2026-10-05T09:48:09.847Z T0 committed S1→A+Z
+2026-10-05T09:48:09.859Z RC6-02 PASS: concurrent production updateService after scope growth — no deadlock, both capacities kept
+2026-10-05T09:48:09.859Z E5b slot day=2026-10-08 weekday=4
+2026-10-05T09:48:09.950Z E5b: booking waiting while production deleteService holds schedule protocol
+2026-10-05T09:48:09.969Z E5b PASS: production deleteService committed first; createBooking rejected; no new booking
+2026-10-05T09:48:09.969Z E6b slot day=2026-10-11 weekday=0
+2026-10-05T09:48:10.134Z E6b: deleteService waiting; booking pid gate; target=commerce-schedule-partner:4bd14a31-02bd-439d-805a-a4b75f0b740b
+2026-10-05T09:48:10.167Z E6b: booking committed id=84f5a264-7b36-46d2-99d1-1827bf127bfe
+2026-10-05T09:48:10.174Z E6b PASS: createBooking committed first; deleteService applied; historical booking retained
+2026-10-05T09:48:10.272Z ADMIN-WD PASS: catalog decide(withdraw) vs createBooking — withdraw wins, booking rejected
+2026-10-05T09:48:10.404Z ADMIN-E6 PASS: booking committed then admin withdraw; historical booking retained
+2026-10-05T09:48:10.426Z CAP1 PASS: one booking on capacity-1 shared resource
