@@ -1,13 +1,17 @@
 RC5 LIVE_JOURNEY
-date=2026-10-04T20:25:00Z
-commit_tested=a77d05062ad804be111d600c1d756d5b53b10eec
-portal_form_modules=PASS (CatalogJourney+MiraCatalogOptions at 390/480/1280; overflowX=false; buttons reachable)
-portal_authenticated_save_submit_admin=NOT_RUN (no isolated partner/admin test credentials in this environment; AUTH_SKIP forbidden for live proof)
+date=2026-10-04T20:25:30Z
+commit_tested=a3fc689fdc403b412c313b0594cf7a5bcf594626
+docs_commit_pending=seal tracker update after zip
+deploy_mira_api=dep-db1bbklg1s2s739g8vf0 LIVE
+deploy_partners=dep-db1bbklg1s2s739g9080 LIVE
+deploy_admin=dep-db1bc0142hec73eshc3g LIVE
+portal_form_modules=PASS CatalogJourney+MiraCatalogOptions 390/480/1280 overflowX=false buttons reachable
+portal_authenticated_save_submit_admin=NOT_RUN (no isolated partner/admin test credentials; AUTH_SKIP forbidden)
 COD_journey=NOT_RUN
 booking_journey=NOT_RUN
 partner_followup=NOT_RUN
 admin_followup=NOT_RUN
 favorites_share=NOT_RUN
-device_run=PENDING
+device_run=PARTIAL (install/launch started; journey not completed)
 views=DEFERRED_BY_OWNER
 durable_storage=DEFERRED_BY_OWNER

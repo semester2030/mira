@@ -2,14 +2,14 @@
   "package": "MIRA_DISCOVER_PHASE1_CORRECTIONS_RC2",
   "studyVersion": "MC-FIX RC5 — إغلاق ملاحظات RC4 دون اعتماد المرحلة",
   "studyStatus": "قيد التنفيذ — بانتظار المراجعة المستقلة",
-  "generatedAt": "2026-10-04T23:19:27.481610+03:00",
+  "generatedAt": "2026-10-05T11:23:24.096137+03:00",
   "baselineSiteZip": "MIRA_ECOMMERCE_REFERENCE_PLACES_PLAN_UPDATE_20260924_0125.zip",
   "baselineSiteSha256": "ad7f070bbc064dcd3153428d6d5ca3712bfaec2e4ddf7da865fc47cfbe7d734d",
   "linkedSourceZip": "DAR_PLACES_TO_MIRA_SOURCE_HANDOFF_RC2_20260924_0125.zip",
   "linkedSourceSha256": "60a8d854eb609e1eef11513a1406fd1e262ac809922e889f2e7beecf76ec48e1",
   "sourceArchiveUnmodified": true,
   "limits": "يثبت اتساق ملفات هذه الحزمة فقط. لا يثبت تشغيل المنتج ولا حداثة أدلة المستودع.",
-  "fileCount": 415,
+  "fileCount": 426,
   "files": [
     {
       "path": "css/components.css",
@@ -73,8 +73,8 @@
     },
     {
       "path": "data/discover-phases.json",
-      "bytes": 346185,
-      "sha256": "1e2d9fd50dd1245110d5f8d83996931dbe18430e64e0ccb66f81ab4dd9cbc6ad"
+      "bytes": 346870,
+      "sha256": "8e8687255d9eb7371698524b2ad97c7f145cb9b814d0820a6902ac8d6c7b8cef"
     },
     {
       "path": "data/discover-visual.json",
@@ -84,7 +84,7 @@
     {
       "path": "data/evidence-index.json",
       "bytes": 36514,
-      "sha256": "8ea4c29c2ee560bac0b0d5ac5528c8d2ef8fa13bdaed995994f439e97c6a3b1b"
+      "sha256": "9a33f07a9e7fda95a1e07f1c3ac559ddad6f64f84d548ec95c6c25561cf147c8"
     },
     {
       "path": "data/gaps.json",
@@ -458,8 +458,8 @@
     },
     {
       "path": "evidence/commerce-operational/MC_FIX_RC5_TRACKER.md",
-      "bytes": 2907,
-      "sha256": "fa908f626627ab882a6ab7c889c45b3042af487648ab65bac0ae612bfbc759fe"
+      "bytes": 2867,
+      "sha256": "fe6aa99d34ef853a196c8340425085e20807dcee1ed9e248440e74ed520bb9b3"
     },
     {
       "path": "evidence/commerce-operational/MC_FIX_TRACKER.md",
@@ -703,8 +703,8 @@
     },
     {
       "path": "evidence/commerce-operational/mc-fix-rc4/flutter-ios-device-run.log",
-      "bytes": 5373,
-      "sha256": "82ea28e3c323edca92fe7dfca9ae37cc171c7892a7896f88f2a74438c7d24771"
+      "bytes": 4520,
+      "sha256": "ba2103c1aea94f90cf69377cba81ac980faa08170b9e02e4e9b4ca4186aef826"
     },
     {
       "path": "evidence/commerce-operational/mc-fix-rc4/flutter-marketplace-test.log",
@@ -737,14 +737,44 @@
       "sha256": "8a7a36884b1c72c7b851a35a422d714bc8608e054e81804dfa56b07fc68b2811"
     },
     {
+      "path": "evidence/commerce-operational/mc-fix-rc5/LIVE_JOURNEY.txt",
+      "bytes": 743,
+      "sha256": "b04be756739b03892e411ae13c5a6f2333172d36a0d2545ef60fd078572253ea"
+    },
+    {
       "path": "evidence/commerce-operational/mc-fix-rc5/LOCK_PROTOCOL.md",
       "bytes": 2327,
       "sha256": "eb4ea09bd152884509ecebdf27076647dfd33ce264ad7076f6b6072c3e255436"
     },
     {
+      "path": "evidence/commerce-operational/mc-fix-rc5/MIRA_COMMERCE_MC_FIX_RC5.zip.sha256",
+      "bytes": 95,
+      "sha256": "739ecc8ead69d7ffc2c7257a4be8d7a5e33d39902f7ace635b22a516f2fa6c6a"
+    },
+    {
+      "path": "evidence/commerce-operational/mc-fix-rc5/PACKAGE_VERIFY.txt",
+      "bytes": 128,
+      "sha256": "244defa41764ca6d97f8a60edee9308eb0cec8be88af9e6834d49dc81960a040"
+    },
+    {
+      "path": "evidence/commerce-operational/mc-fix-rc5/browser-ui-journey.txt",
+      "bytes": 717,
+      "sha256": "7699e527f0b12a8949dbf0c6c5ac1f49aa74d51863dc9b0294f4ae05d8be16dd"
+    },
+    {
+      "path": "evidence/commerce-operational/mc-fix-rc5/browser-ui-metrics.json",
+      "bytes": 7798,
+      "sha256": "45672575f6b6d60aff12ee92b072815e0a05c2c632e458ecea4b8ba588319b1f"
+    },
+    {
       "path": "evidence/commerce-operational/mc-fix-rc5/concurrency-events.txt",
       "bytes": 3128,
       "sha256": "31439a367622cde46514ffed55933ab7246bd8f10cde343a81582c553907f504"
+    },
+    {
+      "path": "evidence/commerce-operational/mc-fix-rc5/device-run.txt",
+      "bytes": 669,
+      "sha256": "3c6da4da7331b1741c6438a9368dd11803778b6cf80f374f8118c71180d9c731"
     },
     {
       "path": "evidence/commerce-operational/mc-fix-rc5/flutter-analyze-scoped.log",
@@ -758,8 +788,8 @@
     },
     {
       "path": "evidence/commerce-operational/mc-fix-rc5/flutter-apk.log",
-      "bytes": 4215,
-      "sha256": "a09fc3d0738803c86403dd4cd01d16f19efbb669238681a733724cc1ec8b1ef8"
+      "bytes": 4278,
+      "sha256": "a2b58817e7376f36fb971eb5eeedc640dab331207186dce0fa0ff24cabc5dfb9"
     },
     {
       "path": "evidence/commerce-operational/mc-fix-rc5/flutter-devices.txt",
@@ -768,8 +798,13 @@
     },
     {
       "path": "evidence/commerce-operational/mc-fix-rc5/flutter-ios-build.log",
-      "bytes": 4390,
-      "sha256": "dcaa8a1b9db4c1742a900d530a4c0985fbfda0fe1a208587aea340865c5b3f5c"
+      "bytes": 4504,
+      "sha256": "45a83ffeabcf3b3a3ec8723a8ec8e3a6f1b4a92bf435b3fb89ebf309aa937c56"
+    },
+    {
+      "path": "evidence/commerce-operational/mc-fix-rc5/flutter-ios-device-run.log",
+      "bytes": 4517,
+      "sha256": "34c6af35734bd4c516d2dae0243be12a00be971d37b4428e5e330ecc54addf0f"
     },
     {
       "path": "evidence/commerce-operational/mc-fix-rc5/flutter-marketplace-test.log",
@@ -780,6 +815,26 @@
       "path": "evidence/commerce-operational/mc-fix-rc5/freshness.txt",
       "bytes": 3884,
       "sha256": "606f4cfbad3c498b2ff137f35a0da9869f421d5ed8f2b0b26065a70d9a08d12a"
+    },
+    {
+      "path": "evidence/commerce-operational/mc-fix-rc5/portal-form-1280.png",
+      "bytes": 250578,
+      "sha256": "c23db0b92ea19026cd9d08ed6082d1b91b8dc314ec274f49b915eb543ebf9663"
+    },
+    {
+      "path": "evidence/commerce-operational/mc-fix-rc5/portal-form-390.png",
+      "bytes": 221836,
+      "sha256": "9ab9f9b0bd7209d69b671032055200265776181bbae6905eb4f500245ad2824b"
+    },
+    {
+      "path": "evidence/commerce-operational/mc-fix-rc5/portal-form-480.png",
+      "bytes": 227291,
+      "sha256": "c8185a1ce53e29b04f73c698dded9a190e6a1ea27356ddb7fbe0983c29bdb590"
+    },
+    {
+      "path": "evidence/commerce-operational/mc-fix-rc5/portal-form-probe.mjs",
+      "bytes": 2353,
+      "sha256": "a13635098b6ee7a4e044ee0447b84f1ba6d72c33824e7762a6d020f42a3fba0c"
     },
     {
       "path": "evidence/commerce-operational/mc-fix-rc5/portal-options.log",
@@ -1903,18 +1958,18 @@
     },
     {
       "path": "evidence/visual/phase2/catalog-error.png",
-      "bytes": 16932,
-      "sha256": "9eee207a50bd9dd8bfdbed5b0aba97e2bcfd609db103a789426ed633717a3aa7"
+      "bytes": 16325,
+      "sha256": "0ba6a19a97b3c174da0282fbc2bf571d12714466ec55c3a3413140b2adf598ed"
     },
     {
       "path": "evidence/visual/phase2/catalog-feed.png",
-      "bytes": 69483,
-      "sha256": "7f1b5bc6a7f5ca8a72396030c63434a424e753d473f8720d59b595e4ce0cfd11"
+      "bytes": 76405,
+      "sha256": "ed875e07870dc9e46abd005cdd40807e0529e8e1f73deaf5fb813d04435c3307"
     },
     {
       "path": "evidence/visual/phase2/catalog-loading.png",
-      "bytes": 14377,
-      "sha256": "6cb211d1d54f96939ab7a460b507f393982529bf8f67efa3532119ca114f6763"
+      "bytes": 13814,
+      "sha256": "94d4f5dbb7be5cb75d8e32a84396e5919f64180f325c71fac71c411f1ab4c36d"
     },
     {
       "path": "evidence/visual/phase2/details-missing.png",
@@ -1923,8 +1978,8 @@
     },
     {
       "path": "evidence/visual/phase2/empty-results.png",
-      "bytes": 16207,
-      "sha256": "4e258733dfb246d4c9953685326dd0383e93a1b20e4b91bd0d5eb65815eb2913"
+      "bytes": 15489,
+      "sha256": "4e9f9b7ffb9275af9f184af3705986660c835cbc35a478418e289c2d5d568e99"
     },
     {
       "path": "evidence/visual/phase2/filters.png",
@@ -1933,33 +1988,33 @@
     },
     {
       "path": "evidence/visual/phase2/rc5-search-empty.png",
-      "bytes": 14632,
-      "sha256": "d382826ab1a0fb28b244e23a7d487930143ba7e1dca8df54a8f56e81a446c9e1"
+      "bytes": 13889,
+      "sha256": "a733104600b417728c0a235ede9e345f2227a4f78d552f6f1675f3441e997747"
     },
     {
       "path": "evidence/visual/phase2/rc5-search-failed.png",
-      "bytes": 15848,
-      "sha256": "d6a08a2870f11ab4ccfcf66c49e92d8c0855a296685cada71eb665777b63eb2e"
+      "bytes": 15040,
+      "sha256": "ad3b3c1b24e860ccf9a048451f61eb6427c23e49ed032bfe4e772ee7922acef9"
     },
     {
       "path": "evidence/visual/phase2/rc5-search-loading.png",
-      "bytes": 14378,
-      "sha256": "ecec563eb2627331125870084c4e194ec841a23c0c2b2e2d49991f676dbd4210"
+      "bytes": 13814,
+      "sha256": "0038b619dcb53fedd832bf55403e10a69af927d54a43c5ed9fe245beec518903"
     },
     {
       "path": "evidence/visual/phase2/rc5-search-results.png",
-      "bytes": 68406,
-      "sha256": "6c387318900bcf1ddd96fb49b1a0d1d77d03c7c922cb4a4a74e10d22ff4e3b36"
+      "bytes": 74950,
+      "sha256": "f8c6d24f2d3e66d165b5505845e1d256984266a8eaf66c64114785926d51eaad"
     },
     {
       "path": "evidence/visual/phase2/search-makeup.png",
-      "bytes": 75694,
-      "sha256": "332b99792e7067c35bad2d1d458181a20cc7f3a37f6801064dcfc72f7af4706c"
+      "bytes": 81819,
+      "sha256": "46da134596f2c0fc25e4f004e969f51a3c5ce9a975f6681044d8a713e7b3c79b"
     },
     {
       "path": "evidence/visual/phase2/server-loaded.png",
-      "bytes": 69677,
-      "sha256": "727a4096d4f89fbeb7195157adf1c696cab70105b34f5143fec9c48f75baa95e"
+      "bytes": 76339,
+      "sha256": "85ce4e801c4d21c8e6591cfa7a691b4d6832a9b030def932e0fcbed92a82abcc"
     },
     {
       "path": "evidence/visual/phase2/store-loreal.png",
@@ -2028,8 +2083,8 @@
     },
     {
       "path": "js/data.generated.js",
-      "bytes": 643545,
-      "sha256": "7c12a4bdb4296e16a7da252c9bce9521a0e45de2d7c440691cbd52220469d7cc"
+      "bytes": 644230,
+      "sha256": "53f0c29f6353659235388e00b577e6920467162223a26cb706aa22729546ad01"
     },
     {
       "path": "scripts/apply_ph2_rc3_site.py",

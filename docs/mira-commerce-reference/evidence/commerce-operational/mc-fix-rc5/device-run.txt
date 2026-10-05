@@ -1,0 +1,9 @@
+RC5 device-run
+date=2026-10-04T20:25:00Z
+commit=a3fc689fdc403b412c313b0594cf7a5bcf594626
+device=fayez’s iPhone (wireless) 00008110-00191986268BA01E iOS 26.6
+cmd=flutter run -d 00008110-00191986268BA01E -t lib/main.dart --dart-define=MIRA_MARKETPLACE_ENABLED=true --dart-define=USE_MIRA_API=true --dart-define=MIRA_API_BASE_URL=https://mira-api-n4p3.onrender.com/api/v1
+result=PARTIAL
+observed=Xcode build done; Installing and launching… started; process ended without durable Flutter run key commands / journey proof
+note=wireless VM Service / launch completion not proven; USB not used this round; not claimed as device journey PASS
+log=flutter-ios-device-run.log

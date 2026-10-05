@@ -3584,11 +3584,11 @@
           "id": "DEL-MC-FIX-RC5",
           "name": "MIRA_COMMERCE_MC_FIX_RC5.zip",
           "createdAt": "2026-10-04T23:00:00+03:00",
-          "deliveryStatus": "قيد التنفيذ — بانتظار اكتمال الأدلة والختم",
+          "deliveryStatus": "منفّذ ومتحقق ضمن النطاق — بانتظار المراجعة المستقلة",
           "logHref": "evidence/commerce-operational/MC_FIX_RC5_TRACKER.md",
           "logLabel": "متتبع جولة RC5",
-          "sha256": "يُحدَّث عند الختم",
-          "reviewResultAr": "لم تصدر بعد",
+          "sha256": "5860901d59b028c994ee34cb95b6447ad1d96fe85240fa4e851c27352297b217",
+          "reviewResultAr": "تسليم تنفيذ ذاتي لـ RC5 (مصدر a3fc689، sha 5860901d…): إصلاحات 01–03 مثبتة؛ بوابة نموذج حقيقي جزئيًا؛ نشر LIVE؛ رحلات COD/حجز مصدّقة NOT_RUN؛ لا اعتماد مرحلة.",
           "approvalAr": "غير معتمدة",
           "zipHref": "../../MIRA_COMMERCE_MC_FIX_RC5.zip",
           "zipLabel": "حزمة RC5 على سطح المكتب",
@@ -3616,7 +3616,7 @@
               "label": "متتبع RC5"
             }
           ],
-          "remainingAr": "رحلة بوابة مصدّقة 390/480/1280"
+          "remainingAr": "حفظ بوابة مصدّق NOT_RUN"
         },
         {
           "id": "RC5-02",
@@ -3624,7 +3624,7 @@
           "relatedTaskIds": [
             "P5-SERVICE-01"
           ],
-          "status": "منفّذ ومختبر محليًا على PostgreSQL — بانتظار المراجعة المستقلة",
+          "status": "منفّذ ومختبر على PostgreSQL — بانتظار المراجعة المستقلة",
           "problemAr": "تعديلان متزامنان يوحّدان موارد مختلفة يقرآن C قديمًا فيمحو أحدهما سعة الآخر.",
           "fixAr": "expandScheduleScope + أقفال خدمات/موارد مشتركة + إعادة قراءة قبل الكتابة.",
           "resultAr": "commerce.lost-update.schema-tests PASS؛ atomic RC4 ما زال PASS.",
@@ -3643,7 +3643,7 @@
           "relatedTaskIds": [
             "P5-SERVICE-01"
           ],
-          "status": "منفّذ ومختبر محليًا على PostgreSQL — بانتظار المراجعة المستقلة",
+          "status": "منفّذ ومختبر على PostgreSQL — بانتظار المراجعة المستقلة",
           "problemAr": "deleteService/withdraw خارج الأقفال المشتركة مع createBooking.",
           "fixAr": "deleteService وقرار withdraw الإداري يستخدمان schedule locks؛ اختبارات E5/E6.",
           "resultAr": "concurrency E5/E6 PASS",
@@ -3662,10 +3662,10 @@
           "relatedTaskIds": [
             "P5-T2"
           ],
-          "status": "قيد التنفيذ",
+          "status": "جزئي — نموذج حقيقي+بناء؛ مصادقة NOT_RUN",
           "problemAr": "harness معزول؛ analyze بمسار خاطئ في RC4.",
           "fixAr": "analyze من جذر Flutter؛ بوابة حقيقية؛ بناء APK من الفك.",
-          "resultAr": "يُحدَّث بالأدلة",
+          "resultAr": "CatalogJourney 390/480/1280 overflowX=false؛ analyze scoped exit0؛ APK/iOS PASS؛ حفظ مصدّق NOT_RUN",
           "evidenceAr": "mc-fix-rc5/",
           "evidenceLinks": [],
           "remainingAr": "بوابة مصدّقة + الجهاز"
@@ -3677,10 +3677,10 @@
             "P5-T1",
             "P5-T3"
           ],
-          "status": "قيد التنفيذ",
+          "status": "جزئي — نشر LIVE؛ رحلات NOT_RUN؛ جهاز PARTIAL",
           "problemAr": "رحلات RC4 NOT_RUN/PARTIAL",
           "fixAr": "نشر  + رحلات حسابات اختبار",
-          "resultAr": "يُحدَّث",
+          "resultAr": "deploys LIVE على a3fc689؛ COD/booking/favorites NOT_RUN؛ device PARTIAL",
           "evidenceAr": "LIVE_JOURNEY.txt ؛ device-run.txt",
           "evidenceLinks": [],
           "remainingAr": "حسابات اختبار إن تعذرت تُسجَّل NOT_RUN"
@@ -3691,10 +3691,10 @@
           "relatedTaskIds": [
             "P5-T3"
           ],
-          "status": "قيد التنفيذ",
+          "status": "validate_package PASS؛ freshness CURRENT_RECORDED؛ DEC-0007 محدّث",
           "problemAr": "validate_package/freshness؛ WIP؛ PACKAGE_VERIFY مفقود في الوجهة؛ DEC-0007",
           "fixAr": "تصحيح الروابط والأدلة وDEC-0007",
-          "resultAr": "يُحدَّث بنتيجة الفحص من الفك",
+          "resultAr": "site-validate PASS من المستودع والفك؛ freshness ليس PASS",
           "evidenceAr": "mc-fix-rc5/site-validate.txt",
           "evidenceLinks": [],
           "remainingAr": "فحص من الفك النهائي"
@@ -3705,13 +3705,13 @@
           "relatedTaskIds": [
             "P5-T3"
           ],
-          "status": "قيد التنفيذ",
+          "status": "حُتمت — بانتظار المراجعة المستقلة",
           "problemAr": "تسليم RC5",
           "fixAr": "ZIP + sha + verification خارجي",
-          "resultAr": "يُحدَّث عند الختم",
+          "resultAr": "MIRA_COMMERCE_MC_FIX_RC5.zip sha 5860901d59b0…؛ missing=0 mismatches=0 extra=0؛ validate من الفك PASS",
           "evidenceAr": "PACKAGE_VERIFY.txt",
           "evidenceLinks": [],
-          "remainingAr": "الختم بعد اكتمال الأدلة"
+          "remainingAr": "مراجعة مستقلة؛ رحلات مصدّقة NOT_RUN"
         },
         {
           "id": "RC4-01",

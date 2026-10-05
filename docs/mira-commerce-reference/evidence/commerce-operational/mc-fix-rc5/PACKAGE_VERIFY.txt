@@ -1,0 +1,4 @@
+catalog-options-rc5-tests passed
+PASS package
+freshness=NOT_RUN independent package check does not read a repository
+SITE_VAL:0
