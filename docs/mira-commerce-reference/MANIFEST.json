@@ -2,14 +2,14 @@
   "package": "MIRA_DISCOVER_PHASE1_CORRECTIONS_RC2",
   "studyVersion": "MC-FIX RC6 — إغلاق ملاحظات مراجعة RC5 دون اعتماد المرحلة",
   "studyStatus": "قيد التنفيذ — بانتظار المراجعة المستقلة",
-  "generatedAt": "2026-10-05T12:57:39.439396+03:00",
+  "generatedAt": "2026-10-05T13:02:01.187087+03:00",
   "baselineSiteZip": "MIRA_ECOMMERCE_REFERENCE_PLACES_PLAN_UPDATE_20260924_0125.zip",
   "baselineSiteSha256": "ad7f070bbc064dcd3153428d6d5ca3712bfaec2e4ddf7da865fc47cfbe7d734d",
   "linkedSourceZip": "DAR_PLACES_TO_MIRA_SOURCE_HANDOFF_RC2_20260924_0125.zip",
   "linkedSourceSha256": "60a8d854eb609e1eef11513a1406fd1e262ac809922e889f2e7beecf76ec48e1",
   "sourceArchiveUnmodified": true,
   "limits": "يثبت اتساق ملفات هذه الحزمة فقط. لا يثبت تشغيل المنتج ولا حداثة أدلة المستودع.",
-  "fileCount": 447,
+  "fileCount": 452,
   "files": [
     {
       "path": "css/components.css",
@@ -73,8 +73,8 @@
     },
     {
       "path": "data/discover-phases.json",
-      "bytes": 355362,
-      "sha256": "0cc9574df90705ae0f66d0cedfe468f30c292324ce1ec7b33bbed6bd1a3fccb0"
+      "bytes": 355531,
+      "sha256": "d3308dec5715a76ff82b1fcc4503e1d55eb644a34110ec65e33497c8ca17b901"
     },
     {
       "path": "data/discover-visual.json",
@@ -463,8 +463,8 @@
     },
     {
       "path": "evidence/commerce-operational/MC_FIX_RC6_TRACKER.md",
-      "bytes": 3864,
-      "sha256": "a97e150daf04ebf051286196db474881d50a09c7cc8584919350d757b3cef3de"
+      "bytes": 4469,
+      "sha256": "2d01603c23fb9a84445cda87ae877ff7efd0bdd0cbe5c3948875e1300d798765"
     },
     {
       "path": "evidence/commerce-operational/MC_FIX_TRACKER.md",
@@ -883,13 +883,28 @@
     },
     {
       "path": "evidence/commerce-operational/mc-fix-rc6/LIVE_JOURNEY.txt",
-      "bytes": 1141,
-      "sha256": "3cc0466eee36035628000c539e205823730421e687f01aeb7efcfcb5770e3b6e"
+      "bytes": 1197,
+      "sha256": "28ec48653514fb8860e22a15228f3d40ac034c2d7fd1791ae9bc3fae4233d7ae"
     },
     {
       "path": "evidence/commerce-operational/mc-fix-rc6/LOCK_PROTOCOL.md",
       "bytes": 2724,
       "sha256": "0c43a927a6a0f76d3f549ff4026618fd6e24269089443543c88223fad2ad2f06"
+    },
+    {
+      "path": "evidence/commerce-operational/mc-fix-rc6/MIRA_COMMERCE_MC_FIX_RC6.zip.sha256",
+      "bytes": 121,
+      "sha256": "3b87cc106151a1d7c688eb9dd1a825f0ea88531dd26b8871aff3ff943124148f"
+    },
+    {
+      "path": "evidence/commerce-operational/mc-fix-rc6/PACKAGE_VERIFY.txt",
+      "bytes": 615,
+      "sha256": "97af57f1e38023779a08000cb525d02a6cb491e5c19eb9b658b60345e730b091"
+    },
+    {
+      "path": "evidence/commerce-operational/mc-fix-rc6/SOURCE_COMMIT.txt",
+      "bytes": 41,
+      "sha256": "d8f03815978ab7f46714c6dd109ed27522de80b2ebe40bd9150b01c1cc32805f"
     },
     {
       "path": "evidence/commerce-operational/mc-fix-rc6/browser-ui-journey.txt",
@@ -900,6 +915,11 @@
       "path": "evidence/commerce-operational/mc-fix-rc6/browser-ui-metrics.json",
       "bytes": 6182,
       "sha256": "b2f5015f13f04ca7fff6d0744c201581e3c74014b52b1a15fc1c629b7bc9939b"
+    },
+    {
+      "path": "evidence/commerce-operational/mc-fix-rc6/device-run.txt",
+      "bytes": 282,
+      "sha256": "bc9943a599fabe42d5a54999fe642a0e8cd49a687a7e8a92ffc289923bdfa4d4"
     },
     {
       "path": "evidence/commerce-operational/mc-fix-rc6/flutter-analyze-scoped.log",
@@ -918,13 +938,18 @@
     },
     {
       "path": "evidence/commerce-operational/mc-fix-rc6/flutter-devices.txt",
-      "bytes": 1268,
-      "sha256": "b3722bbd26f2d756ff60decb1b193c34ef2166d12489cbec6fcfa55faab3b096"
+      "bytes": 1452,
+      "sha256": "c1ba058a26541eac5b0190b7653aacf937e8b393bd89ba98134a68767f0c7452"
     },
     {
       "path": "evidence/commerce-operational/mc-fix-rc6/flutter-ios-build.log",
       "bytes": 4515,
       "sha256": "2882920028497c75df2849e48a8c6ebdf1c78405eab1972d713c8832d68fbb58"
+    },
+    {
+      "path": "evidence/commerce-operational/mc-fix-rc6/flutter-ios-device-run.log",
+      "bytes": 50,
+      "sha256": "9a6017c993b63deadac8281528e58679fda74c5340a4e51ce36faa172b36e288"
     },
     {
       "path": "evidence/commerce-operational/mc-fix-rc6/flutter-marketplace-test.log",
@@ -2188,8 +2213,8 @@
     },
     {
       "path": "js/data.generated.js",
-      "bytes": 653052,
-      "sha256": "4a1161e665e0203000323e38462a47f91a132397f2d83035d38db50a0d60b0af"
+      "bytes": 653221,
+      "sha256": "fdca0618763f05139a004be9c03c5c484576a81058113fe32bcafcc5238bd828"
     },
     {
       "path": "scripts/apply_ph2_rc3_site.py",

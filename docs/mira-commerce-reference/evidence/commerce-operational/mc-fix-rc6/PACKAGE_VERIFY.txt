@@ -1,0 +1,14 @@
+RC6 unpack verification (external; does not modify ZIP)
+zip=/Users/fayez/Desktop/mira/MIRA_COMMERCE_MC_FIX_RC6.zip
+bytes=42445539
+sha256=c53e01faffc0f0bf03d46541b1c3720d071648f3729510951b2bb85f6ed8586f
+source_commit=b60274435d531721986c396d5b5ede2f1d931490
+manifest_vs_unpacked: missing=0 mismatches=0 disk_extra=0
+manifest_vs_zip_rel: missing=0 extra=0
+symlinks_excluded=ios/.symlinks
+catalog-options-rc6-tests passed
+PASS package
+freshness=NOT_RUN independent package check does not read a repository
+
+unpack_flutter_analyze_scoped: EXIT1 issues=20 errors=0
+unpack_commerce_host_rerun: EXIT0 (see post-seal note)

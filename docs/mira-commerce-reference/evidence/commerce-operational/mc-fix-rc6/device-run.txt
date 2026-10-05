@@ -1,0 +1,6 @@
+RC6 device-run
+date=2026-10-05
+target=fayez’s iPhone wireless 00008110-00191986268BA01E
+install_log=flutter-ios-device-run.log
+status=PARTIAL — install started; authenticated COD/booking/favorites journeys NOT_RUN
+note=Installing and launching is not treated as journey success
