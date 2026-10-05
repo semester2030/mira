@@ -1,7 +1,7 @@
 # MC-FIX RC7 Tracker
 
 source_commit_code=affa4831d2898c9cb021d0d746d50fa964077c2c
-docs_commit=(pending)
+docs_commit=0bfdc936a7de74f8de8011c5fed4be517521e0da
 base_rc6_commit=b60274435d531721986c396d5b5ede2f1d931490
 base_rc6_sha256=c53e01faffc0f0bf03d46541b1c3720d071648f3729510951b2bb85f6ed8586f
 zip=MIRA_COMMERCE_MC_FIX_RC7.zip
