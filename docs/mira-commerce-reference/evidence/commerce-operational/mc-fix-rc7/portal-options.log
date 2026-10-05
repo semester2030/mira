@@ -1,0 +1,18 @@
+cwd=/Users/fayez/Desktop/mira/partners-portal/web/js
+sourceCommit=01adb6ae182a80607f1fb8406dedaccc0ba63f5f
+startedAt=2026-10-05T11:38:41Z
+=== catalog-options-rc2-tests.mjs ===
+catalog-options-rc2-tests passed
+EXIT:0
+=== catalog-options-rc4-tests.mjs ===
+catalog-options-rc4-tests passed
+EXIT:0
+=== catalog-options-rc5-tests.mjs ===
+catalog-options-rc5-tests passed
+EXIT:0
+=== catalog-options-rc6-tests.mjs ===
+catalog-options-rc6-tests passed
+EXIT:0
+=== catalog-options-rc7-tests.mjs ===
+catalog-options-rc7-tests passed
+EXIT:0

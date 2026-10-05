@@ -1,0 +1,35 @@
+[
+  {
+    "width": 390,
+    "tags": [
+      "published-open",
+      "clear-cancelled",
+      "clear-accepted",
+      "clear-request-cancelled",
+      "category-conflict",
+      "clear-resolves-conflict"
+    ]
+  },
+  {
+    "width": 480,
+    "tags": [
+      "published-open",
+      "clear-cancelled",
+      "clear-accepted",
+      "clear-request-cancelled",
+      "category-conflict",
+      "clear-resolves-conflict"
+    ]
+  },
+  {
+    "width": 1280,
+    "tags": [
+      "published-open",
+      "clear-cancelled",
+      "clear-accepted",
+      "clear-request-cancelled",
+      "category-conflict",
+      "clear-resolves-conflict"
+    ]
+  }
+]
