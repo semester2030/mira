@@ -1,0 +1,6 @@
+recordedAt=2026-10-05T13:32:03Z
+codeCommit=b894cbe7ad2bfeacf01e27d8763d29f184189758
+API Live dep-db1q5n5g1s2s739v0i10 b894cbe
+Partners Live dep-db1q5n5g1s2s739v0ing b894cbe
+Admin Live dep-db1q7a7avr4c73d442t0 b894cbe
+Website Live dep-daupc2u0tbcc73dv571g 6a5bff (static; commerce-reference path is docs/ in repo — not auto-redeployed this round)

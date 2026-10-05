@@ -1,0 +1,3 @@
+RUNNING 4402 file:///private/var/containers/Bundle/Application/3ABFC87D-D531-44AD-A266-A61C4885F776/Runner.app/Runner
+alive True
+recheckAt 2026-10-05T13:39:24.601422Z

@@ -1,0 +1,10 @@
+package=MIRA_COMMERCE_MC_FIX_RC8.zip
+bytes=52514321
+sha256=e616062661a2a5df16ea5c8f405633de3a7226b9f0f92f852a69c866dd165570
+sourceCommit=b894cbe7ad2bfeacf01e27d8763d29f184189758
+unpack_portal_options=EXIT:0 (final unpack)
+unpack_flutter_marketplace=EXIT:0 (+164) prior unpack e2e/992 seal family; structure unchanged for tests
+unpack_test_commerce=EXIT:0
+site_validate=PASS
+device=profile install+launch+alive on fayez’s iPhone
+note=ZIP not modified after this sha256; delivery card sha updated in post-seal docs commit

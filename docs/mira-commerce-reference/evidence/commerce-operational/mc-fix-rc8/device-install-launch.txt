@@ -1,0 +1,9 @@
+startedAt=2026-10-05T13:29:56Z
+device=fayez’s iPhone
+udid=00008110-00191986268BA01E
+method=devicectl install+launch (after flutter run VM timeout EXIT:1)
+app=/Users/fayez/Desktop/mira/build/ios/iphoneos/Runner.app
+=== install ===
+16:29:56  Acquired tunnel connection to device.
+16:29:56  Enabling developer disk image services.
+16:29:56  Acquired usage assertion.

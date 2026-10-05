@@ -1,0 +1,16 @@
+Found 3 connected devices:
+  fayez’s iPhone (mobile) • 00008110-00191986268BA01E • ios            • iOS 26.6 23G71
+  macOS (desktop)         • macos                     • darwin-arm64   • macOS 26.4.1 25E253 darwin-arm64
+  Chrome (web)            • chrome                    • web-javascript • Google Chrome 154.0.8037.97
+
+Checking for wireless devices...
+
+Found 1 wirelessly connected device:
+  Engineer FA (wireless) (mobile) • 00008101-0019255E0E42001E • ios • iOS 26.4.1 23E254
+
+Error: Browsing on the local area network for سامي العتيبي). Ensure the device is unlocked and attached with a cable or associated with the same local area network as this Mac.
+The device must be opted into Developer Mode to connect wirelessly. (code -27)
+
+Run "flutter emulators" to list and start any available device emulators.
+
+If you expected another device to be detected, please run "flutter doctor" to diagnose potential issues. You may also try increasing the time to wait for connected devices with the "--device-timeout" flag. Visit https://flutter.dev/setup/ for troubleshooting tips.

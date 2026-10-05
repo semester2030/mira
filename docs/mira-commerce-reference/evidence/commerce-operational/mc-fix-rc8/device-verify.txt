@@ -1,0 +1,11 @@
+verifyAt=2026-10-05T13:32:56Z
+apps:
+CK Sample Isolation   app.mira.camerakit.sample     2.5.0     111311844     
+Mira                  app.mira.beauty               1.0.0     2026092302    
+processes:
+4161   /private/var/containers/Bundle/Application/A66F7353-B7BC-459C-965D-867EC89D72B4/Runner.app/Runner                                                                                
+16:32:56  Acquired tunnel connection to device.
+16:32:56  Enabling developer disk image services.
+16:32:56  Acquired usage assertion.
+Launched application with app.mira.beauty bundle identifier.
+4161   /private/var/containers/Bundle/Application/A66F7353-B7BC-459C-965D-867EC89D72B4/Runner.app/Runner                                                                                

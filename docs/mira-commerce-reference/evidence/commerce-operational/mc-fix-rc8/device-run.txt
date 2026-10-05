@@ -1,0 +1,14 @@
+device=fayez’s iPhone
+udid=00008110-00191986268BA01E
+ios=26.6
+buildMode=ios-profile
+bundle=app.mira.beauty
+bundleVersion=2026092302
+version=1.0.0
+defines=MIRA_MARKETPLACE_ENABLED=true USE_MIRA_API=true MIRA_API_BASE_URL=https://mira-api-n4p3.onrender.com/api/v1
+install=PASS (devicectl) path=.../3ABFC87D-D531-44AD-A266-A61C4885F776/Runner.app
+launch=PASS
+processAlive=PASS pid=4402 (rechecked)
+flutter_run_debug_vm=FAIL (Dart VM Service timeout wireless; EXIT:1) — superseded by profile install
+ui_catalog_visual=OWNER_TEST_PENDING (no screenshotr service; owner final journeys)
+evidence=device-profile-install.log device-rebuild-install.log device-run.log device-alive-recheck.txt

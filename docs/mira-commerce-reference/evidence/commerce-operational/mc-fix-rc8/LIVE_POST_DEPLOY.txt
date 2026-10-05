@@ -1,0 +1,14 @@
+startedAt=2026-10-05T13:18:19Z
+partners_journey_sha=14fc8066a43f20ab2954d66cdd8d9cea7eeea05361f4b6fe0b90cfd669053c3b
+local_journey_sha=14fc8066a43f20ab2954d66cdd8d9cea7eeea05361f4b6fe0b90cfd669053c3b
+partners_core_sha=0e9320356441b3f3e83053ba08c0366a36d6ab401a5f32531f5217c8acc2b8ac
+local_core_sha=0e9320356441b3f3e83053ba08c0366a36d6ab401a5f32531f5217c8acc2b8ac
+match_journey=YES
+match_core=YES
+catalog_http=200
+catalog_items 8 kinds {'product': 7, 'service': 1}
+sample {'id': '337481b7-0e85-463a-8d71-d48331e7bfb5', 'title': None, 'name': None, 'itemType': None, 'kind': 'product', 'options': None}
+partners_http=200
+admin_http=200
+auth_partner_admin_journeys=NOT_RUN (no isolated authorized test credentials in agent environment)
+clear_options_live_js=PASS (clearUndoSnapshot present; sha match local b894cbe)

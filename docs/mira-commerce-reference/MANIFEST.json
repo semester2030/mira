@@ -2,14 +2,14 @@
   "package": "MIRA_DISCOVER_PHASE1_CORRECTIONS_RC2",
   "studyVersion": "MC-FIX RC6 — إغلاق ملاحظات مراجعة RC5 دون اعتماد المرحلة",
   "studyStatus": "قيد التنفيذ — بانتظار المراجعة المستقلة",
-  "generatedAt": "2026-10-05T15:27:58.344331+03:00",
+  "generatedAt": "2026-10-05T16:39:34.875716+03:00",
   "baselineSiteZip": "MIRA_ECOMMERCE_REFERENCE_PLACES_PLAN_UPDATE_20260924_0125.zip",
   "baselineSiteSha256": "ad7f070bbc064dcd3153428d6d5ca3712bfaec2e4ddf7da865fc47cfbe7d734d",
   "linkedSourceZip": "DAR_PLACES_TO_MIRA_SOURCE_HANDOFF_RC2_20260924_0125.zip",
   "linkedSourceSha256": "60a8d854eb609e1eef11513a1406fd1e262ac809922e889f2e7beecf76ec48e1",
   "sourceArchiveUnmodified": true,
   "limits": "يثبت اتساق ملفات هذه الحزمة فقط. لا يثبت تشغيل المنتج ولا حداثة أدلة المستودع.",
-  "fileCount": 475,
+  "fileCount": 509,
   "files": [
     {
       "path": "css/components.css",
@@ -73,8 +73,8 @@
     },
     {
       "path": "data/discover-phases.json",
-      "bytes": 364005,
-      "sha256": "43d0fc54b3babf82eaa7ef569fdc624ca2218f3fa157ab64983fc1f173291287"
+      "bytes": 371423,
+      "sha256": "88335691a6e6a22c7e9c60e877c742c709cbde795158e77925e3acc2b892befa"
     },
     {
       "path": "data/discover-visual.json",
@@ -468,8 +468,8 @@
     },
     {
       "path": "evidence/commerce-operational/MC_FIX_RC7_TRACKER.md",
-      "bytes": 1340,
-      "sha256": "6c492bf60639ea3512424de69ce0bd3aaddbb06c64c2945f8f0b59175bd87cb9"
+      "bytes": 1693,
+      "sha256": "d22f8bb5df589f1cb3f4fdaa5892099fe52e76042c5ca3d8b36a0099b88c09f3"
     },
     {
       "path": "evidence/commerce-operational/MC_FIX_TRACKER.md",
@@ -1115,6 +1115,171 @@
       "path": "evidence/commerce-operational/mc-fix-rc7/unpack-test-commerce.log",
       "bytes": 10703,
       "sha256": "918fd969b72df06a632c99532f704a55cb441c288a92983848057038a14d9f30"
+    },
+    {
+      "path": "evidence/commerce-operational/mc-fix-rc8/LIVE_POST_DEPLOY.txt",
+      "bytes": 813,
+      "sha256": "6ee520274f2431d87df63627884d421e38d71bcadabbe3dee3dfeb95f0f577f1"
+    },
+    {
+      "path": "evidence/commerce-operational/mc-fix-rc8/MIRA_COMMERCE_MC_FIX_RC8.zip.sha256",
+      "bytes": 95,
+      "sha256": "53112dec770ee4a78688a7d6e5f2bacffe41ffd5d340744f1c05629b78bd2b06"
+    },
+    {
+      "path": "evidence/commerce-operational/mc-fix-rc8/PACKAGE_VERIFY.txt",
+      "bytes": 522,
+      "sha256": "3ebc0f9105ab679e9d7f3fabff624ee1c6c7bcc08940ed74266f9c4defa5433f"
+    },
+    {
+      "path": "evidence/commerce-operational/mc-fix-rc8/browser-ui-journey.txt",
+      "bytes": 343,
+      "sha256": "7ab9e23d9b5fe402ec22d8fe983695a27903d210e585af2130c61a15df3a7ba5"
+    },
+    {
+      "path": "evidence/commerce-operational/mc-fix-rc8/browser-ui-metrics.json",
+      "bytes": 4189,
+      "sha256": "836e805e784601bbfc8b8cdde6fc2f09e357e2f8b252317d46385714003678b8"
+    },
+    {
+      "path": "evidence/commerce-operational/mc-fix-rc8/device-alive-recheck.txt",
+      "bytes": 167,
+      "sha256": "2673e6672fd677ee0e3cb377d8d105ff0d5a4a43010481f19f8d4f7a7d0073f9"
+    },
+    {
+      "path": "evidence/commerce-operational/mc-fix-rc8/device-install-launch.txt",
+      "bytes": 366,
+      "sha256": "6123595554b4e72ffbb61fb03eb53ba030b98b4e03aac0ef0353c698488b1340"
+    },
+    {
+      "path": "evidence/commerce-operational/mc-fix-rc8/device-profile-install.log",
+      "bytes": 6638,
+      "sha256": "c66a1b052e904421db6a687ee404f4d7c5c660804f27e34e923f26397265d115"
+    },
+    {
+      "path": "evidence/commerce-operational/mc-fix-rc8/device-rebuild-install.log",
+      "bytes": 7057,
+      "sha256": "b98fd1c58da8a6cb3cdf277be343d5d032204cbae0c3b9cc05b5aabc9a28a0c2"
+    },
+    {
+      "path": "evidence/commerce-operational/mc-fix-rc8/device-rebuild.log",
+      "bytes": 4721,
+      "sha256": "6c70f466776352ce41bd413bcc994a8a5fd7a68a176e011bad4bda81d562bc95"
+    },
+    {
+      "path": "evidence/commerce-operational/mc-fix-rc8/device-reinstall-clean.txt",
+      "bytes": 2139,
+      "sha256": "d6ea2565dac4ed6dccd77ec4252ed17e041e02d392d714d04b6da7071818482b"
+    },
+    {
+      "path": "evidence/commerce-operational/mc-fix-rc8/device-run.log",
+      "bytes": 5259,
+      "sha256": "14786b43f6b95d022c7fbe1633f16a688dda84a449af82f4b9f1bf07920e289b"
+    },
+    {
+      "path": "evidence/commerce-operational/mc-fix-rc8/device-run.txt",
+      "bytes": 687,
+      "sha256": "97d59f88f0404539464dadd60fa3fae370dfd9cd3e0fa94332f039232c0de3c7"
+    },
+    {
+      "path": "evidence/commerce-operational/mc-fix-rc8/device-verify.txt",
+      "bytes": 766,
+      "sha256": "2490dc6bb726fdd71e57352a431fbc0a6372df41e5e62c4a86d4f01cd9b52c13"
+    },
+    {
+      "path": "evidence/commerce-operational/mc-fix-rc8/flutter-analyze-scoped.log",
+      "bytes": 9425,
+      "sha256": "112eec99035352417d9b78eb82d40da12a01d319f886c787b6942b1bbd2c6f79"
+    },
+    {
+      "path": "evidence/commerce-operational/mc-fix-rc8/flutter-devices.txt",
+      "bytes": 1117,
+      "sha256": "d3e168fd0168fe8229e501633b518680f8142a8d92e72c3c81f884c69dd8f9e3"
+    },
+    {
+      "path": "evidence/commerce-operational/mc-fix-rc8/flutter-marketplace-test.log",
+      "bytes": 60295,
+      "sha256": "f264d174e539da1f0498489de74cbb4abdaed44d7ca1521dbdbb77120ad4c187"
+    },
+    {
+      "path": "evidence/commerce-operational/mc-fix-rc8/pack-stage-report.json",
+      "bytes": 1561,
+      "sha256": "78ad3f15bbab247b78aa9d177ebe918fe6856b5dcb23c58051c281604fd12b20"
+    },
+    {
+      "path": "evidence/commerce-operational/mc-fix-rc8/portal-clear-1280.png",
+      "bytes": 286031,
+      "sha256": "a0709f118e9a5e10f3772076cb0988f10a849bf44c9c9cec91a1f963cb9a5c4f"
+    },
+    {
+      "path": "evidence/commerce-operational/mc-fix-rc8/portal-clear-390.png",
+      "bytes": 254244,
+      "sha256": "02b3983de9541945e2e9bb852d959c0cb75d71662a18b49bb64f11900a089227"
+    },
+    {
+      "path": "evidence/commerce-operational/mc-fix-rc8/portal-clear-480.png",
+      "bytes": 260504,
+      "sha256": "97ee82361d71c9a83e4560ede998c3f8c68ea884bab36ab445c4f6f110a3ae47"
+    },
+    {
+      "path": "evidence/commerce-operational/mc-fix-rc8/portal-form-probe.cjs",
+      "bytes": 1770,
+      "sha256": "c4d0789c1d988166f03302622ed3b65c6370a97fb0a1037fc63a6225b0dc95c2"
+    },
+    {
+      "path": "evidence/commerce-operational/mc-fix-rc8/portal-options.log",
+      "bytes": 552,
+      "sha256": "4bf3b2fcd94fddd118be179eb08f1066d8c03f6405df27a562112272937d7805"
+    },
+    {
+      "path": "evidence/commerce-operational/mc-fix-rc8/portal-probe.log",
+      "bytes": 574,
+      "sha256": "14362d938d0b51a30a0f2bb816cf449dfabd578a3255dc07170cb298cb940950"
+    },
+    {
+      "path": "evidence/commerce-operational/mc-fix-rc8/render-deploys.txt",
+      "bytes": 348,
+      "sha256": "cb3d92bd138ca66c6928df2f6801f0a7c008169c99fc4ef78c60803041afe931"
+    },
+    {
+      "path": "evidence/commerce-operational/mc-fix-rc8/site-validate-run.txt",
+      "bytes": 84,
+      "sha256": "4e5ba38ce5f43bf739dae665b0125417a5a9ef8b5889371281ce408f18cf91ab"
+    },
+    {
+      "path": "evidence/commerce-operational/mc-fix-rc8/site-validate.txt",
+      "bytes": 84,
+      "sha256": "4e5ba38ce5f43bf739dae665b0125417a5a9ef8b5889371281ce408f18cf91ab"
+    },
+    {
+      "path": "evidence/commerce-operational/mc-fix-rc8/test-commerce.log",
+      "bytes": 12353,
+      "sha256": "77ffd4de44b655db8dce7b0d1560beb1d87bf570305f576b27e29a3fe3a55bfe"
+    },
+    {
+      "path": "evidence/commerce-operational/mc-fix-rc8/unpack-final-portal-options.log",
+      "bytes": 845,
+      "sha256": "ea12bf6775eef49a03e8cf38520f95730a14f33cc8c5c9c2802fcd1751d87c83"
+    },
+    {
+      "path": "evidence/commerce-operational/mc-fix-rc8/unpack-flutter-marketplace.log",
+      "bytes": 57078,
+      "sha256": "ca7db9c4370457f94f7010e38482433b6964492e51c20e2b6dd0a947bc6fd7e0"
+    },
+    {
+      "path": "evidence/commerce-operational/mc-fix-rc8/unpack-portal-options.log",
+      "bytes": 728,
+      "sha256": "7bb99a496aed5af7e7ed886b6a4d2c5bef5df4131b9862170022d04c45fd59b2"
+    },
+    {
+      "path": "evidence/commerce-operational/mc-fix-rc8/unpack-test-commerce.log",
+      "bytes": 12525,
+      "sha256": "cdd71853fdeef74c21fc47f8329c1d4b623f33702dd00a2fe924341656811dac"
+    },
+    {
+      "path": "evidence/commerce-operational/mc-fix-rc8/unpack2-portal-options.log",
+      "bytes": 824,
+      "sha256": "fef018f9a5ae1c4f672b695aa3e2acee018f04f40914732273f11c35d82e126d"
     },
     {
       "path": "evidence/contracts/marketplace-catalog.md",
@@ -2323,8 +2488,8 @@
     },
     {
       "path": "js/data.generated.js",
-      "bytes": 661947,
-      "sha256": "7c3afdbc7dcc6b152cf76c0b47eb129def2870ca15c124f1a8ff91c142e27158"
+      "bytes": 669607,
+      "sha256": "feaaffd31d2ba08376f73bab0c83f165b0fea301d8bb1c3b6c1f9597de2c8f81"
     },
     {
       "path": "scripts/apply_ph2_rc3_site.py",
@@ -2360,6 +2525,11 @@
       "path": "scripts/pack_mc_fix_rc7.py",
       "bytes": 3734,
       "sha256": "09c09d041ea21565e53badd5dd4e9cbd2fc01093fd50f0a35c274f06297341dd"
+    },
+    {
+      "path": "scripts/pack_mc_fix_rc8.py",
+      "bytes": 3734,
+      "sha256": "e6229d6e4ca81682eff009befaa2ce7f95d71816c15a84dcf66b5f939d272d87"
     },
     {
       "path": "scripts/validate_package.py",

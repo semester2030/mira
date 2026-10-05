@@ -1,0 +1,43 @@
+startedAt=2026-10-05T13:33:29Z
+=== terminate stale ===
+16:33:29  Acquired tunnel connection to device.
+16:33:29  Enabling developer disk image services.
+16:33:29  Acquired usage assertion.
+Sent signal to terminate process sent to pid 4161
+16:33:29  Acquired tunnel connection to device.
+16:33:29  Enabling developer disk image services.
+16:33:29  Acquired usage assertion.
+ERROR: The operation couldn’t be completed. No such process (NSPOSIXErrorDomain error 3 (0x03))
+  --terminate-existing    Terminates any already-running instances of the app
+        devicectl will wait for the app to terminate. Catchable signals sent to
+=== uninstall + reinstall ===
+16:33:30  Acquired tunnel connection to device.
+16:33:30  Enabling developer disk image services.
+16:33:30  Acquired usage assertion.
+App uninstalled.
+16:33:32  Acquired tunnel connection to device.
+16:33:32  Enabling developer disk image services.
+16:33:32  Acquired usage assertion.
+App installed:
+• bundleID: app.mira.beauty
+• installationURL: file:///private/var/containers/Bundle/Application/2785DED4-3D51-4A99-93F1-693D1CABB3E8/Runner.app/
+• launchServicesIdentifier: unknown
+• databaseUUID: 141A84E5-CC1C-420C-8AFC-0FE0E459F4CB
+• databaseSequenceNumber: 8072
+• options: 
+INSTALL:0
+CK Sample Isolation   app.mira.camerakit.sample     2.5.0     111311844     
+Mira                  app.mira.beauty               1.0.0     2026092302    
+=== launch ===
+Error: The option '--console' does not take any value, but 'null' was specified.
+Usage: devicectl device process launch [<options>] --device <uuid|ecid|serial_number|udid|name|dns_name> <bundle-identifier-or-path> [<command-line-arguments> ...]
+  See 'devicectl device process launch --help' for more information.
+launchAt=2026-10-05T13:33:46Z
+16:33:46  Acquired tunnel connection to device.
+16:33:46  Enabling developer disk image services.
+16:33:46  Acquired usage assertion.
+Launched application with app.mira.beauty bundle identifier.
+LAUNCH:0
+CK Sample Isolation   app.mira.camerakit.sample     2.5.0     111311844     
+Mira                  app.mira.beauty               1.0.0     2026092302    
+ok False
