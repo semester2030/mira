@@ -729,13 +729,85 @@
     optionsSection.hidden = type !== 'brand';
     text(optionsSection, 'خيارات المنتج', 'h3');
     text(optionsSection, 'الحقول تتغير حسب التصنيف. الخيارات الجاهزة اقتراحات فقط وليست محددة تلقائيًا. التركيبات المتاحة تُختار يدويًا دون إنشاء كل الاحتمالات.');
+    const optionsActionBar = document.createElement('div');
+    optionsActionBar.setAttribute('data-options-action-bar', '1');
     const optionsBody = document.createElement('div');
     const optionsPreview = document.createElement('div');
     optionsPreview.className = 'options-preview';
-    optionsSection.append(optionsBody, optionsPreview);
+    optionsSection.append(optionsActionBar, optionsBody, optionsPreview);
     form.insertBefore(optionsSection, mediaSection);
 
     const optionsState = optionsStateFromServer(editing ? item : null);
+    /** Snapshot taken immediately before an in-session clear (RC8-01 undo). */
+    let clearUndoSnapshot = null;
+
+    function cloneOptionsState(src) {
+      return JSON.parse(JSON.stringify({
+        selected: src.selected || {},
+        customs: src.customs || {},
+        traits: src.traits || {},
+        variants: src.variants || [],
+        valueIds: src.valueIds || {},
+        clearingOptions: !!src.clearingOptions,
+        clearingVariants: !!src.clearingVariants,
+        categoryConflict: src.categoryConflict || null,
+        invalidVariantNote: src.invalidVariantNote || '',
+      }));
+    }
+
+    function hasOptionValuesNow() {
+      if (window.MiraCatalogOptions && window.MiraCatalogOptions.stateHasOptionLabels) {
+        return window.MiraCatalogOptions.stateHasOptionLabels(optionsState);
+      }
+      const selected = optionsState.selected || {};
+      if (Object.keys(selected).some((gid) => (selected[gid] || []).length > 0)) return true;
+      const customs = optionsState.customs || {};
+      if (Object.keys(customs).some((gid) => String(customs[gid] || '').trim())) return true;
+      return (optionsState.variants || []).length > 0;
+    }
+
+    function abandonClearIfValuesEntered() {
+      if (optionsState.clearingOptions && hasOptionValuesNow()) {
+        optionsState.clearingOptions = false;
+        optionsState.clearingVariants = false;
+      }
+    }
+
+    function hasPublishedOptions() {
+      return Boolean(
+        editing &&
+          ((Array.isArray(item.optionsJson) && item.optionsJson.length > 0) ||
+            (Array.isArray(item.variantsJson) && item.variantsJson.length > 0)),
+      );
+    }
+
+    function restoreFromPublished() {
+      optionsState.clearingOptions = false;
+      optionsState.clearingVariants = false;
+      clearUndoSnapshot = null;
+      if (!editing) return;
+      Object.assign(
+        optionsState,
+        optionsStateFromServer(
+          Object.assign({}, item, {
+            draftOptionsSet: false,
+            draftVariantsSet: false,
+            draftOptionsJson: null,
+            draftVariantsJson: null,
+          }),
+        ),
+      );
+    }
+
+    function restoreFromClearUndo() {
+      if (!clearUndoSnapshot) return false;
+      const snap = clearUndoSnapshot;
+      clearUndoSnapshot = null;
+      Object.assign(optionsState, cloneOptionsState(snap));
+      optionsState.clearingOptions = false;
+      optionsState.clearingVariants = false;
+      return true;
+    }
 
     function optionPresets(cat) {
       if (cat === 'clothes') {
@@ -780,15 +852,15 @@
       } catch (error) {}
     }
 
-    function paintOptions() {
-      optionsBody.replaceChildren();
-      optionsPreview.replaceChildren();
+    function syncOptionsActionBar() {
       if (type !== 'brand') {
-        optionsSection.hidden = true;
+        optionsActionBar.replaceChildren();
         return;
       }
-      optionsSection.hidden = false;
-      const preset = optionPresets(category.value);
+      optionsActionBar.replaceChildren();
+      const hasValues = hasOptionValuesNow();
+      const published = hasPublishedOptions();
+
       if (optionsState.categoryConflict && optionsState.categoryConflict.groupIds && optionsState.categoryConflict.groupIds.length) {
         const banner = document.createElement('p');
         banner.className = 'field-error';
@@ -796,7 +868,7 @@
         banner.setAttribute('data-category-conflict', '1');
         banner.textContent =
           'تغيير التصنيف سيُسقط مجموعات خيارات محفوظة دون مسح صريح. ارجعي للتصنيف السابق أو امسحي الخيارات صراحةً قبل الحفظ.';
-        optionsBody.appendChild(banner);
+        optionsActionBar.appendChild(banner);
         const revert = document.createElement('button');
         revert.type = 'button';
         revert.className = 'btn btn-ghost btn-sm';
@@ -811,18 +883,10 @@
             paintOptions();
           }
         };
-        optionsBody.appendChild(revert);
+        optionsActionBar.appendChild(revert);
       }
 
-      // RC7-01: explicit clear action in the simplified UI (no JSON required).
-      const hasOptionValues = Object.keys(optionsState.selected || {}).some(
-        (gid) => (optionsState.selected[gid] || []).length > 0 || String(optionsState.customs[gid] || '').trim(),
-      );
-      const hasPublishedOptions =
-        editing &&
-        ((Array.isArray(item.optionsJson) && item.optionsJson.length > 0) ||
-          (Array.isArray(item.variantsJson) && item.variantsJson.length > 0));
-      if (!optionsState.clearingOptions && (hasOptionValues || hasPublishedOptions || (optionsState.variants || []).length)) {
+      if (!optionsState.clearingOptions && (hasValues || published || (optionsState.variants || []).length)) {
         const clearBtn = document.createElement('button');
         clearBtn.type = 'button';
         clearBtn.className = 'btn btn-ghost btn-sm';
@@ -840,8 +904,10 @@
                 Math.max(variantCount, publishedVariantCount) +
                 '.\n'
               : '') +
+            'يمكن التراجع عن المسح الحالي قبل الحفظ لاستعادة ما كان ظاهرًا.\n' +
             'هل تريدين المتابعة؟';
           if (!window.confirm(msg)) return;
+          clearUndoSnapshot = cloneOptionsState(optionsState);
           optionsState.clearingOptions = true;
           optionsState.clearingVariants = true;
           optionsState.selected = {};
@@ -854,43 +920,76 @@
           saveOptionsDraft();
           paintOptions();
         };
-        optionsBody.appendChild(clearBtn);
+        optionsActionBar.appendChild(clearBtn);
       }
+
+      if (optionsState.clearingOptions) {
+        const banner = document.createElement('p');
+        banner.className = 'field-error';
+        banner.setAttribute('data-clear-options-pending', '1');
+        banner.textContent = published
+          ? 'طلب مسح معلّق: المنشور يبقى ظاهرًا حتى اعتماد الإدارة. إدخال خيارات جديدة يلغي طلب المسح ويستبدله بالمحتوى الجديد.'
+          : 'تم مسح خيارات المسودة. إدخال قيم جديدة يبني خيارات جديدة دون طلب مسح null.';
+        optionsActionBar.appendChild(banner);
+
+        if (clearUndoSnapshot) {
+          const undo = document.createElement('button');
+          undo.type = 'button';
+          undo.className = 'btn btn-ghost btn-sm';
+          undo.setAttribute('data-undo-clear-options', '1');
+          undo.textContent = 'التراجع عن المسح الحالي';
+          undo.onclick = () => {
+            restoreFromClearUndo();
+            saveOptionsDraft();
+            paintOptions();
+          };
+          optionsActionBar.appendChild(undo);
+        }
+
+        if (published) {
+          const restorePub = document.createElement('button');
+          restorePub.type = 'button';
+          restorePub.className = 'btn btn-ghost btn-sm';
+          restorePub.setAttribute('data-cancel-clear-options', '1');
+          restorePub.textContent = 'العودة إلى الخيارات المنشورة';
+          restorePub.onclick = () => {
+            if (!window.confirm('ستُستبدل حالة المسودة الحالية بالخيارات والتركيبات المنشورة. المتابعة؟')) return;
+            restoreFromPublished();
+            saveOptionsDraft();
+            paintOptions();
+          };
+          optionsActionBar.appendChild(restorePub);
+        }
+      } else if (clearUndoSnapshot && hasValues) {
+        // After clear + new values: still allow restoring the pre-clear in-session snapshot.
+        const undo = document.createElement('button');
+        undo.type = 'button';
+        undo.className = 'btn btn-ghost btn-sm';
+        undo.setAttribute('data-undo-clear-options', '1');
+        undo.textContent = 'استعادة ما قبل المسح';
+        undo.onclick = () => {
+          restoreFromClearUndo();
+          saveOptionsDraft();
+          paintOptions();
+        };
+        optionsActionBar.appendChild(undo);
+      }
+    }
+
+    function paintOptions() {
+      optionsBody.replaceChildren();
+      optionsPreview.replaceChildren();
+      if (type !== 'brand') {
+        optionsSection.hidden = true;
+        syncOptionsActionBar();
+        return;
+      }
+      optionsSection.hidden = false;
+      syncOptionsActionBar();
+      const preset = optionPresets(category.value);
 
       if (!preset.groups.length && !preset.traits.length) {
         text(optionsBody, 'هذا التصنيف لا يحتاج خيارات مقاس أو لون أو حجم.');
-        if (optionsState.clearingOptions) {
-          const banner = document.createElement('p');
-          banner.className = 'field-error';
-          banner.setAttribute('data-clear-options-pending', '1');
-          banner.textContent =
-            'مسودة قيد المراجعة تطلب مسح الخيارات والتركيبات المنشورة. الحفظ دون إضافة خيارات يبقي طلب المسح.';
-          optionsBody.appendChild(banner);
-          const restore = document.createElement('button');
-          restore.type = 'button';
-          restore.className = 'btn btn-ghost btn-sm';
-          restore.setAttribute('data-cancel-clear-options', '1');
-          restore.textContent = 'إلغاء طلب المسح والعودة للمنشور';
-          restore.onclick = () => {
-            optionsState.clearingOptions = false;
-            optionsState.clearingVariants = false;
-            if (editing && Array.isArray(item.optionsJson)) {
-              Object.assign(
-                optionsState,
-                optionsStateFromServer(
-                  Object.assign({}, item, {
-                    draftOptionsSet: false,
-                    draftVariantsSet: false,
-                    draftOptionsJson: null,
-                    draftVariantsJson: null,
-                  }),
-                ),
-              );
-            }
-            paintOptions();
-          };
-          optionsBody.appendChild(restore);
-        }
         paintOptionsPreview();
         return;
       }
@@ -912,6 +1011,7 @@
             if (input.checked && at < 0) list.push(label);
             if (!input.checked && at >= 0) list.splice(at, 1);
             optionsState.clearingOptions = false;
+            optionsState.clearingVariants = false;
             onOptionsValuesChanged();
           };
           wrap.append(input, document.createTextNode(' ' + label));
@@ -921,6 +1021,7 @@
         const custom = field(block, 'قيم خاصة (افصلي بفاصلة)', 'custom-' + group.id, optionsState.customs[group.id] || '', 'text');
         custom.oninput = () => {
           optionsState.customs[group.id] = custom.value;
+          abandonClearIfValuesEntered();
           onOptionsValuesChanged();
         };
         optionsBody.appendChild(block);
@@ -938,33 +1039,6 @@
         });
         optionsBody.appendChild(traitBox);
       }
-      if (optionsState.clearingOptions) {
-        const banner = document.createElement('p');
-        banner.className = 'field-error';
-        banner.setAttribute('data-clear-options-pending', '1');
-        banner.textContent = 'مسودة قيد المراجعة تطلب مسح الخيارات والتركيبات المنشورة. الحفظ دون إضافة خيارات يبقي طلب المسح.';
-        optionsBody.appendChild(banner);
-        const restore = document.createElement('button');
-        restore.type = 'button';
-        restore.className = 'btn btn-ghost btn-sm';
-        restore.setAttribute('data-cancel-clear-options', '1');
-        restore.textContent = 'إلغاء طلب المسح والعودة للمنشور';
-        restore.onclick = () => {
-          optionsState.clearingOptions = false;
-          optionsState.clearingVariants = false;
-          if (editing && Array.isArray(item.optionsJson)) {
-            Object.assign(optionsState, optionsStateFromServer(Object.assign({}, item, {
-              draftOptionsSet: false,
-              draftVariantsSet: false,
-              draftOptionsJson: null,
-              draftVariantsJson: null,
-            })));
-          }
-          paintOptions();
-        };
-        optionsBody.appendChild(restore);
-      }
-
       text(optionsBody, 'التركيبات (لا تُنشأ تلقائيًا من كل الاحتمالات)', 'h4');
       const variantList = document.createElement('div');
       variantList.className = 'variant-list';
@@ -1155,8 +1229,10 @@
     }
 
     function onOptionsValuesChanged() {
+      abandonClearIfValuesEntered();
       saveOptionsDraft();
       if (typeof optionsBody._refreshVariantPickers === 'function') optionsBody._refreshVariantPickers();
+      syncOptionsActionBar();
       paintOptionsPreview();
     }
 
@@ -1524,7 +1600,10 @@
         value.deliveryFeeHalalas = fee;
       }
 
-      const built = structuredOptionsPayload();
+      const built = (() => {
+        abandonClearIfValuesEntered();
+        return structuredOptionsPayload();
+      })();
       const advancedOn = Boolean(optionsJsonInput._advancedToggle && optionsJsonInput._advancedToggle.checked);
       if (advancedOn) {
         const options = parseJsonList(optionsJsonInput.value, 'optionsJson', 'الخيارات');

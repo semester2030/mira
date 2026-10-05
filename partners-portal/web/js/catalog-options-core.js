@@ -176,6 +176,15 @@
    * Also blocks silent nulling when a category change would drop saved option groups
    * even when there are no SKU variants yet (RC6-01).
    */
+  function stateHasOptionLabels(state) {
+    const selected = state && state.selected ? state.selected : {};
+    const customs = state && state.customs ? state.customs : {};
+    if (Object.keys(selected).some((gid) => (selected[gid] || []).length > 0)) return true;
+    if (Object.keys(customs).some((gid) => String(customs[gid] || '').trim())) return true;
+    if ((state && state.variants && state.variants.length) > 0) return true;
+    return false;
+  }
+
   function structuredOptionsPayload(state, presetGroups) {
     if (state.clearingOptions) {
       return { optionsJson: null, variantsJson: null, clearing: true, error: null, conflicts: [] };
@@ -380,6 +389,7 @@
     structuredOptionsPayload: structuredOptionsPayload,
     buildCommercePayload: buildCommercePayload,
     incompatibleGroupIds: incompatibleGroupIds,
+    stateHasOptionLabels: stateHasOptionLabels,
     selectionKey: selectionKey,
     isDuplicateVariant: isDuplicateVariant,
     slugValue: slugValue,

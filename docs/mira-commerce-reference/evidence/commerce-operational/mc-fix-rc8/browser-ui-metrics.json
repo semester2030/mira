@@ -1,0 +1,95 @@
+[
+  {
+    "width": 390,
+    "tags": [
+      "new-empty",
+      "new-with-values",
+      "cleared",
+      "undo-restored",
+      "after-xxl",
+      "published-undo-keeps-draft-edit"
+    ],
+    "metrics": {
+      "tag": "published-undo-keeps-draft-edit",
+      "overflowX": false,
+      "confirmCount": 3,
+      "lastConfirm": "مسح خيارات المنتج يطلب حذف كل الخيارات والتركيبات المرتبطة بها بعد اعتماد الإدارة.\nالمنشور الحالي يبقى ظاهرًا للعميلات حتى الاعتماد.\nعدد التركيبات المتأثرة في المسودة/المنشور: 1.\nيمكن التراجع عن المسح الحالي قبل الحفظ لاستعادة ما كان ظاهرًا.\nهل تريدين المتابعة؟",
+      "clearBtn": true,
+      "undoClearBtn": false,
+      "cancelClearBtn": false,
+      "pendingBanner": false,
+      "checked": [
+        "M",
+        "L",
+        "XL",
+        "متاحة",
+        "متاحة للشراء",
+        "تفعيل الطلب داخل ميرا (دفع نقدًا عند الاستلام). رابط الشراء الخارجي يبقى للمنتجات الخارجية فقط."
+      ],
+      "customSize": ""
+    },
+    "shot": "/Users/fayez/Desktop/mira/docs/mira-commerce-reference/evidence/commerce-operational/mc-fix-rc8/portal-clear-390.png"
+  },
+  {
+    "width": 480,
+    "tags": [
+      "new-empty",
+      "new-with-values",
+      "cleared",
+      "undo-restored",
+      "after-xxl",
+      "published-undo-keeps-draft-edit"
+    ],
+    "metrics": {
+      "tag": "published-undo-keeps-draft-edit",
+      "overflowX": false,
+      "confirmCount": 3,
+      "lastConfirm": "مسح خيارات المنتج يطلب حذف كل الخيارات والتركيبات المرتبطة بها بعد اعتماد الإدارة.\nالمنشور الحالي يبقى ظاهرًا للعميلات حتى الاعتماد.\nعدد التركيبات المتأثرة في المسودة/المنشور: 1.\nيمكن التراجع عن المسح الحالي قبل الحفظ لاستعادة ما كان ظاهرًا.\nهل تريدين المتابعة؟",
+      "clearBtn": true,
+      "undoClearBtn": false,
+      "cancelClearBtn": false,
+      "pendingBanner": false,
+      "checked": [
+        "M",
+        "L",
+        "XL",
+        "متاحة",
+        "متاحة للشراء",
+        "تفعيل الطلب داخل ميرا (دفع نقدًا عند الاستلام). رابط الشراء الخارجي يبقى للمنتجات الخارجية فقط."
+      ],
+      "customSize": ""
+    },
+    "shot": "/Users/fayez/Desktop/mira/docs/mira-commerce-reference/evidence/commerce-operational/mc-fix-rc8/portal-clear-480.png"
+  },
+  {
+    "width": 1280,
+    "tags": [
+      "new-empty",
+      "new-with-values",
+      "cleared",
+      "undo-restored",
+      "after-xxl",
+      "published-undo-keeps-draft-edit"
+    ],
+    "metrics": {
+      "tag": "published-undo-keeps-draft-edit",
+      "overflowX": false,
+      "confirmCount": 3,
+      "lastConfirm": "مسح خيارات المنتج يطلب حذف كل الخيارات والتركيبات المرتبطة بها بعد اعتماد الإدارة.\nالمنشور الحالي يبقى ظاهرًا للعميلات حتى الاعتماد.\nعدد التركيبات المتأثرة في المسودة/المنشور: 1.\nيمكن التراجع عن المسح الحالي قبل الحفظ لاستعادة ما كان ظاهرًا.\nهل تريدين المتابعة؟",
+      "clearBtn": true,
+      "undoClearBtn": false,
+      "cancelClearBtn": false,
+      "pendingBanner": false,
+      "checked": [
+        "M",
+        "L",
+        "XL",
+        "متاحة",
+        "متاحة للشراء",
+        "تفعيل الطلب داخل ميرا (دفع نقدًا عند الاستلام). رابط الشراء الخارجي يبقى للمنتجات الخارجية فقط."
+      ],
+      "customSize": ""
+    },
+    "shot": "/Users/fayez/Desktop/mira/docs/mira-commerce-reference/evidence/commerce-operational/mc-fix-rc8/portal-clear-1280.png"
+  }
+]

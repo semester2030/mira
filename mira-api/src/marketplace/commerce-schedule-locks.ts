@@ -131,8 +131,13 @@ export async function lockPartnerScheduleScope(
   return scope;
 }
 
-/** Spin until MIRA_TEST_SCHEDULE_GATE is cleared. Empty/unset = no-op. */
+/**
+ * Spin until MIRA_TEST_SCHEDULE_GATE is cleared.
+ * Production-safe: both MIRA_ALLOW_TEST_SCHEDULE_GATE=1 and GATE=hold are required.
+ * Empty/unset either flag = no-op (live traffic never waits).
+ */
 export async function maybeTestScheduleGate(): Promise<void> {
+  if (process.env.MIRA_ALLOW_TEST_SCHEDULE_GATE !== '1') return;
   if (process.env.MIRA_TEST_SCHEDULE_GATE !== 'hold') return;
   const started = Date.now();
   while (process.env.MIRA_TEST_SCHEDULE_GATE === 'hold') {

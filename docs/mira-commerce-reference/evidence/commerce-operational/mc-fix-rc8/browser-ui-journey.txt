@@ -1,0 +1,4 @@
+RC8 clear/restore UI probe
+width=390 tags=new-empty,new-with-values,cleared,undo-restored,after-xxl,published-undo-keeps-draft-edit
+width=480 tags=new-empty,new-with-values,cleared,undo-restored,after-xxl,published-undo-keeps-draft-edit
+width=1280 tags=new-empty,new-with-values,cleared,undo-restored,after-xxl,published-undo-keeps-draft-edit

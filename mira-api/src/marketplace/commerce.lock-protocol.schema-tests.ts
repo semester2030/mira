@@ -69,24 +69,57 @@ function nextOpenDay(minOffsetDays = 1) {
   throw new Error('no open weekday in window');
 }
 
-/** Backend PID for an interactive connection (logged for RC7 barrier evidence). */
+/** Backend PID for an interactive connection (logged for barrier evidence). */
 async function backendPid(prisma: PrismaClient): Promise<number> {
   const rows = await prisma.$queryRaw<Array<{ pid: number }>>`SELECT pg_backend_pid()::int AS pid`;
   return Number(rows[0]?.pid);
 }
 
+function armScheduleGate() {
+  process.env.MIRA_ALLOW_TEST_SCHEDULE_GATE = '1';
+  process.env.MIRA_TEST_SCHEDULE_GATE = 'hold';
+}
+
+function releaseScheduleGate() {
+  delete process.env.MIRA_TEST_SCHEDULE_GATE;
+  delete process.env.MIRA_ALLOW_TEST_SCHEDULE_GATE;
+}
+
+/** Prisma client forced to one connection so backendPid matches later interactive tx. */
+function singleConnClient(baseUrl: string): PrismaClient {
+  const join = baseUrl.includes('?') ? '&' : '?';
+  return new PrismaClient({ datasources: { db: { url: `${baseUrl}${join}connection_limit=1` } } });
+}
+
 /**
- * Wait until SOME session is blocked on hashtext(lockKey) advisory.
+ * Wait until the expected session is blocked on hashtext(lockKey) advisory.
  * Uses lock classid/objid from hashtext — not query-text ILIKE, not "any waiter".
+ * expectedWaiterPid is required (RC8-03).
  */
 async function waitForAdvisoryWaiter(
   observer: PrismaClient,
   lockKey: string,
-  opts?: { expectedWaiterPid?: number; timeoutMs?: number },
+  opts: { expectedWaiterPid: number; expectedHolderPid?: number; timeoutMs?: number },
 ) {
-  const timeoutMs = opts?.timeoutMs ?? 12_000;
+  const timeoutMs = opts.timeoutMs ?? 12_000;
   const started = Date.now();
   while (Date.now() - started < timeoutMs) {
+    const holders = await observer.$queryRaw<Array<{ pid: number }>>`
+      WITH target AS (SELECT hashtext(${lockKey})::int AS k)
+      SELECT a.pid::int AS pid
+      FROM pg_locks l
+      JOIN pg_stat_activity a ON a.pid = l.pid
+      CROSS JOIN target t
+      WHERE l.locktype = 'advisory'
+        AND l.granted
+        AND (l.classid = t.k OR l.objid = t.k)
+    `;
+    if (opts.expectedHolderPid != null) {
+      if (!holders.some((h) => h.pid === opts.expectedHolderPid)) {
+        await new Promise((r) => setTimeout(r, 40));
+        continue;
+      }
+    }
     const rows = await observer.$queryRaw<Array<{ pid: number; granted: boolean }>>`
       WITH target AS (SELECT hashtext(${lockKey})::int AS k)
       SELECT a.pid::int AS pid, l.granted
@@ -97,24 +130,46 @@ async function waitForAdvisoryWaiter(
         AND NOT l.granted
         AND (l.classid = t.k OR l.objid = t.k)
     `;
-    if (rows.length) {
-      if (opts?.expectedWaiterPid != null) {
-        const hit = rows.find((r) => r.pid === opts.expectedWaiterPid);
-        if (!hit) {
-          await new Promise((r) => setTimeout(r, 40));
-          continue;
-        }
-      }
+    const hit = rows.find((r) => r.pid === opts.expectedWaiterPid);
+    if (hit) {
       step(
-        `advisory wait confirmed key=${lockKey} waiters=${rows.map((r) => r.pid).join(',')} expected=${opts?.expectedWaiterPid ?? 'any'}`,
+        `advisory wait confirmed key=${lockKey} waiters=${rows.map((r) => r.pid).join(',')} expected=${opts.expectedWaiterPid} holders=${holders.map((h) => h.pid).join(',')}`,
       );
       return rows;
     }
     await new Promise((r) => setTimeout(r, 40));
   }
   throw new Error(
-    `timed out waiting for advisory lock key=${lockKey} expectedWaiterPid=${opts?.expectedWaiterPid ?? 'any'}`,
+    `timed out waiting for advisory lock key=${lockKey} expectedWaiterPid=${opts.expectedWaiterPid}`,
   );
+}
+
+async function waitForGrantedHolder(
+  observer: PrismaClient,
+  lockKey: string,
+  opts?: { timeoutMs?: number },
+): Promise<number> {
+  const timeoutMs = opts?.timeoutMs ?? 12_000;
+  const started = Date.now();
+  while (Date.now() - started < timeoutMs) {
+    const rows = await observer.$queryRaw<Array<{ pid: number }>>`
+      WITH target AS (SELECT hashtext(${lockKey})::int AS k)
+      SELECT a.pid::int AS pid
+      FROM pg_locks l
+      JOIN pg_stat_activity a ON a.pid = l.pid
+      CROSS JOIN target t
+      WHERE l.locktype = 'advisory'
+        AND l.granted
+        AND (l.classid = t.k OR l.objid = t.k)
+      LIMIT 1
+    `;
+    if (rows[0]?.pid != null) {
+      step(`advisory holder confirmed key=${lockKey} holder_pid=${rows[0].pid}`);
+      return rows[0].pid;
+    }
+    await new Promise((r) => setTimeout(r, 40));
+  }
+  throw new Error(`timed out waiting for granted advisory holder key=${lockKey}`);
 }
 
 async function main() {
@@ -153,6 +208,7 @@ async function main() {
       name: 'B',
     });
     created.userIds.push(actorA.userId, actorB.userId);
+    const dbUrl = process.env.DATABASE_URL!;
 
     // --- RC6-02: resource-scope growth must not deadlock (T0/T1/T2) ---
     const s1 = await prismaA.service.create({
@@ -257,20 +313,47 @@ async function main() {
     await prodT0;
     step('T0 committed S1→A+Z');
 
-    const [u1, u2] = await Promise.all([
-      portalA.updateService(clinic.id, s1.id, {
+    // RC8-03: while T-hold expands capacity under schedule protocol, T-wait must wait on coord then re-read.
+    const coordKey = partnerScheduleCoordKey(clinic.id);
+    const prismaHold = singleConnClient(dbUrl);
+    const prismaWait = singleConnClient(dbUrl);
+    const portalHold = new PartnersPortalService(prismaHold as unknown as PrismaService, {
+      get: () => 'false',
+    } as never);
+    const portalWait = new PartnersPortalService(prismaWait as unknown as PrismaService, {
+      get: () => 'false',
+    } as never);
+    try {
+      const holdPid = await backendPid(prismaHold);
+      const waitPid = await backendPid(prismaWait);
+      step(`RC8 scope-growth hold_pid=${holdPid} wait_pid=${waitPid}`);
+      armScheduleGate();
+      const holdP = portalHold.updateService(clinic.id, s1.id, {
         availabilityJson: mkWindows([
           { id: 'A', capacity: 2 },
           { id: 'Z', capacity: 1 },
         ]),
         unifySharedResources: true,
-      }),
-      portalB.updateService(clinic.id, s2.id, {
+      });
+      const holderSeen = await waitForGrantedHolder(prismaC, coordKey);
+      assert.equal(holderSeen, holdPid, 'holder must be the single-conn updateService');
+      const waitP = portalWait.updateService(clinic.id, s2.id, {
         availabilityJson: mkWindows([{ id: 'A', capacity: 2 }]),
         unifySharedResources: true,
-      }),
-    ]);
-    assert.ok(u1.id && u2.id);
+      });
+      await waitForAdvisoryWaiter(prismaC, coordKey, {
+        expectedWaiterPid: waitPid,
+        expectedHolderPid: holdPid,
+      });
+      step('RC8: waiter blocked on partner schedule coord during scope edit');
+      releaseScheduleGate();
+      const [u1, u2] = await Promise.all([holdP, waitP]);
+      assert.ok(u1.id && u2.id);
+    } finally {
+      releaseScheduleGate();
+      await prismaHold.$disconnect();
+      await prismaWait.$disconnect();
+    }
     const s1After = await prismaA.service.findUniqueOrThrow({ where: { id: s1.id } });
     const s2After = await prismaA.service.findUniqueOrThrow({ where: { id: s2.id } });
     const capsA = parseAvailability(s1After.availabilityJson)
@@ -281,39 +364,54 @@ async function main() {
       .filter((w) => w.resourceId === 'A')
       .map((w) => w.capacity);
     assert.ok(capsA2.every((c) => c === 2), 'room-A capacity 2 retained on S2');
-    step('RC6-02 PASS: concurrent production updateService after scope growth — no deadlock, both capacities kept');
+    step('RC6-02/RC8-03 PASS: concurrent production updateService after scope growth — waiter PID proven, capacities kept');
 
     // --- RC6-03: production deleteService vs createBooking both directions ---
     const day = nextOpenDay(3);
     const at = localInstant(day, 600)!.toISOString();
     step(`E5b slot day=${day} weekday=${new Date(day + 'T12:00:00').getDay()}`);
 
-    // Withdraw first (production), then booking rejects
+    // Withdraw first (production), then booking rejects — prove expected waiter PID
     const pidObserver = await backendPid(prismaC);
     step(`E5b observer pid=${pidObserver}`);
-    process.env.MIRA_TEST_SCHEDULE_GATE = 'hold';
-    const withdrawP = portalA.deleteService(clinic.id, s1.id).then(
-      (v) => ({ ok: v as { ok: boolean } }),
-      (err: unknown) => ({ err }),
-    );
-    await new Promise((r) => setTimeout(r, 80));
-    const bookAfterWithdraw = commerceB.createBooking(actorB, {
-      serviceId: s1.id,
-      startsAt: at,
-      resourceId: 'Z',
-      contactName: 'نورة',
-      contactPhone: PHONE,
-      idempotencyKey: `${run}-wd-first`,
-    }).then(
-      (v) => ({ ok: v }),
-      (err: unknown) => ({ err }),
-    );
-    await waitForAdvisoryWaiter(prismaC, partnerScheduleCoordKey(clinic.id));
-    step('E5b: booking waiting while production deleteService holds schedule protocol');
-    delete process.env.MIRA_TEST_SCHEDULE_GATE;
-    const wdRes = await withdrawP;
+    const prismaBookE5 = singleConnClient(dbUrl);
+    const commerceBookE5 = new CommerceService(prismaBookE5 as unknown as PrismaService);
+    let wdRes: { ok: { ok: boolean } } | { err: unknown };
+    let bookFail: { ok: unknown } | { err: unknown };
+    try {
+      const bookPidE5 = await backendPid(prismaBookE5);
+      armScheduleGate();
+      const withdrawP = portalA.deleteService(clinic.id, s1.id).then(
+        (v) => ({ ok: v as { ok: boolean } }),
+        (err: unknown) => ({ err }),
+      );
+      const holderE5 = await waitForGrantedHolder(prismaC, partnerScheduleCoordKey(clinic.id));
+      const bookAfterWithdraw = commerceBookE5
+        .createBooking(actorB, {
+          serviceId: s1.id,
+          startsAt: at,
+          resourceId: 'Z',
+          contactName: 'نورة',
+          contactPhone: PHONE,
+          idempotencyKey: `${run}-wd-first`,
+        })
+        .then(
+          (v) => ({ ok: v }),
+          (err: unknown) => ({ err }),
+        );
+      await waitForAdvisoryWaiter(prismaC, partnerScheduleCoordKey(clinic.id), {
+        expectedWaiterPid: bookPidE5,
+        expectedHolderPid: holderE5,
+      });
+      step('E5b: booking waiting while production deleteService holds schedule protocol');
+      releaseScheduleGate();
+      wdRes = await withdrawP;
+      bookFail = await bookAfterWithdraw;
+    } finally {
+      releaseScheduleGate();
+      await prismaBookE5.$disconnect();
+    }
     assert.ok(!('err' in wdRes), `deleteService must commit: ${String((wdRes as { err?: unknown }).err)}`);
-    const bookFail = await bookAfterWithdraw;
     assert.ok('err' in bookFail && bookFail.err instanceof HttpException, 'booking must reject after withdraw');
     const withdrawn = await prismaA.service.findUniqueOrThrow({ where: { id: s1.id } });
     assert.equal(withdrawn.contentStatus, 'withdrawn');
@@ -327,34 +425,54 @@ async function main() {
     const day2 = nextOpenDay(5);
     const at2 = localInstant(day2, 600)!.toISOString();
     step(`E6b slot day=${day2} weekday=${new Date(day2 + 'T12:00:00').getDay()}`);
-    process.env.MIRA_TEST_SCHEDULE_GATE = 'hold';
-    const bookFirst = commerceA
-      .createBooking(actorA, {
-        serviceId: s2.id,
-        startsAt: at2,
-        resourceId: 'A',
-        contactName: 'سارة',
-        contactPhone: PHONE,
-        idempotencyKey: `${run}-book-first`,
-      })
-      .then(
-        (v) => ({ ok: v }),
+    const prismaBookE6 = singleConnClient(dbUrl);
+    const prismaDelE6 = singleConnClient(dbUrl);
+    const commerceBookE6 = new CommerceService(prismaBookE6 as unknown as PrismaService);
+    const portalDelE6 = new PartnersPortalService(prismaDelE6 as unknown as PrismaService, {
+      get: () => 'false',
+    } as never);
+    let bookedWrap: { ok: any } | { err: unknown };
+    let delWrap: { ok: { ok: boolean } } | { err: unknown };
+    try {
+      const bookPidE6 = await backendPid(prismaBookE6);
+      const delPidE6 = await backendPid(prismaDelE6);
+      armScheduleGate();
+      const bookFirst = commerceBookE6
+        .createBooking(actorA, {
+          serviceId: s2.id,
+          startsAt: at2,
+          resourceId: 'A',
+          contactName: 'سارة',
+          contactPhone: PHONE,
+          idempotencyKey: `${run}-book-first`,
+        })
+        .then(
+          (v) => ({ ok: v }),
+          (err: unknown) => ({ err }),
+        );
+      const holderE6 = await waitForGrantedHolder(prismaC, partnerScheduleCoordKey(clinic.id));
+      assert.equal(holderE6, bookPidE6, 'booking must hold schedule coord');
+      const deleteSecond = portalDelE6.deleteService(clinic.id, s2.id).then(
+        (v) => ({ ok: v as { ok: boolean } }),
         (err: unknown) => ({ err }),
       );
-    await new Promise((r) => setTimeout(r, 120));
-    const deleteSecond = portalB.deleteService(clinic.id, s2.id).then(
-      (v) => ({ ok: v as { ok: boolean } }),
-      (err: unknown) => ({ err }),
-    );
-    await waitForAdvisoryWaiter(prismaC, partnerScheduleCoordKey(clinic.id));
-    step(`E6b: deleteService waiting; booking holds gate; target=${partnerScheduleCoordKey(clinic.id)}`);
-    delete process.env.MIRA_TEST_SCHEDULE_GATE;
-    const bookedWrap = await bookFirst;
+      await waitForAdvisoryWaiter(prismaC, partnerScheduleCoordKey(clinic.id), {
+        expectedWaiterPid: delPidE6,
+        expectedHolderPid: bookPidE6,
+      });
+      step(`E6b: deleteService waiting; booking holds gate; target=${partnerScheduleCoordKey(clinic.id)}`);
+      releaseScheduleGate();
+      bookedWrap = await bookFirst;
+      delWrap = await deleteSecond;
+    } finally {
+      releaseScheduleGate();
+      await prismaBookE6.$disconnect();
+      await prismaDelE6.$disconnect();
+    }
     assert.ok(!('err' in bookedWrap), `booking must commit: ${String((bookedWrap as { err?: unknown }).err)}`);
     const booked = bookedWrap.ok;
     assert.ok(booked.booking?.id, 'booking must commit before withdraw');
     step(`E6b: booking committed id=${booked.booking.id}`);
-    const delWrap = await deleteSecond;
     assert.ok(!('err' in delWrap), `deleteService must apply after booking: ${String((delWrap as { err?: unknown }).err)}`);
     const hist = await prismaA.commerceBooking.findUniqueOrThrow({ where: { id: booked.booking.id } });
     assert.equal(hist.serviceId, s2.id);
@@ -379,31 +497,44 @@ async function main() {
     });
     created.serviceIds.push(s3.id);
     const day3 = nextOpenDay(7);
-    process.env.MIRA_TEST_SCHEDULE_GATE = 'hold';
-    const adminWd = catalog.decide('admin:rc6', 'service', s3.id, 'withdraw', 'rc6', undefined).then(
-      (v) => ({ ok: v }),
-      (err: unknown) => ({ err }),
-    );
-    await new Promise((r) => setTimeout(r, 80));
-    const bookAdmin = commerceB
-      .createBooking(actorB, {
-        serviceId: s3.id,
-        startsAt: localInstant(day3, 600)!.toISOString(),
-        resourceId: 'R3',
-        contactName: 'نورة',
-        contactPhone: PHONE,
-        idempotencyKey: `${run}-admin-wd`,
-      })
-      .then(
+    const prismaBookAd = singleConnClient(dbUrl);
+    const commerceBookAd = new CommerceService(prismaBookAd as unknown as PrismaService);
+    let adminRes: { ok: unknown } | { err: unknown };
+    let adminBook: { ok: unknown } | { err: unknown };
+    try {
+      const bookPidAd = await backendPid(prismaBookAd);
+      armScheduleGate();
+      const adminWd = catalog.decide('admin:rc6', 'service', s3.id, 'withdraw', 'rc6', undefined).then(
         (v) => ({ ok: v }),
         (err: unknown) => ({ err }),
       );
-    await waitForAdvisoryWaiter(prismaC, partnerScheduleCoordKey(clinic.id));
-    step('ADMIN-WD: booking waiting on partner schedule coord while admin withdraw holds gate');
-    delete process.env.MIRA_TEST_SCHEDULE_GATE;
-    const adminRes = await adminWd;
+      const holderAd = await waitForGrantedHolder(prismaC, partnerScheduleCoordKey(clinic.id));
+      const bookAdmin = commerceBookAd
+        .createBooking(actorB, {
+          serviceId: s3.id,
+          startsAt: localInstant(day3, 600)!.toISOString(),
+          resourceId: 'R3',
+          contactName: 'نورة',
+          contactPhone: PHONE,
+          idempotencyKey: `${run}-admin-wd`,
+        })
+        .then(
+          (v) => ({ ok: v }),
+          (err: unknown) => ({ err }),
+        );
+      await waitForAdvisoryWaiter(prismaC, partnerScheduleCoordKey(clinic.id), {
+        expectedWaiterPid: bookPidAd,
+        expectedHolderPid: holderAd,
+      });
+      step('ADMIN-WD: booking waiting on partner schedule coord while admin withdraw holds gate');
+      releaseScheduleGate();
+      adminRes = await adminWd;
+      adminBook = await bookAdmin;
+    } finally {
+      releaseScheduleGate();
+      await prismaBookAd.$disconnect();
+    }
     assert.ok(!('err' in adminRes), `admin withdraw must commit: ${String((adminRes as { err?: unknown }).err)}`);
-    const adminBook = await bookAdmin;
     assert.ok('err' in adminBook && adminBook.err instanceof HttpException);
     step('ADMIN-WD PASS: catalog decide(withdraw) vs createBooking — withdraw wins, booking rejected');
 
@@ -424,7 +555,7 @@ async function main() {
     });
     created.serviceIds.push(s3b.id);
     const day3b = nextOpenDay(8);
-    process.env.MIRA_TEST_SCHEDULE_GATE = 'hold';
+    armScheduleGate();
     const bookAdminFirst = commerceA
       .createBooking(actorA, {
         serviceId: s3b.id,
@@ -443,7 +574,7 @@ async function main() {
       (v) => ({ ok: v }),
       (err: unknown) => ({ err }),
     );
-    delete process.env.MIRA_TEST_SCHEDULE_GATE;
+    releaseScheduleGate();
     const bookedAdmin = await bookAdminFirst;
     assert.ok(!('err' in bookedAdmin), `admin-path booking must commit: ${String((bookedAdmin as { err?: unknown }).err)}`);
     const adminDel = await adminWdSecond;
@@ -499,7 +630,7 @@ async function main() {
     console.log('--- event order ---');
     log.forEach((line) => console.log(line));
   } finally {
-    delete process.env.MIRA_TEST_SCHEDULE_GATE;
+    releaseScheduleGate();
     await prismaA.commerceBooking.deleteMany({ where: { userId: { in: created.userIds } } }).catch(() => undefined);
     await prismaA.service.deleteMany({ where: { partnerId: { in: created.partnerIds } } }).catch(() => undefined);
     await prismaA.partner.deleteMany({ where: { id: { in: created.partnerIds } } }).catch(() => undefined);

@@ -1,0 +1,187 @@
+<!DOCTYPE html>
+<html lang="ar" dir="rtl">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>RC8 portal — clear options restore</title>
+  <link href="https://fonts.googleapis.com/css2?family=Tajawal:wght@400;700;800&display=swap" rel="stylesheet" />
+  <link rel="stylesheet" href="/css/site.css" />
+  <style>
+    #metrics { font: 12px/1.4 monospace; white-space: pre-wrap; padding: 8px; background: #111; color: #9f9; max-height: 320px; overflow: auto; }
+  </style>
+</head>
+<body>
+  <pre id="metrics">loading…</pre>
+  <main class="container">
+    <div class="card" id="catalogSection">
+      <h2 id="catalogTitle">الكتالوج</h2>
+      <div id="catalogList"></div>
+      <form id="catalogForm"></form>
+    </div>
+    <div class="card hidden" id="serviceSection"></div>
+  </main>
+  <script>
+    window.__CONFIRMS__ = [];
+    window.confirm = function (msg) {
+      window.__CONFIRMS__.push(String(msg || ''));
+      return window.__CONFIRM_RESULT__ !== false;
+    };
+    window.PartnersApi = {
+      dashboard: async () => ({ partner: window.sessionPartner, catalog: { products: [], services: [] } }),
+      createProduct: async () => { throw new Error('blocked-rc8-probe'); },
+      updateProduct: async () => { throw new Error('blocked-rc8-probe'); },
+    };
+    window.sessionPartner = { id: 'rc8-probe', type: 'brand', nameAr: 'RC8', contactPhone: '0500000000' };
+  </script>
+  <script src="/js/catalog-options-core.js"></script>
+  <script src="/js/catalog-journey.js"></script>
+  <script>
+    function fail(m) { throw new Error(m); }
+    function form() { return document.getElementById('catalogForm'); }
+    function record(tag, extra) {
+      const el = document.documentElement;
+      const f = form();
+      const payload = {
+        tag,
+        overflowX: el.scrollWidth > el.clientWidth + 1,
+        confirmCount: (window.__CONFIRMS__ || []).length,
+        lastConfirm: (window.__CONFIRMS__ || []).slice(-1)[0] || '',
+        clearBtn: !!f.querySelector('[data-clear-product-options]'),
+        undoClearBtn: !!f.querySelector('[data-undo-clear-options]'),
+        cancelClearBtn: !!f.querySelector('[data-cancel-clear-options]'),
+        pendingBanner: !!f.querySelector('[data-clear-options-pending]'),
+        checked: [...f.querySelectorAll('input[type=checkbox]')].filter((c) => c.checked).map((c) => (c.parentElement.textContent || '').trim()),
+        customSize: (f.querySelector('input[name="custom-size"]') || {}).value || '',
+        ...(extra || {}),
+      };
+      document.getElementById('metrics').textContent = JSON.stringify(payload, null, 2);
+      window.__RC8_METRICS__ = payload;
+      window.__RC8_RESULTS__ = window.__RC8_RESULTS__ || [];
+      window.__RC8_RESULTS__.push(payload);
+      return payload;
+    }
+    function enableCod() {
+      const cod = form().querySelector('input[name="internalCod"]');
+      if (!cod) fail('missing internalCod');
+      if (!cod.checked) { cod.checked = true; cod.dispatchEvent(new Event('change', { bubbles: true })); }
+    }
+    function setCategory(v) {
+      const category = form().querySelector('select[name="category"]');
+      if (!category) fail('missing category');
+      category.value = v;
+      category.dispatchEvent(new Event('change', { bubbles: true }));
+    }
+    function checkPreset(labelExact) {
+      const hit = [...form().querySelectorAll('label')].find((l) => (l.textContent || '').replace(/\s+/g, ' ').trim() === labelExact);
+      if (!hit) fail('preset missing ' + labelExact);
+      const input = hit.querySelector('input[type=checkbox]');
+      if (!input.checked) { input.checked = true; input.dispatchEvent(new Event('change', { bubbles: true })); }
+    }
+    function customSizeInput() {
+      const el = form().querySelector('input[name="custom-size"]');
+      if (!el) fail('custom-size missing');
+      return el;
+    }
+    async function run() {
+      // New product: add values → clear button appears without full loss
+      window.CatalogJourney.renderForm('brand', null, 'catalogForm', 'catalogTitle');
+      await new Promise((r) => setTimeout(r, 40));
+      enableCod();
+      setCategory('clothes');
+      await new Promise((r) => setTimeout(r, 40));
+      let m = record('new-empty');
+      if (m.clearBtn) fail('clear button must be hidden when empty');
+      checkPreset('M');
+      checkPreset('L');
+      const custom = customSizeInput();
+      custom.value = 'XXL-draft';
+      custom.dispatchEvent(new Event('input', { bubbles: true }));
+      await new Promise((r) => setTimeout(r, 40));
+      m = record('new-with-values');
+      if (!m.clearBtn) fail('clear button must appear after first values');
+      if (!(m.checked || []).includes('M') || !(m.checked || []).includes('L')) fail('presets lost');
+      if (m.customSize !== 'XXL-draft') fail('custom lost on sync');
+
+      // Clear then undo restores same values/ids path
+      window.__CONFIRM_RESULT__ = true;
+      form().querySelector('[data-clear-product-options]').click();
+      await new Promise((r) => setTimeout(r, 40));
+      m = record('cleared');
+      if (!m.pendingBanner || !m.undoClearBtn) fail('undo clear UI missing');
+      if ((m.checked || []).includes('M')) fail('values must clear');
+      form().querySelector('[data-undo-clear-options]').click();
+      await new Promise((r) => setTimeout(r, 40));
+      m = record('undo-restored');
+      if (!(m.checked || []).includes('M') || !(m.checked || []).includes('L')) fail('undo must restore presets');
+      if (m.customSize !== 'XXL-draft') fail('undo must restore custom');
+      if (m.pendingBanner) fail('pending remained after undo');
+
+      // Clear then type XXL → UI must drop pending clear; payload uses new options
+      form().querySelector('[data-clear-product-options]').click();
+      await new Promise((r) => setTimeout(r, 40));
+      const custom2 = customSizeInput();
+      custom2.value = 'XXL';
+      custom2.dispatchEvent(new Event('input', { bubbles: true }));
+      await new Promise((r) => setTimeout(r, 40));
+      m = record('after-xxl');
+      if (m.pendingBanner) fail('pending clear must end after new value');
+      if (m.customSize !== 'XXL') fail('XXL not kept');
+      // Simulate save builder the same way the form does after abandonClearIfValuesEntered
+      const stateProbe = {
+        selected: {},
+        customs: { size: 'XXL' },
+        variants: [],
+        valueIds: {},
+        clearingOptions: false,
+      };
+      stateProbe._builtGroups = window.MiraCatalogOptions.buildOptionGroups(
+        [{ id: 'size', label: 'المقاس', kind: 'size' }, { id: 'color', label: 'اللون', kind: 'color' }],
+        stateProbe,
+      );
+      const built = window.MiraCatalogOptions.structuredOptionsPayload(stateProbe, [
+        { id: 'size', label: 'المقاس', kind: 'size' },
+        { id: 'color', label: 'اللون', kind: 'color' },
+      ]);
+      if (built.clearing || built.optionsJson == null) fail('XXL after clear must not send null clear');
+      if (!built.optionsJson.some((g) => (g.values || []).some((v) => v.labelAr === 'XXL'))) fail('XXL missing in payload');
+
+      // Published: cancel clear uses undo snapshot not only published
+      const published = {
+        id: 'prod-rc8',
+        nameAr: 'منتج منشور',
+        priceHalalas: 5000,
+        category: 'clothes',
+        purchaseMode: 'internal_cod',
+        optionsJson: [
+          { id: 'size', labelAr: 'المقاس', values: [{ id: 'm', labelAr: 'M' }, { id: 'l', labelAr: 'L' }] },
+        ],
+        variantsJson: [{ id: 'sku-m', selections: { size: 'm' }, priceHalalas: 5000, available: true }],
+        active: true,
+        contentStatus: 'published',
+      };
+      window.CatalogJourney.renderForm('brand', published, 'catalogForm', 'catalogTitle');
+      await new Promise((r) => setTimeout(r, 40));
+      enableCod();
+      checkPreset('XL'); // unpublished draft edit
+      await new Promise((r) => setTimeout(r, 40));
+      window.__CONFIRM_RESULT__ = true;
+      form().querySelector('[data-clear-product-options]').click();
+      await new Promise((r) => setTimeout(r, 40));
+      form().querySelector('[data-undo-clear-options]').click();
+      await new Promise((r) => setTimeout(r, 40));
+      m = record('published-undo-keeps-draft-edit');
+      if (!(m.checked || []).includes('XL')) fail('undo must restore unpublished XL edit, not only published');
+      if (!(m.checked || []).includes('M')) fail('published M must remain after undo');
+
+      if (m.overflowX) fail('horizontal overflow');
+      window.__RC8_READY__ = true;
+    }
+    run().catch((e) => {
+      window.__RC8_READY__ = false;
+      window.__RC8_ERROR__ = String(e && e.message ? e.message : e);
+      document.getElementById('metrics').textContent = 'FAIL ' + window.__RC8_ERROR__;
+      try { record('failed', { error: window.__RC8_ERROR__ }); } catch (_) {}
+    });
+  </script>
+</body>
+</html>
