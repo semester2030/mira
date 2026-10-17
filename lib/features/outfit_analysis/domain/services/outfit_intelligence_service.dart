@@ -1,5 +1,9 @@
+import 'dart:convert';
 import 'dart:developer' as developer;
 import 'dart:io';
+
+import 'package:flutter/services.dart';
+import 'package:path_provider/path_provider.dart';
 
 import '../../../../core/ai/models/mira_occasion.dart';
 import '../../../../core/config/mira_api_config.dart';
@@ -14,6 +18,7 @@ import '../entities/canonical_garment.dart';
 import '../entities/outfit_segment_map.dart';
 import '../entities/user_gender.dart';
 import '../entities/outfit_visual_profile.dart';
+import '../helpers/fashion_color_names.dart';
 import '../helpers/outfit_result_trust.dart';
 import '../../../../core/exceptions/vision_platform_exception.dart';
 import 'outfit_capture_validator.dart';
@@ -68,7 +73,8 @@ class OutfitIntelligenceService {
       await captureValidator.dispose();
     }
 
-    final bytes = await outfitImage.readAsBytes();
+    final retained = await _retainView(outfitImage);
+    final bytes = await retained.readAsBytes();
     final cache = _cache ?? await OutfitAnalysisCacheService.create();
     final skinKey = mode == OutfitAnalysisMode.smart
         ? cache.skinKeyFromReport(
@@ -105,6 +111,7 @@ class OutfitIntelligenceService {
       skin: skin,
     );
 
+    await _loadColorNames();
     final visual = CanonicalGarmentToEngineAdapter.toVisualProfile(
       visionResult.garments,
     );
@@ -161,7 +168,7 @@ class OutfitIntelligenceService {
     final useVisionPieces = segmentMap.source == 'pose_anatomy' ||
         analysis.detectedPieces.isNotEmpty;
     final enriched = analysis.copyWith(
-      frozenImagePath: outfitImage.path,
+      frozenImagePath: retained.path,
       segmentMap: segmentMap,
       upperBodyColors: segmentMap.upperBodyColors,
       lowerBodyColors: segmentMap.lowerBodyColors,
@@ -405,9 +412,7 @@ class OutfitIntelligenceService {
     OutfitSegmentMap segmentMap,
   ) {
     final garmentColors = _garmentColorsOnly(segmentMap);
-    if (garmentColors.isEmpty) {
-      return visual.copyWith(dominantColors: const []);
-    }
+    if (garmentColors.isEmpty) return visual;
     return visual.copyWith(
       dominantColors: garmentColors,
       clothingTypes: segmentMap.hasTrustedOverlay
@@ -474,5 +479,33 @@ class OutfitIntelligenceService {
       out.add(trimmed);
     }
     return out;
+  }
+
+  Future<File> _retainView(File source) async {
+    final root = await getApplicationSupportDirectory();
+    final folder = Directory('${root.path}/outfit-views');
+    await folder.create(recursive: true);
+    final dest = File('${folder.path}/${DateTime.now().microsecondsSinceEpoch}.jpg');
+    return source.copy(dest.path);
+  }
+
+  Future<void> _loadColorNames() async {
+    if (FashionColorNames.catalogLoaded) return;
+    try {
+      final raw = await rootBundle.loadString('assets/fashion/colors.json');
+      final decoded = jsonDecode(raw);
+      final colors = decoded is Map ? decoded['colors'] : null;
+      if (colors is! Map) return;
+      final names = <String, String>{};
+      colors.forEach((id, value) {
+        final name = value is Map ? value['nameAr'] : null;
+        if (id is String && name is String && name.trim().isNotEmpty) {
+          names[id] = name.trim();
+        }
+      });
+      FashionColorNames.useCatalog(names);
+    } catch (error) {
+      developer.log('color catalog unavailable: $error', name: 'OutfitIntelligenceService');
+    }
   }
 }

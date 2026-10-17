@@ -17,10 +17,11 @@ export class OutfitIntelligenceSnapshotDto {
   @MaxLength(64)
   occasionId?: string;
 
+  @IsOptional()
   @IsInt()
   @Min(0)
   @Max(100)
-  compatibilityScore!: number;
+  compatibilityScore?: number;
 
   @IsOptional()
   @IsInt()

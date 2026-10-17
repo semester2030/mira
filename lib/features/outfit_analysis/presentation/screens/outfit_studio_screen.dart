@@ -36,17 +36,16 @@ class _OutfitStudioScreenState extends State<OutfitStudioScreen> {
   }
 
   void _openAdvisor() {
-    final section = _tabs[_index];
-    final color = widget.analysis.dominantColors.isEmpty
-        ? 'دون لون مستخرج'
-        : 'واللون الظاهر ${widget.analysis.dominantColors.first}';
+    final reportId = AnalysisSession.lastOutfit?.id;
+    final uuid = RegExp(
+      r'^[0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{12}$',
+    );
     Navigator.pushNamed(
       context,
       AppRoutes.miraAdvisor,
       arguments: AdvisorRouteArgs(
         outfitAnalysis: widget.analysis,
-        outfitAnalysisId: AnalysisSession.lastOutfit?.id ?? widget.analysis.frozenImagePath,
-        initialQuestion: 'نناقش قسم $section $color',
+        outfitAnalysisId: reportId != null && uuid.hasMatch(reportId) ? reportId : null,
       ),
     );
   }
@@ -62,6 +61,7 @@ class _OutfitStudioScreenState extends State<OutfitStudioScreen> {
             index: _index,
             onSelect: (value) => setState(() => _index = value),
           ),
+          _Photo(path: widget.analysis.frozenImagePath),
           Expanded(
             child: IndexedStack(
               index: _index,
@@ -86,7 +86,7 @@ class _OutfitStudioScreenState extends State<OutfitStudioScreen> {
                   minimumSize: const Size.fromHeight(48),
                 ),
                 icon: const Icon(Icons.auto_awesome_rounded),
-                label: const Text('اسألي ميرا ✨'),
+                label: Text('اسألي ميرا ✨ · ${_tabs[_index]}'),
               ),
             ),
           ),
@@ -103,6 +103,13 @@ class _Nav extends StatelessWidget {
 
   const _Nav({required this.labels, required this.index, required this.onSelect});
 
+  static const _icons = [
+    Icons.checkroom_rounded,
+    Icons.palette_outlined,
+    Icons.auto_fix_high_rounded,
+    Icons.inventory_2_outlined,
+  ];
+
   @override
   Widget build(BuildContext context) {
     return Padding(
@@ -114,18 +121,47 @@ class _Nav extends StatelessWidget {
             Expanded(
               child: Padding(
                 padding: const EdgeInsets.symmetric(horizontal: 3),
-                child: TextButton(
+                child: TextButton.icon(
                   onPressed: () => onSelect(i),
                   style: TextButton.styleFrom(
-                    backgroundColor: i == index ? AppColors.primaryLight : Colors.transparent,
-                    foregroundColor: i == index ? AppColors.primaryDark : AppColors.textSecondary,
-                    minimumSize: const Size(44, 44),
+                    backgroundColor: i == index ? AppColors.primary : AppColors.primaryLight,
+                    foregroundColor: i == index ? Colors.white : AppColors.primaryDark,
+                    minimumSize: const Size(44, 48),
+                    padding: const EdgeInsets.symmetric(horizontal: 4),
                   ),
-                  child: Text(labels[i], style: AppTypography.labelSmall),
+                  icon: Icon(_icons[i], size: 16),
+                  label: Text(labels[i], style: AppTypography.labelSmall),
                 ),
               ),
             ),
         ],
+      ),
+    );
+  }
+}
+
+class _Photo extends StatelessWidget {
+  final String? path;
+
+  const _Photo({required this.path});
+
+  @override
+  Widget build(BuildContext context) {
+    final file = path == null || path!.isEmpty ? null : File(path!);
+    return Padding(
+      padding: const EdgeInsets.fromLTRB(16, 4, 16, 4),
+      child: ClipRRect(
+        borderRadius: BorderRadius.circular(20),
+        child: SizedBox(
+          height: 180,
+          width: double.infinity,
+          child: file != null && file.existsSync()
+              ? InteractiveViewer(child: Image.file(file, fit: BoxFit.contain))
+              : const ColoredBox(
+                  color: AppColors.primaryLight,
+                  child: Center(child: _Note('الصورة غير متاحة في هذا التحليل.')),
+                ),
+        ),
       ),
     );
   }
@@ -139,26 +175,18 @@ class _LookPage extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final path = analysis.frozenImagePath;
-    final pieces = analysis.detectedPieces.where((piece) => piece.trim().isNotEmpty).toList();
+    final pieces = <String>{
+      ...analysis.detectedPieces,
+      analysis.clothingType,
+    }.map((piece) => piece.trim()).where((piece) => piece.isNotEmpty && piece != 'قطعة غير قابلة للتحليل').toList();
     return ListView(
       controller: controller,
       padding: const EdgeInsets.fromLTRB(16, 8, 16, 24),
       children: [
-        if (path != null && path.isNotEmpty && File(path).existsSync())
-          ClipRRect(
-            borderRadius: BorderRadius.circular(24),
-            child: InteractiveViewer(
-              child: Image.file(File(path), fit: BoxFit.contain),
-            ),
-          )
-        else
-          const _Note('الصورة غير متاحة في هذا التحليل.'),
-        const SizedBox(height: 12),
         Text('المناسبة: ${analysis.occasion.labelAr}', style: AppTypography.titleSmall),
         const SizedBox(height: 8),
         if (pieces.isEmpty)
-          const _Note('لم تُكتشف قطع محددة في هذه الصورة.')
+          const _Note('لم تُكتشف قطع محددة. السبب ظاهر أدناه إن وُجد.')
         else
           Wrap(
             spacing: 8,
@@ -166,7 +194,17 @@ class _LookPage extends StatelessWidget {
             children: [for (final piece in pieces) Chip(label: Text(piece))],
           ),
         const SizedBox(height: 12),
-        Text(analysis.explanation, style: AppTypography.bodyMedium),
+        if (analysis.explanation.trim().isNotEmpty) Text(analysis.explanation, style: AppTypography.bodyMedium),
+        for (final reason in analysis.matchReasons.take(3))
+          Padding(
+            padding: const EdgeInsets.only(top: 8),
+            child: Text(reason, style: AppTypography.bodyMedium),
+          ),
+        for (final gap in analysis.mismatchReasons.take(2))
+          Padding(
+            padding: const EdgeInsets.only(top: 8),
+            child: Text(gap, style: AppTypography.bodySmall),
+          ),
       ],
     );
   }
@@ -180,36 +218,47 @@ class _ColorsPage extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final current = analysis.dominantColors.isEmpty ? null : analysis.dominantColors.first;
+    final colors = <String>{
+      ...analysis.dominantColors,
+      ...analysis.upperBodyColors,
+      ...analysis.lowerBodyColors,
+      ...analysis.shoeColors,
+      ...analysis.accessoryColors,
+    }.map((color) => color.trim()).where((color) => color.isNotEmpty).toList();
+    final current = colors.isEmpty ? null : colors.first;
     final piece = analysis.detectedPieces.isNotEmpty
         ? analysis.detectedPieces.first
         : (analysis.clothingType.trim().isEmpty ? 'القطعة الظاهرة' : analysis.clothingType);
-    final accessory = analysis.recommendedColors.where((color) => color != current).toList();
+    final suggestions = analysis.recommendedColors.where((color) => color != current).toList();
     return ListView(
       controller: controller,
       padding: const EdgeInsets.fromLTRB(16, 8, 16, 24),
       children: [
         if (current == null)
-          const _Note('تعذر استخراج لون القماش. لا توجد لوحة ألوان لهذه الصورة.')
+          const _Card(
+            title: 'اللون الحالي',
+            body: 'تعذر استخراج لون القماش من هذه الصورة. القطع الأخرى تبقى ظاهرة، ولا تُختلق لوحة ألوان.',
+          )
         else ...[
-          Text('اللون الحالي', style: AppTypography.titleSmall),
-          const SizedBox(height: 6),
-          Text('$current — $piece', style: AppTypography.bodyMedium),
-          const SizedBox(height: 12),
-          Text(
-            'اللون الحالي مناسب ويمكن إبقاؤه على $piece.',
-            style: AppTypography.bodyMedium,
+          _Card(title: 'اللون الحالي', body: '$current — $piece'),
+          const SizedBox(height: 8),
+          _Card(
+            title: 'إبقاء الإطلالة',
+            body: 'اللون الحالي مناسب ويمكن إبقاؤه على $piece في مناسبة ${analysis.occasion.labelAr}.',
           ),
-          if (accessory.isNotEmpty) ...[
-            const SizedBox(height: 16),
-            Text('للحذاء أو الحقيبة', style: AppTypography.titleSmall),
-            const SizedBox(height: 6),
-            Text(
-              '${accessory.first} يكمّل $current في مناسبة ${analysis.occasion.labelAr} دون تغيير لون $piece.',
-              style: AppTypography.bodyMedium,
+          if (suggestions.isNotEmpty) ...[
+            const SizedBox(height: 8),
+            _Card(
+              title: 'اقتراح تنسيق',
+              body: '${suggestions.first} للحذاء أو الحقيبة، لأنه يكمّل $current. هذا ليس تغييراً للون $piece.',
             ),
           ],
         ],
+        const SizedBox(height: 8),
+        const _Card(
+          title: 'لون التجربة',
+          body: 'اللون الذي تختارينه في جرّبي يبقى معاينة، ولا يُسجَّل كإطلالة ارتديتها.',
+        ),
       ],
     );
   }
@@ -262,7 +311,9 @@ class _WardrobePageState extends State<_WardrobePage> {
           children: [
             Text('سجل التحليلات · ${widget.analysis.occasion.labelAr}', style: AppTypography.titleSmall),
             const SizedBox(height: 8),
-            if (snapshot.connectionState == ConnectionState.waiting)
+            if (snapshot.hasError)
+              _Note('تعذر تحميل السجل: ${snapshot.error}')
+            else if (snapshot.connectionState == ConnectionState.waiting)
               const _Note('جارٍ تحميل السجل.')
             else if (reports.isEmpty)
               const _Note('لا يوجد تحليل محفوظ بتاريخ سابق.')
@@ -296,6 +347,31 @@ class _HistoryTile extends StatelessWidget {
           scored
               ? '${report.garmentType} · $colors · درجة مدعومة ${report.compatibilityScore.round()}'
               : '${report.garmentType}${colors.isEmpty ? '' : ' · $colors'} · بدون درجة مدعومة',
+        ),
+      ),
+    );
+  }
+}
+
+class _Card extends StatelessWidget {
+  final String title;
+  final String body;
+
+  const _Card({required this.title, required this.body});
+
+  @override
+  Widget build(BuildContext context) {
+    return Card(
+      color: AppColors.surface,
+      child: Padding(
+        padding: const EdgeInsets.all(14),
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.stretch,
+          children: [
+            Text(title, style: AppTypography.titleSmall),
+            const SizedBox(height: 6),
+            Text(body, style: AppTypography.bodyMedium.copyWith(height: 1.4)),
+          ],
         ),
       ),
     );

@@ -1,6 +1,7 @@
 import '../../data/helpers/vision_color_mapper.dart';
 import '../entities/canonical_garment.dart';
 import '../entities/outfit_visual_profile.dart';
+import '../helpers/fashion_color_names.dart';
 
 /// Bounded translation from frozen GI output to existing Flutter engine input.
 ///
@@ -8,26 +9,6 @@ import '../entities/outfit_visual_profile.dart';
 /// the internal FashionVisionDocument or invent geometry from geometryRef.
 abstract final class CanonicalGarmentToEngineAdapter {
   CanonicalGarmentToEngineAdapter._();
-
-  static const _colorIdToAr = <String, String>{
-    'beige_linen': 'بيج',
-    'cream_soft': 'كريمي',
-    'black_pure': 'أسود',
-    'navy_deep': 'كحلي',
-    'ivory_warm': 'عاجي',
-    'gray_soft': 'رمادي',
-    'silver_metal': 'فضي',
-    'gold_warm': 'ذهبي',
-    'nude_heel': 'نود',
-    'pearl_white': 'لؤلؤي',
-    'brown_tortoise': 'بني',
-    'blush_lilac': 'لافندر',
-    'emerald_deep': 'زمردي',
-    'teal_satin': 'تركواز داكن',
-    'forest_green': 'أخضر',
-    'ruby_red': 'أحمر',
-    'white_pure': 'أبيض',
-  };
 
   static const _typeIdToEn = <String, String>{
     'blazer': 'Blazer',
@@ -95,8 +76,8 @@ abstract final class CanonicalGarmentToEngineAdapter {
       if (!target.contains(label)) target.add(label);
 
       for (final colorId in garment.attributes.colors) {
-        final color = _colorIdToAr[colorId];
-        if (color != null && !colors.contains(color)) colors.add(color);
+        final color = FashionColorNames.arabic(colorId);
+        if (color.isNotEmpty && !colors.contains(color)) colors.add(color);
       }
       for (final hint in garment.attributes.styleHints) {
         if (!styleHints.contains(hint)) styleHints.add(hint);

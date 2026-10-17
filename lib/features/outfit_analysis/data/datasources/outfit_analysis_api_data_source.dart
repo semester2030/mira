@@ -2,6 +2,7 @@ import 'package:dio/dio.dart';
 
 import '../../../../core/ai/mappers/outfit_result_mapper.dart';
 import '../../../../core/ai/models/mira_occasion.dart';
+import '../mappers/outfit_history_reader.dart';
 import '../../../../core/ai/models/outfit_analysis_result.dart';
 import '../../../../core/network/api_client.dart';
 import '../../../../core/network/mira_api_endpoints.dart';
@@ -63,12 +64,13 @@ class OutfitAnalysisApiDataSource {
     );
 
     final list = response.data ?? [];
-    return list.map((item) {
-      final map = item as Map<String, dynamic>;
-      final occasionId = map['occasionId'] as String? ?? 'casual';
-      final occasion = MiraOccasion.fromId(occasionId) ?? MiraOccasion.casual;
-      return _parseResponse(map, occasion);
-    }).toList();
+    final reports = <OutfitReport>[];
+    for (final item in list) {
+      if (item is! Map) continue;
+      final report = OutfitHistoryReader.read(Map<String, dynamic>.from(item));
+      if (report != null) reports.add(report);
+    }
+    return reports;
   }
 
   OutfitReport _parseResponse(Map<String, dynamic> data, MiraOccasion fallbackOccasion) {

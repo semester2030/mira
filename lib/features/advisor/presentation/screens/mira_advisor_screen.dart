@@ -1,5 +1,6 @@
 import 'dart:io';
 
+import 'package:dio/dio.dart';
 import 'package:flutter/material.dart';
 import 'package:image_picker/image_picker.dart';
 
@@ -81,8 +82,8 @@ class _MiraAdvisorScreenState extends State<MiraAdvisorScreen> {
           setState(() => _followUps = face.suggestedQuestionsAr);
         }
       }
-      if (args?.initialQuestion != null) {
-        _send(args!.initialQuestion!);
+      if (args?.initialQuestion != null && args!.initialQuestion!.trim().isNotEmpty) {
+        _input.text = args.initialQuestion!.trim();
       }
     });
   }
@@ -125,6 +126,22 @@ class _MiraAdvisorScreenState extends State<MiraAdvisorScreen> {
           FaceAdvisorClientRoute.advisorFaceChat ||
       _faceAdvisorSticky;
 
+  String _sessionStartError(Object error) {
+    final status = error is DioException ? error.response?.statusCode : null;
+    if (status == null) {
+      return 'تعذر بدء المحادثة المرتبطة بهذه الإطلالة. أعيدي المحاولة.';
+    }
+    return 'تعذر بدء المحادثة المرتبطة بهذه الإطلالة. رمز الاستجابة $status.';
+  }
+
+  String? _uuidOrNull(String? value) {
+    if (value == null || value.isEmpty) return null;
+    final uuid = RegExp(
+      r'^[0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{12}$',
+    );
+    return uuid.hasMatch(value) ? value : null;
+  }
+
   bool get _openDialogue {
     final args = _args;
     if (args == null) return true;
@@ -156,7 +173,7 @@ class _MiraAdvisorScreenState extends State<MiraAdvisorScreen> {
         args.recolorAttemptId ?? AnalysisSession.lastRecolorAttemptId;
 
     try {
-      String? outfitAnalysisId = args.outfitAnalysisId;
+      String? outfitAnalysisId = _uuidOrNull(args.outfitAnalysisId);
       if (outfitAnalysisId == null && args.outfitAnalysis != null) {
         final snapshot = await _outfitApi.saveIntelligenceSnapshot(
           OutfitConsultationMapper.toSnapshotPayload(args.outfitAnalysis!),
@@ -197,17 +214,15 @@ class _MiraAdvisorScreenState extends State<MiraAdvisorScreen> {
               (outfitPrimary ? null : AnalysisSession.lastSkin?.id));
 
       final faceLabel = _faceContext?.contextLabelAr;
-      final statedGoal = [
-        if (faceLabel != null && faceLabel.isNotEmpty) 'دخلت من نتيجة الوجه: $faceLabel',
-        if (args.initialQuestion != null && args.initialQuestion!.trim().isNotEmpty)
-          args.initialQuestion!.trim(),
-      ].join(' ');
+      final statedGoal = faceLabel != null && faceLabel.isNotEmpty
+          ? 'دخلت من نتيجة الوجه: $faceLabel'
+          : null;
       final session = await _consultationApi.createSession(
         skinAnalysisId: skinId,
         outfitAnalysisId: outfitAnalysisId,
-        recolorAttemptId: recolorId,
+        recolorAttemptId: _uuidOrNull(recolorId),
         occasionId: args.outfitAnalysis?.occasion.id,
-        statedGoalAr: statedGoal.isEmpty ? null : statedGoal,
+        statedGoalAr: statedGoal,
         face: _faceContext?.toJson(),
       );
       final imageLimit = await _consultationApi.dialogueImageLimit();
@@ -239,7 +254,7 @@ class _MiraAdvisorScreenState extends State<MiraAdvisorScreen> {
         _loading = false;
         _sessionReady = false;
         _sessionId = null;
-        _sessionError = 'تعذّر بدء جلسة المستشار — حدّثي التطبيق أو حاولي لاحقاً';
+        _sessionError = _sessionStartError(e);
         _focus = args.outfitAnalysis != null
             ? _ConsultationFocus.outfit
             : _ConsultationFocus.skin;
@@ -308,13 +323,13 @@ class _MiraAdvisorScreenState extends State<MiraAdvisorScreen> {
           _followUps = session.suggestedStartersAr;
         }
       });
-    } catch (_) {
+    } catch (e) {
       if (!mounted) return;
       setState(() {
         _loading = false;
         _sessionReady = false;
         _sessionId = null;
-        _sessionError = 'تعذّر بدء جلسة المستشار — حدّثي التطبيق أو حاولي لاحقاً';
+        _sessionError = _sessionStartError(e);
       });
     }
   }
