@@ -1,9 +1,11 @@
 import '../../../skin_analysis/domain/entities/skin_report.dart';
 import '../entities/detected_garment_color.dart';
 import '../entities/outfit_analysis.dart';
-import '../helpers/outfit_arabic_labels.dart';
-import '../helpers/undertone_resolver.dart';
-import '../helpers/skin_palette_mapper.dart';
+import 'outfit_result_trust.dart';
+import 'outfit_score_support.dart';
+import 'outfit_arabic_labels.dart';
+import 'undertone_resolver.dart';
+import 'skin_palette_mapper.dart';
 
 /// Premium stylist copy — beauty-first, personalized Arabic.
 abstract final class OutfitStylistCopy {
@@ -25,10 +27,17 @@ abstract final class OutfitStylistCopy {
 
   /// Always derived from [compatibilityScore] — never stale cached text.
   static String scoreSubtitle(OutfitAnalysis analysis) {
-    final score = analysis.compatibilityScore;
+    final trust = OutfitResultTrustPolicy.evaluate(analysis);
     final garment = analysis.clothingType.isNotEmpty ? analysis.clothingType : 'إطلالتك';
-    final style = analysis.styleType.isNotEmpty ? analysis.styleType : 'متوازنة';
     final occasion = analysis.occasion.labelAr;
+    if (!OutfitScoreSupport.showScore(analysis, trust)) {
+      if (OutfitScoreSupport.hasStylingEvidence(analysis)) {
+        return 'تنسيق $garment في مناسبة $occasion ظاهر، وتلوين القماش يحتاج صورة أوضح من الاستديو.';
+      }
+      return 'لم تتوفر أدلة كافية لدرجة الإطلالة. اختاري صورة أوضح من الاستديو.';
+    }
+    final score = analysis.compatibilityScore;
+    final style = analysis.styleType.isNotEmpty ? analysis.styleType : 'متوازنة';
 
     if (analysis.isSmartMode) {
       return 'تقييم $score/100 لـ$garment ($style) في مناسبة $occasion — مرتبط بتحليل بشرتك.';

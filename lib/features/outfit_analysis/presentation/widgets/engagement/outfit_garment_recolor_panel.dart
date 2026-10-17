@@ -6,6 +6,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 
 import '../../../../../core/config/mira_api_config.dart';
+import '../../../../../core/navigation/analysis_navigation.dart';
 import '../../../../../core/navigation/app_routes.dart';
 import '../../../../../core/navigation/route_args.dart';
 import '../../../../../core/services/app_session.dart';
@@ -37,6 +38,7 @@ class _OutfitGarmentRecolorPanelState extends State<OutfitGarmentRecolorPanel>
     with SingleTickerProviderStateMixin {
   final _api = VisionApiDataSource();
   final _promptController = TextEditingController();
+  final _noteController = TextEditingController();
   final _customColorController = TextEditingController();
 
   bool _loading = false;
@@ -65,6 +67,7 @@ class _OutfitGarmentRecolorPanelState extends State<OutfitGarmentRecolorPanel>
   void dispose() {
     _promptController.removeListener(_onPromptEdited);
     _promptController.dispose();
+    _noteController.dispose();
     _customColorController.dispose();
     _pulseController.dispose();
     super.dispose();
@@ -124,6 +127,12 @@ class _OutfitGarmentRecolorPanelState extends State<OutfitGarmentRecolorPanel>
     return _selectedColorAr ?? 'أسود';
   }
 
+  bool get _canRecolor {
+    final map = widget.analysis.segmentMap;
+    if (map == null) return false;
+    return map.supportsFabricRecolorFor(garmentLabelAr: _garmentLabelAr);
+  }
+
   GarmentRecolorVisionContext get _visionContext =>
       GarmentRecolorVisionContext.fromAnalysis(widget.analysis, garmentLabelAr: _garmentLabelAr);
 
@@ -134,11 +143,6 @@ class _OutfitGarmentRecolorPanelState extends State<OutfitGarmentRecolorPanel>
       targetColorAr: _effectiveColorAr,
       visionContext: _visionContext,
     ));
-  }
-
-  void _resetPrompt() {
-    setState(() => _promptEdited = false);
-    _syncPromptFromSelection();
   }
 
   Future<void> _applyRecolor() async {
@@ -169,11 +173,13 @@ class _OutfitGarmentRecolorPanelState extends State<OutfitGarmentRecolorPanel>
       return;
     }
 
-    final prompt = _promptController.text.trim();
-    if (prompt.length < 20) {
-      setState(() => _error = 'البرومبت قصير جداً — عدّليه أو اضغطي «إعادة توليد»');
-      return;
-    }
+    final prompt = GarmentRecolorPromptBuilder.build(
+      garmentLabelAr: _garmentLabelAr,
+      targetColorAr: colorAr,
+      visionContext: _visionContext,
+    );
+    final note = _noteController.text.trim();
+    final promptWithNote = note.isEmpty ? prompt : '$prompt وصف التعديل: $note';
 
     HapticFeedback.mediumImpact();
     setState(() {
@@ -215,7 +221,7 @@ class _OutfitGarmentRecolorPanelState extends State<OutfitGarmentRecolorPanel>
         imagePath: path,
         targetColorAr: colorAr,
         garmentLabelAr: _garmentLabelAr,
-        customPromptAr: prompt,
+        customPromptAr: promptWithNote,
         visionContextJson: _visionContext.toJsonString(),
         targetColorHex: targetHex,
       );
@@ -304,7 +310,7 @@ class _OutfitGarmentRecolorPanelState extends State<OutfitGarmentRecolorPanel>
           ),
           const SizedBox(height: 4),
           Text(
-            'فصل «جرّبي» — معالجة على السيرفر مع Phase Q (QEL). لن تُعرض نتيجة تغيّر هويتك.',
+            'اختيار القطعة واللون ثم وصف التعديل. التلوين يغيّر لون القماش فقط.',
             style: AppTypography.bodySmall.copyWith(color: AppColors.textSecondary, height: 1.45),
           ),
           const SizedBox(height: 14),
@@ -394,55 +400,45 @@ class _OutfitGarmentRecolorPanelState extends State<OutfitGarmentRecolorPanel>
             },
           ),
           const SizedBox(height: 16),
-          Row(
-            children: [
-              Expanded(
-                child: Text(
-                  'البرومبت (يُرسل لميرا)',
-                  style: AppTypography.labelLarge.copyWith(fontWeight: FontWeight.w700),
-                ),
-              ),
-              TextButton(
-                onPressed: _loading ? null : _resetPrompt,
-                child: const Text('إعادة توليد'),
-              ),
-            ],
+          Text(
+            'وصف التعديل',
+            style: AppTypography.labelLarge.copyWith(fontWeight: FontWeight.w700),
           ),
           const SizedBox(height: 6),
           TextField(
-            controller: _promptController,
+            controller: _noteController,
             enabled: !_loading,
-            maxLines: 6,
-            minLines: 4,
+            minLines: 2,
+            maxLines: 4,
+            textDirection: TextDirection.rtl,
             textAlign: TextAlign.right,
-            style: AppTypography.bodySmall.copyWith(height: 1.55, color: Colors.white),
             decoration: InputDecoration(
-              hintText: 'عدّلي البرومبت العربي قبل الإرسال…',
+              hintText: 'مثال: درجة أفتح مع بقاء القصة',
               filled: true,
-              fillColor: const Color(0xFF1A1625),
-              hintStyle: AppTypography.bodySmall.copyWith(color: Colors.white54),
-              border: OutlineInputBorder(
-                borderRadius: BorderRadius.circular(14),
-                borderSide: BorderSide(color: AppColors.gold.withValues(alpha: 0.35)),
-              ),
-              enabledBorder: OutlineInputBorder(
-                borderRadius: BorderRadius.circular(14),
-                borderSide: BorderSide(color: AppColors.gold.withValues(alpha: 0.25)),
-              ),
-              focusedBorder: OutlineInputBorder(
-                borderRadius: BorderRadius.circular(14),
-                borderSide: BorderSide(color: AppColors.gold.withValues(alpha: 0.6)),
-              ),
-              contentPadding: const EdgeInsets.all(14),
+              fillColor: AppColors.background,
+              border: OutlineInputBorder(borderRadius: BorderRadius.circular(14)),
             ),
-            cursorColor: AppColors.gold,
           ),
           const SizedBox(height: 14),
+          if (!_canRecolor) ...[
+            Text(
+              'تلوين القماش غير متاح لأن حدود القطعة غير واضحة. تحليل الألوان يبقى كما هو. اختاري صورة أوضح من الاستديو.',
+              style: AppTypography.bodySmall.copyWith(height: 1.45),
+            ),
+            const SizedBox(height: 10),
+            PremiumButton(
+              label: 'اختيار صورة أوضح من الاستديو',
+              icon: Icons.photo_library_outlined,
+              variant: PremiumButtonVariant.secondary,
+              onPressed: () => AnalysisNavigation.openOutfitAnalysis(context),
+            ),
+            const SizedBox(height: 10),
+          ],
           PremiumButton(
             label: _loading ? 'جاري المعالجة…' : 'تطبيق التلوين على صورتي',
             icon: Icons.brush_rounded,
             variant: PremiumButtonVariant.gold,
-            onPressed: _loading ? null : _applyRecolor,
+            onPressed: _loading || !_canRecolor ? null : _applyRecolor,
           ),
           if (_loading) ...[
             const SizedBox(height: 16),

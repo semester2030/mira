@@ -25,6 +25,8 @@ import '../widgets/face_intel_runtime_notice.dart';
 import '../widgets/skin_intelligence_section.dart';
 import '../widgets/treatment_plan_section.dart';
 import '../widgets/weekly_plan_section.dart';
+import '../../../../shared/widgets/ask_mira_entry.dart';
+import '../../../../core/navigation/route_args.dart';
 import '../../../advisor/presentation/widgets/ask_mira_section.dart';
 
 /// Phase 2 — Premium Mira Beauty Report experience.
@@ -162,6 +164,17 @@ class _MiraBeautyReportScreenState extends State<MiraBeautyReportScreen> {
                 const SizedBox(height: 12),
                 ConfidenceLayerSection(layer: mira.confidenceLayer),
                 const SizedBox(height: 20),
+                AskMiraEntry(
+                  contextLine: mira.summaryAdviceAr.isNotEmpty
+                      ? mira.summaryAdviceAr
+                      : 'نتيجة البشرة جاهزة للشرح من الأدلة الظاهرة.',
+                  suggestions: [
+                    for (final concern in mira.mainConcerns.take(2)) 'وضحي لي ${concern.titleAr}',
+                    'ما أول خطوة في روتيني؟',
+                  ],
+                  routeArgs: (question) => AdvisorRouteArgs.skin(widget.report, initialQuestion: question),
+                ),
+                const SizedBox(height: 12),
                 AskMiraSection(report: widget.report, mira: mira),
                 const SizedBox(height: 24),
                 PremiumButton(

@@ -6,6 +6,8 @@ import '../../../../shared/theme/colors.dart';
 import '../../../../shared/theme/typography.dart';
 import '../../domain/entities/outfit_analysis.dart';
 import '../../domain/helpers/outfit_fashion_taxonomy.dart';
+import '../../domain/helpers/outfit_result_trust.dart';
+import '../../domain/helpers/outfit_score_support.dart';
 import '../../domain/helpers/outfit_stylist_copy.dart';
 import 'outfit_harmony_panel.dart';
 import 'outfit_result_motion.dart';
@@ -25,6 +27,8 @@ class OutfitLookResultHero extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final copy = OutfitStylistCopy.hero(analysis);
+    final trust = OutfitResultTrustPolicy.evaluate(analysis);
+    final showScore = OutfitScoreSupport.showScore(analysis, trust);
     final verdict = analysis.styleVerdict.isNotEmpty
         ? analysis.styleVerdict
         : OutfitFashionTaxonomy.verdictForScore(analysis.compatibilityScore);
@@ -80,7 +84,7 @@ class OutfitLookResultHero extends StatelessWidget {
                       const SizedBox(height: 8),
                       Center(
                         child: Text(
-                          '${analysis.compatibilityScore}',
+                          showScore ? '${analysis.compatibilityScore}' : '—',
                           style: AppTypography.displaySmall.copyWith(
                             fontWeight: FontWeight.w800,
                             color: AppColors.secondary,
@@ -88,7 +92,7 @@ class OutfitLookResultHero extends StatelessWidget {
                         ),
                       ),
                       Text(
-                        'درجة الإطلالة',
+                        showScore ? 'درجة الإطلالة' : 'لا توجد درجة مدعومة لهذه الصورة',
                         style: AppTypography.labelSmall.copyWith(
                           color: AppColors.textSecondary,
                         ),

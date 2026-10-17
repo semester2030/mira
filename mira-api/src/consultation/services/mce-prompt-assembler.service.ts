@@ -199,8 +199,11 @@ export class MceResponseValidatorService {
     const cited = (raw.citedFactIds ?? []).filter((id) => allowed.has(id));
 
     let confidence = raw.confidence ?? 'medium';
-    if (cited.length === 0 && !raw.blocked) {
+    const asksPersonalReport = /درجتي|تقريري|نتيجتي|مؤشري/.test(userMessage ?? '');
+    if (cited.length === 0 && asksPersonalReport && factRegistry.length > 0) {
       confidence = 'low';
+    } else if (cited.length === 0 && confidence === 'low') {
+      confidence = 'medium';
     }
 
     const guarded = guardCommercialTurn(String(raw.answerAr ?? ''), factRegistry, userMessage);
@@ -218,7 +221,7 @@ export class MceResponseValidatorService {
       citedFactIds: cited,
       suggestedQuestionsAr: questions,
       blocked: Boolean(raw.blocked),
-      disclaimerAr: this.moderation.disclaimer(),
+      disclaimerAr: needsCareDisclaimer(guarded.text, userMessage) ? this.moderation.disclaimer() : '',
     };
   }
 
@@ -234,7 +237,11 @@ export class MceResponseValidatorService {
         'ما المنتجات المناسبة لي؟',
       ],
       blocked: true,
-      disclaimerAr: this.moderation.disclaimer(),
+      disclaimerAr: '',
     };
   }
+}
+
+function needsCareDisclaimer(answer: string, userMessage?: string): boolean {
+  return /تشخيص|علاج طبي|دواء|روشتة|وصفة علاجية/.test(`${userMessage ?? ''} ${answer}`);
 }

@@ -4,6 +4,7 @@ import '../../../../../core/navigation/app_routes.dart';
 import '../../../../../core/navigation/route_args.dart';
 import '../../../../../core/session/analysis_session.dart';
 import '../../../../../shared/theme/typography.dart';
+import '../../../../../shared/widgets/ask_mira_entry.dart';
 import '../../../../../shared/widgets/mira_app_bar.dart';
 import '../../../../intelligence/domain/entities/face_intelligence_report.dart';
 import '../../../../intelligence/presentation/widgets/mira_report_helpers.dart';
@@ -497,6 +498,26 @@ class _ResultsFaceMirrorScreenState extends State<ResultsFaceMirrorScreen>
                             },
                           ),
                         ],
+                        const SizedBox(height: 12),
+                        AskMiraEntry(
+                          contextLine: summary.headlineAr,
+                          suggestions: [
+                            if (summary.primary != null) 'اشرحي نتيجة ${summary.primary!.titleAr}',
+                            'ما الذي يناسب إطلالتي من هذه النتيجة؟',
+                          ],
+                          routeArgs: (question) {
+                            final ctx = const FaceAdvisorContextAssembler().build(
+                              projection: _projection,
+                              selection: _selection,
+                              reportRef: widget.report.id,
+                            );
+                            return AdvisorRouteArgs.face(
+                              report: widget.report,
+                              faceContext: ctx,
+                              initialQuestion: question ?? ctx.initialQuestionAr,
+                            );
+                          },
+                        ),
                         const SizedBox(height: 12),
                       ],
                       FaceResultActionBar(

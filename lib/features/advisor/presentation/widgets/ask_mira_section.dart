@@ -68,7 +68,7 @@ class AskMiraSection extends StatelessWidget {
         ),
         const SizedBox(height: 10),
         PremiumButton(
-          label: AppSession.canUseCloud ? 'محادثة مع مستشار ميرا · MCE' : 'سجّلي الدخول للاستشارة الذكية',
+          label: AppSession.canUseCloud ? 'اسألي ميرا ✨' : 'سجّلي الدخول للاستشارة الذكية',
           icon: Icons.auto_awesome_outlined,
           variant: PremiumButtonVariant.secondary,
           onPressed: () => Navigator.pushNamed(

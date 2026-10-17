@@ -102,6 +102,13 @@ class ConsultationComposer extends StatelessWidget {
                 child: TextField(
                   key: const Key('consultation_input'),
                   controller: controller,
+                  minLines: 2,
+                  maxLines: 5,
+                  keyboardType: TextInputType.multiline,
+                  textInputAction: TextInputAction.newline,
+                  textDirection: TextDirection.rtl,
+                  textAlign: TextAlign.right,
+                  style: AppTypography.bodyMedium,
                   decoration: InputDecoration(
                     hintText: hintText,
                     filled: true,
@@ -111,8 +118,6 @@ class ConsultationComposer extends StatelessWidget {
                       borderSide: BorderSide.none,
                     ),
                   ),
-                  textInputAction: TextInputAction.send,
-                  onSubmitted: loading ? null : (_) => onSend?.call(),
                 ),
               ),
               const SizedBox(width: 8),

@@ -74,7 +74,7 @@ class OutfitUntrustedResultView extends StatelessWidget {
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                Text('ما الذي تقبله مira؟', style: AppTypography.titleSmall),
+                Text('ما الذي تقبله ميرا؟', style: AppTypography.titleSmall),
                 const SizedBox(height: 10),
                 _TipRow(text: 'صورة عمودية لجسمك كاملاً — رأس، ملابس، وحذاء'),
                 _TipRow(text: 'إضاءة طبيعية ووجهك واضح'),
@@ -85,7 +85,7 @@ class OutfitUntrustedResultView extends StatelessWidget {
           ),
           const SizedBox(height: 24),
           PremiumButton(
-            label: 'إعادة التقاط الإطلالة',
+            label: 'اختيار صورة أوضح من الاستديو',
             icon: Icons.photo_camera_rounded,
             variant: PremiumButtonVariant.gold,
             onPressed: () => AnalysisNavigation.openOutfitAnalysis(context),

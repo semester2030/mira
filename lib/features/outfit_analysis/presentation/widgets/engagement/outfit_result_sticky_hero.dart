@@ -5,6 +5,8 @@ import 'package:flutter/material.dart';
 import '../../../../../shared/theme/colors.dart';
 import '../../../../../shared/theme/typography.dart';
 import '../../../domain/entities/outfit_analysis.dart';
+import '../../../domain/helpers/outfit_result_trust.dart';
+import '../../../domain/helpers/outfit_score_support.dart';
 
 /// Compact hero bar while scrolling inside a chapter.
 class OutfitResultStickyHero extends StatelessWidget {
@@ -19,6 +21,8 @@ class OutfitResultStickyHero extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final trust = OutfitResultTrustPolicy.evaluate(analysis);
+    final showScore = OutfitScoreSupport.showScore(analysis, trust);
     final path = analysis.frozenImagePath;
     final hasPhoto = path != null && File(path).existsSync();
 
@@ -64,7 +68,7 @@ class OutfitResultStickyHero extends StatelessWidget {
                       style: AppTypography.labelSmall.copyWith(color: AppColors.textSecondary),
                     ),
                     Text(
-                      '${analysis.compatibilityScore}/100',
+                      showScore ? '${analysis.compatibilityScore}/100' : 'بدون درجة مدعومة',
                       style: AppTypography.titleMedium.copyWith(
                         color: AppColors.secondary,
                         fontWeight: FontWeight.w800,

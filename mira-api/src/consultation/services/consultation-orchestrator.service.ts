@@ -32,6 +32,7 @@ import { evaluateMceFashionQuarantine } from '../../fashion-knowledge/advisor-in
 import { isDirectCommercialQuestion, serverCommercialTurnReply } from './mce-commercial-guard';
 import { ConsultationDialogueService } from './consultation-attachment.service';
 import { answerCacheAllowed, consultationQuarantineApplies, readPinnedAttachmentIds } from './consultation-dialogue';
+import { decideConsultationScope, guardScopeAnswer } from './consultation-scope';
 
 @Injectable()
 export class ConsultationOrchestratorService {
@@ -307,6 +308,11 @@ export class ConsultationOrchestratorService {
       }
     }
 
+    if (!localReply && !mod.blocked) {
+      const scope = decideConsultationScope(dto.message.trim(), priorHistory);
+      if (!scope.allow) localReply = scope.replyAr;
+    }
+
     let llmMessages: ReturnType<McePromptAssemblerService['buildMessages']> | undefined;
     let detectedIntent: MceConsultationIntent | undefined;
 
@@ -436,7 +442,7 @@ export class ConsultationOrchestratorService {
     streamFactory?: () => AsyncIterable<string>,
   ): Promise<MceAssistantPayloadV1> {
     if (ctx.localReply) {
-      return this.validator.validate({
+      return guardScopeAnswer(this.validator.validate({
         answerAr: ctx.localReply,
         confidence: 'high',
         intent: 'general',
@@ -444,7 +450,7 @@ export class ConsultationOrchestratorService {
         suggestedQuestionsAr: [],
         blocked: false,
         disclaimerAr: '',
-      }, ctx.factRegistry, ctx.userRow.contentAr);
+      }, ctx.factRegistry, ctx.userRow.contentAr), ctx.userRow.contentAr);
     }
     if (ctx.mod.blocked && ctx.mod.safeReply) {
       return this.validator.blockedPayload(
@@ -466,7 +472,10 @@ export class ConsultationOrchestratorService {
       return this.serverCommercialPayload(ctx.userRow.contentAr, ctx.factRegistry);
     }
     if (ctx.cached) {
-      return this.validator.validate(ctx.cached, ctx.factRegistry, ctx.userRow.contentAr);
+      return guardScopeAnswer(
+        this.validator.validate(ctx.cached, ctx.factRegistry, ctx.userRow.contentAr),
+        ctx.userRow.contentAr,
+      );
     }
     if (!this.llm.isConfigured() || !ctx.llmMessages) {
       throw new ServiceUnavailableException({
@@ -481,8 +490,9 @@ export class ConsultationOrchestratorService {
           ctx.factRegistry,
           ctx.userRow.contentAr,
         );
-    if (ctx.faqKey) await this.costGuard.setFaqCache(ctx.faqKey, payload);
-    return payload;
+    const scoped = guardScopeAnswer(payload, ctx.userRow.contentAr);
+    if (ctx.faqKey) await this.costGuard.setFaqCache(ctx.faqKey, scoped);
+    return scoped;
   }
 
   private async finalizeTurn(

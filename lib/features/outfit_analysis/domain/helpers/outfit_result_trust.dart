@@ -50,9 +50,8 @@ abstract final class OutfitResultTrustPolicy {
       }
       return OutfitResultTrust(
         level: OutfitResultTrustLevel.degraded,
-        titleAr: degradedTitle,
-        messageAr: map.validationMessage ??
-            'ألوان القطع من التحليل الدلالي — حدود القماش الدقيقة غير متاحة',
+        titleAr: 'تحليل التنسيق متاح',
+        messageAr: 'ألوان الإطلالة والتنسيق ظاهران. تلوين القماش يحتاج حدود قطعة أوضح، واختيار صورة من الاستديو يسهّل ذلك.',
         detailAr: analysis.photoTrustMessageAr,
       );
     }

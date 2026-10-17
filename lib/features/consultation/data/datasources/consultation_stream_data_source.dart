@@ -7,7 +7,49 @@ import '../../../../core/network/api_client.dart';
 import '../../domain/entities/consultation_entities.dart';
 import '../consultation_api_endpoints.dart';
 
-/// SSE client for MCE Phase 4 streaming responses.
+class ConsultationStreamException implements Exception {
+  final String messageAr;
+  const ConsultationStreamException(this.messageAr);
+  @override
+  String toString() => messageAr;
+}
+
+/// Keeps an unfinished UTF-8 character until the next chunk completes it.
+class ConsultationUtf8Decoder {
+  final List<int> _pending = <int>[];
+
+  String add(List<int> chunk, {bool end = false}) {
+    _pending.addAll(chunk);
+    var cut = _pending.length;
+    while (cut > 0) {
+      try {
+        final text = utf8.decode(_pending.sublist(0, cut));
+        _pending.removeRange(0, cut);
+        if (end && _pending.isNotEmpty) {
+          throw const ConsultationStreamException(
+            'تعذر إكمال حرف في الرد. أعيدي المحاولة بنفس الطلب.',
+          );
+        }
+        return text;
+      } on FormatException {
+        cut -= 1;
+        if (_pending.length - cut > 3) {
+          throw const ConsultationStreamException(
+            'تعذر قراءة الرد العربي. أعيدي المحاولة بنفس الطلب.',
+          );
+        }
+      }
+    }
+    if (end && _pending.isNotEmpty) {
+      throw const ConsultationStreamException(
+        'تعذر إكمال حرف في الرد. أعيدي المحاولة بنفس الطلب.',
+      );
+    }
+    return '';
+  }
+}
+
+/// SSE client for consultation streaming responses.
 class ConsultationStreamDataSource {
   final Dio _dio;
 
@@ -44,27 +86,22 @@ class ConsultationStreamDataSource {
     final completer = Completer<ConsultationTurn>();
     var buffer = '';
     ConsultationTurn? finalTurn;
+    final decoder = ConsultationUtf8Decoder();
 
     await for (final chunk in body.stream) {
-      buffer += utf8.decode(chunk);
-      while (true) {
-        final sep = buffer.indexOf('\n\n');
-        if (sep < 0) break;
-        final block = buffer.substring(0, sep);
-        buffer = buffer.substring(sep + 2);
-        final parsed = _parseSseBlock(block);
-        if (parsed == null) continue;
-
-        if (parsed.event == 'delta' && onDelta != null) {
-          final text = parsed.data['text'] as String? ?? '';
-          if (text.isNotEmpty) onDelta(text);
-        } else if (parsed.event == 'done') {
-          finalTurn = ConsultationTurn.fromJson(parsed.data);
-        } else if (parsed.event == 'error') {
-          final msg = parsed.data['message'] as String? ?? 'فشل البث';
-          throw Exception(msg);
-        }
-      }
+      buffer += decoder.add(chunk);
+      final parsedTurn = _drainEvents(buffer, onDelta);
+      buffer = parsedTurn.rest;
+      finalTurn = parsedTurn.turn ?? finalTurn;
+    }
+    buffer += decoder.add(const [], end: true);
+    final tail = _drainEvents(buffer, onDelta);
+    buffer = tail.rest;
+    finalTurn = tail.turn ?? finalTurn;
+    if (buffer.trim().isNotEmpty && finalTurn == null) {
+      throw const ConsultationStreamException(
+        'انقطع الرد قبل اكتماله. أعيدي المحاولة بنفس الطلب.',
+      );
     }
 
     if (finalTurn != null) {
@@ -73,6 +110,40 @@ class ConsultationStreamDataSource {
       completer.completeError(Exception('انتهى البث دون إجابة كاملة'));
     }
     return completer.future;
+  }
+
+  ({String rest, ConsultationTurn? turn}) _drainEvents(
+    String buffer,
+    void Function(String deltaText)? onDelta,
+  ) {
+    ConsultationTurn? turn;
+    while (true) {
+      final sep = _eventSeparator(buffer);
+      if (sep < 0) break;
+      final width = buffer.startsWith('\r\n\r\n', sep) ? 4 : 2;
+      final block = buffer.substring(0, sep);
+      buffer = buffer.substring(sep + width);
+      final parsed = _parseSseBlock(block);
+      if (parsed == null) continue;
+      if (parsed.event == 'delta' && onDelta != null) {
+        final text = parsed.data['text'] as String? ?? '';
+        if (text.isNotEmpty) onDelta(text);
+      } else if (parsed.event == 'done') {
+        turn = ConsultationTurn.fromJson(parsed.data);
+      } else if (parsed.event == 'error') {
+        final msg = parsed.data['message'] as String? ?? 'تعذر إكمال الرد. أعيدي المحاولة.';
+        throw ConsultationStreamException(msg);
+      }
+    }
+    return (rest: buffer, turn: turn);
+  }
+
+  int _eventSeparator(String buffer) {
+    final lf = buffer.indexOf('\n\n');
+    final crlf = buffer.indexOf('\r\n\r\n');
+    if (lf < 0) return crlf;
+    if (crlf < 0) return lf;
+    return lf < crlf ? lf : crlf;
   }
 
   _SseEvent? _parseSseBlock(String block) {

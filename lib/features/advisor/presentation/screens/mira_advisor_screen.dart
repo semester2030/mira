@@ -445,7 +445,7 @@ class _MiraAdvisorScreenState extends State<MiraAdvisorScreen> {
         }
       });
       ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(content: Text('تعذر الرد: $e')),
+        SnackBar(content: Text(_arabicSendError(e))),
       );
     }
     _scrollToEnd();
@@ -563,7 +563,7 @@ class _MiraAdvisorScreenState extends State<MiraAdvisorScreen> {
       return 'إجابات أزياء عبر مستشار ميرا — سياق الإطلالة فقط';
     }
     if (_currentRoute == FashionAdvisorClientRoute.fashionUnavailable) {
-      return 'نصيحة الأزياء المؤسَّسة غير مفعّلة في هذا الإصدار';
+      return 'محادثة مفتوحة عن الإطلالات والألوان والعناية. اسألي ميرا مباشرة.';
     }
     if (_openDialogue) {
       return 'محادثة مفتوحة عن الجمال والعناية والمكياج والشعر والإطلالات. الصور للمناقشة ولا تغيّر تقرير البشرة.';
@@ -603,7 +603,13 @@ class _MiraAdvisorScreenState extends State<MiraAdvisorScreen> {
             MiraRuntimeEntitlementStore.fashionAdvisorModeB)) {
       return 'مستشار ميرا · أزياء';
     }
-    return _sessionReady ? 'مستشار ميرا · MCE' : 'مستشار ميرا';
+    return 'مستشار ميرا';
+  }
+
+  String _arabicSendError(Object error) {
+    final text = error.toString().replaceFirst('Exception: ', '').trim();
+    if (text.contains('أعيدي') || text.contains('تعذر')) return text;
+    return 'تعذر عرض الرد. أعيدي المحاولة وسنستخدم الطلب نفسه.';
   }
 
   void _scrollToEnd() {
@@ -726,10 +732,11 @@ class _MiraAdvisorScreenState extends State<MiraAdvisorScreen> {
               if (_failedOutbound != null)
                 Padding(
                   padding: const EdgeInsets.fromLTRB(12, 0, 12, 12),
-                  child: TextButton(
+                  child: FilledButton.icon(
                     key: const Key('consultation_retry_send'),
                     onPressed: _loading ? null : () => _send('', retry: _failedOutbound!.retry()),
-                    child: const Text('إعادة إرسال الرسالة دون تكرار'),
+                    icon: const Icon(Icons.refresh_rounded),
+                    label: const Text('إعادة المحاولة'),
                   ),
                 ),
             ],
@@ -766,12 +773,12 @@ class _Bubble extends StatelessWidget {
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.stretch,
           children: [
-            if (!isUser && message.confidence != null)
+            if (!isUser && message.confidence == 'low')
               Align(
                 alignment: Alignment.centerLeft,
                 child: MceConfidenceBadge(confidence: message.confidence!),
               ),
-            if (!isUser && message.confidence != null) const SizedBox(height: 6),
+            if (!isUser && message.confidence == 'low') const SizedBox(height: 6),
             if (message.imageSlots.isNotEmpty)
               ConsultationImageStrip(slots: message.imageSlots)
             else if (message.images.isNotEmpty)

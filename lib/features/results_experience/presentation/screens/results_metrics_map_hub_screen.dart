@@ -5,6 +5,7 @@ import '../../../../core/navigation/route_args.dart';
 import '../../../../core/session/analysis_session.dart';
 import '../../../../shared/theme/colors.dart';
 import '../../../../shared/theme/typography.dart';
+import '../../../../shared/widgets/ask_mira_entry.dart';
 import '../../../../shared/widgets/mira_app_bar.dart';
 import '../../../skin_analysis/domain/entities/skin_report.dart';
 import '../../contracts/result_presentation_vms.dart';
@@ -115,6 +116,20 @@ class _ResultsMetricsMapHubScreenState extends State<ResultsMetricsMapHubScreen>
                   ListView(
                     padding: const EdgeInsets.fromLTRB(20, 16, 20, 28),
                     children: [
+                      AskMiraEntry(
+                        contextLine: e.metrics.isEmpty
+                            ? 'تفاصيل المؤشرات جاهزة للشرح.'
+                            : 'المؤشر الظاهر: ${e.metrics.first.titleAr}',
+                        suggestions: [
+                          for (final metric in e.metrics.take(2)) 'اشرحي لي مؤشر ${metric.titleAr}',
+                          'ما الذي أبدأ به اليوم؟',
+                        ],
+                        routeArgs: (question) => AdvisorRouteArgs.skin(
+                          widget.report,
+                          initialQuestion: question,
+                        ),
+                      ),
+                      const SizedBox(height: 12),
                       MetricsOverviewSection(
                         metrics: e.metrics,
                         onOpen: (m) {
