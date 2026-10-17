@@ -39,6 +39,7 @@ abstract final class MiraFeatures {
   );
 
   /// `false` = إخفاء الشركاء (منتجات · صالونات · عيادات) — «الانطلاق قريباً».
+  /// iOS production builds set this true from ios/Flutter/production_dart_defines.json.
   /// `true` = تفعيل Discover والـ marketplace عبر `--dart-define=MIRA_MARKETPLACE_ENABLED=true`
   static const bool marketplaceEnabled = bool.fromEnvironment(
     'MIRA_MARKETPLACE_ENABLED',

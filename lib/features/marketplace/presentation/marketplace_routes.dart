@@ -18,7 +18,8 @@ import 'screens/favorites_screen.dart';
 import 'screens/order_detail_screen.dart';
 import 'screens/orders_list_screen.dart';
 
-/// Discover routes. The production default keeps [MiraFeatures.marketplaceEnabled] false.
+/// Discover routes. The code default keeps [MiraFeatures.marketplaceEnabled] false.
+/// The committed iOS production build file turns it on.
 abstract final class MarketplaceRoutes {
   MarketplaceRoutes._();
 
