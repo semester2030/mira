@@ -73,11 +73,12 @@ function intelligenceToSummary(
   rowOccasionId: string,
   intel: OutfitIntelligenceSnapshot,
 ): OutfitContextSummaryV1 {
-  const hasScore = typeof intel.compatibilityScore === 'number';
+  const score = intel.compatibilityScore;
+  const hasScore = typeof score === 'number';
   const summary: OutfitContextSummaryV1 = {
     analysisId,
     occasionId: intel.occasionId ?? rowOccasionId,
-    compatibilityScore: hasScore ? Math.round(intel.compatibilityScore) : 0,
+    compatibilityScore: hasScore ? Math.round(score) : 0,
     colorHarmonyScore: Math.round(intel.colorHarmonyScore ?? intel.compatibilityScore ?? 0),
     occasionMatchScore: Math.round(intel.occasionMatchScore ?? intel.compatibilityScore ?? 0),
     analysisGate: intel.analysisGate ?? 'proceed',
