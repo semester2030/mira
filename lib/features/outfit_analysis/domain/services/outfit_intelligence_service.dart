@@ -422,20 +422,10 @@ class OutfitIntelligenceService {
   }
 
   List<String> _garmentColorsOnly(OutfitSegmentMap segmentMap) {
-    if (segmentMap.garmentPalette.isReliable) {
-      final detailed = segmentMap.garmentPalette.detailedColors;
-      if (detailed.isNotEmpty) {
-        return detailed.map((d) => d.displayNameAr).toList();
-      }
-      return segmentMap.garmentPalette.ordered;
-    }
-    final merged = [
+    return _dedupe([
       ...segmentMap.upperBodyColors,
       ...segmentMap.lowerBodyColors,
-      ...segmentMap.shoeColors,
-      ...segmentMap.accessoryColors,
-    ];
-    return _dedupe(merged).take(5).toList();
+    ]).take(5).toList();
   }
 
   List<String> _piecesFromSegments(

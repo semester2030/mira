@@ -72,8 +72,8 @@ class OutfitAnalysis {
       shoeColors.isNotEmpty ||
       accessoryColors.isNotEmpty;
 
-  /// A piece name alone is not evidence that colors or balance were measured.
-  bool get scoreSupported => colorsRecognized && styleBalanceScore > 0 && colorHarmonyScore > 0;
+  /// The weighted formula is not a tested accuracy measure, so it is not shown.
+  bool get scoreSupported => false;
 
   bool get isSmartMode => mode == OutfitAnalysisMode.smart;
 

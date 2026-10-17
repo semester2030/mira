@@ -73,10 +73,11 @@ function intelligenceToSummary(
   rowOccasionId: string,
   intel: OutfitIntelligenceSnapshot,
 ): OutfitContextSummaryV1 {
-  return {
+  const hasScore = typeof intel.compatibilityScore === 'number';
+  const summary: OutfitContextSummaryV1 = {
     analysisId,
     occasionId: intel.occasionId ?? rowOccasionId,
-    compatibilityScore: Math.round(intel.compatibilityScore ?? 0),
+    compatibilityScore: hasScore ? Math.round(intel.compatibilityScore) : 0,
     colorHarmonyScore: Math.round(intel.colorHarmonyScore ?? intel.compatibilityScore ?? 0),
     occasionMatchScore: Math.round(intel.occasionMatchScore ?? intel.compatibilityScore ?? 0),
     analysisGate: intel.analysisGate ?? 'proceed',
@@ -92,6 +93,7 @@ function intelligenceToSummary(
     suggestedMakeupAr: intel.suggestedMakeupAr?.trim() || undefined,
     disclaimerAr: OUTFIT_DISCLAIMER,
   };
+  return Object.assign(summary, { scoreSupported: hasScore });
 }
 
 /** Parse stored OutfitAnalysis.resultJson — Vision intelligence or legacy API shape. */

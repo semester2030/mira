@@ -117,7 +117,8 @@ export class MceFactExtractorService {
     }
 
     const outfit = snapshot.outfit;
-    if (outfit) {
+    const scoreSupported = (outfit as { scoreSupported?: boolean } | undefined)?.scoreSupported !== false;
+    if (outfit && scoreSupported) {
       facts.push({
         id: 'outfit.compatibilityScore',
         labelAr: 'تناسق الإطلالة',
@@ -136,6 +137,8 @@ export class MceFactExtractorService {
         valueAr: `${outfit.occasionMatchScore}%`,
         confidence: 'high',
       });
+    }
+    if (outfit) {
       facts.push({
         id: 'outfit.garmentType',
         labelAr: 'نوع القطعة',

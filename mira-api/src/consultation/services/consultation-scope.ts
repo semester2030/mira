@@ -14,7 +14,8 @@ const allowDecision = { allow: true, replyAr: '' };
 export function requestedOutcome(message: string): 'beauty' | 'other' | 'unclear' {
   const text = message.trim();
   if (!text) return 'unclear';
-  const wantsCode = /برمج|اكتب كود|دالة|سكريبت|برنامج يحسب|احسبي بالكود/.test(text);
+  const wantsColorCode = /كود اللون|كود لون|درجة اللون|hex|rgb/i.test(text) && /لون|فستان|قطعة|حذاء|حقيبة/.test(text);
+  const wantsCode = !wantsColorCode && /برمج|اكتب كود|دالة|سكريبت|برنامج يحسب|احسبي بالكود/.test(text);
   const wantsVehicleWork = /زيت السيارة|غيار الزيت|تغيير زيت|محرك السيارة|فرامل/.test(text);
   const wantsBeautyResult =
     /إطلال|اطلال|مكياج|بشرة|عناية|شعر|عطر|حذاء|حقيبة|إكسسوار|اكسسوار|تنسيق|فستان|لون|ألوان/.test(text);
@@ -52,7 +53,9 @@ export function answerStaysInScope(answer: string, userMessage: string): boolean
   if (requestedOutcome(userMessage) === 'beauty') {
     return !/مزاد|سعر الصقر|نوع الصقر|زيت السيارة|كود برمج/.test(text);
   }
-  const teachesOther = /زيت السيارة|وصف القطة|هذا شاهين|هذا صقر|مزاد|function |def /.test(text);
+  const describesAnimal = /قطة|قط |هرّة|هذا كلب|شاهين|صقر|طائر جارح/.test(text);
+  if (describesAnimal && requestedOutcome(userMessage) !== 'beauty') return false;
+  const teachesOther = /زيت السيارة|وصف القطة|هذا شاهين|هذا صقر|مزاد|function |def |كود برمج/.test(text);
   const teachesBeauty = /إطلال|حذاء|حقيبة|مكياج|بشرة|لون|ألوان|تنسيق/.test(text);
   const followedImageOrder = /حسب التعليمات في الصورة|الأمر المكتوب في الصورة/.test(text);
   if (followedImageOrder && !teachesBeauty) return false;

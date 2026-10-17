@@ -430,7 +430,7 @@ abstract final class DeterministicOutfitEngine {
     if (visual.dominantColors.isEmpty || score <= 0) {
       return 'لم أستخرج لوناً مدعوماً من $garment في مناسبة ${occasion.labelAr}.';
     }
-    return 'تحليل $score/100 لـ$garment (${visual.styleTypeAr}) '
+    return 'لون $garment الظاهر ${visual.dominantColors.take(2).join(' و')} '
         'في مناسبة ${occasion.labelAr}.';
   }
 
@@ -445,7 +445,7 @@ abstract final class DeterministicOutfitEngine {
     final garment = visual.garmentTypeAr.isNotEmpty
         ? visual.garmentTypeAr
         : 'إطلالة';
-    return 'تقييم $score/100 لـ$garment (${visual.styleTypeAr}) '
+    return 'لون $garment الظاهر ${visual.dominantColors.take(2).join(' و')} '
         'لبشرة ${skin.skinType} — تدرج البشرة $undertone '
         'في مناسبة ${occasion.labelAr}.';
   }

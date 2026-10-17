@@ -19,7 +19,7 @@ class OutfitAnalysisCacheEntry {
 
 /// Caches hybrid analysis by image hash + skin + occasion — avoids repeat billing.
 class OutfitAnalysisCacheService {
-  static const _prefix = 'mira_outfit_intel_v1_';
+  static const _prefix = 'mira_outfit_intel_v2_';
   final SharedPreferences _prefs;
 
   OutfitAnalysisCacheService(this._prefs);

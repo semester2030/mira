@@ -66,7 +66,10 @@ function sessionTitle(snapshot: MceContextSnapshotV1): string {
     return `استشارة شاملة — ${snapshot.outfit.styleTypeAr}`;
   }
   if (snapshot.outfit) {
-    return `استشارة إطلالة — ${snapshot.outfit.styleTypeAr} · ${snapshot.outfit.compatibilityScore}%`;
+    const score = snapshot.outfit.compatibilityScore;
+    return score == null
+      ? `استشارة إطلالة — ${snapshot.outfit.styleTypeAr}`
+      : `استشارة إطلالة — ${snapshot.outfit.styleTypeAr} · ${score}%`;
   }
   if (snapshot.skin) {
     return `استشارة بشرة — ${snapshot.skin.skinTypeAr}`;

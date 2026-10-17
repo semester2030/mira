@@ -2,6 +2,7 @@ import 'dart:io';
 
 import 'package:flutter/material.dart';
 
+import '../../../../core/ai/models/mira_occasion.dart';
 import '../../../../core/navigation/app_routes.dart';
 import '../../../../core/navigation/route_args.dart';
 import '../../../../core/session/analysis_session.dart';
@@ -40,12 +41,18 @@ class _OutfitStudioScreenState extends State<OutfitStudioScreen> {
     final uuid = RegExp(
       r'^[0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{12}$',
     );
+    final dress = widget.analysis.dominantColors.where((color) => color.trim().isNotEmpty).toList();
+    final piece = widget.analysis.detectedPieces.isNotEmpty
+        ? widget.analysis.detectedPieces.first
+        : widget.analysis.clothingType;
     Navigator.pushNamed(
       context,
       AppRoutes.miraAdvisor,
       arguments: AdvisorRouteArgs(
         outfitAnalysis: widget.analysis,
         outfitAnalysisId: reportId != null && uuid.hasMatch(reportId) ? reportId : null,
+        discussionFocus: 'التبويب ${_tabs[_index]}، القطعة $piece'
+            '${dress.isEmpty ? '' : '، اللون المرصود ${dress.first}'}',
       ),
     );
   }
@@ -86,7 +93,7 @@ class _OutfitStudioScreenState extends State<OutfitStudioScreen> {
                   minimumSize: const Size.fromHeight(48),
                 ),
                 icon: const Icon(Icons.auto_awesome_rounded),
-                label: Text('اسألي ميرا ✨ · ${_tabs[_index]}'),
+                label: const Text('اسألي ميرا ✨'),
               ),
             ),
           ),
@@ -153,7 +160,7 @@ class _Photo extends StatelessWidget {
       child: ClipRRect(
         borderRadius: BorderRadius.circular(20),
         child: SizedBox(
-          height: 180,
+          height: MediaQuery.sizeOf(context).height.clamp(640, 1200) * 0.42,
           width: double.infinity,
           child: file != null && file.existsSync()
               ? InteractiveViewer(child: Image.file(file, fit: BoxFit.contain))
@@ -195,6 +202,12 @@ class _LookPage extends StatelessWidget {
           ),
         const SizedBox(height: 12),
         if (analysis.explanation.trim().isNotEmpty) Text(analysis.explanation, style: AppTypography.bodyMedium),
+        if (analysis.occasion == MiraOccasion.university &&
+            '${analysis.clothingType} ${analysis.styleType}'.contains('سهرة'))
+          const Padding(
+            padding: EdgeInsets.only(top: 8),
+            child: _Note('فستان السهرة لا يُعد مناسباً للجامعة تلقائياً. إذا كانت المناسبة حفلاً جامعياً، وضّحي ذلك للمستشار.'),
+          ),
         for (final reason in analysis.matchReasons.take(3))
           Padding(
             padding: const EdgeInsets.only(top: 8),
@@ -218,17 +231,17 @@ class _ColorsPage extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final colors = <String>{
+    final dressColors = <String>[
       ...analysis.dominantColors,
       ...analysis.upperBodyColors,
       ...analysis.lowerBodyColors,
-      ...analysis.shoeColors,
-      ...analysis.accessoryColors,
-    }.map((color) => color.trim()).where((color) => color.isNotEmpty).toList();
-    final current = colors.isEmpty ? null : colors.first;
+    ].map((color) => color.trim()).where((color) => color.isNotEmpty).toSet().toList();
+    final shoes = analysis.shoeColors.map((color) => color.trim()).where((color) => color.isNotEmpty).toList();
+    final extras = analysis.accessoryColors.map((color) => color.trim()).where((color) => color.isNotEmpty).toList();
     final piece = analysis.detectedPieces.isNotEmpty
         ? analysis.detectedPieces.first
         : (analysis.clothingType.trim().isEmpty ? 'القطعة الظاهرة' : analysis.clothingType);
+    final current = dressColors.isEmpty ? null : dressColors.first;
     final suggestions = analysis.recommendedColors.where((color) => color != current).toList();
     return ListView(
       controller: controller,
@@ -236,23 +249,32 @@ class _ColorsPage extends StatelessWidget {
       children: [
         if (current == null)
           const _Card(
-            title: 'اللون الحالي',
-            body: 'تعذر استخراج لون القماش من هذه الصورة. القطع الأخرى تبقى ظاهرة، ولا تُختلق لوحة ألوان.',
+            title: 'اللون المرصود',
+            body: 'تعذر استخراج لون القماش من هذه الصورة. لا يُعرض لون افتراضي، وتبقى القطع الأخرى ظاهرة.',
           )
-        else ...[
-          _Card(title: 'اللون الحالي', body: '$current — $piece'),
+        else
+          _Card(title: 'اللون المرصود', body: '$current على $piece. هذا تقدير لما ظهر في الصورة.'),
+        if (shoes.isNotEmpty) ...[
+          const SizedBox(height: 8),
+          _Card(title: 'لون الحذاء', body: shoes.join('، ')),
+        ],
+        if (extras.isNotEmpty) ...[
+          const SizedBox(height: 8),
+          _Card(title: 'لون الإكسسوار', body: extras.join('، ')),
+        ],
+        const SizedBox(height: 8),
+        _Card(
+          title: 'إبقاء الإطلالة',
+          body: current == null
+              ? 'يمكن إبقاء الإطلالة كما هي دون اختراع لون.'
+              : 'يمكن إبقاء $current على $piece. لا يُقترح تغيير لمجرد وجود اقتراح.',
+        ),
+        if (current != null && suggestions.isNotEmpty) ...[
           const SizedBox(height: 8),
           _Card(
-            title: 'إبقاء الإطلالة',
-            body: 'اللون الحالي مناسب ويمكن إبقاؤه على $piece في مناسبة ${analysis.occasion.labelAr}.',
+            title: 'اقتراح تنسيق',
+            body: 'الملاحظة: $piece ظهر بلون $current. ${suggestions.first} مقترح للحذاء أو الحقيبة لأنه يختلف عن لون القطعة فيُظهرها. ليس حكماً بأن اللون الحالي غير مناسب.',
           ),
-          if (suggestions.isNotEmpty) ...[
-            const SizedBox(height: 8),
-            _Card(
-              title: 'اقتراح تنسيق',
-              body: '${suggestions.first} للحذاء أو الحقيبة، لأنه يكمّل $current. هذا ليس تغييراً للون $piece.',
-            ),
-          ],
         ],
         const SizedBox(height: 8),
         const _Card(

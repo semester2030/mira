@@ -27,6 +27,29 @@ import { OutfitAnalysisResponseDto } from './dto/outfit-analysis-response.dto';
 import { SaveOutfitSnapshotDto } from './dto/save-outfit-snapshot.dto';
 import { isLegacyOutfitPathBlockedInProduction } from '../config/production-integrity';
 import { LEGACY_OUTFIT_MOCK_UNAVAILABLE_AR } from '../intelligence/contracts/cosmetic-copy';
+import { OutfitIntelligenceSnapshotDto } from './dto/save-outfit-snapshot.dto';
+
+/** A client cannot declare that a score is reliable. Colors are the evidence. */
+export function sanitizeOutfitIntelligence(
+  input: OutfitIntelligenceSnapshotDto,
+): OutfitIntelligenceSnapshotDto {
+  const colors = (input.dominantColorsAr ?? []).map((color) => color.trim()).filter(Boolean);
+  const base: OutfitIntelligenceSnapshotDto = {
+    ...input,
+    dominantColorsAr: colors,
+    occasionId: input.occasionId,
+    analysisSource: input.analysisSource ?? 'vision_platform',
+  };
+  if (colors.length > 0) return base;
+  return {
+    ...base,
+    compatibilityScore: undefined,
+    colorHarmonyScore: undefined,
+    occasionMatchScore: undefined,
+    styleBalanceScore: undefined,
+    skinCompatibilityScore: undefined,
+  };
+}
 
 /**
  * LEGACY outfit analysis path (OUTFIT_PROVIDER).
@@ -153,6 +176,29 @@ export class OutfitAnalysisService {
     }
 
     const user = await this.usersService.findOrCreateFromFirebase(authUser);
+    const intelligence = sanitizeOutfitIntelligence(dto.intelligence);
+    const fingerprint = intelligence.imageFingerprint?.trim();
+    const version = intelligence.analysisVersion?.trim();
+    if (fingerprint && version) {
+      const recent = await this.prisma.outfitAnalysis.findMany({
+        where: { userId: user.id, occasionId: occasion },
+        orderBy: { createdAt: 'desc' },
+        take: 30,
+        select: { id: true, occasionId: true, createdAt: true, resultJson: true },
+      });
+      const existing = recent.find((row) => {
+        const stored = row.resultJson as { imageFingerprint?: string; analysisVersion?: string };
+        return stored?.imageFingerprint === fingerprint && stored?.analysisVersion === version;
+      });
+      if (existing) {
+        return {
+          id: existing.id,
+          occasionId: existing.occasionId,
+          createdAt: existing.createdAt.toISOString(),
+          reused: true,
+        };
+      }
+    }
 
     const record = await this.prisma.outfitAnalysis.create({
       data: {
@@ -160,11 +206,9 @@ export class OutfitAnalysisService {
         occasionId: occasion,
         resultJson: {
           source: 'vision_platform',
-          intelligence: {
-            ...dto.intelligence,
-            occasionId: occasion,
-            analysisSource: dto.intelligence.analysisSource ?? 'vision_platform',
-          },
+          imageFingerprint: fingerprint,
+          analysisVersion: version,
+          intelligence,
         } as unknown as Prisma.InputJsonValue,
       },
     });

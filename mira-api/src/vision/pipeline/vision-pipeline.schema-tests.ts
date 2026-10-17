@@ -34,6 +34,23 @@ function testNormalizerMapsFreeTextType(): void {
   assert.ok(result.notes.some((n) => n.includes('typeId mapped')));
 }
 
+function testNormalizerKeepsBurgundyAndDropsUnknown(): void {
+  const normalizer = new FashionNormalizerService();
+  const semantics = parseOpenAiSemanticResponse(buildMockOpenAiSemanticResponse());
+  semantics.garments[0].colors = ['burgundy'];
+  semantics.dominantColorIds = ['burgundy'];
+  const burgundy = normalizer.normalizeSemantics(semantics);
+  assert.equal(burgundy.semantics.garments[0].colors[0], 'burgundy_deep');
+  assert.equal(burgundy.semantics.dominantColorIds.includes('black_pure'), false);
+
+  const unknown = parseOpenAiSemanticResponse(buildMockOpenAiSemanticResponse());
+  unknown.garments[0].colors = ['not-a-color'];
+  unknown.dominantColorIds = ['not-a-color'];
+  const dropped = normalizer.normalizeSemantics(unknown);
+  assert.deepEqual(dropped.semantics.garments[0].colors, []);
+  assert.equal(dropped.semantics.dominantColorIds.includes('black_pure'), false);
+}
+
 function testNormalizerMapsColorAlias(): void {
   const normalizer = new FashionNormalizerService();
   const semantics = parseOpenAiSemanticResponse(buildMockOpenAiSemanticResponse());
@@ -134,6 +151,7 @@ function testApplyConfidenceMultiplier(): void {
 export function runVisionPipelineTests(): void {
   testNormalizerMapsFreeTextType();
   testNormalizerMapsColorAlias();
+  testNormalizerKeepsBurgundyAndDropsUnknown();
   testQualityGateRejectsMissingSchemaVersion();
   testFashionRuleDominantColorMismatch();
   testFashionRuleTopologyConflict();

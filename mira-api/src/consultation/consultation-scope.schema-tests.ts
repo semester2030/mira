@@ -64,4 +64,11 @@ record('bird-color-inspiration-stays-open', birdColors.allow);
 const shoes = decideConsultationScope('ما اللون الأنسب للحذاء أو الحقيبة؟');
 record('shoe-or-bag-color-stays-open', shoes.allow);
 
+const colorCode = decideConsultationScope('ما كود لون الفستان؟');
+record('dress-color-code-stays-open', colorCode.allow);
+const auction = decideConsultationScope('اشرح لي كيف يعمل المزاد');
+record('auction-explanation-is-redirected', !auction.allow);
+const catPhoto = guardScopeAnswer(payload('هذه قطة بيضاء تجلس على الكرسي.'), 'ما هذه الصورة؟');
+record('cat-photo-answer-is-replaced-before-display', catPhoto.answerAr === SCOPE_REDIRECT_AR);
+
 console.log(JSON.stringify({ checks: checks.length, failed: process.exitCode ?? 0 }));

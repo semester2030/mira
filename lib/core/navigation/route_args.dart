@@ -64,6 +64,7 @@ class AdvisorRouteArgs {
   final String? outfitAnalysisId;
   final String? recolorAttemptId;
   final String? initialQuestion;
+  final String? discussionFocus;
   /// Phase 9I — Face Result / Guidance context for frozen Advisor chat.
   final FaceAdvisorContext? faceContext;
 
@@ -73,6 +74,7 @@ class AdvisorRouteArgs {
     this.outfitAnalysisId,
     this.recolorAttemptId,
     this.initialQuestion,
+    this.discussionFocus,
     this.faceContext,
   });
 

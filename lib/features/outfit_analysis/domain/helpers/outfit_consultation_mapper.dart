@@ -2,7 +2,10 @@ import '../entities/outfit_analysis.dart';
 
 /// Maps Vision Platform [OutfitAnalysis] to MCE intelligence snapshot payload.
 abstract final class OutfitConsultationMapper {
-  static Map<String, dynamic> toSnapshotPayload(OutfitAnalysis analysis) {
+  static Map<String, dynamic> toSnapshotPayload(
+    OutfitAnalysis analysis, {
+    String? imageFingerprint,
+  }) {
     return {
       'occasionId': analysis.occasion.id,
       'intelligence': {
@@ -12,7 +15,6 @@ abstract final class OutfitConsultationMapper {
         if (analysis.scoreSupported) 'occasionMatchScore': analysis.occasionMatchScore,
         if (analysis.scoreSupported) 'styleBalanceScore': analysis.styleBalanceScore,
         if (analysis.scoreSupported) 'skinCompatibilityScore': analysis.skinCompatibilityScore,
-        'scoreSupported': analysis.scoreSupported,
         'analysisGate': analysis.analysisGate,
         'clothingTypeAr': analysis.clothingType,
         'styleTypeAr': analysis.styleType,
@@ -28,6 +30,9 @@ abstract final class OutfitConsultationMapper {
         if (analysis.suggestedMakeup.isNotEmpty)
           'suggestedMakeupAr': analysis.suggestedMakeup,
         'analysisSource': analysis.analysisSource,
+        if (imageFingerprint != null && imageFingerprint.isNotEmpty)
+          'imageFingerprint': imageFingerprint,
+        'analysisVersion': 'outfit-intel-v2',
       },
     };
   }

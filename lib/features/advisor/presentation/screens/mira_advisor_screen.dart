@@ -1,7 +1,9 @@
 import 'dart:io';
 
+import 'package:crypto/crypto.dart';
 import 'package:dio/dio.dart';
 import 'package:flutter/material.dart';
+import 'package:shared_preferences/shared_preferences.dart';
 import 'package:image_picker/image_picker.dart';
 
 import '../../../../core/config/mira_features.dart';
@@ -84,6 +86,14 @@ class _MiraAdvisorScreenState extends State<MiraAdvisorScreen> {
       }
       if (args?.initialQuestion != null && args!.initialQuestion!.trim().isNotEmpty) {
         _input.text = args.initialQuestion!.trim();
+      }
+      if (_followUps.isEmpty) {
+        final outfit = args?.outfitAnalysis != null || args?.outfitAnalysisId != null;
+        setState(() {
+          _followUps = outfit
+              ? OutfitConsultationMapper.outfitStarterQuestions
+              : _skinStarterQuestions;
+        });
       }
     });
   }
@@ -173,16 +183,28 @@ class _MiraAdvisorScreenState extends State<MiraAdvisorScreen> {
         args.recolorAttemptId ?? AnalysisSession.lastRecolorAttemptId;
 
     try {
+      final prefs = await SharedPreferences.getInstance();
+      final fingerprint = await _imageFingerprint(args.outfitAnalysis?.frozenImagePath);
       String? outfitAnalysisId = _uuidOrNull(args.outfitAnalysisId);
+      if (outfitAnalysisId == null && fingerprint != null) {
+        outfitAnalysisId = _uuidOrNull(prefs.getString('mira_outfit_report_$fingerprint'));
+      }
       if (outfitAnalysisId == null && args.outfitAnalysis != null) {
         final snapshot = await _outfitApi.saveIntelligenceSnapshot(
-          OutfitConsultationMapper.toSnapshotPayload(args.outfitAnalysis!),
+          OutfitConsultationMapper.toSnapshotPayload(
+            args.outfitAnalysis!,
+            imageFingerprint: fingerprint,
+          ),
         );
         outfitAnalysisId = snapshot.id;
+        if (fingerprint != null) {
+          await prefs.setString('mira_outfit_report_$fingerprint', snapshot.id);
+        }
       }
 
       if (outfitAnalysisId != null) {
-        final remembered = AnalysisSession.consultationByAnalysis[outfitAnalysisId];
+        final remembered = AnalysisSession.consultationByAnalysis[outfitAnalysisId]
+            ?? prefs.getString('mira_outfit_chat_$outfitAnalysisId');
         if (remembered != null && remembered.isNotEmpty) {
           final history = await _consultationApi.listMessages(remembered);
           if (!mounted) return;
@@ -214,19 +236,24 @@ class _MiraAdvisorScreenState extends State<MiraAdvisorScreen> {
               (outfitPrimary ? null : AnalysisSession.lastSkin?.id));
 
       final faceLabel = _faceContext?.contextLabelAr;
-      final statedGoal = faceLabel != null && faceLabel.isNotEmpty
-          ? 'دخلت من نتيجة الوجه: $faceLabel'
-          : null;
+      final focus = args.discussionFocus?.trim();
+      final statedGoal = [
+        if (faceLabel != null && faceLabel.isNotEmpty) 'دخلت من نتيجة الوجه: $faceLabel',
+        if (focus != null && focus.isNotEmpty) focus,
+      ].join(' · ');
       final session = await _consultationApi.createSession(
         skinAnalysisId: skinId,
         outfitAnalysisId: outfitAnalysisId,
         recolorAttemptId: _uuidOrNull(recolorId),
         occasionId: args.outfitAnalysis?.occasion.id,
-        statedGoalAr: statedGoal,
+        statedGoalAr: statedGoal.isEmpty ? null : statedGoal,
         face: _faceContext?.toJson(),
       );
       final imageLimit = await _consultationApi.dialogueImageLimit();
       if (!mounted) return;
+      if (outfitAnalysisId != null) {
+        await prefs.setString('mira_outfit_chat_$outfitAnalysisId', session.id);
+      }
       setState(() {
         _sessionId = session.id;
         _snapshotId = session.activeSnapshotId;
@@ -258,8 +285,19 @@ class _MiraAdvisorScreenState extends State<MiraAdvisorScreen> {
         _focus = args.outfitAnalysis != null
             ? _ConsultationFocus.outfit
             : _ConsultationFocus.skin;
+        if (outfitPrimary) {
+          _followUps = OutfitConsultationMapper.outfitStarterQuestions;
+        }
       });
     }
+  }
+
+  Future<String?> _imageFingerprint(String? path) async {
+    if (path == null || path.isEmpty) return null;
+    final file = File(path);
+    if (!file.existsSync()) return null;
+    final digest = sha256.convert(await file.readAsBytes());
+    return digest.toString();
   }
 
   @override
@@ -593,7 +631,7 @@ class _MiraAdvisorScreenState extends State<MiraAdvisorScreen> {
     });
   }
 
-  List<String> _followUps = _skinStarterQuestions;
+  List<String> _followUps = const [];
 
   String get _bannerText {
     if (_sessionError != null) return _sessionError!;

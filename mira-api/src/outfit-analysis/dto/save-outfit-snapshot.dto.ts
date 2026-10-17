@@ -100,6 +100,16 @@ export class OutfitIntelligenceSnapshotDto {
   suggestedMakeupAr?: string;
 
   @IsOptional()
+  @IsString()
+  @MaxLength(64)
+  imageFingerprint?: string;
+
+  @IsOptional()
+  @IsString()
+  @MaxLength(40)
+  analysisVersion?: string;
+
+  @IsOptional()
   @IsIn(['vision_platform', 'deterministic', 'hybrid'])
   analysisSource?: string;
 }

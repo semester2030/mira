@@ -210,7 +210,7 @@ export class FashionNormalizerService {
       notes.push(`${path} color unknown "${raw}" — dropped`);
       onPenalty(0.7);
     }
-    return out.length > 0 ? out : ['black_pure'];
+    return out;
   }
 
   private normalizeArchetypeId(raw: string, registry: FashionOntologyRegistry): string {
