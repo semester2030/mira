@@ -9,6 +9,7 @@ import {
   extractMiraReportFromStored,
 } from '../../skin-analysis/dto/skin-analysis-response.dto';
 import { IntelligenceService } from '../../intelligence/intelligence.service';
+import { presentCurrentReportTips } from '../../intelligence/pipeline/current-care-tips';
 import { PrismaService } from '../../prisma/prisma.service';
 import {
   MceContextSnapshotV1,
@@ -47,10 +48,6 @@ export class MceGroundingPipelineService {
   ) {}
 
   async build(input: GroundingInput): Promise<GroundingResult> {
-    if (!input.skinAnalysisId && !input.outfitAnalysisId && !input.recolorAttemptId) {
-      throw new BadRequestException('يجب ربط تحليل بشرة أو إطلالة أو تلوين على الأقل');
-    }
-
     let snapshot = this.factExtractor.emptySnapshotShell({
       locale: input.locale,
       subscriptionPlan: input.subscriptionPlan,
@@ -77,6 +74,7 @@ export class MceGroundingPipelineService {
       if (!report) {
         throw new BadRequestException('تنسيق تحليل البشرة غير مدعوم لـ MCE');
       }
+      report = presentCurrentReportTips(report);
 
       report = this.intelligence.enrichWithUserContext(report, {
         birthYear: input.birthYear ?? null,
@@ -87,7 +85,7 @@ export class MceGroundingPipelineService {
         row.id,
       );
 
-      snapshot.skin = this.factExtractor.buildSkinSummary(row.id, report);
+      snapshot.skin = this.factExtractor.buildSkinSummary(row.id, report, row.createdAt);
       snapshot.user.isMinor = report.childSafety.isMinor;
     }
 

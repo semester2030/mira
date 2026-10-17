@@ -19,6 +19,7 @@ describe('progress-engine', () => {
     version: 1 as const,
     spatialConfidence: 'none' as const,
     overallBeautyScore: score,
+    overallScoreAvailable: true,
     headlineAr: 'test',
     skinTypeAr: 'مختلطة',
     skinTypeEn: 'combination',

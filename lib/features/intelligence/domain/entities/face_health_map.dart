@@ -123,7 +123,7 @@ class FaceHealthConcernOverlay {
   final String concernId;
   final String labelAr;
   final String labelEn;
-  final int globalScore;
+  final int? globalScore;
   final String severity;
   final Map<String, int> zoneScores;
   final List<String> highlightZoneIds;
@@ -142,7 +142,9 @@ class FaceHealthConcernOverlay {
     required this.hasRegionalData,
   });
 
-  bool get isHealthy => globalScore >= 70;
+  bool get isHealthy => hasMeasuredScore && globalScore! >= 70;
+  bool get hasMeasuredScore =>
+      globalScore != null && globalScore! >= 0 && globalScore! <= 100;
 }
 
 class FaceHealthSpatialMarker {

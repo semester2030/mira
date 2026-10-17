@@ -44,7 +44,7 @@ interface ConcernEducationalRule {
   zoneNameAr: string;
   highlightZoneIds: FaceHealthZoneId[];
   threshold: number;
-  fallbackScore: (skin: SkinAnalysisResult) => number;
+  fallbackScore: (skin: SkinAnalysisResult) => number | null;
 }
 
 const EDUCATIONAL_RULES: ConcernEducationalRule[] = [
@@ -86,7 +86,7 @@ const EDUCATIONAL_RULES: ConcernEducationalRule[] = [
     zoneNameAr: 'تحت العين',
     highlightZoneIds: ['under_eye'],
     threshold: 58,
-    fallbackScore: () => 72,
+    fallbackScore: () => null,
   },
   {
     concernId: 'age_spot',
@@ -252,7 +252,7 @@ function buildSpatialBundle(
 function collectTriggeredConcerns(skin: SkinAnalysisResult): ConcernEducationalRule[] {
   return EDUCATIONAL_RULES.filter((rule) => {
     const ui = uiScore(skin, rule.concernId, rule.fallbackScore(skin));
-    return ui < rule.threshold;
+    return ui != null && ui < rule.threshold;
   });
 }
 
@@ -262,7 +262,7 @@ function buildInsightCard(
   spatial = false,
 ): FaceHealthInsightCard {
   const ui = uiScore(skin, rule.concernId, rule.fallbackScore(skin));
-  const severityWord = severityLabel(ui);
+  const severityWord = ui == null ? 'دون درجة مقاسة' : severityLabel(ui);
 
   const bodyAr = spatial
     ? `تحليل YouCam يشير إلى ${rule.labelAr} ${severityWord} — مع تركيز محتمل في ${rule.zoneNameAr}.`
@@ -341,9 +341,13 @@ function buildConcernZonesFromInsights(
 function uiScore(
   skin: SkinAnalysisResult,
   id: string,
-  fallback: number,
-): number {
-  return skin.concernScores?.[id] ?? fallback;
+  fallback: number | null,
+): number | null {
+  const direct = skin.concernScores?.[id];
+  if (typeof direct === 'number' && Number.isFinite(direct) && direct >= 0 && direct <= 100) {
+    return direct;
+  }
+  return fallback;
 }
 
 function severityLabel(uiScore: number): string {

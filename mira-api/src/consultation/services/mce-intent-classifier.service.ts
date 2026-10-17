@@ -6,7 +6,11 @@ export type MceConsultationIntent =
   | 'occasion'
   | 'accessory'
   | 'makeup'
+  | 'hair'
+  | 'product'
   | 'skin'
+  | 'greeting'
+  | 'off_topic'
   | 'general';
 
 interface IntentRule {
@@ -67,6 +71,25 @@ const OUTFIT_RULES: IntentRule[] = [
   },
 ];
 
+const ALWAYS_RULES: IntentRule[] = [
+  {
+    intent: 'greeting',
+    patterns: [/^(مرحبا|مرحبًا|السلام|هلا|أهلًا|اهلين)[.!\s]*$/i],
+  },
+  {
+    intent: 'hair',
+    patterns: [/شعر/i, /صبغ/i, /تسريح/i],
+  },
+  {
+    intent: 'product',
+    patterns: [/مكون/i, /مكوّن/i, /منتج/i, /عبوة/i],
+  },
+  {
+    intent: 'off_topic',
+    patterns: [/كرة قدم/i, /سياسة/i, /برمجة/i],
+  },
+];
+
 const SKIN_RULES: IntentRule[] = [
   {
     intent: 'skin',
@@ -90,9 +113,8 @@ export class MceIntentClassifierService {
     const text = message.trim();
     if (!text) return 'general';
 
-    const rules: IntentRule[] = [];
-    if (snapshot.outfit) rules.push(...OUTFIT_RULES);
-    if (snapshot.skin) rules.push(...SKIN_RULES);
+    const rules: IntentRule[] = [...ALWAYS_RULES, ...OUTFIT_RULES, ...SKIN_RULES];
+    void snapshot;
 
     for (const rule of rules) {
       if (rule.patterns.some((p) => p.test(text))) {
@@ -100,8 +122,6 @@ export class MceIntentClassifierService {
       }
     }
 
-    if (snapshot.outfit && !snapshot.skin) return 'styling';
-    if (snapshot.skin && !snapshot.outfit) return 'skin';
     return 'general';
   }
 
@@ -111,9 +131,13 @@ export class MceIntentClassifierService {
         styling: 'ركّزي على الأسلوب والألوان والتناسق — دون اقتراح تغيير قصّة القطع.',
         occasion: 'قيّمي ملاءمة الإطلالة للمناسبة المذكورة في السياق.',
         accessory: 'اقترحي إكسسوارات محددة متوافقة مع الألوان والمناسبة.',
-        makeup: 'نصائح مكياج عامة متوافقة مع الإطلالة — دون وصف طبي.',
-        skin: 'اربطي الإجابة بتقرير البشرة المخزّن فقط.',
-        general: 'أجيبي باختصار ووضوح مع الاستشهاد بالحقائق المتاحة.',
+        makeup: 'نصائح مكياج عامة. استخدمي التقرير إن وُجد ولا تصفي علاجًا.',
+        hair: 'نصائح شعر عامة دون تشخيص فروة الرأس.',
+        product: 'ناقشي المنتج أو المكونات الظاهرة. إن لم تتضح فاطلبي صورة أوضح أو النص.',
+        skin: 'إن وُجد تقرير فاستخدميه للحقائق الشخصية، وإلا فأجيبي عناية عامة دون اختراع درجات.',
+        greeting: 'ردّي بتحية قصيرة ثم اتركي الباب مفتوحًا لسؤال جمال واحد.',
+        off_topic: 'بلطف أعيدي الحديث إلى الجمال والعناية والإطلالات.',
+        general: 'أجيبي باختصار. التقرير للحقائق الشخصية والمعرفة العامة للشرح.',
       } satisfies Record<MceConsultationIntent, string>
     )[intent];
   }

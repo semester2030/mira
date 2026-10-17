@@ -37,7 +37,11 @@ describe('UsersService', () => {
 
     expect(prisma.auditLog.create).toHaveBeenCalledWith(
       expect.objectContaining({
-        data: expect.objectContaining({ action: 'account_deleted', userId: 'u1' }),
+        data: expect.objectContaining({
+          action: 'account_deleted',
+          userId: 'u1',
+          metadata: { emailRetained: false },
+        }),
       }),
     );
     expect(prisma.user.delete).toHaveBeenCalledWith({ where: { id: 'u1' } });

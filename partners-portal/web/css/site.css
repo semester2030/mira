@@ -285,3 +285,98 @@ th, td {
 }
 
 #adsForm input { width: 100%; }
+
+.sr-only {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  padding: 0;
+  margin: -1px;
+  overflow: hidden;
+  clip: rect(0, 0, 0, 0);
+  white-space: nowrap;
+  border: 0;
+}
+
+.btn:focus-visible,
+a:focus-visible,
+input:focus-visible,
+select:focus-visible,
+textarea:focus-visible {
+  outline: 2px solid var(--primary-strong);
+  outline-offset: 2px;
+}
+
+.btn.is-busy { cursor: progress; opacity: 0.88; }
+.btn.is-success { background: var(--ok); color: #fff; }
+.btn:disabled { cursor: not-allowed; }
+
+.skeleton-card {
+  border: 1px solid var(--border);
+  border-radius: 12px;
+  background: #f7eef3;
+  margin-bottom: 0.5rem;
+}
+
+.skeleton-card-stat { height: 84px; }
+.skeleton-card-list { height: 92px; }
+.skeleton-card-booking { height: 168px; }
+
+.stat-enter { animation: mira-enter 200ms ease-out; }
+.status-changed { animation: mira-enter 200ms ease-out; }
+.save-ok { animation: mira-save 220ms ease-out; }
+
+@keyframes mira-enter {
+  from { opacity: 0.45; }
+  to { opacity: 1; }
+}
+
+@keyframes mira-save {
+  from { background: #e8f5ee; }
+  to { background: transparent; }
+}
+
+.num.is-missing { font-size: 1rem; color: var(--muted); }
+
+.media-state { margin: 0.2rem 0; font-size: 0.85rem; }
+.media-progress {
+  height: 6px;
+  background: var(--border);
+  border-radius: 999px;
+  overflow: hidden;
+  margin: 0.35rem 0;
+}
+
+.media-progress-bar {
+  display: block;
+  height: 100%;
+  width: 0;
+  background: var(--primary);
+  transition: width 180ms linear;
+}
+
+.media-progress.is-wait .media-progress-bar {
+  width: 35%;
+  animation: mira-wait 800ms ease-in-out infinite alternate;
+}
+
+.media-progress.is-done .media-progress-bar { width: 100%; background: var(--ok); }
+.media-progress.is-fail { background: #fdecea; }
+
+@keyframes mira-wait {
+  from { transform: translateX(-20%); }
+  to { transform: translateX(180%); }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .stat-enter,
+  .status-changed,
+  .save-ok,
+  .media-progress-bar,
+  .media-progress.is-wait .media-progress-bar {
+    animation: none;
+    transition: none;
+  }
+
+  .media-progress.is-wait .media-progress-bar { width: 100%; opacity: 0.45; transform: none; }
+}

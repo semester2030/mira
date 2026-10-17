@@ -78,9 +78,8 @@ export function parseYouCamSpatial(
     const row = output.find(
       (r) => normalizeConcernId(String(r.type ?? '')) === concernId,
     );
-    const globalScore = Math.round(
-      globalScores[concernId] ??
-        (typeof row?.ui_score === 'number' ? row.ui_score : 72),
+    const globalScore = readContractUiScore(
+      globalScores[concernId] ?? row?.ui_score,
     );
     const labels = CONCERN_LABELS[concernId] ?? {
       ar: concernId,
@@ -103,7 +102,7 @@ export function parseYouCamSpatial(
       labelAr: labels.ar,
       labelEn: labels.en,
       globalScore,
-      severity: severityFromUi(globalScore),
+      severity: globalScore == null ? null : severityFromUi(globalScore),
       zoneScores,
       highlightZoneIds,
       highlightColor: labels.color,
@@ -111,10 +110,13 @@ export function parseYouCamSpatial(
     });
   }
 
-  overlays.sort((a, b) => a.globalScore - b.globalScore);
+  overlays.sort(
+    (a, b) => (a.globalScore ?? Number.POSITIVE_INFINITY) - (b.globalScore ?? Number.POSITIVE_INFINITY),
+  );
 
   const defaultConcernId =
-    overlays.find((o) => o.globalScore < 65)?.concernId ??
+    overlays.find((o) => o.globalScore != null && o.globalScore < 65)?.concernId ??
+    overlays.find((o) => o.globalScore != null)?.concernId ??
     overlays[0]?.concernId ??
     'oiliness';
 
@@ -154,20 +156,16 @@ function extractZoneScores(
     if (!map) continue;
     for (const [key, value] of Object.entries(map)) {
       const zoneId = mapRegionKey(key);
-      const score = asNumber(value);
-      if (zoneId && score != null) {
-        scores[zoneId] = Math.round(score);
-      }
+      const score = readContractUiScore(value);
+      if (zoneId && score != null) scores[zoneId] = score;
     }
   }
 
   for (const key of ['forehead', 'cheek', 't_zone', 'nose', 'chin', 'under_eye']) {
     if (row[key] != null) {
       const zoneId = mapRegionKey(key);
-      const score = asNumber(row[key]);
-      if (zoneId && score != null) {
-        scores[zoneId] = Math.round(score);
-      }
+      const score = readContractUiScore(row[key]);
+      if (zoneId && score != null) scores[zoneId] = score;
     }
   }
 
@@ -232,6 +230,13 @@ function normalizeConcernId(type: string): string {
   if (t === 'dark_circle' || t === 'dark_circle_v2') return 'dark_circle';
   if (t === 'age_spot') return 'age_spot';
   return t;
+}
+
+/** YouCam ui_score contract: a finite number from 0 through 100. raw_score is not a substitute. */
+export function readContractUiScore(value: unknown): number | null {
+  if (typeof value !== 'number' || !Number.isFinite(value)) return null;
+  if (value < 0 || value > 100) return null;
+  return Math.round(value);
 }
 
 function severityFromUi(uiScore: number): ConcernSeverity {

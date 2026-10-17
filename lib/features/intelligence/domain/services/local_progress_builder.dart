@@ -20,11 +20,15 @@ abstract final class LocalProgressBuilder {
 
     final timeline = sorted
         .map(
-          (r) => ProgressTimelinePoint(
-            analysisId: r.id ?? '',
-            createdAt: r.createdAt ?? DateTime.now(),
-            overallScore: _score(r),
-          ),
+          (r) {
+            final score = _score(r);
+            return ProgressTimelinePoint(
+              analysisId: r.id ?? '',
+              createdAt: r.createdAt ?? DateTime.now(),
+              overallScore: score,
+              overallScoreAvailable: score != null,
+            );
+          },
         )
         .toList();
 
@@ -51,29 +55,36 @@ abstract final class LocalProgressBuilder {
     final previous = _resolve(sorted[sorted.length - 2]);
     final current = _resolve(sorted.last);
 
+    final overallReady = previous.overallScoreAvailable == true &&
+        current.overallScoreAvailable == true;
     final trends = [
-      _trend(
-        'overall',
-        'مؤشر الجمال',
-        previous.overallBeautyScore,
-        current.overallBeautyScore,
-      ),
-      _trendFromConcerns('moisture', 'الترطيب', previous, current),
-      _trendFromConcerns('pore', 'المسام', previous, current),
-      _trendFromConcerns('redness', 'الاحمرار', previous, current),
+      if (overallReady)
+        _trend(
+          'overall',
+          'مؤشر الجمال',
+          previous.overallBeautyScore,
+          current.overallBeautyScore,
+        ),
+      ...[
+        _trendFromConcerns('moisture', 'الترطيب', previous, current),
+        _trendFromConcerns('pore', 'المسام', previous, current),
+        _trendFromConcerns('redness', 'الاحمرار', previous, current),
+      ].whereType<ProgressMetricTrend>(),
     ];
 
     final improved = trends.where((t) => t.isImproved).toList();
-    final headline = improved.isNotEmpty
-        ? improved.first.messageAr
-        : 'مقارنة بين آخر تحليلين';
+    final headline = !overallReady
+        ? overallComparisonUnavailableAr
+        : improved.isNotEmpty
+            ? improved.first.messageAr
+            : 'مقارنة بين آخر تحليلين';
 
     return ProgressForecast(
       enabled: true,
       scanCount: sorted.length,
       needsMoreScans: false,
       headlineAr: headline,
-      summaryAr: _forecastSummary(timeline),
+      summaryAr: overallReady ? _forecastSummary(timeline) : overallComparisonUnavailableAr,
       timeline: timeline,
       trends: trends,
       milestones: _milestones(sorted.length, trends),
@@ -88,37 +99,34 @@ abstract final class LocalProgressBuilder {
     return LocalMiraReportBuilder.fromSkinReport(report);
   }
 
-  static int _score(SkinReport report) => _resolve(report).overallBeautyScore;
+  static int? _score(SkinReport report) {
+    final resolved = _resolve(report);
+    if (resolved.overallScoreAvailable != true) return null;
+    return resolved.overallBeautyScore;
+  }
 
-  static ProgressMetricTrend _trendFromConcerns(
+  static ProgressMetricTrend? _trendFromConcerns(
     String id,
     String labelAr,
     MiraBeautyReport previous,
     MiraBeautyReport current,
   ) {
-    return _trend(
-      id,
-      labelAr,
-      _concernScore(previous.mainConcerns, id),
-      _concernScore(current.mainConcerns, id),
-    );
+    final previousScore = _measuredScore(previous, id);
+    final currentScore = _measuredScore(current, id);
+    if (previousScore == null || currentScore == null) return null;
+    return _trend(id, labelAr, previousScore, currentScore);
   }
 
-  static int _concernScore(List<ConcernNarrative> concerns, String id) {
-    final match = concerns.where((c) => c.id == id);
-    if (match.isEmpty) return 70;
-    switch (match.first.severity) {
-      case 'none':
-        return 88;
-      case 'mild':
-        return 74;
-      case 'moderate':
-        return 58;
-      case 'noticeable':
-        return 42;
-      default:
-        return 70;
+  static int? _measuredScore(MiraBeautyReport report, String id) {
+    for (final overlay in report.faceHealthMap.concernOverlays) {
+      final key = overlay.concernId == 'hydration' ? 'moisture' : overlay.concernId;
+      if (key == id) {
+        final score = overlay.globalScore;
+        if (score == null || score < 0 || score > 100) return null;
+        return score;
+      }
     }
+    return null;
   }
 
   static ProgressMetricTrend _trend(
@@ -156,11 +164,12 @@ abstract final class LocalProgressBuilder {
 
   static int? _project30Days(List<ProgressTimelinePoint> timeline) {
     if (timeline.length < 2) return null;
+    if (timeline.any((point) => point.overallScore == null)) return null;
     final first = timeline.first;
     final last = timeline.last;
     final daySpan = last.createdAt.difference(first.createdAt).inDays.clamp(1, 3650);
-    final slope = (last.overallScore - first.overallScore) / daySpan;
-    return (last.overallScore + slope * 30).round().clamp(0, 100);
+    final slope = (last.overallScore! - first.overallScore!) / daySpan;
+    return (last.overallScore! + slope * 30).round().clamp(0, 100);
   }
 
   static List<ProgressMilestone> _milestones(

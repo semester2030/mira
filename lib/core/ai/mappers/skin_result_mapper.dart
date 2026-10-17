@@ -1,3 +1,4 @@
+import '../../../features/intelligence/domain/services/local_mira_report_builder.dart';
 import '../../../features/skin_analysis/domain/entities/capture_quality_signals.dart';
 import '../../../features/skin_analysis/domain/entities/skin_report.dart';
 import '../../../features/skin_analysis/domain/services/beauty_score_engine.dart';
@@ -47,11 +48,13 @@ abstract final class SkinResultMapper {
   }
 
   static SkinAnalysisResult fromReport(SkinReport report) {
+    // SkinAnalysisResult.hydration is a required int. This substitute is only
+    // consumed by recommendation copy, not by the overall score or progress path.
     return SkinAnalysisResult(
       beautyScore: report.score,
       skinTypeAr: report.skinType,
       skinTypeEn: report.skinTypeEn,
-      hydration: report.hydration,
+      hydration: report.hydration ?? 0,
       oiliness: report.oiliness,
       pores: report.pores,
       wrinkles: report.wrinkles,
@@ -62,11 +65,8 @@ abstract final class SkinResultMapper {
       undertoneEn: report.undertoneEn,
       skinToneAr: report.skinTone,
       skinToneEn: report.skinToneEn,
-      recommendationsAr:
-          report.recommendations.isNotEmpty ? report.recommendations : [report.advice],
-      recommendationsEn: report.recommendations.isNotEmpty
-          ? List<String>.from(report.recommendations)
-          : (report.advice.isNotEmpty ? [report.advice] : const []),
+      recommendationsAr: LocalMiraReportBuilder.currentTipsFor(report),
+      recommendationsEn: LocalMiraReportBuilder.currentTipsFor(report),
       skinAge: report.skinAge,
       concernScores: report.concernScores,
     );

@@ -17,6 +17,8 @@ class ConsultationStreamDataSource {
     required String sessionId,
     required String message,
     String? contextSnapshotId,
+    List<String> attachmentIds = const [],
+    String? clientMessageId,
     void Function(String deltaText)? onDelta,
   }) async {
     final response = await _dio.post<ResponseBody>(
@@ -25,6 +27,9 @@ class ConsultationStreamDataSource {
         'message': message,
         if (contextSnapshotId != null && contextSnapshotId.isNotEmpty)
           'contextSnapshotId': contextSnapshotId,
+        if (attachmentIds.isNotEmpty) 'attachmentIds': attachmentIds,
+        if (clientMessageId != null && clientMessageId.isNotEmpty)
+          'clientMessageId': clientMessageId,
       },
       options: Options(
         responseType: ResponseType.stream,

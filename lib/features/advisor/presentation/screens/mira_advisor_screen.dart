@@ -1,4 +1,7 @@
+import 'dart:io';
+
 import 'package:flutter/material.dart';
+import 'package:image_picker/image_picker.dart';
 
 import '../../../../core/config/mira_features.dart';
 import '../../../../core/entitlements/mira_runtime_entitlement_store.dart';
@@ -15,15 +18,15 @@ import '../../../../shared/widgets/mce/mce_streaming_text.dart';
 import '../../../../shared/widgets/premium/premium_exports.dart';
 import '../../../consultation/data/datasources/consultation_api_data_source.dart';
 import '../../../consultation/data/datasources/consultation_stream_data_source.dart';
+import '../../../consultation/domain/consultation_session_gate.dart';
+import '../../../consultation/domain/dialogue_history.dart';
+import '../../../consultation/domain/dialogue_outbound.dart';
+import '../../../consultation/presentation/widgets/consultation_composer.dart';
+import '../../../consultation/presentation/widgets/consultation_image_strip.dart';
 import '../../../outfit_analysis/data/datasources/outfit_analysis_api_data_source.dart';
 import '../../../outfit_analysis/domain/helpers/outfit_consultation_mapper.dart';
-import '../../data/datasources/advisor_api_data_source.dart';
-import '../../domain/entities/advisor_face_context.dart';
-import '../../domain/entities/advisor_fashion_context.dart';
 import '../../domain/entities/advisor_response.dart';
-import '../../domain/mappers/advisor_fashion_context_mapper.dart';
 import '../../domain/services/fashion_advisor_route_decision.dart';
-import '../../domain/services/fashion_conversation_context_parser.dart';
 import '../../../face_analysis_experience/advisor_context/advisor_context.dart';
 
 const _skinStarterQuestions = [
@@ -32,10 +35,6 @@ const _skinStarterQuestions = [
   'كيف أحافظ على نتائج التحليل؟',
   'ما المنتجات الأنسب لبشرتي؟',
 ];
-
-const _fashionUnavailableAr =
-    'نصيحة الأزياء المؤسَّسة غير مفعّلة في هذا الإصدار بعد. '
-    'ستتوفر عبر مستشار ميرا عند تفعيل مسار الأزياء.';
 
 class MiraAdvisorScreen extends StatefulWidget {
   const MiraAdvisorScreen({super.key});
@@ -48,10 +47,13 @@ class _MiraAdvisorScreenState extends State<MiraAdvisorScreen> {
   final _input = TextEditingController();
   final _scroll = ScrollController();
   final _messages = <AdvisorMessage>[];
+  final _drafts = <ChatImageDraft>[];
+  DialogueOutbound? _failedOutbound;
+  int _maxImages = 3;
+  String? _olderCursor;
   final _consultationApi = ConsultationApiDataSource();
   final _streamApi = ConsultationStreamDataSource();
   final _outfitApi = OutfitAnalysisApiDataSource();
-  final _advisorApi = AdvisorApiDataSource();
 
   bool _loading = false;
   bool _sessionReady = false;
@@ -61,18 +63,8 @@ class _MiraAdvisorScreenState extends State<MiraAdvisorScreen> {
   String? _boundOutfitAnalysisId;
   _ConsultationFocus _focus = _ConsultationFocus.skin;
 
-  /// Sticky Advisor fashion conversation (follow-ups stay off MCE).
-  bool _fashionAdvisorSticky = false;
-  /// Sticky Face contextual conversation (9I — follow-ups retain Face context).
-  bool _faceAdvisorSticky = false;
-  final List<String> _preferenceTokens = [];
-  String? _explicitCulturalContext;
-  String? _styleGoalOverride;
-  String? _dressCodeOverride;
-  String? _occasionOverride;
-
-  /// Test/observability counters — one fashion/face turn must not double-call.
-  int advisorApiCallCount = 0;
+  final bool _fashionAdvisorSticky = false;
+  final bool _faceAdvisorSticky = false;
   int mceStreamCallCount = 0;
 
   @override
@@ -133,9 +125,19 @@ class _MiraAdvisorScreenState extends State<MiraAdvisorScreen> {
           FaceAdvisorClientRoute.advisorFaceChat ||
       _faceAdvisorSticky;
 
+  bool get _openDialogue {
+    final args = _args;
+    if (args == null) return true;
+    final hasReport = args.skinReport != null ||
+        args.outfitAnalysis != null ||
+        (args.outfitAnalysisId != null && args.outfitAnalysisId!.isNotEmpty) ||
+        args.faceContext != null ||
+        args.recolorAttemptId != null;
+    return !hasReport;
+  }
+
   Future<void> _ensureSession() async {
     final args = _args;
-    if (args == null) return;
     if (!AppSession.canUseCloud || AppSession.isGuest) {
       setState(() {
         _sessionError = 'سجّلي الدخول لاستخدام مستشار ميرا الذكي';
@@ -143,51 +145,15 @@ class _MiraAdvisorScreenState extends State<MiraAdvisorScreen> {
       return;
     }
     if (_sessionReady) return;
+    if (args == null) {
+      await _openOrResume();
+      return;
+    }
 
     final outfitPrimary =
         args.outfitAnalysis != null || args.outfitAnalysisId != null;
     final recolorId =
         args.recolorAttemptId ?? AnalysisSession.lastRecolorAttemptId;
-
-    // Face Advisor (9I): analysisId alone is enough for /advisor/chat.
-    if (_faceContext != null) {
-      setState(() {
-        _sessionReady = true;
-        _sessionError = null;
-        _focus = _ConsultationFocus.face;
-        if (_faceContext!.suggestedQuestionsAr.isNotEmpty) {
-          _followUps = _faceContext!.suggestedQuestionsAr;
-        }
-      });
-      return;
-    }
-
-    // Fashion Advisor V1 (QA): outfit-primary can proceed without MCE session.
-    if (MiraFeatures.fashionAdvisorV1 &&
-        MiraRuntimeEntitlementStore.fashionAdvisorModeB &&
-        outfitPrimary &&
-        recolorId == null) {
-      try {
-        String? outfitAnalysisId = args.outfitAnalysisId;
-        if (outfitAnalysisId == null && args.outfitAnalysis != null) {
-          final snapshot = await _outfitApi.saveIntelligenceSnapshot(
-            OutfitConsultationMapper.toSnapshotPayload(args.outfitAnalysis!),
-          );
-          outfitAnalysisId = snapshot.id;
-        }
-        if (!mounted) return;
-        setState(() {
-          _boundOutfitAnalysisId = outfitAnalysisId;
-          _sessionReady = true;
-          _sessionError = null;
-          _focus = _ConsultationFocus.outfit;
-          _followUps = OutfitConsultationMapper.outfitStarterQuestions;
-        });
-        return;
-      } catch (_) {
-        // Fall through to MCE session bootstrap if snapshot fails.
-      }
-    }
 
     try {
       String? outfitAnalysisId = args.outfitAnalysisId;
@@ -203,12 +169,21 @@ class _MiraAdvisorScreenState extends State<MiraAdvisorScreen> {
           : (args.skinReport?.id ??
               (outfitPrimary ? null : AnalysisSession.lastSkin?.id));
 
+      final faceLabel = _faceContext?.contextLabelAr;
+      final statedGoal = [
+        if (faceLabel != null && faceLabel.isNotEmpty) 'دخلت من نتيجة الوجه: $faceLabel',
+        if (args.initialQuestion != null && args.initialQuestion!.trim().isNotEmpty)
+          args.initialQuestion!.trim(),
+      ].join(' ');
       final session = await _consultationApi.createSession(
         skinAnalysisId: skinId,
         outfitAnalysisId: outfitAnalysisId,
         recolorAttemptId: recolorId,
         occasionId: args.outfitAnalysis?.occasion.id,
+        statedGoalAr: statedGoal.isEmpty ? null : statedGoal,
+        face: _faceContext?.toJson(),
       );
+      final imageLimit = await _consultationApi.dialogueImageLimit();
       if (!mounted) return;
       setState(() {
         _sessionId = session.id;
@@ -216,7 +191,10 @@ class _MiraAdvisorScreenState extends State<MiraAdvisorScreen> {
         _boundOutfitAnalysisId = outfitAnalysisId;
         _sessionReady = true;
         _sessionError = null;
-        _focus = recolorId != null
+        _maxImages = imageLimit;
+        _focus = _faceContext != null
+            ? _ConsultationFocus.face
+            : recolorId != null
             ? _ConsultationFocus.atelier
             : outfitPrimary
                 ? _ConsultationFocus.outfit
@@ -228,7 +206,9 @@ class _MiraAdvisorScreenState extends State<MiraAdvisorScreen> {
     } catch (e) {
       if (!mounted) return;
       setState(() {
+        _loading = false;
         _sessionReady = false;
+        _sessionId = null;
         _sessionError = 'تعذّر بدء جلسة المستشار — حدّثي التطبيق أو حاولي لاحقاً';
         _focus = args.outfitAnalysis != null
             ? _ConsultationFocus.outfit
@@ -244,61 +224,154 @@ class _MiraAdvisorScreenState extends State<MiraAdvisorScreen> {
     super.dispose();
   }
 
-  void _absorbExplicitContext(String message) {
-    final prefs =
-        FashionConversationContextParser.preferenceTokensFromMessage(message);
-    for (final p in prefs) {
-      if (!_preferenceTokens.contains(p)) _preferenceTokens.add(p);
+  Future<void> _openOrResume() async {
+    try {
+      final sessions = await _consultationApi.listSessions();
+      if (sessions.isNotEmpty) {
+        final latest = sessions.first;
+        final history = await _consultationApi.listMessages(latest.id);
+        final loaded = <AdvisorMessage>[];
+        for (final message in history.messages) {
+          final slots = await loadDialogueImages(
+            message.attachmentIds,
+            _consultationApi.downloadAttachment,
+          );
+          loaded.add(AdvisorMessage(
+            id: message.id,
+            text: message.contentAr,
+            isUser: message.isUser,
+            at: message.createdAt,
+            confidence: message.confidence,
+            images: [for (final slot in slots) if (slot.bytes != null) slot.bytes!],
+            imageSlots: slots,
+            attachmentIds: message.attachmentIds,
+            clientMessageId: message.clientMessageId,
+            citedFacts: message.citedFacts
+                .map((f) => MceCitedFact(id: f.id, labelAr: f.labelAr, valueAr: f.valueAr))
+                .toList(),
+          ));
+        }
+        if (!mounted) return;
+        setState(() {
+          _messages
+            ..clear()
+            ..addAll(loaded);
+          _sessionId = latest.id;
+          _snapshotId = latest.activeSnapshotId;
+          _sessionReady = true;
+          _sessionError = null;
+          _olderCursor = history.nextCursor;
+          if (_messages.isEmpty && latest.suggestedStartersAr.isNotEmpty) {
+            _followUps = latest.suggestedStartersAr;
+          }
+        });
+        return;
+      }
+      final session = await _consultationApi.createSession();
+      if (!mounted) return;
+      setState(() {
+        _sessionId = session.id;
+        _snapshotId = session.activeSnapshotId;
+        _sessionReady = true;
+        _sessionError = null;
+        if (session.suggestedStartersAr.isNotEmpty) {
+          _followUps = session.suggestedStartersAr;
+        }
+      });
+    } catch (_) {
+      if (!mounted) return;
+      setState(() {
+        _loading = false;
+        _sessionReady = false;
+        _sessionId = null;
+        _sessionError = 'تعذّر بدء جلسة المستشار — حدّثي التطبيق أو حاولي لاحقاً';
+      });
     }
-    final goal =
-        FashionConversationContextParser.styleGoalFromMessage(message);
-    if (goal != null) _styleGoalOverride = goal;
-    final culture =
-        FashionConversationContextParser.explicitCulturalContext(message);
-    if (culture != null) {
-      _explicitCulturalContext = culture;
-    }
-    final dress =
-        FashionConversationContextParser.dressCodeFromMessage(message);
-    if (dress != null) _dressCodeOverride = dress;
-    final occasion =
-        FashionConversationContextParser.occasionFromMessage(message);
-    if (occasion != null) _occasionOverride = occasion;
   }
 
-  AdvisorFashionContext _buildFashionContext() {
-    final args = _args;
-    final analysis = args?.outfitAnalysis;
-    if (analysis == null) {
-      return AdvisorFashionContext(
-        outfitId: _boundOutfitAnalysisId ?? args?.outfitAnalysisId,
-        occasion: _occasionOverride,
-        dressCode: _dressCodeOverride,
-        styleGoal: _styleGoalOverride,
-        preferenceTokens: List.unmodifiable(_preferenceTokens),
-        culturalContext: _explicitCulturalContext,
-        culturalContextExplicit:
-            _explicitCulturalContext != null ? true : null,
+  Future<void> _removeDraft(String localId) async {
+    final index = _drafts.indexWhere((draft) => draft.localId == localId);
+    if (index < 0) return;
+    final draft = _drafts[index];
+    if (draft.attachmentId != null) {
+      try {
+        await _consultationApi.deleteAttachment(draft.attachmentId!);
+      } catch (_) {
+        if (!mounted) return;
+        setState(() {
+          _drafts[index] = draft.copyWith(status: 'failed', errorAr: 'تعذر الحذف من الخادم');
+        });
+        return;
+      }
+    }
+    if (!mounted) return;
+    setState(() => _drafts.removeWhere((item) => item.localId == localId));
+  }
+
+  Future<void> _loadOlder() async {
+    final sessionId = _sessionId;
+    final cursor = _olderCursor;
+    if (sessionId == null || cursor == null || _loading) return;
+    setState(() => _loading = true);
+    try {
+      final page = await _consultationApi.listMessages(sessionId, before: cursor);
+      if (!mounted) return;
+      final older = <AdvisorMessage>[];
+      for (final message in page.messages) {
+        final slots = await loadDialogueImages(
+          message.attachmentIds,
+          _consultationApi.downloadAttachment,
+        );
+        older.add(AdvisorMessage(
+          id: message.id,
+          text: message.contentAr,
+          isUser: message.isUser,
+          at: message.createdAt,
+          images: [for (final slot in slots) if (slot.bytes != null) slot.bytes!],
+          imageSlots: slots,
+          attachmentIds: message.attachmentIds,
+          clientMessageId: message.clientMessageId,
+        ));
+      }
+      final merged = prependOlderMessages(older, _messages, (message) => message.id);
+      setState(() {
+        _messages
+          ..clear()
+          ..addAll(merged);
+        _olderCursor = page.nextCursor;
+        _loading = false;
+      });
+    } catch (_) {
+      if (!mounted) return;
+      setState(() => _loading = false);
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(content: Text('تعذر تحميل الرسائل الأقدم')),
       );
     }
-    final base = AdvisorFashionContextMapper.fromOutfitAnalysis(
-      analysis,
-      outfitAnalysisId: _boundOutfitAnalysisId ?? args?.outfitAnalysisId,
-      extraPreferenceTokens: _preferenceTokens,
-      explicitCulturalContext: _explicitCulturalContext,
-      culturalContextExplicit: _explicitCulturalContext != null,
-      styleGoalOverride: _styleGoalOverride,
-      dressCodeOverride: _dressCodeOverride,
-    );
-    if (_occasionOverride != null && _occasionOverride != base.occasion) {
-      return base.copyWith(occasion: _occasionOverride);
-    }
-    return base;
   }
 
-  Future<void> _send(String text) async {
-    final trimmed = text.trim();
-    if (trimmed.isEmpty || _loading) return;
+  bool get _canSend => consultationSessionReady(markedReady: _sessionReady, sessionId: _sessionId);
+
+  Future<void> _pickGalleryImage() async {
+    if (_loading || _drafts.length >= _maxImages || !_canSend) return;
+    final picked = await ImagePicker().pickImage(
+      source: ImageSource.gallery,
+      imageQuality: 90,
+    );
+    if (picked == null || !mounted) return;
+    final bytes = await File(picked.path).readAsBytes();
+    if (!mounted) return;
+    setState(() {
+      _drafts.add(ChatImageDraft(
+        localId: 'img-${DateTime.now().microsecondsSinceEpoch}',
+        bytes: bytes,
+      ));
+    });
+  }
+
+  Future<void> _send(String text, {DialogueOutbound? retry}) async {
+    final trimmed = (retry?.text ?? text).trim();
+    if ((trimmed.isEmpty && _drafts.isEmpty && retry == null) || _loading) return;
 
     if (!AppSession.canUseCloud || AppSession.isGuest) {
       ScaffoldMessenger.of(context).showSnackBar(
@@ -307,45 +380,70 @@ class _MiraAdvisorScreenState extends State<MiraAdvisorScreen> {
       return;
     }
 
-    setState(() {
-      _loading = true;
-      _messages.add(
-        AdvisorMessage(text: trimmed, isUser: true, at: DateTime.now()),
-      );
-      _input.clear();
-    });
+    setState(() => _loading = true);
+    var outbound = retry ??
+        DialogueOutbound.first(
+          clientMessageId: 'c-${DateTime.now().microsecondsSinceEpoch}',
+          text: trimmed.isEmpty ? 'ما رأيك؟' : trimmed,
+          attachmentIds: const [],
+        );
+    if (outbound.appendUserBubble) {
+      final uploaded = await _uploadDrafts();
+      if (uploaded == null) return;
+      outbound = outbound.withAttachments(uploaded);
+      setState(() {
+        _loading = true;
+        _failedOutbound = null;
+        _messages.add(
+          AdvisorMessage(
+            text: outbound.text,
+            isUser: true,
+            at: DateTime.now(),
+            images: [for (final draft in _drafts) draft.bytes],
+            attachmentIds: outbound.attachmentIds,
+            clientMessageId: outbound.clientMessageId,
+          ),
+        );
+        _drafts.clear();
+        _input.clear();
+      });
+    } else {
+      setState(() {
+        _loading = true;
+        _failedOutbound = null;
+        final index = _messages.lastIndexWhere(
+          (message) => message.clientMessageId == outbound.clientMessageId,
+        );
+        if (index >= 0) {
+          _messages[index] = _messages[index].copyWith(failed: false);
+        }
+      });
+    }
     _scrollToEnd();
 
     try {
-      if (_useFaceAdvisorChat) {
-        await _sendViaFaceAdvisor(trimmed);
-        return;
-      }
-
-      final route = _currentRoute;
-
-      if (route == FashionAdvisorClientRoute.fashionUnavailable) {
-        await _respondLocalUnavailable();
-        return;
-      }
-
-      if (route == FashionAdvisorClientRoute.advisorFashionChat) {
-        _absorbExplicitContext(trimmed);
-        await _sendViaAdvisor(trimmed);
-        return;
-      }
-
-      // MCE path — never combined with Advisor for the same turn.
       if (_sessionId == null) {
         await _ensureSession();
       }
       if (_sessionId == null) {
         throw Exception(_sessionError ?? 'تعذّر بدء جلسة مستشار ميرا');
       }
-      await _sendWithStream(trimmed);
+      await _sendWithStream(outbound);
     } catch (e) {
       if (!mounted) return;
-      setState(() => _loading = false);
+      setState(() {
+        _loading = false;
+        _failedOutbound = outbound;
+        if (_messages.isNotEmpty && _messages.last.isStreaming && !_messages.last.isUser) {
+          _messages.removeLast();
+        }
+        final index = _messages.lastIndexWhere(
+          (message) => message.clientMessageId == outbound.clientMessageId,
+        );
+        if (index >= 0) {
+          _messages[index] = _messages[index].copyWith(failed: true);
+        }
+      });
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(content: Text('تعذر الرد: $e')),
       );
@@ -353,133 +451,49 @@ class _MiraAdvisorScreenState extends State<MiraAdvisorScreen> {
     _scrollToEnd();
   }
 
-  Future<void> _respondLocalUnavailable() async {
-    if (!mounted) return;
-    setState(() {
-      _messages.add(
-        AdvisorMessage(
-          text: _fashionUnavailableAr,
-          isUser: false,
-          at: DateTime.now(),
-          confidence: 'low',
-        ),
-      );
-      _loading = false;
-    });
-  }
-
-  Future<void> _sendViaFaceAdvisor(String trimmed) async {
-    advisorApiCallCount += 1;
-    _faceAdvisorSticky = true;
-
-    final ctx = _faceContext;
-    final face = ctx == null
-        ? null
-        : AdvisorFaceContext(
-            contextType: ctx.contextType.name,
-            analysisId: ctx.analysisId,
-            reportRef: ctx.reportRef,
-            selectedResultId: ctx.selectedResultId,
-            selectedInsightId: ctx.selectedInsightId,
-            selectedDetailRef: ctx.selectedDetailRef,
-            selectedRegion: ctx.selectedRegion,
-            selectedGuidanceId: ctx.selectedGuidanceId,
-            frozenRecommendationRef: ctx.frozenRecommendationRef,
-            evidenceRefs: ctx.evidenceRefs,
-            limitationRefs: ctx.limitationRefs,
-            confidenceQualifier: ctx.confidenceQualifier,
-            // 9M: free text is display-only — never forwarded as evidence authority.
-            personalizationLevel: ctx.personalizationLevel,
-            contextLabelAr: ctx.contextLabelAr,
-            resultVersion: ctx.resultVersion,
-            evidenceStale: ctx.evidenceStale,
-          );
-
-    if (ctx != null) {
-      FaceAdvisorContextAnalytics.questionSent(
-        type: ctx.contextType,
-        safeResultKey: ctx.selectedResultId ??
-            ctx.selectedInsightId ??
-            ctx.selectedGuidanceId ??
-            ctx.contextType.name,
-      );
+  Future<List<String>?> _uploadDrafts() async {
+    if (_drafts.isEmpty) return const [];
+    if (_sessionId == null) await _ensureSession();
+    if (_sessionId == null) {
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(content: Text(_sessionError ?? 'تعذّر بدء جلسة مستشار ميرا')),
+        );
+      }
+      return null;
     }
-
-    final analysisId = ctx?.reportRef ??
-        ctx?.analysisId ??
-        _args?.skinReport?.id ??
-        AnalysisSession.lastSkin?.id;
-
-    final response = await _advisorApi.chat(
-      message: trimmed,
-      analysisId: analysisId,
-      face: face,
-    );
-
-    if (!mounted) return;
-
-    final answerText = response.disclaimerAr != null &&
-            response.disclaimerAr!.trim().isNotEmpty &&
-            !response.answer.contains(response.disclaimerAr!)
-        ? '${response.answer}\n\n${response.disclaimerAr}'
-        : response.answer;
-
-    setState(() {
-      _messages.add(
-        AdvisorMessage(
-          text: answerText,
-          isUser: false,
-          at: DateTime.now(),
-          confidence: response.confidence,
-        ),
-      );
-      if (response.suggestedQuestions.isNotEmpty) {
-        _followUps = response.suggestedQuestions;
-      } else if (ctx?.suggestedQuestionsAr.isNotEmpty == true) {
-        _followUps = ctx!.suggestedQuestionsAr;
+    final ids = <String>[];
+    for (var i = 0; i < _drafts.length; i++) {
+      if (_drafts[i].attachmentId != null) {
+        ids.add(_drafts[i].attachmentId!);
+        continue;
       }
-      _loading = false;
-    });
+      setState(() {
+        _drafts[i] = _drafts[i].copyWith(status: 'uploading', errorAr: null);
+      });
+      try {
+        final id = await _consultationApi.uploadAttachment(
+          sessionId: _sessionId!,
+          bytes: _drafts[i].bytes,
+        );
+        if (!mounted) return null;
+        setState(() {
+          _drafts[i] = _drafts[i].copyWith(status: 'ready', attachmentId: id);
+        });
+        ids.add(id);
+      } catch (_) {
+        if (!mounted) return null;
+        setState(() {
+          _drafts[i] = _drafts[i].copyWith(status: 'failed', errorAr: 'تعذر الرفع');
+          _loading = false;
+        });
+        return null;
+      }
+    }
+    return ids;
   }
 
-  Future<void> _sendViaAdvisor(String trimmed) async {
-    advisorApiCallCount += 1;
-    _fashionAdvisorSticky = true;
-
-    final fashion = _buildFashionContext();
-    final analysisId = _args?.skinReport?.id;
-
-    final response = await _advisorApi.chat(
-      message: trimmed,
-      analysisId: analysisId,
-      fashion: fashion,
-    );
-
-    if (!mounted) return;
-
-    final answerText = response.disclaimerAr != null &&
-            response.disclaimerAr!.trim().isNotEmpty &&
-            !response.answer.contains(response.disclaimerAr!)
-        ? '${response.answer}\n\n${response.disclaimerAr}'
-        : response.answer;
-
-    setState(() {
-      _messages.add(
-        AdvisorMessage(
-          text: answerText,
-          isUser: false,
-          at: DateTime.now(),
-          confidence: response.confidence,
-        ),
-      );
-      if (response.suggestedQuestions.isNotEmpty) {
-        _followUps = response.suggestedQuestions;
-      }
-      _loading = false;
-    });
-  }
-
-  Future<void> _sendWithStream(String trimmed) async {
+  Future<void> _sendWithStream(DialogueOutbound outbound) async {
     mceStreamCallCount += 1;
     final streamMsg = AdvisorMessage(
       text: '',
@@ -492,8 +506,10 @@ class _MiraAdvisorScreenState extends State<MiraAdvisorScreen> {
 
     final turn = await _streamApi.sendMessageStream(
       sessionId: _sessionId!,
-      message: trimmed,
+      message: outbound.text,
       contextSnapshotId: _snapshotId,
+      attachmentIds: outbound.attachmentIds,
+      clientMessageId: outbound.clientMessageId,
       onDelta: (delta) {
         if (!mounted) return;
         setState(() {
@@ -510,6 +526,7 @@ class _MiraAdvisorScreenState extends State<MiraAdvisorScreen> {
     final assistant = turn.assistantMessage;
     setState(() {
       _messages[streamIndex] = AdvisorMessage(
+        id: assistant.id,
         text: assistant.contentAr,
         isUser: false,
         at: assistant.createdAt,
@@ -525,9 +542,7 @@ class _MiraAdvisorScreenState extends State<MiraAdvisorScreen> {
             .toList(),
       );
       _snapshotId = turn.session.activeSnapshotId ?? _snapshotId;
-      if (turn.session.suggestedStartersAr.isNotEmpty) {
-        _followUps = turn.session.suggestedStartersAr;
-      }
+      _followUps = assistant.suggestedQuestionsAr;
       _loading = false;
     });
   }
@@ -550,6 +565,9 @@ class _MiraAdvisorScreenState extends State<MiraAdvisorScreen> {
     if (_currentRoute == FashionAdvisorClientRoute.fashionUnavailable) {
       return 'نصيحة الأزياء المؤسَّسة غير مفعّلة في هذا الإصدار';
     }
+    if (_openDialogue) {
+      return 'محادثة مفتوحة عن الجمال والعناية والمكياج والشعر والإطلالات. الصور للمناقشة ولا تغيّر تقرير البشرة.';
+    }
     return switch (_focus) {
       _ConsultationFocus.atelier =>
         'إجابات مُؤَسَّسة على تجربة Atelier وQEL — تلوين قماش فقط',
@@ -563,6 +581,7 @@ class _MiraAdvisorScreenState extends State<MiraAdvisorScreen> {
   }
 
   String get _inputHint {
+    if (_openDialogue) return 'اسألي عن العناية أو المكياج أو الشعر أو الإطلالة…';
     return switch (_focus) {
       _ConsultationFocus.atelier =>
         'اسألي عن التلوين · QEL · دقة اللون · الهوية…',
@@ -649,6 +668,12 @@ class _MiraAdvisorScreenState extends State<MiraAdvisorScreen> {
                     ),
                   ),
                 ),
+              if (_olderCursor != null)
+                TextButton(
+                  key: const Key('consultation_load_older'),
+                  onPressed: _loading ? null : _loadOlder,
+                  child: const Text('رسائل أقدم'),
+                ),
               Expanded(
                 child: ListView.builder(
                   controller: _scroll,
@@ -680,44 +705,33 @@ class _MiraAdvisorScreenState extends State<MiraAdvisorScreen> {
                     },
                   ),
                 ),
-              Padding(
-                padding: const EdgeInsets.fromLTRB(12, 8, 12, 12),
-                child: Row(
-                  children: [
-                    Expanded(
-                      child: TextField(
-                        controller: _input,
-                        decoration: InputDecoration(
-                          hintText: _inputHint,
-                          filled: true,
-                          fillColor: AppColors.surface,
-                          border: OutlineInputBorder(
-                            borderRadius: BorderRadius.circular(16),
-                            borderSide: BorderSide.none,
-                          ),
-                        ),
-                        textInputAction: TextInputAction.send,
-                        onSubmitted: _loading ? null : _send,
-                      ),
-                    ),
-                    const SizedBox(width: 8),
-                    IconButton.filled(
-                      onPressed: _loading ? null : () => _send(_input.text),
-                      icon: _loading
-                          ? const SizedBox(
-                              width: 18,
-                              height: 18,
-                              child: CircularProgressIndicator(strokeWidth: 2),
-                            )
-                          : const Icon(Icons.send_rounded),
-                      style: IconButton.styleFrom(
-                        backgroundColor: AppColors.gold,
-                        foregroundColor: AppColors.primaryDark,
-                      ),
-                    ),
-                  ],
-                ),
+              ConsultationComposer(
+                controller: _input,
+                images: _drafts,
+                maxImages: _maxImages,
+                loading: _loading,
+                hintText: _inputHint,
+                onPick: _pickGalleryImage,
+                onRemove: (localId) => _removeDraft(localId),
+                onRetry: (localId) {
+                  final index = _drafts.indexWhere((draft) => draft.localId == localId);
+                  if (index < 0) return;
+                  setState(() {
+                    _drafts[index] = _drafts[index].copyWith(status: 'preview', errorAr: null);
+                  });
+                  _send(_input.text);
+                },
+                onSend: () => _send(_input.text),
               ),
+              if (_failedOutbound != null)
+                Padding(
+                  padding: const EdgeInsets.fromLTRB(12, 0, 12, 12),
+                  child: TextButton(
+                    key: const Key('consultation_retry_send'),
+                    onPressed: _loading ? null : () => _send('', retry: _failedOutbound!.retry()),
+                    child: const Text('إعادة إرسال الرسالة دون تكرار'),
+                  ),
+                ),
             ],
           ),
         ),
@@ -758,6 +772,17 @@ class _Bubble extends StatelessWidget {
                 child: MceConfidenceBadge(confidence: message.confidence!),
               ),
             if (!isUser && message.confidence != null) const SizedBox(height: 6),
+            if (message.imageSlots.isNotEmpty)
+              ConsultationImageStrip(slots: message.imageSlots)
+            else if (message.images.isNotEmpty)
+              ConsultationImageStrip(
+                slots: [
+                  for (final bytes in message.images)
+                    DialogueImageSlot(attachmentId: 'local', bytes: bytes),
+                ],
+              ),
+            if (message.failed)
+              Text('تعذر الإرسال', style: AppTypography.labelSmall),
             message.isStreaming
                 ? MceStreamingText(text: message.text, isStreaming: true)
                 : Text(

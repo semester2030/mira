@@ -1,4 +1,5 @@
 import { SkinAnalysisResult } from '../../ai/contracts/skin-analysis-result.interface';
+import { tipsFromSkinResult } from './current-care-tips';
 import {
   ConcernNarrative,
   ConcernSeverity,
@@ -39,7 +40,7 @@ const NARRATIVES: Record<
     none: 'المسام غير بارزة — مظهر ناعم ومتجانس.',
     mild: 'المسام ظاهرة بدرجة خفيفة — تنظيف لطيف يحافظ على الوضوح.',
     moderate: 'المسام ظاهرة بدرجة متوسطة وتحتاج عناية منتظمة.',
-    noticeable: 'المسام بارزة — مقشر BHA خفيف 1–2 مرات أسبوعياً قد يساعد.',
+    noticeable: 'المسام بارزة — التنظيف اللطيف مفيد، واختيار المقشر يكون مع مختص عند الحاجة.',
   },
   wrinkle: {
     none: 'لا توجد مؤشرات قوية على التجاعيد حالياً.',
@@ -50,7 +51,7 @@ const NARRATIVES: Record<
   acne: {
     none: 'لا مؤشرات واضحة على الحبوب — البشرة هادئة.',
     mild: 'بثور أو حبوب خفيفة — تجنبي لمس الوجه واستخدمي منظفاً لطيفاً.',
-    moderate: 'حبوب متوسطة — نياسيناميد أو BPO خفيف بعد استشارة.',
+    moderate: 'حبوب متوسطة — التنظيف اللطيف مفيد، وتقييم العلاج يكون مع مختص وليس من الصورة.',
     noticeable: 'حبوب ملحوظة — روتين مخصص للحبوب مع متابعة.',
   },
   age_spot: {
@@ -78,6 +79,10 @@ const NARRATIVES: Record<
     noticeable: 'هالات واضحة — روتين عناية بالعين منتظم.',
   },
 };
+
+export function currentConcernNarrative(id: string, severity: ConcernSeverity): string | null {
+  return NARRATIVES[id]?.[severity] ?? null;
+}
 
 function severityFromUiScore(uiScore: number): ConcernSeverity {
   if (uiScore >= 78) return 'none';
@@ -171,8 +176,7 @@ export function buildConcernNarratives(
 }
 
 export function buildTipsAr(skin: SkinAnalysisResult): string[] {
-  const tips = new Set<string>(skin.recommendationsAr.slice(0, 3));
-  tips.add('روتين يومي: تنظيف لطيف، ترطيب، وواقي شمس.');
+  const tips = new Set<string>(tipsFromSkinResult(skin));
   if (resolveUiScore(skin, 'moisture') < 60) {
     tips.add('زيدي الترطيب بسيروم حمض الهيالورونيك.');
   }

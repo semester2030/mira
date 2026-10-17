@@ -62,6 +62,8 @@ abstract final class ReportFaceMapSpec {
   static const borderOpacity = 0.32;
   static const blurSigma = 3.5;
 
+  static const estimateAr = 'مؤشر تقديري من الصورة';
+  static const unavailableAr = 'غير متاح';
   static const titleAr = 'خريطة مؤشرات البشرة';
   static const subtitleAr =
       'تعرض المناطق الشائعة المرتبطة بالمؤشر المختار بناءً على نتيجة تحليلك.';

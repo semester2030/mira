@@ -104,11 +104,21 @@ abstract final class BeautyScoreEngine {
       rawScore: rawBeforeSmoothing,
       compoundPenalty: compoundPenalty.round(),
       negativePenalty: negativePenalty.round(),
+      overallScoreAvailable: moistureInputAvailable(report),
     );
   }
 
   static int scoreFor(SkinReport report, {int? previousScore}) =>
       compute(report, previousScore: previousScore).finalScore;
+
+  /// A measured hydration value, including zero, or a valid moisture score.
+  /// Missing and null are not measurements. Weights are unchanged.
+  static bool moistureInputAvailable(SkinReport report) {
+    final stored = report.concernScores['moisture'];
+    if (stored != null && stored >= 0 && stored <= 100) return true;
+    final hydration = report.hydration;
+    return hydration != null && hydration >= 0 && hydration <= 100;
+  }
 
   static _Metrics _extractMetrics(SkinReport report) {
     final scores = {
@@ -120,21 +130,22 @@ abstract final class BeautyScoreEngine {
 
     int severityFromHealth(int value) => (100 - value).clamp(0, 100);
 
-    final hydration = health('moisture', report.hydration);
+    final hydration = health('moisture', report.hydration ?? 0);
     final wrinkleHealth = health('wrinkle', _legacyHealth(report.wrinkles));
     final poreHealth = health('pore', _legacyHealth(report.pores));
     final textureHealth = health('texture', _blend(hydration, poreHealth));
     final firmness = health('firmness', _blend(wrinkleHealth, hydration));
     final radiance = health(
       'radiance',
-      _blend(hydration, 100 - report.oiliness.clamp(0, 100)),
+      _blend(hydration, report.oiliness.clamp(0, 100)),
     );
     final smoothness = _blend(textureHealth, wrinkleHealth);
     final elasticity = _blend(firmness, wrinkleHealth);
 
-    final oilinessSeverity = report.concernScores.isNotEmpty
-        ? severityFromHealth(health('oiliness', 100 - report.oiliness))
-        : report.oiliness.clamp(0, 100);
+    // The stored oiliness field and concernScores.oiliness are the same ui_score:
+    // higher means healthier. Severity is derived once. An empty concern map
+    // does not switch the field to a quantity.
+    final oilinessSeverity = severityFromHealth(health('oiliness', report.oiliness));
 
     return _Metrics(
       positive: {

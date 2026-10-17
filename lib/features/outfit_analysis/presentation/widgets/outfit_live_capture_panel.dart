@@ -7,6 +7,7 @@ import 'package:image_picker/image_picker.dart';
 
 import '../../../../shared/theme/colors.dart';
 import '../../../../shared/theme/typography.dart';
+import '../../../../core/config/mira_features.dart';
 import '../../domain/entities/outfit_body_pose_metrics.dart';
 import '../../domain/entities/outfit_capture_validation.dart';
 import '../../domain/services/outfit_capture_rules.dart';
@@ -100,6 +101,7 @@ class _OutfitLiveCapturePanelState extends State<OutfitLiveCapturePanel>
   }
 
   Future<void> _initCamera({CameraLensDirection direction = CameraLensDirection.back}) async {
+    if (!MiraFeatures.outfitCameraCaptureEnabled) return;
     setState(() {
       _initializing = true;
       _error = null;

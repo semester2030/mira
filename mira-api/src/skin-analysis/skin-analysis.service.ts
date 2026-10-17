@@ -8,6 +8,7 @@ import { Prisma } from '@prisma/client';
 import { SkinAnalysisResult } from '../ai/contracts/skin-analysis-result.interface';
 import { MiraBeautyReport } from '../intelligence/contracts/mira-beauty-report.interface';
 import { IntelligenceService } from '../intelligence/intelligence.service';
+import { presentCurrentReportTips } from '../intelligence/pipeline/current-care-tips';
 import {
   assertNoRawYouCamInAudit,
   redactYouCamAudit,
@@ -274,7 +275,7 @@ export class SkinAnalysisService {
 
   private async resolveMiraReport(stored: unknown): Promise<MiraBeautyReport> {
     const existing = extractMiraReportFromStored(stored);
-    if (existing) return existing;
+    if (existing) return presentCurrentReportTips(existing);
 
     const legacy = extractLegacySkinFromStored(stored);
     if (legacy) {

@@ -54,6 +54,7 @@ mira-api/.env
 mira-api/.env.local
 mira-api/.env.qa
 mira-api/.env.*.local
+mira-api/data/journey-events.jsonl
 
 # Android Gradle reports (generated)
 android/build/

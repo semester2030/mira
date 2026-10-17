@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import '../../../../core/navigation/analysis_navigation.dart';
+import '../../../../core/navigation/premium_page_route.dart';
 import '../../../../core/navigation/app_routes.dart';
 import '../../../../core/navigation/route_args.dart';
 import '../../../../core/services/app_session.dart';
@@ -12,6 +13,8 @@ import '../../../../shared/widgets/guest_banner.dart';
 import '../../../../shared/widgets/mira_app_bar.dart';
 import '../../../../shared/widgets/premium/premium_exports.dart';
 import '../../domain/entities/outfit_analysis_mode.dart';
+import '../../domain/outfit_capture_availability.dart';
+import 'outfit_gallery_entry_screen.dart';
 import '../providers/outfit_intelligence_providers.dart';
 import '../../../packages/presentation/providers/package_credit_provider.dart';
 
@@ -51,6 +54,17 @@ class OutfitUploadScreen extends ConsumerWidget {
                   style: AppTypography.headlineSmall,
                 ),
                 const SizedBox(height: 8),
+                if (resolveOutfitCaptureEntry() == OutfitCaptureEntry.galleryWhilePaused) ...[
+                  Text(
+                    outfitCameraPausedMessage,
+                    key: const Key('outfit-camera-paused'),
+                    style: AppTypography.bodyMedium.copyWith(
+                      color: AppColors.textPrimary,
+                      height: 1.5,
+                    ),
+                  ),
+                  const SizedBox(height: 8),
+                ],
                 Text(
                   'حلّلي إطلالتك عدة مرات يومياً — التحليل الذكي يضيف ربطاً ببشرتك',
                   style: AppTypography.bodyMedium.copyWith(
@@ -106,6 +120,12 @@ class OutfitUploadScreen extends ConsumerWidget {
   ) async {
     await ref.read(outfitAnalysisModeProvider.notifier).select(mode);
     if (!context.mounted) return;
+    if (resolveOutfitCaptureEntry() == OutfitCaptureEntry.galleryWhilePaused) {
+      await Navigator.of(context).push<void>(
+        PremiumPageRoute(page: OutfitGalleryEntryScreen(mode: mode)),
+      );
+      return;
+    }
     await Navigator.pushNamed(
       context,
       AppRoutes.outfitLiveCapture,

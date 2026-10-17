@@ -141,16 +141,32 @@ function renderAdForm(item) {
       status.textContent = 'محاكاة: لم يُحفظ شيء';
       return;
     }
+    if (form.dataset.saving === '1') return;
+    form.dataset.saving = '1';
+    const idleLabel = save.textContent;
     save.disabled = true;
+    save.setAttribute('aria-busy', 'true');
+    save.classList.add('is-busy');
+    save.textContent = 'جارٍ الحفظ';
     const payload = { targetKind: kind.value.trim(), targetId: targetId.value.trim(), captionAr: caption.value };
     try {
       if (item) await PartnersApi.updateAd(item.id, payload);
       else await PartnersApi.createAd(payload);
+      save.classList.remove('is-busy');
+      save.classList.add('is-success');
+      save.textContent = 'تم الحفظ';
       status.textContent = item ? 'حُفظت المسودة' : 'أُنشئت المسودة';
+      status.classList.add('save-ok');
+      if (window.MiraMotion) MiraMotion.announce(status.textContent);
       if (typeof load === 'function') load();
     } catch (error) {
-      status.textContent = error.message;
+      form.dataset.saving = '';
+      status.textContent = error.message + ' البيانات المكتوبة ما زالت في النموذج.';
       save.disabled = false;
+      save.removeAttribute('aria-busy');
+      save.classList.remove('is-busy');
+      save.textContent = idleLabel;
+      if (window.MiraMotion) MiraMotion.announce(status.textContent);
     }
   };
 }

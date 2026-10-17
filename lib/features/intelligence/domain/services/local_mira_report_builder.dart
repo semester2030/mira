@@ -10,6 +10,7 @@ import '../entities/progress_forecast.dart';
 import 'local_age_intelligence.dart';
 import 'local_beauty_journey_builder.dart';
 import 'local_confidence_layer_builder.dart';
+import '../entities/weekly_plan.dart';
 import 'local_weekly_plan_builder.dart';
 
 /// Offline fallback — mirrors backend engines for guest / legacy reports.
@@ -50,7 +51,10 @@ abstract final class LocalMiraReportBuilder {
       version: 1,
       spatialConfidence: 'none',
       overallBeautyScore: score,
-      headlineAr: _headline(score),
+      overallScoreAvailable: scored.overallScoreAvailable,
+      headlineAr: scored.overallScoreAvailable
+          ? _headline(score)
+          : overallComparisonUnavailableAr,
       skinTypeAr: report.skinType.isNotEmpty ? report.skinType : 'غير محدد',
       skinTypeEn: report.skinTypeEn.isNotEmpty ? report.skinTypeEn : 'unknown',
       skinAgeEstimate: safety.isMinor ? null : rawSkinAge,
@@ -61,7 +65,7 @@ abstract final class LocalMiraReportBuilder {
       summaryAdviceAr: report.advice.isNotEmpty
           ? report.advice
           : 'اتبعي روتينك اليومي بثبات — النتائج تحتاج وقتاً وصبراً.',
-      tipsAr: _personalizedTips(report, concerns),
+      tipsAr: _personalizedTips(concerns),
       faceMapEnabled: false,
       concernZonesSection: concernZones,
       faceHealthMap: faceHealthMap,
@@ -80,6 +84,7 @@ abstract final class LocalMiraReportBuilder {
       version: base.version,
       spatialConfidence: base.spatialConfidence,
       overallBeautyScore: base.overallBeautyScore,
+      overallScoreAvailable: base.overallScoreAvailable,
       headlineAr: base.headlineAr,
       skinTypeAr: base.skinTypeAr,
       skinTypeEn: base.skinTypeEn,
@@ -105,6 +110,7 @@ abstract final class LocalMiraReportBuilder {
       version: withJourney.version,
       spatialConfidence: withJourney.spatialConfidence,
       overallBeautyScore: withJourney.overallBeautyScore,
+      overallScoreAvailable: withJourney.overallScoreAvailable,
       headlineAr: withJourney.headlineAr,
       skinTypeAr: withJourney.skinTypeAr,
       skinTypeEn: withJourney.skinTypeEn,
@@ -146,9 +152,10 @@ abstract final class LocalMiraReportBuilder {
 
     int ui(String id, int fallback) => byId[id] ?? fallback;
 
+    final moisture = byId['moisture'] ?? report.hydration;
     final items = <ConcernNarrative>[
-      _n('moisture', 'الترطيب', ui('moisture', report.hydration)),
-      _n('oiliness', 'إفراز الدهون', ui('oiliness', 100 - report.oiliness)),
+      if (moisture != null) _n('moisture', 'الترطيب', moisture),
+      _n('oiliness', 'إفراز الدهون', ui('oiliness', report.oiliness)),
       _n('pore', 'المسام', ui('pore', 100 - report.pores * 20)),
       _n('wrinkle', 'التجاعيد', ui('wrinkle', 100 - report.wrinkles * 20)),
       _n('acne', 'الحبوب', ui('acne', 100 - report.acne * 20)),
@@ -215,7 +222,7 @@ abstract final class LocalMiraReportBuilder {
         'none': 'المسام غير بارزة — مظهر ناعم ومتجانس.',
         'mild': 'المسام ظاهرة بدرجة خفيفة — تنظيف لطيف يحافظ على الوضوح.',
         'moderate': 'المسام ظاهرة بدرجة متوسطة وتحتاج عناية منتظمة.',
-        'noticeable': 'المسام بارزة — مقشر BHA خفيف 1–2 مرات أسبوعياً قد يساعد.',
+        'noticeable': 'المسام بارزة — التنظيف اللطيف مفيد، واختيار المقشر يكون مع مختص عند الحاجة.',
       },
       'wrinkle': {
         'none': 'لا توجد مؤشرات قوية على التجاعيد حالياً.',
@@ -226,7 +233,7 @@ abstract final class LocalMiraReportBuilder {
       'acne': {
         'none': 'لا مؤشرات واضحة على الحبوب — البشرة هادئة.',
         'mild': 'بثور أو حبوب خفيفة — تجنبي لمس الوجه واستخدمي منظفاً لطيفاً.',
-        'moderate': 'حبوب متوسطة — نياسيناميد أو BPO خفيف بعد استشارة.',
+        'moderate': 'حبوب متوسطة — التنظيف اللطيف مفيد، وتقييم العلاج يكون مع مختص وليس من الصورة.',
         'noticeable': 'حبوب ملحوظة — روتين مخصص للحبوب مع متابعة.',
       },
       'age_spot': {
@@ -247,8 +254,8 @@ abstract final class LocalMiraReportBuilder {
 
   static DailyRoutinePlan _routine(SkinReport report) {
     final scores = {for (final c in SkinReportMatrix.matrixScores(report)) c.id: c.score};
-    final moisture = scores['moisture'] ?? report.hydration;
-    final oilinessUi = scores['oiliness'] ?? (100 - report.oiliness);
+    final int? moisture = scores['moisture'] ?? report.hydration;
+    final oilinessUi = scores['oiliness'] ?? report.oiliness;
     final oilinessHigh = oilinessUi < 55;
     final acne = scores['acne'] ?? (100 - report.acne * 20);
     final redness = scores['redness'] ?? (100 - report.redness * 20);
@@ -264,7 +271,7 @@ abstract final class LocalMiraReportBuilder {
       ),
     ];
 
-    if (moisture < 62) {
+    if (moisture != null && moisture < 62) {
       morning.add(const RoutineStep(
         id: 'serum_am',
         nameAr: 'سيروم ترطيب',
@@ -295,17 +302,17 @@ abstract final class LocalMiraReportBuilder {
     if (acne < 58) {
       evening.add(const RoutineStep(
         id: 'treatment_acne',
-        nameAr: 'معالجة الحبوب (نياسيناميد)',
-        nameEn: 'Niacinamide Treatment',
-        stepAr: 'مساءً — على المناطق المتأثرة',
+        nameAr: 'عناية لطيفة بالحبوب',
+        nameEn: 'Gentle blemish care',
+        stepAr: 'لا تلمسيها. تقييم أي علاج يكون مع مختص، وليس من صورة التحليل.',
         period: 'pm',
       ));
     } else if (pores < 58) {
       evening.add(const RoutineStep(
         id: 'treatment_pores',
-        nameAr: 'مقشر BHA خفيف',
-        nameEn: 'Light BHA Exfoliant',
-        stepAr: '2–3 مرات أسبوعياً — مساءً',
+        nameAr: 'تنظيف لطيف للمسام',
+        nameEn: 'Gentle pore care',
+        stepAr: 'تجنبي الإفراط في المقشرات. اختيار المقشر يكون مع مختص عند الحاجة.',
         period: 'pm',
       ));
     }
@@ -321,8 +328,8 @@ abstract final class LocalMiraReportBuilder {
     } else {
       evening.add(RoutineStep(
         id: 'moisturizer_pm',
-        nameAr: moisture < 60 ? 'كريم ترطيب غني' : 'مرطب يومي',
-        nameEn: moisture < 60 ? 'Rich Moisturizer' : 'Daily Moisturizer',
+        nameAr: moisture != null && moisture < 60 ? 'كريم ترطيب غني' : 'مرطب يومي',
+        nameEn: moisture != null && moisture < 60 ? 'Rich Moisturizer' : 'Daily Moisturizer',
         stepAr: 'مساءً — قبل النوم',
         period: 'pm',
       ));
@@ -335,8 +342,8 @@ abstract final class LocalMiraReportBuilder {
     final scores = {for (final c in SkinReportMatrix.matrixScores(report)) c.id: c.score};
     int ui(String id, int fallback) => scores[id] ?? fallback;
 
-    final oilinessUi = ui('oiliness', 100 - report.oiliness);
-    final moisture = ui('moisture', report.hydration);
+    final oilinessUi = ui('oiliness', report.oiliness);
+    final int? moisture = scores['moisture'] ?? report.hydration;
     final pores = ui('pore', 100 - report.pores * 20);
     final redness = ui('redness', 100 - report.redness * 20);
 
@@ -353,7 +360,7 @@ abstract final class LocalMiraReportBuilder {
         concernIds: ['oiliness'],
       ));
     }
-    if (moisture < 58) {
+    if (moisture != null && moisture < 58) {
       zones.add(const ConcernZoneNarrative(
         id: 'cheeks',
         zoneLabelAr: 'منطقة الخدين',
@@ -391,14 +398,11 @@ abstract final class LocalMiraReportBuilder {
     );
   }
 
-  static List<String> _personalizedTips(
-    SkinReport report,
-    List<ConcernNarrative> concerns,
-  ) {
-    if (report.recommendations.isNotEmpty) {
-      return report.recommendations.take(5).toList();
-    }
+  static List<String> currentTipsFor(SkinReport report) {
+    return _personalizedTips(_concerns(report));
+  }
 
+  static List<String> _personalizedTips(List<ConcernNarrative> concerns) {
     final actionable = concerns.where((c) => c.severity != 'none').toList();
     if (actionable.isEmpty) {
       return const [
@@ -407,15 +411,16 @@ abstract final class LocalMiraReportBuilder {
     }
 
     return [
+      'روتين يومي: تنظيف لطيف، ترطيب، وواقي شمس.',
       for (final c in actionable.take(4)) _tipForConcern(c.id),
-    ];
+    ].take(5).toList();
   }
 
   static String _tipForConcern(String id) => switch (id) {
         'moisture' =>
           'لأن مؤشر الترطيب لديك يحتاج دعماً بسيطاً، ابدئي بروتين خفيف: تنظيف لطيف صباحاً، مرطب يومي، وواقي شمس.',
         'pore' =>
-          'لأن المسام بارزة لديك، ركزي على تنظيف لطيف مساءً ومقشر BHA خفيف 1–2 مرات أسبوعياً.',
+          'لأن المسام بارزة لديك، ركزي على تنظيف لطيف دون الإفراط في المقشرات، واختيار المقشر يكون مع مختص عند الحاجة.',
         'oiliness' =>
           'لأن إفراز الدهون مرتفع، اختاري منظفاً يوازن الدهون دون تجفيف البشرة.',
         'redness' =>
@@ -425,10 +430,235 @@ abstract final class LocalMiraReportBuilder {
         'wrinkle' =>
           'لأن علامات التجاعيد ظاهرة، اجمعي بين ترطيب يومي وواقي شمس — النتائج تحتاج وقتاً.',
         'acne' =>
-          'لأن الحبوب نشطة، تجنبي لمس الوجه واستخدمي معالجة لطيفة بعد التنظيف مساءً.',
+          'لأن الحبوب ظاهرة، تجنبي لمس الوجه. تقييم أي علاج يكون مع مختص، وليس من صورة التحليل.',
         'dark_circle' =>
           'لأن الهالات بارزة، نوم كافٍ وترطيب خفيف تحت العين يساعدان على المظهر.',
         _ =>
           'ركزي على روتين بسيط وثابت — النتائج تحتاج صبراً وانتظاماً.',
       };
+
+  static final _legacyDose = RegExp(
+    r'BHA|BPO|ريتينويد|retinoid|benzoyl|ساليسيليك',
+    caseSensitive: false,
+  );
+
+  static String _keepOrGeneral(String text) {
+    if (_legacyDose.hasMatch(text)) {
+      return 'اتبعي روتينًا لطيفًا وثابتًا. تقييم أي علاج يكون مع مختص، وليس من صورة التحليل.';
+    }
+    return text;
+  }
+
+  static Map<String, int> _knownScores(MiraBeautyReport report) {
+    final scores = <String, int>{};
+    void put(String id, num value) {
+      final key = id == 'hydration' ? 'moisture' : id;
+      scores.putIfAbsent(key, () => value.round());
+    }
+
+    for (final overlay in report.faceHealthMap.concernOverlays) {
+      final score = overlay.globalScore;
+      if (score != null) put(overlay.concernId, score);
+    }
+    for (final metric in report.skinIntelligence?.metrics ?? const []) {
+      if (metric.isAvailable && metric.normalizedValue != null) {
+        put(metric.id, metric.normalizedValue!);
+      }
+    }
+    return scores;
+  }
+
+  static DailyRoutinePlan _routineFromKnown(Map<String, int> scores) {
+    final moisture = scores['moisture'];
+    final oilinessUi = scores['oiliness'];
+    final oilinessHigh = oilinessUi != null && oilinessUi < 55;
+    final acne = scores['acne'];
+    final redness = scores['redness'];
+    final pores = scores['pore'];
+    final morning = <RoutineStep>[
+      RoutineStep(
+        id: 'cleanser_am',
+        nameAr: oilinessHigh ? 'غسول توازن الدهون' : 'غسول لطيف',
+        nameEn: oilinessHigh ? 'Balancing Cleanser' : 'Gentle Cleanser',
+        stepAr: 'صباحاً — 30 ثانية بلطف',
+        period: 'am',
+      ),
+    ];
+    if (moisture != null && moisture < 62) {
+      morning.add(const RoutineStep(
+        id: 'serum_am',
+        nameAr: 'سيروم ترطيب',
+        nameEn: 'Hydrating Serum',
+        stepAr: 'بعد الغسول — طبقة خفيفة',
+        period: 'am',
+      ));
+    }
+    morning.add(const RoutineStep(
+      id: 'sunscreen',
+      nameAr: 'واقي شمس SPF 50',
+      nameEn: 'SPF 50 Sunscreen',
+      stepAr: 'آخر خطوة صباحاً — كل يوم',
+      period: 'am',
+    ));
+    final evening = <RoutineStep>[
+      const RoutineStep(
+        id: 'cleanser_pm',
+        nameAr: 'غسول مسائي',
+        nameEn: 'Evening Cleanser',
+        stepAr: 'مساءً — إزالة الشوائب',
+        period: 'pm',
+      ),
+    ];
+    if (acne != null && acne < 58) {
+      evening.add(const RoutineStep(
+        id: 'treatment_acne',
+        nameAr: 'عناية لطيفة بالحبوب',
+        nameEn: 'Gentle blemish care',
+        stepAr: 'لا تلمسيها. تقييم أي علاج يكون مع مختص، وليس من صورة التحليل.',
+        period: 'pm',
+      ));
+    } else if (pores != null && pores < 58) {
+      evening.add(const RoutineStep(
+        id: 'treatment_pores',
+        nameAr: 'تنظيف لطيف للمسام',
+        nameEn: 'Gentle pore care',
+        stepAr: 'تجنبي الإفراط في المقشرات. اختيار المقشر يكون مع مختص عند الحاجة.',
+        period: 'pm',
+      ));
+    }
+    evening.add(RoutineStep(
+      id: redness != null && redness < 55 ? 'soothing' : 'moisturizer_pm',
+      nameAr: redness != null && redness < 55
+          ? 'مرطب مهدئ'
+          : (moisture != null && moisture < 60 ? 'كريم ترطيب غني' : 'مرطب يومي'),
+      nameEn: 'Moisturizer',
+      stepAr: 'مساءً — قبل النوم',
+      period: 'pm',
+    ));
+    return DailyRoutinePlan(morning: morning, evening: evening);
+  }
+
+  static RoutineStep _soften(RoutineStep step) {
+    final blob = '${step.nameAr} ${step.nameEn} ${step.stepAr}';
+    if (!_legacyDose.hasMatch(blob)) return step;
+    return RoutineStep(
+      id: step.id,
+      nameAr: 'عناية لطيفة',
+      nameEn: 'Gentle care',
+      stepAr: 'تنظيف لطيف وترطيب. اختيار المقشر أو العلاج يكون مع مختص، وليس من صورة التحليل.',
+      period: step.period,
+    );
+  }
+
+  static WeeklyPlan _sanitizeWeekly(WeeklyPlan plan, DailyRoutinePlan routine) {
+    final days = plan.days
+        .map(
+          (day) => WeeklyPlanDay(
+            dayIndex: day.dayIndex,
+            labelAr: day.labelAr,
+            focusAr: _keepOrGeneral(day.focusAr),
+            stepsAr: day.stepsAr
+                .map((step) => _legacyDose.hasMatch(step)
+                    ? 'تنظيف لطيف وترطيب. اختيار المقشر أو العلاج يكون مع مختص، وليس من صورة التحليل.'
+                    : step)
+                .toList(),
+          ),
+        )
+        .toList();
+    if (days.isEmpty) return LocalWeeklyPlanBuilder.fromKnownScores(const {}, routine);
+    return WeeklyPlan(
+      enabled: plan.enabled,
+      headlineAr: _keepOrGeneral(plan.headlineAr),
+      summaryAr: _keepOrGeneral(plan.summaryAr),
+      days: days,
+    );
+  }
+
+  static DailyRoutinePlan _sanitizeRoutine(DailyRoutinePlan routine) {
+    final morning = routine.morning.map(_soften).toList();
+    final evening = routine.evening.map(_soften).toList();
+    if (morning.isEmpty && evening.isEmpty) return _routineFromKnown(const {});
+    final base = _routineFromKnown(const {});
+    return DailyRoutinePlan(
+      morning: morning.isEmpty ? base.morning : morning,
+      evening: evening.isEmpty ? base.evening : evening,
+    );
+  }
+
+  /// Display copy of a stored report. The stored object is not modified.
+  static MiraBeautyReport presentStored(MiraBeautyReport report) {
+    final concerns = report.mainConcerns
+        .map(
+          (concern) => ConcernNarrative(
+            id: concern.id,
+            titleAr: concern.titleAr,
+            narrativeAr: _narrative(concern.id, concern.severity),
+            severity: concern.severity,
+          ),
+        )
+        .toList();
+    final scores = _knownScores(report);
+    final routine = scores.isEmpty ? _sanitizeRoutine(report.dailyRoutine) : _routineFromKnown(scores);
+    final progress = report.progressForecast.forStoredDisplay(
+      reportOverallAvailable: report.overallScoreAvailable,
+    );
+    return MiraBeautyReport(
+      version: report.version,
+      scoreSchemaVersion: report.scoreSchemaVersion,
+      spatialConfidence: report.spatialConfidence,
+      overallBeautyScore: report.overallBeautyScore,
+      overallScoreAvailable: report.overallScoreAvailable,
+      displayScoreLabelAr: report.displayScoreLabelAr,
+      displayScoreLabelEn: report.displayScoreLabelEn,
+      scoreSupportingAr: report.scoreSupportingAr,
+      disclaimerAr: report.disclaimerAr,
+      disclaimerEn: report.disclaimerEn,
+      provenance: report.provenance,
+      headlineAr: _keepOrGeneral(report.headlineAr),
+      skinTypeAr: report.skinTypeAr,
+      skinTypeEn: report.skinTypeEn,
+      skinAgeEstimate: report.skinAgeEstimate,
+      ageComparison: report.ageComparison,
+      childSafety: report.childSafety,
+      mainConcerns: concerns,
+      dailyRoutine: routine,
+      summaryAdviceAr: _keepOrGeneral(report.summaryAdviceAr),
+      tipsAr: _personalizedTips(concerns),
+      faceMapEnabled: report.faceMapEnabled,
+      concernZonesSection: report.concernZonesSection,
+      faceHealthMap: report.faceHealthMap,
+      concernZonesNarrative: report.concernZonesNarrative,
+      recommendedProducts: report.recommendedProducts,
+      weeklyPlan: scores.isEmpty
+          ? _sanitizeWeekly(report.weeklyPlan, routine)
+          : LocalWeeklyPlanBuilder.fromKnownScores(scores, routine),
+      progressForecast: progress,
+      beautyJourney: report.overallScoreAvailable == true
+          ? report.beautyJourney
+          : BeautyJourney(
+              enabled: report.beautyJourney.enabled,
+              headlineAr: report.beautyJourney.headlineAr,
+              summaryAr: report.beautyJourney.summaryAr,
+              currentOverallScore: report.beautyJourney.currentOverallScore,
+              nextGoal: JourneyGoal(
+                metricId: 'overall',
+                labelAr: 'مؤشر جمال البشرة',
+                currentValue: report.beautyJourney.currentOverallScore,
+                targetValue: report.beautyJourney.currentOverallScore,
+                horizonDays: 30,
+                headlineAr: overallComparisonUnavailableAr,
+                summaryAr: overallComparisonUnavailableAr,
+                scoreAvailable: false,
+              ),
+              topOpportunity: report.beautyJourney.topOpportunity,
+              priorities: report.beautyJourney.priorities,
+              planSummaryAr: report.beautyJourney.planSummaryAr,
+              followUpAr: report.beautyJourney.followUpAr,
+            ),
+      confidenceLayer: report.confidenceLayer,
+      skinIntelligence: report.skinIntelligence,
+      faceIntelligence: report.faceIntelligence,
+      faceIntelligenceRuntime: report.faceIntelligenceRuntime,
+    );
+  }
 }

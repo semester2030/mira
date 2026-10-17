@@ -1,19 +1,18 @@
 import {
-  ConcernNarrative,
-  ConcernSeverity,
   ProgressForecastPayload,
   ProgressMetricTrend,
   ProgressMilestone,
   ProgressTimelinePoint,
   MiraBeautyReport,
 } from '../contracts/mira-beauty-report.interface';
+import { readContractUiScore } from './youcam-spatial-parser';
 
-const SEVERITY_SCORE: Record<ConcernSeverity, number> = {
-  none: 88,
-  mild: 74,
-  moderate: 58,
-  noticeable: 42,
-};
+export const OVERALL_COMPARISON_UNAVAILABLE_AR =
+  'لا تتوفر بيانات كافية لمقارنة المؤشر العام بين هذين التحليلين';
+
+function overallReady(report: MiraBeautyReport): boolean {
+  return report.overallScoreAvailable === true;
+}
 
 const METRIC_LABELS: Record<string, string> = {
   moisture: 'الترطيب',
@@ -28,13 +27,13 @@ export interface ProgressHistoryEntry {
   miraReport: MiraBeautyReport;
 }
 
-function concernScore(
-  concerns: ConcernNarrative[],
-  id: string,
-): number {
-  const match = concerns.find((c) => c.id === id);
-  if (!match) return 70;
-  return SEVERITY_SCORE[match.severity];
+function measuredConcernScore(report: MiraBeautyReport, id: string): number | null {
+  for (const overlay of report.faceHealthMap?.concernOverlays ?? []) {
+    const key = overlay.concernId === 'hydration' ? 'moisture' : overlay.concernId;
+    if (key !== id) continue;
+    return readContractUiScore(overlay.globalScore);
+  }
+  return null;
 }
 
 function directionFromDelta(
@@ -127,14 +126,15 @@ function linearProjection30Days(
   timeline: ProgressTimelinePoint[],
 ): number | undefined {
   if (timeline.length < 2) return undefined;
+  if (timeline.some((point) => point.overallScore == null)) return undefined;
 
   const first = timeline[0];
   const last = timeline[timeline.length - 1];
   const firstDate = new Date(first.createdAt).getTime();
   const lastDate = new Date(last.createdAt).getTime();
   const daySpan = Math.max(1, (lastDate - firstDate) / (1000 * 60 * 60 * 24));
-  const slope = (last.overallScore - first.overallScore) / daySpan;
-  const projected = last.overallScore + slope * 30;
+  const slope = (last.overallScore! - first.overallScore!) / daySpan;
+  const projected = last.overallScore! + slope * 30;
   return Math.round(Math.min(100, Math.max(0, projected)));
 }
 
@@ -146,11 +146,15 @@ export function buildProgressForecast(
     (a, b) => a.createdAt.getTime() - b.createdAt.getTime(),
   );
 
-  const timeline: ProgressTimelinePoint[] = sorted.map((entry) => ({
-    analysisId: entry.id,
-    createdAt: entry.createdAt.toISOString(),
-    overallScore: entry.miraReport.overallBeautyScore,
-  }));
+  const timeline: ProgressTimelinePoint[] = sorted.map((entry) => {
+    const ready = overallReady(entry.miraReport);
+    return {
+      analysisId: entry.id,
+      createdAt: entry.createdAt.toISOString(),
+      overallScore: ready ? entry.miraReport.overallBeautyScore : null,
+      overallScoreAvailable: ready,
+    };
+  });
 
   if (scanCount < 2) {
     return {
@@ -169,37 +173,33 @@ export function buildProgressForecast(
   const previous = sorted[sorted.length - 2];
   const current = sorted[sorted.length - 1];
 
-  const trends: ProgressMetricTrend[] = [
-    buildTrend(
+  const pairReady = overallReady(previous.miraReport) && overallReady(current.miraReport);
+  const trends: ProgressMetricTrend[] = [];
+  if (pairReady) {
+    trends.push(buildTrend(
       'overall',
       previous.miraReport.overallBeautyScore,
       current.miraReport.overallBeautyScore,
-    ),
-    buildTrend(
-      'moisture',
-      concernScore(previous.miraReport.mainConcerns, 'moisture'),
-      concernScore(current.miraReport.mainConcerns, 'moisture'),
-    ),
-    buildTrend(
-      'pore',
-      concernScore(previous.miraReport.mainConcerns, 'pore'),
-      concernScore(current.miraReport.mainConcerns, 'pore'),
-    ),
-    buildTrend(
-      'redness',
-      concernScore(previous.miraReport.mainConcerns, 'redness'),
-      concernScore(current.miraReport.mainConcerns, 'redness'),
-    ),
-  ];
+    ));
+  }
+  for (const id of ['moisture', 'pore', 'redness'] as const) {
+    const previousScore = measuredConcernScore(previous.miraReport, id);
+    const currentScore = measuredConcernScore(current.miraReport, id);
+    if (previousScore == null || currentScore == null) continue;
+    trends.push(buildTrend(id, previousScore, currentScore));
+  }
 
   const improved = trends.filter((t) => t.direction === 'improved');
-  const headlineAr =
-    improved.length > 0
+  const headlineAr = !pairReady
+    ? OVERALL_COMPARISON_UNAVAILABLE_AR
+    : improved.length > 0
       ? improved[0].messageAr
       : 'مقارنة بين آخر تحليلين';
 
-  const projectedOverallScore30Days = linearProjection30Days(timeline);
-  const summaryAr = projectedOverallScore30Days
+  const projectedOverallScore30Days = pairReady ? linearProjection30Days(timeline) : undefined;
+  const summaryAr = !pairReady
+    ? OVERALL_COMPARISON_UNAVAILABLE_AR
+    : projectedOverallScore30Days
     ? `إذا استمررتِ على روتينك، قد يصل مؤشرك إلى ${projectedOverallScore30Days} خلال 30 يوماً (تقدير خطي).`
     : 'قارنا آخر تحليلين — راجعي Trends أدناه.';
 

@@ -4,6 +4,7 @@ import '../../../../shared/theme/colors.dart';
 import '../../../../shared/theme/typography.dart';
 import '../../../../shared/widgets/premium/beauty_score_ring.dart';
 import '../../../../shared/widgets/premium/premium_card.dart';
+import '../../domain/constants/report_face_map_spec.dart';
 import '../../domain/entities/mira_beauty_report.dart';
 import '../../domain/entities/result_provenance.dart';
 
@@ -40,10 +41,22 @@ class BeautyScoreHero extends StatelessWidget {
             ),
           ),
           const SizedBox(height: 16),
-          BeautyScoreRing(
-            score: report.skinVitalityIndex.toDouble(),
-            size: 140,
-            label: report.displayScoreLabelAr,
+          if (report.overallScoreAvailable == true)
+            BeautyScoreRing(
+              score: report.skinVitalityIndex.toDouble(),
+              size: 140,
+              label: report.displayScoreLabelAr,
+            )
+          else
+            Text(
+              'غير متاح',
+              style: AppTypography.titleLarge.copyWith(color: AppColors.textSecondary),
+            ),
+          const SizedBox(height: 8),
+          Text(
+            ReportFaceMapSpec.estimateAr,
+            style: AppTypography.bodySmall.copyWith(color: AppColors.textSecondary),
+            textAlign: TextAlign.center,
           ),
           const SizedBox(height: 12),
           Text(

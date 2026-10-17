@@ -33,6 +33,7 @@ import {
   buildProgressForecast,
   ProgressHistoryEntry,
 } from './pipeline/progress-engine';
+import { presentCurrentReportTips } from './pipeline/current-care-tips';
 import { buildTreatmentPlan } from './pipeline/treatment-plan-engine';
 import { buildWeeklyPlan } from './pipeline/weekly-plan-engine';
 import { buildBeautyJourney } from './pipeline/beauty-journey-engine';
@@ -346,6 +347,7 @@ export class IntelligenceService {
         }
       }
       if (!report) continue;
+      report = presentCurrentReportTips(report);
       entries.push({
         id: row.id,
         createdAt: row.createdAt,

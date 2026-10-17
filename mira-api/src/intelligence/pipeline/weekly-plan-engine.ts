@@ -50,11 +50,63 @@ interface WeeklyFocus {
   steps: (routine: DailyRoutinePlan, dayIndex: number) => string[];
 }
 
+function below(value: number | undefined, threshold: number): boolean {
+  return value != null && value < threshold;
+}
+
+export function buildWeeklyPlanFromKnownScores(
+  scores: Record<string, number>,
+  dailyRoutine: DailyRoutinePlan,
+): WeeklyPlanPayload {
+  return weeklyFromScores(dailyRoutine, {
+    moisture: scores.moisture,
+    pores: scores.pore,
+    acne: scores.acne,
+    redness: scores.redness,
+  });
+}
+
 function buildWeeklyFocuses(skin: SkinAnalysisResult): WeeklyFocus[] {
-  const moisture = ui(skin, 'moisture', skin.hydration);
-  const pores = ui(skin, 'pore', 100 - skin.pores * 20);
-  const acne = ui(skin, 'acne', 100 - skin.acne * 20);
-  const redness = ui(skin, 'redness', 100 - skin.redness * 20);
+  return focusTemplates({
+    moisture: ui(skin, 'moisture', skin.hydration),
+    pores: ui(skin, 'pore', 100 - skin.pores * 20),
+    acne: ui(skin, 'acne', 100 - skin.acne * 20),
+    redness: ui(skin, 'redness', 100 - skin.redness * 20),
+  });
+}
+
+function weeklyFromScores(
+  routine: DailyRoutinePlan,
+  scores: { moisture?: number; pores?: number; acne?: number; redness?: number },
+): WeeklyPlanPayload {
+  const focuses = focusTemplates(scores);
+  const days: WeeklyPlanDay[] = DAY_LABELS.map((labelAr, index) => {
+    const focus = focuses[index] ?? focuses[0];
+    return {
+      dayIndex: index + 1,
+      labelAr,
+      focusAr: focus.title,
+      stepsAr: focus.steps(routine, index),
+    };
+  });
+  return {
+    enabled: true,
+    headlineAr: 'خطة أسبوعية — 7 أيام للعناية المتدرجة',
+    summaryAr: 'روتين يومي ثابت مع تركيز مختلف كل يوم — بدون إفراط. الثبات أهم من الكثرة.',
+    days,
+  };
+}
+
+function focusTemplates(scores: {
+  moisture?: number;
+  pores?: number;
+  acne?: number;
+  redness?: number;
+}): WeeklyFocus[] {
+  const moistureLow = below(scores.moisture, 58);
+  const poresLow = below(scores.pores, 58);
+  const acneLow = below(scores.acne, 58);
+  const rednessLow = below(scores.redness, 55);
 
   const am = (r: DailyRoutinePlan) => summarizeSteps(r.morning, 'صباحاً');
   const pm = (r: DailyRoutinePlan) => summarizeSteps(r.evening, 'مساءً');
@@ -65,17 +117,17 @@ function buildWeeklyFocuses(skin: SkinAnalysisResult): WeeklyFocus[] {
       steps: (r) => [...am(r), ...pm(r), 'اشربي 8 أكواب ماء'],
     },
     {
-      title: moisture < 58 ? 'تركيز الترطيب العميق' : 'حماية SPF',
+      title: moistureLow ? 'تركيز الترطيب العميق' : 'حماية SPF',
       steps: (r) => [
         ...am(r),
-        moisture < 58 ? 'قناع ترطيب 15 دقيقة مساءً' : pm(r)[0] ?? 'روتين مسائي',
+        moistureLow ? 'قناع ترطيب 15 دقيقة مساءً' : pm(r)[0] ?? 'روتين مسائي',
       ],
     },
     {
-      title: pores < 58 ? 'تنظيف المسام بلطف' : 'توازن البشرة',
+      title: poresLow ? 'تنظيف المسام بلطف' : 'توازن البشرة',
       steps: (r, i) => [
         ...am(r),
-        pores < 58 && i === 2 ? 'BHA خفيف — مساءً فقط' : pm(r)[0] ?? 'روتين مسائي',
+        poresLow && i === 2 ? 'تنظيف لطيف مساءً — دون مقشر جديد' : pm(r)[0] ?? 'روتين مسائي',
       ],
     },
     {
@@ -83,17 +135,17 @@ function buildWeeklyFocuses(skin: SkinAnalysisResult): WeeklyFocus[] {
       steps: (r) => [...am(r), 'مرطب فقط مساءً — لا actives'],
     },
     {
-      title: acne < 58 ? 'هدئة الحبوب' : 'تغذية البشرة',
+      title: acneLow ? 'هدئة الحبوب' : 'تغذية البشرة',
       steps: (r) => [
         ...am(r),
-        ...(acne < 58 ? ['نياسيناميد على البثور فقط'] : pm(r)),
+        ...(acneLow ? ['لا تلمسي الحبوب؛ تقييم العلاج مع مختص'] : pm(r)),
       ],
     },
     {
-      title: redness < 55 ? 'تخفيف الاحمرار' : 'إشراق نهاية الأسبوع',
+      title: rednessLow ? 'تخفيف الاحمرار' : 'إشراق نهاية الأسبوع',
       steps: (r) => [
         ...am(r),
-        redness < 55 ? 'مرطب مهدئ + تجنّبي الحرارة' : pm(r)[0] ?? 'روتين مسائي',
+        rednessLow ? 'مرطب مهدئ + تجنّبي الحرارة' : pm(r)[0] ?? 'روتين مسائي',
       ],
     },
     {

@@ -47,6 +47,50 @@
     return data;
   }
 
+  function requestProgress(method, path, body, hooks) {
+    if (labeledPreview()) {
+      return Promise.reject(new Error('محاكاة: لم يُرسل طلب ولم تُستخدم الجلسة'));
+    }
+    const notify = hooks || {};
+    return new Promise((resolve, reject) => {
+      const xhr = new XMLHttpRequest();
+      const fail = (error) => reject(error);
+      if (notify.signal) {
+        if (notify.signal.aborted) {
+          fail(Object.assign(new Error('أُلغي الرفع'), { name: 'AbortError' }));
+          return;
+        }
+        notify.signal.addEventListener('abort', () => xhr.abort(), { once: true });
+      }
+      xhr.open(method, `${API_BASE}${path}`);
+      xhr.setRequestHeader('Accept', 'application/json');
+      xhr.setRequestHeader('Content-Type', 'application/json');
+      const headers = authHeaders();
+      Object.keys(headers).forEach((key) => xhr.setRequestHeader(key, headers[key]));
+      xhr.upload.onprogress = (event) => {
+        if (typeof notify.onProgress !== 'function') return;
+        if (event.lengthComputable && event.total > 0) notify.onProgress(event.loaded / event.total);
+        else notify.onProgress(null);
+      };
+      xhr.upload.onload = () => {
+        if (typeof notify.onProcessing === 'function') notify.onProcessing();
+      };
+      xhr.onabort = () => fail(Object.assign(new Error('أُلغي الرفع'), { name: 'AbortError' }));
+      xhr.onerror = () => fail(new Error('تعذر الاتصال'));
+      xhr.onload = () => {
+        let data = {};
+        try { data = JSON.parse(xhr.responseText || '{}'); } catch (error) { data = {}; }
+        if (xhr.status < 200 || xhr.status >= 300) {
+          const msg = data.message || data.error || `HTTP ${xhr.status}`;
+          fail(new Error(Array.isArray(msg) ? msg.join(' ') : msg));
+          return;
+        }
+        resolve(data);
+      };
+      xhr.send(JSON.stringify(body));
+    });
+  }
+
   window.PartnersApi = {
     base: API_BASE,
     apply: (payload) => request('POST', '/partners-portal/apply', payload),
@@ -69,6 +113,8 @@
       request('DELETE', `/partners-portal/services/${id}`),
     addMedia: (kind, id, mimeType, dataBase64) =>
       request('POST', `/partners-portal/${kind}/${id}/media`, { mimeType, dataBase64 }),
+    addMediaProgress: (kind, id, mimeType, dataBase64, hooks) =>
+      requestProgress('POST', `/partners-portal/${kind}/${id}/media`, { mimeType, dataBase64 }, hooks),
     submitReview: (kind, id) =>
       request('POST', `/partners-portal/${kind}/${id}/submit-review`, {}),
     preview: (kind, id) =>

@@ -69,14 +69,22 @@ class _FaceHealthMapSectionState extends State<FaceHealthMapSection> {
                 _ConcernScoreHero(overlay: overlay, showRegional: showRegional),
               ],
               const SizedBox(height: 16),
-              AnimatedBeautyReportFaceMap(
-                concernId: _selectedConcernId.isNotEmpty
-                    ? _selectedConcernId
-                    : ReportFaceMapSpec.tabOrder.first,
-                highlightZoneIds: overlay?.highlightZoneIds ?? const [],
-                highlightColorHex: overlay?.highlightColor,
-                concernScore: overlay?.globalScore ?? 70,
-              ),
+              if (overlay?.hasMeasuredScore == true)
+                AnimatedBeautyReportFaceMap(
+                  concernId: _selectedConcernId.isNotEmpty
+                      ? _selectedConcernId
+                      : ReportFaceMapSpec.tabOrder.first,
+                  highlightZoneIds: overlay?.highlightZoneIds ?? const [],
+                  highlightColorHex: overlay?.highlightColor,
+                  concernScore: overlay!.globalScore!,
+                )
+              else
+                Text(
+                  ReportFaceMapSpec.unavailableAr,
+                  style: AppTypography.bodyMedium.copyWith(
+                    color: AppColors.textSecondary,
+                  ),
+                ),
               const SizedBox(height: 14),
               _DisclaimerBox(
                 text: map.disclaimerAr.isNotEmpty
@@ -193,6 +201,13 @@ class _Header extends StatelessWidget {
                   ),
                 ),
               ],
+              const SizedBox(height: 4),
+              Text(
+                ReportFaceMapSpec.estimateAr,
+                style: AppTypography.labelSmall.copyWith(
+                  color: AppColors.textSecondary,
+                ),
+              ),
             ],
           ),
         ),
@@ -273,11 +288,15 @@ class _ConcernSelector extends StatelessWidget {
                     ),
                     const SizedBox(width: 6),
                     Text(
-                      '${overlay.globalScore}',
+                      overlay.hasMeasuredScore
+                          ? '${overlay.globalScore}'
+                          : ReportFaceMapSpec.unavailableAr,
                       style: AppTypography.labelSmall.copyWith(
-                        color: overlay.isHealthy
-                            ? const Color(0xFF2E7D32)
-                            : const Color(0xFFC62828),
+                        color: overlay.hasMeasuredScore
+                            ? (overlay.isHealthy
+                                ? const Color(0xFF2E7D32)
+                                : const Color(0xFFC62828))
+                            : AppColors.textSecondary,
                         fontWeight: FontWeight.w700,
                       ),
                     ),
@@ -309,7 +328,7 @@ class _ConcernScoreHero extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final color = _parseHex(overlay.highlightColor);
-    final progress = overlay.globalScore / 100;
+    final score = overlay.globalScore;
 
     return Container(
       padding: const EdgeInsets.all(14),
@@ -353,18 +372,19 @@ class _ConcernScoreHero extends StatelessWidget {
             child: Stack(
               alignment: Alignment.center,
               children: [
-                SizedBox(
-                  width: 56,
-                  height: 56,
-                  child: CircularProgressIndicator(
-                    value: progress,
-                    strokeWidth: 5,
-                    backgroundColor: Colors.white.withValues(alpha: 0.6),
-                    color: color,
+                if (score != null)
+                  SizedBox(
+                    width: 56,
+                    height: 56,
+                    child: CircularProgressIndicator(
+                      value: score / 100,
+                      strokeWidth: 5,
+                      backgroundColor: Colors.white.withValues(alpha: 0.6),
+                      color: color,
+                    ),
                   ),
-                ),
                 Text(
-                  '${overlay.globalScore}',
+                  score == null ? ReportFaceMapSpec.unavailableAr : '$score',
                   style: AppTypography.titleSmall.copyWith(
                     color: AppColors.primaryDark,
                     fontWeight: FontWeight.w800,

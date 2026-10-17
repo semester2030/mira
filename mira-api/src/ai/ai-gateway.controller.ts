@@ -16,6 +16,7 @@ import { CurrentUser } from '../common/decorators/current-user.decorator';
 import { RequestUser } from '../common/interfaces/request-user.interface';
 import { FullMiraAnalysisBodyDto } from './dto/full-mira-analysis-body.dto';
 import { AnalyzeOutfitBodyDto } from '../outfit-analysis/dto/analyze-outfit.dto';
+import { assertOutfitCaptureSource } from '../outfit-analysis/outfit-capture-policy';
 import { OutfitAnalysisService } from '../outfit-analysis/outfit-analysis.service';
 import { SkinAnalysisService } from '../skin-analysis/skin-analysis.service';
 import { PerfectHdMaskAcceptanceService } from './services/perfect-hd-mask-acceptance.service';
@@ -129,6 +130,7 @@ export class AiGatewayController {
     @UploadedFile() file: Express.Multer.File,
     @Body() body: AnalyzeOutfitBodyDto,
   ) {
+    assertOutfitCaptureSource(body.captureSource);
     return this.outfitAnalysisService.analyze(
       user,
       file?.buffer ?? Buffer.alloc(0),
@@ -148,6 +150,7 @@ export class AiGatewayController {
     @UploadedFile() file: Express.Multer.File,
     @Body() body: OutfitIntelligenceBodyDto,
   ) {
+    assertOutfitCaptureSource(body.captureSource);
     const skin = JSON.parse(body.skinReport) as SkinReportSnapshot;
     const result = await this.outfitHybridIntelligenceService.analyze(
       file?.buffer ?? Buffer.alloc(0),
@@ -197,6 +200,7 @@ export class AiGatewayController {
     @UploadedFile() file: Express.Multer.File,
     @Body() body: VisionOutfitAnalyzeBodyDto,
   ) {
+    assertOutfitCaptureSource(body.captureSource);
     await this.rateLimit.assertWithinLimit(user.firebaseUid, 'fashion_analysis');
     let skinSnapshot: Record<string, unknown> | null = null;
     if (body.skinSnapshot?.trim()) {

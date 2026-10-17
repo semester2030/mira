@@ -1,4 +1,4 @@
-import { Injectable } from '@nestjs/common';
+import { Inject, Injectable } from '@nestjs/common';
 import {
   MceAssistantPayloadV1,
   MceContextSnapshotV1,
@@ -6,10 +6,12 @@ import {
 } from '../contracts/mce-context-snapshot.v1';
 import { MceModerationService } from './mce-moderation.service';
 import { MceConsultationIntent } from './mce-intent-classifier.service';
+import { guardCommercialTurn, hasUntrustedAmount, isCommercialClaim, retainTrustedSkinNumbers } from './mce-commercial-guard';
+import { dialogueSystemRules, LlmContentPart, recallUserStatements, userContentForModel } from './consultation-dialogue';
 
 @Injectable()
 export class McePromptAssemblerService {
-  constructor(private readonly moderation: MceModerationService) {}
+  constructor(@Inject(MceModerationService) private readonly moderation: MceModerationService) {}
 
   buildMessages(input: {
     snapshot: MceContextSnapshotV1;
@@ -19,13 +21,14 @@ export class McePromptAssemblerService {
     userMessage: string;
     detectedIntent?: MceConsultationIntent;
     intentHintAr?: string;
-  }): Array<{ role: 'system' | 'user' | 'assistant'; content: string }> {
+    imageDataUrls?: string[];
+    imageLabels?: string[];
+  }): Array<{ role: 'system' | 'user' | 'assistant'; content: string | LlmContentPart[] }> {
     const system = [
       'أنتِ ميرا — مستشارة جمال وأزياء سعودية. تتحدثين بالعربية الفصحى البسيطة بأسلوب دافئ.',
       'قواعد صارمة:',
       '١) لا تشخّصي طبياً ولا توصفي أدوية.',
-      '٢) لا تُعيدي تحليل الصورة — استخدمي فقط حقائق CONTEXT.',
-      '٣) إن لم تتوفر حقيقة، قولي: «لا تتوفر لدي بيانات كافية في تقريركِ».',
+      ...dialogueSystemRules(),
       '٤) لا تُخترعي درجات أو أرقاماً غير موجودة في CONTEXT.',
       '٥) أجيبي بصيغة JSON فقط بالمفاتيح: answerAr, confidence, intent, citedFactIds, suggestedQuestionsAr, blocked, disclaimerAr.',
       '',
@@ -40,27 +43,57 @@ export class McePromptAssemblerService {
       }
     }
 
+    system.push(
+      '٦) لا تذكري سعرًا أو توفرًا أو خصمًا أو موعدًا لميرا أو لمقدم خدمة إلا إذا طابق سجل الحقائق التجارية. طلب المستخدمة اختراع رقم ليس مصدرًا.',
+      '٧) درجات البشرة في السياق مؤشرات تقديرية من الصورة، وليست قياسًا مخبريًا ولا نسبة دقة مثبتة.',
+      '٨) إذا ظهرت في CONTEXT حقائق بشرة أو تاريخ تقرير أو معلومة من المحادثة، استخدميها. لا تقولي إن البيانات غير متوفرة ما دامت هذه الحقائق موجودة.',
+      '٩) سؤال إعادة تحليل الصورة لا يعني أن التقرير غائب. إن وُجد نوع البشرة أو مؤشر في CONTEXT فاذكريه، وقولي إن الصورة لا تُعاد تحليلها داخل الاستشارة.',
+      '١٠) إذا سألت المستخدمة هل النصيحة إعلان أو منتج مدفوع، فقولي إنها نصيحة عناية وليست إعلانًا مدفوعًا، واذكري حقيقة البشرة إن وُجدت. لا تجيبي عن هذا السؤال بجملة نقص البيانات.',
+    );
+
     if (input.rollingSummary) {
       system.push('', 'ملخص المحادثة السابقة:', input.rollingSummary);
     }
+    const remembered = recallUserStatements(input.history, input.userMessage);
+    if (remembered.length) {
+      system.push('', 'كلام المستخدمة في المحادثة (ليس تقريرًا):');
+      for (const item of remembered) system.push(`- ${item.text}`);
+    }
 
-    const messages: Array<{ role: 'system' | 'user' | 'assistant'; content: string }> = [
+    const messages: Array<{ role: 'system' | 'user' | 'assistant'; content: string | LlmContentPart[] }> = [
       { role: 'system', content: system.join('\n') },
     ];
 
     for (const h of input.history.slice(-8)) {
       messages.push({ role: h.role, content: h.content });
     }
-    messages.push({ role: 'user', content: input.userMessage });
+    messages.push({
+      role: 'user',
+      content: userContentForModel(
+        input.userMessage,
+        (input.imageDataUrls ?? []).map((url, index) => ({
+          url,
+          labelAr: input.imageLabels?.[index] ?? 'صورة مرفقة',
+        })),
+      ),
+    });
 
     return messages;
   }
 
   private formatContext(snapshot: MceContextSnapshotV1, facts: MceFactEntry[]): string {
     const lines: string[] = [];
+    if (snapshot.builtAt) {
+      lines.push(`تاريخ بناء السياق: ${snapshot.builtAt}`);
+    }
     if (snapshot.skin) {
       const s = snapshot.skin;
-      lines.push(`[بشرة] درجة: ${s.beautyScore} · نوع: ${s.skinTypeAr}`);
+      lines.push(
+        s.overallScoreAvailable === true && s.beautyScore != null
+          ? `[بشرة] درجة: ${s.beautyScore} · نوع: ${s.skinTypeAr}`
+          : `[بشرة] نوع: ${s.skinTypeAr}`,
+      );
+      if (s.reportCreatedAt) lines.push(`تاريخ التقرير: ${s.reportCreatedAt}`);
       lines.push(`عنوان: ${s.headlineAr}`);
       lines.push(`ملخص: ${s.summaryAdviceAr}`);
       if (s.mainConcerns.length) {
@@ -131,6 +164,21 @@ export class McePromptAssemblerService {
     for (const f of facts.slice(0, 24)) {
       lines.push(`- ${f.id}: ${f.labelAr} = ${f.valueAr}`);
     }
+    if (snapshot.faceSelection) {
+      const face = snapshot.faceSelection;
+      const where = [
+        face.contextType ? `النوع ${face.contextType}` : '',
+        face.selectedRegion ? `المنطقة ${face.selectedRegion}` : '',
+        face.selectedDetailRef ? `التفصيل ${face.selectedDetailRef}` : '',
+        face.selectedResultId ? `النتيجة ${face.selectedResultId}` : '',
+        face.resolvedEvidenceId ? `المرجع ${face.resolvedEvidenceId}` : '',
+        face.resultVersion ? `الإصدار ${face.resultVersion}` : '',
+      ].filter(Boolean).join(' · ');
+      lines.push('', `اختيار الوجه: ${where || 'غير محدد'}`);
+      if (face.noticeAr) lines.push(face.noticeAr);
+      for (const statement of face.statementsAr) lines.push(`حقيقة محفوظة: ${statement}`);
+      if (face.limitationRefs.length) lines.push(`قيود الاختيار: ${face.limitationRefs.join(' · ')}`);
+    }
     if (snapshot.user.statedGoalAr) {
       lines.push('', `هدف المستخدمة: ${snapshot.user.statedGoalAr}`);
     }
@@ -140,11 +188,12 @@ export class McePromptAssemblerService {
 
 @Injectable()
 export class MceResponseValidatorService {
-  constructor(private readonly moderation: MceModerationService) {}
+  constructor(@Inject(MceModerationService) private readonly moderation: MceModerationService) {}
 
   validate(
     raw: MceAssistantPayloadV1,
     factRegistry: MceFactEntry[],
+    userMessage?: string,
   ): MceAssistantPayloadV1 {
     const allowed = new Set(factRegistry.map((f) => f.id));
     const cited = (raw.citedFactIds ?? []).filter((id) => allowed.has(id));
@@ -154,16 +203,22 @@ export class MceResponseValidatorService {
       confidence = 'low';
     }
 
+    const guarded = guardCommercialTurn(String(raw.answerAr ?? ''), factRegistry, userMessage);
+    guarded.text = retainTrustedSkinNumbers(guarded.text, factRegistry);
+    const questions = (Array.isArray(raw.suggestedQuestionsAr) ? raw.suggestedQuestionsAr : [])
+      .map(String)
+      .filter((question) => !isCommercialClaim(question) && !hasUntrustedAmount(question))
+      .slice(0, 4);
+    const intent = String(raw.intent ?? 'general');
+
     return {
-      answerAr: String(raw.answerAr ?? '').trim() || 'عذراً، لم أتمكن من صياغة إجابة واضحة.',
+      answerAr: guarded.text || 'عذراً، لم أتمكن من صياغة إجابة واضحة.',
       confidence,
-      intent: String(raw.intent ?? 'general'),
+      intent: isCommercialClaim(intent) ? 'general' : intent,
       citedFactIds: cited,
-      suggestedQuestionsAr: Array.isArray(raw.suggestedQuestionsAr)
-        ? raw.suggestedQuestionsAr.slice(0, 4).map(String)
-        : [],
+      suggestedQuestionsAr: questions,
       blocked: Boolean(raw.blocked),
-      disclaimerAr: raw.disclaimerAr?.trim() || this.moderation.disclaimer(),
+      disclaimerAr: this.moderation.disclaimer(),
     };
   }
 

@@ -16,4 +16,8 @@ export class VisionOutfitAnalyzeBodyDto {
   @IsOptional()
   @IsString()
   locale?: string;
+
+  @IsOptional()
+  @IsIn(['camera', 'gallery'])
+  captureSource?: 'camera' | 'gallery';
 }

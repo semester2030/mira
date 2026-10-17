@@ -24,6 +24,7 @@ class JourneyGoal {
   final int horizonDays;
   final String headlineAr;
   final String summaryAr;
+  final bool scoreAvailable;
 
   const JourneyGoal({
     required this.metricId,
@@ -33,6 +34,7 @@ class JourneyGoal {
     required this.horizonDays,
     required this.headlineAr,
     required this.summaryAr,
+    this.scoreAvailable = true,
   });
 }
 

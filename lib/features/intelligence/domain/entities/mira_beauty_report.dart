@@ -79,6 +79,9 @@ class MiraBeautyReport {
   final int scoreSchemaVersion;
   final String spatialConfidence;
   final int overallBeautyScore;
+  /// True only when this score was computed without substituting missing hydration.
+  /// Null on an older stored report is not proof that the score is complete.
+  final bool? overallScoreAvailable;
   final String displayScoreLabelAr;
   final String displayScoreLabelEn;
   final String scoreSupportingAr;
@@ -116,6 +119,7 @@ class MiraBeautyReport {
     this.scoreSchemaVersion = 1,
     required this.spatialConfidence,
     required this.overallBeautyScore,
+    this.overallScoreAvailable,
     this.displayScoreLabelAr = CosmeticCopy.skinVitalityIndexAr,
     this.displayScoreLabelEn = CosmeticCopy.skinVitalityIndexEn,
     this.scoreSupportingAr = CosmeticCopy.skinVitalitySupportingAr,

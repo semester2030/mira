@@ -1,5 +1,4 @@
 import '../../../skin_analysis/domain/entities/skin_report.dart';
-import '../../../skin_analysis/domain/services/skin_report_matrix.dart';
 import '../constants/report_face_map_spec.dart';
 import '../entities/face_health_map.dart';
 
@@ -27,17 +26,23 @@ abstract final class LocalFaceMapBuilder {
   };
 
   static FaceHealthMap fromSkinReport(SkinReport report) {
-    final scores = {
-      for (final c in SkinReportMatrix.matrixScores(report)) c.id: c.score,
-    };
-    int ui(String id, int fallback) => scores[id] ?? fallback;
+    // concernScores holds stored ui_score values. SkinReportMatrix.matrixScores
+    // falls back to severity formulas when that map is empty; those derived
+    // numbers are not measurements and are not copied onto overlays.
+    int? measured(String id) {
+      if (report.concernScores.containsKey(id)) {
+        return _contractScore(report.concernScores[id]);
+      }
+      if (id == 'moisture') return _contractScore(report.hydration);
+      return null;
+    }
 
     final insights = <FaceHealthInsight>[];
     final overlays = <FaceHealthConcernOverlay>[];
 
     void addConcern({
       required String concernId,
-      required int score,
+      required int? score,
       required String zoneNameAr,
     }) {
       final meta = _concernMeta[concernId];
@@ -48,14 +53,20 @@ abstract final class LocalFaceMapBuilder {
         labelAr: meta.ar,
         labelEn: concernId,
         globalScore: score,
-        severity: score >= 70 ? 'mild' : score >= 55 ? 'moderate' : 'noticeable',
+        severity: score == null
+            ? 'unavailable'
+            : score >= 70
+                ? 'mild'
+                : score >= 55
+                    ? 'moderate'
+                    : 'noticeable',
         zoneScores: const {},
         highlightZoneIds: const [],
         highlightColor: meta.color,
         hasRegionalData: false,
       ));
 
-      if (score >= 58) return;
+      if (score == null || score >= 58) return;
       final severity = score >= 50 ? 'بدرجة متوسطة' : 'بدرجة ملحوظة';
       insights.add(FaceHealthInsight(
         id: 'insight_$concernId',
@@ -70,47 +81,47 @@ abstract final class LocalFaceMapBuilder {
 
     addConcern(
       concernId: 'pore',
-      score: ui('pore', 100 - report.pores * 20),
+      score: measured('pore'),
       zoneNameAr: 'الأنف والخدين ووسط الجبهة',
     );
     addConcern(
       concernId: 'moisture',
-      score: ui('moisture', report.hydration),
+      score: measured('moisture'),
       zoneNameAr: 'الخدين والجبهة والذقن',
     );
     addConcern(
       concernId: 'oiliness',
-      score: ui('oiliness', 100 - report.oiliness),
+      score: measured('oiliness'),
       zoneNameAr: 'منطقة T-Zone',
     );
     addConcern(
       concernId: 'redness',
-      score: ui('redness', 100 - report.redness * 20),
+      score: measured('redness'),
       zoneNameAr: 'الخدين والأنف والذقن',
     );
     addConcern(
       concernId: 'age_spot',
-      score: ui('age_spot', 100 - report.spots * 20),
+      score: measured('age_spot'),
       zoneNameAr: 'الخدين والجبهة وتحت العين',
     );
     addConcern(
       concernId: 'wrinkle',
-      score: ui('wrinkle', 100 - report.wrinkles * 20),
+      score: measured('wrinkle'),
       zoneNameAr: 'الجبهة وزوايا العين وخطوط الابتسامة',
     );
     addConcern(
       concernId: 'acne',
-      score: ui('acne', 100 - report.acne * 20),
+      score: measured('acne'),
       zoneNameAr: 'الجبهة والخدين والذقن والفك',
     );
     addConcern(
       concernId: 'dark_circle',
-      score: ui('dark_circle', _blend(report.hydration, report.wrinkles)),
+      score: measured('dark_circle'),
       zoneNameAr: 'تحت العينين فقط',
     );
     addConcern(
       concernId: 'texture',
-      score: ui('texture', 100 - report.pores * 15),
+      score: measured('texture'),
       zoneNameAr: 'الخدين والجبهة والذقن',
     );
 
@@ -120,7 +131,7 @@ abstract final class LocalFaceMapBuilder {
       return (ai < 0 ? 99 : ai).compareTo(bi < 0 ? 99 : bi);
     });
 
-    final weaker = overlays.where((o) => o.globalScore < 65).toList();
+    final weaker = overlays.where((o) => o.globalScore != null && o.globalScore! < 65).toList();
     final defaultId = weaker.isNotEmpty ? weaker.first.concernId : overlays.first.concernId;
 
     if (overlays.isEmpty) return FaceHealthMap.empty;
@@ -141,7 +152,10 @@ abstract final class LocalFaceMapBuilder {
     );
   }
 
-  static int _blend(int a, int b) => ((a + (100 - b * 20)) / 2).round();
+  static int? _contractScore(int? value) {
+    if (value == null || value < 0 || value > 100) return null;
+    return value;
+  }
 
   static List<FaceHealthZone> _allZones() {
     const zones = [

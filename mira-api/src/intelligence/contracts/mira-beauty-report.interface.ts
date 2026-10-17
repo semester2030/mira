@@ -107,7 +107,9 @@ export type ProgressDirection = 'improved' | 'regressed' | 'stable';
 export interface ProgressTimelinePoint {
   analysisId: string;
   createdAt: string;
-  overallScore: number;
+  overallScore: number | null;
+  /** True only for a point whose overall score was eligible. Absent is not proof. */
+  overallScoreAvailable?: boolean;
 }
 
 export interface ProgressMetricTrend {
@@ -201,6 +203,8 @@ export interface MiraBeautyReport {
    * User-facing meaning (schema ≥2): Skin Vitality Index — not objective beauty.
    */
   overallBeautyScore: number;
+  /** True only when the score did not substitute a missing hydration value. Absent is not completeness. */
+  overallScoreAvailable?: boolean;
   displayScoreLabelAr?: string;
   displayScoreLabelEn?: string;
   scoreSupportingAr?: string;

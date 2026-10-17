@@ -27,6 +27,9 @@ export class ConsultationMessageResponseDto {
   confidence?: string;
   intent?: string;
   citedFacts?: Array<{ id: string; labelAr: string; valueAr: string }>;
+  attachmentIds?: string[];
+  clientMessageId?: string;
+  suggestedQuestionsAr?: string[];
 }
 
 export class ConsultationTurnResponseDto {

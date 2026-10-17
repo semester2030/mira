@@ -1,4 +1,4 @@
-import { IsNotEmpty, IsString } from 'class-validator';
+import { IsIn, IsNotEmpty, IsOptional, IsString } from 'class-validator';
 
 export class OutfitIntelligenceBodyDto {
   @IsString()
@@ -9,4 +9,8 @@ export class OutfitIntelligenceBodyDto {
   @IsString()
   @IsNotEmpty()
   skinReport!: string;
+
+  @IsOptional()
+  @IsIn(['camera', 'gallery'])
+  captureSource?: 'camera' | 'gallery';
 }

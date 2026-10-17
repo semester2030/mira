@@ -1,4 +1,4 @@
-import { Injectable } from '@nestjs/common';
+import { Inject, Injectable } from '@nestjs/common';
 import { PrismaService } from '../../prisma/prisma.service';
 import {
   MceContextSnapshotV1,
@@ -8,7 +8,7 @@ import { GroundingResult } from './mce-grounding-pipeline.service';
 
 @Injectable()
 export class MceContextSnapshotService {
-  constructor(private readonly prisma: PrismaService) {}
+  constructor(@Inject(PrismaService) private readonly prisma: PrismaService) {}
 
   async createVersion(
     sessionId: string,

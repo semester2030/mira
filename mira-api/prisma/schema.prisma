@@ -445,6 +445,7 @@ model ConsultationSession {
   messages       ConsultationMessage[]
   snapshots      ConsultationContextSnapshot[]
   recommendations ConsultationRecommendation[]
+  attachments    ConsultationAttachment[]
 
   @@index([userId, updatedAt(sort: Desc)])
   @@index([userId, status])
@@ -463,8 +464,16 @@ model ConsultationMessage {
   modelId      String?  @map("model_id")
   latencyMs    Int?     @map("latency_ms")
   blocked      Boolean  @default(false)
+  clientMessageId String? @map("client_message_id")
+  requestHash  String?  @map("request_hash")
+  replyToMessageId String? @map("reply_to_message_id")
+  turnStatus   String?  @map("turn_status")
+  attemptToken String?  @map("attempt_token")
+  attemptExpiresAt DateTime? @map("attempt_expires_at")
   createdAt    DateTime @default(now()) @map("created_at")
 
+  @@unique([sessionId, clientMessageId])
+  @@unique([replyToMessageId])
   @@index([sessionId, createdAt])
   @@map("consultation_messages")
 }
@@ -504,6 +513,28 @@ model ConsultationRecommendation {
 
   @@index([sessionId, createdAt])
   @@map("consultation_recommendations")
+}
+
+/// Private consultation images. Bytes live outside the database.
+model ConsultationAttachment {
+  id         String    @id @default(uuid())
+  userId     String    @map("user_id")
+  sessionId  String    @map("session_id")
+  session    ConsultationSession @relation(fields: [sessionId], references: [id], onDelete: Cascade)
+  messageId  String?   @map("message_id")
+  mimeType   String    @map("mime_type")
+  byteSize   Int       @map("byte_size")
+  sha256     String
+  width      Int?
+  height     Int?
+  storageKey String    @map("storage_key")
+  status     String    @default("ready")
+  createdAt  DateTime  @default(now()) @map("created_at")
+  deletedAt  DateTime? @map("deleted_at")
+
+  @@index([userId, sessionId, createdAt])
+  @@index([userId, createdAt])
+  @@map("consultation_attachments")
 }
 
 /// MCE Phase 4 — Atelier QEL recolor attempts (no image stored).
@@ -693,4 +724,17 @@ model CommerceBookingEvent {
 
   @@index([bookingId, createdAt])
   @@map("commerce_booking_events")
+}
+
+/// Product journey counts. No names, phones, emails, or images.
+model JourneyEvent {
+  id        String   @id @default(uuid())
+  name      String
+  kind      String
+  subjectId String?  @map("subject_id")
+  code      String?
+  createdAt DateTime @default(now()) @map("created_at")
+
+  @@index([createdAt])
+  @@map("journey_events")
 }

@@ -122,22 +122,27 @@ class _GoalCard extends StatelessWidget {
             goal.headlineAr,
             style: AppTypography.titleSmall.copyWith(color: AppColors.primaryDark),
           ),
-          const SizedBox(height: 8),
-          Row(
-            children: [
-              _ScorePill(label: 'الآن', value: goal.currentValue),
-              Padding(
-                padding: const EdgeInsets.symmetric(horizontal: 8),
-                child: Icon(Icons.arrow_back_rounded, size: 18, color: AppColors.gold),
-              ),
-              _ScorePill(label: 'الهدف المقترح', value: goal.targetValue, highlight: true),
-            ],
-          ),
-          const SizedBox(height: 8),
-          Text(
-            goal.summaryAr,
-            style: AppTypography.bodySmall.copyWith(height: 1.5),
-          ),
+          if (!goal.scoreAvailable) ...[
+            const SizedBox(height: 8),
+            Text(goal.summaryAr, style: AppTypography.bodySmall),
+          ] else ...[
+            const SizedBox(height: 8),
+            Row(
+              children: [
+                _ScorePill(label: 'الآن', value: goal.currentValue),
+                Padding(
+                  padding: const EdgeInsets.symmetric(horizontal: 8),
+                  child: Icon(Icons.arrow_back_rounded, size: 18, color: AppColors.gold),
+                ),
+                _ScorePill(label: 'الهدف المقترح', value: goal.targetValue, highlight: true),
+              ],
+            ),
+            const SizedBox(height: 8),
+            Text(
+              goal.summaryAr,
+              style: AppTypography.bodySmall.copyWith(height: 1.5),
+            ),
+          ],
         ],
       ),
     );

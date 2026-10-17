@@ -109,4 +109,12 @@ abstract final class MiraFeatures {
   /// Preview route is available in debug OR when dart-define is true.
   static bool get fashionIconPreviewAvailable =>
       kDebugMode || fashionIconPreview;
+
+  /// Outfit/body live camera is paused until professional capture is approved.
+  /// Gallery selection stays available. Face capture is a separate path.
+  /// Re-enable later: `--dart-define=MIRA_OUTFIT_CAMERA_CAPTURE=true`
+  static const bool outfitCameraCaptureEnabled = bool.fromEnvironment(
+    'MIRA_OUTFIT_CAMERA_CAPTURE',
+    defaultValue: false,
+  );
 }

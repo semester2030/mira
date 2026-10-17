@@ -77,11 +77,24 @@
     return '';
   }
 
-  function fileToBase64(file) {
+  function fileToBase64(file, onProgress, signal) {
     return new Promise((resolve, reject) => {
       const reader = new FileReader();
+      const stop = () => {
+        reader.abort();
+        reject(Object.assign(new Error('أُلغي الرفع'), { name: 'AbortError' }));
+      };
+      if (signal) {
+        if (signal.aborted) { stop(); return; }
+        signal.addEventListener('abort', stop, { once: true });
+      }
+      reader.onprogress = (event) => {
+        if (typeof onProgress !== 'function') return;
+        if (event.lengthComputable && event.total > 0) onProgress(event.loaded / event.total);
+        else onProgress(null);
+      };
       reader.onload = () => resolve(String(reader.result).split(',')[1]);
-      reader.onerror = () => reject(reader.error);
+      reader.onerror = () => reject(reader.error || new Error('تعذرت قراءة الملف'));
       reader.readAsDataURL(file);
     });
   }
@@ -135,7 +148,10 @@
       open.textContent = 'فتح في النموذج';
       open.onclick = () => {
         renderForm(type, item, formId, titleId);
-        document.getElementById(formId).scrollIntoView({ behavior: 'smooth', block: 'start' });
+        document.getElementById(formId).scrollIntoView({
+          behavior: window.MiraMotion && MiraMotion.reduced() ? 'auto' : 'smooth',
+          block: 'start',
+        });
       };
       const pull = document.createElement('button');
       pull.type = 'button';
@@ -587,15 +603,19 @@
     text(mediaSection, 'الصور: JPEG أو PNG أو WebP حتى 5 ميغابايت. الفيديو: MP4 حتى 20 ميغابايت. يمكن اختيار أكثر من ملف. الغلاف صورة واحدة، والباقي للتفاصيل.');
     const images = document.createElement('input');
     images.type = 'file';
+    images.id = form.id + '-images';
     images.accept = 'image/jpeg,image/png,image/webp';
     images.multiple = true;
     const videos = document.createElement('input');
     videos.type = 'file';
+    videos.id = form.id + '-videos';
     videos.accept = 'video/mp4';
     videos.multiple = true;
     const imageLabel = document.createElement('label');
+    imageLabel.htmlFor = images.id;
     imageLabel.textContent = 'اختيار صور';
     const videoLabel = document.createElement('label');
+    videoLabel.htmlFor = videos.id;
     videoLabel.textContent = 'اختيار فيديو';
     const mediaBox = document.createElement('div');
     mediaSection.append(imageLabel, images, videoLabel, videos, mediaBox);
@@ -673,8 +693,10 @@
 
     const save = document.createElement('button');
     save.type = 'submit';
+    save.id = form.id + '-save';
     save.className = 'btn btn-primary';
     save.textContent = 'حفظ المسودة';
+    if (note && note.indexOf('حُفظت المسودة') === 0) status.classList.add('save-ok');
     const submit = document.createElement('button');
     submit.type = 'button';
     submit.className = 'btn btn-ghost';
@@ -1409,9 +1431,11 @@
       Array.from(fileList || []).forEach((file) => {
         const problem = mediaProblem(file);
         const entry = {
+          key: file.name + ':' + file.size + ':' + file.lastModified,
           file: file,
           status: problem ? 'فشل' : (item && item.id ? 'جارٍ الرفع' : 'بانتظار الحفظ'),
           error: problem,
+          percent: null,
           url: URL.createObjectURL(file),
         };
         staged[form.id].push(entry);
@@ -1428,20 +1452,45 @@
       rows.forEach((entry, index) => {
         const card = document.createElement('div');
         card.className = 'media-card';
+        card.dataset.fileKey = entry.key;
         text(card, entry.file.name + ' · ' + entry.status + (entry.error ? ' · ' + entry.error : ''));
+        const stateLine = document.createElement('p');
+        stateLine.className = 'media-state';
+        const progress = document.createElement('div');
+        progress.className = 'media-progress';
+        const progressBar = document.createElement('span');
+        progressBar.className = 'media-progress-bar';
+        progress.appendChild(progressBar);
+        const viewInfo = window.MiraMotion ? MiraMotion.describeMedia(entry) : { label: entry.status, mode: 'idle', percent: null };
+        stateLine.textContent = viewInfo.label;
+        if (window.MiraMotion) MiraMotion.applyProgress(progress, viewInfo);
+        card.append(stateLine, progress);
         const view = document.createElement(entry.file.type === 'video/mp4' ? 'video' : 'img');
         view.src = entry.url;
+        view.alt = entry.file.name;
         if (entry.file.type === 'video/mp4') view.controls = true;
         card.appendChild(view);
         const retry = document.createElement('button');
         retry.type = 'button';
+        retry.className = 'btn btn-ghost';
         retry.textContent = 'إعادة المحاولة';
-        retry.disabled = !item || !item.id || !entry.error;
+        retry.setAttribute('aria-label', 'إعادة محاولة رفع ' + entry.file.name);
+        retry.disabled = !item || !item.id || !(entry.error || entry.status === 'أُلغي');
         retry.onclick = () => uploadOne(entry);
+        const cancel = document.createElement('button');
+        cancel.type = 'button';
+        cancel.className = 'btn btn-ghost';
+        cancel.textContent = 'إلغاء';
+        cancel.setAttribute('aria-label', 'إلغاء رفع ' + entry.file.name);
+        cancel.disabled = !entry.controller;
+        cancel.onclick = () => { if (entry.controller) entry.controller.abort(); };
         const remove = document.createElement('button');
         remove.type = 'button';
+        remove.className = 'btn btn-ghost';
         remove.textContent = 'إزالة';
+        remove.setAttribute('aria-label', 'إزالة ' + entry.file.name);
         remove.onclick = () => {
+          if (entry.controller) entry.controller.abort();
           URL.revokeObjectURL(entry.url);
           rows.splice(index, 1);
           paintMedia(serverMedia);
@@ -1456,7 +1505,7 @@
           rows[index] = swap;
           paintMedia(serverMedia);
         };
-        card.append(up, retry, remove);
+        card.append(up, retry, cancel, remove);
         mediaBox.appendChild(card);
       });
       if (!item || !item.id) {
@@ -1522,35 +1571,84 @@
       });
     }
 
+    function syncMedia(entry) {
+      const card = mediaBox.querySelector('[data-file-key="' + entry.key + '"]');
+      const view = window.MiraMotion ? MiraMotion.describeMedia(entry) : { label: entry.status, mode: 'idle', percent: null };
+      if (!card) return;
+      const line = card.querySelector('.media-state');
+      if (line) line.textContent = view.label;
+      if (window.MiraMotion) MiraMotion.applyProgress(card.querySelector('.media-progress'), view);
+    }
+
     async function uploadOne(entry) {
       const problem = mediaProblem(entry.file);
       if (problem) {
         entry.status = 'فشل';
         entry.error = problem;
+        entry.percent = null;
         paintMedia(null);
         return;
       }
       if (!item || !item.id) {
         entry.status = 'بانتظار الحفظ';
+        entry.percent = null;
         paintMedia(null);
         return;
       }
-      entry.status = 'جارٍ الرفع';
+      const controller = new AbortController();
+      entry.controller = controller;
       entry.error = '';
+      entry.percent = null;
+      entry.status = 'جارٍ القراءة';
       paintMedia(null);
+      if (window.MiraMotion) MiraMotion.announce('بدأ رفع ' + entry.file.name);
       try {
-        const dataBase64 = await fileToBase64(entry.file);
-        await PartnersApi.addMedia(type === 'brand' ? 'products' : 'services', item.id, entry.file.type, dataBase64);
+        const dataBase64 = await fileToBase64(entry.file, (ratio) => {
+          entry.percent = ratio;
+          entry.status = 'جارٍ القراءة';
+          syncMedia(entry);
+        }, controller.signal);
+        if (controller.signal.aborted) throw Object.assign(new Error('أُلغي الرفع'), { name: 'AbortError' });
+        entry.status = 'جارٍ الرفع';
+        entry.percent = null;
+        syncMedia(entry);
+        const send = PartnersApi.addMediaProgress || PartnersApi.addMedia;
+        await send(type === 'brand' ? 'products' : 'services', item.id, entry.file.type, dataBase64, {
+          signal: controller.signal,
+          onProgress: (ratio) => {
+            entry.status = 'جارٍ الرفع';
+            entry.percent = ratio;
+            syncMedia(entry);
+          },
+          onProcessing: () => {
+            entry.status = 'جارٍ المعالجة';
+            entry.percent = null;
+            syncMedia(entry);
+          },
+        });
         entry.status = 'رُفع';
         entry.error = '';
+        entry.percent = 1;
+        entry.controller = null;
+        syncMedia(entry);
         URL.revokeObjectURL(entry.url);
         const at = staged[form.id].indexOf(entry);
         if (at >= 0) staged[form.id].splice(at, 1);
         status.textContent = 'رُفع الملف ورُبط بالمسودة. لن يظهر في التطبيق قبل الاعتماد.';
+        if (window.MiraMotion) MiraMotion.announce(status.textContent);
       } catch (error) {
-        entry.status = 'فشل';
-        entry.error = error.message || 'فشل الرفع';
-        status.textContent = 'فشل الرفع وبقيت المسودة: ' + entry.error;
+        entry.controller = null;
+        entry.percent = null;
+        if (error && error.name === 'AbortError') {
+          entry.status = 'أُلغي';
+          entry.error = '';
+          status.textContent = 'أُلغي الرفع وبقي الملف في النموذج.';
+        } else {
+          entry.status = 'فشل';
+          entry.error = error.message || 'فشل الرفع';
+          status.textContent = 'فشل الرفع وبقيت المسودة: ' + entry.error;
+        }
+        if (window.MiraMotion) MiraMotion.announce(status.textContent);
       }
       paintMedia(null);
     }
@@ -1643,6 +1741,7 @@
 
     form.onsubmit = async (event) => {
       event.preventDefault();
+      if (form.dataset.saving === '1') return;
       ['nameAr', 'priceSar', 'category', 'externalUrl', 'durationMin'].forEach((name) => setFieldError(form, name, ''));
       let blocked = false;
       if (nameAr.value.trim().length < 2) {
@@ -1720,8 +1819,14 @@
           }
         }
       }
+      form.dataset.saving = '1';
+      const idleLabel = save.textContent;
       save.disabled = true;
+      save.setAttribute('aria-busy', 'true');
+      save.classList.add('is-busy');
+      save.textContent = 'جارٍ الحفظ';
       status.textContent = 'جارٍ حفظ المسودة';
+      if (window.MiraMotion) MiraMotion.announce(status.textContent);
       try {
         const saved = editing
           ? await (type === 'brand' ? PartnersApi.updateProduct(item.id, payload) : PartnersApi.updateService(item.id, payload))
@@ -1742,7 +1847,11 @@
         }
         item = Object.assign({}, item || {}, saved);
         staged[form.id].ownerId = item.id;
+        save.classList.remove('is-busy');
+        save.classList.add('is-success');
+        save.textContent = 'تم الحفظ';
         status.textContent = 'حُفظت المسودة. السعر المخزن ' + item.priceHalalas + ' هللة (' + formatPrice(item.priceHalalas) + ').';
+        if (window.MiraMotion) MiraMotion.announce(status.textContent);
         await refreshLists();
         const pending = staged[form.id].slice();
         for (const entry of pending) {
@@ -1751,8 +1860,13 @@
         const failures = staged[form.id].filter((entry) => entry && entry.error).map((entry) => entry.file.name + ': ' + entry.error);
         renderForm(type, item, form.id, titleId, failures.length ? 'حُفظت المسودة. لم يُسجَّل الرفع ناجحًا. ' + failures.join(' — ') : '');
       } catch (error) {
+        form.dataset.saving = '';
         status.textContent = 'تعذر الحفظ: ' + error.message + ' البيانات المكتوبة ما زالت في النموذج.';
         save.disabled = false;
+        save.removeAttribute('aria-busy');
+        save.classList.remove('is-busy', 'is-success');
+        save.textContent = idleLabel;
+        if (window.MiraMotion) MiraMotion.announce(status.textContent);
       }
     };
   }

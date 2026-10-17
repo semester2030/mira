@@ -44,8 +44,9 @@ export interface FaceHealthConcernOverlay {
   concernId: string;
   labelAr: string;
   labelEn: string;
-  globalScore: number;
-  severity: ConcernSeverity;
+  /** Null when the provider did not return a valid score. Never a display substitute. */
+  globalScore: number | null;
+  severity: ConcernSeverity | null;
   zoneScores: Partial<Record<FaceHealthZoneId, number>>;
   highlightZoneIds: FaceHealthZoneId[];
   highlightColor: string;

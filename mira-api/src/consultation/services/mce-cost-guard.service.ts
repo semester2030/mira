@@ -12,6 +12,39 @@ import {
 } from '../../redis/redis.service';
 import { MceAssistantPayloadV1 } from '../contracts/mce-context-snapshot.v1';
 
+export const ANSWER_CACHE_KEY_VERSION = 'v2';
+
+export interface AnswerCacheContext {
+  userId: string;
+  sessionId: string;
+  question: string;
+  snapshotId: string;
+  snapshot: unknown;
+  factRegistry: unknown;
+  history: Array<{ role: string; content: string }>;
+  rollingSummary: string | null;
+}
+
+export function buildAnswerCacheKey(ctx: AnswerCacheContext): string | null {
+  const question = ctx.question.trim().toLowerCase().replace(/\s+/g, ' ');
+  if (!ctx.userId || !ctx.sessionId || !question || !ctx.snapshotId || ctx.snapshot == null || ctx.history == null) {
+    return null;
+  }
+  const material = JSON.stringify({
+    v: ANSWER_CACHE_KEY_VERSION,
+    userId: ctx.userId,
+    sessionId: ctx.sessionId,
+    question,
+    snapshotId: ctx.snapshotId,
+    snapshot: ctx.snapshot,
+    facts: ctx.factRegistry ?? [],
+    history: ctx.history.map((row) => ({ role: row.role, content: row.content })),
+    rollingSummary: ctx.rollingSummary ?? '',
+  });
+  const digest = createHash('sha256').update(material).digest('hex');
+  return `mce:faq:${ANSWER_CACHE_KEY_VERSION}:${digest}`;
+}
+
 const PLAN_DAILY_LIMITS: Record<string, number> = {
   free: 10,
   premium: 100,
@@ -72,6 +105,10 @@ export class MceCostGuardService {
       .digest('hex')
       .slice(0, 24);
     return `mce:faq:${digest}`;
+  }
+
+  answerCacheKey(ctx: AnswerCacheContext): string | null {
+    return buildAnswerCacheKey(ctx);
   }
 
   async getFaqCache(key: string): Promise<MceAssistantPayloadV1 | null> {

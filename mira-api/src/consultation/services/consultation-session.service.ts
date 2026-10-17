@@ -1,11 +1,22 @@
-import { Injectable, NotFoundException } from '@nestjs/common';
+import { createHash } from 'node:crypto';
+import { Inject, Injectable, NotFoundException } from '@nestjs/common';
+import { Prisma } from '@prisma/client';
 import { PrismaService } from '../../prisma/prisma.service';
+import { extractMiraReportFromStored } from '../../skin-analysis/dto/skin-analysis-response.dto';
+import { resolveFaceSelection, sanitizeFaceSelection } from './consultation-face-selection';
 import { CreateConsultationSessionDto } from '../dto/create-session.dto';
 import { UpdateConsultationContextDto } from '../dto/update-session-context.dto';
 import { ConsultationSessionResponseDto } from '../dto/consultation-response.dto';
 import { MceContextSnapshotV1 } from '../contracts/mce-context-snapshot.v1';
 import { MceGroundingPipelineService } from './mce-grounding-pipeline.service';
 import { MceContextSnapshotService } from './mce-context-snapshot.service';
+
+const STARTERS_OPEN = [
+  'ما روتين عناية بسيط للبداية؟',
+  'كيف أنسخ إطلالة مناسبة لسهرة؟',
+  'ما الفرق بين مكياج نهاري ومكياج سهرة؟',
+  'كيف أختار حقيبة تناسب فستانًا؟',
+];
 
 const STARTERS_SKIN = [
   'لماذا درجة ترطيبي كذا؟',
@@ -43,7 +54,8 @@ export function pickSuggestedStarters(snapshot?: {
   if (snapshot?.atelier && !snapshot?.skin && !snapshot?.outfit) return STARTERS_ATELIER;
   if (snapshot?.skin && snapshot?.outfit) return STARTERS_FUSION;
   if (snapshot?.outfit) return STARTERS_OUTFIT;
-  return STARTERS_SKIN;
+  if (snapshot?.skin) return STARTERS_SKIN;
+  return STARTERS_OPEN;
 }
 
 function sessionTitle(snapshot: MceContextSnapshotV1): string {
@@ -65,9 +77,9 @@ function sessionTitle(snapshot: MceContextSnapshotV1): string {
 @Injectable()
 export class ConsultationSessionService {
   constructor(
-    private readonly prisma: PrismaService,
-    private readonly grounding: MceGroundingPipelineService,
-    private readonly snapshots: MceContextSnapshotService,
+    @Inject(PrismaService) private readonly prisma: PrismaService,
+    @Inject(MceGroundingPipelineService) private readonly grounding: MceGroundingPipelineService,
+    @Inject(MceContextSnapshotService) private readonly snapshots: MceContextSnapshotService,
   ) {}
 
   async create(
@@ -88,6 +100,21 @@ export class ConsultationSessionService {
       statedGoalAr: dto.statedGoalAr,
       occasionId: dto.occasionId,
     });
+    if (dto.face) {
+      const reportId = dto.face.reportRef || dto.skinAnalysisId;
+      const row = reportId
+        ? await this.prisma.skinAnalysis.findFirst({ where: { id: reportId, userId } })
+        : null;
+      const stored = row ? extractMiraReportFromStored(row.resultJson) : null;
+      const resolved = resolveFaceSelection({
+        owned: Boolean(row),
+        report: stored?.faceIntelligence ?? null,
+        focus: dto.face,
+      });
+      grounding.snapshot.faceSelection = resolved.selection;
+      grounding.factRegistry.push(...resolved.facts);
+      grounding.contentHash = createHash('sha256').update(JSON.stringify(grounding.snapshot)).digest('hex').slice(0, 32);
+    }
 
     const session = await this.prisma.consultationSession.create({
       data: {
@@ -96,7 +123,10 @@ export class ConsultationSessionService {
         occasionId: dto.occasionId ?? grounding.snapshot.occasionId,
         planTier,
         titleAr: sessionTitle(grounding.snapshot),
-        metadataJson: dto.statedGoalAr ? { statedGoalAr: dto.statedGoalAr } : undefined,
+        metadataJson: {
+          ...(dto.statedGoalAr ? { statedGoalAr: dto.statedGoalAr } : {}),
+          ...(dto.face ? { faceSelection: sanitizeFaceSelection(dto.face) } : {}),
+        } as Prisma.InputJsonValue,
       },
     });
 

@@ -122,7 +122,7 @@ class FaceDiagramPainter extends CustomPainter {
 
     for (final zone in zones) {
       final score = zone.zoneScore;
-      if (score == null || !zone.highlight) continue;
+      if (score == null || score < 0 || score > 100 || !zone.highlight) continue;
       final anchor = anchors[zone.id];
       if (anchor == null) continue;
       _drawScoreBadge(canvas, anchor, score, _parseHex(zone.highlightColor));

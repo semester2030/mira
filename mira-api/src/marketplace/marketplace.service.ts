@@ -12,6 +12,7 @@ import {
 import { publishedCatalogMediaWhere } from './catalog-published-media';
 import { publicProductCommerce, publicServiceCommerce } from './commerce-public';
 import { seedMarketplaceIfEmpty } from './marketplace.seed';
+import { recordJourney } from './journey-events';
 
 export type MatchedProductDto = {
   id: string;
@@ -470,6 +471,7 @@ export class MarketplaceService implements OnModuleInit {
       include: { partner: true },
     });
     if (!service) throw new NotFoundException('العنصر غير متاح');
+    await recordJourney({ name: 'service_viewed', kind: 'service', subjectId: service.id }, this.prisma);
     const media = await this.prisma.catalogMedia.findMany({
       where: publishedCatalogMediaWhere('service', service.id),
       orderBy: { sortOrder: 'asc' },

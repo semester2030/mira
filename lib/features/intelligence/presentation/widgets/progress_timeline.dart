@@ -19,6 +19,12 @@ class ProgressTimeline extends StatelessWidget {
         style: AppTypography.bodySmall.copyWith(color: AppColors.textSecondary),
       );
     }
+    if (points.any((point) => point.overallScore == null)) {
+      return Text(
+        overallComparisonUnavailableAr,
+        style: AppTypography.bodySmall.copyWith(color: AppColors.textSecondary),
+      );
+    }
 
     return SizedBox(
       height: 140,
@@ -54,7 +60,7 @@ class _PointLabel extends StatelessWidget {
       mainAxisAlignment: MainAxisAlignment.end,
       children: [
         Text(
-          '${point.overallScore}',
+          '${point.overallScore ?? ''}',
           style: AppTypography.labelLarge.copyWith(color: AppColors.primaryDark),
         ),
         const SizedBox(height: 4),
@@ -76,14 +82,16 @@ class _TimelinePainter extends CustomPainter {
   void paint(Canvas canvas, Size size) {
     if (points.length < 2) return;
 
-    final minScore = points.map((p) => p.overallScore).reduce((a, b) => a < b ? a : b);
-    final maxScore = points.map((p) => p.overallScore).reduce((a, b) => a > b ? a : b);
+    final scores = points.map((p) => p.overallScore).whereType<int>().toList();
+    if (scores.length != points.length) return;
+    final minScore = scores.reduce((a, b) => a < b ? a : b);
+    final maxScore = scores.reduce((a, b) => a > b ? a : b);
     final range = (maxScore - minScore).clamp(8, 100);
 
     final coords = <Offset>[];
     for (var i = 0; i < points.length; i++) {
       final x = (size.width / (points.length - 1)) * i;
-      final normalized = (points[i].overallScore - minScore) / range;
+      final normalized = (points[i].overallScore! - minScore) / range;
       final y = size.height - 36 - (normalized * (size.height - 56));
       coords.add(Offset(x, y));
     }

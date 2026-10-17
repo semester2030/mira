@@ -9,12 +9,35 @@ function score(skin: SkinAnalysisResult, id: string, fallback: number): number {
 }
 
 export function buildTreatmentPlan(skin: SkinAnalysisResult): DailyRoutinePlan {
-  const moisture = score(skin, 'moisture', skin.hydration);
-  const oilinessUi = score(skin, 'oiliness', 100 - skin.oiliness);
-  const oilinessHigh = oilinessUi < 55;
-  const acne = score(skin, 'acne', 100 - skin.acne * 20);
-  const redness = score(skin, 'redness', 100 - skin.redness * 20);
-  const pores = score(skin, 'pore', 100 - skin.pores * 20);
+  return routineFromOptionalScores({
+    moisture: score(skin, 'moisture', skin.hydration),
+    oilinessUi: score(skin, 'oiliness', 100 - skin.oiliness),
+    acne: score(skin, 'acne', 100 - skin.acne * 20),
+    redness: score(skin, 'redness', 100 - skin.redness * 20),
+    pores: score(skin, 'pore', 100 - skin.pores * 20),
+  });
+}
+
+/** Rebuild only from measured scores. Missing keys do not become substitute numbers. */
+export function buildRoutineFromKnownScores(scores: Record<string, number>): DailyRoutinePlan {
+  return routineFromOptionalScores({
+    moisture: scores.moisture,
+    oilinessUi: scores.oiliness,
+    acne: scores.acne,
+    redness: scores.redness,
+    pores: scores.pore,
+  });
+}
+
+function routineFromOptionalScores(input: {
+  moisture?: number;
+  oilinessUi?: number;
+  acne?: number;
+  redness?: number;
+  pores?: number;
+}): DailyRoutinePlan {
+  const { moisture, oilinessUi, acne, redness, pores } = input;
+  const oilinessHigh = oilinessUi != null && oilinessUi < 55;
 
   const morning: RoutineStep[] = [
     {
@@ -26,7 +49,7 @@ export function buildTreatmentPlan(skin: SkinAnalysisResult): DailyRoutinePlan {
     },
   ];
 
-  if (moisture < 62) {
+  if (moisture != null && moisture < 62) {
     morning.push({
       id: 'serum_am',
       nameAr: 'سيروم ترطيب',
@@ -54,25 +77,25 @@ export function buildTreatmentPlan(skin: SkinAnalysisResult): DailyRoutinePlan {
     },
   ];
 
-  if (acne < 58) {
+  if (acne != null && acne < 58) {
     evening.push({
       id: 'treatment_acne',
-      nameAr: 'معالجة الحبوب (نياسيناميد)',
-      nameEn: 'Niacinamide Treatment',
-      stepAr: 'مساءً — على المناطق المتأثرة',
+      nameAr: 'عناية لطيفة بالحبوب',
+      nameEn: 'Gentle blemish care',
+      stepAr: 'لا تلمسيها. تقييم أي علاج يكون مع مختص، وليس من صورة التحليل.',
       period: 'pm',
     });
-  } else if (pores < 58) {
+  } else if (pores != null && pores < 58) {
     evening.push({
       id: 'treatment_pores',
-      nameAr: 'مقشر BHA خفيف',
-      nameEn: 'Light BHA Exfoliant',
-      stepAr: '2–3 مرات أسبوعياً — مساءً',
+      nameAr: 'تنظيف لطيف للمسام',
+      nameEn: 'Gentle pore care',
+      stepAr: 'تجنبي الإفراط في المقشرات. اختيار المقشر يكون مع مختص عند الحاجة.',
       period: 'pm',
     });
   }
 
-  if (redness < 55) {
+  if (redness != null && redness < 55) {
     evening.push({
       id: 'soothing',
       nameAr: 'مرطب مهدئ',
@@ -83,8 +106,8 @@ export function buildTreatmentPlan(skin: SkinAnalysisResult): DailyRoutinePlan {
   } else {
     evening.push({
       id: 'moisturizer_pm',
-      nameAr: moisture < 60 ? 'كريم ترطيب غني' : 'مرطب يومي',
-      nameEn: moisture < 60 ? 'Rich Moisturizer' : 'Daily Moisturizer',
+      nameAr: moisture != null && moisture < 60 ? 'كريم ترطيب غني' : 'مرطب يومي',
+      nameEn: moisture != null && moisture < 60 ? 'Rich Moisturizer' : 'Daily Moisturizer',
       stepAr: 'مساءً — قبل النوم',
       period: 'pm',
     });

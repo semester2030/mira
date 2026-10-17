@@ -38,6 +38,9 @@ import 'features/skin_analysis/presentation/screens/history_screen.dart';
 import 'features/skin_analysis/domain/entities/skin_report.dart';
 import 'features/privacy/presentation/screens/privacy_consent_screen.dart';
 import 'features/privacy/presentation/screens/privacy_policy_screen.dart';
+import 'features/outfit_analysis/domain/entities/outfit_analysis_mode.dart';
+import 'features/outfit_analysis/domain/outfit_capture_availability.dart';
+import 'features/outfit_analysis/presentation/screens/outfit_gallery_entry_screen.dart';
 import 'features/outfit_analysis/presentation/screens/outfit_live_capture_screen.dart';
 import 'features/outfit_analysis/presentation/screens/outfit_camera_screen.dart';
 import 'features/outfit_analysis/presentation/screens/outfit_upload_screen.dart';
@@ -292,10 +295,23 @@ class MirraAppState extends State<MirraApp> {
       case AppRoutes.privacyPolicy:
         return PremiumPageRoute(page: const PrivacyPolicyScreen(), settings: settings);
       case AppRoutes.outfitLiveCapture:
+        if (resolveOutfitCaptureEntry() == OutfitCaptureEntry.galleryWhilePaused) {
+          final pausedArgs = settings.arguments;
+          final pausedMode = pausedArgs is OutfitLiveCaptureRouteArgs
+              ? pausedArgs.mode
+              : OutfitAnalysisMode.quick;
+          return PremiumPageRoute(
+            page: OutfitGalleryEntryScreen(mode: pausedMode),
+            settings: settings,
+          );
+        }
         return PremiumPageRoute(page: const OutfitLiveCaptureScreen(), settings: settings);
       case AppRoutes.outfitUpload:
         return PremiumPageRoute(page: const OutfitUploadScreen(), settings: settings);
       case AppRoutes.outfitCamera:
+        if (resolveOutfitCaptureEntry() == OutfitCaptureEntry.galleryWhilePaused) {
+          return PremiumPageRoute(page: const OutfitGalleryEntryScreen(), settings: settings);
+        }
         return PremiumPageRoute(page: const OutfitCameraScreen(), settings: settings);
       case AppRoutes.occasionSelect:
         return PremiumPageRoute(page: const OccasionSelectScreen(), settings: settings);

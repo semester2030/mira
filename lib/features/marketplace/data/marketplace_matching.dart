@@ -7,19 +7,20 @@ abstract final class MarketplaceMatching {
     if (report.concernScores.isNotEmpty) {
       return Map<String, int>.from(report.concernScores);
     }
+    final hydration = report.hydration;
     return {
-      'moisture': report.hydration,
-      'oiliness': (100 - report.oiliness.clamp(0, 100)).round(),
+      if (hydration != null) 'moisture': hydration,
+      'oiliness': report.oiliness.clamp(0, 100),
       'pore': _severityToUi(report.pores),
       'wrinkle': _severityToUi(report.wrinkles),
       'age_spot': _severityToUi(report.spots),
       'acne': _severityToUi(report.acne),
       'redness': _severityToUi(report.redness),
-      'texture': ((report.hydration + _severityToUi(report.pores)) / 2).round(),
-      'dark_circle':
-          ((report.hydration + _severityToUi(report.wrinkles)) / 2).round(),
-      'radiance':
-          ((report.hydration + (100 - report.oiliness)) / 2).round(),
+      if (hydration != null) ...{
+        'texture': ((hydration + _severityToUi(report.pores)) / 2).round(),
+        'dark_circle': ((hydration + _severityToUi(report.wrinkles)) / 2).round(),
+        'radiance': ((hydration + report.oiliness) / 2).round(),
+      },
     };
   }
 

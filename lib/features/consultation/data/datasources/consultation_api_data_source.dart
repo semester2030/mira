@@ -1,3 +1,5 @@
+import 'dart:typed_data';
+
 import 'package:dio/dio.dart';
 
 import '../../../../core/network/api_client.dart';
@@ -15,6 +17,7 @@ class ConsultationApiDataSource {
     String? recolorAttemptId,
     String? occasionId,
     String? statedGoalAr,
+    Map<String, dynamic>? face,
   }) async {
     final response = await _dio.post<Map<String, dynamic>>(
       ConsultationApiEndpoints.sessions(),
@@ -28,6 +31,7 @@ class ConsultationApiDataSource {
         if (occasionId != null && occasionId.isNotEmpty) 'occasionId': occasionId,
         if (statedGoalAr != null && statedGoalAr.isNotEmpty)
           'statedGoalAr': statedGoalAr,
+        if (face != null) 'face': face,
         'locale': 'ar',
       },
     );
@@ -73,5 +77,69 @@ class ConsultationApiDataSource {
     final data = response.data;
     if (data == null) throw Exception('استجابة فارغة من محرك الاستشارة');
     return ConsultationTurn.fromJson(data);
+  }
+
+  Future<List<ConsultationSession>> listSessions() async {
+    final response = await _dio.get<List<dynamic>>(ConsultationApiEndpoints.sessions());
+    return (response.data ?? const [])
+        .whereType<Map<String, dynamic>>()
+        .map(ConsultationSession.fromJson)
+        .toList();
+  }
+
+  Future<({List<ConsultationMessage> messages, String? nextCursor})> listMessages(
+    String sessionId, {
+    String? before,
+    int limit = 50,
+  }) async {
+    final response = await _dio.get<Map<String, dynamic>>(
+      ConsultationApiEndpoints.sessionMessages(sessionId),
+      queryParameters: {
+        'limit': limit,
+        if (before != null && before.isNotEmpty) 'before': before,
+      },
+    );
+    final data = response.data ?? const <String, dynamic>{};
+    final messages = (data['messages'] as List<dynamic>? ?? const [])
+        .whereType<Map<String, dynamic>>()
+        .map(ConsultationMessage.fromJson)
+        .toList();
+    return (messages: messages, nextCursor: data['nextCursor'] as String?);
+  }
+
+  Future<void> deleteAttachment(String attachmentId) async {
+    await _dio.delete<void>(ConsultationApiEndpoints.attachment(attachmentId));
+  }
+
+  Future<int> dialogueImageLimit() async {
+    final response = await _dio.get<Map<String, dynamic>>(ConsultationApiEndpoints.limits());
+    return response.data?['maxImagesPerMessage'] as int? ?? 3;
+  }
+
+  Future<String> uploadAttachment({
+    required String sessionId,
+    required Uint8List bytes,
+  }) async {
+    final response = await _dio.post<Map<String, dynamic>>(
+      ConsultationApiEndpoints.sessionAttachments(sessionId),
+      data: FormData.fromMap({
+        'image': MultipartFile.fromBytes(bytes, filename: 'chat.jpg'),
+      }),
+    );
+    final id = response.data?['id'] as String?;
+    if (id == null || id.isEmpty) {
+      throw Exception(response.data?['messageAr'] as String? ?? 'تعذر رفع الصورة');
+    }
+    return id;
+  }
+
+  Future<Uint8List> downloadAttachment(String attachmentId) async {
+    final response = await _dio.get<List<int>>(
+      ConsultationApiEndpoints.attachment(attachmentId),
+      options: Options(responseType: ResponseType.bytes),
+    );
+    final data = response.data;
+    if (data == null || data.isEmpty) throw Exception('تعذر تحميل الصورة');
+    return Uint8List.fromList(data);
   }
 }

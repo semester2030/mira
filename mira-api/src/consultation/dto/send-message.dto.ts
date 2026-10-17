@@ -1,4 +1,4 @@
-import { IsOptional, IsString, IsUUID, MaxLength } from 'class-validator';
+import { ArrayMaxSize, IsArray, IsOptional, IsString, IsUUID, MaxLength } from 'class-validator';
 
 export class SendConsultationMessageDto {
   @IsString()
@@ -8,4 +8,15 @@ export class SendConsultationMessageDto {
   @IsOptional()
   @IsUUID()
   contextSnapshotId?: string;
+
+  @IsOptional()
+  @IsArray()
+  @ArrayMaxSize(8)
+  @IsUUID('4', { each: true })
+  attachmentIds?: string[];
+
+  @IsOptional()
+  @IsString()
+  @MaxLength(64)
+  clientMessageId?: string;
 }

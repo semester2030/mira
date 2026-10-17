@@ -19,6 +19,7 @@ import {
   McePromptAssemblerService,
   MceResponseValidatorService,
 } from './services/mce-prompt-assembler.service';
+import { ConsultationDialogueService } from './services/consultation-attachment.service';
 
 @Module({
   imports: [IntelligenceModule, UsersModule, CommonModule, RedisModule],
@@ -36,6 +37,7 @@ import {
     MceCostGuardService,
     ConsultationSessionService,
     ConsultationMessageService,
+    ConsultationDialogueService,
     ConsultationOrchestratorService,
   ],
   exports: [ConsultationOrchestratorService, MceGroundingPipelineService],

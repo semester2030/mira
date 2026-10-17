@@ -87,7 +87,7 @@ class SkinReportModel extends SkinReport {
       skinType: json['skinType'] as String? ?? '',
       skinTypeEn: json['skinTypeEn'] as String? ?? '',
       score: (json['score'] as num?)?.toDouble() ?? 0,
-      hydration: (json['hydration'] as num?)?.toInt() ?? 0,
+      hydration: readLegacyHydration(json['hydration']),
       oiliness: (json['oiliness'] as num?)?.toInt() ?? 0,
       pores: (json['pores'] as num?)?.toInt() ?? 0,
       wrinkles: (json['wrinkles'] as num?)?.toInt() ?? 0,
@@ -111,7 +111,7 @@ class SkinReportModel extends SkinReport {
       'skinType': skinType,
       if (skinTypeEn.isNotEmpty) 'skinTypeEn': skinTypeEn,
       'score': score,
-      'hydration': hydration,
+      if (hydration != null) 'hydration': hydration,
       'oiliness': oiliness,
       'pores': pores,
       'wrinkles': wrinkles,
@@ -129,4 +129,12 @@ class SkinReportModel extends SkinReport {
       if (createdAt != null) 'createdAt': createdAt!.toIso8601String(),
     };
   }
+}
+
+/// Hydration stored on a legacy report: a finite number from 0 through 100.
+/// A missing field, null, or an out-of-range value is not a measurement and is not clamped.
+int? readLegacyHydration(dynamic value) {
+  if (value is! num || !value.isFinite) return null;
+  if (value < 0 || value > 100) return null;
+  return value.round();
 }

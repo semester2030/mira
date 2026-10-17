@@ -13,6 +13,7 @@ const BLOCK_PATTERNS: RegExp[] = [
   /مرض\s*جلد|psoriasis|eczema\s*treat|سرطان|cancer/i,
   /مضمون\s*100|guaranteed\s*cure|شفاء\s*كامل/i,
   /وصف\s*علاج|prescribe/i,
+  /أوقفي\s*علاج|إيقاف\s*العلاج|stop\s+(?:my\s+)?treatment/i,
 ];
 
 const SAFE_MEDICAL_REDIRECT =

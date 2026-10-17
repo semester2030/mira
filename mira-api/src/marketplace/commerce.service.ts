@@ -2,6 +2,7 @@ import { HttpStatus, Inject, Injectable } from '@nestjs/common';
 import { Prisma } from '@prisma/client';
 import { RequestUser } from '../common/interfaces/request-user.interface';
 import { PrismaService } from '../prisma/prisma.service';
+import { journeyCode, recordJourney } from './journey-events';
 import {
   ACTIVE_BOOKING_STATUSES,
   ActorType,
@@ -583,6 +584,18 @@ export class CommerceService {
   // =========================================================================
 
   async createOrder(actor: CommerceActor & { type: 'customer' }, body: unknown, headerKey?: string) {
+    await recordJourney({ name: 'order_started', kind: 'order' }, this.prisma);
+    try {
+      const result = await this.createOrderRecorded(actor, body, headerKey);
+      await recordJourney({ name: 'order_completed', kind: 'order', subjectId: result.order.id }, this.prisma);
+      return result;
+    } catch (error) {
+      await recordJourney({ name: 'order_failed', kind: 'order', code: journeyCode(error) }, this.prisma);
+      throw error;
+    }
+  }
+
+  private async createOrderRecorded(actor: CommerceActor & { type: 'customer' }, body: unknown, headerKey?: string) {
     const data = record(body);
     const idempotencyKey = normalizeIdempotencyKey(headerKey, data.idempotencyKey);
     const delivery = parseDelivery(data);
@@ -1108,6 +1121,18 @@ export class CommerceService {
   // =========================================================================
 
   async createBooking(actor: CommerceActor & { type: 'customer' }, body: unknown, headerKey?: string) {
+    await recordJourney({ name: 'booking_started', kind: 'booking' }, this.prisma);
+    try {
+      const result = await this.createBookingRecorded(actor, body, headerKey);
+      await recordJourney({ name: 'booking_completed', kind: 'booking', subjectId: result.booking.id }, this.prisma);
+      return result;
+    } catch (error) {
+      await recordJourney({ name: 'booking_failed', kind: 'booking', code: journeyCode(error) }, this.prisma);
+      throw error;
+    }
+  }
+
+  private async createBookingRecorded(actor: CommerceActor & { type: 'customer' }, body: unknown, headerKey?: string) {
     const data = record(body);
     const idempotencyKey = normalizeIdempotencyKey(headerKey, data.idempotencyKey);
     if (typeof data.serviceId !== 'string' || !data.serviceId) throw badRequest('SERVICE_REQUIRED', 'الخدمة مطلوبة');

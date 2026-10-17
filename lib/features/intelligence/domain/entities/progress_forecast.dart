@@ -1,12 +1,19 @@
+const overallComparisonUnavailableAr =
+    'لا تتوفر بيانات كافية لمقارنة المؤشر العام بين هذين التحليلين';
+
 class ProgressTimelinePoint {
   final String analysisId;
   final DateTime createdAt;
-  final int overallScore;
+  final int? overallScore;
+
+  /// True only when this point's overall score was eligible. A missing value is not proof.
+  final bool? overallScoreAvailable;
 
   const ProgressTimelinePoint({
     required this.analysisId,
     required this.createdAt,
     required this.overallScore,
+    this.overallScoreAvailable,
   });
 }
 
@@ -65,8 +72,50 @@ class ProgressForecast {
     required this.timeline,
     required this.trends,
     required this.milestones,
-    this.projectedOverallScore30Days,
+    this.    projectedOverallScore30Days,
   });
+
+  /// Display copy. The current report flag does not prove every history point.
+  ProgressForecast forStoredDisplay({required bool? reportOverallAvailable}) {
+    final pointsProven = timeline.length >= 2 &&
+        timeline.every(
+          (point) => point.overallScoreAvailable == true && point.overallScore != null,
+        );
+    if (reportOverallAvailable == true && pointsProven) return this;
+    return ProgressForecast(
+      enabled: enabled,
+      scanCount: scanCount,
+      needsMoreScans: needsMoreScans,
+      headlineAr: overallComparisonUnavailableAr,
+      summaryAr: overallComparisonUnavailableAr,
+      timeline: [
+        for (final point in timeline)
+          ProgressTimelinePoint(
+            analysisId: point.analysisId,
+            createdAt: point.createdAt,
+            overallScore: null,
+            overallScoreAvailable: false,
+          ),
+      ],
+      trends: [
+        for (final trend in trends)
+          if (trend.id != 'overall') trend,
+      ],
+      milestones: [
+        for (final milestone in milestones)
+          if (!_overallMilestone(milestone)) milestone,
+      ],
+      projectedOverallScore30Days: null,
+    );
+  }
+
+  static bool _overallMilestone(ProgressMilestone milestone) {
+    if (milestone.id == 'overall' || milestone.id.startsWith('milestone_overall')) {
+      return true;
+    }
+    return milestone.titleAr.contains('مؤشر الجمال') ||
+        milestone.descriptionAr.contains('مؤشر الجمال');
+  }
 
   static const empty = ProgressForecast(
     enabled: false,

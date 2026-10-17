@@ -19,12 +19,20 @@
   </header>
 
   <main class="container">
-    <div id="loading" class="alert warn">جاري التحميل...</div>
-    <div id="app" class="hidden">
+    <div id="loading" class="sr-only" role="status" aria-live="polite">جارٍ تحميل الخدمات والحجوزات</div>
+    <div id="loadError" class="alert err hidden" role="alert">
+      <p id="loadErrorText"></p>
+      <button type="button" class="btn btn-primary" id="loadingRetry">إعادة المحاولة</button>
+    </div>
+    <div id="app">
       <div class="card">
         <h1 id="partnerName">—</h1>
         <p class="lead" id="partnerMeta">—</p>
-        <div class="stats" id="stats"></div>
+        <div class="stats" id="stats" aria-busy="true">
+          <div class="skeleton-card skeleton-card-stat" aria-hidden="true"></div>
+          <div class="skeleton-card skeleton-card-stat" aria-hidden="true"></div>
+          <div class="skeleton-card skeleton-card-stat" aria-hidden="true"></div>
+        </div>
       </div>
 
       <div class="card">
@@ -40,7 +48,10 @@
       <div class="card" id="catalogSection">
         <h2 id="catalogTitle">الكتالوج</h2>
         <p class="lead">فتح رابط المتجر ليس شراءً مكتملًا. طلب الموعد ليس حجزًا مؤكدًا.</p>
-        <div id="catalogList"></div>
+        <div id="catalogList" aria-busy="true">
+          <div class="skeleton-card skeleton-card-list" aria-hidden="true"></div>
+          <div class="skeleton-card skeleton-card-list" aria-hidden="true"></div>
+        </div>
 
         <h2>إضافة جديد</h2>
         <form id="catalogForm"></form>
@@ -61,8 +72,11 @@
           <button type="button" class="btn btn-ghost" id="commerceTabBookings">الحجوزات</button>
           <button type="button" class="btn btn-ghost" id="commerceRefresh">تحديث</button>
         </div>
-        <p id="commerceStatus" class="lead"></p>
-        <div id="commerceList"></div>
+        <p id="commerceStatus" class="lead" role="status" aria-live="polite"></p>
+        <div id="commerceList" aria-busy="true">
+          <div class="skeleton-card skeleton-card-booking" aria-hidden="true"></div>
+          <div class="skeleton-card skeleton-card-booking" aria-hidden="true"></div>
+        </div>
       </div>
 
       <div class="card" id="adsSection">
@@ -76,6 +90,8 @@
   </main>
 
   <script src="js/api.js"></script>
+  <script src="js/motion.js"></script>
+  <script src="js/motion-fixture.js"></script>
   <script src="js/ads.js"></script>
   <script src="js/service-templates.js"></script>
   <script src="js/catalog-options-core.js"></script>
@@ -97,11 +113,27 @@
     function renderForm() {
       CatalogJourney.renderForm.apply(null, arguments);
     }
+    document.getElementById('loadingRetry').onclick = () => {
+      document.getElementById('loadError').classList.add('hidden');
+      document.getElementById('loading').textContent = 'جارٍ تحميل الخدمات والحجوزات';
+      MiraMotion.fillSkeletons(document.getElementById('stats'), 'stat', 3);
+      MiraMotion.fillSkeletons(document.getElementById('catalogList'), 'list', 2);
+      MiraMotion.fillSkeletons(document.getElementById('commerceList'), 'booking', 2);
+      load();
+    };
+
+    function scrollToForm(id) {
+      document.getElementById(id).scrollIntoView({
+        behavior: MiraMotion.reduced() ? 'auto' : 'smooth',
+        block: 'start',
+      });
+    }
+
     async function load(options) {
       try {
         const data = await PartnersApi.dashboard();
-        document.getElementById('loading').classList.add('hidden');
-        document.getElementById('app').classList.remove('hidden');
+        document.getElementById('loading').textContent = '';
+        document.getElementById('loadError').classList.add('hidden');
 
         const p = data.partner;
         document.getElementById('partnerName').textContent =
@@ -110,12 +142,16 @@
         document.getElementById('partnerMeta').textContent =
           (developer ? 'مطور · ميرا' : p.type) + ' · ' + p.city + (p.storeUrl ? ' · ' + p.storeUrl : '');
 
-        const a = data.analytics30d;
-        document.getElementById('stats').innerHTML = `
-          <div class="stat"><div class="num">${a.impressions}</div><div class="lbl">مشاهدات (30 يوم)</div></div>
-          <div class="stat"><div class="num">${a.clicks}</div><div class="lbl">نقرات</div></div>
-          <div class="stat"><div class="num">${data.catalog.productCount + data.catalog.serviceCount}</div><div class="lbl">عناصر الكتالوج</div></div>
-        `;
+        const a = data.analytics30d || {};
+        const catalogCount = data.catalog
+          ? Number(data.catalog.productCount) + Number(data.catalog.serviceCount)
+          : null;
+        MiraMotion.renderStats(document.getElementById('stats'), [
+          { key: 'impressions', value: a.impressions, label: 'مشاهدات (30 يوم)' },
+          { key: 'clicks', value: a.clicks, label: 'نقرات' },
+          { key: 'catalog', value: Number.isFinite(catalogCount) ? catalogCount : null, label: 'عناصر الكتالوج' },
+        ]);
+        MiraMotion.announce('اكتمل تحميل لوحة الشريك');
 
         window.sessionPartner = p;
         const serviceButton = document.getElementById('goService');
@@ -124,8 +160,8 @@
         const showProducts = developer || p.type === 'brand';
         serviceButton.hidden = !showServices;
         productButton.hidden = !showProducts;
-        serviceButton.onclick = () => document.getElementById('serviceForm').scrollIntoView({ behavior: 'smooth' });
-        productButton.onclick = () => document.getElementById('catalogForm').scrollIntoView({ behavior: 'smooth' });
+        serviceButton.onclick = () => scrollToForm('serviceForm');
+        productButton.onclick = () => scrollToForm('catalogForm');
         if (developer) {
           document.getElementById('serviceSection').classList.remove('hidden');
           document.getElementById('catalogTitle').textContent = 'منتجات الملابس وماركات التجميل';
@@ -149,17 +185,28 @@
           if (notice) notice.textContent = adsError.message;
         }
       } catch (err) {
-        document.getElementById('loading').className = 'alert err';
-        document.getElementById('loading').textContent = err.message;
+        document.getElementById('loading').textContent = '';
+        const error = document.getElementById('loadError');
+        document.getElementById('loadErrorText').textContent = 'تعذر تحميل البيانات: ' + err.message;
+        error.classList.remove('hidden');
+        document.getElementById('stats').removeAttribute('aria-busy');
+        document.getElementById('catalogList').replaceChildren();
+        document.getElementById('catalogList').removeAttribute('aria-busy');
+        document.getElementById('loadingRetry').focus();
       }
     }
     window.reloadPartnerDashboard = load;
 
     if (labeledUi) {
-      document.getElementById('loading').classList.add('hidden');
-      document.getElementById('app').classList.remove('hidden');
+      document.getElementById('loading').textContent = '';
       document.getElementById('partnerName').textContent = 'عرض واجهة موسوم';
       document.getElementById('partnerMeta').textContent = 'بيانات اختبار موسومة. ليست كتالوجًا عامًا.';
+      document.getElementById('stats').replaceChildren();
+      document.getElementById('stats').removeAttribute('aria-busy');
+      document.getElementById('catalogList').replaceChildren();
+      document.getElementById('catalogList').removeAttribute('aria-busy');
+      document.getElementById('commerceList').replaceChildren();
+      document.getElementById('commerceList').removeAttribute('aria-busy');
       renderAds(labeledAdsFixture(), null);
     } else {
       load();

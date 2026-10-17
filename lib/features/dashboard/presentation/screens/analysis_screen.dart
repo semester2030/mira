@@ -9,9 +9,15 @@ import '../../../../shared/widgets/guest_banner.dart';
 import '../../../../shared/theme/colors.dart';
 import '../../../../shared/theme/typography.dart';
 import '../../../../shared/widgets/premium/premium_exports.dart';
+import '../../../skin_analysis/domain/entities/skin_report.dart';
 import '../../../skin_analysis/presentation/blocs/skin_analysis_bloc.dart';
 import '../../../skin_analysis/presentation/blocs/skin_analysis_event.dart';
 import '../../../skin_analysis/presentation/blocs/skin_analysis_state.dart';
+
+String analysisHydrationLine(SkinReport report) {
+  final value = report.hydration == null ? 'غير متاح' : '${report.hydration}';
+  return '${report.skinType} · مؤشر الترطيب $value · مؤشر تقديري من الصورة';
+}
 
 class AnalysisScreen extends StatelessWidget {
   const AnalysisScreen({super.key});
@@ -121,7 +127,7 @@ class AnalysisScreen extends StatelessWidget {
                                 ),
                                 const SizedBox(height: 4),
                                 Text(
-                                  '${report.skinType} · ترطيب ${report.hydration}%',
+                                  analysisHydrationLine(report),
                                   style: AppTypography.bodySmall,
                                 ),
                               ],

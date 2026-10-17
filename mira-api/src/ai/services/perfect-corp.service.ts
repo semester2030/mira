@@ -1,5 +1,6 @@
 import { Injectable, Logger } from '@nestjs/common';
 import { ConfigService } from '@nestjs/config';
+import { currentCareTipsAr, currentCareTipsEn } from '../../intelligence/pipeline/current-care-tips';
 import * as dns from 'node:dns';
 import { resolvePerfectCorpConfig } from '../config/perfect-corp.config';
 import { SkinAnalysisResult } from '../contracts/skin-analysis-result.interface';
@@ -478,17 +479,23 @@ function severityFromUi(uiScore: number): number {
   return Math.min(5, Math.max(0, Math.round(inverted / 20)));
 }
 
+/**
+ * YouCam ui_score for each category, including oiliness, follows raw_score:
+ * a higher score is a healthier reading. ui_score is an upward adjustment of raw_score,
+ * not an oil-quantity percent. Perfect Corp score_info, accessed 2026-10-11.
+ * The old cutoff 65 meant "high quantity"; its health-score complement is 35.
+ */
 function inferSkinType(
   hydration: number,
   oiliness: number,
 ): { skinTypeAr: string; skinTypeEn: string } {
-  if (oiliness >= 65 && hydration < 50) {
+  if (oiliness <= 35 && hydration < 50) {
     return { skinTypeAr: 'دهنية', skinTypeEn: 'Oily' };
   }
-  if (hydration < 45 && oiliness < 45) {
+  if (hydration < 45 && oiliness > 55) {
     return { skinTypeAr: 'جافة', skinTypeEn: 'Dry' };
   }
-  if (oiliness >= 55 && hydration >= 45) {
+  if (oiliness <= 45 && hydration >= 45) {
     return { skinTypeAr: 'مختلطة', skinTypeEn: 'Combination' };
   }
   return { skinTypeAr: 'عادية', skinTypeEn: 'Normal' };
@@ -503,51 +510,11 @@ function buildRecommendationsAr(metrics: {
   darkSpots: number;
   redness: number;
 }): string[] {
-  const tips: string[] = ['روتين يومي: تنظيف لطيف، ترطيب، وواقي شمس.'];
-  if (metrics.hydration < 55) {
-    tips.push('زيدي الترطيب بسيروم أو كريم يحتوي على حمض الهيالورونيك.');
-  }
-  if (metrics.oiliness >= 65) {
-    tips.push('استخدمي منظفًا خفيفًا غير كوميدوجينيك ومنتجات oil-free.');
-  }
-  if (metrics.pores >= 3) {
-    tips.push('مقشر BHA (ساليسيليك) 1–2 مرات أسبوعيًا يساعد على المسام.');
-  }
-  if (metrics.acne >= 3) {
-    tips.push('للحبوب الخفيفة: نياسيناميد أو BPO بتركيز منخفض بعد استشارة.');
-  }
-  if (metrics.wrinkles >= 3) {
-    tips.push('واقي الشمس يوميًا أساسي؛ ريتينويد ليلي يساعد على الخطوط عند التحمل.');
-  }
-  if (metrics.darkSpots >= 3) {
-    tips.push('فيتامين C صباحًا قد يساعد على توحيد لون البشرة تدريجيًا.');
-  }
-  if (metrics.redness >= 3) {
-    tips.push('تجنبي الحرارة والمنتجات القاسية؛ مرطبات مهدئة للاحمرار.');
-  }
-  return tips.slice(0, 5);
+  return currentCareTipsAr(metrics);
 }
 
 function translateRecommendationStub(ar: string): string {
-  const map: Record<string, string> = {
-    'روتين يومي: تنظيف لطيف، ترطيب، وواقي شمس.':
-      'Daily routine: gentle cleanse, moisturize, and sunscreen.',
-    'زيدي الترطيب بسيروم أو كريم يحتوي على حمض الهيالورونيك.':
-      'Boost hydration with hyaluronic acid serum or cream.',
-    'استخدمي منظفًا خفيفًا غير كوميدوجينيك ومنتجات oil-free.':
-      'Use a light non-comedogenic cleanser and oil-free products.',
-    'مقشر BHA (ساليسيليك) 1–2 مرات أسبوعيًا يساعد على المسام.':
-      'BHA exfoliant 1–2× weekly can help pores.',
-    'للحبوب الخفيفة: نياسيناميد أو BPO بتركيز منخفض بعد استشارة.':
-      'For mild acne: low-strength niacinamide or BPO after consultation.',
-    'واقي الشمس يوميًا أساسي؛ ريتينويد ليلي يساعد على الخطوط عند التحمل.':
-      'Daily SPF is essential; nighttime retinoid may help fine lines.',
-    'فيتامين C صباحًا قد يساعد على توحيد لون البشرة تدريجيًا.':
-      'Morning vitamin C may gradually even skin tone.',
-    'تجنبي الحرارة والمنتجات القاسية؛ مرطبات مهدئة للاحمرار.':
-      'Avoid heat and harsh products; soothing moisturizers for redness.',
-  };
-  return map[ar] ?? ar;
+  return currentCareTipsEn([ar])[0];
 }
 
 function asRecord(value: unknown): Record<string, unknown> | null {

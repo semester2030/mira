@@ -1,5 +1,6 @@
 import '../entities/beauty_journey.dart';
 import '../entities/mira_beauty_report.dart';
+import '../entities/progress_forecast.dart';
 
 /// Offline mirror of backend beauty-journey-engine.ts
 abstract final class LocalBeautyJourneyBuilder {
@@ -83,6 +84,18 @@ abstract final class LocalBeautyJourneyBuilder {
 
   static JourneyGoal _nextGoal(MiraBeautyReport report) {
     final current = report.overallBeautyScore;
+    if (report.overallScoreAvailable != true) {
+      return JourneyGoal(
+        metricId: 'overall',
+        labelAr: 'مؤشر جمال البشرة',
+        currentValue: current,
+        targetValue: current,
+        horizonDays: 30,
+        headlineAr: overallComparisonUnavailableAr,
+        summaryAr: overallComparisonUnavailableAr,
+        scoreAvailable: false,
+      );
+    }
     final projected = report.progressForecast.projectedOverallScore30Days;
     final target = _targetScore(current, projected);
     const horizon = 30;

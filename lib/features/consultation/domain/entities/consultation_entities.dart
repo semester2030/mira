@@ -36,6 +36,9 @@ class ConsultationMessage {
   final String? confidence;
   final String? intent;
   final List<MceCitedFact> citedFacts;
+  final List<String> attachmentIds;
+  final String? clientMessageId;
+  final List<String> suggestedQuestionsAr;
 
   const ConsultationMessage({
     required this.id,
@@ -46,6 +49,9 @@ class ConsultationMessage {
     this.confidence,
     this.intent,
     this.citedFacts = const [],
+    this.attachmentIds = const [],
+    this.clientMessageId,
+    this.suggestedQuestionsAr = const [],
   });
 
   factory ConsultationMessage.fromJson(Map<String, dynamic> json) {
@@ -60,6 +66,15 @@ class ConsultationMessage {
       intent: json['intent'] as String?,
       citedFacts: (json['citedFacts'] as List<dynamic>?)
               ?.map((e) => MceCitedFact.fromJson(e as Map<String, dynamic>))
+              .toList() ??
+          const [],
+      attachmentIds: (json['attachmentIds'] as List<dynamic>?)
+              ?.map((e) => e.toString())
+              .toList() ??
+          const [],
+      clientMessageId: json['clientMessageId'] as String?,
+      suggestedQuestionsAr: (json['suggestedQuestionsAr'] as List<dynamic>?)
+              ?.map((e) => e.toString())
               .toList() ??
           const [],
     );

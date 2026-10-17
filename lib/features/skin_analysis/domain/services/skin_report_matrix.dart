@@ -66,7 +66,7 @@ abstract final class SkinReportMatrix {
       ),
     ];
 
-    if (moisture < 60) {
+    if (moisture != null && moisture < 60) {
       steps.add(
         const SkinRoutineProduct(
           id: 'serum',
@@ -80,7 +80,10 @@ abstract final class SkinReportMatrix {
       );
     }
 
-    if (oiliness >= 60) {
+    // No production caller was found for dailyRoutine. The score here is a
+    // health ui_score. Mira treats 35 or below as an oil concern. That cutoff
+    // is Mira's complement of the old quantity threshold 65, not a provider value.
+    if (oiliness <= 35) {
       steps.add(
         const SkinRoutineProduct(
           id: 'moisturizer_light',
@@ -138,19 +141,22 @@ abstract final class SkinReportMatrix {
   }
 
   static List<SkinConcernScore> _fromLegacyMetrics(SkinReport report) {
+    final hydration = report.hydration;
     return [
-      SkinConcernCatalog.labeled('moisture', report.hydration),
-      SkinConcernCatalog.labeled('oiliness', 100 - report.oiliness.clamp(0, 100)),
+      if (hydration != null) SkinConcernCatalog.labeled('moisture', hydration),
+      SkinConcernCatalog.labeled('oiliness', report.oiliness.clamp(0, 100)),
       SkinConcernCatalog.labeled('pore', _severityToUi(report.pores)),
       SkinConcernCatalog.labeled('wrinkle', _severityToUi(report.wrinkles)),
       SkinConcernCatalog.labeled('age_spot', _severityToUi(report.spots)),
       SkinConcernCatalog.labeled('acne', _severityToUi(report.acne)),
       SkinConcernCatalog.labeled('redness', _severityToUi(report.redness)),
-      SkinConcernCatalog.labeled('texture', _blend(report.hydration, report.pores)),
-      SkinConcernCatalog.labeled('dark_circle', _blend(report.hydration, report.wrinkles)),
-      SkinConcernCatalog.labeled('radiance', _blend(report.hydration, 100 - report.oiliness)),
-      SkinConcernCatalog.labeled('firmness', _blend(100 - report.wrinkles * 20, report.hydration)),
-      SkinConcernCatalog.labeled('eye_bag', _blend(report.hydration, report.wrinkles)),
+      if (hydration != null) ...[
+        SkinConcernCatalog.labeled('texture', _blend(hydration, report.pores)),
+        SkinConcernCatalog.labeled('dark_circle', _blend(hydration, report.wrinkles)),
+        SkinConcernCatalog.labeled('radiance', _blend(hydration, report.oiliness)),
+        SkinConcernCatalog.labeled('firmness', _blend(100 - report.wrinkles * 20, hydration)),
+        SkinConcernCatalog.labeled('eye_bag', _blend(hydration, report.wrinkles)),
+      ],
     ];
   }
 

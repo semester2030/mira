@@ -1,5 +1,6 @@
 import {
   BadRequestException,
+  Inject,
   Injectable,
   Logger,
   ServiceUnavailableException,
@@ -15,8 +16,8 @@ export class UsersService {
   private readonly logger = new Logger(UsersService.name);
 
   constructor(
-    private readonly prisma: PrismaService,
-    private readonly config: ConfigService,
+    @Inject(PrismaService) private readonly prisma: PrismaService,
+    @Inject(ConfigService) private readonly config: ConfigService,
   ) {}
 
   async findOrCreateFromFirebase(authUser: RequestUser): Promise<User> {
@@ -111,7 +112,7 @@ export class UsersService {
       await this.writeAuditLog({
         userId: user.id,
         action: 'account_deleted',
-        metadata: { email: user.email ?? null },
+        metadata: { emailRetained: false },
       });
       await this.prisma.user.delete({ where: { id: user.id } });
     }

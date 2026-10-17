@@ -11,6 +11,7 @@ import '../../domain/entities/skin_intelligence_report.dart';
 import '../../domain/entities/weekly_plan.dart';
 import '../../../skin_analysis/domain/entities/skin_report.dart';
 import '../../../face_intelligence/domain/face_intel_runtime_state.dart';
+import '../../domain/services/local_mira_report_builder.dart';
 
 abstract final class MiraBeautyReportMapper {
   MiraBeautyReportMapper._();
@@ -21,11 +22,14 @@ abstract final class MiraBeautyReportMapper {
     final productsRaw = json['recommendedProducts'] as List<dynamic>? ?? [];
     final faceMap = json['faceMap'] as Map<String, dynamic>?;
 
-    return MiraBeautyReport(
+    final parsed = MiraBeautyReport(
       version: (json['version'] as num?)?.toInt() ?? 1,
       scoreSchemaVersion: (json['scoreSchemaVersion'] as num?)?.toInt() ?? 1,
       spatialConfidence: json['spatialConfidence'] as String? ?? 'none',
       overallBeautyScore: (json['overallBeautyScore'] as num?)?.toInt() ?? 0,
+      overallScoreAvailable: json['overallScoreAvailable'] is bool
+          ? json['overallScoreAvailable'] as bool
+          : null,
       displayScoreLabelAr: json['displayScoreLabelAr'] as String? ??
           CosmeticCopy.skinVitalityIndexAr,
       displayScoreLabelEn: json['displayScoreLabelEn'] as String? ??
@@ -93,6 +97,7 @@ abstract final class MiraBeautyReportMapper {
       faceIntelligenceRuntime:
           FaceIntelRuntimeState.tryParse(json['faceIntelligenceRuntime']),
     );
+    return LocalMiraReportBuilder.presentStored(parsed);
   }
 
   static BeautyJourney _parseBeautyJourney(
@@ -235,7 +240,7 @@ abstract final class MiraBeautyReportMapper {
                   ?.map((e) => e.toString())
                   .toList() ??
               const [],
-          zoneScore: (map['zoneScore'] as num?)?.toInt(),
+          zoneScore: readStoredUiScore(map['zoneScore']),
           educationalNoteAr: map['educationalNoteAr'] as String?,
           source: map['source'] as String? ?? 'educational',
         );
@@ -261,11 +266,13 @@ abstract final class MiraBeautyReportMapper {
           concernId: map['concernId'] as String? ?? '',
           labelAr: map['labelAr'] as String? ?? '',
           labelEn: map['labelEn'] as String? ?? '',
-          globalScore: (map['globalScore'] as num?)?.toInt() ?? 0,
+          globalScore: readStoredUiScore(map['globalScore']),
           severity: map['severity'] as String? ?? 'mild',
-          zoneScores: zoneScoresRaw.map(
-            (k, v) => MapEntry(k, (v as num).toInt()),
-          ),
+          zoneScores: {
+            for (final entry in zoneScoresRaw.entries)
+              if (readStoredUiScore(entry.value) != null)
+                entry.key: readStoredUiScore(entry.value)!,
+          },
           highlightZoneIds: (map['highlightZoneIds'] as List<dynamic>?)
                   ?.map((e) => e.toString())
                   .toList() ??
@@ -399,7 +406,12 @@ abstract final class MiraBeautyReportMapper {
           analysisId: map['analysisId'] as String? ?? '',
           createdAt: DateTime.tryParse(map['createdAt'] as String? ?? '') ??
               DateTime.now(),
-          overallScore: (map['overallScore'] as num?)?.toInt() ?? 0,
+          overallScore: map['overallScore'] == null
+              ? null
+              : (map['overallScore'] as num).toInt(),
+          overallScoreAvailable: map['overallScoreAvailable'] is bool
+              ? map['overallScoreAvailable'] as bool
+              : null,
         );
       }).toList(),
       trends: trendsRaw.map((item) {
@@ -463,4 +475,12 @@ abstract final class MiraBeautyReportMapper {
       concernScores: const {},
     );
   }
+}
+
+/// Stored ui_score contract: a finite number from 0 through 100.
+/// A numeric string is not accepted. Out-of-range values are not clamped.
+int? readStoredUiScore(dynamic value) {
+  if (value is! num || !value.isFinite) return null;
+  if (value < 0 || value > 100) return null;
+  return value.round();
 }

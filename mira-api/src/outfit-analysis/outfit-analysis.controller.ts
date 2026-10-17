@@ -16,6 +16,7 @@ import { RequestUser } from '../common/interfaces/request-user.interface';
 import { AnalyzeOutfitBodyDto } from './dto/analyze-outfit.dto';
 import { SaveOutfitSnapshotDto } from './dto/save-outfit-snapshot.dto';
 import { OutfitAnalysisService } from './outfit-analysis.service';
+import { assertOutfitCaptureSource } from './outfit-capture-policy';
 
 const MAX_IMAGE_BYTES = 10 * 1024 * 1024;
 
@@ -36,6 +37,7 @@ export class OutfitAnalysisController {
     @UploadedFile() file: Express.Multer.File,
     @Body() body: AnalyzeOutfitBodyDto,
   ) {
+    assertOutfitCaptureSource(body.captureSource);
     return this.outfitAnalysisService.analyze(
       user,
       file?.buffer ?? Buffer.alloc(0),

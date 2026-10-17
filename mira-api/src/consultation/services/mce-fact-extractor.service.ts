@@ -1,5 +1,6 @@
 import { Injectable } from '@nestjs/common';
 import { MiraBeautyReport } from '../../intelligence/contracts/mira-beauty-report.interface';
+import { readContractUiScore } from '../../intelligence/pipeline/youcam-spatial-parser';
 import {
   MceConfidenceLevel,
   MceFactEntry,
@@ -12,18 +13,29 @@ import {
 
 @Injectable()
 export class MceFactExtractorService {
-  buildSkinSummary(analysisId: string, report: MiraBeautyReport): SkinContextSummaryV1 {
+  buildSkinSummary(
+    analysisId: string,
+    report: MiraBeautyReport,
+    analysisCreatedAt?: Date | string | null,
+  ): SkinContextSummaryV1 {
     const concernScores =
-      report.faceHealthMap.concernOverlays?.map((o) => ({
-        concernId: o.concernId,
-        labelAr: o.labelAr,
-        score: o.globalScore,
-        severity: o.severity,
-      })) ?? [];
+      report.faceHealthMap.concernOverlays
+        ?.flatMap((o) => {
+          const score = readContractUiScore(o.globalScore);
+          if (score == null) return [];
+          return [{
+            concernId: o.concernId,
+            labelAr: o.labelAr,
+            score,
+            severity: o.severity ?? 'unavailable',
+          }];
+        }) ?? [];
 
+    const overallScoreAvailable = report.overallScoreAvailable === true;
     return {
       analysisId,
-      beautyScore: report.overallBeautyScore,
+      beautyScore: overallScoreAvailable ? report.overallBeautyScore : null,
+      overallScoreAvailable,
       skinTypeAr: report.skinTypeAr,
       skinAgeEstimate: report.skinAgeEstimate,
       headlineAr: report.headlineAr,
@@ -42,6 +54,7 @@ export class MceFactExtractorService {
         : undefined,
       disclaimerAr: report.faceHealthMap.disclaimerAr || 'نصيحة عناية عامة — ليست تشخيصاً طبياً.',
       isMinor: report.childSafety.isMinor,
+      ...reportCreatedAtField(analysisCreatedAt),
     };
   }
 
@@ -57,12 +70,14 @@ export class MceFactExtractorService {
     const facts: MceFactEntry[] = [];
     const skin = snapshot.skin;
     if (skin) {
-      facts.push({
-        id: 'skin.beautyScore',
-        labelAr: 'مؤشر حيوية البشرة',
-        valueAr: String(skin.beautyScore),
-        confidence: 'high',
-      });
+      if (skin.overallScoreAvailable === true && skin.beautyScore != null) {
+        facts.push({
+          id: 'skin.beautyScore',
+          labelAr: 'مؤشر حيوية البشرة',
+          valueAr: String(skin.beautyScore),
+          confidence: 'high',
+        });
+      }
       facts.push({
         id: 'skin.type',
         labelAr: 'نوع البشرة',
@@ -90,10 +105,12 @@ export class MceFactExtractorService {
         });
       }
       for (const s of skin.concernScores) {
+        const score = readContractUiScore(s.score);
+        if (score == null) continue;
         facts.push({
           id: `skin.score.${s.concernId}`,
           labelAr: s.labelAr,
-          valueAr: `${s.score}/100 — ${s.severity}`,
+          valueAr: `${score} — مؤشر تقديري من الصورة`,
           confidence: 'medium' as MceConfidenceLevel,
         });
       }
@@ -273,4 +290,19 @@ export class MceFactExtractorService {
       builtAt: new Date().toISOString(),
     };
   }
+}
+
+/** Trusted SkinAnalysis.createdAt only. Never copies the context build time. */
+export function reportCreatedAtField(
+  analysisCreatedAt?: Date | string | null,
+): { reportCreatedAt: string } | Record<string, never> {
+  const reportCreatedAt = trustedReportCreatedAt(analysisCreatedAt);
+  return reportCreatedAt ? { reportCreatedAt } : {};
+}
+
+export function trustedReportCreatedAt(value: Date | string | null | undefined): string | undefined {
+  if (value == null || value === '') return undefined;
+  const date = value instanceof Date ? value : new Date(value);
+  if (Number.isNaN(date.getTime())) return undefined;
+  return date.toISOString();
 }

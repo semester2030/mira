@@ -19,6 +19,10 @@ class BeautyScoreResult {
   /// Sum of individual negative penalties.
   final int negativePenalty;
 
+  /// False when the score used a zero substitute for missing hydration.
+  /// An explicit zero, or a valid moisture score, keeps this true.
+  final bool overallScoreAvailable;
+
   const BeautyScoreResult({
     required this.finalScore,
     required this.confidence,
@@ -32,6 +36,7 @@ class BeautyScoreResult {
     required this.rawScore,
     required this.compoundPenalty,
     required this.negativePenalty,
+    required this.overallScoreAvailable,
   });
 }
 

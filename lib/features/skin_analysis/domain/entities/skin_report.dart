@@ -3,7 +3,9 @@ class SkinReport {
   final String skinType;
   final String skinTypeEn;
   final double score;
-  final int hydration;
+  /// Measured hydration ui_score, 0–100. Null means the field was absent
+  /// or not a valid number. An explicit zero stays zero.
+  final int? hydration;
   final int oiliness;
   final int pores;
   final int wrinkles;
