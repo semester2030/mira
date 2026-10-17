@@ -16,37 +16,38 @@ class ConsultationStreamException implements Exception {
 
 /// Keeps an unfinished UTF-8 character until the next chunk completes it.
 class ConsultationUtf8Decoder {
-  final List<int> _pending = <int>[];
+  final _buffer = StringBuffer();
+  late final ByteConversionSink _sink = utf8.decoder.startChunkedConversion(_Utf8TextSink(_buffer));
+  var _closed = false;
 
   String add(List<int> chunk, {bool end = false}) {
-    _pending.addAll(chunk);
-    var cut = _pending.length;
-    while (cut > 0) {
-      try {
-        final text = utf8.decode(_pending.sublist(0, cut));
-        _pending.removeRange(0, cut);
-        if (end && _pending.isNotEmpty) {
-          throw const ConsultationStreamException(
-            'تعذر إكمال حرف في الرد. أعيدي المحاولة بنفس الطلب.',
-          );
-        }
-        return text;
-      } on FormatException {
-        cut -= 1;
-        if (_pending.length - cut > 3) {
-          throw const ConsultationStreamException(
-            'تعذر قراءة الرد العربي. أعيدي المحاولة بنفس الطلب.',
-          );
-        }
+    if (_closed) return '';
+    final before = _buffer.length;
+    try {
+      if (chunk.isNotEmpty) _sink.add(chunk);
+      if (end) {
+        _sink.close();
+        _closed = true;
       }
-    }
-    if (end && _pending.isNotEmpty) {
+    } on FormatException {
       throw const ConsultationStreamException(
-        'تعذر إكمال حرف في الرد. أعيدي المحاولة بنفس الطلب.',
+        'تعذر قراءة الرد العربي. أعيدي المحاولة بنفس الطلب.',
       );
     }
-    return '';
+    return _buffer.toString().substring(before);
   }
+}
+
+class _Utf8TextSink implements Sink<String> {
+  final StringBuffer buffer;
+
+  _Utf8TextSink(this.buffer);
+
+  @override
+  void add(String data) => buffer.write(data);
+
+  @override
+  void close() {}
 }
 
 /// SSE client for consultation streaming responses.

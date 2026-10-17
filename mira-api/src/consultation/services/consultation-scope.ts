@@ -1,24 +1,32 @@
 import { MceAssistantPayloadV1 } from '../contracts/mce-context-snapshot.v1';
 
 export const SCOPE_REDIRECT_AR =
-  'هذا خارج اختصاص ميرا. أقدر أساعدك في الجمال والعناية والبشرة والشعر والمكياج والعطور والإطلالات والألوان والإكسسوارات والمناسبات والمنتجات. إذا أعجبتك ألوان الصورة، اطلبي استلهام إطلالة منها.';
-
-const BEAUTY_APPLICATION =
-  /استوح|استلهم|إلهام|الهام|إطلال|اطلال|مكياج|شعر|عطر|إكسسوار|اكسسوار|تنسيق|لون|ألوان|بشر|عناية|مناسب|منتج|قماش|كريم|مرطب|سيروم|لبس|قطعة|مكياج|تسريح|صبغ/;
-
-const OFF_SCOPE_DETAIL =
-  /مزاد|صقر|صقور|طائر|تشريح|كرة قدم|سياسة|برمجة|سهم|عملة رقمية/;
-
-const OBJECT_IDENTIFICATION =
-  /ما هذا|ما هذه|ما اسم|ايش هذا|إيش هذا|اشرح|صف لي|وصف |كم سعر|ما هو|ما هي/;
+  'هذا خارج اختصاص ميرا. أقدر أساعدك في الجمال والعناية والبشرة والشعر والمكياج والعطور والملابس والألوان والإكسسوارات والمناسبات والمنتجات. إذا أعجبتك ألوان صورة، اطلبي استلهام إطلالة منها.';
 
 export interface ScopeDecision {
   allow: boolean;
   replyAr: string;
 }
 
-export function beautyApplication(message: string): boolean {
-  return BEAUTY_APPLICATION.test(message);
+const allowDecision = { allow: true, replyAr: '' };
+
+/** What the user is asking Mira to produce, not a flat noun list. */
+export function requestedOutcome(message: string): 'beauty' | 'other' | 'unclear' {
+  const text = message.trim();
+  if (!text) return 'unclear';
+  const wantsCode = /برمج|اكتب كود|دالة|سكريبت|برنامج يحسب|احسبي بالكود/.test(text);
+  const wantsVehicleWork = /زيت السيارة|غيار الزيت|تغيير زيت|محرك السيارة|فرامل/.test(text);
+  const wantsBeautyResult =
+    /إطلال|اطلال|مكياج|بشرة|عناية|شعر|عطر|حذاء|حقيبة|إكسسوار|اكسسوار|تنسيق|فستان|لون|ألوان/.test(text);
+  const wantsInspiration = /استوح|استلهم|إلهام|الهام/.test(text);
+  const wantsDescription = /صف |وصف |اشرح|ما هذا|ما هذه|عرّفي|عرفي/.test(text);
+  const animalSubject = /قطة|شاهين|صقر|صقور|طائر/.test(text);
+  if (wantsCode || wantsVehicleWork) return 'other';
+  if (wantsInspiration && (wantsBeautyResult || /لون|ألوان/.test(text))) return 'beauty';
+  if (animalSubject && wantsDescription && !wantsBeautyResult) return 'other';
+  if (wantsBeautyResult) return 'beauty';
+  if (animalSubject && !wantsInspiration) return 'other';
+  return 'unclear';
 }
 
 export function decideConsultationScope(
@@ -26,36 +34,29 @@ export function decideConsultationScope(
   history: Array<{ role: 'user' | 'assistant'; content: string }> = [],
 ): ScopeDecision {
   const text = message.trim();
-  const allow = { allow: true, replyAr: '' };
-  if (!text) return allow;
-  if (beautyApplication(text)) return allow;
+  if (!text) return allowDecision;
   const lastAssistant = [...history].reverse().find((item) => item.role === 'assistant');
   const previousRedirect = Boolean(lastAssistant?.content.includes('خارج اختصاص ميرا'));
-  const followUp = /وضح|وضحي|أكثر|كملي|كمل|ليش|لماذا/.test(text);
-  if (followUp && previousRedirect) {
-    return { allow: false, replyAr: SCOPE_REDIRECT_AR };
-  }
-  if (followUp) return allow;
-  if (OFF_SCOPE_DETAIL.test(text) || (OBJECT_IDENTIFICATION.test(text) && OFF_SCOPE_DETAIL.test(text))) {
-    return { allow: false, replyAr: SCOPE_REDIRECT_AR };
-  }
-  if (/^(مرحبا|مرحبًا|السلام|هلا|أهلًا)[.!\s]*$/i.test(text)) return allow;
-  return allow;
+  const followUp = /وضح|وضحي|أكثر|كملي|كمل|ليش|لماذا/.test(text) && text.length < 40;
+  if (followUp && previousRedirect) return { allow: false, replyAr: SCOPE_REDIRECT_AR };
+  if (followUp) return allowDecision;
+  const outcome = requestedOutcome(text);
+  if (outcome === 'other') return { allow: false, replyAr: SCOPE_REDIRECT_AR };
+  if (/مزاد/.test(text) && outcome !== 'beauty') return { allow: false, replyAr: SCOPE_REDIRECT_AR };
+  return allowDecision;
 }
 
 export function answerStaysInScope(answer: string, userMessage: string): boolean {
   const text = answer.trim();
   if (!text) return true;
-  const beautyAsk = beautyApplication(userMessage);
-  const off = OFF_SCOPE_DETAIL.test(text);
-  const beautyAnswer = BEAUTY_APPLICATION.test(text);
-  const followedImageOrder = /حسب التعليمات في الصورة|الأمر المكتوب في الصورة|نفذت ما كُتب في الصورة/.test(text);
-  if (followedImageOrder && !beautyAnswer) return false;
-  if (beautyAsk) {
-    return !/مزاد|سعر الصقر|نوع الصقر|صيد بالصقر/.test(text);
+  if (requestedOutcome(userMessage) === 'beauty') {
+    return !/مزاد|سعر الصقر|نوع الصقر|زيت السيارة|كود برمج/.test(text);
   }
-  if (off && !beautyAnswer) return false;
-  if (off && OBJECT_IDENTIFICATION.test(userMessage)) return false;
+  const teachesOther = /زيت السيارة|وصف القطة|هذا شاهين|هذا صقر|مزاد|function |def /.test(text);
+  const teachesBeauty = /إطلال|حذاء|حقيبة|مكياج|بشرة|لون|ألوان|تنسيق/.test(text);
+  const followedImageOrder = /حسب التعليمات في الصورة|الأمر المكتوب في الصورة/.test(text);
+  if (followedImageOrder && !teachesBeauty) return false;
+  if (teachesOther && !teachesBeauty) return false;
   return true;
 }
 
@@ -71,7 +72,7 @@ export function guardScopeAnswer(
       confidence: 'high',
       intent: 'off_topic',
       citedFactIds: [],
-      suggestedQuestionsAr: ['ما الألوان التي تناسب إطلالي؟', 'كيف أعتني ببشرتي اليوم؟'],
+      suggestedQuestionsAr: ['ما اللون الأنسب للحذاء أو الحقيبة؟', 'كيف أعتني ببشرتي اليوم؟'],
       blocked: false,
       disclaimerAr: '',
     };

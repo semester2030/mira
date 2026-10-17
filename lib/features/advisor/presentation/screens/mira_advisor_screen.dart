@@ -164,6 +164,33 @@ class _MiraAdvisorScreenState extends State<MiraAdvisorScreen> {
         outfitAnalysisId = snapshot.id;
       }
 
+      if (outfitAnalysisId != null) {
+        final remembered = AnalysisSession.consultationByAnalysis[outfitAnalysisId];
+        if (remembered != null && remembered.isNotEmpty) {
+          final history = await _consultationApi.listMessages(remembered);
+          if (!mounted) return;
+          setState(() {
+            _messages
+              ..clear()
+              ..addAll(history.messages.map((message) => AdvisorMessage(
+                    id: message.id,
+                    text: message.contentAr,
+                    isUser: message.isUser,
+                    at: message.createdAt,
+                    confidence: message.confidence,
+                    attachmentIds: message.attachmentIds,
+                    clientMessageId: message.clientMessageId,
+                  )));
+            _sessionId = remembered;
+            _sessionReady = true;
+            _boundOutfitAnalysisId = outfitAnalysisId;
+            _focus = _ConsultationFocus.outfit;
+            _sessionError = null;
+          });
+          return;
+        }
+      }
+
       final skinId = outfitPrimary && args.skinReport == null
           ? null
           : (args.skinReport?.id ??
@@ -189,6 +216,9 @@ class _MiraAdvisorScreenState extends State<MiraAdvisorScreen> {
         _sessionId = session.id;
         _snapshotId = session.activeSnapshotId;
         _boundOutfitAnalysisId = outfitAnalysisId;
+        if (outfitAnalysisId != null) {
+          AnalysisSession.consultationByAnalysis[outfitAnalysisId] = session.id;
+        }
         _sessionReady = true;
         _sessionError = null;
         _maxImages = imageLimit;
@@ -404,8 +434,6 @@ class _MiraAdvisorScreenState extends State<MiraAdvisorScreen> {
             clientMessageId: outbound.clientMessageId,
           ),
         );
-        _drafts.clear();
-        _input.clear();
       });
     } else {
       setState(() {
@@ -445,7 +473,7 @@ class _MiraAdvisorScreenState extends State<MiraAdvisorScreen> {
         }
       });
       ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(content: Text(_arabicSendError(e))),
+        SnackBar(content: Text('${_arabicSendError(e)}\nرقم التتبع: ${outbound.clientMessageId}')),
       );
     }
     _scrollToEnd();
@@ -544,6 +572,9 @@ class _MiraAdvisorScreenState extends State<MiraAdvisorScreen> {
       _snapshotId = turn.session.activeSnapshotId ?? _snapshotId;
       _followUps = assistant.suggestedQuestionsAr;
       _loading = false;
+      _failedOutbound = null;
+      _drafts.clear();
+      _input.clear();
     });
   }
 

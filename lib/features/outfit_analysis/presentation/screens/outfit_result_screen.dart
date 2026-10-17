@@ -1,19 +1,16 @@
 import 'package:flutter/material.dart';
 
 import '../../../../core/session/analysis_session.dart';
-import '../../../../shared/delight/analysis_celebration.dart';
 import '../../../../shared/widgets/ask_mira_entry.dart';
 import '../../../../shared/widgets/mira_app_bar.dart';
 import '../../../../core/navigation/route_args.dart';
+import '../../../../shared/theme/colors.dart';
 import '../../../../shared/widgets/premium/premium_exports.dart';
 import '../../domain/entities/outfit_analysis.dart';
 import '../../domain/helpers/outfit_analysis_mapper.dart';
-import '../../domain/helpers/outfit_result_sections.dart';
 import '../../domain/helpers/outfit_result_trust.dart';
-import '../widgets/engagement/outfit_result_story_shell.dart';
-import '../widgets/outfit_result_motion.dart';
+import 'outfit_studio_screen.dart';
 import '../widgets/outfit_untrusted_result_view.dart';
-import '../widgets/outfit_trust_degraded_banner.dart';
 
 class OutfitResultScreen extends StatelessWidget {
   final OutfitAnalysis analysis;
@@ -25,7 +22,6 @@ class OutfitResultScreen extends StatelessWidget {
     AnalysisSession.setOutfitIntelligence(analysis);
     AnalysisSession.setOutfit(OutfitAnalysisMapper.toLegacyReport(analysis));
 
-    final sections = OutfitResultSections.plan(analysis);
     final trust = OutfitResultTrustPolicy.evaluate(analysis);
 
     if (trust.isBlocked) {
@@ -51,34 +47,9 @@ class OutfitResultScreen extends StatelessWidget {
     }
 
     return Scaffold(
-      appBar: const MiraAppBar(pageTitle: 'نتيجة الإطلالة'),
-      body: CelebrationOnMount(
-        message: AnalysisCelebration.messageForOutfit(),
-        child: OutfitResultAmbience(
-          child: FloatingGradientBackground(
-            showOrbs: false,
-            showParticles: false,
-            child: SafeArea(
-              child: Column(
-                children: [
-                  if (trust.isDegraded) OutfitTrustDegradedBanner(trust: trust),
-                  Padding(
-                    padding: const EdgeInsets.fromLTRB(20, 8, 20, 0),
-                    child: _askMira(analysis),
-                  ),
-                  Expanded(
-                    child: OutfitResultStoryShell(
-                      analysis: analysis,
-                      sections: sections,
-                      trust: trust,
-                    ),
-                  ),
-                ],
-              ),
-            ),
-          ),
-        ),
-      ),
+      backgroundColor: AppColors.background,
+      appBar: const MiraAppBar(pageTitle: 'إطلالتك'),
+      body: OutfitStudioScreen(analysis: analysis),
     );
   }
 }

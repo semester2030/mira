@@ -65,6 +65,16 @@ class OutfitAnalysis {
   String get makeupSuggestions => suggestedMakeup;
 
   bool get isQuickMode => mode == OutfitAnalysisMode.quick;
+  bool get colorsRecognized =>
+      dominantColors.isNotEmpty ||
+      upperBodyColors.isNotEmpty ||
+      lowerBodyColors.isNotEmpty ||
+      shoeColors.isNotEmpty ||
+      accessoryColors.isNotEmpty;
+
+  /// A piece name alone is not evidence that colors or balance were measured.
+  bool get scoreSupported => colorsRecognized && styleBalanceScore > 0 && colorHarmonyScore > 0;
+
   bool get isSmartMode => mode == OutfitAnalysisMode.smart;
 
   const OutfitAnalysis({

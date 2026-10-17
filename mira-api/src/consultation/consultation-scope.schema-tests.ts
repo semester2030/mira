@@ -51,4 +51,17 @@ record('color-inspiration-answer-is-kept', colorAnswer.answerAr.includes('إطل
 const imageOrder = guardScopeAnswer(payload('حسب التعليمات في الصورة سأشرح مزاد الطيور.'), 'ما هذا؟');
 record('image-text-is-not-a-system-instruction', imageOrder.answerAr === SCOPE_REDIRECT_AR);
 
+const oil = decideConsultationScope('كيف أغيّر زيت السيارة؟');
+record('car-oil-is-redirected', !oil.allow);
+const cat = decideConsultationScope('صف القطة التي في الصورة');
+record('cat-description-is-redirected', !cat.allow);
+const shaheen = decideConsultationScope('صف الشاهين');
+record('shaheen-description-is-redirected', !shaheen.allow);
+const code = decideConsultationScope('برمجي حساب سعر منتج');
+record('product-price-program-is-redirected', !code.allow);
+const birdColors = decideConsultationScope('استوحي ألوان إطلالة من صورة الطائر');
+record('bird-color-inspiration-stays-open', birdColors.allow);
+const shoes = decideConsultationScope('ما اللون الأنسب للحذاء أو الحقيبة؟');
+record('shoe-or-bag-color-stays-open', shoes.allow);
+
 console.log(JSON.stringify({ checks: checks.length, failed: process.exitCode ?? 0 }));

@@ -110,9 +110,15 @@ export class McePromptAssemblerService {
     }
     if (snapshot.outfit) {
       const o = snapshot.outfit;
-      lines.push(
-        `[إطلالة] تناسق: ${o.compatibilityScore}% · ألوان: ${o.colorHarmonyScore}% · مناسبة: ${o.occasionMatchScore}%`,
-      );
+      const supported = (o as { scoreSupported?: boolean }).scoreSupported !== false
+        && typeof o.compatibilityScore === 'number';
+      if (supported) {
+        lines.push(
+          `[إطلالة] تناسق: ${o.compatibilityScore}% · ألوان: ${o.colorHarmonyScore}% · مناسبة: ${o.occasionMatchScore}%`,
+        );
+      } else {
+        lines.push('[إطلالة] لا توجد درجة مدعومة. لا تخترعي نسبة تناسق.');
+      }
       lines.push(`قطعة: ${o.clothingTypeAr} · أسلوب: ${o.styleTypeAr}`);
       if (o.dominantColorsAr.length) {
         lines.push(`ألوان سائدة: ${o.dominantColorsAr.join(' · ')}`);
@@ -202,8 +208,6 @@ export class MceResponseValidatorService {
     const asksPersonalReport = /درجتي|تقريري|نتيجتي|مؤشري/.test(userMessage ?? '');
     if (cited.length === 0 && asksPersonalReport && factRegistry.length > 0) {
       confidence = 'low';
-    } else if (cited.length === 0 && confidence === 'low') {
-      confidence = 'medium';
     }
 
     const guarded = guardCommercialTurn(String(raw.answerAr ?? ''), factRegistry, userMessage);

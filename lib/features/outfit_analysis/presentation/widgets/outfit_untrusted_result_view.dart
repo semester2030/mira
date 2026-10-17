@@ -79,7 +79,7 @@ class OutfitUntrustedResultView extends StatelessWidget {
                 _TipRow(text: 'صورة عمودية لجسمك كاملاً — رأس، ملابس، وحذاء'),
                 _TipRow(text: 'إضاءة طبيعية ووجهك واضح'),
                 _TipRow(text: 'لا سكرينشوت · لا صور تطبيقات · لا إعلانات'),
-                _TipRow(text: 'التقطي من الكاميرا أو اختاري selfie إطلالة حقيقية'),
+                _TipRow(text: 'اختاري صورة كاملة من الاستديو، فتصوير الإطلالة بالكاميرا متوقف مؤقتًا'),
               ],
             ),
           ),

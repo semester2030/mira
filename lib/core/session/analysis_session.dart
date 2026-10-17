@@ -165,6 +165,8 @@ abstract final class AnalysisSession {
     }());
   }
 
+  static final consultationByAnalysis = <String, String>{};
+
   static void setOutfit(OutfitReport report) => lastOutfit = report;
 
   static void setOutfitIntelligence(OutfitAnalysis analysis) {
@@ -181,6 +183,7 @@ abstract final class AnalysisSession {
     lastOutfit = null;
     lastOutfitIntelligence = null;
     lastRecolorAttemptId = null;
+    consultationByAnalysis.clear();
     userGender = UserGender.female;
     // Best-effort sync clear of face pointer; async wipe via registry.
     final face = lastEphemeralFacePath;

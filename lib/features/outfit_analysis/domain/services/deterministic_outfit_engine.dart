@@ -321,7 +321,8 @@ abstract final class DeterministicOutfitEngine {
   }
 
   static int _visualColorHarmonyScore(OutfitVisualProfile visual) {
-    var score = 72.0;
+    if (visual.dominantColors.isEmpty) return 0;
+    var score = 50.0;
     final colorCount = visual.dominantColors.length;
     if (colorCount == 2) score += 12;
     if (colorCount >= 4) score -= 14;
@@ -384,15 +385,24 @@ abstract final class DeterministicOutfitEngine {
     OutfitVisualProfile visual,
     MiraOccasion occasion,
   ) {
-    final base = switch (occasion) {
-      MiraOccasion.wedding || MiraOccasion.eid => ['ذهبي', 'شامبين', 'عنابي'],
-      MiraOccasion.work ||
-      MiraOccasion.interview => ['كحلي', 'بيج', 'رمادي فاتح'],
-      MiraOccasion.evening => ['أسود', 'ياقوتي', 'فضي'],
-      _ => ['تركواز', 'مرجاني', 'لافندر'],
-    };
-    base.removeWhere(visual.dominantColors.contains);
-    return base;
+    if (visual.dominantColors.isEmpty) return const [];
+    final current = visual.dominantColors.first;
+    final accessory = _accessoryColorFor(current, occasion);
+    if (accessory == null || accessory == current) return [current];
+    return [current, accessory];
+  }
+
+  static String? _accessoryColorFor(String current, MiraOccasion occasion) {
+    const deep = ['عنابي', 'كحلي', 'أسود', 'نبيتي', 'خمري', 'زيتي'];
+    if (deep.any(current.contains)) {
+      return occasion == MiraOccasion.work || occasion == MiraOccasion.interview
+          ? 'بيج'
+          : 'ذهبي';
+    }
+    if (current.contains('أبيض') || current.contains('كريمي') || current.contains('بيج')) {
+      return 'كحلي';
+    }
+    return null;
   }
 
   static List<String> _quickRejectedColors(
@@ -417,6 +427,9 @@ abstract final class DeterministicOutfitEngine {
     final garment = visual.garmentTypeAr.isNotEmpty
         ? visual.garmentTypeAr
         : 'إطلالة';
+    if (visual.dominantColors.isEmpty || score <= 0) {
+      return 'لم أستخرج لوناً مدعوماً من $garment في مناسبة ${occasion.labelAr}.';
+    }
     return 'تحليل $score/100 لـ$garment (${visual.styleTypeAr}) '
         'في مناسبة ${occasion.labelAr}.';
   }
@@ -577,7 +590,8 @@ abstract final class DeterministicOutfitEngine {
   }
 
   static int _styleBalanceScore(OutfitVisualProfile visual) {
-    var score = 75.0;
+    if (visual.dominantColors.isEmpty) return 0;
+    var score = 50.0;
     final colorCount = visual.dominantColors.length;
     if (colorCount == 2) score += 10;
     if (colorCount >= 4) score -= 12;
@@ -591,7 +605,8 @@ abstract final class DeterministicOutfitEngine {
     SkinPaletteProfile palette,
     OutfitVisualProfile visual,
   ) {
-    var score = 70.0;
+    if (visual.dominantColors.isEmpty) return 0;
+    var score = 50.0;
     var matches = 0;
     for (final color in visual.dominantColors) {
       if (_colorMatchesAny(color, palette.recommendedPalettes)) matches++;
