@@ -700,7 +700,8 @@
     const submit = document.createElement('button');
     submit.type = 'button';
     submit.className = 'btn btn-ghost';
-    submit.textContent = 'إرسال للمراجعة';
+    const developerAccount = window.sessionPartner && window.sessionPartner.type === 'developer';
+    submit.textContent = developerAccount ? 'نشر الآن' : 'إرسال للمراجعة';
     form.append(save, submit);
 
     function choice(name, value, label, checked) {
@@ -1657,13 +1658,17 @@
 
     submit.onclick = async () => {
       if (!item || !item.id) {
-        status.textContent = 'احفظي المسودة قبل الإرسال للمراجعة.';
+        status.textContent = developerAccount
+          ? 'احفظي البيانات أولًا، ثم تنشر فورًا.'
+          : 'احفظي المسودة قبل الإرسال للمراجعة.';
         return;
       }
-      status.textContent = 'جارٍ التحقق ثم الإرسال';
+      status.textContent = developerAccount ? 'جارٍ النشر في التطبيق' : 'جارٍ التحقق ثم الإرسال';
       try {
         await PartnersApi.submitReview(type === 'brand' ? 'products' : 'services', item.id);
-        status.textContent = 'أُرسل للمراجعة. لن يظهر في التطبيق قبل اعتماد الإدارة.';
+        status.textContent = developerAccount
+          ? 'نُشر في التطبيق مباشرة، بلا مراجعة.'
+          : 'أُرسل للمراجعة. لن يظهر في التطبيق قبل اعتماد الإدارة.';
         if (window.reloadPartnerDashboard) await window.reloadPartnerDashboard({ preserveForms: true });
       } catch (error) {
         status.textContent = 'تعذر الإرسال: ' + error.message;
@@ -1858,7 +1863,17 @@
           if (!entry.error) await uploadOne(entry);
         }
         const failures = staged[form.id].filter((entry) => entry && entry.error).map((entry) => entry.file.name + ': ' + entry.error);
-        renderForm(type, item, form.id, titleId, failures.length ? 'حُفظت المسودة. لم يُسجَّل الرفع ناجحًا. ' + failures.join(' — ') : '');
+        let publishedNote = '';
+        if (window.sessionPartner && window.sessionPartner.type === 'developer' && !failures.length && item && item.id) {
+          try {
+            await PartnersApi.submitReview(type === 'brand' ? 'products' : 'services', item.id);
+            publishedNote = 'نُشر في التطبيق مباشرة، بلا مراجعة.';
+            await refreshLists();
+          } catch (error) {
+            publishedNote = 'حُفظت البيانات ولم تُنشر: ' + error.message;
+          }
+        }
+        renderForm(type, item, form.id, titleId, failures.length ? 'حُفظت المسودة. لم يُسجَّل الرفع ناجحًا. ' + failures.join(' — ') : publishedNote);
       } catch (error) {
         form.dataset.saving = '';
         status.textContent = 'تعذر الحفظ: ' + error.message + ' البيانات المكتوبة ما زالت في النموذج.';

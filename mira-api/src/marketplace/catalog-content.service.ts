@@ -226,7 +226,11 @@ export class CatalogContentService {
 
   async submit(partnerId: string, kind: Kind, id: string) {
     await this.owned(partnerId, kind, id);
-    return this.prisma.$transaction(async (tx) => {
+    const partner = await this.prisma.partner.findUnique({
+      where: { id: partnerId },
+      select: { type: true },
+    });
+    const queued = await this.prisma.$transaction(async (tx) => {
       const row = await this.lockOwner(tx, kind, id);
       if (row.partnerId !== partnerId) throw new NotFoundException('العنصر غير موجود');
       const media = await tx.catalogMedia.findMany({ where: { ownerKind: kind, ownerId: id } });
@@ -251,6 +255,17 @@ export class CatalogContentService {
       await tx.catalogReviewLog.create({ data: { ownerKind: kind, ownerId: id, actor: `partner:${partnerId}`, action: 'submit', note: null } });
       return { contentStatus: row.contentStatus, reviewStatus: 'in_review', revision, id: row.id };
     });
+    if (partner?.type !== 'developer') return queued;
+    const current = await this.ownedRow(kind, id);
+    if (current?.submittedRevision == null) return queued;
+    return this.decide(
+      'developer-portal',
+      kind,
+      id,
+      'approve',
+      'نشر مباشر لحساب المطوّر',
+      current.submittedRevision,
+    );
   }
 
   async decide(actor: string, kind: string, id: string, decision: string | undefined, note?: string, revision?: number) {

@@ -50,7 +50,8 @@ function renderAds(items, statusNode) {
     const submit = document.createElement('button');
     submit.type = 'button';
     submit.className = 'btn btn-ghost btn-sm';
-    submit.textContent = 'إرسال للمراجعة';
+    const developerAccount = window.sessionPartner && window.sessionPartner.type === 'developer';
+    submit.textContent = developerAccount ? 'نشر الآن' : 'إرسال للمراجعة';
     const withdraw = document.createElement('button');
     withdraw.type = 'button';
     withdraw.className = 'btn btn-ghost btn-sm';
@@ -85,7 +86,7 @@ function renderAds(items, statusNode) {
       }
       try {
         await PartnersApi.submitAd(item.id);
-        localStatus.textContent = 'أُرسل للمراجعة';
+        localStatus.textContent = developerAccount ? 'نُشر في التطبيق مباشرة، بلا مراجعة.' : 'أُرسل للمراجعة';
         if (typeof load === 'function') load();
       } catch (error) {
         localStatus.textContent = error.message;
