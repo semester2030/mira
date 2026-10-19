@@ -85,6 +85,8 @@
     if (status === 'رُفع') return { label: 'اكتمل الرفع', mode: 'done', percent: 1 };
     if (status === 'أُلغي') return { label: 'أُلغي الرفع. الملف ما زال هنا.', mode: 'idle', percent: null };
     if (status === 'بانتظار الحفظ') return { label: 'بانتظار الحفظ', mode: 'idle', percent: null };
+    if (status === 'بانتظار البيانات') return { label: 'أكملي الاسم والسعر والتصنيف ليبدأ الرفع', mode: 'idle', percent: null };
+    if (status === 'جارٍ تجهيز النشر') return { label: 'جارٍ تجهيز النشر', mode: 'wait', percent: null };
     if (status === 'جارٍ القراءة' || status === 'جارٍ الرفع') {
       if (percent == null) return { label: status, mode: 'wait', percent: null };
       return { label: status + ' ' + Math.round(percent * 100) + '%', mode: 'determinate', percent: percent };

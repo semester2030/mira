@@ -122,7 +122,8 @@ export class CatalogContentService {
         }
         const count = await tx.catalogMedia.count({ where: { ownerKind: kind, ownerId: id } });
         const published = locked.contentStatus === 'published';
-        const firstImage = count === 0 && image;
+        const firstMedia = count === 0;
+        const firstImage = firstMedia && image;
         const created = await tx.catalogMedia.create({
           data: {
             ownerKind: kind,
@@ -135,8 +136,8 @@ export class CatalogContentService {
             mimeType: video ? 'video/mp4' : mime,
             byteSize: bytes.length,
             storageKey: key,
-            isPrimary: published ? false : firstImage,
-            draftIsPrimary: firstImage ? true : null,
+            isPrimary: published ? false : (firstImage || (firstMedia && video)),
+            draftIsPrimary: firstImage || (firstMedia && video) ? true : null,
             publication: 'draft',
             sourceMediaKey: input.sourceMediaKey,
           },
@@ -234,7 +235,9 @@ export class CatalogContentService {
       const row = await this.lockOwner(tx, kind, id);
       if (row.partnerId !== partnerId) throw new NotFoundException('العنصر غير موجود');
       const media = await tx.catalogMedia.findMany({ where: { ownerKind: kind, ownerId: id } });
-      if (!media.some((item) => item.kind === 'image' && !item.pendingRemoval)) {
+      const hasImage = media.some((item) => item.kind === 'image' && !item.pendingRemoval);
+      const hasVideo = media.some((item) => item.kind === 'video' && !item.pendingRemoval);
+      if (!hasImage && !(partner?.type === 'developer' && hasVideo)) {
         throw new BadRequestException('صورة واحدة على الأقل مطلوبة. الفيديو اختياري');
       }
       if (row.reviewStatus === 'in_review' && row.submittedRevision === row.reviewRevision) {
@@ -372,7 +375,10 @@ export class CatalogContentService {
       }
       const media = await tx.catalogMedia.findMany({ where: { ownerKind: typedKind, ownerId: id } });
       const images = media.filter((item) => item.kind === 'image' && !item.pendingRemoval);
-      if (images.length === 0) throw new BadRequestException('لا يمكن الاعتماد بلا صورة تبقى منشورة');
+      const videos = media.filter((item) => item.kind === 'video' && !item.pendingRemoval);
+      if (images.length === 0 && !(actor === 'developer-portal' && videos.length > 0)) {
+        throw new BadRequestException('لا يمكن الاعتماد بلا صورة تبقى منشورة');
+      }
       const keysToDelete = media.filter((item) => item.pendingRemoval && item.storageKey).map((item) => item.storageKey as string);
       for (const item of media.filter((entry) => entry.pendingRemoval)) {
         await tx.catalogMedia.delete({ where: { id: item.id } });
