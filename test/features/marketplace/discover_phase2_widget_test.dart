@@ -92,6 +92,7 @@ void main() {
     expect(find.text('عرض معاينة'), findsNothing);
     await _shot(tester, 'catalog-feed');
 
+    await _openSearch(tester);
     await tester.enterText(find.byType(TextField), 'مكياج');
     await tester.pumpAndSettle();
     expect(find.text('مكياج مناسبة + عناية'), findsOneWidget);
@@ -106,6 +107,8 @@ void main() {
     await tester.enterText(find.byType(TextField), 'سيروم');
     await tester.pumpAndSettle();
     expect(find.text('سيروم فيتامين C'), findsOneWidget);
+    await tester.tap(find.byIcon(Icons.close));
+    await tester.pumpAndSettle();
     await tester.tap(find.byIcon(Icons.tune));
     await tester.pumpAndSettle();
     expect(find.text('كل الأنواع'), findsOneWidget);
@@ -129,7 +132,8 @@ void main() {
     await tester.pump();
     expect(find.text('جاري تحميل الكتالوج'), findsNothing);
     expect(find.textContaining('جاري تحميل'), findsNothing);
-    expect(find.byType(TextField), findsOneWidget);
+    expect(find.byType(TextField), findsNothing);
+    expect(find.byIcon(Icons.search), findsOneWidget);
     expect(find.textContaining('لا توجد نتائج'), findsNothing);
     final offer = DiscoverCatalogQueryEngine.localOffers().first;
     gateway.pending.first.complete(_ok([offer]));
@@ -137,6 +141,7 @@ void main() {
     expect(find.text(offer.nameAr), findsOneWidget);
     await _shot(tester, 'server-loaded');
 
+    await _openSearch(tester);
     void search(String value) {
       final field = tester.widget<TextField>(find.byType(TextField));
       field.onChanged!(value);
@@ -206,6 +211,7 @@ void main() {
     final gateway = _HoldGateway();
     await tester.pumpWidget(_app(DiscoverPresentationScreen(gateway: gateway)));
     await tester.pump();
+    await _openSearch(tester);
     expect(find.byType(TextField), findsOneWidget);
     await tester.enterText(find.byType(TextField), 'م');
     await tester.pump();
@@ -258,9 +264,10 @@ void main() {
     final offers = DiscoverCatalogQueryEngine.localOffers().take(2).toList();
     await tester.pumpWidget(_app(DiscoverPresentationScreen(gateway: gateway)));
     await tester.pump();
-    expect(find.byType(TextField), findsOneWidget);
+    expect(find.byIcon(Icons.search), findsOneWidget);
     gateway.pending.first.complete(_ok(offers));
     await tester.pumpAndSettle();
+    await _openSearch(tester);
     expect(find.byType(TextField), findsOneWidget);
     await tester.drag(find.byType(PageView).first, const Offset(0, -280));
     await tester.pump();
@@ -295,11 +302,10 @@ void main() {
     await tester.pumpWidget(_app(DiscoverPresentationScreen(gateway: gateway)));
     await tester.pump();
     expect(find.text('جاري تحميل الكتالوج'), findsNothing);
-    expect(find.byType(TextField), findsOneWidget);
-    final loading = tester.getRect(find.byType(TextField));
+    expect(find.byIcon(Icons.search), findsOneWidget);
     await _shot(tester, 'rc5-search-loading');
-    await tester.tap(find.byType(TextField));
-    await tester.pump();
+    await _openSearch(tester);
+    final loading = tester.getRect(find.byType(TextField));
     gateway.pending.first.complete(_ok(offers));
     await tester.pumpAndSettle();
     expect(tester.getRect(find.byType(TextField)).top, loading.top);
@@ -376,6 +382,13 @@ Widget _app(Widget home) {
     builder: (context, child) => Directionality(textDirection: TextDirection.rtl, child: child!),
     home: home,
   );
+}
+
+Future<void> _openSearch(WidgetTester tester) async {
+  if (find.byType(TextField).evaluate().isEmpty) {
+    await tester.tap(find.byIcon(Icons.search));
+    await tester.pumpAndSettle();
+  }
 }
 
 DiscoverBrowseResponse _ok(List<DiscoverOffer> items) {

@@ -626,7 +626,7 @@ void main() {
     await tester.pump();
     port.flush();
     await tester.pump();
-    await tester.tap(find.byIcon(Icons.volume_up_outlined));
+    await tester.tap(find.byIcon(Icons.volume_up));
     await tester.pump();
     expect(port.isMuted, isTrue);
     await tester.fling(find.byType(PageView).first, const Offset(0, -500), 1200);
@@ -634,8 +634,8 @@ void main() {
     await tester.pump(const Duration(milliseconds: 400));
     port.flush();
     await tester.pump();
-    expect(find.byIcon(Icons.volume_off_outlined), findsWidgets);
-    expect(find.byIcon(Icons.volume_up_outlined), findsNothing);
+    expect(find.byIcon(Icons.volume_off), findsWidgets);
+    expect(find.byIcon(Icons.volume_up), findsNothing);
   });
 
   testWidgets('clinic chrome shows appointment row', (tester) async {

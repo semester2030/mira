@@ -79,7 +79,7 @@ Future<Uint8List> _capture(
     }
   }
   if (expectMute) {
-    expect(find.byIcon(Icons.volume_up_outlined), findsOneWidget, reason: '$name shows the mute control');
+    expect(find.byIcon(Icons.volume_up), findsOneWidget, reason: '$name shows the mute control');
     expect(find.textContaining('sample_clip'), findsNothing, reason: 'the quiet video double must not print a file path');
   }
   final boundary = tester.renderObject<RenderRepaintBoundary>(find.byKey(boundaryKey));

@@ -117,8 +117,8 @@ class DiscoverVisualChrome extends StatelessWidget {
           DiscoverVisualFamily.salon => 'ابحثي عن عيادة أو مشغل أو خدمة',
         };
     final assetFamily = categoryAssetFamily ?? family.name;
-    final bottomBand = (248 * textScale) + padding.bottom;
-    final topBand = padding.top + 96.0;
+    final bottomBand = (220 * textScale) + padding.bottom;
+    final topBand = padding.top + 52.0;
 
     return Stack(
       fit: StackFit.expand,
@@ -146,90 +146,37 @@ class DiscoverVisualChrome extends StatelessWidget {
         ),
         Positioned(
           top: padding.top + 4,
-          left: 10,
-          right: 10,
+          left: 4,
+          right: 4,
           child: includeSearch
-              ? Column(
-                  mainAxisSize: MainAxisSize.min,
-                  children: [
-                    SizedBox(
-                      height: 40,
-                      child: Row(
-                        children: [
-                          _GlassIconButton(icon: Icons.chevron_right, onTap: onBack, semanticLabel: 'رجوع'),
-                          const Spacer(),
-                          const _MiraMark(),
-                          const Spacer(),
-                          const SizedBox(width: 40),
-                        ],
-                      ),
-                    ),
-                    if (slide.preview)
-                      Align(
-                        alignment: AlignmentDirectional.centerStart,
-                        child: Padding(
-                          padding: const EdgeInsets.only(top: 2),
-                          child: Text(
-                            'معاينة تجريبية',
-                            style: AppTypography.labelSmall.copyWith(
-                              color: Colors.white.withValues(alpha: 0.92),
-                              shadows: const [Shadow(blurRadius: 6, color: Colors.black54)],
-                            ),
-                          ),
-                        ),
-                      ),
-                    const SizedBox(height: 6),
-                    Row(
-                      children: [
-                        Expanded(
-                          child: DiscoverSearchField(
-                            hint: searchHint,
-                            fieldKey: searchFieldKey,
-                            focusNode: searchFocus,
-                            controller: searchController,
-                            onSearch: onSearch,
-                            onTap: () => onUnavailable('البحث من هذه الشاشة غير متاح الآن'),
-                          ),
-                        ),
-                        const SizedBox(width: 8),
-                        _GlassIconButton(
-                          icon: Icons.tune,
-                          onTap: onFilter ?? () => onUnavailable('الفلاتر غير متاحة الآن'),
-                          semanticLabel: 'الفلاتر',
-                        ),
-                      ],
-                    ),
-                    if (mediaCount > 1)
-                      IgnorePointer(
-                        child: Padding(
-                          padding: const EdgeInsets.only(top: 8),
-                          child: Align(
-                            alignment: Alignment.centerRight,
-                            child: _MediaDots(count: mediaCount, index: mediaIndex),
-                          ),
-                        ),
-                      ),
-                  ],
+              ? _DiscoverTopChrome(
+                  muted: muted,
+                  showMute: showMute,
+                  preview: slide.preview,
+                  searchHint: searchHint,
+                  searchFieldKey: searchFieldKey,
+                  searchFocus: searchFocus,
+                  searchController: searchController,
+                  onBack: onBack,
+                  onMute: onMute,
+                  onSearch: onSearch,
+                  onFilter: onFilter ?? () => onUnavailable('الفلاتر غير متاحة الآن'),
+                  onSearchUnavailable: () => onUnavailable('البحث من هذه الشاشة غير متاح الآن'),
+                  mediaCount: mediaCount,
+                  mediaIndex: mediaIndex,
                 )
               : (mediaCount > 1
                   ? IgnorePointer(
                       child: Align(
                         alignment: Alignment.centerRight,
-                        child: _MediaDots(count: mediaCount, index: mediaIndex),
+                        child: Padding(
+                          padding: const EdgeInsets.only(top: 4, right: 8),
+                          child: _MediaDots(count: mediaCount, index: mediaIndex),
+                        ),
                       ),
                     )
                   : const SizedBox.shrink()),
         ),
-        if (showMute)
-          Positioned(
-            top: topBand + 8,
-            left: 12,
-            child: _GlassIconButton(
-              icon: muted ? Icons.volume_off_outlined : Icons.volume_up_outlined,
-              onTap: onMute,
-              semanticLabel: muted ? 'تشغيل الصوت' : 'كتم الصوت',
-            ),
-          ),
         Positioned(
           right: 10,
           top: topBand,
@@ -478,6 +425,170 @@ class DiscoverSearchField extends StatelessWidget {
   }
 }
 
+/// Compact Places-style chrome icons: white glyph, no glass disc.
+class _ChromeIcon extends StatelessWidget {
+  const _ChromeIcon({
+    required this.icon,
+    required this.onTap,
+    this.semanticLabel,
+  });
+
+  final IconData icon;
+  final VoidCallback onTap;
+  final String? semanticLabel;
+
+  @override
+  Widget build(BuildContext context) {
+    return Semantics(
+      button: true,
+      label: semanticLabel,
+      child: IconButton(
+        onPressed: onTap,
+        tooltip: semanticLabel,
+        visualDensity: VisualDensity.compact,
+        padding: const EdgeInsets.all(8),
+        constraints: const BoxConstraints(minWidth: 44, minHeight: 44),
+        icon: Icon(
+          icon,
+          color: Colors.white,
+          size: 24,
+          shadows: const [Shadow(blurRadius: 6, color: Colors.black54)],
+        ),
+      ),
+    );
+  }
+}
+
+class _DiscoverTopChrome extends StatefulWidget {
+  const _DiscoverTopChrome({
+    required this.muted,
+    required this.showMute,
+    required this.preview,
+    required this.searchHint,
+    required this.onBack,
+    required this.onMute,
+    required this.onFilter,
+    required this.onSearchUnavailable,
+    required this.mediaCount,
+    required this.mediaIndex,
+    this.searchFieldKey,
+    this.searchFocus,
+    this.searchController,
+    this.onSearch,
+  });
+
+  final bool muted;
+  final bool showMute;
+  final bool preview;
+  final String searchHint;
+  final VoidCallback onBack;
+  final VoidCallback onMute;
+  final VoidCallback onFilter;
+  final VoidCallback onSearchUnavailable;
+  final int mediaCount;
+  final int mediaIndex;
+  final Key? searchFieldKey;
+  final FocusNode? searchFocus;
+  final TextEditingController? searchController;
+  final ValueChanged<String>? onSearch;
+
+  @override
+  State<_DiscoverTopChrome> createState() => _DiscoverTopChromeState();
+}
+
+class _DiscoverTopChromeState extends State<_DiscoverTopChrome> {
+  bool _searchOpen = false;
+
+  @override
+  Widget build(BuildContext context) {
+    return Column(
+      mainAxisSize: MainAxisSize.min,
+      children: [
+        if (_searchOpen && widget.searchController != null)
+          Row(
+            children: [
+              _ChromeIcon(
+                icon: Icons.close,
+                onTap: () {
+                  setState(() => _searchOpen = false);
+                  widget.searchFocus?.unfocus();
+                },
+                semanticLabel: 'إغلاق البحث',
+              ),
+              Expanded(
+                child: DiscoverSearchField(
+                  hint: widget.searchHint,
+                  fieldKey: widget.searchFieldKey,
+                  focusNode: widget.searchFocus,
+                  controller: widget.searchController,
+                  onSearch: widget.onSearch,
+                  onTap: widget.onSearchUnavailable,
+                ),
+              ),
+            ],
+          )
+        else
+          SizedBox(
+            height: 44,
+            child: Row(
+              children: [
+                _ChromeIcon(icon: Icons.chevron_right, onTap: widget.onBack, semanticLabel: 'رجوع'),
+                if (widget.showMute)
+                  _ChromeIcon(
+                    icon: widget.muted ? Icons.volume_off : Icons.volume_up,
+                    onTap: widget.onMute,
+                    semanticLabel: widget.muted ? 'تشغيل الصوت' : 'كتم الصوت',
+                  ),
+                const Spacer(),
+                const _MiraMark(),
+                const Spacer(),
+                _ChromeIcon(
+                  icon: Icons.search,
+                  onTap: () {
+                    if (widget.searchController == null) {
+                      widget.onSearchUnavailable();
+                      return;
+                    }
+                    setState(() => _searchOpen = true);
+                    WidgetsBinding.instance.addPostFrameCallback((_) {
+                      widget.searchFocus?.requestFocus();
+                    });
+                  },
+                  semanticLabel: 'بحث',
+                ),
+                _ChromeIcon(icon: Icons.tune, onTap: widget.onFilter, semanticLabel: 'الفلاتر'),
+              ],
+            ),
+          ),
+        if (widget.preview)
+          Align(
+            alignment: AlignmentDirectional.centerStart,
+            child: Padding(
+              padding: const EdgeInsets.only(top: 2, right: 12),
+              child: Text(
+                'معاينة تجريبية',
+                style: AppTypography.labelSmall.copyWith(
+                  color: Colors.white.withValues(alpha: 0.92),
+                  shadows: const [Shadow(blurRadius: 6, color: Colors.black54)],
+                ),
+              ),
+            ),
+          ),
+        if (widget.mediaCount > 1)
+          IgnorePointer(
+            child: Padding(
+              padding: const EdgeInsets.only(top: 6),
+              child: Align(
+                alignment: Alignment.centerRight,
+                child: _MediaDots(count: widget.mediaCount, index: widget.mediaIndex),
+              ),
+            ),
+          ),
+      ],
+    );
+  }
+}
+
 class _GlassIconButton extends StatelessWidget {
   const _GlassIconButton({
     required this.icon,
@@ -496,20 +607,20 @@ class _GlassIconButton extends StatelessWidget {
     return Semantics(
       button: true,
       label: semanticLabel,
-      child: ClipOval(
-        child: BackdropFilter(
-          filter: ImageFilter.blur(sigmaX: 6, sigmaY: 6),
-          child: Material(
-            color: AppColors.glassFill.withValues(alpha: 0.45),
-            shape: CircleBorder(side: BorderSide(color: AppColors.border.withValues(alpha: 0.55))),
-            child: InkWell(
-              customBorder: const CircleBorder(),
-              onTap: onTap,
-              child: SizedBox(
-                width: 44,
-                height: 44,
-                child: Icon(icon, color: iconColor ?? AppColors.textPrimary, size: 22),
-              ),
+      child: Material(
+        color: Colors.transparent,
+        shape: const CircleBorder(),
+        child: InkWell(
+          customBorder: const CircleBorder(),
+          onTap: onTap,
+          child: SizedBox(
+            width: 44,
+            height: 44,
+            child: Icon(
+              icon,
+              color: iconColor ?? Colors.white,
+              size: 22,
+              shadows: const [Shadow(blurRadius: 6, color: Colors.black54)],
             ),
           ),
         ),
@@ -520,8 +631,8 @@ class _GlassIconButton extends StatelessWidget {
 
 class DiscoverVenueCopy {
   static String label(PresentationSlide slide) {
-    if (slide.product != null) return 'المتجر';
-    return switch (slide.service?.partnerType) {
+    if (slide.service == null) return 'المتجر';
+    return switch (slide.service!.partnerType) {
       'clinic' => 'العيادة',
       'salon' => 'الصالون',
       'workshop' || 'atelier' => 'المشغل',
@@ -530,8 +641,8 @@ class DiscoverVenueCopy {
   }
 
   static IconData icon(PresentationSlide slide) {
-    if (slide.product != null) return Icons.storefront_outlined;
-    return switch (slide.service?.partnerType) {
+    if (slide.service == null) return Icons.storefront_outlined;
+    return switch (slide.service!.partnerType) {
       'clinic' => Icons.local_hospital_outlined,
       'salon' => Icons.content_cut,
       'workshop' || 'atelier' => Icons.chair_outlined,
@@ -565,38 +676,48 @@ class _Actions extends StatelessWidget {
   final String purchaseLabel;
   final String appointmentLabel;
 
+  static const double _side = 48;
+  static const double _center = 64;
+  static const double _gap = 12;
+  static const double _touch = 48;
+
   @override
   Widget build(BuildContext context) {
     final service = slide.product == null && slide.service != null;
     final showCenter = service ? showAppointmentRequest : showPurchaseLink;
     final label = service ? appointmentLabel : purchaseLabel;
-    final icon = service ? Icons.calendar_month : Icons.shopping_bag;
+    final icon = service ? Icons.calendar_month_rounded : Icons.shopping_bag;
     final onTap = service
         ? (onAppointment ?? () => onUnavailable('طلب الموعد غير مفعّل لهذه الخدمة'))
         : onBuy;
     final venue = DiscoverVenueCopy.label(slide);
+    final small = MediaQuery.sizeOf(context).shortestSide < 360;
+    final side = small ? 44.0 : _side;
+    final center = small ? 58.0 : _center;
     return Row(
       textDirection: TextDirection.ltr,
+      mainAxisAlignment: MainAxisAlignment.center,
+      crossAxisAlignment: CrossAxisAlignment.end,
       children: [
-        _LabeledCircle(icon: Icons.info_outline, label: 'التفاصيل', onTap: onDetails),
+        _ClusterSide(
+          diameter: side,
+          icon: Icons.info_outline,
+          label: 'التفاصيل',
+          onTap: onDetails,
+        ),
         if (showCenter) ...[
-          const SizedBox(width: 8),
-          Expanded(
-            child: FilledButton.icon(
-              style: FilledButton.styleFrom(
-                backgroundColor: AppColors.primary,
-                foregroundColor: Colors.white,
-                padding: const EdgeInsets.symmetric(vertical: 14),
-                shape: const StadiumBorder(),
-              ),
-              onPressed: onTap,
-              icon: Icon(icon, color: Colors.white),
-              label: Text(label, style: AppTypography.labelLarge.copyWith(color: Colors.white)),
-            ),
+          const SizedBox(width: _gap),
+          _ClusterPrimary(
+            diameter: center,
+            icon: icon,
+            label: label,
+            onTap: onTap,
           ),
-          const SizedBox(width: 8),
-        ],
-        _LabeledCircle(
+          const SizedBox(width: _gap),
+        ] else
+          const SizedBox(width: _gap),
+        _ClusterSide(
+          diameter: side,
           icon: DiscoverVenueCopy.icon(slide),
           label: venue,
           onTap: onStore ?? () => onUnavailable('صفحة $venue غير متاحة الآن'),
@@ -606,23 +727,127 @@ class _Actions extends StatelessWidget {
   }
 }
 
-class _LabeledCircle extends StatelessWidget {
-  const _LabeledCircle({required this.icon, required this.label, required this.onTap});
+class _ClusterSide extends StatelessWidget {
+  const _ClusterSide({
+    required this.diameter,
+    required this.icon,
+    required this.label,
+    required this.onTap,
+  });
 
+  final double diameter;
   final IconData icon;
   final String label;
   final VoidCallback onTap;
 
   @override
   Widget build(BuildContext context) {
-    return InkWell(
-      onTap: onTap,
-      child: Column(
-        children: [
-          _GlassIconButton(icon: icon, onTap: onTap),
-          const SizedBox(height: 4),
-          Text(label, style: AppTypography.labelSmall.copyWith(color: Colors.white, shadows: const [Shadow(blurRadius: 6, color: Colors.black54)])),
-        ],
+    final target = diameter < _Actions._touch ? _Actions._touch : diameter;
+    return Semantics(
+      button: true,
+      label: label,
+      child: InkWell(
+        onTap: onTap,
+        customBorder: const CircleBorder(),
+        child: SizedBox(
+          width: target + 8,
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              SizedBox(
+                width: target,
+                height: target,
+                child: Center(
+                  child: Container(
+                    width: diameter,
+                    height: diameter,
+                    decoration: BoxDecoration(
+                      shape: BoxShape.circle,
+                      color: Colors.white.withValues(alpha: 0.12),
+                      border: Border.all(color: Colors.white, width: 1.5),
+                    ),
+                    child: Icon(icon, color: Colors.white, size: 22),
+                  ),
+                ),
+              ),
+              const SizedBox(height: 4),
+              Text(
+                label,
+                maxLines: 1,
+                overflow: TextOverflow.ellipsis,
+                style: AppTypography.labelSmall.copyWith(
+                  color: Colors.white,
+                  fontSize: 11,
+                  fontWeight: FontWeight.w600,
+                  shadows: const [Shadow(blurRadius: 4, color: Color(0x66000000), offset: Offset(0, 1))],
+                ),
+              ),
+            ],
+          ),
+        ),
+      ),
+    );
+  }
+}
+
+class _ClusterPrimary extends StatelessWidget {
+  const _ClusterPrimary({
+    required this.diameter,
+    required this.icon,
+    required this.label,
+    required this.onTap,
+  });
+
+  final double diameter;
+  final IconData icon;
+  final String label;
+  final VoidCallback onTap;
+
+  @override
+  Widget build(BuildContext context) {
+    final target = diameter < _Actions._touch ? _Actions._touch : diameter;
+    return Semantics(
+      button: true,
+      label: label,
+      child: InkWell(
+        onTap: onTap,
+        customBorder: const CircleBorder(),
+        child: SizedBox(
+          width: target + 8,
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              SizedBox(
+                width: target,
+                height: target,
+                child: Center(
+                  child: Container(
+                    width: diameter,
+                    height: diameter,
+                    decoration: const BoxDecoration(
+                      shape: BoxShape.circle,
+                      color: AppColors.primary,
+                    ),
+                    child: Icon(icon, color: Colors.white, size: 28),
+                  ),
+                ),
+              ),
+              const SizedBox(height: 4),
+              Text(
+                label,
+                maxLines: 1,
+                overflow: TextOverflow.ellipsis,
+                textAlign: TextAlign.center,
+                style: AppTypography.labelSmall.copyWith(
+                  color: Colors.white,
+                  fontSize: 12,
+                  fontWeight: FontWeight.w700,
+                  shadows: const [Shadow(blurRadius: 4, color: Color(0x66000000), offset: Offset(0, 1))],
+                ),
+              ),
+            ],
+          ),
+        ),
       ),
     );
   }

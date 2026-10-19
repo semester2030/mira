@@ -87,6 +87,7 @@ class _DiscoverPresentationScreenState extends State<DiscoverPresentationScreen>
   final _search = TextEditingController();
   final _searchFieldKey = GlobalKey();
   final _searchFocus = FocusNode();
+  bool _searchOpen = false;
   DiscoverFavoriteClient? _favorites;
   var _ownsFavorites = false;
   DiscoverCatalogQuery _query = const DiscoverCatalogQuery();
@@ -657,66 +658,39 @@ class _DiscoverPresentationScreenState extends State<DiscoverPresentationScreen>
                 if (_catalogDriven)
                   Positioned(
                     top: MediaQuery.paddingOf(context).top + 4,
-                    left: 10,
-                    right: 10,
-                    child: Column(
-                      mainAxisSize: MainAxisSize.min,
-                      children: [
-                        SizedBox(
-                          height: 40,
-                          child: Row(
-                            children: [
-                              IconButton(
-                                onPressed: () => _exitPresentation(context),
-                                icon: const Icon(Icons.chevron_right, color: Colors.white),
-                              ),
-                              const Spacer(),
-                              Image.asset(
-                                'assets/images/mira_logo_icon.png',
-                                height: 28,
-                                errorBuilder: (_, __, ___) => Text(
-                                  'MIRA',
-                                  style: AppTypography.titleMedium.copyWith(color: Colors.white, letterSpacing: 1.6),
-                                ),
-                              ),
-                              const Spacer(),
-                              const SizedBox(width: 40),
-                            ],
-                          ),
-                        ),
-                        if (_slides.isNotEmpty && _slides[_page.clamp(0, _slides.length - 1)].preview)
-                          Align(
-                            alignment: AlignmentDirectional.centerStart,
-                            child: Text(
-                              'معاينة تجريبية',
-                              style: AppTypography.labelSmall.copyWith(color: Colors.white.withValues(alpha: 0.92)),
-                            ),
-                          ),
-                        const SizedBox(height: 6),
-                        Row(
-                          children: [
-                            Expanded(
-                              child: DiscoverSearchField(
-                                hint: switch (widget.lane) {
-                                  DiscoverLane.elegance => 'ابحثي عن منتج أو علامة',
-                                  DiscoverLane.beauty => 'ابحثي عن عيادة أو مشغل أو خدمة',
-                                  null => 'ابحثي في العروض',
-                                },
-                                fieldKey: _searchFieldKey,
-                                focusNode: _searchFocus,
-                                controller: _search,
-                                onSearch: (value) => _reload(_query.copyWith(text: value)),
-                                onTap: () {},
-                              ),
-                            ),
-                            const SizedBox(width: 8),
-                            IconButton(
-                              onPressed: () => _openFilters(context),
-                              icon: const Icon(Icons.tune, color: Colors.white),
-                            ),
-                          ],
-                        ),
-                      ],
+                    left: 4,
+                    right: 4,
+                    child: _CatalogTopChrome(
+                      searchOpen: _searchOpen,
+                      search: _search,
+                      searchFieldKey: _searchFieldKey,
+                      searchFocus: _searchFocus,
+                      searchHint: switch (widget.lane) {
+                        DiscoverLane.elegance => 'ابحثي عن منتج أو علامة',
+                        DiscoverLane.beauty => 'ابحثي عن عيادة أو مشغل أو خدمة',
+                        null => 'ابحثي في العروض',
+                      },
+                      preview: _slides.isNotEmpty && _slides[_page.clamp(0, _slides.length - 1)].preview,
+                      showMute: _slides.isNotEmpty &&
+                          _slides[_page.clamp(0, _slides.length - 1)].media.any((m) => m.kind == PresentationMediaKind.video),
+                      muted: _video.isMuted,
+                      onBack: () => _exitPresentation(context),
+                      onMute: () async {
+                        await _video.setMuted(!_video.isMuted);
+                        if (mounted) setState(() {});
+                      },
+                      onOpenSearch: () {
+                        setState(() => _searchOpen = true);
+                        WidgetsBinding.instance.addPostFrameCallback((_) {
+                          if (mounted) _searchFocus.requestFocus();
+                        });
+                      },
+                      onCloseSearch: () {
+                        setState(() => _searchOpen = false);
+                        _searchFocus.unfocus();
+                      },
+                      onSearch: (value) => _reload(_query.copyWith(text: value)),
+                      onFilter: () => _openFilters(context),
                     ),
                   )
                 else if (_slides.isEmpty)
@@ -730,7 +704,7 @@ class _DiscoverPresentationScreenState extends State<DiscoverPresentationScreen>
                   ),
                 if (_adsFailed)
                   Positioned(
-                    top: MediaQuery.paddingOf(context).top + (_catalogDriven ? 96 : 8),
+                    top: MediaQuery.paddingOf(context).top + (_catalogDriven ? (_searchOpen ? 72 : 52) : 8),
                     left: 16,
                     right: 16,
                     child: Material(
@@ -826,6 +800,110 @@ class _CatalogHooks {
   final bool showPurchaseLink;
   final bool showAppointmentRequest;
   final bool includeSearch;
+}
+
+class _CatalogTopChrome extends StatelessWidget {
+  const _CatalogTopChrome({
+    required this.searchOpen,
+    required this.search,
+    required this.searchFieldKey,
+    required this.searchFocus,
+    required this.searchHint,
+    required this.preview,
+    required this.showMute,
+    required this.muted,
+    required this.onBack,
+    required this.onMute,
+    required this.onOpenSearch,
+    required this.onCloseSearch,
+    required this.onSearch,
+    required this.onFilter,
+  });
+
+  final bool searchOpen;
+  final TextEditingController search;
+  final Key searchFieldKey;
+  final FocusNode searchFocus;
+  final String searchHint;
+  final bool preview;
+  final bool showMute;
+  final bool muted;
+  final VoidCallback onBack;
+  final VoidCallback onMute;
+  final VoidCallback onOpenSearch;
+  final VoidCallback onCloseSearch;
+  final ValueChanged<String> onSearch;
+  final VoidCallback onFilter;
+
+  @override
+  Widget build(BuildContext context) {
+    final iconShadow = const [Shadow(blurRadius: 6, color: Colors.black54)];
+    Widget chromeIcon(IconData icon, VoidCallback onTap, String label) {
+      return IconButton(
+        onPressed: onTap,
+        tooltip: label,
+        visualDensity: VisualDensity.compact,
+        padding: const EdgeInsets.all(8),
+        constraints: const BoxConstraints(minWidth: 44, minHeight: 44),
+        icon: Icon(icon, color: Colors.white, size: 24, shadows: iconShadow),
+      );
+    }
+
+    return Column(
+      mainAxisSize: MainAxisSize.min,
+      children: [
+        if (searchOpen)
+          Row(
+            children: [
+              chromeIcon(Icons.close, onCloseSearch, 'إغلاق البحث'),
+              Expanded(
+                child: DiscoverSearchField(
+                  hint: searchHint,
+                  fieldKey: searchFieldKey,
+                  focusNode: searchFocus,
+                  controller: search,
+                  onSearch: onSearch,
+                  onTap: () {},
+                ),
+              ),
+            ],
+          )
+        else
+          SizedBox(
+            height: 44,
+            child: Row(
+              children: [
+                chromeIcon(Icons.chevron_right, onBack, 'رجوع'),
+                if (showMute) chromeIcon(muted ? Icons.volume_off : Icons.volume_up, onMute, muted ? 'تشغيل الصوت' : 'كتم الصوت'),
+                const Spacer(),
+                Image.asset(
+                  'assets/images/mira_logo_icon.png',
+                  height: 28,
+                  errorBuilder: (_, __, ___) => Text(
+                    'MIRA',
+                    style: AppTypography.titleMedium.copyWith(color: Colors.white, letterSpacing: 1.6, shadows: iconShadow),
+                  ),
+                ),
+                const Spacer(),
+                chromeIcon(Icons.search, onOpenSearch, 'بحث'),
+                chromeIcon(Icons.tune, onFilter, 'الفلاتر'),
+              ],
+            ),
+          ),
+        if (preview)
+          Align(
+            alignment: AlignmentDirectional.centerStart,
+            child: Padding(
+              padding: const EdgeInsets.only(top: 2, right: 12),
+              child: Text(
+                'معاينة تجريبية',
+                style: AppTypography.labelSmall.copyWith(color: Colors.white.withValues(alpha: 0.92)),
+              ),
+            ),
+          ),
+      ],
+    );
+  }
 }
 
 class _PresentationPage extends StatefulWidget {
