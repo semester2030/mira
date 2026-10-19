@@ -1,5 +1,7 @@
-import { Controller, Get, Inject, NotFoundException, Param, StreamableFile } from '@nestjs/common';
+import { Controller, Get, Headers, Inject, NotFoundException, Param, Res, StreamableFile } from '@nestjs/common';
+import type { Response } from 'express';
 import { PrismaService } from '../prisma/prisma.service';
+import { playbackContentType, sliceMediaRange } from './catalog-media.http';
 import { CatalogMediaConnectionError, CatalogMediaPermissionError, CatalogMediaStorage } from './catalog-media.storage';
 
 @Controller('marketplace')
@@ -10,7 +12,11 @@ export class CatalogMediaController {
   ) {}
 
   @Get('media/:id')
-  async published(@Param('id') id: string) {
+  async published(
+    @Param('id') id: string,
+    @Headers('range') range: string | undefined,
+    @Res({ passthrough: true }) res: Response,
+  ) {
     const row = await this.prisma.catalogMedia.findFirst({
       where: { id, active: true, publication: 'published' },
     });
@@ -35,6 +41,19 @@ export class CatalogMediaController {
       console.error('catalog-media-missing');
       throw new NotFoundException('الوسيط غير منشور');
     }
-    return new StreamableFile(bytes, { type: row.mimeType ?? 'application/octet-stream' });
+    const type = playbackContentType(bytes, row.mimeType);
+    const sliced = sliceMediaRange(bytes.length, range);
+    res.setHeader('Accept-Ranges', 'bytes');
+    if (sliced.status === 416) {
+      res.status(416);
+      res.setHeader('Content-Range', `bytes */${bytes.length}`);
+      return new StreamableFile(Buffer.alloc(0), { type, length: 0 });
+    }
+    const body = sliced.status === 206 ? bytes.subarray(sliced.start, sliced.end + 1) : bytes;
+    if (sliced.status === 206) {
+      res.status(206);
+      res.setHeader('Content-Range', `bytes ${sliced.start}-${sliced.end}/${bytes.length}`);
+    }
+    return new StreamableFile(body, { type, length: body.length });
   }
 }
