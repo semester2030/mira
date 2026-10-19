@@ -132,7 +132,7 @@ export class CatalogContentService {
             kind: image ? 'image' : 'video',
             url: '',
             active: false,
-            mimeType: mime,
+            mimeType: video ? 'video/mp4' : mime,
             byteSize: bytes.length,
             storageKey: key,
             isPrimary: published ? false : firstImage,

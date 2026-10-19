@@ -68,11 +68,65 @@
     return found ? found[1] : (key || 'بدون تصنيف');
   }
 
+  function fileExt(file) {
+    const name = String(file && file.name || '').toLowerCase();
+    const dot = name.lastIndexOf('.');
+    return dot >= 0 ? name.slice(dot) : '';
+  }
+
+  function isPhoneVideo(file) {
+    const type = String(file && file.type || '').toLowerCase();
+    const ext = fileExt(file);
+    return type === 'video/mp4' || type === 'video/quicktime' || type === 'video/x-m4v'
+      || ext === '.mov' || ext === '.m4v' || ext === '.mp4';
+  }
+
+  function isPhoneImage(file) {
+    const type = String(file && file.type || '').toLowerCase();
+    const ext = fileExt(file);
+    return IMAGE_TYPES.indexOf(type) >= 0 || type === 'image/jpg' || type === 'image/heic' || type === 'image/heif'
+      || ext === '.jpg' || ext === '.jpeg' || ext === '.png' || ext === '.webp' || ext === '.heic' || ext === '.heif';
+  }
+
+  function uploadMime(file) {
+    const type = String(file && file.type || '').toLowerCase();
+    if (type === 'image/jpg') return 'image/jpeg';
+    if (IMAGE_TYPES.indexOf(type) >= 0) return type;
+    if (isPhoneVideo(file)) return 'video/mp4';
+    return type;
+  }
+
+  function isHeic(file) {
+    const type = String(file && file.type || '').toLowerCase();
+    const ext = fileExt(file);
+    return type === 'image/heic' || type === 'image/heif' || ext === '.heic' || ext === '.heif';
+  }
+
+  function heicToJpeg(file) {
+    return createImageBitmap(file).then((bitmap) => new Promise((resolve, reject) => {
+      const maxEdge = 2000;
+      const scale = Math.min(1, maxEdge / Math.max(bitmap.width, bitmap.height));
+      const canvas = document.createElement('canvas');
+      canvas.width = Math.max(1, Math.round(bitmap.width * scale));
+      canvas.height = Math.max(1, Math.round(bitmap.height * scale));
+      canvas.getContext('2d').drawImage(bitmap, 0, 0, canvas.width, canvas.height);
+      bitmap.close && bitmap.close();
+      canvas.toBlob((blob) => {
+        if (!blob) {
+          reject(new Error('تعذر تحويل صورة الآيفون'));
+          return;
+        }
+        const base = String(file.name || 'photo').replace(/\.[^.]+$/, '');
+        resolve(new File([blob], base + '.jpg', { type: 'image/jpeg', lastModified: file.lastModified }));
+      }, 'image/jpeg', 0.9);
+    }));
+  }
+
   function mediaProblem(file) {
-    const image = IMAGE_TYPES.indexOf(file.type) >= 0;
-    const video = file.type === 'video/mp4';
-    if (!image && !video) return 'الصيغة غير مقبولة. الصور: JPEG أو PNG أو WebP. الفيديو: MP4.';
-    if (image && file.size > 5 * 1024 * 1024) return 'الصورة أكبر من 5 ميغابايت.';
+    const image = isPhoneImage(file) && !isPhoneVideo(file);
+    const video = isPhoneVideo(file);
+    if (!image && !video) return 'الصيغة غير مقبولة. الصور: JPEG أو PNG أو WebP أو صورة الآيفون. الفيديو: MP4 أو MOV.';
+    if (image && file.size > 5 * 1024 * 1024 && !isHeic(file)) return 'الصورة أكبر من 5 ميغابايت.';
     if (video && file.size > 20 * 1024 * 1024) return 'الفيديو أكبر من 20 ميغابايت.';
     return '';
   }
@@ -600,16 +654,16 @@
     const mediaSection = document.createElement('div');
     mediaSection.className = 'form-section';
     text(mediaSection, 'الصور والفيديو', 'h3');
-    text(mediaSection, 'الصور: JPEG أو PNG أو WebP حتى 5 ميغابايت. الفيديو: MP4 حتى 20 ميغابايت. يمكن اختيار أكثر من ملف. الغلاف صورة واحدة، والباقي للتفاصيل.');
+    text(mediaSection, 'صور الآيفون وJPEG وPNG وWebP حتى 5 ميغابايت. فيديو MP4 أو MOV حتى 20 ميغابايت. الرفع يبدأ مع الاختيار بعد الحفظ، وحساب المطوّر يُنشر مباشرة.');
     const images = document.createElement('input');
     images.type = 'file';
     images.id = form.id + '-images';
-    images.accept = 'image/jpeg,image/png,image/webp';
+    images.accept = 'image/jpeg,image/png,image/webp,image/heic,image/heif,.heic,.heif,.jpg';
     images.multiple = true;
     const videos = document.createElement('input');
     videos.type = 'file';
     videos.id = form.id + '-videos';
-    videos.accept = 'video/mp4';
+    videos.accept = 'video/mp4,video/quicktime,video/x-m4v,.mov,.m4v,.mp4';
     videos.multiple = true;
     const imageLabel = document.createElement('label');
     imageLabel.htmlFor = images.id;
@@ -1428,8 +1482,24 @@
     form.oninput = paintPreview;
     paintPreview();
 
-    function addStaged(fileList) {
-      Array.from(fileList || []).forEach((file) => {
+    async function addStaged(fileList) {
+      for (const raw of Array.from(fileList || [])) {
+        let file = raw;
+        if (isHeic(raw)) {
+          try {
+            file = await heicToJpeg(raw);
+          } catch (error) {
+            staged[form.id].push({
+              key: raw.name + ':' + raw.size + ':' + raw.lastModified,
+              file: raw,
+              status: 'فشل',
+              error: error.message || 'تعذر تحويل صورة الآيفون',
+              percent: null,
+              url: URL.createObjectURL(raw),
+            });
+            continue;
+          }
+        }
         const problem = mediaProblem(file);
         const entry = {
           key: file.name + ':' + file.size + ':' + file.lastModified,
@@ -1441,7 +1511,7 @@
         };
         staged[form.id].push(entry);
         if (!problem && item && item.id) uploadOne(entry);
-      });
+      }
       paintMedia(null);
     }
     images.onchange = () => { addStaged(images.files); images.value = ''; };
@@ -1466,10 +1536,10 @@
         stateLine.textContent = viewInfo.label;
         if (window.MiraMotion) MiraMotion.applyProgress(progress, viewInfo);
         card.append(stateLine, progress);
-        const view = document.createElement(entry.file.type === 'video/mp4' ? 'video' : 'img');
+        const view = document.createElement(isPhoneVideo(entry.file) ? 'video' : 'img');
         view.src = entry.url;
         view.alt = entry.file.name;
-        if (entry.file.type === 'video/mp4') view.controls = true;
+        if (isPhoneVideo(entry.file)) view.controls = true;
         card.appendChild(view);
         const retry = document.createElement('button');
         retry.type = 'button';
@@ -1614,7 +1684,7 @@
         entry.percent = null;
         syncMedia(entry);
         const send = PartnersApi.addMediaProgress || PartnersApi.addMedia;
-        await send(type === 'brand' ? 'products' : 'services', item.id, entry.file.type, dataBase64, {
+        await send(type === 'brand' ? 'products' : 'services', item.id, uploadMime(entry.file), dataBase64, {
           signal: controller.signal,
           onProgress: (ratio) => {
             entry.status = 'جارٍ الرفع';
@@ -1635,7 +1705,16 @@
         URL.revokeObjectURL(entry.url);
         const at = staged[form.id].indexOf(entry);
         if (at >= 0) staged[form.id].splice(at, 1);
-        status.textContent = 'رُفع الملف ورُبط بالمسودة. لن يظهر في التطبيق قبل الاعتماد.';
+        if (window.sessionPartner && window.sessionPartner.type === 'developer' && item && item.id) {
+          try {
+            await PartnersApi.submitReview(type === 'brand' ? 'products' : 'services', item.id);
+            status.textContent = 'رُفع الملف ونُشر في التطبيق مباشرة.';
+          } catch (error) {
+            status.textContent = 'رُفع الملف ولم يُنشر: ' + (error.message || '');
+          }
+        } else {
+          status.textContent = 'رُفع الملف ورُبط بالمسودة. لن يظهر في التطبيق قبل الاعتماد.';
+        }
         if (window.MiraMotion) MiraMotion.announce(status.textContent);
       } catch (error) {
         entry.controller = null;

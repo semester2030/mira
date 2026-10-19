@@ -1,5 +1,5 @@
 export const IMAGE_MIME = new Set(['image/jpeg', 'image/png', 'image/webp']);
-export const VIDEO_MIME = new Set(['video/mp4']);
+export const VIDEO_MIME = new Set(['video/mp4', 'video/quicktime', 'video/x-m4v']);
 export const IMAGE_MAX_BYTES = 5 * 1024 * 1024;
 export const VIDEO_MAX_BYTES = 20 * 1024 * 1024;
 
@@ -26,7 +26,7 @@ export function sniffMedia(mime: string, bytes: Buffer): boolean {
   if (mime === 'image/webp') {
     return bytes.length > 12 && bytes.subarray(0, 4).toString('ascii') === 'RIFF' && bytes.subarray(8, 12).toString('ascii') === 'WEBP';
   }
-  if (mime === 'video/mp4') return mp4Playable(bytes);
+  if (mime === 'video/mp4' || mime === 'video/quicktime' || mime === 'video/x-m4v') return mp4Playable(bytes);
   return false;
 }
 
