@@ -166,10 +166,10 @@ class _BookingRequestScreenState extends State<BookingRequestScreen> {
   }
 
   Widget _body() {
-    if (_needsLogin) return const CommerceLoginRequired(message: MarketplaceCopy.loginRequiredBookings);
     if (!service.bookingEnabled) {
       return Center(child: Padding(padding: const EdgeInsets.all(24), child: Text(MarketplaceCopy.appointmentUnavailable, textAlign: TextAlign.center)));
     }
+    if (_needsLogin) return const CommerceLoginRequired(message: MarketplaceCopy.loginRequiredBookings);
     return Form(
       key: _form,
       child: ListView(

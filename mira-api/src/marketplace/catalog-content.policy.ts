@@ -1,7 +1,9 @@
 export const IMAGE_MIME = new Set(['image/jpeg', 'image/png', 'image/webp']);
 export const VIDEO_MIME = new Set(['video/mp4', 'video/quicktime', 'video/x-m4v']);
 export const IMAGE_MAX_BYTES = 5 * 1024 * 1024;
-export const VIDEO_MAX_BYTES = 20 * 1024 * 1024;
+/** Product rule is duration. This ceiling is the JSON upload behind Cloudflare's 100MB body limit. */
+export const VIDEO_MAX_BYTES = 70 * 1024 * 1024;
+export const VIDEO_MAX_DURATION_SECONDS = 300;
 
 export const FIELD_OWNERSHIP = [
   { field: 'priceHalalas', ownerAr: 'تشغيلي (شريك/مصدر)', reviewAr: 'يُحدَّث على الصف المنشور دون مراجعة محتوى' },

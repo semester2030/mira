@@ -78,8 +78,8 @@ class _PartnerDetailScreenState extends State<PartnerDetailScreen> {
                 transport: load.transport,
                 contentMark: load.contentMark,
               ),
-              const Center(
-                child: Icon(Icons.storefront_outlined, size: 48, color: AppColors.primary),
+              Center(
+                child: Icon(_venueIcon(partner.type), size: 48, color: AppColors.primary),
               ),
               if ((partner.descriptionAr ?? '').isNotEmpty) ...[
                 const SizedBox(height: 8),
@@ -111,7 +111,7 @@ class _PartnerDetailScreenState extends State<PartnerDetailScreen> {
                     );
                   },
                   icon: const Icon(Icons.open_in_new_rounded),
-                  label: const Text('زيارة المتجر'),
+                  label: Text(partner.isBrand ? 'زيارة المتجر' : 'صفحة ${partner.nameAr}'),
                 ),
               ],
               if (detail.products.isNotEmpty) ...[
@@ -170,4 +170,14 @@ class _PartnerDetailScreenState extends State<PartnerDetailScreen> {
       },
     );
   }
+}
+
+IconData _venueIcon(String type) {
+  return switch (type) {
+    'clinic' => Icons.local_hospital_outlined,
+    'salon' => Icons.content_cut,
+    'workshop' || 'atelier' => Icons.chair_outlined,
+    'brand' => Icons.storefront_outlined,
+    _ => Icons.badge_outlined,
+  };
 }

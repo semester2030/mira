@@ -127,8 +127,28 @@
     const video = isPhoneVideo(file);
     if (!image && !video) return 'الصيغة غير مقبولة. الصور: JPEG أو PNG أو WebP أو صورة الآيفون. الفيديو: MP4 أو MOV.';
     if (image && file.size > 5 * 1024 * 1024 && !isHeic(file)) return 'الصورة أكبر من 5 ميغابايت.';
-    if (video && file.size > 20 * 1024 * 1024) return 'الفيديو أكبر من 20 ميغابايت.';
+    if (video && file.size > 70 * 1024 * 1024) return 'حجم الملف يتجاوز حد الرفع على هذا الخادم. المدة المسموحة 5 دقائق.';
     return '';
+  }
+
+  function videoDurationSeconds(file) {
+    return new Promise((resolve) => {
+      let url = '';
+      try { url = URL.createObjectURL(file); } catch (_) { resolve(null); return; }
+      const video = document.createElement('video');
+      const finish = (value) => {
+        URL.revokeObjectURL(url);
+        resolve(value);
+      };
+      const timer = setTimeout(() => finish(null), 8000);
+      video.preload = 'metadata';
+      video.onloadedmetadata = () => {
+        clearTimeout(timer);
+        finish(Number.isFinite(video.duration) ? video.duration : null);
+      };
+      video.onerror = () => { clearTimeout(timer); finish(null); };
+      video.src = url;
+    });
   }
 
   function bytesToBase64(bytes, onProgress) {
@@ -695,7 +715,7 @@
     mediaSection.className = 'form-section';
     text(mediaSection, 'وسائط العرض الرئيسي', 'h3');
     text(mediaSection, 'الفيديو أو الصور التي تظهر للمستخدم مباشرة أثناء تصفح اكتشفي بملء الشاشة.');
-    text(mediaSection, 'فيديو واحد أو مجموعة صور. صور JPEG وPNG وWebP وصورة الآيفون حتى 5 ميغابايت. فيديو MP4 أو MOV حتى 20 ميغابايت.');
+    text(mediaSection, 'فيديو واحد أو مجموعة صور. صور JPEG وPNG وWebP وصورة الآيفون حتى 5 ميغابايت. الفيديو حتى 5 دقائق.');
     function mediaInput(id, accept) {
       const input = document.createElement('input');
       input.type = 'file';
@@ -1562,7 +1582,11 @@
             continue;
           }
         }
-        const problem = mediaProblem(file);
+        let problem = mediaProblem(file);
+        if (!problem && isPhoneVideo(file)) {
+          const seconds = await videoDurationSeconds(file);
+          if (seconds != null && seconds > 300) problem = 'مدة الفيديو يجب ألا تتجاوز 5 دقائق';
+        }
         const entry = {
           key: file.name + ':' + file.size + ':' + file.lastModified,
           file: file,

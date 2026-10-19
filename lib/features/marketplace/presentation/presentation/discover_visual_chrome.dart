@@ -51,8 +51,8 @@ class DiscoverVisualChrome extends StatelessWidget {
     this.advertisementLabel,
     this.showPurchaseLink = true,
     this.showAppointmentRequest = true,
-    this.purchaseLabel = 'اشتري الآن',
-    this.appointmentLabel = 'اطلبي موعدًا',
+    this.purchaseLabel = 'أضيفي للسلة',
+    this.appointmentLabel = 'احجزي موعدًا',
     this.categoryLabels,
     this.categoryAssetFamily,
     this.searchHintText,
@@ -280,13 +280,12 @@ class DiscoverVisualChrome extends StatelessWidget {
                   ],
                   const SizedBox(height: 10),
                   _Actions(
-                    family: family,
+                    slide: slide,
                     onDetails: onDetails,
                     onBuy: onBuy,
                     onUnavailable: onUnavailable,
                     onStore: onStore,
                     onAppointment: onAppointment,
-                    onLocation: onLocation,
                     showPurchaseLink: showPurchaseLink,
                     showAppointmentRequest: showAppointmentRequest,
                     purchaseLabel: purchaseLabel,
@@ -519,28 +518,48 @@ class _GlassIconButton extends StatelessWidget {
   }
 }
 
+class DiscoverVenueCopy {
+  static String label(PresentationSlide slide) {
+    if (slide.product != null) return 'المتجر';
+    return switch (slide.service?.partnerType) {
+      'clinic' => 'العيادة',
+      'salon' => 'الصالون',
+      'workshop' || 'atelier' => 'المشغل',
+      _ => 'مقدّم الخدمة',
+    };
+  }
+
+  static IconData icon(PresentationSlide slide) {
+    if (slide.product != null) return Icons.storefront_outlined;
+    return switch (slide.service?.partnerType) {
+      'clinic' => Icons.local_hospital_outlined,
+      'salon' => Icons.content_cut,
+      'workshop' || 'atelier' => Icons.chair_outlined,
+      _ => Icons.badge_outlined,
+    };
+  }
+}
+
 class _Actions extends StatelessWidget {
   const _Actions({
-    required this.family,
+    required this.slide,
     required this.onDetails,
     required this.onBuy,
     required this.onUnavailable,
     this.onStore,
     this.onAppointment,
-    this.onLocation,
     this.showPurchaseLink = true,
     this.showAppointmentRequest = true,
-    this.purchaseLabel = 'اشتري الآن',
-    this.appointmentLabel = 'اطلبي موعدًا',
+    this.purchaseLabel = 'أضيفي للسلة',
+    this.appointmentLabel = 'احجزي موعدًا',
   });
 
-  final DiscoverVisualFamily family;
+  final PresentationSlide slide;
   final VoidCallback onDetails;
   final VoidCallback onBuy;
   final void Function(String message) onUnavailable;
   final VoidCallback? onStore;
   final VoidCallback? onAppointment;
-  final VoidCallback? onLocation;
   final bool showPurchaseLink;
   final bool showAppointmentRequest;
   final String purchaseLabel;
@@ -548,70 +567,40 @@ class _Actions extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    if (family == DiscoverVisualFamily.product) {
-      return Row(
-        textDirection: TextDirection.ltr,
-        children: [
-          _LabeledCircle(icon: Icons.info_outline, label: 'التفاصيل', onTap: onDetails),
-          if (showPurchaseLink) ...[
-            const SizedBox(width: 8),
-            Expanded(
-              child: FilledButton.icon(
-                style: FilledButton.styleFrom(
-                  backgroundColor: AppColors.primary,
-                  foregroundColor: AppColors.onPrimary,
-                  padding: const EdgeInsets.symmetric(vertical: 14),
-                  shape: const StadiumBorder(),
-                ),
-                onPressed: onBuy,
-                icon: const Icon(Icons.shopping_bag_outlined),
-                label: Text(purchaseLabel),
-              ),
-            ),
-            const SizedBox(width: 8),
-          ],
-          _LabeledCircle(icon: Icons.storefront_outlined, label: 'المتجر', onTap: onStore ?? () => onUnavailable('صفحة المتجر غير متاحة الآن')),
-        ],
-      );
-    }
-    final radius = family == DiscoverVisualFamily.salon ? 18.0 : 28.0;
-    OutlinedButton side(String label, IconData icon, VoidCallback onTap) {
-      return OutlinedButton.icon(
-        style: OutlinedButton.styleFrom(
-          foregroundColor: AppColors.textPrimary,
-          backgroundColor: AppColors.glassFill.withValues(alpha: 0.55),
-          side: const BorderSide(color: AppColors.border),
-          shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(radius)),
-          padding: const EdgeInsets.symmetric(vertical: 12, horizontal: 8),
-        ),
-        onPressed: onTap,
-        icon: Icon(icon, size: 18),
-        label: Text(label, style: AppTypography.labelMedium),
-      );
-    }
-
+    final service = slide.product == null && slide.service != null;
+    final showCenter = service ? showAppointmentRequest : showPurchaseLink;
+    final label = service ? appointmentLabel : purchaseLabel;
+    final icon = service ? Icons.calendar_month : Icons.shopping_bag;
+    final onTap = service
+        ? (onAppointment ?? () => onUnavailable('طلب الموعد غير مفعّل لهذه الخدمة'))
+        : onBuy;
+    final venue = DiscoverVenueCopy.label(slide);
     return Row(
       textDirection: TextDirection.ltr,
       children: [
-        Expanded(child: side('التفاصيل', Icons.info_outline, onDetails)),
-        if (showAppointmentRequest) ...[
+        _LabeledCircle(icon: Icons.info_outline, label: 'التفاصيل', onTap: onDetails),
+        if (showCenter) ...[
           const SizedBox(width: 8),
           Expanded(
             child: FilledButton.icon(
               style: FilledButton.styleFrom(
                 backgroundColor: AppColors.primary,
-                foregroundColor: AppColors.onPrimary,
-                shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(radius)),
-                padding: const EdgeInsets.symmetric(vertical: 12),
+                foregroundColor: Colors.white,
+                padding: const EdgeInsets.symmetric(vertical: 14),
+                shape: const StadiumBorder(),
               ),
-              onPressed: onAppointment ?? () => onUnavailable('طلب الموعد غير مفعّل لهذه الخدمة'),
-              icon: const Icon(Icons.calendar_today_outlined, size: 18),
-              label: Text(appointmentLabel),
+              onPressed: onTap,
+              icon: Icon(icon, color: Colors.white),
+              label: Text(label, style: AppTypography.labelLarge.copyWith(color: Colors.white)),
             ),
           ),
           const SizedBox(width: 8),
         ],
-        Expanded(child: side('الموقع', Icons.location_on_outlined, onLocation ?? () => onUnavailable('لا يوجد موقع مسجّل لهذه الجهة'))),
+        _LabeledCircle(
+          icon: DiscoverVenueCopy.icon(slide),
+          label: venue,
+          onTap: onStore ?? () => onUnavailable('صفحة $venue غير متاحة الآن'),
+        ),
       ],
     );
   }

@@ -16,12 +16,14 @@ import '../../data/commerce_api_client.dart';
 import '../../data/discover_favorite_client.dart';
 import '../../data/discover_catalog_query.dart';
 import '../../domain/catalog_offer_media.dart';
+import '../../domain/entities/catalog_product.dart';
 import '../presentation/discover_ad.dart';
 import '../presentation/presentation_models.dart';
 import '../../data/repositories/marketplace_repository_impl.dart';
 import '../../data/ad_link_record.dart';
 import '../ad_link_open_outbox.dart';
 import '../commerce_cart_actions.dart';
+import '../widgets/product_option_selector.dart';
 import '../discover_browse_sequence.dart';
 import '../discover_feed_controller.dart';
 import '../presentation/discover_presentation_catalog.dart';
@@ -30,6 +32,7 @@ import '../presentation/discover_visual_chrome.dart';
 import '../presentation/presentation_video_port.dart';
 import '../widgets/discover_scene_still.dart';
 import 'catalog_record_page.dart';
+import 'booking_request_screen.dart';
 import 'partner_detail_screen.dart';
 
 /// Full-screen Discover presentation. One product or service per page.
@@ -361,14 +364,6 @@ class _DiscoverPresentationScreenState extends State<DiscoverPresentationScreen>
     return _slides.isEmpty ? 'product' : _familyOf(_slides[_page.clamp(0, _slides.length - 1)]);
   }
 
-  bool _canPurchase(PresentationSlide slide) {
-    if (slide.advertisement != null) return slide.advertisement!.openLink;
-    if (slide.product?.isInternalCod == true) return true;
-    final url = slide.product?.externalUrl.trim() ?? '';
-    final uri = Uri.tryParse(url);
-    return slide.product != null && uri != null && uri.hasScheme && uri.host.isNotEmpty;
-  }
-
   String _familyOf(PresentationSlide slide) {
     final type = slide.service?.partnerType;
     if (type == 'clinic') return 'clinic';
@@ -467,7 +462,7 @@ class _DiscoverPresentationScreenState extends State<DiscoverPresentationScreen>
         ),
       );
     } on CatalogSourceException {
-      if (context.mounted) _tell(context, 'تعذر تحميل متجر هذه الجهة');
+      if (context.mounted) _tell(context, 'تعذر فتح صفحة هذه الجهة');
     }
   }
 
@@ -511,11 +506,11 @@ class _DiscoverPresentationScreenState extends State<DiscoverPresentationScreen>
       return;
     }
     final service = slide.service;
-    if (service == null || !service.bookingEnabled) {
+    if (service == null) {
       _tell(context, MarketplaceCopy.appointmentUnavailable);
       return;
     }
-    await Navigator.of(context).pushNamed(AppRoutes.bookingRequest, arguments: service);
+    await Navigator.of(context).push(MaterialPageRoute<void>(builder: (_) => BookingRequestScreen(service: service)));
   }
 
   Future<void> _share(BuildContext context, PresentationSlide slide) async {
@@ -632,9 +627,10 @@ class _DiscoverPresentationScreenState extends State<DiscoverPresentationScreen>
                             DiscoverLane.beauty => 'ابحثي عن عيادة أو مشغل أو خدمة',
                             null => null,
                           },
-                          appointmentLabel: widget.lane == DiscoverLane.beauty ? 'تواصلي' : 'اطلبي موعدًا',
-                          showPurchaseLink: (_slides[index].preview && _slides[index].product != null) || _canPurchase(_slides[index]),
+                          appointmentLabel: 'احجزي موعدًا',
+                          showPurchaseLink: _slides[index].product != null || (_slides[index].advertisement?.openLink ?? false),
                           showAppointmentRequest: _slides[index].service != null &&
+                              _slides[index].product == null &&
                               (_slides[index].advertisement == null || _slides[index].advertisement!.appointmentOperational),
                           includeSearch: false,
                         )
@@ -876,6 +872,7 @@ class _PresentationPageState extends State<_PresentationPage> {
   int _category = 0;
   PresentationSlot? _held;
   bool _linkBusy = false;
+  bool _cartBusy = false;
 
   @override
   void initState() {
@@ -999,17 +996,20 @@ class _PresentationPageState extends State<_PresentationPage> {
           categoryLabels: widget.catalog?.categoryLabels,
           categoryAssetFamily: widget.catalog?.categoryAssetFamily,
           searchHintText: widget.catalog?.searchHint,
-          appointmentLabel: widget.catalog?.appointmentLabel ?? 'اطلبي موعدًا',
+          appointmentLabel: widget.catalog?.appointmentLabel ?? 'احجزي موعدًا',
           viewCount: DiscoverViewSnapshot.disabled(
             targetKind: slide.advertisement == null ? (slide.product != null ? 'product' : 'service') : 'ad',
             targetId: slide.advertisement?.id ?? slide.entityId,
           ),
           advertisementLabel: slide.advertisement?.disclosureLine,
-          showPurchaseLink: widget.catalog?.showPurchaseLink ?? (slide.advertisement == null || slide.advertisement!.openLink),
-          showAppointmentRequest: widget.catalog?.showAppointmentRequest ?? (slide.advertisement == null || slide.advertisement!.appointmentOperational),
+          showPurchaseLink: widget.catalog?.showPurchaseLink ??
+              ((slide.product != null || slide.service == null) &&
+                  (slide.advertisement == null || slide.advertisement!.openLink || slide.product != null)),
+          showAppointmentRequest: widget.catalog?.showAppointmentRequest ??
+              (slide.service != null && slide.product == null && (slide.advertisement == null || slide.advertisement!.appointmentOperational)),
           purchaseLabel: slide.advertisement != null
               ? 'افتحي الرابط'
-              : (slide.product?.isInternalCod == true && !slide.preview ? MarketplaceCopy.addToCart : 'اشتري الآن'),
+              : (slide.product?.outOfStock == true ? 'غير متوفر' : MarketplaceCopy.addToCart),
           onUnavailable: (message) {
             ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text(message)));
           },
@@ -1094,18 +1094,37 @@ class _PresentationPageState extends State<_PresentationPage> {
       case BuyRoute.none:
         tell('لا يوجد رابط شراء صالح');
       case BuyRoute.inApp:
-        // Options are chosen on the detail page, so a blind add never reaches the cart.
-        if (product!.optionGroups.isNotEmpty) {
-          tell(MarketplaceCopy.chooseOptionsFirst);
-          _openDetails(context);
-          return;
+        if (_cartBusy) return;
+        _cartBusy = true;
+        try {
+          var selected = const <String, String>{};
+          if (product!.optionGroups.isNotEmpty) {
+            final picked = await _pickOptions(context, product);
+            if (picked == null || !context.mounted) return;
+            selected = picked;
+          }
+          await CommerceCartActions.addToCart(
+            context,
+            client: widget.commerce ?? ApiCommerceClient(),
+            product: product,
+            selected: selected,
+          );
+        } finally {
+          _cartBusy = false;
         }
-        await CommerceCartActions.addToCart(context, client: widget.commerce ?? ApiCommerceClient(), product: product);
       case BuyRoute.external:
         final opened = await MiraUrlLauncher.openExternal(context, product!.externalUrl.trim());
         if (!context.mounted || !opened) return;
         tell('فُتح رابط خارجي. هذا ليس شراءً مكتملًا');
     }
+  }
+
+  Future<Map<String, String>?> _pickOptions(BuildContext context, CatalogProduct product) {
+    return showModalBottomSheet<Map<String, String>>(
+      context: context,
+      backgroundColor: AppColors.surface,
+      builder: (sheetContext) => _DiscoverOptionSheet(product: product),
+    );
   }
 
   void _openDetails(BuildContext context) {
@@ -1117,6 +1136,47 @@ class _PresentationPageState extends State<_PresentationPage> {
           id: widget.slide.entityId,
           transport: widget.source ?? CatalogTransport.localCatalog,
           gateway: widget.records,
+        ),
+      ),
+    );
+  }
+}
+
+class _DiscoverOptionSheet extends StatefulWidget {
+  const _DiscoverOptionSheet({required this.product});
+
+  final CatalogProduct product;
+
+  @override
+  State<_DiscoverOptionSheet> createState() => _DiscoverOptionSheetState();
+}
+
+class _DiscoverOptionSheetState extends State<_DiscoverOptionSheet> {
+  Map<String, String> _selected = const {};
+
+  @override
+  Widget build(BuildContext context) {
+    final missing = CatalogOptionJson.firstMissing(groups: widget.product.optionGroups, selected: _selected);
+    return SafeArea(
+      child: Padding(
+        padding: const EdgeInsets.fromLTRB(16, 12, 16, 16),
+        child: Column(
+          mainAxisSize: MainAxisSize.min,
+          crossAxisAlignment: CrossAxisAlignment.stretch,
+          children: [
+            Text('اختاري الخيارات', style: AppTypography.titleMedium),
+            const SizedBox(height: 12),
+            ProductOptionSelector(
+              product: widget.product,
+              onChanged: (selected, _) => setState(() => _selected = selected),
+            ),
+            const SizedBox(height: 12),
+            FilledButton(
+              style: FilledButton.styleFrom(backgroundColor: AppColors.primary, foregroundColor: Colors.white),
+              onPressed: missing == null ? () => Navigator.pop(context, _selected) : null,
+              child: Text(missing == null ? MarketplaceCopy.addToCart : MarketplaceCopy.chooseOption(missing.labelAr)),
+            ),
+          ],
         ),
       ),
     );

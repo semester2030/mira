@@ -243,8 +243,9 @@ void main() {
     await tester.pump();
     gateway.pending.first.complete(_ok([service]));
     await tester.pumpAndSettle();
-    await tester.tap(find.text('اطلبي موعدًا'));
-    await tester.pump();
+    await tester.tap(find.text('احجزي موعدًا'));
+    await tester.pumpAndSettle();
+    expect(find.text('طلب موعد'), findsOneWidget);
     expect(find.textContaining('طلب الموعد غير متاح'), findsOneWidget);
     expect(find.textContaining('سُجّل طلب الموعد'), findsNothing);
     expect(find.textContaining('سيُفعّل'), findsNothing);

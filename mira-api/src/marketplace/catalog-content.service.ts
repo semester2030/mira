@@ -3,6 +3,7 @@ import { Prisma } from '@prisma/client';
 import { randomUUID } from 'crypto';
 import { PrismaService } from '../prisma/prisma.service';
 import { FIELD_OWNERSHIP, IMAGE_MAX_BYTES, IMAGE_MIME, VIDEO_MAX_BYTES, VIDEO_MIME, sniffMedia } from './catalog-content.policy';
+import { videoDurationRejection } from './catalog-video-duration';
 import {
   CatalogMediaConnectionError,
   CatalogMediaPermissionError,
@@ -87,8 +88,16 @@ export class CatalogContentService {
       throw new BadRequestException('تعذر قراءة الملف');
     }
     const limit = image ? IMAGE_MAX_BYTES : VIDEO_MAX_BYTES;
-    if (!bytes.length || bytes.length > limit) throw new BadRequestException('حجم الملف خارج الحد');
+    if (!bytes.length || bytes.length > limit) {
+      throw new BadRequestException(video
+        ? 'حجم الملف يتجاوز حد الرفع على هذا الخادم. المدة المسموحة 5 دقائق.'
+        : 'حجم الملف خارج الحد');
+    }
     if (!sniffMedia(mime, bytes)) throw new BadRequestException('محتوى الملف لا يطابق نوعه');
+    if (video) {
+      const duration = videoDurationRejection(bytes);
+      if (duration) throw new BadRequestException(duration);
+    }
     const placement = input.placement === 'detail' || input.placement === 'cover' ? input.placement : 'main';
     const key = randomUUID();
     try {

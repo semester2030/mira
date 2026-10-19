@@ -550,7 +550,7 @@ void main() {
         media: const [PresentationMedia(kind: PresentationMediaKind.image, assetPath: PresentationSamples.portrait)],
       ),
     ]);
-    expect(find.text('اشتري الآن'), findsOneWidget);
+    expect(find.text('أضيفي للسلة'), findsOneWidget);
     expect(find.text('المتجر'), findsOneWidget);
     expect(find.bySemanticsLabel('ميرَا'), findsOneWidget);
     expect(find.textContaining('العد غير مفعّل'), findsNothing);
@@ -564,7 +564,7 @@ void main() {
         null,
       );
     });
-    await tester.tap(find.text('اشتري الآن'));
+    await tester.tap(find.text('أضيفي للسلة'));
     await tester.pump();
     await tester.pump(const Duration(milliseconds: 400));
     expect(find.textContaining('ليس شراءً مكتملًا'), findsOneWidget);
@@ -574,7 +574,7 @@ void main() {
   testWidgets('preview buy does not open a transaction', (tester) async {
     final port = DelayedVideoPort();
     await _pump(tester, port, DiscoverPresentationCatalog.previewSlides().take(1).toList());
-    await tester.tap(find.text('اشتري الآن'));
+    await tester.tap(find.text('أضيفي للسلة'));
     await tester.pump();
     expect(find.textContaining('هذه معاينة ولا تنفّذ شراءً'), findsOneWidget);
   });
@@ -641,8 +641,8 @@ void main() {
   testWidgets('clinic chrome shows appointment row', (tester) async {
     final port = DelayedVideoPort();
     await _pump(tester, port, [_serviceVideo('s-vis')]);
-    expect(find.text('اطلبي موعدًا'), findsOneWidget);
-    expect(find.text('الموقع'), findsOneWidget);
+    expect(find.text('احجزي موعدًا'), findsOneWidget);
+    expect(find.text('العيادة'), findsOneWidget);
     expect(find.text('البشرة'), findsOneWidget);
   });
 
