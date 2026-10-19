@@ -131,9 +131,45 @@
     return '';
   }
 
+  function bytesToBase64(bytes, onProgress) {
+    let binary = '';
+    const chunk = 0x8000;
+    for (let i = 0; i < bytes.length; i += chunk) {
+      binary += String.fromCharCode.apply(null, bytes.subarray(i, i + chunk));
+      if (typeof onProgress === 'function' && bytes.length) onProgress(Math.min(1, (i + chunk) / bytes.length));
+    }
+    return btoa(binary);
+  }
+
   function fileToBase64(file, onProgress, signal) {
+    const abortError = () => Object.assign(new Error('أُلغي الرفع'), { name: 'AbortError' });
+    if (signal && signal.aborted) return Promise.reject(abortError());
+    if (typeof onProgress === 'function') onProgress(0);
+    const read = file && typeof file.arrayBuffer === 'function'
+      ? file.arrayBuffer()
+      : readWithFileReader(file, onProgress, signal);
+    return Promise.resolve(read).then((buffer) => {
+      if (signal && signal.aborted) throw abortError();
+      if (typeof buffer === 'string') return buffer;
+      return bytesToBase64(new Uint8Array(buffer), onProgress);
+    }).catch((error) => {
+      if (error && error.name === 'AbortError') throw error;
+      const message = error && error.message ? error.message : '';
+      if (message.indexOf('FileReader') >= 0 || message.indexOf('arrayBuffer') >= 0) {
+        throw new Error('هذا المتصفح لا يقرأ الملفات. افتحي الصفحة في سفاري ثم أعيدي الاختيار.');
+      }
+      throw error instanceof Error ? error : new Error('تعذرت قراءة الملف');
+    });
+  }
+
+  function readWithFileReader(file, onProgress, signal) {
     return new Promise((resolve, reject) => {
-      const reader = new FileReader();
+      const Reader = typeof FileReader === 'function' ? FileReader : null;
+      if (!Reader) {
+        reject(new Error('هذا المتصفح لا يقرأ الملفات. افتحي الصفحة في سفاري ثم أعيدي الاختيار.'));
+        return;
+      }
+      const reader = new Reader();
       const stop = () => {
         reader.abort();
         reject(Object.assign(new Error('أُلغي الرفع'), { name: 'AbortError' }));
