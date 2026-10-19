@@ -1,5 +1,3 @@
-import 'dart:ui';
-
 import 'package:flutter/material.dart';
 
 import '../../../../shared/theme/typography.dart';
@@ -43,12 +41,7 @@ class _DiscoverSceneStillState extends State<DiscoverSceneStill> {
         key: key,
         fit: fit,
         alignment: Alignment.center,
-        loadingBuilder: backdrop
-            ? null
-            : (context, child, progress) {
-                if (progress == null) return child;
-                return Center(child: Text('جاري تحميل الصورة', style: AppTypography.bodyMedium.copyWith(color: Colors.white70)));
-              },
+        loadingBuilder: (context, child, progress) => progress == null ? child : const SizedBox.expand(),
         errorBuilder: (_, error, __) {
           onError(error);
           return const SizedBox.shrink();
@@ -94,21 +87,8 @@ class _DiscoverSceneStillState extends State<DiscoverSceneStill> {
     return Stack(
       fit: StackFit.expand,
       children: [
-        const ColoredBox(color: Color(0xFF2C2428)),
-        // Soft fill only — heavily blurred so it is not a second readable product.
-        ImageFiltered(
-          imageFilter: ImageFilter.blur(sigmaX: 28, sigmaY: 28, tileMode: TileMode.decal),
-          child: Transform.scale(
-            scale: 1.2,
-            child: Opacity(
-              opacity: 0.55,
-              child: _image(fit: BoxFit.cover, backdrop: true),
-            ),
-          ),
-        ),
-        const ColoredBox(color: Color(0x662C2428)),
-        // Sharp product kept in proportion.
-        _image(fit: BoxFit.contain, backdrop: false),
+        const ColoredBox(color: Color(0xFF111111)),
+        _image(fit: BoxFit.cover, backdrop: false),
       ],
     );
   }

@@ -321,6 +321,8 @@ model CatalogMedia {
   draftSortOrder Int?     @map("draft_sort_order")
   draftIsPrimary Boolean? @map("draft_is_primary")
   sourceMediaKey String?  @map("source_media_key")
+  /// main = full-screen Discover. detail = the details page only. cover = video poster.
+  placement      String   @default("main")
   createdAt      DateTime @default(now()) @map("created_at")
 
   @@unique([ownerKind, ownerId, sourceMediaKey])

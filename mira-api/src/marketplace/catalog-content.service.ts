@@ -74,7 +74,7 @@ export class CatalogContentService {
     };
   }
 
-  async addMedia(partnerId: string, kind: Kind, id: string, input: { mimeType: string; dataBase64: string; sourceMediaKey?: string }) {
+  async addMedia(partnerId: string, kind: Kind, id: string, input: { mimeType: string; dataBase64: string; sourceMediaKey?: string; placement?: string }) {
     await this.owned(partnerId, kind, id);
     const mime = input.mimeType;
     const image = IMAGE_MIME.has(mime);
@@ -89,6 +89,7 @@ export class CatalogContentService {
     const limit = image ? IMAGE_MAX_BYTES : VIDEO_MAX_BYTES;
     if (!bytes.length || bytes.length > limit) throw new BadRequestException('حجم الملف خارج الحد');
     if (!sniffMedia(mime, bytes)) throw new BadRequestException('محتوى الملف لا يطابق نوعه');
+    const placement = input.placement === 'detail' || input.placement === 'cover' ? input.placement : 'main';
     const key = randomUUID();
     try {
       await this.storage.put(key, bytes);
@@ -139,6 +140,7 @@ export class CatalogContentService {
             isPrimary: published ? false : (firstImage || (firstMedia && video)),
             draftIsPrimary: firstImage || (firstMedia && video) ? true : null,
             publication: 'draft',
+            placement,
             sourceMediaKey: input.sourceMediaKey,
           },
         });
@@ -511,6 +513,7 @@ export class CatalogContentService {
         draftSortOrder: item.draftSortOrder,
         pendingRemoval: item.pendingRemoval,
         mimeType: item.mimeType,
+        placement: item.placement,
       })),
     };
   }

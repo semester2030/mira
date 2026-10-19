@@ -1,0 +1,1 @@
+ALTER TABLE "catalog_media" ADD COLUMN IF NOT EXISTS "placement" TEXT NOT NULL DEFAULT 'main';

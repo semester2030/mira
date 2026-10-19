@@ -283,6 +283,7 @@ class _DiscoverPresentationScreenState extends State<DiscoverPresentationScreen>
       if (_vertical.hasClients && (_vertical.page?.round() ?? 0) != _page) {
         _vertical.jumpToPage(_page);
       }
+      _warmAround(_page);
     }
 
     final phase = WidgetsBinding.instance.schedulerPhase;
@@ -295,8 +296,34 @@ class _DiscoverPresentationScreenState extends State<DiscoverPresentationScreen>
 
   void _onPage(int index) {
     setState(() => _page = index);
+    _warmAround(index);
     if (_catalogDriven && _nextCursor != null && index >= _slides.length - 1) {
       _feed?.loadMore();
+    }
+  }
+
+  String? _videoPath(PresentationSlide slide) {
+    for (final item in slide.media) {
+      if (item.kind == PresentationMediaKind.video && item.assetPath.isNotEmpty) return item.assetPath;
+    }
+    return null;
+  }
+
+  void _warmAround(int index) {
+    final port = _video;
+    if (index < 0 || index >= _slides.length) return;
+    if (port is AssetVideoPort) {
+      final next = index + 1 < _slides.length ? _videoPath(_slides[index + 1]) : null;
+      if (next != null) port.warm(next);
+    }
+    if (!mounted) return;
+    final ahead = index + 1 < _slides.length ? _slides[index + 1] : null;
+    if (ahead == null) return;
+    for (final item in ahead.media.take(3)) {
+      final path = item.assetPath;
+      if (item.kind != PresentationMediaKind.image || path.isEmpty) continue;
+      final ImageProvider provider = path.startsWith('http://') || path.startsWith('https://') ? NetworkImage(path) : AssetImage(path);
+      precacheImage(provider, context);
     }
   }
 
@@ -525,7 +552,7 @@ class _DiscoverPresentationScreenState extends State<DiscoverPresentationScreen>
                           Text(
                             _catalogDriven
                                 ? switch (_phase) {
-                                    DiscoverFeedPhase.loading => 'جاري تحميل الكتالوج',
+                                    DiscoverFeedPhase.loading => '',
                                     DiscoverFeedPhase.failed => _loadError ?? 'تعذر تحميل الكتالوج',
                                     _ => widget.lane == null
                                         ? 'لا توجد نتائج. يمكن مسح البحث أو الفلاتر.'
@@ -615,6 +642,22 @@ class _DiscoverPresentationScreenState extends State<DiscoverPresentationScreen>
                 );
               },
             ),
+                if (_catalogDriven && _slides.isNotEmpty)
+                  Positioned(
+                    left: 12,
+                    right: 12,
+                    bottom: MediaQuery.paddingOf(context).bottom + 8,
+                    child: DiscoverCategoryRail(
+                      labels: DiscoverCatalogQueryEngine.forFamily(_activeFamily()).map((item) => item.label).toList(),
+                      assetFamily: switch (widget.lane) {
+                        DiscoverLane.elegance => 'elegance',
+                        DiscoverLane.beauty => 'beauty',
+                        null => _activeFamily(),
+                      },
+                      selected: _category,
+                      onSelected: _onCategory,
+                    ),
+                  ),
                 if (_catalogDriven)
                   Positioned(
                     top: MediaQuery.paddingOf(context).top + 4,
@@ -951,6 +994,8 @@ class _PresentationPageState extends State<_PresentationPage> {
           onFilter: widget.catalog?.onFilter,
           includeSearch: widget.catalog?.includeSearch ?? true,
           provenance: null,
+          showCategoryRail: widget.catalog == null,
+          bottomReserve: widget.catalog == null ? 0 : 116,
           categoryLabels: widget.catalog?.categoryLabels,
           categoryAssetFamily: widget.catalog?.categoryAssetFamily,
           searchHintText: widget.catalog?.searchHint,
@@ -1129,32 +1174,21 @@ class _MediaFrameState extends State<_MediaFrame> {
     final slot = widget.slot;
     if (media.kind == PresentationMediaKind.video) {
       final owns = video.activeSlot != null && video.activeSlot!.same(slot);
-      if (owns && video.playback == PresentationPlayback.failed) {
-        return _Failure(
-          message: video.errorText ?? 'تعذر تشغيل الفيديو',
-          onRetry: () => video.retry(slot, media.assetPath),
-        );
-      }
       final view = owns ? video.buildView() : null;
       final cover = widget.coverPath;
+      final failed = owns && video.playback == PresentationPlayback.failed;
       return ColoredBox(
-        color: const Color(0xFF2C2428),
+        color: const Color(0xFF111111),
         child: Stack(
           fit: StackFit.expand,
           children: [
-            if (view == null && cover != null)
-              DiscoverSceneCover(path: cover)
-            else if (view != null)
-              Center(child: view)
-            else
-              Center(
-                child: Text(
-                  owns && video.playback == PresentationPlayback.loading ? 'جاري تجهيز الفيديو' : '',
-                  style: AppTypography.bodyMedium.copyWith(color: Colors.white70),
-                ),
+            if (cover != null && view == null) DiscoverSceneCover(path: cover),
+            if (view != null) Positioned.fill(child: view),
+            if (failed)
+              _Failure(
+                message: video.errorText ?? 'تعذر تشغيل الفيديو',
+                onRetry: () => video.retry(slot, media.assetPath),
               ),
-            if (view == null && cover != null && owns && video.playback == PresentationPlayback.loading)
-              const Center(child: CircularProgressIndicator(color: Colors.white70)),
           ],
         ),
       );
@@ -1172,12 +1206,12 @@ class _Failure extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return ColoredBox(
-      color: AppColors.background,
+      color: const Color(0x66111111),
       child: Center(
         child: Column(
           mainAxisSize: MainAxisSize.min,
           children: [
-            Text(message, style: AppTypography.bodyMedium),
+            Text(message, style: AppTypography.bodyMedium.copyWith(color: Colors.white)),
             const SizedBox(height: 8),
             OutlinedButton(onPressed: onRetry, child: const Text('إعادة المحاولة')),
           ],

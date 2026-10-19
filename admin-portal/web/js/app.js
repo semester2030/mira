@@ -689,7 +689,8 @@
           for (const media of preview.media || []) {
             const row = document.createElement('div');
             const primary = media.draftIsPrimary == null ? media.isPrimary : media.draftIsPrimary;
-            reviewText(row, (media.kind === 'video' ? 'فيديو' : 'صورة') + (primary ? ' · رئيسي' : '') + (media.pendingRemoval ? ' · طلب إزالة' : ''));
+            const place = media.placement === 'detail' ? 'داخل التفاصيل' : (media.placement === 'cover' ? 'غلاف الفيديو' : 'العرض الرئيسي');
+            reviewText(row, (media.kind === 'video' ? 'فيديو' : 'صورة') + ' · ' + place + (primary ? ' · غلاف' : '') + (media.pendingRemoval ? ' · طلب إزالة' : ''));
             const response = await fetch(MiraAdminApi.base + '/admin/catalog-review-media/' + media.id, {
               headers: { 'X-Admin-Key': localStorage.getItem('mira_admin_key') || '' },
             });

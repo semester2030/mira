@@ -69,6 +69,12 @@ class AssetVideoPort extends PresentationVideoPort {
   final AssetVideoControllerFactory _createController;
 
   VideoPlayerController? _controller;
+  String? _activePath;
+  VideoPlayerController? _warm;
+  String? _warmPath;
+  Future<void>? _warmFuture;
+  VideoPlayerController? _parked;
+  String? _parkedPath;
   int _generation = 0;
   bool _released = false;
 
@@ -108,30 +114,98 @@ class AssetVideoPort extends PresentationVideoPort {
 
   void _notify() => notifyPlayback();
 
+  VideoPlayerController _open(String assetPath) {
+    final uri = Uri.tryParse(assetPath);
+    if (uri != null && (uri.isScheme('http') || uri.isScheme('https'))) {
+      return VideoPlayerController.networkUrl(uri);
+    }
+    return _createController(assetPath);
+  }
+
+  Future<void> _silence(VideoPlayerController controller) async {
+    try {
+      await controller.pause();
+      await controller.setVolume(0);
+    } catch (_) {}
+  }
+
+  /// Keeps the clip just left so a swipe back does not initialize it again.
+  Future<void> _parkLeaving(VideoPlayerController leaving, String? path) async {
+    if (path == null || path.isEmpty || !leaving.value.isInitialized) {
+      await _silence(leaving);
+      await leaving.dispose();
+      return;
+    }
+    await _silence(leaving);
+    final old = _parked;
+    _parked = leaving;
+    _parkedPath = path;
+    if (old != null && old != leaving) {
+      await old.dispose();
+    }
+  }
+
   @override
   Future<void> attach(PresentationSlot slot, String assetPath) async {
     if (_released) return;
     final token = ++_generation;
     final previous = _controller;
+    final previousPath = _activePath;
     _controller = null;
+    _activePath = null;
     activeSlot = slot;
     playback = PresentationPlayback.loading;
     errorText = null;
     _notify();
-    if (previous != null) {
-      await previous.pause();
-      await previous.dispose();
+
+    VideoPlayerController? claimed;
+    var claimedReady = false;
+    if (_warmPath == assetPath && _warm != null) {
+      claimed = _warm;
+      final pending = _warmFuture;
+      _warm = null;
+      _warmPath = null;
+      _warmFuture = null;
+      if (pending != null) {
+        try {
+          await pending;
+        } catch (_) {}
+      }
+      claimedReady = claimed?.value.isInitialized ?? false;
+    } else if (_parkedPath == assetPath && _parked != null) {
+      claimed = _parked;
+      _parked = null;
+      _parkedPath = null;
+      claimedReady = claimed?.value.isInitialized ?? false;
+    }
+    if (token != _generation || _released) {
+      if (claimed != null && claimed != _controller && claimed != _warm && claimed != _parked) {
+        await claimed.dispose();
+      }
+      if (previous != null && previous != _controller && previous != _warm && previous != _parked && previous != claimed) {
+        await previous.dispose();
+      }
+      return;
+    }
+    if (previous != null && previous != claimed) {
+      await _parkLeaving(previous, previousPath);
     }
     if (token != _generation || _released) return;
 
-    final uri = Uri.tryParse(assetPath);
-    final controller = uri != null && (uri.isScheme('http') || uri.isScheme('https'))
-        ? VideoPlayerController.networkUrl(uri)
-        : _createController(assetPath);
+    late final VideoPlayerController controller;
+    if (claimed != null && claimedReady) {
+      controller = claimed;
+    } else {
+      if (claimed != null) await claimed.dispose();
+      controller = _open(assetPath);
+    }
     _controller = controller;
+    _activePath = assetPath;
     controller.addListener(() => _onController(controller, token));
     try {
-      await controller.initialize().timeout(const Duration(seconds: 12));
+      if (!controller.value.isInitialized) {
+        await controller.initialize().timeout(const Duration(seconds: 12));
+      }
       if (token != _generation || _released || _controller != controller) {
         await _dropIfStale(controller, token);
         return;
@@ -190,14 +264,17 @@ class AssetVideoPort extends PresentationVideoPort {
     if (activeSlot == null || !activeSlot!.same(slot)) return;
     final token = ++_generation;
     final controller = _controller;
-    if (_controller == controller) _controller = null;
+    final path = _activePath;
+    if (_controller == controller) {
+      _controller = null;
+      _activePath = null;
+    }
     activeSlot = null;
     playback = PresentationPlayback.idle;
     errorText = null;
     _notify();
     if (controller != null) {
-      await controller.pause();
-      await controller.dispose();
+      await _parkLeaving(controller, path);
     }
     if (token != _generation) return;
   }
@@ -217,14 +294,58 @@ class AssetVideoPort extends PresentationVideoPort {
     _released = true;
     final token = ++_generation;
     final controller = _controller;
+    final warm = _warm;
+    final parked = _parked;
     _controller = null;
+    _activePath = null;
+    _warm = null;
+    _warmPath = null;
+    _warmFuture = null;
+    _parked = null;
+    _parkedPath = null;
     activeSlot = null;
     playback = PresentationPlayback.idle;
     if (controller != null) {
       await controller.pause();
       await controller.dispose();
     }
+    if (warm != null && warm != controller) await warm.dispose();
+    if (parked != null && parked != controller && parked != warm) await parked.dispose();
     if (token != _generation) return;
+  }
+
+  /// Initializes the next clip without playing it or playing its audio.
+  Future<void> warm(String assetPath) async {
+    if (_released || assetPath.isEmpty || _warmPath == assetPath || _activePath == assetPath || _parkedPath == assetPath) return;
+    final previous = _warm;
+    _warm = null;
+    _warmPath = null;
+    _warmFuture = null;
+    if (previous != null && previous != _controller && previous != _parked) {
+      await previous.dispose();
+    }
+    if (_released) return;
+    final uri = Uri.tryParse(assetPath);
+    if (uri == null || !(uri.isScheme('http') || uri.isScheme('https'))) return;
+    final controller = _open(assetPath);
+    _warm = controller;
+    _warmPath = assetPath;
+    final future = () async {
+      await controller.initialize();
+      await controller.setVolume(0);
+      await controller.pause();
+    }();
+    _warmFuture = future;
+    try {
+      await future;
+    } catch (_) {
+      if (_warm == controller) {
+        _warm = null;
+        _warmPath = null;
+        _warmFuture = null;
+        await controller.dispose();
+      }
+    }
   }
 
   @override
@@ -240,10 +361,11 @@ class AssetVideoPort extends PresentationVideoPort {
     }
     final size = controller.value.size;
     return FittedBox(
-      fit: BoxFit.contain,
+      fit: BoxFit.cover,
+      clipBehavior: Clip.hardEdge,
       child: SizedBox(
-        width: size.width == 0 ? 16 : size.width,
-        height: size.height == 0 ? 9 : size.height,
+        width: size.width == 0 ? 9 : size.width,
+        height: size.height == 0 ? 16 : size.height,
         child: VideoPlayer(controller),
       ),
     );
@@ -254,8 +376,18 @@ class AssetVideoPort extends PresentationVideoPort {
     _released = true;
     _generation++;
     final controller = _controller;
+    final warm = _warm;
+    final parked = _parked;
     _controller = null;
+    _activePath = null;
+    _warm = null;
+    _warmPath = null;
+    _warmFuture = null;
+    _parked = null;
+    _parkedPath = null;
     controller?.dispose();
+    if (warm != null && warm != controller) warm.dispose();
+    if (parked != null && parked != controller && parked != warm) parked.dispose();
     super.dispose();
   }
 }

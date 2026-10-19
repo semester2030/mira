@@ -102,14 +102,6 @@ class DiscoverFeedController extends ChangeNotifier {
     final generation = ++_queryGeneration;
     _moreGeneration += 1;
     _loadingMore = false;
-    state = DiscoverFeedState(
-      phase: DiscoverFeedPhase.loading,
-      query: query,
-      replacement: state.replacement + 1,
-    );
-    Future<void>.microtask(() {
-      if (!_disposed && generation == _queryGeneration) _notify();
-    });
     DiscoverBrowseResponse response;
     try {
       response = await _gateway.browse(query);
@@ -119,7 +111,7 @@ class DiscoverFeedController extends ChangeNotifier {
         phase: DiscoverFeedPhase.failed,
         query: query,
         loadError: 'تعذر تحميل الكتالوج',
-        replacement: state.replacement,
+        replacement: state.replacement + 1,
       );
       _notify();
       return;
@@ -205,7 +197,7 @@ class DiscoverFeedController extends ChangeNotifier {
         phase: DiscoverFeedPhase.failed,
         query: query,
         loadError: response.invalidCursor ? 'مؤشر الصفحة غير صالح' : 'تعذر تحميل الكتالوج',
-        replacement: state.replacement,
+        replacement: state.replacement + 1,
       );
       return;
     }
@@ -220,7 +212,7 @@ class DiscoverFeedController extends ChangeNotifier {
       transport: response.transport,
       contentMark: response.contentMark,
       cities: response.cities,
-      replacement: state.replacement,
+      replacement: state.replacement + 1,
     );
   }
 }

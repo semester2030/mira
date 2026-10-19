@@ -56,6 +56,8 @@ class DiscoverVisualChrome extends StatelessWidget {
     this.categoryLabels,
     this.categoryAssetFamily,
     this.searchHintText,
+    this.showCategoryRail = true,
+    this.bottomReserve = 0,
   });
 
   final PresentationSlide slide;
@@ -93,6 +95,8 @@ class DiscoverVisualChrome extends StatelessWidget {
   final List<String>? categoryLabels;
   final String? categoryAssetFamily;
   final String? searchHintText;
+  final bool showCategoryRail;
+  final double bottomReserve;
 
   @override
   Widget build(BuildContext context) {
@@ -254,14 +258,14 @@ class DiscoverVisualChrome extends StatelessWidget {
                 end: Alignment.bottomCenter,
                 colors: [
                   Colors.transparent,
-                  AppColors.background.withValues(alpha: 0.55),
-                  AppColors.background.withValues(alpha: 0.92),
+                  Colors.black.withValues(alpha: 0.28),
+                  Colors.black.withValues(alpha: 0.55),
                 ],
-                stops: const [0, 0.35, 1],
+                stops: const [0, 0.42, 1],
               ),
             ),
             child: Padding(
-              padding: EdgeInsets.fromLTRB(16, 36, 16, padding.bottom + 8),
+              padding: EdgeInsets.fromLTRB(16, 28, 16, padding.bottom + 8 + bottomReserve),
               child: Column(
                 mainAxisSize: MainAxisSize.min,
                 crossAxisAlignment: CrossAxisAlignment.stretch,
@@ -289,47 +293,13 @@ class DiscoverVisualChrome extends StatelessWidget {
                     appointmentLabel: appointmentLabel,
                   ),
                   const SizedBox(height: 10),
-                  SizedBox(
-                    height: 108,
-                    child: LayoutBuilder(
-                      builder: (context, constraints) {
-                        const gap = 8.0;
-                        const minSize = 64.0;
-                        final needed = categories.length * minSize + (categories.length - 1) * gap;
-                        final fits = constraints.maxWidth >= needed;
-                        final size = fits
-                            ? ((constraints.maxWidth - (categories.length - 1) * gap) / categories.length).clamp(minSize, 78.0)
-                            : minSize;
-                        Widget chip(int index) {
-                          return _CategoryChip(
-                            assetFamily: assetFamily,
-                            label: categories[index],
-                            selected: index == selected,
-                            size: size,
-                            onTap: () => onCategory(index),
-                          );
-                        }
-
-                        if (fits) {
-                          return Row(
-                            textDirection: TextDirection.rtl,
-                            children: [
-                              for (var index = 0; index < categories.length; index++) ...[
-                                if (index > 0) const SizedBox(width: gap),
-                                chip(index),
-                              ],
-                            ],
-                          );
-                        }
-                        return ListView.separated(
-                          scrollDirection: Axis.horizontal,
-                          itemCount: categories.length,
-                          separatorBuilder: (_, __) => const SizedBox(width: gap),
-                          itemBuilder: (context, index) => chip(index),
-                        );
-                      },
+                  if (showCategoryRail)
+                    DiscoverCategoryRail(
+                      labels: categories,
+                      assetFamily: assetFamily,
+                      selected: selected,
+                      onSelected: onCategory,
                     ),
-                  ),
                 ],
               ),
             ),
@@ -412,17 +382,18 @@ class _OfferCopy extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    const shadow = [Shadow(blurRadius: 8, color: Colors.black54)];
     final partner = Text(
       slide.partnerName,
       maxLines: 1,
       overflow: TextOverflow.ellipsis,
-      style: AppTypography.bodySmall.copyWith(color: AppColors.textSecondary),
+      style: AppTypography.bodySmall.copyWith(color: Colors.white, shadows: shadow),
     );
     final title = Text(
       slide.title,
       maxLines: 2,
       overflow: TextOverflow.ellipsis,
-      style: AppTypography.headlineSmall,
+      style: AppTypography.headlineSmall.copyWith(color: Colors.white, shadows: shadow),
     );
     if (family == DiscoverVisualFamily.product) {
       return Column(
@@ -431,7 +402,7 @@ class _OfferCopy extends StatelessWidget {
           partner,
           title,
           if (slide.priceLabel != null)
-            Text(slide.priceLabel!, style: AppTypography.titleLarge.copyWith(color: AppColors.primaryDark)),
+            Text(slide.priceLabel!, style: AppTypography.titleLarge.copyWith(color: Colors.white, shadows: shadow)),
         ],
       );
     }
@@ -441,9 +412,9 @@ class _OfferCopy extends StatelessWidget {
         title,
         partner,
         if (slide.service != null)
-          Text(slide.service!.city, style: AppTypography.bodySmall.copyWith(color: AppColors.textSecondary)),
+          Text(slide.service!.city, style: AppTypography.bodySmall.copyWith(color: Colors.white70, shadows: shadow)),
         if (slide.priceLabel != null)
-          Text(slide.priceLabel!, style: AppTypography.titleMedium.copyWith(color: AppColors.primaryDark)),
+          Text(slide.priceLabel!, style: AppTypography.titleMedium.copyWith(color: Colors.white, shadows: shadow)),
       ],
     );
   }
@@ -661,8 +632,68 @@ class _LabeledCircle extends StatelessWidget {
         children: [
           _GlassIconButton(icon: icon, onTap: onTap),
           const SizedBox(height: 4),
-          Text(label, style: AppTypography.labelSmall),
+          Text(label, style: AppTypography.labelSmall.copyWith(color: Colors.white, shadows: const [Shadow(blurRadius: 6, color: Colors.black54)])),
         ],
+      ),
+    );
+  }
+}
+
+class DiscoverCategoryRail extends StatelessWidget {
+  const DiscoverCategoryRail({
+    super.key,
+    required this.labels,
+    required this.assetFamily,
+    required this.selected,
+    required this.onSelected,
+  });
+
+  final List<String> labels;
+  final String assetFamily;
+  final int selected;
+  final ValueChanged<int> onSelected;
+
+  @override
+  Widget build(BuildContext context) {
+    return SizedBox(
+      height: 108,
+      child: LayoutBuilder(
+        builder: (context, constraints) {
+          const gap = 8.0;
+          const minSize = 64.0;
+          final needed = labels.length * minSize + (labels.length - 1) * gap;
+          final fits = constraints.maxWidth >= needed;
+          final size = fits
+              ? ((constraints.maxWidth - (labels.length - 1) * gap) / labels.length).clamp(minSize, 78.0)
+              : minSize;
+          Widget chip(int index) {
+            return _CategoryChip(
+              assetFamily: assetFamily,
+              label: labels[index],
+              selected: index == selected,
+              size: size,
+              onTap: () => onSelected(index),
+            );
+          }
+
+          if (fits) {
+            return Row(
+              textDirection: TextDirection.rtl,
+              children: [
+                for (var index = 0; index < labels.length; index++) ...[
+                  if (index > 0) const SizedBox(width: gap),
+                  chip(index),
+                ],
+              ],
+            );
+          }
+          return ListView.separated(
+            scrollDirection: Axis.horizontal,
+            itemCount: labels.length,
+            separatorBuilder: (_, __) => const SizedBox(width: gap),
+            itemBuilder: (context, index) => chip(index),
+          );
+        },
       ),
     );
   }
@@ -717,7 +748,11 @@ class _CategoryChip extends StatelessWidget {
               label,
               maxLines: 1,
               overflow: TextOverflow.ellipsis,
-              style: AppTypography.labelSmall.copyWith(color: selected ? AppColors.primaryDark : AppColors.textSecondary),
+              style: AppTypography.labelSmall.copyWith(
+                color: Colors.white,
+                fontWeight: selected ? FontWeight.w700 : FontWeight.w500,
+                shadows: const [Shadow(blurRadius: 6, color: Colors.black54)],
+              ),
             ),
           ],
         ),

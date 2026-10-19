@@ -111,10 +111,10 @@
       request('PATCH', `/partners-portal/services/${id}`, payload),
     deleteService: (id) =>
       request('DELETE', `/partners-portal/services/${id}`),
-    addMedia: (kind, id, mimeType, dataBase64) =>
-      request('POST', `/partners-portal/${kind}/${id}/media`, { mimeType, dataBase64 }),
+    addMedia: (kind, id, mimeType, dataBase64, placement) =>
+      request('POST', `/partners-portal/${kind}/${id}/media`, { mimeType, dataBase64, placement: placement || 'main' }),
     addMediaProgress: (kind, id, mimeType, dataBase64, hooks) =>
-      requestProgress('POST', `/partners-portal/${kind}/${id}/media`, { mimeType, dataBase64 }, hooks),
+      requestProgress('POST', `/partners-portal/${kind}/${id}/media`, { mimeType, dataBase64, placement: (hooks && hooks.placement) || 'main' }, hooks),
     submitReview: (kind, id) =>
       request('POST', `/partners-portal/${kind}/${id}/submit-review`, {}),
     preview: (kind, id) =>

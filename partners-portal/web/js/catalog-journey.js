@@ -693,29 +693,48 @@
 
     const mediaSection = document.createElement('div');
     mediaSection.className = 'form-section';
-    text(mediaSection, 'الصور والفيديو', 'h3');
-    text(mediaSection, developerAccount
-      ? 'صور الآيفون وJPEG وPNG وWebP حتى 5 ميغابايت. فيديو MP4 أو MOV حتى 20 ميغابايت. اختيار الملف يبدأ الرفع بالنسبة ثم النشر مباشرة.'
-      : 'الصور: JPEG أو PNG أو WebP حتى 5 ميغابايت. الفيديو: MP4 حتى 20 ميغابايت. يمكن اختيار أكثر من ملف. الغلاف صورة واحدة، والباقي للتفاصيل.');
-    const images = document.createElement('input');
-    images.type = 'file';
-    images.id = form.id + '-images';
-    images.accept = 'image/jpeg,image/png,image/webp,image/heic,image/heif,.heic,.heif,.jpg';
-    images.multiple = true;
-    const videos = document.createElement('input');
-    videos.type = 'file';
-    videos.id = form.id + '-videos';
-    videos.accept = 'video/mp4,video/quicktime,video/x-m4v,.mov,.m4v,.mp4';
-    videos.multiple = true;
+    text(mediaSection, 'وسائط العرض الرئيسي', 'h3');
+    text(mediaSection, 'الفيديو أو الصور التي تظهر للمستخدم مباشرة أثناء تصفح اكتشفي بملء الشاشة.');
+    text(mediaSection, 'فيديو واحد أو مجموعة صور. صور JPEG وPNG وWebP وصورة الآيفون حتى 5 ميغابايت. فيديو MP4 أو MOV حتى 20 ميغابايت.');
+    function mediaInput(id, accept) {
+      const input = document.createElement('input');
+      input.type = 'file';
+      input.id = id;
+      input.accept = accept;
+      input.multiple = true;
+      return input;
+    }
+    const images = mediaInput(form.id + '-images', 'image/jpeg,image/png,image/webp,image/heic,image/heif,.heic,.heif,.jpg');
+    const videos = mediaInput(form.id + '-videos', 'video/mp4,video/quicktime,video/x-m4v,.mov,.m4v,.mp4');
+    videos.multiple = false;
     const imageLabel = document.createElement('label');
     imageLabel.htmlFor = images.id;
-    imageLabel.textContent = 'اختيار صور';
+    imageLabel.textContent = 'إضافة صور للعرض الرئيسي';
     const videoLabel = document.createElement('label');
     videoLabel.htmlFor = videos.id;
-    videoLabel.textContent = 'اختيار فيديو';
+    videoLabel.textContent = 'إضافة فيديو للعرض الرئيسي';
+    const mainPreview = document.createElement('p');
+    mainPreview.textContent = 'معاينة الموضع: تملأ شاشة اكتشفي من الحافة إلى الحافة.';
     const mediaBox = document.createElement('div');
-    mediaSection.append(imageLabel, images, videoLabel, videos, mediaBox);
-    form.appendChild(mediaSection);
+    mediaSection.append(imageLabel, images, videoLabel, videos, mainPreview, mediaBox);
+    const detailMediaSection = document.createElement('div');
+    detailMediaSection.className = 'form-section';
+    text(detailMediaSection, 'وسائط صفحة التفاصيل', 'h3');
+    text(detailMediaSection, 'هذه الصور والمقاطع تظهر داخل صفحة التفاصيل بعد الضغط على زر التفاصيل.');
+    text(detailMediaSection, 'الصور والفيديو مسموحة هنا، وتُعرض كاملة دون قص إجباري بنسبة شاشة اكتشفي.');
+    const detailImages = mediaInput(form.id + '-detail-images', images.accept);
+    const detailVideos = mediaInput(form.id + '-detail-videos', videos.accept);
+    const detailImageLabel = document.createElement('label');
+    detailImageLabel.htmlFor = detailImages.id;
+    detailImageLabel.textContent = 'إضافة صور للتفاصيل';
+    const detailVideoLabel = document.createElement('label');
+    detailVideoLabel.htmlFor = detailVideos.id;
+    detailVideoLabel.textContent = 'إضافة فيديو للتفاصيل';
+    const detailPreview = document.createElement('p');
+    detailPreview.textContent = 'معاينة الموضع: داخل صفحة التفاصيل، بعد زر التفاصيل.';
+    const detailMediaBox = document.createElement('div');
+    detailMediaSection.append(detailImageLabel, detailImages, detailVideoLabel, detailVideos, detailPreview, detailMediaBox);
+    form.append(mediaSection, detailMediaSection);
     form.insertBefore(templateSection, mediaSection);
 
     const detail = document.createElement('div');
@@ -1524,7 +1543,7 @@
     form.oninput = paintPreview;
     paintPreview();
 
-    async function addStaged(fileList) {
+    async function addStaged(fileList, placement) {
       for (const raw of Array.from(fileList || [])) {
         let file = raw;
         if (isHeic(raw)) {
@@ -1538,6 +1557,7 @@
               error: error.message || 'تعذر تحويل صورة الآيفون',
               percent: null,
               url: URL.createObjectURL(raw),
+              placement: placement === 'detail' ? 'detail' : 'main',
             });
             continue;
           }
@@ -1550,6 +1570,7 @@
           error: problem,
           percent: null,
           url: URL.createObjectURL(file),
+          placement: placement === 'detail' ? 'detail' : 'main',
         };
         staged[form.id].push(entry);
         if (!problem && item && item.id) uploadOne(entry);
@@ -1565,17 +1586,20 @@
         }
       }
     }
-    images.onchange = () => { addStaged(images.files); images.value = ''; };
-    videos.onchange = () => { addStaged(videos.files); videos.value = ''; };
+    images.onchange = () => { addStaged(images.files, 'main'); images.value = ''; };
+    videos.onchange = () => { addStaged(videos.files, 'main'); videos.value = ''; };
+    detailImages.onchange = () => { addStaged(detailImages.files, 'detail'); detailImages.value = ''; };
+    detailVideos.onchange = () => { addStaged(detailVideos.files, 'detail'); detailVideos.value = ''; };
 
     async function paintMedia(serverMedia) {
       mediaBox.replaceChildren();
+      detailMediaBox.replaceChildren();
       const rows = staged[form.id];
       rows.forEach((entry, index) => {
         const card = document.createElement('div');
         card.className = 'media-card';
         card.dataset.fileKey = entry.key;
-        text(card, entry.file.name + ' · ' + entry.status + (entry.error ? ' · ' + entry.error : ''));
+        text(card, (entry.placement === 'detail' ? 'داخل التفاصيل' : 'العرض الرئيسي') + ' · ' + entry.file.name + ' · ' + entry.status + (entry.error ? ' · ' + entry.error : ''));
         const stateLine = document.createElement('p');
         stateLine.className = 'media-state';
         const progress = document.createElement('div');
@@ -1623,15 +1647,18 @@
         const up = document.createElement('button');
         up.type = 'button';
         up.textContent = 'أعلى';
-        up.disabled = index === 0;
+        let earlier = index - 1;
+        while (earlier >= 0 && rows[earlier].placement !== entry.placement) earlier -= 1;
+        up.disabled = earlier < 0;
         up.onclick = () => {
-          const swap = rows[index - 1];
-          rows[index - 1] = rows[index];
+          if (earlier < 0) return;
+          const swap = rows[earlier];
+          rows[earlier] = rows[index];
           rows[index] = swap;
           paintMedia(serverMedia);
         };
         card.append(up, retry, cancel, remove);
-        mediaBox.appendChild(card);
+        (entry.placement === 'detail' ? detailMediaBox : mediaBox).appendChild(card);
       });
       if (!item || !item.id) {
         text(mediaBox, developerAccount
@@ -1655,7 +1682,8 @@
         const card = document.createElement('div');
         card.className = 'media-card';
         const primary = row.draftIsPrimary == null ? row.isPrimary : row.draftIsPrimary;
-        text(card, (row.kind === 'video' ? 'فيديو محفوظ' : 'صورة محفوظة') + (primary ? ' · غلاف' : ' · تفاصيل') + ' · ' + (row.publication || 'draft') + (row.pendingRemoval ? ' · طلب إزالة' : ''));
+        const place = row.placement === 'detail' ? 'داخل التفاصيل' : (row.placement === 'cover' ? 'غلاف الفيديو' : 'العرض الرئيسي');
+        text(card, (row.kind === 'video' ? 'فيديو محفوظ' : 'صورة محفوظة') + ' · ' + place + (primary ? ' · غلاف' : '') + ' · ' + (row.publication || 'draft') + (row.pendingRemoval ? ' · طلب إزالة' : ''));
         const view = document.createElement(row.kind === 'video' ? 'video' : 'img');
         view.alt = '';
         card.appendChild(view);
@@ -1669,19 +1697,32 @@
         const up = document.createElement('button');
         up.type = 'button';
         up.textContent = 'أعلى';
-        up.disabled = index === 0;
+        const placeKey = row.placement === 'detail' ? 'detail' : (row.placement === 'cover' ? 'cover' : 'main');
+        let earlierId = null;
+        for (let cursor = index - 1; cursor >= 0; cursor -= 1) {
+          const candidate = media[cursor].placement === 'detail' ? 'detail' : (media[cursor].placement === 'cover' ? 'cover' : 'main');
+          if (candidate === placeKey) {
+            earlierId = media[cursor].id;
+            break;
+          }
+        }
+        up.disabled = earlierId == null;
         up.onclick = async () => {
+          if (!earlierId) return;
           const order = ids.slice();
-          const swap = order[index - 1];
-          order[index - 1] = order[index];
-          order[index] = swap;
+          const from = order.indexOf(row.id);
+          const to = order.indexOf(earlierId);
+          if (from < 0 || to < 0) return;
+          const swap = order[from];
+          order[from] = order[to];
+          order[to] = swap;
           await PartnersApi.reorderMedia(type === 'brand' ? 'products' : 'services', item.id, order);
           paintMedia(null);
         };
         const cover = document.createElement('button');
         cover.type = 'button';
         cover.textContent = 'غلاف';
-        cover.disabled = row.kind !== 'image';
+        cover.disabled = row.kind !== 'image' || row.placement === 'detail';
         cover.onclick = async () => {
           await PartnersApi.setPrimary(type === 'brand' ? 'products' : 'services', item.id, row.id);
           paintMedia(null);
@@ -1694,12 +1735,12 @@
           paintMedia(null);
         };
         card.append(up, cover, remove);
-        mediaBox.appendChild(card);
+        (row.placement === 'detail' ? detailMediaBox : mediaBox).appendChild(card);
       });
     }
 
     function syncMedia(entry) {
-      const card = mediaBox.querySelector('[data-file-key="' + entry.key + '"]');
+      const card = mediaBox.querySelector('[data-file-key="' + entry.key + '"]') || detailMediaBox.querySelector('[data-file-key="' + entry.key + '"]');
       const view = window.MiraMotion ? MiraMotion.describeMedia(entry) : { label: entry.status, mode: 'idle', percent: null };
       if (!card) return;
       const line = card.querySelector('.media-state');
@@ -1741,6 +1782,7 @@
         syncMedia(entry);
         const send = PartnersApi.addMediaProgress || PartnersApi.addMedia;
         await send(type === 'brand' ? 'products' : 'services', item.id, uploadMime(entry.file), dataBase64, {
+          placement: entry.placement || 'main',
           signal: controller.signal,
           onProgress: (ratio) => {
             entry.status = 'جارٍ الرفع';

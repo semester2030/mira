@@ -352,7 +352,7 @@ export class MarketplaceService implements OnModuleInit {
         ...item,
         media: media
           .filter((row) => row.ownerKind === item.kind && row.ownerId === item.id)
-          .map((row) => ({ kind: row.kind, url: row.url, sortOrder: row.sortOrder, isPrimary: row.isPrimary })),
+          .map((row) => ({ kind: row.kind, url: row.url, sortOrder: row.sortOrder, isPrimary: row.isPrimary, placement: row.placement })),
       })),
       nextCursor: paged.nextCursor,
       availableCities: cities,
@@ -463,7 +463,7 @@ export class MarketplaceService implements OnModuleInit {
         category: product.category,
         concernTags: product.concernTags,
         ...publicProductCommerce(product),
-        media: media.map((row) => ({ kind: row.kind, url: row.url, sortOrder: row.sortOrder, isPrimary: row.isPrimary })),
+        media: media.map((row) => ({ kind: row.kind, url: row.url, sortOrder: row.sortOrder, isPrimary: row.isPrimary, placement: row.placement })),
       };
     }
     const service = await this.prisma.service.findFirst({
@@ -494,7 +494,7 @@ export class MarketplaceService implements OnModuleInit {
       category: service.category,
       concernTags: service.concernTags,
       ...publicServiceCommerce(service),
-      media: media.map((row) => ({ kind: row.kind, url: row.url, sortOrder: row.sortOrder, isPrimary: row.isPrimary })),
+      media: media.map((row) => ({ kind: row.kind, url: row.url, sortOrder: row.sortOrder, isPrimary: row.isPrimary, placement: row.placement })),
     };
   }
 

@@ -127,7 +127,8 @@ void main() {
     final gateway = _HoldGateway();
     await tester.pumpWidget(_app(DiscoverPresentationScreen(gateway: gateway)));
     await tester.pump();
-    expect(find.text('جاري تحميل الكتالوج'), findsOneWidget);
+    expect(find.text('جاري تحميل الكتالوج'), findsNothing);
+    expect(find.textContaining('جاري تحميل'), findsNothing);
     expect(find.byType(TextField), findsOneWidget);
     expect(find.textContaining('لا توجد نتائج'), findsNothing);
     final offer = DiscoverCatalogQueryEngine.localOffers().first;
@@ -150,7 +151,8 @@ void main() {
     gateway.pending[1].complete(_ok([stale]));
     await tester.pump();
     expect(find.text(stale.nameAr), findsNothing);
-    expect(find.text('جاري تحميل الكتالوج'), findsOneWidget);
+    expect(find.text('جاري تحميل الكتالوج'), findsNothing);
+    expect(find.text(offer.nameAr), findsOneWidget);
     gateway.pending[2].complete(_ok([makeup]));
     await tester.pumpAndSettle();
     expect(find.text(makeup.nameAr), findsOneWidget);
@@ -291,7 +293,7 @@ void main() {
     final offers = DiscoverCatalogQueryEngine.localOffers().take(2).toList();
     await tester.pumpWidget(_app(DiscoverPresentationScreen(gateway: gateway)));
     await tester.pump();
-    expect(find.text('جاري تحميل الكتالوج'), findsOneWidget);
+    expect(find.text('جاري تحميل الكتالوج'), findsNothing);
     expect(find.byType(TextField), findsOneWidget);
     final loading = tester.getRect(find.byType(TextField));
     await _shot(tester, 'rc5-search-loading');
@@ -307,7 +309,7 @@ void main() {
     expect(field.controller?.text, 'ع');
     expect(field.controller?.selection.extentOffset, 1);
     expect(tester.getRect(find.byType(TextField)).top, loading.top);
-    expect(find.text('جاري تحميل الكتالوج'), findsOneWidget);
+    expect(find.text('جاري تحميل الكتالوج'), findsNothing);
     gateway.pending.last.complete(_ok(const []));
     await tester.pumpAndSettle();
     expect(find.textContaining('لا توجد نتائج'), findsOneWidget);
