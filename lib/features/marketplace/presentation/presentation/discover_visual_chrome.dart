@@ -225,7 +225,7 @@ class DiscoverVisualChrome extends StatelessWidget {
                       style: AppTypography.labelSmall.copyWith(color: AppColors.textSecondary),
                     ),
                   ],
-                  const SizedBox(height: 10),
+                  const SizedBox(height: 8),
                   _Actions(
                     slide: slide,
                     onDetails: onDetails,
@@ -238,7 +238,7 @@ class DiscoverVisualChrome extends StatelessWidget {
                     purchaseLabel: purchaseLabel,
                     appointmentLabel: appointmentLabel,
                   ),
-                  const SizedBox(height: 10),
+                  const SizedBox(height: 8),
                   if (showCategoryRail)
                     DiscoverCategoryRail(
                       labels: categories,
@@ -676,10 +676,14 @@ class _Actions extends StatelessWidget {
   final String purchaseLabel;
   final String appointmentLabel;
 
-  static const double _side = 48;
-  static const double _center = 64;
-  static const double _gap = 12;
-  static const double _touch = 48;
+  // +20% over the Places baseline (48 / 64) so the cluster stays readable
+  // without reclaiming the full-bleed media plane.
+  static const double _side = 58;
+  static const double _center = 77;
+  static const double _gap = 14;
+  static const double _touch = 58;
+  static const double _sideIcon = 26;
+  static const double _centerIcon = 34;
 
   @override
   Widget build(BuildContext context) {
@@ -692,8 +696,8 @@ class _Actions extends StatelessWidget {
         : onBuy;
     final venue = DiscoverVenueCopy.label(slide);
     final small = MediaQuery.sizeOf(context).shortestSide < 360;
-    final side = small ? 44.0 : _side;
-    final center = small ? 58.0 : _center;
+    final side = small ? 53.0 : _side;
+    final center = small ? 70.0 : _center;
     return Row(
       textDirection: TextDirection.ltr,
       mainAxisAlignment: MainAxisAlignment.center,
@@ -766,7 +770,7 @@ class _ClusterSide extends StatelessWidget {
                       color: Colors.white.withValues(alpha: 0.12),
                       border: Border.all(color: Colors.white, width: 1.5),
                     ),
-                    child: Icon(icon, color: Colors.white, size: 22),
+                    child: Icon(icon, color: Colors.white, size: _Actions._sideIcon),
                   ),
                 ),
               ),
@@ -828,7 +832,7 @@ class _ClusterPrimary extends StatelessWidget {
                       shape: BoxShape.circle,
                       color: AppColors.primary,
                     ),
-                    child: Icon(icon, color: Colors.white, size: 28),
+                    child: Icon(icon, color: Colors.white, size: _Actions._centerIcon),
                   ),
                 ),
               ),
@@ -870,15 +874,17 @@ class DiscoverCategoryRail extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return SizedBox(
-      height: 108,
+      height: 130,
       child: LayoutBuilder(
         builder: (context, constraints) {
           const gap = 8.0;
-          const minSize = 64.0;
+          // +20% over the previous 64–78 diameter range; fewer visible chips
+          // with horizontal scroll is preferred over shrinking them again.
+          const minSize = 77.0;
           final needed = labels.length * minSize + (labels.length - 1) * gap;
           final fits = constraints.maxWidth >= needed;
           final size = fits
-              ? ((constraints.maxWidth - (labels.length - 1) * gap) / labels.length).clamp(minSize, 78.0)
+              ? ((constraints.maxWidth - (labels.length - 1) * gap) / labels.length).clamp(minSize, 94.0)
               : minSize;
           Widget chip(int index) {
             return _CategoryChip(

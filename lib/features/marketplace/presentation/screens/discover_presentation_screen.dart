@@ -1070,7 +1070,7 @@ class _PresentationPageState extends State<_PresentationPage> {
           includeSearch: widget.catalog?.includeSearch ?? true,
           provenance: null,
           showCategoryRail: widget.catalog == null,
-          bottomReserve: widget.catalog == null ? 0 : 116,
+          bottomReserve: widget.catalog == null ? 0 : 138,
           categoryLabels: widget.catalog?.categoryLabels,
           categoryAssetFamily: widget.catalog?.categoryAssetFamily,
           searchHintText: widget.catalog?.searchHint,
