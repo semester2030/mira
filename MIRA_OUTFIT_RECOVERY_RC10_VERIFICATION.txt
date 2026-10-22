@@ -1,0 +1,10 @@
+MIRA_OUTFIT_RECOVERY_RC10
+verifiedAt: 2026-10-22T01:42:00Z
+api: https://mira-api-n4p3.onrender.com
+deploy: dep-dbcmckss728c73aof56g LIVE commit 207871b
+redis: AVAILABLE
+tests: rc10=12/12 rc9=4/4 flutter_colors=4/4
+device: app.mira.beauty installed via flutter run --release
+live_dress_journey: NOT_RUN
+scope_live: NOT_RUN
+risk_site: tmp-risk-rc5 CONSULT_DIALOGUE_RC10 cachebust 2026102202

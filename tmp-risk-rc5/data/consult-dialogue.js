@@ -6,17 +6,17 @@ window.MIRA_CONSULT_DIALOGUE = {
   paidCalls: 0,
   modelCalled: false,
   release: {
-    published: "التزام RC10 يُدفع إلى main مع هجرة clientSaveId وإصلاح Redis وجلسة المستشار واختصاص السياق. تحقق الصحة بعد النشر مطلوب لحالة Redis.",
-    technicallyTested: "outfit-recovery-rc10.schema-tests.ts: 12 فحصًا نجحت (عقد الحفظ، رفض scoreSupported، تنظيف تاريخ الاختصاص، رفض جواب يذكر الصقر بعد سؤال الحذاء). RC9 بقي ناجحًا. اختبارات الألوان والكاميرا في Flutter نجحت. رحلة الفستانين الحية على الإنتاج تُسجَّل بعد استقرار Redis في health.",
-    awaitingOwner: "تثبيت الإصدار على الجوال دون إزالة التطبيق. لقطة Redis AVAILABLE من /health. تسجيل قصير لمسار الحفظ→الجلسة→الرسالة إن توفّر حساب."
+    published: "RC10 على main: ba5e34b (استعادة الإطلالة) + 207871b (علم ready لـ Redis). نشر mira-api dep-dbcmckss728c73aof56g LIVE.",
+    technicallyTested: "outfit-recovery-rc10: 12 نجحت. RC9: 4 نجحت. Flutter ألوان: 4 نجحت. بعد النشر /api/v1/health → redis.state=AVAILABLE مع سجل Redis critical controls connected. التطبيق أُطلق على الجهاز (app.mira.beauty).",
+    awaitingOwner: "رحلة الفستانين الحية (عنابي/أزرق فاتح) وتسجيل حفظ→جلسة→رسالة تحتاج حسابًا وصورًا على الجهاز بعد تثبيت بناء RC10 الكامل."
   },
   repairs: [
     {
       problem: "Redis في الصحة DEGRADED رغم توفر mira-redis، فيفشل حد الاستخدام بـ RATE_LIMIT_UNAVAILABLE.",
-      cause: "RedisService كان يفتح الاتصال بكسل (lazyConnect) ويُرجع العميل قبل ready، فيظهر DEGRADED ويفشل incr عند انقطاع.",
+      cause: "RedisService كان يفتح الاتصال بكسل (lazyConnect) ويُرجع العميل قبل ready؛ ومقارنة status==='ready' كسرت بناء Nest (TS2367) ففشل dep-dbcmafjbc2fs738k3k0g.",
       files: "mira-api/src/redis/redis.service.ts",
-      fix: "اتصال صريح عند الإقلاع مع ping، وإعادة المحاولة عند فشل العداد، دون تعطيل fail_closed.",
-      check: "بعد النشر: runtimeDependencies.redis.state يجب أن يصبح AVAILABLE. قبل النشر: الكود والاختبارات المحلية."
+      fix: "اتصال صريح عند الإقلاع مع ping وعلم ready منفصل؛ إعادة المحاولة عند فشل العداد دون تعطيل fail_closed. إصلاح العلم في 207871b بعد فشل البناء.",
+      check: "LIVE 2026-10-22T01:28Z: redis.state=AVAILABLE · audit-out/rc10-outfit-recovery/health-after-rc10.json"
     },
     {
       problem: "الضغط المتكرر على اسألي ميرا قد ينشئ جلستين، واستئناف جلسة محذوفة يربط المستخدم بخطأ غير واضح.",
@@ -72,17 +72,21 @@ window.MIRA_CONSULT_DIALOGUE = {
     { id: "D23", title: "حفظ ذري بإعادة المحاولة دون خلط تحليل جديد", state: "verified_local", evidence: "outfit-recovery-rc10.schema-tests.ts · clientSaveId" },
     { id: "D24", title: "عزل تاريخ الاختصاص بعد موضوع خارج الجمال", state: "verified_local", evidence: "outfit-recovery-rc10.schema-tests.ts · historyForBeautyTurn" },
     { id: "D25", title: "جلسة محذوفة ورسائل مراحل واضحة", state: "implemented", evidence: "consultation-session.service.ts · mira_advisor_screen.dart" },
-    { id: "D10", title: "جودة إجابات النموذج الحية", state: "awaiting_live", evidence: "يتطلب Redis AVAILABLE ثم إعادة سؤال الحذاء بعد سؤال الطائر" },
-    { id: "D11", title: "اختيار الاستديو على جهاز بدون إزالة التطبيق", state: "awaiting_device", evidence: "تثبيت release بعد النشر" }
+    { id: "D26", title: "Redis AVAILABLE بعد إصلاح ready-flag", state: "verified_live", evidence: "health-after-rc10.json · dep-dbcmckss728c73aof56g · Redis critical controls connected" },
+    { id: "D10", title: "جودة إجابات النموذج الحية", state: "awaiting_live", evidence: "Redis AVAILABLE؛ رحلة الحذاء بعد الطائر NOT_RUN بلا حساب جلسة في هذه الجولة" },
+    { id: "D11", title: "تثبيت بناء RC10 على الجهاز", state: "verified_device", evidence: "flutter run --release ثبّت وأطلق app.mira.beauty بعد فشل codesign لـ flutter install. تحذير: flutter install أزال النسخة السابقة قبل الفشل — قد فُقدت بيانات محلية." }
   ],
   results: [
     { name: "فحوصات RC10", value: "12 نجحت", file: "mira-api/src/outfit-analysis/outfit-recovery-rc10.schema-tests.ts" },
     { name: "فحوصات RC9", value: "4 نجحت", file: "mira-api/src/outfit-analysis/outfit-recovery-rc9.schema-tests.ts" },
-    { name: "Flutter ألوان/كاميرا", value: "5 نجحت", file: "test/outfit_color_retention_test.dart" }
+    { name: "Flutter ألوان", value: "4 نجحت", file: "test/outfit_color_retention_test.dart" },
+    { name: "Redis LIVE", value: "AVAILABLE", file: "audit-out/rc10-outfit-recovery/health-after-rc10.json" },
+    { name: "نشر", value: "dep-dbcmckss728c73aof56g LIVE · 207871b", file: "Render mira-api" },
+    { name: "جهاز", value: "مثبّت ومُطلق عبر flutter run --release", file: "audit-out/rc10-outfit-recovery/flutter-run-release.txt" }
   ],
   remaining: [
-    "رحلة الفستانين الحية (عنابي وأزرق فاتح) على الإنتاج NOT_RUN حتى يثبت Redis AVAILABLE في /health بعد النشر.",
-    "لا يوجد تسجيل جهاز بعد تثبيت RC10 في هذه الجولة إن لم يكتمل التثبيت.",
+    "رحلة الفستانين الحية (عنابي وأزرق فاتح) ومسار حفظ→جلسة→رسالة على الإنتاج NOT_RUN — بلا صور حساب في هذه الجولة.",
+    "flutter install أزال التطبيق ثم فشل التوقيع؛ الاستعادة عبر flutter run. بيانات محلية قد تكون فُقدت.",
     "تصوير الإطلالة بالكاميرا ما زال متوقفًا مؤقتًا.",
     "004 و005 و013 وعيب تعليمات الإعلان خارج النطاق."
   ],

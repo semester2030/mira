@@ -1,0 +1,35 @@
+RC10 Outfit Recovery — deploy & Redis
+=====================================
+Date: 2026-10-22 (Asia/Riyadh)
+
+Git
+- ba5e34b Recover outfit consultation stability: Redis connect, atomic save, and scoped history.
+- 207871b Fix Redis ready flag so Nest build accepts the connection service.
+- Branch tip pushed to origin/mira/p5-strict-frontend-recovery-2026-09-14 and main.
+
+Render (workspace tea-d650eh9r0fns73cg2m5g)
+- Service: mira-api srv-d85ngcfavr4c73d3rk6g
+- URL: https://mira-api-n4p3.onrender.com
+- Failed build: dep-dbcmafjbc2fs738k3k0g (ba5e34b) — TS2367 on Redis status==='ready'
+- Live deploy: dep-dbcmckss728c73aof56g (207871b) status=live finished 2026-10-22T01:28:20Z
+
+Health before fix (old live b1d6070): redis.state=DEGRADED
+Health after RC10: see health-after-rc10.json
+  redis.configured=true
+  redis.state=AVAILABLE
+  criticalControls=fail_closed
+
+App log (Render):
+  [RedisService] Redis critical controls connected @ 2026-10-22T01:28:09Z
+
+Local tests
+- outfit-recovery-rc10.schema-tests.ts: checks=12 failed=0
+- outfit-recovery-rc9.schema-tests.ts: checks=4 failed=0
+- flutter test test/outfit_color_retention_test.dart: 4 passed
+
+Device
+- Target: fayez’s iPhone 00008110-00191986268BA01E iOS 26.6
+- Blocker: flutter install uninstalled prior app then failed codesign on Frameworks/objective_c.framework (0xe8008014).
+- App bundle was absent after failed install; flutter run --release used to restore.
+- Live dress journey (burgundy/light-blue) NOT_RUN until restore completes and account/photos available.
+- No secrets or personal photos in this folder.

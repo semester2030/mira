@@ -1,0 +1,15 @@
+04:31:32  Acquired tunnel connection to device.
+04:31:32  Enabling developer disk image services.
+04:31:32  Acquired usage assertion.
+ERROR: Failed to install the app on the device. (com.apple.dt.CoreDeviceError error 3002 (0xBBA))
+       NSURL = file:///Users/fayez/Desktop/mira/build/ios/iphoneos/Runner.app/
+       ----------------------------------------
+           Unable to Install “Mira” (IXUserPresentableErrorDomain error 14 (0x0E))
+           NSLocalizedFailureReason = This app cannot be installed because its integrity could not be verified.
+           NSLocalizedRecoverySuggestion = Failed to verify code signature of /var/installd/Library/Caches/com.apple.mobile.installd.staging/temp.ARW8g8/extracted/Payload/Runner.app/Frameworks/objective_c.framework : 0xe8008014 (The executable contains an invalid signature.)
+       ----------------------------------------
+               Failed to verify code signature of /var/installd/Library/Caches/com.apple.mobile.installd.staging/temp.ARW8g8/extracted/Payload/Runner.app/Frameworks/objective_c.framework : 0xe8008014 (The executable contains an invalid signature.) (MIInstallerErrorDomain error 13 (0x0D))
+               FunctionName = +[MICodeSigningVerifier _validateSignatureAndCopyInfoForURL:withOptions:error:]
+               LegacyErrorString = ApplicationVerificationFailed
+               SourceFileLine = 80
+               LibMISErrorNumber = -402620396

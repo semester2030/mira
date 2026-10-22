@@ -1,0 +1,7 @@
+Installing app.mira.beauty to fayez’s iPhone...
+Uninstalling old version...
+Could not install build/ios/iphoneos/Runner.app on 00008110-00191986268BA01E.
+Try launching Xcode and selecting "Product > Run" to fix the problem:
+  open ios/Runner.xcworkspace
+
+Install failed
