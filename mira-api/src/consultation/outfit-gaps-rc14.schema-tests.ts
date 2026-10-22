@@ -41,8 +41,9 @@ async function main() {
     resumeWithQuota.claimStatus === 'resume' && resumeWithQuota.quotaReserved === true,
     'accepted-resume-skips-recount',
   );
+  const createdStatus: string = created.claimStatus;
   assert(
-    !(created.claimStatus === 'resume' && created.quotaReserved === true),
+    !(createdStatus === 'resume' && created.quotaReserved === true),
     'created-never-skips-via-resume-flag',
   );
 
