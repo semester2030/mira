@@ -1,0 +1,4 @@
+08:29:25  Acquired tunnel connection to device.
+08:29:25  Enabling developer disk image services.
+08:29:25  Acquired usage assertion.
+Launched application with app.mira.beauty bundle identifier.

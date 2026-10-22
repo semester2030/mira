@@ -1,0 +1,7 @@
+APP=/Users/fayez/Desktop/mira/build/ios/iphoneos/Runner.app
+IDENTITY=Apple Development: TARIQ ALDALBAHI (P9C9QSDZY9)
+BUILD=2026102208
+ platform 2
+objective_c already valid — leave Flutter/Xcode signatures intact
+/Users/fayez/Desktop/mira/build/ios/iphoneos/Runner.app: valid on disk
+/Users/fayez/Desktop/mira/build/ios/iphoneos/Runner.app: satisfies its Designated Requirement

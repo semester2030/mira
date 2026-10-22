@@ -1,0 +1,57 @@
+APP=build/ios/iphoneos/Runner.app
+IDENTITY=Apple Development: TARIQ ALDALBAHI (P9C9QSDZY9)
+ platform 2
+build/ios/iphoneos/Runner.app/Frameworks/grpcpp.framework: replacing existing signature
+build/ios/iphoneos/Runner.app/Frameworks/objective_c.framework: replacing existing signature
+build/ios/iphoneos/Runner.app/Frameworks/RecaptchaInterop.framework: replacing existing signature
+build/ios/iphoneos/Runner.app/Frameworks/integration_test.framework: replacing existing signature
+build/ios/iphoneos/Runner.app/Frameworks/GoogleDataTransport.framework: replacing existing signature
+build/ios/iphoneos/Runner.app/Frameworks/FirebaseAuthInterop.framework: replacing existing signature
+build/ios/iphoneos/Runner.app/Frameworks/FirebaseFirestore.framework: replacing existing signature
+build/ios/iphoneos/Runner.app/Frameworks/image_picker_ios.framework: replacing existing signature
+build/ios/iphoneos/Runner.app/Frameworks/GTMSessionFetcher.framework: replacing existing signature
+build/ios/iphoneos/Runner.app/Frameworks/FBLPromises.framework: replacing existing signature
+build/ios/iphoneos/Runner.app/Frameworks/FirebaseCoreInternal.framework: replacing existing signature
+build/ios/iphoneos/Runner.app/Frameworks/video_player_avfoundation.framework: replacing existing signature
+build/ios/iphoneos/Runner.app/Frameworks/FirebaseSharedSwift.framework: replacing existing signature
+build/ios/iphoneos/Runner.app/Frameworks/FirebaseCore.framework: replacing existing signature
+build/ios/iphoneos/Runner.app/Frameworks/GoogleUtilities.framework: replacing existing signature
+build/ios/iphoneos/Runner.app/Frameworks/FirebaseAuth.framework: replacing existing signature
+build/ios/iphoneos/Runner.app/Frameworks/Flutter.framework: replacing existing signature
+build/ios/iphoneos/Runner.app/Frameworks/FirebaseAppCheckInterop.framework: replacing existing signature
+build/ios/iphoneos/Runner.app/Frameworks/FirebaseCoreExtension.framework: replacing existing signature
+build/ios/iphoneos/Runner.app/Frameworks/App.framework: replacing existing signature
+build/ios/iphoneos/Runner.app/Frameworks/FirebaseFirestoreInternal.framework: replacing existing signature
+build/ios/iphoneos/Runner.app/Frameworks/GoogleToolboxForMac.framework: replacing existing signature
+build/ios/iphoneos/Runner.app/Frameworks/nanopb.framework: replacing existing signature
+build/ios/iphoneos/Runner.app/Frameworks/url_launcher_ios.framework: replacing existing signature
+build/ios/iphoneos/Runner.app/Frameworks/leveldb.framework: replacing existing signature
+build/ios/iphoneos/Runner.app/Frameworks/mediapipe_face_mesh.framework: replacing existing signature
+build/ios/iphoneos/Runner.app/Frameworks/grpc.framework: replacing existing signature
+build/ios/iphoneos/Runner.app/Frameworks/share_plus.framework: replacing existing signature
+build/ios/iphoneos/Runner.app/Frameworks/openssl_grpc.framework: replacing existing signature
+build/ios/iphoneos/Runner.app/Frameworks/absl.framework: replacing existing signature
+build/ios/iphoneos/Runner.app/Frameworks/shared_preferences_foundation.framework: replacing existing signature
+build/ios/iphoneos/Runner.app/Frameworks/FirebaseStorage.framework: replacing existing signature
+build/ios/iphoneos/Runner.app/Frameworks/camera_avfoundation.framework: replacing existing signature
+build/ios/iphoneos/Runner.app: replacing existing signature
+Identifier=app.mira.beauty
+Format=app bundle with Mach-O thin (arm64)
+Authority=Apple Development: TARIQ ALDALBAHI (P9C9QSDZY9)
+Authority=Apple Worldwide Developer Relations Certification Authority
+Authority=Apple Root CA
+TeamIdentifier=A97F7227YM
+Sealed Resources version=2 rules=10 files=308
+Identifier=io.flutter.flutter.native-assets.objective-c
+Format=bundle with Mach-O universal (arm64)
+Authority=Apple Development: TARIQ ALDALBAHI (P9C9QSDZY9)
+Authority=Apple Worldwide Developer Relations Certification Authority
+Authority=Apple Root CA
+TeamIdentifier=A97F7227YM
+build/ios/iphoneos/Runner.app/Frameworks/objective_c.framework: valid on disk
+build/ios/iphoneos/Runner.app/Frameworks/objective_c.framework: satisfies its Designated Requirement
+build/ios/iphoneos/Runner.app: valid on disk
+build/ios/iphoneos/Runner.app: satisfies its Designated Requirement
+illustration_files 0
+2026102208
+1.0.0

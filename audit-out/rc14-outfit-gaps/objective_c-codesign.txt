@@ -1,0 +1,22 @@
+Executable=/Users/fayez/Desktop/mira/build/ios/iphoneos/Runner.app/Frameworks/objective_c.framework/objective_c
+Identifier=io.flutter.flutter.native-assets.objective-c
+Format=bundle with Mach-O universal (arm64)
+CodeDirectory v=20400 size=720 flags=0x0(none) hashes=15+3 location=embedded
+Hash type=sha256 size=32
+CandidateCDHash sha256=aa66395b359bb702df3bced3a8de5fa71587fd1c
+CandidateCDHashFull sha256=aa66395b359bb702df3bced3a8de5fa71587fd1c1b8a593d6ed9cefc33e075b7
+Hash choices=sha256
+CMSDigest=aa66395b359bb702df3bced3a8de5fa71587fd1c1b8a593d6ed9cefc33e075b7
+CMSDigestType=2
+CDHash=aa66395b359bb702df3bced3a8de5fa71587fd1c
+Signature size=4787
+Authority=Apple Development: TARIQ ALDALBAHI (P9C9QSDZY9)
+Authority=Apple Worldwide Developer Relations Certification Authority
+Authority=Apple Root CA
+Signed Time=11 Jmd. I 1448 AH at 7:29:20 AM
+Info.plist entries=10
+TeamIdentifier=A97F7227YM
+Sealed Resources version=2 rules=10 files=0
+Internal requirements count=1 size=208
+/Users/fayez/Desktop/mira/build/ios/iphoneos/Runner.app/Frameworks/objective_c.framework: valid on disk
+/Users/fayez/Desktop/mira/build/ios/iphoneos/Runner.app/Frameworks/objective_c.framework: satisfies its Designated Requirement

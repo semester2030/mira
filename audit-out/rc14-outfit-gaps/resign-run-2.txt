@@ -1,0 +1,27 @@
+APP=/Users/fayez/Desktop/mira/build/ios/iphoneos/Runner.app
+IDENTITY=Apple Development: TARIQ ALDALBAHI (P9C9QSDZY9)
+BUILD=2026102208
+ platform 2
+objective_c already valid — leave Flutter/Xcode signatures intact
+Identifier=io.flutter.flutter.native-assets.objective-c
+Format=bundle with Mach-O universal (arm64)
+Authority=Apple Development: TARIQ ALDALBAHI (P9C9QSDZY9)
+Authority=Apple Worldwide Developer Relations Certification Authority
+Authority=Apple Root CA
+TeamIdentifier=A97F7227YM
+/Users/fayez/Desktop/mira/build/ios/iphoneos/Runner.app/Frameworks/objective_c.framework: valid on disk
+/Users/fayez/Desktop/mira/build/ios/iphoneos/Runner.app/Frameworks/objective_c.framework: satisfies its Designated Requirement
+1:<?xml version="1.0" encoding="UTF-8"?><!DOCTYPE plist PUBLIC "-//Apple//DTD PLIST 1.0//EN" "https://www.apple.com/DTDs/PropertyList-1.0.dtd"><plist version="1.0"><dict><key>application-identifier</key><string>A97F7227YM.app.mira.beauty</string><key>com.apple.developer.team-identifier</key><string>A97F7227YM</string><key>get-task-allow</key><true/></dict></plist>
+/Users/fayez/Desktop/mira/build/ios/iphoneos/Runner.app: valid on disk
+/Users/fayez/Desktop/mira/build/ios/iphoneos/Runner.app: satisfies its Designated Requirement
+Identifier=app.mira.beauty
+Format=app bundle with Mach-O thin (arm64)
+Authority=Apple Development: TARIQ ALDALBAHI (P9C9QSDZY9)
+Authority=Apple Worldwide Developer Relations Certification Authority
+Authority=Apple Root CA
+TeamIdentifier=A97F7227YM
+Sealed Resources version=2 rules=10 files=308
+illustration_files=10
+2026102208
+1.0.0
+OK

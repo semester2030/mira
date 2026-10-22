@@ -1,0 +1,12 @@
+Cleaning Xcode workspace...                                         5.1s
+Cleaning Xcode workspace...                                      2,337ms
+Deleting build...                                                   5.9s
+Deleting .dart_tool...                                           1,009ms
+Deleting ephemeral...                                                0ms
+Deleting Generated.xcconfig...                                       0ms
+Deleting flutter_export_environment.sh...                            0ms
+Deleting Flutter.podspec...                                          0ms
+Deleting ephemeral...                                                0ms
+Deleting ephemeral...                                                0ms
+Deleting ephemeral...                                                0ms
+Deleting .flutter-plugins-dependencies...                            0ms

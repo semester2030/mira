@@ -1,0 +1,61 @@
+Analyzing dependencies
+cloud_firestore: Using Firebase SDK version '11.15.0' defined in 'firebase_core'
+firebase_auth: Using Firebase SDK version '11.15.0' defined in 'firebase_core'
+firebase_core: Using Firebase SDK version '11.15.0' defined in 'firebase_core'
+firebase_storage: Using Firebase SDK version '11.15.0' defined in 'firebase_core'
+Adding spec repo `trunk` with CDN `https://cdn.cocoapods.org/`
+Downloading dependencies
+Installing BoringSSL-GRPC (0.0.37)
+Installing Firebase (11.15.0)
+Installing FirebaseAppCheckInterop (11.15.0)
+Installing FirebaseAuth (11.15.0)
+Installing FirebaseAuthInterop (11.15.0)
+Installing FirebaseCore (11.15.0)
+Installing FirebaseCoreExtension (11.15.0)
+Installing FirebaseCoreInternal (11.15.0)
+Installing FirebaseFirestore (11.15.0)
+Installing FirebaseFirestoreInternal (11.15.0)
+Installing FirebaseSharedSwift (11.15.0)
+Installing FirebaseStorage (11.15.0)
+Installing Flutter (1.0.0)
+Installing GTMSessionFetcher (3.5.0)
+Installing GoogleDataTransport (10.1.0)
+Installing GoogleMLKit (9.0.0)
+Installing GoogleToolboxForMac (4.2.1)
+Installing GoogleUtilities (8.1.0)
+Installing MLImage (1.0.0-beta8)
+Installing MLKitCommon (14.0.0)
+Installing MLKitFaceDetection (8.0.0)
+Installing MLKitPoseDetection (1.0.0-beta16)
+Installing MLKitPoseDetectionAccurate (1.0.0-beta16)
+Installing MLKitPoseDetectionCommon (1.0.0-beta16)
+Installing MLKitVision (10.0.0)
+Installing MLKitXenoCommon (1.0.0-beta16)
+Installing PerfectLibCameraKit (2.5.0)
+Installing PromisesObjC (2.4.1)
+Installing RecaptchaInterop (101.0.0)
+Installing abseil (1.20240722.0)
+Installing camera_avfoundation (0.0.1)
+Installing cloud_firestore (5.6.12)
+Installing firebase_auth (5.7.0)
+Installing firebase_core (3.15.2)
+Installing firebase_storage (12.4.10)
+Installing gRPC-C++ (1.69.0)
+Installing gRPC-Core (1.69.0)
+Installing google_mlkit_commons (0.11.1)
+Installing google_mlkit_face_detection (0.13.2)
+Installing google_mlkit_pose_detection (0.14.1)
+Installing image_picker_ios (0.0.1)
+Installing integration_test (0.0.1)
+Installing leveldb-library (1.22.6)
+Installing mediapipe_face_mesh (1.3.0)
+Installing nanopb (3.30910.0)
+Installing share_plus (0.0.1)
+Installing shared_preferences_foundation (0.0.1)
+Installing url_launcher_ios (0.0.1)
+Installing video_player_avfoundation (0.0.1)
+Generating Pods project
+Integrating client project
+Pod installation complete! There are 17 dependencies from the Podfile and 49 total pods installed.
+
+[!] CocoaPods did not set the base configuration of your project because your project already has a custom config set. In order for CocoaPods integration to work at all, please either set the base configurations of the target `Runner` to `Target Support Files/Pods-Runner/Pods-Runner.profile.xcconfig` or include the `Target Support Files/Pods-Runner/Pods-Runner.profile.xcconfig` in your build configuration (`Flutter/Release.xcconfig`).

@@ -6,14 +6,14 @@ window.MIRA_CONSULT_DIALOGUE = {
   paidCalls: 0,
   modelCalled: false,
   release: {
-    published: "RC14: إلغاء إعفاء resume العام من 429؛ حجز حصة موثّق (quotaReserved)؛ سياق bindContext مع statedGoal؛ اقتراحات لونية بلا zip؛ جرّبي يتجاهل النتائج المتأخرة؛ فهرس صور معزول بالحساب؛ بناء 2026102208.",
-    technicallyTested: "outfit-gaps-rc14.schema-tests · rc14/rc13 flutter tests. تثبيت الجهاز قيد المحاولة بعد إصلاح التوقيع.",
-    awaitingOwner: "رحلات الفستانين و8 رسائل وتسجيل الجوال — NOT_RUN حتى ينجح التثبيت الموقَّع."
+    published: "RC14: إلغاء إعفاء resume العام من 429؛ حجز حصة موثّق (quotaReserved)؛ سياق bindContext مع statedGoal؛ اقتراحات لونية بلا zip؛ جرّبي يتجاهل النتائج المتأخرة؛ فهرس صور معزول بالحساب؛ بناء 2026102208 مثبّت على الجهاز؛ API live dep-dbcp24ss728c73aqtfo0 @ 95c8989.",
+    technicallyTested: "outfit-gaps-rc14.schema-tests · rc14 flutter tests · flutter build ios release · codesign platform=2 · device install 2026102208 · Render live.",
+    awaitingOwner: "رحلات الفستانين و8 رسائل وتسجيل الجوال التفاعلي — NOT_RUN (التثبيت نجح؛ الرحلات اليدوية بانتظار المالك)."
   },
   priorRelease: {
     id: "CONSULT_DIALOGUE_RC13",
     published: "RC13: illustrations في pubspec + تخطي rate-limit عند resume (أوسع من اللازم) + ربط ألوان أولي.",
-    note: "RC13 أخطأ بإعفاء كل resume من الحصة؛ وعائق التثبيت كان 0xe8008014 على objective_c.framework وليس قفل الشاشة فقط."
+    note: "RC13 أخطأ بإعفاء كل resume من الحصة؛ وعائق التثبيت كان 0xe8008014 على objective_c.framework (توقيع/منصة خاطئة من native-assets) وليس قفل الشاشة فقط. إصلاح RC14: flutter clean + إزالة كاش objective_c + بناء جهاز فقط؛ لا تُعد توقيع Runner.app بدون application-identifier."
   },
   repairs: [
     {
@@ -41,8 +41,8 @@ window.MIRA_CONSULT_DIALOGUE = {
       problem: "فهرس الصور يقرأ/يكتب مفاتيح عامة؛ التثبيت فشل بتوقيع objective_c.",
       cause: "fallback غير معزول؛ install أبلغ 0xe8008014 ApplicationVerificationFailed.",
       files: "outfit_local_image_index.dart · بناء iOS",
-      fix: "قراءة scoped فقط؛ ترحيل legacy عند remember المطابق؛ رقم بناء 2026102208؛ إعادة توقيع عميق قبل التثبيت.",
-      check: "codesign -dvvv بعد البناء؛ سجل device-install."
+      fix: "قراءة scoped فقط؛ ترحيل legacy عند remember المطابق؛ رقم بناء 2026102208؛ تنظيف كاش native-assets قبل بناء الجهاز؛ التحقق من platform=2 ووجود application-identifier دون إعادة توقيع تُفرّغ الاستحقاقات.",
+      check: "device-install.txt · illustrations-count=10 · device apps 1.0.0/2026102208."
     }
   ],
   scope: "مستشارة تفاعلية للجمال والعناية والمكياج والشعر والإطلالات. تصوير الإطلالة بالكاميرا متوقف مؤقتًا، واختيار صور الاستديو هو المسار المتاح. تصوير الوجه وتحليل البشرة يبقيان متاحين.",
@@ -57,17 +57,20 @@ window.MIRA_CONSULT_DIALOGUE = {
     { id: "D34", title: "دولاب المزيد/مقارنة", state: "implemented", evidence: "wardrobe epoch reload" },
     { id: "D35", title: "سياق bindContext + بطاقة الخادم", state: "implemented", evidence: "statedGoalAr · context card" },
     { id: "D36", title: "فهرس صور معزول بالحساب", state: "implemented", evidence: "outfit_local_image_index scoped-only read" },
-    { id: "D11", title: "تثبيت البناء 2026102208 على الجهاز", state: "awaiting_device", evidence: "RC13 فشل 0xe8008014؛ RC14 يعيد التوقيع" },
+    { id: "D11", title: "تثبيت البناء 2026102208 على الجهاز", state: "done", evidence: "devicectl install + apps list 2026102208؛ 10 رسوم في Runner.app" },
     { id: "D10", title: "رحلات حية + تسجيل", state: "awaiting_live", evidence: "NOT_RUN" }
   ],
   results: [
     { name: "فحوصات RC14 quota", value: "8 نجحت (محاكاة)", file: "mira-api/src/consultation/outfit-gaps-rc14.schema-tests.ts" },
     { name: "Flutter RC14/RC13", value: "6 نجحت", file: "test/outfit_analysis/rc14_outfit_gaps_test.dart" },
-    { name: "بناء التطبيق", value: "1.0.0+2026102208", file: "pubspec.yaml" }
+    { name: "بناء التطبيق", value: "1.0.0+2026102208", file: "pubspec.yaml" },
+    { name: "تثبيت الجهاز", value: "PASS — Mira 1.0.0 (2026102208) على 00008110-00191986268BA01E دون مسح بيانات", file: "audit-out/rc14-outfit-gaps/device-install.txt" },
+    { name: "API إنتاج", value: "live dep-dbcp24ss728c73aqtfo0 commit 95c8989", file: "audit-out/rc14-outfit-gaps/DEPLOY.txt" },
+    { name: "رسوم الإطلالة في الحزمة", value: "10 ملفات تحت assets/icons/fashion/illustrations", file: "audit-out/rc14-outfit-gaps/illustrations-count.txt" }
   ],
   remaining: [
-    "تثبيت موقَّع على الجوال وإثبات الرسوم العشر على الجهاز.",
-    "رحلات الفستان العنابي/الأزرق الفاتح و8 رسائل — NOT_RUN.",
-    "تسجيل جوال فعلي — NOT_RUN."
+    "رحلات الفستان العنابي/الأزرق الفاتح والصورة متعددة القطع والمناسبتين وتبديل الحساب و8 رسائل مع انقطاع الشبكة — NOT_RUN (يدوي على الجهاز المثبّت).",
+    "تسجيل جوال فعلي للرحلات — NOT_RUN.",
+    "إثبات بصري على الجهاز أن الرسوم العشر تظهر في الواجهة (الملفات موجودة في الحزمة؛ العرض الحي بانتظار المالك)."
   ]
 };

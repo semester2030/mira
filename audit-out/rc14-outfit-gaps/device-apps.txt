@@ -1,0 +1,2 @@
+CK Sample Isolation   app.mira.camerakit.sample     2.5.0     111311844     
+Mira                  app.mira.beauty               1.0.0     2026102208    

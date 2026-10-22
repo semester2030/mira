@@ -1,0 +1,20 @@
+Executable=/Users/fayez/Desktop/mira/build/ios/iphoneos/Runner.app/Runner
+Identifier=app.mira.beauty
+Format=app bundle with Mach-O thin (arm64)
+CodeDirectory v=20400 size=111219 flags=0x0(none) hashes=3465+7 location=embedded
+Hash type=sha256 size=32
+CandidateCDHash sha256=6143e7b3903a067200275d88a767fcc632875341
+CandidateCDHashFull sha256=6143e7b3903a067200275d88a767fcc63287534195dd82cd9d87ed13e9d33b97
+Hash choices=sha256
+CMSDigest=6143e7b3903a067200275d88a767fcc63287534195dd82cd9d87ed13e9d33b97
+CMSDigestType=2
+CDHash=6143e7b3903a067200275d88a767fcc632875341
+Signature size=4787
+Authority=Apple Development: TARIQ ALDALBAHI (P9C9QSDZY9)
+Authority=Apple Worldwide Developer Relations Certification Authority
+Authority=Apple Root CA
+Signed Time=11 Jmd. I 1448 AH at 8:28:29 AM
+Info.plist entries=39
+TeamIdentifier=A97F7227YM
+Sealed Resources version=2 rules=10 files=308
+Internal requirements count=1 size=180

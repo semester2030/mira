@@ -1,0 +1,8 @@
+service: srv-d85ngcfavr4c73d3rk6g (mira-api)
+workspace: tea-d650eh9r0fns73cg2m5g
+failed_deploy: dep-dbcota3ncjis73b3ljmg commit 17c170a — nest build TS2367 in outfit-gaps-rc14.schema-tests.ts
+live_deploy: dep-dbcp24ss728c73aqtfo0 commit 95c898936d439d97aeb8ce5a452a4fc524a8dc66 status=live finishedAt=2026-10-22T04:30:37Z
+device_install: PASS UDID=00008110-00191986268BA01E bundle=app.mira.beauty version=1.0.0 build=2026102208 wipe=false
+codesign_root_cause: stale/sim native-assets for objective_c → 0xe8008014; fixed by flutter clean + wipe objective_c hooks cache + device-only rebuild. Do NOT resign Runner.app without entitlements (strips application-identifier).
+illustrations_in_app: 10 under assets/icons/fashion/illustrations
+live_journeys: NOT_RUN
