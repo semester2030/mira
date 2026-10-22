@@ -66,7 +66,7 @@ window.MIRA_CONSULT_DIALOGUE = {
     { id: "D32", title: "429 resume + quotaReserved", state: "implemented", evidence: "RC14" },
     { id: "D33", title: "ألوان مربوطة + جرّبي", state: "implemented", evidence: "RC14" },
     { id: "D36", title: "فهرس صور معزول", state: "implemented", evidence: "RC14" },
-    { id: "D11", title: "تثبيت البناء 2026102210", state: "in_progress", evidence: "قيد البناء/التثبيت" },
+    { id: "D11", title: "تثبيت البناء 2026102210", state: "implemented", evidence: "device install PASS wipe=false · dep-dbcqucs9v7es73brg6fg" },
     { id: "D10", title: "رحلات حية وجه+إطلالة", state: "awaiting_live", evidence: "NOT_RUN" }
   ],
   results: [

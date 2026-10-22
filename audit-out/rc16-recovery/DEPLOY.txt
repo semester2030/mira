@@ -1,0 +1,8 @@
+commit: 452c037a451d24ebccef602f0e228fa99e9c54b4
+api_service: srv-d85ngcfavr4c73d3rk6g mira-api-n4p3
+api_deploy: dep-dbcqucs9v7es73brg6fg status=live
+website_service: srv-d8g4tl5ckfvc73e3gsl0 mira-website
+website_deploy: dep-dbcqud49v7es73brg780 status=live
+site_url: https://mira-website.onrender.com/risk/consult-dialogue.html
+device_build: 1.0.0+2026102210 install=PASS wipe=false
+youcam_prod: BLOCKED_OWNER (ExpiredApiKey until Dashboard key rotate)

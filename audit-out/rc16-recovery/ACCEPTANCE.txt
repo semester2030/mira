@@ -1,18 +1,20 @@
 RC16 acceptance matrix (honest)
 
 LIVE
-- Face capture→real YouCam results: BLOCKED (prod ExpiredApiKey as of 2026-10-22T05:32Z; local key valid; owner must set Render PERFECT_API_KEY/PERFECT_CORP_API_KEY)
-- Lost response after complete analysis→replay: NOT_RUN (needs live face path + claim migration deploy)
-- Rapid retry / app relaunch / stale late result ignored: NOT_RUN (same)
-- Outfit burgundy+blue / same photo two occasions / wardrobe persist / multi-message consult: NOT_RUN (device journeys not re-executed this RC; RC14 code retained)
-- Provider cost not duplicated: NOT_RUN (claim+poll implemented; no live meter proof)
+- Face capture→real YouCam results: BLOCKED (prod ExpiredApiKey; local key valid InvalidParameters; owner must set Render PERFECT_API_KEY + PERFECT_CORP_API_KEY then Save and deploy)
+- Lost response after complete→claim replay: NOT_RUN (claim+migration live on dep-dbcqucs9v7es73brg6fg; needs successful face analysis first)
+- Rapid retry / relaunch / ignore stale late result: NOT_RUN
+- Outfit burgundy+blue / same photo two occasions / wardrobe / multi-message consult: NOT_RUN this RC (RC14 code retained; not re-driven on device)
+- Provider cost not duplicated: NOT_RUN (implemented claim+poll-before-reupload; no live meter proof)
 
-SIM / LOCAL
+SIM / LOCAL / PUBLISHED
 - skin-analysis-claim.schema-tests: PASS
-- tsc build: PASS (noEmit)
-- consult-dialogue JSDOM: PASS (8 task rows, 5 repairs, CONSULT_DIALOGUE_RC16)
-- Illustrations packaged in pubspec assets/icons/fashion/illustrations/: PRESENT (bundle check after iOS build)
+- tsc --noEmit: PASS
+- consult-dialogue JSDOM local: PASS (8 tasks, 5 repairs)
+- published https://mira-website.onrender.com/risk/consult-dialogue.html: PASS (hashes match; DOM 8/5; CONSULT_DIALOGUE_RC16)
+- Illustrations in Runner.app: PASS (10 files)
+- Device install 1.0.0+2026102210: PASS wipe=false commit=452c037
 
 NOTES
-- Face camera ON; outfit camera OFF (studio). No fake analysis results.
-- Automated Render secret write blocked by policy → owner Dashboard action required.
+- Face camera ON; outfit camera OFF (studio).
+- No fake analysis results. No full closure claimed.

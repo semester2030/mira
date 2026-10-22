@@ -1,0 +1,8 @@
+build/ios/iphoneos/Runner.app/Frameworks/objective_c.framework: replacing existing signature
+Identifier=io.flutter.flutter.native-assets.objective-c
+Authority=Apple Development: TARIQ ALDALBAHI (P9C9QSDZY9)
+Authority=Apple Worldwide Developer Relations Certification Authority
+Authority=Apple Root CA
+TeamIdentifier=A97F7227YM
+build/ios/iphoneos/Runner.app/Frameworks/objective_c.framework: valid on disk
+build/ios/iphoneos/Runner.app/Frameworks/objective_c.framework: satisfies its Designated Requirement

@@ -1,0 +1,13 @@
+pub_renderer=1fe32ace0e33a24537d54135da91e38ec2330da81ecef3d8e3452f49dc774572
+loc_renderer=1fe32ace0e33a24537d54135da91e38ec2330da81ecef3d8e3452f49dc774572
+pub_data=315dd8a6c26a8d02a60358417d5cd62dc656d69ffc61d1d1aee95b528c47a3ef
+loc_data=315dd8a6c26a8d02a60358417d5cd62dc656d69ffc61d1d1aee95b528c47a3ef
+pub_has_RC16=1
+pub_is_renderer=1
+pub_not_data_in_root=1
+{
+  "id": "CONSULT_DIALOGUE_RC16",
+  "task_rows": 8,
+  "repair_panels": 5,
+  "empty": false
+}

@@ -1,0 +1,14 @@
+MIRA_RECOVERY_RC16
+commit: 452c037a451d24ebccef602f0e228fa99e9c54b4
+build: 1.0.0+2026102210
+install: PASS wipe=false device=00008110-00191986268BA01E
+api_deploy: dep-dbcqucs9v7es73brg6fg live
+website_deploy: dep-dbcqud49v7es73brg780 live
+site: https://mira-website.onrender.com/risk/consult-dialogue.html
+zip: /Users/fayez/Desktop/MIRA_RECOVERY_RC16.zip
+sha256: 20d7fc676c39c2aeaffb15f82a1c4b035f50912f131ce39a7309faf297b39aae
+youcam: BLOCKED_OWNER — set PERFECT_API_KEY + PERFECT_CORP_API_KEY on Render Dashboard
+face_live: BLOCKED
+outfit_live: NOT_RUN
+claim_unit: PASS
+site_published_dom: PASS

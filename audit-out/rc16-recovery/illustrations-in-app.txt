@@ -1,0 +1,10 @@
+build/ios/iphoneos/Runner.app/Frameworks/App.framework/flutter_assets/assets/icons/fashion/illustrations/mira_piece_blouse.png
+build/ios/iphoneos/Runner.app/Frameworks/App.framework/flutter_assets/assets/icons/fashion/illustrations/mira_piece_jewelry.png
+build/ios/iphoneos/Runner.app/Frameworks/App.framework/flutter_assets/assets/icons/fashion/illustrations/mira_piece_abaya.png
+build/ios/iphoneos/Runner.app/Frameworks/App.framework/flutter_assets/assets/icons/fashion/illustrations/mira_piece_bag.png
+build/ios/iphoneos/Runner.app/Frameworks/App.framework/flutter_assets/assets/icons/fashion/illustrations/mira_piece_scarf.png
+build/ios/iphoneos/Runner.app/Frameworks/App.framework/flutter_assets/assets/icons/fashion/illustrations/mira_piece_heel.png
+build/ios/iphoneos/Runner.app/Frameworks/App.framework/flutter_assets/assets/icons/fashion/illustrations/mira_piece_belt.png
+build/ios/iphoneos/Runner.app/Frameworks/App.framework/flutter_assets/assets/icons/fashion/illustrations/mira_piece_skirt.png
+build/ios/iphoneos/Runner.app/Frameworks/App.framework/flutter_assets/assets/icons/fashion/illustrations/mira_piece_pants.png
+build/ios/iphoneos/Runner.app/Frameworks/App.framework/flutter_assets/assets/icons/fashion/illustrations/mira_piece_dress.png
