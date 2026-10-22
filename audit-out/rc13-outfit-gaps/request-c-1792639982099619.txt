@@ -1,0 +1,10 @@
+clientMessageId: c-1792639982099619
+decoded: 2026-10-22T03:33:02.099619Z UTC = 06:33:02 AST
+Render request log (same second):
+  POST /api/v1/consultation/sessions/0e37e4fa-503e-477f-ad54-9f7a5954dad5/messages/stream
+  statusCode=429
+  requestID=aa92054c-12ce-4c45
+  userAgent=Dart/3.10
+Failure stage: REQUEST (rate limit) — before model / stream / save / decode / display.
+Prior same-session 429s: 02:41Z … 03:28Z (retries also blocked).
+Fix: resume of same clientMessageId skips rate-limit increment.

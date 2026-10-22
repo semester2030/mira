@@ -97,9 +97,21 @@ class OutfitIntelligenceService {
 
     final cached = await cache.get(cacheKey);
     if (cached != null) {
+      // Always bind the retained copy — never the ephemeral picker/cache path.
       final cachedAnalysis = cached.analysis.copyWith(
-        frozenImagePath: outfitImage.path,
+        frozenImagePath: retained.path,
       );
+      try {
+        final fp = sha256.convert(bytes).toString();
+        await OutfitLocalImageIndex.remember(
+          key: fp,
+          absolutePath: retained.path,
+        );
+        await OutfitLocalImageIndex.remember(
+          key: retained.uri.pathSegments.last,
+          absolutePath: retained.path,
+        );
+      } catch (_) {/* local index is best-effort */}
       final cachedTrust = OutfitResultTrustPolicy.evaluate(cachedAnalysis);
       if (!cachedTrust.isBlocked) {
         return cachedAnalysis;

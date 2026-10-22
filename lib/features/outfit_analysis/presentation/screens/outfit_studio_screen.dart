@@ -150,9 +150,12 @@ class _OutfitStudioScreenState extends State<OutfitStudioScreen> {
                   onAskWhy: (color) => _openAdvisor(
                     focusExtra: 'لماذا اقترحتِ اللون $color؟',
                   ),
-                  onTryColor: (color) {
+                  onTryColor: (color, {String? piece}) {
                     setState(() {
                       _selectedColor = color;
+                      if (piece != null && piece.trim().isNotEmpty) {
+                        _selectedPiece = piece.trim();
+                      }
                       _index = 2;
                     });
                   },
@@ -160,7 +163,12 @@ class _OutfitStudioScreenState extends State<OutfitStudioScreen> {
                     focusExtra: 'أريد إبقاء لون الإطلالة كما هو',
                   ),
                 ),
-                _TryPage(analysis: widget.analysis, controller: _scrolls[2]),
+                _TryPage(
+                  analysis: widget.analysis,
+                  controller: _scrolls[2],
+                  selectedPiece: _selectedPiece,
+                  selectedColor: _selectedColor,
+                ),
                 _WardrobePage(
                   analysis: widget.analysis,
                   controller: _scrolls[3],
@@ -652,7 +660,7 @@ class _ColorsPage extends StatelessWidget {
   final String selectedPiece;
   final ValueChanged<String> onSelectColor;
   final ValueChanged<String> onAskWhy;
-  final ValueChanged<String> onTryColor;
+  final void Function(String color, {String? piece}) onTryColor;
   final VoidCallback onKeepLook;
 
   const _ColorsPage({
@@ -666,17 +674,121 @@ class _ColorsPage extends StatelessWidget {
     required this.onKeepLook,
   });
 
+  List<_BoundColor> _pieceBoundColors() {
+    final out = <_BoundColor>[];
+    void addAll(Iterable<String> colors, String piece, String source) {
+      for (final c in colors) {
+        final name = c.trim();
+        if (name.isEmpty) continue;
+        out.add(_BoundColor(nameAr: name, pieceLabel: piece, source: source));
+      }
+    }
+
+    final upperLabel = analysis.detectedPieces.cast<String?>().firstWhere(
+          (p) =>
+              p != null &&
+              (p.contains('فستان') ||
+                  p.contains('بلوزة') ||
+                  p.contains('قميص') ||
+                  p.contains('عباية') ||
+                  p.toLowerCase().contains('dress') ||
+                  p.toLowerCase().contains('top')),
+          orElse: () => analysis.clothingType.trim().isEmpty
+              ? 'العلوي'
+              : analysis.clothingType,
+        )!;
+    final lowerLabel = analysis.detectedPieces.cast<String?>().firstWhere(
+          (p) =>
+              p != null &&
+              (p.contains('تنورة') ||
+                  p.contains('بنطال') ||
+                  p.contains('بنطلون') ||
+                  p.toLowerCase().contains('skirt') ||
+                  p.toLowerCase().contains('pant')),
+          orElse: () => 'السفلي',
+        )!;
+
+    addAll(analysis.upperBodyColors, upperLabel, 'upper');
+    addAll(analysis.lowerBodyColors, lowerLabel, 'lower');
+    addAll(analysis.shoeColors, 'حذاء', 'shoe');
+    addAll(analysis.accessoryColors, 'إكسسوار', 'accessory');
+    if (out.isEmpty) {
+      addAll(analysis.dominantColors, selectedPiece, 'dominant');
+    }
+    return out;
+  }
+
+  List<_ColorSuggestion> _suggestionsFor(List<_BoundColor> observed) {
+    final observedNames = observed.map((o) => o.nameAr).toSet();
+    final recommendations = analysis.recommendedColors
+        .where((c) => c.trim().isNotEmpty && !observedNames.contains(c.trim()))
+        .take(3)
+        .toList();
+    if (recommendations.isEmpty) return const [];
+
+    final pieces = analysis.detectedPieces
+        .map((p) => p.trim())
+        .where((p) => p.isNotEmpty)
+        .toList();
+    final accessoryPieces = pieces
+        .where(
+          (p) =>
+              p.contains('حقيبة') ||
+              p.contains('حذاء') ||
+              p.contains('وشاح') ||
+              p.contains('حزام') ||
+              p.contains('مجوهرات') ||
+              p.toLowerCase().contains('bag') ||
+              p.toLowerCase().contains('shoe'),
+        )
+        .toList();
+
+    final out = <_ColorSuggestion>[];
+    for (var i = 0; i < recommendations.length; i++) {
+      final color = recommendations[i];
+      if (accessoryPieces.length > i) {
+        final piece = accessoryPieces[i];
+        out.add(
+          _ColorSuggestion(
+            colorAr: color,
+            pieceHint: piece,
+            reason:
+                'مقترح لـ$piece ليكمل ${selectedPiece.isEmpty ? 'الإطلالة' : selectedPiece} في ${analysis.occasion.labelAr}، لأنه يختلف عن الألوان المرصودة على القطعة نفسها.',
+            dataBacked: true,
+          ),
+        );
+      } else if (pieces.isNotEmpty && i == 0) {
+        out.add(
+          _ColorSuggestion(
+            colorAr: color,
+            pieceHint: selectedPiece.isEmpty ? pieces.first : selectedPiece,
+            reason:
+                'بديل لوني للنقاش حول ${selectedPiece.isEmpty ? pieces.first : selectedPiece} في ${analysis.occasion.labelAr}. لا توجد قطعة إكسسوار محددة في التحليل لربط الاقتراح تلقائياً.',
+            dataBacked: false,
+          ),
+        );
+      } else {
+        out.add(
+          _ColorSuggestion(
+            colorAr: color,
+            pieceHint: 'غير محدد',
+            reason:
+                'المعلومات غير كافية لربط هذا اللون بقطعة إكسسوار محددة من التحليل.',
+            dataBacked: false,
+          ),
+        );
+      }
+    }
+    return out;
+  }
+
   @override
   Widget build(BuildContext context) {
-    final observed = <String>{
-      ...analysis.dominantColors,
-      ...analysis.upperBodyColors,
-      ...analysis.lowerBodyColors,
-    }.map((c) => c.trim()).where((c) => c.isNotEmpty).toList();
-    final suggestions = analysis.recommendedColors
-        .where((c) => c.trim().isNotEmpty && !observed.contains(c))
-        .toList();
-    final canTry = analysis.segmentMap?.hasTrustedOverlay == true;
+    final boundColors = _pieceBoundColors();
+    final suggestions = _suggestionsFor(boundColors);
+    final maskOk = analysis.segmentMap?.hasTrustedOverlay == true;
+    final recognized = analysis.detectedPieces.isNotEmpty ||
+        analysis.clothingType.trim().isNotEmpty;
 
     return ListView(
       controller: controller,
@@ -684,22 +796,24 @@ class _ColorsPage extends StatelessWidget {
       children: [
         Text('اللون الظاهر', style: AppTypography.titleSmall),
         const SizedBox(height: 8),
-        if (observed.isEmpty)
+        if (boundColors.isEmpty)
           const _Hint('تعذر قراءة لون القماش من هذه الصورة.')
         else
           Wrap(
             spacing: 12,
             runSpacing: 12,
             children: [
-              for (final color in observed)
+              for (final bound in boundColors)
                 _ColorCircle(
-                  nameAr: color,
-                  subtitle: selectedPiece,
-                  selected: selectedColor == color,
+                  nameAr: bound.nameAr,
+                  subtitle: bound.pieceLabel,
+                  art: bound.pieceLabel,
+                  selected: selectedColor == bound.nameAr &&
+                      selectedPiece == bound.pieceLabel,
                   onTap: () {
-                    onSelectColor(color);
-                    final bound = FashionColorBinding.resolveDetailed(
-                      nameAr: color,
+                    onSelectColor(bound.nameAr);
+                    final resolved = FashionColorBinding.resolveDetailed(
+                      nameAr: bound.nameAr,
                       source: FashionColorSource.detected,
                     );
                     showModalBottomSheet<void>(
@@ -711,11 +825,11 @@ class _ColorsPage extends StatelessWidget {
                           mainAxisSize: MainAxisSize.min,
                           crossAxisAlignment: CrossAxisAlignment.stretch,
                           children: [
-                            Text(color, style: AppTypography.titleSmall),
+                            Text(bound.nameAr, style: AppTypography.titleSmall),
                             const SizedBox(height: 6),
                             Text(
-                              'على $selectedPiece · من الصورة'
-                              '${bound.hex == null ? '' : ' · ${bound.hex}'}'
+                              'على ${bound.pieceLabel} · مصدر: ${bound.source}'
+                              '${resolved.hex == null ? '' : ' · ${resolved.hex}'}'
                               '. التقدير يتأثر بالإضاءة.',
                               style: AppTypography.bodyMedium
                                   .copyWith(height: 1.4),
@@ -728,17 +842,10 @@ class _ColorsPage extends StatelessWidget {
                 ),
             ],
           ),
-        if (analysis.shoeColors.isNotEmpty) ...[
-          const SizedBox(height: 14),
-          Text('الحذاء', style: AppTypography.titleSmall),
-          const SizedBox(height: 8),
-          Wrap(
-            spacing: 12,
-            children: [
-              for (final c in analysis.shoeColors)
-                if (c.trim().isNotEmpty)
-                  _ColorCircle(nameAr: c, subtitle: 'حذاء', art: 'حذاء'),
-            ],
+        if (recognized && !maskOk) ...[
+          const SizedBox(height: 12),
+          const _Hint(
+            'تعرّفنا على القطع، لكن حدود التلوين غير كافية لهذه الصورة. المناقشة واختيار صورة أوضح متاحان.',
           ),
         ],
         const SizedBox(height: 14),
@@ -749,25 +856,55 @@ class _ColorsPage extends StatelessWidget {
         ),
         if (suggestions.isNotEmpty) ...[
           const SizedBox(height: 16),
-          Text('ألوان مكملة للإكسسوارات', style: AppTypography.titleSmall),
+          Text('اقتراحات لونية', style: AppTypography.titleSmall),
           const SizedBox(height: 8),
-          for (var i = 0; i < suggestions.take(3).length; i++)
+          for (final suggestion in suggestions)
             Padding(
               padding: const EdgeInsets.only(bottom: 8),
               child: _SuggestionRow(
-                colorAr: suggestions[i],
-                pieceHint: i == 0 ? 'حقيبة' : (i == 1 ? 'حذاء' : 'إكسسوار'),
-                reason:
-                    'يختلف عن اللون المرصود على $selectedPiece فيُظهره ضمن ${analysis.occasion.labelAr}.',
-                canTry: canTry,
-                onWhy: () => onAskWhy(suggestions[i]),
-                onTry: () => onTryColor(suggestions[i]),
+                colorAr: suggestion.colorAr,
+                pieceHint: suggestion.pieceHint,
+                reason: suggestion.reason,
+                canTry: maskOk &&
+                    suggestion.dataBacked &&
+                    suggestion.pieceHint != 'غير محدد',
+                onWhy: () => onAskWhy(suggestion.colorAr),
+                onTry: () => onTryColor(
+                  suggestion.colorAr,
+                  piece: suggestion.pieceHint,
+                ),
               ),
             ),
         ],
       ],
     );
   }
+}
+
+class _BoundColor {
+  final String nameAr;
+  final String pieceLabel;
+  final String source;
+
+  const _BoundColor({
+    required this.nameAr,
+    required this.pieceLabel,
+    required this.source,
+  });
+}
+
+class _ColorSuggestion {
+  final String colorAr;
+  final String pieceHint;
+  final String reason;
+  final bool dataBacked;
+
+  const _ColorSuggestion({
+    required this.colorAr,
+    required this.pieceHint,
+    required this.reason,
+    required this.dataBacked,
+  });
 }
 
 class _ColorCircle extends StatelessWidget {
@@ -932,8 +1069,15 @@ class _SuggestionRow extends StatelessWidget {
 class _TryPage extends StatelessWidget {
   final OutfitAnalysis analysis;
   final ScrollController controller;
+  final String? selectedPiece;
+  final String? selectedColor;
 
-  const _TryPage({required this.analysis, required this.controller});
+  const _TryPage({
+    required this.analysis,
+    required this.controller,
+    this.selectedPiece,
+    this.selectedColor,
+  });
 
   @override
   Widget build(BuildContext context) {
@@ -941,7 +1085,11 @@ class _TryPage extends StatelessWidget {
       controller: controller,
       padding: const EdgeInsets.only(bottom: 20),
       children: [
-        OutfitGarmentRecolorPanel(analysis: analysis),
+        OutfitGarmentRecolorPanel(
+          analysis: analysis,
+          initialGarmentLabelAr: selectedPiece,
+          initialColorAr: selectedColor,
+        ),
       ],
     );
   }
@@ -958,77 +1106,154 @@ class _WardrobePage extends StatefulWidget {
 }
 
 class _WardrobePageState extends State<_WardrobePage> {
-  late final Future<List<_HistoryItem>> _history = _load();
+  static const _pageSize = 12;
+  List<_HistoryItem> _items = const [];
+  int _visible = _pageSize;
+  bool _loading = true;
+  String? _error;
+  final _selected = <String>{};
 
-  Future<List<_HistoryItem>> _load() async {
-    final reports = await OutfitAnalysisRepositoryImpl().getHistory();
-    final items = <_HistoryItem>[];
-    for (final report in reports.take(12)) {
-      final path = await OutfitLocalImageIndex.pathFor(report.id);
-      items.add(_HistoryItem(report: report, localPath: path));
+  @override
+  void initState() {
+    super.initState();
+    _reload();
+  }
+
+  Future<void> _reload() async {
+    setState(() {
+      _loading = true;
+      _error = null;
+    });
+    try {
+      final reports = await OutfitAnalysisRepositoryImpl().getHistory();
+      final items = <_HistoryItem>[];
+      for (final report in reports) {
+        final path = await OutfitLocalImageIndex.pathFor(report.id);
+        items.add(_HistoryItem(report: report, localPath: path));
+      }
+      if (!mounted) return;
+      setState(() {
+        _items = items;
+        _visible = _pageSize;
+        _loading = false;
+        _selected.clear();
+      });
+    } catch (_) {
+      if (!mounted) return;
+      setState(() {
+        _loading = false;
+        _error = 'تعذر تحميل السجل.';
+      });
     }
-    return items;
   }
 
   @override
   Widget build(BuildContext context) {
-    return FutureBuilder<List<_HistoryItem>>(
-      future: _history,
-      builder: (context, snapshot) {
-        final items = snapshot.data ?? const <_HistoryItem>[];
-        return ListView(
-          controller: widget.controller,
-          padding: const EdgeInsets.fromLTRB(16, 4, 16, 20),
+    final shown = _items.take(_visible).toList();
+    final hasMore = _visible < _items.length;
+    return ListView(
+      controller: widget.controller,
+      padding: const EdgeInsets.fromLTRB(16, 4, 16, 20),
+      children: [
+        Row(
           children: [
-            Row(
-              children: [
-                Expanded(
-                  child: Text(
-                    'سجل التحليلات',
-                    style: AppTypography.titleSmall
-                        .copyWith(fontWeight: FontWeight.w800),
-                  ),
-                ),
-                if (items.length >= 2)
-                  TextButton.icon(
-                    onPressed: () => _compare(context, items),
-                    icon: const Icon(Icons.compare_rounded, size: 18),
-                    label: const Text('مقارنة'),
-                  ),
-              ],
+            Expanded(
+              child: Text(
+                'سجل التحليلات',
+                style: AppTypography.titleSmall
+                    .copyWith(fontWeight: FontWeight.w800),
+              ),
             ),
-            const SizedBox(height: 8),
-            if (snapshot.connectionState == ConnectionState.waiting)
-              const _Hint('جارٍ تحميل السجل…')
-            else if (snapshot.hasError)
-              _Hint('تعذر تحميل السجل.')
-            else if (items.isEmpty)
-              const _Hint('لا يوجد تحليل محفوظ بعد.')
-            else
-              GridView.builder(
-                shrinkWrap: true,
-                physics: const NeverScrollableScrollPhysics(),
-                itemCount: items.length,
-                gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
-                  crossAxisCount: 2,
-                  mainAxisSpacing: 10,
-                  crossAxisSpacing: 10,
-                  childAspectRatio: 0.82,
-                ),
-                itemBuilder: (context, i) => _HistoryCard(item: items[i]),
+            IconButton(
+              tooltip: 'تحديث',
+              onPressed: _loading ? null : _reload,
+              icon: const Icon(Icons.refresh_rounded, size: 20),
+            ),
+            if (_selected.length == 2)
+              TextButton.icon(
+                onPressed: () => _compareSelected(context),
+                icon: const Icon(Icons.compare_rounded, size: 18),
+                label: const Text('مقارنة'),
               ),
           ],
-        );
-      },
+        ),
+        const SizedBox(height: 4),
+        Text(
+          'اختاري سجلين للمقارنة. الرسم التوضيحي لا يعني صورة محفوظة.',
+          style: AppTypography.labelSmall.copyWith(
+            color: AppColors.textSecondary,
+          ),
+        ),
+        const SizedBox(height: 8),
+        if (_loading)
+          const _Hint('جارٍ تحميل السجل…')
+        else if (_error != null)
+          _Hint(_error!)
+        else if (shown.isEmpty)
+          const _Hint('لا يوجد تحليل محفوظ بعد.')
+        else ...[
+          GridView.builder(
+            shrinkWrap: true,
+            physics: const NeverScrollableScrollPhysics(),
+            itemCount: shown.length,
+            gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
+              crossAxisCount: 2,
+              mainAxisSpacing: 10,
+              crossAxisSpacing: 10,
+              childAspectRatio: 0.82,
+            ),
+            itemBuilder: (context, i) {
+              final item = shown[i];
+              final id = item.report.id?.trim();
+              final key = (id == null || id.isEmpty) ? 'idx-$i' : id;
+              final selected = _selected.contains(key);
+              return _HistoryCard(
+                item: item,
+                selected: selected,
+                onToggleSelect: () {
+                  setState(() {
+                    if (selected) {
+                      _selected.remove(key);
+                    } else if (_selected.length < 2) {
+                      _selected.add(key);
+                    } else {
+                      _selected
+                        ..clear()
+                        ..add(key);
+                    }
+                  });
+                },
+              );
+            },
+          ),
+          if (hasMore)
+            Padding(
+              padding: const EdgeInsets.only(top: 12),
+              child: OutlinedButton(
+                onPressed: () => setState(() => _visible += _pageSize),
+                child: Text('تحميل المزيد (${_items.length - _visible})'),
+              ),
+            ),
+        ],
+      ],
     );
   }
 
-  void _compare(BuildContext context, List<_HistoryItem> items) {
-    final a = items[0].report;
-    final b = items[1].report;
+  void _compareSelected(BuildContext context) {
+    final picked = <_HistoryItem>[];
+    for (var i = 0; i < _items.length; i++) {
+      final item = _items[i];
+      final id = item.report.id?.trim();
+      final key = (id == null || id.isEmpty) ? 'idx-$i' : id;
+      if (_selected.contains(key)) picked.add(item);
+    }
+    if (picked.length != 2) return;
+    final a = picked[0];
+    final b = picked[1];
     showModalBottomSheet<void>(
       context: context,
       showDragHandle: true,
+      isScrollControlled: true,
       builder: (ctx) => Padding(
         padding: const EdgeInsets.fromLTRB(20, 8, 20, 28),
         child: Column(
@@ -1036,23 +1261,67 @@ class _WardrobePageState extends State<_WardrobePage> {
           crossAxisAlignment: CrossAxisAlignment.stretch,
           children: [
             Text('مقارنة إطلالتين', style: AppTypography.titleSmall),
-            const SizedBox(height: 10),
+            const SizedBox(height: 12),
+            Row(
+              children: [
+                Expanded(child: _CompareThumb(item: a)),
+                const SizedBox(width: 10),
+                Expanded(child: _CompareThumb(item: b)),
+              ],
+            ),
+            const SizedBox(height: 12),
             Text(
-              'الأولى: ${a.occasionLabelAr} · ${a.garmentType} · ${a.dominantColors.take(2).join('، ')}',
+              'الأولى: ${a.report.occasionLabelAr} · ${a.report.garmentType} · ${a.report.dominantColors.take(2).join('، ')}'
+              '${a.report.createdAt == null ? '' : ' · ${a.report.createdAt!.year}/${a.report.createdAt!.month}/${a.report.createdAt!.day}'}',
               style: AppTypography.bodyMedium.copyWith(height: 1.4),
             ),
             const SizedBox(height: 6),
             Text(
-              'الثانية: ${b.occasionLabelAr} · ${b.garmentType} · ${b.dominantColors.take(2).join('، ')}',
+              'الثانية: ${b.report.occasionLabelAr} · ${b.report.garmentType} · ${b.report.dominantColors.take(2).join('، ')}'
+              '${b.report.createdAt == null ? '' : ' · ${b.report.createdAt!.year}/${b.report.createdAt!.month}/${b.report.createdAt!.day}'}',
               style: AppTypography.bodyMedium.copyWith(height: 1.4),
             ),
             const SizedBox(height: 10),
-            const Text(
-              'الدرجات الرقمية غير معروضة دون منهجية مدعومة.',
-              style: TextStyle(height: 1.4),
+            Text(
+              'المقترح/التجربة/الارتداء المؤكد تظهر فقط عند وجود بيانات محفوظة — المعاينة وحدها لا تثبت الارتداء.',
+              style: AppTypography.labelSmall.copyWith(
+                color: AppColors.textSecondary,
+                height: 1.4,
+              ),
             ),
           ],
         ),
+      ),
+    );
+  }
+}
+
+class _CompareThumb extends StatelessWidget {
+  final _HistoryItem item;
+
+  const _CompareThumb({required this.item});
+
+  @override
+  Widget build(BuildContext context) {
+    final path = item.localPath;
+    final file = path == null ? null : File(path);
+    final hasPhoto = file != null && file.existsSync();
+    return AspectRatio(
+      aspectRatio: 0.85,
+      child: ClipRRect(
+        borderRadius: BorderRadius.circular(14),
+        child: hasPhoto
+            ? Image.file(file, fit: BoxFit.cover)
+            : ColoredBox(
+                color: AppColors.primaryLight,
+                child: Center(
+                  child: Text(
+                    'الصورة غير محفوظة محلياً',
+                    textAlign: TextAlign.center,
+                    style: AppTypography.labelSmall,
+                  ),
+                ),
+              ),
       ),
     );
   }
@@ -1067,8 +1336,14 @@ class _HistoryItem {
 
 class _HistoryCard extends StatelessWidget {
   final _HistoryItem item;
+  final bool selected;
+  final VoidCallback? onToggleSelect;
 
-  const _HistoryCard({required this.item});
+  const _HistoryCard({
+    required this.item,
+    this.selected = false,
+    this.onToggleSelect,
+  });
 
   @override
   Widget build(BuildContext context) {
@@ -1077,8 +1352,7 @@ class _HistoryCard extends StatelessWidget {
     final dateText = date == null
         ? 'بدون تاريخ'
         : '${date.year}/${date.month}/${date.day}';
-    final file =
-        item.localPath == null ? null : File(item.localPath!);
+    final file = item.localPath == null ? null : File(item.localPath!);
     final hasPhoto = file != null && file.existsSync();
     final swatch = report.dominantColors
         .map((c) => FashionColorBinding.resolveDetailed(nameAr: c).color)
@@ -1091,7 +1365,9 @@ class _HistoryCard extends StatelessWidget {
       borderRadius: BorderRadius.circular(18),
       child: InkWell(
         borderRadius: BorderRadius.circular(18),
+        onLongPress: onToggleSelect,
         onTap: () {
+          onToggleSelect?.call();
           showModalBottomSheet<void>(
             context: context,
             showDragHandle: true,
@@ -1111,78 +1387,101 @@ class _HistoryCard extends StatelessWidget {
                     '${report.dominantColors.isEmpty ? '' : ' · ${report.dominantColors.take(3).join('، ')}'}',
                     style: AppTypography.bodyMedium.copyWith(height: 1.4),
                   ),
+                  const SizedBox(height: 8),
+                  Text(
+                    hasPhoto
+                        ? 'الصورة محفوظة محلياً على هذا الجهاز.'
+                        : 'ملف الصورة غير موجود محلياً — أي رسم توضيحي ليس صورتكِ.',
+                    style: AppTypography.labelSmall.copyWith(
+                      color: AppColors.textSecondary,
+                      height: 1.35,
+                    ),
+                  ),
                 ],
               ),
             ),
           );
         },
-        child: Padding(
-          padding: const EdgeInsets.all(10),
-          child: Column(
-            crossAxisAlignment: CrossAxisAlignment.stretch,
-            children: [
-              Expanded(
-                child: ClipRRect(
-                  borderRadius: BorderRadius.circular(14),
-                  child: hasPhoto
-                      ? Image.file(file, fit: BoxFit.cover)
-                      : ColoredBox(
-                          color: AppColors.primaryLight,
-                          child: Column(
-                            mainAxisAlignment: MainAxisAlignment.center,
-                            children: [
-                              OutfitPieceArt.visual(
-                                label: report.garmentType,
-                                size: 36,
-                              ),
-                              const SizedBox(height: 6),
-                              Text(
-                                'بلا صورة محفوظة',
-                                style: AppTypography.labelSmall.copyWith(
+        child: DecoratedBox(
+          decoration: BoxDecoration(
+            borderRadius: BorderRadius.circular(18),
+            border: Border.all(
+              color: selected ? AppColors.primary : Colors.transparent,
+              width: 2,
+            ),
+          ),
+          child: Padding(
+            padding: const EdgeInsets.all(10),
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.stretch,
+              children: [
+                Expanded(
+                  child: ClipRRect(
+                    borderRadius: BorderRadius.circular(14),
+                    child: hasPhoto
+                        ? Image.file(file, fit: BoxFit.cover)
+                        : ColoredBox(
+                            color: AppColors.primaryLight,
+                            child: Column(
+                              mainAxisAlignment: MainAxisAlignment.center,
+                              children: [
+                                Icon(
+                                  Icons.hide_image_outlined,
+                                  size: 28,
                                   color: AppColors.textSecondary,
                                 ),
-                              ),
-                              if (swatch.isNotEmpty) ...[
-                                const SizedBox(height: 8),
-                                Row(
-                                  mainAxisAlignment: MainAxisAlignment.center,
-                                  children: [
-                                    for (final c in swatch)
-                                      Container(
-                                        width: 12,
-                                        height: 12,
-                                        margin: const EdgeInsets.symmetric(
-                                          horizontal: 2,
-                                        ),
-                                        decoration: BoxDecoration(
-                                          shape: BoxShape.circle,
-                                          color: c,
-                                          border: Border.all(color: Colors.white),
-                                        ),
-                                      ),
-                                  ],
+                                const SizedBox(height: 6),
+                                Text(
+                                  'الصورة غير محفوظة',
+                                  textAlign: TextAlign.center,
+                                  style: AppTypography.labelSmall.copyWith(
+                                    color: AppColors.textSecondary,
+                                  ),
                                 ),
+                                if (swatch.isNotEmpty) ...[
+                                  const SizedBox(height: 8),
+                                  Row(
+                                    mainAxisAlignment: MainAxisAlignment.center,
+                                    children: [
+                                      for (final c in swatch)
+                                        Container(
+                                          width: 12,
+                                          height: 12,
+                                          margin: const EdgeInsets.symmetric(
+                                            horizontal: 2,
+                                          ),
+                                          decoration: BoxDecoration(
+                                            shape: BoxShape.circle,
+                                            color: c,
+                                            border: Border.all(
+                                              color: Colors.white,
+                                            ),
+                                          ),
+                                        ),
+                                    ],
+                                  ),
+                                ],
                               ],
-                            ],
+                            ),
                           ),
-                        ),
+                  ),
                 ),
-              ),
-              const SizedBox(height: 8),
-              Text(
-                report.occasionLabelAr,
-                maxLines: 1,
-                overflow: TextOverflow.ellipsis,
-                style: AppTypography.labelLarge
-                    .copyWith(fontWeight: FontWeight.w800),
-              ),
-              Text(
-                dateText,
-                style: AppTypography.labelSmall.copyWith(
-                  color: AppColors.textSecondary,
+                const SizedBox(height: 8),
+                Text(
+                  report.occasionLabelAr,
+                  maxLines: 1,
+                  overflow: TextOverflow.ellipsis,
+                  style: AppTypography.labelLarge
+                      .copyWith(fontWeight: FontWeight.w800),
                 ),
-              ),
-            ],
+                Text(
+                  dateText,
+                  style: AppTypography.labelSmall.copyWith(
+                    color: AppColors.textSecondary,
+                  ),
+                ),
+              ],
+            ),
           ),
         ),
       ),

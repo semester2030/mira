@@ -26,8 +26,16 @@ import '../../utils/fashion_color_binding.dart';
 /// Includes garment picker, color chips, editable Arabic prompt, and explicit apply.
 class OutfitGarmentRecolorPanel extends StatefulWidget {
   final OutfitAnalysis analysis;
+  /// Seeded from «ألوانك → جرّبيه» so the panel opens on the chosen piece/color.
+  final String? initialGarmentLabelAr;
+  final String? initialColorAr;
 
-  const OutfitGarmentRecolorPanel({super.key, required this.analysis});
+  const OutfitGarmentRecolorPanel({
+    super.key,
+    required this.analysis,
+    this.initialGarmentLabelAr,
+    this.initialColorAr,
+  });
 
   @override
   State<OutfitGarmentRecolorPanel> createState() => _OutfitGarmentRecolorPanelState();
@@ -52,14 +60,53 @@ class _OutfitGarmentRecolorPanelState extends State<OutfitGarmentRecolorPanel>
   @override
   void initState() {
     super.initState();
-    _garmentLabelAr = _initialGarmentLabel();
-    _selectedColorAr = _colorOptions.isNotEmpty ? _colorOptions.first.nameAr : null;
+    _garmentLabelAr = _resolveInitialGarment();
+    _selectedColorAr = _resolveInitialColor();
     _pulseController = AnimationController(
       vsync: this,
       duration: const Duration(milliseconds: 1400),
     )..repeat(reverse: true);
     _syncPromptFromSelection();
     _promptController.addListener(_onPromptEdited);
+  }
+
+  @override
+  void didUpdateWidget(covariant OutfitGarmentRecolorPanel oldWidget) {
+    super.didUpdateWidget(oldWidget);
+    final garmentChanged =
+        widget.initialGarmentLabelAr != oldWidget.initialGarmentLabelAr;
+    final colorChanged = widget.initialColorAr != oldWidget.initialColorAr;
+    if (!garmentChanged && !colorChanged) return;
+    setState(() {
+      if (garmentChanged) _garmentLabelAr = _resolveInitialGarment();
+      if (colorChanged) _selectedColorAr = _resolveInitialColor();
+      _promptEdited = false;
+      _syncPromptFromSelection();
+    });
+  }
+
+  String _resolveInitialGarment() {
+    final seeded = widget.initialGarmentLabelAr?.trim();
+    if (seeded != null && seeded.isNotEmpty) {
+      final options = GarmentRecolorPromptBuilder.garmentOptions;
+      final match = options.cast<String?>().firstWhere(
+            (o) => o != null && (o == seeded || o.contains(seeded) || seeded.contains(o)),
+            orElse: () => null,
+          );
+      if (match != null) return match;
+      return seeded;
+    }
+    return _initialGarmentLabel();
+  }
+
+  String? _resolveInitialColor() {
+    final seeded = widget.initialColorAr?.trim();
+    if (seeded != null && seeded.isNotEmpty) {
+      final known = _colorOptions.where((c) => c.nameAr == seeded).toList();
+      if (known.isNotEmpty) return known.first.nameAr;
+      return seeded;
+    }
+    return _colorOptions.isNotEmpty ? _colorOptions.first.nameAr : null;
   }
 
   @override

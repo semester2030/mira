@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 
 import '../../theme/colors.dart';
 import '../../theme/typography.dart';
+import 'mce_display_text.dart';
 
 /// Animated streaming assistant text (MCE Phase 4).
 class MceStreamingText extends StatelessWidget {
@@ -16,12 +17,14 @@ class MceStreamingText extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final display = MceDisplayText.sanitize(text);
     return Row(
       crossAxisAlignment: CrossAxisAlignment.end,
       children: [
         Expanded(
           child: Text(
-            text,
+            display,
+            textDirection: TextDirection.rtl,
             style: AppTypography.bodyMedium.copyWith(height: 1.55),
           ),
         ),

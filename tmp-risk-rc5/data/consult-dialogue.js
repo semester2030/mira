@@ -1,137 +1,85 @@
 window.MIRA_CONSULT_DIALOGUE = {
-  id: "CONSULT_DIALOGUE_RC12",
+  id: "CONSULT_DIALOGUE_RC13",
   title: "محادثة الجمال والصور",
   updatedAt: "2026-10-22",
   approval: "DRAFT_FOR_OWNER_REVIEW",
   paidCalls: 0,
   modelCalled: false,
   release: {
-    published: "RC12: تقريب استديو الإطلالة من الموكب المرجعي (أصول موضحة + بطاقات متجاورة + فهرس صور محلية للسجل) فوق إصلاحات RC11.",
-    technicallyTested: "rc12_outfit_visual 2/2 · rc11_outfit_ux 3/3 · ألوان 4/4. أصول illustrations PNG بشفافية. لا مسار إطلالة موازٍ.",
-    awaitingOwner: "لقطات جهاز مقارنة بالمرجع + رحلة الفستانين الحية NOT_RUN في هذه الجولة."
+    published: "RC13: فجوات ما بعد RC12 — محادثة (429/إعادة محاولة)، أصول illustrations في الحزمة، ألوان مربوطة بالقطعة، جرّبيه ينقل الاختيار، دولاب بتحميل المزيد ومقارنة اختيارية، فهرس صور بالحساب.",
+    technicallyTested: "rc13_outfit_gaps · rc12_visual · أدلة Render لـ c-1792639982099619=429 عند الطلب قبل البث. لا مسار إطلالة موازٍ.",
+    awaitingOwner: "لقطات/تسجيل جهاز حي للشاشات الأربع والرسوم بعد إعادة البناء مع illustrations؛ رحلة الفستانين؛ 8 رسائل متتابعة على الجهاز."
   },
   priorRelease: {
-    id: "CONSULT_DIALOGUE_RC11",
-    published: "RC11: clientSaveId≤64 · نبيتي #781828 · أهلية تلوين مبكرة.",
-    note: "أدلة RC10/RC11 في evidence/rc10 و audit-out/rc11 — لا تُمسح."
+    id: "CONSULT_DIALOGUE_RC12",
+    published: "RC12: أصول موضحة + بطاقات متجاورة + فهرس صور محلية.",
+    note: "أدلة RC10–RC12 محفوظة — لا تُمسح. RC12 لم يُثبَّت الرسوم في الحزمة لأن pubspec لم يعلن مجلد illustrations."
   },
   repairs: [
     {
-      problem: "المظهر بعيد عن الموكب المرجعي: بطاقات نصية كبيرة بلا رسوم قطع، والسجل بلا صور حقيقية.",
-      cause: "الاستديو لم يربط سجل أيقونات الأزياء ولا أصولاً موضحة؛ الخادم لا يخزّن صورة اللقطة.",
-      files: "outfit_studio_screen.dart · outfit_piece_art.dart · outfit_local_image_index.dart · assets/icons/fashion/illustrations/*",
-      fix: "أصول PNG شفافة للقطع؛ خريطة مركزية؛ بطاقات متجاورة؛ فهرس محلي fingerprint/reportId→مسار الصورة المحتفظ بها؛ حالة مختصرة بلا صورة.",
-      check: "rc12_outfit_visual_test · جرد INVENTORY RC12."
+      problem: "طلب المحادثة c-1792639982099619 فشل في التسجيل الأخير.",
+      cause: "مرحلة الطلب: POST …/messages/stream أعاد 429 Too Many Requests في 2026-10-22T03:33:02Z (نفس ثانية clientMessageId). إعادة المحاولة بنفس الهوية كانت تمرّ من claim→resume ثم assertWithinLimit فتستهلك/تُرفض مجدداً قبل النموذج/البث/الحفظ.",
+      files: "consultation-orchestrator.service.ts · mira_advisor_screen.dart · dialogue_outbound.dart",
+      fix: "تخطي حد الاستخدام عند claimStatus=resume لنفس clientMessageId؛ إعادة المحاولة تبقي الهوية وتعيد الرد المحفوظ إن اكتمل؛ بطاقة سياق صغيرة + فصل مناسبة التقرير عن سياق النقاش؛ sanitize لـ ** وMarkdown.",
+      check: "سجلات Render request 429 مطابقة للبصمة الزمنية؛ اختبار DialogueOutbound.retry؛ اختبار MceDisplayText."
     },
     {
-      problem: "تعذر حفظ تقرير الإطلالة — 400 · تتبع c-1792632474988668.",
-      cause: "clientSaveId = μs + SHA-256 كاملة (~81 حرفاً) يتجاوز MaxLength(64) على SaveOutfitSnapshotDto. طلبات 400 على /snapshots @ 01:27–01:28Z قبل/أثناء نشر Redis.",
-      files: "mira_advisor_screen.dart · outfit_consultation_mapper.dart · save-outfit-snapshot.dto.ts",
-      fix: "buildClientSaveId يقصّ البصمة إلى 12 ويبقى ≤64؛ يعيد توليد المعرف إن وُجد قديم أطول في prefs.",
-      check: "rc11_outfit_ux_test + outfit-recovery-rc11.schema-tests.ts يرفضان الطول الزائد ويقبلان القصير."
+      problem: "رسوم القطع العشر موجودة في RC12 لكنها لا تظهر في التطبيق/التسجيل.",
+      cause: "Flutter لا يضمّن المجلدات الفرعية تلقائياً. pubspec أعلن assets/icons/fashion/ فقط فغابت illustrations عن AssetManifest وحزمة iOS (0 ملفات mira_piece في Runner.app).",
+      files: "pubspec.yaml · outfit_piece_art.dart",
+      fix: "إعلان assets/icons/fashion/illustrations/ صراحة؛ تسجيل فشل تحميل الأصل في assert بدل إخفاء صامت بالكامل.",
+      check: "بعد إعادة البناء يجب ظهور illustrations في flutter_assets؛ rc13_outfit_gaps + rc12_visual."
     },
     {
-      problem: "دائرة نبيتي تظهر وردية فاتحة.",
-      cause: "fuzzyByName('نبيتي') اختار أطول تطابق «نبيتي فاتح جداً» #ECD5D5.",
-      files: "fashion_color_binding.dart · outfit_studio_screen.dart · outfit_garment_recolor_panel.dart",
-      fix: "shortNameHex نبيتي/عنابي=#781828؛ alias نبيتي→نبيتي غامق؛ تفضيل غامق/متوسط على فاتح في fuzzy.",
-      check: "rc11_outfit_ux_test: luminance نبيتي < 0.25 وhex #781828."
-    },
-    {
-      problem: "تجربة التلوين تُفهم كتعديل منفَّذ دون أهلية واضحة؛ والسجل يعرض درجة مدعومة بلا دليل.",
-      cause: "رسالة الأهلية متأخرة؛ _HistoryTile استخدم score>0.",
-      files: "outfit_garment_recolor_panel.dart · outfit_studio_screen.dart",
-      fix: "أهلية مبكرة + مسار مناقشة؛ دوائر مرصودة/مقترحة منفصلة؛ درجة غير متاحة في السجل دون ادّعاء دعم.",
-      check: "تحليل الواجهة؛ اختبارات الألوان؛ جرد INVENTORY."
-    },
-
-    {
-      problem: "Redis في الصحة DEGRADED رغم توفر mira-redis، فيفشل حد الاستخدام بـ RATE_LIMIT_UNAVAILABLE.",
-      cause: "RedisService كان يفتح الاتصال بكسل (lazyConnect) ويُرجع العميل قبل ready؛ ومقارنة status==='ready' كسرت بناء Nest (TS2367) ففشل dep-dbcmafjbc2fs738k3k0g.",
-      files: "mira-api/src/redis/redis.service.ts",
-      fix: "اتصال صريح عند الإقلاع مع ping وعلم ready منفصل؛ إعادة المحاولة عند فشل العداد دون تعطيل fail_closed. إصلاح العلم في 207871b بعد فشل البناء.",
-      check: "LIVE 2026-10-22T01:28Z: redis.state=AVAILABLE · audit-out/rc10-outfit-recovery/health-after-rc10.json"
-    },
-    {
-      problem: "الضغط المتكرر على اسألي ميرا قد ينشئ جلستين، واستئناف جلسة محذوفة يربط المستخدم بخطأ غير واضح.",
-      cause: "لا قفل على _ensureSession، وgetForUser كان يقبل status=deleted، ورسالة الخطأ واحدة لكل المراحل.",
-      files: "mira_advisor_screen.dart · consultation-session.service.ts",
-      fix: "قفل in-flight لبدء الجلسة، رفض الجلسات المحذوفة، ومسح تفضيل الاستئناف عند 404، ورسائل عربية حسب المرحلة (حفظ/استئناف/جلسة) مع رقم تتبع عند الإمكان.",
-      check: "تحليل Dart نظيف. اختبار RC10 للاختصاص والحفظ."
-    },
-    {
-      problem: "إعادة حفظ نفس التحليل كانت تعتمد على مسح آخر 30 صفًا بالبصمة؛ تحليل جديد لنفس الصورة في مناسبة أخرى كان يُخلط بإعادة المحاولة.",
-      cause: "المطابقة كانت imageFingerprint+analysisVersion الدائم، وanalysisVersion ثابت outfit-intel-v2.",
-      files: "save-outfit-snapshot.dto.ts · outfit-analysis.service.ts · schema.prisma · outfit_consultation_mapper.dart · mira_advisor_screen.dart",
-      fix: "clientSaveId اختياري مع قيد فريد (userId, clientSaveId). إعادة المحاولة تعيد الصف نفسه؛ تحليل جديد يولّد معرف حفظ جديد. أُزيلت إعادة الاستخدام الدائمة بالبصمة وحدها.",
-      check: "outfit-recovery-rc10 يقبل clientSaveId ويرفض scoreSupported."
-    },
-    {
-      problem: "بعد سؤال عن طائر/صقر كان جواب سؤال الحذاء يذكر الموضوع السابق.",
-      cause: "تاريخ المحادثة كاملاً يُمرَّر للنموذج بلا عزل للدورات الخارجة عن الاختصاص.",
-      files: "consultation-scope.ts · consultation-orchestrator.service.ts",
-      fix: "historyForBeautyTurn يحذف أزواج الأسئلة الخارجة وإعادة التوجيه قبل التجميع. answerStaysInScope يرفض ذكر الصقر/القطة في جواب سؤال جمال.",
-      check: "RC10: تنظيف التاريخ وطول 1 بعد سؤال الحذاء؛ رفض جواب يذكر الصقر."
-    },
-    {
-      problem: "درجة قديمة بلا ألوان كانت تُعامل كدرجة مدعومة في المستشار (scoreSupported !== false).",
-      cause: "غياب الحقل كان يعني true.",
-      files: "mce-fact-extractor.service.ts · mce-prompt-assembler.service.ts",
-      fix: "الدرجة تُعرض/تُرسل كحقيقة فقط إذا scoreSupported === true صراحة بعد التحليل.",
-      check: "sanitize ما زال يحذف الدرجة عند غياب الألوان."
-    },
-    {
-      problem: "فستان سهرة للجامعة كان يُمدح أسلوبه ثم يُحذَّر من الرسمية في الصفحة نفسها.",
-      cause: "_buildQuickMatchReasons كان يمدح أي styleTypeAr بما فيها سهرة حتى لمناسبة الجامعة.",
-      files: "deterministic_outfit_engine.dart",
-      fix: "_styleFitsOccasion يمنع مدح سهرة للجامعة/كاجوال، ويضيف سبب عدم ملاءمة صريح.",
-      check: "تحليل الملف. يحتاج صورة حية لاحقًا."
-    },
-    {
-      problem: "تبويب جرّبي يكرر صورة البطل فوق لوحة التلوين.",
-      cause: "_Photo المشترك يظهر فوق IndexedStack في كل التبويبات بما فيها جرّبي التي تعرض Image.file مرة أخرى.",
+      problem: "ألوان الأعلى/الأسفل تُنسب كلها للقطعة المختارة؛ اقتراحات حقيبة/حذاء بترتيب القائمة؛ جرّبيه لا ينقل الاختيار للوحة.",
+      cause: "دمج dominant+upper+lower تحت subtitle واحد؛ pieceHint=i==0?حقيبة؛ _TryPage بلا selectedColor/Piece.",
       files: "outfit_studio_screen.dart · outfit_garment_recolor_panel.dart",
-      fix: "إخفاء _Photo في تبويب جرّبي، وعرض الأصل داخل اللوحة فقط قبل نتيجة التجربة، مع فصل لاحق بين الأصل والمعاينة عند وجود نتيجة.",
-      check: "تحليل الواجهة نظيف."
+      fix: "ألوان مربوطة بمصدر/قطعة؛ اقتراحات فقط عند بيانات كافية؛ تمرير initialGarment/Color إلى لوحة التلوين؛ فصل رسالة التعرف عن أهلية القناع.",
+      check: "تحليل الواجهة؛ اختبارات RC13."
+    },
+    {
+      problem: "مسار cache يعيد frozenImagePath للصورة الأصلية ويتجاوز النسخة المحتفظ بها؛ السجل يقطع عند 12؛ المقارنة تأخذ أول سجلين فقط.",
+      cause: "copyWith(frozenImagePath: outfitImage.path)؛ take(12)؛ compare items[0]/[1].",
+      files: "outfit_intelligence_service.dart · outfit_local_image_index.dart · outfit_studio_screen.dart",
+      fix: "cache يستخدم retained.path ويفهرس؛ فهرس بمفتاح الحساب+المفتاح؛ تحميل المزيد؛ مقارنة سجلين تختارهما المستخدمة؛ لا استبدال صورة مفقودة برسم يوحي بأنها صورة المستخدم.",
+      check: "تحليل المسارات؛ اختبارات محلية."
     }
   ],
   scope: "مستشارة تفاعلية للجمال والعناية والمكياج والشعر والإطلالات. تصوير الإطلالة بالكاميرا متوقف مؤقتًا، واختيار صور الاستديو هو المسار المتاح. تصوير الوجه وتحليل البشرة يبقيان متاحين.",
   decisions: [
     "تصوير الإطلالة بالكاميرا معطل مؤقتًا عبر MIRA_OUTFIT_CAMERA_CAPTURE.",
     "صور الاستديو تبقى مسار تحليل الإطلالة والمحادثة.",
-    "fail_closed لحد الاستخدام يبقى؛ الإصلاح يعيد اتصال Redis لا يتجاوز الضابط."
+    "fail_closed لحد الاستخدام يبقى؛ استئناف نفس clientMessageId لا يحرق حصة إضافية.",
+    "تغيير مناسبة النقاش لا يغيّر مناسبة التقرير الأصلي بصمت."
   ],
   tasks: [
     { id: "D22", title: "أقسام الإطلالة الأربعة واستئناف محادثة التحليل", state: "implemented", evidence: "outfit_studio_screen.dart · جرّبي بلا تكرار صورة البطل" },
     { id: "D23", title: "حفظ ذري بإعادة المحاولة دون خلط تحليل جديد", state: "verified_local", evidence: "outfit-recovery-rc10.schema-tests.ts · clientSaveId" },
     { id: "D24", title: "عزل تاريخ الاختصاص بعد موضوع خارج الجمال", state: "verified_local", evidence: "outfit-recovery-rc10.schema-tests.ts · historyForBeautyTurn" },
     { id: "D25", title: "جلسة محذوفة ورسائل مراحل واضحة", state: "implemented", evidence: "consultation-session.service.ts · mira_advisor_screen.dart" },
-    { id: "D26", title: "Redis AVAILABLE بعد إصلاح ready-flag", state: "verified_live", evidence: "health-after-rc10.json · dep-dbcmckss728c73aof56g · Redis critical controls connected" },
-    { id: "D10", title: "جودة إجابات النموذج الحية", state: "awaiting_live", evidence: "Redis AVAILABLE؛ رحلة الحذاء بعد الطائر NOT_RUN بلا حساب جلسة في هذه الجولة" },
-    { id: "D11", title: "تثبيت بناء RC10 على الجهاز", state: "verified_device", evidence: "flutter run --release ثبّت وأطلق app.mira.beauty بعد فشل codesign لـ flutter install. تحذير: flutter install أزال النسخة السابقة قبل الفشل — قد فُقدت بيانات محلية." },
-    { id: "D27", title: "إصلاح حفظ 400 لطول clientSaveId", state: "verified_local", evidence: "outfit-recovery-rc11.schema-tests.ts · rc11_outfit_ux_test.dart · طلبات 400 على snapshots" },
-    { id: "D28", title: "دائرة نبيتي ليست وردية فاتحة", state: "verified_local", evidence: "fashion_color_binding shortNameHex #781828" },
-    { id: "D29", title: "تحسين تبويبات الاستديو دون مسار موازٍ", state: "implemented", evidence: "outfit_studio_screen.dart · دوائر/طي الصورة/أهلية جرّبي" },
-    { id: "D30", title: "أصول قطع موضحة + خريطة مركزية", state: "verified_local", evidence: "assets/icons/fashion/illustrations · outfit_piece_art.dart · rc12_outfit_visual_test" },
-    { id: "D31", title: "فهرس صور محلية للسجل", state: "implemented", evidence: "outfit_local_image_index.dart · ربط عند التحليل والحفظ" }
+    { id: "D26", title: "Redis AVAILABLE بعد إصلاح ready-flag", state: "verified_live", evidence: "health-after-rc10.json · dep-dbcmckss728c73aof56g" },
+    { id: "D10", title: "جودة إجابات النموذج الحية", state: "awaiting_live", evidence: "إصلاح 429/resume؛ رحلة 8 رسائل على الجهاز NOT_RUN" },
+    { id: "D11", title: "تثبيت بناء على الجهاز", state: "awaiting_device", evidence: "RC12 فشل قفل الجهاز؛ RC13 يحتاج flutter run --release بعد تضمين illustrations" },
+    { id: "D27", title: "إصلاح حفظ 400 لطول clientSaveId", state: "verified_local", evidence: "rc11" },
+    { id: "D28", title: "دائرة نبيتي ليست وردية فاتحة", state: "verified_local", evidence: "rc11 #781828" },
+    { id: "D29", title: "تحسين تبويبات الاستديو دون مسار موازٍ", state: "implemented", evidence: "RC11/RC12/RC13 studio" },
+    { id: "D30", title: "أصول قطع موضحة في الحزمة", state: "fixed_packaging", evidence: "pubspec illustrations/ · كان 0 في Runner.app قبل الإصلاح" },
+    { id: "D31", title: "فهرس صور محلية للحساب+التقرير", state: "implemented", evidence: "outfit_local_image_index scoped + cache retained path" },
+    { id: "D32", title: "إعادة محاولة بنفس clientMessageId دون 429 مكرر", state: "implemented", evidence: "orchestrator skipRateLimit on resume · Render 429 evidence" },
+    { id: "D33", title: "ألوان مربوطة + جرّبيه ينقل الاختيار", state: "implemented", evidence: "studio + recolor panel seeds" },
+    { id: "D34", title: "دولاب: المزيد + مقارنة اختيارية", state: "implemented", evidence: "outfit_studio_screen wardrobe" }
   ],
   results: [
-    { name: "فحوصات RC12 visual", value: "2 نجحت", file: "test/outfit_analysis/rc12_outfit_visual_test.dart" },
-    { name: "فحوصات RC11", value: "2 نجحت", file: "mira-api/src/outfit-analysis/outfit-recovery-rc11.schema-tests.ts" },
-    { name: "Flutter RC11 UX", value: "3 نجحت", file: "test/outfit_analysis/rc11_outfit_ux_test.dart" },
-    { name: "فحوصات RC10", value: "12 نجحت", file: "mira-api/src/outfit-analysis/outfit-recovery-rc10.schema-tests.ts" },
-    { name: "فحوصات RC9", value: "4 نجحت", file: "mira-api/src/outfit-analysis/outfit-recovery-rc9.schema-tests.ts" },
-    { name: "Flutter ألوان", value: "4 نجحت", file: "test/outfit_color_retention_test.dart" },
-    { name: "Redis LIVE", value: "AVAILABLE", file: "audit-out/rc10-outfit-recovery/health-after-rc10.json" },
-    { name: "نشر API", value: "dep-dbcmckss728c73aof56g LIVE · لا نشر API إضافي لـ RC11", file: "Render mira-api" },
-    { name: "جهاز RC10", value: "مثبّت عبر flutter run --release", file: "audit-out/rc10-outfit-recovery/flutter-run-release.txt" }
+    { name: "فشل c-1792639982099619", value: "مرحلة الطلب · 429", file: "Render request logs 2026-10-22T03:33:02Z" },
+    { name: "أصول قبل الإصلاح", value: "0 illustrations في Runner.app", file: "build/ios/.../flutter_assets" },
+    { name: "فحوصات RC13", value: "انظر audit-out/rc13", file: "test/outfit_analysis/rc13_outfit_gaps_test.dart" },
+    { name: "فحوصات RC12 visual", value: "2 نجحت سابقاً", file: "test/outfit_analysis/rc12_outfit_visual_test.dart" },
+    { name: "Redis LIVE", value: "AVAILABLE (RC10)", file: "audit-out/rc10-outfit-recovery/health-after-rc10.json" }
   ],
   remaining: [
-    "لقطات جهاز مقارنة بالموكب المرجعي NOT_RUN.",
-    "رحلة الفستانين الحية حفظ→جلسة→رسالة NOT_RUN.",
-    "حالات مقترح/مختار/تجربة/ارتداء مؤكد تحتاج حقول حفظ فعلية إن لم تكن في السجل بعد.",
-    "تصوير الإطلالة بالكاميرا ما زال متوقفًا مؤقتًا.",
-    "004 و005 و013 وعيب تعليمات الإعلان خارج النطاق."
-  ],
-  unchangedRisks: ["MIRA-RISK-003", "MIRA-RISK-004", "MIRA-RISK-005", "MIRA-RISK-012", "MIRA-RISK-013", "AIA-C02"]
+    "تسجيل/لقطات جهاز بعد البناء مع illustrations — NOT_RUN حتى يُفتح الجهاز.",
+    "رحلة فستان عنابي + أزرق فاتح حية — NOT_RUN.",
+    "8 رسائل متتابعة + انقطاع شبكة على الجهاز — NOT_RUN.",
+    "التسجيل الأخير لم يُعثر عليه كملف فيديو على سطح المكتب؛ الاعتماد على سجلات Render + وصف البرومت."
+  ]
 };

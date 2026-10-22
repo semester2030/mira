@@ -17,6 +17,7 @@ import '../../../../shared/theme/typography.dart';
 import '../../../../shared/widgets/mira_app_bar.dart';
 import '../../../../shared/widgets/mce/mce_citation_chips.dart';
 import '../../../../shared/widgets/mce/mce_confidence_badge.dart';
+import '../../../../shared/widgets/mce/mce_display_text.dart';
 import '../../../../shared/widgets/mce/mce_streaming_text.dart';
 import '../../../../shared/widgets/premium/premium_exports.dart';
 import '../../../consultation/data/datasources/consultation_api_data_source.dart';
@@ -66,6 +67,7 @@ class _MiraAdvisorScreenState extends State<MiraAdvisorScreen> {
   String? _snapshotId;
   String? _sessionError;
   String? _boundOutfitAnalysisId;
+  String? _discussionFocus;
   _ConsultationFocus _focus = _ConsultationFocus.skin;
 
   final bool _fashionAdvisorSticky = false;
@@ -269,6 +271,16 @@ class _MiraAdvisorScreenState extends State<MiraAdvisorScreen> {
           try {
             final history = await _consultationApi.listMessages(remembered);
             if (!mounted) return;
+            final focus = args.discussionFocus?.trim();
+            // Keep analysis occasion on the report; discussion focus updates context only.
+            try {
+              await _consultationApi.bindContext(
+                sessionId: remembered,
+                outfitAnalysisId: outfitAnalysisId,
+                occasionId: args.outfitAnalysis?.occasion.id,
+              );
+            } catch (_) {/* resume still usable without context patch */}
+            if (!mounted) return;
             setState(() {
               _messages
                 ..clear()
@@ -284,6 +296,7 @@ class _MiraAdvisorScreenState extends State<MiraAdvisorScreen> {
               _sessionId = remembered;
               _sessionReady = true;
               _boundOutfitAnalysisId = outfitAnalysisId;
+              _discussionFocus = focus;
               _focus = _ConsultationFocus.outfit;
               _sessionError = null;
             });
@@ -305,7 +318,9 @@ class _MiraAdvisorScreenState extends State<MiraAdvisorScreen> {
       final focus = args.discussionFocus?.trim();
       final statedGoal = [
         if (faceLabel != null && faceLabel.isNotEmpty) 'دخلت من نتيجة الوجه: $faceLabel',
-        if (focus != null && focus.isNotEmpty) focus,
+        if (focus != null && focus.isNotEmpty) 'سياق النقاش: $focus',
+        if (args.outfitAnalysis != null)
+          'مناسبة التقرير: ${args.outfitAnalysis!.occasion.labelAr}',
       ].join(' · ');
       final session = await _consultationApi.createSession(
         skinAnalysisId: skinId,
@@ -324,6 +339,7 @@ class _MiraAdvisorScreenState extends State<MiraAdvisorScreen> {
         _sessionId = session.id;
         _snapshotId = session.activeSnapshotId;
         _boundOutfitAnalysisId = outfitAnalysisId;
+        _discussionFocus = focus;
         if (outfitAnalysisId != null) {
           AnalysisSession.consultationByAnalysis[outfitAnalysisId] = session.id;
         }
@@ -796,6 +812,44 @@ class _MiraAdvisorScreenState extends State<MiraAdvisorScreen> {
                   textAlign: TextAlign.center,
                 ),
               ),
+              if (_focus == _ConsultationFocus.outfit &&
+                  (_boundOutfitAnalysisId != null ||
+                      _args?.outfitAnalysis != null))
+                Padding(
+                  padding: const EdgeInsets.fromLTRB(16, 8, 16, 0),
+                  child: Container(
+                    key: const Key('outfit_advisor_context_card'),
+                    width: double.infinity,
+                    padding: const EdgeInsets.symmetric(
+                      horizontal: 12,
+                      vertical: 8,
+                    ),
+                    decoration: BoxDecoration(
+                      color: AppColors.surface,
+                      borderRadius: BorderRadius.circular(12),
+                      border: Border.all(
+                        color: AppColors.border.withValues(alpha: 0.45),
+                      ),
+                    ),
+                    child: Text(
+                      [
+                        if (_args?.outfitAnalysis != null)
+                          'تقرير: ${_args!.outfitAnalysis!.occasion.labelAr}'
+                              ' · ${_args!.outfitAnalysis!.clothingType}',
+                        if (_discussionFocus != null &&
+                            _discussionFocus!.isNotEmpty)
+                          'نقاش: $_discussionFocus',
+                        if (_boundOutfitAnalysisId != null)
+                          'معرّف التحليل مرتبط',
+                      ].where((s) => s.isNotEmpty).join('\n'),
+                      style: AppTypography.labelSmall.copyWith(
+                        color: AppColors.textSecondary,
+                        height: 1.35,
+                      ),
+                      textAlign: TextAlign.center,
+                    ),
+                  ),
+                ),
               if (_faceContext != null)
                 Padding(
                   padding: const EdgeInsets.fromLTRB(16, 8, 16, 0),
@@ -943,7 +997,10 @@ class _Bubble extends StatelessWidget {
             message.isStreaming
                 ? MceStreamingText(text: message.text, isStreaming: true)
                 : Text(
-                    message.text,
+                    isUser
+                        ? message.text
+                        : MceDisplayText.sanitize(message.text),
+                    textDirection: TextDirection.rtl,
                     style: AppTypography.bodyMedium.copyWith(height: 1.55),
                   ),
             if (!isUser && message.citedFacts.isNotEmpty)

@@ -86,6 +86,7 @@ abstract final class OutfitPieceArt {
   }
 
   /// Prefer illustrated PNG; fall back to registry icon.
+  /// Failed asset loads are logged — silent fallback must not hide packaging bugs.
   static Widget visual({
     required String label,
     double size = 40,
@@ -99,7 +100,14 @@ abstract final class OutfitPieceArt {
         height: size,
         fit: BoxFit.contain,
         filterQuality: FilterQuality.medium,
-        errorBuilder: (_, __, ___) => _fallbackIcon(label, size, tint),
+        errorBuilder: (context, error, stack) {
+          assert(() {
+            // ignore: avoid_print
+            print('OutfitPieceArt asset load failed: $asset · $error');
+            return true;
+          }());
+          return _fallbackIcon(label, size, tint);
+        },
       );
     }
     return _fallbackIcon(label, size, tint);

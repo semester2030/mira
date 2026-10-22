@@ -123,7 +123,11 @@ export class ConsultationOrchestratorService {
     let ctx: Awaited<ReturnType<ConsultationOrchestratorService['prepareTurn']>>;
     const attemptToken = opened.attemptToken;
     try {
-      ctx = await this.prepareTurn(authUser, sessionId, dto, opened.userRow);
+      // Resume of the same clientMessageId must not burn another rate-limit slot
+      // (live c-1792639982099619 failed at request/429 before model/stream).
+      ctx = await this.prepareTurn(authUser, sessionId, dto, opened.userRow, {
+        skipRateLimit: opened.claimStatus === 'resume',
+      });
     } catch (error) {
       await this.failOwned(opened.userRow.id, attemptToken);
       throw error;
@@ -172,7 +176,9 @@ export class ConsultationOrchestratorService {
     let ctx: Awaited<ReturnType<ConsultationOrchestratorService['prepareTurn']>>;
     const attemptToken = opened.attemptToken;
     try {
-      ctx = await this.prepareTurn(authUser, sessionId, dto, opened.userRow);
+      ctx = await this.prepareTurn(authUser, sessionId, dto, opened.userRow, {
+        skipRateLimit: opened.claimStatus === 'resume',
+      });
     } catch (error) {
       await this.failOwned(opened.userRow.id, attemptToken);
       throw error;
@@ -244,13 +250,16 @@ export class ConsultationOrchestratorService {
     sessionId: string,
     dto: SendConsultationMessageDto,
     userRow: { id: string; contentAr: string; role: string; blocked: boolean; createdAt: Date },
+    opts: { skipRateLimit?: boolean } = {},
   ) {
     const started = Date.now();
     const user = await this.users.findOrCreateFromFirebase(authUser);
     const sub = await this.prisma.subscription.findUnique({ where: { userId: user.id } });
     const planTier = sub?.plan ?? 'free';
 
-    await this.rateLimit.assertWithinLimit(user.id, 'consultation-message');
+    if (!opts.skipRateLimit) {
+      await this.rateLimit.assertWithinLimit(user.id, 'consultation-message');
+    }
     await this.costGuard.assertDailyQuota(user.id, planTier);
 
     const session = await this.sessions.getForUser(user.id, sessionId);
@@ -355,8 +364,13 @@ export class ConsultationOrchestratorService {
     sessionId: string,
     dto: SendConsultationMessageDto,
   ): Promise<
-    | { turn: ConsultationTurnResponseDto; userRow?: undefined }
-    | { turn?: undefined; userRow: { id: string; contentAr: string; role: string; blocked: boolean; createdAt: Date }; attemptToken: string | null }
+    | { turn: ConsultationTurnResponseDto; userRow?: undefined; claimStatus?: undefined; attemptToken?: undefined }
+    | {
+        turn?: undefined;
+        userRow: { id: string; contentAr: string; role: string; blocked: boolean; createdAt: Date };
+        attemptToken: string | null;
+        claimStatus: 'created' | 'resume';
+      }
   > {
     const user = await this.users.findOrCreateFromFirebase(authUser);
     await this.messages.recoverStuck(sessionId);
@@ -381,7 +395,11 @@ export class ConsultationOrchestratorService {
         },
       };
     }
-    return { userRow: claim.user, attemptToken: claim.attemptToken ?? null };
+    return {
+      userRow: claim.user,
+      attemptToken: claim.attemptToken ?? null,
+      claimStatus: claim.status === 'resume' ? 'resume' : 'created',
+    };
   }
 
   private async failOwned(messageId: string, attemptToken: string | null): Promise<void> {
