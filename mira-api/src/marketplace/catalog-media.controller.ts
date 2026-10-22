@@ -29,16 +29,22 @@ export class CatalogMediaController {
         : null;
     if (!owner) throw new NotFoundException('الوسيط غير منشور');
     let bytes: Buffer | null;
+    const keyHint = row.storageKey.slice(0, 12);
     try {
       bytes = await this.storage.get(row.storageKey);
     } catch (error) {
-      if (error instanceof CatalogMediaPermissionError) console.error('catalog-media-permission');
-      else if (error instanceof CatalogMediaConnectionError) console.error('catalog-media-connection-failed');
-      else console.error('catalog-media-read-failed');
+      if (error instanceof CatalogMediaPermissionError) {
+        console.error('catalog-media-permission', `id=${id} key=${keyHint}…`);
+      } else if (error instanceof CatalogMediaConnectionError) {
+        console.error('catalog-media-connection-failed', `id=${id} key=${keyHint}…`);
+      } else {
+        console.error('catalog-media-read-failed', `id=${id} key=${keyHint}…`);
+      }
       throw new NotFoundException('الوسيط غير منشور');
     }
     if (!bytes) {
-      console.error('catalog-media-missing');
+      // Object absent from durable store (NoSuchKey) — DB row + product remain published.
+      console.error('catalog-media-missing', `id=${id} key=${keyHint}… bytes=${row.byteSize ?? 'n/a'}`);
       throw new NotFoundException('الوسيط غير منشور');
     }
     const type = playbackContentType(bytes, row.mimeType);

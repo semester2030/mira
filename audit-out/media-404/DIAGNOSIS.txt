@@ -1,0 +1,42 @@
+MIRA catalog media 404 — diagnosis 2026-10-23
+
+Verdict
+- Products and CatalogMedia rows are intact and published. Videos were NOT deleted from the database.
+- GET /api/v1/marketplace/media/:id returns 404 «الوسيط غير منشور» because durable object storage returns NoSuchKey (app log: catalog-media-missing).
+- This is a shared object-store miss, not a per-product unpublish.
+
+Evidence
+- Catalog list 200 includes «فستان زواج» 1200 ر.س → media id 2c2a03bd-1605-4c7f-8ab5-46b64332132e
+- Probe that URL → HTTP 404 body الوسيط غير منشور (~0.5s)
+- Correlated app log 2026-10-22T23:47:00Z: catalog-media-missing
+- Earlier mixed logs: catalog-media-missing + catalog-media-read-failed (same endpoint family)
+- DB row for 2c2a03bd…: publication=published, active=true, storage_key=2f459cc6-688b-49c0-ac5d-8371e4288a43, mime=video/mp4, byte_size=4080629, product content_status=published, catalog_source=catalog, partner=active
+- Same pattern for 800 ر.س dress and makeup 300/200
+- Aggregate: 13 published media with storage_key (11 video, 2 tiny test images), ~89MB recorded sizes
+- Local mira-api/var/catalog-media has only 2 tiny test files — not the production objects
+
+Not the cause
+- Product publish flags / partner status / missing storage_key in DB
+- Client UI alone (server itself 404s the bytes)
+
+Likely cause
+- Objects absent from the S3-compatible bucket currently configured on mira-api (MIRA_MEDIA_STORE=s3), OR env points at a different/empty bucket than the one written on 2026-10-19 when these videos were uploaded.
+- Note: RC16 env restore incident (full PUT) could have swapped bucket/credentials; verify Dashboard values against the bucket that held Oct 19 uploads.
+
+Owner restore (do not recreate products)
+1. Render → mira-api → Environment: confirm MIRA_MEDIA_STORE=s3 and MIRA_MEDIA_S3_BUCKET / ENDPOINT / REGION / keys match the durable bucket used for catalog uploads.
+2. In that bucket console (R2/S3-compatible), Head/list keys below. If present → fix env pointing. If absent → files are gone from store; re-upload video on the SAME product via partner portal (replace media), then re-publish — keep product ids.
+3. After restore, GET media id must return 200 video/mp4 (not 404).
+
+Storage keys to check (published videos)
+- 2f459cc6-688b-49c0-ac5d-8371e4288a43  dress 1200  media 2c2a03bd…
+- 91b46dbf-50f0-4da3-9527-b3d4837b3aeb  dress 800   media 4d2b294b…
+- 025cc6f3-dc46-4112-9622-d30248a7bedd  makeup 300  media c8601a5f…
+- 3a851226-7a35-4442-9e70-e40e438edb10  makeup 200  media 85d8cc01…
+- 4a26a640-5bee-488a-9fe4-9582bf4fca0f
+- 73f435f4-497d-4d96-ad78-188f53a02e33
+- fee7e9ca-6540-4b08-a185-894ac8280209
+- bf554e31-c96b-4d5a-880e-b6cdece33f06
+- 9310f74a-81cc-4613-a77e-6da2d3a22fb6
+- 7505ea0e-2204-40b8-b2ba-50147f732572
+- 17f48809-3c74-4d0b-9a11-201323166143
