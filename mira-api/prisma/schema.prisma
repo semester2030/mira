@@ -15,7 +15,8 @@ model User {
   createdAt   DateTime @default(now()) @map("created_at")
   updatedAt   DateTime @updatedAt @map("updated_at")
 
-  skinAnalyses    SkinAnalysis[]
+  skinAnalyses         SkinAnalysis[]
+  skinAnalysisClaims   SkinAnalysisClaim[]
   outfitAnalyses  OutfitAnalysis[]
   recommendations Recommendation[]
   subscription    Subscription?
@@ -38,9 +39,33 @@ model SkinAnalysis {
   user       User     @relation(fields: [userId], references: [id], onDelete: Cascade)
   resultJson Json     @map("result_json")
   createdAt  DateTime @default(now()) @map("created_at")
+  claims     SkinAnalysisClaim[]
 
   @@index([userId, createdAt(sort: Desc)])
   @@map("skin_analyses")
+}
+
+/// Recoverable face/skin analysis attempt — prevents duplicate provider cost on retry.
+model SkinAnalysisClaim {
+  id               String    @id @default(uuid())
+  userId           String    @map("user_id")
+  user             User      @relation(fields: [userId], references: [id], onDelete: Cascade)
+  clientRequestId  String    @map("client_request_id")
+  inputFingerprint String    @map("input_fingerprint")
+  status           String    @default("pending")
+  attemptToken     String?   @map("attempt_token")
+  attemptExpiresAt DateTime? @map("attempt_expires_at")
+  providerTaskId   String?   @map("provider_task_id")
+  analysisId       String?   @map("analysis_id")
+  analysis         SkinAnalysis? @relation(fields: [analysisId], references: [id], onDelete: SetNull)
+  rateLimitCharged Boolean   @default(false) @map("rate_limit_charged")
+  errorCode        String?   @map("error_code")
+  createdAt        DateTime  @default(now()) @map("created_at")
+  updatedAt        DateTime  @updatedAt @map("updated_at")
+
+  @@unique([userId, clientRequestId])
+  @@index([userId, createdAt(sort: Desc)])
+  @@map("skin_analysis_claims")
 }
 
 model OutfitAnalysis {

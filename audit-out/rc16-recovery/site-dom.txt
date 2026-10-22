@@ -1,0 +1,6 @@
+{
+  "id": "CONSULT_DIALOGUE_RC16",
+  "task_rows": 8,
+  "repair_panels": 5,
+  "owner_blocked": true
+}

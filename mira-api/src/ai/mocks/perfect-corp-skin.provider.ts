@@ -49,7 +49,13 @@ export class PerfectCorpSkinProvider implements SkinAnalysisProvider {
     private readonly config: ConfigService,
   ) {}
 
-  async analyze(imageBytes: Buffer): Promise<SkinAnalysisProviderResult> {
+  async analyze(
+    imageBytes: Buffer,
+    options?: {
+      resumeProviderTaskId?: string;
+      onProviderTaskCreated?: (taskId: string) => void | Promise<void>;
+    },
+  ): Promise<SkinAnalysisProviderResult> {
     const production = isProductionEnv(this.config.get<string>('NODE_ENV'));
     const allowFallback = isPerfectMockFallbackAllowed({
       NODE_ENV: this.config.get<string>('NODE_ENV'),
@@ -57,6 +63,30 @@ export class PerfectCorpSkinProvider implements SkinAnalysisProvider {
         'PERFECT_CORP_FALLBACK_MOCK',
       ),
     });
+
+    if (
+      options?.resumeProviderTaskId &&
+      this.perfectCorp.isConfigured()
+    ) {
+      try {
+        this.logger.log(
+          `YouCam HD resume poll task=${options.resumeProviderTaskId.slice(0, 12)}…`,
+        );
+        return await this.materializeFromRaw(
+          (
+            await this.perfectCorp.resumeSkinHdMasks(
+              options.resumeProviderTaskId,
+            )
+          ).rawYouCam,
+          imageBytes,
+        );
+      } catch (error) {
+        const msg = error instanceof Error ? error.message : String(error);
+        this.logger.warn(
+          `YouCam HD resume poll failed — falling through to new task: ${msg.slice(0, 200)}`,
+        );
+      }
+    }
 
     if (!this.perfectCorp.isConfigured()) {
       if (production || !allowFallback) {
@@ -76,7 +106,7 @@ export class PerfectCorpSkinProvider implements SkinAnalysisProvider {
 
     for (let i = 0; i < variants.length; i++) {
       try {
-        const out = await this.analyzeHdVariant(variants[i]);
+        const out = await this.analyzeHdVariant(variants[i], options);
         if (i > 0) {
           this.logger.log(
             `YouCam HD succeeded on auto-retry variant ${i + 1}/${variants.length}`,
@@ -187,6 +217,9 @@ export class PerfectCorpSkinProvider implements SkinAnalysisProvider {
 
   private async analyzeHdVariant(
     imageBytes: Buffer,
+    options?: {
+      onProviderTaskCreated?: (taskId: string) => void | Promise<void>;
+    },
   ): Promise<SkinAnalysisProviderResult> {
     const meta = await sharp(imageBytes, { failOn: 'none' })
       .rotate()
@@ -212,7 +245,29 @@ export class PerfectCorpSkinProvider implements SkinAnalysisProvider {
     const { rawYouCam } = await this.perfectCorp.analyzeSkinHdMasks(
       imageBytes,
       dstActions,
+      { onTaskCreated: options?.onProviderTaskCreated },
     );
+
+    return this.materializeFromRaw(rawYouCam, imageBytes, {
+      sourceWidth,
+      sourceHeight,
+    });
+  }
+
+  private async materializeFromRaw(
+    rawYouCam: Record<string, unknown>,
+    imageBytes: Buffer,
+    dims?: { sourceWidth: number; sourceHeight: number },
+  ): Promise<SkinAnalysisProviderResult> {
+    let sourceWidth = dims?.sourceWidth ?? 0;
+    let sourceHeight = dims?.sourceHeight ?? 0;
+    if (!sourceWidth || !sourceHeight) {
+      const meta = await sharp(imageBytes, { failOn: 'none' })
+        .rotate()
+        .metadata();
+      sourceWidth = meta.width ?? 0;
+      sourceHeight = meta.height ?? 0;
+    }
 
     const parsed = parsePerfectHdMaskPayload(rawYouCam);
     const { ephemeralMasks } = await materializeHdMaskArtifacts(
@@ -221,7 +276,6 @@ export class PerfectCorpSkinProvider implements SkinAnalysisProvider {
       sourceHeight,
     );
 
-    // Scores: reuse extractConcerns path via mapYouCamResults on raw data.
     const result = this.perfectCorp.mapFromRawYouCam(rawYouCam).result;
 
     this.logger.log(

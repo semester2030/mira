@@ -8,6 +8,10 @@ export interface SkinAnalysisRequest {
   traceId?: string;
   requestId?: string;
   locale?: string;
+  /** Prefer polling this YouCam task before creating a new one. */
+  resumeProviderTaskId?: string;
+  /** Persist provider task id as soon as YouCam accepts the job. */
+  onProviderTaskCreated?: (taskId: string) => void | Promise<void>;
 }
 
 /** Normalized metric — never invent values; use available=false. */

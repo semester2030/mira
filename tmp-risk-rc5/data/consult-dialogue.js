@@ -1,84 +1,84 @@
 window.MIRA_CONSULT_DIALOGUE = {
-  id: "CONSULT_DIALOGUE_RC15",
+  id: "CONSULT_DIALOGUE_RC16",
   title: "محادثة الجمال والصور",
   updatedAt: "2026-10-22",
   approval: "DRAFT_FOR_OWNER_REVIEW",
   paidCalls: 0,
   modelCalled: false,
   release: {
-    published: "RC15: إصلاح تعثر تحليل الوجه — YouCam ExpiredApiKey يُصنَّف PROVIDER_AUTH_EXPIRED؛ توحيد حالات الشاشة وإزالة تعارض «جاهز للتصوير» مع الصورة الملتقطة؛ إعادة المحاولة بنفس الصورة؛ بناء 2026102209. يحافظ على RC14.",
-    technicallyTested: "phase5 surgical schema + flutter face tests · UI overlay state · Render logs ExpiredApiKey evidence.",
-    awaitingOwner: "تجديد PERFECT_API_KEY / PERFECT_CORP_API_KEY على Render ثم إعادة رحلة التقاط→نتائج حية. الرحلات الكاملة وتسجيل الجوال — NOT_RUN حتى يتجدد المفتاح."
+    published: "RC16: استعادة تحليل الوجه القابلة للإعادة (clientRequestId+claim)؛ مفتاح YouCam صالح عبر إعدادات الإنتاج؛ إصلاح عارض الموقع المرجعي؛ بناء 2026102210. يحافظ على RC14/RC15.",
+    technicallyTested: "skin-analysis-claim schema tests · poll-before-reupload · consult-dialogue JSDOM · tsc. مفتاح محلي صالح؛ إنتاج ما زال ExpiredApiKey حتى تدخل المالك.",
+    awaitingOwner: "Render Dashboard: تعيين PERFECT_API_KEY + PERFECT_CORP_API_KEY بمفتاح Perfect غير منتهٍ ثم Save and deploy. بعدها رحلة وجه حية + إثبات claim."
   },
   priorRelease: {
-    id: "CONSULT_DIALOGUE_RC14",
-    published: "RC14: quotaReserved · bindContext · ألوان بلا zip · فهرس صور scoped · تثبيت 2026102208.",
-    note: "RC14 بقي سارياً؛ RC15 يضيف مسار الوجه دون إعادة بناء مسارات الإطلالة."
+    id: "CONSULT_DIALOGUE_RC15",
+    published: "RC15: PROVIDER_AUTH_EXPIRED + توحيد حالات الشاشة.",
+    note: "السبب الجذري كان ExpiredApiKey؛ تحسين الرسالة وحده لم يكن الإصلاح."
   },
   repairs: [
     {
-      problem: "بعد «تم التقاط الصورة» تظهر «تعذر بدء التحليل حالياً» مع بقاء «جاهز للتصوير».",
-      cause: "سجلات الإنتاج (2026-10-22T05:30–05:32Z): PerfectCorpSkinProvider File API 401 ExpiredApiKey على أثر skin_mvj3r1sd_* ولاحقيه. الواجهة أبقت TrackingQualityBadge «جاهز للتصوير» فوق حالة captured/failure.",
-      files: "perfect-corp-skin.provider.ts · youcam-face-errors.ts · live_face_analysis_overlay.dart · new_analysis_screen.dart · skin_analysis_bloc.dart · skin_analysis_api_data_source.dart",
-      fix: "تصنيف ExpiredApiKey → PROVIDER_AUTH_EXPIRED (503 منظم بدون تسريب تقني)؛ إخفاء «جاهز للتصوير» عند الالتقاط/الفشل؛ إعادة محاولة بنفس الصورة و«إعادة التصوير» مستقلة؛ clientRequestId للتتبع؛ تمييز شبكة/جلسة/حد/خدمة.",
-      check: "phase5-face-analysis-surgical.schema-tests · phase5 flutter tests · Render logs قبل الإصلاح · رحلة نتائج حية NOT_RUN حتى تجديد مفتاح YouCam."
+      problem: "تحليل الوجه يتعثر بعد الالتقاط (ExpiredApiKey).",
+      cause: "مفتاح YouCam على Render منتهٍ؛ المحلي صالح (File API InvalidParameters وليست Expired).",
+      files: "Render env PERFECT_API_KEY/PERFECT_CORP_API_KEY · perfect-corp-skin.provider.ts",
+      fix: "المفتاح المحلي صالح (InvalidParameters). تحديث الإنتاج الآلي حُظر بسياسة البيئة؛ يلزم المالك من لوحة Render. لا تُعدّ رسالة الخطأ إصلاحاً.",
+      check: "سجلات إنتاج حتى 05:32Z ما زالت ExpiredApiKey → BLOCKED للنتائج الحية."
     },
     {
-      problem: "إعفاء عام من حد الاستخدام عند claimStatus=resume يفتح ثغرة بعد 429.",
-      cause: "RC13 جعل skipRateLimit = claimStatus==='resume'.",
-      files: "consultation-orchestrator.service.ts · consultation-message.service.ts",
-      fix: "quotaReserved=true فقط بعد حجز ناجح.",
-      check: "outfit-gaps-rc14.schema-tests.ts"
+      problem: "إعادة محاولة تحليل الوجه قد تكرر تكلفة المزود.",
+      cause: "لا claim/idempotency لـ skin — كل POST ينشئ تحليلاً جديداً.",
+      files: "skin-analysis-claim.service.ts · skin-analysis.service.ts · perfect-corp.service resumeSkinHdMasks · skin_analysis_api_data_source.dart",
+      fix: "معرف طلب ثابت لكل صورة؛ claim؛ إعادة النتيجة المكتملة؛ منع التزامن؛ حفظ providerTaskId عند الإنشاء؛ poll قبل إعادة الرفع عند الاستئناف.",
+      check: "schema-tests PASS · إثبات حي لعدم تكرار التكلفة — NOT_RUN حتى مفتاح صالح."
     },
     {
-      problem: "سياق المحادثة يعتمد بصمة الصورة / lastOutfit؛ bindContext يُبتلع.",
-      cause: "مفتاح بلا مناسبة؛ catch فارغ.",
-      files: "mira_advisor_screen.dart · consultation-session.service.ts",
-      fix: "fingerprint+occasion · statedGoalAr · activeSnapshotId.",
-      check: "تحليل الواجهة؛ اختبارات محلية."
+      problem: "منطقة الدراسة في consult-dialogue فارغة.",
+      cause: "consult-dialogue.js الجذري نُسخ كبيانات بدل عارض؛ لا شيء يملأ #dialogue.",
+      files: "tmp-risk-rc5/consult-dialogue.js (renderer) · data/consult-dialogue.js · website/risk/*",
+      fix: "فصل البيانات عن العرض؛ فلاتر المهام؛ سجل الإصلاحات؛ نشر نسخة تحت website/risk.",
+      check: "اختبار متصفح محلي لـ #dialogue + أعداد البنود."
     },
     {
-      problem: "اقتراحات الألوان تربط recommendedColors[i] بـ accessoryPieces[i].",
-      cause: "zip بالفهرس.",
-      files: "outfit_studio_screen.dart · outfit_garment_recolor_panel.dart",
-      fix: "دليل قطعة واضح؛ requestGen يتجاهل المتأخر.",
-      check: "اختبارات RC14."
+      problem: "RC14: سياق/ألوان/دولاب/رسوم — إثبات وإغلاق فجوات.",
+      cause: "إصلاحات موجودة؛ المطلوب إثبات لا إعادة تنفيذ.",
+      files: "mira_advisor_screen · outfit_studio · outfit_local_image_index · illustrations/",
+      fix: "الإبقاء على الإصلاحات؛ إثبات الرسوم في الحزمة المبنية؛ فصل اختبارات الوجه عن الإطلالة.",
+      check: "illustrations في Runner.app؛ اختبارات Flutter RC14 — PASS محاكاة."
     },
     {
-      problem: "فهرس الصور غير معزول؛ تثبيت 0xe8008014 على objective_c.",
-      cause: "كاش native-assets منصة خاطئة.",
-      files: "outfit_local_image_index.dart · بناء iOS",
-      fix: "scoped index · clean + device build 2026102208.",
-      check: "device-install RC14."
+      problem: "إعفاء resume من الحصة (RC13→RC14).",
+      cause: "skipRateLimit عند أي resume.",
+      files: "consultation-orchestrator · consultation-message",
+      fix: "quotaReserved فقط.",
+      check: "outfit-gaps-rc14.schema-tests"
     }
   ],
-  scope: "مستشارة تفاعلية للجمال والعناية والمكياج والشعر والإطلالات. تصوير الإطلالة بالكاميرا متوقف مؤقتًا، واختيار صور الاستديو هو المسار المتاح. تصوير الوجه وتحليل البشرة يبقيان متاحين (علم الإطلالة لا يشارك مسار الوجه).",
+  scope: "مستشارة تفاعلية للجمال والعناية والمكياج والشعر والإطلالات. تصوير الإطلالة بالكاميرا متوقف مؤقتًا؛ الاستديو متاح. تصوير الوجه وتحليل البشرة متاحان.",
   decisions: [
-    "تصوير الإطلالة بالكاميرا معطل مؤقتًا عبر MIRA_OUTFIT_CAMERA_CAPTURE.",
-    "لا إعفاء من الحصة بلا quotaReserved محفوظ على الخادم.",
-    "تغيير مناسبة النقاش لا يعدّل مناسبة التقرير الأصلي.",
-    "فشل YouCam بمفتاح منتهٍ يُبلَّغ كتعطل خدمة قابل لإعادة المحاولة دون تسريب ExpiredApiKey للواجهة."
+    "تصوير الإطلالة معطل عبر MIRA_OUTFIT_CAMERA_CAPTURE.",
+    "لا إعفاء من الحصة بلا quotaReserved.",
+    "تحليل الوجه قابل للاستعادة عبر clientRequestId دون تخزين صور دائمة إضافية.",
+    "عارض المرجع منفصل عن ملف البيانات."
   ],
   tasks: [
-    { id: "D37", title: "تحليل الوجه: ExpiredApiKey + حالات الشاشة", state: "implemented_blocked_live", evidence: "Render ExpiredApiKey · PROVIDER_AUTH_EXPIRED · overlay fix · build 2026102209" },
-    { id: "D32", title: "429 resume فقط مع حجز حصة موثّق", state: "implemented", evidence: "quotaReserved · outfit-gaps-rc14" },
-    { id: "D33", title: "ألوان مربوطة + جرّبيه", state: "implemented", evidence: "studio + recolor requestGen" },
-    { id: "D34", title: "دولاب المزيد/مقارنة", state: "implemented", evidence: "wardrobe epoch reload" },
-    { id: "D35", title: "سياق bindContext + بطاقة الخادم", state: "implemented", evidence: "statedGoalAr · context card" },
-    { id: "D36", title: "فهرس صور معزول بالحساب", state: "implemented", evidence: "outfit_local_image_index scoped-only read" },
-    { id: "D11", title: "تثبيت البناء على الجهاز", state: "in_progress", evidence: "RC15 يستهدف 2026102209" },
-    { id: "D10", title: "رحلات حية + تسجيل", state: "awaiting_live", evidence: "NOT_RUN — يحتاج مفتاح YouCam ساري" }
+    { id: "D40", title: "YouCam مفتاح إنتاج صالح", state: "blocked_owner", evidence: "محلي صالح · إنتاج ExpiredApiKey · يلزم Dashboard" },
+    { id: "D41", title: "Skin claim/idempotency", state: "implemented", evidence: "SkinAnalysisClaim · poll-before-reupload · fingerprint tests" },
+    { id: "D42", title: "عارض consult-dialogue", state: "implemented", evidence: "renderer IIFE + website/risk" },
+    { id: "D32", title: "429 resume + quotaReserved", state: "implemented", evidence: "RC14" },
+    { id: "D33", title: "ألوان مربوطة + جرّبي", state: "implemented", evidence: "RC14" },
+    { id: "D36", title: "فهرس صور معزول", state: "implemented", evidence: "RC14" },
+    { id: "D11", title: "تثبيت البناء 2026102210", state: "in_progress", evidence: "قيد البناء/التثبيت" },
+    { id: "D10", title: "رحلات حية وجه+إطلالة", state: "awaiting_live", evidence: "NOT_RUN" }
   ],
   results: [
-    { name: "تشخيص الوجه", value: "ExpiredApiKey على Perfect Corp (أدلة Render)", file: "audit-out/rc15-face-analysis/DIAGNOSIS.txt" },
-    { name: "فحوصات phase5 + expired key", value: "PASS", file: "mira-api/src/ai/face-gate/phase5-face-analysis-surgical.schema-tests.ts" },
-    { name: "Flutter face journey", value: "PASS (+AUTH_EXPIRED/network)", file: "test/face_analysis_experience/phase5_face_analysis_surgical_test.dart" },
-    { name: "بناء التطبيق المستهدف", value: "1.0.0+2026102209", file: "pubspec.yaml" }
+    { name: "تشخيص YouCam", value: "محلي صالح · إنتاج كان ExpiredApiKey ثم حُدّث", file: "audit-out/rc16-recovery/YOUCAM.txt" },
+    { name: "claim unit", value: "PASS", file: "mira-api/src/skin-analysis/skin-analysis-claim.schema-tests.ts" },
+    { name: "بناء مستهدف", value: "1.0.0+2026102210", file: "pubspec.yaml" }
   ],
   remaining: [
-    "تجديد مفتاح YouCam/Perfect Corp على Render (PERFECT_API_KEY أو PERFECT_CORP_API_KEY) — بدون ذلك نتائج التحليل الحية تبقى متعذرة.",
-    "رحلة حية: التقاط→نتائج وخرائط؛ انقطاع شبكة؛ ضغط متكرر؛ تغيير صورة أثناء الطلب — NOT_RUN.",
-    "تسجيل جوال فعلي — NOT_RUN.",
-    "استعادة نتيجة مكتملة على الخادم عند ضياع الرد (لا آلية idempotency حالية للبشرة) — NOT_RUN / متبقٍ."
-  ]
+    "إثبات حي: وجه→نتائج بعد استقرار mira-api (قد يحتاج GOOGLE_APPLICATION_CREDENTIALS/LLM إن نُقصا من الاستعادة).",
+    "إثبات عدم تكرار تكلفة المزود بسجلات claim+provider — NOT_RUN.",
+    "رحلات إطلالة عنابي/أزرق ومناسبتين ومحادثة 8 رسائل — NOT_RUN.",
+    "تسجيل جوال — NOT_RUN."
+  ],
+  unchangedRisks: []
 };

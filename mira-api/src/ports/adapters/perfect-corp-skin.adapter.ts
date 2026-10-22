@@ -69,7 +69,10 @@ export class PerfectCorpSkinAdapter implements SkinAnalysisPort {
     const production = isProductionEnv(this.config.get<string>('NODE_ENV'));
 
     try {
-      const out = await this.perfect.analyze(request.imageBytes);
+      const out = await this.perfect.analyze(request.imageBytes, {
+        resumeProviderTaskId: request.resumeProviderTaskId,
+        onProviderTaskCreated: request.onProviderTaskCreated,
+      });
       if (out.isMock === true && production) {
         throw new ProviderPortError(
           createProviderError({

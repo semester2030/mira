@@ -2,6 +2,7 @@ import 'dart:io';
 import 'dart:ui' as ui;
 
 import 'package:dio/dio.dart';
+import 'package:shared_preferences/shared_preferences.dart';
 
 import '../../../../core/network/api_client.dart';
 import '../../../../core/network/mira_api_endpoints.dart';
@@ -22,6 +23,25 @@ class SkinAnalysisApiDataSource {
   final Dio _dio;
 
   SkinAnalysisApiDataSource({Dio? dio}) : _dio = dio ?? ApiClient.instance;
+
+  static String _prefsKeyForPath(String path) =>
+      'skin_client_request_id::${path.hashCode}';
+
+  /// Stable id for this capture path across network retries; new path → new id.
+  Future<String> _clientRequestIdFor(String imagePath) async {
+    final prefs = await SharedPreferences.getInstance();
+    final key = _prefsKeyForPath(imagePath);
+    final existing = prefs.getString(key);
+    if (existing != null && existing.isNotEmpty) return existing;
+    final id = 'face_${DateTime.now().toUtc().microsecondsSinceEpoch}';
+    await prefs.setString(key, id);
+    return id;
+  }
+
+  Future<void> _clearClientRequestId(String imagePath) async {
+    final prefs = await SharedPreferences.getInstance();
+    await prefs.remove(_prefsKeyForPath(imagePath));
+  }
 
   /// On success, promotes Perfect-input bytes into [AnalysisSession] ephemeral
   /// face hold, then deletes non-hold temps. On failure, retains [imagePath]
@@ -54,8 +74,7 @@ class SkinAnalysisApiDataSource {
 
       final encT0 = MiraMeasureTrace.monoMs;
       MiraMeasureTrace.span('T6_REQUEST_ENCODE_BEGIN');
-      final clientRequestId =
-          'face_${DateTime.now().toUtc().microsecondsSinceEpoch}';
+      final clientRequestId = await _clientRequestIdFor(imagePath);
       final formMap = <String, dynamic>{
         'image': await MultipartFile.fromFile(
           sourceForPrepare.path,
@@ -132,6 +151,7 @@ class SkinAnalysisApiDataSource {
       );
 
       succeeded = true;
+      await _clearClientRequestId(imagePath);
       return model;
     } on ImageQualityException catch (e) {
       SkinStartAnalysisTrace.fail('IMAGE_QUALITY', e);

@@ -1,84 +1,155 @@
-window.MIRA_CONSULT_DIALOGUE = {
-  id: "CONSULT_DIALOGUE_RC15",
-  title: "محادثة الجمال والصور",
-  updatedAt: "2026-10-22",
-  approval: "DRAFT_FOR_OWNER_REVIEW",
-  paidCalls: 0,
-  modelCalled: false,
-  release: {
-    published: "RC15: إصلاح تعثر تحليل الوجه — YouCam ExpiredApiKey يُصنَّف PROVIDER_AUTH_EXPIRED؛ توحيد حالات الشاشة وإزالة تعارض «جاهز للتصوير» مع الصورة الملتقطة؛ إعادة المحاولة بنفس الصورة؛ بناء 2026102209. يحافظ على RC14.",
-    technicallyTested: "phase5 surgical schema + flutter face tests · UI overlay state · Render logs ExpiredApiKey evidence.",
-    awaitingOwner: "تجديد PERFECT_API_KEY / PERFECT_CORP_API_KEY على Render ثم إعادة رحلة التقاط→نتائج حية. الرحلات الكاملة وتسجيل الجوال — NOT_RUN حتى يتجدد المفتاح."
-  },
-  priorRelease: {
-    id: "CONSULT_DIALOGUE_RC14",
-    published: "RC14: quotaReserved · bindContext · ألوان بلا zip · فهرس صور scoped · تثبيت 2026102208.",
-    note: "RC14 بقي سارياً؛ RC15 يضيف مسار الوجه دون إعادة بناء مسارات الإطلالة."
-  },
-  repairs: [
-    {
-      problem: "بعد «تم التقاط الصورة» تظهر «تعذر بدء التحليل حالياً» مع بقاء «جاهز للتصوير».",
-      cause: "سجلات الإنتاج (2026-10-22T05:30–05:32Z): PerfectCorpSkinProvider File API 401 ExpiredApiKey على أثر skin_mvj3r1sd_* ولاحقيه. الواجهة أبقت TrackingQualityBadge «جاهز للتصوير» فوق حالة captured/failure.",
-      files: "perfect-corp-skin.provider.ts · youcam-face-errors.ts · live_face_analysis_overlay.dart · new_analysis_screen.dart · skin_analysis_bloc.dart · skin_analysis_api_data_source.dart",
-      fix: "تصنيف ExpiredApiKey → PROVIDER_AUTH_EXPIRED (503 منظم بدون تسريب تقني)؛ إخفاء «جاهز للتصوير» عند الالتقاط/الفشل؛ إعادة محاولة بنفس الصورة و«إعادة التصوير» مستقلة؛ clientRequestId للتتبع؛ تمييز شبكة/جلسة/حد/خدمة.",
-      check: "phase5-face-analysis-surgical.schema-tests · phase5 flutter tests · Render logs قبل الإصلاح · رحلة نتائج حية NOT_RUN حتى تجديد مفتاح YouCam."
-    },
-    {
-      problem: "إعفاء عام من حد الاستخدام عند claimStatus=resume يفتح ثغرة بعد 429.",
-      cause: "RC13 جعل skipRateLimit = claimStatus==='resume'.",
-      files: "consultation-orchestrator.service.ts · consultation-message.service.ts",
-      fix: "quotaReserved=true فقط بعد حجز ناجح.",
-      check: "outfit-gaps-rc14.schema-tests.ts"
-    },
-    {
-      problem: "سياق المحادثة يعتمد بصمة الصورة / lastOutfit؛ bindContext يُبتلع.",
-      cause: "مفتاح بلا مناسبة؛ catch فارغ.",
-      files: "mira_advisor_screen.dart · consultation-session.service.ts",
-      fix: "fingerprint+occasion · statedGoalAr · activeSnapshotId.",
-      check: "تحليل الواجهة؛ اختبارات محلية."
-    },
-    {
-      problem: "اقتراحات الألوان تربط recommendedColors[i] بـ accessoryPieces[i].",
-      cause: "zip بالفهرس.",
-      files: "outfit_studio_screen.dart · outfit_garment_recolor_panel.dart",
-      fix: "دليل قطعة واضح؛ requestGen يتجاهل المتأخر.",
-      check: "اختبارات RC14."
-    },
-    {
-      problem: "فهرس الصور غير معزول؛ تثبيت 0xe8008014 على objective_c.",
-      cause: "كاش native-assets منصة خاطئة.",
-      files: "outfit_local_image_index.dart · بناء iOS",
-      fix: "scoped index · clean + device build 2026102208.",
-      check: "device-install RC14."
+(function () {
+  const data = window.MIRA_CONSULT_DIALOGUE;
+  const root = document.getElementById("dialogue");
+  if (!data || !root) return;
+
+  const stateAr = {
+    implemented: "منفّذ",
+    implemented_blocked_live: "منفّذ — حيّ متعذر",
+    in_progress: "قيد التنفيذ",
+    done: "مكتمل",
+    verified_local: "متحقق محليًا",
+    verified_model: "متحقق بالنموذج",
+    awaiting_device: "بانتظار الجهاز",
+    awaiting_live: "بانتظار اختبار حي",
+    not_run: "لم يُشغَّل",
+    blocked: "موقوف",
+  };
+
+  function esc(value) {
+    return String(value ?? "")
+      .replace(/&/g, "&amp;")
+      .replace(/</g, "&lt;")
+      .replace(/>/g, "&gt;")
+      .replace(/"/g, "&quot;");
+  }
+
+  const tasks = Array.isArray(data.tasks) ? data.tasks : [];
+  const repairs = Array.isArray(data.repairs) ? data.repairs : [];
+  const results = Array.isArray(data.results) ? data.results : [];
+  const remaining = Array.isArray(data.remaining) ? data.remaining : [];
+  const decisions = Array.isArray(data.decisions) ? data.decisions : [];
+  const unchanged = Array.isArray(data.unchangedRisks) ? data.unchangedRisks : [];
+  const release = data.release || {};
+  const prior = data.priorRelease || {};
+
+  const counts = {
+    total: tasks.length,
+    done: tasks.filter((t) =>
+      ["done", "verified_local", "verified_model", "implemented"].includes(t.state)
+    ).length,
+    blocked: tasks.filter((t) =>
+      ["blocked", "implemented_blocked_live", "awaiting_live", "not_run"].includes(t.state)
+    ).length,
+    repairs: repairs.length,
+  };
+
+  function taskRows(filterState) {
+    return tasks
+      .filter((task) => !filterState || task.state === filterState)
+      .map(
+        (task) => `<tr data-state="${esc(task.state)}">
+      <td>${esc(task.id)}</td>
+      <td>${esc(task.title)}</td>
+      <td><span class="status status-${esc(task.state)}">${esc(
+          stateAr[task.state] || task.state
+        )}</span></td>
+      <td>${esc(task.evidence)}</td>
+    </tr>`
+      )
+      .join("");
+  }
+
+  const repairCards = repairs
+    .map(
+      (item, index) => `<article class="panel repair" data-repair="${index}">
+      <h3>بند ${index + 1}: ${esc(item.problem || "")}</h3>
+      <dl>
+        <dt>السبب</dt><dd>${esc(item.cause || "")}</dd>
+        <dt>الملفات</dt><dd>${esc(item.files || "")}</dd>
+        <dt>الإصلاح</dt><dd>${esc(item.fix || "")}</dd>
+        <dt>الاختبار / الدليل</dt><dd>${esc(item.check || "")}</dd>
+      </dl>
+    </article>`
+    )
+    .join("");
+
+  const resultItems = results
+    .map((item) => {
+      const link = item.file
+        ? ` — <code>${esc(item.file)}</code>`
+        : "";
+      return `<li>${esc(item.name)}: ${esc(item.value)}${link}</li>`;
+    })
+    .join("");
+
+  root.innerHTML = `
+    <p class="pill">${esc(data.id)} · ${esc(data.approval)}</p>
+    <p>آخر تحديث ${esc(data.updatedAt)}. المهام ${counts.done}/${counts.total} · إصلاحات ${counts.repairs} · متعذر/مفتوح ${counts.blocked}.</p>
+    <div class="counts" role="group" aria-label="أعداد البنود">
+      <article class="card"><strong>${counts.total}</strong>مهام</article>
+      <article class="card"><strong>${counts.repairs}</strong>إصلاحات</article>
+      <article class="card"><strong>${counts.done}</strong>منفّذ/مكتمل</article>
+      <article class="card"><strong>${counts.blocked}</strong>مفتوح/متعذر</article>
+    </div>
+    <h2>حالة الإصدار</h2>
+    <ul>
+      <li>نُشر: ${esc(release.published || "—")}</li>
+      <li>اختُبر تقنيًا: ${esc(release.technicallyTested || "—")}</li>
+      <li>بانتظار المالك: ${esc(release.awaitingOwner || "—")}</li>
+      ${prior.id ? `<li>السابق: ${esc(prior.id)} — ${esc(prior.published || prior.note || "")}</li>` : ""}
+    </ul>
+    <article class="panel"><h2>النطاق</h2><p>${esc(data.scope || "")}</p></article>
+    ${
+      decisions.length
+        ? `<h2>القرارات</h2><ul>${decisions
+            .map((item) => `<li>${esc(item)}</li>`)
+            .join("")}</ul>`
+        : ""
     }
-  ],
-  scope: "مستشارة تفاعلية للجمال والعناية والمكياج والشعر والإطلالات. تصوير الإطلالة بالكاميرا متوقف مؤقتًا، واختيار صور الاستديو هو المسار المتاح. تصوير الوجه وتحليل البشرة يبقيان متاحين (علم الإطلالة لا يشارك مسار الوجه).",
-  decisions: [
-    "تصوير الإطلالة بالكاميرا معطل مؤقتًا عبر MIRA_OUTFIT_CAMERA_CAPTURE.",
-    "لا إعفاء من الحصة بلا quotaReserved محفوظ على الخادم.",
-    "تغيير مناسبة النقاش لا يعدّل مناسبة التقرير الأصلي.",
-    "فشل YouCam بمفتاح منتهٍ يُبلَّغ كتعطل خدمة قابل لإعادة المحاولة دون تسريب ExpiredApiKey للواجهة."
-  ],
-  tasks: [
-    { id: "D37", title: "تحليل الوجه: ExpiredApiKey + حالات الشاشة", state: "implemented_blocked_live", evidence: "Render ExpiredApiKey · PROVIDER_AUTH_EXPIRED · overlay fix · build 2026102209" },
-    { id: "D32", title: "429 resume فقط مع حجز حصة موثّق", state: "implemented", evidence: "quotaReserved · outfit-gaps-rc14" },
-    { id: "D33", title: "ألوان مربوطة + جرّبيه", state: "implemented", evidence: "studio + recolor requestGen" },
-    { id: "D34", title: "دولاب المزيد/مقارنة", state: "implemented", evidence: "wardrobe epoch reload" },
-    { id: "D35", title: "سياق bindContext + بطاقة الخادم", state: "implemented", evidence: "statedGoalAr · context card" },
-    { id: "D36", title: "فهرس صور معزول بالحساب", state: "implemented", evidence: "outfit_local_image_index scoped-only read" },
-    { id: "D11", title: "تثبيت البناء على الجهاز", state: "in_progress", evidence: "RC15 يستهدف 2026102209" },
-    { id: "D10", title: "رحلات حية + تسجيل", state: "awaiting_live", evidence: "NOT_RUN — يحتاج مفتاح YouCam ساري" }
-  ],
-  results: [
-    { name: "تشخيص الوجه", value: "ExpiredApiKey على Perfect Corp (أدلة Render)", file: "audit-out/rc15-face-analysis/DIAGNOSIS.txt" },
-    { name: "فحوصات phase5 + expired key", value: "PASS", file: "mira-api/src/ai/face-gate/phase5-face-analysis-surgical.schema-tests.ts" },
-    { name: "Flutter face journey", value: "PASS (+AUTH_EXPIRED/network)", file: "test/face_analysis_experience/phase5_face_analysis_surgical_test.dart" },
-    { name: "بناء التطبيق المستهدف", value: "1.0.0+2026102209", file: "pubspec.yaml" }
-  ],
-  remaining: [
-    "تجديد مفتاح YouCam/Perfect Corp على Render (PERFECT_API_KEY أو PERFECT_CORP_API_KEY) — بدون ذلك نتائج التحليل الحية تبقى متعذرة.",
-    "رحلة حية: التقاط→نتائج وخرائط؛ انقطاع شبكة؛ ضغط متكرر؛ تغيير صورة أثناء الطلب — NOT_RUN.",
-    "تسجيل جوال فعلي — NOT_RUN.",
-    "استعادة نتيجة مكتملة على الخادم عند ضياع الرد (لا آلية idempotency حالية للبشرة) — NOT_RUN / متبقٍ."
-  ]
-};
+    <h2>سجل الإصلاحات (${repairs.length})</h2>
+    ${repairCards || "<p>لا بنود إصلاح مسجّلة.</p>"}
+    <h2>المهام والحالات</h2>
+    <div class="filters" role="group" aria-label="تصفية المهام">
+      <label>الحالة
+        <select id="filterTaskState">
+          <option value="">الكل</option>
+          ${Object.keys(stateAr)
+            .map((k) => `<option value="${esc(k)}">${esc(stateAr[k])}</option>`)
+            .join("")}
+        </select>
+      </label>
+      <button type="button" id="btnShowAllTasks">إظهار الكل</button>
+    </div>
+    <table class="dialogue-table">
+      <thead><tr><th>المعرف</th><th>المهمة</th><th>الحالة</th><th>الدليل</th></tr></thead>
+      <tbody id="taskBody">${taskRows("")}</tbody>
+    </table>
+    <h2>النتائج</h2>
+    <ul>${resultItems || "<li>لا نتائج بعد.</li>"}</ul>
+    <h2>المتبقي</h2>
+    <ul>${remaining.map((item) => `<li>${esc(item)}</li>`).join("") || "<li>لا متبقي مسجّل.</li>"}</ul>
+    ${
+      unchanged.length
+        ? `<p class="note">سجلات لم تُعالج في هذه الدفعة: ${esc(
+            unchanged.join("، ")
+          )}.</p>`
+        : ""
+    }
+    <p class="dialogue-links"><a href="index.html">العودة إلى الملخص</a></p>
+  `;
+
+  const body = document.getElementById("taskBody");
+  const select = document.getElementById("filterTaskState");
+  const showAll = document.getElementById("btnShowAllTasks");
+  function applyFilter() {
+    if (!body || !select) return;
+    body.innerHTML = taskRows(select.value);
+  }
+  if (select) select.addEventListener("change", applyFilter);
+  if (showAll)
+    showAll.addEventListener("click", () => {
+      if (select) select.value = "";
+      applyFilter();
+    });
+})();

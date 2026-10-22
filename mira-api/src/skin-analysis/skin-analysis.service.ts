@@ -2,6 +2,7 @@ import {
   BadRequestException,
   Inject,
   Injectable,
+  Logger,
   ServiceUnavailableException,
 } from '@nestjs/common';
 import { Prisma } from '@prisma/client';
@@ -35,9 +36,12 @@ import {
   FaceReportPipelineInput,
   parseFaceIntelPackage,
 } from '../intelligence/face-intelligence';
+import { SkinAnalysisClaimService } from './skin-analysis-claim.service';
 
 @Injectable()
 export class SkinAnalysisService {
+  private readonly logger = new Logger(SkinAnalysisService.name);
+
   constructor(
     private readonly skinOrchestrator: SkinAnalysisOrchestrator,
     private readonly intelligence: IntelligenceService,
@@ -46,6 +50,7 @@ export class SkinAnalysisService {
     private readonly rateLimit: RateLimitService,
     private readonly subscriptions: SubscriptionsService,
     private readonly faceGate: FaceGateService,
+    private readonly claims: SkinAnalysisClaimService,
     @Inject(IMAGE_QUALITY_PORT)
     private readonly imageQuality: ImageQualityPort,
   ) {}
@@ -58,6 +63,7 @@ export class SkinAnalysisService {
      * Parsed once; invalid payloads omitted (never invented).
      */
     faceIntelRaw?: unknown,
+    clientRequestId?: string,
   ): Promise<SkinAnalysisResponseDto> {
     if (!imageBuffer?.length) {
       throw new BadRequestException('Image file is required');
@@ -65,7 +71,73 @@ export class SkinAnalysisService {
 
     const user = await this.usersService.findOrCreateFromFirebase(authUser);
     await this.subscriptions.assertCanAnalyze(authUser, 'skin');
-    await this.rateLimit.assertWithinLimit(user.id, 'skin-analysis');
+
+    const fingerprint = this.claims.fingerprint(imageBuffer, faceIntelRaw);
+    const requestId =
+      typeof clientRequestId === 'string' && clientRequestId.trim().length > 0
+        ? clientRequestId.trim().slice(0, 128)
+        : undefined;
+
+    let claimId: string | undefined;
+    let chargeRateLimit = true;
+    let resumeProviderTaskId: string | undefined;
+    if (requestId) {
+      const opened = await this.claims.open({
+        userId: user.id,
+        clientRequestId: requestId,
+        inputFingerprint: fingerprint,
+      });
+      if (opened.status === 'complete') {
+        this.logger.log(
+          `skin-analysis replay complete analysisId=${opened.analysisId} clientRequestId=${requestId}`,
+        );
+        return this.responseFromStoredAnalysis(user.id, opened.analysisId);
+      }
+      claimId = opened.claimId;
+      chargeRateLimit = opened.chargeRateLimit;
+      if (opened.status === 'resume' && opened.providerTaskId) {
+        resumeProviderTaskId = opened.providerTaskId;
+        this.logger.log(
+          `skin-analysis resume providerTaskId=${opened.providerTaskId.slice(0, 12)}… — poll-before-reupload`,
+        );
+      }
+    }
+
+    if (chargeRateLimit) {
+      await this.rateLimit.assertWithinLimit(user.id, 'skin-analysis');
+      if (claimId) await this.claims.markRateLimitCharged(claimId);
+    }
+
+    try {
+      return await this.runAnalysisPipeline({
+        authUser,
+        userId: user.id,
+        imageBuffer,
+        faceIntelRaw,
+        claimId,
+        resumeProviderTaskId,
+      });
+    } catch (error) {
+      if (claimId) {
+        await this.claims.markFailed(
+          claimId,
+          error instanceof Error ? error.name : 'failed',
+        );
+      }
+      throw error;
+    }
+  }
+
+  private async runAnalysisPipeline(input: {
+    authUser: RequestUser;
+    userId: string;
+    imageBuffer: Buffer;
+    faceIntelRaw?: unknown;
+    claimId?: string;
+    resumeProviderTaskId?: string;
+  }): Promise<SkinAnalysisResponseDto> {
+    const { imageBuffer, faceIntelRaw, claimId, userId, resumeProviderTaskId } =
+      input;
 
     // Phase 2: quality gate BEFORE provider — protect Perfect credits.
     const quality = await this.imageQuality.evaluate({
@@ -92,9 +164,15 @@ export class SkinAnalysisService {
 
     const captureQuality = captureSignalsFromImageQuality(quality);
 
-    const prefs = await this.usersService.getPreferences(user.id);
+    const prefs = await this.usersService.getPreferences(userId);
     const orchestrated = await this.skinOrchestrator.analyze({
       imageBytes: imageBuffer,
+      resumeProviderTaskId,
+      onProviderTaskCreated: claimId
+        ? async (taskId) => {
+            await this.claims.markProviderTask(claimId, taskId);
+          }
+        : undefined,
     });
     imageBuffer.fill(0);
 
@@ -114,7 +192,7 @@ export class SkinAnalysisService {
       );
     }
 
-    const previousBeautyScore = await this.loadPreviousBeautyScore(user.id);
+    const previousBeautyScore = await this.loadPreviousBeautyScore(userId);
 
     const capturedAt = new Date().toISOString();
     const providerAudit = rawYouCam
@@ -171,7 +249,7 @@ export class SkinAnalysisService {
 
     const record = await this.prisma.skinAnalysis.create({
       data: {
-        userId: user.id,
+        userId,
         resultJson: buildStoredPayload(
           miraReportBase,
           providerAudit,
@@ -180,7 +258,7 @@ export class SkinAnalysisService {
     });
 
     const miraReport = await this.intelligence.attachProgressForecast(
-      user.id,
+      userId,
       miraReportBase,
       record.id,
     );
@@ -195,8 +273,12 @@ export class SkinAnalysisService {
       },
     });
 
+    if (claimId) {
+      await this.claims.markComplete(claimId, record.id);
+    }
+
     await this.usersService.writeAuditLog({
-      userId: user.id,
+      userId,
       action: 'skin_analysis.completed',
       metadata: {
         analysisId: record.id,
@@ -207,6 +289,7 @@ export class SkinAnalysisService {
         isMock: isMock === true,
         provider: providerName,
         traceId,
+        claimId: claimId ?? null,
         // Sanitized — counts only, never mask payloads / URLs.
         ephemeralMaskCount: ephemeralMasks?.length ?? 0,
         ephemeralMaskWithBytes:
@@ -223,6 +306,39 @@ export class SkinAnalysisService {
         beautyScore: miraReport.overallBeautyScore,
       },
       ephemeralMasks,
+    );
+  }
+
+  private async responseFromStoredAnalysis(
+    userId: string,
+    analysisId: string,
+  ): Promise<SkinAnalysisResponseDto> {
+    const row = await this.prisma.skinAnalysis.findFirst({
+      where: { id: analysisId, userId },
+    });
+    if (!row) {
+      throw new BadRequestException({
+        code: 'SKIN_ANALYSIS_MISSING',
+        message: 'تعذر استعادة نتيجة التحليل المحفوظة.',
+      });
+    }
+    let miraReport = await this.resolveMiraReport(row.resultJson);
+    const prefs = await this.usersService.getPreferences(userId);
+    miraReport = this.intelligence.enrichWithUserContext(miraReport, {
+      birthYear: prefs?.birthYear ?? null,
+    });
+    miraReport = await this.intelligence.attachProgressForecast(
+      userId,
+      miraReport,
+      row.id,
+    );
+    const legacy = extractLegacySkinFromStored(row.resultJson);
+    return SkinAnalysisResponseDto.from(
+      row.id,
+      row.createdAt,
+      miraReport,
+      legacy ?? undefined,
+      undefined,
     );
   }
 

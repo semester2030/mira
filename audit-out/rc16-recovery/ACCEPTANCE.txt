@@ -1,0 +1,18 @@
+RC16 acceptance matrix (honest)
+
+LIVE
+- Face capture→real YouCam results: BLOCKED (prod ExpiredApiKey as of 2026-10-22T05:32Z; local key valid; owner must set Render PERFECT_API_KEY/PERFECT_CORP_API_KEY)
+- Lost response after complete analysis→replay: NOT_RUN (needs live face path + claim migration deploy)
+- Rapid retry / app relaunch / stale late result ignored: NOT_RUN (same)
+- Outfit burgundy+blue / same photo two occasions / wardrobe persist / multi-message consult: NOT_RUN (device journeys not re-executed this RC; RC14 code retained)
+- Provider cost not duplicated: NOT_RUN (claim+poll implemented; no live meter proof)
+
+SIM / LOCAL
+- skin-analysis-claim.schema-tests: PASS
+- tsc build: PASS (noEmit)
+- consult-dialogue JSDOM: PASS (8 task rows, 5 repairs, CONSULT_DIALOGUE_RC16)
+- Illustrations packaged in pubspec assets/icons/fashion/illustrations/: PRESENT (bundle check after iOS build)
+
+NOTES
+- Face camera ON; outfit camera OFF (studio). No fake analysis results.
+- Automated Render secret write blocked by policy → owner Dashboard action required.

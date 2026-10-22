@@ -95,6 +95,7 @@ export class AiGatewayController {
       user,
       file?.buffer ?? Buffer.alloc(0),
       body?.faceIntel,
+      clientRequestId,
     );
   }
 

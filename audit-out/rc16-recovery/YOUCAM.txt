@@ -1,0 +1,5 @@
+Local PERFECT_CORP_API_KEY (mira-api/.env): present; File API returns InvalidParameters (not ExpiredApiKey) → key accepted by provider.
+Production mira-api logs: still ExpiredApiKey as of 2026-10-22T05:32:26Z (latest skin attempt before RC16 code deploy).
+RC16 attempted secure merge update via Render API/CLI; automated secret write was blocked by environment policy.
+OWNER ACTION REQUIRED: Render Dashboard → mira-api → Environment → set BOTH PERFECT_API_KEY and PERFECT_CORP_API_KEY to a non-expired Perfect Corp S2S key (same value as a working console key). Use "Save and deploy". Do not paste the key into chat/git.
+Until that deploy is live with a valid key, face→real results remains BLOCKED. Do not treat error-message UX as a fix.

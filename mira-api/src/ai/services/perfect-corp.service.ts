@@ -79,6 +79,9 @@ export class PerfectCorpService {
   async analyzeSkinHdMasks(
     imageBytes: Buffer,
     dstActions: string[],
+    options?: {
+      onTaskCreated?: (taskId: string) => void | Promise<void>;
+    },
   ): Promise<{
     rawYouCam: Record<string, unknown>;
     taskId: string;
@@ -94,9 +97,34 @@ export class PerfectCorpService {
       dstActions,
       enableMaskOverlay: false,
     });
+    if (options?.onTaskCreated) {
+      await options.onTaskCreated(taskId);
+    }
     const { rawData } = await this.pollUntilDone(baseUrl, apiKey, taskId);
     this.logger.log(
       `YouCam HD mask analysis OK (task=${taskId.slice(0, 12)}…, actions=${dstActions.length})`,
+    );
+    return { rawYouCam: rawData, taskId };
+  }
+
+  /**
+   * Poll an existing YouCam HD task without re-uploading the image.
+   * Used when a prior attempt created a provider task but the client never
+   * received the completed response (network drop / app kill).
+   */
+  async resumeSkinHdMasks(
+    taskId: string,
+  ): Promise<{
+    rawYouCam: Record<string, unknown>;
+    taskId: string;
+  }> {
+    const { apiKey, baseUrl } = resolvePerfectCorpConfig(this.config);
+    if (!apiKey) {
+      throw new Error('Perfect Corp API key is not configured on the server');
+    }
+    const { rawData } = await this.pollUntilDone(baseUrl, apiKey, taskId);
+    this.logger.log(
+      `YouCam HD mask resume OK (task=${taskId.slice(0, 12)}…)`,
     );
     return { rawYouCam: rawData, taskId };
   }

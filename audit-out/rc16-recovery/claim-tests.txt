@@ -1,0 +1,7 @@
+npm warn Unknown env config "devdir". This will stop working in the next major version of npm.
+npm warn exec The following package was not found and will be installed: ts-node@10.9.2
+PASS different-bytes-different-fingerprint
+PASS stable-fingerprint
+PASS faceIntel-changes-fingerprint
+PASS matches-sha256-bytes-only
+skin-analysis-claim.schema-tests: PASS
