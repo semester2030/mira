@@ -30,6 +30,7 @@ class OutfitStudioScreen extends StatefulWidget {
 class _OutfitStudioScreenState extends State<OutfitStudioScreen> {
   static const _tabs = ['إطلالتك', 'ألوانك', 'جرّبي', 'دولابك'];
   int _index = 0;
+  int _wardrobeEpoch = 0;
   final _scrolls = List.generate(4, (_) => ScrollController());
   double _photoCollapse = 0;
   String? _selectedColor;
@@ -71,7 +72,12 @@ class _OutfitStudioScreenState extends State<OutfitStudioScreen> {
   }
 
   void _openAdvisor({String? focusExtra}) {
-    final reportId = AnalysisSession.lastOutfit?.id;
+    // Prefer the report tied to this screen's analysis+occasion — not a stale lastOutfit.
+    final reportId = AnalysisSession.lastOutfitIntelligence == widget.analysis
+        ? AnalysisSession.lastOutfit?.id
+        : (AnalysisSession.lastOutfit?.occasionId == widget.analysis.occasion.id
+            ? AnalysisSession.lastOutfit?.id
+            : null);
     final uuid = RegExp(
       r'^[0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{12}$',
     );
@@ -84,6 +90,7 @@ class _OutfitStudioScreenState extends State<OutfitStudioScreen> {
       'التبويب ${_tabs[_index]}',
       if (piece.trim().isNotEmpty) 'القطعة $piece',
       if (color != null) 'اللون $color',
+      'مناسبة التقرير ${widget.analysis.occasion.labelAr}',
       if (focusExtra != null && focusExtra.isNotEmpty) focusExtra,
     ].join('، ');
     Navigator.pushNamed(
@@ -118,6 +125,7 @@ class _OutfitStudioScreenState extends State<OutfitStudioScreen> {
             index: _index,
             onSelect: (value) => setState(() {
               _index = value;
+              if (value == 3) _wardrobeEpoch++;
               _onScroll();
             }),
           ),
@@ -146,9 +154,15 @@ class _OutfitStudioScreenState extends State<OutfitStudioScreen> {
                   controller: _scrolls[1],
                   selectedColor: _selectedColor,
                   selectedPiece: _selectedPiece ?? 'القطعة',
-                  onSelectColor: (c) => setState(() => _selectedColor = c),
-                  onAskWhy: (color) => _openAdvisor(
-                    focusExtra: 'لماذا اقترحتِ اللون $color؟',
+                  onSelectColor: (color, {required String piece}) {
+                    setState(() {
+                      _selectedColor = color;
+                      _selectedPiece = piece;
+                    });
+                  },
+                  onAskWhy: (color, {String? piece}) => _openAdvisor(
+                    focusExtra:
+                        'لماذا اقترحتِ اللون $color${piece == null ? '' : ' لـ$piece'}؟',
                   ),
                   onTryColor: (color, {String? piece}) {
                     setState(() {
@@ -170,6 +184,7 @@ class _OutfitStudioScreenState extends State<OutfitStudioScreen> {
                   selectedColor: _selectedColor,
                 ),
                 _WardrobePage(
+                  key: ValueKey('wardrobe-$_wardrobeEpoch'),
                   analysis: widget.analysis,
                   controller: _scrolls[3],
                 ),
@@ -658,8 +673,8 @@ class _ColorsPage extends StatelessWidget {
   final ScrollController controller;
   final String? selectedColor;
   final String selectedPiece;
-  final ValueChanged<String> onSelectColor;
-  final ValueChanged<String> onAskWhy;
+  final void Function(String color, {required String piece}) onSelectColor;
+  final void Function(String color, {String? piece}) onAskWhy;
   final void Function(String color, {String? piece}) onTryColor;
   final VoidCallback onKeepLook;
 
@@ -726,58 +741,72 @@ class _ColorsPage extends StatelessWidget {
         .toList();
     if (recommendations.isEmpty) return const [];
 
-    final pieces = analysis.detectedPieces
-        .map((p) => p.trim())
-        .where((p) => p.isNotEmpty)
-        .toList();
-    final accessoryPieces = pieces
-        .where(
-          (p) =>
-              p.contains('حقيبة') ||
-              p.contains('حذاء') ||
-              p.contains('وشاح') ||
-              p.contains('حزام') ||
-              p.contains('مجوهرات') ||
-              p.toLowerCase().contains('bag') ||
-              p.toLowerCase().contains('shoe'),
-        )
-        .toList();
+    // Only emit a suggestion when analysis names a concrete accessory piece
+    // for that color — never zip recommendedColors[i] → accessoryPieces[i].
+    final accessoryEvidence = <String, String>{};
+    for (final piece in analysis.detectedPieces) {
+      final p = piece.trim();
+      if (p.isEmpty) continue;
+      final isAccessory = p.contains('حقيبة') ||
+          p.contains('حذاء') ||
+          p.contains('وشاح') ||
+          p.contains('حزام') ||
+          p.contains('مجوهرات') ||
+          p.toLowerCase().contains('bag') ||
+          p.toLowerCase().contains('shoe') ||
+          p.toLowerCase().contains('scarf') ||
+          p.toLowerCase().contains('belt');
+      if (!isAccessory) continue;
+      // Prefer shoe colors / accessory colors lists as evidence of relation.
+      if (p.contains('حذاء') || p.toLowerCase().contains('shoe')) {
+        if (analysis.shoeColors.isNotEmpty) accessoryEvidence[p] = 'shoe';
+      } else if (analysis.accessoryColors.isNotEmpty) {
+        accessoryEvidence[p] = 'accessory';
+      }
+    }
+
+    if (accessoryEvidence.isEmpty) {
+      return [
+        _ColorSuggestion(
+          colorAr: recommendations.first,
+          pieceHint: 'غير محدد',
+          reason:
+              'المعلومات غير كافية لاقتراح لون على قطعة محددة — الاختلاف اللوني وحده لا يكفي.',
+          dataBacked: false,
+          isObserved: false,
+        ),
+      ];
+    }
 
     final out = <_ColorSuggestion>[];
-    for (var i = 0; i < recommendations.length; i++) {
-      final color = recommendations[i];
-      if (accessoryPieces.length > i) {
-        final piece = accessoryPieces[i];
-        out.add(
-          _ColorSuggestion(
-            colorAr: color,
-            pieceHint: piece,
-            reason:
-                'مقترح لـ$piece ليكمل ${selectedPiece.isEmpty ? 'الإطلالة' : selectedPiece} في ${analysis.occasion.labelAr}، لأنه يختلف عن الألوان المرصودة على القطعة نفسها.',
-            dataBacked: true,
-          ),
-        );
-      } else if (pieces.isNotEmpty && i == 0) {
-        out.add(
-          _ColorSuggestion(
-            colorAr: color,
-            pieceHint: selectedPiece.isEmpty ? pieces.first : selectedPiece,
-            reason:
-                'بديل لوني للنقاش حول ${selectedPiece.isEmpty ? pieces.first : selectedPiece} في ${analysis.occasion.labelAr}. لا توجد قطعة إكسسوار محددة في التحليل لربط الاقتراح تلقائياً.',
-            dataBacked: false,
-          ),
-        );
-      } else {
+    final pieces = accessoryEvidence.keys.toList();
+    for (final color in recommendations) {
+      // Require an explicit piece; do not invent bag/shoe by list order.
+      if (pieces.length != 1) {
         out.add(
           _ColorSuggestion(
             colorAr: color,
             pieceHint: 'غير محدد',
             reason:
-                'المعلومات غير كافية لربط هذا اللون بقطعة إكسسوار محددة من التحليل.',
+                'ظهرت أكثر من قطعة إكسسوار دون دليل يربط $color بواحدة منها تحديداً.',
             dataBacked: false,
+            isObserved: false,
           ),
         );
+        continue;
       }
+      final piece = pieces.first;
+      final kind = accessoryEvidence[piece]!;
+      out.add(
+        _ColorSuggestion(
+          colorAr: color,
+          pieceHint: piece,
+          reason:
+              'مقترح لـ$piece ($kind) ضمن ${analysis.occasion.labelAr} استناداً إلى قطع الإكسسوار المرصودة في التحليل — وليس لمجرد اختلافه عن اللون الظاهر.',
+          dataBacked: true,
+          isObserved: false,
+        ),
+      );
     }
     return out;
   }
@@ -806,16 +835,21 @@ class _ColorsPage extends StatelessWidget {
               for (final bound in boundColors)
                 _ColorCircle(
                   nameAr: bound.nameAr,
-                  subtitle: bound.pieceLabel,
+                  subtitle: 'مرصود · ${bound.pieceLabel}',
                   art: bound.pieceLabel,
                   selected: selectedColor == bound.nameAr &&
                       selectedPiece == bound.pieceLabel,
                   onTap: () {
-                    onSelectColor(bound.nameAr);
+                    onSelectColor(bound.nameAr, piece: bound.pieceLabel);
                     final resolved = FashionColorBinding.resolveDetailed(
                       nameAr: bound.nameAr,
                       source: FashionColorSource.detected,
                     );
+                    final pieceEligible = analysis.segmentMap
+                            ?.supportsFabricRecolorFor(
+                              garmentLabelAr: bound.pieceLabel,
+                            ) ==
+                        true;
                     showModalBottomSheet<void>(
                       context: context,
                       showDragHandle: true,
@@ -825,12 +859,16 @@ class _ColorsPage extends StatelessWidget {
                           mainAxisSize: MainAxisSize.min,
                           crossAxisAlignment: CrossAxisAlignment.stretch,
                           children: [
-                            Text(bound.nameAr, style: AppTypography.titleSmall),
+                            Text(
+                              '${bound.nameAr} · مرصود',
+                              style: AppTypography.titleSmall,
+                            ),
                             const SizedBox(height: 6),
                             Text(
                               'على ${bound.pieceLabel} · مصدر: ${bound.source}'
                               '${resolved.hex == null ? '' : ' · ${resolved.hex}'}'
-                              '. التقدير يتأثر بالإضاءة.',
+                              '. '
+                              '${pieceEligible ? 'القطعة مؤهلة للتجربة.' : 'قناع هذه القطعة غير كافٍ للتلوين.'}',
                               style: AppTypography.bodyMedium
                                   .copyWith(height: 1.4),
                             ),
@@ -856,7 +894,7 @@ class _ColorsPage extends StatelessWidget {
         ),
         if (suggestions.isNotEmpty) ...[
           const SizedBox(height: 16),
-          Text('اقتراحات لونية', style: AppTypography.titleSmall),
+          Text('مقترحات (ليست مرصودة)', style: AppTypography.titleSmall),
           const SizedBox(height: 8),
           for (final suggestion in suggestions)
             Padding(
@@ -865,10 +903,16 @@ class _ColorsPage extends StatelessWidget {
                 colorAr: suggestion.colorAr,
                 pieceHint: suggestion.pieceHint,
                 reason: suggestion.reason,
-                canTry: maskOk &&
-                    suggestion.dataBacked &&
-                    suggestion.pieceHint != 'غير محدد',
-                onWhy: () => onAskWhy(suggestion.colorAr),
+                canTry: suggestion.dataBacked &&
+                    suggestion.pieceHint != 'غير محدد' &&
+                    (analysis.segmentMap?.supportsFabricRecolorFor(
+                          garmentLabelAr: suggestion.pieceHint,
+                        ) ==
+                        true),
+                onWhy: () => onAskWhy(
+                  suggestion.colorAr,
+                  piece: suggestion.pieceHint,
+                ),
                 onTry: () => onTryColor(
                   suggestion.colorAr,
                   piece: suggestion.pieceHint,
@@ -898,12 +942,14 @@ class _ColorSuggestion {
   final String pieceHint;
   final String reason;
   final bool dataBacked;
+  final bool isObserved;
 
   const _ColorSuggestion({
     required this.colorAr,
     required this.pieceHint,
     required this.reason,
     required this.dataBacked,
+    this.isObserved = false,
   });
 }
 
@@ -1099,7 +1145,11 @@ class _WardrobePage extends StatefulWidget {
   final OutfitAnalysis analysis;
   final ScrollController controller;
 
-  const _WardrobePage({required this.analysis, required this.controller});
+  const _WardrobePage({
+    super.key,
+    required this.analysis,
+    required this.controller,
+  });
 
   @override
   State<_WardrobePage> createState() => _WardrobePageState();

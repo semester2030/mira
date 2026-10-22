@@ -67,7 +67,8 @@ class _MiraAdvisorScreenState extends State<MiraAdvisorScreen> {
   String? _snapshotId;
   String? _sessionError;
   String? _boundOutfitAnalysisId;
-  String? _discussionFocus;
+  String? _contextCardText;
+  String? _bindContextError;
   _ConsultationFocus _focus = _ConsultationFocus.skin;
 
   final bool _fashionAdvisorSticky = false;
@@ -211,21 +212,26 @@ class _MiraAdvisorScreenState extends State<MiraAdvisorScreen> {
 
     final outfitPrimary =
         args.outfitAnalysis != null || args.outfitAnalysisId != null;
-    final recolorId =
-        args.recolorAttemptId ?? AnalysisSession.lastRecolorAttemptId;
+    // Recolor id only from route args — never lastOutfit / lastRecolor alone.
+    final recolorId = args.recolorAttemptId;
     var stage = 'session';
 
     try {
       final prefs = await SharedPreferences.getInstance();
       final fingerprint = await _imageFingerprint(args.outfitAnalysis?.frozenImagePath);
+      final occasion = args.outfitAnalysis?.occasion.id;
       String? outfitAnalysisId = _uuidOrNull(args.outfitAnalysisId);
-      if (outfitAnalysisId == null && fingerprint != null) {
-        outfitAnalysisId = _uuidOrNull(prefs.getString('mira_outfit_report_$fingerprint'));
+      // Same image + different occasion → distinct report keys (not fingerprint alone).
+      if (outfitAnalysisId == null && fingerprint != null && occasion != null) {
+        outfitAnalysisId = _uuidOrNull(
+          prefs.getString('mira_outfit_report_${fingerprint}_$occasion'),
+        );
       }
       if (outfitAnalysisId == null && args.outfitAnalysis != null) {
         stage = 'save';
-        final occasion = args.outfitAnalysis!.occasion.id;
-        final saveKey = 'mira_outfit_save_${fingerprint ?? 'nofp'}_${occasion}_outfit-intel-v2';
+        final occasionId = args.outfitAnalysis!.occasion.id;
+        final saveKey =
+            'mira_outfit_save_${fingerprint ?? 'nofp'}_${occasionId}_outfit-intel-v2';
         var clientSaveId = prefs.getString(saveKey)?.trim();
         // Server MaxLength(64). Full SHA-256 after μs caused the live 400.
         if (clientSaveId == null ||
@@ -233,7 +239,7 @@ class _MiraAdvisorScreenState extends State<MiraAdvisorScreen> {
             clientSaveId.length > 64) {
           clientSaveId = OutfitConsultationMapper.buildClientSaveId(
             fingerprint: fingerprint,
-            occasionId: occasion,
+            occasionId: occasionId,
           );
           await prefs.setString(saveKey, clientSaveId);
         }
@@ -246,7 +252,10 @@ class _MiraAdvisorScreenState extends State<MiraAdvisorScreen> {
         );
         outfitAnalysisId = snapshot.id;
         if (fingerprint != null) {
-          await prefs.setString('mira_outfit_report_$fingerprint', snapshot.id);
+          await prefs.setString(
+            'mira_outfit_report_${fingerprint}_$occasionId',
+            snapshot.id,
+          );
         }
         final viewPath = args.outfitAnalysis?.frozenImagePath;
         if (viewPath != null && viewPath.isNotEmpty) {
@@ -272,14 +281,27 @@ class _MiraAdvisorScreenState extends State<MiraAdvisorScreen> {
             final history = await _consultationApi.listMessages(remembered);
             if (!mounted) return;
             final focus = args.discussionFocus?.trim();
-            // Keep analysis occasion on the report; discussion focus updates context only.
+            final statedGoal = [
+              if (focus != null && focus.isNotEmpty) 'سياق النقاش: $focus',
+              if (args.outfitAnalysis != null)
+                'مناسبة التقرير: ${args.outfitAnalysis!.occasion.labelAr}',
+            ].join(' · ');
+            String? acceptedFocus;
+            String? snapshotId;
+            String? bindError;
             try {
-              await _consultationApi.bindContext(
+              final bound = await _consultationApi.bindContext(
                 sessionId: remembered,
                 outfitAnalysisId: outfitAnalysisId,
                 occasionId: args.outfitAnalysis?.occasion.id,
+                statedGoalAr: statedGoal.isEmpty ? null : statedGoal,
               );
-            } catch (_) {/* resume still usable without context patch */}
+              snapshotId = bound.activeSnapshotId;
+              acceptedFocus = statedGoal.isEmpty ? focus : statedGoal;
+            } catch (_) {
+              bindError =
+                  'تعذر تحديث سياق النقاش على الخادم — لن نعرضه كأنه نجح.';
+            }
             if (!mounted) return;
             setState(() {
               _messages
@@ -294,11 +316,13 @@ class _MiraAdvisorScreenState extends State<MiraAdvisorScreen> {
                       clientMessageId: message.clientMessageId,
                     )));
               _sessionId = remembered;
+              _snapshotId = snapshotId;
               _sessionReady = true;
               _boundOutfitAnalysisId = outfitAnalysisId;
-              _discussionFocus = focus;
+              _contextCardText = acceptedFocus;
+              _bindContextError = bindError;
               _focus = _ConsultationFocus.outfit;
-              _sessionError = null;
+              _sessionError = bindError;
             });
             return;
           } catch (_) {
@@ -339,7 +363,8 @@ class _MiraAdvisorScreenState extends State<MiraAdvisorScreen> {
         _sessionId = session.id;
         _snapshotId = session.activeSnapshotId;
         _boundOutfitAnalysisId = outfitAnalysisId;
-        _discussionFocus = focus;
+        _contextCardText = statedGoal.isEmpty ? focus : statedGoal;
+        _bindContextError = null;
         if (outfitAnalysisId != null) {
           AnalysisSession.consultationByAnalysis[outfitAnalysisId] = session.id;
         }
@@ -814,7 +839,8 @@ class _MiraAdvisorScreenState extends State<MiraAdvisorScreen> {
               ),
               if (_focus == _ConsultationFocus.outfit &&
                   (_boundOutfitAnalysisId != null ||
-                      _args?.outfitAnalysis != null))
+                      _args?.outfitAnalysis != null ||
+                      _bindContextError != null))
                 Padding(
                   padding: const EdgeInsets.fromLTRB(16, 8, 16, 0),
                   child: Container(
@@ -836,9 +862,10 @@ class _MiraAdvisorScreenState extends State<MiraAdvisorScreen> {
                         if (_args?.outfitAnalysis != null)
                           'تقرير: ${_args!.outfitAnalysis!.occasion.labelAr}'
                               ' · ${_args!.outfitAnalysis!.clothingType}',
-                        if (_discussionFocus != null &&
-                            _discussionFocus!.isNotEmpty)
-                          'نقاش: $_discussionFocus',
+                        if (_contextCardText != null &&
+                            _contextCardText!.isNotEmpty)
+                          'قبله الخادم: $_contextCardText',
+                        if (_bindContextError != null) _bindContextError!,
                         if (_boundOutfitAnalysisId != null)
                           'معرّف التحليل مرتبط',
                       ].where((s) => s.isNotEmpty).join('\n'),

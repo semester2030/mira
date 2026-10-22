@@ -131,7 +131,7 @@ export class ConsultationMessageService {
     };
     try {
       const user = await this.prisma.consultationMessage.create({ data });
-      return { status: 'created' as const, user, attemptToken };
+      return { status: 'created' as const, user, attemptToken, quotaReserved: false };
     } catch (error) {
       if (!(error instanceof Prisma.PrismaClientKnownRequestError) || error.code !== 'P2002' || !input.clientMessageId) {
         throw error;
@@ -157,13 +157,52 @@ export class ConsultationMessageService {
         },
       });
       if (updated.count !== 1) throw new ConflictException({ code: 'MCE_TURN_IN_PROGRESS', message: 'الطلب نفسه ما زال قيد المعالجة.' });
-      return { status: 'resume' as const, user: state.user, attemptToken };
+      const fresh = await this.prisma.consultationMessage.findUnique({ where: { id: state.user.id } });
+      return {
+        status: 'resume' as const,
+        user: fresh ?? state.user,
+        attemptToken,
+        quotaReserved: this.readQuotaReserved(fresh ?? state.user),
+      };
     }
-    if (state.status === 'complete') return { status: 'complete' as const, user: state.user, assistant: state.assistant };
+    if (state.status === 'complete') {
+      return {
+        status: 'complete' as const,
+        user: state.user,
+        assistant: state.assistant,
+        quotaReserved: this.readQuotaReserved(state.user),
+      };
+    }
     if (state.status === 'conflict') {
       throw new ConflictException({ code: 'MCE_CLIENT_MESSAGE_CONFLICT', message: 'معرّف الطلب مستخدم بمحتوى مختلف.' });
     }
     throw new ConflictException({ code: 'MCE_TURN_IN_PROGRESS', message: 'الطلب نفسه ما زال قيد المعالجة.' });
+  }
+
+  /** Server-side proof that hourly + daily quota already passed for this turn. */
+  readQuotaReserved(row: { payloadJson?: unknown }): boolean {
+    const payload = row.payloadJson;
+    if (!payload || typeof payload !== 'object' || Array.isArray(payload)) return false;
+    return (payload as { quotaReserved?: unknown }).quotaReserved === true;
+  }
+
+  async markQuotaReserved(messageId: string): Promise<void> {
+    const row = await this.prisma.consultationMessage.findUnique({ where: { id: messageId } });
+    if (!row) return;
+    const prev =
+      row.payloadJson && typeof row.payloadJson === 'object' && !Array.isArray(row.payloadJson)
+        ? (row.payloadJson as Record<string, unknown>)
+        : {};
+    await this.prisma.consultationMessage.update({
+      where: { id: messageId },
+      data: {
+        payloadJson: {
+          ...prev,
+          quotaReserved: true,
+          quotaReservedAt: new Date().toISOString(),
+        },
+      },
+    });
   }
 
   async holdsLease(messageId: string, attemptToken: string, now = new Date()): Promise<boolean> {

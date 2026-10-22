@@ -53,6 +53,9 @@ class _OutfitGarmentRecolorPanelState extends State<OutfitGarmentRecolorPanel>
   bool _syncingPrompt = false;
   String? _error;
   VisionGarmentRecolorResult? _result;
+  String? _resultForGarment;
+  String? _resultForColor;
+  int _requestGen = 0;
   String? _selectedColorAr;
   late String _garmentLabelAr;
   late AnimationController _pulseController;
@@ -80,7 +83,14 @@ class _OutfitGarmentRecolorPanelState extends State<OutfitGarmentRecolorPanel>
     setState(() {
       if (garmentChanged) _garmentLabelAr = _resolveInitialGarment();
       if (colorChanged) _selectedColorAr = _resolveInitialColor();
+      // Drop manual color / prior result so the new seed is not shown as done.
+      _customColorController.clear();
       _promptEdited = false;
+      _result = null;
+      _resultForGarment = null;
+      _resultForColor = null;
+      _error = null;
+      _requestGen++;
       _syncPromptFromSelection();
     });
   }
@@ -231,10 +241,15 @@ class _OutfitGarmentRecolorPanelState extends State<OutfitGarmentRecolorPanel>
     final promptWithNote = note.isEmpty ? prompt : '$prompt وصف التعديل: $note';
 
     HapticFeedback.mediumImpact();
+    final gen = ++_requestGen;
+    final requestGarment = _garmentLabelAr;
+    final requestColor = colorAr;
     setState(() {
       _loading = true;
       _error = null;
       _result = null;
+      _resultForGarment = null;
+      _resultForColor = null;
     });
 
     try {
@@ -276,6 +291,8 @@ class _OutfitGarmentRecolorPanelState extends State<OutfitGarmentRecolorPanel>
       );
 
       if (!mounted) return;
+      // Ignore late responses for a superseded selection.
+      if (gen != _requestGen) return;
 
       if (result == null || result.imageBase64.isEmpty) {
         developer.log(
@@ -302,6 +319,8 @@ class _OutfitGarmentRecolorPanelState extends State<OutfitGarmentRecolorPanel>
       setState(() {
         _loading = false;
         _result = result;
+        _resultForGarment = requestGarment;
+        _resultForColor = requestColor;
         _compare = 0.5;
       });
     } catch (e, st) {
@@ -312,12 +331,18 @@ class _OutfitGarmentRecolorPanelState extends State<OutfitGarmentRecolorPanel>
         stackTrace: st,
       );
       if (!mounted) return;
+      if (gen != _requestGen) return;
       setState(() {
         _loading = false;
         _error = friendlyMiraError(e);
       });
     }
   }
+
+  bool get _resultMatchesSelection =>
+      _result != null &&
+      _resultForGarment == _garmentLabelAr &&
+      _resultForColor == _effectiveColorAr;
 
   double _compare = 0.5;
 
@@ -388,7 +413,7 @@ class _OutfitGarmentRecolorPanelState extends State<OutfitGarmentRecolorPanel>
             ),
           ],
           const SizedBox(height: 14),
-          if (_result == null) ...[
+          if (!_resultMatchesSelection) ...[
             Text('الأصل', style: AppTypography.labelLarge.copyWith(fontWeight: FontWeight.w700)),
             const SizedBox(height: 8),
             ClipRRect(
@@ -400,112 +425,116 @@ class _OutfitGarmentRecolorPanelState extends State<OutfitGarmentRecolorPanel>
             ),
             const SizedBox(height: 16),
           ],
-          Text(
-            'القطعة المراد تلوينها',
-            style: AppTypography.labelLarge.copyWith(fontWeight: FontWeight.w700),
-          ),
-          const SizedBox(height: 8),
-          DropdownButtonFormField<String>(
-            initialValue: GarmentRecolorPromptBuilder.garmentOptions.contains(_garmentLabelAr)
-                ? _garmentLabelAr
-                : _garmentLabelAr,
-            decoration: InputDecoration(
-              filled: true,
-              fillColor: AppColors.background,
-              border: OutlineInputBorder(borderRadius: BorderRadius.circular(14)),
-              contentPadding: const EdgeInsets.symmetric(horizontal: 14, vertical: 12),
+          if (_canRecolor) ...[
+            Text(
+              'القطعة المراد تلوينها',
+              style: AppTypography.labelLarge.copyWith(fontWeight: FontWeight.w700),
             ),
-            hint: Text(_garmentLabelAr, style: AppTypography.bodyMedium),
-            items: [
-              if (!GarmentRecolorPromptBuilder.garmentOptions.contains(_garmentLabelAr))
-                DropdownMenuItem(value: _garmentLabelAr, child: Text(_garmentLabelAr)),
-              for (final g in GarmentRecolorPromptBuilder.garmentOptions)
-                DropdownMenuItem(value: g, child: Text(g)),
-            ],
-            onChanged: _loading
-                ? null
-                : (v) {
-                    if (v == null) return;
-                    setState(() {
-                      _garmentLabelAr = v;
-                      _syncPromptFromSelection();
-                    });
-                  },
-          ),
-          const SizedBox(height: 14),
-          Text(
-            'اللون المستهدف',
-            style: AppTypography.labelLarge.copyWith(fontWeight: FontWeight.w700),
-          ),
-          const SizedBox(height: 8),
-          Wrap(
-            spacing: 10,
-            runSpacing: 10,
-            children: options.map((opt) {
-              final selected = _selectedColorAr == opt.nameAr && _customColorController.text.isEmpty;
-              return _ColorChip(
-                option: opt,
-                selected: selected,
-                onTap: _loading
-                    ? null
-                    : () {
-                        HapticFeedback.selectionClick();
-                        setState(() {
-                          _selectedColorAr = opt.nameAr;
-                          _customColorController.clear();
-                          _result = null;
-                          _error = null;
-                          _syncPromptFromSelection();
-                        });
-                      },
-              );
-            }).toList(),
-          ),
-          const SizedBox(height: 10),
-          TextField(
-            controller: _customColorController,
-            enabled: !_loading,
-            textAlign: TextAlign.right,
-            decoration: InputDecoration(
-              hintText: 'أو اكتبي لوناً مخصصاً (مثل: عنابي)',
-              filled: true,
-              fillColor: AppColors.background,
-              border: OutlineInputBorder(borderRadius: BorderRadius.circular(14)),
-              contentPadding: const EdgeInsets.symmetric(horizontal: 14, vertical: 12),
+            const SizedBox(height: 8),
+            DropdownButtonFormField<String>(
+              initialValue: GarmentRecolorPromptBuilder.garmentOptions.contains(_garmentLabelAr)
+                  ? _garmentLabelAr
+                  : _garmentLabelAr,
+              decoration: InputDecoration(
+                filled: true,
+                fillColor: AppColors.background,
+                border: OutlineInputBorder(borderRadius: BorderRadius.circular(14)),
+                contentPadding: const EdgeInsets.symmetric(horizontal: 14, vertical: 12),
+              ),
+              hint: Text(_garmentLabelAr, style: AppTypography.bodyMedium),
+              items: [
+                if (!GarmentRecolorPromptBuilder.garmentOptions.contains(_garmentLabelAr))
+                  DropdownMenuItem(value: _garmentLabelAr, child: Text(_garmentLabelAr)),
+                for (final g in GarmentRecolorPromptBuilder.garmentOptions)
+                  DropdownMenuItem(value: g, child: Text(g)),
+              ],
+              onChanged: _loading
+                  ? null
+                  : (v) {
+                      if (v == null) return;
+                      setState(() {
+                        _garmentLabelAr = v;
+                        _result = null;
+                        _syncPromptFromSelection();
+                      });
+                    },
             ),
-            onChanged: (_) {
-              setState(() => _syncPromptFromSelection());
-            },
-          ),
-          const SizedBox(height: 16),
-          Text(
-            'وصف التعديل',
-            style: AppTypography.labelLarge.copyWith(fontWeight: FontWeight.w700),
-          ),
-          const SizedBox(height: 6),
-          TextField(
-            controller: _noteController,
-            enabled: !_loading,
-            minLines: 2,
-            maxLines: 4,
-            textDirection: TextDirection.rtl,
-            textAlign: TextAlign.right,
-            decoration: InputDecoration(
-              hintText: 'مثال: درجة أفتح مع بقاء القصة',
-              filled: true,
-              fillColor: AppColors.background,
-              border: OutlineInputBorder(borderRadius: BorderRadius.circular(14)),
+            const SizedBox(height: 14),
+            Text(
+              'اللون المستهدف',
+              style: AppTypography.labelLarge.copyWith(fontWeight: FontWeight.w700),
             ),
-          ),
-          const SizedBox(height: 14),
-          PremiumButton(
-            label: _loading
-                ? 'جاري المعالجة…'
-                : (_canRecolor ? 'تطبيق التلوين على صورتي' : 'التلوين غير متاح لهذه الصورة'),
-            icon: Icons.brush_rounded,
-            variant: PremiumButtonVariant.gold,
-            onPressed: _loading || !_canRecolor ? null : _applyRecolor,
-          ),
+            const SizedBox(height: 8),
+            Wrap(
+              spacing: 10,
+              runSpacing: 10,
+              children: options.map((opt) {
+                final selected = _selectedColorAr == opt.nameAr && _customColorController.text.isEmpty;
+                return _ColorChip(
+                  option: opt,
+                  selected: selected,
+                  onTap: _loading
+                      ? null
+                      : () {
+                          HapticFeedback.selectionClick();
+                          setState(() {
+                            _selectedColorAr = opt.nameAr;
+                            _customColorController.clear();
+                            _result = null;
+                            _error = null;
+                            _syncPromptFromSelection();
+                          });
+                        },
+                );
+              }).toList(),
+            ),
+            const SizedBox(height: 10),
+            TextField(
+              controller: _customColorController,
+              enabled: !_loading,
+              textAlign: TextAlign.right,
+              decoration: InputDecoration(
+                hintText: 'أو اكتبي لوناً مخصصاً (مثل: عنابي)',
+                filled: true,
+                fillColor: AppColors.background,
+                border: OutlineInputBorder(borderRadius: BorderRadius.circular(14)),
+                contentPadding: const EdgeInsets.symmetric(horizontal: 14, vertical: 12),
+              ),
+              onChanged: (_) {
+                setState(() {
+                  _result = null;
+                  _syncPromptFromSelection();
+                });
+              },
+            ),
+            const SizedBox(height: 16),
+            Text(
+              'وصف التعديل',
+              style: AppTypography.labelLarge.copyWith(fontWeight: FontWeight.w700),
+            ),
+            const SizedBox(height: 6),
+            TextField(
+              controller: _noteController,
+              enabled: !_loading,
+              minLines: 2,
+              maxLines: 4,
+              textDirection: TextDirection.rtl,
+              textAlign: TextAlign.right,
+              decoration: InputDecoration(
+                hintText: 'مثال: درجة أفتح مع بقاء القصة',
+                filled: true,
+                fillColor: AppColors.background,
+                border: OutlineInputBorder(borderRadius: BorderRadius.circular(14)),
+              ),
+            ),
+            const SizedBox(height: 14),
+            PremiumButton(
+              label: _loading ? 'جاري المعالجة…' : 'تطبيق التلوين على صورتي',
+              icon: Icons.brush_rounded,
+              variant: PremiumButtonVariant.gold,
+              onPressed: _loading ? null : _applyRecolor,
+            ),
+          ],
           if (_loading) ...[
             const SizedBox(height: 16),
             _LoadingState(pulse: _pulseController, colorAr: _effectiveColorAr),
@@ -525,7 +554,7 @@ class _OutfitGarmentRecolorPanelState extends State<OutfitGarmentRecolorPanel>
               ),
             ),
           ],
-          if (_result != null) ...[
+          if (_resultMatchesSelection) ...[
             const SizedBox(height: 16),
             if (_result!.qel != null) ...[
               _QelBadge(qel: _result!.qel!, attempt: _result!.attempt),

@@ -5,18 +5,25 @@ import 'package:shared_preferences/shared_preferences.dart';
 
 /// Maps saved report / fingerprint → retained local outfit view path.
 /// Server snapshots store no image; wardrobe reads these local paths only.
-/// Keys are scoped by Firebase uid when signed in so accounts do not collide.
+/// Keys are scoped by Firebase uid — never read another account's mapping.
 abstract final class OutfitLocalImageIndex {
   static const _prefix = 'mira_outfit_view_';
 
-  static String _scope() {
+  static String? get currentUid {
     final uid = FirebaseAuth.instance.currentUser?.uid.trim();
-    if (uid == null || uid.isEmpty) return 'anon';
+    if (uid == null || uid.isEmpty) return null;
     return uid;
   }
 
+  static String _scope() => currentUid ?? 'anon';
+
   static String _prefKey(String key) => '$_prefix${_scope()}_$key';
 
+  static String _legacyKey(String key) => '$_prefix$key';
+
+  /// Persist a local view path for the signed-in account.
+  /// Migrates a legacy unscoped entry only when it points at the same path
+  /// being remembered now (ownership proven by this authenticated write).
   static Future<void> remember({
     required String key,
     required String absolutePath,
@@ -26,18 +33,19 @@ abstract final class OutfitLocalImageIndex {
     if (!File(absolutePath).existsSync()) return;
     final prefs = await SharedPreferences.getInstance();
     await prefs.setString(_prefKey(trimmed), absolutePath);
-    // Legacy unscoped key — keep readable for reports saved before RC13.
-    await prefs.setString('$_prefix$trimmed', absolutePath);
+    final legacy = prefs.getString(_legacyKey(trimmed));
+    if (legacy != null && legacy == absolutePath) {
+      await prefs.remove(_legacyKey(trimmed));
+    }
   }
 
   static Future<String?> pathFor(String? key) async {
     if (key == null || key.trim().isEmpty) return null;
     final trimmed = key.trim();
     final prefs = await SharedPreferences.getInstance();
-    for (final pref in [_prefKey(trimmed), '$_prefix$trimmed']) {
-      final path = prefs.getString(pref);
-      if (path == null || path.isEmpty) continue;
-      if (File(path).existsSync()) return path;
+    final scoped = prefs.getString(_prefKey(trimmed));
+    if (scoped != null && scoped.isNotEmpty && File(scoped).existsSync()) {
+      return scoped;
     }
     return null;
   }

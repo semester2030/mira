@@ -45,6 +45,7 @@ class ConsultationApiDataSource {
     String? skinAnalysisId,
     String? outfitAnalysisId,
     String? occasionId,
+    String? statedGoalAr,
   }) async {
     final response = await _dio.patch<Map<String, dynamic>>(
       '${ConsultationApiEndpoints.sessions()}/$sessionId/context',
@@ -54,6 +55,8 @@ class ConsultationApiDataSource {
         if (outfitAnalysisId != null && outfitAnalysisId.isNotEmpty)
           'outfitAnalysisId': outfitAnalysisId,
         if (occasionId != null && occasionId.isNotEmpty) 'occasionId': occasionId,
+        if (statedGoalAr != null && statedGoalAr.isNotEmpty)
+          'statedGoalAr': statedGoalAr,
       },
     );
     final data = response.data;

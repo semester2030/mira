@@ -160,7 +160,13 @@ export class ConsultationSessionService {
     const skinAnalysisId = dto.skinAnalysisId ?? active?.skinAnalysisId ?? undefined;
     const outfitAnalysisId = dto.outfitAnalysisId ?? active?.outfitAnalysisId ?? undefined;
     const recolorAttemptId = dto.recolorAttemptId ?? active?.recolorAttemptId ?? undefined;
+    // Discussion occasion/focus updates the snapshot only — report occasion stays on the outfit row.
     const occasionId = dto.occasionId ?? session.occasionId ?? undefined;
+    const priorGoal =
+      active?.snapshotJson && typeof active.snapshotJson === 'object' && !Array.isArray(active.snapshotJson)
+        ? (active.snapshotJson as { user?: { statedGoalAr?: string } }).user?.statedGoalAr
+        : undefined;
+    const statedGoalAr = dto.statedGoalAr ?? priorGoal;
 
     const grounding = await this.grounding.build({
       userId,
@@ -171,6 +177,7 @@ export class ConsultationSessionService {
       birthYear,
       subscriptionPlan: planTier,
       occasionId,
+      statedGoalAr,
     });
 
     const version =

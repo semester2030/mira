@@ -17,4 +17,10 @@ export class UpdateConsultationContextDto {
   @IsString()
   @MaxLength(64)
   occasionId?: string;
+
+  /** Discussion focus for the current studio tab/piece/color — does not rewrite the saved report. */
+  @IsOptional()
+  @IsString()
+  @MaxLength(500)
+  statedGoalAr?: string;
 }

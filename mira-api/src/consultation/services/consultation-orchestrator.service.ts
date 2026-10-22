@@ -123,10 +123,10 @@ export class ConsultationOrchestratorService {
     let ctx: Awaited<ReturnType<ConsultationOrchestratorService['prepareTurn']>>;
     const attemptToken = opened.attemptToken;
     try {
-      // Resume of the same clientMessageId must not burn another rate-limit slot
-      // (live c-1792639982099619 failed at request/429 before model/stream).
+      // Only skip rate/quota when this turn already reserved them on a prior attempt.
+      // A 429 rejection must NOT gain a free retry merely because claimStatus=resume.
       ctx = await this.prepareTurn(authUser, sessionId, dto, opened.userRow, {
-        skipRateLimit: opened.claimStatus === 'resume',
+        skipRateLimit: opened.quotaReserved === true,
       });
     } catch (error) {
       await this.failOwned(opened.userRow.id, attemptToken);
@@ -177,7 +177,7 @@ export class ConsultationOrchestratorService {
     const attemptToken = opened.attemptToken;
     try {
       ctx = await this.prepareTurn(authUser, sessionId, dto, opened.userRow, {
-        skipRateLimit: opened.claimStatus === 'resume',
+        skipRateLimit: opened.quotaReserved === true,
       });
     } catch (error) {
       await this.failOwned(opened.userRow.id, attemptToken);
@@ -259,8 +259,12 @@ export class ConsultationOrchestratorService {
 
     if (!opts.skipRateLimit) {
       await this.rateLimit.assertWithinLimit(user.id, 'consultation-message');
+      await this.costGuard.assertDailyQuota(user.id, planTier);
+      await this.messages.markQuotaReserved(userRow.id);
+    } else {
+      // Quota already reserved for this clientMessageId — do not double-count.
+      // Daily guard stays fail_closed only when we cannot verify at all (new turns).
     }
-    await this.costGuard.assertDailyQuota(user.id, planTier);
 
     const session = await this.sessions.getForUser(user.id, sessionId);
     const loaded = await this.snapshots.loadForSession(
@@ -364,12 +368,13 @@ export class ConsultationOrchestratorService {
     sessionId: string,
     dto: SendConsultationMessageDto,
   ): Promise<
-    | { turn: ConsultationTurnResponseDto; userRow?: undefined; claimStatus?: undefined; attemptToken?: undefined }
+    | { turn: ConsultationTurnResponseDto; userRow?: undefined; claimStatus?: undefined; attemptToken?: undefined; quotaReserved?: undefined }
     | {
         turn?: undefined;
         userRow: { id: string; contentAr: string; role: string; blocked: boolean; createdAt: Date };
         attemptToken: string | null;
         claimStatus: 'created' | 'resume';
+        quotaReserved: boolean;
       }
   > {
     const user = await this.users.findOrCreateFromFirebase(authUser);
@@ -399,6 +404,7 @@ export class ConsultationOrchestratorService {
       userRow: claim.user,
       attemptToken: claim.attemptToken ?? null,
       claimStatus: claim.status === 'resume' ? 'resume' : 'created',
+      quotaReserved: claim.quotaReserved === true,
     };
   }
 
