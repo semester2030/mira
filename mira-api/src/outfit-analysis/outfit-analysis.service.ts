@@ -179,57 +179,74 @@ export class OutfitAnalysisService {
     const intelligence = sanitizeOutfitIntelligence(dto.intelligence);
     const fingerprint = intelligence.imageFingerprint?.trim();
     const version = intelligence.analysisVersion?.trim();
-    if (fingerprint && version) {
-      const recent = await this.prisma.outfitAnalysis.findMany({
-        where: { userId: user.id, occasionId: occasion },
-        orderBy: { createdAt: 'desc' },
-        take: 30,
-        select: { id: true, occasionId: true, createdAt: true, resultJson: true },
+    const clientSaveId = dto.clientSaveId?.trim() || undefined;
+
+    if (clientSaveId) {
+      const bySave = await this.prisma.outfitAnalysis.findFirst({
+        where: { userId: user.id, clientSaveId },
+        select: { id: true, occasionId: true, createdAt: true },
       });
-      const existing = recent.find((row) => {
-        const stored = row.resultJson as { imageFingerprint?: string; analysisVersion?: string };
-        return stored?.imageFingerprint === fingerprint && stored?.analysisVersion === version;
-      });
-      if (existing) {
+      if (bySave) {
         return {
-          id: existing.id,
-          occasionId: existing.occasionId,
-          createdAt: existing.createdAt.toISOString(),
+          id: bySave.id,
+          occasionId: bySave.occasionId,
+          createdAt: bySave.createdAt.toISOString(),
           reused: true,
         };
       }
     }
 
-    const record = await this.prisma.outfitAnalysis.create({
-      data: {
+    try {
+      const record = await this.prisma.outfitAnalysis.create({
+        data: {
+          userId: user.id,
+          occasionId: occasion,
+          clientSaveId: clientSaveId ?? null,
+          resultJson: {
+            source: 'vision_platform',
+            imageFingerprint: fingerprint,
+            analysisVersion: version,
+            clientSaveId,
+            intelligence,
+          } as unknown as Prisma.InputJsonValue,
+        },
+      });
+
+      await this.usersService.writeAuditLog({
         userId: user.id,
-        occasionId: occasion,
-        resultJson: {
-          source: 'vision_platform',
-          imageFingerprint: fingerprint,
-          analysisVersion: version,
-          intelligence,
-        } as unknown as Prisma.InputJsonValue,
-      },
-    });
+        action: 'outfit_analysis.snapshot_saved',
+        metadata: {
+          analysisId: record.id,
+          occasion,
+          clientSaveId,
+          compatibilityScore: dto.intelligence.compatibilityScore,
+          privacyPolicyVersion: '1.0',
+          imageRetained: false,
+        },
+      });
 
-    await this.usersService.writeAuditLog({
-      userId: user.id,
-      action: 'outfit_analysis.snapshot_saved',
-      metadata: {
-        analysisId: record.id,
-        occasion,
-        compatibilityScore: dto.intelligence.compatibilityScore,
-        privacyPolicyVersion: '1.0',
-        imageRetained: false,
-      },
-    });
-
-    return {
-      id: record.id,
-      occasionId: record.occasionId,
-      createdAt: record.createdAt.toISOString(),
-    };
+      return {
+        id: record.id,
+        occasionId: record.occasionId,
+        createdAt: record.createdAt.toISOString(),
+      };
+    } catch (error) {
+      if (clientSaveId && error instanceof Prisma.PrismaClientKnownRequestError && error.code === 'P2002') {
+        const raced = await this.prisma.outfitAnalysis.findFirst({
+          where: { userId: user.id, clientSaveId },
+          select: { id: true, occasionId: true, createdAt: true },
+        });
+        if (raced) {
+          return {
+            id: raced.id,
+            occasionId: raced.occasionId,
+            createdAt: raced.createdAt.toISOString(),
+            reused: true,
+          };
+        }
+      }
+      throw error;
+    }
   }
 
   private async loadPreviousOutfitScore(userId: string): Promise<number | null> {

@@ -110,7 +110,7 @@ export class McePromptAssemblerService {
     }
     if (snapshot.outfit) {
       const o = snapshot.outfit;
-      const supported = (o as { scoreSupported?: boolean }).scoreSupported !== false
+      const supported = (o as { scoreSupported?: boolean }).scoreSupported === true
         && typeof o.compatibilityScore === 'number';
       if (supported) {
         lines.push(

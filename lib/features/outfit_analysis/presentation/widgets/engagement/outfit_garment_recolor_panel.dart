@@ -54,7 +54,7 @@ class _OutfitGarmentRecolorPanelState extends State<OutfitGarmentRecolorPanel>
   void initState() {
     super.initState();
     _garmentLabelAr = _initialGarmentLabel();
-    _selectedColorAr = _colorOptions.isNotEmpty ? _colorOptions.first.nameAr : 'أسود';
+    _selectedColorAr = _colorOptions.isNotEmpty ? _colorOptions.first.nameAr : null;
     _pulseController = AnimationController(
       vsync: this,
       duration: const Duration(milliseconds: 1400),
@@ -124,7 +124,7 @@ class _OutfitGarmentRecolorPanelState extends State<OutfitGarmentRecolorPanel>
   String get _effectiveColorAr {
     final custom = _customColorController.text.trim();
     if (custom.isNotEmpty) return custom;
-    return _selectedColorAr ?? 'أسود';
+    return _selectedColorAr?.trim() ?? '';
   }
 
   bool get _canRecolor {
@@ -314,14 +314,18 @@ class _OutfitGarmentRecolorPanelState extends State<OutfitGarmentRecolorPanel>
             style: AppTypography.bodySmall.copyWith(color: AppColors.textSecondary, height: 1.45),
           ),
           const SizedBox(height: 14),
-          ClipRRect(
-            borderRadius: BorderRadius.circular(16),
-            child: AspectRatio(
-              aspectRatio: 3 / 4,
-              child: Image.file(File(path), fit: BoxFit.cover),
+          if (_result == null) ...[
+            Text('الأصل', style: AppTypography.labelLarge.copyWith(fontWeight: FontWeight.w700)),
+            const SizedBox(height: 8),
+            ClipRRect(
+              borderRadius: BorderRadius.circular(16),
+              child: AspectRatio(
+                aspectRatio: 3 / 4,
+                child: Image.file(File(path), fit: BoxFit.cover),
+              ),
             ),
-          ),
-          const SizedBox(height: 16),
+            const SizedBox(height: 16),
+          ],
           Text(
             'القطعة المراد تلوينها',
             style: AppTypography.labelLarge.copyWith(fontWeight: FontWeight.w700),

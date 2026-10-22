@@ -32,7 +32,7 @@ import { evaluateMceFashionQuarantine } from '../../fashion-knowledge/advisor-in
 import { isDirectCommercialQuestion, serverCommercialTurnReply } from './mce-commercial-guard';
 import { ConsultationDialogueService } from './consultation-attachment.service';
 import { answerCacheAllowed, consultationQuarantineApplies, readPinnedAttachmentIds } from './consultation-dialogue';
-import { decideConsultationScope, guardScopeAnswer } from './consultation-scope';
+import { decideConsultationScope, guardScopeAnswer, historyForBeautyTurn } from './consultation-scope';
 
 @Injectable()
 export class ConsultationOrchestratorService {
@@ -315,6 +315,7 @@ export class ConsultationOrchestratorService {
 
     let llmMessages: ReturnType<McePromptAssemblerService['buildMessages']> | undefined;
     let detectedIntent: MceConsultationIntent | undefined;
+    const modelHistory = historyForBeautyTurn(priorHistory);
 
     if (!localReply && !mod.blocked && !cached && !isDirectCommercialQuestion(dto.message) && this.llm.isConfigured()) {
       detectedIntent = this.intentClassifier.classify(dto.message.trim(), loaded.snapshot);
@@ -322,7 +323,7 @@ export class ConsultationOrchestratorService {
         snapshot: loaded.snapshot,
         factRegistry: loaded.factRegistry,
         rollingSummary: session.rollingSummaryAr,
-        history,
+        history: modelHistory,
         userMessage: dto.message.trim(),
         detectedIntent,
         intentHintAr: this.intentClassifier.intentHintAr(detectedIntent),

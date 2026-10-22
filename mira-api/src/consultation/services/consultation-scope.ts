@@ -47,11 +47,29 @@ export function decideConsultationScope(
   return allowDecision;
 }
 
+/** Drop prior off-topic turns so a later beauty question is not answered through animal/vehicle context. */
+export function historyForBeautyTurn(
+  history: Array<{ role: 'user' | 'assistant'; content: string }>,
+): Array<{ role: 'user' | 'assistant'; content: string }> {
+  const kept: Array<{ role: 'user' | 'assistant'; content: string }> = [];
+  for (let i = 0; i < history.length; i++) {
+    const turn = history[i];
+    if (turn.role === 'user' && requestedOutcome(turn.content) === 'other') {
+      const next = history[i + 1];
+      if (next?.role === 'assistant') i += 1;
+      continue;
+    }
+    if (turn.role === 'assistant' && turn.content.includes('خارج اختصاص ميرا')) continue;
+    kept.push(turn);
+  }
+  return kept;
+}
+
 export function answerStaysInScope(answer: string, userMessage: string): boolean {
   const text = answer.trim();
   if (!text) return true;
   if (requestedOutcome(userMessage) === 'beauty') {
-    return !/مزاد|سعر الصقر|نوع الصقر|زيت السيارة|كود برمج/.test(text);
+    return !/مزاد|سعر الصقر|نوع الصقر|زيت السيارة|كود برمج|هذا صقر|هذا طائر|مزاد الصقور|القطط|وصف القطة/.test(text);
   }
   const describesAnimal = /قطة|قط |هرّة|هذا كلب|شاهين|صقر|طائر جارح/.test(text);
   if (describesAnimal && requestedOutcome(userMessage) !== 'beauty') return false;

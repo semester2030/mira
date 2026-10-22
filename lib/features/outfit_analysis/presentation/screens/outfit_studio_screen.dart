@@ -68,7 +68,7 @@ class _OutfitStudioScreenState extends State<OutfitStudioScreen> {
             index: _index,
             onSelect: (value) => setState(() => _index = value),
           ),
-          _Photo(path: widget.analysis.frozenImagePath),
+          if (_index != 2) _Photo(path: widget.analysis.frozenImagePath),
           Expanded(
             child: IndexedStack(
               index: _index,

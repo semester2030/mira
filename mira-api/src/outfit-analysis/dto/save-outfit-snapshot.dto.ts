@@ -119,6 +119,12 @@ export class SaveOutfitSnapshotDto {
   @MaxLength(64)
   occasionId!: string;
 
+  /** One id per completed analysis save. Network retries reuse it; a new analysis uses a new id. */
+  @IsOptional()
+  @IsString()
+  @MaxLength(64)
+  clientSaveId?: string;
+
   @ValidateNested()
   @Type(() => OutfitIntelligenceSnapshotDto)
   intelligence!: OutfitIntelligenceSnapshotDto;

@@ -5,9 +5,11 @@ abstract final class OutfitConsultationMapper {
   static Map<String, dynamic> toSnapshotPayload(
     OutfitAnalysis analysis, {
     String? imageFingerprint,
+    String? clientSaveId,
   }) {
     return {
       'occasionId': analysis.occasion.id,
+      if (clientSaveId != null && clientSaveId.isNotEmpty) 'clientSaveId': clientSaveId,
       'intelligence': {
         'occasionId': analysis.occasion.id,
         if (analysis.scoreSupported) 'compatibilityScore': analysis.compatibilityScore,

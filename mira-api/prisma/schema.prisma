@@ -44,13 +44,16 @@ model SkinAnalysis {
 }
 
 model OutfitAnalysis {
-  id         String   @id @default(uuid())
-  userId     String   @map("user_id")
-  user       User     @relation(fields: [userId], references: [id], onDelete: Cascade)
-  occasionId String   @map("occasion_id")
-  resultJson Json     @map("result_json")
-  createdAt  DateTime @default(now()) @map("created_at")
+  id           String   @id @default(uuid())
+  userId       String   @map("user_id")
+  user         User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  occasionId   String   @map("occasion_id")
+  /// Client-issued save id. Retries of the same save reuse the row; a new analysis uses a new id.
+  clientSaveId String?  @map("client_save_id")
+  resultJson   Json     @map("result_json")
+  createdAt    DateTime @default(now()) @map("created_at")
 
+  @@unique([userId, clientSaveId])
   @@index([userId, createdAt(sort: Desc)])
   @@map("outfit_analyses")
 }

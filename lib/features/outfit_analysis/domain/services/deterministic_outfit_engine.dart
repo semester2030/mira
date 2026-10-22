@@ -348,15 +348,27 @@ abstract final class DeterministicOutfitEngine {
     if (_isNeutralPalette(visual.dominantColors)) {
       reasons.add('الألوان المحايدة متناسقة مع ${occasion.labelAr}');
     }
-    if (visual.styleTypeAr.isNotEmpty) {
-      reasons.add('أسلوب ${visual.styleTypeAr} متوازن للمناسبة');
+    if (visual.styleTypeAr.isNotEmpty && _styleFitsOccasion(visual.styleTypeAr, occasion)) {
+      reasons.add('أسلوب ${visual.styleTypeAr} متوازن لمناسبة ${occasion.labelAr}');
     }
     if (reasons.isEmpty) {
       reasons.add(
-        'إطلالة ${visual.styleTypeAr} مناسبة جزئياً لـ${occasion.labelAr}',
+        'لون ${visual.dominantColors.isEmpty ? visual.garmentTypeAr : visual.dominantColors.first} ظاهر في الإطلالة — راجعي ملاءمته لـ${occasion.labelAr}',
       );
     }
     return reasons.take(4).toList();
+  }
+
+  static bool _styleFitsOccasion(String styleAr, MiraOccasion occasion) {
+    final evening = styleAr.contains('سهرة') || styleAr.contains('رسمي');
+    final casual = styleAr.contains('يومي') || styleAr.contains('كاجوال');
+    if (evening && (occasion == MiraOccasion.university || occasion == MiraOccasion.casual)) {
+      return false;
+    }
+    if (casual && (occasion == MiraOccasion.wedding || occasion == MiraOccasion.evening)) {
+      return false;
+    }
+    return true;
   }
 
   static List<String> _buildQuickMismatchReasons(
@@ -377,6 +389,14 @@ abstract final class DeterministicOutfitEngine {
     }
     if (visual.formalityLevel > 0.8 && occasion == MiraOccasion.casual) {
       reasons.add('الإطلالة رسمية أكثر من اللازم للكاجوال');
+    }
+    if (!_styleFitsOccasion(visual.styleTypeAr, occasion) && visual.styleTypeAr.isNotEmpty) {
+      reasons.add(
+        'أسلوب ${visual.styleTypeAr} أقل ملاءمة لمناسبة ${occasion.labelAr}',
+      );
+    }
+    if (occasion == MiraOccasion.university && visual.formalityLevel > 0.8) {
+      reasons.add('إطلالة سهرة رسمية قد تكون أثقل من المطلوب للجامعة');
     }
     return reasons.take(4).toList();
   }

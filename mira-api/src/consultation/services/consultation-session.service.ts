@@ -192,7 +192,7 @@ export class ConsultationSessionService {
 
   async getForUser(userId: string, sessionId: string) {
     const row = await this.prisma.consultationSession.findFirst({
-      where: { id: sessionId, userId },
+      where: { id: sessionId, userId, status: { not: 'deleted' } },
     });
     if (!row) throw new NotFoundException('الجلسة غير موجودة');
     return row;

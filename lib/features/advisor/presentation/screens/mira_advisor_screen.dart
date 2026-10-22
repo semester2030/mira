@@ -60,6 +60,7 @@ class _MiraAdvisorScreenState extends State<MiraAdvisorScreen> {
 
   bool _loading = false;
   bool _sessionReady = false;
+  Future<void>? _sessionStart;
   String? _sessionId;
   String? _snapshotId;
   String? _sessionError;
@@ -136,12 +137,24 @@ class _MiraAdvisorScreenState extends State<MiraAdvisorScreen> {
           FaceAdvisorClientRoute.advisorFaceChat ||
       _faceAdvisorSticky;
 
-  String _sessionStartError(Object error) {
+  String _stageError(String stage, Object error) {
     final status = error is DioException ? error.response?.statusCode : null;
-    if (status == null) {
-      return 'تعذر بدء المحادثة المرتبطة بهذه الإطلالة. أعيدي المحاولة.';
+    final code = error is DioException ? error.response?.data is Map ? (error.response!.data as Map)['code'] : null : null;
+    final track = error is DioException ? (error.requestOptions.extra['clientMessageId'] ?? error.response?.headers.value('x-request-id')) : null;
+    final suffix = track == null ? '' : ' رقم التتبع: $track';
+    if (status == 503 || code == 'RATE_LIMIT_UNAVAILABLE' || code == 'MCE_QUOTA_UNAVAILABLE') {
+      return 'تعذر التحقق من حد الاستخدام بأمان. أعيدي المحاولة بعد قليل.$suffix';
     }
-    return 'تعذر بدء المحادثة المرتبطة بهذه الإطلالة. رمز الاستجابة $status.';
+    return switch (stage) {
+      'save' => status == null
+          ? 'تعذر حفظ تقرير الإطلالة. أعيدي المحاولة.$suffix'
+          : 'تعذر حفظ تقرير الإطلالة. رمز الاستجابة $status.$suffix',
+      'resume' => 'تعذر استئناف المحادثة السابقة. سنبدأ جلسة جديدة.$suffix',
+      'session' => status == null
+          ? 'تعذر بدء المحادثة المرتبطة بهذه الإطلالة. أعيدي المحاولة.$suffix'
+          : 'تعذر بدء المحادثة المرتبطة بهذه الإطلالة. رمز الاستجابة $status.$suffix',
+      _ => 'تعذر إكمال الطلب. أعيدي المحاولة.$suffix',
+    };
   }
 
   String? _uuidOrNull(String? value) {
@@ -164,6 +177,22 @@ class _MiraAdvisorScreenState extends State<MiraAdvisorScreen> {
   }
 
   Future<void> _ensureSession() async {
+    if (_sessionReady) return;
+    final inflight = _sessionStart;
+    if (inflight != null) {
+      await inflight;
+      return;
+    }
+    final run = _startSessionOnce();
+    _sessionStart = run;
+    try {
+      await run;
+    } finally {
+      if (identical(_sessionStart, run)) _sessionStart = null;
+    }
+  }
+
+  Future<void> _startSessionOnce() async {
     final args = _args;
     if (!AppSession.canUseCloud || AppSession.isGuest) {
       setState(() {
@@ -181,6 +210,7 @@ class _MiraAdvisorScreenState extends State<MiraAdvisorScreen> {
         args.outfitAnalysis != null || args.outfitAnalysisId != null;
     final recolorId =
         args.recolorAttemptId ?? AnalysisSession.lastRecolorAttemptId;
+    var stage = 'session';
 
     try {
       final prefs = await SharedPreferences.getInstance();
@@ -190,10 +220,19 @@ class _MiraAdvisorScreenState extends State<MiraAdvisorScreen> {
         outfitAnalysisId = _uuidOrNull(prefs.getString('mira_outfit_report_$fingerprint'));
       }
       if (outfitAnalysisId == null && args.outfitAnalysis != null) {
+        stage = 'save';
+        final occasion = args.outfitAnalysis!.occasion.id;
+        final saveKey = 'mira_outfit_save_${fingerprint ?? 'nofp'}_${occasion}_outfit-intel-v2';
+        var clientSaveId = prefs.getString(saveKey);
+        if (clientSaveId == null || clientSaveId.isEmpty) {
+          clientSaveId = '${DateTime.now().microsecondsSinceEpoch}-${fingerprint ?? occasion}';
+          await prefs.setString(saveKey, clientSaveId);
+        }
         final snapshot = await _outfitApi.saveIntelligenceSnapshot(
           OutfitConsultationMapper.toSnapshotPayload(
             args.outfitAnalysis!,
             imageFingerprint: fingerprint,
+            clientSaveId: clientSaveId,
           ),
         );
         outfitAnalysisId = snapshot.id;
@@ -206,30 +245,37 @@ class _MiraAdvisorScreenState extends State<MiraAdvisorScreen> {
         final remembered = AnalysisSession.consultationByAnalysis[outfitAnalysisId]
             ?? prefs.getString('mira_outfit_chat_$outfitAnalysisId');
         if (remembered != null && remembered.isNotEmpty) {
-          final history = await _consultationApi.listMessages(remembered);
-          if (!mounted) return;
-          setState(() {
-            _messages
-              ..clear()
-              ..addAll(history.messages.map((message) => AdvisorMessage(
-                    id: message.id,
-                    text: message.contentAr,
-                    isUser: message.isUser,
-                    at: message.createdAt,
-                    confidence: message.confidence,
-                    attachmentIds: message.attachmentIds,
-                    clientMessageId: message.clientMessageId,
-                  )));
-            _sessionId = remembered;
-            _sessionReady = true;
-            _boundOutfitAnalysisId = outfitAnalysisId;
-            _focus = _ConsultationFocus.outfit;
-            _sessionError = null;
-          });
-          return;
+          stage = 'resume';
+          try {
+            final history = await _consultationApi.listMessages(remembered);
+            if (!mounted) return;
+            setState(() {
+              _messages
+                ..clear()
+                ..addAll(history.messages.map((message) => AdvisorMessage(
+                      id: message.id,
+                      text: message.contentAr,
+                      isUser: message.isUser,
+                      at: message.createdAt,
+                      confidence: message.confidence,
+                      attachmentIds: message.attachmentIds,
+                      clientMessageId: message.clientMessageId,
+                    )));
+              _sessionId = remembered;
+              _sessionReady = true;
+              _boundOutfitAnalysisId = outfitAnalysisId;
+              _focus = _ConsultationFocus.outfit;
+              _sessionError = null;
+            });
+            return;
+          } catch (_) {
+            AnalysisSession.consultationByAnalysis.remove(outfitAnalysisId);
+            await prefs.remove('mira_outfit_chat_$outfitAnalysisId');
+          }
         }
       }
 
+      stage = 'session';
       final skinId = outfitPrimary && args.skinReport == null
           ? null
           : (args.skinReport?.id ??
@@ -281,7 +327,7 @@ class _MiraAdvisorScreenState extends State<MiraAdvisorScreen> {
         _loading = false;
         _sessionReady = false;
         _sessionId = null;
-        _sessionError = _sessionStartError(e);
+        _sessionError = _stageError(stage, e);
         _focus = args.outfitAnalysis != null
             ? _ConsultationFocus.outfit
             : _ConsultationFocus.skin;
@@ -367,7 +413,7 @@ class _MiraAdvisorScreenState extends State<MiraAdvisorScreen> {
         _loading = false;
         _sessionReady = false;
         _sessionId = null;
-        _sessionError = _sessionStartError(e);
+        _sessionError = _stageError('session', e);
       });
     }
   }

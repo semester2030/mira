@@ -117,7 +117,7 @@ export class MceFactExtractorService {
     }
 
     const outfit = snapshot.outfit;
-    const scoreSupported = (outfit as { scoreSupported?: boolean } | undefined)?.scoreSupported !== false;
+    const scoreSupported = (outfit as { scoreSupported?: boolean } | undefined)?.scoreSupported === true;
     if (outfit && scoreSupported) {
       facts.push({
         id: 'outfit.compatibilityScore',
