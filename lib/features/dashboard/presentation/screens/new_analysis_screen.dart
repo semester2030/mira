@@ -48,8 +48,14 @@ class _NewAnalysisScreenState extends ConsumerState<NewAnalysisScreen> {
   int _analysisAttemptId = 0;
   int _activeAttemptId = 0;
 
+  /// Correlates phone attempt ↔ server logs (no image bytes / secrets).
+  String? _activeTraceId;
+
   /// Matches SkinAnalysisApiDataSource receiveTimeout (180s) + small slack.
   static const _analysisTimeout = Duration(seconds: 185);
+
+  String _newTraceId(int attempt) =>
+      'face_${DateTime.now().toUtc().millisecondsSinceEpoch}_a$attempt';
 
   @override
   void initState() {
@@ -145,15 +151,17 @@ class _NewAnalysisScreenState extends ConsumerState<NewAnalysisScreen> {
     }
     final attempt = ++_analysisAttemptId;
     _activeAttemptId = attempt;
+    _activeTraceId = _newTraceId(attempt);
     final t0 = DateTime.now().toUtc().toIso8601String();
     MiraMeasureTrace.span(
       'T4_ANALYSIS_INVOKE',
-      detail: 'attempt=$attempt guest=${AppSession.isGuest}',
+      detail:
+          'attempt=$attempt guest=${AppSession.isGuest} trace=$_activeTraceId',
     );
     debugPrint(
-      'Mira analysis: START attempt=$attempt t0=$t0 '
+      'Mira analysis: START attempt=$attempt trace=$_activeTraceId t0=$t0 '
       'guest=${AppSession.isGuest} '
-      'path=${_capturedImage!.path} '
+      'phase=invoke '
       'probe=${PerfectCameraKitGate.buildProbeTag}',
     );
     if (AppSession.isGuest) {
@@ -240,8 +248,8 @@ class _NewAnalysisScreenState extends ConsumerState<NewAnalysisScreen> {
     } on TimeoutException {
       if (!context.mounted || !_isActiveAttempt(attempt)) return;
       debugPrint(
-        'Mira analysis: TIMEOUT attempt=$attempt '
-        'elapsedMs=${sw.elapsedMilliseconds}',
+        'Mira analysis: TIMEOUT attempt=$attempt trace=$_activeTraceId '
+        'phase=timeout elapsedMs=${sw.elapsedMilliseconds}',
       );
       final mapped = mapFaceAnalysisError(
         code: 'TIMEOUT',
@@ -251,22 +259,13 @@ class _NewAnalysisScreenState extends ConsumerState<NewAnalysisScreen> {
         _journeyError = mapped;
         _journey = FaceAnalysisJourneyPhase.timeout;
       });
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(
-          content: Text(mapped.snackMessage),
-          backgroundColor: AppColors.error,
-          action: SnackBarAction(
-            label: 'إعادة المحاولة',
-            textColor: AppColors.onPrimary,
-            onPressed: () {},
-          ),
-        ),
-      );
+      _showFailureSnack(context, mapped);
     } catch (e) {
       if (!context.mounted || !_isActiveAttempt(attempt)) return;
       debugPrint(
-        'Mira analysis: FAIL attempt=$attempt '
-        'elapsedMs=${sw.elapsedMilliseconds} err=${friendlyMiraError(e)}',
+        'Mira analysis: FAIL attempt=$attempt trace=$_activeTraceId '
+        'phase=request_or_parse elapsedMs=${sw.elapsedMilliseconds} '
+        'err=${friendlyMiraError(e)}',
       );
       final mapped = mapFaceAnalysisError(message: friendlyMiraError(e));
       setState(() {
@@ -275,21 +274,7 @@ class _NewAnalysisScreenState extends ConsumerState<NewAnalysisScreen> {
             ? FaceAnalysisJourneyPhase.captureRejected
             : FaceAnalysisJourneyPhase.serviceUnavailable;
       });
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(
-          content: Text(mapped.snackMessage),
-          backgroundColor: AppColors.error,
-          action: SnackBarAction(
-            label: mapped.requiresRecapture ? 'إعادة التصوير' : 'إعادة المحاولة',
-            textColor: AppColors.onPrimary,
-            onPressed: () {
-              if (mapped.requiresRecapture) {
-                _clearCaptureForRecapture();
-              }
-            },
-          ),
-        ),
-      );
+      _showFailureSnack(context, mapped);
     } finally {
       if (!_isActiveAttempt(attempt)) {
         // Newer attempt owns UI — do not unlock/clear.
@@ -354,6 +339,29 @@ class _NewAnalysisScreenState extends ConsumerState<NewAnalysisScreen> {
         );
   }
 
+  void _showFailureSnack(
+    BuildContext context,
+    FaceAnalysisJourneyError mapped,
+  ) {
+    ScaffoldMessenger.of(context).showSnackBar(
+      SnackBar(
+        content: Text(mapped.snackMessage),
+        backgroundColor: AppColors.error,
+        action: SnackBarAction(
+          label: mapped.requiresRecapture ? 'إعادة التصوير' : 'إعادة المحاولة',
+          textColor: AppColors.onPrimary,
+          onPressed: () {
+            if (mapped.requiresRecapture) {
+              _clearCaptureForRecapture();
+            } else if (mapped.retryable && _capturedImage != null) {
+              _startAnalysisForCurrentCapture(context);
+            }
+          },
+        ),
+      ),
+    );
+  }
+
   Future<void> _onSkinAnalysisSuccess(BuildContext context) async {
     if (MiraFeatures.packagesEnabled && !AppSession.isGuest) {
       try {
@@ -393,10 +401,14 @@ class _NewAnalysisScreenState extends ConsumerState<NewAnalysisScreen> {
       case FaceAnalysisJourneyPhase.ready:
       case FaceAnalysisJourneyPhase.captured:
       case FaceAnalysisJourneyPhase.localValidation:
+        if (_journeyError != null) {
+          return _journeyError!.titleAr;
+        }
         if (busy) return 'جاري تجهيز الصورة...';
         // Truthful: capture accepted; analysis not yet running.
         return 'تم التقاط الصورة';
       default:
+        if (_journeyError != null) return _journeyError!.titleAr;
         return busy ? 'جاري تجهيز الصورة...' : 'تم التقاط الصورة';
     }
   }
@@ -529,17 +541,42 @@ class _NewAnalysisScreenState extends ConsumerState<NewAnalysisScreen> {
             if (showBottomCta)
               Padding(
                 padding: const EdgeInsets.fromLTRB(20, 4, 20, 20),
-                child: PremiumButton(
-                  label: _buttonLabel(hasPhoto: hasPhoto, busy: analyzing),
-                  loading: analyzing,
-                  icon: Icons.auto_awesome_rounded,
-                  variant: PremiumButtonVariant.gold,
-                  onPressed: analyzing || _submitLock
-                      ? null
-                      : (_journeyError?.requiresRecapture == true
-                          ? () => _clearCaptureForRecapture()
-                          : () =>
-                              _startAnalysisForCurrentCapture(analysisContext)),
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.stretch,
+                  children: [
+                    PremiumButton(
+                      label: _buttonLabel(hasPhoto: hasPhoto, busy: analyzing),
+                      loading: analyzing,
+                      icon: Icons.auto_awesome_rounded,
+                      variant: PremiumButtonVariant.gold,
+                      onPressed: analyzing || _submitLock
+                          ? null
+                          : (_journeyError?.requiresRecapture == true
+                              ? () => _clearCaptureForRecapture()
+                              : () => _startAnalysisForCurrentCapture(
+                                    analysisContext,
+                                  )),
+                    ),
+                    // Recapture is independent of retry-with-same-photo.
+                    if (!analyzing &&
+                        hasPhoto &&
+                        _journeyError != null &&
+                        _journeyError!.retryable &&
+                        !_journeyError!.requiresRecapture) ...[
+                      const SizedBox(height: 8),
+                      TextButton(
+                        onPressed: _submitLock
+                            ? null
+                            : () => _clearCaptureForRecapture(),
+                        child: Text(
+                          'إعادة التصوير',
+                          style: AppTypography.labelLarge.copyWith(
+                            color: AppColors.onPrimary.withValues(alpha: 0.9),
+                          ),
+                        ),
+                      ),
+                    ],
+                  ],
                 ),
               )
             else
@@ -677,23 +714,12 @@ class _NewAnalysisScreenState extends ConsumerState<NewAnalysisScreen> {
                       ? FaceAnalysisJourneyPhase.timeout
                       : FaceAnalysisJourneyPhase.serviceUnavailable);
             });
-            ScaffoldMessenger.of(context).showSnackBar(
-              SnackBar(
-                content: Text(err.snackMessage),
-                backgroundColor: AppColors.error,
-                action: SnackBarAction(
-                  label: err.requiresRecapture
-                      ? 'إعادة التصوير'
-                      : 'إعادة المحاولة',
-                  textColor: AppColors.onPrimary,
-                  onPressed: () {
-                    if (err.requiresRecapture) {
-                      _clearCaptureForRecapture();
-                    }
-                  },
-                ),
-              ),
+            debugPrint(
+              'Mira analysis: FAIL signed-in attempt=${state.attemptId} '
+              'trace=$_activeTraceId phase=bloc_failure '
+              'code=${err.code}',
             );
+            _showFailureSnack(context, err);
           }
         },
         builder: (context, state) {

@@ -158,6 +158,62 @@ FaceAnalysisJourneyError mapFaceAnalysisError({
     );
   }
 
+  if (code == 'PROVIDER_AUTH_EXPIRED' ||
+      raw.contains('expiredapikey') ||
+      raw.contains('api key has expired')) {
+    return const FaceAnalysisJourneyError(
+      code: 'PROVIDER_AUTH_EXPIRED',
+      titleAr: 'خدمة التحليل غير متاحة مؤقتاً',
+      bodyAr: 'أعيدي المحاولة لاحقاً أو تواصلي مع الدعم.',
+      userAction: FaceAnalysisUserAction.retry,
+      requiresRecapture: false,
+      retryable: true,
+    );
+  }
+
+  if (statusCode == 401 ||
+      code == 'SESSION_EXPIRED' ||
+      raw.contains('انتهت جلسة') ||
+      raw.contains('unauthorized')) {
+    return const FaceAnalysisJourneyError(
+      code: 'SESSION_EXPIRED',
+      titleAr: 'انتهت جلسة الدخول',
+      bodyAr: 'سجّلي خروجًا ثم دخولًا مرة أخرى ثم أعيدي المحاولة.',
+      userAction: FaceAnalysisUserAction.retry,
+      requiresRecapture: false,
+      retryable: true,
+    );
+  }
+
+  if (statusCode == 429 ||
+      code == 'RATE_LIMITED' ||
+      raw.contains('طلبات كثيرة') ||
+      raw.contains('too many requests')) {
+    return const FaceAnalysisJourneyError(
+      code: 'RATE_LIMITED',
+      titleAr: 'وصلتِ لحد الاستخدام',
+      bodyAr: 'انتظري قليلًا ثم أعيدي المحاولة بنفس الصورة.',
+      userAction: FaceAnalysisUserAction.retry,
+      requiresRecapture: false,
+      retryable: true,
+    );
+  }
+
+  if (code == 'NETWORK_ERROR' ||
+      raw.contains('تعذر الوصول') ||
+      raw.contains('انتهت مهلة الاتصال') ||
+      raw.contains('socket') ||
+      raw.contains('connection')) {
+    return const FaceAnalysisJourneyError(
+      code: 'NETWORK_ERROR',
+      titleAr: 'انقطاع في الاتصال',
+      bodyAr: 'تحققي من الشبكة ثم أعيدي المحاولة بنفس الصورة.',
+      userAction: FaceAnalysisUserAction.retry,
+      requiresRecapture: false,
+      retryable: true,
+    );
+  }
+
   if (statusCode == 503 ||
       category == 'provider' ||
       code == 'PROVIDER_UNAVAILABLE' ||

@@ -117,6 +117,34 @@ export function classifyYouCamCreditInsufficiencyError(): FaceProviderClientErro
   };
 }
 
+/**
+ * Perfect Corp / YouCam API key expired or rejected — operator must renew secrets.
+ * Never surface the raw ExpiredApiKey token to the client UI.
+ */
+export function isYouCamExpiredApiKeyError(message: string): boolean {
+  const lower = message.toLowerCase();
+  return (
+    lower.includes('expiredapikey') ||
+    lower.includes('api key has expired') ||
+    lower.includes('invalidapikey') ||
+    (lower.includes('file api 401') && lower.includes('api key'))
+  );
+}
+
+export function classifyYouCamExpiredApiKeyError(): FaceProviderClientError {
+  return {
+    code: 'PROVIDER_AUTH_EXPIRED',
+    category: 'provider',
+    message:
+      'خدمة تحليل البشرة غير متاحة مؤقتاً. أعيدي المحاولة لاحقاً أو تواصلي مع الدعم.',
+    messageEn:
+      'Skin analysis provider authentication expired. Renew the provider API key.',
+    retryable: true,
+    requiresRecapture: false,
+    userAction: 'retry',
+  };
+}
+
 export function classifyYouCamCaptureError(
   message: string,
 ): FaceProviderClientError | null {

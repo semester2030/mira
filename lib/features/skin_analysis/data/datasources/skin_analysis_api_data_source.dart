@@ -54,12 +54,15 @@ class SkinAnalysisApiDataSource {
 
       final encT0 = MiraMeasureTrace.monoMs;
       MiraMeasureTrace.span('T6_REQUEST_ENCODE_BEGIN');
+      final clientRequestId =
+          'face_${DateTime.now().toUtc().microsecondsSinceEpoch}';
       final formMap = <String, dynamic>{
         'image': await MultipartFile.fromFile(
           sourceForPrepare.path,
           filename: 'scan.jpg',
         ),
         'faceIntel': gate.faceIntelJson,
+        'clientRequestId': clientRequestId,
       };
       MiraMeasureTrace.span('T6_REQUEST_ENCODE_END', t0Ms: encT0);
 
@@ -68,6 +71,10 @@ class SkinAnalysisApiDataSource {
       SkinStartAnalysisTrace.mark(
         'REQUEST_URL_HOST',
         detail: Uri.tryParse(MiraApiConfig.baseUrl)?.host ?? 'unknown',
+      );
+      SkinStartAnalysisTrace.mark(
+        'CLIENT_REQUEST_ID',
+        detail: clientRequestId,
       );
       SkinStartAnalysisTrace.mark(
         'HD_ENDPOINT_REACHED',
@@ -81,6 +88,9 @@ class SkinAnalysisApiDataSource {
         options: Options(
           receiveTimeout: const Duration(seconds: 180),
           sendTimeout: const Duration(seconds: 180),
+          headers: <String, dynamic>{
+            'X-Client-Request-Id': clientRequestId,
+          },
         ),
       );
       // T8 send-body complete is NOT INSTRUMENTED precisely with Dio default;

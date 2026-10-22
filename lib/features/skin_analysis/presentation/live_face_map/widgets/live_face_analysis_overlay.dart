@@ -27,9 +27,12 @@ class LiveFaceAnalysisOverlay extends StatelessWidget {
     required this.scanProgress,
     required this.sweepProgress,
     this.hintText = 'انظري للكاميرا مباشرة',
+    this.errorMessageAr,
   });
 
   final String hintText;
+  /// When set with a captured still, suppress «جاهز للتصوير» and show failure chrome.
+  final String? errorMessageAr;
 
   @override
   Widget build(BuildContext context) {
@@ -38,7 +41,10 @@ class LiveFaceAnalysisOverlay extends StatelessWidget {
       builder: (context, _) {
         final frame = controller.frame;
         final analyzing = uiState == LiveCameraOverlayState.analyzing;
-        final showLiveGuide = !analyzing && uiState != LiveCameraOverlayState.captured;
+        final captured = uiState == LiveCameraOverlayState.captured;
+        final hasError =
+            errorMessageAr != null && errorMessageAr!.trim().isNotEmpty;
+        final showLiveGuide = !analyzing && !captured;
         final canDrawRegions =
             analyzing && frame.outline.length >= 8 && frame.quality.showRegions;
 
@@ -79,11 +85,23 @@ class LiveFaceAnalysisOverlay extends StatelessWidget {
                 alignment: Alignment.topCenter,
                 child: analyzing
                     ? const MiraScanningBadge()
-                    : TrackingQualityBadge(quality: frame.quality, compact: true),
+                    : captured
+                        ? _StatusChip(
+                            text: hasError
+                                ? 'تعذر بدء التحليل'
+                                : 'تم التقاط الصورة',
+                            tone: hasError
+                                ? _StatusChipTone.error
+                                : _StatusChipTone.ok,
+                          )
+                        : TrackingQualityBadge(
+                            quality: frame.quality,
+                            compact: true,
+                          ),
               ),
             ),
 
-            if (!analyzing && uiState != LiveCameraOverlayState.captured)
+            if (!analyzing && !captured)
               Positioned(
                 top: 52,
                 left: 16,
@@ -91,12 +109,20 @@ class LiveFaceAnalysisOverlay extends StatelessWidget {
                 child: _HintPill(text: hintText),
               ),
 
-            if (uiState == LiveCameraOverlayState.captured)
+            if (captured && !hasError)
               const Positioned(
                 top: 52,
                 left: 16,
                 right: 16,
                 child: _CapturedBanner(),
+              ),
+
+            if (captured && hasError)
+              Positioned(
+                top: 52,
+                left: 16,
+                right: 16,
+                child: _HintPill(text: errorMessageAr!.trim()),
               ),
 
             if (analyzing && !frame.quality.showRegions)
@@ -126,6 +152,32 @@ class LiveFaceAnalysisOverlay extends StatelessWidget {
           ],
         );
       },
+    );
+  }
+}
+
+enum _StatusChipTone { ok, error }
+
+class _StatusChip extends StatelessWidget {
+  final String text;
+  final _StatusChipTone tone;
+  const _StatusChip({required this.text, required this.tone});
+
+  @override
+  Widget build(BuildContext context) {
+    final bg = tone == _StatusChipTone.error
+        ? AppColors.error.withValues(alpha: 0.92)
+        : AppColors.success.withValues(alpha: 0.92);
+    return Container(
+      padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
+      decoration: BoxDecoration(
+        color: bg,
+        borderRadius: BorderRadius.circular(999),
+      ),
+      child: Text(
+        text,
+        style: AppTypography.labelMedium.copyWith(color: Colors.white),
+      ),
     );
   }
 }

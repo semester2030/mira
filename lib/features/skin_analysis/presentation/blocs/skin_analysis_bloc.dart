@@ -94,6 +94,15 @@ class SkinAnalysisBloc extends Bloc<SkinAnalysisEvent, SkinAnalysisState> {
 
   FaceAnalysisJourneyError _mapError(Object error) {
     if (error is DioException) {
+      if (error.type == DioExceptionType.connectionError ||
+          error.type == DioExceptionType.connectionTimeout ||
+          error.type == DioExceptionType.sendTimeout ||
+          error.type == DioExceptionType.receiveTimeout) {
+        return mapFaceAnalysisError(
+          code: 'NETWORK_ERROR',
+          message: friendlyMiraError(error),
+        );
+      }
       final data = error.response?.data;
       String? code;
       String? category;
@@ -104,11 +113,21 @@ class SkinAnalysisBloc extends Bloc<SkinAnalysisEvent, SkinAnalysisState> {
         code = data['code']?.toString() ?? data['captureCode']?.toString();
         category = data['category']?.toString();
         final m = data['message'];
-        if (m is String) message = m;
+        if (m is String) {
+          message = m;
+        } else if (m is Map) {
+          code ??= m['code']?.toString();
+          category ??= m['category']?.toString();
+          if (m['message'] is String) message = m['message'] as String;
+          if (m['requiresRecapture'] is bool) {
+            requiresRecapture = m['requiresRecapture'] as bool;
+          }
+          userAction ??= m['userAction']?.toString();
+        }
         if (data['requiresRecapture'] is bool) {
           requiresRecapture = data['requiresRecapture'] as bool;
         }
-        userAction = data['userAction']?.toString();
+        userAction ??= data['userAction']?.toString();
       }
       return mapFaceAnalysisError(
         statusCode: error.response?.statusCode,

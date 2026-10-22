@@ -462,6 +462,7 @@ class _FaceCapturePanelState extends State<FaceCapturePanel>
       scanProgress: _scanController.value,
       sweepProgress: _sweepController.value,
       hintText: 'ضعي وجهك داخل الإطار واضغطي للتصوير',
+      errorMessageAr: widget.analysisErrorMessage,
     );
   }
 

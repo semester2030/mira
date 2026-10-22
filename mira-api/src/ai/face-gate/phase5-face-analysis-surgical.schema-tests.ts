@@ -5,9 +5,11 @@ import assert from 'node:assert/strict';
 import {
   classifyYouCamCaptureError,
   classifyYouCamCreditInsufficiencyError,
+  classifyYouCamExpiredApiKeyError,
   isFaceQualityYouCamError,
   isFaceRecaptureImmediateYouCamError,
   isYouCamCreditInsufficiencyError,
+  isYouCamExpiredApiKeyError,
 } from './youcam-face-errors';
 import {
   classifyProviderFailure,
@@ -181,6 +183,20 @@ function testCreditInsufficiencyIsExplicitProviderError(): void {
   assert.ok(credits.message.includes('رصيد'));
 }
 
+function testExpiredApiKeyIsExplicitProviderError(): void {
+  const sample =
+    'File API 401: {"status":401,"error":"This API key has expired.","error_code":"ExpiredApiKey"}';
+  assert.equal(isYouCamExpiredApiKeyError(sample), true);
+  assert.equal(isYouCamExpiredApiKeyError('error_lighting_dark'), false);
+  const auth = classifyYouCamExpiredApiKeyError();
+  assert.equal(auth.code, 'PROVIDER_AUTH_EXPIRED');
+  assert.equal(auth.category, 'provider');
+  assert.equal(auth.requiresRecapture, false);
+  assert.equal(auth.userAction, 'retry');
+  assert.ok(!auth.message.toLowerCase().includes('apikey'));
+  assert.ok(!auth.message.toLowerCase().includes('expiredapikey'));
+}
+
 function main(): void {
   testLightingDarkIsCaptureQuality();
   testFaceOutOfBoundIsCaptureQualityNot503();
@@ -189,6 +205,7 @@ function main(): void {
   testClientPayloadAlwaysHasMessage();
   testFilterNeverLeaksClassName();
   testCreditInsufficiencyIsExplicitProviderError();
+  testExpiredApiKeyIsExplicitProviderError();
   console.log('phase5-face-analysis-surgical.schema-tests: PASS');
 }
 

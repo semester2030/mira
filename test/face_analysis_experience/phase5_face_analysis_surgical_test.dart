@@ -74,6 +74,30 @@ void main() {
       expect(e.retryable, isTrue);
     });
 
+    test('PROVIDER_AUTH_EXPIRED → retry without technical key text', () {
+      final e = mapFaceAnalysisError(
+        statusCode: 503,
+        code: 'PROVIDER_AUTH_EXPIRED',
+        category: 'provider',
+        message: 'خدمة تحليل البشرة غير متاحة مؤقتاً.',
+      );
+      expect(e.code, 'PROVIDER_AUTH_EXPIRED');
+      expect(e.requiresRecapture, isFalse);
+      expect(e.retryable, isTrue);
+      expect(e.snackMessage.toLowerCase(), isNot(contains('apikey')));
+      expect(e.titleAr, contains('غير متاحة'));
+    });
+
+    test('network → retry same photo messaging', () {
+      final e = mapFaceAnalysisError(
+        code: 'NETWORK_ERROR',
+        message: 'تعذر الوصول للخادم بسبب انقطاع الشبكة.',
+      );
+      expect(e.code, 'NETWORK_ERROR');
+      expect(e.retryable, isTrue);
+      expect(e.bodyAr, contains('الشبكة'));
+    });
+
     test('Law #41 — Soft Laser not tied to idle/ready/submitting', () {
       for (final phase in [
         FaceAnalysisJourneyPhase.idle,

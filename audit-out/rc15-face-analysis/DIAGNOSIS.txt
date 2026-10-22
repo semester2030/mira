@@ -1,0 +1,25 @@
+RC15 Face analysis failure — root cause (evidence-first)
+
+Symptom (owner screenshot description):
+- UI shows «تم التقاط الصورة»
+- then «تعذر بدء التحليل حالياً»
+- while «جاهز للتصوير» remains visible
+
+Server evidence (Render mira-api srv-d85ngcfavr4c73d3rk6g, 2026-10-22):
+- 05:30:20Z analysis_started feature=skin provider=perfect_corp trace=skin_mvj3r1sd_5gurvr75
+- 05:30:27Z PerfectCorpSkinProvider ERROR:
+  YouCam HD skin analysis failed: File API 401:
+  {"status":401,"error":"This API key has expired.","error_code":"ExpiredApiKey"}
+- Repeated at 05:31:27 / 05:31:33 (trace skin_mvj3sh91_fo77zry0)
+- Repeated at 05:32:20 / 05:32:26 (trace skin_mvj3tm5x_0wxyznd3)
+
+Not assumed: 429 rate-limit, OpenAI, outfit RC14 regressions.
+Outfit camera flag MIRA_OUTFIT_CAMERA_CAPTURE does not gate face capture.
+
+UI compounding bug:
+- LiveFaceAnalysisOverlay kept TrackingQualityBadge («جاهز للتصوير»)
+  even when uiState=captured / after analysis failure.
+
+Operator unblock:
+- Renew PERFECT_API_KEY or PERFECT_CORP_API_KEY on Render, redeploy/restart,
+  then re-run live capture→results journey.

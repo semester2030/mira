@@ -1,6 +1,8 @@
 import {
   Body,
   Controller,
+  Headers,
+  Logger,
   Post,
   UploadedFile,
   UploadedFiles,
@@ -46,6 +48,8 @@ const MAX_IMAGE_BYTES = 10 * 1024 * 1024;
 @Controller('ai')
 @UseGuards(FirebaseAuthGuard)
 export class AiGatewayController {
+  private readonly logger = new Logger(AiGatewayController.name);
+
   constructor(
     private readonly skinAnalysisService: SkinAnalysisService,
     private readonly perfectHdMaskAcceptance: PerfectHdMaskAcceptanceService,
@@ -74,8 +78,19 @@ export class AiGatewayController {
      * Phase 4.5 — optional multipart field `faceIntel` (JSON string).
      * When absent/invalid, faceIntelligence sibling is omitted (never invented).
      */
-    @Body() body?: { faceIntel?: string },
+    @Body() body?: { faceIntel?: string; clientRequestId?: string },
+    @Headers('x-client-request-id') clientRequestHeader?: string,
   ) {
+    const clientRequestId =
+      (typeof body?.clientRequestId === 'string' && body.clientRequestId.trim()) ||
+      (typeof clientRequestHeader === 'string' && clientRequestHeader.trim()) ||
+      undefined;
+    if (clientRequestId) {
+      // Correlation only — never log image bytes or secrets.
+      this.logger.log(
+        `skin-analysis invoke clientRequestId=${clientRequestId} bytes=${file?.buffer?.length ?? 0}`,
+      );
+    }
     return this.skinAnalysisService.analyze(
       user,
       file?.buffer ?? Buffer.alloc(0),

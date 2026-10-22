@@ -14,10 +14,12 @@ import { buildYouCamImageVariants } from '../utils/youcam-image-variants';
 import {
   classifyYouCamCaptureError,
   classifyYouCamCreditInsufficiencyError,
+  classifyYouCamExpiredApiKeyError,
   isFaceBlockingYouCamError,
   isFaceQualityYouCamError,
   isFaceRecaptureImmediateYouCamError,
   isYouCamCreditInsufficiencyError,
+  isYouCamExpiredApiKeyError,
 } from '../face-gate/youcam-face-errors';
 import { MockSkinAnalysisProvider } from './mock-skin-analysis.provider';
 import {
@@ -126,6 +128,14 @@ export class PerfectCorpSkinProvider implements SkinAnalysisProvider {
 
         if (qualityIssue && capture) {
           throw new BadRequestException(capture);
+        }
+
+        if (isYouCamExpiredApiKeyError(lastMessage)) {
+          const auth = classifyYouCamExpiredApiKeyError();
+          this.logger.error(
+            `YouCam HD blocked — ${auth.code} (provider API key rejected/expired)`,
+          );
+          throw new ServiceUnavailableException(auth);
         }
 
         if (isYouCamCreditInsufficiencyError(lastMessage)) {

@@ -16,9 +16,9 @@ String friendlyMiraError(Object error) {
       case DioExceptionType.connectionTimeout:
       case DioExceptionType.sendTimeout:
       case DioExceptionType.receiveTimeout:
-        return 'انتهت مهلة الاتصال بخادم ميرا. تأكدي أن السيرفر يعمل وأن الجوال على نفس الشبكة.';
+        return 'انتهت مهلة الاتصال. تحققي من الشبكة ثم أعيدي المحاولة.';
       case DioExceptionType.connectionError:
-        return 'تعذر الوصول لخادم ميرا. على الآيفون استخدمي IP الماك بدل localhost، وتأكدي أن npm run start:dev يعمل.';
+        return 'تعذر الوصول للخادم بسبب انقطاع الشبكة. تحققي من الاتصال ثم أعيدي المحاولة.';
       case DioExceptionType.badResponse:
         break;
       default:
@@ -28,6 +28,10 @@ String friendlyMiraError(Object error) {
     final status = error.response?.statusCode;
     final data = error.response?.data;
     if (status == 401) {
+      final code = _extractCode(data);
+      if (code == 'PROVIDER_AUTH_EXPIRED') {
+        return 'خدمة تحليل البشرة غير متاحة مؤقتاً. أعيدي المحاولة لاحقاً أو تواصلي مع الدعم.';
+      }
       return 'انتهت جلسة الدخول. سجّلي خروجًا ثم دخولًا مرة أخرى.';
     }
     if (status == 403) {
@@ -58,6 +62,12 @@ String friendlyMiraError(Object error) {
       final code = _extractCode(data);
       if (code == 'FASHN_QUOTA_EXCEEDED') {
         return 'خدمة تحديد القطع غير متاحة مؤقتًا (نفاد الرصيد). جرّبي التحليل مجددًا بعد دقائق.';
+      }
+      if (code == 'PROVIDER_AUTH_EXPIRED') {
+        return 'خدمة تحليل البشرة غير متاحة مؤقتاً. أعيدي المحاولة لاحقاً أو تواصلي مع الدعم.';
+      }
+      if (code == 'PROVIDER_CREDITS_EXHAUSTED') {
+        return 'رصيد خدمة تحليل البشرة غير كافٍ حالياً. أعيدي المحاولة بعد تجديد رصيد المزود.';
       }
       final msg = _localizeServerMessage(_extractMessage(data));
       if (msg != null && msg.isNotEmpty && !_looksTechnical(msg)) return msg;
