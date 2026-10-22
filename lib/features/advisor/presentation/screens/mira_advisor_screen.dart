@@ -28,6 +28,7 @@ import '../../../consultation/presentation/widgets/consultation_composer.dart';
 import '../../../consultation/presentation/widgets/consultation_image_strip.dart';
 import '../../../outfit_analysis/data/datasources/outfit_analysis_api_data_source.dart';
 import '../../../outfit_analysis/domain/helpers/outfit_consultation_mapper.dart';
+import '../../../outfit_analysis/domain/helpers/outfit_local_image_index.dart';
 import '../../domain/entities/advisor_response.dart';
 import '../../domain/services/fashion_advisor_route_decision.dart';
 import '../../../face_analysis_experience/advisor_context/advisor_context.dart';
@@ -244,6 +245,19 @@ class _MiraAdvisorScreenState extends State<MiraAdvisorScreen> {
         outfitAnalysisId = snapshot.id;
         if (fingerprint != null) {
           await prefs.setString('mira_outfit_report_$fingerprint', snapshot.id);
+        }
+        final viewPath = args.outfitAnalysis?.frozenImagePath;
+        if (viewPath != null && viewPath.isNotEmpty) {
+          await OutfitLocalImageIndex.remember(
+            key: snapshot.id,
+            absolutePath: viewPath,
+          );
+          if (fingerprint != null) {
+            await OutfitLocalImageIndex.remember(
+              key: fingerprint,
+              absolutePath: viewPath,
+            );
+          }
         }
       }
 

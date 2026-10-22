@@ -19,11 +19,13 @@ import '../entities/outfit_segment_map.dart';
 import '../entities/user_gender.dart';
 import '../entities/outfit_visual_profile.dart';
 import '../helpers/fashion_color_names.dart';
+import '../helpers/outfit_local_image_index.dart';
 import '../helpers/outfit_result_trust.dart';
 import '../../../../core/exceptions/vision_platform_exception.dart';
 import 'outfit_capture_validator.dart';
 import 'deterministic_outfit_engine.dart';
 import 'outfit_segmentation_service.dart';
+import 'package:crypto/crypto.dart';
 
 /// Capture → Vision Platform API → segment map → deterministic scoring.
 /// Phase 7 — VisionApiDataSource only; no Google Vision · no silent fallback.
@@ -167,6 +169,15 @@ class OutfitIntelligenceService {
 
     final useVisionPieces = segmentMap.source == 'pose_anatomy' ||
         analysis.detectedPieces.isNotEmpty;
+    try {
+      final fp = sha256.convert(bytes).toString();
+      await OutfitLocalImageIndex.remember(key: fp, absolutePath: retained.path);
+      await OutfitLocalImageIndex.remember(
+        key: retained.uri.pathSegments.last,
+        absolutePath: retained.path,
+      );
+    } catch (_) {/* local index is best-effort */}
+
     final enriched = analysis.copyWith(
       frozenImagePath: retained.path,
       segmentMap: segmentMap,

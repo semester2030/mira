@@ -313,8 +313,8 @@ class _OutfitGarmentRecolorPanelState extends State<OutfitGarmentRecolorPanel>
           const SizedBox(height: 4),
           Text(
             _canRecolor
-                ? 'اختيار القطعة واللون ثم تطبيق التلوين الحقيقي على القماش فقط. المعاينة ليست إطلالة ارتديتها.'
-                : 'تلوين القماش غير متاح الآن: حدود القطعة غير موثوقة. ملاحظات الألوان تبقى ظاهرة دون معاينة مزيفة.',
+                ? 'اختاري القطعة واللون ثم طبّقي التلوين على القماش. المعاينة تبقى منفصلة عن إطلالتك المحفوظة.'
+                : 'تعذر تلوين القماش لأن حدود القطعة غير واضحة. ملاحظات الألوان تبقى ظاهرة، ويمكنك مناقشة التنسيق مع ميرا.',
             style: AppTypography.bodySmall.copyWith(color: AppColors.textSecondary, height: 1.45),
           ),
           if (!_canRecolor) ...[

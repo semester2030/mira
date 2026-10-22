@@ -1,21 +1,28 @@
 window.MIRA_CONSULT_DIALOGUE = {
-  id: "CONSULT_DIALOGUE_RC11",
+  id: "CONSULT_DIALOGUE_RC12",
   title: "محادثة الجمال والصور",
   updatedAt: "2026-10-22",
   approval: "DRAFT_FOR_OWNER_REVIEW",
   paidCalls: 0,
   modelCalled: false,
   release: {
-    published: "RC11 فوق RC10: إصلاح حفظ 400 (clientSaveId≤64) + دوائر ألوان حقيقية + أهلية التلوين المبكرة. لا تغيير خادم مطلوب للحفظ — الرفض كان صحيحاً لطول المعرف.",
-    technicallyTested: "RC11 schema 2/2 (يرفض clientSaveId الطويل). RC10 12/12. Flutter rc11_outfit_ux 3 + ألوان 4. جرد audit-out/rc11-outfit-ux/INVENTORY.md.",
-    awaitingOwner: "رحلة الفستانين الحية بعد تحديث التطبيق دون wipe. حفظ→جلسة→رسالة على الإنتاج."
+    published: "RC12: تقريب استديو الإطلالة من الموكب المرجعي (أصول موضحة + بطاقات متجاورة + فهرس صور محلية للسجل) فوق إصلاحات RC11.",
+    technicallyTested: "rc12_outfit_visual 2/2 · rc11_outfit_ux 3/3 · ألوان 4/4. أصول illustrations PNG بشفافية. لا مسار إطلالة موازٍ.",
+    awaitingOwner: "لقطات جهاز مقارنة بالمرجع + رحلة الفستانين الحية NOT_RUN في هذه الجولة."
   },
   priorRelease: {
-    id: "CONSULT_DIALOGUE_RC10",
-    published: "RC10 على main: ba5e34b + 207871b. Redis AVAILABLE · dep-dbcmckss728c73aof56g.",
-    note: "أدلة RC10 تاريخية في evidence/rc10 — لا تُمسح."
+    id: "CONSULT_DIALOGUE_RC11",
+    published: "RC11: clientSaveId≤64 · نبيتي #781828 · أهلية تلوين مبكرة.",
+    note: "أدلة RC10/RC11 في evidence/rc10 و audit-out/rc11 — لا تُمسح."
   },
   repairs: [
+    {
+      problem: "المظهر بعيد عن الموكب المرجعي: بطاقات نصية كبيرة بلا رسوم قطع، والسجل بلا صور حقيقية.",
+      cause: "الاستديو لم يربط سجل أيقونات الأزياء ولا أصولاً موضحة؛ الخادم لا يخزّن صورة اللقطة.",
+      files: "outfit_studio_screen.dart · outfit_piece_art.dart · outfit_local_image_index.dart · assets/icons/fashion/illustrations/*",
+      fix: "أصول PNG شفافة للقطع؛ خريطة مركزية؛ بطاقات متجاورة؛ فهرس محلي fingerprint/reportId→مسار الصورة المحتفظ بها؛ حالة مختصرة بلا صورة.",
+      check: "rc12_outfit_visual_test · جرد INVENTORY RC12."
+    },
     {
       problem: "تعذر حفظ تقرير الإطلالة — 400 · تتبع c-1792632474988668.",
       cause: "clientSaveId = μs + SHA-256 كاملة (~81 حرفاً) يتجاوز MaxLength(64) على SaveOutfitSnapshotDto. طلبات 400 على /snapshots @ 01:27–01:28Z قبل/أثناء نشر Redis.",
@@ -104,9 +111,12 @@ window.MIRA_CONSULT_DIALOGUE = {
     { id: "D11", title: "تثبيت بناء RC10 على الجهاز", state: "verified_device", evidence: "flutter run --release ثبّت وأطلق app.mira.beauty بعد فشل codesign لـ flutter install. تحذير: flutter install أزال النسخة السابقة قبل الفشل — قد فُقدت بيانات محلية." },
     { id: "D27", title: "إصلاح حفظ 400 لطول clientSaveId", state: "verified_local", evidence: "outfit-recovery-rc11.schema-tests.ts · rc11_outfit_ux_test.dart · طلبات 400 على snapshots" },
     { id: "D28", title: "دائرة نبيتي ليست وردية فاتحة", state: "verified_local", evidence: "fashion_color_binding shortNameHex #781828" },
-    { id: "D29", title: "تحسين تبويبات الاستديو دون مسار موازٍ", state: "implemented", evidence: "outfit_studio_screen.dart · دوائر/طي الصورة/أهلية جرّبي" }
+    { id: "D29", title: "تحسين تبويبات الاستديو دون مسار موازٍ", state: "implemented", evidence: "outfit_studio_screen.dart · دوائر/طي الصورة/أهلية جرّبي" },
+    { id: "D30", title: "أصول قطع موضحة + خريطة مركزية", state: "verified_local", evidence: "assets/icons/fashion/illustrations · outfit_piece_art.dart · rc12_outfit_visual_test" },
+    { id: "D31", title: "فهرس صور محلية للسجل", state: "implemented", evidence: "outfit_local_image_index.dart · ربط عند التحليل والحفظ" }
   ],
   results: [
+    { name: "فحوصات RC12 visual", value: "2 نجحت", file: "test/outfit_analysis/rc12_outfit_visual_test.dart" },
     { name: "فحوصات RC11", value: "2 نجحت", file: "mira-api/src/outfit-analysis/outfit-recovery-rc11.schema-tests.ts" },
     { name: "Flutter RC11 UX", value: "3 نجحت", file: "test/outfit_analysis/rc11_outfit_ux_test.dart" },
     { name: "فحوصات RC10", value: "12 نجحت", file: "mira-api/src/outfit-analysis/outfit-recovery-rc10.schema-tests.ts" },
@@ -117,8 +127,9 @@ window.MIRA_CONSULT_DIALOGUE = {
     { name: "جهاز RC10", value: "مثبّت عبر flutter run --release", file: "audit-out/rc10-outfit-recovery/flutter-run-release.txt" }
   ],
   remaining: [
-    "رحلة الفستانين الحية (عنابي وأزرق فاتح) ومسار حفظ→جلسة→رسالة على الإنتاج NOT_RUN بعد تحديث RC11 على الجهاز.",
-    "مقارنة بصرية كاملة بالمرجع المرفق NOT_RUN في هذه الجولة (لا لقطات جهاز جديدة).",
+    "لقطات جهاز مقارنة بالموكب المرجعي NOT_RUN.",
+    "رحلة الفستانين الحية حفظ→جلسة→رسالة NOT_RUN.",
+    "حالات مقترح/مختار/تجربة/ارتداء مؤكد تحتاج حقول حفظ فعلية إن لم تكن في السجل بعد.",
     "تصوير الإطلالة بالكاميرا ما زال متوقفًا مؤقتًا.",
     "004 و005 و013 وعيب تعليمات الإعلان خارج النطاق."
   ],
