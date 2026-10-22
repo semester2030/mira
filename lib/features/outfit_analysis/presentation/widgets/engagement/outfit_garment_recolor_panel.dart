@@ -16,7 +16,6 @@ import '../../../../../shared/theme/colors.dart';
 import '../../../../../shared/theme/typography.dart';
 import '../../../../../shared/widgets/premium/premium_exports.dart';
 import '../../../data/datasources/vision_api_data_source.dart';
-import '../../../data/helpers/vision_color_mapper.dart';
 import '../../../domain/entities/outfit_analysis.dart';
 import '../../../domain/helpers/garment_recolor_prompt_builder.dart';
 import '../../../domain/helpers/garment_recolor_vision_context.dart';
@@ -114,9 +113,12 @@ class _OutfitGarmentRecolorPanelState extends State<OutfitGarmentRecolorPanel>
     const extras = ['أسود', 'كحلي', 'ذهبي', 'نبيتي', 'عنابي'];
     for (final name in extras) {
       if (!seen.add(name)) continue;
-      final color = VisionColorMapper.toDisplayColor(name);
-      if (color == null) continue;
-      out.add(_ColorOption(nameAr: name, color: color, hex: null));
+      final bound = FashionColorBinding.resolveDetailed(
+        nameAr: name,
+        source: FashionColorSource.catalog,
+      );
+      if (!bound.isAvailable || bound.color == null) continue;
+      out.add(_ColorOption(nameAr: name, color: bound.color!, hex: bound.hex));
     }
     return out;
   }
@@ -310,9 +312,34 @@ class _OutfitGarmentRecolorPanelState extends State<OutfitGarmentRecolorPanel>
           ),
           const SizedBox(height: 4),
           Text(
-            'اختيار القطعة واللون ثم وصف التعديل. التلوين يغيّر لون القماش فقط.',
+            _canRecolor
+                ? 'اختيار القطعة واللون ثم تطبيق التلوين الحقيقي على القماش فقط. المعاينة ليست إطلالة ارتديتها.'
+                : 'تلوين القماش غير متاح الآن: حدود القطعة غير موثوقة. ملاحظات الألوان تبقى ظاهرة دون معاينة مزيفة.',
             style: AppTypography.bodySmall.copyWith(color: AppColors.textSecondary, height: 1.45),
           ),
+          if (!_canRecolor) ...[
+            const SizedBox(height: 10),
+            PremiumButton(
+              label: 'اختيار صورة أوضح من الاستديو',
+              icon: Icons.photo_library_outlined,
+              variant: PremiumButtonVariant.secondary,
+              onPressed: () => AnalysisNavigation.openOutfitAnalysis(context),
+            ),
+            const SizedBox(height: 8),
+            TextButton(
+              onPressed: () {
+                Navigator.pushNamed(
+                  context,
+                  AppRoutes.miraAdvisor,
+                  arguments: AdvisorRouteArgs(
+                    outfitAnalysis: widget.analysis,
+                    discussionFocus: 'مناقشة تنسيق الألوان دون تلوين — القطعة $_garmentLabelAr',
+                  ),
+                );
+              },
+              child: const Text('ناقشي تنسيق الألوان مع ميرا'),
+            ),
+          ],
           const SizedBox(height: 14),
           if (_result == null) ...[
             Text('الأصل', style: AppTypography.labelLarge.copyWith(fontWeight: FontWeight.w700)),
@@ -424,22 +451,10 @@ class _OutfitGarmentRecolorPanelState extends State<OutfitGarmentRecolorPanel>
             ),
           ),
           const SizedBox(height: 14),
-          if (!_canRecolor) ...[
-            Text(
-              'تلوين القماش غير متاح لأن حدود القطعة غير واضحة. تحليل الألوان يبقى كما هو. اختاري صورة أوضح من الاستديو.',
-              style: AppTypography.bodySmall.copyWith(height: 1.45),
-            ),
-            const SizedBox(height: 10),
-            PremiumButton(
-              label: 'اختيار صورة أوضح من الاستديو',
-              icon: Icons.photo_library_outlined,
-              variant: PremiumButtonVariant.secondary,
-              onPressed: () => AnalysisNavigation.openOutfitAnalysis(context),
-            ),
-            const SizedBox(height: 10),
-          ],
           PremiumButton(
-            label: _loading ? 'جاري المعالجة…' : 'تطبيق التلوين على صورتي',
+            label: _loading
+                ? 'جاري المعالجة…'
+                : (_canRecolor ? 'تطبيق التلوين على صورتي' : 'التلوين غير متاح لهذه الصورة'),
             icon: Icons.brush_rounded,
             variant: PremiumButtonVariant.gold,
             onPressed: _loading || !_canRecolor ? null : _applyRecolor,

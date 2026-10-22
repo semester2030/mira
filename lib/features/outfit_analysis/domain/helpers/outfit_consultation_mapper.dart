@@ -2,6 +2,22 @@ import '../entities/outfit_analysis.dart';
 
 /// Maps Vision Platform [OutfitAnalysis] to MCE intelligence snapshot payload.
 abstract final class OutfitConsultationMapper {
+  /// Idempotent save key ≤ 64 chars (server DTO MaxLength). Never embed full SHA-256.
+  static String buildClientSaveId({
+    required String? fingerprint,
+    required String occasionId,
+    DateTime? at,
+  }) {
+    final stamp = (at ?? DateTime.now()).microsecondsSinceEpoch.toRadixString(36);
+    final fp = fingerprint?.trim() ?? '';
+    final short = fp.isEmpty
+        ? occasionId
+        : fp.substring(0, fp.length < 12 ? fp.length : 12);
+    var id = 's-$stamp-$short';
+    if (id.length > 64) id = id.substring(0, 64);
+    return id;
+  }
+
   static Map<String, dynamic> toSnapshotPayload(
     OutfitAnalysis analysis, {
     String? imageFingerprint,

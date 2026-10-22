@@ -81,7 +81,9 @@ abstract final class FashionColorBinding {
   }
 
   /// Common Arabic aliases → library names (HEX still preferred when present).
+  /// Bare «نبيتي» must not fuzzy-match «نبيتي فاتح جداً» (#ECD5D5 pale pink).
   static const _aliases = <String, String>{
+    'نبيتي': 'نبيتي غامق',
     'عنابي': 'نبيتي غامق',
     'عنّابي': 'نبيتي غامق',
     'burgundy': 'نبيتي غامق',
@@ -94,6 +96,25 @@ abstract final class FashionColorBinding {
     'أزرق سماوي': 'أزرق سماوي',
     'sky blue': 'أزرق سماوي',
     'skyblue': 'أزرق سماوي',
+  };
+
+  /// Canonical HEX for short fashion names used in chips (shared with recolor).
+  static const shortNameHex = <String, String>{
+    'أسود': '#1A1A1A',
+    'أبيض': '#F5F5F5',
+    'بيج': '#D2BEA0',
+    'كريمي': '#EBE0C8',
+    'رمادي': '#9E9E9E',
+    'كحلي': '#1A2848',
+    'ذهبي': '#C8A850',
+    'وردي': '#E699B0',
+    'أحمر': '#B42832',
+    'نبيتي': '#781828',
+    'عنابي': '#781828',
+    'بني': '#785032',
+    'فضي': '#BEBEC8',
+    'تركواز': '#3CAAA0',
+    'مرجاني': '#F07864',
   };
 
   /// Resolve display color from optional hex + Arabic name.
@@ -145,6 +166,19 @@ abstract final class FashionColorBinding {
     final name = nameAr?.trim() ?? '';
     if (name.isEmpty) return FashionColorResolve.unavailable;
 
+    final shortHex = shortNameHex[name] ?? shortNameHex[name.toLowerCase()];
+    if (shortHex != null) {
+      final parsedShort = fromHex(shortHex);
+      if (parsedShort != null) {
+        return FashionColorResolve(
+          color: parsedShort,
+          hex: shortHex,
+          displayNameAr: name,
+          source: FashionColorSource.catalog,
+        );
+      }
+    }
+
     final aliased = _aliases[name] ?? _aliases[name.toLowerCase()] ?? name;
     final entry = FashionColorLibrary.byName(aliased) ??
         FashionColorLibrary.byName(name) ??
@@ -154,7 +188,7 @@ abstract final class FashionColorBinding {
       return FashionColorResolve(
         color: entry.color,
         hex: '#${entry.color.toARGB32().toRadixString(16).padLeft(8, '0').substring(2).toUpperCase()}',
-        displayNameAr: entry.nameAr,
+        displayNameAr: name.length <= entry.nameAr.length ? name : entry.nameAr,
         source: FashionColorSource.catalog,
       );
     }
@@ -267,18 +301,26 @@ abstract final class FashionColorBinding {
     final exact = FashionColorLibrary.byName(name);
     if (exact != null) return exact;
 
+    // Prefer deep/mid over pale when the query is a short base (e.g. نبيتي).
+    const prefer = ['غامق', 'متوسط', 'عميق'];
+    const avoid = ['فاتح جداً', 'فاتح', 'ناعم', 'pale', 'light'];
+    FashionColorEntry? preferred;
     FashionColorEntry? best;
     var bestLen = 0;
     for (final e in colorEntries.values) {
       final ar = e.nameAr;
       if (ar.length < 2) continue;
-      if (name == ar || name.contains(ar) || ar.contains(name)) {
-        if (ar.length > bestLen) {
-          best = e;
-          bestLen = ar.length;
-        }
+      if (!(name == ar || name.contains(ar) || ar.contains(name))) continue;
+      if (ar.contains(name) && prefer.any(ar.contains)) {
+        preferred ??= e;
+      }
+      if (ar.contains(name) && avoid.any(ar.contains)) continue;
+      if (ar.length > bestLen) {
+        best = e;
+        bestLen = ar.length;
       }
     }
+    if (preferred != null) return preferred;
     if (best != null) return best;
 
     final parts = name.split(RegExp(r'\s+'));

@@ -223,9 +223,15 @@ class _MiraAdvisorScreenState extends State<MiraAdvisorScreen> {
         stage = 'save';
         final occasion = args.outfitAnalysis!.occasion.id;
         final saveKey = 'mira_outfit_save_${fingerprint ?? 'nofp'}_${occasion}_outfit-intel-v2';
-        var clientSaveId = prefs.getString(saveKey);
-        if (clientSaveId == null || clientSaveId.isEmpty) {
-          clientSaveId = '${DateTime.now().microsecondsSinceEpoch}-${fingerprint ?? occasion}';
+        var clientSaveId = prefs.getString(saveKey)?.trim();
+        // Server MaxLength(64). Full SHA-256 after μs caused the live 400.
+        if (clientSaveId == null ||
+            clientSaveId.isEmpty ||
+            clientSaveId.length > 64) {
+          clientSaveId = OutfitConsultationMapper.buildClientSaveId(
+            fingerprint: fingerprint,
+            occasionId: occasion,
+          );
           await prefs.setString(saveKey, clientSaveId);
         }
         final snapshot = await _outfitApi.saveIntelligenceSnapshot(
