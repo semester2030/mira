@@ -15,6 +15,7 @@ export type RedisRuntimeState = 'AVAILABLE' | 'DEGRADED' | 'UNAVAILABLE';
 export class RedisService implements OnModuleInit, OnModuleDestroy {
   private readonly logger = new Logger(RedisService.name);
   private client: Redis | null = null;
+  private ready = false;
   private readonly enabled: boolean;
   private readonly url: string;
   private connectAttempt: Promise<Redis | null> | null = null;
@@ -31,7 +32,7 @@ export class RedisService implements OnModuleInit, OnModuleDestroy {
 
   protected async ensureClient(): Promise<Redis | null> {
     if (!this.enabled) return null;
-    if (this.client?.status === 'ready') return this.client;
+    if (this.ready && this.client) return this.client;
     if (this.connectAttempt) return this.connectAttempt;
 
     this.connectAttempt = (async () => {
@@ -43,6 +44,7 @@ export class RedisService implements OnModuleInit, OnModuleDestroy {
             /* ignore */
           }
           this.client = null;
+          this.ready = false;
         }
         const client = new Redis(this.url, {
           maxRetriesPerRequest: 2,
@@ -52,16 +54,19 @@ export class RedisService implements OnModuleInit, OnModuleDestroy {
           retryStrategy: (times) => (times > 4 ? null : Math.min(times * 200, 1000)),
         });
         client.on('error', (err) => {
+          this.ready = false;
           this.logger.warn(`Redis error: ${err.message}`);
         });
         await client.connect();
         await client.ping();
         this.client = client;
+        this.ready = true;
         this.logger.log('Redis critical controls connected');
         return client;
       } catch (err) {
         this.logger.error(`Redis connect failed: ${(err as Error).message}`);
         this.client = null;
+        this.ready = false;
         return null;
       } finally {
         this.connectAttempt = null;
@@ -74,9 +79,9 @@ export class RedisService implements OnModuleInit, OnModuleDestroy {
   /** Sync peek for health — prefer ready client; otherwise report DEGRADED while configured. */
   protected getClient(): Redis | null {
     if (!this.enabled) return null;
-    if (this.client?.status === 'ready') return this.client;
+    if (this.ready && this.client) return this.client;
     void this.ensureClient();
-    return this.client?.status === 'ready' ? this.client : null;
+    return this.ready ? this.client : null;
   }
 
   async incrementRateLimit(key: string, windowSeconds: number): Promise<number> {
@@ -98,6 +103,7 @@ export class RedisService implements OnModuleInit, OnModuleDestroy {
         `Critical Redis counter failed: ${(err as Error).message}`,
       );
       this.client = null;
+      this.ready = false;
       throw new RedisCriticalControlUnavailableError();
     }
   }
@@ -110,7 +116,7 @@ export class RedisService implements OnModuleInit, OnModuleDestroy {
   } {
     const state: RedisRuntimeState = !this.enabled
       ? 'UNAVAILABLE'
-      : this.client?.status === 'ready'
+      : this.ready
         ? 'AVAILABLE'
         : 'DEGRADED';
     return {
