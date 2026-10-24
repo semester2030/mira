@@ -7,9 +7,9 @@
 ```
 تقديم (apply) → pending
      ↓
-Admin يعتمد (X-Admin-Key) → Partner + PartnerUser + accessToken (تلقائي)
+Admin يعتمد (X-Admin-Key) → Partner + PartnerUser (كلمة مرور من طلب الانضمام)
      ↓
-الشريك يدخل (email + token) → يضيف منتجات/خدمات
+الشريك يدخل (email + password) → جلسة Bearer داخلية
      ↓
 تظهر في التطبيق (marketplace/match) + تتبع نقرات
 ```
@@ -19,9 +19,9 @@ Admin يعتمد (X-Admin-Key) → Partner + PartnerUser + accessToken (تلقا
 | صفحة | الوظيفة |
 |------|---------|
 | `index.html` | Landing |
-| `apply.html` | طلب انضمام |
-| `status.html?token=...` | تتبع الحالة + استلام accessToken |
-| `login.html` | دخول الشريك |
+| `apply.html` | طلب انضمام + كلمة مرور |
+| `status.html?token=...` | تتبع حالة الطلب |
+| `login.html` | دخول بالبريد وكلمة المرور |
 | `dashboard.html` | كتalog + إحصائيات 30 يوم |
 | `admin.html` | اعتماد/رفض الطلبات (داخلي) |
 

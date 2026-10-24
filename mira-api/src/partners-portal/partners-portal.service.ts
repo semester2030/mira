@@ -3,7 +3,9 @@ import {
   ConflictException,
   Inject,
   Injectable,
+  Logger,
   NotFoundException,
+  OnModuleInit,
 } from '@nestjs/common';
 import { ConfigService } from '@nestjs/config';
 import { Prisma } from '@prisma/client';
@@ -22,6 +24,7 @@ import { PrismaService } from '../prisma/prisma.service';
 import { ApplyPartnerDto } from './dto/apply-partner.dto';
 import { UpdateProductDto, UpdateServiceDto, UpsertProductDto, UpsertServiceDto } from './dto/catalog.dto';
 import { TrackPartnerEventDto } from './dto/track-event.dto';
+import { hashPartnerPassword, verifyPartnerPassword } from './partner-password';
 
 function newToken(): string {
   return randomBytes(32).toString('hex');
@@ -53,11 +56,39 @@ const PRODUCT_CATEGORIES = new Set(['face', 'body', 'hair', 'clothes', 'accessor
 const SERVICE_CATEGORIES = new Set(['hair', 'skin', 'makeup', 'nails', 'care']);
 
 @Injectable()
-export class PartnersPortalService {
+export class PartnersPortalService implements OnModuleInit {
+  private readonly logger = new Logger(PartnersPortalService.name);
+
   constructor(
     @Inject(PrismaService) private readonly prisma: PrismaService,
     @Inject(ConfigService) private readonly config: ConfigService,
   ) {}
+
+  /** One-shot: set password for an existing portal user from Render env (no chat dump). */
+  async onModuleInit() {
+    const email = this.config
+      .get<string>('MIRA_PARTNER_PORTAL_BOOTSTRAP_EMAIL')
+      ?.trim()
+      .toLowerCase();
+    const password = this.config.get<string>('MIRA_PARTNER_PORTAL_BOOTSTRAP_PASSWORD');
+    if (!email || !password || password.length < 8) return;
+
+    try {
+      const user = await this.prisma.partnerUser.findUnique({ where: { email } });
+      if (!user) {
+        this.logger.warn(`Bootstrap password skipped: no PartnerUser for ${email}`);
+        return;
+      }
+      const passwordHash = await hashPartnerPassword(password);
+      await this.prisma.partnerUser.update({
+        where: { id: user.id },
+        data: { passwordHash, accessToken: newToken() },
+      });
+      this.logger.log(`Bootstrap password applied for portal user ${email}`);
+    } catch (err) {
+      this.logger.error(`Bootstrap password failed: ${(err as Error).message}`);
+    }
+  }
 
   private autoApproveEnabled(): boolean {
     return this.config.get<string>('PARTNER_AUTO_APPROVE') === 'true';
@@ -80,6 +111,7 @@ export class PartnersPortalService {
     }
 
     const statusToken = newToken();
+    const passwordHash = await hashPartnerPassword(dto.password);
     const application = await this.prisma.partnerApplication.create({
       data: {
         type: dto.type,
@@ -94,18 +126,23 @@ export class PartnersPortalService {
         crNumber: dto.crNumber,
         vatNumber: dto.vatNumber,
         message: dto.message,
+        passwordHash,
         statusToken,
       },
     });
 
     if (this.autoApproveEnabled()) {
       const approved = await this.approveApplication(application.id);
+      const session = await this.login(dto.contactEmail, dto.password);
       return {
         applicationId: application.id,
         status: 'approved',
         statusToken,
         autoApproved: true,
-        ...approved,
+        partnerId: approved.partnerId,
+        loginEmail: session.email,
+        accessToken: session.accessToken,
+        message: 'تم التفعيل — ادخل بالبريد وكلمة المرور',
       };
     }
 
@@ -114,7 +151,7 @@ export class PartnersPortalService {
       status: 'pending',
       statusToken,
       statusUrl: `/status.html?token=${statusToken}`,
-      message: 'تم استلام طلبك — سنراجعه خلال 1–3 أيام عمل',
+      message: 'تم استلام طلبك — سنراجعه خلال 1–3 أيام عمل. بعد الاعتماد ادخل بالبريد وكلمة المرور.',
     };
   }
 
@@ -136,19 +173,32 @@ export class PartnersPortalService {
     };
   }
 
-  async login(email: string, accessToken: string) {
+  async login(email: string, password: string) {
     const user = await this.prisma.partnerUser.findFirst({
-      where: {
-        email: email.toLowerCase(),
-        accessToken: accessToken.trim(),
-      },
+      where: { email: email.toLowerCase().trim() },
       include: { partner: true },
     });
     if (!user || user.partner.status !== 'active') {
       throw new BadRequestException('بيانات الدخول غير صحيحة');
     }
+    if (!user.passwordHash) {
+      throw new BadRequestException(
+        'لم تُعيَّن كلمة مرور لهذا الحساب بعد — تواصل مع الإدارة',
+      );
+    }
+    const ok = await verifyPartnerPassword(password, user.passwordHash);
+    if (!ok) {
+      throw new BadRequestException('بيانات الدخول غير صحيحة');
+    }
+
+    const accessToken = newToken();
+    await this.prisma.partnerUser.update({
+      where: { id: user.id },
+      data: { accessToken },
+    });
+
     return {
-      accessToken: user.accessToken,
+      accessToken,
       email: user.email,
       partner: {
         id: user.partner.id,
@@ -158,6 +208,27 @@ export class PartnersPortalService {
         city: user.partner.city,
         storeUrl: user.partner.storeUrl,
       },
+    };
+  }
+
+  /** Admin: set/reset portal password (developer or partner). Never returns the password. */
+  async adminSetPassword(email: string, password: string) {
+    if (!password || password.length < 8 || password.length > 128) {
+      throw new BadRequestException('كلمة المرور يجب أن تكون بين 8 و 128 حرفاً');
+    }
+    const user = await this.prisma.partnerUser.findUnique({
+      where: { email: email.toLowerCase().trim() },
+    });
+    if (!user) throw new NotFoundException('المستخدم غير موجود');
+
+    const passwordHash = await hashPartnerPassword(password);
+    await this.prisma.partnerUser.update({
+      where: { id: user.id },
+      data: { passwordHash, accessToken: newToken() },
+    });
+    return {
+      email: user.email,
+      message: 'تم تعيين كلمة المرور — ادخل من بوابة الشركاء بالبريد وكلمة المرور',
     };
   }
 
@@ -187,17 +258,20 @@ export class PartnersPortalService {
     });
     if (!app) throw new NotFoundException('الطلب غير موجود');
     if (app.status === 'approved' && app.partnerId) {
-      const user = await this.prisma.partnerUser.findUnique({
-        where: { partnerId: app.partnerId },
-      });
       return {
         partnerId: app.partnerId,
-        accessToken: user?.accessToken,
+        loginEmail: app.contactEmail.toLowerCase(),
         alreadyApproved: true,
+        message: 'معتمد مسبقاً — الدخول بالبريد وكلمة المرور فقط',
       };
     }
     if (app.status !== 'pending') {
       throw new ConflictException(`الطلب في حالة: ${app.status}`);
+    }
+    if (!app.passwordHash) {
+      throw new BadRequestException(
+        'الطلب بلا كلمة مرور — اطلب من مقدم الطلب إعادة التسجيل بكلمة مرور',
+      );
     }
 
     const accessToken = newToken();
@@ -223,6 +297,7 @@ export class PartnersPortalService {
           partnerId: partner.id,
           email: app.contactEmail.toLowerCase(),
           accessToken,
+          passwordHash: app.passwordHash!,
         },
       });
 
@@ -232,16 +307,17 @@ export class PartnersPortalService {
           status: 'approved',
           partnerId: partner.id,
           reviewedAt: new Date(),
+          passwordHash: null,
         },
       });
 
-      return { partnerId: partner.id, accessToken };
+      return { partnerId: partner.id };
     });
 
     return {
       ...result,
       loginEmail: app.contactEmail.toLowerCase(),
-      message: 'تم تفعيل الشريك — شارك رمز الدخول مع الشريك',
+      message: 'تم تفعيل الشريك — يدخل بالبريد وكلمة المرور (بدون رمز)',
     };
   }
 

@@ -83,6 +83,17 @@
         <label>رسالة إضافية</label>
         <textarea name="message"></textarea>
 
+        <div class="grid-2">
+          <div>
+            <label>كلمة المرور (للدخول بعد الاعتماد)</label>
+            <input name="password" type="password" required minlength="8" autocomplete="new-password" />
+          </div>
+          <div>
+            <label>تأكيد كلمة المرور</label>
+            <input name="passwordConfirm" type="password" required minlength="8" autocomplete="new-password" />
+          </div>
+        </div>
+
         <div class="actions">
           <button type="submit" class="btn btn-primary">إرسال الطلب</button>
         </div>
@@ -104,17 +115,23 @@
       const fd = new FormData(form);
       const payload = Object.fromEntries(fd.entries());
       if (!payload.storeUrl) delete payload.storeUrl;
+      if (payload.password !== payload.passwordConfirm) {
+        msg.className = 'alert err';
+        msg.textContent = 'كلمتا المرور غير متطابقتين';
+        return;
+      }
+      delete payload.passwordConfirm;
 
       try {
         const res = await PartnersApi.apply(payload);
         if (res.autoApproved && res.accessToken) {
           PartnersApi.saveSession(res.loginEmail || payload.contactEmail, res.accessToken);
           msg.className = 'alert ok';
-          msg.innerHTML = 'تم التفعيل تلقائياً! <a href="dashboard.html">اذهب للوحة التحكم</a>';
+          msg.innerHTML = 'تم التفعيل! ادخل لاحقاً بالبريد وكلمة المرور. <a href="dashboard.html">لوحة التحكم</a>';
         } else {
           msg.className = 'alert ok';
           msg.innerHTML =
-            'تم استلام طلبك. احفظ رمز التتبع: <div class="token-box">' +
+            'تم استلام طلبك. بعد الاعتماد ادخل بالبريد وكلمة المرور. رمز التتبع: <div class="token-box">' +
             res.statusToken +
             '</div> <a href="status.html?token=' +
             encodeURIComponent(res.statusToken) +
