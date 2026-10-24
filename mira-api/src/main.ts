@@ -31,11 +31,22 @@ async function bootstrap(): Promise<void> {
   );
   app.useGlobalFilters(new HttpExceptionFilter());
 
-  const websiteOrigins = config
-    .get<string>('WEBSITE_CORS_ORIGINS', '*')
-    .split(',')
-    .map((o) => o.trim())
-    .filter(Boolean);
+  const defaultPortalOrigins = [
+    'https://mira-partners-portal.onrender.com',
+    'https://mira-admin-portal.onrender.com',
+    'https://mira-website.onrender.com',
+    'https://partners.mira.app',
+  ];
+  const websiteOrigins = [
+    ...new Set([
+      ...defaultPortalOrigins,
+      ...config
+        .get<string>('WEBSITE_CORS_ORIGINS', '*')
+        .split(',')
+        .map((o) => o.trim())
+        .filter(Boolean),
+    ]),
+  ];
   app.enableCors({
     origin: websiteOrigins.length === 1 && websiteOrigins[0] === '*'
       ? true
