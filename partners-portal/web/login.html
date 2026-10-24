@@ -18,13 +18,13 @@
   <main class="container">
     <div class="card" style="max-width:480px;margin:0 auto">
       <h1>دخول الشريك</h1>
-      <p class="lead">استخدم البريد ورمز الدخول الذي استلمته بعد اعتماد طلبك.</p>
+      <p class="lead">البريد الإلكتروني وكلمة المرور فقط — بدون رمز.</p>
       <div id="msg" class="hidden"></div>
       <form id="loginForm">
         <label>البريد الإلكتروني</label>
-        <input name="email" type="email" required />
-        <label>رمز الدخول</label>
-        <input name="accessToken" required placeholder="64 حرف hex" />
+        <input name="email" type="email" required autocomplete="username" />
+        <label>كلمة المرور</label>
+        <input name="password" type="password" required minlength="8" autocomplete="current-password" />
         <div class="actions">
           <button type="submit" class="btn btn-primary">دخول</button>
         </div>
@@ -46,7 +46,7 @@
       msg.textContent = 'جاري التحقق...';
       msg.classList.remove('hidden');
       try {
-        const res = await PartnersApi.login(fd.get('email'), fd.get('accessToken'));
+        const res = await PartnersApi.login(fd.get('email'), fd.get('password'));
         PartnersApi.saveSession(res.email, res.accessToken);
         location.href = 'dashboard.html' + location.search;
       } catch (err) {

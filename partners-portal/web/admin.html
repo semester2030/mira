@@ -94,11 +94,13 @@
               const result = item.querySelector('.result');
               result.className = 'alert ok';
               result.replaceChildren();
-              result.append(document.createTextNode('تم! partnerId: ' + res.partnerId));
-              const token = document.createElement('div');
-              token.className = 'token-box';
-              token.textContent = res.accessToken || '';
-              result.append(document.createElement('br'), document.createTextNode('accessToken:'), token);
+              result.append(
+                document.createTextNode(
+                  'تم! partnerId: ' +
+                    res.partnerId +
+                    ' — الدخول بالبريد وكلمة المرور فقط (بدون رمز)',
+                ),
+              );
               btn.disabled = true;
             } catch (e) {
               alert(e.message);

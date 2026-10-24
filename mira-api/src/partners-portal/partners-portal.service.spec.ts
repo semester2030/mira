@@ -10,7 +10,12 @@ describe('PartnersPortalService', () => {
       update: jest.fn(),
     },
     partner: { create: jest.fn(), findFirst: jest.fn(), findUnique: jest.fn() },
-    partnerUser: { create: jest.fn(), findUnique: jest.fn(), findFirst: jest.fn() },
+    partnerUser: {
+      create: jest.fn(),
+      findUnique: jest.fn(),
+      findFirst: jest.fn(),
+      update: jest.fn(),
+    },
     partnerEvent: { create: jest.fn(), groupBy: jest.fn() },
     product: { create: jest.fn(), findFirst: jest.fn(), update: jest.fn() },
     service: { create: jest.fn(), findFirst: jest.fn(), update: jest.fn() },
@@ -43,6 +48,7 @@ describe('PartnersPortalService', () => {
       contactName: 'Sara',
       contactEmail: 's@t.com',
       contactPhone: '0500000000',
+      password: 'secretpass1',
     });
 
     expect(result.status).toBe('pending');
@@ -61,6 +67,7 @@ describe('PartnersPortalService', () => {
       city: 'الرياض',
       descriptionAr: null,
       storeUrl: null,
+      passwordHash: 'scrypt$salt$hash',
     });
 
     prisma.$transaction.mockImplementation(async (fn) =>
@@ -75,7 +82,8 @@ describe('PartnersPortalService', () => {
 
     const result = await service.approveApplication('app-1');
     expect(result.partnerId).toBe('partner-1');
-    expect(result.accessToken).toBeDefined();
+    expect(result).not.toHaveProperty('accessToken');
+    expect(result.loginEmail).toBe('s@t.com');
     expect(prisma.$transaction).toHaveBeenCalled();
   });
 

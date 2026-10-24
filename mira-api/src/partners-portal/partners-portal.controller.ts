@@ -12,7 +12,7 @@ import {
   StreamableFile,
   UseGuards,
 } from '@nestjs/common';
-import { IsOptional, IsString } from 'class-validator';
+import { IsEmail, IsOptional, IsString, MaxLength, MinLength } from 'class-validator';
 import { AdminApiKeyGuard } from '../common/guards/admin-api-key.guard';
 import {
   PartnerRequest,
@@ -25,11 +25,23 @@ import { CatalogContentService } from '../marketplace/catalog-content.service';
 import { PartnersPortalService } from './partners-portal.service';
 
 class PartnerLoginDto {
-  @IsString()
+  @IsEmail()
   email!: string;
 
   @IsString()
-  accessToken!: string;
+  @MinLength(8)
+  @MaxLength(128)
+  password!: string;
+}
+
+class AdminSetPasswordDto {
+  @IsEmail()
+  email!: string;
+
+  @IsString()
+  @MinLength(8)
+  @MaxLength(128)
+  password!: string;
 }
 
 class RejectApplicationDto {
@@ -58,7 +70,7 @@ export class PartnersPortalController {
 
   @Post('login')
   login(@Body() dto: PartnerLoginDto) {
-    return this.portal.login(dto.email, dto.accessToken);
+    return this.portal.login(dto.email, dto.password);
   }
 
   @Post('track')
@@ -126,6 +138,12 @@ export class PartnersPortalController {
   @UseGuards(AdminApiKeyGuard)
   approve(@Param('id') id: string) {
     return this.portal.approveApplication(id);
+  }
+
+  @Post('admin/set-password')
+  @UseGuards(AdminApiKeyGuard)
+  adminSetPassword(@Body() dto: AdminSetPasswordDto) {
+    return this.portal.adminSetPassword(dto.email, dto.password);
   }
 
   @Get('content-policy')

@@ -292,6 +292,8 @@ model PartnerApplication {
   crNumber      String?   @map("cr_number")
   vatNumber     String?   @map("vat_number")
   message       String?
+  /// bcrypt/scrypt hash from apply form; copied to PartnerUser on approve then cleared.
+  passwordHash  String?   @map("password_hash")
   statusToken   String    @unique @map("status_token")
   partnerId     String?   @map("partner_id")
   rejectReason  String?   @map("reject_reason")
@@ -306,13 +308,15 @@ model PartnerApplication {
 
 /// Partner portal login — one owner per partner (v1).
 model PartnerUser {
-  id          String   @id @default(uuid())
-  partnerId   String   @unique @map("partner_id")
-  partner     Partner  @relation(fields: [partnerId], references: [id], onDelete: Cascade)
-  email       String   @unique
-  accessToken String   @unique @map("access_token")
-  role        String   @default("owner")
-  createdAt   DateTime @default(now()) @map("created_at")
+  id           String   @id @default(uuid())
+  partnerId    String   @unique @map("partner_id")
+  partner      Partner  @relation(fields: [partnerId], references: [id], onDelete: Cascade)
+  email        String   @unique
+  /// Opaque Bearer session token (rotated on login) — never shown as a “password”.
+  accessToken  String   @unique @map("access_token")
+  passwordHash String?  @map("password_hash")
+  role         String   @default("owner")
+  createdAt    DateTime @default(now()) @map("created_at")
 
   @@map("partner_users")
 }

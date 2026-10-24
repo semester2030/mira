@@ -63,4 +63,10 @@ export class ApplyPartnerDto {
   @IsString()
   @MaxLength(1000)
   message?: string;
+
+  /** Portal login password (never a 64-char hex token). */
+  @IsString()
+  @MinLength(8)
+  @MaxLength(128)
+  password!: string;
 }

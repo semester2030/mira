@@ -96,8 +96,8 @@
     apply: (payload) => request('POST', '/partners-portal/apply', payload),
     status: (token) =>
       request('GET', `/partners-portal/apply/status/${encodeURIComponent(token)}`),
-    login: (email, accessToken) =>
-      request('POST', '/partners-portal/login', { email, accessToken }),
+    login: (email, password) =>
+      request('POST', '/partners-portal/login', { email, password }),
     dashboard: () => request('GET', '/partners-portal/me'),
     createProduct: (payload) =>
       request('POST', '/partners-portal/products', payload),
