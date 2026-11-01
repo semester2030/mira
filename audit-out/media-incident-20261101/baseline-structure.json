@@ -1,0 +1,37 @@
+{
+  "kinds": {
+    "product": 8,
+    "service": 0
+  },
+  "media_refs": 21,
+  "sample_keys": [
+    "availabilityPresent",
+    "bookingEnabled",
+    "category",
+    "city",
+    "concernTags",
+    "contactPhone",
+    "deliveryFeeHalalas",
+    "descriptionAr",
+    "durationMin",
+    "externalUrl",
+    "id",
+    "kind",
+    "media",
+    "nameAr",
+    "nameEn",
+    "optionsJson",
+    "partnerEmoji",
+    "partnerId",
+    "partnerNameAr",
+    "partnerType",
+    "payMode",
+    "priceHalalas",
+    "priceLabel",
+    "purchaseMode",
+    "stepAr",
+    "stockAvailable",
+    "stockQty",
+    "variantsJson"
+  ]
+}

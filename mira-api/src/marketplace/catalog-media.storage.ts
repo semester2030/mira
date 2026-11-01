@@ -18,6 +18,7 @@ export {
   CatalogMediaUnavailable,
   CatalogMediaWriteError,
 } from './catalog-media.contract';
+export type { CatalogMediaOpenOk, CatalogMediaOpenResult } from './catalog-media.contract';
 
 export class UnavailableCatalogMediaStorage extends CatalogMediaStorage {
   constructor(private readonly reason: string) {

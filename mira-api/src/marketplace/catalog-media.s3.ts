@@ -1,19 +1,23 @@
 import type { Agent as HttpsAgent } from 'node:https';
+import { Readable } from 'stream';
 import {
   DeleteObjectCommand,
   GetObjectCommand,
+  HeadObjectCommand,
   PutObjectCommand,
   S3Client,
 } from '@aws-sdk/client-s3';
 import { NodeHttpHandler } from '@smithy/node-http-handler';
 import {
   CatalogMediaConnectionError,
+  CatalogMediaOpenResult,
   CatalogMediaPermissionError,
   CatalogMediaReadError,
   CatalogMediaStorage,
   CatalogMediaUnavailable,
   CatalogMediaWriteError,
 } from './catalog-media.contract';
+import { planMediaStream } from './catalog-media.stream';
 
 export interface S3MediaSettings {
   bucket: string;
@@ -124,6 +128,92 @@ export class S3CompatibleCatalogMediaStorage extends CatalogMediaStorage {
           throw new CatalogMediaReadError();
         }
         return this.readBody(output.Body, signal);
+      });
+    } catch (error) {
+      if (error instanceof MissingObject) return null;
+      throw error;
+    }
+  }
+
+  async head(key: string): Promise<{ contentLength: number; contentType?: string } | null> {
+    try {
+      return await this.execute('read', async (client, signal) => {
+        const output = await client.send(new HeadObjectCommand({
+          Bucket: this.settings.bucket,
+          Key: key,
+        }), { abortSignal: signal });
+        const contentLength = Number(output.ContentLength ?? 0);
+        if (!Number.isFinite(contentLength) || contentLength < 0) {
+          console.error('catalog-media-read-failed');
+          throw new CatalogMediaReadError();
+        }
+        return {
+          contentLength,
+          contentType: output.ContentType || undefined,
+        };
+      });
+    } catch (error) {
+      if (error instanceof MissingObject) return null;
+      throw error;
+    }
+  }
+
+  /**
+   * True Range GET against R2/S3 — does not buffer the whole object into RSS.
+   * Uses HeadObject for total size, then GetObject with Range for the slice.
+   */
+  async open(
+    key: string,
+    options: { rangeHeader?: string; signal?: AbortSignal } = {},
+  ): Promise<CatalogMediaOpenResult | null> {
+    const meta = await this.head(key);
+    if (!meta) return null;
+    const plan = planMediaStream(meta.contentLength, options.rangeHeader);
+    if (plan.status === 416) {
+      return { status: 416, totalSize: plan.total, contentRange: plan.contentRange };
+    }
+
+    try {
+      return await this.execute('read', async (client, signal) => {
+        const external = options.signal;
+        const combined = external
+          ? AbortSignal.any([signal, external])
+          : signal;
+        const rangeValue = `bytes=${plan.start}-${plan.end}`;
+        const output = await client.send(new GetObjectCommand({
+          Bucket: this.settings.bucket,
+          Key: key,
+          Range: rangeValue,
+        }), { abortSignal: combined });
+        const body = output.Body as Readable | undefined;
+        if (!body || typeof (body as Readable).pipe !== 'function') {
+          console.error('catalog-media-read-failed');
+          throw new CatalogMediaReadError();
+        }
+        const abort = () => {
+          try {
+            (body as Readable).destroy?.();
+          } catch {
+            /* ignore */
+          }
+        };
+        if (combined.aborted) {
+          abort();
+          throw Object.assign(new Error('aborted'), { name: 'AbortError' });
+        }
+        combined.addEventListener('abort', abort, { once: true });
+        return {
+          status: plan.status,
+          totalSize: plan.total,
+          contentLength: plan.contentLength,
+          contentRange: plan.contentRange,
+          contentType: output.ContentType || meta.contentType,
+          body: body as Readable,
+          abort: () => {
+            combined.removeEventListener('abort', abort);
+            abort();
+          },
+        };
       });
     } catch (error) {
       if (error instanceof MissingObject) return null;
