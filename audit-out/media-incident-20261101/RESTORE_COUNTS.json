@@ -1,0 +1,6 @@
+{
+  "in_r2_recoverable_db_rows": 10,
+  "needs_reupload_db_rows": 62,
+  "r2_orphan_key_possibly": "91b46dbf-50f0-4da3-9527-b3d4837b3aeb",
+  "note": "One R2 object may lack a current DB row; 10 DB rows match R2 keys."
+}
