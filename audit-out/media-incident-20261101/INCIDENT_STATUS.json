@@ -1,0 +1,84 @@
+{
+  "asOf": "2026-11-01T04:14:48Z",
+  "reviewedCommit": "fc762b2dde31f4daa62037323e85c31adf371433",
+  "originMain": "fc762b2dde31f4daa62037323e85c31adf371433",
+  "localFeatureHead": "436ddb22c89526adfdc6d9e928e264733c1fffa2",
+  "attachments": {
+    "catalog-media-recovery.patch": "NOT_FOUND_ON_DISK",
+    "audit-catalog-media.cjs": "CREATED_scripts/audit-catalog-media.cjs"
+  },
+  "publicBaseline": {
+    "asOf": "2026-11-01T04:08:55Z",
+    "note": "Public catalog first page only (nextCursor may need different param)",
+    "catalogItems": 8,
+    "kindCounts": {
+      "product": 8
+    },
+    "mediaLinks": 21,
+    "videoMime": 0,
+    "imageMime": 0,
+    "httpStatusCounts": {
+      "404": 21
+    },
+    "ok2xx": 0,
+    "http404": 21
+  },
+  "r2Bucket": {
+    "name": "mira-catalog-media",
+    "accountId": "23b91d3644ea2baa80d9ffcb6062d0d8",
+    "objectCount": 11,
+    "totalBytes": 89520871,
+    "keys": [
+      "025cc6f3-dc46-4112-9622-d30248a7bedd",
+      "17f48809-3c74-4d0b-9a11-201323166143",
+      "2f459cc6-688b-49c0-ac5d-8371e4288a43",
+      "3a851226-7a35-4442-9e70-e40e438edb10",
+      "4a26a640-5bee-488a-9fe4-9582bf4fca0f",
+      "73f435f4-497d-4d96-ad78-188f53a02e33",
+      "7505ea0e-2204-40b8-b2ba-50147f732572",
+      "91b46dbf-50f0-4da3-9527-b3d4837b3aeb",
+      "9310f74a-81cc-4613-a77e-6da2d3a22fb6",
+      "bf554e31-c96b-4d5a-880e-b6cdece33f06",
+      "fee7e9ca-6540-4b08-a185-894ac8280209"
+    ]
+  },
+  "dbAggregate": {
+    "mediaTotal": 72,
+    "published": 72,
+    "video": 34,
+    "image": 38
+  },
+  "joinHint": {
+    "keysInR2MatchingDbOct19": [
+      "025cc6f3-dc46-4112-9622-d30248a7bedd",
+      "17f48809-3c74-4d0b-9a11-201323166143",
+      "2f459cc6-688b-49c0-ac5d-8371e4288a43",
+      "3a851226-7a35-4442-9e70-e40e438edb10",
+      "4a26a640-5bee-488a-9fe4-9582bf4fca0f",
+      "73f435f4-497d-4d96-ad78-188f53a02e33",
+      "7505ea0e-2204-40b8-b2ba-50147f732572",
+      "9310f74a-81cc-4613-a77e-6da2d3a22fb6",
+      "bf554e31-c96b-4d5a-880e-b6cdece33f06",
+      "fee7e9ca-6540-4b08-a185-894ac8280209",
+      "91b46dbf-50f0-4da3-9527-b3d4837b3aeb"
+    ],
+    "recoverableIfCredentialsPointAtBucket": 11,
+    "dbRowsNotInR2Bucket": "61 of 72 storage_keys absent from mira-catalog-media (mostly Oct 24–30 uploads)"
+  },
+  "envIncident": {
+    "afterBucketRetarget": "catalog-media-provider-incomplete — ACCESS/SECRET keys missing on Render after env update",
+    "blocker": "MIRA_MEDIA_S3_ACCESS_KEY_ID + MIRA_MEDIA_S3_SECRET_ACCESS_KEY must be set to R2 API token for account 23b91d… bucket mira-catalog-media",
+    "doNotOpenPublicBucket": true
+  },
+  "streamingFix": {
+    "status": "IMPLEMENTED_LOCAL_NOT_DEPLOYED",
+    "files": [
+      "catalog-media.controller.ts",
+      "catalog-media.s3.ts",
+      "catalog-media.contract.ts",
+      "catalog-media.stream.ts",
+      "catalog-media.recovery.schema-tests.ts"
+    ],
+    "tests": "npm run test:catalog-media-recovery PASS"
+  }
+}
