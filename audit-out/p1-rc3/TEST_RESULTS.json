@@ -1,0 +1,65 @@
+{
+  "generatedAtUtc": "2026-11-03T21:54:10Z",
+  "codeFinalCommit": "7379215b34ad58bb9933503f4aacb52fff69fa0f",
+  "environment": {
+    "databaseHost": "localhost",
+    "databaseName": "mira_p1_rc3_test",
+    "MIRA_PARTNER_EDITOR_V2": "true"
+  },
+  "suites": [
+    {
+      "name": "test:registry-validation",
+      "cwd": "mira-api",
+      "status": "PASS_LOCAL",
+      "exitCode": 0,
+      "evidence": "logs/rc3-registry-validation.txt"
+    },
+    {
+      "name": "test:editor-v2",
+      "cwd": "mira-api",
+      "status": "PASS_LOCAL",
+      "exitCode": 0,
+      "evidence": "logs/rc3-editor-v1-regression.txt"
+    },
+    {
+      "name": "test:editor-v2-rc3",
+      "cwd": "mira-api",
+      "status": "PASS_LOCAL",
+      "exitCode": 0,
+      "evidence": "logs/rc3-http-integration.txt"
+    },
+    {
+      "name": "editor-v2-isolation.tests.mjs",
+      "cwd": "partners-portal/web/js",
+      "status": "PASS_LOCAL",
+      "exitCode": 0,
+      "evidence": "logs/rc3-account-isolation.txt"
+    },
+    {
+      "name": "p1-rc3-browser-e2e.mjs",
+      "cwd": "mira-api",
+      "status": "PASS_LOCAL",
+      "exitCode": 0,
+      "evidence": "logs/rc3-browser-e2e.txt",
+      "screenshots": "screenshots/"
+    },
+    {
+      "name": "flutter service profile tests",
+      "status": "PASS_LOCAL",
+      "exitCode": 0,
+      "evidence": "logs/rc3-flutter-tests.txt"
+    },
+    {
+      "name": "staging partner E2E",
+      "status": "NOT_RUN"
+    },
+    {
+      "name": "device Flutter",
+      "status": "NOT_RUN"
+    },
+    {
+      "name": "admin public approve browser",
+      "status": "NOT_RUN"
+    }
+  ]
+}

@@ -1,0 +1,10 @@
+{
+  "baselineRc2CodeCommit": "3f8f69dd4b1abf09748cc84ecef155a45777f508",
+  "baselineRc2PackageTip": "b2fb0a70cf1ed4871975a0f4ae0236357f96adfa",
+  "rc2ZipSha256": "884766844894c8f4d0b7c88efd7df218efca916a83208c06c9fbefefffbcd840",
+  "branch": "mira/p1-partner-editor-v2-rc3",
+  "codeFinalCommit": "7379215b34ad58bb9933503f4aacb52fff69fa0f",
+  "registrySha256": "4e7c1e1ae82975abba3ab3dcb79b8d1366c1a5c1b1007f8da4976ae2357e0cbd",
+  "testDatabase": "mira_p1_rc3_test",
+  "generatedAtUtc": "2026-11-03T21:54:10Z"
+}
