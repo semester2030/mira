@@ -1,0 +1,1 @@
+{"ok":true,"payloadSummary":{"colors":["black"],"sizes":["M"],"customKept":true}}

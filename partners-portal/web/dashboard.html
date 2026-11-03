@@ -150,47 +150,47 @@
           openBtn.onclick = async () => {
             try {
               const draft = await MiraEditorV2.openDraft(d.clientDraftId);
-              const formId = draft.kind === 'product' ? 'catalogForm' : 'serviceForm';
-              const titleId = draft.kind === 'product' ? 'catalogTitle' : 'serviceTitle';
-              const type = draft.kind === 'product' ? 'brand' : (window.sessionPartner.type === 'clinic' ? 'clinic' : 'salon');
-              const values = draft.values || {};
-              const stub = draft.targetOwnerId
-                ? {
-                    id: draft.targetOwnerId,
-                    nameAr: values.nameAr || '',
-                    nameEn: values.nameEn || '',
-                    priceHalalas: values.priceHalalas,
-                    category: values.category || '',
-                    durationMin: values.durationMin,
-                    descriptionAr: values.descriptionAr || '',
-                    purchaseMode: values.purchaseMode,
-                    stockQty: values.stockQty,
-                    deliveryFeeHalalas: values.deliveryFeeHalalas,
-                    optionsJson: values.optionsJson,
-                    variantsJson: values.variantsJson,
-                    colors: values.colors,
-                    sizes: values.sizes,
-                  }
-                : null;
-              const draftCtx = {
-                clientDraftId: draft.clientDraftId,
-                kind: draft.kind,
-                profileId: draft.profileId,
-                schemaVersion: draft.schemaVersion,
-                revision: draft.revision,
-                targetOwnerId: draft.targetOwnerId || null,
-                status: draft.status,
-                submitReviewStatus: draft.submitReviewStatus || null,
-                values: values,
-              };
-              CatalogJourney.renderForm(
-                type,
-                stub,
-                formId,
-                titleId,
-                'مسودة خادمية ' + draft.clientDraftId + ' · rev ' + draft.revision,
-                draftCtx,
-              );
+              if (window.CatalogJourney && typeof CatalogJourney.reopenServerDraft === 'function') {
+                CatalogJourney.reopenServerDraft(
+                  draft,
+                  'مسودة خادمية ' + draft.clientDraftId + ' · rev ' + draft.revision,
+                );
+              } else {
+                const target = CatalogJourney.resolveFormTarget
+                  ? CatalogJourney.resolveFormTarget(draft.kind)
+                  : {
+                      formId: draft.kind === 'product' ? 'catalogForm' : 'serviceForm',
+                      titleId: draft.kind === 'product' ? 'catalogTitle' : 'serviceTitle',
+                      type: draft.kind === 'product' ? 'brand' : (window.sessionPartner.type === 'clinic' ? 'clinic' : 'salon'),
+                    };
+                const values = draft.values || {};
+                const stub = draft.targetOwnerId
+                  ? {
+                      id: draft.targetOwnerId,
+                      nameAr: values.nameAr || '',
+                      priceHalalas: values.priceHalalas,
+                      category: values.category || '',
+                    }
+                  : null;
+                CatalogJourney.renderForm(
+                  target.type,
+                  stub,
+                  target.formId,
+                  target.titleId,
+                  'مسودة خادمية ' + draft.clientDraftId + ' · rev ' + draft.revision,
+                  {
+                    clientDraftId: draft.clientDraftId,
+                    kind: draft.kind,
+                    profileId: draft.profileId,
+                    schemaVersion: draft.schemaVersion,
+                    revision: draft.revision,
+                    targetOwnerId: draft.targetOwnerId || null,
+                    status: draft.status,
+                    submitReviewStatus: draft.submitReviewStatus || null,
+                    values: values,
+                  },
+                );
+              }
             } catch (error) {
               list.textContent = 'تعذر الفتح: ' + (error.message || error);
             }
@@ -263,8 +263,23 @@
         const showProducts = developer || p.type === 'brand';
         serviceButton.hidden = !showServices;
         productButton.hidden = !showProducts;
-        serviceButton.onclick = () => scrollToForm('serviceForm');
-        productButton.onclick = () => scrollToForm('catalogForm');
+        productButton.onclick = () => {
+          if (!options || !options.preserveForms) {
+            if (developer) renderForm('brand', null, 'catalogForm', 'catalogTitle');
+            else if (p.type === 'brand') renderForm('brand', null, 'catalogForm', 'catalogTitle');
+          }
+          scrollToForm('catalogForm');
+        };
+        serviceButton.onclick = () => {
+          if (developer) {
+            if (!options || !options.preserveForms) renderForm('clinic', null, 'serviceForm', 'serviceTitle');
+            scrollToForm('serviceForm');
+          } else {
+            // Salon/clinic: services are edited in catalogForm (same as initial load).
+            if (!options || !options.preserveForms) renderForm(p.type, null, 'catalogForm', 'catalogTitle');
+            scrollToForm('catalogForm');
+          }
+        };
         if (developer) {
           document.getElementById('serviceSection').classList.remove('hidden');
           document.getElementById('catalogTitle').textContent = 'منتجات الملابس وماركات التجميل';
@@ -274,7 +289,7 @@
           renderCatalog('clinic', data.catalog, 'serviceList', 'serviceForm', 'serviceTitle');
           if (!options || !options.preserveForms) renderForm('clinic', null, 'serviceForm', 'serviceTitle');
         } else {
-          if (showServices) document.getElementById('serviceSection').classList.remove('hidden');
+          // Do not unhide empty serviceSection for salon/clinic — catalogForm is the service editor.
           renderCatalog(p.type, data.catalog, 'catalogList', 'catalogForm', 'catalogTitle');
           if (!options || !options.preserveForms) renderForm(p.type, null, 'catalogForm', 'catalogTitle');
         }

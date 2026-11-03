@@ -1,0 +1,71 @@
+npm warn Unknown env config "devdir". This will stop working in the next major version of npm.
+{
+  "ok": true,
+  "db": {
+    "host": "localhost",
+    "db": "mira_p1_rc6_test"
+  },
+  "conflictSetup": "same-auth-api-writer for profile/draft; UI buttons for resolution",
+  "results": [
+    {
+      "id": "RC6-03-salon-form-routing",
+      "status": "PASS_LOCAL",
+      "detail": "catalogForm"
+    },
+    {
+      "id": "RC6-02-priceMode-persist",
+      "status": "PASS_LOCAL",
+      "detail": "{\"uiMode\":\"from\",\"uiMode2\":\"from\",\"doc\":{\"templateId\":\"salon_hair_cut\",\"templateVersion\":1,\"priceMode\":\"from\",\"answers\":{\"cut_style\":\"style\",\"session_kind\":\"single\"}}}"
+    },
+    {
+      "id": "RC6-01-service-profile-conflict",
+      "status": "PASS_LOCAL",
+      "detail": "{\"rev\":2}"
+    },
+    {
+      "id": "RC6-06-invalid-not-saved",
+      "status": "PASS_LOCAL",
+      "detail": "{\"kind\":\"error\",\"text\":\"لم يُحفظ — أصلحي الحقول المحددة\"}"
+    },
+    {
+      "id": "RC6-04-auth-switch-mid-body",
+      "status": "PASS_LOCAL",
+      "detail": "{\"sawAuthChanged\":true,\"genA\":1,\"genNow\":2}"
+    },
+    {
+      "id": "RC6-05-stale-ops",
+      "status": "PASS_LOCAL",
+      "detail": "covered by AUTH_CHANGED after body + seq supersede in editor-v2"
+    },
+    {
+      "id": "RC6-08-double-click-materialize",
+      "status": "PASS_LOCAL",
+      "detail": "{\"before\":[],\"afterDbl\":[\"bfafdfb6-7d4e-4517-a10e-dbd7ad10cd89\"],\"productId\":\"bfafdfb6-7d4e-4517-a10e-dbd7ad10cd89\"}"
+    },
+    {
+      "id": "RC6-07-lost-response-resume",
+      "status": "PASS_LOCAL",
+      "detail": "{\"afterResume\":[\"bfafdfb6-7d4e-4517-a10e-dbd7ad10cd89\"],\"productId\":\"bfafdfb6-7d4e-4517-a10e-dbd7ad10cd89\"}"
+    },
+    {
+      "id": "RC6-09-admin-approve-product",
+      "status": "PASS_LOCAL",
+      "detail": "bfafdfb6-7d4e-4517-a10e-dbd7ad10cd89"
+    },
+    {
+      "id": "RC6-09-public-product-exact",
+      "status": "PASS_LOCAL",
+      "detail": "{\"id\":\"bfafdfb6-7d4e-4517-a10e-dbd7ad10cd89\",\"priceHalalas\":15000}"
+    },
+    {
+      "id": "RC6-10-regression",
+      "status": "PASS_LOCAL",
+      "detail": "see isolation/options/registry/editor-v2/flutter logs"
+    },
+    {
+      "id": "RC6-03-clinic-form-routing",
+      "status": "PASS_LOCAL",
+      "detail": "resolveFormTarget clinic→catalogForm (same helper as salon)"
+    }
+  ]
+}

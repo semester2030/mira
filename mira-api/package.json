@@ -28,6 +28,7 @@
     "test:editor-v2-rc3": "tsx src/partners-portal/editor-drafts/editor-v2-rc3.http.integration-tests.ts",
     "test:editor-v2-rc4": "tsx src/partners-portal/editor-drafts/editor-v2-rc4.http.integration-tests.ts",
     "test:editor-v2-rc5-browser": "node scripts/p1-rc5-browser-e2e.mjs",
+    "test:editor-v2-rc6-browser": "node scripts/p1-rc6-browser-e2e.mjs",
     "test:registry-validation": "tsx src/partners-portal/registry/registry.validation.schema-tests.ts",
     "check:field-registry": "node scripts/check-field-registry-sync.mjs",
     "test:vision-schema": "npm run build && node dist/vision/schema/fashion-vision-document.schema-tests.js",

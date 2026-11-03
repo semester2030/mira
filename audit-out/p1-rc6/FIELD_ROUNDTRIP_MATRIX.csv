@@ -1,0 +1,8 @@
+field,ui,payload,validation,storage,retrieve,display,test,status
+serviceProfile.priceMode,select priceMode,putServiceProfile priceMode,bound revision conflict,draft/live profile,getServiceProfile+reopen,select value,RC6-02,PASS_LOCAL
+serviceProfile.answers.excludes,optional text,answers.excludes,template field rules,profile json,conflict keeps server,input,RC6-01,PASS_LOCAL
+serviceReviewRevision,bound at open,expectedRevision,no get-latest overwrite,services.reviewRevision,conflict 409,status conflict,RC6-01,PASS_LOCAL
+formTarget,goService/catalogForm,resolveFormTarget,salon→catalogForm,n/a,reopen same form,catalogForm fields,RC6-03,PASS_LOCAL
+auth mid-body,PartnersApi.request,AUTH_CHANGED after json,ignore body,n/a,n/a,error status,RC6-04,PASS_LOCAL
+priceSar invalid mid-flight,input 100.123,seq bump,no saved status,prior server unchanged,status error,RC6-06,PASS_LOCAL
+product options M/black,chips,optionsJson,registry,product,public catalog exact,public JSON,RC6-09,PASS_LOCAL

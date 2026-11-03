@@ -90,13 +90,14 @@
       body: body ? JSON.stringify(body) : undefined,
       signal: signal || undefined,
     });
+    // Read body first, then re-check session — a mid-body account switch must not apply data.
+    const data = await res.json().catch(() => ({}));
     if (
       localStorage.getItem('mira_partner_token') !== tokenAtStart ||
       authGeneration !== authGenAtStart
     ) {
       throw ApiError('تبديل جلسة أثناء الطلب — تُجاهل الاستجابة', { code: 'AUTH_CHANGED' });
     }
-    const data = await res.json().catch(() => ({}));
     if (!res.ok) {
       const msg = data.message || data.error || `HTTP ${res.status}`;
       throw ApiError(Array.isArray(msg) ? msg.join(' ') : msg, {
@@ -139,9 +140,18 @@
       };
       xhr.onabort = () => fail(Object.assign(new Error('أُلغي الرفع'), { name: 'AbortError' }));
       xhr.onerror = () => fail(new Error('تعذر الاتصال'));
+      const tokenAtStart = localStorage.getItem('mira_partner_token');
+      const authGenAtStart = authGeneration;
       xhr.onload = () => {
         let data = {};
         try { data = JSON.parse(xhr.responseText || '{}'); } catch (error) { data = {}; }
+        if (
+          localStorage.getItem('mira_partner_token') !== tokenAtStart ||
+          authGeneration !== authGenAtStart
+        ) {
+          fail(ApiError('تبديل جلسة أثناء الطلب — تُجاهل الاستجابة', { code: 'AUTH_CHANGED' }));
+          return;
+        }
         if (xhr.status < 200 || xhr.status >= 300) {
           const msg = data.message || data.error || `HTTP ${xhr.status}`;
           fail(ApiError(Array.isArray(msg) ? msg.join(' ') : msg, {

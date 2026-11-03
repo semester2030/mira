@@ -79,13 +79,17 @@
       delete state.timers[id];
     }
     delete state.pending[id];
+    // Bump seq so an in-flight success for a previous value cannot show «محفوظ» for invalid/current UI.
+    if (reason === 'invalid-fields' || reason === 'conflict-reload' || reason === 'post-rehydrate') {
+      state.seq[id] = (state.seq[id] || 0) + 1;
+    }
     if (state.lastFlushResult[id] && state.lastFlushResult[id].ok) {
-      // Invalidate stale "saved" while current inputs are invalid / mid-reload.
       state.lastFlushResult[id] = {
         ok: false,
         reason: reason || 'queue-cleared',
         formId: id,
         priorOk: true,
+        seq: state.seq[id],
       };
     }
   }
@@ -121,26 +125,40 @@
       form.insertBefore(panel, form.firstChild);
       reloadBtn.addEventListener('click', async () => {
         const staleRev = state.draftRevisionByClientId[clientDraftId];
+        const opFormId = formId;
+        const opDraftId = clientDraftId;
+        const opAuth = captureSessionSnapshot();
         try {
           // Stop THIS form's pending saves only — do not cancel sibling product/service queues.
           cancelFormPending(formId, 'conflict-reload');
           clearFormPendingQueue(formId, 'conflict-reload');
           // Fetch first; do NOT adopt server revision until full rehydrate succeeds.
           const draft = await PartnersApi.getEditorDraft(clientDraftId);
+          if (!assertSameSession(opAuth)) {
+            throw new Error('تبديل حساب أثناء إعادة التحميل — تُجاهل النتيجة');
+          }
+          if (opFormId !== (form.id || 'default') || opDraftId !== clientDraftId) {
+            throw new Error('تغيّر سياق النموذج أثناء إعادة التحميل — تُجاهل النتيجة');
+          }
           if (!(window.CatalogJourney && typeof CatalogJourney.reopenServerDraft === 'function')) {
             throw new Error('آلية إعادة التعبئة الكاملة غير متاحة');
           }
-          // Suppress autosave while CatalogJourney rebuilds the form — keep enabled so materialize UI is created.
+          // Suppress autosave while CatalogJourney rebuilds — keep enabled so materialize UI is created.
+          // Reopen into the SAME form the user was editing (salon services use catalogForm).
           state.suppressAutosave = true;
           let reopened;
           try {
             reopened = CatalogJourney.reopenServerDraft(
               draft,
               'أُعيد التحميل من الخادم بعد تعارض · rev ' + draft.revision,
+              opFormId,
             );
           } finally {
             state.suppressAutosave = false;
             clearFormPendingQueue(reopened && reopened.formId ? reopened.formId : formId, 'post-rehydrate');
+          }
+          if (!assertSameSession(opAuth)) {
+            throw new Error('تبديل حساب بعد إعادة التعبئة — تُجاهل النتيجة');
           }
           state.draftRevisionByClientId[clientDraftId] = draft.revision;
           const freshForm = document.getElementById(reopened.formId) || form;
@@ -157,7 +175,11 @@
         } catch (e) {
           // Keep stale revision — do not allow save against a half-loaded form.
           if (staleRev != null) state.draftRevisionByClientId[clientDraftId] = staleRev;
-          setStatus(form, 'تعذر إعادة التحميل: ' + (e && e.message ? e.message : e), 'error');
+          if (e && e.code === 'AUTH_CHANGED') {
+            setStatus(form, 'تُجاهلت استجابة قديمة بعد تبديل الحساب', 'error');
+          } else {
+            setStatus(form, 'تعذر إعادة التحميل: ' + (e && e.message ? e.message : e), 'error');
+          }
         }
       });
       keepBtn.addEventListener('click', () => {
@@ -509,6 +531,19 @@
         // Newer edit landed while this request was in flight — not a confirmed save of current values.
         state.lastFlushResult[formId] = { ok: false, pending: true, reason: 'superseded', formId: formId, revision: saved.revision };
         state.draftRevisionByClientId[built.clientDraftId] = saved.revision;
+        return state.lastFlushResult[formId];
+      }
+      // Re-check generation: invalid input during flight bumps seq and must not show «محفوظ».
+      if (state.seq[formId] !== mySeq) {
+        state.draftRevisionByClientId[built.clientDraftId] = saved.revision;
+        state.lastFlushResult[formId] = {
+          ok: false,
+          pending: false,
+          reason: 'superseded-after-response',
+          formId: formId,
+          revision: saved.revision,
+          seq: mySeq,
+        };
         return state.lastFlushResult[formId];
       }
       state.draftRevisionByClientId[built.clientDraftId] = saved.revision;

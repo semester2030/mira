@@ -219,15 +219,56 @@
   }
 
   /**
+   * Unified form target for product/service across partner types.
+   * Salon/clinic partners edit services in catalogForm (dashboard load path).
+   * Developer keeps services in serviceForm.
+   * preferredFormId wins when reloading the form the user is already on.
+   */
+  function resolveFormTarget(kind, preferredFormId) {
+    const partnerType = (window.sessionPartner && window.sessionPartner.type) || 'salon';
+    const developer = partnerType === 'developer';
+    if (preferredFormId === 'catalogForm' || preferredFormId === 'serviceForm') {
+      const type =
+        kind === 'product'
+          ? 'brand'
+          : partnerType === 'clinic'
+            ? 'clinic'
+            : partnerType === 'salon'
+              ? 'salon'
+              : 'salon';
+      return {
+        formId: preferredFormId,
+        titleId: preferredFormId === 'serviceForm' ? 'serviceTitle' : 'catalogTitle',
+        type: kind === 'product' ? 'brand' : type,
+        partnerType: partnerType,
+      };
+    }
+    if (kind === 'product') {
+      return { formId: 'catalogForm', titleId: 'catalogTitle', type: 'brand', partnerType: partnerType };
+    }
+    if (developer) {
+      return {
+        formId: 'serviceForm',
+        titleId: 'serviceTitle',
+        type: partnerType === 'clinic' ? 'clinic' : 'salon',
+        partnerType: partnerType,
+      };
+    }
+    return {
+      formId: 'catalogForm',
+      titleId: 'catalogTitle',
+      type: partnerType === 'clinic' ? 'clinic' : 'salon',
+      partnerType: partnerType,
+    };
+  }
+
+  /**
    * Full server-draft rehydrate (same path as opening a draft from the list).
    * Used by conflict reload so price/options/serviceProfile map correctly.
    */
-  function reopenServerDraft(draft, note) {
+  function reopenServerDraft(draft, note, preferredFormId) {
     if (!draft || !draft.clientDraftId) throw new Error('مسودة غير صالحة لإعادة التعبئة');
-    const formId = draft.kind === 'product' ? 'catalogForm' : 'serviceForm';
-    const titleId = draft.kind === 'product' ? 'catalogTitle' : 'serviceTitle';
-    const partnerType = (window.sessionPartner && window.sessionPartner.type) || 'salon';
-    const type = draft.kind === 'product' ? 'brand' : (partnerType === 'clinic' ? 'clinic' : 'salon');
+    const target = resolveFormTarget(draft.kind || 'product', preferredFormId);
     const values = draft.values || {};
     const stub = draft.targetOwnerId
       ? {
@@ -245,6 +286,7 @@
           variantsJson: values.variantsJson,
           colors: values.colors,
           sizes: values.sizes,
+          reviewRevision: draft.serviceReviewRevision,
         }
       : null;
     const draftCtx = {
@@ -257,16 +299,27 @@
       status: draft.status,
       submitReviewStatus: draft.submitReviewStatus || null,
       values: values,
+      serviceReviewRevision:
+        draft.serviceReviewRevision != null
+          ? draft.serviceReviewRevision
+          : values && values._serviceReviewRevision != null
+            ? values._serviceReviewRevision
+            : null,
     };
     renderForm(
-      type,
+      target.type,
       stub,
-      formId,
-      titleId,
+      target.formId,
+      target.titleId,
       note || ('مسودة خادمية ' + draft.clientDraftId + ' · rev ' + draft.revision),
       draftCtx,
     );
-    return { formId: formId, revision: draft.revision, clientDraftId: draft.clientDraftId };
+    return {
+      formId: target.formId,
+      revision: draft.revision,
+      clientDraftId: draft.clientDraftId,
+      type: target.type,
+    };
   }
 
   window.CatalogJourney = {
@@ -275,6 +328,7 @@
     renderForm: renderForm,
     refreshLists: refreshLists,
     reopenServerDraft: reopenServerDraft,
+    resolveFormTarget: resolveFormTarget,
   };
 
   async function refreshLists() {
@@ -613,12 +667,48 @@
     }
 
     // Prefer server draft profile (loaded before paint) over shared localStorage keys.
+    // Deep-copy answers so later mutations do not alias into preserveCtx by accident.
     const templateState = (draftCtx && draftCtx.values && draftCtx.values.serviceProfile)
       ? Object.assign(
           { templateId: '', answers: {}, priceMode: 'fixed', templateVersion: 1 },
           draftCtx.values.serviceProfile,
+          {
+            answers: Object.assign(
+              {},
+              (draftCtx.values.serviceProfile && draftCtx.values.serviceProfile.answers) || {},
+            ),
+          },
         )
       : loadServiceTemplateDraft(editing ? item.id : null);
+
+    /**
+     * Revision the user actually read for this service profile.
+     * Never refresh to "latest" at save time to sneak old answers past conflict checks.
+     */
+    let boundServiceReviewRevision =
+      draftCtx && draftCtx.serviceReviewRevision != null
+        ? draftCtx.serviceReviewRevision
+        : item && item.reviewRevision != null
+          ? item.reviewRevision
+          : null;
+    let serviceProfileBindPromise = null;
+    if (type !== 'brand' && item && item.id && boundServiceReviewRevision == null && window.PartnersApi) {
+      serviceProfileBindPromise = PartnersApi.getServiceProfile(item.id)
+        .then((profile) => {
+          boundServiceReviewRevision = profile.reviewRevision;
+          const doc = profile.draftServiceProfileSet
+            ? profile.draftServiceProfileJson
+            : profile.serviceProfileJson;
+          if (doc && doc.templateId) {
+            templateState.templateId = doc.templateId;
+            templateState.templateVersion = doc.templateVersion || 1;
+            templateState.priceMode = doc.priceMode || 'fixed';
+            templateState.answers = Object.assign({}, doc.answers || {});
+          }
+          return profile;
+        })
+        .catch(() => null);
+    }
 
     const REGISTRY_SIZE_IDS = new Set(['XS', 'S', 'M', 'L', 'XL', 'XXL']);
     const REGISTRY_COLOR_IDS = new Set(['black', 'ivory', 'brown', 'pink', 'blue', 'green', 'multi']);
@@ -2676,11 +2766,69 @@
       try {
         // Decision is always live owner id — never the form-build `editing` snapshot.
         const ownerId = resolveOwnerId();
+        let savedProfile = null;
+        let profileSaved = false;
+        let basicsSaved = false;
+
+        // Service template FIRST with the revision the user read — never get-latest-then-overwrite.
+        if (type !== 'brand' && ownerId && templateState && templateState.templateId) {
+          if (serviceProfileBindPromise) {
+            await serviceProfileBindPromise;
+          }
+          if (boundServiceReviewRevision == null) {
+            form.dataset.saving = '';
+            save.disabled = false;
+            save.removeAttribute('aria-busy');
+            save.classList.remove('is-busy');
+            save.textContent = idleLabel;
+            status.textContent = 'لم يُحفظ القالب — لم يُقرأ إصدار الخدمة بعد. أعيدي فتح الخدمة ثم احفظي.';
+            return false;
+          }
+          try {
+            savedProfile = await PartnersApi.putServiceProfile(ownerId, {
+              expectedRevision: boundServiceReviewRevision,
+              templateId: templateState.templateId,
+              templateVersion: templateState.templateVersion || 1,
+              priceMode: templateState.priceMode || 'fixed',
+              answers: Object.assign({}, templateState.answers || {}),
+            });
+            profileSaved = true;
+            boundServiceReviewRevision = savedProfile.reviewRevision;
+            const liveDoc = savedProfile.draftServiceProfileSet
+              ? savedProfile.draftServiceProfileJson
+              : savedProfile.serviceProfileJson;
+            if (liveDoc) {
+              templateState.templateId = liveDoc.templateId;
+              templateState.templateVersion = liveDoc.templateVersion || 1;
+              templateState.priceMode = liveDoc.priceMode || 'fixed';
+              templateState.answers = Object.assign({}, liveDoc.answers || {});
+            }
+          } catch (profileError) {
+            const msg = String(profileError && profileError.message ? profileError.message : profileError);
+            const code = (profileError && profileError.code) || '';
+            if (code === 'SERVICE_PROFILE_REVISION_CONFLICT' || /تعارض|REVISION|409/.test(msg + code)) {
+              form.dataset.saving = '';
+              save.disabled = false;
+              save.removeAttribute('aria-busy');
+              save.classList.remove('is-busy', 'is-success');
+              save.textContent = idleLabel;
+              status.textContent =
+                'تعارض قالب الخدمة مع نسخة أحدث. تعديلاتك ما زالت في النموذج — لم نكتب فوق الخادم. أعيدي التحميل أو أبقي التعديلات.';
+              if (window.MiraEditorV2) {
+                MiraEditorV2.setStatus(form, 'تعارض قالب الخدمة', 'conflict');
+              }
+              return false;
+            }
+            throw profileError;
+          }
+        }
+
         const saved = ownerId
           ? await (type === 'brand'
               ? PartnersApi.updateProduct(ownerId, payload)
               : PartnersApi.updateService(ownerId, payload))
           : await (type === 'brand' ? PartnersApi.createProduct(payload) : PartnersApi.createService(payload));
+        basicsSaved = true;
         if (type === 'brand' && !ownerId) {
           try {
             const fresh = localStorage.getItem('mira-product-options:new');
@@ -2696,44 +2844,30 @@
           } catch (error) {}
         }
         item = Object.assign({}, item || {}, saved);
+        if (saved && saved.reviewRevision != null) {
+          boundServiceReviewRevision = saved.reviewRevision;
+          item.reviewRevision = saved.reviewRevision;
+        }
         staged[form.id].ownerId = item.id;
         const ctxAfter = window.MiraEditorV2 && MiraEditorV2.getEditContext(form.id);
         if (ctxAfter && item.id) ctxAfter.targetOwnerId = item.id;
 
-        // Post-materialize service template: save via conflict-aware profile path (never silent force).
-        if (type !== 'brand' && item.id && templateState && templateState.templateId) {
-          try {
-            const current = await PartnersApi.getServiceProfile(item.id);
-            await PartnersApi.putServiceProfile(item.id, {
-              expectedRevision: current.reviewRevision,
-              templateId: templateState.templateId,
-              templateVersion: templateState.templateVersion || 1,
-              priceMode: templateState.priceMode || 'fixed',
-              answers: templateState.answers || {},
-            });
-          } catch (profileError) {
-            const msg = String(profileError && profileError.message ? profileError.message : profileError);
-            const code = (profileError && profileError.code) || '';
-            if (code === 'SERVICE_PROFILE_REVISION_CONFLICT' || /تعارض|REVISION|409/.test(msg + code)) {
-              form.dataset.saving = '';
-              save.disabled = false;
-              save.removeAttribute('aria-busy');
-              save.classList.remove('is-busy', 'is-success');
-              save.textContent = idleLabel;
-              status.textContent =
-                'حُفظت الخدمة، لكن قالب الخدمة يتعارض مع نسخة أحدث — أعد التحميل بقرار صريح. لم نكتب فوق الخادم.';
-              return false;
-            }
-            throw profileError;
-          }
-        }
-
         save.classList.remove('is-busy');
         save.classList.add('is-success');
         save.textContent = developerAccount ? 'جارٍ الرفع' : 'تم الحفظ';
+        let saveNote =
+          'حُفظت المسودة. السعر المخزن ' + item.priceHalalas + ' هللة (' + formatPrice(item.priceHalalas) + ').';
+        if (type !== 'brand' && templateState && templateState.templateId) {
+          saveNote +=
+            profileSaved && basicsSaved
+              ? ' القالب والبيانات محفوظان.'
+              : profileSaved
+                ? ' القالب محفوظ؛ تعذر تأكيد البيانات الأساسية.'
+                : ' البيانات الأساسية محفوظة دون قالب.';
+        }
         status.textContent = developerAccount
           ? 'جارٍ رفع الملفات ثم النشر في التطبيق.'
-          : 'حُفظت المسودة. السعر المخزن ' + item.priceHalalas + ' هللة (' + formatPrice(item.priceHalalas) + ').';
+          : saveNote;
         if (window.MiraMotion) MiraMotion.announce(status.textContent);
         await refreshLists();
         const pending = staged[form.id].slice();
@@ -2753,10 +2887,17 @@
         }
         const noteOut = failures.length
           ? (developerAccount ? 'لم يُنشر. فشل الرفع. ' : 'حُفظت المسودة. لم يُسجَّل الرفع ناجحًا. ') + failures.join(' — ')
-          : (publishedNote || (developerAccount ? 'نُشر في التطبيق مباشرة، بلا مراجعة.' : ''));
+          : (publishedNote || (developerAccount ? 'نُشر في التطبيق مباشرة، بلا مراجعة.' : saveNote));
         // Preserve materialized draft identity — re-render must not allocate a new clientDraftId.
+        // values.serviceProfile must reflect the just-saved server profile, not a stale preserveCtx copy.
         const preserveCtx = window.MiraEditorV2 && MiraEditorV2.getEditContext(form.id);
         if (preserveCtx && preserveCtx.clientDraftId && item && item.id) {
+          const profileForCtx = {
+            templateId: templateState.templateId || '',
+            templateVersion: templateState.templateVersion || 1,
+            priceMode: templateState.priceMode || 'fixed',
+            answers: Object.assign({}, templateState.answers || {}),
+          };
           const draftCtxPreserve = {
             clientDraftId: preserveCtx.clientDraftId,
             kind: preserveCtx.kind || kind,
@@ -2766,7 +2907,8 @@
             targetOwnerId: item.id,
             status: preserveCtx.status || 'submit_failed',
             submitReviewStatus: preserveCtx.submitReviewStatus || null,
-            values: Object.assign({}, preserveCtx.values || {}, {
+            serviceReviewRevision: boundServiceReviewRevision,
+            values: Object.assign({}, {
               nameAr: item.nameAr,
               nameEn: item.nameEn,
               priceHalalas: item.priceHalalas,
@@ -2779,7 +2921,9 @@
               variantsJson: item.variantsJson,
               colors: item.colors,
               sizes: item.sizes,
-            }),
+            }, type !== 'brand' && profileForCtx.templateId
+              ? { serviceProfile: profileForCtx }
+              : {}),
           };
           renderForm(type, item, form.id, titleId, noteOut, draftCtxPreserve);
         } else {
