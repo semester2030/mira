@@ -2460,6 +2460,11 @@
           scheduleEditorDraftAutosave();
           const saved = await MiraEditorV2.flushUntilSettled(form);
           if (!saved || !saved.ok) {
+            if (saved && (saved.conflict || saved.reason === 'revision-conflict')) {
+              status.textContent =
+                'تعارض تعديل مع جلسة أخرى. تعديلاتك ما زالت في النموذج — اختاري إعادة التحميل أو الإبقاء (لا تحديث تلقائي لرقم الإصدار).';
+              return false;
+            }
             status.textContent = 'تعذر حفظ المسودة الخادمية' + (saved && saved.reason ? ' (' + saved.reason + ')' : '') + '.';
             return false;
           }

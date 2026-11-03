@@ -69,6 +69,77 @@
     el.dataset.kind = kind || '';
   }
 
+  /** Explicit revision-conflict decision UI — never auto-bump expectedRevision. */
+  function showRevisionConflictUi(form, clientDraftId, error) {
+    if (!form) return;
+    setStatus(form, 'تعارض تعديل — تعديلاتك ما زالت في النموذج. اختاري إعادة التحميل أو الإبقاء.', 'conflict');
+    let panel = form.querySelector('[data-editor-v2-conflict-panel]');
+    if (!panel) {
+      panel = document.createElement('div');
+      panel.setAttribute('data-editor-v2-conflict-panel', '1');
+      panel.setAttribute('role', 'alert');
+      panel.style.cssText = 'margin:0.75rem 0;padding:0.75rem;border:1px solid #b45309;background:#fffbeb;';
+      const note = document.createElement('p');
+      note.setAttribute('data-conflict-note', '1');
+      note.textContent = 'جلسة أخرى حفظت نسخة أحدث. لن نكتب فوقها بتحديث رقم الإصدار تلقائيًا.';
+      panel.appendChild(note);
+      const row = document.createElement('div');
+      row.style.cssText = 'display:flex;gap:0.5rem;flex-wrap:wrap;margin-top:0.5rem;';
+      const reloadBtn = document.createElement('button');
+      reloadBtn.type = 'button';
+      reloadBtn.setAttribute('data-conflict-reload', '1');
+      reloadBtn.textContent = 'إعادة التحميل من الخادم';
+      const keepBtn = document.createElement('button');
+      keepBtn.type = 'button';
+      keepBtn.setAttribute('data-conflict-keep', '1');
+      keepBtn.textContent = 'الإبقاء على تعديلاتي';
+      row.appendChild(reloadBtn);
+      row.appendChild(keepBtn);
+      panel.appendChild(row);
+      form.insertBefore(panel, form.firstChild);
+      reloadBtn.addEventListener('click', async () => {
+        try {
+          const draft = await openDraft(clientDraftId);
+          const values = (draft && draft.values) || {};
+          Object.keys(values).forEach((key) => {
+            const field = form.elements.namedItem(key);
+            if (!field || field instanceof RadioNodeList) return;
+            if ('value' in field) field.value = values[key] == null ? '' : String(values[key]);
+          });
+          if (values.nameAr && form.elements.namedItem('nameAr')) {
+            form.elements.namedItem('nameAr').value = String(values.nameAr);
+          }
+          panel.remove();
+          setStatus(form, 'أُعيد التحميل من الخادم · rev ' + draft.revision + ' — عدّلي ثم احفظي', 'saved');
+          state.lastFlushResult[form.id || 'default'] = {
+            ok: false,
+            reason: 'conflict-reloaded',
+            conflict: true,
+            reloaded: true,
+            revision: draft.revision,
+            clientDraftId: clientDraftId,
+          };
+        } catch (e) {
+          setStatus(form, 'تعذر إعادة التحميل: ' + (e && e.message ? e.message : e), 'error');
+        }
+      });
+      keepBtn.addEventListener('click', () => {
+        panel.remove();
+        setStatus(form, 'أُبقيت تعديلاتك محليًا — احفظي بعد إعادة التحميل أو ادمجي يدويًا', 'conflict');
+        state.lastFlushResult[form.id || 'default'] = {
+          ok: false,
+          reason: 'conflict-kept-local',
+          conflict: true,
+          keptLocal: true,
+          localRevision: state.draftRevisionByClientId[clientDraftId],
+          clientDraftId: clientDraftId,
+        };
+      });
+    }
+    panel.dataset.clientDraftId = clientDraftId || '';
+    panel.dataset.errorCode = (error && error.code) || 'DRAFT_REVISION_CONFLICT';
+  }
+
   function cancelAllPending(reason) {
     Object.keys(state.timers).forEach((k) => clearTimeout(state.timers[k]));
     state.timers = Object.create(null);
@@ -424,8 +495,29 @@
         return state.lastFlushResult[formId];
       }
       const msg = String(error && error.message ? error.message : error);
-      if (/تعارض|REVISION|409/.test(msg)) setStatus(form, 'تعارض تعديل — احفظي محليًا ثم أعيدي التحميل بقرار صريح', 'conflict');
-      else setStatus(form, 'تعذر الحفظ — التعديلات ما زالت محليًا', 'error');
+      const code = (error && error.code) || (error && error.body && error.body.code) || '';
+      const status = error && error.status;
+      const isRevisionConflict =
+        code === 'DRAFT_REVISION_CONFLICT' ||
+        code === 'SERVICE_PROFILE_REVISION_CONFLICT' ||
+        status === 409 ||
+        /تعارض|REVISION_CONFLICT/.test(msg + ' ' + code);
+      if (isRevisionConflict) {
+        // Do NOT bump expectedRevision to the server tip — that would silently overwrite.
+        showRevisionConflictUi(form, built.clientDraftId, error);
+        state.lastFlushResult[formId] = {
+          ok: false,
+          error: error,
+          reason: 'revision-conflict',
+          conflict: true,
+          formId: formId,
+          seq: mySeq,
+          clientDraftId: built.clientDraftId,
+          localRevision: state.draftRevisionByClientId[built.clientDraftId],
+        };
+        return state.lastFlushResult[formId];
+      }
+      setStatus(form, 'تعذر الحفظ — التعديلات ما زالت محليًا', 'error');
       state.lastFlushResult[formId] = {
         ok: false,
         error: error,

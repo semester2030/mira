@@ -7,9 +7,9 @@ npm warn Unknown env config "devdir". This will stop working in the next major v
   "ok": true,
   "host": "localhost",
   "db": "mira_p1_rc4_test",
-  "brandEmail": "brand-rc4-cae4cd37@test.local",
-  "salonEmail": "salon-rc4-cae4cd37@test.local",
-  "password": "Rc4!cae4cd37pass",
+  "brandEmail": "brand-rc4-13e6e5b7@test.local",
+  "salonEmail": "salon-rc4-13e6e5b7@test.local",
+  "password": "Rc4!13e6e5b7pass",
   "results": [
     {
       "id": "RC4-reject-noncanonical-color-size-ids",

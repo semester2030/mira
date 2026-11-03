@@ -149,6 +149,86 @@ async function main() {
     pass('browser-brand-options-saved');
     await page.screenshot({ path: join(shotsDir, 'rc4-desktop-product-options.png'), fullPage: true });
 
+    // Concurrent revision conflict BEFORE second login (re-login invalidates prior token).
+    // Inject second writer via API with same auth; prove save button + conflict panel on A.
+    {
+      const draftMeta = await page.evaluate(() => {
+        const form = document.getElementById('catalogForm');
+        const ctx = window.MiraEditorV2 && MiraEditorV2.getEditContext(form.id);
+        const cid =
+          (ctx && ctx.clientDraftId) ||
+          Object.keys((MiraEditorV2.state && MiraEditorV2.state.draftRevisionByClientId) || {})[0];
+        return { clientDraftId: cid, revision: cid ? MiraEditorV2.state.draftRevisionByClientId[cid] : null };
+      });
+      if (!draftMeta.clientDraftId) {
+        fail('browser-dual-session-conflict', 'no clientDraftId on session A');
+      } else {
+        const writer = await page.evaluate(async (cid) => {
+          const draft = await PartnersApi.getEditorDraft(cid);
+          const saved = await PartnersApi.putEditorDraft(cid, {
+            expectedRevision: draft.revision,
+            kind: draft.kind,
+            profileId: draft.profileId,
+            schemaVersion: draft.schemaVersion || 2,
+            values: Object.assign({}, draft.values || {}, { nameAr: 'منتج RC4 جلسة ب' }),
+            targetOwnerId: draft.targetOwnerId || null,
+          });
+          return { revision: saved.revision, prev: draft.revision };
+        }, draftMeta.clientDraftId);
+        await page.evaluate(({ cid, rev }) => {
+          MiraEditorV2.state.draftRevisionByClientId[cid] = rev;
+          const ctx = MiraEditorV2.getEditContext('catalogForm');
+          if (ctx) ctx.revision = rev;
+        }, { cid: draftMeta.clientDraftId, rev: draftMeta.revision });
+        const aRevBefore = await page.evaluate((cid) => MiraEditorV2.state.draftRevisionByClientId[cid], draftMeta.clientDraftId);
+        await page.fill('#catalogForm [name="nameAr"]', 'منتج RC4 جلسة أ تعارض');
+        await page.locator('#catalogForm button[type="submit"]').first().click();
+        await page.waitForSelector('#catalogForm [data-editor-v2-conflict-panel]', { timeout: 15000 });
+        const aState = await page.evaluate((cid) => {
+          const form = document.getElementById('catalogForm');
+          const status = form.querySelector('[data-editor-v2-status]');
+          return {
+            name: form.querySelector('[name="nameAr"]')?.value || '',
+            kind: status ? status.dataset.kind : '',
+            hasPanel: !!form.querySelector('[data-editor-v2-conflict-panel]'),
+            revision: MiraEditorV2.state.draftRevisionByClientId[cid],
+            lastReason: MiraEditorV2.state.lastFlushResult[form.id] && MiraEditorV2.state.lastFlushResult[form.id].reason,
+          };
+        }, draftMeta.clientDraftId);
+        if (aState.hasPanel && aState.name.includes('جلسة أ') && aState.revision === aRevBefore && aState.kind === 'conflict') {
+          await page.locator('#catalogForm [data-conflict-keep]').click();
+          pass('browser-dual-session-conflict', JSON.stringify({ aRevBefore, writer, name: aState.name }));
+        } else {
+          fail('browser-dual-session-conflict', JSON.stringify({ aRevBefore, writer, aState }));
+        }
+        // Explicit reload decision then restore canonical name for the rest of the journey.
+        await page.evaluate(async (cid) => {
+          const draft = await PartnersApi.getEditorDraft(cid);
+          MiraEditorV2.state.draftRevisionByClientId[cid] = draft.revision;
+          const ctx = MiraEditorV2.getEditContext('catalogForm');
+          if (ctx) ctx.revision = draft.revision;
+          await PartnersApi.putEditorDraft(cid, {
+            expectedRevision: draft.revision,
+            kind: draft.kind,
+            profileId: draft.profileId,
+            schemaVersion: draft.schemaVersion || 2,
+            values: Object.assign({}, draft.values || {}, {
+              nameAr: 'منتج RC4 متصفح',
+              nameEn: 'RC4 Browser Product',
+              stockQty: 5,
+            }),
+            targetOwnerId: draft.targetOwnerId || null,
+          }).then((saved) => {
+            MiraEditorV2.state.draftRevisionByClientId[cid] = saved.revision;
+            if (ctx) ctx.revision = saved.revision;
+          });
+        }, draftMeta.clientDraftId);
+        await page.fill('#catalogForm [name="nameAr"]', 'منتج RC4 متصفح');
+        const panel = page.locator('#catalogForm [data-editor-v2-conflict-panel]');
+        if ((await panel.count()) > 0) await panel.evaluate((el) => el.remove()).catch(() => {});
+      }
+    }
+
     // Second session: new context, re-login, open draft from list
     const page2 = await (await browser.newContext({ viewport: { width: 1280, height: 900 } })).newPage();
     await page2.goto(loginUrl, { waitUntil: 'domcontentloaded' });
