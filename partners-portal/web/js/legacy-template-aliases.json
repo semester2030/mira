@@ -1,0 +1,227 @@
+{
+  "template.salon_hair_cut.package_sessions": {
+    "canonical": "packageSessions",
+    "action": "map-with-template-context",
+    "noDataLoss": true
+  },
+  "template.salon_hair_cut.includes": {
+    "canonical": "included",
+    "action": "map-with-template-context",
+    "noDataLoss": true
+  },
+  "template.salon_hair_cut.excludes": {
+    "canonical": "excluded",
+    "action": "map-with-template-context",
+    "noDataLoss": true
+  },
+  "template.salon_hair_cut.addons": {
+    "canonical": "addons",
+    "action": "review-and-convert",
+    "noDataLoss": true
+  },
+  "template.salon_hair_cut.place_mode": {
+    "canonical": "placeMode",
+    "action": "map-with-template-context",
+    "noDataLoss": true
+  },
+  "template.salon_hair_cut.home_coverage": {
+    "canonical": "coverageZones",
+    "action": "review-and-convert",
+    "noDataLoss": true
+  },
+  "template.salon_hair_cut.needs_assessment": {
+    "canonical": "requiresAssessment",
+    "action": "map-with-template-context",
+    "noDataLoss": true
+  },
+  "template.salon_hair_cut.assessment_note": {
+    "canonical": "assessmentNote",
+    "action": "map-with-template-context",
+    "noDataLoss": true
+  },
+  "template.salon_hair_cut.prep_required": {
+    "canonical": "preparation",
+    "action": "map-with-template-context",
+    "noDataLoss": true
+  },
+  "template.salon_hair_color.package_sessions": {
+    "canonical": "packageSessions",
+    "action": "map-with-template-context",
+    "noDataLoss": true
+  },
+  "template.salon_hair_color.includes": {
+    "canonical": "included",
+    "action": "map-with-template-context",
+    "noDataLoss": true
+  },
+  "template.salon_hair_color.addons": {
+    "canonical": "addons",
+    "action": "review-and-convert",
+    "noDataLoss": true
+  },
+  "template.salon_hair_color.place_mode": {
+    "canonical": "placeMode",
+    "action": "map-with-template-context",
+    "noDataLoss": true
+  },
+  "template.salon_hair_color.needs_assessment": {
+    "canonical": "requiresAssessment",
+    "action": "map-with-template-context",
+    "noDataLoss": true
+  },
+  "template.salon_hair_color.assessment_note": {
+    "canonical": "assessmentNote",
+    "action": "map-with-template-context",
+    "noDataLoss": true
+  },
+  "template.salon_hair_color.prep_required": {
+    "canonical": "preparation",
+    "action": "map-with-template-context",
+    "noDataLoss": true
+  },
+  "template.salon_nails.addons": {
+    "canonical": "addons",
+    "action": "review-and-convert",
+    "noDataLoss": true
+  },
+  "template.salon_nails.place_mode": {
+    "canonical": "placeMode",
+    "action": "map-with-template-context",
+    "noDataLoss": true
+  },
+  "template.salon_nails.prep_required": {
+    "canonical": "preparation",
+    "action": "map-with-template-context",
+    "noDataLoss": true
+  },
+  "template.salon_makeup.place_mode": {
+    "canonical": "placeMode",
+    "action": "map-with-template-context",
+    "noDataLoss": true
+  },
+  "template.salon_makeup.home_coverage": {
+    "canonical": "coverageZones",
+    "action": "review-and-convert",
+    "noDataLoss": true
+  },
+  "template.salon_makeup.includes": {
+    "canonical": "included",
+    "action": "map-with-template-context",
+    "noDataLoss": true
+  },
+  "template.salon_makeup.addons": {
+    "canonical": "addons",
+    "action": "review-and-convert",
+    "noDataLoss": true
+  },
+  "template.salon_makeup.needs_assessment": {
+    "canonical": "requiresAssessment",
+    "action": "map-with-template-context",
+    "noDataLoss": true
+  },
+  "template.salon_makeup.assessment_note": {
+    "canonical": "assessmentNote",
+    "action": "map-with-template-context",
+    "noDataLoss": true
+  },
+  "template.salon_makeup.prep_required": {
+    "canonical": "preparation",
+    "action": "map-with-template-context",
+    "noDataLoss": true
+  },
+  "template.clinic_skin.package_sessions": {
+    "canonical": "packageSessions",
+    "action": "map-with-template-context",
+    "noDataLoss": true
+  },
+  "template.clinic_skin.includes": {
+    "canonical": "included",
+    "action": "map-with-template-context",
+    "noDataLoss": true
+  },
+  "template.clinic_skin.place_mode": {
+    "canonical": "placeMode",
+    "action": "map-with-template-context",
+    "noDataLoss": true
+  },
+  "template.clinic_skin.needs_assessment": {
+    "canonical": "requiresAssessment",
+    "action": "map-with-template-context",
+    "noDataLoss": true
+  },
+  "template.clinic_skin.assessment_note": {
+    "canonical": "assessmentNote",
+    "action": "map-with-template-context",
+    "noDataLoss": true
+  },
+  "template.clinic_skin.prep_required": {
+    "canonical": "preparation",
+    "action": "map-with-template-context",
+    "noDataLoss": true
+  },
+  "template.clinic_laser.package_sessions": {
+    "canonical": "packageSessions",
+    "action": "map-with-template-context",
+    "noDataLoss": true
+  },
+  "template.clinic_laser.place_mode": {
+    "canonical": "placeMode",
+    "action": "map-with-template-context",
+    "noDataLoss": true
+  },
+  "template.clinic_laser.needs_assessment": {
+    "canonical": "requiresAssessment",
+    "action": "map-with-template-context",
+    "noDataLoss": true
+  },
+  "template.clinic_laser.assessment_note": {
+    "canonical": "assessmentNote",
+    "action": "map-with-template-context",
+    "noDataLoss": true
+  },
+  "template.clinic_laser.prep_required": {
+    "canonical": "preparation",
+    "action": "map-with-template-context",
+    "noDataLoss": true
+  },
+  "template.clinic_consult.includes": {
+    "canonical": "included",
+    "action": "map-with-template-context",
+    "noDataLoss": true
+  },
+  "template.clinic_consult.prep_required": {
+    "canonical": "preparation",
+    "action": "map-with-template-context",
+    "noDataLoss": true
+  },
+  "template.salon_care.includes": {
+    "canonical": "included",
+    "action": "map-with-template-context",
+    "noDataLoss": true
+  },
+  "template.salon_care.place_mode": {
+    "canonical": "placeMode",
+    "action": "map-with-template-context",
+    "noDataLoss": true
+  },
+  "template.salon_care.prep_required": {
+    "canonical": "preparation",
+    "action": "map-with-template-context",
+    "noDataLoss": true
+  },
+  "template.clinic_teeth.needs_assessment": {
+    "canonical": "requiresAssessment",
+    "action": "map-with-template-context",
+    "noDataLoss": true
+  },
+  "template.clinic_teeth.assessment_note": {
+    "canonical": "assessmentNote",
+    "action": "map-with-template-context",
+    "noDataLoss": true
+  },
+  "template.clinic_teeth.prep_required": {
+    "canonical": "preparation",
+    "action": "map-with-template-context",
+    "noDataLoss": true
+  }
+}

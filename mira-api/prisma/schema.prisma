@@ -173,9 +173,35 @@ model Partner {
   commerceCarts    CommerceCart[]
   commerceOrders   CommerceOrder[]
   commerceBookings CommerceBooking[]
+  editorDrafts     PartnerEditorDraft[]
 
   @@index([type, status])
   @@map("partners")
+}
+
+/// Server-side partner editor draft (P1). Not listed in public catalog.
+model PartnerEditorDraft {
+  id                 String    @id @default(uuid())
+  partnerId          String    @map("partner_id")
+  partner            Partner   @relation(fields: [partnerId], references: [id], onDelete: Cascade)
+  clientDraftId      String    @map("client_draft_id")
+  kind               String    // product | service
+  profileId          String    @map("profile_id")
+  schemaVersion      Int       @map("schema_version")
+  valuesJson         Json      @default("{}") @map("values_json")
+  revision           Int       @default(1)
+  status             String    @default("open") // open | materialized | discarded
+  targetOwnerId      String?   @map("target_owner_id")
+  materializedAt     DateTime? @map("materialized_at")
+  materializeKey     String?   @map("materialize_key")
+  materializeFingerprint String? @map("materialize_fingerprint")
+  createdAt          DateTime  @default(now()) @map("created_at")
+  updatedAt          DateTime  @updatedAt @map("updated_at")
+
+  @@unique([partnerId, clientDraftId])
+  @@index([partnerId, updatedAt(sort: Desc)])
+  @@index([partnerId, kind, targetOwnerId])
+  @@map("partner_editor_drafts")
 }
 
 model Product {
@@ -220,6 +246,9 @@ model Product {
   draftVariantsSet  Boolean @default(false) @map("draft_variants_set")
   /// null = fee unknown (NOT free)
   deliveryFeeHalalas Int? @map("delivery_fee_halalas")
+  /// Partner editor v2 profile metadata (nullable; legacy rows omit).
+  profileId     String?  @map("profile_id")
+  schemaVersion Int?     @map("schema_version")
   createdAt     DateTime @default(now()) @map("created_at")
 
   @@index([partnerId, active])
@@ -255,6 +284,15 @@ model Service {
   payMode         String   @default("pay_at_venue") @map("pay_mode")
   /// [{ weekday: 0-6 (0=Sunday), startMin, endMin, capacity }]
   availabilityJson Json?   @map("availability_json")
+  /// Partner editor v2 profile metadata (nullable; legacy rows omit).
+  profileId       String?  @map("profile_id")
+  schemaVersion   Int?     @map("schema_version")
+  /// Approved service template answers: { templateId, templateVersion, priceMode, answers }.
+  serviceProfileJson Json? @map("service_profile_json")
+  /// Pending profile for published rows — applied on content approve only.
+  draftServiceProfileJson Json? @map("draft_service_profile_json")
+  /// True when a published-row profile draft is pending (including an explicit clear).
+  draftServiceProfileSet Boolean @default(false) @map("draft_service_profile_set")
   createdAt       DateTime @default(now()) @map("created_at")
 
   @@index([partnerId, active])

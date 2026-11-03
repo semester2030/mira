@@ -187,6 +187,8 @@ class MarketplaceApiDataSource {
       mainOfferKind: CatalogMainOfferKindCodec.tryParse(json['mainOfferKind'] as String?),
       payMode: json['payMode'] as String? ?? 'pay_at_venue',
       availabilityPresent: json['availabilityPresent'] == true,
+      // Approved profile only — ignore any draft_* leakage if present.
+      profile: CatalogServiceProfile.fromServiceProfileJson(json['serviceProfileJson']),
     );
   }
 

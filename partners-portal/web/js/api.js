@@ -145,6 +145,28 @@
       request('POST', `/partners/me/commerce/bookings/${id}/transition`, body),
     track: (payload) =>
       request('POST', '/partners-portal/track', payload),
+    registry: () => request('GET', '/partners-portal/registry'),
+    listEditorDrafts: (query) =>
+      request('GET', `/partners-portal/editor-drafts${query ? '?' + query : ''}`),
+    getEditorDraft: (clientDraftId) =>
+      request('GET', `/partners-portal/editor-drafts/${encodeURIComponent(clientDraftId)}`),
+    putEditorDraft: (clientDraftId, payload) =>
+      request('PUT', `/partners-portal/editor-drafts/${encodeURIComponent(clientDraftId)}`, payload),
+    discardEditorDraft: (clientDraftId) =>
+      request('DELETE', `/partners-portal/editor-drafts/${encodeURIComponent(clientDraftId)}`),
+    materializeEditorDraft: (clientDraftId, payload, idempotencyKey) =>
+      request(
+        'POST',
+        `/partners-portal/editor-drafts/${encodeURIComponent(clientDraftId)}/materialize`,
+        payload,
+        { 'Idempotency-Key': idempotencyKey },
+      ),
+    getServiceProfile: (id) =>
+      request('GET', `/partners-portal/services/${encodeURIComponent(id)}/service-profile`),
+    putServiceProfile: (id, payload) =>
+      request('PUT', `/partners-portal/services/${encodeURIComponent(id)}/service-profile`, payload),
+    importLocalTemplate: (id, payload) =>
+      request('POST', `/partners-portal/services/${encodeURIComponent(id)}/import-local-template`, payload),
     adminList: (adminKey, status) =>
       request(
         'GET',

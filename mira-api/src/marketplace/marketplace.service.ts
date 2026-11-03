@@ -494,6 +494,8 @@ export class MarketplaceService implements OnModuleInit {
       category: service.category,
       concernTags: service.concernTags,
       ...publicServiceCommerce(service),
+      // Approved profile only — never draft_service_profile_json.
+      serviceProfileJson: service.serviceProfileJson ?? null,
       media: media.map((row) => ({ kind: row.kind, url: row.url, sortOrder: row.sortOrder, isPrimary: row.isPrimary, placement: row.placement })),
     };
   }

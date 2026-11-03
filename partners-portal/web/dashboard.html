@@ -95,6 +95,7 @@
   <script src="js/ads.js"></script>
   <script src="js/service-templates.js"></script>
   <script src="js/catalog-options-core.js"></script>
+  <script src="js/editor-v2.js"></script>
   <script src="js/catalog-journey.js"></script>
   <script src="js/commerce-orders.js"></script>
   <script>
@@ -154,6 +155,9 @@
         MiraMotion.announce('اكتمل تحميل لوحة الشريك');
 
         window.sessionPartner = p;
+        if (window.MiraEditorV2) {
+          await MiraEditorV2.bootstrap(p);
+        }
         const serviceButton = document.getElementById('goService');
         const productButton = document.getElementById('goProduct');
         const showServices = developer || p.type === 'clinic' || p.type === 'salon';

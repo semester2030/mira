@@ -54,6 +54,9 @@ type OwnerRow = {
   optionsJson?: Prisma.JsonValue | null;
   variantsJson?: Prisma.JsonValue | null;
   availabilityJson?: Prisma.JsonValue | null;
+  draftServiceProfileJson?: Prisma.JsonValue | null;
+  draftServiceProfileSet?: boolean;
+  serviceProfileJson?: Prisma.JsonValue | null;
 };
 
 @Injectable()
@@ -450,7 +453,19 @@ export class CatalogContentService {
         })
         : await tx.service.updateMany({
           where: { id, reviewStatus: 'in_review', reviewRevision: revision, submittedRevision: revision, contentStatus: { not: 'withdrawn' } },
-          data: publishedBase,
+          data: {
+            ...publishedBase,
+            ...(row.draftServiceProfileSet
+              ? {
+                  serviceProfileJson:
+                    row.draftServiceProfileJson == null
+                      ? Prisma.DbNull
+                      : (row.draftServiceProfileJson as Prisma.InputJsonValue),
+                  draftServiceProfileJson: Prisma.DbNull,
+                  draftServiceProfileSet: false,
+                }
+              : {}),
+          },
         });
       if (changed.count !== 1) throw new ConflictException('المسودة تغيرت بعد النسخة التي عُوينت');
       await tx.catalogReviewLog.create({ data: { ownerKind: typedKind, ownerId: id, actor, action: 'approve', note: note ?? null } });

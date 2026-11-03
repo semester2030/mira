@@ -507,6 +507,45 @@
     function saveServiceTemplateDraft() {
       const key = 'mira-service-template:' + ((item && item.id) || 'new');
       localStorage.setItem(key, JSON.stringify(templateState));
+      if (!(window.MiraEditorV2 && MiraEditorV2.state.enabled) || type === 'brand') return;
+      MiraEditorV2.attachStatus(form);
+      const values = {};
+      if (nameAr.value.trim()) values.nameAr = nameAr.value.trim();
+      if (category.value) values.category = category.value;
+      if (duration && duration.value) {
+        const d = parseInt(duration.value, 10);
+        if (Number.isFinite(d)) values.durationMin = d;
+      }
+      const halalas = typeof riyalsToHalalas === 'function' ? riyalsToHalalas(price.value) : null;
+      if (halalas != null) values.priceHalalas = halalas;
+      if (templateState.templateId) {
+        values.serviceProfile = {
+          templateId: templateState.templateId,
+          templateVersion: 1,
+          priceMode: templateState.priceMode || 'fixed',
+          answers: templateState.answers || {},
+        };
+      }
+      MiraEditorV2.scheduleAutosave(form, () => ({
+        clientDraftId: MiraEditorV2.clientDraftIdFor('service', item && item.id),
+        kind: 'service',
+        profileId: MiraEditorV2.profileIdFor('service', category.value, partnerTypeForTemplates()),
+        targetOwnerId: item && item.id ? item.id : null,
+        values: values,
+      }));
+      if (item && item.id && templateState.templateId) {
+        PartnersApi.getServiceProfile(item.id)
+          .then((row) =>
+            MiraEditorV2.pushServiceProfile(item.id, templateState, row.reviewRevision).then(() => {
+              MiraEditorV2.setStatus(form, 'محفوظ على الخادم', 'saved');
+            }),
+          )
+          .catch((error) => {
+            const msg = String(error && error.message ? error.message : error);
+            if (/تعارض|REVISION|409/.test(msg)) MiraEditorV2.setStatus(form, 'تعارض تعديل', 'conflict');
+            else if (!/EDITOR_V2_DISABLED|غير مفعّل/.test(msg)) MiraEditorV2.setStatus(form, 'تعذر حفظ القالب', 'error');
+          });
+      }
     }
 
     function partnerTypeForTemplates() {
@@ -687,7 +726,11 @@
           text(templatePreview, f.label + ': ' + label);
         });
       });
-      text(templatePreview, 'طريقة السعر: ' + (templateState.priceMode || 'fixed') + ' · الخصائص تُحفظ محليًا مع المسودة.');
+      const v2Note =
+        window.MiraEditorV2 && MiraEditorV2.state.enabled
+          ? ' · الحفظ التلقائي على الخادم مفعّل عند توفر الجلسة.'
+          : ' · الخصائص تُحفظ محليًا مع المسودة حتى يُفعَّل محرر v2.';
+      text(templatePreview, 'طريقة السعر: ' + (templateState.priceMode || 'fixed') + v2Note);
     }
 
     templateSelect.onchange = () => {
@@ -703,6 +746,49 @@
       saveServiceTemplateDraft();
       paintServiceTemplates();
     };
+
+    if (type !== 'brand') {
+      const importBtn = document.createElement('button');
+      importBtn.type = 'button';
+      importBtn.className = 'secondary';
+      importBtn.textContent = 'استيراد القالب المحلي إلى الخادم';
+      importBtn.onclick = async () => {
+        if (!(window.MiraEditorV2 && MiraEditorV2.state.enabled)) {
+          status.textContent = 'محرر v2 غير مفعّل على الخادم. لا استيراد تلقائي.';
+          return;
+        }
+        if (!item || !item.id) {
+          status.textContent = 'احفظي الخدمة أولًا ثم أكّدي الاستيراد. لن يُحذف المحلي قبل النجاح.';
+          return;
+        }
+        const account = localStorage.getItem('mira_partner_email');
+        const ownerHint = localStorage.getItem('mira-service-template-owner:' + item.id);
+        if (ownerHint && account && ownerHint !== account) {
+          status.textContent = 'بيانات محلية لحساب آخر — لن يُستورد تلقائيًا.';
+          return;
+        }
+        try {
+          const outcome = await MiraEditorV2.importLocalTemplateInteractive(item.id, templateState);
+          if (outcome.cancelled) {
+            status.textContent = 'أُلغي الاستيراد.';
+            return;
+          }
+          const receipt = outcome.result && outcome.result.importReceipt;
+          status.textContent =
+            'تم الاستيراد. الإصدار ' +
+            (outcome.result && outcome.result.reviewRevision) +
+            (receipt && receipt.unmappedAnswerKeys && receipt.unmappedAnswerKeys.length
+              ? ' · حقول لم تُحوَّل: ' + receipt.unmappedAnswerKeys.join(', ')
+              : '');
+          try {
+            localStorage.setItem('mira-service-template-owner:' + item.id, account || '');
+          } catch (error) {}
+        } catch (error) {
+          status.textContent = 'فشل الاستيراد: ' + (error.message || error);
+        }
+      };
+      templateSection.appendChild(importBtn);
+    }
 
     const previousCategoryOnChange = category.onchange;
     category.onchange = function () {
@@ -2056,6 +2142,16 @@
         }
         item = Object.assign({}, item || {}, saved);
         staged[form.id].ownerId = item.id;
+        if (type !== 'brand' && window.MiraEditorV2 && MiraEditorV2.state.enabled && templateState.templateId && item.id) {
+          try {
+            const row = await PartnersApi.getServiceProfile(item.id);
+            await MiraEditorV2.pushServiceProfile(item.id, templateState, row.reviewRevision);
+          } catch (profileError) {
+            status.textContent =
+              'حُفظت الخدمة. تعذر حفظ قالب الخدمة على الخادم: ' +
+              (profileError && profileError.message ? profileError.message : profileError);
+          }
+        }
         save.classList.remove('is-busy');
         save.classList.add('is-success');
         save.textContent = developerAccount ? 'جارٍ الرفع' : 'تم الحفظ';

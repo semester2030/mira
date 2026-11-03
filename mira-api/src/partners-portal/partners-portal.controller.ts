@@ -3,10 +3,12 @@ import {
   Controller,
   Delete,
   Get,
+  Headers,
   Inject,
   Param,
   Patch,
   Post,
+  Put,
   Query,
   Req,
   StreamableFile,
@@ -22,7 +24,10 @@ import { ApplyPartnerDto } from './dto/apply-partner.dto';
 import { UpdateProductDto, UpdateServiceDto, UpsertProductDto, UpsertServiceDto } from './dto/catalog.dto';
 import { TrackPartnerEventDto } from './dto/track-event.dto';
 import { CatalogContentService } from '../marketplace/catalog-content.service';
+import { EditorDraftsService } from './editor-drafts/editor-drafts.service';
+import { ServiceProfileService } from './editor-drafts/service-profile.service';
 import { PartnersPortalService } from './partners-portal.service';
+import { RegistryService } from './registry/registry.service';
 
 class PartnerLoginDto {
   @IsEmail()
@@ -56,7 +61,107 @@ export class PartnersPortalController {
   constructor(
     @Inject(PartnersPortalService) private readonly portal: PartnersPortalService,
     @Inject(CatalogContentService) private readonly content: CatalogContentService,
+    @Inject(RegistryService) private readonly registry: RegistryService,
+    @Inject(EditorDraftsService) private readonly drafts: EditorDraftsService,
+    @Inject(ServiceProfileService) private readonly serviceProfiles: ServiceProfileService,
   ) {}
+
+  @Get('registry')
+  @UseGuards(PartnerTokenGuard)
+  getRegistry() {
+    return this.registry.metaPayload();
+  }
+
+  @Get('editor-drafts')
+  @UseGuards(PartnerTokenGuard)
+  listEditorDrafts(
+    @Req() req: PartnerRequest,
+    @Query('cursor') cursor?: string,
+    @Query('limit') limit?: string,
+  ) {
+    return this.drafts.list(req.partnerUser.partnerId, cursor, limit ? Number(limit) : 20);
+  }
+
+  @Get('editor-drafts/:clientDraftId')
+  @UseGuards(PartnerTokenGuard)
+  getEditorDraft(@Req() req: PartnerRequest, @Param('clientDraftId') clientDraftId: string) {
+    return this.drafts.get(req.partnerUser.partnerId, clientDraftId);
+  }
+
+  @Put('editor-drafts/:clientDraftId')
+  @UseGuards(PartnerTokenGuard)
+  putEditorDraft(
+    @Req() req: PartnerRequest,
+    @Param('clientDraftId') clientDraftId: string,
+    @Body()
+    body: {
+      expectedRevision: number | null;
+      kind: 'product' | 'service';
+      profileId: string;
+      schemaVersion: number;
+      values: Record<string, unknown>;
+      targetOwnerId?: string | null;
+    },
+  ) {
+    return this.drafts.put(req.partnerUser.partnerId, clientDraftId, body);
+  }
+
+  @Delete('editor-drafts/:clientDraftId')
+  @UseGuards(PartnerTokenGuard)
+  discardEditorDraft(@Req() req: PartnerRequest, @Param('clientDraftId') clientDraftId: string) {
+    return this.drafts.discard(req.partnerUser.partnerId, clientDraftId);
+  }
+
+  @Post('editor-drafts/:clientDraftId/materialize')
+  @UseGuards(PartnerTokenGuard)
+  materializeEditorDraft(
+    @Req() req: PartnerRequest,
+    @Param('clientDraftId') clientDraftId: string,
+    @Headers('idempotency-key') idempotencyKey: string | undefined,
+    @Body() body: { expectedRevision: number; submitReview?: boolean },
+  ) {
+    return this.drafts.materialize(req.partnerUser.partnerId, clientDraftId, body, idempotencyKey);
+  }
+
+  @Get('services/:id/service-profile')
+  @UseGuards(PartnerTokenGuard)
+  getServiceProfile(@Req() req: PartnerRequest, @Param('id') id: string) {
+    return this.serviceProfiles.getForPartner(req.partnerUser.partnerId, id);
+  }
+
+  @Put('services/:id/service-profile')
+  @UseGuards(PartnerTokenGuard)
+  putServiceProfile(
+    @Req() req: PartnerRequest,
+    @Param('id') id: string,
+    @Body()
+    body: {
+      expectedRevision: number;
+      clear?: boolean;
+      templateId?: string;
+      templateVersion?: number;
+      priceMode?: string;
+      answers?: Record<string, unknown>;
+    },
+  ) {
+    return this.serviceProfiles.put(req.partnerUser.partnerId, id, body);
+  }
+
+  @Post('services/:id/import-local-template')
+  @UseGuards(PartnerTokenGuard)
+  importLocalTemplate(
+    @Req() req: PartnerRequest,
+    @Param('id') id: string,
+    @Body()
+    body: {
+      confirm?: boolean;
+      expectedRevision: number;
+      force?: boolean;
+      templateState: unknown;
+    },
+  ) {
+    return this.serviceProfiles.importLocal(req.partnerUser.partnerId, id, body);
+  }
 
   @Post('apply')
   apply(@Body() dto: ApplyPartnerDto) {
