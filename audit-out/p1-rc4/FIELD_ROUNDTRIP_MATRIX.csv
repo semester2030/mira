@@ -5,3 +5,4 @@ optionsJson,option groups,values.optionsJson,nested schema,Product.optionsJson,m
 variantsJson,manual only,values.variantsJson,refs must resolve,Product.variantsJson,materialize,portal,rc4-http broken-ref,PASS_LOCAL
 stockQty,input,values.stockQty,int|null,Product.stockQty,second session,portal,browser-brand-second-session,PASS_LOCAL
 serviceProfile,template radios,values.serviceProfile,template rules,service profile cols,second session+public,Flutter unit,browser-salon+flutter,PASS_LOCAL
+revision-conflict,conflict panel keep/reload,PUT expectedRevision stale,409 DRAFT_REVISION_CONFLICT,no silent bump,local kept,status conflict,browser-dual-session-conflict,PASS_LOCAL

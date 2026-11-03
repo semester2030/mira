@@ -1,7 +1,8 @@
 {
   "verdict": "P1_LOCAL_ACCEPTED_READY_FOR_NEXT_PHASE",
   "db": "mira_p1_rc4_test",
-  "generated_utc": "2026-11-03T22:38:11Z",
+  "generated_utc": "2026-11-03T22:54:08Z",
+  "codeFinalCommit": "7d5faa03e7be6a8263daab3d3efa4be77040e862",
   "results": [
     {
       "name": "registry-sync",
@@ -28,7 +29,8 @@
       "exit": 0,
       "kind": "http-integration",
       "log": "logs/rc4-editor-v1-regression.txt",
-      "status": "PASS_LOCAL"
+      "status": "PASS_LOCAL",
+      "ended_utc": "2026-11-03T22:54:08Z"
     },
     {
       "name": "editor-v2-rc4-http",
@@ -37,7 +39,8 @@
       "exit": 0,
       "kind": "http-integration",
       "log": "logs/rc4-http-integration.txt",
-      "status": "PASS_LOCAL"
+      "status": "PASS_LOCAL",
+      "ended_utc": "2026-11-03T22:54:08Z"
     },
     {
       "name": "browser-e2e-brand-salon",
@@ -47,7 +50,10 @@
       "kind": "playwright-buttons",
       "log": "logs/rc4-browser-e2e.txt",
       "status": "PASS_LOCAL",
-      "ended_utc": "2026-11-03T22:37:31.737Z"
+      "ended_utc": "2026-11-03T22:53:34.022Z",
+      "includes": [
+        "browser-dual-session-conflict"
+      ]
     },
     {
       "name": "options-registry-contract",
@@ -55,7 +61,6 @@
       "cwd": "partners-portal/web/js",
       "exit": 0,
       "kind": "unit",
-      "log": "logs/rc4-options-contract.txt",
       "status": "PASS_LOCAL"
     },
     {
@@ -64,12 +69,11 @@
       "cwd": "partners-portal/web/js",
       "exit": 0,
       "kind": "unit",
-      "log": "logs/rc4-account-isolation.txt",
       "status": "PASS_LOCAL"
     },
     {
       "name": "flutter-service-profile",
-      "cmd": "flutter test test/features/marketplace/service_profile_json_parse_test.dart test/features/marketplace/catalog_service_template_test.dart",
+      "cmd": "flutter test ...",
       "cwd": ".",
       "exit": 0,
       "kind": "unit",
@@ -88,6 +92,5 @@
       "name": "production",
       "status": "NOT_RUN"
     }
-  ],
-  "codeFinalCommit": "4e896d3170658f27de9cf0210e029fb4880c67d6"
+  ]
 }

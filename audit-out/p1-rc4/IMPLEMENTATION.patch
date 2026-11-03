@@ -21,10 +21,10 @@ index eea567b..77098af 100644
      "test:vision-schema": "npm run build && node dist/vision/schema/fashion-vision-document.schema-tests.js",
 diff --git a/mira-api/scripts/p1-rc4-browser-e2e.mjs b/mira-api/scripts/p1-rc4-browser-e2e.mjs
 new file mode 100644
-index 0000000..1985f73
+index 0000000..80f9d1a
 --- /dev/null
 +++ b/mira-api/scripts/p1-rc4-browser-e2e.mjs
-@@ -0,0 +1,405 @@
+@@ -0,0 +1,485 @@
 +/**
 + * P1 RC4 browser journey — brand + salon, real login, form fields + buttons (not API via evaluate).
 + */
@@ -175,6 +175,86 @@ index 0000000..1985f73
 +    }, { timeout: 20000 });
 +    pass('browser-brand-options-saved');
 +    await page.screenshot({ path: join(shotsDir, 'rc4-desktop-product-options.png'), fullPage: true });
++
++    // Concurrent revision conflict BEFORE second login (re-login invalidates prior token).
++    // Inject second writer via API with same auth; prove save button + conflict panel on A.
++    {
++      const draftMeta = await page.evaluate(() => {
++        const form = document.getElementById('catalogForm');
++        const ctx = window.MiraEditorV2 && MiraEditorV2.getEditContext(form.id);
++        const cid =
++          (ctx && ctx.clientDraftId) ||
++          Object.keys((MiraEditorV2.state && MiraEditorV2.state.draftRevisionByClientId) || {})[0];
++        return { clientDraftId: cid, revision: cid ? MiraEditorV2.state.draftRevisionByClientId[cid] : null };
++      });
++      if (!draftMeta.clientDraftId) {
++        fail('browser-dual-session-conflict', 'no clientDraftId on session A');
++      } else {
++        const writer = await page.evaluate(async (cid) => {
++          const draft = await PartnersApi.getEditorDraft(cid);
++          const saved = await PartnersApi.putEditorDraft(cid, {
++            expectedRevision: draft.revision,
++            kind: draft.kind,
++            profileId: draft.profileId,
++            schemaVersion: draft.schemaVersion || 2,
++            values: Object.assign({}, draft.values || {}, { nameAr: 'منتج RC4 جلسة ب' }),
++            targetOwnerId: draft.targetOwnerId || null,
++          });
++          return { revision: saved.revision, prev: draft.revision };
++        }, draftMeta.clientDraftId);
++        await page.evaluate(({ cid, rev }) => {
++          MiraEditorV2.state.draftRevisionByClientId[cid] = rev;
++          const ctx = MiraEditorV2.getEditContext('catalogForm');
++          if (ctx) ctx.revision = rev;
++        }, { cid: draftMeta.clientDraftId, rev: draftMeta.revision });
++        const aRevBefore = await page.evaluate((cid) => MiraEditorV2.state.draftRevisionByClientId[cid], draftMeta.clientDraftId);
++        await page.fill('#catalogForm [name="nameAr"]', 'منتج RC4 جلسة أ تعارض');
++        await page.locator('#catalogForm button[type="submit"]').first().click();
++        await page.waitForSelector('#catalogForm [data-editor-v2-conflict-panel]', { timeout: 15000 });
++        const aState = await page.evaluate((cid) => {
++          const form = document.getElementById('catalogForm');
++          const status = form.querySelector('[data-editor-v2-status]');
++          return {
++            name: form.querySelector('[name="nameAr"]')?.value || '',
++            kind: status ? status.dataset.kind : '',
++            hasPanel: !!form.querySelector('[data-editor-v2-conflict-panel]'),
++            revision: MiraEditorV2.state.draftRevisionByClientId[cid],
++            lastReason: MiraEditorV2.state.lastFlushResult[form.id] && MiraEditorV2.state.lastFlushResult[form.id].reason,
++          };
++        }, draftMeta.clientDraftId);
++        if (aState.hasPanel && aState.name.includes('جلسة أ') && aState.revision === aRevBefore && aState.kind === 'conflict') {
++          await page.locator('#catalogForm [data-conflict-keep]').click();
++          pass('browser-dual-session-conflict', JSON.stringify({ aRevBefore, writer, name: aState.name }));
++        } else {
++          fail('browser-dual-session-conflict', JSON.stringify({ aRevBefore, writer, aState }));
++        }
++        // Explicit reload decision then restore canonical name for the rest of the journey.
++        await page.evaluate(async (cid) => {
++          const draft = await PartnersApi.getEditorDraft(cid);
++          MiraEditorV2.state.draftRevisionByClientId[cid] = draft.revision;
++          const ctx = MiraEditorV2.getEditContext('catalogForm');
++          if (ctx) ctx.revision = draft.revision;
++          await PartnersApi.putEditorDraft(cid, {
++            expectedRevision: draft.revision,
++            kind: draft.kind,
++            profileId: draft.profileId,
++            schemaVersion: draft.schemaVersion || 2,
++            values: Object.assign({}, draft.values || {}, {
++              nameAr: 'منتج RC4 متصفح',
++              nameEn: 'RC4 Browser Product',
++              stockQty: 5,
++            }),
++            targetOwnerId: draft.targetOwnerId || null,
++          }).then((saved) => {
++            MiraEditorV2.state.draftRevisionByClientId[cid] = saved.revision;
++            if (ctx) ctx.revision = saved.revision;
++          });
++        }, draftMeta.clientDraftId);
++        await page.fill('#catalogForm [name="nameAr"]', 'منتج RC4 متصفح');
++        const panel = page.locator('#catalogForm [data-editor-v2-conflict-panel]');
++        if ((await panel.count()) > 0) await panel.evaluate((el) => el.remove()).catch(() => {});
++      }
++    }
 +
 +    // Second session: new context, re-login, open draft from list
 +    const page2 = await (await browser.newContext({ viewport: { width: 1280, height: 900 } })).newPage();
@@ -1131,7 +1211,7 @@ index 36c268f..b5bd0f7 100644
      const t = def.type;
      if (t === 'string' || t === 'text') {
 diff --git a/partners-portal/web/js/catalog-journey.js b/partners-portal/web/js/catalog-journey.js
-index dae441e..f29b936 100644
+index dae441e..33509ed 100644
 --- a/partners-portal/web/js/catalog-journey.js
 +++ b/partners-portal/web/js/catalog-journey.js
 @@ -340,7 +340,8 @@
@@ -1492,7 +1572,7 @@ index dae441e..f29b936 100644
            ],
            traits: ['الخامة', 'العناية', 'دليل المقاسات'],
          };
-@@ -2283,6 +2443,32 @@
+@@ -2283,6 +2443,37 @@
  
      const persistListing = async () => {
        if (form.dataset.saving === '1') return false;
@@ -1513,6 +1593,11 @@ index dae441e..f29b936 100644
 +          scheduleEditorDraftAutosave();
 +          const saved = await MiraEditorV2.flushUntilSettled(form);
 +          if (!saved || !saved.ok) {
++            if (saved && (saved.conflict || saved.reason === 'revision-conflict')) {
++              status.textContent =
++                'تعارض تعديل مع جلسة أخرى. تعديلاتك ما زالت في النموذج — اختاري إعادة التحميل أو الإبقاء (لا تحديث تلقائي لرقم الإصدار).';
++              return false;
++            }
 +            status.textContent = 'تعذر حفظ المسودة الخادمية' + (saved && saved.reason ? ' (' + saved.reason + ')' : '') + '.';
 +            return false;
 +          }
@@ -1525,7 +1610,7 @@ index dae441e..f29b936 100644
        ['nameAr', 'priceSar', 'category', 'externalUrl', 'durationMin'].forEach((name) => setFieldError(form, name, ''));
        let blocked = false;
        if (nameAr.value.trim().length < 2) {
-@@ -2390,16 +2576,7 @@
+@@ -2390,16 +2581,7 @@
          }
          item = Object.assign({}, item || {}, saved);
          staged[form.id].ownerId = item.id;
@@ -1617,10 +1702,88 @@ index 024967e..6aeac91 100644
    };
  })(typeof globalThis !== 'undefined' ? globalThis : this);
 diff --git a/partners-portal/web/js/editor-v2.js b/partners-portal/web/js/editor-v2.js
-index 95fc21f..e2d3770 100644
+index 95fc21f..3b732ed 100644
 --- a/partners-portal/web/js/editor-v2.js
 +++ b/partners-portal/web/js/editor-v2.js
-@@ -80,6 +80,21 @@
+@@ -69,6 +69,77 @@
+     el.dataset.kind = kind || '';
+   }
+ 
++  /** Explicit revision-conflict decision UI — never auto-bump expectedRevision. */
++  function showRevisionConflictUi(form, clientDraftId, error) {
++    if (!form) return;
++    setStatus(form, 'تعارض تعديل — تعديلاتك ما زالت في النموذج. اختاري إعادة التحميل أو الإبقاء.', 'conflict');
++    let panel = form.querySelector('[data-editor-v2-conflict-panel]');
++    if (!panel) {
++      panel = document.createElement('div');
++      panel.setAttribute('data-editor-v2-conflict-panel', '1');
++      panel.setAttribute('role', 'alert');
++      panel.style.cssText = 'margin:0.75rem 0;padding:0.75rem;border:1px solid #b45309;background:#fffbeb;';
++      const note = document.createElement('p');
++      note.setAttribute('data-conflict-note', '1');
++      note.textContent = 'جلسة أخرى حفظت نسخة أحدث. لن نكتب فوقها بتحديث رقم الإصدار تلقائيًا.';
++      panel.appendChild(note);
++      const row = document.createElement('div');
++      row.style.cssText = 'display:flex;gap:0.5rem;flex-wrap:wrap;margin-top:0.5rem;';
++      const reloadBtn = document.createElement('button');
++      reloadBtn.type = 'button';
++      reloadBtn.setAttribute('data-conflict-reload', '1');
++      reloadBtn.textContent = 'إعادة التحميل من الخادم';
++      const keepBtn = document.createElement('button');
++      keepBtn.type = 'button';
++      keepBtn.setAttribute('data-conflict-keep', '1');
++      keepBtn.textContent = 'الإبقاء على تعديلاتي';
++      row.appendChild(reloadBtn);
++      row.appendChild(keepBtn);
++      panel.appendChild(row);
++      form.insertBefore(panel, form.firstChild);
++      reloadBtn.addEventListener('click', async () => {
++        try {
++          const draft = await openDraft(clientDraftId);
++          const values = (draft && draft.values) || {};
++          Object.keys(values).forEach((key) => {
++            const field = form.elements.namedItem(key);
++            if (!field || field instanceof RadioNodeList) return;
++            if ('value' in field) field.value = values[key] == null ? '' : String(values[key]);
++          });
++          if (values.nameAr && form.elements.namedItem('nameAr')) {
++            form.elements.namedItem('nameAr').value = String(values.nameAr);
++          }
++          panel.remove();
++          setStatus(form, 'أُعيد التحميل من الخادم · rev ' + draft.revision + ' — عدّلي ثم احفظي', 'saved');
++          state.lastFlushResult[form.id || 'default'] = {
++            ok: false,
++            reason: 'conflict-reloaded',
++            conflict: true,
++            reloaded: true,
++            revision: draft.revision,
++            clientDraftId: clientDraftId,
++          };
++        } catch (e) {
++          setStatus(form, 'تعذر إعادة التحميل: ' + (e && e.message ? e.message : e), 'error');
++        }
++      });
++      keepBtn.addEventListener('click', () => {
++        panel.remove();
++        setStatus(form, 'أُبقيت تعديلاتك محليًا — احفظي بعد إعادة التحميل أو ادمجي يدويًا', 'conflict');
++        state.lastFlushResult[form.id || 'default'] = {
++          ok: false,
++          reason: 'conflict-kept-local',
++          conflict: true,
++          keptLocal: true,
++          localRevision: state.draftRevisionByClientId[clientDraftId],
++          clientDraftId: clientDraftId,
++        };
++      });
++    }
++    panel.dataset.clientDraftId = clientDraftId || '';
++    panel.dataset.errorCode = (error && error.code) || 'DRAFT_REVISION_CONFLICT';
++  }
++
+   function cancelAllPending(reason) {
+     Object.keys(state.timers).forEach((k) => clearTimeout(state.timers[k]));
+     state.timers = Object.create(null);
+@@ -80,6 +151,21 @@
      state.inflight = Object.create(null);
    }
  
@@ -1642,7 +1805,7 @@ index 95fc21f..e2d3770 100644
    function assertSameSession(snapshot) {
      if (!snapshot) return false;
      if (snapshot.sessionEpoch !== state.sessionEpoch) return false;
-@@ -351,7 +366,9 @@
+@@ -351,7 +437,9 @@
      }
      const built = pending.builder();
      if (!built || !built.clientDraftId) {
@@ -1653,7 +1816,39 @@ index 95fc21f..e2d3770 100644
        return state.lastFlushResult[formId];
      }
      built._session = pending.snapshot;
-@@ -428,30 +445,34 @@
+@@ -407,8 +495,29 @@
+         return state.lastFlushResult[formId];
+       }
+       const msg = String(error && error.message ? error.message : error);
+-      if (/تعارض|REVISION|409/.test(msg)) setStatus(form, 'تعارض تعديل — احفظي محليًا ثم أعيدي التحميل بقرار صريح', 'conflict');
+-      else setStatus(form, 'تعذر الحفظ — التعديلات ما زالت محليًا', 'error');
++      const code = (error && error.code) || (error && error.body && error.body.code) || '';
++      const status = error && error.status;
++      const isRevisionConflict =
++        code === 'DRAFT_REVISION_CONFLICT' ||
++        code === 'SERVICE_PROFILE_REVISION_CONFLICT' ||
++        status === 409 ||
++        /تعارض|REVISION_CONFLICT/.test(msg + ' ' + code);
++      if (isRevisionConflict) {
++        // Do NOT bump expectedRevision to the server tip — that would silently overwrite.
++        showRevisionConflictUi(form, built.clientDraftId, error);
++        state.lastFlushResult[formId] = {
++          ok: false,
++          error: error,
++          reason: 'revision-conflict',
++          conflict: true,
++          formId: formId,
++          seq: mySeq,
++          clientDraftId: built.clientDraftId,
++          localRevision: state.draftRevisionByClientId[built.clientDraftId],
++        };
++        return state.lastFlushResult[formId];
++      }
++      setStatus(form, 'تعذر الحفظ — التعديلات ما زالت محليًا', 'error');
+       state.lastFlushResult[formId] = {
+         ok: false,
+         error: error,
+@@ -428,30 +537,34 @@
      }
    }
  
@@ -1700,7 +1895,7 @@ index 95fc21f..e2d3770 100644
    }
  
    function attachStatus(form) {
-@@ -601,6 +622,7 @@
+@@ -601,6 +714,7 @@
      materialize: materialize,
      setStatus: setStatus,
      cancelAllPending: cancelAllPending,
