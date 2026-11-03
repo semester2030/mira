@@ -1,9 +1,11 @@
 {
-  "asOf": "2026-11-03T13:58:00Z",
+  "asOf": "2026-11-03T15:55:00Z",
   "closed": false,
   "reviewedCommit": "fc762b2dde31f4daa62037323e85c31adf371433",
-  "originMain": "9f8f61c716cdf6ccf57fda4ed61098f551bbfe58",
-  "liveDeploy": "dep-dbjbq0ivcj2c73erc29g",
+  "originMain": "0004bb5",
+  "streamLifetimeFixCommit": "0004bb5",
+  "priorStreamingCommitRevokedPass": "6471cf2/9f8f61c",
+  "liveDeploy": "pending-after-0004bb5",
   "attachments": {
     "catalog-media-recovery.patch": "SANDBOX_UNREACHABLE; reconstructed at docs/catalog-media-recovery.patch; already on main",
     "audit-catalog-media.cjs": "PRESENT mira-api/scripts/audit-catalog-media.cjs"
@@ -27,10 +29,18 @@
     "publiclyPlayableAfterKeys": 1,
     "presentButOwnerWithdrawn": 9
   },
-  "blocker": "MIRA_MEDIA_S3_ACCESS_KEY_ID + MIRA_MEDIA_S3_SECRET_ACCESS_KEY missing on mira-api",
+  "blocker": "public catalog objects still missing from R2 (reupload independent)",
   "streamingFix": {
     "status": "LIVE_ON_PRODUCTION",
     "commit": "6471cf2",
     "tests": "PASS"
+  },
+  "connectionProof": {
+    "mediaId": "38f83110-07ae-450e-9299-04ed12bf61f1",
+    "status": 206,
+    "receivedBytes": 2154752,
+    "expectedBytes": 2154752,
+    "match": true,
+    "note": "Keys applied + deploy; incomplete gone for this object"
   }
 }

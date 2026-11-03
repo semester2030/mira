@@ -1,10 +1,12 @@
 # MIRA catalog media incident — 2026-11-03 (updated)
 
-## Verdict (not closed)
+## Verdict (connection proven; incident not fully closed)
 
-Public catalog media still fails. Streaming Range on `9f8f61c` was **incomplete**: `open()` destroyed the S3 client before the Body finished → truncated reads (`206` + partial bytes + `ECONNRESET`). That premature **PASS** is **revoked**.
+**Render ↔ R2 connection is proven** after keys + deploy of `0004bb5`:
+- `38f83110-…` → **206**, `Content-Range: bytes 0-1023/2154752`, full object **2 154 752/2 154 752** bytes, `ftyp` present.
+- `catalog-media-provider-incomplete` cleared for live process.
 
-`38f83110-…` still returns failure until keys are applied **and** this client-lifetime fix is live. Incomplete credentials currently surface as storage misconfig (now **503**, not «غير منشور»).
+Public Discover feed items that lack R2 objects remain **404** (re-upload task, separate). Streaming client-lifetime fix on `0004bb5` remains required (prior premature PASS revoked).
 
 ## Fixes in this follow-up (on top of Range — not a re-apply)
 
