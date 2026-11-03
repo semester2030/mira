@@ -1,0 +1,17 @@
+field,ui,draft_path,validation,product_or_service_storage,retrieve,display,status
+nameAr,input[name=nameAr],values.nameAr,string draftOptional,Product/Service.nameAr|draft*,GET draft / item,portal+app,PASS_LOCAL
+nameEn,input[name=nameEn],values.nameEn,string optional,Product.nameEn,GET draft,portal,PASS_LOCAL
+descriptionAr,textarea[name=descriptionAr],values.descriptionAr,string optional,descriptionAr,GET draft,portal,PASS_LOCAL
+category,select[name=category],values.category,enum,category,GET draft,portal,PASS_LOCAL
+priceHalalas,input[name=priceSar],values.priceHalalas,int optional draft,priceHalalas,GET draft,portal,PASS_LOCAL
+durationMin,input[name=durationMin],values.durationMin,int optional,Service.durationMin,GET draft,portal,PASS_LOCAL
+colors,option chips color,values.colors,array enum,optionsJson[color],materialize→optionsJson,portal,PASS_LOCAL
+sizes,option chips size,values.sizes,array enum,optionsJson[size],materialize→optionsJson,portal,PASS_LOCAL
+stockQty,input[name=stockQty],values.stockQty,int|null,Product.stockQty,GET draft,portal,PASS_LOCAL
+purchaseMode,checkbox internalCod,values.purchaseMode,enum,Product.purchaseMode,GET draft,portal,PASS_LOCAL
+deliveryFeeHalalas,input[name=deliveryFeeSar],values.deliveryFeeHalalas,int|null,Product.deliveryFeeHalalas,GET draft,portal,PASS_LOCAL
+optionsJson,structured UI,values.optionsJson,json array,Product.optionsJson,materialize,portal,PASS_LOCAL
+variantsJson,manual variants only,values.variantsJson,json|omit — no auto matrix,Product.variantsJson,materialize,portal,PASS_LOCAL
+serviceProfile,template UI,values.serviceProfile,template schema,Service.service_profile_*,materialize+Flutter aliases,Flutter unit PASS_LOCAL
+material,registry field,values.material,accepted in registry,NOT mapped to Product column — deferred,keep in draft; block materialize if required later,DOCUMENTED_DEFERRED
+tags/concernTags,input concernTags,values.concernTags,optional,Product.concernTags when mapped by legacy path,partial,DOCUMENTED

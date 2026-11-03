@@ -69,7 +69,7 @@ function assertLocalTestDb(url: string) {
   }
   if (!db || db === '') throw new Error('REFUSE: database name missing');
   // Explicit allowlist for local test DBs — not production names.
-  if (!/^(mira_db|mira_p1_test|mira_p1_rc2_test)$/.test(db)) {
+  if (!/^(mira_db|mira_p1_test|mira_p1_rc2_test|mira_p1_rc3_test)$/.test(db)) {
     throw new Error(`REFUSE: unexpected database name ${db}`);
   }
   return { host, db };

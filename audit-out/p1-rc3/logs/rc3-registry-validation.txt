@@ -1,0 +1,9 @@
+npm warn Unknown env config "devdir". This will stop working in the next major version of npm.
+
+> mira-api@1.0.0 test:registry-validation
+> tsx src/partners-portal/registry/registry.validation.schema-tests.ts
+
+{
+  "ok": true,
+  "templates": 9
+}

@@ -1,11 +1,12 @@
 /**
- * Partner editor v2 — server drafts autosave with partner/session isolation (P1 RC2).
+ * Partner editor v2 — server drafts with auth-generation isolation (P1 RC3).
  * Server flag owns activation; query params cannot enable a disabled flag.
  */
 (function () {
   const PARTNER_ID_KEY = 'mira_partner_id';
   const ACCOUNT_KEY = 'mira_partner_email';
   const EPOCH_KEY = 'mira_editor_v2_session_epoch';
+  const REGISTRY_URL = 'js/field-registry.v2.json';
 
   const state = {
     enabled: false,
@@ -16,13 +17,18 @@
     partnerId: null,
     accountEmail: null,
     sessionEpoch: 0,
+    authGeneration: 0,
+    tokenFingerprint: null,
     registryMismatch: false,
+    registryReady: false,
     draftRevisionByClientId: Object.create(null),
+    editContexts: Object.create(null),
     timers: Object.create(null),
     inflight: Object.create(null),
     pending: Object.create(null),
     seq: Object.create(null),
     abortByForm: Object.create(null),
+    lastFlushResult: Object.create(null),
   };
 
   function readEpoch() {
@@ -40,6 +46,16 @@
 
   function currentPartnerId() {
     return localStorage.getItem(PARTNER_ID_KEY) || (window.sessionPartner && window.sessionPartner.id) || null;
+  }
+
+  function currentAuthSnapshot() {
+    const gen = window.PartnersApi && typeof PartnersApi.authGeneration === 'function'
+      ? PartnersApi.authGeneration()
+      : 0;
+    const fp = window.PartnersApi && typeof PartnersApi.authTokenFingerprint === 'function'
+      ? PartnersApi.authTokenFingerprint()
+      : null;
+    return { authGeneration: gen, tokenFingerprint: fp };
   }
 
   function statusEl(form) {
@@ -69,10 +85,69 @@
     if (snapshot.sessionEpoch !== state.sessionEpoch) return false;
     if (snapshot.partnerId !== state.partnerId) return false;
     if (currentPartnerId() !== snapshot.partnerId) return false;
+    const auth = currentAuthSnapshot();
+    if (snapshot.authGeneration !== auth.authGeneration) return false;
+    if (snapshot.tokenFingerprint !== auth.tokenFingerprint) return false;
+    if (!auth.tokenFingerprint) return false;
     return true;
   }
 
-  function clientDraftIdFor(kind, itemId) {
+  function captureSessionSnapshot() {
+    const auth = currentAuthSnapshot();
+    return {
+      partnerId: state.partnerId,
+      sessionEpoch: state.sessionEpoch,
+      authGeneration: auth.authGeneration,
+      tokenFingerprint: auth.tokenFingerprint,
+    };
+  }
+
+  function hexSha256(buffer) {
+    return Array.from(new Uint8Array(buffer))
+      .map((b) => b.toString(16).padStart(2, '0'))
+      .join('');
+  }
+
+  async function computeLocalRegistryHash() {
+    if (window.MiraFieldRegistryLocalHash) return window.MiraFieldRegistryLocalHash;
+    const res = await fetch(REGISTRY_URL, { cache: 'no-store' });
+    if (!res.ok) throw new Error('تعذر تحميل سجل الحقول المحلي');
+    const buf = await res.arrayBuffer();
+    if (!window.crypto || !crypto.subtle) throw new Error('تعذر حساب بصمة السجل');
+    const digest = await crypto.subtle.digest('SHA-256', buf);
+    const hash = hexSha256(digest);
+    window.MiraFieldRegistryLocalHash = hash;
+    return hash;
+  }
+
+  function bindEditContext(formId, ctx) {
+    if (!formId || !ctx || !ctx.clientDraftId) return null;
+    state.editContexts[formId] = {
+      clientDraftId: ctx.clientDraftId,
+      kind: ctx.kind,
+      profileId: ctx.profileId || null,
+      schemaVersion: ctx.schemaVersion || state.schemaVersion,
+      revision: ctx.revision == null ? null : ctx.revision,
+      targetOwnerId: ctx.targetOwnerId || null,
+      status: ctx.status || 'draft',
+      submitReviewStatus: ctx.submitReviewStatus || null,
+      values: ctx.values || {},
+    };
+    if (ctx.revision != null) state.draftRevisionByClientId[ctx.clientDraftId] = ctx.revision;
+    return state.editContexts[formId];
+  }
+
+  function getEditContext(formId) {
+    return state.editContexts[formId || 'default'] || null;
+  }
+
+  function clearEditContext(formId) {
+    delete state.editContexts[formId || 'default'];
+  }
+
+  function clientDraftIdFor(kind, itemId, formId) {
+    const ctx = formId ? getEditContext(formId) : null;
+    if (ctx && ctx.clientDraftId && (!ctx.kind || ctx.kind === kind)) return ctx.clientDraftId;
     if (itemId) return 'owner:' + kind + ':' + itemId;
     const scope = state.partnerId || 'anon';
     const key = 'mira_editor_v2_new_' + scope + '_' + kind;
@@ -84,12 +159,26 @@
     return id;
   }
 
+  function allocateNewDraftId(kind) {
+    const scope = state.partnerId || 'anon';
+    const key = 'mira_editor_v2_new_' + scope + '_' + kind;
+    const id = 'new:' + scope + ':' + kind + ':' + (crypto.randomUUID ? crypto.randomUUID() : String(Date.now()) + Math.random());
+    sessionStorage.setItem(key, id);
+    return id;
+  }
+
   function clearNewDraftKey(kind) {
     const scope = state.partnerId || 'anon';
     sessionStorage.removeItem('mira_editor_v2_new_' + scope + '_' + kind);
   }
 
-  function profileIdFor(kind, category, partnerType) {
+  function scopedTemplateKey(ownerOrNew) {
+    const scope = state.partnerId || 'anon';
+    return 'mira-service-template:' + scope + ':' + (ownerOrNew || 'new');
+  }
+
+  function profileIdFor(kind, category, partnerType, preferred) {
+    if (preferred) return preferred;
     if (kind === 'product') {
       const map = {
         clothes: 'product.clothes',
@@ -114,134 +203,255 @@
     return partnerType === 'clinic' ? 'service.clinic.generic' : 'service.salon.generic';
   }
 
+  function onAuthChange(ev) {
+    const detail = (ev && ev.detail) || {};
+    bumpEpoch('auth-change:' + (detail.reason || ''));
+    state.partnerId = null;
+    state.accountEmail = localStorage.getItem(ACCOUNT_KEY);
+    state.authGeneration = currentAuthSnapshot().authGeneration;
+    state.tokenFingerprint = currentAuthSnapshot().tokenFingerprint;
+    state.draftRevisionByClientId = Object.create(null);
+    state.editContexts = Object.create(null);
+    state.enabled = false;
+    state.registryReady = false;
+  }
+
+  window.addEventListener('mira:auth-change', onAuthChange);
+
   async function bootstrap(partner) {
-    const nextPartnerId = partner && partner.id ? partner.id : currentPartnerId();
+    const auth = currentAuthSnapshot();
+    state.authGeneration = auth.authGeneration;
+    state.tokenFingerprint = auth.tokenFingerprint;
+    const nextPartnerId = partner && partner.id ? partner.id : null;
     const nextEmail = localStorage.getItem(ACCOUNT_KEY);
     if (state.partnerId && nextPartnerId && state.partnerId !== nextPartnerId) {
       bumpEpoch('partner-switch');
       state.draftRevisionByClientId = Object.create(null);
+      state.editContexts = Object.create(null);
     } else if (!nextPartnerId && state.partnerId) {
       bumpEpoch('logout');
       state.draftRevisionByClientId = Object.create(null);
+      state.editContexts = Object.create(null);
     }
+    // Never trust a stale mira_partner_id alone — only bind after partner payload arrives.
     state.partnerId = nextPartnerId;
     state.accountEmail = nextEmail;
     state.partnerType = partner && partner.type ? partner.type : null;
     state.sessionEpoch = readEpoch() || bumpEpoch('boot');
     if (nextPartnerId) localStorage.setItem(PARTNER_ID_KEY, nextPartnerId);
+    else try { localStorage.removeItem(PARTNER_ID_KEY); } catch (e) {}
+
     if (!window.PartnersApi || typeof PartnersApi.registry !== 'function') {
       state.enabled = false;
+      state.registryReady = false;
       return state;
     }
     try {
-      const meta = await PartnersApi.registry();
-      if (currentPartnerId() !== state.partnerId) return state;
-      state.enabled = meta.editorV2Enabled === true;
+      const snap = captureSessionSnapshot();
+      const [meta, localHash] = await Promise.all([
+        PartnersApi.registry(),
+        computeLocalRegistryHash(),
+      ]);
+      if (!assertSameSession(snap) && snap.partnerId) {
+        // Auth changed while loading registry — stay disabled.
+        state.enabled = false;
+        state.registryReady = false;
+        return state;
+      }
+      // Re-check partner still matches bootstrap target.
+      if (nextPartnerId && currentPartnerId() !== nextPartnerId) {
+        state.enabled = false;
+        return state;
+      }
+      state.localRegistryHash = localHash;
       state.registryHash = meta.registryHash || null;
       state.schemaVersion = meta.schemaVersion || 2;
-      state.localRegistryHash = window.MiraFieldRegistryLocalHash || null;
       state.registryMismatch = Boolean(
         state.localRegistryHash && state.registryHash && state.localRegistryHash !== state.registryHash,
       );
-      if (state.registryMismatch) {
-        state.enabled = false;
-      }
+      state.registryReady = Boolean(state.localRegistryHash && state.registryHash);
+      const flagOn = meta.editorV2Enabled === true;
+      state.enabled = flagOn && state.registryReady && !state.registryMismatch && !!state.partnerId && !!auth.tokenFingerprint;
     } catch (error) {
       state.enabled = false;
+      state.registryReady = false;
+      state.registryMismatch = true;
     }
     return state;
   }
 
   function onStorage(ev) {
     if (!ev) return;
-    if (ev.key === PARTNER_ID_KEY || ev.key === 'mira_partner_token' || ev.key === ACCOUNT_KEY) {
-      const pid = currentPartnerId();
-      if (pid !== state.partnerId) {
-        bumpEpoch('storage-partner-change');
-        state.partnerId = pid;
-        state.accountEmail = localStorage.getItem(ACCOUNT_KEY);
-        state.draftRevisionByClientId = Object.create(null);
-        state.enabled = false;
-      }
+    if (ev.key === 'mira_partner_token' || ev.key === ACCOUNT_KEY || ev.key === PARTNER_ID_KEY) {
+      // Cross-tab auth change: cancel immediately; do not trust leftover partner id.
+      bumpEpoch('storage-auth-change');
+      state.partnerId = null;
+      state.accountEmail = localStorage.getItem(ACCOUNT_KEY);
+      state.authGeneration = currentAuthSnapshot().authGeneration;
+      state.tokenFingerprint = currentAuthSnapshot().tokenFingerprint;
+      state.draftRevisionByClientId = Object.create(null);
+      state.editContexts = Object.create(null);
+      state.enabled = false;
       if (!localStorage.getItem('mira_partner_token')) {
-        bumpEpoch('logout-storage');
-        state.enabled = false;
-        state.partnerId = null;
+        try { localStorage.removeItem(PARTNER_ID_KEY); } catch (e) {}
       }
     }
   }
   window.addEventListener('storage', onStorage);
 
   function scheduleAutosave(form, payloadBuilder) {
-    if (!state.enabled || state.registryMismatch) {
+    if (!state.registryReady || state.registryMismatch) {
+      setStatus(form, 'تعذر التحقق من سجل الحقول — حدّثي الصفحة قبل الحفظ', 'error');
+      return;
+    }
+    if (!state.enabled) {
       if (state.registryMismatch) setStatus(form, 'اختلاف سجل الحقول — أوقِف الحفظ لمنع فقد البيانات', 'error');
       return;
     }
-    if (!state.partnerId) return;
+    if (!state.partnerId || !currentAuthSnapshot().tokenFingerprint) return;
     const formId = form.id || 'default';
-    const snapshot = {
-      partnerId: state.partnerId,
-      sessionEpoch: state.sessionEpoch,
-      formId: formId,
-    };
+    const snapshot = captureSessionSnapshot();
+    snapshot.formId = formId;
     state.seq[formId] = (state.seq[formId] || 0) + 1;
     const mySeq = state.seq[formId];
     state.pending[formId] = { builder: payloadBuilder, snapshot: snapshot, seq: mySeq };
+    state.lastFlushResult[formId] = { ok: false, pending: true, seq: mySeq };
     setStatus(form, 'جارٍ الحفظ…', 'saving');
     clearTimeout(state.timers[formId]);
     state.timers[formId] = setTimeout(() => flush(form, mySeq), 650);
   }
 
   async function flush(form, expectedSeq) {
-    if (!state.enabled) return;
     const formId = form.id || 'default';
+    const empty = { ok: false, cancelled: true, formId: formId };
+    if (!state.enabled) {
+      state.lastFlushResult[formId] = Object.assign({}, empty, { reason: 'disabled' });
+      return state.lastFlushResult[formId];
+    }
     const pending = state.pending[formId];
-    if (!pending) return;
-    if (expectedSeq != null && pending.seq !== expectedSeq) return;
+    if (!pending) {
+      const last = state.lastFlushResult[formId];
+      if (last && last.ok && last.seq === state.seq[formId]) return last;
+      state.lastFlushResult[formId] = Object.assign({}, empty, { reason: 'nothing-pending' });
+      return state.lastFlushResult[formId];
+    }
+    if (expectedSeq != null && pending.seq !== expectedSeq) {
+      state.lastFlushResult[formId] = Object.assign({}, empty, { reason: 'stale-seq' });
+      return state.lastFlushResult[formId];
+    }
     if (!assertSameSession(pending.snapshot)) {
       delete state.pending[formId];
       setStatus(form, 'أُلغي الحفظ — تغيّر الحساب', 'error');
-      return;
+      state.lastFlushResult[formId] = { ok: false, cancelled: true, reason: 'auth-changed', formId: formId };
+      return state.lastFlushResult[formId];
     }
     if (state.inflight[formId]) {
       state.timers[formId] = setTimeout(() => flush(form, pending.seq), 400);
-      return;
+      return { ok: false, pending: true, reason: 'inflight', formId: formId };
     }
     const built = pending.builder();
-    if (!built) return;
+    if (!built || !built.clientDraftId) {
+      state.lastFlushResult[formId] = { ok: false, reason: 'empty-payload', formId: formId };
+      return state.lastFlushResult[formId];
+    }
     built._session = pending.snapshot;
     state.inflight[formId] = true;
     const controller = typeof AbortController !== 'undefined' ? new AbortController() : null;
     if (controller) state.abortByForm[formId] = controller;
+    const mySeq = pending.seq;
     try {
       const currentRev = state.draftRevisionByClientId[built.clientDraftId];
-      const saved = await PartnersApi.putEditorDraft(built.clientDraftId, {
-        expectedRevision: currentRev == null ? null : currentRev,
-        kind: built.kind,
-        profileId: built.profileId,
-        schemaVersion: state.schemaVersion,
-        values: built.values || {},
-        targetOwnerId: built.targetOwnerId || null,
-      });
-      if (!assertSameSession(built._session) || currentPartnerId() !== built._session.partnerId) {
+      const saved = await PartnersApi.putEditorDraft(
+        built.clientDraftId,
+        {
+          expectedRevision: currentRev == null ? null : currentRev,
+          kind: built.kind,
+          profileId: built.profileId,
+          schemaVersion: state.schemaVersion,
+          values: built.values || {},
+          targetOwnerId: built.targetOwnerId || null,
+        },
+        { signal: controller ? controller.signal : undefined },
+      );
+      if (!assertSameSession(built._session)) {
         setStatus(form, 'تُجاهلت استجابة قديمة بعد تبديل الحساب', 'error');
-        return;
+        state.lastFlushResult[formId] = { ok: false, cancelled: true, reason: 'stale-response', formId: formId };
+        return state.lastFlushResult[formId];
+      }
+      if (state.seq[formId] !== mySeq) {
+        // Newer edit landed while this request was in flight — not a confirmed save of current values.
+        state.lastFlushResult[formId] = { ok: false, pending: true, reason: 'superseded', formId: formId, revision: saved.revision };
+        state.draftRevisionByClientId[built.clientDraftId] = saved.revision;
+        return state.lastFlushResult[formId];
       }
       state.draftRevisionByClientId[built.clientDraftId] = saved.revision;
-      if (state.seq[formId] === pending.seq) setStatus(form, 'محفوظ', 'saved');
-      if (state.pending[formId] && state.pending[formId].seq === pending.seq) delete state.pending[formId];
+      const ctx = getEditContext(formId);
+      if (ctx && ctx.clientDraftId === built.clientDraftId) ctx.revision = saved.revision;
+      setStatus(form, 'محفوظ', 'saved');
+      if (state.pending[formId] && state.pending[formId].seq === mySeq) delete state.pending[formId];
+      state.lastFlushResult[formId] = {
+        ok: true,
+        revision: saved.revision,
+        clientDraftId: built.clientDraftId,
+        seq: mySeq,
+        formId: formId,
+      };
+      return state.lastFlushResult[formId];
     } catch (error) {
-      if (!assertSameSession(built._session)) return;
+      if (error && error.name === 'AbortError') {
+        state.lastFlushResult[formId] = { ok: false, cancelled: true, reason: 'aborted', formId: formId };
+        return state.lastFlushResult[formId];
+      }
+      if (!assertSameSession(built._session)) {
+        state.lastFlushResult[formId] = { ok: false, cancelled: true, reason: 'auth-changed', formId: formId };
+        return state.lastFlushResult[formId];
+      }
       const msg = String(error && error.message ? error.message : error);
-      if (/تعارض|REVISION|409/.test(msg)) setStatus(form, 'تعارض تعديل — أعدي فتح المسودة من الخادم', 'conflict');
+      if (/تعارض|REVISION|409/.test(msg)) setStatus(form, 'تعارض تعديل — احفظي محليًا ثم أعيدي التحميل بقرار صريح', 'conflict');
       else setStatus(form, 'تعذر الحفظ — التعديلات ما زالت محليًا', 'error');
+      state.lastFlushResult[formId] = {
+        ok: false,
+        error: error,
+        fieldErrors: error && error.fieldErrors,
+        reason: 'save-failed',
+        formId: formId,
+        seq: mySeq,
+      };
+      return state.lastFlushResult[formId];
     } finally {
+      // Only clear inflight/abort for this generation.
+      if (state.abortByForm[formId] === controller) delete state.abortByForm[formId];
       state.inflight[formId] = false;
-      delete state.abortByForm[formId];
-      if (state.pending[formId] && state.seq[formId] !== pending.seq) {
+      if (state.pending[formId] && state.seq[formId] !== mySeq) {
         flush(form, state.seq[formId]);
       }
     }
+  }
+
+  /** Flush until pending queue for form is empty or failure. */
+  async function flushUntilSettled(form, maxRounds) {
+    const formId = form.id || 'default';
+    let rounds = maxRounds == null ? 8 : maxRounds;
+    let last = state.lastFlushResult[formId] || { ok: false };
+    while (rounds-- > 0) {
+      if (state.pending[formId] || state.inflight[formId]) {
+        last = await flush(form, state.seq[formId]);
+        if (last && last.ok === false && !last.pending && !last.cancelled) return last;
+        if (last && last.pending) {
+          await new Promise((r) => setTimeout(r, 50));
+          continue;
+        }
+        continue;
+      }
+      // Catch edits that arrived during last flush.
+      if (state.pending[formId]) continue;
+      return last.ok
+        ? last
+        : (state.lastFlushResult[formId] && state.lastFlushResult[formId].ok
+          ? state.lastFlushResult[formId]
+          : last);
+    }
+    return { ok: false, reason: 'flush-timeout', formId: formId };
   }
 
   function attachStatus(form) {
@@ -253,26 +463,31 @@
     form.insertBefore(el, form.firstChild);
   }
 
-  async function listDrafts() {
+  async function listDrafts(opts) {
     if (!state.enabled) throw new Error('محرر v2 غير مفعّل');
-    return PartnersApi.listEditorDrafts();
+    const snap = captureSessionSnapshot();
+    const data = await PartnersApi.listEditorDrafts(null, opts);
+    if (!assertSameSession(snap)) throw new Error('تبديل حساب أثناء القائمة');
+    return data;
   }
 
-  async function openDraft(clientDraftId) {
+  async function openDraft(clientDraftId, opts) {
     if (!state.enabled) throw new Error('محرر v2 غير مفعّل');
-    const draft = await PartnersApi.getEditorDraft(clientDraftId);
-    if (currentPartnerId() !== state.partnerId) throw new Error('تبديل حساب أثناء الفتح');
+    const snap = captureSessionSnapshot();
+    const draft = await PartnersApi.getEditorDraft(clientDraftId, opts);
+    if (!assertSameSession(snap)) throw new Error('تبديل حساب أثناء الفتح');
     state.draftRevisionByClientId[clientDraftId] = draft.revision;
     return draft;
   }
 
-  async function materialize(clientDraftId, expectedRevision, submitReview, idempotencyKey) {
+  async function materialize(clientDraftId, expectedRevision, submitReview, idempotencyKey, opts) {
     if (!state.enabled) throw new Error('محرر v2 غير مفعّل');
-    const snap = { partnerId: state.partnerId, sessionEpoch: state.sessionEpoch };
+    const snap = captureSessionSnapshot();
     const result = await PartnersApi.materializeEditorDraft(
       clientDraftId,
       { expectedRevision: expectedRevision, submitReview: !!submitReview },
       idempotencyKey,
+      opts,
     );
     if (!assertSameSession(snap)) throw new Error('تبديل حساب أثناء التحويل');
     if (result && result.kind) clearNewDraftKey(result.targetKind || result.kind);
@@ -284,7 +499,7 @@
   async function importLocalTemplateInteractive(serviceId, localState) {
     if (!state.enabled) throw new Error('محرر v2 غير مفعّل على الخادم');
     if (!serviceId) throw new Error('يلزم حفظ الخدمة قبل الاستيراد إلى الخادم');
-    const snap = { partnerId: state.partnerId, sessionEpoch: state.sessionEpoch };
+    const snap = captureSessionSnapshot();
     const current = await PartnersApi.getServiceProfile(serviceId);
     if (!assertSameSession(snap)) throw new Error('تبديل حساب أثناء الاستيراد');
     const preview = {
@@ -336,7 +551,7 @@
 
   async function pushServiceProfile(serviceId, templateState, expectedRevision) {
     if (!state.enabled || !serviceId || !templateState || !templateState.templateId) return null;
-    const snap = { partnerId: state.partnerId, sessionEpoch: state.sessionEpoch };
+    const snap = captureSessionSnapshot();
     const result = await PartnersApi.putServiceProfile(serviceId, {
       expectedRevision: expectedRevision,
       templateId: templateState.templateId,
@@ -348,7 +563,6 @@
     return result;
   }
 
-  /** Test seam: expose isolation helpers without secrets. */
   function __testHooks() {
     return {
       state: state,
@@ -357,6 +571,8 @@
       assertSameSession: assertSameSession,
       scheduleAutosave: scheduleAutosave,
       flush: flush,
+      captureSessionSnapshot: captureSessionSnapshot,
+      onAuthChange: onAuthChange,
     };
   }
 
@@ -369,8 +585,14 @@
       const formId = form.id || 'default';
       return flush(form, state.seq[formId]);
     },
+    flushUntilSettled: flushUntilSettled,
     clientDraftIdFor: clientDraftIdFor,
+    allocateNewDraftId: allocateNewDraftId,
     clearNewDraftKey: clearNewDraftKey,
+    bindEditContext: bindEditContext,
+    getEditContext: getEditContext,
+    clearEditContext: clearEditContext,
+    scopedTemplateKey: scopedTemplateKey,
     profileIdFor: profileIdFor,
     importLocalTemplateInteractive: importLocalTemplateInteractive,
     pushServiceProfile: pushServiceProfile,

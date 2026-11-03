@@ -1,0 +1,54 @@
+{
+  "ok": true,
+  "db": {
+    "host": "localhost",
+    "db": "mira_p1_rc3_test"
+  },
+  "email": "browser-rc3-ff68bea8@test.local",
+  "apiPort": 59592,
+  "portalPort": 8765,
+  "results": [
+    {
+      "id": "browser-login",
+      "status": "PASS_LOCAL"
+    },
+    {
+      "id": "browser-product-draft-autosave",
+      "status": "PASS_LOCAL"
+    },
+    {
+      "id": "browser-service-draft-autosave",
+      "status": "PASS_LOCAL",
+      "detail": "{\"ok\":true,\"revision\":1,\"clientDraftId\":\"new:76811db5-45b3-46bb-909d-2079eb45d9e6:service:fd49895f-5eba-44ed-8715-3c67f7350779\",\"seq\":9,\"formId\":\"serviceForm\"}"
+    },
+    {
+      "id": "browser-flush-fail-not-ok",
+      "status": "PASS_LOCAL",
+      "detail": "{\"ok\":false,\"error\":{\"name\":\"Error\"},\"reason\":\"save-failed\",\"formId\":\"catalogForm\",\"seq\":11}"
+    },
+    {
+      "id": "browser-materialize-submit-failed-honest",
+      "status": "PASS_LOCAL",
+      "detail": "{\"code\":\"MATERIALIZE_SUBMIT_REVIEW_FAILED\",\"ownerId\":\"dd494ac7-82bd-436a-93d3-e49c0a0ddcf5\"}"
+    },
+    {
+      "id": "browser-media-and-submit-review",
+      "status": "PASS_LOCAL",
+      "detail": "{\"ok\":true,\"via\":\"submitReview\",\"sub\":{\"contentStatus\":\"published\",\"id\":\"dd494ac7-82bd-436a-93d3-e49c0a0ddcf5\",\"cleanupPending\":false}}"
+    },
+    {
+      "id": "browser-second-session-reopen",
+      "status": "PASS_LOCAL",
+      "detail": "مسودة متصفح RC3 نهائية / Browser Draft Final"
+    },
+    {
+      "id": "browser-screenshots",
+      "status": "PASS_LOCAL"
+    },
+    {
+      "id": "browser-auth-switch-zero-leaks",
+      "status": "PASS_LOCAL",
+      "detail": "{\"calls\":[],\"partnerId\":null}"
+    }
+  ]
+}

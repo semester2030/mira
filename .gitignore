@@ -53,6 +53,7 @@ mira-api/build/
 mira-api/.env
 mira-api/.env.local
 mira-api/.env.qa
+mira-api/.env.rc3
 mira-api/.env.*.local
 mira-api/data/journey-events.jsonl
 

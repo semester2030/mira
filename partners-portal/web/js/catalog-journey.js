@@ -328,7 +328,7 @@
     return select;
   }
 
-  function renderForm(type, item, formId, titleId, note) {
+  function renderForm(type, item, formId, titleId, note, draftCtx) {
     const form = document.getElementById(formId || 'catalogForm');
     form.dataset.saving = '';
     const title = document.getElementById(titleId || 'catalogTitle');
@@ -339,45 +339,99 @@
     const sameItem = item && previous.ownerId === item.id;
     staged[form.id] = sameItem ? previous : [];
     if (item) staged[form.id].ownerId = item.id;
+    if (window.MiraEditorV2) {
+      MiraEditorV2.cancelAllPending('form-replace:' + form.id);
+      MiraEditorV2.clearEditContext(form.id);
+    }
     form.replaceChildren();
 
+    const seed = Object.assign({}, item || {}, (draftCtx && draftCtx.values) || {});
     const editing = Boolean(item && item.id);
+    const seedingDraft = Boolean(draftCtx && draftCtx.clientDraftId);
+    const kind = type === 'brand' ? 'product' : 'service';
+    if (window.MiraEditorV2 && seedingDraft) {
+      MiraEditorV2.bindEditContext(form.id, {
+        clientDraftId: draftCtx.clientDraftId,
+        kind: draftCtx.kind || kind,
+        profileId: draftCtx.profileId || null,
+        schemaVersion: draftCtx.schemaVersion,
+        revision: draftCtx.revision,
+        targetOwnerId: draftCtx.targetOwnerId || (item && item.id) || null,
+        status: draftCtx.status,
+        submitReviewStatus: draftCtx.submitReviewStatus,
+        values: draftCtx.values || {},
+      });
+    } else if (window.MiraEditorV2 && !editing) {
+      // Explicit new draft identity for this form session.
+      const newId = MiraEditorV2.allocateNewDraftId(kind);
+      MiraEditorV2.bindEditContext(form.id, {
+        clientDraftId: newId,
+        kind: kind,
+        profileId: null,
+        revision: null,
+        targetOwnerId: null,
+        status: 'draft',
+        values: {},
+      });
+    } else if (window.MiraEditorV2 && editing) {
+      MiraEditorV2.bindEditContext(form.id, {
+        clientDraftId: MiraEditorV2.clientDraftIdFor(kind, item.id, form.id),
+        kind: kind,
+        targetOwnerId: item.id,
+        revision: null,
+        values: {},
+      });
+    }
+
     const developerAccount = Boolean(window.sessionPartner && window.sessionPartner.type === 'developer');
+    const priceLabel =
+      seed.priceHalalas == null || seed.priceHalalas === ''
+        ? 'غير محدد'
+        : (formatPrice(seed.priceHalalas) + ' · ' + seed.priceHalalas + ' هللة');
     const status = text(form, note || (developerAccount
       ? 'حساب المطوّر: بعد الاسم والسعر والتصنيف، اختيار الملف يرفع بالنسبة وينشر في التطبيق مباشرة.'
       : (editing
-        ? 'مسودة على المعرف نفسه. السعر الظاهر ' + formatPrice(item.priceHalalas) + ' ويخزَّن ' + item.priceHalalas + ' هللة. التعديل لا ينشر قبل اعتماد الإدارة.'
-        : 'مسودة جديدة. لا يُطلب رابط متجر، والسعر يُكتب بالريال.')));
+        ? 'مسودة على المعرف نفسه. السعر الظاهر ' + priceLabel + '. التعديل لا ينشر قبل اعتماد الإدارة.'
+        : (seedingDraft
+          ? 'مسودة خادمية ' + draftCtx.clientDraftId + ' · rev ' + draftCtx.revision
+          : 'مسودة جديدة. لا يُطلب رابط متجر، والسعر يُكتب بالريال.'))));
     if (item && item.reviewNote) text(form, 'سبب المراجعة: ' + item.reviewNote);
     if (item && item.draftNameAr) text(form, 'اسم المسودة: ' + item.draftNameAr + ' · المنشور: ' + (item.nameAr || ''));
+    if (draftCtx && draftCtx.submitReviewStatus) {
+      text(form, 'حالة إرسال المراجعة للمسودة: ' + draftCtx.submitReviewStatus);
+    }
 
     const basics = document.createElement('div');
     basics.className = 'form-section';
     text(basics, 'البيانات الأساسية', 'h3');
     form.appendChild(basics);
-    const nameAr = field(basics, 'الاسم', 'nameAr', editing ? (item.draftNameAr || item.nameAr) : '', 'text');
-    field(basics, 'الاسم بالإنجليزية (اختياري)', 'nameEn', editing ? (item.draftNameEn != null ? item.draftNameEn : (item.nameEn || '')) : '', 'text');
-    field(basics, 'الوصف', 'descriptionAr', editing ? (item.draftDescriptionAr != null ? item.draftDescriptionAr : (item.descriptionAr || '')) : '', 'textarea');
+    const nameSeed = seed.draftNameAr || seed.nameAr || '';
+    const nameAr = field(basics, 'الاسم', 'nameAr', nameSeed, 'text');
+    const nameEn = field(basics, 'الاسم بالإنجليزية (اختياري)', 'nameEn', seed.draftNameEn != null ? seed.draftNameEn : (seed.nameEn || ''), 'text');
+    const descriptionAr = field(basics, 'الوصف', 'descriptionAr', seed.draftDescriptionAr != null ? seed.draftDescriptionAr : (seed.descriptionAr || ''), 'textarea');
     const categories = type === 'brand'
       ? PRODUCT_CATEGORIES
       : (type === 'clinic' ? CLINIC_CATEGORIES : (type === 'salon' ? SALON_CATEGORIES : SERVICE_CATEGORIES));
-    const category = selectField(basics, 'التصنيف', 'category', editing ? (item.category || '') : '', categories);
-    const price = field(basics, 'السعر بالريال', 'priceSar', editing ? halalasToInput(item.priceHalalas) : '', 'text');
+    const category = selectField(basics, 'التصنيف', 'category', seed.category || '', categories);
+    const priceSeed =
+      seed.priceHalalas == null || seed.priceHalalas === ''
+        ? ''
+        : halalasToInput(seed.priceHalalas);
+    const price = field(basics, 'السعر بالريال', 'priceSar', priceSeed, 'text');
     price.inputMode = 'decimal';
     price.placeholder = '52';
 
     const cosmetic = document.createElement('div');
-    const skin = field(cosmetic, 'نوع البشرة (اختياري)', 'skinTypes', editing ? (item.skinTypes || []).join(', ') : '', 'text');
-    const step = field(cosmetic, 'خطوة الروتين (اختياري)', 'stepAr', editing ? (item.stepAr || '') : '', 'text');
+    const skin = field(cosmetic, 'نوع البشرة (اختياري)', 'skinTypes', (seed.skinTypes || []).join ? (seed.skinTypes || []).join(', ') : (seed.skinTypes || ''), 'text');
+    const step = field(cosmetic, 'خطوة الروتين (اختياري)', 'stepAr', seed.stepAr || '', 'text');
     if (type === 'brand') basics.appendChild(cosmetic);
 
     let duration = null;
     let bookingToggle = null;
     let availabilityJson = null;
     if (type !== 'brand') {
-      duration = field(basics, 'المدة بالدقائق (اختياري)', 'durationMin', editing && item.durationMin ? item.durationMin : '', 'number');
-      duration.min = '5';
-      const partner = window.sessionPartner || {};
+      duration = field(basics, 'المدة بالدقائق (اختياري)', 'durationMin', seed.durationMin != null && seed.durationMin !== '' ? seed.durationMin : '', 'number');
+      duration.min = '5';      const partner = window.sessionPartner || {};
       text(basics, 'الفرع والمدينة المسجّلة: ' + (partner.city || 'غير مسجّلة') + '. لا توجد إحداثيات فرع.');
       text(basics, partner.contactPhone ? 'وسيلة التواصل: ' + partner.contactPhone : 'لا توجد وسيلة تواصل مسجّلة على حساب الجهة.');
       const bookingWrap = document.createElement('label');
@@ -492,36 +546,78 @@
     templateSection.append(templateSelect, templateBody, templatePreview);
     // inserted before media once mediaSection exists
 
-    const templateState = loadServiceTemplateDraft(editing ? item.id : null);
-
     function loadServiceTemplateDraft(id) {
       try {
-        const raw = localStorage.getItem('mira-service-template:' + (id || 'new'));
-        if (!raw) return { templateId: '', answers: {}, priceMode: 'fixed' };
-        return Object.assign({ templateId: '', answers: {}, priceMode: 'fixed' }, JSON.parse(raw));
+        const key = window.MiraEditorV2
+          ? MiraEditorV2.scopedTemplateKey(id || 'new')
+          : ('mira-service-template:' + (id || 'new'));
+        const raw = localStorage.getItem(key);
+        if (!raw) return { templateId: '', answers: {}, priceMode: 'fixed', templateVersion: 1 };
+        return Object.assign({ templateId: '', answers: {}, priceMode: 'fixed', templateVersion: 1 }, JSON.parse(raw));
       } catch (error) {
-        return { templateId: '', answers: {}, priceMode: 'fixed' };
+        return { templateId: '', answers: {}, priceMode: 'fixed', templateVersion: 1 };
       }
     }
 
+    // Prefer server draft profile (loaded before paint) over shared localStorage keys.
+    const templateState = (draftCtx && draftCtx.values && draftCtx.values.serviceProfile)
+      ? Object.assign(
+          { templateId: '', answers: {}, priceMode: 'fixed', templateVersion: 1 },
+          draftCtx.values.serviceProfile,
+        )
+      : loadServiceTemplateDraft(editing ? item.id : null);
+
     function buildEditorValues() {
       const values = {};
+      // Preserve blanks: send trimmed strings when present; omit only when empty so draft stays optional.
       if (nameAr.value.trim()) values.nameAr = nameAr.value.trim();
       if (category.value) values.category = category.value;
-      const nameEnEl = form.querySelector('[name="nameEn"]');
-      if (nameEnEl && nameEnEl.value.trim()) values.nameEn = nameEnEl.value.trim();
-      const descEl = form.querySelector('[name="descriptionAr"]');
-      if (descEl && String(descEl.value || '').trim()) values.descriptionAr = String(descEl.value).trim();
-      if (duration && duration.value) {
+      if (nameEn && nameEn.value.trim()) values.nameEn = nameEn.value.trim();
+      else if (nameEn && nameEn.value === '') {
+        // explicit empty allowed — omit key (full-replace keeps absence)
+      }
+      if (descriptionAr && String(descriptionAr.value || '').trim()) {
+        values.descriptionAr = String(descriptionAr.value).trim();
+      }
+      if (duration && duration.value !== '') {
         const d = parseInt(duration.value, 10);
         if (Number.isFinite(d)) values.durationMin = d;
       }
       const halalas = typeof riyalsToHalalas === 'function' ? riyalsToHalalas(price.value) : null;
       if (halalas != null) values.priceHalalas = halalas;
+      if (type === 'brand' && typeof readCommerce === 'function') {
+        const commerce = readCommerce();
+        if (commerce && !commerce.error && commerce.value) {
+          if (commerce.value.purchaseMode) values.purchaseMode = commerce.value.purchaseMode;
+          if (Object.prototype.hasOwnProperty.call(commerce.value, 'stockQty')) {
+            values.stockQty = commerce.value.stockQty;
+          }
+          if (Object.prototype.hasOwnProperty.call(commerce.value, 'deliveryFeeHalalas')) {
+            values.deliveryFeeHalalas = commerce.value.deliveryFeeHalalas;
+          }
+          if (Object.prototype.hasOwnProperty.call(commerce.value, 'optionsJson')) {
+            values.optionsJson = commerce.value.optionsJson;
+          }
+          if (Object.prototype.hasOwnProperty.call(commerce.value, 'variantsJson')) {
+            values.variantsJson = commerce.value.variantsJson;
+          }
+          const opts = commerce.value.optionsJson;
+          if (Array.isArray(opts)) {
+            const colorG = opts.find((g) => g && g.id === 'color');
+            const sizeG = opts.find((g) => g && (g.id === 'size' || g.id === 'sizes'));
+            if (colorG && Array.isArray(colorG.values)) {
+              values.colors = colorG.values.map((v) => v.id).filter(Boolean);
+            }
+            if (sizeG && Array.isArray(sizeG.values)) {
+              values.sizes = sizeG.values.map((v) => v.id).filter(Boolean);
+            }
+          }
+        }
+      }
       if (type !== 'brand' && templateState && templateState.templateId) {
         values.serviceProfile = {
           templateId: templateState.templateId,
-          templateVersion: 1,
+          templateVersion: templateState.templateVersion || 1,
           priceMode: templateState.priceMode || 'fixed',
           answers: templateState.answers || {},
         };
@@ -531,25 +627,32 @@
 
     function scheduleEditorDraftAutosave() {
       if (!(window.MiraEditorV2 && MiraEditorV2.state.enabled)) return;
-      if (MiraEditorV2.state.registryMismatch) {
+      if (!MiraEditorV2.state.registryReady || MiraEditorV2.state.registryMismatch) {
         MiraEditorV2.attachStatus(form);
-        MiraEditorV2.setStatus(form, 'اختلاف سجل الحقول — أوقِف الحفظ', 'error');
+        MiraEditorV2.setStatus(form, 'تعذر التحقق من سجل الحقول — حدّثي الصفحة', 'error');
         return;
       }
       MiraEditorV2.attachStatus(form);
-      const kind = type === 'brand' ? 'product' : 'service';
       const partnerType = type === 'brand' ? 'brand' : partnerTypeForTemplates();
+      const ctx = MiraEditorV2.getEditContext(form.id);
+      const clientDraftId =
+        (ctx && ctx.clientDraftId) ||
+        MiraEditorV2.clientDraftIdFor(kind, item && item.id, form.id);
+      const preferredProfile = (ctx && ctx.profileId) || (draftCtx && draftCtx.profileId) || null;
       MiraEditorV2.scheduleAutosave(form, () => ({
-        clientDraftId: MiraEditorV2.clientDraftIdFor(kind, item && item.id),
+        clientDraftId: clientDraftId,
         kind: kind,
-        profileId: MiraEditorV2.profileIdFor(kind, category.value, partnerType),
-        targetOwnerId: item && item.id ? item.id : null,
+        profileId: MiraEditorV2.profileIdFor(kind, category.value, partnerType, preferredProfile),
+        targetOwnerId: (ctx && ctx.targetOwnerId) || (item && item.id) || null,
         values: buildEditorValues(),
       }));
     }
 
     function saveServiceTemplateDraft() {
-      const key = 'mira-service-template:' + ((item && item.id) || 'new');
+      const ownerKey = (item && item.id) || (draftCtx && draftCtx.clientDraftId) || 'new';
+      const key = window.MiraEditorV2
+        ? MiraEditorV2.scopedTemplateKey(ownerKey)
+        : ('mira-service-template:' + ownerKey);
       localStorage.setItem(key, JSON.stringify(templateState));
       // Single coordinated path: draft autosave carries serviceProfile (no parallel putServiceProfile race).
       if (type !== 'brand') scheduleEditorDraftAutosave();
@@ -805,7 +908,7 @@
     if (type !== 'brand') paintServiceTemplates();
 
     // Product + service field autosave into PartnerEditorDraft (empty values allowed).
-    [nameAr, price, category].forEach((el) => {
+    [nameAr, nameEn, descriptionAr, price, category].forEach((el) => {
       if (!el) return;
       el.addEventListener('input', scheduleEditorDraftAutosave);
       el.addEventListener('change', scheduleEditorDraftAutosave);
@@ -822,26 +925,69 @@
       matBtn.textContent = 'تحويل المسودة الخادمية وإرسال للمراجعة';
       matBtn.onclick = async () => {
         try {
-          await MiraEditorV2.flush(form);
-          const kind = type === 'brand' ? 'product' : 'service';
-          const clientDraftId = MiraEditorV2.clientDraftIdFor(kind, item && item.id);
-          const draft = await MiraEditorV2.openDraft(clientDraftId);
-          const key = 'mat:' + clientDraftId + ':' + draft.revision;
-          const result = await MiraEditorV2.materialize(clientDraftId, draft.revision, true, key);
+          // Ensure latest local edits are queued then confirmed before materialize.
+          scheduleEditorDraftAutosave();
+          const saved = await MiraEditorV2.flushUntilSettled(form);
+          if (!saved || !saved.ok) {
+            status.textContent =
+              'لم يُحوَّل — الحفظ غير مؤكد' +
+              (saved && saved.reason ? ' (' + saved.reason + ')' : '') +
+              '. أصلحي الحفظ أولًا.';
+            return;
+          }
+          const ctx = MiraEditorV2.getEditContext(form.id);
+          const clientDraftId =
+            (ctx && ctx.clientDraftId) ||
+            MiraEditorV2.clientDraftIdFor(kind, item && item.id, form.id);
+          // Use the revision we just confirmed — do not fetch a newer rev to bypass conflict.
+          const expectedRevision =
+            saved.revision != null
+              ? saved.revision
+              : MiraEditorV2.state.draftRevisionByClientId[clientDraftId];
+          if (expectedRevision == null) {
+            status.textContent = 'لا يوجد إصدار محفوظ مؤكد للتحويل.';
+            return;
+          }
+          const resumeKey =
+            sessionStorage.getItem('mira_mat_resume:' + clientDraftId) ||
+            ('mat:' + clientDraftId + ':' + expectedRevision);
+          sessionStorage.setItem('mira_mat_resume:' + clientDraftId, resumeKey);
+          const result = await MiraEditorV2.materialize(
+            clientDraftId,
+            expectedRevision,
+            true,
+            resumeKey,
+          );
+          const reviewOk = result.reviewSubmitted === true || result.submitReviewStatus === 'submitted';
+          const reviewPending =
+            result.submitReviewStatus === 'failed' ||
+            result.code === 'MATERIALIZE_SUBMIT_REVIEW_FAILED';
           status.textContent =
             'تم التحويل' +
-            (result.reviewSubmitted ? ' والإرسال للمراجعة' : '') +
+            (reviewOk ? ' والإرسال للمراجعة' : reviewPending ? ' — العنصر جاهز وإعادة إرسال المراجعة مطلوبة' : '') +
             ' · ' +
             (result.targetKind || kind) +
             ' ' +
             (result.targetOwnerId || '');
           if (result.targetOwnerId) {
             item = Object.assign({}, item || {}, { id: result.targetOwnerId });
+            const bound = MiraEditorV2.getEditContext(form.id);
+            if (bound) {
+              bound.targetOwnerId = result.targetOwnerId;
+              bound.status = 'materialized';
+              bound.submitReviewStatus = result.submitReviewStatus || (reviewOk ? 'submitted' : bound.submitReviewStatus);
+            }
             MiraEditorV2.clearNewDraftKey(kind);
+            if (reviewOk) sessionStorage.removeItem('mira_mat_resume:' + clientDraftId);
           }
           await refreshLists();
         } catch (error) {
           status.textContent = 'تعذر التحويل: ' + (error.message || error);
+          if (error && error.fieldErrors && Array.isArray(error.fieldErrors)) {
+            error.fieldErrors.forEach((fe) => {
+              if (fe && fe.fieldId) setFieldError(form, fe.fieldId, fe.code || error.message);
+            });
+          }
         }
       };
       form.appendChild(matBtn);
@@ -896,7 +1042,8 @@
     const detail = document.createElement('div');
     detail.className = 'form-section';
     text(detail, 'التفاصيل', 'h3');
-    const tags = field(detail, 'وسوم اختيارية', 'concernTags', editing ? (item.concernTags || []).join(', ') : '', 'text');
+    const tags = field(detail, 'وسوم اختيارية', 'concernTags', (seed.concernTags || []).join ? (seed.concernTags || []).join(', ') : (seed.concernTags || ''), 'text');
+    tags.addEventListener('input', scheduleEditorDraftAutosave);
     form.appendChild(detail);
 
     const action = document.createElement('div');
@@ -924,14 +1071,33 @@
       internalToggle = document.createElement('input');
       internalToggle.type = 'checkbox';
       internalToggle.name = 'internalCod';
-      internalToggle.checked = Boolean(editing && item.purchaseMode === 'internal_cod');
+      internalToggle.checked = Boolean(seed.purchaseMode === 'internal_cod' || (editing && item.purchaseMode === 'internal_cod'));
+      internalToggle.addEventListener('change', scheduleEditorDraftAutosave);
       internal.append(internalToggle, document.createTextNode(' تفعيل الطلب داخل ميرا (دفع نقدًا عند الاستلام). رابط الشراء الخارجي يبقى للمنتجات الخارجية فقط.'));
       action.appendChild(internal);
-      stockInput = field(action, 'المخزون (اتركيه فارغًا إذا لا يُتتبع)', 'stockQty', editing && item.stockQty != null ? item.stockQty : '', 'number');
+      stockInput = field(
+        action,
+        'المخزون (اتركيه فارغًا إذا لا يُتتبع)',
+        'stockQty',
+        seed.stockQty != null ? seed.stockQty : (editing && item.stockQty != null ? item.stockQty : ''),
+        'number',
+      );
       stockInput.min = '0';
       stockInput.step = '1';
-      feeInput = field(action, 'رسوم التوصيل بالريال (اتركيها فارغة إذا غير محددة، ولا تُعرض كمجانية)', 'deliveryFeeSar', editing && item.deliveryFeeHalalas != null ? halalasToInput(item.deliveryFeeHalalas) : '', 'text');
+      stockInput.addEventListener('input', scheduleEditorDraftAutosave);
+      stockInput.addEventListener('change', scheduleEditorDraftAutosave);
+      feeInput = field(
+        action,
+        'رسوم التوصيل بالريال (اتركيها فارغة إذا غير محددة، ولا تُعرض كمجانية)',
+        'deliveryFeeSar',
+        seed.deliveryFeeHalalas != null
+          ? halalasToInput(seed.deliveryFeeHalalas)
+          : (editing && item.deliveryFeeHalalas != null ?halalasToInput(item.deliveryFeeHalalas) : ''),
+        'text',
+      );
       feeInput.inputMode = 'decimal';
+      feeInput.addEventListener('input', scheduleEditorDraftAutosave);
+      feeInput.addEventListener('change', scheduleEditorDraftAutosave);
       const advancedWrap = document.createElement('label');
       advancedWrap.className = 'check-row';
       const advancedToggle = document.createElement('input');
@@ -1031,7 +1197,36 @@
     optionsSection.append(optionsActionBar, optionsBody, optionsPreview);
     form.insertBefore(optionsSection, mediaSection);
 
-    const optionsState = optionsStateFromServer(editing ? item : null);
+    const optionsSeedRow = (function () {
+      if (editing && item) return item;
+      if (seed && (seed.optionsJson || seed.colors || seed.sizes)) {
+        return {
+          optionsJson: seed.optionsJson || null,
+          variantsJson: seed.variantsJson || null,
+          // synthesize optionsJson groups from colors/sizes when only those are present
+          _colors: seed.colors,
+          _sizes: seed.sizes,
+        };
+      }
+      return null;
+    })();
+    const optionsState = optionsStateFromServer(optionsSeedRow);
+    if ((!optionsState.selected || !Object.keys(optionsState.selected).length) && seed) {
+      if (Array.isArray(seed.colors) && seed.colors.length) {
+        optionsState.selected = optionsState.selected || {};
+        optionsState.selected.color = seed.colors.slice();
+        optionsState.valueIds = optionsState.valueIds || {};
+        optionsState.valueIds.color = optionsState.valueIds.color || {};
+        seed.colors.forEach((id) => { optionsState.valueIds.color[id] = id; });
+      }
+      if (Array.isArray(seed.sizes) && seed.sizes.length) {
+        optionsState.selected = optionsState.selected || {};
+        optionsState.selected.size = seed.sizes.slice();
+        optionsState.valueIds = optionsState.valueIds || {};
+        optionsState.valueIds.size = optionsState.valueIds.size || {};
+        seed.sizes.forEach((id) => { optionsState.valueIds.size[id] = id; });
+      }
+    }
     /** Snapshot taken immediately before an in-session clear (RC8-01 undo). */
     let clearUndoSnapshot = null;
 
@@ -1141,7 +1336,9 @@
     function saveOptionsDraft() {
       // localStorage is a UI convenience only; authoritative copy is optionsJson on the API.
       try {
-        const key = 'mira-product-options:' + ((item && item.id) || 'new');
+        const scope = (window.MiraEditorV2 && MiraEditorV2.state.partnerId) || 'anon';
+        const owner = (item && item.id) || (draftCtx && draftCtx.clientDraftId) || 'new';
+        const key = 'mira-product-options:' + scope + ':' + owner;
         localStorage.setItem(key, JSON.stringify(optionsState));
       } catch (error) {}
     }
@@ -1528,6 +1725,7 @@
       if (typeof optionsBody._refreshVariantPickers === 'function') optionsBody._refreshVariantPickers();
       syncOptionsActionBar();
       paintOptionsPreview();
+      if (type === 'brand') scheduleEditorDraftAutosave();
     }
 
     function buildOptionGroups() {

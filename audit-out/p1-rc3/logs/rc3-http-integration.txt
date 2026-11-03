@@ -1,0 +1,52 @@
+npm warn Unknown env config "devdir". This will stop working in the next major version of npm.
+
+> mira-api@1.0.0 test:editor-v2-rc3
+> tsx src/partners-portal/editor-drafts/editor-v2-rc3.http.integration-tests.ts
+
+{
+  "ok": true,
+  "host": "localhost",
+  "db": "mira_p1_rc3_test",
+  "results": [
+    {
+      "id": "RC3-draft-save-full-fields",
+      "status": "PASS_LOCAL"
+    },
+    {
+      "id": "RC3-cross-partner-get-denied",
+      "status": "PASS_LOCAL"
+    },
+    {
+      "id": "RC3-cross-partner-cannot-mutate-A",
+      "status": "PASS_LOCAL"
+    },
+    {
+      "id": "RC3-draft-reopen-values",
+      "status": "PASS_LOCAL"
+    },
+    {
+      "id": "RC3-two-drafts-independent",
+      "status": "PASS_LOCAL"
+    },
+    {
+      "id": "RC3-materialize-field-roundtrip",
+      "status": "PASS_LOCAL"
+    },
+    {
+      "id": "RC3-service-draft-with-answers",
+      "status": "PASS_LOCAL"
+    },
+    {
+      "id": "RC3-reject-templateVersion-9999",
+      "status": "PASS_LOCAL"
+    },
+    {
+      "id": "RC3-reject-answers-array",
+      "status": "PASS_LOCAL"
+    },
+    {
+      "id": "RC3-reject-package-sessions-negative",
+      "status": "PASS_LOCAL"
+    }
+  ]
+}

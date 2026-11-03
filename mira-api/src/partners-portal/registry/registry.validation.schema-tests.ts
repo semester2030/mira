@@ -108,6 +108,41 @@ async function main() {
     'SERVICE_TEMPLATE_VERSION_INVALID',
   );
 
+  // unsupported (too high) templateVersion
+  mustFail(
+    () =>
+      registry.normalizeServiceProfile(
+        { templateId: 'salon_hair_cut', templateVersion: 9999, priceMode: 'fixed', answers: {} },
+        'salon',
+      ),
+    'SERVICE_TEMPLATE_VERSION_UNSUPPORTED',
+  );
+
+  // answers as array must reject (not coerce to {})
+  mustFail(
+    () =>
+      registry.normalizeServiceProfile(
+        { templateId: 'salon_hair_cut', templateVersion: 1, priceMode: 'fixed', answers: [] as unknown as Record<string, unknown> },
+        'salon',
+      ),
+    'SERVICE_ANSWERS_TYPE_INVALID',
+  );
+
+  // package_sessions negative
+  mustFail(
+    () =>
+      registry.normalizeServiceProfile(
+        {
+          templateId: 'salon_hair_cut',
+          templateVersion: 1,
+          priceMode: 'fixed',
+          answers: { session_kind: 'package', package_sessions: -4 },
+        },
+        'salon',
+      ),
+    'FIELD_VALUE_OUT_OF_RANGE',
+  );
+
   // unknown priceMode
   mustFail(
     () =>

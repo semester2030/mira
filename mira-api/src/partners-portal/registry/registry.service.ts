@@ -414,11 +414,24 @@ export class RegistryService implements OnModuleInit {
         fieldErrors: [{ fieldId: 'templateVersion', code: 'SERVICE_TEMPLATE_VERSION_INVALID' }],
       });
     }
+    const supportedVersion = Number(template.version || 1);
+    if (body.templateVersion !== supportedVersion) {
+      throw editorError(HttpStatus.BAD_REQUEST, 'SERVICE_TEMPLATE_VERSION_UNSUPPORTED', 'إصدار القالب غير مدعوم', {
+        fieldErrors: [{ fieldId: 'templateVersion', code: 'SERVICE_TEMPLATE_VERSION_UNSUPPORTED' }],
+      });
+    }
     const priceMode = typeof body.priceMode === 'string' ? body.priceMode.trim() : '';
     if (!PRICE_MODES.has(priceMode)) {
       throw editorError(HttpStatus.BAD_REQUEST, 'SERVICE_PRICE_MODE_INVALID', 'طريقة السعر غير معروفة', {
         fieldErrors: [{ fieldId: 'priceMode', code: 'SERVICE_PRICE_MODE_INVALID' }],
       });
+    }
+    if (Object.prototype.hasOwnProperty.call(body, 'answers') && body.answers != null) {
+      if (typeof body.answers !== 'object' || Array.isArray(body.answers)) {
+        throw editorError(HttpStatus.BAD_REQUEST, 'SERVICE_ANSWERS_TYPE_INVALID', 'إجابات القالب يجب أن تكون كائنًا', {
+          fieldErrors: [{ fieldId: 'answers', code: 'SERVICE_ANSWERS_TYPE_INVALID' }],
+        });
+      }
     }
     const answersRaw =
       body.answers && typeof body.answers === 'object' && !Array.isArray(body.answers)
@@ -460,7 +473,14 @@ export class RegistryService implements OnModuleInit {
     const t = field.type;
     if (t === 'boolean') return typeof raw === 'boolean' ? null : 'FIELD_TYPE_INVALID';
     if (t === 'number') {
-      return typeof raw === 'number' && Number.isFinite(raw) ? null : 'FIELD_TYPE_INVALID';
+      if (typeof raw !== 'number' || !Number.isFinite(raw)) return 'FIELD_TYPE_INVALID';
+      if (!Number.isInteger(raw)) return 'FIELD_TYPE_INVALID';
+      // Session counts and similar quantities must be positive when provided.
+      if (field.id === 'package_sessions' || field.id.endsWith('_sessions') || field.id.endsWith('_count')) {
+        if (raw < 1) return 'FIELD_VALUE_OUT_OF_RANGE';
+      }
+      if (raw < 0) return 'FIELD_VALUE_OUT_OF_RANGE';
+      return null;
     }
     if (t === 'text' || t === 'string' || t === 'single') {
       if (typeof raw !== 'string') return 'FIELD_TYPE_INVALID';

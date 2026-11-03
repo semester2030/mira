@@ -111,9 +111,9 @@
 
     document.getElementById('logout').onclick = (e) => {
       e.preventDefault();
-      if (window.MiraEditorV2) MiraEditorV2.cancelAllPending('logout');
-      try { localStorage.removeItem('mira_partner_id'); } catch (err) {}
+      // clearSession bumps auth generation and cancels via mira:auth-change.
       PartnersApi.clearSession();
+      if (window.MiraEditorV2) MiraEditorV2.cancelAllPending('logout');
       location.href = 'login.html' + location.search;
     };
 
@@ -153,23 +153,44 @@
               const formId = draft.kind === 'product' ? 'catalogForm' : 'serviceForm';
               const titleId = draft.kind === 'product' ? 'catalogTitle' : 'serviceTitle';
               const type = draft.kind === 'product' ? 'brand' : (window.sessionPartner.type === 'clinic' ? 'clinic' : 'salon');
-              const stub = {
-                id: draft.targetOwnerId || undefined,
-                nameAr: (draft.values && draft.values.nameAr) || '',
-                priceHalalas: (draft.values && draft.values.priceHalalas) || 0,
-                category: (draft.values && draft.values.category) || '',
-                durationMin: (draft.values && draft.values.durationMin) || '',
-                descriptionAr: (draft.values && draft.values.descriptionAr) || '',
+              const values = draft.values || {};
+              const stub = draft.targetOwnerId
+                ? {
+                    id: draft.targetOwnerId,
+                    nameAr: values.nameAr || '',
+                    nameEn: values.nameEn || '',
+                    priceHalalas: values.priceHalalas,
+                    category: values.category || '',
+                    durationMin: values.durationMin,
+                    descriptionAr: values.descriptionAr || '',
+                    purchaseMode: values.purchaseMode,
+                    stockQty: values.stockQty,
+                    deliveryFeeHalalas: values.deliveryFeeHalalas,
+                    optionsJson: values.optionsJson,
+                    variantsJson: values.variantsJson,
+                    colors: values.colors,
+                    sizes: values.sizes,
+                  }
+                : null;
+              const draftCtx = {
+                clientDraftId: draft.clientDraftId,
+                kind: draft.kind,
+                profileId: draft.profileId,
+                schemaVersion: draft.schemaVersion,
+                revision: draft.revision,
+                targetOwnerId: draft.targetOwnerId || null,
+                status: draft.status,
+                submitReviewStatus: draft.submitReviewStatus || null,
+                values: values,
               };
-              CatalogJourney.renderForm(type, stub, formId, titleId, 'مسودة خادمية ' + draft.clientDraftId + ' · rev ' + draft.revision);
-              if (draft.values && draft.values.serviceProfile && window.ServiceTemplates) {
-                try {
-                  localStorage.setItem(
-                    'mira-service-template:' + (stub.id || 'new'),
-                    JSON.stringify(draft.values.serviceProfile),
-                  );
-                } catch (err) {}
-              }
+              CatalogJourney.renderForm(
+                type,
+                stub,
+                formId,
+                titleId,
+                'مسودة خادمية ' + draft.clientDraftId + ' · rev ' + draft.revision,
+                draftCtx,
+              );
             } catch (error) {
               list.textContent = 'تعذر الفتح: ' + (error.message || error);
             }

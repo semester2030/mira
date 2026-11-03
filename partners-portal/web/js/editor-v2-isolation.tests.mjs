@@ -1,22 +1,27 @@
 /**
- * P1 RC2 — account isolation for editor-v2 autosave (no network).
- * Simulates: A schedules save → switch to B before timer → flush must not send A's payload with B session.
+ * P1 RC3 — account isolation via real PartnersApi.saveSession path (no manual bumpEpoch).
+ * A schedules save → saveSession(B) before timer → zero requests with A's data under B token.
  */
 import assert from 'node:assert/strict';
-import { readFileSync } from 'node:fs';
-import { createRequire } from 'node:module';
+import fs from 'node:fs';
+import path from 'node:path';
 import vm from 'node:vm';
 import { fileURLToPath } from 'node:url';
-import { dirname, join } from 'node:path';
+import { createRequire } from 'node:module';
 
-const root = dirname(fileURLToPath(import.meta.url));
-const code = readFileSync(join(root, 'editor-v2.js'), 'utf8');
+const __dirname = path.dirname(fileURLToPath(import.meta.url));
+const require = createRequire(import.meta.url);
+
+function loadScript(filename, sandbox) {
+  const code = fs.readFileSync(path.join(__dirname, filename), 'utf8');
+  vm.runInNewContext(code, sandbox, { filename });
+}
 
 function makeStorage() {
   const map = new Map();
   return {
     getItem: (k) => (map.has(k) ? map.get(k) : null),
-    setItem: (k, v) => map.set(k, String(v)),
+    setItem: (k, v) => map.set(String(k), String(v)),
     removeItem: (k) => map.delete(k),
     clear: () => map.clear(),
     _map: map,
@@ -24,124 +29,154 @@ function makeStorage() {
 }
 
 async function main() {
+  const calls = [];
   const localStorage = makeStorage();
   const sessionStorage = makeStorage();
-  const calls = [];
-  const PartnersApi = {
-    registry: async () => ({
-      editorV2Enabled: true,
-      registryHash: 'abc',
-      schemaVersion: 2,
-    }),
-    putEditorDraft: async (clientDraftId, payload) => {
-      calls.push({
-        tokenPartner: localStorage.getItem('mira_partner_id'),
-        clientDraftId,
-        payload,
-      });
-      return { revision: 1 };
-    },
-  };
+  const listeners = Object.create(null);
+
   const sandbox = {
-    window: {
-      addEventListener: () => {},
-      sessionPartner: { id: 'partner-A', type: 'salon' },
-      PartnersApi,
-    },
+    console,
     localStorage,
     sessionStorage,
-    crypto: { randomUUID: () => 'uuid-test' },
+    URLSearchParams,
+    crypto: { randomUUID: () => 'test-uuid' },
+    window: null,
+    document: { querySelector: () => null },
+    location: { hostname: '127.0.0.1', search: '', href: 'http://127.0.0.1/dashboard.html' },
+    fetch: async () => ({ ok: true, arrayBuffer: async () => new ArrayBuffer(8), json: async () => ({}) }),
     AbortController: class {
-      abort() {}
+      constructor() {
+        this.signal = { aborted: false, addEventListener() {} };
+        this._reason = null;
+      }
+      abort(reason) {
+        this.signal.aborted = true;
+        this._reason = reason;
+      }
     },
-    PartnersApi,
-    console,
+    CustomEvent: class {
+      constructor(type, init) {
+        this.type = type;
+        this.detail = init && init.detail;
+      }
+    },
     setTimeout: (fn) => {
-      // run immediately for tests that call flush; scheduleAutosave uses real timer — override below
-      return 1;
+      // Deferred; tests call flush / advance manually via Promise microtasks after saveSession.
+      sandbox.__timers.push(fn);
+      return sandbox.__timers.length;
     },
     clearTimeout: () => {},
+    addEventListener: (type, fn) => {
+      listeners[type] = listeners[type] || [];
+      listeners[type].push(fn);
+    },
   };
-  // deterministic timers
-  const timers = [];
-  sandbox.setTimeout = (fn, ms) => {
-    const id = timers.length + 1;
-    timers.push({ id, fn, ms });
-    return id;
-  };
-  sandbox.clearTimeout = (id) => {
-    const i = timers.findIndex((t) => t.id === id);
-    if (i >= 0) timers.splice(i, 1);
+  sandbox.window = sandbox;
+  sandbox.__timers = [];
+  sandbox.window.addEventListener = sandbox.addEventListener;
+  sandbox.window.dispatchEvent = (ev) => {
+    (listeners[ev.type] || []).forEach((fn) => fn(ev));
+    return true;
   };
 
-  vm.createContext(sandbox);
-  vm.runInContext(code, sandbox);
+  loadScript('api.js', sandbox);
+  const { PartnersApi } = sandbox.window;
+  assert.ok(PartnersApi);
+
+  // Replace putEditorDraft to record calls with live token/auth gen.
+  PartnersApi.putEditorDraft = async (clientDraftId, payload) => {
+    calls.push({
+      clientDraftId,
+      payload,
+      token: localStorage.getItem('mira_partner_token'),
+      partnerId: localStorage.getItem('mira_partner_id'),
+      authGeneration: PartnersApi.authGeneration(),
+    });
+    return { revision: 1, clientDraftId };
+  };
+
+  loadScript('editor-v2.js', sandbox);
   const E = sandbox.window.MiraEditorV2;
   assert.ok(E);
 
+  // Session A
+  PartnersApi.saveSession('a@example.com', 'token-A-aaaaaaaa');
   localStorage.setItem('mira_partner_id', 'partner-A');
-  localStorage.setItem('mira_partner_email', 'a@test.local');
-  await E.bootstrap({ id: 'partner-A', type: 'salon' });
-  assert.equal(E.state.enabled, true);
+  E.state.enabled = true;
+  E.state.registryReady = true;
+  E.state.registryMismatch = false;
+  E.state.partnerId = 'partner-A';
+  E.state.sessionEpoch = 1;
+  sessionStorage.setItem('mira_editor_v2_session_epoch', '1');
+  E.state.authGeneration = PartnersApi.authGeneration();
+  E.state.tokenFingerprint = PartnersApi.authTokenFingerprint();
 
-  const form = { id: 'serviceForm', querySelector: () => null };
-  let builtFor = null;
-  E.scheduleAutosave(form, () => {
-    builtFor = E.state.partnerId;
-    return {
-      clientDraftId: 'draft-A',
-      kind: 'service',
-      profileId: 'service.salon_hair_cut',
-      values: { nameAr: 'من حساب A' },
-      targetOwnerId: null,
-    };
-  });
-  assert.equal(timers.length, 1);
+  const form = {
+    id: 'catalogForm',
+    querySelector: () => null,
+    insertBefore: () => {},
+    firstChild: null,
+  };
 
-  // Switch account before timer fires
+  E.scheduleAutosave(form, () => ({
+    clientDraftId: 'draft-A',
+    kind: 'product',
+    profileId: 'product.clothes',
+    targetOwnerId: null,
+    values: { nameAr: 'منتج A' },
+  }));
+  assert.equal(sandbox.__timers.length, 1);
+
+  // Real auth path: B logs in via saveSession (clears partner id, bumps auth gen, cancels pending).
+  PartnersApi.saveSession('b@example.com', 'token-B-bbbbbbbb');
+  // Stale partner id must not remain authoritative; saveSession cleared it.
+  assert.equal(localStorage.getItem('mira_partner_id'), null);
+  // Simulate late metadata for B (after auth switch).
   localStorage.setItem('mira_partner_id', 'partner-B');
-  localStorage.setItem('mira_partner_email', 'b@test.local');
-  E.bumpEpoch('test-switch');
-  await E.bootstrap({ id: 'partner-B', type: 'salon' });
+  E.state.partnerId = 'partner-B';
+  E.state.enabled = true;
+  E.state.registryReady = true;
+  E.state.authGeneration = PartnersApi.authGeneration();
+  E.state.tokenFingerprint = PartnersApi.authTokenFingerprint();
 
-  // Fire leftover timer if any — should no-op or cancel
-  while (timers.length) {
-    const t = timers.shift();
-    await t.fn();
+  // Fire deferred A timer — must not send.
+  for (const fn of sandbox.__timers.splice(0)) {
+    await fn();
   }
+  assert.equal(calls.length, 0, 'A payload must not ride B session');
 
-  assert.equal(calls.length, 0, 'must not send A payload after switch to B');
-  assert.equal(builtFor, null);
-
-  // Stale response discard: schedule under B, capture snapshot, switch away before await resolves
+  // Stale response discard: schedule B, start flush, switch auth mid-flight.
   let resolvePut;
-  PartnersApi.putEditorDraft = () =>
-    new Promise((resolve) => {
-      resolvePut = () => resolve({ revision: 9 });
+  const putPromise = new Promise((r) => { resolvePut = r; });
+  PartnersApi.putEditorDraft = async (clientDraftId, payload) => {
+    calls.push({
+      phase: 'inflight',
+      clientDraftId,
+      token: localStorage.getItem('mira_partner_token'),
+      authGeneration: PartnersApi.authGeneration(),
     });
+    await putPromise;
+    return { revision: 2, clientDraftId };
+  };
+
   E.scheduleAutosave(form, () => ({
     clientDraftId: 'draft-B',
-    kind: 'service',
-    profileId: 'service.salon_hair_cut',
-    values: { nameAr: 'من حساب B' },
+    kind: 'product',
+    profileId: 'product.clothes',
+    values: { nameAr: 'منتج B' },
   }));
-  const flushPromise = (async () => {
-    while (timers.length) {
-      const t = timers.shift();
-      await t.fn();
-    }
-  })();
-  // switch before response
-  localStorage.setItem('mira_partner_id', 'partner-A');
-  E.bumpEpoch('switch-during-inflight');
-  resolvePut();
-  await flushPromise;
-  assert.equal(E.state.draftRevisionByClientId['draft-B'], undefined);
+  const flushP = E.flush(form);
+  // Switch to C while B request in flight via real saveSession.
+  PartnersApi.saveSession('c@example.com', 'token-C-cccccccc');
+  resolvePut({ revision: 2 });
+  const result = await flushP;
+  assert.equal(result.ok, false);
+  assert.ok(result.cancelled || result.reason === 'stale-response' || result.reason === 'auth-changed' || result.reason === 'aborted');
 
-  console.log(JSON.stringify({ ok: true, calls: calls.length }, null, 2));
+  console.log(JSON.stringify({ ok: true, calls: calls.filter((c) => c.clientDraftId === 'draft-A').length, totalCalls: calls.length }));
 }
 
-main().catch((error) => {
-  console.error(error);
+main().catch((e) => {
+  console.error(e);
   process.exit(1);
 });

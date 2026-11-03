@@ -5,6 +5,41 @@
     'https://mira-api-n4p3.onrender.com/api/v1',
   );
 
+  const AUTH_GEN_KEY = 'mira_auth_generation';
+
+  function readAuthGeneration() {
+    const n = Number(sessionStorage.getItem(AUTH_GEN_KEY) || '0');
+    return Number.isFinite(n) ? n : 0;
+  }
+
+  let authGeneration = readAuthGeneration();
+
+  function bumpAuthGeneration(reason) {
+    authGeneration = readAuthGeneration() + 1;
+    sessionStorage.setItem(AUTH_GEN_KEY, String(authGeneration));
+    try {
+      localStorage.removeItem('mira_partner_id');
+    } catch (e) {}
+    try {
+      window.dispatchEvent(
+        new CustomEvent('mira:auth-change', {
+          detail: {
+            reason: reason || 'auth',
+            authGeneration: authGeneration,
+            hasToken: !!localStorage.getItem('mira_partner_token'),
+          },
+        }),
+      );
+    } catch (e) {}
+    return authGeneration;
+  }
+
+  function authTokenFingerprint() {
+    const t = localStorage.getItem('mira_partner_token');
+    if (!t) return null;
+    return String(t.length) + ':' + t.slice(0, 16);
+  }
+
   function localApiBase(fallback) {
     const override = new URLSearchParams(location.search).get('api-base');
     const localPage = location.hostname === '127.0.0.1' || location.hostname === 'localhost';
@@ -25,31 +60,58 @@
     return new URLSearchParams(location.search).get('ui-fixture') === 'labeled';
   }
 
-  async function request(method, path, body, extraHeaders) {
-    if (labeledPreview()) {
-      throw new Error('محاكاة: لم يُرسل طلب ولم تُستخدم الجلسة');
+  function ApiError(message, meta) {
+    const err = new Error(message);
+    err.name = 'PartnersApiError';
+    if (meta) {
+      err.status = meta.status;
+      err.code = meta.code;
+      err.fieldErrors = meta.fieldErrors || null;
+      err.body = meta.body || null;
     }
+    return err;
+  }
+
+  async function request(method, path, body, extraHeaders, opts) {
+    if (labeledPreview()) {
+      throw ApiError('محاكاة: لم يُرسل طلب ولم تُستخدم الجلسة');
+    }
+    const signal = opts && opts.signal;
+    const tokenAtStart = localStorage.getItem('mira_partner_token');
+    const authGenAtStart = authGeneration;
     const res = await fetch(`${API_BASE}${path}`, {
       method,
       headers: {
         Accept: 'application/json',
         ...(body ? { 'Content-Type': 'application/json' } : {}),
-        ...extraHeaders,
+        ...(extraHeaders || {}),
         ...authHeaders(),
       },
       body: body ? JSON.stringify(body) : undefined,
+      signal: signal || undefined,
     });
+    if (
+      localStorage.getItem('mira_partner_token') !== tokenAtStart ||
+      authGeneration !== authGenAtStart
+    ) {
+      throw ApiError('تبديل جلسة أثناء الطلب — تُجاهل الاستجابة', { code: 'AUTH_CHANGED' });
+    }
     const data = await res.json().catch(() => ({}));
     if (!res.ok) {
       const msg = data.message || data.error || `HTTP ${res.status}`;
-      throw new Error(Array.isArray(msg) ? msg.join(' ') : msg);
+      throw ApiError(Array.isArray(msg) ? msg.join(' ') : msg, {
+        status: res.status,
+        code: data.code || null,
+        fieldErrors: data.fieldErrors || null,
+        body: data,
+      });
     }
     return data;
   }
 
   function requestProgress(method, path, body, hooks) {
     if (labeledPreview()) {
-      return Promise.reject(new Error('محاكاة: لم يُرسل طلب ولم تُستخدم الجلسة'));
+      return Promise.reject(ApiError('محاكاة: لم يُرسل طلب ولم تُستخدم الجلسة'));
     }
     const notify = hooks || {};
     return new Promise((resolve, reject) => {
@@ -82,7 +144,12 @@
         try { data = JSON.parse(xhr.responseText || '{}'); } catch (error) { data = {}; }
         if (xhr.status < 200 || xhr.status >= 300) {
           const msg = data.message || data.error || `HTTP ${xhr.status}`;
-          fail(new Error(Array.isArray(msg) ? msg.join(' ') : msg));
+          fail(ApiError(Array.isArray(msg) ? msg.join(' ') : msg, {
+            status: xhr.status,
+            code: data.code || null,
+            fieldErrors: data.fieldErrors || null,
+            body: data,
+          }));
           return;
         }
         resolve(data);
@@ -145,28 +212,29 @@
       request('POST', `/partners/me/commerce/bookings/${id}/transition`, body),
     track: (payload) =>
       request('POST', '/partners-portal/track', payload),
-    registry: () => request('GET', '/partners-portal/registry'),
-    listEditorDrafts: (query) =>
-      request('GET', `/partners-portal/editor-drafts${query ? '?' + query : ''}`),
-    getEditorDraft: (clientDraftId) =>
-      request('GET', `/partners-portal/editor-drafts/${encodeURIComponent(clientDraftId)}`),
-    putEditorDraft: (clientDraftId, payload) =>
-      request('PUT', `/partners-portal/editor-drafts/${encodeURIComponent(clientDraftId)}`, payload),
-    discardEditorDraft: (clientDraftId) =>
-      request('DELETE', `/partners-portal/editor-drafts/${encodeURIComponent(clientDraftId)}`),
-    materializeEditorDraft: (clientDraftId, payload, idempotencyKey) =>
+    registry: (opts) => request('GET', '/partners-portal/registry', null, null, opts),
+    listEditorDrafts: (query, opts) =>
+      request('GET', `/partners-portal/editor-drafts${query ? '?' + query : ''}`, null, null, opts),
+    getEditorDraft: (clientDraftId, opts) =>
+      request('GET', `/partners-portal/editor-drafts/${encodeURIComponent(clientDraftId)}`, null, null, opts),
+    putEditorDraft: (clientDraftId, payload, opts) =>
+      request('PUT', `/partners-portal/editor-drafts/${encodeURIComponent(clientDraftId)}`, payload, null, opts),
+    discardEditorDraft: (clientDraftId, opts) =>
+      request('DELETE', `/partners-portal/editor-drafts/${encodeURIComponent(clientDraftId)}`, null, null, opts),
+    materializeEditorDraft: (clientDraftId, payload, idempotencyKey, opts) =>
       request(
         'POST',
         `/partners-portal/editor-drafts/${encodeURIComponent(clientDraftId)}/materialize`,
         payload,
         { 'Idempotency-Key': idempotencyKey },
+        opts,
       ),
-    getServiceProfile: (id) =>
-      request('GET', `/partners-portal/services/${encodeURIComponent(id)}/service-profile`),
-    putServiceProfile: (id, payload) =>
-      request('PUT', `/partners-portal/services/${encodeURIComponent(id)}/service-profile`, payload),
-    importLocalTemplate: (id, payload) =>
-      request('POST', `/partners-portal/services/${encodeURIComponent(id)}/import-local-template`, payload),
+    getServiceProfile: (id, opts) =>
+      request('GET', `/partners-portal/services/${encodeURIComponent(id)}/service-profile`, null, null, opts),
+    putServiceProfile: (id, payload, opts) =>
+      request('PUT', `/partners-portal/services/${encodeURIComponent(id)}/service-profile`, payload, null, opts),
+    importLocalTemplate: (id, payload, opts) =>
+      request('POST', `/partners-portal/services/${encodeURIComponent(id)}/import-local-template`, payload, null, opts),
     adminList: (adminKey, status) =>
       request(
         'GET',
@@ -182,13 +250,20 @@
       request('POST', `/partners-portal/admin/applications/${id}/reject`, { reason }, {
         'X-Admin-Key': adminKey,
       }),
+    authGeneration: () => authGeneration,
+    authTokenFingerprint: authTokenFingerprint,
+    bumpAuthGeneration: bumpAuthGeneration,
     saveSession: (email, token) => {
+      // Cancel/isolate before writing the new token so pending A work cannot ride B's session.
+      bumpAuthGeneration('saveSession');
       localStorage.setItem('mira_partner_email', email);
       localStorage.setItem('mira_partner_token', token);
     },
     clearSession: () => {
+      bumpAuthGeneration('clearSession');
       localStorage.removeItem('mira_partner_email');
       localStorage.removeItem('mira_partner_token');
+      try { localStorage.removeItem('mira_partner_id'); } catch (e) {}
     },
     isLoggedIn: () => !!localStorage.getItem('mira_partner_token'),
   };
