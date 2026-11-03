@@ -22,7 +22,7 @@
     "dev": "bash scripts/stop-port.sh && bash scripts/dev.sh",
     "test:commerce": "tsx src/marketplace/commerce.types.schema-tests.ts && tsx src/marketplace/commerce-public.schema-tests.ts && tsx src/marketplace/commerce.service.schema-tests.ts && tsx src/marketplace/commerce.concurrency.schema-tests.ts && tsx src/marketplace/commerce.create-service-atomic.schema-tests.ts && tsx src/marketplace/commerce.lost-update.schema-tests.ts && tsx src/marketplace/commerce.lock-protocol.schema-tests.ts && tsx src/marketplace/commerce.http.integration-tests.ts",
     "test:commerce-pure": "tsx src/marketplace/commerce.types.schema-tests.ts && tsx src/marketplace/commerce-public.schema-tests.ts",
-    "test:catalog-media-recovery": "tsx src/marketplace/catalog-media.http.schema-tests.ts && tsx src/marketplace/catalog-media.recovery.schema-tests.ts",
+    "test:catalog-media-recovery": "tsx src/marketplace/catalog-media.http.schema-tests.ts && tsx src/marketplace/catalog-media.recovery.schema-tests.ts && tsx src/marketplace/catalog-media.s3.open-lifetime-tests.ts",
     "test:vision-schema": "npm run build && node dist/vision/schema/fashion-vision-document.schema-tests.js",
     "test:vision-geometry": "npm run build && node dist/vision/providers/fashn-geometry.schema-tests.js",
     "test:vision-degraded": "npm run build && node dist/vision/degraded-geometry.schema-tests.js",

@@ -1,0 +1,74 @@
+{
+  "bucket": "mira-catalog-media",
+  "accountId": "23b91d3644ea2baa80d9ffcb6062d0d8",
+  "objectCount": 11,
+  "totalBytes": 89520871,
+  "objects": [
+    {
+      "key": "025cc6f3-dc46-4112-9622-d30248a7bedd",
+      "size": 2046793,
+      "last_modified": "2026-10-19T23:01:57.313Z",
+      "etag": "3f6883047fc782747d71e4712b0ccfa4"
+    },
+    {
+      "key": "17f48809-3c74-4d0b-9a11-201323166143",
+      "size": 4114301,
+      "last_modified": "2026-10-19T23:07:26.132Z",
+      "etag": "e55c234f5784fb4a4d1bdb7dc2bf4d38"
+    },
+    {
+      "key": "2f459cc6-688b-49c0-ac5d-8371e4288a43",
+      "size": 4080629,
+      "last_modified": "2026-10-19T22:54:28.679Z",
+      "etag": "24099d1087b2f9420a8a8213300aa6a0"
+    },
+    {
+      "key": "3a851226-7a35-4442-9e70-e40e438edb10",
+      "size": 2223138,
+      "last_modified": "2026-10-19T22:58:52.078Z",
+      "etag": "9f591ad28f556458c70f4df13a397469"
+    },
+    {
+      "key": "4a26a640-5bee-488a-9fe4-9582bf4fca0f",
+      "size": 2154752,
+      "last_modified": "2026-10-19T13:54:46.385Z",
+      "etag": "cffd9d26caf3f8895b5c39b75d467406"
+    },
+    {
+      "key": "73f435f4-497d-4d96-ad78-188f53a02e33",
+      "size": 1835865,
+      "last_modified": "2026-10-19T17:55:50.028Z",
+      "etag": "6d9ebfe610109b9f8cc897c1aa988572"
+    },
+    {
+      "key": "7505ea0e-2204-40b8-b2ba-50147f732572",
+      "size": 4933713,
+      "last_modified": "2026-10-19T23:00:30.420Z",
+      "etag": "87819e31270d1fd596bea2f699538723"
+    },
+    {
+      "key": "91b46dbf-50f0-4da3-9527-b3d4837b3aeb",
+      "size": 18295313,
+      "last_modified": "2026-10-19T22:57:22.846Z",
+      "etag": "9ffa70158f342842ebe6bee282af8dbc"
+    },
+    {
+      "key": "9310f74a-81cc-4613-a77e-6da2d3a22fb6",
+      "size": 41646481,
+      "last_modified": "2026-10-19T22:52:41.407Z",
+      "etag": "f0233114716fe863ff3de1faf0fb75d8"
+    },
+    {
+      "key": "bf554e31-c96b-4d5a-880e-b6cdece33f06",
+      "size": 6438819,
+      "last_modified": "2026-10-19T22:50:30.964Z",
+      "etag": "043542b055a3fa145493058eff81cc1c"
+    },
+    {
+      "key": "fee7e9ca-6540-4b08-a185-894ac8280209",
+      "size": 1751067,
+      "last_modified": "2026-10-19T17:59:41.046Z",
+      "etag": "9213b760de27d8c05e4d25659325cd24"
+    }
+  ]
+}

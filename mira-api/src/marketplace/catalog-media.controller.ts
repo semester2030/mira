@@ -7,6 +7,7 @@ import {
   Param,
   Req,
   Res,
+  ServiceUnavailableException,
   StreamableFile,
 } from '@nestjs/common';
 import type { Request, Response } from 'express';
@@ -15,7 +16,9 @@ import { playbackContentType } from './catalog-media.http';
 import {
   CatalogMediaConnectionError,
   CatalogMediaPermissionError,
+  CatalogMediaReadError,
   CatalogMediaStorage,
+  CatalogMediaUnavailable,
 } from './catalog-media.storage';
 
 @Controller('marketplace')
@@ -29,7 +32,7 @@ export class CatalogMediaController {
   async published(
     @Param('id') id: string,
     @Headers('range') range: string | undefined,
-    @Req() req: Request,
+    @Req() _req: Request,
     @Res({ passthrough: true }) res: Response,
   ) {
     const row = await this.prisma.catalogMedia.findFirst({
@@ -52,9 +55,14 @@ export class CatalogMediaController {
     if (!owner) throw new NotFoundException('الوسيط غير منشور');
 
     const keyHint = row.storageKey.slice(0, 12);
+    // Abort only when the response connection drops before completion.
+    // req 'close' can fire when the request body/headers are done while the
+    // response stream is still transferring — that must not cancel playback.
     const ac = new AbortController();
-    const onClose = () => ac.abort();
-    req.on('close', onClose);
+    let responseCompleted = false;
+    const onResponseClose = () => {
+      if (!responseCompleted) ac.abort();
+    };
 
     let opened;
     try {
@@ -63,22 +71,31 @@ export class CatalogMediaController {
         signal: ac.signal,
       });
     } catch (error) {
-      req.off('close', onClose);
-      if (error instanceof CatalogMediaPermissionError) {
-        console.error('catalog-media-permission', `id=${id} key=${keyHint}…`);
-      } else if (error instanceof CatalogMediaConnectionError) {
-        console.error('catalog-media-connection-failed', `id=${id} key=${keyHint}…`);
-      } else if ((error as { name?: string })?.name === 'AbortError') {
+      if ((error as { name?: string })?.name === 'AbortError') {
         console.error('catalog-media-client-aborted', `id=${id} key=${keyHint}…`);
         return;
-      } else {
-        console.error('catalog-media-read-failed', `id=${id} key=${keyHint}…`);
       }
-      throw new NotFoundException('الوسيط غير منشور');
+      if (error instanceof CatalogMediaPermissionError) {
+        console.error('catalog-media-permission', `id=${id} key=${keyHint}…`);
+        throw new ServiceUnavailableException('تعذر الوصول إلى تخزين الوسائط');
+      }
+      if (error instanceof CatalogMediaConnectionError) {
+        console.error('catalog-media-connection-failed', `id=${id} key=${keyHint}…`);
+        throw new ServiceUnavailableException('تعذر الاتصال بتخزين الوسائط');
+      }
+      if (error instanceof CatalogMediaUnavailable) {
+        console.error('catalog-media-durable-unconfigured', `id=${id} key=${keyHint}…`);
+        throw new ServiceUnavailableException('تخزين الوسائط الدائم غير مهيأ');
+      }
+      if (error instanceof CatalogMediaReadError) {
+        console.error('catalog-media-read-failed', `id=${id} key=${keyHint}…`);
+        throw new ServiceUnavailableException('تعذر قراءة ملف الوسائط');
+      }
+      console.error('catalog-media-read-failed', `id=${id} key=${keyHint}…`);
+      throw new ServiceUnavailableException('تعذر قراءة ملف الوسائط');
     }
 
     if (!opened) {
-      req.off('close', onClose);
       console.error(
         'catalog-media-missing',
         `id=${id} key=${keyHint}… bytes=${row.byteSize ?? 'n/a'}`,
@@ -88,7 +105,6 @@ export class CatalogMediaController {
 
     res.setHeader('Accept-Ranges', 'bytes');
     if (opened.status === 416) {
-      req.off('close', onClose);
       res.status(416);
       res.setHeader('Content-Range', opened.contentRange);
       return new StreamableFile(Buffer.alloc(0), {
@@ -108,12 +124,17 @@ export class CatalogMediaController {
       if (opened.contentRange) res.setHeader('Content-Range', opened.contentRange);
     }
 
-    const cleanup = () => {
-      req.off('close', onClose);
+    const release = () => {
+      res.off('close', onResponseClose);
+      res.off('finish', onResponseFinish);
       opened.abort?.();
     };
-    res.on('close', cleanup);
-    res.on('finish', cleanup);
+    const onResponseFinish = () => {
+      responseCompleted = true;
+      release();
+    };
+    res.on('close', onResponseClose);
+    res.on('finish', onResponseFinish);
 
     return new StreamableFile(opened.body as never, {
       type,

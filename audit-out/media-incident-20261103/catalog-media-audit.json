@@ -1,0 +1,148 @@
+{
+  "asOf": "2026-11-03T13:58:00Z",
+  "method": "render-postgres-readonly + cloudflare-r2-list (no S3 keys; API path incomplete-credentials)",
+  "store": "s3",
+  "bucket": "mira-catalog-media",
+  "endpointHost": "https://23b91d3644ea2baa80d9ffcb6062d0d8.r2.cloudflarestorage.com",
+  "region": "auto",
+  "bucketAccess": {
+    "ok": true,
+    "via": "cloudflare-api-list-objects",
+    "objectCount": 11,
+    "totalBytes": 89520871,
+    "apiS3Path": "incomplete-credentials"
+  },
+  "db": {
+    "mediaTotal": 72,
+    "published": 72,
+    "video": 34,
+    "image": 38,
+    "productOwners": 24,
+    "serviceOwners": 3
+  },
+  "objectJoin": {
+    "present": 10,
+    "missing": 62,
+    "unknown": 0,
+    "orphanObjectCount": 1,
+    "sizeMatchOnPresent": true
+  },
+  "publicCatalog": {
+    "items": 23,
+    "mediaLinks": 42,
+    "video": 12,
+    "image": 30,
+    "http404": 42,
+    "ok2xx": 0
+  },
+  "live": {
+    "serviceId": "srv-d85ngcfavr4c73d3rk6g",
+    "deployId": "dep-dbjbq0ivcj2c73erc29g",
+    "commit": "9f8f61c716cdf6ccf57fda4ed61098f551bbfe58",
+    "streamingFixCommit": "6471cf2",
+    "logSignal": "catalog-media-durable-unconfigured incomplete"
+  },
+  "presentRows": [
+    {
+      "mediaId": "38f83110-07ae-450e-9299-04ed12bf61f1",
+      "ownerId": "ca2d4f94-0bf5-4f8b-89f0-4936cc02f941",
+      "ownerKind": "service",
+      "storageKey": "4a26a640-5bee-488a-9fe4-9582bf4fca0f",
+      "bucket": "mira-catalog-media",
+      "objectPresence": "present",
+      "expectedBytes": 2154752,
+      "actualBytes": 2154752,
+      "sizeMatch": true,
+      "publication": "published",
+      "ownerPubliclyReadable": true,
+      "readProbe": "404-mapped (provider incomplete)"
+    },
+    {
+      "mediaId": "a8063d0a-b239-47f9-8ade-833f171b92b3",
+      "ownerId": "9cdd3eb5-bca8-4f5a-9ee1-7adc40e1ad3a",
+      "ownerKind": "product",
+      "storageKey": "73f435f4-497d-4d96-ad78-188f53a02e33",
+      "objectPresence": "present",
+      "expectedBytes": 1835865,
+      "actualBytes": 1835865,
+      "sizeMatch": true,
+      "publication": "published",
+      "ownerPubliclyReadable": false,
+      "ownerContentStatus": "withdrawn"
+    },
+    {
+      "mediaId": "c92a49a6-0f3c-43ea-8605-8f83b4e0db67",
+      "storageKey": "fee7e9ca-6540-4b08-a185-894ac8280209",
+      "objectPresence": "present",
+      "sizeMatch": true,
+      "ownerPubliclyReadable": false,
+      "ownerContentStatus": "withdrawn"
+    },
+    {
+      "mediaId": "1b288893-b287-4bd9-9eb0-d434ba3e3e9c",
+      "storageKey": "bf554e31-c96b-4d5a-880e-b6cdece33f06",
+      "objectPresence": "present",
+      "sizeMatch": true,
+      "ownerPubliclyReadable": false,
+      "ownerContentStatus": "withdrawn"
+    },
+    {
+      "mediaId": "903877f3-ef1f-4d8b-90c8-7c1ee35086d1",
+      "storageKey": "9310f74a-81cc-4613-a77e-6da2d3a22fb6",
+      "objectPresence": "present",
+      "sizeMatch": true,
+      "ownerPubliclyReadable": false,
+      "ownerContentStatus": "withdrawn"
+    },
+    {
+      "mediaId": "2c2a03bd-1605-4c7f-8ab5-46b64332132e",
+      "storageKey": "2f459cc6-688b-49c0-ac5d-8371e4288a43",
+      "objectPresence": "present",
+      "sizeMatch": true,
+      "ownerPubliclyReadable": false,
+      "ownerContentStatus": "withdrawn"
+    },
+    {
+      "mediaId": "85d8cc01-6038-4b27-8eb8-f8f565de83b2",
+      "storageKey": "3a851226-7a35-4442-9e70-e40e438edb10",
+      "objectPresence": "present",
+      "sizeMatch": true,
+      "ownerPubliclyReadable": false,
+      "ownerContentStatus": "withdrawn"
+    },
+    {
+      "mediaId": "049e987c-4806-45c2-b5a5-7cbf6e5022eb",
+      "storageKey": "7505ea0e-2204-40b8-b2ba-50147f732572",
+      "objectPresence": "present",
+      "sizeMatch": true,
+      "ownerPubliclyReadable": false,
+      "ownerContentStatus": "withdrawn"
+    },
+    {
+      "mediaId": "c8601a5f-bd73-49b6-987b-61af7ada7464",
+      "storageKey": "025cc6f3-dc46-4112-9622-d30248a7bedd",
+      "objectPresence": "present",
+      "sizeMatch": true,
+      "ownerPubliclyReadable": false,
+      "ownerContentStatus": "withdrawn"
+    },
+    {
+      "mediaId": "44ef4b86-efcb-4dca-925c-8def5535aecb",
+      "storageKey": "17f48809-3c74-4d0b-9a11-201323166143",
+      "objectPresence": "present",
+      "sizeMatch": true,
+      "ownerPubliclyReadable": false,
+      "ownerContentStatus": "withdrawn"
+    }
+  ],
+  "orphanObjects": [
+    {
+      "key": "91b46dbf-50f0-4da3-9527-b3d4837b3aeb",
+      "size": 18295313
+    }
+  ],
+  "needsReupload": {
+    "dbRowsMissingObject": 62,
+    "publicCatalogMediaIds": "see RESTORE_MAP.json publicCatalogNeedsReuploadMediaIds (42)"
+  }
+}

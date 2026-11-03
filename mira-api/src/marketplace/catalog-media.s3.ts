@@ -35,6 +35,8 @@ export interface S3AdapterDependencies {
 
 export const DEFAULT_S3_TIMEOUT_MS = 10_000;
 export const MAX_S3_TIMEOUT_MS = 120_000;
+/** Allow Range body delivery after GetObject headers return (open keeps the client alive). */
+export const STREAM_BODY_TIMEOUT_MS = 600_000;
 
 export type EndpointRejection = 'invalid' | 'protocol' | 'credentials' | 'path' | 'query' | 'hash' | 'http-forbidden';
 
@@ -161,6 +163,10 @@ export class S3CompatibleCatalogMediaStorage extends CatalogMediaStorage {
   /**
    * True Range GET against R2/S3 — does not buffer the whole object into RSS.
    * Uses HeadObject for total size, then GetObject with Range for the slice.
+   *
+   * Unlike put/get/head, open must NOT destroy the S3 client in a finally-around-
+   * send: the Body stream still needs the HTTP connection. Client lifetime is
+   * tied to stream end/error/close or explicit abort().
    */
   async open(
     key: string,
@@ -173,51 +179,80 @@ export class S3CompatibleCatalogMediaStorage extends CatalogMediaStorage {
       return { status: 416, totalSize: plan.total, contentRange: plan.contentRange };
     }
 
+    this.assertReady();
+    const external = options.signal;
+    if (external?.aborted) {
+      throw Object.assign(new Error('aborted'), { name: 'AbortError' });
+    }
+
+    const client = this.createClient({ streamBody: true });
+    const controller = new AbortController();
+    const onExternalAbort = () => controller.abort();
+    if (external) {
+      external.addEventListener('abort', onExternalAbort, { once: true });
+    }
+
     try {
-      return await this.execute('read', async (client, signal) => {
-        const external = options.signal;
-        const combined = external
-          ? AbortSignal.any([signal, external])
-          : signal;
-        const rangeValue = `bytes=${plan.start}-${plan.end}`;
-        const output = await client.send(new GetObjectCommand({
-          Bucket: this.settings.bucket,
-          Key: key,
-          Range: rangeValue,
-        }), { abortSignal: combined });
-        const body = output.Body as Readable | undefined;
-        if (!body || typeof (body as Readable).pipe !== 'function') {
-          console.error('catalog-media-read-failed');
-          throw new CatalogMediaReadError();
+      const rangeValue = `bytes=${plan.start}-${plan.end}`;
+      const output = await client.send(new GetObjectCommand({
+        Bucket: this.settings.bucket,
+        Key: key,
+        Range: rangeValue,
+      }), { abortSignal: controller.signal });
+      const body = output.Body as Readable | undefined;
+      if (!body || typeof (body as Readable).pipe !== 'function') {
+        console.error('catalog-media-read-failed');
+        throw new CatalogMediaReadError();
+      }
+
+      let released = false;
+      const release = () => {
+        if (released) return;
+        released = true;
+        external?.removeEventListener('abort', onExternalAbort);
+        try {
+          body.destroy?.();
+        } catch {
+          /* ignore */
         }
-        const abort = () => {
-          try {
-            (body as Readable).destroy?.();
-          } catch {
-            /* ignore */
-          }
-        };
-        if (combined.aborted) {
-          abort();
-          throw Object.assign(new Error('aborted'), { name: 'AbortError' });
-        }
-        combined.addEventListener('abort', abort, { once: true });
-        return {
-          status: plan.status,
-          totalSize: plan.total,
-          contentLength: plan.contentLength,
-          contentRange: plan.contentRange,
-          contentType: output.ContentType || meta.contentType,
-          body: body as Readable,
-          abort: () => {
-            combined.removeEventListener('abort', abort);
-            abort();
-          },
-        };
-      });
+        client.destroy();
+      };
+
+      if (controller.signal.aborted || external?.aborted) {
+        release();
+        throw Object.assign(new Error('aborted'), { name: 'AbortError' });
+      }
+      controller.signal.addEventListener('abort', release, { once: true });
+      body.once('end', release);
+      body.once('error', release);
+      body.once('close', release);
+
+      return {
+        status: plan.status,
+        totalSize: plan.total,
+        contentLength: plan.contentLength,
+        contentRange: plan.contentRange,
+        contentType: output.ContentType || meta.contentType,
+        body,
+        abort: release,
+      };
     } catch (error) {
+      external?.removeEventListener('abort', onExternalAbort);
+      client.destroy();
       if (error instanceof MissingObject) return null;
-      throw error;
+      if (isAbort(error) || controller.signal.aborted || external?.aborted) {
+        throw Object.assign(new Error('aborted'), { name: 'AbortError' });
+      }
+      if (
+        error instanceof CatalogMediaConnectionError
+        || error instanceof CatalogMediaReadError
+        || error instanceof CatalogMediaPermissionError
+        || error instanceof CatalogMediaUnavailable
+      ) {
+        throw error;
+      }
+      if (isMissing(error)) return null;
+      throw this.classify(error, 'read');
     }
   }
 
@@ -258,11 +293,16 @@ export class S3CompatibleCatalogMediaStorage extends CatalogMediaStorage {
     }
   }
 
-  private createClient(): S3Client {
+  /** Full-response ops (put/get/head/delete). Streaming open uses createClient({ streamBody: true }). */
+  private createClient(options: { streamBody?: boolean } = {}): S3Client {
     const timeout = this.dependencies.timeoutMs ?? DEFAULT_S3_TIMEOUT_MS;
+    // Body streaming outlives the command promise; a short requestTimeout resets the socket mid-play.
+    const requestTimeout = options.streamBody
+      ? Math.max(timeout, STREAM_BODY_TIMEOUT_MS)
+      : timeout;
     const handler = new GuardedHandler(new NodeHttpHandler({
       connectionTimeout: timeout,
-      requestTimeout: timeout,
+      requestTimeout,
       throwOnRequestTimeout: true,
       httpsAgent: this.dependencies.httpsAgent,
     }), this.dependencies.tamperSignature === true);

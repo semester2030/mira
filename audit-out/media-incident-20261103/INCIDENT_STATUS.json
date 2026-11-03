@@ -1,0 +1,36 @@
+{
+  "asOf": "2026-11-03T13:58:00Z",
+  "closed": false,
+  "reviewedCommit": "fc762b2dde31f4daa62037323e85c31adf371433",
+  "originMain": "9f8f61c716cdf6ccf57fda4ed61098f551bbfe58",
+  "liveDeploy": "dep-dbjbq0ivcj2c73erc29g",
+  "attachments": {
+    "catalog-media-recovery.patch": "SANDBOX_UNREACHABLE; reconstructed at docs/catalog-media-recovery.patch; already on main",
+    "audit-catalog-media.cjs": "PRESENT mira-api/scripts/audit-catalog-media.cjs"
+  },
+  "publicBaseline": {
+    "catalogItems": 23,
+    "mediaLinks": 42,
+    "video": 12,
+    "image": 30,
+    "http404": 42,
+    "ok2xx": 0
+  },
+  "r2Bucket": {
+    "name": "mira-catalog-media",
+    "objectCount": 11,
+    "totalBytes": 89520871
+  },
+  "join": {
+    "present": 10,
+    "missing": 62,
+    "publiclyPlayableAfterKeys": 1,
+    "presentButOwnerWithdrawn": 9
+  },
+  "blocker": "MIRA_MEDIA_S3_ACCESS_KEY_ID + MIRA_MEDIA_S3_SECRET_ACCESS_KEY missing on mira-api",
+  "streamingFix": {
+    "status": "LIVE_ON_PRODUCTION",
+    "commit": "6471cf2",
+    "tests": "PASS"
+  }
+}

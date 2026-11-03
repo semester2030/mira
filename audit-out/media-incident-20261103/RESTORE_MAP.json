@@ -1,0 +1,238 @@
+{
+  "bucket": "mira-catalog-media",
+  "r2ObjectCount": 11,
+  "dbMediaTotal": 72,
+  "dbRowsPresentInR2": 10,
+  "dbRowsMissingInR2": 62,
+  "r2OrphanKey": "91b46dbf-50f0-4da3-9527-b3d4837b3aeb",
+  "recoverableObjectPresent": [
+    {
+      "mediaId": "38f83110-07ae-450e-9299-04ed12bf61f1",
+      "ownerKind": "service",
+      "ownerId": "ca2d4f94-0bf5-4f8b-89f0-4936cc02f941",
+      "storageKey": "4a26a640-5bee-488a-9fe4-9582bf4fca0f",
+      "bytes": 2154752,
+      "publiclyReadableOwner": true
+    },
+    {
+      "mediaId": "a8063d0a-b239-47f9-8ade-833f171b92b3",
+      "ownerKind": "product",
+      "ownerId": "9cdd3eb5-bca8-4f5a-9ee1-7adc40e1ad3a",
+      "storageKey": "73f435f4-497d-4d96-ad78-188f53a02e33",
+      "bytes": 1835865,
+      "publiclyReadableOwner": false,
+      "ownerContentStatus": "withdrawn"
+    },
+    {
+      "mediaId": "c92a49a6-0f3c-43ea-8605-8f83b4e0db67",
+      "ownerKind": "product",
+      "ownerId": "abd3948c-8825-473a-b055-59961b8ed8a9",
+      "storageKey": "fee7e9ca-6540-4b08-a185-894ac8280209",
+      "bytes": 1751067,
+      "publiclyReadableOwner": false,
+      "ownerContentStatus": "withdrawn"
+    },
+    {
+      "mediaId": "1b288893-b287-4bd9-9eb0-d434ba3e3e9c",
+      "ownerKind": "product",
+      "ownerId": "82b507ec-f438-4d58-b905-9966322113a1",
+      "storageKey": "bf554e31-c96b-4d5a-880e-b6cdece33f06",
+      "bytes": 6438819,
+      "publiclyReadableOwner": false,
+      "ownerContentStatus": "withdrawn"
+    },
+    {
+      "mediaId": "903877f3-ef1f-4d8b-90c8-7c1ee35086d1",
+      "ownerKind": "product",
+      "ownerId": "aaa640b3-3648-4c31-ba29-4a5ef0c970a9",
+      "storageKey": "9310f74a-81cc-4613-a77e-6da2d3a22fb6",
+      "bytes": 41646481,
+      "publiclyReadableOwner": false,
+      "ownerContentStatus": "withdrawn"
+    },
+    {
+      "mediaId": "2c2a03bd-1605-4c7f-8ab5-46b64332132e",
+      "ownerKind": "product",
+      "ownerId": "28162e62-5434-4429-85a5-23d5c5b06386",
+      "storageKey": "2f459cc6-688b-49c0-ac5d-8371e4288a43",
+      "bytes": 4080629,
+      "publiclyReadableOwner": false,
+      "ownerContentStatus": "withdrawn"
+    },
+    {
+      "mediaId": "85d8cc01-6038-4b27-8eb8-f8f565de83b2",
+      "ownerKind": "product",
+      "ownerId": "79ed133a-b8f9-46cc-9ca9-b6c985810912",
+      "storageKey": "3a851226-7a35-4442-9e70-e40e438edb10",
+      "bytes": 2223138,
+      "publiclyReadableOwner": false,
+      "ownerContentStatus": "withdrawn"
+    },
+    {
+      "mediaId": "049e987c-4806-45c2-b5a5-7cbf6e5022eb",
+      "ownerKind": "product",
+      "ownerId": "adbea8c8-e303-48fa-a4c1-df1bd7edd028",
+      "storageKey": "7505ea0e-2204-40b8-b2ba-50147f732572",
+      "bytes": 4933713,
+      "publiclyReadableOwner": false,
+      "ownerContentStatus": "withdrawn"
+    },
+    {
+      "mediaId": "c8601a5f-bd73-49b6-987b-61af7ada7464",
+      "ownerKind": "product",
+      "ownerId": "6aa6aa55-7cca-4e42-96b9-8258a43fa71f",
+      "storageKey": "025cc6f3-dc46-4112-9622-d30248a7bedd",
+      "bytes": 2046793,
+      "publiclyReadableOwner": false,
+      "ownerContentStatus": "withdrawn"
+    },
+    {
+      "mediaId": "44ef4b86-efcb-4dca-925c-8def5535aecb",
+      "ownerKind": "product",
+      "ownerId": "cbf44de6-ea19-41e8-9507-7e43e337dd12",
+      "storageKey": "17f48809-3c74-4d0b-9a11-201323166143",
+      "bytes": 4114301,
+      "publiclyReadableOwner": false,
+      "ownerContentStatus": "withdrawn"
+    }
+  ],
+  "publiclyPlayableAfterCredentials": [
+    {
+      "mediaId": "38f83110-07ae-450e-9299-04ed12bf61f1",
+      "ownerKind": "service",
+      "ownerId": "ca2d4f94-0bf5-4f8b-89f0-4936cc02f941",
+      "storageKey": "4a26a640-5bee-488a-9fe4-9582bf4fca0f",
+      "bytes": 2154752,
+      "publiclyReadableOwner": true
+    }
+  ],
+  "objectPresentButOwnerWithdrawn": [
+    {
+      "mediaId": "a8063d0a-b239-47f9-8ade-833f171b92b3",
+      "ownerKind": "product",
+      "ownerId": "9cdd3eb5-bca8-4f5a-9ee1-7adc40e1ad3a",
+      "storageKey": "73f435f4-497d-4d96-ad78-188f53a02e33",
+      "bytes": 1835865,
+      "publiclyReadableOwner": false,
+      "ownerContentStatus": "withdrawn"
+    },
+    {
+      "mediaId": "c92a49a6-0f3c-43ea-8605-8f83b4e0db67",
+      "ownerKind": "product",
+      "ownerId": "abd3948c-8825-473a-b055-59961b8ed8a9",
+      "storageKey": "fee7e9ca-6540-4b08-a185-894ac8280209",
+      "bytes": 1751067,
+      "publiclyReadableOwner": false,
+      "ownerContentStatus": "withdrawn"
+    },
+    {
+      "mediaId": "1b288893-b287-4bd9-9eb0-d434ba3e3e9c",
+      "ownerKind": "product",
+      "ownerId": "82b507ec-f438-4d58-b905-9966322113a1",
+      "storageKey": "bf554e31-c96b-4d5a-880e-b6cdece33f06",
+      "bytes": 6438819,
+      "publiclyReadableOwner": false,
+      "ownerContentStatus": "withdrawn"
+    },
+    {
+      "mediaId": "903877f3-ef1f-4d8b-90c8-7c1ee35086d1",
+      "ownerKind": "product",
+      "ownerId": "aaa640b3-3648-4c31-ba29-4a5ef0c970a9",
+      "storageKey": "9310f74a-81cc-4613-a77e-6da2d3a22fb6",
+      "bytes": 41646481,
+      "publiclyReadableOwner": false,
+      "ownerContentStatus": "withdrawn"
+    },
+    {
+      "mediaId": "2c2a03bd-1605-4c7f-8ab5-46b64332132e",
+      "ownerKind": "product",
+      "ownerId": "28162e62-5434-4429-85a5-23d5c5b06386",
+      "storageKey": "2f459cc6-688b-49c0-ac5d-8371e4288a43",
+      "bytes": 4080629,
+      "publiclyReadableOwner": false,
+      "ownerContentStatus": "withdrawn"
+    },
+    {
+      "mediaId": "85d8cc01-6038-4b27-8eb8-f8f565de83b2",
+      "ownerKind": "product",
+      "ownerId": "79ed133a-b8f9-46cc-9ca9-b6c985810912",
+      "storageKey": "3a851226-7a35-4442-9e70-e40e438edb10",
+      "bytes": 2223138,
+      "publiclyReadableOwner": false,
+      "ownerContentStatus": "withdrawn"
+    },
+    {
+      "mediaId": "049e987c-4806-45c2-b5a5-7cbf6e5022eb",
+      "ownerKind": "product",
+      "ownerId": "adbea8c8-e303-48fa-a4c1-df1bd7edd028",
+      "storageKey": "7505ea0e-2204-40b8-b2ba-50147f732572",
+      "bytes": 4933713,
+      "publiclyReadableOwner": false,
+      "ownerContentStatus": "withdrawn"
+    },
+    {
+      "mediaId": "c8601a5f-bd73-49b6-987b-61af7ada7464",
+      "ownerKind": "product",
+      "ownerId": "6aa6aa55-7cca-4e42-96b9-8258a43fa71f",
+      "storageKey": "025cc6f3-dc46-4112-9622-d30248a7bedd",
+      "bytes": 2046793,
+      "publiclyReadableOwner": false,
+      "ownerContentStatus": "withdrawn"
+    },
+    {
+      "mediaId": "44ef4b86-efcb-4dca-925c-8def5535aecb",
+      "ownerKind": "product",
+      "ownerId": "cbf44de6-ea19-41e8-9507-7e43e337dd12",
+      "storageKey": "17f48809-3c74-4d0b-9a11-201323166143",
+      "bytes": 4114301,
+      "publiclyReadableOwner": false,
+      "ownerContentStatus": "withdrawn"
+    }
+  ],
+  "publicCatalogNeedsReuploadCount": 42,
+  "publicCatalogNeedsReuploadMediaIds": [
+    "f363c35a-422a-469d-9271-f4a5a0e7771c",
+    "26b8dc1d-1c27-4ee1-94ff-35d3429704f4",
+    "e8e762c8-8f62-41da-8631-41aeb1dc6dfb",
+    "147fe0da-bc6e-421b-a913-281afb119f0c",
+    "c970cb2c-82a9-4a2c-944b-1e0e50036f47",
+    "597dac7f-7a3e-422d-9bbc-c250dfe5e3ee",
+    "ddf89e64-e61b-48ac-b5e3-e3904b9a46fe",
+    "ef854ac8-5e85-4240-84ab-2a62f962cf52",
+    "ca5d15ff-2312-4e08-b9ae-37c0080d897a",
+    "97880158-d735-4766-9158-16bf35f78a0f",
+    "7c5e4319-41ae-43d5-ad79-99b14ffe5744",
+    "16747767-5c51-4ba9-ab27-96311eaef4cb",
+    "6b8ca2ec-1333-4033-8b4f-6742f4890b48",
+    "ac20dd14-b9df-4336-b15d-c6567c3945fb",
+    "538b98d5-275c-4e47-859b-060e761deae1",
+    "c6732611-3edc-4f93-8fca-3e875e01167b",
+    "2e43662d-31b8-4233-a3b3-7f95cb26ebc0",
+    "392d5ce2-6eb1-48c5-9b0f-57067f5b63e0",
+    "902af5dd-a84a-4ad4-852f-1e0ead74b515",
+    "1378b767-ecb6-4e2c-87ca-5a8a12a9220a",
+    "dcee2cc2-0733-4a2a-ae9b-12db89bfdeb4",
+    "3ba7eb1c-0afa-48c8-9357-8eb36058301e",
+    "b10c797b-2b70-46d9-9c3d-ea15ab9851b2",
+    "7ee0a8a0-cf50-4000-80a0-65078321cf70",
+    "2152bf2d-52a9-4ebb-80f6-2ff53d1ac6fb",
+    "197a46a6-00ce-4614-89bb-5b7899110507",
+    "d7b5ae26-521a-4add-8993-9792c289d689",
+    "b05af540-2563-4cea-9c29-85c97f091129",
+    "6a4ba44e-0774-451d-ba7b-1abee3e50236",
+    "cdaff379-3484-4536-b9b7-ecaabde7da62",
+    "d2a4d1ef-e199-427e-b2ef-5044dbdd6405",
+    "fa07b6f7-4515-4f6c-b8ac-4a87e6201f44",
+    "6d5490f3-a0f8-401a-ab70-56aa5d764ff2",
+    "44a5979a-25f3-4854-9792-b91c3da6e531",
+    "a9fca1c8-fb2a-4513-800b-a52231eacece",
+    "ca84a9ad-547b-40e5-a377-eb4c873f9668",
+    "b51c31e0-1d5f-427d-93c2-4c9d2f8b2fc4",
+    "c73f4db9-2deb-40c7-8306-21537b3e9ea4",
+    "255ad08f-2544-4376-8f0c-6b23d6b67b66",
+    "5731db3e-8e8b-496a-a5a4-fc149df4cf93",
+    "ff222451-9e16-4a84-8f1f-974adf34f7ee",
+    "38f83110-07ae-450e-9299-04ed12bf61f1"
+  ],
+  "note": "Do not delete DB rows. Do not republish withdrawn owners as part of media restore. Keep bucket private."
+}
