@@ -29,6 +29,8 @@
     seq: Object.create(null),
     abortByForm: Object.create(null),
     lastFlushResult: Object.create(null),
+    /** When true, scheduleAutosave is a no-op (conflict rehydrate / server apply). */
+    suppressAutosave: false,
   };
 
   function readEpoch() {
@@ -69,9 +71,29 @@
     el.dataset.kind = kind || '';
   }
 
+  /** Clear debounce/pending for one form without aborting an in-flight request. */
+  function clearFormPendingQueue(formId, reason) {
+    const id = formId || 'default';
+    if (state.timers[id]) {
+      clearTimeout(state.timers[id]);
+      delete state.timers[id];
+    }
+    delete state.pending[id];
+    if (state.lastFlushResult[id] && state.lastFlushResult[id].ok) {
+      // Invalidate stale "saved" while current inputs are invalid / mid-reload.
+      state.lastFlushResult[id] = {
+        ok: false,
+        reason: reason || 'queue-cleared',
+        formId: id,
+        priorOk: true,
+      };
+    }
+  }
+
   /** Explicit revision-conflict decision UI — never auto-bump expectedRevision. */
   function showRevisionConflictUi(form, clientDraftId, error) {
     if (!form) return;
+    const formId = form.id || 'default';
     setStatus(form, 'تعارض تعديل — تعديلاتك ما زالت في النموذج. اختاري إعادة التحميل أو الإبقاء.', 'conflict');
     let panel = form.querySelector('[data-editor-v2-conflict-panel]');
     if (!panel) {
@@ -98,20 +120,33 @@
       panel.appendChild(row);
       form.insertBefore(panel, form.firstChild);
       reloadBtn.addEventListener('click', async () => {
+        const staleRev = state.draftRevisionByClientId[clientDraftId];
         try {
-          const draft = await openDraft(clientDraftId);
-          const values = (draft && draft.values) || {};
-          Object.keys(values).forEach((key) => {
-            const field = form.elements.namedItem(key);
-            if (!field || field instanceof RadioNodeList) return;
-            if ('value' in field) field.value = values[key] == null ? '' : String(values[key]);
-          });
-          if (values.nameAr && form.elements.namedItem('nameAr')) {
-            form.elements.namedItem('nameAr').value = String(values.nameAr);
+          // Stop THIS form's pending saves only — do not cancel sibling product/service queues.
+          cancelFormPending(formId, 'conflict-reload');
+          clearFormPendingQueue(formId, 'conflict-reload');
+          // Fetch first; do NOT adopt server revision until full rehydrate succeeds.
+          const draft = await PartnersApi.getEditorDraft(clientDraftId);
+          if (!(window.CatalogJourney && typeof CatalogJourney.reopenServerDraft === 'function')) {
+            throw new Error('آلية إعادة التعبئة الكاملة غير متاحة');
           }
-          panel.remove();
-          setStatus(form, 'أُعيد التحميل من الخادم · rev ' + draft.revision + ' — عدّلي ثم احفظي', 'saved');
-          state.lastFlushResult[form.id || 'default'] = {
+          // Suppress autosave while CatalogJourney rebuilds the form — keep enabled so materialize UI is created.
+          state.suppressAutosave = true;
+          let reopened;
+          try {
+            reopened = CatalogJourney.reopenServerDraft(
+              draft,
+              'أُعيد التحميل من الخادم بعد تعارض · rev ' + draft.revision,
+            );
+          } finally {
+            state.suppressAutosave = false;
+            clearFormPendingQueue(reopened && reopened.formId ? reopened.formId : formId, 'post-rehydrate');
+          }
+          state.draftRevisionByClientId[clientDraftId] = draft.revision;
+          const freshForm = document.getElementById(reopened.formId) || form;
+          attachStatus(freshForm);
+          setStatus(freshForm, 'أُعيد التحميل من الخادم · rev ' + draft.revision + ' — عدّلي ثم احفظي', 'reloaded');
+          state.lastFlushResult[reopened.formId || formId] = {
             ok: false,
             reason: 'conflict-reloaded',
             conflict: true,
@@ -120,13 +155,16 @@
             clientDraftId: clientDraftId,
           };
         } catch (e) {
+          // Keep stale revision — do not allow save against a half-loaded form.
+          if (staleRev != null) state.draftRevisionByClientId[clientDraftId] = staleRev;
           setStatus(form, 'تعذر إعادة التحميل: ' + (e && e.message ? e.message : e), 'error');
         }
       });
       keepBtn.addEventListener('click', () => {
         panel.remove();
-        setStatus(form, 'أُبقيت تعديلاتك محليًا — احفظي بعد إعادة التحميل أو ادمجي يدويًا', 'conflict');
-        state.lastFlushResult[form.id || 'default'] = {
+        // Keep local edits AND keep stale expectedRevision — no silent bump.
+        setStatus(form, 'أُبقيت تعديلاتك محليًا — لن نرفع رقم الإصدار ولن نكتب فوق الخادم صامتًا', 'conflict');
+        state.lastFlushResult[formId] = {
           ok: false,
           reason: 'conflict-kept-local',
           conflict: true,
@@ -386,6 +424,7 @@
   window.addEventListener('storage', onStorage);
 
   function scheduleAutosave(form, payloadBuilder) {
+    if (state.suppressAutosave) return;
     if (!state.registryReady || state.registryMismatch) {
       setStatus(form, 'تعذر التحقق من سجل الحقول — حدّثي الصفحة قبل الحفظ', 'error');
       return;
@@ -715,6 +754,7 @@
     setStatus: setStatus,
     cancelAllPending: cancelAllPending,
     cancelFormPending: cancelFormPending,
+    clearFormPendingQueue: clearFormPendingQueue,
     bumpEpoch: bumpEpoch,
     __testHooks: __testHooks,
   };

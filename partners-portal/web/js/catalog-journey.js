@@ -218,11 +218,63 @@
     }
   }
 
+  /**
+   * Full server-draft rehydrate (same path as opening a draft from the list).
+   * Used by conflict reload so price/options/serviceProfile map correctly.
+   */
+  function reopenServerDraft(draft, note) {
+    if (!draft || !draft.clientDraftId) throw new Error('مسودة غير صالحة لإعادة التعبئة');
+    const formId = draft.kind === 'product' ? 'catalogForm' : 'serviceForm';
+    const titleId = draft.kind === 'product' ? 'catalogTitle' : 'serviceTitle';
+    const partnerType = (window.sessionPartner && window.sessionPartner.type) || 'salon';
+    const type = draft.kind === 'product' ? 'brand' : (partnerType === 'clinic' ? 'clinic' : 'salon');
+    const values = draft.values || {};
+    const stub = draft.targetOwnerId
+      ? {
+          id: draft.targetOwnerId,
+          nameAr: values.nameAr || '',
+          nameEn: values.nameEn || '',
+          priceHalalas: values.priceHalalas,
+          category: values.category || '',
+          durationMin: values.durationMin,
+          descriptionAr: values.descriptionAr || '',
+          purchaseMode: values.purchaseMode,
+          stockQty: values.stockQty,
+          deliveryFeeHalalas: values.deliveryFeeHalalas,
+          optionsJson: values.optionsJson,
+          variantsJson: values.variantsJson,
+          colors: values.colors,
+          sizes: values.sizes,
+        }
+      : null;
+    const draftCtx = {
+      clientDraftId: draft.clientDraftId,
+      kind: draft.kind,
+      profileId: draft.profileId,
+      schemaVersion: draft.schemaVersion,
+      revision: draft.revision,
+      targetOwnerId: draft.targetOwnerId || null,
+      status: draft.status,
+      submitReviewStatus: draft.submitReviewStatus || null,
+      values: values,
+    };
+    renderForm(
+      type,
+      stub,
+      formId,
+      titleId,
+      note || ('مسودة خادمية ' + draft.clientDraftId + ' · rev ' + draft.revision),
+      draftCtx,
+    );
+    return { formId: formId, revision: draft.revision, clientDraftId: draft.clientDraftId };
+  }
+
   window.CatalogJourney = {
     formatPrice: formatPrice,
     renderCatalog: renderCatalog,
     renderForm: renderForm,
     refreshLists: refreshLists,
+    reopenServerDraft: reopenServerDraft,
   };
 
   async function refreshLists() {
@@ -571,6 +623,24 @@
     const REGISTRY_SIZE_IDS = new Set(['XS', 'S', 'M', 'L', 'XL', 'XXL']);
     const REGISTRY_COLOR_IDS = new Set(['black', 'ivory', 'brown', 'pink', 'blue', 'green', 'multi']);
 
+    /**
+     * Live owner id — never rely on the `editing` snapshot from form build time.
+     * After materialize / resume, targetOwnerId or item.id must drive update vs create.
+     */
+    function resolveOwnerId() {
+      const ctx = window.MiraEditorV2 && MiraEditorV2.getEditContext(form.id);
+      if (ctx && ctx.targetOwnerId) return ctx.targetOwnerId;
+      if (item && item.id) return item.id;
+      try {
+        const cid = ctx && ctx.clientDraftId;
+        if (cid) {
+          const resume = loadResumeState(cid);
+          if (resume && resume.targetOwnerId) return resume.targetOwnerId;
+        }
+      } catch (e) {}
+      return null;
+    }
+
     /** @returns {{ ok: true, values: object } | { ok: false, fieldErrors: Array<{fieldId:string,message:string}> }} */
     function buildEditorValues() {
       const values = {};
@@ -581,12 +651,33 @@
       if (descriptionAr && String(descriptionAr.value || '').trim()) {
         values.descriptionAr = String(descriptionAr.value).trim();
       }
-      if (duration && duration.value !== '') {
-        const d = parseInt(duration.value, 10);
-        if (Number.isFinite(d)) values.durationMin = d;
+      // Duration: empty optional ≠ invalid typed value. Never parseInt-coerce garbage.
+      if (duration && String(duration.value || '').trim() !== '') {
+        const raw = String(duration.value).trim();
+        if (!/^\d+$/.test(raw)) {
+          fieldErrors.push({ fieldId: 'durationMin', message: 'المدة دقائق صحيحة أو فارغة.' });
+        } else {
+          const d = Number(raw);
+          if (!Number.isFinite(d) || d < 5) {
+            fieldErrors.push({ fieldId: 'durationMin', message: 'المدة 5 دقائق على الأقل، أو اتركيها فارغة.' });
+          } else {
+            values.durationMin = d;
+          }
+        }
       }
-      const halalas = typeof riyalsToHalalas === 'function' ? riyalsToHalalas(price.value) : null;
-      if (halalas != null) values.priceHalalas = halalas;
+      // Price: empty optional ≠ invalid (e.g. 100.123). Do not omit invalid as "unset".
+      const priceRaw = String(price.value ?? '').trim();
+      if (priceRaw !== '') {
+        const halalas = typeof riyalsToHalalas === 'function' ? riyalsToHalalas(priceRaw) : null;
+        if (halalas == null) {
+          fieldErrors.push({
+            fieldId: 'priceSar',
+            message: 'السعر بالريال حتى منزلتين عشريتين، مثل 52 أو 52.5 — القيمة الحالية غير صالحة.',
+          });
+        } else {
+          values.priceHalalas = halalas;
+        }
+      }
       if (type === 'brand' && typeof readCommerce === 'function') {
         const commerce = readCommerce();
         if (commerce && commerce.error) {
@@ -632,6 +723,7 @@
           answers: templateState.answers || {},
         };
       }
+      if (fieldErrors.length) return { ok: false, fieldErrors: fieldErrors, values: values };
       return { ok: true, values: values };
     }
 
@@ -646,14 +738,26 @@
       if (!built.ok) {
         MiraEditorV2.attachStatus(form);
         (built.fieldErrors || []).forEach((fe) => setFieldError(form, fe.fieldId, fe.message));
+        // Drop pending autosave for THIS form only — do not leave a stale "محفوظ".
+        if (typeof MiraEditorV2.clearFormPendingQueue === 'function') {
+          MiraEditorV2.clearFormPendingQueue(form.id, 'invalid-fields');
+        }
         MiraEditorV2.setStatus(form, 'لم يُحفظ — أصلحي الحقول المحددة', 'error');
         return;
       }
       MiraEditorV2.attachStatus(form);
       const partnerType = type === 'brand' ? 'brand' : partnerTypeForTemplates();
       const ctx = MiraEditorV2.getEditContext(form.id);
-      // After materialize, do not PUT the open-draft path — resume/edit item instead.
-      if (ctx && (ctx.status === 'materialized' || ctx.status === 'submit_failed' || ctx.status === 'review_pending')) {
+      const ownerId = resolveOwnerId();
+      // After materialize / known owner: do not PUT the open-draft path — edit the item instead.
+      if (
+        ownerId ||
+        (ctx &&
+          (ctx.status === 'materialized' ||
+            ctx.status === 'submit_failed' ||
+            ctx.status === 'submitted' ||
+            ctx.status === 'review_pending'))
+      ) {
         return;
       }
       const clientDraftId =
@@ -670,7 +774,7 @@
           clientDraftId: clientDraftId,
           kind: kind,
           profileId: MiraEditorV2.profileIdFor(kind, category.value, partnerType, preferredProfile),
-          targetOwnerId: (ctx && ctx.targetOwnerId) || (item && item.id) || null,
+          targetOwnerId: resolveOwnerId(),
           values: again.values || snapshotValues,
         };
       });
@@ -1094,7 +1198,14 @@
             return;
           }
 
-          // Fresh materialize — require confirmed draft save first.
+          // Fresh materialize — require valid fields + confirmed draft save first.
+          const preflight = buildEditorValues();
+          if (!preflight.ok) {
+            (preflight.fieldErrors || []).forEach((fe) => setFieldError(form, fe.fieldId, fe.message));
+            status.textContent = 'لم يُحوَّل — الحقول غير صالحة. النسخة الخادمية السابقة لم تُمس.';
+            MiraEditorV2.setStatus(form, 'لم يُحفظ', 'error');
+            return;
+          }
           scheduleEditorDraftAutosave();
           const saved = await MiraEditorV2.flushUntilSettled(form);
           if (!saved || !saved.ok) {
@@ -2444,34 +2555,31 @@
     const persistListing = async () => {
       if (form.dataset.saving === '1') return false;
 
-      // v2: single coordinated path — draft autosave (+ materialize button for convert). No parallel createProduct.
-      if (window.MiraEditorV2 && MiraEditorV2.state.enabled) {
-        const ctx = MiraEditorV2.getEditContext(form.id);
-        if (ctx && (ctx.status === 'submit_failed' || ctx.status === 'materialized' || ctx.status === 'submitted') && item && item.id) {
-          // Item already exists — fall through to legacy update path for post-materialize edits.
-        } else {
-          const built = buildEditorValues();
-          if (!built.ok) {
-            (built.fieldErrors || []).forEach((fe) => setFieldError(form, fe.fieldId, fe.message));
-            status.textContent = 'لم يُحفظ — أصلحي الحقول المحددة. التعديلات ما زالت في النموذج.';
-            MiraEditorV2.setStatus(form, 'لم يُحفظ', 'error');
-            return false;
-          }
-          scheduleEditorDraftAutosave();
-          const saved = await MiraEditorV2.flushUntilSettled(form);
-          if (!saved || !saved.ok) {
-            if (saved && (saved.conflict || saved.reason === 'revision-conflict')) {
-              status.textContent =
-                'تعارض تعديل مع جلسة أخرى. تعديلاتك ما زالت في النموذج — اختاري إعادة التحميل أو الإبقاء (لا تحديث تلقائي لرقم الإصدار).';
-              return false;
-            }
-            status.textContent = 'تعذر حفظ المسودة الخادمية' + (saved && saved.reason ? ' (' + saved.reason + ')' : '') + '.';
-            return false;
-          }
-          status.textContent = 'حُفظت المسودة الخادمية · rev ' + saved.revision + '. استخدمي زر التحويل للإرسال للمراجعة.';
-          MiraEditorV2.setStatus(form, 'محفوظ', 'saved');
-          return true;
+      const liveOwnerId = resolveOwnerId();
+
+      // v2 without an owned item: draft autosave only. Once targetOwnerId/item.id exists, never create again.
+      if (window.MiraEditorV2 && MiraEditorV2.state.enabled && !liveOwnerId) {
+        const built = buildEditorValues();
+        if (!built.ok) {
+          (built.fieldErrors || []).forEach((fe) => setFieldError(form, fe.fieldId, fe.message));
+          status.textContent = 'لم يُحفظ — أصلحي الحقول المحددة. التعديلات ما زالت في النموذج.';
+          MiraEditorV2.setStatus(form, 'لم يُحفظ', 'error');
+          return false;
         }
+        scheduleEditorDraftAutosave();
+        const saved = await MiraEditorV2.flushUntilSettled(form);
+        if (!saved || !saved.ok) {
+          if (saved && (saved.conflict || saved.reason === 'revision-conflict')) {
+            status.textContent =
+              'تعارض تعديل مع جلسة أخرى. تعديلاتك ما زالت في النموذج — اختاري إعادة التحميل أو الإبقاء (لا تحديث تلقائي لرقم الإصدار).';
+            return false;
+          }
+          status.textContent = 'تعذر حفظ المسودة الخادمية' + (saved && saved.reason ? ' (' + saved.reason + ')' : '') + '.';
+          return false;
+        }
+        status.textContent = 'حُفظت المسودة الخادمية · rev ' + saved.revision + '. استخدمي زر التحويل للإرسال للمراجعة.';
+        MiraEditorV2.setStatus(form, 'محفوظ', 'saved');
+        return true;
       }
 
       ['nameAr', 'priceSar', 'category', 'externalUrl', 'durationMin'].forEach((name) => setFieldError(form, name, ''));
@@ -2480,8 +2588,12 @@
         setFieldError(form, 'nameAr', 'الاسم مطلوب.');
         blocked = true;
       }
-      const halalas = riyalsToHalalas(price.value);
-      if (halalas == null) {
+      const priceRawPersist = String(price.value ?? '').trim();
+      const halalas = priceRawPersist === '' ? null : riyalsToHalalas(priceRawPersist);
+      if (priceRawPersist !== '' && halalas == null) {
+        setFieldError(form, 'priceSar', 'أدخلي السعر بالريال، مثل 52.');
+        blocked = true;
+      } else if (halalas == null) {
         setFieldError(form, 'priceSar', 'أدخلي السعر بالريال، مثل 52.');
         blocked = true;
       }
@@ -2562,10 +2674,14 @@
       status.textContent = developerAccount ? 'جارٍ تجهيز النشر' : 'جارٍ حفظ المسودة';
       if (window.MiraMotion) MiraMotion.announce(status.textContent);
       try {
-        const saved = editing
-          ? await (type === 'brand' ? PartnersApi.updateProduct(item.id, payload) : PartnersApi.updateService(item.id, payload))
+        // Decision is always live owner id — never the form-build `editing` snapshot.
+        const ownerId = resolveOwnerId();
+        const saved = ownerId
+          ? await (type === 'brand'
+              ? PartnersApi.updateProduct(ownerId, payload)
+              : PartnersApi.updateService(ownerId, payload))
           : await (type === 'brand' ? PartnersApi.createProduct(payload) : PartnersApi.createService(payload));
-        if (type === 'brand' && !editing) {
+        if (type === 'brand' && !ownerId) {
           try {
             const fresh = localStorage.getItem('mira-product-options:new');
             if (fresh && saved && saved.id) {
@@ -2581,7 +2697,37 @@
         }
         item = Object.assign({}, item || {}, saved);
         staged[form.id].ownerId = item.id;
-        // v2: serviceProfile lives in editor draft / materialize — never fetch latest revision then overwrite with local template.
+        const ctxAfter = window.MiraEditorV2 && MiraEditorV2.getEditContext(form.id);
+        if (ctxAfter && item.id) ctxAfter.targetOwnerId = item.id;
+
+        // Post-materialize service template: save via conflict-aware profile path (never silent force).
+        if (type !== 'brand' && item.id && templateState && templateState.templateId) {
+          try {
+            const current = await PartnersApi.getServiceProfile(item.id);
+            await PartnersApi.putServiceProfile(item.id, {
+              expectedRevision: current.reviewRevision,
+              templateId: templateState.templateId,
+              templateVersion: templateState.templateVersion || 1,
+              priceMode: templateState.priceMode || 'fixed',
+              answers: templateState.answers || {},
+            });
+          } catch (profileError) {
+            const msg = String(profileError && profileError.message ? profileError.message : profileError);
+            const code = (profileError && profileError.code) || '';
+            if (code === 'SERVICE_PROFILE_REVISION_CONFLICT' || /تعارض|REVISION|409/.test(msg + code)) {
+              form.dataset.saving = '';
+              save.disabled = false;
+              save.removeAttribute('aria-busy');
+              save.classList.remove('is-busy', 'is-success');
+              save.textContent = idleLabel;
+              status.textContent =
+                'حُفظت الخدمة، لكن قالب الخدمة يتعارض مع نسخة أحدث — أعد التحميل بقرار صريح. لم نكتب فوق الخادم.';
+              return false;
+            }
+            throw profileError;
+          }
+        }
+
         save.classList.remove('is-busy');
         save.classList.add('is-success');
         save.textContent = developerAccount ? 'جارٍ الرفع' : 'تم الحفظ';
@@ -2605,9 +2751,40 @@
             publishedNote = 'حُفظت البيانات ولم تُنشر: ' + error.message;
           }
         }
-        renderForm(type, item, form.id, titleId, failures.length
+        const noteOut = failures.length
           ? (developerAccount ? 'لم يُنشر. فشل الرفع. ' : 'حُفظت المسودة. لم يُسجَّل الرفع ناجحًا. ') + failures.join(' — ')
-          : (publishedNote || (developerAccount ? 'نُشر في التطبيق مباشرة، بلا مراجعة.' : '')));
+          : (publishedNote || (developerAccount ? 'نُشر في التطبيق مباشرة، بلا مراجعة.' : ''));
+        // Preserve materialized draft identity — re-render must not allocate a new clientDraftId.
+        const preserveCtx = window.MiraEditorV2 && MiraEditorV2.getEditContext(form.id);
+        if (preserveCtx && preserveCtx.clientDraftId && item && item.id) {
+          const draftCtxPreserve = {
+            clientDraftId: preserveCtx.clientDraftId,
+            kind: preserveCtx.kind || kind,
+            profileId: preserveCtx.profileId || null,
+            schemaVersion: preserveCtx.schemaVersion,
+            revision: preserveCtx.revision,
+            targetOwnerId: item.id,
+            status: preserveCtx.status || 'submit_failed',
+            submitReviewStatus: preserveCtx.submitReviewStatus || null,
+            values: Object.assign({}, preserveCtx.values || {}, {
+              nameAr: item.nameAr,
+              nameEn: item.nameEn,
+              priceHalalas: item.priceHalalas,
+              category: item.category,
+              descriptionAr: item.descriptionAr,
+              durationMin: item.durationMin,
+              stockQty: item.stockQty,
+              deliveryFeeHalalas: item.deliveryFeeHalalas,
+              optionsJson: item.optionsJson,
+              variantsJson: item.variantsJson,
+              colors: item.colors,
+              sizes: item.sizes,
+            }),
+          };
+          renderForm(type, item, form.id, titleId, noteOut, draftCtxPreserve);
+        } else {
+          renderForm(type, item, form.id, titleId, noteOut);
+        }
         return true;
       } catch (error) {
         form.dataset.saving = '';

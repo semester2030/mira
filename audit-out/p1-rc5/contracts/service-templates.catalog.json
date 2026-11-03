@@ -1,0 +1,913 @@
+{
+  "version": 1,
+  "source": "partners-portal/web/js/service-templates.js",
+  "templates": [
+    {
+      "id": "salon_hair_cut",
+      "version": 1,
+      "labelAr": "قص وتصفيف الشعر",
+      "category": "hair",
+      "partnerTypes": [
+        "salon"
+      ],
+      "fields": [
+        {
+          "id": "session_kind",
+          "type": "single",
+          "required": true,
+          "options": [
+            "single",
+            "package"
+          ],
+          "visibleWhenField": null,
+          "visibleWhenAnyOf": []
+        },
+        {
+          "id": "package_sessions",
+          "type": "number",
+          "required": false,
+          "options": [],
+          "visibleWhenField": "session_kind",
+          "visibleWhenAnyOf": [
+            "package"
+          ]
+        },
+        {
+          "id": "package_validity",
+          "type": "text",
+          "required": false,
+          "options": [],
+          "visibleWhenField": "session_kind",
+          "visibleWhenAnyOf": [
+            "package"
+          ]
+        },
+        {
+          "id": "cut_style",
+          "type": "single",
+          "required": true,
+          "options": [
+            "cut",
+            "style",
+            "cut_style"
+          ],
+          "visibleWhenField": null,
+          "visibleWhenAnyOf": []
+        },
+        {
+          "id": "hair_length",
+          "type": "single",
+          "required": false,
+          "options": [
+            "short",
+            "medium",
+            "long",
+            "any"
+          ],
+          "visibleWhenField": null,
+          "visibleWhenAnyOf": []
+        },
+        {
+          "id": "includes_wash_dry",
+          "type": "boolean",
+          "required": false,
+          "options": [],
+          "visibleWhenField": null,
+          "visibleWhenAnyOf": []
+        },
+        {
+          "id": "includes",
+          "type": "multi",
+          "required": false,
+          "options": [
+            "wash",
+            "dry",
+            "style",
+            "trim"
+          ],
+          "visibleWhenField": null,
+          "visibleWhenAnyOf": []
+        },
+        {
+          "id": "excludes",
+          "type": "text",
+          "required": false,
+          "options": [],
+          "visibleWhenField": null,
+          "visibleWhenAnyOf": []
+        },
+        {
+          "id": "addons",
+          "type": "multi",
+          "required": false,
+          "options": [
+            "mask",
+            "oil"
+          ],
+          "visibleWhenField": null,
+          "visibleWhenAnyOf": []
+        },
+        {
+          "id": "place_mode",
+          "type": "single",
+          "required": true,
+          "options": [
+            "branch",
+            "home",
+            "either"
+          ],
+          "visibleWhenField": null,
+          "visibleWhenAnyOf": []
+        },
+        {
+          "id": "home_coverage",
+          "type": "text",
+          "required": false,
+          "options": [],
+          "visibleWhenField": "place_mode",
+          "visibleWhenAnyOf": [
+            "home",
+            "either"
+          ]
+        },
+        {
+          "id": "needs_assessment",
+          "type": "boolean",
+          "required": false,
+          "options": [],
+          "visibleWhenField": null,
+          "visibleWhenAnyOf": []
+        },
+        {
+          "id": "assessment_note",
+          "type": "text",
+          "required": false,
+          "options": [],
+          "visibleWhenField": "needs_assessment",
+          "visibleWhenAnyOf": [
+            "true"
+          ]
+        },
+        {
+          "id": "prep_required",
+          "type": "text",
+          "required": false,
+          "options": [],
+          "visibleWhenField": null,
+          "visibleWhenAnyOf": []
+        },
+        {
+          "id": "policies",
+          "type": "text",
+          "required": false,
+          "options": [],
+          "visibleWhenField": null,
+          "visibleWhenAnyOf": []
+        }
+      ]
+    },
+    {
+      "id": "salon_hair_color",
+      "version": 1,
+      "labelAr": "صبغة الشعر",
+      "category": "hair",
+      "partnerTypes": [
+        "salon",
+        "clinic"
+      ],
+      "fields": [
+        {
+          "id": "session_kind",
+          "type": "single",
+          "required": true,
+          "options": [
+            "single",
+            "package"
+          ],
+          "visibleWhenField": null,
+          "visibleWhenAnyOf": []
+        },
+        {
+          "id": "package_sessions",
+          "type": "number",
+          "required": false,
+          "options": [],
+          "visibleWhenField": "session_kind",
+          "visibleWhenAnyOf": [
+            "package"
+          ]
+        },
+        {
+          "id": "color_kind",
+          "type": "single",
+          "required": true,
+          "options": [
+            "full",
+            "roots",
+            "highlights",
+            "balayage"
+          ],
+          "visibleWhenField": null,
+          "visibleWhenAnyOf": []
+        },
+        {
+          "id": "price_by_length",
+          "type": "boolean",
+          "required": false,
+          "options": [],
+          "visibleWhenField": null,
+          "visibleWhenAnyOf": []
+        },
+        {
+          "id": "length_tiers",
+          "type": "multi",
+          "required": false,
+          "options": [
+            "short",
+            "medium",
+            "long"
+          ],
+          "visibleWhenField": "price_by_length",
+          "visibleWhenAnyOf": [
+            "true"
+          ]
+        },
+        {
+          "id": "includes_bleach",
+          "type": "boolean",
+          "required": false,
+          "options": [],
+          "visibleWhenField": null,
+          "visibleWhenAnyOf": []
+        },
+        {
+          "id": "includes",
+          "type": "multi",
+          "required": false,
+          "options": [
+            "toner",
+            "treatment"
+          ],
+          "visibleWhenField": null,
+          "visibleWhenAnyOf": []
+        },
+        {
+          "id": "addons",
+          "type": "multi",
+          "required": false,
+          "options": [
+            "olaplex"
+          ],
+          "visibleWhenField": null,
+          "visibleWhenAnyOf": []
+        },
+        {
+          "id": "place_mode",
+          "type": "single",
+          "required": true,
+          "options": [
+            "branch",
+            "home",
+            "either"
+          ],
+          "visibleWhenField": null,
+          "visibleWhenAnyOf": []
+        },
+        {
+          "id": "needs_assessment",
+          "type": "boolean",
+          "required": false,
+          "options": [],
+          "visibleWhenField": null,
+          "visibleWhenAnyOf": []
+        },
+        {
+          "id": "assessment_note",
+          "type": "text",
+          "required": false,
+          "options": [],
+          "visibleWhenField": "needs_assessment",
+          "visibleWhenAnyOf": [
+            "true"
+          ]
+        },
+        {
+          "id": "prep_required",
+          "type": "text",
+          "required": false,
+          "options": [],
+          "visibleWhenField": null,
+          "visibleWhenAnyOf": []
+        },
+        {
+          "id": "policies",
+          "type": "text",
+          "required": false,
+          "options": [],
+          "visibleWhenField": null,
+          "visibleWhenAnyOf": []
+        }
+      ]
+    },
+    {
+      "id": "salon_nails",
+      "version": 1,
+      "labelAr": "العناية بالأظافر",
+      "category": "nails",
+      "partnerTypes": [
+        "salon"
+      ],
+      "fields": [
+        {
+          "id": "hands_feet",
+          "type": "single",
+          "required": true,
+          "options": [
+            "hands",
+            "feet",
+            "both"
+          ],
+          "visibleWhenField": null,
+          "visibleWhenAnyOf": []
+        },
+        {
+          "id": "nail_kind",
+          "type": "single",
+          "required": true,
+          "options": [
+            "manicure",
+            "pedicure",
+            "gel",
+            "acrylic"
+          ],
+          "visibleWhenField": null,
+          "visibleWhenAnyOf": []
+        },
+        {
+          "id": "remove_old",
+          "type": "boolean",
+          "required": false,
+          "options": [],
+          "visibleWhenField": null,
+          "visibleWhenAnyOf": []
+        },
+        {
+          "id": "addons",
+          "type": "multi",
+          "required": false,
+          "options": [
+            "art",
+            "paraffin"
+          ],
+          "visibleWhenField": null,
+          "visibleWhenAnyOf": []
+        },
+        {
+          "id": "place_mode",
+          "type": "single",
+          "required": true,
+          "options": [
+            "branch",
+            "home",
+            "either"
+          ],
+          "visibleWhenField": null,
+          "visibleWhenAnyOf": []
+        },
+        {
+          "id": "prep_required",
+          "type": "text",
+          "required": false,
+          "options": [],
+          "visibleWhenField": null,
+          "visibleWhenAnyOf": []
+        },
+        {
+          "id": "policies",
+          "type": "text",
+          "required": false,
+          "options": [],
+          "visibleWhenField": null,
+          "visibleWhenAnyOf": []
+        }
+      ]
+    },
+    {
+      "id": "salon_makeup",
+      "version": 1,
+      "labelAr": "المكياج",
+      "category": "makeup",
+      "partnerTypes": [
+        "salon"
+      ],
+      "fields": [
+        {
+          "id": "occasion",
+          "type": "single",
+          "required": true,
+          "options": [
+            "daily",
+            "event",
+            "bridal",
+            "photo"
+          ],
+          "visibleWhenField": null,
+          "visibleWhenAnyOf": []
+        },
+        {
+          "id": "place_mode",
+          "type": "single",
+          "required": true,
+          "options": [
+            "branch",
+            "home",
+            "either"
+          ],
+          "visibleWhenField": null,
+          "visibleWhenAnyOf": []
+        },
+        {
+          "id": "home_coverage",
+          "type": "text",
+          "required": false,
+          "options": [],
+          "visibleWhenField": "place_mode",
+          "visibleWhenAnyOf": [
+            "home",
+            "either"
+          ]
+        },
+        {
+          "id": "includes",
+          "type": "multi",
+          "required": false,
+          "options": [
+            "base",
+            "eyes",
+            "lashes",
+            "brows"
+          ],
+          "visibleWhenField": null,
+          "visibleWhenAnyOf": []
+        },
+        {
+          "id": "addons",
+          "type": "multi",
+          "required": false,
+          "options": [
+            "hair",
+            "trial"
+          ],
+          "visibleWhenField": null,
+          "visibleWhenAnyOf": []
+        },
+        {
+          "id": "needs_assessment",
+          "type": "boolean",
+          "required": false,
+          "options": [],
+          "visibleWhenField": null,
+          "visibleWhenAnyOf": []
+        },
+        {
+          "id": "assessment_note",
+          "type": "text",
+          "required": false,
+          "options": [],
+          "visibleWhenField": "needs_assessment",
+          "visibleWhenAnyOf": [
+            "true"
+          ]
+        },
+        {
+          "id": "prep_required",
+          "type": "text",
+          "required": false,
+          "options": [],
+          "visibleWhenField": null,
+          "visibleWhenAnyOf": []
+        },
+        {
+          "id": "policies",
+          "type": "text",
+          "required": false,
+          "options": [],
+          "visibleWhenField": null,
+          "visibleWhenAnyOf": []
+        }
+      ]
+    },
+    {
+      "id": "clinic_skin",
+      "version": 1,
+      "labelAr": "العناية بالبشرة",
+      "category": "skin",
+      "partnerTypes": [
+        "clinic",
+        "salon"
+      ],
+      "fields": [
+        {
+          "id": "session_name",
+          "type": "text",
+          "required": true,
+          "options": [],
+          "visibleWhenField": null,
+          "visibleWhenAnyOf": []
+        },
+        {
+          "id": "session_kind",
+          "type": "single",
+          "required": true,
+          "options": [
+            "single",
+            "package"
+          ],
+          "visibleWhenField": null,
+          "visibleWhenAnyOf": []
+        },
+        {
+          "id": "package_sessions",
+          "type": "number",
+          "required": false,
+          "options": [],
+          "visibleWhenField": "session_kind",
+          "visibleWhenAnyOf": [
+            "package"
+          ]
+        },
+        {
+          "id": "includes",
+          "type": "multi",
+          "required": false,
+          "options": [
+            "cleanse",
+            "mask",
+            "massage",
+            "serum"
+          ],
+          "visibleWhenField": null,
+          "visibleWhenAnyOf": []
+        },
+        {
+          "id": "place_mode",
+          "type": "single",
+          "required": true,
+          "options": [
+            "branch",
+            "home",
+            "either"
+          ],
+          "visibleWhenField": null,
+          "visibleWhenAnyOf": []
+        },
+        {
+          "id": "needs_assessment",
+          "type": "boolean",
+          "required": false,
+          "options": [],
+          "visibleWhenField": null,
+          "visibleWhenAnyOf": []
+        },
+        {
+          "id": "assessment_note",
+          "type": "text",
+          "required": false,
+          "options": [],
+          "visibleWhenField": "needs_assessment",
+          "visibleWhenAnyOf": [
+            "true"
+          ]
+        },
+        {
+          "id": "prep_required",
+          "type": "text",
+          "required": false,
+          "options": [],
+          "visibleWhenField": null,
+          "visibleWhenAnyOf": []
+        },
+        {
+          "id": "aftercare",
+          "type": "text",
+          "required": false,
+          "options": [],
+          "visibleWhenField": null,
+          "visibleWhenAnyOf": []
+        },
+        {
+          "id": "policies",
+          "type": "text",
+          "required": false,
+          "options": [],
+          "visibleWhenField": null,
+          "visibleWhenAnyOf": []
+        }
+      ]
+    },
+    {
+      "id": "clinic_laser",
+      "version": 1,
+      "labelAr": "إزالة الشعر بالليزر",
+      "category": "laser",
+      "partnerTypes": [
+        "clinic"
+      ],
+      "fields": [
+        {
+          "id": "laser_areas",
+          "type": "multi",
+          "required": true,
+          "options": [
+            "face",
+            "underarms",
+            "legs",
+            "bikini",
+            "full"
+          ],
+          "visibleWhenField": null,
+          "visibleWhenAnyOf": []
+        },
+        {
+          "id": "session_kind",
+          "type": "single",
+          "required": true,
+          "options": [
+            "single",
+            "package"
+          ],
+          "visibleWhenField": null,
+          "visibleWhenAnyOf": []
+        },
+        {
+          "id": "package_sessions",
+          "type": "number",
+          "required": false,
+          "options": [],
+          "visibleWhenField": "session_kind",
+          "visibleWhenAnyOf": [
+            "package"
+          ]
+        },
+        {
+          "id": "package_validity",
+          "type": "text",
+          "required": false,
+          "options": [],
+          "visibleWhenField": "session_kind",
+          "visibleWhenAnyOf": [
+            "package"
+          ]
+        },
+        {
+          "id": "device_info",
+          "type": "text",
+          "required": false,
+          "options": [],
+          "visibleWhenField": null,
+          "visibleWhenAnyOf": []
+        },
+        {
+          "id": "place_mode",
+          "type": "single",
+          "required": true,
+          "options": [
+            "branch",
+            "home",
+            "either"
+          ],
+          "visibleWhenField": null,
+          "visibleWhenAnyOf": []
+        },
+        {
+          "id": "needs_assessment",
+          "type": "boolean",
+          "required": false,
+          "options": [],
+          "visibleWhenField": null,
+          "visibleWhenAnyOf": []
+        },
+        {
+          "id": "assessment_note",
+          "type": "text",
+          "required": false,
+          "options": [],
+          "visibleWhenField": "needs_assessment",
+          "visibleWhenAnyOf": [
+            "true"
+          ]
+        },
+        {
+          "id": "prep_required",
+          "type": "text",
+          "required": false,
+          "options": [],
+          "visibleWhenField": null,
+          "visibleWhenAnyOf": []
+        },
+        {
+          "id": "policies",
+          "type": "text",
+          "required": false,
+          "options": [],
+          "visibleWhenField": null,
+          "visibleWhenAnyOf": []
+        }
+      ]
+    },
+    {
+      "id": "clinic_consult",
+      "version": 1,
+      "labelAr": "استشارة أو تقييم",
+      "category": "skin",
+      "partnerTypes": [
+        "clinic",
+        "salon"
+      ],
+      "fields": [
+        {
+          "id": "consult_kind",
+          "type": "single",
+          "required": true,
+          "options": [
+            "skin",
+            "hair",
+            "general"
+          ],
+          "visibleWhenField": null,
+          "visibleWhenAnyOf": []
+        },
+        {
+          "id": "consult_mode",
+          "type": "single",
+          "required": false,
+          "options": [
+            "in_person",
+            "remote",
+            "either"
+          ],
+          "visibleWhenField": null,
+          "visibleWhenAnyOf": []
+        },
+        {
+          "id": "includes",
+          "type": "multi",
+          "required": false,
+          "options": [
+            "exam",
+            "plan",
+            "qa"
+          ],
+          "visibleWhenField": null,
+          "visibleWhenAnyOf": []
+        },
+        {
+          "id": "bring_docs",
+          "type": "text",
+          "required": false,
+          "options": [],
+          "visibleWhenField": null,
+          "visibleWhenAnyOf": []
+        },
+        {
+          "id": "prep_required",
+          "type": "text",
+          "required": false,
+          "options": [],
+          "visibleWhenField": null,
+          "visibleWhenAnyOf": []
+        },
+        {
+          "id": "policies",
+          "type": "text",
+          "required": false,
+          "options": [],
+          "visibleWhenField": null,
+          "visibleWhenAnyOf": []
+        }
+      ]
+    },
+    {
+      "id": "salon_care",
+      "version": 1,
+      "labelAr": "عناية عامة",
+      "category": "care",
+      "partnerTypes": [
+        "salon"
+      ],
+      "fields": [
+        {
+          "id": "session_kind",
+          "type": "single",
+          "required": true,
+          "options": [
+            "single",
+            "package"
+          ],
+          "visibleWhenField": null,
+          "visibleWhenAnyOf": []
+        },
+        {
+          "id": "includes",
+          "type": "text",
+          "required": false,
+          "options": [],
+          "visibleWhenField": null,
+          "visibleWhenAnyOf": []
+        },
+        {
+          "id": "place_mode",
+          "type": "single",
+          "required": true,
+          "options": [
+            "branch",
+            "home",
+            "either"
+          ],
+          "visibleWhenField": null,
+          "visibleWhenAnyOf": []
+        },
+        {
+          "id": "prep_required",
+          "type": "text",
+          "required": false,
+          "options": [],
+          "visibleWhenField": null,
+          "visibleWhenAnyOf": []
+        },
+        {
+          "id": "policies",
+          "type": "text",
+          "required": false,
+          "options": [],
+          "visibleWhenField": null,
+          "visibleWhenAnyOf": []
+        }
+      ]
+    },
+    {
+      "id": "clinic_teeth",
+      "version": 1,
+      "labelAr": "الأسنان (محدود)",
+      "category": "teeth",
+      "partnerTypes": [
+        "clinic"
+      ],
+      "fields": [
+        {
+          "id": "teeth_kind",
+          "type": "text",
+          "required": true,
+          "options": [],
+          "visibleWhenField": null,
+          "visibleWhenAnyOf": []
+        },
+        {
+          "id": "session_kind",
+          "type": "single",
+          "required": true,
+          "options": [
+            "single",
+            "package"
+          ],
+          "visibleWhenField": null,
+          "visibleWhenAnyOf": []
+        },
+        {
+          "id": "needs_assessment",
+          "type": "boolean",
+          "required": false,
+          "options": [],
+          "visibleWhenField": null,
+          "visibleWhenAnyOf": []
+        },
+        {
+          "id": "assessment_note",
+          "type": "text",
+          "required": false,
+          "options": [],
+          "visibleWhenField": "needs_assessment",
+          "visibleWhenAnyOf": [
+            "true"
+          ]
+        },
+        {
+          "id": "prep_required",
+          "type": "text",
+          "required": false,
+          "options": [],
+          "visibleWhenField": null,
+          "visibleWhenAnyOf": []
+        },
+        {
+          "id": "policies",
+          "type": "text",
+          "required": false,
+          "options": [],
+          "visibleWhenField": null,
+          "visibleWhenAnyOf": []
+        }
+      ]
+    }
+  ]
+}
