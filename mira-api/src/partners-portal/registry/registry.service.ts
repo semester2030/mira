@@ -17,11 +17,46 @@ function editorError(status: HttpStatus, code: string, messageAr: string, extra:
   return new HttpException({ message: messageAr, messageAr, code, ...extra }, status);
 }
 
+type TemplateField = {
+  id: string;
+  type: string;
+  required?: boolean;
+  options?: string[];
+  visibleWhenField?: string | null;
+  visibleWhenAnyOf?: string[];
+};
+
+type TemplateDef = {
+  id: string;
+  version: number;
+  partnerTypes: string[];
+  fields: TemplateField[];
+};
+
+const PRICE_MODES = new Set(['fixed', 'from', 'afterAssessment', 'unknown']);
+const SUPPORTED_FIELD_TYPES = new Set([
+  'string',
+  'text',
+  'number',
+  'integer',
+  'boolean',
+  'array',
+  'string[]',
+  'multiSelect',
+  'tags',
+  'enum',
+  'singleSelect',
+  'select',
+  'object',
+  'json',
+]);
+
 @Injectable()
 export class RegistryService implements OnModuleInit {
   private registry!: FieldRegistryV2;
   private registryHash = '';
   private aliases: Record<string, { canonical?: string; action?: string }> = {};
+  private templates = new Map<string, TemplateDef>();
 
   onModuleInit() {
     this.load();
@@ -40,6 +75,13 @@ export class RegistryService implements OnModuleInit {
       this.aliases = JSON.parse(readFileSync(aliasPath, 'utf8')) as typeof this.aliases;
     } catch {
       this.aliases = {};
+    }
+    try {
+      const catalogPath = join(__dirname, 'service-templates.catalog.json');
+      const catalog = JSON.parse(readFileSync(catalogPath, 'utf8')) as { templates: TemplateDef[] };
+      this.templates = new Map(catalog.templates.map((t) => [t.id, t]));
+    } catch {
+      this.templates = new Map();
     }
   }
 
@@ -62,12 +104,17 @@ export class RegistryService implements OnModuleInit {
     return this.registry;
   }
 
+  listTemplateIds(): string[] {
+    return [...this.templates.keys()];
+  }
+
   metaPayload() {
     return {
       schemaVersion: EDITOR_SCHEMA_VERSION,
       registryHash: this.registryHash,
       editorV2Enabled: this.isEditorV2Enabled(),
       registry: this.registry,
+      serviceTemplateIds: this.listTemplateIds(),
     };
   }
 
@@ -105,6 +152,16 @@ export class RegistryService implements OnModuleInit {
     return this.registry.fields[fieldId];
   }
 
+  /** Merge profile.fieldOverrides onto base field defs (activity-scoped rules). */
+  private effectiveField(profile: RegistryProfile, fieldId: string): RegistryFieldDef | undefined {
+    const base = this.fieldDef(fieldId);
+    if (!base) return undefined;
+    const overrides = (profile as RegistryProfile & { fieldOverrides?: Record<string, Partial<RegistryFieldDef>> })
+      .fieldOverrides?.[fieldId];
+    if (!overrides) return base;
+    return { ...base, ...overrides, id: fieldId };
+  }
+
   private allowedValueIds(field: RegistryFieldDef): Set<string> | null {
     const values = field.values;
     if (!Array.isArray(values) || values.length === 0) return null;
@@ -112,8 +169,8 @@ export class RegistryService implements OnModuleInit {
     for (const entry of values) {
       if (typeof entry === 'string') ids.add(entry);
       else if (entry && typeof entry === 'object') {
-        if (typeof entry.id === 'string') ids.add(entry.id);
-        if (typeof entry.value === 'string') ids.add(entry.value);
+        if (typeof (entry as { id?: string }).id === 'string') ids.add((entry as { id: string }).id);
+        if (typeof (entry as { value?: string }).value === 'string') ids.add((entry as { value: string }).value);
       }
     }
     return ids.size ? ids : null;
@@ -133,28 +190,25 @@ export class RegistryService implements OnModuleInit {
     return max;
   }
 
-  assertValuesBounds(values: Record<string, unknown>) {
+  assertValuesBounds(values: Record<string, unknown>, label = 'values') {
     const bytes = Buffer.byteLength(JSON.stringify(values), 'utf8');
     if (bytes > MAX_VALUES_BYTES) {
-      throw editorError(HttpStatus.BAD_REQUEST, 'VALUES_TOO_LARGE', 'حجم بيانات المسودة أكبر من الحد المسموح');
+      throw editorError(HttpStatus.BAD_REQUEST, 'VALUES_TOO_LARGE', `حجم ${label} أكبر من الحد المسموح`);
     }
     if (Object.keys(values).length > MAX_VALUES_KEYS) {
-      throw editorError(HttpStatus.BAD_REQUEST, 'VALUES_TOO_MANY_KEYS', 'عدد الحقول أكبر من الحد المسموح');
+      throw editorError(HttpStatus.BAD_REQUEST, 'VALUES_TOO_MANY_KEYS', `عدد مفاتيح ${label} أكبر من الحد`);
     }
     if (this.depthOf(values) > MAX_VALUES_DEPTH) {
-      throw editorError(HttpStatus.BAD_REQUEST, 'VALUES_TOO_DEEP', 'عمق بيانات المسودة أكبر من الحد المسموح');
+      throw editorError(HttpStatus.BAD_REQUEST, 'VALUES_TOO_DEEP', `عمق ${label} أكبر من الحد المسموح`);
     }
   }
 
-  /**
-   * Draft-mode validation: unknown fields/values rejected; no invented defaults;
-   * draftRequired profile/field lists enforced only when mode=publish.
-   */
   validateValues(input: {
     profile: RegistryProfile;
     values: Record<string, unknown>;
     mode: 'draft' | 'publish';
     schemaVersion: number;
+    partnerType?: string;
   }) {
     if (input.schemaVersion !== EDITOR_SCHEMA_VERSION) {
       throw editorError(HttpStatus.BAD_REQUEST, 'REGISTRY_UNSUPPORTED_VERSION', 'إصدار السجل غير مدعوم', {
@@ -170,27 +224,56 @@ export class RegistryService implements OnModuleInit {
         fieldErrors.push({ fieldId, code: 'REGISTRY_UNKNOWN_FIELD' });
         continue;
       }
-      const def = this.fieldDef(fieldId);
+      const def = this.effectiveField(input.profile, fieldId);
       if (!def) {
         fieldErrors.push({ fieldId, code: 'REGISTRY_UNKNOWN_FIELD' });
         continue;
       }
       if (raw === null || raw === undefined) continue;
+      if (fieldId === 'serviceProfile') {
+        try {
+          this.validateServiceProfileDocument(raw, input.partnerType ?? 'salon', { requireKnownAnswers: true });
+        } catch (error) {
+          if (error instanceof HttpException) {
+            const body = error.getResponse() as { fieldErrors?: Array<{ fieldId: string; code: string }>; code?: string };
+            if (Array.isArray(body.fieldErrors)) fieldErrors.push(...body.fieldErrors.map((e) => ({ fieldId: `serviceProfile.${e.fieldId}`, code: e.code })));
+            else fieldErrors.push({ fieldId: 'serviceProfile', code: body.code || 'SERVICE_PROFILE_INVALID' });
+          } else {
+            fieldErrors.push({ fieldId: 'serviceProfile', code: 'SERVICE_PROFILE_INVALID' });
+          }
+        }
+        continue;
+      }
+      if (!SUPPORTED_FIELD_TYPES.has(def.type)) {
+        fieldErrors.push({ fieldId, code: 'REGISTRY_UNSUPPORTED_TYPE' });
+        continue;
+      }
       const typeError = this.validateType(def, raw);
       if (typeError) fieldErrors.push({ fieldId, code: typeError });
     }
 
     if (input.mode === 'publish') {
-      // Enforce explicit draftRequired lists only. Broad publishRequiredWhen markers
-      // (e.g. media) are handled by materialize / submit-review separately.
-      // Contract: nameAr is NOT draft-required; materialize still demands Prisma fields.
       const required = new Set<string>([
         ...(input.profile.draftRequired ?? []),
         ...Object.values(this.registry.fields)
           .filter((f) => f.draftRequired === true && allowed.has(f.id))
           .map((f) => f.id),
       ]);
+      // Conditional publish markers that apply to in-values fields (not media/booking ops).
+      for (const fieldId of allowed) {
+        const def = this.effectiveField(input.profile, fieldId);
+        if (!def?.publishRequiredWhen) continue;
+        if (this.publishRuleApplies(def.publishRequiredWhen, input.values)) {
+          required.add(fieldId);
+        }
+      }
+      // nameAr is NOT draft-required; materialize enforces Prisma fields separately.
+      required.delete('media');
+      required.delete('coverMediaId');
       for (const fieldId of required) {
+        if (fieldId === 'nameAr') continue; // optional until materialize gate
+        // Legacy createProduct allows omitted/blank externalUrl with purchaseMode=external.
+        if (fieldId === 'externalUrl') continue;
         const present = Object.prototype.hasOwnProperty.call(input.values, fieldId);
         const value = input.values[fieldId];
         const empty =
@@ -204,9 +287,26 @@ export class RegistryService implements OnModuleInit {
     }
 
     if (fieldErrors.length) {
-      const code = fieldErrors[0].code;
-      throw editorError(HttpStatus.BAD_REQUEST, code, 'راجعي الحقول المحددة', { fieldErrors });
+      throw editorError(HttpStatus.BAD_REQUEST, fieldErrors[0].code, 'راجعي الحقول المحددة', { fieldErrors });
     }
+  }
+
+  private publishRuleApplies(rule: string, values: Record<string, unknown>): boolean {
+    // Bare "product/service publish" markers document the full publication journey
+    // (media, booking ops). They are NOT all draft-value requirements at materialize.
+    // Materialize enforces Prisma gates (name/price/duration) separately.
+    if (rule === 'optional' || rule === 'publish' || rule === 'product publish' || rule === 'service publish') {
+      return false;
+    }
+    if (rule === 'purchaseMode=external') return values.purchaseMode === 'external';
+    if (rule === 'internal_cod') return values.purchaseMode === 'internal_cod';
+    if (rule === 'inventoryMode=product') return values.inventoryMode === 'product';
+    if (rule === 'priceMode in [fixed,from]') {
+      const mode = values.priceMode ?? (values.serviceProfile as { priceMode?: string } | undefined)?.priceMode;
+      return mode === 'fixed' || mode === 'from';
+    }
+    // Booking/media/calendar operational rules are enforced on their own write paths.
+    return false;
   }
 
   private validateType(def: RegistryFieldDef, raw: unknown): string | null {
@@ -227,8 +327,10 @@ export class RegistryService implements OnModuleInit {
     if (t === 'boolean') {
       return typeof raw === 'boolean' ? null : 'FIELD_TYPE_INVALID';
     }
-    if (t === 'string[]' || t === 'multiSelect' || t === 'tags') {
+    if (t === 'array' || t === 'string[]' || t === 'multiSelect' || t === 'tags') {
       if (!Array.isArray(raw)) return 'FIELD_TYPE_INVALID';
+      if (def.min != null && raw.length < def.min) return 'MIN_VALUE';
+      if (def.max != null && raw.length > def.max) return 'MAX_VALUE';
       const allowedIds = this.allowedValueIds(def);
       for (const item of raw) {
         if (typeof item !== 'string') return 'FIELD_TYPE_INVALID';
@@ -245,55 +347,138 @@ export class RegistryService implements OnModuleInit {
     if (t === 'object' || t === 'json') {
       return raw != null && typeof raw === 'object' && !Array.isArray(raw) ? null : 'FIELD_TYPE_INVALID';
     }
-    // Unknown registry type: accept JSON-compatible scalars/objects but do not invent.
-    return null;
+    return 'REGISTRY_UNSUPPORTED_TYPE';
   }
 
-  /** Map localStorage / legacy answer keys into canonical ids for a template. */
+  /** Map localStorage / legacy answer keys into Flutter-compatible storage ids. */
   mapLegacyAnswers(templateId: string, answers: Record<string, unknown>): {
     mapped: Record<string, unknown>;
     unmapped: string[];
   } {
     const mapped: Record<string, unknown> = {};
     const unmapped: string[] = [];
+    const reverseCamel: Record<string, string> = {
+      included: 'includes',
+      excluded: 'excludes',
+      packageSessions: 'package_sessions',
+      placeMode: 'place_mode',
+      homeCoverage: 'home_coverage',
+      needsAssessment: 'needs_assessment',
+      assessmentNote: 'assessment_note',
+      prepRequired: 'prep_required',
+    };
     for (const [key, value] of Object.entries(answers)) {
       const aliasKey = `template.${templateId}.${key}`;
       const alias = this.aliases[aliasKey];
-      if (alias?.canonical) {
-        mapped[alias.canonical] = value;
-        continue;
-      }
       if (alias?.action === 'drop') {
         unmapped.push(key);
         continue;
       }
-      // Already canonical or unknown — keep key; caller may still flag unknown template fields.
-      mapped[key] = value;
+      let dest = key;
+      if (alias?.canonical) dest = alias.canonical;
+      else if (reverseCamel[key]) dest = reverseCamel[key];
+      mapped[dest] = value;
     }
     return { mapped, unmapped };
   }
 
-  normalizeServiceProfile(input: unknown): ServiceProfileDoc {
+  validateServiceProfileDocument(
+    input: unknown,
+    partnerType: string,
+    opts: { requireKnownAnswers: boolean },
+  ): ServiceProfileDoc {
     if (!input || typeof input !== 'object' || Array.isArray(input)) {
       throw editorError(HttpStatus.BAD_REQUEST, 'SERVICE_PROFILE_INVALID', 'بيانات قالب الخدمة غير صالحة');
     }
     const body = input as Record<string, unknown>;
+    this.assertValuesBounds(body, 'serviceProfile');
     const templateId = typeof body.templateId === 'string' ? body.templateId.trim() : '';
     if (!templateId) {
       throw editorError(HttpStatus.BAD_REQUEST, 'SERVICE_PROFILE_INVALID', 'معرّف القالب مطلوب', {
         fieldErrors: [{ fieldId: 'templateId', code: 'REQUIRED' }],
       });
     }
-    const templateVersion =
-      typeof body.templateVersion === 'number' && Number.isInteger(body.templateVersion)
-        ? body.templateVersion
-        : 1;
-    const priceMode = typeof body.priceMode === 'string' && body.priceMode.trim() ? body.priceMode.trim() : 'fixed';
-    const answers =
+    const template = this.templates.get(templateId);
+    if (!template) {
+      throw editorError(HttpStatus.BAD_REQUEST, 'SERVICE_TEMPLATE_UNKNOWN', 'القالب غير موجود', {
+        fieldErrors: [{ fieldId: 'templateId', code: 'SERVICE_TEMPLATE_UNKNOWN' }],
+      });
+    }
+    if (partnerType !== 'developer' && !(template.partnerTypes || []).includes(partnerType)) {
+      throw editorError(HttpStatus.FORBIDDEN, 'SERVICE_TEMPLATE_FORBIDDEN', 'القالب غير مسموح لنوع الشريك', {
+        fieldErrors: [{ fieldId: 'templateId', code: 'SERVICE_TEMPLATE_FORBIDDEN' }],
+      });
+    }
+    if (typeof body.templateVersion !== 'number' || !Number.isInteger(body.templateVersion) || body.templateVersion < 1) {
+      throw editorError(HttpStatus.BAD_REQUEST, 'SERVICE_TEMPLATE_VERSION_INVALID', 'إصدار القالب غير صالح', {
+        fieldErrors: [{ fieldId: 'templateVersion', code: 'SERVICE_TEMPLATE_VERSION_INVALID' }],
+      });
+    }
+    const priceMode = typeof body.priceMode === 'string' ? body.priceMode.trim() : '';
+    if (!PRICE_MODES.has(priceMode)) {
+      throw editorError(HttpStatus.BAD_REQUEST, 'SERVICE_PRICE_MODE_INVALID', 'طريقة السعر غير معروفة', {
+        fieldErrors: [{ fieldId: 'priceMode', code: 'SERVICE_PRICE_MODE_INVALID' }],
+      });
+    }
+    const answersRaw =
       body.answers && typeof body.answers === 'object' && !Array.isArray(body.answers)
         ? (body.answers as Record<string, unknown>)
         : {};
-    this.assertValuesBounds(answers);
-    return { templateId, templateVersion, priceMode, answers };
+    this.assertValuesBounds(answersRaw, 'serviceProfile.answers');
+    const { mapped } = this.mapLegacyAnswers(templateId, answersRaw);
+    const fieldById = new Map(template.fields.map((f) => [f.id, f]));
+    const fieldErrors: Array<{ fieldId: string; code: string }> = [];
+    for (const [key, raw] of Object.entries(mapped)) {
+      const field = fieldById.get(key);
+      if (!field) {
+        if (opts.requireKnownAnswers) fieldErrors.push({ fieldId: key, code: 'TEMPLATE_UNKNOWN_ANSWER' });
+        continue;
+      }
+      const err = this.validateTemplateAnswer(field, raw);
+      if (err) fieldErrors.push({ fieldId: key, code: err });
+    }
+    if (fieldErrors.length) {
+      throw editorError(HttpStatus.BAD_REQUEST, fieldErrors[0].code, 'إجابات القالب غير صالحة', { fieldErrors });
+    }
+    return {
+      templateId,
+      templateVersion: body.templateVersion as number,
+      priceMode,
+      answers: mapped,
+    };
+  }
+
+  private validateTemplateAnswer(field: TemplateField, raw: unknown): string | null {
+    if (raw === null || raw === undefined) return null;
+    if (raw && typeof raw === 'object' && !Array.isArray(raw)) {
+      const state = (raw as { state?: string }).state;
+      if (state === 'unset' || state === 'notApplicable' || state === 'not_applicable') return null;
+      if (Object.prototype.hasOwnProperty.call(raw, 'value')) {
+        return this.validateTemplateAnswer(field, (raw as { value: unknown }).value);
+      }
+    }
+    const t = field.type;
+    if (t === 'boolean') return typeof raw === 'boolean' ? null : 'FIELD_TYPE_INVALID';
+    if (t === 'number') {
+      return typeof raw === 'number' && Number.isFinite(raw) ? null : 'FIELD_TYPE_INVALID';
+    }
+    if (t === 'text' || t === 'string' || t === 'single') {
+      if (typeof raw !== 'string') return 'FIELD_TYPE_INVALID';
+      if (field.options?.length && !field.options.includes(raw)) return 'REGISTRY_UNKNOWN_VALUE';
+      return null;
+    }
+    if (t === 'multi') {
+      if (!Array.isArray(raw)) return 'FIELD_TYPE_INVALID';
+      for (const item of raw) {
+        if (typeof item !== 'string') return 'FIELD_TYPE_INVALID';
+        if (field.options?.length && !field.options.includes(item)) return 'REGISTRY_UNKNOWN_VALUE';
+      }
+      return null;
+    }
+    return null;
+  }
+
+  normalizeServiceProfile(input: unknown, partnerType = 'salon'): ServiceProfileDoc {
+    return this.validateServiceProfileDocument(input, partnerType, { requireKnownAnswers: true });
   }
 }

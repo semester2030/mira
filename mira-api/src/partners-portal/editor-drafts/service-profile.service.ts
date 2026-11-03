@@ -77,16 +77,20 @@ export class ServiceProfileService {
       }
 
       const published = service.contentStatus === 'published';
+      const partner = await tx.partner.findUniqueOrThrow({ where: { id: partnerId } });
       let nextDoc: ServiceProfileDoc | null = null;
       if (body.clear === true) {
         nextDoc = null;
       } else {
-        nextDoc = this.registry.normalizeServiceProfile({
-          templateId: body.templateId,
-          templateVersion: body.templateVersion,
-          priceMode: body.priceMode,
-          answers: body.answers ?? {},
-        });
+        nextDoc = this.registry.normalizeServiceProfile(
+          {
+            templateId: body.templateId,
+            templateVersion: body.templateVersion,
+            priceMode: body.priceMode,
+            answers: body.answers ?? {},
+          },
+          partner.type,
+        );
       }
 
       const updated = await tx.service.updateMany({

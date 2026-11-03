@@ -45,5 +45,24 @@ void main() {
       expect(profile.answer('includes').state, CatalogServiceAnswerState.notApplicable);
       expect(profile.answer('session_kind').asString(), 'package');
     });
+
+    test('camelCase storage aliases map to Flutter field ids', () {
+      final profile = CatalogServiceProfile.fromServiceProfileJson({
+        'templateId': 'salon_hair_cut',
+        'templateVersion': 1,
+        'priceMode': 'fixed',
+        'answers': {
+          'included': ['wash'],
+          'packageSessions': 4,
+        },
+      });
+      expect(profile.answer('includes').asStringList(), ['wash']);
+      expect(profile.answer('package_sessions').asInt(), 4);
+      final template = CatalogServiceTemplates.byId('salon_hair_cut');
+      expect(template, isNotNull);
+      final rows = CatalogServiceTemplateEngine.detailRows(template: template!, profile: profile);
+      expect(rows.any((r) => r.field.id == 'includes'), isTrue);
+      expect(rows.any((r) => r.display.contains('included')), isFalse);
+    });
   });
 }

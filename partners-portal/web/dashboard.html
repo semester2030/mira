@@ -64,6 +64,13 @@
         <form id="serviceForm"></form>
       </div>
 
+      <div class="card" id="editorDraftsSection">
+        <h2>مسودات المحرر (الخادم)</h2>
+        <p class="lead">مسودات محفوظة على الخادم لكل شريك. إعادة الفتح لا تعتمد على localStorage.</p>
+        <button type="button" class="btn btn-ghost" id="refreshEditorDrafts">تحديث المسودات</button>
+        <div id="editorDraftsList"></div>
+      </div>
+
       <div class="card" id="commerceSection">
         <h2>الطلبات والحجوزات</h2>
         <p class="lead">طلبات الدفع عند الاستلام داخل ميرا وطلبات المواعيد. «طلب موعد» ليس حجزًا مؤكدًا حتى تؤكديه.</p>
@@ -104,9 +111,78 @@
 
     document.getElementById('logout').onclick = (e) => {
       e.preventDefault();
+      if (window.MiraEditorV2) MiraEditorV2.cancelAllPending('logout');
+      try { localStorage.removeItem('mira_partner_id'); } catch (err) {}
       PartnersApi.clearSession();
       location.href = 'login.html' + location.search;
     };
+
+    window.renderEditorDrafts = async function renderEditorDrafts() {
+      const list = document.getElementById('editorDraftsList');
+      if (!list) return;
+      if (!(window.MiraEditorV2 && MiraEditorV2.state.enabled)) {
+        list.textContent = 'محرر v2 غير مفعّل على الخادم.';
+        return;
+      }
+      if (MiraEditorV2.state.registryMismatch) {
+        list.textContent = 'اختلاف سجل الحقول بين البوابة والخادم — أوقِف التحرير حتى تتطابق النسخ.';
+        return;
+      }
+      list.textContent = 'جارٍ التحميل…';
+      try {
+        const data = await MiraEditorV2.listDrafts();
+        list.replaceChildren();
+        const items = (data && data.items) || [];
+        if (!items.length) {
+          list.textContent = 'لا توجد مسودات خادمية بعد.';
+          return;
+        }
+        items.forEach((d) => {
+          const row = document.createElement('div');
+          row.className = 'list-row';
+          const title = (d.values && d.values.nameAr) || '(بدون اسم)';
+          row.textContent =
+            d.kind + ' · ' + title + ' · rev ' + d.revision + ' · ' + d.status +
+            (d.submitReviewStatus ? ' · مراجعة:' + d.submitReviewStatus : '');
+          const openBtn = document.createElement('button');
+          openBtn.type = 'button';
+          openBtn.textContent = 'فتح';
+          openBtn.onclick = async () => {
+            try {
+              const draft = await MiraEditorV2.openDraft(d.clientDraftId);
+              const formId = draft.kind === 'product' ? 'catalogForm' : 'serviceForm';
+              const titleId = draft.kind === 'product' ? 'catalogTitle' : 'serviceTitle';
+              const type = draft.kind === 'product' ? 'brand' : (window.sessionPartner.type === 'clinic' ? 'clinic' : 'salon');
+              const stub = {
+                id: draft.targetOwnerId || undefined,
+                nameAr: (draft.values && draft.values.nameAr) || '',
+                priceHalalas: (draft.values && draft.values.priceHalalas) || 0,
+                category: (draft.values && draft.values.category) || '',
+                durationMin: (draft.values && draft.values.durationMin) || '',
+                descriptionAr: (draft.values && draft.values.descriptionAr) || '',
+              };
+              CatalogJourney.renderForm(type, stub, formId, titleId, 'مسودة خادمية ' + draft.clientDraftId + ' · rev ' + draft.revision);
+              if (draft.values && draft.values.serviceProfile && window.ServiceTemplates) {
+                try {
+                  localStorage.setItem(
+                    'mira-service-template:' + (stub.id || 'new'),
+                    JSON.stringify(draft.values.serviceProfile),
+                  );
+                } catch (err) {}
+              }
+            } catch (error) {
+              list.textContent = 'تعذر الفتح: ' + (error.message || error);
+            }
+          };
+          row.appendChild(openBtn);
+          list.appendChild(row);
+        });
+      } catch (error) {
+        list.textContent = 'تعذر التحميل: ' + (error.message || error);
+      }
+    };
+    const refreshDraftsBtn = document.getElementById('refreshEditorDrafts');
+    if (refreshDraftsBtn) refreshDraftsBtn.onclick = () => window.renderEditorDrafts();
 
     function renderCatalog(type, catalog, listId, formId, titleId) {
       CatalogJourney.renderCatalog(type, catalog, listId, formId, titleId);
@@ -155,8 +231,10 @@
         MiraMotion.announce('اكتمل تحميل لوحة الشريك');
 
         window.sessionPartner = p;
+        try { localStorage.setItem('mira_partner_id', p.id); } catch (e) {}
         if (window.MiraEditorV2) {
           await MiraEditorV2.bootstrap(p);
+          if (window.renderEditorDrafts) renderEditorDrafts();
         }
         const serviceButton = document.getElementById('goService');
         const productButton = document.getElementById('goProduct');

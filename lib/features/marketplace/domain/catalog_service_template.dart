@@ -199,7 +199,7 @@ class CatalogServiceProfile {
     final answers = <String, CatalogServiceAnswer>{};
     if (answersRaw is Map) {
       for (final entry in answersRaw.entries) {
-        final key = entry.key.toString();
+        final key = _canonicalAnswerKey(entry.key.toString());
         answers[key] = _parseAnswer(entry.value);
       }
     }
@@ -243,6 +243,21 @@ class CatalogServiceProfile {
       }
     }
     return CatalogServiceAnswer.value(raw);
+  }
+
+  /// Adapter: accept storage aliases (camelCase) and Flutter field ids (snake_case).
+  static String _canonicalAnswerKey(String key) {
+    const aliases = <String, String>{
+      'included': 'includes',
+      'excluded': 'excludes',
+      'packageSessions': 'package_sessions',
+      'placeMode': 'place_mode',
+      'homeCoverage': 'home_coverage',
+      'needsAssessment': 'needs_assessment',
+      'assessmentNote': 'assessment_note',
+      'prepRequired': 'prep_required',
+    };
+    return aliases[key] ?? key;
   }
 }
 

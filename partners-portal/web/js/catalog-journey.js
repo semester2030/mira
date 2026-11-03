@@ -504,21 +504,21 @@
       }
     }
 
-    function saveServiceTemplateDraft() {
-      const key = 'mira-service-template:' + ((item && item.id) || 'new');
-      localStorage.setItem(key, JSON.stringify(templateState));
-      if (!(window.MiraEditorV2 && MiraEditorV2.state.enabled) || type === 'brand') return;
-      MiraEditorV2.attachStatus(form);
+    function buildEditorValues() {
       const values = {};
       if (nameAr.value.trim()) values.nameAr = nameAr.value.trim();
       if (category.value) values.category = category.value;
+      const nameEnEl = form.querySelector('[name="nameEn"]');
+      if (nameEnEl && nameEnEl.value.trim()) values.nameEn = nameEnEl.value.trim();
+      const descEl = form.querySelector('[name="descriptionAr"]');
+      if (descEl && String(descEl.value || '').trim()) values.descriptionAr = String(descEl.value).trim();
       if (duration && duration.value) {
         const d = parseInt(duration.value, 10);
         if (Number.isFinite(d)) values.durationMin = d;
       }
       const halalas = typeof riyalsToHalalas === 'function' ? riyalsToHalalas(price.value) : null;
       if (halalas != null) values.priceHalalas = halalas;
-      if (templateState.templateId) {
+      if (type !== 'brand' && templateState && templateState.templateId) {
         values.serviceProfile = {
           templateId: templateState.templateId,
           templateVersion: 1,
@@ -526,26 +526,33 @@
           answers: templateState.answers || {},
         };
       }
-      MiraEditorV2.scheduleAutosave(form, () => ({
-        clientDraftId: MiraEditorV2.clientDraftIdFor('service', item && item.id),
-        kind: 'service',
-        profileId: MiraEditorV2.profileIdFor('service', category.value, partnerTypeForTemplates()),
-        targetOwnerId: item && item.id ? item.id : null,
-        values: values,
-      }));
-      if (item && item.id && templateState.templateId) {
-        PartnersApi.getServiceProfile(item.id)
-          .then((row) =>
-            MiraEditorV2.pushServiceProfile(item.id, templateState, row.reviewRevision).then(() => {
-              MiraEditorV2.setStatus(form, 'محفوظ على الخادم', 'saved');
-            }),
-          )
-          .catch((error) => {
-            const msg = String(error && error.message ? error.message : error);
-            if (/تعارض|REVISION|409/.test(msg)) MiraEditorV2.setStatus(form, 'تعارض تعديل', 'conflict');
-            else if (!/EDITOR_V2_DISABLED|غير مفعّل/.test(msg)) MiraEditorV2.setStatus(form, 'تعذر حفظ القالب', 'error');
-          });
+      return values;
+    }
+
+    function scheduleEditorDraftAutosave() {
+      if (!(window.MiraEditorV2 && MiraEditorV2.state.enabled)) return;
+      if (MiraEditorV2.state.registryMismatch) {
+        MiraEditorV2.attachStatus(form);
+        MiraEditorV2.setStatus(form, 'اختلاف سجل الحقول — أوقِف الحفظ', 'error');
+        return;
       }
+      MiraEditorV2.attachStatus(form);
+      const kind = type === 'brand' ? 'product' : 'service';
+      const partnerType = type === 'brand' ? 'brand' : partnerTypeForTemplates();
+      MiraEditorV2.scheduleAutosave(form, () => ({
+        clientDraftId: MiraEditorV2.clientDraftIdFor(kind, item && item.id),
+        kind: kind,
+        profileId: MiraEditorV2.profileIdFor(kind, category.value, partnerType),
+        targetOwnerId: item && item.id ? item.id : null,
+        values: buildEditorValues(),
+      }));
+    }
+
+    function saveServiceTemplateDraft() {
+      const key = 'mira-service-template:' + ((item && item.id) || 'new');
+      localStorage.setItem(key, JSON.stringify(templateState));
+      // Single coordinated path: draft autosave carries serviceProfile (no parallel putServiceProfile race).
+      if (type !== 'brand') scheduleEditorDraftAutosave();
     }
 
     function partnerTypeForTemplates() {
@@ -796,6 +803,49 @@
       if (type !== 'brand') paintServiceTemplates();
     };
     if (type !== 'brand') paintServiceTemplates();
+
+    // Product + service field autosave into PartnerEditorDraft (empty values allowed).
+    [nameAr, price, category].forEach((el) => {
+      if (!el) return;
+      el.addEventListener('input', scheduleEditorDraftAutosave);
+      el.addEventListener('change', scheduleEditorDraftAutosave);
+    });
+    if (duration) {
+      duration.addEventListener('input', scheduleEditorDraftAutosave);
+      duration.addEventListener('change', scheduleEditorDraftAutosave);
+    }
+
+    if (window.MiraEditorV2 && MiraEditorV2.state.enabled) {
+      const matBtn = document.createElement('button');
+      matBtn.type = 'button';
+      matBtn.className = 'secondary';
+      matBtn.textContent = 'تحويل المسودة الخادمية وإرسال للمراجعة';
+      matBtn.onclick = async () => {
+        try {
+          await MiraEditorV2.flush(form);
+          const kind = type === 'brand' ? 'product' : 'service';
+          const clientDraftId = MiraEditorV2.clientDraftIdFor(kind, item && item.id);
+          const draft = await MiraEditorV2.openDraft(clientDraftId);
+          const key = 'mat:' + clientDraftId + ':' + draft.revision;
+          const result = await MiraEditorV2.materialize(clientDraftId, draft.revision, true, key);
+          status.textContent =
+            'تم التحويل' +
+            (result.reviewSubmitted ? ' والإرسال للمراجعة' : '') +
+            ' · ' +
+            (result.targetKind || kind) +
+            ' ' +
+            (result.targetOwnerId || '');
+          if (result.targetOwnerId) {
+            item = Object.assign({}, item || {}, { id: result.targetOwnerId });
+            MiraEditorV2.clearNewDraftKey(kind);
+          }
+          await refreshLists();
+        } catch (error) {
+          status.textContent = 'تعذر التحويل: ' + (error.message || error);
+        }
+      };
+      form.appendChild(matBtn);
+    }
 
     const mediaSection = document.createElement('div');
     mediaSection.className = 'form-section';

@@ -11,6 +11,7 @@ import { CatalogContentService } from '../../marketplace/catalog-content.service
 import { normalizeIdempotencyKey, stableFingerprint } from '../../marketplace/commerce.types';
 import { RegistryService } from '../registry/registry.service';
 import { EDITOR_SCHEMA_VERSION } from '../registry/registry.types';
+import { optionsJsonFromDraftValues } from '../registry/draft-values-mapping';
 
 function editorError(status: HttpStatus, code: string, messageAr: string, extra: Record<string, unknown> = {}) {
   return new HttpException({ message: messageAr, messageAr, code, ...extra }, status);
@@ -50,6 +51,8 @@ export class EditorDraftsService {
     status: string;
     targetOwnerId: string | null;
     materializedAt: Date | null;
+    submitReviewStatus?: string | null;
+    submitReviewError?: string | null;
     createdAt: Date;
     updatedAt: Date;
   }) {
@@ -64,6 +67,8 @@ export class EditorDraftsService {
       status: row.status,
       targetOwnerId: row.targetOwnerId,
       materializedAt: row.materializedAt?.toISOString() ?? null,
+      submitReviewStatus: row.submitReviewStatus ?? null,
+      submitReviewError: row.submitReviewError ?? null,
       createdAt: row.createdAt.toISOString(),
       updatedAt: row.updatedAt.toISOString(),
     };
@@ -116,6 +121,7 @@ export class EditorDraftsService {
       values: body.values,
       mode: 'draft',
       schemaVersion,
+      partnerType,
     });
 
     if (body.targetOwnerId) {
@@ -232,6 +238,12 @@ export class EditorDraftsService {
           }
           return {
             replay: true,
+            needsSubmitRetry:
+              submitReview &&
+              draft.submitReviewStatus !== 'submitted' &&
+              (draft.submitReviewStatus === 'pending' ||
+                draft.submitReviewStatus === 'failed' ||
+                draft.submitReviewStatus == null),
             draftId: draft.id,
             revision: draft.revision,
             status: draft.status,
@@ -239,6 +251,7 @@ export class EditorDraftsService {
             targetOwnerId: draft.targetOwnerId!,
             materializedAt: draft.materializedAt!.toISOString(),
             submitReview,
+            submitReviewStatus: draft.submitReviewStatus,
           };
         }
         throw editorError(HttpStatus.CONFLICT, 'DRAFT_ALREADY_MATERIALIZED', 'تم تحويل المسودة مسبقًا');
@@ -251,13 +264,17 @@ export class EditorDraftsService {
       }
 
       const profile = this.registry.assertProfileAllowed(draft.profileId, partnerType, draft.kind);
-      const values = (draft.valuesJson ?? {}) as Record<string, unknown>;
-      // Validate provided values; enforce publish-required when creating/updating catalog content.
+      const values = { ...((draft.valuesJson ?? {}) as Record<string, unknown>) };
+      // Default purchaseMode only when omitted — empty externalUrl remains allowed.
+      // Do NOT invent priceMode here: if omitted, priceHalalas publish rule stays inactive
+      // and the materialize Prisma gate returns MATERIALIZE_INVALID without fake zeros.
+      if (values.purchaseMode == null && draft.kind === 'product') values.purchaseMode = 'external';
       this.registry.validateValues({
         profile,
         values,
         mode: 'publish',
         schemaVersion: draft.schemaVersion,
+        partnerType,
       });
 
       const nameAr = typeof values.nameAr === 'string' ? values.nameAr.trim() : '';
@@ -297,6 +314,8 @@ export class EditorDraftsService {
           materializedAt: new Date(),
           materializeKey: idempotencyKey,
           materializeFingerprint: fingerprint,
+          submitReviewStatus: submitReview ? 'pending' : 'none',
+          submitReviewError: null,
         },
       });
       if (marked.count !== 1) {
@@ -305,6 +324,7 @@ export class EditorDraftsService {
       const refreshed = await tx.partnerEditorDraft.findUniqueOrThrow({ where: { id: draft.id } });
       return {
         replay: false,
+        needsSubmitRetry: submitReview,
         draftId: refreshed.id,
         revision: refreshed.revision,
         status: refreshed.status,
@@ -312,14 +332,50 @@ export class EditorDraftsService {
         targetOwnerId: refreshed.targetOwnerId!,
         materializedAt: refreshed.materializedAt!.toISOString(),
         submitReview,
+        submitReviewStatus: refreshed.submitReviewStatus,
       };
     });
 
-    if (!outcome.replay && submitReview) {
-      // Outside the materialize write; submit uses its own locking. Failures leave draft materialized (recoverable).
-      await this.content.submit(partnerId, outcome.targetKind as 'product' | 'service', outcome.targetOwnerId);
+    let reviewSubmitted = false;
+    let reviewError: string | null = null;
+    if (submitReview && (outcome.needsSubmitRetry || (!outcome.replay && outcome.submitReviewStatus === 'pending'))) {
+      try {
+        await this.content.submit(partnerId, outcome.targetKind as 'product' | 'service', outcome.targetOwnerId);
+        reviewSubmitted = true;
+        await this.prisma.partnerEditorDraft.update({
+          where: { id: outcome.draftId },
+          data: { submitReviewStatus: 'submitted', submitReviewError: null },
+        });
+      } catch (error) {
+        reviewError = error instanceof Error ? error.message : String(error);
+        await this.prisma.partnerEditorDraft.update({
+          where: { id: outcome.draftId },
+          data: { submitReviewStatus: 'failed', submitReviewError: reviewError.slice(0, 500) },
+        });
+        throw editorError(
+          HttpStatus.SERVICE_UNAVAILABLE,
+          'MATERIALIZE_SUBMIT_REVIEW_FAILED',
+          'تم تحويل المسودة إلى عنصر، لكن تعذر الإرسال للمراجعة. أعيدي المحاولة بنفس المفتاح دون إنشاء عنصر ثانٍ.',
+          {
+            targetOwnerId: outcome.targetOwnerId,
+            targetKind: outcome.targetKind,
+            draftId: outcome.draftId,
+            materializedAt: outcome.materializedAt,
+            submitReviewStatus: 'failed',
+            reviewError,
+            resume: true,
+          },
+        );
+      }
+    } else if (outcome.replay && submitReview && outcome.submitReviewStatus === 'submitted') {
+      reviewSubmitted = true;
     }
-    return outcome;
+
+    return {
+      ...outcome,
+      reviewSubmitted,
+      submitReviewStatus: reviewSubmitted ? 'submitted' : outcome.submitReviewStatus ?? (submitReview ? 'pending' : 'none'),
+    };
   }
 
   private async createFromDraft(
@@ -358,10 +414,7 @@ export class EditorDraftsService {
             typeof values.deliveryFeeHalalas === 'number' && Number.isInteger(values.deliveryFeeHalalas)
               ? values.deliveryFeeHalalas
               : null,
-          optionsJson:
-            values.optionsJson && typeof values.optionsJson === 'object'
-              ? (values.optionsJson as Prisma.InputJsonValue)
-              : undefined,
+          optionsJson: optionsJsonFromDraftValues(values),
           variantsJson:
             values.variantsJson && typeof values.variantsJson === 'object'
               ? (values.variantsJson as Prisma.InputJsonValue)
@@ -371,6 +424,12 @@ export class EditorDraftsService {
       return row.id;
     }
     const durationMin = values.durationMin as number;
+    let serviceProfileJson: Prisma.InputJsonValue | undefined;
+    if (values.serviceProfile && typeof values.serviceProfile === 'object') {
+      const partner = await tx.partner.findUniqueOrThrow({ where: { id: partnerId } });
+      const normalized = this.registry.normalizeServiceProfile(values.serviceProfile, partner.type);
+      serviceProfileJson = normalized as unknown as Prisma.InputJsonValue;
+    }
     const row = await tx.service.create({
       data: {
         partnerId,
@@ -390,10 +449,7 @@ export class EditorDraftsService {
         reviewStatus: 'draft',
         profileId: draft.profileId,
         schemaVersion: draft.schemaVersion,
-        serviceProfileJson:
-          values.serviceProfile && typeof values.serviceProfile === 'object'
-            ? (values.serviceProfile as Prisma.InputJsonValue)
-            : undefined,
+        ...(serviceProfileJson !== undefined ? { serviceProfileJson } : {}),
       },
     });
     return row.id;
@@ -433,15 +489,14 @@ export class EditorDraftsService {
             schemaVersion: draft.schemaVersion,
             reviewRevision: { increment: 1 },
             reviewStatus: current.reviewStatus === 'in_review' ? 'in_review' : 'draft',
-            ...(values.optionsJson !== undefined
-              ? {
-                  draftOptionsSet: true,
-                  draftOptionsJson:
-                    values.optionsJson == null
-                      ? Prisma.DbNull
-                      : (values.optionsJson as Prisma.InputJsonValue),
-                }
-              : {}),
+            ...(() => {
+              const mapped = optionsJsonFromDraftValues(values);
+              if (mapped === undefined && values.optionsJson === undefined) return {};
+              return {
+                draftOptionsSet: true,
+                draftOptionsJson: mapped === undefined ? Prisma.DbNull : mapped,
+              };
+            })(),
             ...(values.variantsJson !== undefined
               ? {
                   draftVariantsSet: true,
@@ -454,6 +509,7 @@ export class EditorDraftsService {
           },
         });
       } else {
+        const mappedOptions = optionsJsonFromDraftValues(values);
         await tx.product.update({
           where: { id: targetOwnerId },
           data: {
@@ -472,14 +528,7 @@ export class EditorDraftsService {
             ...(typeof values.category === 'string' || values.category === null
               ? { category: typeof values.category === 'string' ? values.category : null }
               : {}),
-            ...(values.optionsJson !== undefined
-              ? {
-                  optionsJson:
-                    values.optionsJson == null
-                      ? Prisma.DbNull
-                      : (values.optionsJson as Prisma.InputJsonValue),
-                }
-              : {}),
+            ...(mappedOptions !== undefined ? { optionsJson: mappedOptions } : {}),
             ...(values.variantsJson !== undefined
               ? {
                   variantsJson:

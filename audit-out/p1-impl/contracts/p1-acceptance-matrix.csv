@@ -1,0 +1,20 @@
+case_id,task,contract,status,evidence
+A01,save draft without invented price/duration,PUT editor-drafts values:{},PASS_LOCAL,logs/editor-v2-integration.txt
+A02,retrieve draft other session token same partner,GET editor-drafts,PASS_LOCAL,logs/editor-v2-integration.txt
+A03,deny other partner draft,GET 404,PASS_LOCAL,logs/editor-v2-integration.txt
+A04,draft absent public catalog,GET marketplace 404,PASS_LOCAL,logs/editor-v2-integration.txt
+A05,revision conflict,PUT stale expectedRevision 409,PASS_LOCAL,logs/editor-v2-integration.txt
+A06,idempotent rematerialize same key,POST materialize replay,PASS_LOCAL,logs/editor-v2-integration.txt
+A06b,two keys no duplicate row,POST materialize 409,PASS_LOCAL,logs/editor-v2-integration.txt
+A07,service profile roundtrip unpublished,PUT service-profile,PASS_LOCAL,logs/editor-v2-integration.txt
+A08,import force cannot bypass newer revision,import 409 then fresh 200,PASS_LOCAL,logs/editor-v2-integration.txt
+A09,public keeps approved profile until approve,serviceProfileJson fixed while draft from,PASS_LOCAL,logs/editor-v2-integration.txt
+A10,legacy CRUD flag on and off,POST products,PASS_LOCAL,logs/editor-v2-integration.txt
+A11,flag off keeps drafts,403 write + rows retained,PASS_LOCAL,logs/editor-v2-integration.txt
+A12,Flutter parse approved profile + legacy null,unit tests,PASS_LOCAL,logs/flutter-tests.txt
+P1.1-registry,registry meta draftRequired camelCase,GET registry,PASS_LOCAL,logs/editor-v2-integration.txt
+P1.1-sync,api/web registry sha match,check-field-registry,PASS_LOCAL,logs/registry-sync.txt
+P1.2-concurrent,concurrent PUT one 200 one 409,DB transaction,PASS_LOCAL,logs/editor-v2-integration.txt
+P1.2-no-zeros,materialize without price 422 keeps draft,MATERIALIZE_INVALID,PASS_LOCAL,logs/editor-v2-integration.txt
+STAGING_E2E,partner portal live staging journey,—,NOT_RUN,remaining
+DEVICE_FLUTTER,device render service detail profile,—,NOT_RUN,remaining

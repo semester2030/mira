@@ -4938,6 +4938,41 @@
       "valueLabels": {},
       "legacyRequired": false,
       "legacyFieldId": "policies"
+    },
+    "serviceProfile": {
+      "id": "serviceProfile",
+      "labelAr": "قالب الخدمة وإجاباته",
+      "type": "object",
+      "widget": "service_template",
+      "unit": null,
+      "values": [],
+      "filter": null,
+      "currentStatus": "P1_DRAFT_STORAGE",
+      "draftRequired": false,
+      "publishRequiredWhen": "optional",
+      "source": "partner",
+      "editable": true,
+      "nullMeaning": "unspecified",
+      "default": null,
+      "min": null,
+      "max": null,
+      "dependsOn": null,
+      "storage": "service_profile_json via materialize; draft values.serviceProfile",
+      "publicWhen": "published via serviceProfileJson",
+      "searchable": false,
+      "unknownHandling": "reject invalid nested template answers",
+      "evidence": "P1 RC2",
+      "schema": {
+        "templateId": "string",
+        "templateVersion": "integer>=1",
+        "priceMode": [
+          "fixed",
+          "from",
+          "afterAssessment",
+          "unknown"
+        ],
+        "answers": "object of template field answers"
+      }
     }
   },
   "profiles": [
@@ -5271,7 +5306,8 @@
         "template.salon_hair_cut.cut_style",
         "template.salon_hair_cut.hair_length",
         "template.salon_hair_cut.includes_wash_dry",
-        "template.salon_hair_cut.policies"
+        "template.salon_hair_cut.policies",
+        "serviceProfile"
       ],
       "draftRequired": [],
       "publishRules": "specs/03-JOURNEYS.md#publication",
@@ -5423,7 +5459,8 @@
         "template.salon_hair_color.price_by_length",
         "template.salon_hair_color.length_tiers",
         "template.salon_hair_color.includes_bleach",
-        "template.salon_hair_color.policies"
+        "template.salon_hair_color.policies",
+        "serviceProfile"
       ],
       "draftRequired": [],
       "publishRules": "specs/03-JOURNEYS.md#publication",
@@ -5553,7 +5590,8 @@
         "template.salon_nails.hands_feet",
         "template.salon_nails.nail_kind",
         "template.salon_nails.remove_old",
-        "template.salon_nails.policies"
+        "template.salon_nails.policies",
+        "serviceProfile"
       ],
       "draftRequired": [],
       "publishRules": "specs/03-JOURNEYS.md#publication",
@@ -5645,7 +5683,8 @@
         "requiresAssessment",
         "assessmentNote",
         "template.salon_makeup.occasion",
-        "template.salon_makeup.policies"
+        "template.salon_makeup.policies",
+        "serviceProfile"
       ],
       "draftRequired": [],
       "publishRules": "specs/03-JOURNEYS.md#publication",
@@ -5775,7 +5814,8 @@
         "template.clinic_skin.session_name",
         "template.clinic_skin.session_kind",
         "template.clinic_skin.aftercare",
-        "template.clinic_skin.policies"
+        "template.clinic_skin.policies",
+        "serviceProfile"
       ],
       "draftRequired": [],
       "publishRules": "specs/03-JOURNEYS.md#publication",
@@ -5896,7 +5936,8 @@
         "template.clinic_laser.session_kind",
         "template.clinic_laser.package_validity",
         "template.clinic_laser.device_info",
-        "template.clinic_laser.policies"
+        "template.clinic_laser.policies",
+        "serviceProfile"
       ],
       "draftRequired": [],
       "publishRules": "specs/03-JOURNEYS.md#publication",
@@ -6005,7 +6046,8 @@
         "template.clinic_consult.consult_kind",
         "template.clinic_consult.consult_mode",
         "template.clinic_consult.bring_docs",
-        "template.clinic_consult.policies"
+        "template.clinic_consult.policies",
+        "serviceProfile"
       ],
       "draftRequired": [],
       "publishRules": "specs/03-JOURNEYS.md#publication",
@@ -6086,7 +6128,8 @@
         "requiresAssessment",
         "assessmentNote",
         "template.salon_care.session_kind",
-        "template.salon_care.policies"
+        "template.salon_care.policies",
+        "serviceProfile"
       ],
       "draftRequired": [],
       "publishRules": "specs/03-JOURNEYS.md#publication",
@@ -6174,7 +6217,8 @@
         "assessmentNote",
         "template.clinic_teeth.teeth_kind",
         "template.clinic_teeth.session_kind",
-        "template.clinic_teeth.policies"
+        "template.clinic_teeth.policies",
+        "serviceProfile"
       ],
       "draftRequired": [],
       "publishRules": "specs/03-JOURNEYS.md#publication",
@@ -6256,7 +6300,8 @@
         "packageSessions",
         "packageValidityDays",
         "requiresAssessment",
-        "assessmentNote"
+        "assessmentNote",
+        "serviceProfile"
       ],
       "draftRequired": [],
       "publishRules": "specs/03-JOURNEYS.md#publication",
@@ -6314,7 +6359,8 @@
         "packageSessions",
         "packageValidityDays",
         "requiresAssessment",
-        "assessmentNote"
+        "assessmentNote",
+        "serviceProfile"
       ],
       "draftRequired": [],
       "publishRules": "specs/03-JOURNEYS.md#publication",
@@ -6638,7 +6684,8 @@
         "guestsMin",
         "guestsMax",
         "setupMinutes",
-        "eventRequirements"
+        "eventRequirements",
+        "serviceProfile"
       ],
       "draftRequired": [],
       "publishRules": "specs/03-JOURNEYS.md#publication",
@@ -6923,5 +6970,6 @@
       "action": "map-with-template-context",
       "noDataLoss": true
     }
-  }
+  },
+  "p1Rc": "RC2"
 }

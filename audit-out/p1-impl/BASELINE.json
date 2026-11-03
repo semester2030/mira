@@ -1,0 +1,11 @@
+{
+  "baselineCommit": "10b48c5de746a1fafe212ab0b3e66d50dd3a00a8",
+  "branch": "mira/p1-partner-editor-v2",
+  "worktree": "/Users/fayez/Desktop/mira-p1-partner-editor",
+  "featureFlag": "MIRA_PARTNER_EDITOR_V2",
+  "featureFlagDefault": false,
+  "dateUtc": "2026-11-03",
+  "p0PackageSha256": "7f75a318a18982b6638bbe9e98ec2b53217855d4de95fc29e1cba13afd153993",
+  "rc2PackageSha256": "2c82549b0d565c9bc39bf2d20f08043be8c36d9abe58dd889ca361c2e347a524",
+  "finalCommit": "4c920f2e6c23319c1499f58bad8f2caabed4dedf"
+}

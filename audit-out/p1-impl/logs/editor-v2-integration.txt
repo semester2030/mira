@@ -1,0 +1,89 @@
+{
+  "ok": true,
+  "results": [
+    {
+      "id": "P1.1-registry-meta",
+      "status": "PASS_LOCAL"
+    },
+    {
+      "id": "A10-legacy-with-flag-on",
+      "status": "PASS_LOCAL"
+    },
+    {
+      "id": "A01-empty-draft-no-fake-price",
+      "status": "PASS_LOCAL"
+    },
+    {
+      "id": "P1.1-future-profile-disabled",
+      "status": "PASS_LOCAL"
+    },
+    {
+      "id": "P1.1-unknown-field",
+      "status": "PASS_LOCAL"
+    },
+    {
+      "id": "A02-retrieve-draft",
+      "status": "PASS_LOCAL"
+    },
+    {
+      "id": "A03-deny-other-partner",
+      "status": "PASS_LOCAL"
+    },
+    {
+      "id": "A05-revision-conflict",
+      "status": "PASS_LOCAL"
+    },
+    {
+      "id": "P1.2-materialize-create",
+      "status": "PASS_LOCAL"
+    },
+    {
+      "id": "A04-draft-absent-public",
+      "status": "PASS_LOCAL"
+    },
+    {
+      "id": "A06-idempotent-same-key",
+      "status": "PASS_LOCAL"
+    },
+    {
+      "id": "P1.2-idempotency-fingerprint-conflict",
+      "status": "PASS_LOCAL"
+    },
+    {
+      "id": "P1.2-two-keys-no-duplicate",
+      "status": "PASS_LOCAL"
+    },
+    {
+      "id": "P1.2-materialize-no-fake-zeros",
+      "status": "PASS_LOCAL"
+    },
+    {
+      "id": "P1.2-concurrent-revision-db",
+      "status": "PASS_LOCAL"
+    },
+    {
+      "id": "A07-service-profile-roundtrip-draft-row",
+      "status": "PASS_LOCAL"
+    },
+    {
+      "id": "A09-public-keeps-approved-until-review",
+      "status": "PASS_LOCAL"
+    },
+    {
+      "id": "A08-import-force-cannot-bypass-newer-revision",
+      "status": "PASS_LOCAL"
+    },
+    {
+      "id": "A08-import-confirm-on-fresh-revision",
+      "status": "PASS_LOCAL"
+    },
+    {
+      "id": "A11-flag-off-keeps-drafts",
+      "status": "PASS_LOCAL"
+    },
+    {
+      "id": "A10-legacy-with-flag-off",
+      "status": "PASS_LOCAL"
+    }
+  ]
+}

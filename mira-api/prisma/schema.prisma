@@ -195,6 +195,9 @@ model PartnerEditorDraft {
   materializedAt     DateTime? @map("materialized_at")
   materializeKey     String?   @map("materialize_key")
   materializeFingerprint String? @map("materialize_fingerprint")
+  /// none | pending | submitted | failed — tracks submit-review after materialize
+  submitReviewStatus String?   @map("submit_review_status")
+  submitReviewError  String?   @map("submit_review_error")
   createdAt          DateTime  @default(now()) @map("created_at")
   updatedAt          DateTime  @updatedAt @map("updated_at")
 

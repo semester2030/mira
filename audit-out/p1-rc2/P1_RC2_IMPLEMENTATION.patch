@@ -1,0 +1,4881 @@
+diff --git a/lib/features/marketplace/domain/catalog_service_template.dart b/lib/features/marketplace/domain/catalog_service_template.dart
+index fa0726f..641c890 100644
+--- a/lib/features/marketplace/domain/catalog_service_template.dart
++++ b/lib/features/marketplace/domain/catalog_service_template.dart
+@@ -199,7 +199,7 @@ class CatalogServiceProfile {
+     final answers = <String, CatalogServiceAnswer>{};
+     if (answersRaw is Map) {
+       for (final entry in answersRaw.entries) {
+-        final key = entry.key.toString();
++        final key = _canonicalAnswerKey(entry.key.toString());
+         answers[key] = _parseAnswer(entry.value);
+       }
+     }
+@@ -244,6 +244,21 @@ class CatalogServiceProfile {
+     }
+     return CatalogServiceAnswer.value(raw);
+   }
++
++  /// Adapter: accept storage aliases (camelCase) and Flutter field ids (snake_case).
++  static String _canonicalAnswerKey(String key) {
++    const aliases = <String, String>{
++      'included': 'includes',
++      'excluded': 'excludes',
++      'packageSessions': 'package_sessions',
++      'placeMode': 'place_mode',
++      'homeCoverage': 'home_coverage',
++      'needsAssessment': 'needs_assessment',
++      'assessmentNote': 'assessment_note',
++      'prepRequired': 'prep_required',
++    };
++    return aliases[key] ?? key;
++  }
+ }
+ 
+ /// Visibility + section projection from the same template definition.
+diff --git a/mira-api/package.json b/mira-api/package.json
+index 8882c83..ce37faa 100644
+--- a/mira-api/package.json
++++ b/mira-api/package.json
+@@ -24,6 +24,8 @@
+     "test:commerce-pure": "tsx src/marketplace/commerce.types.schema-tests.ts && tsx src/marketplace/commerce-public.schema-tests.ts",
+     "test:catalog-media-recovery": "tsx src/marketplace/catalog-media.http.schema-tests.ts && tsx src/marketplace/catalog-media.recovery.schema-tests.ts && tsx src/marketplace/catalog-media.s3.open-lifetime-tests.ts",
+     "test:editor-v2": "tsx src/partners-portal/editor-drafts/editor-v2.http.integration-tests.ts",
++    "test:editor-v2-rc2": "tsx src/partners-portal/registry/registry.validation.schema-tests.ts && tsx src/partners-portal/editor-drafts/editor-v2-rc2.http.integration-tests.ts",
++    "test:registry-validation": "tsx src/partners-portal/registry/registry.validation.schema-tests.ts",
+     "check:field-registry": "node scripts/check-field-registry-sync.mjs",
+     "test:vision-schema": "npm run build && node dist/vision/schema/fashion-vision-document.schema-tests.js",
+     "test:vision-geometry": "npm run build && node dist/vision/providers/fashn-geometry.schema-tests.js",
+diff --git a/mira-api/prisma/migrations/20261104010000_partner_editor_v2_p1_rc2/migration.sql b/mira-api/prisma/migrations/20261104010000_partner_editor_v2_p1_rc2/migration.sql
+new file mode 100644
+index 0000000..b41b8ed
+--- /dev/null
++++ b/mira-api/prisma/migrations/20261104010000_partner_editor_v2_p1_rc2/migration.sql
+@@ -0,0 +1,3 @@
++-- P1 RC2: resume materialize → submit-review without DROP.
++ALTER TABLE "partner_editor_drafts" ADD COLUMN IF NOT EXISTS "submit_review_status" TEXT;
++ALTER TABLE "partner_editor_drafts" ADD COLUMN IF NOT EXISTS "submit_review_error" TEXT;
+diff --git a/mira-api/prisma/schema.prisma b/mira-api/prisma/schema.prisma
+index a44217b..ec13425 100644
+--- a/mira-api/prisma/schema.prisma
++++ b/mira-api/prisma/schema.prisma
+@@ -195,6 +195,9 @@ model PartnerEditorDraft {
+   materializedAt     DateTime? @map("materialized_at")
+   materializeKey     String?   @map("materialize_key")
+   materializeFingerprint String? @map("materialize_fingerprint")
++  /// none | pending | submitted | failed — tracks submit-review after materialize
++  submitReviewStatus String?   @map("submit_review_status")
++  submitReviewError  String?   @map("submit_review_error")
+   createdAt          DateTime  @default(now()) @map("created_at")
+   updatedAt          DateTime  @updatedAt @map("updated_at")
+ 
+diff --git a/mira-api/src/partners-portal/editor-drafts/editor-drafts.service.ts b/mira-api/src/partners-portal/editor-drafts/editor-drafts.service.ts
+index b98e4f1..1c89838 100644
+--- a/mira-api/src/partners-portal/editor-drafts/editor-drafts.service.ts
++++ b/mira-api/src/partners-portal/editor-drafts/editor-drafts.service.ts
+@@ -11,6 +11,7 @@ import { CatalogContentService } from '../../marketplace/catalog-content.service
+ import { normalizeIdempotencyKey, stableFingerprint } from '../../marketplace/commerce.types';
+ import { RegistryService } from '../registry/registry.service';
+ import { EDITOR_SCHEMA_VERSION } from '../registry/registry.types';
++import { optionsJsonFromDraftValues } from '../registry/draft-values-mapping';
+ 
+ function editorError(status: HttpStatus, code: string, messageAr: string, extra: Record<string, unknown> = {}) {
+   return new HttpException({ message: messageAr, messageAr, code, ...extra }, status);
+@@ -50,6 +51,8 @@ export class EditorDraftsService {
+     status: string;
+     targetOwnerId: string | null;
+     materializedAt: Date | null;
++    submitReviewStatus?: string | null;
++    submitReviewError?: string | null;
+     createdAt: Date;
+     updatedAt: Date;
+   }) {
+@@ -64,6 +67,8 @@ export class EditorDraftsService {
+       status: row.status,
+       targetOwnerId: row.targetOwnerId,
+       materializedAt: row.materializedAt?.toISOString() ?? null,
++      submitReviewStatus: row.submitReviewStatus ?? null,
++      submitReviewError: row.submitReviewError ?? null,
+       createdAt: row.createdAt.toISOString(),
+       updatedAt: row.updatedAt.toISOString(),
+     };
+@@ -116,6 +121,7 @@ export class EditorDraftsService {
+       values: body.values,
+       mode: 'draft',
+       schemaVersion,
++      partnerType,
+     });
+ 
+     if (body.targetOwnerId) {
+@@ -232,6 +238,12 @@ export class EditorDraftsService {
+           }
+           return {
+             replay: true,
++            needsSubmitRetry:
++              submitReview &&
++              draft.submitReviewStatus !== 'submitted' &&
++              (draft.submitReviewStatus === 'pending' ||
++                draft.submitReviewStatus === 'failed' ||
++                draft.submitReviewStatus == null),
+             draftId: draft.id,
+             revision: draft.revision,
+             status: draft.status,
+@@ -239,6 +251,7 @@ export class EditorDraftsService {
+             targetOwnerId: draft.targetOwnerId!,
+             materializedAt: draft.materializedAt!.toISOString(),
+             submitReview,
++            submitReviewStatus: draft.submitReviewStatus,
+           };
+         }
+         throw editorError(HttpStatus.CONFLICT, 'DRAFT_ALREADY_MATERIALIZED', 'تم تحويل المسودة مسبقًا');
+@@ -251,13 +264,17 @@ export class EditorDraftsService {
+       }
+ 
+       const profile = this.registry.assertProfileAllowed(draft.profileId, partnerType, draft.kind);
+-      const values = (draft.valuesJson ?? {}) as Record<string, unknown>;
+-      // Validate provided values; enforce publish-required when creating/updating catalog content.
++      const values = { ...((draft.valuesJson ?? {}) as Record<string, unknown>) };
++      // Default purchaseMode only when omitted — empty externalUrl remains allowed.
++      // Do NOT invent priceMode here: if omitted, priceHalalas publish rule stays inactive
++      // and the materialize Prisma gate returns MATERIALIZE_INVALID without fake zeros.
++      if (values.purchaseMode == null && draft.kind === 'product') values.purchaseMode = 'external';
+       this.registry.validateValues({
+         profile,
+         values,
+         mode: 'publish',
+         schemaVersion: draft.schemaVersion,
++        partnerType,
+       });
+ 
+       const nameAr = typeof values.nameAr === 'string' ? values.nameAr.trim() : '';
+@@ -297,6 +314,8 @@ export class EditorDraftsService {
+           materializedAt: new Date(),
+           materializeKey: idempotencyKey,
+           materializeFingerprint: fingerprint,
++          submitReviewStatus: submitReview ? 'pending' : 'none',
++          submitReviewError: null,
+         },
+       });
+       if (marked.count !== 1) {
+@@ -305,6 +324,7 @@ export class EditorDraftsService {
+       const refreshed = await tx.partnerEditorDraft.findUniqueOrThrow({ where: { id: draft.id } });
+       return {
+         replay: false,
++        needsSubmitRetry: submitReview,
+         draftId: refreshed.id,
+         revision: refreshed.revision,
+         status: refreshed.status,
+@@ -312,14 +332,50 @@ export class EditorDraftsService {
+         targetOwnerId: refreshed.targetOwnerId!,
+         materializedAt: refreshed.materializedAt!.toISOString(),
+         submitReview,
++        submitReviewStatus: refreshed.submitReviewStatus,
+       };
+     });
+ 
+-    if (!outcome.replay && submitReview) {
+-      // Outside the materialize write; submit uses its own locking. Failures leave draft materialized (recoverable).
+-      await this.content.submit(partnerId, outcome.targetKind as 'product' | 'service', outcome.targetOwnerId);
++    let reviewSubmitted = false;
++    let reviewError: string | null = null;
++    if (submitReview && (outcome.needsSubmitRetry || (!outcome.replay && outcome.submitReviewStatus === 'pending'))) {
++      try {
++        await this.content.submit(partnerId, outcome.targetKind as 'product' | 'service', outcome.targetOwnerId);
++        reviewSubmitted = true;
++        await this.prisma.partnerEditorDraft.update({
++          where: { id: outcome.draftId },
++          data: { submitReviewStatus: 'submitted', submitReviewError: null },
++        });
++      } catch (error) {
++        reviewError = error instanceof Error ? error.message : String(error);
++        await this.prisma.partnerEditorDraft.update({
++          where: { id: outcome.draftId },
++          data: { submitReviewStatus: 'failed', submitReviewError: reviewError.slice(0, 500) },
++        });
++        throw editorError(
++          HttpStatus.SERVICE_UNAVAILABLE,
++          'MATERIALIZE_SUBMIT_REVIEW_FAILED',
++          'تم تحويل المسودة إلى عنصر، لكن تعذر الإرسال للمراجعة. أعيدي المحاولة بنفس المفتاح دون إنشاء عنصر ثانٍ.',
++          {
++            targetOwnerId: outcome.targetOwnerId,
++            targetKind: outcome.targetKind,
++            draftId: outcome.draftId,
++            materializedAt: outcome.materializedAt,
++            submitReviewStatus: 'failed',
++            reviewError,
++            resume: true,
++          },
++        );
++      }
++    } else if (outcome.replay && submitReview && outcome.submitReviewStatus === 'submitted') {
++      reviewSubmitted = true;
+     }
+-    return outcome;
++
++    return {
++      ...outcome,
++      reviewSubmitted,
++      submitReviewStatus: reviewSubmitted ? 'submitted' : outcome.submitReviewStatus ?? (submitReview ? 'pending' : 'none'),
++    };
+   }
+ 
+   private async createFromDraft(
+@@ -358,10 +414,7 @@ export class EditorDraftsService {
+             typeof values.deliveryFeeHalalas === 'number' && Number.isInteger(values.deliveryFeeHalalas)
+               ? values.deliveryFeeHalalas
+               : null,
+-          optionsJson:
+-            values.optionsJson && typeof values.optionsJson === 'object'
+-              ? (values.optionsJson as Prisma.InputJsonValue)
+-              : undefined,
++          optionsJson: optionsJsonFromDraftValues(values),
+           variantsJson:
+             values.variantsJson && typeof values.variantsJson === 'object'
+               ? (values.variantsJson as Prisma.InputJsonValue)
+@@ -371,6 +424,12 @@ export class EditorDraftsService {
+       return row.id;
+     }
+     const durationMin = values.durationMin as number;
++    let serviceProfileJson: Prisma.InputJsonValue | undefined;
++    if (values.serviceProfile && typeof values.serviceProfile === 'object') {
++      const partner = await tx.partner.findUniqueOrThrow({ where: { id: partnerId } });
++      const normalized = this.registry.normalizeServiceProfile(values.serviceProfile, partner.type);
++      serviceProfileJson = normalized as unknown as Prisma.InputJsonValue;
++    }
+     const row = await tx.service.create({
+       data: {
+         partnerId,
+@@ -390,10 +449,7 @@ export class EditorDraftsService {
+         reviewStatus: 'draft',
+         profileId: draft.profileId,
+         schemaVersion: draft.schemaVersion,
+-        serviceProfileJson:
+-          values.serviceProfile && typeof values.serviceProfile === 'object'
+-            ? (values.serviceProfile as Prisma.InputJsonValue)
+-            : undefined,
++        ...(serviceProfileJson !== undefined ? { serviceProfileJson } : {}),
+       },
+     });
+     return row.id;
+@@ -433,15 +489,14 @@ export class EditorDraftsService {
+             schemaVersion: draft.schemaVersion,
+             reviewRevision: { increment: 1 },
+             reviewStatus: current.reviewStatus === 'in_review' ? 'in_review' : 'draft',
+-            ...(values.optionsJson !== undefined
+-              ? {
+-                  draftOptionsSet: true,
+-                  draftOptionsJson:
+-                    values.optionsJson == null
+-                      ? Prisma.DbNull
+-                      : (values.optionsJson as Prisma.InputJsonValue),
+-                }
+-              : {}),
++            ...(() => {
++              const mapped = optionsJsonFromDraftValues(values);
++              if (mapped === undefined && values.optionsJson === undefined) return {};
++              return {
++                draftOptionsSet: true,
++                draftOptionsJson: mapped === undefined ? Prisma.DbNull : mapped,
++              };
++            })(),
+             ...(values.variantsJson !== undefined
+               ? {
+                   draftVariantsSet: true,
+@@ -454,6 +509,7 @@ export class EditorDraftsService {
+           },
+         });
+       } else {
++        const mappedOptions = optionsJsonFromDraftValues(values);
+         await tx.product.update({
+           where: { id: targetOwnerId },
+           data: {
+@@ -472,14 +528,7 @@ export class EditorDraftsService {
+             ...(typeof values.category === 'string' || values.category === null
+               ? { category: typeof values.category === 'string' ? values.category : null }
+               : {}),
+-            ...(values.optionsJson !== undefined
+-              ? {
+-                  optionsJson:
+-                    values.optionsJson == null
+-                      ? Prisma.DbNull
+-                      : (values.optionsJson as Prisma.InputJsonValue),
+-                }
+-              : {}),
++            ...(mappedOptions !== undefined ? { optionsJson: mappedOptions } : {}),
+             ...(values.variantsJson !== undefined
+               ? {
+                   variantsJson:
+diff --git a/mira-api/src/partners-portal/editor-drafts/editor-v2-rc2.http.integration-tests.ts b/mira-api/src/partners-portal/editor-drafts/editor-v2-rc2.http.integration-tests.ts
+new file mode 100644
+index 0000000..2743566
+--- /dev/null
++++ b/mira-api/src/partners-portal/editor-drafts/editor-v2-rc2.http.integration-tests.ts
+@@ -0,0 +1,282 @@
++/**
++ * P1 RC2 integration: colors mapping, submit-review resume, serviceProfile draft field.
++ * DATABASE_URL must be host localhost/127.0.0.1 and a dedicated/local DB name.
++ */
++import 'reflect-metadata';
++import assert from 'node:assert/strict';
++import { INestApplication, Module, UnauthorizedException, ValidationPipe } from '@nestjs/common';
++import { ConfigModule } from '@nestjs/config';
++import { NestFactory } from '@nestjs/core';
++import { PrismaClient } from '@prisma/client';
++import { randomUUID } from 'node:crypto';
++import { FirebaseIdTokenVerifier, VerifiedFirebaseIdentity } from '../../common/auth/firebase-id-token-verifier';
++import { FirebaseAuthGuard } from '../../common/guards/firebase-auth.guard';
++import { AdminApiKeyGuard } from '../../common/guards/admin-api-key.guard';
++import { PrismaModule } from '../../prisma/prisma.module';
++import { PrismaService } from '../../prisma/prisma.service';
++import { CatalogContentService } from '../../marketplace/catalog-content.service';
++import { CatalogMediaController } from '../../marketplace/catalog-media.controller';
++import { CatalogMediaStorage, MemoryCatalogMediaStorage } from '../../marketplace/catalog-media.storage';
++import { CatalogReviewAdminController } from '../../marketplace/catalog-review.admin.controller';
++import { MarketplaceController } from '../../marketplace/marketplace.controller';
++import { MarketplaceService } from '../../marketplace/marketplace.service';
++import { PartnerTokenGuard } from '../guards/partner-token.guard';
++import { PartnersPortalController } from '../partners-portal.controller';
++import { PartnersPortalService } from '../partners-portal.service';
++import { RegistryService } from '../registry/registry.service';
++import { EditorDraftsService } from './editor-drafts.service';
++import { ServiceProfileService } from './service-profile.service';
++
++const PNG = 'iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAYAAAAfFcSJAAAADUlEQVR42mP8z8BQDwAEhQGAhKmMIQAAAABJRU5ErkJggg==';
++
++class ScriptedIdTokenVerifier extends FirebaseIdTokenVerifier {
++  async verify(token: string): Promise<VerifiedFirebaseIdentity> {
++    if (token !== 'unused') throw new UnauthorizedException('Invalid token');
++    return { uid: 'unused', email: 'unused@test.local' };
++  }
++}
++
++@Module({
++  imports: [ConfigModule.forRoot({ isGlobal: true, ignoreEnvFile: true }), PrismaModule],
++  controllers: [PartnersPortalController, CatalogMediaController, CatalogReviewAdminController, MarketplaceController],
++  providers: [
++    PartnersPortalService,
++    PartnerTokenGuard,
++    AdminApiKeyGuard,
++    CatalogContentService,
++    RegistryService,
++    EditorDraftsService,
++    ServiceProfileService,
++    FirebaseAuthGuard,
++    { provide: CatalogMediaStorage, useClass: MemoryCatalogMediaStorage },
++    { provide: MarketplaceService, useFactory: (prisma: PrismaService) => new MarketplaceService(prisma), inject: [PrismaService] },
++    { provide: FirebaseIdTokenVerifier, useClass: ScriptedIdTokenVerifier },
++  ],
++})
++class EditorV2Rc2HttpTestModule {}
++
++function assertLocalTestDb(url: string) {
++  let parsed: URL;
++  try {
++    parsed = new URL(url);
++  } catch {
++    throw new Error('DATABASE_URL parse failed');
++  }
++  const host = parsed.hostname;
++  const db = parsed.pathname.replace(/^\//, '').split('?')[0];
++  if (host !== 'localhost' && host !== '127.0.0.1') {
++    throw new Error(`REFUSE: host must be localhost/127.0.0.1, got ${host}`);
++  }
++  if (!db || db === '') throw new Error('REFUSE: database name missing');
++  // Explicit allowlist for local test DBs — not production names.
++  if (!/^(mira_db|mira_p1_test|mira_p1_rc2_test)$/.test(db)) {
++    throw new Error(`REFUSE: unexpected database name ${db}`);
++  }
++  return { host, db };
++}
++
++async function baseUrl(app: INestApplication) {
++  const address = app.getHttpServer().address();
++  const port = typeof address === 'object' && address ? address.port : 0;
++  return `http://127.0.0.1:${port}`;
++}
++
++async function json(res: Response) {
++  return res.json().catch(() => ({}));
++}
++
++async function main() {
++  const url = process.env.DATABASE_URL ?? '';
++  const { host, db } = assertLocalTestDb(url);
++  process.env.MIRA_PARTNER_EDITOR_V2 = 'true';
++  process.env.ADMIN_API_KEY = 'p1-rc2-admin';
++  process.env.AUTH_SKIP = 'false';
++
++  const prisma = new PrismaClient();
++  const suffix = randomUUID().slice(0, 8);
++  const brand = await prisma.partner.create({
++    data: { type: 'brand', status: 'active', nameAr: `RC2 Brand ${suffix}`, nameEn: 'RC2', city: 'الرياض' },
++  });
++  const salon = await prisma.partner.create({
++    data: { type: 'salon', status: 'active', nameAr: `RC2 Salon ${suffix}`, nameEn: 'RC2S', city: 'الرياض' },
++  });
++  await prisma.partnerUser.create({
++    data: { partnerId: brand.id, email: `brand-rc2-${suffix}@test.local`, accessToken: `token-brand-rc2-${suffix}` },
++  });
++  await prisma.partnerUser.create({
++    data: { partnerId: salon.id, email: `salon-rc2-${suffix}@test.local`, accessToken: `token-salon-rc2-${suffix}` },
++  });
++
++  const app = await NestFactory.create(EditorV2Rc2HttpTestModule, { logger: ['error'] });
++  app.setGlobalPrefix('api/v1');
++  app.useGlobalPipes(new ValidationPipe({ transform: true }));
++  await app.listen(0);
++  const base = await baseUrl(app);
++  const brandH = { authorization: `Bearer token-brand-rc2-${suffix}`, 'content-type': 'application/json' };
++  const salonH = { authorization: `Bearer token-salon-rc2-${suffix}`, 'content-type': 'application/json' };
++  const results: Array<{ id: string; status: string }> = [];
++  const pass = (id: string) => results.push({ id, status: 'PASS_LOCAL' });
++
++  try {
++    // Colors → optionsJson on materialize
++    const draftId = `colors-${suffix}`;
++    const sizeField = (await (await fetch(`${base}/api/v1/partners-portal/registry`, { headers: brandH })).json())
++      .registry.fields.sizes.values[0];
++    let put = await fetch(`${base}/api/v1/partners-portal/editor-drafts/${draftId}`, {
++      method: 'PUT',
++      headers: brandH,
++      body: JSON.stringify({
++        expectedRevision: null,
++        kind: 'product',
++        profileId: 'product.clothes',
++        schemaVersion: 2,
++        values: {
++          nameAr: 'عباية ألوان',
++          priceHalalas: 7000,
++          category: 'clothes',
++          colors: ['black', 'ivory'],
++          sizes: [sizeField],
++        },
++      }),
++    });
++    let body = await json(put);
++    assert.equal(put.status, 200, JSON.stringify(body));
++    const matKey = `mat-colors-${suffix}`;
++    let mat = await fetch(`${base}/api/v1/partners-portal/editor-drafts/${draftId}/materialize`, {
++      method: 'POST',
++      headers: { ...brandH, 'Idempotency-Key': matKey },
++      body: JSON.stringify({ expectedRevision: 1, submitReview: false }),
++    });
++    body = await json(mat);
++    assert.ok(mat.status === 200 || mat.status === 201, JSON.stringify(body));
++    const product = await prisma.product.findUniqueOrThrow({ where: { id: body.targetOwnerId } });
++    assert.ok(Array.isArray(product.optionsJson), 'optionsJson missing');
++    const groups = product.optionsJson as Array<{ id: string; values: Array<{ id: string }> }>;
++    assert.ok(groups.some((g) => g.id === 'color' && g.values.some((v) => v.id === 'black')));
++    assert.ok(groups.some((g) => g.id === 'size'));
++    pass('RC2-colors-sizes-materialize');
++
++    // Draft serviceProfile accepted (registry field)
++    const svcDraft = `svcprof-${suffix}`;
++    put = await fetch(`${base}/api/v1/partners-portal/editor-drafts/${svcDraft}`, {
++      method: 'PUT',
++      headers: salonH,
++      body: JSON.stringify({
++        expectedRevision: null,
++        kind: 'service',
++        profileId: 'service.salon_hair_cut',
++        schemaVersion: 2,
++        values: {
++          nameAr: 'قص مع قالب',
++          priceHalalas: 5000,
++          durationMin: 40,
++          serviceProfile: {
++            templateId: 'salon_hair_cut',
++            templateVersion: 1,
++            priceMode: 'fixed',
++            answers: { session_kind: 'single', includes: ['wash'] },
++          },
++        },
++      }),
++    });
++    body = await json(put);
++    assert.equal(put.status, 200, JSON.stringify(body));
++    pass('RC2-serviceProfile-in-draft-values');
++
++    mat = await fetch(`${base}/api/v1/partners-portal/editor-drafts/${svcDraft}/materialize`, {
++      method: 'POST',
++      headers: { ...salonH, 'Idempotency-Key': `mat-svc-${suffix}` },
++      body: JSON.stringify({ expectedRevision: 1, submitReview: false }),
++    });
++    body = await json(mat);
++    assert.ok(mat.status === 200 || mat.status === 201, JSON.stringify(body));
++    const service = await prisma.service.findUniqueOrThrow({ where: { id: body.targetOwnerId } });
++    const profile = service.serviceProfileJson as { answers?: Record<string, unknown> };
++    assert.ok(profile?.answers?.includes || profile?.answers?.session_kind);
++    pass('RC2-serviceProfile-persisted-on-materialize');
++
++    // materialize success + submitReview fail (no media) → honest error + resume
++    const resumeId = `resume-${suffix}`;
++    await fetch(`${base}/api/v1/partners-portal/editor-drafts/${resumeId}`, {
++      method: 'PUT',
++      headers: brandH,
++      body: JSON.stringify({
++        expectedRevision: null,
++        kind: 'product',
++        profileId: 'product.clothes',
++        schemaVersion: 2,
++        values: { nameAr: 'استئناف مراجعة', priceHalalas: 3000, category: 'clothes' },
++      }),
++    });
++    const resumeKey = `resume-key-${suffix}`;
++    mat = await fetch(`${base}/api/v1/partners-portal/editor-drafts/${resumeId}/materialize`, {
++      method: 'POST',
++      headers: { ...brandH, 'Idempotency-Key': resumeKey },
++      body: JSON.stringify({ expectedRevision: 1, submitReview: true }),
++    });
++    body = await json(mat);
++    assert.equal(mat.status, 503, JSON.stringify(body));
++    assert.equal(body.code, 'MATERIALIZE_SUBMIT_REVIEW_FAILED');
++    assert.ok(body.targetOwnerId);
++    const draftRow = await prisma.partnerEditorDraft.findUniqueOrThrow({
++      where: { partnerId_clientDraftId: { partnerId: brand.id, clientDraftId: resumeId } },
++    });
++    assert.equal(draftRow.status, 'materialized');
++    assert.equal(draftRow.submitReviewStatus, 'failed');
++    assert.equal(
++      await prisma.product.count({ where: { partnerId: brand.id, nameAr: 'استئناف مراجعة' } }),
++      1,
++    );
++    pass('RC2-materialize-submit-fail-keeps-one-product');
++
++    // add media then retry same key
++    await fetch(`${base}/api/v1/partners-portal/products/${body.targetOwnerId}/media`, {
++      method: 'POST',
++      headers: brandH,
++      body: JSON.stringify({ mimeType: 'image/png', dataBase64: PNG }),
++    });
++    mat = await fetch(`${base}/api/v1/partners-portal/editor-drafts/${resumeId}/materialize`, {
++      method: 'POST',
++      headers: { ...brandH, 'Idempotency-Key': resumeKey },
++      body: JSON.stringify({ expectedRevision: 1, submitReview: true }),
++    });
++    body = await json(mat);
++    assert.ok(mat.status === 200 || mat.status === 201, JSON.stringify(body));
++    assert.equal(body.reviewSubmitted, true);
++    assert.equal(body.replay, true);
++    const after = await prisma.partnerEditorDraft.findUniqueOrThrow({
++      where: { partnerId_clientDraftId: { partnerId: brand.id, clientDraftId: resumeId } },
++    });
++    assert.equal(after.submitReviewStatus, 'submitted');
++    assert.equal(
++      await prisma.product.count({ where: { partnerId: brand.id, nameAr: 'استئناف مراجعة' } }),
++      1,
++    );
++    pass('RC2-submit-resume-same-key');
++
++    // Reject bad colors via API
++    put = await fetch(`${base}/api/v1/partners-portal/editor-drafts/bad-color-${suffix}`, {
++      method: 'PUT',
++      headers: brandH,
++      body: JSON.stringify({
++        expectedRevision: null,
++        kind: 'product',
++        profileId: 'product.clothes',
++        schemaVersion: 2,
++        values: { colors: ['NOT_A_COLOR'] },
++      }),
++    });
++    assert.equal(put.status, 400);
++    pass('RC2-api-rejects-unknown-color');
++
++    console.log(JSON.stringify({ ok: true, host, db, results }, null, 2));
++  } catch (error) {
++    console.error(JSON.stringify({ ok: false, host, db, results, error: String(error) }, null, 2));
++    process.exitCode = 1;
++  } finally {
++    await app.close();
++    await prisma.$disconnect();
++  }
++}
++
++main();
+diff --git a/mira-api/src/partners-portal/editor-drafts/service-profile.service.ts b/mira-api/src/partners-portal/editor-drafts/service-profile.service.ts
+index 42927e7..02d66f5 100644
+--- a/mira-api/src/partners-portal/editor-drafts/service-profile.service.ts
++++ b/mira-api/src/partners-portal/editor-drafts/service-profile.service.ts
+@@ -77,16 +77,20 @@ export class ServiceProfileService {
+       }
+ 
+       const published = service.contentStatus === 'published';
++      const partner = await tx.partner.findUniqueOrThrow({ where: { id: partnerId } });
+       let nextDoc: ServiceProfileDoc | null = null;
+       if (body.clear === true) {
+         nextDoc = null;
+       } else {
+-        nextDoc = this.registry.normalizeServiceProfile({
+-          templateId: body.templateId,
+-          templateVersion: body.templateVersion,
+-          priceMode: body.priceMode,
+-          answers: body.answers ?? {},
+-        });
++        nextDoc = this.registry.normalizeServiceProfile(
++          {
++            templateId: body.templateId,
++            templateVersion: body.templateVersion,
++            priceMode: body.priceMode,
++            answers: body.answers ?? {},
++          },
++          partner.type,
++        );
+       }
+ 
+       const updated = await tx.service.updateMany({
+diff --git a/mira-api/src/partners-portal/registry/draft-values-mapping.ts b/mira-api/src/partners-portal/registry/draft-values-mapping.ts
+new file mode 100644
+index 0000000..92649ba
+--- /dev/null
++++ b/mira-api/src/partners-portal/registry/draft-values-mapping.ts
+@@ -0,0 +1,47 @@
++import { Prisma } from '@prisma/client';
++
++/** Map P1 draft values (colors/sizes/…) into Product optionsJson groups. No variant matrix / stock. */
++export function optionsJsonFromDraftValues(values: Record<string, unknown>): Prisma.InputJsonValue | undefined {
++  const groups: Array<{ id: string; labelAr: string; values: Array<{ id: string; labelAr: string }> }> = [];
++
++  if (Array.isArray(values.colors)) {
++    const colorValues = values.colors
++      .filter((c): c is string => typeof c === 'string' && c.trim().length > 0)
++      .map((id) => ({ id, labelAr: colorLabelAr(id) }));
++    if (colorValues.length) {
++      groups.push({ id: 'color', labelAr: 'اللون', values: colorValues });
++    }
++  }
++
++  if (Array.isArray(values.sizes)) {
++    const sizeValues = values.sizes
++      .filter((c): c is string => typeof c === 'string' && c.trim().length > 0)
++      .map((id) => ({ id, labelAr: id }));
++    if (sizeValues.length) {
++      groups.push({ id: 'size', labelAr: 'المقاس', values: sizeValues });
++    }
++  }
++
++  // Explicit optionsJson from editor wins if already shaped; else build from colors/sizes.
++  if (values.optionsJson !== undefined) {
++    return values.optionsJson == null ? undefined : (values.optionsJson as Prisma.InputJsonValue);
++  }
++  if (!groups.length) return undefined;
++  return groups as unknown as Prisma.InputJsonValue;
++}
++
++function colorLabelAr(id: string): string {
++  const map: Record<string, string> = {
++    black: 'أسود',
++    ivory: 'عاجي',
++    brown: 'بني',
++    pink: 'وردي',
++    blue: 'أزرق',
++    green: 'أخضر',
++    multi: 'متعدد',
++  };
++  return map[id] || id;
++}
++
++/** Fields that must not be silently dropped on materialize when present in values. */
++export const P1_PRODUCT_MAPPED_FIELDS = ['colors', 'sizes', 'nameAr', 'nameEn', 'descriptionAr', 'priceHalalas', 'category', 'purchaseMode', 'stockQty', 'deliveryFeeHalalas', 'externalUrl', 'concernTags'] as const;
+diff --git a/mira-api/src/partners-portal/registry/field-registry.v2.json b/mira-api/src/partners-portal/registry/field-registry.v2.json
+index 17559f8..a72f3db 100644
+--- a/mira-api/src/partners-portal/registry/field-registry.v2.json
++++ b/mira-api/src/partners-portal/registry/field-registry.v2.json
+@@ -4938,6 +4938,41 @@
+       "valueLabels": {},
+       "legacyRequired": false,
+       "legacyFieldId": "policies"
++    },
++    "serviceProfile": {
++      "id": "serviceProfile",
++      "labelAr": "قالب الخدمة وإجاباته",
++      "type": "object",
++      "widget": "service_template",
++      "unit": null,
++      "values": [],
++      "filter": null,
++      "currentStatus": "P1_DRAFT_STORAGE",
++      "draftRequired": false,
++      "publishRequiredWhen": "optional",
++      "source": "partner",
++      "editable": true,
++      "nullMeaning": "unspecified",
++      "default": null,
++      "min": null,
++      "max": null,
++      "dependsOn": null,
++      "storage": "service_profile_json via materialize; draft values.serviceProfile",
++      "publicWhen": "published via serviceProfileJson",
++      "searchable": false,
++      "unknownHandling": "reject invalid nested template answers",
++      "evidence": "P1 RC2",
++      "schema": {
++        "templateId": "string",
++        "templateVersion": "integer>=1",
++        "priceMode": [
++          "fixed",
++          "from",
++          "afterAssessment",
++          "unknown"
++        ],
++        "answers": "object of template field answers"
++      }
+     }
+   },
+   "profiles": [
+@@ -5271,7 +5306,8 @@
+         "template.salon_hair_cut.cut_style",
+         "template.salon_hair_cut.hair_length",
+         "template.salon_hair_cut.includes_wash_dry",
+-        "template.salon_hair_cut.policies"
++        "template.salon_hair_cut.policies",
++        "serviceProfile"
+       ],
+       "draftRequired": [],
+       "publishRules": "specs/03-JOURNEYS.md#publication",
+@@ -5423,7 +5459,8 @@
+         "template.salon_hair_color.price_by_length",
+         "template.salon_hair_color.length_tiers",
+         "template.salon_hair_color.includes_bleach",
+-        "template.salon_hair_color.policies"
++        "template.salon_hair_color.policies",
++        "serviceProfile"
+       ],
+       "draftRequired": [],
+       "publishRules": "specs/03-JOURNEYS.md#publication",
+@@ -5553,7 +5590,8 @@
+         "template.salon_nails.hands_feet",
+         "template.salon_nails.nail_kind",
+         "template.salon_nails.remove_old",
+-        "template.salon_nails.policies"
++        "template.salon_nails.policies",
++        "serviceProfile"
+       ],
+       "draftRequired": [],
+       "publishRules": "specs/03-JOURNEYS.md#publication",
+@@ -5645,7 +5683,8 @@
+         "requiresAssessment",
+         "assessmentNote",
+         "template.salon_makeup.occasion",
+-        "template.salon_makeup.policies"
++        "template.salon_makeup.policies",
++        "serviceProfile"
+       ],
+       "draftRequired": [],
+       "publishRules": "specs/03-JOURNEYS.md#publication",
+@@ -5775,7 +5814,8 @@
+         "template.clinic_skin.session_name",
+         "template.clinic_skin.session_kind",
+         "template.clinic_skin.aftercare",
+-        "template.clinic_skin.policies"
++        "template.clinic_skin.policies",
++        "serviceProfile"
+       ],
+       "draftRequired": [],
+       "publishRules": "specs/03-JOURNEYS.md#publication",
+@@ -5896,7 +5936,8 @@
+         "template.clinic_laser.session_kind",
+         "template.clinic_laser.package_validity",
+         "template.clinic_laser.device_info",
+-        "template.clinic_laser.policies"
++        "template.clinic_laser.policies",
++        "serviceProfile"
+       ],
+       "draftRequired": [],
+       "publishRules": "specs/03-JOURNEYS.md#publication",
+@@ -6005,7 +6046,8 @@
+         "template.clinic_consult.consult_kind",
+         "template.clinic_consult.consult_mode",
+         "template.clinic_consult.bring_docs",
+-        "template.clinic_consult.policies"
++        "template.clinic_consult.policies",
++        "serviceProfile"
+       ],
+       "draftRequired": [],
+       "publishRules": "specs/03-JOURNEYS.md#publication",
+@@ -6086,7 +6128,8 @@
+         "requiresAssessment",
+         "assessmentNote",
+         "template.salon_care.session_kind",
+-        "template.salon_care.policies"
++        "template.salon_care.policies",
++        "serviceProfile"
+       ],
+       "draftRequired": [],
+       "publishRules": "specs/03-JOURNEYS.md#publication",
+@@ -6174,7 +6217,8 @@
+         "assessmentNote",
+         "template.clinic_teeth.teeth_kind",
+         "template.clinic_teeth.session_kind",
+-        "template.clinic_teeth.policies"
++        "template.clinic_teeth.policies",
++        "serviceProfile"
+       ],
+       "draftRequired": [],
+       "publishRules": "specs/03-JOURNEYS.md#publication",
+@@ -6256,7 +6300,8 @@
+         "packageSessions",
+         "packageValidityDays",
+         "requiresAssessment",
+-        "assessmentNote"
++        "assessmentNote",
++        "serviceProfile"
+       ],
+       "draftRequired": [],
+       "publishRules": "specs/03-JOURNEYS.md#publication",
+@@ -6314,7 +6359,8 @@
+         "packageSessions",
+         "packageValidityDays",
+         "requiresAssessment",
+-        "assessmentNote"
++        "assessmentNote",
++        "serviceProfile"
+       ],
+       "draftRequired": [],
+       "publishRules": "specs/03-JOURNEYS.md#publication",
+@@ -6638,7 +6684,8 @@
+         "guestsMin",
+         "guestsMax",
+         "setupMinutes",
+-        "eventRequirements"
++        "eventRequirements",
++        "serviceProfile"
+       ],
+       "draftRequired": [],
+       "publishRules": "specs/03-JOURNEYS.md#publication",
+@@ -6923,5 +6970,6 @@
+       "action": "map-with-template-context",
+       "noDataLoss": true
+     }
+-  }
+-}
+\ No newline at end of file
++  },
++  "p1Rc": "RC2"
++}
+diff --git a/mira-api/src/partners-portal/registry/legacy-template-aliases.json b/mira-api/src/partners-portal/registry/legacy-template-aliases.json
+index 60e131c..701036e 100644
+--- a/mira-api/src/partners-portal/registry/legacy-template-aliases.json
++++ b/mira-api/src/partners-portal/registry/legacy-template-aliases.json
+@@ -1,18 +1,24 @@
+ {
+   "template.salon_hair_cut.package_sessions": {
+-    "canonical": "packageSessions",
++    "canonical": "package_sessions",
+     "action": "map-with-template-context",
+-    "noDataLoss": true
++    "noDataLoss": true,
++    "storageCanonical": "package_sessions",
++    "previousCanonical": "packageSessions"
+   },
+   "template.salon_hair_cut.includes": {
+-    "canonical": "included",
++    "canonical": "includes",
+     "action": "map-with-template-context",
+-    "noDataLoss": true
++    "noDataLoss": true,
++    "storageCanonical": "includes",
++    "previousCanonical": "included"
+   },
+   "template.salon_hair_cut.excludes": {
+-    "canonical": "excluded",
++    "canonical": "excludes",
+     "action": "map-with-template-context",
+-    "noDataLoss": true
++    "noDataLoss": true,
++    "storageCanonical": "excludes",
++    "previousCanonical": "excluded"
+   },
+   "template.salon_hair_cut.addons": {
+     "canonical": "addons",
+@@ -20,9 +26,11 @@
+     "noDataLoss": true
+   },
+   "template.salon_hair_cut.place_mode": {
+-    "canonical": "placeMode",
++    "canonical": "place_mode",
+     "action": "map-with-template-context",
+-    "noDataLoss": true
++    "noDataLoss": true,
++    "storageCanonical": "place_mode",
++    "previousCanonical": "placeMode"
+   },
+   "template.salon_hair_cut.home_coverage": {
+     "canonical": "coverageZones",
+@@ -35,9 +43,11 @@
+     "noDataLoss": true
+   },
+   "template.salon_hair_cut.assessment_note": {
+-    "canonical": "assessmentNote",
++    "canonical": "assessment_note",
+     "action": "map-with-template-context",
+-    "noDataLoss": true
++    "noDataLoss": true,
++    "storageCanonical": "assessment_note",
++    "previousCanonical": "assessmentNote"
+   },
+   "template.salon_hair_cut.prep_required": {
+     "canonical": "preparation",
+@@ -45,14 +55,18 @@
+     "noDataLoss": true
+   },
+   "template.salon_hair_color.package_sessions": {
+-    "canonical": "packageSessions",
++    "canonical": "package_sessions",
+     "action": "map-with-template-context",
+-    "noDataLoss": true
++    "noDataLoss": true,
++    "storageCanonical": "package_sessions",
++    "previousCanonical": "packageSessions"
+   },
+   "template.salon_hair_color.includes": {
+-    "canonical": "included",
++    "canonical": "includes",
+     "action": "map-with-template-context",
+-    "noDataLoss": true
++    "noDataLoss": true,
++    "storageCanonical": "includes",
++    "previousCanonical": "included"
+   },
+   "template.salon_hair_color.addons": {
+     "canonical": "addons",
+@@ -60,9 +74,11 @@
+     "noDataLoss": true
+   },
+   "template.salon_hair_color.place_mode": {
+-    "canonical": "placeMode",
++    "canonical": "place_mode",
+     "action": "map-with-template-context",
+-    "noDataLoss": true
++    "noDataLoss": true,
++    "storageCanonical": "place_mode",
++    "previousCanonical": "placeMode"
+   },
+   "template.salon_hair_color.needs_assessment": {
+     "canonical": "requiresAssessment",
+@@ -70,9 +86,11 @@
+     "noDataLoss": true
+   },
+   "template.salon_hair_color.assessment_note": {
+-    "canonical": "assessmentNote",
++    "canonical": "assessment_note",
+     "action": "map-with-template-context",
+-    "noDataLoss": true
++    "noDataLoss": true,
++    "storageCanonical": "assessment_note",
++    "previousCanonical": "assessmentNote"
+   },
+   "template.salon_hair_color.prep_required": {
+     "canonical": "preparation",
+@@ -85,9 +103,11 @@
+     "noDataLoss": true
+   },
+   "template.salon_nails.place_mode": {
+-    "canonical": "placeMode",
++    "canonical": "place_mode",
+     "action": "map-with-template-context",
+-    "noDataLoss": true
++    "noDataLoss": true,
++    "storageCanonical": "place_mode",
++    "previousCanonical": "placeMode"
+   },
+   "template.salon_nails.prep_required": {
+     "canonical": "preparation",
+@@ -95,9 +115,11 @@
+     "noDataLoss": true
+   },
+   "template.salon_makeup.place_mode": {
+-    "canonical": "placeMode",
++    "canonical": "place_mode",
+     "action": "map-with-template-context",
+-    "noDataLoss": true
++    "noDataLoss": true,
++    "storageCanonical": "place_mode",
++    "previousCanonical": "placeMode"
+   },
+   "template.salon_makeup.home_coverage": {
+     "canonical": "coverageZones",
+@@ -105,9 +127,11 @@
+     "noDataLoss": true
+   },
+   "template.salon_makeup.includes": {
+-    "canonical": "included",
++    "canonical": "includes",
+     "action": "map-with-template-context",
+-    "noDataLoss": true
++    "noDataLoss": true,
++    "storageCanonical": "includes",
++    "previousCanonical": "included"
+   },
+   "template.salon_makeup.addons": {
+     "canonical": "addons",
+@@ -120,9 +144,11 @@
+     "noDataLoss": true
+   },
+   "template.salon_makeup.assessment_note": {
+-    "canonical": "assessmentNote",
++    "canonical": "assessment_note",
+     "action": "map-with-template-context",
+-    "noDataLoss": true
++    "noDataLoss": true,
++    "storageCanonical": "assessment_note",
++    "previousCanonical": "assessmentNote"
+   },
+   "template.salon_makeup.prep_required": {
+     "canonical": "preparation",
+@@ -130,19 +156,25 @@
+     "noDataLoss": true
+   },
+   "template.clinic_skin.package_sessions": {
+-    "canonical": "packageSessions",
++    "canonical": "package_sessions",
+     "action": "map-with-template-context",
+-    "noDataLoss": true
++    "noDataLoss": true,
++    "storageCanonical": "package_sessions",
++    "previousCanonical": "packageSessions"
+   },
+   "template.clinic_skin.includes": {
+-    "canonical": "included",
++    "canonical": "includes",
+     "action": "map-with-template-context",
+-    "noDataLoss": true
++    "noDataLoss": true,
++    "storageCanonical": "includes",
++    "previousCanonical": "included"
+   },
+   "template.clinic_skin.place_mode": {
+-    "canonical": "placeMode",
++    "canonical": "place_mode",
+     "action": "map-with-template-context",
+-    "noDataLoss": true
++    "noDataLoss": true,
++    "storageCanonical": "place_mode",
++    "previousCanonical": "placeMode"
+   },
+   "template.clinic_skin.needs_assessment": {
+     "canonical": "requiresAssessment",
+@@ -150,9 +182,11 @@
+     "noDataLoss": true
+   },
+   "template.clinic_skin.assessment_note": {
+-    "canonical": "assessmentNote",
++    "canonical": "assessment_note",
+     "action": "map-with-template-context",
+-    "noDataLoss": true
++    "noDataLoss": true,
++    "storageCanonical": "assessment_note",
++    "previousCanonical": "assessmentNote"
+   },
+   "template.clinic_skin.prep_required": {
+     "canonical": "preparation",
+@@ -160,14 +194,18 @@
+     "noDataLoss": true
+   },
+   "template.clinic_laser.package_sessions": {
+-    "canonical": "packageSessions",
++    "canonical": "package_sessions",
+     "action": "map-with-template-context",
+-    "noDataLoss": true
++    "noDataLoss": true,
++    "storageCanonical": "package_sessions",
++    "previousCanonical": "packageSessions"
+   },
+   "template.clinic_laser.place_mode": {
+-    "canonical": "placeMode",
++    "canonical": "place_mode",
+     "action": "map-with-template-context",
+-    "noDataLoss": true
++    "noDataLoss": true,
++    "storageCanonical": "place_mode",
++    "previousCanonical": "placeMode"
+   },
+   "template.clinic_laser.needs_assessment": {
+     "canonical": "requiresAssessment",
+@@ -175,9 +213,11 @@
+     "noDataLoss": true
+   },
+   "template.clinic_laser.assessment_note": {
+-    "canonical": "assessmentNote",
++    "canonical": "assessment_note",
+     "action": "map-with-template-context",
+-    "noDataLoss": true
++    "noDataLoss": true,
++    "storageCanonical": "assessment_note",
++    "previousCanonical": "assessmentNote"
+   },
+   "template.clinic_laser.prep_required": {
+     "canonical": "preparation",
+@@ -185,9 +225,11 @@
+     "noDataLoss": true
+   },
+   "template.clinic_consult.includes": {
+-    "canonical": "included",
++    "canonical": "includes",
+     "action": "map-with-template-context",
+-    "noDataLoss": true
++    "noDataLoss": true,
++    "storageCanonical": "includes",
++    "previousCanonical": "included"
+   },
+   "template.clinic_consult.prep_required": {
+     "canonical": "preparation",
+@@ -195,14 +237,18 @@
+     "noDataLoss": true
+   },
+   "template.salon_care.includes": {
+-    "canonical": "included",
++    "canonical": "includes",
+     "action": "map-with-template-context",
+-    "noDataLoss": true
++    "noDataLoss": true,
++    "storageCanonical": "includes",
++    "previousCanonical": "included"
+   },
+   "template.salon_care.place_mode": {
+-    "canonical": "placeMode",
++    "canonical": "place_mode",
+     "action": "map-with-template-context",
+-    "noDataLoss": true
++    "noDataLoss": true,
++    "storageCanonical": "place_mode",
++    "previousCanonical": "placeMode"
+   },
+   "template.salon_care.prep_required": {
+     "canonical": "preparation",
+@@ -215,13 +261,15 @@
+     "noDataLoss": true
+   },
+   "template.clinic_teeth.assessment_note": {
+-    "canonical": "assessmentNote",
++    "canonical": "assessment_note",
+     "action": "map-with-template-context",
+-    "noDataLoss": true
++    "noDataLoss": true,
++    "storageCanonical": "assessment_note",
++    "previousCanonical": "assessmentNote"
+   },
+   "template.clinic_teeth.prep_required": {
+     "canonical": "preparation",
+     "action": "map-with-template-context",
+     "noDataLoss": true
+   }
+-}
+\ No newline at end of file
++}
+diff --git a/mira-api/src/partners-portal/registry/registry.service.ts b/mira-api/src/partners-portal/registry/registry.service.ts
+index 6d6873f..0e47361 100644
+--- a/mira-api/src/partners-portal/registry/registry.service.ts
++++ b/mira-api/src/partners-portal/registry/registry.service.ts
+@@ -17,11 +17,46 @@ function editorError(status: HttpStatus, code: string, messageAr: string, extra:
+   return new HttpException({ message: messageAr, messageAr, code, ...extra }, status);
+ }
+ 
++type TemplateField = {
++  id: string;
++  type: string;
++  required?: boolean;
++  options?: string[];
++  visibleWhenField?: string | null;
++  visibleWhenAnyOf?: string[];
++};
++
++type TemplateDef = {
++  id: string;
++  version: number;
++  partnerTypes: string[];
++  fields: TemplateField[];
++};
++
++const PRICE_MODES = new Set(['fixed', 'from', 'afterAssessment', 'unknown']);
++const SUPPORTED_FIELD_TYPES = new Set([
++  'string',
++  'text',
++  'number',
++  'integer',
++  'boolean',
++  'array',
++  'string[]',
++  'multiSelect',
++  'tags',
++  'enum',
++  'singleSelect',
++  'select',
++  'object',
++  'json',
++]);
++
+ @Injectable()
+ export class RegistryService implements OnModuleInit {
+   private registry!: FieldRegistryV2;
+   private registryHash = '';
+   private aliases: Record<string, { canonical?: string; action?: string }> = {};
++  private templates = new Map<string, TemplateDef>();
+ 
+   onModuleInit() {
+     this.load();
+@@ -41,6 +76,13 @@ export class RegistryService implements OnModuleInit {
+     } catch {
+       this.aliases = {};
+     }
++    try {
++      const catalogPath = join(__dirname, 'service-templates.catalog.json');
++      const catalog = JSON.parse(readFileSync(catalogPath, 'utf8')) as { templates: TemplateDef[] };
++      this.templates = new Map(catalog.templates.map((t) => [t.id, t]));
++    } catch {
++      this.templates = new Map();
++    }
+   }
+ 
+   isEditorV2Enabled(): boolean {
+@@ -62,12 +104,17 @@ export class RegistryService implements OnModuleInit {
+     return this.registry;
+   }
+ 
++  listTemplateIds(): string[] {
++    return [...this.templates.keys()];
++  }
++
+   metaPayload() {
+     return {
+       schemaVersion: EDITOR_SCHEMA_VERSION,
+       registryHash: this.registryHash,
+       editorV2Enabled: this.isEditorV2Enabled(),
+       registry: this.registry,
++      serviceTemplateIds: this.listTemplateIds(),
+     };
+   }
+ 
+@@ -105,6 +152,16 @@ export class RegistryService implements OnModuleInit {
+     return this.registry.fields[fieldId];
+   }
+ 
++  /** Merge profile.fieldOverrides onto base field defs (activity-scoped rules). */
++  private effectiveField(profile: RegistryProfile, fieldId: string): RegistryFieldDef | undefined {
++    const base = this.fieldDef(fieldId);
++    if (!base) return undefined;
++    const overrides = (profile as RegistryProfile & { fieldOverrides?: Record<string, Partial<RegistryFieldDef>> })
++      .fieldOverrides?.[fieldId];
++    if (!overrides) return base;
++    return { ...base, ...overrides, id: fieldId };
++  }
++
+   private allowedValueIds(field: RegistryFieldDef): Set<string> | null {
+     const values = field.values;
+     if (!Array.isArray(values) || values.length === 0) return null;
+@@ -112,8 +169,8 @@ export class RegistryService implements OnModuleInit {
+     for (const entry of values) {
+       if (typeof entry === 'string') ids.add(entry);
+       else if (entry && typeof entry === 'object') {
+-        if (typeof entry.id === 'string') ids.add(entry.id);
+-        if (typeof entry.value === 'string') ids.add(entry.value);
++        if (typeof (entry as { id?: string }).id === 'string') ids.add((entry as { id: string }).id);
++        if (typeof (entry as { value?: string }).value === 'string') ids.add((entry as { value: string }).value);
+       }
+     }
+     return ids.size ? ids : null;
+@@ -133,28 +190,25 @@ export class RegistryService implements OnModuleInit {
+     return max;
+   }
+ 
+-  assertValuesBounds(values: Record<string, unknown>) {
++  assertValuesBounds(values: Record<string, unknown>, label = 'values') {
+     const bytes = Buffer.byteLength(JSON.stringify(values), 'utf8');
+     if (bytes > MAX_VALUES_BYTES) {
+-      throw editorError(HttpStatus.BAD_REQUEST, 'VALUES_TOO_LARGE', 'حجم بيانات المسودة أكبر من الحد المسموح');
++      throw editorError(HttpStatus.BAD_REQUEST, 'VALUES_TOO_LARGE', `حجم ${label} أكبر من الحد المسموح`);
+     }
+     if (Object.keys(values).length > MAX_VALUES_KEYS) {
+-      throw editorError(HttpStatus.BAD_REQUEST, 'VALUES_TOO_MANY_KEYS', 'عدد الحقول أكبر من الحد المسموح');
++      throw editorError(HttpStatus.BAD_REQUEST, 'VALUES_TOO_MANY_KEYS', `عدد مفاتيح ${label} أكبر من الحد`);
+     }
+     if (this.depthOf(values) > MAX_VALUES_DEPTH) {
+-      throw editorError(HttpStatus.BAD_REQUEST, 'VALUES_TOO_DEEP', 'عمق بيانات المسودة أكبر من الحد المسموح');
++      throw editorError(HttpStatus.BAD_REQUEST, 'VALUES_TOO_DEEP', `عمق ${label} أكبر من الحد المسموح`);
+     }
+   }
+ 
+-  /**
+-   * Draft-mode validation: unknown fields/values rejected; no invented defaults;
+-   * draftRequired profile/field lists enforced only when mode=publish.
+-   */
+   validateValues(input: {
+     profile: RegistryProfile;
+     values: Record<string, unknown>;
+     mode: 'draft' | 'publish';
+     schemaVersion: number;
++    partnerType?: string;
+   }) {
+     if (input.schemaVersion !== EDITOR_SCHEMA_VERSION) {
+       throw editorError(HttpStatus.BAD_REQUEST, 'REGISTRY_UNSUPPORTED_VERSION', 'إصدار السجل غير مدعوم', {
+@@ -170,27 +224,56 @@ export class RegistryService implements OnModuleInit {
+         fieldErrors.push({ fieldId, code: 'REGISTRY_UNKNOWN_FIELD' });
+         continue;
+       }
+-      const def = this.fieldDef(fieldId);
++      const def = this.effectiveField(input.profile, fieldId);
+       if (!def) {
+         fieldErrors.push({ fieldId, code: 'REGISTRY_UNKNOWN_FIELD' });
+         continue;
+       }
+       if (raw === null || raw === undefined) continue;
++      if (fieldId === 'serviceProfile') {
++        try {
++          this.validateServiceProfileDocument(raw, input.partnerType ?? 'salon', { requireKnownAnswers: true });
++        } catch (error) {
++          if (error instanceof HttpException) {
++            const body = error.getResponse() as { fieldErrors?: Array<{ fieldId: string; code: string }>; code?: string };
++            if (Array.isArray(body.fieldErrors)) fieldErrors.push(...body.fieldErrors.map((e) => ({ fieldId: `serviceProfile.${e.fieldId}`, code: e.code })));
++            else fieldErrors.push({ fieldId: 'serviceProfile', code: body.code || 'SERVICE_PROFILE_INVALID' });
++          } else {
++            fieldErrors.push({ fieldId: 'serviceProfile', code: 'SERVICE_PROFILE_INVALID' });
++          }
++        }
++        continue;
++      }
++      if (!SUPPORTED_FIELD_TYPES.has(def.type)) {
++        fieldErrors.push({ fieldId, code: 'REGISTRY_UNSUPPORTED_TYPE' });
++        continue;
++      }
+       const typeError = this.validateType(def, raw);
+       if (typeError) fieldErrors.push({ fieldId, code: typeError });
+     }
+ 
+     if (input.mode === 'publish') {
+-      // Enforce explicit draftRequired lists only. Broad publishRequiredWhen markers
+-      // (e.g. media) are handled by materialize / submit-review separately.
+-      // Contract: nameAr is NOT draft-required; materialize still demands Prisma fields.
+       const required = new Set<string>([
+         ...(input.profile.draftRequired ?? []),
+         ...Object.values(this.registry.fields)
+           .filter((f) => f.draftRequired === true && allowed.has(f.id))
+           .map((f) => f.id),
+       ]);
++      // Conditional publish markers that apply to in-values fields (not media/booking ops).
++      for (const fieldId of allowed) {
++        const def = this.effectiveField(input.profile, fieldId);
++        if (!def?.publishRequiredWhen) continue;
++        if (this.publishRuleApplies(def.publishRequiredWhen, input.values)) {
++          required.add(fieldId);
++        }
++      }
++      // nameAr is NOT draft-required; materialize enforces Prisma fields separately.
++      required.delete('media');
++      required.delete('coverMediaId');
+       for (const fieldId of required) {
++        if (fieldId === 'nameAr') continue; // optional until materialize gate
++        // Legacy createProduct allows omitted/blank externalUrl with purchaseMode=external.
++        if (fieldId === 'externalUrl') continue;
+         const present = Object.prototype.hasOwnProperty.call(input.values, fieldId);
+         const value = input.values[fieldId];
+         const empty =
+@@ -204,11 +287,28 @@ export class RegistryService implements OnModuleInit {
+     }
+ 
+     if (fieldErrors.length) {
+-      const code = fieldErrors[0].code;
+-      throw editorError(HttpStatus.BAD_REQUEST, code, 'راجعي الحقول المحددة', { fieldErrors });
++      throw editorError(HttpStatus.BAD_REQUEST, fieldErrors[0].code, 'راجعي الحقول المحددة', { fieldErrors });
+     }
+   }
+ 
++  private publishRuleApplies(rule: string, values: Record<string, unknown>): boolean {
++    // Bare "product/service publish" markers document the full publication journey
++    // (media, booking ops). They are NOT all draft-value requirements at materialize.
++    // Materialize enforces Prisma gates (name/price/duration) separately.
++    if (rule === 'optional' || rule === 'publish' || rule === 'product publish' || rule === 'service publish') {
++      return false;
++    }
++    if (rule === 'purchaseMode=external') return values.purchaseMode === 'external';
++    if (rule === 'internal_cod') return values.purchaseMode === 'internal_cod';
++    if (rule === 'inventoryMode=product') return values.inventoryMode === 'product';
++    if (rule === 'priceMode in [fixed,from]') {
++      const mode = values.priceMode ?? (values.serviceProfile as { priceMode?: string } | undefined)?.priceMode;
++      return mode === 'fixed' || mode === 'from';
++    }
++    // Booking/media/calendar operational rules are enforced on their own write paths.
++    return false;
++  }
++
+   private validateType(def: RegistryFieldDef, raw: unknown): string | null {
+     const t = def.type;
+     if (t === 'string' || t === 'text') {
+@@ -227,8 +327,10 @@ export class RegistryService implements OnModuleInit {
+     if (t === 'boolean') {
+       return typeof raw === 'boolean' ? null : 'FIELD_TYPE_INVALID';
+     }
+-    if (t === 'string[]' || t === 'multiSelect' || t === 'tags') {
++    if (t === 'array' || t === 'string[]' || t === 'multiSelect' || t === 'tags') {
+       if (!Array.isArray(raw)) return 'FIELD_TYPE_INVALID';
++      if (def.min != null && raw.length < def.min) return 'MIN_VALUE';
++      if (def.max != null && raw.length > def.max) return 'MAX_VALUE';
+       const allowedIds = this.allowedValueIds(def);
+       for (const item of raw) {
+         if (typeof item !== 'string') return 'FIELD_TYPE_INVALID';
+@@ -245,55 +347,138 @@ export class RegistryService implements OnModuleInit {
+     if (t === 'object' || t === 'json') {
+       return raw != null && typeof raw === 'object' && !Array.isArray(raw) ? null : 'FIELD_TYPE_INVALID';
+     }
+-    // Unknown registry type: accept JSON-compatible scalars/objects but do not invent.
+-    return null;
++    return 'REGISTRY_UNSUPPORTED_TYPE';
+   }
+ 
+-  /** Map localStorage / legacy answer keys into canonical ids for a template. */
++  /** Map localStorage / legacy answer keys into Flutter-compatible storage ids. */
+   mapLegacyAnswers(templateId: string, answers: Record<string, unknown>): {
+     mapped: Record<string, unknown>;
+     unmapped: string[];
+   } {
+     const mapped: Record<string, unknown> = {};
+     const unmapped: string[] = [];
++    const reverseCamel: Record<string, string> = {
++      included: 'includes',
++      excluded: 'excludes',
++      packageSessions: 'package_sessions',
++      placeMode: 'place_mode',
++      homeCoverage: 'home_coverage',
++      needsAssessment: 'needs_assessment',
++      assessmentNote: 'assessment_note',
++      prepRequired: 'prep_required',
++    };
+     for (const [key, value] of Object.entries(answers)) {
+       const aliasKey = `template.${templateId}.${key}`;
+       const alias = this.aliases[aliasKey];
+-      if (alias?.canonical) {
+-        mapped[alias.canonical] = value;
+-        continue;
+-      }
+       if (alias?.action === 'drop') {
+         unmapped.push(key);
+         continue;
+       }
+-      // Already canonical or unknown — keep key; caller may still flag unknown template fields.
+-      mapped[key] = value;
++      let dest = key;
++      if (alias?.canonical) dest = alias.canonical;
++      else if (reverseCamel[key]) dest = reverseCamel[key];
++      mapped[dest] = value;
+     }
+     return { mapped, unmapped };
+   }
+ 
+-  normalizeServiceProfile(input: unknown): ServiceProfileDoc {
++  validateServiceProfileDocument(
++    input: unknown,
++    partnerType: string,
++    opts: { requireKnownAnswers: boolean },
++  ): ServiceProfileDoc {
+     if (!input || typeof input !== 'object' || Array.isArray(input)) {
+       throw editorError(HttpStatus.BAD_REQUEST, 'SERVICE_PROFILE_INVALID', 'بيانات قالب الخدمة غير صالحة');
+     }
+     const body = input as Record<string, unknown>;
++    this.assertValuesBounds(body, 'serviceProfile');
+     const templateId = typeof body.templateId === 'string' ? body.templateId.trim() : '';
+     if (!templateId) {
+       throw editorError(HttpStatus.BAD_REQUEST, 'SERVICE_PROFILE_INVALID', 'معرّف القالب مطلوب', {
+         fieldErrors: [{ fieldId: 'templateId', code: 'REQUIRED' }],
+       });
+     }
+-    const templateVersion =
+-      typeof body.templateVersion === 'number' && Number.isInteger(body.templateVersion)
+-        ? body.templateVersion
+-        : 1;
+-    const priceMode = typeof body.priceMode === 'string' && body.priceMode.trim() ? body.priceMode.trim() : 'fixed';
+-    const answers =
++    const template = this.templates.get(templateId);
++    if (!template) {
++      throw editorError(HttpStatus.BAD_REQUEST, 'SERVICE_TEMPLATE_UNKNOWN', 'القالب غير موجود', {
++        fieldErrors: [{ fieldId: 'templateId', code: 'SERVICE_TEMPLATE_UNKNOWN' }],
++      });
++    }
++    if (partnerType !== 'developer' && !(template.partnerTypes || []).includes(partnerType)) {
++      throw editorError(HttpStatus.FORBIDDEN, 'SERVICE_TEMPLATE_FORBIDDEN', 'القالب غير مسموح لنوع الشريك', {
++        fieldErrors: [{ fieldId: 'templateId', code: 'SERVICE_TEMPLATE_FORBIDDEN' }],
++      });
++    }
++    if (typeof body.templateVersion !== 'number' || !Number.isInteger(body.templateVersion) || body.templateVersion < 1) {
++      throw editorError(HttpStatus.BAD_REQUEST, 'SERVICE_TEMPLATE_VERSION_INVALID', 'إصدار القالب غير صالح', {
++        fieldErrors: [{ fieldId: 'templateVersion', code: 'SERVICE_TEMPLATE_VERSION_INVALID' }],
++      });
++    }
++    const priceMode = typeof body.priceMode === 'string' ? body.priceMode.trim() : '';
++    if (!PRICE_MODES.has(priceMode)) {
++      throw editorError(HttpStatus.BAD_REQUEST, 'SERVICE_PRICE_MODE_INVALID', 'طريقة السعر غير معروفة', {
++        fieldErrors: [{ fieldId: 'priceMode', code: 'SERVICE_PRICE_MODE_INVALID' }],
++      });
++    }
++    const answersRaw =
+       body.answers && typeof body.answers === 'object' && !Array.isArray(body.answers)
+         ? (body.answers as Record<string, unknown>)
+         : {};
+-    this.assertValuesBounds(answers);
+-    return { templateId, templateVersion, priceMode, answers };
++    this.assertValuesBounds(answersRaw, 'serviceProfile.answers');
++    const { mapped } = this.mapLegacyAnswers(templateId, answersRaw);
++    const fieldById = new Map(template.fields.map((f) => [f.id, f]));
++    const fieldErrors: Array<{ fieldId: string; code: string }> = [];
++    for (const [key, raw] of Object.entries(mapped)) {
++      const field = fieldById.get(key);
++      if (!field) {
++        if (opts.requireKnownAnswers) fieldErrors.push({ fieldId: key, code: 'TEMPLATE_UNKNOWN_ANSWER' });
++        continue;
++      }
++      const err = this.validateTemplateAnswer(field, raw);
++      if (err) fieldErrors.push({ fieldId: key, code: err });
++    }
++    if (fieldErrors.length) {
++      throw editorError(HttpStatus.BAD_REQUEST, fieldErrors[0].code, 'إجابات القالب غير صالحة', { fieldErrors });
++    }
++    return {
++      templateId,
++      templateVersion: body.templateVersion as number,
++      priceMode,
++      answers: mapped,
++    };
++  }
++
++  private validateTemplateAnswer(field: TemplateField, raw: unknown): string | null {
++    if (raw === null || raw === undefined) return null;
++    if (raw && typeof raw === 'object' && !Array.isArray(raw)) {
++      const state = (raw as { state?: string }).state;
++      if (state === 'unset' || state === 'notApplicable' || state === 'not_applicable') return null;
++      if (Object.prototype.hasOwnProperty.call(raw, 'value')) {
++        return this.validateTemplateAnswer(field, (raw as { value: unknown }).value);
++      }
++    }
++    const t = field.type;
++    if (t === 'boolean') return typeof raw === 'boolean' ? null : 'FIELD_TYPE_INVALID';
++    if (t === 'number') {
++      return typeof raw === 'number' && Number.isFinite(raw) ? null : 'FIELD_TYPE_INVALID';
++    }
++    if (t === 'text' || t === 'string' || t === 'single') {
++      if (typeof raw !== 'string') return 'FIELD_TYPE_INVALID';
++      if (field.options?.length && !field.options.includes(raw)) return 'REGISTRY_UNKNOWN_VALUE';
++      return null;
++    }
++    if (t === 'multi') {
++      if (!Array.isArray(raw)) return 'FIELD_TYPE_INVALID';
++      for (const item of raw) {
++        if (typeof item !== 'string') return 'FIELD_TYPE_INVALID';
++        if (field.options?.length && !field.options.includes(item)) return 'REGISTRY_UNKNOWN_VALUE';
++      }
++      return null;
++    }
++    return null;
++  }
++
++  normalizeServiceProfile(input: unknown, partnerType = 'salon'): ServiceProfileDoc {
++    return this.validateServiceProfileDocument(input, partnerType, { requireKnownAnswers: true });
+   }
+ }
+diff --git a/mira-api/src/partners-portal/registry/registry.validation.schema-tests.ts b/mira-api/src/partners-portal/registry/registry.validation.schema-tests.ts
+new file mode 100644
+index 0000000..056f729
+--- /dev/null
++++ b/mira-api/src/partners-portal/registry/registry.validation.schema-tests.ts
+@@ -0,0 +1,182 @@
++/**
++ * P1 RC2 — registry validation negatives/positives (no DB).
++ */
++import 'reflect-metadata';
++import assert from 'node:assert/strict';
++import { HttpException } from '@nestjs/common';
++import { RegistryService } from './registry.service';
++
++function mustFail(fn: () => void, code: string) {
++  try {
++    fn();
++    assert.fail(`expected ${code}`);
++  } catch (error) {
++    assert.ok(error instanceof HttpException, String(error));
++    const body = error.getResponse() as { code?: string };
++    assert.equal(body.code, code, JSON.stringify(body));
++  }
++}
++
++async function main() {
++  const registry = new RegistryService();
++  registry.load();
++  const clothes = registry.assertProfileAllowed('product.clothes', 'brand', 'product');
++  const salonCut = registry.assertProfileAllowed('service.salon_hair_cut', 'salon', 'service');
++
++  // colors type array — reject number and unknown value
++  mustFail(
++    () =>
++      registry.validateValues({
++        profile: clothes,
++        values: { colors: 123 as unknown as string[] },
++        mode: 'draft',
++        schemaVersion: 2,
++        partnerType: 'brand',
++      }),
++    'FIELD_TYPE_INVALID',
++  );
++  mustFail(
++    () =>
++      registry.validateValues({
++        profile: clothes,
++        values: { colors: ['NOT_A_COLOR'] },
++        mode: 'draft',
++        schemaVersion: 2,
++        partnerType: 'brand',
++      }),
++    'REGISTRY_UNKNOWN_VALUE',
++  );
++
++  // valid colors
++  registry.validateValues({
++    profile: clothes,
++    values: { colors: ['black', 'ivory'] },
++    mode: 'draft',
++    schemaVersion: 2,
++    partnerType: 'brand',
++  });
++
++  const sizeVals = (registry.getRegistry().fields.sizes?.values || []) as string[];
++  if (sizeVals.length) {
++    mustFail(
++      () =>
++        registry.validateValues({
++          profile: clothes,
++          values: { sizes: ['NOT_A_SIZE'] },
++          mode: 'draft',
++          schemaVersion: 2,
++          partnerType: 'brand',
++        }),
++      'REGISTRY_UNKNOWN_VALUE',
++    );
++    registry.validateValues({
++      profile: clothes,
++      values: { sizes: [String(sizeVals[0])] },
++      mode: 'draft',
++      schemaVersion: 2,
++      partnerType: 'brand',
++    });
++  }
++
++  // serviceProfile unknown template
++  mustFail(
++    () =>
++      registry.validateValues({
++        profile: salonCut,
++        values: {
++          serviceProfile: {
++            templateId: 'not_a_real_template',
++            templateVersion: 1,
++            priceMode: 'fixed',
++            answers: {},
++          },
++        },
++        mode: 'draft',
++        schemaVersion: 2,
++        partnerType: 'salon',
++      }),
++    'SERVICE_TEMPLATE_UNKNOWN',
++  );
++
++  // negative templateVersion
++  mustFail(
++    () =>
++      registry.normalizeServiceProfile(
++        { templateId: 'salon_hair_cut', templateVersion: -1, priceMode: 'fixed', answers: {} },
++        'salon',
++      ),
++    'SERVICE_TEMPLATE_VERSION_INVALID',
++  );
++
++  // unknown priceMode
++  mustFail(
++    () =>
++      registry.normalizeServiceProfile(
++        { templateId: 'salon_hair_cut', templateVersion: 1, priceMode: 'weird', answers: {} },
++        'salon',
++      ),
++    'SERVICE_PRICE_MODE_INVALID',
++  );
++
++  // unknown answers
++  mustFail(
++    () =>
++      registry.normalizeServiceProfile(
++        {
++          templateId: 'salon_hair_cut',
++          templateVersion: 1,
++          priceMode: 'fixed',
++          answers: { totally_unknown_field: 'x' },
++        },
++        'salon',
++      ),
++    'TEMPLATE_UNKNOWN_ANSWER',
++  );
++
++  // clinic template forbidden for salon
++  mustFail(
++    () =>
++      registry.normalizeServiceProfile(
++        { templateId: 'clinic_laser', templateVersion: 1, priceMode: 'fixed', answers: {} },
++        'salon',
++      ),
++    'SERVICE_TEMPLATE_FORBIDDEN',
++  );
++
++  // empty draft values ok
++  registry.validateValues({
++    profile: clothes,
++    values: {},
++    mode: 'draft',
++    schemaVersion: 2,
++    partnerType: 'brand',
++  });
++
++  // serviceProfile with Flutter-compatible answers + alias remap
++  const doc = registry.normalizeServiceProfile(
++    {
++      templateId: 'salon_hair_cut',
++      templateVersion: 1,
++      priceMode: 'fixed',
++      answers: { includes: ['wash'], package_sessions: 3, session_kind: 'package' },
++    },
++    'salon',
++  );
++  assert.equal(doc.answers.includes != null || doc.answers.package_sessions != null, true);
++
++  // Positive: every catalog template validates empty answers for its partner type
++  for (const id of registry.listTemplateIds()) {
++    const tplPartner = id.startsWith('clinic') ? 'clinic' : 'salon';
++    registry.normalizeServiceProfile(
++      { templateId: id, templateVersion: 1, priceMode: 'fixed', answers: {} },
++      tplPartner,
++    );
++  }
++
++  console.log(JSON.stringify({ ok: true, templates: registry.listTemplateIds().length }, null, 2));
++}
++
++main().catch((error) => {
++  console.error(error);
++  process.exit(1);
++});
+diff --git a/mira-api/src/partners-portal/registry/service-templates.catalog.json b/mira-api/src/partners-portal/registry/service-templates.catalog.json
+new file mode 100644
+index 0000000..5d6f675
+--- /dev/null
++++ b/mira-api/src/partners-portal/registry/service-templates.catalog.json
+@@ -0,0 +1,913 @@
++{
++  "version": 1,
++  "source": "partners-portal/web/js/service-templates.js",
++  "templates": [
++    {
++      "id": "salon_hair_cut",
++      "version": 1,
++      "labelAr": "قص وتصفيف الشعر",
++      "category": "hair",
++      "partnerTypes": [
++        "salon"
++      ],
++      "fields": [
++        {
++          "id": "session_kind",
++          "type": "single",
++          "required": true,
++          "options": [
++            "single",
++            "package"
++          ],
++          "visibleWhenField": null,
++          "visibleWhenAnyOf": []
++        },
++        {
++          "id": "package_sessions",
++          "type": "number",
++          "required": false,
++          "options": [],
++          "visibleWhenField": "session_kind",
++          "visibleWhenAnyOf": [
++            "package"
++          ]
++        },
++        {
++          "id": "package_validity",
++          "type": "text",
++          "required": false,
++          "options": [],
++          "visibleWhenField": "session_kind",
++          "visibleWhenAnyOf": [
++            "package"
++          ]
++        },
++        {
++          "id": "cut_style",
++          "type": "single",
++          "required": true,
++          "options": [
++            "cut",
++            "style",
++            "cut_style"
++          ],
++          "visibleWhenField": null,
++          "visibleWhenAnyOf": []
++        },
++        {
++          "id": "hair_length",
++          "type": "single",
++          "required": false,
++          "options": [
++            "short",
++            "medium",
++            "long",
++            "any"
++          ],
++          "visibleWhenField": null,
++          "visibleWhenAnyOf": []
++        },
++        {
++          "id": "includes_wash_dry",
++          "type": "boolean",
++          "required": false,
++          "options": [],
++          "visibleWhenField": null,
++          "visibleWhenAnyOf": []
++        },
++        {
++          "id": "includes",
++          "type": "multi",
++          "required": false,
++          "options": [
++            "wash",
++            "dry",
++            "style",
++            "trim"
++          ],
++          "visibleWhenField": null,
++          "visibleWhenAnyOf": []
++        },
++        {
++          "id": "excludes",
++          "type": "text",
++          "required": false,
++          "options": [],
++          "visibleWhenField": null,
++          "visibleWhenAnyOf": []
++        },
++        {
++          "id": "addons",
++          "type": "multi",
++          "required": false,
++          "options": [
++            "mask",
++            "oil"
++          ],
++          "visibleWhenField": null,
++          "visibleWhenAnyOf": []
++        },
++        {
++          "id": "place_mode",
++          "type": "single",
++          "required": true,
++          "options": [
++            "branch",
++            "home",
++            "either"
++          ],
++          "visibleWhenField": null,
++          "visibleWhenAnyOf": []
++        },
++        {
++          "id": "home_coverage",
++          "type": "text",
++          "required": false,
++          "options": [],
++          "visibleWhenField": "place_mode",
++          "visibleWhenAnyOf": [
++            "home",
++            "either"
++          ]
++        },
++        {
++          "id": "needs_assessment",
++          "type": "boolean",
++          "required": false,
++          "options": [],
++          "visibleWhenField": null,
++          "visibleWhenAnyOf": []
++        },
++        {
++          "id": "assessment_note",
++          "type": "text",
++          "required": false,
++          "options": [],
++          "visibleWhenField": "needs_assessment",
++          "visibleWhenAnyOf": [
++            "true"
++          ]
++        },
++        {
++          "id": "prep_required",
++          "type": "text",
++          "required": false,
++          "options": [],
++          "visibleWhenField": null,
++          "visibleWhenAnyOf": []
++        },
++        {
++          "id": "policies",
++          "type": "text",
++          "required": false,
++          "options": [],
++          "visibleWhenField": null,
++          "visibleWhenAnyOf": []
++        }
++      ]
++    },
++    {
++      "id": "salon_hair_color",
++      "version": 1,
++      "labelAr": "صبغة الشعر",
++      "category": "hair",
++      "partnerTypes": [
++        "salon",
++        "clinic"
++      ],
++      "fields": [
++        {
++          "id": "session_kind",
++          "type": "single",
++          "required": true,
++          "options": [
++            "single",
++            "package"
++          ],
++          "visibleWhenField": null,
++          "visibleWhenAnyOf": []
++        },
++        {
++          "id": "package_sessions",
++          "type": "number",
++          "required": false,
++          "options": [],
++          "visibleWhenField": "session_kind",
++          "visibleWhenAnyOf": [
++            "package"
++          ]
++        },
++        {
++          "id": "color_kind",
++          "type": "single",
++          "required": true,
++          "options": [
++            "full",
++            "roots",
++            "highlights",
++            "balayage"
++          ],
++          "visibleWhenField": null,
++          "visibleWhenAnyOf": []
++        },
++        {
++          "id": "price_by_length",
++          "type": "boolean",
++          "required": false,
++          "options": [],
++          "visibleWhenField": null,
++          "visibleWhenAnyOf": []
++        },
++        {
++          "id": "length_tiers",
++          "type": "multi",
++          "required": false,
++          "options": [
++            "short",
++            "medium",
++            "long"
++          ],
++          "visibleWhenField": "price_by_length",
++          "visibleWhenAnyOf": [
++            "true"
++          ]
++        },
++        {
++          "id": "includes_bleach",
++          "type": "boolean",
++          "required": false,
++          "options": [],
++          "visibleWhenField": null,
++          "visibleWhenAnyOf": []
++        },
++        {
++          "id": "includes",
++          "type": "multi",
++          "required": false,
++          "options": [
++            "toner",
++            "treatment"
++          ],
++          "visibleWhenField": null,
++          "visibleWhenAnyOf": []
++        },
++        {
++          "id": "addons",
++          "type": "multi",
++          "required": false,
++          "options": [
++            "olaplex"
++          ],
++          "visibleWhenField": null,
++          "visibleWhenAnyOf": []
++        },
++        {
++          "id": "place_mode",
++          "type": "single",
++          "required": true,
++          "options": [
++            "branch",
++            "home",
++            "either"
++          ],
++          "visibleWhenField": null,
++          "visibleWhenAnyOf": []
++        },
++        {
++          "id": "needs_assessment",
++          "type": "boolean",
++          "required": false,
++          "options": [],
++          "visibleWhenField": null,
++          "visibleWhenAnyOf": []
++        },
++        {
++          "id": "assessment_note",
++          "type": "text",
++          "required": false,
++          "options": [],
++          "visibleWhenField": "needs_assessment",
++          "visibleWhenAnyOf": [
++            "true"
++          ]
++        },
++        {
++          "id": "prep_required",
++          "type": "text",
++          "required": false,
++          "options": [],
++          "visibleWhenField": null,
++          "visibleWhenAnyOf": []
++        },
++        {
++          "id": "policies",
++          "type": "text",
++          "required": false,
++          "options": [],
++          "visibleWhenField": null,
++          "visibleWhenAnyOf": []
++        }
++      ]
++    },
++    {
++      "id": "salon_nails",
++      "version": 1,
++      "labelAr": "العناية بالأظافر",
++      "category": "nails",
++      "partnerTypes": [
++        "salon"
++      ],
++      "fields": [
++        {
++          "id": "hands_feet",
++          "type": "single",
++          "required": true,
++          "options": [
++            "hands",
++            "feet",
++            "both"
++          ],
++          "visibleWhenField": null,
++          "visibleWhenAnyOf": []
++        },
++        {
++          "id": "nail_kind",
++          "type": "single",
++          "required": true,
++          "options": [
++            "manicure",
++            "pedicure",
++            "gel",
++            "acrylic"
++          ],
++          "visibleWhenField": null,
++          "visibleWhenAnyOf": []
++        },
++        {
++          "id": "remove_old",
++          "type": "boolean",
++          "required": false,
++          "options": [],
++          "visibleWhenField": null,
++          "visibleWhenAnyOf": []
++        },
++        {
++          "id": "addons",
++          "type": "multi",
++          "required": false,
++          "options": [
++            "art",
++            "paraffin"
++          ],
++          "visibleWhenField": null,
++          "visibleWhenAnyOf": []
++        },
++        {
++          "id": "place_mode",
++          "type": "single",
++          "required": true,
++          "options": [
++            "branch",
++            "home",
++            "either"
++          ],
++          "visibleWhenField": null,
++          "visibleWhenAnyOf": []
++        },
++        {
++          "id": "prep_required",
++          "type": "text",
++          "required": false,
++          "options": [],
++          "visibleWhenField": null,
++          "visibleWhenAnyOf": []
++        },
++        {
++          "id": "policies",
++          "type": "text",
++          "required": false,
++          "options": [],
++          "visibleWhenField": null,
++          "visibleWhenAnyOf": []
++        }
++      ]
++    },
++    {
++      "id": "salon_makeup",
++      "version": 1,
++      "labelAr": "المكياج",
++      "category": "makeup",
++      "partnerTypes": [
++        "salon"
++      ],
++      "fields": [
++        {
++          "id": "occasion",
++          "type": "single",
++          "required": true,
++          "options": [
++            "daily",
++            "event",
++            "bridal",
++            "photo"
++          ],
++          "visibleWhenField": null,
++          "visibleWhenAnyOf": []
++        },
++        {
++          "id": "place_mode",
++          "type": "single",
++          "required": true,
++          "options": [
++            "branch",
++            "home",
++            "either"
++          ],
++          "visibleWhenField": null,
++          "visibleWhenAnyOf": []
++        },
++        {
++          "id": "home_coverage",
++          "type": "text",
++          "required": false,
++          "options": [],
++          "visibleWhenField": "place_mode",
++          "visibleWhenAnyOf": [
++            "home",
++            "either"
++          ]
++        },
++        {
++          "id": "includes",
++          "type": "multi",
++          "required": false,
++          "options": [
++            "base",
++            "eyes",
++            "lashes",
++            "brows"
++          ],
++          "visibleWhenField": null,
++          "visibleWhenAnyOf": []
++        },
++        {
++          "id": "addons",
++          "type": "multi",
++          "required": false,
++          "options": [
++            "hair",
++            "trial"
++          ],
++          "visibleWhenField": null,
++          "visibleWhenAnyOf": []
++        },
++        {
++          "id": "needs_assessment",
++          "type": "boolean",
++          "required": false,
++          "options": [],
++          "visibleWhenField": null,
++          "visibleWhenAnyOf": []
++        },
++        {
++          "id": "assessment_note",
++          "type": "text",
++          "required": false,
++          "options": [],
++          "visibleWhenField": "needs_assessment",
++          "visibleWhenAnyOf": [
++            "true"
++          ]
++        },
++        {
++          "id": "prep_required",
++          "type": "text",
++          "required": false,
++          "options": [],
++          "visibleWhenField": null,
++          "visibleWhenAnyOf": []
++        },
++        {
++          "id": "policies",
++          "type": "text",
++          "required": false,
++          "options": [],
++          "visibleWhenField": null,
++          "visibleWhenAnyOf": []
++        }
++      ]
++    },
++    {
++      "id": "clinic_skin",
++      "version": 1,
++      "labelAr": "العناية بالبشرة",
++      "category": "skin",
++      "partnerTypes": [
++        "clinic",
++        "salon"
++      ],
++      "fields": [
++        {
++          "id": "session_name",
++          "type": "text",
++          "required": true,
++          "options": [],
++          "visibleWhenField": null,
++          "visibleWhenAnyOf": []
++        },
++        {
++          "id": "session_kind",
++          "type": "single",
++          "required": true,
++          "options": [
++            "single",
++            "package"
++          ],
++          "visibleWhenField": null,
++          "visibleWhenAnyOf": []
++        },
++        {
++          "id": "package_sessions",
++          "type": "number",
++          "required": false,
++          "options": [],
++          "visibleWhenField": "session_kind",
++          "visibleWhenAnyOf": [
++            "package"
++          ]
++        },
++        {
++          "id": "includes",
++          "type": "multi",
++          "required": false,
++          "options": [
++            "cleanse",
++            "mask",
++            "massage",
++            "serum"
++          ],
++          "visibleWhenField": null,
++          "visibleWhenAnyOf": []
++        },
++        {
++          "id": "place_mode",
++          "type": "single",
++          "required": true,
++          "options": [
++            "branch",
++            "home",
++            "either"
++          ],
++          "visibleWhenField": null,
++          "visibleWhenAnyOf": []
++        },
++        {
++          "id": "needs_assessment",
++          "type": "boolean",
++          "required": false,
++          "options": [],
++          "visibleWhenField": null,
++          "visibleWhenAnyOf": []
++        },
++        {
++          "id": "assessment_note",
++          "type": "text",
++          "required": false,
++          "options": [],
++          "visibleWhenField": "needs_assessment",
++          "visibleWhenAnyOf": [
++            "true"
++          ]
++        },
++        {
++          "id": "prep_required",
++          "type": "text",
++          "required": false,
++          "options": [],
++          "visibleWhenField": null,
++          "visibleWhenAnyOf": []
++        },
++        {
++          "id": "aftercare",
++          "type": "text",
++          "required": false,
++          "options": [],
++          "visibleWhenField": null,
++          "visibleWhenAnyOf": []
++        },
++        {
++          "id": "policies",
++          "type": "text",
++          "required": false,
++          "options": [],
++          "visibleWhenField": null,
++          "visibleWhenAnyOf": []
++        }
++      ]
++    },
++    {
++      "id": "clinic_laser",
++      "version": 1,
++      "labelAr": "إزالة الشعر بالليزر",
++      "category": "laser",
++      "partnerTypes": [
++        "clinic"
++      ],
++      "fields": [
++        {
++          "id": "laser_areas",
++          "type": "multi",
++          "required": true,
++          "options": [
++            "face",
++            "underarms",
++            "legs",
++            "bikini",
++            "full"
++          ],
++          "visibleWhenField": null,
++          "visibleWhenAnyOf": []
++        },
++        {
++          "id": "session_kind",
++          "type": "single",
++          "required": true,
++          "options": [
++            "single",
++            "package"
++          ],
++          "visibleWhenField": null,
++          "visibleWhenAnyOf": []
++        },
++        {
++          "id": "package_sessions",
++          "type": "number",
++          "required": false,
++          "options": [],
++          "visibleWhenField": "session_kind",
++          "visibleWhenAnyOf": [
++            "package"
++          ]
++        },
++        {
++          "id": "package_validity",
++          "type": "text",
++          "required": false,
++          "options": [],
++          "visibleWhenField": "session_kind",
++          "visibleWhenAnyOf": [
++            "package"
++          ]
++        },
++        {
++          "id": "device_info",
++          "type": "text",
++          "required": false,
++          "options": [],
++          "visibleWhenField": null,
++          "visibleWhenAnyOf": []
++        },
++        {
++          "id": "place_mode",
++          "type": "single",
++          "required": true,
++          "options": [
++            "branch",
++            "home",
++            "either"
++          ],
++          "visibleWhenField": null,
++          "visibleWhenAnyOf": []
++        },
++        {
++          "id": "needs_assessment",
++          "type": "boolean",
++          "required": false,
++          "options": [],
++          "visibleWhenField": null,
++          "visibleWhenAnyOf": []
++        },
++        {
++          "id": "assessment_note",
++          "type": "text",
++          "required": false,
++          "options": [],
++          "visibleWhenField": "needs_assessment",
++          "visibleWhenAnyOf": [
++            "true"
++          ]
++        },
++        {
++          "id": "prep_required",
++          "type": "text",
++          "required": false,
++          "options": [],
++          "visibleWhenField": null,
++          "visibleWhenAnyOf": []
++        },
++        {
++          "id": "policies",
++          "type": "text",
++          "required": false,
++          "options": [],
++          "visibleWhenField": null,
++          "visibleWhenAnyOf": []
++        }
++      ]
++    },
++    {
++      "id": "clinic_consult",
++      "version": 1,
++      "labelAr": "استشارة أو تقييم",
++      "category": "skin",
++      "partnerTypes": [
++        "clinic",
++        "salon"
++      ],
++      "fields": [
++        {
++          "id": "consult_kind",
++          "type": "single",
++          "required": true,
++          "options": [
++            "skin",
++            "hair",
++            "general"
++          ],
++          "visibleWhenField": null,
++          "visibleWhenAnyOf": []
++        },
++        {
++          "id": "consult_mode",
++          "type": "single",
++          "required": false,
++          "options": [
++            "in_person",
++            "remote",
++            "either"
++          ],
++          "visibleWhenField": null,
++          "visibleWhenAnyOf": []
++        },
++        {
++          "id": "includes",
++          "type": "multi",
++          "required": false,
++          "options": [
++            "exam",
++            "plan",
++            "qa"
++          ],
++          "visibleWhenField": null,
++          "visibleWhenAnyOf": []
++        },
++        {
++          "id": "bring_docs",
++          "type": "text",
++          "required": false,
++          "options": [],
++          "visibleWhenField": null,
++          "visibleWhenAnyOf": []
++        },
++        {
++          "id": "prep_required",
++          "type": "text",
++          "required": false,
++          "options": [],
++          "visibleWhenField": null,
++          "visibleWhenAnyOf": []
++        },
++        {
++          "id": "policies",
++          "type": "text",
++          "required": false,
++          "options": [],
++          "visibleWhenField": null,
++          "visibleWhenAnyOf": []
++        }
++      ]
++    },
++    {
++      "id": "salon_care",
++      "version": 1,
++      "labelAr": "عناية عامة",
++      "category": "care",
++      "partnerTypes": [
++        "salon"
++      ],
++      "fields": [
++        {
++          "id": "session_kind",
++          "type": "single",
++          "required": true,
++          "options": [
++            "single",
++            "package"
++          ],
++          "visibleWhenField": null,
++          "visibleWhenAnyOf": []
++        },
++        {
++          "id": "includes",
++          "type": "text",
++          "required": false,
++          "options": [],
++          "visibleWhenField": null,
++          "visibleWhenAnyOf": []
++        },
++        {
++          "id": "place_mode",
++          "type": "single",
++          "required": true,
++          "options": [
++            "branch",
++            "home",
++            "either"
++          ],
++          "visibleWhenField": null,
++          "visibleWhenAnyOf": []
++        },
++        {
++          "id": "prep_required",
++          "type": "text",
++          "required": false,
++          "options": [],
++          "visibleWhenField": null,
++          "visibleWhenAnyOf": []
++        },
++        {
++          "id": "policies",
++          "type": "text",
++          "required": false,
++          "options": [],
++          "visibleWhenField": null,
++          "visibleWhenAnyOf": []
++        }
++      ]
++    },
++    {
++      "id": "clinic_teeth",
++      "version": 1,
++      "labelAr": "الأسنان (محدود)",
++      "category": "teeth",
++      "partnerTypes": [
++        "clinic"
++      ],
++      "fields": [
++        {
++          "id": "teeth_kind",
++          "type": "text",
++          "required": true,
++          "options": [],
++          "visibleWhenField": null,
++          "visibleWhenAnyOf": []
++        },
++        {
++          "id": "session_kind",
++          "type": "single",
++          "required": true,
++          "options": [
++            "single",
++            "package"
++          ],
++          "visibleWhenField": null,
++          "visibleWhenAnyOf": []
++        },
++        {
++          "id": "needs_assessment",
++          "type": "boolean",
++          "required": false,
++          "options": [],
++          "visibleWhenField": null,
++          "visibleWhenAnyOf": []
++        },
++        {
++          "id": "assessment_note",
++          "type": "text",
++          "required": false,
++          "options": [],
++          "visibleWhenField": "needs_assessment",
++          "visibleWhenAnyOf": [
++            "true"
++          ]
++        },
++        {
++          "id": "prep_required",
++          "type": "text",
++          "required": false,
++          "options": [],
++          "visibleWhenField": null,
++          "visibleWhenAnyOf": []
++        },
++        {
++          "id": "policies",
++          "type": "text",
++          "required": false,
++          "options": [],
++          "visibleWhenField": null,
++          "visibleWhenAnyOf": []
++        }
++      ]
++    }
++  ]
++}
+\ No newline at end of file
+diff --git a/partners-portal/web/dashboard.html b/partners-portal/web/dashboard.html
+index 4e4476c..9bc4e8a 100644
+--- a/partners-portal/web/dashboard.html
++++ b/partners-portal/web/dashboard.html
+@@ -64,6 +64,13 @@
+         <form id="serviceForm"></form>
+       </div>
+ 
++      <div class="card" id="editorDraftsSection">
++        <h2>مسودات المحرر (الخادم)</h2>
++        <p class="lead">مسودات محفوظة على الخادم لكل شريك. إعادة الفتح لا تعتمد على localStorage.</p>
++        <button type="button" class="btn btn-ghost" id="refreshEditorDrafts">تحديث المسودات</button>
++        <div id="editorDraftsList"></div>
++      </div>
++
+       <div class="card" id="commerceSection">
+         <h2>الطلبات والحجوزات</h2>
+         <p class="lead">طلبات الدفع عند الاستلام داخل ميرا وطلبات المواعيد. «طلب موعد» ليس حجزًا مؤكدًا حتى تؤكديه.</p>
+@@ -104,10 +111,79 @@
+ 
+     document.getElementById('logout').onclick = (e) => {
+       e.preventDefault();
++      if (window.MiraEditorV2) MiraEditorV2.cancelAllPending('logout');
++      try { localStorage.removeItem('mira_partner_id'); } catch (err) {}
+       PartnersApi.clearSession();
+       location.href = 'login.html' + location.search;
+     };
+ 
++    window.renderEditorDrafts = async function renderEditorDrafts() {
++      const list = document.getElementById('editorDraftsList');
++      if (!list) return;
++      if (!(window.MiraEditorV2 && MiraEditorV2.state.enabled)) {
++        list.textContent = 'محرر v2 غير مفعّل على الخادم.';
++        return;
++      }
++      if (MiraEditorV2.state.registryMismatch) {
++        list.textContent = 'اختلاف سجل الحقول بين البوابة والخادم — أوقِف التحرير حتى تتطابق النسخ.';
++        return;
++      }
++      list.textContent = 'جارٍ التحميل…';
++      try {
++        const data = await MiraEditorV2.listDrafts();
++        list.replaceChildren();
++        const items = (data && data.items) || [];
++        if (!items.length) {
++          list.textContent = 'لا توجد مسودات خادمية بعد.';
++          return;
++        }
++        items.forEach((d) => {
++          const row = document.createElement('div');
++          row.className = 'list-row';
++          const title = (d.values && d.values.nameAr) || '(بدون اسم)';
++          row.textContent =
++            d.kind + ' · ' + title + ' · rev ' + d.revision + ' · ' + d.status +
++            (d.submitReviewStatus ? ' · مراجعة:' + d.submitReviewStatus : '');
++          const openBtn = document.createElement('button');
++          openBtn.type = 'button';
++          openBtn.textContent = 'فتح';
++          openBtn.onclick = async () => {
++            try {
++              const draft = await MiraEditorV2.openDraft(d.clientDraftId);
++              const formId = draft.kind === 'product' ? 'catalogForm' : 'serviceForm';
++              const titleId = draft.kind === 'product' ? 'catalogTitle' : 'serviceTitle';
++              const type = draft.kind === 'product' ? 'brand' : (window.sessionPartner.type === 'clinic' ? 'clinic' : 'salon');
++              const stub = {
++                id: draft.targetOwnerId || undefined,
++                nameAr: (draft.values && draft.values.nameAr) || '',
++                priceHalalas: (draft.values && draft.values.priceHalalas) || 0,
++                category: (draft.values && draft.values.category) || '',
++                durationMin: (draft.values && draft.values.durationMin) || '',
++                descriptionAr: (draft.values && draft.values.descriptionAr) || '',
++              };
++              CatalogJourney.renderForm(type, stub, formId, titleId, 'مسودة خادمية ' + draft.clientDraftId + ' · rev ' + draft.revision);
++              if (draft.values && draft.values.serviceProfile && window.ServiceTemplates) {
++                try {
++                  localStorage.setItem(
++                    'mira-service-template:' + (stub.id || 'new'),
++                    JSON.stringify(draft.values.serviceProfile),
++                  );
++                } catch (err) {}
++              }
++            } catch (error) {
++              list.textContent = 'تعذر الفتح: ' + (error.message || error);
++            }
++          };
++          row.appendChild(openBtn);
++          list.appendChild(row);
++        });
++      } catch (error) {
++        list.textContent = 'تعذر التحميل: ' + (error.message || error);
++      }
++    };
++    const refreshDraftsBtn = document.getElementById('refreshEditorDrafts');
++    if (refreshDraftsBtn) refreshDraftsBtn.onclick = () => window.renderEditorDrafts();
++
+     function renderCatalog(type, catalog, listId, formId, titleId) {
+       CatalogJourney.renderCatalog(type, catalog, listId, formId, titleId);
+     }
+@@ -155,8 +231,10 @@
+         MiraMotion.announce('اكتمل تحميل لوحة الشريك');
+ 
+         window.sessionPartner = p;
++        try { localStorage.setItem('mira_partner_id', p.id); } catch (e) {}
+         if (window.MiraEditorV2) {
+           await MiraEditorV2.bootstrap(p);
++          if (window.renderEditorDrafts) renderEditorDrafts();
+         }
+         const serviceButton = document.getElementById('goService');
+         const productButton = document.getElementById('goProduct');
+diff --git a/partners-portal/web/js/catalog-journey.js b/partners-portal/web/js/catalog-journey.js
+index a26b92a..10ab703 100644
+--- a/partners-portal/web/js/catalog-journey.js
++++ b/partners-portal/web/js/catalog-journey.js
+@@ -504,21 +504,21 @@
+       }
+     }
+ 
+-    function saveServiceTemplateDraft() {
+-      const key = 'mira-service-template:' + ((item && item.id) || 'new');
+-      localStorage.setItem(key, JSON.stringify(templateState));
+-      if (!(window.MiraEditorV2 && MiraEditorV2.state.enabled) || type === 'brand') return;
+-      MiraEditorV2.attachStatus(form);
++    function buildEditorValues() {
+       const values = {};
+       if (nameAr.value.trim()) values.nameAr = nameAr.value.trim();
+       if (category.value) values.category = category.value;
++      const nameEnEl = form.querySelector('[name="nameEn"]');
++      if (nameEnEl && nameEnEl.value.trim()) values.nameEn = nameEnEl.value.trim();
++      const descEl = form.querySelector('[name="descriptionAr"]');
++      if (descEl && String(descEl.value || '').trim()) values.descriptionAr = String(descEl.value).trim();
+       if (duration && duration.value) {
+         const d = parseInt(duration.value, 10);
+         if (Number.isFinite(d)) values.durationMin = d;
+       }
+       const halalas = typeof riyalsToHalalas === 'function' ? riyalsToHalalas(price.value) : null;
+       if (halalas != null) values.priceHalalas = halalas;
+-      if (templateState.templateId) {
++      if (type !== 'brand' && templateState && templateState.templateId) {
+         values.serviceProfile = {
+           templateId: templateState.templateId,
+           templateVersion: 1,
+@@ -526,26 +526,33 @@
+           answers: templateState.answers || {},
+         };
+       }
++      return values;
++    }
++
++    function scheduleEditorDraftAutosave() {
++      if (!(window.MiraEditorV2 && MiraEditorV2.state.enabled)) return;
++      if (MiraEditorV2.state.registryMismatch) {
++        MiraEditorV2.attachStatus(form);
++        MiraEditorV2.setStatus(form, 'اختلاف سجل الحقول — أوقِف الحفظ', 'error');
++        return;
++      }
++      MiraEditorV2.attachStatus(form);
++      const kind = type === 'brand' ? 'product' : 'service';
++      const partnerType = type === 'brand' ? 'brand' : partnerTypeForTemplates();
+       MiraEditorV2.scheduleAutosave(form, () => ({
+-        clientDraftId: MiraEditorV2.clientDraftIdFor('service', item && item.id),
+-        kind: 'service',
+-        profileId: MiraEditorV2.profileIdFor('service', category.value, partnerTypeForTemplates()),
++        clientDraftId: MiraEditorV2.clientDraftIdFor(kind, item && item.id),
++        kind: kind,
++        profileId: MiraEditorV2.profileIdFor(kind, category.value, partnerType),
+         targetOwnerId: item && item.id ? item.id : null,
+-        values: values,
++        values: buildEditorValues(),
+       }));
+-      if (item && item.id && templateState.templateId) {
+-        PartnersApi.getServiceProfile(item.id)
+-          .then((row) =>
+-            MiraEditorV2.pushServiceProfile(item.id, templateState, row.reviewRevision).then(() => {
+-              MiraEditorV2.setStatus(form, 'محفوظ على الخادم', 'saved');
+-            }),
+-          )
+-          .catch((error) => {
+-            const msg = String(error && error.message ? error.message : error);
+-            if (/تعارض|REVISION|409/.test(msg)) MiraEditorV2.setStatus(form, 'تعارض تعديل', 'conflict');
+-            else if (!/EDITOR_V2_DISABLED|غير مفعّل/.test(msg)) MiraEditorV2.setStatus(form, 'تعذر حفظ القالب', 'error');
+-          });
+-      }
++    }
++
++    function saveServiceTemplateDraft() {
++      const key = 'mira-service-template:' + ((item && item.id) || 'new');
++      localStorage.setItem(key, JSON.stringify(templateState));
++      // Single coordinated path: draft autosave carries serviceProfile (no parallel putServiceProfile race).
++      if (type !== 'brand') scheduleEditorDraftAutosave();
+     }
+ 
+     function partnerTypeForTemplates() {
+@@ -797,6 +804,49 @@
+     };
+     if (type !== 'brand') paintServiceTemplates();
+ 
++    // Product + service field autosave into PartnerEditorDraft (empty values allowed).
++    [nameAr, price, category].forEach((el) => {
++      if (!el) return;
++      el.addEventListener('input', scheduleEditorDraftAutosave);
++      el.addEventListener('change', scheduleEditorDraftAutosave);
++    });
++    if (duration) {
++      duration.addEventListener('input', scheduleEditorDraftAutosave);
++      duration.addEventListener('change', scheduleEditorDraftAutosave);
++    }
++
++    if (window.MiraEditorV2 && MiraEditorV2.state.enabled) {
++      const matBtn = document.createElement('button');
++      matBtn.type = 'button';
++      matBtn.className = 'secondary';
++      matBtn.textContent = 'تحويل المسودة الخادمية وإرسال للمراجعة';
++      matBtn.onclick = async () => {
++        try {
++          await MiraEditorV2.flush(form);
++          const kind = type === 'brand' ? 'product' : 'service';
++          const clientDraftId = MiraEditorV2.clientDraftIdFor(kind, item && item.id);
++          const draft = await MiraEditorV2.openDraft(clientDraftId);
++          const key = 'mat:' + clientDraftId + ':' + draft.revision;
++          const result = await MiraEditorV2.materialize(clientDraftId, draft.revision, true, key);
++          status.textContent =
++            'تم التحويل' +
++            (result.reviewSubmitted ? ' والإرسال للمراجعة' : '') +
++            ' · ' +
++            (result.targetKind || kind) +
++            ' ' +
++            (result.targetOwnerId || '');
++          if (result.targetOwnerId) {
++            item = Object.assign({}, item || {}, { id: result.targetOwnerId });
++            MiraEditorV2.clearNewDraftKey(kind);
++          }
++          await refreshLists();
++        } catch (error) {
++          status.textContent = 'تعذر التحويل: ' + (error.message || error);
++        }
++      };
++      form.appendChild(matBtn);
++    }
++
+     const mediaSection = document.createElement('div');
+     mediaSection.className = 'form-section';
+     text(mediaSection, 'وسائط العرض الرئيسي', 'h3');
+diff --git a/partners-portal/web/js/editor-v2-isolation.tests.mjs b/partners-portal/web/js/editor-v2-isolation.tests.mjs
+new file mode 100644
+index 0000000..8838aae
+--- /dev/null
++++ b/partners-portal/web/js/editor-v2-isolation.tests.mjs
+@@ -0,0 +1,147 @@
++/**
++ * P1 RC2 — account isolation for editor-v2 autosave (no network).
++ * Simulates: A schedules save → switch to B before timer → flush must not send A's payload with B session.
++ */
++import assert from 'node:assert/strict';
++import { readFileSync } from 'node:fs';
++import { createRequire } from 'node:module';
++import vm from 'node:vm';
++import { fileURLToPath } from 'node:url';
++import { dirname, join } from 'node:path';
++
++const root = dirname(fileURLToPath(import.meta.url));
++const code = readFileSync(join(root, 'editor-v2.js'), 'utf8');
++
++function makeStorage() {
++  const map = new Map();
++  return {
++    getItem: (k) => (map.has(k) ? map.get(k) : null),
++    setItem: (k, v) => map.set(k, String(v)),
++    removeItem: (k) => map.delete(k),
++    clear: () => map.clear(),
++    _map: map,
++  };
++}
++
++async function main() {
++  const localStorage = makeStorage();
++  const sessionStorage = makeStorage();
++  const calls = [];
++  const PartnersApi = {
++    registry: async () => ({
++      editorV2Enabled: true,
++      registryHash: 'abc',
++      schemaVersion: 2,
++    }),
++    putEditorDraft: async (clientDraftId, payload) => {
++      calls.push({
++        tokenPartner: localStorage.getItem('mira_partner_id'),
++        clientDraftId,
++        payload,
++      });
++      return { revision: 1 };
++    },
++  };
++  const sandbox = {
++    window: {
++      addEventListener: () => {},
++      sessionPartner: { id: 'partner-A', type: 'salon' },
++      PartnersApi,
++    },
++    localStorage,
++    sessionStorage,
++    crypto: { randomUUID: () => 'uuid-test' },
++    AbortController: class {
++      abort() {}
++    },
++    PartnersApi,
++    console,
++    setTimeout: (fn) => {
++      // run immediately for tests that call flush; scheduleAutosave uses real timer — override below
++      return 1;
++    },
++    clearTimeout: () => {},
++  };
++  // deterministic timers
++  const timers = [];
++  sandbox.setTimeout = (fn, ms) => {
++    const id = timers.length + 1;
++    timers.push({ id, fn, ms });
++    return id;
++  };
++  sandbox.clearTimeout = (id) => {
++    const i = timers.findIndex((t) => t.id === id);
++    if (i >= 0) timers.splice(i, 1);
++  };
++
++  vm.createContext(sandbox);
++  vm.runInContext(code, sandbox);
++  const E = sandbox.window.MiraEditorV2;
++  assert.ok(E);
++
++  localStorage.setItem('mira_partner_id', 'partner-A');
++  localStorage.setItem('mira_partner_email', 'a@test.local');
++  await E.bootstrap({ id: 'partner-A', type: 'salon' });
++  assert.equal(E.state.enabled, true);
++
++  const form = { id: 'serviceForm', querySelector: () => null };
++  let builtFor = null;
++  E.scheduleAutosave(form, () => {
++    builtFor = E.state.partnerId;
++    return {
++      clientDraftId: 'draft-A',
++      kind: 'service',
++      profileId: 'service.salon_hair_cut',
++      values: { nameAr: 'من حساب A' },
++      targetOwnerId: null,
++    };
++  });
++  assert.equal(timers.length, 1);
++
++  // Switch account before timer fires
++  localStorage.setItem('mira_partner_id', 'partner-B');
++  localStorage.setItem('mira_partner_email', 'b@test.local');
++  E.bumpEpoch('test-switch');
++  await E.bootstrap({ id: 'partner-B', type: 'salon' });
++
++  // Fire leftover timer if any — should no-op or cancel
++  while (timers.length) {
++    const t = timers.shift();
++    await t.fn();
++  }
++
++  assert.equal(calls.length, 0, 'must not send A payload after switch to B');
++  assert.equal(builtFor, null);
++
++  // Stale response discard: schedule under B, capture snapshot, switch away before await resolves
++  let resolvePut;
++  PartnersApi.putEditorDraft = () =>
++    new Promise((resolve) => {
++      resolvePut = () => resolve({ revision: 9 });
++    });
++  E.scheduleAutosave(form, () => ({
++    clientDraftId: 'draft-B',
++    kind: 'service',
++    profileId: 'service.salon_hair_cut',
++    values: { nameAr: 'من حساب B' },
++  }));
++  const flushPromise = (async () => {
++    while (timers.length) {
++      const t = timers.shift();
++      await t.fn();
++    }
++  })();
++  // switch before response
++  localStorage.setItem('mira_partner_id', 'partner-A');
++  E.bumpEpoch('switch-during-inflight');
++  resolvePut();
++  await flushPromise;
++  assert.equal(E.state.draftRevisionByClientId['draft-B'], undefined);
++
++  console.log(JSON.stringify({ ok: true, calls: calls.length }, null, 2));
++}
++
++main().catch((error) => {
++  console.error(error);
++  process.exit(1);
++});
+diff --git a/partners-portal/web/js/editor-v2.js b/partners-portal/web/js/editor-v2.js
+index a86338b..6cb1fb8 100644
+--- a/partners-portal/web/js/editor-v2.js
++++ b/partners-portal/web/js/editor-v2.js
+@@ -1,22 +1,47 @@
+ /**
+- * Partner editor v2 helpers: server drafts autosave + local template import.
+- * Server flag MIRA_PARTNER_EDITOR_V2 owns activation; query params cannot enable it.
++ * Partner editor v2 — server drafts autosave with partner/session isolation (P1 RC2).
++ * Server flag owns activation; query params cannot enable a disabled flag.
+  */
+ (function () {
++  const PARTNER_ID_KEY = 'mira_partner_id';
+   const ACCOUNT_KEY = 'mira_partner_email';
++  const EPOCH_KEY = 'mira_editor_v2_session_epoch';
++
+   const state = {
+     enabled: false,
+     registryHash: null,
++    localRegistryHash: null,
+     schemaVersion: 2,
+     partnerType: null,
+-    account: null,
++    partnerId: null,
++    accountEmail: null,
++    sessionEpoch: 0,
++    registryMismatch: false,
+     draftRevisionByClientId: Object.create(null),
+     timers: Object.create(null),
+     inflight: Object.create(null),
+     pending: Object.create(null),
+     seq: Object.create(null),
++    abortByForm: Object.create(null),
+   };
+ 
++  function readEpoch() {
++    const n = Number(sessionStorage.getItem(EPOCH_KEY) || '0');
++    return Number.isFinite(n) ? n : 0;
++  }
++
++  function bumpEpoch(reason) {
++    const next = readEpoch() + 1;
++    sessionStorage.setItem(EPOCH_KEY, String(next));
++    state.sessionEpoch = next;
++    cancelAllPending(reason || 'epoch');
++    return next;
++  }
++
++  function currentPartnerId() {
++    return localStorage.getItem(PARTNER_ID_KEY) || (window.sessionPartner && window.sessionPartner.id) || null;
++  }
++
+   function statusEl(form) {
+     return (form && form.querySelector('[data-editor-v2-status]')) || null;
+   }
+@@ -28,17 +53,42 @@
+     el.dataset.kind = kind || '';
+   }
+ 
++  function cancelAllPending(reason) {
++    Object.keys(state.timers).forEach((k) => clearTimeout(state.timers[k]));
++    state.timers = Object.create(null);
++    state.pending = Object.create(null);
++    Object.keys(state.abortByForm).forEach((k) => {
++      try { state.abortByForm[k].abort(reason || 'cancelled'); } catch (e) {}
++    });
++    state.abortByForm = Object.create(null);
++    state.inflight = Object.create(null);
++  }
++
++  function assertSameSession(snapshot) {
++    if (!snapshot) return false;
++    if (snapshot.sessionEpoch !== state.sessionEpoch) return false;
++    if (snapshot.partnerId !== state.partnerId) return false;
++    if (currentPartnerId() !== snapshot.partnerId) return false;
++    return true;
++  }
++
+   function clientDraftIdFor(kind, itemId) {
+     if (itemId) return 'owner:' + kind + ':' + itemId;
+-    let key = 'mira_editor_v2_new_' + kind;
++    const scope = state.partnerId || 'anon';
++    const key = 'mira_editor_v2_new_' + scope + '_' + kind;
+     let id = sessionStorage.getItem(key);
+     if (!id) {
+-      id = 'new:' + kind + ':' + (crypto.randomUUID ? crypto.randomUUID() : String(Date.now()) + Math.random());
++      id = 'new:' + scope + ':' + kind + ':' + (crypto.randomUUID ? crypto.randomUUID() : String(Date.now()) + Math.random());
+       sessionStorage.setItem(key, id);
+     }
+     return id;
+   }
+ 
++  function clearNewDraftKey(kind) {
++    const scope = state.partnerId || 'anon';
++    sessionStorage.removeItem('mira_editor_v2_new_' + scope + '_' + kind);
++  }
++
+   function profileIdFor(kind, category, partnerType) {
+     if (kind === 'product') {
+       const map = {
+@@ -65,21 +115,36 @@
+   }
+ 
+   async function bootstrap(partner) {
+-    state.account = localStorage.getItem(ACCOUNT_KEY);
++    const nextPartnerId = partner && partner.id ? partner.id : currentPartnerId();
++    const nextEmail = localStorage.getItem(ACCOUNT_KEY);
++    if (state.partnerId && nextPartnerId && state.partnerId !== nextPartnerId) {
++      bumpEpoch('partner-switch');
++      state.draftRevisionByClientId = Object.create(null);
++    } else if (!nextPartnerId && state.partnerId) {
++      bumpEpoch('logout');
++      state.draftRevisionByClientId = Object.create(null);
++    }
++    state.partnerId = nextPartnerId;
++    state.accountEmail = nextEmail;
+     state.partnerType = partner && partner.type ? partner.type : null;
++    state.sessionEpoch = readEpoch() || bumpEpoch('boot');
++    if (nextPartnerId) localStorage.setItem(PARTNER_ID_KEY, nextPartnerId);
+     if (!window.PartnersApi || typeof PartnersApi.registry !== 'function') {
+       state.enabled = false;
+       return state;
+     }
+     try {
+       const meta = await PartnersApi.registry();
++      if (currentPartnerId() !== state.partnerId) return state;
+       state.enabled = meta.editorV2Enabled === true;
+       state.registryHash = meta.registryHash || null;
+       state.schemaVersion = meta.schemaVersion || 2;
+-      if (meta.registry && meta.registryHash && window.MiraFieldRegistryLocalHash) {
+-        if (window.MiraFieldRegistryLocalHash !== meta.registryHash) {
+-          console.warn('editor-v2 registry hash mismatch', window.MiraFieldRegistryLocalHash, meta.registryHash);
+-        }
++      state.localRegistryHash = window.MiraFieldRegistryLocalHash || null;
++      state.registryMismatch = Boolean(
++        state.localRegistryHash && state.registryHash && state.localRegistryHash !== state.registryHash,
++      );
++      if (state.registryMismatch) {
++        state.enabled = false;
+       }
+     } catch (error) {
+       state.enabled = false;
+@@ -87,24 +152,41 @@
+     return state;
+   }
+ 
+-  function onAccountSwitch() {
+-    const email = localStorage.getItem(ACCOUNT_KEY);
+-    if (state.account && email && state.account !== email) {
+-      Object.keys(state.timers).forEach((k) => clearTimeout(state.timers[k]));
+-      state.timers = Object.create(null);
+-      state.pending = Object.create(null);
+-      state.draftRevisionByClientId = Object.create(null);
++  function onStorage(ev) {
++    if (!ev) return;
++    if (ev.key === PARTNER_ID_KEY || ev.key === 'mira_partner_token' || ev.key === ACCOUNT_KEY) {
++      const pid = currentPartnerId();
++      if (pid !== state.partnerId) {
++        bumpEpoch('storage-partner-change');
++        state.partnerId = pid;
++        state.accountEmail = localStorage.getItem(ACCOUNT_KEY);
++        state.draftRevisionByClientId = Object.create(null);
++        state.enabled = false;
++      }
++      if (!localStorage.getItem('mira_partner_token')) {
++        bumpEpoch('logout-storage');
++        state.enabled = false;
++        state.partnerId = null;
++      }
+     }
+-    state.account = email;
+   }
++  window.addEventListener('storage', onStorage);
+ 
+   function scheduleAutosave(form, payloadBuilder) {
+-    if (!state.enabled) return;
+-    onAccountSwitch();
++    if (!state.enabled || state.registryMismatch) {
++      if (state.registryMismatch) setStatus(form, 'اختلاف سجل الحقول — أوقِف الحفظ لمنع فقد البيانات', 'error');
++      return;
++    }
++    if (!state.partnerId) return;
+     const formId = form.id || 'default';
++    const snapshot = {
++      partnerId: state.partnerId,
++      sessionEpoch: state.sessionEpoch,
++      formId: formId,
++    };
+     state.seq[formId] = (state.seq[formId] || 0) + 1;
+     const mySeq = state.seq[formId];
+-    state.pending[formId] = payloadBuilder;
++    state.pending[formId] = { builder: payloadBuilder, snapshot: snapshot, seq: mySeq };
+     setStatus(form, 'جارٍ الحفظ…', 'saving');
+     clearTimeout(state.timers[formId]);
+     state.timers[formId] = setTimeout(() => flush(form, mySeq), 650);
+@@ -113,16 +195,24 @@
+   async function flush(form, expectedSeq) {
+     if (!state.enabled) return;
+     const formId = form.id || 'default';
+-    if (expectedSeq != null && state.seq[formId] !== expectedSeq) return;
++    const pending = state.pending[formId];
++    if (!pending) return;
++    if (expectedSeq != null && pending.seq !== expectedSeq) return;
++    if (!assertSameSession(pending.snapshot)) {
++      delete state.pending[formId];
++      setStatus(form, 'أُلغي الحفظ — تغيّر الحساب', 'error');
++      return;
++    }
+     if (state.inflight[formId]) {
+-      state.timers[formId] = setTimeout(() => flush(form, state.seq[formId]), 400);
++      state.timers[formId] = setTimeout(() => flush(form, pending.seq), 400);
+       return;
+     }
+-    const builder = state.pending[formId];
+-    if (!builder) return;
+-    const built = builder();
++    const built = pending.builder();
+     if (!built) return;
++    built._session = pending.snapshot;
+     state.inflight[formId] = true;
++    const controller = typeof AbortController !== 'undefined' ? new AbortController() : null;
++    if (controller) state.abortByForm[formId] = controller;
+     try {
+       const currentRev = state.draftRevisionByClientId[built.clientDraftId];
+       const saved = await PartnersApi.putEditorDraft(built.clientDraftId, {
+@@ -133,15 +223,22 @@
+         values: built.values || {},
+         targetOwnerId: built.targetOwnerId || null,
+       });
++      if (!assertSameSession(built._session) || currentPartnerId() !== built._session.partnerId) {
++        setStatus(form, 'تُجاهلت استجابة قديمة بعد تبديل الحساب', 'error');
++        return;
++      }
+       state.draftRevisionByClientId[built.clientDraftId] = saved.revision;
+-      if (state.seq[formId] === expectedSeq) setStatus(form, 'محفوظ', 'saved');
++      if (state.seq[formId] === pending.seq) setStatus(form, 'محفوظ', 'saved');
++      if (state.pending[formId] && state.pending[formId].seq === pending.seq) delete state.pending[formId];
+     } catch (error) {
++      if (!assertSameSession(built._session)) return;
+       const msg = String(error && error.message ? error.message : error);
+-      if (/تعارض|REVISION|409/.test(msg)) setStatus(form, 'تعارض تعديل — أعدي فتح المسودة', 'conflict');
++      if (/تعارض|REVISION|409/.test(msg)) setStatus(form, 'تعارض تعديل — أعدي فتح المسودة من الخادم', 'conflict');
+       else setStatus(form, 'تعذر الحفظ — التعديلات ما زالت محليًا', 'error');
+     } finally {
+       state.inflight[formId] = false;
+-      if (state.pending[formId] && state.seq[formId] !== expectedSeq) {
++      delete state.abortByForm[formId];
++      if (state.pending[formId] && state.seq[formId] !== pending.seq) {
+         flush(form, state.seq[formId]);
+       }
+     }
+@@ -156,14 +253,40 @@
+     form.insertBefore(el, form.firstChild);
+   }
+ 
+-  /**
+-   * Import localStorage template into server for an owned service.
+-   * Never auto-imports on account switch. Requires explicit confirm.
+-   */
++  async function listDrafts() {
++    if (!state.enabled) throw new Error('محرر v2 غير مفعّل');
++    return PartnersApi.listEditorDrafts();
++  }
++
++  async function openDraft(clientDraftId) {
++    if (!state.enabled) throw new Error('محرر v2 غير مفعّل');
++    const draft = await PartnersApi.getEditorDraft(clientDraftId);
++    if (currentPartnerId() !== state.partnerId) throw new Error('تبديل حساب أثناء الفتح');
++    state.draftRevisionByClientId[clientDraftId] = draft.revision;
++    return draft;
++  }
++
++  async function materialize(clientDraftId, expectedRevision, submitReview, idempotencyKey) {
++    if (!state.enabled) throw new Error('محرر v2 غير مفعّل');
++    const snap = { partnerId: state.partnerId, sessionEpoch: state.sessionEpoch };
++    const result = await PartnersApi.materializeEditorDraft(
++      clientDraftId,
++      { expectedRevision: expectedRevision, submitReview: !!submitReview },
++      idempotencyKey,
++    );
++    if (!assertSameSession(snap)) throw new Error('تبديل حساب أثناء التحويل');
++    if (result && result.kind) clearNewDraftKey(result.targetKind || result.kind);
++    else clearNewDraftKey('product');
++    clearNewDraftKey('service');
++    return result;
++  }
++
+   async function importLocalTemplateInteractive(serviceId, localState) {
+     if (!state.enabled) throw new Error('محرر v2 غير مفعّل على الخادم');
+     if (!serviceId) throw new Error('يلزم حفظ الخدمة قبل الاستيراد إلى الخادم');
++    const snap = { partnerId: state.partnerId, sessionEpoch: state.sessionEpoch };
+     const current = await PartnersApi.getServiceProfile(serviceId);
++    if (!assertSameSession(snap)) throw new Error('تبديل حساب أثناء الاستيراد');
+     const preview = {
+       local: localState,
+       serverLive: current.serviceProfileJson,
+@@ -184,11 +307,13 @@
+         force: false,
+         templateState: localState,
+       });
++      if (!assertSameSession(snap)) throw new Error('تبديل حساب بعد الاستيراد');
+       return { ok: true, result, preview };
+     } catch (error) {
+       const msg = String(error && error.message ? error.message : error);
+       if (/تعارض|REVISION|409/.test(msg)) {
+         const fresh = await PartnersApi.getServiceProfile(serviceId);
++        if (!assertSameSession(snap)) throw new Error('تبديل حساب أثناء التعارض');
+         const again = window.confirm(
+           'تغيّر إصدار الخادم بعد المعاينة (' +
+             current.reviewRevision +
+@@ -211,25 +336,50 @@
+ 
+   async function pushServiceProfile(serviceId, templateState, expectedRevision) {
+     if (!state.enabled || !serviceId || !templateState || !templateState.templateId) return null;
+-    return PartnersApi.putServiceProfile(serviceId, {
++    const snap = { partnerId: state.partnerId, sessionEpoch: state.sessionEpoch };
++    const result = await PartnersApi.putServiceProfile(serviceId, {
+       expectedRevision: expectedRevision,
+       templateId: templateState.templateId,
+       templateVersion: templateState.templateVersion || 1,
+       priceMode: templateState.priceMode || 'fixed',
+       answers: templateState.answers || {},
+     });
++    if (!assertSameSession(snap)) throw new Error('تبديل حساب أثناء حفظ القالب');
++    return result;
++  }
++
++  /** Test seam: expose isolation helpers without secrets. */
++  function __testHooks() {
++    return {
++      state: state,
++      bumpEpoch: bumpEpoch,
++      cancelAllPending: cancelAllPending,
++      assertSameSession: assertSameSession,
++      scheduleAutosave: scheduleAutosave,
++      flush: flush,
++    };
+   }
+ 
+   window.MiraEditorV2 = {
+-    state,
+-    bootstrap,
+-    attachStatus,
+-    scheduleAutosave,
+-    flush: (form) => flush(form, state.seq[form.id || 'default']),
+-    clientDraftIdFor,
+-    profileIdFor,
+-    importLocalTemplateInteractive,
+-    pushServiceProfile,
+-    setStatus,
++    state: state,
++    bootstrap: bootstrap,
++    attachStatus: attachStatus,
++    scheduleAutosave: scheduleAutosave,
++    flush: function (form) {
++      const formId = form.id || 'default';
++      return flush(form, state.seq[formId]);
++    },
++    clientDraftIdFor: clientDraftIdFor,
++    clearNewDraftKey: clearNewDraftKey,
++    profileIdFor: profileIdFor,
++    importLocalTemplateInteractive: importLocalTemplateInteractive,
++    pushServiceProfile: pushServiceProfile,
++    listDrafts: listDrafts,
++    openDraft: openDraft,
++    materialize: materialize,
++    setStatus: setStatus,
++    cancelAllPending: cancelAllPending,
++    bumpEpoch: bumpEpoch,
++    __testHooks: __testHooks,
+   };
+ })();
+diff --git a/partners-portal/web/js/field-registry.v2.json b/partners-portal/web/js/field-registry.v2.json
+index 17559f8..a72f3db 100644
+--- a/partners-portal/web/js/field-registry.v2.json
++++ b/partners-portal/web/js/field-registry.v2.json
+@@ -4938,6 +4938,41 @@
+       "valueLabels": {},
+       "legacyRequired": false,
+       "legacyFieldId": "policies"
++    },
++    "serviceProfile": {
++      "id": "serviceProfile",
++      "labelAr": "قالب الخدمة وإجاباته",
++      "type": "object",
++      "widget": "service_template",
++      "unit": null,
++      "values": [],
++      "filter": null,
++      "currentStatus": "P1_DRAFT_STORAGE",
++      "draftRequired": false,
++      "publishRequiredWhen": "optional",
++      "source": "partner",
++      "editable": true,
++      "nullMeaning": "unspecified",
++      "default": null,
++      "min": null,
++      "max": null,
++      "dependsOn": null,
++      "storage": "service_profile_json via materialize; draft values.serviceProfile",
++      "publicWhen": "published via serviceProfileJson",
++      "searchable": false,
++      "unknownHandling": "reject invalid nested template answers",
++      "evidence": "P1 RC2",
++      "schema": {
++        "templateId": "string",
++        "templateVersion": "integer>=1",
++        "priceMode": [
++          "fixed",
++          "from",
++          "afterAssessment",
++          "unknown"
++        ],
++        "answers": "object of template field answers"
++      }
+     }
+   },
+   "profiles": [
+@@ -5271,7 +5306,8 @@
+         "template.salon_hair_cut.cut_style",
+         "template.salon_hair_cut.hair_length",
+         "template.salon_hair_cut.includes_wash_dry",
+-        "template.salon_hair_cut.policies"
++        "template.salon_hair_cut.policies",
++        "serviceProfile"
+       ],
+       "draftRequired": [],
+       "publishRules": "specs/03-JOURNEYS.md#publication",
+@@ -5423,7 +5459,8 @@
+         "template.salon_hair_color.price_by_length",
+         "template.salon_hair_color.length_tiers",
+         "template.salon_hair_color.includes_bleach",
+-        "template.salon_hair_color.policies"
++        "template.salon_hair_color.policies",
++        "serviceProfile"
+       ],
+       "draftRequired": [],
+       "publishRules": "specs/03-JOURNEYS.md#publication",
+@@ -5553,7 +5590,8 @@
+         "template.salon_nails.hands_feet",
+         "template.salon_nails.nail_kind",
+         "template.salon_nails.remove_old",
+-        "template.salon_nails.policies"
++        "template.salon_nails.policies",
++        "serviceProfile"
+       ],
+       "draftRequired": [],
+       "publishRules": "specs/03-JOURNEYS.md#publication",
+@@ -5645,7 +5683,8 @@
+         "requiresAssessment",
+         "assessmentNote",
+         "template.salon_makeup.occasion",
+-        "template.salon_makeup.policies"
++        "template.salon_makeup.policies",
++        "serviceProfile"
+       ],
+       "draftRequired": [],
+       "publishRules": "specs/03-JOURNEYS.md#publication",
+@@ -5775,7 +5814,8 @@
+         "template.clinic_skin.session_name",
+         "template.clinic_skin.session_kind",
+         "template.clinic_skin.aftercare",
+-        "template.clinic_skin.policies"
++        "template.clinic_skin.policies",
++        "serviceProfile"
+       ],
+       "draftRequired": [],
+       "publishRules": "specs/03-JOURNEYS.md#publication",
+@@ -5896,7 +5936,8 @@
+         "template.clinic_laser.session_kind",
+         "template.clinic_laser.package_validity",
+         "template.clinic_laser.device_info",
+-        "template.clinic_laser.policies"
++        "template.clinic_laser.policies",
++        "serviceProfile"
+       ],
+       "draftRequired": [],
+       "publishRules": "specs/03-JOURNEYS.md#publication",
+@@ -6005,7 +6046,8 @@
+         "template.clinic_consult.consult_kind",
+         "template.clinic_consult.consult_mode",
+         "template.clinic_consult.bring_docs",
+-        "template.clinic_consult.policies"
++        "template.clinic_consult.policies",
++        "serviceProfile"
+       ],
+       "draftRequired": [],
+       "publishRules": "specs/03-JOURNEYS.md#publication",
+@@ -6086,7 +6128,8 @@
+         "requiresAssessment",
+         "assessmentNote",
+         "template.salon_care.session_kind",
+-        "template.salon_care.policies"
++        "template.salon_care.policies",
++        "serviceProfile"
+       ],
+       "draftRequired": [],
+       "publishRules": "specs/03-JOURNEYS.md#publication",
+@@ -6174,7 +6217,8 @@
+         "assessmentNote",
+         "template.clinic_teeth.teeth_kind",
+         "template.clinic_teeth.session_kind",
+-        "template.clinic_teeth.policies"
++        "template.clinic_teeth.policies",
++        "serviceProfile"
+       ],
+       "draftRequired": [],
+       "publishRules": "specs/03-JOURNEYS.md#publication",
+@@ -6256,7 +6300,8 @@
+         "packageSessions",
+         "packageValidityDays",
+         "requiresAssessment",
+-        "assessmentNote"
++        "assessmentNote",
++        "serviceProfile"
+       ],
+       "draftRequired": [],
+       "publishRules": "specs/03-JOURNEYS.md#publication",
+@@ -6314,7 +6359,8 @@
+         "packageSessions",
+         "packageValidityDays",
+         "requiresAssessment",
+-        "assessmentNote"
++        "assessmentNote",
++        "serviceProfile"
+       ],
+       "draftRequired": [],
+       "publishRules": "specs/03-JOURNEYS.md#publication",
+@@ -6638,7 +6684,8 @@
+         "guestsMin",
+         "guestsMax",
+         "setupMinutes",
+-        "eventRequirements"
++        "eventRequirements",
++        "serviceProfile"
+       ],
+       "draftRequired": [],
+       "publishRules": "specs/03-JOURNEYS.md#publication",
+@@ -6923,5 +6970,6 @@
+       "action": "map-with-template-context",
+       "noDataLoss": true
+     }
+-  }
+-}
+\ No newline at end of file
++  },
++  "p1Rc": "RC2"
++}
+diff --git a/partners-portal/web/js/legacy-template-aliases.json b/partners-portal/web/js/legacy-template-aliases.json
+index 60e131c..701036e 100644
+--- a/partners-portal/web/js/legacy-template-aliases.json
++++ b/partners-portal/web/js/legacy-template-aliases.json
+@@ -1,18 +1,24 @@
+ {
+   "template.salon_hair_cut.package_sessions": {
+-    "canonical": "packageSessions",
++    "canonical": "package_sessions",
+     "action": "map-with-template-context",
+-    "noDataLoss": true
++    "noDataLoss": true,
++    "storageCanonical": "package_sessions",
++    "previousCanonical": "packageSessions"
+   },
+   "template.salon_hair_cut.includes": {
+-    "canonical": "included",
++    "canonical": "includes",
+     "action": "map-with-template-context",
+-    "noDataLoss": true
++    "noDataLoss": true,
++    "storageCanonical": "includes",
++    "previousCanonical": "included"
+   },
+   "template.salon_hair_cut.excludes": {
+-    "canonical": "excluded",
++    "canonical": "excludes",
+     "action": "map-with-template-context",
+-    "noDataLoss": true
++    "noDataLoss": true,
++    "storageCanonical": "excludes",
++    "previousCanonical": "excluded"
+   },
+   "template.salon_hair_cut.addons": {
+     "canonical": "addons",
+@@ -20,9 +26,11 @@
+     "noDataLoss": true
+   },
+   "template.salon_hair_cut.place_mode": {
+-    "canonical": "placeMode",
++    "canonical": "place_mode",
+     "action": "map-with-template-context",
+-    "noDataLoss": true
++    "noDataLoss": true,
++    "storageCanonical": "place_mode",
++    "previousCanonical": "placeMode"
+   },
+   "template.salon_hair_cut.home_coverage": {
+     "canonical": "coverageZones",
+@@ -35,9 +43,11 @@
+     "noDataLoss": true
+   },
+   "template.salon_hair_cut.assessment_note": {
+-    "canonical": "assessmentNote",
++    "canonical": "assessment_note",
+     "action": "map-with-template-context",
+-    "noDataLoss": true
++    "noDataLoss": true,
++    "storageCanonical": "assessment_note",
++    "previousCanonical": "assessmentNote"
+   },
+   "template.salon_hair_cut.prep_required": {
+     "canonical": "preparation",
+@@ -45,14 +55,18 @@
+     "noDataLoss": true
+   },
+   "template.salon_hair_color.package_sessions": {
+-    "canonical": "packageSessions",
++    "canonical": "package_sessions",
+     "action": "map-with-template-context",
+-    "noDataLoss": true
++    "noDataLoss": true,
++    "storageCanonical": "package_sessions",
++    "previousCanonical": "packageSessions"
+   },
+   "template.salon_hair_color.includes": {
+-    "canonical": "included",
++    "canonical": "includes",
+     "action": "map-with-template-context",
+-    "noDataLoss": true
++    "noDataLoss": true,
++    "storageCanonical": "includes",
++    "previousCanonical": "included"
+   },
+   "template.salon_hair_color.addons": {
+     "canonical": "addons",
+@@ -60,9 +74,11 @@
+     "noDataLoss": true
+   },
+   "template.salon_hair_color.place_mode": {
+-    "canonical": "placeMode",
++    "canonical": "place_mode",
+     "action": "map-with-template-context",
+-    "noDataLoss": true
++    "noDataLoss": true,
++    "storageCanonical": "place_mode",
++    "previousCanonical": "placeMode"
+   },
+   "template.salon_hair_color.needs_assessment": {
+     "canonical": "requiresAssessment",
+@@ -70,9 +86,11 @@
+     "noDataLoss": true
+   },
+   "template.salon_hair_color.assessment_note": {
+-    "canonical": "assessmentNote",
++    "canonical": "assessment_note",
+     "action": "map-with-template-context",
+-    "noDataLoss": true
++    "noDataLoss": true,
++    "storageCanonical": "assessment_note",
++    "previousCanonical": "assessmentNote"
+   },
+   "template.salon_hair_color.prep_required": {
+     "canonical": "preparation",
+@@ -85,9 +103,11 @@
+     "noDataLoss": true
+   },
+   "template.salon_nails.place_mode": {
+-    "canonical": "placeMode",
++    "canonical": "place_mode",
+     "action": "map-with-template-context",
+-    "noDataLoss": true
++    "noDataLoss": true,
++    "storageCanonical": "place_mode",
++    "previousCanonical": "placeMode"
+   },
+   "template.salon_nails.prep_required": {
+     "canonical": "preparation",
+@@ -95,9 +115,11 @@
+     "noDataLoss": true
+   },
+   "template.salon_makeup.place_mode": {
+-    "canonical": "placeMode",
++    "canonical": "place_mode",
+     "action": "map-with-template-context",
+-    "noDataLoss": true
++    "noDataLoss": true,
++    "storageCanonical": "place_mode",
++    "previousCanonical": "placeMode"
+   },
+   "template.salon_makeup.home_coverage": {
+     "canonical": "coverageZones",
+@@ -105,9 +127,11 @@
+     "noDataLoss": true
+   },
+   "template.salon_makeup.includes": {
+-    "canonical": "included",
++    "canonical": "includes",
+     "action": "map-with-template-context",
+-    "noDataLoss": true
++    "noDataLoss": true,
++    "storageCanonical": "includes",
++    "previousCanonical": "included"
+   },
+   "template.salon_makeup.addons": {
+     "canonical": "addons",
+@@ -120,9 +144,11 @@
+     "noDataLoss": true
+   },
+   "template.salon_makeup.assessment_note": {
+-    "canonical": "assessmentNote",
++    "canonical": "assessment_note",
+     "action": "map-with-template-context",
+-    "noDataLoss": true
++    "noDataLoss": true,
++    "storageCanonical": "assessment_note",
++    "previousCanonical": "assessmentNote"
+   },
+   "template.salon_makeup.prep_required": {
+     "canonical": "preparation",
+@@ -130,19 +156,25 @@
+     "noDataLoss": true
+   },
+   "template.clinic_skin.package_sessions": {
+-    "canonical": "packageSessions",
++    "canonical": "package_sessions",
+     "action": "map-with-template-context",
+-    "noDataLoss": true
++    "noDataLoss": true,
++    "storageCanonical": "package_sessions",
++    "previousCanonical": "packageSessions"
+   },
+   "template.clinic_skin.includes": {
+-    "canonical": "included",
++    "canonical": "includes",
+     "action": "map-with-template-context",
+-    "noDataLoss": true
++    "noDataLoss": true,
++    "storageCanonical": "includes",
++    "previousCanonical": "included"
+   },
+   "template.clinic_skin.place_mode": {
+-    "canonical": "placeMode",
++    "canonical": "place_mode",
+     "action": "map-with-template-context",
+-    "noDataLoss": true
++    "noDataLoss": true,
++    "storageCanonical": "place_mode",
++    "previousCanonical": "placeMode"
+   },
+   "template.clinic_skin.needs_assessment": {
+     "canonical": "requiresAssessment",
+@@ -150,9 +182,11 @@
+     "noDataLoss": true
+   },
+   "template.clinic_skin.assessment_note": {
+-    "canonical": "assessmentNote",
++    "canonical": "assessment_note",
+     "action": "map-with-template-context",
+-    "noDataLoss": true
++    "noDataLoss": true,
++    "storageCanonical": "assessment_note",
++    "previousCanonical": "assessmentNote"
+   },
+   "template.clinic_skin.prep_required": {
+     "canonical": "preparation",
+@@ -160,14 +194,18 @@
+     "noDataLoss": true
+   },
+   "template.clinic_laser.package_sessions": {
+-    "canonical": "packageSessions",
++    "canonical": "package_sessions",
+     "action": "map-with-template-context",
+-    "noDataLoss": true
++    "noDataLoss": true,
++    "storageCanonical": "package_sessions",
++    "previousCanonical": "packageSessions"
+   },
+   "template.clinic_laser.place_mode": {
+-    "canonical": "placeMode",
++    "canonical": "place_mode",
+     "action": "map-with-template-context",
+-    "noDataLoss": true
++    "noDataLoss": true,
++    "storageCanonical": "place_mode",
++    "previousCanonical": "placeMode"
+   },
+   "template.clinic_laser.needs_assessment": {
+     "canonical": "requiresAssessment",
+@@ -175,9 +213,11 @@
+     "noDataLoss": true
+   },
+   "template.clinic_laser.assessment_note": {
+-    "canonical": "assessmentNote",
++    "canonical": "assessment_note",
+     "action": "map-with-template-context",
+-    "noDataLoss": true
++    "noDataLoss": true,
++    "storageCanonical": "assessment_note",
++    "previousCanonical": "assessmentNote"
+   },
+   "template.clinic_laser.prep_required": {
+     "canonical": "preparation",
+@@ -185,9 +225,11 @@
+     "noDataLoss": true
+   },
+   "template.clinic_consult.includes": {
+-    "canonical": "included",
++    "canonical": "includes",
+     "action": "map-with-template-context",
+-    "noDataLoss": true
++    "noDataLoss": true,
++    "storageCanonical": "includes",
++    "previousCanonical": "included"
+   },
+   "template.clinic_consult.prep_required": {
+     "canonical": "preparation",
+@@ -195,14 +237,18 @@
+     "noDataLoss": true
+   },
+   "template.salon_care.includes": {
+-    "canonical": "included",
++    "canonical": "includes",
+     "action": "map-with-template-context",
+-    "noDataLoss": true
++    "noDataLoss": true,
++    "storageCanonical": "includes",
++    "previousCanonical": "included"
+   },
+   "template.salon_care.place_mode": {
+-    "canonical": "placeMode",
++    "canonical": "place_mode",
+     "action": "map-with-template-context",
+-    "noDataLoss": true
++    "noDataLoss": true,
++    "storageCanonical": "place_mode",
++    "previousCanonical": "placeMode"
+   },
+   "template.salon_care.prep_required": {
+     "canonical": "preparation",
+@@ -215,13 +261,15 @@
+     "noDataLoss": true
+   },
+   "template.clinic_teeth.assessment_note": {
+-    "canonical": "assessmentNote",
++    "canonical": "assessment_note",
+     "action": "map-with-template-context",
+-    "noDataLoss": true
++    "noDataLoss": true,
++    "storageCanonical": "assessment_note",
++    "previousCanonical": "assessmentNote"
+   },
+   "template.clinic_teeth.prep_required": {
+     "canonical": "preparation",
+     "action": "map-with-template-context",
+     "noDataLoss": true
+   }
+-}
+\ No newline at end of file
++}
+diff --git a/partners-portal/web/js/service-templates.catalog.json b/partners-portal/web/js/service-templates.catalog.json
+new file mode 100644
+index 0000000..5d6f675
+--- /dev/null
++++ b/partners-portal/web/js/service-templates.catalog.json
+@@ -0,0 +1,913 @@
++{
++  "version": 1,
++  "source": "partners-portal/web/js/service-templates.js",
++  "templates": [
++    {
++      "id": "salon_hair_cut",
++      "version": 1,
++      "labelAr": "قص وتصفيف الشعر",
++      "category": "hair",
++      "partnerTypes": [
++        "salon"
++      ],
++      "fields": [
++        {
++          "id": "session_kind",
++          "type": "single",
++          "required": true,
++          "options": [
++            "single",
++            "package"
++          ],
++          "visibleWhenField": null,
++          "visibleWhenAnyOf": []
++        },
++        {
++          "id": "package_sessions",
++          "type": "number",
++          "required": false,
++          "options": [],
++          "visibleWhenField": "session_kind",
++          "visibleWhenAnyOf": [
++            "package"
++          ]
++        },
++        {
++          "id": "package_validity",
++          "type": "text",
++          "required": false,
++          "options": [],
++          "visibleWhenField": "session_kind",
++          "visibleWhenAnyOf": [
++            "package"
++          ]
++        },
++        {
++          "id": "cut_style",
++          "type": "single",
++          "required": true,
++          "options": [
++            "cut",
++            "style",
++            "cut_style"
++          ],
++          "visibleWhenField": null,
++          "visibleWhenAnyOf": []
++        },
++        {
++          "id": "hair_length",
++          "type": "single",
++          "required": false,
++          "options": [
++            "short",
++            "medium",
++            "long",
++            "any"
++          ],
++          "visibleWhenField": null,
++          "visibleWhenAnyOf": []
++        },
++        {
++          "id": "includes_wash_dry",
++          "type": "boolean",
++          "required": false,
++          "options": [],
++          "visibleWhenField": null,
++          "visibleWhenAnyOf": []
++        },
++        {
++          "id": "includes",
++          "type": "multi",
++          "required": false,
++          "options": [
++            "wash",
++            "dry",
++            "style",
++            "trim"
++          ],
++          "visibleWhenField": null,
++          "visibleWhenAnyOf": []
++        },
++        {
++          "id": "excludes",
++          "type": "text",
++          "required": false,
++          "options": [],
++          "visibleWhenField": null,
++          "visibleWhenAnyOf": []
++        },
++        {
++          "id": "addons",
++          "type": "multi",
++          "required": false,
++          "options": [
++            "mask",
++            "oil"
++          ],
++          "visibleWhenField": null,
++          "visibleWhenAnyOf": []
++        },
++        {
++          "id": "place_mode",
++          "type": "single",
++          "required": true,
++          "options": [
++            "branch",
++            "home",
++            "either"
++          ],
++          "visibleWhenField": null,
++          "visibleWhenAnyOf": []
++        },
++        {
++          "id": "home_coverage",
++          "type": "text",
++          "required": false,
++          "options": [],
++          "visibleWhenField": "place_mode",
++          "visibleWhenAnyOf": [
++            "home",
++            "either"
++          ]
++        },
++        {
++          "id": "needs_assessment",
++          "type": "boolean",
++          "required": false,
++          "options": [],
++          "visibleWhenField": null,
++          "visibleWhenAnyOf": []
++        },
++        {
++          "id": "assessment_note",
++          "type": "text",
++          "required": false,
++          "options": [],
++          "visibleWhenField": "needs_assessment",
++          "visibleWhenAnyOf": [
++            "true"
++          ]
++        },
++        {
++          "id": "prep_required",
++          "type": "text",
++          "required": false,
++          "options": [],
++          "visibleWhenField": null,
++          "visibleWhenAnyOf": []
++        },
++        {
++          "id": "policies",
++          "type": "text",
++          "required": false,
++          "options": [],
++          "visibleWhenField": null,
++          "visibleWhenAnyOf": []
++        }
++      ]
++    },
++    {
++      "id": "salon_hair_color",
++      "version": 1,
++      "labelAr": "صبغة الشعر",
++      "category": "hair",
++      "partnerTypes": [
++        "salon",
++        "clinic"
++      ],
++      "fields": [
++        {
++          "id": "session_kind",
++          "type": "single",
++          "required": true,
++          "options": [
++            "single",
++            "package"
++          ],
++          "visibleWhenField": null,
++          "visibleWhenAnyOf": []
++        },
++        {
++          "id": "package_sessions",
++          "type": "number",
++          "required": false,
++          "options": [],
++          "visibleWhenField": "session_kind",
++          "visibleWhenAnyOf": [
++            "package"
++          ]
++        },
++        {
++          "id": "color_kind",
++          "type": "single",
++          "required": true,
++          "options": [
++            "full",
++            "roots",
++            "highlights",
++            "balayage"
++          ],
++          "visibleWhenField": null,
++          "visibleWhenAnyOf": []
++        },
++        {
++          "id": "price_by_length",
++          "type": "boolean",
++          "required": false,
++          "options": [],
++          "visibleWhenField": null,
++          "visibleWhenAnyOf": []
++        },
++        {
++          "id": "length_tiers",
++          "type": "multi",
++          "required": false,
++          "options": [
++            "short",
++            "medium",
++            "long"
++          ],
++          "visibleWhenField": "price_by_length",
++          "visibleWhenAnyOf": [
++            "true"
++          ]
++        },
++        {
++          "id": "includes_bleach",
++          "type": "boolean",
++          "required": false,
++          "options": [],
++          "visibleWhenField": null,
++          "visibleWhenAnyOf": []
++        },
++        {
++          "id": "includes",
++          "type": "multi",
++          "required": false,
++          "options": [
++            "toner",
++            "treatment"
++          ],
++          "visibleWhenField": null,
++          "visibleWhenAnyOf": []
++        },
++        {
++          "id": "addons",
++          "type": "multi",
++          "required": false,
++          "options": [
++            "olaplex"
++          ],
++          "visibleWhenField": null,
++          "visibleWhenAnyOf": []
++        },
++        {
++          "id": "place_mode",
++          "type": "single",
++          "required": true,
++          "options": [
++            "branch",
++            "home",
++            "either"
++          ],
++          "visibleWhenField": null,
++          "visibleWhenAnyOf": []
++        },
++        {
++          "id": "needs_assessment",
++          "type": "boolean",
++          "required": false,
++          "options": [],
++          "visibleWhenField": null,
++          "visibleWhenAnyOf": []
++        },
++        {
++          "id": "assessment_note",
++          "type": "text",
++          "required": false,
++          "options": [],
++          "visibleWhenField": "needs_assessment",
++          "visibleWhenAnyOf": [
++            "true"
++          ]
++        },
++        {
++          "id": "prep_required",
++          "type": "text",
++          "required": false,
++          "options": [],
++          "visibleWhenField": null,
++          "visibleWhenAnyOf": []
++        },
++        {
++          "id": "policies",
++          "type": "text",
++          "required": false,
++          "options": [],
++          "visibleWhenField": null,
++          "visibleWhenAnyOf": []
++        }
++      ]
++    },
++    {
++      "id": "salon_nails",
++      "version": 1,
++      "labelAr": "العناية بالأظافر",
++      "category": "nails",
++      "partnerTypes": [
++        "salon"
++      ],
++      "fields": [
++        {
++          "id": "hands_feet",
++          "type": "single",
++          "required": true,
++          "options": [
++            "hands",
++            "feet",
++            "both"
++          ],
++          "visibleWhenField": null,
++          "visibleWhenAnyOf": []
++        },
++        {
++          "id": "nail_kind",
++          "type": "single",
++          "required": true,
++          "options": [
++            "manicure",
++            "pedicure",
++            "gel",
++            "acrylic"
++          ],
++          "visibleWhenField": null,
++          "visibleWhenAnyOf": []
++        },
++        {
++          "id": "remove_old",
++          "type": "boolean",
++          "required": false,
++          "options": [],
++          "visibleWhenField": null,
++          "visibleWhenAnyOf": []
++        },
++        {
++          "id": "addons",
++          "type": "multi",
++          "required": false,
++          "options": [
++            "art",
++            "paraffin"
++          ],
++          "visibleWhenField": null,
++          "visibleWhenAnyOf": []
++        },
++        {
++          "id": "place_mode",
++          "type": "single",
++          "required": true,
++          "options": [
++            "branch",
++            "home",
++            "either"
++          ],
++          "visibleWhenField": null,
++          "visibleWhenAnyOf": []
++        },
++        {
++          "id": "prep_required",
++          "type": "text",
++          "required": false,
++          "options": [],
++          "visibleWhenField": null,
++          "visibleWhenAnyOf": []
++        },
++        {
++          "id": "policies",
++          "type": "text",
++          "required": false,
++          "options": [],
++          "visibleWhenField": null,
++          "visibleWhenAnyOf": []
++        }
++      ]
++    },
++    {
++      "id": "salon_makeup",
++      "version": 1,
++      "labelAr": "المكياج",
++      "category": "makeup",
++      "partnerTypes": [
++        "salon"
++      ],
++      "fields": [
++        {
++          "id": "occasion",
++          "type": "single",
++          "required": true,
++          "options": [
++            "daily",
++            "event",
++            "bridal",
++            "photo"
++          ],
++          "visibleWhenField": null,
++          "visibleWhenAnyOf": []
++        },
++        {
++          "id": "place_mode",
++          "type": "single",
++          "required": true,
++          "options": [
++            "branch",
++            "home",
++            "either"
++          ],
++          "visibleWhenField": null,
++          "visibleWhenAnyOf": []
++        },
++        {
++          "id": "home_coverage",
++          "type": "text",
++          "required": false,
++          "options": [],
++          "visibleWhenField": "place_mode",
++          "visibleWhenAnyOf": [
++            "home",
++            "either"
++          ]
++        },
++        {
++          "id": "includes",
++          "type": "multi",
++          "required": false,
++          "options": [
++            "base",
++            "eyes",
++            "lashes",
++            "brows"
++          ],
++          "visibleWhenField": null,
++          "visibleWhenAnyOf": []
++        },
++        {
++          "id": "addons",
++          "type": "multi",
++          "required": false,
++          "options": [
++            "hair",
++            "trial"
++          ],
++          "visibleWhenField": null,
++          "visibleWhenAnyOf": []
++        },
++        {
++          "id": "needs_assessment",
++          "type": "boolean",
++          "required": false,
++          "options": [],
++          "visibleWhenField": null,
++          "visibleWhenAnyOf": []
++        },
++        {
++          "id": "assessment_note",
++          "type": "text",
++          "required": false,
++          "options": [],
++          "visibleWhenField": "needs_assessment",
++          "visibleWhenAnyOf": [
++            "true"
++          ]
++        },
++        {
++          "id": "prep_required",
++          "type": "text",
++          "required": false,
++          "options": [],
++          "visibleWhenField": null,
++          "visibleWhenAnyOf": []
++        },
++        {
++          "id": "policies",
++          "type": "text",
++          "required": false,
++          "options": [],
++          "visibleWhenField": null,
++          "visibleWhenAnyOf": []
++        }
++      ]
++    },
++    {
++      "id": "clinic_skin",
++      "version": 1,
++      "labelAr": "العناية بالبشرة",
++      "category": "skin",
++      "partnerTypes": [
++        "clinic",
++        "salon"
++      ],
++      "fields": [
++        {
++          "id": "session_name",
++          "type": "text",
++          "required": true,
++          "options": [],
++          "visibleWhenField": null,
++          "visibleWhenAnyOf": []
++        },
++        {
++          "id": "session_kind",
++          "type": "single",
++          "required": true,
++          "options": [
++            "single",
++            "package"
++          ],
++          "visibleWhenField": null,
++          "visibleWhenAnyOf": []
++        },
++        {
++          "id": "package_sessions",
++          "type": "number",
++          "required": false,
++          "options": [],
++          "visibleWhenField": "session_kind",
++          "visibleWhenAnyOf": [
++            "package"
++          ]
++        },
++        {
++          "id": "includes",
++          "type": "multi",
++          "required": false,
++          "options": [
++            "cleanse",
++            "mask",
++            "massage",
++            "serum"
++          ],
++          "visibleWhenField": null,
++          "visibleWhenAnyOf": []
++        },
++        {
++          "id": "place_mode",
++          "type": "single",
++          "required": true,
++          "options": [
++            "branch",
++            "home",
++            "either"
++          ],
++          "visibleWhenField": null,
++          "visibleWhenAnyOf": []
++        },
++        {
++          "id": "needs_assessment",
++          "type": "boolean",
++          "required": false,
++          "options": [],
++          "visibleWhenField": null,
++          "visibleWhenAnyOf": []
++        },
++        {
++          "id": "assessment_note",
++          "type": "text",
++          "required": false,
++          "options": [],
++          "visibleWhenField": "needs_assessment",
++          "visibleWhenAnyOf": [
++            "true"
++          ]
++        },
++        {
++          "id": "prep_required",
++          "type": "text",
++          "required": false,
++          "options": [],
++          "visibleWhenField": null,
++          "visibleWhenAnyOf": []
++        },
++        {
++          "id": "aftercare",
++          "type": "text",
++          "required": false,
++          "options": [],
++          "visibleWhenField": null,
++          "visibleWhenAnyOf": []
++        },
++        {
++          "id": "policies",
++          "type": "text",
++          "required": false,
++          "options": [],
++          "visibleWhenField": null,
++          "visibleWhenAnyOf": []
++        }
++      ]
++    },
++    {
++      "id": "clinic_laser",
++      "version": 1,
++      "labelAr": "إزالة الشعر بالليزر",
++      "category": "laser",
++      "partnerTypes": [
++        "clinic"
++      ],
++      "fields": [
++        {
++          "id": "laser_areas",
++          "type": "multi",
++          "required": true,
++          "options": [
++            "face",
++            "underarms",
++            "legs",
++            "bikini",
++            "full"
++          ],
++          "visibleWhenField": null,
++          "visibleWhenAnyOf": []
++        },
++        {
++          "id": "session_kind",
++          "type": "single",
++          "required": true,
++          "options": [
++            "single",
++            "package"
++          ],
++          "visibleWhenField": null,
++          "visibleWhenAnyOf": []
++        },
++        {
++          "id": "package_sessions",
++          "type": "number",
++          "required": false,
++          "options": [],
++          "visibleWhenField": "session_kind",
++          "visibleWhenAnyOf": [
++            "package"
++          ]
++        },
++        {
++          "id": "package_validity",
++          "type": "text",
++          "required": false,
++          "options": [],
++          "visibleWhenField": "session_kind",
++          "visibleWhenAnyOf": [
++            "package"
++          ]
++        },
++        {
++          "id": "device_info",
++          "type": "text",
++          "required": false,
++          "options": [],
++          "visibleWhenField": null,
++          "visibleWhenAnyOf": []
++        },
++        {
++          "id": "place_mode",
++          "type": "single",
++          "required": true,
++          "options": [
++            "branch",
++            "home",
++            "either"
++          ],
++          "visibleWhenField": null,
++          "visibleWhenAnyOf": []
++        },
++        {
++          "id": "needs_assessment",
++          "type": "boolean",
++          "required": false,
++          "options": [],
++          "visibleWhenField": null,
++          "visibleWhenAnyOf": []
++        },
++        {
++          "id": "assessment_note",
++          "type": "text",
++          "required": false,
++          "options": [],
++          "visibleWhenField": "needs_assessment",
++          "visibleWhenAnyOf": [
++            "true"
++          ]
++        },
++        {
++          "id": "prep_required",
++          "type": "text",
++          "required": false,
++          "options": [],
++          "visibleWhenField": null,
++          "visibleWhenAnyOf": []
++        },
++        {
++          "id": "policies",
++          "type": "text",
++          "required": false,
++          "options": [],
++          "visibleWhenField": null,
++          "visibleWhenAnyOf": []
++        }
++      ]
++    },
++    {
++      "id": "clinic_consult",
++      "version": 1,
++      "labelAr": "استشارة أو تقييم",
++      "category": "skin",
++      "partnerTypes": [
++        "clinic",
++        "salon"
++      ],
++      "fields": [
++        {
++          "id": "consult_kind",
++          "type": "single",
++          "required": true,
++          "options": [
++            "skin",
++            "hair",
++            "general"
++          ],
++          "visibleWhenField": null,
++          "visibleWhenAnyOf": []
++        },
++        {
++          "id": "consult_mode",
++          "type": "single",
++          "required": false,
++          "options": [
++            "in_person",
++            "remote",
++            "either"
++          ],
++          "visibleWhenField": null,
++          "visibleWhenAnyOf": []
++        },
++        {
++          "id": "includes",
++          "type": "multi",
++          "required": false,
++          "options": [
++            "exam",
++            "plan",
++            "qa"
++          ],
++          "visibleWhenField": null,
++          "visibleWhenAnyOf": []
++        },
++        {
++          "id": "bring_docs",
++          "type": "text",
++          "required": false,
++          "options": [],
++          "visibleWhenField": null,
++          "visibleWhenAnyOf": []
++        },
++        {
++          "id": "prep_required",
++          "type": "text",
++          "required": false,
++          "options": [],
++          "visibleWhenField": null,
++          "visibleWhenAnyOf": []
++        },
++        {
++          "id": "policies",
++          "type": "text",
++          "required": false,
++          "options": [],
++          "visibleWhenField": null,
++          "visibleWhenAnyOf": []
++        }
++      ]
++    },
++    {
++      "id": "salon_care",
++      "version": 1,
++      "labelAr": "عناية عامة",
++      "category": "care",
++      "partnerTypes": [
++        "salon"
++      ],
++      "fields": [
++        {
++          "id": "session_kind",
++          "type": "single",
++          "required": true,
++          "options": [
++            "single",
++            "package"
++          ],
++          "visibleWhenField": null,
++          "visibleWhenAnyOf": []
++        },
++        {
++          "id": "includes",
++          "type": "text",
++          "required": false,
++          "options": [],
++          "visibleWhenField": null,
++          "visibleWhenAnyOf": []
++        },
++        {
++          "id": "place_mode",
++          "type": "single",
++          "required": true,
++          "options": [
++            "branch",
++            "home",
++            "either"
++          ],
++          "visibleWhenField": null,
++          "visibleWhenAnyOf": []
++        },
++        {
++          "id": "prep_required",
++          "type": "text",
++          "required": false,
++          "options": [],
++          "visibleWhenField": null,
++          "visibleWhenAnyOf": []
++        },
++        {
++          "id": "policies",
++          "type": "text",
++          "required": false,
++          "options": [],
++          "visibleWhenField": null,
++          "visibleWhenAnyOf": []
++        }
++      ]
++    },
++    {
++      "id": "clinic_teeth",
++      "version": 1,
++      "labelAr": "الأسنان (محدود)",
++      "category": "teeth",
++      "partnerTypes": [
++        "clinic"
++      ],
++      "fields": [
++        {
++          "id": "teeth_kind",
++          "type": "text",
++          "required": true,
++          "options": [],
++          "visibleWhenField": null,
++          "visibleWhenAnyOf": []
++        },
++        {
++          "id": "session_kind",
++          "type": "single",
++          "required": true,
++          "options": [
++            "single",
++            "package"
++          ],
++          "visibleWhenField": null,
++          "visibleWhenAnyOf": []
++        },
++        {
++          "id": "needs_assessment",
++          "type": "boolean",
++          "required": false,
++          "options": [],
++          "visibleWhenField": null,
++          "visibleWhenAnyOf": []
++        },
++        {
++          "id": "assessment_note",
++          "type": "text",
++          "required": false,
++          "options": [],
++          "visibleWhenField": "needs_assessment",
++          "visibleWhenAnyOf": [
++            "true"
++          ]
++        },
++        {
++          "id": "prep_required",
++          "type": "text",
++          "required": false,
++          "options": [],
++          "visibleWhenField": null,
++          "visibleWhenAnyOf": []
++        },
++        {
++          "id": "policies",
++          "type": "text",
++          "required": false,
++          "options": [],
++          "visibleWhenField": null,
++          "visibleWhenAnyOf": []
++        }
++      ]
++    }
++  ]
++}
+\ No newline at end of file
+diff --git a/test/features/marketplace/service_profile_json_parse_test.dart b/test/features/marketplace/service_profile_json_parse_test.dart
+index bc595ce..3fd5c23 100644
+--- a/test/features/marketplace/service_profile_json_parse_test.dart
++++ b/test/features/marketplace/service_profile_json_parse_test.dart
+@@ -45,5 +45,24 @@ void main() {
+       expect(profile.answer('includes').state, CatalogServiceAnswerState.notApplicable);
+       expect(profile.answer('session_kind').asString(), 'package');
+     });
++
++    test('camelCase storage aliases map to Flutter field ids', () {
++      final profile = CatalogServiceProfile.fromServiceProfileJson({
++        'templateId': 'salon_hair_cut',
++        'templateVersion': 1,
++        'priceMode': 'fixed',
++        'answers': {
++          'included': ['wash'],
++          'packageSessions': 4,
++        },
++      });
++      expect(profile.answer('includes').asStringList(), ['wash']);
++      expect(profile.answer('package_sessions').asInt(), 4);
++      final template = CatalogServiceTemplates.byId('salon_hair_cut');
++      expect(template, isNotNull);
++      final rows = CatalogServiceTemplateEngine.detailRows(template: template!, profile: profile);
++      expect(rows.any((r) => r.field.id == 'includes'), isTrue);
++      expect(rows.any((r) => r.display.contains('included')), isFalse);
++    });
+   });
+ }
