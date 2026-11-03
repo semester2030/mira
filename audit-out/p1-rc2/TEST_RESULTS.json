@@ -29,7 +29,7 @@
       "cwd": "mira-api",
       "status": "PASS_LOCAL",
       "evidence": "logs/rc2-editor-v1-regression.txt",
-      "notes": "A01–A11 regression"
+      "notes": "A01\u2013A11 regression"
     },
     {
       "name": "npm run test:editor-v2-rc2",
@@ -43,7 +43,7 @@
       "cwd": "partners-portal/web/js",
       "status": "PASS_LOCAL",
       "evidence": "logs/rc2-account-isolation.txt",
-      "notes": "A schedule → switch B → timer: calls=0"
+      "notes": "A schedule \u2192 switch B \u2192 timer: calls=0"
     },
     {
       "name": "flutter test service_profile + alias/canonical keys",
@@ -62,5 +62,6 @@
       "name": "device Flutter imported answers",
       "status": "NOT_RUN"
     }
-  ]
+  ],
+  "finalCommit": "3f8f69dd4b1abf09748cc84ecef155a45777f508"
 }

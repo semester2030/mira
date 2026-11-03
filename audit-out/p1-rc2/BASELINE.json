@@ -3,5 +3,6 @@
   "rc1ZipSha256": "dcbfa47206f025e530becb02614ed255683e726adf2616457c3a6cd70a8176dd",
   "registrySha256": "4e7c1e1ae82975abba3ab3dcb79b8d1366c1a5c1b1007f8da4976ae2357e0cbd",
   "branch": "mira/p1-partner-editor-v2-rc2",
-  "date": "20261104"
+  "date": "20261104",
+  "finalCommit": "3f8f69dd4b1abf09748cc84ecef155a45777f508"
 }
