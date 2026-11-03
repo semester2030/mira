@@ -244,6 +244,16 @@ export class RegistryService implements OnModuleInit {
         }
         continue;
       }
+      if (fieldId === 'optionsJson') {
+        const err = this.validateOptionsJson(raw);
+        if (err) fieldErrors.push({ fieldId, code: err });
+        continue;
+      }
+      if (fieldId === 'variantsJson') {
+        const err = this.validateVariantsJson(raw, input.values.optionsJson);
+        if (err) fieldErrors.push({ fieldId, code: err });
+        continue;
+      }
       if (!SUPPORTED_FIELD_TYPES.has(def.type)) {
         fieldErrors.push({ fieldId, code: 'REGISTRY_UNSUPPORTED_TYPE' });
         continue;
@@ -307,6 +317,73 @@ export class RegistryService implements OnModuleInit {
     }
     // Booking/media/calendar operational rules are enforced on their own write paths.
     return false;
+  }
+
+  /** Nested optionsJson: [{id,labelAr,values:[{id,labelAr}]}] — null clears. */
+  private validateOptionsJson(raw: unknown): string | null {
+    if (raw === null) return null;
+    if (!Array.isArray(raw)) return 'FIELD_TYPE_INVALID';
+    if (raw.length > 32) return 'MAX_VALUE';
+    const groupIds = new Set<string>();
+    for (const group of raw) {
+      if (!group || typeof group !== 'object' || Array.isArray(group)) return 'OPTIONS_JSON_INVALID';
+      const g = group as Record<string, unknown>;
+      if (typeof g.id !== 'string' || !g.id.trim()) return 'OPTIONS_JSON_INVALID';
+      if (groupIds.has(g.id)) return 'OPTIONS_JSON_DUPLICATE_GROUP';
+      groupIds.add(g.id);
+      if (g.labelAr != null && typeof g.labelAr !== 'string') return 'OPTIONS_JSON_INVALID';
+      if (!Array.isArray(g.values)) return 'OPTIONS_JSON_INVALID';
+      if (g.values.length > 64) return 'MAX_VALUE';
+      const valueIds = new Set<string>();
+      for (const v of g.values) {
+        if (!v || typeof v !== 'object' || Array.isArray(v)) return 'OPTIONS_JSON_INVALID';
+        const row = v as Record<string, unknown>;
+        if (typeof row.id !== 'string' || !row.id.trim()) return 'OPTIONS_JSON_INVALID';
+        if (valueIds.has(row.id)) return 'OPTIONS_JSON_DUPLICATE_VALUE';
+        valueIds.add(row.id);
+        if (row.labelAr != null && typeof row.labelAr !== 'string') return 'OPTIONS_JSON_INVALID';
+      }
+    }
+    return null;
+  }
+
+  /** Nested variantsJson: manual variants only; selections must reference optionsJson value ids when provided. */
+  private validateVariantsJson(raw: unknown, optionsJson: unknown): string | null {
+    if (raw === null) return null;
+    if (!Array.isArray(raw)) return 'FIELD_TYPE_INVALID';
+    if (raw.length > 200) return 'MAX_VALUE';
+    const allowedByGroup = new Map<string, Set<string>>();
+    if (Array.isArray(optionsJson)) {
+      for (const group of optionsJson) {
+        if (!group || typeof group !== 'object') continue;
+        const g = group as { id?: string; values?: Array<{ id?: string }> };
+        if (!g.id || !Array.isArray(g.values)) continue;
+        allowedByGroup.set(g.id, new Set(g.values.map((v) => v && v.id).filter((id): id is string => typeof id === 'string')));
+      }
+    }
+    const variantIds = new Set<string>();
+    for (const variant of raw) {
+      if (!variant || typeof variant !== 'object' || Array.isArray(variant)) return 'VARIANTS_JSON_INVALID';
+      const v = variant as Record<string, unknown>;
+      if (typeof v.id !== 'string' || !v.id.trim()) return 'VARIANTS_JSON_INVALID';
+      if (variantIds.has(v.id)) return 'VARIANTS_JSON_DUPLICATE_ID';
+      variantIds.add(v.id);
+      if (v.selections != null) {
+        if (typeof v.selections !== 'object' || Array.isArray(v.selections)) return 'VARIANTS_JSON_INVALID';
+        for (const [groupId, valueId] of Object.entries(v.selections as Record<string, unknown>)) {
+          if (typeof valueId !== 'string') return 'VARIANTS_JSON_INVALID';
+          if (allowedByGroup.size) {
+            const allowed = allowedByGroup.get(groupId);
+            if (!allowed || !allowed.has(valueId)) return 'VARIANTS_JSON_BROKEN_REF';
+          }
+        }
+      }
+      if (v.priceHalalas != null && (typeof v.priceHalalas !== 'number' || !Number.isInteger(v.priceHalalas))) {
+        return 'VARIANTS_JSON_INVALID';
+      }
+      if (v.available != null && typeof v.available !== 'boolean') return 'VARIANTS_JSON_INVALID';
+    }
+    return null;
   }
 
   private validateType(def: RegistryFieldDef, raw: unknown): string | null {

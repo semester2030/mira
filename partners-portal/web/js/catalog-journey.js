@@ -340,7 +340,8 @@
     staged[form.id] = sameItem ? previous : [];
     if (item) staged[form.id].ownerId = item.id;
     if (window.MiraEditorV2) {
-      MiraEditorV2.cancelAllPending('form-replace:' + form.id);
+      // Only cancel this form's queue — do not abort product save when opening service.
+      MiraEditorV2.cancelFormPending(form.id, 'form-replace:' + form.id);
       MiraEditorV2.clearEditContext(form.id);
     }
     form.replaceChildren();
@@ -567,15 +568,16 @@
         )
       : loadServiceTemplateDraft(editing ? item.id : null);
 
+    const REGISTRY_SIZE_IDS = new Set(['XS', 'S', 'M', 'L', 'XL', 'XXL']);
+    const REGISTRY_COLOR_IDS = new Set(['black', 'ivory', 'brown', 'pink', 'blue', 'green', 'multi']);
+
+    /** @returns {{ ok: true, values: object } | { ok: false, fieldErrors: Array<{fieldId:string,message:string}> }} */
     function buildEditorValues() {
       const values = {};
-      // Preserve blanks: send trimmed strings when present; omit only when empty so draft stays optional.
+      const fieldErrors = [];
       if (nameAr.value.trim()) values.nameAr = nameAr.value.trim();
       if (category.value) values.category = category.value;
       if (nameEn && nameEn.value.trim()) values.nameEn = nameEn.value.trim();
-      else if (nameEn && nameEn.value === '') {
-        // explicit empty allowed — omit key (full-replace keeps absence)
-      }
       if (descriptionAr && String(descriptionAr.value || '').trim()) {
         values.descriptionAr = String(descriptionAr.value).trim();
       }
@@ -587,7 +589,14 @@
       if (halalas != null) values.priceHalalas = halalas;
       if (type === 'brand' && typeof readCommerce === 'function') {
         const commerce = readCommerce();
-        if (commerce && !commerce.error && commerce.value) {
+        if (commerce && commerce.error) {
+          fieldErrors.push({
+            fieldId: commerce.error.field || 'optionsJson',
+            message: commerce.error.message || 'بيانات التجارة غير صالحة',
+          });
+          return { ok: false, fieldErrors: fieldErrors, values: values };
+        }
+        if (commerce && commerce.value) {
           if (commerce.value.purchaseMode) values.purchaseMode = commerce.value.purchaseMode;
           if (Object.prototype.hasOwnProperty.call(commerce.value, 'stockQty')) {
             values.stockQty = commerce.value.stockQty;
@@ -606,10 +615,11 @@
             const colorG = opts.find((g) => g && g.id === 'color');
             const sizeG = opts.find((g) => g && (g.id === 'size' || g.id === 'sizes'));
             if (colorG && Array.isArray(colorG.values)) {
-              values.colors = colorG.values.map((v) => v.id).filter(Boolean);
+              // Only registry-known color ids go into colors[]; customs stay in optionsJson.
+              values.colors = colorG.values.map((v) => v.id).filter((id) => REGISTRY_COLOR_IDS.has(id));
             }
             if (sizeG && Array.isArray(sizeG.values)) {
-              values.sizes = sizeG.values.map((v) => v.id).filter(Boolean);
+              values.sizes = sizeG.values.map((v) => v.id).filter((id) => REGISTRY_SIZE_IDS.has(id));
             }
           }
         }
@@ -622,7 +632,7 @@
           answers: templateState.answers || {},
         };
       }
-      return values;
+      return { ok: true, values: values };
     }
 
     function scheduleEditorDraftAutosave() {
@@ -632,20 +642,38 @@
         MiraEditorV2.setStatus(form, 'تعذر التحقق من سجل الحقول — حدّثي الصفحة', 'error');
         return;
       }
+      const built = buildEditorValues();
+      if (!built.ok) {
+        MiraEditorV2.attachStatus(form);
+        (built.fieldErrors || []).forEach((fe) => setFieldError(form, fe.fieldId, fe.message));
+        MiraEditorV2.setStatus(form, 'لم يُحفظ — أصلحي الحقول المحددة', 'error');
+        return;
+      }
       MiraEditorV2.attachStatus(form);
       const partnerType = type === 'brand' ? 'brand' : partnerTypeForTemplates();
       const ctx = MiraEditorV2.getEditContext(form.id);
+      // After materialize, do not PUT the open-draft path — resume/edit item instead.
+      if (ctx && (ctx.status === 'materialized' || ctx.status === 'submit_failed' || ctx.status === 'review_pending')) {
+        return;
+      }
       const clientDraftId =
         (ctx && ctx.clientDraftId) ||
         MiraEditorV2.clientDraftIdFor(kind, item && item.id, form.id);
       const preferredProfile = (ctx && ctx.profileId) || (draftCtx && draftCtx.profileId) || null;
-      MiraEditorV2.scheduleAutosave(form, () => ({
-        clientDraftId: clientDraftId,
-        kind: kind,
-        profileId: MiraEditorV2.profileIdFor(kind, category.value, partnerType, preferredProfile),
-        targetOwnerId: (ctx && ctx.targetOwnerId) || (item && item.id) || null,
-        values: buildEditorValues(),
-      }));
+      const snapshotValues = built.values;
+      MiraEditorV2.scheduleAutosave(form, () => {
+        const again = buildEditorValues();
+        if (!again.ok) {
+          return null;
+        }
+        return {
+          clientDraftId: clientDraftId,
+          kind: kind,
+          profileId: MiraEditorV2.profileIdFor(kind, category.value, partnerType, preferredProfile),
+          targetOwnerId: (ctx && ctx.targetOwnerId) || (item && item.id) || null,
+          values: again.values || snapshotValues,
+        };
+      });
     }
 
     function saveServiceTemplateDraft() {
@@ -918,14 +946,155 @@
       duration.addEventListener('change', scheduleEditorDraftAutosave);
     }
 
+    function resumeStorageKey(clientDraftId) {
+      const scope = (window.MiraEditorV2 && MiraEditorV2.state.partnerId) || 'anon';
+      return 'mira_mat_resume:' + scope + ':' + clientDraftId;
+    }
+
+    function loadResumeState(clientDraftId) {
+      try {
+        const raw = sessionStorage.getItem(resumeStorageKey(clientDraftId));
+        return raw ? JSON.parse(raw) : null;
+      } catch (e) {
+        return null;
+      }
+    }
+
+    function saveResumeState(clientDraftId, data) {
+      try {
+        sessionStorage.setItem(resumeStorageKey(clientDraftId), JSON.stringify(data));
+      } catch (e) {}
+    }
+
+    function clearResumeState(clientDraftId) {
+      try {
+        sessionStorage.removeItem(resumeStorageKey(clientDraftId));
+      } catch (e) {}
+    }
+
+    function applyMaterializeOutcome(clientDraftId, result, fromError) {
+      const body = (fromError && fromError.body) || result || {};
+      const ownerId = body.targetOwnerId || (result && result.targetOwnerId) || null;
+      const code = body.code || (fromError && fromError.code) || null;
+      const reviewOk =
+        (result && (result.reviewSubmitted === true || result.submitReviewStatus === 'submitted')) ||
+        body.submitReviewStatus === 'submitted';
+      const submitFailed =
+        code === 'MATERIALIZE_SUBMIT_REVIEW_FAILED' ||
+        body.submitReviewStatus === 'failed' ||
+        (result && result.submitReviewStatus === 'failed');
+      if (ownerId) {
+        item = Object.assign({}, item || {}, { id: ownerId });
+        const bound = MiraEditorV2.getEditContext(form.id);
+        if (bound) {
+          bound.targetOwnerId = ownerId;
+          bound.status = reviewOk ? 'submitted' : 'submit_failed';
+          bound.submitReviewStatus = reviewOk ? 'submitted' : 'failed';
+        }
+        MiraEditorV2.clearNewDraftKey(kind);
+        saveResumeState(clientDraftId, {
+          clientDraftId: clientDraftId,
+          targetOwnerId: ownerId,
+          targetKind: body.targetKind || kind,
+          idempotencyKey: body.resumeKey || sessionStorage.getItem(resumeStorageKey(clientDraftId) + ':key'),
+          expectedRevision: body.expectedRevision,
+          status: reviewOk ? 'submitted' : 'submit_failed',
+          submitReviewStatus: reviewOk ? 'submitted' : 'failed',
+        });
+      }
+      if (reviewOk) clearResumeState(clientDraftId);
+      status.textContent = reviewOk
+        ? 'تم التحويل والإرسال للمراجعة · ' + (body.targetKind || kind) + ' ' + (ownerId || '')
+        : submitFailed
+          ? 'تم إنشاء العنصر، وتعذر الإرسال للمراجعة — ارفعي وسائط ثم أعيدي المحاولة. · ' + (ownerId || '')
+          : 'نتيجة التحويل: ' + (fromError && fromError.message ? fromError.message : 'غير معروفة');
+      return { ownerId: ownerId, reviewOk: reviewOk, submitFailed: submitFailed };
+    }
+
     if (window.MiraEditorV2 && MiraEditorV2.state.enabled) {
       const matBtn = document.createElement('button');
       matBtn.type = 'button';
       matBtn.className = 'secondary';
+      matBtn.setAttribute('data-editor-v2-materialize', '1');
       matBtn.textContent = 'تحويل المسودة الخادمية وإرسال للمراجعة';
+      // Restore resume banner if page reloaded mid-flight.
+      (function restoreResumeBanner() {
+        const ctx0 = MiraEditorV2.getEditContext(form.id);
+        const cid = ctx0 && ctx0.clientDraftId;
+        const resume = cid ? loadResumeState(cid) : null;
+        if (resume && resume.targetOwnerId && resume.status === 'submit_failed') {
+          item = Object.assign({}, item || {}, { id: resume.targetOwnerId });
+          if (ctx0) {
+            ctx0.targetOwnerId = resume.targetOwnerId;
+            ctx0.status = 'submit_failed';
+            ctx0.submitReviewStatus = 'failed';
+          }
+          matBtn.textContent = 'استئناف الإرسال للمراجعة';
+          status.textContent = 'العنصر موجود (' + resume.targetOwnerId + ') — أكمل الوسائط ثم استأنفي الإرسال.';
+        }
+      })();
       matBtn.onclick = async () => {
         try {
-          // Ensure latest local edits are queued then confirmed before materialize.
+          const ctx = MiraEditorV2.getEditContext(form.id);
+          const clientDraftId =
+            (ctx && ctx.clientDraftId) ||
+            MiraEditorV2.clientDraftIdFor(kind, item && item.id, form.id);
+          const resume = loadResumeState(clientDraftId);
+
+          // Resume path: item already created — attach media then submitReview / rematerialize with same key.
+          if (
+            (ctx && (ctx.status === 'submit_failed' || ctx.status === 'materialized')) ||
+            (resume && resume.targetOwnerId && resume.status === 'submit_failed')
+          ) {
+            const ownerId = (ctx && ctx.targetOwnerId) || (resume && resume.targetOwnerId) || (item && item.id);
+            if (!ownerId) {
+              status.textContent = 'لا يوجد معرّف عنصر للاستئناف.';
+              return;
+            }
+            item = Object.assign({}, item || {}, { id: ownerId });
+            const key =
+              (resume && resume.idempotencyKey) ||
+              sessionStorage.getItem(resumeStorageKey(clientDraftId) + ':key') ||
+              null;
+            // Resume: do NOT PUT the open draft. Rematerialize with same key when revision known; else submitReview on owner.
+            if (key && resume && resume.expectedRevision != null) {
+              try {
+                const result = await MiraEditorV2.materialize(
+                  clientDraftId,
+                  resume.expectedRevision,
+                  true,
+                  key,
+                );
+                applyMaterializeOutcome(clientDraftId, result, null);
+                await refreshLists();
+                return;
+              } catch (error) {
+                if (error && error.code === 'MATERIALIZE_SUBMIT_REVIEW_FAILED') {
+                  applyMaterializeOutcome(clientDraftId, null, error);
+                  // continue to media+submitReview below
+                } else if (
+                  !(
+                    error &&
+                    (error.code === 'DRAFT_ALREADY_MATERIALIZED' ||
+                      (error.body && error.body.code === 'DRAFT_ALREADY_MATERIALIZED'))
+                  )
+                ) {
+                  throw error;
+                }
+              }
+            }
+            await PartnersApi.submitReview(kind === 'product' ? 'products' : 'services', ownerId);
+            applyMaterializeOutcome(clientDraftId, {
+              targetOwnerId: ownerId,
+              reviewSubmitted: true,
+              submitReviewStatus: 'submitted',
+            }, null);
+            clearResumeState(clientDraftId);
+            await refreshLists();
+            return;
+          }
+
+          // Fresh materialize — require confirmed draft save first.
           scheduleEditorDraftAutosave();
           const saved = await MiraEditorV2.flushUntilSettled(form);
           if (!saved || !saved.ok) {
@@ -935,11 +1104,6 @@
               '. أصلحي الحفظ أولًا.';
             return;
           }
-          const ctx = MiraEditorV2.getEditContext(form.id);
-          const clientDraftId =
-            (ctx && ctx.clientDraftId) ||
-            MiraEditorV2.clientDraftIdFor(kind, item && item.id, form.id);
-          // Use the revision we just confirmed — do not fetch a newer rev to bypass conflict.
           const expectedRevision =
             saved.revision != null
               ? saved.revision
@@ -948,37 +1112,32 @@
             status.textContent = 'لا يوجد إصدار محفوظ مؤكد للتحويل.';
             return;
           }
-          const resumeKey =
-            sessionStorage.getItem('mira_mat_resume:' + clientDraftId) ||
-            ('mat:' + clientDraftId + ':' + expectedRevision);
-          sessionStorage.setItem('mira_mat_resume:' + clientDraftId, resumeKey);
-          const result = await MiraEditorV2.materialize(
-            clientDraftId,
-            expectedRevision,
-            true,
-            resumeKey,
-          );
-          const reviewOk = result.reviewSubmitted === true || result.submitReviewStatus === 'submitted';
-          const reviewPending =
-            result.submitReviewStatus === 'failed' ||
-            result.code === 'MATERIALIZE_SUBMIT_REVIEW_FAILED';
-          status.textContent =
-            'تم التحويل' +
-            (reviewOk ? ' والإرسال للمراجعة' : reviewPending ? ' — العنصر جاهز وإعادة إرسال المراجعة مطلوبة' : '') +
-            ' · ' +
-            (result.targetKind || kind) +
-            ' ' +
-            (result.targetOwnerId || '');
-          if (result.targetOwnerId) {
-            item = Object.assign({}, item || {}, { id: result.targetOwnerId });
-            const bound = MiraEditorV2.getEditContext(form.id);
-            if (bound) {
-              bound.targetOwnerId = result.targetOwnerId;
-              bound.status = 'materialized';
-              bound.submitReviewStatus = result.submitReviewStatus || (reviewOk ? 'submitted' : bound.submitReviewStatus);
+          const resumeKey = 'mat:' + clientDraftId + ':' + expectedRevision;
+          sessionStorage.setItem(resumeStorageKey(clientDraftId) + ':key', resumeKey);
+          saveResumeState(clientDraftId, {
+            clientDraftId: clientDraftId,
+            idempotencyKey: resumeKey,
+            expectedRevision: expectedRevision,
+            status: 'materializing',
+          });
+          try {
+            const result = await MiraEditorV2.materialize(
+              clientDraftId,
+              expectedRevision,
+              true,
+              resumeKey,
+            );
+            applyMaterializeOutcome(clientDraftId, result, null);
+            if (result && result.targetOwnerId && !(result.reviewSubmitted || result.submitReviewStatus === 'submitted')) {
+              matBtn.textContent = 'استئناف الإرسال للمراجعة';
             }
-            MiraEditorV2.clearNewDraftKey(kind);
-            if (reviewOk) sessionStorage.removeItem('mira_mat_resume:' + clientDraftId);
+          } catch (error) {
+            if (error && error.code === 'MATERIALIZE_SUBMIT_REVIEW_FAILED') {
+              applyMaterializeOutcome(clientDraftId, null, error);
+              matBtn.textContent = 'استئناف الإرسال للمراجعة';
+            } else {
+              throw error;
+            }
           }
           await refreshLists();
         } catch (error) {
@@ -1303,7 +1462,8 @@
         return {
           groups: [
             { id: 'size', label: 'المقاس', kind: 'size', presets: ['XS', 'S', 'M', 'L', 'XL'] },
-            { id: 'color', label: 'اللون', kind: 'color', presets: [] },
+            // Display labels; canonical ids (black/…) applied in catalog-options-core.
+            { id: 'color', label: 'اللون', kind: 'color', presets: ['أسود', 'سكري', 'بني', 'وردي', 'أزرق', 'أخضر', 'متعدد الألوان'] },
           ],
           traits: ['الخامة', 'العناية', 'دليل المقاسات'],
         };
@@ -2283,6 +2443,32 @@
 
     const persistListing = async () => {
       if (form.dataset.saving === '1') return false;
+
+      // v2: single coordinated path — draft autosave (+ materialize button for convert). No parallel createProduct.
+      if (window.MiraEditorV2 && MiraEditorV2.state.enabled) {
+        const ctx = MiraEditorV2.getEditContext(form.id);
+        if (ctx && (ctx.status === 'submit_failed' || ctx.status === 'materialized' || ctx.status === 'submitted') && item && item.id) {
+          // Item already exists — fall through to legacy update path for post-materialize edits.
+        } else {
+          const built = buildEditorValues();
+          if (!built.ok) {
+            (built.fieldErrors || []).forEach((fe) => setFieldError(form, fe.fieldId, fe.message));
+            status.textContent = 'لم يُحفظ — أصلحي الحقول المحددة. التعديلات ما زالت في النموذج.';
+            MiraEditorV2.setStatus(form, 'لم يُحفظ', 'error');
+            return false;
+          }
+          scheduleEditorDraftAutosave();
+          const saved = await MiraEditorV2.flushUntilSettled(form);
+          if (!saved || !saved.ok) {
+            status.textContent = 'تعذر حفظ المسودة الخادمية' + (saved && saved.reason ? ' (' + saved.reason + ')' : '') + '.';
+            return false;
+          }
+          status.textContent = 'حُفظت المسودة الخادمية · rev ' + saved.revision + '. استخدمي زر التحويل للإرسال للمراجعة.';
+          MiraEditorV2.setStatus(form, 'محفوظ', 'saved');
+          return true;
+        }
+      }
+
       ['nameAr', 'priceSar', 'category', 'externalUrl', 'durationMin'].forEach((name) => setFieldError(form, name, ''));
       let blocked = false;
       if (nameAr.value.trim().length < 2) {
@@ -2390,16 +2576,7 @@
         }
         item = Object.assign({}, item || {}, saved);
         staged[form.id].ownerId = item.id;
-        if (type !== 'brand' && window.MiraEditorV2 && MiraEditorV2.state.enabled && templateState.templateId && item.id) {
-          try {
-            const row = await PartnersApi.getServiceProfile(item.id);
-            await MiraEditorV2.pushServiceProfile(item.id, templateState, row.reviewRevision);
-          } catch (profileError) {
-            status.textContent =
-              'حُفظت الخدمة. تعذر حفظ قالب الخدمة على الخادم: ' +
-              (profileError && profileError.message ? profileError.message : profileError);
-          }
-        }
+        // v2: serviceProfile lives in editor draft / materialize — never fetch latest revision then overwrite with local template.
         save.classList.remove('is-busy');
         save.classList.add('is-success');
         save.textContent = developerAccount ? 'جارٍ الرفع' : 'تم الحفظ';

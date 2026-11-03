@@ -89,9 +89,49 @@
     return base || ('v' + (index + 1));
   }
 
+  /** Registry-canonical size ids (do not lowercase M→m). */
+  const SIZE_CANONICAL = {
+    xs: 'XS', XS: 'XS',
+    s: 'S', S: 'S',
+    m: 'M', M: 'M',
+    l: 'L', L: 'L',
+    xl: 'XL', XL: 'XL',
+    xxl: 'XXL', XXL: 'XXL',
+  };
+
+  /** Display label / english → registry color id. Custom colors keep custom: slug. */
+  const COLOR_CANONICAL = {
+    black: 'black', أسود: 'black',
+    ivory: 'ivory', سكري: 'ivory', عاجي: 'ivory',
+    brown: 'brown', بني: 'brown',
+    pink: 'pink', وردي: 'pink',
+    blue: 'blue', أزرق: 'blue',
+    green: 'green', أخضر: 'green',
+    multi: 'multi', متعدد: 'multi', 'متعدد الألوان': 'multi',
+  };
+
+  function canonicalOptionValueId(groupId, label, index, existing) {
+    if (existing) return existing;
+    const raw = String(label || '').trim();
+    if (!raw) return 'v' + (index + 1);
+    if (groupId === 'size' || groupId === 'sizes') {
+      if (SIZE_CANONICAL[raw]) return SIZE_CANONICAL[raw];
+      if (SIZE_CANONICAL[raw.toLowerCase()]) return SIZE_CANONICAL[raw.toLowerCase()];
+      // custom size — stable slug, not forced into registry sizes enum
+      return 'custom:' + slugValue(raw, index);
+    }
+    if (groupId === 'color' || groupId === 'colors') {
+      if (COLOR_CANONICAL[raw]) return COLOR_CANONICAL[raw];
+      if (COLOR_CANONICAL[raw.toLowerCase()]) return COLOR_CANONICAL[raw.toLowerCase()];
+      return 'custom:' + slugValue(raw, index);
+    }
+    return slugValue(raw, index);
+  }
+
   /**
    * Build optionsJson groups from UI state + preset descriptors.
    * presetGroups: [{ id, label, kind, presets?: string[] }]
+   * Separates display label (labelAr) from stable value id.
    */
   function buildOptionGroups(presetGroups, state) {
     const groups = [];
@@ -113,7 +153,7 @@
         kind: group.kind,
         values: labels.map((label, index) => {
           const existing = state.valueIds[group.id][label];
-          const id = existing || slugValue(label, index);
+          const id = canonicalOptionValueId(group.id, label, index, existing);
           state.valueIds[group.id][label] = id;
           return { id: id, labelAr: label };
         }),
@@ -393,6 +433,9 @@
     selectionKey: selectionKey,
     isDuplicateVariant: isDuplicateVariant,
     slugValue: slugValue,
+    canonicalOptionValueId: canonicalOptionValueId,
+    SIZE_CANONICAL: SIZE_CANONICAL,
+    COLOR_CANONICAL: COLOR_CANONICAL,
     syncPickerOptions: syncPickerOptions,
   };
 })(typeof globalThis !== 'undefined' ? globalThis : this);

@@ -80,6 +80,21 @@
     state.inflight = Object.create(null);
   }
 
+  /** Cancel timers/inflight for one form only (opening another form must not drop sibling saves). */
+  function cancelFormPending(formId, reason) {
+    const id = formId || 'default';
+    if (state.timers[id]) {
+      clearTimeout(state.timers[id]);
+      delete state.timers[id];
+    }
+    delete state.pending[id];
+    if (state.abortByForm[id]) {
+      try { state.abortByForm[id].abort(reason || 'cancelled'); } catch (e) {}
+      delete state.abortByForm[id];
+    }
+    state.inflight[id] = false;
+  }
+
   function assertSameSession(snapshot) {
     if (!snapshot) return false;
     if (snapshot.sessionEpoch !== state.sessionEpoch) return false;
@@ -351,7 +366,9 @@
     }
     const built = pending.builder();
     if (!built || !built.clientDraftId) {
-      state.lastFlushResult[formId] = { ok: false, reason: 'empty-payload', formId: formId };
+      delete state.pending[formId];
+      setStatus(form, 'لم يُحفظ — الحمولة غير صالحة أو الحقول غير مكتملة', 'error');
+      state.lastFlushResult[formId] = { ok: false, reason: 'invalid-payload', formId: formId };
       return state.lastFlushResult[formId];
     }
     built._session = pending.snapshot;
@@ -428,30 +445,34 @@
     }
   }
 
-  /** Flush until pending queue for form is empty or failure. */
+  /** Flush until pending queue for form is empty or failure. Waits on real inflight, not fixed short spins. */
   async function flushUntilSettled(form, maxRounds) {
     const formId = form.id || 'default';
-    let rounds = maxRounds == null ? 8 : maxRounds;
+    let rounds = maxRounds == null ? 40 : maxRounds;
     let last = state.lastFlushResult[formId] || { ok: false };
     while (rounds-- > 0) {
-      if (state.pending[formId] || state.inflight[formId]) {
+      if (state.inflight[formId]) {
+        await new Promise((r) => setTimeout(r, 100));
+        last = state.lastFlushResult[formId] || last;
+        continue;
+      }
+      if (state.pending[formId]) {
         last = await flush(form, state.seq[formId]);
         if (last && last.ok === false && !last.pending && !last.cancelled) return last;
         if (last && last.pending) {
-          await new Promise((r) => setTimeout(r, 50));
+          await new Promise((r) => setTimeout(r, 100));
           continue;
         }
         continue;
       }
-      // Catch edits that arrived during last flush.
-      if (state.pending[formId]) continue;
-      return last.ok
-        ? last
-        : (state.lastFlushResult[formId] && state.lastFlushResult[formId].ok
-          ? state.lastFlushResult[formId]
-          : last);
+      if (last && last.ok && last.seq === state.seq[formId]) return last;
+      if (state.lastFlushResult[formId] && state.lastFlushResult[formId].ok && state.lastFlushResult[formId].seq === state.seq[formId]) {
+        return state.lastFlushResult[formId];
+      }
+      // Nothing pending and no confirmed save for current seq.
+      return last && last.ok ? last : { ok: false, reason: 'nothing-confirmed', formId: formId, last: last };
     }
-    return { ok: false, reason: 'flush-timeout', formId: formId };
+    return { ok: false, reason: 'flush-timeout', formId: formId, last: last };
   }
 
   function attachStatus(form) {
@@ -601,6 +622,7 @@
     materialize: materialize,
     setStatus: setStatus,
     cancelAllPending: cancelAllPending,
+    cancelFormPending: cancelFormPending,
     bumpEpoch: bumpEpoch,
     __testHooks: __testHooks,
   };

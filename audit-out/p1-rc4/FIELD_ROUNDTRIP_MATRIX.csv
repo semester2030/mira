@@ -1,0 +1,7 @@
+field,ui,payload,validation,storage,retrieve,display,test,status
+sizes,chip M,values.sizes=["M"]+optionsJson,array enum M,Product.optionsJson,GET draft+catalog,portal+public,rc4-http+browser,PASS_LOCAL
+colors,chip أسود,values.colors=["black"]+optionsJson labelAr أسود,array enum black,Product.optionsJson,GET draft+catalog,portal+public,rc4-http+browser,PASS_LOCAL
+optionsJson,option groups,values.optionsJson,nested schema,Product.optionsJson,materialize,public catalog,rc4-http+browser,PASS_LOCAL
+variantsJson,manual only,values.variantsJson,refs must resolve,Product.variantsJson,materialize,portal,rc4-http broken-ref,PASS_LOCAL
+stockQty,input,values.stockQty,int|null,Product.stockQty,second session,portal,browser-brand-second-session,PASS_LOCAL
+serviceProfile,template radios,values.serviceProfile,template rules,service profile cols,second session+public,Flutter unit,browser-salon+flutter,PASS_LOCAL

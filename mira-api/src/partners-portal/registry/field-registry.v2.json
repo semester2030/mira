@@ -719,13 +719,13 @@
       "evidence": "source-manifest.json",
       "automation": "suggest_only; seller confirms offered options",
       "valueLabels": {
-        "black": "black",
-        "ivory": "ivory",
-        "brown": "brown",
-        "pink": "pink",
-        "blue": "blue",
-        "green": "green",
-        "multi": "multi"
+        "black": "أسود",
+        "ivory": "سكري",
+        "brown": "بني",
+        "pink": "وردي",
+        "blue": "أزرق",
+        "green": "أخضر",
+        "multi": "متعدد الألوان"
       }
     },
     "sizeSystem": {
@@ -4973,6 +4973,56 @@
         ],
         "answers": "object of template field answers"
       }
+    },
+    "optionsJson": {
+      "id": "optionsJson",
+      "labelAr": "خيارات المنتج المنظمة",
+      "type": "json",
+      "widget": "options_builder",
+      "unit": null,
+      "values": [],
+      "filter": null,
+      "currentStatus": "OPTIONS_JSON",
+      "draftRequired": false,
+      "publishRequiredWhen": "optional",
+      "source": "partner_confirmed",
+      "editable": true,
+      "nullMeaning": "explicit_clear",
+      "default": null,
+      "min": null,
+      "max": null,
+      "dependsOn": null,
+      "storage": "Product.optionsJson",
+      "publicWhen": "published",
+      "searchable": false,
+      "unknownHandling": "reject invalid structure",
+      "evidence": "P1 RC4 options contract",
+      "valueLabels": {}
+    },
+    "variantsJson": {
+      "id": "variantsJson",
+      "labelAr": "تركيبات المنتج اليدوية",
+      "type": "json",
+      "widget": "options_builder",
+      "unit": null,
+      "values": [],
+      "filter": null,
+      "currentStatus": "OPTIONS_JSON",
+      "draftRequired": false,
+      "publishRequiredWhen": "optional",
+      "source": "partner_confirmed",
+      "editable": true,
+      "nullMeaning": "explicit_clear",
+      "default": null,
+      "min": null,
+      "max": null,
+      "dependsOn": null,
+      "storage": "Product.variantsJson",
+      "publicWhen": "published",
+      "searchable": false,
+      "unknownHandling": "reject invalid structure",
+      "evidence": "P1 RC4 variants contract — no auto matrix",
+      "valueLabels": {}
     }
   },
   "profiles": [
@@ -5013,6 +5063,8 @@
         "colors",
         "sizeSystem",
         "sizes",
+        "variantsJson",
+        "optionsJson",
         "material",
         "cut",
         "occasion",
@@ -5078,6 +5130,8 @@
         "warnings",
         "shadeCode",
         "colors",
+        "variantsJson",
+        "optionsJson",
         "finish"
       ],
       "draftRequired": [],
@@ -5136,7 +5190,9 @@
         "concernTags",
         "ingredients",
         "useInstructions",
-        "warnings"
+        "warnings",
+        "optionsJson",
+        "variantsJson"
       ],
       "draftRequired": [],
       "publishRules": "specs/03-JOURNEYS.md#publication",
@@ -5190,7 +5246,9 @@
         "hairTypes",
         "ingredients",
         "useInstructions",
-        "warnings"
+        "warnings",
+        "optionsJson",
+        "variantsJson"
       ],
       "draftRequired": [],
       "publishRules": "specs/03-JOURNEYS.md#publication",
@@ -5239,6 +5297,8 @@
         "offerEnd",
         "offerPriceHalalas",
         "colors",
+        "variantsJson",
+        "optionsJson",
         "finish",
         "material",
         "itemDimensions",
@@ -6409,6 +6469,8 @@
         "offerPriceHalalas",
         "sizeSystem",
         "sizes",
+        "variantsJson",
+        "optionsJson",
         "colors",
         "lengthCm",
         "cut",
@@ -6467,6 +6529,8 @@
         "heightCm",
         "sizeSystem",
         "sizes",
+        "variantsJson",
+        "optionsJson",
         "colors",
         "material"
       ],
@@ -6523,7 +6587,9 @@
         "ringSizeSystem",
         "ringSize",
         "gemstone",
-        "personalization"
+        "personalization",
+        "optionsJson",
+        "variantsJson"
       ],
       "draftRequired": [],
       "publishRules": "specs/03-JOURNEYS.md#publication",
@@ -6575,7 +6641,9 @@
         "wrapping",
         "giftMessage",
         "recipient",
-        "personalization"
+        "personalization",
+        "optionsJson",
+        "variantsJson"
       ],
       "draftRequired": [],
       "publishRules": "specs/03-JOURNEYS.md#publication",
@@ -6623,7 +6691,9 @@
         "offerEnd",
         "offerPriceHalalas",
         "volumeMl",
-        "fragranceConcentration"
+        "fragranceConcentration",
+        "optionsJson",
+        "variantsJson"
       ],
       "draftRequired": [],
       "publishRules": "specs/03-JOURNEYS.md#publication",
