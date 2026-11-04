@@ -556,6 +556,7 @@
       bookingToggle.type = 'checkbox';
       bookingToggle.name = 'bookingEnabled';
       bookingToggle.checked = Boolean(editing && item.bookingEnabled);
+      bookingToggle.addEventListener('change', bumpFormContentEpoch);
       bookingWrap.append(bookingToggle, document.createTextNode(' تفعيل طلب الموعد داخل ميرا (بانتظار قبول الجهة)'));
       basics.appendChild(bookingWrap);
       text(basics, 'الدفع لدى الجهة عند الموعد. لا تُطبَّق عبارة الدفع عند الاستلام الخاصة بالمنتجات على الخدمات.');
@@ -711,8 +712,54 @@
     let boundProfileFingerprint = null;
     /** Bumps whenever the user edits fields after paint — used to detect newer edits during in-flight save. */
     let formContentEpoch = 0;
+    /** Epoch captured when the last persist request finished applying its own snapshot. */
+    let lastSettledPersistEpoch = null;
+    let programmaticPaintDepth = 0;
+    function withProgrammaticPaint(fn) {
+      programmaticPaintDepth += 1;
+      try {
+        return fn();
+      } finally {
+        programmaticPaintDepth -= 1;
+      }
+    }
     function bumpFormContentEpoch() {
+      if (programmaticPaintDepth > 0) return;
       formContentEpoch += 1;
+      // If a prior save already announced success, immediately correct the visible UX.
+      if (
+        lastSettledPersistEpoch != null &&
+        formContentEpoch > lastSettledPersistEpoch &&
+        form.dataset.saving !== '1'
+      ) {
+        paintUnsavedNewerNotice();
+      }
+    }
+    function paintUnsavedNewerNotice(extraNote) {
+      if (!status) return;
+      const stripped = String(status.textContent || '')
+        .replace(/\s*توجد تعديلات أحدث في النموذج[^]*?(?:احفظي مرة أخرى(?: للإصدار الحالي)?\.?)/g, '')
+        .trim();
+      const base = stripped || extraNote || 'حُفظت نسخة سابقة على الخادم.';
+      const note =
+        base +
+        ' توجد تعديلات أحدث في النموذج لم يشملها الطلب السابق — ليست محفوظة بعد. احفظي مرة أخرى.';
+      status.textContent = note;
+      status.setAttribute('data-catalog-persist-status', '1');
+      status.setAttribute('data-unsaved-newer', '1');
+      const saveBtn = form.querySelector('#' + form.id + '-save') || form.querySelector('button[type="submit"]');
+      if (saveBtn) {
+        saveBtn.disabled = false;
+        saveBtn.removeAttribute('aria-busy');
+        saveBtn.classList.remove('is-busy', 'is-success');
+        saveBtn.textContent = developerAccount ? 'نشر التعديلات المتبقية' : 'حفظ التعديلات المتبقية';
+      }
+      if (window.MiraEditorV2) {
+        MiraEditorV2.setStatus(form, 'تعديلات أحدث غير محفوظة', 'dirty');
+      }
+    }
+    function hasNewerEditsThan(epoch) {
+      return formContentEpoch > epoch;
     }
 
     function profileDocFrom(profile) {
@@ -869,7 +916,7 @@
           const result = applyBoundServiceProfile(profile, { mode: resolvedMode });
           if (result && !result.conflict && typeof paintServiceTemplates === 'function') {
             try {
-              paintServiceTemplates();
+              withProgrammaticPaint(() => paintServiceTemplates());
             } catch (_) {}
           }
           return result;
@@ -1322,8 +1369,14 @@
       el.addEventListener('change', scheduleEditorDraftAutosave);
     });
     if (duration) {
-      duration.addEventListener('input', scheduleEditorDraftAutosave);
-      duration.addEventListener('change', scheduleEditorDraftAutosave);
+      duration.addEventListener('input', () => {
+        bumpFormContentEpoch();
+        scheduleEditorDraftAutosave();
+      });
+      duration.addEventListener('change', () => {
+        bumpFormContentEpoch();
+        scheduleEditorDraftAutosave();
+      });
     }
 
     function resumeStorageKey(clientDraftId) {
@@ -1510,6 +1563,11 @@
             (ctx && ctx.clientDraftId) ||
             MiraEditorV2.clientDraftIdFor(kind, item && item.id, form.id);
           matOp = captureMaterializeOp(clientDraftId);
+          const assertMatLive = (phase) => {
+            if (materializeOpStillLive(matOp)) return true;
+            // F3: A must not schedule autosave / flush / UI writes against B.
+            return false;
+          };
           let resume = loadResumeState(clientDraftId);
 
           /**
@@ -1527,8 +1585,9 @@
             status.textContent = 'نتيجة التحويل غير مؤكدة — جارٍ الاستعادة من الخادم…';
             try {
               const draftRow = await PartnersApi.getEditorDraft(clientDraftId);
+              if (!assertMatLive('recover-get')) return;
               if (draftRow && draftRow.status === 'materialized' && draftRow.targetOwnerId) {
-                applyMaterializeOutcome(
+                const out = applyMaterializeOutcome(
                   clientDraftId,
                   {
                     targetOwnerId: draftRow.targetOwnerId,
@@ -1539,11 +1598,14 @@
                     resumeKey: resume.idempotencyKey,
                   },
                   null,
-                matOp);
+                  matOp,
+                );
+                if (out && out.stale) return;
                 if (draftRow.submitReviewStatus !== 'submitted') {
                   matBtn.textContent = 'استئناف الإرسال للمراجعة';
                 }
                 await refreshLists();
+                if (!assertMatLive('recover-refresh')) return;
                 resume = loadResumeState(clientDraftId);
                 if (draftRow.submitReviewStatus === 'submitted') return;
                 // Fall through to resume submit path below when media/submit still needed.
@@ -1554,19 +1616,23 @@
                   true,
                   resume.idempotencyKey,
                 );
-                applyMaterializeOutcome(clientDraftId, result, null, matOp);
+                if (!assertMatLive('recover-mat')) return;
+                const out = applyMaterializeOutcome(clientDraftId, result, null, matOp);
+                if (out && out.stale) return;
                 await refreshLists();
                 return;
               }
             } catch (recoverErr) {
+              if (!assertMatLive('recover-catch')) return;
               const rCode =
                 (recoverErr && recoverErr.code) ||
                 (recoverErr && recoverErr.body && recoverErr.body.code) ||
                 '';
               if (rCode === 'DRAFT_ALREADY_MATERIALIZED') {
                 const draftRow = await PartnersApi.getEditorDraft(clientDraftId);
+                if (!assertMatLive('recover-already')) return;
                 if (draftRow && draftRow.targetOwnerId) {
-                  applyMaterializeOutcome(
+                  const out = applyMaterializeOutcome(
                     clientDraftId,
                     {
                       targetOwnerId: draftRow.targetOwnerId,
@@ -1577,9 +1643,12 @@
                       resumeKey: resume.idempotencyKey,
                     },
                     null,
-                  matOp);
+                    matOp,
+                  );
+                  if (out && out.stale) return;
                   matBtn.textContent = 'استئناف الإرسال للمراجعة';
                   await refreshLists();
+                  if (!assertMatLive('recover-already-refresh')) return;
                   resume = loadResumeState(clientDraftId);
                 } else {
                   status.textContent =
@@ -1587,9 +1656,11 @@
                   return;
                 }
               } else if (recoverErr && recoverErr.code === 'MATERIALIZE_SUBMIT_REVIEW_FAILED') {
-                applyMaterializeOutcome(clientDraftId, null, recoverErr, matOp);
+                const out = applyMaterializeOutcome(clientDraftId, null, recoverErr, matOp);
+                if (out && out.stale) return;
                 matBtn.textContent = 'استئناف الإرسال للمراجعة';
                 await refreshLists();
+                if (!assertMatLive('recover-submit-fail')) return;
                 resume = loadResumeState(clientDraftId);
               } else {
                 throw recoverErr;
@@ -1602,6 +1673,7 @@
             (ctx && (ctx.status === 'submit_failed' || ctx.status === 'materialized')) ||
             (resume && resume.targetOwnerId && resume.status === 'submit_failed')
           ) {
+            if (!assertMatLive('resume-enter')) return;
             const ownerId = (ctx && ctx.targetOwnerId) || (resume && resume.targetOwnerId) || (item && item.id);
             if (!ownerId) {
               status.textContent = 'لا يوجد معرّف عنصر للاستئناف.';
@@ -1621,12 +1693,16 @@
                   true,
                   key,
                 );
-                applyMaterializeOutcome(clientDraftId, result, null, matOp);
+                if (!assertMatLive('resume-mat')) return;
+                const out = applyMaterializeOutcome(clientDraftId, result, null, matOp);
+                if (out && out.stale) return;
                 await refreshLists();
                 return;
               } catch (error) {
+                if (!assertMatLive('resume-mat-catch')) return;
                 if (error && error.code === 'MATERIALIZE_SUBMIT_REVIEW_FAILED') {
-                  applyMaterializeOutcome(clientDraftId, null, error, matOp);
+                  const out = applyMaterializeOutcome(clientDraftId, null, error, matOp);
+                  if (out && out.stale) return;
                   // continue to media+submitReview below
                 } else if (
                   !(
@@ -1639,12 +1715,15 @@
                 }
               }
             }
+            if (!assertMatLive('resume-submit')) return;
             await PartnersApi.submitReview(kind === 'product' ? 'products' : 'services', ownerId);
-            applyMaterializeOutcome(clientDraftId, {
+            if (!assertMatLive('resume-submit-done')) return;
+            const out = applyMaterializeOutcome(clientDraftId, {
               targetOwnerId: ownerId,
               reviewSubmitted: true,
               submitReviewStatus: 'submitted',
             }, null, matOp);
+            if (out && out.stale) return;
             clearResumeState(clientDraftId);
             await refreshLists();
             return;
@@ -1654,12 +1733,13 @@
           // If a prior attempt already materialized, recover instead of PUT.
           try {
             const prior = await PartnersApi.getEditorDraft(clientDraftId);
+            if (!assertMatLive('preflight-get')) return;
             if (prior && prior.status === 'materialized' && prior.targetOwnerId) {
               const priorKey =
                 sessionStorage.getItem(resumeStorageKey(clientDraftId) + ':key') ||
                 (resume && resume.idempotencyKey) ||
                 null;
-              applyMaterializeOutcome(
+              const out = applyMaterializeOutcome(
                 clientDraftId,
                 {
                   targetOwnerId: prior.targetOwnerId,
@@ -1670,7 +1750,9 @@
                   expectedRevision: prior.revision,
                 },
                 null,
-              matOp);
+                matOp,
+              );
+              if (out && out.stale) return;
               matBtn.textContent = 'استئناف الإرسال للمراجعة';
               status.textContent =
                 'استُعيد العنصر المحوّل مسبقًا (' + prior.targetOwnerId + ') — لا إنشاء بديل.';
@@ -1678,9 +1760,11 @@
               return;
             }
           } catch (e) {
+            if (!assertMatLive('preflight-get-miss')) return;
             /* draft may not exist yet — continue fresh path */
           }
 
+          if (!assertMatLive('preflight')) return;
           const preflight = buildEditorValues();
           if (!preflight.ok) {
             (preflight.fieldErrors || []).forEach((fe) => setFieldError(form, fe.fieldId, fe.message));
@@ -1688,19 +1772,24 @@
             MiraEditorV2.setStatus(form, 'لم يُحفظ', 'error');
             return;
           }
+          // Snapshot draft identity for this op — never flush/autosave a different live draft.
+          if (!assertMatLive('before-autosave')) return;
           scheduleEditorDraftAutosave();
           let saved;
           try {
             saved = await MiraEditorV2.flushUntilSettled(form);
+            if (!assertMatLive('after-flush')) return;
           } catch (flushErr) {
+            if (!assertMatLive('flush-catch')) return;
             const fCode =
               (flushErr && flushErr.code) ||
               (flushErr && flushErr.body && flushErr.body.code) ||
               '';
             if (fCode === 'DRAFT_ALREADY_MATERIALIZED') {
               const prior = await PartnersApi.getEditorDraft(clientDraftId);
+              if (!assertMatLive('flush-already')) return;
               if (prior && prior.targetOwnerId) {
-                applyMaterializeOutcome(
+                const out = applyMaterializeOutcome(
                   clientDraftId,
                   {
                     targetOwnerId: prior.targetOwnerId,
@@ -1711,7 +1800,9 @@
                     expectedRevision: prior.revision,
                   },
                   null,
-                matOp);
+                  matOp,
+                );
+                if (out && out.stale) return;
                 matBtn.textContent = 'استئناف الإرسال للمراجعة';
                 await refreshLists();
                 return;
@@ -1749,6 +1840,8 @@
               '. أصلحي الحفظ أولًا.';
             return;
           }
+          if (!assertMatLive('before-revision')) return;
+          // Prefer the flush result for THIS clientDraftId — never borrow B's live revision.
           const expectedRevision =
             saved.revision != null
               ? saved.revision
@@ -1766,6 +1859,7 @@
             expectedRevision: expectedRevision,
             status: 'materializing',
           });
+          if (!assertMatLive('before-materialize')) return;
           try {
             const result = await MiraEditorV2.materialize(
               clientDraftId,
@@ -1773,12 +1867,21 @@
               true,
               resumeKey,
             );
+            if (!assertMatLive('after-materialize')) {
+              // Server may have completed A — resume was already saved under A's draft id.
+              applyMaterializeOutcome(clientDraftId, result, null, matOp);
+              return;
+            }
             const matOut = applyMaterializeOutcome(clientDraftId, result, null, matOp);
             if (matOut && matOut.stale) return;
             if (result && result.targetOwnerId && !(result.reviewSubmitted || result.submitReviewStatus === 'submitted')) {
               matBtn.textContent = 'استئناف الإرسال للمراجعة';
             }
           } catch (error) {
+            if (!assertMatLive('materialize-catch')) {
+              applyMaterializeOutcome(clientDraftId, null, error, matOp);
+              return;
+            }
             if (error && error.code === 'MATERIALIZE_SUBMIT_REVIEW_FAILED') {
               const matOut = applyMaterializeOutcome(clientDraftId, null, error, matOp);
               if (matOut && matOut.stale) return;
@@ -1787,6 +1890,24 @@
               const mCode = (error && error.code) || (error && error.body && error.body.code) || '';
               if (mCode === 'DRAFT_ALREADY_MATERIALIZED') {
                 const prior = await PartnersApi.getEditorDraft(clientDraftId);
+                if (!assertMatLive('mat-already')) {
+                  if (prior && prior.targetOwnerId) {
+                    applyMaterializeOutcome(
+                      clientDraftId,
+                      {
+                        targetOwnerId: prior.targetOwnerId,
+                        targetKind: prior.kind || kind,
+                        reviewSubmitted: prior.submitReviewStatus === 'submitted',
+                        submitReviewStatus: prior.submitReviewStatus || 'failed',
+                        resumeKey: resumeKey,
+                        expectedRevision: expectedRevision,
+                      },
+                      null,
+                      matOp,
+                    );
+                  }
+                  return;
+                }
                 if (prior && prior.targetOwnerId) {
                   const matOut = applyMaterializeOutcome(
                     clientDraftId,
@@ -1876,7 +1997,14 @@
     detail.className = 'form-section';
     text(detail, 'التفاصيل', 'h3');
     const tags = field(detail, 'وسوم اختيارية', 'concernTags', (seed.concernTags || []).join ? (seed.concernTags || []).join(', ') : (seed.concernTags || ''), 'text');
-    tags.addEventListener('input', scheduleEditorDraftAutosave);
+    tags.addEventListener('input', () => {
+      bumpFormContentEpoch();
+      scheduleEditorDraftAutosave();
+    });
+    tags.addEventListener('change', () => {
+      bumpFormContentEpoch();
+      scheduleEditorDraftAutosave();
+    });
     form.appendChild(detail);
 
     const action = document.createElement('div');
@@ -1905,8 +2033,12 @@
       internalToggle.type = 'checkbox';
       internalToggle.name = 'internalCod';
       internalToggle.checked = Boolean(seed.purchaseMode === 'internal_cod' || (editing && item.purchaseMode === 'internal_cod'));
-      internalToggle.addEventListener('change', scheduleEditorDraftAutosave);
+      internalToggle.addEventListener('change', () => {
+        bumpFormContentEpoch();
+        scheduleEditorDraftAutosave();
+      });
       internal.append(internalToggle, document.createTextNode(' تفعيل الطلب داخل ميرا (دفع نقدًا عند الاستلام). رابط الشراء الخارجي يبقى للمنتجات الخارجية فقط.'));
+      choices.addEventListener('change', bumpFormContentEpoch);
       action.appendChild(internal);
       stockInput = field(
         action,
@@ -1917,8 +2049,14 @@
       );
       stockInput.min = '0';
       stockInput.step = '1';
-      stockInput.addEventListener('input', scheduleEditorDraftAutosave);
-      stockInput.addEventListener('change', scheduleEditorDraftAutosave);
+      stockInput.addEventListener('input', () => {
+        bumpFormContentEpoch();
+        scheduleEditorDraftAutosave();
+      });
+      stockInput.addEventListener('change', () => {
+        bumpFormContentEpoch();
+        scheduleEditorDraftAutosave();
+      });
       feeInput = field(
         action,
         'رسوم التوصيل بالريال (اتركيها فارغة إذا غير محددة، ولا تُعرض كمجانية)',
@@ -1929,8 +2067,14 @@
         'text',
       );
       feeInput.inputMode = 'decimal';
-      feeInput.addEventListener('input', scheduleEditorDraftAutosave);
-      feeInput.addEventListener('change', scheduleEditorDraftAutosave);
+      feeInput.addEventListener('input', () => {
+        bumpFormContentEpoch();
+        scheduleEditorDraftAutosave();
+      });
+      feeInput.addEventListener('change', () => {
+        bumpFormContentEpoch();
+        scheduleEditorDraftAutosave();
+      });
       const advancedWrap = document.createElement('label');
       advancedWrap.className = 'check-row';
       const advancedToggle = document.createElement('input');
@@ -2168,6 +2312,7 @@
     }
 
     function saveOptionsDraft() {
+      bumpFormContentEpoch();
       // localStorage is a UI convenience only; authoritative copy is optionsJson on the API.
       try {
         const scope = (window.MiraEditorV2 && MiraEditorV2.state.partnerId) || 'anon';
@@ -3511,7 +3656,7 @@
             }
           } catch (error) {}
         }
-        const newerEditsPending = formContentEpoch > persistEpoch;
+        let newerEditsPending = hasNewerEditsThan(persistEpoch);
         item = Object.assign({}, item || {}, saved);
         if (saved && saved.reviewRevision != null && !newerEditsPending) {
           boundServiceReviewRevision = saved.reviewRevision;
@@ -3531,19 +3676,22 @@
           }
         }
 
-        save.classList.remove('is-busy');
-        save.classList.add(newerEditsPending ? 'is-busy' : 'is-success');
-        if (newerEditsPending) save.classList.remove('is-success');
-        save.disabled = false;
-        save.removeAttribute('aria-busy');
-        save.textContent = developerAccount
-          ? newerEditsPending
-            ? 'نشر التعديلات المتبقية'
-            : 'جارٍ الرفع'
-          : newerEditsPending
-            ? 'حفظ التعديلات المتبقية'
-            : 'تم الحفظ';
-        form.dataset.saving = '';
+        function applyPersistSuccessChrome(pendingNewer) {
+          save.classList.remove('is-busy');
+          if (pendingNewer) save.classList.remove('is-success');
+          else save.classList.add('is-success');
+          save.disabled = false;
+          save.removeAttribute('aria-busy');
+          save.textContent = developerAccount
+            ? pendingNewer
+              ? 'نشر التعديلات المتبقية'
+              : 'جارٍ الرفع'
+            : pendingNewer
+              ? 'حفظ التعديلات المتبقية'
+              : 'تم الحفظ';
+          form.dataset.saving = '';
+        }
+        applyPersistSuccessChrome(newerEditsPending);
         let saveNote =
           'حُفظت المسودة. السعر المخزن ' + item.priceHalalas + ' هللة (' + formatPrice(item.priceHalalas) + ').';
         if (type !== 'brand' && templateState && templateState.templateId) {
@@ -3560,21 +3708,35 @@
           if (window.MiraEditorV2) {
             MiraEditorV2.setStatus(form, 'محفوظ جزئيًا · تعديلات أحدث غير محفوظة', 'dirty');
           }
+          status.setAttribute('data-unsaved-newer', '1');
         }
         status.textContent = developerAccount
           ? newerEditsPending
             ? saveNote
             : 'جارٍ رفع الملفات ثم النشر في التطبيق.'
           : saveNote;
+        status.setAttribute('data-catalog-persist-status', '1');
         if (window.MiraMotion) MiraMotion.announce(status.textContent);
         await refreshLists();
         if (!assertPersistOpLive(persistOp)) return false;
+        // F2-D: user may edit during refreshLists — re-evaluate before claiming full success.
+        newerEditsPending = hasNewerEditsThan(persistEpoch);
+        if (newerEditsPending) {
+          applyPersistSuccessChrome(true);
+          paintUnsavedNewerNotice(saveNote);
+        }
         const pending = staged[form.id].slice();
         for (const entry of pending) {
           if (!assertPersistOpLive(persistOp)) return false;
           if (!entry.error && entry.file) await uploadOne(entry, { deferPublish: true });
+          newerEditsPending = hasNewerEditsThan(persistEpoch);
         }
         if (!assertPersistOpLive(persistOp)) return false;
+        newerEditsPending = hasNewerEditsThan(persistEpoch);
+        if (newerEditsPending) {
+          applyPersistSuccessChrome(true);
+          paintUnsavedNewerNotice(saveNote);
+        }
         const failures = staged[form.id].filter((entry) => entry && entry.error).map((entry) => entry.file.name + ': ' + entry.error);
         let publishedNote = '';
         if (
@@ -3588,23 +3750,31 @@
           try {
             await PartnersApi.submitReview(type === 'brand' ? 'products' : 'services', item.id);
             if (!assertPersistOpLive(persistOp)) return false;
-            publishedNote = 'نُشر في التطبيق مباشرة، بلا مراجعة.';
-            await refreshLists();
+            newerEditsPending = hasNewerEditsThan(persistEpoch);
+            if (newerEditsPending) {
+              applyPersistSuccessChrome(true);
+              paintUnsavedNewerNotice(saveNote);
+            } else {
+              publishedNote = 'نُشر في التطبيق مباشرة، بلا مراجعة.';
+              await refreshLists();
+            }
           } catch (error) {
             publishedNote = 'حُفظت البيانات ولم تُنشر: ' + error.message;
           }
         }
         if (!assertPersistOpLive(persistOp)) return false;
+        newerEditsPending = hasNewerEditsThan(persistEpoch);
         const noteOut = failures.length
           ? (developerAccount ? 'لم يُنشر. فشل الرفع. ' : 'حُفظت المسودة. لم يُسجَّل الرفع ناجحًا. ') + failures.join(' — ')
           : (publishedNote || (developerAccount && !newerEditsPending ? 'نُشر في التطبيق مباشرة، بلا مراجعة.' : saveNote));
         // F2: if the user typed newer edits mid-flight, keep the live DOM — do not re-render from the old response.
-        if (newerEditsPending || formContentEpoch > persistEpoch) {
-          status.textContent = noteOut;
-          status.setAttribute('data-catalog-persist-status', '1');
-          status.setAttribute('data-unsaved-newer', '1');
+        if (newerEditsPending) {
+          applyPersistSuccessChrome(true);
+          paintUnsavedNewerNotice(noteOut);
+          lastSettledPersistEpoch = persistEpoch;
           return true;
         }
+        lastSettledPersistEpoch = formContentEpoch;
         // Preserve materialized draft identity — re-render must not allocate a new clientDraftId.
         // values.serviceProfile must reflect the just-saved server profile, not a stale preserveCtx copy.
         const preserveCtx = window.MiraEditorV2 && MiraEditorV2.getEditContext(form.id);
