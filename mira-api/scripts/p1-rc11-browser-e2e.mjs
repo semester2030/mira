@@ -986,11 +986,13 @@ async function main() {
       if (window.renderEditorDrafts) await window.renderEditorDrafts();
     });
     await page.waitForTimeout(700);
-    let openDraft = page.locator('#editorDraftsList li', { hasText: 'RC11-10 reload' }).locator('button', { hasText: 'فتح' }).first();
+    const openDraft = page
+      .locator('#editorDraftsList .list-row', { hasText: 'منتج RC11-10 reload' })
+      .locator('button', { hasText: 'فتح' })
+      .first();
     if ((await openDraft.count()) === 0) {
-      openDraft = page.locator('#editorDraftsList', { hasText: 'منتج RC11-10 reload' }).locator('button', { hasText: 'فتح' }).first();
+      throw new Error('RC11-10: specific reload draft open button missing (refusing first-row fallback)');
     }
-    if ((await openDraft.count()) === 0) throw new Error('RC11-10: specific reload draft open button missing');
     await openDraft.click();
     await page.waitForTimeout(1200);
     const mat2 = page.locator('#catalogForm [data-editor-v2-materialize]');
@@ -1138,7 +1140,7 @@ async function main() {
       await ssp.waitForTimeout(900);
       // Prefer the draft row that mentions the reload service name
       const openDraftS = ssp
-        .locator('#editorDraftsList li', { hasText: 'RC11-10 reload' })
+        .locator('#editorDraftsList .list-row', { hasText: 'خدمة RC11-10 reload' })
         .locator('button', { hasText: 'فتح' })
         .first();
       if ((await openDraftS.count()) === 0) {
