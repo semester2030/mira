@@ -2992,7 +2992,8 @@
         const entry = {
           key: file.name + ':' + file.size + ':' + file.lastModified,
           file: file,
-          status: problem ? 'فشل' : (item && item.id ? 'جارٍ الرفع' : (developerAccount ? 'جارٍ تجهيز النشر' : 'بانتظار الحفظ')),
+          // C04: file select never implies publish — stage/upload only; explicit «نشر الآن» publishes.
+          status: problem ? 'فشل' : (item && item.id ? 'جارٍ الرفع' : 'بانتظار الحفظ'),
           error: problem,
           percent: null,
           url: URL.createObjectURL(file),
@@ -3002,12 +3003,28 @@
         if (!problem && item && item.id) uploadOne(entry);
       }
       paintMedia(null);
-      if (developerAccount && form.dataset.saving !== '1' && staged[form.id].some((entry) => entry.status === 'جارٍ تجهيز النشر')) {
-        const published = await persistListing();
-        if (!published) {
+      // Legacy (V2 off): selecting a file for a new item may create/save the draft owner so upload can start,
+      // but must NOT call submitReview / publish. Explicit publish stays on «نشر الآن» / submit.
+      if (
+        developerAccount &&
+        form.dataset.saving !== '1' &&
+        !(item && item.id) &&
+        staged[form.id].some((entry) => entry.status === 'بانتظار الحفظ' && entry.file && !entry.error)
+      ) {
+        const saved = await persistListing({ publish: false });
+        if (!saved) {
           staged[form.id].forEach((entry) => {
-            if (entry.status === 'جارٍ تجهيز النشر') entry.status = 'بانتظار البيانات';
+            if (entry.status === 'بانتظار الحفظ') entry.status = 'بانتظار البيانات';
           });
+          paintMedia(null);
+        } else if (item && item.id) {
+          // Draft owner exists — start staged uploads without publishing.
+          for (const entry of staged[form.id].slice()) {
+            if (!entry.error && entry.file && entry.status === 'بانتظار الحفظ') {
+              entry.status = 'جارٍ الرفع';
+              uploadOne(entry);
+            }
+          }
           paintMedia(null);
         }
       }
@@ -3047,9 +3064,10 @@
         retry.className = 'btn btn-ghost';
         retry.textContent = 'إعادة المحاولة';
         retry.setAttribute('aria-label', 'إعادة محاولة رفع ' + entry.file.name);
-        retry.disabled = entry.status === 'جارٍ القراءة' || entry.status === 'جارٍ الرفع' || entry.status === 'جارٍ المعالجة' || entry.status === 'جارٍ تجهيز النشر';
+        retry.disabled = entry.status === 'جارٍ القراءة' || entry.status === 'جارٍ الرفع' || entry.status === 'جارٍ المعالجة' || entry.status === 'بانتظار الحفظ';
         retry.onclick = () => {
-          if (!item || !item.id) persistListing();
+          // C04: retry may save draft / resume upload — never auto-publish.
+          if (!item || !item.id) persistListing({ publish: false });
           else uploadOne(entry);
         };
         const cancel = document.createElement('button');
@@ -3447,9 +3465,10 @@
     paintMedia(null);
 
     submit.onclick = async () => {
+      // Explicit publish / submit-review only — never from file select.
       if (!item || !item.id) {
         if (developerAccount) {
-          await persistListing();
+          await persistListing({ publish: true });
           return;
         }
         status.textContent = 'احفظي المسودة قبل الإرسال للمراجعة.';
@@ -3627,7 +3646,14 @@
       }
     }
 
-    const persistListing = async () => {
+    /**
+     * Persist listing fields (+ optional staged uploads).
+     * @param {{ publish?: boolean }} [opts]
+     *   publish=true  → developer may call submitReview after successful save/upload (explicit «نشر الآن»).
+     *   publish=false → draft/media only (file select, retry, autosave). Never submitReview.
+     */
+    const persistListing = async (opts) => {
+      const wantPublish = !!(opts && opts.publish === true);
       if (form.dataset.saving === '1') return false;
 
       const persistOp = capturePersistOp();
@@ -3743,7 +3769,7 @@
       }
       const idleLabel = save.textContent;
       beginPersistBusy(persistOp, developerAccount ? 'جارٍ النشر' : 'جارٍ الحفظ');
-      status.textContent = developerAccount ? 'جارٍ تجهيز النشر' : 'جارٍ حفظ المسودة';
+      status.textContent = wantPublish && developerAccount ? 'جارٍ النشر في التطبيق' : 'جارٍ حفظ المسودة';
       if (window.MiraMotion) MiraMotion.announce(status.textContent);
       // Track step outcomes outside try so catch can report partial success honestly.
       let savedProfile = null;
@@ -4058,7 +4084,9 @@
         }
         const failures = staged[form.id].filter((entry) => entry && entry.error).map((entry) => entry.file.name + ': ' + entry.error);
         let publishedNote = '';
+        // C04: submitReview only on explicit publish intent — never from file-select draft persist.
         if (
+          wantPublish &&
           window.sessionPartner &&
           window.sessionPartner.type === 'developer' &&
           !failures.length &&
@@ -4080,12 +4108,14 @@
           } catch (error) {
             publishedNote = 'حُفظت البيانات ولم تُنشر: ' + error.message;
           }
+        } else if (!wantPublish && developerAccount && !failures.length && item && item.id) {
+          publishedNote = 'حُفظت المسودة والوسائط. اضغط «نشر الآن» لنشرها في التطبيق.';
         }
         if (!assertPersistOpLive(persistOp)) return false;
         newerEditsPending = hasNewerEditsThan(persistEpoch);
         const noteOut = failures.length
-          ? (developerAccount ? 'لم يُنشر. فشل الرفع. ' : 'حُفظت المسودة. لم يُسجَّل الرفع ناجحًا. ') + failures.join(' — ')
-          : (publishedNote || (developerAccount && !newerEditsPending ? 'نُشر في التطبيق مباشرة، بلا مراجعة.' : saveNote));
+          ? (wantPublish && developerAccount ? 'لم يُنشر. فشل الرفع. ' : 'حُفظت المسودة. لم يُسجَّل الرفع ناجحًا. ') + failures.join(' — ')
+          : (publishedNote || saveNote);
         // F2: if the user typed newer edits mid-flight, keep the live DOM — do not re-render from the old response.
         if (newerEditsPending) {
           applyPersistSuccessChrome(true, { finalize: true });
@@ -4248,7 +4278,8 @@
     }
     form.onsubmit = (event) => {
       event.preventDefault();
-      return persistListing();
+      // Developer primary CTA is «نشر الآن» → explicit publish. Others save draft only.
+      return persistListing({ publish: !!developerAccount });
     };
   }
 })();

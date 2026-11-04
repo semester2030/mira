@@ -586,11 +586,49 @@ async function main() {
     );
   }
 
-  // —— C05: restore future backoff timers on worker boot (no client GET)
+  // —— C05: bootRecover default batch=20 must arm ALL future sessions (21+) without client GET
   {
     process.env.MIRA_UPLOAD_FINALIZE_RETRY_BASE_MS = '200';
     process.env.MIRA_UPLOAD_FINALIZE_RETRY_MAX_MS = '800';
-    const init = await (
+    const worker = app.get(UploadFinalizeService);
+    const futureIds: string[] = [];
+    const dueAt = new Date(Date.now() + 60_000); // far future — arm only, do not consume attempts
+    for (let i = 0; i < 21; i++) {
+      // DB-only fixtures for arming proof (objects not required until due).
+      const row = await prisma.partnerUploadSession.create({
+        data: {
+          partnerId: brand.id,
+          ownerKind: 'product',
+          ownerId: product.id,
+          clientMediaId: randomUUID(),
+          idempotencyKey: randomUUID(),
+          objectKey: `partners/${brand.id}/upload-sessions/c05-future-${i}-${randomUUID()}.png`,
+          storageUploadId: randomUUID(),
+          declaredMimeType: 'image/png',
+          declaredByteSize: png.length,
+          declaredChecksum: sha256(png),
+          partSizeBytes: png.length,
+          totalParts: 1,
+          status: 'failed',
+          failureClass: 'retryable',
+          failureCode: 'transient',
+          failureMessageAr: 'c05-batch',
+          storageCompletedAt: new Date(),
+          completedPartsJson: [{ partNumber: 1, etag: '"c05"', size: png.length }],
+          catalogMediaId: null,
+          finalizeLeaseOwner: null,
+          finalizeLeaseUntil: null,
+          finalizeNextAttemptAt: new Date(dueAt.getTime() + i),
+          finalizeAttempts: 1,
+          placement: 'main',
+          expiresAt: new Date(Date.now() + 3600_000),
+        },
+      });
+      futureIds.push(row.id);
+    }
+    // One real soon-due session to prove auto-ready without client
+    const soonBytes = Buffer.concat([png, Buffer.from([0x05])]);
+    const soonInit = await (
       await fetch(`${base}/partners-portal/upload-sessions`, {
         method: 'POST',
         headers: auth,
@@ -600,17 +638,17 @@ async function main() {
           clientMediaId: randomUUID(),
           idempotencyKey: randomUUID(),
           mimeType: 'image/png',
-          byteSize: png.length,
-          checksum: sha256(png),
+          byteSize: soonBytes.length,
+          checksum: sha256(soonBytes),
         }),
       })
     ).json();
-    const completed: Array<{ partNumber: number; etag: string; size: number }> = [];
-    for (let n = 1; n <= init.totalParts; n++) {
-      const start = (n - 1) * init.partSizeBytes;
-      const chunk = png.subarray(start, Math.min(png.length, start + init.partSizeBytes));
+    const soonParts: Array<{ partNumber: number; etag: string; size: number }> = [];
+    for (let n = 1; n <= soonInit.totalParts; n++) {
+      const start = (n - 1) * soonInit.partSizeBytes;
+      const chunk = soonBytes.subarray(start, Math.min(soonBytes.length, start + soonInit.partSizeBytes));
       const sign = await (
-        await fetch(`${base}/partners-portal/upload-sessions/${init.sessionId}/parts/${n}/sign`, {
+        await fetch(`${base}/partners-portal/upload-sessions/${soonInit.sessionId}/parts/${n}/sign`, {
           method: 'POST',
           headers: auth,
           body: '{}',
@@ -622,49 +660,87 @@ async function main() {
         body: new Uint8Array(chunk),
       });
       const body = await put.json();
-      completed.push({ partNumber: n, etag: body.etag, size: chunk.length });
+      soonParts.push({ partNumber: n, etag: body.etag, size: chunk.length });
     }
-    const row0 = await prisma.partnerUploadSession.findUnique({ where: { id: init.sessionId } });
-    await memoryStore.complete(row0!.objectKey, row0!.storageUploadId!, completed);
-    const dueAt = new Date(Date.now() + 400);
+    const soonRow = await prisma.partnerUploadSession.findUnique({ where: { id: soonInit.sessionId } });
+    await memoryStore.complete(soonRow!.objectKey, soonRow!.storageUploadId!, soonParts);
+    const soonAt = new Date(Date.now() + 350);
     await prisma.partnerUploadSession.update({
-      where: { id: init.sessionId },
+      where: { id: soonInit.sessionId },
       data: {
         status: 'failed',
         failureClass: 'retryable',
         failureCode: 'transient',
-        failureMessageAr: 'c05',
+        failureMessageAr: 'c05-soon',
         storageCompletedAt: new Date(),
-        completedPartsJson: completed,
+        completedPartsJson: soonParts,
         catalogMediaId: null,
         finalizeLeaseOwner: null,
         finalizeLeaseUntil: null,
-        finalizeNextAttemptAt: dueAt,
+        finalizeNextAttemptAt: soonAt,
         finalizeAttempts: 1,
       },
     });
-    // New worker instance (simulates process restart) — must re-arm timer.
-    const worker2 = app.get(UploadFinalizeService);
-    // Clear any leftover timers from same process by creating a fresh service via bootRecover path.
-    worker2.backoffScheduleCount = 0;
-    const boot = await worker2.bootRecover(50);
-    // recoverStaleWork must NOT enqueue yet (future); restoreFutureBackoffTimers must arm.
-    const armed = boot.futureArmed >= 1 || worker2.backoffScheduleCount >= 1;
+
+    worker.backoffScheduleCount = 0;
+    // Default path — do NOT pass a larger limit to force PASS
+    const boot = await worker.bootRecover();
+    const attemptsSnap = await prisma.partnerUploadSession.findMany({
+      where: { id: { in: futureIds } },
+      select: { id: true, finalizeAttempts: true },
+    });
+    const attemptsUnchanged = attemptsSnap.every((r) => r.finalizeAttempts === 1);
+    const allArmed = boot.futureArmed >= 22; // 21 far + 1 soon
     const deadline = Date.now() + 5000;
-    let finalStatus: string | undefined;
-    let mediaId: string | null = null;
+    let soonReady = false;
+    let soonMedia: string | null = null;
     while (Date.now() < deadline) {
-      const live = await prisma.partnerUploadSession.findUnique({ where: { id: init.sessionId } });
-      finalStatus = live?.status;
-      mediaId = live?.catalogMediaId ?? null;
-      if (live?.status === 'ready' && live.catalogMediaId) break;
+      const live = await prisma.partnerUploadSession.findUnique({ where: { id: soonInit.sessionId } });
+      if (live?.status === 'ready' && live.catalogMediaId) {
+        soonReady = true;
+        soonMedia = live.catalogMediaId;
+        break;
+      }
       await new Promise((r) => setTimeout(r, 50));
     }
+    const mediaCount = soonMedia
+      ? await prisma.catalogMedia.count({ where: { sourceMediaKey: `upload-session:${soonInit.sessionId}` } })
+      : 0;
     record(
       'C05',
-      armed && finalStatus === 'ready' && !!mediaId,
-      { futureArmedOnBoot: true, autoRetryWithoutClient: true, ready: true },
-      { boot, armed, finalStatus, mediaId, dueAt: dueAt.toISOString() },
+      allArmed && attemptsUnchanged && soonReady && mediaCount === 1,
+      {
+        futureArmedGte22: true,
+        defaultBatchDrain: true,
+        noEarlyAttemptBurn: true,
+        autoReadyWithoutClient: true,
+        singleMedia: true,
+      },
+      {
+        boot,
+        futureIds: futureIds.length,
+        attemptsUnchanged,
+        soonReady,
+        soonMedia,
+        mediaCount,
+        scheduleCount: worker.backoffScheduleCount,
+      },
+    );
+  }
+
+  // —— C04 static: catalog-journey must not auto-publish from file-select / uploadOne
+  {
+    const journeyPath = join(process.cwd(), '..', 'partners-portal', 'web', 'js', 'catalog-journey.js');
+    const src = existsSync(journeyPath) ? readFileSync(journeyPath, 'utf8') : '';
+    const uploadFn = (src.split('async function uploadOne')[1] || '').slice(0, 4000);
+    const hasPublishOpt = /persistListing\(\{\s*publish:\s*false\s*\}\)/.test(src);
+    const uploadOneNoSubmit = !!uploadFn && !uploadFn.includes('submitReview');
+    const wantPublishGate = /wantPublish\s*&&/.test(src) && /opts\.publish === true/.test(src);
+    record(
+      'C04_STATIC',
+      !!src && hasPublishOpt && uploadOneNoSubmit && wantPublishGate,
+      { publishFalseOnFileSelect: true, uploadOneNoSubmit: true, wantPublishGate: true },
+      { hasPublishOpt, uploadOneNoSubmit, wantPublishGate, bytes: src.length },
     );
   }
 
@@ -680,6 +756,7 @@ async function main() {
     'C02',
     'C03',
     'C05',
+    'C04_STATIC',
   ];
   const byId = Object.fromEntries(cases.map((c) => [c.id, c]));
   const failed = required.filter((id) => !byId[id] || byId[id].ok !== true);

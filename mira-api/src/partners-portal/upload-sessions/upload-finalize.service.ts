@@ -60,24 +60,59 @@ export class UploadFinalizeService implements OnModuleInit {
   /**
    * Boot: reclaim due work, then re-arm timers for future finalizeNextAttemptAt
    * so a worker restart does not wait for the 15m sweep / client GET.
+   * C05: drain ALL eligible sessions in bounded batches (default batch=20) —
+   * raising a single take limit is not sufficient; pagination continues until empty.
    */
-  async bootRecover(limit = 20): Promise<{ due: number; futureArmed: number }> {
-    const due = await this.recoverStaleWork(limit);
-    const futureArmed = await this.restoreFutureBackoffTimers(limit);
-    return { due, futureArmed };
+  async bootRecover(batchSize = 20): Promise<{ due: number; futureArmed: number; batches: number }> {
+    const size = Math.max(1, Math.min(100, Number(batchSize) || 20));
+    let due = 0;
+    let futureArmed = 0;
+    let batches = 0;
+    // Due / overdue work
+    for (;;) {
+      batches += 1;
+      const n = await this.recoverStaleWork(size);
+      due += n;
+      if (n < size) break;
+      // Safety: avoid infinite loop if enqueue somehow fails to track
+      if (batches > 10_000) {
+        this.log.warn(`bootRecover due-drain stopped after ${batches} batches`);
+        break;
+      }
+    }
+    // Future backoff timers — exclude already armed/queued
+    for (;;) {
+      batches += 1;
+      const n = await this.restoreFutureBackoffTimers(size);
+      futureArmed += n;
+      if (n < size) break;
+      if (batches > 10_000) {
+        this.log.warn(`bootRecover future-drain stopped after ${batches} batches`);
+        break;
+      }
+    }
+    return { due, futureArmed, batches };
   }
 
   /**
    * C05: re-schedule sessions whose backoff is still in the future after worker restart.
-   * Does not consume an attempt; only arms timers / notes pendingBackoff.
+   * Does not consume an attempt; only arms timers. Callers that need full coverage
+   * (bootRecover) loop until a short batch is returned.
    */
-  async restoreFutureBackoffTimers(limit = 50): Promise<number> {
+  async restoreFutureBackoffTimers(limit = 20): Promise<number> {
+    const size = Math.max(1, Math.min(100, Number(limit) || 20));
     const now = new Date(uploadNowMs());
+    const skipIds = [
+      ...this.backoffTimers.keys(),
+      ...this.waitQueue,
+      ...this.inFlight.keys(),
+    ];
     const rows = await this.prisma.partnerUploadSession.findMany({
       where: {
         catalogMediaId: null,
         cleanedAt: null,
         finalizeNextAttemptAt: { gt: now },
+        ...(skipIds.length ? { id: { notIn: skipIds } } : {}),
         OR: [
           { status: 'failed', failureClass: 'retryable' },
           { status: 'uploaded' },
@@ -85,8 +120,8 @@ export class UploadFinalizeService implements OnModuleInit {
           { status: 'uploading', storageCompletedAt: { not: null } },
         ],
       },
-      orderBy: { finalizeNextAttemptAt: 'asc' },
-      take: limit,
+      orderBy: [{ finalizeNextAttemptAt: 'asc' }, { id: 'asc' }],
+      take: size,
       select: { id: true, finalizeNextAttemptAt: true },
     });
     let armed = 0;
@@ -302,10 +337,12 @@ export class UploadFinalizeService implements OnModuleInit {
   async recoverStaleWork(limit = 20): Promise<number> {
     await this.reconcileOrphanCompletes(limit);
     const now = new Date(uploadNowMs());
+    const skipIds = [...this.waitQueue, ...this.inFlight.keys()];
     const rows = await this.prisma.partnerUploadSession.findMany({
       where: {
         catalogMediaId: null,
         cleanedAt: null,
+        ...(skipIds.length ? { id: { notIn: skipIds } } : {}),
         AND: [
           {
             OR: [
