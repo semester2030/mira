@@ -27,6 +27,7 @@
     "test:editor-v2-rc2": "tsx src/partners-portal/registry/registry.validation.schema-tests.ts && tsx src/partners-portal/editor-drafts/editor-v2-rc2.http.integration-tests.ts",
     "test:editor-v2-rc3": "tsx src/partners-portal/editor-drafts/editor-v2-rc3.http.integration-tests.ts",
     "test:editor-v2-rc4": "tsx src/partners-portal/editor-drafts/editor-v2-rc4.http.integration-tests.ts",
+    "test:upload-sessions-p21": "tsx src/partners-portal/upload-sessions/upload-sessions.http.integration-tests.ts",
     "test:editor-v2-rc5-browser": "node scripts/p1-rc5-browser-e2e.mjs",
     "test:editor-v2-rc6-browser": "node scripts/p1-rc6-browser-e2e.mjs",
     "test:registry-validation": "tsx src/partners-portal/registry/registry.validation.schema-tests.ts",
@@ -94,6 +95,7 @@
   },
   "dependencies": {
     "@aws-sdk/client-s3": "^3.1141.0",
+    "@aws-sdk/s3-request-presigner": "^3.1161.0",
     "@nestjs/common": "^11.0.0",
     "@nestjs/config": "^4.0.0",
     "@nestjs/core": "^11.0.0",

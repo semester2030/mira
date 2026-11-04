@@ -87,10 +87,12 @@
     if (status === 'بانتظار الحفظ') return { label: 'بانتظار الحفظ', mode: 'idle', percent: null };
     if (status === 'بانتظار البيانات') return { label: 'أكملي الاسم والسعر والتصنيف ليبدأ الرفع', mode: 'idle', percent: null };
     if (status === 'جارٍ تجهيز النشر') return { label: 'جارٍ تجهيز النشر', mode: 'wait', percent: null };
+    if (status === 'جارٍ التحضير') return { label: 'جارٍ التحضير', mode: 'wait', percent: null };
     if (status === 'جارٍ القراءة' || status === 'جارٍ الرفع') {
       if (percent == null) return { label: status, mode: 'wait', percent: null };
       return { label: status + ' ' + Math.round(percent * 100) + '%', mode: 'determinate', percent: percent };
     }
+    if (status === 'جارٍ التحقق') return { label: 'جارٍ التحقق', mode: 'wait', percent: null };
     if (status === 'جارٍ المعالجة') return { label: 'جارٍ المعالجة', mode: 'wait', percent: null };
     return { label: status, mode: 'idle', percent: null };
   }

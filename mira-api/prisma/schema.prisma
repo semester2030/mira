@@ -174,9 +174,55 @@ model Partner {
   commerceOrders   CommerceOrder[]
   commerceBookings CommerceBooking[]
   editorDrafts     PartnerEditorDraft[]
+  uploadSessions   PartnerUploadSession[]
 
   @@index([type, status])
   @@map("partners")
+}
+
+/// P2.1 partner direct multipart upload session (R2/S3 or local test adapter).
+model PartnerUploadSession {
+  id                 String    @id @default(uuid())
+  partnerId          String    @map("partner_id")
+  partner            Partner   @relation(fields: [partnerId], references: [id], onDelete: Cascade)
+  /// product | service
+  ownerKind          String    @map("owner_kind")
+  ownerId            String    @map("owner_id")
+  /// Optional editor draft client id for tracing; ownership still via partner+owner.
+  clientDraftId      String?   @map("client_draft_id")
+  clientMediaId      String    @map("client_media_id")
+  idempotencyKey     String    @map("idempotency_key")
+  /// created | uploading | uploaded | verifying | ready | failed | aborted
+  status             String    @default("created")
+  declaredMimeType   String    @map("declared_mime_type")
+  declaredByteSize   Int       @map("declared_byte_size")
+  declaredChecksum   String?   @map("declared_checksum")
+  objectKey          String    @map("object_key")
+  storageUploadId    String?   @map("storage_upload_id")
+  /// JSON array of { partNumber, etag, size, completedAt }
+  completedPartsJson Json      @default("[]") @map("completed_parts_json")
+  partSizeBytes      Int       @map("part_size_bytes")
+  totalParts         Int       @map("total_parts")
+  placement          String    @default("main")
+  verifiedMimeType   String?   @map("verified_mime_type")
+  verifiedByteSize   Int?      @map("verified_byte_size")
+  verifiedDurationSec Float?   @map("verified_duration_sec")
+  failureCode        String?   @map("failure_code")
+  failureMessageAr   String?   @map("failure_message_ar")
+  catalogMediaId     String?   @map("catalog_media_id")
+  finalizeAttempts   Int       @default(0) @map("finalize_attempts")
+  expiresAt          DateTime  @map("expires_at")
+  completedAt        DateTime? @map("completed_at")
+  readyAt            DateTime? @map("ready_at")
+  abortedAt          DateTime? @map("aborted_at")
+  createdAt          DateTime  @default(now()) @map("created_at")
+  updatedAt          DateTime  @updatedAt @map("updated_at")
+
+  @@unique([partnerId, idempotencyKey])
+  @@index([partnerId, status, updatedAt(sort: Desc)])
+  @@index([ownerKind, ownerId])
+  @@index([status, expiresAt])
+  @@map("partner_upload_sessions")
 }
 
 /// Server-side partner editor draft (P1). Not listed in public catalog.

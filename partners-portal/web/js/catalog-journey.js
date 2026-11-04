@@ -122,12 +122,41 @@
     }));
   }
 
-  function mediaProblem(file) {
+  let uploadSessionPolicyCache = null;
+  let uploadSessionPolicyPromise = null;
+
+  function loadUploadSessionPolicy() {
+    if (uploadSessionPolicyCache) return Promise.resolve(uploadSessionPolicyCache);
+    if (uploadSessionPolicyPromise) return uploadSessionPolicyPromise;
+    if (!window.PartnersApi || typeof PartnersApi.uploadSessionPolicy !== 'function') {
+      uploadSessionPolicyCache = { enabled: false };
+      return Promise.resolve(uploadSessionPolicyCache);
+    }
+    uploadSessionPolicyPromise = PartnersApi.uploadSessionPolicy()
+      .then((policy) => {
+        uploadSessionPolicyCache = policy || { enabled: false };
+        return uploadSessionPolicyCache;
+      })
+      .catch(() => {
+        uploadSessionPolicyCache = { enabled: false };
+        return uploadSessionPolicyCache;
+      });
+    return uploadSessionPolicyPromise;
+  }
+
+  function mediaProblem(file, policy) {
     const image = isPhoneImage(file) && !isPhoneVideo(file);
     const video = isPhoneVideo(file);
     if (!image && !video) return 'الصيغة غير مقبولة. الصور: JPEG أو PNG أو WebP أو صورة الآيفون. الفيديو: MP4 أو MOV.';
-    if (image && file.size > 5 * 1024 * 1024 && !isHeic(file)) return 'الصورة أكبر من 5 ميغابايت.';
-    if (video && file.size > 70 * 1024 * 1024) return 'حجم الملف يتجاوز حد الرفع على هذا الخادم. المدة المسموحة 5 دقائق.';
+    const sessionOn = policy && policy.enabled;
+    const imageMax = sessionOn && policy.imageMaxBytes ? policy.imageMaxBytes : 5 * 1024 * 1024;
+    const videoMax = sessionOn && policy.videoMaxBytes ? policy.videoMaxBytes : 70 * 1024 * 1024;
+    if (image && file.size > imageMax && !isHeic(file)) {
+      return sessionOn ? 'الصورة أكبر من الحد المسموح.' : 'الصورة أكبر من 5 ميغابايت.';
+    }
+    if (video && file.size > videoMax) {
+      return 'حجم الملف يتجاوز حد الرفع على هذا الخادم. المدة المسموحة 5 دقائق.';
+    }
     return '';
   }
 
@@ -3136,7 +3165,8 @@
     }
 
     async function uploadOne(entry, options) {
-      const problem = mediaProblem(entry.file);
+      const policy = await loadUploadSessionPolicy();
+      const problem = mediaProblem(entry.file, policy);
       if (problem) {
         entry.status = 'فشل';
         entry.error = problem;
@@ -3150,38 +3180,70 @@
         paintMedia(null);
         return;
       }
+      if (entry._uploadBusy) return;
+      entry._uploadBusy = true;
       const controller = new AbortController();
       entry.controller = controller;
       entry.error = '';
       entry.percent = null;
-      entry.status = 'جارٍ القراءة';
+      entry.status = policy && policy.enabled ? 'جارٍ التحضير' : 'جارٍ القراءة';
       paintMedia(null);
       if (window.MiraMotion) MiraMotion.announce('بدأ رفع ' + entry.file.name);
       try {
-        const dataBase64 = await fileToBase64(entry.file, (ratio) => {
-          entry.percent = ratio;
-          entry.status = 'جارٍ القراءة';
+        const kind = type === 'brand' ? 'products' : 'services';
+        if (policy && policy.enabled && typeof PartnersApi.uploadViaSession === 'function') {
+          if (!entry.clientMediaId) {
+            entry.clientMediaId = (crypto.randomUUID && crypto.randomUUID()) || String(Date.now()) + Math.random();
+          }
+          entry.status = 'جارٍ الرفع';
           syncMedia(entry);
-        }, controller.signal);
-        if (controller.signal.aborted) throw Object.assign(new Error('أُلغي الرفع'), { name: 'AbortError' });
-        entry.status = 'جارٍ الرفع';
-        entry.percent = null;
-        syncMedia(entry);
-        const send = PartnersApi.addMediaProgress || PartnersApi.addMedia;
-        await send(type === 'brand' ? 'products' : 'services', item.id, uploadMime(entry.file), dataBase64, {
-          placement: entry.placement || 'main',
-          signal: controller.signal,
-          onProgress: (ratio) => {
-            entry.status = 'جارٍ الرفع';
+          await PartnersApi.uploadViaSession(kind, item.id, entry.file, {
+            placement: entry.placement || 'main',
+            mimeType: uploadMime(entry.file),
+            clientMediaId: entry.clientMediaId,
+            idempotencyKey: entry.clientMediaId,
+            clientDraftId: (draftCtx && draftCtx.clientDraftId) || undefined,
+            signal: controller.signal,
+            onSession: (session) => {
+              entry.uploadSessionId = session && session.sessionId;
+            },
+            onProgress: (ratio) => {
+              entry.status = 'جارٍ الرفع';
+              entry.percent = ratio;
+              syncMedia(entry);
+            },
+            onProcessing: () => {
+              entry.status = 'جارٍ التحقق';
+              entry.percent = null;
+              syncMedia(entry);
+            },
+          });
+        } else {
+          const dataBase64 = await fileToBase64(entry.file, (ratio) => {
             entry.percent = ratio;
+            entry.status = 'جارٍ القراءة';
             syncMedia(entry);
-          },
-          onProcessing: () => {
-            entry.status = 'جارٍ المعالجة';
-            entry.percent = null;
-            syncMedia(entry);
-          },
-        });
+          }, controller.signal);
+          if (controller.signal.aborted) throw Object.assign(new Error('أُلغي الرفع'), { name: 'AbortError' });
+          entry.status = 'جارٍ الرفع';
+          entry.percent = null;
+          syncMedia(entry);
+          const send = PartnersApi.addMediaProgress || PartnersApi.addMedia;
+          await send(kind, item.id, uploadMime(entry.file), dataBase64, {
+            placement: entry.placement || 'main',
+            signal: controller.signal,
+            onProgress: (ratio) => {
+              entry.status = 'جارٍ الرفع';
+              entry.percent = ratio;
+              syncMedia(entry);
+            },
+            onProcessing: () => {
+              entry.status = 'جارٍ المعالجة';
+              entry.percent = null;
+              syncMedia(entry);
+            },
+          });
+        }
         entry.status = 'رُفع';
         entry.error = '';
         entry.percent = 1;
@@ -3208,12 +3270,17 @@
           entry.status = 'أُلغي';
           entry.error = '';
           status.textContent = 'أُلغي الرفع وبقي الملف في النموذج.';
+          if (entry.uploadSessionId && typeof PartnersApi.abortUploadSession === 'function') {
+            try { await PartnersApi.abortUploadSession(entry.uploadSessionId); } catch (_) {}
+          }
         } else {
           entry.status = 'فشل';
           entry.error = error.message || 'فشل الرفع';
           status.textContent = developerAccount ? 'فشل الرفع ولم يُنشر: ' + entry.error : 'فشل الرفع وبقيت المسودة: ' + entry.error;
         }
         if (window.MiraMotion) MiraMotion.announce(status.textContent);
+      } finally {
+        entry._uploadBusy = false;
       }
       paintMedia(null);
     }

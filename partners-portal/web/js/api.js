@@ -192,6 +192,194 @@
       request('POST', `/partners-portal/${kind}/${id}/media`, { mimeType, dataBase64, placement: placement || 'main' }),
     addMediaProgress: (kind, id, mimeType, dataBase64, hooks) =>
       requestProgress('POST', `/partners-portal/${kind}/${id}/media`, { mimeType, dataBase64, placement: (hooks && hooks.placement) || 'main' }, hooks),
+    uploadSessionPolicy: (opts) =>
+      request('GET', '/partners-portal/upload-sessions/policy', null, null, opts),
+    initiateUploadSession: (payload, opts) =>
+      request('POST', '/partners-portal/upload-sessions', payload, null, opts),
+    getUploadSession: (sessionId, opts) =>
+      request('GET', `/partners-portal/upload-sessions/${encodeURIComponent(sessionId)}`, null, null, opts),
+    signUploadPart: (sessionId, partNumber, opts) =>
+      request(
+        'POST',
+        `/partners-portal/upload-sessions/${encodeURIComponent(sessionId)}/parts/${partNumber}/sign`,
+        {},
+        null,
+        opts,
+      ),
+    completeUploadSession: (sessionId, parts, opts) =>
+      request(
+        'POST',
+        `/partners-portal/upload-sessions/${encodeURIComponent(sessionId)}/complete`,
+        { parts },
+        null,
+        opts,
+      ),
+    abortUploadSession: (sessionId, opts) =>
+      request(
+        'POST',
+        `/partners-portal/upload-sessions/${encodeURIComponent(sessionId)}/abort`,
+        {},
+        null,
+        opts,
+      ),
+    /**
+     * P2.1 multipart upload: browser sends part bytes to signed URL (R2) or API (memory).
+     * Progress is byte-based; completed parts are not double-counted on retry.
+     */
+    uploadViaSession: async (kind, id, file, hooks) => {
+      const notify = hooks || {};
+      const signal = notify.signal;
+      const abortError = () => Object.assign(new Error('أُلغي الرفع'), { name: 'AbortError' });
+      const checkAbort = () => {
+        if (signal && signal.aborted) throw abortError();
+      };
+      const ownerKind = kind === 'products' ? 'product' : 'service';
+      const mimeType = notify.mimeType || file.type || 'application/octet-stream';
+      const clientMediaId = notify.clientMediaId || (crypto.randomUUID ? crypto.randomUUID() : String(Date.now()) + Math.random());
+      const idempotencyKey = notify.idempotencyKey || clientMediaId;
+      let checksum;
+      try {
+        const buf = await file.arrayBuffer();
+        checkAbort();
+        const digest = await crypto.subtle.digest('SHA-256', buf);
+        checksum = Array.from(new Uint8Array(digest)).map((b) => b.toString(16).padStart(2, '0')).join('');
+      } catch (_) {
+        checksum = undefined;
+      }
+      const session = await request('POST', '/partners-portal/upload-sessions', {
+        ownerKind,
+        ownerId: id,
+        clientMediaId,
+        idempotencyKey,
+        mimeType,
+        byteSize: file.size,
+        checksum,
+        placement: notify.placement || 'main',
+        clientDraftId: notify.clientDraftId || undefined,
+      }, null, { signal });
+      if (typeof notify.onSession === 'function') notify.onSession(session);
+      const partSize = session.partSizeBytes || session.upload && session.upload.partSizeBytes || 16 * 1024 * 1024;
+      const totalParts = session.totalParts || Math.ceil(file.size / partSize);
+      const concurrency = (session.upload && session.upload.concurrency) || 2;
+      const maxRetries = (session.upload && session.upload.partMaxRetries) || 3;
+      const completedMap = new Map();
+      (session.completedParts || []).forEach((p) => {
+        if (p && p.partNumber) completedMap.set(p.partNumber, { partNumber: p.partNumber, etag: p.etag, size: p.size });
+      });
+      const reportProgress = () => {
+        if (typeof notify.onProgress !== 'function') return;
+        let uploaded = 0;
+        completedMap.forEach((p) => { uploaded += Number(p.size) || 0; });
+        notify.onProgress(file.size ? Math.min(1, uploaded / file.size) : null);
+      };
+      reportProgress();
+
+      async function putPart(partNumber) {
+        checkAbort();
+        if (completedMap.has(partNumber)) return completedMap.get(partNumber);
+        const start = (partNumber - 1) * partSize;
+        const end = Math.min(file.size, start + partSize);
+        const chunk = file.slice(start, end);
+        let lastError = null;
+        for (let attempt = 0; attempt <= maxRetries; attempt++) {
+          checkAbort();
+          try {
+            const signed = await request(
+              'POST',
+              `/partners-portal/upload-sessions/${encodeURIComponent(session.sessionId)}/parts/${partNumber}/sign`,
+              {},
+              null,
+              { signal },
+            );
+            let putUrl = signed.url;
+            if (!/^https?:\/\//i.test(putUrl)) {
+              try {
+                const origin = new URL(API_BASE).origin;
+                putUrl = putUrl.startsWith('/') ? origin + putUrl : origin + '/' + putUrl;
+              } catch (_) {
+                putUrl = (API_BASE.replace(/\/$/, '') + '/' + putUrl.replace(/^\//, ''));
+              }
+            }
+            const headers = Object.assign({}, signed.headers || {});
+            if (signed.directToApi) {
+              Object.assign(headers, authHeaders());
+            }
+            const putRes = await fetch(putUrl, {
+              method: signed.method || 'PUT',
+              headers,
+              body: chunk,
+              signal: signal || undefined,
+            });
+            if (!putRes.ok) {
+              throw new Error('فشل رفع الجزء ' + partNumber);
+            }
+            let etag = putRes.headers.get('etag') || putRes.headers.get('ETag') || '';
+            if (signed.directToApi) {
+              const body = await putRes.json().catch(() => ({}));
+              etag = body.etag || etag;
+            }
+            if (!etag) throw new Error('تعذر قراءة ETag للجزء ' + partNumber);
+            const row = { partNumber, etag, size: end - start };
+            completedMap.set(partNumber, row);
+            reportProgress();
+            return row;
+          } catch (error) {
+            if (error && error.name === 'AbortError') throw error;
+            lastError = error;
+            if (attempt >= maxRetries) break;
+            await new Promise((r) => setTimeout(r, Math.min(4000, 400 * Math.pow(2, attempt))));
+          }
+        }
+        throw lastError || new Error('فشل رفع الجزء');
+      }
+
+      const pending = [];
+      for (let n = 1; n <= totalParts; n++) {
+        if (!completedMap.has(n)) pending.push(n);
+      }
+      let cursor = 0;
+      async function worker() {
+        while (cursor < pending.length) {
+          const idx = cursor++;
+          await putPart(pending[idx]);
+        }
+      }
+      const workers = [];
+      for (let i = 0; i < Math.min(concurrency, pending.length || 1); i++) workers.push(worker());
+      await Promise.all(workers);
+      checkAbort();
+      const parts = [];
+      for (let n = 1; n <= totalParts; n++) {
+        const row = completedMap.get(n);
+        if (!row) throw new Error('جزء مفقود بعد الرفع: ' + n);
+        parts.push(row);
+      }
+      if (typeof notify.onProcessing === 'function') notify.onProcessing();
+      let state = await request(
+        'POST',
+        `/partners-portal/upload-sessions/${encodeURIComponent(session.sessionId)}/complete`,
+        { parts },
+        null,
+        { signal },
+      );
+      const deadline = Date.now() + 120000;
+      while (state && (state.status === 'uploaded' || state.status === 'verifying') && Date.now() < deadline) {
+        checkAbort();
+        await new Promise((r) => setTimeout(r, 400));
+        state = await request(
+          'GET',
+          `/partners-portal/upload-sessions/${encodeURIComponent(session.sessionId)}`,
+          null,
+          null,
+          { signal },
+        );
+      }
+      if (!state || state.status !== 'ready') {
+        const msg = (state && state.failureMessageAr) || 'تعذر التحقق من الملف';
+        throw ApiError(msg, { code: (state && state.failureCode) || 'upload_failed', body: state });
+      }
+      return state;
+    },
     submitReview: (kind, id) =>
       request('POST', `/partners-portal/${kind}/${id}/submit-review`, {}),
     preview: (kind, id) =>
