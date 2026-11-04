@@ -335,7 +335,8 @@ export class UploadFinalizeService implements OnModuleInit {
 
   /** Crash recovery: reconcile orphans, then reclaim due leases / retryable / uploaded. */
   async recoverStaleWork(limit = 20): Promise<number> {
-    await this.reconcileOrphanCompletes(limit);
+    // Include reconcile enqueue count — skipIds below exclude already-queued ids so we do not double-count.
+    const reconciled = await this.reconcileOrphanCompletes(limit);
     const now = new Date(uploadNowMs());
     const skipIds = [...this.waitQueue, ...this.inFlight.keys()];
     const rows = await this.prisma.partnerUploadSession.findMany({
@@ -365,7 +366,7 @@ export class UploadFinalizeService implements OnModuleInit {
       select: { id: true },
     });
     for (const row of rows) this.enqueue(row.id);
-    return rows.length;
+    return reconciled + rows.length;
   }
 
   /**
