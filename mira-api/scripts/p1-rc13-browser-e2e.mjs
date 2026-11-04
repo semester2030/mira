@@ -1289,20 +1289,28 @@ async function main() {
           }, productId);
           const preList = Array.isArray(preDel) ? preDel : [];
           mVariantFixture = preList
-            .filter((v) => v && v.selections && String(v.selections.size) === 'M')
+            .filter((v) => v && v.selections && String(v.selections.size).toUpperCase() === 'M')
             .map((v) => ({
               id: v.id,
               selections: v.selections || {},
               priceHalalas: v.priceHalalas == null ? null : v.priceHalalas,
               available: v.available === false ? false : true,
             }));
-          const lVar = preList.find((v) => v && v.selections && String(v.selections.size) === 'L');
+          const lVar = preList.find((v) => v && v.selections && String(v.selections.size).toUpperCase() === 'L');
           if (lVar) deletedVariantId = lVar.id;
-          globalThis.__rc13ExpectedRemainVariants = mVariantFixture;
-          if (!mVariantFixture.length) {
-            // No variants path: exact options-only still valid with empty expected variants
-            globalThis.__rc13ExpectedRemainVariants = [];
+          // Prefer M fixtures; if size key differs, keep all non-L as remain expected
+          if (!mVariantFixture.length && preList.length) {
+            mVariantFixture = preList
+              .filter((v) => !(v && v.selections && String(v.selections.size).toUpperCase() === 'L'))
+              .map((v) => ({
+                id: v.id,
+                selections: v.selections || {},
+                priceHalalas: v.priceHalalas == null ? null : v.priceHalalas,
+                available: v.available === false ? false : true,
+              }));
           }
+          globalThis.__rc13ExpectedRemainVariants = mVariantFixture;
+          globalThis.__rc13HadVariantsBeforeDelete = preList.length > 0;
         }
       } else {
         globalThis.__rc13ExpectedRemainVariants = [];
@@ -1356,6 +1364,9 @@ async function main() {
         // Remaining variants from pre-delete fixture only when non-empty; otherwise options+absentIds prove delete.
         if (Array.isArray(globalThis.__rc13ExpectedRemainVariants) && globalThis.__rc13ExpectedRemainVariants.length) {
           expectedAfterDelete.variants = globalThis.__rc13ExpectedRemainVariants;
+        } else if (globalThis.__rc13HadVariantsBeforeDelete) {
+          // Had variants before delete but could not derive M remain fixture — fail via empty expected vs actual
+          expectedAfterDelete.variants = [];
         } else {
           delete expectedAfterDelete.variants;
         }
@@ -1496,7 +1507,7 @@ async function main() {
           if (window.renderEditorDrafts) await window.renderEditorDrafts();
         });
         // open from catalog list by name
-        const openItem = sp.locator('.list-row', { hasText: expectedName }).locator('button', { hasText: /فتح|تعديل/ }).first();
+        const openItem = sp.locator('#catalogList .list-item, .list-item, .list-row', { hasText: expectedName }).locator('button', { hasText: /فتح/ }).first();
         if ((await openItem.count()) > 0) {
           await openItem.click();
           await sp.waitForTimeout(1200);
@@ -1768,7 +1779,7 @@ async function main() {
           await pg.waitForTimeout(1200);
           // Catalog list uses "فتح في النموذج" — require the named row, never first-row fallback.
           const openBtn = pg
-            .locator('#catalogList .list-row, .list-row', { hasText: name })
+            .locator('#catalogList .list-item, #catalogList .list-row, .list-item, .list-row', { hasText: name })
             .locator('button', { hasText: /فتح/ })
             .first();
           if ((await openBtn.count()) === 0) {

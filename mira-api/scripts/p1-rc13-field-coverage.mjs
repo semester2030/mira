@@ -73,6 +73,40 @@ async function softWaitSaved(page, timeout = 12000) {
   try { await waitSaved(page, timeout); } catch (_) { await page.waitForTimeout(1500); }
 }
 
+function pickPayloadValue(body, serverKey) {
+  if (!body || typeof body !== 'object') return null;
+  if (body[serverKey] != null) return body[serverKey];
+  if (body.values && body.values[serverKey] != null) return body.values[serverKey];
+  if (body.basics && body.basics[serverKey] != null) return body.basics[serverKey];
+  if (serverKey.startsWith('answers.') && body.values) {
+    const k = serverKey.slice('answers.'.length);
+    const ans = (body.values.answers || body.answers || {});
+    return ans[k];
+  }
+  if (serverKey.startsWith('answers.') && body.answers) {
+    return body.answers[serverKey.slice('answers.'.length)];
+  }
+  return null;
+}
+
+async function openCatalogOwner(page, kind, ownerId) {
+  return page.evaluate(async ({ kind, ownerId }) => {
+    const d = await PartnersApi.dashboard();
+    const list = kind === 'product' ? ((d.catalog && d.catalog.products) || []) : ((d.catalog && d.catalog.services) || []);
+    const row = list.find((x) => x.id === ownerId);
+    if (!row) return { ok: false, reason: 'owner-not-in-dashboard' };
+    const name = row.nameAr || '';
+    const cards = Array.from(document.querySelectorAll('#catalogList .list-item, #catalogList .list-row'));
+    const card = cards.find((el) => (el.textContent || '').includes(name)) || cards.find((el) => (el.textContent || '').includes(ownerId));
+    if (!card) return { ok: false, reason: 'list-item-missing', name };
+    const btn = Array.from(card.querySelectorAll('button')).find((b) => /فتح/.test(b.textContent || ''));
+    if (!btn) return { ok: false, reason: 'open-btn-missing', name };
+    btn.click();
+    return { ok: true, name };
+  }, { kind, ownerId });
+}
+
+
 function csvEscape(v) {
   const s = v == null ? '' : String(v);
   if (/[",\n\r]/.test(s)) return '"' + s.replace(/"/g, '""') + '"';
@@ -89,7 +123,7 @@ const PRODUCT_SPECS = [
   { field: 'stockQty', selector: '[name="stockQty"]', kind: 'text', oldVal: '2', newVal: '8', serverKey: 'stockQty', category: 'clothes' },
   { field: 'deliveryFeeSar', selector: '[name="deliveryFeeSar"]', kind: 'text', oldVal: '10', newVal: '18', serverKey: 'deliveryFeeHalalas', normalize: (v) => String(Math.round(Number(v) * 100)), category: 'clothes' },
   { field: 'externalUrl', selector: '[name="externalUrl"]', kind: 'text', oldVal: 'https://example.com/old-rc13', newVal: 'https://example.com/new-rc13', serverKey: 'externalUrl', category: 'clothes', needsExternal: true },
-  { field: 'purchaseMode', selector: 'input[name="purchaseMode"][value="external"], input[value="external"]', kind: 'radio', oldVal: 'internal_cod', newVal: 'external', serverKey: 'purchaseMode', category: 'clothes', independent: true },
+  { field: 'purchaseMode', selector: 'input[name="internalCod"]', kind: 'checkbox', oldVal: true, newVal: false, serverKey: 'purchaseMode', category: 'clothes', independent: true, normalize: (v) => (v === true || v === 'true' || v === 'internal_cod' ? 'internal_cod' : 'external'), normalizeServer: (v) => String(v || '') },
   { field: 'skinTypes', selector: '[name="skinTypes"]', kind: 'text', oldVal: 'دهنية', newVal: 'مختلطة', serverKey: 'skinTypes', category: 'face', normalizeServer: (v) => (Array.isArray(v) ? v.join(',') : String(v || '')) },
   { field: 'stepAr', selector: '[name="stepAr"]', kind: 'text', oldVal: 'تنظيف', newVal: 'ترطيب', serverKey: 'stepAr', category: 'face' },
 ];
@@ -197,11 +231,12 @@ async function main() {
           const prev = await PartnersApi.preview('products', id);
           const d = await PartnersApi.dashboard();
           const row = ((d.catalog && d.catalog.products) || []).find((p) => p.id === id) || {};
+          // Prefer live dashboard row (post-updateProduct), then draft, then published.
           const map = {
-            nameAr: prev.draftNameAr != null ? prev.draftNameAr : (prev.publishedNameAr || row.nameAr),
-            nameEn: prev.draftNameEn != null ? prev.draftNameEn : (prev.publishedNameEn || row.nameEn),
-            descriptionAr: prev.draftDescriptionAr != null ? prev.draftDescriptionAr : (prev.publishedDescriptionAr || row.descriptionAr),
-            priceHalalas: prev.priceHalalas != null ? prev.priceHalalas : row.priceHalalas,
+            nameAr: row.nameAr || prev.draftNameAr || prev.publishedNameAr,
+            nameEn: row.nameEn || prev.draftNameEn || prev.publishedNameEn,
+            descriptionAr: row.descriptionAr || prev.draftDescriptionAr || prev.publishedDescriptionAr,
+            priceHalalas: row.priceHalalas != null ? row.priceHalalas : prev.priceHalalas,
             category: row.category,
             concernTags: row.concernTags || row.draftConcernTags,
             stockQty: row.stockQty,
@@ -217,8 +252,17 @@ async function main() {
 
       async function setField(spec, val) {
         if (spec.needsExternal) {
-          const purchaseExternal = page.locator('#catalogForm input[name="purchaseMode"][value="external"], #catalogForm input[value="external"]');
-          if ((await purchaseExternal.count()) > 0) await purchaseExternal.first().check();
+          const link = page.locator('#catalogForm input[name="purchaseMode"][value="link"]');
+          if ((await link.count()) > 0) await link.first().check();
+          const ic = page.locator('#catalogForm input[name="internalCod"]');
+          if ((await ic.count()) > 0 && (await ic.isChecked())) await ic.uncheck();
+        }
+        if (spec.field === 'purchaseMode' && spec.kind === 'checkbox') {
+          const ic = page.locator('#catalogForm input[name="internalCod"]').first();
+          if ((await ic.count()) === 0) return { ok: false, reason: 'control-absent' };
+          if (val) await ic.check();
+          else await ic.uncheck();
+          return { ok: true };
         }
         if (spec.category) {
           const cat = page.locator('#catalogForm [name="category"]');
@@ -250,6 +294,11 @@ async function main() {
       }
 
       async function uiValue(spec) {
+        if (spec.field === 'purchaseMode') {
+          const ic = page.locator('#catalogForm input[name="internalCod"]').first();
+          if ((await ic.count()) === 0) return null;
+          return (await ic.isChecked()) ? 'internal_cod' : 'external';
+        }
         const el = page.locator('#catalogForm ' + spec.selector).first();
         if ((await el.count()) === 0) return null;
         if (spec.kind === 'checkbox') return el.isChecked();
@@ -262,9 +311,9 @@ async function main() {
         const shot = join(outDir, 'screenshots', testId + '.png');
         try {
           if (spec.independent && spec.field === 'purchaseMode') {
-            // independent: set COD first then external via gated save
-            const cod = page.locator('#catalogForm input[value="internal_cod"], #catalogForm input[name="purchaseMode"][value="internal_cod"]');
-            if ((await cod.count()) > 0) await cod.first().check();
+            // independent: start from internal_cod (checkbox on), then gate-flip to external
+            const ic = page.locator('#catalogForm input[name="internalCod"]');
+            if ((await ic.count()) > 0) await ic.first().check();
             await page.locator('#catalogForm button[type="submit"]').first().click();
             await softWaitSaved(page);
           }
@@ -292,6 +341,9 @@ async function main() {
           }
           await page.locator('#catalogForm button[type="submit"]').first().click();
           await softWaitSaved(page);
+          // Re-dirty same field so the gated save actually starts (clean form would skip request).
+          await setField(spec, spec.oldVal);
+          await page.waitForTimeout(120);
 
           const editedNorm = spec.normalize ? spec.normalize(spec.newVal) : String(spec.newVal);
           let capturedPayload = null;
@@ -375,16 +427,31 @@ async function main() {
           });
           await page.locator('#catalogForm button[type="submit"]').first().click();
           await softWaitSaved(page);
+          const tNextP = Date.now();
+          while (nextPayload == null && Date.now() - tNextP < 8000) await page.waitForTimeout(50);
           await page.unroute('**/partners-portal/**');
 
-          const payloadRaw = nextPayload || capturedPayload || {};
-          let payloadVal = payloadRaw[spec.serverKey];
+          const payloadRaw = nextPayload != null ? nextPayload : {};
+          let payloadVal = pickPayloadValue(payloadRaw, spec.serverKey);
           if (spec.serverKey === 'concernTags' && Array.isArray(payloadVal)) payloadVal = payloadVal.join(',');
-          if (spec.field === 'priceSar' && payloadRaw.priceHalalas != null) payloadVal = String(payloadRaw.priceHalalas);
-          if (spec.field === 'deliveryFeeSar' && payloadRaw.deliveryFeeHalalas != null) payloadVal = String(payloadRaw.deliveryFeeHalalas);
-          if (spec.field === 'purchaseMode') payloadVal = payloadRaw.purchaseMode || payloadVal;
+          if (spec.field === 'priceSar') {
+            const ph = pickPayloadValue(payloadRaw, 'priceHalalas');
+            if (ph != null) payloadVal = String(ph);
+          }
+          if (spec.field === 'deliveryFeeSar') {
+            const dh = pickPayloadValue(payloadRaw, 'deliveryFeeHalalas');
+            if (dh != null) payloadVal = String(dh);
+          }
+          if (spec.field === 'purchaseMode') payloadVal = pickPayloadValue(payloadRaw, 'purchaseMode') || payloadVal;
 
-          const serverRaw = ownerId ? await readServerProduct(ownerId, spec.serverKey, spec.normalizeServer) : '';
+          // Allow save to settle before server read
+          await page.waitForTimeout(800);
+          let serverRaw = ownerId ? await readServerProduct(ownerId, spec.serverKey, spec.normalizeServer) : '';
+          // Retry once if server still shows old while payload has new
+          if (ownerId && String(serverRaw) === String(spec.oldVal)) {
+            await page.waitForTimeout(1200);
+            serverRaw = await readServerProduct(ownerId, spec.serverKey, spec.normalizeServer);
+          }
           let serverVal = serverRaw == null ? '' : String(serverRaw);
           if (spec.normalize && spec.field !== 'priceSar' && spec.field !== 'deliveryFeeSar') {
             // already normalized via normalizeServer
@@ -396,41 +463,17 @@ async function main() {
           await page.reload({ waitUntil: 'domcontentloaded' });
           await page.waitForTimeout(1200);
           if (ownerId) {
-            const opened = await page.evaluate(async (id) => {
-              const d = await PartnersApi.dashboard();
-              const row = ((d.catalog && d.catalog.products) || []).find((p) => p.id === id);
-              if (!row) return false;
-              // Prefer catalog journey open helpers when present
-              if (typeof window.openCatalogEditor === 'function') {
-                await window.openCatalogEditor(row);
-                return true;
-              }
-              const buttons = Array.from(document.querySelectorAll('#catalogList .list-row button, .list-row button'));
-              const hit = buttons.find((b) => /فتح/.test(b.textContent || '') && (b.closest('.list-row') || {}).textContent && (b.closest('.list-row').textContent.includes(row.nameAr) || b.closest('.list-row').textContent.includes(id)));
-              if (hit) {
-                hit.click();
-                return true;
-              }
-              // Last resort: click first matching name row
-              const rows = Array.from(document.querySelectorAll('#catalogList .list-row, .list-row'));
-              const r = rows.find((el) => (el.textContent || '').includes(row.nameAr || ''));
-              const btn = r && r.querySelector('button');
-              if (btn && /فتح/.test(btn.textContent || '')) {
-                btn.click();
-                return true;
-              }
-              return false;
-            }, ownerId);
+            const opened = await openCatalogOwner(page, 'product', ownerId);
             await page.waitForTimeout(1400);
-            if (!opened) {
-              // still try label button
-              const openBtn = page.locator('#catalogList .list-row button', { hasText: /فتح/ }).first();
+            if (!opened || !opened.ok) {
+              // named fallback
+              const openBtn = page.locator('#catalogList .list-item button', { hasText: /فتح/ }).first();
               if ((await openBtn.count()) > 0) await openBtn.click();
               await page.waitForTimeout(1000);
             }
           }
-          // restore category visibility for cosmetic fields
-          if (spec.category) {
+          // restore category visibility for cosmetic fields (never overwrite the category field under test)
+          if (spec.category && spec.field !== 'category') {
             const cat = page.locator('#catalogForm [name="category"]');
             if ((await cat.count()) > 0) await cat.selectOption(spec.category).catch(() => {});
           }
@@ -463,45 +506,29 @@ async function main() {
             timeoutSwallowed: false,
           });
 
-          // For purchaseMode/externalUrl accept server commerce semantics
           let ok = ev.ok;
-          if (spec.field === 'externalUrl' || spec.field === 'purchaseMode') {
+          if (spec.field === 'purchaseMode') {
+            const editedPm = 'external'; // newVal false → external
+            const midPm = midStr;
+            const rePm = String(reopened ?? '');
+            const payPm = payloadNorm || '';
+            const srvPm = serverVal || '';
             ok =
-              midStr.includes(String(spec.newVal).slice(0, 12)) || midStr === String(spec.newVal)
-                ? evaluateFieldRoundtrip({
-                    ...ev.ev,
-                    // loosen only payload key presence when nested
-                    payloadValue: payloadNorm || editedNorm,
-                    payloadNormalized: payloadNorm || editedNorm,
-                    serverValue: serverVal || editedNorm,
-                    serverNormalized: serverVal || editedNorm,
-                    reopenedValue: String(reopened ?? '') || editedNorm,
-                    reopenedNormalized: reopenedNorm || editedNorm,
-                  }).ok && midStr
-                : false;
-            // re-evaluate strictly on mid+reopen at least
+              midPm === editedPm &&
+              rePm === editedPm &&
+              (payPm === editedPm || payPm === 'external') &&
+              (srvPm === editedPm || srvPm === 'external');
+          } else if (spec.field === 'externalUrl') {
             ok =
-              String(mid) === String(spec.newVal) ||
-              (spec.kind === 'radio' && mid === true) ||
-              (spec.field === 'purchaseMode' && midStr === 'external');
-            const reOk =
-              String(reopened) === String(spec.newVal) ||
-              (spec.field === 'purchaseMode' && (await page.locator('#catalogForm input[value="external"]').isChecked().catch(() => false)));
-            const serverOk = serverVal.includes(String(spec.newVal)) || serverVal === editedNorm || serverVal === 'external' || /example\.com\/new-rc13/.test(serverVal);
-            ok = ok && reOk && (serverOk || payloadNorm.includes('new-rc13') || payloadNorm === 'external');
-          }
-
-          // Prefer evaluator for standard fields
-          if (!['purchaseMode', 'externalUrl'].includes(spec.field)) {
-            ok = ev.ok;
-            // price/delivery: compare normalized
-            if (spec.normalize) {
-              ok =
-                midStr === String(spec.newVal) &&
-                (payloadNorm === editedNorm || payloadNorm === String(spec.newVal)) &&
-                (serverVal === editedNorm || serverVal === String(spec.newVal)) &&
-                (reopenedNorm === editedNorm || String(reopened) === String(spec.newVal));
-            }
+              (midStr === String(spec.newVal) || midStr.includes('new-rc13')) &&
+              (String(reopened) === String(spec.newVal) || String(reopened).includes('new-rc13')) &&
+              (serverVal.includes('new-rc13') || payloadNorm.includes('new-rc13'));
+          } else if (spec.normalize) {
+            ok =
+              midStr === String(spec.newVal) &&
+              (payloadNorm === editedNorm || payloadNorm === String(spec.newVal)) &&
+              (serverVal === editedNorm || serverVal === String(spec.newVal)) &&
+              (reopenedNorm === editedNorm || String(reopened) === String(spec.newVal));
           }
 
           record({
@@ -627,8 +654,51 @@ async function main() {
       if ((await pm.count()) > 0) await pm.selectOption('fixed');
       await page.locator('#catalogForm button[type="submit"]').first().click();
       await softWaitSaved(page);
+      const tinySvc = Buffer.from(
+        'iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAYAAAAfFcSJAAAADUlEQVR42mP8z8BQDwAEhQGAhKmMIQAAAABJRU5ErkJggg==',
+        'base64',
+      );
+      const fileSvc = page.locator('#catalogForm input[type="file"]').first();
+      if ((await fileSvc.count()) > 0 && (await page.locator('#catalogForm [data-editor-v2-materialize]').count()) > 0) {
+        await fileSvc.setInputFiles({ name: 's.png', mimeType: 'image/png', buffer: tinySvc });
+        await page.locator('#catalogForm [data-editor-v2-materialize]').click();
+        await page.waitForTimeout(3500);
+      }
 
       let ownerId = await page.evaluate(() => MiraEditorV2.getEditContext('catalogForm')?.targetOwnerId || null);
+      if (!ownerId) {
+        ownerId = await page.evaluate(async () => {
+          const d = await PartnersApi.dashboard();
+          const hit = ((d.catalog && d.catalog.services) || []).find((s) => (s.nameAr || '').includes('RC13 fields'));
+          return hit && hit.id;
+        });
+      }
+
+      // Materialize can clear category / required template answers and leave save blocked ("لم يُرسل الحفظ").
+      await page.selectOption('#catalogForm [name="category"]', 'hair').catch(() => {});
+      await page.fill('#catalogForm [name="priceSar"]', '70').catch(() => {});
+      await page.fill('#catalogForm [name="durationMin"]', '30').catch(() => {});
+      const cut = page.locator('#catalogForm input[name="tpl-cut_style"][value="cut"], #catalogForm input[name="tpl-cut_style"]').first();
+      if ((await cut.count()) > 0) await cut.check().catch(() => {});
+      // Re-bind template revision after materialize so profile+basics saves are allowed
+      const tpl2 = page.locator('#catalogForm select[name="serviceTemplateId"]');
+      if ((await tpl2.count()) > 0) {
+        await tpl2.selectOption('salon_hair_cut').catch(() => {});
+        await page.waitForTimeout(600);
+        if ((await cut.count()) > 0) await cut.check().catch(() => {});
+      }
+      await page.locator('#catalogForm button[type="submit"]').first().click();
+      await softWaitSaved(page);
+      await page.waitForTimeout(800);
+      // Confirm a basics PATCH works before roundtrips
+      const smoke = await page.evaluate(async (id) => {
+        const d = await PartnersApi.dashboard();
+        const row = ((d.catalog && d.catalog.services) || []).find((s) => s.id === id);
+        return row ? { nameAr: row.nameAr, category: row.category, priceHalalas: row.priceHalalas } : null;
+      }, ownerId);
+      if (!smoke || !smoke.nameAr) {
+        throw new Error('RC13 service field setup failed to persist after materialize: ' + JSON.stringify(smoke));
+      }
 
       for (const spec of SERVICE_SPECS) {
         const testId = 'RC13-FIELD-service-' + spec.field;
@@ -697,57 +767,122 @@ async function main() {
           }
 
           if (spec.field === 'availabilityJson') {
-            // Ensure booking/availability UI visible
             const booking = page.locator('#catalogForm [name="bookingEnabled"]');
             if ((await booking.count()) > 0) await booking.check().catch(() => {});
             await page.waitForTimeout(300);
-            const day = page.locator('#catalogForm .availability-day input[type="checkbox"], #catalogForm [data-availability] input[type="checkbox"]').first();
-            if ((await day.count()) === 0 || !(await day.isVisible().catch(() => false))) {
+            const availSection = page.locator('#catalogForm .form-section', { hasText: 'أيام العمل' });
+            if ((await availSection.count()) === 0) {
               record({
-                testId,
-                scope: 'service',
-                field: spec.field,
-                ownerId,
-                oldValue: '',
-                editedValue: true,
-                requestValue: '',
-                serverValue: '',
-                reopenedValue: '',
-                dirtyEvidence: 'availability-controls-not-visible',
-                status: 'FAIL',
-                evidence: 'must show availability UI under booking conditions',
-                evidencePath: shot,
+                testId, scope: 'service', field: spec.field, ownerId,
+                oldValue: '', editedValue: true, requestValue: '', serverValue: '', reopenedValue: '',
+                dirtyEvidence: 'availability-controls-not-visible', status: 'FAIL',
+                evidence: 'must show availability UI under booking conditions', evidencePath: shot,
+              });
+              await page.screenshot({ path: shot, fullPage: true }).catch(() => {});
+              continue;
+            }
+
+            const before = await page.evaluate(async (id) => {
+              const d = await PartnersApi.dashboard();
+              const row = ((d.catalog && d.catalog.services) || []).find((s) => s.id === id) || {};
+              return Array.isArray(row.availabilityJson) ? row.availabilityJson.map((w) => Number(w.weekday)) : [];
+            }, ownerId);
+
+            // Drive real labels: enable السبت، disable الخميس
+            const thuRow = availSection.locator('.check-row', { hasText: 'الخميس' }).first();
+            const satRow = availSection.locator('.check-row', { hasText: 'السبت' }).first();
+            const thuBox = thuRow.locator('input[type="checkbox"]').first();
+            const satBox = satRow.locator('input[type="checkbox"]').first();
+            if ((await thuBox.count()) === 0 || (await satBox.count()) === 0) {
+              record({
+                testId, scope: 'service', field: spec.field, ownerId,
+                oldValue: false, editedValue: true, requestValue: '', serverValue: '', reopenedValue: '',
+                dirtyEvidence: 'day-labels-missing', status: 'FAIL',
+                evidence: 'expected الخميس/السبت rows', evidencePath: shot,
               });
               continue;
             }
-            await day.check();
+            if (await thuBox.isChecked()) await thuBox.uncheck();
+            if (!(await satBox.isChecked())) await satBox.check();
+            // Force persist dirty via duration nudge (availability onchange should also bump epoch)
+            const dur = page.locator('#catalogForm [name="durationMin"]');
+            if ((await dur.count()) > 0) {
+              const cur = await dur.inputValue();
+              await dur.fill(cur || '30');
+              await dur.dispatchEvent('input').catch(() => {});
+            }
+
+            let availPayload = null;
+            await page.route('**/partners-portal/services/**', async (route) => {
+              const m = route.request().method();
+              const u = route.request().url();
+              if (m === 'PATCH' && !/service-profile|media/.test(u)) {
+                try {
+                  const body = route.request().postDataJSON();
+                  if (body && body.availabilityJson) availPayload = body.availabilityJson;
+                } catch (_) {}
+              }
+              await route.continue();
+            });
             await page.locator('#catalogForm button[type="submit"]').first().click();
             await softWaitSaved(page);
-            const server = await page.evaluate(async () => {
+            const tPay = Date.now();
+            while (availPayload == null && Date.now() - tPay < 8000) await page.waitForTimeout(50);
+            await page.unroute('**/partners-portal/services/**');
+
+            let server = await page.evaluate(async (id) => {
               const d = await PartnersApi.dashboard();
-              const row = ((d.catalog && d.catalog.services) || []).find((s) => (s.nameAr || '').includes('RC13 fields')) || ((d.catalog && d.catalog.services) || [])[0];
-              return row && row.availabilityJson;
-            });
-            const ok = server != null && (Array.isArray(server) ? server.length > 0 : !!server);
+              const row = ((d.catalog && d.catalog.services) || []).find((s) => s.id === id) || {};
+              return row.availabilityJson;
+            }, ownerId);
+            for (let i = 0; i < 10; i++) {
+              const weeks = Array.isArray(server) ? server.map((w) => Number(w.weekday)) : [];
+              if (weeks.includes(6) && !weeks.includes(4)) break;
+              await page.waitForTimeout(400);
+              server = await page.evaluate(async (id) => {
+                const d = await PartnersApi.dashboard();
+                const row = ((d.catalog && d.catalog.services) || []).find((s) => s.id === id) || {};
+                return row.availabilityJson;
+              }, ownerId);
+            }
+            const weeks = Array.isArray(server) ? server.map((w) => Number(w.weekday)) : [];
+            const payloadWeeks = Array.isArray(availPayload) ? availPayload.map((w) => Number(w.weekday)) : [];
+            const serverOk = weeks.includes(6) && !weeks.includes(4);
+            const payloadOk = payloadWeeks.includes(6) && !payloadWeeks.includes(4);
+
+            await page.reload({ waitUntil: 'domcontentloaded' });
+            await page.waitForTimeout(1000);
+            if (ownerId) await openCatalogOwner(page, 'service', ownerId);
+            await page.waitForTimeout(1400);
+            const reThu = page.locator('#catalogForm .form-section', { hasText: 'أيام العمل' }).locator('.check-row', { hasText: 'الخميس' }).locator('input[type="checkbox"]').first();
+            const reSat = page.locator('#catalogForm .form-section', { hasText: 'أيام العمل' }).locator('.check-row', { hasText: 'السبت' }).locator('input[type="checkbox"]').first();
+            const reOk =
+              (await reSat.count()) > 0 &&
+              (await reThu.count()) > 0 &&
+              (await reSat.isChecked()) &&
+              !(await reThu.isChecked());
+
             record({
               testId,
               scope: 'service',
               field: spec.field,
               ownerId,
-              oldValue: false,
-              editedValue: true,
-              requestValue: 'checked',
-              serverValue: JSON.stringify(server).slice(0, 200),
-              reopenedValue: 'checked',
+              oldValue: JSON.stringify(before),
+              editedValue: 'sat-on,thu-off',
+              requestValue: JSON.stringify(payloadWeeks),
+              serverValue: JSON.stringify(weeks),
+              reopenedValue: reOk ? 'sat-on,thu-off' : '__missing__',
               dirtyEvidence: '',
-              status: ok ? 'PASS_LOCAL' : 'FAIL',
-              evidence: 'availability-ui-save',
+              status: serverOk && payloadOk && reOk ? 'PASS_LOCAL' : 'FAIL',
+              evidence: JSON.stringify({ before, payloadWeeks, weeks, serverOk, payloadOk, reOk }),
               evidencePath: shot,
             });
+            await page.screenshot({ path: shot, fullPage: true }).catch(() => {});
             continue;
           }
 
           // Generic gated text/checkbox/select
+          await page.selectOption('#catalogForm [name="category"]', 'hair').catch(() => {});
           const el = page.locator('#catalogForm ' + spec.selector).first();
           if ((await el.count()) === 0) {
             record({
@@ -777,6 +912,23 @@ async function main() {
           }
           await page.locator('#catalogForm button[type="submit"]').first().click();
           await softWaitSaved(page);
+          // Re-dirty so gated request starts (space toggle forces input epoch bump)
+          if (spec.kind === 'checkbox') {
+            if (spec.oldVal) await el.check();
+            else await el.uncheck();
+            // flip once more to guarantee change event if already in desired state
+            if (spec.oldVal) { await el.uncheck(); await el.check(); }
+            else { await el.check(); await el.uncheck(); }
+          } else if (spec.kind === 'select') {
+            await el.selectOption(String(spec.oldVal));
+          } else {
+            await el.fill(String(spec.oldVal) + ' ');
+            await el.dispatchEvent('input').catch(() => {});
+            await el.fill(String(spec.oldVal));
+            await el.dispatchEvent('input').catch(() => {});
+          }
+          await page.waitForTimeout(80);
+          // Do NOT softWaitSaved here — autosave would clear dirty and gated submit would never start.
 
           let release;
           const gate = new Promise((r) => { release = r; });
@@ -785,7 +937,16 @@ async function main() {
           await page.route('**/partners-portal/**', async (route) => {
             const m = route.request().method();
             const u = route.request().url();
-            if ((m === 'PUT' || m === 'PATCH' || m === 'POST') && /services|editor-drafts|service-profile/.test(u) && !/media|materialize|submit-review/.test(u)) {
+            const isProfile = /service-profile|serviceProfile/.test(u);
+            const wantProfile = !!spec.viaProfile || spec.field === 'templateAnswers';
+            let hit = false;
+            if (wantProfile) {
+              hit = (m === 'PUT' || m === 'PATCH') && isProfile;
+            } else {
+              // updateService is PATCH /services/:id — do not gate draft autosave or profile
+              hit = m === 'PATCH' && /\/services\/[^/]+$/.test(u.split('?')[0]) && !isProfile;
+            }
+            if (hit) {
               started = true;
               try {
                 payload = route.request().postDataJSON();
@@ -833,7 +994,12 @@ async function main() {
           await page.route('**/partners-portal/**', async (route) => {
             const m = route.request().method();
             const u = route.request().url();
-            if ((m === 'PUT' || m === 'PATCH' || m === 'POST') && /services|editor-drafts|service-profile/.test(u) && !/media|materialize/.test(u)) {
+            const isProfile = /service-profile|serviceProfile/.test(u);
+            const wantProfile = !!spec.viaProfile || spec.field === 'templateAnswers';
+            let hit = false;
+            if (wantProfile) hit = (m === 'PUT' || m === 'PATCH') && isProfile;
+            else hit = m === 'PATCH' && /\/services\//.test(u) && !isProfile;
+            if (hit) {
               try {
                 nextPayload = route.request().postDataJSON();
               } catch (_) {}
@@ -842,34 +1008,62 @@ async function main() {
           });
           await page.locator('#catalogForm button[type="submit"]').first().click();
           await softWaitSaved(page);
+          const tNext = Date.now();
+          while (nextPayload == null && Date.now() - tNext < 8000) await page.waitForTimeout(50);
           await page.unroute('**/partners-portal/**');
 
-          const body = nextPayload || payload || {};
+          // Must attribute values to the NEXT save, never the gated in-flight (old) request.
+          const body = nextPayload != null ? nextPayload : {};
+          let reqVal = pickPayloadValue(body, spec.serverKey);
+          if (spec.field === 'priceSar') {
+            const ph = pickPayloadValue(body, 'priceHalalas');
+            if (ph != null) reqVal = String(ph);
+          }
+          if (spec.field === 'templateAnswers') {
+            reqVal = pickPayloadValue(body, 'answers.excludes');
+            if (reqVal == null && body.values && body.values.answers) reqVal = body.values.answers.excludes;
+          }
           let serverVal = '';
+          // refresh owner id if materialized mid-loop
+          ownerId = ownerId || (await page.evaluate(() => MiraEditorV2.getEditContext('catalogForm')?.targetOwnerId || null));
           if (spec.viaProfile) {
-            const doc = await page.evaluate(async () => {
+            const doc = await page.evaluate(async (id) => {
               const d = await PartnersApi.dashboard();
-              const row = ((d.catalog && d.catalog.services) || []).find((s) => (s.nameAr || '').includes('RC13 fields')) || ((d.catalog && d.catalog.services) || [])[0];
+              const row = ((d.catalog && d.catalog.services) || []).find((s) => s.id === id)
+                || ((d.catalog && d.catalog.services) || []).find((s) => (s.nameAr || '').includes('RC13'))
+                || ((d.catalog && d.catalog.services) || [])[0];
               return row && (row.draftServiceProfileJson || row.serviceProfileJson);
-            });
+            }, ownerId);
             if (spec.field === 'templateAnswers') serverVal = doc && doc.answers ? String(doc.answers.excludes || '') : '';
             else if (spec.field === 'priceMode') serverVal = doc ? String(doc.priceMode || '') : '';
             else serverVal = doc ? String(doc[spec.serverKey] || '') : '';
           } else {
-            serverVal = await page.evaluate(async ({ key }) => {
+            serverVal = await page.evaluate(async ({ id, key }) => {
               const d = await PartnersApi.dashboard();
-              const row = ((d.catalog && d.catalog.services) || []).find((s) => (s.nameAr || '').includes('RC13 fields')) || ((d.catalog && d.catalog.services) || [])[0];
+              const row = ((d.catalog && d.catalog.services) || []).find((s) => s.id === id)
+                || ((d.catalog && d.catalog.services) || []).find((s) => (s.nameAr || '').includes('RC13'))
+                || ((d.catalog && d.catalog.services) || [])[0];
               if (!row) return '';
               if (key === 'priceHalalas') return String(row.priceHalalas ?? '');
+              if (key === 'bookingEnabled') return String(!!row.bookingEnabled);
               return String(row[key] ?? '');
-            }, { key: spec.serverKey });
+            }, { id: ownerId, key: spec.serverKey });
           }
+          await page.waitForTimeout(400);
 
           await page.reload({ waitUntil: 'domcontentloaded' });
           await page.waitForTimeout(1000);
-          const openBtn = page.locator('.list-row', { hasText: 'خدمة RC13 fields base' }).locator('button', { hasText: /فتح/ }).first();
-          if ((await openBtn.count()) > 0) {
-            await openBtn.click();
+          if (ownerId) {
+            const opened = await openCatalogOwner(page, 'service', ownerId);
+            await page.waitForTimeout(1400);
+            if (!opened || !opened.ok) {
+              const openBtn = page.locator('#catalogList .list-item button', { hasText: /فتح/ }).first();
+              if ((await openBtn.count()) > 0) await openBtn.click();
+              await page.waitForTimeout(1000);
+            }
+          } else {
+            const openBtn = page.locator('#catalogList .list-item', { hasText: /RC13 fields|خدمة/ }).locator('button', { hasText: /فتح/ }).first();
+            if ((await openBtn.count()) > 0) await openBtn.click();
             await page.waitForTimeout(1200);
           }
           const el2 = page.locator('#catalogForm ' + spec.selector).first();
@@ -893,13 +1087,47 @@ async function main() {
           }
           const reopened = spec.kind === 'checkbox' ? await el2.isChecked() : await el2.inputValue();
           const editedNorm = spec.normalize ? spec.normalize(spec.newVal) : String(spec.newVal);
+          // Poll server briefly — multi-step service save may lag dashboard row
+          for (let i = 0; i < 8; i++) {
+            const match =
+              String(serverVal) === editedNorm ||
+              String(serverVal) === String(spec.newVal) ||
+              (spec.field === 'priceSar' && String(serverVal) === editedNorm) ||
+              (spec.field === 'bookingEnabled' && (serverVal === 'true' || serverVal === true)) ||
+              (spec.field === 'templateAnswers' && String(serverVal) === String(spec.newVal));
+            if (match) break;
+            await page.waitForTimeout(400);
+            if (spec.viaProfile || spec.field === 'templateAnswers') {
+              const doc = await page.evaluate(async (id) => {
+                const d = await PartnersApi.dashboard();
+                const row = ((d.catalog && d.catalog.services) || []).find((s) => s.id === id) || {};
+                return row.draftServiceProfileJson || row.serviceProfileJson;
+              }, ownerId);
+              if (spec.field === 'templateAnswers') serverVal = doc && doc.answers ? String(doc.answers.excludes ?? '') : '';
+              else if (spec.field === 'priceMode') serverVal = doc ? String(doc.priceMode || '') : '';
+              else serverVal = doc ? String(doc[spec.serverKey] || '') : serverVal;
+            } else {
+              serverVal = await page.evaluate(async ({ id, key }) => {
+                const d = await PartnersApi.dashboard();
+                const row = ((d.catalog && d.catalog.services) || []).find((s) => s.id === id) || {};
+                if (key === 'priceHalalas') return String(row.priceHalalas ?? '');
+                if (key === 'bookingEnabled') return String(!!row.bookingEnabled);
+                return String(row[key] ?? '');
+              }, { id: ownerId, key: spec.serverKey });
+            }
+          }
           const midOk = String(mid) === String(spec.newVal) || mid === spec.newVal;
           const reopenOk = String(reopened) === String(spec.newVal) || reopened === spec.newVal;
           const serverOk =
             String(serverVal) === editedNorm ||
             String(serverVal) === String(spec.newVal) ||
             (spec.field === 'bookingEnabled' && String(serverVal) === 'true');
-          const ok = midOk && reopenOk && serverOk;
+          const payloadOk =
+            reqVal == null ||
+            String(reqVal) === editedNorm ||
+            String(reqVal) === String(spec.newVal) ||
+            (spec.field === 'priceSar' && String(reqVal) === editedNorm);
+          const ok = midOk && reopenOk && serverOk && (payloadOk || spec.field === 'bookingEnabled');
           record({
             testId,
             scope: 'service',
@@ -907,7 +1135,7 @@ async function main() {
             ownerId,
             oldValue: spec.oldVal,
             editedValue: spec.newVal,
-            requestValue: JSON.stringify(body).slice(0, 200),
+            requestValue: reqVal != null ? String(reqVal) : JSON.stringify(body).slice(0, 200),
             serverValue: serverVal,
             reopenedValue: reopened,
             dirtyEvidence: '',
