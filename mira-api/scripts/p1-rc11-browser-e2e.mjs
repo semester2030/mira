@@ -92,7 +92,7 @@ async function fillSalonService(page, name) {
   if ((await place.count()) > 0) await place.check();
   const excludes = page.locator('#catalogForm [name="excludes"], #catalogForm textarea[name="excludes"]');
   const hasExcludes = (await excludes.count()) > 0;
-  if (hasExcludes) await excludes.first().fill('ملاحظة RC10');
+  if (hasExcludes) await excludes.first().fill('ملاحظة RC11');
   const pm = page.locator('#catalogForm select[name="priceMode"]');
   if ((await pm.count()) === 0) throw new Error('priceMode missing');
   await pm.selectOption('fixed');
