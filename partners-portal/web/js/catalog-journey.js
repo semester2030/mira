@@ -467,6 +467,8 @@
         status: draftCtx.status,
         submitReviewStatus: draftCtx.submitReviewStatus,
         values: draftCtx.values || {},
+        serviceReviewRevision:
+          draftCtx.serviceReviewRevision != null ? draftCtx.serviceReviewRevision : null,
       });
     } else if (window.MiraEditorV2 && !editing) {
       // Explicit new draft identity for this form session.
@@ -487,6 +489,7 @@
         targetOwnerId: item.id,
         revision: null,
         values: {},
+        serviceReviewRevision: item.reviewRevision != null ? item.reviewRevision : null,
       });
     }
 
@@ -692,22 +695,116 @@
           ? item.reviewRevision
           : null;
     let serviceProfileBindPromise = null;
-    if (type !== 'brand' && item && item.id && boundServiceReviewRevision == null && window.PartnersApi) {
-      serviceProfileBindPromise = PartnersApi.getServiceProfile(item.id)
-        .then((profile) => {
-          boundServiceReviewRevision = profile.reviewRevision;
-          const doc = profile.draftServiceProfileSet
-            ? profile.draftServiceProfileJson
-            : profile.serviceProfileJson;
-          if (doc && doc.templateId) {
-            templateState.templateId = doc.templateId;
-            templateState.templateVersion = doc.templateVersion || 1;
-            templateState.priceMode = doc.priceMode || 'fixed';
-            templateState.answers = Object.assign({}, doc.answers || {});
+    let serviceProfileBindStatus = boundServiceReviewRevision != null ? 'bound' : 'idle';
+    /** Snapshot of local template edits taken before a bind read — restored if user typed during fetch. */
+    let templateEditsDuringBind = null;
+
+    function applyBoundServiceProfile(profile, opts) {
+      if (!profile) return null;
+      const keepLocal = opts && opts.keepLocalEdits;
+      const localSnap = keepLocal
+        ? {
+            templateId: templateState.templateId,
+            templateVersion: templateState.templateVersion,
+            priceMode: templateState.priceMode,
+            answers: Object.assign({}, templateState.answers || {}),
           }
-          return profile;
+        : null;
+      boundServiceReviewRevision = profile.reviewRevision;
+      serviceProfileBindStatus = 'bound';
+      const doc = profile.draftServiceProfileSet
+        ? profile.draftServiceProfileJson
+        : profile.serviceProfileJson;
+      if (doc && doc.templateId && !keepLocal) {
+        templateState.templateId = doc.templateId;
+        templateState.templateVersion = doc.templateVersion || 1;
+        templateState.priceMode = doc.priceMode || 'fixed';
+        templateState.answers = Object.assign({}, doc.answers || {});
+      } else if (doc && doc.templateId && keepLocal && localSnap && localSnap.templateId) {
+        // Keep the user's in-progress edits; only adopt the revision we just read.
+        templateState.templateId = localSnap.templateId;
+        templateState.templateVersion = localSnap.templateVersion || 1;
+        templateState.priceMode = localSnap.priceMode || 'fixed';
+        templateState.answers = Object.assign({}, localSnap.answers || {});
+      } else if (doc && doc.templateId) {
+        templateState.templateId = doc.templateId;
+        templateState.templateVersion = doc.templateVersion || 1;
+        templateState.priceMode = doc.priceMode || 'fixed';
+        templateState.answers = Object.assign({}, doc.answers || {});
+      }
+      const ctx = window.MiraEditorV2 && MiraEditorV2.getEditContext(form.id);
+      if (ctx) ctx.serviceReviewRevision = boundServiceReviewRevision;
+      if (item) item.reviewRevision = boundServiceReviewRevision;
+      return profile;
+    }
+
+    /**
+     * Bind service profile revision after materialize / when owner becomes known mid-session.
+     * Does not silently overwrite user edits that started while the read was in flight.
+     */
+    function ensureServiceProfileBound(ownerId, opts) {
+      if (type === 'brand' || !ownerId || !window.PartnersApi) {
+        return Promise.resolve(null);
+      }
+      if (boundServiceReviewRevision != null && !(opts && opts.force)) {
+        return Promise.resolve({ reviewRevision: boundServiceReviewRevision, alreadyBound: true });
+      }
+      if (serviceProfileBindPromise && !(opts && opts.force)) return serviceProfileBindPromise;
+      serviceProfileBindStatus = 'binding';
+      templateEditsDuringBind = {
+        templateId: templateState.templateId,
+        templateVersion: templateState.templateVersion,
+        priceMode: templateState.priceMode,
+        answers: Object.assign({}, templateState.answers || {}),
+      };
+      const bindOwner = ownerId;
+      serviceProfileBindPromise = PartnersApi.getServiceProfile(bindOwner)
+        .then((profile) => {
+          // If the open owner changed, ignore.
+          const liveOwner = resolveOwnerId();
+          if (liveOwner && liveOwner !== bindOwner) {
+            serviceProfileBindStatus = 'stale';
+            return null;
+          }
+          const userEditedDuring =
+            templateEditsDuringBind &&
+            (templateState.templateId !== templateEditsDuringBind.templateId ||
+              templateState.priceMode !== templateEditsDuringBind.priceMode ||
+              JSON.stringify(templateState.answers || {}) !==
+                JSON.stringify(templateEditsDuringBind.answers || {}));
+          // Also treat "user already had template answers before bind started" as keep-local
+          // when force-binding after materialize with local draft values already painted.
+          const keepLocal =
+            Boolean(opts && opts.keepLocalEdits) ||
+            userEditedDuring ||
+            (templateEditsDuringBind && templateEditsDuringBind.templateId);
+          return applyBoundServiceProfile(profile, { keepLocalEdits: keepLocal });
         })
-        .catch(() => null);
+        .catch((err) => {
+          serviceProfileBindStatus = 'error';
+          return null;
+        });
+      return serviceProfileBindPromise;
+    }
+
+    // Existing service open: always load the authoritative profile from the server.
+    // LocalStorage / prior draft copies must not resurrect a stale priceMode after a successful save.
+    // keepLocalEdits only when seeding from an explicit draftCtx.serviceProfile (conflict keep / mid-edit).
+    if (type !== 'brand' && item && item.id && window.PartnersApi) {
+      const seededFromDraftProfile = Boolean(
+        draftCtx && draftCtx.values && draftCtx.values.serviceProfile && draftCtx.values.serviceProfile.templateId,
+      );
+      serviceProfileBindPromise = ensureServiceProfileBound(item.id, {
+        keepLocalEdits: seededFromDraftProfile,
+        force: !seededFromDraftProfile,
+      }).then((profile) => {
+        if (profile && typeof paintServiceTemplates === 'function') {
+          try {
+            paintServiceTemplates();
+          } catch (_) {}
+        }
+        return profile;
+      });
     }
 
     const REGISTRY_SIZE_IDS = new Set(['XS', 'S', 'M', 'L', 'XL', 'XXL']);
@@ -1179,6 +1276,7 @@
         (result && result.submitReviewStatus === 'failed');
       if (ownerId) {
         item = Object.assign({}, item || {}, { id: ownerId });
+        staged[form.id].ownerId = ownerId;
         const bound = MiraEditorV2.getEditContext(form.id);
         if (bound) {
           bound.targetOwnerId = ownerId;
@@ -1186,15 +1284,62 @@
           bound.submitReviewStatus = reviewOk ? 'submitted' : 'failed';
         }
         MiraEditorV2.clearNewDraftKey(kind);
+        const resumeKey =
+          body.resumeKey ||
+          sessionStorage.getItem(resumeStorageKey(clientDraftId) + ':key') ||
+          null;
         saveResumeState(clientDraftId, {
           clientDraftId: clientDraftId,
           targetOwnerId: ownerId,
           targetKind: body.targetKind || kind,
-          idempotencyKey: body.resumeKey || sessionStorage.getItem(resumeStorageKey(clientDraftId) + ':key'),
-          expectedRevision: body.expectedRevision,
+          idempotencyKey: resumeKey,
+          expectedRevision:
+            body.expectedRevision != null
+              ? body.expectedRevision
+              : (loadResumeState(clientDraftId) || {}).expectedRevision,
           status: reviewOk ? 'submitted' : 'submit_failed',
           submitReviewStatus: reviewOk ? 'submitted' : 'failed',
         });
+        // Complete new→existing transition: bind service profile revision without forcing reopen.
+        if (type !== 'brand') {
+          const fromMaterialize =
+            body.targetReviewRevision != null
+              ? body.targetReviewRevision
+              : result && result.targetReviewRevision != null
+                ? result.targetReviewRevision
+                : null;
+          if (fromMaterialize != null && Number.isInteger(fromMaterialize)) {
+            boundServiceReviewRevision = fromMaterialize;
+            serviceProfileBindStatus = 'bound';
+            const ctxRev = MiraEditorV2.getEditContext(form.id);
+            if (ctxRev) ctxRev.serviceReviewRevision = fromMaterialize;
+            if (item) item.reviewRevision = fromMaterialize;
+            if (window.MiraEditorV2) {
+              MiraEditorV2.setStatus(
+                form,
+                'جاهز للحفظ · قالب مربوط بإصدار ' + boundServiceReviewRevision,
+                'bound',
+              );
+            }
+          } else {
+            status.textContent =
+              (status.textContent || '') +
+              (serviceProfileBindStatus === 'bound' ? '' : ' · جارٍ تجهيز قالب الخدمة…');
+            ensureServiceProfileBound(ownerId, {
+              keepLocalEdits: true,
+              force: true,
+            }).then((profile) => {
+              if (!profile) return;
+              if (window.MiraEditorV2) {
+                MiraEditorV2.setStatus(
+                  form,
+                  'جاهز للحفظ · قالب مربوط بإصدار ' + boundServiceReviewRevision,
+                  'bound',
+                );
+              }
+            });
+          }
+        }
       }
       if (reviewOk) clearResumeState(clientDraftId);
       status.textContent = reviewOk
@@ -1233,7 +1378,92 @@
           const clientDraftId =
             (ctx && ctx.clientDraftId) ||
             MiraEditorV2.clientDraftIdFor(kind, item && item.id, form.id);
-          const resume = loadResumeState(clientDraftId);
+          let resume = loadResumeState(clientDraftId);
+
+          /**
+           * Lost-response recovery: materialize ran on the server but the UI never got targetOwnerId.
+           * Do NOT PUT the open draft (DRAFT_ALREADY_MATERIALIZED). Recover via GET draft or
+           * rematerialize with the SAME idempotency key + expectedRevision.
+           */
+          if (
+            resume &&
+            resume.status === 'materializing' &&
+            !resume.targetOwnerId &&
+            resume.idempotencyKey &&
+            resume.expectedRevision != null
+          ) {
+            status.textContent = 'نتيجة التحويل غير مؤكدة — جارٍ الاستعادة من الخادم…';
+            try {
+              const draftRow = await PartnersApi.getEditorDraft(clientDraftId);
+              if (draftRow && draftRow.status === 'materialized' && draftRow.targetOwnerId) {
+                applyMaterializeOutcome(
+                  clientDraftId,
+                  {
+                    targetOwnerId: draftRow.targetOwnerId,
+                    targetKind: draftRow.kind || kind,
+                    reviewSubmitted: draftRow.submitReviewStatus === 'submitted',
+                    submitReviewStatus: draftRow.submitReviewStatus || 'failed',
+                    expectedRevision: resume.expectedRevision,
+                    resumeKey: resume.idempotencyKey,
+                  },
+                  null,
+                );
+                if (draftRow.submitReviewStatus !== 'submitted') {
+                  matBtn.textContent = 'استئناف الإرسال للمراجعة';
+                }
+                await refreshLists();
+                resume = loadResumeState(clientDraftId);
+                if (draftRow.submitReviewStatus === 'submitted') return;
+                // Fall through to resume submit path below when media/submit still needed.
+              } else {
+                const result = await MiraEditorV2.materialize(
+                  clientDraftId,
+                  resume.expectedRevision,
+                  true,
+                  resume.idempotencyKey,
+                );
+                applyMaterializeOutcome(clientDraftId, result, null);
+                await refreshLists();
+                return;
+              }
+            } catch (recoverErr) {
+              const rCode =
+                (recoverErr && recoverErr.code) ||
+                (recoverErr && recoverErr.body && recoverErr.body.code) ||
+                '';
+              if (rCode === 'DRAFT_ALREADY_MATERIALIZED') {
+                const draftRow = await PartnersApi.getEditorDraft(clientDraftId);
+                if (draftRow && draftRow.targetOwnerId) {
+                  applyMaterializeOutcome(
+                    clientDraftId,
+                    {
+                      targetOwnerId: draftRow.targetOwnerId,
+                      targetKind: draftRow.kind || kind,
+                      reviewSubmitted: draftRow.submitReviewStatus === 'submitted',
+                      submitReviewStatus: draftRow.submitReviewStatus || 'failed',
+                      expectedRevision: resume.expectedRevision,
+                      resumeKey: resume.idempotencyKey,
+                    },
+                    null,
+                  );
+                  matBtn.textContent = 'استئناف الإرسال للمراجعة';
+                  await refreshLists();
+                  resume = loadResumeState(clientDraftId);
+                } else {
+                  status.textContent =
+                    'المسودة محوّلة على الخادم لكن تعذر استعادة معرّف العنصر. حدّثي القائمة وافتحي العنصر.';
+                  return;
+                }
+              } else if (recoverErr && recoverErr.code === 'MATERIALIZE_SUBMIT_REVIEW_FAILED') {
+                applyMaterializeOutcome(clientDraftId, null, recoverErr);
+                matBtn.textContent = 'استئناف الإرسال للمراجعة';
+                await refreshLists();
+                resume = loadResumeState(clientDraftId);
+              } else {
+                throw recoverErr;
+              }
+            }
+          }
 
           // Resume path: item already created — attach media then submitReview / rematerialize with same key.
           if (
@@ -1289,6 +1519,36 @@
           }
 
           // Fresh materialize — require valid fields + confirmed draft save first.
+          // If a prior attempt already materialized, recover instead of PUT.
+          try {
+            const prior = await PartnersApi.getEditorDraft(clientDraftId);
+            if (prior && prior.status === 'materialized' && prior.targetOwnerId) {
+              const priorKey =
+                sessionStorage.getItem(resumeStorageKey(clientDraftId) + ':key') ||
+                (resume && resume.idempotencyKey) ||
+                null;
+              applyMaterializeOutcome(
+                clientDraftId,
+                {
+                  targetOwnerId: prior.targetOwnerId,
+                  targetKind: prior.kind || kind,
+                  reviewSubmitted: prior.submitReviewStatus === 'submitted',
+                  submitReviewStatus: prior.submitReviewStatus || 'failed',
+                  resumeKey: priorKey,
+                  expectedRevision: prior.revision,
+                },
+                null,
+              );
+              matBtn.textContent = 'استئناف الإرسال للمراجعة';
+              status.textContent =
+                'استُعيد العنصر المحوّل مسبقًا (' + prior.targetOwnerId + ') — لا إنشاء بديل.';
+              await refreshLists();
+              return;
+            }
+          } catch (e) {
+            /* draft may not exist yet — continue fresh path */
+          }
+
           const preflight = buildEditorValues();
           if (!preflight.ok) {
             (preflight.fieldErrors || []).forEach((fe) => setFieldError(form, fe.fieldId, fe.message));
@@ -1297,8 +1557,60 @@
             return;
           }
           scheduleEditorDraftAutosave();
-          const saved = await MiraEditorV2.flushUntilSettled(form);
+          let saved;
+          try {
+            saved = await MiraEditorV2.flushUntilSettled(form);
+          } catch (flushErr) {
+            const fCode =
+              (flushErr && flushErr.code) ||
+              (flushErr && flushErr.body && flushErr.body.code) ||
+              '';
+            if (fCode === 'DRAFT_ALREADY_MATERIALIZED') {
+              const prior = await PartnersApi.getEditorDraft(clientDraftId);
+              if (prior && prior.targetOwnerId) {
+                applyMaterializeOutcome(
+                  clientDraftId,
+                  {
+                    targetOwnerId: prior.targetOwnerId,
+                    targetKind: prior.kind || kind,
+                    reviewSubmitted: prior.submitReviewStatus === 'submitted',
+                    submitReviewStatus: prior.submitReviewStatus || 'failed',
+                    resumeKey: sessionStorage.getItem(resumeStorageKey(clientDraftId) + ':key'),
+                    expectedRevision: prior.revision,
+                  },
+                  null,
+                );
+                matBtn.textContent = 'استئناف الإرسال للمراجعة';
+                await refreshLists();
+                return;
+              }
+            }
+            throw flushErr;
+          }
           if (!saved || !saved.ok) {
+            const sCode =
+              (saved && saved.error && (saved.error.code || (saved.error.body && saved.error.body.code))) ||
+              '';
+            if (sCode === 'DRAFT_ALREADY_MATERIALIZED') {
+              const prior = await PartnersApi.getEditorDraft(clientDraftId);
+              if (prior && prior.targetOwnerId) {
+                applyMaterializeOutcome(
+                  clientDraftId,
+                  {
+                    targetOwnerId: prior.targetOwnerId,
+                    targetKind: prior.kind || kind,
+                    reviewSubmitted: prior.submitReviewStatus === 'submitted',
+                    submitReviewStatus: prior.submitReviewStatus || 'failed',
+                    resumeKey: sessionStorage.getItem(resumeStorageKey(clientDraftId) + ':key'),
+                    expectedRevision: prior.revision,
+                  },
+                  null,
+                );
+                matBtn.textContent = 'استئناف الإرسال للمراجعة';
+                await refreshLists();
+                return;
+              }
+            }
             status.textContent =
               'لم يُحوَّل — الحفظ غير مؤكد' +
               (saved && saved.reason ? ' (' + saved.reason + ')' : '') +
@@ -1315,6 +1627,7 @@
           }
           const resumeKey = 'mat:' + clientDraftId + ':' + expectedRevision;
           sessionStorage.setItem(resumeStorageKey(clientDraftId) + ':key', resumeKey);
+          // Persist intent BEFORE the network call so reload can recover without injecting owner id.
           saveResumeState(clientDraftId, {
             clientDraftId: clientDraftId,
             idempotencyKey: resumeKey,
@@ -1337,7 +1650,29 @@
               applyMaterializeOutcome(clientDraftId, null, error);
               matBtn.textContent = 'استئناف الإرسال للمراجعة';
             } else {
-              throw error;
+              const mCode = (error && error.code) || (error && error.body && error.body.code) || '';
+              if (mCode === 'DRAFT_ALREADY_MATERIALIZED') {
+                const prior = await PartnersApi.getEditorDraft(clientDraftId);
+                if (prior && prior.targetOwnerId) {
+                  applyMaterializeOutcome(
+                    clientDraftId,
+                    {
+                      targetOwnerId: prior.targetOwnerId,
+                      targetKind: prior.kind || kind,
+                      reviewSubmitted: prior.submitReviewStatus === 'submitted',
+                      submitReviewStatus: prior.submitReviewStatus || 'failed',
+                      resumeKey: resumeKey,
+                      expectedRevision: expectedRevision,
+                    },
+                    null,
+                  );
+                  matBtn.textContent = 'استئناف الإرسال للمراجعة';
+                } else {
+                  throw error;
+                }
+              } else {
+                throw error;
+              }
             }
           }
           await refreshLists();
@@ -2763,12 +3098,47 @@
       save.textContent = developerAccount ? 'جارٍ النشر' : 'جارٍ الحفظ';
       status.textContent = developerAccount ? 'جارٍ تجهيز النشر' : 'جارٍ حفظ المسودة';
       if (window.MiraMotion) MiraMotion.announce(status.textContent);
+      // Track step outcomes outside try so catch can report partial success honestly.
+      let savedProfile = null;
+      let profileSaved = false;
+      let basicsSaved = false;
+      let ownerId = resolveOwnerId();
       try {
         // Decision is always live owner id — never the form-build `editing` snapshot.
-        const ownerId = resolveOwnerId();
-        let savedProfile = null;
-        let profileSaved = false;
-        let basicsSaved = false;
+        ownerId = resolveOwnerId();
+
+        // Editor v2 open draft (no owner yet): persist the server draft only.
+        // Do NOT createProduct/createService here — materialize owns creation (prevents duplicates
+        // and unbound profile revisions that break the first post-materialize save).
+        if (
+          window.MiraEditorV2 &&
+          MiraEditorV2.state.enabled &&
+          !ownerId &&
+          !(window.sessionPartner && window.sessionPartner.type === 'developer')
+        ) {
+          scheduleEditorDraftAutosave();
+          const draftSaved = await MiraEditorV2.flushUntilSettled(form);
+          form.dataset.saving = '';
+          save.disabled = false;
+          save.removeAttribute('aria-busy');
+          save.classList.remove('is-busy');
+          if (draftSaved && draftSaved.ok) {
+            save.classList.add('is-success');
+            save.textContent = 'تم الحفظ';
+            status.textContent =
+              'حُفظت المسودة الخادمية (rev ' +
+              draftSaved.revision +
+              '). بعد التحويل يمكنك تعديل القالب والحفظ مباشرة دون إعادة فتح.';
+            MiraEditorV2.setStatus(form, 'محفوظ', 'saved');
+            return true;
+          }
+          save.textContent = idleLabel;
+          status.textContent =
+            'لم يُؤكد حفظ المسودة' +
+            (draftSaved && draftSaved.reason ? ' (' + draftSaved.reason + ')' : '') +
+            '. أصلحي الحقول ثم أعيدي المحاولة.';
+          return false;
+        }
 
         // Service template FIRST with the revision the user read — never get-latest-then-overwrite.
         if (type !== 'brand' && ownerId && templateState && templateState.templateId) {
@@ -2776,12 +3146,17 @@
             await serviceProfileBindPromise;
           }
           if (boundServiceReviewRevision == null) {
+            status.textContent = 'جارٍ تجهيز إصدار قالب الخدمة بعد الإنشاء…';
+            await ensureServiceProfileBound(ownerId, { keepLocalEdits: true, force: true });
+          }
+          if (boundServiceReviewRevision == null) {
             form.dataset.saving = '';
             save.disabled = false;
             save.removeAttribute('aria-busy');
             save.classList.remove('is-busy');
             save.textContent = idleLabel;
-            status.textContent = 'لم يُحفظ القالب — لم يُقرأ إصدار الخدمة بعد. أعيدي فتح الخدمة ثم احفظي.';
+            status.textContent =
+              'لم يُحفظ القالب — تعذر ربط إصدار الخدمة بعد الإنشاء. أبقي النموذج مفتوحًا وأعيدي المحاولة؛ لا حاجة لإغلاقه.';
             return false;
           }
           try {
@@ -2813,7 +3188,8 @@
               save.classList.remove('is-busy', 'is-success');
               save.textContent = idleLabel;
               status.textContent =
-                'تعارض قالب الخدمة مع نسخة أحدث. تعديلاتك ما زالت في النموذج — لم نكتب فوق الخادم. أعيدي التحميل أو أبقي التعديلات.';
+                'تعارض قالب الخدمة مع نسخة أحدث. تعديلاتك ما زالت في النموذج — لم نكتب فوق الخادم.';
+              showServiceProfileConflictUi(ownerId);
               if (window.MiraEditorV2) {
                 MiraEditorV2.setStatus(form, 'تعارض قالب الخدمة', 'conflict');
               }
@@ -2932,15 +3308,90 @@
         return true;
       } catch (error) {
         form.dataset.saving = '';
-        status.textContent = 'تعذر الحفظ: ' + error.message + ' البيانات المكتوبة ما زالت في النموذج.';
         save.disabled = false;
         save.removeAttribute('aria-busy');
         save.classList.remove('is-busy', 'is-success');
         save.textContent = idleLabel;
+        let partialNote = '';
+        if (profileSaved && !basicsSaved) {
+          partialNote =
+            'حُفظ قالب الخدمة على الخادم، لكن فشل حفظ البيانات الأساسية. أعيدي المحاولة لحفظ البيانات فقط — لن يُنشأ عنصر جديد.';
+          // Profile put advanced the revision — keep bound revision in sync with server tip we wrote.
+          if (savedProfile && savedProfile.reviewRevision != null) {
+            boundServiceReviewRevision = savedProfile.reviewRevision;
+          }
+        } else if (!profileSaved && basicsSaved) {
+          partialNote = 'حُفظت البيانات الأساسية، لكن القالب لم يُحفظ. أعيدي المحاولة للقالب.';
+        } else if (profileSaved && basicsSaved) {
+          partialNote = 'الحفظ اكتمل جزئيًا ثم فشل لاحقًا: ' + (error.message || error);
+        } else {
+          partialNote = 'تعذر الحفظ: ' + (error.message || error) + ' البيانات المكتوبة ما زالت في النموذج.';
+        }
+        status.textContent = partialNote;
         if (window.MiraMotion) MiraMotion.announce(status.textContent);
         return false;
       }
     };
+
+    function showServiceProfileConflictUi(serviceOwnerId) {
+      let panel = form.querySelector('[data-service-profile-conflict-panel]');
+      if (panel) panel.remove();
+      panel = document.createElement('div');
+      panel.setAttribute('data-service-profile-conflict-panel', '1');
+      panel.setAttribute('role', 'alert');
+      panel.style.cssText = 'margin:0.75rem 0;padding:0.75rem;border:1px solid #b45309;background:#fffbeb;';
+      const note = document.createElement('p');
+      note.textContent =
+        'نسخة أحدث من قالب الخدمة على الخادم. اختاري إعادة التحميل (تفقد التعديلات المحلية للقالب) أو الإبقاء.';
+      const row = document.createElement('div');
+      row.style.cssText = 'display:flex;gap:0.5rem;flex-wrap:wrap;margin-top:0.5rem;';
+      const reloadBtn = document.createElement('button');
+      reloadBtn.type = 'button';
+      reloadBtn.setAttribute('data-service-conflict-reload', '1');
+      reloadBtn.textContent = 'إعادة تحميل القالب من الخادم';
+      const keepBtn = document.createElement('button');
+      keepBtn.type = 'button';
+      keepBtn.setAttribute('data-service-conflict-keep', '1');
+      keepBtn.textContent = 'الإبقاء على تعديلاتي';
+      row.append(reloadBtn, keepBtn);
+      panel.append(note, row);
+      form.insertBefore(panel, form.firstChild);
+      const opOwner = serviceOwnerId;
+      const opDraft =
+        (window.MiraEditorV2 && MiraEditorV2.getEditContext(form.id) || {}).clientDraftId || null;
+      const opGen =
+        (window.MiraEditorV2 && MiraEditorV2.getEditContext(form.id) || {}).formGeneration || 0;
+      reloadBtn.addEventListener('click', async () => {
+        try {
+          const live = window.MiraEditorV2 && MiraEditorV2.getEditContext(form.id);
+          if (
+            !live ||
+            (opDraft && live.clientDraftId !== opDraft) ||
+            (opGen && live.formGeneration !== opGen) ||
+            resolveOwnerId() !== opOwner
+          ) {
+            return;
+          }
+          const profile = await PartnersApi.getServiceProfile(opOwner);
+          const live2 = window.MiraEditorV2 && MiraEditorV2.getEditContext(form.id);
+          if (!live2 || (opDraft && live2.clientDraftId !== opDraft) || resolveOwnerId() !== opOwner) {
+            return;
+          }
+          applyBoundServiceProfile(profile, { keepLocalEdits: false });
+          if (typeof paintServiceTemplates === 'function') paintServiceTemplates();
+          panel.remove();
+          status.textContent =
+            'أُعيد تحميل قالب الخدمة من الخادم · إصدار ' + boundServiceReviewRevision + ' — عدّلي ثم احفظي.';
+        } catch (e) {
+          status.textContent = 'تعذر إعادة تحميل القالب: ' + (e && e.message ? e.message : e);
+        }
+      });
+      keepBtn.addEventListener('click', () => {
+        panel.remove();
+        status.textContent =
+          'أُبقيت تعديلات القالب محليًا — لن نرفع الإصدار ولن نكتب فوق الخادم صامتًا.';
+      });
+    }
     form.onsubmit = (event) => {
       event.preventDefault();
       return persistListing();

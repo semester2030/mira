@@ -371,10 +371,32 @@ export class EditorDraftsService {
       reviewSubmitted = true;
     }
 
+    // Expose the live owner reviewRevision after create/submit so the client can bind
+    // without a racy follow-up GET (avoids first post-materialize profile put on a stale 0).
+    let targetReviewRevision: number | null = null;
+    try {
+      if (outcome.targetKind === 'service') {
+        const svc = await this.prisma.service.findFirst({
+          where: { id: outcome.targetOwnerId, partnerId },
+          select: { reviewRevision: true },
+        });
+        targetReviewRevision = svc?.reviewRevision ?? null;
+      } else if (outcome.targetKind === 'product') {
+        const prod = await this.prisma.product.findFirst({
+          where: { id: outcome.targetOwnerId, partnerId },
+          select: { reviewRevision: true },
+        });
+        targetReviewRevision = prod?.reviewRevision ?? null;
+      }
+    } catch {
+      targetReviewRevision = null;
+    }
+
     return {
       ...outcome,
       reviewSubmitted,
       submitReviewStatus: reviewSubmitted ? 'submitted' : outcome.submitReviewStatus ?? (submitReview ? 'pending' : 'none'),
+      targetReviewRevision,
     };
   }
 

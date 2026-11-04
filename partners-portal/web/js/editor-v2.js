@@ -25,8 +25,12 @@
     editContexts: Object.create(null),
     timers: Object.create(null),
     inflight: Object.create(null),
+    /** Seq of the request that currently owns inflight[formId]. */
+    inflightSeq: Object.create(null),
     pending: Object.create(null),
     seq: Object.create(null),
+    /** Bumps on every form bind/replace so stale async ops cannot touch a newer draft. */
+    formGeneration: Object.create(null),
     abortByForm: Object.create(null),
     lastFlushResult: Object.create(null),
     /** When true, scheduleAutosave is a no-op (conflict rehydrate / server apply). */
@@ -71,6 +75,12 @@
     el.dataset.kind = kind || '';
   }
 
+  function bumpFormGeneration(formId, reason) {
+    const id = formId || 'default';
+    state.formGeneration[id] = (state.formGeneration[id] || 0) + 1;
+    return state.formGeneration[id];
+  }
+
   /** Clear debounce/pending for one form without aborting an in-flight request. */
   function clearFormPendingQueue(formId, reason) {
     const id = formId || 'default';
@@ -80,7 +90,13 @@
     }
     delete state.pending[id];
     // Bump seq so an in-flight success for a previous value cannot show «محفوظ» for invalid/current UI.
-    if (reason === 'invalid-fields' || reason === 'conflict-reload' || reason === 'post-rehydrate') {
+    if (
+      reason === 'invalid-fields' ||
+      reason === 'conflict-reload' ||
+      reason === 'post-rehydrate' ||
+      reason === 'form-replace' ||
+      reason === 'draft-switch'
+    ) {
       state.seq[id] = (state.seq[id] || 0) + 1;
     }
     if (state.lastFlushResult[id] && state.lastFlushResult[id].ok) {
@@ -128,6 +144,9 @@
         const opFormId = formId;
         const opDraftId = clientDraftId;
         const opAuth = captureSessionSnapshot();
+        const liveAtStart = getEditContext(opFormId);
+        const opGeneration =
+          (liveAtStart && liveAtStart.formGeneration) || state.formGeneration[opFormId] || 0;
         try {
           // Stop THIS form's pending saves only — do not cancel sibling product/service queues.
           cancelFormPending(formId, 'conflict-reload');
@@ -137,8 +156,18 @@
           if (!assertSameSession(opAuth)) {
             throw new Error('تبديل حساب أثناء إعادة التحميل — تُجاهل النتيجة');
           }
-          if (opFormId !== (form.id || 'default') || opDraftId !== clientDraftId) {
-            throw new Error('تغيّر سياق النموذج أثناء إعادة التحميل — تُجاهل النتيجة');
+          // Compare against LIVE edit context — not the closed-over draft id (always equal to itself).
+          const liveNow = getEditContext(opFormId);
+          const liveGen = state.formGeneration[opFormId] || 0;
+          if (
+            !liveNow ||
+            liveNow.clientDraftId !== opDraftId ||
+            liveGen !== opGeneration ||
+            (liveNow.formGeneration != null && liveNow.formGeneration !== opGeneration)
+          ) {
+            throw Object.assign(new Error('تغيّر سياق النموذج أثناء إعادة التحميل — تُجاهل النتيجة'), {
+              code: 'STALE_OP',
+            });
           }
           if (!(window.CatalogJourney && typeof CatalogJourney.reopenServerDraft === 'function')) {
             throw new Error('آلية إعادة التعبئة الكاملة غير متاحة');
@@ -160,6 +189,12 @@
           if (!assertSameSession(opAuth)) {
             throw new Error('تبديل حساب بعد إعادة التعبئة — تُجاهل النتيجة');
           }
+          const liveAfter = getEditContext(reopened.formId || opFormId);
+          if (!liveAfter || liveAfter.clientDraftId !== opDraftId) {
+            throw Object.assign(new Error('النموذج لم يعد على نفس المسودة بعد إعادة التعبئة'), {
+              code: 'STALE_OP',
+            });
+          }
           state.draftRevisionByClientId[clientDraftId] = draft.revision;
           const freshForm = document.getElementById(reopened.formId) || form;
           attachStatus(freshForm);
@@ -175,6 +210,15 @@
         } catch (e) {
           // Keep stale revision — do not allow save against a half-loaded form.
           if (staleRev != null) state.draftRevisionByClientId[clientDraftId] = staleRev;
+          // If the form moved on, do not paint error/status over the newer draft.
+          const liveErr = getEditContext(opFormId);
+          const stillSame =
+            liveErr &&
+            liveErr.clientDraftId === opDraftId &&
+            (state.formGeneration[opFormId] || 0) === opGeneration;
+          if (!stillSame || (e && e.code === 'STALE_OP')) {
+            return;
+          }
           if (e && e.code === 'AUTH_CHANGED') {
             setStatus(form, 'تُجاهلت استجابة قديمة بعد تبديل الحساب', 'error');
           } else {
@@ -223,7 +267,23 @@
       try { state.abortByForm[id].abort(reason || 'cancelled'); } catch (e) {}
       delete state.abortByForm[id];
     }
+    // Invalidate ownership of any in-flight finally — do not leave a hole that re-queues blindly.
+    delete state.inflightSeq[id];
     state.inflight[id] = false;
+    // Opening another draft / rebuilding the form must supersede older seq and generation.
+    if (reason && String(reason).indexOf('form-replace') === 0) {
+      state.seq[id] = (state.seq[id] || 0) + 1;
+      bumpFormGeneration(id, reason);
+      if (state.lastFlushResult[id] && state.lastFlushResult[id].ok) {
+        state.lastFlushResult[id] = {
+          ok: false,
+          reason: reason,
+          formId: id,
+          priorOk: true,
+          seq: state.seq[id],
+        };
+      }
+    }
   }
 
   function assertSameSession(snapshot) {
@@ -268,6 +328,7 @@
 
   function bindEditContext(formId, ctx) {
     if (!formId || !ctx || !ctx.clientDraftId) return null;
+    const gen = bumpFormGeneration(formId, 'bind');
     state.editContexts[formId] = {
       clientDraftId: ctx.clientDraftId,
       kind: ctx.kind,
@@ -278,6 +339,12 @@
       status: ctx.status || 'draft',
       submitReviewStatus: ctx.submitReviewStatus || null,
       values: ctx.values || {},
+      serviceReviewRevision:
+        ctx.serviceReviewRevision != null ? ctx.serviceReviewRevision : null,
+      formGeneration: gen,
+      opId:
+        ctx.opId ||
+        formId + ':' + ctx.clientDraftId + ':' + gen + ':' + Date.now(),
     };
     if (ctx.revision != null) state.draftRevisionByClientId[ctx.clientDraftId] = ctx.revision;
     return state.editContexts[formId];
@@ -288,7 +355,23 @@
   }
 
   function clearEditContext(formId) {
-    delete state.editContexts[formId || 'default'];
+    const id = formId || 'default';
+    bumpFormGeneration(id, 'clear');
+    delete state.editContexts[id];
+  }
+
+  /** True when the live form still owns the same draft + generation the op started with. */
+  function assertLiveFormOp(formId, op) {
+    if (!op) return false;
+    const live = getEditContext(formId);
+    if (!live) return false;
+    if (op.clientDraftId && live.clientDraftId !== op.clientDraftId) return false;
+    if (op.formGeneration != null) {
+      if (live.formGeneration !== op.formGeneration) return false;
+      if ((state.formGeneration[formId] || 0) !== op.formGeneration) return false;
+    }
+    if (op.opId && live.opId && live.opId !== op.opId) return false;
+    return true;
   }
 
   function clientDraftIdFor(kind, itemId, formId) {
@@ -459,6 +542,11 @@
     const formId = form.id || 'default';
     const snapshot = captureSessionSnapshot();
     snapshot.formId = formId;
+    const liveCtx = getEditContext(formId);
+    snapshot.clientDraftId = liveCtx && liveCtx.clientDraftId;
+    snapshot.formGeneration =
+      (liveCtx && liveCtx.formGeneration) || state.formGeneration[formId] || 0;
+    snapshot.opId = liveCtx && liveCtx.opId;
     state.seq[formId] = (state.seq[formId] || 0) + 1;
     const mySeq = state.seq[formId];
     state.pending[formId] = { builder: payloadBuilder, snapshot: snapshot, seq: mySeq };
@@ -504,7 +592,14 @@
       return state.lastFlushResult[formId];
     }
     built._session = pending.snapshot;
+    built._op = {
+      clientDraftId: built.clientDraftId,
+      formGeneration: pending.snapshot.formGeneration,
+      opId: pending.snapshot.opId,
+      seq: pending.seq,
+    };
     state.inflight[formId] = true;
+    state.inflightSeq[formId] = pending.seq;
     const controller = typeof AbortController !== 'undefined' ? new AbortController() : null;
     if (controller) state.abortByForm[formId] = controller;
     const mySeq = pending.seq;
@@ -523,23 +618,34 @@
         { signal: controller ? controller.signal : undefined },
       );
       if (!assertSameSession(built._session)) {
-        setStatus(form, 'تُجاهلت استجابة قديمة بعد تبديل الحساب', 'error');
+        // Do not paint status if the form already moved on.
+        if (assertLiveFormOp(formId, built._op)) {
+          setStatus(form, 'تُجاهلت استجابة قديمة بعد تبديل الحساب', 'error');
+        }
         state.lastFlushResult[formId] = { ok: false, cancelled: true, reason: 'stale-response', formId: formId };
         return state.lastFlushResult[formId];
       }
-      if (state.seq[formId] !== mySeq) {
-        // Newer edit landed while this request was in flight — not a confirmed save of current values.
-        state.lastFlushResult[formId] = { ok: false, pending: true, reason: 'superseded', formId: formId, revision: saved.revision };
+      // Always remember revision for THIS draft id — helpful for a later save of the same draft —
+      // but never mutate UI / lastFlushResult / editContexts when the form moved to another draft.
+      const liveOk = assertLiveFormOp(formId, built._op);
+      if (state.seq[formId] !== mySeq || !liveOk) {
         state.draftRevisionByClientId[built.clientDraftId] = saved.revision;
-        return state.lastFlushResult[formId];
-      }
-      // Re-check generation: invalid input during flight bumps seq and must not show «محفوظ».
-      if (state.seq[formId] !== mySeq) {
-        state.draftRevisionByClientId[built.clientDraftId] = saved.revision;
+        if (!liveOk) {
+          // Stale draft response must not touch the currently open draft's flush result.
+          return {
+            ok: false,
+            cancelled: true,
+            reason: 'stale-draft-context',
+            formId: formId,
+            clientDraftId: built.clientDraftId,
+            revision: saved.revision,
+            seq: mySeq,
+          };
+        }
         state.lastFlushResult[formId] = {
           ok: false,
-          pending: false,
-          reason: 'superseded-after-response',
+          pending: true,
+          reason: 'superseded',
           formId: formId,
           revision: saved.revision,
           seq: mySeq,
@@ -561,12 +667,25 @@
       return state.lastFlushResult[formId];
     } catch (error) {
       if (error && error.name === 'AbortError') {
-        state.lastFlushResult[formId] = { ok: false, cancelled: true, reason: 'aborted', formId: formId };
-        return state.lastFlushResult[formId];
+        // Only record abort on lastFlushResult when we still own the form op.
+        if (assertLiveFormOp(formId, built._op) && state.seq[formId] === mySeq) {
+          state.lastFlushResult[formId] = { ok: false, cancelled: true, reason: 'aborted', formId: formId };
+          return state.lastFlushResult[formId];
+        }
+        return { ok: false, cancelled: true, reason: 'aborted-stale', formId: formId, seq: mySeq };
       }
       if (!assertSameSession(built._session)) {
-        state.lastFlushResult[formId] = { ok: false, cancelled: true, reason: 'auth-changed', formId: formId };
-        return state.lastFlushResult[formId];
+        return { ok: false, cancelled: true, reason: 'auth-changed', formId: formId, seq: mySeq };
+      }
+      if (!assertLiveFormOp(formId, built._op) || state.seq[formId] !== mySeq) {
+        return {
+          ok: false,
+          cancelled: true,
+          reason: 'stale-draft-context',
+          formId: formId,
+          seq: mySeq,
+          clientDraftId: built.clientDraftId,
+        };
       }
       const msg = String(error && error.message ? error.message : error);
       const code = (error && error.code) || (error && error.body && error.body.code) || '';
@@ -602,11 +721,20 @@
       };
       return state.lastFlushResult[formId];
     } finally {
-      // Only clear inflight/abort for this generation.
+      // Only clear inflight/abort / reschedule when THIS generation still owns the flight.
       if (state.abortByForm[formId] === controller) delete state.abortByForm[formId];
-      state.inflight[formId] = false;
-      if (state.pending[formId] && state.seq[formId] !== mySeq) {
-        flush(form, state.seq[formId]);
+      if (state.inflightSeq[formId] === mySeq) {
+        delete state.inflightSeq[formId];
+        state.inflight[formId] = false;
+        // Reschedule only if a newer pending exists AND the live form still matches that pending's draft.
+        const nextPending = state.pending[formId];
+        if (nextPending && state.seq[formId] !== mySeq) {
+          const live = getEditContext(formId);
+          const pendingDraft = nextPending.snapshot && nextPending.snapshot.clientDraftId;
+          if (!pendingDraft || (live && live.clientDraftId === pendingDraft)) {
+            flush(form, state.seq[formId]);
+          }
+        }
       }
     }
   }
@@ -779,6 +907,8 @@
     bindEditContext: bindEditContext,
     getEditContext: getEditContext,
     clearEditContext: clearEditContext,
+    assertLiveFormOp: assertLiveFormOp,
+    bumpFormGeneration: bumpFormGeneration,
     scopedTemplateKey: scopedTemplateKey,
     profileIdFor: profileIdFor,
     importLocalTemplateInteractive: importLocalTemplateInteractive,
