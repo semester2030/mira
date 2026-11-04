@@ -22,6 +22,7 @@ This decision **supersedes** any earlier assignment that required those checks t
 | Package | `MIRA_P1_PARTNER_EDITOR_CLOSURE_RC13_20261104T142814Z.zip` |
 | SHA256 | `0570e3b5300ef70e22069326b2bb0a7b6581fc5a81b57fbc882d464d1e138b93` |
 | codeCommit | `3254b19be96a2ff3c82a5fb9b422f16041dc615d` |
+| documentationCommit | `d77063ec635e49fc6f36d83141218e036458742f` |
 | Prior local RC13 judgment | `P1_LOCAL_ACCEPTED_READY_FOR_NEXT_PHASE` (evidence package only; not full verification) |
 
 ## Deferred IDs
