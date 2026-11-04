@@ -28,7 +28,18 @@ import {
   uploadSessionEnabled,
   uploadVideoMaxBytes,
 } from './upload-sessions.policy';
-import { CompletedPart, MemoryMultipartUploadStore, MultipartUploadStore } from './multipart.store';
+import {
+  CompletedPart,
+  DiskMultipartUploadStore,
+  MemoryMultipartUploadStore,
+  MultipartUploadStore,
+} from './multipart.store';
+
+function isDirectPartStore(
+  store: MultipartUploadStore,
+): store is MemoryMultipartUploadStore | DiskMultipartUploadStore {
+  return store instanceof MemoryMultipartUploadStore || store instanceof DiskMultipartUploadStore;
+}
 import { UploadFinalizeService } from './upload-finalize.service';
 
 type OwnerKind = 'product' | 'service';
@@ -80,8 +91,12 @@ export class UploadSessionsService {
       finalizeMaxAttempts: UPLOAD_FINALIZE_MAX_ATTEMPTS,
       allowedImageMime: [...IMAGE_MIME],
       allowedVideoMime: [...VIDEO_MIME],
-      storeMode: this.multipart instanceof MemoryMultipartUploadStore ? 'memory' : 's3',
-      directPartsAllowed: uploadDirectPartsAllowed() && this.multipart instanceof MemoryMultipartUploadStore,
+      storeMode: isDirectPartStore(this.multipart)
+        ? this.multipart instanceof DiskMultipartUploadStore
+          ? 'disk'
+          : 'memory'
+        : 's3',
+      directPartsAllowed: uploadDirectPartsAllowed() && isDirectPartStore(this.multipart),
     };
   }
 
@@ -122,6 +137,8 @@ export class UploadSessionsService {
     verifiedMimeType: string | null;
     storageCompletedAt: Date | null;
     finalizeAttempts: number;
+    finalizeNextAttemptAt?: Date | null;
+    completeIntentAt?: Date | null;
   }) {
     const parts = asParts(row.completedPartsJson);
     const uploadedBytes = parts.reduce((sum, p) => sum + p.size, 0);
@@ -143,6 +160,8 @@ export class UploadSessionsService {
       failureCode: row.failureCode,
       failureClass: row.failureClass,
       retryable: row.failureClass === 'retryable',
+      finalizeAttempts: row.finalizeAttempts,
+      finalizeNextAttemptAt: row.finalizeNextAttemptAt ? row.finalizeNextAttemptAt.toISOString() : null,
       expiresAt: row.expiresAt.toISOString(),
       readyAt: row.readyAt ? row.readyAt.toISOString() : null,
       verifiedByteSize: row.verifiedByteSize,
@@ -338,7 +357,14 @@ export class UploadSessionsService {
       await this.syncPartsFromStorage(row);
       row = await this.loadOwned(partnerId, sessionId);
     }
-    if ((row.status === 'uploaded' || (row.status === 'failed' && row.failureClass === 'retryable')) && !row.catalogMediaId) {
+    // F05: polling must not burn attempts — enqueue only when due.
+    const due =
+      !row.finalizeNextAttemptAt || row.finalizeNextAttemptAt.getTime() <= uploadNowMs();
+    if (
+      due &&
+      (row.status === 'uploaded' || (row.status === 'failed' && row.failureClass === 'retryable')) &&
+      !row.catalogMediaId
+    ) {
       this.finalize.enqueue(row.id);
     }
     return this.publicSession(row);
@@ -383,7 +409,7 @@ export class UploadSessionsService {
   }
 
   async recordDirectPart(partnerId: string, sessionId: string, partNumber: number, body: Buffer) {
-    if (!uploadDirectPartsAllowed() || !(this.multipart instanceof MemoryMultipartUploadStore)) {
+    if (!uploadDirectPartsAllowed() || !isDirectPartStore(this.multipart)) {
       throw new ForbiddenException('الرفع المباشر عبر API غير متاح');
     }
     const row = await this.loadOwned(partnerId, sessionId);
@@ -494,6 +520,9 @@ export class UploadSessionsService {
             ...p,
             completedAt: new Date(uploadNowMs()).toISOString(),
           })) as unknown as Prisma.InputJsonValue,
+          // U10: durable intent before storage Complete — crash after storage can be reconciled.
+          completeIntentAt: new Date(uploadNowMs()),
+          status: 'uploading',
         },
       });
       return { kind: 'proceed' as const };
@@ -510,7 +539,17 @@ export class UploadSessionsService {
     if (!row.storageUploadId) throw new ConflictException('معرّف الرفع مفقود');
     try {
       await this.multipart.complete(row.objectKey, row.storageUploadId, parts);
+      // Test hook: throw after storage object exists to simulate crash before DB write (U10).
+      if ('failNextCompleteDbHook' in this.multipart && this.multipart.failNextCompleteDbHook) {
+        const hook = this.multipart.failNextCompleteDbHook;
+        (this.multipart as MemoryMultipartUploadStore).failNextCompleteDbHook = null;
+        hook();
+      }
     } catch (error) {
+      if (String((error as Error)?.message) === 'inject-complete-db-crash') {
+        // Object exists; completeIntentAt set; status still uploading — recoverStaleWork must fix.
+        throw new ServiceUnavailableException('تعذر حفظ حالة الإكمال');
+      }
       const latestAfter = await this.loadOwned(partnerId, sessionId);
       if (latestAfter.status === 'aborted') {
         // Abort won while storage complete was in flight — do not promote.
@@ -556,6 +595,7 @@ export class UploadSessionsService {
           status: 'uploaded',
           completedAt: new Date(uploadNowMs()),
           storageCompletedAt: new Date(uploadNowMs()),
+          completeIntentAt: null,
           completedPartsJson: parts.map((p) => ({
             ...p,
             completedAt: new Date(uploadNowMs()).toISOString(),
@@ -585,11 +625,11 @@ export class UploadSessionsService {
       row.status !== 'uploaded' &&
       row.status !== 'verifying' &&
       !(row.status === 'failed' && row.failureClass === 'retryable') &&
-      !(row.status === 'uploading' && row.storageCompletedAt)
+      !(row.status === 'uploading' && (row.storageCompletedAt || row.completeIntentAt))
     ) {
       throw new ConflictException('لا يمكن إعادة التحقق لهذه الحالة');
     }
-    // F05: schedule only — never bypass concurrency pump with a direct finalizeOne.
+    // F05: schedule only — claimLease enforces backoff; GET/retry must not bypass delay.
     this.finalize.enqueue(row.id);
     return this.publicSession(await this.loadOwned(partnerId, sessionId));
   }
@@ -629,6 +669,8 @@ export class UploadSessionsService {
           failureClass: 'permanent',
           finalizeLeaseOwner: null,
           finalizeLeaseUntil: null,
+          finalizeNextAttemptAt: null,
+          completeIntentAt: null,
         },
       });
     });

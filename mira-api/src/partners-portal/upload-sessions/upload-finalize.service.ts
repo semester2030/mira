@@ -2,15 +2,20 @@ import { Inject, Injectable, Logger, OnModuleInit } from '@nestjs/common';
 import { randomUUID } from 'crypto';
 import { PrismaService } from '../../prisma/prisma.service';
 import { CatalogMediaStorage } from '../../marketplace/catalog-media.contract';
-import { MemoryMultipartUploadStore, MultipartUploadStore } from './multipart.store';
+import { DiskMultipartUploadStore, MemoryMultipartUploadStore, MultipartUploadStore } from './multipart.store';
 import { verifyMediaFile } from './upload-media-verify';
 import {
   UPLOAD_FINALIZE_CONCURRENCY,
   UPLOAD_FINALIZE_LEASE_MS,
   UPLOAD_FINALIZE_MAX_ATTEMPTS,
   UPLOAD_IMAGE_MAX_BYTES,
+  finalizeRetryDelayMs,
   uploadNowMs,
 } from './upload-sessions.policy';
+
+function needsLocalCatalogCopy(store: MultipartUploadStore): boolean {
+  return store instanceof MemoryMultipartUploadStore || store instanceof DiskMultipartUploadStore;
+}
 
 @Injectable()
 export class UploadFinalizeService implements OnModuleInit {
@@ -88,6 +93,16 @@ export class UploadFinalizeService implements OnModuleInit {
     while (this.activeCount < UPLOAD_FINALIZE_CONCURRENCY && this.waitQueue.length) {
       const sessionId = this.waitQueue.shift()!;
       if (this.inFlight.has(sessionId)) continue;
+      // Skip sessions still in backoff without consuming a worker slot.
+      const row = await this.prisma.partnerUploadSession.findUnique({
+        where: { id: sessionId },
+        select: { finalizeNextAttemptAt: true, status: true, catalogMediaId: true },
+      });
+      if (!row || row.catalogMediaId || row.status === 'ready' || row.status === 'aborted') continue;
+      if (row.finalizeNextAttemptAt && row.finalizeNextAttemptAt.getTime() > uploadNowMs()) {
+        // Re-queue later via recover; do not burn attempts.
+        continue;
+      }
       this.activeCount += 1;
       const work = this.runFinalize(sessionId).finally(() => {
         this.inFlight.delete(sessionId);
@@ -99,18 +114,96 @@ export class UploadFinalizeService implements OnModuleInit {
     }
   }
 
-  /** Crash recovery: reclaim expired leases and retryable/uploaded sessions. */
+  /**
+   * U10: without GET — detect storage-complete + lost DB update via completeIntentAt
+   * and/or full completedParts + head(objectKey).
+   */
+  async reconcileOrphanCompletes(limit = 20): Promise<number> {
+    const nowMs = uploadNowMs();
+    const candidates = await this.prisma.partnerUploadSession.findMany({
+      where: {
+        catalogMediaId: null,
+        cleanedAt: null,
+        status: 'uploading',
+        OR: [{ completeIntentAt: { not: null } }, { storageCompletedAt: { not: null } }],
+      },
+      orderBy: { updatedAt: 'asc' },
+      take: limit,
+    });
+    // Also: uploading with all parts recorded but no intent (crash before intent write is rare;
+    // still probe sessions whose completedPartsJson length matches totalParts and are aged).
+    const aged = await this.prisma.partnerUploadSession.findMany({
+      where: {
+        catalogMediaId: null,
+        cleanedAt: null,
+        status: 'uploading',
+        storageCompletedAt: null,
+        completeIntentAt: null,
+        updatedAt: { lt: new Date(nowMs - 5_000) },
+      },
+      orderBy: { updatedAt: 'asc' },
+      take: limit,
+    });
+
+    const seen = new Set<string>();
+    let fixed = 0;
+    for (const row of [...candidates, ...aged]) {
+      if (seen.has(row.id)) continue;
+      seen.add(row.id);
+      const parts = Array.isArray(row.completedPartsJson) ? (row.completedPartsJson as unknown[]) : [];
+      const allParts = parts.length >= row.totalParts || !!row.completeIntentAt || !!row.storageCompletedAt;
+      if (!allParts) continue;
+      try {
+        const head = await this.multipart.head(row.objectKey);
+        if (!head || head.contentLength !== row.declaredByteSize) continue;
+        const updated = await this.prisma.partnerUploadSession.updateMany({
+          where: {
+            id: row.id,
+            status: 'uploading',
+            catalogMediaId: null,
+            cleanedAt: null,
+          },
+          data: {
+            status: 'uploaded',
+            storageCompletedAt: new Date(nowMs),
+            completedAt: new Date(nowMs),
+            completeIntentAt: null,
+          },
+        });
+        if (updated.count) {
+          fixed += 1;
+          this.enqueue(row.id);
+        }
+      } catch (error) {
+        this.log.warn(`reconcile-orphan ${row.id}: ${(error as Error).message}`);
+      }
+    }
+    return fixed;
+  }
+
+  /** Crash recovery: reconcile orphans, then reclaim due leases / retryable / uploaded. */
   async recoverStaleWork(limit = 20): Promise<number> {
+    await this.reconcileOrphanCompletes(limit);
     const now = new Date(uploadNowMs());
     const rows = await this.prisma.partnerUploadSession.findMany({
       where: {
         catalogMediaId: null,
         cleanedAt: null,
-        OR: [
-          { status: 'uploaded' },
-          { status: 'verifying', OR: [{ finalizeLeaseUntil: null }, { finalizeLeaseUntil: { lt: now } }] },
-          { status: 'failed', failureClass: 'retryable' },
-          { status: 'uploading', storageCompletedAt: { not: null } },
+        AND: [
+          {
+            OR: [
+              { finalizeNextAttemptAt: null },
+              { finalizeNextAttemptAt: { lte: now } },
+            ],
+          },
+          {
+            OR: [
+              { status: 'uploaded' },
+              { status: 'verifying', OR: [{ finalizeLeaseUntil: null }, { finalizeLeaseUntil: { lt: now } }] },
+              { status: 'failed', failureClass: 'retryable' },
+              { status: 'uploading', storageCompletedAt: { not: null } },
+            ],
+          },
         ],
       },
       orderBy: { updatedAt: 'asc' },
@@ -132,18 +225,26 @@ export class UploadFinalizeService implements OnModuleInit {
   private async claimLease(sessionId: string): Promise<boolean> {
     const now = uploadNowMs();
     const until = new Date(now + UPLOAD_FINALIZE_LEASE_MS);
+    // F05: only claim when due (finalizeNextAttemptAt null or <= now). Attempt increments here only.
     const claimed = await this.prisma.partnerUploadSession.updateMany({
       where: {
         id: sessionId,
         catalogMediaId: null,
         cleanedAt: null,
-        OR: [
-          { status: 'uploaded' },
-          { status: 'failed', failureClass: 'retryable' },
-          { status: 'uploading', storageCompletedAt: { not: null } },
+        AND: [
           {
-            status: 'verifying',
-            OR: [{ finalizeLeaseUntil: null }, { finalizeLeaseUntil: { lt: new Date(now) } }],
+            OR: [{ finalizeNextAttemptAt: null }, { finalizeNextAttemptAt: { lte: new Date(now) } }],
+          },
+          {
+            OR: [
+              { status: 'uploaded' },
+              { status: 'failed', failureClass: 'retryable' },
+              { status: 'uploading', storageCompletedAt: { not: null } },
+              {
+                status: 'verifying',
+                OR: [{ finalizeLeaseUntil: null }, { finalizeLeaseUntil: { lt: new Date(now) } }],
+              },
+            ],
           },
         ],
       },
@@ -152,6 +253,7 @@ export class UploadFinalizeService implements OnModuleInit {
         finalizeLeaseOwner: this.workerId,
         finalizeLeaseUntil: until,
         finalizeAttempts: { increment: 1 },
+        finalizeNextAttemptAt: null,
         failureCode: null,
         failureMessageAr: null,
         failureClass: null,
@@ -256,9 +358,10 @@ export class UploadFinalizeService implements OnModuleInit {
 
       if (!(await this.stillOwns(sessionId))) return;
 
-      const catalogKey = this.multipart instanceof MemoryMultipartUploadStore ? randomUUID() : leased.objectKey;
-      if (this.multipart instanceof MemoryMultipartUploadStore) {
-        await this.multipart.copyToCatalogStorage(this.storage, leased.objectKey, catalogKey);
+      const catalogKey = needsLocalCatalogCopy(this.multipart) ? randomUUID() : leased.objectKey;
+      if (needsLocalCatalogCopy(this.multipart)) {
+        const local = this.multipart as MemoryMultipartUploadStore | DiskMultipartUploadStore;
+        await local.copyToCatalogStorage(this.storage, leased.objectKey, catalogKey);
       }
 
       const image = verified.kind === 'image';
@@ -427,6 +530,18 @@ export class UploadFinalizeService implements OnModuleInit {
     messageAr: string,
     failureClass: 'permanent' | 'retryable',
   ) {
+    const row = await this.prisma.partnerUploadSession.findUnique({
+      where: { id: sessionId },
+      select: { finalizeAttempts: true },
+    });
+    const attempts = row?.finalizeAttempts ?? 1;
+    const nextAt =
+      failureClass === 'retryable' && attempts < UPLOAD_FINALIZE_MAX_ATTEMPTS
+        ? new Date(uploadNowMs() + finalizeRetryDelayMs(attempts))
+        : null;
+    const permanent =
+      failureClass === 'permanent' ||
+      (failureClass === 'retryable' && attempts >= UPLOAD_FINALIZE_MAX_ATTEMPTS);
     await this.prisma.partnerUploadSession.updateMany({
       where: {
         id: sessionId,
@@ -436,11 +551,15 @@ export class UploadFinalizeService implements OnModuleInit {
       },
       data: {
         status: 'failed',
-        failureCode: code,
-        failureMessageAr: messageAr,
-        failureClass,
+        failureCode: permanent && failureClass === 'retryable' ? 'finalize_exhausted' : code,
+        failureMessageAr:
+          permanent && failureClass === 'retryable'
+            ? 'تجاوزت محاولات التحقق الحد المسموح'
+            : messageAr,
+        failureClass: permanent ? 'permanent' : 'retryable',
         finalizeLeaseOwner: null,
         finalizeLeaseUntil: null,
+        finalizeNextAttemptAt: permanent ? null : nextAt,
       },
     });
   }

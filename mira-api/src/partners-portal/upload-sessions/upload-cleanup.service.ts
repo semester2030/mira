@@ -4,10 +4,22 @@ import { MultipartUploadStore } from './multipart.store';
 import { uploadNowMs } from './upload-sessions.policy';
 import { UploadFinalizeService } from './upload-finalize.service';
 
+function isBenignAbortError(error: unknown): boolean {
+  const name = String((error as { name?: string; Code?: string })?.name || (error as { Code?: string })?.Code || '');
+  const msg = String((error as Error)?.message || error).toLowerCase();
+  return (
+    name === 'NoSuchUpload' ||
+    name === 'NotFound' ||
+    msg.includes('nosuchupload') ||
+    msg.includes('upload-not-found') ||
+    msg.includes('not found')
+  );
+}
+
 /**
- * Expires incomplete sessions after TTL (default 24h). Controllable via setUploadClock in tests.
- * Never deletes CatalogMedia-bound objects. Never marks cleanedAt unless cleanup succeeded.
- * F03: claim aborted under FOR UPDATE before any object delete so finalize cannot bind mid-delete.
+ * Expires incomplete sessions after TTL. Never marks cleanedAt unless storage work succeeded.
+ * F02: abort connection failures and missing completed-object deletes block cleanedAt.
+ * F03: claim aborted under FOR UPDATE before delete; respect active finalize lease.
  */
 @Injectable()
 export class UploadCleanupService implements OnModuleInit {
@@ -62,12 +74,6 @@ export class UploadCleanupService implements OnModuleInit {
     return { cleaned, skippedBound, skippedLease, failed };
   }
 
-  /**
-   * Atomic cleanup of one session.
-   * 1) Claim aborted (or bound) under FOR UPDATE — never overwrite ready; respect active lease.
-   * 2) Outside lock: abort multipart / deleteObject by exact key only.
-   * 3) Set cleanedAt only after required storage work succeeds.
-   */
   async cleanOne(sessionId: string, nowMs = uploadNowMs()): Promise<'cleaned' | 'bound' | 'lease' | 'skipped' | 'failed'> {
     const now = new Date(nowMs);
 
@@ -77,17 +83,19 @@ export class UploadCleanupService implements OnModuleInit {
       catalog_media_id: string | null;
       storage_upload_id: string | null;
       storage_completed_at: Date | null;
+      complete_intent_at: Date | null;
       object_key: string;
       finalize_lease_owner: string | null;
       finalize_lease_until: Date | null;
       cleaned_at: Date | null;
       expires_at: Date;
+      declared_byte_size: number;
     };
 
     const claim = await this.prisma.$transaction(async (tx) => {
       const rows = await tx.$queryRaw<Locked[]>`
-        SELECT id, status, catalog_media_id, storage_upload_id, storage_completed_at,
-               object_key, finalize_lease_owner, finalize_lease_until, cleaned_at, expires_at
+        SELECT id, status, catalog_media_id, storage_upload_id, storage_completed_at, complete_intent_at,
+               object_key, finalize_lease_owner, finalize_lease_until, cleaned_at, expires_at, declared_byte_size
         FROM partner_upload_sessions
         WHERE id = ${sessionId}
         FOR UPDATE
@@ -114,7 +122,6 @@ export class UploadCleanupService implements OnModuleInit {
         return { kind: 'lease' as const };
       }
 
-      // Already aborted (e.g. user abort) — still need storage cleanup + cleanedAt
       if (live.status !== 'aborted') {
         const updated = await tx.partnerUploadSession.updateMany({
           where: {
@@ -130,6 +137,8 @@ export class UploadCleanupService implements OnModuleInit {
             failureMessageAr: 'انتهت صلاحية جلسة الرفع ونُظّفت',
             finalizeLeaseOwner: null,
             finalizeLeaseUntil: null,
+            finalizeNextAttemptAt: null,
+            completeIntentAt: null,
           },
         });
         if (!updated.count) {
@@ -150,28 +159,58 @@ export class UploadCleanupService implements OnModuleInit {
         objectKey: live.object_key,
         storageUploadId: live.storage_upload_id,
         storageCompletedAt: live.storage_completed_at,
+        completeIntentAt: live.complete_intent_at,
+        declaredByteSize: live.declared_byte_size,
+        // Abort open multipart when upload id still present and we have not recorded storage complete.
         needAbortMultipart: !!(live.storage_upload_id && !live.storage_completed_at),
-        needDeleteObject: !!(
-          live.storage_completed_at ||
-          live.status === 'uploaded' ||
-          live.status === 'failed' ||
-          live.status === 'verifying' ||
-          live.status === 'aborted'
-        ),
       };
     });
 
     if (claim.kind !== 'claimed') return claim.kind;
 
+    // Probe storage — do not trust storageCompletedAt alone (U10 / F02).
+    let objectPresent = false;
+    try {
+      const head = await this.multipart.head(claim.objectKey);
+      objectPresent = !!(head && head.contentLength > 0);
+    } catch (error) {
+      this.log.warn(`cleanup-head-failed ${sessionId}: ${(error as Error).message}`);
+      await this.prisma.partnerUploadSession.updateMany({
+        where: { id: sessionId, cleanedAt: null, status: 'aborted' },
+        data: {
+          failureCode: 'cleanup_storage_unavailable',
+          failureMessageAr: 'تعذر التحقق من كائن التخزين أثناء التنظيف',
+        },
+      });
+      return 'failed';
+    }
+
     if (claim.needAbortMultipart && claim.storageUploadId) {
       try {
         await this.multipart.abort(claim.objectKey, claim.storageUploadId);
       } catch (error) {
-        this.log.warn(`cleanup-abort-multipart ${sessionId}: ${(error as Error).message}`);
+        if (!isBenignAbortError(error)) {
+          this.log.warn(`cleanup-abort-multipart ${sessionId}: ${(error as Error).message}`);
+          await this.prisma.partnerUploadSession.updateMany({
+            where: { id: sessionId, cleanedAt: null, status: 'aborted' },
+            data: {
+              failureCode: 'cleanup_abort_failed',
+              failureMessageAr: 'تعذر إلغاء الرفع المتعدد الأجزاء أثناء التنظيف',
+            },
+          });
+          // F02: do NOT set cleanedAt when abort fails for non-benign reasons
+          return 'failed';
+        }
       }
     }
 
-    if (claim.needDeleteObject) {
+    // Delete completed (or possibly completed) object by exact key when unbound.
+    const needDelete =
+      objectPresent ||
+      !!claim.storageCompletedAt ||
+      !!claim.completeIntentAt;
+
+    if (needDelete || objectPresent) {
       const media = await this.prisma.catalogMedia.findFirst({
         where: { storageKey: claim.objectKey },
         select: { id: true },
@@ -183,12 +222,24 @@ export class UploadCleanupService implements OnModuleInit {
         });
         return 'bound';
       }
-      try {
-        await this.multipart.deleteObject(claim.objectKey);
-      } catch (error) {
-        this.log.warn(`cleanup-delete-object ${sessionId}: ${(error as Error).message}`);
-        // F02: do NOT set cleanedAt on delete failure — retryable
-        return 'failed';
+      // Re-check session not rebound under finalize while we probed
+      const live = await this.prisma.partnerUploadSession.findUnique({ where: { id: sessionId } });
+      if (live?.status === 'ready' || live?.catalogMediaId) return 'bound';
+
+      if (objectPresent || claim.storageCompletedAt || claim.completeIntentAt) {
+        try {
+          await this.multipart.deleteObject(claim.objectKey);
+        } catch (error) {
+          this.log.warn(`cleanup-delete-object ${sessionId}: ${(error as Error).message}`);
+          await this.prisma.partnerUploadSession.updateMany({
+            where: { id: sessionId, cleanedAt: null, status: 'aborted' },
+            data: {
+              failureCode: 'cleanup_delete_failed',
+              failureMessageAr: 'تعذر حذف كائن التخزين أثناء التنظيف',
+            },
+          });
+          return 'failed';
+        }
       }
     }
 
@@ -199,7 +250,11 @@ export class UploadCleanupService implements OnModuleInit {
         status: 'aborted',
         catalogMediaId: null,
       },
-      data: { cleanedAt: now },
+      data: {
+        cleanedAt: now,
+        failureCode: 'expired',
+        failureMessageAr: 'انتهت صلاحية جلسة الرفع ونُظّفت',
+      },
     });
     if (!marked.count) {
       const again = await this.prisma.partnerUploadSession.findUnique({ where: { id: sessionId } });

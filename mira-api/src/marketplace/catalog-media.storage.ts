@@ -1,13 +1,16 @@
 import { Injectable } from '@nestjs/common';
 import { ConfigService } from '@nestjs/config';
-import { mkdir, readFile, rm, writeFile } from 'fs/promises';
+import { createReadStream } from 'fs';
+import { mkdir, readFile, rm, stat, writeFile } from 'fs/promises';
 import * as path from 'path';
 import {
   CatalogMediaPermissionError,
   CatalogMediaReadError,
   CatalogMediaStorage,
   CatalogMediaUnavailable,
+  type CatalogMediaOpenResult,
 } from './catalog-media.contract';
+import { planMediaStream } from './catalog-media.stream';
 import { inspectCatalogEndpoint, readS3TimeoutMs, S3CompatibleCatalogMediaStorage, S3MediaSettings } from './catalog-media.s3';
 
 export {
@@ -101,6 +104,45 @@ export class LocalCatalogMediaStorage extends CatalogMediaStorage {
       }
       throw error;
     }
+  }
+
+  /** Stream Range without buffering the whole object into RSS (U11/U12 local proofs). */
+  async open(
+    key: string,
+    options: { rangeHeader?: string; signal?: AbortSignal } = {},
+  ): Promise<CatalogMediaOpenResult | null> {
+    this.refuseProduction();
+    if (options.signal?.aborted) {
+      throw Object.assign(new Error('aborted'), { name: 'AbortError' });
+    }
+    const file = this.safe(key);
+    let total: number;
+    try {
+      total = Number((await stat(file)).size);
+    } catch (error) {
+      const code = (error as NodeJS.ErrnoException).code;
+      if (code === 'ENOENT') return null;
+      if (code === 'EACCES' || code === 'EPERM') throw new CatalogMediaPermissionError();
+      throw new CatalogMediaReadError();
+    }
+    const plan = planMediaStream(total, options.rangeHeader);
+    if (plan.status === 416) {
+      return { status: 416, totalSize: plan.total, contentRange: plan.contentRange };
+    }
+    const stream = createReadStream(file, { start: plan.start, end: plan.end, highWaterMark: 1024 * 1024 });
+    if (options.signal) {
+      const onAbort = () => stream.destroy(Object.assign(new Error('aborted'), { name: 'AbortError' }));
+      if (options.signal.aborted) onAbort();
+      else options.signal.addEventListener('abort', onAbort, { once: true });
+    }
+    return {
+      status: plan.status,
+      totalSize: plan.total,
+      contentLength: plan.contentLength,
+      contentRange: plan.contentRange,
+      body: stream,
+      abort: () => stream.destroy(),
+    };
   }
 }
 

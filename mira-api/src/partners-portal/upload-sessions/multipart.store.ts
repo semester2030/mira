@@ -1,6 +1,6 @@
 import { createHmac, randomUUID, timingSafeEqual } from 'crypto';
-import { createWriteStream } from 'fs';
-import { mkdtemp, rm, writeFile } from 'fs/promises';
+import { createReadStream, createWriteStream } from 'fs';
+import { mkdir, mkdtemp, readFile, readdir, rm, stat, writeFile } from 'fs/promises';
 import * as os from 'os';
 import * as path from 'path';
 import { Readable } from 'stream';
@@ -171,9 +171,18 @@ export class MemoryMultipartUploadStore extends MultipartUploadStore {
     this.uploads.delete(storageUploadId);
   }
 
+  /** Test hook: inject abort failures (connection-like). */
+  failNextAbort: Error | null = null;
+
   async abort(objectKey: string, storageUploadId: string): Promise<void> {
+    if (this.failNextAbort) {
+      const err = this.failNextAbort;
+      this.failNextAbort = null;
+      throw err;
+    }
     const up = this.uploads.get(storageUploadId);
     if (up && up.objectKey === objectKey) this.uploads.delete(storageUploadId);
+    // Missing upload id is a no-op (equivalent to NoSuchUpload).
   }
 
   async head(objectKey: string) {
@@ -313,13 +322,20 @@ export class S3MultipartUploadStore extends MultipartUploadStore {
   }
 
   async abort(objectKey: string, storageUploadId: string): Promise<void> {
-    await this.client.send(
-      new AbortMultipartUploadCommand({
-        Bucket: this.settings.bucket,
-        Key: objectKey,
-        UploadId: storageUploadId,
-      }),
-    );
+    try {
+      await this.client.send(
+        new AbortMultipartUploadCommand({
+          Bucket: this.settings.bucket,
+          Key: objectKey,
+          UploadId: storageUploadId,
+        }),
+      );
+    } catch (error) {
+      const name = String((error as { name?: string; Code?: string })?.name || (error as { Code?: string })?.Code || '');
+      // Expected: already completed or previously aborted
+      if (name === 'NoSuchUpload' || name === 'NotFound') return;
+      throw error;
+    }
   }
 
   async head(objectKey: string) {
@@ -382,6 +398,197 @@ export class S3MultipartUploadStore extends MultipartUploadStore {
   }
 }
 
+/**
+ * Disk-backed multipart for streaming / memory proofs (U11).
+ * Parts and completed objects live on disk — never retain full object Buffers in RSS.
+ */
+export class DiskMultipartUploadStore extends MultipartUploadStore {
+  readonly root: string;
+  private readonly uploads = new Map<string, { objectKey: string; contentType: string; partDir: string }>();
+  failNextAbort: Error | null = null;
+  failNextCompleteDbHook: (() => void) | null = null;
+
+  constructor(rootDir?: string) {
+    super();
+    this.root = rootDir || path.join(os.tmpdir(), `mira-upload-disk-${randomUUID()}`);
+  }
+
+  private async ensureRoot() {
+    await mkdir(this.root, { recursive: true });
+  }
+
+  async create(objectKey: string, contentType: string): Promise<MultipartCreateResult> {
+    await this.ensureRoot();
+    const storageUploadId = randomUUID();
+    const partDir = path.join(this.root, 'uploads', storageUploadId);
+    await mkdir(partDir, { recursive: true });
+    this.uploads.set(storageUploadId, { objectKey, contentType, partDir });
+    return { storageUploadId };
+  }
+
+  async signPart(
+    objectKey: string,
+    storageUploadId: string,
+    partNumber: number,
+    sessionId: string,
+  ): Promise<MultipartSignResult> {
+    const up = this.uploads.get(storageUploadId);
+    if (!up || up.objectKey !== objectKey) throw new Error('upload-not-found');
+    const exp = Math.floor(Date.now() / 1000) + UPLOAD_PART_URL_TTL_SECONDS;
+    const token = signDirectPartToken(sessionId, partNumber, exp);
+    const base = (process.env.MIRA_PUBLIC_API_BASE || '').replace(/\/$/, '');
+    const pathUrl = `/api/v1/partners-portal/upload-sessions/${encodeURIComponent(sessionId)}/direct-parts/${partNumber}?exp=${exp}&sig=${token}`;
+    return {
+      url: base ? `${base}${pathUrl}` : pathUrl,
+      method: 'PUT',
+      headers: { 'Content-Type': 'application/octet-stream' },
+      expiresAt: new Date(exp * 1000).toISOString(),
+      directToApi: true,
+    };
+  }
+
+  async putPartDirect(
+    _sessionId: string,
+    objectKey: string,
+    storageUploadId: string,
+    partNumber: number,
+    body: Buffer,
+  ): Promise<{ etag: string; size: number }> {
+    const up = this.uploads.get(storageUploadId);
+    if (!up || up.objectKey !== objectKey) throw new Error('upload-not-found');
+    const etag = `"disk-${partNumber}-${body.length}-${createHmac('sha256', 'etag').update(body).digest('hex').slice(0, 16)}"`;
+    await writeFile(path.join(up.partDir, `${partNumber}.part`), body);
+    await writeFile(path.join(up.partDir, `${partNumber}.etag`), etag, 'utf8');
+    return { etag, size: body.length };
+  }
+
+  async listParts(objectKey: string, storageUploadId: string): Promise<CompletedPart[]> {
+    const up = this.uploads.get(storageUploadId);
+    if (!up || up.objectKey !== objectKey) return [];
+    const names = await readdir(up.partDir).catch(() => [] as string[]);
+    const parts: CompletedPart[] = [];
+    for (const name of names) {
+      const m = /^(\d+)\.part$/.exec(name);
+      if (!m) continue;
+      const partNumber = Number(m[1]);
+      const filePath = path.join(up.partDir, name);
+      const st = await stat(filePath);
+      const etag = await readFile(path.join(up.partDir, `${partNumber}.etag`), 'utf8').catch(() => `"disk-${partNumber}"`);
+      parts.push({ partNumber, etag: etag.trim(), size: Number(st.size) });
+    }
+    return parts.sort((a, b) => a.partNumber - b.partNumber);
+  }
+
+  private objectPath(objectKey: string) {
+    const safe = createHmac('sha256', 'key').update(objectKey).digest('hex');
+    return path.join(this.root, 'objects', safe);
+  }
+
+  async complete(objectKey: string, storageUploadId: string, parts: CompletedPart[]): Promise<void> {
+    const up = this.uploads.get(storageUploadId);
+    const dest = this.objectPath(objectKey);
+    if (!up || up.objectKey !== objectKey) {
+      try {
+        await stat(dest);
+        return;
+      } catch {
+        throw new Error('upload-not-found');
+      }
+    }
+    await mkdir(path.dirname(dest), { recursive: true });
+    // Stream parts to object file without buffering the full video in one Buffer.
+    const out = createWriteStream(dest);
+    try {
+      for (const p of [...parts].sort((a, b) => a.partNumber - b.partNumber)) {
+        const partPath = path.join(up.partDir, `${p.partNumber}.part`);
+        const st = await stat(partPath);
+        if (Number(st.size) !== p.size) throw new Error('part-size-mismatch-' + p.partNumber);
+        await new Promise<void>((resolve, reject) => {
+          const rs = createReadStream(partPath, { highWaterMark: 1024 * 1024 });
+          rs.on('error', reject);
+          out.on('error', reject);
+          rs.on('data', (chunk: Buffer | string) => {
+            const buf = typeof chunk === 'string' ? Buffer.from(chunk) : chunk;
+            if (!out.write(buf)) {
+              rs.pause();
+              out.once('drain', () => rs.resume());
+            }
+          });
+          rs.on('end', () => resolve());
+        });
+      }
+      await new Promise<void>((resolve, reject) => {
+        out.end(() => resolve());
+        out.on('error', reject);
+      });
+    } catch (error) {
+      out.destroy();
+      await rm(dest, { force: true }).catch(() => undefined);
+      throw error;
+    }
+    await rm(up.partDir, { recursive: true, force: true });
+    this.uploads.delete(storageUploadId);
+    if (this.failNextCompleteDbHook) {
+      const hook = this.failNextCompleteDbHook;
+      this.failNextCompleteDbHook = null;
+      hook();
+    }
+  }
+
+  async abort(objectKey: string, storageUploadId: string): Promise<void> {
+    if (this.failNextAbort) {
+      const err = this.failNextAbort;
+      this.failNextAbort = null;
+      throw err;
+    }
+    const up = this.uploads.get(storageUploadId);
+    if (up && up.objectKey === objectKey) {
+      await rm(up.partDir, { recursive: true, force: true });
+      this.uploads.delete(storageUploadId);
+    }
+  }
+
+  async head(objectKey: string) {
+    try {
+      const st = await stat(this.objectPath(objectKey));
+      return { contentLength: Number(st.size) };
+    } catch {
+      return null;
+    }
+  }
+
+  async materializeToTemp(objectKey: string) {
+    const src = this.objectPath(objectKey);
+    try {
+      await stat(src);
+    } catch {
+      throw new Error('object-missing');
+    }
+    const dir = await mkdtemp(path.join(os.tmpdir(), 'mira-upload-'));
+    const filePath = path.join(dir, 'object.bin');
+    const cleanup = async () => {
+      await rm(dir, { recursive: true, force: true });
+    };
+    try {
+      await pipeline(createReadStream(src), createWriteStream(filePath));
+      return { filePath, cleanup };
+    } catch (error) {
+      await cleanup().catch(() => undefined);
+      throw error;
+    }
+  }
+
+  async copyToCatalogStorage(storage: CatalogMediaStorage, objectKey: string, catalogKey: string): Promise<void> {
+    const src = this.objectPath(objectKey);
+    const bytes = await readFile(src);
+    await storage.put(catalogKey, bytes);
+  }
+
+  async deleteObject(objectKey: string): Promise<void> {
+    await rm(this.objectPath(objectKey), { force: true });
+  }
+}
+
 export function createMultipartUploadStore(config: ConfigService): MultipartUploadStore {
   const production = (process.env.NODE_ENV ?? '').toLowerCase() === 'production';
   const store = (config?.get<string>('MIRA_MEDIA_STORE') ?? process.env.MIRA_MEDIA_STORE ?? '').trim().toLowerCase();
@@ -396,6 +603,9 @@ export function createMultipartUploadStore(config: ConfigService): MultipartUplo
     });
     if (!endpoint.ok) throw new Error('s3-endpoint-' + endpoint.reason);
     return new S3MultipartUploadStore(s3, timeoutMs);
+  }
+  if (store === 'disk' || process.env.MIRA_UPLOAD_DISK_STORE === '1') {
+    return new DiskMultipartUploadStore(process.env.MIRA_UPLOAD_DISK_ROOT || undefined);
   }
   // Local / memory adapter for development and isolated tests
   return new MemoryMultipartUploadStore();

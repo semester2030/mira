@@ -39,6 +39,26 @@ export const UPLOAD_FINALIZE_LEASE_MS = Math.max(
   30_000,
   Number(process.env.MIRA_UPLOAD_FINALIZE_LEASE_MS || String(5 * 60 * 1000)) || 5 * 60 * 1000,
 );
+/** Base delay for retryable finalize backoff (ms). Re-read env so tests can override. */
+export function uploadFinalizeRetryBaseMs(): number {
+  return Math.max(100, Number(process.env.MIRA_UPLOAD_FINALIZE_RETRY_BASE_MS || '2000') || 2_000);
+}
+/** Cap for retryable finalize backoff (ms). */
+export function uploadFinalizeRetryMaxMs(): number {
+  return Math.max(
+    uploadFinalizeRetryBaseMs(),
+    Number(process.env.MIRA_UPLOAD_FINALIZE_RETRY_MAX_MS || String(5 * 60 * 1000)) || 5 * 60 * 1000,
+  );
+}
+export const UPLOAD_FINALIZE_RETRY_BASE_MS = uploadFinalizeRetryBaseMs();
+export const UPLOAD_FINALIZE_RETRY_MAX_MS = uploadFinalizeRetryMaxMs();
+
+/** Exponential backoff after N completed attempts (1-based after claim). */
+export function finalizeRetryDelayMs(afterAttempts: number): number {
+  const n = Math.max(1, Math.floor(afterAttempts));
+  const delay = uploadFinalizeRetryBaseMs() * Math.pow(2, Math.min(8, n - 1));
+  return Math.min(uploadFinalizeRetryMaxMs(), delay);
+}
 
 export { IMAGE_MIME, VIDEO_MIME, VIDEO_MAX_DURATION_SECONDS };
 

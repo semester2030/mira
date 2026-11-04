@@ -1,7 +1,7 @@
 /**
  * Bounded-memory media verification from a temp file path.
  * Images: sharp decode (rejects header-only / truncated).
- * Videos: ffprobe for real streams + duration (rejects synthetic box-only MP4).
+ * Videos: ffprobe metadata + ffmpeg decode sample (rejects container-ok / mdat-corrupt).
  * Never loads full video into a single Buffer / Base64.
  */
 import { createHash } from 'crypto';
@@ -16,6 +16,10 @@ const HASH_CHUNK = 1024 * 1024;
 const FFPROBE_TIMEOUT_MS = Math.max(
   5_000,
   Number(process.env.MIRA_UPLOAD_FFPROBE_TIMEOUT_MS || '30000') || 30_000,
+);
+const FFMPEG_DECODE_TIMEOUT_MS = Math.max(
+  5_000,
+  Number(process.env.MIRA_UPLOAD_FFMPEG_DECODE_TIMEOUT_MS || '45000') || 45_000,
 );
 /** Reject tiny “header-only” images before sharp (PNG signature alone is 8 bytes). */
 const MIN_IMAGE_BYTES = 32;
@@ -95,6 +99,38 @@ type FfprobeOut = {
   }>;
 };
 
+function classifyToolError(err: unknown, tool: 'ffprobe' | 'ffmpeg'): VerifyFail {
+  const msg = String((err as Error)?.message || err);
+  const lower = msg.toLowerCase();
+  if (
+    lower.includes('enoent') ||
+    lower.includes('spawn ' + tool) ||
+    lower.includes(`${tool}-missing`) ||
+    (lower.includes(tool) && (lower.includes('not found') || lower.includes('no such file')))
+  ) {
+    return {
+      ok: false,
+      code: 'verify_tool_unavailable',
+      messageAr: 'تعذر فحص الملف: أداة التحقق غير متاحة على الخادم',
+      permanent: false,
+    };
+  }
+  if (lower.includes('timeout') || lower.includes(`${tool}-timeout`)) {
+    return {
+      ok: false,
+      code: 'verify_tool_timeout',
+      messageAr: 'انتهت مهلة فحص الملف؛ أعد المحاولة لاحقًا',
+      permanent: false,
+    };
+  }
+  return {
+    ok: false,
+    code: 'content_mismatch',
+    messageAr: tool === 'ffmpeg' ? 'بيانات الفيديو تالفة أو غير قابلة للفك' : 'ملف الفيديو تالف أو غير صالح',
+    permanent: true,
+  };
+}
+
 function runFfprobe(filePath: string): Promise<FfprobeOut> {
   return new Promise((resolve, reject) => {
     const args = [
@@ -134,6 +170,50 @@ function runFfprobe(filePath: string): Promise<FfprobeOut> {
   });
 }
 
+/**
+ * Prove at least one video frame can be decoded. Streams to null muxer — no full Buffer.
+ * Corrupt mdat with intact moov fails here even when ffprobe metadata looks fine.
+ */
+function runFfmpegDecodeSample(filePath: string): Promise<void> {
+  return new Promise((resolve, reject) => {
+    const args = [
+      '-v',
+      'error',
+      '-i',
+      filePath,
+      '-frames:v',
+      '1',
+      '-f',
+      'null',
+      '-',
+    ];
+    const child = spawn('ffmpeg', args, { stdio: ['ignore', 'ignore', 'pipe'] });
+    const errChunks: Buffer[] = [];
+    const timer = setTimeout(() => {
+      child.kill('SIGKILL');
+      reject(new Error('ffmpeg-timeout'));
+    }, FFMPEG_DECODE_TIMEOUT_MS);
+    child.stderr.on('data', (c) => {
+      errChunks.push(c);
+      if (Buffer.concat(errChunks).length > 64 * 1024) {
+        child.kill('SIGKILL');
+      }
+    });
+    child.on('error', (err) => {
+      clearTimeout(timer);
+      reject(err);
+    });
+    child.on('close', (code) => {
+      clearTimeout(timer);
+      if (code !== 0) {
+        reject(new Error(`ffmpeg-exit-${code}: ${Buffer.concat(errChunks).toString('utf8').slice(0, 200)}`));
+        return;
+      }
+      resolve();
+    });
+  });
+}
+
 async function verifyImageDecodable(filePath: string, mime: string): Promise<VerifyFail | null> {
   try {
     const pipeline = sharp(filePath, {
@@ -150,8 +230,8 @@ async function verifyImageDecodable(filePath: string, mime: string): Promise<Ver
         permanent: true,
       };
     }
-    // Force a decode pass (not just header parse) without keeping a full RGBA buffer longer than needed.
-    await pipeline.rotate().raw().toBuffer({ resolveWithObject: false });
+    // Decode to a tiny thumbnail — proves pixels without retaining full RGBA.
+    await pipeline.rotate().resize({ width: 8, height: 8, fit: 'inside' }).raw().toBuffer({ resolveWithObject: false });
     if (mime === 'image/png' && meta.format && meta.format !== 'png') {
       return { ok: false, code: 'content_mismatch', messageAr: 'صيغة الصورة لا تطابق المعلن', permanent: true };
     }
@@ -172,7 +252,7 @@ async function verifyImageDecodable(filePath: string, mime: string): Promise<Ver
   }
 }
 
-async function verifyVideoWithFfprobe(filePath: string): Promise<
+async function verifyVideoWithProbeAndDecode(filePath: string): Promise<
   | { ok: true; durationSec: number; codec: string }
   | VerifyFail
 > {
@@ -180,22 +260,7 @@ async function verifyVideoWithFfprobe(filePath: string): Promise<
   try {
     probe = await runFfprobe(filePath);
   } catch (error) {
-    const msg = String((error as Error)?.message || error);
-    if (msg.includes('ENOENT') || msg.includes('ffprobe')) {
-      // Prefer fail closed when probe binary missing in production-like verify path.
-      return {
-        ok: false,
-        code: 'content_mismatch',
-        messageAr: 'تعذر فحص الفيديو: أداة التحقق غير متاحة',
-        permanent: true,
-      };
-    }
-    return {
-      ok: false,
-      code: 'content_mismatch',
-      messageAr: 'ملف الفيديو تالف أو غير صالح',
-      permanent: true,
-    };
+    return classifyToolError(error, 'ffprobe');
   }
 
   const videoStreams = (probe.streams || []).filter((s) => s.codec_type === 'video');
@@ -247,7 +312,33 @@ async function verifyVideoWithFfprobe(filePath: string): Promise<
       permanent: true,
     };
   }
+
+  try {
+    await runFfmpegDecodeSample(filePath);
+  } catch (error) {
+    return classifyToolError(error, 'ffmpeg');
+  }
+
   return { ok: true, durationSec, codec };
+}
+
+/** Probe that required verify binaries exist (boot / packaging check). */
+export async function assertVerifyToolsAvailable(): Promise<{ ok: true } | VerifyFail> {
+  try {
+    await new Promise<void>((resolve, reject) => {
+      const child = spawn('ffprobe', ['-version'], { stdio: ['ignore', 'ignore', 'ignore'] });
+      child.on('error', reject);
+      child.on('close', (code) => (code === 0 ? resolve() : reject(new Error('ffprobe-missing'))));
+    });
+    await new Promise<void>((resolve, reject) => {
+      const child = spawn('ffmpeg', ['-version'], { stdio: ['ignore', 'ignore', 'ignore'] });
+      child.on('error', reject);
+      child.on('close', (code) => (code === 0 ? resolve() : reject(new Error('ffmpeg-missing'))));
+    });
+    return { ok: true };
+  } catch (error) {
+    return classifyToolError(error, 'ffprobe');
+  }
 }
 
 /**
@@ -339,7 +430,7 @@ export async function verifyMediaFile(opts: {
     return { ok: true, sha256, byteSize, durationSec: null, kind: 'image' };
   }
 
-  const probed = await verifyVideoWithFfprobe(opts.filePath);
+  const probed = await verifyVideoWithProbeAndDecode(opts.filePath);
   if (!('durationSec' in probed) || !probed.ok) return probed;
 
   return {

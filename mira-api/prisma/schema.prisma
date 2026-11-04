@@ -218,6 +218,10 @@ model PartnerUploadSession {
   finalizeLeaseUntil DateTime? @map("finalize_lease_until")
   /// Set when storage multipart complete succeeded (even if DB status write later fails).
   storageCompletedAt DateTime? @map("storage_completed_at")
+  /// When set, finalize must wait until this time before another attempt (F05 backoff).
+  finalizeNextAttemptAt DateTime? @map("finalize_next_attempt_at")
+  /// Set under lock before storage CompleteMultipart; enables crash recovery without GET (U10).
+  completeIntentAt DateTime? @map("complete_intent_at")
   /// Full-object SHA256 computed during streaming finalize (never trust client alone).
   verifiedChecksum   String?   @map("verified_checksum")
   expiresAt          DateTime  @map("expires_at")
@@ -233,6 +237,7 @@ model PartnerUploadSession {
   @@index([ownerKind, ownerId])
   @@index([status, expiresAt])
   @@index([status, finalizeLeaseUntil])
+  @@index([status, finalizeNextAttemptAt])
   @@map("partner_upload_sessions")
 }
 
