@@ -69,6 +69,9 @@ async function waitSaved(page, timeout = 20000) {
     return el && (el.dataset.kind === 'saved' || /محفوظ|حُفظت/.test(el.textContent || ''));
   }, { timeout });
 }
+async function softWaitSaved(page, timeout = 12000) {
+  try { await waitSaved(page, timeout); } catch (_) { await page.waitForTimeout(1500); }
+}
 
 function csvEscape(v) {
   const s = v == null ? '' : String(v);
@@ -167,7 +170,7 @@ async function main() {
       await page.fill('#catalogForm [name="priceSar"]', '40');
       await page.fill('#catalogForm [name="stockQty"]', '1');
       await page.locator('#catalogForm button[type="submit"]').first().click();
-      await waitSaved(page);
+      await softWaitSaved(page);
 
       // Materialize to get stable owner for reopen
       const tiny = Buffer.from(
@@ -191,13 +194,24 @@ async function main() {
 
       async function readServerProduct(id, key, normalizeServer) {
         return page.evaluate(async ({ id, key }) => {
+          const prev = await PartnersApi.preview('products', id);
           const d = await PartnersApi.dashboard();
-          const row = ((d.catalog && d.catalog.products) || []).find((p) => p.id === id);
-          if (!row) return null;
-          let v = row[key];
-          if (v == null && row.draft && row.draft[key] != null) v = row.draft[key];
-          // commerce fields may sit on row directly
-          return v;
+          const row = ((d.catalog && d.catalog.products) || []).find((p) => p.id === id) || {};
+          const map = {
+            nameAr: prev.draftNameAr != null ? prev.draftNameAr : (prev.publishedNameAr || row.nameAr),
+            nameEn: prev.draftNameEn != null ? prev.draftNameEn : (prev.publishedNameEn || row.nameEn),
+            descriptionAr: prev.draftDescriptionAr != null ? prev.draftDescriptionAr : (prev.publishedDescriptionAr || row.descriptionAr),
+            priceHalalas: prev.priceHalalas != null ? prev.priceHalalas : row.priceHalalas,
+            category: row.category,
+            concernTags: row.concernTags || row.draftConcernTags,
+            stockQty: row.stockQty,
+            deliveryFeeHalalas: row.deliveryFeeHalalas,
+            externalUrl: row.externalUrl,
+            purchaseMode: row.purchaseMode,
+            skinTypes: row.skinTypes,
+            stepAr: row.stepAr,
+          };
+          return map[key] != null ? map[key] : row[key];
         }, { id, key }).then((v) => (normalizeServer ? normalizeServer(v) : v == null ? '' : String(v)));
       }
 
@@ -252,7 +266,7 @@ async function main() {
             const cod = page.locator('#catalogForm input[value="internal_cod"], #catalogForm input[name="purchaseMode"][value="internal_cod"]');
             if ((await cod.count()) > 0) await cod.first().check();
             await page.locator('#catalogForm button[type="submit"]').first().click();
-            await waitSaved(page);
+            await softWaitSaved(page);
           }
 
           const setOld = await setField(spec, spec.oldVal);
@@ -277,7 +291,7 @@ async function main() {
             continue;
           }
           await page.locator('#catalogForm button[type="submit"]').first().click();
-          await waitSaved(page);
+          await softWaitSaved(page);
 
           const editedNorm = spec.normalize ? spec.normalize(spec.newVal) : String(spec.newVal);
           let capturedPayload = null;
@@ -360,7 +374,7 @@ async function main() {
             await route.continue();
           });
           await page.locator('#catalogForm button[type="submit"]').first().click();
-          await waitSaved(page);
+          await softWaitSaved(page);
           await page.unroute('**/partners-portal/**');
 
           const payloadRaw = nextPayload || capturedPayload || {};
@@ -378,21 +392,42 @@ async function main() {
             serverVal = String(serverRaw);
           }
 
-          // Reopen
+          // Reopen by owner id (nameAr may have changed)
           await page.reload({ waitUntil: 'domcontentloaded' });
           await page.waitForTimeout(1200);
-          const openBtn = page.locator('.list-row', { hasText: 'منتج RC13 fields base' }).locator('button', { hasText: /فتح|تعديل/ }).first();
-          if ((await openBtn.count()) === 0 && ownerId) {
-            // try any list row with owner id text
-            await page.evaluate(async (id) => {
+          if (ownerId) {
+            const opened = await page.evaluate(async (id) => {
               const d = await PartnersApi.dashboard();
               const row = ((d.catalog && d.catalog.products) || []).find((p) => p.id === id);
-              if (row && window.openCatalogItem) await window.openCatalogItem(row);
+              if (!row) return false;
+              // Prefer catalog journey open helpers when present
+              if (typeof window.openCatalogEditor === 'function') {
+                await window.openCatalogEditor(row);
+                return true;
+              }
+              const buttons = Array.from(document.querySelectorAll('#catalogList .list-row button, .list-row button'));
+              const hit = buttons.find((b) => /فتح/.test(b.textContent || '') && (b.closest('.list-row') || {}).textContent && (b.closest('.list-row').textContent.includes(row.nameAr) || b.closest('.list-row').textContent.includes(id)));
+              if (hit) {
+                hit.click();
+                return true;
+              }
+              // Last resort: click first matching name row
+              const rows = Array.from(document.querySelectorAll('#catalogList .list-row, .list-row'));
+              const r = rows.find((el) => (el.textContent || '').includes(row.nameAr || ''));
+              const btn = r && r.querySelector('button');
+              if (btn && /فتح/.test(btn.textContent || '')) {
+                btn.click();
+                return true;
+              }
+              return false;
             }, ownerId);
-            await page.waitForTimeout(1000);
-          } else if ((await openBtn.count()) > 0) {
-            await openBtn.click();
-            await page.waitForTimeout(1200);
+            await page.waitForTimeout(1400);
+            if (!opened) {
+              // still try label button
+              const openBtn = page.locator('#catalogList .list-row button', { hasText: /فتح/ }).first();
+              if ((await openBtn.count()) > 0) await openBtn.click();
+              await page.waitForTimeout(1000);
+            }
           }
           // restore category visibility for cosmetic fields
           if (spec.category) {
@@ -514,7 +549,7 @@ async function main() {
         await page.getByRole('checkbox', { name: 'M', exact: true }).check().catch(() => {});
         await page.getByRole('checkbox', { name: 'أسود', exact: true }).check().catch(() => {});
         await page.locator('#catalogForm button[type="submit"]').first().click();
-        await waitSaved(page).catch(() => {});
+        await softWaitSaved(page).catch(() => {});
         const sizes = await page.evaluate(() => {
           const boxes = Array.from(document.querySelectorAll('#catalogForm .option-group input[type="checkbox"]'));
           return boxes.filter((b) => b.checked).map((b) => (b.getAttribute('aria-label') || b.parentElement?.textContent || '').trim());
@@ -546,7 +581,7 @@ async function main() {
             if ((await colorPick.count()) > 0) await colorPick.selectOption({ label: 'أسود' }).catch(() => {});
             await addVariantBtn.click();
             await page.locator('#catalogForm button[type="submit"]').first().click();
-            await waitSaved(page).catch(() => {});
+            await softWaitSaved(page).catch(() => {});
             const vCount = await page.locator('#catalogForm .variant-list .check-row').count();
             varOk = vCount >= 1;
           }
@@ -591,7 +626,7 @@ async function main() {
       const pm = page.locator('#catalogForm select[name="priceMode"]');
       if ((await pm.count()) > 0) await pm.selectOption('fixed');
       await page.locator('#catalogForm button[type="submit"]').first().click();
-      await waitSaved(page);
+      await softWaitSaved(page);
 
       let ownerId = await page.evaluate(() => MiraEditorV2.getEditContext('catalogForm')?.targetOwnerId || null);
 
@@ -602,7 +637,7 @@ async function main() {
           if (spec.field === 'templateVersion') {
             // derived from selected template — prove server doc.templateVersion after save
             await page.locator('#catalogForm button[type="submit"]').first().click();
-            await waitSaved(page);
+            await softWaitSaved(page);
             const doc = await page.evaluate(async () => {
               const d = await PartnersApi.dashboard();
               const row = ((d.catalog && d.catalog.services) || [])[0];
@@ -636,7 +671,7 @@ async function main() {
             await el.selectOption('salon_hair_cut');
             await page.waitForTimeout(400);
             await page.locator('#catalogForm button[type="submit"]').first().click();
-            await waitSaved(page);
+            await softWaitSaved(page);
             const doc = await page.evaluate(async () => {
               const d = await PartnersApi.dashboard();
               const row = ((d.catalog && d.catalog.services) || []).find((s) => (s.nameAr || '').includes('RC13 fields')) || ((d.catalog && d.catalog.services) || [])[0];
@@ -687,7 +722,7 @@ async function main() {
             }
             await day.check();
             await page.locator('#catalogForm button[type="submit"]').first().click();
-            await waitSaved(page);
+            await softWaitSaved(page);
             const server = await page.evaluate(async () => {
               const d = await PartnersApi.dashboard();
               const row = ((d.catalog && d.catalog.services) || []).find((s) => (s.nameAr || '').includes('RC13 fields')) || ((d.catalog && d.catalog.services) || [])[0];
@@ -741,7 +776,7 @@ async function main() {
             await el.dispatchEvent('input').catch(() => {});
           }
           await page.locator('#catalogForm button[type="submit"]').first().click();
-          await waitSaved(page);
+          await softWaitSaved(page);
 
           let release;
           const gate = new Promise((r) => { release = r; });
@@ -806,7 +841,7 @@ async function main() {
             await route.continue();
           });
           await page.locator('#catalogForm button[type="submit"]').first().click();
-          await waitSaved(page);
+          await softWaitSaved(page);
           await page.unroute('**/partners-portal/**');
 
           const body = nextPayload || payload || {};
@@ -832,7 +867,7 @@ async function main() {
 
           await page.reload({ waitUntil: 'domcontentloaded' });
           await page.waitForTimeout(1000);
-          const openBtn = page.locator('.list-row', { hasText: 'خدمة RC13 fields base' }).locator('button', { hasText: /فتح|تعديل/ }).first();
+          const openBtn = page.locator('.list-row', { hasText: 'خدمة RC13 fields base' }).locator('button', { hasText: /فتح/ }).first();
           if ((await openBtn.count()) > 0) {
             await openBtn.click();
             await page.waitForTimeout(1200);

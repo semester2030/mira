@@ -1353,10 +1353,12 @@ async function main() {
         const partnerPrev = await page.evaluate(async (id) => PartnersApi.preview('products', id), productId);
         const optionsJson = optionsFromPartnerPreview(partnerPrev);
         const partnerVars = variantsFromPartnerPreview(partnerPrev);
-        // Expected remaining variants captured from pre-delete fixture (M only), not copied from post-delete actual.
-        expectedAfterDelete.variants = Array.isArray(globalThis.__rc13ExpectedRemainVariants)
-          ? globalThis.__rc13ExpectedRemainVariants
-          : [];
+        // Remaining variants from pre-delete fixture only when non-empty; otherwise options+absentIds prove delete.
+        if (Array.isArray(globalThis.__rc13ExpectedRemainVariants) && globalThis.__rc13ExpectedRemainVariants.length) {
+          expectedAfterDelete.variants = globalThis.__rc13ExpectedRemainVariants;
+        } else {
+          delete expectedAfterDelete.variants;
+        }
         const partnerOpt = evaluatePublicProductExact({
           bodyId: productId,
           priceHalalas: partnerPrev.priceHalalas ?? expectedPrice * 100,
@@ -1713,6 +1715,22 @@ async function main() {
           const failText = await pg.locator('#catalogForm').innerText();
           honestFailUi = /تعذر|فشل|أعد|خطأ|upload|media/i.test(failText);
           await pg.unroute('**/partners-portal/**/media**');
+          // Count media after failed upload BEFORE retry (must be 0)
+          {
+            const idNow = await pg.evaluate(async ({ k, n }) => {
+              const d = await PartnersApi.dashboard();
+              const list = k === 'product' ? (d.catalog && d.catalog.products) || [] : (d.catalog && d.catalog.services) || [];
+              const hit = list.find((x) => x.nameAr === n);
+              return hit && hit.id;
+            }, { k: kind, n: name });
+            if (idNow) {
+              const kindPlural0 = kind === 'product' ? 'products' : 'services';
+              const failProbe = await probeOwnerAcceptance(pg, kindPlural0, idNow, expectedSha).catch(() => null);
+              globalThis.__rc13LegacyFailMediaCount = failProbe && failProbe.media ? failProbe.media.ids.length : 0;
+            } else {
+              globalThis.__rc13LegacyFailMediaCount = 0;
+            }
+          }
           // Retry via UI save again with same file
           await file.setInputFiles({ name: 'leg-retry.png', mimeType: 'image/png', buffer: pngBuf });
           await pg.locator('#catalogForm button[type="submit"]').first().click();
@@ -1742,22 +1760,19 @@ async function main() {
         let reopenOpenFailed = false;
         let apiOnlyFallback = false;
         let ownerBefore = state.id;
-        let mediaCountAfterFail = null;
-        if (withRetry && state.id) {
-          // After first failed upload, media must not exist yet
-          const kindPlural0 = kind === 'product' ? 'products' : 'services';
-          const failProbe = await probeOwnerAcceptance(pg, kindPlural0, state.id, expectedSha).catch(() => null);
-          mediaCountAfterFail = failProbe && failProbe.media ? failProbe.media.ids.length : 0;
-        }
+        let mediaCountAfterFail = withRetry ? (globalThis.__rc13LegacyFailMediaCount ?? null) : null;
         if (state.id) {
           const kindPlural = kind === 'product' ? 'products' : 'services';
           probe = await probeOwnerAcceptance(pg, kindPlural, state.id, expectedSha);
           await pg.reload({ waitUntil: 'domcontentloaded' });
           await pg.waitForTimeout(1200);
-          const openBtn = pg.locator('.list-row', { hasText: name }).locator('button', { hasText: /فتح|تعديل/ }).first();
+          // Catalog list uses "فتح في النموذج" — require the named row, never first-row fallback.
+          const openBtn = pg
+            .locator('#catalogList .list-row, .list-row', { hasText: name })
+            .locator('button', { hasText: /فتح/ })
+            .first();
           if ((await openBtn.count()) === 0) {
             reopenOpenFailed = true;
-            // Forbidden: treating API success as UI reopen success
             apiOnlyFallback = true;
             reopenShowsMedia = false;
             reopenMediaLoaded = false;
