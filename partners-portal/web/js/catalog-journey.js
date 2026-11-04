@@ -540,6 +540,10 @@
     const cosmetic = document.createElement('div');
     const skin = field(cosmetic, 'نوع البشرة (اختياري)', 'skinTypes', (seed.skinTypes || []).join ? (seed.skinTypes || []).join(', ') : (seed.skinTypes || ''), 'text');
     const step = field(cosmetic, 'خطوة الروتين (اختياري)', 'stepAr', seed.stepAr || '', 'text');
+    skin.addEventListener('input', bumpFormContentEpoch);
+    skin.addEventListener('change', bumpFormContentEpoch);
+    step.addEventListener('input', bumpFormContentEpoch);
+    step.addEventListener('change', bumpFormContentEpoch);
     if (type === 'brand') basics.appendChild(cosmetic);
 
     let duration = null;
@@ -584,27 +588,42 @@
         const on = document.createElement('input');
         on.type = 'checkbox';
         on.checked = availState[weekday].on;
-        on.onchange = () => { availState[weekday].on = on.checked; };
+        on.onchange = () => {
+          availState[weekday].on = on.checked;
+          bumpFormContentEpoch();
+        };
         const start = document.createElement('input');
         start.type = 'time';
         start.value = availState[weekday].start;
-        start.onchange = () => { availState[weekday].start = start.value; };
+        start.onchange = () => {
+          availState[weekday].start = start.value;
+          bumpFormContentEpoch();
+        };
         const end = document.createElement('input');
         end.type = 'time';
         end.value = availState[weekday].end;
-        end.onchange = () => { availState[weekday].end = end.value; };
+        end.onchange = () => {
+          availState[weekday].end = end.value;
+          bumpFormContentEpoch();
+        };
         const cap = document.createElement('input');
         cap.type = 'number';
         cap.min = '1';
         cap.max = '100';
         cap.value = availState[weekday].capacity;
         cap.style.width = '4rem';
-        cap.onchange = () => { availState[weekday].capacity = cap.value; };
+        cap.onchange = () => {
+          availState[weekday].capacity = cap.value;
+          bumpFormContentEpoch();
+        };
         const res = document.createElement('input');
         res.type = 'text';
         res.placeholder = 'معرّف المورد (اختياري، مثل غرفة-أ)';
         res.value = availState[weekday].resourceId;
-        res.onchange = () => { availState[weekday].resourceId = res.value.trim(); };
+        res.onchange = () => {
+          availState[weekday].resourceId = res.value.trim();
+          bumpFormContentEpoch();
+        };
         res.title = 'نفس المعرّف يُستخدم في التوفر والحجز. حروف عربية مسموحة دون مسافات.';
         row.append(on, document.createTextNode(' ' + name + ' '), start, document.createTextNode(' — '), end, document.createTextNode(' سعة '), cap, res);
         availBox.appendChild(row);
@@ -614,6 +633,7 @@
       const unifyToggle = document.createElement('input');
       unifyToggle.type = 'checkbox';
       unifyToggle.name = 'unifySharedResources';
+      unifyToggle.addEventListener('change', bumpFormContentEpoch);
       unifyWrap.append(
         unifyToggle,
         document.createTextNode(' توحيد سعة المورد المشترك في كل خدمات جهتي عند التعارض'),
@@ -714,6 +734,8 @@
     let formContentEpoch = 0;
     /** Epoch captured when the last persist request finished applying its own snapshot. */
     let lastSettledPersistEpoch = null;
+    /** Token of the in-flight persistListing for THIS form instance — only the owner may clear busy. */
+    let activePersistToken = null;
     let programmaticPaintDepth = 0;
     function withProgrammaticPaint(fn) {
       programmaticPaintDepth += 1;
@@ -748,11 +770,18 @@
       status.setAttribute('data-catalog-persist-status', '1');
       status.setAttribute('data-unsaved-newer', '1');
       const saveBtn = form.querySelector('#' + form.id + '-save') || form.querySelector('button[type="submit"]');
-      if (saveBtn) {
+      const persistInFlight = form.dataset.saving === '1' && activePersistToken;
+      if (saveBtn && !persistInFlight) {
         saveBtn.disabled = false;
         saveBtn.removeAttribute('aria-busy');
         saveBtn.classList.remove('is-busy', 'is-success');
         saveBtn.textContent = developerAccount ? 'نشر التعديلات المتبقية' : 'حفظ التعديلات المتبقية';
+      } else if (saveBtn && persistInFlight) {
+        // Keep ownership of busy; fields stay editable; button stays owned by the in-flight save.
+        saveBtn.classList.remove('is-success');
+        saveBtn.textContent = developerAccount
+          ? 'جارٍ الإكمال · تعديلات أحدث معلّقة'
+          : 'جارٍ الإكمال · تعديلات أحدث معلّقة';
       }
       if (window.MiraEditorV2) {
         MiraEditorV2.setStatus(form, 'تعديلات أحدث غير محفوظة', 'dirty');
@@ -2024,6 +2053,14 @@
       action.appendChild(choices);
       url = field(action, 'رابط الشراء (فقط عند اختيار الرابط)', 'externalUrl', editing && item.externalUrl ? item.externalUrl : '', 'url');
       url.required = false;
+      url.addEventListener('input', () => {
+        bumpFormContentEpoch();
+        scheduleEditorDraftAutosave();
+      });
+      url.addEventListener('change', () => {
+        bumpFormContentEpoch();
+        scheduleEditorDraftAutosave();
+      });
       if (editing && validUrl(item.externalUrl)) choices.querySelector('input[value="link"]').checked = true;
 
       // Operational commerce: in-Mira cart + cash on delivery. External URL stays the default.
@@ -2094,7 +2131,20 @@
         });
       }
       setAdvancedVisible(false);
-      advancedToggle.onchange = () => setAdvancedVisible(advancedToggle.checked);
+      advancedToggle.onchange = () => {
+        setAdvancedVisible(advancedToggle.checked);
+        bumpFormContentEpoch();
+      };
+      optionsJsonInput.addEventListener('input', () => {
+        bumpFormContentEpoch();
+        scheduleEditorDraftAutosave();
+      });
+      optionsJsonInput.addEventListener('change', bumpFormContentEpoch);
+      variantsJsonInput.addEventListener('input', () => {
+        bumpFormContentEpoch();
+        scheduleEditorDraftAutosave();
+      });
+      variantsJsonInput.addEventListener('change', bumpFormContentEpoch);
       optionsJsonInput._advancedToggle = advancedToggle;
       text(action, 'المقاسات والألوان والأحجام تُحفظ من النموذج المبسّط أعلاه. المخزون ورسوم التوصيل ووضع الشراء يسري مباشرة؛ الخيارات للمنشور تمر بمسودة مراجعة.');
     }
@@ -3273,7 +3323,7 @@
         formGeneration: (ctx && ctx.formGeneration) || null,
         opId: (ctx && ctx.opId) || null,
         auth: auth,
-        token: String(Date.now()) + ':' + Math.random(),
+        token: 'persist:' + form.id + ':' + String(Date.now()) + ':' + Math.random().toString(16).slice(2),
       };
     }
 
@@ -3311,10 +3361,38 @@
       return true;
     }
 
+    function ownsPersistBusy(persistOp) {
+      return Boolean(
+        persistOp &&
+          persistOp.token &&
+          activePersistToken === persistOp.token &&
+          form.dataset.persistToken === persistOp.token,
+      );
+    }
+
+    function beginPersistBusy(persistOp, busyLabel) {
+      activePersistToken = persistOp.token;
+      form.dataset.saving = '1';
+      form.dataset.persistToken = persistOp.token;
+      if (save) {
+        save.disabled = true;
+        save.setAttribute('aria-busy', 'true');
+        save.classList.add('is-busy');
+        save.classList.remove('is-success');
+        if (busyLabel) save.textContent = busyLabel;
+      }
+    }
+
     function releasePersistBusyIfOwned(persistOp, idleLabel) {
-      if (!persistOp || form.dataset.saving !== '1') return;
-      if (!assertPersistOpLive(persistOp)) return;
+      if (!persistOp || !ownsPersistBusy(persistOp)) return;
+      if (!assertPersistOpLive(persistOp) && form.dataset.saving === '1') {
+        // Stale op must not clear a newer owner's busy — only clear if we still own the token.
+        if (activePersistToken !== persistOp.token) return;
+      }
+      if (activePersistToken !== persistOp.token) return;
       form.dataset.saving = '';
+      delete form.dataset.persistToken;
+      activePersistToken = null;
       if (save) {
         save.disabled = false;
         save.removeAttribute('aria-busy');
@@ -3437,12 +3515,8 @@
           }
         }
       }
-      form.dataset.saving = '1';
       const idleLabel = save.textContent;
-      save.disabled = true;
-      save.setAttribute('aria-busy', 'true');
-      save.classList.add('is-busy');
-      save.textContent = developerAccount ? 'جارٍ النشر' : 'جارٍ الحفظ';
+      beginPersistBusy(persistOp, developerAccount ? 'جارٍ النشر' : 'جارٍ الحفظ');
       status.textContent = developerAccount ? 'جارٍ تجهيز النشر' : 'جارٍ حفظ المسودة';
       if (window.MiraMotion) MiraMotion.announce(status.textContent);
       // Track step outcomes outside try so catch can report partial success honestly.
@@ -3465,10 +3539,8 @@
         ) {
           scheduleEditorDraftAutosave();
           const draftSaved = await MiraEditorV2.flushUntilSettled(form);
-          form.dataset.saving = '';
-          save.disabled = false;
-          save.removeAttribute('aria-busy');
-          save.classList.remove('is-busy');
+          if (!assertPersistOpLive(persistOp)) return false;
+          releasePersistBusyIfOwned(persistOp, idleLabel);
           if (draftSaved && draftSaved.ok) {
             save.classList.add('is-success');
             save.textContent = 'تم الحفظ';
@@ -3511,11 +3583,7 @@
             }
           }
           if (serviceProfileBindStatus === 'local-diverged') {
-            form.dataset.saving = '';
-            save.disabled = false;
-            save.removeAttribute('aria-busy');
-            save.classList.remove('is-busy');
-            save.textContent = idleLabel;
+            releasePersistBusyIfOwned(persistOp, idleLabel);
             status.textContent =
               'لم يُحفظ — القالب المحلي يختلف عن الخادم. حلّي التعارض أولًا (إعادة تحميل أو إبقاء ثم حفظ بعد المطابقة).';
             showServiceProfileConflictUi(ownerId);
@@ -3539,11 +3607,7 @@
         // Service template FIRST with the revision bound to THIS painted data — never get-latest-then-overwrite.
         if (type !== 'brand' && ownerId && profilePayloadForOp) {
           if (profilePayloadForOp.expectedRevision == null) {
-            form.dataset.saving = '';
-            save.disabled = false;
-            save.removeAttribute('aria-busy');
-            save.classList.remove('is-busy');
-            save.textContent = idleLabel;
+            releasePersistBusyIfOwned(persistOp, idleLabel);
             status.textContent =
               'لم يُحفظ القالب — تعذر ربط إصدار الخدمة بعد الإنشاء. أبقي النموذج مفتوحًا وأعيدي المحاولة؛ لا حاجة لإغلاقه.';
             return false;
@@ -3587,11 +3651,7 @@
             const msg = String(profileError && profileError.message ? profileError.message : profileError);
             const code = (profileError && profileError.code) || '';
             if (code === 'SERVICE_PROFILE_REVISION_CONFLICT' || /تعارض|REVISION|409/.test(msg + code)) {
-              form.dataset.saving = '';
-              save.disabled = false;
-              save.removeAttribute('aria-busy');
-              save.classList.remove('is-busy', 'is-success');
-              save.textContent = idleLabel;
+              releasePersistBusyIfOwned(persistOp, idleLabel);
               status.textContent =
                 'تعارض قالب الخدمة مع نسخة أحدث. تعديلاتك ما زالت في النموذج — لم نكتب فوق الخادم.';
               showServiceProfileConflictUi(ownerId);
@@ -3618,9 +3678,20 @@
               priceHalalas: halalasLive,
               category: category.value,
               nameEn: String(new FormData(form).get('nameEn') || '').trim(),
+              concernTags: tags.value.split(',').map((part) => part.trim()).filter(Boolean),
             });
+            if (type === 'brand') {
+              basicsPayload.externalUrl = purchaseMode() === 'link' && url ? url.value.trim() : '';
+              if (cosmeticVisible()) {
+                basicsPayload.skinTypes = skin.value.split(',').map((part) => part.trim()).filter(Boolean);
+                basicsPayload.stepAr = step.value.trim();
+              }
+            }
             if (type !== 'brand' && duration && duration.value) {
               basicsPayload.durationMin = parseInt(duration.value, 10);
+            }
+            if (type !== 'brand' && bookingToggle) {
+              basicsPayload.bookingEnabled = Boolean(bookingToggle.checked);
             }
           }
         }
@@ -3676,22 +3747,44 @@
           }
         }
 
-        function applyPersistSuccessChrome(pendingNewer) {
-          save.classList.remove('is-busy');
+        function applyPersistSuccessChrome(pendingNewer, opts) {
+          const finalize = opts && opts.finalize === true;
+          if (!ownsPersistBusy(persistOp)) return;
+          if (!assertPersistOpLive(persistOp) && !finalize) return;
           if (pendingNewer) save.classList.remove('is-success');
+          else if (!finalize) save.classList.remove('is-success');
           else save.classList.add('is-success');
+          if (!finalize) {
+            // Keep busy ownership through refreshLists / uploads / auto-publish.
+            save.disabled = true;
+            save.setAttribute('aria-busy', 'true');
+            save.classList.add('is-busy');
+            save.textContent = pendingNewer
+              ? developerAccount
+                ? 'جارٍ الإكمال · تعديلات أحدث معلّقة'
+                : 'جارٍ الإكمال · تعديلات أحدث معلّقة'
+              : developerAccount
+                ? 'جارٍ الرفع'
+                : 'جارٍ إكمال الحفظ';
+            return;
+          }
+          save.classList.remove('is-busy');
           save.disabled = false;
           save.removeAttribute('aria-busy');
           save.textContent = developerAccount
             ? pendingNewer
               ? 'نشر التعديلات المتبقية'
-              : 'جارٍ الرفع'
+              : 'تم الحفظ'
             : pendingNewer
               ? 'حفظ التعديلات المتبقية'
               : 'تم الحفظ';
-          form.dataset.saving = '';
+          if (ownsPersistBusy(persistOp)) {
+            form.dataset.saving = '';
+            delete form.dataset.persistToken;
+            activePersistToken = null;
+          }
         }
-        applyPersistSuccessChrome(newerEditsPending);
+        applyPersistSuccessChrome(newerEditsPending, { finalize: false });
         let saveNote =
           'حُفظت المسودة. السعر المخزن ' + item.priceHalalas + ' هللة (' + formatPrice(item.priceHalalas) + ').';
         if (type !== 'brand' && templateState && templateState.templateId) {
@@ -3722,7 +3815,7 @@
         // F2-D: user may edit during refreshLists — re-evaluate before claiming full success.
         newerEditsPending = hasNewerEditsThan(persistEpoch);
         if (newerEditsPending) {
-          applyPersistSuccessChrome(true);
+          applyPersistSuccessChrome(true, { finalize: false });
           paintUnsavedNewerNotice(saveNote);
         }
         const pending = staged[form.id].slice();
@@ -3734,7 +3827,7 @@
         if (!assertPersistOpLive(persistOp)) return false;
         newerEditsPending = hasNewerEditsThan(persistEpoch);
         if (newerEditsPending) {
-          applyPersistSuccessChrome(true);
+          applyPersistSuccessChrome(true, { finalize: false });
           paintUnsavedNewerNotice(saveNote);
         }
         const failures = staged[form.id].filter((entry) => entry && entry.error).map((entry) => entry.file.name + ': ' + entry.error);
@@ -3752,7 +3845,7 @@
             if (!assertPersistOpLive(persistOp)) return false;
             newerEditsPending = hasNewerEditsThan(persistEpoch);
             if (newerEditsPending) {
-              applyPersistSuccessChrome(true);
+              applyPersistSuccessChrome(true, { finalize: false });
               paintUnsavedNewerNotice(saveNote);
             } else {
               publishedNote = 'نُشر في التطبيق مباشرة، بلا مراجعة.';
@@ -3769,12 +3862,13 @@
           : (publishedNote || (developerAccount && !newerEditsPending ? 'نُشر في التطبيق مباشرة، بلا مراجعة.' : saveNote));
         // F2: if the user typed newer edits mid-flight, keep the live DOM — do not re-render from the old response.
         if (newerEditsPending) {
-          applyPersistSuccessChrome(true);
+          applyPersistSuccessChrome(true, { finalize: true });
           paintUnsavedNewerNotice(noteOut);
           lastSettledPersistEpoch = persistEpoch;
           return true;
         }
         lastSettledPersistEpoch = formContentEpoch;
+        applyPersistSuccessChrome(false, { finalize: true });
         // Preserve materialized draft identity — re-render must not allocate a new clientDraftId.
         // values.serviceProfile must reflect the just-saved server profile, not a stale preserveCtx copy.
         const preserveCtx = window.MiraEditorV2 && MiraEditorV2.getEditContext(form.id);
@@ -3826,14 +3920,11 @@
         return true;
       } catch (error) {
         if (!assertPersistOpLive(persistOp)) {
-          // Do not paint A's error over B.
+          // Do not paint A's error over B / clear B's busy.
           return false;
         }
-        form.dataset.saving = '';
-        save.disabled = false;
-        save.removeAttribute('aria-busy');
-        save.classList.remove('is-busy', 'is-success');
-        save.textContent = idleLabel;
+        releasePersistBusyIfOwned(persistOp, idleLabel);
+        save.classList.remove('is-success');
         let partialNote = '';
         if (profileSaved && !basicsSaved) {
           partialNote =
