@@ -505,6 +505,7 @@
         : (seedingDraft
           ? 'مسودة خادمية ' + draftCtx.clientDraftId + ' · rev ' + draftCtx.revision
           : 'مسودة جديدة. لا يُطلب رابط متجر، والسعر يُكتب بالريال.'))));
+    status.setAttribute('data-catalog-persist-status', '1');
     if (item && item.reviewNote) text(form, 'سبب المراجعة: ' + item.reviewNote);
     if (item && item.draftNameAr) text(form, 'اسم المسودة: ' + item.draftNameAr + ' · المنشور: ' + (item.nameAr || ''));
     if (draftCtx && draftCtx.submitReviewStatus) {
@@ -696,42 +697,49 @@
           : null;
     let serviceProfileBindPromise = null;
     let serviceProfileBindStatus = boundServiceReviewRevision != null ? 'bound' : 'idle';
-    /** Snapshot of local template edits taken before a bind read — restored if user typed during fetch. */
+    /** Snapshot of local template edits taken before a bind read. */
     let templateEditsDuringBind = null;
+    /** Fingerprint of templateState that matches boundServiceReviewRevision (null if divergent). */
+    let boundProfileFingerprint = null;
 
-    function applyBoundServiceProfile(profile, opts) {
+    function profileDocFrom(profile) {
       if (!profile) return null;
-      const keepLocal = opts && opts.keepLocalEdits;
-      const localSnap = keepLocal
-        ? {
-            templateId: templateState.templateId,
-            templateVersion: templateState.templateVersion,
-            priceMode: templateState.priceMode,
-            answers: Object.assign({}, templateState.answers || {}),
-          }
-        : null;
-      boundServiceReviewRevision = profile.reviewRevision;
-      serviceProfileBindStatus = 'bound';
-      const doc = profile.draftServiceProfileSet
-        ? profile.draftServiceProfileJson
-        : profile.serviceProfileJson;
-      if (doc && doc.templateId && !keepLocal) {
-        templateState.templateId = doc.templateId;
-        templateState.templateVersion = doc.templateVersion || 1;
-        templateState.priceMode = doc.priceMode || 'fixed';
-        templateState.answers = Object.assign({}, doc.answers || {});
-      } else if (doc && doc.templateId && keepLocal && localSnap && localSnap.templateId) {
-        // Keep the user's in-progress edits; only adopt the revision we just read.
-        templateState.templateId = localSnap.templateId;
-        templateState.templateVersion = localSnap.templateVersion || 1;
-        templateState.priceMode = localSnap.priceMode || 'fixed';
-        templateState.answers = Object.assign({}, localSnap.answers || {});
+      if (profile.draftServiceProfileSet) return profile.draftServiceProfileJson;
+      return profile.serviceProfileJson;
+    }
+
+    function fingerprintProfileState(state) {
+      if (!state) return '';
+      return JSON.stringify({
+        templateId: state.templateId || '',
+        templateVersion: state.templateVersion || 1,
+        priceMode: state.priceMode || 'fixed',
+        answers: state.answers || {},
+      });
+    }
+
+    function applyServerProfileDoc(profile) {
+      const doc = profileDocFrom(profile);
+      // Explicit clear / empty draft wins over localStorage residue.
+      if (profile.draftServiceProfileSet && (doc == null || !doc.templateId)) {
+        templateState.templateId = '';
+        templateState.templateVersion = 1;
+        templateState.priceMode = 'fixed';
+        templateState.answers = {};
       } else if (doc && doc.templateId) {
         templateState.templateId = doc.templateId;
         templateState.templateVersion = doc.templateVersion || 1;
         templateState.priceMode = doc.priceMode || 'fixed';
         templateState.answers = Object.assign({}, doc.answers || {});
+      } else if (!profile.draftServiceProfileSet && (doc == null || !doc.templateId)) {
+        templateState.templateId = '';
+        templateState.templateVersion = 1;
+        templateState.priceMode = 'fixed';
+        templateState.answers = {};
       }
+      boundServiceReviewRevision = profile.reviewRevision;
+      boundProfileFingerprint = fingerprintProfileState(templateState);
+      serviceProfileBindStatus = 'bound';
       const ctx = window.MiraEditorV2 && MiraEditorV2.getEditContext(form.id);
       if (ctx) ctx.serviceReviewRevision = boundServiceReviewRevision;
       if (item) item.reviewRevision = boundServiceReviewRevision;
@@ -739,18 +747,75 @@
     }
 
     /**
+     * Bind profile revision ONLY with matching data.
+     * Never attach a fresh server revision to stale localStorage / painted values.
+     * mode:
+     *  - 'server': apply server doc + its revision (open / reload).
+     *  - 'keep-local-if-same': keep local only when it equals server; else conflict without bumping rev.
+     *  - 'materialize-local': post-create local answers are the basis; adopt targetRevision if provided
+     *    and equal-or-unknown server; never silently upgrade old localStorage over newer server.
+     */
+    function applyBoundServiceProfile(profile, opts) {
+      if (!profile) return null;
+      const mode = (opts && opts.mode) || 'server';
+      const localSnap = {
+        templateId: templateState.templateId,
+        templateVersion: templateState.templateVersion,
+        priceMode: templateState.priceMode,
+        answers: Object.assign({}, templateState.answers || {}),
+      };
+      const serverDoc = profileDocFrom(profile);
+      const localFp = fingerprintProfileState(localSnap);
+      const serverFp = fingerprintProfileState(
+        serverDoc && serverDoc.templateId
+          ? serverDoc
+          : { templateId: '', templateVersion: 1, priceMode: 'fixed', answers: {} },
+      );
+
+      if (mode === 'server') {
+        return applyServerProfileDoc(profile);
+      }
+
+      if (mode === 'keep-local-if-same' || mode === 'materialize-local') {
+        if (localFp === serverFp) {
+          // Local already matches server — safe to adopt revision.
+          boundServiceReviewRevision = profile.reviewRevision;
+          boundProfileFingerprint = localFp;
+          serviceProfileBindStatus = 'bound';
+          const ctx = window.MiraEditorV2 && MiraEditorV2.getEditContext(form.id);
+          if (ctx) ctx.serviceReviewRevision = boundServiceReviewRevision;
+          if (item) item.reviewRevision = boundServiceReviewRevision;
+          return profile;
+        }
+        // Divergent: keep user-visible local edits, do NOT bump revision to server tip.
+        serviceProfileBindStatus = 'local-diverged';
+        if (typeof showServiceProfileConflictUi === 'function') {
+          showServiceProfileConflictUi(resolveOwnerId() || (item && item.id));
+        }
+        status.textContent =
+          'نسخة القالب المحلية تختلف عن الخادم. تعديلاتك معروضة — اختر إعادة التحميل أو أبقها ثم احفظ بعد حل التعارض.';
+        return { conflict: true, profile: profile, localFp: localFp, serverFp: serverFp };
+      }
+
+      return applyServerProfileDoc(profile);
+    }
+
+    /**
      * Bind service profile revision after materialize / when owner becomes known mid-session.
-     * Does not silently overwrite user edits that started while the read was in flight.
      */
     function ensureServiceProfileBound(ownerId, opts) {
       if (type === 'brand' || !ownerId || !window.PartnersApi) {
         return Promise.resolve(null);
       }
-      if (boundServiceReviewRevision != null && !(opts && opts.force)) {
+      if (boundServiceReviewRevision != null && boundProfileFingerprint && !(opts && opts.force)) {
         return Promise.resolve({ reviewRevision: boundServiceReviewRevision, alreadyBound: true });
       }
       if (serviceProfileBindPromise && !(opts && opts.force)) return serviceProfileBindPromise;
       serviceProfileBindStatus = 'binding';
+      const bindGen =
+        (window.MiraEditorV2 && MiraEditorV2.getEditContext(form.id) || {}).formGeneration || 0;
+      const bindDraft =
+        (window.MiraEditorV2 && MiraEditorV2.getEditContext(form.id) || {}).clientDraftId || null;
       templateEditsDuringBind = {
         templateId: templateState.templateId,
         templateVersion: templateState.templateVersion,
@@ -758,52 +823,60 @@
         answers: Object.assign({}, templateState.answers || {}),
       };
       const bindOwner = ownerId;
+      const mode = (opts && opts.mode) || 'server';
       serviceProfileBindPromise = PartnersApi.getServiceProfile(bindOwner)
         .then((profile) => {
-          // If the open owner changed, ignore.
+          const live = window.MiraEditorV2 && MiraEditorV2.getEditContext(form.id);
           const liveOwner = resolveOwnerId();
-          if (liveOwner && liveOwner !== bindOwner) {
+          if (
+            (liveOwner && liveOwner !== bindOwner) ||
+            (bindDraft && live && live.clientDraftId !== bindDraft) ||
+            (bindGen && live && live.formGeneration !== bindGen)
+          ) {
             serviceProfileBindStatus = 'stale';
             return null;
           }
           const userEditedDuring =
             templateEditsDuringBind &&
-            (templateState.templateId !== templateEditsDuringBind.templateId ||
-              templateState.priceMode !== templateEditsDuringBind.priceMode ||
-              JSON.stringify(templateState.answers || {}) !==
-                JSON.stringify(templateEditsDuringBind.answers || {}));
-          // Also treat "user already had template answers before bind started" as keep-local
-          // when force-binding after materialize with local draft values already painted.
-          const keepLocal =
-            Boolean(opts && opts.keepLocalEdits) ||
-            userEditedDuring ||
-            (templateEditsDuringBind && templateEditsDuringBind.templateId);
-          return applyBoundServiceProfile(profile, { keepLocalEdits: keepLocal });
+            fingerprintProfileState(templateState) !== fingerprintProfileState(templateEditsDuringBind);
+          // If revision was already bound (e.g. targetReviewRevision after materialize) and the user
+          // edited afterward, keep those edits under THAT revision — do not treat as stale-local conflict.
+          if (userEditedDuring && boundServiceReviewRevision != null) {
+            serviceProfileBindStatus = 'bound';
+            boundProfileFingerprint = fingerprintProfileState(templateState);
+            const ctx = window.MiraEditorV2 && MiraEditorV2.getEditContext(form.id);
+            if (ctx) ctx.serviceReviewRevision = boundServiceReviewRevision;
+            return { reviewRevision: boundServiceReviewRevision, userEditedDuring: true };
+          }
+          // Presence of a local templateId alone is NOT a reason to keep local + adopt fresh revision.
+          let resolvedMode = mode;
+          if (userEditedDuring) resolvedMode = 'keep-local-if-same';
+          else if (opts && opts.mode) resolvedMode = opts.mode;
+          else resolvedMode = 'server';
+          const result = applyBoundServiceProfile(profile, { mode: resolvedMode });
+          if (result && !result.conflict && typeof paintServiceTemplates === 'function') {
+            try {
+              paintServiceTemplates();
+            } catch (_) {}
+          }
+          return result;
         })
-        .catch((err) => {
+        .catch(() => {
           serviceProfileBindStatus = 'error';
           return null;
         });
       return serviceProfileBindPromise;
     }
 
-    // Existing service open: always load the authoritative profile from the server.
-    // LocalStorage / prior draft copies must not resurrect a stale priceMode after a successful save.
-    // keepLocalEdits only when seeding from an explicit draftCtx.serviceProfile (conflict keep / mid-edit).
+    // Existing service open: always load authoritative server profile + its revision together.
+    // LocalStorage must not win. Intentional mid-edit keep uses conflict UI, not silent rev bump.
     if (type !== 'brand' && item && item.id && window.PartnersApi) {
       const seededFromDraftProfile = Boolean(
         draftCtx && draftCtx.values && draftCtx.values.serviceProfile && draftCtx.values.serviceProfile.templateId,
       );
       serviceProfileBindPromise = ensureServiceProfileBound(item.id, {
-        keepLocalEdits: seededFromDraftProfile,
-        force: !seededFromDraftProfile,
-      }).then((profile) => {
-        if (profile && typeof paintServiceTemplates === 'function') {
-          try {
-            paintServiceTemplates();
-          } catch (_) {}
-        }
-        return profile;
+        force: true,
+        mode: seededFromDraftProfile ? 'keep-local-if-same' : 'server',
       });
     }
 
@@ -1103,6 +1176,7 @@
       } else if (f.type === 'number') {
         const input = document.createElement('input');
         input.type = 'number';
+        input.name = f.id;
         input.min = '1';
         input.value = current == null ? '' : current;
         input.oninput = () => {
@@ -1114,6 +1188,7 @@
         if (f.unit) text(wrap, f.unit);
       } else {
         const input = document.createElement('textarea');
+        input.name = f.id;
         input.rows = 2;
         input.value = current == null ? '' : String(current);
         input.oninput = () => {
@@ -1308,12 +1383,19 @@
               : result && result.targetReviewRevision != null
                 ? result.targetReviewRevision
                 : null;
+          // After materialize, sync the canonical server profile + its revision together.
+          // Do not fingerprint-compare draft paint vs normalized server (false local-diverged).
+          status.textContent =
+            (status.textContent || '') +
+            (serviceProfileBindStatus === 'bound' ? '' : ' · جارٍ تجهيز قالب الخدمة…');
           if (fromMaterialize != null && Number.isInteger(fromMaterialize)) {
             boundServiceReviewRevision = fromMaterialize;
-            serviceProfileBindStatus = 'bound';
             const ctxRev = MiraEditorV2.getEditContext(form.id);
             if (ctxRev) ctxRev.serviceReviewRevision = fromMaterialize;
             if (item) item.reviewRevision = fromMaterialize;
+          }
+          ensureServiceProfileBound(ownerId, { force: true, mode: 'server' }).then((profile) => {
+            if (!profile || profile.conflict) return;
             if (window.MiraEditorV2) {
               MiraEditorV2.setStatus(
                 form,
@@ -1321,24 +1403,7 @@
                 'bound',
               );
             }
-          } else {
-            status.textContent =
-              (status.textContent || '') +
-              (serviceProfileBindStatus === 'bound' ? '' : ' · جارٍ تجهيز قالب الخدمة…');
-            ensureServiceProfileBound(ownerId, {
-              keepLocalEdits: true,
-              force: true,
-            }).then((profile) => {
-              if (!profile) return;
-              if (window.MiraEditorV2) {
-                MiraEditorV2.setStatus(
-                  form,
-                  'جاهز للحفظ · قالب مربوط بإصدار ' + boundServiceReviewRevision,
-                  'bound',
-                );
-              }
-            });
-          }
+          });
         }
       }
       if (reviewOk) clearResumeState(clientDraftId);
@@ -2977,9 +3042,50 @@
       return { value: value };
     }
 
+    function capturePersistOp() {
+      const ctx = window.MiraEditorV2 && MiraEditorV2.getEditContext(form.id);
+      const auth =
+        window.MiraEditorV2 && typeof MiraEditorV2.__testHooks === 'function'
+          ? MiraEditorV2.__testHooks().captureSessionSnapshot()
+          : null;
+      return {
+        formId: form.id,
+        clientDraftId: (ctx && ctx.clientDraftId) || null,
+        ownerId: resolveOwnerId(),
+        formGeneration: (ctx && ctx.formGeneration) || null,
+        opId: (ctx && ctx.opId) || null,
+        auth: auth,
+        token: String(Date.now()) + ':' + Math.random(),
+      };
+    }
+
+    function assertPersistOpLive(op) {
+      if (!op) return false;
+      if (!form.isConnected || form.id !== op.formId) return false;
+      const live = window.MiraEditorV2 && MiraEditorV2.getEditContext(op.formId);
+      if (window.MiraEditorV2) {
+        if (!live) return false;
+        if (op.clientDraftId && live.clientDraftId !== op.clientDraftId) return false;
+        if (op.formGeneration != null && live.formGeneration !== op.formGeneration) return false;
+        if (op.opId && live.opId && live.opId !== op.opId) return false;
+      }
+      if (op.ownerId) {
+        const liveOwner = resolveOwnerId();
+        if (liveOwner && liveOwner !== op.ownerId) return false;
+      } else {
+        const liveOwner = resolveOwnerId();
+        if (liveOwner) return false;
+      }
+      if (op.auth && window.MiraEditorV2 && typeof MiraEditorV2.__testHooks === 'function') {
+        if (!MiraEditorV2.__testHooks().assertSameSession(op.auth)) return false;
+      }
+      return true;
+    }
+
     const persistListing = async () => {
       if (form.dataset.saving === '1') return false;
 
+      const persistOp = capturePersistOp();
       const liveOwnerId = resolveOwnerId();
 
       // v2 without an owned item: draft autosave only. Once targetOwnerId/item.id exists, never create again.
@@ -3140,16 +3246,44 @@
           return false;
         }
 
-        // Service template FIRST with the revision the user read — never get-latest-then-overwrite.
-        if (type !== 'brand' && ownerId && templateState && templateState.templateId) {
+        // Snapshot template payload at request start — never send a later edit under an older op's revision.
+        const profilePayloadForOp =
+          type !== 'brand' && templateState && templateState.templateId
+            ? {
+                templateId: templateState.templateId,
+                templateVersion: templateState.templateVersion || 1,
+                priceMode: templateState.priceMode || 'fixed',
+                answers: Object.assign({}, templateState.answers || {}),
+                expectedRevision: boundServiceReviewRevision,
+              }
+            : null;
+
+        // Service template FIRST with the revision bound to THIS painted data — never get-latest-then-overwrite.
+        if (type !== 'brand' && ownerId && profilePayloadForOp) {
           if (serviceProfileBindPromise) {
             await serviceProfileBindPromise;
+            if (!assertPersistOpLive(persistOp)) {
+              return false;
+            }
           }
-          if (boundServiceReviewRevision == null) {
+          if (boundServiceReviewRevision == null || profilePayloadForOp.expectedRevision == null) {
             status.textContent = 'جارٍ تجهيز إصدار قالب الخدمة بعد الإنشاء…';
-            await ensureServiceProfileBound(ownerId, { keepLocalEdits: true, force: true });
+            await ensureServiceProfileBound(ownerId, { force: true, mode: 'materialize-local' });
+            if (!assertPersistOpLive(persistOp)) return false;
+            profilePayloadForOp.expectedRevision = boundServiceReviewRevision;
           }
-          if (boundServiceReviewRevision == null) {
+          if (serviceProfileBindStatus === 'local-diverged') {
+            form.dataset.saving = '';
+            save.disabled = false;
+            save.removeAttribute('aria-busy');
+            save.classList.remove('is-busy');
+            save.textContent = idleLabel;
+            status.textContent =
+              'لم يُحفظ — القالب المحلي يختلف عن الخادم. حلّي التعارض أولًا (إعادة تحميل أو إبقاء ثم حفظ بعد المطابقة).';
+            showServiceProfileConflictUi(ownerId);
+            return false;
+          }
+          if (profilePayloadForOp.expectedRevision == null) {
             form.dataset.saving = '';
             save.disabled = false;
             save.removeAttribute('aria-busy');
@@ -3161,13 +3295,19 @@
           }
           try {
             savedProfile = await PartnersApi.putServiceProfile(ownerId, {
-              expectedRevision: boundServiceReviewRevision,
-              templateId: templateState.templateId,
-              templateVersion: templateState.templateVersion || 1,
-              priceMode: templateState.priceMode || 'fixed',
-              answers: Object.assign({}, templateState.answers || {}),
+              expectedRevision: profilePayloadForOp.expectedRevision,
+              templateId: profilePayloadForOp.templateId,
+              templateVersion: profilePayloadForOp.templateVersion,
+              priceMode: profilePayloadForOp.priceMode,
+              answers: profilePayloadForOp.answers,
             });
+            // Server accepted this op's profile write even if the form later switched —
+            // mark before live-check so catch can report partial honesty on same-form failures.
             profileSaved = true;
+            if (!assertPersistOpLive(persistOp)) {
+              // Server may have accepted A's profile — do not mutate B's UI/context.
+              return false;
+            }
             boundServiceReviewRevision = savedProfile.reviewRevision;
             const liveDoc = savedProfile.draftServiceProfileSet
               ? savedProfile.draftServiceProfileJson
@@ -3177,8 +3317,10 @@
               templateState.templateVersion = liveDoc.templateVersion || 1;
               templateState.priceMode = liveDoc.priceMode || 'fixed';
               templateState.answers = Object.assign({}, liveDoc.answers || {});
+              boundProfileFingerprint = fingerprintProfileState(templateState);
             }
           } catch (profileError) {
+            if (!assertPersistOpLive(persistOp)) return false;
             const msg = String(profileError && profileError.message ? profileError.message : profileError);
             const code = (profileError && profileError.code) || '';
             if (code === 'SERVICE_PROFILE_REVISION_CONFLICT' || /تعارض|REVISION|409/.test(msg + code)) {
@@ -3204,6 +3346,10 @@
               ? PartnersApi.updateProduct(ownerId, payload)
               : PartnersApi.updateService(ownerId, payload))
           : await (type === 'brand' ? PartnersApi.createProduct(payload) : PartnersApi.createService(payload));
+        if (!assertPersistOpLive(persistOp)) {
+          // Stale success for A after B opened — discard UI side effects entirely.
+          return false;
+        }
         basicsSaved = true;
         if (type === 'brand' && !ownerId) {
           try {
@@ -3223,10 +3369,16 @@
         if (saved && saved.reviewRevision != null) {
           boundServiceReviewRevision = saved.reviewRevision;
           item.reviewRevision = saved.reviewRevision;
+          boundProfileFingerprint = fingerprintProfileState(templateState);
         }
         staged[form.id].ownerId = item.id;
         const ctxAfter = window.MiraEditorV2 && MiraEditorV2.getEditContext(form.id);
-        if (ctxAfter && item.id) ctxAfter.targetOwnerId = item.id;
+        if (ctxAfter && item.id && assertPersistOpLive(persistOp)) {
+          // Only bind owner on the SAME draft/generation that started this save.
+          if (!persistOp.clientDraftId || ctxAfter.clientDraftId === persistOp.clientDraftId) {
+            ctxAfter.targetOwnerId = item.id;
+          }
+        }
 
         save.classList.remove('is-busy');
         save.classList.add('is-success');
@@ -3238,7 +3390,7 @@
             profileSaved && basicsSaved
               ? ' القالب والبيانات محفوظان.'
               : profileSaved
-                ? ' القالب محفوظ؛ تعذر تأكيد البيانات الأساسية.'
+                ? ' القالب محفوظ على الخادم؛ فشل/لم يُؤكد حفظ البيانات الأساسية — أعيدي المحاولة لنفس العنصر (سيُعاد إرسال القالب بإصداره الحالي إن لزم).'
                 : ' البيانات الأساسية محفوظة دون قالب.';
         }
         status.textContent = developerAccount
@@ -3246,28 +3398,40 @@
           : saveNote;
         if (window.MiraMotion) MiraMotion.announce(status.textContent);
         await refreshLists();
+        if (!assertPersistOpLive(persistOp)) return false;
         const pending = staged[form.id].slice();
         for (const entry of pending) {
+          if (!assertPersistOpLive(persistOp)) return false;
           if (!entry.error && entry.file) await uploadOne(entry, { deferPublish: true });
         }
+        if (!assertPersistOpLive(persistOp)) return false;
         const failures = staged[form.id].filter((entry) => entry && entry.error).map((entry) => entry.file.name + ': ' + entry.error);
         let publishedNote = '';
         if (window.sessionPartner && window.sessionPartner.type === 'developer' && !failures.length && item && item.id) {
           try {
             await PartnersApi.submitReview(type === 'brand' ? 'products' : 'services', item.id);
+            if (!assertPersistOpLive(persistOp)) return false;
             publishedNote = 'نُشر في التطبيق مباشرة، بلا مراجعة.';
             await refreshLists();
           } catch (error) {
             publishedNote = 'حُفظت البيانات ولم تُنشر: ' + error.message;
           }
         }
+        if (!assertPersistOpLive(persistOp)) return false;
         const noteOut = failures.length
           ? (developerAccount ? 'لم يُنشر. فشل الرفع. ' : 'حُفظت المسودة. لم يُسجَّل الرفع ناجحًا. ') + failures.join(' — ')
           : (publishedNote || (developerAccount ? 'نُشر في التطبيق مباشرة، بلا مراجعة.' : saveNote));
         // Preserve materialized draft identity — re-render must not allocate a new clientDraftId.
         // values.serviceProfile must reflect the just-saved server profile, not a stale preserveCtx copy.
         const preserveCtx = window.MiraEditorV2 && MiraEditorV2.getEditContext(form.id);
-        if (preserveCtx && preserveCtx.clientDraftId && item && item.id) {
+        if (
+          preserveCtx &&
+          preserveCtx.clientDraftId &&
+          item &&
+          item.id &&
+          (!persistOp.clientDraftId || preserveCtx.clientDraftId === persistOp.clientDraftId) &&
+          assertPersistOpLive(persistOp)
+        ) {
           const profileForCtx = {
             templateId: templateState.templateId || '',
             templateVersion: templateState.templateVersion || 1,
@@ -3302,11 +3466,15 @@
               : {}),
           };
           renderForm(type, item, form.id, titleId, noteOut, draftCtxPreserve);
-        } else {
+        } else if (assertPersistOpLive(persistOp)) {
           renderForm(type, item, form.id, titleId, noteOut);
         }
         return true;
       } catch (error) {
+        if (!assertPersistOpLive(persistOp)) {
+          // Do not paint A's error over B.
+          return false;
+        }
         form.dataset.saving = '';
         save.disabled = false;
         save.removeAttribute('aria-busy');
@@ -3315,10 +3483,11 @@
         let partialNote = '';
         if (profileSaved && !basicsSaved) {
           partialNote =
-            'حُفظ قالب الخدمة على الخادم، لكن فشل حفظ البيانات الأساسية. أعيدي المحاولة لحفظ البيانات فقط — لن يُنشأ عنصر جديد.';
+            'حُفظ قالب الخدمة على الخادم، لكن فشل حفظ البيانات الأساسية. أعيدي المحاولة من هذه الشاشة لنفس العنصر — لن يُنشأ عنصر جديد.';
           // Profile put advanced the revision — keep bound revision in sync with server tip we wrote.
           if (savedProfile && savedProfile.reviewRevision != null) {
             boundServiceReviewRevision = savedProfile.reviewRevision;
+            boundProfileFingerprint = fingerprintProfileState(templateState);
           }
         } else if (!profileSaved && basicsSaved) {
           partialNote = 'حُفظت البيانات الأساسية، لكن القالب لم يُحفظ. أعيدي المحاولة للقالب.';
@@ -3364,22 +3533,34 @@
       reloadBtn.addEventListener('click', async () => {
         try {
           const live = window.MiraEditorV2 && MiraEditorV2.getEditContext(form.id);
-          if (
-            !live ||
-            (opDraft && live.clientDraftId !== opDraft) ||
-            (opGen && live.formGeneration !== opGen) ||
-            resolveOwnerId() !== opOwner
-          ) {
+          const liveOwner = resolveOwnerId();
+          if (opOwner && liveOwner && liveOwner !== opOwner) {
+            status.textContent = 'تُجاهل إعادة التحميل — تغيّر عنصر النموذج.';
+            return;
+          }
+          if (opDraft && live && live.clientDraftId && live.clientDraftId !== opDraft) {
+            status.textContent = 'تُجاهل إعادة التحميل — تغيّرت المسودة.';
+            return;
+          }
+          if (opGen && live && live.formGeneration != null && live.formGeneration !== opGen) {
+            status.textContent = 'تُجاهل إعادة التحميل — جيل النموذج تغيّر.';
             return;
           }
           const profile = await PartnersApi.getServiceProfile(opOwner);
           const live2 = window.MiraEditorV2 && MiraEditorV2.getEditContext(form.id);
-          if (!live2 || (opDraft && live2.clientDraftId !== opDraft) || resolveOwnerId() !== opOwner) {
+          const liveOwner2 = resolveOwnerId();
+          if (opOwner && liveOwner2 && liveOwner2 !== opOwner) {
+            status.textContent = 'تُجاهل إعادة التحميل — تغيّر عنصر النموذج أثناء القراءة.';
             return;
           }
-          applyBoundServiceProfile(profile, { keepLocalEdits: false });
+          if (opDraft && live2 && live2.clientDraftId && live2.clientDraftId !== opDraft) {
+            status.textContent = 'تُجاهل إعادة التحميل — تغيّرت المسودة أثناء القراءة.';
+            return;
+          }
+          applyBoundServiceProfile(profile, { mode: 'server' });
           if (typeof paintServiceTemplates === 'function') paintServiceTemplates();
           panel.remove();
+          serviceProfileBindStatus = 'bound';
           status.textContent =
             'أُعيد تحميل قالب الخدمة من الخادم · إصدار ' + boundServiceReviewRevision + ' — عدّلي ثم احفظي.';
         } catch (e) {
@@ -3388,8 +3569,10 @@
       });
       keepBtn.addEventListener('click', () => {
         panel.remove();
+        // Keeping local edits must NOT adopt the newer server revision — next save should 409 until reload or intentional merge.
+        serviceProfileBindStatus = 'local-diverged';
         status.textContent =
-          'أُبقيت تعديلات القالب محليًا — لن نرفع الإصدار ولن نكتب فوق الخادم صامتًا.';
+          'أُبقيت تعديلات القالب محليًا — لن نرفع الإصدار ولن نكتب فوق الخادم صامتًا. الحفظ سيُرفض حتى تحلّي التعارض أو تعيدي التحميل.';
       });
     }
     form.onsubmit = (event) => {
