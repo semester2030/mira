@@ -11,7 +11,7 @@ Do not use `P1_FULLY_VERIFIED` or `ALL_TESTS_COMPLETE`.
 | Role | SHA |
 |---|---|
 | codeCommit (tested RC13) | `3254b19be96a2ff3c82a5fb9b422f16041dc615d` |
-| documentationCommit | `2a23a1b71d248295898d6ddec67465d4de8060a8` |
+| documentationCommit | tip of docs-only commits atop codeCommit; authoritative value in acceptance package `FINAL_COMMITS.txt` |
 
 ## Documents
 - `OWNER_ACCEPTANCE.md`
