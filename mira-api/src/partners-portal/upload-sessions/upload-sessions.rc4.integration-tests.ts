@@ -198,6 +198,7 @@ async function main() {
   const png = loadFixture('valid.png');
   const shortMp4 = loadFixture('valid-short.mp4');
   const corrupt = loadFixture('corrupt-mdat.mp4');
+  const corruptAfterFirst = loadFixture('corrupt-after-first.mp4');
   const headerOnly = loadFixture('header-only.png');
   const synthetic96 = loadFixture('synthetic-96.mp4');
   const mp4_300 = loadFixture('valid-300s.mp4');
@@ -269,16 +270,23 @@ async function main() {
     return (await fetch(`${base}/partners-portal/upload-sessions/${session.sessionId}`, { headers: auth })).json();
   }
 
-  // —— F01 direct verify + session path
+  // —— F01 direct verify + session path (incl. mid-stream corrupt that still yields frame 1)
   {
     const direct = await Promise.all([
       verifyMediaFile({ filePath: join(fixturesDir, 'header-only.png'), mime: 'image/png', declaredByteSize: headerOnly.length, imageMaxBytes: 20 << 20 }),
       verifyMediaFile({ filePath: join(fixturesDir, 'synthetic-96.mp4'), mime: 'video/mp4', declaredByteSize: synthetic96.length, imageMaxBytes: 20 << 20 }),
       verifyMediaFile({ filePath: join(fixturesDir, 'corrupt-mdat.mp4'), mime: 'video/mp4', declaredByteSize: corrupt.length, imageMaxBytes: 20 << 20 }),
+      verifyMediaFile({
+        filePath: join(fixturesDir, 'corrupt-after-first.mp4'),
+        mime: 'video/mp4',
+        declaredByteSize: corruptAfterFirst.length,
+        imageMaxBytes: 20 << 20,
+      }),
       verifyMediaFile({ filePath: join(fixturesDir, 'valid.png'), mime: 'image/png', declaredByteSize: png.length, imageMaxBytes: 20 << 20 }),
       verifyMediaFile({ filePath: join(fixturesDir, 'valid-short.mp4'), mime: 'video/mp4', declaredByteSize: shortMp4.length, imageMaxBytes: 20 << 20 }),
     ]);
     const upCorrupt = await uploadReady(corrupt, 'video/mp4', service.id, 'service');
+    const upCorruptAfterFirst = await uploadReady(corruptAfterFirst, 'video/mp4', service.id, 'service');
     const upOk = await uploadReady(shortMp4, 'video/mp4', service.id, 'service');
     const up300 = await uploadReady(mp4_300, 'video/mp4', service.id, 'service');
     const up301 = await uploadReady(mp4_301, 'video/mp4', service.id, 'service');
@@ -287,17 +295,21 @@ async function main() {
       !direct[0].ok &&
         !direct[1].ok &&
         !direct[2].ok &&
-        !!direct[3].ok &&
+        !direct[3].ok &&
         !!direct[4].ok &&
+        !!direct[5].ok &&
         upCorrupt.status === 'failed' &&
+        upCorruptAfterFirst.status === 'failed' &&
         upOk.status === 'ready' &&
         up300.status === 'ready' &&
         up301.status === 'failed' &&
-        upCorrupt.failureCode === 'content_mismatch',
+        upCorrupt.failureCode === 'content_mismatch' &&
+        upCorruptAfterFirst.failureCode === 'content_mismatch',
       {
         headerOnly: 'reject',
         synthetic96: 'reject',
         corruptMdat: 'reject',
+        corruptAfterFirst: 'reject',
         valid: 'accept',
         d300: 'ready',
         d301: 'failed',
@@ -305,9 +317,12 @@ async function main() {
       {
         direct: direct.map((d) => (d.ok ? 'ok' : `${d.code}:${d.permanent}`)),
         corruptSession: { status: upCorrupt.status, code: upCorrupt.failureCode },
+        corruptAfterFirstSession: { status: upCorruptAfterFirst.status, code: upCorruptAfterFirst.failureCode },
         okSession: upOk.status,
         d300: up300.status,
         d301: up301.status,
+        largeU11Bytes: largeU11.length,
+        largeU11PartsAt16MiB: Math.ceil(largeU11.length / (16 * 1024 * 1024)),
       },
     );
   }

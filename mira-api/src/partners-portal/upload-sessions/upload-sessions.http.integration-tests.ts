@@ -304,8 +304,9 @@ async function main() {
     return { ok: true as const, session: got };
   }
 
-  // —— F01 real integrity
+  // —— F01 real integrity (incl. mid-stream corrupt that still yields frame 1)
   {
+    const corruptAfterFirst = loadFixture('corrupt-after-first.mp4');
     const badPng = await uploadFile({
       ownerKind: 'product',
       ownerId: product.id,
@@ -316,6 +317,12 @@ async function main() {
       ownerKind: 'service',
       ownerId: service.id,
       bytes: synthetic96,
+      mimeType: 'video/mp4',
+    });
+    const badMid = await uploadFile({
+      ownerKind: 'service',
+      ownerId: service.id,
+      bytes: corruptAfterFirst,
       mimeType: 'video/mp4',
     });
     const goodPng = await uploadFile({
@@ -339,15 +346,27 @@ async function main() {
         badPng.session.status === 'failed' &&
         badMp4.ok &&
         badMp4.session.status === 'failed' &&
+        badMid.ok &&
+        badMid.session.status === 'failed' &&
+        badMid.session.failureCode === 'content_mismatch' &&
         goodPng.ok &&
         goodPng.session.status === 'ready' &&
         goodVid.ok &&
         goodVid.session.status === 'ready'
       ),
-      { headerOnly: 'failed', synthetic96: 'failed', validPng: 'ready', validMp4: 'ready' },
+      {
+        headerOnly: 'failed',
+        synthetic96: 'failed',
+        corruptAfterFirst: 'failed',
+        validPng: 'ready',
+        validMp4: 'ready',
+      },
       {
         headerOnly: badPng.ok ? badPng.session.status : badPng,
         synthetic96: badMp4.ok ? badMp4.session.status : badMp4,
+        corruptAfterFirst: badMid.ok
+          ? { status: badMid.session.status, code: badMid.session.failureCode }
+          : badMid,
         validPng: goodPng.ok ? goodPng.session.status : goodPng,
         validMp4: goodVid.ok ? goodVid.session.status : goodVid,
         digests: { png: sha256(png), short: sha256(shortMp4) },
@@ -1212,9 +1231,173 @@ async function main() {
       'F05',
       finalize.peakConcurrentVerifies <= limit &&
         finalize.peakConcurrentVerifies >= 2 &&
+        finalize.peakActiveSlots <= limit &&
         statuses.every((s) => s === 'ready'),
-      { peakLte: limit, peakGte: 2, allReady: true },
-      { peak: finalize.peakConcurrentVerifies, starts: finalize.activeVerifyStarts, statuses, limit },
+      { peakLte: limit, peakGte: 2, slotsLte: limit, allReady: true },
+      {
+        peak: finalize.peakConcurrentVerifies,
+        peakActiveSlots: finalize.peakActiveSlots,
+        starts: finalize.activeVerifyStarts,
+        statuses,
+        limit,
+      },
+    );
+  }
+
+  // —— F05_PUMP_RACE: inject await after slot reserve; concurrent pump must not exceed limit
+  {
+    finalize.peakActiveSlots = 0;
+    finalize.peakConcurrentVerifies = 0;
+    finalize.activeVerifyStarts = 0;
+    finalize.afterSlotReserve = async () => {
+      await new Promise((r) => setTimeout(r, 80));
+    };
+    finalize.beforeCatalogBind = async () => {
+      await new Promise((r) => setTimeout(r, 120));
+    };
+
+    async function prepRace() {
+      const init = await (
+        await fetch(`${base}/partners-portal/upload-sessions`, {
+          method: 'POST',
+          headers: auth,
+          body: JSON.stringify({
+            ownerKind: 'product',
+            ownerId: product.id,
+            clientMediaId: randomUUID(),
+            idempotencyKey: randomUUID(),
+            mimeType: 'image/png',
+            byteSize: png.length,
+          }),
+        })
+      ).json();
+      const parts = await putAllParts(init, png);
+      const row = await prisma.partnerUploadSession.findUnique({ where: { id: init.sessionId } });
+      await memoryStore.complete(row!.objectKey, row!.storageUploadId!, parts);
+      await prisma.partnerUploadSession.update({
+        where: { id: init.sessionId },
+        data: {
+          status: 'uploaded',
+          storageCompletedAt: new Date(),
+          completedPartsJson: parts,
+          catalogMediaId: null,
+          finalizeLeaseOwner: null,
+          finalizeLeaseUntil: null,
+          finalizeNextAttemptAt: null,
+        },
+      });
+      return init.sessionId as string;
+    }
+
+    const raceIds = await Promise.all([prepRace(), prepRace(), prepRace(), prepRace(), prepRace(), prepRace()]);
+    await Promise.all(raceIds.map((id) => finalize.finalizeOne(id)));
+    finalize.afterSlotReserve = null;
+    finalize.beforeCatalogBind = null;
+    const raceStatuses = await Promise.all(
+      raceIds.map(async (id) => (await prisma.partnerUploadSession.findUnique({ where: { id } }))?.status),
+    );
+    const limit = Number(process.env.MIRA_UPLOAD_FINALIZE_CONCURRENCY || '2');
+    record(
+      'F05_PUMP_RACE',
+      finalize.peakActiveSlots <= limit &&
+        finalize.peakConcurrentVerifies <= limit &&
+        raceStatuses.every((s) => s === 'ready'),
+      { peakActiveSlotsLte: limit, peakVerifyLte: limit, allReady: true },
+      {
+        peakActiveSlots: finalize.peakActiveSlots,
+        peakVerify: finalize.peakConcurrentVerifies,
+        statuses: raceStatuses,
+        limit,
+        n: raceIds.length,
+      },
+    );
+  }
+
+  // —— F05_AUTO_RETRY: timer fires after retryable failure without client retry-finalize
+  {
+    finalize.backoffScheduleCount = 0;
+    const init = await (
+      await fetch(`${base}/partners-portal/upload-sessions`, {
+        method: 'POST',
+        headers: auth,
+        body: JSON.stringify({
+          ownerKind: 'product',
+          ownerId: product.id,
+          clientMediaId: randomUUID(),
+          idempotencyKey: randomUUID(),
+          mimeType: 'image/png',
+          byteSize: png.length,
+        }),
+      })
+    ).json();
+    const parts = await putAllParts(init, png);
+    const row0 = await prisma.partnerUploadSession.findUnique({ where: { id: init.sessionId } });
+    await memoryStore.complete(row0!.objectKey, row0!.storageUploadId!, parts);
+    await prisma.partnerUploadSession.update({
+      where: { id: init.sessionId },
+      data: {
+        status: 'uploaded',
+        storageCompletedAt: new Date(),
+        completedPartsJson: parts,
+        catalogMediaId: null,
+        finalizeLeaseOwner: null,
+        finalizeLeaseUntil: null,
+        finalizeNextAttemptAt: null,
+        finalizeAttempts: 0,
+      },
+    });
+    const origHead = memoryStore.head.bind(memoryStore);
+    let headFails = 1;
+    memoryStore.head = async (key: string) => {
+      if (headFails > 0) {
+        headFails -= 1;
+        throw new Error('injected-transient-storage');
+      }
+      return origHead(key);
+    };
+    // Enqueue only — do not use finalizeOne/enqueueAndWait (those wait through auto-retry).
+    finalize.enqueue(init.sessionId);
+    let midStatus: string | undefined;
+    let midClass: string | null | undefined;
+    const midDeadline = Date.now() + 3000;
+    while (Date.now() < midDeadline) {
+      const live = await prisma.partnerUploadSession.findUnique({ where: { id: init.sessionId } });
+      if (live?.status === 'failed' && live.failureClass === 'retryable') {
+        midStatus = live.status;
+        midClass = live.failureClass;
+        break;
+      }
+      await new Promise((r) => setTimeout(r, 20));
+    }
+    const scheduled = finalize.backoffScheduleCount;
+    // Wait for armed timer without client retry-finalize / finalizeOne.
+    const deadline = Date.now() + 5000;
+    let finalStatus = midStatus;
+    let catalogMediaId: string | null = null;
+    while (Date.now() < deadline) {
+      const live = await prisma.partnerUploadSession.findUnique({ where: { id: init.sessionId } });
+      finalStatus = live?.status;
+      catalogMediaId = live?.catalogMediaId ?? null;
+      if (live?.status === 'ready' && live.catalogMediaId) break;
+      await new Promise((r) => setTimeout(r, 50));
+    }
+    memoryStore.head = origHead;
+    record(
+      'F05_AUTO_RETRY',
+      midStatus === 'failed' &&
+        midClass === 'retryable' &&
+        scheduled >= 1 &&
+        finalStatus === 'ready' &&
+        !!catalogMediaId,
+      { firstRetryable: true, timerScheduled: true, autoReady: true, noClientRetry: true },
+      {
+        midStatus,
+        midClass,
+        scheduled,
+        finalStatus,
+        catalogMediaId,
+        headFailsLeft: headFails,
+      },
     );
   }
 
@@ -1340,6 +1523,8 @@ async function main() {
     'F03',
     'F04',
     'F05',
+    'F05_PUMP_RACE',
+    'F05_AUTO_RETRY',
     'F06',
     'U01',
     'U02',

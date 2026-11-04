@@ -199,7 +199,13 @@ export class CatalogContentService {
       const owner = await this.lockOwner(tx, kind, id);
       if (owner.partnerId !== partnerId) throw new NotFoundException('العنصر غير موجود');
       const row = await tx.catalogMedia.findFirst({ where: { id: mediaId, ownerKind: kind, ownerId: id } });
-      if (!row || row.kind !== 'image' || row.pendingRemoval) throw new BadRequestException('الوسيط الرئيسي يجب أن يكون صورة تابعة لهذا العنصر');
+      if (!row || row.kind !== 'image' || row.pendingRemoval) {
+        throw new BadRequestException('الوسيط الرئيسي يجب أن يكون صورة تابعة لهذا العنصر');
+      }
+      // P2.2: cover only from READY media (bound storage or legacy URL) — never unfinished uploads.
+      if (!row.storageKey && !(row.url && String(row.url).trim())) {
+        throw new BadRequestException('لا يمكن تعيين غلاف من وسيط غير جاهز');
+      }
       const published = owner.contentStatus === 'published' || row.publication === 'published';
       if (published) {
         await tx.catalogMedia.updateMany({ where: { ownerKind: kind, ownerId: id }, data: { draftIsPrimary: false } });
@@ -213,6 +219,49 @@ export class CatalogContentService {
     return { ok: true };
   }
 
+  /**
+   * P2.2: bind READY CatalogMedia ids to an existing product variant (variantsJson.mediaIds).
+   * Does not create inventory tables; reuses Product.variantsJson contract.
+   */
+  async bindVariantMedia(
+    partnerId: string,
+    productId: string,
+    variantId: string,
+    mediaIds: string[],
+  ) {
+    await this.owned(partnerId, 'product', productId);
+    const uniqueIds = [...new Set((mediaIds || []).map((m) => String(m || '').trim()).filter(Boolean))];
+    return this.prisma.$transaction(async (tx) => {
+      const owner = await this.lockOwner(tx, 'product', productId);
+      if (owner.partnerId !== partnerId) throw new NotFoundException('العنصر غير موجود');
+      const variants = Array.isArray(owner.variantsJson) ? ([...owner.variantsJson] as Array<Record<string, unknown>>) : [];
+      const idx = variants.findIndex((v) => String(v?.id || '') === String(variantId));
+      if (idx < 0) throw new BadRequestException('التركيبة غير موجودة على هذا المنتج');
+      if (uniqueIds.length) {
+        const rows = await tx.catalogMedia.findMany({
+          where: { ownerKind: 'product', ownerId: productId, id: { in: uniqueIds } },
+        });
+        if (rows.length !== uniqueIds.length) {
+          throw new BadRequestException('وسائط التركيبة يجب أن تتبع نفس المنتج');
+        }
+        for (const row of rows) {
+          if (row.pendingRemoval) throw new BadRequestException('لا يمكن ربط وسيط معلّق للإزالة');
+          if (!row.storageKey && !(row.url && String(row.url).trim())) {
+            throw new BadRequestException('لا يمكن ربط وسيط غير جاهز بتركيبة');
+          }
+        }
+      }
+      const next = { ...variants[idx], mediaIds: uniqueIds };
+      variants[idx] = next;
+      await tx.product.update({
+        where: { id: productId },
+        data: { variantsJson: variants as Prisma.InputJsonValue },
+      });
+      await this.bumpRevision(tx, 'product', productId);
+      return { ok: true, variantId, mediaIds: uniqueIds };
+    });
+  }
+
   async removeMedia(partnerId: string, kind: Kind, id: string, mediaId: string) {
     await this.owned(partnerId, kind, id);
     const outcome = await this.prisma.$transaction(async (tx) => {
@@ -224,6 +273,23 @@ export class CatalogContentService {
         await tx.catalogMedia.update({ where: { id: mediaId }, data: { pendingRemoval: true } });
         await this.bumpRevision(tx, kind, id);
         return { removed: 'pending_review' as const, storageKey: null as string | null };
+      }
+      // Drop draft media from any variant.mediaIds bindings before delete (P2.2 consistency).
+      if (kind === 'product') {
+        const product = await tx.product.findUnique({ where: { id }, select: { variantsJson: true } });
+        const variants = Array.isArray(product?.variantsJson)
+          ? (product!.variantsJson as Array<Record<string, unknown>>)
+          : [];
+        let changed = false;
+        const cleaned = variants.map((v) => {
+          const ids = Array.isArray(v.mediaIds) ? (v.mediaIds as string[]) : null;
+          if (!ids || !ids.includes(mediaId)) return v;
+          changed = true;
+          return { ...v, mediaIds: ids.filter((x) => x !== mediaId) };
+        });
+        if (changed) {
+          await tx.product.update({ where: { id }, data: { variantsJson: cleaned as Prisma.InputJsonValue } });
+        }
       }
       await tx.catalogMedia.delete({ where: { id: mediaId } });
       await this.bumpRevision(tx, kind, id);

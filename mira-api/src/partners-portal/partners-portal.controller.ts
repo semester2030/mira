@@ -281,6 +281,17 @@ export class PartnersPortalController {
     return this.content.reorder(req.partnerUser.partnerId, 'service', id, body.ids);
   }
 
+  @Patch('products/:id/variants/:variantId/media')
+  @UseGuards(PartnerTokenGuard)
+  bindProductVariantMedia(
+    @Req() req: PartnerRequest,
+    @Param('id') id: string,
+    @Param('variantId') variantId: string,
+    @Body() body: { mediaIds?: string[] },
+  ) {
+    return this.content.bindVariantMedia(req.partnerUser.partnerId, id, variantId, body?.mediaIds || []);
+  }
+
   @Patch('products/:id/media/:mediaId/primary')
   @UseGuards(PartnerTokenGuard)
   primaryProduct(@Req() req: PartnerRequest, @Param('id') id: string, @Param('mediaId') mediaId: string) {

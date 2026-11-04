@@ -1,7 +1,8 @@
 /**
  * Bounded-memory media verification from a temp file path.
  * Images: sharp decode (rejects header-only / truncated).
- * Videos: ffprobe metadata + ffmpeg decode sample (rejects container-ok / mdat-corrupt).
+ * Videos: ffprobe metadata + full-stream ffmpeg decode with -xerror
+ * (rejects container-ok / first-frame-ok / mid-mdat-corrupt).
  * Never loads full video into a single Buffer / Base64.
  */
 import { createHash } from 'crypto';
@@ -171,31 +172,49 @@ function runFfprobe(filePath: string): Promise<FfprobeOut> {
 }
 
 /**
- * Prove at least one video frame can be decoded. Streams to null muxer — no full Buffer.
- * Corrupt mdat with intact moov fails here even when ffprobe metadata looks fine.
+ * Decoder-failure signatures observed on ffmpeg 6.x/8.x even when process exit code is 0
+ * (notably with -xerror on some builds). Exit code alone is insufficient.
  */
-function runFfmpegDecodeSample(filePath: string): Promise<void> {
+const FFMPEG_DECODE_FAIL_RE =
+  /corrupt decoded frame|Error processing packet in decoder|Error submitting packet to decoder|Decode error rate\s+\S+\s+exceeds|error while decoding MB|Invalid data found when processing input|Task finished with error code:\s*-\d+|Error splitting the input into NAL units|missing picture in access unit|Invalid NAL unit size/i;
+
+/**
+ * Decode the full video stream. Uses -xerror but also rejects when stderr reports
+ * decoder failures with exit code 0 (ffmpeg 6.1.1 / 8.x observed behavior).
+ * Does not require exact frame-count match (VFR-safe). Streams to null — no full Buffer.
+ */
+function runFfmpegDecodeStream(filePath: string, durationSec: number): Promise<void> {
+  const timeoutMs = Math.min(
+    180_000,
+    Math.max(FFMPEG_DECODE_TIMEOUT_MS, Math.ceil(durationSec * 2000) + 15_000),
+  );
   return new Promise((resolve, reject) => {
     const args = [
+      '-hide_banner',
+      '-nostdin',
       '-v',
       'error',
+      '-xerror',
+      '-err_detect',
+      'explode',
       '-i',
       filePath,
-      '-frames:v',
-      '1',
       '-f',
       'null',
       '-',
     ];
     const child = spawn('ffmpeg', args, { stdio: ['ignore', 'ignore', 'pipe'] });
     const errChunks: Buffer[] = [];
+    let abortedForLog = false;
     const timer = setTimeout(() => {
       child.kill('SIGKILL');
       reject(new Error('ffmpeg-timeout'));
-    }, FFMPEG_DECODE_TIMEOUT_MS);
+    }, timeoutMs);
     child.stderr.on('data', (c) => {
       errChunks.push(c);
-      if (Buffer.concat(errChunks).length > 64 * 1024) {
+      const joined = Buffer.concat(errChunks);
+      if (joined.length > 64 * 1024) {
+        abortedForLog = true;
         child.kill('SIGKILL');
       }
     });
@@ -205,8 +224,18 @@ function runFfmpegDecodeSample(filePath: string): Promise<void> {
     });
     child.on('close', (code) => {
       clearTimeout(timer);
+      const stderrText = Buffer.concat(errChunks).toString('utf8');
+      const clip = stderrText.slice(0, 400);
+      if (abortedForLog) {
+        reject(new Error(`ffmpeg-stderr-overflow: ${clip}`));
+        return;
+      }
       if (code !== 0) {
-        reject(new Error(`ffmpeg-exit-${code}: ${Buffer.concat(errChunks).toString('utf8').slice(0, 200)}`));
+        reject(new Error(`ffmpeg-exit-${code}: ${clip}`));
+        return;
+      }
+      if (FFMPEG_DECODE_FAIL_RE.test(stderrText)) {
+        reject(new Error(`ffmpeg-decode-error-on-exit-0: ${clip}`));
         return;
       }
       resolve();
@@ -314,7 +343,7 @@ async function verifyVideoWithProbeAndDecode(filePath: string): Promise<
   }
 
   try {
-    await runFfmpegDecodeSample(filePath);
+    await runFfmpegDecodeStream(filePath, durationSec);
   } catch (error) {
     return classifyToolError(error, 'ffmpeg');
   }

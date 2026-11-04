@@ -417,6 +417,15 @@ export class DiskMultipartUploadStore extends MultipartUploadStore {
     await mkdir(this.root, { recursive: true });
   }
 
+  /**
+   * Re-attach an in-progress multipart after process restart (parts already on disk).
+   * Required for OS-level crash recovery proofs — Map state is process-local.
+   */
+  adoptUpload(objectKey: string, storageUploadId: string, contentType = 'application/octet-stream') {
+    const partDir = path.join(this.root, 'uploads', storageUploadId);
+    this.uploads.set(storageUploadId, { objectKey, contentType, partDir });
+  }
+
   async create(objectKey: string, contentType: string): Promise<MultipartCreateResult> {
     await this.ensureRoot();
     const storageUploadId = randomUUID();

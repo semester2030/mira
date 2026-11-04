@@ -2051,7 +2051,14 @@
     detailPreview.textContent = 'معاينة الموضع: داخل صفحة التفاصيل، بعد زر التفاصيل.';
     const detailMediaBox = document.createElement('div');
     detailMediaSection.append(detailImageLabel, detailImages, detailVideoLabel, detailVideos, detailPreview, detailMediaBox);
-    form.append(mediaSection, detailMediaSection);
+    const variantMediaSection = document.createElement('div');
+    variantMediaSection.className = 'form-section';
+    variantMediaSection.hidden = type !== 'brand';
+    text(variantMediaSection, 'وسائط التركيبات', 'h3');
+    text(variantMediaSection, 'اربط وسائط جاهزة بتركيبة معتمدة. الوسائط غير الجاهزة أو التابعة لمنتج آخر مرفوضة.');
+    const variantMediaBox = document.createElement('div');
+    variantMediaSection.appendChild(variantMediaBox);
+    form.append(mediaSection, detailMediaSection, variantMediaSection);
     form.insertBefore(templateSection, mediaSection);
 
     const detail = document.createElement('div');
@@ -3155,6 +3162,56 @@
         };
         card.append(up, cover, remove);
         (row.placement === 'detail' ? detailMediaBox : mediaBox).appendChild(card);
+      });
+      paintVariantMediaBindings(media);
+    }
+
+    function paintVariantMediaBindings(serverMedia) {
+      if (type !== 'brand' || !item || !item.id) {
+        variantMediaSection.hidden = true;
+        return;
+      }
+      const variants = Array.isArray(item.variantsJson) ? item.variantsJson : [];
+      variantMediaSection.hidden = variants.length === 0;
+      variantMediaBox.replaceChildren();
+      if (!variants.length) return;
+      const readyMedia = (serverMedia || []).filter(function (row) {
+        return row && row.id && !row.pendingRemoval && (row.storageKey || row.url);
+      });
+      variants.forEach(function (variant) {
+        if (!variant || !variant.id) return;
+        const row = document.createElement('div');
+        row.className = 'variant-media-row';
+        const title = document.createElement('p');
+        title.textContent = 'تركيبة: ' + (variant.id || '');
+        const select = document.createElement('select');
+        select.multiple = true;
+        select.setAttribute('aria-label', 'وسائط التركيبة ' + variant.id);
+        const bound = Array.isArray(variant.mediaIds) ? variant.mediaIds : [];
+        readyMedia.forEach(function (m) {
+          const opt = document.createElement('option');
+          opt.value = m.id;
+          opt.textContent = (m.kind === 'video' ? 'فيديو' : 'صورة') + ' · ' + m.id.slice(0, 8);
+          if (bound.indexOf(m.id) >= 0) opt.selected = true;
+          select.appendChild(opt);
+        });
+        const saveBtn = document.createElement('button');
+        saveBtn.type = 'button';
+        saveBtn.textContent = 'حفظ ربط التركيبة';
+        saveBtn.onclick = async function () {
+          const chosen = Array.prototype.slice.call(select.selectedOptions).map(function (o) { return o.value; });
+          try {
+            await PartnersApi.bindVariantMedia(item.id, variant.id, chosen);
+            status.textContent = 'تم حفظ ربط وسائط التركيبة.';
+            const refreshed = await PartnersApi.get(type === 'brand' ? 'products' : 'services', item.id);
+            if (refreshed) item.variantsJson = refreshed.variantsJson;
+            paintMedia(null);
+          } catch (err) {
+            status.textContent = (err && err.message) || 'تعذر حفظ ربط التركيبة';
+          }
+        };
+        row.append(title, select, saveBtn);
+        variantMediaBox.appendChild(row);
       });
     }
 

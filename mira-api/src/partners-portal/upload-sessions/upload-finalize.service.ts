@@ -24,12 +24,26 @@ export class UploadFinalizeService implements OnModuleInit {
   private readonly inFlight = new Map<string, Promise<void>>();
   private activeCount = 0;
   private readonly waitQueue: string[] = [];
+  /** Deferred re-enqueue timers for finalizeNextAttemptAt backoff. */
+  private readonly backoffTimers = new Map<string, ReturnType<typeof setTimeout>>();
+  /**
+   * Backoff due times noted while the session is still inFlight.
+   * scheduleBackoff must run only after the slot/inFlight release (finally),
+   * otherwise the inFlight guard drops the timer permanently.
+   */
+  private readonly pendingBackoff = new Map<string, Date>();
+  /** Test hook: count scheduled backoff timers (auto-retry without client). */
+  backoffScheduleCount = 0;
   /** Test hook: count how many runFinalize bodies actually start verify work. */
   activeVerifyStarts = 0;
   peakConcurrentVerifies = 0;
+  /** Test hook: observed peak of activeCount (pump slots), distinct from verify starts. */
+  peakActiveSlots = 0;
   private currentVerifies = 0;
   /** Test hook: awaited inside bind transaction after FOR UPDATE, before CatalogMedia create. */
   beforeCatalogBind: (() => Promise<void>) | null = null;
+  /** Test hook: delay after slot reserve, before runFinalize body (race injection). */
+  afterSlotReserve: (() => Promise<void>) | null = null;
 
   constructor(
     @Inject(PrismaService) private readonly prisma: PrismaService,
@@ -89,29 +103,87 @@ export class UploadFinalizeService implements OnModuleInit {
     }
   }
 
+  /**
+   * Concurrency-limited pump. Slot reservation (activeCount++) is synchronous and
+   * happens before any await — concurrent pump() callers cannot exceed the limit
+   * via TOCTOU on the while-condition (F05 regression).
+   */
   private async pump() {
     while (this.activeCount < UPLOAD_FINALIZE_CONCURRENCY && this.waitQueue.length) {
       const sessionId = this.waitQueue.shift()!;
       if (this.inFlight.has(sessionId)) continue;
-      // Skip sessions still in backoff without consuming a worker slot.
-      const row = await this.prisma.partnerUploadSession.findUnique({
-        where: { id: sessionId },
-        select: { finalizeNextAttemptAt: true, status: true, catalogMediaId: true },
-      });
-      if (!row || row.catalogMediaId || row.status === 'ready' || row.status === 'aborted') continue;
-      if (row.finalizeNextAttemptAt && row.finalizeNextAttemptAt.getTime() > uploadNowMs()) {
-        // Re-queue later via recover; do not burn attempts.
-        continue;
-      }
+
+      // Reserve slot BEFORE any await (single-threaded check-and-increment).
       this.activeCount += 1;
-      const work = this.runFinalize(sessionId).finally(() => {
+      this.peakActiveSlots = Math.max(this.peakActiveSlots, this.activeCount);
+
+      const work = this.runQueuedFinalize(sessionId).finally(() => {
         this.inFlight.delete(sessionId);
         this.activeCount -= 1;
+        // Schedule backoff ONLY after inFlight release — otherwise scheduleBackoff was a no-op.
+        const due = this.pendingBackoff.get(sessionId);
+        if (due) {
+          this.pendingBackoff.delete(sessionId);
+          this.armBackoffTimer(sessionId, due);
+        }
         setImmediate(() => void this.pump());
       });
       this.inFlight.set(sessionId, work);
       void work;
     }
+  }
+
+  /** Queue a backoff wake-up; armed in pump finally after inFlight clear. */
+  private noteBackoff(sessionId: string, when: Date | null | undefined) {
+    if (!when) return;
+    if (when.getTime() <= uploadNowMs()) {
+      // Already due — re-enqueue once slot frees (finally will still run).
+      this.pendingBackoff.set(sessionId, when);
+      return;
+    }
+    this.pendingBackoff.set(sessionId, when);
+  }
+
+  private clearBackoff(sessionId: string) {
+    this.pendingBackoff.delete(sessionId);
+    const t = this.backoffTimers.get(sessionId);
+    if (t) {
+      clearTimeout(t);
+      this.backoffTimers.delete(sessionId);
+    }
+  }
+
+  private armBackoffTimer(sessionId: string, when: Date) {
+    if (this.backoffTimers.has(sessionId) || this.waitQueue.includes(sessionId) || this.inFlight.has(sessionId)) {
+      return;
+    }
+    const delay = Math.max(0, when.getTime() - uploadNowMs());
+    const timer = setTimeout(() => {
+      this.backoffTimers.delete(sessionId);
+      this.enqueue(sessionId);
+    }, Math.min(delay, 60_000));
+    this.backoffTimers.set(sessionId, timer);
+    this.backoffScheduleCount += 1;
+  }
+
+  private async runQueuedFinalize(sessionId: string): Promise<void> {
+    if (this.afterSlotReserve) {
+      await this.afterSlotReserve();
+    }
+    const row = await this.prisma.partnerUploadSession.findUnique({
+      where: { id: sessionId },
+      select: { finalizeNextAttemptAt: true, status: true, catalogMediaId: true },
+    });
+    if (!row || row.catalogMediaId || row.status === 'ready' || row.status === 'aborted') {
+      this.clearBackoff(sessionId);
+      return;
+    }
+    if (row.finalizeNextAttemptAt && row.finalizeNextAttemptAt.getTime() > uploadNowMs()) {
+      // Do not burn a finalize attempt; arm timer after this slot releases.
+      this.noteBackoff(sessionId, row.finalizeNextAttemptAt);
+      return;
+    }
+    await this.runFinalize(sessionId);
   }
 
   /**
@@ -562,5 +634,10 @@ export class UploadFinalizeService implements OnModuleInit {
         finalizeNextAttemptAt: permanent ? null : nextAt,
       },
     });
+    if (!permanent && nextAt) {
+      this.noteBackoff(sessionId, nextAt);
+    } else {
+      this.clearBackoff(sessionId);
+    }
   }
 }

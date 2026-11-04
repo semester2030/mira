@@ -531,6 +531,11 @@
       request('PATCH', `/partners-portal/${kind}/${id}/media/order`, { ids }),
     setPrimary: (kind, id, mediaId) =>
       request('PATCH', `/partners-portal/${kind}/${id}/media/${mediaId}/primary`, {}),
+    /** P2.2: bind READY media ids to a product variant (variantsJson.mediaIds). */
+    bindVariantMedia: (productId, variantId, mediaIds) =>
+      request('PATCH', `/partners-portal/products/${productId}/variants/${encodeURIComponent(variantId)}/media`, {
+        mediaIds: Array.isArray(mediaIds) ? mediaIds : [],
+      }),
     removeMedia: (kind, id, mediaId) =>
       request('DELETE', `/partners-portal/${kind}/${id}/media/${mediaId}`),
     ads: () => request('GET', '/partners-portal/ads'),
