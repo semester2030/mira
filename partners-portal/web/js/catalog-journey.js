@@ -3088,7 +3088,7 @@
       });
       if (!item || !item.id) {
         text(mediaBox, developerAccount
-          ? 'اختيار الملف يبدأ الرفع بالنسبة ثم النشر مباشرة. الاسم والسعر والتصنيف مطلوبة قبل أن يبدأ.'
+          ? 'اختيار الملف يبدأ الرفع بعد حفظ المسودة. النشر يتم فقط عند ضغط «نشر الآن».'
           : 'الرفع يبدأ بعد حفظ المسودة. الملفات المختارة تبقى هنا.');
         return;
       }
@@ -3098,7 +3098,18 @@
           const previewData = await PartnersApi.preview(type === 'brand' ? 'products' : 'services', item.id);
           media = previewData.media || [];
           if (previewData.reviewNote) status.textContent = 'سبب المراجعة: ' + previewData.reviewNote;
+          // Keep item draft/published variant fields aligned with preview for bindings UI.
+          if (typeof previewData.draftVariantsSet === 'boolean') {
+            item.draftVariantsSet = previewData.draftVariantsSet;
+            item.draftVariantsJson = previewData.draftVariantsSet
+              ? (previewData.draftVariantsJson ?? null)
+              : null;
+          }
+          if (previewData.publishedVariantsJson !== undefined) {
+            item.variantsJson = previewData.publishedVariantsJson;
+          }
         } catch (error) {
+          // Do not wipe variant binding UI on a failed media reload.
           text(mediaBox, 'تعذر تحميل الوسائط المحفوظة: ' + error.message);
           return;
         }
@@ -3171,12 +3182,23 @@
         variantMediaSection.hidden = true;
         return;
       }
-      const variants = Array.isArray(item.variantsJson) ? item.variantsJson : [];
+      // Effective variants: draft when set, else published / working variantsJson.
+      var variants;
+      if (item.draftVariantsSet) {
+        variants = item.draftVariantsJson == null ? [] : (Array.isArray(item.draftVariantsJson) ? item.draftVariantsJson : []);
+      } else if (Array.isArray(item.variantsJson)) {
+        variants = item.variantsJson;
+      } else {
+        variants = [];
+      }
       variantMediaSection.hidden = variants.length === 0;
       variantMediaBox.replaceChildren();
       if (!variants.length) return;
+      // C01: use explicit ready flag from preview (no storageKey/url required in API).
       const readyMedia = (serverMedia || []).filter(function (row) {
-        return row && row.id && !row.pendingRemoval && (row.storageKey || row.url);
+        if (!row || !row.id || row.pendingRemoval) return false;
+        if (typeof row.ready === 'boolean') return row.ready === true;
+        return !!(row.storageKey || row.url);
       });
       variants.forEach(function (variant) {
         if (!variant || !variant.id) return;
@@ -3203,9 +3225,20 @@
           try {
             await PartnersApi.bindVariantMedia(item.id, variant.id, chosen);
             status.textContent = 'تم حفظ ربط وسائط التركيبة.';
-            const refreshed = await PartnersApi.get(type === 'brand' ? 'products' : 'services', item.id);
-            if (refreshed) item.variantsJson = refreshed.variantsJson;
-            paintMedia(null);
+            // Refresh via preview (same contract as picker) so draft bindings survive reload.
+            const previewData = await PartnersApi.preview('products', item.id);
+            if (previewData) {
+              if (typeof previewData.draftVariantsSet === 'boolean') {
+                item.draftVariantsSet = previewData.draftVariantsSet;
+                item.draftVariantsJson = previewData.draftVariantsSet
+                  ? (previewData.draftVariantsJson ?? null)
+                  : null;
+              }
+              if (previewData.publishedVariantsJson !== undefined) {
+                item.variantsJson = previewData.publishedVariantsJson;
+              }
+            }
+            paintMedia(previewData && previewData.media ? previewData.media : null);
           } catch (err) {
             status.textContent = (err && err.message) || 'تعذر حفظ ربط التركيبة';
           }
@@ -3372,14 +3405,11 @@
         URL.revokeObjectURL(entry.url);
         const at = staged[form.id].indexOf(entry);
         if (at >= 0) staged[form.id].splice(at, 1);
-        if (!(options && options.deferPublish) && developerAccount && item && item.id) {
-          try {
-            await PartnersApi.submitReview(type === 'brand' ? 'products' : 'services', item.id);
-            status.textContent = 'رُفع الملف ونُشر في التطبيق مباشرة.';
-          } catch (error) {
-            status.textContent = 'رُفع الملف ولم يُنشر: ' + (error.message || '');
-          }
-        } else if (!developerAccount) {
+        // C04: upload completion only marks media ready in draft — never auto-publish.
+        // Developer direct publish remains available via the explicit publish button.
+        if (developerAccount) {
+          status.textContent = 'رُفع الملف وأصبح جاهزًا في المسودة. اضغط «نشر الآن» لنشره.';
+        } else {
           status.textContent = 'رُفع الملف ورُبط بالمسودة. لن يظهر في التطبيق قبل الاعتماد.';
         }
         if (window.MiraMotion) MiraMotion.announce(status.textContent);

@@ -220,8 +220,9 @@ export class CatalogContentService {
   }
 
   /**
-   * P2.2: bind READY CatalogMedia ids to an existing product variant (variantsJson.mediaIds).
-   * Does not create inventory tables; reuses Product.variantsJson contract.
+   * P2.2: bind READY CatalogMedia ids to an existing product variant.
+   * Respects draftVariantsJson / draftVariantsSet for published products;
+   * never mutates published variantsJson until approve merges the draft.
    */
   async bindVariantMedia(
     partnerId: string,
@@ -234,7 +235,21 @@ export class CatalogContentService {
     return this.prisma.$transaction(async (tx) => {
       const owner = await this.lockOwner(tx, 'product', productId);
       if (owner.partnerId !== partnerId) throw new NotFoundException('العنصر غير موجود');
-      const variants = Array.isArray(owner.variantsJson) ? ([...owner.variantsJson] as Array<Record<string, unknown>>) : [];
+      const published = owner.contentStatus === 'published';
+      const useDraft = published || Boolean(owner.draftVariantsSet);
+      let variants: Array<Record<string, unknown>>;
+      if (owner.draftVariantsSet) {
+        if (owner.draftVariantsJson == null) {
+          throw new BadRequestException('التركيبات ممسوحة في المسودة');
+        }
+        variants = Array.isArray(owner.draftVariantsJson)
+          ? ([...owner.draftVariantsJson] as Array<Record<string, unknown>>)
+          : [];
+      } else {
+        variants = Array.isArray(owner.variantsJson)
+          ? ([...owner.variantsJson] as Array<Record<string, unknown>>)
+          : [];
+      }
       const idx = variants.findIndex((v) => String(v?.id || '') === String(variantId));
       if (idx < 0) throw new BadRequestException('التركيبة غير موجودة على هذا المنتج');
       if (uniqueIds.length) {
@@ -253,13 +268,38 @@ export class CatalogContentService {
       }
       const next = { ...variants[idx], mediaIds: uniqueIds };
       variants[idx] = next;
-      await tx.product.update({
-        where: { id: productId },
-        data: { variantsJson: variants as Prisma.InputJsonValue },
-      });
+      if (useDraft) {
+        await tx.product.update({
+          where: { id: productId },
+          data: {
+            draftVariantsSet: true,
+            draftVariantsJson: variants as Prisma.InputJsonValue,
+          },
+        });
+      } else {
+        await tx.product.update({
+          where: { id: productId },
+          data: { variantsJson: variants as Prisma.InputJsonValue },
+        });
+      }
       await this.bumpRevision(tx, 'product', productId);
-      return { ok: true, variantId, mediaIds: uniqueIds };
+      return { ok: true, variantId, mediaIds: uniqueIds, draft: useDraft };
     });
+  }
+
+  /** Strip media id references from variant.mediaIds arrays. */
+  private stripMediaIdsFromVariants(
+    variants: Array<Record<string, unknown>>,
+    removeIds: Set<string>,
+  ): { cleaned: Array<Record<string, unknown>>; changed: boolean } {
+    let changed = false;
+    const cleaned = variants.map((v) => {
+      const ids = Array.isArray(v.mediaIds) ? (v.mediaIds as string[]) : null;
+      if (!ids || !ids.some((x) => removeIds.has(x))) return v;
+      changed = true;
+      return { ...v, mediaIds: ids.filter((x) => !removeIds.has(x)) };
+    });
+    return { cleaned, changed };
   }
 
   async removeMedia(partnerId: string, kind: Kind, id: string, mediaId: string) {
@@ -276,19 +316,28 @@ export class CatalogContentService {
       }
       // Drop draft media from any variant.mediaIds bindings before delete (P2.2 consistency).
       if (kind === 'product') {
-        const product = await tx.product.findUnique({ where: { id }, select: { variantsJson: true } });
-        const variants = Array.isArray(product?.variantsJson)
-          ? (product!.variantsJson as Array<Record<string, unknown>>)
-          : [];
-        let changed = false;
-        const cleaned = variants.map((v) => {
-          const ids = Array.isArray(v.mediaIds) ? (v.mediaIds as string[]) : null;
-          if (!ids || !ids.includes(mediaId)) return v;
-          changed = true;
-          return { ...v, mediaIds: ids.filter((x) => x !== mediaId) };
+        const product = await tx.product.findUnique({
+          where: { id },
+          select: { variantsJson: true, draftVariantsJson: true, draftVariantsSet: true },
         });
-        if (changed) {
-          await tx.product.update({ where: { id }, data: { variantsJson: cleaned as Prisma.InputJsonValue } });
+        const removeIds = new Set([mediaId]);
+        const data: Prisma.ProductUpdateInput = {};
+        if (product?.draftVariantsSet && Array.isArray(product.draftVariantsJson)) {
+          const { cleaned, changed } = this.stripMediaIdsFromVariants(
+            product.draftVariantsJson as Array<Record<string, unknown>>,
+            removeIds,
+          );
+          if (changed) data.draftVariantsJson = cleaned as Prisma.InputJsonValue;
+        }
+        if (Array.isArray(product?.variantsJson)) {
+          const { cleaned, changed } = this.stripMediaIdsFromVariants(
+            product!.variantsJson as Array<Record<string, unknown>>,
+            removeIds,
+          );
+          if (changed) data.variantsJson = cleaned as Prisma.InputJsonValue;
+        }
+        if (Object.keys(data).length) {
+          await tx.product.update({ where: { id }, data });
         }
       }
       await tx.catalogMedia.delete({ where: { id: mediaId } });
@@ -420,8 +469,14 @@ export class CatalogContentService {
         await tx.catalogReviewLog.create({ data: { ownerKind: typedKind, ownerId: id, actor, action: 'reject', note: note ?? null } });
         return { contentStatus: row.contentStatus, reviewStatus: 'rejected', id };
       }
+      const media = await tx.catalogMedia.findMany({ where: { ownerKind: typedKind, ownerId: id } });
+      const removedMediaIds = new Set(
+        media.filter((entry) => entry.pendingRemoval).map((entry) => entry.id),
+      );
+      let finalOptions: Prisma.JsonValue | null | undefined;
+      let finalVariants: Array<Record<string, unknown>> = [];
       if (typedKind === 'product') {
-        const finalOptions = row.draftOptionsSet
+        finalOptions = row.draftOptionsSet
           ? row.draftOptionsJson == null
             ? null
             : Array.isArray(row.draftOptionsJson)
@@ -430,17 +485,21 @@ export class CatalogContentService {
           : Array.isArray(row.optionsJson)
             ? row.optionsJson
             : null;
-        const finalVariants = row.draftOptionsSet && row.draftOptionsJson == null && !row.draftVariantsSet
-          ? []
-          : row.draftVariantsSet
-            ? row.draftVariantsJson == null
-              ? []
-              : Array.isArray(row.draftVariantsJson)
-                ? row.draftVariantsJson
-                : []
-            : Array.isArray(row.variantsJson)
-              ? row.variantsJson
-              : [];
+        const rawVariants: Array<Record<string, unknown>> =
+          row.draftOptionsSet && row.draftOptionsJson == null && !row.draftVariantsSet
+            ? []
+            : row.draftVariantsSet
+              ? row.draftVariantsJson == null
+                ? []
+                : Array.isArray(row.draftVariantsJson)
+                  ? ([...row.draftVariantsJson] as Array<Record<string, unknown>>)
+                  : []
+              : Array.isArray(row.variantsJson)
+                ? ([...row.variantsJson] as Array<Record<string, unknown>>)
+                : [];
+        finalVariants = removedMediaIds.size
+          ? this.stripMediaIdsFromVariants(rawVariants, removedMediaIds).cleaned
+          : rawVariants;
         try {
           assertVariantsMatchOptions(finalOptions, finalVariants);
         } catch (error) {
@@ -453,7 +512,6 @@ export class CatalogContentService {
           throw new BadRequestException(message);
         }
       }
-      const media = await tx.catalogMedia.findMany({ where: { ownerKind: typedKind, ownerId: id } });
       const images = media.filter((item) => item.kind === 'image' && !item.pendingRemoval);
       const videos = media.filter((item) => item.kind === 'video' && !item.pendingRemoval);
       if (images.length === 0 && !(actor === 'developer-portal' && videos.length > 0)) {
@@ -508,9 +566,13 @@ export class CatalogContentService {
                   draftOptionsSet: false,
                 }
               : {}),
-            ...(row.draftVariantsSet
+            ...(row.draftVariantsSet || removedMediaIds.size
               ? {
-                  variantsJson: row.draftVariantsJson == null ? Prisma.DbNull : (row.draftVariantsJson as Prisma.InputJsonValue),
+                  // Always write cleaned finalVariants when merging draft or stripping deleted media ids.
+                  variantsJson:
+                    row.draftVariantsSet && row.draftVariantsJson == null && !removedMediaIds.size
+                      ? Prisma.DbNull
+                      : (finalVariants as unknown as Prisma.InputJsonValue),
                   draftVariantsJson: Prisma.DbNull,
                   draftVariantsSet: false,
                 }
@@ -591,6 +653,7 @@ export class CatalogContentService {
       draftOptionsJson: kind === 'product' ? (row.draftOptionsSet ? row.draftOptionsJson ?? null : undefined) : undefined,
       draftOptionsCleared: kind === 'product' ? Boolean(row.draftOptionsSet && row.draftOptionsJson == null) : undefined,
       publishedVariantsJson: kind === 'product' ? row.variantsJson ?? null : undefined,
+      draftVariantsSet: kind === 'product' ? Boolean(row.draftVariantsSet) : undefined,
       draftVariantsJson: kind === 'product' ? (row.draftVariantsSet ? row.draftVariantsJson ?? null : undefined) : undefined,
       draftVariantsCleared: kind === 'product' ? Boolean(row.draftVariantsSet && row.draftVariantsJson == null) : undefined,
       media: ordered.map((item) => ({
@@ -604,6 +667,10 @@ export class CatalogContentService {
         pendingRemoval: item.pendingRemoval,
         mimeType: item.mimeType,
         placement: item.placement,
+        // Explicit readiness for portal pickers — no internal storageKey exposure.
+        ready:
+          !item.pendingRemoval &&
+          Boolean(item.storageKey || (item.url && String(item.url).trim())),
       })),
     };
   }

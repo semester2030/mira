@@ -384,7 +384,303 @@ async function main() {
     record('P22-07', rejected, { rejectIncompleteCover: true }, { rejected });
   }
 
-  const required = ['P22-01', 'P22-02', 'P22-03', 'P22-04', 'P22-05', 'P22-06', 'P22-07'];
+  // —— C01: preview ready contract (no storageKey/url required for picker)
+  {
+    const up = await uploadPng('product', product.id, Buffer.concat([png, Buffer.from([0xc0, 0x01])]));
+    const preview = await content.preview(brand.id, 'product', product.id);
+    const row = (preview.media as Array<Record<string, unknown>>).find((m) => m.id === up.catalogMediaId);
+    const hasInternalKey = row != null && ('storageKey' in row || Object.prototype.hasOwnProperty.call(row, 'storageKey'));
+    const readyOk = row?.ready === true && row?.pendingRemoval !== true;
+    const uiFilter = (preview.media as Array<Record<string, unknown>>).filter(
+      (m) => m && m.id && !m.pendingRemoval && m.ready === true,
+    );
+    record(
+      'C01',
+      readyOk && !hasInternalKey && uiFilter.some((m) => m.id === up.catalogMediaId),
+      { ready: true, noStorageKey: true, pickerOption: true },
+      { ready: row?.ready, hasInternalKey, pickerCount: uiFilter.length, mediaId: up.catalogMediaId },
+    );
+  }
+
+  // —— C02: bind respects draft for published products
+  {
+    const pubProduct = await prisma.product.create({
+      data: {
+        partnerId: brand.id,
+        nameAr: 'منشور C02',
+        nameEn: 'C02',
+        priceHalalas: 4000,
+        externalUrl: '',
+        concernTags: [],
+        skinTypes: [],
+        contentStatus: 'published',
+        reviewStatus: 'none',
+        active: true,
+        catalogSource: 'catalog',
+        optionsJson: [
+          {
+            id: 'size',
+            labelAr: 'المقاس',
+            kind: 'size',
+            values: [
+              { id: 's', labelAr: 'S' },
+              { id: 'm', labelAr: 'M' },
+              { id: 'l', labelAr: 'L' },
+            ],
+          },
+        ],
+        variantsJson: [
+          { id: 's-only', selections: { size: 's' }, available: true, mediaIds: [] },
+          { id: 'keep', selections: { size: 'm' }, available: true, mediaIds: ['keep-me'] },
+        ],
+      },
+    });
+    // Draft-only variant (not yet published)
+    await prisma.product.update({
+      where: { id: pubProduct.id },
+      data: {
+        draftVariantsSet: true,
+        draftVariantsJson: [
+          { id: 's-only', selections: { size: 's' }, available: true, mediaIds: [] },
+          { id: 'keep', selections: { size: 'm' }, available: true, mediaIds: ['keep-me'] },
+          { id: 'draft-only', selections: { size: 'l' }, available: true, mediaIds: [] },
+        ],
+      },
+    });
+    const up = await uploadPng('product', pubProduct.id, Buffer.concat([png, Buffer.from([0xc0, 0x02])]));
+    const beforePub = await prisma.product.findUnique({ where: { id: pubProduct.id } });
+    const publishedBefore = JSON.stringify(beforePub?.variantsJson);
+    await content.bindVariantMedia(brand.id, pubProduct.id, 'draft-only', [up.catalogMediaId]);
+    await content.bindVariantMedia(brand.id, pubProduct.id, 's-only', [up.catalogMediaId]);
+    const mid = await prisma.product.findUnique({ where: { id: pubProduct.id } });
+    const publishedUnchanged = JSON.stringify(mid?.variantsJson) === publishedBefore;
+    const draft = Array.isArray(mid?.draftVariantsJson)
+      ? (mid!.draftVariantsJson as Array<{ id: string; mediaIds?: string[] }>)
+      : [];
+    const draftBound = draft.find((v) => v.id === 'draft-only');
+    const sOnly = draft.find((v) => v.id === 's-only');
+    const keep = draft.find((v) => v.id === 'keep');
+    // Approve draft merge
+    const rev = mid!.reviewRevision;
+    await prisma.product.update({
+      where: { id: pubProduct.id },
+      data: { reviewStatus: 'in_review', submittedRevision: rev, reviewRevision: rev },
+    });
+    // Need at least one non-pending image for approve — upload already ready
+    await content.decide('admin-test', 'product', pubProduct.id, 'approve', undefined, rev);
+    const after = await prisma.product.findUnique({ where: { id: pubProduct.id } });
+    const finals = Array.isArray(after?.variantsJson)
+      ? (after!.variantsJson as Array<{ id: string; mediaIds?: string[] }>)
+      : [];
+    const finalDraftOnly = finals.find((v) => v.id === 'draft-only');
+    const finalKeep = finals.find((v) => v.id === 'keep');
+    record(
+      'C02',
+      publishedUnchanged &&
+        mid?.draftVariantsSet === true &&
+        Array.isArray(draftBound?.mediaIds) &&
+        draftBound!.mediaIds!.includes(up.catalogMediaId) &&
+        Array.isArray(sOnly?.mediaIds) &&
+        sOnly!.mediaIds!.includes(up.catalogMediaId) &&
+        Array.isArray(keep?.mediaIds) &&
+        keep!.mediaIds!.includes('keep-me') &&
+        Array.isArray(finalDraftOnly?.mediaIds) &&
+        finalDraftOnly!.mediaIds!.includes(up.catalogMediaId) &&
+        Array.isArray(finalKeep?.mediaIds) &&
+        finalKeep!.mediaIds!.includes('keep-me') &&
+        after?.draftVariantsSet === false,
+      {
+        publishedUntouchedBeforeApprove: true,
+        draftOnlyBind: true,
+        keepOtherBindings: true,
+        mergeOnApprove: true,
+      },
+      {
+        publishedUnchanged,
+        draftBound: draftBound?.mediaIds,
+        sOnly: sOnly?.mediaIds,
+        keep: keep?.mediaIds,
+        finalDraftOnly: finalDraftOnly?.mediaIds,
+        finalKeep: finalKeep?.mediaIds,
+        draftVariantsSetAfter: after?.draftVariantsSet,
+      },
+    );
+  }
+
+  // —— C03: pendingRemoval + approve strips mediaIds
+  {
+    const c03 = await prisma.product.create({
+      data: {
+        partnerId: brand.id,
+        nameAr: 'C03',
+        nameEn: 'C03',
+        priceHalalas: 3000,
+        externalUrl: '',
+        concernTags: [],
+        skinTypes: [],
+        contentStatus: 'published',
+        reviewStatus: 'none',
+        active: true,
+        catalogSource: 'catalog',
+        optionsJson: [{ id: 'size', labelAr: 'المقاس', kind: 'size', values: [{ id: 'm', labelAr: 'M' }] }],
+        variantsJson: [{ id: 'm1', selections: { size: 'm' }, available: true, mediaIds: [] }],
+      },
+    });
+    const keepUp = await uploadPng('product', c03.id, Buffer.concat([png, Buffer.from([0xc0, 0x03, 1])]));
+    const dropUp = await uploadPng('product', c03.id, Buffer.concat([png, Buffer.from([0xc0, 0x03, 2])]));
+    await prisma.catalogMedia.updateMany({
+      where: { id: { in: [keepUp.catalogMediaId, dropUp.catalogMediaId] } },
+      data: { publication: 'published', active: true },
+    });
+    await prisma.product.update({
+      where: { id: c03.id },
+      data: {
+        variantsJson: [
+          {
+            id: 'm1',
+            selections: { size: 'm' },
+            available: true,
+            mediaIds: [keepUp.catalogMediaId, dropUp.catalogMediaId],
+          },
+        ],
+      },
+    });
+    await content.removeMedia(brand.id, 'product', c03.id, dropUp.catalogMediaId);
+    const pending = await prisma.catalogMedia.findUnique({ where: { id: dropUp.catalogMediaId } });
+    const beforeApprove = await prisma.product.findUnique({ where: { id: c03.id } });
+    const beforeVariants = Array.isArray(beforeApprove?.variantsJson)
+      ? (beforeApprove!.variantsJson as Array<{ mediaIds?: string[] }>)
+      : [];
+    // Published variants still reference until approve
+    const stillReferenced = (beforeVariants[0]?.mediaIds || []).includes(dropUp.catalogMediaId);
+    const revRow = await prisma.product.findUnique({ where: { id: c03.id } });
+    const rev = revRow!.reviewRevision;
+    await prisma.product.update({
+      where: { id: c03.id },
+      data: { reviewStatus: 'in_review', submittedRevision: rev, reviewRevision: rev },
+    });
+    await content.decide('admin-test', 'product', c03.id, 'approve', undefined, rev);
+    const afterMedia = await prisma.catalogMedia.findUnique({ where: { id: dropUp.catalogMediaId } });
+    const keepStill = await prisma.catalogMedia.findUnique({ where: { id: keepUp.catalogMediaId } });
+    const afterProd = await prisma.product.findUnique({ where: { id: c03.id } });
+    const afterVariants = Array.isArray(afterProd?.variantsJson)
+      ? (afterProd!.variantsJson as Array<{ mediaIds?: string[] }>)
+      : [];
+    const ids = afterVariants[0]?.mediaIds || [];
+    record(
+      'C03',
+      pending?.pendingRemoval === true &&
+        stillReferenced &&
+        !afterMedia &&
+        !!keepStill &&
+        ids.includes(keepUp.catalogMediaId) &&
+        !ids.includes(dropUp.catalogMediaId),
+      { pendingThenApprove: true, droppedRefGone: true, otherKept: true },
+      {
+        pendingRemoval: pending?.pendingRemoval,
+        stillReferencedBeforeApprove: stillReferenced,
+        dropGone: !afterMedia,
+        keepAlive: !!keepStill,
+        mediaIds: ids,
+      },
+    );
+  }
+
+  // —— C05: restore future backoff timers on worker boot (no client GET)
+  {
+    process.env.MIRA_UPLOAD_FINALIZE_RETRY_BASE_MS = '200';
+    process.env.MIRA_UPLOAD_FINALIZE_RETRY_MAX_MS = '800';
+    const init = await (
+      await fetch(`${base}/partners-portal/upload-sessions`, {
+        method: 'POST',
+        headers: auth,
+        body: JSON.stringify({
+          ownerKind: 'product',
+          ownerId: product.id,
+          clientMediaId: randomUUID(),
+          idempotencyKey: randomUUID(),
+          mimeType: 'image/png',
+          byteSize: png.length,
+          checksum: sha256(png),
+        }),
+      })
+    ).json();
+    const completed: Array<{ partNumber: number; etag: string; size: number }> = [];
+    for (let n = 1; n <= init.totalParts; n++) {
+      const start = (n - 1) * init.partSizeBytes;
+      const chunk = png.subarray(start, Math.min(png.length, start + init.partSizeBytes));
+      const sign = await (
+        await fetch(`${base}/partners-portal/upload-sessions/${init.sessionId}/parts/${n}/sign`, {
+          method: 'POST',
+          headers: auth,
+          body: '{}',
+        })
+      ).json();
+      const put = await fetch(await abs(sign.url), {
+        method: 'PUT',
+        headers: { authorization: `Bearer ${token}`, 'content-type': 'application/octet-stream' },
+        body: new Uint8Array(chunk),
+      });
+      const body = await put.json();
+      completed.push({ partNumber: n, etag: body.etag, size: chunk.length });
+    }
+    const row0 = await prisma.partnerUploadSession.findUnique({ where: { id: init.sessionId } });
+    await memoryStore.complete(row0!.objectKey, row0!.storageUploadId!, completed);
+    const dueAt = new Date(Date.now() + 400);
+    await prisma.partnerUploadSession.update({
+      where: { id: init.sessionId },
+      data: {
+        status: 'failed',
+        failureClass: 'retryable',
+        failureCode: 'transient',
+        failureMessageAr: 'c05',
+        storageCompletedAt: new Date(),
+        completedPartsJson: completed,
+        catalogMediaId: null,
+        finalizeLeaseOwner: null,
+        finalizeLeaseUntil: null,
+        finalizeNextAttemptAt: dueAt,
+        finalizeAttempts: 1,
+      },
+    });
+    // New worker instance (simulates process restart) — must re-arm timer.
+    const worker2 = app.get(UploadFinalizeService);
+    // Clear any leftover timers from same process by creating a fresh service via bootRecover path.
+    worker2.backoffScheduleCount = 0;
+    const boot = await worker2.bootRecover(50);
+    // recoverStaleWork must NOT enqueue yet (future); restoreFutureBackoffTimers must arm.
+    const armed = boot.futureArmed >= 1 || worker2.backoffScheduleCount >= 1;
+    const deadline = Date.now() + 5000;
+    let finalStatus: string | undefined;
+    let mediaId: string | null = null;
+    while (Date.now() < deadline) {
+      const live = await prisma.partnerUploadSession.findUnique({ where: { id: init.sessionId } });
+      finalStatus = live?.status;
+      mediaId = live?.catalogMediaId ?? null;
+      if (live?.status === 'ready' && live.catalogMediaId) break;
+      await new Promise((r) => setTimeout(r, 50));
+    }
+    record(
+      'C05',
+      armed && finalStatus === 'ready' && !!mediaId,
+      { futureArmedOnBoot: true, autoRetryWithoutClient: true, ready: true },
+      { boot, armed, finalStatus, mediaId, dueAt: dueAt.toISOString() },
+    );
+  }
+
+  const required = [
+    'P22-01',
+    'P22-02',
+    'P22-03',
+    'P22-04',
+    'P22-05',
+    'P22-06',
+    'P22-07',
+    'C01',
+    'C02',
+    'C03',
+    'C05',
+  ];
   const byId = Object.fromEntries(cases.map((c) => [c.id, c]));
   const failed = required.filter((id) => !byId[id] || byId[id].ok !== true);
   const summary = {

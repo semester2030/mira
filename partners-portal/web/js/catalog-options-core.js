@@ -65,6 +65,7 @@
       ),
       priceHalalas: typeof variant.priceHalalas === 'number' ? variant.priceHalalas : null,
       available: variant.available !== false,
+      mediaIds: Array.isArray(variant.mediaIds) ? variant.mediaIds.slice() : [],
     }));
 
     return {

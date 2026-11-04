@@ -53,8 +53,53 @@ export class UploadFinalizeService implements OnModuleInit {
 
   onModuleInit() {
     setImmediate(() => {
-      void this.recoverStaleWork().catch((e) => this.log.warn(`recover-on-boot-failed: ${(e as Error).message}`));
+      void this.bootRecover().catch((e) => this.log.warn(`recover-on-boot-failed: ${(e as Error).message}`));
     });
+  }
+
+  /**
+   * Boot: reclaim due work, then re-arm timers for future finalizeNextAttemptAt
+   * so a worker restart does not wait for the 15m sweep / client GET.
+   */
+  async bootRecover(limit = 20): Promise<{ due: number; futureArmed: number }> {
+    const due = await this.recoverStaleWork(limit);
+    const futureArmed = await this.restoreFutureBackoffTimers(limit);
+    return { due, futureArmed };
+  }
+
+  /**
+   * C05: re-schedule sessions whose backoff is still in the future after worker restart.
+   * Does not consume an attempt; only arms timers / notes pendingBackoff.
+   */
+  async restoreFutureBackoffTimers(limit = 50): Promise<number> {
+    const now = new Date(uploadNowMs());
+    const rows = await this.prisma.partnerUploadSession.findMany({
+      where: {
+        catalogMediaId: null,
+        cleanedAt: null,
+        finalizeNextAttemptAt: { gt: now },
+        OR: [
+          { status: 'failed', failureClass: 'retryable' },
+          { status: 'uploaded' },
+          { status: 'verifying' },
+          { status: 'uploading', storageCompletedAt: { not: null } },
+        ],
+      },
+      orderBy: { finalizeNextAttemptAt: 'asc' },
+      take: limit,
+      select: { id: true, finalizeNextAttemptAt: true },
+    });
+    let armed = 0;
+    for (const row of rows) {
+      if (!row.finalizeNextAttemptAt) continue;
+      if (this.backoffTimers.has(row.id) || this.waitQueue.includes(row.id) || this.inFlight.has(row.id)) {
+        continue;
+      }
+      // Boot path: arm directly (no inFlight finally pending).
+      this.armBackoffTimer(row.id, row.finalizeNextAttemptAt);
+      armed += 1;
+    }
+    return armed;
   }
 
   /** Schedule through the concurrency-limited pump (all paths must use this). */
