@@ -211,10 +211,20 @@ model PartnerUploadSession {
   failureMessageAr   String?   @map("failure_message_ar")
   catalogMediaId     String?   @map("catalog_media_id")
   finalizeAttempts   Int       @default(0) @map("finalize_attempts")
+  /// permanent | retryable — null when no failure
+  failureClass       String?   @map("failure_class")
+  /// Worker lease for crash recovery (DB-backed; not process-local only).
+  finalizeLeaseOwner String?   @map("finalize_lease_owner")
+  finalizeLeaseUntil DateTime? @map("finalize_lease_until")
+  /// Set when storage multipart complete succeeded (even if DB status write later fails).
+  storageCompletedAt DateTime? @map("storage_completed_at")
+  /// Full-object SHA256 computed during streaming finalize (never trust client alone).
+  verifiedChecksum   String?   @map("verified_checksum")
   expiresAt          DateTime  @map("expires_at")
   completedAt        DateTime? @map("completed_at")
   readyAt            DateTime? @map("ready_at")
   abortedAt          DateTime? @map("aborted_at")
+  cleanedAt          DateTime? @map("cleaned_at")
   createdAt          DateTime  @default(now()) @map("created_at")
   updatedAt          DateTime  @updatedAt @map("updated_at")
 
@@ -222,6 +232,7 @@ model PartnerUploadSession {
   @@index([partnerId, status, updatedAt(sort: Desc)])
   @@index([ownerKind, ownerId])
   @@index([status, expiresAt])
+  @@index([status, finalizeLeaseUntil])
   @@map("partner_upload_sessions")
 }
 

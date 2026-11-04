@@ -1,17 +1,24 @@
-import { Inject, Injectable, Logger } from '@nestjs/common';
-import { createHash, randomUUID } from 'crypto';
-import { readFile } from 'fs/promises';
+import { Inject, Injectable, Logger, OnModuleInit } from '@nestjs/common';
+import { randomUUID } from 'crypto';
 import { PrismaService } from '../../prisma/prisma.service';
 import { CatalogMediaStorage } from '../../marketplace/catalog-media.contract';
-import { IMAGE_MIME, VIDEO_MIME, sniffMedia } from '../../marketplace/catalog-content.policy';
-import { isoBmffDurationSeconds, videoDurationRejection } from '../../marketplace/catalog-video-duration';
 import { MemoryMultipartUploadStore, MultipartUploadStore } from './multipart.store';
+import { verifyMediaFile } from './upload-media-verify';
+import {
+  UPLOAD_FINALIZE_CONCURRENCY,
+  UPLOAD_FINALIZE_LEASE_MS,
+  UPLOAD_FINALIZE_MAX_ATTEMPTS,
+  UPLOAD_IMAGE_MAX_BYTES,
+  uploadNowMs,
+} from './upload-sessions.policy';
 
 @Injectable()
-export class UploadFinalizeService {
+export class UploadFinalizeService implements OnModuleInit {
   private readonly log = new Logger(UploadFinalizeService.name);
-  private readonly queue = new Set<string>();
-  private readonly running = new Map<string, Promise<void>>();
+  private readonly workerId = `finalize-${randomUUID()}`;
+  private readonly inFlight = new Map<string, Promise<void>>();
+  private activeCount = 0;
+  private readonly waitQueue: string[] = [];
 
   constructor(
     @Inject(PrismaService) private readonly prisma: PrismaService,
@@ -19,37 +26,93 @@ export class UploadFinalizeService {
     @Inject(CatalogMediaStorage) private readonly storage: CatalogMediaStorage,
   ) {}
 
-  enqueue(sessionId: string) {
-    if (this.queue.has(sessionId) || this.running.has(sessionId)) return;
-    this.queue.add(sessionId);
+  onModuleInit() {
     setImmediate(() => {
-      void this.drain();
+      void this.recoverStaleWork();
     });
   }
 
-  private async drain() {
-    for (const sessionId of [...this.queue]) {
-      this.queue.delete(sessionId);
-      try {
-        await this.finalizeOne(sessionId);
-      } catch (error) {
-        this.log.error('finalize-unhandled', error as Error);
-      }
+  enqueue(sessionId: string) {
+    if (this.inFlight.has(sessionId) || this.waitQueue.includes(sessionId)) return;
+    this.waitQueue.push(sessionId);
+    setImmediate(() => void this.pump());
+  }
+
+  private async pump() {
+    while (this.activeCount < UPLOAD_FINALIZE_CONCURRENCY && this.waitQueue.length) {
+      const sessionId = this.waitQueue.shift()!;
+      if (this.inFlight.has(sessionId)) continue;
+      this.activeCount += 1;
+      void this.finalizeOne(sessionId).finally(() => {
+        this.activeCount -= 1;
+        setImmediate(() => void this.pump());
+      });
     }
   }
 
-  /** Exposed for tests to await finalize synchronously. Concurrent callers await the same work. */
+  /** Crash recovery: reclaim expired leases and retryable/uploaded sessions. */
+  async recoverStaleWork(limit = 20): Promise<number> {
+    const now = new Date(uploadNowMs());
+    const rows = await this.prisma.partnerUploadSession.findMany({
+      where: {
+        catalogMediaId: null,
+        OR: [
+          { status: 'uploaded' },
+          { status: 'verifying', OR: [{ finalizeLeaseUntil: null }, { finalizeLeaseUntil: { lt: now } }] },
+          { status: 'failed', failureClass: 'retryable' },
+          { status: 'uploading', storageCompletedAt: { not: null } },
+        ],
+      },
+      orderBy: { updatedAt: 'asc' },
+      take: limit,
+      select: { id: true },
+    });
+    for (const row of rows) this.enqueue(row.id);
+    return rows.length;
+  }
+
   async finalizeOne(sessionId: string): Promise<void> {
-    const existing = this.running.get(sessionId);
+    const existing = this.inFlight.get(sessionId);
     if (existing) {
       await existing;
       return;
     }
     const work = this.runFinalize(sessionId).finally(() => {
-      this.running.delete(sessionId);
+      this.inFlight.delete(sessionId);
     });
-    this.running.set(sessionId, work);
+    this.inFlight.set(sessionId, work);
     await work;
+  }
+
+  private async claimLease(sessionId: string): Promise<boolean> {
+    const now = uploadNowMs();
+    const until = new Date(now + UPLOAD_FINALIZE_LEASE_MS);
+    // Claim uploaded / retryable-failed / verifying with expired lease / uploading with storage done
+    const claimed = await this.prisma.partnerUploadSession.updateMany({
+      where: {
+        id: sessionId,
+        catalogMediaId: null,
+        OR: [
+          { status: 'uploaded' },
+          { status: 'failed', failureClass: 'retryable' },
+          { status: 'uploading', storageCompletedAt: { not: null } },
+          {
+            status: 'verifying',
+            OR: [{ finalizeLeaseUntil: null }, { finalizeLeaseUntil: { lt: new Date(now) } }],
+          },
+        ],
+      },
+      data: {
+        status: 'verifying',
+        finalizeLeaseOwner: this.workerId,
+        finalizeLeaseUntil: until,
+        finalizeAttempts: { increment: 1 },
+        failureCode: null,
+        failureMessageAr: null,
+        failureClass: null,
+      },
+    });
+    return claimed.count > 0;
   }
 
   private async runFinalize(sessionId: string): Promise<void> {
@@ -57,80 +120,83 @@ export class UploadFinalizeService {
     if (!row) return;
     if (row.status === 'ready' && row.catalogMediaId) return;
     if (row.status === 'aborted') return;
-    if (row.status !== 'uploaded' && row.status !== 'verifying') return;
+    if (row.status === 'failed' && row.failureClass === 'permanent') return;
 
-    const claimed = await this.prisma.partnerUploadSession.updateMany({
-      where: { id: sessionId, status: { in: ['uploaded', 'verifying'] }, catalogMediaId: null },
-      data: {
-        status: 'verifying',
-        finalizeAttempts: { increment: 1 },
-      },
-    });
-    if (!claimed.count) {
+    if (!(await this.claimLease(sessionId))) {
       const latest = await this.prisma.partnerUploadSession.findUnique({ where: { id: sessionId } });
-      if (latest?.status === 'ready') return;
-      if (latest?.status === 'aborted') return;
+      if (latest?.status === 'ready' || latest?.status === 'aborted') return;
+      return;
+    }
+
+    const leased = await this.prisma.partnerUploadSession.findUnique({ where: { id: sessionId } });
+    if (!leased || leased.status === 'aborted') return;
+    if (leased.finalizeAttempts > UPLOAD_FINALIZE_MAX_ATTEMPTS) {
+      await this.fail(sessionId, 'finalize_exhausted', 'تجاوزت محاولات التحقق الحد المسموح', 'permanent');
       return;
     }
 
     let cleanup: (() => Promise<void>) | null = null;
     try {
-      const head = await this.multipart.head(row.objectKey);
-      if (!head || head.contentLength !== row.declaredByteSize) {
-        await this.fail(sessionId, 'size_mismatch', 'حجم الملف المخزّن لا يطابق الحجم المعلن');
+      let head;
+      try {
+        head = await this.multipart.head(leased.objectKey);
+      } catch (error) {
+        this.log.error(`finalize-head-error ${sessionId}`, error as Error);
+        await this.fail(sessionId, 'storage_unavailable', 'تعذر الاتصال بالتخزين أثناء التحقق', 'retryable');
+        return;
+      }
+      if (!head) {
+        await this.fail(sessionId, 'object_missing', 'الكائن غير موجود في التخزين', 'retryable');
+        return;
+      }
+      if (head.contentLength !== leased.declaredByteSize) {
+        await this.fail(sessionId, 'size_mismatch', 'حجم الملف المخزّن لا يطابق الحجم المعلن', 'permanent');
         return;
       }
 
-      const materialized = await this.multipart.materializeToTemp(row.objectKey);
+      const abortedEarly = await this.prisma.partnerUploadSession.findUnique({ where: { id: sessionId } });
+      if (!abortedEarly || abortedEarly.status === 'aborted') return;
+
+      let materialized;
+      try {
+        materialized = await this.multipart.materializeToTemp(leased.objectKey);
+      } catch (error) {
+        this.log.error(`finalize-materialize-error ${sessionId}`, error as Error);
+        await this.fail(sessionId, 'storage_unavailable', 'تعذر تنزيل الملف للتحقق', 'retryable');
+        return;
+      }
       cleanup = materialized.cleanup;
-      const bytes = await readFile(materialized.filePath);
 
-      // Peak buffer is one object for verification; streaming materialize keeps S3 path off the Nest request stack.
-      if (bytes.length !== row.declaredByteSize) {
-        await this.fail(sessionId, 'size_mismatch', 'حجم الملف بعد القراءة لا يطابق الحجم المعلن');
+      const verified = await verifyMediaFile({
+        filePath: materialized.filePath,
+        mime: leased.declaredMimeType,
+        declaredByteSize: leased.declaredByteSize,
+        declaredChecksum: leased.declaredChecksum,
+        imageMaxBytes: UPLOAD_IMAGE_MAX_BYTES,
+      });
+      if (!verified.ok) {
+        await this.fail(sessionId, verified.code, verified.messageAr, verified.permanent ? 'permanent' : 'retryable');
         return;
       }
 
-      const mime = row.declaredMimeType;
-      if (!sniffMedia(mime, bytes)) {
-        await this.fail(sessionId, 'content_mismatch', 'محتوى الملف لا يطابق نوعه المعلن');
-        return;
-      }
-      if (row.declaredChecksum) {
-        const actual = createHash('sha256').update(bytes).digest('hex');
-        if (actual.toLowerCase() !== String(row.declaredChecksum).trim().toLowerCase()) {
-          await this.fail(sessionId, 'content_mismatch', 'بصمة الملف لا تطابق المعلن عند بدء الجلسة');
-          return;
-        }
-      }
-      const image = IMAGE_MIME.has(mime);
-      const video = VIDEO_MIME.has(mime);
-      let duration: number | null = null;
-      if (video) {
-        const rejection = videoDurationRejection(bytes);
-        if (rejection) {
-          await this.fail(sessionId, 'duration_invalid', rejection);
-          return;
-        }
-        duration = isoBmffDurationSeconds(bytes);
-      }
-
-      // Abort race: if aborted during verify before bind, stop without creating media
       const still = await this.prisma.partnerUploadSession.findUnique({ where: { id: sessionId } });
-      if (!still || still.status === 'aborted') {
-        return;
-      }
+      if (!still || still.status === 'aborted') return;
+      // Ensure we still hold lease
+      if (still.finalizeLeaseOwner !== this.workerId) return;
 
-      const catalogKey = this.multipart instanceof MemoryMultipartUploadStore ? randomUUID() : row.objectKey;
-
+      const catalogKey = this.multipart instanceof MemoryMultipartUploadStore ? randomUUID() : leased.objectKey;
       if (this.multipart instanceof MemoryMultipartUploadStore) {
-        await this.multipart.copyToCatalogStorage(this.storage, row.objectKey, catalogKey);
+        await this.multipart.copyToCatalogStorage(this.storage, leased.objectKey, catalogKey);
       }
 
-      const sourceMediaKey = `upload-session:${row.id}`;
+      const image = verified.kind === 'image';
+      const video = verified.kind === 'video';
+      const sourceMediaKey = `upload-session:${leased.id}`;
+
       const media = await this.prisma.$transaction(async (tx) => {
         const session = await tx.partnerUploadSession.findUnique({ where: { id: sessionId } });
         if (!session || session.status === 'aborted') return null;
+        if (session.finalizeLeaseOwner !== this.workerId) return null;
         if (session.catalogMediaId) {
           return tx.catalogMedia.findUnique({ where: { id: session.catalogMediaId } });
         }
@@ -139,9 +205,7 @@ export class UploadFinalizeService {
           session.ownerKind === 'product'
             ? await tx.product.findFirst({ where: { id: session.ownerId, partnerId: session.partnerId } })
             : await tx.service.findFirst({ where: { id: session.ownerId, partnerId: session.partnerId } });
-        if (!owner) {
-          throw new Error('owner-missing');
-        }
+        if (!owner) throw new Error('owner-missing');
 
         const count = await tx.catalogMedia.count({
           where: { ownerKind: session.ownerKind, ownerId: session.ownerId },
@@ -165,8 +229,8 @@ export class UploadFinalizeService {
             kind: image ? 'image' : 'video',
             url: '',
             active: false,
-            mimeType: video ? 'video/mp4' : mime,
-            byteSize: bytes.length,
+            mimeType: video ? 'video/mp4' : leased.declaredMimeType,
+            byteSize: verified.byteSize,
             storageKey: catalogKey,
             isPrimary: published ? false : firstImage || (firstMedia && video),
             draftIsPrimary: firstImage || (firstMedia && video) ? true : null,
@@ -174,33 +238,39 @@ export class UploadFinalizeService {
             placement: session.placement,
             sourceMediaKey,
           },
-          update: {
-            // Idempotent re-bind: keep existing storage/row; refresh verified size/mime only via session.
-          },
+          update: {},
         });
-        await tx.partnerUploadSession.update({
-          where: { id: sessionId },
+
+        const marked = await tx.partnerUploadSession.updateMany({
+          where: {
+            id: sessionId,
+            status: 'verifying',
+            catalogMediaId: null,
+            finalizeLeaseOwner: this.workerId,
+          },
           data: {
             status: 'ready',
             catalogMediaId: created.id,
-            verifiedMimeType: video ? 'video/mp4' : mime,
-            verifiedByteSize: bytes.length,
-            verifiedDurationSec: duration,
-            readyAt: new Date(),
+            verifiedMimeType: video ? 'video/mp4' : leased.declaredMimeType,
+            verifiedByteSize: verified.byteSize,
+            verifiedDurationSec: verified.durationSec,
+            verifiedChecksum: verified.sha256,
+            readyAt: new Date(uploadNowMs()),
             failureCode: null,
             failureMessageAr: null,
+            failureClass: null,
+            finalizeLeaseOwner: null,
+            finalizeLeaseUntil: null,
           },
         });
+        if (!marked.count) return null;
         return created;
       });
 
-      if (!media) {
-        // aborted during bind
-        return;
-      }
+      if (!media) return;
     } catch (error) {
       this.log.error(`finalize-failed ${sessionId}`, error as Error);
-      await this.fail(sessionId, 'finalize_error', 'تعذر التحقق من الملف وربطه');
+      await this.fail(sessionId, 'finalize_error', 'تعذر التحقق من الملف وربطه', 'retryable');
     } finally {
       if (cleanup) {
         try {
@@ -212,13 +282,25 @@ export class UploadFinalizeService {
     }
   }
 
-  private async fail(sessionId: string, code: string, messageAr: string) {
+  private async fail(
+    sessionId: string,
+    code: string,
+    messageAr: string,
+    failureClass: 'permanent' | 'retryable',
+  ) {
     await this.prisma.partnerUploadSession.updateMany({
-      where: { id: sessionId, status: { in: ['uploaded', 'verifying'] }, catalogMediaId: null },
+      where: {
+        id: sessionId,
+        status: { in: ['uploaded', 'verifying', 'uploading', 'failed'] },
+        catalogMediaId: null,
+      },
       data: {
         status: 'failed',
         failureCode: code,
         failureMessageAr: messageAr,
+        failureClass,
+        finalizeLeaseOwner: null,
+        finalizeLeaseUntil: null,
       },
     });
   }

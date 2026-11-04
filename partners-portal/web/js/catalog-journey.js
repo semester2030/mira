@@ -126,20 +126,23 @@
   let uploadSessionPolicyPromise = null;
 
   function loadUploadSessionPolicy() {
-    if (uploadSessionPolicyCache) return Promise.resolve(uploadSessionPolicyCache);
+    if (uploadSessionPolicyCache && uploadSessionPolicyCache._source === 'ok') {
+      return Promise.resolve(uploadSessionPolicyCache);
+    }
     if (uploadSessionPolicyPromise) return uploadSessionPolicyPromise;
     if (!window.PartnersApi || typeof PartnersApi.uploadSessionPolicy !== 'function') {
-      uploadSessionPolicyCache = { enabled: false };
-      return Promise.resolve(uploadSessionPolicyCache);
+      return Promise.resolve({ enabled: false, _source: 'unavailable' });
     }
     uploadSessionPolicyPromise = PartnersApi.uploadSessionPolicy()
       .then((policy) => {
-        uploadSessionPolicyCache = policy || { enabled: false };
+        uploadSessionPolicyCache = Object.assign({}, policy || { enabled: false }, { _source: 'ok' });
+        uploadSessionPolicyPromise = null;
         return uploadSessionPolicyCache;
       })
-      .catch(() => {
-        uploadSessionPolicyCache = { enabled: false };
-        return uploadSessionPolicyCache;
+      .catch((error) => {
+        uploadSessionPolicyPromise = null;
+        // Network/server error is NOT a decision to fall back to Base64.
+        return { enabled: null, _source: 'error', error: error && error.message };
       });
     return uploadSessionPolicyPromise;
   }
@@ -3166,6 +3169,14 @@
 
     async function uploadOne(entry, options) {
       const policy = await loadUploadSessionPolicy();
+      if (policy && policy._source === 'error') {
+        entry.status = 'فشل';
+        entry.error = 'تعذر قراءة سياسة الرفع: ' + (policy.error || 'خطأ شبكة');
+        entry.percent = null;
+        paintMedia(null);
+        status.textContent = entry.error;
+        return;
+      }
       const problem = mediaProblem(entry.file, policy);
       if (problem) {
         entry.status = 'فشل';
@@ -3191,21 +3202,26 @@
       if (window.MiraMotion) MiraMotion.announce('بدأ رفع ' + entry.file.name);
       try {
         const kind = type === 'brand' ? 'products' : 'services';
-        if (policy && policy.enabled && typeof PartnersApi.uploadViaSession === 'function') {
+        if (policy && policy.enabled === true && typeof PartnersApi.uploadViaSession === 'function') {
           if (!entry.clientMediaId) {
             entry.clientMediaId = (crypto.randomUUID && crypto.randomUUID()) || String(Date.now()) + Math.random();
           }
-          entry.status = 'جارٍ الرفع';
+          entry.status = 'جارٍ التحضير';
           syncMedia(entry);
           await PartnersApi.uploadViaSession(kind, item.id, entry.file, {
             placement: entry.placement || 'main',
             mimeType: uploadMime(entry.file),
             clientMediaId: entry.clientMediaId,
             idempotencyKey: entry.clientMediaId,
+            sessionId: entry.uploadSessionId || undefined,
             clientDraftId: (draftCtx && draftCtx.clientDraftId) || undefined,
             signal: controller.signal,
             onSession: (session) => {
               entry.uploadSessionId = session && session.sessionId;
+            },
+            onHashProgress: () => {
+              entry.status = 'جارٍ التحضير';
+              syncMedia(entry);
             },
             onProgress: (ratio) => {
               entry.status = 'جارٍ الرفع';

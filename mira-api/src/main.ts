@@ -7,7 +7,11 @@ import { HttpExceptionFilter } from './common/filters/http-exception.filter';
 import { assertProviderPortsConfig } from './ports/config/provider-ports.config';
 import { assertProductionIntegrity } from './config/production-integrity';
 import { catalogRequestLimit } from './marketplace/catalog-content.policy';
-import { UPLOAD_IMAGE_MAX_BYTES, uploadVideoMaxBytes } from './partners-portal/upload-sessions/upload-sessions.policy';
+import {
+  UPLOAD_IMAGE_MAX_BYTES,
+  uploadDirectPartsAllowed,
+  uploadVideoMaxBytes,
+} from './partners-portal/upload-sessions/upload-sessions.policy';
 
 async function bootstrap(): Promise<void> {
   assertProductionIntegrity(process.env);
@@ -16,8 +20,12 @@ async function bootstrap(): Promise<void> {
   const app = await NestFactory.create(AppModule, { bodyParser: false });
   app.use((req: Request, res: Response, next: NextFunction) => {
     const path = (req.originalUrl || req.url || '').split('?')[0];
-    // P2.1 memory/local adapter: binary part PUT (not used for R2 presigned uploads).
-    if (req.method === 'PUT' && /\/partners-portal\/upload-sessions\/[^/]+\/direct-parts\/\d+$/.test(path)) {
+    // Memory/dev adapter only — never accepts full-video bodies in production.
+    if (
+      uploadDirectPartsAllowed() &&
+      req.method === 'PUT' &&
+      /\/partners-portal\/upload-sessions\/[^/]+\/direct-parts\/\d+$/.test(path)
+    ) {
       const limit = Math.max(UPLOAD_IMAGE_MAX_BYTES, uploadVideoMaxBytes()) + 1024 * 1024;
       return raw({ type: '*/*', limit })(req, res, next);
     }

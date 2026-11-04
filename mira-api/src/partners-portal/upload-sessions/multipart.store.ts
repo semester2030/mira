@@ -11,6 +11,7 @@ import {
   CreateMultipartUploadCommand,
   GetObjectCommand,
   HeadObjectCommand,
+  ListPartsCommand,
   S3Client,
   UploadPartCommand,
 } from '@aws-sdk/client-s3';
@@ -54,7 +55,9 @@ export abstract class MultipartUploadStore {
     parts: CompletedPart[],
   ): Promise<void>;
   abstract abort(objectKey: string, storageUploadId: string): Promise<void>;
-  abstract head(objectKey: string): Promise<{ contentLength: number; contentType?: string } | null>;
+  abstract head(objectKey: string): Promise<{ contentLength: number; contentType?: string; etag?: string } | null>;
+  /** List uploaded parts from storage (paginated for S3). Empty if upload already completed/aborted. */
+  abstract listParts(objectKey: string, storageUploadId: string): Promise<CompletedPart[]>;
   /** Stream object bytes to a temp file for bounded-memory verification; caller must cleanup. */
   abstract materializeToTemp(objectKey: string): Promise<{ filePath: string; cleanup: () => Promise<void> }>;
 }
@@ -85,10 +88,15 @@ export function verifyDirectPartToken(sessionId: string, partNumber: number, exp
   }
 }
 
-/** In-process multipart for local/tests — no R2 required. */
+/** In-process multipart for local/tests — no R2 required. Never enabled in production. */
 export class MemoryMultipartUploadStore extends MultipartUploadStore {
-  readonly uploads = new Map<string, { objectKey: string; contentType: string; parts: Map<number, Buffer> }>();
-  readonly objects = new Map<string, { bytes: Buffer; contentType: string }>();
+  readonly uploads = new Map<
+    string,
+    { objectKey: string; contentType: string; parts: Map<number, { bytes: Buffer; etag: string }> }
+  >();
+  readonly objects = new Map<string, { bytes: Buffer; contentType: string; etag: string }>();
+  /** Simulate storage complete succeeding then DB failure by throwing after object write. */
+  failNextCompleteDbHook: (() => void) | null = null;
 
   async create(objectKey: string, contentType: string): Promise<MultipartCreateResult> {
     const storageUploadId = randomUUID();
@@ -126,24 +134,37 @@ export class MemoryMultipartUploadStore extends MultipartUploadStore {
   ): Promise<{ etag: string; size: number }> {
     const up = this.uploads.get(storageUploadId);
     if (!up || up.objectKey !== objectKey) throw new Error('upload-not-found');
-    up.parts.set(partNumber, Buffer.from(body));
     const etag = `"mem-${partNumber}-${body.length}-${createHmac('sha256', 'etag').update(body).digest('hex').slice(0, 16)}"`;
+    up.parts.set(partNumber, { bytes: Buffer.from(body), etag });
     return { etag, size: body.length };
+  }
+
+  async listParts(objectKey: string, storageUploadId: string): Promise<CompletedPart[]> {
+    const up = this.uploads.get(storageUploadId);
+    if (!up || up.objectKey !== objectKey) return [];
+    return [...up.parts.entries()]
+      .map(([partNumber, part]) => ({ partNumber, etag: part.etag, size: part.bytes.length }))
+      .sort((a, b) => a.partNumber - b.partNumber);
   }
 
   async complete(objectKey: string, storageUploadId: string, parts: CompletedPart[]): Promise<void> {
     const up = this.uploads.get(storageUploadId);
-    if (!up || up.objectKey !== objectKey) throw new Error('upload-not-found');
+    if (!up || up.objectKey !== objectKey) {
+      // Already completed — treat as success if object present (lost-response recovery).
+      if (this.objects.has(objectKey)) return;
+      throw new Error('upload-not-found');
+    }
     const ordered = [...parts].sort((a, b) => a.partNumber - b.partNumber);
     const chunks: Buffer[] = [];
     for (const p of ordered) {
-      const buf = up.parts.get(p.partNumber);
-      if (!buf) throw new Error('missing-part-' + p.partNumber);
-      if (buf.length !== p.size) throw new Error('part-size-mismatch-' + p.partNumber);
-      chunks.push(buf);
+      const part = up.parts.get(p.partNumber);
+      if (!part) throw new Error('missing-part-' + p.partNumber);
+      if (part.bytes.length !== p.size) throw new Error('part-size-mismatch-' + p.partNumber);
+      chunks.push(part.bytes);
     }
     const bytes = Buffer.concat(chunks);
-    this.objects.set(objectKey, { bytes, contentType: up.contentType });
+    const etag = `"mem-obj-${createHmac('sha256', 'obj').update(bytes).digest('hex').slice(0, 16)}"`;
+    this.objects.set(objectKey, { bytes, contentType: up.contentType, etag });
     this.uploads.delete(storageUploadId);
   }
 
@@ -155,7 +176,7 @@ export class MemoryMultipartUploadStore extends MultipartUploadStore {
   async head(objectKey: string) {
     const obj = this.objects.get(objectKey);
     if (!obj) return null;
-    return { contentLength: obj.bytes.length, contentType: obj.contentType };
+    return { contentLength: obj.bytes.length, contentType: obj.contentType, etag: obj.etag };
   }
 
   async materializeToTemp(objectKey: string) {
@@ -172,11 +193,16 @@ export class MemoryMultipartUploadStore extends MultipartUploadStore {
     };
   }
 
-  /** Mirror completed object into CatalogMediaStorage key space for partner reads. */
+  /** Mirror completed object into CatalogMediaStorage key space for partner reads — stream copy. */
   async copyToCatalogStorage(storage: CatalogMediaStorage, objectKey: string, catalogKey: string): Promise<void> {
     const obj = this.objects.get(objectKey);
     if (!obj) throw new Error('object-missing');
     await storage.put(catalogKey, obj.bytes);
+  }
+
+  /** Test/cleanup helper: delete orphan completed object when not bound. */
+  async deleteObject(objectKey: string): Promise<void> {
+    this.objects.delete(objectKey);
   }
 }
 
@@ -233,19 +259,54 @@ export class S3MultipartUploadStore extends MultipartUploadStore {
     };
   }
 
+  async listParts(objectKey: string, storageUploadId: string): Promise<CompletedPart[]> {
+    const parts: CompletedPart[] = [];
+    let partNumberMarker: string | undefined;
+    for (;;) {
+      const out = await this.client.send(
+        new ListPartsCommand({
+          Bucket: this.settings.bucket,
+          Key: objectKey,
+          UploadId: storageUploadId,
+          PartNumberMarker: partNumberMarker,
+          MaxParts: 1000,
+        }),
+      );
+      for (const p of out.Parts || []) {
+        if (p.PartNumber == null || !p.ETag) continue;
+        parts.push({
+          partNumber: p.PartNumber,
+          etag: p.ETag,
+          size: Number(p.Size ?? 0),
+        });
+      }
+      if (!out.IsTruncated) break;
+      partNumberMarker = out.NextPartNumberMarker;
+      if (!partNumberMarker) break;
+    }
+    return parts.sort((a, b) => a.partNumber - b.partNumber);
+  }
+
   async complete(objectKey: string, storageUploadId: string, parts: CompletedPart[]): Promise<void> {
-    await this.client.send(
-      new CompleteMultipartUploadCommand({
-        Bucket: this.settings.bucket,
-        Key: objectKey,
-        UploadId: storageUploadId,
-        MultipartUpload: {
-          Parts: [...parts]
-            .sort((a, b) => a.partNumber - b.partNumber)
-            .map((p) => ({ ETag: p.etag, PartNumber: p.partNumber })),
-        },
-      }),
-    );
+    try {
+      await this.client.send(
+        new CompleteMultipartUploadCommand({
+          Bucket: this.settings.bucket,
+          Key: objectKey,
+          UploadId: storageUploadId,
+          MultipartUpload: {
+            Parts: [...parts]
+              .sort((a, b) => a.partNumber - b.partNumber)
+              .map((p) => ({ ETag: p.etag, PartNumber: p.partNumber })),
+          },
+        }),
+      );
+    } catch (error) {
+      // Lost-response recovery: Complete already succeeded → UploadId gone; object present.
+      const head = await this.head(objectKey);
+      if (head && head.contentLength > 0) return;
+      throw error;
+    }
   }
 
   async abort(objectKey: string, storageUploadId: string): Promise<void> {
@@ -266,9 +327,12 @@ export class S3MultipartUploadStore extends MultipartUploadStore {
       return {
         contentLength: Number(out.ContentLength ?? 0),
         contentType: out.ContentType,
+        etag: out.ETag,
       };
-    } catch {
-      return null;
+    } catch (error) {
+      const name = String((error as { name?: string })?.name || '');
+      if (name === 'NotFound' || name === 'NoSuchKey') return null;
+      throw error;
     }
   }
 

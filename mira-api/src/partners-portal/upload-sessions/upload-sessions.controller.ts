@@ -2,6 +2,7 @@ import {
   BadRequestException,
   Body,
   Controller,
+  ForbiddenException,
   Get,
   Inject,
   Param,
@@ -14,6 +15,7 @@ import {
 import { PartnerTokenGuard } from '../guards/partner-token.guard';
 import { UploadSessionsService } from './upload-sessions.service';
 import { verifyDirectPartToken } from './multipart.store';
+import { uploadDirectPartsAllowed } from './upload-sessions.policy';
 
 type PartnerRequest = { partnerUser: { partnerId: string } };
 
@@ -64,9 +66,15 @@ export class UploadSessionsController {
   complete(
     @Req() req: PartnerRequest,
     @Param('id') id: string,
-    @Body() body: { parts: Array<{ partNumber: number; etag: string; size: number }> },
+    @Body() body: { parts?: Array<{ partNumber: number; etag: string; size: number }> },
   ) {
-    return this.uploads.complete(req.partnerUser.partnerId, id, body || { parts: [] });
+    return this.uploads.complete(req.partnerUser.partnerId, id, body || {});
+  }
+
+  @Post('upload-sessions/:id/retry-finalize')
+  @UseGuards(PartnerTokenGuard)
+  retry(@Req() req: PartnerRequest, @Param('id') id: string) {
+    return this.uploads.retryFinalize(req.partnerUser.partnerId, id);
   }
 
   @Post('upload-sessions/:id/abort')
@@ -76,8 +84,7 @@ export class UploadSessionsController {
   }
 
   /**
-   * Memory/local adapter only: browser PUTs part bytes here using HMAC query signature.
-   * Not used when MIRA_MEDIA_STORE=s3 (presigned R2 URLs).
+   * Memory/local adapter only — disabled in production and when MIRA_MEDIA_STORE=s3.
    */
   @Put('upload-sessions/:id/direct-parts/:partNumber')
   @UseGuards(PartnerTokenGuard)
@@ -88,6 +95,9 @@ export class UploadSessionsController {
     @Query('exp') exp: string,
     @Query('sig') sig: string,
   ) {
+    if (!uploadDirectPartsAllowed()) {
+      throw new ForbiddenException('الرفع المباشر عبر API غير متاح');
+    }
     const n = Number(partNumber);
     const expN = Number(exp);
     if (!verifyDirectPartToken(id, n, expN, String(sig || ''))) {
