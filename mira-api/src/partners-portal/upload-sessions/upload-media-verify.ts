@@ -1,14 +1,26 @@
 /**
- * Bounded-memory media verification from a temp file path (streaming; no full Buffer for video).
+ * Bounded-memory media verification from a temp file path.
+ * Images: sharp decode (rejects header-only / truncated).
+ * Videos: ffprobe for real streams + duration (rejects synthetic box-only MP4).
+ * Never loads full video into a single Buffer / Base64.
  */
 import { createHash } from 'crypto';
+import { spawn } from 'child_process';
 import { createReadStream } from 'fs';
-import { open, readFile, stat } from 'fs/promises';
+import { open, stat } from 'fs/promises';
+import sharp from 'sharp';
 import { IMAGE_MIME, VIDEO_MAX_DURATION_SECONDS, VIDEO_MIME } from '../../marketplace/catalog-content.policy';
 import { VIDEO_DURATION_REJECTED } from '../../marketplace/catalog-video-duration';
 
-const SNIFF_HEAD = 64 * 1024;
 const HASH_CHUNK = 1024 * 1024;
+const FFPROBE_TIMEOUT_MS = Math.max(
+  5_000,
+  Number(process.env.MIRA_UPLOAD_FFPROBE_TIMEOUT_MS || '30000') || 30_000,
+);
+/** Reject tiny “header-only” images before sharp (PNG signature alone is 8 bytes). */
+const MIN_IMAGE_BYTES = 32;
+/** Reject box-only MP4 stubs; real clips with a coded frame are larger. */
+const MIN_VIDEO_BYTES = 1024;
 
 export type VerifyOk = {
   ok: true;
@@ -16,6 +28,7 @@ export type VerifyOk = {
   byteSize: number;
   durationSec: number | null;
   kind: 'image' | 'video';
+  codec?: string | null;
 };
 
 export type VerifyFail = {
@@ -43,7 +56,7 @@ export async function streamSha256(filePath: string): Promise<{ sha256: string; 
   return { sha256: hash.digest('hex'), byteSize };
 }
 
-async function readHead(filePath: string, max = SNIFF_HEAD): Promise<Buffer> {
+async function readHead(filePath: string, max = 64): Promise<Buffer> {
   const fh = await open(filePath, 'r');
   try {
     const info = await fh.stat();
@@ -57,7 +70,9 @@ async function readHead(filePath: string, max = SNIFF_HEAD): Promise<Buffer> {
 }
 
 function sniffHead(mime: string, head: Buffer): boolean {
-  if (mime === 'image/png') return head.subarray(0, 8).equals(Buffer.from([0x89, 0x50, 0x4e, 0x47, 0x0d, 0x0a, 0x1a, 0x0a]));
+  if (mime === 'image/png') {
+    return head.length >= 8 && head.subarray(0, 8).equals(Buffer.from([0x89, 0x50, 0x4e, 0x47, 0x0d, 0x0a, 0x1a, 0x0a]));
+  }
   if (mime === 'image/jpeg') return head.length > 3 && head[0] === 0xff && head[1] === 0xd8 && head[2] === 0xff;
   if (mime === 'image/webp') {
     return head.length > 12 && head.subarray(0, 4).toString('ascii') === 'RIFF' && head.subarray(8, 12).toString('ascii') === 'WEBP';
@@ -68,92 +83,175 @@ function sniffHead(mime: string, head: Buffer): boolean {
   return false;
 }
 
-/** Walk ISO-BMFF boxes via random-access reads; require duration + a video track (hdlr vide). */
-export async function inspectMp4File(filePath: string): Promise<{
-  durationSec: number | null;
-  hasVideoTrack: boolean;
-  error?: string;
-}> {
-  const info = await stat(filePath);
-  const fileSize = Number(info.size);
-  const fh = await open(filePath, 'r');
-  const durations: number[] = [];
-  let hasVideoTrack = false;
+type FfprobeOut = {
+  format?: { duration?: string; format_name?: string };
+  streams?: Array<{
+    codec_type?: string;
+    codec_name?: string;
+    duration?: string;
+    width?: number;
+    height?: number;
+    nb_frames?: string;
+  }>;
+};
 
-  async function readExact(offset: number, length: number): Promise<Buffer | null> {
-    if (offset < 0 || length <= 0 || offset + length > fileSize) return null;
-    const buf = Buffer.alloc(length);
-    const { bytesRead } = await fh.read(buf, 0, length, offset);
-    return bytesRead === length ? buf : null;
-  }
-
-  async function walk(start: number, end: number, depth: number): Promise<void> {
-    if (depth > 32) return;
-    let offset = start;
-    while (offset + 8 <= end) {
-      const header = await readExact(offset, 16);
-      if (!header) return;
-      let size = header.readUInt32BE(0);
-      const type = header.toString('latin1', 4, 8);
-      let headerLen = 8;
-      if (size === 1) {
-        if (offset + 16 > end) return;
-        const high = header.readUInt32BE(8);
-        const low = header.readUInt32BE(12);
-        size = high * 0x100000000 + low;
-        headerLen = 16;
-      } else if (size === 0) {
-        size = end - offset;
+function runFfprobe(filePath: string): Promise<FfprobeOut> {
+  return new Promise((resolve, reject) => {
+    const args = [
+      '-v',
+      'error',
+      '-print_format',
+      'json',
+      '-show_format',
+      '-show_streams',
+      filePath,
+    ];
+    const child = spawn('ffprobe', args, { stdio: ['ignore', 'pipe', 'pipe'] });
+    const chunks: Buffer[] = [];
+    const errChunks: Buffer[] = [];
+    const timer = setTimeout(() => {
+      child.kill('SIGKILL');
+      reject(new Error('ffprobe-timeout'));
+    }, FFPROBE_TIMEOUT_MS);
+    child.stdout.on('data', (c) => chunks.push(c));
+    child.stderr.on('data', (c) => errChunks.push(c));
+    child.on('error', (err) => {
+      clearTimeout(timer);
+      reject(err);
+    });
+    child.on('close', (code) => {
+      clearTimeout(timer);
+      if (code !== 0) {
+        reject(new Error(`ffprobe-exit-${code}: ${Buffer.concat(errChunks).toString('utf8').slice(0, 200)}`));
+        return;
       }
-      if (!Number.isFinite(size) || size < headerLen || offset + size > end) return;
-      const payload = offset + headerLen;
-      const payloadEnd = offset + size;
-
-      if (type === 'moov' || type === 'trak' || type === 'mdia' || type === 'minf' || type === 'stbl') {
-        await walk(payload, payloadEnd, depth + 1);
-      } else if (type === 'mvhd' || type === 'mdhd') {
-        const body = await readExact(payload, Math.min(32, payloadEnd - payload));
-        if (body && body.length >= 20) {
-          const version = body[0];
-          let timescale = 0;
-          let duration = 0;
-          if (version === 0 && body.length >= 20) {
-            timescale = body.readUInt32BE(12);
-            duration = body.readUInt32BE(16);
-          } else if (version === 1 && body.length >= 32) {
-            timescale = body.readUInt32BE(20);
-            const high = body.readUInt32BE(24);
-            const low = body.readUInt32BE(28);
-            duration = high * 0x100000000 + low;
-          }
-          if (timescale > 0 && duration > 0) durations.push(duration / timescale);
-        }
-      } else if (type === 'hdlr') {
-        const body = await readExact(payload, Math.min(24, payloadEnd - payload));
-        if (body && body.length >= 12) {
-          const handler = body.toString('latin1', 8, 12);
-          if (handler === 'vide') hasVideoTrack = true;
-        }
+      try {
+        resolve(JSON.parse(Buffer.concat(chunks).toString('utf8') || '{}') as FfprobeOut);
+      } catch (error) {
+        reject(error);
       }
-      offset += size;
-    }
-  }
+    });
+  });
+}
 
+async function verifyImageDecodable(filePath: string, mime: string): Promise<VerifyFail | null> {
   try {
-    await walk(0, fileSize, 0);
-  } finally {
-    await fh.close();
+    const pipeline = sharp(filePath, {
+      failOn: 'error',
+      sequentialRead: true,
+      limitInputPixels: 64 * 1024 * 1024,
+    });
+    const meta = await pipeline.metadata();
+    if (!meta.width || !meta.height || meta.width < 1 || meta.height < 1) {
+      return {
+        ok: false,
+        code: 'content_mismatch',
+        messageAr: 'الصورة غير قابلة للقراءة أو بلا أبعاد صالحة',
+        permanent: true,
+      };
+    }
+    // Force a decode pass (not just header parse) without keeping a full RGBA buffer longer than needed.
+    await pipeline.rotate().raw().toBuffer({ resolveWithObject: false });
+    if (mime === 'image/png' && meta.format && meta.format !== 'png') {
+      return { ok: false, code: 'content_mismatch', messageAr: 'صيغة الصورة لا تطابق المعلن', permanent: true };
+    }
+    if (mime === 'image/jpeg' && meta.format && meta.format !== 'jpeg') {
+      return { ok: false, code: 'content_mismatch', messageAr: 'صيغة الصورة لا تطابق المعلن', permanent: true };
+    }
+    if (mime === 'image/webp' && meta.format && meta.format !== 'webp') {
+      return { ok: false, code: 'content_mismatch', messageAr: 'صيغة الصورة لا تطابق المعلن', permanent: true };
+    }
+    return null;
+  } catch {
+    return {
+      ok: false,
+      code: 'content_mismatch',
+      messageAr: 'محتوى الصورة تالف أو غير مكتمل',
+      permanent: true,
+    };
+  }
+}
+
+async function verifyVideoWithFfprobe(filePath: string): Promise<
+  | { ok: true; durationSec: number; codec: string }
+  | VerifyFail
+> {
+  let probe: FfprobeOut;
+  try {
+    probe = await runFfprobe(filePath);
+  } catch (error) {
+    const msg = String((error as Error)?.message || error);
+    if (msg.includes('ENOENT') || msg.includes('ffprobe')) {
+      // Prefer fail closed when probe binary missing in production-like verify path.
+      return {
+        ok: false,
+        code: 'content_mismatch',
+        messageAr: 'تعذر فحص الفيديو: أداة التحقق غير متاحة',
+        permanent: true,
+      };
+    }
+    return {
+      ok: false,
+      code: 'content_mismatch',
+      messageAr: 'ملف الفيديو تالف أو غير صالح',
+      permanent: true,
+    };
   }
 
-  if (durations.length === 0) {
-    return { durationSec: null, hasVideoTrack, error: 'تعذر قراءة مدة الفيديو' };
+  const videoStreams = (probe.streams || []).filter((s) => s.codec_type === 'video');
+  if (!videoStreams.length) {
+    return {
+      ok: false,
+      code: 'content_mismatch',
+      messageAr: 'الملف لا يحتوي مسار فيديو صالحًا',
+      permanent: true,
+    };
   }
-  return { durationSec: Math.max(...durations), hasVideoTrack };
+  const vs = videoStreams[0];
+  const codec = String(vs.codec_name || '').toLowerCase();
+  const allowed = new Set(['h264', 'hevc', 'h265', 'mpeg4', 'vp9', 'av1']);
+  if (!codec || !allowed.has(codec)) {
+    return {
+      ok: false,
+      code: 'content_mismatch',
+      messageAr: 'ترميز الفيديو غير مدعوم',
+      permanent: true,
+    };
+  }
+  if (!vs.width || !vs.height || vs.width < 2 || vs.height < 2) {
+    return {
+      ok: false,
+      code: 'content_mismatch',
+      messageAr: 'أبعاد الفيديو غير صالحة',
+      permanent: true,
+    };
+  }
+
+  let durationSec =
+    Number(probe.format?.duration) ||
+    Number(vs.duration) ||
+    NaN;
+  if (!Number.isFinite(durationSec) || durationSec <= 0) {
+    return {
+      ok: false,
+      code: 'duration_invalid',
+      messageAr: 'تعذر قراءة مدة الفيديو',
+      permanent: true,
+    };
+  }
+  if (durationSec > VIDEO_MAX_DURATION_SECONDS) {
+    return {
+      ok: false,
+      code: 'duration_invalid',
+      messageAr: VIDEO_DURATION_REJECTED,
+      permanent: true,
+    };
+  }
+  return { ok: true, durationSec, codec };
 }
 
 /**
- * Verify object at temp path. Images may load fully if ≤ image max (caller enforces size).
- * Videos are never loaded as a single Buffer.
+ * Verify object at temp path. Videos never loaded as one Buffer.
  */
 export async function verifyMediaFile(opts: {
   filePath: string;
@@ -178,6 +276,23 @@ export async function verifyMediaFile(opts: {
   const video = VIDEO_MIME.has(mime);
   if (!image && !video) {
     return { ok: false, code: 'content_mismatch', messageAr: 'نوع الملف غير مقبول', permanent: true };
+  }
+
+  if (image && fileSize < MIN_IMAGE_BYTES) {
+    return {
+      ok: false,
+      code: 'content_mismatch',
+      messageAr: 'ملف الصورة أصغر من أن يكون محتوى صالحًا',
+      permanent: true,
+    };
+  }
+  if (video && fileSize < MIN_VIDEO_BYTES) {
+    return {
+      ok: false,
+      code: 'content_mismatch',
+      messageAr: 'ملف الفيديو أصغر من أن يكون محتوى صالحًا',
+      permanent: true,
+    };
   }
 
   const head = await readHead(opts.filePath);
@@ -219,49 +334,20 @@ export async function verifyMediaFile(opts: {
         permanent: true,
       };
     }
-    // Optional deep sniff for tiny images — still stream-hash only; head already validated.
+    const imageFail = await verifyImageDecodable(opts.filePath, mime);
+    if (imageFail) return imageFail;
     return { ok: true, sha256, byteSize, durationSec: null, kind: 'image' };
   }
 
-  // Video: require real video track + duration ≤ 300s — not header-only ftyp.
-  const mp4 = await inspectMp4File(opts.filePath);
-  if (mp4.error || mp4.durationSec == null) {
-    return {
-      ok: false,
-      code: 'duration_invalid',
-      messageAr: mp4.error || 'تعذر قراءة مدة الفيديو',
-      permanent: true,
-    };
-  }
-  if (!mp4.hasVideoTrack) {
-    return {
-      ok: false,
-      code: 'content_mismatch',
-      messageAr: 'الملف لا يحتوي مسار فيديو صالحًا',
-      permanent: true,
-    };
-  }
-  if (mp4.durationSec > VIDEO_MAX_DURATION_SECONDS) {
-    return {
-      ok: false,
-      code: 'duration_invalid',
-      messageAr: VIDEO_DURATION_REJECTED,
-      permanent: true,
-    };
-  }
+  const probed = await verifyVideoWithFfprobe(opts.filePath);
+  if (!('durationSec' in probed) || !probed.ok) return probed;
 
   return {
     ok: true,
     sha256,
     byteSize,
-    durationSec: mp4.durationSec,
+    durationSec: probed.durationSec,
     kind: 'video',
+    codec: probed.codec,
   };
-}
-
-/** Test helper: load small image fully only when under budget (not used for video). */
-export async function readSmallImageIfNeeded(filePath: string, maxBytes: number): Promise<Buffer | null> {
-  const info = await stat(filePath);
-  if (Number(info.size) > maxBytes) return null;
-  return readFile(filePath);
 }

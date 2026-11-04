@@ -19,10 +19,10 @@ import {
   UPLOAD_IMAGE_MAX_BYTES,
   UPLOAD_PART_CONCURRENCY,
   UPLOAD_PART_MAX_RETRIES,
-  UPLOAD_PART_SIZE_BYTES,
   UPLOAD_SESSION_TTL_HOURS,
   computeTotalParts,
   expectedPartSize,
+  resolveUploadPartSizeBytes,
   uploadDirectPartsAllowed,
   uploadNowMs,
   uploadSessionEnabled,
@@ -69,7 +69,7 @@ export class UploadSessionsService {
   policy() {
     return {
       enabled: uploadSessionEnabled(),
-      partSizeBytes: UPLOAD_PART_SIZE_BYTES,
+      partSizeBytes: resolveUploadPartSizeBytes(),
       concurrency: UPLOAD_PART_CONCURRENCY,
       partMaxRetries: UPLOAD_PART_MAX_RETRIES,
       imageMaxBytes: UPLOAD_IMAGE_MAX_BYTES,
@@ -208,7 +208,7 @@ export class UploadSessionsService {
       return this.publicSession(existing);
     }
 
-    const partSizeBytes = UPLOAD_PART_SIZE_BYTES;
+    const partSizeBytes = resolveUploadPartSizeBytes();
     const totalParts = computeTotalParts(byteSize, partSizeBytes);
     if (totalParts < 1 || totalParts > 10000) throw new BadRequestException('عدد الأجزاء غير صالح');
 
@@ -589,8 +589,8 @@ export class UploadSessionsService {
     ) {
       throw new ConflictException('لا يمكن إعادة التحقق لهذه الحالة');
     }
+    // F05: schedule only — never bypass concurrency pump with a direct finalizeOne.
     this.finalize.enqueue(row.id);
-    await this.finalize.finalizeOne(row.id);
     return this.publicSession(await this.loadOwned(partnerId, sessionId));
   }
 

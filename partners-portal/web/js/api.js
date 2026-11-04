@@ -458,19 +458,66 @@
         null,
         { signal },
       );
-      const deadline = Date.now() + 120000;
-      while (state && (state.status === 'uploaded' || state.status === 'verifying') && Date.now() < deadline) {
+      // F06: follow verifying / retryable failures until ready or permanent failure.
+      // Client wait timeout ≠ server failure — surface verify_pending so UI can resume.
+      const deadline = Date.now() + 180000;
+      let retryFinalizeCalls = 0;
+      while (state && Date.now() < deadline) {
         checkAbort();
-        await new Promise((r) => setTimeout(r, 400));
-        state = await request(
-          'GET',
-          `/partners-portal/upload-sessions/${encodeURIComponent(session.sessionId)}`,
-          null,
-          null,
-          { signal },
-        );
+        if (state.status === 'ready') break;
+        if (state.status === 'aborted') {
+          throw ApiError((state && state.failureMessageAr) || 'أُلغي الرفع', { code: 'aborted', body: state });
+        }
+        if (state.status === 'failed' && state.failureClass === 'permanent') {
+          throw ApiError((state && state.failureMessageAr) || 'تعذر التحقق من الملف', {
+            code: (state && state.failureCode) || 'upload_failed',
+            body: state,
+          });
+        }
+        if (state.status === 'failed' && state.failureClass === 'retryable' && retryFinalizeCalls < 5) {
+          retryFinalizeCalls += 1;
+          if (typeof notify.onProcessing === 'function') notify.onProcessing();
+          state = await request(
+            'POST',
+            `/partners-portal/upload-sessions/${encodeURIComponent(session.sessionId)}/retry-finalize`,
+            {},
+            null,
+            { signal },
+          );
+          continue;
+        }
+        if (
+          state.status === 'uploaded' ||
+          state.status === 'verifying' ||
+          (state.status === 'failed' && state.failureClass === 'retryable') ||
+          (state.status === 'uploading' && state.storageCompleted)
+        ) {
+          if (typeof notify.onProcessing === 'function') notify.onProcessing();
+          await new Promise((r) => setTimeout(r, 500));
+          state = await request(
+            'GET',
+            `/partners-portal/upload-sessions/${encodeURIComponent(session.sessionId)}`,
+            null,
+            null,
+            { signal },
+          );
+          continue;
+        }
+        break;
       }
       if (!state || state.status !== 'ready') {
+        if (
+          state &&
+          (state.status === 'verifying' ||
+            state.status === 'uploaded' ||
+            (state.status === 'failed' && state.failureClass === 'retryable') ||
+            state.retryable)
+        ) {
+          throw ApiError('ما زال التحقق جاريًا؛ أعد المحاولة لاحقًا دون إعادة الرفع', {
+            code: 'verify_pending',
+            body: state,
+          });
+        }
         const msg = (state && state.failureMessageAr) || 'تعذر التحقق من الملف';
         throw ApiError(msg, { code: (state && state.failureCode) || 'upload_failed', body: state });
       }

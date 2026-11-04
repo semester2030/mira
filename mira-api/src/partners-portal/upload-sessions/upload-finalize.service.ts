@@ -15,10 +15,16 @@ import {
 @Injectable()
 export class UploadFinalizeService implements OnModuleInit {
   private readonly log = new Logger(UploadFinalizeService.name);
-  private readonly workerId = `finalize-${randomUUID()}`;
+  readonly workerId = `finalize-${randomUUID()}`;
   private readonly inFlight = new Map<string, Promise<void>>();
   private activeCount = 0;
   private readonly waitQueue: string[] = [];
+  /** Test hook: count how many runFinalize bodies actually start verify work. */
+  activeVerifyStarts = 0;
+  peakConcurrentVerifies = 0;
+  private currentVerifies = 0;
+  /** Test hook: awaited inside bind transaction after FOR UPDATE, before CatalogMedia create. */
+  beforeCatalogBind: (() => Promise<void>) | null = null;
 
   constructor(
     @Inject(PrismaService) private readonly prisma: PrismaService,
@@ -28,14 +34,54 @@ export class UploadFinalizeService implements OnModuleInit {
 
   onModuleInit() {
     setImmediate(() => {
-      void this.recoverStaleWork();
+      void this.recoverStaleWork().catch((e) => this.log.warn(`recover-on-boot-failed: ${(e as Error).message}`));
     });
   }
 
+  /** Schedule through the concurrency-limited pump (all paths must use this). */
   enqueue(sessionId: string) {
     if (this.inFlight.has(sessionId) || this.waitQueue.includes(sessionId)) return;
     this.waitQueue.push(sessionId);
     setImmediate(() => void this.pump());
+  }
+
+  /**
+   * Enqueue and await completion — still respects UPLOAD_FINALIZE_CONCURRENCY.
+   * Never bypasses the pump (F05).
+   */
+  async enqueueAndWait(sessionId: string): Promise<void> {
+    const existing = this.inFlight.get(sessionId);
+    if (existing) {
+      await existing;
+      return;
+    }
+    let resolveWait!: () => void;
+    const gate = new Promise<void>((r) => {
+      resolveWait = r;
+    });
+    const prevFinally = () => resolveWait();
+    this.enqueue(sessionId);
+    // Wait until this session appears in-flight then completes, or is already done.
+    const deadline = uploadNowMs() + 120_000;
+    while (uploadNowMs() < deadline) {
+      const inflight = this.inFlight.get(sessionId);
+      if (inflight) {
+        await inflight;
+        return;
+      }
+      const row = await this.prisma.partnerUploadSession.findUnique({
+        where: { id: sessionId },
+        select: { status: true, catalogMediaId: true, failureClass: true },
+      });
+      if (!row) return;
+      if (row.status === 'ready' && row.catalogMediaId) return;
+      if (row.status === 'aborted') return;
+      if (row.status === 'failed' && row.failureClass === 'permanent') return;
+      // Still queued — yield
+      await new Promise((r) => setTimeout(r, 20));
+      void gate;
+      void prevFinally;
+    }
   }
 
   private async pump() {
@@ -43,10 +89,13 @@ export class UploadFinalizeService implements OnModuleInit {
       const sessionId = this.waitQueue.shift()!;
       if (this.inFlight.has(sessionId)) continue;
       this.activeCount += 1;
-      void this.finalizeOne(sessionId).finally(() => {
+      const work = this.runFinalize(sessionId).finally(() => {
+        this.inFlight.delete(sessionId);
         this.activeCount -= 1;
         setImmediate(() => void this.pump());
       });
+      this.inFlight.set(sessionId, work);
+      void work;
     }
   }
 
@@ -56,6 +105,7 @@ export class UploadFinalizeService implements OnModuleInit {
     const rows = await this.prisma.partnerUploadSession.findMany({
       where: {
         catalogMediaId: null,
+        cleanedAt: null,
         OR: [
           { status: 'uploaded' },
           { status: 'verifying', OR: [{ finalizeLeaseUntil: null }, { finalizeLeaseUntil: { lt: now } }] },
@@ -71,27 +121,22 @@ export class UploadFinalizeService implements OnModuleInit {
     return rows.length;
   }
 
+  /**
+   * @deprecated Prefer enqueue / enqueueAndWait so concurrency is enforced.
+   * Kept as alias that routes through the pump (F05).
+   */
   async finalizeOne(sessionId: string): Promise<void> {
-    const existing = this.inFlight.get(sessionId);
-    if (existing) {
-      await existing;
-      return;
-    }
-    const work = this.runFinalize(sessionId).finally(() => {
-      this.inFlight.delete(sessionId);
-    });
-    this.inFlight.set(sessionId, work);
-    await work;
+    await this.enqueueAndWait(sessionId);
   }
 
   private async claimLease(sessionId: string): Promise<boolean> {
     const now = uploadNowMs();
     const until = new Date(now + UPLOAD_FINALIZE_LEASE_MS);
-    // Claim uploaded / retryable-failed / verifying with expired lease / uploading with storage done
     const claimed = await this.prisma.partnerUploadSession.updateMany({
       where: {
         id: sessionId,
         catalogMediaId: null,
+        cleanedAt: null,
         OR: [
           { status: 'uploaded' },
           { status: 'failed', failureClass: 'retryable' },
@@ -115,28 +160,57 @@ export class UploadFinalizeService implements OnModuleInit {
     return claimed.count > 0;
   }
 
+  /** Renew lease while still verifying under this worker. */
+  private async renewLease(sessionId: string): Promise<boolean> {
+    const until = new Date(uploadNowMs() + UPLOAD_FINALIZE_LEASE_MS);
+    const renewed = await this.prisma.partnerUploadSession.updateMany({
+      where: {
+        id: sessionId,
+        status: 'verifying',
+        catalogMediaId: null,
+        finalizeLeaseOwner: this.workerId,
+      },
+      data: { finalizeLeaseUntil: until },
+    });
+    return renewed.count > 0;
+  }
+
+  private async stillOwns(sessionId: string): Promise<boolean> {
+    const row = await this.prisma.partnerUploadSession.findUnique({ where: { id: sessionId } });
+    if (!row) return false;
+    if (row.status === 'aborted' || row.status === 'ready') return false;
+    if (row.finalizeLeaseOwner !== this.workerId) return false;
+    if (row.cleanedAt) return false;
+    return true;
+  }
+
   private async runFinalize(sessionId: string): Promise<void> {
     const row = await this.prisma.partnerUploadSession.findUnique({ where: { id: sessionId } });
     if (!row) return;
     if (row.status === 'ready' && row.catalogMediaId) return;
     if (row.status === 'aborted') return;
     if (row.status === 'failed' && row.failureClass === 'permanent') return;
+    if (row.cleanedAt) return;
 
     if (!(await this.claimLease(sessionId))) {
-      const latest = await this.prisma.partnerUploadSession.findUnique({ where: { id: sessionId } });
-      if (latest?.status === 'ready' || latest?.status === 'aborted') return;
       return;
     }
 
     const leased = await this.prisma.partnerUploadSession.findUnique({ where: { id: sessionId } });
-    if (!leased || leased.status === 'aborted') return;
+    if (!leased || leased.status === 'aborted' || leased.cleanedAt) return;
     if (leased.finalizeAttempts > UPLOAD_FINALIZE_MAX_ATTEMPTS) {
       await this.fail(sessionId, 'finalize_exhausted', 'تجاوزت محاولات التحقق الحد المسموح', 'permanent');
       return;
     }
 
+    this.currentVerifies += 1;
+    this.activeVerifyStarts += 1;
+    this.peakConcurrentVerifies = Math.max(this.peakConcurrentVerifies, this.currentVerifies);
+
     let cleanup: (() => Promise<void>) | null = null;
     try {
+      if (!(await this.renewLease(sessionId))) return;
+
       let head;
       try {
         head = await this.multipart.head(leased.objectKey);
@@ -154,8 +228,7 @@ export class UploadFinalizeService implements OnModuleInit {
         return;
       }
 
-      const abortedEarly = await this.prisma.partnerUploadSession.findUnique({ where: { id: sessionId } });
-      if (!abortedEarly || abortedEarly.status === 'aborted') return;
+      if (!(await this.stillOwns(sessionId))) return;
 
       let materialized;
       try {
@@ -166,6 +239,8 @@ export class UploadFinalizeService implements OnModuleInit {
         return;
       }
       cleanup = materialized.cleanup;
+
+      if (!(await this.renewLease(sessionId))) return;
 
       const verified = await verifyMediaFile({
         filePath: materialized.filePath,
@@ -179,10 +254,7 @@ export class UploadFinalizeService implements OnModuleInit {
         return;
       }
 
-      const still = await this.prisma.partnerUploadSession.findUnique({ where: { id: sessionId } });
-      if (!still || still.status === 'aborted') return;
-      // Ensure we still hold lease
-      if (still.finalizeLeaseOwner !== this.workerId) return;
+      if (!(await this.stillOwns(sessionId))) return;
 
       const catalogKey = this.multipart instanceof MemoryMultipartUploadStore ? randomUUID() : leased.objectKey;
       if (this.multipart instanceof MemoryMultipartUploadStore) {
@@ -193,53 +265,109 @@ export class UploadFinalizeService implements OnModuleInit {
       const video = verified.kind === 'video';
       const sourceMediaKey = `upload-session:${leased.id}`;
 
-      const media = await this.prisma.$transaction(async (tx) => {
-        const session = await tx.partnerUploadSession.findUnique({ where: { id: sessionId } });
-        if (!session || session.status === 'aborted') return null;
-        if (session.finalizeLeaseOwner !== this.workerId) return null;
-        if (session.catalogMediaId) {
-          return tx.catalogMedia.findUnique({ where: { id: session.catalogMediaId } });
+      // F04: bind under row lock; throw to rollback if lease/abort lost after create.
+      await this.prisma.$transaction(async (tx) => {
+        const locked = await tx.$queryRaw<
+          Array<{
+            id: string;
+            status: string;
+            catalog_media_id: string | null;
+            finalize_lease_owner: string | null;
+            partner_id: string;
+            owner_kind: string;
+            owner_id: string;
+            placement: string;
+          }>
+        >`
+          SELECT id, status, catalog_media_id, finalize_lease_owner, partner_id, owner_kind, owner_id, placement
+          FROM partner_upload_sessions
+          WHERE id = ${sessionId}
+          FOR UPDATE
+        `;
+        const session = locked[0];
+        if (!session) throw new Error('session-missing');
+        if (session.status === 'aborted' || session.status === 'ready') {
+          // Lost race — do not create media
+          return;
+        }
+        if (session.finalize_lease_owner !== this.workerId) {
+          return;
+        }
+        if (session.catalog_media_id) {
+          return;
+        }
+
+        if (this.beforeCatalogBind) {
+          await this.beforeCatalogBind();
+        }
+
+        // Re-check after barrier — another worker may have aborted while we yielded.
+        const recheck = await tx.$queryRaw<Array<{ status: string; finalize_lease_owner: string | null; catalog_media_id: string | null }>>`
+          SELECT status, finalize_lease_owner, catalog_media_id
+          FROM partner_upload_sessions
+          WHERE id = ${sessionId}
+          FOR UPDATE
+        `;
+        const live = recheck[0];
+        if (!live || live.status === 'aborted' || live.status === 'ready' || live.catalog_media_id) {
+          return;
+        }
+        if (live.finalize_lease_owner !== this.workerId) {
+          return;
         }
 
         const owner =
-          session.ownerKind === 'product'
-            ? await tx.product.findFirst({ where: { id: session.ownerId, partnerId: session.partnerId } })
-            : await tx.service.findFirst({ where: { id: session.ownerId, partnerId: session.partnerId } });
+          session.owner_kind === 'product'
+            ? await tx.product.findFirst({ where: { id: session.owner_id, partnerId: session.partner_id } })
+            : await tx.service.findFirst({ where: { id: session.owner_id, partnerId: session.partner_id } });
         if (!owner) throw new Error('owner-missing');
 
         const count = await tx.catalogMedia.count({
-          where: { ownerKind: session.ownerKind, ownerId: session.ownerId },
+          where: { ownerKind: session.owner_kind, ownerId: session.owner_id },
         });
         const published = owner.contentStatus === 'published';
         const firstMedia = count === 0;
         const firstImage = firstMedia && image;
-        const created = await tx.catalogMedia.upsert({
+
+        let created = await tx.catalogMedia.findFirst({
           where: {
-            ownerKind_ownerId_sourceMediaKey: {
-              ownerKind: session.ownerKind,
-              ownerId: session.ownerId,
-              sourceMediaKey,
-            },
-          },
-          create: {
-            ownerKind: session.ownerKind,
-            ownerId: session.ownerId,
-            sortOrder: count,
-            draftSortOrder: published ? count : null,
-            kind: image ? 'image' : 'video',
-            url: '',
-            active: false,
-            mimeType: video ? 'video/mp4' : leased.declaredMimeType,
-            byteSize: verified.byteSize,
-            storageKey: catalogKey,
-            isPrimary: published ? false : firstImage || (firstMedia && video),
-            draftIsPrimary: firstImage || (firstMedia && video) ? true : null,
-            publication: 'draft',
-            placement: session.placement,
+            ownerKind: session.owner_kind,
+            ownerId: session.owner_id,
             sourceMediaKey,
           },
-          update: {},
         });
+        if (!created) {
+          try {
+            created = await tx.catalogMedia.create({
+              data: {
+                ownerKind: session.owner_kind,
+                ownerId: session.owner_id,
+                sortOrder: count,
+                draftSortOrder: published ? count : null,
+                kind: image ? 'image' : 'video',
+                url: '',
+                active: false,
+                mimeType: video ? 'video/mp4' : leased.declaredMimeType,
+                byteSize: verified.byteSize,
+                storageKey: catalogKey,
+                isPrimary: published ? false : firstImage || (firstMedia && video),
+                draftIsPrimary: firstImage || (firstMedia && video) ? true : null,
+                publication: 'draft',
+                placement: session.placement,
+                sourceMediaKey,
+              },
+            });
+          } catch (error) {
+            created = await tx.catalogMedia.findFirst({
+              where: {
+                ownerKind: session.owner_kind,
+                ownerId: session.owner_id,
+                sourceMediaKey,
+              },
+            });
+            if (!created) throw error;
+          }
+        }
 
         const marked = await tx.partnerUploadSession.updateMany({
           where: {
@@ -263,15 +391,26 @@ export class UploadFinalizeService implements OnModuleInit {
             finalizeLeaseUntil: null,
           },
         });
-        if (!marked.count) return null;
-        return created;
+        if (!marked.count) {
+          // Abort/cleanup won after lock check window — roll back any new media row.
+          throw new Error('bind-lost-lease');
+        }
       });
-
-      if (!media) return;
     } catch (error) {
+      const msg = String((error as Error)?.message || error);
+      if (msg === 'bind-lost-lease') {
+        // Transaction rolled back; session may be aborted — do not mark failed over abort.
+        const latest = await this.prisma.partnerUploadSession.findUnique({ where: { id: sessionId } });
+        if (latest?.status === 'aborted' || latest?.status === 'ready') return;
+        await this.fail(sessionId, 'finalize_error', 'تعذر التحقق من الملف وربطه', 'retryable');
+        return;
+      }
       this.log.error(`finalize-failed ${sessionId}`, error as Error);
-      await this.fail(sessionId, 'finalize_error', 'تعذر التحقق من الملف وربطه', 'retryable');
+      if (await this.stillOwns(sessionId)) {
+        await this.fail(sessionId, 'finalize_error', 'تعذر التحقق من الملف وربطه', 'retryable');
+      }
     } finally {
+      this.currentVerifies = Math.max(0, this.currentVerifies - 1);
       if (cleanup) {
         try {
           await cleanup();
@@ -293,6 +432,7 @@ export class UploadFinalizeService implements OnModuleInit {
         id: sessionId,
         status: { in: ['uploaded', 'verifying', 'uploading', 'failed'] },
         catalogMediaId: null,
+        finalizeLeaseOwner: this.workerId,
       },
       data: {
         status: 'failed',

@@ -1,7 +1,17 @@
 import { IMAGE_MIME, VIDEO_MIME, VIDEO_MAX_DURATION_SECONDS } from '../../marketplace/catalog-content.policy';
 
-/** Fixed part size for P2.1 (except last part). */
-export const UPLOAD_PART_SIZE_BYTES = 16 * 1024 * 1024;
+/** Fixed part size for P2.1 (except last part). Overridable in test via env (≥256KiB). */
+export function resolveUploadPartSizeBytes(): number {
+  const def = 16 * 1024 * 1024;
+  const raw = (process.env.MIRA_UPLOAD_PART_SIZE_BYTES || '').trim();
+  if (!/^[1-9]\d*$/.test(raw)) return def;
+  const n = Number(raw);
+  const min = (process.env.NODE_ENV || '').toLowerCase() === 'test' ? 256 * 1024 : 5 * 1024 * 1024;
+  if (n >= min && n <= 64 * 1024 * 1024) return n;
+  return def;
+}
+/** Snapshot at load; prefer resolveUploadPartSizeBytes() when env may change in tests. */
+export const UPLOAD_PART_SIZE_BYTES = resolveUploadPartSizeBytes();
 /** Browser concurrent part uploads. */
 export const UPLOAD_PART_CONCURRENCY = 2;
 /** Per-part client retry budget. */

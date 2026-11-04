@@ -9,6 +9,7 @@ import {
   AbortMultipartUploadCommand,
   CompleteMultipartUploadCommand,
   CreateMultipartUploadCommand,
+  DeleteObjectCommand,
   GetObjectCommand,
   HeadObjectCommand,
   ListPartsCommand,
@@ -60,6 +61,8 @@ export abstract class MultipartUploadStore {
   abstract listParts(objectKey: string, storageUploadId: string): Promise<CompletedPart[]>;
   /** Stream object bytes to a temp file for bounded-memory verification; caller must cleanup. */
   abstract materializeToTemp(objectKey: string): Promise<{ filePath: string; cleanup: () => Promise<void> }>;
+  /** Delete a completed object by exact key. No-op if missing. Never prefix-delete. */
+  abstract deleteObject(objectKey: string): Promise<void>;
 }
 
 function partSignSecret(): string {
@@ -339,21 +342,43 @@ export class S3MultipartUploadStore extends MultipartUploadStore {
   async materializeToTemp(objectKey: string) {
     const dir = await mkdtemp(path.join(os.tmpdir(), 'mira-upload-'));
     const filePath = path.join(dir, 'object.bin');
-    const out = await this.client.send(
-      new GetObjectCommand({ Bucket: this.settings.bucket, Key: objectKey }),
-    );
-    if (!out.Body) {
+    const cleanup = async () => {
       await rm(dir, { recursive: true, force: true });
-      throw new Error('empty-body');
-    }
-    const body = out.Body as Readable;
-    await pipeline(body, createWriteStream(filePath));
-    return {
-      filePath,
-      cleanup: async () => {
-        await rm(dir, { recursive: true, force: true });
-      },
     };
+    try {
+      const out = await this.client.send(
+        new GetObjectCommand({ Bucket: this.settings.bucket, Key: objectKey }),
+      );
+      if (!out.Body) {
+        await cleanup();
+        throw new Error('empty-body');
+      }
+      const body = out.Body as Readable;
+      await pipeline(body, createWriteStream(filePath));
+      return { filePath, cleanup };
+    } catch (error) {
+      try {
+        await cleanup();
+      } catch {
+        /* ignore */
+      }
+      throw error;
+    }
+  }
+
+  async deleteObject(objectKey: string): Promise<void> {
+    try {
+      await this.client.send(
+        new DeleteObjectCommand({
+          Bucket: this.settings.bucket,
+          Key: objectKey,
+        }),
+      );
+    } catch (error) {
+      const name = String((error as { name?: string })?.name || '');
+      if (name === 'NotFound' || name === 'NoSuchKey') return;
+      throw error;
+    }
   }
 }
 

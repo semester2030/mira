@@ -3203,37 +3203,84 @@
       try {
         const kind = type === 'brand' ? 'products' : 'services';
         if (policy && policy.enabled === true && typeof PartnersApi.uploadViaSession === 'function') {
+          // F06/U04: restore upload session after reload / re-pick (name+size hint; checksum verified in API).
+          if (!entry.clientMediaId || !entry.uploadSessionId) {
+            try {
+              const prefix = 'mira_upload_resume:' + item.id + ':';
+              for (let i = 0; i < sessionStorage.length; i++) {
+                const k = sessionStorage.key(i);
+                if (!k || k.indexOf(prefix) !== 0) continue;
+                const saved = JSON.parse(sessionStorage.getItem(k) || 'null');
+                if (
+                  saved &&
+                  saved.sessionId &&
+                  saved.byteSize === entry.file.size &&
+                  saved.name === entry.file.name
+                ) {
+                  entry.clientMediaId = k.slice(prefix.length);
+                  entry.uploadSessionId = saved.sessionId;
+                  entry.uploadChecksum = saved.checksum || null;
+                  break;
+                }
+              }
+            } catch (_) {}
+          }
           if (!entry.clientMediaId) {
             entry.clientMediaId = (crypto.randomUUID && crypto.randomUUID()) || String(Date.now()) + Math.random();
           }
+          const resumeKey = 'mira_upload_resume:' + item.id + ':' + entry.clientMediaId;
           entry.status = 'جارٍ التحضير';
           syncMedia(entry);
-          await PartnersApi.uploadViaSession(kind, item.id, entry.file, {
-            placement: entry.placement || 'main',
-            mimeType: uploadMime(entry.file),
-            clientMediaId: entry.clientMediaId,
-            idempotencyKey: entry.clientMediaId,
-            sessionId: entry.uploadSessionId || undefined,
-            clientDraftId: (draftCtx && draftCtx.clientDraftId) || undefined,
-            signal: controller.signal,
-            onSession: (session) => {
-              entry.uploadSessionId = session && session.sessionId;
-            },
-            onHashProgress: () => {
-              entry.status = 'جارٍ التحضير';
-              syncMedia(entry);
-            },
-            onProgress: (ratio) => {
-              entry.status = 'جارٍ الرفع';
-              entry.percent = ratio;
-              syncMedia(entry);
-            },
-            onProcessing: () => {
+          try {
+            await PartnersApi.uploadViaSession(kind, item.id, entry.file, {
+              placement: entry.placement || 'main',
+              mimeType: uploadMime(entry.file),
+              clientMediaId: entry.clientMediaId,
+              idempotencyKey: entry.clientMediaId,
+              sessionId: entry.uploadSessionId || undefined,
+              clientDraftId: (draftCtx && draftCtx.clientDraftId) || undefined,
+              signal: controller.signal,
+              onSession: (session) => {
+                entry.uploadSessionId = session && session.sessionId;
+                try {
+                  sessionStorage.setItem(
+                    resumeKey,
+                    JSON.stringify({
+                      sessionId: entry.uploadSessionId,
+                      byteSize: entry.file.size,
+                      checksum: session && session.declaredChecksum,
+                      name: entry.file.name,
+                      updatedAt: Date.now(),
+                    }),
+                  );
+                } catch (_) {}
+              },
+              onHashProgress: () => {
+                entry.status = 'جارٍ التحضير';
+                syncMedia(entry);
+              },
+              onProgress: (ratio) => {
+                entry.status = 'جارٍ الرفع';
+                entry.percent = ratio;
+                syncMedia(entry);
+              },
+              onProcessing: () => {
+                entry.status = 'جارٍ التحقق';
+                entry.percent = null;
+                syncMedia(entry);
+              },
+            });
+            try { sessionStorage.removeItem(resumeKey); } catch (_) {}
+          } catch (uploadErr) {
+            if (uploadErr && uploadErr.code === 'verify_pending') {
               entry.status = 'جارٍ التحقق';
-              entry.percent = null;
+              entry.error = '';
               syncMedia(entry);
-            },
-          });
+              status.textContent = 'التحقق ما زال جاريًا على الخادم؛ لن يُعاد رفع الأجزاء.';
+              throw uploadErr;
+            }
+            throw uploadErr;
+          }
         } else {
           const dataBase64 = await fileToBase64(entry.file, (ratio) => {
             entry.percent = ratio;
@@ -3289,6 +3336,15 @@
           if (entry.uploadSessionId && typeof PartnersApi.abortUploadSession === 'function') {
             try { await PartnersApi.abortUploadSession(entry.uploadSessionId); } catch (_) {}
           }
+        } else if (error && error.code === 'verify_pending') {
+          entry.status = 'جارٍ التحقق';
+          entry.error = '';
+          status.textContent = 'انتهى انتظار الواجهة والتحقق مستمر على الخادم — أعد المحاولة دون إعادة الرفع.';
+        } else if (error && error.code === 'file_mismatch') {
+          entry.status = 'فشل';
+          entry.error = error.message || 'الملف لا يطابق جلسة الرفع';
+          entry.uploadSessionId = null;
+          status.textContent = entry.error;
         } else {
           entry.status = 'فشل';
           entry.error = error.message || 'فشل الرفع';
