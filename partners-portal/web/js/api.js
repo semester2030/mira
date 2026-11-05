@@ -214,6 +214,14 @@
         null,
         opts,
       ),
+    retryFinalizeUploadSession: (sessionId, opts) =>
+      request(
+        'POST',
+        `/partners-portal/upload-sessions/${encodeURIComponent(sessionId)}/retry-finalize`,
+        {},
+        null,
+        opts,
+      ),
     abortUploadSession: (sessionId, opts) =>
       request(
         'POST',

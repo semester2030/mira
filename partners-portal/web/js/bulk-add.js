@@ -19,7 +19,15 @@
   const commitLocks = Object.create(null);
   /** batchId::cardId -> true while that card's auto-materialize is in flight */
   const cardMatLocks = Object.create(null);
+  /** batchId::cardId -> Promise<ownerId> shared by concurrent uploads for the same card */
+  const cardOwnerPromises = Object.create(null);
+  /** batchId::cardId -> Promise for single-flight save before upload */
+  const cardSavePromises = Object.create(null);
   const VARIANT_PAGE_SIZE = 50;
+
+  function sleep(ms) {
+    return new Promise((r) => setTimeout(r, ms));
+  }
 
   function el(tag, attrs, children) {
     const node = document.createElement(tag);
@@ -1526,8 +1534,7 @@
           sess.status === 'verifying' ||
           sess.status === 'finalizing' ||
           sess.status === 'completing' ||
-          (sess.status === 'uploading' && sess.storageCompleted) ||
-          (sess.status === 'failed' && sess.failureClass === 'retryable')
+          (sess.status === 'uploading' && sess.storageCompleted)
         ) {
           job.status = 'verifying';
           job.needsLocalFile = false;
@@ -1536,15 +1543,22 @@
           return job;
         }
         if (sess.status === 'aborted') {
-          job.status = 'failed';
-          job.error = sess.failureMessageAr || 'أُلغي الرفع';
+          job.status = 'aborted';
+          job.error = sess.failureMessageAr || sess.failureCode || 'أُلغي الرفع';
           job.needsLocalFile = false;
           persistMediaMeta();
           return job;
         }
         if (sess.status === 'failed' && sess.failureClass === 'permanent') {
-          job.status = 'failed';
+          job.status = 'failed_permanent';
           job.error = sess.failureMessageAr || sess.failureCode || 'فشل دائم';
+          job.needsLocalFile = false;
+          persistMediaMeta();
+          return job;
+        }
+        if (sess.status === 'failed' && sess.failureClass === 'retryable') {
+          job.status = 'failed_retryable';
+          job.error = sess.failureMessageAr || sess.failureCode || 'فشل قابل لإعادة الإنهاء';
           job.needsLocalFile = false;
           persistMediaMeta();
           return job;
@@ -1581,26 +1595,52 @@
       return job;
     }
 
+    async function retryFinalizeSession(sessionId) {
+      if (typeof PartnersApi.retryFinalizeUploadSession === 'function') {
+        return PartnersApi.retryFinalizeUploadSession(sessionId);
+      }
+      if (typeof PartnersApi.request === 'function') {
+        return PartnersApi.request(
+          'POST',
+          '/partners-portal/upload-sessions/' + encodeURIComponent(sessionId) + '/retry-finalize',
+          {},
+        );
+      }
+      return null;
+    }
+
     async function pollVerifyUntilReady(job, opts) {
       const maxMs = (opts && opts.maxMs) || 15000;
       const started = Date.now();
+      let retryCalls = 0;
       while (Date.now() - started < maxMs) {
         await reconcileJobSession(job);
         if (job.status === 'ready') return job;
-        if (job.status === 'failed') return job;
-        if (job.status !== 'verifying') return job;
-        await new Promise((r) => setTimeout(r, 500));
-        if (typeof PartnersApi.uploadViaSession === 'function' && job.sessionId && !job.file) {
-          // Prefer GET-only reconcile; retry-finalize is inside uploadViaSession when file present.
-          try {
-            if (typeof PartnersApi.getUploadSession === 'function') {
-              const sess = await PartnersApi.getUploadSession(job.sessionId);
-              if (sess && sess.status === 'failed' && sess.failureClass === 'retryable') {
-                // leave as verifying — user can click resume again
+        if (job.status === 'aborted' || job.status === 'failed_permanent' || job.status === 'failed') return job;
+        if (job.status === 'failed_retryable' || job.status === 'verifying') {
+          if (job.status === 'failed_retryable' && job.sessionId && retryCalls < 5) {
+            retryCalls += 1;
+            job.status = 'verifying';
+            persistMediaMeta();
+            try {
+              const state = await retryFinalizeSession(job.sessionId);
+              if (state && state.status === 'ready') {
+                job.status = 'ready';
+                job.mediaId = state.catalogMediaId || state.mediaId || job.mediaId;
+                job.needsLocalFile = false;
+                job.error = null;
+                persistMediaMeta();
+                return job;
               }
+            } catch (e) {
+              job.error = (e && (e.messageAr || e.message)) || String(e);
+              persistMediaMeta();
             }
-          } catch (_) {}
+          }
+          await sleep(500);
+          continue;
         }
+        return job;
       }
       return job;
     }
@@ -1623,89 +1663,174 @@
       });
     }
 
-    async function ensureOwnerForUpload(ctx, st) {
-      let ownerId = ctx.ownerId || st.targetOwnerId;
+    /** Wait until batch commit lock can be taken, or owner already exists for card. */
+    async function acquireBatchCommitLockWhenFree(batchId, cardId, maxMs) {
+      const deadline = Date.now() + (maxMs || 90000);
+      while (Date.now() < deadline) {
+        const live = ensureBatchCards(batchId)[cardId];
+        if (live && live.targetOwnerId) return { ownerId: live.targetOwnerId, acquired: false };
+        if (acquireBatchCommitLock(batchId)) return { ownerId: null, acquired: true };
+        await sleep(40);
+      }
+      throw new Error('انتهت مهلة انتظار قفل التحويل للدفعة');
+    }
+
+    function applyOwnerToCard(ctx, ownerId, committedValues, committedRev) {
+      const live = ensureBatchCards(ctx.batchId)[ctx.cardId];
+      if (!live) return;
+      live.targetOwnerId = ownerId;
+      live.status = 'materialized';
+      if (committedRev != null) live.revision = committedRev;
+      if (committedValues) {
+        live.savedValues = Object.assign({}, committedValues);
+        if (live.dirty && live.editGen !== live.saveGen) {
+          live.error = 'اكتمل التحويل بالقيم المعتمدة؛ بقي تعديل أحدث غير محفوظ — صحّحيه على العنصر.';
+        } else {
+          live.localValues = Object.assign({}, committedValues);
+          live.dirty = false;
+          live.dirtyFields = Object.create(null);
+          if (committedValues.priceHalalas != null) {
+            live.priceSarText = halalasToSar(committedValues.priceHalalas);
+          }
+          live.error = null;
+        }
+      }
+    }
+
+    /**
+     * Ensure card has targetOwnerId for upload. Concurrent jobs for the same card
+     * join one materialize promise; other cards WAIT for the batch lock (not fail).
+     */
+    async function ensureOwnerForUpload(ctx, st, job) {
+      let ownerId = (job && job.ownerId) || ctx.ownerId || st.targetOwnerId;
       if (ownerId) return ownerId;
       const lockKey = cardKey(ctx.batchId, ctx.cardId);
-      if (cardMatLocks[lockKey] || commitLocks[ctx.batchId]) {
-        throw new Error('تحويل جارٍ لهذه البطاقة/الدفعة — انتظري');
+
+      if (cardOwnerPromises[lockKey]) {
+        if (job) {
+          job.status = 'waiting';
+          job.error = null;
+          persistMediaMeta();
+        }
+        setStatusFor(ctx.batchId, 'انتظار إنشاء عنصر ' + ctx.cardId + '…');
+        return cardOwnerPromises[lockKey];
       }
+
       if (cardHasValidationErrors(st)) {
         throw new Error('قيم غير صالحة — أوقِف التحويل التلقائي قبل الرفع');
       }
       if (st.dirty) {
         throw new Error('لا تحويل تلقائي قبل الرفع مع تعديلات غير معتمدة');
       }
-      // Freeze independent snapshot of approved values before any await
+
       const committedValues = deepCloneJson(st.savedValues || {});
       const committedRev = st.revision;
-      if (!acquireBatchCommitLock(ctx.batchId)) {
-        throw new Error('قفل التحويل مشغول');
-      }
-      cardMatLocks[lockKey] = true;
-      if (isOpen(ctx.batchId)) renderCards();
-      try {
-        const mat = await PartnersApi.materializeBulkBatch(
-          ctx.batchId,
-          { cardIds: [ctx.cardId], submitReview: false },
-          'bulk-media-' + ctx.batchId + '-' + ctx.cardId,
-        );
-        const row = (mat.results || []).find((r) => r.cardId === ctx.cardId);
-        if (!row || !row.ok) {
-          // Idempotent: re-fetch batch before assuming failure means no owner
-          try {
-            const fresh = await PartnersApi.getBulkBatch(ctx.batchId);
-            const card = (fresh.cards || []).find((c) => c.cardId === ctx.cardId);
-            if (card && card.targetOwnerId) {
-              ownerId = card.targetOwnerId;
-              const live = ensureBatchCards(ctx.batchId)[ctx.cardId];
-              if (live) {
-                live.targetOwnerId = ownerId;
-                live.status = 'materialized';
-                live.savedValues = Object.assign({}, card.values || committedValues);
-                // Only replace local display if user did not edit under lock (should be locked)
-                if (!live.dirty || live.editGen === live.saveGen) {
-                  live.localValues = Object.assign({}, live.savedValues);
-                  live.dirty = false;
-                  live.dirtyFields = Object.create(null);
-                  if (live.savedValues.priceHalalas != null) {
-                    live.priceSarText = halalasToSar(live.savedValues.priceHalalas);
-                  }
-                }
-              }
-              return ownerId;
-            }
-          } catch (_) {}
-          throw new Error(
-            (row && row.error && (row.error.messageAr || row.error.code)) || 'تعذر إنشاء العنصر قبل الرفع',
-          );
-        }
-        ownerId = row.targetOwnerId;
-        const live = ensureBatchCards(ctx.batchId)[ctx.cardId];
-        if (live) {
-          live.targetOwnerId = ownerId;
-          live.status = 'materialized';
-          live.revision = committedRev;
-          live.savedValues = Object.assign({}, committedValues);
-          // Do NOT wipe a newer local edit if lock was somehow bypassed
-          if (live.dirty && live.editGen !== live.saveGen) {
-            live.error = 'اكتمل التحويل بالقيم المعتمدة؛ بقي تعديل أحدث غير محفوظ — صحّحيه على العنصر.';
-          } else {
-            live.localValues = Object.assign({}, committedValues);
-            live.dirty = false;
-            live.dirtyFields = Object.create(null);
-            if (committedValues.priceHalalas != null) {
-              live.priceSarText = halalasToSar(committedValues.priceHalalas);
-            }
-            live.error = null;
+
+      cardOwnerPromises[lockKey] = (async () => {
+        try {
+          const live0 = ensureBatchCards(ctx.batchId)[ctx.cardId];
+          if (live0 && live0.targetOwnerId) return live0.targetOwnerId;
+
+          if (job) {
+            job.status = 'waiting';
+            job.error = null;
+            persistMediaMeta();
           }
+          const got = await acquireBatchCommitLockWhenFree(ctx.batchId, ctx.cardId, 90000);
+          if (got.ownerId) return got.ownerId;
+
+          cardMatLocks[lockKey] = true;
+          if (job) {
+            job.status = 'creating';
+            persistMediaMeta();
+          }
+          setStatusFor(ctx.batchId, 'إنشاء عنصر ' + ctx.cardId + '…');
+          if (isOpen(ctx.batchId)) renderCards();
+          try {
+            const mat = await PartnersApi.materializeBulkBatch(
+              ctx.batchId,
+              { cardIds: [ctx.cardId], submitReview: false },
+              'bulk-media-' + ctx.batchId + '-' + ctx.cardId,
+            );
+            const row = (mat.results || []).find((r) => r.cardId === ctx.cardId);
+            if (row && row.ok && row.targetOwnerId) {
+              applyOwnerToCard(ctx, row.targetOwnerId, committedValues, committedRev);
+              return row.targetOwnerId;
+            }
+            // Lost response / partial: re-fetch before recreate
+            try {
+              const fresh = await PartnersApi.getBulkBatch(ctx.batchId);
+              const card = (fresh.cards || []).find((c) => c.cardId === ctx.cardId);
+              if (card && card.targetOwnerId) {
+                applyOwnerToCard(
+                  ctx,
+                  card.targetOwnerId,
+                  Object.assign({}, card.values || committedValues),
+                  card.revision != null ? card.revision : committedRev,
+                );
+                return card.targetOwnerId;
+              }
+            } catch (_) {}
+            throw new Error(
+              (row && row.error && (row.error.messageAr || row.error.code)) || 'تعذر إنشاء العنصر قبل الرفع',
+            );
+          } finally {
+            delete cardMatLocks[lockKey];
+            releaseBatchCommitLock(ctx.batchId);
+            if (isOpen(ctx.batchId)) renderCards();
+          }
+        } finally {
+          // Keep resolved promise briefly so late joiners get the same result via targetOwnerId
+          const done = cardOwnerPromises[lockKey];
+          setTimeout(() => {
+            if (cardOwnerPromises[lockKey] === done) delete cardOwnerPromises[lockKey];
+          }, 0);
         }
-        return ownerId;
-      } finally {
-        delete cardMatLocks[lockKey];
-        releaseBatchCommitLock(ctx.batchId);
-        if (isOpen(ctx.batchId)) renderCards();
+      })();
+
+      return cardOwnerPromises[lockKey];
+    }
+
+    /** Single-flight save for a card so multi-file upload does not race same revision. */
+    async function ensureSavedBeforeUpload(ctx, st, job) {
+      if (!(st.dirty && st.status !== 'materialized')) return;
+      const key = cardKey(ctx.batchId, ctx.cardId);
+      if (cardSavePromises[key]) {
+        if (job) {
+          job.status = 'waiting';
+          persistMediaMeta();
+        }
+        await cardSavePromises[key];
+        const after = ensureBatchCards(ctx.batchId)[ctx.cardId];
+        if (after.dirty || cardHasValidationErrors(after)) {
+          throw new Error('تعذر اعتماد الحفظ قبل الرفع — يوجد تعديل أحدث أو قيمة غير صالحة');
+        }
+        return;
       }
+      if (cardHasValidationErrors(st)) {
+        throw new Error('قيم غير صالحة — أوقِف الحفظ قبل الرفع');
+      }
+      const snap = buildSavePayload(st);
+      snap.values = deepCloneJson(snap.values);
+      snap.clearFields = (snap.clearFields || []).slice();
+      if (job) {
+        job.status = 'saving';
+        persistMediaMeta();
+      }
+      cardSavePromises[key] = (async () => {
+        await saveCard(
+          { batchId: ctx.batchId, kind: ctx.ownerKindPath === 'products' ? 'product' : 'service', profileId: '' },
+          ctx.cardId,
+          { silent: true, skipRender: true, snapshot: snap },
+        );
+        const after = ensureBatchCards(ctx.batchId)[ctx.cardId];
+        if (after.editGen !== snap.editGen || after.dirty || cardHasValidationErrors(after)) {
+          throw new Error('تعذر اعتماد الحفظ قبل الرفع — يوجد تعديل أحدث أو قيمة غير صالحة');
+        }
+      })().finally(() => {
+        delete cardSavePromises[key];
+      });
+      await cardSavePromises[key];
     }
 
     async function runOneUpload(job) {
@@ -1733,23 +1858,38 @@
       if (job.sessionId) {
         await reconcileJobSession(job);
         if (job.status === 'ready') return;
-        if (job.status === 'verifying') {
+        if (job.status === 'aborted' || job.status === 'failed_permanent') {
+          persistMediaMeta();
+          if (isOpen(ctx.batchId)) renderCards();
+          return;
+        }
+        if (job.status === 'verifying' || job.status === 'failed_retryable') {
           await pollVerifyUntilReady(job, { maxMs: 12000 });
           if (job.status === 'ready') return;
-          if (job.status === 'verifying') {
+          if (job.status === 'verifying' || job.status === 'failed_retryable') {
             setStatusFor(
               ctx.batchId,
-              'جلسة …' + String(job.sessionId).slice(-6) + ' في التحقق — اضغطي الاستكمال لاحقًا دون إعادة اختيار ملف.',
+              'جلسة …' +
+                String(job.sessionId).slice(-6) +
+                ' في التحقق/إعادة إنهاء — اضغطي الاستكمال لاحقًا دون إعادة اختيار ملف.',
             );
             persistMediaMeta();
             if (isOpen(ctx.batchId)) renderCards();
             return;
           }
+          if (job.status === 'aborted' || job.status === 'failed_permanent' || job.status === 'failed') return;
         }
       }
 
       if (!job.file) {
-        if (job.status === 'verifying') return;
+        if (
+          job.status === 'verifying' ||
+          job.status === 'failed_retryable' ||
+          job.status === 'aborted' ||
+          job.status === 'failed_permanent'
+        ) {
+          return;
+        }
         job.status = 'needs_file';
         job.needsLocalFile = true;
         persistMediaMeta();
@@ -1781,26 +1921,14 @@
       job.status = 'uploading';
       persistMediaMeta();
       try {
-        if (st.dirty && st.status !== 'materialized') {
-          if (cardHasValidationErrors(st)) {
-            throw new Error('قيم غير صالحة — أوقِف الحفظ قبل الرفع');
-          }
-          const snap = buildSavePayload(st);
-          snap.values = deepCloneJson(snap.values);
-          snap.clearFields = (snap.clearFields || []).slice();
-          await saveCard(
-            { batchId: ctx.batchId, kind: ctx.ownerKindPath === 'products' ? 'product' : 'service', profileId: '' },
-            ctx.cardId,
-            { silent: true, skipRender: true, snapshot: snap },
-          );
-          const after = ensureBatchCards(ctx.batchId)[ctx.cardId];
-          if (after.editGen !== snap.editGen || after.dirty || cardHasValidationErrors(after)) {
-            throw new Error('تعذر اعتماد الحفظ قبل الرفع — يوجد تعديل أحدث أو قيمة غير صالحة');
-          }
-        }
-        const ownerId = await ensureOwnerForUpload(ctx, ensureBatchCards(ctx.batchId)[ctx.cardId]);
+        await ensureSavedBeforeUpload(ctx, ensureBatchCards(ctx.batchId)[ctx.cardId], job);
+        job.status = 'uploading';
+        persistMediaMeta();
+        const ownerId = await ensureOwnerForUpload(ctx, ensureBatchCards(ctx.batchId)[ctx.cardId], job);
         job.ownerId = ownerId;
         ctx.ownerId = ownerId;
+        job.status = 'uploading';
+        persistMediaMeta();
 
         const session = await PartnersApi.uploadViaSession(ctx.ownerKindPath, ownerId, job.file, {
           clientMediaId: job.clientMediaId,
@@ -1865,7 +1993,17 @@
         }
       }
       const pending = jobsForBatch(ctx.batchId).filter((j) =>
-        ['assigned', 'failed', 'needs_file', 'needs_reconcile', 'verifying'].includes(j.status),
+        [
+          'assigned',
+          'failed',
+          'failed_retryable',
+          'needs_file',
+          'needs_reconcile',
+          'verifying',
+          'waiting',
+          'saving',
+          'creating',
+        ].includes(j.status),
       );
       if (!pending.length) {
         const ready = jobsForBatch(ctx.batchId).filter((j) => j.status === 'ready').length;

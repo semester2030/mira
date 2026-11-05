@@ -18,9 +18,10 @@ import { INestApplication, Module, UnauthorizedException, ValidationPipe } from 
 import { ConfigModule } from '@nestjs/config';
 import { NestFactory } from '@nestjs/core';
 import { PrismaClient } from '@prisma/client';
-import { FirebaseIdTokenVerifier } from '../src/common/auth/firebase-id-token-verifier';
+import { FirebaseIdTokenVerifier, VerifiedFirebaseIdentity } from '../src/common/auth/firebase-id-token-verifier';
 import { FirebaseAuthGuard } from '../src/common/guards/firebase-auth.guard';
 import { AdminApiKeyGuard } from '../src/common/guards/admin-api-key.guard';
+import { HttpExceptionFilter } from '../src/common/filters/http-exception.filter';
 import { PrismaModule } from '../src/prisma/prisma.module';
 import { PrismaService } from '../src/prisma/prisma.service';
 import { CatalogContentService } from '../src/marketplace/catalog-content.service';
@@ -30,6 +31,7 @@ import { CatalogReviewAdminController } from '../src/marketplace/catalog-review.
 import { MarketplaceController } from '../src/marketplace/marketplace.controller';
 import { MarketplaceService } from '../src/marketplace/marketplace.service';
 import { CommerceService } from '../src/marketplace/commerce.service';
+import { CommerceController } from '../src/marketplace/commerce.controller';
 import { PartnerTokenGuard } from '../src/partners-portal/guards/partner-token.guard';
 import { PartnersPortalController } from '../src/partners-portal/partners-portal.controller';
 import { PartnersPortalService } from '../src/partners-portal/partners-portal.service';
@@ -44,16 +46,25 @@ const root = join(__dirname, '../..');
 const outDir = join(root, 'audit-out/p0-p7-final/logs/c07-portal-to-app');
 mkdirSync(outDir, { recursive: true });
 
+const customerTokens: Record<string, string> = Object.create(null);
+
 class ScriptedIdTokenVerifier extends FirebaseIdTokenVerifier {
-  async verify(token) {
-    if (token !== 'unused') throw new UnauthorizedException('Invalid token');
-    return { uid: 'unused', email: 'unused@test.local' };
+  async verify(token: string): Promise<VerifiedFirebaseIdentity> {
+    const uid = customerTokens[token];
+    if (!uid) throw new UnauthorizedException('Invalid token');
+    return { uid, email: `${uid}@test.local`, name: uid };
   }
 }
 
 @Module({
   imports: [ConfigModule.forRoot({ isGlobal: true, ignoreEnvFile: true }), PrismaModule],
-  controllers: [PartnersPortalController, CatalogMediaController, CatalogReviewAdminController, MarketplaceController],
+  controllers: [
+    PartnersPortalController,
+    CatalogMediaController,
+    CatalogReviewAdminController,
+    MarketplaceController,
+    CommerceController,
+  ],
   providers: [
     PartnersPortalService,
     PartnerTokenGuard,
@@ -64,6 +75,7 @@ class ScriptedIdTokenVerifier extends FirebaseIdTokenVerifier {
     BulkBatchesService,
     ServiceProfileService,
     VariantInventoryService,
+    CommerceService,
     FirebaseAuthGuard,
     { provide: CatalogMediaStorage, useClass: MemoryCatalogMediaStorage },
     { provide: MarketplaceService, useFactory: (prisma) => new MarketplaceService(prisma), inject: [PrismaService] },
@@ -110,9 +122,13 @@ async function main() {
     data: { partnerId: salon.id, email: `c07-s-${suffix}@test.local`, accessToken: salonToken },
   });
 
+  const custTok = `c07-cust-${suffix}`;
+  customerTokens[custTok] = `c07-uid-${suffix}`;
+
   const app = await NestFactory.create(C07Module, { logger: ['error'] });
   app.setGlobalPrefix('api/v1');
   app.useGlobalPipes(new ValidationPipe({ transform: true }));
+  app.useGlobalFilters(new HttpExceptionFilter());
   await app.listen(0);
   const addr = app.getHttpServer().address();
   const port = typeof addr === 'object' && addr ? addr.port : 0;
@@ -123,6 +139,8 @@ async function main() {
   let productId = null;
   let serviceId = null;
   let variantId = null;
+  const TINY_PNG_B64 =
+    'iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAYAAAAfFcSJAAAADUlEQVR42mP8z8BQDwAEhQGAhKmMIQAAAABJRU5ErkJggg==';
 
   try {
     // —— Product via portal bulk
@@ -177,8 +195,6 @@ async function main() {
     record('C07_PORTAL_MATERIALIZE_PRODUCT', matBody.succeeded === 1 && !!productId, matBody);
 
     // Publish via portal media + submit-review + admin decision (HTTP paths)
-    const TINY_PNG_B64 =
-      'iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAYAAAAfFcSJAAAADUlEQVR42mP8z8BQDwAEhQGAhKmMIQAAAABJRU5ErkJggg==';
     const adminH = {
       'Content-Type': 'application/json',
       'x-admin-key': process.env.ADMIN_API_KEY || 'c07-admin',
@@ -238,43 +254,49 @@ async function main() {
       found,
     });
 
-    // Cart via CommerceService (app path)
-    const commerce = new CommerceService(prisma as unknown as PrismaService);
-    (globalThis as { __c07Commerce?: CommerceService }).__c07Commerce = commerce;
-    let cartOk = false;
-    let cartDetail: unknown = null;
+    // Cart via HTTP CommerceController (no silent fallback that hides variant failure)
+    const custH = { Authorization: `Bearer ${custTok}`, 'Content-Type': 'application/json' };
+    const cartRes = await fetch(`${base}/api/v1/marketplace/commerce/cart/items`, {
+      method: 'POST',
+      headers: custH,
+      body: JSON.stringify({
+        productId,
+        quantity: 1,
+        variantKey: variantId,
+        selections: { color: 'black', size: 'M' },
+      }),
+    });
+    const cartBody = await json(cartRes);
+    const cartItems = (cartBody && cartBody.items) || [];
+    const cartOk = cartRes.status >= 200 && cartRes.status < 300 && cartItems.length >= 1;
+    record('C07_CART_ADD_PRODUCT_HTTP', cartOk, {
+      status: cartRes.status,
+      itemCount: cartItems.length,
+      body: cartBody,
+      path: 'POST /marketplace/commerce/cart/items',
+    });
+    // Internal service check retained with correct classification (not a substitute for HTTP)
+    let cartSvcOk = false;
+    let cartSvcDetail: unknown = null;
     try {
+      const commerce = new CommerceService(prisma as unknown as PrismaService);
       const user = await commerce.customerActor({
-        firebaseUid: `c07-user-${suffix}`,
-        email: `c07-user-${suffix}@test.local`,
-        name: 'عميل C07',
+        firebaseUid: `c07-svc-${suffix}`,
+        email: `c07-svc-${suffix}@test.local`,
+        name: 'عميل خدمة داخلية',
       });
-      try {
-        const cart = await commerce.addCartItem(user, {
-          productId,
-          quantity: 1,
-          variantKey: variantId,
-          selections: { color: 'black', size: 'M' },
-        });
-        cartOk = !!(cart && ((cart as { items?: unknown[] }).items || []).length);
-        cartDetail = { itemCount: ((cart as { items?: unknown[] }).items || []).length };
-      } catch (e) {
-        const cart2 = await commerce.addCartItem(user, {
-          productId,
-          quantity: 1,
-          selections: { color: 'black', size: 'M' },
-        });
-        cartOk = !!(cart2 && ((cart2 as { items?: unknown[] }).items || []).length);
-        cartDetail = {
-          fallback: true,
-          itemCount: ((cart2 as { items?: unknown[] }).items || []).length,
-          firstError: e instanceof Error ? e.message : String(e),
-        };
-      }
+      const cart = await commerce.addCartItem(user, {
+        productId,
+        quantity: 1,
+        variantKey: variantId,
+        selections: { color: 'black', size: 'M' },
+      });
+      cartSvcOk = !!(((cart as { items?: unknown[] }).items || []).length);
+      cartSvcDetail = { itemCount: ((cart as { items?: unknown[] }).items || []).length, class: 'CommerceService_internal' };
     } catch (e) {
-      cartDetail = { error: e instanceof Error ? e.message : String(e) };
+      cartSvcDetail = { error: e instanceof Error ? e.message : String(e), class: 'CommerceService_internal' };
     }
-    record('C07_CART_ADD_PRODUCT', cartOk, cartDetail);
+    record('C07_CART_ADD_PRODUCT_SERVICE_INTERNAL', cartSvcOk, cartSvcDetail);
 
     // —— Service via portal bulk
     const svcCreate = await fetch(`${base}/api/v1/partners-portal/bulk-batches`, {
@@ -341,18 +363,61 @@ async function main() {
         body: JSON.stringify({
           durationMin: 45,
           bookingEnabled: true,
-          availabilityJson: { windows: weeklyOpen },
+          availabilityJson: {
+            v: 2,
+            timezone: 'Asia/Riyadh',
+            windows: weeklyOpen,
+            exceptions: [],
+            closedDates: [],
+          },
         }),
       });
       const patchBody = await json(patchSvc);
+      const profileGet = await fetch(`${base}/api/v1/partners-portal/services/${serviceId}/service-profile`, {
+        headers: salonH,
+      });
+      const profileGetBody = await json(profileGet);
+      const expectedRevision =
+        typeof profileGetBody.reviewRevision === 'number'
+          ? profileGetBody.reviewRevision
+          : typeof patchBody.reviewRevision === 'number'
+            ? patchBody.reviewRevision
+            : 1;
       const profilePut = await fetch(`${base}/api/v1/partners-portal/services/${serviceId}/service-profile`, {
         method: 'PUT',
         headers: salonH,
         body: JSON.stringify({
-          answers: { placeMode: 'branch', branchId: 'branch-c07' },
+          expectedRevision,
+          templateId: 'salon_hair_cut',
+          templateVersion: 1,
+          priceMode: 'fixed',
+          answers: {
+            session_kind: 'single',
+            includes: ['wash'],
+            place_mode: 'branch',
+          },
         }),
       });
       const profileBody = await json(profilePut);
+      const profileGet2 = await fetch(`${base}/api/v1/partners-portal/services/${serviceId}/service-profile`, {
+        headers: salonH,
+      });
+      const profileGet2Body = await json(profileGet2);
+      const restoredDoc =
+        profileGet2Body.serviceProfileJson || profileGet2Body.draftServiceProfileJson || null;
+      const answers = (restoredDoc && restoredDoc.answers) || {};
+      const profilePersisted =
+        (profilePut.status === 200 || profilePut.status === 201) &&
+        restoredDoc &&
+        restoredDoc.templateId === 'salon_hair_cut' &&
+        answers.session_kind === 'single';
+      record('C07_SERVICE_PROFILE_SAVE', profilePersisted, {
+        getStatus: profileGet.status,
+        putStatus: profilePut.status,
+        expectedRevision,
+        profileBody,
+        restored: restoredDoc,
+      });
       const media = await fetch(`${base}/api/v1/partners-portal/services/${serviceId}/media`, {
         method: 'POST',
         headers: salonH,
@@ -377,6 +442,7 @@ async function main() {
       const row = await prisma.service.findUnique({ where: { id: serviceId } });
       publishServiceOk =
         (patchSvc.status === 200 || patchSvc.status === 201) &&
+        profilePersisted &&
         (media.status === 200 || media.status === 201) &&
         (sub.status === 200 || sub.status === 201) &&
         (decision.status === 200 || decision.status === 201) &&
@@ -386,6 +452,7 @@ async function main() {
         patchBody,
         profileStatus: profilePut.status,
         profileBody,
+        profilePersisted,
         mediaStatus: media.status,
         mediaBody,
         submitStatus: sub.status,
@@ -420,62 +487,61 @@ async function main() {
       availN: (catSvcAvailBody.items || catSvcAvailBody.results || []).length,
     });
 
-    let availOk = false;
-    let availDetail: unknown = null;
-    let firstSlot: { startsAt?: string; resourceId?: string; available?: boolean } | null = null;
-    const commerceSvc =
-      (globalThis as { __c07Commerce?: CommerceService }).__c07Commerce ||
-      new CommerceService(prisma as unknown as PrismaService);
-    try {
-      const avail = await commerceSvc.serviceAvailability(serviceId as string, dateStr);
-      const slots = ((avail as { slots?: Array<{ startsAt?: string; resourceId?: string; available?: boolean }> })
-        ?.slots || []) as Array<{ startsAt?: string; resourceId?: string; available?: boolean }>;
-      firstSlot = slots.find((s) => s && s.available !== false && s.startsAt) || slots[0] || null;
-      availOk = Array.isArray(slots) && slots.length > 0 && !!firstSlot?.startsAt;
-      availDetail = { keys: avail && Object.keys(avail as object), slotN: slots.length, firstStartsAt: firstSlot?.startsAt };
-    } catch (e) {
-      availDetail = { error: e instanceof Error ? e.message : String(e) };
-    }
-    record('C07_SERVICE_AVAILABILITY', availOk, availDetail);
+    const availHttp = await fetch(
+      `${base}/api/v1/marketplace/commerce/services/${serviceId}/availability?date=${encodeURIComponent(dateStr)}`,
+    );
+    const availBody = await json(availHttp);
+    const slots = (availBody && availBody.slots) || [];
+    const firstSlot =
+      slots.find((s: { available?: boolean; startsAt?: string }) => s && s.available !== false && s.startsAt) ||
+      slots[0] ||
+      null;
+    const availOk = availHttp.status === 200 && Array.isArray(slots) && slots.length > 0 && !!firstSlot?.startsAt;
+    record('C07_SERVICE_AVAILABILITY_HTTP', availOk, {
+      status: availHttp.status,
+      slotN: slots.length,
+      firstStartsAt: firstSlot?.startsAt,
+      path: 'GET /marketplace/commerce/services/:id/availability',
+    });
 
-    // Appointment request (MIRA model: requested, not auto-confirmed). Via CommerceService —
-    // same server path as POST /marketplace/commerce/bookings; C07Module does not mount that controller.
-    let bookOk = false;
-    let bookDetail: unknown = null;
-    try {
-      if (!firstSlot?.startsAt) throw new Error('no_slot');
-      const bookUser = await commerceSvc.customerActor({
-        firebaseUid: `c07-book-${suffix}`,
-        email: `c07-book-${suffix}@test.local`,
-        name: 'عميل موعد C07',
-      });
-      const booked = await commerceSvc.createBooking(bookUser, {
+    const bookHttp = await fetch(`${base}/api/v1/marketplace/commerce/bookings`, {
+      method: 'POST',
+      headers: { ...custH, 'Idempotency-Key': `c07-bk-${suffix}` },
+      body: JSON.stringify({
         serviceId,
-        startsAt: firstSlot.startsAt,
+        startsAt: firstSlot?.startsAt,
         contactName: 'عميل C07',
         contactPhone: '+966500000007',
         idempotencyKey: `c07-bk-${suffix}`,
-        ...(firstSlot.resourceId ? { resourceId: firstSlot.resourceId } : {}),
-      });
-      const row = (booked as { booking?: { status?: string; serviceId?: string; startsAt?: string; partnerId?: string } })
-        ?.booking;
-      bookOk =
-        !!row &&
-        row.status === 'requested' &&
-        row.serviceId === serviceId &&
-        String(row.startsAt || '').startsWith(String(firstSlot.startsAt).slice(0, 16));
-      bookDetail = {
-        status: row?.status,
-        serviceId: row?.serviceId,
-        partnerId: row?.partnerId,
-        startsAt: row?.startsAt,
-        noteAr: 'طلب موعد (requested) وليس حجزًا مؤكدًا',
-        path: 'CommerceService.createBooking',
-      };
-    } catch (e) {
-      bookDetail = { error: e instanceof Error ? e.message : String(e) };
-    }
-    record('C07_APPOINTMENT_REQUEST', bookOk, bookDetail);
+        ...(firstSlot?.resourceId ? { resourceId: firstSlot.resourceId } : {}),
+      }),
+    });
+    const bookBody = await json(bookHttp);
+    const bookRow = bookBody && (bookBody.booking || bookBody);
+    const bookOk =
+      bookHttp.status >= 200 &&
+      bookHttp.status < 300 &&
+      bookRow &&
+      bookRow.status === 'requested' &&
+      bookRow.serviceId === serviceId;
+    record('C07_APPOINTMENT_REQUEST_HTTP', bookOk, {
+      status: bookHttp.status,
+      bookingStatus: bookRow && bookRow.status,
+      serviceId: bookRow && bookRow.serviceId,
+      partnerId: bookRow && bookRow.partnerId,
+      startsAt: bookRow && bookRow.startsAt,
+      noteAr: 'طلب موعد (requested) وليس حجزًا مؤكدًا',
+      path: 'POST /marketplace/commerce/bookings',
+      body: bookBody,
+    });
+
+    // Unauthorized booking must fail
+    const bookUnauth = await fetch(`${base}/api/v1/marketplace/commerce/bookings`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ serviceId, startsAt: firstSlot?.startsAt, contactName: 'x', contactPhone: '+966500000001' }),
+    });
+    record('C07_BOOKING_UNAUTHORIZED', bookUnauth.status === 401, { status: bookUnauth.status });
   } catch (e) {
     record('C07_UNEXPECTED', false, { error: e instanceof Error ? e.message : String(e) });
   } finally {
@@ -489,7 +555,7 @@ async function main() {
       steps,
       ok: steps.length > 0 && steps.every((s) => s.ok),
       noteAr:
-        'سلسلة محلية بوابة HTTP→نشر→كتالوج→سلة/إتاحة/طلب موعد عبر CommerceService. ليست DEVICE_VERIFIED ولا إثبات R2.',
+        'سلسلة محلية بوابة HTTP→نشر→كتالوج→سلة/إتاحة/طلب موعد عبر HTTP Commerce. ليست DEVICE_VERIFIED ولا إثبات R2.',
     };
     writeFileSync(join(outDir, 'RESULTS.json'), JSON.stringify(summary, null, 2));
     console.log(JSON.stringify({ ok: summary.ok, failed: steps.filter((s) => !s.ok).map((s) => s.id), outDir }));
