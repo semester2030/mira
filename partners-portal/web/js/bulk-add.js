@@ -1,21 +1,25 @@
 /**
  * P6 — إضافة مجموعة
- * Batch-scoped media/card state, frozen async upload context, dirty field gens, registry fields.
+ * Every async op freezes {batchId, kind, profileId, ...} at click time.
+ * Never retargets using the currently open `batch` after an await.
  */
 (function () {
   const DEFAULT_LIMIT = 10;
   const BATCH_KEY = 'mira_bulk_pending_batch_id';
-  const MEDIA_STORE_KEY = 'mira_bulk_media_jobs_v2';
+  const MEDIA_STORE_KEY = 'mira_bulk_media_jobs_v3';
   const HALALAS_PER_SAR = 100;
   const MAX_UPLOAD_INFLIGHT = 2;
   const VIDEO_MAX_SECONDS = 300;
 
-  /** Global media jobs: clientMediaId -> job (always includes batchId). Never wipe on batch switch. */
   const mediaJobs = Object.create(null);
-  /** batchId -> { cardId -> cardState } */
   const cardsByBatch = Object.create(null);
   let uploadInflight = 0;
   let uploadPumpRunning = false;
+  /** batchId -> true while materialize/save-commit in flight (explicit or auto-before-upload) */
+  const commitLocks = Object.create(null);
+  /** batchId::cardId -> true while that card's auto-materialize is in flight */
+  const cardMatLocks = Object.create(null);
+  const VARIANT_PAGE_SIZE = 50;
 
   function el(tag, attrs, children) {
     const node = document.createElement(tag);
@@ -89,21 +93,187 @@
       .map((p) => ({ id: p.id, label: p.labelAr || p.label || p.id, fields: p.fields || [] }));
   }
 
+  /** Nested editors too heavy for bulk cards — handled by compact panels below instead. */
+  const SKIP_BULK_FIELDS = {
+    media: 1,
+    coverMediaId: 1,
+    optionsJson: 1,
+    variantsJson: 1,
+    serviceProfile: 1,
+    resources: 1,
+    weeklyHours: 1,
+    dateExceptions: 1,
+    coverageZones: 1,
+    addons: 1,
+    measurements: 1,
+    itemDimensions: 1,
+  };
+
+  const WEEK_DAYS = [
+    { id: 'sun', label: 'أحد' },
+    { id: 'mon', label: 'إثنين' },
+    { id: 'tue', label: 'ثلاثاء' },
+    { id: 'wed', label: 'أربعاء' },
+    { id: 'thu', label: 'خميس' },
+    { id: 'fri', label: 'جمعة' },
+    { id: 'sat', label: 'سبت' },
+  ];
+
+  function variantSelectionKey(selections) {
+    const s = selections || {};
+    return Object.keys(s)
+      .sort()
+      .map((k) => k + '=' + String(s[k]))
+      .join('|');
+  }
+
+  function findExistingVariant(existing, selections, stableId) {
+    const list = Array.isArray(existing) ? existing : [];
+    const key = variantSelectionKey(selections);
+    let hit = list.find((v) => v && variantSelectionKey(v.selections) === key);
+    if (hit) return hit;
+    if (stableId) hit = list.find((v) => v && v.id === stableId);
+    return hit || null;
+  }
+
+  /**
+   * Generate variants from colors×sizes, preserving id/price/qty/availability/media
+   * for combinations that already exist.
+   */
+  function buildVariantsFromColorsSizes(state) {
+    const colors = Array.isArray(state.localValues.colors) ? state.localValues.colors : [];
+    const sizes = Array.isArray(state.localValues.sizes) ? state.localValues.sizes : [];
+    const basePrice =
+      typeof state.localValues.priceHalalas === 'number' ? state.localValues.priceHalalas : null;
+    const existing = Array.isArray(state.localValues.variantsJson) ? state.localValues.variantsJson : [];
+    if (!colors.length && !sizes.length) {
+      return { optionsJson: null, variantsJson: null, error: 'اختاري لونًا أو مقاسًا أولًا' };
+    }
+    const MO = window.MiraCatalogOptions;
+    const selected = {};
+    if (colors.length) selected.color = colors.map((c) => COLOR_LABELS_AR[c] || c);
+    if (sizes.length) selected.size = sizes.slice();
+    const presetGroups = [];
+    if (colors.length) presetGroups.push({ id: 'color', label: 'اللون', kind: 'color', presets: colors });
+    if (sizes.length) presetGroups.push({ id: 'size', label: 'المقاس', kind: 'size', presets: sizes });
+    const optState = {
+      selected: selected,
+      customs: {},
+      valueIds: {},
+      variants: [],
+      clearingOptions: false,
+      clearingVariants: false,
+    };
+    if (MO && MO.buildOptionGroups) {
+      optState._builtGroups = MO.buildOptionGroups(presetGroups, optState);
+    } else {
+      optState._builtGroups = presetGroups.map((g) => ({
+        id: g.id,
+        labelAr: g.label,
+        kind: g.kind,
+        values: (selected[g.id] || []).map((lab, i) => ({
+          id: g.id === 'color' ? colors[i] || lab : sizes[i] || lab,
+          labelAr: lab,
+        })),
+      }));
+    }
+    const groups = optState._builtGroups || [];
+    const colorVals = (groups.find((g) => g.id === 'color') || { values: [] }).values;
+    const sizeVals = (groups.find((g) => g.id === 'size') || { values: [] }).values;
+    const variants = [];
+    const cList = colorVals.length ? colorVals : [{ id: null, labelAr: null }];
+    const sList = sizeVals.length ? sizeVals : [{ id: null, labelAr: null }];
+    cList.forEach((c) => {
+      sList.forEach((s) => {
+        const selections = {};
+        const labels = {};
+        if (c.id) {
+          selections.color = c.id;
+          labels.color = c.labelAr;
+        }
+        if (s.id) {
+          selections.size = s.id;
+          labels.size = s.labelAr;
+        }
+        const idParts = [c.id, s.id].filter(Boolean);
+        const stableId = idParts.join('-') || 'default';
+        const prev = findExistingVariant(existing, selections, stableId);
+        if (prev) {
+          variants.push({
+            id: prev.id || stableId,
+            selections: selections,
+            labels: labels,
+            priceHalalas: Object.prototype.hasOwnProperty.call(prev, 'priceHalalas')
+              ? prev.priceHalalas
+              : basePrice,
+            available: prev.available !== false,
+            stockQty: Object.prototype.hasOwnProperty.call(prev, 'stockQty') ? prev.stockQty : null,
+            mediaIds: Array.isArray(prev.mediaIds) ? prev.mediaIds.slice() : [],
+            priceSarText: prev.priceSarText != null ? prev.priceSarText : undefined,
+            priceError: prev.priceError || null,
+            stockError: prev.stockError || null,
+          });
+        } else {
+          variants.push({
+            id: stableId,
+            selections: selections,
+            labels: labels,
+            priceHalalas: basePrice,
+            available: true,
+            stockQty: null,
+            mediaIds: [],
+            priceError: null,
+            stockError: null,
+          });
+        }
+      });
+    });
+    return {
+      optionsJson: groups,
+      variantsJson: variants,
+      error: null,
+      preserved: variants.filter((v) => findExistingVariant(existing, v.selections, v.id)).length,
+      created: variants.length - existing.filter((v) => findExistingVariant(variants, v.selections, v.id)).length,
+    };
+  }
+
+  function cardHasValidationErrors(st) {
+    if (!st) return true;
+    if (st.priceError) return true;
+    const vs = Array.isArray(st.localValues && st.localValues.variantsJson)
+      ? st.localValues.variantsJson
+      : [];
+    return vs.some((v) => v && (v.priceError || v.stockError));
+  }
+
+  function deepCloneJson(v) {
+    return JSON.parse(JSON.stringify(v == null ? null : v));
+  }
+
+  const COLOR_LABELS_AR = {
+    black: 'أسود',
+    ivory: 'سكري',
+    brown: 'بني',
+    pink: 'وردي',
+    blue: 'أزرق',
+    green: 'أخضر',
+    multi: 'متعدد',
+  };
+
   function fieldDefsForProfile(registry, profileId) {
     const root = (registry && registry.registry) || registry || {};
     const profile = (root.profiles || []).find((p) => p.id === profileId);
     const fieldsMap = root.fields || {};
     if (!profile) return [];
-    const skip = {
-      media: 1,
-      coverMediaId: 1,
-      optionsJson: 1,
-      variantsJson: 1,
-      serviceProfile: 1,
-    };
     return (profile.fields || [])
-      .filter((id) => !skip[id])
-      .map((id) => fieldsMap[id] || { id: id, type: 'string', labelAr: id })
+      .filter((id) => !SKIP_BULK_FIELDS[id])
+      .map((id) => {
+        const f = fieldsMap[id] || { id: id, type: 'string', labelAr: id };
+        return Object.assign({ id: id }, f, {
+          options: f.values || f.options || [],
+          widget: f.widget || null,
+        });
+      })
       .filter((f) => {
         const t = f.type || 'string';
         return (
@@ -111,10 +281,12 @@
           t === 'text' ||
           t === 'int' ||
           t === 'integer' ||
+          t === 'number' ||
           t === 'enum' ||
           t === 'boolean' ||
           t === 'money' ||
-          t === 'halalas'
+          t === 'halalas' ||
+          t === 'array'
         );
       });
   }
@@ -135,8 +307,10 @@
           mediaId: j.mediaId || null,
           status: j.status,
           ownerId: j.ownerId || null,
+          ownerKindPath: j.ownerKindPath || null,
+          checksum: j.checksum || null,
           error: j.error || null,
-          needsLocalFile: !j.file && j.status !== 'ready',
+          needsLocalFile: !j.file && j.status !== 'ready' && !!j.sessionId,
         };
       });
       sessionStorage.setItem(MEDIA_STORE_KEY, JSON.stringify(out));
@@ -151,18 +325,26 @@
       Object.keys(parsed || {}).forEach((id) => {
         if (mediaJobs[id]) return;
         const j = parsed[id];
-        mediaJobs[id] = Object.assign({}, j, { file: null, clientMediaId: id });
+        // uploading in a dead tab is not a live upload — mark for reconcile
+        let status = j.status;
+        if (status === 'uploading') status = 'needs_reconcile';
+        mediaJobs[id] = Object.assign({}, j, {
+          file: null,
+          clientMediaId: id,
+          status: status,
+          needsLocalFile: status !== 'ready' && !j.file,
+        });
       });
     } catch (_) {}
-  }
-
-  function cardKey(batchId, cardId) {
-    return String(batchId) + '::' + String(cardId);
   }
 
   function ensureBatchCards(batchId) {
     if (!cardsByBatch[batchId]) cardsByBatch[batchId] = Object.create(null);
     return cardsByBatch[batchId];
+  }
+
+  function cardKey(batchId, cardId) {
+    return String(batchId) + '::' + String(cardId);
   }
 
   function jobsForCard(batchId, cardId) {
@@ -175,6 +357,52 @@
     return Object.keys(mediaJobs)
       .map((id) => mediaJobs[id])
       .filter((j) => j && j.batchId === batchId);
+  }
+
+  function freezeCtx(batch) {
+    return {
+      batchId: batch.batchId,
+      kind: batch.kind,
+      profileId: batch.profileId,
+      ownerKindPath: batch.kind === 'product' ? 'products' : 'services',
+    };
+  }
+
+  function sanitizeValuesForSave(values) {
+    const out = deepCloneJson(values || {});
+    if (Array.isArray(out.variantsJson)) {
+      out.variantsJson = out.variantsJson.map((v) => {
+        if (!v || typeof v !== 'object') return v;
+        const clean = {
+          id: v.id,
+          selections: v.selections || {},
+          labels: v.labels || {},
+          priceHalalas: v.priceHalalas,
+          available: v.available !== false,
+          stockQty: v.stockQty == null ? null : v.stockQty,
+          mediaIds: Array.isArray(v.mediaIds) ? v.mediaIds : [],
+        };
+        return clean;
+      });
+    }
+    return out;
+  }
+
+  function buildSavePayload(st) {
+    const clearFields = [];
+    const values = {};
+    const keys = new Set([...Object.keys(st.localValues || {}), ...Object.keys(st.savedValues || {})]);
+    keys.forEach((k) => {
+      if (k.startsWith('_')) return;
+      if (!(k in st.localValues) && k in st.savedValues) clearFields.push(k);
+      else if (k in st.localValues) values[k] = st.localValues[k];
+    });
+    return {
+      values: sanitizeValuesForSave(values),
+      clearFields: clearFields,
+      expectedRevision: st.revision,
+      editGen: st.editGen,
+    };
   }
 
   async function openBulkUi(root, partner) {
@@ -191,7 +419,7 @@
     }
 
     const status = el('p', { className: 'lead', id: 'bulkStatus', role: 'status' }, [
-      'دفعة بهوية ثابتة · الوسائط مربوطة بالدفعة والبطاقة · التحويل ≠ نشر.',
+      'كل عملية تُثبّت هوية الدفعة عند البدء. التحويل ≠ نشر.',
     ]);
     const listHost = el('div', { id: 'bulkMyList' });
     const cardsHost = el('div', { id: 'bulkCards' });
@@ -213,16 +441,14 @@
     const refillProfiles = () => {
       profileSelect.innerHTML = '';
       if (!registry) {
-        profileSelect.appendChild(
-          el('option', { value: '', text: 'تعذر جلب القوالب — لا يُختار افتراضي مضلل' }),
-        );
+        profileSelect.appendChild(el('option', { value: '', text: 'تعذر جلب القوالب' }));
         profileSelect.disabled = true;
         return;
       }
       profileSelect.disabled = false;
       const opts = profilesFromRegistry(registry, partner, kindSelect.value);
       if (!opts.length) {
-        profileSelect.appendChild(el('option', { value: '', text: 'لا قوالب مسموحة لهذا الحساب' }));
+        profileSelect.appendChild(el('option', { value: '', text: 'لا قوالب مسموحة' }));
         return;
       }
       opts.forEach((p) => profileSelect.appendChild(el('option', { value: p.id, text: p.label })));
@@ -230,20 +456,23 @@
     refillProfiles();
     kindSelect.addEventListener('change', refillProfiles);
 
-    /** @type {null | {batchId:string, kind:string, profileId:string, cards:any[], ready?:boolean}} */
-    let batch = null;
+    /** Currently open batch view (display only — never the sole destination after await). */
+    let openBatch = null;
 
-    function currentCards() {
-      return batch ? ensureBatchCards(batch.batchId) : Object.create(null);
+    function isOpen(batchId) {
+      return !!(openBatch && openBatch.batchId === batchId);
     }
 
-    function syncStateFromBatch(b) {
-      batch = b;
+    function setStatusFor(batchId, msg) {
+      if (isOpen(batchId)) status.textContent = msg;
+    }
+
+    function syncStateFromBatch(b, opts) {
       const map = ensureBatchCards(b.batchId);
       (b.cards || []).forEach((c) => {
         const prev = map[c.cardId];
         const saved = Object.assign({}, c.values || {});
-        if (prev && prev.dirty) {
+        if (prev && prev.dirty && !(opts && opts.forceClean)) {
           map[c.cardId] = Object.assign({}, prev, {
             revision: c.revision,
             status: c.status,
@@ -252,17 +481,14 @@
             contentStatus: c.contentStatus,
             submitReviewStatus: c.submitReviewStatus,
             openUrl: c.openUrl,
+            commitLocked: commitLocks[b.batchId] === true,
           });
         } else {
           map[c.cardId] = {
             localValues: Object.assign({}, saved),
             savedValues: saved,
-            priceSarText:
-              prev && prev.priceSarText != null
-                ? prev.priceSarText
-                : saved.priceHalalas != null
-                  ? halalasToSar(saved.priceHalalas)
-                  : '',
+            dirtyFields: Object.create(null),
+            priceSarText: saved.priceHalalas != null ? halalasToSar(saved.priceHalalas) : '',
             priceError: null,
             revision: c.revision,
             status: c.status,
@@ -274,161 +500,158 @@
             saveGen: (prev && prev.saveGen) || 0,
             error: null,
             openUrl: c.openUrl,
+            commitLocked: commitLocks[b.batchId] === true,
           };
         }
       });
+      if (!(opts && opts.keepOpenUntouched)) {
+        openBatch = b;
+      } else if (isOpen(b.batchId)) {
+        openBatch = b;
+      }
     }
 
-    function bumpEdit(cardId) {
-      const st = currentCards()[cardId];
-      if (!st) return;
+    function openBatchView(b) {
+      syncStateFromBatch(b);
+      setBulkUrl(b.batchId);
+      renderCards();
+    }
+
+    function bumpEdit(batchId, cardId, fieldId) {
+      const st = ensureBatchCards(batchId)[cardId];
+      if (!st || st.status === 'materialized' || st.commitLocked) return;
       st.editGen = (st.editGen || 0) + 1;
       st.dirty = true;
+      if (fieldId) st.dirtyFields[fieldId] = true;
       st.error = null;
     }
 
-    function markDirty(cardId, field, value) {
-      const st = currentCards()[cardId];
-      if (!st || st.status === 'materialized') return;
-      st.localValues[field] = value;
-      bumpEdit(cardId);
-    }
-
-    function markClear(cardId, field) {
-      const st = currentCards()[cardId];
-      if (!st || st.status === 'materialized') return;
-      delete st.localValues[field];
-      if (field === 'priceHalalas') {
-        st.priceSarText = '';
-        st.priceError = null;
-      }
-      bumpEdit(cardId);
-    }
-
-    async function saveCard(cardId, opts) {
-      const st = currentCards()[cardId];
-      if (!st || !batch) return null;
+    /**
+     * Save one card for a frozen ctx. Never uses openBatch for API destination.
+     * snapshot optional: { values, clearFields, expectedRevision, editGen }
+     */
+    async function saveCard(ctx, cardId, opts) {
+      const st = ensureBatchCards(ctx.batchId)[cardId];
+      if (!st) throw new Error('بطاقة غير موجودة في الدفعة ' + ctx.batchId);
       if (st.status === 'materialized') {
-        st.error = 'البطاقة محوّلة — استخدمي رابط فتح العنصر للتعديل. لم يُرسل حفظ.';
-        if (!(opts && opts.silent)) status.textContent = st.error;
-        throw Object.assign(new Error(st.error), { code: 'BULK_CARD_MATERIALIZED_UI' });
+        const err = 'البطاقة محوّلة — استخدمي رابط فتح العنصر. لم يُرسل حفظ.';
+        st.error = err;
+        throw Object.assign(new Error(err), { code: 'BULK_CARD_MATERIALIZED_UI' });
       }
       if (st.priceError) {
-        st.error = st.priceError;
-        if (!(opts && opts.silent)) status.textContent = st.error;
-        throw Object.assign(new Error(st.error), { code: 'BULK_PRICE_INVALID' });
+        throw Object.assign(new Error(st.priceError), { code: 'BULK_PRICE_INVALID' });
       }
-      const clearFields = [];
-      const values = {};
-      const keys = new Set([...Object.keys(st.localValues), ...Object.keys(st.savedValues)]);
-      keys.forEach((k) => {
-        if (k.startsWith('_')) return;
-        if (!(k in st.localValues) && k in st.savedValues) clearFields.push(k);
-        else if (k in st.localValues) values[k] = st.localValues[k];
-      });
-      const sentGen = st.editGen;
-      const sentRevision = st.revision;
-      st.saveGen = sentGen;
-      try {
-        const put = await PartnersApi.putBulkCard(batch.batchId, cardId, {
-          expectedRevision: sentRevision,
-          values,
-          clearFields,
-          overwriteWritten: true,
+      if (cardHasValidationErrors(st)) {
+        throw Object.assign(new Error('توجد قيم رقمية غير صالحة في البطاقة أو تركيباتها'), {
+          code: 'BULK_FIELD_INVALID',
         });
-        // Only apply server snapshot if no newer local edit landed during the wait.
-        if (st.editGen === sentGen) {
-          st.revision = put.revision;
-          st.savedValues = Object.assign({}, put.values || {});
-          st.localValues = Object.assign({}, put.values || {});
-          st.priceSarText =
-            put.values && put.values.priceHalalas != null ? halalasToSar(put.values.priceHalalas) : st.priceSarText;
-          st.priceError = null;
-          st.dirty = false;
-          st.error = null;
-          if (!(opts && opts.silent)) {
-            status.textContent = 'حُفظت البطاقة ' + cardId + ' · rev ' + put.revision + ' (مؤكد من الخادم)';
-          }
-        } else {
-          // Server advanced; keep local newer edits dirty; adopt revision only if put matched our base.
-          st.revision = put.revision;
-          st.savedValues = Object.assign({}, put.values || {});
-          st.dirty = true;
-          st.error = null;
-          if (!(opts && opts.silent)) {
-            status.textContent =
-              'حُفظت نسخة سابقة من ' + cardId + '؛ بقي تعديل أحدث غير محفوظ — احفظي مجددًا.';
-          }
-        }
-        return put;
-      } catch (e) {
-        st.error = (e && (e.messageAr || e.message)) || String(e);
-        if (e && e.code === 'DRAFT_REVISION_CONFLICT') {
-          st.error += ' — تعارض إصدار؛ لا يُستبدل تعديلك صامتًا.';
-        }
-        if (!(opts && opts.silent)) status.textContent = st.error;
-        throw e;
       }
+      const snap = (opts && opts.snapshot) || buildSavePayload(st);
+      const sentGen = snap.editGen;
+      st.saveGen = sentGen;
+      const put = await PartnersApi.putBulkCard(ctx.batchId, cardId, {
+        expectedRevision: snap.expectedRevision,
+        values: snap.values,
+        clearFields: snap.clearFields,
+        overwriteWritten: true,
+      });
+      // Apply against the same batch card map — not whatever is open now.
+      const live = ensureBatchCards(ctx.batchId)[cardId];
+      if (!live) return put;
+      if (live.editGen === sentGen) {
+        live.revision = put.revision;
+        live.savedValues = Object.assign({}, put.values || {});
+        live.localValues = Object.assign({}, put.values || {});
+        live.dirtyFields = Object.create(null);
+        if (put.values && Object.prototype.hasOwnProperty.call(put.values, 'priceHalalas')) {
+          live.priceSarText = put.values.priceHalalas != null ? halalasToSar(put.values.priceHalalas) : '';
+          live.priceError = null;
+        }
+        live.dirty = false;
+        live.error = null;
+        if (!(opts && opts.silent)) {
+          setStatusFor(ctx.batchId, 'حُفظت ' + cardId + ' · rev ' + put.revision);
+        }
+      } else {
+        live.revision = put.revision;
+        live.savedValues = Object.assign({}, put.values || {});
+        live.dirty = true;
+        if (!(opts && opts.silent)) {
+          setStatusFor(ctx.batchId, 'حُفظت نسخة أقدم من ' + cardId + '؛ بقي تعديل أحدث — احفظي مجددًا.');
+        }
+      }
+      if (isOpen(ctx.batchId) && !(opts && opts.skipRender)) renderCards();
+      return put;
     }
 
-    async function saveDirtyCards() {
-      if (!batch) return { ok: true, failed: [] };
-      const map = currentCards();
+    async function saveDirtyCards(ctx, opts) {
+      const map = ensureBatchCards(ctx.batchId);
       const failed = [];
+      const snapshots = (opts && opts.snapshots) || null;
       for (const cardId of Object.keys(map)) {
         const st = map[cardId];
-        if (!st.dirty || st.status === 'materialized') continue;
+        if (st.status === 'materialized') continue;
+        const snap = snapshots ? snapshots[cardId] : null;
+        if (!snap && !st.dirty) continue;
         try {
-          await saveCard(cardId, { silent: true });
+          await saveCard(ctx, cardId, {
+            silent: true,
+            skipRender: true,
+            snapshot: snap || buildSavePayload(st),
+          });
         } catch (e) {
-          failed.push({ cardId, error: st.error || String(e) });
+          failed.push({ cardId: cardId, error: (e && e.message) || String(e) });
         }
       }
-      return { ok: failed.length === 0, failed };
+      return { ok: failed.length === 0, failed: failed };
     }
 
     function confirmLeaveIfNeeded() {
-      if (!batch) return true;
-      const dirty = Object.keys(currentCards()).some((id) => currentCards()[id].dirty);
-      const uploading = jobsForBatch(batch.batchId).some((j) => j.status === 'uploading' || j.status === 'verifying');
+      if (!openBatch) return true;
+      if (commitLocks[openBatch.batchId]) {
+        window.alert('عملية حفظ/تحويل جارية على هذه الدفعة. انتظري اكتمالها قبل الانتقال.');
+        return false;
+      }
+      const map = ensureBatchCards(openBatch.batchId);
+      const dirty = Object.keys(map).some((id) => map[id].dirty);
+      const uploading = jobsForBatch(openBatch.batchId).some(
+        (j) => j.status === 'uploading' || j.status === 'verifying',
+      );
       if (!dirty && !uploading) return true;
       return window.confirm(
-        'هناك تعديلات غير محفوظة أو رفع جارٍ. المتابعة قد تُبقي الرفع على دفعة/بطاقة التعيين الأصلية، لكن التعديلات غير المحفوظة تبقى في دفعتها. متابَعة؟',
+        'تعديلات غير محفوظة أو رفع جارٍ. الانتقال لا يغيّر وجهة العمليات التي بدأت، لكن التعديلات غير المحفوظة تبقى في دفعتها. متابَعة؟',
       );
     }
 
     function renderCards() {
       cardsHost.innerHTML = '';
-      if (!batch) return;
+      if (!openBatch) return;
+      const batch = openBatch;
+      const map = ensureBatchCards(batch.batchId);
+      const lockedCommit = commitLocks[batch.batchId] === true;
       if (batch.ready === false) {
         cardsHost.appendChild(el('p', { className: 'lead', text: 'الدفعة قيد الاستكمال…' }));
         return;
       }
-      const map = currentCards();
-      const fieldDefs = fieldDefsForProfile(registry, batch.profileId);
-      const simpleIds = fieldDefs.map((f) => f.id);
-      // Always ensure core fields present
-      ['nameAr', 'priceHalalas', 'durationMin', 'descriptionAr', 'purchaseMode', 'externalUrl'].forEach((id) => {
-        if (simpleIds.indexOf(id) < 0) {
-          const need =
-            id === 'durationMin'
-              ? batch.kind === 'service'
-              : id === 'purchaseMode' || id === 'externalUrl'
-                ? batch.kind === 'product'
-                : true;
-          if (need) fieldDefs.push({ id: id, type: id === 'priceHalalas' ? 'halalas' : 'string', labelAr: id });
+      let fieldDefs = fieldDefsForProfile(registry, batch.profileId);
+      const ensure = ['nameAr', 'priceHalalas', 'descriptionAr'];
+      if (batch.kind === 'service') ensure.push('durationMin');
+      if (batch.kind === 'product') ensure.push('purchaseMode', 'externalUrl');
+      ensure.forEach((id) => {
+        if (!fieldDefs.some((f) => f.id === id)) {
+          fieldDefs = fieldDefs.concat([{ id: id, type: id === 'priceHalalas' ? 'halalas' : 'string', labelAr: id }]);
         }
       });
 
       (batch.cards || []).forEach((card) => {
         const state = map[card.cardId];
         if (!state) return;
-        const locked = state.status === 'materialized';
+        const locked = state.status === 'materialized' || lockedCommit;
         const ck = el('input', { type: 'checkbox', className: 'bulk-card-ck', 'data-card': card.cardId });
         ck.checked = true;
         const dirtyBadge = el('span', {
           className: 'lead',
-          text: locked ? 'محوّلة' : state.dirty ? 'غير محفوظ' : 'محفوظ',
+          text: state.status === 'materialized' ? 'محوّلة' : state.dirty ? 'غير محفوظ' : 'محفوظ',
         });
         const err = el('p', {
           className: 'lead',
@@ -436,76 +659,451 @@
           style: state.error || state.priceError ? 'color:#b00020' : '',
         });
         const fieldsHost = el('div', { className: 'bulk-card-fields' });
+        const batchIdFrozen = batch.batchId;
 
         fieldDefs.forEach((def) => {
           const id = def.id;
-          if (id === 'priceHalalas') {
+          if (id === 'durationMin' && batch.kind !== 'service') return;
+          if (id === 'priceHalalas' || def.type === 'halalas' || def.type === 'money') {
+            const isMainPrice = id === 'priceHalalas';
+            const moneySar = isMainPrice
+              ? state.priceSarText != null
+                ? state.priceSarText
+                : ''
+              : state.localValues[id] != null
+                ? halalasToSar(state.localValues[id])
+                : '';
             const priceSar = el('input', {
               type: 'text',
               inputmode: 'decimal',
               placeholder: 'ريال',
-              value: state.priceSarText != null ? state.priceSarText : '',
+              value: moneySar,
               disabled: locked,
             });
             priceSar.addEventListener('input', () => {
               if (locked) return;
               const t = priceSar.value;
-              state.priceSarText = t;
+              if (isMainPrice) state.priceSarText = t;
               const trimmed = t.trim();
               if (!trimmed) {
-                state.priceError = null;
-                markClear(card.cardId, 'priceHalalas');
+                if (isMainPrice) state.priceError = null;
+                delete state.localValues[id];
+                bumpEdit(batchIdFrozen, card.cardId, id);
               } else {
                 try {
                   const h = sarToHalalas(trimmed);
-                  state.priceError = null;
-                  markDirty(card.cardId, 'priceHalalas', h);
+                  if (isMainPrice) state.priceError = null;
+                  state.localValues[id] = h;
+                  bumpEdit(batchIdFrozen, card.cardId, id);
                 } catch (e) {
-                  state.priceError = e.message || 'السعر غير صالح';
-                  bumpEdit(card.cardId);
-                  // Do NOT write previous valid priceHalalas
+                  if (isMainPrice) state.priceError = e.message || 'السعر غير صالح';
+                  bumpEdit(batchIdFrozen, card.cardId, id);
                 }
               }
               dirtyBadge.textContent = state.dirty ? 'غير محفوظ' : 'محفوظ';
               err.textContent = state.priceError || state.error || '';
             });
-            fieldsHost.appendChild(el('label', null, [(def.labelAr || 'السعر') + ' (ريال) ', priceSar]));
+            fieldsHost.appendChild(el('label', null, [(def.labelAr || id) + ' (ريال) ', priceSar]));
             return;
           }
-          if (id === 'durationMin' && batch.kind !== 'service') return;
+          if (def.type === 'boolean') {
+            const input = el('input', {
+              type: 'checkbox',
+              checked: !!state.localValues[id],
+              disabled: locked,
+            });
+            input.addEventListener('change', () => {
+              if (locked) return;
+              state.localValues[id] = !!input.checked;
+              bumpEdit(batchIdFrozen, card.cardId, id);
+              dirtyBadge.textContent = 'غير محفوظ';
+            });
+            fieldsHost.appendChild(el('label', null, [input, ' ' + (def.labelAr || id)]));
+            return;
+          }
+          if (def.type === 'array' && Array.isArray(def.options) && def.options.length) {
+            const selected = Array.isArray(state.localValues[id]) ? state.localValues[id].slice() : [];
+            const row = el('div', { className: 'bulk-array-field', 'data-field': id });
+            row.appendChild(el('span', { text: (def.labelAr || id) + ' ' }));
+            def.options.forEach((opt) => {
+              const v = typeof opt === 'string' ? opt : opt.value || opt.id;
+              const lab =
+                id === 'colors'
+                  ? COLOR_LABELS_AR[v] || (typeof opt === 'string' ? opt : opt.labelAr || opt.label || v)
+                  : typeof opt === 'string'
+                    ? opt
+                    : opt.labelAr || opt.label || v;
+              const on = selected.indexOf(v) >= 0;
+              if (id === 'colors' && window.MiraCatalogOptions && MiraCatalogOptions.colorSwatchStyle) {
+                const style = MiraCatalogOptions.colorSwatchStyle(v);
+                const sw = el('button', {
+                  type: 'button',
+                  className: 'bulk-color-swatch' + (on ? ' is-on' : ''),
+                  title: lab,
+                  text: lab,
+                  disabled: locked,
+                  style:
+                    'display:inline-flex;align-items:center;gap:6px;margin:2px;border-radius:999px;padding:4px 10px;border:2px solid ' +
+                    (style.borderColor || '#999') +
+                    ';background:#fff',
+                });
+                const dot = el('span', {
+                  style:
+                    'width:14px;height:14px;border-radius:50%;display:inline-block;border:1px solid #ccc;background:' +
+                    (style.background || '#ccc'),
+                });
+                sw.insertBefore(dot, sw.firstChild);
+                sw.addEventListener('click', () => {
+                  if (locked) return;
+                  const cur = Array.isArray(state.localValues[id]) ? state.localValues[id].slice() : [];
+                  const ix = cur.indexOf(v);
+                  if (ix >= 0) cur.splice(ix, 1);
+                  else cur.push(v);
+                  if (!cur.length) delete state.localValues[id];
+                  else state.localValues[id] = cur;
+                  bumpEdit(batchIdFrozen, card.cardId, id);
+                  dirtyBadge.textContent = 'غير محفوظ';
+                  // Toggle in place — full re-render mid-multi-select drops later clicks.
+                  if (cur.indexOf(v) >= 0) sw.classList.add('is-on');
+                  else sw.classList.remove('is-on');
+                });
+                row.appendChild(sw);
+              } else {
+                const chip = el('label', {
+                  style: 'display:inline-flex;gap:4px;margin:2px;align-items:center',
+                }, [
+                  el('input', {
+                    type: 'checkbox',
+                    checked: on,
+                    disabled: locked,
+                    onChange: () => {
+                      if (locked) return;
+                      const cur = Array.isArray(state.localValues[id]) ? state.localValues[id].slice() : [];
+                      const ix = cur.indexOf(v);
+                      if (ix >= 0) cur.splice(ix, 1);
+                      else cur.push(v);
+                      if (!cur.length) delete state.localValues[id];
+                      else state.localValues[id] = cur;
+                      bumpEdit(batchIdFrozen, card.cardId, id);
+                      dirtyBadge.textContent = 'غير محفوظ';
+                    },
+                  }),
+                  lab,
+                ]);
+                row.appendChild(chip);
+              }
+            });
+            fieldsHost.appendChild(row);
+            return;
+          }
+          if (def.type === 'enum' && Array.isArray(def.options) && def.options.length) {
+            const sel = el('select', { disabled: locked });
+            sel.appendChild(el('option', { value: '', text: '—' }));
+            def.options.forEach((opt) => {
+              const v = typeof opt === 'string' ? opt : opt.value || opt.id;
+              const lab = typeof opt === 'string' ? opt : opt.labelAr || opt.label || v;
+              const o = el('option', { value: v, text: lab });
+              if (String(state.localValues[id] || '') === String(v)) o.selected = true;
+              sel.appendChild(o);
+            });
+            sel.addEventListener('change', () => {
+              if (locked) return;
+              if (!sel.value) delete state.localValues[id];
+              else state.localValues[id] = sel.value;
+              bumpEdit(batchIdFrozen, card.cardId, id);
+              dirtyBadge.textContent = 'غير محفوظ';
+            });
+            fieldsHost.appendChild(el('label', null, [(def.labelAr || id) + ' ', sel]));
+            return;
+          }
+          const isNum = def.type === 'int' || def.type === 'integer' || def.type === 'number';
+          const isDate =
+            id === 'offerStart' || id === 'offerEnd' || (def.widget === 'date' && def.type === 'string');
           const input = el('input', {
-            type: def.type === 'int' || def.type === 'integer' ? 'number' : 'text',
+            type: isDate ? 'date' : isNum ? 'number' : 'text',
             value: state.localValues[id] != null ? String(state.localValues[id]) : '',
             disabled: locked,
+            min: def.min != null ? String(def.min) : undefined,
+            max: def.max != null ? String(def.max) : undefined,
+            step: def.type === 'number' ? 'any' : isNum ? '1' : undefined,
           });
           input.addEventListener('input', () => {
             if (locked) return;
             const v = input.value;
-            if (v === '') markClear(card.cardId, id);
-            else if (def.type === 'int' || def.type === 'integer') markDirty(card.cardId, id, Number(v));
-            else markDirty(card.cardId, id, v);
-            dirtyBadge.textContent = state.dirty ? 'غير محفوظ' : 'محفوظ';
+            if (v === '') delete state.localValues[id];
+            else if (isNum) state.localValues[id] = Number(v);
+            else state.localValues[id] = v;
+            bumpEdit(batchIdFrozen, card.cardId, id);
+            dirtyBadge.textContent = 'غير محفوظ';
           });
           fieldsHost.appendChild(el('label', null, [(def.labelAr || id) + ' ', input]));
         });
 
+        // Product: generate options/variants from selected colors×sizes (reuse MiraCatalogOptions)
+        if (batch.kind === 'product' && !locked) {
+          const commerceHost = el('div', { className: 'bulk-commerce', 'data-card': card.cardId });
+          const vCount = Array.isArray(state.localValues.variantsJson)
+            ? state.localValues.variantsJson.length
+            : 0;
+          commerceHost.appendChild(
+            el('p', {
+              className: 'lead',
+              text:
+                'تركيبات محفوظة محليًا: ' +
+                vCount +
+                (vCount ? ' — ستُرسل مع الحفظ' : ' — ولّدي من الألوان/المقاسات'),
+            }),
+          );
+          commerceHost.appendChild(
+            el('button', {
+              type: 'button',
+              className: 'btn btn-ghost',
+              text: 'توليد التركيبات من الألوان×المقاسات',
+              onClick: () => {
+                const built = buildVariantsFromColorsSizes(state);
+                if (built.error) {
+                  err.textContent = built.error;
+                  return;
+                }
+                state.localValues.optionsJson = built.optionsJson;
+                state.localValues.variantsJson = built.variantsJson;
+                bumpEdit(batchIdFrozen, card.cardId, 'variantsJson');
+                dirtyBadge.textContent = 'غير محفوظ';
+                setStatusFor(
+                  batchIdFrozen,
+                  card.cardId +
+                    ': ' +
+                    built.variantsJson.length +
+                    ' تركيبة (محفوظ ' +
+                    (built.preserved || 0) +
+                    ') — احفظي البطاقة',
+                );
+                renderCards();
+              },
+            }),
+          );
+          if (Array.isArray(state.localValues.variantsJson) && state.localValues.variantsJson.length) {
+            const list = el('div', { className: 'bulk-variant-list' });
+            if (state.variantPage == null) state.variantPage = 0;
+            const all = state.localValues.variantsJson;
+            const page = Math.max(0, state.variantPage | 0);
+            const start = page * VARIANT_PAGE_SIZE;
+            const end = Math.min(all.length, start + VARIANT_PAGE_SIZE);
+            commerceHost.appendChild(
+              el('p', {
+                className: 'lead',
+                text:
+                  'عرض ' +
+                  (start + 1) +
+                  '–' +
+                  end +
+                  ' من ' +
+                  all.length +
+                  (all.length > VARIANT_PAGE_SIZE ? ' (تصفح دون فقدان التعديلات)' : ''),
+              }),
+            );
+            all.slice(start, end).forEach((v, idx) => {
+              const absIdx = start + idx;
+              const priceIn = el('input', {
+                type: 'text',
+                inputmode: 'decimal',
+                placeholder: 'سعر التركيبة (ريال)',
+                value:
+                  v.priceSarText != null
+                    ? v.priceSarText
+                    : v.priceHalalas != null
+                      ? halalasToSar(v.priceHalalas)
+                      : '',
+                disabled: locked,
+                'data-variant': v.id,
+              });
+              priceIn.addEventListener('input', () => {
+                const t = priceIn.value;
+                v.priceSarText = t;
+                const trimmed = t.trim();
+                if (!trimmed) {
+                  v.priceHalalas = null;
+                  v.priceError = null;
+                } else {
+                  try {
+                    v.priceHalalas = sarToHalalas(trimmed);
+                    v.priceError = null;
+                  } catch (e) {
+                    v.priceError = e.message || 'سعر تركيبة غير صالح';
+                    // keep typed text; do NOT write old price as accepted
+                  }
+                }
+                bumpEdit(batchIdFrozen, card.cardId, 'variantsJson');
+                dirtyBadge.textContent = 'غير محفوظ';
+                err.textContent = v.priceError || state.priceError || state.error || '';
+              });
+              const qtyIn = el('input', {
+                type: 'text',
+                inputmode: 'numeric',
+                placeholder: 'كمية (فارغ=غير محدد)',
+                value: v.stockQtyText != null ? v.stockQtyText : v.stockQty != null ? String(v.stockQty) : '',
+                disabled: locked,
+              });
+              qtyIn.addEventListener('input', () => {
+                const t = qtyIn.value;
+                v.stockQtyText = t;
+                const trimmed = t.trim();
+                if (!trimmed) {
+                  v.stockQty = null;
+                  v.stockError = null;
+                } else if (!/^\d+$/.test(trimmed)) {
+                  v.stockError = 'الكمية يجب أن تكون عددًا صحيحًا غير سالب أو فارغة';
+                } else {
+                  v.stockQty = Number(trimmed);
+                  v.stockError = null;
+                }
+                bumpEdit(batchIdFrozen, card.cardId, 'variantsJson');
+                dirtyBadge.textContent = 'غير محفوظ';
+                err.textContent = v.stockError || v.priceError || state.priceError || state.error || '';
+              });
+              const avail = el('input', {
+                type: 'checkbox',
+                checked: v.available !== false,
+                disabled: locked,
+              });
+              avail.addEventListener('change', () => {
+                v.available = !!avail.checked;
+                bumpEdit(batchIdFrozen, card.cardId, 'variantsJson');
+                dirtyBadge.textContent = 'غير محفوظ';
+              });
+              list.appendChild(
+                el('div', { className: 'bulk-variant-row', 'data-variant-index': String(absIdx) }, [
+                  el('strong', { text: (v.id || 'v' + absIdx) + ' #' + (absIdx + 1) }),
+                  ' ',
+                  priceIn,
+                  qtyIn,
+                  el('label', null, [avail, ' متاح']),
+                  v.priceError || v.stockError
+                    ? el('span', {
+                        style: 'color:#b00020',
+                        text: ' ' + (v.priceError || v.stockError),
+                      })
+                    : null,
+                ]),
+              );
+            });
+            if (all.length > VARIANT_PAGE_SIZE) {
+              const nav = el('div', { className: 'journey-actions' });
+              nav.appendChild(
+                el('button', {
+                  type: 'button',
+                  className: 'btn btn-ghost',
+                  text: 'السابق',
+                  disabled: page <= 0 || locked,
+                  onClick: () => {
+                    state.variantPage = Math.max(0, page - 1);
+                    renderCards();
+                  },
+                }),
+              );
+              nav.appendChild(
+                el('button', {
+                  type: 'button',
+                  className: 'btn btn-ghost',
+                  text: 'التالي',
+                  disabled: end >= all.length || locked,
+                  onClick: () => {
+                    state.variantPage = page + 1;
+                    renderCards();
+                  },
+                }),
+              );
+              list.appendChild(nav);
+            }
+            commerceHost.appendChild(list);
+          }
+          fieldsHost.appendChild(commerceHost);
+        }
+
+        // Service: weekly hours + exceptions compact (capacity/branch/duration already typed above)
+        if (batch.kind === 'service') {
+          const sched = el('div', { className: 'bulk-schedule' });
+          sched.appendChild(el('p', { className: 'lead', text: 'ساعات أسبوعية (اختياري)' }));
+          let hours = Array.isArray(state.localValues.weeklyHours)
+            ? state.localValues.weeklyHours.slice()
+            : [];
+          WEEK_DAYS.forEach((d) => {
+            const existing = hours.find((h) => h && (h.day === d.id || h.weekday === d.id));
+            const on = el('input', {
+              type: 'checkbox',
+              checked: !!existing,
+              disabled: locked,
+            });
+            const open = el('input', {
+              type: 'time',
+              value: (existing && (existing.open || existing.start)) || '10:00',
+              disabled: locked || !existing,
+            });
+            const close = el('input', {
+              type: 'time',
+              value: (existing && (existing.close || existing.end)) || '18:00',
+              disabled: locked || !existing,
+            });
+            const syncHours = () => {
+              hours = hours.filter((h) => h && h.day !== d.id && h.weekday !== d.id);
+              if (on.checked) {
+                hours.push({ day: d.id, open: open.value, close: close.value });
+              }
+              if (!hours.length) delete state.localValues.weeklyHours;
+              else state.localValues.weeklyHours = hours;
+              bumpEdit(batchIdFrozen, card.cardId, 'weeklyHours');
+              dirtyBadge.textContent = 'غير محفوظ';
+              open.disabled = locked || !on.checked;
+              close.disabled = locked || !on.checked;
+            };
+            on.addEventListener('change', syncHours);
+            open.addEventListener('change', syncHours);
+            close.addEventListener('change', syncHours);
+            sched.appendChild(
+              el('div', { style: 'display:flex;gap:8px;align-items:center;margin:4px 0' }, [
+                el('label', null, [on, ' ' + d.label]),
+                open,
+                el('span', { text: '→' }),
+                close,
+              ]),
+            );
+          });
+          const excIn = el('input', {
+            type: 'text',
+            placeholder: 'استثناءات تواريخ YYYY-MM-DD مفصولة بفاصلة (اختياري)',
+            value: Array.isArray(state.localValues.dateExceptions)
+              ? state.localValues.dateExceptions
+                  .map((x) => (typeof x === 'string' ? x : x.date || ''))
+                  .filter(Boolean)
+                  .join(',')
+              : '',
+            disabled: locked,
+          });
+          excIn.addEventListener('change', () => {
+            const parts = excIn.value
+              .split(',')
+              .map((s) => s.trim())
+              .filter(Boolean);
+            if (!parts.length) delete state.localValues.dateExceptions;
+            else state.localValues.dateExceptions = parts.map((date) => ({ date: date, closed: true }));
+            bumpEdit(batchIdFrozen, card.cardId, 'dateExceptions');
+            dirtyBadge.textContent = 'غير محفوظ';
+          });
+          sched.appendChild(el('label', null, ['استثناءات ', excIn]));
+          fieldsHost.appendChild(sched);
+        }
+
         const saveBtn = el('button', {
           type: 'button',
           className: 'btn btn-ghost',
-          text: locked ? 'محوّلة — لا حفظ مسودة' : 'حفظ البطاقة',
+          text: state.status === 'materialized' ? 'محوّلة' : 'حفظ البطاقة',
           disabled: locked,
           onClick: async () => {
-            if (locked) {
-              err.textContent = 'البطاقة محوّلة. افتحي العنصر للتعديل.';
-              return;
-            }
+            const ctx = freezeCtx(batch);
             try {
-              await saveCard(card.cardId);
-              dirtyBadge.textContent = state.dirty ? 'غير محفوظ' : 'محفوظ';
-              err.textContent = state.error || '';
-            } catch (_) {
-              err.textContent = state.error || 'فشل الحفظ';
-              dirtyBadge.textContent = state.dirty ? 'غير محفوظ' : 'محفوظ';
+              await saveCard(ctx, card.cardId, {});
+            } catch (e) {
+              err.textContent = (e && e.message) || 'فشل الحفظ';
             }
           },
         });
@@ -521,9 +1119,9 @@
                     j.fileName +
                     ' · ' +
                     j.status +
-                    (j.sessionId ? ' · session…' + String(j.sessionId).slice(-6) : '') +
+                    (j.sessionId ? ' · sess…' + String(j.sessionId).slice(-6) : '') +
                     (j.mediaId ? ' · media ' + j.mediaId : '') +
-                    (j.needsLocalFile ? ' · يلزم إعادة اختيار الملف' : ''),
+                    (j.needsLocalFile ? ' · يلزم ملف' : ''),
                 }),
                 el('button', {
                   type: 'button',
@@ -531,7 +1129,7 @@
                   text: 'إلغاء التعيين',
                   onClick: () => {
                     if (j.status === 'uploading' || j.status === 'verifying') {
-                      status.textContent = 'لا يمكن إلغاء تعيين رفع جارٍ من هنا دون إيقاف العملية.';
+                      setStatusFor(batch.batchId, 'لا يُلغى رفع جارٍ من الواجهة دون معرفة حالة الخادم.');
                       return;
                     }
                     delete mediaJobs[j.clientMediaId];
@@ -552,18 +1150,18 @@
           onClick: () => {
             const files = fileInput.files;
             if (!files || !files.length) {
-              status.textContent = 'اختاري ملفات أولًا ثم عيّنيها يدويًا لكل بطاقة (لا توزيع تلقائي).';
+              setStatusFor(batch.batchId, 'اختاري ملفات ثم عيّنيها يدويًا.');
               return;
             }
-            const batchIdFrozen = batch.batchId;
+            const ctx = freezeCtx(batch);
             const cardIdFrozen = card.cardId;
             Array.from(files).forEach((file) => {
               const clientMediaId = newClientMediaId();
               mediaJobs[clientMediaId] = {
-                clientMediaId,
-                batchId: batchIdFrozen,
+                clientMediaId: clientMediaId,
+                batchId: ctx.batchId,
                 cardId: cardIdFrozen,
-                file,
+                file: file,
                 fileName: file.name,
                 mimeType: file.type || 'application/octet-stream',
                 size: file.size,
@@ -571,52 +1169,85 @@
                 sessionId: null,
                 mediaId: null,
                 ownerId: state.targetOwnerId || null,
-                ownerKindPath: batch.kind === 'product' ? 'products' : 'services',
+                ownerKindPath: ctx.ownerKindPath,
                 error: null,
                 needsLocalFile: false,
               };
             });
             persistMediaMeta();
             refreshMedia();
-            status.textContent =
-              'عُيّنت ' + files.length + ' ملفًا للدفعة ' + batchIdFrozen.slice(0, 8) + ' / ' + cardIdFrozen;
+            setStatusFor(ctx.batchId, 'عُيّنت ' + files.length + ' ملفًا لـ ' + ctx.batchId.slice(0, 8) + '/' + cardIdFrozen);
           },
         });
 
         const refileInput = el('input', { type: 'file', accept: 'image/*,video/*', style: 'display:none' });
-        refileInput.addEventListener('change', () => {
+        const refileSelect = el('select');
+        const refreshRefileOptions = () => {
+          refileSelect.innerHTML = '';
+          refileSelect.appendChild(el('option', { value: '', text: 'اختاري مهمة تحتاج ملفًا' }));
+          jobsForCard(batch.batchId, card.cardId)
+            .filter((j) => j.needsLocalFile || j.status === 'needs_reconcile' || j.status === 'needs_file')
+            .forEach((j) => {
+              refileSelect.appendChild(
+                el('option', {
+                  value: j.clientMediaId,
+                  text: j.fileName + ' · ' + j.status,
+                }),
+              );
+            });
+        };
+        refreshRefileOptions();
+        refileInput.addEventListener('change', async () => {
           const file = refileInput.files && refileInput.files[0];
-          if (!file) return;
-          const need = jobsForCard(batch.batchId, card.cardId).find((j) => j.needsLocalFile && j.status !== 'ready');
-          if (!need) {
-            status.textContent = 'لا مهمة تحتاج إعادة اختيار ملف لهذه البطاقة.';
+          const mid = refileSelect.value;
+          if (!file || !mid) return;
+          const need = mediaJobs[mid];
+          if (!need || need.batchId !== batch.batchId || need.cardId !== card.cardId) {
+            setStatusFor(batch.batchId, 'المهمة لا تطابق هذه البطاقة.');
             return;
           }
           if (need.size && file.size !== need.size) {
-            status.textContent = 'الحجم لا يطابق جلسة الرفع المحفوظة.';
+            setStatusFor(batch.batchId, 'الحجم لا يطابق الجلسة.');
             return;
+          }
+          if (need.checksum && typeof PartnersApi.sha256FileIncremental === 'function') {
+            try {
+              const actual = await PartnersApi.sha256FileIncremental(file, {});
+              if (actual !== need.checksum) {
+                setStatusFor(batch.batchId, 'البصمة لا تطابق جلسة الرفع.');
+                return;
+              }
+            } catch (_) {}
           }
           need.file = file;
           need.needsLocalFile = false;
           need.fileName = file.name;
           need.mimeType = file.type || need.mimeType;
+          if (need.status === 'needs_file' || need.status === 'needs_reconcile') need.status = 'assigned';
           persistMediaMeta();
           refreshMedia();
-          status.textContent = 'أُعيد ربط الملف المحلي للمهمة ' + need.clientMediaId.slice(0, 8);
+          refreshRefileOptions();
+          setStatusFor(batch.batchId, 'أُعيد ربط الملف للمهمة ' + mid.slice(0, 8));
         });
         const refileBtn = el('button', {
           type: 'button',
           className: 'btn btn-ghost',
-          text: 'إعادة اختيار ملف لجلسة محفوظة',
-          onClick: () => refileInput.click(),
+          text: 'إعادة اختيار ملف للمهمة المحددة',
+          onClick: () => {
+            if (!refileSelect.value) {
+              setStatusFor(batch.batchId, 'حددي مهمة تحتاج ملفًا.');
+              return;
+            }
+            refileInput.click();
+          },
         });
 
         const phase =
           state.status === 'materialized'
-            ? 'محوّل' +
+            ? 'عنصر مُنشأ' +
               (state.contentStatus ? ' · محتوى:' + state.contentStatus : '') +
               (state.submitReviewStatus ? ' · مراجعة:' + state.submitReviewStatus : '')
-            : 'مسودة محفوظة';
+            : 'مسودة';
 
         cardsHost.appendChild(
           el('div', { className: 'bulk-card', 'data-batch': batch.batchId, 'data-card': card.cardId }, [
@@ -625,14 +1256,13 @@
               el('strong', { text: card.cardId }),
               el('span', { text: ' · ' + phase + ' · ' }),
               dirtyBadge,
-              state.targetOwnerId
-                ? el('a', { href: state.openUrl || card.openUrl, text: ' فتح العنصر للتعديل' })
-                : null,
+              state.targetOwnerId ? el('a', { href: state.openUrl || card.openUrl, text: ' فتح العنصر' }) : null,
             ]),
             fieldsHost,
-            locked ? null : saveBtn,
-            locked ? null : assignBtn,
-            locked ? null : refileBtn,
+            state.status === 'materialized' ? null : saveBtn,
+            assignBtn,
+            refileSelect,
+            refileBtn,
             refileInput,
             mediaList,
             err,
@@ -646,11 +1276,7 @@
       try {
         const list = await PartnersApi.listBulkBatches();
         listHost.appendChild(el('h3', { text: 'دفعاتي' }));
-        if (!list.items || !list.items.length) {
-          listHost.appendChild(el('p', { className: 'lead', text: 'لا دفعات بعد.' }));
-          return;
-        }
-        list.items.forEach((it) => {
+        (list.items || []).forEach((it) => {
           listHost.appendChild(
             el('div', { className: 'journey-actions' }, [
               el('button', {
@@ -662,23 +1288,14 @@
                   it.kind +
                   ' · ' +
                   it.cardCount +
-                  ' · ' +
-                  (it.createStatus || '') +
                   ' · محوّل ' +
                   (it.materializedCount || 0),
                 onClick: async () => {
                   if (!confirmLeaveIfNeeded()) return;
                   try {
                     const b = await PartnersApi.getBulkBatch(it.batchId);
-                    syncStateFromBatch(b);
-                    setBulkUrl(b.batchId);
-                    status.textContent =
-                      'فُتحت الدفعة ' +
-                      b.batchId +
-                      ' · وسائط هذه الدفعة: ' +
-                      jobsForBatch(b.batchId).length +
-                      ' (دفعات أخرى معزولة)';
-                    renderCards();
+                    openBatchView(b);
+                    setStatusFor(b.batchId, 'فُتحت ' + b.batchId + ' · وسائط: ' + jobsForBatch(b.batchId).length);
                   } catch (e) {
                     status.textContent = (e && (e.messageAr || e.message)) || String(e);
                   }
@@ -700,14 +1317,12 @@
         if (!confirmLeaveIfNeeded()) return;
         try {
           if (!registry || profileSelect.disabled || !profileSelect.value) {
-            status.textContent = registryError
-              ? 'تعذر إنشاء الدفعة: ' + registryError
-              : 'اختاري قالبًا مسموحًا من الخادم أولًا.';
+            status.textContent = registryError || 'اختاري قالبًا من الخادم.';
             return;
           }
           const count = Number(countInput.value);
           if (!Number.isInteger(count) || count < 1) {
-            status.textContent = 'أدخلي عددًا صحيحًا دون كسور.';
+            status.textContent = 'عدد صحيح فقط.';
             return;
           }
           let batchId = sessionStorage.getItem(BATCH_KEY);
@@ -715,19 +1330,15 @@
             batchId = newBatchId();
             sessionStorage.setItem(BATCH_KEY, batchId);
           }
-          status.textContent = 'إنشاء الدفعة ' + batchId + '…';
           const b = await PartnersApi.createBulkBatch({
             kind: kindSelect.value,
             profileId: profileSelect.value,
-            count,
-            batchId,
+            count: count,
+            batchId: batchId,
           });
           sessionStorage.removeItem(BATCH_KEY);
-          // Do NOT clear mediaJobs — other batches' assignments must survive.
-          syncStateFromBatch(b);
-          setBulkUrl(b.batchId);
-          status.textContent = 'دفعة جاهزة ' + b.batchId + ' · ' + b.cards.length + ' بطاقة';
-          renderCards();
+          openBatchView(b);
+          setStatusFor(b.batchId, 'دفعة جاهزة ' + b.batchId);
           await loadMyBatches();
         } catch (e) {
           status.textContent = (e && (e.messageAr || e.message)) || String(e);
@@ -735,65 +1346,58 @@
       },
     });
 
-    const sharedName = el('input', { id: 'bulkSharedName', type: 'text', placeholder: 'اسم مشترك' });
-    const sharedPrice = el('input', { id: 'bulkSharedPrice', type: 'text', placeholder: 'سعر مشترك (ريال)' });
-    const overwriteCk = el('input', { id: 'bulkOverwrite', type: 'checkbox' });
-    const fileInput = el('input', { id: 'bulkFiles', type: 'file', multiple: 'multiple', accept: 'image/*,video/*' });
+    const sharedName = el('input', { type: 'text', placeholder: 'اسم مشترك' });
+    const sharedPrice = el('input', { type: 'text', placeholder: 'سعر مشترك (ريال)' });
+    const overwriteCk = el('input', { type: 'checkbox' });
+    const fileInput = el('input', { type: 'file', multiple: 'multiple', accept: 'image/*,video/*' });
+    let lastPreview = null;
 
     const selectedIds = () =>
       Array.from(cardsHost.querySelectorAll('.bulk-card-ck:checked')).map((n) => n.getAttribute('data-card'));
-
-    let lastPreview = null;
 
     const previewBtn = el('button', {
       type: 'button',
       className: 'btn btn-ghost',
       text: 'معاينة التعبئة',
       onClick: async () => {
-        if (!batch) return;
+        if (!openBatch) return;
+        const ctx = freezeCtx(openBatch);
         const values = {};
         if (sharedName.value.trim()) values.nameAr = sharedName.value.trim();
         if (sharedPrice.value.trim()) {
           try {
             values.priceHalalas = sarToHalalas(sharedPrice.value);
           } catch (e) {
-            status.textContent = e.message;
+            setStatusFor(ctx.batchId, e.message);
             return;
           }
         }
         const cardIds = selectedIds();
         const expectedRevisions = {};
+        const map = ensureBatchCards(ctx.batchId);
         cardIds.forEach((id) => {
-          const st = currentCards()[id];
-          if (st) expectedRevisions[id] = st.revision;
+          if (map[id]) expectedRevisions[id] = map[id].revision;
         });
         try {
-          const preview = await PartnersApi.applyBulkShared(batch.batchId, {
+          const preview = await PartnersApi.applyBulkShared(ctx.batchId, {
             previewOnly: true,
-            cardIds,
-            values,
+            cardIds: cardIds,
+            values: values,
             overwriteWritten: overwriteCk.checked,
-            expectedRevisions,
+            expectedRevisions: expectedRevisions,
           });
-          lastPreview = { batchId: batch.batchId, expectedRevisions, values, cardIds, at: Date.now() };
+          lastPreview = {
+            batchId: ctx.batchId,
+            expectedRevisions: expectedRevisions,
+            values: values,
+            cardIds: cardIds,
+          };
           const lines = (preview.perCard || [])
-            .map(
-              (p) =>
-                p.cardId +
-                '@' +
-                p.revision +
-                ': تعيين[' +
-                (p.willSet || []).join(',') +
-                '] مسح[' +
-                (p.willClear || []).join(',') +
-                '] حظر[' +
-                (p.wouldBlock || []).join(',') +
-                ']',
-            )
+            .map((p) => p.cardId + '@' + p.revision + ':[' + (p.willSet || []).join(',') + ']')
             .join(' · ');
-          status.textContent = 'معاينة مربوطة بالإصدارات: ' + (lines || 'لا تغيير');
+          setStatusFor(ctx.batchId, 'معاينة ' + ctx.batchId.slice(0, 8) + ': ' + (lines || 'لا تغيير'));
         } catch (e) {
-          status.textContent = (e && (e.messageAr || e.message)) || String(e);
+          setStatusFor(ctx.batchId, (e && (e.messageAr || e.message)) || String(e));
         }
       },
     });
@@ -803,82 +1407,321 @@
       className: 'btn btn-ghost',
       text: 'تعبئة مشتركة',
       onClick: async () => {
-        if (!batch) return;
+        if (!openBatch) return;
+        const ctx = freezeCtx(openBatch);
+        if (commitLocks[ctx.batchId]) {
+          setStatusFor(ctx.batchId, 'تعبئة مرفوضة — تحويل/حفظ حرج جارٍ على هذه الدفعة.');
+          return;
+        }
         const values = {};
         if (sharedName.value.trim()) values.nameAr = sharedName.value.trim();
         if (sharedPrice.value.trim()) {
           try {
             values.priceHalalas = sarToHalalas(sharedPrice.value);
           } catch (e) {
-            status.textContent = e.message;
+            setStatusFor(ctx.batchId, e.message);
             return;
           }
         }
         const cardIds = selectedIds();
+        const map = ensureBatchCards(ctx.batchId);
         const expectedRevisions = {};
         const blockedLocal = [];
         cardIds.forEach((id) => {
-          const st = currentCards()[id];
+          const st = map[id];
           if (!st) return;
           expectedRevisions[id] = st.revision;
           if (st.dirty && !overwriteCk.checked) blockedLocal.push(id);
+          if (cardHasValidationErrors(st)) blockedLocal.push(id + ':invalid');
         });
         if (blockedLocal.length && !overwriteCk.checked) {
-          status.textContent =
-            'بطاقات بتعديلات محلية غير محفوظة: ' + blockedLocal.join(', ') + ' — احفظيها أو فعّلي الاستبدال.';
+          setStatusFor(ctx.batchId, 'بطاقات dirty/غير صالحة: ' + blockedLocal.join(',') + ' — احفظي أو فعّلي الاستبدال.');
           return;
         }
-        if (lastPreview && lastPreview.batchId === batch.batchId) {
+        if (blockedLocal.some((x) => String(x).indexOf(':invalid') >= 0)) {
+          setStatusFor(ctx.batchId, 'تعبئة مرفوضة — أصلحي القيم غير الصالحة أولًا.');
+          return;
+        }
+        if (lastPreview && lastPreview.batchId === ctx.batchId) {
           const drift = cardIds.filter((id) => lastPreview.expectedRevisions[id] !== expectedRevisions[id]);
           if (drift.length) {
-            status.textContent =
-              'تغيرت إصدارات بعد المعاينة (' + drift.join(',') + '). أعيدي المعاينة قبل التطبيق.';
+            setStatusFor(ctx.batchId, 'تغيرت إصدارات بعد المعاينة (' + drift.join(',') + ').');
             return;
           }
         }
         try {
-          const out = await PartnersApi.applyBulkShared(batch.batchId, {
-            cardIds,
-            values,
+          const out = await PartnersApi.applyBulkShared(ctx.batchId, {
+            cardIds: cardIds,
+            values: values,
             overwriteWritten: overwriteCk.checked,
-            expectedRevisions,
+            expectedRevisions: expectedRevisions,
           });
+          // Apply ONLY to ctx.batchId card map
+          const dest = ensureBatchCards(ctx.batchId);
           (out.results || []).forEach((r) => {
-            const st = currentCards()[r.cardId];
+            const st = dest[r.cardId];
             if (!st) return;
             if (r.ok) {
-              if (!st.dirty || st.editGen === st.saveGen) {
-                st.revision = r.revision;
-                st.savedValues = Object.assign({}, r.values || {});
-                st.localValues = Object.assign({}, r.values || {});
-                st.dirty = false;
-              } else {
-                st.revision = r.revision;
-                st.savedValues = Object.assign({}, r.values || {});
-                // keep newer local edits
-              }
+              st.revision = r.revision;
+              st.savedValues = Object.assign({}, r.values || {});
+              // Merge server values into local only for fields that were not dirtied after request,
+              // or when overwrite / not dirty.
+              const serverVals = r.values || {};
+              Object.keys(serverVals).forEach((k) => {
+                if (st.dirtyFields[k] && st.editGen !== st.saveGen) return;
+                st.localValues[k] = serverVals[k];
+                if (k === 'priceHalalas') {
+                  st.priceSarText = serverVals[k] != null ? halalasToSar(serverVals[k]) : '';
+                  st.priceError = null;
+                  delete st.dirtyFields.priceHalalas;
+                } else {
+                  delete st.dirtyFields[k];
+                }
+              });
+              st.dirty = Object.keys(st.dirtyFields).length > 0;
+              st.error = null;
             } else {
               const errBody = r.error || {};
               st.error = errBody.messageAr || errBody.message || errBody.code || 'فشل';
             }
           });
-          renderCards();
-          if (out.allOk) status.textContent = 'تعبئة مشتركة: نجحت كل البطاقات (' + out.succeeded + ').';
+          if (isOpen(ctx.batchId)) renderCards();
+          if (out.allOk) setStatusFor(ctx.batchId, 'تعبئة ' + ctx.batchId.slice(0, 8) + ': نجحت كلها (' + out.succeeded + ')');
           else if (out.partial)
-            status.textContent = 'نجاح جزئي: نجح ' + out.succeeded + ' · تعثر ' + out.failed;
-          else status.textContent = 'تعبئة مشتركة: فشلت (' + out.failed + ').';
+            setStatusFor(ctx.batchId, 'نجاح جزئي على ' + ctx.batchId.slice(0, 8) + ': ' + out.succeeded + '/' + out.failed);
+          else setStatusFor(ctx.batchId, 'تعبئة فشلت على ' + ctx.batchId.slice(0, 8));
         } catch (e) {
-          status.textContent = (e && (e.messageAr || e.message)) || String(e);
+          setStatusFor(ctx.batchId, (e && (e.messageAr || e.message)) || String(e));
         }
       },
     });
 
+    /**
+     * Map server upload-session status → UI job status per API contract.
+     * ready | uploaded | verifying | uploading(+storageCompleted) must NOT become needs_file.
+     */
+    async function reconcileJobSession(job) {
+      if (!job.sessionId || typeof PartnersApi.getUploadSession !== 'function') return job;
+      try {
+        const sess = await PartnersApi.getUploadSession(job.sessionId);
+        if (!sess) return job;
+        if (sess.ownerKind === 'product') job.ownerKindPath = 'products';
+        else if (sess.ownerKind === 'service') job.ownerKindPath = 'services';
+        if (sess.ownerId) job.ownerId = sess.ownerId;
+        if (sess.declaredChecksum) job.checksum = sess.declaredChecksum;
+        if (sess.declaredByteSize != null) job.size = sess.declaredByteSize;
+
+        const mediaId = sess.catalogMediaId || sess.mediaId || null;
+        if (sess.status === 'ready' && mediaId) {
+          job.status = 'ready';
+          job.mediaId = mediaId;
+          job.file = null;
+          job.needsLocalFile = false;
+          job.error = null;
+          persistMediaMeta();
+          return job;
+        }
+        if (
+          sess.status === 'uploaded' ||
+          sess.status === 'verifying' ||
+          sess.status === 'finalizing' ||
+          sess.status === 'completing' ||
+          (sess.status === 'uploading' && sess.storageCompleted) ||
+          (sess.status === 'failed' && sess.failureClass === 'retryable')
+        ) {
+          job.status = 'verifying';
+          job.needsLocalFile = false;
+          job.error = null;
+          persistMediaMeta();
+          return job;
+        }
+        if (sess.status === 'aborted') {
+          job.status = 'failed';
+          job.error = sess.failureMessageAr || 'أُلغي الرفع';
+          job.needsLocalFile = false;
+          persistMediaMeta();
+          return job;
+        }
+        if (sess.status === 'failed' && sess.failureClass === 'permanent') {
+          job.status = 'failed';
+          job.error = sess.failureMessageAr || sess.failureCode || 'فشل دائم';
+          job.needsLocalFile = false;
+          persistMediaMeta();
+          return job;
+        }
+        // uploading without storageCompleted, or initiated — may still need local bytes
+        const partsDone = Array.isArray(sess.parts) ? sess.parts.length : sess.completedParts || 0;
+        const partsTotal = sess.totalParts || 0;
+        if (partsDone > 0 && partsDone < partsTotal && !job.file) {
+          job.status = 'needs_file';
+          job.needsLocalFile = true;
+          job.error = null;
+          persistMediaMeta();
+          return job;
+        }
+        if (!job.file && sess.status === 'uploading' && !sess.storageCompleted) {
+          job.status = 'needs_file';
+          job.needsLocalFile = true;
+          job.error = null;
+          persistMediaMeta();
+          return job;
+        }
+        persistMediaMeta();
+      } catch (e) {
+        const code = e && e.code;
+        if (code === 'NOT_FOUND' || (e && e.status === 404)) {
+          job.status = 'failed';
+          job.error = 'الجلسة غير موجودة أو غير مصرح بها';
+          job.needsLocalFile = false;
+          persistMediaMeta();
+          throw e;
+        }
+        throw e;
+      }
+      return job;
+    }
+
+    async function pollVerifyUntilReady(job, opts) {
+      const maxMs = (opts && opts.maxMs) || 15000;
+      const started = Date.now();
+      while (Date.now() - started < maxMs) {
+        await reconcileJobSession(job);
+        if (job.status === 'ready') return job;
+        if (job.status === 'failed') return job;
+        if (job.status !== 'verifying') return job;
+        await new Promise((r) => setTimeout(r, 500));
+        if (typeof PartnersApi.uploadViaSession === 'function' && job.sessionId && !job.file) {
+          // Prefer GET-only reconcile; retry-finalize is inside uploadViaSession when file present.
+          try {
+            if (typeof PartnersApi.getUploadSession === 'function') {
+              const sess = await PartnersApi.getUploadSession(job.sessionId);
+              if (sess && sess.status === 'failed' && sess.failureClass === 'retryable') {
+                // leave as verifying — user can click resume again
+              }
+            }
+          } catch (_) {}
+        }
+      }
+      return job;
+    }
+
+    function acquireBatchCommitLock(batchId) {
+      if (commitLocks[batchId]) return false;
+      commitLocks[batchId] = true;
+      const map = ensureBatchCards(batchId);
+      Object.keys(map).forEach((id) => {
+        map[id].commitLocked = true;
+      });
+      return true;
+    }
+
+    function releaseBatchCommitLock(batchId) {
+      delete commitLocks[batchId];
+      const map = ensureBatchCards(batchId);
+      Object.keys(map).forEach((id) => {
+        map[id].commitLocked = false;
+      });
+    }
+
+    async function ensureOwnerForUpload(ctx, st) {
+      let ownerId = ctx.ownerId || st.targetOwnerId;
+      if (ownerId) return ownerId;
+      const lockKey = cardKey(ctx.batchId, ctx.cardId);
+      if (cardMatLocks[lockKey] || commitLocks[ctx.batchId]) {
+        throw new Error('تحويل جارٍ لهذه البطاقة/الدفعة — انتظري');
+      }
+      if (cardHasValidationErrors(st)) {
+        throw new Error('قيم غير صالحة — أوقِف التحويل التلقائي قبل الرفع');
+      }
+      if (st.dirty) {
+        throw new Error('لا تحويل تلقائي قبل الرفع مع تعديلات غير معتمدة');
+      }
+      // Freeze independent snapshot of approved values before any await
+      const committedValues = deepCloneJson(st.savedValues || {});
+      const committedRev = st.revision;
+      if (!acquireBatchCommitLock(ctx.batchId)) {
+        throw new Error('قفل التحويل مشغول');
+      }
+      cardMatLocks[lockKey] = true;
+      if (isOpen(ctx.batchId)) renderCards();
+      try {
+        const mat = await PartnersApi.materializeBulkBatch(
+          ctx.batchId,
+          { cardIds: [ctx.cardId], submitReview: false },
+          'bulk-media-' + ctx.batchId + '-' + ctx.cardId,
+        );
+        const row = (mat.results || []).find((r) => r.cardId === ctx.cardId);
+        if (!row || !row.ok) {
+          // Idempotent: re-fetch batch before assuming failure means no owner
+          try {
+            const fresh = await PartnersApi.getBulkBatch(ctx.batchId);
+            const card = (fresh.cards || []).find((c) => c.cardId === ctx.cardId);
+            if (card && card.targetOwnerId) {
+              ownerId = card.targetOwnerId;
+              const live = ensureBatchCards(ctx.batchId)[ctx.cardId];
+              if (live) {
+                live.targetOwnerId = ownerId;
+                live.status = 'materialized';
+                live.savedValues = Object.assign({}, card.values || committedValues);
+                // Only replace local display if user did not edit under lock (should be locked)
+                if (!live.dirty || live.editGen === live.saveGen) {
+                  live.localValues = Object.assign({}, live.savedValues);
+                  live.dirty = false;
+                  live.dirtyFields = Object.create(null);
+                  if (live.savedValues.priceHalalas != null) {
+                    live.priceSarText = halalasToSar(live.savedValues.priceHalalas);
+                  }
+                }
+              }
+              return ownerId;
+            }
+          } catch (_) {}
+          throw new Error(
+            (row && row.error && (row.error.messageAr || row.error.code)) || 'تعذر إنشاء العنصر قبل الرفع',
+          );
+        }
+        ownerId = row.targetOwnerId;
+        const live = ensureBatchCards(ctx.batchId)[ctx.cardId];
+        if (live) {
+          live.targetOwnerId = ownerId;
+          live.status = 'materialized';
+          live.revision = committedRev;
+          live.savedValues = Object.assign({}, committedValues);
+          // Do NOT wipe a newer local edit if lock was somehow bypassed
+          if (live.dirty && live.editGen !== live.saveGen) {
+            live.error = 'اكتمل التحويل بالقيم المعتمدة؛ بقي تعديل أحدث غير محفوظ — صحّحيه على العنصر.';
+          } else {
+            live.localValues = Object.assign({}, committedValues);
+            live.dirty = false;
+            live.dirtyFields = Object.create(null);
+            if (committedValues.priceHalalas != null) {
+              live.priceSarText = halalasToSar(committedValues.priceHalalas);
+            }
+            live.error = null;
+          }
+        }
+        return ownerId;
+      } finally {
+        delete cardMatLocks[lockKey];
+        releaseBatchCommitLock(ctx.batchId);
+        if (isOpen(ctx.batchId)) renderCards();
+      }
+    }
+
     async function runOneUpload(job) {
-      // Frozen destination — never read current `batch` for ownership.
-      const destBatchId = job.batchId;
-      const destCardId = job.cardId;
-      const map = ensureBatchCards(destBatchId);
-      const st = map[destCardId];
+      const ctx = {
+        batchId: job.batchId,
+        cardId: job.cardId,
+        ownerKindPath: job.ownerKindPath,
+        ownerId: job.ownerId,
+      };
+      if (!ctx.ownerKindPath) {
+        job.status = 'failed';
+        job.error = 'نوع المالك مفقود — لا افتراض products';
+        persistMediaMeta();
+        return;
+      }
+      const st = ensureBatchCards(ctx.batchId)[ctx.cardId];
       if (!st) {
         job.status = 'failed';
         job.error = 'بطاقة الوجهة غير محمّلة';
@@ -886,15 +1729,35 @@
         return;
       }
       if (job.status === 'ready' && job.mediaId) return;
+
+      if (job.sessionId) {
+        await reconcileJobSession(job);
+        if (job.status === 'ready') return;
+        if (job.status === 'verifying') {
+          await pollVerifyUntilReady(job, { maxMs: 12000 });
+          if (job.status === 'ready') return;
+          if (job.status === 'verifying') {
+            setStatusFor(
+              ctx.batchId,
+              'جلسة …' + String(job.sessionId).slice(-6) + ' في التحقق — اضغطي الاستكمال لاحقًا دون إعادة اختيار ملف.',
+            );
+            persistMediaMeta();
+            if (isOpen(ctx.batchId)) renderCards();
+            return;
+          }
+        }
+      }
+
       if (!job.file) {
+        if (job.status === 'verifying') return;
         job.status = 'needs_file';
         job.needsLocalFile = true;
-        job.error = 'يلزم إعادة اختيار الملف المحلي لاستكمال الجلسة';
         persistMediaMeta();
+        setStatusFor(ctx.batchId, 'يلزم إعادة اختيار الملف للمهمة ' + job.clientMediaId.slice(0, 8));
         return;
       }
+
       if (String(job.mimeType || '').indexOf('video/') === 0) {
-        // Best-effort duration gate when browser can probe; server enforces too.
         try {
           const dur = await new Promise((resolve) => {
             const v = document.createElement('video');
@@ -908,7 +1771,7 @@
           });
           if (dur > VIDEO_MAX_SECONDS) {
             job.status = 'failed';
-            job.error = 'الفيديو يتجاوز الحد المعتمد (5 دقائق)';
+            job.error = 'الفيديو يتجاوز 5 دقائق';
             persistMediaMeta();
             return;
           }
@@ -919,96 +1782,102 @@
       persistMediaMeta();
       try {
         if (st.dirty && st.status !== 'materialized') {
-          // Save within destination batch context
-          const prevBatch = batch;
-          batch = { batchId: destBatchId, kind: (batch && batch.kind) || 'product', profileId: '', cards: [] };
-          try {
-            await saveCard(destCardId, { silent: true });
-          } finally {
-            batch = prevBatch;
+          if (cardHasValidationErrors(st)) {
+            throw new Error('قيم غير صالحة — أوقِف الحفظ قبل الرفع');
+          }
+          const snap = buildSavePayload(st);
+          snap.values = deepCloneJson(snap.values);
+          snap.clearFields = (snap.clearFields || []).slice();
+          await saveCard(
+            { batchId: ctx.batchId, kind: ctx.ownerKindPath === 'products' ? 'product' : 'service', profileId: '' },
+            ctx.cardId,
+            { silent: true, skipRender: true, snapshot: snap },
+          );
+          const after = ensureBatchCards(ctx.batchId)[ctx.cardId];
+          if (after.editGen !== snap.editGen || after.dirty || cardHasValidationErrors(after)) {
+            throw new Error('تعذر اعتماد الحفظ قبل الرفع — يوجد تعديل أحدث أو قيمة غير صالحة');
           }
         }
-        let ownerId = job.ownerId || st.targetOwnerId;
-        if (!ownerId) {
-          const mat = await PartnersApi.materializeBulkBatch(
-            destBatchId,
-            { cardIds: [destCardId], submitReview: false },
-            'bulk-media-' + destBatchId + '-' + destCardId,
-          );
-          const row = (mat.results || []).find((r) => r.cardId === destCardId);
-          if (!row || !row.ok) throw new Error('تعذر إنشاء العنصر قبل الرفع');
-          ownerId = row.targetOwnerId;
-          st.targetOwnerId = ownerId;
-          st.status = 'materialized';
-          job.ownerId = ownerId;
-        } else {
-          job.ownerId = ownerId;
-        }
+        const ownerId = await ensureOwnerForUpload(ctx, ensureBatchCards(ctx.batchId)[ctx.cardId]);
+        job.ownerId = ownerId;
+        ctx.ownerId = ownerId;
 
-        if (job.sessionId && typeof PartnersApi.getUploadSession === 'function') {
-          try {
-            const sess = await PartnersApi.getUploadSession(job.sessionId);
-            if (sess && (sess.status === 'ready' || sess.mediaId)) {
-              job.status = 'ready';
-              job.mediaId = sess.mediaId || sess.id || job.mediaId;
-              job.file = null;
-              persistMediaMeta();
-              return;
-            }
-            if (sess && sess.status === 'finalizing') {
-              job.status = 'verifying';
-              persistMediaMeta();
-            }
-          } catch (_) {}
-        }
-
-        const kindForUpload = job.ownerKindPath || 'products';
-
-        job.status = job.status === 'verifying' ? 'verifying' : 'uploading';
-        const session = await PartnersApi.uploadViaSession(kindForUpload, ownerId, job.file, {
+        const session = await PartnersApi.uploadViaSession(ctx.ownerKindPath, ownerId, job.file, {
           clientMediaId: job.clientMediaId,
           sessionId: job.sessionId || undefined,
           onSession: (s) => {
             job.sessionId = s && s.sessionId;
+            if (s && s.declaredChecksum) job.checksum = s.declaredChecksum;
             persistMediaMeta();
           },
-          onProgress: () => {},
+          onProcessing: () => {
+            job.status = 'verifying';
+            job.needsLocalFile = false;
+            persistMediaMeta();
+          },
         });
         job.status = 'ready';
-        job.mediaId = session && (session.mediaId || session.id);
+        job.mediaId = session && (session.catalogMediaId || session.mediaId || session.id);
         job.file = null;
         job.needsLocalFile = false;
         job.error = null;
         persistMediaMeta();
+        if (isOpen(ctx.batchId)) renderCards();
       } catch (e) {
+        const code = e && e.code;
         const msg = (e && (e.messageAr || e.message)) || String(e);
-        if (/تحقق|finaliz|pending|جار/i.test(msg)) {
+        if (
+          code === 'verify_pending' ||
+          code === 'UPLOAD_FINALIZING' ||
+          code === 'FINALIZING' ||
+          code === 'uploaded' ||
+          code === 'verifying'
+        ) {
           job.status = 'verifying';
-          job.error = 'جارٍ التحقق من اكتمال التخزين — يمكن المتابعة لاحقًا بنفس الجلسة';
+          job.needsLocalFile = false;
+          job.error = null;
+          setStatusFor(ctx.batchId, 'التحقق مستمر لـ ' + ctx.cardId + ' — بلا إعادة رفع.');
         } else {
           job.status = 'failed';
           job.error = msg;
+          setStatusFor(ctx.batchId, 'رفع ' + ctx.cardId + ': ' + msg);
         }
         persistMediaMeta();
+        if (isOpen(ctx.batchId)) renderCards();
       }
     }
 
     async function uploadAssignedMedia() {
-      if (!batch) return;
+      if (!openBatch) return;
+      const ctx = freezeCtx(openBatch);
       if (typeof PartnersApi.uploadViaSession !== 'function') {
-        status.textContent = 'مسار الرفع غير متاح.';
+        setStatusFor(ctx.batchId, 'مسار الرفع غير متاح.');
         return;
       }
-      // Only jobs for the *current* batch that still need work — never pull other batches.
-      const pending = jobsForBatch(batch.batchId).filter(
-        (j) => j.status === 'assigned' || j.status === 'failed' || j.status === 'needs_file' || j.status === 'verifying',
+      // Reconcile restored jobs first
+      const all = jobsForBatch(ctx.batchId);
+      for (let i = 0; i < all.length; i++) {
+        const j = all[i];
+        if (j.sessionId && (j.status === 'needs_reconcile' || j.status === 'verifying' || j.status === 'uploading')) {
+          try {
+            await reconcileJobSession(j);
+          } catch (_) {}
+        }
+      }
+      const pending = jobsForBatch(ctx.batchId).filter((j) =>
+        ['assigned', 'failed', 'needs_file', 'needs_reconcile', 'verifying'].includes(j.status),
       );
       if (!pending.length) {
-        status.textContent = 'لا مهام رفع معلّقة لهذه الدفعة.';
+        const ready = jobsForBatch(ctx.batchId).filter((j) => j.status === 'ready').length;
+        setStatusFor(
+          ctx.batchId,
+          ready ? 'لا مهام معلّقة · جاهز ' + ready : 'لا مهام رفع معلّقة لهذه الدفعة.',
+        );
+        if (isOpen(ctx.batchId)) renderCards();
         return;
       }
       if (uploadPumpRunning) {
-        status.textContent = 'رفع جارٍ بالفعل (حد التزامن ' + MAX_UPLOAD_INFLIGHT + ') — لم تُنشأ مجموعة إضافية.';
+        setStatusFor(ctx.batchId, 'رفع جارٍ (حد ' + MAX_UPLOAD_INFLIGHT + ') — لم تُنشأ مجموعة إضافية.');
         return;
       }
       uploadPumpRunning = true;
@@ -1017,7 +1886,6 @@
         const pump = () => {
           while (uploadInflight < MAX_UPLOAD_INFLIGHT && i < pending.length) {
             const job = pending[i++];
-            // Skip ready (idempotent)
             if (job.status === 'ready' && job.mediaId) continue;
             uploadInflight++;
             runOneUpload(job).finally(() => {
@@ -1028,39 +1896,34 @@
               } else pump();
             });
           }
-          if (pending.length === 0) {
-            uploadPumpRunning = false;
-            resolve();
-          } else if (i >= pending.length && uploadInflight === 0) {
+          if (!pending.length || (i >= pending.length && uploadInflight === 0)) {
             uploadPumpRunning = false;
             resolve();
           }
         };
         pump();
       });
-      renderCards();
-      const all = jobsForBatch(batch.batchId);
-      const ready = all.filter((j) => j.status === 'ready').length;
-      const failed = all.filter((j) => j.status === 'failed').length;
-      const verifying = all.filter((j) => j.status === 'verifying').length;
-      const assigned = all.filter((j) => j.status === 'assigned' || j.status === 'needs_file').length;
-      status.textContent =
-        'رفع دفعة ' +
-        batch.batchId.slice(0, 8) +
-        ': جاهز ' +
-        ready +
-        ' · جارٍ التحقق ' +
-        verifying +
-        ' · فشل ' +
-        failed +
-        ' · متبقٍ ' +
-        assigned;
+      if (isOpen(ctx.batchId)) renderCards();
+      const after = jobsForBatch(ctx.batchId);
+      setStatusFor(
+        ctx.batchId,
+        'رفع ' +
+          ctx.batchId.slice(0, 8) +
+          ': جاهز ' +
+          after.filter((j) => j.status === 'ready').length +
+          ' · تحقق ' +
+          after.filter((j) => j.status === 'verifying').length +
+          ' · فشل ' +
+          after.filter((j) => j.status === 'failed').length +
+          ' · ملف ' +
+          after.filter((j) => j.status === 'needs_file').length,
+      );
     }
 
     const uploadBtn = el('button', {
       type: 'button',
       className: 'btn btn-ghost',
-      text: 'رفع وسائط هذه الدفعة فقط',
+      text: 'رفع/استكمال وسائط هذه الدفعة',
       onClick: () => uploadAssignedMedia(),
     });
 
@@ -1069,40 +1932,94 @@
       className: 'btn btn-primary',
       text: 'حفظ ثم تحويل الدفعة',
       onClick: async () => {
-        if (!batch) return;
+        if (!openBatch) return;
+        // Freeze destination BEFORE any await
+        const ctx = freezeCtx(openBatch);
+        if (!acquireBatchCommitLock(ctx.batchId)) {
+          setStatusFor(ctx.batchId, 'تحويل جارٍ فعلًا لهذه الدفعة.');
+          return;
+        }
+        // Snapshot dirty cards now (deep clone values to commit)
+        const map = ensureBatchCards(ctx.batchId);
+        const snapshots = Object.create(null);
+        let abortReason = null;
+        for (const cardId of Object.keys(map)) {
+          const st = map[cardId];
+          if (st.dirty && st.status !== 'materialized') {
+            if (cardHasValidationErrors(st)) {
+              abortReason = 'قيم غير صالحة في ' + cardId + ' — أوقِف التحويل.';
+              break;
+            }
+            const snap = buildSavePayload(st);
+            snap.values = deepCloneJson(snap.values);
+            snap.clearFields = (snap.clearFields || []).slice();
+            snapshots[cardId] = snap;
+          } else if (st.status !== 'materialized' && cardHasValidationErrors(st)) {
+            abortReason = 'قيم غير صالحة في ' + cardId + ' — أوقِف التحويل.';
+            break;
+          }
+        }
+        if (abortReason) {
+          releaseBatchCommitLock(ctx.batchId);
+          setStatusFor(ctx.batchId, abortReason);
+          if (isOpen(ctx.batchId)) renderCards();
+          return;
+        }
+        if (isOpen(ctx.batchId)) renderCards();
         try {
-          status.textContent = 'حفظ المدخلات قبل التحويل…';
-          const saved = await saveDirtyCards();
+          setStatusFor(ctx.batchId, 'حفظ دفعة ' + ctx.batchId.slice(0, 8) + '…');
+          const saved = await saveDirtyCards(ctx, { snapshots: snapshots });
           if (!saved.ok) {
-            status.textContent =
-              'تعذر التحويل: فشل حفظ ' + saved.failed.length + ' بطاقة. المدخلات محفوظة محليًا.';
-            renderCards();
+            setStatusFor(ctx.batchId, 'تعذر التحويل: فشل حفظ ' + saved.failed.length + ' بطاقة.');
             return;
           }
-          const key = 'bulk-ui-' + batch.batchId;
+          const afterMap = ensureBatchCards(ctx.batchId);
+          for (const cardId of Object.keys(snapshots)) {
+            const st = afterMap[cardId];
+            if (st.dirty && st.editGen !== st.saveGen) {
+              setStatusFor(ctx.batchId, 'توقف التحويل: تعديل أحدث على ' + cardId);
+              return;
+            }
+            if (cardHasValidationErrors(st)) {
+              setStatusFor(ctx.batchId, 'توقف التحويل: قيمة غير صالحة على ' + cardId);
+              return;
+            }
+          }
+          setStatusFor(ctx.batchId, 'تحويل ' + ctx.batchId.slice(0, 8) + '…');
+          const key = 'bulk-ui-' + ctx.batchId;
           const out = await PartnersApi.materializeBulkBatch(
-            batch.batchId,
+            ctx.batchId,
             { submitReview: true, failedOnly: true },
             key,
           );
-          const fresh = await PartnersApi.getBulkBatch(batch.batchId);
-          syncStateFromBatch(fresh);
-          renderCards();
+          const fresh = await PartnersApi.getBulkBatch(ctx.batchId);
+          syncStateFromBatch(fresh, { forceClean: true, keepOpenUntouched: !isOpen(ctx.batchId) });
+          if (isOpen(ctx.batchId)) {
+            openBatch = fresh;
+            renderCards();
+          }
           const detail = (out.results || [])
             .filter((r) => !r.ok)
             .map((r) => r.cardId + ':' + ((r.error && (r.error.messageAr || r.error.code)) || 'fail'))
             .join(' · ');
-          status.textContent =
-            'مسودة→محوّل: نجح ' +
-            out.succeeded +
-            ' · تعثر ' +
-            out.failed +
-            ' · تخطي ' +
-            out.skipped +
-            (detail ? ' | ' + detail : '') +
-            ' — التحويل ليس نشرًا علنيًا.';
+          setStatusFor(
+            ctx.batchId,
+            'تحويل ' +
+              ctx.batchId.slice(0, 8) +
+              ': نجح ' +
+              out.succeeded +
+              ' · تعثر ' +
+              out.failed +
+              ' · تخطي ' +
+              out.skipped +
+              (detail ? ' | ' + detail : '') +
+              ' — ليس نشرًا.',
+          );
         } catch (e) {
-          status.textContent = (e && (e.messageAr || e.message)) || String(e);
+          setStatusFor(ctx.batchId, (e && (e.messageAr || e.message)) || String(e));
+        } finally {
+          releaseBatchCommitLock(ctx.batchId);
+          if (isOpen(ctx.batchId)) renderCards();
         }
       },
     });
@@ -1122,7 +2039,7 @@
     );
     root.appendChild(
       el('p', { className: 'lead' }, [
-        'الملفات تُعيَّن يدويًا لكل بطاقة بهوية clientMediaId مستقلة وbatchId ثابت. التبديل بين الدفعات لا ينقل الرفع. حد الفيديو 5 دقائق.',
+        'العمليات تُثبّت الدفعة عند البدء. الانتقال لا يحوّل دفعة أخرى. حد الفيديو 5 دقائق.',
       ]),
     );
     root.appendChild(fileInput);
@@ -1140,20 +2057,24 @@
     root.appendChild(cardsHost);
 
     await loadMyBatches();
-
-    const q = new URLSearchParams(location.search);
-    const existing = q.get('bulk');
+    const existing = new URLSearchParams(location.search).get('bulk');
     if (existing) {
       try {
         const b = await PartnersApi.getBulkBatch(existing);
-        syncStateFromBatch(b);
-        setBulkUrl(b.batchId);
-        status.textContent =
-          'استُعيدت الدفعة ' + b.batchId + ' · مهام وسائط مستعادة: ' + jobsForBatch(b.batchId).length;
-        renderCards();
+        openBatchView(b);
+        // reconcile media for this batch on open
+        const jobs = jobsForBatch(b.batchId);
+        for (let i = 0; i < jobs.length; i++) {
+          if (jobs[i].sessionId) {
+            try {
+              await reconcileJobSession(jobs[i]);
+            } catch (_) {}
+          }
+        }
+        if (isOpen(b.batchId)) renderCards();
+        setStatusFor(b.batchId, 'استُعيدت ' + b.batchId + ' · وسائط: ' + jobsForBatch(b.batchId).length);
       } catch (e) {
-        status.textContent =
-          'تعذر فتح الدفعة: ' + ((e && (e.messageAr || e.message)) || String(e)) + ' — لم تُنشأ دفعة جديدة.';
+        status.textContent = 'تعذر فتح الدفعة: ' + ((e && (e.messageAr || e.message)) || String(e));
       }
     }
   }
@@ -1161,13 +2082,19 @@
   window.MiraBulkAdd = {
     open: openBulkUi,
     defaultLimit: DEFAULT_LIMIT,
-    sarToHalalas,
-    halalasToSar,
-    /** test hooks */
+    sarToHalalas: sarToHalalas,
+    halalasToSar: halalasToSar,
+    freezeCtx: freezeCtx,
+    buildSavePayload: buildSavePayload,
+    buildVariantsFromColorsSizes: buildVariantsFromColorsSizes,
+    cardHasValidationErrors: cardHasValidationErrors,
+    variantSelectionKey: variantSelectionKey,
     _mediaJobs: mediaJobs,
     _cardsByBatch: cardsByBatch,
     _jobsForBatch: jobsForBatch,
     _jobsForCard: jobsForCard,
+    _ensureBatchCards: ensureBatchCards,
     _cardKey: cardKey,
+    MEDIA_STORE_KEY: MEDIA_STORE_KEY,
   };
 })();
