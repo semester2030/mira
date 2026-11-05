@@ -183,8 +183,8 @@ async function main() {
     });
     await commerce.addCartItem(customer, { productId: product.id, quantity: 1, variantKey: 'v-m', selections: { size: 'm' } });
     const cartUntracked = await commerce.getCart(customer);
-    const untrackedLineIssues =
-      cartUntracked.lines?.some?.((l: { issues?: unknown[] }) => (l.issues || []).length > 0) === true;
+    const cartItems = (cartUntracked as { items?: Array<{ issues?: unknown[] }> }).items || [];
+    const untrackedLineIssues = cartItems.some((l) => (l.issues || []).length > 0);
     const untrackedOk = !untrackedLineIssues;
     // clear and test tracked null rejects
     await commerce.clearCart(customer);
@@ -196,7 +196,7 @@ async function main() {
     }
     record('P31_UNTRACKED_CART_OK', untrackedOk, {
       untrackedLineIssues,
-      lines: cartUntracked.lines?.map?.((l: { issues?: unknown[] }) => l.issues) ?? null,
+      itemIssues: cartItems.map((l) => l.issues),
     });
     record('P31_TRACKED_NULL_REJECT', unspecifiedRejected);
 
