@@ -8,6 +8,8 @@ import { join } from 'node:path';
 import { Prisma, PrismaClient } from '@prisma/client';
 import { PrismaService } from '../prisma/prisma.service';
 import { CommerceService, partnerActor } from '../marketplace/commerce.service';
+import { CatalogContentService } from '../marketplace/catalog-content.service';
+import { MemoryCatalogMediaStorage } from '../marketplace/catalog-media.storage';
 import { VariantInventoryService } from './variant-inventory.service';
 
 const outDir =
@@ -43,8 +45,35 @@ async function main() {
   const prisma = new PrismaClient();
   const commerce = new CommerceService(prisma as unknown as PrismaService);
   const inv = new VariantInventoryService(prisma as never);
+  const mediaStore = new MemoryCatalogMediaStorage();
+  const catalog = new CatalogContentService(prisma as unknown as PrismaService, mediaStore);
   const run = randomUUID().slice(0, 8);
   const cleanup: Array<() => Promise<void>> = [];
+
+  async function seedCover(productId: string) {
+    await prisma.catalogMedia.create({
+      data: {
+        ownerKind: 'product',
+        ownerId: productId,
+        kind: 'image',
+        url: `/api/v1/marketplace/media/pending-${run}`,
+        mimeType: 'image/png',
+        byteSize: 68,
+        storageKey: `test-p31/${run}/${productId}.png`,
+        isPrimary: true,
+        publication: 'published',
+        active: true,
+        sortOrder: 0,
+      },
+    });
+    await mediaStore.put(
+      `test-p31/${run}/${productId}.png`,
+      Buffer.from(
+        'iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAYAAAAfFcSJAAAADUlEQVR42mP8z8BQDwAEhQGAhKmMIQAAAABJRU5ErkJggg==',
+        'base64',
+      ),
+    );
+  }
 
   const delivery = (key: string, extra: Record<string, unknown> = {}) => ({
     idempotencyKey: key,
@@ -75,6 +104,8 @@ async function main() {
       await prisma.commerceCartItem.deleteMany({ where: { cart: { userId: user.userId } } }).catch(() => undefined);
       await prisma.commerceCart.deleteMany({ where: { userId: user.userId } }).catch(() => undefined);
       await prisma.productVariantInventory.deleteMany({ where: { product: { partnerId: partner.id } } }).catch(() => undefined);
+      await prisma.catalogMedia.deleteMany({ where: { ownerKind: 'product', ownerId: { in: (await prisma.product.findMany({ where: { partnerId: partner.id }, select: { id: true } })).map((p) => p.id) } } }).catch(() => undefined);
+      await prisma.catalogReviewLog.deleteMany({ where: { ownerKind: 'product', ownerId: { in: (await prisma.product.findMany({ where: { partnerId: partner.id }, select: { id: true } })).map((p) => p.id) } } }).catch(() => undefined);
       await prisma.product.deleteMany({ where: { partnerId: partner.id } }).catch(() => undefined);
       await prisma.partnerUser.delete({ where: { id: pu.id } }).catch(() => undefined);
       await prisma.partner.delete({ where: { id: partner.id } }).catch(() => undefined);
@@ -325,15 +356,23 @@ async function main() {
       rows: [{ variantId: 'c1', stockMode: 'tracked', stockQty: 10 }],
     });
     const baseRev = c0.rows[0].revision;
-    // Deterministic concurrent race: same expectedRevision, qty 12 vs 7 — exactly one wins.
-    const race = await Promise.allSettled([
-      inv.upsertMany(partner.id, cProd.id, {
-        rows: [{ variantId: 'c1', stockQty: 12, expectedRevision: baseRev }],
-      }),
-      inv.upsertMany(partner.id, cProd.id, {
-        rows: [{ variantId: 'c1', stockQty: 7, expectedRevision: baseRev }],
-      }),
-    ]);
+    // Deterministic barrier: both requests observe the same revision before either writes.
+    let releaseBarrier!: () => void;
+    const barrier = new Promise<void>((resolve) => {
+      releaseBarrier = resolve;
+    });
+    let arrived = 0;
+    async function racedWrite(qty: number, withMode: boolean) {
+      const seen = (await inv.list(cProd.id))[0]?.revision;
+      arrived += 1;
+      if (arrived === 2) releaseBarrier();
+      await barrier;
+      return inv.upsertMany(partner.id, cProd.id, {
+        ...(withMode ? { inventoryMode: 'variant' as const } : {}),
+        rows: [{ variantId: 'c1', stockQty: qty, expectedRevision: seen }],
+      });
+    }
+    const race = await Promise.allSettled([racedWrite(12, false), racedWrite(7, false)]);
     const wins = race.filter((r) => r.status === 'fulfilled').length;
     const losses = race.filter((r) => r.status === 'rejected').length;
     const afterRace = await inv.list(cProd.id);
@@ -348,50 +387,40 @@ async function main() {
       { wins, losses, raceQty, raceRev, baseRev },
     );
 
-    let conflictOk = false;
-    try {
-      await inv.upsertMany(partner.id, cProd.id, {
-        rows: [{ variantId: 'c1', stockQty: 99, expectedRevision: baseRev }],
+    // Repeat barrier race with inventoryMode in body
+    const midRev = (await inv.list(cProd.id))[0]!.revision;
+    arrived = 0;
+    const barrier2 = new Promise<void>((resolve) => {
+      releaseBarrier = resolve;
+    });
+    async function racedWriteMode(qty: number) {
+      const seen = (await inv.list(cProd.id))[0]?.revision;
+      arrived += 1;
+      if (arrived === 2) releaseBarrier();
+      await barrier2;
+      return inv.upsertMany(partner.id, cProd.id, {
+        inventoryMode: 'variant',
+        rows: [{ variantId: 'c1', stockQty: qty, expectedRevision: seen }],
       });
-    } catch (e) {
-      conflictOk = /VARIANT_INVENTORY_REVISION_CONFLICT|تعارض/.test(errBlob(e));
     }
-    const still = await inv.list(cProd.id);
+    const raceMode = await Promise.allSettled([racedWriteMode(20), racedWriteMode(3)]);
+    const modeWins = raceMode.filter((r) => r.status === 'fulfilled').length;
+    const afterMode = await inv.list(cProd.id);
     record(
-      'D3_STALE_REVISION_REJECTED_SERVER_KEEPS_QTY',
-      conflictOk && still[0]?.stockQty === raceQty,
-      still[0],
+      'D3_ATOMIC_RACE_WITH_INVENTORY_MODE',
+      modeWins === 1 &&
+        raceMode.filter((r) => r.status === 'rejected').length === 1 &&
+        (afterMode[0]?.stockQty === 20 || afterMode[0]?.stockQty === 3) &&
+        afterMode[0]?.revision === midRev + 1,
+      { modeWins, qty: afterMode[0]?.stockQty, rev: afterMode[0]?.revision, midRev },
     );
 
-    let missingRev = false;
-    try {
-      await inv.upsertMany(partner.id, cProd.id, {
-        rows: [{ variantId: 'c1', stockQty: 7 }],
-      });
-    } catch (e) {
-      missingRev = /VARIANT_INVENTORY_REVISION_REQUIRED|مراجعة/.test(errBlob(e));
-    }
-    const still2 = await inv.list(cProd.id);
-    record('D3_MISSING_REVISION_REJECTED', missingRev && still2[0]?.stockQty === raceQty, still2[0]);
-
-    // Also with inventoryMode present in body
-    let modeBodyConflict = false;
-    try {
-      await inv.upsertMany(partner.id, cProd.id, {
-        inventoryMode: 'variant',
-        rows: [{ variantId: 'c1', stockQty: 1, expectedRevision: baseRev }],
-      });
-    } catch (e) {
-      modeBodyConflict = /VARIANT_INVENTORY_REVISION_CONFLICT|تعارض/.test(errBlob(e));
-    }
-    record('D3_CONFLICT_WITH_INVENTORY_MODE_BODY', modeBodyConflict && (await inv.list(cProd.id))[0]?.stockQty === raceQty);
-
-    // ========== D4: draft delete must not archive published stock ==========
-    const dProd = await prisma.product.create({
+    // Multi-row atomicity: conflict on second row must not leave first row updated.
+    const multiProd = await prisma.product.create({
       data: {
         partnerId: partner.id,
-        nameAr: 'حذف',
-        nameEn: `del-${run}`,
+        nameAr: 'متعدد',
+        nameEn: `multi-${run}`,
         priceHalalas: 1000,
         purchaseMode: 'internal_cod',
         stockQty: null,
@@ -409,8 +438,116 @@ async function main() {
             id: 'size',
             labelAr: 'المقاس',
             values: [
+              { id: 'm1v', labelAr: 'M1' },
+              { id: 'm2v', labelAr: 'M2' },
+            ],
+          },
+        ],
+        variantsJson: [
+          { id: 'm1', selections: { size: 'm1v' }, available: true },
+          { id: 'm2', selections: { size: 'm2v' }, available: true },
+        ],
+      },
+    });
+    await inv.upsertMany(partner.id, multiProd.id, {
+      rows: [
+        { variantId: 'm1', stockQty: 4 },
+        { variantId: 'm2', stockQty: 4 },
+      ],
+    });
+    const mRows = await inv.list(multiProd.id);
+    const m1Rev = mRows.find((r) => r.variantId === 'm1')!.revision;
+    const m2Rev = mRows.find((r) => r.variantId === 'm2')!.revision;
+    let multiConflict = false;
+    try {
+      await inv.upsertMany(partner.id, multiProd.id, {
+        rows: [
+          { variantId: 'm1', stockQty: 9, expectedRevision: m1Rev },
+          { variantId: 'm2', stockQty: 9, expectedRevision: m2Rev - 1 }, // stale → conflict
+        ],
+      });
+    } catch (e) {
+      multiConflict = /VARIANT_INVENTORY_REVISION_CONFLICT|تعارض/.test(errBlob(e));
+    }
+    const afterMulti = await inv.list(multiProd.id);
+    record(
+      'D3_MULTI_ROW_NO_PARTIAL_UPDATE',
+      multiConflict &&
+        afterMulti.find((r) => r.variantId === 'm1')?.stockQty === 4 &&
+        afterMulti.find((r) => r.variantId === 'm2')?.stockQty === 4,
+      afterMulti,
+    );
+
+    const qtyAfterRaces = (await inv.list(cProd.id))[0]?.stockQty;
+    const tipRev = (await inv.list(cProd.id))[0]?.revision ?? 0;
+    let conflictOk = false;
+    try {
+      await inv.upsertMany(partner.id, cProd.id, {
+        rows: [{ variantId: 'c1', stockQty: 99, expectedRevision: baseRev }],
+      });
+    } catch (e) {
+      conflictOk = /VARIANT_INVENTORY_REVISION_CONFLICT|تعارض/.test(errBlob(e));
+    }
+    const still = await inv.list(cProd.id);
+    record(
+      'D3_STALE_REVISION_REJECTED_SERVER_KEEPS_QTY',
+      conflictOk && still[0]?.stockQty === qtyAfterRaces,
+      still[0],
+    );
+
+    let missingRev = false;
+    try {
+      await inv.upsertMany(partner.id, cProd.id, {
+        rows: [{ variantId: 'c1', stockQty: 7 }],
+      });
+    } catch (e) {
+      missingRev = /VARIANT_INVENTORY_REVISION_REQUIRED|مراجعة/.test(errBlob(e));
+    }
+    const still2 = await inv.list(cProd.id);
+    record('D3_MISSING_REVISION_REJECTED', missingRev && still2[0]?.stockQty === qtyAfterRaces, still2[0]);
+
+    // Also with inventoryMode present in body against stale tip
+    let modeBodyConflict = false;
+    try {
+      await inv.upsertMany(partner.id, cProd.id, {
+        inventoryMode: 'variant',
+        rows: [{ variantId: 'c1', stockQty: 1, expectedRevision: tipRev - 1 }],
+      });
+    } catch (e) {
+      modeBodyConflict = /VARIANT_INVENTORY_REVISION_CONFLICT|تعارض/.test(errBlob(e));
+    }
+    record(
+      'D3_CONFLICT_WITH_INVENTORY_MODE_BODY',
+      modeBodyConflict && (await inv.list(cProd.id))[0]?.stockQty === qtyAfterRaces,
+    );
+
+    // ========== D4 cycle: draft ↔ published ↔ inventory ==========
+    const dProd = await prisma.product.create({
+      data: {
+        partnerId: partner.id,
+        nameAr: 'حذف',
+        nameEn: `del-${run}`,
+        priceHalalas: 1000,
+        purchaseMode: 'internal_cod',
+        stockQty: null,
+        inventoryMode: 'variant',
+        externalUrl: '',
+        concernTags: [],
+        skinTypes: [],
+        contentStatus: 'published',
+        reviewStatus: 'none',
+        reviewRevision: 1,
+        active: true,
+        catalogSource: 'catalog',
+        deliveryFeeHalalas: 0,
+        optionsJson: [
+          {
+            id: 'size',
+            labelAr: 'المقاس',
+            values: [
               { id: 'd1v', labelAr: 'D1' },
               { id: 'd2v', labelAr: 'D2' },
+              { id: 'd3v', labelAr: 'D3' },
             ],
           },
         ],
@@ -420,18 +557,21 @@ async function main() {
         ],
       },
     });
+    await seedCover(dProd.id);
     await inv.upsertMany(partner.id, dProd.id, {
       rows: [
         { variantId: 'd1', stockQty: 10 },
         { variantId: 'd2', stockQty: 10 },
       ],
     });
-    // Draft removes d2 only — published still has d2
+
+    // D4-A: draft removes published d2 — stays available before approve
     await prisma.product.update({
       where: { id: dProd.id },
       data: {
         draftVariantsSet: true,
         draftVariantsJson: [{ id: 'd1', selections: { size: 'd1v' }, available: true }],
+        reviewRevision: 2,
       },
     });
     const d1BeforeDraftSave = (await inv.list(dProd.id)).find((r) => r.variantId === 'd1')!;
@@ -442,50 +582,117 @@ async function main() {
     const d2AfterDraft = (await inv.list(dProd.id)).find((r) => r.variantId === 'd2');
     const availD2 = await inv.availableForVariant(dProd.id, 'd2');
     record(
-      'D4_DRAFT_DELETE_KEEPS_PUBLISHED_AVAILABLE',
+      'D4_A_DRAFT_DELETE_KEEPS_PUBLISHED_AVAILABLE',
       derivedAfterDraft.derivedStockQty === 20 && !d2AfterDraft?.archivedAt && availD2 === 10,
       { derivedAfterDraft, d2AfterDraft, availD2 },
     );
 
-    // Reject draft path: clear review flags but keep published — simulate reject by clearing draft only
-    await prisma.product.update({
-      where: { id: dProd.id },
-      data: { draftVariantsSet: false, draftVariantsJson: Prisma.DbNull, reviewStatus: 'rejected' },
-    });
-    const derivedAfterReject = await inv.derivedProductStock(dProd.id);
+    // D4-B: reject via CatalogContentService.decide — published availability unchanged
+    const submittedReject = await catalog.submit(partner.id, 'product', dProd.id);
+    const rejectRev =
+      (submittedReject as { revision?: number }).revision ??
+      (await prisma.product.findUniqueOrThrow({ where: { id: dProd.id } })).submittedRevision!;
+    await catalog.decide('ops-reviewer', 'product', dProd.id, 'reject', 'اختبار رفض', rejectRev);
+    const afterReject = await inv.derivedProductStock(dProd.id);
+    const d2Reject = (await inv.list(dProd.id)).find((r) => r.variantId === 'd2');
     record(
-      'D4_REJECT_DRAFT_KEEPS_PUBLISHED',
-      derivedAfterReject.derivedStockQty === 20 && !(await inv.list(dProd.id)).find((r) => r.variantId === 'd2')?.archivedAt,
-      derivedAfterReject,
+      'D4_B_REJECT_KEEPS_PUBLISHED',
+      afterReject.derivedStockQty === 20 && !d2Reject?.archivedAt && (await inv.availableForVariant(dProd.id, 'd2')) === 10,
+      { afterReject, d2Reject },
     );
 
-    // Publish-side delete: shrink published variantsJson then inventory put archives orphan
+    // Clear rejection and restore draft for new-variant path (D4-C)
     await prisma.product.update({
       where: { id: dProd.id },
       data: {
         reviewStatus: 'none',
-        variantsJson: [{ id: 'd1', selections: { size: 'd1v' }, available: true }],
+        reviewNote: null,
+        submittedRevision: null,
+        draftVariantsSet: true,
+        draftVariantsJson: [
+          { id: 'd1', selections: { size: 'd1v' }, available: true },
+          { id: 'd2', selections: { size: 'd2v' }, available: true },
+          { id: 'd3', selections: { size: 'd3v' }, available: true },
+        ],
+        reviewRevision: 3,
       },
     });
-    const d1row = (await inv.list(dProd.id)).find((r) => r.variantId === 'd1')!;
-    await inv.upsertMany(partner.id, dProd.id, {
-      rows: [{ variantId: 'd1', stockQty: 10, expectedRevision: d1row.revision }],
+
+    // D4-C: new draft variant qty 5 — not public until approve; then available=5
+    const createdNew = await inv.upsertMany(partner.id, dProd.id, {
+      rows: [{ variantId: 'd3', stockQty: 5 }],
     });
-    const derived = await inv.derivedProductStock(dProd.id);
-    const d2 = (await inv.list(dProd.id)).find((r) => r.variantId === 'd2');
+    const d3row = (await inv.list(dProd.id)).find((r) => r.variantId === 'd3');
+    const respRev = createdNew.updated.find((r) => r.variantId === 'd3')?.revision;
+    const availBefore = await inv.availableForVariant(dProd.id, 'd3');
+    const derivedBefore = await inv.derivedProductStock(dProd.id);
     record(
-      'D4_DELETED_VARIANT_EXCLUDED_FROM_DERIVED',
-      derived.derivedStockQty === 10 && !!d2?.archivedAt,
-      { derived, d2 },
+      'D4_C_NEW_DRAFT_NOT_PUBLIC_AND_NOT_ARCHIVED',
+      !d3row?.archivedAt &&
+        d3row?.stockQty === 5 &&
+        respRev === d3row?.revision &&
+        availBefore === 0 &&
+        derivedBefore.derivedStockQty === 20,
+      { d3row, respRev, availBefore, derivedBefore },
     );
 
-    // Remove all published variants
-    await prisma.product.update({ where: { id: dProd.id }, data: { variantsJson: [] } });
-    await inv.upsertMany(partner.id, dProd.id, { rows: [] });
-    const derivedEmpty = await inv.derivedProductStock(dProd.id);
-    record('D4_ALL_VARIANTS_REMOVED_DERIVED_ZERO', derivedEmpty.derivedStockQty === 0, derivedEmpty);
+    // D4-D: second save using revision returned from first save succeeds (no phantom conflict)
+    const secondSave = await inv.upsertMany(partner.id, dProd.id, {
+      rows: [{ variantId: 'd3', stockQty: 5, expectedRevision: respRev }],
+    });
+    record(
+      'D4_D_SECOND_SAVE_WITH_RETURNED_REVISION',
+      secondSave.ok === true &&
+        secondSave.updated.find((r) => r.variantId === 'd3')?.revision === (respRev || 0) + 1 &&
+        !(await inv.list(dProd.id)).find((r) => r.variantId === 'd3')?.archivedAt,
+      secondSave.updated.find((r) => r.variantId === 'd3'),
+    );
 
-    // Held reservation: orphan with reservedQty>0 stays unarchived
+    const submittedApprove = await catalog.submit(partner.id, 'product', dProd.id);
+    const approveRev =
+      (submittedApprove as { revision?: number }).revision ??
+      (await prisma.product.findUniqueOrThrow({ where: { id: dProd.id } })).submittedRevision!;
+    await catalog.decide('ops-reviewer', 'product', dProd.id, 'approve', 'اعتماد تركيبة جديدة', approveRev);
+    const availAfterApprove = await inv.availableForVariant(dProd.id, 'd3');
+    const derivedAfterApprove = await inv.derivedProductStock(dProd.id);
+    const d3AfterApprove = (await inv.list(dProd.id)).find((r) => r.variantId === 'd3');
+    record(
+      'D4_C_AFTER_APPROVE_AVAILABLE_FIVE',
+      availAfterApprove === 5 &&
+        !d3AfterApprove?.archivedAt &&
+        derivedAfterApprove.derivedStockQty === 25,
+      { availAfterApprove, d3AfterApprove, derivedAfterApprove },
+    );
+
+    // D4-E: approve deletion of d2 — public availability stops
+    await prisma.product.update({
+      where: { id: dProd.id },
+      data: {
+        draftVariantsSet: true,
+        draftVariantsJson: [
+          { id: 'd1', selections: { size: 'd1v' }, available: true },
+          { id: 'd3', selections: { size: 'd3v' }, available: true },
+        ],
+        reviewRevision: 4,
+        reviewStatus: 'none',
+        submittedRevision: null,
+      },
+    });
+    const submittedDel = await catalog.submit(partner.id, 'product', dProd.id);
+    const delRev =
+      (submittedDel as { revision?: number }).revision ??
+      (await prisma.product.findUniqueOrThrow({ where: { id: dProd.id } })).submittedRevision!;
+    await catalog.decide('ops-reviewer', 'product', dProd.id, 'approve', 'اعتماد حذف d2', delRev);
+    const d2AfterApproveDelete = (await inv.list(dProd.id)).find((r) => r.variantId === 'd2');
+    const availD2Gone = await inv.availableForVariant(dProd.id, 'd2');
+    const derivedAfterDel = await inv.derivedProductStock(dProd.id);
+    record(
+      'D4_E_APPROVE_DELETE_STOPS_PUBLIC',
+      !!d2AfterApproveDelete?.archivedAt && availD2Gone === 0 && derivedAfterDel.derivedStockQty === 15,
+      { d2AfterApproveDelete, availD2Gone, derivedAfterDel },
+    );
+
+    // D4-F: held reservation survives remove-from-catalog; release/consume via commerce paths
     const holdProd = await prisma.product.create({
       data: {
         partnerId: partner.id,
@@ -500,6 +707,7 @@ async function main() {
         skinTypes: [],
         contentStatus: 'published',
         reviewStatus: 'none',
+        reviewRevision: 1,
         active: true,
         catalogSource: 'catalog',
         deliveryFeeHalalas: 0,
@@ -519,23 +727,111 @@ async function main() {
         ],
       },
     });
+    await seedCover(holdProd.id);
     await inv.upsertMany(partner.id, holdProd.id, {
       rows: [
         { variantId: 'h1', stockQty: 5 },
         { variantId: 'h2', stockQty: 5 },
       ],
     });
-    await prisma.productVariantInventory.update({
-      where: { productId_variantId: { productId: holdProd.id, variantId: 'h2' } },
-      data: { reservedQty: 2 },
+    await commerce.clearCart(user);
+    await commerce.addCartItem(user, {
+      productId: holdProd.id,
+      quantity: 2,
+      variantKey: 'h2',
+      selections: { size: 'h2v' },
     });
+    const holdQuote = await commerce.quote(user);
+    const heldWrap = await commerce.createOrder(
+      user,
+      delivery(`hold-${run}`, { confirmationFingerprint: holdQuote.confirmationFingerprint }),
+    );
+    const orderId = (heldWrap as { order: { id: string } }).order.id;
+    const h2Held = (await inv.list(holdProd.id)).find((r) => r.variantId === 'h2');
+    const heldItem = await prisma.commerceOrderItem.findFirst({ where: { orderId } });
+    record(
+      'D4_F_HOLD_CREATED',
+      !!orderId && (h2Held?.reservedQty || 0) >= 2 && heldItem?.stockSource === 'variant',
+      { orderId, h2Held, stockSource: heldItem?.stockSource },
+    );
+
     await prisma.product.update({
       where: { id: holdProd.id },
-      data: { variantsJson: [{ id: 'h1', selections: { size: 'h1v' }, available: true }] },
+      data: {
+        draftVariantsSet: true,
+        draftVariantsJson: [{ id: 'h1', selections: { size: 'h1v' }, available: true }],
+        reviewRevision: 2,
+      },
     });
-    await inv.upsertMany(partner.id, holdProd.id, { rows: [] });
-    const h2 = (await inv.list(holdProd.id)).find((r) => r.variantId === 'h2');
-    record('D4_HELD_ORPHAN_NOT_ARCHIVED', !h2?.archivedAt && h2?.reservedQty === 2, h2);
+    const submittedHold = await catalog.submit(partner.id, 'product', holdProd.id);
+    const holdRev =
+      (submittedHold as { revision?: number }).revision ??
+      (await prisma.product.findUniqueOrThrow({ where: { id: holdProd.id } })).submittedRevision!;
+    await catalog.decide('ops-reviewer', 'product', holdProd.id, 'approve', 'حذف مع حجز', holdRev);
+    const h2After = (await inv.list(holdProd.id)).find((r) => r.variantId === 'h2');
+    record(
+      'D4_F_HELD_ORPHAN_KEPT',
+      !h2After?.archivedAt && (h2After?.reservedQty || 0) >= 2,
+      h2After,
+    );
+
+    await commerce.transitionOrderFor(actor, orderId, {
+      fulfillmentStatus: 'rejected',
+      note: 'تحرير حجز تركيبة محذوفة من العرض',
+    });
+    const afterRelease = (await inv.list(holdProd.id)).find((r) => r.variantId === 'h2');
+    const releasedItem = await prisma.commerceOrderItem.findFirst({ where: { orderId } });
+    record(
+      'D4_F_RELEASE_VIA_ORDER',
+      (afterRelease?.reservedQty || 0) === 0 && releasedItem?.stockState === 'released',
+      { afterRelease, releasedItem },
+    );
+
+    // Consume path: restore h2 to published catalog, new checkout, deliver
+    await prisma.product.update({
+      where: { id: holdProd.id },
+      data: {
+        variantsJson: [
+          { id: 'h1', selections: { size: 'h1v' }, available: true },
+          { id: 'h2', selections: { size: 'h2v' }, available: true },
+        ],
+        draftVariantsSet: false,
+        draftVariantsJson: Prisma.DbNull,
+        reviewStatus: 'none',
+        reviewRevision: 3,
+        submittedRevision: null,
+      },
+    });
+    await inv.archiveOrphansAfterPublish(holdProd.id);
+    const h2Live = (await inv.list(holdProd.id)).find((r) => r.variantId === 'h2');
+    record('D4_F_REPUBLISH_REACTIVATES', !h2Live?.archivedAt && (await inv.availableForVariant(holdProd.id, 'h2')) != null, h2Live);
+
+    await commerce.clearCart(user);
+    await commerce.addCartItem(user, {
+      productId: holdProd.id,
+      quantity: 1,
+      variantKey: 'h2',
+      selections: { size: 'h2v' },
+    });
+    const consumeQuote = await commerce.quote(user);
+    const consumeWrap = await commerce.createOrder(
+      user,
+      delivery(`consume-${run}`, { confirmationFingerprint: consumeQuote.confirmationFingerprint }),
+    );
+    const consumeId = (consumeWrap as { order: { id: string } }).order.id;
+    await commerce.transitionOrderFor(actor, consumeId, { fulfillmentStatus: 'accepted', note: 'قبول' });
+    await commerce.transitionOrderFor(actor, consumeId, { fulfillmentStatus: 'preparing', note: 'تجهيز' });
+    await commerce.transitionOrderFor(actor, consumeId, { fulfillmentStatus: 'out_for_delivery', note: 'شحن' });
+    await commerce.transitionOrderFor(actor, consumeId, { fulfillmentStatus: 'delivered', note: 'تسليم' });
+    const afterConsume = (await inv.list(holdProd.id)).find((r) => r.variantId === 'h2');
+    const d4ConsumedItem = await prisma.commerceOrderItem.findFirst({ where: { orderId: consumeId } });
+    record(
+      'D4_F_CONSUME_VIA_ORDER',
+      (afterConsume?.reservedQty || 0) === 0 &&
+        d4ConsumedItem?.stockState === 'consumed' &&
+        (afterConsume?.stockQty || 0) === (h2Live?.stockQty || 5) - 1,
+      { afterConsume, d4ConsumedItem },
+    );
   } catch (e) {
     record('D1_D4_SUITE', false, String((e as Error)?.stack || e));
   } finally {

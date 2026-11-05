@@ -596,21 +596,27 @@ export class CatalogContentService {
           },
         });
       if (changed.count !== 1) throw new ConflictException('المسودة تغيرت بعد النسخة التي عُوينت');
-      // D4: after draft approve, archive inventory rows for variants no longer in published catalog
-      // (keep rows with outstanding reservations for release/consume).
+      // D4: after draft approve — reactivate inventory for newly published variants,
+      // then archive true orphans (removed from published). Keep held reservations.
       if (typedKind === 'product' && (row.draftVariantsSet || removedMediaIds.size)) {
         const publishedIds = new Set(
           finalVariants.map((v) => String(v?.id || '').trim()).filter(Boolean),
         );
-        const orphans = await tx.productVariantInventory.findMany({
-          where: { productId: id, archivedAt: null },
-        });
-        for (const orphan of orphans) {
-          if (publishedIds.has(orphan.variantId)) continue;
-          if (orphan.reservedQty > 0) continue;
+        const inventoryRows = await tx.productVariantInventory.findMany({ where: { productId: id } });
+        for (const invRow of inventoryRows) {
+          if (publishedIds.has(invRow.variantId) && invRow.archivedAt) {
+            await tx.productVariantInventory.update({
+              where: { id: invRow.id },
+              data: { archivedAt: null, revision: invRow.revision + 1 },
+            });
+            continue;
+          }
+          if (publishedIds.has(invRow.variantId)) continue;
+          if (invRow.archivedAt) continue;
+          if (invRow.reservedQty > 0) continue;
           await tx.productVariantInventory.update({
-            where: { id: orphan.id },
-            data: { archivedAt: new Date(), revision: orphan.revision + 1 },
+            where: { id: invRow.id },
+            data: { archivedAt: new Date(), revision: invRow.revision + 1 },
           });
         }
       }

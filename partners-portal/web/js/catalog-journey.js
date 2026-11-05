@@ -4309,9 +4309,24 @@
         if (type === 'brand' && saved && saved.id) {
           try {
             await persistVariantInventory(saved.id);
+            status.removeAttribute('data-inventory-revision-conflict');
           } catch (invErr) {
             const code = invErr && invErr.code;
-            if (code === 'INVENTORY_NOT_READY' || code === 'INVENTORY_CONTEXT_MISMATCH' || code === 'INVENTORY_INVALID_QTY') {
+            const bodyCode =
+              (invErr && invErr.body && (invErr.body.code || (invErr.body.message && invErr.body.message.code))) ||
+              '';
+            const blob = String((invErr && invErr.message) || '') + ' ' + code + ' ' + bodyCode;
+            const isInvRevConflict =
+              code === 'VARIANT_INVENTORY_REVISION_CONFLICT' ||
+              bodyCode === 'VARIANT_INVENTORY_REVISION_CONFLICT' ||
+              /VARIANT_INVENTORY_REVISION_CONFLICT|تعارض مراجعة مخزون/.test(blob);
+            if (isInvRevConflict) {
+              // Keep local dirty qty — never auto-hydrate latest revision and rewrite over the other editor.
+              status.textContent =
+                'تعارض مراجعة المخزون: تعديلاتك المحلية ما زالت في النموذج ولم تُحفظ. عالجِ التعارض ثم أعيدي المحاولة.';
+              status.setAttribute('data-inventory-partial', '1');
+              status.setAttribute('data-inventory-revision-conflict', '1');
+            } else if (code === 'INVENTORY_NOT_READY' || code === 'INVENTORY_CONTEXT_MISMATCH' || code === 'INVENTORY_INVALID_QTY') {
               status.textContent =
                 'حُفظت بيانات المنتج دون تحديث المخزون: ' +
                 ((invErr && invErr.message) || 'المخزون غير جاهز') +

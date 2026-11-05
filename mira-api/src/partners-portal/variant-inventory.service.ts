@@ -320,41 +320,75 @@ export class VariantInventoryService {
         out.push(this.mapRow(saved));
       }
 
-      // D4: archive only against published catalog — draft deletion must not archive live stock.
-      await this.archiveOrphansAgainstPublished(tx, productId);
+      // D4: archive true orphans only — never archive draft-new or still-published rows on draft save.
+      await this.archiveOrphansAgainstCatalog(tx, productId);
 
       void targetMode;
+      // Response must reflect final revision after archival side-effects in the same transaction.
+      const finalUpdated: VariantInventoryRow[] = [];
+      for (const row of out) {
+        const freshRow = await tx.productVariantInventory.findUnique({
+          where: { productId_variantId: { productId, variantId: row.variantId } },
+        });
+        if (freshRow) finalUpdated.push(this.mapRow(freshRow));
+      }
       const derived = await this.derivedInTx(tx, productId);
-      return { ok: true, ...derived, updated: out };
+      return { ok: true, ...derived, updated: finalUpdated };
     });
   }
 
   /**
    * After draft approve publishes a smaller variantsJson, archive inventory for removed published variants
-   * (keep rows with outstanding reservations).
+   * (keep rows with outstanding reservations) and reactivate rows that are now published.
    */
   async archiveOrphansAfterPublish(productId: string): Promise<void> {
     await this.prisma.$transaction(async (tx) => {
-      await this.archiveOrphansAgainstPublished(tx, productId);
+      await this.reactivatePublishedInventory(tx, productId);
+      await this.archiveOrphansAgainstCatalog(tx, productId);
     });
   }
 
-  private async archiveOrphansAgainstPublished(tx: Prisma.TransactionClient, productId: string) {
+  /**
+   * Protect published ∪ current draft identities. A draft-only new variant is not an orphan.
+   * True orphans = inventory rows outside that protect set (and without held reservations).
+   */
+  private async archiveOrphansAgainstCatalog(tx: Prisma.TransactionClient, productId: string) {
+    const fresh = await tx.product.findUnique({
+      where: { id: productId },
+      select: { variantsJson: true, draftVariantsJson: true, draftVariantsSet: true },
+    });
+    if (!fresh) return;
+    const protect = this.knownVariantIds(fresh, 'writable');
+    const orphanRows = await tx.productVariantInventory.findMany({
+      where: { productId, archivedAt: null },
+    });
+    for (const orphan of orphanRows) {
+      if (protect.has(orphan.variantId)) continue;
+      if (orphan.reservedQty > 0) continue;
+      await tx.productVariantInventory.update({
+        where: { id: orphan.id },
+        data: { archivedAt: new Date(), revision: orphan.revision + 1 },
+      });
+    }
+  }
+
+  /** Clear archive on rows that belong to the live published catalog (e.g. after approve). */
+  private async reactivatePublishedInventory(tx: Prisma.TransactionClient, productId: string) {
     const fresh = await tx.product.findUnique({
       where: { id: productId },
       select: { variantsJson: true, draftVariantsJson: true, draftVariantsSet: true },
     });
     if (!fresh) return;
     const published = this.knownVariantIds(fresh, 'published');
-    const orphanRows = await tx.productVariantInventory.findMany({
-      where: { productId, archivedAt: null },
+    if (!published.size) return;
+    const rows = await tx.productVariantInventory.findMany({
+      where: { productId, archivedAt: { not: null } },
     });
-    for (const orphan of orphanRows) {
-      if (published.has(orphan.variantId)) continue;
-      if (orphan.reservedQty > 0) continue;
+    for (const row of rows) {
+      if (!published.has(row.variantId)) continue;
       await tx.productVariantInventory.update({
-        where: { id: orphan.id },
-        data: { archivedAt: new Date(), revision: orphan.revision + 1 },
+        where: { id: row.id },
+        data: { archivedAt: null, revision: row.revision + 1 },
       });
     }
   }

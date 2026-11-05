@@ -61,7 +61,11 @@ export class CatalogMediaController {
     const ac = new AbortController();
     let responseCompleted = false;
     const onResponseClose = () => {
-      if (!responseCompleted) ac.abort();
+      if (!responseCompleted) {
+        ac.abort();
+        // Evidence hook: same request id — proves upstream cancel (not natural EOF).
+        console.error('catalog-media-upstream-aborted', `id=${id} key=${keyHint}…`);
+      }
     };
 
     let opened;

@@ -1,64 +1,124 @@
 /**
- * Local decision tests for R2 acceptance gate — SDK-only / missing MIRA steps must not PASS.
+ * Unit proofs for R2 acceptance gate — mocks only; never counts as R2 PASS.
  */
 import assert from 'node:assert/strict';
-import { judgeR2Acceptance, REQUIRED_MIRA_STEPS } from './r2-acceptance-gate';
+import {
+  judgeR2Acceptance,
+  judgeBindResult,
+  judgeRangeResponse,
+  mediaIdFromSessionBody,
+  REQUIRED_MIRA_STEPS,
+} from './r2-acceptance-gate';
 
-function miraPassSteps() {
+function allMiraOk() {
   return REQUIRED_MIRA_STEPS.map((id) => ({ id, ok: true as const }));
 }
 
 {
   const r = judgeR2Acceptance([
     { id: 'R2_SUITE', ok: true },
-    { id: 'R2_SDK_DIAGNOSTIC', ok: true },
     { id: 'R2_MIRA_APP_PATH', ok: 'BLOCKED' },
   ]);
-  assert.equal(r.ok, false);
   assert.equal(r.blocked, true);
-  assert.equal(r.detail, 'MIRA_APP_PATH_BLOCKED');
+  assert.equal(r.ok, false);
 }
-
 {
-  // Base present historically skipped MIRA steps — must FAIL, not PASS.
   const r = judgeR2Acceptance([
     { id: 'R2_SUITE', ok: true },
-    { id: 'R2_SDK_DIAGNOSTIC', ok: true },
+    { id: 'R2_MIRA_APP_PATH', ok: true },
+    // missing REQUIRED_MIRA_STEPS
   ]);
   assert.equal(r.ok, false);
   assert.equal(r.blocked, false);
   assert.ok(r.failed.includes('MIRA_STEPS_INCOMPLETE'));
 }
-
 {
-  const r = judgeR2Acceptance([
-    { id: 'R2_SUITE', ok: true },
-    { id: 'R2_MIRA_APP_PATH', ok: false },
-    ...miraPassSteps().slice(0, 3),
-  ]);
-  assert.equal(r.ok, false);
-  assert.equal(r.blocked, false);
-}
-
-{
-  const r = judgeR2Acceptance([
-    { id: 'R2_SUITE', ok: true },
-    { id: 'R2_MIRA_APP_PATH', ok: true },
-    ...miraPassSteps(),
-  ]);
+  const r = judgeR2Acceptance([{ id: 'R2_SUITE', ok: true }, { id: 'R2_MIRA_APP_PATH', ok: true }, ...allMiraOk()]);
   assert.equal(r.ok, true);
-  assert.equal(r.blocked, false);
-  assert.equal(r.detail, 'PASS');
 }
-
 {
+  // SDK-only must never PASS
+  const r = judgeR2Acceptance([{ id: 'R2_SUITE', ok: true }]);
+  assert.equal(r.ok, false);
+}
+{
+  // Invalid base / failed step
   const r = judgeR2Acceptance([
     { id: 'R2_SUITE', ok: true },
     { id: 'R2_MIRA_APP_PATH', ok: false },
-    { id: 'R2_MIRA_CREATE_SESSION', ok: false },
+    ...allMiraOk(),
   ]);
   assert.equal(r.ok, false);
-  assert.equal(r.blocked, false);
+}
+{
+  // catalogMediaId contract — mediaId alone is not enough
+  assert.equal(mediaIdFromSessionBody({ status: 'ready', mediaId: 'legacy' }), null);
+  assert.equal(mediaIdFromSessionBody({ status: 'ready', catalogMediaId: 'm1' }), 'm1');
+  assert.equal(mediaIdFromSessionBody({ status: 'uploading', catalogMediaId: 'm1' }), null);
+}
+{
+  const bad409 = judgeBindResult({
+    httpOk: false,
+    status: 409,
+    mediaId: 'm1',
+    ownerId: 'o1',
+    final: null,
+  });
+  assert.equal(bad409.ok, false);
+  const ok409 = judgeBindResult({
+    httpOk: false,
+    status: 409,
+    mediaId: 'm1',
+    ownerId: 'o1',
+    final: { id: 'm1', ownerId: 'o1', draftIsPrimary: true },
+  });
+  assert.equal(ok409.ok, true);
+}
+{
+  const file = Buffer.from('0123456789ABCDEFGHIJ');
+  const good = judgeRangeResponse({
+    status: 206,
+    contentRange: 'bytes 0-15/20',
+    contentLengthHeader: '16',
+    body: file.subarray(0, 16),
+    expectedFile: file,
+    start: 0,
+    end: 15,
+  });
+  assert.equal(good.ok, true);
+
+  const short = judgeRangeResponse({
+    status: 206,
+    contentRange: 'bytes 0-15/20',
+    contentLengthHeader: '16',
+    body: file.subarray(0, 8),
+    expectedFile: file,
+    start: 0,
+    end: 15,
+  });
+  assert.equal(short.ok, false);
+
+  const badHeader = judgeRangeResponse({
+    status: 206,
+    contentRange: 'bytes 0-7/20',
+    contentLengthHeader: '16',
+    body: file.subarray(0, 16),
+    expectedFile: file,
+    start: 0,
+    end: 15,
+  });
+  assert.equal(badHeader.ok, false);
+
+  const errDoc = judgeRangeResponse({
+    status: 503,
+    contentRange: null,
+    contentLengthHeader: '20',
+    body: Buffer.from('{"error":"unavailable"}'),
+    expectedFile: file,
+    start: 0,
+    end: 15,
+  });
+  assert.equal(errDoc.ok, false);
 }
 
 console.log(JSON.stringify({ ok: true, id: 'R2_MIRA_GATE_UNIT', required: REQUIRED_MIRA_STEPS.length }));
