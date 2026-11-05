@@ -25,6 +25,7 @@ import { ApplyPartnerDto } from './dto/apply-partner.dto';
 import { UpdateProductDto, UpdateServiceDto, UpsertProductDto, UpsertServiceDto } from './dto/catalog.dto';
 import { TrackPartnerEventDto } from './dto/track-event.dto';
 import { hashPartnerPassword, verifyPartnerPassword } from './partner-password';
+import { assertVariantMediaIdsEligible } from './variant-media-ids';
 
 function newToken(): string {
   return randomBytes(32).toString('hex');
@@ -506,6 +507,9 @@ export class PartnersPortalService implements OnModuleInit {
         if (dto.stepAr !== undefined) data.stepAr = dto.stepAr === '' ? null : dto.stepAr;
       }
       const commerce = normalizeProductCommerce(dto, current, data.priceHalalas ?? current.priceHalalas);
+      if (commerce.variantsJson !== undefined && commerce.variantsJson !== null) {
+        await assertVariantMediaIdsEligible(tx, productId, commerce.variantsJson);
+      }
       if (published) {
         // Operational fields on the live row. Options/variants go to draft* until admin approve.
         if (commerce.purchaseMode !== undefined) data.purchaseMode = commerce.purchaseMode;

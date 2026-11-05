@@ -106,4 +106,46 @@ function hydrateWithMedia(mediaIds) {
   assert.deepEqual(payload.variantsJson[0].mediaIds, ['draft-media']);
 }
 
+// 6) Delete strip: general save must not resurrect removed media id
+{
+  const { state } = hydrateWithMedia(['keep-me', 'delete-me']);
+  M.stripMediaIdsFromOptionsState(state, ['delete-me']);
+  assert.deepEqual(state.variants[0].mediaIds, ['keep-me']);
+  const payload = M.structuredOptionsPayload(state, apparel);
+  assert.deepEqual(payload.variantsJson[0].mediaIds, ['keep-me']);
+}
+
+// 7) Stale preview omitIds win over server row that still lists deleted id
+{
+  const { state } = hydrateWithMedia(['keep-me']);
+  state.variants[0].mediaIds = ['keep-me', 'stale-deleted'];
+  M.syncVariantMediaIdsFromServer(
+    state,
+    [{ id: 'sku-m-black', mediaIds: ['keep-me', 'stale-deleted'] }],
+    new Set(['stale-deleted']),
+  );
+  assert.deepEqual(state.variants[0].mediaIds, ['keep-me']);
+  // selections/price untouched
+  assert.equal(state.variants[0].priceHalalas, 5500);
+}
+
+// 8) Two variants: strip one id from both when shared
+{
+  const published = {
+    optionsJson: [
+      { id: 'size', labelAr: 'المقاس', values: [{ id: 'M', labelAr: 'M' }, { id: 'L', labelAr: 'L' }] },
+    ],
+    variantsJson: [
+      { id: 'm', selections: { size: 'M' }, available: true, mediaIds: ['shared', 'only-m'] },
+      { id: 'l', selections: { size: 'L' }, available: true, mediaIds: ['shared', 'only-l'] },
+    ],
+  };
+  const state = M.optionsStateFromServer(published);
+  state._builtGroups = published.optionsJson;
+  M.stripMediaIdsFromOptionsState(state, ['shared']);
+  const payload = M.structuredOptionsPayload(state, apparel);
+  assert.deepEqual(payload.variantsJson.find((v) => v.id === 'm').mediaIds, ['only-m']);
+  assert.deepEqual(payload.variantsJson.find((v) => v.id === 'l').mediaIds, ['only-l']);
+}
+
 console.log('catalog-options-media-bind-tests passed');

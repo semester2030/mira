@@ -864,15 +864,17 @@ async function main() {
     const hasR2 =
       (process.env.MIRA_MEDIA_STORE || '').toLowerCase() === 's3' &&
       !!process.env.MIRA_MEDIA_S3_BUCKET &&
-      !!process.env.MIRA_MEDIA_S3_ACCESS_KEY_ID;
+      !!process.env.MIRA_MEDIA_S3_ACCESS_KEY_ID &&
+      !!process.env.MIRA_MEDIA_S3_SECRET_ACCESS_KEY &&
+      !!process.env.MIRA_MEDIA_S3_ENDPOINT;
     record(
       'U01_R2',
-      hasR2 ? false : 'BLOCKED',
-      { liveR2Browser: true, cors: true, etag: true },
+      'BLOCKED',
+      { liveR2Browser: true, suite: 'r2-browser-multipart.evidence.ts' },
       { configured: hasR2 },
       hasR2
-        ? 'R2 env present but headed browser CORS/ETag journey not executed in this run'
-        : 'No isolated R2 credentials in available env; production secrets unused',
+        ? 'Env present — run: npx tsx src/partners-portal/upload-sessions/r2-browser-multipart.evidence.ts'
+        : 'No isolated R2 credentials; suite: npx tsx src/partners-portal/upload-sessions/r2-browser-multipart.evidence.ts',
     );
   }
 

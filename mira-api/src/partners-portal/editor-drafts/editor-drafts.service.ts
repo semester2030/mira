@@ -12,6 +12,7 @@ import { normalizeIdempotencyKey, stableFingerprint } from '../../marketplace/co
 import { RegistryService } from '../registry/registry.service';
 import { EDITOR_SCHEMA_VERSION } from '../registry/registry.types';
 import { optionsJsonFromDraftValues } from '../registry/draft-values-mapping';
+import { assertVariantMediaIdsEligible } from '../variant-media-ids';
 
 function editorError(status: HttpStatus, code: string, messageAr: string, extra: Record<string, unknown> = {}) {
   return new HttpException({ message: messageAr, messageAr, code, ...extra }, status);
@@ -499,6 +500,9 @@ export class EditorDraftsService {
             : nameAr;
       const descriptionAr =
         typeof values.descriptionAr === 'string' ? values.descriptionAr.trim() || null : current.descriptionAr;
+      if (values.variantsJson !== undefined && values.variantsJson !== null) {
+        await assertVariantMediaIdsEligible(tx, targetOwnerId, values.variantsJson);
+      }
       // Content only — do not overwrite operational price/stock/delivery from stale draft when published.
       if (published) {
         await tx.product.update({

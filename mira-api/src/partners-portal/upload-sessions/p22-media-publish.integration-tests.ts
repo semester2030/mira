@@ -20,6 +20,8 @@ import { UploadCleanupService } from './upload-cleanup.service';
 import { UploadFinalizeService } from './upload-finalize.service';
 import { UploadSessionsController } from './upload-sessions.controller';
 import { UploadSessionsService } from './upload-sessions.service';
+import { PartnersPortalService } from '../partners-portal.service';
+import { assertVariantMediaIdsEligible } from '../variant-media-ids';
 
 process.env.MIRA_PARTNER_UPLOAD_SESSION = 'true';
 process.env.NODE_ENV = 'test';
@@ -134,6 +136,7 @@ async function main() {
       UploadFinalizeService,
       UploadCleanupService,
       CatalogContentService,
+      PartnersPortalService,
       { provide: MultipartUploadStore, useValue: memoryStore },
       { provide: CatalogMediaStorage, useValue: memoryCatalog },
     ],
@@ -157,6 +160,7 @@ async function main() {
   const auth = { authorization: `Bearer ${token}`, 'content-type': 'application/json' };
   const finalize = app.get(UploadFinalizeService);
   const content = app.get(CatalogContentService);
+  const portal = app.get(PartnersPortalService);
   const png = loadFixture('valid.png');
 
   async function abs(u: string) {
@@ -294,6 +298,70 @@ async function main() {
       !still && !(bound?.mediaIds || []).includes(up.catalogMediaId),
       { deleted: true, unbound: true },
       { still: !!still, mediaIds: bound?.mediaIds },
+    );
+
+    // P22-08: general save must reject deleted / foreign mediaIds (not only bind endpoint)
+    const deletedId = up.catalogMediaId;
+    let deletedRejected = false;
+    let deletedRejectMsg = '';
+    try {
+      await portal.updateProduct(brand.id, product.id, {
+        variantsJson: [
+          { id: 'm-only', selections: { size: 'm' }, available: true, mediaIds: [deletedId] },
+        ],
+      });
+    } catch (e) {
+      deletedRejected = true;
+      deletedRejectMsg = String((e as Error)?.message || e);
+    }
+    const foreignRow = await prisma.catalogMedia.create({
+      data: {
+        ownerKind: 'product',
+        ownerId: otherProduct.id,
+        kind: 'image',
+        url: 'https://example.invalid/foreign-save.png',
+        mimeType: 'image/png',
+        byteSize: 12,
+        publication: 'draft',
+        sortOrder: 0,
+      },
+    });
+    let foreignSaveRejected = false;
+    try {
+      await portal.updateProduct(brand.id, product.id, {
+        variantsJson: [
+          { id: 'm-only', selections: { size: 'm' }, available: true, mediaIds: [foreignRow.id] },
+        ],
+      });
+    } catch {
+      foreignSaveRejected = true;
+    }
+    let assertHelperOk = false;
+    try {
+      await assertVariantMediaIdsEligible(prisma as never, product.id, [
+        { id: 'm-only', mediaIds: [deletedId] },
+      ]);
+    } catch {
+      assertHelperOk = true;
+    }
+    const afterBadSave = await prisma.product.findUnique({ where: { id: product.id } });
+    const afterVariants = Array.isArray(afterBadSave?.variantsJson)
+      ? (afterBadSave!.variantsJson as Array<{ mediaIds?: string[] }>)
+      : [];
+    const storedBad =
+      afterVariants.some((v) => (v.mediaIds || []).includes(deletedId)) ||
+      afterVariants.some((v) => (v.mediaIds || []).includes(foreignRow.id));
+    record(
+      'P22-08',
+      deletedRejected && foreignSaveRejected && assertHelperOk && !storedBad,
+      { rejectDeleted: true, rejectForeign: true, noStore: true },
+      {
+        deletedRejected,
+        foreignSaveRejected,
+        assertHelperOk,
+        storedBad,
+        deletedRejectMsg: deletedRejectMsg.slice(0, 160),
+      },
     );
   }
 

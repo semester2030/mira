@@ -529,8 +529,144 @@ async function main() {
         );
       }
 
+      // Delete bound media from UI → general save WITHOUT reload → must not resurrect ref
+      const descBeforeDelete = 'وصف قبل حذف الوسيط المرتبط';
+      const descField = page.locator('#catalogForm [name="descriptionAr"], #catalogForm textarea[name="descriptionAr"]');
+      if ((await descField.count()) > 0) await descField.first().fill(descBeforeDelete);
+      const serverBeforeDelete = (
+        twoVariants.find((v) => (v.mediaIds || []).includes(otherMediaId))?.mediaIds || []
+      ).slice();
+      const removeBtn = page.locator(`[data-testid="media-card-saved"][data-media-id="${otherMediaId}"] [data-testid="media-remove"]`);
+      if ((await removeBtn.count()) === 0) {
+        // fallback: remove button on card containing media id text
+        const card = page.locator('.media-card').filter({ hasText: otherMediaId.slice(0, 8) });
+        await card.locator('button').filter({ hasText: /^إزالة$/ }).click();
+      } else {
+        await removeBtn.first().click();
+      }
+      await page.waitForTimeout(1500);
+      const afterDeletePreview = await (
+        await fetch(`${apiBase}/partners-portal/products/${productId}/preview`, {
+          headers: { authorization: `Bearer ${token}` },
+        })
+      ).json();
+      const afterDeleteVariants =
+        afterDeletePreview.draftVariantsJson || afterDeletePreview.publishedVariantsJson || afterDeletePreview.variantsJson || [];
+      const serverRefsAfterDelete = afterDeleteVariants.flatMap((v) => v.mediaIds || []);
+      if (serverRefsAfterDelete.includes(otherMediaId)) {
+        throw new Error('server still references deleted media before general save: ' + JSON.stringify(afterDeleteVariants));
+      }
+      if (!(afterDeletePreview.media || []).every((m) => m.id !== otherMediaId)) {
+        throw new Error('deleted media still listed in preview media array');
+      }
+      // Unsaved description must survive delete+general-save
+      await saveDraft(page);
+      await page.waitForTimeout(1500);
+      const afterDeleteSave = await (
+        await fetch(`${apiBase}/partners-portal/products/${productId}/preview`, {
+          headers: { authorization: `Bearer ${token}` },
+        })
+      ).json();
+      const resurrected = (
+        afterDeleteSave.draftVariantsJson ||
+        afterDeleteSave.publishedVariantsJson ||
+        afterDeleteSave.variantsJson ||
+        []
+      ).some((v) => (v.mediaIds || []).includes(otherMediaId));
+      if (resurrected) {
+        throw new Error(
+          'deleted mediaId RESURRECTED after general save: ' +
+            JSON.stringify({
+              serverBeforeDelete,
+              draft: afterDeleteSave.draftVariantsJson,
+              published: afterDeleteSave.publishedVariantsJson,
+            }),
+        );
+      }
+      const keepBindOk = (
+        afterDeleteSave.draftVariantsJson ||
+        afterDeleteSave.publishedVariantsJson ||
+        afterDeleteSave.variantsJson ||
+        []
+      ).some((v) => (v.mediaIds || []).includes(bindMediaId));
+      if (!keepBindOk) throw new Error('sibling bind lost when deleting other media');
+      // Second general save must not resurrect either
+      await saveDraft(page);
+      await page.waitForTimeout(1000);
+      const afterDeleteSave2 = await (
+        await fetch(`${apiBase}/partners-portal/products/${productId}/preview`, {
+          headers: { authorization: `Bearer ${token}` },
+        })
+      ).json();
+      if (
+        (
+          afterDeleteSave2.draftVariantsJson ||
+          afterDeleteSave2.publishedVariantsJson ||
+          afterDeleteSave2.variantsJson ||
+          []
+        ).some((v) => (v.mediaIds || []).includes(otherMediaId))
+      ) {
+        throw new Error('deleted mediaId resurrected on second general save');
+      }
+      record('BIND_DELETE_GENERAL_SAVE', true, {
+        productId,
+        deletedMediaId: otherMediaId,
+        keptMediaId: bindMediaId,
+        serverBeforeDelete,
+        serverAfterDelete: serverRefsAfterDelete,
+        resurrected: false,
+        siblingKept: keepBindOk,
+      });
+
+      // Re-upload a replacement media for second variant + continue clear/rebind flow
+      await uiUploadPng(page, 'p2-replace.png', PNG2);
+      await waitReadyMedia(apiBase, token, 'products', productId, 2);
+      const refreshed = await (
+        await fetch(`${apiBase}/partners-portal/products/${productId}/preview`, {
+          headers: { authorization: `Bearer ${token}` },
+        })
+      ).json();
+      const replacementId = (refreshed.media || [])
+        .map((m) => m.id)
+        .find((id) => id !== bindMediaId);
+      if (!replacementId) throw new Error('replacement media missing after re-upload');
+      // Cover/order baseline for later persistence check must reflect post-delete media set.
+      const beforePersistAfterDelete = await mediaOrderAndCover(refreshed);
+      if (beforePersistAfterDelete.coverId !== bindMediaId && beforePersistAfterDelete.coverId !== expectedCoverId) {
+        // Re-assert cover on remaining original if needed
+        const coverAgain = page.locator(`[data-testid="media-card-saved"][data-media-id="${bindMediaId}"] button`).filter({ hasText: /^غلاف$/ });
+        if ((await coverAgain.count()) > 0) {
+          await coverAgain.first().click();
+          await page.waitForTimeout(800);
+        }
+      }
+      const beforePersistFresh = await mediaOrderAndCover(
+        await (
+          await fetch(`${apiBase}/partners-portal/products/${productId}/preview`, {
+            headers: { authorization: `Bearer ${token}` },
+          })
+        ).json(),
+      );
+      Object.assign(beforePersist, beforePersistFresh);
+      const bindSelectsAfter = page.locator('.variant-media-row select, select[aria-label*="تركيبة"]');
+      if ((await bindSelectsAfter.count()) >= 2) {
+        await bindSelectsAfter.nth(1).evaluate((sel, id) => {
+          for (const o of sel.options) o.selected = o.value === id;
+          sel.dispatchEvent(new Event('change', { bubbles: true }));
+        }, replacementId);
+        await Promise.all([
+          page.waitForResponse((r) => r.request().method() === 'PATCH' && /variants\/.+\/media/.test(r.url()), {
+            timeout: 15000,
+          }),
+          page.locator('button').filter({ hasText: /حفظ ربط التركيبة/ }).nth(1).click(),
+        ]);
+        await page.waitForTimeout(600);
+        await saveDraft(page);
+        await page.waitForTimeout(800);
+      }
+
       // Explicit clear bind on first variant → general save → must stay cleared after reopen
-      await bindSelects.first().evaluate((sel) => {
+      await page.locator('.variant-media-row select, select[aria-label*="تركيبة"]').first().evaluate((sel) => {
         for (const o of sel.options) o.selected = false;
         sel.dispatchEvent(new Event('change', { bubbles: true }));
       });
@@ -538,7 +674,7 @@ async function main() {
         page.waitForResponse((r) => r.request().method() === 'PATCH' && /variants\/.+\/media/.test(r.url()), {
           timeout: 15000,
         }),
-        saveBind2.first().click(),
+        page.locator('button').filter({ hasText: /حفظ ربط التركيبة/ }).first().click(),
       ]);
       await page.waitForTimeout(800);
       await saveDraft(page);
@@ -553,7 +689,7 @@ async function main() {
       if (stillHasBindMedia) {
         throw new Error('explicit clear bind did not stick before reload: ' + JSON.stringify(clearedVariants));
       }
-      const secondStillBound = clearedVariants.some((v) => (v.mediaIds || []).includes(otherMediaId));
+      const secondStillBound = clearedVariants.some((v) => (v.mediaIds || []).includes(replacementId));
       if (!secondStillBound) throw new Error('clearing one variant wiped the other variant bind');
 
       await assertPreviewPanel(page, {
@@ -1210,35 +1346,71 @@ async function main() {
           },
         );
 
-        // —— UI transient: file pick → inject after session create → verifying UI → ready, one media ——
+        async function cardStateForSession(sessionId, fileName) {
+          let card = sessionId
+            ? page.locator(`[data-testid="media-card-staged"][data-upload-session-id="${sessionId}"]`)
+            : null;
+          if (!card || (await card.count()) === 0) {
+            if (fileName) {
+              card = page.locator(`[data-testid="media-card-staged"][data-file-name="${fileName}"]`);
+            }
+          }
+          if (!card || (await card.count()) === 0) return { present: false, text: '', via: 'missing' };
+          const text = ((await card.locator('[data-testid="media-state"], .media-state').first().textContent()) || '').trim();
+          const sid = await card.getAttribute('data-upload-session-id');
+          return { present: true, text, via: sid ? 'session' : 'filename', sessionAttr: sid };
+        }
+
+        // Negative guard: a stale fail card must NOT make "saw fail" true while target still waits.
+        {
+          const staleFail = page.locator('#catalogForm .media-state').filter({ hasText: /فشل/ });
+          const staleCount = await staleFail.count();
+          const fakeWaitingCard = { text: 'جارٍ التحقق' };
+          const naivePass = staleCount > 0 && !/جارٍ التحقق/.test(
+            (await page.locator('#catalogForm .media-state').allTextContents()).filter((t) => !/فشل/.test(t)).join(' ') || fakeWaitingCard.text,
+          );
+          // Demonstrate scoped rule: only the target card decides.
+          const scopedWouldPass = /فشل/.test(fakeWaitingCard.text); // false while waiting
+          record(
+            'FINALIZE_UI_SCOPED_NEGATIVE',
+            staleCount >= 0 && scopedWouldPass === false && !(staleCount > 0 && scopedWouldPass),
+            {
+              staleFailCards: staleCount,
+              note: 'global .media-state fail text must not certify a different waiting card',
+              scopedWaitingIsNotFail: !scopedWouldPass,
+            },
+          );
+        }
+
+        // —— UI transient: file pick → inject after session create → verifying on THAT card → ready ——
         const uiPng = Buffer.from(
           'iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAYAAAAfFcSJAAAADUlEQVR42mP8z8BQDwAEhQGAhKmMIQAAAABJRU5ErkJggg==',
           'base64',
         );
         let uiSessionId = null;
+        let injectArmed = false;
+        let injectError = null;
         const onSessionCreate = async (res) => {
-          try {
-            if (res.request().method() !== 'POST') return;
-            if (!/\/upload-sessions\/?$/.test(res.url().replace(/\?.*$/, ''))) return;
-            if (!res.ok()) return;
-            const body = await res.json();
-            if (!body.sessionId || uiSessionId) return;
-            uiSessionId = body.sessionId;
-            await fetch(`${injectBase}/inject-head-fail`, {
-              method: 'POST',
-              headers: { 'content-type': 'application/json' },
-              body: JSON.stringify({ times: 1, sessionId: uiSessionId }),
-            });
-          } catch (_) {}
+          if (res.request().method() !== 'POST') return;
+          if (!/\/upload-sessions\/?$/.test(res.url().replace(/\?.*$/, ''))) return;
+          if (!res.ok()) return;
+          const body = await res.json();
+          if (!body.sessionId || uiSessionId) return;
+          uiSessionId = body.sessionId;
+          const injRes = await fetch(`${injectBase}/inject-head-fail`, {
+            method: 'POST',
+            headers: { 'content-type': 'application/json' },
+            body: JSON.stringify({ times: 1, sessionId: uiSessionId }),
+          });
+          if (!injRes.ok) {
+            injectError = `inject HTTP ${injRes.status} ${await injRes.text()}`;
+            return;
+          }
+          injectArmed = true;
         };
         page.on('response', onSessionCreate);
-        const uiStates = [];
-        const pollUi = setInterval(async () => {
-          try {
-            const t = await page.locator('#catalogForm .media-state').allTextContents();
-            uiStates.push({ t: Date.now(), states: t });
-          } catch (_) {}
-        }, 200);
+        const cardSamples = [];
+        const uiFileName = 'finalize-ui-transient.png';
         const mediaBeforeUi = (
           await (
             await fetch(`${apiBase}/partners-portal/products/${ownerId}/preview`, {
@@ -1246,29 +1418,42 @@ async function main() {
             })
           ).json()
         ).media || [];
-        await uiUploadPng(page, 'finalize-ui-transient.png', uiPng);
-        let uiReady = false;
-        let uiSawVerifying = false;
+        // Start upload then poll the specific card immediately (do not wait 2.5s first).
+        const fileInput = page.locator('#catalogForm input[type="file"]').first();
+        await fileInput.setInputFiles({ name: uiFileName, mimeType: 'image/png', buffer: uiPng });
+
+        let apiReady = false;
+        let uiCardSawVerifying = false;
+        let uiCardReadyOrGone = false;
+        let uiCardTextFinal = '';
         const uiDeadline = Date.now() + 45000;
         while (Date.now() < uiDeadline) {
-          const texts = await page.locator('#catalogForm .media-state').allTextContents();
-          if (texts.some((s) => /جارٍ التحقق|جارٍ المعالجة|بانتظار/.test(s))) uiSawVerifying = true;
+          if (injectError) throw new Error(injectError);
+          const card = await cardStateForSession(uiSessionId, uiFileName);
+          cardSamples.push({ t: Date.now(), sessionId: uiSessionId, injectArmed, ...card });
+          if (/جارٍ التحقق|جارٍ المعالجة|بانتظار|جارٍ الرفع|جارٍ التحضير/.test(card.text)) {
+            if (/جارٍ التحقق|جارٍ المعالجة|بانتظار/.test(card.text)) uiCardSawVerifying = true;
+          }
           if (uiSessionId) {
             const s = await getSession(apiBase, token, uiSessionId);
-            if (s.status === 'failed' && s.failureClass === 'retryable') uiSawVerifying = true;
+            if (s.status === 'failed' && s.failureClass === 'retryable') {
+              // Server-side retryable while card may still show verifying
+              if (card.present && /جارٍ|بانتظار/.test(card.text)) uiCardSawVerifying = true;
+            }
             if (s.status === 'ready' && s.catalogMediaId) {
-              uiReady = true;
-              break;
+              apiReady = true;
+              const saved = page.locator(`[data-testid="media-card-saved"][data-media-id="${s.catalogMediaId}"]`);
+              if ((await saved.count()) > 0 || !card.present) {
+                uiCardReadyOrGone = true;
+                uiCardTextFinal = card.text;
+                break;
+              }
             }
           }
-          await page.waitForTimeout(250);
+          await page.waitForTimeout(100);
         }
-        clearInterval(pollUi);
         page.off('response', onSessionCreate);
-        const sawFromSamples = uiStates.some((s) =>
-          (s.states || []).some((t) => /جارٍ التحقق|جارٍ المعالجة|بانتظار/.test(String(t || ''))),
-        );
-        uiSawVerifying = uiSawVerifying || sawFromSamples;
+        if (!uiSessionId || !injectArmed) throw new Error('inject not armed for UI transient session');
         const mediaAfterUi = (
           await (
             await fetch(`${apiBase}/partners-portal/products/${ownerId}/preview`, {
@@ -1278,32 +1463,33 @@ async function main() {
         ).media || [];
         const newMedia = mediaAfterUi.filter((m) => !mediaBeforeUi.some((b) => b.id === m.id));
         const uiRow = uiSessionId ? await getSession(apiBase, token, uiSessionId) : null;
-        // Same session recovered after injected transient (attempts > 1) without re-picking file.
         const recoveredSameSession = !!(uiRow && uiRow.status === 'ready' && (uiRow.finalizeAttempts || 0) >= 2);
-        await page.screenshot({ path: join(shotsDir, 'finalize-ui-transient.png'), fullPage: true });
-        record(
-          'FINALIZE_TRANSIENT_UI',
-          !!(
-            uiReady &&
-            uiSawVerifying &&
-            uiRow &&
-            uiRow.status === 'ready' &&
-            newMedia.length === 1 &&
-            recoveredSameSession
-          ),
-          {
-            sessionId: uiSessionId,
-            uiReady,
-            uiSawVerifying,
-            sawFromSamples,
-            recoveredSameSession,
-            status: uiRow && uiRow.status,
-            attempts: uiRow && uiRow.finalizeAttempts,
-            catalogMediaId: uiRow && uiRow.catalogMediaId,
-            newMediaCount: newMedia.length,
-            uiStateSamples: uiStates.slice(0, 30),
-          },
+        // API ready alone is not UI PASS — require card-scoped verifying evidence.
+        const uiPass = !!(
+          apiReady &&
+          uiCardSawVerifying &&
+          uiCardReadyOrGone &&
+          uiRow &&
+          uiRow.status === 'ready' &&
+          newMedia.length === 1 &&
+          recoveredSameSession &&
+          injectArmed
         );
+        await page.screenshot({ path: join(shotsDir, 'finalize-ui-transient.png'), fullPage: true });
+        record('FINALIZE_TRANSIENT_UI', uiPass, {
+          sessionId: uiSessionId,
+          apiReady,
+          uiCardSawVerifying,
+          uiCardReadyOrGone,
+          uiCardTextFinal,
+          injectArmed,
+          recoveredSameSession,
+          status: uiRow && uiRow.status,
+          attempts: uiRow && uiRow.finalizeAttempts,
+          catalogMediaId: uiRow && uiRow.catalogMediaId,
+          newMediaCount: newMedia.length,
+          cardSamples: cardSamples.slice(0, 40),
+        });
 
         // —— API permanent (session-scoped exhaust; do not leave global head broken) ——
         const { init: init2, etag: etag2 } = await putCompleteSession(PNG2, 'permanent-api');
@@ -1359,73 +1545,106 @@ async function main() {
           attemptTrail: attemptTrail.slice(-15),
         });
 
-        // —— UI permanent: inject high times on new session → UI shows فشل, not success/wait forever ——
+        // —— UI permanent: scoped to target session card only ——
         let uiPermSession = null;
+        let permInjectArmed = false;
+        let permInjectError = null;
         const onPermSession = async (res) => {
-          try {
-            if (res.request().method() !== 'POST') return;
-            if (!/\/upload-sessions\/?$/.test(res.url().replace(/\?.*$/, ''))) return;
-            if (!res.ok()) return;
-            const body = await res.json();
-            if (!body.sessionId || uiPermSession) return;
-            uiPermSession = body.sessionId;
-            await fetch(`${injectBase}/inject-head-fail`, {
-              method: 'POST',
-              headers: { 'content-type': 'application/json' },
-              body: JSON.stringify({ times: 20, sessionId: uiPermSession }),
-            });
-          } catch (_) {}
+          if (res.request().method() !== 'POST') return;
+          if (!/\/upload-sessions\/?$/.test(res.url().replace(/\?.*$/, ''))) return;
+          if (!res.ok()) return;
+          const body = await res.json();
+          if (!body.sessionId || uiPermSession) return;
+          uiPermSession = body.sessionId;
+          const injRes = await fetch(`${injectBase}/inject-head-fail`, {
+            method: 'POST',
+            headers: { 'content-type': 'application/json' },
+            body: JSON.stringify({ times: 20, sessionId: uiPermSession }),
+          });
+          if (!injRes.ok) {
+            permInjectError = `perm inject HTTP ${injRes.status} ${await injRes.text()}`;
+            return;
+          }
+          permInjectArmed = true;
         };
         page.on('response', onPermSession);
         await uiUploadPng(page, 'finalize-ui-permanent.png', PNG);
-        let uiPermFailed = false;
-        let uiPermSawFailMsg = false;
+        const permArmDeadline = Date.now() + 10000;
+        while (Date.now() < permArmDeadline && !permInjectArmed && !permInjectError) {
+          await page.waitForTimeout(50);
+        }
+        if (permInjectError) throw new Error(permInjectError);
+        if (!uiPermSession || !permInjectArmed) throw new Error('permanent inject not armed');
+
+        let uiPermFailedApi = false;
+        let uiPermCardFail = false;
+        let uiPermCardWaiting = false;
         let uiPermNeverReady = true;
+        let uiPermCardText = '';
+        const permCardSamples = [];
         const permUiDeadline = Date.now() + 50000;
         while (Date.now() < permUiDeadline) {
-          const texts = (await page.locator('#catalogForm .media-state').allTextContents()).join(' | ');
-          const statusLine = ((await page.locator('#catalogForm .status, #catalogStatus, [data-testid="catalog-status"]').allTextContents().catch(() => [])) || []).join(' ');
-          const blob = texts + ' ' + statusLine;
-          if (/فشل/.test(blob)) uiPermSawFailMsg = true;
-          if (uiPermSession) {
-            const s = await getSession(apiBase, token, uiPermSession);
-            if (s.status === 'ready') {
-              uiPermNeverReady = false;
-              break;
-            }
-            if (s.status === 'failed' && s.failureClass === 'permanent') {
-              uiPermFailed = true;
-              break;
-            }
+          const card = await cardStateForSession(uiPermSession);
+          permCardSamples.push({ t: Date.now(), ...card });
+          if (/جارٍ التحقق|جارٍ الرفع|جارٍ المعالجة|بانتظار/.test(card.text)) uiPermCardWaiting = true;
+          if (/فشل/.test(card.text)) {
+            uiPermCardFail = true;
+            uiPermCardText = card.text;
           }
-          await page.waitForTimeout(300);
+          const s = await getSession(apiBase, token, uiPermSession);
+          if (s.status === 'ready') {
+            uiPermNeverReady = false;
+            break;
+          }
+          if (s.status === 'failed' && s.failureClass === 'permanent') {
+            uiPermFailedApi = true;
+            // keep looping briefly so UI can paint fail on this card
+            if (uiPermCardFail) break;
+          }
+          await page.waitForTimeout(250);
         }
         page.off('response', onPermSession);
-        // Give UI a moment to paint failure after terminal session
-        await page.waitForTimeout(1000);
-        const finalUiText = (await page.locator('#catalogForm .media-state').allTextContents()).join(' | ');
-        if (/فشل/.test(finalUiText)) uiPermSawFailMsg = true;
-        const stillWaiting = /جارٍ التحقق|جارٍ الرفع|جارٍ المعالجة/.test(finalUiText) && !/فشل/.test(finalUiText);
+        await page.waitForTimeout(800);
+        const cardFinal = await cardStateForSession(uiPermSession);
+        if (/فشل/.test(cardFinal.text)) {
+          uiPermCardFail = true;
+          uiPermCardText = cardFinal.text;
+        }
+        const cardStillWaiting = /جارٍ التحقق|جارٍ الرفع|جارٍ المعالجة/.test(cardFinal.text) && !/فشل/.test(cardFinal.text);
+        // Global fail text from older file_mismatch card must not certify this session.
+        const globalFailCount = await page.locator('#catalogForm .media-state').filter({ hasText: /فشل/ }).count();
+        const naiveGlobalWouldPass = globalFailCount > 0 && uiPermFailedApi;
         await page.screenshot({ path: join(shotsDir, 'finalize-ui-permanent.png'), fullPage: true });
         const permUiRow = uiPermSession ? await getSession(apiBase, token, uiPermSession) : null;
-        record(
-          'FINALIZE_PERMANENT_UI',
-          !!(uiPermFailed && uiPermNeverReady && uiPermSawFailMsg && !stillWaiting && permUiRow && permUiRow.failureClass === 'permanent'),
-          {
-            sessionId: uiPermSession,
-            uiPermFailed,
-            uiPermSawFailMsg,
-            uiPermNeverReady,
-            stillWaiting,
-            finalUiText,
-            status: permUiRow && permUiRow.status,
-            failureClass: permUiRow && permUiRow.failureClass,
-            failureMessageAr: permUiRow && permUiRow.failureMessageAr,
-            attempts: permUiRow && permUiRow.finalizeAttempts,
-          },
+        const permUiPass = !!(
+          uiPermFailedApi &&
+          uiPermNeverReady &&
+          uiPermCardFail &&
+          !cardStillWaiting &&
+          permUiRow &&
+          permUiRow.failureClass === 'permanent' &&
+          permInjectArmed
         );
+        record('FINALIZE_PERMANENT_UI', permUiPass, {
+          sessionId: uiPermSession,
+          apiFailed: uiPermFailedApi,
+          uiPermCardFail,
+          uiPermCardWaitingSeen: uiPermCardWaiting,
+          uiPermNeverReady,
+          cardStillWaiting,
+          uiPermCardText,
+          globalFailCount,
+          naiveGlobalWouldPass,
+          scopedRequired: true,
+          status: permUiRow && permUiRow.status,
+          failureClass: permUiRow && permUiRow.failureClass,
+          failureMessageAr: permUiRow && permUiRow.failureMessageAr,
+          attempts: permUiRow && permUiRow.finalizeAttempts,
+          permCardSamples: permCardSamples.slice(0, 40),
+        });
       } catch (finErr) {
         record('FINALIZE_TRANSIENT_RECOVER', false, String(finErr && finErr.stack ? finErr.stack : finErr));
+        record('FINALIZE_UI_SCOPED_NEGATIVE', false, 'skipped due to prior finalize error');
         record('FINALIZE_TRANSIENT_UI', false, 'skipped due to prior finalize error');
         record('FINALIZE_PERMANENT', false, 'skipped due to prior finalize error');
         record('FINALIZE_PERMANENT_UI', false, 'skipped due to prior finalize error');

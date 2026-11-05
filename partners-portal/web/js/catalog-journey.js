@@ -3038,17 +3038,63 @@
     detailImages.onchange = () => { addStaged(detailImages.files, 'detail'); detailImages.value = ''; };
     detailVideos.onchange = () => { addStaged(detailVideos.files, 'detail'); detailVideos.value = ''; };
 
+    /** Media ids removed in this editor session — omit even if a stale preview still lists them. */
+    const locallyRemovedMediaIds = new Set();
+    let mediaPaintGeneration = 0;
+
+    function stripDeletedFromOptionsState(mediaId) {
+      if (window.MiraCatalogOptions && typeof window.MiraCatalogOptions.stripMediaIdsFromOptionsState === 'function') {
+        window.MiraCatalogOptions.stripMediaIdsFromOptionsState(optionsState, [mediaId]);
+        return;
+      }
+      if (!optionsState || !Array.isArray(optionsState.variants)) return;
+      optionsState.variants.forEach(function (variant) {
+        if (!variant || !Array.isArray(variant.mediaIds)) return;
+        variant.mediaIds = variant.mediaIds.filter(function (id) { return id !== mediaId; });
+      });
+    }
+
+    function syncOptionsMediaIdsFromItemOrPreview(previewData) {
+      var serverVariants = [];
+      if (previewData && previewData.draftVariantsSet && Array.isArray(previewData.draftVariantsJson)) {
+        serverVariants = previewData.draftVariantsJson;
+      } else if (previewData && Array.isArray(previewData.publishedVariantsJson)) {
+        serverVariants = previewData.publishedVariantsJson;
+      } else if (item && item.draftVariantsSet && Array.isArray(item.draftVariantsJson)) {
+        serverVariants = item.draftVariantsJson;
+      } else if (item && Array.isArray(item.variantsJson)) {
+        serverVariants = item.variantsJson;
+      }
+      if (window.MiraCatalogOptions && typeof window.MiraCatalogOptions.syncVariantMediaIdsFromServer === 'function') {
+        window.MiraCatalogOptions.syncVariantMediaIdsFromServer(optionsState, serverVariants, locallyRemovedMediaIds);
+        return;
+      }
+      if (!optionsState || !Array.isArray(optionsState.variants)) return;
+      optionsState.variants.forEach(function (variant) {
+        if (!variant || !variant.id) return;
+        var match = serverVariants.find(function (sv) { return sv && sv.id === variant.id; });
+        if (!match) return;
+        var next = Array.isArray(match.mediaIds) ? match.mediaIds.slice() : [];
+        variant.mediaIds = next.filter(function (id) { return id && !locallyRemovedMediaIds.has(id); });
+      });
+    }
+
     async function paintMedia(serverMedia) {
+      const paintGen = ++mediaPaintGeneration;
       mediaBox.replaceChildren();
       detailMediaBox.replaceChildren();
       const rows = staged[form.id];
       rows.forEach((entry, index) => {
         const card = document.createElement('div');
         card.className = 'media-card';
+        card.setAttribute('data-testid', 'media-card-staged');
         card.dataset.fileKey = entry.key;
+        if (entry.uploadSessionId) card.dataset.uploadSessionId = entry.uploadSessionId;
+        if (entry.file && entry.file.name) card.dataset.fileName = entry.file.name;
         text(card, (entry.placement === 'detail' ? 'داخل التفاصيل' : 'العرض الرئيسي') + ' · ' + entry.file.name + ' · ' + entry.status + (entry.error ? ' · ' + entry.error : ''));
         const stateLine = document.createElement('p');
         stateLine.className = 'media-state';
+        stateLine.setAttribute('data-testid', 'media-state');
         const progress = document.createElement('div');
         progress.className = 'media-progress';
         const progressBar = document.createElement('span');
@@ -3115,10 +3161,13 @@
         return;
       }
       let media = serverMedia;
+      let previewForSync = null;
       if (!media) {
         try {
           const previewData = await PartnersApi.preview(type === 'brand' ? 'products' : 'services', item.id);
+          if (paintGen !== mediaPaintGeneration) return; // newer paint started; drop stale preview
           media = previewData.media || [];
+          previewForSync = previewData;
           if (previewData.reviewNote) status.textContent = 'سبب المراجعة: ' + previewData.reviewNote;
           // Keep item draft/published variant fields aligned with preview for bindings UI.
           if (typeof previewData.draftVariantsSet === 'boolean') {
@@ -3130,16 +3179,31 @@
           if (previewData.publishedVariantsJson !== undefined) {
             item.variantsJson = previewData.publishedVariantsJson;
           }
+          // Sync mediaIds into optionsState (bindings only) without wiping unsaved edits.
+          syncOptionsMediaIdsFromItemOrPreview(previewData);
+          // Drop local omit markers once the server no longer lists the media.
+          Array.from(locallyRemovedMediaIds).forEach(function (removedId) {
+            if (!(media || []).some(function (m) { return m && m.id === removedId; })) {
+              locallyRemovedMediaIds.delete(removedId);
+            }
+          });
         } catch (error) {
           // Do not wipe variant binding UI on a failed media reload.
           text(mediaBox, 'تعذر تحميل الوسائط المحفوظة: ' + error.message);
           return;
         }
+      } else if (paintGen !== mediaPaintGeneration) {
+        return;
+      } else {
+        syncOptionsMediaIdsFromItemOrPreview(null);
       }
+      void previewForSync;
       const ids = media.map((row) => row.id);
       media.forEach((row, index) => {
         const card = document.createElement('div');
         card.className = 'media-card';
+        card.setAttribute('data-testid', 'media-card-saved');
+        card.dataset.mediaId = row.id;
         const primary = row.draftIsPrimary == null ? row.isPrimary : row.draftIsPrimary;
         const place = row.placement === 'detail' ? 'داخل التفاصيل' : (row.placement === 'cover' ? 'غلاف الفيديو' : 'العرض الرئيسي');
         text(card, (row.kind === 'video' ? 'فيديو محفوظ' : 'صورة محفوظة') + ' · ' + place + (primary ? ' · غلاف' : '') + ' · ' + (row.publication || 'draft') + (row.pendingRemoval ? ' · طلب إزالة' : ''));
@@ -3189,8 +3253,28 @@
         const remove = document.createElement('button');
         remove.type = 'button';
         remove.textContent = 'إزالة';
+        remove.setAttribute('data-testid', 'media-remove');
         remove.onclick = async () => {
           await PartnersApi.removeMedia(type === 'brand' ? 'products' : 'services', item.id, row.id);
+          // Strip from editor optionsState immediately so general save cannot resurrect.
+          locallyRemovedMediaIds.add(row.id);
+          stripDeletedFromOptionsState(row.id);
+          if (item && Array.isArray(item.draftVariantsJson)) {
+            item.draftVariantsJson = item.draftVariantsJson.map(function (v) {
+              if (!v || !Array.isArray(v.mediaIds)) return v;
+              return Object.assign({}, v, {
+                mediaIds: v.mediaIds.filter(function (id) { return id !== row.id; }),
+              });
+            });
+          }
+          if (item && Array.isArray(item.variantsJson)) {
+            item.variantsJson = item.variantsJson.map(function (v) {
+              if (!v || !Array.isArray(v.mediaIds)) return v;
+              return Object.assign({}, v, {
+                mediaIds: v.mediaIds.filter(function (id) { return id !== row.id; }),
+              });
+            });
+          }
           paintMedia(null);
         };
         card.append(up, cover, remove);
@@ -3299,8 +3383,14 @@
       const card = mediaBox.querySelector('[data-file-key="' + entry.key + '"]') || detailMediaBox.querySelector('[data-file-key="' + entry.key + '"]');
       const view = window.MiraMotion ? MiraMotion.describeMedia(entry) : { label: entry.status, mode: 'idle', percent: null };
       if (!card) return;
+      if (entry.uploadSessionId) card.dataset.uploadSessionId = entry.uploadSessionId;
+      if (entry.catalogMediaId) card.dataset.mediaId = entry.catalogMediaId;
+      card.setAttribute('data-testid', 'media-card-staged');
       const line = card.querySelector('.media-state');
-      if (line) line.textContent = view.label;
+      if (line) {
+        line.textContent = view.label;
+        line.setAttribute('data-testid', 'media-state');
+      }
       if (window.MiraMotion) MiraMotion.applyProgress(card.querySelector('.media-progress'), view);
     }
 
@@ -3379,6 +3469,7 @@
               signal: controller.signal,
               onSession: (session) => {
                 entry.uploadSessionId = session && session.sessionId;
+                syncMedia(entry);
                 try {
                   sessionStorage.setItem(
                     resumeKey,

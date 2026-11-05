@@ -428,6 +428,44 @@
     return keep;
   }
 
+  /**
+   * Drop media ids from optionsState only (keeps labels/prices/selections).
+   * Used after UI removeMedia so general save cannot resurrect deleted refs.
+   */
+  function stripMediaIdsFromOptionsState(state, removeIds) {
+    if (!state || !Array.isArray(state.variants)) return state;
+    const drop = removeIds instanceof Set ? removeIds : new Set(Array.isArray(removeIds) ? removeIds : [removeIds]);
+    state.variants.forEach(function (variant) {
+      if (!variant || !Array.isArray(variant.mediaIds)) return;
+      variant.mediaIds = variant.mediaIds.filter(function (id) {
+        return id && !drop.has(id);
+      });
+    });
+    return state;
+  }
+
+  /**
+   * Sync only mediaIds from server variant rows into live optionsState.
+   * Does not replace selections/prices. `omitIds` wins over stale preview rows.
+   */
+  function syncVariantMediaIdsFromServer(state, serverVariants, omitIds) {
+    if (!state || !Array.isArray(state.variants)) return state;
+    const omit = omitIds instanceof Set ? omitIds : new Set(omitIds || []);
+    const rows = Array.isArray(serverVariants) ? serverVariants : [];
+    state.variants.forEach(function (variant) {
+      if (!variant || !variant.id) return;
+      const match = rows.find(function (sv) {
+        return sv && sv.id === variant.id;
+      });
+      if (!match) return;
+      const next = Array.isArray(match.mediaIds) ? match.mediaIds.slice() : [];
+      variant.mediaIds = next.filter(function (id) {
+        return id && !omit.has(id);
+      });
+    });
+    return state;
+  }
+
   global.MiraCatalogOptions = {
     optionsStateFromServer: optionsStateFromServer,
     buildOptionGroups: buildOptionGroups,
@@ -442,5 +480,7 @@
     SIZE_CANONICAL: SIZE_CANONICAL,
     COLOR_CANONICAL: COLOR_CANONICAL,
     syncPickerOptions: syncPickerOptions,
+    stripMediaIdsFromOptionsState: stripMediaIdsFromOptionsState,
+    syncVariantMediaIdsFromServer: syncVariantMediaIdsFromServer,
   };
 })(typeof globalThis !== 'undefined' ? globalThis : this);

@@ -407,16 +407,22 @@ async function main() {
   }
 
   {
+    // Real browser R2 suite lives in r2-browser-multipart.evidence.ts (V03).
+    // This harness only probes env presence — never claims R2 PASS here.
     const hasR2 =
       (process.env.MIRA_MEDIA_STORE || '').toLowerCase() === 's3' &&
       !!process.env.MIRA_MEDIA_S3_BUCKET &&
-      !!process.env.MIRA_MEDIA_S3_ACCESS_KEY_ID;
+      !!process.env.MIRA_MEDIA_S3_ACCESS_KEY_ID &&
+      !!process.env.MIRA_MEDIA_S3_SECRET_ACCESS_KEY &&
+      !!process.env.MIRA_MEDIA_S3_ENDPOINT;
     record(
       'U01_R2',
-      hasR2 ? false : 'BLOCKED',
-      { liveR2: true },
+      'BLOCKED',
+      { liveR2: true, suite: 'r2-browser-multipart.evidence.ts' },
       { configured: hasR2 },
-      hasR2 ? 'R2 configured but browser CORS/ETag path not executed in this harness' : 'No isolated R2 credentials',
+      hasR2
+        ? 'Env present — run: npx tsx src/partners-portal/upload-sessions/r2-browser-multipart.evidence.ts'
+        : 'No isolated R2 credentials; suite: npx tsx src/partners-portal/upload-sessions/r2-browser-multipart.evidence.ts',
     );
   }
 
