@@ -536,6 +536,11 @@
       request('PATCH', `/partners-portal/products/${productId}/variants/${encodeURIComponent(variantId)}/media`, {
         mediaIds: Array.isArray(mediaIds) ? mediaIds : [],
       }),
+    /** P3.1: variant-level inventory adapter. */
+    getVariantInventory: (productId) =>
+      request('GET', `/partners-portal/products/${encodeURIComponent(productId)}/variant-inventory`),
+    putVariantInventory: (productId, body) =>
+      request('PUT', `/partners-portal/products/${encodeURIComponent(productId)}/variant-inventory`, body || {}),
     removeMedia: (kind, id, mediaId) =>
       request('DELETE', `/partners-portal/${kind}/${id}/media/${mediaId}`),
     ads: () => request('GET', '/partners-portal/ads'),

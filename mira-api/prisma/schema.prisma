@@ -301,6 +301,8 @@ model Product {
   /// null = unlimited / untracked
   stockQty      Int?     @map("stock_qty")
   reservedQty   Int      @default(0) @map("reserved_qty")
+  /// product = legacy Product.stockQty; variant = ProductVariantInventory is sole numeric source.
+  inventoryMode String   @default("product") @map("inventory_mode")
   optionsJson   Json?    @map("options_json")
   variantsJson  Json?    @map("variants_json")
   /// Pending options/variants for published rows — applied on content approve only.
@@ -315,9 +317,33 @@ model Product {
   profileId     String?  @map("profile_id")
   schemaVersion Int?     @map("schema_version")
   createdAt     DateTime @default(now()) @map("created_at")
+  variantInventories ProductVariantInventory[]
 
   @@index([partnerId, active])
   @@map("products")
+}
+
+/// P3.1 — per-variant inventory adapter. Empty stockQty means unspecified (not zero).
+model ProductVariantInventory {
+  id          String    @id @default(uuid())
+  productId   String    @map("product_id")
+  product     Product   @relation(fields: [productId], references: [id], onDelete: Cascade)
+  variantId   String    @map("variant_id")
+  variantKey  String    @default("") @map("variant_key")
+  /// tracked | untracked
+  stockMode   String    @default("tracked") @map("stock_mode")
+  /// null = unspecified (never coerce to 0)
+  stockQty    Int?      @map("stock_qty")
+  reservedQty Int       @default(0) @map("reserved_qty")
+  revision    Int       @default(0)
+  archivedAt  DateTime? @map("archived_at")
+  updatedAt   DateTime  @updatedAt @map("updated_at")
+  createdAt   DateTime  @default(now()) @map("created_at")
+
+  @@unique([productId, variantId])
+  @@unique([productId, variantKey])
+  @@index([productId, archivedAt])
+  @@map("product_variant_inventories")
 }
 
 model Service {

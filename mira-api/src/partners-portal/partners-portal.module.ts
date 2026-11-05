@@ -15,6 +15,7 @@ import { UploadCleanupService } from './upload-sessions/upload-cleanup.service';
 import { UploadFinalizeService } from './upload-sessions/upload-finalize.service';
 import { UploadSessionsController } from './upload-sessions/upload-sessions.controller';
 import { UploadSessionsService } from './upload-sessions/upload-sessions.service';
+import { VariantInventoryService } from './variant-inventory.service';
 
 @Module({
   imports: [MarketplaceModule],
@@ -31,6 +32,7 @@ import { UploadSessionsService } from './upload-sessions/upload-sessions.service
     RegistryService,
     EditorDraftsService,
     ServiceProfileService,
+    VariantInventoryService,
     {
       provide: MultipartUploadStore,
       inject: [ConfigService],
@@ -40,6 +42,6 @@ import { UploadSessionsService } from './upload-sessions/upload-sessions.service
     UploadCleanupService,
     UploadSessionsService,
   ],
-  exports: [PartnersPortalService, RegistryService, UploadSessionsService],
+  exports: [PartnersPortalService, RegistryService, UploadSessionsService, VariantInventoryService],
 })
 export class PartnersPortalModule {}

@@ -2309,7 +2309,53 @@
         clearingVariants: !!src.clearingVariants,
         categoryConflict: src.categoryConflict || null,
         invalidVariantNote: src.invalidVariantNote || '',
+        inventoryMode: src.inventoryMode === 'variant' ? 'variant' : 'product',
       }));
+    }
+
+    async function hydrateVariantInventory() {
+      if (type !== 'brand' || !item || !item.id || !window.PartnersApi || !PartnersApi.getVariantInventory) return;
+      try {
+        const inv = await PartnersApi.getVariantInventory(item.id);
+        if (!inv) return;
+        if (inv.inventoryMode === 'variant' || inv.inventoryMode === 'product') {
+          optionsState.inventoryMode = inv.inventoryMode;
+        }
+        const byId = {};
+        (inv.rows || []).forEach((r) => {
+          if (r && r.variantId) byId[r.variantId] = r;
+        });
+        (optionsState.variants || []).forEach((v) => {
+          const row = byId[v.id];
+          if (!row) return;
+          v.stockQty = row.stockQty == null ? null : row.stockQty;
+          v._inventoryRevision = row.revision;
+        });
+        paintOptions();
+      } catch (err) {
+        /* inventory hydrate is best-effort; product editor still works */
+      }
+    }
+
+    async function persistVariantInventory(productId) {
+      if (type !== 'brand' || !productId || !window.PartnersApi || !PartnersApi.putVariantInventory) return { ok: true, skipped: true };
+      const mode = optionsState.inventoryMode === 'variant' ? 'variant' : 'product';
+      const rows = (optionsState.variants || []).map((v) => ({
+        variantId: v.id,
+        variantKey: v.id,
+        stockMode: 'tracked',
+        stockQty: v.stockQty == null ? null : v.stockQty,
+        expectedRevision: v._inventoryRevision != null ? v._inventoryRevision : null,
+      }));
+      const res = await PartnersApi.putVariantInventory(productId, {
+        inventoryMode: mode,
+        rows: mode === 'variant' ? rows : [],
+      });
+      (res.updated || res.rows || []).forEach((r) => {
+        const live = (optionsState.variants || []).find((v) => v.id === r.variantId);
+        if (live) live._inventoryRevision = r.revision;
+      });
+      return res;
     }
 
     function hasOptionValuesNow() {
@@ -2559,13 +2605,15 @@
         block.className = 'option-group';
         text(block, group.label, 'h4');
         const chips = document.createElement('div');
-        chips.className = 'choice-row';
+        chips.className = group.kind === 'color' ? 'choice-row swatch-row' : 'choice-row';
         if (!optionsState.selected[group.id]) optionsState.selected[group.id] = [];
         group.presets.forEach((label) => {
           const wrap = document.createElement('label');
+          wrap.className = group.kind === 'color' ? 'swatch-choice' : (group.kind === 'size' ? 'size-choice' : '');
           const input = document.createElement('input');
           input.type = 'checkbox';
           input.checked = optionsState.selected[group.id].indexOf(label) >= 0;
+          input.setAttribute('aria-label', label);
           input.onchange = () => {
             const list = optionsState.selected[group.id];
             const at = list.indexOf(label);
@@ -2575,7 +2623,28 @@
             optionsState.clearingVariants = false;
             onOptionsValuesChanged();
           };
-          wrap.append(input, document.createTextNode(' ' + label));
+          if (group.kind === 'color') {
+            const swatch = document.createElement('span');
+            swatch.className = 'color-swatch';
+            swatch.setAttribute('data-color-label', label);
+            swatch.setAttribute('title', label);
+            const style =
+              window.MiraCatalogOptions && typeof window.MiraCatalogOptions.colorSwatchStyle === 'function'
+                ? window.MiraCatalogOptions.colorSwatchStyle(label)
+                : { background: '#d4c4ce', borderColor: '#d4c4ce' };
+            swatch.style.background = style.background;
+            swatch.style.borderColor = style.borderColor;
+            if (input.checked) wrap.classList.add('is-selected');
+            const name = document.createElement('span');
+            name.className = 'swatch-name';
+            name.textContent = label;
+            wrap.append(input, swatch, name);
+            input.addEventListener('change', () => {
+              wrap.classList.toggle('is-selected', input.checked);
+            });
+          } else {
+            wrap.append(input, document.createTextNode(' ' + label));
+          }
           chips.appendChild(wrap);
         });
         block.appendChild(chips);
@@ -2603,9 +2672,27 @@
       text(optionsBody, 'التركيبات (لا تُنشأ تلقائيًا من كل الاحتمالات)', 'h4');
       const variantList = document.createElement('div');
       variantList.className = 'variant-list';
+      // P3.1 — inventory mode for variant stock adapter (empty ≠ 0).
+      if (!optionsState.inventoryMode) optionsState.inventoryMode = 'product';
+      const invModeRow = document.createElement('div');
+      invModeRow.className = 'choice-row';
+      const invLabel = document.createElement('label');
+      const invCheck = document.createElement('input');
+      invCheck.type = 'checkbox';
+      invCheck.checked = optionsState.inventoryMode === 'variant';
+      invCheck.onchange = () => {
+        optionsState.inventoryMode = invCheck.checked ? 'variant' : 'product';
+        saveOptionsDraft();
+        paintOptions();
+      };
+      invLabel.append(invCheck, document.createTextNode(' تتبع المخزون لكل تركيبة'));
+      invModeRow.appendChild(invLabel);
+      optionsBody.appendChild(invModeRow);
+
       optionsState.variants.forEach((variant, index) => {
         const row = document.createElement('div');
-        row.className = 'check-row';
+        row.className = 'check-row variant-stock-row';
+        row.setAttribute('data-variant-id', variant.id);
         const label = document.createElement('span');
         label.textContent = Object.values(variant.labels || {}).join(' · ') + ' · id=' + variant.id;
         const price = document.createElement('input');
@@ -2629,6 +2716,29 @@
           paintOptionsPreview();
         };
         avail.append(availInput, document.createTextNode(' متاحة'));
+        let stockField = null;
+        if (optionsState.inventoryMode === 'variant') {
+          stockField = document.createElement('input');
+          stockField.type = 'number';
+          stockField.min = '0';
+          stockField.step = '1';
+          stockField.placeholder = 'كمية (فارغ = غير محدد)';
+          stockField.setAttribute('aria-label', 'كمية المخزون للتركيبة');
+          stockField.setAttribute('data-testid', 'variant-stock-qty');
+          stockField.style.width = '8rem';
+          // Distinguish empty (unspecified) from 0 — never coerce empty→0.
+          stockField.value = variant.stockQty == null ? '' : String(variant.stockQty);
+          stockField.oninput = () => {
+            const raw = stockField.value.trim();
+            if (raw === '') variant.stockQty = null;
+            else {
+              const n = Number(raw);
+              variant.stockQty = Number.isInteger(n) && n >= 0 ? n : null;
+            }
+            saveOptionsDraft();
+            paintOptionsPreview();
+          };
+        }
         const remove = document.createElement('button');
         remove.type = 'button';
         remove.className = 'btn btn-ghost btn-sm';
@@ -2639,7 +2749,9 @@
           saveOptionsDraft();
           paintOptions();
         };
-        row.append(label, price, avail, remove);
+        row.append(label, price, avail);
+        if (stockField) row.appendChild(stockField);
+        row.appendChild(remove);
         variantList.appendChild(row);
       });
       optionsBody.appendChild(variantList);
@@ -2945,6 +3057,7 @@
     }
 
     paintOptions();
+    hydrateVariantInventory();
 
     function purchaseMode() {
       const selected = form.querySelector('input[name="purchaseMode"]:checked');
@@ -4085,6 +4198,16 @@
           return false;
         }
         basicsSaved = true;
+        if (type === 'brand' && saved && saved.id) {
+          try {
+            await persistVariantInventory(saved.id);
+          } catch (invErr) {
+            status.textContent =
+              'حُفظ المنتج لكن مخزون التركيبات لم يُحدَّث: ' +
+              ((invErr && invErr.message) || 'خطأ غير معروف');
+            throw invErr;
+          }
+        }
         if (type === 'brand' && !ownerId) {
           try {
             const fresh = localStorage.getItem('mira-product-options:new');

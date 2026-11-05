@@ -28,6 +28,7 @@ import { EditorDraftsService } from './editor-drafts/editor-drafts.service';
 import { ServiceProfileService } from './editor-drafts/service-profile.service';
 import { PartnersPortalService } from './partners-portal.service';
 import { RegistryService } from './registry/registry.service';
+import { VariantInventoryService } from './variant-inventory.service';
 
 class PartnerLoginDto {
   @IsEmail()
@@ -64,6 +65,7 @@ export class PartnersPortalController {
     @Inject(RegistryService) private readonly registry: RegistryService,
     @Inject(EditorDraftsService) private readonly drafts: EditorDraftsService,
     @Inject(ServiceProfileService) private readonly serviceProfiles: ServiceProfileService,
+    @Inject(VariantInventoryService) private readonly variantInventory: VariantInventoryService,
   ) {}
 
   @Get('registry')
@@ -290,6 +292,36 @@ export class PartnersPortalController {
     @Body() body: { mediaIds?: string[] },
   ) {
     return this.content.bindVariantMedia(req.partnerUser.partnerId, id, variantId, body?.mediaIds || []);
+  }
+
+  /** P3.1 — list variant inventory + derived stock for inventoryMode=variant. */
+  @Get('products/:id/variant-inventory')
+  @UseGuards(PartnerTokenGuard)
+  async getVariantInventory(@Req() req: PartnerRequest, @Param('id') id: string) {
+    await this.variantInventory.assertProductOwner(req.partnerUser.partnerId, id);
+    return this.variantInventory.derivedProductStock(id);
+  }
+
+  /** P3.1 — upsert variant inventory rows; empty stockQty stays null (not zero). */
+  @Put('products/:id/variant-inventory')
+  @UseGuards(PartnerTokenGuard)
+  putVariantInventory(
+    @Req() req: PartnerRequest,
+    @Param('id') id: string,
+    @Body()
+    body: {
+      inventoryMode?: 'product' | 'variant';
+      rows?: Array<{
+        variantId: string;
+        variantKey?: string;
+        stockMode?: 'tracked' | 'untracked';
+        stockQty?: number | null;
+        expectedRevision?: number | null;
+        archive?: boolean;
+      }>;
+    },
+  ) {
+    return this.variantInventory.upsertMany(req.partnerUser.partnerId, id, body || {});
   }
 
   @Patch('products/:id/media/:mediaId/primary')

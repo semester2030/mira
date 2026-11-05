@@ -1361,25 +1361,113 @@ async function main() {
           return { present: true, text, via: sid ? 'session' : 'filename', sessionAttr: sid };
         }
 
-        // Negative guard: a stale fail card must NOT make "saw fail" true while target still waits.
+        /** Same acceptance helper used by transient/permanent UI + negative case. */
+        async function assertSavedCardVisible(catalogMediaId, { timeoutMs = 15000 } = {}) {
+          const deadline = Date.now() + timeoutMs;
+          while (Date.now() < deadline) {
+            const saved = page.locator(
+              `[data-testid="media-card-saved"][data-media-id="${catalogMediaId}"]`,
+            );
+            if ((await saved.count()) > 0 && (await saved.first().isVisible())) {
+              return { ok: true, visible: true };
+            }
+            await page.waitForTimeout(100);
+          }
+          return { ok: false, visible: false };
+        }
+
+        function evaluateFinalizeUiPass({
+          apiReady,
+          sessionId,
+          catalogMediaId,
+          uiCardSawVerifying,
+          savedCardVisible,
+          recoveredSameSession,
+          injectArmed,
+          newMediaCount,
+        }) {
+          // Disappearing staged card alone never passes — saved card must be visible with exact id.
+          return !!(
+            apiReady &&
+            sessionId &&
+            catalogMediaId &&
+            uiCardSawVerifying &&
+            savedCardVisible === true &&
+            recoveredSameSession &&
+            injectArmed &&
+            newMediaCount === 1
+          );
+        }
+
+        // —— Negative: stale fail card + waiting target must FAIL the shared helper ——
         {
           const staleFail = page.locator('#catalogForm .media-state').filter({ hasText: /فشل/ });
           const staleCount = await staleFail.count();
-          const fakeWaitingCard = { text: 'جارٍ التحقق' };
-          const naivePass = staleCount > 0 && !/جارٍ التحقق/.test(
-            (await page.locator('#catalogForm .media-state').allTextContents()).filter((t) => !/فشل/.test(t)).join(' ') || fakeWaitingCard.text,
-          );
-          // Demonstrate scoped rule: only the target card decides.
-          const scopedWouldPass = /فشل/.test(fakeWaitingCard.text); // false while waiting
-          record(
-            'FINALIZE_UI_SCOPED_NEGATIVE',
-            staleCount >= 0 && scopedWouldPass === false && !(staleCount > 0 && scopedWouldPass),
-            {
-              staleFailCards: staleCount,
-              note: 'global .media-state fail text must not certify a different waiting card',
-              scopedWaitingIsNotFail: !scopedWouldPass,
-            },
-          );
+          // Inject a waiting staged card for a fake session id that will never become ready.
+          await page.evaluate(() => {
+            const box = document.querySelector('#catalogForm #mediaBox, #catalogForm .media-box, #catalogForm');
+            if (!box) return;
+            const card = document.createElement('div');
+            card.className = 'media-card';
+            card.setAttribute('data-testid', 'media-card-staged');
+            card.setAttribute('data-upload-session-id', 'negative-waiting-session');
+            card.setAttribute('data-file-name', 'negative-waiting.png');
+            const state = document.createElement('p');
+            state.className = 'media-state';
+            state.setAttribute('data-testid', 'media-state');
+            state.textContent = 'جارٍ التحقق';
+            card.appendChild(state);
+            (document.querySelector('#catalogForm [data-testid="media-card-staged"]')?.parentElement ||
+              document.querySelector('#catalogForm') ||
+              document.body).appendChild(card);
+          });
+          const waitingCard = await cardStateForSession('negative-waiting-session', 'negative-waiting.png');
+          const wrongGlobalLogicWouldPass =
+            staleCount > 0 && /فشل/.test((await page.locator('#catalogForm .media-state').allTextContents()).join(' | '));
+          const sharedHelperWhileWaiting = evaluateFinalizeUiPass({
+            apiReady: false,
+            sessionId: 'negative-waiting-session',
+            catalogMediaId: null,
+            uiCardSawVerifying: /جارٍ التحقق/.test(waitingCard.text),
+            savedCardVisible: false,
+            recoveredSameSession: false,
+            injectArmed: true,
+            newMediaCount: 0,
+          });
+          // API ready without saved card must also fail.
+          const apiReadyNoCard = evaluateFinalizeUiPass({
+            apiReady: true,
+            sessionId: 'negative-waiting-session',
+            catalogMediaId: 'ghost-media-id',
+            uiCardSawVerifying: true,
+            savedCardVisible: false,
+            recoveredSameSession: true,
+            injectArmed: true,
+            newMediaCount: 1,
+          });
+          // When target transitions to fail, helper still needs savedCardVisible for ready path —
+          // for permanent fail we only check waiting→fail on the target card text.
+          const targetStillWaiting = /جارٍ التحقق|جارٍ المعالجة|بانتظار/.test(waitingCard.text);
+          const negativeOk =
+            staleCount >= 1 &&
+            waitingCard.present &&
+            targetStillWaiting &&
+            wrongGlobalLogicWouldPass === true &&
+            sharedHelperWhileWaiting === false &&
+            apiReadyNoCard === false;
+          record('FINALIZE_UI_SCOPED_NEGATIVE', negativeOk, {
+            staleFailCards: staleCount,
+            waitingCard,
+            wrongGlobalLogicWouldPass,
+            sharedHelperWhileWaiting,
+            apiReadyNoCard,
+            note: 'stale fail + waiting target must not PASS shared helper; API ready without visible saved card fails',
+          });
+          await page.evaluate(() => {
+            document
+              .querySelectorAll('[data-upload-session-id="negative-waiting-session"]')
+              .forEach((n) => n.remove());
+          });
         }
 
         // —— UI transient: file pick → inject after session create → verifying on THAT card → ready ——
@@ -1424,27 +1512,27 @@ async function main() {
 
         let apiReady = false;
         let uiCardSawVerifying = false;
-        let uiCardReadyOrGone = false;
+        let savedCardVisible = false;
         let uiCardTextFinal = '';
+        let readyCatalogMediaId = null;
         const uiDeadline = Date.now() + 45000;
         while (Date.now() < uiDeadline) {
           if (injectError) throw new Error(injectError);
-          const card = await cardStateForSession(uiSessionId, uiFileName);
+          // Prefer session id once known — filename only before sessionAttr exists.
+          const card = await cardStateForSession(uiSessionId, uiSessionId ? null : uiFileName);
           cardSamples.push({ t: Date.now(), sessionId: uiSessionId, injectArmed, ...card });
-          if (/جارٍ التحقق|جارٍ المعالجة|بانتظار|جارٍ الرفع|جارٍ التحضير/.test(card.text)) {
-            if (/جارٍ التحقق|جارٍ المعالجة|بانتظار/.test(card.text)) uiCardSawVerifying = true;
-          }
+          if (/جارٍ التحقق|جارٍ المعالجة|بانتظار/.test(card.text)) uiCardSawVerifying = true;
           if (uiSessionId) {
             const s = await getSession(apiBase, token, uiSessionId);
             if (s.status === 'failed' && s.failureClass === 'retryable') {
-              // Server-side retryable while card may still show verifying
               if (card.present && /جارٍ|بانتظار/.test(card.text)) uiCardSawVerifying = true;
             }
             if (s.status === 'ready' && s.catalogMediaId) {
               apiReady = true;
-              const saved = page.locator(`[data-testid="media-card-saved"][data-media-id="${s.catalogMediaId}"]`);
-              if ((await saved.count()) > 0 || !card.present) {
-                uiCardReadyOrGone = true;
+              readyCatalogMediaId = s.catalogMediaId;
+              const saved = await assertSavedCardVisible(s.catalogMediaId, { timeoutMs: 2000 });
+              if (saved.ok) {
+                savedCardVisible = true;
                 uiCardTextFinal = card.text;
                 break;
               }
@@ -1454,6 +1542,10 @@ async function main() {
         }
         page.off('response', onSessionCreate);
         if (!uiSessionId || !injectArmed) throw new Error('inject not armed for UI transient session');
+        if (apiReady && readyCatalogMediaId && !savedCardVisible) {
+          const late = await assertSavedCardVisible(readyCatalogMediaId, { timeoutMs: 10000 });
+          savedCardVisible = late.ok;
+        }
         const mediaAfterUi = (
           await (
             await fetch(`${apiBase}/partners-portal/products/${ownerId}/preview`, {
@@ -1464,23 +1556,22 @@ async function main() {
         const newMedia = mediaAfterUi.filter((m) => !mediaBeforeUi.some((b) => b.id === m.id));
         const uiRow = uiSessionId ? await getSession(apiBase, token, uiSessionId) : null;
         const recoveredSameSession = !!(uiRow && uiRow.status === 'ready' && (uiRow.finalizeAttempts || 0) >= 2);
-        // API ready alone is not UI PASS — require card-scoped verifying evidence.
-        const uiPass = !!(
-          apiReady &&
-          uiCardSawVerifying &&
-          uiCardReadyOrGone &&
-          uiRow &&
-          uiRow.status === 'ready' &&
-          newMedia.length === 1 &&
-          recoveredSameSession &&
-          injectArmed
-        );
+        const uiPass = evaluateFinalizeUiPass({
+          apiReady,
+          sessionId: uiSessionId,
+          catalogMediaId: uiRow && uiRow.catalogMediaId,
+          uiCardSawVerifying,
+          savedCardVisible,
+          recoveredSameSession,
+          injectArmed,
+          newMediaCount: newMedia.length,
+        });
         await page.screenshot({ path: join(shotsDir, 'finalize-ui-transient.png'), fullPage: true });
         record('FINALIZE_TRANSIENT_UI', uiPass, {
           sessionId: uiSessionId,
           apiReady,
           uiCardSawVerifying,
-          uiCardReadyOrGone,
+          savedCardVisible,
           uiCardTextFinal,
           injectArmed,
           recoveredSameSession,

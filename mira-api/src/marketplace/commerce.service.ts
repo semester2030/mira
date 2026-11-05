@@ -222,9 +222,9 @@ export class CommerceService {
       }
       const lineQty = Math.min((existing?.quantity ?? 0) + quantity, MAX_LINE_QUANTITY);
       const otherQty = items
-        .filter((i) => i.productId === product.id && i.id !== existing?.id)
+        .filter((i) => i.productId === product.id && i.variantKey === resolved.variantKey && i.id !== existing?.id)
         .reduce((sum, i) => sum + i.quantity, 0);
-      this.assertStock(product, otherQty + lineQty);
+      await this.assertStockForLine(product, resolved.variantKey, otherQty + lineQty, tx);
 
       if (existing) {
         await tx.commerceCartItem.update({ where: { id: existing.id }, data: { quantity: lineQty } });
@@ -254,9 +254,11 @@ export class CommerceService {
       if (!item) throw notFound('CART_ITEM_NOT_FOUND', 'عنصر السلة غير موجود');
       const product = await this.loadProduct(item.productId, tx);
       this.assertInAppProduct(product);
-      const siblings = await tx.commerceCartItem.findMany({ where: { cartId: cart.id, productId: item.productId } });
+      const siblings = await tx.commerceCartItem.findMany({
+        where: { cartId: cart.id, productId: item.productId, variantKey: item.variantKey },
+      });
       const otherQty = siblings.filter((s) => s.id !== item.id).reduce((sum, s) => sum + s.quantity, 0);
-      this.assertStock(product, otherQty + quantity);
+      await this.assertStockForLine(product, item.variantKey, otherQty + quantity, tx);
       await tx.commerceCartItem.update({ where: { id: item.id }, data: { quantity } });
     }, TX_OPTIONS);
     return this.getCart(actor);
@@ -324,6 +326,30 @@ export class CommerceService {
     return Math.max(product.stockQty - product.reservedQty, 0);
   }
 
+  /** P3.1 — when inventoryMode=variant, ProductVariantInventory is the numeric source. */
+  private async availableQtyForLine(
+    product: ProductWithPartner,
+    variantKey: string | null | undefined,
+    db: Tx | PrismaService = this.prisma,
+  ): Promise<number | null> {
+    if (product.inventoryMode !== 'variant') {
+      return this.availableQty(product);
+    }
+    const key = String(variantKey || '').trim();
+    if (!key) return 0;
+    const row = await db.productVariantInventory.findFirst({
+      where: {
+        productId: product.id,
+        OR: [{ variantId: key }, { variantKey: key }],
+        archivedAt: null,
+      },
+    });
+    if (!row) return 0;
+    if (row.stockMode === 'untracked') return null;
+    if (row.stockQty == null) return null;
+    return Math.max(row.stockQty - row.reservedQty, 0);
+  }
+
   private assertStock(product: ProductWithPartner, wantedQty: number): void {
     const available = this.availableQty(product);
     if (available !== null && available < wantedQty) {
@@ -331,12 +357,33 @@ export class CommerceService {
     }
   }
 
-  private priceLines(
+  private async assertStockForLine(
+    product: ProductWithPartner,
+    variantKey: string | null | undefined,
+    wantedQty: number,
+    db: Tx | PrismaService = this.prisma,
+  ): Promise<void> {
+    if (product.inventoryMode !== 'variant') {
+      this.assertStock(product, wantedQty);
+      return;
+    }
+    const available = await this.availableQtyForLine(product, variantKey, db);
+    if (available !== null && available < wantedQty) {
+      throw conflict('OUT_OF_STOCK', 'الكمية المطلوبة غير متوفرة حاليًا', {
+        availableQty: available,
+        variantKey: variantKey || null,
+      });
+    }
+  }
+
+  private async priceLines(
     items: CartItemRow[],
     products: Map<string, ProductWithPartner>,
     expectedPartnerId: string | null,
-  ): PricedLine[] {
-    const lines: PricedLine[] = items.map((item) => {
+    db: Tx | PrismaService = this.prisma,
+  ): Promise<PricedLine[]> {
+    const lines: PricedLine[] = [];
+    for (const item of items) {
       const product = products.get(item.productId);
       const base: PricedLine = {
         id: item.id,
@@ -348,21 +395,24 @@ export class CommerceService {
         quantity: item.quantity,
         unitPriceHalalas: null,
         lineTotalHalalas: null,
-        availableQty: product ? this.availableQty(product) : null,
+        availableQty: product ? await this.availableQtyForLine(product, item.variantKey, db) : null,
         deliveryFeeHalalas: product?.deliveryFeeHalalas ?? null,
         issues: [],
       };
       if (!product) {
         base.issues.push({ code: 'PRODUCT_UNAVAILABLE', messageAr: 'المنتج لم يعد متاحًا' });
-        return base;
+        lines.push(base);
+        continue;
       }
       if (product.purchaseMode !== PURCHASE_MODE_INTERNAL_COD) {
         base.issues.push({ code: 'EXTERNAL_PRODUCT_NOT_PURCHASABLE', messageAr: 'هذا المنتج يُشترى من موقع المتجر' });
-        return base;
+        lines.push(base);
+        continue;
       }
       if (expectedPartnerId && product.partnerId !== expectedPartnerId) {
         base.issues.push({ code: 'CART_PARTNER_CONFLICT', messageAr: 'السلة تحتوي على منتجات من أكثر من متجر' });
-        return base;
+        lines.push(base);
+        continue;
       }
       try {
         const stored = record(item.selectionsJson);
@@ -371,6 +421,7 @@ export class CommerceService {
         base.variantKey = resolved.variantKey;
         base.unitPriceHalalas = resolved.unitPriceHalalas;
         base.lineTotalHalalas = lineTotal(resolved.unitPriceHalalas, item.quantity);
+        base.availableQty = await this.availableQtyForLine(product, resolved.variantKey, db);
       } catch (error) {
         const body = (error as { getResponse?: () => unknown }).getResponse?.() as Record<string, unknown> | undefined;
         base.issues.push({
@@ -378,14 +429,27 @@ export class CommerceService {
           messageAr: typeof body?.messageAr === 'string' ? body.messageAr : 'خيار المنتج لم يعد متاحًا',
         });
       }
-      return base;
-    });
+      lines.push(base);
+    }
 
-    // Stock is per product: all lines of one product share the same pool.
-    const qtyByProduct = new Map<string, number>();
-    for (const line of lines) qtyByProduct.set(line.productId, (qtyByProduct.get(line.productId) ?? 0) + line.quantity);
+    // Product mode: stock pool shared across lines of one product.
+    // Variant mode: each variantKey has an independent pool (P3.1).
+    const qtyByPool = new Map<string, number>();
     for (const line of lines) {
-      const total = qtyByProduct.get(line.productId) ?? 0;
+      const product = products.get(line.productId);
+      const poolKey =
+        product?.inventoryMode === 'variant'
+          ? `${line.productId}::${line.variantKey || ''}`
+          : line.productId;
+      qtyByPool.set(poolKey, (qtyByPool.get(poolKey) ?? 0) + line.quantity);
+    }
+    for (const line of lines) {
+      const product = products.get(line.productId);
+      const poolKey =
+        product?.inventoryMode === 'variant'
+          ? `${line.productId}::${line.variantKey || ''}`
+          : line.productId;
+      const total = qtyByPool.get(poolKey) ?? 0;
       if (line.availableQty !== null && line.availableQty < total && !line.issues.some((i) => i.code === 'PRODUCT_UNAVAILABLE')) {
         line.issues.push({ code: 'OUT_OF_STOCK', messageAr: 'الكمية المطلوبة غير متوفرة حاليًا' });
       }
@@ -435,7 +499,7 @@ export class CommerceService {
       }
     }
     const partnerId = cart?.partnerId ?? [...products.values()][0]?.partnerId ?? null;
-    const lines = this.priceLines(items, products, partnerId);
+    const lines = await this.priceLines(items, products, partnerId, db);
     const subtotal = lines.reduce((sum, l) => sum + (l.lineTotalHalalas ?? 0), 0);
     const fee = computeDeliveryFee(lines.map((l) => l.deliveryFeeHalalas));
     const partner = partnerId ? [...products.values()].find((p) => p.partnerId === partnerId)?.partner : undefined;
@@ -682,10 +746,23 @@ export class CommerceService {
           }
           const requestFingerprint = orderRequestFingerprint(delivery, currentFingerprint);
 
-          // Reserve stock: one conditional UPDATE per product, ordered by id to avoid deadlocks.
+          // Reserve stock: product-mode on products; variant-mode on product_variant_inventories (P3.1).
           const qtyByProduct = new Map<string, number>();
-          for (const line of priced.lines) qtyByProduct.set(line.productId, (qtyByProduct.get(line.productId) ?? 0) + line.quantity);
+          const qtyByVariant = new Map<string, { productId: string; variantKey: string; qty: number }>();
+          for (const line of priced.lines) {
+            const product = priced.products.get(line.productId)!;
+            if (product.inventoryMode === 'variant') {
+              const vk = line.variantKey || '';
+              const key = `${line.productId}::${vk}`;
+              const cur = qtyByVariant.get(key);
+              if (cur) cur.qty += line.quantity;
+              else qtyByVariant.set(key, { productId: line.productId, variantKey: vk, qty: line.quantity });
+            } else {
+              qtyByProduct.set(line.productId, (qtyByProduct.get(line.productId) ?? 0) + line.quantity);
+            }
+          }
           const tracked = new Set<string>();
+          const trackedVariants = new Set<string>();
           for (const productId of [...qtyByProduct.keys()].sort()) {
             const product = priced.products.get(productId)!;
             if (product.stockQty == null) continue;
@@ -701,6 +778,26 @@ export class CommerceService {
               throw conflict('OUT_OF_STOCK', `الكمية المطلوبة من "${product.nameAr}" غير متوفرة حاليًا`, { productId });
             }
             tracked.add(productId);
+          }
+          for (const key of [...qtyByVariant.keys()].sort()) {
+            const { productId, variantKey, qty } = qtyByVariant.get(key)!;
+            const product = priced.products.get(productId)!;
+            const affected = await tx.$executeRaw`
+              UPDATE product_variant_inventories
+              SET reserved_qty = reserved_qty + ${qty}, revision = revision + 1
+              WHERE product_id = ${productId}
+                AND (variant_id = ${variantKey} OR variant_key = ${variantKey})
+                AND archived_at IS NULL
+                AND stock_mode = 'tracked'
+                AND stock_qty IS NOT NULL
+                AND stock_qty - reserved_qty >= ${qty}`;
+            if (affected !== 1) {
+              throw conflict('OUT_OF_STOCK', `الكمية المطلوبة من "${product.nameAr}" غير متوفرة حاليًا`, {
+                productId,
+                variantKey,
+              });
+            }
+            trackedVariants.add(key);
           }
 
           const row = await tx.commerceOrder.create({
@@ -725,17 +822,25 @@ export class CommerceService {
               requestFingerprint,
               clientRequestId,
               items: {
-                create: priced.lines.map((line) => ({
-                  productId: line.productId,
-                  productNameAr: line.nameAr ?? '',
-                  variantKey: line.variantKey,
-                  selectionsJson: line.selections as unknown as Prisma.InputJsonValue,
-                  unitPriceHalalas: line.unitPriceHalalas!,
-                  quantity: line.quantity,
-                  lineTotalHalalas: line.lineTotalHalalas!,
-                  reservedQty: tracked.has(line.productId) ? line.quantity : 0,
-                  stockState: tracked.has(line.productId) ? 'reserved' : 'none',
-                })),
+                create: priced.lines.map((line) => {
+                  const product = priced.products.get(line.productId);
+                  const variantTracked =
+                    product?.inventoryMode === 'variant' &&
+                    trackedVariants.has(`${line.productId}::${line.variantKey || ''}`);
+                  const productTracked = tracked.has(line.productId);
+                  const isTracked = variantTracked || productTracked;
+                  return {
+                    productId: line.productId,
+                    productNameAr: line.nameAr ?? '',
+                    variantKey: line.variantKey,
+                    selectionsJson: line.selections as unknown as Prisma.InputJsonValue,
+                    unitPriceHalalas: line.unitPriceHalalas!,
+                    quantity: line.quantity,
+                    lineTotalHalalas: line.lineTotalHalalas!,
+                    reservedQty: isTracked ? line.quantity : 0,
+                    stockState: isTracked ? 'reserved' : 'none',
+                  };
+                }),
               },
               events: {
                 create: [
@@ -959,7 +1064,7 @@ export class CommerceService {
     return this.getOrderDetail(order.id, scope, actor.type);
   }
 
-  /** Each item flips reserved -> released exactly once; only the winner touches the product counter. */
+  /** Each item flips reserved -> released exactly once; only the winner touches the product/variant counter. */
   private async releaseOrderStock(tx: Tx, orderId: string): Promise<void> {
     const items = await tx.commerceOrderItem.findMany({ where: { orderId, stockState: 'reserved' }, orderBy: { productId: 'asc' } });
     for (const item of items) {
@@ -968,9 +1073,22 @@ export class CommerceService {
         data: { stockState: 'released' },
       });
       if (flipped.count !== 1) continue;
-      await tx.$executeRaw`
-        UPDATE products SET reserved_qty = GREATEST(reserved_qty - ${item.reservedQty}, 0)
-        WHERE id = ${item.productId}`;
+      const product = await tx.product.findUnique({
+        where: { id: item.productId },
+        select: { inventoryMode: true },
+      });
+      if (product?.inventoryMode === 'variant') {
+        const vk = item.variantKey || '';
+        await tx.$executeRaw`
+          UPDATE product_variant_inventories
+          SET reserved_qty = GREATEST(reserved_qty - ${item.reservedQty}, 0)
+          WHERE product_id = ${item.productId}
+            AND (variant_id = ${vk} OR variant_key = ${vk})`;
+      } else {
+        await tx.$executeRaw`
+          UPDATE products SET reserved_qty = GREATEST(reserved_qty - ${item.reservedQty}, 0)
+          WHERE id = ${item.productId}`;
+      }
     }
   }
 
@@ -982,11 +1100,26 @@ export class CommerceService {
         data: { stockState: 'consumed' },
       });
       if (flipped.count !== 1) continue;
-      await tx.$executeRaw`
-        UPDATE products
-        SET reserved_qty = GREATEST(reserved_qty - ${item.reservedQty}, 0),
-            stock_qty = CASE WHEN stock_qty IS NULL THEN NULL ELSE GREATEST(stock_qty - ${item.reservedQty}, 0) END
-        WHERE id = ${item.productId}`;
+      const product = await tx.product.findUnique({
+        where: { id: item.productId },
+        select: { inventoryMode: true },
+      });
+      if (product?.inventoryMode === 'variant') {
+        const vk = item.variantKey || '';
+        await tx.$executeRaw`
+          UPDATE product_variant_inventories
+          SET reserved_qty = GREATEST(reserved_qty - ${item.reservedQty}, 0),
+              stock_qty = CASE WHEN stock_qty IS NULL THEN NULL ELSE GREATEST(stock_qty - ${item.reservedQty}, 0) END,
+              revision = revision + 1
+          WHERE product_id = ${item.productId}
+            AND (variant_id = ${vk} OR variant_key = ${vk})`;
+      } else {
+        await tx.$executeRaw`
+          UPDATE products
+          SET reserved_qty = GREATEST(reserved_qty - ${item.reservedQty}, 0),
+              stock_qty = CASE WHEN stock_qty IS NULL THEN NULL ELSE GREATEST(stock_qty - ${item.reservedQty}, 0) END
+          WHERE id = ${item.productId}`;
+      }
     }
   }
 

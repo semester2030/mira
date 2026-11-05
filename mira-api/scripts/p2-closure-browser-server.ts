@@ -29,6 +29,7 @@ import { hashPartnerPassword } from '../src/partners-portal/partner-password';
 import { RegistryService } from '../src/partners-portal/registry/registry.service';
 import { EditorDraftsService } from '../src/partners-portal/editor-drafts/editor-drafts.service';
 import { ServiceProfileService } from '../src/partners-portal/editor-drafts/service-profile.service';
+import { VariantInventoryService } from '../src/partners-portal/variant-inventory.service';
 import { MemoryMultipartUploadStore, MultipartUploadStore } from '../src/partners-portal/upload-sessions/multipart.store';
 import { UploadCleanupService } from '../src/partners-portal/upload-sessions/upload-cleanup.service';
 import { UploadFinalizeService } from '../src/partners-portal/upload-sessions/upload-finalize.service';
@@ -58,6 +59,7 @@ class ScriptedIdTokenVerifier extends FirebaseIdTokenVerifier {
     RegistryService,
     EditorDraftsService,
     ServiceProfileService,
+    VariantInventoryService,
     FirebaseAuthGuard,
     UploadSessionsService,
     UploadFinalizeService,

@@ -1,25 +1,25 @@
 /**
- * V03 / U01_R2 — real isolated R2 multipart from a browser context (Playwright).
+ * V03 / U01_R2 — real isolated R2 multipart from a controlled browser origin (Playwright).
  *
  * Required env (values never printed):
  *   MIRA_MEDIA_STORE=s3
  *   MIRA_MEDIA_S3_BUCKET
  *   MIRA_MEDIA_S3_ACCESS_KEY_ID
  *   MIRA_MEDIA_S3_SECRET_ACCESS_KEY
- *   MIRA_MEDIA_S3_ENDPOINT          (R2 S3 API endpoint)
- *   MIRA_MEDIA_S3_REGION            (e.g. auto)
+ *   MIRA_MEDIA_S3_ENDPOINT
+ *   MIRA_MEDIA_S3_REGION
  *   MIRA_MEDIA_S3_TIMEOUT_MS
- *   MIRA_R2_TEST_PREFIX             (optional; default mira-p21-v03-test/)
- *   MIRA_R2_TEST_ORIGIN             (optional CORS origin; default http://127.0.0.1:8879)
+ *   MIRA_R2_TEST_PREFIX (optional)
  *
  * Run:
  *   npx tsx src/partners-portal/upload-sessions/r2-browser-multipart.evidence.ts
  *
- * Exit 0 with summary.ok=true on full PASS.
- * Exit 0 with summary.blocked=true when credentials/env missing (not a PASS).
- * Exit 1 on failed attempt with credentials present.
+ * Exit 0 + blocked=true when env incomplete (NOT a PASS).
+ * Exit 0 + ok=true on full PASS.
+ * Exit 1 when credentials present but suite fails.
  */
 import { createHash, randomBytes, randomUUID } from 'node:crypto';
+import { createServer } from 'node:http';
 import { mkdirSync, writeFileSync } from 'node:fs';
 import { join } from 'node:path';
 import {
@@ -39,7 +39,7 @@ const outDir =
   process.env.MIRA_P21_OUT_DIR || join(process.cwd(), '..', 'audit-out', 'p2-1-p2-2', 'logs', 'r2-v03');
 mkdirSync(outDir, { recursive: true });
 
-type Step = { id: string; ok: boolean | 'BLOCKED' | 'SKIP'; detail?: unknown };
+type Step = { id: string; ok: boolean | 'BLOCKED'; detail?: unknown };
 const steps: Step[] = [];
 function record(id: string, ok: Step['ok'], detail?: unknown) {
   steps.push({ id, ok, detail });
@@ -50,7 +50,7 @@ function summarize(d: unknown) {
   try {
     return JSON.parse(
       JSON.stringify(d, (_k, v) => {
-        if (typeof v === 'string' && (v.startsWith('http') || v.length > 80)) return `[redacted:${v.length}]`;
+        if (typeof v === 'string' && (v.startsWith('http') || v.length > 120)) return `[redacted:${v.length}]`;
         return v;
       }),
     );
@@ -60,8 +60,7 @@ function summarize(d: unknown) {
 }
 
 function envPresent(name: string): boolean {
-  const v = (process.env[name] || '').trim();
-  return v.length > 0;
+  return (process.env[name] || '').trim().length > 0;
 }
 
 function requiredEnvNames() {
@@ -95,6 +94,12 @@ async function streamToBuffer(body: unknown): Promise<Buffer> {
   return Buffer.concat(chunks);
 }
 
+function isNoSuchUpload(err: unknown): boolean {
+  const e = err as { name?: string; Code?: string; $metadata?: { httpStatusCode?: number } };
+  const name = String(e?.name || e?.Code || '');
+  return name === 'NoSuchUpload' || name === 'NotFound' || e?.$metadata?.httpStatusCode === 404;
+}
+
 async function main() {
   const startedUtc = new Date().toISOString();
   const commit = process.env.MIRA_P21_COMMIT || 'unknown';
@@ -105,7 +110,7 @@ async function main() {
       ok: false,
       blocked: true,
       id: 'V03_R2_BROWSER',
-      reason: 'isolated R2 test credentials/env incomplete',
+      reason: 'isolated R2 test credentials/env incomplete — suite did not start',
       requiredEnvNames: requiredEnvNames(),
       missingEnvNames: store !== 's3' ? ['MIRA_MEDIA_STORE(=s3)', ...missing] : missing,
       presentEnvNames: requiredEnvNames().filter((n) => envPresent(n)),
@@ -124,14 +129,9 @@ async function main() {
   const bucket = process.env.MIRA_MEDIA_S3_BUCKET!.trim();
   const prefix = (process.env.MIRA_R2_TEST_PREFIX || 'mira-p21-v03-test/').replace(/^\/+/, '');
   const objectKey = `${prefix}${randomUUID()}.bin`;
-  const origin = (process.env.MIRA_R2_TEST_ORIGIN || 'http://127.0.0.1:8879').trim();
-  // Provider-valid part size (≥5 MiB for S3/R2 multipart non-last parts).
   const partSize = Math.max(5 * 1024 * 1024, Number(process.env.MIRA_R2_TEST_PART_SIZE_BYTES || 5 * 1024 * 1024));
   const totalParts = 2;
-  const fileBytes = Buffer.concat([
-    randomBytes(partSize),
-    randomBytes(Math.floor(partSize / 3)),
-  ]);
+  const fileBytes = Buffer.concat([randomBytes(partSize), randomBytes(Math.floor(partSize / 3))]);
   const fileSha = sha256(fileBytes);
 
   const client = new S3Client({
@@ -144,13 +144,26 @@ async function main() {
     },
   });
 
+  // Controlled origin — never pretend setContent origin equals required origin.
+  const originServer = createServer((_req, res) => {
+    res.writeHead(200, { 'content-type': 'text/html; charset=utf-8' });
+    res.end('<!doctype html><html><body data-testid="r2-origin">mira-r2-test</body></html>');
+  });
+  const originPort: number = await new Promise((resolve) => {
+    originServer.listen(0, '127.0.0.1', () => {
+      const a = originServer.address();
+      resolve(typeof a === 'object' && a ? a.port : 0);
+    });
+  });
+  const expectedOrigin = `http://127.0.0.1:${originPort}`;
+
   let uploadId: string | undefined;
   let completed = false;
-  const createdKeys: string[] = [];
+  const createdKeys: string[] = [objectKey];
   const abortUploadIds: Array<{ key: string; uploadId: string }> = [];
+  let browser: { close: () => Promise<void> } | null = null;
 
   try {
-    // 1) Create multipart
     const created = await client.send(
       new CreateMultipartUploadCommand({
         Bucket: bucket,
@@ -160,18 +173,19 @@ async function main() {
     );
     uploadId = created.UploadId;
     if (!uploadId) throw new Error('multipart create missing UploadId');
-    createdKeys.push(objectKey);
     record('R2_CREATE_MULTIPART', true, { objectKeySuffix: objectKey.slice(-24), parts: totalParts, partSize });
 
-    // 2–3) Browser PUTs with signed URLs + CORS ETag
     const { chromium } = await import('playwright');
-    const browser = await chromium.launch({ headless: true });
+    browser = await chromium.launch({ headless: true });
     const context = await browser.newContext();
     const page = await context.newPage();
-    await page.goto(origin).catch(async () => {
-      // Origin may not serve HTML — use blank page with fake origin via route.
-      await page.setContent('<html><body>r2-test</body></html>');
-    });
+    const nav = await page.goto(expectedOrigin, { waitUntil: 'domcontentloaded', timeout: 15000 });
+    if (!nav || !nav.ok()) throw new Error(`origin navigate failed status=${nav && nav.status()}`);
+    const actualOrigin = await page.evaluate(() => window.location.origin);
+    if (actualOrigin !== expectedOrigin) {
+      throw new Error(`origin mismatch expected=${expectedOrigin} actual=${actualOrigin}`);
+    }
+    record('R2_ORIGIN', true, { expectedOrigin, actualOrigin });
 
     const etags: string[] = [];
     for (let partNumber = 1; partNumber <= totalParts; partNumber++) {
@@ -181,12 +195,12 @@ async function main() {
       const command = new UploadPartCommand({
         Bucket: bucket,
         Key: objectKey,
-        UploadId: uploadId,
+        UploadId: uploadId!,
         PartNumber: partNumber,
       });
       const url = await getSignedUrl(client, command, { expiresIn: 900 });
       const put = await page.evaluate(
-        async ({ putUrl, bytes, corsOrigin }) => {
+        async ({ putUrl, bytes }) => {
           const body = Uint8Array.from(bytes);
           const res = await fetch(putUrl, {
             method: 'PUT',
@@ -200,28 +214,28 @@ async function main() {
             status: res.status,
             ok: res.ok,
             etag,
-            // Prove CORS exposed ETag (null means header blocked)
             etagReadable: typeof etag === 'string' && etag.length > 0,
-            origin: corsOrigin,
+            pageOrigin: window.location.origin,
           };
         },
-        { putUrl: url, bytes: Array.from(chunk), corsOrigin: origin },
+        { putUrl: url, bytes: Array.from(chunk) },
       );
+      if (put.pageOrigin !== expectedOrigin) {
+        throw new Error(`PUT evaluated under wrong origin ${put.pageOrigin}`);
+      }
       if (!put.ok || !put.etagReadable) {
         record('R2_BROWSER_PUT_PART', false, { partNumber, put });
-        throw new Error(`browser PUT part ${partNumber} failed or ETag not readable via CORS`);
+        throw new Error(`browser PUT part ${partNumber} failed or ETag not CORS-readable`);
       }
       etags.push(put.etag!);
       record('R2_BROWSER_PUT_PART', true, { partNumber, status: put.status, etagReadable: true, size: chunk.length });
     }
-    await browser.close();
 
-    // 4) Complete + head size/etag
     await client.send(
       new CompleteMultipartUploadCommand({
         Bucket: bucket,
         Key: objectKey,
-        UploadId: uploadId,
+        UploadId: uploadId!,
         MultipartUpload: {
           Parts: etags.map((etag, i) => ({ ETag: etag, PartNumber: i + 1 })),
         },
@@ -238,14 +252,12 @@ async function main() {
     });
     if (!headOk) throw new Error('head size mismatch');
 
-    // 5) Full read + sha256
     const full = await client.send(new GetObjectCommand({ Bucket: bucket, Key: objectKey }));
     const fullBuf = await streamToBuffer(full.Body);
     const fullOk = fullBuf.length === fileBytes.length && sha256(fullBuf) === fileSha;
     record('R2_FULL_READ', fullOk, { bytes: fullBuf.length, shaMatch: sha256(fullBuf) === fileSha });
     if (!fullOk) throw new Error('full read mismatch');
 
-    // 6) Range mid-file
     const midStart = Math.floor(fileBytes.length / 3);
     const midEnd = midStart + 1024 - 1;
     const ranged = await client.send(
@@ -269,27 +281,48 @@ async function main() {
     });
     if (!rangeOk) throw new Error('range read mismatch');
 
-    // 7) Abort in-flight GetObject (cancel) — verify AbortController path frees resources
+    // Abort after bytes have started flowing (not immediately before first chunk).
     {
       const ac = new AbortController();
-      const pending = client.send(
-        new GetObjectCommand({ Bucket: bucket, Key: objectKey }),
-        { abortSignal: ac.signal as never },
-      );
-      ac.abort();
-      let aborted = false;
+      let sawBytes = false;
+      let abortKind: 'AbortError' | 'other' | 'none' = 'none';
       try {
-        await pending;
-      } catch {
-        aborted = true;
+        const out = await client.send(new GetObjectCommand({ Bucket: bucket, Key: objectKey }));
+        const body = out.Body as AsyncIterable<Uint8Array>;
+        const reader = (async () => {
+          for await (const chunk of body) {
+            if (chunk && chunk.length) {
+              sawBytes = true;
+              ac.abort();
+            }
+            if (ac.signal.aborted) break;
+          }
+        })();
+        // Also abort via AbortController on a second concurrent get to prove cancel path.
+        const pending = client.send(new GetObjectCommand({ Bucket: bucket, Key: objectKey }), {
+          abortSignal: ac.signal as never,
+        });
+        await reader.catch(() => undefined);
+        try {
+          await pending;
+          abortKind = 'none';
+        } catch (err) {
+          const name = String((err as { name?: string })?.name || '');
+          abortKind = name === 'AbortError' || /aborted|AbortError/i.test(String(err)) ? 'AbortError' : 'other';
+        }
+      } catch (err) {
+        const name = String((err as { name?: string })?.name || '');
+        abortKind = name === 'AbortError' || /aborted|AbortError/i.test(String(err)) ? 'AbortError' : 'other';
       }
-      record('R2_ABORT_READ', aborted, { aborted });
-      if (!aborted) throw new Error('expected aborted get');
+      const abortOk = sawBytes && abortKind === 'AbortError';
+      record('R2_ABORT_READ', abortOk, { sawBytes, abortKind });
+      if (!abortOk) throw new Error('abort-read expected AbortError after receiving bytes');
     }
 
-    // 8) Abort incomplete multipart + list parts empty/cleanup
+    // Incomplete multipart abort — only NoSuchUpload/empty list counts as cleaned.
     {
       const abortKey = `${prefix}abort-${randomUUID()}.bin`;
+      createdKeys.push(abortKey);
       const createdAbort = await client.send(
         new CreateMultipartUploadCommand({
           Bucket: bucket,
@@ -306,7 +339,6 @@ async function main() {
         PartNumber: 1,
       });
       const putUrl = await getSignedUrl(client, signCmd, { expiresIn: 600 });
-      // Upload one part via Node fetch (browser already proven); then abort upload.
       const partBody = randomBytes(partSize);
       const putRes = await fetch(putUrl, { method: 'PUT', body: partBody });
       if (!putRes.ok) throw new Error(`abort-setup PUT HTTP ${putRes.status}`);
@@ -317,21 +349,23 @@ async function main() {
       await client.send(
         new AbortMultipartUploadCommand({ Bucket: bucket, Key: abortKey, UploadId: abortId }),
       );
-      let partsAfter = -1;
-      let listGone = false;
+      let listOutcome: 'gone' | 'empty' | 'error' = 'error';
+      let httpStatus: number | null = null;
       try {
         const listedAfter = await client.send(
           new ListPartsCommand({ Bucket: bucket, Key: abortKey, UploadId: abortId }),
         );
-        partsAfter = listedAfter.Parts?.length || 0;
-      } catch {
-        listGone = true;
-        partsAfter = 0;
+        if ((listedAfter.Parts?.length || 0) === 0) listOutcome = 'empty';
+        else listOutcome = 'error';
+      } catch (err) {
+        httpStatus = (err as { $metadata?: { httpStatusCode?: number } })?.$metadata?.httpStatusCode ?? null;
+        if (isNoSuchUpload(err)) listOutcome = 'gone';
+        else if (httpStatus === 403 || (httpStatus != null && httpStatus >= 500)) listOutcome = 'error';
+        else listOutcome = 'error';
       }
-      const abortOk = partsBefore >= 1 && (listGone || partsAfter === 0);
-      record('R2_ABORT_UPLOAD', abortOk, { partsBefore, partsAfter, listGone });
-      if (!abortOk) throw new Error('abort upload did not clean parts');
-      // mark cleaned
+      const abortOk = partsBefore >= 1 && (listOutcome === 'gone' || listOutcome === 'empty');
+      record('R2_ABORT_UPLOAD', abortOk, { partsBefore, listOutcome, httpStatus });
+      if (!abortOk) throw new Error('abort upload cleanup not proven (403/5xx/timeout ≠ success)');
       abortUploadIds.pop();
     }
 
@@ -339,14 +373,29 @@ async function main() {
   } catch (e) {
     record('R2_SUITE', false, String((e as Error)?.stack || e));
   } finally {
-    // 9) Cleanup only this test's resources
+    if (browser) {
+      try {
+        await browser.close();
+      } catch {
+        /* ignore */
+      }
+    }
+    try {
+      originServer.close();
+    } catch {
+      /* ignore */
+    }
     const cleanup: Array<{ action: string; ok: boolean; detail?: string }> = [];
     for (const { key, uploadId: uid } of abortUploadIds) {
       try {
         await client.send(new AbortMultipartUploadCommand({ Bucket: bucket, Key: key, UploadId: uid }));
         cleanup.push({ action: 'abort', ok: true, detail: key.slice(-20) });
       } catch (err) {
-        cleanup.push({ action: 'abort', ok: false, detail: String(err) });
+        cleanup.push({
+          action: 'abort',
+          ok: isNoSuchUpload(err),
+          detail: isNoSuchUpload(err) ? 'already-gone' : String(err).slice(0, 120),
+        });
       }
     }
     if (uploadId && !completed) {
@@ -356,7 +405,7 @@ async function main() {
         );
         cleanup.push({ action: 'abort-main', ok: true });
       } catch (err) {
-        cleanup.push({ action: 'abort-main', ok: false, detail: String(err) });
+        cleanup.push({ action: 'abort-main', ok: isNoSuchUpload(err), detail: String(err).slice(0, 80) });
       }
     }
     for (const key of createdKeys) {
@@ -364,7 +413,7 @@ async function main() {
         await client.send(new DeleteObjectCommand({ Bucket: bucket, Key: key }));
         cleanup.push({ action: 'delete', ok: true, detail: key.slice(-20) });
       } catch (err) {
-        cleanup.push({ action: 'delete', ok: false, detail: String(err) });
+        cleanup.push({ action: 'delete', ok: false, detail: String(err).slice(0, 80) });
       }
     }
     record(

@@ -66,6 +66,8 @@
       priceHalalas: typeof variant.priceHalalas === 'number' ? variant.priceHalalas : null,
       available: variant.available !== false,
       mediaIds: Array.isArray(variant.mediaIds) ? variant.mediaIds.slice() : [],
+      // P3.1 — null = unspecified (never coerce to 0)
+      stockQty: typeof variant.stockQty === 'number' ? variant.stockQty : null,
     }));
 
     return {
@@ -77,6 +79,7 @@
       clearingOptions: clearingOptions,
       clearingVariants: clearingVariants,
       invalidVariantNote: '',
+      inventoryMode: row.inventoryMode === 'variant' ? 'variant' : 'product',
     };
   }
 
@@ -110,6 +113,29 @@
     green: 'green', أخضر: 'green',
     multi: 'multi', متعدد: 'multi', 'متعدد الألوان': 'multi',
   };
+
+  /** P3.1 — CSS hex for known color ids/labels (swatch circles). Unknown → neutral. */
+  const COLOR_SWATCH_HEX = {
+    black: '#1a1a1a', أسود: '#1a1a1a',
+    ivory: '#fffff0', سكري: '#f5f0e6', عاجي: '#fffff0',
+    brown: '#6b3e2e', بني: '#6b3e2e',
+    pink: '#e86fa9', وردي: '#e86fa9',
+    blue: '#3b6ea5', أزرق: '#3b6ea5',
+    green: '#2e7d5a', أخضر: '#2e7d5a',
+    multi: 'conic-gradient(red, yellow, lime, aqua, blue, magenta, red)',
+    متعدد: 'conic-gradient(red, yellow, lime, aqua, blue, magenta, red)',
+    'متعدد الألوان': 'conic-gradient(red, yellow, lime, aqua, blue, magenta, red)',
+  };
+
+  function colorSwatchStyle(labelOrId) {
+    const key = String(labelOrId || '').trim();
+    const canon = COLOR_CANONICAL[key] || COLOR_CANONICAL[key.toLowerCase()] || key;
+    const fill = COLOR_SWATCH_HEX[canon] || COLOR_SWATCH_HEX[key] || '#d4c4ce';
+    if (String(fill).startsWith('conic')) {
+      return { background: fill, borderColor: '#9a8a94' };
+    }
+    return { background: fill, borderColor: fill === '#fffff0' || fill === '#f5f0e6' ? '#c4b4be' : fill };
+  }
 
   function canonicalOptionValueId(groupId, label, index, existing) {
     if (existing) return existing;
@@ -473,6 +499,7 @@
     buildCommercePayload: buildCommercePayload,
     incompatibleGroupIds: incompatibleGroupIds,
     stateHasOptionLabels: stateHasOptionLabels,
+    colorSwatchStyle: colorSwatchStyle,
     selectionKey: selectionKey,
     isDuplicateVariant: isDuplicateVariant,
     slugValue: slugValue,
