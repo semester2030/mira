@@ -12,9 +12,11 @@ import { Prisma } from '@prisma/client';
 import { randomBytes } from 'crypto';
 import { normalizeProductCommerce, ProductCommerceData } from '../marketplace/commerce-public';
 import {
+  AVAILABILITY_TIMEZONE,
   assertAvailabilityConsistent,
   assertResourceCapacitiesConsistent,
   findResourceCapacityConflicts,
+  normalizeAvailabilityDocument,
   normalizeResourceId,
   parseAvailability,
   unifyResourceCapacities,
@@ -33,12 +35,13 @@ function newToken(): string {
 
 function resourceIdsFromAvailability(raw: unknown): string[] {
   if (raw == null) return [];
-  if (!Array.isArray(raw)) return [];
   const ids = new Set<string>();
-  for (const entry of raw) {
-    if (!entry || typeof entry !== 'object') continue;
-    const id = normalizeResourceId((entry as Record<string, unknown>).resourceId);
-    if (id) ids.add(id);
+  const doc = normalizeAvailabilityDocument(raw);
+  for (const entry of doc.windows) {
+    if (entry.resourceId) ids.add(entry.resourceId);
+  }
+  for (const entry of doc.exceptions) {
+    if (entry.resourceId) ids.add(entry.resourceId);
   }
   return [...ids];
 }
@@ -703,30 +706,20 @@ export class PartnersPortalService implements OnModuleInit {
     unifySharedResources = false,
   ): Promise<Prisma.InputJsonValue | typeof Prisma.DbNull> {
     if (raw == null) return Prisma.DbNull;
-    if (!Array.isArray(raw)) throw new BadRequestException('جدول التوفر غير صالح');
-    const windows = [];
-    for (const entry of raw) {
-      if (!entry || typeof entry !== 'object') throw new BadRequestException('فترة توفر غير صالحة');
-      const row = entry as Record<string, unknown>;
-      const resourceId = normalizeResourceId(row.resourceId);
-      const weekday = row.weekday;
-      const startMin = row.startMin;
-      const endMin = row.endMin;
-      const capacity = row.capacity;
-      if (
-        typeof weekday !== 'number' ||
-        typeof startMin !== 'number' ||
-        typeof endMin !== 'number' ||
-        typeof capacity !== 'number'
-      ) {
-        throw new BadRequestException('فترة توفر غير صالحة');
-      }
-      windows.push({ weekday, startMin, endMin, capacity, resourceId });
-    }
-    const parsed = parseAvailability(windows);
-    if (parsed.length !== windows.length) throw new BadRequestException('فترة توفر غير صالحة');
+    // Strict write: array (legacy) or {windows, closedDates?, exceptions?, timezone?}. Invalid entries are
+    // rejected (never silently dropped) and any timezone other than Asia/Riyadh is refused.
+    const doc = normalizeAvailabilityDocument(raw, { strict: true });
+    const parsed = doc.windows;
     assertAvailabilityConsistent(parsed);
     assertResourceCapacitiesConsistent(parsed);
+    // Always persist the v2 document (also for legacy bare-array input).
+    const persistDoc = {
+      v: 2 as const,
+      timezone: AVAILABILITY_TIMEZONE,
+      windows: parsed,
+      closedDates: doc.closedDates,
+      exceptions: doc.exceptions,
+    };
     // Always re-read siblings under the caller's transaction/locks — never reuse a pre-lock snapshot.
     const siblings = await db.service.findMany({
       where: { partnerId, active: true, ...(serviceId ? { id: { not: serviceId } } : {}) },
@@ -737,18 +730,16 @@ export class PartnersPortalService implements OnModuleInit {
       for (const w of parsed) {
         if (w.resourceId) capacityByResource.set(w.resourceId, w.capacity);
       }
-      const affected: string[] = [];
       let unifiedCount = 0;
       const siblingIds = siblings.map((s) => s.id).sort();
       for (const siblingId of siblingIds) {
-        // Re-read each sibling immediately before write so a prior unify in this tx is visible
-        // and a stale pre-lock copy cannot wipe another resource's capacity.
         const fresh = await db.service.findFirst({
           where: { id: siblingId, partnerId },
           select: { id: true, availabilityJson: true, nameAr: true },
         });
         if (!fresh) continue;
-        const siblingWindows = parseAvailability(fresh.availabilityJson);
+        const siblingDoc = normalizeAvailabilityDocument(fresh.availabilityJson);
+        const siblingWindows = siblingDoc.windows;
         const needs = siblingWindows.some(
           (w) => w.resourceId && capacityByResource.has(w.resourceId) && capacityByResource.get(w.resourceId) !== w.capacity,
         );
@@ -757,15 +748,21 @@ export class PartnersPortalService implements OnModuleInit {
         assertAvailabilityConsistent(unified);
         await db.service.update({
           where: { id: fresh.id },
-          data: { availabilityJson: unified as unknown as Prisma.InputJsonValue },
+          data: {
+            availabilityJson: {
+              ...siblingDoc,
+              v: 2,
+              timezone: AVAILABILITY_TIMEZONE,
+              windows: unified,
+            } as unknown as Prisma.InputJsonValue,
+          },
         });
-        affected.push(fresh.nameAr);
         unifiedCount += 1;
         if (process.env.MIRA_TEST_UNIFY_FAIL_AFTER === '1' && unifiedCount === 1) {
           throw new BadRequestException('حقن فشل اختبار بعد أول توحيد');
         }
       }
-      return parsed as unknown as Prisma.InputJsonValue;
+      return persistDoc as unknown as Prisma.InputJsonValue;
     }
     const otherWindows = siblings.flatMap((s) => parseAvailability(s.availabilityJson));
     const conflicts = findResourceCapacityConflicts([parsed, otherWindows]);
@@ -785,7 +782,7 @@ export class PartnersPortalService implements OnModuleInit {
         unifyHintAr: 'فعّلي خيار «توحيد سعة المورد المشترك» في نموذج الخدمة ثم احفظي مرة أخرى',
       });
     }
-    return parsed as unknown as Prisma.InputJsonValue;
+    return persistDoc as unknown as Prisma.InputJsonValue;
   }
 
   async deleteService(partnerId: string, serviceId: string) {

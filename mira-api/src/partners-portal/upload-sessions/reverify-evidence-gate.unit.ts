@@ -117,6 +117,41 @@ const base = {
   assert.equal(v.reason, 'runId-mismatch');
 }
 {
+  // expectedRunId set but evidence.runId missing → FAIL (not silent accept)
+  const v = verifyR2EvidenceDocument({
+    evidence: {
+      commit: 'abc123',
+      startedUtc: '2026-11-05T14:00:05.000Z',
+      ok: false,
+      blocked: true,
+      steps: [{ id: 'R2_MIRA_APP_PATH', ok: 'BLOCKED' }],
+    },
+    testedCommit: 'abc123',
+    runStartedIso: '2026-11-05T14:00:00.000Z',
+    exitCode: 0,
+    expectedRunId: 'run-1',
+  });
+  assert.equal(v.verdict, 'FAIL');
+  assert.equal(v.reason, 'runId-missing');
+}
+{
+  const v = verifyR2EvidenceDocument({
+    evidence: {
+      ...base,
+      runId: '   ',
+      ok: false,
+      blocked: true,
+      steps: [{ id: 'R2_MIRA_APP_PATH', ok: 'BLOCKED' }],
+    },
+    testedCommit: 'abc123',
+    runStartedIso: '2026-11-05T14:00:00.000Z',
+    exitCode: 0,
+    expectedRunId: 'run-1',
+  });
+  assert.equal(v.verdict, 'FAIL');
+  assert.equal(v.reason, 'runId-missing');
+}
+{
   const v = verifyR2EvidenceDocument({
     evidence: {
       ...base,
@@ -182,6 +217,53 @@ const base = {
   ]);
   assert.equal(j.blocked, false);
   assert.equal(j.ok, false);
+}
+{
+  // summary.ok=false must NEVER upgrade to PASS even if recomputed steps look green.
+  const miraPassSteps = [
+    { id: 'R2_SUITE', ok: true },
+    { id: 'R2_MIRA_APP_PATH', ok: true },
+    ...[
+      'R2_MIRA_CREATE_SESSION',
+      'R2_MIRA_SIGN_PARTS',
+      'R2_MIRA_BROWSER_PUT',
+      'R2_MIRA_COMPLETE',
+      'R2_MIRA_READY',
+      'R2_MIRA_BIND',
+      'R2_MIRA_PUBLISH',
+      'R2_MIRA_READ_FULL',
+      'R2_MIRA_READ_RANGE',
+      'R2_MIRA_ABORT_READ',
+    ].map((id) => ({ id, ok: true as const })),
+  ];
+  const v = verifyR2EvidenceDocument({
+    evidence: {
+      ...base,
+      ok: false,
+      steps: miraPassSteps,
+    },
+    testedCommit: 'abc123',
+    runStartedIso: '2026-11-05T14:00:00.000Z',
+    exitCode: 0,
+  });
+  assert.equal(v.verdict, 'FAIL');
+  assert.equal(v.reason, 'summary-ok-false-conflicts-with-passing-steps');
+}
+{
+  // Non-zero exit is FAIL even when document claims blocked-only.
+  const v = verifyR2EvidenceDocument({
+    evidence: {
+      ...base,
+      ok: false,
+      blocked: true,
+      steps: [{ id: 'ENV', ok: 'BLOCKED' }, { id: 'R2_MIRA_APP_PATH', ok: 'BLOCKED' }],
+    },
+    testedCommit: 'abc123',
+    runStartedIso: '2026-11-05T14:00:00.000Z',
+    exitCode: 1,
+  });
+  assert.equal(v.verdict, 'FAIL');
+  assert.match(v.reason, /^exit-1$/);
 }
 
 console.log(JSON.stringify({ ok: true, id: 'REVERIFY_EVIDENCE_GATE_UNIT' }));

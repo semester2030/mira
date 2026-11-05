@@ -598,68 +598,345 @@
       text(basics, 'الدفع لدى الجهة عند الموعد. لا تُطبَّق عبارة الدفع عند الاستلام الخاصة بالمنتجات على الخدمات.');
       const availBox = document.createElement('div');
       availBox.className = 'form-section';
-      text(availBox, 'أيام العمل والفترات والسعة', 'h3');
-      text(availBox, 'كل يوم يعمل بفترة واحدة وسعة واحدة. الفترات المتداخلة لنفس المورد تُرفض عند الحفظ. لا حاجة لتعديل قاعدة البيانات يدويًا.');
+      text(availBox, 'التقويم والإتاحة', 'h3');
+      text(availBox, 'المنطقة الزمنية: Asia/Riyadh (ثابتة — لا تُحوَّل حسب جهازك). غياب إعداد الإتاحة لا يعني أن الخدمة متاحة.');
+      text(availBox, 'طلب الموعد داخل ميرا ليس حجزًا مؤكدًا. لا دفع ولا محفظة في هذه المرحلة.');
       const dayNames = ['الأحد', 'الإثنين', 'الثلاثاء', 'الأربعاء', 'الخميس', 'الجمعة', 'السبت'];
-      const defaultWindows = editing && Array.isArray(item.availabilityJson) && item.availabilityJson.length
-        ? item.availabilityJson
-        : [0, 1, 2, 3, 4].map((d) => ({ weekday: d, startMin: 540, endMin: 1020, capacity: 1, resourceId: '' }));
-      const availState = dayNames.map((_, weekday) => {
-        const hit = defaultWindows.find((w) => Number(w.weekday) === weekday);
+      const rawAvail = editing && item && item.availabilityJson != null ? item.availabilityJson : null;
+      const seededDoc = (function normalizeClientAvail(raw) {
+        if (!raw) return { windows: [], closedDates: [], exceptions: [] };
+        if (Array.isArray(raw)) return { windows: raw, closedDates: [], exceptions: [] };
         return {
-          on: Boolean(hit),
-          start: hit ? String(Math.floor(hit.startMin / 60)).padStart(2, '0') + ':' + String(hit.startMin % 60).padStart(2, '0') : '09:00',
-          end: hit ? String(Math.floor(hit.endMin / 60)).padStart(2, '0') + ':' + String(hit.endMin % 60).padStart(2, '0') : '17:00',
-          capacity: hit ? String(hit.capacity || 1) : '1',
-          resourceId: hit && hit.resourceId ? String(hit.resourceId) : '',
+          windows: Array.isArray(raw.windows) ? raw.windows : [],
+          closedDates: Array.isArray(raw.closedDates) ? raw.closedDates.slice() : [],
+          exceptions: Array.isArray(raw.exceptions) ? raw.exceptions.map(function (e) { return Object.assign({}, e); }) : [],
         };
-      });
-      dayNames.forEach((name, weekday) => {
-        const row = document.createElement('div');
-        row.className = 'check-row';
-        const on = document.createElement('input');
-        on.type = 'checkbox';
-        on.checked = availState[weekday].on;
-        on.onchange = () => {
-          availState[weekday].on = on.checked;
-          bumpFormContentEpoch();
+      })(rawAvail);
+      // Empty seed stays empty (unconfigured). Preserve ALL windows per weekday (not just first).
+      function minsToTime(m) {
+        return String(Math.floor(Number(m) / 60)).padStart(2, '0') + ':' + String(Number(m) % 60).padStart(2, '0');
+      }
+      function emptySegment() {
+        return { start: '09:00', end: '17:00', capacity: '1', resourceId: '' };
+      }
+      function segmentFromWindow(w) {
+        return {
+          start: minsToTime(w.startMin),
+          end: minsToTime(w.endMin),
+          // Keep capacity as typed string; never coerce empty/invalid → 1 here.
+          capacity: w.capacity == null ? '' : String(w.capacity),
+          resourceId: w.resourceId ? String(w.resourceId) : '',
         };
-        const start = document.createElement('input');
-        start.type = 'time';
-        start.value = availState[weekday].start;
-        start.onchange = () => {
-          availState[weekday].start = start.value;
-          bumpFormContentEpoch();
+      }
+      const daySegments = dayNames.map((_, weekday) =>
+        seededDoc.windows.filter((w) => Number(w.weekday) === weekday).map(segmentFromWindow),
+      );
+      const closedDates = seededDoc.closedDates.slice();
+      const exceptions = seededDoc.exceptions.slice();
+      text(availBox, 'أيام العمل الأسبوعية — يمكن أكثر من فترة لنفس اليوم/المورد', 'h4');
+      const weeklyBox = document.createElement('div');
+      weeklyBox.setAttribute('data-testid', 'avail-weekly-windows');
+      availBox.appendChild(weeklyBox);
+      function paintWeekly() {
+        weeklyBox.replaceChildren();
+        dayNames.forEach((name, weekday) => {
+          const dayBlock = document.createElement('div');
+          dayBlock.className = 'form-section';
+          dayBlock.setAttribute('data-weekday', String(weekday));
+          const title = document.createElement('div');
+          title.className = 'check-row';
+          title.textContent = name + (daySegments[weekday].length ? '' : ' · بلا فترات');
+          dayBlock.appendChild(title);
+          daySegments[weekday].forEach((seg, segIdx) => {
+            const row = document.createElement('div');
+            row.className = 'check-row';
+            row.setAttribute('data-testid', 'avail-window-row');
+            row.setAttribute('data-weekday', String(weekday));
+            row.setAttribute('data-seg', String(segIdx));
+            const start = document.createElement('input');
+            start.type = 'time';
+            start.value = seg.start;
+            start.onchange = () => {
+              seg.start = start.value;
+              bumpFormContentEpoch();
+              paintAvailPreview();
+            };
+            const end = document.createElement('input');
+            end.type = 'time';
+            end.value = seg.end;
+            end.onchange = () => {
+              seg.end = end.value;
+              bumpFormContentEpoch();
+              paintAvailPreview();
+            };
+            const cap = document.createElement('input');
+            cap.type = 'number';
+            cap.min = '1';
+            cap.max = '100';
+            cap.placeholder = 'سعة';
+            cap.value = seg.capacity;
+            cap.style.width = '4rem';
+            cap.oninput = () => {
+              seg.capacity = cap.value;
+              bumpFormContentEpoch();
+            };
+            cap.onchange = () => {
+              seg.capacity = cap.value;
+              bumpFormContentEpoch();
+              paintAvailPreview();
+            };
+            const res = document.createElement('input');
+            res.type = 'text';
+            res.placeholder = 'معرّف المورد (اختياري)';
+            res.value = seg.resourceId;
+            res.onchange = () => {
+              seg.resourceId = res.value.trim();
+              bumpFormContentEpoch();
+            };
+            const rm = document.createElement('button');
+            rm.type = 'button';
+            rm.className = 'btn btn-ghost btn-sm';
+            rm.textContent = 'حذف الفترة';
+            rm.setAttribute('data-testid', 'avail-window-remove');
+            rm.onclick = () => {
+              daySegments[weekday].splice(segIdx, 1);
+              bumpFormContentEpoch();
+              paintWeekly();
+              paintAvailPreview();
+            };
+            row.append(
+              start,
+              document.createTextNode(' — '),
+              end,
+              document.createTextNode(' سعة '),
+              cap,
+              res,
+              rm,
+            );
+            dayBlock.appendChild(row);
+          });
+          const addSeg = document.createElement('button');
+          addSeg.type = 'button';
+          addSeg.className = 'btn btn-ghost btn-sm';
+          addSeg.textContent = 'إضافة فترة لـ' + name;
+          addSeg.setAttribute('data-testid', 'avail-window-add');
+          addSeg.onclick = () => {
+            daySegments[weekday].push(emptySegment());
+            bumpFormContentEpoch();
+            paintWeekly();
+            paintAvailPreview();
+          };
+          dayBlock.appendChild(addSeg);
+          weeklyBox.appendChild(dayBlock);
+        });
+      }
+      paintWeekly();
+
+      text(availBox, 'أيام إغلاق واستثناءات بتاريخ محدد', 'h4');
+      const closedWrap = document.createElement('div');
+      closedWrap.setAttribute('data-testid', 'avail-closed-dates');
+      const closedList = document.createElement('div');
+      const closedInput = document.createElement('input');
+      closedInput.type = 'date';
+      closedInput.setAttribute('data-testid', 'avail-closed-date-input');
+      const closedAdd = document.createElement('button');
+      closedAdd.type = 'button';
+      closedAdd.className = 'btn btn-ghost btn-sm';
+      closedAdd.textContent = 'إضافة يوم إغلاق';
+      function paintClosed() {
+        closedList.replaceChildren();
+        closedDates.forEach((d, idx) => {
+          const row = document.createElement('div');
+          row.className = 'check-row';
+          row.textContent = d + ' · مغلق';
+          const rm = document.createElement('button');
+          rm.type = 'button';
+          rm.className = 'btn btn-ghost btn-sm';
+          rm.textContent = 'مسح';
+          rm.onclick = () => {
+            closedDates.splice(idx, 1);
+            bumpFormContentEpoch();
+            paintClosed();
+            paintAvailPreview();
+          };
+          row.appendChild(rm);
+          closedList.appendChild(row);
+        });
+        if (!closedDates.length) text(closedList, 'لا أيام إغلاق محددة.', 'p');
+      }
+      closedAdd.onclick = () => {
+        const v = closedInput.value;
+        if (!/^\d{4}-\d{2}-\d{2}$/.test(v)) return;
+        if (closedDates.indexOf(v) < 0) closedDates.push(v);
+        closedInput.value = '';
+        bumpFormContentEpoch();
+        paintClosed();
+        paintAvailPreview();
+      };
+      closedWrap.append(closedInput, closedAdd, closedList);
+      availBox.appendChild(closedWrap);
+      paintClosed();
+
+      const exWrap = document.createElement('div');
+      exWrap.setAttribute('data-testid', 'avail-exceptions');
+      const exList = document.createElement('div');
+      const exDate = document.createElement('input');
+      exDate.type = 'date';
+      const exKind = document.createElement('select');
+      exKind.innerHTML = '<option value="closed">إغلاق يوم</option><option value="special">فترة خاصة</option>';
+      const exStart = document.createElement('input');
+      exStart.type = 'time';
+      exStart.value = '10:00';
+      const exEnd = document.createElement('input');
+      exEnd.type = 'time';
+      exEnd.value = '14:00';
+      const exCap = document.createElement('input');
+      exCap.type = 'number';
+      exCap.min = '1';
+      exCap.max = '100';
+      exCap.value = '1';
+      exCap.style.width = '4rem';
+      const exAdd = document.createElement('button');
+      exAdd.type = 'button';
+      exAdd.className = 'btn btn-ghost btn-sm';
+      exAdd.textContent = 'إضافة استثناء';
+      function paintExceptions() {
+        exList.replaceChildren();
+        exceptions.forEach((e, idx) => {
+          const row = document.createElement('div');
+          row.className = 'check-row';
+          row.textContent =
+            e.date +
+            ' · ' +
+            (e.kind === 'closed'
+              ? 'إغلاق'
+              : 'خاصة ' +
+                String(Math.floor((e.startMin || 0) / 60)).padStart(2, '0') +
+                ':' +
+                String((e.startMin || 0) % 60).padStart(2, '0') +
+                '–' +
+                String(Math.floor((e.endMin || 0) / 60)).padStart(2, '0') +
+                ':' +
+                String((e.endMin || 0) % 60).padStart(2, '0') +
+                ' سعة ' +
+                (e.capacity || 1));
+          const rm = document.createElement('button');
+          rm.type = 'button';
+          rm.className = 'btn btn-ghost btn-sm';
+          rm.textContent = 'مسح';
+          rm.onclick = () => {
+            exceptions.splice(idx, 1);
+            bumpFormContentEpoch();
+            paintExceptions();
+            paintAvailPreview();
+          };
+          row.appendChild(rm);
+          exList.appendChild(row);
+        });
+        if (!exceptions.length) text(exList, 'لا استثناءات.', 'p');
+      }
+      exAdd.onclick = () => {
+        const d = exDate.value;
+        if (!/^\d{4}-\d{2}-\d{2}$/.test(d)) return;
+        if (exKind.value === 'closed') {
+          exceptions.push({ date: d, kind: 'closed' });
+        } else {
+          const sm = exStart.value.split(':').map(Number);
+          const em = exEnd.value.split(':').map(Number);
+          const startMin = sm[0] * 60 + sm[1];
+          const endMin = em[0] * 60 + em[1];
+          const capacity = parseInt(exCap.value, 10);
+          if (!(endMin > startMin) || !Number.isInteger(capacity) || capacity < 1) {
+            throw new Error('فترة الاستثناء غير صالحة');
+          }
+          exceptions.push({ date: d, kind: 'special', startMin: startMin, endMin: endMin, capacity: capacity, resourceId: '' });
+        }
+        exDate.value = '';
+        bumpFormContentEpoch();
+        paintExceptions();
+        paintAvailPreview();
+      };
+      exWrap.append(
+        exDate,
+        exKind,
+        document.createTextNode(' '),
+        exStart,
+        document.createTextNode(' — '),
+        exEnd,
+        document.createTextNode(' سعة '),
+        exCap,
+        exAdd,
+        exList,
+      );
+      availBox.appendChild(exWrap);
+      paintExceptions();
+
+      const previewCal = document.createElement('div');
+      previewCal.setAttribute('data-testid', 'avail-calendar-preview');
+      previewCal.className = 'options-preview';
+      text(availBox, 'معاينة ساعات العمل المُعدّة لـ 14 يومًا (Asia/Riyadh) — ليست توافر حجز محسوبًا', 'h4');
+      text(availBox, 'المفتاح: يوم عمل مُعدّ · مغلق/بدون جدول · غير مهيأ', 'p');
+      availBox.appendChild(previewCal);
+      function riyadhParts(ms) {
+        const local = new Date(ms + 180 * 60 * 1000);
+        return {
+          weekday: local.getUTCDay(),
+          dateKey: local.toISOString().slice(0, 10),
         };
-        const end = document.createElement('input');
-        end.type = 'time';
-        end.value = availState[weekday].end;
-        end.onchange = () => {
-          availState[weekday].end = end.value;
-          bumpFormContentEpoch();
-        };
-        const cap = document.createElement('input');
-        cap.type = 'number';
-        cap.min = '1';
-        cap.max = '100';
-        cap.value = availState[weekday].capacity;
-        cap.style.width = '4rem';
-        cap.onchange = () => {
-          availState[weekday].capacity = cap.value;
-          bumpFormContentEpoch();
-        };
-        const res = document.createElement('input');
-        res.type = 'text';
-        res.placeholder = 'معرّف المورد (اختياري، مثل غرفة-أ)';
-        res.value = availState[weekday].resourceId;
-        res.onchange = () => {
-          availState[weekday].resourceId = res.value.trim();
-          bumpFormContentEpoch();
-        };
-        res.title = 'نفس المعرّف يُستخدم في التوفر والحجز. حروف عربية مسموحة دون مسافات.';
-        row.append(on, document.createTextNode(' ' + name + ' '), start, document.createTextNode(' — '), end, document.createTextNode(' سعة '), cap, res);
-        availBox.appendChild(row);
-      });
+      }
+      function buildWindowsSnapshot() {
+        const windows = [];
+        daySegments.forEach((segs, weekday) => {
+          segs.forEach((day) => {
+            const sm = String(day.start || '').split(':').map(Number);
+            const em = String(day.end || '').split(':').map(Number);
+            if (!Number.isFinite(sm[0]) || !Number.isFinite(em[0])) return;
+            const capacity = parseInt(day.capacity, 10);
+            windows.push({
+              weekday: weekday,
+              startMin: sm[0] * 60 + (sm[1] || 0),
+              endMin: em[0] * 60 + (em[1] || 0),
+              capacity: Number.isInteger(capacity) && capacity >= 1 ? capacity : null,
+              resourceId: day.resourceId || '',
+            });
+          });
+        });
+        return windows;
+      }
+      function dayStatus(dateKey, windows) {
+        if (closedDates.indexOf(dateKey) >= 0) return 'مغلق/بدون جدول';
+        const dayEx = exceptions.filter((e) => e.date === dateKey);
+        if (dayEx.some((e) => e.kind === 'closed')) return 'مغلق/بدون جدول';
+        const specials = dayEx.filter((e) => e.kind === 'special');
+        let has = false;
+        if (specials.length) has = true;
+        else {
+          const parts = riyadhParts(Date.parse(dateKey + 'T00:00:00.000Z') + (12 * 60 - 180) * 60 * 1000);
+          has = windows.some((w) => w.weekday === parts.weekday);
+        }
+        if (!has) {
+          return windows.length === 0 && exceptions.length === 0 && closedDates.length === 0
+            ? 'غير مهيأ'
+            : 'مغلق/بدون جدول';
+        }
+        return 'يوم عمل مُعدّ';
+      }
+      function paintAvailPreview() {
+        previewCal.replaceChildren();
+        const windows = buildWindowsSnapshot();
+        const start = Date.now();
+        for (let i = 0; i < 14; i++) {
+          const parts = riyadhParts(start + i * 86400000);
+          const st = dayStatus(parts.dateKey, windows);
+          const cell = document.createElement('div');
+          cell.className = 'check-row';
+          cell.setAttribute('data-avail-status', st);
+          cell.textContent = parts.dateKey + ' · ' + dayNames[parts.weekday] + ' · ' + st;
+          previewCal.appendChild(cell);
+        }
+      }
+      paintAvailPreview();
+
       const unifyWrap = document.createElement('label');
       unifyWrap.className = 'check-row';
       const unifyToggle = document.createElement('input');
@@ -674,30 +951,52 @@
       const unifyPreview = document.createElement('p');
       unifyPreview.className = 'muted';
       unifyPreview.setAttribute('data-unify-preview', '1');
-      unifyPreview.textContent = 'عند التفعيل تُحدَّث سعة المورد في كل خدمات جهتك التي تشارك نفس معرّف المورد، ضمن حفظ واحد. راجعي أسماء الخدمات في رسالة التعارض قبل التأكيد.';
+      unifyPreview.textContent = 'عند التفعيل تُحدَّث سعة المورد في كل خدمات جهتك التي تشارك نفس معرّف المورد، ضمن حفظ واحد.';
       availBox.appendChild(unifyPreview);
-      text(availBox, 'عند تعارض سعات قديمة لنفس المورد تُرفض الحجوزات الجديدة حتى التوحيد. لا تُلغى الحجوزات القائمة تلقائيًا.');
+      text(availBox, 'تعديل الإتاحة لا يلغي طلبات المواعيد القائمة تلقائيًا — تبقى سجلاتها وفق قواعد المشروع.');
+      const availFieldErr = document.createElement('div');
+      availFieldErr.className = 'field-error';
+      availFieldErr.dataset.for = 'availabilityJson';
+      availFieldErr.setAttribute('data-testid', 'avail-field-error');
+      availBox.appendChild(availFieldErr);
       basics.appendChild(availBox);
       availabilityJson = {
         unifyToggle: unifyToggle,
         build: function () {
           const windows = [];
-          availState.forEach((day, weekday) => {
-            if (!day.on) return;
-            const sm = day.start.split(':').map(Number);
-            const em = day.end.split(':').map(Number);
-            const startMin = sm[0] * 60 + sm[1];
-            const endMin = em[0] * 60 + em[1];
-            const capacity = parseInt(day.capacity, 10);
-            if (!Number.isInteger(startMin) || !Number.isInteger(endMin) || endMin <= startMin) {
-              throw new Error('وقت غير صالح ليوم ' + dayNames[weekday]);
-            }
-            if (!Number.isInteger(capacity) || capacity < 1) {
-              throw new Error('السعة يجب أن تكون عددًا ≥ 1 ليوم ' + dayNames[weekday]);
-            }
-            windows.push({ weekday: weekday, startMin: startMin, endMin: endMin, capacity: capacity, resourceId: day.resourceId || '' });
+          daySegments.forEach((segs, weekday) => {
+            segs.forEach((day, segIdx) => {
+              const sm = String(day.start || '').split(':').map(Number);
+              const em = String(day.end || '').split(':').map(Number);
+              const startMin = sm[0] * 60 + (sm[1] || 0);
+              const endMin = em[0] * 60 + (em[1] || 0);
+              const capacityRaw = String(day.capacity == null ? '' : day.capacity).trim();
+              if (!Number.isInteger(startMin) || !Number.isInteger(endMin) || endMin <= startMin) {
+                throw new Error('وقت غير صالح لـ' + dayNames[weekday] + ' (فترة ' + (segIdx + 1) + ')');
+              }
+              if (capacityRaw === '' || !/^\d+$/.test(capacityRaw)) {
+                throw new Error('السعة مطلوبة كعدد صحيح ≥ 1 لـ' + dayNames[weekday] + ' (فترة ' + (segIdx + 1) + ')');
+              }
+              const capacity = parseInt(capacityRaw, 10);
+              if (!Number.isInteger(capacity) || capacity < 1 || capacity > 100) {
+                throw new Error('السعة يجب أن تكون بين 1 و100 لـ' + dayNames[weekday] + ' (فترة ' + (segIdx + 1) + ')');
+              }
+              windows.push({
+                weekday: weekday,
+                startMin: startMin,
+                endMin: endMin,
+                capacity: capacity,
+                resourceId: day.resourceId || '',
+              });
+            });
           });
-          return windows;
+          return {
+            v: 2,
+            timezone: 'Asia/Riyadh',
+            windows: windows,
+            closedDates: closedDates.slice(),
+            exceptions: exceptions.map(function (e) { return Object.assign({}, e); }),
+          };
         },
       };
     }
@@ -4098,12 +4397,15 @@
         payload.payMode = 'pay_at_venue';
         if (availabilityJson && typeof availabilityJson.build === 'function') {
           try {
+            setFieldError(form, 'availabilityJson', '');
             payload.availabilityJson = availabilityJson.build();
             if (availabilityJson.unifyToggle && availabilityJson.unifyToggle.checked) {
               payload.unifySharedResources = true;
             }
           } catch (error) {
-            status.textContent = 'لم يُرسل الحفظ. ' + (error.message || 'أصلحي جدول التوفر.');
+            const msg = error.message || 'أصلحي جدول التوفر.';
+            setFieldError(form, 'availabilityJson', msg);
+            status.textContent = 'لم يُرسل الحفظ. ' + msg;
             return false;
           }
         }

@@ -39,6 +39,7 @@ import {
   findResourceCapacityConflicts,
   orderRequestFingerprint,
   partnerResourceCapacities,
+  normalizeAvailabilityDocument,
   parseAvailability,
   parseContact,
   parseDelivery,
@@ -1478,7 +1479,8 @@ export class CommerceService {
           );
         }
 
-        const lockedSlot = checkSlot(startsAt, service.durationMin, windows, new Date(), resourceId);
+        const calendar = normalizeAvailabilityDocument(service.availabilityJson);
+        const lockedSlot = checkSlot(startsAt, service.durationMin, windows, new Date(), resourceId, calendar);
         if (!lockedSlot.ok) throw this.slotError(lockedSlot.code);
 
         const overlapWhere: Prisma.CommerceBookingWhereInput = {
@@ -1546,6 +1548,7 @@ export class CommerceService {
       SLOT_TOO_FAR: 'الموعد بعيد جدًا، اختر موعدًا أقرب',
       SLOT_MISALIGNED: 'وقت الحجز لا يطابق المواعيد المتاحة',
       SLOT_OUTSIDE_AVAILABILITY: 'هذا الوقت خارج أوقات عمل الخدمة',
+      SLOT_DATE_CLOSED: 'هذا اليوم مغلق للحجز',
       AVAILABILITY_NOT_CONFIGURED: 'مواعيد هذه الخدمة غير محددة بعد',
       DURATION_INVALID: 'مدة الخدمة غير صالحة للحجز',
     };
@@ -1619,7 +1622,7 @@ export class CommerceService {
       durationMin: service.durationMin,
       payMode: service.payMode,
       priceHalalas: service.priceHalalas,
-      slots: buildDaySlots(date, service.durationMin, windows, held),
+      slots: buildDaySlots(date, service.durationMin, windows, held, new Date(), normalizeAvailabilityDocument(service.availabilityJson)),
       resourceCapacityConflicts: conflicts.map((c) => ({
         resourceId: c.resourceId,
         capacities: c.capacities,

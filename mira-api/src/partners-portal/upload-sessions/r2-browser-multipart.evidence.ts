@@ -21,7 +21,7 @@
 import { execSync } from 'node:child_process';
 import { createHash, randomBytes, randomUUID } from 'node:crypto';
 import { createServer } from 'node:http';
-import { mkdirSync, writeFileSync } from 'node:fs';
+import { mkdirSync, writeFileSync, readFileSync, existsSync } from 'node:fs';
 import { join } from 'node:path';
 import {
   AbortMultipartUploadCommand,
@@ -644,11 +644,29 @@ async function runMiraAppPathEvidence(
   const auth = { Authorization: `Bearer ${token}`, 'content-type': 'application/json' };
   const clientMediaId = `r2-mira-${randomUUID()}`;
   const idempotencyKey = `r2-mira-${randomUUID()}`;
-  // Valid tiny JPEG (not an empty placeholder) so app mime sniff can accept image/jpeg.
-  const jpeg = Buffer.from(
-    '/9j/4AAQSkZJRgABAQAAAQABAAD/2wBDAAgGBgcGBQgHBwcJCQgKDBQNDAsLDBkSEw8UHRofHh0aHBwgJC4nICIsIxwcKDcpLDAxNDQ0Hyc5PTgyPC4zNDL/2wBDAQkJCQwLDBgNDRgyIRwhMjIyMjIyMjIyMjIyMjIyMjIyMjIyMjIyMjIyMjIyMjIyMjIyMjIyMjIyMjIyMjIyMjL/wAARCAABAAEDASIAAhEBAxEB/8QAFQABAQAAAAAAAAAAAAAAAAAAAAn/xAAUEAEAAAAAAAAAAAAAAAAAAAAA/8QAFQEBAQAAAAAAAAAAAAAAAAAAAAX/xAAUEQEAAAAAAAAAAAAAAAAAAAAA/9oADAMBAAIQAxAAAAGcP//EABQQAQAAAAAAAAAAAAAAAAAAAAD/2gAIAQEAAQUCf//EABQRAQAAAAAAAAAAAAAAAAAAAAD/2gAIAQMBAT8Bf//EABQRAQAAAAAAAAAAAAAAAAAAAAD/2gAIAQIBAT8Bf//Z',
-    'base64',
-  );
+  // Multi-MB real fixture so multipart has >1 part under typical part sizes (and abort can be mid-stream).
+  // evidence.ts is executed via tsx from mira-api cwd (or compiled under dist/).
+  const fixturesDir = join(process.cwd(), 'src/partners-portal/upload-sessions/fixtures');
+  const fixtureCandidates = [
+    join(fixturesDir, 'valid-u11-16m.mp4'),
+    join(fixturesDir, 'valid-multipart.mp4'),
+    join(fixturesDir, 'valid-large.mp4'),
+  ];
+  const fixturePath = fixtureCandidates.find((p) => existsSync(p));
+  if (!fixturePath) {
+    record('R2_MIRA_APP_PATH', false, { reason: 'multi-MB fixture missing under upload-sessions/fixtures' });
+    return;
+  }
+  const mediaBytes = readFileSync(fixturePath);
+  // Prefer the multi-megabyte fixture; fall back only when that file is absent.
+  if (fixturePath.endsWith('valid-u11-16m.mp4') === false && mediaBytes.length < 2 * 1024 * 1024) {
+    record('R2_MIRA_APP_PATH', false, {
+      reason: 'need multi-MB fixture (valid-u11-16m.mp4) for multipart+abort proof',
+      bytes: mediaBytes.length,
+      fixture: fixturePath.split('/').pop(),
+    });
+    return;
+  }
 
   try {
     const initRes = await fetch(`${base}/api/v1/partners-portal/upload-sessions`, {
@@ -659,8 +677,8 @@ async function runMiraAppPathEvidence(
         ownerId,
         clientMediaId,
         idempotencyKey,
-        mimeType: 'image/jpeg',
-        byteSize: jpeg.length,
+        mimeType: 'video/mp4',
+        byteSize: mediaBytes.length,
         placement: 'main',
       }),
     });
@@ -668,70 +686,130 @@ async function runMiraAppPathEvidence(
       sessionId?: string;
       status?: string;
       messageAr?: string;
+      totalParts?: number;
+      partSizeBytes?: number;
+      session?: { totalParts?: number; partSizeBytes?: number };
     };
     const sessionId = String(initBody.sessionId || '');
-    record('R2_MIRA_CREATE_SESSION', initRes.ok && Boolean(sessionId), {
+    const totalParts = Number(initBody.totalParts || initBody.session?.totalParts || 0);
+    const partSizeBytes = Number(initBody.partSizeBytes || initBody.session?.partSizeBytes || 0);
+    record('R2_MIRA_CREATE_SESSION', initRes.ok && Boolean(sessionId) && totalParts >= 2, {
       status: initRes.status,
       sessionPresent: Boolean(sessionId),
+      totalParts,
+      partSizeBytes,
+      fileBytes: mediaBytes.length,
+      fixture: fixturePath.split('/').pop(),
       messageAr: initBody.messageAr || null,
     });
-    if (!initRes.ok || !sessionId) {
-      record('R2_MIRA_APP_PATH', false, { reason: 'create session failed' });
+    if (!initRes.ok || !sessionId || totalParts < 2 || !partSizeBytes) {
+      record('R2_MIRA_APP_PATH', false, {
+        reason: 'create session failed or not multi-part',
+        totalParts,
+        partSizeBytes,
+      });
       return;
     }
 
-    const signRes = await fetch(`${base}/api/v1/partners-portal/upload-sessions/${sessionId}/parts/1/sign`, {
-      method: 'POST',
-      headers: auth,
-      body: '{}',
-    });
-    const signBody = (await signRes.json().catch(() => ({}))) as { url?: string; uploadUrl?: string };
-    const putUrl = String(signBody.url || signBody.uploadUrl || '');
-    record('R2_MIRA_SIGN_PARTS', signRes.ok && putUrl.startsWith('http'), {
-      status: signRes.status,
-      urlPresent: Boolean(putUrl),
-    });
-    if (!signRes.ok || !putUrl) {
-      record('R2_MIRA_APP_PATH', false, { reason: 'sign part failed' });
-      return;
+    const signedParts: Array<{ partNumber: number; url: string }> = [];
+    for (let partNumber = 1; partNumber <= totalParts; partNumber += 1) {
+      const signRes = await fetch(`${base}/api/v1/partners-portal/upload-sessions/${sessionId}/parts/${partNumber}/sign`, {
+        method: 'POST',
+        headers: auth,
+        body: '{}',
+      });
+      const signBody = (await signRes.json().catch(() => ({}))) as { url?: string; uploadUrl?: string };
+      const putUrl = String(signBody.url || signBody.uploadUrl || '');
+      if (!signRes.ok || !putUrl.startsWith('http')) {
+        record('R2_MIRA_SIGN_PARTS', false, { status: signRes.status, partNumber });
+        record('R2_MIRA_APP_PATH', false, { reason: 'sign part failed', partNumber });
+        return;
+      }
+      signedParts.push({ partNumber, url: putUrl });
     }
+    record('R2_MIRA_SIGN_PARTS', signedParts.length === totalParts, {
+      signed: signedParts.length,
+      totalParts,
+    });
 
-    // Browser-origin PUT using Playwright (same origin discipline as SDK suite).
+    // Browser-origin PUT of every part (Playwright — same origin discipline as SDK suite).
     const { chromium } = await import('playwright');
     const browser = await chromium.launch({ headless: true });
     try {
       const context = await browser.newContext();
       const page = await context.newPage();
       await page.goto(browserOrigin, { waitUntil: 'domcontentloaded', timeout: 15000 });
-      const put = await page.evaluate(
-        async ({ url, bytes }: { url: string; bytes: number[] }) => {
-          const res = await fetch(url, {
-            method: 'PUT',
-            body: Uint8Array.from(bytes),
-            mode: 'cors',
-            credentials: 'omit',
-          });
-          return { status: res.status, etag: res.headers.get('etag') || res.headers.get('ETag') || '' };
-        },
-        { url: putUrl, bytes: [...jpeg] },
-      );
-      const etag = String(put.etag || '').replace(/"/g, '');
-      record('R2_MIRA_BROWSER_PUT', put.status >= 200 && put.status < 300 && Boolean(etag), {
-        status: put.status,
-        etagReadable: Boolean(etag),
+      const completedParts: Array<{ partNumber: number; etag: string; size: number }> = [];
+      // Serve fixture chunks from the controlled browser origin, then PUT from the page
+      // (avoids huge evaluate payloads while keeping a real browser CORS PUT).
+      const chunkServer = createServer((req, res) => {
+        const m = /^\/chunk\/(\d+)$/.exec(String(req.url || ''));
+        if (!m) {
+          res.writeHead(404);
+          res.end('missing');
+          return;
+        }
+        const partNumber = Number(m[1]);
+        const start = (partNumber - 1) * partSizeBytes;
+        const end = Math.min(mediaBytes.length, start + partSizeBytes);
+        const chunk = mediaBytes.subarray(start, end);
+        res.writeHead(200, {
+          'content-type': 'application/octet-stream',
+          'content-length': String(chunk.length),
+          'access-control-allow-origin': '*',
+        });
+        res.end(chunk);
+      });
+      await new Promise<void>((r) => chunkServer.listen(0, '127.0.0.1', () => r()));
+      const chunkPort = (chunkServer.address() as { port: number }).port;
+      const chunkOrigin = `http://127.0.0.1:${chunkPort}`;
+      try {
+        for (const part of signedParts) {
+          const put = await page.evaluate(
+            async ({ url, chunkUrl }: { url: string; chunkUrl: string }) => {
+              const src = await fetch(chunkUrl);
+              const buf = await src.arrayBuffer();
+              const res = await fetch(url, {
+                method: 'PUT',
+                body: buf,
+                mode: 'cors',
+                credentials: 'omit',
+              });
+              return {
+                status: res.status,
+                etag: res.headers.get('etag') || res.headers.get('ETag') || '',
+                size: buf.byteLength,
+              };
+            },
+            { url: part.url, chunkUrl: `${chunkOrigin}/chunk/${part.partNumber}` },
+          );
+          const etag = String(put.etag || '').replace(/"/g, '');
+          if (!(put.status >= 200 && put.status < 300 && etag)) {
+            record('R2_MIRA_BROWSER_PUT', false, {
+              status: put.status,
+              partNumber: part.partNumber,
+              etagReadable: Boolean(etag),
+            });
+            record('R2_MIRA_APP_PATH', false, { reason: 'browser put failed', partNumber: part.partNumber });
+            return;
+          }
+          completedParts.push({ partNumber: part.partNumber, etag, size: put.size });
+        }
+      } finally {
+        chunkServer.close();
+      }
+      record('R2_MIRA_BROWSER_PUT', completedParts.length === totalParts, {
+        parts: completedParts.length,
+        totalParts,
         origin: browserOrigin,
       });
-      if (!(put.status >= 200 && put.status < 300 && etag)) {
-        record('R2_MIRA_APP_PATH', false, { reason: 'browser put failed' });
-        return;
-      }
 
       const completeRes = await fetch(`${base}/api/v1/partners-portal/upload-sessions/${sessionId}/complete`, {
         method: 'POST',
         headers: auth,
-        body: JSON.stringify({ parts: [{ partNumber: 1, etag, size: jpeg.length }] }),
+        body: JSON.stringify({ parts: completedParts }),
       });
-      record('R2_MIRA_COMPLETE', completeRes.ok, { status: completeRes.status });
+      record('R2_MIRA_COMPLETE', completeRes.ok, { status: completeRes.status, parts: completedParts.length });
       if (!completeRes.ok) {
         record('R2_MIRA_APP_PATH', false, { reason: 'complete failed' });
         return;
@@ -878,13 +956,13 @@ async function runMiraAppPathEvidence(
       const fullJudge = judgeFullRead({
         status: fullRes.status,
         body: fullBuf,
-        expected: jpeg,
-        expectedSha256: sha256(jpeg),
+        expected: mediaBytes,
+        expectedSha256: sha256(mediaBytes),
       });
       record('R2_MIRA_READ_FULL', fullJudge.ok, {
         status: fullRes.status,
         bytes: fullBuf.length,
-        expected: jpeg.length,
+        expected: mediaBytes.length,
         reason: fullJudge.reason,
       });
 
@@ -897,7 +975,7 @@ async function runMiraAppPathEvidence(
         contentRange: rangeRes.headers.get('content-range'),
         contentLengthHeader: rangeRes.headers.get('content-length'),
         body: rangeBuf,
-        expectedFile: jpeg,
+        expectedFile: mediaBytes,
         start: 0,
         end: 15,
       });
@@ -908,8 +986,7 @@ async function runMiraAppPathEvidence(
         reason: rangeJudge.reason,
       });
 
-      // Abort mid-stream with request id + upstream probe (admin). Tiny JPEG may EOF in one chunk —
-      // require partial bytes strictly; if file too small, FAIL (not PASS).
+      // Abort mid-stream with request id + upstream probe (admin). Multi-MB body allows true partial.
       const abortReqId = `abort-${randomUUID()}`;
       const ac = new AbortController();
       let saw = 0;
@@ -931,7 +1008,7 @@ async function runMiraAppPathEvidence(
           const first = await reader.read();
           if (!first.done && first.value && first.value.byteLength > 0) {
             saw = first.value.byteLength;
-            if (saw >= jpeg.length) {
+            if (saw >= mediaBytes.length) {
               abortedEarly = false; // whole body arrived — cannot claim mid-stream cancel
             } else {
               ac.abort();
@@ -945,19 +1022,23 @@ async function runMiraAppPathEvidence(
           }
         }
       } catch (err) {
-        abortedEarly = saw > 0 && saw < jpeg.length && /abort/i.test(String((err as Error)?.name || err));
+        abortedEarly =
+          saw > 0 && saw < mediaBytes.length && /abort/i.test(String((err as Error)?.name || err));
       }
       const afterAbort = await fetch(`${base}/api/v1/marketplace/media/${mediaId}`, {
         headers: { Origin: browserOrigin },
       });
       const afterBuf = Buffer.from(await afterAbort.arrayBuffer());
       const afterOk =
-        afterAbort.ok && afterBuf.length === jpeg.length && sha256(afterBuf) === sha256(jpeg) && afterResNotErrorDoc(afterBuf);
+        afterAbort.ok &&
+        afterBuf.length === mediaBytes.length &&
+        sha256(afterBuf) === sha256(mediaBytes) &&
+        afterResNotErrorDoc(afterBuf);
 
       let upstreamClosed = false;
       const adminKey = (process.env.MIRA_R2_ADMIN_API_KEY || process.env.ADMIN_API_KEY || '').trim();
       if (adminKey) {
-        for (let i = 0; i < 20; i++) {
+        for (let i = 0; i < 40; i++) {
           const probe = await fetch(`${base}/api/v1/admin/media-abort-probe/${abortReqId}`, {
             headers: { 'x-admin-key': adminKey },
           });
@@ -969,17 +1050,30 @@ async function runMiraAppPathEvidence(
           await new Promise((r) => setTimeout(r, 100));
         }
       }
+      // Negative control: abort claimed without upstream close must FAIL the judge.
+      const negJudge = judgeAbortRead({
+        responseStatus: abortStatus || 200,
+        receivedBytes: Math.max(1, Math.min(saw, mediaBytes.length - 1)),
+        expectedTotalBytes: mediaBytes.length,
+        abortedBeforeEof: true,
+        upstreamClosedForRequestId: false,
+        followUpFullOk: true,
+      });
+      record('R2_MIRA_ABORT_NEG_NO_UPSTREAM', negJudge.ok === false && negJudge.reason === 'upstream-close-unproven', {
+        reason: negJudge.reason,
+      });
+
       const abortJudge = judgeAbortRead({
         responseStatus: abortStatus || 200,
         receivedBytes: saw,
-        expectedTotalBytes: jpeg.length,
+        expectedTotalBytes: mediaBytes.length,
         abortedBeforeEof: abortedEarly,
         upstreamClosedForRequestId: upstreamClosed,
         followUpFullOk: afterOk,
       });
       record('R2_MIRA_ABORT_READ', abortJudge.ok, {
         sawBytes: saw,
-        expectedTotal: jpeg.length,
+        expectedTotal: mediaBytes.length,
         abortedEarly,
         upstreamClosed,
         afterOk,
@@ -987,17 +1081,21 @@ async function runMiraAppPathEvidence(
         abortReqIdSuffix: abortReqId.slice(-8),
       });
 
+      const negOk =
+        negJudge.ok === false && negJudge.reason === 'upstream-close-unproven';
       const pathOk =
         Boolean(mediaId) &&
         bindJudge.ok &&
         publishOk &&
         fullJudge.ok &&
         rangeJudge.ok &&
-        abortJudge.ok;
+        abortJudge.ok &&
+        negOk;
       record('R2_MIRA_APP_PATH', pathOk, {
         sessionIdSuffix: sessionId.slice(-8),
         mediaIdSuffix: mediaId.slice(-8),
         pathOk,
+        negOk,
       });
     } finally {
       await browser.close().catch(() => undefined);

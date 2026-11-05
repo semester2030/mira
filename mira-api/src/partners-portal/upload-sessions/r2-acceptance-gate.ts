@@ -113,12 +113,24 @@ export function verifyR2EvidenceDocument(input: {
       recomputed: { ok: false, blocked: false, failed: ['COMMIT'], detail: 'COMMIT' },
     };
   }
-  if (input.expectedRunId && String(ev.runId || '') && String(ev.runId) !== input.expectedRunId) {
-    return {
-      verdict: 'FAIL',
-      reason: 'runId-mismatch',
-      recomputed: { ok: false, blocked: false, failed: ['RUN_ID'], detail: 'RUN_ID' },
-    };
+  // When expectedRunId is required, missing/empty/mismatch all FAIL (no silent skip).
+  if (input.expectedRunId != null && String(input.expectedRunId).trim() !== '') {
+    const gotRun = String(ev.runId || '').trim();
+    const wantRun = String(input.expectedRunId).trim();
+    if (!gotRun) {
+      return {
+        verdict: 'FAIL',
+        reason: 'runId-missing',
+        recomputed: { ok: false, blocked: false, failed: ['RUN_ID'], detail: 'RUN_ID' },
+      };
+    }
+    if (gotRun !== wantRun) {
+      return {
+        verdict: 'FAIL',
+        reason: 'runId-mismatch',
+        recomputed: { ok: false, blocked: false, failed: ['RUN_ID'], detail: 'RUN_ID' },
+      };
+    }
   }
   const started = String(ev.startedUtc || '').trim();
   if (!started) {
@@ -148,6 +160,14 @@ export function verifyR2EvidenceDocument(input: {
   }
 
   const recomputed = judgeR2Acceptance(steps);
+  // Non-zero process exit always fails — never hide under BLOCKED.
+  if (input.exitCode !== 0) {
+    return {
+      verdict: 'FAIL',
+      reason: `exit-${input.exitCode}`,
+      recomputed,
+    };
+  }
   // Conflict: document claims blocked but an executed step failed → FAIL
   if (ev.blocked === true && steps.some((s) => s.ok === false)) {
     return {
@@ -164,15 +184,27 @@ export function verifyR2EvidenceDocument(input: {
       recomputed,
     };
   }
+  // Explicit ok=false must never be upgraded to PASS via recomputed steps.
+  if (ev.ok === false && recomputed.ok) {
+    return {
+      verdict: 'FAIL',
+      reason: 'summary-ok-false-conflicts-with-passing-steps',
+      recomputed,
+    };
+  }
   if (recomputed.blocked) {
     return { verdict: 'BLOCKED', reason: recomputed.detail, recomputed };
   }
-  if (recomputed.ok && input.exitCode === 0 && ev.ok === true) {
+  if (recomputed.ok && ev.ok === true) {
     return { verdict: 'PASS', reason: 'PASS', recomputed };
   }
-  if (recomputed.ok && input.exitCode === 0 && ev.blocked !== true) {
-    // Prefer recomputed over stale summary.ok
-    return { verdict: 'PASS', reason: 'PASS_RECOMPUTED', recomputed };
+  // Missing summary.ok with recomputed pass is still FAIL — require explicit ok=true.
+  if (recomputed.ok && ev.ok !== true && ev.blocked !== true) {
+    return {
+      verdict: 'FAIL',
+      reason: 'summary-ok-missing-despite-passing-steps',
+      recomputed,
+    };
   }
   return {
     verdict: 'FAIL',

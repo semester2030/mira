@@ -6,6 +6,7 @@ import {
   judgeR2Acceptance,
   judgeBindResult,
   judgeRangeResponse,
+  judgeAbortRead,
   mediaIdFromSessionBody,
   REQUIRED_MIRA_STEPS,
 } from './r2-acceptance-gate';
@@ -119,6 +120,52 @@ function allMiraOk() {
     end: 15,
   });
   assert.equal(errDoc.ok, false);
+}
+
+{
+  // Negative: AbortController signal alone must NOT yield PASS without upstream close proof
+  // and without proving 0 < received < total.
+  const signalOnly = judgeAbortRead({
+    responseStatus: 200,
+    receivedBytes: 0,
+    expectedTotalBytes: 5_000_000,
+    abortedBeforeEof: true,
+    upstreamClosedForRequestId: false,
+    followUpFullOk: true,
+  });
+  assert.equal(signalOnly.ok, false);
+  assert.ok(/bytes-not-partial|upstream-close/.test(signalOnly.reason));
+
+  const noUpstream = judgeAbortRead({
+    responseStatus: 200,
+    receivedBytes: 100_000,
+    expectedTotalBytes: 5_000_000,
+    abortedBeforeEof: true,
+    upstreamClosedForRequestId: false, // signal sent but storage stream still open
+    followUpFullOk: true,
+  });
+  assert.equal(noUpstream.ok, false);
+  assert.equal(noUpstream.reason, 'upstream-close-unproven');
+
+  const fullEof = judgeAbortRead({
+    responseStatus: 200,
+    receivedBytes: 5_000_000,
+    expectedTotalBytes: 5_000_000,
+    abortedBeforeEof: false,
+    upstreamClosedForRequestId: true,
+    followUpFullOk: true,
+  });
+  assert.equal(fullEof.ok, false);
+
+  const okAbort = judgeAbortRead({
+    responseStatus: 200,
+    receivedBytes: 100_000,
+    expectedTotalBytes: 5_000_000,
+    abortedBeforeEof: true,
+    upstreamClosedForRequestId: true,
+    followUpFullOk: true,
+  });
+  assert.equal(okAbort.ok, true);
 }
 
 console.log(JSON.stringify({ ok: true, id: 'R2_MIRA_GATE_UNIT', required: REQUIRED_MIRA_STEPS.length }));

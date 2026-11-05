@@ -30,9 +30,11 @@ if [[ -e "$OUT" ]]; then
   echo "REFUSE: evidence dir already exists: $OUT"
   exit 1
 fi
-mkdir -p "$OUT"/{http,rc4,p22,crash,memory-v02,portal,bind,p31,p31-defects,p31-d1d4,r2,swatch,hydrate,editor-state,r2-unit,typecheck,evidence-gate}
+mkdir -p "$OUT"/{http,rc4,p22,crash,memory-v02,portal,bind,p31,p31-defects,p31-d1d4,p31-ui,p4,p4-slots,r2,swatch,hydrate,editor-state,r2-unit,typecheck,evidence-gate,avail-unit}
 export MIRA_P21_COMMIT="$(git -C "$REPO_ROOT" rev-parse HEAD)"
 export MIRA_TEST_COMMIT="$MIRA_P21_COMMIT"
+export MIRA_P21_RUN_ID="$RUN_ID"
+export MIRA_TEST_RUN_ID="$RUN_ID"
 export MIRA_P31_OUT_DIR="$OUT/p31"
 echo "$MIRA_P21_COMMIT" > "$OUT/TESTED_COMMIT.txt"
 echo "$UTC" > "$OUT/STARTED_UTC.txt"
@@ -58,6 +60,9 @@ fail_run() {
 
 echo "== evidence integrity unit =="
 npx tsx src/partners-portal/upload-sessions/reverify-evidence-gate.unit.ts | tee "$OUT/evidence-gate/unit.txt"
+
+echo "== availability document unit =="
+npx tsx src/marketplace/availability-document.unit.ts | tee "$OUT/avail-unit/run.txt"
 
 echo "== bind unit =="
 node "$REPO_ROOT/partners-portal/web/js/catalog-options-media-bind-tests.mjs" | tee "$OUT/bind/unit.txt"
@@ -126,6 +131,24 @@ MIRA_P21_OUT_DIR="$OUT/memory-v02" npx tsx src/partners-portal/upload-sessions/m
 
 echo "== portal =="
 MIRA_P21_OUT_DIR="$OUT/portal" npx tsx scripts/p2-closure-portal-journey.mjs
+
+echo "== p31 inventory conflict browser =="
+MIRA_P31_OUT_DIR="$OUT/p31-ui" node scripts/p31-inventory-conflict-browser.mjs | tee "$OUT/p31-ui/run.txt"
+if [[ -f "$OUT/p31-ui/verdict.txt" ]] && grep -qx "FAIL" "$OUT/p31-ui/verdict.txt"; then
+  fail_run "P3.1 inventory conflict browser FAIL"
+fi
+
+echo "== p4 slots calendar (DB/service) =="
+MIRA_P4_OUT_DIR="$OUT/p4-slots" npx tsx src/marketplace/p4-slots-calendar.integration-tests.ts | tee "$OUT/p4-slots/run.txt"
+if [[ -f "$OUT/p4-slots/verdict.txt" ]] && grep -qx "FAIL" "$OUT/p4-slots/verdict.txt"; then
+  fail_run "P4 slots calendar FAIL"
+fi
+
+echo "== p4 availability acceptance (API+browser) =="
+MIRA_P4_OUT_DIR="$OUT/p4" node scripts/p4-availability-acceptance.mjs | tee "$OUT/p4/run.txt"
+if [[ -f "$OUT/p4/verdict.txt" ]] && grep -qx "FAIL" "$OUT/p4/verdict.txt"; then
+  fail_run "P4 availability acceptance FAIL"
+fi
 
 echo "== V03 R2 (no || true; fresh dir) =="
 set +e
