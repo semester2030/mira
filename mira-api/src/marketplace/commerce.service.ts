@@ -37,6 +37,8 @@ import {
   normalizeResourceId,
   notFound,
   findResourceCapacityConflicts,
+  capacityBearingWindowsFromDocument,
+  applyPartnerCapsToCalendar,
   orderRequestFingerprint,
   partnerResourceCapacities,
   normalizeAvailabilityDocument,
@@ -1459,8 +1461,6 @@ export class CommerceService {
           throw unprocessable('SERVICE_NOT_BOOKABLE', 'بيانات الخدمة غير مكتملة للحجز');
         }
 
-        const baseWindows = parseAvailability(service.availabilityJson);
-        const calendar = normalizeAvailabilityDocument(service.availabilityJson);
         const knownResources = new Set(resourceIdsFromAvailabilityDocument(service.availabilityJson));
         if (resourceId) {
           // Document association (weekly OR special). Date-specific open/closed is checkSlot's job.
@@ -1468,7 +1468,11 @@ export class CommerceService {
             throw unprocessable('RESOURCE_NOT_AVAILABLE', 'هذا المورد غير مرتبط بجدول توفر هذه الخدمة');
           }
         }
-        const { windows, conflicts } = await this.windowsWithPartnerCaps(tx, service.partnerId, baseWindows);
+        const { windows, calendar, conflicts } = await this.windowsWithPartnerCaps(
+          tx,
+          service.partnerId,
+          service.availabilityJson,
+        );
         const conflictHit = conflicts.find((c) =>
           resourceId ? c.resourceId === resourceId : knownResources.has(c.resourceId),
         );
@@ -1563,25 +1567,35 @@ export class CommerceService {
   }
 
   /**
-   * Partner-wide capacities for shared resources. Conflicting resourceIds are reported
-   * and never silently reduced via MIN — booking/slots must refuse those resources.
+   * Partner-wide capacities for shared resources (weekly AND specials).
+   * Conflicting resourceIds are reported and never silently reduced via MIN —
+   * booking/slots must refuse those resources. Caps also rewrite special capacities.
    */
   private async windowsWithPartnerCaps(
     db: Tx | PrismaService,
     partnerId: string,
-    serviceWindows: ReturnType<typeof parseAvailability>,
+    serviceAvailabilityJson: unknown,
   ) {
-    const resourceIds = [...new Set(serviceWindows.map((w) => w.resourceId).filter(Boolean))];
-    if (resourceIds.length === 0) return { windows: serviceWindows, conflicts: [] as ReturnType<typeof findResourceCapacityConflicts> };
+    const resourceIds = resourceIdsFromAvailabilityDocument(serviceAvailabilityJson);
+    const baseDoc = normalizeAvailabilityDocument(serviceAvailabilityJson);
+    if (resourceIds.length === 0) {
+      return {
+        windows: baseDoc.windows,
+        calendar: baseDoc,
+        conflicts: [] as ReturnType<typeof findResourceCapacityConflicts>,
+      };
+    }
     const siblings = await db.service.findMany({
       where: { partnerId, active: true },
       select: { id: true, nameAr: true, availabilityJson: true },
     });
-    const lists = siblings.map((s) => parseAvailability(s.availabilityJson));
+    // Include specials — weekly-only lists miss special-only / special-capacity mismatches.
+    const lists = siblings.map((s) => capacityBearingWindowsFromDocument(s.availabilityJson));
     const conflicts = findResourceCapacityConflicts(lists).filter((c) => resourceIds.includes(c.resourceId));
     const caps = partnerResourceCapacities(lists);
-    const windows = withPartnerResourceCaps(serviceWindows, caps).filter((w) => !conflicts.some((c) => c.resourceId === w.resourceId));
-    return { windows, conflicts };
+    const conflicted = new Set(conflicts.map((c) => c.resourceId));
+    const calendar = applyPartnerCapsToCalendar(baseDoc, caps, conflicted);
+    return { windows: calendar.windows, calendar, conflicts };
   }
 
   /** Slots for one local (Asia/Riyadh) day. Partner callers may only read their own services. */
@@ -1593,11 +1607,10 @@ export class CommerceService {
         : { id: serviceId, active: true, contentStatus: 'published', catalogSource: 'catalog', bookingEnabled: true, partner: { status: 'active' } },
     });
     if (!service) throw notFound('SERVICE_NOT_FOUND', 'الخدمة غير متاحة');
-    const calendar = normalizeAvailabilityDocument(service.availabilityJson);
-    const { windows, conflicts } = await this.windowsWithPartnerCaps(
+    const { windows, calendar, conflicts } = await this.windowsWithPartnerCaps(
       this.prisma,
       service.partnerId,
-      parseAvailability(service.availabilityJson),
+      service.availabilityJson,
     );
     const dayStart = localInstant(date, 0)!;
     const dayEnd = new Date(dayStart.getTime() + 86_400_000);
@@ -1605,7 +1618,7 @@ export class CommerceService {
     const resourceIds = [
       ...new Set([
         ...windows.map((w) => w.resourceId),
-        ...resourceIdsForDate(date, service.availabilityJson),
+        ...resourceIdsForDate(date, calendar),
         ...resourceIdsFromAvailabilityDocument(service.availabilityJson),
       ]),
     ].filter(Boolean);

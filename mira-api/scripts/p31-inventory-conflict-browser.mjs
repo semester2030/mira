@@ -103,28 +103,39 @@ async function seedFixture(prisma, { developer }) {
       revision: 1,
     },
   });
-  // Publish-eligible cover image (assertImages requires ≥1 non-removed image).
+  // Cover image via approved partners-portal upload path (stores bytes + DB row).
+  // Do NOT insert a catalogMedia row pointing at a missing storage object.
   const png = Buffer.from(
     'iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAYAAAAfFcSJAAAADUlEQVR42mP8z8BQDwAEhQGAhKmMIQAAAABJRU5ErkJggg==',
     'base64',
   );
-  const storageKey = `p31-ui/${run}/${product.id}.png`;
-  await prisma.catalogMedia.create({
-    data: {
-      ownerKind: 'product',
-      ownerId: product.id,
-      kind: 'image',
-      url: `/api/v1/marketplace/media/pending-${run}`,
-      mimeType: 'image/png',
-      byteSize: png.length,
-      storageKey,
-      isPrimary: true,
-      publication: 'published',
-      active: true,
-      sortOrder: 0,
-      placement: 'main',
+  const mediaRes = await fetch(`${apiBase}/partners-portal/products/${product.id}/media`, {
+    method: 'POST',
+    headers: {
+      Authorization: `Bearer ${token}`,
+      'content-type': 'application/json',
+      Accept: 'application/json',
     },
+    body: JSON.stringify({
+      mimeType: 'image/png',
+      dataBase64: png.toString('base64'),
+      placement: 'main',
+    }),
   });
+  const mediaBody = await mediaRes.json().catch(() => ({}));
+  if (!mediaRes.ok || !mediaBody?.id) {
+    throw new Error(`cover upload failed status=${mediaRes.status} body=${JSON.stringify(mediaBody).slice(0, 200)}`);
+  }
+  // Partner media GET must return real bytes (proves storage object exists).
+  const readRes = await fetch(`${apiBase}/partners-portal/media/${mediaBody.id}`, {
+    headers: { Authorization: `Bearer ${token}` },
+  });
+  const readBuf = Buffer.from(await readRes.arrayBuffer());
+  if (!readRes.ok || readBuf.length !== png.length || readBuf.compare(png) !== 0) {
+    throw new Error(
+      `cover not readable status=${readRes.status} len=${readBuf.length} expect=${png.length}`,
+    );
+  }
   return {
     token,
     productId: product.id,
@@ -134,6 +145,9 @@ async function seedFixture(prisma, { developer }) {
     email: pu.email,
     developer: Boolean(developer),
     hasCoverImage: true,
+    coverMediaId: mediaBody.id,
+    coverSha256: createHash('sha256').update(png).digest('hex'),
+    coverBytes: png.length,
     cleanup: async () => {
       await prisma.productVariantInventory.deleteMany({ where: { productId: product.id } }).catch(() => undefined);
       await prisma.catalogMedia.deleteMany({ where: { ownerKind: 'product', ownerId: product.id } }).catch(() => undefined);
@@ -218,6 +232,15 @@ async function main() {
         productIdSuffix: productId.slice(-8),
         variantId,
         sameTokenBothSessions: true,
+        coverMediaId: seeded.coverMediaId,
+        coverBytes: seeded.coverBytes,
+        coverSha256: seeded.coverSha256,
+      });
+      record('BRAND_COVER_MEDIA_READABLE_API', true, {
+        mediaId: seeded.coverMediaId,
+        bytes: seeded.coverBytes,
+        sha256: seeded.coverSha256,
+        note: 'GET /partners-portal/media/:id matched PNG fixture bytes',
       });
       coverDeveloper = true;
     } else {
@@ -462,6 +485,31 @@ async function main() {
       const b = await openSession(tokenB, `${labelPrefix}-B`);
       await openProductForm(a.page);
       await openProductForm(b.page);
+      // Cover image must load in UI (element alone is insufficient — require naturalWidth / completed).
+      const coverUi = await a.page.evaluate(async () => {
+        const imgs = [...document.querySelectorAll('#catalogForm img, #catalogForm [data-testid="catalog-media"] img')];
+        const results = [];
+        for (const img of imgs) {
+          if (!(img instanceof HTMLImageElement)) continue;
+          if (!img.complete) {
+            await new Promise((res) => {
+              img.addEventListener('load', () => res(null), { once: true });
+              img.addEventListener('error', () => res(null), { once: true });
+              setTimeout(() => res(null), 4000);
+            });
+          }
+          results.push({
+            src: String(img.currentSrc || img.src || '').slice(0, 120),
+            complete: img.complete,
+            naturalWidth: img.naturalWidth,
+            naturalHeight: img.naturalHeight,
+          });
+        }
+        return results;
+      });
+      const coverLoaded = coverUi.some((i) => i.complete && i.naturalWidth > 0);
+      record(`${labelPrefix}_COVER_IMAGE_LOADED_UI`, coverLoaded, { coverUi });
+
       // Both hold same revision after hydrate — verify via API independently.
       const invBefore = await fetch(`${apiBase}/partners-portal/products/${productId}/variant-inventory`, {
         headers: { Authorization: `Bearer ${tokenA}` },
@@ -533,6 +581,35 @@ async function main() {
       let controlOk = false;
       let controlDetail = {};
       try {
+        // Image must decode in the UI — presence of an <img> tag alone is insufficient.
+        const imgOk = await a.page.evaluate(async () => {
+          const imgs = [...document.querySelectorAll('#catalogForm img, [data-testid="catalog-media"] img, .media-thumb img')];
+          if (!imgs.length) return { ok: false, reason: 'no-img' };
+          const results = await Promise.all(
+            imgs.slice(0, 4).map(
+              (img) =>
+                new Promise((resolve) => {
+                  const done = () =>
+                    resolve({
+                      src: String(img.getAttribute('src') || '').slice(0, 120),
+                      complete: img.complete,
+                      naturalWidth: img.naturalWidth,
+                    });
+                  if (img.complete) done();
+                  else {
+                    img.addEventListener('load', done, { once: true });
+                    img.addEventListener('error', () => resolve({ src: String(img.src || '').slice(0, 120), complete: true, naturalWidth: 0 }), {
+                      once: true,
+                    });
+                    setTimeout(done, 4000);
+                  }
+                }),
+            ),
+          );
+          return { ok: results.some((r) => r.naturalWidth > 0), results };
+        });
+        record(`${labelPrefix}_COVER_IMAGE_DECODED_IN_UI`, Boolean(imgOk && imgOk.ok), imgOk || { ok: false });
+
         // Exact CTAs only — do NOT match MiraEditorV2 «تحويل المسودة…وإرسال للمراجعة» (false positive).
         // Developer primary is #catalogForm-save (label may be «نشر الآن» or «تم الحفظ» after prior publish).
         const isDev = labelPrefix === 'DEV';
@@ -649,7 +726,17 @@ async function main() {
       tokenB = dev.token;
       productId = dev.productId;
       variantId = dev.variantId;
-      record('SEED_DEVELOPER', true, { productIdSuffix: productId.slice(-8) });
+      record('SEED_DEVELOPER', true, {
+        productIdSuffix: productId.slice(-8),
+        coverMediaId: dev.coverMediaId,
+        coverBytes: dev.coverBytes,
+        coverSha256: dev.coverSha256,
+      });
+      record('DEV_COVER_MEDIA_READABLE_API', true, {
+        mediaId: dev.coverMediaId,
+        bytes: dev.coverBytes,
+        sha256: dev.coverSha256,
+      });
       await runConflictPair('DEV');
     }
 

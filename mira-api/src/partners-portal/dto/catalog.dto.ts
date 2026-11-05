@@ -246,9 +246,11 @@ export class UpsertServiceDto {
   @Min(5)
   durationMin?: number;
 
+  /** Optional on draft create — omitted means unset (stored 0; booking still requires >0). */
+  @IsOptional()
   @IsInt()
   @Min(0)
-  priceHalalas!: number;
+  priceHalalas?: number;
 
   @IsOptional()
   @IsArray()

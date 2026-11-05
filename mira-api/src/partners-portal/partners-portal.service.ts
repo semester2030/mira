@@ -15,6 +15,7 @@ import {
   AVAILABILITY_TIMEZONE,
   assertAvailabilityConsistent,
   assertResourceCapacitiesConsistent,
+  capacityBearingWindowsFromDocument,
   findResourceCapacityConflicts,
   normalizeAvailabilityDocument,
   normalizeResourceId,
@@ -595,7 +596,7 @@ export class PartnersPortalService implements OnModuleInit {
           nameEn: dto.nameEn?.trim() || nameAr,
           descriptionAr: dto.descriptionAr?.trim() || null,
           durationMin: dto.durationMin ?? 0,
-          priceHalalas: dto.priceHalalas,
+          priceHalalas: dto.priceHalalas ?? 0,
           concernTags: dto.concernTags ?? [],
           category,
           bookingEnabled: dto.bookingEnabled === true,
@@ -726,7 +727,8 @@ export class PartnersPortalService implements OnModuleInit {
     const doc = normalizeAvailabilityDocument(raw, { strict: true });
     const parsed = doc.windows;
     assertAvailabilityConsistent(parsed);
-    assertResourceCapacitiesConsistent(parsed);
+    // Weekly + specials within this payload must agree on resource capacities.
+    assertResourceCapacitiesConsistent(capacityBearingWindowsFromDocument(doc));
     // Always persist the v2 document (also for legacy bare-array input).
     const persistDoc = {
       v: 2 as const,
@@ -779,12 +781,17 @@ export class PartnersPortalService implements OnModuleInit {
       }
       return persistDoc as unknown as Prisma.InputJsonValue;
     }
-    const otherWindows = siblings.flatMap((s) => parseAvailability(s.availabilityJson));
-    const conflicts = findResourceCapacityConflicts([parsed, otherWindows]);
+    const selfCaps = capacityBearingWindowsFromDocument(persistDoc);
+    const otherWindows = siblings.flatMap((s) => capacityBearingWindowsFromDocument(s.availabilityJson));
+    const conflicts = findResourceCapacityConflicts([selfCaps, otherWindows]);
     if (conflicts.length > 0) {
       const first = conflicts[0]!;
       const names = siblings
-        .filter((s) => findResourceCapacityConflicts([parsed, parseAvailability(s.availabilityJson)]).length > 0)
+        .filter(
+          (s) =>
+            findResourceCapacityConflicts([selfCaps, capacityBearingWindowsFromDocument(s.availabilityJson)])
+              .length > 0,
+        )
         .map((s) => s.nameAr)
         .slice(0, 5);
       throw new BadRequestException({

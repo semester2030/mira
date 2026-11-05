@@ -316,6 +316,169 @@ async function main() {
     });
     const bareSlots = await commerce.serviceAvailability(bare2.id, DATE);
     record('P4_UNCONFIGURED_EMPTY', bareSlots.slots.length === 0, { n: bareSlots.slots.length });
+
+    // ---- CLOSE-01: shared resource capacity across weekly vs special ----
+    const partnerB = await prisma.partner.create({
+      data: { type: 'salon', status: 'active', nameAr: `شريكB ${run}`, nameEn: `pb-${run}`, city: 'جدة' },
+    });
+    partnerIds.push(partnerB.id);
+
+    const weeklyCap1 = await prisma.service.create({
+      data: {
+        partnerId: partner.id,
+        nameAr: `سعة1 ${run}`,
+        nameEn: `cap1-${run}`,
+        durationMin: 60,
+        priceHalalas: 10000,
+        concernTags: [],
+        bookingEnabled: true,
+        active: true,
+        contentStatus: 'published',
+        catalogSource: 'catalog',
+        availabilityJson: {
+          v: 2,
+          timezone: 'Asia/Riyadh',
+          windows: [{ weekday: 2, startMin: 540, endMin: 720, capacity: 1, resourceId: 'room-A' }],
+          closedDates: [],
+          exceptions: [],
+        },
+      },
+    });
+    const specialCap2 = await prisma.service.create({
+      data: {
+        partnerId: partner.id,
+        nameAr: `سعة2خاصة ${run}`,
+        nameEn: `cap2s-${run}`,
+        durationMin: 60,
+        priceHalalas: 10000,
+        concernTags: [],
+        bookingEnabled: true,
+        active: true,
+        contentStatus: 'published',
+        catalogSource: 'catalog',
+        availabilityJson: {
+          v: 2,
+          timezone: 'Asia/Riyadh',
+          windows: [],
+          closedDates: [],
+          exceptions: [
+            { date: DATE, kind: 'special', startMin: 540, endMin: 720, capacity: 2, resourceId: 'room-A' },
+          ],
+        },
+      },
+    });
+
+    // Defect shape: listing must surface conflict (not offer bookable slots for room-A).
+    const conflictList = await commerce.serviceAvailability(specialCap2.id, DATE);
+    const conflictCodes = (conflictList.resourceCapacityConflicts || []).map((c) => c.resourceId);
+    const roomSlots = conflictList.slots.filter((s) => s.resourceId === 'room-A' && s.available);
+    record(
+      'P4_C01_WEEKLY_SPECIAL_CONFLICT_SURFACED',
+      conflictCodes.includes('room-A') && roomSlots.length === 0,
+      { conflictCodes, availableRoomSlots: roomSlots.length },
+    );
+    await failure(
+      book(alice, specialCap2.id, localInstant(DATE, 540)!.toISOString(), `${run}-c01-book`, 'room-A'),
+      409,
+      'RESOURCE_CAPACITY_CONFLICT',
+    );
+    record('P4_C01_WEEKLY_SPECIAL_BOOK_REJECTED', true, { code: 'RESOURCE_CAPACITY_CONFLICT' });
+
+    // special/special conflict
+    await prisma.service.update({
+      where: { id: weeklyCap1.id },
+      data: {
+        availabilityJson: {
+          v: 2,
+          timezone: 'Asia/Riyadh',
+          windows: [],
+          closedDates: [],
+          exceptions: [
+            { date: DATE, kind: 'special', startMin: 540, endMin: 720, capacity: 1, resourceId: 'room-A' },
+          ],
+        },
+      },
+    });
+    const ssList = await commerce.serviceAvailability(specialCap2.id, DATE);
+    record(
+      'P4_C01_SPECIAL_SPECIAL_CONFLICT',
+      (ssList.resourceCapacityConflicts || []).some((c) => c.resourceId === 'room-A'),
+      { conflicts: ssList.resourceCapacityConflicts },
+    );
+
+    // Aligned capacities: shared hold counts across services
+    await prisma.service.update({
+      where: { id: weeklyCap1.id },
+      data: {
+        availabilityJson: {
+          v: 2,
+          timezone: 'Asia/Riyadh',
+          windows: [{ weekday: 2, startMin: 540, endMin: 720, capacity: 1, resourceId: 'room-Shared' }],
+          closedDates: [],
+          exceptions: [],
+        },
+      },
+    });
+    await prisma.service.update({
+      where: { id: specialCap2.id },
+      data: {
+        availabilityJson: {
+          v: 2,
+          timezone: 'Asia/Riyadh',
+          windows: [],
+          closedDates: [],
+          exceptions: [
+            { date: DATE, kind: 'special', startMin: 540, endMin: 720, capacity: 1, resourceId: 'room-Shared' },
+          ],
+        },
+      },
+    });
+    await book(alice, weeklyCap1.id, localInstant(DATE, 540)!.toISOString(), `${run}-c01-hold`, 'room-Shared');
+    const afterHold = await commerce.serviceAvailability(specialCap2.id, DATE);
+    const sharedSlot = afterHold.slots.find(
+      (s) => s.resourceId === 'room-Shared' && localParts(new Date(s.startsAt)).minuteOfDay === 540,
+    );
+    record(
+      'P4_C01_ALIGNED_CROSS_SERVICE_HOLD',
+      Boolean(sharedSlot) && sharedSlot!.available === false && sharedSlot!.remaining === 0,
+      { sharedSlot },
+    );
+    await failure(
+      book(bob, specialCap2.id, localInstant(DATE, 540)!.toISOString(), `${run}-c01-full`, 'room-Shared'),
+      409,
+      'BOOKING_SLOT_FULL',
+    );
+    record('P4_C01_ALIGNED_SECOND_BOOK_FULL', true, { code: 'BOOKING_SLOT_FULL' });
+
+    // Partner isolation: other partner same resource id does not conflict
+    const foreign = await prisma.service.create({
+      data: {
+        partnerId: partnerB.id,
+        nameAr: `أجنبي ${run}`,
+        nameEn: `fx-${run}`,
+        durationMin: 60,
+        priceHalalas: 10000,
+        concernTags: [],
+        bookingEnabled: true,
+        active: true,
+        contentStatus: 'published',
+        catalogSource: 'catalog',
+        availabilityJson: {
+          v: 2,
+          timezone: 'Asia/Riyadh',
+          windows: [{ weekday: 2, startMin: 540, endMin: 720, capacity: 9, resourceId: 'room-Shared' }],
+          closedDates: [],
+          exceptions: [],
+        },
+      },
+    });
+    const foreignList = await commerce.serviceAvailability(foreign.id, DATE);
+    record(
+      'P4_C01_PARTNER_ISOLATION',
+      (foreignList.resourceCapacityConflicts || []).length === 0 &&
+        foreignList.slots.some((s) => s.resourceId === 'room-Shared' && s.available),
+      { conflicts: foreignList.resourceCapacityConflicts, n: foreignList.slots.length },
+    );
   } finally {
     await prisma.commerceBooking.deleteMany({ where: { userId: { in: userIds } } }).catch(() => undefined);
     await prisma.service.deleteMany({ where: { partnerId: { in: partnerIds } } }).catch(() => undefined);

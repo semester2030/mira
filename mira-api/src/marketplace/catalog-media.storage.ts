@@ -135,27 +135,35 @@ export class LocalCatalogMediaStorage extends CatalogMediaStorage {
       return { status: 416, totalSize: plan.total, contentRange: plan.contentRange };
     }
     const stream = createReadStream(file, { start: plan.start, end: plan.end, highWaterMark: 1024 * 1024 });
-    let aborted = false;
-    const noteAbort = () => {
-      if (!options.abortRequestId || aborted) return;
-      aborted = true;
+    let abortRequested = false;
+    const probe = () => {
       try {
         // eslint-disable-next-line @typescript-eslint/no-require-imports
-        const { noteMediaStorageReadClosed } = require('./catalog-media-abort-probe') as {
+        return require('./catalog-media-abort-probe') as {
+          noteMediaStorageAbortRequested: (requestId: string, mediaId: string) => void;
           noteMediaStorageReadClosed: (requestId: string, mediaId: string) => void;
         };
-        noteMediaStorageReadClosed(options.abortRequestId, options.mediaId || key);
       } catch {
-        /* probe optional */
+        return null;
       }
     };
+    const markAbortRequested = () => {
+      if (!options.abortRequestId || abortRequested) return;
+      abortRequested = true;
+      probe()?.noteMediaStorageAbortRequested(options.abortRequestId, options.mediaId || key);
+    };
+    // Proof only on real stream close after abort — never on destroy() alone, never on EOF.
+    stream.once('close', () => {
+      if (!abortRequested || !options.abortRequestId) return;
+      probe()?.noteMediaStorageReadClosed(options.abortRequestId, options.mediaId || key);
+    });
+    const destroyForAbort = () => {
+      markAbortRequested();
+      stream.destroy(Object.assign(new Error('aborted'), { name: 'AbortError' }));
+    };
     if (options.signal) {
-      const onAbort = () => {
-        noteAbort();
-        stream.destroy(Object.assign(new Error('aborted'), { name: 'AbortError' }));
-      };
-      if (options.signal.aborted) onAbort();
-      else options.signal.addEventListener('abort', onAbort, { once: true });
+      if (options.signal.aborted) destroyForAbort();
+      else options.signal.addEventListener('abort', destroyForAbort, { once: true });
     }
     return {
       status: plan.status,
@@ -163,10 +171,7 @@ export class LocalCatalogMediaStorage extends CatalogMediaStorage {
       contentLength: plan.contentLength,
       contentRange: plan.contentRange,
       body: stream,
-      abort: () => {
-        noteAbort();
-        stream.destroy();
-      },
+      abort: () => destroyForAbort(),
     };
   }
 }

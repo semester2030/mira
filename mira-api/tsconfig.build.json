@@ -1,4 +1,13 @@
 {
   "extends": "./tsconfig.json",
-  "exclude": ["node_modules", "dist", "test", "**/*spec.ts", "**/*.integration-tests.ts", "**/*schema-tests.ts"]
+  "exclude": [
+    "node_modules",
+    "dist",
+    "test",
+    "**/*spec.ts",
+    "**/*.integration-tests.ts",
+    "**/*schema-tests.ts",
+    "**/*.unit.ts",
+    "**/*.evidence.ts"
+  ]
 }

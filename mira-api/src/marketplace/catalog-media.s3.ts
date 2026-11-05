@@ -198,16 +198,15 @@ export class S3CompatibleCatalogMediaStorage extends CatalogMediaStorage {
     }
 
     // Lazy import keeps production path free of circular init; probe is test-scoped.
-    const noteStorageAbort = (reason: 'abort' | 'eof') => {
-      if (reason !== 'abort' || !options.abortRequestId) return;
+    const probe = () => {
       try {
         // eslint-disable-next-line @typescript-eslint/no-require-imports
-        const { noteMediaStorageReadClosed } = require('./catalog-media-abort-probe') as {
+        return require('./catalog-media-abort-probe') as {
+          noteMediaStorageAbortRequested: (requestId: string, mediaId: string) => void;
           noteMediaStorageReadClosed: (requestId: string, mediaId: string) => void;
         };
-        noteMediaStorageReadClosed(options.abortRequestId, options.mediaId || key);
       } catch {
-        /* probe optional */
+        return null;
       }
     };
 
@@ -225,18 +224,32 @@ export class S3CompatibleCatalogMediaStorage extends CatalogMediaStorage {
       }
 
       let released = false;
+      let abortRequested = false;
+      const markAbortRequested = () => {
+        if (!options.abortRequestId || abortRequested) return;
+        abortRequested = true;
+        probe()?.noteMediaStorageAbortRequested(options.abortRequestId, options.mediaId || key);
+      };
       const release = (reason: 'abort' | 'eof' | 'error' = 'eof') => {
         if (released) return;
         released = true;
         external?.removeEventListener('abort', onExternalAbort);
+        if (reason === 'abort') markAbortRequested();
         try {
           body.destroy?.();
         } catch {
           /* ignore */
         }
         client.destroy();
-        if (reason === 'abort') noteStorageAbort('abort');
+        // Do NOT note close here — wait for body 'close' after abort.
       };
+
+      // Real close after abort request = proof. Natural EOF close without abort = no proof.
+      body.once('close', () => {
+        if (abortRequested && options.abortRequestId) {
+          probe()?.noteMediaStorageReadClosed(options.abortRequestId, options.mediaId || key);
+        }
+      });
 
       if (controller.signal.aborted || external?.aborted) {
         release('abort');
@@ -245,9 +258,6 @@ export class S3CompatibleCatalogMediaStorage extends CatalogMediaStorage {
       controller.signal.addEventListener('abort', () => release('abort'), { once: true });
       body.once('end', () => release('eof'));
       body.once('error', () => release('error'));
-      body.once('close', () => {
-        if (!released) release('eof');
-      });
 
       return {
         status: plan.status,

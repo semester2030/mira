@@ -175,20 +175,23 @@ if [[ -f "$OUT/p4/verdict.txt" ]] && grep -qx "FAIL" "$OUT/p4/verdict.txt"; then
 fi
 
 echo "== V03 R2 (no || true; fresh dir) =="
+# Capture R2 suite wall-clock BEFORE the test; preserve exit code immediately after.
+R2_STARTED_ISO="$(date -u +%Y-%m-%dT%H:%M:%SZ)"
+echo "$R2_STARTED_ISO" > "$OUT/r2/R2_STARTED_ISO.txt"
 set +e
 MIRA_P21_OUT_DIR="$OUT/r2" npx tsx src/partners-portal/upload-sessions/r2-browser-multipart.evidence.ts
 R2_RC=$?
 set -e
+echo "$R2_RC" > "$OUT/r2/R2_EXIT_CODE.txt"
 R2_JSON="$OUT/r2/r2-browser-multipart.json"
 if [[ ! -f "$R2_JSON" ]]; then
   echo "R2_ACCEPTANCE=FAIL reason=no-evidence-file exit=$R2_RC" | tee "$OUT/r2/verdict.txt"
   fail_run "R2 evidence file missing"
 fi
-# Authoritative verifier (same module unit-tested) — not a parallel python copy.
-STARTED_ISO="$(cat "$OUT/STARTED_ISO.txt")"
+# Authoritative verifier — pass original R2 start time + preserved exit (never "now" after the fact).
 set +e
 npx tsx src/partners-portal/upload-sessions/verify-r2-evidence.ts \
-  "$R2_JSON" "$MIRA_P21_COMMIT" "$STARTED_ISO" "$R2_RC" "$RUN_ID"
+  "$R2_JSON" "$MIRA_P21_COMMIT" "$R2_STARTED_ISO" "$R2_RC" "$RUN_ID"
 VERIFY_RC=$?
 set -e
 if [[ ! -f "$OUT/r2/verdict.txt" ]]; then
@@ -196,7 +199,7 @@ if [[ ! -f "$OUT/r2/verdict.txt" ]]; then
   fail_run "R2 verify did not write verdict"
 fi
 VERDICT="$(tr -d '\n' < "$OUT/r2/verdict.txt")"
-echo "R2_ACCEPTANCE=$VERDICT verify_exit=$VERIFY_RC"
+echo "R2_ACCEPTANCE=$VERDICT verify_exit=$VERIFY_RC r2_exit=$R2_RC started=$R2_STARTED_ISO"
 if [[ "$VERDICT" == "FAIL" || "$VERIFY_RC" -ne 0 && "$VERDICT" != "BLOCKED" ]]; then
   fail_run "R2 evidence verification failed"
 fi

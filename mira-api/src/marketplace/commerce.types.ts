@@ -900,6 +900,56 @@ export function resourceIdsFromAvailabilityDocument(json: unknown): string[] {
   return [...ids];
 }
 
+/**
+ * Capacity-bearing windows from weekly schedule AND special exceptions.
+ * Used for partner-wide RESOURCE_CAPACITY_CONFLICT — specials must not bypass weekly checks.
+ * Weekday/start/end on synthetic special rows are placeholders; only resourceId+capacity matter for conflict detection.
+ */
+export function capacityBearingWindowsFromDocument(json: unknown): AvailabilityWindow[] {
+  const doc = normalizeAvailabilityDocument(json);
+  const out: AvailabilityWindow[] = doc.windows.map((w) => ({ ...w }));
+  for (const e of doc.exceptions) {
+    if (e.kind !== 'special') continue;
+    const resourceId = e.resourceId ?? '';
+    if (!resourceId) continue;
+    let capacity = e.capacity;
+    if (capacity == null) {
+      const inherited = doc.windows.filter((w) => w.resourceId === resourceId).map((w) => w.capacity);
+      capacity = inherited.length > 0 ? Math.min(...inherited) : 1;
+    }
+    out.push({
+      weekday: 0,
+      startMin: e.startMin ?? 0,
+      endMin: e.endMin ?? (e.startMin ?? 0) + 1,
+      capacity,
+      resourceId,
+    });
+  }
+  return out;
+}
+
+/** Apply agreed partner capacities onto special exceptions (never invent MIN across conflicts). */
+export function applyPartnerCapsToCalendar(
+  calendar: AvailabilityDocument,
+  partnerCaps: ReadonlyMap<string, number>,
+  conflicted: ReadonlySet<string>,
+): AvailabilityDocument {
+  return {
+    ...calendar,
+    exceptions: calendar.exceptions
+      .filter((e) => !(e.resourceId && conflicted.has(e.resourceId)))
+      .map((e) => {
+        if (e.kind !== 'special' || !e.resourceId) return e;
+        const cap = partnerCaps.get(e.resourceId);
+        if (cap == null || e.capacity === cap) return e;
+        return { ...e, capacity: cap };
+      }),
+    windows: withPartnerResourceCaps(calendar.windows, partnerCaps).filter(
+      (w) => !w.resourceId || !conflicted.has(w.resourceId),
+    ),
+  };
+}
+
 type DayResolution = {
   /** Whole local day closed (closedDates or an exception without resourceId). */
   dayClosed: boolean;

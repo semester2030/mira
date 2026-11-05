@@ -64,29 +64,40 @@ async function main() {
     const authA = { Authorization: `Bearer ${tokenA}`, 'content-type': 'application/json' };
     const authB = { Authorization: `Bearer ${tokenB}`, 'content-type': 'application/json' };
 
-    // 1) Minimal draft — price 0 allowed for draft; omit duration (optional). Do not invent booking readiness.
+    // 1) Minimal draft — omit price and duration entirely (do not send priceHalalas:0 as a stand-in for “unset”).
     const createRes = await fetch(`${apiBase}/partners-portal/services`, {
       method: 'POST',
       headers: authA,
       body: JSON.stringify({
         nameAr: `خدمة مسودة ${run}`,
-        priceHalalas: 0,
         category: 'hair',
         bookingEnabled: false,
       }),
     });
     const created = await createRes.json().catch(() => ({}));
-    record('P4_CREATE_MIN_DRAFT', createRes.ok && !!created.id && created.priceHalalas === 0, {
-      status: createRes.status,
-      idSuffix: created.id?.slice(-8),
-      priceHalalas: created.priceHalalas,
-      durationMin: created.durationMin ?? null,
-    });
+    record(
+      'P4_CREATE_MIN_DRAFT',
+      createRes.ok &&
+        !!created.id &&
+        (created.durationMin == null || created.durationMin === 0) &&
+        // Storage maps omitted price → 0; booking path still refuses ≤0.
+        (created.priceHalalas == null || created.priceHalalas === 0),
+      {
+        status: createRes.status,
+        idSuffix: created.id?.slice(-8),
+        priceHalalas: created.priceHalalas ?? null,
+        durationMin: created.durationMin ?? null,
+        priceFieldSent: false,
+        durationFieldSent: false,
+      },
+    );
     const serviceId = created.id;
     if (!serviceId) throw new Error('create failed');
     record(
       'P4_MIN_DRAFT_NOT_BOOKABLE_YET',
-      created.bookingEnabled === false && (created.durationMin == null || created.durationMin === 0 || created.priceHalalas === 0),
+      created.bookingEnabled === false &&
+        (created.durationMin == null || created.durationMin === 0) &&
+        (created.priceHalalas == null || created.priceHalalas === 0),
       { bookingEnabled: created.bookingEnabled, durationMin: created.durationMin, priceHalalas: created.priceHalalas },
     );
 
@@ -345,12 +356,98 @@ async function main() {
     const leak = (meB.catalog?.services || []).some((s) => s.id === serviceId);
     record('P4_OWNERSHIP_READ_ISOLATED', !leak, { serviceCount: meB.catalog?.serviceCount });
 
-    // 11) Draft vs published — contentStatus stays draft/published per existing review cycle
-    const sDraft = afterDescSvc || s3;
+    // 11) Draft status must equal expected (not merely "one of" draft/published/pending_review).
+    const sDraft = afterDescSvc || (await loadService(authA));
     record(
       'P4_CONTENT_STATUS_PRESERVED',
-      ['draft', 'published', 'pending_review'].includes(String(sDraft?.contentStatus || '')),
+      sDraft?.contentStatus === 'draft' && sDraft?.reviewStatus === 'draft',
       { contentStatus: sDraft?.contentStatus, reviewStatus: sDraft?.reviewStatus },
+    );
+
+    // Published edit cycle: public name remains; draft fields take pending edits; reviewStatus → draft.
+    const pubCreate = await fetch(`${apiBase}/partners-portal/services`, {
+      method: 'POST',
+      headers: authA,
+      body: JSON.stringify({
+        nameAr: `خدمة منشورة ${run}`,
+        priceHalalas: 15000,
+        durationMin: 45,
+        category: 'hair',
+        bookingEnabled: true,
+      }),
+    });
+    const pubSvc = await pubCreate.json().catch(() => ({}));
+    await prisma.service.update({
+      where: { id: pubSvc.id },
+      data: { contentStatus: 'published', reviewStatus: 'approved', active: true, reviewRevision: 3 },
+    });
+    const pubRow = (await loadService(authA)) || {};
+    // loadService finds by original serviceId — fetch explicitly:
+    const meAll = await fetch(`${apiBase}/partners-portal/me`, { headers: authA }).then((r) => r.json());
+    const pubListed = (meAll.catalog?.services || []).find((s) => s.id === pubSvc.id);
+    const patchPub = await fetch(`${apiBase}/partners-portal/services/${pubSvc.id}`, {
+      method: 'PATCH',
+      headers: authA,
+      body: JSON.stringify({
+        nameAr: `اسم مسودة ${run}`,
+        descriptionAr: `وصف مسودة ${run}`,
+        expectedRevision: pubListed?.reviewRevision ?? 3,
+      }),
+    });
+    const meAfterPub = await fetch(`${apiBase}/partners-portal/me`, { headers: authA }).then((r) => r.json());
+    const rePub = (meAfterPub.catalog?.services || []).find((s) => s.id === pubSvc.id);
+    record(
+      'P4_PUBLISHED_EDIT_KEEPS_PUBLIC_NAME',
+      patchPub.ok &&
+        String(rePub?.nameAr || '').includes('منشورة') &&
+        String(rePub?.draftNameAr || '').includes(`اسم مسودة ${run}`) &&
+        rePub?.contentStatus === 'published' &&
+        rePub?.reviewStatus === 'draft',
+      {
+        status: patchPub.status,
+        nameAr: rePub?.nameAr,
+        draftNameAr: rePub?.draftNameAr,
+        contentStatus: rePub?.contentStatus,
+        reviewStatus: rePub?.reviewStatus,
+      },
+    );
+    const stalePub = await fetch(`${apiBase}/partners-portal/services/${pubSvc.id}`, {
+      method: 'PATCH',
+      headers: authA,
+      body: JSON.stringify({ descriptionAr: 'يجب أن يُرفض', expectedRevision: 0 }),
+    });
+    const staleBody = await stalePub.json().catch(() => ({}));
+    record(
+      'P4_PUBLISHED_STALE_REVISION_409',
+      stalePub.status === 409 &&
+        (staleBody.code === 'SERVICE_REVISION_CONFLICT' || /REVISION|تعارض/.test(JSON.stringify(staleBody))),
+      { status: stalePub.status, code: staleBody.code },
+    );
+
+    // Lost-response style retry: second write with same expectedRevision must not corrupt or duplicate.
+    const tipSvc = await loadService(authA);
+    const tip = tipSvc?.reviewRevision;
+    const lost1 = await fetch(`${apiBase}/partners-portal/services/${serviceId}`, {
+      method: 'PATCH',
+      headers: authA,
+      body: JSON.stringify({ descriptionAr: `شبكة-أ ${run}`, expectedRevision: tip }),
+    });
+    const lost2 = await fetch(`${apiBase}/partners-portal/services/${serviceId}`, {
+      method: 'PATCH',
+      headers: authA,
+      body: JSON.stringify({ descriptionAr: `شبكة-أ ${run}`, expectedRevision: tip }),
+    });
+    const afterLost = await loadService(authA);
+    const draftCount = (
+      (await fetch(`${apiBase}/partners-portal/me`, { headers: authA }).then((r) => r.json())).catalog?.services || []
+    ).filter((s) => String(s.nameAr || s.draftNameAr || '').includes('مسودة')).length;
+    record(
+      'P4_LOST_RESPONSE_RETRY_NO_DUP_CORRUPT',
+      lost1.ok &&
+        String(afterLost?.descriptionAr || '').includes(`شبكة-أ ${run}`) &&
+        (lost2.status === 409 || lost2.ok) &&
+        draftCount >= 1,
+      { lost1: lost1.status, lost2: lost2.status, tip, afterRev: afterLost?.reviewRevision, draftCount },
     );
 
     // Template coverage matrix (presence ≠ proven UI — recorded separately)
