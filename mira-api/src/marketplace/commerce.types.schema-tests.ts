@@ -1,6 +1,7 @@
 import assert from 'node:assert/strict';
 import { HttpException } from '@nestjs/common';
 import {
+  applyPartnerCapsToCalendar,
   assertAvailabilityConsistent,
   assertResourceCapacitiesConsistent,
   buildDaySlots,
@@ -17,6 +18,7 @@ import {
   localInstant,
   localParts,
   makePublicNumber,
+  normalizeAvailabilityDocument,
   normalizeIdempotencyKey,
   normalizeResourceId,
   parseAvailability,
@@ -25,6 +27,7 @@ import {
   releasesStock,
   resolveSelection,
   unifyResourceCapacities,
+  windowsForDate,
   withPartnerResourceCaps,
   FULFILLMENT_STATUSES,
   FULFILLMENT_TRANSITIONS,
@@ -245,5 +248,45 @@ const unified = unifyResourceCapacities(
   new Map([['staff-1', 1]]),
 );
 assert.equal(unified[0]?.capacity, 1);
+
+// P5 / P4 dependency: special replaces weekly; stripping conflicted special must NOT reopen weekly.
+{
+  const date = '2026-11-10'; // Tuesday → weekday 2
+  const doc = normalizeAvailabilityDocument({
+    v: 2,
+    timezone: 'Asia/Riyadh',
+    windows: [
+      { weekday: 2, startMin: 540, endMin: 720, capacity: 1, resourceId: 'room-weekly' },
+      { weekday: 2, startMin: 540, endMin: 720, capacity: 1, resourceId: 'room-special' },
+    ],
+    closedDates: [],
+    exceptions: [
+      { date, kind: 'special', startMin: 600, endMin: 660, capacity: 1, resourceId: 'room-special' },
+    ],
+  });
+  const before = windowsForDate(date, doc);
+  assert.equal(before.length, 1);
+  assert.equal(before[0]?.resourceId, 'room-special');
+
+  const capped = applyPartnerCapsToCalendar(doc, new Map(), new Set(['room-special']));
+  assert.deepEqual(capped.specialReplaceLockedDates, [date]);
+  assert.equal(
+    capped.exceptions.filter((e) => e.kind === 'special' && e.date === date).length,
+    0,
+  );
+  const after = windowsForDate(date, capped);
+  assert.equal(after.length, 0, 'weekly must not reopen after conflicted special strip');
+  const slots = buildDaySlots(date, 60, capped.windows, [], new Date('2026-11-01T00:00:00.000Z'), capped);
+  assert.equal(slots.length, 0);
+  const bookAttempt = checkSlot(
+    localInstant(date, 540)!,
+    60,
+    capped.windows,
+    new Date('2026-11-01T00:00:00.000Z'),
+    'room-weekly',
+    capped,
+  );
+  assert.equal(bookAttempt.ok, false);
+}
 
 console.log('commerce.types schema tests passed');

@@ -479,6 +479,98 @@ async function main() {
         foreignList.slots.some((s) => s.resourceId === 'room-Shared' && s.available),
       { conflicts: foreignList.resourceCapacityConflicts, n: foreignList.slots.length },
     );
+
+    // P5 dep: special replaces weekly on DATE; capacity conflict strips special → weekly must not reopen.
+    const reopenPartner = await prisma.partner.create({
+      data: { type: 'salon', status: 'active', nameAr: `إعادةفتح ${run}`, nameEn: `reopen-${run}`, city: 'الرياض' },
+    });
+    partnerIds.push(reopenPartner.id);
+    const weeklySibling = await prisma.service.create({
+      data: {
+        partnerId: reopenPartner.id,
+        nameAr: `أسبوعي ${run}`,
+        nameEn: `wk-${run}`,
+        durationMin: 60,
+        priceHalalas: 8000,
+        concernTags: [],
+        bookingEnabled: true,
+        active: true,
+        contentStatus: 'published',
+        catalogSource: 'catalog',
+        availabilityJson: {
+          v: 2,
+          timezone: 'Asia/Riyadh',
+          windows: [{ weekday: 2, startMin: 540, endMin: 720, capacity: 1, resourceId: 'room-Conflict' }],
+          closedDates: [],
+          exceptions: [],
+        },
+      },
+    });
+    const specialPrimary = await prisma.service.create({
+      data: {
+        partnerId: reopenPartner.id,
+        nameAr: `خاصة ${run}`,
+        nameEn: `sp-${run}`,
+        durationMin: 60,
+        priceHalalas: 8000,
+        concernTags: [],
+        bookingEnabled: true,
+        active: true,
+        contentStatus: 'published',
+        catalogSource: 'catalog',
+        availabilityJson: {
+          v: 2,
+          timezone: 'Asia/Riyadh',
+          windows: [
+            { weekday: 2, startMin: 540, endMin: 720, capacity: 1, resourceId: 'room-WeeklyOther' },
+            { weekday: 2, startMin: 540, endMin: 720, capacity: 2, resourceId: 'room-Conflict' },
+          ],
+          closedDates: [],
+          exceptions: [
+            {
+              date: DATE,
+              kind: 'special',
+              startMin: 600,
+              endMin: 720,
+              capacity: 2,
+              resourceId: 'room-Conflict',
+            },
+          ],
+        },
+      },
+    });
+    void weeklySibling;
+    const reopenList = await commerce.serviceAvailability(specialPrimary.id, DATE);
+    const weeklyLeak = reopenList.slots.filter((s) => s.resourceId === 'room-WeeklyOther' && s.available);
+    const conflictedAvail = reopenList.slots.filter((s) => s.resourceId === 'room-Conflict' && s.available);
+    record(
+      'P5_P4DEP_SPECIAL_STRIP_NO_WEEKLY_REOPEN',
+      (reopenList.resourceCapacityConflicts || []).some((c) => c.resourceId === 'room-Conflict') &&
+        weeklyLeak.length === 0 &&
+        conflictedAvail.length === 0,
+      {
+        conflicts: reopenList.resourceCapacityConflicts,
+        weeklyLeak: weeklyLeak.length,
+        conflictedAvail: conflictedAvail.length,
+        slotResources: [...new Set(reopenList.slots.map((s) => s.resourceId))],
+      },
+    );
+    let reopenBookOk = false;
+    let reopenBookDetail: unknown = null;
+    try {
+      await book(alice, specialPrimary.id, localInstant(DATE, 540)!.toISOString(), `${run}-reopen-wk`, 'room-WeeklyOther');
+      reopenBookDetail = { unexpected: 'booked' };
+    } catch (error) {
+      assert.ok(error instanceof HttpException, String(error));
+      const body = error.getResponse() as Record<string, unknown>;
+      reopenBookOk =
+        body.code === 'SLOT_OUTSIDE_AVAILABILITY' ||
+        body.code === 'RESOURCE_CAPACITY_CONFLICT' ||
+        body.code === 'SLOT_DATE_CLOSED' ||
+        body.code === 'AVAILABILITY_NOT_CONFIGURED';
+      reopenBookDetail = { status: error.getStatus(), code: body.code };
+    }
+    record('P5_P4DEP_SPECIAL_STRIP_BOOK_REFUSED', reopenBookOk, reopenBookDetail);
   } finally {
     await prisma.commerceBooking.deleteMany({ where: { userId: { in: userIds } } }).catch(() => undefined);
     await prisma.service.deleteMany({ where: { partnerId: { in: partnerIds } } }).catch(() => undefined);

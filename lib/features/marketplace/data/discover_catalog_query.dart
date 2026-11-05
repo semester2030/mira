@@ -5,8 +5,12 @@ import 'marketplace_local_catalog.dart';
 
 /// One published catalog row. It keeps the original product or service object.
 class DiscoverOffer {
-  DiscoverOffer.product(CatalogProduct product, {required this.city})
-      : product = product,
+  DiscoverOffer.product(
+    CatalogProduct product, {
+    required this.city,
+    this.matchedVariantIds = const [],
+    this.matchedVariantSelections = const {},
+  })  : product = product,
         service = null,
         id = product.id,
         partnerId = product.partnerId,
@@ -20,8 +24,11 @@ class DiscoverOffer {
         category = product.category,
         media = product.media;
 
-  DiscoverOffer.service(CatalogService service)
-      : service = service,
+  DiscoverOffer.service(
+    CatalogService service, {
+    this.matchedVariantIds = const [],
+    this.matchedVariantSelections = const {},
+  })  : service = service,
         product = null,
         id = service.id,
         partnerId = service.partnerId,
@@ -50,6 +57,12 @@ class DiscoverOffer {
   final List<CatalogMediaLink> media;
   final CatalogProduct? product;
   final CatalogService? service;
+
+  /// Server-matched publicly available variant ids for the active filter set.
+  final List<String> matchedVariantIds;
+
+  /// When exactly one variant matched, its selections (groupId → valueId) for detail/cart context.
+  final Map<String, String> matchedVariantSelections;
 
   String get cursor => '$kind:$id';
 
@@ -87,6 +100,12 @@ class DiscoverCatalogQuery {
     this.partnerId,
     this.lane,
     this.requireVisual = false,
+    this.colors = const [],
+    this.sizes = const [],
+    this.placeModes = const [],
+    this.inStock,
+    this.sort = 'key',
+    this.requestFacets = false,
   });
 
   final String text;
@@ -97,6 +116,37 @@ class DiscoverCatalogQuery {
   final DiscoverLane? lane;
   final bool requireVisual;
 
+  /// Registry value ids for variant.color (OR within). Empty = unset.
+  final List<String> colors;
+
+  /// Registry value ids for variant.size (OR within). Empty = unset.
+  final List<String> sizes;
+
+  /// Service placeMode ids (OR within). Empty = unset.
+  final List<String> placeModes;
+
+  /// When true, only in-stock (sellable) matches. Null = no stock filter.
+  final bool? inStock;
+
+  /// Server sort: key | price_asc | price_desc
+  final String sort;
+
+  final bool requestFacets;
+
+  int get activeFilterCount {
+    var n = 0;
+    if (text.trim().isNotEmpty) n += 1;
+    if (categoryId != null && categoryId != 'all') n += 1;
+    if (city != null && city!.isNotEmpty) n += 1;
+    if (partnerId != null) n += 1;
+    if (colors.isNotEmpty) n += 1;
+    if (sizes.isNotEmpty) n += 1;
+    if (placeModes.isNotEmpty) n += 1;
+    if (inStock != null) n += 1;
+    if (sort != 'key') n += 1;
+    return n;
+  }
+
   DiscoverCatalogQuery copyWith({
     String? text,
     String? partnerType,
@@ -105,11 +155,21 @@ class DiscoverCatalogQuery {
     String? partnerId,
     DiscoverLane? lane,
     bool? requireVisual,
+    List<String>? colors,
+    List<String>? sizes,
+    List<String>? placeModes,
+    bool? inStock,
+    String? sort,
+    bool? requestFacets,
     bool clearType = false,
     bool clearCategory = false,
     bool clearCity = false,
     bool clearPartner = false,
     bool clearLane = false,
+    bool clearColors = false,
+    bool clearSizes = false,
+    bool clearPlaceModes = false,
+    bool clearInStock = false,
   }) {
     return DiscoverCatalogQuery(
       text: text ?? this.text,
@@ -119,6 +179,22 @@ class DiscoverCatalogQuery {
       partnerId: clearPartner ? null : partnerId ?? this.partnerId,
       lane: clearLane ? null : lane ?? this.lane,
       requireVisual: requireVisual ?? this.requireVisual,
+      colors: clearColors ? const [] : colors ?? this.colors,
+      sizes: clearSizes ? const [] : sizes ?? this.sizes,
+      placeModes: clearPlaceModes ? const [] : placeModes ?? this.placeModes,
+      inStock: clearInStock ? null : inStock ?? this.inStock,
+      sort: sort ?? this.sort,
+      requestFacets: requestFacets ?? this.requestFacets,
+    );
+  }
+
+  DiscoverCatalogQuery clearAdvancedFilters() {
+    return copyWith(
+      clearColors: true,
+      clearSizes: true,
+      clearPlaceModes: true,
+      clearInStock: true,
+      sort: 'key',
     );
   }
 }

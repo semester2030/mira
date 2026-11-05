@@ -16,10 +16,12 @@ class ProductOptionSelector extends StatefulWidget {
     super.key,
     required this.product,
     this.onChanged,
+    this.initialSelected,
   });
 
   final CatalogProduct product;
   final ProductOptionChanged? onChanged;
+  final Map<String, String>? initialSelected;
 
   @override
   State<ProductOptionSelector> createState() => _ProductOptionSelectorState();
@@ -31,14 +33,19 @@ class _ProductOptionSelectorState extends State<ProductOptionSelector> {
   @override
   void initState() {
     super.initState();
-    _selected = {};
+    _selected = Map<String, String>.from(widget.initialSelected ?? const {});
+    if (_selected.isNotEmpty) {
+      WidgetsBinding.instance.addPostFrameCallback((_) {
+        widget.onChanged?.call(_selected, _match);
+      });
+    }
   }
 
   @override
   void didUpdateWidget(covariant ProductOptionSelector oldWidget) {
     super.didUpdateWidget(oldWidget);
     if (oldWidget.product.id != widget.product.id) {
-      _selected = {};
+      _selected = Map<String, String>.from(widget.initialSelected ?? const {});
     }
   }
 

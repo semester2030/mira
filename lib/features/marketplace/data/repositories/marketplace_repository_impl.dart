@@ -185,6 +185,12 @@ class MarketplaceRepositoryImpl implements MarketplaceRepository, DiscoverCatalo
         requireVisual: query.requireVisual,
         cursor: cursor,
         limit: limit,
+        colors: query.colors,
+        sizes: query.sizes,
+        placeModes: query.placeModes,
+        inStock: query.inStock,
+        sort: query.sort,
+        facets: query.requestFacets,
       );
       return DiscoverBrowseResponse(
         failed: false,

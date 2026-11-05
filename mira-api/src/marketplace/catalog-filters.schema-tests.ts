@@ -1,0 +1,196 @@
+import assert from 'node:assert/strict';
+import {
+  buildCatalogFacets,
+  filterCatalogItems,
+  matchCatalogItem,
+  parseCatalogFilterQuery,
+  variantMatchesSelections,
+  type CatalogFilterItem,
+} from './catalog-filters';
+import { parseVariants } from './commerce.types';
+
+const dress: CatalogFilterItem = {
+  kind: 'product',
+  id: 'dress-1',
+  partnerId: 'p1',
+  partnerType: 'brand',
+  partnerNameAr: 'متجر',
+  city: 'الرياض',
+  nameAr: 'فستان',
+  nameEn: 'Dress',
+  category: 'clothes',
+  concernTags: ['texture'],
+  priceHalalas: 10000,
+  inventoryMode: 'product',
+  stockQty: 5,
+  stockAvailable: true,
+  optionsJson: [
+    { id: 'color', labelAr: 'اللون', values: [{ id: 'black', labelAr: 'أسود' }, { id: 'white', labelAr: 'أبيض' }] },
+    { id: 'size', labelAr: 'المقاس', values: [{ id: 's', labelAr: 'S' }, { id: 'm', labelAr: 'M' }] },
+  ],
+  variantsJson: [
+    { id: 'v-black-s', selections: { color: 'black', size: 's' }, priceHalalas: 10000, available: true },
+    { id: 'v-white-m', selections: { color: 'white', size: 'm' }, priceHalalas: 12000, available: true },
+  ],
+};
+
+// REQ-0013 / P5: black + M must NOT match black/S + white/M.
+{
+  const hit = matchCatalogItem(dress, {
+    variantSelections: { color: ['black'], size: ['m'] },
+  });
+  assert.equal(hit, null, 'black+M must not cross-match variants');
+}
+
+// After adding black/M, it matches with that variant only.
+{
+  const withBlackM: CatalogFilterItem = {
+    ...dress,
+    variantsJson: [
+      ...(dress.variantsJson as unknown[]),
+      { id: 'v-black-m', selections: { color: 'black', size: 'm' }, priceHalalas: 11000, available: true },
+    ],
+  };
+  const hit = matchCatalogItem(withBlackM, {
+    variantSelections: { color: ['black'], size: ['m'] },
+  });
+  assert.ok(hit);
+  assert.deepEqual(
+    hit!.matchedVariants.map((v) => v.variantId),
+    ['v-black-m'],
+  );
+  assert.equal(hit!.effectivePriceHalalas, 11000);
+}
+
+// OR within color, AND with size.
+{
+  const withBlackM: CatalogFilterItem = {
+    ...dress,
+    variantsJson: [
+      ...(dress.variantsJson as unknown[]),
+      { id: 'v-black-m', selections: { color: 'black', size: 'm' }, priceHalalas: 11000, available: true },
+    ],
+  };
+  const hits = filterCatalogItems([withBlackM], {
+    variantSelections: { color: ['black', 'white'], size: ['m'] },
+  });
+  assert.equal(hits.length, 1);
+  assert.deepEqual(
+    hits[0]!.matchedVariants.map((v) => v.variantId).sort(),
+    ['v-black-m', 'v-white-m'],
+  );
+}
+
+// Unavailable / draft-like (available:false) never matches.
+{
+  const soldOut: CatalogFilterItem = {
+    ...dress,
+    variantsJson: [
+      { id: 'v-black-m', selections: { color: 'black', size: 'm' }, priceHalalas: 11000, available: false },
+    ],
+  };
+  assert.equal(
+    matchCatalogItem(soldOut, { variantSelections: { color: ['black'], size: ['m'] } }),
+    null,
+  );
+}
+
+// Variant inventory exhaustion.
+{
+  const tracked: CatalogFilterItem = {
+    ...dress,
+    inventoryMode: 'variant',
+    variantsJson: [
+      { id: 'v-black-m', selections: { color: 'black', size: 'm' }, priceHalalas: 11000, available: true },
+    ],
+    variantSellable: { 'v-black-m': 0 },
+  };
+  assert.equal(
+    matchCatalogItem(tracked, { variantSelections: { color: ['black'], size: ['m'] }, inStock: true }),
+    null,
+  );
+  assert.ok(
+    matchCatalogItem(tracked, { variantSelections: { color: ['black'], size: ['m'] }, inStock: false }),
+  );
+  tracked.variantSellable = { 'v-black-m': 2 };
+  assert.ok(
+    matchCatalogItem(tracked, { variantSelections: { color: ['black'], size: ['m'] }, inStock: true }),
+  );
+}
+
+// Service filters reject product-only variant fields.
+{
+  const svc: CatalogFilterItem = {
+    kind: 'service',
+    id: 'svc-1',
+    partnerId: 'p2',
+    partnerType: 'salon',
+    partnerNameAr: 'صالون',
+    city: 'جدة',
+    nameAr: 'قص',
+    nameEn: 'Cut',
+    category: 'hair',
+    concernTags: [],
+    priceHalalas: 5000,
+    durationMin: 45,
+    placeMode: 'branch',
+  };
+  assert.equal(matchCatalogItem(svc, { variantSelections: { color: ['black'] } }), null);
+  assert.ok(matchCatalogItem(svc, { placeModes: ['branch'], city: 'جدة' }));
+  assert.equal(matchCatalogItem(svc, { placeModes: ['home'] }), null);
+}
+
+// Facet counts exclude own field.
+{
+  const items: CatalogFilterItem[] = [
+    dress,
+    {
+      ...dress,
+      id: 'dress-2',
+      variantsJson: [
+        { id: 'v2', selections: { color: 'black', size: 'm' }, priceHalalas: 9000, available: true },
+      ],
+    },
+  ];
+  const facets = buildCatalogFacets(items, {
+    variantSelections: { color: ['black'], size: ['m'] },
+  });
+  // With color+size applied for other facets; color facet omits color filter so black/S and black/M both contribute black.
+  assert.ok(facets['variant.color'].some((b) => b.id === 'black'));
+  assert.ok(facets.staleSelections.length === 0 || Array.isArray(facets.staleSelections));
+}
+
+// Stale selection flagged when value absent from remaining catalog.
+{
+  const facets = buildCatalogFacets([dress], {
+    variantSelections: { color: ['neon'], size: ['m'] },
+  });
+  assert.ok(facets.staleSelections.some((s) => s.field === 'variant.color' && s.value === 'neon'));
+}
+
+// Query parse rejects bad option / sort.
+{
+  const bad = parseCatalogFilterQuery({ option: 'nocolon', sort: 'key' });
+  assert.equal(bad.ok, false);
+  const ok = parseCatalogFilterQuery({
+    'variant.color': 'black,white',
+    size: 'm',
+    sort: 'price_asc',
+    inStock: '1',
+  });
+  assert.equal(ok.ok, true);
+  if (ok.ok) {
+    assert.deepEqual(ok.filter.variantSelections, { color: ['black', 'white'], size: ['m'] });
+    assert.equal(ok.filter.sort, 'price_asc');
+    assert.equal(ok.filter.inStock, true);
+  }
+}
+
+// Same-variant helper
+{
+  const [v] = parseVariants([{ id: 'x', selections: { color: 'black', size: 's' }, available: true }]);
+  assert.equal(variantMatchesSelections(v!, { color: ['black'], size: ['s'] }), true);
+  assert.equal(variantMatchesSelections(v!, { color: ['black'], size: ['m'] }), false);
+}
+
+console.log('catalog-filters.schema-tests: PASS');

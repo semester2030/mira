@@ -657,10 +657,18 @@ export type AvailabilityDocument = {
   windows: AvailabilityWindow[];
   closedDates: string[];
   exceptions: AvailabilityException[];
+  /**
+   * Runtime-only (never persist): dates whose special windows were stripped by a
+   * partner RESOURCE_CAPACITY_CONFLICT. Weekly windows must not reopen for these dates.
+   */
+  specialReplaceLockedDates?: string[];
 };
 
 /** Calendar-only part of a document (closures + date overrides). */
-export type AvailabilityCalendar = Pick<AvailabilityDocument, 'closedDates' | 'exceptions'>;
+export type AvailabilityCalendar = Pick<
+  AvailabilityDocument,
+  'closedDates' | 'exceptions' | 'specialReplaceLockedDates'
+>;
 
 export type DayAvailabilityStatus = 'unconfigured' | 'available' | 'unavailable' | 'full';
 
@@ -870,12 +878,19 @@ export function normalizeAvailabilityDocument(json: unknown, opts: NormalizeAvai
       }
     }
   }
+  // Preserve runtime-only lock dates from applyPartnerCapsToCalendar (never persisted by writers).
+  let specialReplaceLockedDates: string[] | undefined;
+  if (isRecord(json) && Array.isArray(json.specialReplaceLockedDates)) {
+    const locked = [...new Set(json.specialReplaceLockedDates.filter((d) => isValidDateKey(d)))].sort();
+    if (locked.length > 0) specialReplaceLockedDates = locked;
+  }
   return {
     v: 2,
     timezone: AVAILABILITY_TIMEZONE,
     windows,
     closedDates,
     exceptions,
+    ...(specialReplaceLockedDates ? { specialReplaceLockedDates } : {}),
   };
 }
 
@@ -928,25 +943,42 @@ export function capacityBearingWindowsFromDocument(json: unknown): AvailabilityW
   return out;
 }
 
-/** Apply agreed partner capacities onto special exceptions (never invent MIN across conflicts). */
+/**
+ * Apply agreed partner capacities onto special exceptions (never invent MIN across conflicts).
+ * When a special that replaced the weekly schedule is stripped because its resource is conflicted,
+ * the date is locked so weekly windows do not reopen for that day.
+ */
 export function applyPartnerCapsToCalendar(
   calendar: AvailabilityDocument,
   partnerCaps: ReadonlyMap<string, number>,
   conflicted: ReadonlySet<string>,
 ): AvailabilityDocument {
+  const locked = new Set<string>(calendar.specialReplaceLockedDates ?? []);
+  const exceptions = calendar.exceptions
+    .filter((e) => {
+      if (e.resourceId && conflicted.has(e.resourceId)) {
+        if (e.kind === 'special') locked.add(e.date);
+        return false;
+      }
+      return true;
+    })
+    .map((e) => {
+      if (e.kind !== 'special' || !e.resourceId) return e;
+      const cap = partnerCaps.get(e.resourceId);
+      if (cap == null || e.capacity === cap) return e;
+      return { ...e, capacity: cap };
+    });
+  // Keep the lock only when every special for that date was stripped.
+  for (const date of [...locked]) {
+    if (exceptions.some((e) => e.kind === 'special' && e.date === date)) locked.delete(date);
+  }
   return {
     ...calendar,
-    exceptions: calendar.exceptions
-      .filter((e) => !(e.resourceId && conflicted.has(e.resourceId)))
-      .map((e) => {
-        if (e.kind !== 'special' || !e.resourceId) return e;
-        const cap = partnerCaps.get(e.resourceId);
-        if (cap == null || e.capacity === cap) return e;
-        return { ...e, capacity: cap };
-      }),
+    exceptions,
     windows: withPartnerResourceCaps(calendar.windows, partnerCaps).filter(
       (w) => !w.resourceId || !conflicted.has(w.resourceId),
     ),
+    ...(locked.size > 0 ? { specialReplaceLockedDates: [...locked].sort() } : { specialReplaceLockedDates: undefined }),
   };
 }
 
@@ -981,6 +1013,7 @@ function resolveDay(
   }
   const weeklyForDay = weekly.filter((w) => w.weekday === weekday);
   const specials = dayExceptions.filter((e) => e.kind === 'special');
+  const specialLocked = (calendar?.specialReplaceLockedDates ?? []).includes(dateKey);
   let capacityKnown = true;
   let windows: AvailabilityWindow[];
   if (specials.length > 0) {
@@ -996,11 +1029,20 @@ function resolveDay(
       }
       return { weekday, startMin: e.startMin!, endMin: e.endMin!, capacity, resourceId: e.resourceId ?? '' };
     });
+  } else if (specialLocked) {
+    // Special replaced weekly, then all special resources were capacity-conflicted — do not reopen weekly.
+    windows = [];
   } else {
     windows = weeklyForDay;
   }
   windows = windows.filter((w) => !closedResources.has(w.resourceId));
-  return { dayClosed, hasSpecial: specials.length > 0, closedResources, windows, capacityKnown };
+  return {
+    dayClosed,
+    hasSpecial: specials.length > 0 || specialLocked,
+    closedResources,
+    windows,
+    capacityKnown,
+  };
 }
 
 /**

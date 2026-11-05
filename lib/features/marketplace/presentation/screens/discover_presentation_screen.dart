@@ -414,23 +414,99 @@ class _DiscoverPresentationScreenState extends State<DiscoverPresentationScreen>
   }
 
   Future<void> _openFilters(BuildContext context) async {
+    final elegance = widget.lane == DiscoverLane.elegance ||
+        (widget.lane == null && (_query.partnerType == null || _query.partnerType == 'brand'));
+    final beauty = widget.lane == DiscoverLane.beauty ||
+        (_query.partnerType == 'clinic' || _query.partnerType == 'salon');
     final type = await showModalBottomSheet<String>(
       context: context,
+      isScrollControlled: true,
       builder: (context) {
         return SafeArea(
-          child: Column(
-            mainAxisSize: MainAxisSize.min,
-            children: [
-              if (widget.lane == null) ...[
-                ListTile(title: const Text('كل الأنواع'), onTap: () => Navigator.pop(context, 'all')),
-                ListTile(title: const Text('منتجات'), onTap: () => Navigator.pop(context, 'brand')),
-                ListTile(title: const Text('عيادات'), onTap: () => Navigator.pop(context, 'clinic')),
-                ListTile(title: const Text('مشاغل'), onTap: () => Navigator.pop(context, 'salon')),
+          child: SingleChildScrollView(
+            child: Column(
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                ListTile(
+                  title: Text(
+                    _query.activeFilterCount == 0
+                        ? 'الفلاتر'
+                        : 'الفلاتر (${_query.activeFilterCount} نشط)',
+                  ),
+                  subtitle: const Text('الاختيارات المتعددة داخل الحقل = أو، وبين الحقول = و'),
+                ),
+                if (widget.lane == null) ...[
+                  ListTile(title: const Text('كل الأنواع'), onTap: () => Navigator.pop(context, 'all')),
+                  ListTile(title: const Text('منتجات'), onTap: () => Navigator.pop(context, 'brand')),
+                  ListTile(title: const Text('عيادات'), onTap: () => Navigator.pop(context, 'clinic')),
+                  ListTile(title: const Text('مشاغل'), onTap: () => Navigator.pop(context, 'salon')),
+                ],
+                for (final city in _cities)
+                  ListTile(
+                    title: Text(city),
+                    trailing: _query.city == city ? const Icon(Icons.check) : null,
+                    onTap: () => Navigator.pop(context, 'city:$city'),
+                  ),
+                if (elegance) ...[
+                  const Divider(),
+                  const ListTile(title: Text('لون التركيبة')),
+                  ListTile(
+                    title: const Text('أسود'),
+                    trailing: _query.colors.contains('black') ? const Icon(Icons.check) : null,
+                    onTap: () => Navigator.pop(context, 'color:black'),
+                  ),
+                  ListTile(
+                    title: const Text('أبيض'),
+                    trailing: _query.colors.contains('white') ? const Icon(Icons.check) : null,
+                    onTap: () => Navigator.pop(context, 'color:white'),
+                  ),
+                  const ListTile(title: Text('مقاس التركيبة')),
+                  for (final size in const ['xs', 's', 'm', 'l', 'xl'])
+                    ListTile(
+                      title: Text(size.toUpperCase()),
+                      trailing: _query.sizes.contains(size) ? const Icon(Icons.check) : null,
+                      onTap: () => Navigator.pop(context, 'size:$size'),
+                    ),
+                  SwitchListTile(
+                    title: const Text('المتاح بالمخزون فقط'),
+                    value: _query.inStock == true,
+                    onChanged: (_) => Navigator.pop(context, 'stock'),
+                  ),
+                ],
+                if (beauty) ...[
+                  const Divider(),
+                  const ListTile(title: Text('مكان تقديم الخدمة')),
+                  for (final mode in const [
+                    ('branch', 'في الفرع'),
+                    ('home', 'منزلية'),
+                    ('remote', 'عن بعد'),
+                    ('either', 'مرن'),
+                  ])
+                    ListTile(
+                      title: Text(mode.$2),
+                      trailing: _query.placeModes.contains(mode.$1) ? const Icon(Icons.check) : null,
+                      onTap: () => Navigator.pop(context, 'place:${mode.$1}'),
+                    ),
+                ],
+                const Divider(),
+                ListTile(
+                  title: const Text('ترتيب: المعرّف'),
+                  trailing: _query.sort == 'key' ? const Icon(Icons.check) : null,
+                  onTap: () => Navigator.pop(context, 'sort:key'),
+                ),
+                ListTile(
+                  title: const Text('ترتيب: السعر تصاعدي'),
+                  trailing: _query.sort == 'price_asc' ? const Icon(Icons.check) : null,
+                  onTap: () => Navigator.pop(context, 'sort:price_asc'),
+                ),
+                ListTile(
+                  title: const Text('ترتيب: السعر تنازلي'),
+                  trailing: _query.sort == 'price_desc' ? const Icon(Icons.check) : null,
+                  onTap: () => Navigator.pop(context, 'sort:price_desc'),
+                ),
+                ListTile(title: const Text('مسح الفلاتر'), onTap: () => Navigator.pop(context, 'clear')),
               ],
-              for (final city in _cities)
-                ListTile(title: Text(city), onTap: () => Navigator.pop(context, 'city:$city')),
-              ListTile(title: const Text('مسح الفلاتر'), onTap: () => Navigator.pop(context, 'clear')),
-            ],
+            ),
           ),
         );
       },
@@ -443,6 +519,41 @@ class _DiscoverPresentationScreenState extends State<DiscoverPresentationScreen>
       await _reload(_query.copyWith(clearType: true, clearCategory: true));
     } else if (type.startsWith('city:')) {
       await _reload(_query.copyWith(city: type.substring(5)));
+    } else if (type.startsWith('color:')) {
+      final id = type.substring(6);
+      final next = [..._query.colors];
+      if (next.contains(id)) {
+        next.remove(id);
+      } else {
+        next.add(id);
+      }
+      await _reload(_query.copyWith(colors: next, requestFacets: true));
+    } else if (type.startsWith('size:')) {
+      final id = type.substring(5);
+      final next = [..._query.sizes];
+      if (next.contains(id)) {
+        next.remove(id);
+      } else {
+        next.add(id);
+      }
+      await _reload(_query.copyWith(sizes: next, requestFacets: true));
+    } else if (type.startsWith('place:')) {
+      final id = type.substring(6);
+      final next = [..._query.placeModes];
+      if (next.contains(id)) {
+        next.remove(id);
+      } else {
+        next.add(id);
+      }
+      await _reload(_query.copyWith(placeModes: next, requestFacets: true));
+    } else if (type == 'stock') {
+      await _reload(_query.copyWith(
+        inStock: _query.inStock == true ? null : true,
+        clearInStock: _query.inStock == true,
+        requestFacets: true,
+      ));
+    } else if (type.startsWith('sort:')) {
+      await _reload(_query.copyWith(sort: type.substring(5)));
     } else {
       await _reload(_query.copyWith(partnerType: type, clearCategory: true));
     }
@@ -1207,6 +1318,7 @@ class _PresentationPageState extends State<_PresentationPage> {
 
   void _openDetails(BuildContext context) {
     final kind = widget.slide.product != null ? 'product' : 'service';
+    final initial = widget.slide.matchedVariantSelections;
     Navigator.of(context).push(
       MaterialPageRoute<void>(
         builder: (_) => CatalogRecordScope.page(
@@ -1214,6 +1326,7 @@ class _PresentationPageState extends State<_PresentationPage> {
           id: widget.slide.entityId,
           transport: widget.source ?? CatalogTransport.localCatalog,
           gateway: widget.records,
+          initialSelections: initial.isEmpty ? null : initial,
         ),
       ),
     );

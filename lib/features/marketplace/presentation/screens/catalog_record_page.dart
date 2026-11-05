@@ -18,6 +18,7 @@ class CatalogRecordPage extends StatefulWidget {
     required this.transport,
     this.matchKnown = false,
     this.matchScore = 0,
+    this.initialSelections,
   });
 
   final DiscoverCatalogGateway gateway;
@@ -26,6 +27,7 @@ class CatalogRecordPage extends StatefulWidget {
   final CatalogTransport? transport;
   final bool matchKnown;
   final int matchScore;
+  final Map<String, String>? initialSelections;
 
   @override
   State<CatalogRecordPage> createState() => _CatalogRecordPageState();
@@ -87,6 +89,7 @@ class _CatalogRecordPageState extends State<CatalogRecordPage> {
           return ProductDetailScreen(
             product: widget.matchKnown ? product.withKnownMatch(widget.matchScore) : product,
             provenance: banner,
+            initialSelections: widget.initialSelections,
           );
         }
         final service = result.service!;

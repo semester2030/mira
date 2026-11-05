@@ -24,7 +24,16 @@ class ProductDetailScreen extends StatefulWidget {
   /// Cart client. Defaults to the signed-in account's API client.
   final CommerceClient? commerce;
 
-  const ProductDetailScreen({super.key, required this.product, this.provenance, this.commerce});
+  /// Pre-select variant choices from a catalog filter match (same-variant context).
+  final Map<String, String>? initialSelections;
+
+  const ProductDetailScreen({
+    super.key,
+    required this.product,
+    this.provenance,
+    this.commerce,
+    this.initialSelections,
+  });
 
   @override
   State<ProductDetailScreen> createState() => _ProductDetailScreenState();
@@ -32,9 +41,17 @@ class ProductDetailScreen extends StatefulWidget {
 
 class _ProductDetailScreenState extends State<ProductDetailScreen> {
   CatalogProductVariant? _variant;
-  Map<String, String> _selected = const {};
+  late Map<String, String> _selected = Map<String, String>.from(widget.initialSelections ?? const {});
   late final CommerceClient _commerce = widget.commerce ?? ApiCommerceClient();
   bool _adding = false;
+
+  @override
+  void initState() {
+    super.initState();
+    if (_selected.isNotEmpty) {
+      _variant = CatalogOptionMatrix.match(variants: product.variants, selected: _selected);
+    }
+  }
 
   CatalogProduct get product => widget.product;
 
@@ -162,8 +179,9 @@ class _ProductDetailScreenState extends State<ProductDetailScreen> {
             if (product.optionGroups.isNotEmpty) ...[
               const SizedBox(height: 20),
               ProductOptionSelector(
-                key: ValueKey(product.id),
+                key: ValueKey('${product.id}:${widget.initialSelections?.entries.map((e) => '${e.key}=${e.value}').join('|') ?? ''}'),
                 product: product,
+                initialSelected: widget.initialSelections,
                 onChanged: (selected, variant) {
                   setState(() {
                     _selected = selected;
