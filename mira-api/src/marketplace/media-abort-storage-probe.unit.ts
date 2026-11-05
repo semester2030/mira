@@ -22,8 +22,13 @@ import {
   takeMediaUpstreamAbort,
   waitMediaStorageAbortClosed,
 } from './catalog-media-abort-probe';
-import { LocalCatalogMediaStorage } from './catalog-media.storage';
+import { LocalCatalogMediaStorage, type CatalogMediaOpenResult } from './catalog-media.storage';
 import { judgeAbortRead } from '../partners-portal/upload-sessions/r2-acceptance-gate';
+
+function asBody(opened: CatalogMediaOpenResult | null): Readable {
+  assert.ok(opened && 'body' in opened && opened.body, 'expected open stream body');
+  return opened.body as Readable;
+}
 
 async function main() {
   const root = join(tmpdir(), `mira-abort-probe-${process.pid}`);
@@ -69,9 +74,7 @@ async function main() {
       abortRequestId: 'req-adapter-ok',
       mediaId: 'media-slow',
     });
-    assert.ok(opened && opened.body);
-    assert.ok(opened && 'body' in opened && opened.body);
-    const body = opened.body as Readable;
+    const body = asBody(opened);
     body.on('error', () => {
       /* abort destroy emits AbortError — expected */
     });
@@ -127,9 +130,8 @@ async function main() {
       abortRequestId: 'req-eof',
       mediaId: 'media-eof',
     });
-    assert.ok(opened && 'body' in opened && opened.body);
     const chunks: Buffer[] = [];
-    for await (const c of opened.body as Readable) chunks.push(c as Buffer);
+    for await (const c of asBody(opened)) chunks.push(c as Buffer);
     await new Promise((r) => setTimeout(r, 50));
     assert.equal(Buffer.concat(chunks).equals(payload), true);
     assert.equal(mediaStorageAbortSeen('req-eof'), false, 'EOF must not count as abort');
@@ -157,8 +159,7 @@ async function main() {
       abortRequestId: 'req-follow-abort',
       mediaId: 'media-follow',
     });
-    assert.ok(first && 'body' in first && first.body);
-    const firstBody = first.body as Readable;
+    const firstBody = asBody(first);
     firstBody.on('error', () => {
       /* expected on abort */
     });
@@ -172,9 +173,8 @@ async function main() {
     assert.equal(await waitMediaStorageAbortClosed('req-follow-abort', 2000), true);
     takeMediaUpstreamAbort('req-follow-abort');
     const second = await storage.open(key, { abortRequestId: 'req-follow-full', mediaId: 'media-follow' });
-    assert.ok(second && 'body' in second && second.body);
     const full: Buffer[] = [];
-    for await (const c of second.body as Readable) full.push(c as Buffer);
+    for await (const c of asBody(second)) full.push(c as Buffer);
     assert.equal(Buffer.concat(full).length, payload.length);
     assert.equal(mediaStorageAbortSeen('req-follow-full'), false);
   }
