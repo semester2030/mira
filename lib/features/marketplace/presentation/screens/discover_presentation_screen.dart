@@ -16,6 +16,7 @@ import '../../data/commerce_api_client.dart';
 import '../../data/discover_favorite_client.dart';
 import '../../data/discover_catalog_facets.dart';
 import '../../data/discover_catalog_query.dart';
+import '../../data/discover_match_scope.dart';
 import '../../domain/catalog_offer_media.dart';
 import '../../domain/catalog_product_options.dart';
 import '../../domain/entities/catalog_product.dart';
@@ -1630,7 +1631,8 @@ class _PresentationPageState extends State<_PresentationPage> {
                 context,
                 product,
                 initialSelected: selected,
-                allowedVariantIds: matchedIds,
+                // null = unrestricted browse; non-null (even empty) = match scope from filters.
+                allowedVariantIds: matchedIds.isEmpty ? null : matchedIds,
               );
               if (picked == null || !context.mounted) return;
               selected = picked;
@@ -1656,7 +1658,7 @@ class _PresentationPageState extends State<_PresentationPage> {
     BuildContext context,
     CatalogProduct product, {
     Map<String, String> initialSelected = const {},
-    List<String> allowedVariantIds = const [],
+    List<String>? allowedVariantIds,
   }) {
     return showModalBottomSheet<Map<String, String>>(
       context: context,
@@ -1697,12 +1699,13 @@ class _DiscoverOptionSheet extends StatefulWidget {
   const _DiscoverOptionSheet({
     required this.product,
     this.initialSelected = const {},
-    this.allowedVariantIds = const [],
+    /// null = no match restriction; empty = matches were required but none remain.
+    this.allowedVariantIds,
   });
 
   final CatalogProduct product;
   final Map<String, String> initialSelected;
-  final List<String> allowedVariantIds;
+  final List<String>? allowedVariantIds;
 
   @override
   State<_DiscoverOptionSheet> createState() => _DiscoverOptionSheetState();
@@ -1711,16 +1714,22 @@ class _DiscoverOptionSheet extends StatefulWidget {
 class _DiscoverOptionSheetState extends State<_DiscoverOptionSheet> {
   late Map<String, String> _selected = Map<String, String>.from(widget.initialSelected);
 
-  List<CatalogProductVariant> get _variants {
-    if (widget.allowedVariantIds.isEmpty) return widget.product.variants;
-    final allowed = widget.allowedVariantIds.toSet();
-    final filtered = widget.product.variants.where((v) => allowed.contains(v.id)).toList();
-    return filtered.isEmpty ? widget.product.variants : filtered;
-  }
+  bool get _matchScopeActive => DiscoverMatchScope.isActive(widget.allowedVariantIds);
+
+  bool get _matchesGone => DiscoverMatchScope.matchesGone(
+        matchedVariantIds: widget.allowedVariantIds,
+        variantIds: widget.product.variants.map((v) => v.id),
+      );
+
+  List<CatalogProductVariant> get _variants => DiscoverMatchScope.filterVariants(
+        matchedVariantIds: widget.allowedVariantIds,
+        variants: widget.product.variants,
+        idOf: (v) => v.id,
+      );
 
   CatalogProduct get _scopedProduct {
     final variants = _variants;
-    if (identical(variants, widget.product.variants)) return widget.product;
+    if (!_matchScopeActive || identical(variants, widget.product.variants)) return widget.product;
     return CatalogProduct(
       id: widget.product.id,
       partnerId: widget.product.partnerId,
@@ -1752,8 +1761,33 @@ class _DiscoverOptionSheetState extends State<_DiscoverOptionSheet> {
 
   @override
   Widget build(BuildContext context) {
+    if (_matchesGone) {
+      return SafeArea(
+        child: Padding(
+          padding: const EdgeInsets.fromLTRB(16, 12, 16, 16),
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
+            crossAxisAlignment: CrossAxisAlignment.stretch,
+            children: [
+              Text('التركيبات المطابقة لبحثك لم تعد متاحة', style: AppTypography.titleMedium),
+              const SizedBox(height: 8),
+              Text(
+                'حدّثي نتائج الاكتشاف أو أعيدي اختيار الفلاتر، ثم حاولي مجددًا.',
+                style: AppTypography.bodyMedium,
+              ),
+              const SizedBox(height: 12),
+              FilledButton(
+                style: FilledButton.styleFrom(backgroundColor: AppColors.primary, foregroundColor: Colors.white),
+                onPressed: () => Navigator.pop(context),
+                child: const Text('حسناً'),
+              ),
+            ],
+          ),
+        ),
+      );
+    }
     final missing = CatalogOptionJson.firstMissing(groups: widget.product.optionGroups, selected: _selected);
-    final multi = widget.allowedVariantIds.length > 1;
+    final multi = (widget.allowedVariantIds?.length ?? 0) > 1;
     return SafeArea(
       child: Padding(
         padding: const EdgeInsets.fromLTRB(16, 12, 16, 16),

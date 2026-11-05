@@ -340,6 +340,9 @@ export class MarketplaceService implements OnModuleInit {
       variantInventories?: Array<{ variantId: string; stockQty: number | null; reservedQty: number; stockMode: string }>;
     };
 
+    // Bookability is service-level for the date (holds/capacity/duration/bookingEnabled).
+    // Branch filter is applied later in matchCatalogItem so branch facets can exclude
+    // the branch field itself while keeping availableOn (P5 remaining review).
     const bookableByServiceId = filter.availableOn
       ? await this.computeBookableServiceIds(
           services.map((s) => ({
@@ -351,7 +354,6 @@ export class MarketplaceService implements OnModuleInit {
             branchId: branchIdFromServiceProfile(s.serviceProfileJson),
           })),
           filter.availableOn,
-          filter.branchIds,
         )
       : null;
 
@@ -635,7 +637,6 @@ export class MarketplaceService implements OnModuleInit {
       branchId: string | null;
     }>,
     dateKey: string,
-    requiredBranchIds?: string[],
   ): Promise<Set<string>> {
     const bookable = new Set<string>();
     if (!localInstant(dateKey, 0) || services.length === 0) return bookable;
@@ -707,7 +708,6 @@ export class MarketplaceService implements OnModuleInit {
           bundle,
           held,
           now,
-          requiredBranchIds,
         })
       ) {
         bookable.add(service.id);

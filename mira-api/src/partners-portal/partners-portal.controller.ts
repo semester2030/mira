@@ -24,6 +24,7 @@ import { ApplyPartnerDto } from './dto/apply-partner.dto';
 import { UpdateProductDto, UpdateServiceDto, UpsertProductDto, UpsertServiceDto } from './dto/catalog.dto';
 import { TrackPartnerEventDto } from './dto/track-event.dto';
 import { CatalogContentService } from '../marketplace/catalog-content.service';
+import { BulkBatchesService } from './bulk-batches/bulk-batches.service';
 import { EditorDraftsService } from './editor-drafts/editor-drafts.service';
 import { ServiceProfileService } from './editor-drafts/service-profile.service';
 import { PartnersPortalService } from './partners-portal.service';
@@ -64,6 +65,7 @@ export class PartnersPortalController {
     @Inject(CatalogContentService) private readonly content: CatalogContentService,
     @Inject(RegistryService) private readonly registry: RegistryService,
     @Inject(EditorDraftsService) private readonly drafts: EditorDraftsService,
+    @Inject(BulkBatchesService) private readonly bulkBatches: BulkBatchesService,
     @Inject(ServiceProfileService) private readonly serviceProfiles: ServiceProfileService,
     @Inject(VariantInventoryService) private readonly variantInventory: VariantInventoryService,
   ) {}
@@ -123,6 +125,81 @@ export class PartnersPortalController {
     @Body() body: { expectedRevision: number; submitReview?: boolean },
   ) {
     return this.drafts.materialize(req.partnerUser.partnerId, clientDraftId, body, idempotencyKey);
+  }
+
+  @Get('bulk-batches')
+  @UseGuards(PartnerTokenGuard)
+  listBulkBatches(@Req() req: PartnerRequest) {
+    return this.bulkBatches.list(req.partnerUser.partnerId);
+  }
+
+  @Post('bulk-batches')
+  @UseGuards(PartnerTokenGuard)
+  createBulkBatch(
+    @Req() req: PartnerRequest,
+    @Body()
+    body: {
+      kind: 'product' | 'service';
+      profileId: string;
+      count: number;
+      batchId?: string;
+    },
+  ) {
+    return this.bulkBatches.create(req.partnerUser.partnerId, body);
+  }
+
+  @Get('bulk-batches/:batchId')
+  @UseGuards(PartnerTokenGuard)
+  getBulkBatch(@Req() req: PartnerRequest, @Param('batchId') batchId: string) {
+    return this.bulkBatches.get(req.partnerUser.partnerId, batchId);
+  }
+
+  @Put('bulk-batches/:batchId/cards/:cardId')
+  @UseGuards(PartnerTokenGuard)
+  putBulkCard(
+    @Req() req: PartnerRequest,
+    @Param('batchId') batchId: string,
+    @Param('cardId') cardId: string,
+    @Body()
+    body: {
+      expectedRevision: number | null;
+      values: Record<string, unknown>;
+      overwriteWritten?: boolean;
+    },
+  ) {
+    return this.bulkBatches.putCard(req.partnerUser.partnerId, batchId, cardId, body);
+  }
+
+  @Post('bulk-batches/:batchId/apply-shared')
+  @UseGuards(PartnerTokenGuard)
+  applyBulkShared(
+    @Req() req: PartnerRequest,
+    @Param('batchId') batchId: string,
+    @Body()
+    body: {
+      cardIds: string[];
+      values: Record<string, unknown>;
+      previewOnly?: boolean;
+      overwriteWritten?: boolean;
+    },
+  ) {
+    return this.bulkBatches.applyShared(req.partnerUser.partnerId, batchId, body);
+  }
+
+  @Post('bulk-batches/:batchId/materialize')
+  @UseGuards(PartnerTokenGuard)
+  materializeBulkBatch(
+    @Req() req: PartnerRequest,
+    @Param('batchId') batchId: string,
+    @Headers('idempotency-key') idempotencyKey: string | undefined,
+    @Body()
+    body: {
+      cardIds?: string[];
+      submitReview?: boolean;
+      failedOnly?: boolean;
+    },
+  ) {
+    return this.bulkBatches.materialize(req.partnerUser.partnerId, batchId, body ?? {}, idempotencyKey);
   }
 
   @Get('services/:id/service-profile')

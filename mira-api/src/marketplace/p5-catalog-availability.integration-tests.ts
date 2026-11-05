@@ -122,6 +122,15 @@ async function main() {
       windows: weeklyOpen,
       branchId: 'branch-open',
     });
+    const openAlt = await mkService({
+      name: `مفتوح بديل ${run}`,
+      bookingEnabled: true,
+      durationMin: 60,
+      windows: [
+        { weekday: 2, startMin: 9 * 60, endMin: 12 * 60, capacity: 1, resourceId: 'room-Open-B' },
+      ],
+      branchId: 'branch-alt',
+    });
     const disabled = await mkService({
       name: `معطّل ${run}`,
       bookingEnabled: false,
@@ -203,6 +212,29 @@ async function main() {
 
     const branchFull = await browse(`availableOn=${DATE}&branch=branch-full`);
     record('P5_AVAIL_BRANCH_FULL_EMPTY', !branchFull.ids.includes(full.id) && !branchFull.ids.includes(open.id), branchFull);
+
+    // Two bookable branches on the same day: selecting one must not drop the other from branch facets.
+    const branchFacetsRes = await fetch(
+      `${base}/api/v1/marketplace/catalog?partnerId=${partner.id}&kind=service&availableOn=${DATE}&branch=branch-open&facets=1`,
+    );
+    const branchFacetsBody = (await branchFacetsRes.json()) as {
+      facets?: { branch?: Array<{ id: string; count: number }> };
+      items: Array<{ id: string }>;
+    };
+    const facetIds = (branchFacetsBody.facets?.branch ?? []).map((b) => b.id);
+    record(
+      'P5_AVAIL_BRANCH_FACET_KEEPS_ALTERNATES',
+      branchFacetsRes.status === 200 &&
+        facetIds.includes('branch-open') &&
+        facetIds.includes('branch-alt') &&
+        !facetIds.includes('branch-full'),
+      { facetIds, itemIds: branchFacetsBody.items.map((i) => i.id), openAlt: openAlt.id },
+    );
+    record(
+      'P5_AVAIL_BRANCH_FACET_RESULTS_SCOPED',
+      branchFacetsBody.items.length >= 1 && branchFacetsBody.items.every((i) => i.id === open.id),
+      { itemIds: branchFacetsBody.items.map((i) => i.id) },
+    );
 
     assert.ok(openHit.ids.includes(open.id));
   } finally {

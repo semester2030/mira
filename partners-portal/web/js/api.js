@@ -580,6 +580,35 @@
         { 'Idempotency-Key': idempotencyKey },
         opts,
       ),
+    listBulkBatches: (opts) => request('GET', '/partners-portal/bulk-batches', null, null, opts),
+    createBulkBatch: (payload, opts) =>
+      request('POST', '/partners-portal/bulk-batches', payload, null, opts),
+    getBulkBatch: (batchId, opts) =>
+      request('GET', `/partners-portal/bulk-batches/${encodeURIComponent(batchId)}`, null, null, opts),
+    putBulkCard: (batchId, cardId, payload, opts) =>
+      request(
+        'PUT',
+        `/partners-portal/bulk-batches/${encodeURIComponent(batchId)}/cards/${encodeURIComponent(cardId)}`,
+        payload,
+        null,
+        opts,
+      ),
+    applyBulkShared: (batchId, payload, opts) =>
+      request(
+        'POST',
+        `/partners-portal/bulk-batches/${encodeURIComponent(batchId)}/apply-shared`,
+        payload,
+        null,
+        opts,
+      ),
+    materializeBulkBatch: (batchId, payload, idempotencyKey, opts) =>
+      request(
+        'POST',
+        `/partners-portal/bulk-batches/${encodeURIComponent(batchId)}/materialize`,
+        payload || {},
+        { 'Idempotency-Key': idempotencyKey },
+        opts,
+      ),
     getServiceProfile: (id, opts) =>
       request('GET', `/partners-portal/services/${encodeURIComponent(id)}/service-profile`, null, null, opts),
     putServiceProfile: (id, payload, opts) =>

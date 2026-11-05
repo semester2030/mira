@@ -41,8 +41,15 @@
         <div class="journey-actions">
           <button type="button" class="btn btn-primary" id="goProduct">إضافة منتج</button>
           <button type="button" class="btn btn-primary" id="goService">إضافة خدمة</button>
+          <button type="button" class="btn btn-primary" id="goBulk">إضافة مجموعة</button>
         </div>
         <p id="storeLinkState"><strong>ربط متجر خارجي:</strong> غير متصل. لا يوجد تكامل API، وغيابه لا يمنع المسودة.</p>
+      </div>
+
+      <div class="card hidden" id="bulkSection">
+        <h2>إضافة مجموعة</h2>
+        <p class="lead">عدة منتجات أو خدمات في دفعة واحدة — كل بطاقة عرض مستقل مرتبط بحسابك. عدد الملفات لا يساوي عدد العناصر تلقائيًا.</p>
+        <div id="bulkRoot"></div>
       </div>
 
       <div class="card" id="catalogSection">
@@ -105,6 +112,7 @@
   <script src="js/inventory-editor-state.js"></script>
   <script src="js/editor-v2.js"></script>
   <script src="js/catalog-journey.js"></script>
+  <script src="js/bulk-add.js"></script>
   <script src="js/commerce-orders.js"></script>
   <script>
     const labeledUi = new URLSearchParams(location.search).get('ui-fixture') === 'labeled';
@@ -260,11 +268,15 @@
         }
         const serviceButton = document.getElementById('goService');
         const productButton = document.getElementById('goProduct');
+        const bulkButton = document.getElementById('goBulk');
+        const bulkSection = document.getElementById('bulkSection');
         const showServices = developer || p.type === 'clinic' || p.type === 'salon';
         const showProducts = developer || p.type === 'brand';
         serviceButton.hidden = !showServices;
         productButton.hidden = !showProducts;
+        bulkButton.hidden = !(showServices || showProducts);
         productButton.onclick = () => {
+          bulkSection.classList.add('hidden');
           if (!options || !options.preserveForms) {
             if (developer) renderForm('brand', null, 'catalogForm', 'catalogTitle');
             else if (p.type === 'brand') renderForm('brand', null, 'catalogForm', 'catalogTitle');
@@ -272,6 +284,7 @@
           scrollToForm('catalogForm');
         };
         serviceButton.onclick = () => {
+          bulkSection.classList.add('hidden');
           if (developer) {
             if (!options || !options.preserveForms) renderForm('clinic', null, 'serviceForm', 'serviceTitle');
             scrollToForm('serviceForm');
@@ -281,6 +294,23 @@
             scrollToForm('catalogForm');
           }
         };
+        bulkButton.onclick = () => {
+          bulkSection.classList.remove('hidden');
+          if (window.MiraBulkAdd) {
+            const preferService = showServices && !showProducts;
+            const kindSelectWillDefault = preferService ? 'service' : 'product';
+            MiraBulkAdd.open(document.getElementById('bulkRoot'), p);
+            const kindEl = document.getElementById('bulkKind');
+            if (kindEl) {
+              kindEl.value = kindSelectWillDefault;
+              kindEl.dispatchEvent(new Event('change'));
+            }
+          }
+          bulkSection.scrollIntoView({ behavior: 'smooth', block: 'start' });
+        };
+        if (new URLSearchParams(location.search).get('bulk') && window.MiraBulkAdd) {
+          bulkButton.click();
+        }
         if (developer) {
           document.getElementById('serviceSection').classList.remove('hidden');
           document.getElementById('catalogTitle').textContent = 'منتجات الملابس وماركات التجميل';
