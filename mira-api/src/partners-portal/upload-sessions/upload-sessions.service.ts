@@ -167,7 +167,6 @@ export class UploadSessionsService {
       verifiedByteSize: row.verifiedByteSize,
       verifiedMimeType: row.verifiedMimeType,
       storageCompleted: !!row.storageCompletedAt,
-      finalizeAttempts: row.finalizeAttempts,
       objectKeyFingerprint: createHash('sha256').update(row.objectKey).digest('hex').slice(0, 16),
       upload: {
         partSizeBytes: row.partSizeBytes,
@@ -540,9 +539,10 @@ export class UploadSessionsService {
     try {
       await this.multipart.complete(row.objectKey, row.storageUploadId, parts);
       // Test hook: throw after storage object exists to simulate crash before DB write (U10).
-      if ('failNextCompleteDbHook' in this.multipart && this.multipart.failNextCompleteDbHook) {
-        const hook = this.multipart.failNextCompleteDbHook;
-        (this.multipart as MemoryMultipartUploadStore).failNextCompleteDbHook = null;
+      const crashHookStore = this.multipart as MemoryMultipartUploadStore;
+      if (typeof crashHookStore.failNextCompleteDbHook === 'function') {
+        const hook = crashHookStore.failNextCompleteDbHook;
+        crashHookStore.failNextCompleteDbHook = null;
         hook();
       }
     } catch (error) {

@@ -36,6 +36,7 @@ import {
 } from '@aws-sdk/client-s3';
 import { getSignedUrl } from '@aws-sdk/s3-request-presigner';
 import {
+  judgeAbortRead,
   judgeBindResult,
   judgeFullRead,
   judgeR2Acceptance,
@@ -152,6 +153,7 @@ async function main() {
         'MIRA_MEDIA_STORE=s3 MIRA_MEDIA_S3_BUCKET=… MIRA_MEDIA_S3_ACCESS_KEY_ID=… MIRA_MEDIA_S3_SECRET_ACCESS_KEY=… MIRA_MEDIA_S3_ENDPOINT=… MIRA_MEDIA_S3_REGION=auto MIRA_MEDIA_S3_TIMEOUT_MS=30000 npx tsx src/partners-portal/upload-sessions/r2-browser-multipart.evidence.ts',
       startedUtc,
       finishedUtc: new Date().toISOString(),
+      runId: process.env.MIRA_P21_RUN_ID || process.env.MIRA_TEST_RUN_ID || undefined,
       steps: [
         { id: 'ENV', ok: 'BLOCKED' as const },
         { id: 'R2_MIRA_APP_PATH', ok: 'BLOCKED' as const },
@@ -753,18 +755,26 @@ async function runMiraAppPathEvidence(
         }
         await new Promise((r) => setTimeout(r, 500));
       }
-      if (mediaId) {
-        const mediaMeta = await fetch(
-          `${base}/api/v1/partners-portal/${ownerKind === 'service' ? 'services' : 'products'}/${ownerId}/media`,
+      async function loadPreviewMedia() {
+        const previewRes = await fetch(
+          `${base}/api/v1/partners-portal/${ownerKind === 'service' ? 'services' : 'products'}/${ownerId}/preview`,
           { headers: auth },
         );
-        const list = (await mediaMeta.json().catch(() => [])) as Array<{
-          id?: string;
-          publication?: string;
-          ownerId?: string;
-        }>;
-        const rows = Array.isArray(list) ? list : (list as { media?: unknown[] }).media || [];
-        const row = (rows as Array<{ id?: string; publication?: string }>).find((m) => m.id === mediaId);
+        const previewBody = (await previewRes.json().catch(() => ({}))) as {
+          media?: Array<{
+            id?: string;
+            publication?: string;
+            isPrimary?: boolean;
+            draftIsPrimary?: boolean | null;
+          }>;
+          partnerId?: string;
+        };
+        return { ok: previewRes.ok, media: previewBody.media || [], partnerId: previewBody.partnerId };
+      }
+
+      if (mediaId) {
+        const preview = await loadPreviewMedia();
+        const row = preview.media.find((m) => m.id === mediaId);
         readyPublication = row?.publication || null;
       }
       record('R2_MIRA_READY', ready && Boolean(mediaId), {
@@ -794,20 +804,8 @@ async function runMiraAppPathEvidence(
         `${base}/api/v1/partners-portal/${ownerKind === 'service' ? 'services' : 'products'}/${ownerId}/media/${mediaId}/primary`,
         { method: 'PATCH', headers: auth, body: '{}' },
       );
-      const mediaListRes = await fetch(
-        `${base}/api/v1/partners-portal/${ownerKind === 'service' ? 'services' : 'products'}/${ownerId}/media`,
-        { headers: auth },
-      );
-      const mediaListBody = await mediaListRes.json().catch(() => []);
-      const mediaRows = Array.isArray(mediaListBody)
-        ? mediaListBody
-        : (mediaListBody as { media?: unknown[] }).media || [];
-      const finalRow = (mediaRows as Array<{
-        id?: string;
-        ownerId?: string;
-        isPrimary?: boolean;
-        draftIsPrimary?: boolean | null;
-      }>).find((m) => m.id === mediaId);
+      const afterBindPreview = await loadPreviewMedia();
+      const finalRow = afterBindPreview.media.find((m) => m.id === mediaId);
       const bindJudge = judgeBindResult({
         httpOk: bindRes.ok,
         status: bindRes.status,
@@ -816,7 +814,7 @@ async function runMiraAppPathEvidence(
         final: finalRow
           ? {
               id: finalRow.id,
-              ownerId: finalRow.ownerId || ownerId,
+              ownerId: afterBindPreview.partnerId || ownerId,
               isPrimary: finalRow.isPrimary,
               draftIsPrimary: finalRow.draftIsPrimary,
             }
@@ -825,47 +823,47 @@ async function runMiraAppPathEvidence(
       record('R2_MIRA_BIND', bindJudge.ok, {
         status: bindRes.status,
         reason: bindJudge.reason,
-        // 409 alone is not success — judgeBindResult requires verified final state
       });
       if (!bindJudge.ok) {
         record('R2_MIRA_APP_PATH', false, { reason: 'bind/primary failed or unverified' });
         return;
       }
 
-      // Cover/primary is not publish — run real submit→approve when media still draft.
+      // Cover/primary is not publish — partner submit + admin catalog-reviews decision.
       let publishOk = readyPublication === 'published';
       if (!publishOk) {
         const submitRes = await fetch(
           `${base}/api/v1/partners-portal/${ownerKind === 'service' ? 'services' : 'products'}/${ownerId}/submit-review`,
           { method: 'POST', headers: auth, body: '{}' },
         );
-        const submitBody = (await submitRes.json().catch(() => ({}))) as { revision?: number; submittedRevision?: number };
+        const submitBody = (await submitRes.json().catch(() => ({}))) as {
+          revision?: number;
+          submittedRevision?: number;
+          contentStatus?: string;
+        };
         const rev = submitBody.revision ?? submitBody.submittedRevision;
-        const decideRes = await fetch(`${base}/api/v1/ops/catalog/${ownerKind}/${ownerId}/decide`, {
-          method: 'POST',
-          headers: {
-            ...auth,
-            // Isolated env may use ops token; fall back to partner-dev decide endpoint if present.
-            ...(process.env.MIRA_R2_MIRA_OPS_TOKEN
-              ? { Authorization: `Bearer ${process.env.MIRA_R2_MIRA_OPS_TOKEN}` }
-              : {}),
-          },
-          body: JSON.stringify({ decision: 'approve', revision: rev, note: 'r2-isolated-publish' }),
-        });
-        publishOk = decideRes.ok || submitRes.ok;
-        // Developer partners auto-approve on submit — accept that path.
-        if ((submitBody as { contentStatus?: string }).contentStatus === 'published') publishOk = true;
-        if (!decideRes.ok && submitRes.ok) {
-          // Re-check media publication after submit (developer auto-approve).
-          const again = await fetch(
-            `${base}/api/v1/partners-portal/${ownerKind === 'service' ? 'services' : 'products'}/${ownerId}/media`,
-            { headers: auth },
+        const adminKey = (process.env.MIRA_R2_ADMIN_API_KEY || process.env.ADMIN_API_KEY || '').trim();
+        let decideOk = false;
+        if (adminKey && rev != null) {
+          const decideRes = await fetch(
+            `${base}/api/v1/admin/catalog-reviews/${ownerKind}/${ownerId}/decision`,
+            {
+              method: 'POST',
+              headers: {
+                'content-type': 'application/json',
+                'x-admin-key': adminKey,
+              },
+              body: JSON.stringify({ decision: 'approve', revision: rev, note: 'r2-isolated-publish' }),
+            },
           );
-          const againBody = await again.json().catch(() => []);
-          const againRows = Array.isArray(againBody) ? againBody : (againBody as { media?: unknown[] }).media || [];
-          const pubRow = (againRows as Array<{ id?: string; publication?: string }>).find((m) => m.id === mediaId);
-          publishOk = pubRow?.publication === 'published';
+          decideOk = decideRes.ok;
         }
+        // Developer partners may auto-approve on submit — verify via preview publication.
+        if ((submitBody as { contentStatus?: string }).contentStatus === 'published') publishOk = true;
+        const afterPub = await loadPreviewMedia();
+        const pubRow = afterPub.media.find((m) => m.id === mediaId);
+        publishOk = publishOk || decideOk || pubRow?.publication === 'published';
+        if (!submitRes.ok && !decideOk) publishOk = false;
       }
       record('R2_MIRA_PUBLISH', publishOk, { priorPublication: readyPublication });
       if (!publishOk) {
@@ -910,16 +908,19 @@ async function runMiraAppPathEvidence(
         reason: rangeJudge.reason,
       });
 
-      // Abort mid-stream; require partial bytes then cancel — EOF alone is not success.
+      // Abort mid-stream with request id + upstream probe (admin). Tiny JPEG may EOF in one chunk —
+      // require partial bytes strictly; if file too small, FAIL (not PASS).
+      const abortReqId = `abort-${randomUUID()}`;
       const ac = new AbortController();
       let saw = 0;
       let abortedEarly = false;
-      let upstreamHint = false;
+      let abortStatus = 0;
       try {
         const abortRes = await fetch(`${base}/api/v1/marketplace/media/${mediaId}`, {
-          headers: { Origin: browserOrigin },
+          headers: { Origin: browserOrigin, 'x-mira-media-req': abortReqId },
           signal: ac.signal,
         });
+        abortStatus = abortRes.status;
         if (!(abortRes.status >= 200 && abortRes.status < 300)) {
           record('R2_MIRA_ABORT_READ', false, { reason: 'abort-get-not-success', status: abortRes.status });
           record('R2_MIRA_APP_PATH', false, { reason: 'abort precondition failed' });
@@ -930,38 +931,60 @@ async function runMiraAppPathEvidence(
           const first = await reader.read();
           if (!first.done && first.value && first.value.byteLength > 0) {
             saw = first.value.byteLength;
-            ac.abort();
-            try {
-              await reader.cancel();
-            } catch {
-              /* ignore */
+            if (saw >= jpeg.length) {
+              abortedEarly = false; // whole body arrived — cannot claim mid-stream cancel
+            } else {
+              ac.abort();
+              try {
+                await reader.cancel();
+              } catch {
+                /* ignore */
+              }
+              abortedEarly = true;
             }
-            abortedEarly = true;
-          } else if (first.done) {
-            abortedEarly = false; // natural EOF — not proof of cancel
           }
         }
       } catch (err) {
-        abortedEarly = saw > 0 && /abort/i.test(String((err as Error)?.name || err));
+        abortedEarly = saw > 0 && saw < jpeg.length && /abort/i.test(String((err as Error)?.name || err));
       }
-      // Independent subsequent read must still succeed (resource not poisoned).
       const afterAbort = await fetch(`${base}/api/v1/marketplace/media/${mediaId}`, {
         headers: { Origin: browserOrigin },
       });
       const afterBuf = Buffer.from(await afterAbort.arrayBuffer());
       const afterOk =
-        afterAbort.ok && afterBuf.length === jpeg.length && sha256(afterBuf) === sha256(jpeg);
-      // Upstream abort log is emitted by catalog-media.controller on response close;
-      // when MIRA_R2_UPSTREAM_ABORT_LOG=1 the runner may inject a side-channel; otherwise
-      // require early cancel + healthy follow-up read (never treat 503 JSON as success).
-      if (process.env.MIRA_R2_UPSTREAM_ABORT_SEEN === '1') upstreamHint = true;
-      const abortOk = abortedEarly && saw > 0 && afterOk && afterResNotErrorDoc(afterBuf);
-      record('R2_MIRA_ABORT_READ', abortOk, {
+        afterAbort.ok && afterBuf.length === jpeg.length && sha256(afterBuf) === sha256(jpeg) && afterResNotErrorDoc(afterBuf);
+
+      let upstreamClosed = false;
+      const adminKey = (process.env.MIRA_R2_ADMIN_API_KEY || process.env.ADMIN_API_KEY || '').trim();
+      if (adminKey) {
+        for (let i = 0; i < 20; i++) {
+          const probe = await fetch(`${base}/api/v1/admin/media-abort-probe/${abortReqId}`, {
+            headers: { 'x-admin-key': adminKey },
+          });
+          const body = (await probe.json().catch(() => ({}))) as { seen?: boolean };
+          if (body.seen) {
+            upstreamClosed = true;
+            break;
+          }
+          await new Promise((r) => setTimeout(r, 100));
+        }
+      }
+      const abortJudge = judgeAbortRead({
+        responseStatus: abortStatus || 200,
+        receivedBytes: saw,
+        expectedTotalBytes: jpeg.length,
+        abortedBeforeEof: abortedEarly,
+        upstreamClosedForRequestId: upstreamClosed,
+        followUpFullOk: afterOk,
+      });
+      record('R2_MIRA_ABORT_READ', abortJudge.ok, {
         sawBytes: saw,
+        expectedTotal: jpeg.length,
         abortedEarly,
+        upstreamClosed,
         afterOk,
-        upstreamHint,
-        note: 'client cancel before EOF + follow-up read; upstream log optional via env',
+        reason: abortJudge.reason,
+        abortReqIdSuffix: abortReqId.slice(-8),
       });
 
       const pathOk =
@@ -970,7 +993,7 @@ async function runMiraAppPathEvidence(
         publishOk &&
         fullJudge.ok &&
         rangeJudge.ok &&
-        abortOk;
+        abortJudge.ok;
       record('R2_MIRA_APP_PATH', pathOk, {
         sessionIdSuffix: sessionId.slice(-8),
         mediaIdSuffix: mediaId.slice(-8),

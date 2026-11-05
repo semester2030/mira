@@ -734,6 +734,7 @@ async function main() {
         { variantId: 'h2', stockQty: 5 },
       ],
     });
+    // Two real checkouts before delete — one will release, one will consume while deleted.
     await commerce.clearCart(user);
     await commerce.addCartItem(user, {
       productId: holdProd.id,
@@ -742,17 +743,32 @@ async function main() {
       selections: { size: 'h2v' },
     });
     const holdQuote = await commerce.quote(user);
-    const heldWrap = await commerce.createOrder(
+    const releaseWrap = await commerce.createOrder(
       user,
-      delivery(`hold-${run}`, { confirmationFingerprint: holdQuote.confirmationFingerprint }),
+      delivery(`hold-rel-${run}`, { confirmationFingerprint: holdQuote.confirmationFingerprint }),
     );
-    const orderId = (heldWrap as { order: { id: string } }).order.id;
+    const releaseOrderId = (releaseWrap as { order: { id: string } }).order.id;
+
+    await commerce.clearCart(user);
+    await commerce.addCartItem(user, {
+      productId: holdProd.id,
+      quantity: 1,
+      variantKey: 'h2',
+      selections: { size: 'h2v' },
+    });
+    const holdQuote2 = await commerce.quote(user);
+    const consumeWrap = await commerce.createOrder(
+      user,
+      delivery(`hold-con-${run}`, { confirmationFingerprint: holdQuote2.confirmationFingerprint }),
+    );
+    const consumeOrderId = (consumeWrap as { order: { id: string } }).order.id;
+
     const h2Held = (await inv.list(holdProd.id)).find((r) => r.variantId === 'h2');
-    const heldItem = await prisma.commerceOrderItem.findFirst({ where: { orderId } });
+    const heldItem = await prisma.commerceOrderItem.findFirst({ where: { orderId: releaseOrderId } });
     record(
       'D4_F_HOLD_CREATED',
-      !!orderId && (h2Held?.reservedQty || 0) >= 2 && heldItem?.stockSource === 'variant',
-      { orderId, h2Held, stockSource: heldItem?.stockSource },
+      (h2Held?.reservedQty || 0) >= 3 && heldItem?.stockSource === 'variant',
+      { releaseOrderId, consumeOrderId, h2Held, stockSource: heldItem?.stockSource },
     );
 
     await prisma.product.update({
@@ -768,69 +784,89 @@ async function main() {
       (submittedHold as { revision?: number }).revision ??
       (await prisma.product.findUniqueOrThrow({ where: { id: holdProd.id } })).submittedRevision!;
     await catalog.decide('ops-reviewer', 'product', holdProd.id, 'approve', 'حذف مع حجز', holdRev);
+
+    const publishedAfterDel = await prisma.product.findUniqueOrThrow({ where: { id: holdProd.id } });
+    const publishedIds = Array.isArray(publishedAfterDel.variantsJson)
+      ? (publishedAfterDel.variantsJson as Array<{ id?: string }>).map((v) => v.id)
+      : [];
     const h2After = (await inv.list(holdProd.id)).find((r) => r.variantId === 'h2');
+    const availGone = await inv.availableForVariant(holdProd.id, 'h2');
     record(
-      'D4_F_HELD_ORPHAN_KEPT',
-      !h2After?.archivedAt && (h2After?.reservedQty || 0) >= 2,
-      h2After,
+      'D4_F_HELD_ORPHAN_KEPT_WHILE_DELETED',
+      !publishedIds.includes('h2') &&
+        !h2After?.archivedAt &&
+        (h2After?.reservedQty || 0) >= 3 &&
+        availGone === 0,
+      { publishedIds, h2After, availGone },
     );
 
-    await commerce.transitionOrderFor(actor, orderId, {
+    // New checkout for deleted variant must fail / not increase stock
+    let newCheckoutBlocked = false;
+    try {
+      await commerce.clearCart(user);
+      await commerce.addCartItem(user, {
+        productId: holdProd.id,
+        quantity: 1,
+        variantKey: 'h2',
+        selections: { size: 'h2v' },
+      });
+    } catch (e) {
+      newCheckoutBlocked = /OUT_OF_STOCK|غير متوفرة|VARIANT|تركيبة|unavailable/i.test(errBlob(e));
+    }
+    record('D4_F_NEW_ORDERS_BLOCKED_AFTER_DELETE', newCheckoutBlocked, { newCheckoutBlocked });
+
+    // Release one hold while still deleted from published catalog
+    const reservedBeforeRelease = (await inv.list(holdProd.id)).find((r) => r.variantId === 'h2')!.reservedQty;
+    await commerce.transitionOrderFor(actor, releaseOrderId, {
       fulfillmentStatus: 'rejected',
       note: 'تحرير حجز تركيبة محذوفة من العرض',
     });
     const afterRelease = (await inv.list(holdProd.id)).find((r) => r.variantId === 'h2');
-    const releasedItem = await prisma.commerceOrderItem.findFirst({ where: { orderId } });
+    const releasedItem = await prisma.commerceOrderItem.findFirst({ where: { orderId: releaseOrderId } });
+    const stillDeleted = !(
+      Array.isArray(
+        (await prisma.product.findUniqueOrThrow({ where: { id: holdProd.id } })).variantsJson,
+      ) &&
+      (
+        (await prisma.product.findUniqueOrThrow({ where: { id: holdProd.id } })).variantsJson as Array<{
+          id?: string;
+        }>
+      ).some((v) => v.id === 'h2')
+    );
     record(
-      'D4_F_RELEASE_VIA_ORDER',
-      (afterRelease?.reservedQty || 0) === 0 && releasedItem?.stockState === 'released',
-      { afterRelease, releasedItem },
+      'D4_F_RELEASE_WHILE_DELETED',
+      stillDeleted &&
+        releasedItem?.stockState === 'released' &&
+        (afterRelease?.reservedQty || 0) === reservedBeforeRelease - 2,
+      { afterRelease, releasedItem, stillDeleted },
     );
 
-    // Consume path: restore h2 to published catalog, new checkout, deliver
-    await prisma.product.update({
-      where: { id: holdProd.id },
-      data: {
-        variantsJson: [
-          { id: 'h1', selections: { size: 'h1v' }, available: true },
-          { id: 'h2', selections: { size: 'h2v' }, available: true },
-        ],
-        draftVariantsSet: false,
-        draftVariantsJson: Prisma.DbNull,
-        reviewStatus: 'none',
-        reviewRevision: 3,
-        submittedRevision: null,
-      },
-    });
-    await inv.archiveOrphansAfterPublish(holdProd.id);
-    const h2Live = (await inv.list(holdProd.id)).find((r) => r.variantId === 'h2');
-    record('D4_F_REPUBLISH_REACTIVATES', !h2Live?.archivedAt && (await inv.availableForVariant(holdProd.id, 'h2')) != null, h2Live);
-
-    await commerce.clearCart(user);
-    await commerce.addCartItem(user, {
-      productId: holdProd.id,
-      quantity: 1,
-      variantKey: 'h2',
-      selections: { size: 'h2v' },
-    });
-    const consumeQuote = await commerce.quote(user);
-    const consumeWrap = await commerce.createOrder(
-      user,
-      delivery(`consume-${run}`, { confirmationFingerprint: consumeQuote.confirmationFingerprint }),
-    );
-    const consumeId = (consumeWrap as { order: { id: string } }).order.id;
-    await commerce.transitionOrderFor(actor, consumeId, { fulfillmentStatus: 'accepted', note: 'قبول' });
-    await commerce.transitionOrderFor(actor, consumeId, { fulfillmentStatus: 'preparing', note: 'تجهيز' });
-    await commerce.transitionOrderFor(actor, consumeId, { fulfillmentStatus: 'out_for_delivery', note: 'شحن' });
-    await commerce.transitionOrderFor(actor, consumeId, { fulfillmentStatus: 'delivered', note: 'تسليم' });
+    // Consume the other hold via delivery — variant remains absent from published
+    const qtyBeforeConsume = (await inv.list(holdProd.id)).find((r) => r.variantId === 'h2')!.stockQty!;
+    const reservedBeforeConsume = (await inv.list(holdProd.id)).find((r) => r.variantId === 'h2')!.reservedQty;
+    await commerce.transitionOrderFor(actor, consumeOrderId, { fulfillmentStatus: 'accepted', note: 'قبول' });
+    await commerce.transitionOrderFor(actor, consumeOrderId, { fulfillmentStatus: 'preparing', note: 'تجهيز' });
+    await commerce.transitionOrderFor(actor, consumeOrderId, { fulfillmentStatus: 'out_for_delivery', note: 'شحن' });
+    await commerce.transitionOrderFor(actor, consumeOrderId, { fulfillmentStatus: 'delivered', note: 'تسليم' });
     const afterConsume = (await inv.list(holdProd.id)).find((r) => r.variantId === 'h2');
-    const d4ConsumedItem = await prisma.commerceOrderItem.findFirst({ where: { orderId: consumeId } });
+    const d4ConsumedItem = await prisma.commerceOrderItem.findFirst({ where: { orderId: consumeOrderId } });
+    const publishedStill = await prisma.product.findUniqueOrThrow({ where: { id: holdProd.id } });
+    const h2StillAbsent = !(
+      Array.isArray(publishedStill.variantsJson) &&
+      (publishedStill.variantsJson as Array<{ id?: string }>).some((v) => v.id === 'h2')
+    );
+    // Idempotent second deliver must not double-consume
+    await commerce.transitionOrderFor(actor, consumeOrderId, { fulfillmentStatus: 'delivered', note: 'تكرار' });
+    const afterConsumeTwice = (await inv.list(holdProd.id)).find((r) => r.variantId === 'h2');
     record(
-      'D4_F_CONSUME_VIA_ORDER',
-      (afterConsume?.reservedQty || 0) === 0 &&
+      'D4_F_CONSUME_WHILE_DELETED',
+      h2StillAbsent &&
         d4ConsumedItem?.stockState === 'consumed' &&
-        (afterConsume?.stockQty || 0) === (h2Live?.stockQty || 5) - 1,
-      { afterConsume, d4ConsumedItem },
+        (afterConsume?.stockQty || 0) === qtyBeforeConsume - 1 &&
+        (afterConsume?.reservedQty || 0) === reservedBeforeConsume - 1 &&
+        (afterConsumeTwice?.stockQty || 0) === (afterConsume?.stockQty || 0) &&
+        (afterConsumeTwice?.reservedQty || 0) === (afterConsume?.reservedQty || 0),
+      { afterConsume, afterConsumeTwice, d4ConsumedItem, h2StillAbsent },
     );
   } catch (e) {
     record('D1_D4_SUITE', false, String((e as Error)?.stack || e));

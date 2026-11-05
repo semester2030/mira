@@ -28,18 +28,157 @@ export function judgeR2Acceptance(steps: R2Step[]): {
   const miraOk = REQUIRED_MIRA_STEPS.every((id) => steps.some((s) => s.id === id && s.ok === true));
   const sdkOk = steps.some((s) => s.id === 'R2_SUITE' && s.ok === true);
 
-  if (miraBlocked && failed.length === 0 && !miraGateFail) {
-    return { ok: false, blocked: true, failed, detail: 'MIRA_APP_PATH_BLOCKED' };
-  }
-  if (!miraOk || miraGateFail || failed.length > 0 || !sdkOk) {
+  // Executed failures always win over BLOCKED (cannot hide a false step under blocked).
+  if (failed.length > 0 || miraGateFail) {
     return {
       ok: false,
       blocked: false,
-      failed: [...failed, ...(miraOk ? [] : ['MIRA_STEPS_INCOMPLETE'])],
-      detail: miraOk ? 'FAILED_STEPS' : 'MIRA_STEPS_INCOMPLETE_OR_SDK_ONLY',
+      failed: [...failed, ...(miraGateFail ? ['R2_MIRA_APP_PATH'] : [])],
+      detail: 'FAILED_STEPS',
+    };
+  }
+  if (miraBlocked) {
+    return { ok: false, blocked: true, failed: [], detail: 'MIRA_APP_PATH_BLOCKED' };
+  }
+  if (!miraOk || !sdkOk) {
+    return {
+      ok: false,
+      blocked: false,
+      failed: [...(miraOk ? [] : ['MIRA_STEPS_INCOMPLETE'])],
+      detail: 'MIRA_STEPS_INCOMPLETE_OR_SDK_ONLY',
     };
   }
   return { ok: true, blocked: false, failed: [], detail: 'PASS' };
+}
+
+/** Abort mid-stream: must see a proper prefix, not full EOF, plus upstream close for the same request id. */
+export function judgeAbortRead(input: {
+  responseStatus: number;
+  receivedBytes: number;
+  expectedTotalBytes: number;
+  abortedBeforeEof: boolean;
+  upstreamClosedForRequestId: boolean;
+  followUpFullOk: boolean;
+}): { ok: boolean; reason: string } {
+  if (!(input.responseStatus >= 200 && input.responseStatus < 300)) {
+    return { ok: false, reason: `status-${input.responseStatus}` };
+  }
+  if (input.responseStatus === 503) return { ok: false, reason: 'error-503' };
+  if (!(input.receivedBytes > 0 && input.receivedBytes < input.expectedTotalBytes)) {
+    return {
+      ok: false,
+      reason: `bytes-not-partial got=${input.receivedBytes} total=${input.expectedTotalBytes}`,
+    };
+  }
+  if (!input.abortedBeforeEof) return { ok: false, reason: 'not-aborted-before-eof' };
+  if (!input.upstreamClosedForRequestId) return { ok: false, reason: 'upstream-close-unproven' };
+  if (!input.followUpFullOk) return { ok: false, reason: 'follow-up-read-failed' };
+  return { ok: true, reason: 'abort-ok' };
+}
+
+export type R2EvidenceDoc = {
+  ok?: boolean;
+  blocked?: boolean;
+  commit?: string;
+  startedUtc?: string;
+  finishedUtc?: string;
+  runId?: string;
+  steps?: R2Step[];
+};
+
+/**
+ * Authoritative evidence verifier used by REVERIFY — do not duplicate this logic in unit tests.
+ */
+export function verifyR2EvidenceDocument(input: {
+  evidence: R2EvidenceDoc;
+  testedCommit: string;
+  runStartedIso: string;
+  exitCode: number;
+  expectedRunId?: string;
+}): { verdict: 'PASS' | 'FAIL' | 'BLOCKED'; reason: string; recomputed: ReturnType<typeof judgeR2Acceptance> } {
+  const ev = input.evidence || {};
+  const commit = String(ev.commit || '').trim();
+  const tested = String(input.testedCommit || '').trim();
+  if (!commit || commit.toLowerCase() === 'unknown') {
+    return {
+      verdict: 'FAIL',
+      reason: 'commit-missing-or-unknown',
+      recomputed: { ok: false, blocked: false, failed: ['COMMIT'], detail: 'COMMIT' },
+    };
+  }
+  if (!tested || commit !== tested) {
+    return {
+      verdict: 'FAIL',
+      reason: 'commit-mismatch',
+      recomputed: { ok: false, blocked: false, failed: ['COMMIT'], detail: 'COMMIT' },
+    };
+  }
+  if (input.expectedRunId && String(ev.runId || '') && String(ev.runId) !== input.expectedRunId) {
+    return {
+      verdict: 'FAIL',
+      reason: 'runId-mismatch',
+      recomputed: { ok: false, blocked: false, failed: ['RUN_ID'], detail: 'RUN_ID' },
+    };
+  }
+  const started = String(ev.startedUtc || '').trim();
+  if (!started) {
+    return {
+      verdict: 'FAIL',
+      reason: 'startedUtc-missing',
+      recomputed: { ok: false, blocked: false, failed: ['TIME'], detail: 'TIME' },
+    };
+  }
+  const evMs = Date.parse(started);
+  const runMs = Date.parse(input.runStartedIso);
+  if (Number.isNaN(evMs) || Number.isNaN(runMs) || evMs / 1000 + 2 < runMs / 1000) {
+    return {
+      verdict: 'FAIL',
+      reason: 'stale-or-unparseable-time',
+      recomputed: { ok: false, blocked: false, failed: ['TIME'], detail: 'TIME' },
+    };
+  }
+
+  const steps = Array.isArray(ev.steps) ? ev.steps : [];
+  if (ev.ok === true && steps.length === 0) {
+    return {
+      verdict: 'FAIL',
+      reason: 'ok-true-with-empty-steps',
+      recomputed: { ok: false, blocked: false, failed: ['EMPTY_STEPS'], detail: 'EMPTY_STEPS' },
+    };
+  }
+
+  const recomputed = judgeR2Acceptance(steps);
+  // Conflict: document claims blocked but an executed step failed → FAIL
+  if (ev.blocked === true && steps.some((s) => s.ok === false)) {
+    return {
+      verdict: 'FAIL',
+      reason: 'blocked-conflicts-with-executed-failure',
+      recomputed: { ok: false, blocked: false, failed: recomputed.failed, detail: 'BLOCKED_WITH_FAILURE' },
+    };
+  }
+  // Conflict: document ok=true but recomputed not ok
+  if (ev.ok === true && !recomputed.ok) {
+    return {
+      verdict: 'FAIL',
+      reason: 'summary-ok-conflicts-with-steps',
+      recomputed,
+    };
+  }
+  if (recomputed.blocked) {
+    return { verdict: 'BLOCKED', reason: recomputed.detail, recomputed };
+  }
+  if (recomputed.ok && input.exitCode === 0 && ev.ok === true) {
+    return { verdict: 'PASS', reason: 'PASS', recomputed };
+  }
+  if (recomputed.ok && input.exitCode === 0 && ev.blocked !== true) {
+    // Prefer recomputed over stale summary.ok
+    return { verdict: 'PASS', reason: 'PASS_RECOMPUTED', recomputed };
+  }
+  return {
+    verdict: 'FAIL',
+    reason: recomputed.detail || `exit-${input.exitCode}`,
+    recomputed,
+  };
 }
 
 /** Extract READY media id from publicSession / session GET body (catalogMediaId is the contract). */

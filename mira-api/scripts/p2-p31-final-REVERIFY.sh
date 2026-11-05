@@ -137,59 +137,22 @@ if [[ ! -f "$R2_JSON" ]]; then
   echo "R2_ACCEPTANCE=FAIL reason=no-evidence-file exit=$R2_RC" | tee "$OUT/r2/verdict.txt"
   fail_run "R2 evidence file missing"
 fi
-python3 - <<PY
-import json, sys, os
-from datetime import datetime, timezone
-p = "$R2_JSON"
-d = json.load(open(p))
-ev_commit = str(d.get("commit") or "").strip()
-tested = "$MIRA_P21_COMMIT".strip()
-open("$OUT/r2/COMMIT_IN_EVIDENCE.txt","w").write(ev_commit + "\n")
-# Refuse missing / empty / unknown commits — previous bug treated unknown as acceptable.
-if not ev_commit or ev_commit.lower() == "unknown":
-    print(f"R2_ACCEPTANCE=FAIL reason=evidence-commit-missing-or-unknown evidence={ev_commit!r} tested={tested}")
-    open("$OUT/r2/verdict.txt","w").write("FAIL\n")
-    sys.exit(1)
-if ev_commit != tested:
-    print(f"R2_ACCEPTANCE=FAIL reason=evidence-commit-mismatch evidence={ev_commit} tested={tested}")
-    open("$OUT/r2/verdict.txt","w").write("FAIL\n")
-    sys.exit(1)
-# Freshness: startedUtc must parse and be >= STARTED_ISO (allow 2s clock skew)
-started_iso = open("$OUT/STARTED_ISO.txt").read().strip()
-ev_started = str(d.get("startedUtc") or "").strip()
-if not ev_started:
-    print("R2_ACCEPTANCE=FAIL reason=evidence-startedUtc-missing")
-    open("$OUT/r2/verdict.txt","w").write("FAIL\n")
-    sys.exit(1)
-def parse_iso(s):
-    return datetime.fromisoformat(s.replace("Z", "+00:00"))
-try:
-    run_start = parse_iso(started_iso)
-    ev_start = parse_iso(ev_started)
-except Exception as e:
-    print("R2_ACCEPTANCE=FAIL reason=evidence-time-parse", e)
-    open("$OUT/r2/verdict.txt","w").write("FAIL\n")
-    sys.exit(1)
-# Evidence from a prior run (started before this REVERIFY) is rejected.
-if ev_start.timestamp() + 2 < run_start.timestamp():
-    print(f"R2_ACCEPTANCE=FAIL reason=stale-evidence ev_started={ev_started} run_started={started_iso}")
-    open("$OUT/r2/verdict.txt","w").write("FAIL\n")
-    sys.exit(1)
-blocked = bool(d.get("blocked"))
-ok = bool(d.get("ok"))
-if blocked:
-    print("R2_ACCEPTANCE=BLOCKED reason=isolated-env-or-mira-path-incomplete")
-    open("$OUT/r2/verdict.txt","w").write("BLOCKED\n")
-    # Do not convert BLOCKED into overall FAIL; continue to finish markers.
-    sys.exit(0)
-if ok and int("$R2_RC") == 0:
-    print("R2_ACCEPTANCE=PASS")
-    open("$OUT/r2/verdict.txt","w").write("PASS\n")
-    sys.exit(0)
-print(f"R2_ACCEPTANCE=FAIL suite_executed_and_failed exit=$R2_RC")
-open("$OUT/r2/verdict.txt","w").write("FAIL\n")
-sys.exit(1)
-PY
+# Authoritative verifier (same module unit-tested) — not a parallel python copy.
+STARTED_ISO="$(cat "$OUT/STARTED_ISO.txt")"
+set +e
+npx tsx src/partners-portal/upload-sessions/verify-r2-evidence.ts \
+  "$R2_JSON" "$MIRA_P21_COMMIT" "$STARTED_ISO" "$R2_RC" "$RUN_ID"
+VERIFY_RC=$?
+set -e
+if [[ ! -f "$OUT/r2/verdict.txt" ]]; then
+  echo "FAIL" > "$OUT/r2/verdict.txt"
+  fail_run "R2 verify did not write verdict"
+fi
+VERDICT="$(tr -d '\n' < "$OUT/r2/verdict.txt")"
+echo "R2_ACCEPTANCE=$VERDICT verify_exit=$VERIFY_RC"
+if [[ "$VERDICT" == "FAIL" || "$VERIFY_RC" -ne 0 && "$VERDICT" != "BLOCKED" ]]; then
+  fail_run "R2 evidence verification failed"
+fi
 
 date -u +%Y%m%dT%H%M%SZ > "$OUT/FINISHED_UTC.txt"
 # Overwrite any stale overall verdict only after successful completion of gated steps.

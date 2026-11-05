@@ -20,6 +20,7 @@ import {
   CatalogMediaStorage,
   CatalogMediaUnavailable,
 } from './catalog-media.storage';
+import { noteMediaUpstreamAbort } from './catalog-media-abort-probe';
 
 @Controller('marketplace')
 export class CatalogMediaController {
@@ -32,6 +33,7 @@ export class CatalogMediaController {
   async published(
     @Param('id') id: string,
     @Headers('range') range: string | undefined,
+    @Headers('x-mira-media-req') mediaReqId: string | undefined,
     @Req() _req: Request,
     @Res({ passthrough: true }) res: Response,
   ) {
@@ -64,7 +66,11 @@ export class CatalogMediaController {
       if (!responseCompleted) {
         ac.abort();
         // Evidence hook: same request id — proves upstream cancel (not natural EOF).
-        console.error('catalog-media-upstream-aborted', `id=${id} key=${keyHint}…`);
+        console.error(
+          'catalog-media-upstream-aborted',
+          `id=${id} req=${mediaReqId || '-'} key=${keyHint}…`,
+        );
+        if (mediaReqId) noteMediaUpstreamAbort(mediaReqId, id);
       }
     };
 

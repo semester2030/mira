@@ -1,5 +1,6 @@
 import { Body, Controller, Get, Inject, Param, Post, StreamableFile, UseGuards } from '@nestjs/common';
 import { AdminApiKeyGuard } from '../common/guards/admin-api-key.guard';
+import { mediaUpstreamAbortSeen, takeMediaUpstreamAbort } from './catalog-media-abort-probe';
 import { CatalogContentService } from './catalog-content.service';
 
 @Controller('admin')
@@ -10,6 +11,14 @@ export class CatalogReviewAdminController {
   @Get('catalog-reviews')
   list() {
     return this.content.listReviews();
+  }
+
+  /** Isolated evidence: whether marketplace media GET aborted upstream for this request id. */
+  @Get('media-abort-probe/:reqId')
+  abortProbe(@Param('reqId') reqId: string) {
+    const seen = mediaUpstreamAbortSeen(reqId);
+    const row = seen ? takeMediaUpstreamAbort(reqId) : null;
+    return { seen, ...(row || {}) };
   }
 
   @Get('catalog-review-media/:id')

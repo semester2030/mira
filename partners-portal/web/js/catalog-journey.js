@@ -4306,10 +4306,13 @@
           return false;
         }
         basicsSaved = true;
+        let inventoryConflict = false;
+        let inventoryPartialOther = false;
         if (type === 'brand' && saved && saved.id) {
           try {
             await persistVariantInventory(saved.id);
             status.removeAttribute('data-inventory-revision-conflict');
+            status.removeAttribute('data-inventory-partial');
           } catch (invErr) {
             const code = invErr && invErr.code;
             const bodyCode =
@@ -4321,25 +4324,57 @@
               bodyCode === 'VARIANT_INVENTORY_REVISION_CONFLICT' ||
               /VARIANT_INVENTORY_REVISION_CONFLICT|تعارض مراجعة مخزون/.test(blob);
             if (isInvRevConflict) {
-              // Keep local dirty qty — never auto-hydrate latest revision and rewrite over the other editor.
+              // Keep local dirty qty + expectedRevision the user read — never auto-rewrite.
+              inventoryConflict = true;
               status.textContent =
-                'تعارض مراجعة المخزون: تعديلاتك المحلية ما زالت في النموذج ولم تُحفظ. عالجِ التعارض ثم أعيدي المحاولة.';
+                'حُفظت البيانات الأساسية، لكن مخزون التركيبات لم يُحفظ بسبب تعارض مراجعة. تعديلاتك المحلية ما زالت في النموذج.';
               status.setAttribute('data-inventory-partial', '1');
               status.setAttribute('data-inventory-revision-conflict', '1');
+              status.setAttribute('data-catalog-persist-status', 'partial-inventory-conflict');
             } else if (code === 'INVENTORY_NOT_READY' || code === 'INVENTORY_CONTEXT_MISMATCH' || code === 'INVENTORY_INVALID_QTY') {
+              inventoryPartialOther = true;
               status.textContent =
                 'حُفظت بيانات المنتج دون تحديث المخزون: ' +
                 ((invErr && invErr.message) || 'المخزون غير جاهز') +
                 ' تعديلات المخزون ما زالت في النموذج.';
               status.setAttribute('data-inventory-partial', '1');
-              // Do not wipe local stock; do not rethrow — product basics saved, inventory blocked intentionally.
             } else {
+              inventoryPartialOther = true;
               status.textContent =
                 'حُفظ المنتج لكن مخزون التركيبات لم يُحدَّث: ' +
                 ((invErr && invErr.message) || 'خطأ غير معروف');
               status.setAttribute('data-inventory-partial', '1');
             }
           }
+        }
+        // Inventory revision conflict: stop the full success path — no is-success, no submitReview, no renderForm wipe.
+        if (inventoryConflict) {
+          if (!assertPersistOpLive(persistOp)) return false;
+          item = Object.assign({}, item || {}, saved);
+          staged[form.id].ownerId = item.id;
+          const ctxAfterConflict = window.MiraEditorV2 && MiraEditorV2.getEditContext(form.id);
+          if (ctxAfterConflict && item.id && assertPersistOpLive(persistOp)) {
+            if (!persistOp.clientDraftId || ctxAfterConflict.clientDraftId === persistOp.clientDraftId) {
+              ctxAfterConflict.targetOwnerId = item.id;
+            }
+          }
+          releasePersistBusyIfOwned(persistOp, idleLabel);
+          save.classList.remove('is-success', 'is-busy');
+          save.disabled = false;
+          save.removeAttribute('aria-busy');
+          if (window.MiraEditorV2) {
+            MiraEditorV2.setStatus(form, 'حفظ جزئي · تعارض مخزون', 'error');
+          }
+          if (window.MiraMotion) MiraMotion.announce(status.textContent);
+          lastSettledPersistEpoch = persistEpoch;
+          return {
+            ok: false,
+            partial: true,
+            inventoryConflict: true,
+            basicsSaved: true,
+            published: false,
+            id: item.id,
+          };
         }
         if (type === 'brand' && !ownerId) {
           try {
@@ -4423,6 +4458,11 @@
                 ? ' القالب محفوظ على الخادم؛ فشل/لم يُؤكد حفظ البيانات الأساسية — أعيدي المحاولة لنفس العنصر (سيُعاد إرسال القالب بإصداره الحالي إن لزم).'
                 : ' البيانات الأساسية محفوظة دون قالب.';
         }
+        if (inventoryPartialOther) {
+          saveNote =
+            (status.textContent || saveNote) +
+            ' لن يُعلن نجاحًا كاملًا ولن يُنشر هذا الحفظ تلقائيًا.';
+        }
         if (newerEditsPending) {
           saveNote +=
             ' توجد تعديلات أحدث في النموذج لم يشملها هذا الطلب — ليست محفوظة بعد. احفظي مرة أخرى للإصدار الحالي.';
@@ -4431,12 +4471,15 @@
           }
           status.setAttribute('data-unsaved-newer', '1');
         }
-        status.textContent = developerAccount
-          ? newerEditsPending
+        status.textContent =
+          inventoryPartialOther
             ? saveNote
-            : 'جارٍ رفع الملفات ثم النشر في التطبيق.'
-          : saveNote;
-        status.setAttribute('data-catalog-persist-status', '1');
+            : developerAccount
+              ? newerEditsPending
+                ? saveNote
+                : 'جارٍ رفع الملفات ثم النشر في التطبيق.'
+              : saveNote;
+        status.setAttribute('data-catalog-persist-status', inventoryPartialOther ? 'partial-inventory' : '1');
         if (window.MiraMotion) MiraMotion.announce(status.textContent);
         await refreshLists();
         if (!assertPersistOpLive(persistOp)) return false;
@@ -4461,6 +4504,7 @@
         const failures = staged[form.id].filter((entry) => entry && entry.error).map((entry) => entry.file.name + ': ' + entry.error);
         let publishedNote = '';
         // C04: submitReview only on explicit publish intent — never from file-select draft persist.
+        // Inventory conflict already returned above; other inventory partials must not publish either.
         if (
           wantPublish &&
           window.sessionPartner &&
@@ -4468,7 +4512,8 @@
           !failures.length &&
           item &&
           item.id &&
-          !newerEditsPending
+          !newerEditsPending &&
+          !inventoryPartialOther
         ) {
           try {
             await PartnersApi.submitReview(type === 'brand' ? 'products' : 'services', item.id);
@@ -4501,6 +4546,19 @@
         }
         lastSettledPersistEpoch = formContentEpoch;
         applyPersistSuccessChrome(false, { finalize: true });
+        if (inventoryPartialOther) {
+          save.classList.remove('is-success');
+          status.textContent = saveNote;
+          status.setAttribute('data-inventory-partial', '1');
+          return {
+            ok: false,
+            partial: true,
+            inventoryConflict: false,
+            basicsSaved: true,
+            published: false,
+            id: item && item.id,
+          };
+        }
         // Preserve materialized draft identity — re-render must not allocate a new clientDraftId.
         // values.serviceProfile must reflect the just-saved server profile, not a stale preserveCtx copy.
         const preserveCtx = window.MiraEditorV2 && MiraEditorV2.getEditContext(form.id);
