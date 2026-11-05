@@ -884,6 +884,22 @@ export function parseAvailability(json: unknown): AvailabilityWindow[] {
   return normalizeAvailabilityDocument(json).windows;
 }
 
+/**
+ * All resource ids declared on a service schedule — weekly windows AND dated specials.
+ * Used for ownership/lock seeds and RESOURCE_NOT_AVAILABLE (not date-scoped).
+ */
+export function resourceIdsFromAvailabilityDocument(json: unknown): string[] {
+  const doc = normalizeAvailabilityDocument(json);
+  const ids = new Set<string>();
+  for (const w of doc.windows) {
+    if (w.resourceId) ids.add(w.resourceId);
+  }
+  for (const e of doc.exceptions) {
+    if (e.resourceId) ids.add(e.resourceId);
+  }
+  return [...ids];
+}
+
 type DayResolution = {
   /** Whole local day closed (closedDates or an exception without resourceId). */
   dayClosed: boolean;
@@ -970,6 +986,17 @@ export function windowsForDate(dateKey: string, json: unknown): AvailabilityWind
   const day = resolveDay(dateKey, doc.windows, doc);
   if (!day || day.dayClosed) return [];
   return day.windows;
+}
+
+/** Resource ids effective on one local date after closed/special resolution. */
+export function resourceIdsForDate(dateKey: string, json: unknown): string[] {
+  return [
+    ...new Set(
+      windowsForDate(dateKey, json)
+        .map((w) => w.resourceId)
+        .filter((id): id is string => Boolean(id)),
+    ),
+  ];
 }
 
 /** Reject overlapping windows for the same resource (adjacent end===start is allowed). */

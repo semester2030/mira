@@ -1,6 +1,5 @@
 /**
- * P4 slot calendar acceptance — real CommerceService + local DB.
- * Covers closed dates, specials, capacity parity (list vs create), restore, Asia/Riyadh.
+ * P4 slot calendar + resource consistency (list ≡ book).
  * Run: npx tsx src/marketplace/p4-slots-calendar.integration-tests.ts
  */
 import 'reflect-metadata';
@@ -40,6 +39,14 @@ async function failure(promise: Promise<unknown>, status: number, code: string) 
   assert.fail(`expected ${code}`);
 }
 
+function nextWeekday(targetWeekday: number, minDaysAhead = 5): string {
+  for (let i = minDaysAhead; i < minDaysAhead + 14; i += 1) {
+    const key = localParts(new Date(Date.now() + i * 86_400_000)).dateKey;
+    if (localParts(localInstant(key, 12 * 60)!).weekday === targetWeekday) return key;
+  }
+  throw new Error(`no weekday ${targetWeekday}`);
+}
+
 async function main() {
   const url = process.env.DATABASE_URL ?? '';
   if (!url.includes('localhost') && !url.includes('127.0.0.1')) {
@@ -70,228 +77,233 @@ async function main() {
     });
     userIds.push(bob.userId);
 
-    // Pick a Tuesday ≥ 5 days ahead (Asia/Riyadh) so lead time + horizon hold.
-    let target = new Date(Date.now() + 5 * 86_400_000);
-    for (let i = 0; i < 14; i += 1) {
-      const key = localParts(new Date(target.getTime() + i * 86_400_000)).dateKey;
-      const noon = localInstant(key, 12 * 60)!;
-      if (localParts(noon).weekday === 2) {
-        target = noon;
-        break;
-      }
-    }
-    const DATE = localParts(target).dateKey;
-    const weekday = localParts(localInstant(DATE, 12 * 60)!).weekday;
-    assert.equal(weekday, 2, 'fixture day must be Tuesday');
+    const DATE = nextWeekday(2); // Tuesday
+    const WED = nextWeekday(3);
+    assert.notEqual(DATE, WED);
 
-    const weekly = [
-      { weekday: 2, startMin: 540, endMin: 720, capacity: 1, resourceId: '' }, // 09:00–12:00
-    ];
-
-    const service = await prisma.service.create({
-      data: {
-        partnerId: partner.id,
-        nameAr: `خدمة تقويم ${run}`,
-        nameEn: `cal-${run}`,
-        durationMin: 60,
-        priceHalalas: 15000,
-        concernTags: [],
-        bookingEnabled: true,
-        active: true,
-        contentStatus: 'published',
-        catalogSource: 'catalog',
-        availabilityJson: {
-          v: 2,
-          timezone: 'Asia/Riyadh',
-          windows: weekly,
-          closedDates: [],
-          exceptions: [],
+    const mkPublished = (name: string, availabilityJson: unknown, durationMin = 60) =>
+      prisma.service.create({
+        data: {
+          partnerId: partner.id,
+          nameAr: name,
+          nameEn: `${run}-${name}`,
+          durationMin,
+          priceHalalas: 15000,
+          concernTags: [],
+          bookingEnabled: true,
+          active: true,
+          contentStatus: 'published',
+          catalogSource: 'catalog',
+          availabilityJson: availabilityJson as object,
         },
-      },
+      });
+
+    const book = (
+      user: Customer,
+      serviceId: string,
+      startsAt: string,
+      key: string,
+      resourceId?: string,
+    ) =>
+      commerce.createBooking(user, {
+        serviceId,
+        startsAt,
+        contactName: 'سارة',
+        contactPhone: PHONE,
+        idempotencyKey: key,
+        ...(resourceId != null ? { resourceId } : {}),
+      });
+
+    // ---- 1) Weekly resource: list ≡ book ----
+    const weeklySvc = await mkPublished(`أسبوعي ${run}`, {
+      v: 2,
+      timezone: 'Asia/Riyadh',
+      windows: [{ weekday: 2, startMin: 540, endMin: 720, capacity: 1, resourceId: 'room-W' }],
+      closedDates: [],
+      exceptions: [],
+    });
+    const wList = await commerce.serviceAvailability(weeklySvc.id, DATE);
+    const wSlot = wList.slots.find((s) => s.available && s.resourceId === 'room-W' && localParts(new Date(s.startsAt)).minuteOfDay === 540);
+    record('P4_R1_WEEKLY_LIST', Boolean(wSlot), { slots: wList.slots.length });
+    const wBook = await book(alice, weeklySvc.id, wSlot!.startsAt, `${run}-w1`, 'room-W');
+    record('P4_R1_WEEKLY_BOOK', wBook.booking.status === 'requested', { status: wBook.booking.status });
+
+    // ---- 2) Special-only resource (no weekly) — the reviewed defect ----
+    const specialOnly = await mkPublished(`خاص فقط ${run}`, {
+      v: 2,
+      timezone: 'Asia/Riyadh',
+      windows: [],
+      closedDates: [],
+      exceptions: [
+        {
+          date: DATE,
+          kind: 'special',
+          startMin: 540,
+          endMin: 720,
+          capacity: 1,
+          resourceId: 'room-A',
+        },
+      ],
+    });
+    const soList = await commerce.serviceAvailability(specialOnly.id, DATE);
+    const soAvail = soList.slots.filter((s) => s.available && s.resourceId === 'room-A');
+    record('P4_R2_SPECIAL_ONLY_LIST', soAvail.length === 3, {
+      count: soAvail.length,
+      starts: soAvail.map((s) => localParts(new Date(s.startsAt)).minuteOfDay),
+    });
+    // Pre-fix proof path: booking must succeed (was RESOURCE_NOT_AVAILABLE).
+    let soBookOk = false;
+    let soBookCode: string | null = null;
+    try {
+      const soBook = await book(alice, specialOnly.id, soAvail[0]!.startsAt, `${run}-so1`, 'room-A');
+      soBookOk = soBook.booking.status === 'requested';
+    } catch (e) {
+      soBookCode =
+        e instanceof HttpException
+          ? String((e.getResponse() as { code?: string }).code || e.getStatus())
+          : String(e);
+    }
+    record('P4_R2_SPECIAL_ONLY_BOOK', soBookOk, { soBookCode });
+
+    // ---- 3) Capacity: list full + next book BOOKING_SLOT_FULL ----
+    const afterCap = await commerce.serviceAvailability(specialOnly.id, DATE);
+    const takenStart = soAvail[0]!.startsAt;
+    const afterSlot = afterCap.slots.find((s) => s.startsAt === takenStart);
+    record('P4_R3_LIST_FULL', Boolean(afterSlot && afterSlot.remaining === 0 && !afterSlot.available), {
+      remaining: afterSlot?.remaining,
+      available: afterSlot?.available,
+    });
+    await failure(book(bob, specialOnly.id, takenStart, `${run}-so2`, 'room-A'), 409, 'BOOKING_SLOT_FULL');
+    record('P4_R3_BOOK_FULL', true, { code: 'BOOKING_SLOT_FULL' });
+
+    // ---- 4) Special on day without weekly (Wednesday; weekly only Tuesday elsewhere) ----
+    const mix = await mkPublished(`خليط ${run}`, {
+      v: 2,
+      timezone: 'Asia/Riyadh',
+      windows: [{ weekday: 2, startMin: 540, endMin: 720, capacity: 1, resourceId: 'room-W2' }],
+      closedDates: [],
+      exceptions: [{ date: WED, kind: 'special', startMin: 600, endMin: 660, capacity: 1, resourceId: 'room-S' }],
+    });
+    const wedList = await commerce.serviceAvailability(mix.id, WED);
+    const wedSlot = wedList.slots.find((s) => s.available && s.resourceId === 'room-S');
+    record('P4_R4_SPECIAL_NO_WEEKDAY_LIST', Boolean(wedSlot), { slots: wedList.slots.length });
+    const wedBook = await book(bob, mix.id, wedSlot!.startsAt, `${run}-wed`, 'room-S');
+    record('P4_R4_SPECIAL_NO_WEEKDAY_BOOK', wedBook.booking.status === 'requested', {
+      status: wedBook.booking.status,
     });
 
-    // 1) Weekly open → close by date: no bookable slots; direct book refused.
-    const openSlots = await commerce.serviceAvailability(service.id, DATE);
-    const openAvail = openSlots.slots.filter((s) => s.available);
-    record('P4_SLOT_WEEKLY_OPEN', openAvail.length > 0, { count: openAvail.length, date: DATE });
-
+    // ---- 5) Full-day close ----
     await prisma.service.update({
-      where: { id: service.id },
+      where: { id: mix.id },
       data: {
         availabilityJson: {
           v: 2,
           timezone: 'Asia/Riyadh',
-          windows: weekly,
+          windows: [{ weekday: 2, startMin: 540, endMin: 720, capacity: 1, resourceId: 'room-W2' }],
           closedDates: [DATE],
           exceptions: [],
         },
       },
     });
-    const closedSlots = await commerce.serviceAvailability(service.id, DATE);
-    record('P4_SLOT_CLOSED_LIST_EMPTY', closedSlots.slots.length === 0, {
-      slots: closedSlots.slots.length,
-    });
+    const closedList = await commerce.serviceAvailability(mix.id, DATE);
+    record('P4_R5_CLOSED_LIST', closedList.slots.length === 0, { n: closedList.slots.length });
     await failure(
-      commerce.createBooking(alice, {
-        serviceId: service.id,
-        startsAt: localInstant(DATE, 540)!.toISOString(),
-        contactName: 'سارة',
-        contactPhone: PHONE,
-        idempotencyKey: `${run}-closed`,
-      }),
+      book(alice, mix.id, localInstant(DATE, 540)!.toISOString(), `${run}-closed`, 'room-W2'),
       422,
       'SLOT_DATE_CLOSED',
     );
-    record('P4_SLOT_CLOSED_BOOK_REJECTED', true, { code: 'SLOT_DATE_CLOSED' });
+    record('P4_R5_CLOSED_BOOK', true, { code: 'SLOT_DATE_CLOSED' });
 
-    // 5 partial: remove closure → weekly returns
+    // ---- 6) Resource-scoped close: room-A closed, room-B open ----
+    const dual = await mkPublished(`موردان ${run}`, {
+      v: 2,
+      timezone: 'Asia/Riyadh',
+      windows: [
+        { weekday: 2, startMin: 540, endMin: 720, capacity: 1, resourceId: 'room-A2' },
+        { weekday: 2, startMin: 540, endMin: 720, capacity: 1, resourceId: 'room-B2' },
+      ],
+      closedDates: [],
+      exceptions: [{ date: DATE, kind: 'closed', resourceId: 'room-A2' }],
+    });
+    const dualList = await commerce.serviceAvailability(dual.id, DATE);
+    const aOpen = dualList.slots.some((s) => s.available && s.resourceId === 'room-A2');
+    const bOpen = dualList.slots.some((s) => s.available && s.resourceId === 'room-B2');
+    record('P4_R6_SCOPED_CLOSE', !aOpen && bOpen, { aOpen, bOpen });
+    await failure(
+      book(alice, dual.id, localInstant(DATE, 540)!.toISOString(), `${run}-a2`, 'room-A2'),
+      422,
+      'SLOT_DATE_CLOSED',
+    );
+    const bBook = await book(alice, dual.id, localInstant(DATE, 540)!.toISOString(), `${run}-b2`, 'room-B2');
+    record('P4_R6_OTHER_RESOURCE_OK', bBook.booking.status === 'requested', { status: bBook.booking.status });
+
+    // ---- 7) Remove close → weekly returns ----
     await prisma.service.update({
-      where: { id: service.id },
+      where: { id: mix.id },
       data: {
         availabilityJson: {
           v: 2,
           timezone: 'Asia/Riyadh',
-          windows: weekly,
+          windows: [{ weekday: 2, startMin: 540, endMin: 720, capacity: 1, resourceId: 'room-W2' }],
           closedDates: [],
           exceptions: [],
         },
       },
     });
-    const restored = await commerce.serviceAvailability(service.id, DATE);
-    record('P4_SLOT_RESTORE_AFTER_UNCLOSE', restored.slots.some((s) => s.available), {
+    const restored = await commerce.serviceAvailability(mix.id, DATE);
+    record('P4_R7_UNCLOSE', restored.slots.some((s) => s.available && s.resourceId === 'room-W2'), {
       available: restored.slots.filter((s) => s.available).length,
     });
 
-    // 2) Special overrides weekly hours
+    // ---- 8) Special replaces weekly hours (no weekly-only times) ----
     await prisma.service.update({
-      where: { id: service.id },
+      where: { id: mix.id },
       data: {
         availabilityJson: {
           v: 2,
           timezone: 'Asia/Riyadh',
-          windows: weekly,
+          windows: [{ weekday: 2, startMin: 540, endMin: 720, capacity: 1, resourceId: 'room-W2' }],
           closedDates: [],
-          exceptions: [{ date: DATE, kind: 'special', startMin: 600, endMin: 720, capacity: 1, resourceId: '' }],
+          exceptions: [
+            { date: DATE, kind: 'special', startMin: 600, endMin: 720, capacity: 1, resourceId: 'room-W2' },
+          ],
         },
       },
     });
-    const special = await commerce.serviceAvailability(service.id, DATE);
-    const starts = special.slots.filter((s) => s.available).map((s) => s.startsAt);
-    const has600 = starts.some((iso) => localParts(new Date(iso)).minuteOfDay === 600);
-    const has540 = starts.some((iso) => localParts(new Date(iso)).minuteOfDay === 540);
-    record('P4_SLOT_SPECIAL_HOURS', has600 && !has540, { starts: starts.map((s) => localParts(new Date(s)).minuteOfDay) });
+    const override = await commerce.serviceAvailability(mix.id, DATE);
+    const mins = override.slots.filter((s) => s.available).map((s) => localParts(new Date(s.startsAt)).minuteOfDay);
+    record('P4_R8_SPECIAL_OVERRIDE', mins.includes(600) && !mins.includes(540), { mins });
     await failure(
-      commerce.createBooking(alice, {
-        serviceId: service.id,
-        startsAt: localInstant(DATE, 540)!.toISOString(),
-        contactName: 'سارة',
-        contactPhone: PHONE,
-        idempotencyKey: `${run}-excl`,
-      }),
+      book(bob, mix.id, localInstant(DATE, 540)!.toISOString(), `${run}-excl`, 'room-W2'),
       422,
       'SLOT_OUTSIDE_AVAILABILITY',
     );
-    record('P4_SLOT_SPECIAL_EXCLUDED_REJECTED', true, { code: 'SLOT_OUTSIDE_AVAILABILITY' });
+    record('P4_R8_WEEKLY_HOUR_REJECTED', true, { code: 'SLOT_OUTSIDE_AVAILABILITY' });
 
-    // 3) Special on a day with no weekly window (Wednesday)
-    let wedKey = DATE;
-    for (let i = 1; i < 10; i += 1) {
-      const k = localParts(new Date(localInstant(DATE, 0)!.getTime() + i * 86_400_000)).dateKey;
-      if (localParts(localInstant(k, 12 * 60)!).weekday === 3) {
-        wedKey = k;
-        break;
-      }
-    }
-    await prisma.service.update({
-      where: { id: service.id },
-      data: {
-        availabilityJson: {
-          v: 2,
-          timezone: 'Asia/Riyadh',
-          windows: weekly, // Tuesday only
-          closedDates: [],
-          exceptions: [{ date: wedKey, kind: 'special', startMin: 600, endMin: 660, capacity: 1 }],
-        },
-      },
-    });
-    const wedSlots = await commerce.serviceAvailability(service.id, wedKey);
-    const wedOk = wedSlots.slots.some((s) => s.available && localParts(new Date(s.startsAt)).minuteOfDay === 600);
-    record('P4_SLOT_SPECIAL_NO_WEEKLY', wedOk, { wedKey, slots: wedSlots.slots.length });
-    const wedBook = await commerce.createBooking(alice, {
-      serviceId: service.id,
-      startsAt: localInstant(wedKey, 600)!.toISOString(),
-      contactName: 'سارة',
-      contactPhone: PHONE,
-      idempotencyKey: `${run}-wed`,
-    });
-    record('P4_SLOT_SPECIAL_NO_WEEKLY_BOOK', wedBook.booking.status === 'requested', {
-      status: wedBook.booking.status,
+    // ---- 9) Existing holds on same resource count toward capacity ----
+    // room-A special-only already has one booking at first slot; remaining free slots still open.
+    const soAgain = await commerce.serviceAvailability(specialOnly.id, DATE);
+    const free = soAgain.slots.find((s) => s.available && s.resourceId === 'room-A');
+    record('P4_R9_OTHER_SLOT_STILL_OPEN', Boolean(free), {
+      free: free && localParts(new Date(free.startsAt)).minuteOfDay,
     });
 
-    // 4) Capacity: list remaining matches create rejection
-    await prisma.service.update({
-      where: { id: service.id },
-      data: {
-        availabilityJson: {
-          v: 2,
-          timezone: 'Asia/Riyadh',
-          windows: weekly,
-          closedDates: [],
-          exceptions: [],
-        },
-      },
-    });
-    // Use a fresh future Tuesday slot minute that is free (660 if 540 used? weekly 540–720 → 540,600,660)
-    const capMinute = 660;
-    const beforeCap = await commerce.serviceAvailability(service.id, DATE);
-    const beforeSlot = beforeCap.slots.find((s) => localParts(new Date(s.startsAt)).minuteOfDay === capMinute);
-    record('P4_SLOT_CAP_BEFORE', Boolean(beforeSlot?.available && beforeSlot.remaining === 1), {
-      remaining: beforeSlot?.remaining,
-    });
-    await commerce.createBooking(alice, {
-      serviceId: service.id,
-      startsAt: localInstant(DATE, capMinute)!.toISOString(),
-      contactName: 'سارة',
-      contactPhone: PHONE,
-      idempotencyKey: `${run}-cap1`,
-    });
-    const afterCap = await commerce.serviceAvailability(service.id, DATE);
-    const afterSlot = afterCap.slots.find((s) => localParts(new Date(s.startsAt)).minuteOfDay === capMinute);
-    record('P4_SLOT_CAP_LIST_FULL', Boolean(afterSlot && afterSlot.remaining === 0 && !afterSlot.available), {
-      remaining: afterSlot?.remaining,
-      available: afterSlot?.available,
-    });
+    // ---- 10) Resource not open on another date ----
+    const otherDay = nextWeekday(4); // Thursday — specialOnly has no windows/specials
+    const otherList = await commerce.serviceAvailability(specialOnly.id, otherDay);
+    record('P4_R10_OTHER_DATE_EMPTY', otherList.slots.length === 0, { n: otherList.slots.length, otherDay });
     await failure(
-      commerce.createBooking(bob, {
-        serviceId: service.id,
-        startsAt: localInstant(DATE, capMinute)!.toISOString(),
-        contactName: 'نورة',
-        contactPhone: PHONE,
-        idempotencyKey: `${run}-cap2`,
-      }),
-      409,
-      'BOOKING_SLOT_FULL',
+      book(bob, specialOnly.id, localInstant(otherDay, 540)!.toISOString(), `${run}-other`, 'room-A'),
+      422,
+      'AVAILABILITY_NOT_CONFIGURED',
     );
-    record('P4_SLOT_CAP_BOOK_MATCHES_LIST', true, { code: 'BOOKING_SLOT_FULL' });
+    record('P4_R10_OTHER_DATE_REJECT', true, { code: 'AVAILABILITY_NOT_CONFIGURED' });
 
-    // 6) Timezone: DATE keys and slot instants are Asia/Riyadh (UTC+3)
-    const sample = afterCap.slots[0];
-    if (sample) {
-      const parts = localParts(new Date(sample.startsAt));
-      record('P4_SLOT_TZ_RIYADH', parts.dateKey === DATE && afterCap.timezone === 'Asia/Riyadh', {
-        dateKey: parts.dateKey,
-        timezone: afterCap.timezone,
-        minuteOfDay: parts.minuteOfDay,
-      });
-    } else {
-      record('P4_SLOT_TZ_RIYADH', false, { reason: 'no slots' });
-    }
-
-    // Absence of availability ≠ available
-    const bare = await prisma.service.create({
+    // Absence ≠ available
+    const bare2 = await prisma.service.create({
       data: {
         partnerId: partner.id,
-        nameAr: `بلا جدول ${run}`,
+        nameAr: `بلا ${run}`,
         nameEn: `bare-${run}`,
         durationMin: 30,
         priceHalalas: 5000,
@@ -302,20 +314,8 @@ async function main() {
         catalogSource: 'catalog',
       },
     });
-    const bareSlots = await commerce.serviceAvailability(bare.id, DATE);
-    record('P4_SLOT_UNCONFIGURED_EMPTY', bareSlots.slots.length === 0, { slots: bareSlots.slots.length });
-    await failure(
-      commerce.createBooking(bob, {
-        serviceId: bare.id,
-        startsAt: localInstant(DATE, 600)!.toISOString(),
-        contactName: 'نورة',
-        contactPhone: PHONE,
-        idempotencyKey: `${run}-bare`,
-      }),
-      422,
-      'AVAILABILITY_NOT_CONFIGURED',
-    );
-    record('P4_SLOT_UNCONFIGURED_REJECT', true, { code: 'AVAILABILITY_NOT_CONFIGURED' });
+    const bareSlots = await commerce.serviceAvailability(bare2.id, DATE);
+    record('P4_UNCONFIGURED_EMPTY', bareSlots.slots.length === 0, { n: bareSlots.slots.length });
   } finally {
     await prisma.commerceBooking.deleteMany({ where: { userId: { in: userIds } } }).catch(() => undefined);
     await prisma.service.deleteMany({ where: { partnerId: { in: partnerIds } } }).catch(() => undefined);

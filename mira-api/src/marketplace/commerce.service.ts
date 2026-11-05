@@ -41,6 +41,8 @@ import {
   partnerResourceCapacities,
   normalizeAvailabilityDocument,
   parseAvailability,
+  resourceIdsForDate,
+  resourceIdsFromAvailabilityDocument,
   parseContact,
   parseDelivery,
   parseOptionalNotes,
@@ -1409,11 +1411,8 @@ export class CommerceService {
           select: { id: true, partnerId: true, availabilityJson: true },
         });
         if (!peek) throw notFound('SERVICE_NOT_FOUND', 'الخدمة غير متاحة');
-        const peekWindows = parseAvailability(peek.availabilityJson);
-        const seedResources = new Set<string>();
-        for (const w of peekWindows) {
-          if (w.resourceId) seedResources.add(w.resourceId);
-        }
+        // Weekly windows AND dated specials — specials alone must still lock/seed the resource.
+        const seedResources = new Set(resourceIdsFromAvailabilityDocument(peek.availabilityJson));
         if (resourceId) seedResources.add(resourceId);
         // Partner id from DB row only — never from client payload.
         await lockPartnerScheduleScope(tx, {
@@ -1427,7 +1426,7 @@ export class CommerceService {
             });
             return partnerServices.map((s) => ({
               id: s.id,
-              resourceIds: parseAvailability(s.availabilityJson).map((w) => w.resourceId).filter(Boolean) as string[],
+              resourceIds: resourceIdsFromAvailabilityDocument(s.availabilityJson),
             }));
           },
         });
@@ -1461,15 +1460,17 @@ export class CommerceService {
         }
 
         const baseWindows = parseAvailability(service.availabilityJson);
+        const calendar = normalizeAvailabilityDocument(service.availabilityJson);
+        const knownResources = new Set(resourceIdsFromAvailabilityDocument(service.availabilityJson));
         if (resourceId) {
-          const known = new Set(baseWindows.map((w) => w.resourceId));
-          if (!known.has(resourceId)) {
+          // Document association (weekly OR special). Date-specific open/closed is checkSlot's job.
+          if (!knownResources.has(resourceId)) {
             throw unprocessable('RESOURCE_NOT_AVAILABLE', 'هذا المورد غير مرتبط بجدول توفر هذه الخدمة');
           }
         }
         const { windows, conflicts } = await this.windowsWithPartnerCaps(tx, service.partnerId, baseWindows);
         const conflictHit = conflicts.find((c) =>
-          resourceId ? c.resourceId === resourceId : baseWindows.some((w) => w.resourceId === c.resourceId),
+          resourceId ? c.resourceId === resourceId : knownResources.has(c.resourceId),
         );
         if (conflictHit) {
           throw conflict(
@@ -1479,7 +1480,6 @@ export class CommerceService {
           );
         }
 
-        const calendar = normalizeAvailabilityDocument(service.availabilityJson);
         const lockedSlot = checkSlot(startsAt, service.durationMin, windows, new Date(), resourceId, calendar);
         if (!lockedSlot.ok) throw this.slotError(lockedSlot.code);
 
@@ -1593,6 +1593,7 @@ export class CommerceService {
         : { id: serviceId, active: true, contentStatus: 'published', catalogSource: 'catalog', bookingEnabled: true, partner: { status: 'active' } },
     });
     if (!service) throw notFound('SERVICE_NOT_FOUND', 'الخدمة غير متاحة');
+    const calendar = normalizeAvailabilityDocument(service.availabilityJson);
     const { windows, conflicts } = await this.windowsWithPartnerCaps(
       this.prisma,
       service.partnerId,
@@ -1600,7 +1601,14 @@ export class CommerceService {
     );
     const dayStart = localInstant(date, 0)!;
     const dayEnd = new Date(dayStart.getTime() + 86_400_000);
-    const resourceIds = [...new Set(windows.map((w) => w.resourceId))];
+    // Include specials for this date — weekly-only ids miss special-only rooms.
+    const resourceIds = [
+      ...new Set([
+        ...windows.map((w) => w.resourceId),
+        ...resourceIdsForDate(date, service.availabilityJson),
+        ...resourceIdsFromAvailabilityDocument(service.availabilityJson),
+      ]),
+    ].filter(Boolean);
     const held = await this.prisma.commerceBooking.findMany({
       where: {
         status: { in: [...ACTIVE_BOOKING_STATUSES] },
@@ -1608,8 +1616,8 @@ export class CommerceService {
         endsAt: { gt: dayStart },
         OR: [
           { serviceId: service.id, resourceId: '' },
-          ...(resourceIds.filter(Boolean).length
-            ? [{ partnerId: service.partnerId, resourceId: { in: resourceIds.filter(Boolean) } }]
+          ...(resourceIds.length
+            ? [{ partnerId: service.partnerId, resourceId: { in: resourceIds } }]
             : []),
         ],
       },
@@ -1622,7 +1630,7 @@ export class CommerceService {
       durationMin: service.durationMin,
       payMode: service.payMode,
       priceHalalas: service.priceHalalas,
-      slots: buildDaySlots(date, service.durationMin, windows, held, new Date(), normalizeAvailabilityDocument(service.availabilityJson)),
+      slots: buildDaySlots(date, service.durationMin, windows, held, new Date(), calendar),
       resourceCapacityConflicts: conflicts.map((c) => ({
         resourceId: c.resourceId,
         capacities: c.capacities,

@@ -215,6 +215,12 @@ export class UpdateServiceDto {
   @IsOptional()
   @IsBoolean()
   unifySharedResources?: boolean;
+
+  /** Optimistic concurrency — must match current reviewRevision when provided. */
+  @IsOptional()
+  @IsInt()
+  @Min(0)
+  expectedRevision?: number;
 }
 
 export class UpsertServiceDto {

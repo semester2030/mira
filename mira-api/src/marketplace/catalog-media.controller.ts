@@ -20,7 +20,7 @@ import {
   CatalogMediaStorage,
   CatalogMediaUnavailable,
 } from './catalog-media.storage';
-import { noteMediaUpstreamAbort } from './catalog-media-abort-probe';
+import { noteMediaClientDisconnect } from './catalog-media-abort-probe';
 
 @Controller('marketplace')
 export class CatalogMediaController {
@@ -65,12 +65,12 @@ export class CatalogMediaController {
     const onResponseClose = () => {
       if (!responseCompleted) {
         ac.abort();
-        // Evidence hook: same request id — proves upstream cancel (not natural EOF).
+        // Client disconnect only — storage Body close is recorded by the adapter.
         console.error(
-          'catalog-media-upstream-aborted',
+          'catalog-media-client-disconnect',
           `id=${id} req=${mediaReqId || '-'} key=${keyHint}…`,
         );
-        if (mediaReqId) noteMediaUpstreamAbort(mediaReqId, id);
+        if (mediaReqId) noteMediaClientDisconnect(mediaReqId, id);
       }
     };
 
@@ -79,6 +79,8 @@ export class CatalogMediaController {
       opened = await this.storage.open(row.storageKey, {
         rangeHeader: range,
         signal: ac.signal,
+        abortRequestId: mediaReqId,
+        mediaId: id,
       });
     } catch (error) {
       if ((error as { name?: string })?.name === 'AbortError') {

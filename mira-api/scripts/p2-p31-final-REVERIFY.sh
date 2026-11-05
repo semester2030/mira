@@ -64,6 +64,9 @@ npx tsx src/partners-portal/upload-sessions/reverify-evidence-gate.unit.ts | tee
 echo "== availability document unit =="
 npx tsx src/marketplace/availability-document.unit.ts | tee "$OUT/avail-unit/run.txt"
 
+echo "== media abort storage probe unit =="
+npx tsx src/marketplace/media-abort-storage-probe.unit.ts | tee "$OUT/r2-unit/abort-storage-probe.txt"
+
 echo "== bind unit =="
 node "$REPO_ROOT/partners-portal/web/js/catalog-options-media-bind-tests.mjs" | tee "$OUT/bind/unit.txt"
 
@@ -82,6 +85,27 @@ npx tsx src/partners-portal/upload-sessions/r2-abort-same-stream.unit.ts | tee "
 echo "== r2 mira gate unit =="
 npx tsx src/partners-portal/upload-sessions/r2-mira-gate.unit.ts | tee "$OUT/r2-unit/mira-gate.txt"
 
+echo "== real nest build (affected package) =="
+mkdir -p "$OUT/build"
+BUILD_STARTED="$(date -u +%Y-%m-%dT%H:%M:%SZ)"
+set +e
+npm run build > "$OUT/build/nest-build.stdout.txt" 2> "$OUT/build/nest-build.stderr.txt"
+BUILD_RC=$?
+set -e
+BUILD_FINISHED="$(date -u +%Y-%m-%dT%H:%M:%SZ)"
+{
+  echo "startedUtc=$BUILD_STARTED"
+  echo "finishedUtc=$BUILD_FINISHED"
+  echo "exitCode=$BUILD_RC"
+  echo "command=npm run build"
+} | tee "$OUT/build/meta.txt"
+if [[ $BUILD_RC -ne 0 ]]; then
+  echo "BUILD=FAIL exit=$BUILD_RC" | tee "$OUT/build/verdict.txt"
+  tail -n 40 "$OUT/build/nest-build.stderr.txt" || true
+  fail_run "nest build failed"
+fi
+echo "BUILD=PASS exit=$BUILD_RC" | tee "$OUT/build/verdict.txt"
+
 echo "== typecheck (changed P3.1 / R2 / catalog-content modules) =="
 set +e
 npx tsc -p tsconfig.json --noEmit > "$OUT/typecheck/tsc-full.txt" 2>&1
@@ -89,7 +113,7 @@ TSC_RC=$?
 set -e
 TOUCHED_ERR=0
 if [[ -f "$OUT/typecheck/tsc-full.txt" ]]; then
-  if grep -E 'commerce\.service\.ts|variant-inventory\.service\.ts|catalog-content\.service\.ts|catalog-media\.controller\.ts|p31-d1-d4|p31-inventory-defects|r2-browser-multipart\.evidence\.ts|r2-acceptance-gate\.ts|r2-mira-gate|r2-abort-same-stream|reverify-evidence-gate' \
+  if grep -E 'commerce\.service\.ts|commerce\.types\.ts|partners-portal\.service\.ts|catalog\.dto\.ts|catalog-media-abort-probe\.ts|variant-inventory\.service\.ts|catalog-content\.service\.ts|catalog-media\.controller\.ts|p31-d1-d4|p31-inventory-defects|p4-slots-calendar|r2-browser-multipart\.evidence\.ts|r2-acceptance-gate\.ts|r2-mira-gate|r2-abort-same-stream|reverify-evidence-gate|media-abort-storage-probe' \
     "$OUT/typecheck/tsc-full.txt" > "$OUT/typecheck/tsc-touched.txt"; then
     TOUCHED_ERR=1
   else

@@ -64,22 +64,31 @@ async function main() {
     const authA = { Authorization: `Bearer ${tokenA}`, 'content-type': 'application/json' };
     const authB = { Authorization: `Bearer ${tokenB}`, 'content-type': 'application/json' };
 
-    // 1) Minimal draft service (no fake prices/zeros for empty optional)
+    // 1) Minimal draft — price 0 allowed for draft; omit duration (optional). Do not invent booking readiness.
     const createRes = await fetch(`${apiBase}/partners-portal/services`, {
       method: 'POST',
       headers: authA,
       body: JSON.stringify({
         nameAr: `خدمة مسودة ${run}`,
-        priceHalalas: 5000,
-        durationMin: 30,
+        priceHalalas: 0,
         category: 'hair',
         bookingEnabled: false,
       }),
     });
     const created = await createRes.json().catch(() => ({}));
-    record('P4_CREATE_MIN_DRAFT', createRes.ok && !!created.id, { status: createRes.status, idSuffix: created.id?.slice(-8) });
+    record('P4_CREATE_MIN_DRAFT', createRes.ok && !!created.id && created.priceHalalas === 0, {
+      status: createRes.status,
+      idSuffix: created.id?.slice(-8),
+      priceHalalas: created.priceHalalas,
+      durationMin: created.durationMin ?? null,
+    });
     const serviceId = created.id;
     if (!serviceId) throw new Error('create failed');
+    record(
+      'P4_MIN_DRAFT_NOT_BOOKABLE_YET',
+      created.bookingEnabled === false && (created.durationMin == null || created.durationMin === 0 || created.priceHalalas === 0),
+      { bookingEnabled: created.bookingEnabled, durationMin: created.durationMin, priceHalalas: created.priceHalalas },
+    );
 
     // Re-open via GET me catalog (no dedicated GET /services/:id in this portal).
     async function loadService(auth) {
@@ -500,9 +509,50 @@ async function main() {
         await page.waitForTimeout(2000);
       }
       const sDur = await loadService(authA);
-      record('P4_BROWSER_DURATION', sDur?.durationMin === 50 || sDur?.durationMin === 45, {
+      record('P4_BROWSER_DURATION', sDur?.durationMin === 50, {
         durationMin: sDur?.durationMin,
+        expect: 50,
       });
+
+      // Dual-session service edit conflict: A saves description, B tries stale overwrite.
+      const tokenA2 = tokenA;
+      const pageA2 = await browser.newPage();
+      const pageB2 = await browser.newPage();
+      await pageA2.addInitScript(({ token }) => localStorage.setItem('mira_partner_token', token), { token: tokenA2 });
+      await pageB2.addInitScript(({ token }) => localStorage.setItem('mira_partner_token', token), { token: tokenA2 });
+      const openSvc = async (page) => {
+        await page.goto(`${origin}/dashboard.html?api-base=${encodeURIComponent(portalApi)}`, {
+          waitUntil: 'domcontentloaded',
+          timeout: 45000,
+        });
+        await page.waitForSelector('#catalogList .list-item', { timeout: 30000 });
+        await page.locator('#catalogList .list-item', { hasText: 'خدمة مسودة' }).locator('button', { hasText: 'فتح في النموذج' }).first().click();
+        await page.waitForSelector('[data-testid="avail-calendar-preview"]', { timeout: 20000 });
+      };
+      await openSvc(pageA2);
+      await openSvc(pageB2);
+      const descA = pageA2.locator('textarea[name="descriptionAr"], input[name="descriptionAr"]').first();
+      const descB = pageB2.locator('textarea[name="descriptionAr"], input[name="descriptionAr"]').first();
+      if ((await descA.count()) && (await descB.count())) {
+        await descA.fill(`جلسة-أ ${run}`);
+        await pageA2.locator('#catalogForm button[type="submit"]').first().click();
+        await pageA2.waitForTimeout(2000);
+        await descB.fill(`جلسة-ب قديمة ${run}`);
+        await pageB2.locator('#catalogForm button[type="submit"]').first().click();
+        await pageB2.waitForTimeout(2000);
+        const afterConflict = await loadService(authA);
+        const keptA = String(afterConflict?.descriptionAr || afterConflict?.draftDescriptionAr || '').includes(`جلسة-أ ${run}`);
+        const silentB = String(afterConflict?.descriptionAr || '').includes(`جلسة-ب قديمة`);
+        // Accepted behaviors: keep A, or surface conflict without silent B overwrite of A.
+        record('P4_BROWSER_DUAL_SESSION_NO_SILENT_B', keptA && !silentB, {
+          descriptionAr: afterConflict?.descriptionAr,
+          draftDescriptionAr: afterConflict?.draftDescriptionAr,
+        });
+      } else {
+        record('P4_BROWSER_DUAL_SESSION_NO_SILENT_B', false, { reason: 'description field missing' });
+      }
+      await pageA2.close();
+      await pageB2.close();
 
       // Session B cannot open A's service in list
       const pageB = await browser.newPage();

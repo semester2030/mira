@@ -103,6 +103,28 @@ async function seedFixture(prisma, { developer }) {
       revision: 1,
     },
   });
+  // Publish-eligible cover image (assertImages requires ≥1 non-removed image).
+  const png = Buffer.from(
+    'iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAYAAAAfFcSJAAAADUlEQVR42mP8z8BQDwAEhQGAhKmMIQAAAABJRU5ErkJggg==',
+    'base64',
+  );
+  const storageKey = `p31-ui/${run}/${product.id}.png`;
+  await prisma.catalogMedia.create({
+    data: {
+      ownerKind: 'product',
+      ownerId: product.id,
+      kind: 'image',
+      url: `/api/v1/marketplace/media/pending-${run}`,
+      mimeType: 'image/png',
+      byteSize: png.length,
+      storageKey,
+      isPrimary: true,
+      publication: 'published',
+      active: true,
+      sortOrder: 0,
+      placement: 'main',
+    },
+  });
   return {
     token,
     productId: product.id,
@@ -111,6 +133,7 @@ async function seedFixture(prisma, { developer }) {
     partnerUserId: pu.id,
     email: pu.email,
     developer: Boolean(developer),
+    hasCoverImage: true,
     cleanup: async () => {
       await prisma.productVariantInventory.deleteMany({ where: { productId: product.id } }).catch(() => undefined);
       await prisma.catalogMedia.deleteMany({ where: { ownerKind: 'product', ownerId: product.id } }).catch(() => undefined);
@@ -482,28 +505,8 @@ async function main() {
       });
       record(`${labelPrefix}_B_NO_SILENT_OVERWRITE`, noSilentAdvance && localKept, {});
 
-      // Real review/publish paths from api.js / catalog-journey: POST .../submit-review
+      // Real review/publish paths: POST .../submit-review (UI button — not page.evaluate as sole proof).
       const REVIEW_URL_RE = /\/partners-portal\/(products|services)\/[^/]+\/submit-review(?:\?|$)/;
-      const mark = Date.now();
-      // Control: prove the request monitor can see a real submit-review POST (session A, outside conflict).
-      const control = await a.page.evaluate(async (pid) => {
-        try {
-          const r = await PartnersApi.submitReview('products', pid);
-          return { ok: true, r };
-        } catch (e) {
-          return { ok: false, status: e && e.status, code: e && e.code, message: String(e && e.message).slice(0, 120) };
-        }
-      }, productId);
-      await a.page.waitForTimeout(300);
-      const controlHits = networkLog.filter(
-        (n) => n.label === `${labelPrefix}-A` && n.phase === 'request' && n.method === 'POST' && REVIEW_URL_RE.test(n.url) && n.t >= mark,
-      );
-      record(`${labelPrefix}_MONITOR_CATCHES_SUBMIT_REVIEW`, controlHits.length >= 1, {
-        controlHits,
-        controlApi: control,
-        note: 'Monitor must observe POST submit-review; API may 4xx if review preconditions unmet',
-      });
-
       const bWrites = networkLog.filter(
         (n) =>
           n.label === `${labelPrefix}-B` &&
@@ -523,6 +526,74 @@ async function main() {
         reviewAfterConflict,
         bWriteCount: bWrites.length,
       });
+
+      // Healthy control AFTER conflict window: prove monitor sees real UI-triggered submit-review
+      // on a publish-eligible product (cover image seeded). Conflict must not be why review is absent.
+      const mark = Date.now();
+      let controlOk = false;
+      let controlDetail = {};
+      try {
+        // Exact CTAs only — do NOT match MiraEditorV2 «تحويل المسودة…وإرسال للمراجعة» (false positive).
+        // Developer primary is #catalogForm-save (label may be «نشر الآن» or «تم الحفظ» after prior publish).
+        const isDev = labelPrefix === 'DEV';
+        const publishBtn = isDev
+          ? a.page.locator('#catalogForm-save').first()
+          : a.page.locator('#catalogForm button.btn-ghost', { hasText: /^إرسال للمراجعة$/ }).first();
+        await publishBtn.waitFor({ state: 'visible', timeout: 10000 });
+        // Align stock with server tip so inventory PUT succeeds and review can proceed.
+        await a.page.locator('[data-testid="variant-stock-qty"]').first().fill(String(EXPECT_A));
+        const reviewRespPromise = a.page.waitForResponse(
+          (r) =>
+            r.request().method() === 'POST' &&
+            /\/partners-portal\/(products|services)\/[^/]+\/submit-review(?:\?|$)/.test(r.url()),
+          { timeout: 20000 },
+        );
+        await publishBtn.click();
+        let reviewResp = null;
+        try {
+          reviewResp = await reviewRespPromise;
+        } catch {
+          reviewResp = null;
+        }
+        await a.page.waitForTimeout(800);
+        const controlHits = networkLog.filter(
+          (n) =>
+            n.label === `${labelPrefix}-A` &&
+            n.phase === 'request' &&
+            n.method === 'POST' &&
+            REVIEW_URL_RE.test(n.url) &&
+            n.t >= mark,
+        );
+        const controlResps = networkLog.filter(
+          (n) =>
+            n.label === `${labelPrefix}-A` &&
+            n.phase === 'response' &&
+            n.method === 'POST' &&
+            REVIEW_URL_RE.test(n.url) &&
+            n.t >= mark,
+        );
+        const reviewStatus = reviewResp ? reviewResp.status() : null;
+        controlOk =
+          controlHits.length >= 1 &&
+          ((reviewStatus != null && reviewStatus >= 200 && reviewStatus < 300) ||
+            controlResps.some((r) => r.status >= 200 && r.status < 300));
+        controlDetail = {
+          controlHits,
+          controlResps,
+          reviewStatus,
+          btnMode: isDev ? 'developer-save-publish' : 'brand-ghost-submit-review',
+          note: 'UI button must trigger submit-review with 2xx on publish-eligible product',
+        };
+      } catch (e) {
+        controlDetail = { error: String(e?.message || e).slice(0, 200) };
+      }
+      record(`${labelPrefix}_MONITOR_CATCHES_SUBMIT_REVIEW`, controlOk, controlDetail);
+      // Conflict path must still show zero review posts in B's write window (independent of control).
+      record(
+        `${labelPrefix}_CONFLICT_BLOCKED_REVIEW_NOT_IMAGE`,
+        reviewAfterConflict.length === 0 && controlOk,
+        { reviewAfterConflict, controlOk },
+      );
 
       // expectedRevision on B's inventory PUT must equal the shared pre-A revision (no silent bump to A's tip).
       const invPutBodies = networkLog.filter(

@@ -133,6 +133,7 @@ export function verifyR2EvidenceDocument(input: {
     }
   }
   const started = String(ev.startedUtc || '').trim();
+  const finished = String(ev.finishedUtc || '').trim();
   if (!started) {
     return {
       verdict: 'FAIL',
@@ -140,12 +141,27 @@ export function verifyR2EvidenceDocument(input: {
       recomputed: { ok: false, blocked: false, failed: ['TIME'], detail: 'TIME' },
     };
   }
+  if (!finished) {
+    return {
+      verdict: 'FAIL',
+      reason: 'finishedUtc-missing',
+      recomputed: { ok: false, blocked: false, failed: ['TIME'], detail: 'TIME' },
+    };
+  }
   const evMs = Date.parse(started);
+  const finMs = Date.parse(finished);
   const runMs = Date.parse(input.runStartedIso);
-  if (Number.isNaN(evMs) || Number.isNaN(runMs) || evMs / 1000 + 2 < runMs / 1000) {
+  if (Number.isNaN(evMs) || Number.isNaN(finMs) || Number.isNaN(runMs) || evMs / 1000 + 2 < runMs / 1000) {
     return {
       verdict: 'FAIL',
       reason: 'stale-or-unparseable-time',
+      recomputed: { ok: false, blocked: false, failed: ['TIME'], detail: 'TIME' },
+    };
+  }
+  if (finMs < evMs) {
+    return {
+      verdict: 'FAIL',
+      reason: 'finished-before-started',
       recomputed: { ok: false, blocked: false, failed: ['TIME'], detail: 'TIME' },
     };
   }

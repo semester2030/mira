@@ -639,6 +639,21 @@ export class PartnersPortalService implements OnModuleInit {
       const locked = await tx.service.findFirst({ where: { id: serviceId, partnerId } });
       if (!locked) throw new NotFoundException('الخدمة غير موجودة');
 
+      if (
+        dto.expectedRevision != null &&
+        Number.isInteger(dto.expectedRevision) &&
+        dto.expectedRevision !== locked.reviewRevision
+      ) {
+        throw new ConflictException({
+          statusCode: 409,
+          code: 'SERVICE_REVISION_CONFLICT',
+          message: 'تعارض مراجعة الخدمة — حدّثي الصفحة أو احتفظي بتعديلاتك المحلية وأعيدي المحاولة بعد الدمج',
+          messageAr: 'تعارض مراجعة الخدمة — حدّثي الصفحة أو احتفظي بتعديلاتك المحلية وأعيدي المحاولة بعد الدمج',
+          expectedRevision: dto.expectedRevision,
+          currentRevision: locked.reviewRevision,
+        });
+      }
+
       const published = locked.contentStatus === 'published';
       const data: {
         draftNameAr?: string;

@@ -170,7 +170,12 @@ export class S3CompatibleCatalogMediaStorage extends CatalogMediaStorage {
    */
   async open(
     key: string,
-    options: { rangeHeader?: string; signal?: AbortSignal } = {},
+    options: {
+      rangeHeader?: string;
+      signal?: AbortSignal;
+      abortRequestId?: string;
+      mediaId?: string;
+    } = {},
   ): Promise<CatalogMediaOpenResult | null> {
     const meta = await this.head(key);
     if (!meta) return null;
@@ -192,6 +197,20 @@ export class S3CompatibleCatalogMediaStorage extends CatalogMediaStorage {
       external.addEventListener('abort', onExternalAbort, { once: true });
     }
 
+    // Lazy import keeps production path free of circular init; probe is test-scoped.
+    const noteStorageAbort = (reason: 'abort' | 'eof') => {
+      if (reason !== 'abort' || !options.abortRequestId) return;
+      try {
+        // eslint-disable-next-line @typescript-eslint/no-require-imports
+        const { noteMediaStorageReadClosed } = require('./catalog-media-abort-probe') as {
+          noteMediaStorageReadClosed: (requestId: string, mediaId: string) => void;
+        };
+        noteMediaStorageReadClosed(options.abortRequestId, options.mediaId || key);
+      } catch {
+        /* probe optional */
+      }
+    };
+
     try {
       const rangeValue = `bytes=${plan.start}-${plan.end}`;
       const output = await client.send(new GetObjectCommand({
@@ -206,7 +225,7 @@ export class S3CompatibleCatalogMediaStorage extends CatalogMediaStorage {
       }
 
       let released = false;
-      const release = () => {
+      const release = (reason: 'abort' | 'eof' | 'error' = 'eof') => {
         if (released) return;
         released = true;
         external?.removeEventListener('abort', onExternalAbort);
@@ -216,16 +235,19 @@ export class S3CompatibleCatalogMediaStorage extends CatalogMediaStorage {
           /* ignore */
         }
         client.destroy();
+        if (reason === 'abort') noteStorageAbort('abort');
       };
 
       if (controller.signal.aborted || external?.aborted) {
-        release();
+        release('abort');
         throw Object.assign(new Error('aborted'), { name: 'AbortError' });
       }
-      controller.signal.addEventListener('abort', release, { once: true });
-      body.once('end', release);
-      body.once('error', release);
-      body.once('close', release);
+      controller.signal.addEventListener('abort', () => release('abort'), { once: true });
+      body.once('end', () => release('eof'));
+      body.once('error', () => release('error'));
+      body.once('close', () => {
+        if (!released) release('eof');
+      });
 
       return {
         status: plan.status,
@@ -234,7 +256,7 @@ export class S3CompatibleCatalogMediaStorage extends CatalogMediaStorage {
         contentRange: plan.contentRange,
         contentType: output.ContentType || meta.contentType,
         body,
-        abort: release,
+        abort: () => release('abort'),
       };
     } catch (error) {
       external?.removeEventListener('abort', onExternalAbort);

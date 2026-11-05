@@ -16,6 +16,7 @@ function allMiraOk() {
 const base = {
   commit: 'abc123',
   startedUtc: '2026-11-05T14:00:05.000Z',
+  finishedUtc: '2026-11-05T14:05:00.000Z',
   runId: 'run-1',
 };
 
@@ -217,6 +218,23 @@ const base = {
   ]);
   assert.equal(j.blocked, false);
   assert.equal(j.ok, false);
+}
+{
+  // finishedUtc < startedUtc → FAIL
+  const v = verifyR2EvidenceDocument({
+    evidence: {
+      ...base,
+      ok: false,
+      blocked: true,
+      finishedUtc: '2026-11-05T13:00:00.000Z',
+      steps: [{ id: 'ENV', ok: 'BLOCKED' }, { id: 'R2_MIRA_APP_PATH', ok: 'BLOCKED' }],
+    },
+    testedCommit: 'abc123',
+    runStartedIso: '2026-11-05T14:00:00.000Z',
+    exitCode: 0,
+  });
+  assert.equal(v.verdict, 'FAIL');
+  assert.equal(v.reason, 'finished-before-started');
 }
 {
   // summary.ok=false must NEVER upgrade to PASS even if recomputed steps look green.

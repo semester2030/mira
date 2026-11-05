@@ -74,7 +74,13 @@ export abstract class CatalogMediaStorage {
    */
   async open(
     key: string,
-    options: { rangeHeader?: string; signal?: AbortSignal } = {},
+    options: {
+      rangeHeader?: string;
+      signal?: AbortSignal;
+      /** Isolated abort evidence: request id from x-mira-media-req */
+      abortRequestId?: string;
+      mediaId?: string;
+    } = {},
   ): Promise<CatalogMediaOpenResult | null> {
     if (options.signal?.aborted) {
       throw Object.assign(new Error('aborted'), { name: 'AbortError' });

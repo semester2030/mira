@@ -4409,6 +4409,16 @@
             return false;
           }
         }
+        // Optimistic concurrency for service basics — same tip as profile bind / last paint.
+        const tipRev =
+          boundServiceReviewRevision != null
+            ? boundServiceReviewRevision
+            : item && item.reviewRevision != null
+              ? item.reviewRevision
+              : null;
+        if (tipRev != null && Number.isFinite(Number(tipRev))) {
+          payload.expectedRevision = Number(tipRev);
+        }
       }
       const idleLabel = save.textContent;
       beginPersistBusy(persistOp, developerAccount ? 'جارٍ النشر' : 'جارٍ الحفظ');
@@ -4590,14 +4600,54 @@
             }
           }
         }
+        // After profile put, reviewRevision tip advanced — basics must send the new tip, not the pre-put tip.
+        if (type !== 'brand' && ownerId && basicsPayload.expectedRevision != null) {
+          if (boundServiceReviewRevision != null) {
+            basicsPayload = Object.assign({}, basicsPayload, {
+              expectedRevision: Number(boundServiceReviewRevision),
+            });
+          }
+        }
 
-        const saved = ownerId
-          ? await (type === 'brand'
-              ? PartnersApi.updateProduct(ownerId, basicsPayload)
-              : PartnersApi.updateService(ownerId, basicsPayload))
-          : await (type === 'brand'
-              ? PartnersApi.createProduct(basicsPayload)
-              : PartnersApi.createService(basicsPayload));
+        let saved;
+        try {
+          saved = ownerId
+            ? await (type === 'brand'
+                ? PartnersApi.updateProduct(ownerId, basicsPayload)
+                : PartnersApi.updateService(ownerId, basicsPayload))
+            : await (type === 'brand'
+                ? PartnersApi.createProduct(basicsPayload)
+                : PartnersApi.createService(basicsPayload));
+        } catch (basicsErr) {
+          const code = (basicsErr && basicsErr.code) || '';
+          const bodyCode =
+            (basicsErr && basicsErr.body && (basicsErr.body.code || (basicsErr.body.message && basicsErr.body.message.code))) ||
+            '';
+          const blob = String((basicsErr && basicsErr.message) || '') + ' ' + code + ' ' + bodyCode;
+          if (
+            code === 'SERVICE_REVISION_CONFLICT' ||
+            bodyCode === 'SERVICE_REVISION_CONFLICT' ||
+            /SERVICE_REVISION_CONFLICT/.test(blob)
+          ) {
+            releasePersistBusyIfOwned(persistOp, idleLabel);
+            status.textContent =
+              'تعارض مراجعة الخدمة مع نسخة أحدث. تعديلاتك ما زالت في النموذج — لم نكتب فوق الخادم.';
+            status.setAttribute('data-service-revision-conflict', '1');
+            if (window.MiraEditorV2) {
+              MiraEditorV2.setStatus(form, 'تعارض مراجعة الخدمة', 'conflict');
+            }
+            showServiceProfileConflictUi(ownerId);
+            return {
+              ok: false,
+              conflict: true,
+              code: 'SERVICE_REVISION_CONFLICT',
+              basicsSaved: false,
+              published: false,
+              id: ownerId || null,
+            };
+          }
+          throw basicsErr;
+        }
         // F4: create null→this id is the legitimate owner bind for THIS op.
         if (!persistOp.ownerId && saved && saved.id) {
           persistOp.createdOwnerId = saved.id;
