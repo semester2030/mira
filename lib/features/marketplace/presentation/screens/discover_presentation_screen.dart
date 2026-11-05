@@ -14,13 +14,14 @@ import '../../data/discover_catalog_gateway.dart';
 import '../../data/catalog_record_scope.dart';
 import '../../data/commerce_api_client.dart';
 import '../../data/discover_favorite_client.dart';
+import '../../data/discover_catalog_facets.dart';
 import '../../data/discover_catalog_query.dart';
 import '../../domain/catalog_offer_media.dart';
+import '../../domain/catalog_product_options.dart';
 import '../../domain/entities/catalog_product.dart';
 import '../presentation/discover_ad.dart';
 import '../presentation/presentation_models.dart';
 import '../../data/repositories/marketplace_repository_impl.dart';
-import '../../data/ad_link_record.dart';
 import '../ad_link_open_outbox.dart';
 import '../commerce_cart_actions.dart';
 import '../widgets/product_option_selector.dart';
@@ -31,7 +32,6 @@ import '../presentation/discover_view_count.dart';
 import '../presentation/discover_visual_chrome.dart';
 import '../presentation/presentation_video_port.dart';
 import '../widgets/discover_scene_still.dart';
-import 'catalog_record_page.dart';
 import 'booking_request_screen.dart';
 import 'partner_detail_screen.dart';
 
@@ -93,8 +93,9 @@ class _DiscoverPresentationScreenState extends State<DiscoverPresentationScreen>
   DiscoverCatalogQuery _query = const DiscoverCatalogQuery();
   String? _nextCursor;
   List<String> _cities = const [];
+  DiscoverCatalogFacets _facets = DiscoverCatalogFacets.empty;
+  int? _totalMatched;
   CatalogTransport? _transport;
-  ContentMark? _contentMark;
   int _category = 0;
   DiscoverFeedController? _feed;
   DiscoverFeedPhase _phase = DiscoverFeedPhase.ready;
@@ -269,8 +270,9 @@ class _DiscoverPresentationScreenState extends State<DiscoverPresentationScreen>
         );
         _nextCursor = next.nextCursor;
         _cities = next.cities;
+        _facets = next.facets;
+        _totalMatched = next.totalMatched;
         _transport = next.transport;
-        _contentMark = next.contentMark;
         _loadError = next.loadError;
         _loadMoreError = next.loadMoreError;
         _adsFailed = next.adsFailed;
@@ -413,11 +415,49 @@ class _DiscoverPresentationScreenState extends State<DiscoverPresentationScreen>
     ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text(message)));
   }
 
+  Color? _swatchColor(String? hex) {
+    if (hex == null || hex.isEmpty) return null;
+    var value = hex.trim();
+    if (value.startsWith('#')) value = value.substring(1);
+    if (value.length == 6) value = 'FF$value';
+    final parsed = int.tryParse(value, radix: 16);
+    if (parsed == null) return null;
+    return Color(parsed);
+  }
+
   Future<void> _openFilters(BuildContext context) async {
     final elegance = widget.lane == DiscoverLane.elegance ||
         (widget.lane == null && (_query.partnerType == null || _query.partnerType == 'brand'));
     final beauty = widget.lane == DiscoverLane.beauty ||
         (_query.partnerType == 'clinic' || _query.partnerType == 'salon');
+    final cityBuckets = _facets.city.isNotEmpty
+        ? _facets.city
+        : [for (final city in _cities) DiscoverFacetBucket(id: city, count: 0, labelAr: city)];
+    final colorBuckets = [
+      ..._facets.colors,
+      for (final id in _query.colors)
+        if (!_facets.colors.any((b) => b.id == id))
+          DiscoverFacetBucket(id: id, count: 0, labelAr: id),
+    ];
+    final sizeBuckets = [
+      ..._facets.sizes,
+      for (final id in _query.sizes)
+        if (!_facets.sizes.any((b) => b.id == id))
+          DiscoverFacetBucket(id: id, count: 0, labelAr: id),
+    ];
+    const placeLabels = {
+      'branch': 'في الفرع',
+      'home': 'منزلية',
+      'remote': 'عن بعد',
+      'either': 'مرن',
+    };
+    final placeBuckets = _facets.placeMode.isNotEmpty
+        ? _facets.placeMode
+        : [
+            for (final e in placeLabels.entries)
+              DiscoverFacetBucket(id: e.key, count: 0, labelAr: e.value),
+          ];
+
     final type = await showModalBottomSheet<String>(
       context: context,
       isScrollControlled: true,
@@ -429,11 +469,15 @@ class _DiscoverPresentationScreenState extends State<DiscoverPresentationScreen>
               children: [
                 ListTile(
                   title: Text(
-                    _query.activeFilterCount == 0
-                        ? 'الفلاتر'
-                        : 'الفلاتر (${_query.activeFilterCount} نشط)',
+                    _totalMatched == null
+                        ? (_query.activeFilterCount == 0 ? 'الفلاتر' : 'الفلاتر (${_query.activeFilterCount})')
+                        : 'النتائج: $_totalMatched',
                   ),
-                  subtitle: const Text('الاختيارات المتعددة داخل الحقل = أو، وبين الحقول = و'),
+                  subtitle: Text(
+                    _facets.staleSelections.isEmpty
+                        ? 'اختاري ما يناسبك ثم امسحي أي فلتر بسهولة'
+                        : 'بعض الاختيارات لم تعد متاحة في النتائج الحالية',
+                  ),
                 ),
                 if (widget.lane == null) ...[
                   ListTile(title: const Text('كل الأنواع'), onTap: () => Navigator.pop(context, 'all')),
@@ -441,70 +485,114 @@ class _DiscoverPresentationScreenState extends State<DiscoverPresentationScreen>
                   ListTile(title: const Text('عيادات'), onTap: () => Navigator.pop(context, 'clinic')),
                   ListTile(title: const Text('مشاغل'), onTap: () => Navigator.pop(context, 'salon')),
                 ],
-                for (final city in _cities)
+                const ListTile(title: Text('المدينة')),
+                for (final city in cityBuckets)
                   ListTile(
-                    title: Text(city),
-                    trailing: _query.city == city ? const Icon(Icons.check) : null,
-                    onTap: () => Navigator.pop(context, 'city:$city'),
+                    title: Text(city.displayLabel),
+                    subtitle: city.count > 0 ? Text('${city.count}') : null,
+                    trailing: _query.city == city.id ? const Icon(Icons.check) : null,
+                    onTap: () => Navigator.pop(context, 'city:${city.id}'),
                   ),
                 if (elegance) ...[
                   const Divider(),
-                  const ListTile(title: Text('لون التركيبة')),
-                  ListTile(
-                    title: const Text('أسود'),
-                    trailing: _query.colors.contains('black') ? const Icon(Icons.check) : null,
-                    onTap: () => Navigator.pop(context, 'color:black'),
-                  ),
-                  ListTile(
-                    title: const Text('أبيض'),
-                    trailing: _query.colors.contains('white') ? const Icon(Icons.check) : null,
-                    onTap: () => Navigator.pop(context, 'color:white'),
-                  ),
-                  const ListTile(title: Text('مقاس التركيبة')),
-                  for (final size in const ['xs', 's', 'm', 'l', 'xl'])
+                  const ListTile(title: Text('اللون')),
+                  if (colorBuckets.isEmpty)
+                    const ListTile(title: Text('لا توجد ألوان منشورة مطابقة حاليًا')),
+                  for (final color in colorBuckets)
                     ListTile(
-                      title: Text(size.toUpperCase()),
-                      trailing: _query.sizes.contains(size) ? const Icon(Icons.check) : null,
-                      onTap: () => Navigator.pop(context, 'size:$size'),
+                      leading: CircleAvatar(
+                        radius: 12,
+                        backgroundColor: _swatchColor(color.swatchHex) ?? Colors.grey.shade300,
+                        child: _query.colors.contains(color.id)
+                            ? const Icon(Icons.check, size: 14, color: Colors.white)
+                            : null,
+                      ),
+                      title: Text(color.displayLabel),
+                      subtitle: Text(
+                        [
+                          if (color.count > 0) '${color.count}',
+                          if (color.swatchHex == null) 'لون غير محدد',
+                        ].join(' · '),
+                      ),
+                      trailing: _query.colors.contains(color.id) ? const Icon(Icons.check) : null,
+                      onTap: () => Navigator.pop(context, 'color:${color.id}'),
+                    ),
+                  const ListTile(title: Text('المقاس')),
+                  if (sizeBuckets.isEmpty)
+                    const ListTile(title: Text('لا توجد مقاسات منشورة مطابقة حاليًا')),
+                  for (final size in sizeBuckets)
+                    ListTile(
+                      title: Text(size.displayLabel),
+                      subtitle: size.count > 0 ? Text('${size.count}') : null,
+                      trailing: _query.sizes.contains(size.id) ? const Icon(Icons.check) : null,
+                      onTap: () => Navigator.pop(context, 'size:${size.id}'),
                     ),
                   SwitchListTile(
                     title: const Text('المتاح بالمخزون فقط'),
                     value: _query.inStock == true,
                     onChanged: (_) => Navigator.pop(context, 'stock'),
                   ),
+                  ListTile(
+                    title: Text(
+                      _query.priceMaxHalalas == null
+                          ? 'حد أعلى للسعر'
+                          : 'حد أعلى للسعر: ${(_query.priceMaxHalalas! / 100).round()} ر.س',
+                    ),
+                    onTap: () => Navigator.pop(context, 'priceMax'),
+                  ),
                 ],
                 if (beauty) ...[
                   const Divider(),
                   const ListTile(title: Text('مكان تقديم الخدمة')),
-                  for (final mode in const [
-                    ('branch', 'في الفرع'),
-                    ('home', 'منزلية'),
-                    ('remote', 'عن بعد'),
-                    ('either', 'مرن'),
-                  ])
+                  for (final mode in placeBuckets)
                     ListTile(
-                      title: Text(mode.$2),
-                      trailing: _query.placeModes.contains(mode.$1) ? const Icon(Icons.check) : null,
-                      onTap: () => Navigator.pop(context, 'place:${mode.$1}'),
+                      title: Text(placeLabels[mode.id] ?? mode.displayLabel),
+                      subtitle: mode.count > 0 ? Text('${mode.count}') : null,
+                      trailing: _query.placeModes.contains(mode.id) ? const Icon(Icons.check) : null,
+                      onTap: () => Navigator.pop(context, 'place:${mode.id}'),
                     ),
+                  if (_facets.branch.isNotEmpty) ...[
+                    const ListTile(title: Text('الفرع')),
+                    for (final branch in _facets.branch)
+                      ListTile(
+                        title: Text(branch.displayLabel),
+                        subtitle: branch.count > 0 ? Text('${branch.count}') : null,
+                        trailing: _query.branchIds.contains(branch.id) ? const Icon(Icons.check) : null,
+                        onTap: () => Navigator.pop(context, 'branch:${branch.id}'),
+                      ),
+                  ],
+                  ListTile(
+                    title: Text(
+                      _query.availableOn == null ? 'تاريخ الإتاحة' : 'تاريخ الإتاحة: ${_query.availableOn}',
+                    ),
+                    onTap: () => Navigator.pop(context, 'availableOn'),
+                  ),
+                  ListTile(
+                    title: Text(
+                      _query.durationMax == null
+                          ? 'أقصى مدة للخدمة'
+                          : 'أقصى مدة: ${_query.durationMax} دقيقة',
+                    ),
+                    onTap: () => Navigator.pop(context, 'durationMax'),
+                  ),
                 ],
                 const Divider(),
                 ListTile(
-                  title: const Text('ترتيب: المعرّف'),
+                  title: const Text('الأحدث إضافة'),
                   trailing: _query.sort == 'key' ? const Icon(Icons.check) : null,
                   onTap: () => Navigator.pop(context, 'sort:key'),
                 ),
                 ListTile(
-                  title: const Text('ترتيب: السعر تصاعدي'),
+                  title: const Text('السعر: من الأقل للأعلى'),
                   trailing: _query.sort == 'price_asc' ? const Icon(Icons.check) : null,
                   onTap: () => Navigator.pop(context, 'sort:price_asc'),
                 ),
                 ListTile(
-                  title: const Text('ترتيب: السعر تنازلي'),
+                  title: const Text('السعر: من الأعلى للأقل'),
                   trailing: _query.sort == 'price_desc' ? const Icon(Icons.check) : null,
                   onTap: () => Navigator.pop(context, 'sort:price_desc'),
                 ),
-                ListTile(title: const Text('مسح الفلاتر'), onTap: () => Navigator.pop(context, 'clear')),
+                ListTile(title: const Text('مسح كل الفلاتر'), onTap: () => Navigator.pop(context, 'clear')),
               ],
             ),
           ),
@@ -516,9 +604,13 @@ class _DiscoverPresentationScreenState extends State<DiscoverPresentationScreen>
       _search.clear();
       await _reload(DiscoverCatalogQuery(lane: widget.lane, requireVisual: widget.lane != null));
     } else if (type == 'all') {
-      await _reload(_query.copyWith(clearType: true, clearCategory: true));
+      await _reload(_query.copyWith(clearType: true, clearCategory: true).withoutInapplicableFilters());
     } else if (type.startsWith('city:')) {
-      await _reload(_query.copyWith(city: type.substring(5)));
+      final city = type.substring(5);
+      await _reload(
+        (_query.city == city ? _query.copyWith(clearCity: true) : _query.copyWith(city: city))
+            .withoutInapplicableFilters(),
+      );
     } else if (type.startsWith('color:')) {
       final id = type.substring(6);
       final next = [..._query.colors];
@@ -527,7 +619,7 @@ class _DiscoverPresentationScreenState extends State<DiscoverPresentationScreen>
       } else {
         next.add(id);
       }
-      await _reload(_query.copyWith(colors: next, requestFacets: true));
+      await _reload(_query.copyWith(colors: next).withoutInapplicableFilters());
     } else if (type.startsWith('size:')) {
       final id = type.substring(5);
       final next = [..._query.sizes];
@@ -536,7 +628,7 @@ class _DiscoverPresentationScreenState extends State<DiscoverPresentationScreen>
       } else {
         next.add(id);
       }
-      await _reload(_query.copyWith(sizes: next, requestFacets: true));
+      await _reload(_query.copyWith(sizes: next).withoutInapplicableFilters());
     } else if (type.startsWith('place:')) {
       final id = type.substring(6);
       final next = [..._query.placeModes];
@@ -545,17 +637,57 @@ class _DiscoverPresentationScreenState extends State<DiscoverPresentationScreen>
       } else {
         next.add(id);
       }
-      await _reload(_query.copyWith(placeModes: next, requestFacets: true));
+      await _reload(_query.copyWith(placeModes: next).withoutInapplicableFilters());
+    } else if (type.startsWith('branch:')) {
+      final id = type.substring(7);
+      final next = [..._query.branchIds];
+      if (next.contains(id)) {
+        next.remove(id);
+      } else {
+        next.add(id);
+      }
+      await _reload(_query.copyWith(branchIds: next).withoutInapplicableFilters());
     } else if (type == 'stock') {
       await _reload(_query.copyWith(
         inStock: _query.inStock == true ? null : true,
         clearInStock: _query.inStock == true,
-        requestFacets: true,
-      ));
+      ).withoutInapplicableFilters());
+    } else if (type == 'priceMax') {
+      final next = _query.priceMaxHalalas == null
+          ? 20000
+          : _query.priceMaxHalalas == 20000
+              ? 50000
+              : null;
+      await _reload(
+        (next == null ? _query.copyWith(clearPrice: true) : _query.copyWith(priceMaxHalalas: next))
+            .withoutInapplicableFilters(),
+      );
+    } else if (type == 'durationMax') {
+      final next = _query.durationMax == null
+          ? 60
+          : _query.durationMax == 60
+              ? 120
+              : null;
+      await _reload(
+        (next == null ? _query.copyWith(clearDuration: true) : _query.copyWith(durationMax: next))
+            .withoutInapplicableFilters(),
+      );
+    } else if (type == 'availableOn') {
+      final picked = await showDatePicker(
+        context: context,
+        initialDate: DateTime.now().add(const Duration(days: 1)),
+        firstDate: DateTime.now(),
+        lastDate: DateTime.now().add(const Duration(days: 60)),
+        locale: const Locale('ar'),
+      );
+      if (!mounted || picked == null) return;
+      final key =
+          '${picked.year.toString().padLeft(4, '0')}-${picked.month.toString().padLeft(2, '0')}-${picked.day.toString().padLeft(2, '0')}';
+      await _reload(_query.copyWith(availableOn: key).withoutInapplicableFilters());
     } else if (type.startsWith('sort:')) {
-      await _reload(_query.copyWith(sort: type.substring(5)));
+      await _reload(_query.copyWith(sort: type.substring(5)).withoutInapplicableFilters());
     } else {
-      await _reload(_query.copyWith(partnerType: type, clearCategory: true));
+      await _reload(_query.copyWith(partnerType: type, clearCategory: true).withoutInapplicableFilters());
     }
   }
 
@@ -1286,11 +1418,22 @@ class _PresentationPageState extends State<_PresentationPage> {
         if (_cartBusy) return;
         _cartBusy = true;
         try {
-          var selected = const <String, String>{};
+          var selected = Map<String, String>.from(widget.slide.matchedVariantSelections);
           if (product!.optionGroups.isNotEmpty) {
-            final picked = await _pickOptions(context, product);
-            if (picked == null || !context.mounted) return;
-            selected = picked;
+            final matchedIds = widget.slide.matchedVariantIds;
+            final needsPick = selected.isEmpty ||
+                matchedIds.length > 1 ||
+                CatalogOptionJson.firstMissing(groups: product.optionGroups, selected: selected) != null;
+            if (needsPick) {
+              final picked = await _pickOptions(
+                context,
+                product,
+                initialSelected: selected,
+                allowedVariantIds: matchedIds,
+              );
+              if (picked == null || !context.mounted) return;
+              selected = picked;
+            }
           }
           await CommerceCartActions.addToCart(
             context,
@@ -1308,17 +1451,27 @@ class _PresentationPageState extends State<_PresentationPage> {
     }
   }
 
-  Future<Map<String, String>?> _pickOptions(BuildContext context, CatalogProduct product) {
+  Future<Map<String, String>?> _pickOptions(
+    BuildContext context,
+    CatalogProduct product, {
+    Map<String, String> initialSelected = const {},
+    List<String> allowedVariantIds = const [],
+  }) {
     return showModalBottomSheet<Map<String, String>>(
       context: context,
       backgroundColor: AppColors.surface,
-      builder: (sheetContext) => _DiscoverOptionSheet(product: product),
+      builder: (sheetContext) => _DiscoverOptionSheet(
+        product: product,
+        initialSelected: initialSelected,
+        allowedVariantIds: allowedVariantIds,
+      ),
     );
   }
 
   void _openDetails(BuildContext context) {
     final kind = widget.slide.product != null ? 'product' : 'service';
     final initial = widget.slide.matchedVariantSelections;
+    final matchedIds = widget.slide.matchedVariantIds;
     Navigator.of(context).push(
       MaterialPageRoute<void>(
         builder: (_) => CatalogRecordScope.page(
@@ -1326,7 +1479,8 @@ class _PresentationPageState extends State<_PresentationPage> {
           id: widget.slide.entityId,
           transport: widget.source ?? CatalogTransport.localCatalog,
           gateway: widget.records,
-          initialSelections: initial.isEmpty ? null : initial,
+          initialSelections: matchedIds.length == 1 && initial.isNotEmpty ? initial : null,
+          matchedVariantIds: matchedIds.isEmpty ? null : matchedIds,
         ),
       ),
     );
@@ -1334,20 +1488,66 @@ class _PresentationPageState extends State<_PresentationPage> {
 }
 
 class _DiscoverOptionSheet extends StatefulWidget {
-  const _DiscoverOptionSheet({required this.product});
+  const _DiscoverOptionSheet({
+    required this.product,
+    this.initialSelected = const {},
+    this.allowedVariantIds = const [],
+  });
 
   final CatalogProduct product;
+  final Map<String, String> initialSelected;
+  final List<String> allowedVariantIds;
 
   @override
   State<_DiscoverOptionSheet> createState() => _DiscoverOptionSheetState();
 }
 
 class _DiscoverOptionSheetState extends State<_DiscoverOptionSheet> {
-  Map<String, String> _selected = const {};
+  late Map<String, String> _selected = Map<String, String>.from(widget.initialSelected);
+
+  List<CatalogProductVariant> get _variants {
+    if (widget.allowedVariantIds.isEmpty) return widget.product.variants;
+    final allowed = widget.allowedVariantIds.toSet();
+    final filtered = widget.product.variants.where((v) => allowed.contains(v.id)).toList();
+    return filtered.isEmpty ? widget.product.variants : filtered;
+  }
+
+  CatalogProduct get _scopedProduct {
+    final variants = _variants;
+    if (identical(variants, widget.product.variants)) return widget.product;
+    return CatalogProduct(
+      id: widget.product.id,
+      partnerId: widget.product.partnerId,
+      partnerNameAr: widget.product.partnerNameAr,
+      partnerEmoji: widget.product.partnerEmoji,
+      nameAr: widget.product.nameAr,
+      nameEn: widget.product.nameEn,
+      descriptionAr: widget.product.descriptionAr,
+      priceHalalas: widget.product.priceHalalas,
+      priceLabel: widget.product.priceLabel,
+      priceKnown: widget.product.priceKnown,
+      externalUrl: widget.product.externalUrl,
+      stepAr: widget.product.stepAr,
+      contactPhone: widget.product.contactPhone,
+      matchScore: widget.product.matchScore,
+      matchKnown: widget.product.matchKnown,
+      category: widget.product.category,
+      concernTags: widget.product.concernTags,
+      media: widget.product.media,
+      mainOfferKind: widget.product.mainOfferKind,
+      optionGroups: widget.product.optionGroups,
+      variants: variants,
+      traits: widget.product.traits,
+      purchaseMode: widget.product.purchaseMode,
+      stockQty: widget.product.stockQty,
+      deliveryFeeHalalas: widget.product.deliveryFeeHalalas,
+    );
+  }
 
   @override
   Widget build(BuildContext context) {
     final missing = CatalogOptionJson.firstMissing(groups: widget.product.optionGroups, selected: _selected);
+    final multi = widget.allowedVariantIds.length > 1;
     return SafeArea(
       child: Padding(
         padding: const EdgeInsets.fromLTRB(16, 12, 16, 16),
@@ -1355,10 +1555,11 @@ class _DiscoverOptionSheetState extends State<_DiscoverOptionSheet> {
           mainAxisSize: MainAxisSize.min,
           crossAxisAlignment: CrossAxisAlignment.stretch,
           children: [
-            Text('اختاري الخيارات', style: AppTypography.titleMedium),
+            Text(multi ? 'اختاري من النتائج المطابقة' : 'اختاري الخيارات', style: AppTypography.titleMedium),
             const SizedBox(height: 12),
             ProductOptionSelector(
-              product: widget.product,
+              product: _scopedProduct,
+              initialSelected: widget.initialSelected,
               onChanged: (selected, _) => setState(() => _selected = selected),
             ),
             const SizedBox(height: 12),

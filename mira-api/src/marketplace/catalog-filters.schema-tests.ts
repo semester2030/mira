@@ -8,6 +8,7 @@ import {
   type CatalogFilterItem,
 } from './catalog-filters';
 import { parseVariants } from './commerce.types';
+// filterCatalogItems used in C03 facet↔result equality check.
 
 const dress: CatalogFilterItem = {
   kind: 'product',
@@ -60,6 +61,72 @@ const dress: CatalogFilterItem = {
     ['v-black-m'],
   );
   assert.equal(hit!.effectivePriceHalalas, 11000);
+}
+
+// C03: black/M @100 vs white/M @500 with max 200 — white must not count as a matching color option.
+{
+  const priced: CatalogFilterItem = {
+    ...dress,
+    variantsJson: [
+      { id: 'bm', selections: { color: 'black', size: 'm' }, priceHalalas: 10000, available: true },
+      { id: 'wm', selections: { color: 'white', size: 'm' }, priceHalalas: 50000, available: true },
+    ],
+  };
+  const facets = buildCatalogFacets([priced], {
+    variantSelections: { size: ['m'] },
+    priceMaxHalalas: 20000,
+  });
+  assert.ok(facets['variant.color'].some((b) => b.id === 'black' && b.count === 1));
+  assert.equal(
+    facets['variant.color'].find((b) => b.id === 'white')?.count ?? 0,
+    0,
+    'white above price max must not appear in color facets',
+  );
+  assert.equal(matchCatalogItem(priced, { variantSelections: { color: ['white'], size: ['m'] }, priceMaxHalalas: 20000 }), null);
+}
+
+// C03: base price 100, sole variant 500 — max 200 must not match as purchasable at base.
+{
+  const inheritedTrap: CatalogFilterItem = {
+    ...dress,
+    priceHalalas: 10000,
+    variantsJson: [{ id: 'only', selections: { color: 'black', size: 'm' }, priceHalalas: 50000, available: true }],
+  };
+  assert.equal(matchCatalogItem(inheritedTrap, { priceMaxHalalas: 20000 }), null);
+  const inheritOk: CatalogFilterItem = {
+    ...dress,
+    priceHalalas: 10000,
+    variantsJson: [{ id: 'only', selections: { color: 'black', size: 'm' }, priceHalalas: null, available: true }],
+  };
+  const hit = matchCatalogItem(inheritOk, { priceMaxHalalas: 20000, variantSelections: { color: ['black'], size: ['m'] } });
+  assert.ok(hit);
+  assert.equal(hit!.matchedVariants[0]?.priceInherited, true);
+  assert.equal(hit!.matchedVariants[0]?.priceHalalas, 10000);
+}
+
+// C03: facet count equals result count for a single color pick.
+{
+  const items: CatalogFilterItem[] = [
+    {
+      ...dress,
+      id: 'a',
+      variantsJson: [{ id: 'a1', selections: { color: 'black', size: 'm' }, priceHalalas: 10000, available: true }],
+    },
+    {
+      ...dress,
+      id: 'b',
+      variantsJson: [{ id: 'b1', selections: { color: 'black', size: 's' }, priceHalalas: 10000, available: true }],
+    },
+    {
+      ...dress,
+      id: 'c',
+      variantsJson: [{ id: 'c1', selections: { color: 'white', size: 'm' }, priceHalalas: 10000, available: true }],
+    },
+  ];
+  const facets = buildCatalogFacets(items, { variantSelections: { size: ['m'] } });
+  const blackCount = facets['variant.color'].find((b) => b.id === 'black')?.count ?? 0;
+  const results = filterCatalogItems(items, { variantSelections: { color: ['black'], size: ['m'] } });
+  assert.equal(blackCount, results.length);
 }
 
 // OR within color, AND with size.

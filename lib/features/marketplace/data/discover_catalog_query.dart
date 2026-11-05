@@ -103,9 +103,15 @@ class DiscoverCatalogQuery {
     this.colors = const [],
     this.sizes = const [],
     this.placeModes = const [],
+    this.branchIds = const [],
     this.inStock,
+    this.priceMinHalalas,
+    this.priceMaxHalalas,
+    this.durationMin,
+    this.durationMax,
+    this.availableOn,
     this.sort = 'key',
-    this.requestFacets = false,
+    this.requestFacets = true,
   });
 
   final String text;
@@ -125,8 +131,19 @@ class DiscoverCatalogQuery {
   /// Service placeMode ids (OR within). Empty = unset.
   final List<String> placeModes;
 
+  /// Service branch ids from partner profile answers.
+  final List<String> branchIds;
+
   /// When true, only in-stock (sellable) matches. Null = no stock filter.
   final bool? inStock;
+
+  final int? priceMinHalalas;
+  final int? priceMaxHalalas;
+  final int? durationMin;
+  final int? durationMax;
+
+  /// Service calendar date YYYY-MM-DD (Asia/Riyadh).
+  final String? availableOn;
 
   /// Server sort: key | price_asc | price_desc
   final String sort;
@@ -142,9 +159,29 @@ class DiscoverCatalogQuery {
     if (colors.isNotEmpty) n += 1;
     if (sizes.isNotEmpty) n += 1;
     if (placeModes.isNotEmpty) n += 1;
+    if (branchIds.isNotEmpty) n += 1;
     if (inStock != null) n += 1;
+    if (priceMinHalalas != null || priceMaxHalalas != null) n += 1;
+    if (durationMin != null || durationMax != null) n += 1;
+    if (availableOn != null && availableOn!.isNotEmpty) n += 1;
     if (sort != 'key') n += 1;
     return n;
+  }
+
+  /// Drop product-only or service-only filters when the lane cannot use them.
+  DiscoverCatalogQuery withoutInapplicableFilters() {
+    if (lane == DiscoverLane.elegance) {
+      return copyWith(
+        clearPlaceModes: true,
+        clearBranchIds: true,
+        clearAvailableOn: true,
+        clearDuration: true,
+      );
+    }
+    if (lane == DiscoverLane.beauty) {
+      return copyWith(clearColors: true, clearSizes: true, clearInStock: true);
+    }
+    return this;
   }
 
   DiscoverCatalogQuery copyWith({
@@ -158,7 +195,13 @@ class DiscoverCatalogQuery {
     List<String>? colors,
     List<String>? sizes,
     List<String>? placeModes,
+    List<String>? branchIds,
     bool? inStock,
+    int? priceMinHalalas,
+    int? priceMaxHalalas,
+    int? durationMin,
+    int? durationMax,
+    String? availableOn,
     String? sort,
     bool? requestFacets,
     bool clearType = false,
@@ -169,7 +212,11 @@ class DiscoverCatalogQuery {
     bool clearColors = false,
     bool clearSizes = false,
     bool clearPlaceModes = false,
+    bool clearBranchIds = false,
     bool clearInStock = false,
+    bool clearPrice = false,
+    bool clearDuration = false,
+    bool clearAvailableOn = false,
   }) {
     return DiscoverCatalogQuery(
       text: text ?? this.text,
@@ -182,7 +229,13 @@ class DiscoverCatalogQuery {
       colors: clearColors ? const [] : colors ?? this.colors,
       sizes: clearSizes ? const [] : sizes ?? this.sizes,
       placeModes: clearPlaceModes ? const [] : placeModes ?? this.placeModes,
+      branchIds: clearBranchIds ? const [] : branchIds ?? this.branchIds,
       inStock: clearInStock ? null : inStock ?? this.inStock,
+      priceMinHalalas: clearPrice ? null : priceMinHalalas ?? this.priceMinHalalas,
+      priceMaxHalalas: clearPrice ? null : priceMaxHalalas ?? this.priceMaxHalalas,
+      durationMin: clearDuration ? null : durationMin ?? this.durationMin,
+      durationMax: clearDuration ? null : durationMax ?? this.durationMax,
+      availableOn: clearAvailableOn ? null : availableOn ?? this.availableOn,
       sort: sort ?? this.sort,
       requestFacets: requestFacets ?? this.requestFacets,
     );
@@ -193,7 +246,11 @@ class DiscoverCatalogQuery {
       clearColors: true,
       clearSizes: true,
       clearPlaceModes: true,
+      clearBranchIds: true,
       clearInStock: true,
+      clearPrice: true,
+      clearDuration: true,
+      clearAvailableOn: true,
       sort: 'key',
     );
   }

@@ -1,10 +1,10 @@
 import 'package:flutter/material.dart';
 
-import '../../../../core/constants/marketplace_copy.dart';
 import '../../../../shared/theme/colors.dart';
 import '../../../../shared/theme/typography.dart';
 import '../../data/catalog_provenance.dart';
 import '../../data/discover_catalog_gateway.dart';
+import '../../domain/entities/catalog_product.dart';
 import '../widgets/marketplace_data_banner.dart';
 import 'product_detail_screen.dart';
 import 'service_detail_screen.dart';
@@ -19,6 +19,7 @@ class CatalogRecordPage extends StatefulWidget {
     this.matchKnown = false,
     this.matchScore = 0,
     this.initialSelections,
+    this.matchedVariantIds,
   });
 
   final DiscoverCatalogGateway gateway;
@@ -28,6 +29,7 @@ class CatalogRecordPage extends StatefulWidget {
   final bool matchKnown;
   final int matchScore;
   final Map<String, String>? initialSelections;
+  final List<String>? matchedVariantIds;
 
   @override
   State<CatalogRecordPage> createState() => _CatalogRecordPageState();
@@ -86,8 +88,47 @@ class _CatalogRecordPageState extends State<CatalogRecordPage> {
             : MarketplaceDataBanner(transport: result.transport!, contentMark: result.contentMark!);
         final product = result.product;
         if (product != null) {
+          final scoped = () {
+            final ids = widget.matchedVariantIds;
+            if (ids == null || ids.isEmpty || ids.length <= 1) {
+              return widget.matchKnown ? product.withKnownMatch(widget.matchScore) : product;
+            }
+            final allowed = ids.toSet();
+            final variants = product.variants.where((v) => allowed.contains(v.id)).toList();
+            if (variants.isEmpty) {
+              return widget.matchKnown ? product.withKnownMatch(widget.matchScore) : product;
+            }
+            final base = widget.matchKnown ? product.withKnownMatch(widget.matchScore) : product;
+            return CatalogProduct(
+              id: base.id,
+              partnerId: base.partnerId,
+              partnerNameAr: base.partnerNameAr,
+              partnerEmoji: base.partnerEmoji,
+              nameAr: base.nameAr,
+              nameEn: base.nameEn,
+              descriptionAr: base.descriptionAr,
+              priceHalalas: base.priceHalalas,
+              priceLabel: base.priceLabel,
+              priceKnown: base.priceKnown,
+              externalUrl: base.externalUrl,
+              stepAr: base.stepAr,
+              contactPhone: base.contactPhone,
+              matchScore: base.matchScore,
+              matchKnown: base.matchKnown,
+              category: base.category,
+              concernTags: base.concernTags,
+              media: base.media,
+              mainOfferKind: base.mainOfferKind,
+              optionGroups: base.optionGroups,
+              variants: variants,
+              traits: base.traits,
+              purchaseMode: base.purchaseMode,
+              stockQty: base.stockQty,
+              deliveryFeeHalalas: base.deliveryFeeHalalas,
+            );
+          }();
           return ProductDetailScreen(
-            product: widget.matchKnown ? product.withKnownMatch(widget.matchScore) : product,
+            product: scoped,
             provenance: banner,
             initialSelections: widget.initialSelections,
           );

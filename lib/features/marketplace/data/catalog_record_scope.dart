@@ -14,6 +14,7 @@ abstract final class CatalogRecordScope {
     bool matchKnown = false,
     int matchScore = 0,
     Map<String, String>? initialSelections,
+    List<String>? matchedVariantIds,
   }) {
     final resolvedTransport = transport ?? (MiraApiConfig.useBackend ? CatalogTransport.server : CatalogTransport.localCatalog);
     final useServer = resolvedTransport == CatalogTransport.server;
@@ -25,6 +26,7 @@ abstract final class CatalogRecordScope {
       matchKnown: matchKnown,
       matchScore: matchScore,
       initialSelections: initialSelections,
+      matchedVariantIds: matchedVariantIds,
     );
   }
 }

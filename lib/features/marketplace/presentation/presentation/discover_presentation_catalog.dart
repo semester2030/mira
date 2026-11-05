@@ -184,6 +184,7 @@ abstract final class DiscoverPresentationCatalog {
       mainOfferKind: kind,
       videoCoverPath: cover?.url,
       matchedVariantSelections: offer.matchedVariantSelections,
+      matchedVariantIds: offer.matchedVariantIds,
       media: [
         for (final item in mains)
           PresentationMedia(

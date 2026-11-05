@@ -45,6 +45,10 @@ export type CatalogFilterInput = {
   durationMin?: number | null;
   durationMax?: number | null;
   placeModes?: string[];
+  /** Partner branch ids from serviceProfileJson.answers.branchId when present. */
+  branchIds?: string[];
+  /** Local Asia/Riyadh date YYYY-MM-DD — calendar day must not be closed/unconfigured. */
+  availableOn?: string;
   sort?: CatalogSort;
 };
 
@@ -63,6 +67,11 @@ export type CatalogFilterItem = {
   priceHalalas: number | null;
   durationMin?: number | null;
   placeMode?: string | null;
+  branchId?: string | null;
+  /** Raw availability document for calendar-day eligibility (services). */
+  availabilityJson?: unknown;
+  /** Precomputed: true when availableOn calendar day is bookable at schedule level (no holds). */
+  availableOnDay?: boolean | null;
   optionsJson?: unknown;
   variantsJson?: unknown;
   /** Product-level sellable qty; null = untracked. */
@@ -75,7 +84,10 @@ export type CatalogFilterItem = {
 
 export type MatchedVariant = {
   variantId: string;
+  /** Effective unit price after product inheritance (null only when both variant and product unknown). */
   priceHalalas: number | null;
+  /** True when price came from the product base (variant had no own price). */
+  priceInherited: boolean;
   selections: Record<string, string>;
 };
 
@@ -159,6 +171,11 @@ export function parseCatalogFilterQuery(params: Record<string, string | undefine
     return { ok: false, reason: 'invalid_in_stock', messageAr: 'قيمة التوفر غير صالحة' };
   }
 
+  const availableOn = (params.availableOn ?? '').trim();
+  if (availableOn && !/^\d{4}-\d{2}-\d{2}$/.test(availableOn)) {
+    return { ok: false, reason: 'invalid_available_on', messageAr: 'تاريخ الإتاحة غير صالح (YYYY-MM-DD)' };
+  }
+
   return {
     ok: true,
     filter: {
@@ -175,9 +192,20 @@ export function parseCatalogFilterQuery(params: Record<string, string | undefine
       durationMin,
       durationMax,
       placeModes: splitCsv(params.placeMode),
+      branchIds: splitCsv(params.branch ?? params.branchId),
+      availableOn: availableOn || undefined,
       sort: sortRaw as CatalogSort,
     },
   };
+}
+
+/** Effective sell price for a variant: own price, else product base, else null (unknown). */
+export function effectiveVariantPrice(
+  variant: ProductVariant,
+  item: Pick<CatalogFilterItem, 'priceHalalas'>,
+): { priceHalalas: number | null; inherited: boolean } {
+  if (variant.priceHalalas != null) return { priceHalalas: variant.priceHalalas, inherited: false };
+  return { priceHalalas: item.priceHalalas, inherited: item.priceHalalas != null };
 }
 
 /** True when a public variant satisfies every variant filter field (AND) with OR within each field. */
@@ -217,16 +245,46 @@ function variantInStock(item: CatalogFilterItem, variant: ProductVariant): boole
   return (sellable ?? 0) > 0;
 }
 
-function extractPlaceMode(profileJson: unknown): string | null {
+function profileAnswers(profileJson: unknown): Record<string, unknown> | null {
   if (!profileJson || typeof profileJson !== 'object' || Array.isArray(profileJson)) return null;
   const answers = (profileJson as { answers?: unknown }).answers;
   if (!answers || typeof answers !== 'object' || Array.isArray(answers)) return null;
-  const raw = (answers as Record<string, unknown>).placeMode ?? (answers as Record<string, unknown>).place_mode;
+  return answers as Record<string, unknown>;
+}
+
+function extractPlaceMode(profileJson: unknown): string | null {
+  const answers = profileAnswers(profileJson);
+  if (!answers) return null;
+  const raw = answers.placeMode ?? answers.place_mode;
+  return typeof raw === 'string' && raw.length > 0 ? raw : null;
+}
+
+function extractBranchId(profileJson: unknown): string | null {
+  const answers = profileAnswers(profileJson);
+  if (!answers) return null;
+  const raw = answers.branchId ?? answers.branch_id;
   return typeof raw === 'string' && raw.length > 0 ? raw : null;
 }
 
 export function placeModeFromServiceProfile(profileJson: unknown): string | null {
   return extractPlaceMode(profileJson);
+}
+
+export function branchIdFromServiceProfile(profileJson: unknown): string | null {
+  return extractBranchId(profileJson);
+}
+
+/** Whether a public variant passes stock + price constraints for the active filter. */
+export function variantPassesCommerceConstraints(
+  item: CatalogFilterItem,
+  variant: ProductVariant,
+  filter: CatalogFilterInput,
+): boolean {
+  if (!variant.available) return false;
+  if (filter.inStock === true && !variantInStock(item, variant)) return false;
+  if (filter.inStock === false && variantInStock(item, variant)) return false;
+  const { priceHalalas } = effectiveVariantPrice(variant, item);
+  return priceInRange(priceHalalas, filter.priceMinHalalas, filter.priceMaxHalalas);
 }
 
 function priceInRange(price: number | null, min?: number | null, max?: number | null): boolean {
@@ -262,70 +320,86 @@ export function matchCatalogItem(item: CatalogFilterItem, filter: CatalogFilterI
     if (filter.placeModes && filter.placeModes.length > 0) {
       if (!item.placeMode || !filter.placeModes.includes(item.placeMode)) return null;
     }
+    if (filter.branchIds && filter.branchIds.length > 0) {
+      if (!item.branchId || !filter.branchIds.includes(item.branchId)) return null;
+    }
     if (filter.durationMin != null || filter.durationMax != null) {
       if (item.durationMin == null) return null;
       if (filter.durationMin != null && item.durationMin < filter.durationMin) return null;
       if (filter.durationMax != null && item.durationMin > filter.durationMax) return null;
     }
     if (!priceInRange(item.priceHalalas, filter.priceMinHalalas, filter.priceMaxHalalas)) return null;
+    if (filter.availableOn) {
+      // availableOnDay is precomputed from the same calendar document used by booking.
+      if (item.availableOnDay !== true) return null;
+    }
     if (filter.inStock === true) {
       // Services: inStock is not applicable; ignore rather than invent availability.
     }
     return { item, matchedVariants: [], effectivePriceHalalas: item.priceHalalas };
   }
 
-  // Product path
+  // Product path — service-only filters do not apply.
   if (filter.placeModes && filter.placeModes.length > 0) return null;
+  if (filter.branchIds && filter.branchIds.length > 0) return null;
   if (filter.durationMin != null || filter.durationMax != null) return null;
+  if (filter.availableOn) return null;
 
   const variants = parseVariants(item.variantsJson);
   const hasVariantFilters = Object.keys(filter.variantSelections ?? {}).length > 0;
+  const needsVariantScope =
+    hasVariantFilters ||
+    filter.priceMinHalalas != null ||
+    filter.priceMaxHalalas != null ||
+    filter.inStock != null;
 
-  if (hasVariantFilters) {
+  if (variants.length > 0) {
     const matched: MatchedVariant[] = [];
     for (const variant of variants) {
-      if (!variantMatchesSelections(variant, filter.variantSelections)) continue;
-      if (filter.inStock === true && !variantInStock(item, variant)) continue;
-      if (filter.inStock === false && variantInStock(item, variant)) continue;
-      const unitPrice = variant.priceHalalas ?? item.priceHalalas;
-      if (!priceInRange(unitPrice, filter.priceMinHalalas, filter.priceMaxHalalas)) continue;
+      if (hasVariantFilters && !variantMatchesSelections(variant, filter.variantSelections)) continue;
+      if (!variantPassesCommerceConstraints(item, variant, filter)) continue;
+      const priced = effectiveVariantPrice(variant, item);
       matched.push({
         variantId: variant.id,
-        priceHalalas: variant.priceHalalas,
+        priceHalalas: priced.priceHalalas,
+        priceInherited: priced.inherited,
         selections: { ...variant.selections },
       });
     }
-    if (matched.length === 0) return null;
-    const prices = matched.map((m) => m.priceHalalas ?? item.priceHalalas).filter((p): p is number => p != null);
+    if (needsVariantScope && matched.length === 0) return null;
+    if (!needsVariantScope) {
+      // Unconstrained browse: still expose a stable sort price from available variants.
+      const available = variants.filter((v) => v.available);
+      const prices = available
+        .map((v) => effectiveVariantPrice(v, item).priceHalalas)
+        .filter((p): p is number => p != null);
+      const effective =
+        filter.sort === 'price_desc'
+          ? prices.length
+            ? Math.max(...prices)
+            : item.priceHalalas
+          : prices.length
+            ? Math.min(...prices)
+            : item.priceHalalas;
+      return { item, matchedVariants: [], effectivePriceHalalas: effective };
+    }
+    const prices = matched.map((m) => m.priceHalalas).filter((p): p is number => p != null);
     const effective =
       filter.sort === 'price_desc'
         ? prices.length
           ? Math.max(...prices)
-          : item.priceHalalas
+          : null
         : prices.length
           ? Math.min(...prices)
-          : item.priceHalalas;
+          : null;
     return { item, matchedVariants: matched, effectivePriceHalalas: effective };
   }
 
-  // No variant filters — product-level price/stock.
+  // No variants — product-level price/stock only. Variant filters cannot match.
+  if (hasVariantFilters) return null;
   if (!priceInRange(item.priceHalalas, filter.priceMinHalalas, filter.priceMaxHalalas)) return null;
-  if (filter.inStock === true) {
-    if (item.inventoryMode === 'variant') {
-      const any = variants.some((v) => v.available && variantInStock(item, v));
-      if (!any) return null;
-    } else if (item.stockAvailable === false) {
-      return null;
-    }
-  }
-  if (filter.inStock === false) {
-    if (item.inventoryMode === 'variant') {
-      const any = variants.some((v) => v.available && variantInStock(item, v));
-      if (any) return null;
-    } else if (item.stockAvailable !== false) {
-      return null;
-    }
-  }
+  if (filter.inStock === true && item.stockAvailable === false) return null;
+  if (filter.inStock === false && item.stockAvailable !== false) return null;
 
   return { item, matchedVariants: [], effectivePriceHalalas: item.priceHalalas };
 }
@@ -363,7 +437,7 @@ export function sortCatalogMatches(matches: CatalogFilterMatch[], sort: CatalogS
   return copy;
 }
 
-export type FacetBucket = { id: string; count: number };
+export type FacetBucket = { id: string; labelAr?: string; count: number; swatchHex?: string | null };
 export type CatalogFacets = {
   /** Facet counts exclude the field's own filter and apply the rest (standard faceted search). */
   concern: FacetBucket[];
@@ -372,6 +446,7 @@ export type CatalogFacets = {
   'variant.color': FacetBucket[];
   'variant.size': FacetBucket[];
   placeMode: FacetBucket[];
+  branch: FacetBucket[];
   staleSelections: Array<{ field: string; value: string }>;
 };
 
@@ -380,13 +455,58 @@ function bump(map: Map<string, number>, id: string) {
   map.set(id, (map.get(id) ?? 0) + 1);
 }
 
-function toBuckets(map: Map<string, number>): FacetBucket[] {
+function toBuckets(
+  map: Map<string, number>,
+  labels?: Map<string, { labelAr?: string; swatchHex?: string | null }>,
+): FacetBucket[] {
   return [...map.entries()]
-    .map(([id, count]) => ({ id, count }))
+    .map(([id, count]) => ({
+      id,
+      count,
+      ...(labels?.get(id)?.labelAr ? { labelAr: labels.get(id)!.labelAr } : {}),
+      ...(labels?.get(id)?.swatchHex != null ? { swatchHex: labels.get(id)!.swatchHex } : {}),
+    }))
     .sort((a, b) => b.count - a.count || a.id.localeCompare(b.id));
 }
 
-/** Build facet counts: for each facet field, apply all filters except that field. */
+function collectOptionMeta(items: readonly CatalogFilterItem[], groupId: string) {
+  const meta = new Map<string, { labelAr?: string; swatchHex?: string | null }>();
+  for (const item of items) {
+    if (!Array.isArray(item.optionsJson)) continue;
+    for (const raw of item.optionsJson) {
+      if (!raw || typeof raw !== 'object' || Array.isArray(raw)) continue;
+      const group = raw as { id?: unknown; values?: unknown };
+      if (group.id !== groupId || !Array.isArray(group.values)) continue;
+      for (const value of group.values) {
+        if (!value || typeof value !== 'object' || Array.isArray(value)) continue;
+        const row = value as { id?: unknown; labelAr?: unknown; swatchHex?: unknown };
+        if (typeof row.id !== 'string' || !row.id || meta.has(row.id)) continue;
+        meta.set(row.id, {
+          labelAr: typeof row.labelAr === 'string' ? row.labelAr : row.id,
+          swatchHex: typeof row.swatchHex === 'string' ? row.swatchHex : null,
+        });
+      }
+    }
+  }
+  return meta;
+}
+
+/**
+ * Count offers (not variants) that would match if `valueId` were the sole selection for `groupId`,
+ * with all other filters held constant. Used so facet count == result count for a single-value pick.
+ */
+function countOffersForVariantValue(
+  items: readonly CatalogFilterItem[],
+  filter: CatalogFilterInput,
+  groupId: string,
+  valueId: string,
+): number {
+  const selections: Record<string, string[]> = { ...(filter.variantSelections ?? {}) };
+  selections[groupId] = [valueId];
+  return filterCatalogItems(items, { ...filter, variantSelections: selections }).length;
+}
+
+/** Build facet counts: for each facet field, apply all filters except that field. Counts are offers. */
 export function buildCatalogFacets(
   items: readonly CatalogFilterItem[],
   filter: CatalogFilterInput,
@@ -414,9 +534,13 @@ export function buildCatalogFacets(
   const colors = new Map<string, number>();
   const sizes = new Map<string, number>();
   const placeMode = new Map<string, number>();
+  const branch = new Map<string, number>();
 
   for (const hit of filterCatalogItems(items, without('tags'))) {
-    for (const tag of hit.item.concernTags) bump(concern, tag);
+    const seen = new Set<string>();
+    for (const tag of hit.item.concernTags) {
+      if (seen.add(tag)) bump(concern, tag);
+    }
   }
   for (const hit of filterCatalogItems(items, without('category'))) {
     if (hit.item.category) bump(category, hit.item.category);
@@ -424,42 +548,51 @@ export function buildCatalogFacets(
   for (const hit of filterCatalogItems(items, without('city'))) {
     bump(city, hit.item.city);
   }
+
+  // Candidate value ids from options that survive the rest of the filter (color field omitted).
+  const colorCandidates = new Set<string>();
   for (const hit of filterCatalogItems(items, without('variant.color'))) {
     if (hit.item.kind !== 'product') continue;
-    // Count distinct color values among variants that satisfy other variant filters.
     const other: Record<string, string[]> = { ...(filter.variantSelections ?? {}) };
     delete other.color;
     const otherSel = Object.keys(other).length ? other : undefined;
-    const seen = new Set<string>();
     for (const v of parseVariants(hit.item.variantsJson)) {
       if (!variantMatchesSelections(v, otherSel)) continue;
-      if (filter.inStock === true && !variantInStock(hit.item, v)) continue;
-      const c = v.selections.color;
-      if (c && !seen.has(c)) {
-        seen.add(c);
-        bump(colors, c);
-      }
+      if (!variantPassesCommerceConstraints(hit.item, v, { ...filter, variantSelections: otherSel })) continue;
+      if (v.selections.color) colorCandidates.add(v.selections.color);
     }
   }
+  for (const valueId of colorCandidates) {
+    const n = countOffersForVariantValue(items, without('variant.color'), 'color', valueId);
+    if (n > 0) colors.set(valueId, n);
+  }
+
+  const sizeCandidates = new Set<string>();
   for (const hit of filterCatalogItems(items, without('variant.size'))) {
     if (hit.item.kind !== 'product') continue;
     const other: Record<string, string[]> = { ...(filter.variantSelections ?? {}) };
     delete other.size;
     const otherSel = Object.keys(other).length ? other : undefined;
-    const seen = new Set<string>();
     for (const v of parseVariants(hit.item.variantsJson)) {
       if (!variantMatchesSelections(v, otherSel)) continue;
-      if (filter.inStock === true && !variantInStock(hit.item, v)) continue;
-      const s = v.selections.size;
-      if (s && !seen.has(s)) {
-        seen.add(s);
-        bump(sizes, s);
-      }
+      if (!variantPassesCommerceConstraints(hit.item, v, { ...filter, variantSelections: otherSel })) continue;
+      if (v.selections.size) sizeCandidates.add(v.selections.size);
     }
   }
+  for (const valueId of sizeCandidates) {
+    const n = countOffersForVariantValue(items, without('variant.size'), 'size', valueId);
+    if (n > 0) sizes.set(valueId, n);
+  }
+
   for (const hit of filterCatalogItems(items, without('placeModes'))) {
     if (hit.item.placeMode) bump(placeMode, hit.item.placeMode);
   }
+  for (const hit of filterCatalogItems(items, without('branchIds'))) {
+    if (hit.item.branchId) bump(branch, hit.item.branchId);
+  }
+
+  const colorMeta = collectOptionMeta(items, 'color');
+  const sizeMeta = collectOptionMeta(items, 'size');
 
   const staleSelections: Array<{ field: string; value: string }> = [];
   const colorFacet = new Set(toBuckets(colors).map((b) => b.id));
@@ -475,9 +608,10 @@ export function buildCatalogFacets(
     concern: toBuckets(concern),
     category: toBuckets(category),
     city: toBuckets(city),
-    'variant.color': toBuckets(colors),
-    'variant.size': toBuckets(sizes),
+    'variant.color': toBuckets(colors, colorMeta),
+    'variant.size': toBuckets(sizes, sizeMeta),
     placeMode: toBuckets(placeMode),
+    branch: toBuckets(branch),
     staleSelections,
   };
 }

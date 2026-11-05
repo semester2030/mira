@@ -11,6 +11,7 @@ import '../../domain/entities/catalog_service.dart';
 import '../../domain/entities/marketplace_match.dart';
 import '../../domain/entities/partner_detail.dart';
 import '../../domain/entities/partner_summary.dart';
+import '../discover_catalog_facets.dart';
 import '../discover_catalog_gateway.dart';
 import '../discover_published_ad.dart';
 import '../discover_favorite_client.dart';
@@ -207,7 +208,15 @@ class MarketplaceApiDataSource {
     );
   }
 
-  Future<({List<DiscoverOffer> items, String? nextCursor, List<String> cities, Map<String, dynamic>? facets, Map<String, dynamic>? activeFilters, int? totalMatched})> browseCatalog({
+  Future<({
+    List<DiscoverOffer> items,
+    String? nextCursor,
+    List<String> cities,
+    DiscoverCatalogFacets facets,
+    Map<String, dynamic> activeFilters,
+    int? totalMatched,
+    String? queryFingerprint,
+  })> browseCatalog({
     required String text,
     String? partnerType,
     String? city,
@@ -223,9 +232,15 @@ class MarketplaceApiDataSource {
     List<String> colors = const [],
     List<String> sizes = const [],
     List<String> placeModes = const [],
+    List<String> branchIds = const [],
     bool? inStock,
+    int? priceMinHalalas,
+    int? priceMaxHalalas,
+    int? durationMin,
+    int? durationMax,
+    String? availableOn,
     String sort = 'key',
-    bool facets = false,
+    bool facets = true,
   }) async {
     late final Response<Map<String, dynamic>> response;
     try {
@@ -246,7 +261,13 @@ class MarketplaceApiDataSource {
         if (colors.isNotEmpty) 'variant.color': colors.join(','),
         if (sizes.isNotEmpty) 'variant.size': sizes.join(','),
         if (placeModes.isNotEmpty) 'placeMode': placeModes.join(','),
+        if (branchIds.isNotEmpty) 'branch': branchIds.join(','),
         if (inStock != null) 'inStock': inStock ? '1' : '0',
+        if (priceMinHalalas != null) 'priceMin': priceMinHalalas,
+        if (priceMaxHalalas != null) 'priceMax': priceMaxHalalas,
+        if (durationMin != null) 'durationMin': durationMin,
+        if (durationMax != null) 'durationMax': durationMax,
+        if (availableOn != null && availableOn.isNotEmpty) 'availableOn': availableOn,
         if (sort != 'key') 'sort': sort,
         if (facets) 'facets': '1',
         'limit': limit,
@@ -262,9 +283,14 @@ class MarketplaceApiDataSource {
       items: raw.map((item) => _offer(item as Map<String, dynamic>)).toList(),
       nextCursor: data['nextCursor'] as String?,
       cities: (data['availableCities'] as List<dynamic>? ?? const []).map((item) => item.toString()).toList(),
-      facets: data['facets'] is Map<String, dynamic> ? data['facets'] as Map<String, dynamic> : null,
-      activeFilters: data['activeFilters'] is Map<String, dynamic> ? data['activeFilters'] as Map<String, dynamic> : null,
+      facets: DiscoverCatalogFacets.fromJson(
+        data['facets'] is Map ? Map<String, dynamic>.from(data['facets'] as Map) : null,
+      ),
+      activeFilters: data['activeFilters'] is Map
+          ? Map<String, dynamic>.from(data['activeFilters'] as Map)
+          : const <String, dynamic>{},
       totalMatched: (data['totalMatched'] as num?)?.toInt(),
+      queryFingerprint: data['queryFingerprint'] as String?,
     );
   }
 

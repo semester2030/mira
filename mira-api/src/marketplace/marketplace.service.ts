@@ -2,6 +2,13 @@ import { BadRequestException, Inject, Injectable, NotFoundException, OnModuleIni
 import { Prisma } from '@prisma/client';
 import { PrismaService } from '../prisma/prisma.service';
 import {
+  decodeCatalogCursor,
+  encodeCatalogCursor,
+  normalizeFilterFingerprint,
+  parseCatalogLimit,
+} from './catalog-cursor';
+import {
+  branchIdFromServiceProfile,
   buildCatalogFacets,
   filterCatalogItems,
   parseCatalogFilterQuery,
@@ -9,8 +16,8 @@ import {
   type CatalogFilterItem,
   type CatalogFilterMatch,
 } from './catalog-filters';
-import { pageCatalogItems } from './catalog-page';
 import { formatCatalogPrice } from './catalog-price';
+import { dayAvailabilityStatus } from './commerce.types';
 import { MatchMarketplaceDto } from './dto/match-marketplace.dto';
 import {
   ConcernMap,
@@ -205,6 +212,9 @@ export class MarketplaceService implements OnModuleInit {
     durationMin?: string;
     durationMax?: string;
     placeMode?: string;
+    branch?: string;
+    branchId?: string;
+    availableOn?: string;
     sort?: string;
     facets?: string;
     ['variant.color']?: string;
@@ -221,10 +231,11 @@ export class MarketplaceService implements OnModuleInit {
     if (params.venue && !['clinic', 'salon'].includes(params.venue)) {
       throw new BadRequestException('نوع الجهة غير صالح');
     }
-    const parsedLimit = params.limit == null || params.limit === '' ? 8 : Number(params.limit);
-    if (!Number.isInteger(parsedLimit)) {
+    const limitParsed = parseCatalogLimit(params.limit);
+    if (!limitParsed.ok) {
       throw new BadRequestException('حد الصفحة غير صالح');
     }
+    const parsedLimit = limitParsed.limit;
 
     const parsedFilters = parseCatalogFilterQuery({
       q: params.q ?? params.hint,
@@ -243,6 +254,9 @@ export class MarketplaceService implements OnModuleInit {
       durationMin: params.durationMin,
       durationMax: params.durationMax,
       placeMode: params.placeMode,
+      branch: params.branch,
+      branchId: params.branchId,
+      availableOn: params.availableOn,
       sort: params.sort,
       'variant.color': params['variant.color'] ?? params.color,
       'variant.size': params['variant.size'] ?? params.size,
@@ -252,6 +266,16 @@ export class MarketplaceService implements OnModuleInit {
       throw new BadRequestException(parsedFilters.messageAr);
     }
     const filter = parsedFilters.filter;
+    const fingerprint = normalizeFilterFingerprint(filter);
+    const sort = filter.sort ?? 'key';
+    const decodedCursor = decodeCatalogCursor(params.cursor, { sort, fingerprint });
+    if (!decodedCursor.ok) {
+      throw new BadRequestException(
+        decodedCursor.reason === 'cursor_mismatch'
+          ? 'مؤشر الصفحة لا يطابق البحث الحالي'
+          : 'مؤشر الصفحة غير صالح',
+      );
+    }
 
     const partnerBase = {
       status: 'active' as const,
@@ -282,7 +306,9 @@ export class MarketplaceService implements OnModuleInit {
     const needVariantInventory =
       filter.inStock != null || Object.keys(filter.variantSelections ?? {}).length > 0 || params.facets === '1';
 
-    const [products, services, partners] = await Promise.all([
+    // Published catalog only; cities derived from these rows (no extra partner scan).
+    // Filter/facet/sort remain in-process for correct same-variant AND/OR — SQL pushdown deferred.
+    const [products, services] = await Promise.all([
       this.prisma.product.findMany({
         where: { active: true, contentStatus: 'published', catalogSource: 'catalog', partner: productPartner },
         include: {
@@ -295,10 +321,6 @@ export class MarketplaceService implements OnModuleInit {
       this.prisma.service.findMany({
         where: { active: true, contentStatus: 'published', catalogSource: 'catalog', partner: servicePartner },
         include: { partner: true },
-      }),
-      this.prisma.partner.findMany({
-        where: { status: 'active' },
-        select: { city: true },
       }),
     ]);
 
@@ -339,40 +361,60 @@ export class MarketplaceService implements OnModuleInit {
           variantSellable: Object.keys(variantSellable).length ? variantSellable : undefined,
         };
       }),
-      ...services.map((service) => ({
-        kind: 'service' as const,
-        id: service.id,
-        partnerId: service.partnerId,
-        partnerType: service.partner.type,
-        partnerNameAr: service.partner.nameAr,
-        city: service.partner.city,
-        nameAr: service.nameAr,
-        nameEn: service.nameEn,
-        descriptionAr: service.descriptionAr,
-        category: service.category,
-        concernTags: service.concernTags,
-        priceHalalas: service.priceHalalas,
-        durationMin: service.durationMin,
-        placeMode: placeModeFromServiceProfile(service.serviceProfileJson),
-      })),
+      ...services.map((service) => {
+        const availableOnDay =
+          filter.availableOn == null
+            ? null
+            : (() => {
+                const status = dayAvailabilityStatus(filter.availableOn!, service.availabilityJson);
+                return status === 'available' || status === 'full';
+              })();
+        return {
+          kind: 'service' as const,
+          id: service.id,
+          partnerId: service.partnerId,
+          partnerType: service.partner.type,
+          partnerNameAr: service.partner.nameAr,
+          city: service.partner.city,
+          nameAr: service.nameAr,
+          nameEn: service.nameEn,
+          descriptionAr: service.descriptionAr,
+          category: service.category,
+          concernTags: service.concernTags,
+          priceHalalas: service.priceHalalas,
+          durationMin: service.durationMin,
+          placeMode: placeModeFromServiceProfile(service.serviceProfileJson),
+          branchId: branchIdFromServiceProfile(service.serviceProfileJson),
+          availabilityJson: service.availabilityJson,
+          availableOnDay,
+        };
+      }),
     ];
 
     const requireVisual = params.visual === '1';
-    const visualKeys = requireVisual
-      ? new Set(
-          (
-            await this.prisma.catalogMedia.findMany({
-              where: {
-                active: true,
-                publication: 'published',
-                pendingRemoval: false,
-                kind: { in: ['image', 'video'] },
-              },
-              select: { ownerKind: true, ownerId: true },
-            })
-          ).map((row) => `${row.ownerKind}:${row.ownerId}`),
-        )
-      : null;
+    const visualOwnerOr = [
+      ...products.map((p) => ({ ownerKind: 'product' as const, ownerId: p.id })),
+      ...services.map((s) => ({ ownerKind: 'service' as const, ownerId: s.id })),
+    ];
+    const visualKeys =
+      requireVisual && visualOwnerOr.length > 0
+        ? new Set(
+            (
+              await this.prisma.catalogMedia.findMany({
+                where: {
+                  active: true,
+                  publication: 'published',
+                  pendingRemoval: false,
+                  kind: { in: ['image', 'video'] },
+                  OR: visualOwnerOr,
+                },
+                select: { ownerKind: true, ownerId: true },
+              })
+            ).map((row) => `${row.ownerKind}:${row.ownerId}`),
+          )
+        : requireVisual
+          ? new Set<string>()
+          : null;
 
     const scoped = filterItems.filter((item) => {
       if (params.lane === 'elegance' && item.kind !== 'product') return false;
@@ -385,31 +427,28 @@ export class MarketplaceService implements OnModuleInit {
     const matched = filterCatalogItems(scoped, filter);
     const facets = params.facets === '1' ? buildCatalogFacets(scoped, filter) : undefined;
 
-    // Page by catalog key after filter+sort. Sort already applied in filterCatalogItems.
-    const pageSource = matched.map((m) => m.item);
-    // pageCatalogItems always re-sorts by key — for price sorts, page the already-sorted match list manually.
-    let pagedItems: CatalogFilterMatch[];
-    let nextCursor: string | null;
-    if ((filter.sort ?? 'key') === 'key') {
-      const paged = pageCatalogItems(pageSource, params.cursor, parsedLimit);
-      if (!paged.ok) {
-        throw new BadRequestException(paged.reason === 'invalid_cursor' ? 'مؤشر الصفحة غير صالح' : 'حد الصفحة غير صالح');
+    // Unified paging for all sorts — cursor is bound to fingerprint+sort.
+    let start = 0;
+    if (decodedCursor.ok && decodedCursor.id) {
+      const idx = matched.findIndex(
+        (m) => m.item.kind === decodedCursor.kind && m.item.id === decodedCursor.id,
+      );
+      if (idx < 0) {
+        throw new BadRequestException('مؤشر الصفحة غير صالح');
       }
-      const byKey = new Map(matched.map((m) => [`${m.item.kind}:${m.item.id}`, m]));
-      pagedItems = paged.items.map((item) => byKey.get(`${item.kind}:${item.id}`)!).filter(Boolean);
-      nextCursor = paged.nextCursor;
-    } else {
-      if (params.cursor != null && params.cursor.trim() !== '') {
-        const idx = matched.findIndex((m) => `${m.item.kind}:${m.item.id}` === params.cursor!.trim());
-        if (idx < 0) throw new BadRequestException('مؤشر الصفحة غير صالح');
-        pagedItems = matched.slice(idx + 1, idx + 1 + parsedLimit);
-      } else {
-        pagedItems = matched.slice(0, parsedLimit);
-      }
-      const last = pagedItems[pagedItems.length - 1];
-      nextCursor =
-        last && matched.indexOf(last) + 1 < matched.length ? `${last.item.kind}:${last.item.id}` : null;
+      start = idx + 1;
     }
+    const pagedItems: CatalogFilterMatch[] = matched.slice(start, start + parsedLimit);
+    const last = pagedItems[pagedItems.length - 1];
+    const nextCursor =
+      last && start + pagedItems.length < matched.length
+        ? encodeCatalogCursor({
+            sort,
+            fingerprint,
+            kind: last.item.kind,
+            id: last.item.id,
+          })
+        : null;
 
     const productById = new Map(products.map((p) => [p.id, p]));
     const serviceById = new Map(services.map((s) => [s.id, s]));
@@ -424,7 +463,13 @@ export class MarketplaceService implements OnModuleInit {
           orderBy: { sortOrder: 'asc' },
         })
       : [];
-    const cities = [...new Set(partners.map((partner) => partner.city).filter((city) => city.length > 0))].sort();
+    const cities = [
+      ...new Set(
+        [...products, ...services]
+          .map((row) => row.partner.city)
+          .filter((city) => typeof city === 'string' && city.length > 0),
+      ),
+    ].sort();
 
     return {
       items: pagedItems.map((match) => {
@@ -432,10 +477,18 @@ export class MarketplaceService implements OnModuleInit {
         if (item.kind === 'product') {
           const product = productById.get(item.id)!;
           const commerce = publicProductCommerce(product);
+          const prices = match.matchedVariants
+            .map((v) => v.priceHalalas)
+            .filter((p): p is number => p != null);
+          const uniquePrices = [...new Set(prices)];
           const displayPrice =
             match.matchedVariants.length === 1
-              ? match.matchedVariants[0]!.priceHalalas ?? product.priceHalalas
+              ? match.matchedVariants[0]!.priceHalalas
               : match.effectivePriceHalalas ?? product.priceHalalas;
+          const priceLabel =
+            uniquePrices.length > 1 && match.matchedVariants.length > 1
+              ? `ابتداءً من ${this.formatPrice(Math.min(...uniquePrices))}`
+              : this.formatPrice(displayPrice);
           return {
             kind: 'product' as const,
             id: product.id,
@@ -448,7 +501,7 @@ export class MarketplaceService implements OnModuleInit {
             nameEn: product.nameEn,
             descriptionAr: product.descriptionAr,
             priceHalalas: displayPrice,
-            priceLabel: this.formatPrice(displayPrice),
+            priceLabel,
             externalUrl: product.externalUrl,
             stepAr: product.stepAr,
             partnerEmoji: product.partner.logoEmoji,
@@ -500,6 +553,7 @@ export class MarketplaceService implements OnModuleInit {
           optionsJson: null as unknown,
           variantsJson: null as unknown,
           placeMode: item.placeMode,
+          branchId: item.branchId,
           matchedVariantIds: [] as string[],
           matchedVariants: [] as CatalogFilterMatch['matchedVariants'],
           media: media
@@ -516,6 +570,7 @@ export class MarketplaceService implements OnModuleInit {
       nextCursor,
       availableCities: cities,
       totalMatched: matched.length,
+      queryFingerprint: fingerprint,
       activeFilters: {
         q: filter.q ?? null,
         tags: filter.tags ?? [],
@@ -530,7 +585,9 @@ export class MarketplaceService implements OnModuleInit {
         durationMin: filter.durationMin ?? null,
         durationMax: filter.durationMax ?? null,
         placeModes: filter.placeModes ?? [],
-        sort: filter.sort ?? 'key',
+        branchIds: filter.branchIds ?? [],
+        availableOn: filter.availableOn ?? null,
+        sort,
       },
       ...(facets ? { facets } : {}),
     };
