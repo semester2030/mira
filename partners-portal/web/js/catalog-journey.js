@@ -2344,46 +2344,17 @@
         const inv = await PartnersApi.getVariantInventory(productId);
         if (seq !== inventoryHydrateSeq) return; // superseded
         if (!item || item.id !== productId) return; // navigated away
-        if ((optionsState.inventoryLocalEpoch || 0) !== epochAtStart) {
-          // User edited while waiting — keep local values; still adopt revisions for non-dirty rows only.
-          const byId = {};
-          (inv && inv.rows ? inv.rows : []).forEach((r) => {
-            if (r && r.variantId) byId[r.variantId] = r;
-          });
-          (optionsState.variants || []).forEach((v) => {
-            const row = byId[v.id];
-            if (!row) return;
-            if (v._stockDirty) return;
-            v.stockQty = row.stockQty == null ? null : row.stockQty;
-            v._inventoryRevision = row.revision;
-          });
-          optionsState.inventoryLoadState = 'loaded';
-          optionsState.inventoryLoadError = '';
-          paintOptions();
-          return;
-        }
         if (!inv) {
           optionsState.inventoryLoadState = 'failed';
           optionsState.inventoryLoadError = 'تعذر تحميل المخزون';
           paintOptions();
           return;
         }
-        if (inv.inventoryMode === 'variant' || inv.inventoryMode === 'product') {
-          if (!optionsState._inventoryModeDirty) {
-            optionsState.inventoryMode = inv.inventoryMode;
-          }
+        const preserveLocalQty = (optionsState.inventoryLocalEpoch || 0) !== epochAtStart;
+        if (!window.MiraInventoryEditor || typeof window.MiraInventoryEditor.applyInventoryHydrate !== 'function') {
+          throw new Error('MiraInventoryEditor غير محمّل');
         }
-        const byId = {};
-        (inv.rows || []).forEach((r) => {
-          if (r && r.variantId) byId[r.variantId] = r;
-        });
-        (optionsState.variants || []).forEach((v) => {
-          const row = byId[v.id];
-          if (!row) return;
-          if (v._stockDirty) return;
-          v.stockQty = row.stockQty == null ? null : row.stockQty;
-          v._inventoryRevision = row.revision;
-        });
+        window.MiraInventoryEditor.applyInventoryHydrate(optionsState, inv, { preserveLocalQty: preserveLocalQty });
         optionsState.inventoryLoadState = 'loaded';
         optionsState.inventoryLoadError = '';
         paintOptions();
@@ -2417,31 +2388,30 @@
         err.code = 'INVENTORY_CONTEXT_MISMATCH';
         throw err;
       }
-      const mode = optionsState.inventoryMode === 'variant' ? 'variant' : 'product';
-      for (const v of optionsState.variants || []) {
-        if (v && v._stockInvalid) {
-          const err = new Error('كمية المخزون غير صالحة بجانب إحدى التركيبات');
-          err.code = 'INVENTORY_INVALID_QTY';
-          throw err;
-        }
+      if (!window.MiraInventoryEditor || typeof window.MiraInventoryEditor.buildInventoryPersistPayload !== 'function') {
+        throw new Error('MiraInventoryEditor غير محمّل');
       }
-      const rows = (optionsState.variants || []).map((v) => ({
-        variantId: v.id,
-        variantKey: v.id,
-        stockMode: 'tracked',
-        // Only send stockQty when loaded; null here is intentional empty field, not a failed fetch.
-        stockQty: Object.prototype.hasOwnProperty.call(v, 'stockQty') ? (v.stockQty == null ? null : v.stockQty) : null,
-        expectedRevision: v._inventoryRevision != null ? v._inventoryRevision : null,
-      }));
-      const res = await PartnersApi.putVariantInventory(productId, {
-        inventoryMode: mode,
-        rows: mode === 'variant' ? rows : [],
-      });
+      const built = window.MiraInventoryEditor.buildInventoryPersistPayload(optionsState);
+      if (!built.ok) {
+        const err = new Error(
+          built.code === 'INVENTORY_REVISION_MISSING'
+            ? 'لا يمكن حفظ تعديل المخزون قبل ربط رقم المراجعة — أعيدي تحميل المخزون مع الإبقاء على تعديلك.'
+            : built.code === 'INVENTORY_INVALID_QTY'
+              ? 'كمية المخزون غير صالحة بجانب إحدى التركيبات'
+              : 'تعذر حفظ المخزون لأن التحميل لم يكتمل.',
+        );
+        err.code = built.code;
+        throw err;
+      }
+      const res = await PartnersApi.putVariantInventory(productId, built.body);
       (res.updated || res.rows || []).forEach((r) => {
         const live = (optionsState.variants || []).find((v) => v.id === r.variantId);
         if (live) {
           live._inventoryRevision = r.revision;
+          live._inventoryRowExists = true;
+          live.stockMode = r.stockMode === 'untracked' ? 'untracked' : 'tracked';
           live._stockDirty = false;
+          live._stockModeDirty = false;
           live._stockInvalid = false;
         }
       });

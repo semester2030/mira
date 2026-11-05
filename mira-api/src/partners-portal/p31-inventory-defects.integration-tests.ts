@@ -183,7 +183,9 @@ async function main() {
     });
     await commerce.addCartItem(customer, { productId: product.id, quantity: 1, variantKey: 'v-m', selections: { size: 'm' } });
     const cartUntracked = await commerce.getCart(customer);
-    const untrackedOk = !cartUntracked.lines?.some?.((l: { issues?: unknown[] }) => (l.issues || []).length) || true;
+    const untrackedLineIssues =
+      cartUntracked.lines?.some?.((l: { issues?: unknown[] }) => (l.issues || []).length > 0) === true;
+    const untrackedOk = !untrackedLineIssues;
     // clear and test tracked null rejects
     await commerce.clearCart(customer);
     let unspecifiedRejected = false;
@@ -192,7 +194,10 @@ async function main() {
     } catch (e) {
       unspecifiedRejected = /STOCK_UNSPECIFIED|غير محددة/.test(errCode(e));
     }
-    record('P31_UNTRACKED_CART_OK', untrackedOk);
+    record('P31_UNTRACKED_CART_OK', untrackedOk, {
+      untrackedLineIssues,
+      lines: cartUntracked.lines?.map?.((l: { issues?: unknown[] }) => l.issues) ?? null,
+    });
     record('P31_TRACKED_NULL_REJECT', unspecifiedRejected);
 
     // reset stocks for remaining tests
@@ -307,42 +312,37 @@ async function main() {
     const modeStillProduct = (await prisma.product.findUnique({ where: { id: poolProduct.id } }))?.inventoryMode === 'product';
     record('P31_MODE_SWITCH_BLOCKED_WHILE_RESERVED', switchBlocked && modeStillProduct);
 
-    // Release via commerce transition (cancel) — must free product reserved_qty, not invent variant rows
+    // Release via real commerce cancel path (transitionOrderFor → releaseOrderStock).
     const beforeRel = await prisma.product.findUnique({ where: { id: poolProduct.id } });
-    // Simulate releaseOrderStock path by calling private via transition if accessible —
-    // use raw invoke through cancel-like update:
-    await prisma.$transaction(async (tx) => {
-      const item = order.items[0];
-      const flipped = await tx.commerceOrderItem.updateMany({
-        where: { id: item.id, stockState: 'reserved' },
-        data: { stockState: 'released' },
-      });
-      if (flipped.count === 1) {
-        await tx.$executeRaw`
-          UPDATE products SET reserved_qty = GREATEST(reserved_qty - ${item.reservedQty}, 0)
-          WHERE id = ${item.productId}`;
-      }
-    });
-    // Second release must be no-op
-    await prisma.$transaction(async (tx) => {
-      const item = order.items[0];
-      const flipped = await tx.commerceOrderItem.updateMany({
-        where: { id: item.id, stockState: 'reserved' },
-        data: { stockState: 'released' },
-      });
-      if (flipped.count === 1) {
-        await tx.$executeRaw`
-          UPDATE products SET reserved_qty = GREATEST(reserved_qty - ${item.reservedQty}, 0)
-          WHERE id = ${item.productId}`;
-      }
+    await commerce.transitionOrderFor(partnerAct, order.id, {
+      fulfillmentStatus: 'rejected',
+      note: 'رفض اختبار تحرير المخزون',
     });
     const afterRel = await prisma.product.findUnique({ where: { id: poolProduct.id } });
-    const variantRows = await prisma.productVariantInventory.count({ where: { productId: poolProduct.id } });
-    record('P31_RELEASE_USES_PRODUCT_SOURCE', (beforeRel?.reservedQty || 0) >= 2 && afterRel?.reservedQty === (beforeRel!.reservedQty - 2) && variantRows === 0, {
-      before: beforeRel?.reservedQty,
-      after: afterRel?.reservedQty,
-      variantRows,
+    const releasedItem = await prisma.commerceOrderItem.findFirst({ where: { orderId: order.id } });
+    // Second reject must be idempotent — reserved_qty must not go negative / double-free.
+    await commerce.transitionOrderFor(partnerAct, order.id, {
+      fulfillmentStatus: 'rejected',
+      note: 'تكرار رفض',
     });
+    const afterTwice = await prisma.product.findUnique({ where: { id: poolProduct.id } });
+    const variantRows = await prisma.productVariantInventory.count({ where: { productId: poolProduct.id } });
+    record(
+      'P31_RELEASE_USES_PRODUCT_SOURCE',
+      (beforeRel?.reservedQty || 0) >= 2 &&
+        afterRel?.reservedQty === (beforeRel!.reservedQty - 2) &&
+        afterTwice?.reservedQty === afterRel?.reservedQty &&
+        releasedItem?.stockState === 'released' &&
+        releasedItem?.stockSource === 'product' &&
+        variantRows === 0,
+      {
+        before: beforeRel?.reservedQty,
+        after: afterRel?.reservedQty,
+        afterTwice: afterTwice?.reservedQty,
+        item: releasedItem,
+        variantRows,
+      },
+    );
 
     // After release, mode switch allowed
     let switchOk = false;

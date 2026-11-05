@@ -161,7 +161,8 @@ async function main() {
   let completed = false;
   const createdKeys: string[] = [objectKey];
   const abortUploadIds: Array<{ key: string; uploadId: string }> = [];
-  let browser: { close: () => Promise<void> } | null = null;
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  let browser: any = null;
 
   try {
     const created = await client.send(
@@ -200,7 +201,7 @@ async function main() {
       });
       const url = await getSignedUrl(client, command, { expiresIn: 900 });
       const put = await page.evaluate(
-        async ({ putUrl, bytes }) => {
+        async ({ putUrl, bytes }: { putUrl: string; bytes: number[] }) => {
           const body = Uint8Array.from(bytes);
           const res = await fetch(putUrl, {
             method: 'PUT',
@@ -282,81 +283,124 @@ async function main() {
     if (!rangeOk) throw new Error('range read mismatch');
 
     // Abort the SAME GetObject stream after real bytes — never a second request.
+    // streamClosed is proven only via close/end/destroyed events (not a local flag assignment).
     {
       const ac = new AbortController();
       let sawBytes = false;
       let bytesBeforeAbort = 0;
+      let bytesAfterAbort = 0;
       let abortKind: 'AbortError' | 'stream-closed' | 'other' | 'none' = 'none';
-      let streamClosed = false;
+      let closeEvent: string | null = null;
       try {
         const out = await client.send(new GetObjectCommand({ Bucket: bucket, Key: objectKey }), {
           abortSignal: ac.signal as never,
         });
         const body = out.Body as AsyncIterable<Uint8Array> & {
           destroy?: (err?: Error) => void;
-          cancel?: (reason?: unknown) => Promise<void> | void;
+          destroyed?: boolean;
+          on?: (ev: string, cb: (...args: unknown[]) => void) => void;
+          once?: (ev: string, cb: (...args: unknown[]) => void) => void;
         };
+        const closed = new Promise<string>((resolve) => {
+          const done = (ev: string) => {
+            if (!closeEvent) closeEvent = ev;
+            resolve(ev);
+          };
+          if (typeof body.once === 'function') {
+            body.once('close', () => done('close'));
+            body.once('end', () => done('end'));
+            body.once('error', () => done('error'));
+          } else if (typeof body.on === 'function') {
+            body.on('close', () => done('close'));
+            body.on('end', () => done('end'));
+            body.on('error', () => done('error'));
+          } else {
+            // Fallback: destroyed property after destroy()
+            const poll = setInterval(() => {
+              if (body.destroyed) {
+                clearInterval(poll);
+                done('destroyed');
+              }
+            }, 10);
+            setTimeout(() => {
+              clearInterval(poll);
+              if (!closeEvent) done('timeout');
+            }, 3000);
+          }
+        });
         try {
           for await (const chunk of body) {
+            if (ac.signal.aborted) {
+              bytesAfterAbort += chunk?.length || 0;
+              break;
+            }
             if (chunk && chunk.length) {
               sawBytes = true;
               bytesBeforeAbort += chunk.length;
               ac.abort();
-              try {
-                if (typeof body.destroy === 'function') body.destroy();
-                else if (typeof body.cancel === 'function') await body.cancel('test-abort');
-              } catch {
-                /* destroy/cancel may throw after abort — expected */
+              if (typeof body.destroy === 'function') {
+                body.destroy(new Error('test-abort'));
               }
-              streamClosed = true;
-              break;
             }
-          }
-          if (ac.signal.aborted && sawBytes) {
-            abortKind = 'stream-closed';
-          } else {
-            abortKind = 'none';
           }
         } catch (err) {
           const name = String((err as { name?: string })?.name || '');
           const msg = String(err);
-          if (name === 'AbortError' || /aborted|AbortError|aborted/i.test(msg)) {
+          if (name === 'AbortError' || /aborted|AbortError|test-abort/i.test(msg)) {
             abortKind = 'AbortError';
-            streamClosed = true;
-          } else if (sawBytes && ac.signal.aborted) {
-            abortKind = 'stream-closed';
-            streamClosed = true;
           } else {
             abortKind = 'other';
           }
         }
+        const closedHow = await Promise.race([
+          closed,
+          new Promise<string>((r) => setTimeout(() => r('timeout'), 3000)),
+        ]);
+        if (closeEvent == null) closeEvent = closedHow;
+        if (abortKind === 'none' && sawBytes && ac.signal.aborted && closeEvent && closeEvent !== 'timeout') {
+          abortKind = 'stream-closed';
+        }
+        if (closeEvent === 'timeout' || (closeEvent === 'error' && abortKind === 'other')) {
+          // permission/network errors must not PASS as cancel
+          if (abortKind !== 'AbortError') abortKind = 'other';
+        }
       } catch (err) {
         const name = String((err as { name?: string })?.name || '');
         const http = (err as { $metadata?: { httpStatusCode?: number } })?.$metadata?.httpStatusCode;
-        if (http === 403 || (http != null && http >= 500)) {
-          abortKind = 'other';
-        } else if (name === 'AbortError' || /aborted|AbortError/i.test(String(err))) {
+        if (http === 403 || (http != null && http >= 500)) abortKind = 'other';
+        else if (name === 'AbortError' || /aborted|AbortError/i.test(String(err))) {
           abortKind = sawBytes ? 'AbortError' : 'other';
-          streamClosed = sawBytes;
-        } else {
-          abortKind = 'other';
-        }
+        } else abortKind = 'other';
       }
+      const streamClosedProven =
+        !!closeEvent && closeEvent !== 'timeout' && ['close', 'end', 'destroyed', 'error'].includes(closeEvent);
       const abortOk =
         sawBytes &&
         bytesBeforeAbort > 0 &&
-        streamClosed &&
+        bytesAfterAbort === 0 &&
+        streamClosedProven &&
         (abortKind === 'AbortError' || abortKind === 'stream-closed') &&
         ac.signal.aborted;
       record('R2_ABORT_READ', abortOk, {
         sawBytes,
         bytesBeforeAbort,
+        bytesAfterAbort,
         abortKind,
-        streamClosed,
+        closeEvent,
+        streamClosedProven,
         abortedSignal: ac.signal.aborted,
-        note: 'same GetObject stream aborted after bytes; second request not used',
+        note: 'same stream; close proven by event — not a local boolean assignment',
       });
-      if (!abortOk) throw new Error('abort-read expected same-stream cancel after receiving bytes');
+      if (!abortOk) throw new Error('abort-read expected same-stream cancel with proven close event');
+    }
+
+    // SDK connection check is separate from MIRA app path (labeled diagnostic).
+    record('R2_SDK_DIAGNOSTIC', true, { note: 'SDK multipart/read/abort above is connection diagnostic' });
+    if (!(process.env.MIRA_R2_MIRA_BASE || '').trim()) {
+      record('R2_MIRA_APP_PATH', 'BLOCKED', {
+        reason: 'set MIRA_R2_MIRA_BASE + partner token env to exercise upload-sessions→finalize→read',
+        requiredEnvNames: ['MIRA_R2_MIRA_BASE', 'MIRA_R2_MIRA_PARTNER_TOKEN', 'MIRA_R2_MIRA_OWNER_ID'],
+      });
     }
 
     // Incomplete multipart abort — only NoSuchUpload/empty list counts as cleaned.
@@ -488,9 +532,12 @@ async function main() {
   }
 
   const failed = steps.filter((s) => s.ok === false);
+  const miraBlocked = steps.some((s) => s.id === 'R2_MIRA_APP_PATH' && s.ok === 'BLOCKED');
+  const suiteOk = failed.length === 0 && steps.some((s) => s.id === 'R2_SUITE' && s.ok === true);
+  // Full R2 acceptance requires MIRA app path; SDK-only success without it is BLOCKED not PASS.
   const summary = {
-    ok: failed.length === 0 && steps.some((s) => s.id === 'R2_SUITE' && s.ok === true),
-    blocked: false,
+    ok: suiteOk && !miraBlocked,
+    blocked: miraBlocked && failed.length === 0,
     id: 'V03_R2_BROWSER',
     startedUtc,
     finishedUtc: new Date().toISOString(),
@@ -501,7 +548,15 @@ async function main() {
     outDir,
   };
   writeFileSync(join(outDir, 'r2-browser-multipart.json'), JSON.stringify(summary, null, 2));
-  console.log(JSON.stringify({ ok: summary.ok, blocked: false, failed: failed.map((f) => f.id), outDir }));
+  console.log(
+    JSON.stringify({
+      ok: summary.ok,
+      blocked: summary.blocked,
+      failed: failed.map((f) => f.id),
+      outDir,
+    }),
+  );
+  if (summary.blocked) process.exit(0);
   process.exit(summary.ok ? 0 : 1);
 }
 

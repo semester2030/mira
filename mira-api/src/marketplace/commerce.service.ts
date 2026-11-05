@@ -1115,58 +1115,124 @@ export class CommerceService {
   }
 
   /**
-   * Release/consume use the stockSource stamped at reservation — never the product's current inventoryMode.
-   * Flip stockState first so retries are idempotent.
+   * Resolve legacy stock_source=none with reservedQty>0 without using current inventoryMode alone.
+   * Evidence: which pool actually holds the reservation. Ambiguous → null (unresolved).
+   */
+  private async resolveLegacyStockSource(
+    tx: Tx,
+    item: { id: string; productId: string; variantKey: string; reservedQty: number; stockSource?: string | null },
+  ): Promise<'product' | 'variant' | 'none' | null> {
+    const stamped = String(item.stockSource || 'none');
+    if (stamped === 'product' || stamped === 'variant') return stamped;
+    if (stamped === 'none' && item.reservedQty <= 0) return 'none';
+    if (stamped !== 'none' || item.reservedQty <= 0) return null;
+
+    const product = await tx.product.findUnique({
+      where: { id: item.productId },
+      select: { reservedQty: true },
+    });
+    const vk = item.variantKey || '';
+    const variantRow = vk
+      ? await tx.productVariantInventory.findUnique({
+          where: { productId_variantId: { productId: item.productId, variantId: vk } },
+          select: { reservedQty: true },
+        })
+      : null;
+    const productHolds = (product?.reservedQty || 0) >= item.reservedQty;
+    const variantHolds = (variantRow?.reservedQty || 0) >= item.reservedQty;
+    if (productHolds && !variantHolds) return 'product';
+    if (variantHolds && !productHolds) return 'variant';
+    // Both or neither → unresolved (do not guess from inventoryMode).
+    return null;
+  }
+
+  /**
+   * Release/consume use stamped stockSource. Legacy none+reservedQty>0 must resolve or fail —
+   * never flip to released/consumed without applying the qty change in the same transaction.
    */
   private async releaseOrderStock(tx: Tx, orderId: string): Promise<void> {
     const items = await tx.commerceOrderItem.findMany({ where: { orderId, stockState: 'reserved' }, orderBy: { productId: 'asc' } });
     for (const item of items) {
-      const flipped = await tx.commerceOrderItem.updateMany({
-        where: { id: item.id, stockState: 'reserved' },
-        data: { stockState: 'released' },
-      });
-      if (flipped.count !== 1) continue;
-      const source = (item as { stockSource?: string }).stockSource || 'none';
+      const source = await this.resolveLegacyStockSource(tx, item as never);
+      if (source == null) {
+        throw conflict('STOCK_SOURCE_UNRESOLVED', 'تعذر تحديد مصدر حجز المخزون لهذا السطر — لن يُحرَّر دون دليل', {
+          orderItemId: item.id,
+          productId: item.productId,
+          reservedQty: item.reservedQty,
+        });
+      }
       if (source === 'variant') {
         const vk = item.variantKey || '';
-        await tx.$executeRaw`
+        const affected = await tx.$executeRaw`
           UPDATE product_variant_inventories
           SET reserved_qty = GREATEST(reserved_qty - ${item.reservedQty}, 0)
           WHERE product_id = ${item.productId}
-            AND variant_id = ${vk}`;
+            AND variant_id = ${vk}
+            AND reserved_qty >= ${item.reservedQty}`;
+        if (Number(affected) !== 1) {
+          throw conflict('STOCK_RELEASE_FAILED', 'تعذر تحرير حجز مخزون التركيبة', { orderItemId: item.id });
+        }
       } else if (source === 'product') {
-        await tx.$executeRaw`
+        const affected = await tx.$executeRaw`
           UPDATE products SET reserved_qty = GREATEST(reserved_qty - ${item.reservedQty}, 0)
-          WHERE id = ${item.productId}`;
+          WHERE id = ${item.productId}
+            AND reserved_qty >= ${item.reservedQty}`;
+        if (Number(affected) !== 1) {
+          throw conflict('STOCK_RELEASE_FAILED', 'تعذر تحرير حجز مخزون المنتج', { orderItemId: item.id });
+        }
       }
-      // source === 'none' → nothing to release
+      // source === 'none' (reservedQty 0): state flip only. Qty applied above only when product/variant.
+      const flipped = await tx.commerceOrderItem.updateMany({
+        where: { id: item.id, stockState: 'reserved' },
+        data: { stockState: 'released', stockSource: source },
+      });
+      if (flipped.count !== 1) {
+        throw conflict('STOCK_RELEASE_RACE', 'تعارض تحرير المخزون', { orderItemId: item.id });
+      }
     }
   }
 
   private async consumeOrderStock(tx: Tx, orderId: string): Promise<void> {
     const items = await tx.commerceOrderItem.findMany({ where: { orderId, stockState: 'reserved' }, orderBy: { productId: 'asc' } });
     for (const item of items) {
-      const flipped = await tx.commerceOrderItem.updateMany({
-        where: { id: item.id, stockState: 'reserved' },
-        data: { stockState: 'consumed' },
-      });
-      if (flipped.count !== 1) continue;
-      const source = (item as { stockSource?: string }).stockSource || 'none';
+      const source = await this.resolveLegacyStockSource(tx, item as never);
+      if (source == null) {
+        throw conflict('STOCK_SOURCE_UNRESOLVED', 'تعذر تحديد مصدر حجز المخزون لهذا السطر — لن يُستهلك دون دليل', {
+          orderItemId: item.id,
+          productId: item.productId,
+          reservedQty: item.reservedQty,
+        });
+      }
       if (source === 'variant') {
         const vk = item.variantKey || '';
-        await tx.$executeRaw`
+        const affected = await tx.$executeRaw`
           UPDATE product_variant_inventories
           SET reserved_qty = GREATEST(reserved_qty - ${item.reservedQty}, 0),
               stock_qty = CASE WHEN stock_qty IS NULL THEN NULL ELSE GREATEST(stock_qty - ${item.reservedQty}, 0) END,
               revision = revision + 1
           WHERE product_id = ${item.productId}
-            AND variant_id = ${vk}`;
+            AND variant_id = ${vk}
+            AND reserved_qty >= ${item.reservedQty}`;
+        if (Number(affected) !== 1) {
+          throw conflict('STOCK_CONSUME_FAILED', 'تعذر استهلاك مخزون التركيبة', { orderItemId: item.id });
+        }
       } else if (source === 'product') {
-        await tx.$executeRaw`
+        const affected = await tx.$executeRaw`
           UPDATE products
           SET reserved_qty = GREATEST(reserved_qty - ${item.reservedQty}, 0),
               stock_qty = CASE WHEN stock_qty IS NULL THEN NULL ELSE GREATEST(stock_qty - ${item.reservedQty}, 0) END
-          WHERE id = ${item.productId}`;
+          WHERE id = ${item.productId}
+            AND reserved_qty >= ${item.reservedQty}`;
+        if (Number(affected) !== 1) {
+          throw conflict('STOCK_CONSUME_FAILED', 'تعذر استهلاك مخزون المنتج', { orderItemId: item.id });
+        }
+      }
+      const flipped = await tx.commerceOrderItem.updateMany({
+        where: { id: item.id, stockState: 'reserved' },
+        data: { stockState: 'consumed', stockSource: source },
+      });
+      if (flipped.count !== 1) {
+        throw conflict('STOCK_CONSUME_RACE', 'تعارض استهلاك المخزون', { orderItemId: item.id });
       }
     }
   }

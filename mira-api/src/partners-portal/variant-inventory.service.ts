@@ -53,7 +53,11 @@ export class VariantInventoryService {
     return variantIdsFromJson(product.variantsJson);
   }
 
-  /** Sum of tracked available qty; null when any tracked row is unspecified or mode is product. */
+  /**
+   * Sum of tracked available qty for variants that belong to the active catalog context.
+   * Orphan / deleted-from-catalog rows (not in knownVariantIds) are excluded from the total
+   * even if their inventory rows still exist for reservation history.
+   */
   async derivedProductStock(productId: string): Promise<{
     inventoryMode: string;
     derivedStockQty: number | null;
@@ -61,17 +65,25 @@ export class VariantInventoryService {
   }> {
     const product = await this.prisma.product.findUnique({
       where: { id: productId },
-      select: { inventoryMode: true, stockQty: true },
+      select: {
+        inventoryMode: true,
+        stockQty: true,
+        variantsJson: true,
+        draftVariantsJson: true,
+        draftVariantsSet: true,
+      },
     });
     if (!product) throw new NotFoundException('المنتج غير موجود');
     const rows = await this.list(productId);
     if (product.inventoryMode !== 'variant') {
       return { inventoryMode: product.inventoryMode || 'product', derivedStockQty: product.stockQty, rows };
     }
+    const known = this.knownVariantIds(product);
     let total = 0;
     let anyUnspecified = false;
     for (const row of rows) {
       if (row.archivedAt) continue;
+      if (!known.has(row.variantId)) continue; // D4: deleted/orphan variants do not count
       if (row.stockMode === 'untracked') continue;
       if (row.stockQty == null) {
         anyUnspecified = true;
@@ -224,19 +236,43 @@ export class VariantInventoryService {
       for (const row of incoming) {
         const variantId = String(row.variantId || '').trim();
         const variantKey = variantId; // server-canonical; never trust a divergent client key
-        const stockMode = row.stockMode === 'untracked' ? 'untracked' : 'tracked';
 
         const current = await tx.productVariantInventory.findUnique({
           where: { productId_variantId: { productId, variantId } },
         });
-        if (current && row.expectedRevision != null && current.revision !== row.expectedRevision) {
-          throw new ConflictException({
-            messageAr: 'تعارض مراجعة مخزون التركيبة',
-            code: 'VARIANT_INVENTORY_REVISION_CONFLICT',
-            expectedRevision: row.expectedRevision,
-            currentRevision: current.revision,
-          });
+
+        // D3: updating an existing row requires the revision the editor loaded — never null overwrite.
+        if (current) {
+          if (row.expectedRevision == null) {
+            throw new ConflictException({
+              messageAr: 'تعديل مخزون موجود يتطلب رقم مراجعة — أكملي التحميل ثم أعيدي المحاولة',
+              code: 'VARIANT_INVENTORY_REVISION_REQUIRED',
+              variantId,
+              currentRevision: current.revision,
+            });
+          }
+          if (current.revision !== row.expectedRevision) {
+            throw new ConflictException({
+              messageAr: 'تعارض مراجعة مخزون التركيبة',
+              code: 'VARIANT_INVENTORY_REVISION_CONFLICT',
+              expectedRevision: row.expectedRevision,
+              currentRevision: current.revision,
+            });
+          }
         }
+
+        // D2: omit stockMode → keep existing; only create defaults to tracked.
+        const stockMode =
+          row.stockMode === 'untracked'
+            ? 'untracked'
+            : row.stockMode === 'tracked'
+              ? 'tracked'
+              : current
+                ? current.stockMode === 'untracked'
+                  ? 'untracked'
+                  : 'tracked'
+                : 'tracked';
+
         if (current && row.stockQty != null && row.stockQty < current.reservedQty) {
           throw new BadRequestException(
             `لا يمكن خفض الكمية دون المحجوز (${current.reservedQty})`,
@@ -285,6 +321,31 @@ export class VariantInventoryService {
         });
       }
 
+      // D4: archive inventory rows for variants no longer in the active catalog (keep rows with holds).
+      // Re-read product inside the tx so a prior variantsJson clear in this connection is visible.
+      const freshCatalog = await tx.product.findUnique({
+        where: { id: productId },
+        select: { variantsJson: true, draftVariantsJson: true, draftVariantsSet: true },
+      });
+      const knownNow = this.knownVariantIds(
+        freshCatalog || {
+          draftVariantsSet: locked.draftVariantsSet,
+          variantsJson: locked.variantsJson,
+          draftVariantsJson: locked.draftVariantsJson,
+        },
+      );
+      const orphanRows = await tx.productVariantInventory.findMany({
+        where: { productId, archivedAt: null },
+      });
+      for (const orphan of orphanRows) {
+        if (knownNow.has(orphan.variantId)) continue;
+        if (orphan.reservedQty > 0) continue; // keep for release/consume
+        await tx.productVariantInventory.update({
+          where: { id: orphan.id },
+          data: { archivedAt: new Date(), revision: orphan.revision + 1 },
+        });
+      }
+
       void targetMode;
       const derived = await this.derivedInTx(tx, productId);
       return { ok: true, ...derived, updated: out };
@@ -294,7 +355,13 @@ export class VariantInventoryService {
   private async derivedInTx(tx: Prisma.TransactionClient, productId: string) {
     const product = await tx.product.findUnique({
       where: { id: productId },
-      select: { inventoryMode: true, stockQty: true },
+      select: {
+        inventoryMode: true,
+        stockQty: true,
+        variantsJson: true,
+        draftVariantsJson: true,
+        draftVariantsSet: true,
+      },
     });
     const rows = await tx.productVariantInventory.findMany({ where: { productId } });
     const mapped: VariantInventoryRow[] = rows.map((r) => ({
@@ -313,10 +380,11 @@ export class VariantInventoryService {
         rows: mapped,
       };
     }
+    const known = this.knownVariantIds(product);
     let total = 0;
     let anyUnspecified = false;
     for (const row of mapped) {
-      if (row.archivedAt || row.stockMode === 'untracked') continue;
+      if (row.archivedAt || !known.has(row.variantId) || row.stockMode === 'untracked') continue;
       if (row.stockQty == null) {
         anyUnspecified = true;
         continue;
