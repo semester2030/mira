@@ -2190,8 +2190,10 @@
 
     const preview = document.createElement('div');
     preview.className = 'form-section';
+    preview.setAttribute('data-testid', 'catalog-preview-panel');
     text(preview, 'المعاينة والنشر', 'h3');
     const previewBody = text(preview, '');
+    previewBody.setAttribute('data-testid', 'catalog-preview-body');
     form.appendChild(preview);
 
     const save = document.createElement('button');
@@ -2774,6 +2776,7 @@
           labels: labels,
           priceHalalas: priceH,
           available: addAvailInput.checked,
+          mediaIds: [],
         });
         optionsState.clearingOptions = false;
         optionsState.clearingVariants = false;
@@ -2879,6 +2882,7 @@
           selections: selections,
           priceHalalas: typeof variant.priceHalalas === 'number' ? variant.priceHalalas : null,
           available: variant.available !== false,
+          mediaIds: Array.isArray(variant.mediaIds) ? variant.mediaIds.slice() : [],
         });
       });
       return {
@@ -3243,6 +3247,12 @@
           try {
             await PartnersApi.bindVariantMedia(item.id, variant.id, chosen);
             status.textContent = 'تم حفظ ربط وسائط التركيبة.';
+            // Keep easy-UI optionsState in sync so a later general save (persistListing /
+            // structuredOptionsPayload) does not rewrite variants without mediaIds.
+            if (optionsState && Array.isArray(optionsState.variants)) {
+              const live = optionsState.variants.find(function (v) { return v && v.id === variant.id; });
+              if (live) live.mediaIds = chosen.slice();
+            }
             // Refresh via preview (same contract as picker) so draft bindings survive reload.
             const previewData = await PartnersApi.preview('products', item.id);
             if (previewData) {
@@ -3254,6 +3264,25 @@
               }
               if (previewData.publishedVariantsJson !== undefined) {
                 item.variantsJson = previewData.publishedVariantsJson;
+              }
+              // Re-hydrate mediaIds for all variants from server draft/published so
+              // sibling variants keep their bindings after this save.
+              var serverVariants = [];
+              if (previewData.draftVariantsSet && Array.isArray(previewData.draftVariantsJson)) {
+                serverVariants = previewData.draftVariantsJson;
+              } else if (Array.isArray(previewData.publishedVariantsJson)) {
+                serverVariants = previewData.publishedVariantsJson;
+              } else if (Array.isArray(previewData.variantsJson)) {
+                serverVariants = previewData.variantsJson;
+              }
+              if (optionsState && Array.isArray(optionsState.variants) && serverVariants.length) {
+                optionsState.variants.forEach(function (v) {
+                  if (!v || !v.id) return;
+                  var match = serverVariants.find(function (sv) { return sv && sv.id === v.id; });
+                  if (match) {
+                    v.mediaIds = Array.isArray(match.mediaIds) ? match.mediaIds.slice() : [];
+                  }
+                });
               }
             }
             paintMedia(previewData && previewData.media ? previewData.media : null);

@@ -227,15 +227,31 @@ async function saveDraft(page) {
   await page.waitForTimeout(2000);
 }
 
-async function assertPreviewPanel(page, expectName) {
-  const panel = page.locator('#catalogForm').locator('text=المعاينة والنشر').locator('..');
-  const body = page.locator('#catalogForm').getByText(new RegExp(expectName));
-  if ((await body.count()) === 0) {
-    // preview is live-updated on input — read preview section text
-    const text = await page.locator('#catalogForm').innerText();
-    if (!text.includes(expectName)) throw new Error('preview panel missing expected name: ' + expectName);
+async function assertPreviewPanel(page, { expectName, expectPriceHint, expectNotName }) {
+  const panel = page.locator('#catalogForm [data-testid="catalog-preview-panel"]');
+  if ((await panel.count()) === 0) throw new Error('catalog-preview-panel missing');
+  if (!(await panel.first().isVisible())) throw new Error('catalog-preview-panel not visible');
+  const body = page.locator('#catalogForm [data-testid="catalog-preview-body"]');
+  if ((await body.count()) === 0) throw new Error('catalog-preview-body missing');
+  const text = ((await body.first().textContent()) || '').trim();
+  if (!text) throw new Error('preview body empty');
+  // Ensure preview is scoped to this panel, not coincidental form fields elsewhere.
+  const panelText = ((await panel.first().innerText()) || '').trim();
+  if (expectName && !text.includes(expectName) && !panelText.includes(expectName)) {
+    throw new Error(`preview panel/body missing name ${expectName}: ${JSON.stringify(panelText.slice(0, 240))}`);
   }
-  return true;
+  if (expectNotName && (text.includes(expectNotName) || panelText.includes(expectNotName))) {
+    throw new Error(`preview shows stale/other item ${expectNotName}: ${JSON.stringify(panelText.slice(0, 240))}`);
+  }
+  if (expectPriceHint) {
+    const hasPrice = text.includes(expectPriceHint) || panelText.includes(expectPriceHint);
+    if (!hasPrice) {
+      throw new Error(`preview missing price hint ${expectPriceHint}: ${JSON.stringify(panelText.slice(0, 240))}`);
+    }
+  }
+  // Media thumbnails / count when present in current preview design
+  const mediaBits = panel.locator('img, video, [data-preview-media], .preview-media');
+  return { text, panelText, mediaNodeCount: await mediaBits.count() };
 }
 
 async function mediaOrderAndCover(preview) {
@@ -321,16 +337,26 @@ async function main() {
       if ((await cat.count()) === 0) throw new Error('category missing');
       await cat.selectOption('clothes');
 
-      // Options + one variant via UI (clothes → size presets)
+      // Options + two variants via UI (clothes → size presets) for independent bind proof
       const sizeM = page.locator('#catalogForm .option-group label').filter({ hasText: /^\s*M\s*$/ });
+      const sizeL = page.locator('#catalogForm .option-group label').filter({ hasText: /^\s*L\s*$/ });
       if ((await sizeM.count()) === 0) throw new Error('size M checkbox missing for clothes');
+      if ((await sizeL.count()) === 0) throw new Error('size L checkbox missing for clothes');
       await sizeM.locator('input[type="checkbox"]').check();
+      await sizeL.locator('input[type="checkbox"]').check();
       await page.waitForTimeout(400);
       const pick = page.locator('#catalogForm select[name="variantPick-size"]');
       if ((await pick.count()) === 0) throw new Error('variant size picker missing');
-      await pick.selectOption({ index: 1 });
       const addVar = page.locator('#catalogForm button').filter({ hasText: /^إضافة التركيبة$/ });
       if ((await addVar.count()) === 0) throw new Error('إضافة التركيبة missing');
+      await pick.selectOption({ label: 'M' }).catch(async () => {
+        await pick.selectOption({ index: 1 });
+      });
+      await addVar.click();
+      await page.waitForTimeout(300);
+      await pick.selectOption({ label: 'L' }).catch(async () => {
+        await pick.selectOption({ index: 2 });
+      });
       await addVar.click();
       await page.waitForTimeout(400);
       // Flush options/variant into server draft before materialize (dedicated save, not API substitute).
@@ -348,7 +374,17 @@ async function main() {
       const submitAfterUpload = net.filter((n) => n.method === 'POST' && /submit-review/.test(n.url)).length;
       if (submitAfterUpload > submitBefore) throw new Error('auto submit-review on upload');
 
-      // Cover = last READY image; reorder so cover moves if needed
+      // Capture baseline then set expected cover/order BEFORE asserting persistence
+      preview = (
+        await (
+          await fetch(`${apiBase}/partners-portal/products/${productId}/preview`, {
+            headers: { authorization: `Bearer ${token}` },
+          })
+        ).json()
+      );
+      const baseline = await mediaOrderAndCover(preview);
+      if (baseline.ids.length < 2) throw new Error('need 2 ready media for order proof');
+      const expectedCoverId = baseline.ids[baseline.ids.length - 1]; // last card → غلاف
       const coverBtn = page.locator('#catalogForm button').filter({ hasText: /^غلاف$/ });
       if ((await coverBtn.count()) === 0) throw new Error('cover button missing');
       await coverBtn.last().click();
@@ -371,8 +407,15 @@ async function main() {
         ).json()
       );
       const beforePersist = await mediaOrderAndCover(preview);
-      if (!beforePersist.coverId) throw new Error('cover id not set after غلاف click');
-      if (beforePersist.ids.length < 2) throw new Error('need 2 ready media for order proof');
+      if (beforePersist.coverId !== expectedCoverId) {
+        throw new Error(`cover click did not set expected cover: want=${expectedCoverId} got=${beforePersist.coverId}`);
+      }
+      if (beforePersist.ids.join(',') === baseline.ids.join(',')) {
+        // order may stay same if cover was already first after primary flip; require cover change at least
+        if (baseline.coverId === expectedCoverId) {
+          throw new Error('cover/order unchanged vs baseline — change did not take effect');
+        }
+      }
 
       // Bind known media to variant via UI
       await page.reload({ waitUntil: 'domcontentloaded' });
@@ -404,8 +447,6 @@ async function main() {
       if (!bindResp) throw new Error('bind save did not issue variants/.../media PATCH');
       if (bindResp.status() >= 400) throw new Error(`bind PATCH HTTP ${bindResp.status()}`);
       await page.waitForTimeout(1000);
-      // Do NOT general-save after bind — persistListing can rewrite variants without mediaIds.
-      await assertPreviewPanel(page, productName);
       const midBind = await (
         await fetch(`${apiBase}/partners-portal/products/${productId}/preview`, {
           headers: { authorization: `Bearer ${token}` },
@@ -416,7 +457,7 @@ async function main() {
       );
       if (!boundNow) {
         throw new Error(
-          'bind not visible on preview immediately after save: ' +
+          'bind not visible on preview immediately after bind CTA: ' +
             JSON.stringify({
               draftSet: midBind.draftVariantsSet,
               draft: midBind.draftVariantsJson,
@@ -426,11 +467,135 @@ async function main() {
         );
       }
 
-      // Reload + reopen via list button; compare cover/order/bind
+      // General save AFTER bind — must keep mediaIds (the defect under test).
+      await page.fill('#catalogForm [name="descriptionAr"]', 'وصف بعد الربط P2').catch(() => {});
+      // descriptionAr may be optional / named differently
+      const desc = page.locator('#catalogForm [name="descriptionAr"], #catalogForm textarea[name="descriptionAr"]');
+      if ((await desc.count()) > 0) await desc.first().fill('وصف بعد الربط P2');
+      await saveDraft(page);
+      await page.waitForTimeout(1500);
+      const afterGeneralSave = await (
+        await fetch(`${apiBase}/partners-portal/products/${productId}/preview`, {
+          headers: { authorization: `Bearer ${token}` },
+        })
+      ).json();
+      const boundAfterGeneral = (
+        afterGeneralSave.draftVariantsJson ||
+        afterGeneralSave.publishedVariantsJson ||
+        afterGeneralSave.variantsJson ||
+        []
+      ).some((v) => (v.mediaIds || []).includes(bindMediaId));
+      if (!boundAfterGeneral) {
+        throw new Error(
+          'bind LOST after general save: ' +
+            JSON.stringify({
+              draftSet: afterGeneralSave.draftVariantsSet,
+              draft: afterGeneralSave.draftVariantsJson,
+              published: afterGeneralSave.publishedVariantsJson,
+            }),
+        );
+      }
+
+      // Bind second variant to the OTHER media; saving one must not rewrite the other.
+      const otherMediaId = beforePersist.ids.find((id) => id !== bindMediaId) || beforePersist.ids[0];
+      const bindSelects = page.locator('.variant-media-row select, select[aria-label*="تركيبة"]');
+      if ((await bindSelects.count()) < 2) throw new Error('need two variant media selects');
+      await bindSelects.nth(1).evaluate((sel, id) => {
+        for (const o of sel.options) o.selected = o.value === id;
+        sel.dispatchEvent(new Event('change', { bubbles: true }));
+      }, otherMediaId);
+      const saveBind2 = page.locator('button').filter({ hasText: /حفظ ربط التركيبة/ });
+      await Promise.all([
+        page.waitForResponse((r) => r.request().method() === 'PATCH' && /variants\/.+\/media/.test(r.url()), {
+          timeout: 15000,
+        }),
+        saveBind2.nth(1).click(),
+      ]);
+      await page.waitForTimeout(800);
+      await saveDraft(page);
+      await page.waitForTimeout(1200);
+      const twoVar = await (
+        await fetch(`${apiBase}/partners-portal/products/${productId}/preview`, {
+          headers: { authorization: `Bearer ${token}` },
+        })
+      ).json();
+      const twoVariants = twoVar.draftVariantsJson || twoVar.publishedVariantsJson || twoVar.variantsJson || [];
+      const v0 = twoVariants.find((v) => (v.mediaIds || []).includes(bindMediaId));
+      const v1 = twoVariants.find((v) => (v.mediaIds || []).includes(otherMediaId));
+      if (!v0 || !v1 || v0.id === v1.id) {
+        throw new Error(
+          'independent variant binds lost: ' +
+            JSON.stringify(twoVariants.map((v) => ({ id: v.id, mediaIds: v.mediaIds }))),
+        );
+      }
+
+      // Explicit clear bind on first variant → general save → must stay cleared after reopen
+      await bindSelects.first().evaluate((sel) => {
+        for (const o of sel.options) o.selected = false;
+        sel.dispatchEvent(new Event('change', { bubbles: true }));
+      });
+      await Promise.all([
+        page.waitForResponse((r) => r.request().method() === 'PATCH' && /variants\/.+\/media/.test(r.url()), {
+          timeout: 15000,
+        }),
+        saveBind2.first().click(),
+      ]);
+      await page.waitForTimeout(800);
+      await saveDraft(page);
+      await page.waitForTimeout(1200);
+      const clearedPrev = await (
+        await fetch(`${apiBase}/partners-portal/products/${productId}/preview`, {
+          headers: { authorization: `Bearer ${token}` },
+        })
+      ).json();
+      const clearedVariants = clearedPrev.draftVariantsJson || clearedPrev.publishedVariantsJson || clearedPrev.variantsJson || [];
+      const stillHasBindMedia = clearedVariants.some((v) => (v.mediaIds || []).includes(bindMediaId));
+      if (stillHasBindMedia) {
+        throw new Error('explicit clear bind did not stick before reload: ' + JSON.stringify(clearedVariants));
+      }
+      const secondStillBound = clearedVariants.some((v) => (v.mediaIds || []).includes(otherMediaId));
+      if (!secondStillBound) throw new Error('clearing one variant wiped the other variant bind');
+
+      await assertPreviewPanel(page, {
+        expectName: productName,
+        expectPriceHint: '55',
+        expectNotName: 'خدمة رحلة',
+      });
+
+      // Reload + reopen via list button; compare cover/order; cleared bind must not resurrect
       await page.reload({ waitUntil: 'domcontentloaded' });
       await page.waitForTimeout(1200);
       await openInForm(page, productName);
       await page.waitForTimeout(1500);
+      await saveDraft(page);
+      await page.waitForTimeout(1500);
+      const afterClearReload = await (
+        await fetch(`${apiBase}/partners-portal/products/${productId}/preview`, {
+          headers: { authorization: `Bearer ${token}` },
+        })
+      ).json();
+      const afterClearVariants =
+        afterClearReload.draftVariantsJson || afterClearReload.publishedVariantsJson || afterClearReload.variantsJson || [];
+      if (afterClearVariants.some((v) => (v.mediaIds || []).includes(bindMediaId))) {
+        throw new Error('cleared bind resurrected after reload+general-save');
+      }
+
+      // Re-bind cover media for publish/public-media proof later
+      const rebindSelect = page.locator('.variant-media-row select, select[aria-label*="تركيبة"]').first();
+      await rebindSelect.evaluate((sel, id) => {
+        for (const o of sel.options) o.selected = o.value === id;
+        sel.dispatchEvent(new Event('change', { bubbles: true }));
+      }, bindMediaId);
+      await Promise.all([
+        page.waitForResponse((r) => r.request().method() === 'PATCH' && /variants\/.+\/media/.test(r.url()), {
+          timeout: 15000,
+        }),
+        page.locator('button').filter({ hasText: /حفظ ربط التركيبة/ }).first().click(),
+      ]);
+      await page.waitForTimeout(800);
+      await saveDraft(page);
+      await page.waitForTimeout(1200);
+
       const after = await (
         await fetch(`${apiBase}/partners-portal/products/${productId}/preview`, {
           headers: { authorization: `Bearer ${token}` },
@@ -446,7 +611,8 @@ async function main() {
       const bound = (after.draftVariantsJson || after.publishedVariantsJson || after.variantsJson || []).some((v) =>
         (v.mediaIds || []).includes(bindMediaId),
       );
-      if (!bound) throw new Error('variant bind not persisted after reload');
+      if (!bound) throw new Error('variant bind not persisted after reload+general-save');
+      await assertPreviewPanel(page, { expectName: productName, expectNotName: 'خدمة رحلة' });
 
       const prePub = await fetch(`${apiBase}/marketplace/media/${bindMediaId}`);
       if (prePub.status !== 404) {
@@ -474,9 +640,15 @@ async function main() {
       record('JOURNEY_PRODUCT', true, {
         productId,
         readyCount: readyMedia.length,
+        expectedCoverId,
         coverId: afterPersist.coverId,
         orderIds: afterPersist.ids,
+        bindMediaId,
+        otherMediaId,
         bound,
+        boundAfterGeneralSave: boundAfterGeneral,
+        independentBinds: { v0: v0.id, v1: v1.id },
+        clearBindHeld: true,
         approveStatus: approve.status,
         submitViaUi: submit.viaUi === true && submit.status < 400,
         submitHttp: submit.status,
@@ -518,6 +690,14 @@ async function main() {
       await uiUploadPng(page, 'svc-b.png', PNG2);
       await waitReadyMedia(apiBase, sToken, 'services', serviceId, 2);
 
+      let preview = await (
+        await fetch(`${apiBase}/partners-portal/services/${serviceId}/preview`, {
+          headers: { authorization: `Bearer ${sToken}` },
+        })
+      ).json();
+      const baseline = await mediaOrderAndCover(preview);
+      if (baseline.ids.length < 2) throw new Error('service need 2 ready media');
+      const expectedCoverId = baseline.ids[baseline.ids.length - 1];
       const coverBtn = page.locator('#catalogForm button').filter({ hasText: /^غلاف$/ });
       if ((await coverBtn.count()) === 0) throw new Error('service cover button missing');
       await coverBtn.last().click();
@@ -531,16 +711,25 @@ async function main() {
         await down.first().click();
       }
       await page.waitForTimeout(1000);
-      let preview = await (
+      preview = await (
         await fetch(`${apiBase}/partners-portal/services/${serviceId}/preview`, {
           headers: { authorization: `Bearer ${sToken}` },
         })
       ).json();
       const beforePersist = await mediaOrderAndCover(preview);
-      if (!beforePersist.coverId || beforePersist.ids.length < 2) throw new Error('service cover/order not set');
+      if (beforePersist.coverId !== expectedCoverId) {
+        throw new Error(`service cover click mismatch: want=${expectedCoverId} got=${beforePersist.coverId}`);
+      }
+      if (beforePersist.coverId === baseline.coverId && beforePersist.ids.join(',') === baseline.ids.join(',')) {
+        throw new Error('service cover/order unchanged vs baseline');
+      }
 
       await saveDraft(page);
-      await assertPreviewPanel(page, serviceName);
+      await assertPreviewPanel(page, {
+        expectName: serviceName,
+        expectPriceHint: '90',
+        expectNotName: 'منتج رحلة',
+      });
 
       await page.reload({ waitUntil: 'domcontentloaded' });
       await page.waitForTimeout(1200);
@@ -879,49 +1068,58 @@ async function main() {
       });
       await page.screenshot({ path: join(shotsDir, 'resume-final.png'), fullPage: true });
 
-      // ========== FINALIZE transient / permanent (harness inject; no manual CatalogMedia) ==========
+      // ========== FINALIZE: API server proof + UI experience (harness inject only) ==========
       try {
         if (!ready.injectPort) throw new Error('injectPort missing from harness ready payload');
         const injectBase = `http://127.0.0.1:${ready.injectPort}`;
         const meta0 = await fetch(`${injectBase}/finalize-meta`);
         if (!meta0.ok) throw new Error('finalize-meta unavailable ' + meta0.status);
         const meta = await meta0.json();
-        const init = await (
-          await fetch(`${apiBase}/partners-portal/upload-sessions`, {
-            method: 'POST',
-            headers: { authorization: `Bearer ${token}`, 'content-type': 'application/json' },
-            body: JSON.stringify({
-              ownerKind: 'product',
-              ownerId,
-              clientMediaId: cryptoRandom(),
-              idempotencyKey: cryptoRandom(),
-              mimeType: 'image/png',
-              byteSize: PNG.length,
-              checksum: createHash('sha256').update(PNG).digest('hex'),
-            }),
-          })
-        ).json();
-        // Put part first, then inject, then complete — mirrors F05_AUTO_RETRY ordering.
-        const sign = await (
-          await fetch(`${apiBase}/partners-portal/upload-sessions/${init.sessionId}/parts/1/sign`, {
-            method: 'POST',
-            headers: { authorization: `Bearer ${token}`, 'content-type': 'application/json' },
-            body: '{}',
-          })
-        ).json();
-        const putUrl = sign.url.startsWith('http') ? sign.url : `http://127.0.0.1:${ready.port}${sign.url}`;
-        const putRes = await fetch(putUrl, {
-          method: 'PUT',
-          body: new Uint8Array(PNG),
-          headers: {
-            authorization: `Bearer ${token}`,
-            'content-type': 'application/octet-stream',
-          },
-        });
-        const putBody = await putRes.json().catch(() => ({}));
-        if (!putRes.ok) throw new Error(`direct-part PUT HTTP ${putRes.status} ${JSON.stringify(putBody)}`);
-        const etag = putBody.etag || putRes.headers.get('etag');
-        if (!etag) throw new Error('missing etag from part PUT');
+        const backoffBase = Number(process.env.MIRA_UPLOAD_FINALIZE_RETRY_BASE_MS || 200);
+        const backoffMax = Number(process.env.MIRA_UPLOAD_FINALIZE_RETRY_MAX_MS || 800);
+
+        async function putCompleteSession(buf, label) {
+          const init = await (
+            await fetch(`${apiBase}/partners-portal/upload-sessions`, {
+              method: 'POST',
+              headers: { authorization: `Bearer ${token}`, 'content-type': 'application/json' },
+              body: JSON.stringify({
+                ownerKind: 'product',
+                ownerId,
+                clientMediaId: cryptoRandom(),
+                idempotencyKey: cryptoRandom(),
+                mimeType: 'image/png',
+                byteSize: buf.length,
+                checksum: createHash('sha256').update(buf).digest('hex'),
+              }),
+            })
+          ).json();
+          if (!init.sessionId) throw new Error(`${label}: session create failed ${JSON.stringify(init)}`);
+          const sign = await (
+            await fetch(`${apiBase}/partners-portal/upload-sessions/${init.sessionId}/parts/1/sign`, {
+              method: 'POST',
+              headers: { authorization: `Bearer ${token}`, 'content-type': 'application/json' },
+              body: '{}',
+            })
+          ).json();
+          const putUrl = sign.url.startsWith('http') ? sign.url : `http://127.0.0.1:${ready.port}${sign.url}`;
+          const putRes = await fetch(putUrl, {
+            method: 'PUT',
+            body: new Uint8Array(buf),
+            headers: {
+              authorization: `Bearer ${token}`,
+              'content-type': 'application/octet-stream',
+            },
+          });
+          const putBody = await putRes.json().catch(() => ({}));
+          if (!putRes.ok) throw new Error(`${label} PUT HTTP ${putRes.status} ${JSON.stringify(putBody)}`);
+          const etag = putBody.etag || putRes.headers.get('etag');
+          if (!etag) throw new Error(`${label}: missing etag`);
+          return { init, etag };
+        }
+
+        // —— API transient ——
+        const { init, etag } = await putCompleteSession(PNG, 'transient-api');
         const preComplete = await getSession(apiBase, token, init.sessionId);
         const inj = await fetch(`${injectBase}/inject-head-fail`, {
           method: 'POST',
@@ -931,6 +1129,8 @@ async function main() {
         if (!inj.ok) throw new Error('inject-head-fail ' + inj.status + ' ' + (await inj.text()));
         const injBody = await inj.json();
         const attemptsBefore = preComplete.finalizeAttempts || 0;
+        const metaBefore = meta.backoffScheduleCount || 0;
+        const tComplete = Date.now();
         const completeRes = await fetch(`${apiBase}/partners-portal/upload-sessions/${init.sessionId}/complete`, {
           method: 'POST',
           headers: { authorization: `Bearer ${token}`, 'content-type': 'application/json' },
@@ -940,13 +1140,29 @@ async function main() {
           throw new Error(`complete HTTP ${completeRes.status} ${await completeRes.text()}`);
         }
         let sawRetryable = false;
+        let firstRetryableAt = null;
+        let readyAt = null;
+        let attemptSamples = [];
         let finalRow = null;
         const d2 = Date.now() + 20000;
         while (Date.now() < d2) {
           finalRow = await getSession(apiBase, token, init.sessionId);
-          if (finalRow.status === 'failed' && finalRow.failureClass === 'retryable') sawRetryable = true;
-          if (finalRow.status === 'ready' && finalRow.catalogMediaId) break;
-          await new Promise((r) => setTimeout(r, 100));
+          attemptSamples.push({
+            t: Date.now() - tComplete,
+            status: finalRow.status,
+            attempts: finalRow.finalizeAttempts || 0,
+            failureClass: finalRow.failureClass || null,
+            nextAt: finalRow.finalizeNextAttemptAt || null,
+          });
+          if (finalRow.status === 'failed' && finalRow.failureClass === 'retryable') {
+            sawRetryable = true;
+            if (firstRetryableAt == null) firstRetryableAt = Date.now();
+          }
+          if (finalRow.status === 'ready' && finalRow.catalogMediaId) {
+            readyAt = Date.now();
+            break;
+          }
+          await new Promise((r) => setTimeout(r, 50));
         }
         const mediaN = await (
           await fetch(`${apiBase}/partners-portal/products/${ownerId}/preview`, {
@@ -954,64 +1170,149 @@ async function main() {
           })
         ).json();
         const catCount = (mediaN.media || []).filter((m) => m.id === finalRow.catalogMediaId).length;
-        const noEarlyBurn = (finalRow.finalizeAttempts || 0) >= attemptsBefore;
+        const metaAfter = await (await fetch(`${injectBase}/finalize-meta`)).json();
+        const backoffGrew = (metaAfter.backoffScheduleCount || 0) > metaBefore;
+        const gapMs = firstRetryableAt != null && readyAt != null ? readyAt - firstRetryableAt : null;
+        // Respect documented backoff window: recovery must not be instantaneous relative to base.
+        const backoffRespected =
+          sawRetryable &&
+          backoffGrew &&
+          gapMs != null &&
+          gapMs >= Math.max(0, backoffBase - 50) &&
+          gapMs <= backoffMax * 6 + 2000;
         record(
           'FINALIZE_TRANSIENT_RECOVER',
-          !!(finalRow && finalRow.status === 'ready' && finalRow.catalogMediaId && catCount === 1 && sawRetryable),
+          !!(
+            finalRow &&
+            finalRow.status === 'ready' &&
+            finalRow.catalogMediaId &&
+            catCount === 1 &&
+            sawRetryable &&
+            backoffRespected &&
+            (finalRow.finalizeAttempts || 0) > attemptsBefore
+          ),
           {
             sessionId: init.sessionId,
             sawRetryable,
             status: finalRow && finalRow.status,
+            attemptsBefore,
             attempts: finalRow && finalRow.finalizeAttempts,
             catalogMediaId: finalRow && finalRow.catalogMediaId,
             catCount,
-            noEarlyBurn,
-            backoffScheduleCount: meta.backoffScheduleCount,
+            backoffGrew,
+            backoffRespected,
+            gapMs,
+            backoffBase,
+            backoffMax,
+            backoffScheduleCount: metaAfter.backoffScheduleCount,
             inject: injBody,
+            attemptSamples: attemptSamples.slice(0, 40),
           },
         );
 
-        // Permanent: keep head failing → terminal failed, not infinite loop
-        const permInj = await fetch(`${injectBase}/inject-head-fail-permanent`, {
+        // —— UI transient: file pick → inject after session create → verifying UI → ready, one media ——
+        const uiPng = Buffer.from(
+          'iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAYAAAAfFcSJAAAADUlEQVR42mP8z8BQDwAEhQGAhKmMIQAAAABJRU5ErkJggg==',
+          'base64',
+        );
+        let uiSessionId = null;
+        const onSessionCreate = async (res) => {
+          try {
+            if (res.request().method() !== 'POST') return;
+            if (!/\/upload-sessions\/?$/.test(res.url().replace(/\?.*$/, ''))) return;
+            if (!res.ok()) return;
+            const body = await res.json();
+            if (!body.sessionId || uiSessionId) return;
+            uiSessionId = body.sessionId;
+            await fetch(`${injectBase}/inject-head-fail`, {
+              method: 'POST',
+              headers: { 'content-type': 'application/json' },
+              body: JSON.stringify({ times: 1, sessionId: uiSessionId }),
+            });
+          } catch (_) {}
+        };
+        page.on('response', onSessionCreate);
+        const uiStates = [];
+        const pollUi = setInterval(async () => {
+          try {
+            const t = await page.locator('#catalogForm .media-state').allTextContents();
+            uiStates.push({ t: Date.now(), states: t });
+          } catch (_) {}
+        }, 200);
+        const mediaBeforeUi = (
+          await (
+            await fetch(`${apiBase}/partners-portal/products/${ownerId}/preview`, {
+              headers: { authorization: `Bearer ${token}` },
+            })
+          ).json()
+        ).media || [];
+        await uiUploadPng(page, 'finalize-ui-transient.png', uiPng);
+        let uiReady = false;
+        let uiSawVerifying = false;
+        const uiDeadline = Date.now() + 45000;
+        while (Date.now() < uiDeadline) {
+          const texts = await page.locator('#catalogForm .media-state').allTextContents();
+          if (texts.some((s) => /جارٍ التحقق|جارٍ المعالجة|بانتظار/.test(s))) uiSawVerifying = true;
+          if (uiSessionId) {
+            const s = await getSession(apiBase, token, uiSessionId);
+            if (s.status === 'failed' && s.failureClass === 'retryable') uiSawVerifying = true;
+            if (s.status === 'ready' && s.catalogMediaId) {
+              uiReady = true;
+              break;
+            }
+          }
+          await page.waitForTimeout(250);
+        }
+        clearInterval(pollUi);
+        page.off('response', onSessionCreate);
+        const sawFromSamples = uiStates.some((s) =>
+          (s.states || []).some((t) => /جارٍ التحقق|جارٍ المعالجة|بانتظار/.test(String(t || ''))),
+        );
+        uiSawVerifying = uiSawVerifying || sawFromSamples;
+        const mediaAfterUi = (
+          await (
+            await fetch(`${apiBase}/partners-portal/products/${ownerId}/preview`, {
+              headers: { authorization: `Bearer ${token}` },
+            })
+          ).json()
+        ).media || [];
+        const newMedia = mediaAfterUi.filter((m) => !mediaBeforeUi.some((b) => b.id === m.id));
+        const uiRow = uiSessionId ? await getSession(apiBase, token, uiSessionId) : null;
+        // Same session recovered after injected transient (attempts > 1) without re-picking file.
+        const recoveredSameSession = !!(uiRow && uiRow.status === 'ready' && (uiRow.finalizeAttempts || 0) >= 2);
+        await page.screenshot({ path: join(shotsDir, 'finalize-ui-transient.png'), fullPage: true });
+        record(
+          'FINALIZE_TRANSIENT_UI',
+          !!(
+            uiReady &&
+            uiSawVerifying &&
+            uiRow &&
+            uiRow.status === 'ready' &&
+            newMedia.length === 1 &&
+            recoveredSameSession
+          ),
+          {
+            sessionId: uiSessionId,
+            uiReady,
+            uiSawVerifying,
+            sawFromSamples,
+            recoveredSameSession,
+            status: uiRow && uiRow.status,
+            attempts: uiRow && uiRow.finalizeAttempts,
+            catalogMediaId: uiRow && uiRow.catalogMediaId,
+            newMediaCount: newMedia.length,
+            uiStateSamples: uiStates.slice(0, 30),
+          },
+        );
+
+        // —— API permanent (session-scoped exhaust; do not leave global head broken) ——
+        const { init: init2, etag: etag2 } = await putCompleteSession(PNG2, 'permanent-api');
+        const permInj = await fetch(`${injectBase}/inject-head-fail`, {
           method: 'POST',
           headers: { 'content-type': 'application/json' },
-          body: '{}',
+          body: JSON.stringify({ times: 20, sessionId: init2.sessionId }),
         });
-        if (!permInj.ok) throw new Error('inject-head-fail-permanent ' + permInj.status);
-        const init2 = await (
-          await fetch(`${apiBase}/partners-portal/upload-sessions`, {
-            method: 'POST',
-            headers: { authorization: `Bearer ${token}`, 'content-type': 'application/json' },
-            body: JSON.stringify({
-              ownerKind: 'product',
-              ownerId,
-              clientMediaId: cryptoRandom(),
-              idempotencyKey: cryptoRandom(),
-              mimeType: 'image/png',
-              byteSize: PNG2.length,
-              checksum: createHash('sha256').update(PNG2).digest('hex'),
-            }),
-          })
-        ).json();
-        const sign2 = await (
-          await fetch(`${apiBase}/partners-portal/upload-sessions/${init2.sessionId}/parts/1/sign`, {
-            method: 'POST',
-            headers: { authorization: `Bearer ${token}`, 'content-type': 'application/json' },
-            body: '{}',
-          })
-        ).json();
-        const putUrl2 = sign2.url.startsWith('http') ? sign2.url : `http://127.0.0.1:${ready.port}${sign2.url}`;
-        const put2 = await fetch(putUrl2, {
-          method: 'PUT',
-          body: new Uint8Array(PNG2),
-          headers: {
-            authorization: `Bearer ${token}`,
-            'content-type': 'application/octet-stream',
-          },
-        });
-        const putBody2 = await put2.json().catch(() => ({}));
-        if (!put2.ok) throw new Error(`direct-part2 PUT HTTP ${put2.status}`);
-        const etag2 = putBody2.etag || put2.headers.get('etag');
+        if (!permInj.ok) throw new Error('inject permanent ' + permInj.status);
         const complete2 = await fetch(`${apiBase}/partners-portal/upload-sessions/${init2.sessionId}/complete`, {
           method: 'POST',
           headers: { authorization: `Bearer ${token}`, 'content-type': 'application/json' },
@@ -1021,28 +1322,113 @@ async function main() {
           throw new Error(`complete2 HTTP ${complete2.status}`);
         }
         let terminal = null;
+        let attemptTrail = [];
         const d3 = Date.now() + 45000;
         while (Date.now() < d3) {
           terminal = await getSession(apiBase, token, init2.sessionId);
+          attemptTrail.push({
+            t: Date.now(),
+            status: terminal.status,
+            attempts: terminal.finalizeAttempts || 0,
+            failureClass: terminal.failureClass || null,
+          });
           if (terminal.status === 'failed' && terminal.failureClass === 'permanent') break;
-          if (terminal.status === 'failed' && (terminal.finalizeAttempts || 0) >= 3) break;
+          if (terminal.status === 'failed' && (terminal.finalizeAttempts || 0) >= 3 && terminal.failureClass === 'permanent') {
+            break;
+          }
           await new Promise((r) => setTimeout(r, 200));
         }
+        const stoppedAuto =
+          terminal &&
+          terminal.status === 'failed' &&
+          terminal.failureClass === 'permanent' &&
+          !attemptTrail.slice(-5).some((a) => a.status === 'verifying' || a.status === 'ready');
         const permanentOk =
           terminal &&
           terminal.status === 'failed' &&
           !terminal.catalogMediaId &&
-          (terminal.failureClass === 'permanent' || (terminal.finalizeAttempts || 0) >= 3);
+          terminal.failureClass === 'permanent' &&
+          stoppedAuto;
         record('FINALIZE_PERMANENT', !!permanentOk, {
           sessionId: init2.sessionId,
           status: terminal && terminal.status,
           failureClass: terminal && terminal.failureClass,
           attempts: terminal && terminal.finalizeAttempts,
           catalogMediaId: terminal && terminal.catalogMediaId,
+          failureMessageAr: terminal && terminal.failureMessageAr,
+          attemptTrail: attemptTrail.slice(-15),
         });
+
+        // —— UI permanent: inject high times on new session → UI shows فشل, not success/wait forever ——
+        let uiPermSession = null;
+        const onPermSession = async (res) => {
+          try {
+            if (res.request().method() !== 'POST') return;
+            if (!/\/upload-sessions\/?$/.test(res.url().replace(/\?.*$/, ''))) return;
+            if (!res.ok()) return;
+            const body = await res.json();
+            if (!body.sessionId || uiPermSession) return;
+            uiPermSession = body.sessionId;
+            await fetch(`${injectBase}/inject-head-fail`, {
+              method: 'POST',
+              headers: { 'content-type': 'application/json' },
+              body: JSON.stringify({ times: 20, sessionId: uiPermSession }),
+            });
+          } catch (_) {}
+        };
+        page.on('response', onPermSession);
+        await uiUploadPng(page, 'finalize-ui-permanent.png', PNG);
+        let uiPermFailed = false;
+        let uiPermSawFailMsg = false;
+        let uiPermNeverReady = true;
+        const permUiDeadline = Date.now() + 50000;
+        while (Date.now() < permUiDeadline) {
+          const texts = (await page.locator('#catalogForm .media-state').allTextContents()).join(' | ');
+          const statusLine = ((await page.locator('#catalogForm .status, #catalogStatus, [data-testid="catalog-status"]').allTextContents().catch(() => [])) || []).join(' ');
+          const blob = texts + ' ' + statusLine;
+          if (/فشل/.test(blob)) uiPermSawFailMsg = true;
+          if (uiPermSession) {
+            const s = await getSession(apiBase, token, uiPermSession);
+            if (s.status === 'ready') {
+              uiPermNeverReady = false;
+              break;
+            }
+            if (s.status === 'failed' && s.failureClass === 'permanent') {
+              uiPermFailed = true;
+              break;
+            }
+          }
+          await page.waitForTimeout(300);
+        }
+        page.off('response', onPermSession);
+        // Give UI a moment to paint failure after terminal session
+        await page.waitForTimeout(1000);
+        const finalUiText = (await page.locator('#catalogForm .media-state').allTextContents()).join(' | ');
+        if (/فشل/.test(finalUiText)) uiPermSawFailMsg = true;
+        const stillWaiting = /جارٍ التحقق|جارٍ الرفع|جارٍ المعالجة/.test(finalUiText) && !/فشل/.test(finalUiText);
+        await page.screenshot({ path: join(shotsDir, 'finalize-ui-permanent.png'), fullPage: true });
+        const permUiRow = uiPermSession ? await getSession(apiBase, token, uiPermSession) : null;
+        record(
+          'FINALIZE_PERMANENT_UI',
+          !!(uiPermFailed && uiPermNeverReady && uiPermSawFailMsg && !stillWaiting && permUiRow && permUiRow.failureClass === 'permanent'),
+          {
+            sessionId: uiPermSession,
+            uiPermFailed,
+            uiPermSawFailMsg,
+            uiPermNeverReady,
+            stillWaiting,
+            finalUiText,
+            status: permUiRow && permUiRow.status,
+            failureClass: permUiRow && permUiRow.failureClass,
+            failureMessageAr: permUiRow && permUiRow.failureMessageAr,
+            attempts: permUiRow && permUiRow.finalizeAttempts,
+          },
+        );
       } catch (finErr) {
         record('FINALIZE_TRANSIENT_RECOVER', false, String(finErr && finErr.stack ? finErr.stack : finErr));
+        record('FINALIZE_TRANSIENT_UI', false, 'skipped due to prior finalize error');
         record('FINALIZE_PERMANENT', false, 'skipped due to prior finalize error');
+        record('FINALIZE_PERMANENT_UI', false, 'skipped due to prior finalize error');
       }
 
       await ctx.close();

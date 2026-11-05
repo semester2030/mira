@@ -338,11 +338,15 @@
       });
       variant.selections = Object.assign({}, selections);
 
+      // Preserve mediaIds on general save. Omitted/undefined must not wipe bindings;
+      // explicit [] (user cleared bind) is a deliberate clear and must be sent.
+      const mediaIds = Array.isArray(variant.mediaIds) ? variant.mediaIds.slice() : [];
       variants.push({
         id: variant.id,
         selections: selections,
         priceHalalas: typeof variant.priceHalalas === 'number' ? variant.priceHalalas : null,
         available: variant.available !== false,
+        mediaIds: mediaIds,
       });
     });
 
