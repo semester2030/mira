@@ -319,19 +319,37 @@ export class MarketplaceService implements OnModuleInit {
       filter.inStock != null || Object.keys(filter.variantSelections ?? {}).length > 0 || params.facets === '1';
 
     // Published catalog only; cities derived from these rows (no extra partner scan).
-    // Filter/facet/sort remain in-process for correct same-variant AND/OR — SQL pushdown deferred.
+    // Kind is pushed to SQL via impossible id when the other kind is requested (C06 partial).
+    // Variant AND/OR, city/branch facets, and availability stay in-process for facet accuracy.
     const [products, services] = await Promise.all([
       this.prisma.product.findMany({
-        where: { active: true, contentStatus: 'published', catalogSource: 'catalog', partner: productPartner },
+        where: {
+          active: true,
+          contentStatus: 'published',
+          catalogSource: 'catalog',
+          partner: productPartner,
+          ...(filter.kind === 'service' ? { id: '__none__' } : {}),
+        },
         include: {
           partner: true,
           ...(needVariantInventory
-            ? { variantInventories: { where: { archivedAt: null }, select: { variantId: true, stockQty: true, reservedQty: true, stockMode: true } } }
+            ? {
+                variantInventories: {
+                  where: { archivedAt: null },
+                  select: { variantId: true, stockQty: true, reservedQty: true, stockMode: true },
+                },
+              }
             : {}),
         },
       }),
       this.prisma.service.findMany({
-        where: { active: true, contentStatus: 'published', catalogSource: 'catalog', partner: servicePartner },
+        where: {
+          active: true,
+          contentStatus: 'published',
+          catalogSource: 'catalog',
+          partner: servicePartner,
+          ...(filter.kind === 'product' ? { id: '__none__' } : {}),
+        },
         include: { partner: true },
       }),
     ]);
