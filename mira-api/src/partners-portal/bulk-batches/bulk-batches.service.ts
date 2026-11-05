@@ -28,9 +28,20 @@ type MetaPayload = {
   kind: 'product' | 'service';
   profileId: string;
   cardIds: string[];
+  count: number;
   limit: number;
   createdAt: string;
+  /** creating = cards incomplete; ready = all card drafts present */
+  createStatus: 'creating' | 'ready';
 };
+
+function isWrittenValue(prev: unknown): boolean {
+  return (
+    prev != null &&
+    prev !== '' &&
+    !(typeof prev === 'object' && !Array.isArray(prev) && Object.keys(prev as object).length === 0)
+  );
+}
 
 @Injectable()
 export class BulkBatchesService {
@@ -59,16 +70,153 @@ export class BulkBatchesService {
     return partner.type;
   }
 
-  private async readMeta(partnerId: string, batchId: string): Promise<MetaPayload> {
-    const row = await this.prisma.partnerEditorDraft.findUnique({
+  private assertBatchId(raw: string | undefined): string {
+    const batchId = (raw && String(raw).trim()) || randomUUID();
+    if (batchId.length > 64 || /[^a-zA-Z0-9_-]/.test(batchId)) {
+      throw bulkError(HttpStatus.BAD_REQUEST, 'BULK_BATCH_ID_INVALID', 'معرّف الدفعة غير صالح');
+    }
+    return batchId;
+  }
+
+  /** Reject silent floor/truncate — count must be an integer in range. */
+  private assertCount(raw: unknown): number {
+    if (typeof raw !== 'number' || !Number.isInteger(raw)) {
+      throw bulkError(
+        HttpStatus.BAD_REQUEST,
+        'BULK_COUNT_INVALID',
+        'عدد البطاقات يجب أن يكون عددًا صحيحًا دون تقريب',
+      );
+    }
+    if (raw < 1) {
+      throw bulkError(HttpStatus.BAD_REQUEST, 'BULK_COUNT_INVALID', 'عدد البطاقات يجب أن يكون ≥ 1');
+    }
+    if (raw > BULK_BATCH_MAX_CARDS) {
+      throw bulkError(
+        HttpStatus.BAD_REQUEST,
+        'BULK_COUNT_LIMIT',
+        `الحد التشغيلي الحالي ${BULK_BATCH_MAX_CARDS} بطاقة لكل دفعة`,
+        { max: BULK_BATCH_MAX_CARDS },
+      );
+    }
+    return raw;
+  }
+
+  private cardIdsForCount(count: number): string[] {
+    const cardIds: string[] = [];
+    for (let i = 0; i < count; i += 1) {
+      cardIds.push(`c${String(i + 1).padStart(3, '0')}`);
+    }
+    return cardIds;
+  }
+
+  private async readMetaRow(partnerId: string, batchId: string) {
+    return this.prisma.partnerEditorDraft.findUnique({
       where: { partnerId_clientDraftId: { partnerId, clientDraftId: this.metaClientId(batchId) } },
     });
-    if (!row || row.status === 'discarded') throw new NotFoundException('الدفعة غير موجودة');
-    const values = (row.valuesJson ?? {}) as MetaPayload;
-    if (values.v !== 1 || values.batchId !== batchId) {
+  }
+
+  private parseMeta(row: { valuesJson: Prisma.JsonValue; status: string }, batchId: string): MetaPayload {
+    if (row.status === 'discarded') throw new NotFoundException('الدفعة غير موجودة');
+    const values = (row.valuesJson ?? {}) as Partial<MetaPayload>;
+    if (values.v !== 1 || values.batchId !== batchId || !Array.isArray(values.cardIds)) {
       throw bulkError(HttpStatus.CONFLICT, 'BULK_META_CORRUPT', 'بيانات الدفعة تالفة');
     }
-    return values;
+    return {
+      v: 1,
+      batchId: values.batchId,
+      kind: values.kind as 'product' | 'service',
+      profileId: String(values.profileId),
+      cardIds: values.cardIds.map(String),
+      count: typeof values.count === 'number' ? values.count : values.cardIds.length,
+      limit: typeof values.limit === 'number' ? values.limit : BULK_BATCH_MAX_CARDS,
+      createdAt: String(values.createdAt || ''),
+      createStatus: values.createStatus === 'ready' ? 'ready' : 'creating',
+    };
+  }
+
+  private async readMeta(partnerId: string, batchId: string): Promise<MetaPayload> {
+    const row = await this.readMetaRow(partnerId, batchId);
+    if (!row) throw new NotFoundException('الدفعة غير موجودة');
+    return this.parseMeta(row, batchId);
+  }
+
+  /**
+   * Ensure every declared card draft exists. Safe to call after interrupt.
+   * Returns true when batch is ready.
+   */
+  private async ensureCards(
+    partnerId: string,
+    meta: MetaPayload,
+  ): Promise<{ ready: boolean; missing: string[] }> {
+    const missing: string[] = [];
+    for (const cardId of meta.cardIds) {
+      const clientDraftId = this.cardClientId(meta.batchId, cardId);
+      const row = await this.prisma.partnerEditorDraft.findUnique({
+        where: { partnerId_clientDraftId: { partnerId, clientDraftId } },
+      });
+      if (!row || row.status === 'discarded') missing.push(cardId);
+    }
+    if (!missing.length) {
+      if (meta.createStatus !== 'ready') {
+        await this.prisma.partnerEditorDraft.update({
+          where: { partnerId_clientDraftId: { partnerId, clientDraftId: this.metaClientId(meta.batchId) } },
+          data: {
+            valuesJson: { ...meta, createStatus: 'ready' } as unknown as Prisma.InputJsonValue,
+          },
+        });
+      }
+      return { ready: true, missing: [] };
+    }
+
+    // Create missing cards in one transaction (idempotent create skipDuplicates via unique).
+    await this.prisma.$transaction(async (tx) => {
+      for (const cardId of missing) {
+        const clientDraftId = this.cardClientId(meta.batchId, cardId);
+        const existing = await tx.partnerEditorDraft.findUnique({
+          where: { partnerId_clientDraftId: { partnerId, clientDraftId } },
+        });
+        if (existing && existing.status !== 'discarded') continue;
+        if (existing?.status === 'discarded') {
+          await tx.partnerEditorDraft.update({
+            where: { id: existing.id },
+            data: {
+              status: 'open',
+              kind: meta.kind,
+              profileId: meta.profileId,
+              schemaVersion: EDITOR_SCHEMA_VERSION,
+              valuesJson: {},
+              revision: 1,
+              targetOwnerId: null,
+              materializedAt: null,
+              materializeKey: null,
+              materializeFingerprint: null,
+              submitReviewStatus: null,
+              submitReviewError: null,
+            },
+          });
+          continue;
+        }
+        await tx.partnerEditorDraft.create({
+          data: {
+            partnerId,
+            clientDraftId,
+            kind: meta.kind,
+            profileId: meta.profileId,
+            schemaVersion: EDITOR_SCHEMA_VERSION,
+            valuesJson: {},
+            revision: 1,
+            status: 'open',
+          },
+        });
+      }
+      await tx.partnerEditorDraft.update({
+        where: { partnerId_clientDraftId: { partnerId, clientDraftId: this.metaClientId(meta.batchId) } },
+        data: {
+          valuesJson: { ...meta, createStatus: 'ready' } as unknown as Prisma.InputJsonValue,
+        },
+      });
+    });
+    return { ready: true, missing: [] };
   }
 
   async create(
@@ -85,69 +233,104 @@ export class BulkBatchesService {
     if (kind !== 'product' && kind !== 'service') {
       throw bulkError(HttpStatus.BAD_REQUEST, 'BULK_KIND_INVALID', 'نوع العنصر غير صالح');
     }
-    const count = Math.floor(Number(body.count));
-    if (!Number.isFinite(count) || count < 1) {
-      throw bulkError(HttpStatus.BAD_REQUEST, 'BULK_COUNT_INVALID', 'عدد البطاقات يجب أن يكون ≥ 1');
-    }
-    if (count > BULK_BATCH_MAX_CARDS) {
-      throw bulkError(
-        HttpStatus.BAD_REQUEST,
-        'BULK_COUNT_LIMIT',
-        `الحد التشغيلي الحالي ${BULK_BATCH_MAX_CARDS} بطاقة لكل دفعة`,
-        { max: BULK_BATCH_MAX_CARDS },
-      );
-    }
+    const count = this.assertCount(body.count);
     const partnerType = await this.partnerType(partnerId);
     this.registry.assertProfileAllowed(body.profileId, partnerType, kind);
+    const batchId = this.assertBatchId(body.batchId);
+    const cardIds = this.cardIdsForCount(count);
 
-    const batchId = (body.batchId && String(body.batchId).trim()) || randomUUID();
-    if (batchId.length > 64 || /[^a-zA-Z0-9_-]/.test(batchId)) {
-      throw bulkError(HttpStatus.BAD_REQUEST, 'BULK_BATCH_ID_INVALID', 'معرّف الدفعة غير صالح');
-    }
-
-    const existing = await this.prisma.partnerEditorDraft.findUnique({
-      where: { partnerId_clientDraftId: { partnerId, clientDraftId: this.metaClientId(batchId) } },
-    });
+    const existing = await this.readMetaRow(partnerId, batchId);
     if (existing && existing.status !== 'discarded') {
+      const meta = this.parseMeta(existing, batchId);
+      const mismatch: string[] = [];
+      if (meta.kind !== kind) mismatch.push('kind');
+      if (meta.profileId !== body.profileId) mismatch.push('profileId');
+      if (meta.count !== count && meta.cardIds.length !== count) mismatch.push('count');
+      if (mismatch.length) {
+        throw bulkError(
+          HttpStatus.CONFLICT,
+          'BULK_IDEMPOTENCY_MISMATCH',
+          'نفس معرّف الدفعة مستخدم ببيانات مختلفة',
+          {
+            mismatchFields: mismatch,
+            existing: { kind: meta.kind, profileId: meta.profileId, count: meta.count },
+            requested: { kind, profileId: body.profileId, count },
+          },
+        );
+      }
+      // Resume incomplete create — do not 404; complete missing cards.
+      await this.ensureCards(partnerId, meta);
       return this.get(partnerId, batchId);
     }
 
-    const cardIds: string[] = [];
-    for (let i = 0; i < count; i += 1) {
-      cardIds.push(`c${String(i + 1).padStart(3, '0')}`);
-    }
     const meta: MetaPayload = {
       v: 1,
       batchId,
       kind,
       profileId: body.profileId,
       cardIds,
+      count,
       limit: BULK_BATCH_MAX_CARDS,
       createdAt: new Date().toISOString(),
+      createStatus: 'creating',
     };
 
-    // Meta is batch index only — written directly (not registry field values).
-    await this.prisma.partnerEditorDraft.create({
-      data: {
-        partnerId,
-        clientDraftId: this.metaClientId(batchId),
-        kind,
-        profileId: body.profileId,
-        schemaVersion: EDITOR_SCHEMA_VERSION,
-        valuesJson: meta as unknown as Prisma.InputJsonValue,
-        revision: 1,
-        status: 'open',
-      },
-    });
-
-    for (const cardId of cardIds) {
-      await this.drafts.put(partnerId, this.cardClientId(batchId, cardId), {
-        expectedRevision: null,
-        kind,
-        profileId: body.profileId,
-        schemaVersion: EDITOR_SCHEMA_VERSION,
-        values: {},
+    // Atomic: meta + all cards in one transaction. Concurrent same batchId → unique conflict → resume path.
+    try {
+      await this.prisma.$transaction(async (tx) => {
+        await tx.partnerEditorDraft.create({
+          data: {
+            partnerId,
+            clientDraftId: this.metaClientId(batchId),
+            kind,
+            profileId: body.profileId,
+            schemaVersion: EDITOR_SCHEMA_VERSION,
+            valuesJson: meta as unknown as Prisma.InputJsonValue,
+            revision: 1,
+            status: 'open',
+          },
+        });
+        for (const cardId of cardIds) {
+          await tx.partnerEditorDraft.create({
+            data: {
+              partnerId,
+              clientDraftId: this.cardClientId(batchId, cardId),
+              kind,
+              profileId: body.profileId,
+              schemaVersion: EDITOR_SCHEMA_VERSION,
+              valuesJson: {},
+              revision: 1,
+              status: 'open',
+            },
+          });
+        }
+        await tx.partnerEditorDraft.update({
+          where: { partnerId_clientDraftId: { partnerId, clientDraftId: this.metaClientId(batchId) } },
+          data: {
+            valuesJson: { ...meta, createStatus: 'ready' } as unknown as Prisma.InputJsonValue,
+          },
+        });
       });
+    } catch (e) {
+      // Unique race: other request created meta — resume/complete.
+      if (e instanceof Prisma.PrismaClientKnownRequestError && e.code === 'P2002') {
+        const row = await this.readMetaRow(partnerId, batchId);
+        if (!row || row.status === 'discarded') {
+          throw bulkError(HttpStatus.CONFLICT, 'BULK_CREATE_RACE', 'تعارض إنشاء الدفعة؛ أعيدي المحاولة');
+        }
+        const metaRace = this.parseMeta(row, batchId);
+        if (metaRace.kind !== kind || metaRace.profileId !== body.profileId || metaRace.count !== count) {
+          throw bulkError(
+            HttpStatus.CONFLICT,
+            'BULK_IDEMPOTENCY_MISMATCH',
+            'نفس معرّف الدفعة مستخدم ببيانات مختلفة',
+            { mismatchFields: ['race'] },
+          );
+        }
+        await this.ensureCards(partnerId, metaRace);
+        return this.get(partnerId, batchId);
+      }
+      throw e;
     }
 
     return this.get(partnerId, batchId);
@@ -164,17 +347,41 @@ export class BulkBatchesService {
       orderBy: { updatedAt: 'desc' },
       take: 40,
     });
+    const items = [];
+    for (const r of rows) {
+      const batchId = ((r.valuesJson as MetaPayload)?.batchId) ?? this.parseBatchIdFromClient(r.clientDraftId);
+      if (!batchId) continue;
+      let meta: MetaPayload;
+      try {
+        meta = this.parseMeta(r, batchId);
+      } catch {
+        continue;
+      }
+      const cardRows = await this.prisma.partnerEditorDraft.findMany({
+        where: {
+          partnerId,
+          clientDraftId: { in: meta.cardIds.map((id) => this.cardClientId(batchId, id)) },
+          status: { not: 'discarded' },
+        },
+        select: { status: true, submitReviewStatus: true },
+      });
+      const ready = meta.createStatus === 'ready' && cardRows.length === meta.cardIds.length;
+      items.push({
+        batchId,
+        kind: meta.kind,
+        profileId: meta.profileId,
+        cardCount: meta.cardIds.length,
+        createStatus: ready ? 'ready' : 'creating',
+        ready,
+        materializedCount: cardRows.filter((c) => c.status === 'materialized').length,
+        openCount: cardRows.filter((c) => c.status === 'open').length,
+        updatedAt: r.updatedAt.toISOString(),
+        createdAt: meta.createdAt || r.createdAt.toISOString(),
+        openUrl: `/dashboard.html?bulk=${encodeURIComponent(batchId)}`,
+      });
+    }
     return {
-      items: rows.map((r) => {
-        const values = (r.valuesJson ?? {}) as MetaPayload;
-        return {
-          batchId: values.batchId ?? this.parseBatchIdFromClient(r.clientDraftId),
-          kind: values.kind ?? r.kind,
-          profileId: values.profileId ?? r.profileId,
-          cardCount: Array.isArray(values.cardIds) ? values.cardIds.length : 0,
-          updatedAt: r.updatedAt.toISOString(),
-        };
-      }),
+      items,
       maxCards: BULK_BATCH_MAX_CARDS,
       defaultLimit: BULK_BATCH_DEFAULT_LIMIT,
     };
@@ -182,10 +389,39 @@ export class BulkBatchesService {
 
   async get(partnerId: string, batchId: string) {
     this.registry.assertEditorV2Enabled();
-    const meta = await this.readMeta(partnerId, batchId);
+    let meta = await this.readMeta(partnerId, batchId);
+    if (meta.createStatus !== 'ready') {
+      await this.ensureCards(partnerId, meta);
+      meta = await this.readMeta(partnerId, batchId);
+    }
     const cards = [];
     for (const cardId of meta.cardIds) {
-      const draft = await this.drafts.get(partnerId, this.cardClientId(batchId, cardId));
+      let draft;
+      try {
+        draft = await this.drafts.get(partnerId, this.cardClientId(batchId, cardId));
+      } catch {
+        await this.ensureCards(partnerId, meta);
+        draft = await this.drafts.get(partnerId, this.cardClientId(batchId, cardId));
+      }
+      let contentStatus: string | null = null;
+      let reviewStatus: string | null = null;
+      if (draft.targetOwnerId) {
+        if (draft.kind === 'product') {
+          const p = await this.prisma.product.findFirst({
+            where: { id: draft.targetOwnerId, partnerId },
+            select: { contentStatus: true, reviewStatus: true },
+          });
+          contentStatus = p?.contentStatus ?? null;
+          reviewStatus = p?.reviewStatus ?? null;
+        } else {
+          const s = await this.prisma.service.findFirst({
+            where: { id: draft.targetOwnerId, partnerId },
+            select: { contentStatus: true, reviewStatus: true },
+          });
+          contentStatus = s?.contentStatus ?? null;
+          reviewStatus = s?.reviewStatus ?? null;
+        }
+      }
       cards.push({
         cardId,
         clientDraftId: draft.clientDraftId,
@@ -195,18 +431,24 @@ export class BulkBatchesService {
         materializedAt: draft.materializedAt,
         submitReviewStatus: draft.submitReviewStatus,
         submitReviewError: draft.submitReviewError,
+        contentStatus,
+        reviewStatus,
         values: draft.values,
         openUrl: draft.targetOwnerId
           ? `/dashboard.html?edit=${encodeURIComponent(draft.kind)}:${encodeURIComponent(draft.targetOwnerId)}`
           : `/dashboard.html?bulk=${encodeURIComponent(batchId)}&card=${encodeURIComponent(cardId)}`,
       });
     }
+    const ready = meta.createStatus === 'ready' && cards.length === meta.cardIds.length;
     return {
       batchId: meta.batchId,
       kind: meta.kind,
       profileId: meta.profileId,
+      count: meta.count,
       limit: meta.limit,
       createdAt: meta.createdAt,
+      createStatus: ready ? 'ready' : 'creating',
+      ready,
       maxCards: BULK_BATCH_MAX_CARDS,
       cards,
     };
@@ -218,13 +460,19 @@ export class BulkBatchesService {
     cardId: string,
     body: {
       expectedRevision: number | null;
-      values: Record<string, unknown>;
-      /** When false, refuse to overwrite keys that already have non-empty values (shared fill safety). */
+      /** Partial patch. Omitted keys are unchanged. */
+      values?: Record<string, unknown>;
+      /** Explicit clear — removes keys even if omitted from values. */
+      clearFields?: string[];
+      /** When false, refuse to overwrite keys that already have non-empty values. */
       overwriteWritten?: boolean;
     },
   ) {
     this.registry.assertEditorV2Enabled();
     const meta = await this.readMeta(partnerId, batchId);
+    if (meta.createStatus !== 'ready') {
+      throw bulkError(HttpStatus.CONFLICT, 'BULK_NOT_READY', 'الدفعة لم تكتمل بعد؛ أعيدي إنشاء/استكمال الدفعة');
+    }
     if (!meta.cardIds.includes(cardId)) {
       throw bulkError(HttpStatus.NOT_FOUND, 'BULK_CARD_NOT_FOUND', 'البطاقة غير موجودة في الدفعة');
     }
@@ -235,16 +483,27 @@ export class BulkBatchesService {
     }
 
     const nextValues = { ...(current.values as Record<string, unknown>) };
+    const clearFields = Array.isArray(body.clearFields) ? body.clearFields : [];
+    for (const fieldId of clearFields) {
+      delete nextValues[fieldId];
+    }
+
     const incoming = body.values ?? {};
     const overwrite = body.overwriteWritten === true;
     const blocked: string[] = [];
     for (const [k, v] of Object.entries(incoming)) {
+      if (clearFields.includes(k)) continue;
+      // Explicit null in values also means clear.
+      if (v === null) {
+        if (isWrittenValue(nextValues[k]) && !overwrite) {
+          blocked.push(k);
+          continue;
+        }
+        delete nextValues[k];
+        continue;
+      }
       const prev = nextValues[k];
-      const hasWritten =
-        prev != null &&
-        prev !== '' &&
-        !(typeof prev === 'object' && !Array.isArray(prev) && Object.keys(prev as object).length === 0);
-      if (hasWritten && !overwrite && JSON.stringify(prev) !== JSON.stringify(v)) {
+      if (isWrittenValue(prev) && !overwrite && JSON.stringify(prev) !== JSON.stringify(v)) {
         blocked.push(k);
         continue;
       }
@@ -259,25 +518,23 @@ export class BulkBatchesService {
       );
     }
 
-    return this.drafts.put(partnerId, clientDraftId, {
+    const saved = await this.drafts.put(partnerId, clientDraftId, {
       expectedRevision: body.expectedRevision,
       kind: meta.kind,
       profileId: meta.profileId,
       schemaVersion: EDITOR_SCHEMA_VERSION,
       values: nextValues,
     });
+    return saved;
   }
 
-  /**
-   * Shared fill preview or apply for selected cards.
-   * File count must never auto-set product count — callers pass explicit cardIds.
-   */
   async applyShared(
     partnerId: string,
     batchId: string,
     body: {
       cardIds: string[];
       values: Record<string, unknown>;
+      clearFields?: string[];
       previewOnly?: boolean;
       overwriteWritten?: boolean;
     },
@@ -288,33 +545,77 @@ export class BulkBatchesService {
     if (!selected.length) {
       throw bulkError(HttpStatus.BAD_REQUEST, 'BULK_CARDS_REQUIRED', 'اختر بطاقة واحدة على الأقل');
     }
-    const changing = Object.keys(body.values ?? {});
+    const incoming = body.values ?? {};
+    const clearFields = Array.isArray(body.clearFields) ? body.clearFields : [];
+    const overwrite = body.overwriteWritten === true;
+
     if (body.previewOnly) {
+      const perCard: Array<Record<string, unknown>> = [];
+      for (const cardId of selected) {
+        const draft = await this.drafts.get(partnerId, this.cardClientId(batchId, cardId));
+        const current = draft.values as Record<string, unknown>;
+        const willSet: string[] = [];
+        const willClear: string[] = [];
+        const wouldBlock: string[] = [];
+        for (const fieldId of clearFields) {
+          if (Object.prototype.hasOwnProperty.call(current, fieldId)) willClear.push(fieldId);
+        }
+        for (const [k, v] of Object.entries(incoming)) {
+          if (clearFields.includes(k) || v === null) {
+            if (Object.prototype.hasOwnProperty.call(current, k)) willClear.push(k);
+            continue;
+          }
+          const prev = current[k];
+          if (isWrittenValue(prev) && !overwrite && JSON.stringify(prev) !== JSON.stringify(v)) {
+            wouldBlock.push(k);
+          } else if (JSON.stringify(prev) !== JSON.stringify(v)) {
+            willSet.push(k);
+          }
+        }
+        perCard.push({ cardId, revision: draft.revision, willSet, willClear, wouldBlock });
+      }
       return {
         preview: true,
         batchId,
         cardIds: selected,
-        fieldsThatWillChange: changing,
-        overwriteWritten: body.overwriteWritten === true,
+        fieldsThatWillChange: [...new Set([...Object.keys(incoming), ...clearFields])],
+        overwriteWritten: overwrite,
+        perCard,
       };
     }
+
     const results = [];
+    let succeeded = 0;
+    let failed = 0;
+    let skipped = 0;
     for (const cardId of selected) {
       const draft = await this.drafts.get(partnerId, this.cardClientId(batchId, cardId));
       try {
         const put = await this.putCard(partnerId, batchId, cardId, {
           expectedRevision: draft.revision,
-          values: body.values,
-          overwriteWritten: body.overwriteWritten,
+          values: incoming,
+          clearFields,
+          overwriteWritten: overwrite,
         });
-        results.push({ cardId, ok: true, revision: put.revision });
+        results.push({ cardId, ok: true, revision: put.revision, values: put.values });
+        succeeded += 1;
       } catch (e) {
         const err = e as HttpException;
         const payload = typeof err.getResponse === 'function' ? err.getResponse() : { messageAr: String(e) };
         results.push({ cardId, ok: false, error: payload });
+        failed += 1;
       }
     }
-    return { preview: false, batchId, results };
+    return {
+      preview: false,
+      batchId,
+      succeeded,
+      failed,
+      skipped,
+      results,
+      partial: failed > 0 && succeeded > 0,
+      allOk: failed === 0,
+    };
   }
 
   async materialize(
@@ -323,39 +624,56 @@ export class BulkBatchesService {
     body: {
       cardIds?: string[];
       submitReview?: boolean;
-      /** Retry only failed/open cards; skip already materialized. */
+      /** Retry only failed/open cards; skip already materialized unless submitReview retry needed. */
       failedOnly?: boolean;
     },
     idempotencyKeyHeader: string | undefined,
   ) {
     this.registry.assertEditorV2Enabled();
     const meta = await this.readMeta(partnerId, batchId);
+    if (meta.createStatus !== 'ready') {
+      throw bulkError(HttpStatus.CONFLICT, 'BULK_NOT_READY', 'الدفعة غير جاهزة للتحويل');
+    }
     let targets = meta.cardIds;
     if (body.cardIds?.length) {
       targets = body.cardIds.filter((id) => meta.cardIds.includes(id));
     }
+    const submitReview = body.submitReview === true;
     const results: Array<Record<string, unknown>> = [];
     for (const cardId of targets) {
       const clientDraftId = this.cardClientId(batchId, cardId);
       const draft = await this.drafts.get(partnerId, clientDraftId);
       if (draft.status === 'materialized') {
-        if (body.failedOnly !== false) {
-          results.push({
-            cardId,
-            ok: true,
-            skipped: true,
-            reason: 'already_materialized',
-            targetOwnerId: draft.targetOwnerId,
-            clientDraftId,
-          });
+        // Allow resume of submit-review without creating another item.
+        if (submitReview && draft.submitReviewStatus !== 'submitted') {
+          try {
+            const row = await this.prisma.partnerEditorDraft.findUnique({
+              where: { partnerId_clientDraftId: { partnerId, clientDraftId } },
+              select: { materializeKey: true },
+            });
+            const out = await this.drafts.materialize(
+              partnerId,
+              clientDraftId,
+              { expectedRevision: draft.revision, submitReview: true },
+              row?.materializeKey || `${idempotencyKeyHeader || `bulk-${batchId}`}:${cardId}`,
+            );
+            results.push({
+              cardId,
+              ok: true,
+              skipped: false,
+              resumedReview: true,
+              targetOwnerId: out.targetOwnerId,
+              clientDraftId,
+              status: out.status,
+              submitReviewStatus: out.submitReviewStatus,
+            });
+          } catch (e) {
+            const err = e as HttpException;
+            const payload = typeof err.getResponse === 'function' ? err.getResponse() : { messageAr: String(e) };
+            results.push({ cardId, ok: false, error: payload, clientDraftId, targetOwnerId: draft.targetOwnerId });
+          }
           continue;
         }
-      }
-      if (draft.status !== 'open' && draft.status !== 'materialized') {
-        results.push({ cardId, ok: false, error: { code: 'BULK_CARD_STATUS', status: draft.status } });
-        continue;
-      }
-      if (draft.status === 'materialized') {
         results.push({
           cardId,
           ok: true,
@@ -363,7 +681,12 @@ export class BulkBatchesService {
           reason: 'already_materialized',
           targetOwnerId: draft.targetOwnerId,
           clientDraftId,
+          submitReviewStatus: draft.submitReviewStatus,
         });
+        continue;
+      }
+      if (draft.status !== 'open') {
+        results.push({ cardId, ok: false, error: { code: 'BULK_CARD_STATUS', status: draft.status } });
         continue;
       }
       const cardKey = `${idempotencyKeyHeader || `bulk-${batchId}`}:${cardId}`;
@@ -371,7 +694,7 @@ export class BulkBatchesService {
         const out = await this.drafts.materialize(
           partnerId,
           clientDraftId,
-          { expectedRevision: draft.revision, submitReview: body.submitReview === true },
+          { expectedRevision: draft.revision, submitReview },
           cardKey,
         );
         results.push({
@@ -382,6 +705,7 @@ export class BulkBatchesService {
           clientDraftId,
           replay: out.replay === true,
           status: out.status,
+          submitReviewStatus: out.submitReviewStatus,
           openUrl: `/dashboard.html?edit=${encodeURIComponent(meta.kind)}:${encodeURIComponent(out.targetOwnerId)}`,
         });
       } catch (e) {
@@ -399,6 +723,7 @@ export class BulkBatchesService {
       failed,
       skipped,
       results,
+      noteAr: 'materialized لا يعني published — النشر يظهر بعد موافقة المحتوى عند اللزوم',
     };
   }
 }

@@ -163,7 +163,8 @@ export class PartnersPortalController {
     @Body()
     body: {
       expectedRevision: number | null;
-      values: Record<string, unknown>;
+      values?: Record<string, unknown>;
+      clearFields?: string[];
       overwriteWritten?: boolean;
     },
   ) {
@@ -179,6 +180,7 @@ export class PartnersPortalController {
     body: {
       cardIds: string[];
       values: Record<string, unknown>;
+      clearFields?: string[];
       previewOnly?: boolean;
       overwriteWritten?: boolean;
     },

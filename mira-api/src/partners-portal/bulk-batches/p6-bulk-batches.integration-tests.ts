@@ -406,6 +406,168 @@ async function main() {
       n: againBody.cards?.length,
     });
 
+    // —— Partial create resume: meta+1 card then ensure completes remaining
+    const resumeId = `resume-${suffix}`;
+    await prisma.partnerEditorDraft.create({
+      data: {
+        partnerId: brand.id,
+        clientDraftId: `p6:${resumeId}:_meta`,
+        kind: 'product',
+        profileId: 'product.clothes',
+        schemaVersion: 2,
+        valuesJson: {
+          v: 1,
+          batchId: resumeId,
+          kind: 'product',
+          profileId: 'product.clothes',
+          cardIds: ['c001', 'c002', 'c003'],
+          count: 3,
+          limit: 50,
+          createdAt: new Date().toISOString(),
+          createStatus: 'creating',
+        },
+        revision: 1,
+        status: 'open',
+      },
+    });
+    await prisma.partnerEditorDraft.create({
+      data: {
+        partnerId: brand.id,
+        clientDraftId: `p6:${resumeId}:c001`,
+        kind: 'product',
+        profileId: 'product.clothes',
+        schemaVersion: 2,
+        valuesJson: {},
+        revision: 1,
+        status: 'open',
+      },
+    });
+    const resume = await fetch(`${base}/api/v1/partners-portal/bulk-batches`, {
+      method: 'POST',
+      headers: brandH,
+      body: JSON.stringify({ kind: 'product', profileId: 'product.clothes', count: 3, batchId: resumeId }),
+    });
+    const resumeBody = (await json(resume)) as { cards: unknown[]; ready?: boolean; createStatus?: string };
+    record(
+      'P6_BULK_CREATE_RESUME',
+      okHttp(resume.status) && resumeBody.cards?.length === 3 && resumeBody.ready === true,
+      { status: resume.status, n: resumeBody.cards?.length, ready: resumeBody.ready },
+    );
+
+    // Same batchId different count → conflict
+    const mismatch = await fetch(`${base}/api/v1/partners-portal/bulk-batches`, {
+      method: 'POST',
+      headers: brandH,
+      body: JSON.stringify({ kind: 'product', profileId: 'product.clothes', count: 5, batchId: resumeId }),
+    });
+    const mismatchBody = await json(mismatch);
+    record('P6_BULK_CREATE_MISMATCH', mismatch.status === 409, { status: mismatch.status, body: mismatchBody });
+
+    // Non-integer count rejected (no silent floor)
+    const floor = await fetch(`${base}/api/v1/partners-portal/bulk-batches`, {
+      method: 'POST',
+      headers: brandH,
+      body: JSON.stringify({ kind: 'product', profileId: 'product.clothes', count: 2.7, batchId: `floor-${suffix}` }),
+    });
+    record('P6_BULK_COUNT_NO_FLOOR', floor.status === 400, { status: floor.status, body: await json(floor) });
+
+    // Concurrent identical creates
+    const concId = `conc-${suffix}`;
+    const [a, b] = await Promise.all([
+      fetch(`${base}/api/v1/partners-portal/bulk-batches`, {
+        method: 'POST',
+        headers: brandH,
+        body: JSON.stringify({ kind: 'product', profileId: 'product.clothes', count: 2, batchId: concId }),
+      }),
+      fetch(`${base}/api/v1/partners-portal/bulk-batches`, {
+        method: 'POST',
+        headers: brandH,
+        body: JSON.stringify({ kind: 'product', profileId: 'product.clothes', count: 2, batchId: concId }),
+      }),
+    ]);
+    const aBody = (await json(a)) as { cards: unknown[]; batchId: string };
+    const bBody = (await json(b)) as { cards: unknown[]; batchId: string };
+    const metaCount = await prisma.partnerEditorDraft.count({
+      where: { partnerId: brand.id, clientDraftId: `p6:${concId}:_meta` },
+    });
+    record(
+      'P6_BULK_CREATE_CONCURRENT',
+      okHttp(a.status) && okHttp(b.status) && aBody.cards?.length === 2 && bBody.cards?.length === 2 && metaCount === 1,
+      { a: a.status, b: b.status, metaCount },
+    );
+
+    // Clear field then reload
+    const clearBatch = await fetch(`${base}/api/v1/partners-portal/bulk-batches`, {
+      method: 'POST',
+      headers: brandH,
+      body: JSON.stringify({ kind: 'product', profileId: 'product.clothes', count: 1, batchId: `clear-${suffix}` }),
+    });
+    const clearBody = (await json(clearBatch)) as { batchId: string; cards: Array<{ cardId: string; revision: number }> };
+    await fetch(`${base}/api/v1/partners-portal/bulk-batches/${clearBody.batchId}/cards/c001`, {
+      method: 'PUT',
+      headers: brandH,
+      body: JSON.stringify({
+        expectedRevision: clearBody.cards[0].revision,
+        values: { nameAr: 'للمسح', priceHalalas: 1000, purchaseMode: 'external', externalUrl: 'https://example.test/x' },
+        overwriteWritten: true,
+      }),
+    });
+    const afterName = await fetch(`${base}/api/v1/partners-portal/bulk-batches/${clearBody.batchId}`, { headers: brandH });
+    const afterNameBody = (await json(afterName)) as { cards: Array<{ revision: number; values: Record<string, unknown> }> };
+    const cleared = await fetch(`${base}/api/v1/partners-portal/bulk-batches/${clearBody.batchId}/cards/c001`, {
+      method: 'PUT',
+      headers: brandH,
+      body: JSON.stringify({
+        expectedRevision: afterNameBody.cards[0].revision,
+        values: {},
+        clearFields: ['nameAr'],
+        overwriteWritten: true,
+      }),
+    });
+    const clearedBody = (await json(cleared)) as { values: Record<string, unknown> };
+    const reload = await fetch(`${base}/api/v1/partners-portal/bulk-batches/${clearBody.batchId}`, { headers: brandH });
+    const reloadBody = (await json(reload)) as { cards: Array<{ values: Record<string, unknown> }> };
+    record(
+      'P6_BULK_CLEAR_FIELD',
+      okHttp(cleared.status) &&
+        !Object.prototype.hasOwnProperty.call(clearedBody.values || {}, 'nameAr') &&
+        !Object.prototype.hasOwnProperty.call(reloadBody.cards[0].values || {}, 'nameAr'),
+      { cleared: clearedBody.values, reload: reloadBody.cards[0].values },
+    );
+
+    // Shared apply honesty: allOk false when overwrite blocked
+    const sharedHonesty = await fetch(`${base}/api/v1/partners-portal/bulk-batches/${clearBody.batchId}/apply-shared`, {
+      method: 'POST',
+      headers: brandH,
+      body: JSON.stringify({
+        cardIds: ['c001'],
+        values: { priceHalalas: 999 },
+        overwriteWritten: false,
+      }),
+    });
+    const sharedHonestyBody = (await json(sharedHonesty)) as {
+      allOk?: boolean;
+      failed?: number;
+      results: Array<{ ok: boolean }>;
+    };
+    record(
+      'P6_BULK_SHARED_HONEST_PARTIAL',
+      okHttp(sharedHonesty.status) &&
+        sharedHonestyBody.allOk === false &&
+        sharedHonestyBody.failed === 1 &&
+        sharedHonestyBody.results?.[0]?.ok === false,
+      sharedHonestyBody,
+    );
+
+    // List batches
+    const listed = await fetch(`${base}/api/v1/partners-portal/bulk-batches`, { headers: brandH });
+    const listedBody = (await json(listed)) as { items: Array<{ batchId: string; ready?: boolean }> };
+    record(
+      'P6_BULK_LIST',
+      okHttp(listed.status) && (listedBody.items || []).some((i) => i.batchId === resumeId && i.ready !== false),
+      { n: listedBody.items?.length },
+    );
+
     const failed = results.filter((r) => !r.ok);
     const finishedUTC = new Date().toISOString();
     writeFileSync(
