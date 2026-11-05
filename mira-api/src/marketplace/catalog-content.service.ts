@@ -596,6 +596,24 @@ export class CatalogContentService {
           },
         });
       if (changed.count !== 1) throw new ConflictException('المسودة تغيرت بعد النسخة التي عُوينت');
+      // D4: after draft approve, archive inventory rows for variants no longer in published catalog
+      // (keep rows with outstanding reservations for release/consume).
+      if (typedKind === 'product' && (row.draftVariantsSet || removedMediaIds.size)) {
+        const publishedIds = new Set(
+          finalVariants.map((v) => String(v?.id || '').trim()).filter(Boolean),
+        );
+        const orphans = await tx.productVariantInventory.findMany({
+          where: { productId: id, archivedAt: null },
+        });
+        for (const orphan of orphans) {
+          if (publishedIds.has(orphan.variantId)) continue;
+          if (orphan.reservedQty > 0) continue;
+          await tx.productVariantInventory.update({
+            where: { id: orphan.id },
+            data: { archivedAt: new Date(), revision: orphan.revision + 1 },
+          });
+        }
+      }
       await tx.catalogReviewLog.create({ data: { ownerKind: typedKind, ownerId: id, actor, action: 'approve', note: note ?? null } });
       return { contentStatus: 'published', id, keysToDelete };
     });

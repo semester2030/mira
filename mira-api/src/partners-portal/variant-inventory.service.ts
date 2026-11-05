@@ -19,6 +19,15 @@ export type VariantInventoryRow = {
   archivedAt: string | null;
 };
 
+/** Catalog identity context for validation / derived / archival. */
+export type VariantCatalogContext = 'published' | 'draft' | 'writable';
+
+type ProductCatalogSlice = {
+  variantsJson: unknown;
+  draftVariantsJson: unknown;
+  draftVariantsSet: boolean;
+};
+
 function variantIdsFromJson(json: unknown): Set<string> {
   const ids = new Set<string>();
   if (!Array.isArray(json)) return ids;
@@ -40,28 +49,39 @@ export class VariantInventoryService {
     return product;
   }
 
-  /** Active catalog variants for this product (draft wins when draftVariantsSet). */
-  knownVariantIds(product: {
-    variantsJson: unknown;
-    draftVariantsJson: unknown;
-    draftVariantsSet: boolean;
-  }): Set<string> {
-    if (product.draftVariantsSet) {
-      if (product.draftVariantsJson == null) return new Set(); // explicit clear
+  /**
+   * D4 — explicit catalog contexts:
+   * - published: live customer-facing variantsJson only
+   * - draft: draftVariantsJson when draftVariantsSet (else published)
+   * - writable: union of published + draft so new draft variants can receive stock before approve;
+   *   draft clear (null) does not remove published ids from writable set
+   */
+  knownVariantIds(product: ProductCatalogSlice, context: VariantCatalogContext = 'published'): Set<string> {
+    const published = variantIdsFromJson(product.variantsJson);
+    if (context === 'published') return published;
+
+    if (context === 'draft') {
+      if (!product.draftVariantsSet) return published;
+      if (product.draftVariantsJson == null) return new Set();
       return variantIdsFromJson(product.draftVariantsJson);
     }
-    return variantIdsFromJson(product.variantsJson);
+
+    // writable
+    if (!product.draftVariantsSet) return published;
+    if (product.draftVariantsJson == null) return published; // draft clears → still write published until approve
+    const draft = variantIdsFromJson(product.draftVariantsJson);
+    return new Set([...published, ...draft]);
   }
 
   /**
-   * Sum of tracked available qty for variants that belong to the active catalog context.
-   * Orphan / deleted-from-catalog rows (not in knownVariantIds) are excluded from the total
-   * even if their inventory rows still exist for reservation history.
+   * Customer / sell-side derived total — always published catalog.
+   * Orphan rows and draft-only deletions do not shrink published availability.
    */
   async derivedProductStock(productId: string): Promise<{
     inventoryMode: string;
     derivedStockQty: number | null;
     rows: VariantInventoryRow[];
+    catalogContext: 'published';
   }> {
     const product = await this.prisma.product.findUnique({
       where: { id: productId },
@@ -76,25 +96,17 @@ export class VariantInventoryService {
     if (!product) throw new NotFoundException('المنتج غير موجود');
     const rows = await this.list(productId);
     if (product.inventoryMode !== 'variant') {
-      return { inventoryMode: product.inventoryMode || 'product', derivedStockQty: product.stockQty, rows };
+      return {
+        inventoryMode: product.inventoryMode || 'product',
+        derivedStockQty: product.stockQty,
+        rows,
+        catalogContext: 'published',
+      };
     }
-    const known = this.knownVariantIds(product);
-    let total = 0;
-    let anyUnspecified = false;
-    for (const row of rows) {
-      if (row.archivedAt) continue;
-      if (!known.has(row.variantId)) continue; // D4: deleted/orphan variants do not count
-      if (row.stockMode === 'untracked') continue;
-      if (row.stockQty == null) {
-        anyUnspecified = true;
-        continue;
-      }
-      total += Math.max(row.stockQty - row.reservedQty, 0);
-    }
+    const known = this.knownVariantIds(product, 'published');
     return {
-      inventoryMode: 'variant',
-      derivedStockQty: anyUnspecified ? null : total,
-      rows,
+      ...this.sumDerived(rows, known, product.inventoryMode || 'variant'),
+      catalogContext: 'published',
     };
   }
 
@@ -103,15 +115,7 @@ export class VariantInventoryService {
       where: { productId },
       orderBy: { createdAt: 'asc' },
     });
-    return rows.map((r) => ({
-      variantId: r.variantId,
-      variantKey: r.variantKey,
-      stockMode: r.stockMode === 'untracked' ? 'untracked' : 'tracked',
-      stockQty: r.stockQty,
-      reservedQty: r.reservedQty,
-      revision: r.revision,
-      archivedAt: r.archivedAt ? r.archivedAt.toISOString() : null,
-    }));
+    return rows.map((r) => this.mapRow(r));
   }
 
   async upsertMany(
@@ -134,14 +138,13 @@ export class VariantInventoryService {
       throw new BadRequestException('inventoryMode غير صالح');
     }
 
-    const knownIds = this.knownVariantIds(product);
+    const writableIds = this.knownVariantIds(product, 'writable');
     const incoming = body.rows || [];
 
-    // Validate entire request before any write — no partial commits of mixed good/bad rows.
     for (const row of incoming) {
       const variantId = String(row.variantId || '').trim();
       if (!variantId) throw new BadRequestException('variantId مطلوب');
-      if (!knownIds.has(variantId)) {
+      if (!writableIds.has(variantId)) {
         throw new BadRequestException({
           messageAr: 'تركيبة غير موجودة أو لا تتبع هذا المنتج',
           code: 'VARIANT_NOT_ON_PRODUCT',
@@ -149,7 +152,6 @@ export class VariantInventoryService {
         });
       }
       if (row.variantKey != null && String(row.variantKey).trim() && String(row.variantKey).trim() !== variantId) {
-        // Server identity is variantId; refuse ambiguous client keys that could target another row.
         throw new BadRequestException({
           messageAr: 'variantKey يجب أن يطابق معرّف التركيبة',
           code: 'VARIANT_KEY_MISMATCH',
@@ -178,7 +180,6 @@ export class VariantInventoryService {
 
       const targetMode = body.inventoryMode || locked.inventoryMode || 'product';
 
-      // Block mode switch while outstanding reservations exist on the source being abandoned.
       if (body.inventoryMode && body.inventoryMode !== locked.inventoryMode) {
         if (locked.inventoryMode === 'product' && body.inventoryMode === 'variant') {
           if ((locked.reservedQty || 0) > 0) {
@@ -212,11 +213,10 @@ export class VariantInventoryService {
         }
       }
 
-      // Re-check known ids inside tx against latest product row.
-      const knownInTx = this.knownVariantIds(locked);
+      const writableInTx = this.knownVariantIds(locked, 'writable');
       for (const row of incoming) {
         const variantId = String(row.variantId || '').trim();
-        if (!knownInTx.has(variantId)) {
+        if (!writableInTx.has(variantId)) {
           throw new BadRequestException({
             messageAr: 'تركيبة غير موجودة أو لا تتبع هذا المنتج',
             code: 'VARIANT_NOT_ON_PRODUCT',
@@ -235,33 +235,12 @@ export class VariantInventoryService {
       const out: VariantInventoryRow[] = [];
       for (const row of incoming) {
         const variantId = String(row.variantId || '').trim();
-        const variantKey = variantId; // server-canonical; never trust a divergent client key
+        const variantKey = variantId;
 
         const current = await tx.productVariantInventory.findUnique({
           where: { productId_variantId: { productId, variantId } },
         });
 
-        // D3: updating an existing row requires the revision the editor loaded — never null overwrite.
-        if (current) {
-          if (row.expectedRevision == null) {
-            throw new ConflictException({
-              messageAr: 'تعديل مخزون موجود يتطلب رقم مراجعة — أكملي التحميل ثم أعيدي المحاولة',
-              code: 'VARIANT_INVENTORY_REVISION_REQUIRED',
-              variantId,
-              currentRevision: current.revision,
-            });
-          }
-          if (current.revision !== row.expectedRevision) {
-            throw new ConflictException({
-              messageAr: 'تعارض مراجعة مخزون التركيبة',
-              code: 'VARIANT_INVENTORY_REVISION_CONFLICT',
-              expectedRevision: row.expectedRevision,
-              currentRevision: current.revision,
-            });
-          }
-        }
-
-        // D2: omit stockMode → keep existing; only create defaults to tracked.
         const stockMode =
           row.stockMode === 'untracked'
             ? 'untracked'
@@ -286,70 +265,98 @@ export class VariantInventoryService {
           });
         }
 
-        const data: Prisma.ProductVariantInventoryUncheckedCreateInput = {
-          productId,
-          variantId,
-          variantKey,
-          stockMode,
-          stockQty: row.stockQty === undefined ? current?.stockQty ?? null : row.stockQty,
-          reservedQty: current?.reservedQty ?? 0,
-          revision: (current?.revision ?? 0) + 1,
-          archivedAt: row.archive ? new Date() : current?.archivedAt ?? null,
-        };
+        const stockQty = row.stockQty === undefined ? current?.stockQty ?? null : row.stockQty;
+        // Writing a live catalog variant clears prior archive (prevents old row resurrecting as active incorrectly).
+        const archivedAt = row.archive ? new Date() : null;
 
-        const saved = current
-          ? await tx.productVariantInventory.update({
-              where: { id: current.id },
-              data: {
-                variantKey: data.variantKey,
-                stockMode: data.stockMode,
-                stockQty: data.stockQty,
-                revision: data.revision,
-                archivedAt: data.archivedAt,
-              },
-            })
-          : await tx.productVariantInventory.create({ data });
+        if (!current) {
+          const saved = await tx.productVariantInventory.create({
+            data: {
+              productId,
+              variantId,
+              variantKey,
+              stockMode,
+              stockQty,
+              reservedQty: 0,
+              revision: 1,
+              archivedAt,
+            },
+          });
+          out.push(this.mapRow(saved));
+          continue;
+        }
 
-        out.push({
-          variantId: saved.variantId,
-          variantKey: saved.variantKey,
-          stockMode: saved.stockMode === 'untracked' ? 'untracked' : 'tracked',
-          stockQty: saved.stockQty,
-          reservedQty: saved.reservedQty,
-          revision: saved.revision,
-          archivedAt: saved.archivedAt ? saved.archivedAt.toISOString() : null,
+        // D3: existing row requires expectedRevision; write is atomic WHERE revision matches.
+        if (row.expectedRevision == null) {
+          throw new ConflictException({
+            messageAr: 'تعديل مخزون موجود يتطلب رقم مراجعة — أكملي التحميل ثم أعيدي المحاولة',
+            code: 'VARIANT_INVENTORY_REVISION_REQUIRED',
+            variantId,
+            currentRevision: current.revision,
+          });
+        }
+
+        const updated = await tx.productVariantInventory.updateMany({
+          where: { id: current.id, revision: row.expectedRevision },
+          data: {
+            variantKey,
+            stockMode,
+            stockQty,
+            revision: { increment: 1 },
+            archivedAt,
+          },
         });
+        if (updated.count !== 1) {
+          const fresh = await tx.productVariantInventory.findUnique({ where: { id: current.id } });
+          throw new ConflictException({
+            messageAr: 'تعارض مراجعة مخزون التركيبة',
+            code: 'VARIANT_INVENTORY_REVISION_CONFLICT',
+            expectedRevision: row.expectedRevision,
+            currentRevision: fresh?.revision ?? null,
+            variantId,
+          });
+        }
+        const saved = await tx.productVariantInventory.findUniqueOrThrow({ where: { id: current.id } });
+        out.push(this.mapRow(saved));
       }
 
-      // D4: archive inventory rows for variants no longer in the active catalog (keep rows with holds).
-      // Re-read product inside the tx so a prior variantsJson clear in this connection is visible.
-      const freshCatalog = await tx.product.findUnique({
-        where: { id: productId },
-        select: { variantsJson: true, draftVariantsJson: true, draftVariantsSet: true },
-      });
-      const knownNow = this.knownVariantIds(
-        freshCatalog || {
-          draftVariantsSet: locked.draftVariantsSet,
-          variantsJson: locked.variantsJson,
-          draftVariantsJson: locked.draftVariantsJson,
-        },
-      );
-      const orphanRows = await tx.productVariantInventory.findMany({
-        where: { productId, archivedAt: null },
-      });
-      for (const orphan of orphanRows) {
-        if (knownNow.has(orphan.variantId)) continue;
-        if (orphan.reservedQty > 0) continue; // keep for release/consume
-        await tx.productVariantInventory.update({
-          where: { id: orphan.id },
-          data: { archivedAt: new Date(), revision: orphan.revision + 1 },
-        });
-      }
+      // D4: archive only against published catalog — draft deletion must not archive live stock.
+      await this.archiveOrphansAgainstPublished(tx, productId);
 
       void targetMode;
       const derived = await this.derivedInTx(tx, productId);
       return { ok: true, ...derived, updated: out };
     });
+  }
+
+  /**
+   * After draft approve publishes a smaller variantsJson, archive inventory for removed published variants
+   * (keep rows with outstanding reservations).
+   */
+  async archiveOrphansAfterPublish(productId: string): Promise<void> {
+    await this.prisma.$transaction(async (tx) => {
+      await this.archiveOrphansAgainstPublished(tx, productId);
+    });
+  }
+
+  private async archiveOrphansAgainstPublished(tx: Prisma.TransactionClient, productId: string) {
+    const fresh = await tx.product.findUnique({
+      where: { id: productId },
+      select: { variantsJson: true, draftVariantsJson: true, draftVariantsSet: true },
+    });
+    if (!fresh) return;
+    const published = this.knownVariantIds(fresh, 'published');
+    const orphanRows = await tx.productVariantInventory.findMany({
+      where: { productId, archivedAt: null },
+    });
+    for (const orphan of orphanRows) {
+      if (published.has(orphan.variantId)) continue;
+      if (orphan.reservedQty > 0) continue;
+      await tx.productVariantInventory.update({
+        where: { id: orphan.id },
+        data: { archivedAt: new Date(), revision: orphan.revision + 1 },
+      });
+    }
   }
 
   private async derivedInTx(tx: Prisma.TransactionClient, productId: string) {
@@ -363,28 +370,26 @@ export class VariantInventoryService {
         draftVariantsSet: true,
       },
     });
-    const rows = await tx.productVariantInventory.findMany({ where: { productId } });
-    const mapped: VariantInventoryRow[] = rows.map((r) => ({
-      variantId: r.variantId,
-      variantKey: r.variantKey,
-      stockMode: r.stockMode === 'untracked' ? 'untracked' : 'tracked',
-      stockQty: r.stockQty,
-      reservedQty: r.reservedQty,
-      revision: r.revision,
-      archivedAt: r.archivedAt ? r.archivedAt.toISOString() : null,
-    }));
+    const rows = (await tx.productVariantInventory.findMany({ where: { productId } })).map((r) => this.mapRow(r));
     if (!product || product.inventoryMode !== 'variant') {
       return {
         inventoryMode: product?.inventoryMode || 'product',
         derivedStockQty: product?.stockQty ?? null,
-        rows: mapped,
+        rows,
+        catalogContext: 'published' as const,
       };
     }
-    const known = this.knownVariantIds(product);
+    const known = this.knownVariantIds(product, 'published');
+    return { ...this.sumDerived(rows, known, 'variant'), catalogContext: 'published' as const };
+  }
+
+  private sumDerived(rows: VariantInventoryRow[], known: Set<string>, inventoryMode: string) {
     let total = 0;
     let anyUnspecified = false;
-    for (const row of mapped) {
-      if (row.archivedAt || !known.has(row.variantId) || row.stockMode === 'untracked') continue;
+    for (const row of rows) {
+      if (row.archivedAt) continue;
+      if (!known.has(row.variantId)) continue;
+      if (row.stockMode === 'untracked') continue;
       if (row.stockQty == null) {
         anyUnspecified = true;
         continue;
@@ -392,29 +397,61 @@ export class VariantInventoryService {
       total += Math.max(row.stockQty - row.reservedQty, 0);
     }
     return {
-      inventoryMode: 'variant',
+      inventoryMode,
       derivedStockQty: anyUnspecified ? null : total,
-      rows: mapped,
+      rows,
     };
   }
 
-  /** Available units for a variant when inventoryMode=variant; null = untracked. */
+  private mapRow(r: {
+    variantId: string;
+    variantKey: string;
+    stockMode: string;
+    stockQty: number | null;
+    reservedQty: number;
+    revision: number;
+    archivedAt: Date | null;
+  }): VariantInventoryRow {
+    return {
+      variantId: r.variantId,
+      variantKey: r.variantKey,
+      stockMode: r.stockMode === 'untracked' ? 'untracked' : 'tracked',
+      stockQty: r.stockQty,
+      reservedQty: r.reservedQty,
+      revision: r.revision,
+      archivedAt: r.archivedAt ? r.archivedAt.toISOString() : null,
+    };
+  }
+
+  /**
+   * Available units for a published variant when inventoryMode=variant; null = untracked.
+   * Draft-only variants (not in published catalog) are not sellable here.
+   */
   async availableForVariant(productId: string, variantId: string): Promise<number | null> {
     const product = await this.prisma.product.findUnique({
       where: { id: productId },
-      select: { inventoryMode: true, stockQty: true, reservedQty: true },
+      select: {
+        inventoryMode: true,
+        stockQty: true,
+        reservedQty: true,
+        variantsJson: true,
+        draftVariantsJson: true,
+        draftVariantsSet: true,
+      },
     });
     if (!product) return null;
     if (product.inventoryMode !== 'variant') {
       if (product.stockQty == null) return null;
       return Math.max(product.stockQty - product.reservedQty, 0);
     }
+    const published = this.knownVariantIds(product, 'published');
+    if (!published.has(variantId)) return 0;
     const row = await this.prisma.productVariantInventory.findUnique({
       where: { productId_variantId: { productId, variantId } },
     });
     if (!row || row.archivedAt) return 0;
     if (row.stockMode === 'untracked') return null;
-    if (row.stockQty == null) return 0; // tracked unspecified → not sellable (distinct from untracked)
+    if (row.stockQty == null) return 0;
     return Math.max(row.stockQty - row.reservedQty, 0);
   }
 }

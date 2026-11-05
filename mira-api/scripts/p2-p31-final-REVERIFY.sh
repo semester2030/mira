@@ -55,6 +55,9 @@ node "$REPO_ROOT/partners-portal/web/js/catalog-options-p31-swatch-tests.mjs" | 
 echo "== r2 abort same-stream unit =="
 npx tsx src/partners-portal/upload-sessions/r2-abort-same-stream.unit.ts | tee "$OUT/r2-unit/run.txt"
 
+echo "== r2 mira gate unit =="
+npx tsx src/partners-portal/upload-sessions/r2-mira-gate.unit.ts | tee "$OUT/r2-unit/mira-gate.txt"
+
 echo "== typecheck (changed P3.1 / R2 modules) =="
 set +e
 # Full-project tsc has pre-existing unrelated .spec.ts failures; gate on touched modules.

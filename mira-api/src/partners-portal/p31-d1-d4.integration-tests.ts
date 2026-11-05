@@ -5,7 +5,7 @@
 import { randomUUID } from 'node:crypto';
 import { mkdirSync, writeFileSync } from 'node:fs';
 import { join } from 'node:path';
-import { PrismaClient } from '@prisma/client';
+import { Prisma, PrismaClient } from '@prisma/client';
 import { PrismaService } from '../prisma/prisma.service';
 import { CommerceService, partnerActor } from '../marketplace/commerce.service';
 import { VariantInventoryService } from './variant-inventory.service';
@@ -324,20 +324,44 @@ async function main() {
     const c0 = await inv.upsertMany(partner.id, cProd.id, {
       rows: [{ variantId: 'c1', stockMode: 'tracked', stockQty: 10 }],
     });
-    // Concurrent bump
-    await inv.upsertMany(partner.id, cProd.id, {
-      rows: [{ variantId: 'c1', stockQty: 12, expectedRevision: c0.rows[0].revision }],
-    });
+    const baseRev = c0.rows[0].revision;
+    // Deterministic concurrent race: same expectedRevision, qty 12 vs 7 — exactly one wins.
+    const race = await Promise.allSettled([
+      inv.upsertMany(partner.id, cProd.id, {
+        rows: [{ variantId: 'c1', stockQty: 12, expectedRevision: baseRev }],
+      }),
+      inv.upsertMany(partner.id, cProd.id, {
+        rows: [{ variantId: 'c1', stockQty: 7, expectedRevision: baseRev }],
+      }),
+    ]);
+    const wins = race.filter((r) => r.status === 'fulfilled').length;
+    const losses = race.filter((r) => r.status === 'rejected').length;
+    const afterRace = await inv.list(cProd.id);
+    const raceQty = afterRace[0]?.stockQty;
+    const raceRev = afterRace[0]?.revision;
+    record(
+      'D3_ATOMIC_RACE_ONE_WINS',
+      wins === 1 &&
+        losses === 1 &&
+        (raceQty === 12 || raceQty === 7) &&
+        raceRev === baseRev + 1,
+      { wins, losses, raceQty, raceRev, baseRev },
+    );
+
     let conflictOk = false;
     try {
       await inv.upsertMany(partner.id, cProd.id, {
-        rows: [{ variantId: 'c1', stockQty: 7, expectedRevision: c0.rows[0].revision }],
+        rows: [{ variantId: 'c1', stockQty: 99, expectedRevision: baseRev }],
       });
     } catch (e) {
       conflictOk = /VARIANT_INVENTORY_REVISION_CONFLICT|تعارض/.test(errBlob(e));
     }
     const still = await inv.list(cProd.id);
-    record('D3_STALE_REVISION_REJECTED_SERVER_KEEPS_12', conflictOk && still[0]?.stockQty === 12, still[0]);
+    record(
+      'D3_STALE_REVISION_REJECTED_SERVER_KEEPS_QTY',
+      conflictOk && still[0]?.stockQty === raceQty,
+      still[0],
+    );
 
     let missingRev = false;
     try {
@@ -348,9 +372,21 @@ async function main() {
       missingRev = /VARIANT_INVENTORY_REVISION_REQUIRED|مراجعة/.test(errBlob(e));
     }
     const still2 = await inv.list(cProd.id);
-    record('D3_MISSING_REVISION_REJECTED', missingRev && still2[0]?.stockQty === 12, still2[0]);
+    record('D3_MISSING_REVISION_REJECTED', missingRev && still2[0]?.stockQty === raceQty, still2[0]);
 
-    // ========== D4: deleted variant excluded from derived ==========
+    // Also with inventoryMode present in body
+    let modeBodyConflict = false;
+    try {
+      await inv.upsertMany(partner.id, cProd.id, {
+        inventoryMode: 'variant',
+        rows: [{ variantId: 'c1', stockQty: 1, expectedRevision: baseRev }],
+      });
+    } catch (e) {
+      modeBodyConflict = /VARIANT_INVENTORY_REVISION_CONFLICT|تعارض/.test(errBlob(e));
+    }
+    record('D3_CONFLICT_WITH_INVENTORY_MODE_BODY', modeBodyConflict && (await inv.list(cProd.id))[0]?.stockQty === raceQty);
+
+    // ========== D4: draft delete must not archive published stock ==========
     const dProd = await prisma.product.create({
       data: {
         partnerId: partner.id,
@@ -386,33 +422,120 @@ async function main() {
     });
     await inv.upsertMany(partner.id, dProd.id, {
       rows: [
-        { variantId: 'd1', stockQty: 4 },
-        { variantId: 'd2', stockQty: 6 },
+        { variantId: 'd1', stockQty: 10 },
+        { variantId: 'd2', stockQty: 10 },
       ],
     });
-    // Remove d2 from catalog
+    // Draft removes d2 only — published still has d2
     await prisma.product.update({
       where: { id: dProd.id },
-      data: { variantsJson: [{ id: 'd1', selections: { size: 'd1v' }, available: true }] },
+      data: {
+        draftVariantsSet: true,
+        draftVariantsJson: [{ id: 'd1', selections: { size: 'd1v' }, available: true }],
+      },
     });
-    // Inventory put for remaining variants archives orphan
+    const d1BeforeDraftSave = (await inv.list(dProd.id)).find((r) => r.variantId === 'd1')!;
+    await inv.upsertMany(partner.id, dProd.id, {
+      rows: [{ variantId: 'd1', stockQty: 10, expectedRevision: d1BeforeDraftSave.revision }],
+    });
+    const derivedAfterDraft = await inv.derivedProductStock(dProd.id);
+    const d2AfterDraft = (await inv.list(dProd.id)).find((r) => r.variantId === 'd2');
+    const availD2 = await inv.availableForVariant(dProd.id, 'd2');
+    record(
+      'D4_DRAFT_DELETE_KEEPS_PUBLISHED_AVAILABLE',
+      derivedAfterDraft.derivedStockQty === 20 && !d2AfterDraft?.archivedAt && availD2 === 10,
+      { derivedAfterDraft, d2AfterDraft, availD2 },
+    );
+
+    // Reject draft path: clear review flags but keep published — simulate reject by clearing draft only
+    await prisma.product.update({
+      where: { id: dProd.id },
+      data: { draftVariantsSet: false, draftVariantsJson: Prisma.DbNull, reviewStatus: 'rejected' },
+    });
+    const derivedAfterReject = await inv.derivedProductStock(dProd.id);
+    record(
+      'D4_REJECT_DRAFT_KEEPS_PUBLISHED',
+      derivedAfterReject.derivedStockQty === 20 && !(await inv.list(dProd.id)).find((r) => r.variantId === 'd2')?.archivedAt,
+      derivedAfterReject,
+    );
+
+    // Publish-side delete: shrink published variantsJson then inventory put archives orphan
+    await prisma.product.update({
+      where: { id: dProd.id },
+      data: {
+        reviewStatus: 'none',
+        variantsJson: [{ id: 'd1', selections: { size: 'd1v' }, available: true }],
+      },
+    });
     const d1row = (await inv.list(dProd.id)).find((r) => r.variantId === 'd1')!;
     await inv.upsertMany(partner.id, dProd.id, {
-      rows: [{ variantId: 'd1', stockQty: 4, expectedRevision: d1row.revision }],
+      rows: [{ variantId: 'd1', stockQty: 10, expectedRevision: d1row.revision }],
     });
     const derived = await inv.derivedProductStock(dProd.id);
     const d2 = (await inv.list(dProd.id)).find((r) => r.variantId === 'd2');
     record(
       'D4_DELETED_VARIANT_EXCLUDED_FROM_DERIVED',
-      derived.derivedStockQty === 4 && !!d2?.archivedAt,
+      derived.derivedStockQty === 10 && !!d2?.archivedAt,
       { derived, d2 },
     );
 
-    // Remove all variants
+    // Remove all published variants
     await prisma.product.update({ where: { id: dProd.id }, data: { variantsJson: [] } });
     await inv.upsertMany(partner.id, dProd.id, { rows: [] });
     const derivedEmpty = await inv.derivedProductStock(dProd.id);
     record('D4_ALL_VARIANTS_REMOVED_DERIVED_ZERO', derivedEmpty.derivedStockQty === 0, derivedEmpty);
+
+    // Held reservation: orphan with reservedQty>0 stays unarchived
+    const holdProd = await prisma.product.create({
+      data: {
+        partnerId: partner.id,
+        nameAr: 'حجز',
+        nameEn: `hold-${run}`,
+        priceHalalas: 1000,
+        purchaseMode: 'internal_cod',
+        stockQty: null,
+        inventoryMode: 'variant',
+        externalUrl: '',
+        concernTags: [],
+        skinTypes: [],
+        contentStatus: 'published',
+        reviewStatus: 'none',
+        active: true,
+        catalogSource: 'catalog',
+        deliveryFeeHalalas: 0,
+        optionsJson: [
+          {
+            id: 'size',
+            labelAr: 'المقاس',
+            values: [
+              { id: 'h1v', labelAr: 'H1' },
+              { id: 'h2v', labelAr: 'H2' },
+            ],
+          },
+        ],
+        variantsJson: [
+          { id: 'h1', selections: { size: 'h1v' }, available: true },
+          { id: 'h2', selections: { size: 'h2v' }, available: true },
+        ],
+      },
+    });
+    await inv.upsertMany(partner.id, holdProd.id, {
+      rows: [
+        { variantId: 'h1', stockQty: 5 },
+        { variantId: 'h2', stockQty: 5 },
+      ],
+    });
+    await prisma.productVariantInventory.update({
+      where: { productId_variantId: { productId: holdProd.id, variantId: 'h2' } },
+      data: { reservedQty: 2 },
+    });
+    await prisma.product.update({
+      where: { id: holdProd.id },
+      data: { variantsJson: [{ id: 'h1', selections: { size: 'h1v' }, available: true }] },
+    });
+    await inv.upsertMany(partner.id, holdProd.id, { rows: [] });
+    const h2 = (await inv.list(holdProd.id)).find((r) => r.variantId === 'h2');
+    record('D4_HELD_ORPHAN_NOT_ARCHIVED', !h2?.archivedAt && h2?.reservedQty === 2, h2);
   } catch (e) {
     record('D1_D4_SUITE', false, String((e as Error)?.stack || e));
   } finally {
