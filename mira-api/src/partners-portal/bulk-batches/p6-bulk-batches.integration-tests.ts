@@ -568,6 +568,46 @@ async function main() {
       { n: listedBody.items?.length },
     );
 
+    // Preview revision drift: apply with stale expectedRevisions
+    const driftBatch = await fetch(`${base}/api/v1/partners-portal/bulk-batches`, {
+      method: 'POST',
+      headers: brandH,
+      body: JSON.stringify({ kind: 'product', profileId: 'product.clothes', count: 1, batchId: `drift-${suffix}` }),
+    });
+    const driftBody = (await json(driftBatch)) as { batchId: string; cards: Array<{ cardId: string; revision: number }> };
+    await fetch(`${base}/api/v1/partners-portal/bulk-batches/${driftBody.batchId}/cards/c001`, {
+      method: 'PUT',
+      headers: brandH,
+      body: JSON.stringify({
+        expectedRevision: driftBody.cards[0].revision,
+        values: { nameAr: 'قبل', priceHalalas: 100 },
+        overwriteWritten: true,
+      }),
+    });
+    const driftGot = await fetch(`${base}/api/v1/partners-portal/bulk-batches/${driftBody.batchId}`, { headers: brandH });
+    const driftGotBody = (await json(driftGot)) as { cards: Array<{ revision: number }> };
+    const driftApply = await fetch(`${base}/api/v1/partners-portal/bulk-batches/${driftBody.batchId}/apply-shared`, {
+      method: 'POST',
+      headers: brandH,
+      body: JSON.stringify({
+        cardIds: ['c001'],
+        values: { nameAr: 'بعد' },
+        overwriteWritten: true,
+        expectedRevisions: { c001: driftGotBody.cards[0].revision - 1 },
+      }),
+    });
+    const driftApplyBody = (await json(driftApply)) as {
+      allOk?: boolean;
+      results: Array<{ ok: boolean; error?: { code?: string } }>;
+    };
+    record(
+      'P6_BULK_PREVIEW_REVISION_DRIFT',
+      okHttp(driftApply.status) &&
+        driftApplyBody.allOk === false &&
+        driftApplyBody.results?.[0]?.error?.code === 'BULK_PREVIEW_REVISION_DRIFT',
+      driftApplyBody,
+    );
+
     const failed = results.filter((r) => !r.ok);
     const finishedUTC = new Date().toISOString();
     writeFileSync(

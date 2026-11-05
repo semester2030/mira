@@ -537,6 +537,8 @@ export class BulkBatchesService {
       clearFields?: string[];
       previewOnly?: boolean;
       overwriteWritten?: boolean;
+      /** When set, each card must still be at this revision or the apply fails for that card. */
+      expectedRevisions?: Record<string, number>;
     },
   ) {
     this.registry.assertEditorV2Enabled();
@@ -548,6 +550,7 @@ export class BulkBatchesService {
     const incoming = body.values ?? {};
     const clearFields = Array.isArray(body.clearFields) ? body.clearFields : [];
     const overwrite = body.overwriteWritten === true;
+    const expectedRevisions = body.expectedRevisions || null;
 
     if (body.previewOnly) {
       const perCard: Array<Record<string, unknown>> = [];
@@ -580,6 +583,7 @@ export class BulkBatchesService {
         cardIds: selected,
         fieldsThatWillChange: [...new Set([...Object.keys(incoming), ...clearFields])],
         overwriteWritten: overwrite,
+        expectedRevisions: Object.fromEntries(perCard.map((p) => [p.cardId as string, p.revision])),
         perCard,
       };
     }
@@ -590,6 +594,23 @@ export class BulkBatchesService {
     let skipped = 0;
     for (const cardId of selected) {
       const draft = await this.drafts.get(partnerId, this.cardClientId(batchId, cardId));
+      if (expectedRevisions && Object.prototype.hasOwnProperty.call(expectedRevisions, cardId)) {
+        const want = expectedRevisions[cardId];
+        if (want !== draft.revision) {
+          results.push({
+            cardId,
+            ok: false,
+            error: {
+              code: 'BULK_PREVIEW_REVISION_DRIFT',
+              messageAr: 'تغيرت البطاقة بعد المعاينة؛ أعيدي المعاينة قبل التطبيق',
+              expectedRevision: want,
+              currentRevision: draft.revision,
+            },
+          });
+          failed += 1;
+          continue;
+        }
+      }
       try {
         const put = await this.putCard(partnerId, batchId, cardId, {
           expectedRevision: draft.revision,

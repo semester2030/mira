@@ -183,6 +183,7 @@ export class PartnersPortalController {
       clearFields?: string[];
       previewOnly?: boolean;
       overwriteWritten?: boolean;
+      expectedRevisions?: Record<string, number>;
     },
   ) {
     return this.bulkBatches.applyShared(req.partnerUser.partnerId, batchId, body);
