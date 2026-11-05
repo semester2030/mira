@@ -814,6 +814,9 @@ model CommerceOrderItem {
   reservedQty      Int           @default(0) @map("reserved_qty")
   /// none | reserved | released | consumed — guards against double release.
   stockState       String        @default("none") @map("stock_state")
+  /// Snapshot of where units were reserved: none | product | variant.
+  /// Release/consume MUST use this, not the product's current inventoryMode.
+  stockSource      String        @default("none") @map("stock_source")
 
   @@index([orderId])
   @@map("commerce_order_items")

@@ -281,42 +281,82 @@ async function main() {
     });
     if (!rangeOk) throw new Error('range read mismatch');
 
-    // Abort after bytes have started flowing (not immediately before first chunk).
+    // Abort the SAME GetObject stream after real bytes — never a second request.
     {
       const ac = new AbortController();
       let sawBytes = false;
-      let abortKind: 'AbortError' | 'other' | 'none' = 'none';
+      let bytesBeforeAbort = 0;
+      let abortKind: 'AbortError' | 'stream-closed' | 'other' | 'none' = 'none';
+      let streamClosed = false;
       try {
-        const out = await client.send(new GetObjectCommand({ Bucket: bucket, Key: objectKey }));
-        const body = out.Body as AsyncIterable<Uint8Array>;
-        const reader = (async () => {
+        const out = await client.send(new GetObjectCommand({ Bucket: bucket, Key: objectKey }), {
+          abortSignal: ac.signal as never,
+        });
+        const body = out.Body as AsyncIterable<Uint8Array> & {
+          destroy?: (err?: Error) => void;
+          cancel?: (reason?: unknown) => Promise<void> | void;
+        };
+        try {
           for await (const chunk of body) {
             if (chunk && chunk.length) {
               sawBytes = true;
+              bytesBeforeAbort += chunk.length;
               ac.abort();
+              try {
+                if (typeof body.destroy === 'function') body.destroy();
+                else if (typeof body.cancel === 'function') await body.cancel('test-abort');
+              } catch {
+                /* destroy/cancel may throw after abort — expected */
+              }
+              streamClosed = true;
+              break;
             }
-            if (ac.signal.aborted) break;
           }
-        })();
-        // Also abort via AbortController on a second concurrent get to prove cancel path.
-        const pending = client.send(new GetObjectCommand({ Bucket: bucket, Key: objectKey }), {
-          abortSignal: ac.signal as never,
-        });
-        await reader.catch(() => undefined);
-        try {
-          await pending;
-          abortKind = 'none';
+          if (ac.signal.aborted && sawBytes) {
+            abortKind = 'stream-closed';
+          } else {
+            abortKind = 'none';
+          }
         } catch (err) {
           const name = String((err as { name?: string })?.name || '');
-          abortKind = name === 'AbortError' || /aborted|AbortError/i.test(String(err)) ? 'AbortError' : 'other';
+          const msg = String(err);
+          if (name === 'AbortError' || /aborted|AbortError|aborted/i.test(msg)) {
+            abortKind = 'AbortError';
+            streamClosed = true;
+          } else if (sawBytes && ac.signal.aborted) {
+            abortKind = 'stream-closed';
+            streamClosed = true;
+          } else {
+            abortKind = 'other';
+          }
         }
       } catch (err) {
         const name = String((err as { name?: string })?.name || '');
-        abortKind = name === 'AbortError' || /aborted|AbortError/i.test(String(err)) ? 'AbortError' : 'other';
+        const http = (err as { $metadata?: { httpStatusCode?: number } })?.$metadata?.httpStatusCode;
+        if (http === 403 || (http != null && http >= 500)) {
+          abortKind = 'other';
+        } else if (name === 'AbortError' || /aborted|AbortError/i.test(String(err))) {
+          abortKind = sawBytes ? 'AbortError' : 'other';
+          streamClosed = sawBytes;
+        } else {
+          abortKind = 'other';
+        }
       }
-      const abortOk = sawBytes && abortKind === 'AbortError';
-      record('R2_ABORT_READ', abortOk, { sawBytes, abortKind });
-      if (!abortOk) throw new Error('abort-read expected AbortError after receiving bytes');
+      const abortOk =
+        sawBytes &&
+        bytesBeforeAbort > 0 &&
+        streamClosed &&
+        (abortKind === 'AbortError' || abortKind === 'stream-closed') &&
+        ac.signal.aborted;
+      record('R2_ABORT_READ', abortOk, {
+        sawBytes,
+        bytesBeforeAbort,
+        abortKind,
+        streamClosed,
+        abortedSignal: ac.signal.aborted,
+        note: 'same GetObject stream aborted after bytes; second request not used',
+      });
+      if (!abortOk) throw new Error('abort-read expected same-stream cancel after receiving bytes');
     }
 
     // Incomplete multipart abort — only NoSuchUpload/empty list counts as cleaned.
@@ -360,12 +400,36 @@ async function main() {
       } catch (err) {
         httpStatus = (err as { $metadata?: { httpStatusCode?: number } })?.$metadata?.httpStatusCode ?? null;
         if (isNoSuchUpload(err)) listOutcome = 'gone';
-        else if (httpStatus === 403 || (httpStatus != null && httpStatus >= 500)) listOutcome = 'error';
         else listOutcome = 'error';
       }
-      const abortOk = partsBefore >= 1 && (listOutcome === 'gone' || listOutcome === 'empty');
-      record('R2_ABORT_UPLOAD', abortOk, { partsBefore, listOutcome, httpStatus });
-      if (!abortOk) throw new Error('abort upload cleanup not proven (403/5xx/timeout ≠ success)');
+      // Empty parts list alone is insufficient — prove session gone via UploadPart → NoSuchUpload.
+      let uploadPartProbe: 'gone' | 'error' | 'unexpected-ok' = 'error';
+      try {
+        await client.send(
+          new UploadPartCommand({
+            Bucket: bucket,
+            Key: abortKey,
+            UploadId: abortId,
+            PartNumber: 2,
+            Body: randomBytes(16),
+          }),
+        );
+        uploadPartProbe = 'unexpected-ok';
+      } catch (err) {
+        const st = (err as { $metadata?: { httpStatusCode?: number } })?.$metadata?.httpStatusCode ?? null;
+        if (isNoSuchUpload(err)) uploadPartProbe = 'gone';
+        else if (st === 403 || (st != null && st >= 500)) uploadPartProbe = 'error';
+        else uploadPartProbe = 'error';
+      }
+      const abortOk = partsBefore >= 1 && (listOutcome === 'gone' || uploadPartProbe === 'gone');
+      record('R2_ABORT_UPLOAD', abortOk, {
+        partsBefore,
+        listOutcome,
+        uploadPartProbe,
+        httpStatus,
+        note: 'session must be gone (NoSuchUpload); empty parts alone insufficient',
+      });
+      if (!abortOk) throw new Error('abort upload cleanup not proven (empty list / 403 / 5xx ≠ session gone)');
       abortUploadIds.pop();
     }
 

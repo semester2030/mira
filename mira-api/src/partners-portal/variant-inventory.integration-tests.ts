@@ -90,6 +90,11 @@ async function main() {
         reviewStatus: 'draft',
         active: true,
         catalogSource: 'catalog',
+        variantsJson: [
+          { id: 'v-empty', selections: {}, available: true },
+          { id: 'v-zero', selections: {}, available: true },
+          { id: 'v-five', selections: {}, available: true },
+        ],
       },
     });
     productId = product.id;
@@ -107,9 +112,9 @@ async function main() {
     const up = await svc.upsertMany(pa.id, product.id, {
       inventoryMode: 'variant',
       rows: [
-        { variantId: 'v-empty', variantKey: 'v-empty', stockQty: null },
-        { variantId: 'v-zero', variantKey: 'v-zero', stockQty: 0 },
-        { variantId: 'v-five', variantKey: 'v-five', stockQty: 5 },
+        { variantId: 'v-empty', stockQty: null },
+        { variantId: 'v-zero', stockQty: 0 },
+        { variantId: 'v-five', stockQty: 5 },
       ],
     });
     const empty = up.rows.find((r) => r.variantId === 'v-empty');

@@ -2310,16 +2310,68 @@
         categoryConflict: src.categoryConflict || null,
         invalidVariantNote: src.invalidVariantNote || '',
         inventoryMode: src.inventoryMode === 'variant' ? 'variant' : 'product',
+        inventoryLoadState: src.inventoryLoadState || 'idle',
+        inventoryLoadError: src.inventoryLoadError || '',
+        inventoryHydrateProductId: src.inventoryHydrateProductId || null,
       }));
     }
 
+    /**
+     * inventoryLoadState: idle | loading | loaded | failed
+     * Never treat failed/loading as empty stock. Late responses for another product are ignored.
+     * Local stock edits (_stockDirty / inventoryLocalEpoch) win over stale GET bodies.
+     */
+    let inventoryHydrateSeq = 0;
+    if (!optionsState.inventoryLoadState) optionsState.inventoryLoadState = item && item.id ? 'idle' : 'loaded';
+    if (optionsState.inventoryLocalEpoch == null) optionsState.inventoryLocalEpoch = 0;
+
+    function markInventoryLocalEdit() {
+      optionsState.inventoryLocalEpoch = (optionsState.inventoryLocalEpoch || 0) + 1;
+    }
+
     async function hydrateVariantInventory() {
-      if (type !== 'brand' || !item || !item.id || !window.PartnersApi || !PartnersApi.getVariantInventory) return;
+      if (type !== 'brand' || !item || !item.id || !window.PartnersApi || !PartnersApi.getVariantInventory) {
+        optionsState.inventoryLoadState = 'loaded';
+        return;
+      }
+      const productId = item.id;
+      const seq = ++inventoryHydrateSeq;
+      const epochAtStart = optionsState.inventoryLocalEpoch || 0;
+      optionsState.inventoryLoadState = 'loading';
+      optionsState.inventoryLoadError = '';
+      optionsState.inventoryHydrateProductId = productId;
       try {
-        const inv = await PartnersApi.getVariantInventory(item.id);
-        if (!inv) return;
+        const inv = await PartnersApi.getVariantInventory(productId);
+        if (seq !== inventoryHydrateSeq) return; // superseded
+        if (!item || item.id !== productId) return; // navigated away
+        if ((optionsState.inventoryLocalEpoch || 0) !== epochAtStart) {
+          // User edited while waiting — keep local values; still adopt revisions for non-dirty rows only.
+          const byId = {};
+          (inv && inv.rows ? inv.rows : []).forEach((r) => {
+            if (r && r.variantId) byId[r.variantId] = r;
+          });
+          (optionsState.variants || []).forEach((v) => {
+            const row = byId[v.id];
+            if (!row) return;
+            if (v._stockDirty) return;
+            v.stockQty = row.stockQty == null ? null : row.stockQty;
+            v._inventoryRevision = row.revision;
+          });
+          optionsState.inventoryLoadState = 'loaded';
+          optionsState.inventoryLoadError = '';
+          paintOptions();
+          return;
+        }
+        if (!inv) {
+          optionsState.inventoryLoadState = 'failed';
+          optionsState.inventoryLoadError = 'تعذر تحميل المخزون';
+          paintOptions();
+          return;
+        }
         if (inv.inventoryMode === 'variant' || inv.inventoryMode === 'product') {
-          optionsState.inventoryMode = inv.inventoryMode;
+          if (!optionsState._inventoryModeDirty) {
+            optionsState.inventoryMode = inv.inventoryMode;
+          }
         }
         const byId = {};
         (inv.rows || []).forEach((r) => {
@@ -2328,23 +2380,57 @@
         (optionsState.variants || []).forEach((v) => {
           const row = byId[v.id];
           if (!row) return;
+          if (v._stockDirty) return;
           v.stockQty = row.stockQty == null ? null : row.stockQty;
           v._inventoryRevision = row.revision;
         });
+        optionsState.inventoryLoadState = 'loaded';
+        optionsState.inventoryLoadError = '';
         paintOptions();
       } catch (err) {
-        /* inventory hydrate is best-effort; product editor still works */
+        if (seq !== inventoryHydrateSeq) return;
+        if (!item || item.id !== productId) return;
+        optionsState.inventoryLoadState = 'failed';
+        optionsState.inventoryLoadError =
+          (err && err.message) || 'تعذر تحميل المخزون — لن يُرسل تعديل مخزون حتى تنجح إعادة المحاولة';
+        paintOptions();
       }
     }
 
     async function persistVariantInventory(productId) {
-      if (type !== 'brand' || !productId || !window.PartnersApi || !PartnersApi.putVariantInventory) return { ok: true, skipped: true };
+      if (type !== 'brand' || !productId || !window.PartnersApi || !PartnersApi.putVariantInventory) {
+        return { ok: true, skipped: true };
+      }
+      const state = optionsState.inventoryLoadState;
+      // Failed or never-loaded GET must not POST null/empty as intentional stock wipe.
+      if (state === 'failed' || state === 'loading' || state === 'idle') {
+        const err = new Error(
+          state === 'failed'
+            ? 'تعذر حفظ المخزون لأن التحميل فشل. أعيدي المحاولة بعد نجاح التحميل.'
+            : 'المخزون ما زال يُحمَّل — انتظري ثم احفظي مرة أخرى.',
+        );
+        err.code = 'INVENTORY_NOT_READY';
+        throw err;
+      }
+      if (optionsState.inventoryHydrateProductId && optionsState.inventoryHydrateProductId !== productId) {
+        const err = new Error('سياق المخزون لا يطابق المنتج الحالي');
+        err.code = 'INVENTORY_CONTEXT_MISMATCH';
+        throw err;
+      }
       const mode = optionsState.inventoryMode === 'variant' ? 'variant' : 'product';
+      for (const v of optionsState.variants || []) {
+        if (v && v._stockInvalid) {
+          const err = new Error('كمية المخزون غير صالحة بجانب إحدى التركيبات');
+          err.code = 'INVENTORY_INVALID_QTY';
+          throw err;
+        }
+      }
       const rows = (optionsState.variants || []).map((v) => ({
         variantId: v.id,
         variantKey: v.id,
         stockMode: 'tracked',
-        stockQty: v.stockQty == null ? null : v.stockQty,
+        // Only send stockQty when loaded; null here is intentional empty field, not a failed fetch.
+        stockQty: Object.prototype.hasOwnProperty.call(v, 'stockQty') ? (v.stockQty == null ? null : v.stockQty) : null,
         expectedRevision: v._inventoryRevision != null ? v._inventoryRevision : null,
       }));
       const res = await PartnersApi.putVariantInventory(productId, {
@@ -2353,9 +2439,18 @@
       });
       (res.updated || res.rows || []).forEach((r) => {
         const live = (optionsState.variants || []).find((v) => v.id === r.variantId);
-        if (live) live._inventoryRevision = r.revision;
+        if (live) {
+          live._inventoryRevision = r.revision;
+          live._stockDirty = false;
+          live._stockInvalid = false;
+        }
       });
+      optionsState._inventoryModeDirty = false;
       return res;
+    }
+
+    async function retryInventoryHydrate() {
+      await hydrateVariantInventory();
     }
 
     function hasOptionValuesNow() {
@@ -2674,6 +2769,30 @@
       variantList.className = 'variant-list';
       // P3.1 — inventory mode for variant stock adapter (empty ≠ 0).
       if (!optionsState.inventoryMode) optionsState.inventoryMode = 'product';
+      if (optionsState.inventoryLoadState === 'failed') {
+        const failBanner = document.createElement('p');
+        failBanner.className = 'field-error';
+        failBanner.setAttribute('role', 'alert');
+        failBanner.setAttribute('data-testid', 'inventory-load-error');
+        failBanner.textContent =
+          optionsState.inventoryLoadError ||
+          'تعذر تحميل المخزون. التعديلات المحلية محفوظة في النموذج ولن يُرسل مسح للمخزون.';
+        const retryBtn = document.createElement('button');
+        retryBtn.type = 'button';
+        retryBtn.className = 'btn btn-ghost btn-sm';
+        retryBtn.textContent = 'إعادة تحميل المخزون';
+        retryBtn.onclick = () => {
+          retryInventoryHydrate();
+        };
+        optionsBody.appendChild(failBanner);
+        optionsBody.appendChild(retryBtn);
+      } else if (optionsState.inventoryLoadState === 'loading') {
+        const loadingNote = document.createElement('p');
+        loadingNote.className = 'muted';
+        loadingNote.setAttribute('data-testid', 'inventory-loading');
+        loadingNote.textContent = 'جارٍ تحميل المخزون…';
+        optionsBody.appendChild(loadingNote);
+      }
       const invModeRow = document.createElement('div');
       invModeRow.className = 'choice-row';
       const invLabel = document.createElement('label');
@@ -2682,6 +2801,8 @@
       invCheck.checked = optionsState.inventoryMode === 'variant';
       invCheck.onchange = () => {
         optionsState.inventoryMode = invCheck.checked ? 'variant' : 'product';
+        optionsState._inventoryModeDirty = true;
+        markInventoryLocalEdit();
         saveOptionsDraft();
         paintOptions();
       };
@@ -2726,14 +2847,31 @@
           stockField.setAttribute('aria-label', 'كمية المخزون للتركيبة');
           stockField.setAttribute('data-testid', 'variant-stock-qty');
           stockField.style.width = '8rem';
-          // Distinguish empty (unspecified) from 0 — never coerce empty→0.
-          stockField.value = variant.stockQty == null ? '' : String(variant.stockQty);
+          // Distinguish empty (unspecified) from 0 — never coerce empty→0 or invalid→null silently.
+          stockField.value =
+            variant._stockRaw != null
+              ? String(variant._stockRaw)
+              : variant.stockQty == null
+                ? ''
+                : String(variant.stockQty);
+          if (variant._stockInvalid) stockField.classList.add('is-invalid');
           stockField.oninput = () => {
             const raw = stockField.value.trim();
-            if (raw === '') variant.stockQty = null;
-            else {
-              const n = Number(raw);
-              variant.stockQty = Number.isInteger(n) && n >= 0 ? n : null;
+            variant._stockRaw = stockField.value;
+            variant._stockDirty = true;
+            markInventoryLocalEdit();
+            if (raw === '') {
+              variant.stockQty = null;
+              variant._stockInvalid = false;
+              stockField.classList.remove('is-invalid');
+            } else if (/^\d+$/.test(raw)) {
+              variant.stockQty = parseInt(raw, 10);
+              variant._stockInvalid = false;
+              stockField.classList.remove('is-invalid');
+            } else {
+              // Keep typed text; do not coerce to null.
+              variant._stockInvalid = true;
+              stockField.classList.add('is-invalid');
             }
             saveOptionsDraft();
             paintOptionsPreview();
@@ -4202,10 +4340,20 @@
           try {
             await persistVariantInventory(saved.id);
           } catch (invErr) {
-            status.textContent =
-              'حُفظ المنتج لكن مخزون التركيبات لم يُحدَّث: ' +
-              ((invErr && invErr.message) || 'خطأ غير معروف');
-            throw invErr;
+            const code = invErr && invErr.code;
+            if (code === 'INVENTORY_NOT_READY' || code === 'INVENTORY_CONTEXT_MISMATCH' || code === 'INVENTORY_INVALID_QTY') {
+              status.textContent =
+                'حُفظت بيانات المنتج دون تحديث المخزون: ' +
+                ((invErr && invErr.message) || 'المخزون غير جاهز') +
+                ' تعديلات المخزون ما زالت في النموذج.';
+              status.setAttribute('data-inventory-partial', '1');
+              // Do not wipe local stock; do not rethrow — product basics saved, inventory blocked intentionally.
+            } else {
+              status.textContent =
+                'حُفظ المنتج لكن مخزون التركيبات لم يُحدَّث: ' +
+                ((invErr && invErr.message) || 'خطأ غير معروف');
+              status.setAttribute('data-inventory-partial', '1');
+            }
           }
         }
         if (type === 'brand' && !ownerId) {

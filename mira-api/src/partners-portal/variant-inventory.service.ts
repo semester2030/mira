@@ -19,6 +19,17 @@ export type VariantInventoryRow = {
   archivedAt: string | null;
 };
 
+function variantIdsFromJson(json: unknown): Set<string> {
+  const ids = new Set<string>();
+  if (!Array.isArray(json)) return ids;
+  for (const row of json) {
+    if (!row || typeof row !== 'object') continue;
+    const id = String((row as { id?: unknown }).id || '').trim();
+    if (id) ids.add(id);
+  }
+  return ids;
+}
+
 @Injectable()
 export class VariantInventoryService {
   constructor(@Inject(PrismaService) private readonly prisma: PrismaService) {}
@@ -27,6 +38,19 @@ export class VariantInventoryService {
     const product = await this.prisma.product.findFirst({ where: { id: productId, partnerId } });
     if (!product) throw new NotFoundException('المنتج غير موجود');
     return product;
+  }
+
+  /** Active catalog variants for this product (draft wins when draftVariantsSet). */
+  knownVariantIds(product: {
+    variantsJson: unknown;
+    draftVariantsJson: unknown;
+    draftVariantsSet: boolean;
+  }): Set<string> {
+    if (product.draftVariantsSet) {
+      if (product.draftVariantsJson == null) return new Set(); // explicit clear
+      return variantIdsFromJson(product.draftVariantsJson);
+    }
+    return variantIdsFromJson(product.variantsJson);
   }
 
   /** Sum of tracked available qty; null when any tracked row is unspecified or mode is product. */
@@ -98,19 +122,97 @@ export class VariantInventoryService {
       throw new BadRequestException('inventoryMode غير صالح');
     }
 
-    // Switching product→variant without confirmed distribution is refused when product has stock.
-    if (body.inventoryMode === 'variant' && product.inventoryMode !== 'variant') {
-      if (product.stockQty != null && product.stockQty > 0) {
-        const existing = await this.prisma.productVariantInventory.count({ where: { productId } });
-        if (!existing && !(body.rows && body.rows.length)) {
-          throw new BadRequestException(
-            'لا يمكن تحويل المخزون الإجمالي إلى تركيبات دون توزيع يؤكده الشريك',
-          );
-        }
+    const knownIds = this.knownVariantIds(product);
+    const incoming = body.rows || [];
+
+    // Validate entire request before any write — no partial commits of mixed good/bad rows.
+    for (const row of incoming) {
+      const variantId = String(row.variantId || '').trim();
+      if (!variantId) throw new BadRequestException('variantId مطلوب');
+      if (!knownIds.has(variantId)) {
+        throw new BadRequestException({
+          messageAr: 'تركيبة غير موجودة أو لا تتبع هذا المنتج',
+          code: 'VARIANT_NOT_ON_PRODUCT',
+          variantId,
+        });
+      }
+      if (row.variantKey != null && String(row.variantKey).trim() && String(row.variantKey).trim() !== variantId) {
+        // Server identity is variantId; refuse ambiguous client keys that could target another row.
+        throw new BadRequestException({
+          messageAr: 'variantKey يجب أن يطابق معرّف التركيبة',
+          code: 'VARIANT_KEY_MISMATCH',
+          variantId,
+          variantKey: row.variantKey,
+        });
+      }
+      if (row.stockQty != null && (!Number.isInteger(row.stockQty) || row.stockQty < 0)) {
+        throw new BadRequestException('stockQty يجب أن يكون عددًا صحيحًا ≥ 0 أو فارغًا');
       }
     }
 
     return this.prisma.$transaction(async (tx) => {
+      const locked = await tx.product.findUnique({
+        where: { id: productId },
+        select: {
+          inventoryMode: true,
+          stockQty: true,
+          reservedQty: true,
+          variantsJson: true,
+          draftVariantsJson: true,
+          draftVariantsSet: true,
+        },
+      });
+      if (!locked) throw new NotFoundException('المنتج غير موجود');
+
+      const targetMode = body.inventoryMode || locked.inventoryMode || 'product';
+
+      // Block mode switch while outstanding reservations exist on the source being abandoned.
+      if (body.inventoryMode && body.inventoryMode !== locked.inventoryMode) {
+        if (locked.inventoryMode === 'product' && body.inventoryMode === 'variant') {
+          if ((locked.reservedQty || 0) > 0) {
+            throw new ConflictException({
+              messageAr: 'لا يمكن تحويل نمط المخزون أثناء وجود حجوزات على المخزون الإجمالي',
+              code: 'INVENTORY_MODE_SWITCH_BLOCKED_RESERVATIONS',
+              reservedQty: locked.reservedQty,
+            });
+          }
+          if (locked.stockQty != null && locked.stockQty > 0) {
+            const existing = await tx.productVariantInventory.count({ where: { productId } });
+            if (!existing && !incoming.length) {
+              throw new BadRequestException(
+                'لا يمكن تحويل المخزون الإجمالي إلى تركيبات دون توزيع يؤكده الشريك',
+              );
+            }
+          }
+        }
+        if (locked.inventoryMode === 'variant' && body.inventoryMode === 'product') {
+          const held = await tx.productVariantInventory.aggregate({
+            where: { productId, archivedAt: null, reservedQty: { gt: 0 } },
+            _sum: { reservedQty: true },
+          });
+          if ((held._sum.reservedQty || 0) > 0) {
+            throw new ConflictException({
+              messageAr: 'لا يمكن تحويل نمط المخزون أثناء وجود حجوزات على مخزون التركيبات',
+              code: 'INVENTORY_MODE_SWITCH_BLOCKED_RESERVATIONS',
+              reservedQty: held._sum.reservedQty,
+            });
+          }
+        }
+      }
+
+      // Re-check known ids inside tx against latest product row.
+      const knownInTx = this.knownVariantIds(locked);
+      for (const row of incoming) {
+        const variantId = String(row.variantId || '').trim();
+        if (!knownInTx.has(variantId)) {
+          throw new BadRequestException({
+            messageAr: 'تركيبة غير موجودة أو لا تتبع هذا المنتج',
+            code: 'VARIANT_NOT_ON_PRODUCT',
+            variantId,
+          });
+        }
+      }
+
       if (body.inventoryMode) {
         await tx.product.update({
           where: { id: productId },
@@ -119,14 +221,10 @@ export class VariantInventoryService {
       }
 
       const out: VariantInventoryRow[] = [];
-      for (const row of body.rows || []) {
+      for (const row of incoming) {
         const variantId = String(row.variantId || '').trim();
-        if (!variantId) throw new BadRequestException('variantId مطلوب');
-        const variantKey = String(row.variantKey || variantId).trim() || variantId;
+        const variantKey = variantId; // server-canonical; never trust a divergent client key
         const stockMode = row.stockMode === 'untracked' ? 'untracked' : 'tracked';
-        if (row.stockQty != null && (!Number.isInteger(row.stockQty) || row.stockQty < 0)) {
-          throw new BadRequestException('stockQty يجب أن يكون عددًا صحيحًا ≥ 0 أو فارغًا');
-        }
 
         const current = await tx.productVariantInventory.findUnique({
           where: { productId_variantId: { productId, variantId } },
@@ -143,6 +241,13 @@ export class VariantInventoryService {
           throw new BadRequestException(
             `لا يمكن خفض الكمية دون المحجوز (${current.reservedQty})`,
           );
+        }
+        if (row.archive && current && current.reservedQty > 0) {
+          throw new ConflictException({
+            messageAr: 'لا يمكن أرشفة تركيبة لها حجوزات قائمة',
+            code: 'VARIANT_ARCHIVE_BLOCKED_RESERVATIONS',
+            reservedQty: current.reservedQty,
+          });
         }
 
         const data: Prisma.ProductVariantInventoryUncheckedCreateInput = {
@@ -180,6 +285,7 @@ export class VariantInventoryService {
         });
       }
 
+      void targetMode;
       const derived = await this.derivedInTx(tx, productId);
       return { ok: true, ...derived, updated: out };
     });
@@ -224,7 +330,7 @@ export class VariantInventoryService {
     };
   }
 
-  /** Available units for a variant when inventoryMode=variant; null = untracked/unspecified. */
+  /** Available units for a variant when inventoryMode=variant; null = untracked. */
   async availableForVariant(productId: string, variantId: string): Promise<number | null> {
     const product = await this.prisma.product.findUnique({
       where: { id: productId },
@@ -238,8 +344,9 @@ export class VariantInventoryService {
     const row = await this.prisma.productVariantInventory.findUnique({
       where: { productId_variantId: { productId, variantId } },
     });
-    if (!row || row.archivedAt || row.stockMode === 'untracked') return null;
-    if (row.stockQty == null) return null;
+    if (!row || row.archivedAt) return 0;
+    if (row.stockMode === 'untracked') return null;
+    if (row.stockQty == null) return 0; // tracked unspecified → not sellable (distinct from untracked)
     return Math.max(row.stockQty - row.reservedQty, 0);
   }
 }
