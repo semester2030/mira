@@ -7,8 +7,10 @@ import { Module, UnauthorizedException, ValidationPipe } from '@nestjs/common';
 import { ConfigModule } from '@nestjs/config';
 import { NestFactory } from '@nestjs/core';
 import { json, raw, type NextFunction, type Request, type Response } from 'express';
+import { createServer } from 'node:http';
 import { PrismaClient } from '@prisma/client';
 import { randomUUID } from 'node:crypto';
+
 import { FirebaseIdTokenVerifier, VerifiedFirebaseIdentity } from '../src/common/auth/firebase-id-token-verifier';
 import { FirebaseAuthGuard } from '../src/common/guards/firebase-auth.guard';
 import { AdminApiKeyGuard } from '../src/common/guards/admin-api-key.guard';
@@ -130,13 +132,99 @@ async function main() {
   });
   app.setGlobalPrefix('api/v1');
   app.useGlobalPipes(new ValidationPipe({ transform: true }));
+
   await app.listen(0, '127.0.0.1');
   const addr = app.getHttpServer().address();
   const port = typeof addr === 'object' && addr ? addr.port : 0;
+
+  const multipart = app.get(MultipartUploadStore) as MemoryMultipartUploadStore;
+  const finalize = app.get(UploadFinalizeService);
+  const prismaSvc = app.get(PrismaService);
+  // Ensure we patch the same instance FinalizeService holds (Nest singleton).
+  const finalizeStore = (finalize as unknown as { multipart: MemoryMultipartUploadStore }).multipart;
+  const patchTargets = [...new Set([multipart, finalizeStore].filter(Boolean))];
+  // Side-channel inject server (Nest router would 404 custom Express mounts after listen).
+  const injectServer = createServer((req, res) => {
+    const url = (req.url || '').split('?')[0];
+    const send = (code: number, body: unknown) => {
+      res.writeHead(code, { 'content-type': 'application/json' });
+      res.end(JSON.stringify(body));
+    };
+    if (req.method === 'GET' && url === '/finalize-meta') {
+      return send(200, {
+        ok: true,
+        backoffScheduleCount: finalize.backoffScheduleCount,
+        workerId: finalize.workerId,
+        sameStore: multipart === finalizeStore,
+      });
+    }
+    if (req.method === 'POST' && url === '/inject-head-fail') {
+      let rawBody = '';
+      req.on('data', (c) => {
+        rawBody += c;
+      });
+      req.on('end', () => {
+        void (async () => {
+          let times = 1;
+          let sessionId = '';
+          try {
+            const parsed = JSON.parse(rawBody || '{}') as { times?: number; sessionId?: string };
+            times = Math.max(1, Number(parsed.times || 1));
+            sessionId = String(parsed.sessionId || '');
+          } catch {
+            times = 1;
+          }
+          let objectKey = '';
+          if (sessionId) {
+            const row = await prismaSvc.partnerUploadSession.findUnique({
+              where: { id: sessionId },
+              select: { objectKey: true },
+            });
+            objectKey = row?.objectKey || '';
+          }
+          if (!objectKey) {
+            send(400, { ok: false, error: 'sessionId required to resolve objectKey' });
+            return;
+          }
+          let left = times;
+          for (const store of patchTargets) {
+            const orig = store.head.bind(store);
+            store.head = async (key: string) => {
+              if (left > 0 && key === objectKey) {
+                left -= 1;
+                throw new Error('injected-transient-storage');
+              }
+              if (left <= 0) store.head = orig;
+              return orig(key);
+            };
+          }
+          send(200, { ok: true, times, sessionId, objectKeyFingerprint: objectKey.slice(-12), targets: patchTargets.length });
+        })();
+      });
+      return;
+    }
+    if (req.method === 'POST' && url === '/inject-head-fail-permanent') {
+      for (const store of patchTargets) {
+        store.head = async () => {
+          throw new Error('injected-permanent-storage');
+        };
+      }
+      return send(200, { ok: true, targets: patchTargets.length });
+    }
+    send(404, { ok: false });
+  });
+  const injectPort: number = await new Promise((resolve) => {
+    injectServer.listen(0, '127.0.0.1', () => {
+      const a = injectServer.address();
+      resolve(typeof a === 'object' && a ? a.port : 0);
+    });
+  });
+
   console.log(
     JSON.stringify({
       ready: true,
       port,
+      injectPort,
       password,
       brandEmail: `brand-p2-${suffix}@test.local`,
       salonEmail: `salon-p2-${suffix}@test.local`,
