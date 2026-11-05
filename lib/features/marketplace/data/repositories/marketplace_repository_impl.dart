@@ -188,6 +188,7 @@ class MarketplaceRepositoryImpl implements MarketplaceRepository, DiscoverCatalo
         limit: limit,
         colors: effective.colors,
         sizes: effective.sizes,
+        volumes: effective.volumes,
         placeModes: effective.placeModes,
         branchIds: effective.branchIds,
         inStock: effective.inStock,

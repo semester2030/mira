@@ -102,6 +102,7 @@ class DiscoverCatalogQuery {
     this.requireVisual = false,
     this.colors = const [],
     this.sizes = const [],
+    this.volumes = const [],
     this.placeModes = const [],
     this.branchIds = const [],
     this.inStock,
@@ -127,6 +128,9 @@ class DiscoverCatalogQuery {
 
   /// Registry value ids for variant.size (OR within). Empty = unset.
   final List<String> sizes;
+
+  /// Registry value ids for variant.volume (OR within). Empty = unset.
+  final List<String> volumes;
 
   /// Service placeMode ids (OR within). Empty = unset.
   final List<String> placeModes;
@@ -158,6 +162,7 @@ class DiscoverCatalogQuery {
     if (partnerId != null) n += 1;
     if (colors.isNotEmpty) n += 1;
     if (sizes.isNotEmpty) n += 1;
+    if (volumes.isNotEmpty) n += 1;
     if (placeModes.isNotEmpty) n += 1;
     if (branchIds.isNotEmpty) n += 1;
     if (inStock != null) n += 1;
@@ -168,9 +173,13 @@ class DiscoverCatalogQuery {
     return n;
   }
 
-  /// Drop product-only or service-only filters when the lane cannot use them.
+  /// Drop product-only or service-only filters when the lane/type cannot use them.
   DiscoverCatalogQuery withoutInapplicableFilters() {
-    if (lane == DiscoverLane.elegance) {
+    final beauty = lane == DiscoverLane.beauty ||
+        partnerType == 'clinic' ||
+        partnerType == 'salon';
+    final elegance = lane == DiscoverLane.elegance || partnerType == 'brand';
+    if (elegance && !beauty) {
       return copyWith(
         clearPlaceModes: true,
         clearBranchIds: true,
@@ -178,8 +187,13 @@ class DiscoverCatalogQuery {
         clearDuration: true,
       );
     }
-    if (lane == DiscoverLane.beauty) {
-      return copyWith(clearColors: true, clearSizes: true, clearInStock: true);
+    if (beauty && !elegance) {
+      return copyWith(
+        clearColors: true,
+        clearSizes: true,
+        clearVolumes: true,
+        clearInStock: true,
+      );
     }
     return this;
   }
@@ -194,6 +208,7 @@ class DiscoverCatalogQuery {
     bool? requireVisual,
     List<String>? colors,
     List<String>? sizes,
+    List<String>? volumes,
     List<String>? placeModes,
     List<String>? branchIds,
     bool? inStock,
@@ -211,11 +226,16 @@ class DiscoverCatalogQuery {
     bool clearLane = false,
     bool clearColors = false,
     bool clearSizes = false,
+    bool clearVolumes = false,
     bool clearPlaceModes = false,
     bool clearBranchIds = false,
     bool clearInStock = false,
     bool clearPrice = false,
+    bool clearPriceMin = false,
+    bool clearPriceMax = false,
     bool clearDuration = false,
+    bool clearDurationMin = false,
+    bool clearDurationMax = false,
     bool clearAvailableOn = false,
   }) {
     return DiscoverCatalogQuery(
@@ -228,13 +248,14 @@ class DiscoverCatalogQuery {
       requireVisual: requireVisual ?? this.requireVisual,
       colors: clearColors ? const [] : colors ?? this.colors,
       sizes: clearSizes ? const [] : sizes ?? this.sizes,
+      volumes: clearVolumes ? const [] : volumes ?? this.volumes,
       placeModes: clearPlaceModes ? const [] : placeModes ?? this.placeModes,
       branchIds: clearBranchIds ? const [] : branchIds ?? this.branchIds,
       inStock: clearInStock ? null : inStock ?? this.inStock,
-      priceMinHalalas: clearPrice ? null : priceMinHalalas ?? this.priceMinHalalas,
-      priceMaxHalalas: clearPrice ? null : priceMaxHalalas ?? this.priceMaxHalalas,
-      durationMin: clearDuration ? null : durationMin ?? this.durationMin,
-      durationMax: clearDuration ? null : durationMax ?? this.durationMax,
+      priceMinHalalas: (clearPrice || clearPriceMin) ? null : priceMinHalalas ?? this.priceMinHalalas,
+      priceMaxHalalas: (clearPrice || clearPriceMax) ? null : priceMaxHalalas ?? this.priceMaxHalalas,
+      durationMin: (clearDuration || clearDurationMin) ? null : durationMin ?? this.durationMin,
+      durationMax: (clearDuration || clearDurationMax) ? null : durationMax ?? this.durationMax,
       availableOn: clearAvailableOn ? null : availableOn ?? this.availableOn,
       sort: sort ?? this.sort,
       requestFacets: requestFacets ?? this.requestFacets,
@@ -245,6 +266,7 @@ class DiscoverCatalogQuery {
     return copyWith(
       clearColors: true,
       clearSizes: true,
+      clearVolumes: true,
       clearPlaceModes: true,
       clearBranchIds: true,
       clearInStock: true,

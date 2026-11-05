@@ -8,6 +8,13 @@ import {
   parseCatalogLimit,
 } from './catalog-cursor';
 import {
+  partnerCapBundleForService,
+  resourceIdsForServiceDate,
+  serviceHasBookableSlotOnDate,
+  ACTIVE_BOOKING_STATUSES,
+  type HeldInterval,
+} from './catalog-availability';
+import {
   branchIdFromServiceProfile,
   buildCatalogFacets,
   filterCatalogItems,
@@ -17,7 +24,7 @@ import {
   type CatalogFilterMatch,
 } from './catalog-filters';
 import { formatCatalogPrice } from './catalog-price';
-import { dayAvailabilityStatus } from './commerce.types';
+import { localInstant } from './commerce.types';
 import { MatchMarketplaceDto } from './dto/match-marketplace.dto';
 import {
   ConcernMap,
@@ -266,7 +273,13 @@ export class MarketplaceService implements OnModuleInit {
       throw new BadRequestException(parsedFilters.messageAr);
     }
     const filter = parsedFilters.filter;
-    const fingerprint = normalizeFilterFingerprint(filter);
+    // City is applied in-memory so city facets can exclude the city filter itself (C03).
+    const fingerprint = normalizeFilterFingerprint(filter, {
+      type: params.type,
+      venue: params.venue,
+      visual: params.visual,
+      lane: params.lane,
+    });
     const sort = filter.sort ?? 'key';
     const decodedCursor = decodeCatalogCursor(params.cursor, { sort, fingerprint });
     if (!decodedCursor.ok) {
@@ -279,7 +292,6 @@ export class MarketplaceService implements OnModuleInit {
 
     const partnerBase = {
       status: 'active' as const,
-      ...(params.city ? { city: params.city } : {}),
       ...(params.partnerId ? { id: params.partnerId } : {}),
     };
     const productPartner = params.lane === 'beauty'
@@ -328,6 +340,21 @@ export class MarketplaceService implements OnModuleInit {
       variantInventories?: Array<{ variantId: string; stockQty: number | null; reservedQty: number; stockMode: string }>;
     };
 
+    const bookableByServiceId = filter.availableOn
+      ? await this.computeBookableServiceIds(
+          services.map((s) => ({
+            id: s.id,
+            partnerId: s.partnerId,
+            bookingEnabled: s.bookingEnabled,
+            durationMin: s.durationMin,
+            availabilityJson: s.availabilityJson,
+            branchId: branchIdFromServiceProfile(s.serviceProfileJson),
+          })),
+          filter.availableOn,
+          filter.branchIds,
+        )
+      : null;
+
     const filterItems: CatalogFilterItem[] = [
       ...products.map((product) => {
         const row = product as ProductRow;
@@ -362,13 +389,11 @@ export class MarketplaceService implements OnModuleInit {
         };
       }),
       ...services.map((service) => {
+        const branchId = branchIdFromServiceProfile(service.serviceProfileJson);
         const availableOnDay =
           filter.availableOn == null
             ? null
-            : (() => {
-                const status = dayAvailabilityStatus(filter.availableOn!, service.availabilityJson);
-                return status === 'available' || status === 'full';
-              })();
+            : bookableByServiceId?.has(service.id) === true;
         return {
           kind: 'service' as const,
           id: service.id,
@@ -384,8 +409,9 @@ export class MarketplaceService implements OnModuleInit {
           priceHalalas: service.priceHalalas,
           durationMin: service.durationMin,
           placeMode: placeModeFromServiceProfile(service.serviceProfileJson),
-          branchId: branchIdFromServiceProfile(service.serviceProfileJson),
+          branchId,
           availabilityJson: service.availabilityJson,
+          bookingEnabled: service.bookingEnabled,
           availableOnDay,
         };
       }),
@@ -481,12 +507,14 @@ export class MarketplaceService implements OnModuleInit {
             .map((v) => v.priceHalalas)
             .filter((p): p is number => p != null);
           const uniquePrices = [...new Set(prices)];
+          // Representative price is always the minimum known eligible/matched price.
+          // Sort direction must not change priceHalalas or priceLabel (C03).
           const displayPrice =
             match.matchedVariants.length === 1
               ? match.matchedVariants[0]!.priceHalalas
               : match.effectivePriceHalalas ?? product.priceHalalas;
           const priceLabel =
-            uniquePrices.length > 1 && match.matchedVariants.length > 1
+            uniquePrices.length > 1
               ? `ابتداءً من ${this.formatPrice(Math.min(...uniquePrices))}`
               : this.formatPrice(displayPrice);
           return {
@@ -591,6 +619,101 @@ export class MarketplaceService implements OnModuleInit {
       },
       ...(facets ? { facets } : {}),
     };
+  }
+
+  /**
+   * Batch bookability for availableOn: one sibling-cap load per partner + one holds query for the day.
+   * Uses the same buildDaySlots rules as CommerceService.serviceAvailability (no second algorithm).
+   */
+  private async computeBookableServiceIds(
+    services: Array<{
+      id: string;
+      partnerId: string;
+      bookingEnabled: boolean;
+      durationMin: number;
+      availabilityJson: unknown;
+      branchId: string | null;
+    }>,
+    dateKey: string,
+    requiredBranchIds?: string[],
+  ): Promise<Set<string>> {
+    const bookable = new Set<string>();
+    if (!localInstant(dateKey, 0) || services.length === 0) return bookable;
+
+    const partnerIds = [...new Set(services.map((s) => s.partnerId))];
+    const siblings = await this.prisma.service.findMany({
+      where: { partnerId: { in: partnerIds }, active: true },
+      select: { partnerId: true, availabilityJson: true },
+    });
+    const siblingJsonByPartner = new Map<string, unknown[]>();
+    for (const row of siblings) {
+      const list = siblingJsonByPartner.get(row.partnerId) ?? [];
+      list.push(row.availabilityJson);
+      siblingJsonByPartner.set(row.partnerId, list);
+    }
+
+    const dayStart = localInstant(dateKey, 0)!;
+    const dayEnd = new Date(dayStart.getTime() + 86_400_000);
+
+    const bundles = new Map<string, ReturnType<typeof partnerCapBundleForService>>();
+    const allResourceIds = new Set<string>();
+    for (const service of services) {
+      const bundle = partnerCapBundleForService(
+        service.availabilityJson,
+        siblingJsonByPartner.get(service.partnerId) ?? [service.availabilityJson],
+      );
+      bundles.set(service.id, bundle);
+      for (const id of resourceIdsForServiceDate(
+        service.availabilityJson,
+        bundle.calendar,
+        dateKey,
+        bundle.windows,
+      )) {
+        allResourceIds.add(id);
+      }
+    }
+
+    const heldRows = await this.prisma.commerceBooking.findMany({
+      where: {
+        status: { in: [...ACTIVE_BOOKING_STATUSES] },
+        startsAt: { lt: dayEnd },
+        endsAt: { gt: dayStart },
+        OR: [
+          { serviceId: { in: services.map((s) => s.id) }, resourceId: '' },
+          ...(allResourceIds.size
+            ? [{ partnerId: { in: partnerIds }, resourceId: { in: [...allResourceIds] } }]
+            : []),
+        ],
+      },
+      select: { serviceId: true, partnerId: true, startsAt: true, endsAt: true, resourceId: true },
+    });
+
+    const now = new Date();
+    for (const service of services) {
+      const bundle = bundles.get(service.id)!;
+      const serviceResourceIds = new Set(
+        resourceIdsForServiceDate(service.availabilityJson, bundle.calendar, dateKey, bundle.windows),
+      );
+      const held: HeldInterval[] = heldRows
+        .filter((h) => {
+          if (h.resourceId === '' && h.serviceId === service.id) return true;
+          return h.partnerId === service.partnerId && serviceResourceIds.has(h.resourceId);
+        })
+        .map((h) => ({ startsAt: h.startsAt, endsAt: h.endsAt, resourceId: h.resourceId }));
+      if (
+        serviceHasBookableSlotOnDate({
+          service,
+          dateKey,
+          bundle,
+          held,
+          now,
+          requiredBranchIds,
+        })
+      ) {
+        bookable.add(service.id);
+      }
+    }
+    return bookable;
   }
 
   async listPartners(type?: string, city?: string): Promise<PartnerSummaryDto[]> {

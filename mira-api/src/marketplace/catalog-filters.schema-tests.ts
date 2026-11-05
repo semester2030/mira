@@ -1,6 +1,7 @@
 import assert from 'node:assert/strict';
 import {
   buildCatalogFacets,
+  coerceQueryParam,
   filterCatalogItems,
   matchCatalogItem,
   parseCatalogFilterQuery,
@@ -258,6 +259,46 @@ const dress: CatalogFilterItem = {
   const [v] = parseVariants([{ id: 'x', selections: { color: 'black', size: 's' }, available: true }]);
   assert.equal(variantMatchesSelections(v!, { color: ['black'], size: ['s'] }), true);
   assert.equal(variantMatchesSelections(v!, { color: ['black'], size: ['m'] }), false);
+}
+
+// C03: city facet keeps alternate cities when city filter is active (exclude own field).
+{
+  const riyadh = { ...dress, id: 'r', city: 'الرياض' };
+  const jeddah = { ...dress, id: 'j', city: 'جدة', variantsJson: dress.variantsJson };
+  const facets = buildCatalogFacets([riyadh, jeddah], { city: 'الرياض' });
+  assert.ok(facets.city.some((b) => b.id === 'الرياض' && b.count === 1));
+  assert.ok(facets.city.some((b) => b.id === 'جدة' && b.count === 1), 'city facet must exclude city filter itself');
+}
+
+// C03: sort direction does not change representative (min) display price.
+{
+  const multi: CatalogFilterItem = {
+    ...dress,
+    variantsJson: [
+      { id: 'cheap', selections: { color: 'black', size: 'm' }, priceHalalas: 10000, available: true },
+      { id: 'dear', selections: { color: 'black', size: 's' }, priceHalalas: 50000, available: true },
+    ],
+  };
+  const asc = matchCatalogItem(multi, { sort: 'price_asc' });
+  const desc = matchCatalogItem(multi, { sort: 'price_desc' });
+  assert.equal(asc?.effectivePriceHalalas, 10000);
+  assert.equal(desc?.effectivePriceHalalas, 10000, 'display price stays min across sort');
+  const orderedDesc = filterCatalogItems([multi], { sort: 'price_desc' });
+  assert.equal(orderedDesc[0]?.effectivePriceHalalas, 10000);
+}
+
+// C05: reject impossible calendar dates.
+{
+  const bad = parseCatalogFilterQuery({ availableOn: '2026-02-30' });
+  assert.equal(bad.ok, false);
+  const ok = parseCatalogFilterQuery({ availableOn: '2026-02-28' });
+  assert.equal(ok.ok, true);
+}
+
+// coerceQueryParam merges duplicated color params.
+{
+  assert.equal(coerceQueryParam(['black', 'white']), 'black,white');
+  assert.equal(coerceQueryParam('black'), 'black');
 }
 
 console.log('catalog-filters.schema-tests: PASS');

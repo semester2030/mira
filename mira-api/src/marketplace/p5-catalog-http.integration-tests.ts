@@ -187,6 +187,88 @@ async function main() {
       page2.status === 200 && p2.items.length === 1 && p2.items[0]?.id !== p1.items[0]?.id,
       { status: page2.status, p1: p1.items[0]?.id, p2: p2.items[0]?.id },
     );
+
+    const badDate = await fetch(`${base}/api/v1/marketplace/catalog?availableOn=2026-02-30`);
+    record('P5_HTTP_BAD_DATE_400', badDate.status === 400, { status: badDate.status, text: await badDate.text() });
+
+    const visualMismatch = await fetch(
+      `${base}/api/v1/marketplace/catalog?partnerId=${partner.id}&visual=1&sort=price_asc&limit=1&cursor=${encodeURIComponent(p1.nextCursor!)}`,
+    );
+    record('P5_HTTP_CURSOR_VISUAL_MISMATCH_400', visualMismatch.status === 400, {
+      status: visualMismatch.status,
+    });
+
+    const partnerJeddah = await prisma.partner.create({
+      data: {
+        type: 'brand',
+        status: 'active',
+        nameAr: `جدة ${run}`,
+        nameEn: `jed-${run}`,
+        city: 'جدة',
+      },
+    });
+    partnerIds.push(partnerJeddah.id);
+    const jeddahProduct = await prisma.product.create({
+      data: {
+        partnerId: partnerJeddah.id,
+        nameAr: `جدة ${run}`,
+        nameEn: `jed-p-${run}`,
+        priceHalalas: 15000,
+        externalUrl: 'https://example.test/j',
+        concernTags: ['texture'],
+        category: 'clothes',
+        active: true,
+        contentStatus: 'published',
+        catalogSource: 'catalog',
+      },
+    });
+    productIds.push(jeddahProduct.id);
+
+    const cityFacets = await fetch(
+      `${base}/api/v1/marketplace/catalog?city=${encodeURIComponent('الرياض')}&facets=1&limit=24`,
+    );
+    const cityBody = (await cityFacets.json()) as {
+      facets?: { city?: Array<{ id: string; count: number }> };
+      items: Array<{ city?: string }>;
+    };
+    const hasJeddahFacet = (cityBody.facets?.city ?? []).some((b) => b.id === 'جدة' && b.count > 0);
+    const onlyRiyadhResults = cityBody.items.every((i) => i.city === 'الرياض');
+    record('P5_HTTP_CITY_FACET_KEEPS_ALTERNATES', cityFacets.status === 200 && hasJeddahFacet && onlyRiyadhResults, {
+      hasJeddahFacet,
+      onlyRiyadhResults,
+      cities: cityBody.facets?.city,
+    });
+
+    const priceAsc = await fetch(
+      `${base}/api/v1/marketplace/catalog?partnerId=${partner.id}&sort=price_asc&limit=24`,
+    );
+    const priceDesc = await fetch(
+      `${base}/api/v1/marketplace/catalog?partnerId=${partner.id}&sort=price_desc&limit=24`,
+    );
+    const ascBody = (await priceAsc.json()) as {
+      items: Array<{ id: string; priceHalalas: number | null; priceLabel: string }>;
+    };
+    const descBody = (await priceDesc.json()) as {
+      items: Array<{ id: string; priceHalalas: number | null; priceLabel: string }>;
+    };
+    const dressAsc = ascBody.items.find((i) => i.id === dress.id);
+    const dressDesc = descBody.items.find((i) => i.id === dress.id);
+    record(
+      'P5_HTTP_PRICE_DISPLAY_STABLE_ACROSS_SORT',
+      Boolean(
+        dressAsc &&
+          dressDesc &&
+          dressAsc.priceHalalas === dressDesc.priceHalalas &&
+          dressAsc.priceLabel === dressDesc.priceLabel &&
+          (dressAsc.priceLabel.includes('ابتداءً من') || dressAsc.priceHalalas === 10000),
+      ),
+      { dressAsc, dressDesc },
+    );
+
+    const dupColor = await fetch(
+      `${base}/api/v1/marketplace/catalog?partnerId=${partner.id}&color=black&color=white&facets=1`,
+    );
+    record('P5_HTTP_DUP_COLOR_OK', dupColor.status === 200, { status: dupColor.status });
   } finally {
     await prisma.product.deleteMany({ where: { id: { in: productIds } } }).catch(() => undefined);
     await prisma.partner.deleteMany({ where: { id: { in: partnerIds } } }).catch(() => undefined);

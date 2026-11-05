@@ -10,30 +10,54 @@ import type { CatalogFilterInput, CatalogSort } from './catalog-filters';
 const CURSOR_RE = /^v1\.(key|price_asc|price_desc)\.([a-f0-9]{8})\.(product|service):([A-Za-z0-9_-]+)$/;
 const LEGACY_KEY_RE = /^(product|service):([A-Za-z0-9_-]+)$/;
 
-export function normalizeFilterFingerprint(filter: CatalogFilterInput): string {
+/** Browse-context fields that change the result set but are not inside CatalogFilterInput. */
+export type CatalogBrowseContext = {
+  type?: string;
+  venue?: string;
+  visual?: string;
+  lane?: string;
+};
+
+function sortedUnique(values: readonly string[] | undefined): string[] {
+  return [...new Set((values ?? []).map((v) => v.trim()).filter(Boolean))].sort((a, b) => a.localeCompare(b));
+}
+
+export function normalizeFilterFingerprint(
+  filter: CatalogFilterInput,
+  context: CatalogBrowseContext = {},
+): string {
   const payload = {
-    q: filter.q ?? '',
-    tags: [...(filter.tags ?? [])].sort(),
-    category: filter.category ?? '',
-    city: filter.city ?? '',
-    partnerId: filter.partnerId ?? '',
+    q: (filter.q ?? '').trim(),
+    tags: sortedUnique(filter.tags),
+    category: (filter.category ?? '').trim(),
+    city: (filter.city ?? '').trim(),
+    partnerId: (filter.partnerId ?? '').trim(),
     kind: filter.kind ?? '',
     variantSelections: Object.fromEntries(
       Object.entries(filter.variantSelections ?? {})
         .sort(([a], [b]) => a.localeCompare(b))
-        .map(([k, v]) => [k, [...v].sort()]),
+        .map(([k, v]) => [k, sortedUnique(v)]),
     ),
     inStock: filter.inStock ?? null,
     priceMinHalalas: filter.priceMinHalalas ?? null,
     priceMaxHalalas: filter.priceMaxHalalas ?? null,
     durationMin: filter.durationMin ?? null,
     durationMax: filter.durationMax ?? null,
-    placeModes: [...(filter.placeModes ?? [])].sort(),
-    branchIds: [...(filter.branchIds ?? [])].sort(),
+    placeModes: sortedUnique(filter.placeModes),
+    branchIds: sortedUnique(filter.branchIds),
     availableOn: filter.availableOn ?? '',
     sort: filter.sort ?? 'key',
+    type: (context.type ?? '').trim(),
+    venue: (context.venue ?? '').trim(),
+    visual: context.visual === '1' ? '1' : '',
+    lane: (context.lane ?? '').trim(),
   };
   return createHash('sha256').update(JSON.stringify(payload)).digest('hex').slice(0, 8);
+}
+
+/** Fingerprint of an empty browse (used to gate legacy cursors). */
+export function emptyCatalogFingerprint(): string {
+  return normalizeFilterFingerprint({}, {});
 }
 
 export function encodeCatalogCursor(args: {
@@ -68,9 +92,10 @@ export function decodeCatalogCursor(
     }
     return { ok: true, sort, fingerprint, kind, id };
   }
-  // Legacy key-only cursor: accepted ONLY for sort=key with matching fingerprint omitted (compat).
+  // Legacy key-only cursor: only when sort=key AND the query set is the empty default.
+  // New filters must not be bypassed by a pre-P5 cursor.
   const legacy = LEGACY_KEY_RE.exec(value);
-  if (legacy && expected.sort === 'key') {
+  if (legacy && expected.sort === 'key' && expected.fingerprint === emptyCatalogFingerprint()) {
     return {
       ok: true,
       sort: 'key',
@@ -78,6 +103,9 @@ export function decodeCatalogCursor(
       kind: legacy[1] as 'product' | 'service',
       id: legacy[2]!,
     };
+  }
+  if (legacy) {
+    return { ok: false, reason: 'cursor_mismatch' };
   }
   return { ok: false, reason: 'invalid_cursor' };
 }

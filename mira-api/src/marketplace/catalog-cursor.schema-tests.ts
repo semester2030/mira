@@ -1,6 +1,7 @@
 import assert from 'node:assert/strict';
 import {
   decodeCatalogCursor,
+  emptyCatalogFingerprint,
   encodeCatalogCursor,
   normalizeFilterFingerprint,
   parseCatalogLimit,
@@ -32,5 +33,23 @@ const mismatchFp = decodeCatalogCursor(cursor, { sort: 'price_asc', fingerprint:
 assert.equal(mismatchFp.ok, false);
 
 assert.equal(decodeCatalogCursor('not-a-cursor', { sort: 'key', fingerprint: fpA }).ok, false);
+
+// Context fields change fingerprint (type/venue/visual/lane).
+{
+  const base = normalizeFilterFingerprint({ sort: 'key' });
+  const withVisual = normalizeFilterFingerprint({ sort: 'key' }, { visual: '1' });
+  const withType = normalizeFilterFingerprint({ sort: 'key' }, { type: 'clinic' });
+  assert.notEqual(base, withVisual);
+  assert.notEqual(base, withType);
+}
+
+// Legacy cursor rejected when filters are active.
+{
+  const empty = emptyCatalogFingerprint();
+  const legacyOk = decodeCatalogCursor('product:abc', { sort: 'key', fingerprint: empty });
+  assert.equal(legacyOk.ok, true);
+  const legacyBlocked = decodeCatalogCursor('product:abc', { sort: 'key', fingerprint: fpA });
+  assert.equal(legacyBlocked.ok, false);
+}
 
 console.log('catalog-cursor.schema-tests: PASS');

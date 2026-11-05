@@ -9,7 +9,7 @@
  * - Facet counts for a field exclude that field's own selection and apply the rest.
  */
 
-import { parseOptionGroups, parseVariants, type ProductVariant } from './commerce.types';
+import { isValidDateKey, parseOptionGroups, parseVariants, type ProductVariant } from './commerce.types';
 
 /** Registry filter key → option group id used in optionsJson / variantsJson.selections. */
 export const VARIANT_FILTER_GROUP_IDS: Readonly<Record<string, string>> = {
@@ -70,8 +70,12 @@ export type CatalogFilterItem = {
   branchId?: string | null;
   /** Raw availability document for calendar-day eligibility (services). */
   availabilityJson?: unknown;
-  /** Precomputed: true when availableOn calendar day is bookable at schedule level (no holds). */
+  /**
+   * Precomputed: true when ≥1 bookable slot exists on availableOn (same rules as booking listing).
+   * False when booking disabled, full, duration unfit, capacity conflict, or no open slot.
+   */
   availableOnDay?: boolean | null;
+  bookingEnabled?: boolean;
   optionsJson?: unknown;
   variantsJson?: unknown;
   /** Product-level sellable qty; null = untracked. */
@@ -97,6 +101,20 @@ export type CatalogFilterMatch = {
   /** Price used for sort/display for this match (variant override or item). */
   effectivePriceHalalas: number | null;
 };
+
+/** Coerce Nest/query values that may arrive as string | string[] into one CSV string (OR-merge). */
+export function coerceQueryParam(raw: unknown): string | undefined {
+  if (raw == null) return undefined;
+  if (typeof raw === 'string') return raw;
+  if (Array.isArray(raw)) {
+    const parts = raw
+      .flatMap((v) => (typeof v === 'string' ? v.split(',') : []))
+      .map((s) => s.trim())
+      .filter(Boolean);
+    return parts.length ? parts.join(',') : undefined;
+  }
+  return undefined;
+}
 
 function splitCsv(raw: string | undefined): string[] {
   if (!raw) return [];
@@ -172,7 +190,7 @@ export function parseCatalogFilterQuery(params: Record<string, string | undefine
   }
 
   const availableOn = (params.availableOn ?? '').trim();
-  if (availableOn && !/^\d{4}-\d{2}-\d{2}$/.test(availableOn)) {
+  if (availableOn && !isValidDateKey(availableOn)) {
     return { ok: false, reason: 'invalid_available_on', messageAr: 'تاريخ الإتاحة غير صالح (YYYY-MM-DD)' };
   }
 
@@ -368,30 +386,18 @@ export function matchCatalogItem(item: CatalogFilterItem, filter: CatalogFilterI
     }
     if (needsVariantScope && matched.length === 0) return null;
     if (!needsVariantScope) {
-      // Unconstrained browse: still expose a stable sort price from available variants.
+      // Unconstrained browse: display/sort representative = lowest known eligible price («ابتداءً من»).
       const available = variants.filter((v) => v.available);
       const prices = available
         .map((v) => effectiveVariantPrice(v, item).priceHalalas)
         .filter((p): p is number => p != null);
-      const effective =
-        filter.sort === 'price_desc'
-          ? prices.length
-            ? Math.max(...prices)
-            : item.priceHalalas
-          : prices.length
-            ? Math.min(...prices)
-            : item.priceHalalas;
+      const effective = prices.length ? Math.min(...prices) : item.priceHalalas;
       return { item, matchedVariants: [], effectivePriceHalalas: effective };
     }
+    // Matched set: representative price is always the minimum known matched price (sort direction
+    // uses a separate key in sortCatalogMatches; it must not change the displayed amount).
     const prices = matched.map((m) => m.priceHalalas).filter((p): p is number => p != null);
-    const effective =
-      filter.sort === 'price_desc'
-        ? prices.length
-          ? Math.max(...prices)
-          : null
-        : prices.length
-          ? Math.min(...prices)
-          : null;
+    const effective = prices.length ? Math.min(...prices) : null;
     return { item, matchedVariants: matched, effectivePriceHalalas: effective };
   }
 
@@ -416,13 +422,30 @@ export function filterCatalogItems(
   return sortCatalogMatches(out, filter.sort ?? 'key');
 }
 
+/** Internal sort key: for price_desc use max known eligible price without mutating display («ابتداءً من» min). */
+function sortPriceKey(m: CatalogFilterMatch, sort: CatalogSort): number | null {
+  if (sort !== 'price_desc') return m.effectivePriceHalalas;
+  const fromMatched = m.matchedVariants
+    .map((v) => v.priceHalalas)
+    .filter((p): p is number => p != null);
+  if (fromMatched.length) return Math.max(...fromMatched);
+  if (m.item.kind === 'product') {
+    const variants = parseVariants(m.item.variantsJson).filter((v) => v.available);
+    const prices = variants
+      .map((v) => effectiveVariantPrice(v, m.item).priceHalalas)
+      .filter((p): p is number => p != null);
+    if (prices.length) return Math.max(...prices);
+  }
+  return m.effectivePriceHalalas;
+}
+
 export function sortCatalogMatches(matches: CatalogFilterMatch[], sort: CatalogSort): CatalogFilterMatch[] {
   const key = (m: CatalogFilterMatch) => `${m.item.kind}:${m.item.id}`;
   const copy = [...matches];
   copy.sort((a, b) => {
     if (sort === 'price_asc' || sort === 'price_desc') {
-      const ap = a.effectivePriceHalalas;
-      const bp = b.effectivePriceHalalas;
+      const ap = sortPriceKey(a, sort);
+      const bp = sortPriceKey(b, sort);
       // Unknown prices sort last for both directions (stable discovery).
       if (ap == null && bp != null) return 1;
       if (ap != null && bp == null) return -1;
@@ -445,6 +468,7 @@ export type CatalogFacets = {
   city: FacetBucket[];
   'variant.color': FacetBucket[];
   'variant.size': FacetBucket[];
+  'variant.volume': FacetBucket[];
   placeMode: FacetBucket[];
   branch: FacetBucket[];
   staleSelections: Array<{ field: string; value: string }>;
@@ -511,11 +535,19 @@ export function buildCatalogFacets(
   items: readonly CatalogFilterItem[],
   filter: CatalogFilterInput,
 ): CatalogFacets {
-  const without = (omit: keyof CatalogFilterInput | 'variant.color' | 'variant.size' | 'variant'): CatalogFilterInput => {
-    if (omit === 'variant.color' || omit === 'variant.size' || omit === 'variant') {
+  const without = (
+    omit: keyof CatalogFilterInput | 'variant.color' | 'variant.size' | 'variant.volume' | 'variant',
+  ): CatalogFilterInput => {
+    if (
+      omit === 'variant.color' ||
+      omit === 'variant.size' ||
+      omit === 'variant.volume' ||
+      omit === 'variant'
+    ) {
       const selections: Record<string, string[]> = { ...(filter.variantSelections ?? {}) };
       if (omit === 'variant.color') delete selections.color;
       else if (omit === 'variant.size') delete selections.size;
+      else if (omit === 'variant.volume') delete selections.volume;
       else {
         for (const key of Object.keys(selections)) delete selections[key];
       }
@@ -533,6 +565,7 @@ export function buildCatalogFacets(
   const city = new Map<string, number>();
   const colors = new Map<string, number>();
   const sizes = new Map<string, number>();
+  const volumes = new Map<string, number>();
   const placeMode = new Map<string, number>();
   const branch = new Map<string, number>();
 
@@ -584,6 +617,23 @@ export function buildCatalogFacets(
     if (n > 0) sizes.set(valueId, n);
   }
 
+  const volumeCandidates = new Set<string>();
+  for (const hit of filterCatalogItems(items, without('variant.volume'))) {
+    if (hit.item.kind !== 'product') continue;
+    const other: Record<string, string[]> = { ...(filter.variantSelections ?? {}) };
+    delete other.volume;
+    const otherSel = Object.keys(other).length ? other : undefined;
+    for (const v of parseVariants(hit.item.variantsJson)) {
+      if (!variantMatchesSelections(v, otherSel)) continue;
+      if (!variantPassesCommerceConstraints(hit.item, v, { ...filter, variantSelections: otherSel })) continue;
+      if (v.selections.volume) volumeCandidates.add(v.selections.volume);
+    }
+  }
+  for (const valueId of volumeCandidates) {
+    const n = countOffersForVariantValue(items, without('variant.volume'), 'volume', valueId);
+    if (n > 0) volumes.set(valueId, n);
+  }
+
   for (const hit of filterCatalogItems(items, without('placeModes'))) {
     if (hit.item.placeMode) bump(placeMode, hit.item.placeMode);
   }
@@ -593,15 +643,20 @@ export function buildCatalogFacets(
 
   const colorMeta = collectOptionMeta(items, 'color');
   const sizeMeta = collectOptionMeta(items, 'size');
+  const volumeMeta = collectOptionMeta(items, 'volume');
 
   const staleSelections: Array<{ field: string; value: string }> = [];
   const colorFacet = new Set(toBuckets(colors).map((b) => b.id));
   const sizeFacet = new Set(toBuckets(sizes).map((b) => b.id));
+  const volumeFacet = new Set(toBuckets(volumes).map((b) => b.id));
   for (const v of filter.variantSelections?.color ?? []) {
     if (!colorFacet.has(v)) staleSelections.push({ field: 'variant.color', value: v });
   }
   for (const v of filter.variantSelections?.size ?? []) {
     if (!sizeFacet.has(v)) staleSelections.push({ field: 'variant.size', value: v });
+  }
+  for (const v of filter.variantSelections?.volume ?? []) {
+    if (!volumeFacet.has(v)) staleSelections.push({ field: 'variant.volume', value: v });
   }
 
   return {
@@ -610,6 +665,7 @@ export function buildCatalogFacets(
     city: toBuckets(city),
     'variant.color': toBuckets(colors, colorMeta),
     'variant.size': toBuckets(sizes, sizeMeta),
+    'variant.volume': toBuckets(volumes, volumeMeta),
     placeMode: toBuckets(placeMode),
     branch: toBuckets(branch),
     staleSelections,

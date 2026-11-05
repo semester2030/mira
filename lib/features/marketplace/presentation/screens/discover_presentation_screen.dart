@@ -445,6 +445,12 @@ class _DiscoverPresentationScreenState extends State<DiscoverPresentationScreen>
         if (!_facets.sizes.any((b) => b.id == id))
           DiscoverFacetBucket(id: id, count: 0, labelAr: id),
     ];
+    final volumeBuckets = [
+      ..._facets.volumes,
+      for (final id in _query.volumes)
+        if (!_facets.volumes.any((b) => b.id == id))
+          DiscoverFacetBucket(id: id, count: 0, labelAr: id),
+    ];
     const placeLabels = {
       'branch': 'في الفرع',
       'home': 'منزلية',
@@ -527,18 +533,31 @@ class _DiscoverPresentationScreenState extends State<DiscoverPresentationScreen>
                       trailing: _query.sizes.contains(size.id) ? const Icon(Icons.check) : null,
                       onTap: () => Navigator.pop(context, 'size:${size.id}'),
                     ),
+                  if (volumeBuckets.isNotEmpty) ...[
+                    const ListTile(title: Text('الحجم')),
+                    for (final volume in volumeBuckets)
+                      ListTile(
+                        title: Text(volume.displayLabel),
+                        subtitle: volume.count > 0 ? Text('${volume.count}') : null,
+                        trailing: _query.volumes.contains(volume.id) ? const Icon(Icons.check) : null,
+                        onTap: () => Navigator.pop(context, 'volume:${volume.id}'),
+                      ),
+                  ],
                   SwitchListTile(
                     title: const Text('المتاح بالمخزون فقط'),
                     value: _query.inStock == true,
                     onChanged: (_) => Navigator.pop(context, 'stock'),
                   ),
                   ListTile(
-                    title: Text(
-                      _query.priceMaxHalalas == null
-                          ? 'حد أعلى للسعر'
-                          : 'حد أعلى للسعر: ${(_query.priceMaxHalalas! / 100).round()} ر.س',
-                    ),
-                    onTap: () => Navigator.pop(context, 'priceMax'),
+                    title: Text(_priceRangeLabel()),
+                    subtitle: const Text('حد أدنى وحد أعلى بالريال'),
+                    trailing: (_query.priceMinHalalas != null || _query.priceMaxHalalas != null)
+                        ? IconButton(
+                            icon: const Icon(Icons.clear),
+                            onPressed: () => Navigator.pop(context, 'clearPrice'),
+                          )
+                        : null,
+                    onTap: () => Navigator.pop(context, 'priceRange'),
                   ),
                 ],
                 if (beauty) ...[
@@ -565,20 +584,41 @@ class _DiscoverPresentationScreenState extends State<DiscoverPresentationScreen>
                     title: Text(
                       _query.availableOn == null ? 'تاريخ الإتاحة' : 'تاريخ الإتاحة: ${_query.availableOn}',
                     ),
+                    trailing: _query.availableOn != null
+                        ? IconButton(
+                            icon: const Icon(Icons.clear),
+                            onPressed: () => Navigator.pop(context, 'clearAvailableOn'),
+                          )
+                        : null,
                     onTap: () => Navigator.pop(context, 'availableOn'),
                   ),
                   ListTile(
-                    title: Text(
-                      _query.durationMax == null
-                          ? 'أقصى مدة للخدمة'
-                          : 'أقصى مدة: ${_query.durationMax} دقيقة',
-                    ),
-                    onTap: () => Navigator.pop(context, 'durationMax'),
+                    title: Text(_durationRangeLabel()),
+                    subtitle: const Text('المدة بالدقائق'),
+                    trailing: (_query.durationMin != null || _query.durationMax != null)
+                        ? IconButton(
+                            icon: const Icon(Icons.clear),
+                            onPressed: () => Navigator.pop(context, 'clearDuration'),
+                          )
+                        : null,
+                    onTap: () => Navigator.pop(context, 'durationRange'),
+                  ),
+                  ListTile(
+                    title: Text(_priceRangeLabel()),
+                    subtitle: const Text('سعر الخدمة بالريال'),
+                    trailing: (_query.priceMinHalalas != null || _query.priceMaxHalalas != null)
+                        ? IconButton(
+                            icon: const Icon(Icons.clear),
+                            onPressed: () => Navigator.pop(context, 'clearPrice'),
+                          )
+                        : null,
+                    onTap: () => Navigator.pop(context, 'priceRange'),
                   ),
                 ],
                 const Divider(),
                 ListTile(
-                  title: const Text('الأحدث إضافة'),
+                  title: const Text('الترتيب الافتراضي'),
+                  subtitle: const Text('حسب نوع العنصر ثم المعرّف'),
                   trailing: _query.sort == 'key' ? const Icon(Icons.check) : null,
                   onTap: () => Navigator.pop(context, 'sort:key'),
                 ),
@@ -629,6 +669,15 @@ class _DiscoverPresentationScreenState extends State<DiscoverPresentationScreen>
         next.add(id);
       }
       await _reload(_query.copyWith(sizes: next).withoutInapplicableFilters());
+    } else if (type.startsWith('volume:')) {
+      final id = type.substring(7);
+      final next = [..._query.volumes];
+      if (next.contains(id)) {
+        next.remove(id);
+      } else {
+        next.add(id);
+      }
+      await _reload(_query.copyWith(volumes: next).withoutInapplicableFilters());
     } else if (type.startsWith('place:')) {
       final id = type.substring(6);
       final next = [..._query.placeModes];
@@ -652,30 +701,57 @@ class _DiscoverPresentationScreenState extends State<DiscoverPresentationScreen>
         inStock: _query.inStock == true ? null : true,
         clearInStock: _query.inStock == true,
       ).withoutInapplicableFilters());
-    } else if (type == 'priceMax') {
-      final next = _query.priceMaxHalalas == null
-          ? 20000
-          : _query.priceMaxHalalas == 20000
-              ? 50000
-              : null;
+    } else if (type == 'clearPrice') {
+      await _reload(_query.copyWith(clearPrice: true).withoutInapplicableFilters());
+    } else if (type == 'clearDuration') {
+      await _reload(_query.copyWith(clearDuration: true).withoutInapplicableFilters());
+    } else if (type == 'clearAvailableOn') {
+      await _reload(_query.copyWith(clearAvailableOn: true).withoutInapplicableFilters());
+    } else if (type == 'priceRange') {
+      final range = await _promptIntRange(
+        context,
+        title: 'نطاق السعر (ريال)',
+        minLabel: 'الحد الأدنى',
+        maxLabel: 'الحد الأعلى',
+        initialMin: _query.priceMinHalalas == null ? null : (_query.priceMinHalalas! / 100).round(),
+        initialMax: _query.priceMaxHalalas == null ? null : (_query.priceMaxHalalas! / 100).round(),
+      );
+      if (!mounted || range == null) return;
       await _reload(
-        (next == null ? _query.copyWith(clearPrice: true) : _query.copyWith(priceMaxHalalas: next))
+        _query
+            .copyWith(
+              priceMinHalalas: range.$1 == null ? null : range.$1! * 100,
+              priceMaxHalalas: range.$2 == null ? null : range.$2! * 100,
+              clearPriceMin: range.$1 == null,
+              clearPriceMax: range.$2 == null,
+            )
             .withoutInapplicableFilters(),
       );
-    } else if (type == 'durationMax') {
-      final next = _query.durationMax == null
-          ? 60
-          : _query.durationMax == 60
-              ? 120
-              : null;
+    } else if (type == 'durationRange') {
+      final range = await _promptIntRange(
+        context,
+        title: 'مدة الخدمة (دقيقة)',
+        minLabel: 'الحد الأدنى',
+        maxLabel: 'الحد الأعلى',
+        initialMin: _query.durationMin,
+        initialMax: _query.durationMax,
+      );
+      if (!mounted || range == null) return;
       await _reload(
-        (next == null ? _query.copyWith(clearDuration: true) : _query.copyWith(durationMax: next))
+        _query
+            .copyWith(
+              durationMin: range.$1,
+              durationMax: range.$2,
+              clearDurationMin: range.$1 == null,
+              clearDurationMax: range.$2 == null,
+            )
             .withoutInapplicableFilters(),
       );
     } else if (type == 'availableOn') {
+      final initial = _parseAvailableOn(_query.availableOn) ?? DateTime.now().add(const Duration(days: 1));
       final picked = await showDatePicker(
         context: context,
-        initialDate: DateTime.now().add(const Duration(days: 1)),
+        initialDate: initial,
         firstDate: DateTime.now(),
         lastDate: DateTime.now().add(const Duration(days: 60)),
         locale: const Locale('ar'),
@@ -687,8 +763,125 @@ class _DiscoverPresentationScreenState extends State<DiscoverPresentationScreen>
     } else if (type.startsWith('sort:')) {
       await _reload(_query.copyWith(sort: type.substring(5)).withoutInapplicableFilters());
     } else {
-      await _reload(_query.copyWith(partnerType: type, clearCategory: true).withoutInapplicableFilters());
+      await _reload(
+        _query
+            .copyWith(partnerType: type, clearCategory: true)
+            .withoutInapplicableFilters(),
+      );
     }
+  }
+
+  String _priceRangeLabel() {
+    final min = _query.priceMinHalalas;
+    final max = _query.priceMaxHalalas;
+    if (min == null && max == null) return 'نطاق السعر';
+    final minLabel = min == null ? '—' : '${(min / 100).round()}';
+    final maxLabel = max == null ? '—' : '${(max / 100).round()}';
+    return 'السعر: $minLabel – $maxLabel ر.س';
+  }
+
+  String _durationRangeLabel() {
+    final min = _query.durationMin;
+    final max = _query.durationMax;
+    if (min == null && max == null) return 'مدة الخدمة';
+    return 'المدة: ${min ?? '—'} – ${max ?? '—'} دقيقة';
+  }
+
+  DateTime? _parseAvailableOn(String? raw) {
+    if (raw == null || raw.length != 10) return null;
+    final parts = raw.split('-');
+    if (parts.length != 3) return null;
+    final y = int.tryParse(parts[0]);
+    final m = int.tryParse(parts[1]);
+    final d = int.tryParse(parts[2]);
+    if (y == null || m == null || d == null) return null;
+    final dt = DateTime(y, m, d);
+    if (dt.year != y || dt.month != m || dt.day != d) return null;
+    return dt;
+  }
+
+  Future<(int?, int?)?> _promptIntRange(
+    BuildContext context, {
+    required String title,
+    required String minLabel,
+    required String maxLabel,
+    int? initialMin,
+    int? initialMax,
+  }) async {
+    final minCtrl = TextEditingController(text: initialMin?.toString() ?? '');
+    final maxCtrl = TextEditingController(text: initialMax?.toString() ?? '');
+    final result = await showDialog<(int?, int?)>(
+      context: context,
+      builder: (dialogContext) {
+        String? error;
+        return StatefulBuilder(
+          builder: (context, setLocal) {
+            return AlertDialog(
+              title: Text(title),
+              content: Column(
+                mainAxisSize: MainAxisSize.min,
+                children: [
+                  TextField(
+                    controller: minCtrl,
+                    keyboardType: TextInputType.number,
+                    decoration: InputDecoration(labelText: minLabel),
+                  ),
+                  TextField(
+                    controller: maxCtrl,
+                    keyboardType: TextInputType.number,
+                    decoration: InputDecoration(labelText: maxLabel),
+                  ),
+                  if (error != null) ...[
+                    const SizedBox(height: 8),
+                    Text(error!, style: TextStyle(color: Theme.of(context).colorScheme.error)),
+                  ],
+                ],
+              ),
+              actions: [
+                TextButton(onPressed: () => Navigator.pop(dialogContext), child: const Text('إلغاء')),
+                TextButton(
+                  onPressed: () => Navigator.pop(dialogContext, (null, null)),
+                  child: const Text('مسح'),
+                ),
+                TextButton(
+                  onPressed: () {
+                    final minRaw = minCtrl.text.trim();
+                    final maxRaw = maxCtrl.text.trim();
+                    final minVal = minRaw.isEmpty ? null : int.tryParse(minRaw);
+                    final maxVal = maxRaw.isEmpty ? null : int.tryParse(maxRaw);
+                    if (minRaw.isNotEmpty && minVal == null) {
+                      setLocal(() => error = 'الحد الأدنى غير صالح');
+                      return;
+                    }
+                    if (maxRaw.isNotEmpty && maxVal == null) {
+                      setLocal(() => error = 'الحد الأعلى غير صالح');
+                      return;
+                    }
+                    if (minVal != null && minVal < 0) {
+                      setLocal(() => error = 'القيم يجب أن تكون صفر أو أكبر');
+                      return;
+                    }
+                    if (maxVal != null && maxVal < 0) {
+                      setLocal(() => error = 'القيم يجب أن تكون صفر أو أكبر');
+                      return;
+                    }
+                    if (minVal != null && maxVal != null && minVal > maxVal) {
+                      setLocal(() => error = 'الحد الأدنى أكبر من الأعلى');
+                      return;
+                    }
+                    Navigator.pop(dialogContext, (minVal, maxVal));
+                  },
+                  child: const Text('تطبيق'),
+                ),
+              ],
+            );
+          },
+        );
+      },
+    );
+    minCtrl.dispose();
+    maxCtrl.dispose();
+    return result;
   }
 
   Future<void> _openStore(BuildContext context, PresentationSlide slide) async {
@@ -754,7 +947,15 @@ class _DiscoverPresentationScreenState extends State<DiscoverPresentationScreen>
       _tell(context, MarketplaceCopy.appointmentUnavailable);
       return;
     }
-    await Navigator.of(context).push(MaterialPageRoute<void>(builder: (_) => BookingRequestScreen(service: service)));
+    await Navigator.of(context).push(
+      MaterialPageRoute<void>(
+        builder: (_) => BookingRequestScreen(
+          service: service,
+          initialDateKey: _query.availableOn,
+          initialBranchId: _query.branchIds.length == 1 ? _query.branchIds.first : null,
+        ),
+      ),
+    );
   }
 
   Future<void> _share(BuildContext context, PresentationSlide slide) async {
@@ -1472,6 +1673,7 @@ class _PresentationPageState extends State<_PresentationPage> {
     final kind = widget.slide.product != null ? 'product' : 'service';
     final initial = widget.slide.matchedVariantSelections;
     final matchedIds = widget.slide.matchedVariantIds;
+    final parent = context.findAncestorStateOfType<_DiscoverPresentationScreenState>();
     Navigator.of(context).push(
       MaterialPageRoute<void>(
         builder: (_) => CatalogRecordScope.page(
@@ -1481,6 +1683,10 @@ class _PresentationPageState extends State<_PresentationPage> {
           gateway: widget.records,
           initialSelections: matchedIds.length == 1 && initial.isNotEmpty ? initial : null,
           matchedVariantIds: matchedIds.isEmpty ? null : matchedIds,
+          bookingDateKey: parent?._query.availableOn,
+          bookingBranchId: parent != null && parent._query.branchIds.length == 1
+              ? parent._query.branchIds.first
+              : null,
         ),
       ),
     );
