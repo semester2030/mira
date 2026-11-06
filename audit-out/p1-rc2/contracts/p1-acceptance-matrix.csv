@@ -1,0 +1,10 @@
+id,area,status,evidence
+P1.1,field-registry-validation,PASS_LOCAL,logs/rc2-registry-validation.txt
+P1.1,registry-sync,PASS_LOCAL,logs/rc2-registry-sync.txt
+P1.2,editor-v2-regression,PASS_LOCAL,logs/rc2-editor-v1-regression.txt
+P1.2,editor-v2-rc2-http,PASS_LOCAL,logs/rc2-http-integration.txt
+P1.2,account-isolation,PASS_LOCAL,logs/rc2-account-isolation.txt
+P1.2,portal-browser-journey,NOT_RUN,
+P1.3,flutter-unit,PASS_LOCAL,logs/rc2-flutter-tests.txt
+P1.3,staging-e2e,NOT_RUN,
+P1.3,device-flutter,NOT_RUN,

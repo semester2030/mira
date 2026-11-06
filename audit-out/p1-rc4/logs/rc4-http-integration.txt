@@ -1,0 +1,39 @@
+npm warn Unknown env config "devdir". This will stop working in the next major version of npm.
+
+> mira-api@1.0.0 test:editor-v2-rc4
+> tsx src/partners-portal/editor-drafts/editor-v2-rc4.http.integration-tests.ts
+
+{
+  "ok": true,
+  "host": "localhost",
+  "db": "mira_p1_rc4_test",
+  "brandEmail": "brand-rc4-13e6e5b7@test.local",
+  "salonEmail": "salon-rc4-13e6e5b7@test.local",
+  "password": "Rc4!13e6e5b7pass",
+  "results": [
+    {
+      "id": "RC4-reject-noncanonical-color-size-ids",
+      "status": "PASS_LOCAL"
+    },
+    {
+      "id": "RC4-ui-shaped-options-save",
+      "status": "PASS_LOCAL"
+    },
+    {
+      "id": "RC4-reject-broken-variant-ref",
+      "status": "PASS_LOCAL"
+    },
+    {
+      "id": "RC4-materialize-preserves-option-ids",
+      "status": "PASS_LOCAL"
+    },
+    {
+      "id": "RC4-materialized-draft-rejects-put",
+      "status": "PASS_LOCAL"
+    },
+    {
+      "id": "RC4-salon-service-draft",
+      "status": "PASS_LOCAL"
+    }
+  ]
+}

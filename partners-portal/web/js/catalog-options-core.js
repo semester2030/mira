@@ -65,6 +65,9 @@
       ),
       priceHalalas: typeof variant.priceHalalas === 'number' ? variant.priceHalalas : null,
       available: variant.available !== false,
+      mediaIds: Array.isArray(variant.mediaIds) ? variant.mediaIds.slice() : [],
+      // P3.1 — null = unspecified (never coerce to 0)
+      stockQty: typeof variant.stockQty === 'number' ? variant.stockQty : null,
     }));
 
     return {
@@ -76,6 +79,7 @@
       clearingOptions: clearingOptions,
       clearingVariants: clearingVariants,
       invalidVariantNote: '',
+      inventoryMode: row.inventoryMode === 'variant' ? 'variant' : 'product',
     };
   }
 
@@ -89,9 +93,72 @@
     return base || ('v' + (index + 1));
   }
 
+  /** Registry-canonical size ids (do not lowercase M→m). */
+  const SIZE_CANONICAL = {
+    xs: 'XS', XS: 'XS',
+    s: 'S', S: 'S',
+    m: 'M', M: 'M',
+    l: 'L', L: 'L',
+    xl: 'XL', XL: 'XL',
+    xxl: 'XXL', XXL: 'XXL',
+  };
+
+  /** Display label / english → registry color id. Custom colors keep custom: slug. */
+  const COLOR_CANONICAL = {
+    black: 'black', أسود: 'black',
+    ivory: 'ivory', سكري: 'ivory', عاجي: 'ivory',
+    brown: 'brown', بني: 'brown',
+    pink: 'pink', وردي: 'pink',
+    blue: 'blue', أزرق: 'blue',
+    green: 'green', أخضر: 'green',
+    multi: 'multi', متعدد: 'multi', 'متعدد الألوان': 'multi',
+  };
+
+  /** P3.1 — CSS hex for known color ids/labels (swatch circles). Unknown → neutral. */
+  const COLOR_SWATCH_HEX = {
+    black: '#1a1a1a', أسود: '#1a1a1a',
+    ivory: '#fffff0', سكري: '#f5f0e6', عاجي: '#fffff0',
+    brown: '#6b3e2e', بني: '#6b3e2e',
+    pink: '#e86fa9', وردي: '#e86fa9',
+    blue: '#3b6ea5', أزرق: '#3b6ea5',
+    green: '#2e7d5a', أخضر: '#2e7d5a',
+    multi: 'conic-gradient(red, yellow, lime, aqua, blue, magenta, red)',
+    متعدد: 'conic-gradient(red, yellow, lime, aqua, blue, magenta, red)',
+    'متعدد الألوان': 'conic-gradient(red, yellow, lime, aqua, blue, magenta, red)',
+  };
+
+  function colorSwatchStyle(labelOrId) {
+    const key = String(labelOrId || '').trim();
+    const canon = COLOR_CANONICAL[key] || COLOR_CANONICAL[key.toLowerCase()] || key;
+    const fill = COLOR_SWATCH_HEX[canon] || COLOR_SWATCH_HEX[key] || '#d4c4ce';
+    if (String(fill).startsWith('conic')) {
+      return { background: fill, borderColor: '#9a8a94' };
+    }
+    return { background: fill, borderColor: fill === '#fffff0' || fill === '#f5f0e6' ? '#c4b4be' : fill };
+  }
+
+  function canonicalOptionValueId(groupId, label, index, existing) {
+    if (existing) return existing;
+    const raw = String(label || '').trim();
+    if (!raw) return 'v' + (index + 1);
+    if (groupId === 'size' || groupId === 'sizes') {
+      if (SIZE_CANONICAL[raw]) return SIZE_CANONICAL[raw];
+      if (SIZE_CANONICAL[raw.toLowerCase()]) return SIZE_CANONICAL[raw.toLowerCase()];
+      // custom size — stable slug, not forced into registry sizes enum
+      return 'custom:' + slugValue(raw, index);
+    }
+    if (groupId === 'color' || groupId === 'colors') {
+      if (COLOR_CANONICAL[raw]) return COLOR_CANONICAL[raw];
+      if (COLOR_CANONICAL[raw.toLowerCase()]) return COLOR_CANONICAL[raw.toLowerCase()];
+      return 'custom:' + slugValue(raw, index);
+    }
+    return slugValue(raw, index);
+  }
+
   /**
    * Build optionsJson groups from UI state + preset descriptors.
    * presetGroups: [{ id, label, kind, presets?: string[] }]
+   * Separates display label (labelAr) from stable value id.
    */
   function buildOptionGroups(presetGroups, state) {
     const groups = [];
@@ -113,7 +180,7 @@
         kind: group.kind,
         values: labels.map((label, index) => {
           const existing = state.valueIds[group.id][label];
-          const id = existing || slugValue(label, index);
+          const id = canonicalOptionValueId(group.id, label, index, existing);
           state.valueIds[group.id][label] = id;
           return { id: id, labelAr: label };
         }),
@@ -297,11 +364,15 @@
       });
       variant.selections = Object.assign({}, selections);
 
+      // Preserve mediaIds on general save. Omitted/undefined must not wipe bindings;
+      // explicit [] (user cleared bind) is a deliberate clear and must be sent.
+      const mediaIds = Array.isArray(variant.mediaIds) ? variant.mediaIds.slice() : [];
       variants.push({
         id: variant.id,
         selections: selections,
         priceHalalas: typeof variant.priceHalalas === 'number' ? variant.priceHalalas : null,
         available: variant.available !== false,
+        mediaIds: mediaIds,
       });
     });
 
@@ -383,6 +454,44 @@
     return keep;
   }
 
+  /**
+   * Drop media ids from optionsState only (keeps labels/prices/selections).
+   * Used after UI removeMedia so general save cannot resurrect deleted refs.
+   */
+  function stripMediaIdsFromOptionsState(state, removeIds) {
+    if (!state || !Array.isArray(state.variants)) return state;
+    const drop = removeIds instanceof Set ? removeIds : new Set(Array.isArray(removeIds) ? removeIds : [removeIds]);
+    state.variants.forEach(function (variant) {
+      if (!variant || !Array.isArray(variant.mediaIds)) return;
+      variant.mediaIds = variant.mediaIds.filter(function (id) {
+        return id && !drop.has(id);
+      });
+    });
+    return state;
+  }
+
+  /**
+   * Sync only mediaIds from server variant rows into live optionsState.
+   * Does not replace selections/prices. `omitIds` wins over stale preview rows.
+   */
+  function syncVariantMediaIdsFromServer(state, serverVariants, omitIds) {
+    if (!state || !Array.isArray(state.variants)) return state;
+    const omit = omitIds instanceof Set ? omitIds : new Set(omitIds || []);
+    const rows = Array.isArray(serverVariants) ? serverVariants : [];
+    state.variants.forEach(function (variant) {
+      if (!variant || !variant.id) return;
+      const match = rows.find(function (sv) {
+        return sv && sv.id === variant.id;
+      });
+      if (!match) return;
+      const next = Array.isArray(match.mediaIds) ? match.mediaIds.slice() : [];
+      variant.mediaIds = next.filter(function (id) {
+        return id && !omit.has(id);
+      });
+    });
+    return state;
+  }
+
   global.MiraCatalogOptions = {
     optionsStateFromServer: optionsStateFromServer,
     buildOptionGroups: buildOptionGroups,
@@ -390,9 +499,15 @@
     buildCommercePayload: buildCommercePayload,
     incompatibleGroupIds: incompatibleGroupIds,
     stateHasOptionLabels: stateHasOptionLabels,
+    colorSwatchStyle: colorSwatchStyle,
     selectionKey: selectionKey,
     isDuplicateVariant: isDuplicateVariant,
     slugValue: slugValue,
+    canonicalOptionValueId: canonicalOptionValueId,
+    SIZE_CANONICAL: SIZE_CANONICAL,
+    COLOR_CANONICAL: COLOR_CANONICAL,
     syncPickerOptions: syncPickerOptions,
+    stripMediaIdsFromOptionsState: stripMediaIdsFromOptionsState,
+    syncVariantMediaIdsFromServer: syncVariantMediaIdsFromServer,
   };
 })(typeof globalThis !== 'undefined' ? globalThis : this);

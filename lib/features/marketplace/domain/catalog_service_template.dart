@@ -183,6 +183,82 @@ class CatalogServiceProfile {
       answers: answers ?? this.answers,
     );
   }
+
+  /// Parses approved `serviceProfileJson` from the public catalog API.
+  /// Null / legacy absence → empty profile. Never reads draft profile payloads.
+  static CatalogServiceProfile fromServiceProfileJson(Object? raw) {
+    if (raw == null) return const CatalogServiceProfile();
+    if (raw is! Map) return const CatalogServiceProfile();
+    final json = <String, dynamic>{
+      for (final entry in raw.entries) entry.key.toString(): entry.value,
+    };
+    final templateId = (json['templateId'] as String?)?.trim();
+    final templateVersion = (json['templateVersion'] as num?)?.toInt() ?? 0;
+    final priceMode = _parsePriceMode(json['priceMode'] as String?);
+    final answersRaw = json['answers'];
+    final answers = <String, CatalogServiceAnswer>{};
+    if (answersRaw is Map) {
+      for (final entry in answersRaw.entries) {
+        final key = _canonicalAnswerKey(entry.key.toString());
+        answers[key] = _parseAnswer(entry.value);
+      }
+    }
+    if ((templateId == null || templateId.isEmpty) && answers.isEmpty) {
+      return const CatalogServiceProfile();
+    }
+    return CatalogServiceProfile(
+      templateId: templateId?.isEmpty == true ? null : templateId,
+      templateVersion: templateVersion,
+      priceMode: priceMode,
+      answers: answers,
+    );
+  }
+
+  static CatalogServicePriceMode _parsePriceMode(String? raw) {
+    switch (raw) {
+      case 'from':
+        return CatalogServicePriceMode.from;
+      case 'afterAssessment':
+        return CatalogServicePriceMode.afterAssessment;
+      case 'unknown':
+        return CatalogServicePriceMode.unknown;
+      case 'fixed':
+      default:
+        return CatalogServicePriceMode.fixed;
+    }
+  }
+
+  static CatalogServiceAnswer _parseAnswer(Object? raw) {
+    if (raw == null) return const CatalogServiceAnswer.unset();
+    if (raw is Map) {
+      final state = raw['state']?.toString();
+      if (state == 'unset') return const CatalogServiceAnswer.unset();
+      if (state == 'notApplicable' || state == 'not_applicable') {
+        return const CatalogServiceAnswer.notApplicable();
+      }
+      if (raw.containsKey('value')) {
+        final value = raw['value'];
+        if (value == null) return const CatalogServiceAnswer.unset();
+        return CatalogServiceAnswer.value(value);
+      }
+    }
+    return CatalogServiceAnswer.value(raw);
+  }
+
+  /// Adapter: accept storage aliases (camelCase) and Flutter field ids (snake_case).
+  static String _canonicalAnswerKey(String key) {
+    const aliases = <String, String>{
+      'included': 'includes',
+      'excluded': 'excludes',
+      'packageSessions': 'package_sessions',
+      'placeMode': 'place_mode',
+      'homeCoverage': 'home_coverage',
+      'needsAssessment': 'needs_assessment',
+      'assessmentNote': 'assessment_note',
+      'prepRequired': 'prep_required',
+    };
+    return aliases[key] ?? key;
+  }
 }
 
 /// Visibility + section projection from the same template definition.

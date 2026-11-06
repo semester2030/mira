@@ -7,3 +7,7 @@ dist/
 var/
 *.log
 .DS_Store
+.env.rc3
+.env.rc4
+.env.rc5
+.env.rc6

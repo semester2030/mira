@@ -1,0 +1,9 @@
+{
+  "rc3_package": "MIRA_P1_PARTNER_EDITOR_CLOSURE_RC3_20261103T215422Z.zip",
+  "rc3_sha256": "610c61e0282a6c329ab789f181fcc6a8401679d29915d6ef3433dc0a2d6f3729",
+  "codeFinalCommit_rc3": "7379215b34ad58bb9933503f4aacb52fff69fa0f",
+  "branch_start": "mira/p1-partner-editor-v2-rc4",
+  "worktree_parent_tip": "8df68fe",
+  "db": "mira_p1_rc4_test",
+  "host": "127.0.0.1"
+}

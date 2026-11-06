@@ -1,7 +1,6 @@
 import 'package:flutter/material.dart';
 
 import '../../../../core/constants/marketplace_copy.dart';
-import '../../../../core/navigation/app_routes.dart';
 import '../../../../core/utils/mira_url_launcher.dart';
 import '../../../../shared/theme/colors.dart';
 import '../../../../shared/theme/typography.dart';
@@ -12,12 +11,21 @@ import '../../domain/catalog_offer_media.dart';
 import '../../domain/catalog_service_template.dart';
 import '../../domain/entities/catalog_service.dart';
 import '../widgets/catalog_detail_media_section.dart';
+import 'booking_request_screen.dart';
 
 class ServiceDetailScreen extends StatelessWidget {
   final CatalogService service;
   final Widget? provenance;
+  final String? bookingDateKey;
+  final String? bookingBranchId;
 
-  const ServiceDetailScreen({super.key, required this.service, this.provenance});
+  const ServiceDetailScreen({
+    super.key,
+    required this.service,
+    this.provenance,
+    this.bookingDateKey,
+    this.bookingBranchId,
+  });
 
   String get _priceText {
     switch (service.profile.priceMode) {
@@ -57,7 +65,15 @@ class ServiceDetailScreen extends StatelessWidget {
       messenger.showSnackBar(const SnackBar(content: Text(MarketplaceCopy.appointmentUnavailable)));
       return;
     }
-    await Navigator.of(context).pushNamed(AppRoutes.bookingRequest, arguments: service);
+    await Navigator.of(context).push(
+      MaterialPageRoute<void>(
+        builder: (_) => BookingRequestScreen(
+          service: service,
+          initialDateKey: bookingDateKey,
+          initialBranchId: bookingBranchId,
+        ),
+      ),
+    );
   }
 
   @override

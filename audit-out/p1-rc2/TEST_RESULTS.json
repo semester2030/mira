@@ -1,0 +1,67 @@
+{
+  "generatedAtUtc": "2026-11-03T21:30:00Z",
+  "package": "MIRA_P1_PARTNER_EDITOR_IMPLEMENTATION_RC2_20261104",
+  "baselineCommit": "4c920f2e6c23319c1499f58bad8f2caabed4dedf",
+  "rc1ZipSha256": "dcbfa47206f025e530becb02614ed255683e726adf2616457c3a6cd70a8176dd",
+  "environment": {
+    "os": "darwin",
+    "databaseHost": "127.0.0.1",
+    "databaseName": "mira_db",
+    "databaseUrlRedacted": "postgresql://mira:***@127.0.0.1:5432/mira_db",
+    "MIRA_PARTNER_EDITOR_V2": "true during RC2 suites"
+  },
+  "suites": [
+    {
+      "name": "npm run test:registry-validation",
+      "cwd": "mira-api",
+      "status": "PASS_LOCAL",
+      "evidence": "logs/rc2-registry-validation.txt",
+      "notes": "9 templates positive + negatives (array/colors/template/priceMode)"
+    },
+    {
+      "name": "npm run check:field-registry",
+      "cwd": "mira-api",
+      "status": "PASS_LOCAL",
+      "evidence": "logs/rc2-registry-sync.txt"
+    },
+    {
+      "name": "npm run test:editor-v2",
+      "cwd": "mira-api",
+      "status": "PASS_LOCAL",
+      "evidence": "logs/rc2-editor-v1-regression.txt",
+      "notes": "A01\u2013A11 regression"
+    },
+    {
+      "name": "npm run test:editor-v2-rc2",
+      "cwd": "mira-api",
+      "status": "PASS_LOCAL",
+      "evidence": "logs/rc2-http-integration.txt",
+      "notes": "colors/sizes, serviceProfile, materialize submit resume, unknown color reject"
+    },
+    {
+      "name": "node --test editor-v2-isolation.tests.mjs",
+      "cwd": "partners-portal/web/js",
+      "status": "PASS_LOCAL",
+      "evidence": "logs/rc2-account-isolation.txt",
+      "notes": "A schedule \u2192 switch B \u2192 timer: calls=0"
+    },
+    {
+      "name": "flutter test service_profile + alias/canonical keys",
+      "status": "PASS_LOCAL",
+      "evidence": "logs/rc2-flutter-tests.txt"
+    },
+    {
+      "name": "portal real-browser journey + screenshots desktop/RTL",
+      "status": "NOT_RUN"
+    },
+    {
+      "name": "staging partner E2E",
+      "status": "NOT_RUN"
+    },
+    {
+      "name": "device Flutter imported answers",
+      "status": "NOT_RUN"
+    }
+  ],
+  "finalCommit": "3f8f69dd4b1abf09748cc84ecef155a45777f508"
+}

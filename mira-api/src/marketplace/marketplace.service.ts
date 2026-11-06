@@ -1,8 +1,30 @@
 import { BadRequestException, Inject, Injectable, NotFoundException, OnModuleInit, UnauthorizedException } from '@nestjs/common';
 import { Prisma } from '@prisma/client';
 import { PrismaService } from '../prisma/prisma.service';
-import { compareCatalogKeys, pageCatalogItems } from './catalog-page';
+import {
+  decodeCatalogCursor,
+  encodeCatalogCursor,
+  normalizeFilterFingerprint,
+  parseCatalogLimit,
+} from './catalog-cursor';
+import {
+  partnerCapBundleForService,
+  resourceIdsForServiceDate,
+  serviceHasBookableSlotOnDate,
+  ACTIVE_BOOKING_STATUSES,
+  type HeldInterval,
+} from './catalog-availability';
+import {
+  branchIdFromServiceProfile,
+  buildCatalogFacets,
+  filterCatalogItems,
+  parseCatalogFilterQuery,
+  placeModeFromServiceProfile,
+  type CatalogFilterItem,
+  type CatalogFilterMatch,
+} from './catalog-filters';
 import { formatCatalogPrice } from './catalog-price';
+import { localInstant } from './commerce.types';
 import { MatchMarketplaceDto } from './dto/match-marketplace.dto';
 import {
   ConcernMap,
@@ -10,7 +32,7 @@ import {
   scoreServiceMatch,
 } from './marketplace-matching.engine';
 import { publishedCatalogMediaWhere } from './catalog-published-media';
-import { publicProductCommerce, publicServiceCommerce } from './commerce-public';
+import { publicProductCommerce, publicServiceCommerce, sellableQty } from './commerce-public';
 import { seedMarketplaceIfEmpty } from './marketplace.seed';
 import { recordJourney } from './journey-events';
 
@@ -186,6 +208,25 @@ export class MarketplaceService implements OnModuleInit {
     lane?: string;
     venue?: string;
     visual?: string;
+    kind?: string;
+    color?: string;
+    size?: string;
+    volume?: string;
+    option?: string;
+    inStock?: string;
+    priceMin?: string;
+    priceMax?: string;
+    durationMin?: string;
+    durationMax?: string;
+    placeMode?: string;
+    branch?: string;
+    branchId?: string;
+    availableOn?: string;
+    sort?: string;
+    facets?: string;
+    ['variant.color']?: string;
+    ['variant.size']?: string;
+    ['variant.volume']?: string;
   }) {
     await this.ensureSeeded();
     if (params.type && !['brand', 'clinic', 'salon'].includes(params.type)) {
@@ -197,19 +238,60 @@ export class MarketplaceService implements OnModuleInit {
     if (params.venue && !['clinic', 'salon'].includes(params.venue)) {
       throw new BadRequestException('نوع الجهة غير صالح');
     }
-    const parsedLimit = params.limit == null || params.limit === '' ? 8 : Number(params.limit);
-    if (!Number.isInteger(parsedLimit)) {
+    const limitParsed = parseCatalogLimit(params.limit);
+    if (!limitParsed.ok) {
       throw new BadRequestException('حد الصفحة غير صالح');
     }
-    const tags = (params.tag ?? '')
-      .split(',')
-      .map((item) => item.trim())
-      .filter((item) => item.length > 0);
-    const hint = (params.hint ?? '').trim().toLowerCase();
-    const q = (params.q ?? '').trim().toLowerCase();
+    const parsedLimit = limitParsed.limit;
+
+    const parsedFilters = parseCatalogFilterQuery({
+      q: params.q ?? params.hint,
+      tag: params.tag,
+      category: params.category,
+      city: params.city,
+      partnerId: params.partnerId,
+      kind: params.kind ?? (params.lane === 'elegance' ? 'product' : params.lane === 'beauty' ? 'service' : undefined),
+      color: params.color,
+      size: params.size,
+      volume: params.volume,
+      option: params.option,
+      inStock: params.inStock,
+      priceMin: params.priceMin,
+      priceMax: params.priceMax,
+      durationMin: params.durationMin,
+      durationMax: params.durationMax,
+      placeMode: params.placeMode,
+      branch: params.branch,
+      branchId: params.branchId,
+      availableOn: params.availableOn,
+      sort: params.sort,
+      'variant.color': params['variant.color'] ?? params.color,
+      'variant.size': params['variant.size'] ?? params.size,
+      'variant.volume': params['variant.volume'] ?? params.volume,
+    });
+    if (!parsedFilters.ok) {
+      throw new BadRequestException(parsedFilters.messageAr);
+    }
+    const filter = parsedFilters.filter;
+    // City is applied in-memory so city facets can exclude the city filter itself (C03).
+    const fingerprint = normalizeFilterFingerprint(filter, {
+      type: params.type,
+      venue: params.venue,
+      visual: params.visual,
+      lane: params.lane,
+    });
+    const sort = filter.sort ?? 'key';
+    const decodedCursor = decodeCatalogCursor(params.cursor, { sort, fingerprint });
+    if (!decodedCursor.ok) {
+      throw new BadRequestException(
+        decodedCursor.reason === 'cursor_mismatch'
+          ? 'مؤشر الصفحة لا يطابق البحث الحالي'
+          : 'مؤشر الصفحة غير صالح',
+      );
+    }
+
     const partnerBase = {
       status: 'active' as const,
-      ...(params.city ? { city: params.city } : {}),
       ...(params.partnerId ? { id: params.partnerId } : {}),
     };
     const productPartner = params.lane === 'beauty'
@@ -233,130 +315,423 @@ export class MarketplaceService implements OnModuleInit {
         ? { ...partnerBase, OR: [{ type: 'clinic' }, { type: 'salon' }, { type: 'developer' }] }
         : partnerBase;
 
-    const [products, services, partners] = await Promise.all([
+    const needVariantInventory =
+      filter.inStock != null || Object.keys(filter.variantSelections ?? {}).length > 0 || params.facets === '1';
+
+    // Published catalog only; cities derived from these rows (no extra partner scan).
+    // Kind is pushed to SQL via impossible id when the other kind is requested (C06 partial).
+    // Variant AND/OR, city/branch facets, and availability stay in-process for facet accuracy.
+    const [products, services] = await Promise.all([
       this.prisma.product.findMany({
-        where: { active: true, contentStatus: 'published', catalogSource: 'catalog', partner: productPartner },
-        include: { partner: true },
+        where: {
+          active: true,
+          contentStatus: 'published',
+          catalogSource: 'catalog',
+          partner: productPartner,
+          ...(filter.kind === 'service' ? { id: '__none__' } : {}),
+        },
+        include: {
+          partner: true,
+          ...(needVariantInventory
+            ? {
+                variantInventories: {
+                  where: { archivedAt: null },
+                  select: { variantId: true, stockQty: true, reservedQty: true, stockMode: true },
+                },
+              }
+            : {}),
+        },
       }),
       this.prisma.service.findMany({
-        where: { active: true, contentStatus: 'published', catalogSource: 'catalog', partner: servicePartner },
+        where: {
+          active: true,
+          contentStatus: 'published',
+          catalogSource: 'catalog',
+          partner: servicePartner,
+          ...(filter.kind === 'product' ? { id: '__none__' } : {}),
+        },
         include: { partner: true },
-      }),
-      this.prisma.partner.findMany({
-        where: { status: 'active' },
-        select: { city: true },
       }),
     ]);
 
-    const items = [
-      ...products.map((product) => ({
-        kind: 'product' as const,
-        id: product.id,
-        partnerId: product.partnerId,
-        partnerType: product.partner.type,
-        partnerNameAr: product.partner.nameAr,
-        city: product.partner.city,
-        contactPhone: product.partner.contactPhone,
-        nameAr: product.nameAr,
-        nameEn: product.nameEn,
-        descriptionAr: product.descriptionAr,
-        priceHalalas: product.priceHalalas,
-        priceLabel: this.formatPrice(product.priceHalalas),
-        externalUrl: product.externalUrl,
-        stepAr: product.stepAr,
-        partnerEmoji: product.partner.logoEmoji,
-        concernTags: product.concernTags,
-        category: product.category,
-        durationMin: null as number | null,
-        ...publicProductCommerce(product),
-        bookingEnabled: false,
-        payMode: null as string | null,
-        availabilityPresent: false,
-      })),
-      ...services.map((service) => ({
-        kind: 'service' as const,
-        id: service.id,
-        partnerId: service.partnerId,
-        partnerType: service.partner.type,
-        partnerNameAr: service.partner.nameAr,
-        city: service.partner.city,
-        contactPhone: service.partner.contactPhone,
-        nameAr: service.nameAr,
-        nameEn: service.nameEn,
-        descriptionAr: service.descriptionAr,
-        priceHalalas: service.priceHalalas,
-        priceLabel: this.formatPrice(service.priceHalalas),
-        externalUrl: null as string | null,
-        stepAr: null as string | null,
-        partnerEmoji: service.partner.logoEmoji,
-        concernTags: service.concernTags,
-        category: service.category,
-        durationMin: service.durationMin,
-        ...publicServiceCommerce(service),
-        purchaseMode: null as string | null,
-        stockQty: null as number | null,
-        stockAvailable: false,
-        deliveryFeeHalalas: null as number | null,
-        optionsJson: null as unknown,
-        variantsJson: null as unknown,
-      })),
-    ].sort((a, b) => compareCatalogKeys(`${a.kind}:${a.id}`, `${b.kind}:${b.id}`));
+    type ProductRow = (typeof products)[number] & {
+      variantInventories?: Array<{ variantId: string; stockQty: number | null; reservedQty: number; stockMode: string }>;
+    };
 
-    const category = (params.category ?? '').trim();
-    const requireVisual = params.visual === '1';
-    const visualKeys = requireVisual
-      ? new Set(
-          (
-            await this.prisma.catalogMedia.findMany({
-              where: {
-                active: true,
-                publication: 'published',
-                pendingRemoval: false,
-                kind: { in: ['image', 'video'] },
-              },
-              select: { ownerKind: true, ownerId: true },
-            })
-          ).map((row) => `${row.ownerKind}:${row.ownerId}`),
+    // Bookability is service-level for the date (holds/capacity/duration/bookingEnabled).
+    // Branch filter is applied later in matchCatalogItem so branch facets can exclude
+    // the branch field itself while keeping availableOn (P5 remaining review).
+    const bookableByServiceId = filter.availableOn
+      ? await this.computeBookableServiceIds(
+          services.map((s) => ({
+            id: s.id,
+            partnerId: s.partnerId,
+            bookingEnabled: s.bookingEnabled,
+            durationMin: s.durationMin,
+            availabilityJson: s.availabilityJson,
+            branchId: branchIdFromServiceProfile(s.serviceProfileJson),
+          })),
+          filter.availableOn,
         )
       : null;
-    const matched = items.filter((item) => {
+
+    const filterItems: CatalogFilterItem[] = [
+      ...products.map((product) => {
+        const row = product as ProductRow;
+        const commerce = publicProductCommerce(product);
+        const variantSellable: Record<string, number | null> = {};
+        for (const inv of row.variantInventories ?? []) {
+          if (inv.stockMode === 'untracked') {
+            variantSellable[inv.variantId] = null;
+          } else {
+            variantSellable[inv.variantId] = sellableQty({ stockQty: inv.stockQty, reservedQty: inv.reservedQty });
+          }
+        }
+        return {
+          kind: 'product' as const,
+          id: product.id,
+          partnerId: product.partnerId,
+          partnerType: product.partner.type,
+          partnerNameAr: product.partner.nameAr,
+          city: product.partner.city,
+          nameAr: product.nameAr,
+          nameEn: product.nameEn,
+          descriptionAr: product.descriptionAr,
+          category: product.category,
+          concernTags: product.concernTags,
+          priceHalalas: product.priceHalalas,
+          optionsJson: commerce.optionsJson,
+          variantsJson: commerce.variantsJson,
+          stockQty: commerce.stockQty,
+          stockAvailable: commerce.stockAvailable,
+          inventoryMode: product.inventoryMode,
+          variantSellable: Object.keys(variantSellable).length ? variantSellable : undefined,
+        };
+      }),
+      ...services.map((service) => {
+        const branchId = branchIdFromServiceProfile(service.serviceProfileJson);
+        const availableOnDay =
+          filter.availableOn == null
+            ? null
+            : bookableByServiceId?.has(service.id) === true;
+        return {
+          kind: 'service' as const,
+          id: service.id,
+          partnerId: service.partnerId,
+          partnerType: service.partner.type,
+          partnerNameAr: service.partner.nameAr,
+          city: service.partner.city,
+          nameAr: service.nameAr,
+          nameEn: service.nameEn,
+          descriptionAr: service.descriptionAr,
+          category: service.category,
+          concernTags: service.concernTags,
+          priceHalalas: service.priceHalalas,
+          durationMin: service.durationMin,
+          placeMode: placeModeFromServiceProfile(service.serviceProfileJson),
+          branchId,
+          availabilityJson: service.availabilityJson,
+          bookingEnabled: service.bookingEnabled,
+          availableOnDay,
+        };
+      }),
+    ];
+
+    const requireVisual = params.visual === '1';
+    const visualOwnerOr = [
+      ...products.map((p) => ({ ownerKind: 'product' as const, ownerId: p.id })),
+      ...services.map((s) => ({ ownerKind: 'service' as const, ownerId: s.id })),
+    ];
+    const visualKeys =
+      requireVisual && visualOwnerOr.length > 0
+        ? new Set(
+            (
+              await this.prisma.catalogMedia.findMany({
+                where: {
+                  active: true,
+                  publication: 'published',
+                  pendingRemoval: false,
+                  kind: { in: ['image', 'video'] },
+                  OR: visualOwnerOr,
+                },
+                select: { ownerKind: true, ownerId: true },
+              })
+            ).map((row) => `${row.ownerKind}:${row.ownerId}`),
+          )
+        : requireVisual
+          ? new Set<string>()
+          : null;
+
+    const scoped = filterItems.filter((item) => {
       if (params.lane === 'elegance' && item.kind !== 'product') return false;
       if (params.lane === 'beauty' && item.kind !== 'service') return false;
       if (params.venue && item.partnerType !== params.venue) return false;
       if (visualKeys && !visualKeys.has(`${item.kind}:${item.id}`)) return false;
-      if (category && item.category !== category) return false;
-      if (tags.length > 0 && !item.concernTags.some((tag) => tags.includes(tag))) return false;
-      if (hint && !`${item.nameAr} ${item.nameEn}`.toLowerCase().includes(hint)) return false;
-      if (!q) return true;
-      const haystack = `${item.nameAr} ${item.nameEn} ${item.partnerNameAr} ${item.descriptionAr ?? ''} ${item.city}`.toLowerCase();
-      return haystack.includes(q);
+      return true;
     });
 
-    const paged = pageCatalogItems(matched, params.cursor, parsedLimit);
-    if (!paged.ok) {
-      throw new BadRequestException(paged.reason === 'invalid_cursor' ? 'مؤشر الصفحة غير صالح' : 'حد الصفحة غير صالح');
+    const matched = filterCatalogItems(scoped, filter);
+    const facets = params.facets === '1' ? buildCatalogFacets(scoped, filter) : undefined;
+
+    // Unified paging for all sorts — cursor is bound to fingerprint+sort.
+    let start = 0;
+    if (decodedCursor.ok && decodedCursor.id) {
+      const idx = matched.findIndex(
+        (m) => m.item.kind === decodedCursor.kind && m.item.id === decodedCursor.id,
+      );
+      if (idx < 0) {
+        throw new BadRequestException('مؤشر الصفحة غير صالح');
+      }
+      start = idx + 1;
     }
-    const media = paged.items.length
+    const pagedItems: CatalogFilterMatch[] = matched.slice(start, start + parsedLimit);
+    const last = pagedItems[pagedItems.length - 1];
+    const nextCursor =
+      last && start + pagedItems.length < matched.length
+        ? encodeCatalogCursor({
+            sort,
+            fingerprint,
+            kind: last.item.kind,
+            id: last.item.id,
+          })
+        : null;
+
+    const productById = new Map(products.map((p) => [p.id, p]));
+    const serviceById = new Map(services.map((s) => [s.id, s]));
+
+    const media = pagedItems.length
       ? await this.prisma.catalogMedia.findMany({
           where: {
             active: true,
             publication: 'published',
-            OR: paged.items.map((item) => ({ ownerKind: item.kind, ownerId: item.id })),
+            OR: pagedItems.map((m) => ({ ownerKind: m.item.kind, ownerId: m.item.id })),
           },
           orderBy: { sortOrder: 'asc' },
         })
       : [];
-    const cities = [...new Set(partners.map((partner) => partner.city).filter((city) => city.length > 0))].sort();
+    const cities = [
+      ...new Set(
+        [...products, ...services]
+          .map((row) => row.partner.city)
+          .filter((city) => typeof city === 'string' && city.length > 0),
+      ),
+    ].sort();
+
     return {
-      items: paged.items.map((item) => ({
-        ...item,
-        media: media
-          .filter((row) => row.ownerKind === item.kind && row.ownerId === item.id)
-          .map((row) => ({ kind: row.kind, url: row.url, sortOrder: row.sortOrder, isPrimary: row.isPrimary, placement: row.placement })),
-      })),
-      nextCursor: paged.nextCursor,
+      items: pagedItems.map((match) => {
+        const item = match.item;
+        if (item.kind === 'product') {
+          const product = productById.get(item.id)!;
+          const commerce = publicProductCommerce(product);
+          const prices = match.matchedVariants
+            .map((v) => v.priceHalalas)
+            .filter((p): p is number => p != null);
+          const uniquePrices = [...new Set(prices)];
+          // Representative price is always the minimum known eligible/matched price.
+          // Sort direction must not change priceHalalas or priceLabel (C03).
+          const displayPrice =
+            match.matchedVariants.length === 1
+              ? match.matchedVariants[0]!.priceHalalas
+              : match.effectivePriceHalalas ?? product.priceHalalas;
+          const priceLabel =
+            uniquePrices.length > 1
+              ? `ابتداءً من ${this.formatPrice(Math.min(...uniquePrices))}`
+              : this.formatPrice(displayPrice);
+          return {
+            kind: 'product' as const,
+            id: product.id,
+            partnerId: product.partnerId,
+            partnerType: product.partner.type,
+            partnerNameAr: product.partner.nameAr,
+            city: product.partner.city,
+            contactPhone: product.partner.contactPhone,
+            nameAr: product.nameAr,
+            nameEn: product.nameEn,
+            descriptionAr: product.descriptionAr,
+            priceHalalas: displayPrice,
+            priceLabel,
+            externalUrl: product.externalUrl,
+            stepAr: product.stepAr,
+            partnerEmoji: product.partner.logoEmoji,
+            concernTags: product.concernTags,
+            category: product.category,
+            durationMin: null as number | null,
+            ...commerce,
+            bookingEnabled: false,
+            payMode: null as string | null,
+            availabilityPresent: false,
+            matchedVariantIds: match.matchedVariants.map((v) => v.variantId),
+            matchedVariants: match.matchedVariants,
+            media: media
+              .filter((row) => row.ownerKind === 'product' && row.ownerId === product.id)
+              .map((row) => ({
+                kind: row.kind,
+                url: row.url,
+                sortOrder: row.sortOrder,
+                isPrimary: row.isPrimary,
+                placement: row.placement,
+              })),
+          };
+        }
+        const service = serviceById.get(item.id)!;
+        return {
+          kind: 'service' as const,
+          id: service.id,
+          partnerId: service.partnerId,
+          partnerType: service.partner.type,
+          partnerNameAr: service.partner.nameAr,
+          city: service.partner.city,
+          contactPhone: service.partner.contactPhone,
+          nameAr: service.nameAr,
+          nameEn: service.nameEn,
+          descriptionAr: service.descriptionAr,
+          priceHalalas: service.priceHalalas,
+          priceLabel: this.formatPrice(service.priceHalalas),
+          externalUrl: null as string | null,
+          stepAr: null as string | null,
+          partnerEmoji: service.partner.logoEmoji,
+          concernTags: service.concernTags,
+          category: service.category,
+          durationMin: service.durationMin,
+          ...publicServiceCommerce(service),
+          purchaseMode: null as string | null,
+          stockQty: null as number | null,
+          stockAvailable: false,
+          deliveryFeeHalalas: null as number | null,
+          optionsJson: null as unknown,
+          variantsJson: null as unknown,
+          placeMode: item.placeMode,
+          branchId: item.branchId,
+          matchedVariantIds: [] as string[],
+          matchedVariants: [] as CatalogFilterMatch['matchedVariants'],
+          media: media
+            .filter((row) => row.ownerKind === 'service' && row.ownerId === service.id)
+            .map((row) => ({
+              kind: row.kind,
+              url: row.url,
+              sortOrder: row.sortOrder,
+              isPrimary: row.isPrimary,
+              placement: row.placement,
+            })),
+        };
+      }),
+      nextCursor,
       availableCities: cities,
+      totalMatched: matched.length,
+      queryFingerprint: fingerprint,
+      activeFilters: {
+        q: filter.q ?? null,
+        tags: filter.tags ?? [],
+        category: filter.category ?? null,
+        city: filter.city ?? null,
+        partnerId: filter.partnerId ?? null,
+        kind: filter.kind ?? null,
+        variantSelections: filter.variantSelections ?? {},
+        inStock: filter.inStock ?? null,
+        priceMinHalalas: filter.priceMinHalalas ?? null,
+        priceMaxHalalas: filter.priceMaxHalalas ?? null,
+        durationMin: filter.durationMin ?? null,
+        durationMax: filter.durationMax ?? null,
+        placeModes: filter.placeModes ?? [],
+        branchIds: filter.branchIds ?? [],
+        availableOn: filter.availableOn ?? null,
+        sort,
+      },
+      ...(facets ? { facets } : {}),
     };
+  }
+
+  /**
+   * Batch bookability for availableOn: one sibling-cap load per partner + one holds query for the day.
+   * Uses the same buildDaySlots rules as CommerceService.serviceAvailability (no second algorithm).
+   */
+  private async computeBookableServiceIds(
+    services: Array<{
+      id: string;
+      partnerId: string;
+      bookingEnabled: boolean;
+      durationMin: number;
+      availabilityJson: unknown;
+      branchId: string | null;
+    }>,
+    dateKey: string,
+  ): Promise<Set<string>> {
+    const bookable = new Set<string>();
+    if (!localInstant(dateKey, 0) || services.length === 0) return bookable;
+
+    const partnerIds = [...new Set(services.map((s) => s.partnerId))];
+    const siblings = await this.prisma.service.findMany({
+      where: { partnerId: { in: partnerIds }, active: true },
+      select: { partnerId: true, availabilityJson: true },
+    });
+    const siblingJsonByPartner = new Map<string, unknown[]>();
+    for (const row of siblings) {
+      const list = siblingJsonByPartner.get(row.partnerId) ?? [];
+      list.push(row.availabilityJson);
+      siblingJsonByPartner.set(row.partnerId, list);
+    }
+
+    const dayStart = localInstant(dateKey, 0)!;
+    const dayEnd = new Date(dayStart.getTime() + 86_400_000);
+
+    const bundles = new Map<string, ReturnType<typeof partnerCapBundleForService>>();
+    const allResourceIds = new Set<string>();
+    for (const service of services) {
+      const bundle = partnerCapBundleForService(
+        service.availabilityJson,
+        siblingJsonByPartner.get(service.partnerId) ?? [service.availabilityJson],
+      );
+      bundles.set(service.id, bundle);
+      for (const id of resourceIdsForServiceDate(
+        service.availabilityJson,
+        bundle.calendar,
+        dateKey,
+        bundle.windows,
+      )) {
+        allResourceIds.add(id);
+      }
+    }
+
+    const heldRows = await this.prisma.commerceBooking.findMany({
+      where: {
+        status: { in: [...ACTIVE_BOOKING_STATUSES] },
+        startsAt: { lt: dayEnd },
+        endsAt: { gt: dayStart },
+        OR: [
+          { serviceId: { in: services.map((s) => s.id) }, resourceId: '' },
+          ...(allResourceIds.size
+            ? [{ partnerId: { in: partnerIds }, resourceId: { in: [...allResourceIds] } }]
+            : []),
+        ],
+      },
+      select: { serviceId: true, partnerId: true, startsAt: true, endsAt: true, resourceId: true },
+    });
+
+    const now = new Date();
+    for (const service of services) {
+      const bundle = bundles.get(service.id)!;
+      const serviceResourceIds = new Set(
+        resourceIdsForServiceDate(service.availabilityJson, bundle.calendar, dateKey, bundle.windows),
+      );
+      const held: HeldInterval[] = heldRows
+        .filter((h) => {
+          if (h.resourceId === '' && h.serviceId === service.id) return true;
+          return h.partnerId === service.partnerId && serviceResourceIds.has(h.resourceId);
+        })
+        .map((h) => ({ startsAt: h.startsAt, endsAt: h.endsAt, resourceId: h.resourceId }));
+      if (
+        serviceHasBookableSlotOnDate({
+          service,
+          dateKey,
+          bundle,
+          held,
+          now,
+        })
+      ) {
+        bookable.add(service.id);
+      }
+    }
+    return bookable;
   }
 
   async listPartners(type?: string, city?: string): Promise<PartnerSummaryDto[]> {
@@ -494,6 +869,8 @@ export class MarketplaceService implements OnModuleInit {
       category: service.category,
       concernTags: service.concernTags,
       ...publicServiceCommerce(service),
+      // Approved profile only — never draft_service_profile_json.
+      serviceProfileJson: service.serviceProfileJson ?? null,
       media: media.map((row) => ({ kind: row.kind, url: row.url, sortOrder: row.sortOrder, isPrimary: row.isPrimary, placement: row.placement })),
     };
   }

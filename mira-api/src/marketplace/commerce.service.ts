@@ -37,9 +37,14 @@ import {
   normalizeResourceId,
   notFound,
   findResourceCapacityConflicts,
+  capacityBearingWindowsFromDocument,
+  applyPartnerCapsToCalendar,
   orderRequestFingerprint,
   partnerResourceCapacities,
+  normalizeAvailabilityDocument,
   parseAvailability,
+  resourceIdsForDate,
+  resourceIdsFromAvailabilityDocument,
   parseContact,
   parseDelivery,
   parseOptionalNotes,
@@ -221,10 +226,16 @@ export class CommerceService {
         throw conflict('CART_FULL', 'السلة وصلت للحد الأقصى من العناصر');
       }
       const lineQty = Math.min((existing?.quantity ?? 0) + quantity, MAX_LINE_QUANTITY);
+      // product mode: all lines of this product share one pool (any variantKey).
+      // variant mode: only lines of the same variantKey share a pool.
       const otherQty = items
-        .filter((i) => i.productId === product.id && i.id !== existing?.id)
+        .filter((i) => {
+          if (i.productId !== product.id || i.id === existing?.id) return false;
+          if (product.inventoryMode === 'variant') return i.variantKey === resolved.variantKey;
+          return true;
+        })
         .reduce((sum, i) => sum + i.quantity, 0);
-      this.assertStock(product, otherQty + lineQty);
+      await this.assertStockForLine(product, resolved.variantKey, otherQty + lineQty, tx);
 
       if (existing) {
         await tx.commerceCartItem.update({ where: { id: existing.id }, data: { quantity: lineQty } });
@@ -254,9 +265,14 @@ export class CommerceService {
       if (!item) throw notFound('CART_ITEM_NOT_FOUND', 'عنصر السلة غير موجود');
       const product = await this.loadProduct(item.productId, tx);
       this.assertInAppProduct(product);
-      const siblings = await tx.commerceCartItem.findMany({ where: { cartId: cart.id, productId: item.productId } });
+      const siblings = await tx.commerceCartItem.findMany({
+        where:
+          product.inventoryMode === 'variant'
+            ? { cartId: cart.id, productId: item.productId, variantKey: item.variantKey }
+            : { cartId: cart.id, productId: item.productId },
+      });
       const otherQty = siblings.filter((s) => s.id !== item.id).reduce((sum, s) => sum + s.quantity, 0);
-      this.assertStock(product, otherQty + quantity);
+      await this.assertStockForLine(product, item.variantKey, otherQty + quantity, tx);
       await tx.commerceCartItem.update({ where: { id: item.id }, data: { quantity } });
     }, TX_OPTIONS);
     return this.getCart(actor);
@@ -324,6 +340,49 @@ export class CommerceService {
     return Math.max(product.stockQty - product.reservedQty, 0);
   }
 
+  /**
+   * P3.1 stock semantics (cart + checkout share one policy):
+   * - product mode → Product.stockQty (null = untracked/unlimited)
+   * - variant untracked → null (unlimited; no numeric reserve)
+   * - variant tracked + null qty → not sellable (0 for availability; STOCK_UNSPECIFIED on assert)
+   * - variant tracked + 0 → OUT_OF_STOCK
+   * - variant missing/archived → 0
+   */
+  private async availableQtyForLine(
+    product: ProductWithPartner,
+    variantKey: string | null | undefined,
+    db: Tx | PrismaService = this.prisma,
+  ): Promise<number | null> {
+    if (product.inventoryMode !== 'variant') {
+      return this.availableQty(product);
+    }
+    const key = String(variantKey || '').trim();
+    if (!key) return 0;
+    const row = await db.productVariantInventory.findUnique({
+      where: { productId_variantId: { productId: product.id, variantId: key } },
+    });
+    if (!row || row.archivedAt) return 0;
+    if (row.stockMode === 'untracked') return null;
+    if (row.stockQty == null) return 0;
+    return Math.max(row.stockQty - row.reservedQty, 0);
+  }
+
+  private async variantStockMeta(
+    productId: string,
+    variantKey: string | null | undefined,
+    db: Tx | PrismaService,
+  ): Promise<{ kind: 'missing' | 'untracked' | 'unspecified' | 'tracked'; available: number | null }> {
+    const key = String(variantKey || '').trim();
+    if (!key) return { kind: 'missing', available: 0 };
+    const row = await db.productVariantInventory.findUnique({
+      where: { productId_variantId: { productId, variantId: key } },
+    });
+    if (!row || row.archivedAt) return { kind: 'missing', available: 0 };
+    if (row.stockMode === 'untracked') return { kind: 'untracked', available: null };
+    if (row.stockQty == null) return { kind: 'unspecified', available: 0 };
+    return { kind: 'tracked', available: Math.max(row.stockQty - row.reservedQty, 0) };
+  }
+
   private assertStock(product: ProductWithPartner, wantedQty: number): void {
     const available = this.availableQty(product);
     if (available !== null && available < wantedQty) {
@@ -331,12 +390,39 @@ export class CommerceService {
     }
   }
 
-  private priceLines(
+  private async assertStockForLine(
+    product: ProductWithPartner,
+    variantKey: string | null | undefined,
+    wantedQty: number,
+    db: Tx | PrismaService = this.prisma,
+  ): Promise<void> {
+    if (product.inventoryMode !== 'variant') {
+      this.assertStock(product, wantedQty);
+      return;
+    }
+    const meta = await this.variantStockMeta(product.id, variantKey, db);
+    if (meta.kind === 'untracked') return;
+    if (meta.kind === 'unspecified') {
+      throw conflict('STOCK_UNSPECIFIED', 'كمية المخزون لهذه التركيبة غير محددة بعد', {
+        variantKey: variantKey || null,
+      });
+    }
+    if (meta.available !== null && meta.available < wantedQty) {
+      throw conflict('OUT_OF_STOCK', 'الكمية المطلوبة غير متوفرة حاليًا', {
+        availableQty: meta.available,
+        variantKey: variantKey || null,
+      });
+    }
+  }
+
+  private async priceLines(
     items: CartItemRow[],
     products: Map<string, ProductWithPartner>,
     expectedPartnerId: string | null,
-  ): PricedLine[] {
-    const lines: PricedLine[] = items.map((item) => {
+    db: Tx | PrismaService = this.prisma,
+  ): Promise<PricedLine[]> {
+    const lines: PricedLine[] = [];
+    for (const item of items) {
       const product = products.get(item.productId);
       const base: PricedLine = {
         id: item.id,
@@ -348,21 +434,24 @@ export class CommerceService {
         quantity: item.quantity,
         unitPriceHalalas: null,
         lineTotalHalalas: null,
-        availableQty: product ? this.availableQty(product) : null,
+        availableQty: product ? await this.availableQtyForLine(product, item.variantKey, db) : null,
         deliveryFeeHalalas: product?.deliveryFeeHalalas ?? null,
         issues: [],
       };
       if (!product) {
         base.issues.push({ code: 'PRODUCT_UNAVAILABLE', messageAr: 'المنتج لم يعد متاحًا' });
-        return base;
+        lines.push(base);
+        continue;
       }
       if (product.purchaseMode !== PURCHASE_MODE_INTERNAL_COD) {
         base.issues.push({ code: 'EXTERNAL_PRODUCT_NOT_PURCHASABLE', messageAr: 'هذا المنتج يُشترى من موقع المتجر' });
-        return base;
+        lines.push(base);
+        continue;
       }
       if (expectedPartnerId && product.partnerId !== expectedPartnerId) {
         base.issues.push({ code: 'CART_PARTNER_CONFLICT', messageAr: 'السلة تحتوي على منتجات من أكثر من متجر' });
-        return base;
+        lines.push(base);
+        continue;
       }
       try {
         const stored = record(item.selectionsJson);
@@ -371,6 +460,7 @@ export class CommerceService {
         base.variantKey = resolved.variantKey;
         base.unitPriceHalalas = resolved.unitPriceHalalas;
         base.lineTotalHalalas = lineTotal(resolved.unitPriceHalalas, item.quantity);
+        base.availableQty = await this.availableQtyForLine(product, resolved.variantKey, db);
       } catch (error) {
         const body = (error as { getResponse?: () => unknown }).getResponse?.() as Record<string, unknown> | undefined;
         base.issues.push({
@@ -378,14 +468,27 @@ export class CommerceService {
           messageAr: typeof body?.messageAr === 'string' ? body.messageAr : 'خيار المنتج لم يعد متاحًا',
         });
       }
-      return base;
-    });
+      lines.push(base);
+    }
 
-    // Stock is per product: all lines of one product share the same pool.
-    const qtyByProduct = new Map<string, number>();
-    for (const line of lines) qtyByProduct.set(line.productId, (qtyByProduct.get(line.productId) ?? 0) + line.quantity);
+    // Product mode: stock pool shared across lines of one product.
+    // Variant mode: each variantKey has an independent pool (P3.1).
+    const qtyByPool = new Map<string, number>();
     for (const line of lines) {
-      const total = qtyByProduct.get(line.productId) ?? 0;
+      const product = products.get(line.productId);
+      const poolKey =
+        product?.inventoryMode === 'variant'
+          ? `${line.productId}::${line.variantKey || ''}`
+          : line.productId;
+      qtyByPool.set(poolKey, (qtyByPool.get(poolKey) ?? 0) + line.quantity);
+    }
+    for (const line of lines) {
+      const product = products.get(line.productId);
+      const poolKey =
+        product?.inventoryMode === 'variant'
+          ? `${line.productId}::${line.variantKey || ''}`
+          : line.productId;
+      const total = qtyByPool.get(poolKey) ?? 0;
       if (line.availableQty !== null && line.availableQty < total && !line.issues.some((i) => i.code === 'PRODUCT_UNAVAILABLE')) {
         line.issues.push({ code: 'OUT_OF_STOCK', messageAr: 'الكمية المطلوبة غير متوفرة حاليًا' });
       }
@@ -435,7 +538,7 @@ export class CommerceService {
       }
     }
     const partnerId = cart?.partnerId ?? [...products.values()][0]?.partnerId ?? null;
-    const lines = this.priceLines(items, products, partnerId);
+    const lines = await this.priceLines(items, products, partnerId, db);
     const subtotal = lines.reduce((sum, l) => sum + (l.lineTotalHalalas ?? 0), 0);
     const fee = computeDeliveryFee(lines.map((l) => l.deliveryFeeHalalas));
     const partner = partnerId ? [...products.values()].find((p) => p.partnerId === partnerId)?.partner : undefined;
@@ -682,13 +785,47 @@ export class CommerceService {
           }
           const requestFingerprint = orderRequestFingerprint(delivery, currentFingerprint);
 
-          // Reserve stock: one conditional UPDATE per product, ordered by id to avoid deadlocks.
+          // Reserve stock: product-mode on products; variant tracked on product_variant_inventories.
+          // Untracked variants skip numeric reserve (stockSource=none). Stamp stockSource at reserve time.
           const qtyByProduct = new Map<string, number>();
-          for (const line of priced.lines) qtyByProduct.set(line.productId, (qtyByProduct.get(line.productId) ?? 0) + line.quantity);
-          const tracked = new Set<string>();
+          const qtyByVariant = new Map<string, { productId: string; variantKey: string; qty: number }>();
+          const lineStockSource = new Map<string, 'none' | 'product' | 'variant'>();
+          for (const line of priced.lines) {
+            const product = priced.products.get(line.productId)!;
+            if (product.inventoryMode === 'variant') {
+              const meta = await this.variantStockMeta(line.productId, line.variantKey, tx);
+              if (meta.kind === 'untracked') {
+                lineStockSource.set(line.id, 'none');
+                continue;
+              }
+              if (meta.kind === 'unspecified') {
+                throw conflict('STOCK_UNSPECIFIED', `كمية المخزون لـ "${product.nameAr}" غير محددة بعد`, {
+                  productId: line.productId,
+                  variantKey: line.variantKey,
+                });
+              }
+              if (meta.kind === 'missing' || (meta.available !== null && meta.available < line.quantity)) {
+                throw conflict('OUT_OF_STOCK', `الكمية المطلوبة من "${product.nameAr}" غير متوفرة حاليًا`, {
+                  productId: line.productId,
+                  variantKey: line.variantKey,
+                  availableQty: meta.available,
+                });
+              }
+              const vk = line.variantKey || '';
+              const key = `${line.productId}::${vk}`;
+              const cur = qtyByVariant.get(key);
+              if (cur) cur.qty += line.quantity;
+              else qtyByVariant.set(key, { productId: line.productId, variantKey: vk, qty: line.quantity });
+              lineStockSource.set(line.id, 'variant');
+            } else if (product.stockQty == null) {
+              lineStockSource.set(line.id, 'none');
+            } else {
+              qtyByProduct.set(line.productId, (qtyByProduct.get(line.productId) ?? 0) + line.quantity);
+              lineStockSource.set(line.id, 'product');
+            }
+          }
           for (const productId of [...qtyByProduct.keys()].sort()) {
             const product = priced.products.get(productId)!;
-            if (product.stockQty == null) continue;
             const qty = qtyByProduct.get(productId)!;
             const affected = await tx.$executeRaw`
               UPDATE products SET reserved_qty = reserved_qty + ${qty}
@@ -700,7 +837,25 @@ export class CommerceService {
             if (affected !== 1) {
               throw conflict('OUT_OF_STOCK', `الكمية المطلوبة من "${product.nameAr}" غير متوفرة حاليًا`, { productId });
             }
-            tracked.add(productId);
+          }
+          for (const key of [...qtyByVariant.keys()].sort()) {
+            const { productId, variantKey, qty } = qtyByVariant.get(key)!;
+            const product = priced.products.get(productId)!;
+            const affected = await tx.$executeRaw`
+              UPDATE product_variant_inventories
+              SET reserved_qty = reserved_qty + ${qty}, revision = revision + 1
+              WHERE product_id = ${productId}
+                AND variant_id = ${variantKey}
+                AND archived_at IS NULL
+                AND stock_mode = 'tracked'
+                AND stock_qty IS NOT NULL
+                AND stock_qty - reserved_qty >= ${qty}`;
+            if (affected !== 1) {
+              throw conflict('OUT_OF_STOCK', `الكمية المطلوبة من "${product.nameAr}" غير متوفرة حاليًا`, {
+                productId,
+                variantKey,
+              });
+            }
           }
 
           const row = await tx.commerceOrder.create({
@@ -725,17 +880,22 @@ export class CommerceService {
               requestFingerprint,
               clientRequestId,
               items: {
-                create: priced.lines.map((line) => ({
-                  productId: line.productId,
-                  productNameAr: line.nameAr ?? '',
-                  variantKey: line.variantKey,
-                  selectionsJson: line.selections as unknown as Prisma.InputJsonValue,
-                  unitPriceHalalas: line.unitPriceHalalas!,
-                  quantity: line.quantity,
-                  lineTotalHalalas: line.lineTotalHalalas!,
-                  reservedQty: tracked.has(line.productId) ? line.quantity : 0,
-                  stockState: tracked.has(line.productId) ? 'reserved' : 'none',
-                })),
+                create: priced.lines.map((line) => {
+                  const source = lineStockSource.get(line.id) || 'none';
+                  const isTracked = source === 'product' || source === 'variant';
+                  return {
+                    productId: line.productId,
+                    productNameAr: line.nameAr ?? '',
+                    variantKey: line.variantKey,
+                    selectionsJson: line.selections as unknown as Prisma.InputJsonValue,
+                    unitPriceHalalas: line.unitPriceHalalas!,
+                    quantity: line.quantity,
+                    lineTotalHalalas: line.lineTotalHalalas!,
+                    reservedQty: isTracked ? line.quantity : 0,
+                    stockState: isTracked ? 'reserved' : 'none',
+                    stockSource: source,
+                  };
+                }),
               },
               events: {
                 create: [
@@ -959,34 +1119,126 @@ export class CommerceService {
     return this.getOrderDetail(order.id, scope, actor.type);
   }
 
-  /** Each item flips reserved -> released exactly once; only the winner touches the product counter. */
+  /**
+   * Resolve legacy stock_source=none with reservedQty>0 without using current inventoryMode alone.
+   * Evidence: which pool actually holds the reservation. Ambiguous → null (unresolved).
+   */
+  private async resolveLegacyStockSource(
+    tx: Tx,
+    item: { id: string; productId: string; variantKey: string; reservedQty: number; stockSource?: string | null },
+  ): Promise<'product' | 'variant' | 'none' | null> {
+    const stamped = String(item.stockSource || 'none');
+    if (stamped === 'product' || stamped === 'variant') return stamped;
+    if (stamped === 'none' && item.reservedQty <= 0) return 'none';
+    if (stamped !== 'none' || item.reservedQty <= 0) return null;
+
+    const product = await tx.product.findUnique({
+      where: { id: item.productId },
+      select: { reservedQty: true },
+    });
+    const vk = item.variantKey || '';
+    const variantRow = vk
+      ? await tx.productVariantInventory.findUnique({
+          where: { productId_variantId: { productId: item.productId, variantId: vk } },
+          select: { reservedQty: true },
+        })
+      : null;
+    const productHolds = (product?.reservedQty || 0) >= item.reservedQty;
+    const variantHolds = (variantRow?.reservedQty || 0) >= item.reservedQty;
+    if (productHolds && !variantHolds) return 'product';
+    if (variantHolds && !productHolds) return 'variant';
+    // Both or neither → unresolved (do not guess from inventoryMode).
+    return null;
+  }
+
+  /**
+   * Release/consume use stamped stockSource. Legacy none+reservedQty>0 must resolve or fail —
+   * never flip to released/consumed without applying the qty change in the same transaction.
+   */
   private async releaseOrderStock(tx: Tx, orderId: string): Promise<void> {
     const items = await tx.commerceOrderItem.findMany({ where: { orderId, stockState: 'reserved' }, orderBy: { productId: 'asc' } });
     for (const item of items) {
+      const source = await this.resolveLegacyStockSource(tx, item as never);
+      if (source == null) {
+        throw conflict('STOCK_SOURCE_UNRESOLVED', 'تعذر تحديد مصدر حجز المخزون لهذا السطر — لن يُحرَّر دون دليل', {
+          orderItemId: item.id,
+          productId: item.productId,
+          reservedQty: item.reservedQty,
+        });
+      }
+      if (source === 'variant') {
+        const vk = item.variantKey || '';
+        const affected = await tx.$executeRaw`
+          UPDATE product_variant_inventories
+          SET reserved_qty = GREATEST(reserved_qty - ${item.reservedQty}, 0)
+          WHERE product_id = ${item.productId}
+            AND variant_id = ${vk}
+            AND reserved_qty >= ${item.reservedQty}`;
+        if (Number(affected) !== 1) {
+          throw conflict('STOCK_RELEASE_FAILED', 'تعذر تحرير حجز مخزون التركيبة', { orderItemId: item.id });
+        }
+      } else if (source === 'product') {
+        const affected = await tx.$executeRaw`
+          UPDATE products SET reserved_qty = GREATEST(reserved_qty - ${item.reservedQty}, 0)
+          WHERE id = ${item.productId}
+            AND reserved_qty >= ${item.reservedQty}`;
+        if (Number(affected) !== 1) {
+          throw conflict('STOCK_RELEASE_FAILED', 'تعذر تحرير حجز مخزون المنتج', { orderItemId: item.id });
+        }
+      }
+      // source === 'none' (reservedQty 0): state flip only. Qty applied above only when product/variant.
       const flipped = await tx.commerceOrderItem.updateMany({
         where: { id: item.id, stockState: 'reserved' },
-        data: { stockState: 'released' },
+        data: { stockState: 'released', stockSource: source },
       });
-      if (flipped.count !== 1) continue;
-      await tx.$executeRaw`
-        UPDATE products SET reserved_qty = GREATEST(reserved_qty - ${item.reservedQty}, 0)
-        WHERE id = ${item.productId}`;
+      if (flipped.count !== 1) {
+        throw conflict('STOCK_RELEASE_RACE', 'تعارض تحرير المخزون', { orderItemId: item.id });
+      }
     }
   }
 
   private async consumeOrderStock(tx: Tx, orderId: string): Promise<void> {
     const items = await tx.commerceOrderItem.findMany({ where: { orderId, stockState: 'reserved' }, orderBy: { productId: 'asc' } });
     for (const item of items) {
+      const source = await this.resolveLegacyStockSource(tx, item as never);
+      if (source == null) {
+        throw conflict('STOCK_SOURCE_UNRESOLVED', 'تعذر تحديد مصدر حجز المخزون لهذا السطر — لن يُستهلك دون دليل', {
+          orderItemId: item.id,
+          productId: item.productId,
+          reservedQty: item.reservedQty,
+        });
+      }
+      if (source === 'variant') {
+        const vk = item.variantKey || '';
+        const affected = await tx.$executeRaw`
+          UPDATE product_variant_inventories
+          SET reserved_qty = GREATEST(reserved_qty - ${item.reservedQty}, 0),
+              stock_qty = CASE WHEN stock_qty IS NULL THEN NULL ELSE GREATEST(stock_qty - ${item.reservedQty}, 0) END,
+              revision = revision + 1
+          WHERE product_id = ${item.productId}
+            AND variant_id = ${vk}
+            AND reserved_qty >= ${item.reservedQty}`;
+        if (Number(affected) !== 1) {
+          throw conflict('STOCK_CONSUME_FAILED', 'تعذر استهلاك مخزون التركيبة', { orderItemId: item.id });
+        }
+      } else if (source === 'product') {
+        const affected = await tx.$executeRaw`
+          UPDATE products
+          SET reserved_qty = GREATEST(reserved_qty - ${item.reservedQty}, 0),
+              stock_qty = CASE WHEN stock_qty IS NULL THEN NULL ELSE GREATEST(stock_qty - ${item.reservedQty}, 0) END
+          WHERE id = ${item.productId}
+            AND reserved_qty >= ${item.reservedQty}`;
+        if (Number(affected) !== 1) {
+          throw conflict('STOCK_CONSUME_FAILED', 'تعذر استهلاك مخزون المنتج', { orderItemId: item.id });
+        }
+      }
       const flipped = await tx.commerceOrderItem.updateMany({
         where: { id: item.id, stockState: 'reserved' },
-        data: { stockState: 'consumed' },
+        data: { stockState: 'consumed', stockSource: source },
       });
-      if (flipped.count !== 1) continue;
-      await tx.$executeRaw`
-        UPDATE products
-        SET reserved_qty = GREATEST(reserved_qty - ${item.reservedQty}, 0),
-            stock_qty = CASE WHEN stock_qty IS NULL THEN NULL ELSE GREATEST(stock_qty - ${item.reservedQty}, 0) END
-        WHERE id = ${item.productId}`;
+      if (flipped.count !== 1) {
+        throw conflict('STOCK_CONSUME_RACE', 'تعارض استهلاك المخزون', { orderItemId: item.id });
+      }
     }
   }
 
@@ -1161,11 +1413,8 @@ export class CommerceService {
           select: { id: true, partnerId: true, availabilityJson: true },
         });
         if (!peek) throw notFound('SERVICE_NOT_FOUND', 'الخدمة غير متاحة');
-        const peekWindows = parseAvailability(peek.availabilityJson);
-        const seedResources = new Set<string>();
-        for (const w of peekWindows) {
-          if (w.resourceId) seedResources.add(w.resourceId);
-        }
+        // Weekly windows AND dated specials — specials alone must still lock/seed the resource.
+        const seedResources = new Set(resourceIdsFromAvailabilityDocument(peek.availabilityJson));
         if (resourceId) seedResources.add(resourceId);
         // Partner id from DB row only — never from client payload.
         await lockPartnerScheduleScope(tx, {
@@ -1179,7 +1428,7 @@ export class CommerceService {
             });
             return partnerServices.map((s) => ({
               id: s.id,
-              resourceIds: parseAvailability(s.availabilityJson).map((w) => w.resourceId).filter(Boolean) as string[],
+              resourceIds: resourceIdsFromAvailabilityDocument(s.availabilityJson),
             }));
           },
         });
@@ -1212,16 +1461,20 @@ export class CommerceService {
           throw unprocessable('SERVICE_NOT_BOOKABLE', 'بيانات الخدمة غير مكتملة للحجز');
         }
 
-        const baseWindows = parseAvailability(service.availabilityJson);
+        const knownResources = new Set(resourceIdsFromAvailabilityDocument(service.availabilityJson));
         if (resourceId) {
-          const known = new Set(baseWindows.map((w) => w.resourceId));
-          if (!known.has(resourceId)) {
+          // Document association (weekly OR special). Date-specific open/closed is checkSlot's job.
+          if (!knownResources.has(resourceId)) {
             throw unprocessable('RESOURCE_NOT_AVAILABLE', 'هذا المورد غير مرتبط بجدول توفر هذه الخدمة');
           }
         }
-        const { windows, conflicts } = await this.windowsWithPartnerCaps(tx, service.partnerId, baseWindows);
+        const { windows, calendar, conflicts } = await this.windowsWithPartnerCaps(
+          tx,
+          service.partnerId,
+          service.availabilityJson,
+        );
         const conflictHit = conflicts.find((c) =>
-          resourceId ? c.resourceId === resourceId : baseWindows.some((w) => w.resourceId === c.resourceId),
+          resourceId ? c.resourceId === resourceId : knownResources.has(c.resourceId),
         );
         if (conflictHit) {
           throw conflict(
@@ -1231,7 +1484,7 @@ export class CommerceService {
           );
         }
 
-        const lockedSlot = checkSlot(startsAt, service.durationMin, windows, new Date(), resourceId);
+        const lockedSlot = checkSlot(startsAt, service.durationMin, windows, new Date(), resourceId, calendar);
         if (!lockedSlot.ok) throw this.slotError(lockedSlot.code);
 
         const overlapWhere: Prisma.CommerceBookingWhereInput = {
@@ -1299,6 +1552,7 @@ export class CommerceService {
       SLOT_TOO_FAR: 'الموعد بعيد جدًا، اختر موعدًا أقرب',
       SLOT_MISALIGNED: 'وقت الحجز لا يطابق المواعيد المتاحة',
       SLOT_OUTSIDE_AVAILABILITY: 'هذا الوقت خارج أوقات عمل الخدمة',
+      SLOT_DATE_CLOSED: 'هذا اليوم مغلق للحجز',
       AVAILABILITY_NOT_CONFIGURED: 'مواعيد هذه الخدمة غير محددة بعد',
       DURATION_INVALID: 'مدة الخدمة غير صالحة للحجز',
     };
@@ -1313,25 +1567,35 @@ export class CommerceService {
   }
 
   /**
-   * Partner-wide capacities for shared resources. Conflicting resourceIds are reported
-   * and never silently reduced via MIN — booking/slots must refuse those resources.
+   * Partner-wide capacities for shared resources (weekly AND specials).
+   * Conflicting resourceIds are reported and never silently reduced via MIN —
+   * booking/slots must refuse those resources. Caps also rewrite special capacities.
    */
   private async windowsWithPartnerCaps(
     db: Tx | PrismaService,
     partnerId: string,
-    serviceWindows: ReturnType<typeof parseAvailability>,
+    serviceAvailabilityJson: unknown,
   ) {
-    const resourceIds = [...new Set(serviceWindows.map((w) => w.resourceId).filter(Boolean))];
-    if (resourceIds.length === 0) return { windows: serviceWindows, conflicts: [] as ReturnType<typeof findResourceCapacityConflicts> };
+    const resourceIds = resourceIdsFromAvailabilityDocument(serviceAvailabilityJson);
+    const baseDoc = normalizeAvailabilityDocument(serviceAvailabilityJson);
+    if (resourceIds.length === 0) {
+      return {
+        windows: baseDoc.windows,
+        calendar: baseDoc,
+        conflicts: [] as ReturnType<typeof findResourceCapacityConflicts>,
+      };
+    }
     const siblings = await db.service.findMany({
       where: { partnerId, active: true },
       select: { id: true, nameAr: true, availabilityJson: true },
     });
-    const lists = siblings.map((s) => parseAvailability(s.availabilityJson));
+    // Include specials — weekly-only lists miss special-only / special-capacity mismatches.
+    const lists = siblings.map((s) => capacityBearingWindowsFromDocument(s.availabilityJson));
     const conflicts = findResourceCapacityConflicts(lists).filter((c) => resourceIds.includes(c.resourceId));
     const caps = partnerResourceCapacities(lists);
-    const windows = withPartnerResourceCaps(serviceWindows, caps).filter((w) => !conflicts.some((c) => c.resourceId === w.resourceId));
-    return { windows, conflicts };
+    const conflicted = new Set(conflicts.map((c) => c.resourceId));
+    const calendar = applyPartnerCapsToCalendar(baseDoc, caps, conflicted);
+    return { windows: calendar.windows, calendar, conflicts };
   }
 
   /** Slots for one local (Asia/Riyadh) day. Partner callers may only read their own services. */
@@ -1343,14 +1607,21 @@ export class CommerceService {
         : { id: serviceId, active: true, contentStatus: 'published', catalogSource: 'catalog', bookingEnabled: true, partner: { status: 'active' } },
     });
     if (!service) throw notFound('SERVICE_NOT_FOUND', 'الخدمة غير متاحة');
-    const { windows, conflicts } = await this.windowsWithPartnerCaps(
+    const { windows, calendar, conflicts } = await this.windowsWithPartnerCaps(
       this.prisma,
       service.partnerId,
-      parseAvailability(service.availabilityJson),
+      service.availabilityJson,
     );
     const dayStart = localInstant(date, 0)!;
     const dayEnd = new Date(dayStart.getTime() + 86_400_000);
-    const resourceIds = [...new Set(windows.map((w) => w.resourceId))];
+    // Include specials for this date — weekly-only ids miss special-only rooms.
+    const resourceIds = [
+      ...new Set([
+        ...windows.map((w) => w.resourceId),
+        ...resourceIdsForDate(date, calendar),
+        ...resourceIdsFromAvailabilityDocument(service.availabilityJson),
+      ]),
+    ].filter(Boolean);
     const held = await this.prisma.commerceBooking.findMany({
       where: {
         status: { in: [...ACTIVE_BOOKING_STATUSES] },
@@ -1358,8 +1629,8 @@ export class CommerceService {
         endsAt: { gt: dayStart },
         OR: [
           { serviceId: service.id, resourceId: '' },
-          ...(resourceIds.filter(Boolean).length
-            ? [{ partnerId: service.partnerId, resourceId: { in: resourceIds.filter(Boolean) } }]
+          ...(resourceIds.length
+            ? [{ partnerId: service.partnerId, resourceId: { in: resourceIds } }]
             : []),
         ],
       },
@@ -1372,7 +1643,7 @@ export class CommerceService {
       durationMin: service.durationMin,
       payMode: service.payMode,
       priceHalalas: service.priceHalalas,
-      slots: buildDaySlots(date, service.durationMin, windows, held),
+      slots: buildDaySlots(date, service.durationMin, windows, held, new Date(), calendar),
       resourceCapacityConflicts: conflicts.map((c) => ({
         resourceId: c.resourceId,
         capacities: c.capacities,

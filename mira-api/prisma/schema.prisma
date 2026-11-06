@@ -173,9 +173,100 @@ model Partner {
   commerceCarts    CommerceCart[]
   commerceOrders   CommerceOrder[]
   commerceBookings CommerceBooking[]
+  editorDrafts     PartnerEditorDraft[]
+  uploadSessions   PartnerUploadSession[]
 
   @@index([type, status])
   @@map("partners")
+}
+
+/// P2.1 partner direct multipart upload session (R2/S3 or local test adapter).
+model PartnerUploadSession {
+  id                 String    @id @default(uuid())
+  partnerId          String    @map("partner_id")
+  partner            Partner   @relation(fields: [partnerId], references: [id], onDelete: Cascade)
+  /// product | service
+  ownerKind          String    @map("owner_kind")
+  ownerId            String    @map("owner_id")
+  /// Optional editor draft client id for tracing; ownership still via partner+owner.
+  clientDraftId      String?   @map("client_draft_id")
+  clientMediaId      String    @map("client_media_id")
+  idempotencyKey     String    @map("idempotency_key")
+  /// created | uploading | uploaded | verifying | ready | failed | aborted
+  status             String    @default("created")
+  declaredMimeType   String    @map("declared_mime_type")
+  declaredByteSize   Int       @map("declared_byte_size")
+  declaredChecksum   String?   @map("declared_checksum")
+  objectKey          String    @map("object_key")
+  storageUploadId    String?   @map("storage_upload_id")
+  /// JSON array of { partNumber, etag, size, completedAt }
+  completedPartsJson Json      @default("[]") @map("completed_parts_json")
+  partSizeBytes      Int       @map("part_size_bytes")
+  totalParts         Int       @map("total_parts")
+  placement          String    @default("main")
+  verifiedMimeType   String?   @map("verified_mime_type")
+  verifiedByteSize   Int?      @map("verified_byte_size")
+  verifiedDurationSec Float?   @map("verified_duration_sec")
+  failureCode        String?   @map("failure_code")
+  failureMessageAr   String?   @map("failure_message_ar")
+  catalogMediaId     String?   @map("catalog_media_id")
+  finalizeAttempts   Int       @default(0) @map("finalize_attempts")
+  /// permanent | retryable — null when no failure
+  failureClass       String?   @map("failure_class")
+  /// Worker lease for crash recovery (DB-backed; not process-local only).
+  finalizeLeaseOwner String?   @map("finalize_lease_owner")
+  finalizeLeaseUntil DateTime? @map("finalize_lease_until")
+  /// Set when storage multipart complete succeeded (even if DB status write later fails).
+  storageCompletedAt DateTime? @map("storage_completed_at")
+  /// When set, finalize must wait until this time before another attempt (F05 backoff).
+  finalizeNextAttemptAt DateTime? @map("finalize_next_attempt_at")
+  /// Set under lock before storage CompleteMultipart; enables crash recovery without GET (U10).
+  completeIntentAt DateTime? @map("complete_intent_at")
+  /// Full-object SHA256 computed during streaming finalize (never trust client alone).
+  verifiedChecksum   String?   @map("verified_checksum")
+  expiresAt          DateTime  @map("expires_at")
+  completedAt        DateTime? @map("completed_at")
+  readyAt            DateTime? @map("ready_at")
+  abortedAt          DateTime? @map("aborted_at")
+  cleanedAt          DateTime? @map("cleaned_at")
+  createdAt          DateTime  @default(now()) @map("created_at")
+  updatedAt          DateTime  @updatedAt @map("updated_at")
+
+  @@unique([partnerId, idempotencyKey])
+  @@index([partnerId, status, updatedAt(sort: Desc)])
+  @@index([ownerKind, ownerId])
+  @@index([status, expiresAt])
+  @@index([status, finalizeLeaseUntil])
+  @@index([status, finalizeNextAttemptAt])
+  @@map("partner_upload_sessions")
+}
+
+/// Server-side partner editor draft (P1). Not listed in public catalog.
+model PartnerEditorDraft {
+  id                 String    @id @default(uuid())
+  partnerId          String    @map("partner_id")
+  partner            Partner   @relation(fields: [partnerId], references: [id], onDelete: Cascade)
+  clientDraftId      String    @map("client_draft_id")
+  kind               String    // product | service
+  profileId          String    @map("profile_id")
+  schemaVersion      Int       @map("schema_version")
+  valuesJson         Json      @default("{}") @map("values_json")
+  revision           Int       @default(1)
+  status             String    @default("open") // open | materialized | discarded
+  targetOwnerId      String?   @map("target_owner_id")
+  materializedAt     DateTime? @map("materialized_at")
+  materializeKey     String?   @map("materialize_key")
+  materializeFingerprint String? @map("materialize_fingerprint")
+  /// none | pending | submitted | failed — tracks submit-review after materialize
+  submitReviewStatus String?   @map("submit_review_status")
+  submitReviewError  String?   @map("submit_review_error")
+  createdAt          DateTime  @default(now()) @map("created_at")
+  updatedAt          DateTime  @updatedAt @map("updated_at")
+
+  @@unique([partnerId, clientDraftId])
+  @@index([partnerId, updatedAt(sort: Desc)])
+  @@index([partnerId, kind, targetOwnerId])
+  @@map("partner_editor_drafts")
 }
 
 model Product {
@@ -210,6 +301,8 @@ model Product {
   /// null = unlimited / untracked
   stockQty      Int?     @map("stock_qty")
   reservedQty   Int      @default(0) @map("reserved_qty")
+  /// product = legacy Product.stockQty; variant = ProductVariantInventory is sole numeric source.
+  inventoryMode String   @default("product") @map("inventory_mode")
   optionsJson   Json?    @map("options_json")
   variantsJson  Json?    @map("variants_json")
   /// Pending options/variants for published rows — applied on content approve only.
@@ -220,10 +313,37 @@ model Product {
   draftVariantsSet  Boolean @default(false) @map("draft_variants_set")
   /// null = fee unknown (NOT free)
   deliveryFeeHalalas Int? @map("delivery_fee_halalas")
+  /// Partner editor v2 profile metadata (nullable; legacy rows omit).
+  profileId     String?  @map("profile_id")
+  schemaVersion Int?     @map("schema_version")
   createdAt     DateTime @default(now()) @map("created_at")
+  variantInventories ProductVariantInventory[]
 
   @@index([partnerId, active])
   @@map("products")
+}
+
+/// P3.1 — per-variant inventory adapter. Empty stockQty means unspecified (not zero).
+model ProductVariantInventory {
+  id          String    @id @default(uuid())
+  productId   String    @map("product_id")
+  product     Product   @relation(fields: [productId], references: [id], onDelete: Cascade)
+  variantId   String    @map("variant_id")
+  variantKey  String    @default("") @map("variant_key")
+  /// tracked | untracked
+  stockMode   String    @default("tracked") @map("stock_mode")
+  /// null = unspecified (never coerce to 0)
+  stockQty    Int?      @map("stock_qty")
+  reservedQty Int       @default(0) @map("reserved_qty")
+  revision    Int       @default(0)
+  archivedAt  DateTime? @map("archived_at")
+  updatedAt   DateTime  @updatedAt @map("updated_at")
+  createdAt   DateTime  @default(now()) @map("created_at")
+
+  @@unique([productId, variantId])
+  @@unique([productId, variantKey])
+  @@index([productId, archivedAt])
+  @@map("product_variant_inventories")
 }
 
 model Service {
@@ -255,6 +375,15 @@ model Service {
   payMode         String   @default("pay_at_venue") @map("pay_mode")
   /// [{ weekday: 0-6 (0=Sunday), startMin, endMin, capacity }]
   availabilityJson Json?   @map("availability_json")
+  /// Partner editor v2 profile metadata (nullable; legacy rows omit).
+  profileId       String?  @map("profile_id")
+  schemaVersion   Int?     @map("schema_version")
+  /// Approved service template answers: { templateId, templateVersion, priceMode, answers }.
+  serviceProfileJson Json? @map("service_profile_json")
+  /// Pending profile for published rows — applied on content approve only.
+  draftServiceProfileJson Json? @map("draft_service_profile_json")
+  /// True when a published-row profile draft is pending (including an explicit clear).
+  draftServiceProfileSet Boolean @default(false) @map("draft_service_profile_set")
   createdAt       DateTime @default(now()) @map("created_at")
 
   @@index([partnerId, active])
@@ -685,6 +814,9 @@ model CommerceOrderItem {
   reservedQty      Int           @default(0) @map("reserved_qty")
   /// none | reserved | released | consumed — guards against double release.
   stockState       String        @default("none") @map("stock_state")
+  /// Snapshot of where units were reserved: none | product | variant.
+  /// Release/consume MUST use this, not the product's current inventoryMode.
+  stockSource      String        @default("none") @map("stock_source")
 
   @@index([orderId])
   @@map("commerce_order_items")

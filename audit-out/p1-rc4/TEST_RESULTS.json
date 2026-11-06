@@ -1,0 +1,96 @@
+{
+  "verdict": "P1_LOCAL_ACCEPTED_READY_FOR_NEXT_PHASE",
+  "db": "mira_p1_rc4_test",
+  "generated_utc": "2026-11-03T22:54:08Z",
+  "codeFinalCommit": "7d5faa03e7be6a8263daab3d3efa4be77040e862",
+  "results": [
+    {
+      "name": "registry-sync",
+      "cmd": "npm run check:field-registry",
+      "cwd": "mira-api",
+      "exit": 0,
+      "kind": "unit",
+      "log": "logs/rc4-registry-sync.txt",
+      "status": "PASS_LOCAL"
+    },
+    {
+      "name": "registry-validation",
+      "cmd": "npm run test:registry-validation",
+      "cwd": "mira-api",
+      "exit": 0,
+      "kind": "unit",
+      "log": "logs/rc4-registry-validation.txt",
+      "status": "PASS_LOCAL"
+    },
+    {
+      "name": "editor-v2-regression",
+      "cmd": "npm run test:editor-v2",
+      "cwd": "mira-api",
+      "exit": 0,
+      "kind": "http-integration",
+      "log": "logs/rc4-editor-v1-regression.txt",
+      "status": "PASS_LOCAL",
+      "ended_utc": "2026-11-03T22:54:08Z"
+    },
+    {
+      "name": "editor-v2-rc4-http",
+      "cmd": "npm run test:editor-v2-rc4",
+      "cwd": "mira-api",
+      "exit": 0,
+      "kind": "http-integration",
+      "log": "logs/rc4-http-integration.txt",
+      "status": "PASS_LOCAL",
+      "ended_utc": "2026-11-03T22:54:08Z"
+    },
+    {
+      "name": "browser-e2e-brand-salon",
+      "cmd": "node scripts/p1-rc4-browser-e2e.mjs",
+      "cwd": "mira-api",
+      "exit": 0,
+      "kind": "playwright-buttons",
+      "log": "logs/rc4-browser-e2e.txt",
+      "status": "PASS_LOCAL",
+      "ended_utc": "2026-11-03T22:53:34.022Z",
+      "includes": [
+        "browser-dual-session-conflict"
+      ]
+    },
+    {
+      "name": "options-registry-contract",
+      "cmd": "node options-registry-contract.tests.mjs",
+      "cwd": "partners-portal/web/js",
+      "exit": 0,
+      "kind": "unit",
+      "status": "PASS_LOCAL"
+    },
+    {
+      "name": "account-isolation",
+      "cmd": "node editor-v2-isolation.tests.mjs",
+      "cwd": "partners-portal/web/js",
+      "exit": 0,
+      "kind": "unit",
+      "status": "PASS_LOCAL"
+    },
+    {
+      "name": "flutter-service-profile",
+      "cmd": "flutter test ...",
+      "cwd": ".",
+      "exit": 0,
+      "kind": "unit",
+      "log": "logs/rc4-flutter-tests.txt",
+      "status": "PASS_LOCAL"
+    },
+    {
+      "name": "staging",
+      "status": "NOT_RUN"
+    },
+    {
+      "name": "device",
+      "status": "NOT_RUN"
+    },
+    {
+      "name": "production",
+      "status": "NOT_RUN"
+    }
+  ]
+}

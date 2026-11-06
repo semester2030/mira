@@ -1,0 +1,7 @@
+field,ui,payload,validation,storage,retrieve,display,test,status
+priceHalalas,priceSar riyals,values.priceHalalas,reject 100.123 keep prior,draft/product,conflict reload+GET,halalasToInput,T04+T07,PASS_LOCAL
+colors/options,chips,colors+optionsJson ids,registry enums,Product.optionsJson,reload+public,chips checked,T04+T01-public,PASS_LOCAL
+durationMin,durationMin input,values.durationMin,digits>=5 or empty,draft/service,second session,input,T05+T09,PASS_LOCAL
+serviceProfile,template radios,values.serviceProfile,template rules,service profile,materialize+public,Flutter unit,T02-public+flutter,PASS_LOCAL
+targetOwnerId,resume banner,ctx.targetOwnerId,live resolveOwnerId,resume storage,post-save preserve,no duplicate create,T01+T02+T03,PASS_LOCAL
+revision-conflict,reload/keep buttons,expectedRevision,no silent bump,draft revision,reopenServerDraft,UI matches server,T04+T06,PASS_LOCAL

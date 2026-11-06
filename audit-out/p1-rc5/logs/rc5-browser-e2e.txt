@@ -1,0 +1,118 @@
+{
+  "ok": true,
+  "db": {
+    "host": "localhost",
+    "db": "mira_p1_rc5_test"
+  },
+  "conflictSetup": "same-auth-api-writer (not independent login session)",
+  "brandEmail": "brand-rc5-b-c578a1aa@test.local",
+  "salonEmail": "salon-rc5-b-c578a1aa@test.local",
+  "results": [
+    {
+      "id": "T09-brand-login",
+      "status": "PASS_LOCAL"
+    },
+    {
+      "id": "T01-draft-options-saved",
+      "status": "PASS_LOCAL"
+    },
+    {
+      "id": "T07-invalid-price-blocked",
+      "status": "PASS_LOCAL",
+      "detail": "{\"before\":{\"rev\":2,\"price\":10000,\"cid\":\"new:3cfd6735-919d-453b-85e1-69c67f202b8b:product:04cefa6c-cf26-40c2-af14-adba4742b186\"},\"afterInvalid\":{\"rev\":2,\"price\":10000},\"statusKind\":\"error\"}"
+    },
+    {
+      "id": "T04-conflict-reload-full-rehydrate",
+      "status": "PASS_LOCAL",
+      "detail": "{\"writer\":{\"rev\":4,\"prev\":3},\"uiAfterReload\":{\"price\":\"200\",\"checked\":[\"M\",\"وردي\"],\"rev\":4},\"serverAfter\":{\"price\":20000,\"colors\":[\"pink\"],\"rev\":5}}"
+    },
+    {
+      "id": "T06-keep-local-no-revision-bump",
+      "status": "PASS_LOCAL",
+      "detail": "{\"name\":\"منتج RC5 تعديل محلي\",\"rev\":5,\"kind\":\"conflict\"}"
+    },
+    {
+      "id": "T01-materialize-submit-failed",
+      "status": "PASS_LOCAL",
+      "detail": "78b36082-42a4-44f8-8986-6ffd91b5f31b"
+    },
+    {
+      "id": "T01-no-duplicate-after-save",
+      "status": "PASS_LOCAL",
+      "detail": "{\"beforeIds\":[],\"afterIds\":[\"78b36082-42a4-44f8-8986-6ffd91b5f31b\"],\"productId\":\"78b36082-42a4-44f8-8986-6ffd91b5f31b\",\"ownerAfter\":{\"targetOwnerId\":\"78b36082-42a4-44f8-8986-6ffd91b5f31b\",\"clientDraftId\":\"new:3cfd6735-919d-453b-85e1-69c67f202b8b:product:04cefa6c-cf26-40c2-af14-adba4742b186\",\"status\":\"submit_failed\"}}"
+    },
+    {
+      "id": "T01-resume-submit-ok",
+      "status": "PASS_LOCAL",
+      "detail": "78b36082-42a4-44f8-8986-6ffd91b5f31b"
+    },
+    {
+      "id": "T03-no-duplicate-double-click",
+      "status": "PASS_LOCAL",
+      "detail": "[\"78b36082-42a4-44f8-8986-6ffd91b5f31b\"]"
+    },
+    {
+      "id": "T01-admin-approve-product",
+      "status": "PASS_LOCAL",
+      "detail": "78b36082-42a4-44f8-8986-6ffd91b5f31b"
+    },
+    {
+      "id": "T01-public-product-exact",
+      "status": "PASS_LOCAL",
+      "detail": "price+pink"
+    },
+    {
+      "id": "T09-salon-login",
+      "status": "PASS_LOCAL"
+    },
+    {
+      "id": "T02-service-draft-saved",
+      "status": "PASS_LOCAL"
+    },
+    {
+      "id": "T05-service-conflict-reload",
+      "status": "PASS_LOCAL",
+      "detail": "{\"price\":\"120\",\"name\":\"خدمة RC5 متصفح\"}"
+    },
+    {
+      "id": "T09-salon-second-session",
+      "status": "PASS_LOCAL",
+      "detail": "{\"sn\":\"خدمة RC5 متصفح\",\"price\":\"120\"}"
+    },
+    {
+      "id": "T02-service-materialize",
+      "status": "PASS_LOCAL",
+      "detail": "51a40a32-bd41-4ea2-8acf-831c8d6fc40f"
+    },
+    {
+      "id": "T02-no-duplicate-service-save",
+      "status": "PASS_LOCAL",
+      "detail": "{\"beforeS\":[],\"afterS\":[\"51a40a32-bd41-4ea2-8acf-831c8d6fc40f\"],\"serviceId\":\"51a40a32-bd41-4ea2-8acf-831c8d6fc40f\",\"owner\":{\"targetOwnerId\":\"51a40a32-bd41-4ea2-8acf-831c8d6fc40f\",\"clientDraftId\":\"new:f7066a5b-2255-431d-a035-0e5515869813:service:0b6275be-a9fa-4faa-94fc-e482971edb38\"}}"
+    },
+    {
+      "id": "T02-service-resume-ok",
+      "status": "PASS_LOCAL",
+      "detail": "51a40a32-bd41-4ea2-8acf-831c8d6fc40f"
+    },
+    {
+      "id": "T02-admin-approve-service",
+      "status": "PASS_LOCAL",
+      "detail": "51a40a32-bd41-4ea2-8acf-831c8d6fc40f"
+    },
+    {
+      "id": "T02-public-service-exact",
+      "status": "PASS_LOCAL",
+      "detail": "name+template"
+    },
+    {
+      "id": "T08-documented-as-unit",
+      "status": "PASS_LOCAL",
+      "detail": "see editor-v2-isolation + HTTP concurrent"
+    },
+    {
+      "id": "T10-regression-separate",
+      "status": "PASS_LOCAL",
+      "detail": "REVERIFY runs registry/editor-v2/flutter"
+    }
+  ]
+}

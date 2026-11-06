@@ -2,8 +2,13 @@ import { Body, Controller, Get, Inject, Param, Post, Query, UseGuards } from '@n
 import { CurrentUser } from '../common/decorators/current-user.decorator';
 import { FirebaseAuthGuard } from '../common/guards/firebase-auth.guard';
 import { RequestUser } from '../common/interfaces/request-user.interface';
+import { coerceQueryParam } from './catalog-filters';
 import { MatchMarketplaceDto } from './dto/match-marketplace.dto';
 import { MarketplaceService } from './marketplace.service';
+
+function qstr(raw: unknown): string | undefined {
+  return coerceQueryParam(raw);
+}
 
 /** Public catalog + skin-based matching (no auth — no PII in request). */
 @Controller('marketplace')
@@ -16,21 +21,40 @@ export class MarketplaceController {
   }
 
   @Get('catalog')
-  catalog(
-    @Query('q') q?: string,
-    @Query('type') type?: string,
-    @Query('city') city?: string,
-    @Query('tag') tag?: string,
-    @Query('hint') hint?: string,
-    @Query('cursor') cursor?: string,
-    @Query('limit') limit?: string,
-    @Query('partnerId') partnerId?: string,
-    @Query('category') category?: string,
-    @Query('lane') lane?: string,
-    @Query('venue') venue?: string,
-    @Query('visual') visual?: string,
-  ) {
-    return this.marketplace.browse({ q, type, city, tag, hint, cursor, limit, partnerId, category, lane, venue, visual });
+  catalog(@Query() query: Record<string, unknown>) {
+    return this.marketplace.browse({
+      q: qstr(query.q),
+      type: qstr(query.type),
+      city: qstr(query.city),
+      tag: qstr(query.tag),
+      hint: qstr(query.hint),
+      cursor: qstr(query.cursor),
+      limit: qstr(query.limit),
+      partnerId: qstr(query.partnerId),
+      category: qstr(query.category),
+      lane: qstr(query.lane),
+      venue: qstr(query.venue),
+      visual: qstr(query.visual),
+      kind: qstr(query.kind),
+      color: qstr(query.color),
+      size: qstr(query.size),
+      volume: qstr(query.volume),
+      option: qstr(query.option),
+      inStock: qstr(query.inStock),
+      priceMin: qstr(query.priceMin),
+      priceMax: qstr(query.priceMax),
+      durationMin: qstr(query.durationMin),
+      durationMax: qstr(query.durationMax),
+      placeMode: qstr(query.placeMode),
+      branch: qstr(query.branch),
+      branchId: qstr(query.branchId),
+      availableOn: qstr(query.availableOn),
+      sort: qstr(query.sort),
+      facets: qstr(query.facets),
+      'variant.color': qstr(query['variant.color']),
+      'variant.size': qstr(query['variant.size']),
+      'variant.volume': qstr(query['variant.volume']),
+    });
   }
 
   @Get('catalog/:kind/:id')

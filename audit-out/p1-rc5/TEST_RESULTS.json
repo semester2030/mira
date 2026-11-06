@@ -1,0 +1,84 @@
+{
+  "verdict": "P1_LOCAL_ACCEPTED_READY_FOR_NEXT_PHASE",
+  "db": "mira_p1_rc5_test",
+  "generated_utc": "2026-11-03T23:24:16Z",
+  "codeFinalCommit": "ce9c6426317355fa40904dafe3ec531dffc7f081",
+  "conflictSetupNote": "same-auth API writer; resolution via real reload/keep buttons",
+  "results": [
+    {
+      "id": "T01-T09-browser",
+      "cmd": "node scripts/p1-rc5-browser-e2e.mjs",
+      "cwd": "mira-api",
+      "exit": 0,
+      "kind": "playwright-buttons",
+      "log": "logs/rc5-browser-e2e.txt",
+      "status": "PASS_LOCAL",
+      "ended_utc": "2026-11-03T23:22:28.835Z",
+      "commit": "ce9c6426317355fa40904dafe3ec531dffc7f081"
+    },
+    {
+      "id": "registry-sync",
+      "cmd": "npm run check:field-registry",
+      "cwd": "mira-api",
+      "exit": 0,
+      "status": "PASS_LOCAL",
+      "log": "logs/rc5-registry-sync.txt",
+      "commit": "ce9c6426317355fa40904dafe3ec531dffc7f081"
+    },
+    {
+      "id": "registry-validation",
+      "cmd": "npm run test:registry-validation",
+      "cwd": "mira-api",
+      "exit": 0,
+      "status": "PASS_LOCAL",
+      "log": "logs/rc5-registry-validation.txt",
+      "commit": "ce9c6426317355fa40904dafe3ec531dffc7f081"
+    },
+    {
+      "id": "editor-v2-regression",
+      "cmd": "npm run test:editor-v2",
+      "cwd": "mira-api",
+      "exit": 0,
+      "status": "PASS_LOCAL",
+      "log": "logs/rc5-editor-v2-regression.txt",
+      "commit": "ce9c6426317355fa40904dafe3ec531dffc7f081"
+    },
+    {
+      "id": "options-contract",
+      "cmd": "node options-registry-contract.tests.mjs",
+      "cwd": "partners-portal/web/js",
+      "exit": 0,
+      "status": "PASS_LOCAL",
+      "commit": "ce9c6426317355fa40904dafe3ec531dffc7f081"
+    },
+    {
+      "id": "account-isolation",
+      "cmd": "node editor-v2-isolation.tests.mjs",
+      "cwd": "partners-portal/web/js",
+      "exit": 0,
+      "status": "PASS_LOCAL",
+      "commit": "ce9c6426317355fa40904dafe3ec531dffc7f081"
+    },
+    {
+      "id": "flutter-service-profile",
+      "cmd": "flutter test ...",
+      "cwd": ".",
+      "exit": 0,
+      "status": "PASS_LOCAL",
+      "log": "logs/rc5-flutter-tests.txt",
+      "commit": "ce9c6426317355fa40904dafe3ec531dffc7f081"
+    },
+    {
+      "id": "staging",
+      "status": "NOT_RUN"
+    },
+    {
+      "id": "device",
+      "status": "NOT_RUN"
+    },
+    {
+      "id": "production",
+      "status": "NOT_RUN"
+    }
+  ]
+}

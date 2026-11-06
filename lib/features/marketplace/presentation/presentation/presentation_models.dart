@@ -37,6 +37,8 @@ class PresentationSlide {
     this.advertisement,
     this.mainOfferKind = CatalogMainOfferKind.images,
     this.videoCoverPath,
+    this.matchedVariantSelections = const {},
+    this.matchedVariantIds = const [],
   });
 
   final String entityId;
@@ -62,6 +64,12 @@ class PresentationSlide {
 
   /// Optional poster for a main video. Not a horizontal slide.
   final String? videoCoverPath;
+
+  /// Filter-matched variant selections (single match) carried into details/cart.
+  final Map<String, String> matchedVariantSelections;
+
+  /// All publicly matched variant ids for the active filter set (may be multiple).
+  final List<String> matchedVariantIds;
 
   /// Ad identity stays separate from the original when two ads share one target.
   String get slotId => advertisement?.id ?? entityId;

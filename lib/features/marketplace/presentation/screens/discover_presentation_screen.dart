@@ -14,13 +14,15 @@ import '../../data/discover_catalog_gateway.dart';
 import '../../data/catalog_record_scope.dart';
 import '../../data/commerce_api_client.dart';
 import '../../data/discover_favorite_client.dart';
+import '../../data/discover_catalog_facets.dart';
 import '../../data/discover_catalog_query.dart';
+import '../../data/discover_match_scope.dart';
 import '../../domain/catalog_offer_media.dart';
+import '../../domain/catalog_product_options.dart';
 import '../../domain/entities/catalog_product.dart';
 import '../presentation/discover_ad.dart';
 import '../presentation/presentation_models.dart';
 import '../../data/repositories/marketplace_repository_impl.dart';
-import '../../data/ad_link_record.dart';
 import '../ad_link_open_outbox.dart';
 import '../commerce_cart_actions.dart';
 import '../widgets/product_option_selector.dart';
@@ -31,7 +33,6 @@ import '../presentation/discover_view_count.dart';
 import '../presentation/discover_visual_chrome.dart';
 import '../presentation/presentation_video_port.dart';
 import '../widgets/discover_scene_still.dart';
-import 'catalog_record_page.dart';
 import 'booking_request_screen.dart';
 import 'partner_detail_screen.dart';
 
@@ -93,8 +94,9 @@ class _DiscoverPresentationScreenState extends State<DiscoverPresentationScreen>
   DiscoverCatalogQuery _query = const DiscoverCatalogQuery();
   String? _nextCursor;
   List<String> _cities = const [];
+  DiscoverCatalogFacets _facets = DiscoverCatalogFacets.empty;
+  int? _totalMatched;
   CatalogTransport? _transport;
-  ContentMark? _contentMark;
   int _category = 0;
   DiscoverFeedController? _feed;
   DiscoverFeedPhase _phase = DiscoverFeedPhase.ready;
@@ -269,8 +271,9 @@ class _DiscoverPresentationScreenState extends State<DiscoverPresentationScreen>
         );
         _nextCursor = next.nextCursor;
         _cities = next.cities;
+        _facets = next.facets;
+        _totalMatched = next.totalMatched;
         _transport = next.transport;
-        _contentMark = next.contentMark;
         _loadError = next.loadError;
         _loadMoreError = next.loadMoreError;
         _adsFailed = next.adsFailed;
@@ -413,24 +416,226 @@ class _DiscoverPresentationScreenState extends State<DiscoverPresentationScreen>
     ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text(message)));
   }
 
+  Color? _swatchColor(String? hex) {
+    if (hex == null || hex.isEmpty) return null;
+    var value = hex.trim();
+    if (value.startsWith('#')) value = value.substring(1);
+    if (value.length == 6) value = 'FF$value';
+    final parsed = int.tryParse(value, radix: 16);
+    if (parsed == null) return null;
+    return Color(parsed);
+  }
+
   Future<void> _openFilters(BuildContext context) async {
+    final elegance = widget.lane == DiscoverLane.elegance ||
+        (widget.lane == null && (_query.partnerType == null || _query.partnerType == 'brand'));
+    final beauty = widget.lane == DiscoverLane.beauty ||
+        (_query.partnerType == 'clinic' || _query.partnerType == 'salon');
+    final cityBuckets = _facets.city.isNotEmpty
+        ? _facets.city
+        : [for (final city in _cities) DiscoverFacetBucket(id: city, count: 0, labelAr: city)];
+    final colorBuckets = [
+      ..._facets.colors,
+      for (final id in _query.colors)
+        if (!_facets.colors.any((b) => b.id == id))
+          DiscoverFacetBucket(id: id, count: 0, labelAr: id),
+    ];
+    final sizeBuckets = [
+      ..._facets.sizes,
+      for (final id in _query.sizes)
+        if (!_facets.sizes.any((b) => b.id == id))
+          DiscoverFacetBucket(id: id, count: 0, labelAr: id),
+    ];
+    final volumeBuckets = [
+      ..._facets.volumes,
+      for (final id in _query.volumes)
+        if (!_facets.volumes.any((b) => b.id == id))
+          DiscoverFacetBucket(id: id, count: 0, labelAr: id),
+    ];
+    const placeLabels = {
+      'branch': 'في الفرع',
+      'home': 'منزلية',
+      'remote': 'عن بعد',
+      'either': 'مرن',
+    };
+    final placeBuckets = _facets.placeMode.isNotEmpty
+        ? _facets.placeMode
+        : [
+            for (final e in placeLabels.entries)
+              DiscoverFacetBucket(id: e.key, count: 0, labelAr: e.value),
+          ];
+
     final type = await showModalBottomSheet<String>(
       context: context,
+      isScrollControlled: true,
       builder: (context) {
         return SafeArea(
-          child: Column(
-            mainAxisSize: MainAxisSize.min,
-            children: [
-              if (widget.lane == null) ...[
-                ListTile(title: const Text('كل الأنواع'), onTap: () => Navigator.pop(context, 'all')),
-                ListTile(title: const Text('منتجات'), onTap: () => Navigator.pop(context, 'brand')),
-                ListTile(title: const Text('عيادات'), onTap: () => Navigator.pop(context, 'clinic')),
-                ListTile(title: const Text('مشاغل'), onTap: () => Navigator.pop(context, 'salon')),
+          child: SingleChildScrollView(
+            child: Column(
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                ListTile(
+                  title: Text(
+                    _totalMatched == null
+                        ? (_query.activeFilterCount == 0 ? 'الفلاتر' : 'الفلاتر (${_query.activeFilterCount})')
+                        : 'النتائج: $_totalMatched',
+                  ),
+                  subtitle: Text(
+                    _facets.staleSelections.isEmpty
+                        ? 'اختاري ما يناسبك ثم امسحي أي فلتر بسهولة'
+                        : 'بعض الاختيارات لم تعد متاحة في النتائج الحالية',
+                  ),
+                ),
+                if (widget.lane == null) ...[
+                  ListTile(title: const Text('كل الأنواع'), onTap: () => Navigator.pop(context, 'all')),
+                  ListTile(title: const Text('منتجات'), onTap: () => Navigator.pop(context, 'brand')),
+                  ListTile(title: const Text('عيادات'), onTap: () => Navigator.pop(context, 'clinic')),
+                  ListTile(title: const Text('مشاغل'), onTap: () => Navigator.pop(context, 'salon')),
+                ],
+                const ListTile(title: Text('المدينة')),
+                for (final city in cityBuckets)
+                  ListTile(
+                    title: Text(city.displayLabel),
+                    subtitle: city.count > 0 ? Text('${city.count}') : null,
+                    trailing: _query.city == city.id ? const Icon(Icons.check) : null,
+                    onTap: () => Navigator.pop(context, 'city:${city.id}'),
+                  ),
+                if (elegance) ...[
+                  const Divider(),
+                  const ListTile(title: Text('اللون')),
+                  if (colorBuckets.isEmpty)
+                    const ListTile(title: Text('لا توجد ألوان منشورة مطابقة حاليًا')),
+                  for (final color in colorBuckets)
+                    ListTile(
+                      leading: CircleAvatar(
+                        radius: 12,
+                        backgroundColor: _swatchColor(color.swatchHex) ?? Colors.grey.shade300,
+                        child: _query.colors.contains(color.id)
+                            ? const Icon(Icons.check, size: 14, color: Colors.white)
+                            : null,
+                      ),
+                      title: Text(color.displayLabel),
+                      subtitle: Text(
+                        [
+                          if (color.count > 0) '${color.count}',
+                          if (color.swatchHex == null) 'لون غير محدد',
+                        ].join(' · '),
+                      ),
+                      trailing: _query.colors.contains(color.id) ? const Icon(Icons.check) : null,
+                      onTap: () => Navigator.pop(context, 'color:${color.id}'),
+                    ),
+                  const ListTile(title: Text('المقاس')),
+                  if (sizeBuckets.isEmpty)
+                    const ListTile(title: Text('لا توجد مقاسات منشورة مطابقة حاليًا')),
+                  for (final size in sizeBuckets)
+                    ListTile(
+                      title: Text(size.displayLabel),
+                      subtitle: size.count > 0 ? Text('${size.count}') : null,
+                      trailing: _query.sizes.contains(size.id) ? const Icon(Icons.check) : null,
+                      onTap: () => Navigator.pop(context, 'size:${size.id}'),
+                    ),
+                  if (volumeBuckets.isNotEmpty) ...[
+                    const ListTile(title: Text('الحجم')),
+                    for (final volume in volumeBuckets)
+                      ListTile(
+                        title: Text(volume.displayLabel),
+                        subtitle: volume.count > 0 ? Text('${volume.count}') : null,
+                        trailing: _query.volumes.contains(volume.id) ? const Icon(Icons.check) : null,
+                        onTap: () => Navigator.pop(context, 'volume:${volume.id}'),
+                      ),
+                  ],
+                  SwitchListTile(
+                    title: const Text('المتاح بالمخزون فقط'),
+                    value: _query.inStock == true,
+                    onChanged: (_) => Navigator.pop(context, 'stock'),
+                  ),
+                  ListTile(
+                    title: Text(_priceRangeLabel()),
+                    subtitle: const Text('حد أدنى وحد أعلى بالريال'),
+                    trailing: (_query.priceMinHalalas != null || _query.priceMaxHalalas != null)
+                        ? IconButton(
+                            icon: const Icon(Icons.clear),
+                            onPressed: () => Navigator.pop(context, 'clearPrice'),
+                          )
+                        : null,
+                    onTap: () => Navigator.pop(context, 'priceRange'),
+                  ),
+                ],
+                if (beauty) ...[
+                  const Divider(),
+                  const ListTile(title: Text('مكان تقديم الخدمة')),
+                  for (final mode in placeBuckets)
+                    ListTile(
+                      title: Text(placeLabels[mode.id] ?? mode.displayLabel),
+                      subtitle: mode.count > 0 ? Text('${mode.count}') : null,
+                      trailing: _query.placeModes.contains(mode.id) ? const Icon(Icons.check) : null,
+                      onTap: () => Navigator.pop(context, 'place:${mode.id}'),
+                    ),
+                  if (_facets.branch.isNotEmpty) ...[
+                    const ListTile(title: Text('الفرع')),
+                    for (final branch in _facets.branch)
+                      ListTile(
+                        title: Text(branch.displayLabel),
+                        subtitle: branch.count > 0 ? Text('${branch.count}') : null,
+                        trailing: _query.branchIds.contains(branch.id) ? const Icon(Icons.check) : null,
+                        onTap: () => Navigator.pop(context, 'branch:${branch.id}'),
+                      ),
+                  ],
+                  ListTile(
+                    title: Text(
+                      _query.availableOn == null ? 'تاريخ الإتاحة' : 'تاريخ الإتاحة: ${_query.availableOn}',
+                    ),
+                    trailing: _query.availableOn != null
+                        ? IconButton(
+                            icon: const Icon(Icons.clear),
+                            onPressed: () => Navigator.pop(context, 'clearAvailableOn'),
+                          )
+                        : null,
+                    onTap: () => Navigator.pop(context, 'availableOn'),
+                  ),
+                  ListTile(
+                    title: Text(_durationRangeLabel()),
+                    subtitle: const Text('المدة بالدقائق'),
+                    trailing: (_query.durationMin != null || _query.durationMax != null)
+                        ? IconButton(
+                            icon: const Icon(Icons.clear),
+                            onPressed: () => Navigator.pop(context, 'clearDuration'),
+                          )
+                        : null,
+                    onTap: () => Navigator.pop(context, 'durationRange'),
+                  ),
+                  ListTile(
+                    title: Text(_priceRangeLabel()),
+                    subtitle: const Text('سعر الخدمة بالريال'),
+                    trailing: (_query.priceMinHalalas != null || _query.priceMaxHalalas != null)
+                        ? IconButton(
+                            icon: const Icon(Icons.clear),
+                            onPressed: () => Navigator.pop(context, 'clearPrice'),
+                          )
+                        : null,
+                    onTap: () => Navigator.pop(context, 'priceRange'),
+                  ),
+                ],
+                const Divider(),
+                ListTile(
+                  title: const Text('الترتيب الافتراضي'),
+                  subtitle: const Text('حسب نوع العنصر ثم المعرّف'),
+                  trailing: _query.sort == 'key' ? const Icon(Icons.check) : null,
+                  onTap: () => Navigator.pop(context, 'sort:key'),
+                ),
+                ListTile(
+                  title: const Text('السعر: من الأقل للأعلى'),
+                  trailing: _query.sort == 'price_asc' ? const Icon(Icons.check) : null,
+                  onTap: () => Navigator.pop(context, 'sort:price_asc'),
+                ),
+                ListTile(
+                  title: const Text('السعر: من الأعلى للأقل'),
+                  trailing: _query.sort == 'price_desc' ? const Icon(Icons.check) : null,
+                  onTap: () => Navigator.pop(context, 'sort:price_desc'),
+                ),
+                ListTile(title: const Text('مسح كل الفلاتر'), onTap: () => Navigator.pop(context, 'clear')),
               ],
-              for (final city in _cities)
-                ListTile(title: Text(city), onTap: () => Navigator.pop(context, 'city:$city')),
-              ListTile(title: const Text('مسح الفلاتر'), onTap: () => Navigator.pop(context, 'clear')),
-            ],
+            ),
           ),
         );
       },
@@ -440,12 +645,244 @@ class _DiscoverPresentationScreenState extends State<DiscoverPresentationScreen>
       _search.clear();
       await _reload(DiscoverCatalogQuery(lane: widget.lane, requireVisual: widget.lane != null));
     } else if (type == 'all') {
-      await _reload(_query.copyWith(clearType: true, clearCategory: true));
+      await _reload(_query.copyWith(clearType: true, clearCategory: true).withoutInapplicableFilters());
     } else if (type.startsWith('city:')) {
-      await _reload(_query.copyWith(city: type.substring(5)));
+      final city = type.substring(5);
+      await _reload(
+        (_query.city == city ? _query.copyWith(clearCity: true) : _query.copyWith(city: city))
+            .withoutInapplicableFilters(),
+      );
+    } else if (type.startsWith('color:')) {
+      final id = type.substring(6);
+      final next = [..._query.colors];
+      if (next.contains(id)) {
+        next.remove(id);
+      } else {
+        next.add(id);
+      }
+      await _reload(_query.copyWith(colors: next).withoutInapplicableFilters());
+    } else if (type.startsWith('size:')) {
+      final id = type.substring(5);
+      final next = [..._query.sizes];
+      if (next.contains(id)) {
+        next.remove(id);
+      } else {
+        next.add(id);
+      }
+      await _reload(_query.copyWith(sizes: next).withoutInapplicableFilters());
+    } else if (type.startsWith('volume:')) {
+      final id = type.substring(7);
+      final next = [..._query.volumes];
+      if (next.contains(id)) {
+        next.remove(id);
+      } else {
+        next.add(id);
+      }
+      await _reload(_query.copyWith(volumes: next).withoutInapplicableFilters());
+    } else if (type.startsWith('place:')) {
+      final id = type.substring(6);
+      final next = [..._query.placeModes];
+      if (next.contains(id)) {
+        next.remove(id);
+      } else {
+        next.add(id);
+      }
+      await _reload(_query.copyWith(placeModes: next).withoutInapplicableFilters());
+    } else if (type.startsWith('branch:')) {
+      final id = type.substring(7);
+      final next = [..._query.branchIds];
+      if (next.contains(id)) {
+        next.remove(id);
+      } else {
+        next.add(id);
+      }
+      await _reload(_query.copyWith(branchIds: next).withoutInapplicableFilters());
+    } else if (type == 'stock') {
+      await _reload(_query.copyWith(
+        inStock: _query.inStock == true ? null : true,
+        clearInStock: _query.inStock == true,
+      ).withoutInapplicableFilters());
+    } else if (type == 'clearPrice') {
+      await _reload(_query.copyWith(clearPrice: true).withoutInapplicableFilters());
+    } else if (type == 'clearDuration') {
+      await _reload(_query.copyWith(clearDuration: true).withoutInapplicableFilters());
+    } else if (type == 'clearAvailableOn') {
+      await _reload(_query.copyWith(clearAvailableOn: true).withoutInapplicableFilters());
+    } else if (type == 'priceRange') {
+      final range = await _promptIntRange(
+        context,
+        title: 'نطاق السعر (ريال)',
+        minLabel: 'الحد الأدنى',
+        maxLabel: 'الحد الأعلى',
+        initialMin: _query.priceMinHalalas == null ? null : (_query.priceMinHalalas! / 100).round(),
+        initialMax: _query.priceMaxHalalas == null ? null : (_query.priceMaxHalalas! / 100).round(),
+      );
+      if (!mounted || range == null) return;
+      await _reload(
+        _query
+            .copyWith(
+              priceMinHalalas: range.$1 == null ? null : range.$1! * 100,
+              priceMaxHalalas: range.$2 == null ? null : range.$2! * 100,
+              clearPriceMin: range.$1 == null,
+              clearPriceMax: range.$2 == null,
+            )
+            .withoutInapplicableFilters(),
+      );
+    } else if (type == 'durationRange') {
+      final range = await _promptIntRange(
+        context,
+        title: 'مدة الخدمة (دقيقة)',
+        minLabel: 'الحد الأدنى',
+        maxLabel: 'الحد الأعلى',
+        initialMin: _query.durationMin,
+        initialMax: _query.durationMax,
+      );
+      if (!mounted || range == null) return;
+      await _reload(
+        _query
+            .copyWith(
+              durationMin: range.$1,
+              durationMax: range.$2,
+              clearDurationMin: range.$1 == null,
+              clearDurationMax: range.$2 == null,
+            )
+            .withoutInapplicableFilters(),
+      );
+    } else if (type == 'availableOn') {
+      final initial = _parseAvailableOn(_query.availableOn) ?? DateTime.now().add(const Duration(days: 1));
+      final picked = await showDatePicker(
+        context: context,
+        initialDate: initial,
+        firstDate: DateTime.now(),
+        lastDate: DateTime.now().add(const Duration(days: 60)),
+        locale: const Locale('ar'),
+      );
+      if (!mounted || picked == null) return;
+      final key =
+          '${picked.year.toString().padLeft(4, '0')}-${picked.month.toString().padLeft(2, '0')}-${picked.day.toString().padLeft(2, '0')}';
+      await _reload(_query.copyWith(availableOn: key).withoutInapplicableFilters());
+    } else if (type.startsWith('sort:')) {
+      await _reload(_query.copyWith(sort: type.substring(5)).withoutInapplicableFilters());
     } else {
-      await _reload(_query.copyWith(partnerType: type, clearCategory: true));
+      await _reload(
+        _query
+            .copyWith(partnerType: type, clearCategory: true)
+            .withoutInapplicableFilters(),
+      );
     }
+  }
+
+  String _priceRangeLabel() {
+    final min = _query.priceMinHalalas;
+    final max = _query.priceMaxHalalas;
+    if (min == null && max == null) return 'نطاق السعر';
+    final minLabel = min == null ? '—' : '${(min / 100).round()}';
+    final maxLabel = max == null ? '—' : '${(max / 100).round()}';
+    return 'السعر: $minLabel – $maxLabel ر.س';
+  }
+
+  String _durationRangeLabel() {
+    final min = _query.durationMin;
+    final max = _query.durationMax;
+    if (min == null && max == null) return 'مدة الخدمة';
+    return 'المدة: ${min ?? '—'} – ${max ?? '—'} دقيقة';
+  }
+
+  DateTime? _parseAvailableOn(String? raw) {
+    if (raw == null || raw.length != 10) return null;
+    final parts = raw.split('-');
+    if (parts.length != 3) return null;
+    final y = int.tryParse(parts[0]);
+    final m = int.tryParse(parts[1]);
+    final d = int.tryParse(parts[2]);
+    if (y == null || m == null || d == null) return null;
+    final dt = DateTime(y, m, d);
+    if (dt.year != y || dt.month != m || dt.day != d) return null;
+    return dt;
+  }
+
+  Future<(int?, int?)?> _promptIntRange(
+    BuildContext context, {
+    required String title,
+    required String minLabel,
+    required String maxLabel,
+    int? initialMin,
+    int? initialMax,
+  }) async {
+    final minCtrl = TextEditingController(text: initialMin?.toString() ?? '');
+    final maxCtrl = TextEditingController(text: initialMax?.toString() ?? '');
+    final result = await showDialog<(int?, int?)>(
+      context: context,
+      builder: (dialogContext) {
+        String? error;
+        return StatefulBuilder(
+          builder: (context, setLocal) {
+            return AlertDialog(
+              title: Text(title),
+              content: Column(
+                mainAxisSize: MainAxisSize.min,
+                children: [
+                  TextField(
+                    controller: minCtrl,
+                    keyboardType: TextInputType.number,
+                    decoration: InputDecoration(labelText: minLabel),
+                  ),
+                  TextField(
+                    controller: maxCtrl,
+                    keyboardType: TextInputType.number,
+                    decoration: InputDecoration(labelText: maxLabel),
+                  ),
+                  if (error != null) ...[
+                    const SizedBox(height: 8),
+                    Text(error!, style: TextStyle(color: Theme.of(context).colorScheme.error)),
+                  ],
+                ],
+              ),
+              actions: [
+                TextButton(onPressed: () => Navigator.pop(dialogContext), child: const Text('إلغاء')),
+                TextButton(
+                  onPressed: () => Navigator.pop(dialogContext, (null, null)),
+                  child: const Text('مسح'),
+                ),
+                TextButton(
+                  onPressed: () {
+                    final minRaw = minCtrl.text.trim();
+                    final maxRaw = maxCtrl.text.trim();
+                    final minVal = minRaw.isEmpty ? null : int.tryParse(minRaw);
+                    final maxVal = maxRaw.isEmpty ? null : int.tryParse(maxRaw);
+                    if (minRaw.isNotEmpty && minVal == null) {
+                      setLocal(() => error = 'الحد الأدنى غير صالح');
+                      return;
+                    }
+                    if (maxRaw.isNotEmpty && maxVal == null) {
+                      setLocal(() => error = 'الحد الأعلى غير صالح');
+                      return;
+                    }
+                    if (minVal != null && minVal < 0) {
+                      setLocal(() => error = 'القيم يجب أن تكون صفر أو أكبر');
+                      return;
+                    }
+                    if (maxVal != null && maxVal < 0) {
+                      setLocal(() => error = 'القيم يجب أن تكون صفر أو أكبر');
+                      return;
+                    }
+                    if (minVal != null && maxVal != null && minVal > maxVal) {
+                      setLocal(() => error = 'الحد الأدنى أكبر من الأعلى');
+                      return;
+                    }
+                    Navigator.pop(dialogContext, (minVal, maxVal));
+                  },
+                  child: const Text('تطبيق'),
+                ),
+              ],
+            );
+          },
+        );
+      },
+    );
+    minCtrl.dispose();
+    maxCtrl.dispose();
+    return result;
   }
 
   Future<void> _openStore(BuildContext context, PresentationSlide slide) async {
@@ -511,7 +948,15 @@ class _DiscoverPresentationScreenState extends State<DiscoverPresentationScreen>
       _tell(context, MarketplaceCopy.appointmentUnavailable);
       return;
     }
-    await Navigator.of(context).push(MaterialPageRoute<void>(builder: (_) => BookingRequestScreen(service: service)));
+    await Navigator.of(context).push(
+      MaterialPageRoute<void>(
+        builder: (_) => BookingRequestScreen(
+          service: service,
+          initialDateKey: _query.availableOn,
+          initialBranchId: _query.branchIds.length == 1 ? _query.branchIds.first : null,
+        ),
+      ),
+    );
   }
 
   Future<void> _share(BuildContext context, PresentationSlide slide) async {
@@ -1175,11 +1620,23 @@ class _PresentationPageState extends State<_PresentationPage> {
         if (_cartBusy) return;
         _cartBusy = true;
         try {
-          var selected = const <String, String>{};
+          var selected = Map<String, String>.from(widget.slide.matchedVariantSelections);
           if (product!.optionGroups.isNotEmpty) {
-            final picked = await _pickOptions(context, product);
-            if (picked == null || !context.mounted) return;
-            selected = picked;
+            final matchedIds = widget.slide.matchedVariantIds;
+            final needsPick = selected.isEmpty ||
+                matchedIds.length > 1 ||
+                CatalogOptionJson.firstMissing(groups: product.optionGroups, selected: selected) != null;
+            if (needsPick) {
+              final picked = await _pickOptions(
+                context,
+                product,
+                initialSelected: selected,
+                // null = unrestricted browse; non-null (even empty) = match scope from filters.
+                allowedVariantIds: matchedIds.isEmpty ? null : matchedIds,
+              );
+              if (picked == null || !context.mounted) return;
+              selected = picked;
+            }
           }
           await CommerceCartActions.addToCart(
             context,
@@ -1197,16 +1654,28 @@ class _PresentationPageState extends State<_PresentationPage> {
     }
   }
 
-  Future<Map<String, String>?> _pickOptions(BuildContext context, CatalogProduct product) {
+  Future<Map<String, String>?> _pickOptions(
+    BuildContext context,
+    CatalogProduct product, {
+    Map<String, String> initialSelected = const {},
+    List<String>? allowedVariantIds,
+  }) {
     return showModalBottomSheet<Map<String, String>>(
       context: context,
       backgroundColor: AppColors.surface,
-      builder: (sheetContext) => _DiscoverOptionSheet(product: product),
+      builder: (sheetContext) => _DiscoverOptionSheet(
+        product: product,
+        initialSelected: initialSelected,
+        allowedVariantIds: allowedVariantIds,
+      ),
     );
   }
 
   void _openDetails(BuildContext context) {
     final kind = widget.slide.product != null ? 'product' : 'service';
+    final initial = widget.slide.matchedVariantSelections;
+    final matchedIds = widget.slide.matchedVariantIds;
+    final parent = context.findAncestorStateOfType<_DiscoverPresentationScreenState>();
     Navigator.of(context).push(
       MaterialPageRoute<void>(
         builder: (_) => CatalogRecordScope.page(
@@ -1214,6 +1683,12 @@ class _PresentationPageState extends State<_PresentationPage> {
           id: widget.slide.entityId,
           transport: widget.source ?? CatalogTransport.localCatalog,
           gateway: widget.records,
+          initialSelections: matchedIds.length == 1 && initial.isNotEmpty ? initial : null,
+          matchedVariantIds: matchedIds.isEmpty ? null : matchedIds,
+          bookingDateKey: parent?._query.availableOn,
+          bookingBranchId: parent != null && parent._query.branchIds.length == 1
+              ? parent._query.branchIds.first
+              : null,
         ),
       ),
     );
@@ -1221,20 +1696,98 @@ class _PresentationPageState extends State<_PresentationPage> {
 }
 
 class _DiscoverOptionSheet extends StatefulWidget {
-  const _DiscoverOptionSheet({required this.product});
+  const _DiscoverOptionSheet({
+    required this.product,
+    this.initialSelected = const {},
+    /// null = no match restriction; empty = matches were required but none remain.
+    this.allowedVariantIds,
+  });
 
   final CatalogProduct product;
+  final Map<String, String> initialSelected;
+  final List<String>? allowedVariantIds;
 
   @override
   State<_DiscoverOptionSheet> createState() => _DiscoverOptionSheetState();
 }
 
 class _DiscoverOptionSheetState extends State<_DiscoverOptionSheet> {
-  Map<String, String> _selected = const {};
+  late Map<String, String> _selected = Map<String, String>.from(widget.initialSelected);
+
+  bool get _matchScopeActive => DiscoverMatchScope.isActive(widget.allowedVariantIds);
+
+  bool get _matchesGone => DiscoverMatchScope.matchesGone(
+        matchedVariantIds: widget.allowedVariantIds,
+        variantIds: widget.product.variants.map((v) => v.id),
+      );
+
+  List<CatalogProductVariant> get _variants => DiscoverMatchScope.filterVariants(
+        matchedVariantIds: widget.allowedVariantIds,
+        variants: widget.product.variants,
+        idOf: (v) => v.id,
+      );
+
+  CatalogProduct get _scopedProduct {
+    final variants = _variants;
+    if (!_matchScopeActive || identical(variants, widget.product.variants)) return widget.product;
+    return CatalogProduct(
+      id: widget.product.id,
+      partnerId: widget.product.partnerId,
+      partnerNameAr: widget.product.partnerNameAr,
+      partnerEmoji: widget.product.partnerEmoji,
+      nameAr: widget.product.nameAr,
+      nameEn: widget.product.nameEn,
+      descriptionAr: widget.product.descriptionAr,
+      priceHalalas: widget.product.priceHalalas,
+      priceLabel: widget.product.priceLabel,
+      priceKnown: widget.product.priceKnown,
+      externalUrl: widget.product.externalUrl,
+      stepAr: widget.product.stepAr,
+      contactPhone: widget.product.contactPhone,
+      matchScore: widget.product.matchScore,
+      matchKnown: widget.product.matchKnown,
+      category: widget.product.category,
+      concernTags: widget.product.concernTags,
+      media: widget.product.media,
+      mainOfferKind: widget.product.mainOfferKind,
+      optionGroups: widget.product.optionGroups,
+      variants: variants,
+      traits: widget.product.traits,
+      purchaseMode: widget.product.purchaseMode,
+      stockQty: widget.product.stockQty,
+      deliveryFeeHalalas: widget.product.deliveryFeeHalalas,
+    );
+  }
 
   @override
   Widget build(BuildContext context) {
+    if (_matchesGone) {
+      return SafeArea(
+        child: Padding(
+          padding: const EdgeInsets.fromLTRB(16, 12, 16, 16),
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
+            crossAxisAlignment: CrossAxisAlignment.stretch,
+            children: [
+              Text('التركيبات المطابقة لبحثك لم تعد متاحة', style: AppTypography.titleMedium),
+              const SizedBox(height: 8),
+              Text(
+                'حدّثي نتائج الاكتشاف أو أعيدي اختيار الفلاتر، ثم حاولي مجددًا.',
+                style: AppTypography.bodyMedium,
+              ),
+              const SizedBox(height: 12),
+              FilledButton(
+                style: FilledButton.styleFrom(backgroundColor: AppColors.primary, foregroundColor: Colors.white),
+                onPressed: () => Navigator.pop(context),
+                child: const Text('حسناً'),
+              ),
+            ],
+          ),
+        ),
+      );
+    }
     final missing = CatalogOptionJson.firstMissing(groups: widget.product.optionGroups, selected: _selected);
+    final multi = (widget.allowedVariantIds?.length ?? 0) > 1;
     return SafeArea(
       child: Padding(
         padding: const EdgeInsets.fromLTRB(16, 12, 16, 16),
@@ -1242,10 +1795,11 @@ class _DiscoverOptionSheetState extends State<_DiscoverOptionSheet> {
           mainAxisSize: MainAxisSize.min,
           crossAxisAlignment: CrossAxisAlignment.stretch,
           children: [
-            Text('اختاري الخيارات', style: AppTypography.titleMedium),
+            Text(multi ? 'اختاري من النتائج المطابقة' : 'اختاري الخيارات', style: AppTypography.titleMedium),
             const SizedBox(height: 12),
             ProductOptionSelector(
-              product: widget.product,
+              product: _scopedProduct,
+              initialSelected: widget.initialSelected,
               onChanged: (selected, _) => setState(() => _selected = selected),
             ),
             const SizedBox(height: 12),

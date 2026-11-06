@@ -1,0 +1,162 @@
+{
+  "status": "IMPLEMENTED_IN_P1_RC1",
+  "featureFlag": "MIRA_PARTNER_EDITOR_V2",
+  "featureFlagDefault": false,
+  "notes": [
+    "Server owns activation; query params cannot enable a disabled flag.",
+    "Legacy CRUD remains available with flag on or off.",
+    "v2 draft/profile write routes require flag=true.",
+    "PUT editor-drafts replaces the full values object sent by the client.",
+    "Operational rollback = set MIRA_PARTNER_EDITOR_V2=false; do not DROP tables/columns."
+  ],
+  "registryKeys": {
+    "draftRequired": "camelCase on fields and profiles — do not use draft_required",
+    "publishRequiredWhen": "camelCase — do not use publish_required_when without an explicit adapter",
+    "draftSaveMinimum": ["kind", "profileId", "schemaVersion"],
+    "nameArDraftRequired": false,
+    "emptyValuesAllowed": true
+  },
+  "endpoints": [
+    {
+      "method": "GET",
+      "path": "/api/v1/partners-portal/registry",
+      "auth": "partner",
+      "flagRequired": false,
+      "returns": {
+        "schemaVersion": 2,
+        "registryHash": "sha256",
+        "editorV2Enabled": "boolean from server",
+        "registry": "field-registry.v2.json body"
+      }
+    },
+    {
+      "method": "GET",
+      "path": "/api/v1/partners-portal/editor-drafts",
+      "auth": "partner",
+      "flagRequired": true,
+      "query": { "cursor": "optional", "limit": "1..50 default 20" },
+      "returns": "owned drafts only, newest first"
+    },
+    {
+      "method": "PUT",
+      "path": "/api/v1/partners-portal/editor-drafts/{clientDraftId}",
+      "auth": "partner",
+      "flagRequired": true,
+      "semantics": "Full replace of values (+ metadata fields). Omitted values key is rejected; send values:{} to clear commercial fields.",
+      "body": {
+        "expectedRevision": "null on create; int thereafter",
+        "kind": "product|service",
+        "profileId": "string",
+        "schemaVersion": 2,
+        "values": "object (may be empty)",
+        "targetOwnerId": "uuid|null"
+      },
+      "errors": [
+        "409 DRAFT_REVISION_CONFLICT",
+        "400 REGISTRY_UNKNOWN_FIELD",
+        "400 REGISTRY_UNKNOWN_VALUE",
+        "400 REGISTRY_UNSUPPORTED_VERSION",
+        "403 EDITOR_V2_DISABLED",
+        "404 TARGET_NOT_FOUND"
+      ]
+    },
+    {
+      "method": "GET",
+      "path": "/api/v1/partners-portal/editor-drafts/{clientDraftId}",
+      "auth": "partner",
+      "flagRequired": true
+    },
+    {
+      "method": "DELETE",
+      "path": "/api/v1/partners-portal/editor-drafts/{clientDraftId}",
+      "auth": "partner",
+      "flagRequired": true,
+      "semantics": "soft-delete status=discarded; row retained"
+    },
+    {
+      "method": "POST",
+      "path": "/api/v1/partners-portal/editor-drafts/{clientDraftId}/materialize",
+      "auth": "partner",
+      "flagRequired": true,
+      "headers": { "Idempotency-Key": "required" },
+      "body": {
+        "expectedRevision": "required int",
+        "submitReview": "boolean default false"
+      },
+      "response": {
+        "draftId": "uuid",
+        "revision": "int",
+        "status": "materialized",
+        "targetKind": "product|service",
+        "targetOwnerId": "uuid",
+        "materializedAt": "ISO8601",
+        "submitReview": "boolean",
+        "replay": "boolean"
+      },
+      "guarantees": [
+        "Same Idempotency-Key + same fingerprint returns prior result",
+        "Same key + different fingerprint => 409 IDEMPOTENCY_CONFLICT",
+        "Two keys for same draft cannot create two catalog rows (row lock + status gate)",
+        "No invented name/price/duration zeros; missing Prisma/publish fields => 422 with fieldErrors",
+        "Published target content goes to draft* / review path; operational price/stock/availability not overwritten from draft"
+      ],
+      "errors": [
+        "422 MATERIALIZE_INVALID",
+        "409 DRAFT_REVISION_CONFLICT",
+        "409 IDEMPOTENCY_CONFLICT",
+        "409 DRAFT_ALREADY_MATERIALIZED"
+      ]
+    },
+    {
+      "method": "PUT",
+      "path": "/api/v1/partners-portal/services/{id}/service-profile",
+      "auth": "partner",
+      "flagRequired": true,
+      "semantics": "Full replace of service profile document under expectedRevision (service.reviewRevision).",
+      "body": {
+        "expectedRevision": "required int",
+        "clear": "boolean optional — clears profile (draft clear when published)",
+        "templateId": "string",
+        "templateVersion": "number",
+        "priceMode": "string",
+        "answers": "object"
+      },
+      "notes": "Published services write draft_service_profile_json + draft_service_profile_set=true. Never invent answers."
+    },
+    {
+      "method": "POST",
+      "path": "/api/v1/partners-portal/services/{id}/import-local-template",
+      "auth": "partner",
+      "flagRequired": true,
+      "body": {
+        "confirm": true,
+        "expectedRevision": "required int — server revision observed at preview",
+        "force": "boolean — only allows overwrite when expectedRevision still matches; cannot bypass a newer revision",
+        "templateState": {
+          "templateId": "string",
+          "templateVersion": "number",
+          "priceMode": "string",
+          "answers": "object"
+        }
+      },
+      "errors": [
+        "409 SERVICE_PROFILE_REVISION_CONFLICT",
+        "400 IMPORT_CONFIRM_REQUIRED",
+        "422 IMPORT_FIELD_UNMAPPED"
+      ]
+    }
+  ],
+  "publicExtension": {
+    "GET /api/v1/marketplace/catalog/:kind/:id": "adds serviceProfileJson when present; never draft_service_profile_json"
+  },
+  "existingUnchanged": [
+    "POST/PATCH /partners-portal/products|services (legacy CRUD)",
+    "POST .../submit-review",
+    "operational PATCH price/stock/availability"
+  ],
+  "rollback": {
+    "operational": "MIRA_PARTNER_EDITOR_V2=false",
+    "dataRetention": "PartnerEditorDraft rows and service_profile_* columns retained",
+    "forbiddenUsualRollback": ["DROP TABLE", "DROP COLUMN"]
+  }
+}

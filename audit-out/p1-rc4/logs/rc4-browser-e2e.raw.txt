@@ -1,0 +1,87 @@
+npm warn Unknown env config "devdir". This will stop working in the next major version of npm.
+{
+  "ok": true,
+  "db": {
+    "host": "localhost",
+    "db": "mira_p1_rc4_test"
+  },
+  "brandEmail": "brand-rc4-b-7f2f3839@test.local",
+  "salonEmail": "salon-rc4-b-7f2f3839@test.local",
+  "results": [
+    {
+      "id": "browser-brand-login",
+      "status": "PASS_LOCAL"
+    },
+    {
+      "id": "browser-brand-incomplete-draft-save",
+      "status": "PASS_LOCAL"
+    },
+    {
+      "id": "browser-brand-options-saved",
+      "status": "PASS_LOCAL"
+    },
+    {
+      "id": "browser-dual-session-conflict",
+      "status": "PASS_LOCAL",
+      "detail": "{\"aRevBefore\":2,\"writer\":{\"revision\":3,\"prev\":2},\"name\":\"منتج RC4 جلسة أ تعارض\"}"
+    },
+    {
+      "id": "browser-brand-second-session",
+      "status": "PASS_LOCAL",
+      "detail": "{\"nameVal\":\"منتج RC4 متصفح\",\"enVal\":\"RC4 Browser Product\",\"stock\":\"5\"}"
+    },
+    {
+      "id": "browser-brand-materialize-click",
+      "status": "PASS_LOCAL",
+      "detail": "محفوظ\n\nتم إنشاء العنصر، وتعذر الإرسال للمراجعة — ارفعي وسائط ثم أعيدي المحاولة. · 45ed3e0b-5b3e-4339-b66e-5f6612507795\nالبيانات الأساسية\nالاسم\nالاسم بالإنجليزية (اختياري)\nالوصف\nالت"
+    },
+    {
+      "id": "browser-brand-resume-after-media",
+      "status": "PASS_LOCAL",
+      "detail": "محفوظ\n\nتم التحويل والإرسال للمراجعة · product 45ed3e0b-5b3e-4339-b66e-5f6612507795\nالبيانات الأساسية\nالاسم\nالاسم بالإنجليزية (اختياري)\nالوصف\nالتصنيف\nاختاري\nالوجه\nالجسم\nالشعر\nالملاب"
+    },
+    {
+      "id": "browser-admin-approve-product",
+      "status": "PASS_LOCAL",
+      "detail": "{\"status\":201,\"id\":\"45ed3e0b-5b3e-4339-b66e-5f6612507795\"}"
+    },
+    {
+      "id": "browser-public-product-options",
+      "status": "PASS_LOCAL",
+      "detail": "M+black present after approve"
+    },
+    {
+      "id": "browser-auth-switch",
+      "status": "PASS_LOCAL",
+      "detail": "{\"calls\":[],\"partnerId\":null}"
+    },
+    {
+      "id": "browser-salon-login",
+      "status": "PASS_LOCAL"
+    },
+    {
+      "id": "browser-salon-service-draft-save",
+      "status": "PASS_LOCAL"
+    },
+    {
+      "id": "browser-salon-second-session",
+      "status": "PASS_LOCAL",
+      "detail": "خدمة RC4 متصفح"
+    },
+    {
+      "id": "browser-salon-materialize",
+      "status": "PASS_LOCAL",
+      "detail": "محفوظ\n\nتم التحويل والإرسال للمراجعة · service f4436739-a247-403c-bd5a-347744143d4a\nالبيانات الأساسية\nالاسم\nالاسم بالإنجليزية (اختياري)\nالوصف\nالتصنيف\nاختاري\nالشع"
+    },
+    {
+      "id": "browser-admin-approve-service",
+      "status": "PASS_LOCAL",
+      "detail": "f4436739-a247-403c-bd5a-347744143d4a"
+    },
+    {
+      "id": "browser-public-service",
+      "status": "PASS_LOCAL",
+      "detail": "service visible after approve"
+    }
+  ]
+}

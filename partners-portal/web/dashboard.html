@@ -41,8 +41,15 @@
         <div class="journey-actions">
           <button type="button" class="btn btn-primary" id="goProduct">إضافة منتج</button>
           <button type="button" class="btn btn-primary" id="goService">إضافة خدمة</button>
+          <button type="button" class="btn btn-primary" id="goBulk">إضافة مجموعة</button>
         </div>
         <p id="storeLinkState"><strong>ربط متجر خارجي:</strong> غير متصل. لا يوجد تكامل API، وغيابه لا يمنع المسودة.</p>
+      </div>
+
+      <div class="card hidden" id="bulkSection">
+        <h2>إضافة مجموعة</h2>
+        <p class="lead">عدة منتجات أو خدمات في دفعة واحدة — كل بطاقة عرض مستقل مرتبط بحسابك. عدد الملفات لا يساوي عدد العناصر تلقائيًا.</p>
+        <div id="bulkRoot"></div>
       </div>
 
       <div class="card" id="catalogSection">
@@ -62,6 +69,13 @@
         <div id="serviceList"></div>
         <h2>إضافة خدمة</h2>
         <form id="serviceForm"></form>
+      </div>
+
+      <div class="card" id="editorDraftsSection">
+        <h2>مسودات المحرر (الخادم)</h2>
+        <p class="lead">مسودات محفوظة على الخادم لكل شريك. إعادة الفتح لا تعتمد على localStorage.</p>
+        <button type="button" class="btn btn-ghost" id="refreshEditorDrafts">تحديث المسودات</button>
+        <div id="editorDraftsList"></div>
       </div>
 
       <div class="card" id="commerceSection">
@@ -95,7 +109,10 @@
   <script src="js/ads.js"></script>
   <script src="js/service-templates.js"></script>
   <script src="js/catalog-options-core.js"></script>
+  <script src="js/inventory-editor-state.js"></script>
+  <script src="js/editor-v2.js"></script>
   <script src="js/catalog-journey.js"></script>
+  <script src="js/bulk-add.js"></script>
   <script src="js/commerce-orders.js"></script>
   <script>
     const labeledUi = new URLSearchParams(location.search).get('ui-fixture') === 'labeled';
@@ -103,9 +120,99 @@
 
     document.getElementById('logout').onclick = (e) => {
       e.preventDefault();
+      // clearSession bumps auth generation and cancels via mira:auth-change.
       PartnersApi.clearSession();
+      if (window.MiraEditorV2) MiraEditorV2.cancelAllPending('logout');
       location.href = 'login.html' + location.search;
     };
+
+    window.renderEditorDrafts = async function renderEditorDrafts() {
+      const list = document.getElementById('editorDraftsList');
+      if (!list) return;
+      if (!(window.MiraEditorV2 && MiraEditorV2.state.enabled)) {
+        list.textContent = 'محرر v2 غير مفعّل على الخادم.';
+        return;
+      }
+      if (MiraEditorV2.state.registryMismatch) {
+        list.textContent = 'اختلاف سجل الحقول بين البوابة والخادم — أوقِف التحرير حتى تتطابق النسخ.';
+        return;
+      }
+      list.textContent = 'جارٍ التحميل…';
+      try {
+        const data = await MiraEditorV2.listDrafts();
+        list.replaceChildren();
+        const items = (data && data.items) || [];
+        if (!items.length) {
+          list.textContent = 'لا توجد مسودات خادمية بعد.';
+          return;
+        }
+        items.forEach((d) => {
+          const row = document.createElement('div');
+          row.className = 'list-row';
+          const title = (d.values && d.values.nameAr) || '(بدون اسم)';
+          row.textContent =
+            d.kind + ' · ' + title + ' · rev ' + d.revision + ' · ' + d.status +
+            (d.submitReviewStatus ? ' · مراجعة:' + d.submitReviewStatus : '');
+          const openBtn = document.createElement('button');
+          openBtn.type = 'button';
+          openBtn.textContent = 'فتح';
+          openBtn.onclick = async () => {
+            try {
+              const draft = await MiraEditorV2.openDraft(d.clientDraftId);
+              if (window.CatalogJourney && typeof CatalogJourney.reopenServerDraft === 'function') {
+                CatalogJourney.reopenServerDraft(
+                  draft,
+                  'مسودة خادمية ' + draft.clientDraftId + ' · rev ' + draft.revision,
+                );
+              } else {
+                const target = CatalogJourney.resolveFormTarget
+                  ? CatalogJourney.resolveFormTarget(draft.kind)
+                  : {
+                      formId: draft.kind === 'product' ? 'catalogForm' : 'serviceForm',
+                      titleId: draft.kind === 'product' ? 'catalogTitle' : 'serviceTitle',
+                      type: draft.kind === 'product' ? 'brand' : (window.sessionPartner.type === 'clinic' ? 'clinic' : 'salon'),
+                    };
+                const values = draft.values || {};
+                const stub = draft.targetOwnerId
+                  ? {
+                      id: draft.targetOwnerId,
+                      nameAr: values.nameAr || '',
+                      priceHalalas: values.priceHalalas,
+                      category: values.category || '',
+                    }
+                  : null;
+                CatalogJourney.renderForm(
+                  target.type,
+                  stub,
+                  target.formId,
+                  target.titleId,
+                  'مسودة خادمية ' + draft.clientDraftId + ' · rev ' + draft.revision,
+                  {
+                    clientDraftId: draft.clientDraftId,
+                    kind: draft.kind,
+                    profileId: draft.profileId,
+                    schemaVersion: draft.schemaVersion,
+                    revision: draft.revision,
+                    targetOwnerId: draft.targetOwnerId || null,
+                    status: draft.status,
+                    submitReviewStatus: draft.submitReviewStatus || null,
+                    values: values,
+                  },
+                );
+              }
+            } catch (error) {
+              list.textContent = 'تعذر الفتح: ' + (error.message || error);
+            }
+          };
+          row.appendChild(openBtn);
+          list.appendChild(row);
+        });
+      } catch (error) {
+        list.textContent = 'تعذر التحميل: ' + (error.message || error);
+      }
+    };
+    const refreshDraftsBtn = document.getElementById('refreshEditorDrafts');
+    if (refreshDraftsBtn) refreshDraftsBtn.onclick = () => window.renderEditorDrafts();
 
     function renderCatalog(type, catalog, listId, formId, titleId) {
       CatalogJourney.renderCatalog(type, catalog, listId, formId, titleId);
@@ -154,14 +261,56 @@
         MiraMotion.announce('اكتمل تحميل لوحة الشريك');
 
         window.sessionPartner = p;
+        try { localStorage.setItem('mira_partner_id', p.id); } catch (e) {}
+        if (window.MiraEditorV2) {
+          await MiraEditorV2.bootstrap(p);
+          if (window.renderEditorDrafts) renderEditorDrafts();
+        }
         const serviceButton = document.getElementById('goService');
         const productButton = document.getElementById('goProduct');
+        const bulkButton = document.getElementById('goBulk');
+        const bulkSection = document.getElementById('bulkSection');
         const showServices = developer || p.type === 'clinic' || p.type === 'salon';
         const showProducts = developer || p.type === 'brand';
         serviceButton.hidden = !showServices;
         productButton.hidden = !showProducts;
-        serviceButton.onclick = () => scrollToForm('serviceForm');
-        productButton.onclick = () => scrollToForm('catalogForm');
+        bulkButton.hidden = !(showServices || showProducts);
+        productButton.onclick = () => {
+          bulkSection.classList.add('hidden');
+          if (!options || !options.preserveForms) {
+            if (developer) renderForm('brand', null, 'catalogForm', 'catalogTitle');
+            else if (p.type === 'brand') renderForm('brand', null, 'catalogForm', 'catalogTitle');
+          }
+          scrollToForm('catalogForm');
+        };
+        serviceButton.onclick = () => {
+          bulkSection.classList.add('hidden');
+          if (developer) {
+            if (!options || !options.preserveForms) renderForm('clinic', null, 'serviceForm', 'serviceTitle');
+            scrollToForm('serviceForm');
+          } else {
+            // Salon/clinic: services are edited in catalogForm (same as initial load).
+            if (!options || !options.preserveForms) renderForm(p.type, null, 'catalogForm', 'catalogTitle');
+            scrollToForm('catalogForm');
+          }
+        };
+        bulkButton.onclick = () => {
+          bulkSection.classList.remove('hidden');
+          if (window.MiraBulkAdd) {
+            const preferService = showServices && !showProducts;
+            const kindSelectWillDefault = preferService ? 'service' : 'product';
+            MiraBulkAdd.open(document.getElementById('bulkRoot'), p);
+            const kindEl = document.getElementById('bulkKind');
+            if (kindEl) {
+              kindEl.value = kindSelectWillDefault;
+              kindEl.dispatchEvent(new Event('change'));
+            }
+          }
+          bulkSection.scrollIntoView({ behavior: 'smooth', block: 'start' });
+        };
+        if (new URLSearchParams(location.search).get('bulk') && window.MiraBulkAdd) {
+          bulkButton.click();
+        }
         if (developer) {
           document.getElementById('serviceSection').classList.remove('hidden');
           document.getElementById('catalogTitle').textContent = 'منتجات الملابس وماركات التجميل';
@@ -171,7 +320,7 @@
           renderCatalog('clinic', data.catalog, 'serviceList', 'serviceForm', 'serviceTitle');
           if (!options || !options.preserveForms) renderForm('clinic', null, 'serviceForm', 'serviceTitle');
         } else {
-          if (showServices) document.getElementById('serviceSection').classList.remove('hidden');
+          // Do not unhide empty serviceSection for salon/clinic — catalogForm is the service editor.
           renderCatalog(p.type, data.catalog, 'catalogList', 'catalogForm', 'catalogTitle');
           if (!options || !options.preserveForms) renderForm(p.type, null, 'catalogForm', 'catalogTitle');
         }

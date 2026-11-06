@@ -11,6 +11,7 @@ import '../../domain/entities/catalog_service.dart';
 import '../../domain/entities/marketplace_match.dart';
 import '../../domain/entities/partner_detail.dart';
 import '../../domain/entities/partner_summary.dart';
+import '../discover_catalog_facets.dart';
 import '../discover_catalog_gateway.dart';
 import '../discover_published_ad.dart';
 import '../discover_favorite_client.dart';
@@ -187,6 +188,8 @@ class MarketplaceApiDataSource {
       mainOfferKind: CatalogMainOfferKindCodec.tryParse(json['mainOfferKind'] as String?),
       payMode: json['payMode'] as String? ?? 'pay_at_venue',
       availabilityPresent: json['availabilityPresent'] == true,
+      // Approved profile only — ignore any draft_* leakage if present.
+      profile: CatalogServiceProfile.fromServiceProfileJson(json['serviceProfileJson']),
     );
   }
 
@@ -205,7 +208,15 @@ class MarketplaceApiDataSource {
     );
   }
 
-  Future<({List<DiscoverOffer> items, String? nextCursor, List<String> cities})> browseCatalog({
+  Future<({
+    List<DiscoverOffer> items,
+    String? nextCursor,
+    List<String> cities,
+    DiscoverCatalogFacets facets,
+    Map<String, dynamic> activeFilters,
+    int? totalMatched,
+    String? queryFingerprint,
+  })> browseCatalog({
     required String text,
     String? partnerType,
     String? city,
@@ -218,6 +229,19 @@ class MarketplaceApiDataSource {
     String? hint,
     String? cursor,
     int limit = 8,
+    List<String> colors = const [],
+    List<String> sizes = const [],
+    List<String> volumes = const [],
+    List<String> placeModes = const [],
+    List<String> branchIds = const [],
+    bool? inStock,
+    int? priceMinHalalas,
+    int? priceMaxHalalas,
+    int? durationMin,
+    int? durationMax,
+    String? availableOn,
+    String sort = 'key',
+    bool facets = true,
   }) async {
     late final Response<Map<String, dynamic>> response;
     try {
@@ -235,6 +259,19 @@ class MarketplaceApiDataSource {
         if (tags.isNotEmpty) 'tag': tags.join(','),
         if (hint != null && hint.isNotEmpty) 'hint': hint,
         if (cursor != null) 'cursor': cursor,
+        if (colors.isNotEmpty) 'variant.color': colors.join(','),
+        if (sizes.isNotEmpty) 'variant.size': sizes.join(','),
+        if (volumes.isNotEmpty) 'variant.volume': volumes.join(','),
+        if (placeModes.isNotEmpty) 'placeMode': placeModes.join(','),
+        if (branchIds.isNotEmpty) 'branch': branchIds.join(','),
+        if (inStock != null) 'inStock': inStock ? '1' : '0',
+        if (priceMinHalalas != null) 'priceMin': priceMinHalalas,
+        if (priceMaxHalalas != null) 'priceMax': priceMaxHalalas,
+        if (durationMin != null) 'durationMin': durationMin,
+        if (durationMax != null) 'durationMax': durationMax,
+        if (availableOn != null && availableOn.isNotEmpty) 'availableOn': availableOn,
+        if (sort != 'key') 'sort': sort,
+        if (facets) 'facets': '1',
         'limit': limit,
       },
     );
@@ -248,11 +285,32 @@ class MarketplaceApiDataSource {
       items: raw.map((item) => _offer(item as Map<String, dynamic>)).toList(),
       nextCursor: data['nextCursor'] as String?,
       cities: (data['availableCities'] as List<dynamic>? ?? const []).map((item) => item.toString()).toList(),
+      facets: DiscoverCatalogFacets.fromJson(
+        data['facets'] is Map ? Map<String, dynamic>.from(data['facets'] as Map) : null,
+      ),
+      activeFilters: data['activeFilters'] is Map
+          ? Map<String, dynamic>.from(data['activeFilters'] as Map)
+          : const <String, dynamic>{},
+      totalMatched: (data['totalMatched'] as num?)?.toInt(),
+      queryFingerprint: data['queryFingerprint'] as String?,
     );
   }
 
   DiscoverOffer _offer(Map<String, dynamic> json) {
     final kind = json['kind'] as String? ?? 'product';
+    final matchedIds = (json['matchedVariantIds'] as List<dynamic>? ?? const [])
+        .map((item) => item.toString())
+        .toList();
+    final matchedSelections = <String, String>{};
+    final matchedRows = json['matchedVariants'] as List<dynamic>? ?? const [];
+    if (matchedRows.length == 1 && matchedRows.first is Map) {
+      final selections = (matchedRows.first as Map)['selections'];
+      if (selections is Map) {
+        for (final entry in selections.entries) {
+          if (entry.value is String) matchedSelections[entry.key.toString()] = entry.value as String;
+        }
+      }
+    }
     if (kind == 'service') {
       return DiscoverOffer.service(
         CatalogService(
@@ -279,6 +337,8 @@ class MarketplaceApiDataSource {
           payMode: json['payMode'] as String? ?? 'pay_at_venue',
           availabilityPresent: json['availabilityPresent'] == true,
         ),
+        matchedVariantIds: matchedIds,
+        matchedVariantSelections: matchedSelections,
       );
     }
     return DiscoverOffer.product(
@@ -308,6 +368,8 @@ class MarketplaceApiDataSource {
         deliveryFeeHalalas: (json['deliveryFeeHalalas'] as num?)?.toInt(),
       ),
       city: json['city'] as String? ?? '',
+      matchedVariantIds: matchedIds,
+      matchedVariantSelections: matchedSelections,
     );
   }
 

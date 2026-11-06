@@ -1,0 +1,35 @@
+{
+  "generatedAtUtc": "2026-11-03T21:00:00Z",
+  "finalCommit": "4c920f2e6c23319c1499f58bad8f2caabed4dedf",
+  "environment": {
+    "database": "postgresql://mira:***@localhost:5432/mira_db",
+    "MIRA_PARTNER_EDITOR_V2": "true during tests then false for A11"
+  },
+  "suites": [
+    {
+      "name": "npm run test:editor-v2",
+      "cwd": "mira-api",
+      "status": "PASS_LOCAL",
+      "evidence": "logs/editor-v2-integration.txt"
+    },
+    {
+      "name": "npm run check:field-registry",
+      "status": "PASS_LOCAL",
+      "evidence": "logs/registry-sync.txt",
+      "registrySha256": "494236d8d13ec17a2df720bba1100ba4b73d9093896702b62c6dd236ce56037b"
+    },
+    {
+      "name": "flutter test service_profile_json_parse + catalog_service_template",
+      "status": "PASS_LOCAL",
+      "evidence": "logs/flutter-tests.txt"
+    },
+    {
+      "name": "staging partner E2E",
+      "status": "NOT_RUN"
+    },
+    {
+      "name": "device Flutter service detail",
+      "status": "NOT_RUN"
+    }
+  ]
+}

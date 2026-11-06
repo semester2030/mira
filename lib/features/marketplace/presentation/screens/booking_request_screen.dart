@@ -15,13 +15,26 @@ import '../widgets/commerce_common.dart';
 
 /// Pick a day and slot, then send a booking *request*. The partner must confirm it.
 class BookingRequestScreen extends StatefulWidget {
-  const BookingRequestScreen({super.key, required this.service, this.client, this.now});
+  const BookingRequestScreen({
+    super.key,
+    required this.service,
+    this.client,
+    this.now,
+    this.initialDateKey,
+    this.initialBranchId,
+  });
 
   final CatalogService service;
   final CommerceClient? client;
 
   /// Test hook for the list of selectable days.
   final DateTime Function()? now;
+
+  /// Discover filter context: YYYY-MM-DD when the user filtered by availableOn.
+  final String? initialDateKey;
+
+  /// Discover filter context: branch id when the user filtered by branch.
+  final String? initialBranchId;
 
   @override
   State<BookingRequestScreen> createState() => _BookingRequestScreenState();
@@ -58,6 +71,11 @@ class _BookingRequestScreenState extends State<BookingRequestScreen> {
     super.initState();
     final start = riyadhTime((widget.now ?? DateTime.now)());
     _dates = [for (var i = 0; i < _days; i++) DateTime.utc(start.year, start.month, start.day).add(Duration(days: i))];
+    final preferred = widget.initialDateKey;
+    if (preferred != null && preferred.length == 10) {
+      final idx = _dates.indexWhere((d) => _dateKey(d) == preferred);
+      if (idx >= 0) _dateIndex = idx;
+    }
     if (!_client.signedIn) {
       _needsLogin = true;
     } else {
@@ -177,6 +195,17 @@ class _BookingRequestScreenState extends State<BookingRequestScreen> {
         children: [
           Text(service.nameAr, style: AppTypography.headlineSmall, textAlign: TextAlign.center),
           Text(service.partnerNameAr, style: AppTypography.titleMedium, textAlign: TextAlign.center),
+          if (widget.initialDateKey != null || widget.initialBranchId != null) ...[
+            const SizedBox(height: 8),
+            Text(
+              [
+                if (widget.initialDateKey != null) 'التاريخ المختار: ${widget.initialDateKey}',
+                if (widget.initialBranchId != null) 'الفرع: ${widget.initialBranchId}',
+              ].join(' · '),
+              style: AppTypography.bodyMedium,
+              textAlign: TextAlign.center,
+            ),
+          ],
           const SizedBox(height: 8),
           Text(
             '${service.durationMin > 0 ? 'المدة ${service.durationMin} د · ' : ''}${CatalogPrice.text(known: service.priceKnown, halalas: service.priceHalalas)}',

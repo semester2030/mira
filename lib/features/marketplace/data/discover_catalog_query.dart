@@ -5,8 +5,12 @@ import 'marketplace_local_catalog.dart';
 
 /// One published catalog row. It keeps the original product or service object.
 class DiscoverOffer {
-  DiscoverOffer.product(CatalogProduct product, {required this.city})
-      : product = product,
+  DiscoverOffer.product(
+    CatalogProduct product, {
+    required this.city,
+    this.matchedVariantIds = const [],
+    this.matchedVariantSelections = const {},
+  })  : product = product,
         service = null,
         id = product.id,
         partnerId = product.partnerId,
@@ -20,8 +24,11 @@ class DiscoverOffer {
         category = product.category,
         media = product.media;
 
-  DiscoverOffer.service(CatalogService service)
-      : service = service,
+  DiscoverOffer.service(
+    CatalogService service, {
+    this.matchedVariantIds = const [],
+    this.matchedVariantSelections = const {},
+  })  : service = service,
         product = null,
         id = service.id,
         partnerId = service.partnerId,
@@ -50,6 +57,12 @@ class DiscoverOffer {
   final List<CatalogMediaLink> media;
   final CatalogProduct? product;
   final CatalogService? service;
+
+  /// Server-matched publicly available variant ids for the active filter set.
+  final List<String> matchedVariantIds;
+
+  /// When exactly one variant matched, its selections (groupId → valueId) for detail/cart context.
+  final Map<String, String> matchedVariantSelections;
 
   String get cursor => '$kind:$id';
 
@@ -87,6 +100,19 @@ class DiscoverCatalogQuery {
     this.partnerId,
     this.lane,
     this.requireVisual = false,
+    this.colors = const [],
+    this.sizes = const [],
+    this.volumes = const [],
+    this.placeModes = const [],
+    this.branchIds = const [],
+    this.inStock,
+    this.priceMinHalalas,
+    this.priceMaxHalalas,
+    this.durationMin,
+    this.durationMax,
+    this.availableOn,
+    this.sort = 'key',
+    this.requestFacets = true,
   });
 
   final String text;
@@ -97,6 +123,81 @@ class DiscoverCatalogQuery {
   final DiscoverLane? lane;
   final bool requireVisual;
 
+  /// Registry value ids for variant.color (OR within). Empty = unset.
+  final List<String> colors;
+
+  /// Registry value ids for variant.size (OR within). Empty = unset.
+  final List<String> sizes;
+
+  /// Registry value ids for variant.volume (OR within). Empty = unset.
+  final List<String> volumes;
+
+  /// Service placeMode ids (OR within). Empty = unset.
+  final List<String> placeModes;
+
+  /// Service branch ids from partner profile answers.
+  final List<String> branchIds;
+
+  /// When true, only in-stock (sellable) matches. Null = no stock filter.
+  final bool? inStock;
+
+  final int? priceMinHalalas;
+  final int? priceMaxHalalas;
+  final int? durationMin;
+  final int? durationMax;
+
+  /// Service calendar date YYYY-MM-DD (Asia/Riyadh).
+  final String? availableOn;
+
+  /// Server sort: key | price_asc | price_desc
+  final String sort;
+
+  final bool requestFacets;
+
+  int get activeFilterCount {
+    var n = 0;
+    if (text.trim().isNotEmpty) n += 1;
+    if (categoryId != null && categoryId != 'all') n += 1;
+    if (city != null && city!.isNotEmpty) n += 1;
+    if (partnerId != null) n += 1;
+    if (colors.isNotEmpty) n += 1;
+    if (sizes.isNotEmpty) n += 1;
+    if (volumes.isNotEmpty) n += 1;
+    if (placeModes.isNotEmpty) n += 1;
+    if (branchIds.isNotEmpty) n += 1;
+    if (inStock != null) n += 1;
+    if (priceMinHalalas != null || priceMaxHalalas != null) n += 1;
+    if (durationMin != null || durationMax != null) n += 1;
+    if (availableOn != null && availableOn!.isNotEmpty) n += 1;
+    if (sort != 'key') n += 1;
+    return n;
+  }
+
+  /// Drop product-only or service-only filters when the lane/type cannot use them.
+  DiscoverCatalogQuery withoutInapplicableFilters() {
+    final beauty = lane == DiscoverLane.beauty ||
+        partnerType == 'clinic' ||
+        partnerType == 'salon';
+    final elegance = lane == DiscoverLane.elegance || partnerType == 'brand';
+    if (elegance && !beauty) {
+      return copyWith(
+        clearPlaceModes: true,
+        clearBranchIds: true,
+        clearAvailableOn: true,
+        clearDuration: true,
+      );
+    }
+    if (beauty && !elegance) {
+      return copyWith(
+        clearColors: true,
+        clearSizes: true,
+        clearVolumes: true,
+        clearInStock: true,
+      );
+    }
+    return this;
+  }
+
   DiscoverCatalogQuery copyWith({
     String? text,
     String? partnerType,
@@ -105,11 +206,37 @@ class DiscoverCatalogQuery {
     String? partnerId,
     DiscoverLane? lane,
     bool? requireVisual,
+    List<String>? colors,
+    List<String>? sizes,
+    List<String>? volumes,
+    List<String>? placeModes,
+    List<String>? branchIds,
+    bool? inStock,
+    int? priceMinHalalas,
+    int? priceMaxHalalas,
+    int? durationMin,
+    int? durationMax,
+    String? availableOn,
+    String? sort,
+    bool? requestFacets,
     bool clearType = false,
     bool clearCategory = false,
     bool clearCity = false,
     bool clearPartner = false,
     bool clearLane = false,
+    bool clearColors = false,
+    bool clearSizes = false,
+    bool clearVolumes = false,
+    bool clearPlaceModes = false,
+    bool clearBranchIds = false,
+    bool clearInStock = false,
+    bool clearPrice = false,
+    bool clearPriceMin = false,
+    bool clearPriceMax = false,
+    bool clearDuration = false,
+    bool clearDurationMin = false,
+    bool clearDurationMax = false,
+    bool clearAvailableOn = false,
   }) {
     return DiscoverCatalogQuery(
       text: text ?? this.text,
@@ -119,6 +246,34 @@ class DiscoverCatalogQuery {
       partnerId: clearPartner ? null : partnerId ?? this.partnerId,
       lane: clearLane ? null : lane ?? this.lane,
       requireVisual: requireVisual ?? this.requireVisual,
+      colors: clearColors ? const [] : colors ?? this.colors,
+      sizes: clearSizes ? const [] : sizes ?? this.sizes,
+      volumes: clearVolumes ? const [] : volumes ?? this.volumes,
+      placeModes: clearPlaceModes ? const [] : placeModes ?? this.placeModes,
+      branchIds: clearBranchIds ? const [] : branchIds ?? this.branchIds,
+      inStock: clearInStock ? null : inStock ?? this.inStock,
+      priceMinHalalas: (clearPrice || clearPriceMin) ? null : priceMinHalalas ?? this.priceMinHalalas,
+      priceMaxHalalas: (clearPrice || clearPriceMax) ? null : priceMaxHalalas ?? this.priceMaxHalalas,
+      durationMin: (clearDuration || clearDurationMin) ? null : durationMin ?? this.durationMin,
+      durationMax: (clearDuration || clearDurationMax) ? null : durationMax ?? this.durationMax,
+      availableOn: clearAvailableOn ? null : availableOn ?? this.availableOn,
+      sort: sort ?? this.sort,
+      requestFacets: requestFacets ?? this.requestFacets,
+    );
+  }
+
+  DiscoverCatalogQuery clearAdvancedFilters() {
+    return copyWith(
+      clearColors: true,
+      clearSizes: true,
+      clearVolumes: true,
+      clearPlaceModes: true,
+      clearBranchIds: true,
+      clearInStock: true,
+      clearPrice: true,
+      clearDuration: true,
+      clearAvailableOn: true,
+      sort: 'key',
     );
   }
 }

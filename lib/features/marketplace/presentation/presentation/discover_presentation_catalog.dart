@@ -183,6 +183,8 @@ abstract final class DiscoverPresentationCatalog {
       preview: offer.id.startsWith('preview-'),
       mainOfferKind: kind,
       videoCoverPath: cover?.url,
+      matchedVariantSelections: offer.matchedVariantSelections,
+      matchedVariantIds: offer.matchedVariantIds,
       media: [
         for (final item in mains)
           PresentationMedia(

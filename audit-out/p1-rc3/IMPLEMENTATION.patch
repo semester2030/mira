@@ -1,0 +1,2549 @@
+diff --git a/mira-api/.gitignore b/mira-api/.gitignore
+index 9c4061e..c97041e 100644
+--- a/mira-api/.gitignore
++++ b/mira-api/.gitignore
+@@ -7,3 +7,4 @@ dist/
+ var/
+ *.log
+ .DS_Store
++.env.rc3
+diff --git a/mira-api/package-lock.json b/mira-api/package-lock.json
+index df36364..93236f5 100644
+--- a/mira-api/package-lock.json
++++ b/mira-api/package-lock.json
+@@ -31,6 +31,7 @@
+         "@types/express": "^5.0.0",
+         "@types/multer": "^1.4.12",
+         "@types/node": "^22.0.0",
++        "playwright": "^1.64.1",
+         "tsx": "^4.23.15",
+         "typescript": "^5.7.0"
+       },
+@@ -6647,6 +6648,35 @@
+         "pathe": "^2.0.3"
+       }
+     },
++    "node_modules/playwright": {
++      "version": "1.64.1",
++      "resolved": "https://registry.npmjs.org/playwright/-/playwright-1.64.1.tgz",
++      "integrity": "sha512-HCrVhHr5QQuwYoswEUGTb7gGp522yflbv/ST8nF4sFWGuLjQCt17Q/EubpGGSNKYn1tsTCPZxqHhHCfVURu7UA==",
++      "dev": true,
++      "license": "Apache-2.0",
++      "dependencies": {
++        "playwright-core": "1.64.1"
++      },
++      "bin": {
++        "playwright": "cli.js"
++      },
++      "engines": {
++        "node": ">=20"
++      }
++    },
++    "node_modules/playwright-core": {
++      "version": "1.64.1",
++      "resolved": "https://registry.npmjs.org/playwright-core/-/playwright-core-1.64.1.tgz",
++      "integrity": "sha512-BC4s8y6SEVA6Q1rSxZTto8hI1KUI3xXlHGZgvGqP4IqPdI/a6FX9H29IDNz7vKo9l21b6LfYosScPL6M3xxyDQ==",
++      "dev": true,
++      "license": "Apache-2.0",
++      "bin": {
++        "playwright-core": "cli.js"
++      },
++      "engines": {
++        "node": ">=20"
++      }
++    },
+     "node_modules/pluralize": {
+       "version": "8.0.0",
+       "resolved": "https://registry.npmjs.org/pluralize/-/pluralize-8.0.0.tgz",
+diff --git a/mira-api/package.json b/mira-api/package.json
+index ce37faa..eea567b 100644
+--- a/mira-api/package.json
++++ b/mira-api/package.json
+@@ -25,6 +25,7 @@
+     "test:catalog-media-recovery": "tsx src/marketplace/catalog-media.http.schema-tests.ts && tsx src/marketplace/catalog-media.recovery.schema-tests.ts && tsx src/marketplace/catalog-media.s3.open-lifetime-tests.ts",
+     "test:editor-v2": "tsx src/partners-portal/editor-drafts/editor-v2.http.integration-tests.ts",
+     "test:editor-v2-rc2": "tsx src/partners-portal/registry/registry.validation.schema-tests.ts && tsx src/partners-portal/editor-drafts/editor-v2-rc2.http.integration-tests.ts",
++    "test:editor-v2-rc3": "tsx src/partners-portal/editor-drafts/editor-v2-rc3.http.integration-tests.ts",
+     "test:registry-validation": "tsx src/partners-portal/registry/registry.validation.schema-tests.ts",
+     "check:field-registry": "node scripts/check-field-registry-sync.mjs",
+     "test:vision-schema": "npm run build && node dist/vision/schema/fashion-vision-document.schema-tests.js",
+@@ -112,6 +113,7 @@
+     "@types/express": "^5.0.0",
+     "@types/multer": "^1.4.12",
+     "@types/node": "^22.0.0",
++    "playwright": "^1.64.1",
+     "tsx": "^4.23.15",
+     "typescript": "^5.7.0"
+   }
+diff --git a/mira-api/scripts/p1-rc3-browser-e2e.mjs b/mira-api/scripts/p1-rc3-browser-e2e.mjs
+new file mode 100644
+index 0000000..9ebfd27
+--- /dev/null
++++ b/mira-api/scripts/p1-rc3-browser-e2e.mjs
+@@ -0,0 +1,339 @@
++/**
++ * P1 RC3 browser journey: real login → draft → second-tab reopen → auth switch isolation.
++ */
++import { spawn } from 'node:child_process';
++import { createServer } from 'node:http';
++import { readFileSync, writeFileSync, mkdirSync, existsSync } from 'node:fs';
++import { join, extname, dirname } from 'node:path';
++import { fileURLToPath } from 'node:url';
++
++const __dirname = dirname(fileURLToPath(import.meta.url));
++const root = join(__dirname, '..', '..');
++const webRoot = join(root, 'partners-portal', 'web');
++const outDir = join(root, 'audit-out', 'p1-rc3');
++const shotsDir = join(outDir, 'screenshots');
++mkdirSync(shotsDir, { recursive: true });
++mkdirSync(join(outDir, 'logs'), { recursive: true });
++
++function assertRc3Db(url) {
++  const u = new URL(url);
++  const host = u.hostname;
++  const db = u.pathname.replace(/^\//, '').split('?')[0];
++  if (host !== 'localhost' && host !== '127.0.0.1') throw new Error(`REFUSE host ${host}`);
++  if (db !== 'mira_p1_rc3_test') throw new Error(`REFUSE db ${db}`);
++  return { host, db };
++}
++
++const mime = {
++  '.html': 'text/html; charset=utf-8',
++  '.js': 'text/javascript; charset=utf-8',
++  '.css': 'text/css; charset=utf-8',
++  '.json': 'application/json',
++  '.png': 'image/png',
++  '.svg': 'image/svg+xml',
++};
++
++function serveStatic(port) {
++  const server = createServer((req, res) => {
++    try {
++      const url = new URL(req.url || '/', `http://127.0.0.1:${port}`);
++      let rel = decodeURIComponent(url.pathname);
++      if (rel === '/') rel = '/index.html';
++      const file = join(webRoot, rel.replace(/^\//, ''));
++      if (!file.startsWith(webRoot) || !existsSync(file)) {
++        res.writeHead(404);
++        res.end('not found');
++        return;
++      }
++      res.writeHead(200, { 'Content-Type': mime[extname(file)] || 'application/octet-stream' });
++      res.end(readFileSync(file));
++    } catch (e) {
++      res.writeHead(500);
++      res.end(String(e));
++    }
++  });
++  return new Promise((resolve) => server.listen(port, '127.0.0.1', () => resolve(server)));
++}
++
++async function main() {
++  const dbMeta = assertRc3Db(process.env.DATABASE_URL || '');
++  process.env.MIRA_PARTNER_EDITOR_V2 = 'true';
++
++  const child = spawn('npx', ['tsx', 'scripts/p1-rc3-browser-server.ts'], {
++    cwd: join(root, 'mira-api'),
++    env: process.env,
++    stdio: ['ignore', 'pipe', 'pipe'],
++  });
++
++  const ready = await new Promise((resolve, reject) => {
++    let buf = '';
++    const timer = setTimeout(() => reject(new Error('API start timeout\n' + buf)), 90000);
++    child.stdout.on('data', (d) => {
++      buf += d.toString();
++      for (const line of buf.split('\n')) {
++        if (!line.includes('"ready"')) continue;
++        try {
++          const j = JSON.parse(line.trim());
++          if (j.ready) {
++            clearTimeout(timer);
++            resolve(j);
++          }
++        } catch (_) {}
++      }
++    });
++    child.stderr.on('data', (d) => process.stderr.write(d));
++    child.on('exit', (code) => reject(new Error('API exited early ' + code + '\n' + buf)));
++  });
++
++  const portalPort = 8765;
++  const staticServer = await serveStatic(portalPort);
++  const apiBase = `http://127.0.0.1:${ready.port}/api/v1`;
++  const loginUrl = `http://127.0.0.1:${portalPort}/login.html?api-base=${encodeURIComponent(apiBase)}`;
++  const dashUrl = `http://127.0.0.1:${portalPort}/dashboard.html?api-base=${encodeURIComponent(apiBase)}`;
++
++  const { chromium } = await import('playwright');
++  const browser = await chromium.launch({ headless: true });
++  const context = await browser.newContext({ viewport: { width: 1280, height: 800 } });
++  const page = await context.newPage();
++  const results = [];
++  const pass = (id, detail) => results.push({ id, status: 'PASS_LOCAL', detail });
++  const fail = (id, detail) => results.push({ id, status: 'FAIL', detail });
++
++  try {
++    await page.goto(loginUrl, { waitUntil: 'domcontentloaded' });
++    await page.fill('input[name="email"]', ready.email);
++    await page.fill('input[name="password"]', ready.password);
++    await Promise.all([
++      page.waitForURL(/dashboard\.html/, { timeout: 25000 }),
++      page.click('button[type="submit"]'),
++    ]);
++    await page.waitForTimeout(2000);
++    pass('browser-login');
++    await page.screenshot({ path: join(shotsDir, 'rc3-desktop-dashboard.png'), fullPage: true });
++
++    // Salon dashboard may hide brand catalog — force product form for P1 product journey.
++    await page.evaluate(() => {
++      if (window.CatalogJourney) {
++        window.CatalogJourney.renderForm('brand', null, 'catalogForm', 'catalogTitle', 'RC3 browser product');
++      }
++    });
++    await page.waitForSelector('#catalogForm [name="nameAr"]', { timeout: 10000 });
++    await page.fill('#catalogForm [name="nameAr"]', 'مسودة متصفح RC3');
++    await page.fill('#catalogForm [name="nameEn"]', 'Browser Draft');
++    await page.fill('#catalogForm [name="descriptionAr"]', 'وصف من المتصفح');
++    await page.selectOption('#catalogForm [name="category"]', { value: 'clothes' }).catch(async () => {
++      await page.selectOption('#catalogForm select[name="category"]', 'clothes');
++    });
++    await page.fill('#catalogForm [name="priceSar"]', '42');
++    await page.waitForTimeout(1200);
++    await page.waitForFunction(() => {
++      const el = document.querySelector('#catalogForm [data-editor-v2-status]');
++      return el && /محفوظ/.test(el.textContent || '');
++    }, { timeout: 20000 });
++    pass('browser-product-draft-autosave');
++    await page.screenshot({ path: join(shotsDir, 'rc3-desktop-product-draft.png'), fullPage: true });
++
++    // Service + template answers
++    await page.evaluate(() => {
++      const sec = document.getElementById('serviceSection');
++      if (sec) sec.classList.remove('hidden');
++      if (window.CatalogJourney) {
++        window.CatalogJourney.renderForm('salon', null, 'serviceForm', 'serviceTitle', 'RC3 browser service');
++      }
++    });
++    await page.waitForSelector('#serviceForm [name="nameAr"]', { timeout: 10000 });
++    await page.fill('#serviceForm [name="nameAr"]', 'خدمة متصفح RC3');
++    await page.selectOption('#serviceForm [name="category"]', 'hair').catch(() => {});
++    await page.fill('#serviceForm [name="priceSar"]', '80');
++    await page.waitForTimeout(500);
++    const tplSelect = page.locator('#serviceForm select[name="serviceTemplateId"]');
++    if ((await tplSelect.count()) > 0) {
++      const vals = await tplSelect.locator('option').evaluateAll((nodes) =>
++        nodes.map((n) => n.value).filter(Boolean),
++      );
++      const prefer = vals.find((v) => v === 'salon_hair_cut') || vals[0];
++      if (prefer) {
++        await tplSelect.selectOption(prefer);
++        await page.waitForTimeout(500);
++      }
++      // Prefer simple answers: session_kind=single avoids package_sessions rules.
++      const single = page.locator('#serviceForm input[type="radio"][value="single"]').first();
++      if ((await single.count()) > 0) await single.check();
++    }
++    const serviceSave = await page.evaluate(async () => {
++      const form = document.getElementById('serviceForm');
++      if (!(window.MiraEditorV2 && MiraEditorV2.state.enabled)) {
++        return { ok: false, reason: 'editor-disabled', mismatch: MiraEditorV2 && MiraEditorV2.state.registryMismatch };
++      }
++      // Trigger coordinated autosave then flush.
++      form.querySelector('[name="nameAr"]').dispatchEvent(new Event('input', { bubbles: true }));
++      const saved = await MiraEditorV2.flushUntilSettled(form);
++      return saved;
++    });
++    if (!serviceSave || !serviceSave.ok) {
++      fail('browser-service-draft-autosave', JSON.stringify(serviceSave));
++    } else {
++      pass('browser-service-draft-autosave', JSON.stringify(serviceSave));
++    }
++    await page.screenshot({ path: join(shotsDir, 'rc3-desktop-service-draft.png'), fullPage: true });
++
++    // Flush-gate: force save failure then ensure materialize blocked
++    const gate = await page.evaluate(async () => {
++      const form = document.getElementById('catalogForm');
++      MiraEditorV2.cancelAllPending('before-forced-fail');
++      const real = PartnersApi.putEditorDraft.bind(PartnersApi);
++      PartnersApi.putEditorDraft = async () => {
++        throw Object.assign(new Error('forced network fail'), { code: 'NETWORK' });
++      };
++      MiraEditorV2.scheduleAutosave(form, () => ({
++        clientDraftId: MiraEditorV2.getEditContext(form.id).clientDraftId,
++        kind: 'product',
++        profileId: 'product.clothes',
++        values: { nameAr: 'فشل متعمد' },
++      }));
++      const saved = await MiraEditorV2.flushUntilSettled(form);
++      MiraEditorV2.cancelAllPending('after-forced-fail');
++      PartnersApi.putEditorDraft = real;
++      return saved;
++    });
++    if (gate && gate.ok) fail('browser-flush-fail-blocks-ok', JSON.stringify(gate));
++    else pass('browser-flush-fail-not-ok', JSON.stringify(gate));
++
++    // Re-assert a known good save before second-session reopen.
++    await page.fill('#catalogForm [name="nameAr"]', 'مسودة متصفح RC3 نهائية');
++    await page.fill('#catalogForm [name="nameEn"]', 'Browser Draft Final');
++    await page.waitForTimeout(900);
++    await page.waitForFunction(() => {
++      const el = document.querySelector('#catalogForm [data-editor-v2-status]');
++      return el && /محفوظ/.test(el.textContent || '');
++    }, { timeout: 20000 });
++
++    // Materialize from UI (may fail submit-review without media — must stay honest / resumable).
++    const mat = await page.evaluate(async () => {
++      const form = document.getElementById('catalogForm');
++      const saved = await MiraEditorV2.flushUntilSettled(form);
++      if (!saved || !saved.ok) return { blocked: true, saved };
++      const ctx = MiraEditorV2.getEditContext(form.id);
++      const clientDraftId = ctx.clientDraftId;
++      const key = 'mat-browser:' + clientDraftId + ':' + saved.revision;
++      try {
++        const result = await MiraEditorV2.materialize(clientDraftId, saved.revision, true, key);
++        return { ok: true, result };
++      } catch (error) {
++        return {
++          ok: false,
++          message: String(error && error.message ? error.message : error),
++          code: error && error.code,
++          body: error && error.body,
++        };
++      }
++    });
++    const ownerId =
++      (mat.result && mat.result.targetOwnerId) ||
++      (mat.body && mat.body.targetOwnerId) ||
++      null;
++    if (mat.blocked) fail('browser-materialize-gated', JSON.stringify(mat));
++    else if (ownerId) {
++      if (mat.ok) pass('browser-materialize', JSON.stringify(mat.result));
++      else pass('browser-materialize-submit-failed-honest', JSON.stringify({ code: mat.code, ownerId }));
++      const media = await page.evaluate(async (id) => {
++        const png = 'iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAYAAAAfFcSJAAAADUlEQVR42mP8z8BQDwAEhQGAhKmMIQAAAABJRU5ErkJggg==';
++        try {
++          await PartnersApi.addMedia('products', id, 'image/png', png, 'main');
++          // Resume materialize submit with same key if draft still resumable; else direct submitReview.
++          try {
++            const sub = await PartnersApi.submitReview('products', id);
++            return { ok: true, via: 'submitReview', sub };
++          } catch (error) {
++            return { ok: false, message: String(error && error.message ? error.message : error), code: error && error.code };
++          }
++        } catch (error) {
++          return { ok: false, stage: 'media', message: String(error && error.message ? error.message : error) };
++        }
++      }, ownerId);
++      if (media.ok) pass('browser-media-and-submit-review', JSON.stringify(media));
++      else fail('browser-media-and-submit-review', JSON.stringify(media));
++    } else {
++      fail('browser-materialize', JSON.stringify(mat));
++    }
++
++    // Second session same account — open remaining drafts / verify values path still works via list API
++    // (product may already be materialized; service draft should still open).
++    const page2 = await context.newPage();
++    await page2.goto(dashUrl, { waitUntil: 'domcontentloaded' });
++    await page2.waitForTimeout(2500);
++    await page2.evaluate(async () => {
++      if (window.renderEditorDrafts) await window.renderEditorDrafts();
++    });
++    await page2.waitForTimeout(1000);
++    const openBtn = page2.locator('#editorDraftsList button', { hasText: 'فتح' }).first();
++    if ((await openBtn.count()) > 0) {
++      await openBtn.click();
++      await page2.waitForTimeout(1200);
++      const nameVal = await page2.inputValue('#catalogForm [name="nameAr"]');
++      const enVal = await page2.inputValue('#catalogForm [name="nameEn"]');
++      if (nameVal !== 'مسودة متصفح RC3 نهائية' || enVal !== 'Browser Draft Final') {
++        fail('browser-second-session-reopen', JSON.stringify({ nameVal, enVal }));
++      } else {
++        pass('browser-second-session-reopen', nameVal + ' / ' + enVal);
++      }
++    } else {
++      fail('browser-second-session-reopen', 'no open button');
++    }
++    await page2.screenshot({ path: join(shotsDir, 'rc3-desktop-draft-reopen.png'), fullPage: true });
++    await page2.setViewportSize({ width: 390, height: 844 });
++    await page2.screenshot({ path: join(shotsDir, 'rc3-mobile-rtl-draft.png'), fullPage: true });
++    pass('browser-screenshots');
++
++    // Auth switch via real saveSession after schedule
++    const iso = await page2.evaluate(async () => {
++      const calls = [];
++      const real = PartnersApi.putEditorDraft.bind(PartnersApi);
++      PartnersApi.putEditorDraft = async (id, payload, opts) => {
++        calls.push({
++          id,
++          token: localStorage.getItem('mira_partner_token'),
++          partnerId: localStorage.getItem('mira_partner_id'),
++          nameAr: payload && payload.values && payload.values.nameAr,
++        });
++        return real(id, payload, opts);
++      };
++      const form = document.getElementById('catalogForm') || document.createElement('form');
++      if (!form.id) form.id = 'isoForm';
++      MiraEditorV2.state.enabled = true;
++      MiraEditorV2.state.registryReady = true;
++      MiraEditorV2.state.registryMismatch = false;
++      if (!MiraEditorV2.state.partnerId) MiraEditorV2.state.partnerId = localStorage.getItem('mira_partner_id');
++      MiraEditorV2.state.authGeneration = PartnersApi.authGeneration();
++      MiraEditorV2.state.tokenFingerprint = PartnersApi.authTokenFingerprint();
++      MiraEditorV2.scheduleAutosave(form, () => ({
++        clientDraftId: 'isolation-probe-A',
++        kind: 'product',
++        profileId: 'product.clothes',
++        values: { nameAr: 'يجب ألا يُرسل' },
++      }));
++      PartnersApi.saveSession('other@test.local', 'token-OTHER-otherother');
++      await new Promise((r) => setTimeout(r, 1000));
++      PartnersApi.putEditorDraft = real;
++      return { calls, partnerId: localStorage.getItem('mira_partner_id') };
++    });
++    const leaked = (iso.calls || []).filter((c) => c.nameAr === 'يجب ألا يُرسل');
++    if (leaked.length) fail('browser-auth-switch-zero-leaks', JSON.stringify(iso));
++    else pass('browser-auth-switch-zero-leaks', JSON.stringify(iso));
++
++    const payload = { ok: results.every((r) => r.status === 'PASS_LOCAL'), db: dbMeta, email: ready.email, apiPort: ready.port, portalPort, results };
++    writeFileSync(join(outDir, 'logs', 'rc3-browser-e2e.txt'), JSON.stringify(payload, null, 2) + '\n');
++    console.log(JSON.stringify(payload, null, 2));
++    if (!payload.ok) process.exitCode = 1;
++  } finally {
++    await browser.close().catch(() => {});
++    staticServer.close();
++    child.kill('SIGTERM');
++  }
++}
++
++main().catch((e) => {
++  console.error(e);
++  writeFileSync(join(outDir, 'logs', 'rc3-browser-e2e.txt'), JSON.stringify({ ok: false, error: String(e && e.stack || e) }, null, 2));
++  process.exit(1);
++});
+diff --git a/mira-api/scripts/p1-rc3-browser-server.ts b/mira-api/scripts/p1-rc3-browser-server.ts
+new file mode 100644
+index 0000000..e812095
+--- /dev/null
++++ b/mira-api/scripts/p1-rc3-browser-server.ts
+@@ -0,0 +1,99 @@
++/**
++ * Ephemeral Nest harness + partner login for RC3 browser E2E.
++ * Prints one JSON line: {ready,port,email,password,partnerId}
++ */
++import 'reflect-metadata';
++import { Module, UnauthorizedException, ValidationPipe } from '@nestjs/common';
++import { ConfigModule } from '@nestjs/config';
++import { NestFactory } from '@nestjs/core';
++import { PrismaClient } from '@prisma/client';
++import { randomUUID } from 'node:crypto';
++import { FirebaseIdTokenVerifier, VerifiedFirebaseIdentity } from '../src/common/auth/firebase-id-token-verifier';
++import { FirebaseAuthGuard } from '../src/common/guards/firebase-auth.guard';
++import { AdminApiKeyGuard } from '../src/common/guards/admin-api-key.guard';
++import { PrismaModule } from '../src/prisma/prisma.module';
++import { PrismaService } from '../src/prisma/prisma.service';
++import { CatalogContentService } from '../src/marketplace/catalog-content.service';
++import { CatalogMediaController } from '../src/marketplace/catalog-media.controller';
++import { CatalogMediaStorage, MemoryCatalogMediaStorage } from '../src/marketplace/catalog-media.storage';
++import { CatalogReviewAdminController } from '../src/marketplace/catalog-review.admin.controller';
++import { MarketplaceController } from '../src/marketplace/marketplace.controller';
++import { MarketplaceService } from '../src/marketplace/marketplace.service';
++import { PartnerTokenGuard } from '../src/partners-portal/guards/partner-token.guard';
++import { PartnersPortalController } from '../src/partners-portal/partners-portal.controller';
++import { PartnersPortalService } from '../src/partners-portal/partners-portal.service';
++import { hashPartnerPassword } from '../src/partners-portal/partner-password';
++import { RegistryService } from '../src/partners-portal/registry/registry.service';
++import { EditorDraftsService } from '../src/partners-portal/editor-drafts/editor-drafts.service';
++import { ServiceProfileService } from '../src/partners-portal/editor-drafts/service-profile.service';
++
++class ScriptedIdTokenVerifier extends FirebaseIdTokenVerifier {
++  async verify(_token: string): Promise<VerifiedFirebaseIdentity> {
++    throw new UnauthorizedException('unused');
++  }
++}
++
++@Module({
++  imports: [ConfigModule.forRoot({ isGlobal: true, ignoreEnvFile: true }), PrismaModule],
++  controllers: [PartnersPortalController, CatalogMediaController, CatalogReviewAdminController, MarketplaceController],
++  providers: [
++    PartnersPortalService,
++    PartnerTokenGuard,
++    AdminApiKeyGuard,
++    CatalogContentService,
++    RegistryService,
++    EditorDraftsService,
++    ServiceProfileService,
++    FirebaseAuthGuard,
++    { provide: CatalogMediaStorage, useClass: MemoryCatalogMediaStorage },
++    { provide: MarketplaceService, useFactory: (prisma: PrismaService) => new MarketplaceService(prisma), inject: [PrismaService] },
++    { provide: FirebaseIdTokenVerifier, useClass: ScriptedIdTokenVerifier },
++  ],
++})
++class BrowserHarnessModule {}
++
++function assertRc3Db(url: string) {
++  const parsed = new URL(url);
++  const host = parsed.hostname;
++  const db = parsed.pathname.replace(/^\//, '').split('?')[0];
++  if (host !== 'localhost' && host !== '127.0.0.1') throw new Error(`REFUSE host ${host}`);
++  if (db !== 'mira_p1_rc3_test') throw new Error(`REFUSE db ${db}`);
++}
++
++async function main() {
++  assertRc3Db(process.env.DATABASE_URL || '');
++  process.env.MIRA_PARTNER_EDITOR_V2 = 'true';
++  process.env.ADMIN_API_KEY = process.env.ADMIN_API_KEY || 'p1-rc3-admin';
++
++  const suffix = randomUUID().slice(0, 8);
++  const email = `browser-rc3-${suffix}@test.local`;
++  const password = `Rc3Pass!${suffix}`;
++  const prisma = new PrismaClient();
++  // Developer partner can exercise product + service profiles in one browser session.
++  const partner = await prisma.partner.create({
++    data: { type: 'developer', status: 'active', nameAr: `متصفح RC3 ${suffix}`, nameEn: 'Browser RC3', city: 'الرياض' },
++  });
++  const passwordHash = await hashPartnerPassword(password);
++  await prisma.partnerUser.create({
++    data: {
++      partnerId: partner.id,
++      email,
++      accessToken: `boot-${suffix}`,
++      passwordHash,
++    },
++  });
++
++  const app = await NestFactory.create(BrowserHarnessModule, { logger: ['error'] });
++  app.enableCors({ origin: true, credentials: true });
++  app.setGlobalPrefix('api/v1');
++  app.useGlobalPipes(new ValidationPipe({ transform: true }));
++  await app.listen(0, '127.0.0.1');
++  const addr = app.getHttpServer().address();
++  const port = typeof addr === 'object' && addr ? addr.port : 0;
++  console.log(JSON.stringify({ ready: true, port, email, password, partnerId: partner.id }));
++}
++
++main().catch((e) => {
++  console.error(e);
++  process.exit(1);
++});
+diff --git a/mira-api/src/partners-portal/editor-drafts/editor-v2-rc2.http.integration-tests.ts b/mira-api/src/partners-portal/editor-drafts/editor-v2-rc2.http.integration-tests.ts
+index 2743566..bcbe873 100644
+--- a/mira-api/src/partners-portal/editor-drafts/editor-v2-rc2.http.integration-tests.ts
++++ b/mira-api/src/partners-portal/editor-drafts/editor-v2-rc2.http.integration-tests.ts
+@@ -69,7 +69,7 @@ function assertLocalTestDb(url: string) {
+   }
+   if (!db || db === '') throw new Error('REFUSE: database name missing');
+   // Explicit allowlist for local test DBs — not production names.
+-  if (!/^(mira_db|mira_p1_test|mira_p1_rc2_test)$/.test(db)) {
++  if (!/^(mira_db|mira_p1_test|mira_p1_rc2_test|mira_p1_rc3_test)$/.test(db)) {
+     throw new Error(`REFUSE: unexpected database name ${db}`);
+   }
+   return { host, db };
+diff --git a/mira-api/src/partners-portal/editor-drafts/editor-v2-rc3.http.integration-tests.ts b/mira-api/src/partners-portal/editor-drafts/editor-v2-rc3.http.integration-tests.ts
+new file mode 100644
+index 0000000..b20428d
+--- /dev/null
++++ b/mira-api/src/partners-portal/editor-drafts/editor-v2-rc3.http.integration-tests.ts
+@@ -0,0 +1,363 @@
++/**
++ * P1 RC3 HTTP: cross-partner isolation, field round-trip values, template rejects.
++ * Requires DATABASE_URL → mira_p1_rc3_test on localhost/127.0.0.1.
++ */
++import 'reflect-metadata';
++import assert from 'node:assert/strict';
++import { INestApplication, Module, UnauthorizedException, ValidationPipe } from '@nestjs/common';
++import { ConfigModule } from '@nestjs/config';
++import { NestFactory } from '@nestjs/core';
++import { PrismaClient } from '@prisma/client';
++import { randomUUID } from 'node:crypto';
++import { FirebaseIdTokenVerifier, VerifiedFirebaseIdentity } from '../../common/auth/firebase-id-token-verifier';
++import { FirebaseAuthGuard } from '../../common/guards/firebase-auth.guard';
++import { AdminApiKeyGuard } from '../../common/guards/admin-api-key.guard';
++import { PrismaModule } from '../../prisma/prisma.module';
++import { PrismaService } from '../../prisma/prisma.service';
++import { CatalogContentService } from '../../marketplace/catalog-content.service';
++import { CatalogMediaController } from '../../marketplace/catalog-media.controller';
++import { CatalogMediaStorage, MemoryCatalogMediaStorage } from '../../marketplace/catalog-media.storage';
++import { CatalogReviewAdminController } from '../../marketplace/catalog-review.admin.controller';
++import { MarketplaceController } from '../../marketplace/marketplace.controller';
++import { MarketplaceService } from '../../marketplace/marketplace.service';
++import { PartnerTokenGuard } from '../guards/partner-token.guard';
++import { PartnersPortalController } from '../partners-portal.controller';
++import { PartnersPortalService } from '../partners-portal.service';
++import { RegistryService } from '../registry/registry.service';
++import { EditorDraftsService } from './editor-drafts.service';
++import { ServiceProfileService } from './service-profile.service';
++
++class ScriptedIdTokenVerifier extends FirebaseIdTokenVerifier {
++  async verify(token: string): Promise<VerifiedFirebaseIdentity> {
++    if (token !== 'unused') throw new UnauthorizedException('Invalid token');
++    return { uid: 'unused', email: 'unused@test.local' };
++  }
++}
++
++@Module({
++  imports: [ConfigModule.forRoot({ isGlobal: true, ignoreEnvFile: true }), PrismaModule],
++  controllers: [PartnersPortalController, CatalogMediaController, CatalogReviewAdminController, MarketplaceController],
++  providers: [
++    PartnersPortalService,
++    PartnerTokenGuard,
++    AdminApiKeyGuard,
++    CatalogContentService,
++    RegistryService,
++    EditorDraftsService,
++    ServiceProfileService,
++    FirebaseAuthGuard,
++    { provide: CatalogMediaStorage, useClass: MemoryCatalogMediaStorage },
++    { provide: MarketplaceService, useFactory: (prisma: PrismaService) => new MarketplaceService(prisma), inject: [PrismaService] },
++    { provide: FirebaseIdTokenVerifier, useClass: ScriptedIdTokenVerifier },
++  ],
++})
++class EditorV2Rc3HttpTestModule {}
++
++function assertRc3Db(url: string) {
++  const parsed = new URL(url);
++  const host = parsed.hostname;
++  const db = parsed.pathname.replace(/^\//, '').split('?')[0];
++  if (host !== 'localhost' && host !== '127.0.0.1') {
++    throw new Error(`REFUSE: host must be localhost/127.0.0.1, got ${host}`);
++  }
++  if (db !== 'mira_p1_rc3_test') {
++    throw new Error(`REFUSE: RC3 requires database mira_p1_rc3_test, got ${db}`);
++  }
++  return { host, db };
++}
++
++async function baseUrl(app: INestApplication) {
++  const address = app.getHttpServer().address();
++  const port = typeof address === 'object' && address ? address.port : 0;
++  return `http://127.0.0.1:${port}`;
++}
++
++async function json(res: Response) {
++  return res.json().catch(() => ({}));
++}
++
++async function main() {
++  const url = process.env.DATABASE_URL ?? '';
++  const { host, db } = assertRc3Db(url);
++  process.env.MIRA_PARTNER_EDITOR_V2 = 'true';
++  process.env.ADMIN_API_KEY = 'p1-rc3-admin';
++  process.env.AUTH_SKIP = 'false';
++
++  const prisma = new PrismaClient();
++  const suffix = randomUUID().slice(0, 8);
++  const brandA = await prisma.partner.create({
++    data: { type: 'brand', status: 'active', nameAr: `RC3 A ${suffix}`, nameEn: 'RC3A', city: 'الرياض' },
++  });
++  const brandB = await prisma.partner.create({
++    data: { type: 'brand', status: 'active', nameAr: `RC3 B ${suffix}`, nameEn: 'RC3B', city: 'جدة' },
++  });
++  const salon = await prisma.partner.create({
++    data: { type: 'salon', status: 'active', nameAr: `RC3 Salon ${suffix}`, nameEn: 'RC3S', city: 'الرياض' },
++  });
++  await prisma.partnerUser.create({
++    data: { partnerId: brandA.id, email: `a-rc3-${suffix}@test.local`, accessToken: `token-a-rc3-${suffix}` },
++  });
++  await prisma.partnerUser.create({
++    data: { partnerId: brandB.id, email: `b-rc3-${suffix}@test.local`, accessToken: `token-b-rc3-${suffix}` },
++  });
++  await prisma.partnerUser.create({
++    data: { partnerId: salon.id, email: `salon-rc3-${suffix}@test.local`, accessToken: `token-salon-rc3-${suffix}` },
++  });
++
++  const app = await NestFactory.create(EditorV2Rc3HttpTestModule, { logger: ['error'] });
++  app.setGlobalPrefix('api/v1');
++  app.useGlobalPipes(new ValidationPipe({ transform: true }));
++  await app.listen(0);
++  const base = await baseUrl(app);
++  const aH = { authorization: `Bearer token-a-rc3-${suffix}`, 'content-type': 'application/json' };
++  const bH = { authorization: `Bearer token-b-rc3-${suffix}`, 'content-type': 'application/json' };
++  const salonH = { authorization: `Bearer token-salon-rc3-${suffix}`, 'content-type': 'application/json' };
++
++  const results: Array<{ id: string; status: string }> = [];
++  const pass = (id: string) => results.push({ id, status: 'PASS_LOCAL' });
++
++  try {
++    const draftId = `rc3-product-${suffix}`;
++    const sizeField = (await (await fetch(`${base}/api/v1/partners-portal/registry`, { headers: aH })).json())
++      .registry.fields.sizes.values[0];
++
++    let res = await fetch(`${base}/api/v1/partners-portal/editor-drafts/${draftId}`, {
++      method: 'PUT',
++      headers: aH,
++      body: JSON.stringify({
++        expectedRevision: null,
++        kind: 'product',
++        profileId: 'product.clothes',
++        schemaVersion: 2,
++        values: {
++          nameAr: 'منتج RC3',
++          nameEn: 'RC3 Product',
++          descriptionAr: 'وصف تجريبي',
++          category: 'clothes',
++          priceHalalas: 5500,
++          colors: ['black', 'ivory'],
++          sizes: [sizeField],
++          stockQty: 7,
++          purchaseMode: 'external',
++          deliveryFeeHalalas: 1500,
++        },
++      }),
++    });
++    let body = await json(res);
++    assert.ok(res.status === 200 || res.status === 201, JSON.stringify(body));
++    assert.equal(body.revision, 1);
++    pass('RC3-draft-save-full-fields');
++
++    // B cannot read A's draft
++    res = await fetch(`${base}/api/v1/partners-portal/editor-drafts/${draftId}`, { headers: bH });
++    assert.ok(res.status === 403 || res.status === 404, `B read status ${res.status}`);
++    pass('RC3-cross-partner-get-denied');
++
++    // B may create its own row under the same clientDraftId string (scoped by partnerId),
++    // but must not mutate A's draft values.
++    res = await fetch(`${base}/api/v1/partners-portal/editor-drafts/${draftId}`, {
++      method: 'PUT',
++      headers: bH,
++      body: JSON.stringify({
++        expectedRevision: null,
++        kind: 'product',
++        profileId: 'product.clothes',
++        schemaVersion: 2,
++        values: { nameAr: 'اختراق' },
++      }),
++    });
++    assert.ok(res.status === 200 || res.status === 201 || res.status === 403 || res.status === 404, `B write status ${res.status}`);
++
++    // reopen A — values intact (B did not overwrite partner A)
++    res = await fetch(`${base}/api/v1/partners-portal/editor-drafts/${draftId}`, { headers: aH });
++    body = await json(res);
++    assert.equal(res.status, 200);
++    assert.equal(body.values.nameAr, 'منتج RC3');
++    assert.equal(body.values.nameEn, 'RC3 Product');
++    assert.equal(body.values.stockQty, 7);
++    assert.equal(body.values.deliveryFeeHalalas, 1500);
++    assert.deepEqual(body.values.colors, ['black', 'ivory']);
++    assert.deepEqual(body.values.sizes, [sizeField]);
++    pass('RC3-cross-partner-cannot-mutate-A');
++    pass('RC3-draft-reopen-values');
++
++    // second draft identity independent
++    const draft2 = `rc3-product-b-${suffix}`;
++    res = await fetch(`${base}/api/v1/partners-portal/editor-drafts/${draft2}`, {
++      method: 'PUT',
++      headers: aH,
++      body: JSON.stringify({
++        expectedRevision: null,
++        kind: 'product',
++        profileId: 'product.clothes',
++        schemaVersion: 2,
++        values: { nameAr: 'مسودة ثانية' },
++      }),
++    });
++    body = await json(res);
++    assert.ok(res.status === 200 || res.status === 201);
++    res = await fetch(`${base}/api/v1/partners-portal/editor-drafts/${draftId}`, {
++      method: 'PUT',
++      headers: aH,
++      body: JSON.stringify({
++        expectedRevision: 1,
++        kind: 'product',
++        profileId: 'product.clothes',
++        schemaVersion: 2,
++        values: {
++          nameAr: 'منتج RC3 محدّث',
++          nameEn: 'RC3 Product',
++          descriptionAr: 'وصف تجريبي',
++          category: 'clothes',
++          priceHalalas: 5500,
++          colors: ['black'],
++          sizes: [sizeField],
++          stockQty: 7,
++          purchaseMode: 'external',
++          deliveryFeeHalalas: 1500,
++        },
++      }),
++    });
++    body = await json(res);
++    assert.equal(res.status, 200);
++    assert.equal(body.revision, 2);
++    const other = await json(await fetch(`${base}/api/v1/partners-portal/editor-drafts/${draft2}`, { headers: aH }));
++    assert.equal(other.values.nameAr, 'مسودة ثانية');
++    pass('RC3-two-drafts-independent');
++
++    // materialize and assert exact options + commerce fields
++    res = await fetch(`${base}/api/v1/partners-portal/editor-drafts/${draftId}/materialize`, {
++      method: 'POST',
++      headers: { ...aH, 'Idempotency-Key': `mat-rc3-${suffix}` },
++      body: JSON.stringify({ expectedRevision: 2, submitReview: false }),
++    });
++    body = await json(res);
++    assert.ok(res.status === 200 || res.status === 201, JSON.stringify(body));
++    const product = await prisma.product.findUnique({ where: { id: body.targetOwnerId } });
++    assert.ok(product);
++    assert.equal(product!.nameEn, 'RC3 Product');
++    assert.equal(product!.descriptionAr, 'وصف تجريبي');
++    assert.equal(product!.stockQty, 7);
++    assert.equal(product!.deliveryFeeHalalas, 1500);
++    const groups = product!.optionsJson as Array<{ id: string; values: Array<{ id: string }> }>;
++    assert.ok(Array.isArray(groups));
++    const colorG = groups.find((g) => g.id === 'color');
++    assert.ok(colorG);
++    assert.deepEqual(colorG!.values.map((v) => v.id), ['black']);
++    pass('RC3-materialize-field-roundtrip');
++
++    // service draft with real answers
++    const svcId = `rc3-svc-${suffix}`;
++    res = await fetch(`${base}/api/v1/partners-portal/editor-drafts/${svcId}`, {
++      method: 'PUT',
++      headers: salonH,
++      body: JSON.stringify({
++        expectedRevision: null,
++        kind: 'service',
++        profileId: 'service.salon_hair_cut',
++        schemaVersion: 2,
++        values: {
++          nameAr: 'قص تجريبي',
++          category: 'hair',
++          priceHalalas: 8000,
++          durationMin: 45,
++          serviceProfile: {
++            templateId: 'salon_hair_cut',
++            templateVersion: 1,
++            priceMode: 'fixed',
++            answers: {
++              session_kind: 'package',
++              package_sessions: 4,
++              includes: ['wash'],
++            },
++          },
++        },
++      }),
++    });
++    body = await json(res);
++    assert.ok(res.status === 200 || res.status === 201, JSON.stringify(body));
++    pass('RC3-service-draft-with-answers');
++
++    // reject unsupported template version via draft values
++    res = await fetch(`${base}/api/v1/partners-portal/editor-drafts/rc3-bad-ver-${suffix}`, {
++      method: 'PUT',
++      headers: salonH,
++      body: JSON.stringify({
++        expectedRevision: null,
++        kind: 'service',
++        profileId: 'service.salon_hair_cut',
++        schemaVersion: 2,
++        values: {
++          serviceProfile: {
++            templateId: 'salon_hair_cut',
++            templateVersion: 9999,
++            priceMode: 'fixed',
++            answers: {},
++          },
++        },
++      }),
++    });
++    body = await json(res);
++    assert.equal(res.status, 400);
++    assert.equal(body.code, 'SERVICE_TEMPLATE_VERSION_UNSUPPORTED');
++    pass('RC3-reject-templateVersion-9999');
++
++    // reject answers array
++    res = await fetch(`${base}/api/v1/partners-portal/editor-drafts/rc3-bad-ans-${suffix}`, {
++      method: 'PUT',
++      headers: salonH,
++      body: JSON.stringify({
++        expectedRevision: null,
++        kind: 'service',
++        profileId: 'service.salon_hair_cut',
++        schemaVersion: 2,
++        values: {
++          serviceProfile: {
++            templateId: 'salon_hair_cut',
++            templateVersion: 1,
++            priceMode: 'fixed',
++            answers: [],
++          },
++        },
++      }),
++    });
++    body = await json(res);
++    assert.equal(res.status, 400);
++    assert.equal(body.code, 'SERVICE_ANSWERS_TYPE_INVALID');
++    pass('RC3-reject-answers-array');
++
++    // reject negative package_sessions
++    res = await fetch(`${base}/api/v1/partners-portal/editor-drafts/rc3-bad-sess-${suffix}`, {
++      method: 'PUT',
++      headers: salonH,
++      body: JSON.stringify({
++        expectedRevision: null,
++        kind: 'service',
++        profileId: 'service.salon_hair_cut',
++        schemaVersion: 2,
++        values: {
++          serviceProfile: {
++            templateId: 'salon_hair_cut',
++            templateVersion: 1,
++            priceMode: 'fixed',
++            answers: { session_kind: 'package', package_sessions: -4 },
++          },
++        },
++      }),
++    });
++    body = await json(res);
++    assert.equal(res.status, 400);
++    assert.equal(body.code, 'FIELD_VALUE_OUT_OF_RANGE');
++    pass('RC3-reject-package-sessions-negative');
++
++    console.log(JSON.stringify({ ok: true, host, db, results }, null, 2));
++  } finally {
++    await app.close();
++    await prisma.$disconnect();
++  }
++}
++
++main().catch((error) => {
++  console.error(error);
++  process.exit(1);
++});
+diff --git a/mira-api/src/partners-portal/registry/registry.service.ts b/mira-api/src/partners-portal/registry/registry.service.ts
+index 0e47361..36c268f 100644
+--- a/mira-api/src/partners-portal/registry/registry.service.ts
++++ b/mira-api/src/partners-portal/registry/registry.service.ts
+@@ -414,12 +414,25 @@ export class RegistryService implements OnModuleInit {
+         fieldErrors: [{ fieldId: 'templateVersion', code: 'SERVICE_TEMPLATE_VERSION_INVALID' }],
+       });
+     }
++    const supportedVersion = Number(template.version || 1);
++    if (body.templateVersion !== supportedVersion) {
++      throw editorError(HttpStatus.BAD_REQUEST, 'SERVICE_TEMPLATE_VERSION_UNSUPPORTED', 'إصدار القالب غير مدعوم', {
++        fieldErrors: [{ fieldId: 'templateVersion', code: 'SERVICE_TEMPLATE_VERSION_UNSUPPORTED' }],
++      });
++    }
+     const priceMode = typeof body.priceMode === 'string' ? body.priceMode.trim() : '';
+     if (!PRICE_MODES.has(priceMode)) {
+       throw editorError(HttpStatus.BAD_REQUEST, 'SERVICE_PRICE_MODE_INVALID', 'طريقة السعر غير معروفة', {
+         fieldErrors: [{ fieldId: 'priceMode', code: 'SERVICE_PRICE_MODE_INVALID' }],
+       });
+     }
++    if (Object.prototype.hasOwnProperty.call(body, 'answers') && body.answers != null) {
++      if (typeof body.answers !== 'object' || Array.isArray(body.answers)) {
++        throw editorError(HttpStatus.BAD_REQUEST, 'SERVICE_ANSWERS_TYPE_INVALID', 'إجابات القالب يجب أن تكون كائنًا', {
++          fieldErrors: [{ fieldId: 'answers', code: 'SERVICE_ANSWERS_TYPE_INVALID' }],
++        });
++      }
++    }
+     const answersRaw =
+       body.answers && typeof body.answers === 'object' && !Array.isArray(body.answers)
+         ? (body.answers as Record<string, unknown>)
+@@ -460,7 +473,14 @@ export class RegistryService implements OnModuleInit {
+     const t = field.type;
+     if (t === 'boolean') return typeof raw === 'boolean' ? null : 'FIELD_TYPE_INVALID';
+     if (t === 'number') {
+-      return typeof raw === 'number' && Number.isFinite(raw) ? null : 'FIELD_TYPE_INVALID';
++      if (typeof raw !== 'number' || !Number.isFinite(raw)) return 'FIELD_TYPE_INVALID';
++      if (!Number.isInteger(raw)) return 'FIELD_TYPE_INVALID';
++      // Session counts and similar quantities must be positive when provided.
++      if (field.id === 'package_sessions' || field.id.endsWith('_sessions') || field.id.endsWith('_count')) {
++        if (raw < 1) return 'FIELD_VALUE_OUT_OF_RANGE';
++      }
++      if (raw < 0) return 'FIELD_VALUE_OUT_OF_RANGE';
++      return null;
+     }
+     if (t === 'text' || t === 'string' || t === 'single') {
+       if (typeof raw !== 'string') return 'FIELD_TYPE_INVALID';
+diff --git a/mira-api/src/partners-portal/registry/registry.validation.schema-tests.ts b/mira-api/src/partners-portal/registry/registry.validation.schema-tests.ts
+index 056f729..7248898 100644
+--- a/mira-api/src/partners-portal/registry/registry.validation.schema-tests.ts
++++ b/mira-api/src/partners-portal/registry/registry.validation.schema-tests.ts
+@@ -108,6 +108,41 @@ async function main() {
+     'SERVICE_TEMPLATE_VERSION_INVALID',
+   );
+ 
++  // unsupported (too high) templateVersion
++  mustFail(
++    () =>
++      registry.normalizeServiceProfile(
++        { templateId: 'salon_hair_cut', templateVersion: 9999, priceMode: 'fixed', answers: {} },
++        'salon',
++      ),
++    'SERVICE_TEMPLATE_VERSION_UNSUPPORTED',
++  );
++
++  // answers as array must reject (not coerce to {})
++  mustFail(
++    () =>
++      registry.normalizeServiceProfile(
++        { templateId: 'salon_hair_cut', templateVersion: 1, priceMode: 'fixed', answers: [] as unknown as Record<string, unknown> },
++        'salon',
++      ),
++    'SERVICE_ANSWERS_TYPE_INVALID',
++  );
++
++  // package_sessions negative
++  mustFail(
++    () =>
++      registry.normalizeServiceProfile(
++        {
++          templateId: 'salon_hair_cut',
++          templateVersion: 1,
++          priceMode: 'fixed',
++          answers: { session_kind: 'package', package_sessions: -4 },
++        },
++        'salon',
++      ),
++    'FIELD_VALUE_OUT_OF_RANGE',
++  );
++
+   // unknown priceMode
+   mustFail(
+     () =>
+diff --git a/partners-portal/web/dashboard.html b/partners-portal/web/dashboard.html
+index 9bc4e8a..5874d4a 100644
+--- a/partners-portal/web/dashboard.html
++++ b/partners-portal/web/dashboard.html
+@@ -111,9 +111,9 @@
+ 
+     document.getElementById('logout').onclick = (e) => {
+       e.preventDefault();
+-      if (window.MiraEditorV2) MiraEditorV2.cancelAllPending('logout');
+-      try { localStorage.removeItem('mira_partner_id'); } catch (err) {}
++      // clearSession bumps auth generation and cancels via mira:auth-change.
+       PartnersApi.clearSession();
++      if (window.MiraEditorV2) MiraEditorV2.cancelAllPending('logout');
+       location.href = 'login.html' + location.search;
+     };
+ 
+@@ -153,23 +153,44 @@
+               const formId = draft.kind === 'product' ? 'catalogForm' : 'serviceForm';
+               const titleId = draft.kind === 'product' ? 'catalogTitle' : 'serviceTitle';
+               const type = draft.kind === 'product' ? 'brand' : (window.sessionPartner.type === 'clinic' ? 'clinic' : 'salon');
+-              const stub = {
+-                id: draft.targetOwnerId || undefined,
+-                nameAr: (draft.values && draft.values.nameAr) || '',
+-                priceHalalas: (draft.values && draft.values.priceHalalas) || 0,
+-                category: (draft.values && draft.values.category) || '',
+-                durationMin: (draft.values && draft.values.durationMin) || '',
+-                descriptionAr: (draft.values && draft.values.descriptionAr) || '',
++              const values = draft.values || {};
++              const stub = draft.targetOwnerId
++                ? {
++                    id: draft.targetOwnerId,
++                    nameAr: values.nameAr || '',
++                    nameEn: values.nameEn || '',
++                    priceHalalas: values.priceHalalas,
++                    category: values.category || '',
++                    durationMin: values.durationMin,
++                    descriptionAr: values.descriptionAr || '',
++                    purchaseMode: values.purchaseMode,
++                    stockQty: values.stockQty,
++                    deliveryFeeHalalas: values.deliveryFeeHalalas,
++                    optionsJson: values.optionsJson,
++                    variantsJson: values.variantsJson,
++                    colors: values.colors,
++                    sizes: values.sizes,
++                  }
++                : null;
++              const draftCtx = {
++                clientDraftId: draft.clientDraftId,
++                kind: draft.kind,
++                profileId: draft.profileId,
++                schemaVersion: draft.schemaVersion,
++                revision: draft.revision,
++                targetOwnerId: draft.targetOwnerId || null,
++                status: draft.status,
++                submitReviewStatus: draft.submitReviewStatus || null,
++                values: values,
+               };
+-              CatalogJourney.renderForm(type, stub, formId, titleId, 'مسودة خادمية ' + draft.clientDraftId + ' · rev ' + draft.revision);
+-              if (draft.values && draft.values.serviceProfile && window.ServiceTemplates) {
+-                try {
+-                  localStorage.setItem(
+-                    'mira-service-template:' + (stub.id || 'new'),
+-                    JSON.stringify(draft.values.serviceProfile),
+-                  );
+-                } catch (err) {}
+-              }
++              CatalogJourney.renderForm(
++                type,
++                stub,
++                formId,
++                titleId,
++                'مسودة خادمية ' + draft.clientDraftId + ' · rev ' + draft.revision,
++                draftCtx,
++              );
+             } catch (error) {
+               list.textContent = 'تعذر الفتح: ' + (error.message || error);
+             }
+diff --git a/partners-portal/web/js/api.js b/partners-portal/web/js/api.js
+index 2c107ba..4549126 100644
+--- a/partners-portal/web/js/api.js
++++ b/partners-portal/web/js/api.js
+@@ -5,6 +5,41 @@
+     'https://mira-api-n4p3.onrender.com/api/v1',
+   );
+ 
++  const AUTH_GEN_KEY = 'mira_auth_generation';
++
++  function readAuthGeneration() {
++    const n = Number(sessionStorage.getItem(AUTH_GEN_KEY) || '0');
++    return Number.isFinite(n) ? n : 0;
++  }
++
++  let authGeneration = readAuthGeneration();
++
++  function bumpAuthGeneration(reason) {
++    authGeneration = readAuthGeneration() + 1;
++    sessionStorage.setItem(AUTH_GEN_KEY, String(authGeneration));
++    try {
++      localStorage.removeItem('mira_partner_id');
++    } catch (e) {}
++    try {
++      window.dispatchEvent(
++        new CustomEvent('mira:auth-change', {
++          detail: {
++            reason: reason || 'auth',
++            authGeneration: authGeneration,
++            hasToken: !!localStorage.getItem('mira_partner_token'),
++          },
++        }),
++      );
++    } catch (e) {}
++    return authGeneration;
++  }
++
++  function authTokenFingerprint() {
++    const t = localStorage.getItem('mira_partner_token');
++    if (!t) return null;
++    return String(t.length) + ':' + t.slice(0, 16);
++  }
++
+   function localApiBase(fallback) {
+     const override = new URLSearchParams(location.search).get('api-base');
+     const localPage = location.hostname === '127.0.0.1' || location.hostname === 'localhost';
+@@ -25,31 +60,58 @@
+     return new URLSearchParams(location.search).get('ui-fixture') === 'labeled';
+   }
+ 
+-  async function request(method, path, body, extraHeaders) {
++  function ApiError(message, meta) {
++    const err = new Error(message);
++    err.name = 'PartnersApiError';
++    if (meta) {
++      err.status = meta.status;
++      err.code = meta.code;
++      err.fieldErrors = meta.fieldErrors || null;
++      err.body = meta.body || null;
++    }
++    return err;
++  }
++
++  async function request(method, path, body, extraHeaders, opts) {
+     if (labeledPreview()) {
+-      throw new Error('محاكاة: لم يُرسل طلب ولم تُستخدم الجلسة');
++      throw ApiError('محاكاة: لم يُرسل طلب ولم تُستخدم الجلسة');
+     }
++    const signal = opts && opts.signal;
++    const tokenAtStart = localStorage.getItem('mira_partner_token');
++    const authGenAtStart = authGeneration;
+     const res = await fetch(`${API_BASE}${path}`, {
+       method,
+       headers: {
+         Accept: 'application/json',
+         ...(body ? { 'Content-Type': 'application/json' } : {}),
+-        ...extraHeaders,
++        ...(extraHeaders || {}),
+         ...authHeaders(),
+       },
+       body: body ? JSON.stringify(body) : undefined,
++      signal: signal || undefined,
+     });
++    if (
++      localStorage.getItem('mira_partner_token') !== tokenAtStart ||
++      authGeneration !== authGenAtStart
++    ) {
++      throw ApiError('تبديل جلسة أثناء الطلب — تُجاهل الاستجابة', { code: 'AUTH_CHANGED' });
++    }
+     const data = await res.json().catch(() => ({}));
+     if (!res.ok) {
+       const msg = data.message || data.error || `HTTP ${res.status}`;
+-      throw new Error(Array.isArray(msg) ? msg.join(' ') : msg);
++      throw ApiError(Array.isArray(msg) ? msg.join(' ') : msg, {
++        status: res.status,
++        code: data.code || null,
++        fieldErrors: data.fieldErrors || null,
++        body: data,
++      });
+     }
+     return data;
+   }
+ 
+   function requestProgress(method, path, body, hooks) {
+     if (labeledPreview()) {
+-      return Promise.reject(new Error('محاكاة: لم يُرسل طلب ولم تُستخدم الجلسة'));
++      return Promise.reject(ApiError('محاكاة: لم يُرسل طلب ولم تُستخدم الجلسة'));
+     }
+     const notify = hooks || {};
+     return new Promise((resolve, reject) => {
+@@ -82,7 +144,12 @@
+         try { data = JSON.parse(xhr.responseText || '{}'); } catch (error) { data = {}; }
+         if (xhr.status < 200 || xhr.status >= 300) {
+           const msg = data.message || data.error || `HTTP ${xhr.status}`;
+-          fail(new Error(Array.isArray(msg) ? msg.join(' ') : msg));
++          fail(ApiError(Array.isArray(msg) ? msg.join(' ') : msg, {
++            status: xhr.status,
++            code: data.code || null,
++            fieldErrors: data.fieldErrors || null,
++            body: data,
++          }));
+           return;
+         }
+         resolve(data);
+@@ -145,28 +212,29 @@
+       request('POST', `/partners/me/commerce/bookings/${id}/transition`, body),
+     track: (payload) =>
+       request('POST', '/partners-portal/track', payload),
+-    registry: () => request('GET', '/partners-portal/registry'),
+-    listEditorDrafts: (query) =>
+-      request('GET', `/partners-portal/editor-drafts${query ? '?' + query : ''}`),
+-    getEditorDraft: (clientDraftId) =>
+-      request('GET', `/partners-portal/editor-drafts/${encodeURIComponent(clientDraftId)}`),
+-    putEditorDraft: (clientDraftId, payload) =>
+-      request('PUT', `/partners-portal/editor-drafts/${encodeURIComponent(clientDraftId)}`, payload),
+-    discardEditorDraft: (clientDraftId) =>
+-      request('DELETE', `/partners-portal/editor-drafts/${encodeURIComponent(clientDraftId)}`),
+-    materializeEditorDraft: (clientDraftId, payload, idempotencyKey) =>
++    registry: (opts) => request('GET', '/partners-portal/registry', null, null, opts),
++    listEditorDrafts: (query, opts) =>
++      request('GET', `/partners-portal/editor-drafts${query ? '?' + query : ''}`, null, null, opts),
++    getEditorDraft: (clientDraftId, opts) =>
++      request('GET', `/partners-portal/editor-drafts/${encodeURIComponent(clientDraftId)}`, null, null, opts),
++    putEditorDraft: (clientDraftId, payload, opts) =>
++      request('PUT', `/partners-portal/editor-drafts/${encodeURIComponent(clientDraftId)}`, payload, null, opts),
++    discardEditorDraft: (clientDraftId, opts) =>
++      request('DELETE', `/partners-portal/editor-drafts/${encodeURIComponent(clientDraftId)}`, null, null, opts),
++    materializeEditorDraft: (clientDraftId, payload, idempotencyKey, opts) =>
+       request(
+         'POST',
+         `/partners-portal/editor-drafts/${encodeURIComponent(clientDraftId)}/materialize`,
+         payload,
+         { 'Idempotency-Key': idempotencyKey },
++        opts,
+       ),
+-    getServiceProfile: (id) =>
+-      request('GET', `/partners-portal/services/${encodeURIComponent(id)}/service-profile`),
+-    putServiceProfile: (id, payload) =>
+-      request('PUT', `/partners-portal/services/${encodeURIComponent(id)}/service-profile`, payload),
+-    importLocalTemplate: (id, payload) =>
+-      request('POST', `/partners-portal/services/${encodeURIComponent(id)}/import-local-template`, payload),
++    getServiceProfile: (id, opts) =>
++      request('GET', `/partners-portal/services/${encodeURIComponent(id)}/service-profile`, null, null, opts),
++    putServiceProfile: (id, payload, opts) =>
++      request('PUT', `/partners-portal/services/${encodeURIComponent(id)}/service-profile`, payload, null, opts),
++    importLocalTemplate: (id, payload, opts) =>
++      request('POST', `/partners-portal/services/${encodeURIComponent(id)}/import-local-template`, payload, null, opts),
+     adminList: (adminKey, status) =>
+       request(
+         'GET',
+@@ -182,13 +250,20 @@
+       request('POST', `/partners-portal/admin/applications/${id}/reject`, { reason }, {
+         'X-Admin-Key': adminKey,
+       }),
++    authGeneration: () => authGeneration,
++    authTokenFingerprint: authTokenFingerprint,
++    bumpAuthGeneration: bumpAuthGeneration,
+     saveSession: (email, token) => {
++      // Cancel/isolate before writing the new token so pending A work cannot ride B's session.
++      bumpAuthGeneration('saveSession');
+       localStorage.setItem('mira_partner_email', email);
+       localStorage.setItem('mira_partner_token', token);
+     },
+     clearSession: () => {
++      bumpAuthGeneration('clearSession');
+       localStorage.removeItem('mira_partner_email');
+       localStorage.removeItem('mira_partner_token');
++      try { localStorage.removeItem('mira_partner_id'); } catch (e) {}
+     },
+     isLoggedIn: () => !!localStorage.getItem('mira_partner_token'),
+   };
+diff --git a/partners-portal/web/js/catalog-journey.js b/partners-portal/web/js/catalog-journey.js
+index 10ab703..dae441e 100644
+--- a/partners-portal/web/js/catalog-journey.js
++++ b/partners-portal/web/js/catalog-journey.js
+@@ -328,7 +328,7 @@
+     return select;
+   }
+ 
+-  function renderForm(type, item, formId, titleId, note) {
++  function renderForm(type, item, formId, titleId, note, draftCtx) {
+     const form = document.getElementById(formId || 'catalogForm');
+     form.dataset.saving = '';
+     const title = document.getElementById(titleId || 'catalogTitle');
+@@ -339,45 +339,99 @@
+     const sameItem = item && previous.ownerId === item.id;
+     staged[form.id] = sameItem ? previous : [];
+     if (item) staged[form.id].ownerId = item.id;
++    if (window.MiraEditorV2) {
++      MiraEditorV2.cancelAllPending('form-replace:' + form.id);
++      MiraEditorV2.clearEditContext(form.id);
++    }
+     form.replaceChildren();
+ 
++    const seed = Object.assign({}, item || {}, (draftCtx && draftCtx.values) || {});
+     const editing = Boolean(item && item.id);
++    const seedingDraft = Boolean(draftCtx && draftCtx.clientDraftId);
++    const kind = type === 'brand' ? 'product' : 'service';
++    if (window.MiraEditorV2 && seedingDraft) {
++      MiraEditorV2.bindEditContext(form.id, {
++        clientDraftId: draftCtx.clientDraftId,
++        kind: draftCtx.kind || kind,
++        profileId: draftCtx.profileId || null,
++        schemaVersion: draftCtx.schemaVersion,
++        revision: draftCtx.revision,
++        targetOwnerId: draftCtx.targetOwnerId || (item && item.id) || null,
++        status: draftCtx.status,
++        submitReviewStatus: draftCtx.submitReviewStatus,
++        values: draftCtx.values || {},
++      });
++    } else if (window.MiraEditorV2 && !editing) {
++      // Explicit new draft identity for this form session.
++      const newId = MiraEditorV2.allocateNewDraftId(kind);
++      MiraEditorV2.bindEditContext(form.id, {
++        clientDraftId: newId,
++        kind: kind,
++        profileId: null,
++        revision: null,
++        targetOwnerId: null,
++        status: 'draft',
++        values: {},
++      });
++    } else if (window.MiraEditorV2 && editing) {
++      MiraEditorV2.bindEditContext(form.id, {
++        clientDraftId: MiraEditorV2.clientDraftIdFor(kind, item.id, form.id),
++        kind: kind,
++        targetOwnerId: item.id,
++        revision: null,
++        values: {},
++      });
++    }
++
+     const developerAccount = Boolean(window.sessionPartner && window.sessionPartner.type === 'developer');
++    const priceLabel =
++      seed.priceHalalas == null || seed.priceHalalas === ''
++        ? 'غير محدد'
++        : (formatPrice(seed.priceHalalas) + ' · ' + seed.priceHalalas + ' هللة');
+     const status = text(form, note || (developerAccount
+       ? 'حساب المطوّر: بعد الاسم والسعر والتصنيف، اختيار الملف يرفع بالنسبة وينشر في التطبيق مباشرة.'
+       : (editing
+-        ? 'مسودة على المعرف نفسه. السعر الظاهر ' + formatPrice(item.priceHalalas) + ' ويخزَّن ' + item.priceHalalas + ' هللة. التعديل لا ينشر قبل اعتماد الإدارة.'
+-        : 'مسودة جديدة. لا يُطلب رابط متجر، والسعر يُكتب بالريال.')));
++        ? 'مسودة على المعرف نفسه. السعر الظاهر ' + priceLabel + '. التعديل لا ينشر قبل اعتماد الإدارة.'
++        : (seedingDraft
++          ? 'مسودة خادمية ' + draftCtx.clientDraftId + ' · rev ' + draftCtx.revision
++          : 'مسودة جديدة. لا يُطلب رابط متجر، والسعر يُكتب بالريال.'))));
+     if (item && item.reviewNote) text(form, 'سبب المراجعة: ' + item.reviewNote);
+     if (item && item.draftNameAr) text(form, 'اسم المسودة: ' + item.draftNameAr + ' · المنشور: ' + (item.nameAr || ''));
++    if (draftCtx && draftCtx.submitReviewStatus) {
++      text(form, 'حالة إرسال المراجعة للمسودة: ' + draftCtx.submitReviewStatus);
++    }
+ 
+     const basics = document.createElement('div');
+     basics.className = 'form-section';
+     text(basics, 'البيانات الأساسية', 'h3');
+     form.appendChild(basics);
+-    const nameAr = field(basics, 'الاسم', 'nameAr', editing ? (item.draftNameAr || item.nameAr) : '', 'text');
+-    field(basics, 'الاسم بالإنجليزية (اختياري)', 'nameEn', editing ? (item.draftNameEn != null ? item.draftNameEn : (item.nameEn || '')) : '', 'text');
+-    field(basics, 'الوصف', 'descriptionAr', editing ? (item.draftDescriptionAr != null ? item.draftDescriptionAr : (item.descriptionAr || '')) : '', 'textarea');
++    const nameSeed = seed.draftNameAr || seed.nameAr || '';
++    const nameAr = field(basics, 'الاسم', 'nameAr', nameSeed, 'text');
++    const nameEn = field(basics, 'الاسم بالإنجليزية (اختياري)', 'nameEn', seed.draftNameEn != null ? seed.draftNameEn : (seed.nameEn || ''), 'text');
++    const descriptionAr = field(basics, 'الوصف', 'descriptionAr', seed.draftDescriptionAr != null ? seed.draftDescriptionAr : (seed.descriptionAr || ''), 'textarea');
+     const categories = type === 'brand'
+       ? PRODUCT_CATEGORIES
+       : (type === 'clinic' ? CLINIC_CATEGORIES : (type === 'salon' ? SALON_CATEGORIES : SERVICE_CATEGORIES));
+-    const category = selectField(basics, 'التصنيف', 'category', editing ? (item.category || '') : '', categories);
+-    const price = field(basics, 'السعر بالريال', 'priceSar', editing ? halalasToInput(item.priceHalalas) : '', 'text');
++    const category = selectField(basics, 'التصنيف', 'category', seed.category || '', categories);
++    const priceSeed =
++      seed.priceHalalas == null || seed.priceHalalas === ''
++        ? ''
++        : halalasToInput(seed.priceHalalas);
++    const price = field(basics, 'السعر بالريال', 'priceSar', priceSeed, 'text');
+     price.inputMode = 'decimal';
+     price.placeholder = '52';
+ 
+     const cosmetic = document.createElement('div');
+-    const skin = field(cosmetic, 'نوع البشرة (اختياري)', 'skinTypes', editing ? (item.skinTypes || []).join(', ') : '', 'text');
+-    const step = field(cosmetic, 'خطوة الروتين (اختياري)', 'stepAr', editing ? (item.stepAr || '') : '', 'text');
++    const skin = field(cosmetic, 'نوع البشرة (اختياري)', 'skinTypes', (seed.skinTypes || []).join ? (seed.skinTypes || []).join(', ') : (seed.skinTypes || ''), 'text');
++    const step = field(cosmetic, 'خطوة الروتين (اختياري)', 'stepAr', seed.stepAr || '', 'text');
+     if (type === 'brand') basics.appendChild(cosmetic);
+ 
+     let duration = null;
+     let bookingToggle = null;
+     let availabilityJson = null;
+     if (type !== 'brand') {
+-      duration = field(basics, 'المدة بالدقائق (اختياري)', 'durationMin', editing && item.durationMin ? item.durationMin : '', 'number');
+-      duration.min = '5';
+-      const partner = window.sessionPartner || {};
++      duration = field(basics, 'المدة بالدقائق (اختياري)', 'durationMin', seed.durationMin != null && seed.durationMin !== '' ? seed.durationMin : '', 'number');
++      duration.min = '5';      const partner = window.sessionPartner || {};
+       text(basics, 'الفرع والمدينة المسجّلة: ' + (partner.city || 'غير مسجّلة') + '. لا توجد إحداثيات فرع.');
+       text(basics, partner.contactPhone ? 'وسيلة التواصل: ' + partner.contactPhone : 'لا توجد وسيلة تواصل مسجّلة على حساب الجهة.');
+       const bookingWrap = document.createElement('label');
+@@ -492,36 +546,78 @@
+     templateSection.append(templateSelect, templateBody, templatePreview);
+     // inserted before media once mediaSection exists
+ 
+-    const templateState = loadServiceTemplateDraft(editing ? item.id : null);
+-
+     function loadServiceTemplateDraft(id) {
+       try {
+-        const raw = localStorage.getItem('mira-service-template:' + (id || 'new'));
+-        if (!raw) return { templateId: '', answers: {}, priceMode: 'fixed' };
+-        return Object.assign({ templateId: '', answers: {}, priceMode: 'fixed' }, JSON.parse(raw));
++        const key = window.MiraEditorV2
++          ? MiraEditorV2.scopedTemplateKey(id || 'new')
++          : ('mira-service-template:' + (id || 'new'));
++        const raw = localStorage.getItem(key);
++        if (!raw) return { templateId: '', answers: {}, priceMode: 'fixed', templateVersion: 1 };
++        return Object.assign({ templateId: '', answers: {}, priceMode: 'fixed', templateVersion: 1 }, JSON.parse(raw));
+       } catch (error) {
+-        return { templateId: '', answers: {}, priceMode: 'fixed' };
++        return { templateId: '', answers: {}, priceMode: 'fixed', templateVersion: 1 };
+       }
+     }
+ 
++    // Prefer server draft profile (loaded before paint) over shared localStorage keys.
++    const templateState = (draftCtx && draftCtx.values && draftCtx.values.serviceProfile)
++      ? Object.assign(
++          { templateId: '', answers: {}, priceMode: 'fixed', templateVersion: 1 },
++          draftCtx.values.serviceProfile,
++        )
++      : loadServiceTemplateDraft(editing ? item.id : null);
++
+     function buildEditorValues() {
+       const values = {};
++      // Preserve blanks: send trimmed strings when present; omit only when empty so draft stays optional.
+       if (nameAr.value.trim()) values.nameAr = nameAr.value.trim();
+       if (category.value) values.category = category.value;
+-      const nameEnEl = form.querySelector('[name="nameEn"]');
+-      if (nameEnEl && nameEnEl.value.trim()) values.nameEn = nameEnEl.value.trim();
+-      const descEl = form.querySelector('[name="descriptionAr"]');
+-      if (descEl && String(descEl.value || '').trim()) values.descriptionAr = String(descEl.value).trim();
+-      if (duration && duration.value) {
++      if (nameEn && nameEn.value.trim()) values.nameEn = nameEn.value.trim();
++      else if (nameEn && nameEn.value === '') {
++        // explicit empty allowed — omit key (full-replace keeps absence)
++      }
++      if (descriptionAr && String(descriptionAr.value || '').trim()) {
++        values.descriptionAr = String(descriptionAr.value).trim();
++      }
++      if (duration && duration.value !== '') {
+         const d = parseInt(duration.value, 10);
+         if (Number.isFinite(d)) values.durationMin = d;
+       }
+       const halalas = typeof riyalsToHalalas === 'function' ? riyalsToHalalas(price.value) : null;
+       if (halalas != null) values.priceHalalas = halalas;
++      if (type === 'brand' && typeof readCommerce === 'function') {
++        const commerce = readCommerce();
++        if (commerce && !commerce.error && commerce.value) {
++          if (commerce.value.purchaseMode) values.purchaseMode = commerce.value.purchaseMode;
++          if (Object.prototype.hasOwnProperty.call(commerce.value, 'stockQty')) {
++            values.stockQty = commerce.value.stockQty;
++          }
++          if (Object.prototype.hasOwnProperty.call(commerce.value, 'deliveryFeeHalalas')) {
++            values.deliveryFeeHalalas = commerce.value.deliveryFeeHalalas;
++          }
++          if (Object.prototype.hasOwnProperty.call(commerce.value, 'optionsJson')) {
++            values.optionsJson = commerce.value.optionsJson;
++          }
++          if (Object.prototype.hasOwnProperty.call(commerce.value, 'variantsJson')) {
++            values.variantsJson = commerce.value.variantsJson;
++          }
++          const opts = commerce.value.optionsJson;
++          if (Array.isArray(opts)) {
++            const colorG = opts.find((g) => g && g.id === 'color');
++            const sizeG = opts.find((g) => g && (g.id === 'size' || g.id === 'sizes'));
++            if (colorG && Array.isArray(colorG.values)) {
++              values.colors = colorG.values.map((v) => v.id).filter(Boolean);
++            }
++            if (sizeG && Array.isArray(sizeG.values)) {
++              values.sizes = sizeG.values.map((v) => v.id).filter(Boolean);
++            }
++          }
++        }
++      }
+       if (type !== 'brand' && templateState && templateState.templateId) {
+         values.serviceProfile = {
+           templateId: templateState.templateId,
+-          templateVersion: 1,
++          templateVersion: templateState.templateVersion || 1,
+           priceMode: templateState.priceMode || 'fixed',
+           answers: templateState.answers || {},
+         };
+@@ -531,25 +627,32 @@
+ 
+     function scheduleEditorDraftAutosave() {
+       if (!(window.MiraEditorV2 && MiraEditorV2.state.enabled)) return;
+-      if (MiraEditorV2.state.registryMismatch) {
++      if (!MiraEditorV2.state.registryReady || MiraEditorV2.state.registryMismatch) {
+         MiraEditorV2.attachStatus(form);
+-        MiraEditorV2.setStatus(form, 'اختلاف سجل الحقول — أوقِف الحفظ', 'error');
++        MiraEditorV2.setStatus(form, 'تعذر التحقق من سجل الحقول — حدّثي الصفحة', 'error');
+         return;
+       }
+       MiraEditorV2.attachStatus(form);
+-      const kind = type === 'brand' ? 'product' : 'service';
+       const partnerType = type === 'brand' ? 'brand' : partnerTypeForTemplates();
++      const ctx = MiraEditorV2.getEditContext(form.id);
++      const clientDraftId =
++        (ctx && ctx.clientDraftId) ||
++        MiraEditorV2.clientDraftIdFor(kind, item && item.id, form.id);
++      const preferredProfile = (ctx && ctx.profileId) || (draftCtx && draftCtx.profileId) || null;
+       MiraEditorV2.scheduleAutosave(form, () => ({
+-        clientDraftId: MiraEditorV2.clientDraftIdFor(kind, item && item.id),
++        clientDraftId: clientDraftId,
+         kind: kind,
+-        profileId: MiraEditorV2.profileIdFor(kind, category.value, partnerType),
+-        targetOwnerId: item && item.id ? item.id : null,
++        profileId: MiraEditorV2.profileIdFor(kind, category.value, partnerType, preferredProfile),
++        targetOwnerId: (ctx && ctx.targetOwnerId) || (item && item.id) || null,
+         values: buildEditorValues(),
+       }));
+     }
+ 
+     function saveServiceTemplateDraft() {
+-      const key = 'mira-service-template:' + ((item && item.id) || 'new');
++      const ownerKey = (item && item.id) || (draftCtx && draftCtx.clientDraftId) || 'new';
++      const key = window.MiraEditorV2
++        ? MiraEditorV2.scopedTemplateKey(ownerKey)
++        : ('mira-service-template:' + ownerKey);
+       localStorage.setItem(key, JSON.stringify(templateState));
+       // Single coordinated path: draft autosave carries serviceProfile (no parallel putServiceProfile race).
+       if (type !== 'brand') scheduleEditorDraftAutosave();
+@@ -805,7 +908,7 @@
+     if (type !== 'brand') paintServiceTemplates();
+ 
+     // Product + service field autosave into PartnerEditorDraft (empty values allowed).
+-    [nameAr, price, category].forEach((el) => {
++    [nameAr, nameEn, descriptionAr, price, category].forEach((el) => {
+       if (!el) return;
+       el.addEventListener('input', scheduleEditorDraftAutosave);
+       el.addEventListener('change', scheduleEditorDraftAutosave);
+@@ -822,26 +925,69 @@
+       matBtn.textContent = 'تحويل المسودة الخادمية وإرسال للمراجعة';
+       matBtn.onclick = async () => {
+         try {
+-          await MiraEditorV2.flush(form);
+-          const kind = type === 'brand' ? 'product' : 'service';
+-          const clientDraftId = MiraEditorV2.clientDraftIdFor(kind, item && item.id);
+-          const draft = await MiraEditorV2.openDraft(clientDraftId);
+-          const key = 'mat:' + clientDraftId + ':' + draft.revision;
+-          const result = await MiraEditorV2.materialize(clientDraftId, draft.revision, true, key);
++          // Ensure latest local edits are queued then confirmed before materialize.
++          scheduleEditorDraftAutosave();
++          const saved = await MiraEditorV2.flushUntilSettled(form);
++          if (!saved || !saved.ok) {
++            status.textContent =
++              'لم يُحوَّل — الحفظ غير مؤكد' +
++              (saved && saved.reason ? ' (' + saved.reason + ')' : '') +
++              '. أصلحي الحفظ أولًا.';
++            return;
++          }
++          const ctx = MiraEditorV2.getEditContext(form.id);
++          const clientDraftId =
++            (ctx && ctx.clientDraftId) ||
++            MiraEditorV2.clientDraftIdFor(kind, item && item.id, form.id);
++          // Use the revision we just confirmed — do not fetch a newer rev to bypass conflict.
++          const expectedRevision =
++            saved.revision != null
++              ? saved.revision
++              : MiraEditorV2.state.draftRevisionByClientId[clientDraftId];
++          if (expectedRevision == null) {
++            status.textContent = 'لا يوجد إصدار محفوظ مؤكد للتحويل.';
++            return;
++          }
++          const resumeKey =
++            sessionStorage.getItem('mira_mat_resume:' + clientDraftId) ||
++            ('mat:' + clientDraftId + ':' + expectedRevision);
++          sessionStorage.setItem('mira_mat_resume:' + clientDraftId, resumeKey);
++          const result = await MiraEditorV2.materialize(
++            clientDraftId,
++            expectedRevision,
++            true,
++            resumeKey,
++          );
++          const reviewOk = result.reviewSubmitted === true || result.submitReviewStatus === 'submitted';
++          const reviewPending =
++            result.submitReviewStatus === 'failed' ||
++            result.code === 'MATERIALIZE_SUBMIT_REVIEW_FAILED';
+           status.textContent =
+             'تم التحويل' +
+-            (result.reviewSubmitted ? ' والإرسال للمراجعة' : '') +
++            (reviewOk ? ' والإرسال للمراجعة' : reviewPending ? ' — العنصر جاهز وإعادة إرسال المراجعة مطلوبة' : '') +
+             ' · ' +
+             (result.targetKind || kind) +
+             ' ' +
+             (result.targetOwnerId || '');
+           if (result.targetOwnerId) {
+             item = Object.assign({}, item || {}, { id: result.targetOwnerId });
++            const bound = MiraEditorV2.getEditContext(form.id);
++            if (bound) {
++              bound.targetOwnerId = result.targetOwnerId;
++              bound.status = 'materialized';
++              bound.submitReviewStatus = result.submitReviewStatus || (reviewOk ? 'submitted' : bound.submitReviewStatus);
++            }
+             MiraEditorV2.clearNewDraftKey(kind);
++            if (reviewOk) sessionStorage.removeItem('mira_mat_resume:' + clientDraftId);
+           }
+           await refreshLists();
+         } catch (error) {
+           status.textContent = 'تعذر التحويل: ' + (error.message || error);
++          if (error && error.fieldErrors && Array.isArray(error.fieldErrors)) {
++            error.fieldErrors.forEach((fe) => {
++              if (fe && fe.fieldId) setFieldError(form, fe.fieldId, fe.code || error.message);
++            });
++          }
+         }
+       };
+       form.appendChild(matBtn);
+@@ -896,7 +1042,8 @@
+     const detail = document.createElement('div');
+     detail.className = 'form-section';
+     text(detail, 'التفاصيل', 'h3');
+-    const tags = field(detail, 'وسوم اختيارية', 'concernTags', editing ? (item.concernTags || []).join(', ') : '', 'text');
++    const tags = field(detail, 'وسوم اختيارية', 'concernTags', (seed.concernTags || []).join ? (seed.concernTags || []).join(', ') : (seed.concernTags || ''), 'text');
++    tags.addEventListener('input', scheduleEditorDraftAutosave);
+     form.appendChild(detail);
+ 
+     const action = document.createElement('div');
+@@ -924,14 +1071,33 @@
+       internalToggle = document.createElement('input');
+       internalToggle.type = 'checkbox';
+       internalToggle.name = 'internalCod';
+-      internalToggle.checked = Boolean(editing && item.purchaseMode === 'internal_cod');
++      internalToggle.checked = Boolean(seed.purchaseMode === 'internal_cod' || (editing && item.purchaseMode === 'internal_cod'));
++      internalToggle.addEventListener('change', scheduleEditorDraftAutosave);
+       internal.append(internalToggle, document.createTextNode(' تفعيل الطلب داخل ميرا (دفع نقدًا عند الاستلام). رابط الشراء الخارجي يبقى للمنتجات الخارجية فقط.'));
+       action.appendChild(internal);
+-      stockInput = field(action, 'المخزون (اتركيه فارغًا إذا لا يُتتبع)', 'stockQty', editing && item.stockQty != null ? item.stockQty : '', 'number');
++      stockInput = field(
++        action,
++        'المخزون (اتركيه فارغًا إذا لا يُتتبع)',
++        'stockQty',
++        seed.stockQty != null ? seed.stockQty : (editing && item.stockQty != null ? item.stockQty : ''),
++        'number',
++      );
+       stockInput.min = '0';
+       stockInput.step = '1';
+-      feeInput = field(action, 'رسوم التوصيل بالريال (اتركيها فارغة إذا غير محددة، ولا تُعرض كمجانية)', 'deliveryFeeSar', editing && item.deliveryFeeHalalas != null ? halalasToInput(item.deliveryFeeHalalas) : '', 'text');
++      stockInput.addEventListener('input', scheduleEditorDraftAutosave);
++      stockInput.addEventListener('change', scheduleEditorDraftAutosave);
++      feeInput = field(
++        action,
++        'رسوم التوصيل بالريال (اتركيها فارغة إذا غير محددة، ولا تُعرض كمجانية)',
++        'deliveryFeeSar',
++        seed.deliveryFeeHalalas != null
++          ? halalasToInput(seed.deliveryFeeHalalas)
++          : (editing && item.deliveryFeeHalalas != null ?halalasToInput(item.deliveryFeeHalalas) : ''),
++        'text',
++      );
+       feeInput.inputMode = 'decimal';
++      feeInput.addEventListener('input', scheduleEditorDraftAutosave);
++      feeInput.addEventListener('change', scheduleEditorDraftAutosave);
+       const advancedWrap = document.createElement('label');
+       advancedWrap.className = 'check-row';
+       const advancedToggle = document.createElement('input');
+@@ -1031,7 +1197,36 @@
+     optionsSection.append(optionsActionBar, optionsBody, optionsPreview);
+     form.insertBefore(optionsSection, mediaSection);
+ 
+-    const optionsState = optionsStateFromServer(editing ? item : null);
++    const optionsSeedRow = (function () {
++      if (editing && item) return item;
++      if (seed && (seed.optionsJson || seed.colors || seed.sizes)) {
++        return {
++          optionsJson: seed.optionsJson || null,
++          variantsJson: seed.variantsJson || null,
++          // synthesize optionsJson groups from colors/sizes when only those are present
++          _colors: seed.colors,
++          _sizes: seed.sizes,
++        };
++      }
++      return null;
++    })();
++    const optionsState = optionsStateFromServer(optionsSeedRow);
++    if ((!optionsState.selected || !Object.keys(optionsState.selected).length) && seed) {
++      if (Array.isArray(seed.colors) && seed.colors.length) {
++        optionsState.selected = optionsState.selected || {};
++        optionsState.selected.color = seed.colors.slice();
++        optionsState.valueIds = optionsState.valueIds || {};
++        optionsState.valueIds.color = optionsState.valueIds.color || {};
++        seed.colors.forEach((id) => { optionsState.valueIds.color[id] = id; });
++      }
++      if (Array.isArray(seed.sizes) && seed.sizes.length) {
++        optionsState.selected = optionsState.selected || {};
++        optionsState.selected.size = seed.sizes.slice();
++        optionsState.valueIds = optionsState.valueIds || {};
++        optionsState.valueIds.size = optionsState.valueIds.size || {};
++        seed.sizes.forEach((id) => { optionsState.valueIds.size[id] = id; });
++      }
++    }
+     /** Snapshot taken immediately before an in-session clear (RC8-01 undo). */
+     let clearUndoSnapshot = null;
+ 
+@@ -1141,7 +1336,9 @@
+     function saveOptionsDraft() {
+       // localStorage is a UI convenience only; authoritative copy is optionsJson on the API.
+       try {
+-        const key = 'mira-product-options:' + ((item && item.id) || 'new');
++        const scope = (window.MiraEditorV2 && MiraEditorV2.state.partnerId) || 'anon';
++        const owner = (item && item.id) || (draftCtx && draftCtx.clientDraftId) || 'new';
++        const key = 'mira-product-options:' + scope + ':' + owner;
+         localStorage.setItem(key, JSON.stringify(optionsState));
+       } catch (error) {}
+     }
+@@ -1528,6 +1725,7 @@
+       if (typeof optionsBody._refreshVariantPickers === 'function') optionsBody._refreshVariantPickers();
+       syncOptionsActionBar();
+       paintOptionsPreview();
++      if (type === 'brand') scheduleEditorDraftAutosave();
+     }
+ 
+     function buildOptionGroups() {
+diff --git a/partners-portal/web/js/editor-v2-isolation.tests.mjs b/partners-portal/web/js/editor-v2-isolation.tests.mjs
+index 8838aae..58aa77d 100644
+--- a/partners-portal/web/js/editor-v2-isolation.tests.mjs
++++ b/partners-portal/web/js/editor-v2-isolation.tests.mjs
+@@ -1,22 +1,27 @@
+ /**
+- * P1 RC2 — account isolation for editor-v2 autosave (no network).
+- * Simulates: A schedules save → switch to B before timer → flush must not send A's payload with B session.
++ * P1 RC3 — account isolation via real PartnersApi.saveSession path (no manual bumpEpoch).
++ * A schedules save → saveSession(B) before timer → zero requests with A's data under B token.
+  */
+ import assert from 'node:assert/strict';
+-import { readFileSync } from 'node:fs';
+-import { createRequire } from 'node:module';
++import fs from 'node:fs';
++import path from 'node:path';
+ import vm from 'node:vm';
+ import { fileURLToPath } from 'node:url';
+-import { dirname, join } from 'node:path';
++import { createRequire } from 'node:module';
+ 
+-const root = dirname(fileURLToPath(import.meta.url));
+-const code = readFileSync(join(root, 'editor-v2.js'), 'utf8');
++const __dirname = path.dirname(fileURLToPath(import.meta.url));
++const require = createRequire(import.meta.url);
++
++function loadScript(filename, sandbox) {
++  const code = fs.readFileSync(path.join(__dirname, filename), 'utf8');
++  vm.runInNewContext(code, sandbox, { filename });
++}
+ 
+ function makeStorage() {
+   const map = new Map();
+   return {
+     getItem: (k) => (map.has(k) ? map.get(k) : null),
+-    setItem: (k, v) => map.set(k, String(v)),
++    setItem: (k, v) => map.set(String(k), String(v)),
+     removeItem: (k) => map.delete(k),
+     clear: () => map.clear(),
+     _map: map,
+@@ -24,124 +29,154 @@ function makeStorage() {
+ }
+ 
+ async function main() {
++  const calls = [];
+   const localStorage = makeStorage();
+   const sessionStorage = makeStorage();
+-  const calls = [];
+-  const PartnersApi = {
+-    registry: async () => ({
+-      editorV2Enabled: true,
+-      registryHash: 'abc',
+-      schemaVersion: 2,
+-    }),
+-    putEditorDraft: async (clientDraftId, payload) => {
+-      calls.push({
+-        tokenPartner: localStorage.getItem('mira_partner_id'),
+-        clientDraftId,
+-        payload,
+-      });
+-      return { revision: 1 };
+-    },
+-  };
++  const listeners = Object.create(null);
++
+   const sandbox = {
+-    window: {
+-      addEventListener: () => {},
+-      sessionPartner: { id: 'partner-A', type: 'salon' },
+-      PartnersApi,
+-    },
++    console,
+     localStorage,
+     sessionStorage,
+-    crypto: { randomUUID: () => 'uuid-test' },
++    URLSearchParams,
++    crypto: { randomUUID: () => 'test-uuid' },
++    window: null,
++    document: { querySelector: () => null },
++    location: { hostname: '127.0.0.1', search: '', href: 'http://127.0.0.1/dashboard.html' },
++    fetch: async () => ({ ok: true, arrayBuffer: async () => new ArrayBuffer(8), json: async () => ({}) }),
+     AbortController: class {
+-      abort() {}
++      constructor() {
++        this.signal = { aborted: false, addEventListener() {} };
++        this._reason = null;
++      }
++      abort(reason) {
++        this.signal.aborted = true;
++        this._reason = reason;
++      }
++    },
++    CustomEvent: class {
++      constructor(type, init) {
++        this.type = type;
++        this.detail = init && init.detail;
++      }
+     },
+-    PartnersApi,
+-    console,
+     setTimeout: (fn) => {
+-      // run immediately for tests that call flush; scheduleAutosave uses real timer — override below
+-      return 1;
++      // Deferred; tests call flush / advance manually via Promise microtasks after saveSession.
++      sandbox.__timers.push(fn);
++      return sandbox.__timers.length;
+     },
+     clearTimeout: () => {},
++    addEventListener: (type, fn) => {
++      listeners[type] = listeners[type] || [];
++      listeners[type].push(fn);
++    },
+   };
+-  // deterministic timers
+-  const timers = [];
+-  sandbox.setTimeout = (fn, ms) => {
+-    const id = timers.length + 1;
+-    timers.push({ id, fn, ms });
+-    return id;
++  sandbox.window = sandbox;
++  sandbox.__timers = [];
++  sandbox.window.addEventListener = sandbox.addEventListener;
++  sandbox.window.dispatchEvent = (ev) => {
++    (listeners[ev.type] || []).forEach((fn) => fn(ev));
++    return true;
+   };
+-  sandbox.clearTimeout = (id) => {
+-    const i = timers.findIndex((t) => t.id === id);
+-    if (i >= 0) timers.splice(i, 1);
++
++  loadScript('api.js', sandbox);
++  const { PartnersApi } = sandbox.window;
++  assert.ok(PartnersApi);
++
++  // Replace putEditorDraft to record calls with live token/auth gen.
++  PartnersApi.putEditorDraft = async (clientDraftId, payload) => {
++    calls.push({
++      clientDraftId,
++      payload,
++      token: localStorage.getItem('mira_partner_token'),
++      partnerId: localStorage.getItem('mira_partner_id'),
++      authGeneration: PartnersApi.authGeneration(),
++    });
++    return { revision: 1, clientDraftId };
+   };
+ 
+-  vm.createContext(sandbox);
+-  vm.runInContext(code, sandbox);
++  loadScript('editor-v2.js', sandbox);
+   const E = sandbox.window.MiraEditorV2;
+   assert.ok(E);
+ 
++  // Session A
++  PartnersApi.saveSession('a@example.com', 'token-A-aaaaaaaa');
+   localStorage.setItem('mira_partner_id', 'partner-A');
+-  localStorage.setItem('mira_partner_email', 'a@test.local');
+-  await E.bootstrap({ id: 'partner-A', type: 'salon' });
+-  assert.equal(E.state.enabled, true);
+-
+-  const form = { id: 'serviceForm', querySelector: () => null };
+-  let builtFor = null;
+-  E.scheduleAutosave(form, () => {
+-    builtFor = E.state.partnerId;
+-    return {
+-      clientDraftId: 'draft-A',
+-      kind: 'service',
+-      profileId: 'service.salon_hair_cut',
+-      values: { nameAr: 'من حساب A' },
+-      targetOwnerId: null,
+-    };
+-  });
+-  assert.equal(timers.length, 1);
+-
+-  // Switch account before timer fires
++  E.state.enabled = true;
++  E.state.registryReady = true;
++  E.state.registryMismatch = false;
++  E.state.partnerId = 'partner-A';
++  E.state.sessionEpoch = 1;
++  sessionStorage.setItem('mira_editor_v2_session_epoch', '1');
++  E.state.authGeneration = PartnersApi.authGeneration();
++  E.state.tokenFingerprint = PartnersApi.authTokenFingerprint();
++
++  const form = {
++    id: 'catalogForm',
++    querySelector: () => null,
++    insertBefore: () => {},
++    firstChild: null,
++  };
++
++  E.scheduleAutosave(form, () => ({
++    clientDraftId: 'draft-A',
++    kind: 'product',
++    profileId: 'product.clothes',
++    targetOwnerId: null,
++    values: { nameAr: 'منتج A' },
++  }));
++  assert.equal(sandbox.__timers.length, 1);
++
++  // Real auth path: B logs in via saveSession (clears partner id, bumps auth gen, cancels pending).
++  PartnersApi.saveSession('b@example.com', 'token-B-bbbbbbbb');
++  // Stale partner id must not remain authoritative; saveSession cleared it.
++  assert.equal(localStorage.getItem('mira_partner_id'), null);
++  // Simulate late metadata for B (after auth switch).
+   localStorage.setItem('mira_partner_id', 'partner-B');
+-  localStorage.setItem('mira_partner_email', 'b@test.local');
+-  E.bumpEpoch('test-switch');
+-  await E.bootstrap({ id: 'partner-B', type: 'salon' });
+-
+-  // Fire leftover timer if any — should no-op or cancel
+-  while (timers.length) {
+-    const t = timers.shift();
+-    await t.fn();
+-  }
++  E.state.partnerId = 'partner-B';
++  E.state.enabled = true;
++  E.state.registryReady = true;
++  E.state.authGeneration = PartnersApi.authGeneration();
++  E.state.tokenFingerprint = PartnersApi.authTokenFingerprint();
+ 
+-  assert.equal(calls.length, 0, 'must not send A payload after switch to B');
+-  assert.equal(builtFor, null);
++  // Fire deferred A timer — must not send.
++  for (const fn of sandbox.__timers.splice(0)) {
++    await fn();
++  }
++  assert.equal(calls.length, 0, 'A payload must not ride B session');
+ 
+-  // Stale response discard: schedule under B, capture snapshot, switch away before await resolves
++  // Stale response discard: schedule B, start flush, switch auth mid-flight.
+   let resolvePut;
+-  PartnersApi.putEditorDraft = () =>
+-    new Promise((resolve) => {
+-      resolvePut = () => resolve({ revision: 9 });
++  const putPromise = new Promise((r) => { resolvePut = r; });
++  PartnersApi.putEditorDraft = async (clientDraftId, payload) => {
++    calls.push({
++      phase: 'inflight',
++      clientDraftId,
++      token: localStorage.getItem('mira_partner_token'),
++      authGeneration: PartnersApi.authGeneration(),
+     });
++    await putPromise;
++    return { revision: 2, clientDraftId };
++  };
++
+   E.scheduleAutosave(form, () => ({
+     clientDraftId: 'draft-B',
+-    kind: 'service',
+-    profileId: 'service.salon_hair_cut',
+-    values: { nameAr: 'من حساب B' },
++    kind: 'product',
++    profileId: 'product.clothes',
++    values: { nameAr: 'منتج B' },
+   }));
+-  const flushPromise = (async () => {
+-    while (timers.length) {
+-      const t = timers.shift();
+-      await t.fn();
+-    }
+-  })();
+-  // switch before response
+-  localStorage.setItem('mira_partner_id', 'partner-A');
+-  E.bumpEpoch('switch-during-inflight');
+-  resolvePut();
+-  await flushPromise;
+-  assert.equal(E.state.draftRevisionByClientId['draft-B'], undefined);
++  const flushP = E.flush(form);
++  // Switch to C while B request in flight via real saveSession.
++  PartnersApi.saveSession('c@example.com', 'token-C-cccccccc');
++  resolvePut({ revision: 2 });
++  const result = await flushP;
++  assert.equal(result.ok, false);
++  assert.ok(result.cancelled || result.reason === 'stale-response' || result.reason === 'auth-changed' || result.reason === 'aborted');
+ 
+-  console.log(JSON.stringify({ ok: true, calls: calls.length }, null, 2));
++  console.log(JSON.stringify({ ok: true, calls: calls.filter((c) => c.clientDraftId === 'draft-A').length, totalCalls: calls.length }));
+ }
+ 
+-main().catch((error) => {
+-  console.error(error);
++main().catch((e) => {
++  console.error(e);
+   process.exit(1);
+ });
+diff --git a/partners-portal/web/js/editor-v2.js b/partners-portal/web/js/editor-v2.js
+index 6cb1fb8..95fc21f 100644
+--- a/partners-portal/web/js/editor-v2.js
++++ b/partners-portal/web/js/editor-v2.js
+@@ -1,11 +1,12 @@
+ /**
+- * Partner editor v2 — server drafts autosave with partner/session isolation (P1 RC2).
++ * Partner editor v2 — server drafts with auth-generation isolation (P1 RC3).
+  * Server flag owns activation; query params cannot enable a disabled flag.
+  */
+ (function () {
+   const PARTNER_ID_KEY = 'mira_partner_id';
+   const ACCOUNT_KEY = 'mira_partner_email';
+   const EPOCH_KEY = 'mira_editor_v2_session_epoch';
++  const REGISTRY_URL = 'js/field-registry.v2.json';
+ 
+   const state = {
+     enabled: false,
+@@ -16,13 +17,18 @@
+     partnerId: null,
+     accountEmail: null,
+     sessionEpoch: 0,
++    authGeneration: 0,
++    tokenFingerprint: null,
+     registryMismatch: false,
++    registryReady: false,
+     draftRevisionByClientId: Object.create(null),
++    editContexts: Object.create(null),
+     timers: Object.create(null),
+     inflight: Object.create(null),
+     pending: Object.create(null),
+     seq: Object.create(null),
+     abortByForm: Object.create(null),
++    lastFlushResult: Object.create(null),
+   };
+ 
+   function readEpoch() {
+@@ -42,6 +48,16 @@
+     return localStorage.getItem(PARTNER_ID_KEY) || (window.sessionPartner && window.sessionPartner.id) || null;
+   }
+ 
++  function currentAuthSnapshot() {
++    const gen = window.PartnersApi && typeof PartnersApi.authGeneration === 'function'
++      ? PartnersApi.authGeneration()
++      : 0;
++    const fp = window.PartnersApi && typeof PartnersApi.authTokenFingerprint === 'function'
++      ? PartnersApi.authTokenFingerprint()
++      : null;
++    return { authGeneration: gen, tokenFingerprint: fp };
++  }
++
+   function statusEl(form) {
+     return (form && form.querySelector('[data-editor-v2-status]')) || null;
+   }
+@@ -69,10 +85,69 @@
+     if (snapshot.sessionEpoch !== state.sessionEpoch) return false;
+     if (snapshot.partnerId !== state.partnerId) return false;
+     if (currentPartnerId() !== snapshot.partnerId) return false;
++    const auth = currentAuthSnapshot();
++    if (snapshot.authGeneration !== auth.authGeneration) return false;
++    if (snapshot.tokenFingerprint !== auth.tokenFingerprint) return false;
++    if (!auth.tokenFingerprint) return false;
+     return true;
+   }
+ 
+-  function clientDraftIdFor(kind, itemId) {
++  function captureSessionSnapshot() {
++    const auth = currentAuthSnapshot();
++    return {
++      partnerId: state.partnerId,
++      sessionEpoch: state.sessionEpoch,
++      authGeneration: auth.authGeneration,
++      tokenFingerprint: auth.tokenFingerprint,
++    };
++  }
++
++  function hexSha256(buffer) {
++    return Array.from(new Uint8Array(buffer))
++      .map((b) => b.toString(16).padStart(2, '0'))
++      .join('');
++  }
++
++  async function computeLocalRegistryHash() {
++    if (window.MiraFieldRegistryLocalHash) return window.MiraFieldRegistryLocalHash;
++    const res = await fetch(REGISTRY_URL, { cache: 'no-store' });
++    if (!res.ok) throw new Error('تعذر تحميل سجل الحقول المحلي');
++    const buf = await res.arrayBuffer();
++    if (!window.crypto || !crypto.subtle) throw new Error('تعذر حساب بصمة السجل');
++    const digest = await crypto.subtle.digest('SHA-256', buf);
++    const hash = hexSha256(digest);
++    window.MiraFieldRegistryLocalHash = hash;
++    return hash;
++  }
++
++  function bindEditContext(formId, ctx) {
++    if (!formId || !ctx || !ctx.clientDraftId) return null;
++    state.editContexts[formId] = {
++      clientDraftId: ctx.clientDraftId,
++      kind: ctx.kind,
++      profileId: ctx.profileId || null,
++      schemaVersion: ctx.schemaVersion || state.schemaVersion,
++      revision: ctx.revision == null ? null : ctx.revision,
++      targetOwnerId: ctx.targetOwnerId || null,
++      status: ctx.status || 'draft',
++      submitReviewStatus: ctx.submitReviewStatus || null,
++      values: ctx.values || {},
++    };
++    if (ctx.revision != null) state.draftRevisionByClientId[ctx.clientDraftId] = ctx.revision;
++    return state.editContexts[formId];
++  }
++
++  function getEditContext(formId) {
++    return state.editContexts[formId || 'default'] || null;
++  }
++
++  function clearEditContext(formId) {
++    delete state.editContexts[formId || 'default'];
++  }
++
++  function clientDraftIdFor(kind, itemId, formId) {
++    const ctx = formId ? getEditContext(formId) : null;
++    if (ctx && ctx.clientDraftId && (!ctx.kind || ctx.kind === kind)) return ctx.clientDraftId;
+     if (itemId) return 'owner:' + kind + ':' + itemId;
+     const scope = state.partnerId || 'anon';
+     const key = 'mira_editor_v2_new_' + scope + '_' + kind;
+@@ -84,12 +159,26 @@
+     return id;
+   }
+ 
++  function allocateNewDraftId(kind) {
++    const scope = state.partnerId || 'anon';
++    const key = 'mira_editor_v2_new_' + scope + '_' + kind;
++    const id = 'new:' + scope + ':' + kind + ':' + (crypto.randomUUID ? crypto.randomUUID() : String(Date.now()) + Math.random());
++    sessionStorage.setItem(key, id);
++    return id;
++  }
++
+   function clearNewDraftKey(kind) {
+     const scope = state.partnerId || 'anon';
+     sessionStorage.removeItem('mira_editor_v2_new_' + scope + '_' + kind);
+   }
+ 
+-  function profileIdFor(kind, category, partnerType) {
++  function scopedTemplateKey(ownerOrNew) {
++    const scope = state.partnerId || 'anon';
++    return 'mira-service-template:' + scope + ':' + (ownerOrNew || 'new');
++  }
++
++  function profileIdFor(kind, category, partnerType, preferred) {
++    if (preferred) return preferred;
+     if (kind === 'product') {
+       const map = {
+         clothes: 'product.clothes',
+@@ -114,136 +203,257 @@
+     return partnerType === 'clinic' ? 'service.clinic.generic' : 'service.salon.generic';
+   }
+ 
++  function onAuthChange(ev) {
++    const detail = (ev && ev.detail) || {};
++    bumpEpoch('auth-change:' + (detail.reason || ''));
++    state.partnerId = null;
++    state.accountEmail = localStorage.getItem(ACCOUNT_KEY);
++    state.authGeneration = currentAuthSnapshot().authGeneration;
++    state.tokenFingerprint = currentAuthSnapshot().tokenFingerprint;
++    state.draftRevisionByClientId = Object.create(null);
++    state.editContexts = Object.create(null);
++    state.enabled = false;
++    state.registryReady = false;
++  }
++
++  window.addEventListener('mira:auth-change', onAuthChange);
++
+   async function bootstrap(partner) {
+-    const nextPartnerId = partner && partner.id ? partner.id : currentPartnerId();
++    const auth = currentAuthSnapshot();
++    state.authGeneration = auth.authGeneration;
++    state.tokenFingerprint = auth.tokenFingerprint;
++    const nextPartnerId = partner && partner.id ? partner.id : null;
+     const nextEmail = localStorage.getItem(ACCOUNT_KEY);
+     if (state.partnerId && nextPartnerId && state.partnerId !== nextPartnerId) {
+       bumpEpoch('partner-switch');
+       state.draftRevisionByClientId = Object.create(null);
++      state.editContexts = Object.create(null);
+     } else if (!nextPartnerId && state.partnerId) {
+       bumpEpoch('logout');
+       state.draftRevisionByClientId = Object.create(null);
++      state.editContexts = Object.create(null);
+     }
++    // Never trust a stale mira_partner_id alone — only bind after partner payload arrives.
+     state.partnerId = nextPartnerId;
+     state.accountEmail = nextEmail;
+     state.partnerType = partner && partner.type ? partner.type : null;
+     state.sessionEpoch = readEpoch() || bumpEpoch('boot');
+     if (nextPartnerId) localStorage.setItem(PARTNER_ID_KEY, nextPartnerId);
++    else try { localStorage.removeItem(PARTNER_ID_KEY); } catch (e) {}
++
+     if (!window.PartnersApi || typeof PartnersApi.registry !== 'function') {
+       state.enabled = false;
++      state.registryReady = false;
+       return state;
+     }
+     try {
+-      const meta = await PartnersApi.registry();
+-      if (currentPartnerId() !== state.partnerId) return state;
+-      state.enabled = meta.editorV2Enabled === true;
++      const snap = captureSessionSnapshot();
++      const [meta, localHash] = await Promise.all([
++        PartnersApi.registry(),
++        computeLocalRegistryHash(),
++      ]);
++      if (!assertSameSession(snap) && snap.partnerId) {
++        // Auth changed while loading registry — stay disabled.
++        state.enabled = false;
++        state.registryReady = false;
++        return state;
++      }
++      // Re-check partner still matches bootstrap target.
++      if (nextPartnerId && currentPartnerId() !== nextPartnerId) {
++        state.enabled = false;
++        return state;
++      }
++      state.localRegistryHash = localHash;
+       state.registryHash = meta.registryHash || null;
+       state.schemaVersion = meta.schemaVersion || 2;
+-      state.localRegistryHash = window.MiraFieldRegistryLocalHash || null;
+       state.registryMismatch = Boolean(
+         state.localRegistryHash && state.registryHash && state.localRegistryHash !== state.registryHash,
+       );
+-      if (state.registryMismatch) {
+-        state.enabled = false;
+-      }
++      state.registryReady = Boolean(state.localRegistryHash && state.registryHash);
++      const flagOn = meta.editorV2Enabled === true;
++      state.enabled = flagOn && state.registryReady && !state.registryMismatch && !!state.partnerId && !!auth.tokenFingerprint;
+     } catch (error) {
+       state.enabled = false;
++      state.registryReady = false;
++      state.registryMismatch = true;
+     }
+     return state;
+   }
+ 
+   function onStorage(ev) {
+     if (!ev) return;
+-    if (ev.key === PARTNER_ID_KEY || ev.key === 'mira_partner_token' || ev.key === ACCOUNT_KEY) {
+-      const pid = currentPartnerId();
+-      if (pid !== state.partnerId) {
+-        bumpEpoch('storage-partner-change');
+-        state.partnerId = pid;
+-        state.accountEmail = localStorage.getItem(ACCOUNT_KEY);
+-        state.draftRevisionByClientId = Object.create(null);
+-        state.enabled = false;
+-      }
++    if (ev.key === 'mira_partner_token' || ev.key === ACCOUNT_KEY || ev.key === PARTNER_ID_KEY) {
++      // Cross-tab auth change: cancel immediately; do not trust leftover partner id.
++      bumpEpoch('storage-auth-change');
++      state.partnerId = null;
++      state.accountEmail = localStorage.getItem(ACCOUNT_KEY);
++      state.authGeneration = currentAuthSnapshot().authGeneration;
++      state.tokenFingerprint = currentAuthSnapshot().tokenFingerprint;
++      state.draftRevisionByClientId = Object.create(null);
++      state.editContexts = Object.create(null);
++      state.enabled = false;
+       if (!localStorage.getItem('mira_partner_token')) {
+-        bumpEpoch('logout-storage');
+-        state.enabled = false;
+-        state.partnerId = null;
++        try { localStorage.removeItem(PARTNER_ID_KEY); } catch (e) {}
+       }
+     }
+   }
+   window.addEventListener('storage', onStorage);
+ 
+   function scheduleAutosave(form, payloadBuilder) {
+-    if (!state.enabled || state.registryMismatch) {
++    if (!state.registryReady || state.registryMismatch) {
++      setStatus(form, 'تعذر التحقق من سجل الحقول — حدّثي الصفحة قبل الحفظ', 'error');
++      return;
++    }
++    if (!state.enabled) {
+       if (state.registryMismatch) setStatus(form, 'اختلاف سجل الحقول — أوقِف الحفظ لمنع فقد البيانات', 'error');
+       return;
+     }
+-    if (!state.partnerId) return;
++    if (!state.partnerId || !currentAuthSnapshot().tokenFingerprint) return;
+     const formId = form.id || 'default';
+-    const snapshot = {
+-      partnerId: state.partnerId,
+-      sessionEpoch: state.sessionEpoch,
+-      formId: formId,
+-    };
++    const snapshot = captureSessionSnapshot();
++    snapshot.formId = formId;
+     state.seq[formId] = (state.seq[formId] || 0) + 1;
+     const mySeq = state.seq[formId];
+     state.pending[formId] = { builder: payloadBuilder, snapshot: snapshot, seq: mySeq };
++    state.lastFlushResult[formId] = { ok: false, pending: true, seq: mySeq };
+     setStatus(form, 'جارٍ الحفظ…', 'saving');
+     clearTimeout(state.timers[formId]);
+     state.timers[formId] = setTimeout(() => flush(form, mySeq), 650);
+   }
+ 
+   async function flush(form, expectedSeq) {
+-    if (!state.enabled) return;
+     const formId = form.id || 'default';
++    const empty = { ok: false, cancelled: true, formId: formId };
++    if (!state.enabled) {
++      state.lastFlushResult[formId] = Object.assign({}, empty, { reason: 'disabled' });
++      return state.lastFlushResult[formId];
++    }
+     const pending = state.pending[formId];
+-    if (!pending) return;
+-    if (expectedSeq != null && pending.seq !== expectedSeq) return;
++    if (!pending) {
++      const last = state.lastFlushResult[formId];
++      if (last && last.ok && last.seq === state.seq[formId]) return last;
++      state.lastFlushResult[formId] = Object.assign({}, empty, { reason: 'nothing-pending' });
++      return state.lastFlushResult[formId];
++    }
++    if (expectedSeq != null && pending.seq !== expectedSeq) {
++      state.lastFlushResult[formId] = Object.assign({}, empty, { reason: 'stale-seq' });
++      return state.lastFlushResult[formId];
++    }
+     if (!assertSameSession(pending.snapshot)) {
+       delete state.pending[formId];
+       setStatus(form, 'أُلغي الحفظ — تغيّر الحساب', 'error');
+-      return;
++      state.lastFlushResult[formId] = { ok: false, cancelled: true, reason: 'auth-changed', formId: formId };
++      return state.lastFlushResult[formId];
+     }
+     if (state.inflight[formId]) {
+       state.timers[formId] = setTimeout(() => flush(form, pending.seq), 400);
+-      return;
++      return { ok: false, pending: true, reason: 'inflight', formId: formId };
+     }
+     const built = pending.builder();
+-    if (!built) return;
++    if (!built || !built.clientDraftId) {
++      state.lastFlushResult[formId] = { ok: false, reason: 'empty-payload', formId: formId };
++      return state.lastFlushResult[formId];
++    }
+     built._session = pending.snapshot;
+     state.inflight[formId] = true;
+     const controller = typeof AbortController !== 'undefined' ? new AbortController() : null;
+     if (controller) state.abortByForm[formId] = controller;
++    const mySeq = pending.seq;
+     try {
+       const currentRev = state.draftRevisionByClientId[built.clientDraftId];
+-      const saved = await PartnersApi.putEditorDraft(built.clientDraftId, {
+-        expectedRevision: currentRev == null ? null : currentRev,
+-        kind: built.kind,
+-        profileId: built.profileId,
+-        schemaVersion: state.schemaVersion,
+-        values: built.values || {},
+-        targetOwnerId: built.targetOwnerId || null,
+-      });
+-      if (!assertSameSession(built._session) || currentPartnerId() !== built._session.partnerId) {
++      const saved = await PartnersApi.putEditorDraft(
++        built.clientDraftId,
++        {
++          expectedRevision: currentRev == null ? null : currentRev,
++          kind: built.kind,
++          profileId: built.profileId,
++          schemaVersion: state.schemaVersion,
++          values: built.values || {},
++          targetOwnerId: built.targetOwnerId || null,
++        },
++        { signal: controller ? controller.signal : undefined },
++      );
++      if (!assertSameSession(built._session)) {
+         setStatus(form, 'تُجاهلت استجابة قديمة بعد تبديل الحساب', 'error');
+-        return;
++        state.lastFlushResult[formId] = { ok: false, cancelled: true, reason: 'stale-response', formId: formId };
++        return state.lastFlushResult[formId];
++      }
++      if (state.seq[formId] !== mySeq) {
++        // Newer edit landed while this request was in flight — not a confirmed save of current values.
++        state.lastFlushResult[formId] = { ok: false, pending: true, reason: 'superseded', formId: formId, revision: saved.revision };
++        state.draftRevisionByClientId[built.clientDraftId] = saved.revision;
++        return state.lastFlushResult[formId];
+       }
+       state.draftRevisionByClientId[built.clientDraftId] = saved.revision;
+-      if (state.seq[formId] === pending.seq) setStatus(form, 'محفوظ', 'saved');
+-      if (state.pending[formId] && state.pending[formId].seq === pending.seq) delete state.pending[formId];
++      const ctx = getEditContext(formId);
++      if (ctx && ctx.clientDraftId === built.clientDraftId) ctx.revision = saved.revision;
++      setStatus(form, 'محفوظ', 'saved');
++      if (state.pending[formId] && state.pending[formId].seq === mySeq) delete state.pending[formId];
++      state.lastFlushResult[formId] = {
++        ok: true,
++        revision: saved.revision,
++        clientDraftId: built.clientDraftId,
++        seq: mySeq,
++        formId: formId,
++      };
++      return state.lastFlushResult[formId];
+     } catch (error) {
+-      if (!assertSameSession(built._session)) return;
++      if (error && error.name === 'AbortError') {
++        state.lastFlushResult[formId] = { ok: false, cancelled: true, reason: 'aborted', formId: formId };
++        return state.lastFlushResult[formId];
++      }
++      if (!assertSameSession(built._session)) {
++        state.lastFlushResult[formId] = { ok: false, cancelled: true, reason: 'auth-changed', formId: formId };
++        return state.lastFlushResult[formId];
++      }
+       const msg = String(error && error.message ? error.message : error);
+-      if (/تعارض|REVISION|409/.test(msg)) setStatus(form, 'تعارض تعديل — أعدي فتح المسودة من الخادم', 'conflict');
++      if (/تعارض|REVISION|409/.test(msg)) setStatus(form, 'تعارض تعديل — احفظي محليًا ثم أعيدي التحميل بقرار صريح', 'conflict');
+       else setStatus(form, 'تعذر الحفظ — التعديلات ما زالت محليًا', 'error');
++      state.lastFlushResult[formId] = {
++        ok: false,
++        error: error,
++        fieldErrors: error && error.fieldErrors,
++        reason: 'save-failed',
++        formId: formId,
++        seq: mySeq,
++      };
++      return state.lastFlushResult[formId];
+     } finally {
++      // Only clear inflight/abort for this generation.
++      if (state.abortByForm[formId] === controller) delete state.abortByForm[formId];
+       state.inflight[formId] = false;
+-      delete state.abortByForm[formId];
+-      if (state.pending[formId] && state.seq[formId] !== pending.seq) {
++      if (state.pending[formId] && state.seq[formId] !== mySeq) {
+         flush(form, state.seq[formId]);
+       }
+     }
+   }
+ 
++  /** Flush until pending queue for form is empty or failure. */
++  async function flushUntilSettled(form, maxRounds) {
++    const formId = form.id || 'default';
++    let rounds = maxRounds == null ? 8 : maxRounds;
++    let last = state.lastFlushResult[formId] || { ok: false };
++    while (rounds-- > 0) {
++      if (state.pending[formId] || state.inflight[formId]) {
++        last = await flush(form, state.seq[formId]);
++        if (last && last.ok === false && !last.pending && !last.cancelled) return last;
++        if (last && last.pending) {
++          await new Promise((r) => setTimeout(r, 50));
++          continue;
++        }
++        continue;
++      }
++      // Catch edits that arrived during last flush.
++      if (state.pending[formId]) continue;
++      return last.ok
++        ? last
++        : (state.lastFlushResult[formId] && state.lastFlushResult[formId].ok
++          ? state.lastFlushResult[formId]
++          : last);
++    }
++    return { ok: false, reason: 'flush-timeout', formId: formId };
++  }
++
+   function attachStatus(form) {
+     if (!form || form.querySelector('[data-editor-v2-status]')) return;
+     const el = document.createElement('p');
+@@ -253,26 +463,31 @@
+     form.insertBefore(el, form.firstChild);
+   }
+ 
+-  async function listDrafts() {
++  async function listDrafts(opts) {
+     if (!state.enabled) throw new Error('محرر v2 غير مفعّل');
+-    return PartnersApi.listEditorDrafts();
++    const snap = captureSessionSnapshot();
++    const data = await PartnersApi.listEditorDrafts(null, opts);
++    if (!assertSameSession(snap)) throw new Error('تبديل حساب أثناء القائمة');
++    return data;
+   }
+ 
+-  async function openDraft(clientDraftId) {
++  async function openDraft(clientDraftId, opts) {
+     if (!state.enabled) throw new Error('محرر v2 غير مفعّل');
+-    const draft = await PartnersApi.getEditorDraft(clientDraftId);
+-    if (currentPartnerId() !== state.partnerId) throw new Error('تبديل حساب أثناء الفتح');
++    const snap = captureSessionSnapshot();
++    const draft = await PartnersApi.getEditorDraft(clientDraftId, opts);
++    if (!assertSameSession(snap)) throw new Error('تبديل حساب أثناء الفتح');
+     state.draftRevisionByClientId[clientDraftId] = draft.revision;
+     return draft;
+   }
+ 
+-  async function materialize(clientDraftId, expectedRevision, submitReview, idempotencyKey) {
++  async function materialize(clientDraftId, expectedRevision, submitReview, idempotencyKey, opts) {
+     if (!state.enabled) throw new Error('محرر v2 غير مفعّل');
+-    const snap = { partnerId: state.partnerId, sessionEpoch: state.sessionEpoch };
++    const snap = captureSessionSnapshot();
+     const result = await PartnersApi.materializeEditorDraft(
+       clientDraftId,
+       { expectedRevision: expectedRevision, submitReview: !!submitReview },
+       idempotencyKey,
++      opts,
+     );
+     if (!assertSameSession(snap)) throw new Error('تبديل حساب أثناء التحويل');
+     if (result && result.kind) clearNewDraftKey(result.targetKind || result.kind);
+@@ -284,7 +499,7 @@
+   async function importLocalTemplateInteractive(serviceId, localState) {
+     if (!state.enabled) throw new Error('محرر v2 غير مفعّل على الخادم');
+     if (!serviceId) throw new Error('يلزم حفظ الخدمة قبل الاستيراد إلى الخادم');
+-    const snap = { partnerId: state.partnerId, sessionEpoch: state.sessionEpoch };
++    const snap = captureSessionSnapshot();
+     const current = await PartnersApi.getServiceProfile(serviceId);
+     if (!assertSameSession(snap)) throw new Error('تبديل حساب أثناء الاستيراد');
+     const preview = {
+@@ -336,7 +551,7 @@
+ 
+   async function pushServiceProfile(serviceId, templateState, expectedRevision) {
+     if (!state.enabled || !serviceId || !templateState || !templateState.templateId) return null;
+-    const snap = { partnerId: state.partnerId, sessionEpoch: state.sessionEpoch };
++    const snap = captureSessionSnapshot();
+     const result = await PartnersApi.putServiceProfile(serviceId, {
+       expectedRevision: expectedRevision,
+       templateId: templateState.templateId,
+@@ -348,7 +563,6 @@
+     return result;
+   }
+ 
+-  /** Test seam: expose isolation helpers without secrets. */
+   function __testHooks() {
+     return {
+       state: state,
+@@ -357,6 +571,8 @@
+       assertSameSession: assertSameSession,
+       scheduleAutosave: scheduleAutosave,
+       flush: flush,
++      captureSessionSnapshot: captureSessionSnapshot,
++      onAuthChange: onAuthChange,
+     };
+   }
+ 
+@@ -369,8 +585,14 @@
+       const formId = form.id || 'default';
+       return flush(form, state.seq[formId]);
+     },
++    flushUntilSettled: flushUntilSettled,
+     clientDraftIdFor: clientDraftIdFor,
++    allocateNewDraftId: allocateNewDraftId,
+     clearNewDraftKey: clearNewDraftKey,
++    bindEditContext: bindEditContext,
++    getEditContext: getEditContext,
++    clearEditContext: clearEditContext,
++    scopedTemplateKey: scopedTemplateKey,
+     profileIdFor: profileIdFor,
+     importLocalTemplateInteractive: importLocalTemplateInteractive,
+     pushServiceProfile: pushServiceProfile,

@@ -1,6 +1,7 @@
 import 'package:flutter/foundation.dart';
 
 import '../data/catalog_provenance.dart';
+import '../data/discover_catalog_facets.dart';
 import '../data/discover_catalog_gateway.dart';
 import '../data/discover_catalog_query.dart';
 import '../data/discover_published_ad.dart';
@@ -22,6 +23,9 @@ class DiscoverFeedState {
     this.loadMoreError,
     this.loadError,
     this.replacement = 0,
+    this.facets = DiscoverCatalogFacets.empty,
+    this.totalMatched,
+    this.queryFingerprint,
   });
 
   final DiscoverFeedPhase phase;
@@ -37,6 +41,9 @@ class DiscoverFeedState {
   final String? loadMoreError;
   final String? loadError;
   final int replacement;
+  final DiscoverCatalogFacets facets;
+  final int? totalMatched;
+  final String? queryFingerprint;
 
   DiscoverFeedState copyWith({
     DiscoverFeedPhase? phase,
@@ -52,9 +59,13 @@ class DiscoverFeedState {
     String? loadMoreError,
     String? loadError,
     int? replacement,
+    DiscoverCatalogFacets? facets,
+    int? totalMatched,
+    String? queryFingerprint,
     bool clearCursor = false,
     bool clearLoadMoreError = false,
     bool clearLoadError = false,
+    bool clearTotalMatched = false,
   }) {
     return DiscoverFeedState(
       phase: phase ?? this.phase,
@@ -70,6 +81,9 @@ class DiscoverFeedState {
       loadMoreError: clearLoadMoreError ? null : loadMoreError ?? this.loadMoreError,
       loadError: clearLoadError ? null : loadError ?? this.loadError,
       replacement: replacement ?? this.replacement,
+      facets: facets ?? this.facets,
+      totalMatched: clearTotalMatched ? null : totalMatched ?? this.totalMatched,
+      queryFingerprint: queryFingerprint ?? this.queryFingerprint,
     );
   }
 }
@@ -212,6 +226,9 @@ class DiscoverFeedController extends ChangeNotifier {
       transport: response.transport,
       contentMark: response.contentMark,
       cities: response.cities,
+      facets: response.facets,
+      totalMatched: response.totalMatched,
+      queryFingerprint: response.queryFingerprint,
       replacement: state.replacement + 1,
     );
   }

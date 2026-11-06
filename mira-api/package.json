@@ -23,6 +23,15 @@
     "test:commerce": "tsx src/marketplace/commerce.types.schema-tests.ts && tsx src/marketplace/commerce-public.schema-tests.ts && tsx src/marketplace/commerce.service.schema-tests.ts && tsx src/marketplace/commerce.concurrency.schema-tests.ts && tsx src/marketplace/commerce.create-service-atomic.schema-tests.ts && tsx src/marketplace/commerce.lost-update.schema-tests.ts && tsx src/marketplace/commerce.lock-protocol.schema-tests.ts && tsx src/marketplace/commerce.http.integration-tests.ts",
     "test:commerce-pure": "tsx src/marketplace/commerce.types.schema-tests.ts && tsx src/marketplace/commerce-public.schema-tests.ts",
     "test:catalog-media-recovery": "tsx src/marketplace/catalog-media.http.schema-tests.ts && tsx src/marketplace/catalog-media.recovery.schema-tests.ts && tsx src/marketplace/catalog-media.s3.open-lifetime-tests.ts",
+    "test:editor-v2": "tsx src/partners-portal/editor-drafts/editor-v2.http.integration-tests.ts",
+    "test:editor-v2-rc2": "tsx src/partners-portal/registry/registry.validation.schema-tests.ts && tsx src/partners-portal/editor-drafts/editor-v2-rc2.http.integration-tests.ts",
+    "test:editor-v2-rc3": "tsx src/partners-portal/editor-drafts/editor-v2-rc3.http.integration-tests.ts",
+    "test:editor-v2-rc4": "tsx src/partners-portal/editor-drafts/editor-v2-rc4.http.integration-tests.ts",
+    "test:upload-sessions-p21": "tsx src/partners-portal/upload-sessions/upload-sessions.http.integration-tests.ts",
+    "test:editor-v2-rc5-browser": "node scripts/p1-rc5-browser-e2e.mjs",
+    "test:editor-v2-rc6-browser": "node scripts/p1-rc6-browser-e2e.mjs",
+    "test:registry-validation": "tsx src/partners-portal/registry/registry.validation.schema-tests.ts",
+    "check:field-registry": "node scripts/check-field-registry-sync.mjs",
     "test:vision-schema": "npm run build && node dist/vision/schema/fashion-vision-document.schema-tests.js",
     "test:vision-geometry": "npm run build && node dist/vision/providers/fashn-geometry.schema-tests.js",
     "test:vision-degraded": "npm run build && node dist/vision/degraded-geometry.schema-tests.js",
@@ -86,6 +95,7 @@
   },
   "dependencies": {
     "@aws-sdk/client-s3": "^3.1141.0",
+    "@aws-sdk/s3-request-presigner": "^3.1161.0",
     "@nestjs/common": "^11.0.0",
     "@nestjs/config": "^4.0.0",
     "@nestjs/core": "^11.0.0",
@@ -108,6 +118,7 @@
     "@types/express": "^5.0.0",
     "@types/multer": "^1.4.12",
     "@types/node": "^22.0.0",
+    "playwright": "^1.64.1",
     "tsx": "^4.23.15",
     "typescript": "^5.7.0"
   }

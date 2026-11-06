@@ -172,19 +172,33 @@ class MarketplaceRepositoryImpl implements MarketplaceRepository, DiscoverCatalo
               query.lane == DiscoverLane.elegance ? 'elegance' : 'beauty',
               query.categoryId,
             );
+      final effective = query.withoutInapplicableFilters();
       final remote = await _api.browseCatalog(
-        text: query.text,
-        partnerType: query.lane == null ? query.partnerType : null,
-        city: query.city,
-        partnerId: query.partnerId,
-        category: query.lane == null
-            ? (query.categoryId == null || query.categoryId == 'all' ? null : query.categoryId)
+        text: effective.text,
+        partnerType: effective.lane == null ? effective.partnerType : null,
+        city: effective.city,
+        partnerId: effective.partnerId,
+        category: effective.lane == null
+            ? (effective.categoryId == null || effective.categoryId == 'all' ? null : effective.categoryId)
             : (selected == null || selected.matchesAll || selected.venueType != null ? null : selected.storedKey),
-        lane: query.lane?.name,
+        lane: effective.lane?.name,
         venue: selected?.venueType,
-        requireVisual: query.requireVisual,
+        requireVisual: effective.requireVisual,
         cursor: cursor,
         limit: limit,
+        colors: effective.colors,
+        sizes: effective.sizes,
+        volumes: effective.volumes,
+        placeModes: effective.placeModes,
+        branchIds: effective.branchIds,
+        inStock: effective.inStock,
+        priceMinHalalas: effective.priceMinHalalas,
+        priceMaxHalalas: effective.priceMaxHalalas,
+        durationMin: effective.durationMin,
+        durationMax: effective.durationMax,
+        availableOn: effective.availableOn,
+        sort: effective.sort,
+        facets: effective.requestFacets,
       );
       return DiscoverBrowseResponse(
         failed: false,
@@ -193,6 +207,10 @@ class MarketplaceRepositoryImpl implements MarketplaceRepository, DiscoverCatalo
         items: remote.items,
         nextCursor: remote.nextCursor,
         cities: remote.cities,
+        facets: remote.facets,
+        totalMatched: remote.totalMatched,
+        activeFilters: remote.activeFilters,
+        queryFingerprint: remote.queryFingerprint,
       );
     } on CatalogCursorException {
       return const DiscoverBrowseResponse(failed: true, invalidCursor: true);

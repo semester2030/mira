@@ -13,6 +13,10 @@
       {
         "include": "fashion-knowledge/assets/**/*",
         "watchAssets": true
+      },
+      {
+        "include": "partners-portal/registry/*.json",
+        "watchAssets": true
       }
     ]
   }

@@ -1,0 +1,29 @@
+#!/usr/bin/env bash
+set -euo pipefail
+REPO="${MIRA_REPO:-$(cd "$(dirname "$0")/../.." && pwd)}"
+cd "$REPO"
+LOG="$REPO/audit-out/p1-rc6/logs"
+mkdir -p "$LOG"
+if [[ -f "$REPO/mira-api/.env.rc6" ]]; then set -a; # shellcheck disable=SC1091
+  source "$REPO/mira-api/.env.rc6"; set +a; fi
+[[ -n "${DATABASE_URL:-}" ]] || { echo DATABASE_URL required; exit 2; }
+python3 - <<'PY'
+import os,sys,urllib.parse
+u=urllib.parse.urlparse(os.environ["DATABASE_URL"])
+h=(u.hostname or "").lower(); db=(u.path or "/").lstrip("/").split("?")[0]
+if h not in {"127.0.0.1","localhost","::1"} or db!="mira_p1_rc6_test":
+  print("REFUSED",h,db); sys.exit(3)
+print("OK",h,db)
+PY
+export MIRA_PARTNER_EDITOR_V2=true
+cd "$REPO/mira-api"
+npx prisma migrate deploy
+npm run check:field-registry | tee "$LOG/rc6-registry-sync.txt"
+npm run test:editor-v2 | tee "$LOG/rc6-editor-v2-regression.txt"
+node scripts/p1-rc6-browser-e2e.mjs 2>/dev/null | tee "$LOG/rc6-browser-e2e.txt"
+cd "$REPO/partners-portal/web/js"
+node options-registry-contract.tests.mjs | tee "$LOG/rc6-options-contract.txt"
+node editor-v2-isolation.tests.mjs | tee "$LOG/rc6-account-isolation.txt"
+cd "$REPO"
+flutter test test/features/marketplace/service_profile_json_parse_test.dart test/features/marketplace/catalog_service_template_test.dart | tee "$LOG/rc6-flutter-tests.txt"
+echo REVERIFY_OK

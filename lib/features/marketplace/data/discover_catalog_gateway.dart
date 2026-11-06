@@ -1,4 +1,5 @@
 import 'catalog_provenance.dart';
+import 'discover_catalog_facets.dart';
 import 'discover_catalog_query.dart';
 import 'discover_published_ad.dart';
 import '../domain/entities/catalog_product.dart';
@@ -39,6 +40,10 @@ class DiscoverBrowseResponse {
     this.items = const [],
     this.nextCursor,
     this.cities = const [],
+    this.facets = DiscoverCatalogFacets.empty,
+    this.totalMatched,
+    this.activeFilters = const {},
+    this.queryFingerprint,
   });
 
   final bool failed;
@@ -48,6 +53,10 @@ class DiscoverBrowseResponse {
   final List<DiscoverOffer> items;
   final String? nextCursor;
   final List<String> cities;
+  final DiscoverCatalogFacets facets;
+  final int? totalMatched;
+  final Map<String, dynamic> activeFilters;
+  final String? queryFingerprint;
 
   bool get succeeded => !failed && !invalidCursor;
 }

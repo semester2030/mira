@@ -1,0 +1,31 @@
+{
+  "ok": true,
+  "host": "localhost",
+  "db": "mira_db",
+  "results": [
+    {
+      "id": "RC2-colors-sizes-materialize",
+      "status": "PASS_LOCAL"
+    },
+    {
+      "id": "RC2-serviceProfile-in-draft-values",
+      "status": "PASS_LOCAL"
+    },
+    {
+      "id": "RC2-serviceProfile-persisted-on-materialize",
+      "status": "PASS_LOCAL"
+    },
+    {
+      "id": "RC2-materialize-submit-fail-keeps-one-product",
+      "status": "PASS_LOCAL"
+    },
+    {
+      "id": "RC2-submit-resume-same-key",
+      "status": "PASS_LOCAL"
+    },
+    {
+      "id": "RC2-api-rejects-unknown-color",
+      "status": "PASS_LOCAL"
+    }
+  ]
+}

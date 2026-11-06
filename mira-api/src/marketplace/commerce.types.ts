@@ -639,10 +639,56 @@ export type AvailabilityWindow = {
   resourceId: string;
 };
 
-export function parseAvailability(json: unknown): AvailabilityWindow[] {
-  if (!Array.isArray(json)) return [];
+/** Fixed calendar timezone for partners portal (P4). Never follow the device TZ. */
+export const AVAILABILITY_TIMEZONE = 'Asia/Riyadh' as const;
+
+export type AvailabilityException = {
+  date: string; // YYYY-MM-DD in Asia/Riyadh calendar
+  kind: 'closed' | 'special';
+  startMin?: number;
+  endMin?: number;
+  capacity?: number;
+  resourceId?: string;
+};
+
+export type AvailabilityDocument = {
+  v: 2;
+  timezone: typeof AVAILABILITY_TIMEZONE;
+  windows: AvailabilityWindow[];
+  closedDates: string[];
+  exceptions: AvailabilityException[];
+  /**
+   * Runtime-only (never persist): dates whose special windows were stripped by a
+   * partner RESOURCE_CAPACITY_CONFLICT. Weekly windows must not reopen for these dates.
+   */
+  specialReplaceLockedDates?: string[];
+};
+
+/** Calendar-only part of a document (closures + date overrides). */
+export type AvailabilityCalendar = Pick<
+  AvailabilityDocument,
+  'closedDates' | 'exceptions' | 'specialReplaceLockedDates'
+>;
+
+export type DayAvailabilityStatus = 'unconfigured' | 'available' | 'unavailable' | 'full';
+
+export const MAX_CLOSED_DATES = 366;
+export const MAX_AVAILABILITY_EXCEPTIONS = 366;
+
+const DATE_KEY_RE = /^\d{4}-\d{2}-\d{2}$/;
+
+/** True only for real calendar dates written as YYYY-MM-DD (rejects 2026-02-30, 2026-1-1, ISO timestamps). */
+export function isValidDateKey(value: unknown): value is string {
+  if (typeof value !== 'string' || !DATE_KEY_RE.test(value)) return false;
+  const base = Date.parse(`${value}T00:00:00.000Z`);
+  if (!Number.isFinite(base)) return false;
+  return new Date(base).toISOString().slice(0, 10) === value;
+}
+
+function parseAvailabilityWindows(list: unknown): AvailabilityWindow[] {
+  if (!Array.isArray(list)) return [];
   const windows: AvailabilityWindow[] = [];
-  for (const raw of json) {
+  for (const raw of list) {
     if (!isRecord(raw)) continue;
     const { weekday, startMin, endMin, capacity } = raw;
     let resourceId = '';
@@ -661,6 +707,388 @@ export function parseAvailability(json: unknown): AvailabilityWindow[] {
     }
   }
   return windows;
+}
+
+export type AvailabilityParseOptions = {
+  /** Drop invalid entries instead of throwing (read paths only). Writers use the strict default. */
+  lenient?: boolean;
+};
+
+/**
+ * Closed dates: YYYY-MM-DD only. Deduplicated + sorted.
+ * Strict by default: any invalid entry throws a coded Arabic 400. `null`/`undefined` → [].
+ */
+export function parseClosedDates(raw: unknown, opts: AvailabilityParseOptions = {}): string[] {
+  if (raw == null) return [];
+  if (!Array.isArray(raw)) {
+    if (opts.lenient) return [];
+    throw badRequest('CLOSED_DATES_INVALID', 'قائمة تواريخ الإغلاق غير صالحة');
+  }
+  if (!opts.lenient && raw.length > MAX_CLOSED_DATES) {
+    throw badRequest('CLOSED_DATES_INVALID', 'عدد تواريخ الإغلاق كبير جدًا');
+  }
+  const out = new Set<string>();
+  for (const v of raw) {
+    if (isValidDateKey(v)) out.add(v);
+    else if (!opts.lenient) {
+      throw badRequest('CLOSED_DATE_INVALID', 'تاريخ إغلاق غير صالح (YYYY-MM-DD)', { value: v as unknown });
+    }
+  }
+  return [...out].sort().slice(0, MAX_CLOSED_DATES);
+}
+
+function parseOneException(entry: unknown): AvailabilityException {
+  if (!isRecord(entry)) throw badRequest('AVAILABILITY_EXCEPTION_INVALID', 'استثناء توفر غير صالح');
+  if (!isValidDateKey(entry.date)) {
+    throw badRequest('AVAILABILITY_EXCEPTION_DATE_INVALID', 'تاريخ الاستثناء غير صالح (YYYY-MM-DD)', { value: entry.date as unknown });
+  }
+  if (entry.kind !== 'closed' && entry.kind !== 'special') {
+    throw badRequest('AVAILABILITY_EXCEPTION_KIND_INVALID', 'نوع الاستثناء غير صالح');
+  }
+  const resourceId = normalizeResourceId(entry.resourceId);
+  const base: AvailabilityException = { date: entry.date, kind: entry.kind, ...(resourceId ? { resourceId } : {}) };
+  if (entry.kind === 'closed') return base; // times/capacity are meaningless for a closure
+  const { startMin, endMin, capacity } = entry;
+  if (
+    typeof startMin !== 'number' || !Number.isInteger(startMin) || startMin < 0 || startMin >= 1440 ||
+    typeof endMin !== 'number' || !Number.isInteger(endMin) || endMin <= startMin || endMin > 1440
+  ) {
+    throw badRequest('AVAILABILITY_EXCEPTION_TIME_INVALID', 'الفترة الخاصة تتطلب وقت بداية ونهاية صالحين');
+  }
+  if (capacity != null && (typeof capacity !== 'number' || !Number.isInteger(capacity) || capacity < 1 || capacity > 100)) {
+    throw badRequest('AVAILABILITY_EXCEPTION_CAPACITY_INVALID', 'سعة الفترة الخاصة غير صالحة');
+  }
+  return { ...base, startMin, endMin, ...(typeof capacity === 'number' ? { capacity } : {}) };
+}
+
+/**
+ * Date exceptions. `closed` needs only a valid date; `special` needs valid start/end (capacity optional).
+ * Strict by default (throws on the first invalid entry or overlapping specials on the same date+resource).
+ */
+export function parseAvailabilityExceptions(raw: unknown, opts: AvailabilityParseOptions = {}): AvailabilityException[] {
+  if (raw == null) return [];
+  if (!Array.isArray(raw)) {
+    if (opts.lenient) return [];
+    throw badRequest('AVAILABILITY_EXCEPTIONS_INVALID', 'قائمة الاستثناءات غير صالحة');
+  }
+  if (!opts.lenient && raw.length > MAX_AVAILABILITY_EXCEPTIONS) {
+    throw badRequest('AVAILABILITY_EXCEPTIONS_INVALID', 'عدد الاستثناءات كبير جدًا');
+  }
+  const list: AvailabilityException[] = [];
+  for (const entry of raw.slice(0, MAX_AVAILABILITY_EXCEPTIONS)) {
+    try {
+      list.push(parseOneException(entry));
+    } catch (err) {
+      if (!opts.lenient) throw err;
+    }
+  }
+  const groups = new Map<string, AvailabilityException[]>();
+  for (const e of list) {
+    if (e.kind !== 'special') continue;
+    const key = `${e.date}|${e.resourceId ?? ''}`;
+    groups.set(key, [...(groups.get(key) ?? []), e]);
+  }
+  const overlapping = new Set<AvailabilityException>();
+  for (const group of groups.values()) {
+    const sorted = [...group].sort((a, b) => a.startMin! - b.startMin! || a.endMin! - b.endMin!);
+    for (let i = 1; i < sorted.length; i += 1) {
+      if (sorted[i]!.startMin! < sorted[i - 1]!.endMin!) {
+        if (!opts.lenient) {
+          throw badRequest('AVAILABILITY_EXCEPTION_OVERLAP', 'فترات خاصة متداخلة في نفس اليوم', { date: sorted[i]!.date });
+        }
+        overlapping.add(sorted[i]!);
+      }
+    }
+  }
+  return list
+    .filter((e) => !overlapping.has(e))
+    .sort((a, b) => a.date.localeCompare(b.date) || a.kind.localeCompare(b.kind) || (a.startMin ?? 0) - (b.startMin ?? 0));
+}
+
+export function emptyAvailabilityDocument(): AvailabilityDocument {
+  return {
+    v: 2,
+    timezone: AVAILABILITY_TIMEZONE,
+    windows: [],
+    closedDates: [],
+    exceptions: [],
+  };
+}
+
+export type NormalizeAvailabilityOptions = {
+  /**
+   * Writers: throw on invalid windows/dates/exceptions, a non-Asia/Riyadh timezone or a non-2 version.
+   * Default (readers): drop invalid entries and coerce timezone to Asia/Riyadh.
+   */
+  strict?: boolean;
+};
+
+/** Accept a legacy window array OR a v2 document. Timezone is always Asia/Riyadh. */
+export function normalizeAvailabilityDocument(json: unknown, opts: NormalizeAvailabilityOptions = {}): AvailabilityDocument {
+  const strict = opts.strict === true;
+  if (json == null) return emptyAvailabilityDocument();
+  let rawWindows: unknown = [];
+  let rawClosed: unknown;
+  let rawExceptions: unknown;
+  if (Array.isArray(json)) {
+    rawWindows = json;
+  } else if (isRecord(json)) {
+    if (strict) {
+      if (json.timezone != null && json.timezone !== AVAILABILITY_TIMEZONE) {
+        throw badRequest('AVAILABILITY_TIMEZONE_INVALID', `المنطقة الزمنية المعتمدة هي ${AVAILABILITY_TIMEZONE} فقط`);
+      }
+      if (json.v != null && json.v !== 2) {
+        throw badRequest('AVAILABILITY_VERSION_INVALID', 'إصدار جدول التوفر غير مدعوم');
+      }
+      // Present-but-wrong-type must FAIL (never coerce to empty = silent wipe).
+      if (Object.prototype.hasOwnProperty.call(json, 'windows') && json.windows != null && !Array.isArray(json.windows)) {
+        throw badRequest('AVAILABILITY_WINDOWS_TYPE_INVALID', 'حقل windows يجب أن يكون مصفوفة');
+      }
+      if (Object.prototype.hasOwnProperty.call(json, 'closedDates') && json.closedDates != null && !Array.isArray(json.closedDates)) {
+        throw badRequest('CLOSED_DATES_TYPE_INVALID', 'حقل closedDates يجب أن يكون مصفوفة');
+      }
+      if (Object.prototype.hasOwnProperty.call(json, 'exceptions') && json.exceptions != null && !Array.isArray(json.exceptions)) {
+        throw badRequest('AVAILABILITY_EXCEPTIONS_TYPE_INVALID', 'حقل exceptions يجب أن يكون مصفوفة');
+      }
+    }
+    rawWindows = json.windows ?? [];
+    rawClosed = json.closedDates;
+    rawExceptions = json.exceptions;
+  } else if (strict) {
+    throw badRequest('AVAILABILITY_INVALID', 'جدول التوفر غير صالح');
+  } else {
+    return emptyAvailabilityDocument();
+  }
+  const windows = parseAvailabilityWindows(rawWindows);
+  if (strict && Array.isArray(rawWindows) && windows.length !== rawWindows.length) {
+    throw badRequest('AVAILABILITY_WINDOW_INVALID', 'فترة توفر غير صالحة');
+  }
+  const closedDates = parseClosedDates(rawClosed, { lenient: !strict });
+  const exceptions = parseAvailabilityExceptions(rawExceptions, { lenient: !strict });
+  if (strict) {
+    // Same calendar date cannot be both a whole-day closure and a special window.
+    const closedSet = new Set(closedDates);
+    for (const e of exceptions) {
+      if (e.kind === 'special' && closedSet.has(e.date)) {
+        throw badRequest(
+          'AVAILABILITY_CLOSED_SPECIAL_CONFLICT',
+          'لا يمكن الجمع بين إغلاق يوم كامل وفترة خاصة في نفس التاريخ',
+          { date: e.date },
+        );
+      }
+    }
+  }
+  // Preserve runtime-only lock dates from applyPartnerCapsToCalendar (never persisted by writers).
+  let specialReplaceLockedDates: string[] | undefined;
+  if (isRecord(json) && Array.isArray(json.specialReplaceLockedDates)) {
+    const locked = [...new Set(json.specialReplaceLockedDates.filter((d) => isValidDateKey(d)))].sort();
+    if (locked.length > 0) specialReplaceLockedDates = locked;
+  }
+  return {
+    v: 2,
+    timezone: AVAILABILITY_TIMEZONE,
+    windows,
+    closedDates,
+    exceptions,
+    ...(specialReplaceLockedDates ? { specialReplaceLockedDates } : {}),
+  };
+}
+
+/** Windows only — backward compatible. Reads v2 documents and legacy arrays. */
+export function parseAvailability(json: unknown): AvailabilityWindow[] {
+  return normalizeAvailabilityDocument(json).windows;
+}
+
+/**
+ * All resource ids declared on a service schedule — weekly windows AND dated specials.
+ * Used for ownership/lock seeds and RESOURCE_NOT_AVAILABLE (not date-scoped).
+ */
+export function resourceIdsFromAvailabilityDocument(json: unknown): string[] {
+  const doc = normalizeAvailabilityDocument(json);
+  const ids = new Set<string>();
+  for (const w of doc.windows) {
+    if (w.resourceId) ids.add(w.resourceId);
+  }
+  for (const e of doc.exceptions) {
+    if (e.resourceId) ids.add(e.resourceId);
+  }
+  return [...ids];
+}
+
+/**
+ * Capacity-bearing windows from weekly schedule AND special exceptions.
+ * Used for partner-wide RESOURCE_CAPACITY_CONFLICT — specials must not bypass weekly checks.
+ * Weekday/start/end on synthetic special rows are placeholders; only resourceId+capacity matter for conflict detection.
+ */
+export function capacityBearingWindowsFromDocument(json: unknown): AvailabilityWindow[] {
+  const doc = normalizeAvailabilityDocument(json);
+  const out: AvailabilityWindow[] = doc.windows.map((w) => ({ ...w }));
+  for (const e of doc.exceptions) {
+    if (e.kind !== 'special') continue;
+    const resourceId = e.resourceId ?? '';
+    if (!resourceId) continue;
+    let capacity = e.capacity;
+    if (capacity == null) {
+      const inherited = doc.windows.filter((w) => w.resourceId === resourceId).map((w) => w.capacity);
+      capacity = inherited.length > 0 ? Math.min(...inherited) : 1;
+    }
+    out.push({
+      weekday: 0,
+      startMin: e.startMin ?? 0,
+      endMin: e.endMin ?? (e.startMin ?? 0) + 1,
+      capacity,
+      resourceId,
+    });
+  }
+  return out;
+}
+
+/**
+ * Apply agreed partner capacities onto special exceptions (never invent MIN across conflicts).
+ * When a special that replaced the weekly schedule is stripped because its resource is conflicted,
+ * the date is locked so weekly windows do not reopen for that day.
+ */
+export function applyPartnerCapsToCalendar(
+  calendar: AvailabilityDocument,
+  partnerCaps: ReadonlyMap<string, number>,
+  conflicted: ReadonlySet<string>,
+): AvailabilityDocument {
+  const locked = new Set<string>(calendar.specialReplaceLockedDates ?? []);
+  const exceptions = calendar.exceptions
+    .filter((e) => {
+      if (e.resourceId && conflicted.has(e.resourceId)) {
+        if (e.kind === 'special') locked.add(e.date);
+        return false;
+      }
+      return true;
+    })
+    .map((e) => {
+      if (e.kind !== 'special' || !e.resourceId) return e;
+      const cap = partnerCaps.get(e.resourceId);
+      if (cap == null || e.capacity === cap) return e;
+      return { ...e, capacity: cap };
+    });
+  // Keep the lock only when every special for that date was stripped.
+  for (const date of [...locked]) {
+    if (exceptions.some((e) => e.kind === 'special' && e.date === date)) locked.delete(date);
+  }
+  return {
+    ...calendar,
+    exceptions,
+    windows: withPartnerResourceCaps(calendar.windows, partnerCaps).filter(
+      (w) => !w.resourceId || !conflicted.has(w.resourceId),
+    ),
+    ...(locked.size > 0 ? { specialReplaceLockedDates: [...locked].sort() } : { specialReplaceLockedDates: undefined }),
+  };
+}
+
+type DayResolution = {
+  /** Whole local day closed (closedDates or an exception without resourceId). */
+  dayClosed: boolean;
+  /** At least one special exception exists for the date (weekly windows are replaced). */
+  hasSpecial: boolean;
+  /** Resources closed by a resource-scoped closed exception. */
+  closedResources: Set<string>;
+  /** Effective windows for the date (weekday-stamped), closed resources removed. */
+  windows: AvailabilityWindow[];
+  /** False when a special window has no capacity and none can be inherited from weekly windows. */
+  capacityKnown: boolean;
+};
+
+function resolveDay(
+  dateKey: string,
+  weekly: ReadonlyArray<AvailabilityWindow>,
+  calendar: AvailabilityCalendar | null | undefined,
+): DayResolution | null {
+  const noon = localInstant(dateKey, 12 * 60);
+  if (!noon) return null;
+  const weekday = localParts(noon).weekday;
+  const dayExceptions = (calendar?.exceptions ?? []).filter((e) => e.date === dateKey);
+  const closedResources = new Set<string>();
+  let dayClosed = (calendar?.closedDates ?? []).includes(dateKey);
+  for (const e of dayExceptions) {
+    if (e.kind !== 'closed') continue;
+    if (e.resourceId) closedResources.add(e.resourceId);
+    else dayClosed = true;
+  }
+  const weeklyForDay = weekly.filter((w) => w.weekday === weekday);
+  const specials = dayExceptions.filter((e) => e.kind === 'special');
+  const specialLocked = (calendar?.specialReplaceLockedDates ?? []).includes(dateKey);
+  let capacityKnown = true;
+  let windows: AvailabilityWindow[];
+  if (specials.length > 0) {
+    windows = specials.map((e) => {
+      const inherited = weeklyForDay.filter((w) => w.resourceId === (e.resourceId ?? '')).map((w) => w.capacity);
+      let capacity = e.capacity;
+      if (capacity == null) {
+        if (inherited.length > 0) capacity = Math.min(...inherited);
+        else {
+          capacity = 1;
+          capacityKnown = false;
+        }
+      }
+      return { weekday, startMin: e.startMin!, endMin: e.endMin!, capacity, resourceId: e.resourceId ?? '' };
+    });
+  } else if (specialLocked) {
+    // Special replaced weekly, then all special resources were capacity-conflicted — do not reopen weekly.
+    windows = [];
+  } else {
+    windows = weeklyForDay;
+  }
+  windows = windows.filter((w) => !closedResources.has(w.resourceId));
+  return {
+    dayClosed,
+    hasSpecial: specials.length > 0 || specialLocked,
+    closedResources,
+    windows,
+    capacityKnown,
+  };
+}
+
+/**
+ * Day status for calendar UI / slot listing (calendar dates are Asia/Riyadh).
+ * - Nothing configured (no weekly windows and no special that day) → 'unconfigured' (never "available").
+ * - closedDates / closed exception → 'unavailable'; a special exception replaces weekly windows that day.
+ * - 'full' only when capacity is known AND `opts.heldCount` is provided and >= the day's total capacity
+ *   (sum of the day's window capacities). Without heldCount the day is never 'full'.
+ */
+export function dayAvailabilityStatus(
+  dateKey: string,
+  json: unknown,
+  opts?: { heldCount?: number },
+): DayAvailabilityStatus {
+  if (!isValidDateKey(dateKey)) return 'unconfigured';
+  const doc = normalizeAvailabilityDocument(json);
+  const day = resolveDay(dateKey, doc.windows, doc);
+  if (!day) return 'unconfigured';
+  if (doc.windows.length === 0 && !day.hasSpecial) return 'unconfigured';
+  if (day.dayClosed) return 'unavailable';
+  if (day.windows.length === 0) return 'unavailable';
+  if (day.capacityKnown && typeof opts?.heldCount === 'number') {
+    const capacity = day.windows.reduce((sum, w) => sum + w.capacity, 0);
+    if (opts.heldCount >= capacity) return 'full';
+  }
+  return 'available';
+}
+
+/** Effective windows for a local date (special overrides weekly; closed → []). */
+export function windowsForDate(dateKey: string, json: unknown): AvailabilityWindow[] {
+  if (!isValidDateKey(dateKey)) return [];
+  const doc = normalizeAvailabilityDocument(json);
+  const day = resolveDay(dateKey, doc.windows, doc);
+  if (!day || day.dayClosed) return [];
+  return day.windows;
+}
+
+/** Resource ids effective on one local date after closed/special resolution. */
+export function resourceIdsForDate(dateKey: string, json: unknown): string[] {
+  return [
+    ...new Set(
+      windowsForDate(dateKey, json)
+        .map((w) => w.resourceId)
+        .filter((id): id is string => Boolean(id)),
+    ),
+  ];
 }
 
 /** Reject overlapping windows for the same resource (adjacent end===start is allowed). */
@@ -734,23 +1162,44 @@ export function localInstant(dateKey: string, minuteOfDay: number): Date | null 
 
 export type SlotCheck =
   | { ok: true; capacity: number; endsAt: Date; resourceId: string }
-  | { ok: false; code: 'SLOT_IN_PAST' | 'SLOT_TOO_FAR' | 'SLOT_MISALIGNED' | 'SLOT_OUTSIDE_AVAILABILITY' | 'AVAILABILITY_NOT_CONFIGURED' | 'DURATION_INVALID' };
+  | { ok: false; code: 'SLOT_IN_PAST' | 'SLOT_TOO_FAR' | 'SLOT_MISALIGNED' | 'SLOT_OUTSIDE_AVAILABILITY' | 'SLOT_DATE_CLOSED' | 'AVAILABILITY_NOT_CONFIGURED' | 'DURATION_INVALID' };
 
-/** Shared bookability check used by listing and create booking. */
+/**
+ * Shared bookability check used by listing and create booking.
+ *
+ * `windowsOrDoc` is either the (partner-capped) weekly windows or a full availability document.
+ * `calendar` (closedDates + exceptions) is optional; when `windowsOrDoc` is a document it is taken from there.
+ * - closed date / closed exception for the local date of `startsAt` → SLOT_DATE_CLOSED
+ * - special exception on that date replaces the weekly windows for that day
+ * - nothing configured (no weekly windows and no special that day) → AVAILABILITY_NOT_CONFIGURED
+ */
 export function checkSlot(
   startsAt: Date,
   durationMin: number,
-  windows: AvailabilityWindow[],
+  windowsOrDoc: AvailabilityWindow[] | unknown,
   now: Date = new Date(),
   resourceId = '',
+  calendar?: AvailabilityCalendar | null,
 ): SlotCheck {
   if (!Number.isInteger(durationMin) || durationMin < 5 || durationMin > 12 * 60) {
     return { ok: false, code: 'DURATION_INVALID' };
   }
-  if (windows.length === 0) return { ok: false, code: 'AVAILABILITY_NOT_CONFIGURED' };
+  let weekly: AvailabilityWindow[];
+  let cal: AvailabilityCalendar | null = calendar ?? null;
+  if (Array.isArray(windowsOrDoc)) {
+    weekly = windowsOrDoc as AvailabilityWindow[];
+  } else {
+    const doc = normalizeAvailabilityDocument(windowsOrDoc);
+    weekly = doc.windows;
+    cal = calendar ?? doc;
+  }
+  const { weekday, minuteOfDay, dateKey } = localParts(startsAt);
+  const day = cal ? resolveDay(dateKey, weekly, cal) : null;
+  if (weekly.length === 0 && !day?.hasSpecial) return { ok: false, code: 'AVAILABILITY_NOT_CONFIGURED' };
   if (startsAt.getTime() < now.getTime() + BOOKING_LEAD_MINUTES * 60_000) return { ok: false, code: 'SLOT_IN_PAST' };
   if (startsAt.getTime() > now.getTime() + BOOKING_HORIZON_DAYS * 86_400_000) return { ok: false, code: 'SLOT_TOO_FAR' };
-  const { weekday, minuteOfDay } = localParts(startsAt);
+  if (day && (day.dayClosed || day.closedResources.has(resourceId))) return { ok: false, code: 'SLOT_DATE_CLOSED' };
+  const windows = day ? day.windows : weekly;
   if (startsAt.getUTCSeconds() !== 0 || startsAt.getUTCMilliseconds() !== 0) return { ok: false, code: 'SLOT_MISALIGNED' };
   const slotEnd = minuteOfDay + durationMin;
   const capacity = capacityCovering(weekday, minuteOfDay, slotEnd, windows, resourceId);
@@ -791,17 +1240,22 @@ export function buildDaySlots(
   windows: AvailabilityWindow[],
   held: ReadonlyArray<{ startsAt: Date; endsAt: Date; resourceId?: string }>,
   now: Date = new Date(),
+  calendar?: AvailabilityCalendar | null,
 ): SlotView[] {
   if (!Number.isInteger(durationMin) || durationMin < 5) return [];
   const dayStart = localInstant(dateKey, 0);
   if (!dayStart) return [];
   const weekday = localParts(new Date(dayStart.getTime() + 12 * 3_600_000)).weekday;
-  const resourceIds = [...new Set(windows.filter((w) => w.weekday === weekday).map((w) => w.resourceId))];
+  // Closed days list nothing; a special exception replaces the weekly windows for that date.
+  const day = calendar ? resolveDay(dateKey, windows, calendar) : null;
+  if (day?.dayClosed) return [];
+  const dayBase = day ? day.windows : windows;
+  const resourceIds = [...new Set(dayBase.filter((w) => w.weekday === weekday).map((w) => w.resourceId))];
   if (resourceIds.length === 0) return [];
 
   const slots: SlotView[] = [];
   for (const resourceId of resourceIds) {
-    const dayWindows = windows.filter((w) => w.weekday === weekday && w.resourceId === resourceId);
+    const dayWindows = dayBase.filter((w) => w.weekday === weekday && w.resourceId === resourceId);
     const starts = new Set<number>();
     for (const w of dayWindows) {
       for (let m = w.startMin; m + durationMin <= w.endMin; m += durationMin) {
@@ -810,10 +1264,10 @@ export function buildDaySlots(
     }
     for (const m of [...starts].sort((a, b) => a - b)) {
       const startsAt = localInstant(dateKey, m)!;
-      const check = checkSlot(startsAt, durationMin, windows, now, resourceId);
+      const check = checkSlot(startsAt, durationMin, windows, now, resourceId, calendar);
       if (!check.ok) {
         // Still show past/outside as unavailable rows only when capacity exists for the window.
-        const cap = capacityCovering(weekday, m, m + durationMin, windows, resourceId);
+        const cap = capacityCovering(weekday, m, m + durationMin, dayBase, resourceId);
         if (cap == null) continue;
         const endsAt = new Date(startsAt.getTime() + durationMin * 60_000);
         const taken = held.filter(

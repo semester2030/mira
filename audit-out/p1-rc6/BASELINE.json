@@ -1,0 +1,8 @@
+{
+  "rc5_package": "MIRA_P1_PARTNER_EDITOR_CLOSURE_RC5_20261103T232416Z.zip",
+  "rc5_codeFinalCommit": "ce9c6426317355fa40904dafe3ec531dffc7f081",
+  "branch": "mira/p1-partner-editor-v2-rc6",
+  "db": "mira_p1_rc6_test",
+  "verdict_start": "P1_NOT_CLOSED",
+  "started_utc": "2026-11-03T23:51:44Z"
+}
