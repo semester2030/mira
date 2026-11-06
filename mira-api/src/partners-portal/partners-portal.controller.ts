@@ -205,6 +205,32 @@ export class PartnersPortalController {
     return this.bulkBatches.materialize(req.partnerUser.partnerId, batchId, body ?? {}, idempotencyKey);
   }
 
+  @Post('bulk-batches/:batchId/cards')
+  @UseGuards(PartnerTokenGuard)
+  appendBulkCard(@Req() req: PartnerRequest, @Param('batchId') batchId: string) {
+    return this.bulkBatches.appendCard(req.partnerUser.partnerId, batchId);
+  }
+
+  @Delete('bulk-batches/:batchId/cards/:cardId')
+  @UseGuards(PartnerTokenGuard)
+  discardBulkCard(
+    @Req() req: PartnerRequest,
+    @Param('batchId') batchId: string,
+    @Param('cardId') cardId: string,
+  ) {
+    return this.bulkBatches.discardCard(req.partnerUser.partnerId, batchId, cardId);
+  }
+
+  @Post('bulk-batches/:batchId/publish-group')
+  @UseGuards(PartnerTokenGuard)
+  publishBulkGroup(
+    @Req() req: PartnerRequest,
+    @Param('batchId') batchId: string,
+    @Headers('idempotency-key') idempotencyKey: string | undefined,
+  ) {
+    return this.bulkBatches.publishGroup(req.partnerUser.partnerId, batchId, idempotencyKey);
+  }
+
   @Get('services/:id/service-profile')
   @UseGuards(PartnerTokenGuard)
   getServiceProfile(@Req() req: PartnerRequest, @Param('id') id: string) {

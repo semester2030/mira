@@ -757,4 +757,259 @@ export class BulkBatchesService {
         : 'materialized لا يعني published — النشر يظهر بعد موافقة المحتوى عند اللزوم',
     };
   }
+
+  /** Grow an existing batch by one empty card — sequential «عرض تالٍ» without upfront count. */
+  async appendCard(partnerId: string, batchId: string) {
+    this.registry.assertEditorV2Enabled();
+    const meta = await this.readMeta(partnerId, batchId);
+    if (meta.createStatus !== 'ready') {
+      throw bulkError(HttpStatus.CONFLICT, 'BULK_NOT_READY', 'الدفعة لم تكتمل بعد');
+    }
+    if (meta.cardIds.length >= BULK_BATCH_MAX_CARDS) {
+      throw bulkError(
+        HttpStatus.BAD_REQUEST,
+        'BULK_COUNT_LIMIT',
+        `الحد التشغيلي الحالي ${BULK_BATCH_MAX_CARDS} بطاقة لكل دفعة`,
+        { max: BULK_BATCH_MAX_CARDS },
+      );
+    }
+    let nextIndex = meta.cardIds.length + 1;
+    let cardId = `c${String(nextIndex).padStart(3, '0')}`;
+    while (meta.cardIds.includes(cardId)) {
+      nextIndex += 1;
+      cardId = `c${String(nextIndex).padStart(3, '0')}`;
+    }
+    const nextMeta: MetaPayload = {
+      ...meta,
+      cardIds: [...meta.cardIds, cardId],
+      count: meta.cardIds.length + 1,
+    };
+    await this.prisma.$transaction(async (tx) => {
+      await tx.partnerEditorDraft.create({
+        data: {
+          partnerId,
+          clientDraftId: this.cardClientId(batchId, cardId),
+          kind: meta.kind,
+          profileId: meta.profileId,
+          schemaVersion: EDITOR_SCHEMA_VERSION,
+          valuesJson: {},
+          revision: 1,
+          status: 'open',
+        },
+      });
+      await tx.partnerEditorDraft.update({
+        where: { partnerId_clientDraftId: { partnerId, clientDraftId: this.metaClientId(batchId) } },
+        data: { valuesJson: nextMeta as unknown as Prisma.InputJsonValue },
+      });
+    });
+    return this.get(partnerId, batchId);
+  }
+
+  /** Remove one card from a group before publish — other cards untouched. */
+  async discardCard(partnerId: string, batchId: string, cardId: string) {
+    this.registry.assertEditorV2Enabled();
+    const meta = await this.readMeta(partnerId, batchId);
+    if (!meta.cardIds.includes(cardId)) {
+      throw bulkError(HttpStatus.NOT_FOUND, 'BULK_CARD_NOT_FOUND', 'البطاقة غير موجودة في الدفعة');
+    }
+    if (meta.cardIds.length <= 1) {
+      throw bulkError(HttpStatus.BAD_REQUEST, 'BULK_CARD_LAST', 'لا يمكن إزالة العرض الوحيد من المجموعة');
+    }
+    const draft = await this.drafts.get(partnerId, this.cardClientId(batchId, cardId));
+    if (draft.submitReviewStatus === 'submitted') {
+      throw bulkError(HttpStatus.CONFLICT, 'BULK_CARD_SUBMITTED', 'لا تُزال بطاقة أُرسلت للمراجعة أو نُشرت');
+    }
+    if (draft.targetOwnerId) {
+      if (meta.kind === 'product') {
+        const row = await this.prisma.product.findFirst({
+          where: { id: draft.targetOwnerId, partnerId },
+          select: { contentStatus: true },
+        });
+        if (row?.contentStatus === 'published') {
+          throw bulkError(HttpStatus.CONFLICT, 'BULK_CARD_PUBLISHED', 'لا تُزال بطاقة منشورة');
+        }
+      } else {
+        const row = await this.prisma.service.findFirst({
+          where: { id: draft.targetOwnerId, partnerId },
+          select: { contentStatus: true },
+        });
+        if (row?.contentStatus === 'published') {
+          throw bulkError(HttpStatus.CONFLICT, 'BULK_CARD_PUBLISHED', 'لا تُزال بطاقة منشورة');
+        }
+      }
+    }
+    const nextIds = meta.cardIds.filter((id) => id !== cardId);
+    const nextMeta: MetaPayload = { ...meta, cardIds: nextIds, count: nextIds.length };
+    await this.prisma.$transaction(async (tx) => {
+      await tx.partnerEditorDraft.update({
+        where: { partnerId_clientDraftId: { partnerId, clientDraftId: this.cardClientId(batchId, cardId) } },
+        data: { status: 'discarded' },
+      });
+      await tx.partnerEditorDraft.update({
+        where: { partnerId_clientDraftId: { partnerId, clientDraftId: this.metaClientId(batchId) } },
+        data: { valuesJson: nextMeta as unknown as Prisma.InputJsonValue },
+      });
+    });
+    return this.get(partnerId, batchId);
+  }
+
+  /**
+   * One-shot group publish: validate ALL cards first; only then submit.
+   * Developer (server partner.type) auto-publishes; others queue for admin review.
+   * Trusts stored partner identity — never client-sent roles.
+   */
+  async publishGroup(partnerId: string, batchId: string, idempotencyKeyHeader: string | undefined) {
+    this.registry.assertEditorV2Enabled();
+    const partner = await this.prisma.partner.findUnique({
+      where: { id: partnerId },
+      select: { id: true, type: true, status: true },
+    });
+    if (!partner || partner.status !== 'active') throw new NotFoundException('الشريك غير متاح');
+    const meta = await this.readMeta(partnerId, batchId);
+    if (meta.createStatus !== 'ready') {
+      throw bulkError(HttpStatus.CONFLICT, 'BULK_NOT_READY', 'الدفعة غير جاهزة');
+    }
+    if (!partnerCanCreateKind(partner.type, meta.kind)) {
+      throw bulkError(HttpStatus.FORBIDDEN, PARTNER_KIND_FORBIDDEN, 'نوع العنصر غير مسموح لهذا الحساب');
+    }
+
+    const blockers: Array<{ cardId: string; field: string; messageAr: string }> = [];
+    const cardSnapshots: Array<{
+      cardId: string;
+      targetOwnerId: string | null;
+      status: string;
+      contentStatus: string | null;
+      submitReviewStatus: string | null;
+      revision: number;
+    }> = [];
+
+    for (const cardId of meta.cardIds) {
+      const draft = await this.drafts.get(partnerId, this.cardClientId(batchId, cardId));
+      const values = (draft.values || {}) as Record<string, unknown>;
+      const name = typeof values.nameAr === 'string' ? values.nameAr.trim() : '';
+      if (!name) blockers.push({ cardId, field: 'nameAr', messageAr: 'الاسم مطلوب' });
+      if (values.priceHalalas == null || values.priceHalalas === '') {
+        blockers.push({ cardId, field: 'priceHalalas', messageAr: 'السعر مطلوب' });
+      }
+      if (meta.kind === 'service' && (values.durationMin == null || values.durationMin === '')) {
+        blockers.push({ cardId, field: 'durationMin', messageAr: 'مدة الخدمة مطلوبة' });
+      }
+
+      let contentStatus: string | null = null;
+      if (draft.targetOwnerId) {
+        if (meta.kind === 'product') {
+          const row = await this.prisma.product.findFirst({
+            where: { id: draft.targetOwnerId, partnerId },
+            select: { id: true, contentStatus: true },
+          });
+          if (!row) {
+            blockers.push({ cardId, field: 'ownership', messageAr: 'العنصر لا يخص هذا الحساب' });
+          } else {
+            contentStatus = row.contentStatus;
+          }
+        } else {
+          const row = await this.prisma.service.findFirst({
+            where: { id: draft.targetOwnerId, partnerId },
+            select: { id: true, contentStatus: true },
+          });
+          if (!row) {
+            blockers.push({ cardId, field: 'ownership', messageAr: 'العنصر لا يخص هذا الحساب' });
+          } else {
+            contentStatus = row.contentStatus;
+          }
+        }
+
+        if (contentStatus !== 'published') {
+          const media = await this.prisma.catalogMedia.findMany({
+            where: { ownerKind: meta.kind, ownerId: draft.targetOwnerId },
+          });
+          const hasImage = media.some((m) => m.kind === 'image' && !m.pendingRemoval);
+          const hasVideo = media.some((m) => m.kind === 'video' && !m.pendingRemoval);
+          if (partner.type === 'developer') {
+            if (!hasVideo && !hasImage) {
+              blockers.push({
+                cardId,
+                field: 'media',
+                messageAr: 'فيديو صالح واحد يكفي لعرض المطوّر — ارفعي المقطع أولًا',
+              });
+            }
+          } else if (!hasImage) {
+            blockers.push({ cardId, field: 'media', messageAr: 'صورة واحدة على الأقل مطلوبة' });
+          }
+        }
+      } else {
+        blockers.push({
+          cardId,
+          field: 'video',
+          messageAr: 'احفظي العرض وارفعِ المقطع قبل نشر المجموعة',
+        });
+      }
+
+      cardSnapshots.push({
+        cardId,
+        targetOwnerId: draft.targetOwnerId,
+        status: draft.status,
+        contentStatus,
+        submitReviewStatus: draft.submitReviewStatus,
+        revision: draft.revision,
+      });
+    }
+
+    if (blockers.length) {
+      throw bulkError(HttpStatus.BAD_REQUEST, 'BULK_GROUP_NOT_READY', 'المجموعة غير جاهزة للنشر', {
+        blockers,
+        cardCount: meta.cardIds.length,
+      });
+    }
+
+    // All ready — submit (developer auto-approves inside catalog submit). Idempotent per card.
+    const out = await this.materialize(
+      partnerId,
+      batchId,
+      { submitReview: true },
+      idempotencyKeyHeader || `publish-group-${batchId}`,
+    );
+
+    const published = [];
+    const queued = [];
+    for (const r of out.results || []) {
+      const cardId = String(r.cardId || '');
+      const ownerId = (r.targetOwnerId as string) || null;
+      if (!ownerId) continue;
+      if (meta.kind === 'product') {
+        const p = await this.prisma.product.findFirst({
+          where: { id: ownerId, partnerId },
+          select: { id: true, contentStatus: true, reviewStatus: true, nameAr: true },
+        });
+        if (p?.contentStatus === 'published') published.push({ cardId, kind: meta.kind, id: p.id, nameAr: p.nameAr });
+        else queued.push({ cardId, kind: meta.kind, id: ownerId, reviewStatus: p?.reviewStatus ?? null });
+      } else {
+        const s = await this.prisma.service.findFirst({
+          where: { id: ownerId, partnerId },
+          select: { id: true, contentStatus: true, reviewStatus: true, nameAr: true },
+        });
+        if (s?.contentStatus === 'published') published.push({ cardId, kind: meta.kind, id: s.id, nameAr: s.nameAr });
+        else queued.push({ cardId, kind: meta.kind, id: ownerId, reviewStatus: s?.reviewStatus ?? null });
+      }
+    }
+
+    const developer = partner.type === 'developer';
+    return {
+      batchId,
+      kind: meta.kind,
+      developerDirectPublish: developer,
+      publishedCount: published.length,
+      queuedCount: queued.length,
+      published,
+      queued,
+      materialize: out,
+      noteAr: developer
+        ? published.length
+          ? `تم نشر ${published.length} عروض`
+          : 'لم يُنشر شيء — راجعي نتائج التحويل'
+        : queued.length
+          ? `أُرسلت ${queued.length} عروض للمراجعة`
+          : 'لم يُرسل شيء للمراجعة',
+    };
+  }
 }

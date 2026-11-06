@@ -63,11 +63,13 @@
   function ApiError(message, meta) {
     const err = new Error(message);
     err.name = 'PartnersApiError';
+    err.messageAr = message;
     if (meta) {
       err.status = meta.status;
       err.code = meta.code;
       err.fieldErrors = meta.fieldErrors || null;
       err.body = meta.body || null;
+      if (meta.body && meta.body.messageAr) err.messageAr = meta.body.messageAr;
     }
     return err;
   }
@@ -615,6 +617,24 @@
         `/partners-portal/bulk-batches/${encodeURIComponent(batchId)}/materialize`,
         payload || {},
         { 'Idempotency-Key': idempotencyKey },
+        opts,
+      ),
+    appendBulkCard: (batchId, opts) =>
+      request('POST', `/partners-portal/bulk-batches/${encodeURIComponent(batchId)}/cards`, {}, null, opts),
+    discardBulkCard: (batchId, cardId, opts) =>
+      request(
+        'DELETE',
+        `/partners-portal/bulk-batches/${encodeURIComponent(batchId)}/cards/${encodeURIComponent(cardId)}`,
+        null,
+        null,
+        opts,
+      ),
+    publishBulkGroup: (batchId, idempotencyKey, opts) =>
+      request(
+        'POST',
+        `/partners-portal/bulk-batches/${encodeURIComponent(batchId)}/publish-group`,
+        {},
+        { 'Idempotency-Key': idempotencyKey || `publish-group-${batchId}` },
         opts,
       ),
     getServiceProfile: (id, opts) =>
