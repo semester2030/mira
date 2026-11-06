@@ -164,15 +164,18 @@
         descriptionAr: vals.descriptionAr || '',
         durationMin: vals.durationMin != null ? String(vals.durationMin) : '',
         deliveryMode: vals.deliveryMode || vals.fulfillmentMode || '',
-        colorsText: Array.isArray(vals.colors) ? vals.colors.join('، ') : vals.colorsText || '',
-        sizesText: Array.isArray(vals.sizes) ? vals.sizes.join('، ') : vals.sizesText || '',
+        category: vals.category || '',
         stock: vals.stock != null ? String(vals.stock) : '',
+        optionsJson: vals.optionsJson != null ? vals.optionsJson : null,
+        variantsJson: Array.isArray(vals.variantsJson) ? vals.variantsJson : [],
+        inventoryMode: vals.inventoryMode === 'variant' ? 'variant' : 'product',
         coverageCityIds: Array.isArray(vals.coverageZones)
           ? vals.coverageZones
           : Array.isArray(vals.cityIds)
             ? vals.cityIds
             : [],
       };
+      state.commerceMount = null;
       state.file = null;
       if (state.previewUrl) {
         try {
@@ -208,16 +211,21 @@
         values.durationMin = Math.round(dur);
         if (d.deliveryMode) values.deliveryMode = d.deliveryMode;
       } else {
-        const colors = String(d.colorsText || '')
-          .split(/[،,]/)
-          .map((s) => s.trim())
-          .filter(Boolean);
-        const sizes = String(d.sizesText || '')
-          .split(/[،,]/)
-          .map((s) => s.trim())
-          .filter(Boolean);
-        if (colors.length) values.colors = colors;
-        if (sizes.length) values.sizes = sizes;
+        const commerce =
+          state.commerceMount && typeof state.commerceMount.getCommercePayload === 'function'
+            ? state.commerceMount.getCommercePayload()
+            : null;
+        if (commerce) {
+          if (commerce.category) values.category = commerce.category;
+          if (commerce.optionsJson != null) values.optionsJson = commerce.optionsJson;
+          if (Array.isArray(commerce.variantsJson)) values.variantsJson = commerce.variantsJson;
+          if (commerce.inventoryMode) values.inventoryMode = commerce.inventoryMode;
+        } else {
+          if (d.category) values.category = d.category;
+          if (d.optionsJson != null) values.optionsJson = d.optionsJson;
+          if (Array.isArray(d.variantsJson)) values.variantsJson = d.variantsJson;
+          if (d.inventoryMode) values.inventoryMode = d.inventoryMode;
+        }
         if (d.stock !== '' && d.stock != null) {
           const n = Number(d.stock);
           if (Number.isFinite(n)) values.stock = n;
@@ -280,31 +288,50 @@
       state.uploadStatus = 'uploading';
       state.uploadPct = 0;
       render();
-      const session = await PartnersApi.uploadViaSession(ownerKindPath, ownerId, state.file, {
-        clientMediaId: clientMediaId,
-        onProgress: (p) => {
-          if (typeof p === 'number' && Number.isFinite(p)) {
-            state.uploadPct = Math.max(0, Math.min(1, p));
-            state.uploadStatus = 'uploading';
-            const bar = document.getElementById('journeyUploadBar');
+      let uploadSessionId = state.uploadSessionId || null;
+      try {
+        const session = await PartnersApi.uploadViaSession(ownerKindPath, ownerId, state.file, {
+          clientMediaId: clientMediaId,
+          sessionId: uploadSessionId || undefined,
+          mimeType: state.file.type || (/\.mov$/i.test(state.file.name || '') ? 'video/quicktime' : 'video/mp4'),
+          onSession: (s) => {
+            if (s && s.sessionId) {
+              state.uploadSessionId = s.sessionId;
+              uploadSessionId = s.sessionId;
+            }
+          },
+          onProgress: (p) => {
+            if (typeof p === 'number' && Number.isFinite(p)) {
+              state.uploadPct = Math.max(0, Math.min(1, p));
+              state.uploadStatus = 'uploading';
+              const bar = document.getElementById('journeyUploadBar');
+              const txt = document.getElementById('journeyUploadTxt');
+              if (bar) bar.style.width = Math.round(state.uploadPct * 100) + '%';
+              if (txt) txt.textContent = 'رفع المقطع: ' + Math.round(state.uploadPct * 100) + '%';
+            }
+          },
+          onProcessing: () => {
+            state.uploadStatus = 'verifying';
+            state.uploadPct = 1;
             const txt = document.getElementById('journeyUploadTxt');
-            if (bar) bar.style.width = Math.round(state.uploadPct * 100) + '%';
-            if (txt) txt.textContent = 'رفع المقطع: ' + Math.round(state.uploadPct * 100) + '%';
-          }
-        },
-        onProcessing: () => {
-          state.uploadStatus = 'verifying';
-          state.uploadPct = 1;
-          const txt = document.getElementById('journeyUploadTxt');
-          if (txt) txt.textContent = 'التحقق من المقطع…';
-        },
-      });
-      state.mediaId = session && (session.catalogMediaId || session.mediaId || session.id);
-      state.uploadStatus = 'ready';
-      state.uploadPct = 1;
-      state.file = null;
-      await refreshBatch(batch.batchId);
-      return state.mediaId;
+            if (txt) txt.textContent = 'التحقق من المقطع…';
+          },
+        });
+        state.mediaId = session && (session.catalogMediaId || session.mediaId || session.id);
+        state.uploadStatus = 'ready';
+        state.uploadPct = 1;
+        state.file = null;
+        state.uploadSessionId = null;
+        await refreshBatch(batch.batchId);
+        return state.mediaId;
+      } catch (e) {
+        const stage = (e && e.stage) || (e && e.code) || '';
+        const ar =
+          (e && (e.messageAr || e.message)) ||
+          String(e);
+        state.uploadStatus = 'failed';
+        throw Object.assign(new Error(ar + (stage ? ' · مرحلة: ' + stage : '')), e || {});
+      }
     }
 
     async function startBatch(kind, profileId) {
@@ -460,7 +487,7 @@
 
       const fileInput = el('input', {
         type: 'file',
-        accept: 'video/*',
+        accept: 'video/*,.mov,.mp4,.m4v',
         style: 'display:none',
         id: 'journeyVideoInput',
       });
@@ -473,8 +500,15 @@
       fileInput.addEventListener('change', async () => {
         const file = fileInput.files && fileInput.files[0];
         if (!file) return;
-        if (String(file.type || '').indexOf('video/') !== 0) {
-          setStatus('يُقبل فيديو واحد فقط في هذا المسار', true);
+        const mime = String(file.type || '').toLowerCase();
+        const name = String(file.name || '').toLowerCase();
+        const okVideo =
+          mime.indexOf('video/') === 0 ||
+          name.endsWith('.mov') ||
+          name.endsWith('.mp4') ||
+          name.endsWith('.m4v');
+        if (!okVideo) {
+          setStatus('يُقبل فيديو واحد فقط في هذا المسار (مثل MOV أو MP4)', true);
           return;
         }
         const dur = await readVideoDuration(file);
@@ -596,22 +630,6 @@
         if (d.deliveryMode) modeSel.value = d.deliveryMode;
         fields.appendChild(fieldInput('طريقة التقديم', false, modeSel));
       } else {
-        const colorsIn = el('input', {
-          type: 'text',
-          value: d.colorsText,
-          placeholder: 'أحمر، أسود',
-          onInput: (e) => {
-            state.fieldDraft.colorsText = e.target.value;
-          },
-        });
-        const sizesIn = el('input', {
-          type: 'text',
-          value: d.sizesText,
-          placeholder: 'S، M، L',
-          onInput: (e) => {
-            state.fieldDraft.sizesText = e.target.value;
-          },
-        });
         const stockIn = el('input', {
           type: 'number',
           value: d.stock,
@@ -619,9 +637,41 @@
             state.fieldDraft.stock = e.target.value;
           },
         });
-        fields.appendChild(fieldInput('الألوان', false, colorsIn));
-        fields.appendChild(fieldInput('المقاسات', false, sizesIn));
-        fields.appendChild(fieldInput('المخزون', false, stockIn));
+        fields.appendChild(fieldInput('المخزون على مستوى المنتج', false, stockIn));
+        const commerceHost = el('div', { className: 'bulk-journey-commerce' });
+        fields.appendChild(commerceHost);
+        try {
+          if (state.commerceMount && state.commerceMount.destroy) state.commerceMount.destroy();
+          const MO = window.MiraCatalogOptions;
+          const category =
+            d.category ||
+            (MO && MO.categoryFromProfileId
+              ? MO.categoryFromProfileId(batch.profileId)
+              : 'clothes');
+          state.fieldDraft.category = category;
+          state.commerceMount = window.MiraProductCommerceFields.mount(commerceHost, {
+            category: category,
+            initialRow: {
+              optionsJson: d.optionsJson,
+              variantsJson: d.variantsJson,
+              inventoryMode: d.inventoryMode,
+            },
+            onChange: (payload) => {
+              state.fieldDraft.category = payload.category;
+              state.fieldDraft.optionsJson = payload.optionsJson;
+              state.fieldDraft.variantsJson = payload.variantsJson;
+              state.fieldDraft.inventoryMode = payload.inventoryMode;
+            },
+          });
+        } catch (e) {
+          commerceHost.appendChild(
+            el('p', {
+              className: 'lead',
+              style: 'color:#b00020',
+              text: 'تعذر تحميل حقول المنتج المشتركة: ' + ((e && e.message) || String(e)),
+            }),
+          );
+        }
       }
       shell.appendChild(fields);
 

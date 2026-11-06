@@ -407,24 +407,52 @@
               }
             }
             const headers = Object.assign({}, signed.headers || {});
+            // Keep Content-Type stable for CORS + signature (never rely on Blob sniffing).
+            if (!headers['Content-Type'] && !headers['content-type']) {
+              headers['Content-Type'] = 'application/octet-stream';
+            }
             if (signed.directToApi) {
               Object.assign(headers, authHeaders());
             }
-            const putRes = await fetch(putUrl, {
-              method: signed.method || 'PUT',
-              headers,
-              body: chunk,
-              signal: signal || undefined,
-            });
+            let putRes;
+            try {
+              putRes = await fetch(putUrl, {
+                method: signed.method || 'PUT',
+                headers,
+                body: chunk,
+                signal: signal || undefined,
+              });
+            } catch (netErr) {
+              const msg = (netErr && netErr.message) || String(netErr);
+              throw Object.assign(
+                new Error(
+                  /Load failed|Failed to fetch|NetworkError|CORS/i.test(msg)
+                    ? 'تعثر رفع الجزء إلى التخزين (CORS أو الشبكة) — الجزء ' + partNumber
+                    : 'تعثر الاتصال أثناء رفع الجزء ' + partNumber + ': ' + msg,
+                ),
+                { code: 'UPLOAD_PUT_NETWORK', stage: 'put', partNumber: partNumber },
+              );
+            }
             if (!putRes.ok) {
-              throw new Error('فشل رفع الجزء ' + partNumber);
+              throw Object.assign(new Error('فشل رفع الجزء ' + partNumber + ' (HTTP ' + putRes.status + ')'), {
+                code: 'UPLOAD_PUT_HTTP',
+                stage: 'put',
+                partNumber: partNumber,
+                status: putRes.status,
+              });
             }
             let etag = putRes.headers.get('etag') || putRes.headers.get('ETag') || '';
             if (signed.directToApi) {
               const body = await putRes.json().catch(() => ({}));
               etag = body.etag || etag;
             }
-            if (!etag) throw new Error('تعذر قراءة ETag للجزء ' + partNumber);
+            if (!etag) {
+              throw Object.assign(new Error('تعذر قراءة ETag للجزء ' + partNumber + ' بعد نجاح الرفع'), {
+                code: 'UPLOAD_ETAG_MISSING',
+                stage: 'etag',
+                partNumber: partNumber,
+              });
+            }
             const row = { partNumber, etag, size: end - start };
             completedMap.set(partNumber, row);
             reportProgress();

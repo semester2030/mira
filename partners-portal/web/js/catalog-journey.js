@@ -2777,27 +2777,8 @@
     }
 
     function optionPresets(cat) {
-      if (cat === 'clothes') {
-        return {
-          groups: [
-            { id: 'size', label: 'المقاس', kind: 'size', presets: ['XS', 'S', 'M', 'L', 'XL'] },
-            // Display labels; canonical ids (black/…) applied in catalog-options-core.
-            { id: 'color', label: 'اللون', kind: 'color', presets: ['أسود', 'سكري', 'بني', 'وردي', 'أزرق', 'أخضر', 'متعدد الألوان'] },
-          ],
-          traits: ['الخامة', 'العناية', 'دليل المقاسات'],
-        };
-      }
-      if (cat === 'face' || cat === 'body' || cat === 'hair') {
-        return {
-          groups: [{ id: 'volume', label: 'الحجم', kind: 'volume', presets: ['50 مل', '100 مل'] }],
-          traits: ['المكونات', 'طريقة الاستخدام', 'الخامة'],
-        };
-      }
-      if (cat === 'accessories') {
-        return {
-          groups: [{ id: 'finish', label: 'التشطيب', kind: 'finish', presets: ['ذهبي', 'فضي'] }],
-          traits: ['الخامة', 'الأبعاد'],
-        };
+      if (window.MiraCatalogOptions && typeof window.MiraCatalogOptions.optionPresets === 'function') {
+        return window.MiraCatalogOptions.optionPresets(cat);
       }
       return { groups: [], traits: [] };
     }

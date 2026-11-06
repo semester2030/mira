@@ -492,6 +492,42 @@
     return state;
   }
 
+  /** Same category → option groups as «إضافة منتج» (catalog-journey). */
+  function optionPresets(cat) {
+    if (cat === 'clothes') {
+      return {
+        groups: [
+          { id: 'size', label: 'المقاس', kind: 'size', presets: ['XS', 'S', 'M', 'L', 'XL'] },
+          { id: 'color', label: 'اللون', kind: 'color', presets: ['أسود', 'سكري', 'بني', 'وردي', 'أزرق', 'أخضر', 'متعدد الألوان'] },
+        ],
+        traits: ['الخامة', 'العناية', 'دليل المقاسات'],
+      };
+    }
+    if (cat === 'face' || cat === 'body' || cat === 'hair') {
+      return {
+        groups: [{ id: 'volume', label: 'الحجم', kind: 'volume', presets: ['50 مل', '100 مل'] }],
+        traits: ['المكونات', 'طريقة الاستخدام', 'الخامة'],
+      };
+    }
+    if (cat === 'accessories') {
+      return {
+        groups: [{ id: 'finish', label: 'التشطيب', kind: 'finish', presets: ['ذهبي', 'فضي'] }],
+        traits: ['الخامة', 'الأبعاد'],
+      };
+    }
+    return { groups: [], traits: [] };
+  }
+
+  function categoryFromProfileId(profileId) {
+    const id = String(profileId || '');
+    if (/clothes|abaya|outfit/i.test(id)) return 'clothes';
+    if (/accessor/i.test(id)) return 'accessories';
+    if (/face|makeup|skin|cosmetic/i.test(id)) return 'face';
+    if (/body/i.test(id)) return 'body';
+    if (/hair/i.test(id)) return 'hair';
+    return 'clothes';
+  }
+
   global.MiraCatalogOptions = {
     optionsStateFromServer: optionsStateFromServer,
     buildOptionGroups: buildOptionGroups,
@@ -509,5 +545,7 @@
     syncPickerOptions: syncPickerOptions,
     stripMediaIdsFromOptionsState: stripMediaIdsFromOptionsState,
     syncVariantMediaIdsFromServer: syncVariantMediaIdsFromServer,
+    optionPresets: optionPresets,
+    categoryFromProfileId: categoryFromProfileId,
   };
 })(typeof globalThis !== 'undefined' ? globalThis : this);
