@@ -26,7 +26,7 @@ export const VARIANT_FILTER_GROUP_IDS: Readonly<Record<string, string>> = {
   finish: 'finish',
 };
 
-export type CatalogSort = 'key' | 'price_asc' | 'price_desc';
+export type CatalogSort = 'key' | 'price_asc' | 'price_desc' | 'distance';
 
 export type CatalogFilterInput = {
   q?: string;
@@ -68,6 +68,13 @@ export type CatalogFilterItem = {
   durationMin?: number | null;
   placeMode?: string | null;
   branchId?: string | null;
+  /** Branch coordinates for distance sort (services only). */
+  lat?: number | null;
+  lng?: number | null;
+  /** Populated when sorting by distance; approximate km. */
+  distanceKm?: number | null;
+  /** Home coverage city ids when placeMode=home. */
+  coverageCityIds?: string[] | null;
   /** Raw availability document for calendar-day eligibility (services). */
   availabilityJson?: unknown;
   /**
@@ -135,7 +142,7 @@ export function parseCatalogFilterQuery(params: Record<string, string | undefine
   | { ok: true; filter: CatalogFilterInput }
   | { ok: false; reason: string; messageAr: string } {
   const sortRaw = (params.sort ?? 'key').trim();
-  if (sortRaw !== 'key' && sortRaw !== 'price_asc' && sortRaw !== 'price_desc') {
+  if (sortRaw !== 'key' && sortRaw !== 'price_asc' && sortRaw !== 'price_desc' && sortRaw !== 'distance') {
     return { ok: false, reason: 'invalid_sort', messageAr: 'ترتيب النتائج غير صالح' };
   }
 
@@ -320,7 +327,15 @@ function priceInRange(price: number | null, min?: number | null, max?: number | 
 export function matchCatalogItem(item: CatalogFilterItem, filter: CatalogFilterInput): CatalogFilterMatch | null {
   if (filter.kind && item.kind !== filter.kind) return null;
   if (filter.partnerId && item.partnerId !== filter.partnerId) return null;
-  if (filter.city && item.city !== filter.city) return null;
+  if (filter.city) {
+    // Home services: city must be listed in coverage (partner HQ proximity ≠ coverage).
+    if (item.kind === 'service' && item.placeMode === 'home') {
+      const ids = item.coverageCityIds || [];
+      if (!ids.includes(filter.city) && item.city !== filter.city) return null;
+    } else if (item.city !== filter.city) {
+      return null;
+    }
+  }
   if (filter.category && item.category !== filter.category) return null;
 
   if (filter.tags && filter.tags.length > 0) {
@@ -443,6 +458,13 @@ export function sortCatalogMatches(matches: CatalogFilterMatch[], sort: CatalogS
   const key = (m: CatalogFilterMatch) => `${m.item.kind}:${m.item.id}`;
   const copy = [...matches];
   copy.sort((a, b) => {
+    if (sort === 'distance') {
+      const aDist = a.item.kind === 'service' ? a.item.distanceKm : null;
+      const bDist = b.item.kind === 'service' ? b.item.distanceKm : null;
+      if (aDist == null && bDist != null) return 1;
+      if (aDist != null && bDist == null) return -1;
+      if (aDist != null && bDist != null && aDist !== bDist) return aDist - bDist;
+    }
     if (sort === 'price_asc' || sort === 'price_desc') {
       const ap = sortPriceKey(a, sort);
       const bp = sortPriceKey(b, sort);

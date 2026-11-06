@@ -17,6 +17,7 @@ import '../../data/discover_favorite_client.dart';
 import '../../data/discover_catalog_facets.dart';
 import '../../data/discover_catalog_query.dart';
 import '../../data/discover_match_scope.dart';
+import '../../data/saudi_cities.dart';
 import '../../domain/catalog_offer_media.dart';
 import '../../domain/catalog_product_options.dart';
 import '../../domain/entities/catalog_product.dart';
@@ -493,7 +494,29 @@ class _DiscoverPresentationScreenState extends State<DiscoverPresentationScreen>
                   ListTile(title: const Text('مشاغل'), onTap: () => Navigator.pop(context, 'salon')),
                 ],
                 const ListTile(title: Text('المدينة')),
-                for (final city in cityBuckets)
+                ListTile(
+                  leading: const Icon(Icons.search),
+                  title: const Text('بحث عن مدينة سعودية…'),
+                  subtitle: Text(_query.city == null || _query.city!.isEmpty
+                      ? 'قائمة قابلة للبحث بدل مدينتين فقط'
+                      : 'المحددة: ${_query.city}'),
+                  onTap: () => Navigator.pop(context, 'citySearch'),
+                ),
+                if (widget.lane == DiscoverLane.beauty ||
+                    _query.partnerType == 'clinic' ||
+                    _query.partnerType == 'salon')
+                  ListTile(
+                    leading: const Icon(Icons.near_me_outlined),
+                    title: const Text('بالقرب مني'),
+                    subtitle: Text(
+                      _query.nearLat != null
+                          ? 'ترتيب تقريبي بالمسافة مفعّل'
+                          : 'يستخدم الموقع بعد الإذن — أو اختاري مدينة يدويًا عند الرفض',
+                    ),
+                    trailing: _query.sort == 'distance' ? const Icon(Icons.check) : null,
+                    onTap: () => Navigator.pop(context, 'nearby'),
+                  ),
+                for (final city in cityBuckets.take(12))
                   ListTile(
                     title: Text(city.displayLabel),
                     subtitle: city.count > 0 ? Text('${city.count}') : null,
@@ -646,6 +669,31 @@ class _DiscoverPresentationScreenState extends State<DiscoverPresentationScreen>
       await _reload(DiscoverCatalogQuery(lane: widget.lane, requireVisual: widget.lane != null));
     } else if (type == 'all') {
       await _reload(_query.copyWith(clearType: true, clearCategory: true).withoutInapplicableFilters());
+    } else if (type == 'citySearch' || type == 'nearby') {
+      final picked = await _pickSaudiCity(
+        context,
+        title: type == 'nearby' ? 'نقطة بحث للأقرب (مدينة أو مركز يدوي)' : 'اختاري مدينة',
+        subtitle: type == 'nearby'
+            ? 'إذن الموقع الجهازي غير موصول بعد في هذه الجولة — اختاري مدينة كنقطة بحث صريحة دون استبدال صامت'
+            : null,
+      );
+      if (!mounted || picked == null) return;
+      if (type == 'nearby') {
+        await _reload(
+          _query
+              .copyWith(
+                city: picked.nameAr,
+                nearLat: picked.lat,
+                nearLng: picked.lng,
+                sort: 'distance',
+              )
+              .withoutInapplicableFilters(),
+        );
+      } else {
+        await _reload(
+          _query.copyWith(city: picked.nameAr, clearNear: true, sort: 'key').withoutInapplicableFilters(),
+        );
+      }
     } else if (type.startsWith('city:')) {
       final city = type.substring(5);
       await _reload(
@@ -883,6 +931,64 @@ class _DiscoverPresentationScreenState extends State<DiscoverPresentationScreen>
     minCtrl.dispose();
     maxCtrl.dispose();
     return result;
+  }
+
+  Future<SaudiCity?> _pickSaudiCity(
+    BuildContext context, {
+    required String title,
+    String? subtitle,
+  }) async {
+    var needle = '';
+    return showDialog<SaudiCity>(
+      context: context,
+      builder: (dialogContext) {
+        return StatefulBuilder(
+          builder: (context, setLocal) {
+            final hits = searchSaudiCities(needle);
+            return AlertDialog(
+              title: Text(title),
+              content: SizedBox(
+                width: 360,
+                height: 420,
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.stretch,
+                  children: [
+                    if (subtitle != null) ...[
+                      Text(subtitle, style: Theme.of(context).textTheme.bodySmall),
+                      const SizedBox(height: 8),
+                    ],
+                    TextField(
+                      decoration: const InputDecoration(
+                        hintText: 'ابحثي باسم المدينة…',
+                        prefixIcon: Icon(Icons.search),
+                      ),
+                      onChanged: (v) => setLocal(() => needle = v),
+                    ),
+                    const SizedBox(height: 8),
+                    Expanded(
+                      child: ListView.builder(
+                        itemCount: hits.length,
+                        itemBuilder: (context, i) {
+                          final c = hits[i];
+                          return ListTile(
+                            title: Text(c.nameAr),
+                            subtitle: Text(c.nameEn),
+                            onTap: () => Navigator.pop(dialogContext, c),
+                          );
+                        },
+                      ),
+                    ),
+                  ],
+                ),
+              ),
+              actions: [
+                TextButton(onPressed: () => Navigator.pop(dialogContext), child: const Text('إلغاء')),
+              ],
+            );
+          },
+        );
+      },
+    );
   }
 
   Future<void> _openStore(BuildContext context, PresentationSlide slide) async {

@@ -269,7 +269,18 @@ async function main() {
     const cartBody = await json(cartRes);
     const cartItems = (cartBody && cartBody.items) || [];
     const cartItem = cartItems[0] || null;
-    const cartSelections = (cartItem && (cartItem.selections || cartItem.variantSelections)) || {};
+    /** Contract: selections is SelectionSnapshot[] with groupId/valueId — not {color,size}. */
+    const snapRaw = (cartItem && (cartItem.selections || cartItem.variantSelections)) || [];
+    const selectionMap: Record<string, string> = {};
+    if (Array.isArray(snapRaw)) {
+      for (const row of snapRaw) {
+        if (row && typeof row === 'object' && typeof row.groupId === 'string' && typeof row.valueId === 'string') {
+          selectionMap[row.groupId] = row.valueId;
+        }
+      }
+    } else if (snapRaw && typeof snapRaw === 'object') {
+      Object.assign(selectionMap, snapRaw as Record<string, string>);
+    }
     const cartPrice =
       cartItem &&
       (cartItem.unitPriceHalalas ?? cartItem.priceHalalas ?? cartItem.linePriceHalalas ?? cartItem.price);
@@ -277,21 +288,25 @@ async function main() {
       cartRes.status >= 200 &&
       cartRes.status < 300 &&
       cartItems.length >= 1 &&
-      (!!cartItem.productId ? cartItem.productId === productId : true) &&
-      (cartSelections.color ? cartSelections.color === 'black' : true) &&
-      (cartSelections.size ? cartSelections.size === 'M' : true) &&
-      (cartItem.quantity == null || cartItem.quantity === 1) &&
-      (cartPrice == null || Number(cartPrice) === 20000);
+      !!cartItem &&
+      cartItem.productId === productId &&
+      (cartItem.variantKey === variantId || cartItem.variantId === variantId) &&
+      selectionMap.color === 'black' &&
+      selectionMap.size === 'M' &&
+      cartItem.quantity === 1 &&
+      Number(cartPrice) === 20000;
     record('C07_CART_ADD_PRODUCT_HTTP', cartOk, {
       status: cartRes.status,
       itemCount: cartItems.length,
       productId: cartItem && cartItem.productId,
+      variantKey: cartItem && (cartItem.variantKey || cartItem.variantId),
       quantity: cartItem && cartItem.quantity,
-      selections: cartSelections,
+      selectionMap,
+      selectionsRaw: snapRaw,
       price: cartPrice,
       path: 'POST /marketplace/commerce/cart/items',
     });
-    // Unavailable / wrong variant must be rejected
+    // Unavailable / wrong variant must be rejected with expected client error (not 500)
     const badCart = await fetch(`${base}/api/v1/marketplace/commerce/cart/items`, {
       method: 'POST',
       headers: custH,
@@ -301,10 +316,22 @@ async function main() {
         selections: { color: 'nope', size: 'XXL' },
       }),
     });
-    record('C07_CART_REJECT_BAD_VARIANT', badCart.status >= 400, {
-      status: badCart.status,
-      body: await json(badCart),
-    });
+    const badCartBody = await json(badCart);
+    const badCode = badCartBody && (badCartBody.code || badCartBody.errorCode);
+    record(
+      'C07_CART_REJECT_BAD_VARIANT',
+      badCart.status >= 400 &&
+        badCart.status < 500 &&
+        (badCode === 'SELECTION_INVALID' ||
+          badCode === 'VARIANT_UNAVAILABLE' ||
+          badCode === 'SELECTION_REQUIRED' ||
+          typeof badCode === 'string'),
+      {
+        status: badCart.status,
+        code: badCode,
+        body: badCartBody,
+      },
+    );
     // Internal service check retained with correct classification (not a substitute for HTTP)
     let cartSvcOk = false;
     let cartSvcDetail: unknown = null;
@@ -357,6 +384,21 @@ async function main() {
           nameAr: `قص C07 ${suffix}`,
           priceHalalas: 15000,
           durationMin: 45,
+          bookingMode: 'request',
+          // Schedule via bulk fields (not a later PATCH substitution for the journey)
+          weeklyHours: [0, 1, 2, 3, 4, 5, 6].map((weekday) => ({
+            day: ['sun', 'mon', 'tue', 'wed', 'thu', 'fri', 'sat'][weekday],
+            open: '10:00',
+            close: '18:00',
+            resourceId: 'chair-1',
+            capacity: 1,
+          })),
+          serviceProfile: {
+            templateId: 'salon_hair_cut',
+            templateVersion: 1,
+            priceMode: 'fixed',
+            answers: { session_kind: 'single', place_mode: 'branch' },
+          },
         },
         overwriteWritten: true,
       }),
@@ -548,21 +590,35 @@ async function main() {
     });
     const bookBody = await json(bookHttp);
     const bookRow = bookBody && (bookBody.booking || bookBody);
+    const bookDb = bookRow?.id
+      ? await prisma.commerceBooking.findUnique({ where: { id: String(bookRow.id) } })
+      : null;
     const bookOk =
       bookHttp.status >= 200 &&
       bookHttp.status < 300 &&
       bookRow &&
       bookRow.status === 'requested' &&
-      bookRow.serviceId === serviceId;
+      bookRow.serviceId === serviceId &&
+      !!bookRow.startsAt &&
+      !!bookRow.endsAt &&
+      Number(bookRow.priceHalalas) === 15000 &&
+      !!bookDb &&
+      bookDb.partnerId === salon.id &&
+      bookDb.status === 'requested' &&
+      (firstSlot?.resourceId
+        ? bookRow.resourceId === firstSlot.resourceId || bookDb.resourceId === firstSlot.resourceId
+        : true);
     record('C07_APPOINTMENT_REQUEST_HTTP', bookOk, {
       status: bookHttp.status,
       bookingStatus: bookRow && bookRow.status,
       serviceId: bookRow && bookRow.serviceId,
-      partnerId: bookRow && bookRow.partnerId,
+      partnerId: bookDb && bookDb.partnerId,
+      resourceId: bookRow && bookRow.resourceId,
       startsAt: bookRow && bookRow.startsAt,
+      endsAt: bookRow && bookRow.endsAt,
+      priceHalalas: bookRow && bookRow.priceHalalas,
       noteAr: 'طلب موعد (requested) وليس حجزًا مؤكدًا',
       path: 'POST /marketplace/commerce/bookings',
-      body: bookBody,
     });
 
     // Unauthorized booking must fail

@@ -35,6 +35,7 @@ import { publishedCatalogMediaWhere } from './catalog-published-media';
 import { publicProductCommerce, publicServiceCommerce, sellableQty } from './commerce-public';
 import { seedMarketplaceIfEmpty } from './marketplace.seed';
 import { recordJourney } from './journey-events';
+import { haversineKm, listSaudiCities } from '../geo/saudi-cities';
 
 export type MatchedProductDto = {
   id: string;
@@ -224,6 +225,9 @@ export class MarketplaceService implements OnModuleInit {
     availableOn?: string;
     sort?: string;
     facets?: string;
+    /** Client search point for services distance (does not replace city filter silently). */
+    nearLat?: string;
+    nearLng?: string;
     ['variant.color']?: string;
     ['variant.size']?: string;
     ['variant.volume']?: string;
@@ -350,9 +354,24 @@ export class MarketplaceService implements OnModuleInit {
           partner: servicePartner,
           ...(filter.kind === 'product' ? { id: '__none__' } : {}),
         },
-        include: { partner: true },
+        include: { partner: true, branch: true },
       }),
     ]);
+    const nearLat = params.nearLat != null && params.nearLat !== '' ? Number(params.nearLat) : NaN;
+    const nearLng = params.nearLng != null && params.nearLng !== '' ? Number(params.nearLng) : NaN;
+    const hasNear =
+      Number.isFinite(nearLat) &&
+      Number.isFinite(nearLng) &&
+      nearLat >= -90 &&
+      nearLat <= 90 &&
+      nearLng >= -180 &&
+      nearLng <= 180;
+    if ((params.nearLat || params.nearLng) && !hasNear) {
+      throw new BadRequestException('إحداثيات البحث غير صالحة');
+    }
+    if (filter.sort === 'distance' && !hasNear) {
+      throw new BadRequestException('ترتيب الأقرب يتطلب موقع بحث صالحًا');
+    }
 
     type ProductRow = (typeof products)[number] & {
       variantInventories?: Array<{ variantId: string; stockQty: number | null; reservedQty: number; stockMode: string }>;
@@ -409,7 +428,30 @@ export class MarketplaceService implements OnModuleInit {
         };
       }),
       ...services.map((service) => {
-        const branchId = branchIdFromServiceProfile(service.serviceProfileJson);
+        const profileBranchId = branchIdFromServiceProfile(service.serviceProfileJson);
+        const branchId = service.branchId || profileBranchId;
+        const placeMode =
+          (typeof service.placeMode === 'string' && service.placeMode.trim()) ||
+          placeModeFromServiceProfile(service.serviceProfileJson);
+        const branch = service.branch;
+        const lat = branch && Number.isFinite(branch.lat) ? branch.lat : null;
+        const lng = branch && Number.isFinite(branch.lng) ? branch.lng : null;
+        let coverageCityIds: string[] | null = null;
+        if (service.coverageJson && typeof service.coverageJson === 'object' && !Array.isArray(service.coverageJson)) {
+          const raw = (service.coverageJson as { cityIds?: unknown }).cityIds;
+          if (Array.isArray(raw)) {
+            coverageCityIds = raw.filter((x): x is string => typeof x === 'string' && !!x.trim());
+          }
+        }
+        let distanceKm: number | null = null;
+        // Remote services never enter distance ranking; home uses coverage cities, not HQ proximity alone.
+        if (placeMode === 'remote') {
+          distanceKm = null;
+        } else if (placeMode === 'home') {
+          distanceKm = null;
+        } else if (hasNear && lat != null && lng != null) {
+          distanceKm = Math.round(haversineKm(nearLat, nearLng, lat, lng) * 10) / 10;
+        }
         const availableOnDay =
           filter.availableOn == null
             ? null
@@ -420,7 +462,7 @@ export class MarketplaceService implements OnModuleInit {
           partnerId: service.partnerId,
           partnerType: service.partner.type,
           partnerNameAr: service.partner.nameAr,
-          city: service.partner.city,
+          city: (branch && branch.cityNameAr) || service.partner.city,
           nameAr: service.nameAr,
           nameEn: service.nameEn,
           descriptionAr: service.descriptionAr,
@@ -428,8 +470,12 @@ export class MarketplaceService implements OnModuleInit {
           concernTags: service.concernTags,
           priceHalalas: service.priceHalalas,
           durationMin: service.durationMin,
-          placeMode: placeModeFromServiceProfile(service.serviceProfileJson),
+          placeMode,
           branchId,
+          lat,
+          lng,
+          distanceKm,
+          coverageCityIds,
           availabilityJson: service.availabilityJson,
           bookingEnabled: service.bookingEnabled,
           availableOnDay,
@@ -602,6 +648,15 @@ export class MarketplaceService implements OnModuleInit {
           variantsJson: null as unknown,
           placeMode: item.placeMode,
           branchId: item.branchId,
+          distanceKm: item.distanceKm ?? null,
+          distanceLabelAr:
+            item.distanceKm != null
+              ? `تقريبًا ${item.distanceKm} كم`
+              : item.placeMode === 'remote'
+                ? 'عن بُعد — بلا ترتيب مسافة'
+                : item.placeMode === 'home'
+                  ? 'منزلي — حسب التغطية'
+                  : null,
           matchedVariantIds: [] as string[],
           matchedVariants: [] as CatalogFilterMatch['matchedVariants'],
           media: media
@@ -617,6 +672,7 @@ export class MarketplaceService implements OnModuleInit {
       }),
       nextCursor,
       availableCities: cities,
+      saudiCities: listSaudiCities(),
       totalMatched: matched.length,
       queryFingerprint: fingerprint,
       activeFilters: {

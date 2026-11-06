@@ -261,6 +261,42 @@ const projected = api.buildAvailabilityJsonFromLocal(payload.values);
 assert.ok(projected);
 assert.equal(projected.windows[0].weekday, 2);
 
+// Changing general resource/capacity must rewrite existing day rows (not leave resource-1/cap 1).
+const hoursBefore = [
+  { day: 'sun', open: '10:00', close: '18:00', resourceId: 'old', capacity: 1 },
+  { day: 'mon', open: '10:00', close: '18:00', resourceId: 'old', capacity: 1 },
+];
+const hoursAfter = api.applyDefaultsOntoWeeklyHours(hoursBefore, 'chair-3', 3);
+assert.equal(hoursAfter[0].resourceId, 'chair-3');
+assert.equal(hoursAfter[0].capacity, 3);
+assert.equal(hoursAfter[1].resourceId, 'chair-3');
+assert.equal(hoursAfter[1].capacity, 3);
+const dflt = api.deriveScheduleDefaults(hoursAfter);
+assert.equal(dflt.defaultResourceId, 'chair-3');
+assert.equal(dflt.defaultCapacity, 3);
+assert.equal(dflt.mixed, false);
+const mixed = api.deriveScheduleDefaults([
+  { day: 'sun', open: '10:00', close: '12:00', resourceId: 'a', capacity: 1 },
+  { day: 'mon', open: '10:00', close: '12:00', resourceId: 'b', capacity: 2 },
+]);
+assert.equal(mixed.mixed, true);
+assert.equal(mixed.defaultResourceId, null);
+
+// Hydrate UI defaults from saved weeklyHours after strip of helpers
+const hydrated = api.hydrateScheduleUiFields({
+  weeklyHours: [{ day: 'wed', open: '11:00', close: '15:00', resourceId: 'chair-9', capacity: 4 }],
+});
+assert.equal(hydrated.defaultResourceId, 'chair-9');
+assert.equal(hydrated.defaultCapacity, 4);
+
+// Invalid lengthCm blocks save even if a previous good value existed
+const lenBad = {
+  localValues: {},
+  lengthCmError: 'الطول غير صالح',
+  priceError: null,
+};
+assert.equal(api.cardHasValidationErrors(lenBad), true);
+
 console.log(
   JSON.stringify({
     ok: true,
@@ -275,6 +311,8 @@ console.log(
       'variant_preserve',
       'variant_validation_gate',
       'availability_json_from_schedule',
+      'schedule_resource_capacity_propagate',
+      'lengthCm_invalid_blocks_save',
     ],
   }),
 );

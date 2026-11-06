@@ -5,6 +5,7 @@ import { RequestUser } from '../common/interfaces/request-user.interface';
 import { coerceQueryParam } from './catalog-filters';
 import { MatchMarketplaceDto } from './dto/match-marketplace.dto';
 import { MarketplaceService } from './marketplace.service';
+import { listSaudiCities } from '../geo/saudi-cities';
 
 function qstr(raw: unknown): string | undefined {
   return coerceQueryParam(raw);
@@ -51,10 +52,18 @@ export class MarketplaceController {
       availableOn: qstr(query.availableOn),
       sort: qstr(query.sort),
       facets: qstr(query.facets),
+      nearLat: qstr(query.nearLat),
+      nearLng: qstr(query.nearLng),
       'variant.color': qstr(query['variant.color']),
       'variant.size': qstr(query['variant.size']),
       'variant.volume': qstr(query['variant.volume']),
     });
+  }
+
+  /** Documented Saudi cities catalog (stable ids) for searchable city UI. */
+  @Get('cities')
+  cities(@Query('q') q?: string) {
+    return { items: listSaudiCities(q) };
   }
 
   @Get('catalog/:kind/:id')
