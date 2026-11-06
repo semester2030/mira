@@ -384,18 +384,39 @@ export class EditorDraftsService {
       }
 
       if (draft.status === 'materialized') {
+        const canRetrySubmit =
+          submitReview &&
+          !!draft.targetOwnerId &&
+          draft.submitReviewStatus !== 'submitted' &&
+          (draft.submitReviewStatus === 'pending' ||
+            draft.submitReviewStatus === 'failed' ||
+            draft.submitReviewStatus == null ||
+            draft.submitReviewStatus === 'none');
         if (draft.materializeKey === idempotencyKey) {
           if (draft.materializeFingerprint && draft.materializeFingerprint !== fingerprint) {
-            throw editorError(HttpStatus.CONFLICT, 'IDEMPOTENCY_CONFLICT', 'مفتاح منع التكرار مستخدم لطلب مختلف');
+            // Same materialize key may upgrade submitReview:false → true after media attach.
+            if (!canRetrySubmit) {
+              throw editorError(HttpStatus.CONFLICT, 'IDEMPOTENCY_CONFLICT', 'مفتاح منع التكرار مستخدم لطلب مختلف');
+            }
           }
           return {
             replay: true,
-            needsSubmitRetry:
-              submitReview &&
-              draft.submitReviewStatus !== 'submitted' &&
-              (draft.submitReviewStatus === 'pending' ||
-                draft.submitReviewStatus === 'failed' ||
-                draft.submitReviewStatus == null),
+            needsSubmitRetry: canRetrySubmit,
+            draftId: draft.id,
+            revision: draft.revision,
+            status: draft.status,
+            targetKind: draft.kind,
+            targetOwnerId: draft.targetOwnerId!,
+            materializedAt: draft.materializedAt!.toISOString(),
+            submitReview,
+            submitReviewStatus: draft.submitReviewStatus,
+          };
+        }
+        // Already materialized under another key — still allow one-shot submit/publish upgrade.
+        if (canRetrySubmit) {
+          return {
+            replay: true,
+            needsSubmitRetry: true,
             draftId: draft.id,
             revision: draft.revision,
             status: draft.status,
