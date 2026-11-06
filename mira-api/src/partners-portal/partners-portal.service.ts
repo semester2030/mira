@@ -1,12 +1,14 @@
 import {
   BadRequestException,
   ConflictException,
+  ForbiddenException,
   Inject,
   Injectable,
   Logger,
   NotFoundException,
   OnModuleInit,
 } from '@nestjs/common';
+import { PARTNER_KIND_FORBIDDEN, partnerCanCreateKind } from './partner-capabilities';
 import { ConfigService } from '@nestjs/config';
 import { Prisma } from '@prisma/client';
 import { randomBytes } from 'crypto';
@@ -420,8 +422,12 @@ export class PartnersPortalService implements OnModuleInit {
     const partner = await this.prisma.partner.findUnique({
       where: { id: partnerId },
     });
-    if (!partner || (partner.type !== 'brand' && partner.type !== 'developer')) {
-      throw new BadRequestException('المنتجات متاحة للماركات فقط');
+    if (!partner || !partnerCanCreateKind(partner.type, 'product')) {
+      throw new ForbiddenException({
+        message: 'المنتجات غير مسموحة لهذا الحساب',
+        messageAr: 'المنتجات غير مسموحة لهذا الحساب',
+        code: PARTNER_KIND_FORBIDDEN,
+      });
     }
     const category = this.optionalCategory(dto.category, PRODUCT_CATEGORIES);
     const cosmetic = category === 'face' || category === 'body' || category === 'hair';
@@ -555,8 +561,12 @@ export class PartnersPortalService implements OnModuleInit {
     const partner = await this.prisma.partner.findUnique({
       where: { id: partnerId },
     });
-    if (!partner || (!['clinic', 'salon'].includes(partner.type) && partner.type !== 'developer')) {
-      throw new BadRequestException('الخدمات متاحة للعيادات والصالونات فقط');
+    if (!partner || !partnerCanCreateKind(partner.type, 'service')) {
+      throw new ForbiddenException({
+        message: 'الخدمات غير مسموحة لهذا الحساب',
+        messageAr: 'الخدمات غير مسموحة لهذا الحساب',
+        code: PARTNER_KIND_FORBIDDEN,
+      });
     }
     const nameAr = dto.nameAr.trim();
     // Validate category before any availability side effects.

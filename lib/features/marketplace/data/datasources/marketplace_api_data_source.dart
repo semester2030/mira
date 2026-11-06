@@ -241,6 +241,8 @@ class MarketplaceApiDataSource {
     int? durationMax,
     String? availableOn,
     String sort = 'key',
+    double? nearLat,
+    double? nearLng,
     bool facets = true,
   }) async {
     late final Response<Map<String, dynamic>> response;
@@ -271,6 +273,8 @@ class MarketplaceApiDataSource {
         if (durationMax != null) 'durationMax': durationMax,
         if (availableOn != null && availableOn.isNotEmpty) 'availableOn': availableOn,
         if (sort != 'key') 'sort': sort,
+        if (nearLat != null) 'nearLat': nearLat,
+        if (nearLng != null) 'nearLng': nearLng,
         if (facets) 'facets': '1',
         'limit': limit,
       },

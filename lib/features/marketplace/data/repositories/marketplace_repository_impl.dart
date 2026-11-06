@@ -198,6 +198,8 @@ class MarketplaceRepositoryImpl implements MarketplaceRepository, DiscoverCatalo
         durationMax: effective.durationMax,
         availableOn: effective.availableOn,
         sort: effective.sort,
+        nearLat: effective.nearLat,
+        nearLng: effective.nearLng,
         facets: effective.requestFacets,
       );
       return DiscoverBrowseResponse(

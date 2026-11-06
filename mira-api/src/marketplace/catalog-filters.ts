@@ -10,6 +10,35 @@
  */
 
 import { isValidDateKey, parseOptionGroups, parseVariants, type ProductVariant } from './commerce.types';
+import { resolveSaudiCity } from '../geo/saudi-cities';
+
+/** Match city filter against stored id or Arabic/English name. */
+export function citiesEquivalent(a: string | null | undefined, b: string | null | undefined): boolean {
+  const left = String(a || '').trim();
+  const right = String(b || '').trim();
+  if (!left || !right) return false;
+  if (left === right) return true;
+  const ra = resolveSaudiCity(left);
+  const rb = resolveSaudiCity(right);
+  if (ra && rb) return ra.id === rb.id;
+  if (ra && (ra.id === right || ra.nameAr === right || ra.nameEn.toLowerCase() === right.toLowerCase())) {
+    return true;
+  }
+  if (rb && (rb.id === left || rb.nameAr === left || rb.nameEn.toLowerCase() === left.toLowerCase())) {
+    return true;
+  }
+  return false;
+}
+
+/** True when coverage list includes the filter city (id or display name). */
+export function coverageIncludesCity(
+  coverageCityIds: string[] | null | undefined,
+  filterCity: string,
+): boolean {
+  const ids = Array.isArray(coverageCityIds) ? coverageCityIds : [];
+  if (!ids.length) return false;
+  return ids.some((id) => citiesEquivalent(id, filterCity));
+}
 
 /** Registry filter key → option group id used in optionsJson / variantsJson.selections. */
 export const VARIANT_FILTER_GROUP_IDS: Readonly<Record<string, string>> = {
@@ -26,7 +55,7 @@ export const VARIANT_FILTER_GROUP_IDS: Readonly<Record<string, string>> = {
   finish: 'finish',
 };
 
-export type CatalogSort = 'key' | 'price_asc' | 'price_desc';
+export type CatalogSort = 'key' | 'price_asc' | 'price_desc' | 'distance';
 
 export type CatalogFilterInput = {
   q?: string;
@@ -68,6 +97,13 @@ export type CatalogFilterItem = {
   durationMin?: number | null;
   placeMode?: string | null;
   branchId?: string | null;
+  /** Branch coordinates for distance sort (services only). */
+  lat?: number | null;
+  lng?: number | null;
+  /** Populated when sorting by distance; approximate km. */
+  distanceKm?: number | null;
+  /** Home coverage city ids when placeMode=home. */
+  coverageCityIds?: string[] | null;
   /** Raw availability document for calendar-day eligibility (services). */
   availabilityJson?: unknown;
   /**
@@ -135,7 +171,7 @@ export function parseCatalogFilterQuery(params: Record<string, string | undefine
   | { ok: true; filter: CatalogFilterInput }
   | { ok: false; reason: string; messageAr: string } {
   const sortRaw = (params.sort ?? 'key').trim();
-  if (sortRaw !== 'key' && sortRaw !== 'price_asc' && sortRaw !== 'price_desc') {
+  if (sortRaw !== 'key' && sortRaw !== 'price_asc' && sortRaw !== 'price_desc' && sortRaw !== 'distance') {
     return { ok: false, reason: 'invalid_sort', messageAr: 'ترتيب النتائج غير صالح' };
   }
 
@@ -320,7 +356,14 @@ function priceInRange(price: number | null, min?: number | null, max?: number | 
 export function matchCatalogItem(item: CatalogFilterItem, filter: CatalogFilterInput): CatalogFilterMatch | null {
   if (filter.kind && item.kind !== filter.kind) return null;
   if (filter.partnerId && item.partnerId !== filter.partnerId) return null;
-  if (filter.city && item.city !== filter.city) return null;
+  if (filter.city) {
+    // Home services: coverage only — never fall back to partner HQ / branch city.
+    if (item.kind === 'service' && item.placeMode === 'home') {
+      if (!coverageIncludesCity(item.coverageCityIds, filter.city)) return null;
+    } else if (!citiesEquivalent(item.city, filter.city)) {
+      return null;
+    }
+  }
   if (filter.category && item.category !== filter.category) return null;
 
   if (filter.tags && filter.tags.length > 0) {
@@ -443,6 +486,13 @@ export function sortCatalogMatches(matches: CatalogFilterMatch[], sort: CatalogS
   const key = (m: CatalogFilterMatch) => `${m.item.kind}:${m.item.id}`;
   const copy = [...matches];
   copy.sort((a, b) => {
+    if (sort === 'distance') {
+      const aDist = a.item.kind === 'service' ? a.item.distanceKm : null;
+      const bDist = b.item.kind === 'service' ? b.item.distanceKm : null;
+      if (aDist == null && bDist != null) return 1;
+      if (aDist != null && bDist == null) return -1;
+      if (aDist != null && bDist != null && aDist !== bDist) return aDist - bDist;
+    }
     if (sort === 'price_asc' || sort === 'price_desc') {
       const ap = sortPriceKey(a, sort);
       const bp = sortPriceKey(b, sort);

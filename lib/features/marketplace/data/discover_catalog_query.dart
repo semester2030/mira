@@ -112,6 +112,8 @@ class DiscoverCatalogQuery {
     this.durationMax,
     this.availableOn,
     this.sort = 'key',
+    this.nearLat,
+    this.nearLng,
     this.requestFacets = true,
   });
 
@@ -149,8 +151,12 @@ class DiscoverCatalogQuery {
   /// Service calendar date YYYY-MM-DD (Asia/Riyadh).
   final String? availableOn;
 
-  /// Server sort: key | price_asc | price_desc
+  /// Server sort: key | price_asc | price_desc | distance
   final String sort;
+
+  /// Explicit search point for service distance — never silently overwritten by device location.
+  final double? nearLat;
+  final double? nearLng;
 
   final bool requestFacets;
 
@@ -170,6 +176,7 @@ class DiscoverCatalogQuery {
     if (durationMin != null || durationMax != null) n += 1;
     if (availableOn != null && availableOn!.isNotEmpty) n += 1;
     if (sort != 'key') n += 1;
+    if (nearLat != null && nearLng != null) n += 1;
     return n;
   }
 
@@ -218,6 +225,8 @@ class DiscoverCatalogQuery {
     int? durationMax,
     String? availableOn,
     String? sort,
+    double? nearLat,
+    double? nearLng,
     bool? requestFacets,
     bool clearType = false,
     bool clearCategory = false,
@@ -237,6 +246,7 @@ class DiscoverCatalogQuery {
     bool clearDurationMin = false,
     bool clearDurationMax = false,
     bool clearAvailableOn = false,
+    bool clearNear = false,
   }) {
     return DiscoverCatalogQuery(
       text: text ?? this.text,
@@ -258,6 +268,8 @@ class DiscoverCatalogQuery {
       durationMax: (clearDuration || clearDurationMax) ? null : durationMax ?? this.durationMax,
       availableOn: clearAvailableOn ? null : availableOn ?? this.availableOn,
       sort: sort ?? this.sort,
+      nearLat: clearNear ? null : nearLat ?? this.nearLat,
+      nearLng: clearNear ? null : nearLng ?? this.nearLng,
       requestFacets: requestFacets ?? this.requestFacets,
     );
   }
@@ -273,6 +285,7 @@ class DiscoverCatalogQuery {
       clearPrice: true,
       clearDuration: true,
       clearAvailableOn: true,
+      clearNear: true,
       sort: 'key',
     );
   }

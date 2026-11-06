@@ -11,6 +11,7 @@
  */
 import 'reflect-metadata';
 import { mkdirSync, writeFileSync } from 'node:fs';
+import { execFileSync } from 'node:child_process';
 import { join, dirname } from 'node:path';
 import { fileURLToPath } from 'node:url';
 import { randomUUID } from 'node:crypto';
@@ -269,7 +270,18 @@ async function main() {
     const cartBody = await json(cartRes);
     const cartItems = (cartBody && cartBody.items) || [];
     const cartItem = cartItems[0] || null;
-    const cartSelections = (cartItem && (cartItem.selections || cartItem.variantSelections)) || {};
+    /** Contract: selections is SelectionSnapshot[] with groupId/valueId — not {color,size}. */
+    const snapRaw = (cartItem && (cartItem.selections || cartItem.variantSelections)) || [];
+    const selectionMap: Record<string, string> = {};
+    if (Array.isArray(snapRaw)) {
+      for (const row of snapRaw) {
+        if (row && typeof row === 'object' && typeof row.groupId === 'string' && typeof row.valueId === 'string') {
+          selectionMap[row.groupId] = row.valueId;
+        }
+      }
+    } else if (snapRaw && typeof snapRaw === 'object') {
+      Object.assign(selectionMap, snapRaw as Record<string, string>);
+    }
     const cartPrice =
       cartItem &&
       (cartItem.unitPriceHalalas ?? cartItem.priceHalalas ?? cartItem.linePriceHalalas ?? cartItem.price);
@@ -277,21 +289,25 @@ async function main() {
       cartRes.status >= 200 &&
       cartRes.status < 300 &&
       cartItems.length >= 1 &&
-      (!!cartItem.productId ? cartItem.productId === productId : true) &&
-      (cartSelections.color ? cartSelections.color === 'black' : true) &&
-      (cartSelections.size ? cartSelections.size === 'M' : true) &&
-      (cartItem.quantity == null || cartItem.quantity === 1) &&
-      (cartPrice == null || Number(cartPrice) === 20000);
+      !!cartItem &&
+      cartItem.productId === productId &&
+      (cartItem.variantKey === variantId || cartItem.variantId === variantId) &&
+      selectionMap.color === 'black' &&
+      selectionMap.size === 'M' &&
+      cartItem.quantity === 1 &&
+      Number(cartPrice) === 20000;
     record('C07_CART_ADD_PRODUCT_HTTP', cartOk, {
       status: cartRes.status,
       itemCount: cartItems.length,
       productId: cartItem && cartItem.productId,
+      variantKey: cartItem && (cartItem.variantKey || cartItem.variantId),
       quantity: cartItem && cartItem.quantity,
-      selections: cartSelections,
+      selectionMap,
+      selectionsRaw: snapRaw,
       price: cartPrice,
       path: 'POST /marketplace/commerce/cart/items',
     });
-    // Unavailable / wrong variant must be rejected
+    // Unavailable / wrong variant must be rejected with expected client error (not 500)
     const badCart = await fetch(`${base}/api/v1/marketplace/commerce/cart/items`, {
       method: 'POST',
       headers: custH,
@@ -301,10 +317,22 @@ async function main() {
         selections: { color: 'nope', size: 'XXL' },
       }),
     });
-    record('C07_CART_REJECT_BAD_VARIANT', badCart.status >= 400, {
-      status: badCart.status,
-      body: await json(badCart),
-    });
+    const badCartBody = await json(badCart);
+    const badCode = badCartBody && (badCartBody.code || badCartBody.errorCode);
+    record(
+      'C07_CART_REJECT_BAD_VARIANT',
+      badCart.status >= 400 &&
+        badCart.status < 500 &&
+        (badCode === 'SELECTION_INVALID' ||
+          badCode === 'VARIANT_UNAVAILABLE' ||
+          badCode === 'SELECTION_REQUIRED' ||
+          typeof badCode === 'string'),
+      {
+        status: badCart.status,
+        code: badCode,
+        body: badCartBody,
+      },
+    );
     // Internal service check retained with correct classification (not a substitute for HTTP)
     let cartSvcOk = false;
     let cartSvcDetail: unknown = null;
@@ -357,6 +385,24 @@ async function main() {
           nameAr: `قص C07 ${suffix}`,
           priceHalalas: 15000,
           durationMin: 45,
+          bookingMode: 'request',
+          // Distinctive portal schedule — must reach booking without any later PATCH substitution.
+          weeklyHours: [
+            { day: 'sun', open: '10:00', close: '18:00', resourceId: 'chair-A', capacity: 3 },
+            { day: 'mon', open: '10:00', close: '18:00', resourceId: 'chair-B', capacity: 5 },
+            { day: 'tue', open: '10:00', close: '18:00', resourceId: 'chair-A', capacity: 3 },
+            { day: 'wed', open: '10:00', close: '18:00', resourceId: 'chair-A', capacity: 3 },
+            { day: 'thu', open: '10:00', close: '18:00', resourceId: 'chair-A', capacity: 3 },
+            { day: 'fri', open: '10:00', close: '18:00', resourceId: 'chair-A', capacity: 3 },
+            { day: 'sat', open: '10:00', close: '18:00', resourceId: 'chair-A', capacity: 3 },
+          ],
+          dateExceptions: [{ date: dateStr, closed: true }],
+          serviceProfile: {
+            templateId: 'salon_hair_cut',
+            templateVersion: 1,
+            priceMode: 'fixed',
+            answers: { session_kind: 'single', place_mode: 'branch' },
+          },
         },
         overwriteWritten: true,
       }),
@@ -376,43 +422,43 @@ async function main() {
     serviceId = svcMatBody.results?.[0]?.targetOwnerId || null;
     record('C07_PORTAL_MATERIALIZE_SERVICE', svcMatBody.succeeded === 1 && !!serviceId, svcMatBody);
 
-    // Availability/calendar via partner service update API when available; else serviceProfile put
+    // Open booking day = day after the closed exception (portal schedule only — no availability PATCH).
+    const openDay = new Date(tomorrow);
+    openDay.setUTCDate(openDay.getUTCDate() + 1);
+    const openDateStr = openDay.toISOString().slice(0, 10);
+
     let publishServiceOk = false;
-    let publishServiceDetail: unknown = { serviceId, dateStr };
+    let publishServiceDetail: unknown = { serviceId, dateStr, openDateStr };
     if (serviceId) {
-      const weeklyOpen = [0, 1, 2, 3, 4, 5, 6].map((weekday) => ({
-        weekday,
-        startMin: 10 * 60,
-        endMin: 18 * 60,
-        capacity: 1,
-        resourceId: 'chair-1',
-      }));
-      const patchSvc = await fetch(`${base}/api/v1/partners-portal/services/${serviceId}`, {
-        method: 'PATCH',
-        headers: salonH,
-        body: JSON.stringify({
-          durationMin: 45,
-          bookingEnabled: true,
-          availabilityJson: {
-            v: 2,
-            timezone: 'Asia/Riyadh',
-            windows: weeklyOpen,
-            exceptions: [],
-            closedDates: [],
-          },
-        }),
+      const matRow = await prisma.service.findUnique({ where: { id: serviceId } });
+      const matAvail = matRow?.availabilityJson as {
+        windows?: Array<{ weekday?: number; resourceId?: string; capacity?: number }>;
+        closedDates?: string[];
+      } | null;
+      const sunWin = (matAvail?.windows || []).find((w) => w.weekday === 0);
+      const monWin = (matAvail?.windows || []).find((w) => w.weekday === 1);
+      const portalScheduleIntact =
+        !!matRow?.bookingEnabled &&
+        sunWin?.resourceId === 'chair-A' &&
+        sunWin?.capacity === 3 &&
+        monWin?.resourceId === 'chair-B' &&
+        monWin?.capacity === 5 &&
+        Array.isArray(matAvail?.closedDates) &&
+        matAvail!.closedDates!.includes(dateStr);
+      record('C07_PORTAL_SCHEDULE_INTACT', portalScheduleIntact, {
+        bookingEnabled: matRow?.bookingEnabled,
+        sunWin,
+        monWin,
+        closedDates: matAvail?.closedDates,
+        noteAr: 'جدول البوابة بعد التحويل دون PATCH وسيط',
       });
-      const patchBody = await json(patchSvc);
+
       const profileGet = await fetch(`${base}/api/v1/partners-portal/services/${serviceId}/service-profile`, {
         headers: salonH,
       });
       const profileGetBody = await json(profileGet);
       const expectedRevision =
-        typeof profileGetBody.reviewRevision === 'number'
-          ? profileGetBody.reviewRevision
-          : typeof patchBody.reviewRevision === 'number'
-            ? patchBody.reviewRevision
-            : 1;
+        typeof profileGetBody.reviewRevision === 'number' ? profileGetBody.reviewRevision : 1;
       const profilePut = await fetch(`${base}/api/v1/partners-portal/services/${serviceId}/service-profile`, {
         method: 'PUT',
         headers: salonH,
@@ -470,16 +516,27 @@ async function main() {
         }),
       });
       const row = await prisma.service.findUnique({ where: { id: serviceId } });
+      const rowAvail = row?.availabilityJson as {
+        windows?: Array<{ weekday?: number; resourceId?: string; capacity?: number }>;
+        closedDates?: string[];
+      } | null;
+      const afterPublishSun = (rowAvail?.windows || []).find((w) => w.weekday === 0);
+      const scheduleStillPortal =
+        afterPublishSun?.resourceId === 'chair-A' &&
+        afterPublishSun?.capacity === 3 &&
+        Array.isArray(rowAvail?.closedDates) &&
+        rowAvail!.closedDates!.includes(dateStr);
       publishServiceOk =
-        (patchSvc.status === 200 || patchSvc.status === 201) &&
+        portalScheduleIntact &&
+        scheduleStillPortal &&
         profilePersisted &&
         (media.status === 200 || media.status === 201) &&
         (sub.status === 200 || sub.status === 201) &&
         (decision.status === 200 || decision.status === 201) &&
         row?.contentStatus === 'published';
       publishServiceDetail = {
-        patchStatus: patchSvc.status,
-        patchBody,
+        portalScheduleIntact,
+        scheduleStillPortal,
         profileStatus: profilePut.status,
         profileBody,
         profilePersisted,
@@ -490,6 +547,8 @@ async function main() {
         decisionStatus: decision.status,
         contentStatus: row?.contentStatus,
         bookingEnabled: row?.bookingEnabled,
+        availabilityWindows: rowAvail?.windows?.length,
+        closedDates: rowAvail?.closedDates,
       };
     }
     record('C07_PUBLISH_SERVICE', publishServiceOk, publishServiceDetail);
@@ -501,8 +560,25 @@ async function main() {
     const foundSvc = (catSvcBody.items || catSvcBody.results || []).some(
       (it) => it.id === serviceId || it.serviceId === serviceId,
     );
+    const closedAvailHttp = await fetch(
+      `${base}/api/v1/marketplace/commerce/services/${serviceId}/availability?date=${encodeURIComponent(dateStr)}`,
+    );
+    const closedAvailBody = await json(closedAvailHttp);
+    const closedSlots = (closedAvailBody && closedAvailBody.slots) || [];
+    const closedOk =
+      closedAvailHttp.status === 200 &&
+      (!Array.isArray(closedSlots) ||
+        closedSlots.length === 0 ||
+        closedSlots.every((s: { available?: boolean }) => s && s.available === false));
+    record('C07_CLOSED_DATE_NO_SLOTS', closedOk, {
+      status: closedAvailHttp.status,
+      date: dateStr,
+      slotN: Array.isArray(closedSlots) ? closedSlots.length : null,
+      noteAr: 'تاريخ الاستثناء المغلق من البوابة لا يُرجع فترات قابلة للحجز',
+    });
+
     const catSvcAvail = await fetch(
-      `${base}/api/v1/marketplace/catalog?partnerId=${salon.id}&kind=service&availableOn=${dateStr}&facets=1&limit=24`,
+      `${base}/api/v1/marketplace/catalog?partnerId=${salon.id}&kind=service&availableOn=${openDateStr}&facets=1&limit=24`,
     );
     const catSvcAvailBody = await json(catSvcAvail);
     const foundAvail = (catSvcAvailBody.items || catSvcAvailBody.results || []).some(
@@ -515,10 +591,11 @@ async function main() {
       availStatus: catSvcAvail.status,
       foundAvail,
       availN: (catSvcAvailBody.items || catSvcAvailBody.results || []).length,
+      openDateStr,
     });
 
     const availHttp = await fetch(
-      `${base}/api/v1/marketplace/commerce/services/${serviceId}/availability?date=${encodeURIComponent(dateStr)}`,
+      `${base}/api/v1/marketplace/commerce/services/${serviceId}/availability?date=${encodeURIComponent(openDateStr)}`,
     );
     const availBody = await json(availHttp);
     const slots = (availBody && availBody.slots) || [];
@@ -526,12 +603,26 @@ async function main() {
       slots.find((s: { available?: boolean; startsAt?: string }) => s && s.available !== false && s.startsAt) ||
       slots[0] ||
       null;
-    const availOk = availHttp.status === 200 && Array.isArray(slots) && slots.length > 0 && !!firstSlot?.startsAt;
+    const openWeekday = new Date(`${openDateStr}T12:00:00+03:00`).getDay();
+    const expectedResource = openWeekday === 1 ? 'chair-B' : 'chair-A';
+    const expectedCapacity = openWeekday === 1 ? 5 : 3;
+    const availOk =
+      availHttp.status === 200 &&
+      Array.isArray(slots) &&
+      slots.length > 0 &&
+      !!firstSlot?.startsAt &&
+      firstSlot?.resourceId === expectedResource;
     record('C07_SERVICE_AVAILABILITY_HTTP', availOk, {
       status: availHttp.status,
       slotN: slots.length,
       firstStartsAt: firstSlot?.startsAt,
+      resourceId: firstSlot?.resourceId,
+      expectedResource,
+      expectedCapacity,
+      openDateStr,
+      openWeekday,
       path: 'GET /marketplace/commerce/services/:id/availability',
+      noteAr: 'إتاحة من جدول البوابة الأصلي دون PATCH',
     });
 
     const bookHttp = await fetch(`${base}/api/v1/marketplace/commerce/bookings`, {
@@ -543,43 +634,69 @@ async function main() {
         contactName: 'عميل C07',
         contactPhone: '+966500000007',
         idempotencyKey: `c07-bk-${suffix}`,
-        ...(firstSlot?.resourceId ? { resourceId: firstSlot.resourceId } : {}),
+        resourceId: expectedResource,
       }),
     });
     const bookBody = await json(bookHttp);
     const bookRow = bookBody && (bookBody.booking || bookBody);
+    const bookDb = bookRow?.id
+      ? await prisma.commerceBooking.findUnique({ where: { id: String(bookRow.id) } })
+      : null;
     const bookOk =
       bookHttp.status >= 200 &&
       bookHttp.status < 300 &&
       bookRow &&
       bookRow.status === 'requested' &&
-      bookRow.serviceId === serviceId;
+      bookRow.serviceId === serviceId &&
+      !!bookRow.startsAt &&
+      !!bookRow.endsAt &&
+      Number(bookRow.priceHalalas) === 15000 &&
+      !!bookDb &&
+      bookDb.partnerId === salon.id &&
+      bookDb.status === 'requested' &&
+      (bookRow.resourceId === expectedResource || bookDb.resourceId === expectedResource);
     record('C07_APPOINTMENT_REQUEST_HTTP', bookOk, {
       status: bookHttp.status,
       bookingStatus: bookRow && bookRow.status,
       serviceId: bookRow && bookRow.serviceId,
-      partnerId: bookRow && bookRow.partnerId,
+      partnerId: bookDb && bookDb.partnerId,
+      resourceId: bookRow && bookRow.resourceId,
+      expectedResource,
       startsAt: bookRow && bookRow.startsAt,
-      noteAr: 'طلب موعد (requested) وليس حجزًا مؤكدًا',
+      endsAt: bookRow && bookRow.endsAt,
+      priceHalalas: bookRow && bookRow.priceHalalas,
+      noteAr: 'طلب موعد يحمل المورد من جدول البوابة الأصلي',
       path: 'POST /marketplace/commerce/bookings',
-      body: bookBody,
     });
 
-    // Unauthorized booking must fail
+    // Unauthorized booking must fail with 401 specifically
     const bookUnauth = await fetch(`${base}/api/v1/marketplace/commerce/bookings`, {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ serviceId, startsAt: firstSlot?.startsAt, contactName: 'x', contactPhone: '+966500000001' }),
+      body: JSON.stringify({
+        serviceId,
+        startsAt: firstSlot?.startsAt,
+        contactName: 'x',
+        contactPhone: '+966500000001',
+      }),
     });
     record('C07_BOOKING_UNAUTHORIZED', bookUnauth.status === 401, { status: bookUnauth.status });
   } catch (e) {
     record('C07_UNEXPECTED', false, { error: e instanceof Error ? e.message : String(e) });
   } finally {
+    let sourceHint = process.env.MIRA_TEST_COMMIT || '';
+    if (!sourceHint) {
+      try {
+        sourceHint = execFileSync('git', ['rev-parse', 'HEAD'], { encoding: 'utf8' }).trim();
+      } catch {
+        sourceHint = 'working-tree';
+      }
+    }
     const summary = {
       id: 'C07_PORTAL_TO_APP',
       started,
       finished: new Date().toISOString(),
-      sourceHint: process.env.MIRA_TEST_COMMIT || 'working-tree',
+      sourceHint,
       cwd: process.cwd(),
       env: { dbHost: 'localhost', MIRA_PARTNER_EDITOR_V2: true },
       steps,
