@@ -218,6 +218,49 @@ const bad = {
 };
 assert.equal(api.cardHasValidationErrors(bad), true);
 
+// availabilityJson from weeklyHours (booking contract)
+const avail = api.buildAvailabilityJsonFromLocal({
+  weeklyHours: [
+    { day: 'sun', open: '10:00', close: '18:00' },
+    { day: 'mon', open: '09:00', close: '17:00' },
+  ],
+  dateExceptions: [{ date: '2099-01-01', closed: true }],
+  defaultResourceId: 'chair-1',
+  defaultCapacity: 2,
+});
+assert.ok(avail);
+assert.equal(avail.v, 2);
+assert.equal(avail.timezone, 'Asia/Riyadh');
+assert.equal(avail.windows.length, 2);
+assert.equal(avail.windows[0].weekday, 0);
+assert.equal(avail.windows[0].startMin, 600);
+assert.equal(avail.windows[0].resourceId, 'chair-1');
+assert.equal(avail.windows[0].capacity, 2);
+assert.deepEqual(avail.closedDates, ['2099-01-01']);
+const payload = api.buildSavePayload({
+  localValues: {
+    nameAr: 'قص',
+    weeklyHours: [{ day: 'tue', open: '10:00', close: '12:00' }],
+    defaultResourceId: 'r1',
+    bookingEnabled: true,
+    availabilityJson: avail,
+  },
+  savedValues: {},
+  revision: 1,
+  editGen: 1,
+});
+// PUT sends registry fields only; availabilityJson is rebuilt server-side from weeklyHours.
+assert.equal(payload.values.availabilityJson, undefined);
+assert.equal(payload.values.bookingEnabled, undefined);
+assert.equal(payload.values.defaultResourceId, undefined);
+assert.ok(Array.isArray(payload.values.weeklyHours));
+assert.equal(payload.values.weeklyHours[0].day, 'tue');
+assert.equal(payload.values.nameAr, 'قص');
+// Local helper still projects the booking contract for UI/preview.
+const projected = api.buildAvailabilityJsonFromLocal(payload.values);
+assert.ok(projected);
+assert.equal(projected.windows[0].weekday, 2);
+
 console.log(
   JSON.stringify({
     ok: true,
@@ -231,6 +274,7 @@ console.log(
       'upload_restore_reconcile',
       'variant_preserve',
       'variant_validation_gate',
+      'availability_json_from_schedule',
     ],
   }),
 );

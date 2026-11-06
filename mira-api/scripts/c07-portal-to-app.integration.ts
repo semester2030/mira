@@ -268,12 +268,42 @@ async function main() {
     });
     const cartBody = await json(cartRes);
     const cartItems = (cartBody && cartBody.items) || [];
-    const cartOk = cartRes.status >= 200 && cartRes.status < 300 && cartItems.length >= 1;
+    const cartItem = cartItems[0] || null;
+    const cartSelections = (cartItem && (cartItem.selections || cartItem.variantSelections)) || {};
+    const cartPrice =
+      cartItem &&
+      (cartItem.unitPriceHalalas ?? cartItem.priceHalalas ?? cartItem.linePriceHalalas ?? cartItem.price);
+    const cartOk =
+      cartRes.status >= 200 &&
+      cartRes.status < 300 &&
+      cartItems.length >= 1 &&
+      (!!cartItem.productId ? cartItem.productId === productId : true) &&
+      (cartSelections.color ? cartSelections.color === 'black' : true) &&
+      (cartSelections.size ? cartSelections.size === 'M' : true) &&
+      (cartItem.quantity == null || cartItem.quantity === 1) &&
+      (cartPrice == null || Number(cartPrice) === 20000);
     record('C07_CART_ADD_PRODUCT_HTTP', cartOk, {
       status: cartRes.status,
       itemCount: cartItems.length,
-      body: cartBody,
+      productId: cartItem && cartItem.productId,
+      quantity: cartItem && cartItem.quantity,
+      selections: cartSelections,
+      price: cartPrice,
       path: 'POST /marketplace/commerce/cart/items',
+    });
+    // Unavailable / wrong variant must be rejected
+    const badCart = await fetch(`${base}/api/v1/marketplace/commerce/cart/items`, {
+      method: 'POST',
+      headers: custH,
+      body: JSON.stringify({
+        productId,
+        quantity: 1,
+        selections: { color: 'nope', size: 'XXL' },
+      }),
+    });
+    record('C07_CART_REJECT_BAD_VARIANT', badCart.status >= 400, {
+      status: badCart.status,
+      body: await json(badCart),
     });
     // Internal service check retained with correct classification (not a substitute for HTTP)
     let cartSvcOk = false;

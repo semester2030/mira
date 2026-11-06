@@ -409,9 +409,23 @@ export class RegistryService implements OnModuleInit {
       if (def.min != null && raw.length < def.min) return 'MIN_VALUE';
       if (def.max != null && raw.length > def.max) return 'MAX_VALUE';
       const allowedIds = this.allowedValueIds(def);
+      // Calendar/schedule fields (weeklyHours, dateExceptions, resources) store object rows.
+      // Only enforce string-enum membership when the field declares a closed value set.
+      if (!allowedIds) {
+        for (const item of raw) {
+          if (item == null) return 'FIELD_TYPE_INVALID';
+          const ok =
+            typeof item === 'string' ||
+            typeof item === 'number' ||
+            typeof item === 'boolean' ||
+            (typeof item === 'object' && !Array.isArray(item));
+          if (!ok) return 'FIELD_TYPE_INVALID';
+        }
+        return null;
+      }
       for (const item of raw) {
         if (typeof item !== 'string') return 'FIELD_TYPE_INVALID';
-        if (allowedIds && !allowedIds.has(item)) return 'REGISTRY_UNKNOWN_VALUE';
+        if (!allowedIds.has(item)) return 'REGISTRY_UNKNOWN_VALUE';
       }
       return null;
     }

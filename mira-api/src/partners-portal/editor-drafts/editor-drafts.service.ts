@@ -8,11 +8,70 @@ import {
 import { Prisma } from '@prisma/client';
 import { PrismaService } from '../../prisma/prisma.service';
 import { CatalogContentService } from '../../marketplace/catalog-content.service';
-import { normalizeIdempotencyKey, stableFingerprint } from '../../marketplace/commerce.types';
+import {
+  normalizeAvailabilityDocument,
+  normalizeIdempotencyKey,
+  stableFingerprint,
+} from '../../marketplace/commerce.types';
 import { RegistryService } from '../registry/registry.service';
 import { EDITOR_SCHEMA_VERSION } from '../registry/registry.types';
 import { optionsJsonFromDraftValues } from '../registry/draft-values-mapping';
 import { assertVariantMediaIdsEligible } from '../variant-media-ids';
+
+/** Map bulk weeklyHours/dateExceptions → availabilityJson when canonical doc missing. */
+function availabilityFromBulkSchedule(values: Record<string, unknown>) {
+  if (values.availabilityJson != null && typeof values.availabilityJson === 'object') {
+    return normalizeAvailabilityDocument(values.availabilityJson, { strict: true });
+  }
+  const hours = Array.isArray(values.weeklyHours) ? values.weeklyHours : [];
+  const dayMap: Record<string, number> = { sun: 0, mon: 1, tue: 2, wed: 3, thu: 4, fri: 5, sat: 6 };
+  const toMin = (t: unknown) => {
+    const s = String(t || '10:00');
+    const [h, m] = s.split(':').map((x) => Number(x));
+    if (!Number.isFinite(h) || !Number.isFinite(m)) return null;
+    return h * 60 + m;
+  };
+  const resourceId =
+    typeof values.defaultResourceId === 'string' && values.defaultResourceId.trim()
+      ? values.defaultResourceId.trim()
+      : 'resource-1';
+  const capacity =
+    typeof values.defaultCapacity === 'number' && Number.isInteger(values.defaultCapacity) && values.defaultCapacity > 0
+      ? values.defaultCapacity
+      : 1;
+  const windows = hours
+    .map((raw) => {
+      if (!raw || typeof raw !== 'object') return null;
+      const h = raw as Record<string, unknown>;
+      const dayKey = String(h.day || h.weekday || '');
+      const weekday =
+        typeof h.weekday === 'number' && Number.isInteger(h.weekday)
+          ? h.weekday
+          : dayMap[dayKey] != null
+            ? dayMap[dayKey]
+            : null;
+      const startMin = typeof h.startMin === 'number' ? h.startMin : toMin(h.open || h.start);
+      const endMin = typeof h.endMin === 'number' ? h.endMin : toMin(h.close || h.end);
+      if (weekday == null || startMin == null || endMin == null || endMin <= startMin) return null;
+      return {
+        weekday,
+        startMin,
+        endMin,
+        capacity: typeof h.capacity === 'number' ? h.capacity : capacity,
+        resourceId: typeof h.resourceId === 'string' && h.resourceId ? h.resourceId : resourceId,
+      };
+    })
+    .filter(Boolean);
+  const closedDates = (Array.isArray(values.dateExceptions) ? values.dateExceptions : [])
+    .map((x) => (typeof x === 'string' ? x : x && typeof x === 'object' ? String((x as { date?: string }).date || '') : ''))
+    .map((d) => d.trim())
+    .filter(Boolean);
+  if (!windows.length && !closedDates.length) return null;
+  return normalizeAvailabilityDocument(
+    { v: 2, timezone: 'Asia/Riyadh', windows, exceptions: [], closedDates },
+    { strict: true },
+  );
+}
 
 function editorError(status: HttpStatus, code: string, messageAr: string, extra: Record<string, unknown> = {}) {
   return new HttpException({ message: messageAr, messageAr, code, ...extra }, status);
@@ -433,6 +492,12 @@ export class EditorDraftsService {
               ? String(values.purchaseMode)
               : 'external',
           stockQty: typeof values.stockQty === 'number' && Number.isInteger(values.stockQty) ? values.stockQty : null,
+          inventoryMode:
+            values.inventoryMode === 'variant' || values.inventoryMode === 'product'
+              ? String(values.inventoryMode)
+              : Array.isArray(values.variantsJson) && (values.variantsJson as unknown[]).length
+                ? 'variant'
+                : 'product',
           deliveryFeeHalalas:
             typeof values.deliveryFeeHalalas === 'number' && Number.isInteger(values.deliveryFeeHalalas)
               ? values.deliveryFeeHalalas
@@ -444,6 +509,34 @@ export class EditorDraftsService {
               : undefined,
         },
       });
+      // Seed P3.1 variant inventory rows from draft variants so cart/stock work after materialize.
+      if (Array.isArray(values.variantsJson)) {
+        for (const raw of values.variantsJson) {
+          if (!raw || typeof raw !== 'object') continue;
+          const v = raw as Record<string, unknown>;
+          const variantId = typeof v.id === 'string' ? v.id.trim() : '';
+          if (!variantId) continue;
+          const stockQty =
+            typeof v.stockQty === 'number' && Number.isInteger(v.stockQty) && v.stockQty >= 0 ? v.stockQty : null;
+          const stockMode = stockQty == null ? 'untracked' : 'tracked';
+          await tx.productVariantInventory.upsert({
+            where: { productId_variantId: { productId: row.id, variantId } },
+            create: {
+              productId: row.id,
+              variantId,
+              variantKey: variantId,
+              stockMode,
+              stockQty,
+              reservedQty: 0,
+            },
+            update: {
+              stockMode,
+              stockQty,
+              archivedAt: null,
+            },
+          });
+        }
+      }
       return row.id;
     }
     const durationMin = values.durationMin as number;
@@ -453,6 +546,10 @@ export class EditorDraftsService {
       const normalized = this.registry.normalizeServiceProfile(values.serviceProfile, partner.type);
       serviceProfileJson = normalized as unknown as Prisma.InputJsonValue;
     }
+    const availabilityDoc = availabilityFromBulkSchedule(values);
+    const bookingEnabled =
+      values.bookingEnabled === true ||
+      (values.bookingEnabled !== false && !!availabilityDoc && (availabilityDoc.windows || []).length > 0);
     const row = await tx.service.create({
       data: {
         partnerId,
@@ -465,7 +562,7 @@ export class EditorDraftsService {
           ? values.concernTags.filter((t): t is string => typeof t === 'string')
           : [],
         category: typeof values.category === 'string' ? values.category : null,
-        bookingEnabled: values.bookingEnabled === true,
+        bookingEnabled,
         payMode: 'pay_at_venue',
         active: false,
         contentStatus: 'draft',
@@ -473,6 +570,9 @@ export class EditorDraftsService {
         profileId: draft.profileId,
         schemaVersion: draft.schemaVersion,
         ...(serviceProfileJson !== undefined ? { serviceProfileJson } : {}),
+        ...(availabilityDoc
+          ? { availabilityJson: availabilityDoc as unknown as Prisma.InputJsonValue }
+          : {}),
       },
     });
     return row.id;
@@ -630,6 +730,20 @@ export class EditorDraftsService {
                 draftServiceProfileSet: false,
               }
             : {}),
+          ...(() => {
+            try {
+              const availabilityDoc = availabilityFromBulkSchedule(values);
+              if (!availabilityDoc) return {};
+              return {
+                availabilityJson: availabilityDoc as unknown as Prisma.InputJsonValue,
+                bookingEnabled:
+                  values.bookingEnabled === true ||
+                  (values.bookingEnabled !== false && (availabilityDoc.windows || []).length > 0),
+              };
+            } catch {
+              return {};
+            }
+          })(),
         },
       });
     }
