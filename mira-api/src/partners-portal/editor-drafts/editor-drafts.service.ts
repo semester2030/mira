@@ -17,6 +17,89 @@ import { RegistryService } from '../registry/registry.service';
 import { EDITOR_SCHEMA_VERSION } from '../registry/registry.types';
 import { optionsJsonFromDraftValues } from '../registry/draft-values-mapping';
 import { assertVariantMediaIdsEligible } from '../variant-media-ids';
+import { resolveSaudiCity } from '../../geo/saudi-cities';
+import {
+  branchIdFromServiceProfile,
+  placeModeFromServiceProfile,
+} from '../../marketplace/catalog-filters';
+import { PARTNER_KIND_FORBIDDEN, partnerCanCreateKind } from '../partner-capabilities';
+
+/** Normalize coverage city ids (Arabic name → stable sa-* id). */
+function normalizeCoverageJson(raw: unknown): { cityIds: string[] } | null {
+  if (!raw || typeof raw !== 'object' || Array.isArray(raw)) return null;
+  const cityIdsRaw = (raw as { cityIds?: unknown }).cityIds;
+  if (!Array.isArray(cityIdsRaw)) return null;
+  const cityIds = cityIdsRaw
+    .map((x) => {
+      if (typeof x !== 'string' || !x.trim()) return null;
+      const resolved = resolveSaudiCity(x.trim());
+      return resolved ? resolved.id : x.trim();
+    })
+    .filter((x): x is string => !!x);
+  return { cityIds };
+}
+
+function placeFieldsFromBulkValues(values: Record<string, unknown>): {
+  placeMode?: string;
+  branchId?: string | null;
+  coverageJson?: Prisma.InputJsonValue | typeof Prisma.DbNull;
+} {
+  const profile = values.serviceProfile;
+  let placeMode =
+    (typeof values.placeMode === 'string' && values.placeMode.trim()) ||
+    placeModeFromServiceProfile(profile) ||
+    null;
+  if (placeMode === 'in_branch') placeMode = 'branch';
+  const branchId =
+    (typeof values.branchId === 'string' && values.branchId.trim()) ||
+    branchIdFromServiceProfile(profile) ||
+    null;
+  let coverageJson: Prisma.InputJsonValue | typeof Prisma.DbNull | undefined;
+  if (values.coverageJson != null) {
+    const norm = normalizeCoverageJson(values.coverageJson);
+    coverageJson = norm ? (norm as unknown as Prisma.InputJsonValue) : Prisma.DbNull;
+  } else if (Array.isArray(values.coverageCityIds)) {
+    const norm = normalizeCoverageJson({ cityIds: values.coverageCityIds });
+    coverageJson = norm ? (norm as unknown as Prisma.InputJsonValue) : Prisma.DbNull;
+  } else if (Array.isArray(values.coverageZones)) {
+    // Portal registry field → Service.coverageJson.cityIds
+    const norm = normalizeCoverageJson({ cityIds: values.coverageZones });
+    coverageJson = norm ? (norm as unknown as Prisma.InputJsonValue) : Prisma.DbNull;
+  } else if (placeMode === 'home' && values.coverageCityId) {
+    const norm = normalizeCoverageJson({ cityIds: [String(values.coverageCityId)] });
+    coverageJson = norm ? (norm as unknown as Prisma.InputJsonValue) : undefined;
+  } else if (profile && typeof profile === 'object') {
+    const answers =
+      (profile as { answers?: Record<string, unknown> }).answers &&
+      typeof (profile as { answers?: unknown }).answers === 'object'
+        ? ((profile as { answers: Record<string, unknown> }).answers as Record<string, unknown>)
+        : null;
+    if (answers) {
+      const raw = answers.coverageZones ?? answers.home_coverage ?? answers.coverageCityIds;
+      if (Array.isArray(raw)) {
+        const norm = normalizeCoverageJson({ cityIds: raw });
+        if (norm) coverageJson = norm as unknown as Prisma.InputJsonValue;
+      } else if (typeof raw === 'string' && raw.trim()) {
+        const parts = raw.split(/[,|،]/).map((s) => s.trim()).filter(Boolean);
+        const norm = normalizeCoverageJson({ cityIds: parts });
+        if (norm) coverageJson = norm as unknown as Prisma.InputJsonValue;
+      }
+    }
+  }
+  const out: {
+    placeMode?: string;
+    branchId?: string | null;
+    coverageJson?: Prisma.InputJsonValue | typeof Prisma.DbNull;
+  } = {};
+  if (placeMode) out.placeMode = placeMode;
+  if (branchId !== null && branchId !== undefined) out.branchId = branchId || null;
+  if (coverageJson !== undefined) out.coverageJson = coverageJson;
+  // Explicit empty coverageZones clears prior coverage on rematerialize.
+  if (Array.isArray(values.coverageZones) && values.coverageZones.length === 0) {
+    out.coverageJson = Prisma.DbNull;
+  }
+  return out;
+}
 
 /** Map bulk weeklyHours/dateExceptions → availabilityJson when canonical doc missing. */
 function availabilityFromBulkSchedule(values: Record<string, unknown>) {
@@ -174,6 +257,9 @@ export class EditorDraftsService {
       throw editorError(HttpStatus.BAD_REQUEST, 'VALUES_REQUIRED', 'يجب إرسال values ككائن (يُسمح بـ {})');
     }
     const partnerType = await this.partnerType(partnerId);
+    if (!partnerCanCreateKind(partnerType, body.kind)) {
+      throw editorError(HttpStatus.FORBIDDEN, PARTNER_KIND_FORBIDDEN, 'نوع العنصر غير مسموح لهذا الحساب');
+    }
     const profile = this.registry.assertProfileAllowed(body.profileId, partnerType, body.kind);
     const schemaVersion = body.schemaVersion ?? EDITOR_SCHEMA_VERSION;
     this.registry.validateValues({
@@ -290,6 +376,12 @@ export class EditorDraftsService {
         where: { partnerId_clientDraftId: { partnerId, clientDraftId } },
       });
       if (!draft || draft.status === 'discarded') throw new NotFoundException('المسودة غير موجودة');
+      if (draft.kind !== 'product' && draft.kind !== 'service') {
+        throw editorError(HttpStatus.BAD_REQUEST, 'KIND_INVALID', 'نوع العنصر غير صالح');
+      }
+      if (!partnerCanCreateKind(partnerType, draft.kind)) {
+        throw editorError(HttpStatus.FORBIDDEN, PARTNER_KIND_FORBIDDEN, 'نوع العنصر غير مسموح لهذا الحساب');
+      }
 
       if (draft.status === 'materialized') {
         if (draft.materializeKey === idempotencyKey) {
@@ -550,6 +642,7 @@ export class EditorDraftsService {
     const bookingEnabled =
       values.bookingEnabled === true ||
       (values.bookingEnabled !== false && !!availabilityDoc && (availabilityDoc.windows || []).length > 0);
+    const placeFields = placeFieldsFromBulkValues(values);
     const row = await tx.service.create({
       data: {
         partnerId,
@@ -573,6 +666,7 @@ export class EditorDraftsService {
         ...(availabilityDoc
           ? { availabilityJson: availabilityDoc as unknown as Prisma.InputJsonValue }
           : {}),
+        ...placeFields,
       },
     });
     return row.id;
@@ -732,8 +826,20 @@ export class EditorDraftsService {
             : {}),
           ...(() => {
             try {
+              const scheduleTouched =
+                Array.isArray(values.weeklyHours) ||
+                Array.isArray(values.dateExceptions) ||
+                values.availabilityJson !== undefined;
+              if (!scheduleTouched) return {};
               const availabilityDoc = availabilityFromBulkSchedule(values);
-              if (!availabilityDoc) return {};
+              // Explicit empty weeklyHours/dateExceptions must clear stored availability
+              // (omit vs clear: missing keys = no schedule change; [] = clear).
+              if (!availabilityDoc) {
+                return {
+                  availabilityJson: Prisma.DbNull,
+                  bookingEnabled: false,
+                };
+              }
               return {
                 availabilityJson: availabilityDoc as unknown as Prisma.InputJsonValue,
                 bookingEnabled:
@@ -744,6 +850,7 @@ export class EditorDraftsService {
               return {};
             }
           })(),
+          ...placeFieldsFromBulkValues(values),
         },
       });
     }

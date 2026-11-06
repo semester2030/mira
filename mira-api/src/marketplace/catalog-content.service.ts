@@ -387,17 +387,8 @@ export class CatalogContentService {
       await tx.catalogReviewLog.create({ data: { ownerKind: kind, ownerId: id, actor: `partner:${partnerId}`, action: 'submit', note: null } });
       return { contentStatus: row.contentStatus, reviewStatus: 'in_review', revision, id: row.id };
     });
-    if (partner?.type !== 'developer') return queued;
-    const current = await this.ownedRow(kind, id);
-    if (current?.submittedRevision == null) return queued;
-    return this.decide(
-      'developer-portal',
-      kind,
-      id,
-      'approve',
-      'نشر مباشر لحساب المطوّر',
-      current.submittedRevision,
-    );
+    // Developer must not self-approve or bypass content review — same queue as other partners.
+    return queued;
   }
 
   async decide(actor: string, kind: string, id: string, decision: string | undefined, note?: string, revision?: number) {

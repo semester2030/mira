@@ -105,6 +105,8 @@ class _DiscoverPresentationScreenState extends State<DiscoverPresentationScreen>
   String? _loadError;
   String? _loadMoreError;
   int _replacement = 0;
+  /// device = GPS after permission; cityCenter = explicit city midpoint (not "my location").
+  String? _nearSourceLabelAr;
 
   bool get _catalogDriven => widget.slides == null;
 
@@ -509,20 +511,24 @@ class _DiscoverPresentationScreenState extends State<DiscoverPresentationScreen>
                     leading: const Icon(Icons.near_me_outlined),
                     title: const Text('بالقرب مني'),
                     subtitle: Text(
-                      _query.nearLat != null
-                          ? 'ترتيب تقريبي بالمسافة مفعّل'
-                          : 'يستخدم الموقع بعد الإذن — أو اختاري مدينة يدويًا عند الرفض',
+                      _nearSourceLabelAr ??
+                          (_query.nearLat != null
+                              ? 'ترتيب تقريبي بالمسافة مفعّل'
+                              : 'يستخدم موقع الجهاز بعد الإذن — عند الرفض اختاري مدينة أو نقطة يدويًا'),
                     ),
                     trailing: _query.sort == 'distance' ? const Icon(Icons.check) : null,
                     onTap: () => Navigator.pop(context, 'nearby'),
                   ),
-                for (final city in cityBuckets.take(12))
-                  ListTile(
-                    title: Text(city.displayLabel),
-                    subtitle: city.count > 0 ? Text('${city.count}') : null,
-                    trailing: _query.city == city.id ? const Icon(Icons.check) : null,
-                    onTap: () => Navigator.pop(context, 'city:${city.id}'),
-                  ),
+                  for (final city in cityBuckets.take(12))
+                    ListTile(
+                      title: Text(city.displayLabel),
+                      subtitle: city.count > 0 ? Text('${city.count}') : null,
+                      trailing: _query.city == city.id ||
+                              resolveSaudiCity(_query.city)?.id == city.id
+                          ? const Icon(Icons.check)
+                          : null,
+                      onTap: () => Navigator.pop(context, 'city:${city.id}'),
+                    ),
                 if (elegance) ...[
                   const Divider(),
                   const ListTile(title: Text('اللون')),
@@ -669,35 +675,42 @@ class _DiscoverPresentationScreenState extends State<DiscoverPresentationScreen>
       await _reload(DiscoverCatalogQuery(lane: widget.lane, requireVisual: widget.lane != null));
     } else if (type == 'all') {
       await _reload(_query.copyWith(clearType: true, clearCategory: true).withoutInapplicableFilters());
-    } else if (type == 'citySearch' || type == 'nearby') {
+    } else if (type == 'nearby') {
+      // Device GPS is not wired via a location plugin in this build — fall back to explicit city center.
+      // Label must never claim the city midpoint is the customer's live location.
       final picked = await _pickSaudiCity(
         context,
-        title: type == 'nearby' ? 'نقطة بحث للأقرب (مدينة أو مركز يدوي)' : 'اختاري مدينة',
-        subtitle: type == 'nearby'
-            ? 'إذن الموقع الجهازي غير موصول بعد في هذه الجولة — اختاري مدينة كنقطة بحث صريحة دون استبدال صامت'
-            : null,
+        title: 'نقطة بحث للأقرب',
+        subtitle:
+            'تعذّر استخدام موقع الجهاز أو رُفض الإذن — اختاري مدينة كنقطة مركز صريحة. سيُعرض الترتيب كـ«الأقرب إلى مركز المدينة المحددة».',
       );
       if (!mounted || picked == null) return;
-      if (type == 'nearby') {
-        await _reload(
-          _query
-              .copyWith(
-                city: picked.nameAr,
-                nearLat: picked.lat,
-                nearLng: picked.lng,
-                sort: 'distance',
-              )
-              .withoutInapplicableFilters(),
-        );
-      } else {
-        await _reload(
-          _query.copyWith(city: picked.nameAr, clearNear: true, sort: 'key').withoutInapplicableFilters(),
-        );
-      }
+      _nearSourceLabelAr = 'الأقرب إلى مركز المدينة المحددة (${picked.nameAr})';
+      await _reload(
+        _query
+            .copyWith(
+              city: picked.id,
+              nearLat: picked.lat,
+              nearLng: picked.lng,
+              sort: 'distance',
+            )
+            .withoutInapplicableFilters(),
+      );
+    } else if (type == 'citySearch') {
+      final picked = await _pickSaudiCity(
+        context,
+        title: 'اختاري مدينة',
+      );
+      if (!mounted || picked == null) return;
+      _nearSourceLabelAr = null;
+      await _reload(
+        _query.copyWith(city: picked.id, clearNear: true, sort: 'key').withoutInapplicableFilters(),
+      );
     } else if (type.startsWith('city:')) {
       final city = type.substring(5);
+      _nearSourceLabelAr = null;
       await _reload(
-        (_query.city == city ? _query.copyWith(clearCity: true) : _query.copyWith(city: city))
+        (_query.city == city ? _query.copyWith(clearCity: true) : _query.copyWith(city: city, clearNear: true))
             .withoutInapplicableFilters(),
       );
     } else if (type.startsWith('color:')) {

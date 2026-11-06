@@ -10,6 +10,35 @@
  */
 
 import { isValidDateKey, parseOptionGroups, parseVariants, type ProductVariant } from './commerce.types';
+import { resolveSaudiCity } from '../geo/saudi-cities';
+
+/** Match city filter against stored id or Arabic/English name. */
+export function citiesEquivalent(a: string | null | undefined, b: string | null | undefined): boolean {
+  const left = String(a || '').trim();
+  const right = String(b || '').trim();
+  if (!left || !right) return false;
+  if (left === right) return true;
+  const ra = resolveSaudiCity(left);
+  const rb = resolveSaudiCity(right);
+  if (ra && rb) return ra.id === rb.id;
+  if (ra && (ra.id === right || ra.nameAr === right || ra.nameEn.toLowerCase() === right.toLowerCase())) {
+    return true;
+  }
+  if (rb && (rb.id === left || rb.nameAr === left || rb.nameEn.toLowerCase() === left.toLowerCase())) {
+    return true;
+  }
+  return false;
+}
+
+/** True when coverage list includes the filter city (id or display name). */
+export function coverageIncludesCity(
+  coverageCityIds: string[] | null | undefined,
+  filterCity: string,
+): boolean {
+  const ids = Array.isArray(coverageCityIds) ? coverageCityIds : [];
+  if (!ids.length) return false;
+  return ids.some((id) => citiesEquivalent(id, filterCity));
+}
 
 /** Registry filter key → option group id used in optionsJson / variantsJson.selections. */
 export const VARIANT_FILTER_GROUP_IDS: Readonly<Record<string, string>> = {
@@ -328,11 +357,10 @@ export function matchCatalogItem(item: CatalogFilterItem, filter: CatalogFilterI
   if (filter.kind && item.kind !== filter.kind) return null;
   if (filter.partnerId && item.partnerId !== filter.partnerId) return null;
   if (filter.city) {
-    // Home services: city must be listed in coverage (partner HQ proximity ≠ coverage).
+    // Home services: coverage only — never fall back to partner HQ / branch city.
     if (item.kind === 'service' && item.placeMode === 'home') {
-      const ids = item.coverageCityIds || [];
-      if (!ids.includes(filter.city) && item.city !== filter.city) return null;
-    } else if (item.city !== filter.city) {
+      if (!coverageIncludesCity(item.coverageCityIds, filter.city)) return null;
+    } else if (!citiesEquivalent(item.city, filter.city)) {
       return null;
     }
   }

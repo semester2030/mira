@@ -115,6 +115,8 @@
     addons: 1,
     measurements: 1,
     itemDimensions: 1,
+    /** Specialized length editor only — avoid duplicate generic number input. */
+    lengthCm: 1,
   };
 
   const WEEK_DAYS = [
@@ -249,11 +251,21 @@
     if (!st) return true;
     if (st.priceError) return true;
     if (st.lengthCmError) return true;
+    if (st.capacityError) return true;
     if (st.scheduleError) return true;
+    const dayErrs = st.dayTimeErrors;
+    if (dayErrs && typeof dayErrs === 'object' && Object.keys(dayErrs).some((k) => !!dayErrs[k])) return true;
     const vs = Array.isArray(st.localValues && st.localValues.variantsJson)
       ? st.localValues.variantsJson
       : [];
     return vs.some((v) => v && (v.priceError || v.stockError));
+  }
+
+  /** Always read the live card schedule — never a stale UI closure copy. */
+  function readWeeklyHours(local) {
+    return Array.isArray(local && local.weeklyHours)
+      ? local.weeklyHours.filter(Boolean).map((h) => Object.assign({}, h))
+      : [];
   }
 
   /**
@@ -276,25 +288,53 @@
     };
   }
 
-  /** Apply general resource/capacity onto day rows (resource ≠ branch). */
+  /**
+   * Apply general resource/capacity onto inheriting day rows only (resource ≠ branch).
+   * Rows with resourceOverride/capacityOverride keep their explicit values.
+   */
   function applyDefaultsOntoWeeklyHours(hours, resourceId, capacity) {
     const rid = String(resourceId || '').trim();
     const cap =
       typeof capacity === 'number' && Number.isInteger(capacity) && capacity > 0 ? capacity : null;
     return (Array.isArray(hours) ? hours : []).filter(Boolean).map((h) => {
       const next = Object.assign({}, h);
-      if (rid) next.resourceId = rid;
-      else delete next.resourceId;
-      if (cap != null) next.capacity = cap;
-      else delete next.capacity;
+      if (!next.resourceOverride) {
+        if (rid) next.resourceId = rid;
+        else delete next.resourceId;
+      }
+      if (!next.capacityOverride) {
+        if (cap != null) next.capacity = cap;
+        else delete next.capacity;
+      }
       return next;
     });
+  }
+
+  /** Upsert one day row while preserving other days' resource/capacity (live read). */
+  function upsertWeeklyHourRow(local, dayId, patchOrNull) {
+    const cur = readWeeklyHours(local);
+    const next = cur.filter((h) => h.day !== dayId && h.weekday !== dayId);
+    if (patchOrNull) next.push(patchOrNull);
+    // Keep the key as [] when empty so save sends an explicit clear (≠ omit).
+    local.weeklyHours = next;
+    return next;
   }
 
   /** After server round-trip, restore UI defaults from persisted weeklyHours. */
   function hydrateScheduleUiFields(local) {
     if (!local || typeof local !== 'object') return local;
     const hours = Array.isArray(local.weeklyHours) ? local.weeklyHours : [];
+    // Explicit empty [] means cleared — do not revive from leftover availabilityJson.
+    if (
+      Object.prototype.hasOwnProperty.call(local, 'weeklyHours') &&
+      Array.isArray(local.weeklyHours) &&
+      !local.weeklyHours.length
+    ) {
+      delete local.defaultResourceId;
+      delete local.defaultCapacity;
+      local._scheduleMixed = false;
+      return local;
+    }
     if (!hours.length && local.availabilityJson && Array.isArray(local.availabilityJson.windows)) {
       // Project windows → weeklyHours for editor restore (day ids).
       const WEEKDAY_TO_DAY = ['sun', 'mon', 'tue', 'wed', 'thu', 'fri', 'sat'];
@@ -314,12 +354,19 @@
         };
       });
     }
-    const d = deriveScheduleDefaults(local.weeklyHours);
+    const hoursNow = Array.isArray(local.weeklyHours) ? local.weeklyHours.filter(Boolean) : [];
+    const d = deriveScheduleDefaults(hoursNow);
     if (d.defaultResourceId) local.defaultResourceId = d.defaultResourceId;
     else delete local.defaultResourceId;
     if (d.defaultCapacity != null) local.defaultCapacity = d.defaultCapacity;
     else delete local.defaultCapacity;
     local._scheduleMixed = d.mixed;
+    // Mixed schedules are explicit per-day exceptions — do not unify on default edits.
+    if (d.mixed && hoursNow.length) {
+      local.weeklyHours = hoursNow.map((h) =>
+        Object.assign({}, h, { resourceOverride: true, capacityOverride: true }),
+      );
+    }
     return local;
   }
 
@@ -458,10 +505,14 @@
   /** Build canonical availabilityJson from bulk schedule fields (same contract as booking). */
   function buildAvailabilityJsonFromLocal(local) {
     const lv = local || {};
+    const hoursExplicit = Object.prototype.hasOwnProperty.call(lv, 'weeklyHours');
     const hours = Array.isArray(lv.weeklyHours) ? lv.weeklyHours : [];
-    // Prefer rebuilding from weeklyHours/dateExceptions so schedule edits win.
-    // Fall back to an existing availabilityJson only when no schedule fields are set.
-    if (!hours.length && !(Array.isArray(lv.dateExceptions) && lv.dateExceptions.length)) {
+    // Explicit empty weeklyHours ([] or cleared) must NOT revive stale availabilityJson.
+    if (hoursExplicit && !hours.length && !(Array.isArray(lv.dateExceptions) && lv.dateExceptions.length)) {
+      return null;
+    }
+    // Fall back to existing availabilityJson only when schedule fields were never set.
+    if (!hoursExplicit && !hours.length && !(Array.isArray(lv.dateExceptions) && lv.dateExceptions.length)) {
       if (lv.availabilityJson && typeof lv.availabilityJson === 'object' && Array.isArray(lv.availabilityJson.windows)) {
         return deepCloneJson(lv.availabilityJson);
       }
@@ -544,6 +595,16 @@
     delete out.bookingEnabled;
     delete out.defaultResourceId;
     delete out.defaultCapacity;
+    delete out._scheduleMixed;
+    if (Array.isArray(out.weeklyHours)) {
+      out.weeklyHours = out.weeklyHours.filter(Boolean).map((h) => {
+        if (!h || typeof h !== 'object') return h;
+        const clean = Object.assign({}, h);
+        delete clean.resourceOverride;
+        delete clean.capacityOverride;
+        return clean;
+      });
+    }
     if (out.serviceProfile && typeof out.serviceProfile === 'object') {
       /* keep as-is for server normalizeServiceProfile */
     }
@@ -586,10 +647,14 @@
     const listHost = el('div', { id: 'bulkMyList' });
     const cardsHost = el('div', { id: 'bulkCards' });
 
-    const kindSelect = el('select', { id: 'bulkKind' }, [
-      el('option', { value: 'product', text: 'منتجات' }),
-      el('option', { value: 'service', text: 'خدمات' }),
-    ]);
+    const pType = (partner && partner.type) || '';
+    const canProduct = pType === 'developer' || pType === 'brand';
+    const canService = pType === 'developer' || pType === 'salon' || pType === 'clinic';
+    const kindOpts = [];
+    if (canProduct) kindOpts.push(el('option', { value: 'product', text: 'منتجات' }));
+    if (canService) kindOpts.push(el('option', { value: 'service', text: 'خدمات' }));
+    if (!kindOpts.length) kindOpts.push(el('option', { value: '', text: 'لا صلاحية إضافة' }));
+    const kindSelect = el('select', { id: 'bulkKind' }, kindOpts);
     const profileSelect = el('select', { id: 'bulkProfile' });
     const countInput = el('input', {
       id: 'bulkCount',
@@ -1185,12 +1250,16 @@
           fieldsHost.appendChild(commerceHost);
         }
 
-        // Product: lengthCm only when profile supports it — empty ≠ zero; invalid blocks save
-        const profileFieldIds = new Set((fieldDefs || []).map((f) => f.id));
-        if (batch.kind === 'product' && profileFieldIds.has('lengthCm')) {
-          const dim = el('div', { className: 'bulk-dimensions' });
+        // Product: single lengthCm editor when profile lists it (skipped from generic loop).
+        const rootReg = (registry && registry.registry) || registry || {};
+        const profileFields = (
+          ((rootReg.profiles || []).find((p) => p.id === batch.profileId) || {}).fields || []
+        );
+        const lengthSupported = batch.kind === 'product' && profileFields.indexOf('lengthCm') >= 0;
+        if (lengthSupported) {
+          const dim = el('div', { className: 'bulk-dimensions', 'data-length-editor': '1' });
           dim.appendChild(el('p', { className: 'lead', text: 'طول المنتج سم (اختياري)' }));
-          const lenDef = (fieldDefs || []).find((f) => f.id === 'lengthCm') || {};
+          const lenDef = (rootReg.fields && rootReg.fields.lengthCm) || {};
           const shown =
             state.lengthCmText != null
               ? state.lengthCmText
@@ -1199,10 +1268,12 @@
                 : '';
           const lenInp = el('input', {
             type: 'text',
+            inputMode: 'decimal',
             placeholder: 'طول',
             value: shown,
             disabled: locked,
             style: 'width:72px',
+            'data-field': 'lengthCm',
           });
           const lenErr = el('span', {
             className: 'bulk-field-error',
@@ -1284,39 +1355,70 @@
             disabled: locked,
             style: 'width:64px',
           });
+          if (!state.dayTimeErrors || typeof state.dayTimeErrors !== 'object') state.dayTimeErrors = {};
+          const capErr = el('span', {
+            className: 'bulk-field-error',
+            text: state.capacityError || '',
+            style: 'color:#b00020;display:block;font-size:12px',
+          });
           const schedErr = el('span', {
             className: 'bulk-field-error',
             text: state.scheduleError || '',
             style: 'color:#b00020;display:block;font-size:12px',
           });
+          const refreshDayMetas = () => {
+            const live = readWeeklyHours(state.localValues);
+            WEEK_DAYS.forEach((d) => {
+              const metaEl = sched.querySelector('[data-day-meta="' + d.id + '"]');
+              if (!metaEl) return;
+              const row = live.find((h) => h && (h.day === d.id || h.weekday === d.id));
+              if (!row) {
+                metaEl.textContent = '';
+                return;
+              }
+              metaEl.textContent =
+                ' · ' +
+                (row.resourceId || state.localValues.defaultResourceId || '—') +
+                ' / سعة ' +
+                (row.capacity != null
+                  ? row.capacity
+                  : state.localValues.defaultCapacity != null
+                    ? state.localValues.defaultCapacity
+                    : '—');
+            });
+          };
           const syncMeta = () => {
             const r = resIn.value.trim();
             const cRaw = capIn.value.trim();
             if (cRaw && (!/^\d+$/.test(cRaw) || Number(cRaw) < 1)) {
-              state.scheduleError = 'السعة يجب أن تكون عددًا صحيحًا ≥ 1';
-              schedErr.textContent = state.scheduleError;
+              state.capacityError = 'السعة يجب أن تكون عددًا صحيحًا ≥ 1';
+              capErr.textContent = state.capacityError;
               bumpEdit(batchIdFrozen, card.cardId, 'weeklyHours');
               dirtyBadge.textContent = 'غير محفوظ';
               return;
             }
-            state.scheduleError = null;
-            schedErr.textContent = '';
+            state.capacityError = null;
+            capErr.textContent = '';
             if (r) state.localValues.defaultResourceId = r;
             else delete state.localValues.defaultResourceId;
             if (cRaw) state.localValues.defaultCapacity = Number(cRaw);
             else delete state.localValues.defaultCapacity;
-            // Propagate general defaults onto existing day rows so save ≠ stale resource-1/capacity 1.
-            if (Array.isArray(state.localValues.weeklyHours) && state.localValues.weeklyHours.length) {
+            // Propagate onto inheriting rows only — never clobber per-day overrides.
+            const live = readWeeklyHours(state.localValues);
+            if (live.length) {
               state.localValues.weeklyHours = applyDefaultsOntoWeeklyHours(
-                state.localValues.weeklyHours,
+                live,
                 state.localValues.defaultResourceId,
                 state.localValues.defaultCapacity,
               );
-              state.localValues._scheduleMixed = false;
+              state.localValues._scheduleMixed = deriveScheduleDefaults(
+                state.localValues.weeklyHours,
+              ).mixed;
             }
             syncAvailabilityOntoLocal(state);
             bumpEdit(batchIdFrozen, card.cardId, 'weeklyHours');
             dirtyBadge.textContent = 'غير محفوظ';
+            refreshDayMetas();
           };
           resIn.addEventListener('change', syncMeta);
           capIn.addEventListener('change', syncMeta);
@@ -1326,12 +1428,17 @@
               el('label', null, ['سعة ', capIn]),
             ]),
           );
+          sched.appendChild(capErr);
           sched.appendChild(schedErr);
-          let hours = Array.isArray(state.localValues.weeklyHours)
-            ? state.localValues.weeklyHours.slice()
-            : [];
           WEEK_DAYS.forEach((d) => {
-            const existing = hours.find((h) => h && (h.day === d.id || h.weekday === d.id));
+            const hoursSnap = readWeeklyHours(state.localValues);
+            const existing = hoursSnap.find((h) => h && (h.day === d.id || h.weekday === d.id));
+            const dayErr = el('span', {
+              className: 'bulk-field-error',
+              'data-day-err': d.id,
+              text: (state.dayTimeErrors && state.dayTimeErrors[d.id]) || '',
+              style: 'color:#b00020;font-size:11px',
+            });
             const on = el('input', {
               type: 'checkbox',
               checked: !!existing,
@@ -1349,6 +1456,7 @@
             });
             const rowMeta = el('span', {
               style: 'font-size:11px;opacity:0.75',
+              'data-day-meta': d.id,
               text: existing
                 ? ' · ' +
                   (existing.resourceId || state.localValues.defaultResourceId || '—') +
@@ -1361,42 +1469,67 @@
                 : '',
             });
             const syncHours = () => {
-              hours = hours.filter((h) => h && h.day !== d.id && h.weekday !== d.id);
+              // Always read latest card schedule — stale closure copies wiped sibling day meta.
+              const prev = readWeeklyHours(state.localValues).find(
+                (h) => h && (h.day === d.id || h.weekday === d.id),
+              );
               if (on.checked) {
                 const startMin = timeToMin(open.value);
                 const endMin = timeToMin(close.value);
                 if (startMin == null || endMin == null || endMin <= startMin) {
-                  state.scheduleError = 'وقت غير صالح ليوم ' + d.label;
-                  schedErr.textContent = state.scheduleError;
-                  on.checked = !!existing;
+                  if (!state.dayTimeErrors) state.dayTimeErrors = {};
+                  state.dayTimeErrors[d.id] = 'وقت غير صالح ليوم ' + d.label;
+                  dayErr.textContent = state.dayTimeErrors[d.id];
+                  // Keep prior checked state for this day; do not mutate other days.
+                  if (!prev) on.checked = false;
                   return;
                 }
-                state.scheduleError = null;
-                schedErr.textContent = '';
-                const row = { day: d.id, open: open.value, close: close.value };
-                const rid = (resIn.value || state.localValues.defaultResourceId || '').trim();
-                const cap = Number(capIn.value || state.localValues.defaultCapacity);
-                if (rid) row.resourceId = rid;
-                if (Number.isInteger(cap) && cap > 0) row.capacity = cap;
-                hours.push(row);
+                if (state.dayTimeErrors) {
+                  delete state.dayTimeErrors[d.id];
+                  dayErr.textContent = '';
+                }
+                const row = {
+                  day: d.id,
+                  open: open.value,
+                  close: close.value,
+                };
+                // Time-only edits must preserve this day's resource/capacity/overrides.
+                if (prev && prev.resourceId) row.resourceId = prev.resourceId;
+                else {
+                  const rid = (resIn.value || state.localValues.defaultResourceId || '').trim();
+                  if (rid) row.resourceId = rid;
+                }
+                if (prev && prev.capacity != null) row.capacity = prev.capacity;
+                else {
+                  const cap = Number(capIn.value || state.localValues.defaultCapacity);
+                  if (Number.isInteger(cap) && cap > 0) row.capacity = cap;
+                }
+                if (prev && prev.resourceOverride) row.resourceOverride = true;
+                if (prev && prev.capacityOverride) row.capacityOverride = true;
+                upsertWeeklyHourRow(state.localValues, d.id, row);
+              } else {
+                if (state.dayTimeErrors) {
+                  delete state.dayTimeErrors[d.id];
+                  dayErr.textContent = '';
+                }
+                upsertWeeklyHourRow(state.localValues, d.id, null);
               }
-              if (!hours.length) delete state.localValues.weeklyHours;
-              else state.localValues.weeklyHours = hours;
+              const hours = readWeeklyHours(state.localValues);
               const dflt = deriveScheduleDefaults(hours);
-              if (dflt.defaultResourceId) state.localValues.defaultResourceId = dflt.defaultResourceId;
-              if (dflt.defaultCapacity != null) state.localValues.defaultCapacity = dflt.defaultCapacity;
+              // Do not overwrite explicit general inputs from mixed rows on day toggle.
+              if (!state.localValues.defaultResourceId && dflt.defaultResourceId) {
+                state.localValues.defaultResourceId = dflt.defaultResourceId;
+              }
+              if (state.localValues.defaultCapacity == null && dflt.defaultCapacity != null) {
+                state.localValues.defaultCapacity = dflt.defaultCapacity;
+              }
               state.localValues._scheduleMixed = dflt.mixed;
               syncAvailabilityOntoLocal(state);
               bumpEdit(batchIdFrozen, card.cardId, 'weeklyHours');
               dirtyBadge.textContent = 'غير محفوظ';
               open.disabled = locked || !on.checked;
               close.disabled = locked || !on.checked;
-              rowMeta.textContent = on.checked
-                ? ' · ' +
-                  ((resIn.value || '').trim() || '—') +
-                  ' / سعة ' +
-                  (capIn.value || '—')
-                : '';
+              refreshDayMetas();
             };
             on.addEventListener('change', syncHours);
             open.addEventListener('change', syncHours);
@@ -1408,6 +1541,7 @@
                 el('span', { text: '→' }),
                 close,
                 rowMeta,
+                dayErr,
               ]),
             );
           });
@@ -1482,6 +1616,81 @@
             if (String((prof.answers && prof.answers.place_mode) || '') === opt[0]) o.selected = true;
             placeSel.appendChild(o);
           });
+          const covHost = el('div', {
+            style: 'margin-top:8px',
+            className: 'bulk-coverage',
+          });
+          const covLabel = el('p', {
+            className: 'lead',
+            text: 'مدن التغطية المنزلية (معرّفات ثابتة)',
+          });
+          const selectedCov = new Set(
+            Array.isArray(state.localValues.coverageZones)
+              ? state.localValues.coverageZones.map(String)
+              : [],
+          );
+          const SA_CITIES = [
+            ['sa-riyadh', 'الرياض'],
+            ['sa-jeddah', 'جدة'],
+            ['sa-makkah', 'مكة المكرمة'],
+            ['sa-madinah', 'المدينة المنورة'],
+            ['sa-dammam', 'الدمام'],
+            ['sa-khobar', 'الخبر'],
+            ['sa-dhahran', 'الظهران'],
+            ['sa-taif', 'الطائف'],
+            ['sa-tabuk', 'تبوك'],
+            ['sa-abha', 'أبها'],
+            ['sa-khamis', 'خميس مشيط'],
+            ['sa-najran', 'نجران'],
+            ['sa-jazan', 'جازان'],
+            ['sa-hail', 'حائل'],
+            ['sa-buraidah', 'بريدة'],
+            ['sa-unaizah', 'عنيزة'],
+            ['sa-jubail', 'الجبيل'],
+            ['sa-yanbu', 'ينبع'],
+            ['sa-qatif', 'القطيف'],
+            ['sa-sakaka', 'سكاكا'],
+            ['sa-arf', 'عرعر'],
+            ['sa-albahah', 'الباحة'],
+            ['sa-hafar', 'حفر الباطن'],
+            ['sa-kharj', 'الخرج'],
+            ['sa-qassim', 'القصيم'],
+          ];
+          const syncCoverageVisibility = () => {
+            const home = placeSel.value === 'home';
+            covHost.style.display = home ? '' : 'none';
+            if (!home) {
+              delete state.localValues.coverageZones;
+            }
+          };
+          const redrawCov = () => {
+            covHost.innerHTML = '';
+            covHost.appendChild(covLabel);
+            SA_CITIES.forEach((pair) => {
+              const id = pair[0];
+              const name = pair[1];
+              const cb = el('input', {
+                type: 'checkbox',
+                checked: selectedCov.has(id),
+                disabled: locked || placeSel.value !== 'home',
+              });
+              cb.addEventListener('change', () => {
+                if (cb.checked) selectedCov.add(id);
+                else selectedCov.delete(id);
+                const zones = Array.from(selectedCov);
+                // Explicit [] clears server coverage on rematerialize.
+                state.localValues.coverageZones = zones;
+                bumpEdit(batchIdFrozen, card.cardId, 'coverageZones');
+                dirtyBadge.textContent = 'غير محفوظ';
+              });
+              covHost.appendChild(
+                el('label', { style: 'display:inline-flex;gap:4px;margin:2px 8px 2px 0;font-size:12px' }, [
+                  cb,
+                  ' ' + name,
+                ]),
+              );
+            });
+          };
           placeSel.addEventListener('change', () => {
             const next = Object.assign(
               { templateId: profileTpl, templateVersion: 1, priceMode: 'fixed', answers: {} },
@@ -1496,10 +1705,20 @@
               if (!next.answers.session_kind) next.answers.session_kind = 'single';
               state.localValues.serviceProfile = next;
             }
+            if (placeSel.value !== 'home') {
+              selectedCov.clear();
+              state.localValues.coverageZones = [];
+              bumpEdit(batchIdFrozen, card.cardId, 'coverageZones');
+            }
             bumpEdit(batchIdFrozen, card.cardId, 'serviceProfile');
             dirtyBadge.textContent = 'غير محفوظ';
+            syncCoverageVisibility();
+            redrawCov();
           });
           sched.appendChild(el('div', { style: 'margin-top:8px' }, [el('label', null, ['ملف الخدمة ', placeSel])]));
+          redrawCov();
+          syncCoverageVisibility();
+          sched.appendChild(covHost);
           fieldsHost.appendChild(sched);
         }
 
@@ -2632,6 +2851,8 @@
     deriveScheduleDefaults: deriveScheduleDefaults,
     applyDefaultsOntoWeeklyHours: applyDefaultsOntoWeeklyHours,
     hydrateScheduleUiFields: hydrateScheduleUiFields,
+    readWeeklyHours: readWeeklyHours,
+    upsertWeeklyHourRow: upsertWeeklyHourRow,
     variantSelectionKey: variantSelectionKey,
     _mediaJobs: mediaJobs,
     _cardsByBatch: cardsByBatch,

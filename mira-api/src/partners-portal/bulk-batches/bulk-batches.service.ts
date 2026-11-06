@@ -11,6 +11,7 @@ import { EditorDraftsService } from '../editor-drafts/editor-drafts.service';
 import { EDITOR_SCHEMA_VERSION } from '../registry/registry.types';
 import { RegistryService } from '../registry/registry.service';
 import { PrismaService } from '../../prisma/prisma.service';
+import { PARTNER_KIND_FORBIDDEN, partnerCanCreateKind } from '../partner-capabilities';
 
 function bulkError(status: HttpStatus, code: string, messageAr: string, extra: Record<string, unknown> = {}) {
   return new HttpException({ message: messageAr, messageAr, code, ...extra }, status);
@@ -235,6 +236,9 @@ export class BulkBatchesService {
     }
     const count = this.assertCount(body.count);
     const partnerType = await this.partnerType(partnerId);
+    if (!partnerCanCreateKind(partnerType, kind)) {
+      throw bulkError(HttpStatus.FORBIDDEN, PARTNER_KIND_FORBIDDEN, 'نوع العنصر غير مسموح لهذا الحساب');
+    }
     this.registry.assertProfileAllowed(body.profileId, partnerType, kind);
     const batchId = this.assertBatchId(body.batchId);
     const cardIds = this.cardIdsForCount(count);

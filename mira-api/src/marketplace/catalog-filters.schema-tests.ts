@@ -205,7 +205,54 @@ const dress: CatalogFilterItem = {
   };
   assert.equal(matchCatalogItem(svc, { variantSelections: { color: ['black'] } }), null);
   assert.ok(matchCatalogItem(svc, { placeModes: ['branch'], city: 'جدة' }));
+  assert.ok(matchCatalogItem(svc, { placeModes: ['branch'], city: 'sa-jeddah' }));
   assert.equal(matchCatalogItem(svc, { placeModes: ['home'] }), null);
+}
+
+// Home coverage: HQ city must NOT substitute for coverage; id ↔ Arabic name must match.
+{
+  const homeRiyadhHqJeddahCoverage: CatalogFilterItem = {
+    kind: 'service',
+    id: 'svc-home-1',
+    partnerId: 'p2',
+    partnerType: 'salon',
+    partnerNameAr: 'صالون',
+    city: 'الرياض', // HQ — must not match جدة filter alone
+    nameAr: 'منزلي',
+    nameEn: 'Home',
+    category: 'hair',
+    concernTags: [],
+    priceHalalas: 8000,
+    durationMin: 60,
+    placeMode: 'home',
+    coverageCityIds: ['sa-jeddah'],
+  };
+  assert.equal(
+    matchCatalogItem(homeRiyadhHqJeddahCoverage, { placeModes: ['home'], city: 'sa-riyadh' }),
+    null,
+    'HQ Riyadh must not match when coverage is Jeddah only',
+  );
+  assert.equal(
+    matchCatalogItem(homeRiyadhHqJeddahCoverage, { placeModes: ['home'], city: 'الرياض' }),
+    null,
+  );
+  assert.ok(
+    matchCatalogItem(homeRiyadhHqJeddahCoverage, { placeModes: ['home'], city: 'sa-jeddah' }),
+    'coverage id sa-jeddah must match filter sa-jeddah',
+  );
+  assert.ok(
+    matchCatalogItem(homeRiyadhHqJeddahCoverage, { placeModes: ['home'], city: 'جدة' }),
+    'coverage id sa-jeddah must match Arabic جدة',
+  );
+  const remote: CatalogFilterItem = {
+    ...homeRiyadhHqJeddahCoverage,
+    id: 'svc-remote',
+    placeMode: 'remote',
+    coverageCityIds: null,
+    distanceKm: null,
+  };
+  assert.ok(matchCatalogItem(remote, { placeModes: ['remote'] }));
+  assert.equal(matchCatalogItem(remote, { placeModes: ['home'], city: 'sa-jeddah' }), null);
 }
 
 // Facet counts exclude own field.

@@ -297,6 +297,91 @@ const lenBad = {
 };
 assert.equal(api.cardHasValidationErrors(lenBad), true);
 
+// Sun A/3 then add Mon must keep Sun A/3 (live read, not stale hours closure).
+{
+  const local = { weeklyHours: [], defaultResourceId: 'A', defaultCapacity: 3 };
+  api.upsertWeeklyHourRow(local, 'sun', {
+    day: 'sun',
+    open: '10:00',
+    close: '18:00',
+    resourceId: 'A',
+    capacity: 3,
+  });
+  // Simulate general defaults rewrite on inheriting rows only.
+  local.weeklyHours = api.applyDefaultsOntoWeeklyHours(local.weeklyHours, 'A', 3);
+  api.upsertWeeklyHourRow(local, 'mon', {
+    day: 'mon',
+    open: '10:00',
+    close: '18:00',
+    resourceId: 'A',
+    capacity: 3,
+  });
+  const sun = local.weeklyHours.find((h) => h.day === 'sun');
+  const mon = local.weeklyHours.find((h) => h.day === 'mon');
+  assert.equal(sun.resourceId, 'A');
+  assert.equal(sun.capacity, 3);
+  assert.equal(mon.resourceId, 'A');
+  assert.equal(mon.capacity, 3);
+}
+
+// Time-only edit preserves per-day A/3 and B/5 overrides.
+{
+  const local = {
+    weeklyHours: [
+      { day: 'sun', open: '10:00', close: '18:00', resourceId: 'A', capacity: 3, resourceOverride: true, capacityOverride: true },
+      { day: 'mon', open: '10:00', close: '18:00', resourceId: 'B', capacity: 5, resourceOverride: true, capacityOverride: true },
+    ],
+  };
+  const sunPrev = local.weeklyHours.find((h) => h.day === 'sun');
+  api.upsertWeeklyHourRow(local, 'sun', {
+    day: 'sun',
+    open: '11:00',
+    close: '17:00',
+    resourceId: sunPrev.resourceId,
+    capacity: sunPrev.capacity,
+    resourceOverride: true,
+    capacityOverride: true,
+  });
+  // Changing general defaults must not clobber overrides.
+  local.weeklyHours = api.applyDefaultsOntoWeeklyHours(local.weeklyHours, 'Z', 9);
+  const sun = local.weeklyHours.find((h) => h.day === 'sun');
+  const mon = local.weeklyHours.find((h) => h.day === 'mon');
+  assert.equal(sun.open, '11:00');
+  assert.equal(sun.close, '17:00');
+  assert.equal(sun.resourceId, 'A');
+  assert.equal(sun.capacity, 3);
+  assert.equal(mon.resourceId, 'B');
+  assert.equal(mon.capacity, 5);
+}
+
+// Capacity error stays blocking while other day time edits do not clear it.
+{
+  const st = {
+    localValues: {
+      weeklyHours: [{ day: 'sun', open: '10:00', close: '18:00', resourceId: 'A', capacity: 3 }],
+    },
+    capacityError: 'السعة يجب أن تكون عددًا صحيحًا ≥ 1',
+    dayTimeErrors: {},
+    priceError: null,
+  };
+  assert.equal(api.cardHasValidationErrors(st), true);
+  st.dayTimeErrors = {}; // editing another day clears only that day's time error
+  assert.equal(api.cardHasValidationErrors(st), true);
+  st.capacityError = null;
+  assert.equal(api.cardHasValidationErrors(st), false);
+}
+
+// Deleting last day keeps weeklyHours=[] (explicit clear ≠ omit) so server can wipe availability.
+{
+  const local = {
+    weeklyHours: [{ day: 'sun', open: '10:00', close: '12:00', resourceId: 'A', capacity: 1 }],
+  };
+  api.upsertWeeklyHourRow(local, 'sun', null);
+  assert.ok(Array.isArray(local.weeklyHours));
+  assert.equal(local.weeklyHours.length, 0);
+  assert.equal(api.buildAvailabilityJsonFromLocal(local), null);
+}
+
 console.log(
   JSON.stringify({
     ok: true,
@@ -313,6 +398,10 @@ console.log(
       'availability_json_from_schedule',
       'schedule_resource_capacity_propagate',
       'lengthCm_invalid_blocks_save',
+      'schedule_sun_then_mon_preserves',
+      'schedule_time_edit_preserves_meta',
+      'capacity_error_field_local',
+      'schedule_delete_last_day',
     ],
   }),
 );

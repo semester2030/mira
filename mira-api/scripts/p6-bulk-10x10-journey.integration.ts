@@ -5,6 +5,7 @@
  */
 import 'reflect-metadata';
 import { mkdirSync, writeFileSync } from 'node:fs';
+import { execFileSync } from 'node:child_process';
 import { join, dirname } from 'node:path';
 import { fileURLToPath } from 'node:url';
 import { randomUUID } from 'node:crypto';
@@ -319,14 +320,6 @@ async function main() {
       partnerId: salon.id,
     });
 
-    const weekly = [0, 1, 2, 3, 4, 5, 6].map((weekday) => ({
-      weekday,
-      startMin: 10 * 60,
-      endMin: 18 * 60,
-      capacity: 1,
-      resourceId: 'chair-j10',
-    }));
-
     for (let i = 0; i < 10; i++) {
       const card = sBatch.cards[i];
       const values: Record<string, unknown> = {
@@ -335,23 +328,31 @@ async function main() {
         durationMin: 30 + (i % 3) * 15,
         bookingMode: 'request',
         capacity: 1,
-      };
-      // leave optional weekly empty on last 2; others get availability via registry fields
-      if (i < 8) {
-        values.weeklyHours = [
+        // All cards get portal schedule (no later availability PATCH in this journey).
+        weeklyHours: [
           { day: 'sun', open: '10:00', close: '18:00', resourceId: 'chair-j10', capacity: 1 },
           { day: 'mon', open: '10:00', close: '18:00', resourceId: 'chair-j10', capacity: 1 },
           { day: 'tue', open: '10:00', close: '18:00', resourceId: 'chair-j10', capacity: 1 },
           { day: 'wed', open: '10:00', close: '18:00', resourceId: 'chair-j10', capacity: 1 },
           { day: 'thu', open: '10:00', close: '18:00', resourceId: 'chair-j10', capacity: 1 },
-        ];
-        if (i === 0) values.dateExceptions = ['2099-12-31'];
-        values.serviceProfile = {
+        ],
+        serviceProfile: {
           templateId: 'salon_hair_cut',
           templateVersion: 1,
           priceMode: 'fixed',
           answers: { session_kind: 'single', place_mode: 'branch' },
-        };
+        },
+      };
+      if (i === 0) values.dateExceptions = ['2099-12-31'];
+      // Card 9 keeps an intentional resource override exception for isolation proof.
+      if (i === 1) {
+        values.weeklyHours = [
+          { day: 'sun', open: '10:00', close: '18:00', resourceId: 'chair-A', capacity: 3 },
+          { day: 'mon', open: '10:00', close: '18:00', resourceId: 'chair-B', capacity: 5 },
+          { day: 'tue', open: '10:00', close: '18:00', resourceId: 'chair-A', capacity: 3 },
+          { day: 'wed', open: '10:00', close: '18:00', resourceId: 'chair-A', capacity: 3 },
+          { day: 'thu', open: '10:00', close: '18:00', resourceId: 'chair-A', capacity: 3 },
+        ];
       }
       const put = await fetch(`${base}/api/v1/partners-portal/bulk-batches/${sBatch.batchId}/cards/${card.cardId}`, {
         method: 'PUT',
@@ -398,15 +399,7 @@ async function main() {
 
     let publishedS = 0;
     for (const id of serviceIds) {
-      // ensure availability for publishable booking services
-      await fetch(`${base}/api/v1/partners-portal/services/${id}`, {
-        method: 'PATCH',
-        headers: salonH,
-        body: JSON.stringify({
-          bookingEnabled: true,
-          availabilityJson: { v: 2, timezone: 'Asia/Riyadh', windows: weekly, exceptions: [], closedDates: [] },
-        }),
-      });
+      // Do NOT PATCH availabilityJson here — journey must use portal weeklyHours → materialize only.
       const media = await fetch(`${base}/api/v1/partners-portal/services/${id}/media`, {
         method: 'POST',
         headers: salonH,
@@ -523,11 +516,19 @@ async function main() {
   } catch (e) {
     record('J10_UNEXPECTED', false, { error: e instanceof Error ? e.message : String(e) });
   } finally {
+    let sourceHint = process.env.MIRA_TEST_COMMIT || '';
+    if (!sourceHint) {
+      try {
+        sourceHint = execFileSync('git', ['rev-parse', 'HEAD'], { encoding: 'utf8' }).trim();
+      } catch {
+        sourceHint = 'working-tree';
+      }
+    }
     const summary = {
       id: 'P6_BULK_10x10_JOURNEY',
       started,
       finished: new Date().toISOString(),
-      sourceHint: process.env.MIRA_TEST_COMMIT || 'working-tree',
+      sourceHint,
       productIds,
       serviceIds,
       steps,
