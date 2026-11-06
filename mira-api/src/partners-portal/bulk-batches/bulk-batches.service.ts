@@ -742,13 +742,19 @@ export class BulkBatchesService {
     const succeeded = results.filter((r) => r.ok && !r.skipped).length;
     const failed = results.filter((r) => !r.ok).length;
     const skipped = results.filter((r) => r.ok && r.skipped).length;
+    const partnerType = await this.partnerType(partnerId);
+    const developerAuto =
+      submitReview === true && partnerType === 'developer';
     return {
       batchId,
       succeeded,
       failed,
       skipped,
       results,
-      noteAr: 'materialized لا يعني published — النشر يظهر بعد موافقة المحتوى عند اللزوم',
+      developerAutoPublish: developerAuto,
+      noteAr: developerAuto
+        ? 'حساب المطوّر: التقديم مع التحويل ينشر مباشرة بلا موافقة إدارية (خاصية المطوّر فقط).'
+        : 'materialized لا يعني published — النشر يظهر بعد موافقة المحتوى عند اللزوم',
     };
   }
 }
