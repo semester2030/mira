@@ -641,15 +641,36 @@
       registryError = (e && (e.messageAr || e.message)) || String(e);
     }
 
+    const pType = (partner && partner.type) || '';
+    const isDeveloper = pType === 'developer';
     const status = el('p', { className: 'lead', id: 'bulkStatus', role: 'status' }, [
-      'كل عملية تُثبّت هوية الدفعة عند البدء. التحويل ≠ نشر.',
+      isDeveloper
+        ? 'حساب المطوّر: التقديم ينشر مباشرة بعد اكتمال الوسائط — بلا موافقة إدارية. تتبّعي نسبة الرفع أدناه.'
+        : 'كل عملية تُثبّت هوية الدفعة عند البدء. التحويل ≠ نشر (يحتاج موافقة محتوى).',
     ]);
+    const mediaProgressHost = el('div', {
+      id: 'bulkMediaProgress',
+      className: 'bulk-media-progress',
+      style:
+        'margin:8px 0;padding:10px 12px;border:1px solid #c9c2b8;background:#f7f4ef;font-size:13px;line-height:1.5',
+      role: 'status',
+      'aria-live': 'polite',
+    });
+    const mediaProgressBar = el('div', {
+      style: 'height:10px;background:#e5e0d8;border-radius:4px;overflow:hidden;margin-top:6px',
+    });
+    const mediaProgressFill = el('div', {
+      style: 'height:100%;width:0%;background:#2f6f4e;transition:width 0.2s ease',
+    });
+    mediaProgressBar.appendChild(mediaProgressFill);
+    const mediaProgressText = el('div', { text: 'لا وسائط معيّنة بعد لهذه الدفعة.' });
+    mediaProgressHost.appendChild(mediaProgressText);
+    mediaProgressHost.appendChild(mediaProgressBar);
     const listHost = el('div', { id: 'bulkMyList' });
     const cardsHost = el('div', { id: 'bulkCards' });
 
-    const pType = (partner && partner.type) || '';
-    const canProduct = pType === 'developer' || pType === 'brand';
-    const canService = pType === 'developer' || pType === 'salon' || pType === 'clinic';
+    const canProduct = isDeveloper || pType === 'brand';
+    const canService = isDeveloper || pType === 'salon' || pType === 'clinic';
     const kindOpts = [];
     if (canProduct) kindOpts.push(el('option', { value: 'product', text: 'منتجات' }));
     if (canService) kindOpts.push(el('option', { value: 'service', text: 'خدمات' }));
@@ -692,6 +713,56 @@
 
     function setStatusFor(batchId, msg) {
       if (isOpen(batchId)) status.textContent = msg;
+    }
+
+    /** Batch media progress proof: total / ready / remaining / % (bytes when available). */
+    function summarizeBatchMedia(batchId) {
+      const jobs = jobsForBatch(batchId);
+      const total = jobs.length;
+      const ready = jobs.filter((j) => j.status === 'ready').length;
+      const failed = jobs.filter((j) => j.status === 'failed' || j.status === 'failed_retryable').length;
+      const uploading = jobs.filter((j) => j.status === 'uploading').length;
+      const verifying = jobs.filter((j) => j.status === 'verifying').length;
+      const needsFile = jobs.filter((j) => j.needsLocalFile || j.status === 'needs_file').length;
+      const remaining = Math.max(0, total - ready - failed);
+      let weighted = 0;
+      let weightSum = 0;
+      jobs.forEach((j) => {
+        const w = typeof j.size === 'number' && j.size > 0 ? j.size : 1;
+        weightSum += w;
+        if (j.status === 'ready') weighted += w;
+        else if (j.status === 'verifying') weighted += w * 0.95;
+        else if (j.status === 'uploading' && typeof j.uploadPercent === 'number') {
+          weighted += w * Math.max(0, Math.min(1, j.uploadPercent));
+        }
+      });
+      const percent = total === 0 ? 0 : Math.round((weightSum ? weighted / weightSum : ready / total) * 100);
+      return { total, ready, failed, uploading, verifying, needsFile, remaining, percent };
+    }
+
+    function refreshMediaProgress(batchId) {
+      if (!isOpen(batchId)) return;
+      const s = summarizeBatchMedia(batchId);
+      if (!s.total) {
+        mediaProgressText.textContent = 'لا وسائط معيّنة بعد لهذه الدفعة.';
+        mediaProgressFill.style.width = '0%';
+        return;
+      }
+      mediaProgressText.textContent =
+        'تقدم الرفع: ' +
+        s.percent +
+        '% · مكتمل ' +
+        s.ready +
+        ' من ' +
+        s.total +
+        ' · متبقّي ' +
+        s.remaining +
+        (s.uploading ? ' · يُرفع الآن ' + s.uploading : '') +
+        (s.verifying ? ' · تحقق ' + s.verifying : '') +
+        (s.failed ? ' · فشل ' + s.failed : '') +
+        (s.needsFile ? ' · يلزم ملف ' + s.needsFile : '');
+      mediaProgressFill.style.width = s.percent + '%';
+      mediaProgressFill.style.background = s.failed && !s.remaining ? '#b00020' : s.percent >= 100 ? '#2f6f4e' : '#3d6ea5';
     }
 
     function syncStateFromBatch(b, opts) {
@@ -742,6 +813,7 @@
       syncStateFromBatch(b);
       setBulkUrl(b.batchId);
       renderCards();
+      refreshMediaProgress(b.batchId);
     }
 
     function bumpEdit(batchId, cardId, fieldId) {
@@ -1741,6 +1813,12 @@
         const refreshMedia = () => {
           mediaList.innerHTML = '';
           jobsForCard(batch.batchId, card.cardId).forEach((j) => {
+            const pct =
+              j.status === 'ready'
+                ? '100%'
+                : typeof j.uploadPercent === 'number'
+                  ? Math.round(j.uploadPercent * 100) + '%'
+                  : null;
             mediaList.appendChild(
               el('div', null, [
                 el('span', {
@@ -1748,6 +1826,7 @@
                     j.fileName +
                     ' · ' +
                     j.status +
+                    (pct ? ' · ' + pct : '') +
                     (j.sessionId ? ' · sess…' + String(j.sessionId).slice(-6) : '') +
                     (j.mediaId ? ' · media ' + j.mediaId : '') +
                     (j.needsLocalFile ? ' · يلزم ملف' : ''),
@@ -1805,7 +1884,21 @@
             });
             persistMediaMeta();
             refreshMedia();
-            setStatusFor(ctx.batchId, 'عُيّنت ' + files.length + ' ملفًا لـ ' + ctx.batchId.slice(0, 8) + '/' + cardIdFrozen);
+            refreshMediaProgress(ctx.batchId);
+            const s = summarizeBatchMedia(ctx.batchId);
+            setStatusFor(
+              ctx.batchId,
+              'عُيّنت ' +
+                files.length +
+                ' ملفًا لـ ' +
+                ctx.batchId.slice(0, 8) +
+                '/' +
+                cardIdFrozen +
+                ' · الإجمالي الآن ' +
+                s.total +
+                ' · متبقّي ' +
+                s.remaining,
+            );
           },
         });
 
@@ -1898,6 +1991,7 @@
           ]),
         );
       });
+      refreshMediaProgress(batch.batchId);
     }
 
     async function loadMyBatches() {
@@ -2559,18 +2653,41 @@
             if (s && s.declaredChecksum) job.checksum = s.declaredChecksum;
             persistMediaMeta();
           },
+          onProgress: (p) => {
+            if (typeof p === 'number' && Number.isFinite(p)) {
+              job.uploadPercent = Math.max(0, Math.min(1, p));
+              job.status = 'uploading';
+              refreshMediaProgress(ctx.batchId);
+              setStatusFor(
+                ctx.batchId,
+                'رفع ' +
+                  (job.fileName || ctx.cardId) +
+                  ': ' +
+                  Math.round(job.uploadPercent * 100) +
+                  '% · ' +
+                  summarizeBatchMedia(ctx.batchId).ready +
+                  '/' +
+                  summarizeBatchMedia(ctx.batchId).total +
+                  ' مكتمل',
+              );
+            }
+          },
           onProcessing: () => {
             job.status = 'verifying';
+            job.uploadPercent = 1;
             job.needsLocalFile = false;
             persistMediaMeta();
+            refreshMediaProgress(ctx.batchId);
           },
         });
         job.status = 'ready';
+        job.uploadPercent = 1;
         job.mediaId = session && (session.catalogMediaId || session.mediaId || session.id);
         job.file = null;
         job.needsLocalFile = false;
         job.error = null;
         persistMediaMeta();
+        refreshMediaProgress(ctx.batchId);
         if (isOpen(ctx.batchId)) renderCards();
       } catch (e) {
         const code = e && e.code;
@@ -2592,6 +2709,7 @@
           setStatusFor(ctx.batchId, 'رفع ' + ctx.cardId + ': ' + msg);
         }
         persistMediaMeta();
+        refreshMediaProgress(ctx.batchId);
         if (isOpen(ctx.batchId)) renderCards();
       }
     }
@@ -2662,20 +2780,24 @@
         };
         pump();
       });
+      refreshMediaProgress(ctx.batchId);
       if (isOpen(ctx.batchId)) renderCards();
-      const after = jobsForBatch(ctx.batchId);
+      const s = summarizeBatchMedia(ctx.batchId);
       setStatusFor(
         ctx.batchId,
         'رفع ' +
           ctx.batchId.slice(0, 8) +
-          ': جاهز ' +
-          after.filter((j) => j.status === 'ready').length +
-          ' · تحقق ' +
-          after.filter((j) => j.status === 'verifying').length +
-          ' · فشل ' +
-          after.filter((j) => j.status === 'failed').length +
-          ' · ملف ' +
-          after.filter((j) => j.status === 'needs_file').length,
+          ': ' +
+          s.percent +
+          '% · مكتمل ' +
+          s.ready +
+          '/' +
+          s.total +
+          ' · متبقّي ' +
+          s.remaining +
+          (s.verifying ? ' · تحقق ' + s.verifying : '') +
+          (s.failed ? ' · فشل ' + s.failed : '') +
+          (s.needsFile ? ' · يلزم ملف ' + s.needsFile : ''),
       );
     }
 
@@ -2772,7 +2894,9 @@
               ' · تخطي ' +
               out.skipped +
               (detail ? ' | ' + detail : '') +
-              ' — ليس نشرًا.',
+              (isDeveloper
+                ? ' — حساب المطوّر: التقديم ينشر مباشرة بلا موافقة إدارية.'
+                : ' — ليس نشرًا (بانتظار موافقة المحتوى).'),
           );
         } catch (e) {
           setStatusFor(ctx.batchId, (e && (e.messageAr || e.message)) || String(e));
@@ -2784,6 +2908,7 @@
     });
 
     root.appendChild(status);
+    root.appendChild(mediaProgressHost);
     if (registryError) {
       root.appendChild(el('p', { className: 'lead', style: 'color:#b00020', text: 'فشل registry: ' + registryError }));
     }
