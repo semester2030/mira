@@ -572,16 +572,57 @@
       [],
     );
     let taxonomyCache = null;
+    let taxonomyLoadError = null;
     let taxonomyLoadGen = 0;
-    async function loadTaxonomyDoc() {
-      if (taxonomyCache) return taxonomyCache;
-      try {
-        const base = (window.MIRA_API_BASE || '/api/v1').replace(/\/$/, '');
-        taxonomyCache = await fetch(base + '/marketplace/taxonomy?lane=elegance').then((r) => r.json());
-      } catch (_) {
-        taxonomyCache = { nodes: [] };
+    function paintTaxonomyLoadError() {
+      const wrap = subcategory.parentElement;
+      if (!wrap) return;
+      let err = wrap.querySelector('[data-testid="taxonomy-load-error"]');
+      if (!taxonomyLoadError) {
+        if (err) err.remove();
+        return;
       }
-      return taxonomyCache;
+      if (!err) {
+        err = document.createElement('p');
+        err.className = 'lead';
+        err.style.color = '#b00020';
+        err.setAttribute('data-testid', 'taxonomy-load-error');
+        const retry = document.createElement('button');
+        retry.type = 'button';
+        retry.className = 'btn btn-ghost';
+        retry.textContent = 'إعادة المحاولة';
+        retry.setAttribute('data-testid', 'taxonomy-load-retry');
+        retry.addEventListener('click', () => {
+          refreshSubcategoryOptions({ forceReload: true, keepValue: subcategory.value });
+        });
+        wrap.appendChild(err);
+        wrap.appendChild(retry);
+      }
+      err.textContent = 'تعذر تحميل التصنيفات: ' + taxonomyLoadError;
+    }
+    async function loadTaxonomyDoc(opts) {
+      const force = opts && opts.force;
+      if (taxonomyCache && !force) return taxonomyCache;
+      if (!window.PartnersApi || typeof PartnersApi.taxonomy !== 'function') {
+        taxonomyCache = null;
+        taxonomyLoadError = 'عميل التصنيفات (PartnersApi.taxonomy) غير متاح';
+        throw new Error(taxonomyLoadError);
+      }
+      try {
+        const doc = await PartnersApi.taxonomy({ lane: 'elegance' });
+        if (!doc || !Array.isArray(doc.nodes)) {
+          taxonomyCache = null;
+          taxonomyLoadError = 'استجابة تصنيفات غير صالحة';
+          throw new Error(taxonomyLoadError);
+        }
+        taxonomyCache = doc;
+        taxonomyLoadError = null;
+        return taxonomyCache;
+      } catch (e) {
+        taxonomyCache = null;
+        taxonomyLoadError = (e && (e.messageAr || e.message)) || String(e);
+        throw e;
+      }
     }
     async function refreshSubcategoryOptions(opts) {
       const keepValue = opts && Object.prototype.hasOwnProperty.call(opts, 'keepValue')
@@ -590,8 +631,18 @@
       const cat = category.value;
       const wrap = subcategory.parentElement;
       const gen = ++taxonomyLoadGen;
-      const doc = await loadTaxonomyDoc();
+      let doc = null;
+      try {
+        doc = await loadTaxonomyDoc({ force: !!(opts && opts.forceReload) });
+      } catch (_) {
+        if (gen !== taxonomyLoadGen) return;
+        paintTaxonomyLoadError();
+        // Keep existing subcategory value; do not invent first/wedding_dress.
+        if (wrap) wrap.hidden = type !== 'brand';
+        return;
+      }
       if (gen !== taxonomyLoadGen) return; // stale load
+      paintTaxonomyLoadError();
       const list =
         window.MiraRegistryAttributeFields &&
         typeof MiraRegistryAttributeFields.subcategoriesFromTaxonomy === 'function'
@@ -4696,6 +4747,8 @@
 
         // Snapshot AFTER bind settles. Include any intentional user edits typed during bind.
         const persistEpoch = formContentEpoch;
+        const attrRevAtSend =
+          attrMount && typeof attrMount.getEditRevision === 'function' ? attrMount.getEditRevision() : 0;
         const profilePayloadForOp =
           type !== 'brand' && templateState && templateState.templateId
             ? {
@@ -4861,10 +4914,26 @@
             saved.draftTaxonomySet && saved.draftAttributesJson != null
               ? saved.draftAttributesJson
               : saved.attributesJson;
-          if (typeof attrMount.setFromAttributes === 'function') {
+          const attrRevNow =
+            typeof attrMount.getEditRevision === 'function' ? attrMount.getEditRevision() : 0;
+          const attrsUnchangedSinceSend =
+            formContentEpoch === persistEpoch && attrRevNow === attrRevAtSend;
+          if (attrsUnchangedSinceSend && typeof attrMount.setFromAttributes === 'function') {
             attrMount.setFromAttributes(attrsLive || {});
+            setAttrSaveKind('saved', 'خصائص محفوظة');
+          } else if (typeof attrMount.applyServerSnapshot === 'function') {
+            // Stale response must not clobber newer in-form attribute edits.
+            attrMount.applyServerSnapshot(attrsLive || {}, { onlyClean: true });
+            if (attrMount.hasDirty && attrMount.hasDirty()) {
+              setAttrSaveKind('dirty', 'خصائص أحدث لم تُحفظ بعد — الرد القديم لم يُطبَّق عليها');
+            } else {
+              setAttrSaveKind('saved', 'خصائص محفوظة');
+            }
+          } else if (attrMount.hasDirty && attrMount.hasDirty()) {
+            setAttrSaveKind('dirty', 'خصائص أحدث لم تُحفظ بعد');
+          } else {
+            setAttrSaveKind('saved', 'خصائص محفوظة');
           }
-          setAttrSaveKind('saved', 'خصائص محفوظة');
         }
         let inventoryConflict = false;
         let inventoryPartialOther = false;

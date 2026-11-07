@@ -108,23 +108,33 @@
     let registry = null;
     let registryError = null;
     let taxonomyDoc = null;
+    let taxonomyError = null;
     try {
       registry = await PartnersApi.registry();
     } catch (e) {
       registryError = (e && (e.messageAr || e.message)) || String(e);
     }
-    try {
-      if (typeof PartnersApi.taxonomy === 'function') {
-        taxonomyDoc = await PartnersApi.taxonomy({ lane: 'elegance' });
-      } else {
-        const base =
-          (window.MIRA_API_BASE ||
-            (window.PartnersApi && PartnersApi.baseUrl) ||
-            '/api/v1').replace(/\/$/, '');
-        const taxUrl = base.indexOf('/api/v1') >= 0 ? base + '/marketplace/taxonomy?lane=elegance' : '/api/v1/marketplace/taxonomy?lane=elegance';
-        taxonomyDoc = await fetch(taxUrl).then((r) => r.json());
+    async function loadBulkTaxonomy(force) {
+      if (taxonomyDoc && !force) return taxonomyDoc;
+      if (typeof PartnersApi.taxonomy !== 'function') {
+        taxonomyDoc = null;
+        taxonomyError = 'عميل التصنيفات (PartnersApi.taxonomy) غير متاح';
+        throw new Error(taxonomyError);
       }
-    } catch (_) {
+      const doc = await PartnersApi.taxonomy({ lane: 'elegance' });
+      if (!doc || !Array.isArray(doc.nodes)) {
+        taxonomyDoc = null;
+        taxonomyError = 'استجابة تصنيفات غير صالحة';
+        throw new Error(taxonomyError);
+      }
+      taxonomyDoc = doc;
+      taxonomyError = null;
+      return taxonomyDoc;
+    }
+    try {
+      await loadBulkTaxonomy(false);
+    } catch (e) {
+      taxonomyError = (e && (e.messageAr || e.message)) || String(e);
       taxonomyDoc = null;
     }
 
@@ -176,15 +186,15 @@
       const attrs =
         window.MiraRegistryAttributeFields &&
         typeof MiraRegistryAttributeFields.extractAttributesFromValues === 'function'
-          ? MiraRegistryAttributeFields.extractAttributesFromValues(vals)
+          ? MiraRegistryAttributeFields.extractAttributesFromValues(
+              vals,
+              registry || undefined,
+              { includeComponentContract: false },
+            )
           : Object.assign(
               {},
               vals.attributesJson && typeof vals.attributesJson === 'object' ? vals.attributesJson : {},
               vals.attributes && typeof vals.attributes === 'object' ? vals.attributes : {},
-              Object.prototype.hasOwnProperty.call(vals, 'material') ? { material: vals.material } : {},
-              Object.prototype.hasOwnProperty.call(vals, 'cut') ? { cut: vals.cut } : {},
-              Object.prototype.hasOwnProperty.call(vals, 'occasion') ? { occasion: vals.occasion } : {},
-              Object.prototype.hasOwnProperty.call(vals, 'lengthCm') ? { lengthCm: vals.lengthCm } : {},
             );
       state.fieldDraft = {
         nameAr: vals.nameAr || '',
@@ -719,6 +729,32 @@
               state.fieldDraft.inventoryMode = payload.inventoryMode;
             },
           });
+          if (taxonomyError) {
+            const taxErr = el('p', {
+              className: 'lead',
+              style: 'color:#b00020',
+              'data-testid': 'bulk-taxonomy-load-error',
+              text: 'تعذر تحميل التصنيفات: ' + taxonomyError,
+            });
+            const taxRetry = el('button', {
+              type: 'button',
+              className: 'btn btn-ghost',
+              'data-testid': 'bulk-taxonomy-load-retry',
+              text: 'إعادة المحاولة',
+              onClick: async () => {
+                try {
+                  await loadBulkTaxonomy(true);
+                  setStatus('أُعيد تحميل التصنيفات');
+                  render();
+                } catch (e) {
+                  setStatus((e && (e.messageAr || e.message)) || String(e), true);
+                  render();
+                }
+              },
+            });
+            fields.appendChild(taxErr);
+            fields.appendChild(taxRetry);
+          }
           const subOpts =
             window.MiraRegistryAttributeFields &&
             typeof MiraRegistryAttributeFields.subcategoriesFromTaxonomy === 'function'
@@ -762,11 +798,21 @@
           });
           fields.appendChild(attrHost);
 
+          function profileIdForBulkCard() {
+            const sub = state.fieldDraft.subcategory || d.subcategory || '';
+            if (sub === 'clothes.abaya') return 'product.abaya';
+            const nodes = (taxonomyDoc && taxonomyDoc.nodes) || [];
+            const n = nodes.find((x) => x && x.id === sub);
+            if (n && n.profileId) return n.profileId;
+            return batch.profileId || 'product.clothes';
+          }
+
           function remountBulkAttrs(preserveState) {
             if (!(window.MiraRegistryAttributeFields && registry)) return;
             if (state.attrMount && state.attrMount.destroy) state.attrMount.destroy();
-            const profileId = batch.profileId || 'product.clothes';
+            const profileId = profileIdForBulkCard();
             const card = currentCard();
+            // Mount id is per-card so parked/editor state never crosses cards.
             state.attrMount = window.MiraRegistryAttributeFields.mount(attrHost, {
               registry: registry,
               profileId: profileId,

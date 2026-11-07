@@ -239,4 +239,175 @@ function pass(id: string) {
   pass('E2c-registry-copies-sync');
 }
 
+// --- E2-C01: park incompatible values across profile remount; explicit clear stays cleared ---
+{
+  const st1 = {
+    values: { occasion: ['work'], material: ['cotton'], lengthCm: 0 },
+    cleared: {},
+    dirty: { occasion: true, material: true, lengthCm: true },
+    invalidInputs: { lengthCm: 'nope' },
+  };
+  const abayaDefs = M.attributeFieldDefsForProfile(registry, 'product.abaya');
+  const toAbaya = M.projectStateOntoDefs(st1, abayaDefs);
+  assert.ok(Object.prototype.hasOwnProperty.call(toAbaya.parked, 'occasion'), 'occasion parked on abaya');
+  assert.ok(!Object.prototype.hasOwnProperty.call(toAbaya.values, 'occasion'));
+  assert.deepEqual(toAbaya.values.material, ['cotton']);
+  assert.equal(toAbaya.values.lengthCm, 0);
+  // lengthCm is compatible with abaya — invalid typed input stays active, not parked
+  assert.equal(toAbaya.invalidInputs.lengthCm, 'nope');
+
+  sandbox.document = makeDom().document;
+  const abayaMount = M.mount(makeDom().host, {
+    registry,
+    profileId: 'product.abaya',
+    mountId: 'c01-single',
+    preserveState: st1,
+    initialAttributes: {},
+  });
+  assert.ok(abayaMount.getParkedKeys().includes('occasion'));
+  const st2 = abayaMount.captureEditorState();
+  assert.ok(Object.prototype.hasOwnProperty.call(st2.parked, 'occasion'));
+
+  const clothesDefs = M.attributeFieldDefsForProfile(registry, 'product.clothes');
+  const back = M.projectStateOntoDefs(st2, clothesDefs);
+  assert.deepEqual(back.values.occasion, ['work']);
+  assert.ok(!Object.prototype.hasOwnProperty.call(back.parked, 'occasion'));
+
+  // explicit clear must not resurrect parked value
+  const clearedState = {
+    values: { material: ['silk'] },
+    cleared: { occasion: true },
+    dirty: { occasion: true, material: true },
+    parked: {},
+    parkedCleared: {},
+  };
+  const clearedProj = M.projectStateOntoDefs(clearedState, clothesDefs);
+  assert.equal(clearedProj.cleared.occasion, true);
+  assert.ok(!Object.prototype.hasOwnProperty.call(clearedProj.values, 'occasion'));
+
+  // clear while on clothes, then abaya, then back — stays cleared
+  const clearThenSwitch = M.projectStateOntoDefs(
+    {
+      values: { material: ['silk'] },
+      cleared: { occasion: true },
+      dirty: { occasion: true },
+    },
+    abayaDefs,
+  );
+  assert.equal(clearThenSwitch.parkedCleared.occasion, true);
+  const clearBack = M.projectStateOntoDefs(
+    {
+      values: clearThenSwitch.values,
+      cleared: clearThenSwitch.cleared,
+      dirty: clearThenSwitch.dirty,
+      parked: clearThenSwitch.parked,
+      parkedCleared: clearThenSwitch.parkedCleared,
+      parkedDirty: clearThenSwitch.parkedDirty,
+    },
+    clothesDefs,
+  );
+  assert.equal(clearBack.cleared.occasion, true);
+  assert.ok(!Object.prototype.hasOwnProperty.call(clearBack.values, 'occasion'));
+  pass('E2-C01-park-restore-and-explicit-clear');
+}
+
+// --- E2-C02: stale server snapshot must not overwrite newer dirty field ---
+{
+  sandbox.document = makeDom().document;
+  const host = makeDom().host;
+  const m = M.mount(host, {
+    registry,
+    profileId: 'product.clothes',
+    mountId: 'c02',
+    initialAttributes: { material: ['silk'] },
+  });
+  const rev0 = m.getEditRevision();
+  m.setFromAttributes({ material: ['linen'] });
+  // mark dirty via project+seed path: use applyServerSnapshot after dirtying through capture
+  const dirtyMount = M.mount(makeDom().host, {
+    registry,
+    profileId: 'product.clothes',
+    mountId: 'c02b',
+    preserveState: {
+      values: { material: ['linen'] },
+      cleared: {},
+      dirty: { material: true },
+      invalidInputs: {},
+    },
+    initialAttributes: { material: ['silk'] },
+  });
+  assert.equal(JSON.stringify(dirtyMount.getValues().material), JSON.stringify(['linen']));
+  dirtyMount.applyServerSnapshot({ material: ['silk'] }, { onlyClean: true });
+  assert.equal(JSON.stringify(dirtyMount.getValues().material), JSON.stringify(['linen']));
+  assert.equal(dirtyMount.hasDirty(), true);
+  assert.ok(dirtyMount.getEditRevision() >= rev0);
+  pass('E2-C02-stale-snapshot-preserves-dirty');
+}
+
+// --- E2-C04: derive field ids from registry; id≠storage; deferred stays non-writable ---
+{
+  const fixture = JSON.parse(JSON.stringify(registry));
+  const root = fixture.registry || fixture;
+  root.fields.e2aTestAttr = {
+    labelAr: 'حقل اختبار E2أ',
+    type: 'text',
+    storage: 'attributes.e2aTestKey',
+    currentStatus: 'ATTRIBUTES_JSON',
+    editable: true,
+  };
+  root.fields.e2aDeferredAttr = {
+    labelAr: 'مؤجل',
+    type: 'text',
+    storage: 'attributes.e2aDeferredKey',
+    currentStatus: 'PROPOSED',
+    editable: true,
+  };
+  const clothes = (root.profiles || []).find((p: any) => p.id === 'product.clothes');
+  clothes.fields.push('e2aTestAttr', 'e2aDeferredAttr');
+
+  const ids = M.attrFieldIdsFromRegistry(fixture);
+  assert.ok(ids.includes('e2aTestAttr'), 'test field derived without FLAT list');
+  assert.ok(!ids.includes('e2aDeferredAttr'), 'deferred not writable extract id');
+
+  const extracted = M.extractAttributesFromValues(
+    { e2aTestAttr: 'hello', attributes: { material: ['silk'] } },
+    fixture,
+  );
+  assert.equal(extracted.e2aTestKey, 'hello');
+  assert.deepEqual(extracted.material, ['silk']);
+
+  assert.equal(M.classifyField(Object.assign({ id: 'e2aDeferredAttr' }, root.fields.e2aDeferredAttr)), 'deferred');
+  const defs = M.attributeFieldDefsForProfile(fixture, 'product.clothes');
+  assert.ok(defs.some((d: any) => d.id === 'e2aTestAttr'));
+  assert.ok(!defs.some((d: any) => d.id === 'e2aDeferredAttr'));
+  pass('E2-C04-registry-derived-storage-key-deferred');
+}
+
+{
+  // Independent mounts must not share editor/parked state
+  sandbox.document = makeDom().document;
+  const a = M.mount(makeDom().host, {
+    registry,
+    profileId: 'product.clothes',
+    mountId: 'card-1',
+    preserveState: {
+      values: {},
+      parked: { occasion: ['work'] },
+      parkedDirty: { occasion: true },
+      dirty: {},
+      cleared: {},
+    },
+  });
+  const b = M.mount(makeDom().host, {
+    registry,
+    profileId: 'product.clothes',
+    mountId: 'card-2',
+    initialAttributes: {},
+  });
+  assert.deepEqual(a.getValues().occasion, ['work']);
+  assert.equal(b.getValues().occasion, undefined);
+  assert.equal(b.getParkedKeys().length, 0);
+  pass('E2-C01-card-isolation');
+}
+
 console.log('registry-attribute-fields.schema-tests: PASS');

@@ -16,7 +16,10 @@
     carryStyle: true,
   };
 
-  /** Flat attribute field ids used when hydrating card/product values. */
+  /**
+   * Fallback flat ids only when no registry is passed to extractAttributesFromValues.
+   * Prefer attrFieldIdsFromRegistry(registry) so new registry fields need no second list.
+   */
   var FLAT_ATTR_FIELD_IDS = ['material', 'cut', 'occasion', 'lengthCm', 'carryStyle'];
 
   var mountSeq = 0;
@@ -89,12 +92,47 @@
   }
 
   /**
-   * Restore attributes from card/product values independently of material/cut.
-   * Priority: attributes bag → attributesJson → flat field ids (hasOwnProperty).
-   * Distinguishes missing key vs intentional null vs 0 vs present array/value.
+   * Derive supported attribute field ids from registry definitions.
+   * Write-tier by default; optional component-contract ids; never promotes deferred to writable.
    */
-  function extractAttributesFromValues(vals, fieldIds) {
-    var ids = fieldIds || FLAT_ATTR_FIELD_IDS;
+  function attrFieldIdsFromRegistry(registry, opts) {
+    opts = opts || {};
+    var root = registryRoot(registry);
+    var ids = [];
+    Object.keys(root.fields || {}).forEach(function (id) {
+      var def = fieldDef(registry, id);
+      if (!def || !storageAttrKey(def)) return;
+      var tier = classifyField(def);
+      if (tier === 'write') ids.push(id);
+      else if (tier === 'component' && opts.includeComponentContract) ids.push(id);
+      // deferred / read: intentionally omitted from writable flat extract lists
+    });
+    return ids;
+  }
+
+  /**
+   * Restore attributes from card/product values independently of material/cut.
+   * Priority documentation (nested vs flat):
+   *   1) Start from nested bag: vals.attributes, else vals.attributesJson (storage keys).
+   *   2) Flat keys (field id or storage key) win when present via hasOwnProperty —
+   *      so a newer flat card edit overrides nested without dropping sibling bag keys.
+   * Distinguishes missing key vs intentional null vs 0 vs present array/value.
+   *
+   * @param {object} vals
+   * @param {string[]|object} [fieldIdsOrRegistry] array of ids, or registry object to derive ids
+   * @param {object} [opts] when registry passed: { includeComponentContract }
+   */
+  function extractAttributesFromValues(vals, fieldIdsOrRegistry, opts) {
+    var registry = null;
+    var ids;
+    if (Array.isArray(fieldIdsOrRegistry)) {
+      ids = fieldIdsOrRegistry;
+    } else if (fieldIdsOrRegistry && typeof fieldIdsOrRegistry === 'object') {
+      registry = fieldIdsOrRegistry;
+      ids = attrFieldIdsFromRegistry(registry, opts || {});
+    } else {
+      ids = FLAT_ATTR_FIELD_IDS.slice();
+    }
     var out = {};
     if (!vals || typeof vals !== 'object') return out;
 
@@ -109,9 +147,15 @@
     }
 
     ids.forEach(function (fid) {
+      var storageKey = fid;
+      if (registry) {
+        var def = fieldDef(registry, fid);
+        storageKey = storageAttrKey(def) || fid;
+      }
       if (Object.prototype.hasOwnProperty.call(vals, fid)) {
-        // Flat key wins when present (newer card form stores flat registry ids).
-        out[fid] = vals[fid];
+        out[storageKey] = vals[fid];
+      } else if (storageKey !== fid && Object.prototype.hasOwnProperty.call(vals, storageKey)) {
+        out[storageKey] = vals[storageKey];
       }
     });
 
@@ -147,13 +191,16 @@
 
   /**
    * Filter a captured editor state onto defs of a (possibly new) profile.
-   * Compatible keys keep values+clears; incompatible keys listed separately.
+   * Compatible keys keep values+clears+invalidInputs; incompatible keys stay in parked*
+   * so a later return to a compatible profile can restore them without sending them
+   * while the active profile forbids them.
    */
   function projectStateOntoDefs(state, defs) {
     state = state || {};
     var values = isPlainObject(state.values) ? state.values : {};
     var cleared = state.cleared || {};
     var dirty = state.dirty || {};
+    var invalidInputs = state.invalidInputs || {};
     var allowed = Object.create(null);
     (defs || []).forEach(function (def) {
       var key = storageAttrKey(def);
@@ -162,27 +209,75 @@
     var nextValues = {};
     var nextCleared = Object.create(null);
     var nextDirty = Object.create(null);
-    var incompatible = {};
+    var nextInvalid = Object.create(null);
+    var parked = Object.assign({}, isPlainObject(state.parked) ? state.parked : {});
+    var parkedCleared = Object.assign({}, state.parkedCleared || {});
+    var parkedDirty = Object.assign({}, state.parkedDirty || {});
+    var parkedInvalid = Object.assign({}, state.parkedInvalid || {});
+
     Object.keys(values).forEach(function (k) {
       if (allowed[k]) nextValues[k] = values[k];
-      else incompatible[k] = values[k];
+      else parked[k] = values[k];
     });
     Object.keys(cleared).forEach(function (k) {
       if (allowed[k]) {
         nextCleared[k] = true;
         delete nextValues[k];
-      } else if (!Object.prototype.hasOwnProperty.call(incompatible, k)) {
-        incompatible[k] = null;
+      } else {
+        parkedCleared[k] = true;
+        if (!Object.prototype.hasOwnProperty.call(parked, k)) parked[k] = null;
       }
     });
     Object.keys(dirty).forEach(function (k) {
       if (allowed[k]) nextDirty[k] = true;
+      else parkedDirty[k] = true;
     });
+    Object.keys(invalidInputs).forEach(function (k) {
+      if (allowed[k]) nextInvalid[k] = invalidInputs[k];
+      else parkedInvalid[k] = invalidInputs[k];
+    });
+
+    // Restore parked entries that are compatible with the new profile.
+    Object.keys(parkedCleared).forEach(function (k) {
+      if (!allowed[k]) return;
+      nextCleared[k] = true;
+      delete nextValues[k];
+      if (parkedDirty[k]) nextDirty[k] = true;
+      if (Object.prototype.hasOwnProperty.call(parkedInvalid, k)) nextInvalid[k] = parkedInvalid[k];
+      delete parked[k];
+      delete parkedCleared[k];
+      delete parkedDirty[k];
+      delete parkedInvalid[k];
+    });
+    Object.keys(parked).forEach(function (k) {
+      if (!allowed[k]) return;
+      if (nextCleared[k]) {
+        delete parked[k];
+        delete parkedDirty[k];
+        delete parkedInvalid[k];
+        return;
+      }
+      if (!Object.prototype.hasOwnProperty.call(nextValues, k)) {
+        nextValues[k] = parked[k];
+        if (parkedDirty[k]) nextDirty[k] = true;
+        if (Object.prototype.hasOwnProperty.call(parkedInvalid, k)) nextInvalid[k] = parkedInvalid[k];
+      }
+      delete parked[k];
+      delete parkedDirty[k];
+      delete parkedInvalid[k];
+    });
+
     return {
       values: nextValues,
       cleared: nextCleared,
       dirty: nextDirty,
-      incompatible: incompatible,
+      invalidInputs: nextInvalid,
+      parked: parked,
+      parkedCleared: parkedCleared,
+      parkedDirty: parkedDirty,
+      parkedInvalid: parkedInvalid,
+      /** Remaining parked keys (for UI notice) — not sent while incompatible. */
+      incompatible: parked,
     };
   }
 
@@ -230,7 +325,17 @@
     var fieldErrors = Object.create(null);
     /** Invalid typed number strings that must block save. */
     var invalidInputs = Object.create(null);
+    /** Parked (incompatible-with-active-profile) editor bag — survives remount via captureEditorState. */
+    var parkedBag = Object.create(null);
+    var parkedClearedBag = Object.create(null);
+    var parkedDirtyBag = Object.create(null);
+    var parkedInvalidBag = Object.create(null);
     var incompatibleNotice = null;
+    var editRevision = 0;
+
+    function bumpEditRevision() {
+      editRevision += 1;
+    }
 
     function seedFrom(attrs, opts) {
       opts = opts || {};
@@ -278,11 +383,15 @@
       var projected = null;
       if (options.preserveState) {
         projected = projectStateOntoDefs(options.preserveState, defs);
+        parkedBag = Object.assign(Object.create(null), projected.parked || {});
+        parkedClearedBag = Object.assign(Object.create(null), projected.parkedCleared || {});
+        parkedDirtyBag = Object.assign(Object.create(null), projected.parkedDirty || {});
+        parkedInvalidBag = Object.assign(Object.create(null), projected.parkedInvalid || {});
         incompatibleNotice = projected.incompatible;
         seedFrom(projected.values, {
           cleared: projected.cleared,
           dirty: projected.dirty,
-          invalidInputs: options.preserveState.invalidInputs,
+          invalidInputs: projected.invalidInputs,
         });
         // Also seed any compatible keys from server seed that weren't dirty
         var server = options.initialAttributes;
@@ -327,6 +436,7 @@
 
     function markDirty(key, nextVal) {
       dirty[key] = true;
+      bumpEditRevision();
       if (nextVal === null || nextVal === undefined) {
         cleared[key] = true;
         delete values[key];
@@ -334,6 +444,29 @@
         delete cleared[key];
         values[key] = nextVal;
       }
+      notify();
+    }
+
+    /**
+     * Apply server attributes onto clean keys only — never overwrite dirty/cleared/invalid local edits.
+     */
+    function applyServerSnapshot(serverAttrs, opts) {
+      opts = opts || {};
+      var onlyClean = opts.onlyClean !== false;
+      if (!isPlainObject(serverAttrs)) return;
+      defs.forEach(function (def) {
+        var key = storageAttrKey(def);
+        if (!key) return;
+        if (onlyClean && (dirty[key] || cleared[key] || Object.prototype.hasOwnProperty.call(invalidInputs, def.id) || Object.prototype.hasOwnProperty.call(invalidInputs, key))) {
+          return;
+        }
+        if (Object.prototype.hasOwnProperty.call(serverAttrs, key)) {
+          values[key] = serverAttrs[key];
+          delete cleared[key];
+          if (!onlyClean) delete dirty[key];
+        }
+      });
+      paint();
       notify();
     }
 
@@ -403,7 +536,13 @@
         cleared: Object.assign({}, cleared),
         dirty: Object.assign({}, dirty),
         invalidInputs: Object.assign({}, invalidInputs),
+        parked: Object.assign({}, parkedBag),
+        parkedCleared: Object.assign({}, parkedClearedBag),
+        parkedDirty: Object.assign({}, parkedDirtyBag),
+        parkedInvalid: Object.assign({}, parkedInvalidBag),
         profileId: profileId,
+        mountId: mountId,
+        editRevision: editRevision,
       };
     }
 
@@ -413,16 +552,20 @@
       host.setAttribute('dir', 'rtl');
       host.setAttribute('data-mount-id', mountId);
 
-      if (incompatibleNotice && Object.keys(incompatibleNotice).length) {
+      var parkedKeys = Object.keys(parkedBag);
+      if (parkedKeys.length) {
+        incompatibleNotice = parkedBag;
         host.appendChild(
           el('p', {
             className: 'lead mira-attr-incompatible',
             'data-testid': 'attr-incompatible-notice',
             text:
-              'بعض القيم غير متوافقة مع التصنيف الحالي وحُفظت مؤقتًا للرجوع: ' +
-              Object.keys(incompatibleNotice).join('، '),
+              'قيم محفوظة مؤقتًا لهذا العنصر فقط — ستُستعاد عند الرجوع لتصنيف يدعمها، ولن تُرسل مع التصنيف الحالي: ' +
+              parkedKeys.join('، '),
           }),
         );
+      } else {
+        incompatibleNotice = null;
       }
 
       if (!defs.length) {
@@ -571,6 +714,7 @@
             var v = validateNumberValue(def, raw);
             if (!v.ok) {
               invalidInputs[def.id] = raw;
+              bumpEditRevision();
               setError(def.id, v.message);
               notify();
               return;
@@ -589,6 +733,7 @@
             var v = validateNumberValue(def, raw);
             if (!v.ok) {
               invalidInputs[def.id] = raw;
+              bumpEditRevision();
               setError(def.id, v.message);
             } else {
               delete invalidInputs[def.id];
@@ -643,6 +788,13 @@
         seedFrom(attrs);
         paint();
         notify();
+      },
+      applyServerSnapshot: applyServerSnapshot,
+      getEditRevision: function () {
+        return editRevision;
+      },
+      getParkedKeys: function () {
+        return Object.keys(parkedBag);
       },
       setFieldError: setError,
       getDefs: function () {
@@ -705,6 +857,7 @@
     E2_WRITE_FIELD_IDS: E2_WRITE_FIELD_IDS,
     E2_COMPONENT_CONTRACT_IDS: E2_COMPONENT_CONTRACT_IDS,
     FLAT_ATTR_FIELD_IDS: FLAT_ATTR_FIELD_IDS,
+    attrFieldIdsFromRegistry: attrFieldIdsFromRegistry,
     attributeFieldDefsForProfile: attributeFieldDefsForProfile,
     classifyField: classifyField,
     storageAttrKey: storageAttrKey,
