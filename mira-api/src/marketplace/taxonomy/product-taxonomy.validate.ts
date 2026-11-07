@@ -1,5 +1,13 @@
 import type { EleganceTaxonomyDoc, TaxonomyFieldError, TaxonomyNode } from './taxonomy.types';
 
+export type AttributeFieldDef = {
+  id: string;
+  type: string;
+  values?: unknown[];
+  min?: number | null;
+  max?: number | null;
+};
+
 export type ProductTaxonomyInput = {
   category?: string | null;
   subcategory?: string | null;
@@ -7,6 +15,12 @@ export type ProductTaxonomyInput = {
   attributes?: unknown;
   /** When true, omitted subcategory is allowed (legacy rows / patch without field). */
   allowOmittedSubcategory?: boolean;
+  /** Known registry profile ids — reject unknown profileId. */
+  knownProfileIds?: Set<string>;
+  /** Profile field defs for attributes validation (id → def). Unknown keys rejected when set. */
+  attributeFieldDefs?: Map<string, AttributeFieldDef>;
+  /** When true, unknown attribute keys are kept (legacy) but typed when known. */
+  allowUnknownAttributeKeys?: boolean;
 };
 
 function nodeMap(doc: EleganceTaxonomyDoc): Map<string, TaxonomyNode> {
@@ -23,8 +37,127 @@ function resolveWriteEnabled(node: TaxonomyNode, nodes: Map<string, TaxonomyNode
   return true;
 }
 
+function allowedValueIds(def: AttributeFieldDef): Set<string> | null {
+  const values = def.values;
+  if (!Array.isArray(values) || values.length === 0) return null;
+  const ids = new Set<string>();
+  for (const entry of values) {
+    if (typeof entry === 'string') ids.add(entry);
+    else if (entry && typeof entry === 'object') {
+      const o = entry as { id?: string; value?: string };
+      if (typeof o.id === 'string') ids.add(o.id);
+      if (typeof o.value === 'string') ids.add(o.value);
+    }
+  }
+  return ids.size ? ids : null;
+}
+
+function validateAttributeValue(
+  fieldId: string,
+  def: AttributeFieldDef,
+  raw: unknown,
+): TaxonomyFieldError | null {
+  if (raw === null || raw === undefined) return null;
+  const t = def.type;
+  if (t === 'array' || t === 'string[]' || t === 'multiSelect' || t === 'tags') {
+    if (!Array.isArray(raw)) {
+      return { fieldId, code: 'ATTRIBUTE_TYPE', messageAr: `الحقل ${fieldId} يجب أن يكون مصفوفة` };
+    }
+    const allowed = allowedValueIds(def);
+    for (const item of raw) {
+      if (typeof item !== 'string') {
+        return { fieldId, code: 'ATTRIBUTE_VALUE_TYPE', messageAr: `قيم ${fieldId} يجب أن تكون نصوصًا` };
+      }
+      if (allowed && !allowed.has(item)) {
+        return { fieldId, code: 'ATTRIBUTE_VALUE_UNKNOWN', messageAr: `قيمة غير معروفة في ${fieldId}` };
+      }
+    }
+    return null;
+  }
+  if (t === 'number' || t === 'integer') {
+    if (typeof raw !== 'number' || !Number.isFinite(raw)) {
+      return { fieldId, code: 'ATTRIBUTE_TYPE', messageAr: `الحقل ${fieldId} يجب أن يكون رقمًا` };
+    }
+    if (t === 'integer' && !Number.isInteger(raw)) {
+      return { fieldId, code: 'ATTRIBUTE_TYPE', messageAr: `الحقل ${fieldId} يجب أن يكون عددًا صحيحًا` };
+    }
+    if (def.min != null && raw < def.min) {
+      return { fieldId, code: 'ATTRIBUTE_MIN', messageAr: `الحقل ${fieldId} أقل من الحد` };
+    }
+    if (def.max != null && raw > def.max) {
+      return { fieldId, code: 'ATTRIBUTE_MAX', messageAr: `الحقل ${fieldId} أكبر من الحد` };
+    }
+    return null;
+  }
+  if (t === 'boolean') {
+    if (typeof raw !== 'boolean') {
+      return { fieldId, code: 'ATTRIBUTE_TYPE', messageAr: `الحقل ${fieldId} يجب أن يكون منطقيًا` };
+    }
+    return null;
+  }
+  if (t === 'object' || t === 'json') {
+    if (typeof raw !== 'object' || raw === null || Array.isArray(raw)) {
+      return { fieldId, code: 'ATTRIBUTE_TYPE', messageAr: `الحقل ${fieldId} يجب أن يكون كائنًا` };
+    }
+    return null;
+  }
+  // string / text / enum / select
+  if (typeof raw !== 'string') {
+    return { fieldId, code: 'ATTRIBUTE_TYPE', messageAr: `الحقل ${fieldId} يجب أن يكون نصًا` };
+  }
+  const allowed = allowedValueIds(def);
+  if (allowed && !allowed.has(raw)) {
+    return { fieldId, code: 'ATTRIBUTE_VALUE_UNKNOWN', messageAr: `قيمة غير معروفة في ${fieldId}` };
+  }
+  return null;
+}
+
+function validateAttributesBag(
+  attrs: Record<string, unknown>,
+  input: ProductTaxonomyInput,
+  errors: TaxonomyFieldError[],
+) {
+  const dim = attrs.dimensionsCm;
+  if (dim !== undefined && dim !== null) {
+    if (typeof dim !== 'object' || Array.isArray(dim)) {
+      errors.push({ fieldId: 'dimensionsCm', code: 'DIMENSIONS_TYPE', messageAr: 'الأبعاد يجب أن تكون كائنًا' });
+    } else {
+      for (const axis of ['w', 'h', 'd'] as const) {
+        const v = (dim as Record<string, unknown>)[axis];
+        if (v === undefined) continue;
+        if (v === null) {
+          errors.push({ fieldId: `dimensionsCm.${axis}`, code: 'DIMENSIONS_NULL', messageAr: 'البعد لا يقبل null' });
+        } else if (typeof v !== 'number' || !Number.isFinite(v)) {
+          errors.push({ fieldId: `dimensionsCm.${axis}`, code: 'DIMENSIONS_TYPE', messageAr: 'البعد يجب أن يكون رقمًا' });
+        } else if (v < 0) {
+          errors.push({ fieldId: `dimensionsCm.${axis}`, code: 'DIMENSIONS_MIN', messageAr: 'البعد لا يقبل قيمة سالبة' });
+        }
+      }
+    }
+  }
+
+  const defs = input.attributeFieldDefs;
+  if (!defs) return;
+  for (const [key, value] of Object.entries(attrs)) {
+    if (key === 'dimensionsCm') continue; // structural check above
+    const def = defs.get(key);
+    if (!def) {
+      if (!input.allowUnknownAttributeKeys) {
+        errors.push({
+          fieldId: key,
+          code: 'ATTRIBUTE_UNKNOWN',
+          messageAr: `خاصية غير مسموحة لهذا الملف: ${key}`,
+        });
+      }
+      continue;
+    }
+    const err = validateAttributeValue(key, def, value);
+    if (err) errors.push(err);
+  }
+}
+
 /**
- * Validate category/subcategory/profileId against elegance taxonomy.
+ * Validate category/subcategory/profileId/attributes against elegance taxonomy (+ optional registry).
  * Server-authoritative write gate for E1.
  */
 export function validateProductTaxonomyWrite(
@@ -42,34 +175,42 @@ export function validateProductTaxonomyWrite(
         messageAr: 'خصائص المنتج يجب أن تكون كائنًا وليس مصفوفة',
       });
     } else {
-      const attrs = input.attributes as Record<string, unknown>;
-      const dim = attrs.dimensionsCm;
-      if (dim !== undefined && dim !== null) {
-        if (typeof dim !== 'object' || Array.isArray(dim)) {
-          errors.push({ fieldId: 'dimensionsCm', code: 'DIMENSIONS_TYPE', messageAr: 'الأبعاد يجب أن تكون كائنًا' });
-        } else {
-          for (const axis of ['w', 'h', 'd'] as const) {
-            const v = (dim as Record<string, unknown>)[axis];
-            if (v === undefined) continue;
-            if (v === null) {
-              errors.push({ fieldId: `dimensionsCm.${axis}`, code: 'DIMENSIONS_NULL', messageAr: 'البعد لا يقبل null' });
-            } else if (typeof v !== 'number' || !Number.isFinite(v)) {
-              errors.push({ fieldId: `dimensionsCm.${axis}`, code: 'DIMENSIONS_TYPE', messageAr: 'البعد يجب أن يكون رقمًا' });
-            } else if (v < 0) {
-              errors.push({ fieldId: `dimensionsCm.${axis}`, code: 'DIMENSIONS_MIN', messageAr: 'البعد لا يقبل قيمة سالبة' });
-            }
-          }
-        }
+      validateAttributesBag(input.attributes as Record<string, unknown>, input, errors);
+    }
+  }
+
+  // profileId without subcategory must still be a known profile when known set provided.
+  if (input.profileId != null && input.profileId !== '') {
+    if (typeof input.profileId !== 'string') {
+      errors.push({ fieldId: 'profileId', code: 'PROFILE_TYPE', messageAr: 'ملف الحقول غير صالح' });
+    } else if (input.knownProfileIds && !input.knownProfileIds.has(input.profileId)) {
+      errors.push({
+        fieldId: 'profileId',
+        code: 'PROFILE_UNKNOWN',
+        messageAr: 'ملف الحقول غير معروف',
+      });
+    }
+  }
+
+  if (input.category != null && input.category !== '') {
+    if (typeof input.category !== 'string') {
+      errors.push({ fieldId: 'category', code: 'CATEGORY_TYPE', messageAr: 'القسم غير صالح' });
+    } else {
+      const catNode = nodes.get(input.category);
+      // If present in taxonomy, it must be a root section — not a leaf used as category.
+      if (catNode && catNode.parentId != null) {
+        errors.push({
+          fieldId: 'category',
+          code: 'CATEGORY_NOT_ROOT',
+          messageAr: 'معرّف الفرع لا يُستخدم كقسم رئيسي',
+        });
       }
     }
   }
 
   const sub = input.subcategory;
   if (sub === undefined || sub === null || sub === '') {
-    if (!input.allowOmittedSubcategory) {
-      // create may omit subcategory (legacy path); caller sets allowOmittedSubcategory
-    }
-    // If category alone provided without subcategory — ok for legacy
+    // Omitted/null/empty subcategory: legacy path — do not TypeError.
     return errors;
   }
 
@@ -82,6 +223,14 @@ export function validateProductTaxonomyWrite(
   if (!node) {
     errors.push({ fieldId: 'subcategory', code: 'SUBCATEGORY_UNKNOWN', messageAr: 'التصنيف الفرعي غير معروف' });
     return errors;
+  }
+  // Root category ids (parentId null) are not valid product subcategories.
+  if (node.parentId == null) {
+    errors.push({
+      fieldId: 'subcategory',
+      code: 'SUBCATEGORY_IS_CATEGORY',
+      messageAr: 'لا يمكن حفظ القسم الرئيسي كتصنيف فرعي للمنتج',
+    });
   }
   if (!node.active) {
     errors.push({ fieldId: 'subcategory', code: 'SUBCATEGORY_INACTIVE', messageAr: 'التصنيف الفرعي غير مفعّل' });
@@ -134,4 +283,13 @@ export function resolveFromSubcategory(
     category: node.parentId,
     profileId: node.profileId ?? parent?.profileId ?? null,
   };
+}
+
+/** Safe normalize for optional string fields — never calls trim on null. */
+export function normalizeOptionalId(value: unknown): string | null | undefined {
+  if (value === undefined) return undefined;
+  if (value === null) return null;
+  if (typeof value !== 'string') return null;
+  const t = value.trim();
+  return t === '' ? null : t;
 }

@@ -338,6 +338,12 @@ model Product {
   /// True when a published-row options draft is pending (including an explicit clear).
   draftOptionsSet   Boolean @default(false) @map("draft_options_set")
   draftVariantsSet  Boolean @default(false) @map("draft_variants_set")
+  /// Pending taxonomy/attributes for published rows — applied on content approve only.
+  draftCategory     String? @map("draft_category")
+  draftSubcategory  String? @map("draft_subcategory")
+  draftProfileId    String? @map("draft_profile_id")
+  draftAttributesJson Json? @map("draft_attributes_json")
+  draftTaxonomySet  Boolean @default(false) @map("draft_taxonomy_set")
   /// null = fee unknown (NOT free)
   deliveryFeeHalalas Int? @map("delivery_fee_halalas")
   /// Partner editor v2 profile metadata (nullable; legacy rows omit).

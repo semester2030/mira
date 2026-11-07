@@ -101,4 +101,49 @@ assert.deepEqual(resolved, { category: 'clothes', profileId: 'product.abaya' });
 assert.equal(resolveFromSubcategory(doc, 'clothes.all'), null);
 pass('E1-04-resolve-from-subcategory');
 
+const faceClothes = validateProductTaxonomyWrite(doc, {
+  category: 'face',
+  subcategory: 'clothes',
+  profileId: 'product.clothes',
+});
+assert.ok(faceClothes.some((e) => e.code === 'SUBCATEGORY_IS_CATEGORY'));
+pass('E1-closure-reject-category-as-subcategory');
+
+const unknownProfile = validateProductTaxonomyWrite(doc, {
+  profileId: 'product.nope',
+  allowOmittedSubcategory: true,
+  knownProfileIds: new Set(['product.clothes', 'product.abaya']),
+});
+assert.ok(unknownProfile.some((e) => e.code === 'PROFILE_UNKNOWN'));
+pass('E1-closure-reject-unknown-profile');
+
+const materialBad = validateProductTaxonomyWrite(doc, {
+  category: 'clothes',
+  subcategory: 'clothes.abaya',
+  profileId: 'product.abaya',
+  attributes: { material: 123 },
+  attributeFieldDefs: new Map([
+    ['material', { id: 'material', type: 'array', values: ['silk', 'cotton'] }],
+  ]),
+});
+assert.ok(materialBad.some((e) => e.code === 'ATTRIBUTE_TYPE' && e.fieldId === 'material'));
+pass('E1-closure-reject-material-number');
+
+const unknownAttr = validateProductTaxonomyWrite(doc, {
+  allowOmittedSubcategory: true,
+  attributes: { notAField: 'x' },
+  attributeFieldDefs: new Map([['material', { id: 'material', type: 'array' }]]),
+  allowUnknownAttributeKeys: false,
+});
+assert.ok(unknownAttr.some((e) => e.code === 'ATTRIBUTE_UNKNOWN'));
+pass('E1-closure-reject-unknown-attribute');
+
+const nullSub = validateProductTaxonomyWrite(doc, {
+  category: 'clothes',
+  subcategory: null,
+  allowOmittedSubcategory: true,
+});
+assert.equal(nullSub.length, 0);
+pass('E1-closure-null-subcategory-no-throw');
+
 console.log('E1-04/05 ALL PASS');

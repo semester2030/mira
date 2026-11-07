@@ -45,3 +45,33 @@ function colorLabelAr(id: string): string {
 
 /** Fields that must not be silently dropped on materialize when present in values. */
 export const P1_PRODUCT_MAPPED_FIELDS = ['colors', 'sizes', 'nameAr', 'nameEn', 'descriptionAr', 'priceHalalas', 'category', 'purchaseMode', 'stockQty', 'deliveryFeeHalalas', 'externalUrl', 'concernTags'] as const;
+
+/**
+ * Collect attributes.* registry fields from flat draft values into attributesJson bag.
+ * Top-level `attributes` object (if present) is merged as a patch over field keys.
+ */
+export function attributesJsonFromDraftValues(
+  values: Record<string, unknown>,
+  fieldDefs: Record<string, unknown>,
+): Record<string, unknown> | undefined {
+  const bag: Record<string, unknown> = {};
+  let touched = false;
+  for (const [fieldId, rawDef] of Object.entries(fieldDefs)) {
+    const storage = (rawDef as { storage?: string } | null | undefined)?.storage;
+    if (typeof storage !== 'string' || !storage.startsWith('attributes.')) continue;
+    if (!Object.prototype.hasOwnProperty.call(values, fieldId)) continue;
+    const key = storage.slice('attributes.'.length);
+    if (!key) continue;
+    bag[key] = values[fieldId];
+    touched = true;
+  }
+  if (values.attributes !== undefined && values.attributes !== null && typeof values.attributes === 'object' && !Array.isArray(values.attributes)) {
+    Object.assign(bag, values.attributes as Record<string, unknown>);
+    touched = true;
+  }
+  if (values.attributesJson !== undefined && values.attributesJson !== null && typeof values.attributesJson === 'object' && !Array.isArray(values.attributesJson)) {
+    Object.assign(bag, values.attributesJson as Record<string, unknown>);
+    touched = true;
+  }
+  return touched ? bag : undefined;
+}

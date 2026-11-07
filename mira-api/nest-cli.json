@@ -17,6 +17,10 @@
       {
         "include": "partners-portal/registry/*.json",
         "watchAssets": true
+      },
+      {
+        "include": "marketplace/taxonomy/*.json",
+        "watchAssets": true
       }
     ]
   }

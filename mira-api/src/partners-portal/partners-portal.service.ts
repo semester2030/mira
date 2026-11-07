@@ -28,11 +28,15 @@ import {
 import { lockPartnerScheduleScope } from '../marketplace/commerce-schedule-locks';
 import { PrismaService } from '../prisma/prisma.service';
 import { TaxonomyService } from '../marketplace/taxonomy/taxonomy.service';
+import { applyTaxonomyPatch } from '../marketplace/taxonomy/taxonomy-write.apply';
+import type { AttributeFieldDef } from '../marketplace/taxonomy/product-taxonomy.validate';
+import { normalizeOptionalId } from '../marketplace/taxonomy/product-taxonomy.validate';
 import { ApplyPartnerDto } from './dto/apply-partner.dto';
 import { UpdateProductDto, UpdateServiceDto, UpsertProductDto, UpsertServiceDto } from './dto/catalog.dto';
 import { TrackPartnerEventDto } from './dto/track-event.dto';
 import { hashPartnerPassword, verifyPartnerPassword } from './partner-password';
 import { assertVariantMediaIdsEligible } from './variant-media-ids';
+import { RegistryService } from './registry/registry.service';
 
 function newToken(): string {
   return randomBytes(32).toString('hex');
@@ -69,28 +73,59 @@ export class PartnersPortalService implements OnModuleInit {
   private readonly logger = new Logger(PartnersPortalService.name);
 
   private readonly taxonomy: TaxonomyService;
+  private readonly registry: RegistryService | null;
 
   constructor(
     @Inject(PrismaService) private readonly prisma: PrismaService,
     @Inject(ConfigService) private readonly config: ConfigService,
     @Optional() @Inject(TaxonomyService) taxonomy?: TaxonomyService,
+    @Optional() @Inject(RegistryService) registry?: RegistryService,
   ) {
     this.taxonomy = taxonomy ?? new TaxonomyService();
     if (!taxonomy) this.taxonomy.onModuleInit();
+    this.registry = registry ?? null;
   }
 
-  private assertTaxonomyWrite(input: {
-    category?: string | null;
-    subcategory?: string | null;
-    profileId?: string | null;
-    attributes?: unknown;
-    allowOmittedSubcategory?: boolean;
-  }) {
-    const errors = this.taxonomy.validateWrite(input);
+  private taxonomyWriteContext(profileId?: string | null) {
+    const knownProfileIds = this.registry
+      ? new Set(this.registry.getRegistry().profiles.map((p) => p.id))
+      : undefined;
+    let attributeFieldDefs: Map<string, AttributeFieldDef> | undefined;
+    if (this.registry && profileId) {
+      const profile = this.registry.getProfile(profileId);
+      if (profile) {
+        attributeFieldDefs = new Map();
+        const fields = this.registry.getRegistry().fields;
+        for (const fieldId of profile.fields ?? []) {
+          const def = fields[fieldId];
+          if (!def) continue;
+          // Only attribute-stored fields participate in attributes bag validation.
+          const storage = (def as { storage?: string }).storage;
+          if (typeof storage === 'string' && storage.startsWith('attributes.')) {
+            attributeFieldDefs.set(fieldId, {
+              id: fieldId,
+              type: def.type,
+              values: def.values,
+              min: def.min ?? null,
+              max: def.max ?? null,
+            });
+          }
+        }
+      }
+    }
+    return {
+      doc: this.taxonomy.getDoc(),
+      knownProfileIds,
+      attributeFieldDefs,
+      allowUnknownAttributeKeys: true,
+    };
+  }
+
+  private throwTaxonomyErrors(errors: Array<{ fieldId: string; code: string; messageAr?: string }>) {
     if (!errors.length) return;
     throw new BadRequestException({
-      message: errors[0].messageAr,
-      messageAr: errors[0].messageAr,
+      message: errors[0].messageAr || errors[0].code,
+      messageAr: errors[0].messageAr || errors[0].code,
       code: errors[0].code,
       fieldErrors: errors,
     });
@@ -454,25 +489,23 @@ export class PartnersPortalService implements OnModuleInit {
         code: PARTNER_KIND_FORBIDDEN,
       });
     }
-    let category = this.optionalCategory(dto.category, PRODUCT_CATEGORIES);
-    let profileId: string | null = dto.profileId?.trim() || null;
-    const subcategory = dto.subcategory?.trim() || null;
-    this.assertTaxonomyWrite({
-      category,
-      subcategory,
-      profileId,
-      attributes: dto.attributes,
-      allowOmittedSubcategory: true,
-    });
-    if (subcategory) {
-      const resolved = this.taxonomy.resolveFromSubcategory(subcategory);
-      if (resolved) {
-        if (!category) {
-          category = this.optionalCategory(resolved.category, PRODUCT_CATEGORIES);
-        }
-        if (!profileId && resolved.profileId) profileId = resolved.profileId;
-      }
-    }
+    const categoryRaw = this.optionalCategory(dto.category, PRODUCT_CATEGORIES);
+    const applied = applyTaxonomyPatch(
+      this.taxonomyWriteContext(normalizeOptionalId(dto.profileId) ?? null),
+      { category: null, subcategory: null, profileId: null, attributesJson: null },
+      {
+        category: categoryRaw,
+        subcategory: dto.subcategory as string | null | undefined,
+        profileId: dto.profileId as string | null | undefined,
+        attributes: dto.attributes,
+      },
+      { published: false },
+    );
+    this.throwTaxonomyErrors(applied.errors);
+    let category = applied.next.category;
+    if (category) category = this.optionalCategory(category, PRODUCT_CATEGORIES);
+    const subcategory = applied.next.subcategory;
+    const profileId = applied.next.profileId;
     const cosmetic = category === 'face' || category === 'body' || category === 'hair';
     const nameAr = dto.nameAr.trim();
     const commerce = normalizeProductCommerce(dto, null, dto.priceHalalas);
@@ -493,9 +526,9 @@ export class PartnersPortalService implements OnModuleInit {
         ...(dto.attributes !== undefined
           ? {
               attributesJson:
-                dto.attributes == null
+                applied.next.attributesJson == null
                   ? Prisma.DbNull
-                  : (dto.attributes as Prisma.InputJsonValue),
+                  : (applied.next.attributesJson as Prisma.InputJsonValue),
             }
           : {}),
         skinTypes: cosmetic ? (dto.skinTypes ?? []) : [],
@@ -528,6 +561,11 @@ export class PartnersPortalService implements OnModuleInit {
         subcategory?: string | null;
         profileId?: string | null;
         attributesJson?: Prisma.InputJsonValue | typeof Prisma.DbNull;
+        draftCategory?: string | null;
+        draftSubcategory?: string | null;
+        draftProfileId?: string | null;
+        draftAttributesJson?: Prisma.InputJsonValue | typeof Prisma.DbNull;
+        draftTaxonomySet?: boolean;
         skinTypes?: string[];
         stepAr?: string | null;
         reviewRevision: { increment: number };
@@ -562,41 +600,57 @@ export class PartnersPortalService implements OnModuleInit {
       data.priceHalalas = linked ? current.priceHalalas : (dto.priceHalalas ?? current.priceHalalas);
       if (dto.externalUrl !== undefined) data.externalUrl = dto.externalUrl.trim();
       if (dto.concernTags !== undefined) data.concernTags = dto.concernTags;
-      if (dto.category !== undefined) data.category = this.optionalCategory(dto.category, PRODUCT_CATEGORIES);
-      // Omitted subcategory must not clear an existing value (E1 compat).
-      if (dto.subcategory !== undefined) {
-        data.subcategory = dto.subcategory.trim() || null;
-      }
-      if (dto.profileId !== undefined) {
-        data.profileId = dto.profileId.trim() || null;
-      }
-      if (dto.attributes !== undefined) {
-        data.attributesJson =
-          dto.attributes == null ? Prisma.DbNull : (dto.attributes as Prisma.InputJsonValue);
-      }
-      const nextCategory = data.category === undefined ? current.category : data.category;
-      const nextSubcategory =
-        data.subcategory === undefined ? current.subcategory : data.subcategory;
-      const nextProfileId = data.profileId === undefined ? current.profileId : data.profileId;
-      this.assertTaxonomyWrite({
-        category: nextCategory,
-        subcategory: nextSubcategory,
-        profileId: nextProfileId,
-        attributes: dto.attributes !== undefined ? dto.attributes : undefined,
-        allowOmittedSubcategory: true,
-      });
-      if (dto.subcategory !== undefined && nextSubcategory) {
-        const resolved = this.taxonomy.resolveFromSubcategory(nextSubcategory);
-        if (resolved) {
-          if (data.category === undefined && !current.category) {
-            data.category = this.optionalCategory(resolved.category, PRODUCT_CATEGORIES);
-          }
-          if (dto.profileId === undefined && !current.profileId && resolved.profileId) {
-            data.profileId = resolved.profileId;
+
+      const taxonomyTouched =
+        dto.category !== undefined ||
+        dto.subcategory !== undefined ||
+        dto.profileId !== undefined ||
+        dto.attributes !== undefined;
+      if (taxonomyTouched) {
+        const categoryPatch =
+          dto.category !== undefined ? this.optionalCategory(dto.category, PRODUCT_CATEGORIES) : undefined;
+        // Effective baseline for published pending edits: prior draft taxonomy if set, else live.
+        const baseline = published && current.draftTaxonomySet
+          ? {
+              category: current.draftCategory ?? current.category,
+              subcategory: current.draftSubcategory ?? current.subcategory,
+              profileId: current.draftProfileId ?? current.profileId,
+              attributesJson: current.draftAttributesJson ?? current.attributesJson,
+            }
+          : {
+              category: current.category,
+              subcategory: current.subcategory,
+              profileId: current.profileId,
+              attributesJson: current.attributesJson,
+            };
+        const applied = applyTaxonomyPatch(
+          this.taxonomyWriteContext(
+            (dto.profileId !== undefined ? normalizeOptionalId(dto.profileId) : baseline.profileId) ?? null,
+          ),
+          baseline,
+          {
+            category: categoryPatch,
+            subcategory: dto.subcategory as string | null | undefined,
+            profileId: dto.profileId as string | null | undefined,
+            attributes: dto.attributes,
+          },
+          { published },
+        );
+        this.throwTaxonomyErrors(applied.errors);
+        if (published) {
+          Object.assign(data, applied.draftData);
+        } else {
+          Object.assign(data, applied.liveData);
+          if (applied.liveData.category != null) {
+            data.category = this.optionalCategory(String(applied.liveData.category), PRODUCT_CATEGORIES);
           }
         }
       }
-      const category = data.category === undefined ? current.category : data.category;
+      const category = published
+        ? current.category
+        : data.category === undefined
+          ? current.category
+          : data.category;
       const cosmetic = category === 'face' || category === 'body' || category === 'hair';
       if (!cosmetic) {
         data.skinTypes = [];

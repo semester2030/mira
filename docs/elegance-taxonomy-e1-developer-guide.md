@@ -1,63 +1,59 @@
-# دليل المطوّر — أساس تصنيفات «أناقتك» (E1)
+# دليل المطوّر — أساس تصنيفات «أناقتك» (E1 مغلق)
 
-## أين يعدّل التصنيفات والحقول؟
+## مصدر التعريف
 
-| ماذا | أين (مصدر الحقيقة) |
-|------|---------------------|
-| حقول المنتج والـprofiles | `mira-api/src/partners-portal/registry/field-registry.v2.json` |
-| شجرة أقسام/فروع أناقتك | `mira-api/src/marketplace/taxonomy/elegance-taxonomy.v1.json` |
-| نسخة البوابة من السجل | `partners-portal/web/js/field-registry.v2.json` (مشتقة — يجب تطابق SHA) |
+| ماذا | أين |
+|------|-----|
+| حقول/profiles | `mira-api/src/partners-portal/registry/field-registry.v2.json` |
+| شجرة أناقتك | `mira-api/src/marketplace/taxonomy/elegance-taxonomy.v1.json` |
+| دمج PATCH للخصائص | `marketplace/taxonomy/attributes-patch.merge.ts` |
+| تحقق التصنيف | `marketplace/taxonomy/product-taxonomy.validate.ts` |
+| تطبيق الحفظ | `marketplace/taxonomy/taxonomy-write.apply.ts` |
 
-لا تُنشئ سجل حقول ثانيًا. الإسقاط العام للتطبيق يُشتق من ملف التصنيفات أعلاه عبر `TaxonomyService.publicProjection()`.
+نسخة السجل للويب مشتقة: `partners-portal/web/js/field-registry.v2.json` (`npm run check:field-registry`).  
+إسقاط التطبيق العام: `GET /api/v1/marketplace/taxonomy?lane=elegance` (يُحمَّل JSON من `dist` بعد البناء — مضمّن في `nest-cli.json` assets).
 
-## كيف يضيف فرعًا مدعومًا؟
+## عقد PATCH / null / المصفوفات
 
-1. أضف عقدة في `elegance-taxonomy.v1.json` بمعرّف ثابت (`parent.child`)، و`parentId` صحيح، و`children` متبادلة.
-2. اربط `profileId` موجودًا في `field-registry.v2.json` (أو أضف الـprofile أولًا).
-3. اضبط `writeEnabled: true` فقط عندما يكون القسم في allowlist المنتجات وجاهزًا للحفظ.
-4. لا تستخدم `*.all` إلا كـ`browseOnly` للتنقّل — لا يُحفظ على المنتج.
-5. شغّل: `npm run check:elegance-taxonomy` و`npm run test:elegance-e1`.
+- الحقل **غير المرسل** يبقى كما هو.
+- `attributes: {}` لا يمسح الخصائص.
+- `attributes: null` ككيس كامل → مرفوض (`ATTRIBUTES_NULL_FORBIDDEN`).
+- مفتاح علوي `null` → مسح ذلك المفتاح فقط.
+- مصفوفة مرسلة → استبدال كوحدة (لا دمج عناصر).
+- كائن متداخل (مثل `dimensionsCm`) → دمج عميق؛ `dimensionsCm.w=null` → 400 `DIMENSIONS_NULL`.
+- التحقق يُطبَّق على **النتيجة بعد الدمج**، مع قفل `FOR UPDATE` في التحديث الفردي.
 
-## ما الذي يحتاج كودًا / migration / إصدار تطبيق؟
+## منشور مقابل معلّق
 
-| التغيير | مطلوب |
-|---------|--------|
-| فرع جديد ضمن قسم write-enabled قائم + profile موجود | تحديث JSON + اختبارات (غالبًا بدون migration) |
-| عمود تخزين جديد على Product | migration إضافية متوافقة |
-| قسم جديد للكتابة غير موجود في `PRODUCT_CATEGORIES` | كود allowlist + profile + taxonomy |
-| شاشات البوابة/التطبيق | مراحل E2–E5 (خارج E1) |
+للمنتج `contentStatus=published`:
+- الاسم/الوصف → `draftName*`
+- options/variants → `draftOptions*` / `draftVariants*`
+- category/subcategory/profileId/attributes → `draftCategory` / `draftSubcategory` / `draftProfileId` / `draftAttributesJson` + `draftTaxonomySet`
+- النسخة العامة لا تتغير حتى `approve` في `CatalogContentService.decide`
+- حساب `developer` يبقى بنشر مباشر بعد submit مع بقاء التحقق والملكية
 
-## كيف تُولد النسخ المشتقة؟
+غير المنشور: الكتابة على الأعمدة الحية مباشرة.
 
-- السجل للويب: انسخ من مصدر الـAPI ثم `npm run check:field-registry`.
-- التصنيفات العامة: لا تُنسخ يدويًا — `GET /api/v1/marketplace/taxonomy?lane=elegance`.
-- كشف الانحراف: `npm run check:elegance-taxonomy`.
+## المسارات
 
-## كيف يشغّل الاختبارات؟
+1. فردي: `POST/PATCH /partners-portal/products`
+2. مسودة: editor PUT → materialize (`attributesJsonFromDraftValues` يجمع حقول `attributes.*`)
+3. مجموعات: bulk → نفس materialize
+4. موافقة: admin `POST /admin/catalog-reviews/:kind/:id/decision`
+
+## إضافة تصنيف فرعي مدعوم
+
+1. عقدة في `elegance-taxonomy.v1.json` (معرّف ثابت، parent/children متوافقان، `writeEnabled` صادق).
+2. `profileId` موجود في السجل.
+3. `npm run check:elegance-taxonomy` و`npm run test:elegance-e1`.
+4. لا تفعّل الشنط/الأحذية للكتابة قبل E4.
+
+## اختبارات التوافق
 
 ```bash
-cd mira-api
-export DATABASE_URL='postgresql://mira:mira_secret@localhost:5432/mira_db?schema=public'
-npx prisma migrate deploy
 npm run test:elegance-e1
+npm run build   # يجب وجود dist/marketplace/taxonomy/elegance-taxonomy.v1.json
+node scripts/e1-migration-rollback-proof.mjs
 ```
 
-اختبارات نقية بدون HTTP:  
-`npx tsx src/marketplace/taxonomy/taxonomy.load.schema-tests.ts`  
-`npx tsx src/marketplace/taxonomy/product-taxonomy.validate.schema-tests.ts`
-
-## تتبّع حقل من التعريف إلى الحفظ والقراءة
-
-1. تعريف الحقل في `field-registry.v2.json` → `RegistryService.validateValues`.
-2. التصنيف الفرعي في `elegance-taxonomy.v1.json` → `validateProductTaxonomyWrite` / `TaxonomyService.validateWrite`.
-3. الحفظ الفردي: `PartnersPortalService.createProduct|updateProduct` → أعمدة `category` / `subcategory` / `profile_id` / `attributes_json`.
-4. المسودات: `EditorDraftsService` materialize بنفس الأعمدة.
-5. القراءة العامة: كتالوج marketplace يعيد `subcategory`؛ الفلتر `?subcategory=` قبل pagination.
-6. التصفح العام للشجرة: `GET .../marketplace/taxonomy?lane=elegance`.
-
-## حدود E1 مقابل E2+
-
-- **مغلق في E1:** مصدر موحّد، تحقق خادم ملزم، taxonomy API، حفظ/قراءة subcategory، فلتر كتالوج، اختبارات E1-01..12.
-- **E2 إلزامي:** استدارة حفظ attributes في البوابة (مثل `material[]` و`carryStyle`) بعد تعديل الاسم — انظر `docs/elegance-taxonomy-e2-acceptance.md`.
-- **E4:** تفعيل كتابة الشنط/الأحذية (`writeEnabled`).
-- خارج النطاق: مجوهرات، أطفال، خدمات، حجوزات، ترحيل إنتاج، نشر عام للميزة.
+تراجع migration المفضّل: إعادة نشر بناء سابق مع إبقاء الأعمدة الإضافية.

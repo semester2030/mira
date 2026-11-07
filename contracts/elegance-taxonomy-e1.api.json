@@ -55,7 +55,23 @@
   "storage": {
     "products.subcategory": "TEXT nullable",
     "products.attributes_json": "JSONB nullable",
-    "migration": "20261107210000_elegance_e1_product_subcategory",
-    "rollback": "DROP INDEX products_category_subcategory_idx; ALTER TABLE products DROP COLUMN subcategory, DROP COLUMN attributes_json;"
+    "products.draft_category": "TEXT nullable (published pending)",
+    "products.draft_subcategory": "TEXT nullable",
+    "products.draft_profile_id": "TEXT nullable",
+    "products.draft_attributes_json": "JSONB nullable",
+    "products.draft_taxonomy_set": "BOOLEAN default false",
+    "migrations": [
+      "20261107210000_elegance_e1_product_subcategory",
+      "20261107223000_elegance_e1_draft_taxonomy"
+    ],
+    "rollbackPreferred": "Redeploy prior app build; leave additive columns. DROP only on unused environments with no dependent writes."
+  },
+  "patchContract": {
+    "attributesEmptyObject": "keep existing",
+    "attributesNullBag": "400 ATTRIBUTES_NULL_FORBIDDEN",
+    "attributesKeyNull": "clears that key",
+    "nestedNull": "400 (DIMENSIONS_NULL for dimensionsCm.*)",
+    "arrayReplace": "whole unit",
+    "publishedTaxonomy": "writes draft_* until approve"
   }
 }

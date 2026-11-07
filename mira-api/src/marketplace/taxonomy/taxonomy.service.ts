@@ -54,8 +54,7 @@ export class TaxonomyService implements OnModuleInit {
   }
 
   private toPublic(n: TaxonomyNode) {
-    const writeEnabled =
-      n.writeEnabled === false ? false : n.browseOnly ? false : n.writeEnabled !== false;
+    const writeEnabled = n.browseOnly ? false : n.writeEnabled !== false;
     return {
       id: n.id,
       parentId: n.parentId,

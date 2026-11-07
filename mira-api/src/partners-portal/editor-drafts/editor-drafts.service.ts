@@ -16,7 +16,7 @@ import {
 } from '../../marketplace/commerce.types';
 import { RegistryService } from '../registry/registry.service';
 import { EDITOR_SCHEMA_VERSION } from '../registry/registry.types';
-import { optionsJsonFromDraftValues } from '../registry/draft-values-mapping';
+import { attributesJsonFromDraftValues, optionsJsonFromDraftValues } from '../registry/draft-values-mapping';
 import { assertVariantMediaIdsEligible } from '../variant-media-ids';
 import { resolveSaudiCity } from '../../geo/saudi-cities';
 import {
@@ -24,6 +24,9 @@ import {
   placeModeFromServiceProfile,
 } from '../../marketplace/catalog-filters';
 import { TaxonomyService } from '../../marketplace/taxonomy/taxonomy.service';
+import { applyTaxonomyPatch } from '../../marketplace/taxonomy/taxonomy-write.apply';
+import type { AttributeFieldDef } from '../../marketplace/taxonomy/product-taxonomy.validate';
+import { normalizeOptionalId } from '../../marketplace/taxonomy/product-taxonomy.validate';
 import { PARTNER_KIND_FORBIDDEN, partnerCanCreateKind } from '../partner-capabilities';
 
 /** Normalize coverage city ids (Arabic name → stable sa-* id). */
@@ -185,27 +188,44 @@ export class EditorDraftsService {
     if (!taxonomy) this.taxonomy.onModuleInit();
   }
 
-  private assertProductTaxonomyValues(values: Record<string, unknown>, profileId: string) {
-    const category = typeof values.category === 'string' ? values.category : null;
-    const subcategory = typeof values.subcategory === 'string' ? values.subcategory : null;
-    const attributes =
-      values.attributes !== undefined
-        ? values.attributes
-        : values.attributesJson !== undefined
-          ? values.attributesJson
-          : undefined;
-    const errors = this.taxonomy.validateWrite({
-      category,
-      subcategory,
-      profileId,
-      attributes,
-      allowOmittedSubcategory: true,
-    });
+  private taxonomyWriteContext(profileId?: string | null) {
+    const knownProfileIds = new Set(this.registry.getRegistry().profiles.map((p) => p.id));
+    let attributeFieldDefs: Map<string, AttributeFieldDef> | undefined;
+    if (profileId) {
+      const profile = this.registry.getProfile(profileId);
+      if (profile) {
+        attributeFieldDefs = new Map();
+        const fields = this.registry.getRegistry().fields;
+        for (const fieldId of profile.fields ?? []) {
+          const def = fields[fieldId];
+          if (!def) continue;
+          const storage = (def as { storage?: string }).storage;
+          if (typeof storage === 'string' && storage.startsWith('attributes.')) {
+            attributeFieldDefs.set(fieldId, {
+              id: fieldId,
+              type: def.type,
+              values: def.values,
+              min: def.min ?? null,
+              max: def.max ?? null,
+            });
+          }
+        }
+      }
+    }
+    return {
+      doc: this.taxonomy.getDoc(),
+      knownProfileIds,
+      attributeFieldDefs,
+      allowUnknownAttributeKeys: true,
+    };
+  }
+
+  private throwTaxonomyErrors(errors: Array<{ fieldId: string; code: string; messageAr?: string }>) {
     if (!errors.length) return;
     throw new HttpException(
       {
-        message: errors[0].messageAr,
-        messageAr: errors[0].messageAr,
+        message: errors[0].messageAr || errors[0].code,
+        messageAr: errors[0].messageAr || errors[0].code,
         code: errors[0].code,
         fieldErrors: errors,
       },
@@ -619,23 +639,19 @@ export class EditorDraftsService {
     const nameAr = String(values.nameAr).trim();
     const priceHalalas = values.priceHalalas as number;
     if (kind === 'product') {
-      this.assertProductTaxonomyValues(values, draft.profileId);
-      let category = typeof values.category === 'string' ? values.category : null;
-      const subcategory = typeof values.subcategory === 'string' ? values.subcategory.trim() || null : null;
-      let profileId = draft.profileId;
-      if (subcategory) {
-        const resolved = this.taxonomy.resolveFromSubcategory(subcategory);
-        if (resolved) {
-          if (!category) category = resolved.category;
-          if (resolved.profileId) profileId = resolved.profileId;
-        }
-      }
-      const attributesRaw =
-        values.attributes !== undefined
-          ? values.attributes
-          : values.attributesJson !== undefined
-            ? values.attributesJson
-            : undefined;
+      const attributesRaw = attributesJsonFromDraftValues(values, this.registry.getRegistry().fields);
+      const applied = applyTaxonomyPatch(
+        this.taxonomyWriteContext(draft.profileId),
+        { category: null, subcategory: null, profileId: draft.profileId, attributesJson: null },
+        {
+          category: normalizeOptionalId(values.category) ?? null,
+          subcategory: values.subcategory === undefined ? undefined : normalizeOptionalId(values.subcategory),
+          profileId: draft.profileId,
+          attributes: attributesRaw,
+        },
+        { published: false },
+      );
+      this.throwTaxonomyErrors(applied.errors);
       const row = await tx.product.create({
         data: {
           partnerId,
@@ -647,20 +663,20 @@ export class EditorDraftsService {
           concernTags: Array.isArray(values.concernTags)
             ? values.concernTags.filter((t): t is string => typeof t === 'string')
             : [],
-          category,
-          subcategory,
+          category: applied.next.category,
+          subcategory: applied.next.subcategory,
           ...(attributesRaw !== undefined
             ? {
                 attributesJson:
-                  attributesRaw == null
+                  applied.next.attributesJson == null
                     ? Prisma.DbNull
-                    : (attributesRaw as Prisma.InputJsonValue),
+                    : (applied.next.attributesJson as Prisma.InputJsonValue),
               }
             : {}),
           active: false,
           contentStatus: 'draft',
           reviewStatus: 'draft',
-          profileId,
+          profileId: applied.next.profileId ?? draft.profileId,
           schemaVersion: draft.schemaVersion,
           purchaseMode:
             values.purchaseMode === 'internal_cod' || values.purchaseMode === 'external'
@@ -767,14 +783,6 @@ export class EditorDraftsService {
       await tx.$executeRaw`SELECT id FROM products WHERE id = ${targetOwnerId} FOR UPDATE`;
       const current = await tx.product.findFirst({ where: { id: targetOwnerId, partnerId } });
       if (!current) throw new NotFoundException('المنتج غير موجود');
-      this.assertProductTaxonomyValues(
-        {
-          ...values,
-          category: values.category !== undefined ? values.category : current.category,
-          subcategory: values.subcategory !== undefined ? values.subcategory : current.subcategory,
-        },
-        draft.profileId,
-      );
       const published = current.contentStatus === 'published';
       const nameAr = typeof values.nameAr === 'string' ? values.nameAr.trim() : current.nameAr;
       const nameEn =
@@ -788,6 +796,42 @@ export class EditorDraftsService {
       if (values.variantsJson !== undefined && values.variantsJson !== null) {
         await assertVariantMediaIdsEligible(tx, targetOwnerId, values.variantsJson);
       }
+
+      const attributesRaw = attributesJsonFromDraftValues(values, this.registry.getRegistry().fields);
+      const baseline =
+        published && current.draftTaxonomySet
+          ? {
+              category: current.draftCategory ?? current.category,
+              subcategory: current.draftSubcategory ?? current.subcategory,
+              profileId: current.draftProfileId ?? current.profileId,
+              attributesJson: current.draftAttributesJson ?? current.attributesJson,
+            }
+          : {
+              category: current.category,
+              subcategory: current.subcategory,
+              profileId: current.profileId,
+              attributesJson: current.attributesJson,
+            };
+      const taxonomyTouched =
+        values.category !== undefined ||
+        values.subcategory !== undefined ||
+        attributesRaw !== undefined ||
+        draft.profileId !== (current.profileId ?? '');
+      const applied = taxonomyTouched
+        ? applyTaxonomyPatch(
+            this.taxonomyWriteContext(draft.profileId),
+            baseline,
+            {
+              category: values.category === undefined ? undefined : normalizeOptionalId(values.category),
+              subcategory: values.subcategory === undefined ? undefined : normalizeOptionalId(values.subcategory),
+              profileId: draft.profileId,
+              attributes: attributesRaw,
+            },
+            { published },
+          )
+        : null;
+      if (applied) this.throwTaxonomyErrors(applied.errors);
+
       // Content only — do not overwrite operational price/stock/delivery from stale draft when published.
       if (published) {
         await tx.product.update({
@@ -796,10 +840,10 @@ export class EditorDraftsService {
             draftNameAr: nameAr,
             draftNameEn: nameEn,
             draftDescriptionAr: descriptionAr ?? '',
-            profileId: draft.profileId,
             schemaVersion: draft.schemaVersion,
             reviewRevision: { increment: 1 },
             reviewStatus: current.reviewStatus === 'in_review' ? 'in_review' : 'draft',
+            ...(applied ? applied.draftData : {}),
             ...(() => {
               const mapped = optionsJsonFromDraftValues(values);
               if (mapped === undefined && values.optionsJson === undefined) return {};
@@ -827,7 +871,7 @@ export class EditorDraftsService {
             nameAr,
             nameEn,
             descriptionAr,
-            profileId: draft.profileId,
+            profileId: applied?.next.profileId ?? draft.profileId,
             schemaVersion: draft.schemaVersion,
             reviewRevision: { increment: 1 },
             reviewStatus: 'draft',
@@ -836,28 +880,7 @@ export class EditorDraftsService {
             ...(Array.isArray(values.concernTags)
               ? { concernTags: values.concernTags.filter((t): t is string => typeof t === 'string') }
               : {}),
-            ...(typeof values.category === 'string' || values.category === null
-              ? { category: typeof values.category === 'string' ? values.category : null }
-              : {}),
-            // Omitted subcategory leaves existing (E1 compat).
-            ...(typeof values.subcategory === 'string'
-              ? { subcategory: values.subcategory.trim() || null }
-              : {}),
-            ...(values.attributes !== undefined
-              ? {
-                  attributesJson:
-                    values.attributes == null
-                      ? Prisma.DbNull
-                      : (values.attributes as Prisma.InputJsonValue),
-                }
-              : values.attributesJson !== undefined
-                ? {
-                    attributesJson:
-                      values.attributesJson == null
-                        ? Prisma.DbNull
-                        : (values.attributesJson as Prisma.InputJsonValue),
-                  }
-                : {}),
+            ...(applied ? applied.liveData : {}),
             ...(mappedOptions !== undefined ? { optionsJson: mappedOptions } : {}),
             ...(values.variantsJson !== undefined
               ? {

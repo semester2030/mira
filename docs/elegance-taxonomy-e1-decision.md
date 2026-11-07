@@ -1,31 +1,42 @@
-# قرار المرحلة E1 — أساس تصنيفات أناقتك
+# قرار إغلاق المرحلة E1 — أساس تصنيفات أناقتك
 
-**القرار:** `E1_IMPLEMENTED_VERIFIED`
+**القرار:** `E1_CLOSED_VERIFIED`  
+**أساس E2:** جاهز من جهة الباك اند (تعريفات + تحقق + حفظ موحّد + taxonomy API).  
+بنود واجهة البوابة E2 (`material[]` / `carryStyle` UX) تبقى مفتوحة كما هي — إصلاح باك اند لا يغلق تجربة البوابة تلقائيًا.
 
-لا يعني إغلاق E2–E5 ولا جاهزية الإطلاق العام ولا ترحيل قاعدة الإنتاج.
+## المعرفات
 
-## حالات القبول
+| | |
+|--|--|
+| الفرع | `mira/elegance-e1-taxonomy-foundation` |
+| base | `60d9134294f6db96bc0c55685066dc49301833ae` |
+| رأس E1 foundation | `1ce240187efb5a09329fd536998081f2cfd43365` |
+| إغلاق الملاحظات | (يُملأ بعد commit الإغلاق) |
 
-| ID | الحالة | دليل |
-|----|--------|------|
-| E1-01 | IMPLEMENTED_VERIFIED | `taxonomy.load.schema-tests.ts` |
-| E1-02 | IMPLEMENTED_VERIFIED | HTTP `GET /marketplace/taxonomy` في `elegance-e1.http.integration-tests.ts` |
-| E1-03 | IMPLEMENTED_VERIFIED | حفظ subcategory + قراءة DB/API |
-| E1-04 | IMPLEMENTED_VERIFIED | رفض browseOnly / تعارض / writeDisabled |
-| E1-05 | IMPLEMENTED_VERIFIED | attributes مصفوفة، dimensionsCm null/سالب |
-| E1-06 | IMPLEMENTED_VERIFIED | مسودة تحتفظ بالسعر الحقيقي |
-| E1-07 | IMPLEMENTED_VERIFIED | تعديل الاسم لا يمسح options/variants/stock |
-| E1-08 | IMPLEMENTED_VERIFIED | legacy subcategory=null + omit يحافظ |
-| E1-09 | IMPLEMENTED_VERIFIED | عزل الشريك 404 |
-| E1-10 | IMPLEMENTED_VERIFIED | أعمدة migration موجودة؛ تراجع موثّق في العقد |
-| E1-11 | IMPLEMENTED_VERIFIED | فلتر subcategory قبل pagination |
-| E1-12 | IMPLEMENTED_VERIFIED | انحدار catalog-filters + smoke E1 |
+## الملاحظات الأربع
 
-## ما انتقل إلى E2
+| # | الملاحظة | الحالة | الدليل |
+|---|----------|--------|--------|
+| 1 | فقد الخصائص عند التعديل الجزئي | PASS | `mergeAttributesPatch` + A-* في `elegance-e1-closure.http.integration-tests.ts` |
+| 2 | اختلاف فردي/مسودات/منشور | PASS | draft_* taxonomy + approve merge + B/C tests |
+| 3 | ثغرات التحقق وnull | PASS | D-* + schema-tests |
+| 4 | نقص اختبارات/مبالغة تقرير | PASS | suite كاملة + build/boot + migration proof |
 
-انظر `docs/elegance-taxonomy-e2-acceptance.md` — material[] / carryStyle round-trip في البوابة.
+## أوامر التحقق
 
-## المرجع
+```bash
+cd mira-api
+export DATABASE_URL='postgresql://mira:mira_secret@localhost:5432/mira_db?schema=public'
+npx prisma migrate deploy
+npm run test:elegance-e1
+npm run build
+# boot dist + GET /api/v1/marketplace/taxonomy?lane=elegance
+node scripts/e1-migration-rollback-proof.mjs
+```
 
-- دراسة التصميم: RC2-CLOSE-FIX2  
-- أصل الفرع: `60d9134294f6db96bc0c55685066dc49301833ae` (`origin/main` عند بدء E1)
+## المتبقي خارج E1
+
+- E2 واجهة البوابة: استرجاع `material[]` وتعديل `carryStyle` بعد إعادة الفتح.
+- E4 كتابة الشنط/الأحذية.
+- مجوهرات/أطفال/خدمات/حجوزات.
+- نشر إنتاج / ترحيل بيانات إنتاج.

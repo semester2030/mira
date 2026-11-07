@@ -51,6 +51,15 @@ type OwnerRow = {
   draftVariantsJson?: Prisma.JsonValue | null;
   draftOptionsSet?: boolean;
   draftVariantsSet?: boolean;
+  draftCategory?: string | null;
+  draftSubcategory?: string | null;
+  draftProfileId?: string | null;
+  draftAttributesJson?: Prisma.JsonValue | null;
+  draftTaxonomySet?: boolean;
+  category?: string | null;
+  subcategory?: string | null;
+  profileId?: string | null;
+  attributesJson?: Prisma.JsonValue | null;
   optionsJson?: Prisma.JsonValue | null;
   variantsJson?: Prisma.JsonValue | null;
   availabilityJson?: Prisma.JsonValue | null;
@@ -578,6 +587,22 @@ export class CatalogContentService {
                   draftVariantsSet: false,
                 }
               : {}),
+            ...(row.draftTaxonomySet
+              ? {
+                  category: row.draftCategory ?? row.category ?? null,
+                  subcategory: row.draftSubcategory ?? null,
+                  profileId: row.draftProfileId ?? row.profileId ?? null,
+                  attributesJson:
+                    row.draftAttributesJson == null
+                      ? Prisma.DbNull
+                      : (row.draftAttributesJson as Prisma.InputJsonValue),
+                  draftCategory: null,
+                  draftSubcategory: null,
+                  draftProfileId: null,
+                  draftAttributesJson: Prisma.DbNull,
+                  draftTaxonomySet: false,
+                }
+              : {}),
           },
         })
         : await tx.service.updateMany({
@@ -677,6 +702,15 @@ export class CatalogContentService {
       publishedOptionsJson: kind === 'product' ? row.optionsJson ?? null : undefined,
       draftOptionsJson: kind === 'product' ? (row.draftOptionsSet ? row.draftOptionsJson ?? null : undefined) : undefined,
       draftOptionsCleared: kind === 'product' ? Boolean(row.draftOptionsSet && row.draftOptionsJson == null) : undefined,
+      publishedCategory: kind === 'product' ? row.category ?? null : undefined,
+      publishedSubcategory: kind === 'product' ? row.subcategory ?? null : undefined,
+      publishedProfileId: kind === 'product' ? row.profileId ?? null : undefined,
+      publishedAttributes: kind === 'product' ? row.attributesJson ?? null : undefined,
+      draftCategory: kind === 'product' && row.draftTaxonomySet ? row.draftCategory ?? null : undefined,
+      draftSubcategory: kind === 'product' && row.draftTaxonomySet ? row.draftSubcategory ?? null : undefined,
+      draftProfileId: kind === 'product' && row.draftTaxonomySet ? row.draftProfileId ?? null : undefined,
+      draftAttributes: kind === 'product' && row.draftTaxonomySet ? row.draftAttributesJson ?? null : undefined,
+      draftTaxonomySet: kind === 'product' ? Boolean(row.draftTaxonomySet) : undefined,
       publishedVariantsJson: kind === 'product' ? row.variantsJson ?? null : undefined,
       draftVariantsSet: kind === 'product' ? Boolean(row.draftVariantsSet) : undefined,
       draftVariantsJson: kind === 'product' ? (row.draftVariantsSet ? row.draftVariantsJson ?? null : undefined) : undefined,
