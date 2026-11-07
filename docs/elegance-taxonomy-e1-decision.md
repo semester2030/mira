@@ -11,7 +11,7 @@
 | الفرع | `mira/elegance-e1-taxonomy-foundation` |
 | base | `60d9134294f6db96bc0c55685066dc49301833ae` |
 | رأس E1 foundation | `1ce240187efb5a09329fd536998081f2cfd43365` |
-| إغلاق الملاحظات | (يُملأ بعد commit الإغلاق) |
+| إغلاق الملاحظات | `ee5959bb4ba43481cc2a25af0d9c3afa503f9511` |
 
 ## الملاحظات الأربع
 
