@@ -261,6 +261,38 @@ th, td {
 .options-preview { margin-top: 0.75rem; padding: 0.75rem; border: 1px dashed var(--border); border-radius: 12px; max-width: 100%; overflow-wrap: anywhere; }
 .field-error { color: var(--err); min-height: 1.2em; font-size: 0.85rem; overflow-wrap: anywhere; }
 .form-section { margin-top: 1rem; padding-top: 0.25rem; border-top: 1px solid var(--border); max-width: 100%; min-width: 0; }
+
+/* E2 — registry attribute fields (shared individual + group) */
+.mira-attr-fields { margin-top: 0.5rem; }
+.mira-attr-field { margin: 0.85rem 0; }
+.mira-attr-label { font-weight: 600; margin-bottom: 0.35rem; }
+.mira-attr-badge { font-weight: 400; font-size: 0.8rem; color: var(--muted); }
+.mira-attr-chip, .mira-attr-choice {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.25rem;
+  padding: 0.35rem 0.7rem;
+  border: 1.5px solid var(--border);
+  border-radius: 12px;
+  background: #fff;
+  cursor: pointer;
+}
+.mira-attr-chip.is-selected,
+.mira-attr-choice.is-selected,
+.mira-attr-chip:has(input:checked),
+.mira-attr-choice:has(input:checked) {
+  border-color: var(--primary);
+  background: rgba(232, 111, 169, 0.08);
+  font-weight: 600;
+}
+.mira-attr-chip input, .mira-attr-choice input { width: auto; margin: 0; }
+.mira-attr-number-row { display: flex; align-items: center; gap: 0.5rem; max-width: 16rem; }
+.mira-attr-unit { color: var(--muted); font-size: 0.9rem; }
+.mira-attr-clear { margin-top: 0.35rem; }
+.mira-attr-save-state[data-kind="dirty"] { color: #8a5a00; }
+.mira-attr-save-state[data-kind="saving"] { color: var(--muted); }
+.mira-attr-save-state[data-kind="saved"] { color: #2f6f4e; }
+.mira-attr-save-state[data-kind="error"] { color: var(--err); }
 #catalogForm,
 #serviceForm {
   max-width: 100%;

@@ -153,7 +153,7 @@ export class UpdateProductDto {
   @MaxLength(80)
   profileId?: string;
 
-  /** Object bag; when sent, replaces attributes_json entirely (E2 may refine merge). */
+  /** Object bag; when sent, merges into attributes_json by key (omit = keep; null key = clear). */
   @IsOptional()
   attributes?: Record<string, unknown>;
 

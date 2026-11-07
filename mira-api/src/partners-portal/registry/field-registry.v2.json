@@ -850,7 +850,7 @@
         "other"
       ],
       "filter": "material",
-      "currentStatus": "PROPOSED",
+      "currentStatus": "ATTRIBUTES_JSON",
       "draftRequired": false,
       "publishRequiredWhen": "optional",
       "source": "partner",
@@ -931,7 +931,7 @@
       "unit": "cm",
       "values": [],
       "filter": null,
-      "currentStatus": "PROPOSED",
+      "currentStatus": "ATTRIBUTES_JSON",
       "draftRequired": false,
       "publishRequiredWhen": "optional",
       "source": "partner",
@@ -962,7 +962,7 @@
         "closed"
       ],
       "filter": "cut",
-      "currentStatus": "PROPOSED",
+      "currentStatus": "ATTRIBUTES_JSON",
       "draftRequired": false,
       "publishRequiredWhen": "optional",
       "source": "partner",
@@ -999,7 +999,7 @@
         "wedding"
       ],
       "filter": "occasion",
-      "currentStatus": "PROPOSED",
+      "currentStatus": "ATTRIBUTES_JSON",
       "draftRequired": false,
       "publishRequiredWhen": "optional",
       "source": "partner",
@@ -5048,6 +5048,41 @@
       "unknownHandling": "reject invalid structure",
       "evidence": "P1 RC4 variants contract — no auto matrix",
       "valueLabels": {}
+    },
+    "carryStyle": {
+      "id": "carryStyle",
+      "labelAr": "طريقة الحمل",
+      "type": "enum",
+      "widget": "select",
+      "unit": null,
+      "values": [
+        "hand",
+        "shoulder",
+        "crossbody",
+        "backpack"
+      ],
+      "filter": "carryStyle",
+      "currentStatus": "ATTRIBUTES_JSON",
+      "draftRequired": false,
+      "publishRequiredWhen": "optional",
+      "source": "partner",
+      "editable": true,
+      "nullMeaning": "unspecified",
+      "default": null,
+      "min": null,
+      "max": null,
+      "dependsOn": null,
+      "storage": "attributes.carryStyle",
+      "publicWhen": "published and applicable",
+      "searchable": false,
+      "unknownHandling": "omit from facets; never infer false, zero or stock",
+      "evidence": "E2 component contract; bags writeEnabled deferred to E4",
+      "valueLabels": {
+        "hand": "يد",
+        "shoulder": "كتف",
+        "crossbody": "عرضي",
+        "backpack": "ظهر"
+      }
     }
   },
   "profiles": [
@@ -6458,6 +6493,48 @@
         "laser",
         "teeth"
       ]
+    },
+    {
+      "id": "product.bags",
+      "labelAr": "الحقائب (E4 كتابة)",
+      "kind": "product",
+      "legacyCategory": "bags",
+      "phase": "FUTURE_EXTENSION",
+      "enabledByDefault": false,
+      "partnerTypes": [
+        "brand"
+      ],
+      "fields": [
+        "nameAr",
+        "nameEn",
+        "category",
+        "subcategory",
+        "descriptionAr",
+        "priceMode",
+        "priceHalalas",
+        "media",
+        "coverMediaId",
+        "tags",
+        "purchaseMode",
+        "externalUrl",
+        "inventoryMode",
+        "stockQty",
+        "deliveryFeeHalalas",
+        "colors",
+        "sizes",
+        "optionsJson",
+        "variantsJson",
+        "material",
+        "carryStyle"
+      ],
+      "draftRequired": [],
+      "publishRules": "specs/03-JOURNEYS.md#publication",
+      "suggestedGroups": [
+        "colors",
+        "material",
+        "carryStyle"
+      ],
+      "schemaVersion": 2
     },
     {
       "id": "product.abaya",

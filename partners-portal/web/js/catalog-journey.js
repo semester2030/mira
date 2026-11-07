@@ -556,6 +556,57 @@
       ? PRODUCT_CATEGORIES
       : (type === 'clinic' ? CLINIC_CATEGORIES : (type === 'salon' ? SALON_CATEGORIES : SERVICE_CATEGORIES));
     const category = selectField(basics, 'التصنيف', 'category', seed.category || '', categories);
+    const ELEGANCE_SUBCATEGORY_OPTIONS = {
+      clothes: [
+        { value: 'clothes.wedding_dress', label: 'فساتين زفاف' },
+        { value: 'clothes.evening', label: 'سهرة' },
+        { value: 'clothes.abaya', label: 'عبايات' },
+      ],
+      bags: [
+        { value: 'bags', label: 'حقائب (كتابة مؤجلة E4)', disabled: true },
+      ],
+      shoes: [
+        { value: 'shoes', label: 'أحذية (كتابة مؤجلة E4)', disabled: true },
+      ],
+    };
+    const subcategorySeed =
+      seed.draftTaxonomySet && seed.draftSubcategory !== undefined
+        ? seed.draftSubcategory
+        : seed.subcategory != null
+          ? seed.subcategory
+          : '';
+    const subcategory = selectField(
+      basics,
+      'التصنيف الفرعي (أناقتك)',
+      'subcategory',
+      subcategorySeed || (seed.category === 'clothes' ? 'clothes.wedding_dress' : ''),
+      (ELEGANCE_SUBCATEGORY_OPTIONS[seed.category] || [])
+        .filter((o) => !o.disabled)
+        .map((o) => [o.value, o.label]),
+    );
+    function refreshSubcategoryOptions() {
+      const cat = category.value;
+      const opts = ELEGANCE_SUBCATEGORY_OPTIONS[cat] || [];
+      const wrap = subcategory.parentElement;
+      if (wrap) wrap.hidden = type !== 'brand' || !opts.length;
+      const prev = subcategory.value;
+      subcategory.innerHTML = '';
+      const empty = document.createElement('option');
+      empty.value = '';
+      empty.textContent = 'اختاري';
+      subcategory.appendChild(empty);
+      opts.forEach((o) => {
+        const opt = document.createElement('option');
+        opt.value = o.value;
+        opt.textContent = o.label;
+        if (o.disabled) opt.disabled = true;
+        subcategory.appendChild(opt);
+      });
+      if (opts.some((o) => o.value === prev && !o.disabled)) subcategory.value = prev;
+      else if (cat === 'clothes') subcategory.value = opts[0] && !opts[0].disabled ? opts[0].value : '';
+      else subcategory.value = '';
+    }
+    refreshSubcategoryOptions();
     const priceSeed =
       seed.priceHalalas == null || seed.priceHalalas === ''
         ? ''
@@ -568,6 +619,7 @@
     descriptionAr.addEventListener('input', bumpFormContentEpoch);
     price.addEventListener('input', bumpFormContentEpoch);
     category.addEventListener('change', bumpFormContentEpoch);
+    subcategory.addEventListener('change', bumpFormContentEpoch);
 
     const cosmetic = document.createElement('div');
     const skin = field(cosmetic, 'نوع البشرة (اختياري)', 'skinTypes', (seed.skinTypes || []).join ? (seed.skinTypes || []).join(', ') : (seed.skinTypes || ''), 'text');
@@ -1392,6 +1444,16 @@
             if (sizeG && Array.isArray(sizeG.values)) {
               values.sizes = sizeG.values.map((v) => v.id).filter((id) => REGISTRY_SIZE_IDS.has(id));
             }
+          }
+        }
+        if (subcategory && subcategory.value) values.subcategory = subcategory.value;
+        if (attrMount && typeof attrMount.getFlatValues === 'function') {
+          const flat = attrMount.getFlatValues();
+          Object.keys(flat).forEach((k) => {
+            values[k] = flat[k];
+          });
+          if (attrMount.hasDirty && attrMount.hasDirty()) {
+            values.attributes = attrMount.getAttributesPatch();
           }
         }
       }
@@ -2527,6 +2589,7 @@
     let lastCompatibleCategory = category.value;
     category.onchange = function () {
       cosmeticVisible();
+      refreshSubcategoryOptions();
       if (type === 'brand') {
         // Keep selected values/variants; category drop of saved groups is a conflict (RC6-01).
         // Do not clear optionsState — merchant must revert category or explicit-clear.
@@ -2547,7 +2610,11 @@
           lastCompatibleCategory = next;
         }
         paintOptions();
+        remountAttributeFields();
       } else paintServiceTemplates();
+    };
+    subcategory.onchange = function () {
+      remountAttributeFields();
     };
     cosmeticVisible();
 
@@ -2563,6 +2630,108 @@
     optionsPreview.className = 'options-preview';
     optionsSection.append(optionsActionBar, optionsBody, optionsPreview);
     form.insertBefore(optionsSection, mediaSection);
+
+    const attrSection = document.createElement('div');
+    attrSection.className = 'form-section';
+    attrSection.hidden = type !== 'brand';
+    attrSection.setAttribute('data-testid', 'registry-attribute-section');
+    text(attrSection, 'خصائص التصنيف', 'h3');
+    text(
+      attrSection,
+      'الحقول من سجل الحقول المعتمد. الخامات اختيار متعدد؛ القصة اختيار مفرد. لا تُعرض كمحفوظة إلا بمسار تخزين attributes.',
+    );
+    const attrSaveState = document.createElement('div');
+    attrSaveState.className = 'mira-attr-save-state';
+    attrSaveState.setAttribute('data-testid', 'attr-save-state');
+    const attrHost = document.createElement('div');
+    attrHost.setAttribute('data-testid', 'registry-attribute-host');
+    attrSection.append(attrSaveState, attrHost);
+    form.insertBefore(attrSection, mediaSection);
+
+    let attrMount = null;
+    let attrRegistryCache = null;
+    function resolveAttributesSeed() {
+      if (item && item.draftTaxonomySet) {
+        return item.draftAttributesJson && typeof item.draftAttributesJson === 'object'
+          ? item.draftAttributesJson
+          : {};
+      }
+      if (seed && seed.attributesJson && typeof seed.attributesJson === 'object') return seed.attributesJson;
+      if (item && item.attributesJson && typeof item.attributesJson === 'object') return item.attributesJson;
+      return {};
+    }
+    function profileIdForAttributes() {
+      const preferred =
+        (item && item.draftTaxonomySet ? item.draftProfileId : null) ||
+        (item && item.profileId) ||
+        (seed && seed.profileId) ||
+        null;
+      if (window.MiraEditorV2 && typeof MiraEditorV2.profileIdFor === 'function') {
+        // Prefer taxonomy subcategory mapping for abaya etc.
+        const sub = subcategory && subcategory.value;
+        if (sub === 'clothes.abaya') return 'product.abaya';
+        if (sub && String(sub).indexOf('bags') === 0) return 'product.bags';
+        if (sub && String(sub).indexOf('shoes') === 0) return 'product.shoes';
+        return MiraEditorV2.profileIdFor(
+          'product',
+          category.value,
+          (window.sessionPartner && window.sessionPartner.type) || 'brand',
+          preferred,
+        );
+      }
+      return preferred || 'product.clothes';
+    }
+    function setAttrSaveKind(kind, msg) {
+      attrSaveState.dataset.kind = kind || '';
+      attrSaveState.textContent = msg || '';
+    }
+    async function remountAttributeFields() {
+      if (type !== 'brand') {
+        attrSection.hidden = true;
+        return;
+      }
+      const cat = category.value;
+      const writeBlocked = cat === 'bags' || cat === 'shoes';
+      attrSection.hidden = false;
+      if (attrMount && attrMount.destroy) attrMount.destroy();
+      attrMount = null;
+      if (!window.MiraRegistryAttributeFields) {
+        attrHost.textContent = 'مكوّن الخصائص غير محمّل.';
+        return;
+      }
+      try {
+        if (!attrRegistryCache) {
+          attrRegistryCache =
+            (window.MiraEditorV2 && MiraEditorV2.state && MiraEditorV2.state.localRegistry) ||
+            (await fetch('js/field-registry.v2.json').then((r) => r.json()));
+        }
+        const profileId = profileIdForAttributes();
+        attrMount = window.MiraRegistryAttributeFields.mount(attrHost, {
+          registry: attrRegistryCache,
+          profileId: profileId,
+          initialAttributes: resolveAttributesSeed(),
+          includeComponentContract: writeBlocked || profileId === 'product.bags',
+          persistComponentContract: false,
+          readOnly: writeBlocked,
+          onChange: function () {
+            bumpFormContentEpoch();
+            setAttrSaveKind('dirty', 'تغييرات خصائص غير محفوظة');
+            scheduleEditorDraftAutosave();
+          },
+        });
+        if (writeBlocked) {
+          setAttrSaveKind(
+            'error',
+            'كتابة الحقائب/الأحذية مؤجلة إلى E4 — العرض للمكوّن فقط دون نشر.',
+          );
+        } else {
+          setAttrSaveKind('', '');
+        }
+      } catch (e) {
+        attrHost.textContent = 'تعذر تحميل خصائص السجل: ' + ((e && e.message) || String(e));
+      }
+    }
+    remountAttributeFields();
 
     const optionsSeedRow = (function () {
       if (editing && item) return item;
@@ -4365,6 +4534,13 @@
       if (type === 'brand') {
         payload.externalUrl = purchaseMode() === 'link' ? url.value.trim() : '';
         Object.assign(payload, commerce.value);
+        if (subcategory && subcategory.value) {
+          payload.subcategory = subcategory.value;
+        }
+        // Never send profileId unless user explicitly manages it — omit preserves cleared null (E1).
+        if (attrMount && typeof attrMount.getAttributesPatch === 'function' && attrMount.hasDirty()) {
+          payload.attributes = attrMount.getAttributesPatch();
+        }
         if (cosmeticVisible()) {
           payload.skinTypes = skin.value.split(',').map((part) => part.trim()).filter(Boolean);
           payload.stepAr = step.value.trim();
@@ -4639,6 +4815,16 @@
           return false;
         }
         basicsSaved = true;
+        if (type === 'brand' && attrMount && saved) {
+          const attrsLive =
+            saved.draftTaxonomySet && saved.draftAttributesJson != null
+              ? saved.draftAttributesJson
+              : saved.attributesJson;
+          if (typeof attrMount.setFromAttributes === 'function') {
+            attrMount.setFromAttributes(attrsLive || {});
+          }
+          setAttrSaveKind('saved', 'خصائص محفوظة');
+        }
         let inventoryConflict = false;
         let inventoryPartialOther = false;
         if (type === 'brand' && saved && saved.id) {

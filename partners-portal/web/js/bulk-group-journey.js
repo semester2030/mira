@@ -158,6 +158,19 @@
     function syncFieldDraftFromCard() {
       const card = currentCard();
       const vals = (card && card.values) || {};
+      const attrs =
+        vals.attributes && typeof vals.attributes === 'object'
+          ? vals.attributes
+          : vals.attributesJson && typeof vals.attributesJson === 'object'
+            ? vals.attributesJson
+            : vals.material != null || vals.cut != null
+              ? {
+                  material: vals.material,
+                  cut: vals.cut,
+                  occasion: vals.occasion,
+                  lengthCm: vals.lengthCm,
+                }
+              : {};
       state.fieldDraft = {
         nameAr: vals.nameAr || '',
         priceSar: vals.priceHalalas != null ? halalasToSar(vals.priceHalalas) : '',
@@ -165,10 +178,12 @@
         durationMin: vals.durationMin != null ? String(vals.durationMin) : '',
         deliveryMode: vals.deliveryMode || vals.fulfillmentMode || '',
         category: vals.category || '',
+        subcategory: vals.subcategory || '',
         stock: vals.stock != null ? String(vals.stock) : '',
         optionsJson: vals.optionsJson != null ? vals.optionsJson : null,
         variantsJson: Array.isArray(vals.variantsJson) ? vals.variantsJson : [],
         inventoryMode: vals.inventoryMode === 'variant' ? 'variant' : 'product',
+        attributes: attrs,
         coverageCityIds: Array.isArray(vals.coverageZones)
           ? vals.coverageZones
           : Array.isArray(vals.cityIds)
@@ -176,6 +191,7 @@
             : [],
       };
       state.commerceMount = null;
+      state.attrMount = null;
       state.file = null;
       if (state.previewUrl) {
         try {
@@ -225,6 +241,23 @@
           if (d.optionsJson != null) values.optionsJson = d.optionsJson;
           if (Array.isArray(d.variantsJson)) values.variantsJson = d.variantsJson;
           if (d.inventoryMode) values.inventoryMode = d.inventoryMode;
+        }
+        if (d.subcategory) values.subcategory = d.subcategory;
+        else if (state.batch && state.batch.profileId === 'product.clothes' && !values.subcategory) {
+          values.subcategory = 'clothes.wedding_dress';
+        } else if (state.batch && state.batch.profileId === 'product.abaya') {
+          values.subcategory = 'clothes.abaya';
+        }
+        // Flat registry field ids only (bulk rejects unknown keys like nested `attributes`).
+        if (state.attrMount && typeof state.attrMount.getFlatValues === 'function') {
+          const flat = state.attrMount.getFlatValues();
+          Object.keys(flat).forEach((k) => {
+            values[k] = flat[k];
+          });
+        } else if (d.attributes && typeof d.attributes === 'object') {
+          Object.keys(d.attributes).forEach((k) => {
+            if (d.attributes[k] !== undefined) values[k] = d.attributes[k];
+          });
         }
         if (d.stock !== '' && d.stock != null) {
           const n = Number(d.stock);
@@ -663,6 +696,32 @@
               state.fieldDraft.inventoryMode = payload.inventoryMode;
             },
           });
+          const attrHost = el('div', {
+            className: 'mira-attr-fields',
+            'data-testid': 'bulk-registry-attribute-host',
+          });
+          fields.appendChild(attrHost);
+          if (window.MiraRegistryAttributeFields && registry) {
+            const profileId = batch.profileId || 'product.clothes';
+            if (!d.subcategory) {
+              state.fieldDraft.subcategory =
+                profileId === 'product.abaya'
+                  ? 'clothes.abaya'
+                  : category === 'clothes'
+                    ? 'clothes.wedding_dress'
+                    : d.subcategory || '';
+            }
+            state.attrMount = window.MiraRegistryAttributeFields.mount(attrHost, {
+              registry: registry,
+              profileId: profileId,
+              initialAttributes: d.attributes || {},
+              includeComponentContract: profileId === 'product.bags',
+              persistComponentContract: false,
+              onChange: (payload) => {
+                state.fieldDraft.attributes = Object.assign({}, payload.values || {});
+              },
+            });
+          }
         } catch (e) {
           commerceHost.appendChild(
             el('p', {

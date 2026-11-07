@@ -1,0 +1,64 @@
+<!DOCTYPE html>
+<html lang="ar" dir="rtl">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>E2 Attribute Fields Harness</title>
+  <link rel="stylesheet" href="css/site.css" />
+  <style>
+    body { max-width: 720px; margin: 1rem auto; padding: 1rem; font-family: "Segoe UI", Tahoma, sans-serif; }
+    h1 { font-size: 1.4rem; }
+    .panel { border: 1px solid #ddd; border-radius: 12px; padding: 1rem; margin: 1rem 0; }
+  </style>
+</head>
+<body>
+  <h1>اختبار مكوّن خصائص السجل — E2</h1>
+  <p class="lead">نفس المكوّن المستخدم في الفردي والمجموعات.</p>
+  <div class="panel">
+    <h2>product.clothes — خامة وقصة</h2>
+    <div id="clothes-host" data-testid="harness-clothes"></div>
+  </div>
+  <div class="panel">
+    <h2>product.bags — carryStyle (مكوّن فقط / E4 حفظ)</h2>
+    <div id="bags-host" data-testid="harness-bags"></div>
+  </div>
+  <pre id="out" data-testid="harness-out"></pre>
+  <script src="js/registry-attribute-fields.js"></script>
+  <script>
+    async function main() {
+      const registry = await fetch('js/field-registry.v2.json').then((r) => r.json());
+      const clothes = MiraRegistryAttributeFields.mount(document.getElementById('clothes-host'), {
+        registry,
+        profileId: 'product.clothes',
+        initialAttributes: { material: ['silk'], cut: 'hand' },
+        onChange: (s) => {
+          document.getElementById('out').textContent = JSON.stringify(s, null, 2);
+        },
+      });
+      // Fix seed cut to regular then change to fitted for contract
+      clothes.setFromAttributes({ material: ['silk', 'cotton'], cut: 'regular' });
+      const bags = MiraRegistryAttributeFields.mount(document.getElementById('bags-host'), {
+        registry,
+        profileId: 'product.bags',
+        includeComponentContract: true,
+        persistComponentContract: false,
+        initialAttributes: { carryStyle: 'hand' },
+        onChange: (s) => {
+          document.getElementById('out').textContent = JSON.stringify(s, null, 2);
+        },
+      });
+      window.__e2Harness = { clothes, bags, MiraRegistryAttributeFields };
+      // Simulate single-select change in memory for carryStyle contract
+      const next = MiraRegistryAttributeFields.applySingleSelect('hand', 'shoulder');
+      document.getElementById('out').textContent = JSON.stringify({
+        clothesDefs: clothes.getDefs().map((d) => d.id),
+        bagsDefs: bags.getDefs().map((d) => d.id),
+        carryStyleContract: next,
+        material: clothes.getValues().material,
+        cut: clothes.getValues().cut,
+      }, null, 2);
+    }
+    main();
+  </script>
+</body>
+</html>
