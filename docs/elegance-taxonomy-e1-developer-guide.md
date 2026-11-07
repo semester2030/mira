@@ -67,7 +67,16 @@
 export DATABASE_URL='postgresql://mira:mira_secret@localhost:5432/mira_db'
 npm run test:elegance-e1
 npm run test:elegance-e1-migration-proof
+# بعد بناء الإصدار السابق على PREV_APP_DIST:
+npm run test:elegance-e1-previous-app-rollback
 npm run build   # يجب وجود dist/marketplace/taxonomy/elegance-taxonomy.v1.json
 ```
 
-تراجع migration المفضّل: إعادة نشر بناء سابق مع إبقاء الأعمدة الإضافية. لا تَعُدّ DROP COLUMN رجوعًا آمنًا بعد اعتماد بيانات عليها.
+### غياب / مسح profile والتحقق
+
+- `profileId` المخزَّن قد يكون `null` بعد مسح صريح.
+- سياق التحقق يُستنتج من `subcategory` عند الحاجة دون إعادة كتابة الملف الممسوح.
+- إضافة/تعديل attributes بلا سياق موثوق → `ATTRIBUTE_CONTEXT_REQUIRED` (أو أخطاء النوع/المجهول عند توفر السياق).
+- المسح بمفتاح `null` مسموح؛ الخصائص القديمة غير المعدَّلة تُحفظ.
+
+تراجع migration المفضّل: إعادة نشر بناء سابق (`60d9134…`) مع إبقاء الأعمدة الإضافية — مثبَّت عبر `e1-previous-app-rollback-proof.mjs`. لا تَعُدّ DROP COLUMN رجوعًا آمنًا بعد اعتماد بيانات عليها.

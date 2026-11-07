@@ -76,8 +76,10 @@
     "draftTaxonomyBaseline": "when draftTaxonomySet=true use draft_* including null clears; never coalesce null back to published",
     "validationOrder": "resolve final taxonomy → load final profile attribute defs → merge attributes → validate",
     "unknownAttributeKeys": "reject newly patched unknown keys; preserve untouched legacy unknown keys",
+    "nullOrMissingProfile": "does not disable attribute validation; trusted validation context may come from subcategory while stored profileId stays null after explicit clear; otherwise ATTRIBUTE_CONTEXT_REQUIRED",
     "subcategoryNull": "explicit clear allowed (legacy); stored as draft null when published",
-    "catalogCursor": "subcategory is part of filter fingerprint; filter change with old cursor → 400"
+    "catalogCursor": "subcategory is part of filter fingerprint; filter change with old cursor → 400",
+    "editorDraftStaleRevision": "409 DRAFT_REVISION_CONFLICT"
   },
   "registry": {
     "subcategoryField": "existing.subcategory — present on product.clothes and product.abaya profiles for editor drafts"

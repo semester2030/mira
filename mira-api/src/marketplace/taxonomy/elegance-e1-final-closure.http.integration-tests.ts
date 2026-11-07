@@ -312,6 +312,136 @@ async function main() {
       record('V05', 'تعارض تصنيف/ملف', '400 تعارض صريح', `${bad.status} ${codes.join(',')}`, ok);
     }
 
+    // —— V-NULL: explicit null / missing profile must not disable attribute validation ——
+    {
+      const beforeCount = await prisma.product.count({ where: { partnerId: brand.id } });
+      const badNull = await readJson(
+        await fetch(`${root}/api/v1/partners-portal/products`, {
+          method: 'POST',
+          headers: auth(tokenBrand),
+          body: JSON.stringify({
+            nameAr: `VNULL ${suffix}`,
+            priceHalalas: 1000,
+            category: 'clothes',
+            subcategory: 'clothes.abaya',
+            profileId: null,
+            attributes: { material: 123, notAllowed: true },
+            externalUrl: 'https://example.test/vnull',
+          }),
+        }),
+      );
+      const codesNull = codesOf(badNull.json);
+      const afterCount = await prisma.product.count({ where: { partnerId: brand.id } });
+      const okNull =
+        badNull.status === 400 &&
+        afterCount === beforeCount &&
+        (codesNull.includes('ATTRIBUTE_TYPE') || codesNull.includes('ATTRIBUTE_UNKNOWN'));
+      record(
+        'V-NULL-PROFILE',
+        'profileId=null مع subcategory وattributes خاطئة',
+        '400 تحقق + بلا كتابة جزئية',
+        `${badNull.status} ${codesNull.join(',')} countDelta=${afterCount - beforeCount}`,
+        okNull,
+      );
+
+      const beforeCount2 = await prisma.product.count({ where: { partnerId: brand.id } });
+      const badMissing = await readJson(
+        await fetch(`${root}/api/v1/partners-portal/products`, {
+          method: 'POST',
+          headers: auth(tokenBrand),
+          body: JSON.stringify({
+            nameAr: `VNOPROF ${suffix}`,
+            priceHalalas: 1000,
+            category: 'clothes',
+            attributes: { material: 123, notAllowed: true },
+            externalUrl: 'https://example.test/vnoprofile',
+          }),
+        }),
+      );
+      const codesMissing = codesOf(badMissing.json);
+      const afterCount2 = await prisma.product.count({ where: { partnerId: brand.id } });
+      const okMissing =
+        badMissing.status === 400 &&
+        afterCount2 === beforeCount2 &&
+        (codesMissing.includes('ATTRIBUTE_CONTEXT_REQUIRED') ||
+          codesMissing.includes('ATTRIBUTE_TYPE') ||
+          codesMissing.includes('ATTRIBUTE_UNKNOWN'));
+      record(
+        'V-NO-CONTEXT',
+        'غياب profile وsubcategory مع attributes جديدة',
+        '400 بلا كتابة',
+        `${badMissing.status} ${codesMissing.join(',')} countDelta=${afterCount2 - beforeCount2}`,
+        okMissing,
+      );
+
+      const existing = await prisma.product.create({
+        data: {
+          partnerId: brand.id,
+          nameAr: `VCLR ${suffix}`,
+          nameEn: `vclr-${suffix}`,
+          priceHalalas: 1200,
+          externalUrl: 'https://example.test/vclr',
+          category: 'clothes',
+          subcategory: 'clothes.abaya',
+          profileId: 'product.abaya',
+          attributesJson: { material: ['silk'], legacyUnknown: 'keep' },
+          contentStatus: 'draft',
+          reviewStatus: 'draft',
+          active: false,
+          concernTags: [],
+          skinTypes: [],
+        },
+      });
+      createdIds.push(existing.id);
+      const badClear = await readJson(
+        await fetch(`${root}/api/v1/partners-portal/products/${existing.id}`, {
+          method: 'PATCH',
+          headers: auth(tokenBrand),
+          body: JSON.stringify({ profileId: null, attributes: { material: 123 } }),
+        }),
+      );
+      const codesClear = codesOf(badClear.json);
+      const rowClear = await prisma.product.findUniqueOrThrow({ where: { id: existing.id } });
+      const okClear =
+        badClear.status === 400 &&
+        codesClear.includes('ATTRIBUTE_TYPE') &&
+        rowClear.profileId === 'product.abaya' &&
+        JSON.stringify(rowClear.attributesJson) === JSON.stringify({ material: ['silk'], legacyUnknown: 'keep' });
+      record(
+        'V-CLEAR-PROFILE-BAD-ATTR',
+        'مسح profile مع attributes غير صحيحة في نفس الطلب',
+        '400 وبقاء البيانات السابقة',
+        `${badClear.status} ${codesClear.join(',')} profile=${rowClear.profileId}`,
+        !!okClear,
+      );
+
+      const okInfer = await readJson(
+        await fetch(`${root}/api/v1/partners-portal/products`, {
+          method: 'POST',
+          headers: auth(tokenBrand),
+          body: JSON.stringify({
+            nameAr: `VOK ${suffix}`,
+            priceHalalas: 1300,
+            category: 'clothes',
+            subcategory: 'clothes.abaya',
+            attributes: { material: ['silk'] },
+            externalUrl: 'https://example.test/vok',
+          }),
+        }),
+      );
+      assert.ok(okInfer.status === 200 || okInfer.status === 201, okInfer.text);
+      createdIds.push(okInfer.json.id);
+      const rowOk = await prisma.product.findUniqueOrThrow({ where: { id: okInfer.json.id } });
+      record(
+        'V-INFER-OK',
+        'attributes صحيحة مع استنتاج الملف من subcategory',
+        'نجاح وحفظ material',
+        `profile=${rowOk.profileId} attrs=${JSON.stringify(rowOk.attributesJson)}`,
+        rowOk.profileId === 'product.abaya' &&
+          JSON.stringify(rowOk.attributesJson) === JSON.stringify({ material: ['silk'] }),
+      );
+    }
+
     // —— N01 ——
     {
       const pub = await prisma.product.create({
@@ -701,9 +831,9 @@ async function main() {
       record('G02', 'إعادة محاولة تحويل المجموعة', 'لا تكرار وفق idempotency', `count=${count}`, count === 2);
     }
 
-    // —— C01 concurrency / stale draft ——
+    // —— C01 stale revision (isolated) ——
     {
-      const draftId = `e1f-c01-${suffix}`;
+      const draftId = `e1f-c01-stale-${suffix}`;
       const put = await readJson(
         await fetch(`${root}/api/v1/partners-portal/editor-drafts/${draftId}`, {
           method: 'PUT',
@@ -713,11 +843,19 @@ async function main() {
             kind: 'product',
             profileId: 'product.clothes',
             schemaVersion: 2,
-            values: { nameAr: `C01 ${suffix}`, category: 'clothes', priceHalalas: 4000, externalUrl: 'https://example.test/c01' },
+            values: {
+              nameAr: `C01 ${suffix}`,
+              category: 'clothes',
+              priceHalalas: 4000,
+              externalUrl: 'https://example.test/c01',
+            },
           }),
         }),
       );
       assert.ok(put.status === 200 || put.status === 201, put.text);
+      const beforeStale = await prisma.partnerEditorDraft.findFirst({
+        where: { partnerId: brand.id, clientDraftId: draftId },
+      });
       const stale = await readJson(
         await fetch(`${root}/api/v1/partners-portal/editor-drafts/${draftId}`, {
           method: 'PUT',
@@ -727,12 +865,34 @@ async function main() {
             kind: 'product',
             profileId: 'product.clothes',
             schemaVersion: 2,
-            values: { nameAr: `C01 stale ${suffix}`, category: 'clothes', priceHalalas: 4000, externalUrl: 'https://example.test/c01' },
+            values: {
+              nameAr: `C01 stale ${suffix}`,
+              category: 'clothes',
+              priceHalalas: 4000,
+              externalUrl: 'https://example.test/c01',
+            },
           }),
         }),
       );
-      const staleOk = stale.status === 409 || stale.status === 400 || stale.status === 422;
-      // Concurrent patches on draft product: both apply under FOR UPDATE without silent loss of cleared attrs.
+      // Contract: editor draft revision conflict is HTTP 409 DRAFT_REVISION_CONFLICT.
+      assert.equal(stale.status, 409, stale.text);
+      assert.equal(stale.json?.code, 'DRAFT_REVISION_CONFLICT');
+      const afterStale = await prisma.partnerEditorDraft.findFirst({
+        where: { partnerId: brand.id, clientDraftId: draftId },
+      });
+      assert.equal(afterStale?.revision, beforeStale?.revision);
+      assert.deepEqual(afterStale?.valuesJson, beforeStale?.valuesJson);
+      record(
+        'C01-STALE',
+        'مسودة بإصدار قديم',
+        '409 DRAFT_REVISION_CONFLICT دون كتابة',
+        `status=${stale.status} code=${stale.json?.code} rev=${afterStale?.revision}`,
+        true,
+      );
+    }
+
+    // —— C01 concurrency: real parallel PATCH under row lock ——
+    {
       const prod = await prisma.product.create({
         data: {
           partnerId: brand.id,
@@ -743,7 +903,7 @@ async function main() {
           category: 'clothes',
           subcategory: 'clothes.abaya',
           profileId: 'product.abaya',
-          attributesJson: { material: ['silk'], lengthCm: 140 },
+          attributesJson: { material: ['silk'], lengthCm: 140, cut: 'regular' },
           contentStatus: 'draft',
           reviewStatus: 'draft',
           active: false,
@@ -752,55 +912,33 @@ async function main() {
         },
       });
       createdIds.push(prod.id);
-      const [p1, p2] = await Promise.all([
-        readJson(
-          await fetch(`${root}/api/v1/partners-portal/products/${prod.id}`, {
-            method: 'PATCH',
-            headers: auth(tokenBrand),
-            body: JSON.stringify({ attributes: { material: null } }),
-          }),
-        ),
-        readJson(
-          await fetch(`${root}/api/v1/partners-portal/products/${prod.id}`, {
-            method: 'PATCH',
-            headers: auth(tokenBrand),
-            body: JSON.stringify({ attributes: { lengthCm: 150 } }),
-          }),
-        ),
-      ]);
-      assert.ok(p1.status === 200 && p2.status === 200, `${p1.text} | ${p2.text}`);
+      // Start both fetches without awaiting either before Promise.all — true overlap.
+      const clearP = fetch(`${root}/api/v1/partners-portal/products/${prod.id}`, {
+        method: 'PATCH',
+        headers: auth(tokenBrand),
+        body: JSON.stringify({ attributes: { material: null } }),
+      }).then(readJson);
+      const lenP = fetch(`${root}/api/v1/partners-portal/products/${prod.id}`, {
+        method: 'PATCH',
+        headers: auth(tokenBrand),
+        body: JSON.stringify({ attributes: { lengthCm: 150 } }),
+      }).then(readJson);
+      const [p1, p2] = await Promise.all([clearP, lenP]);
+      assert.equal(p1.status, 200, p1.text);
+      assert.equal(p2.status, 200, p2.text);
+      // Assert immediately — no corrective PATCH afterward.
       const after = await prisma.product.findUniqueOrThrow({ where: { id: prod.id } });
       const attrs = (after.attributesJson || {}) as Record<string, unknown>;
-      // Under serialization one wins last; must not invent silk back if material was cleared in a winning write,
-      // and lengthCm must be present if that patch won. Decisive: both HTTP succeeded and final bag is a
-      // coherent merge of the two patches (no partial write / 5xx), and material is either absent or silk
-      // only if clear lost the race — never a corrupted type.
-      const coherent =
-        (attrs.material === undefined || JSON.stringify(attrs.material) === JSON.stringify(['silk'])) &&
-        (attrs.lengthCm === undefined || attrs.lengthCm === 140 || attrs.lengthCm === 150) &&
-        !(attrs.material === undefined && attrs.lengthCm === undefined);
-      // Stronger: after both patches sequentially re-applied, clear+set must stick.
-      const clearThenSet = await readJson(
-        await fetch(`${root}/api/v1/partners-portal/products/${prod.id}`, {
-          method: 'PATCH',
-          headers: auth(tokenBrand),
-          body: JSON.stringify({ attributes: { material: null, lengthCm: 151 } }),
-        }),
-      );
-      assert.equal(clearThenSet.status, 200, clearThenSet.text);
-      const finalRow = await prisma.product.findUniqueOrThrow({ where: { id: prod.id } });
-      const finalAttrs = finalRow.attributesJson as Record<string, unknown>;
-      const finalOk =
-        staleOk &&
-        coherent &&
-        finalAttrs.lengthCm === 151 &&
-        !Object.prototype.hasOwnProperty.call(finalAttrs, 'material');
+      const ok =
+        !Object.prototype.hasOwnProperty.call(attrs, 'material') &&
+        attrs.lengthCm === 150 &&
+        attrs.cut === 'regular';
       record(
         'C01',
-        'مسودة قديمة + تعديلات متزامنة',
-        'تعارض صريح للمسودة القديمة ودمج/تسلسل صحيح بدون فقد صامت للمسح',
-        `stale=${stale.status} final=${JSON.stringify(finalAttrs)}`,
-        !!finalOk,
+        'تعديلان متوازيان: مسح material وتعديل lengthCm',
+        'كلاهما 200؛ material محذوفة وlengthCm=150 وcut يبقى',
+        `p1=${p1.status} p2=${p2.status} attrs=${JSON.stringify(attrs)}`,
+        ok,
       );
     }
 

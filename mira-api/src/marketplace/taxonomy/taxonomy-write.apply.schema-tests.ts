@@ -84,4 +84,69 @@ const ctx = {
   pass('N01-cleared-values-stay-cleared');
 }
 
+{
+  const r = applyTaxonomyPatch(
+    ctx,
+    { category: null, subcategory: null, profileId: null, attributesJson: null },
+    {
+      category: 'clothes',
+      subcategory: 'clothes.abaya',
+      profileId: null,
+      attributes: { material: 123, notAllowed: true },
+    },
+  );
+  assert.equal(r.next.profileId, null, 'explicit null profile stays stored');
+  assert.ok(r.errors.some((e) => e.fieldId === 'material' && e.code === 'ATTRIBUTE_TYPE'), JSON.stringify(r.errors));
+  assert.ok(r.errors.some((e) => e.fieldId === 'notAllowed' && e.code === 'ATTRIBUTE_UNKNOWN'), JSON.stringify(r.errors));
+  pass('V-null-profile-still-validates-via-subcategory');
+}
+
+{
+  const r = applyTaxonomyPatch(
+    ctx,
+    { category: null, subcategory: null, profileId: null, attributesJson: null },
+    {
+      category: 'clothes',
+      attributes: { material: 123, notAllowed: true },
+    },
+  );
+  assert.ok(
+    r.errors.some((e) => e.code === 'ATTRIBUTE_CONTEXT_REQUIRED' || e.code === 'ATTRIBUTE_TYPE' || e.code === 'ATTRIBUTE_UNKNOWN'),
+    JSON.stringify(r.errors),
+  );
+  pass('V-no-profile-no-subcategory-rejects-bad-attrs');
+}
+
+{
+  const r = applyTaxonomyPatch(
+    ctx,
+    {
+      category: 'clothes',
+      subcategory: 'clothes.abaya',
+      profileId: 'product.abaya',
+      attributesJson: { material: ['silk'], legacyUnknown: 'keep' },
+    },
+    { profileId: null, attributes: { material: 123 } },
+  );
+  assert.equal(r.next.profileId, null);
+  assert.ok(r.errors.some((e) => e.fieldId === 'material' && e.code === 'ATTRIBUTE_TYPE'), JSON.stringify(r.errors));
+  pass('V-clear-profile-with-bad-attrs-rejects');
+}
+
+{
+  const r = applyTaxonomyPatch(
+    ctx,
+    {
+      category: 'clothes',
+      subcategory: 'clothes.abaya',
+      profileId: 'product.abaya',
+      attributesJson: { material: ['silk'], legacyUnknown: 'keep' },
+    },
+    { attributes: { material: null } },
+  );
+  assert.equal(r.errors.length, 0, JSON.stringify(r.errors));
+  assert.deepEqual(r.next.attributesJson, { legacyUnknown: 'keep' });
+  pass('V-explicit-clear-keeps-untouched-legacy');
+}
+
 console.log('taxonomy-write.apply.schema-tests: PASS');

@@ -102,8 +102,25 @@ function isPlainObject(v: unknown): v is Record<string, unknown> {
   return !!v && typeof v === 'object' && !Array.isArray(v);
 }
 
+/** True when the patch adds/changes attribute values (not only clears or dimensionsCm). */
+function attributePatchRequiresTrustedContext(
+  patchAttributes: unknown,
+  patchedAttrKeys: Set<string>,
+): boolean {
+  if (!isPlainObject(patchAttributes)) return patchAttributes != null;
+  for (const key of patchedAttrKeys) {
+    if (key === 'dimensionsCm') continue;
+    if (patchAttributes[key] === null) continue; // explicit clear of a key
+    return true;
+  }
+  return false;
+}
+
 /**
  * Resolve next taxonomy state from current + patch, validate merged result against FINAL profile defs.
+ *
+ * Stored profileId may be null after an explicit clear. Attribute validation still uses a
+ * trusted context derived from subcategory when available — missing defs never mean "accept all".
  */
 export function applyTaxonomyPatch(
   ctx: TaxonomyWriteContext,
@@ -120,7 +137,10 @@ export function applyTaxonomyPatch(
 
   let nextCategory = categoryIn !== undefined ? categoryIn : current.category;
   let nextSubcategory = subcategoryIn !== undefined ? subcategoryIn : current.subcategory;
+  // Stored profile — respects explicit null clear; do not silently restore.
   let nextProfileId = profileIn !== undefined ? profileIn : current.profileId;
+  // Validation context may differ from stored when profile was cleared but subcategory remains.
+  let validationProfileId: string | null = nextProfileId;
 
   // Resolve canonical category/profile from subcategory when not explicitly conflicting.
   if (nextSubcategory) {
@@ -130,13 +150,22 @@ export function applyTaxonomyPatch(
         nextCategory = resolved.category;
       }
       if (profileIn === undefined) {
-        // Always prefer taxonomy-resolved profile when client omitted profileId,
-        // including when current.profileId was null OR when subcategory changed.
+        // Omitted profileId: infer from taxonomy when empty or subcategory changed.
         if (subcategoryIn !== undefined || nextProfileId == null || nextProfileId === '') {
           nextProfileId = resolved.profileId;
+          validationProfileId = resolved.profileId;
+        } else {
+          validationProfileId = nextProfileId;
         }
+      } else if (profileIn == null || profileIn === '') {
+        // Explicit clear stays stored as null; still validate attributes against taxonomy profile.
+        validationProfileId = resolved.profileId;
+      } else {
+        validationProfileId = nextProfileId;
       }
     }
+  } else if (profileIn === null) {
+    validationProfileId = null;
   }
 
   let nextAttributes = current.attributesJson;
@@ -153,11 +182,29 @@ export function applyTaxonomyPatch(
     }
   }
 
-  // Load field defs for the FINAL profile only (after taxonomy resolution).
+  const needsTrustedContext = attributePatchRequiresTrustedContext(patch.attributes, patchedAttrKeys);
+  if (needsTrustedContext && (validationProfileId == null || validationProfileId === '')) {
+    errors.push({
+      fieldId: 'attributes',
+      code: 'ATTRIBUTE_CONTEXT_REQUIRED',
+      messageAr: 'لا يمكن التحقق من الخصائص دون تصنيف فرعي أو ملف حقول موثوق',
+    });
+  }
+
+  // Load field defs for the TRUSTED validation profile (may differ from stored null after clear).
   const attributeFieldDefs =
-    ctx.resolveAttributeFieldDefs?.(nextProfileId) ??
-    (nextProfileId ? ctx.attributeFieldDefs : undefined) ??
-    undefined;
+    validationProfileId
+      ? ctx.resolveAttributeFieldDefs?.(validationProfileId) ??
+        (ctx.attributeFieldDefs ?? undefined)
+      : undefined;
+
+  if (needsTrustedContext && validationProfileId && !attributeFieldDefs) {
+    errors.push({
+      fieldId: 'attributes',
+      code: 'ATTRIBUTE_CONTEXT_REQUIRED',
+      messageAr: 'تعذر تحميل تعريفات خصائص الملف للتحقق',
+    });
+  }
 
   const validateInput: ProductTaxonomyInput = {
     category: nextCategory,
@@ -201,11 +248,12 @@ export function applyTaxonomyPatch(
             messageAr: `خاصية غير مسموحة لهذا الملف: ${key}`,
           });
         }
-      } else if (nextProfileId && patchedAttrKeys.size > 0) {
-        // Profile known but no attribute defs resolved — still reject typed unknowns via PROFILE path.
-        // If profile has no attribute fields, any patched non-dimensions key is unknown.
+      } else if (needsTrustedContext && patchedAttrKeys.size > 0) {
+        // No defs available for a write that requires context — reject non-clear keys.
         for (const key of patchedAttrKeys) {
           if (key === 'dimensionsCm') continue;
+          const patchObj = isPlainObject(patch.attributes) ? patch.attributes : {};
+          if (patchObj[key] === null) continue;
           errors.push({
             fieldId: key,
             code: 'ATTRIBUTE_UNKNOWN',
