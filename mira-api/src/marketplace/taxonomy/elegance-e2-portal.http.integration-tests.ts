@@ -178,20 +178,38 @@ async function main() {
       );
       assert.ok(created.status === 200 || created.status === 201, created.text);
       createdIds.push(created.json.id);
-      const got = await readJson(
-        await fetch(`${root}/api/v1/partners-portal/products/${created.json.id}`, {
+      // Portal read path: preview (not GET /products/:id which is 404).
+      const preview = await readJson(
+        await fetch(`${root}/api/v1/partners-portal/products/${created.json.id}/preview`, {
           headers: auth(tokenBrand),
         }),
       );
-      // Some portals list via dashboard — also read DB
+      assert.equal(preview.status, 200, `portal preview required: ${preview.text}`);
+      assert.equal(preview.json.id, created.json.id);
+      const dash = await readJson(
+        await fetch(`${root}/api/v1/partners-portal/me`, { headers: auth(tokenBrand) }),
+      );
+      assert.equal(dash.status, 200, dash.text);
+      const listed = (dash.json?.catalog?.products || []).find((p: any) => p.id === created.json.id);
+      assert.ok(listed, 'product must appear in dashboard catalog list');
       const row = await prisma.product.findUniqueOrThrow({ where: { id: created.json.id } });
-      const attrs = (got.status === 200 && got.json?.attributesJson) || row.attributesJson;
-      const ok = JSON.stringify(attrs) === JSON.stringify({ material: ['silk', 'cotton'] });
+      // Preview contract uses publishedAttributes / draftAttributes (portal hydrate).
+      const attrsPreview =
+        preview.json.draftTaxonomySet && preview.json.draftAttributes != null
+          ? preview.json.draftAttributes
+          : preview.json.publishedAttributes;
+      const attrsList = listed.attributesJson;
+      const ok =
+        preview.status === 200 &&
+        !!listed &&
+        JSON.stringify(attrsPreview) === JSON.stringify({ material: ['silk', 'cotton'] }) &&
+        JSON.stringify(attrsList) === JSON.stringify({ material: ['silk', 'cotton'] }) &&
+        JSON.stringify(row.attributesJson) === JSON.stringify({ material: ['silk', 'cotton'] });
       record(
         'A02',
-        'حفظ خامتين واستعادة بعد قراءة جديدة',
-        'material=[silk,cotton]',
-        `attrs=${JSON.stringify(attrs)} getStatus=${got.status}`,
+        'حفظ خامتين واستعادة عبر مسار قراءة البوابة (preview+dashboard) وDB',
+        'preview+list+db material=[silk,cotton]',
+        `preview=${preview.status} listed=${!!listed} attrsPreview=${JSON.stringify(attrsPreview)}`,
         ok,
       );
 
@@ -217,16 +235,27 @@ async function main() {
         ok3,
       );
 
-      // A05 — colors/sizes ids preserved (from create)
-      const opts = after.optionsJson as any;
+      // A05 — colors/sizes ids via portal preview read-back (not DB-only)
+      const previewOpts = await readJson(
+        await fetch(`${root}/api/v1/partners-portal/products/${created.json.id}/preview`, {
+          headers: auth(tokenBrand),
+        }),
+      );
+      assert.equal(previewOpts.status, 200, previewOpts.text);
+      const opts = (previewOpts.json.publishedOptionsJson ||
+        previewOpts.json.draftOptionsJson ||
+        after.optionsJson) as any;
       const colorIds = (opts || []).find((g: any) => g.id === 'color')?.values?.map((v: any) => v.id) || [];
       const sizeIds = (opts || []).find((g: any) => g.id === 'size')?.values?.map((v: any) => v.id) || [];
       record(
         'A05',
-        'ألوان ومقاسات بمعرفاتها',
-        'black + M,L',
-        `colors=${colorIds.join(',')} sizes=${sizeIds.join(',')}`,
-        colorIds.includes('black') && sizeIds.includes('M') && sizeIds.includes('L'),
+        'ألوان ومقاسات بمعرفاتها عبر preview',
+        'black + M,L on portal read path',
+        `colors=${colorIds.join(',')} sizes=${sizeIds.join(',')} preview=${previewOpts.status}`,
+        previewOpts.status === 200 &&
+          colorIds.includes('black') &&
+          sizeIds.includes('M') &&
+          sizeIds.includes('L'),
       );
 
       // Drop one material intentionally
@@ -431,10 +460,9 @@ async function main() {
       );
     }
 
-    // A09 — failed save then retry does not duplicate (create once)
+    // A09 — create once, failed PATCH retry updates same id (no duplicate)
     {
-      const countBefore = await prisma.product.count({ where: { partnerId: brand.id } });
-      const bad = await readJson(
+      const created = await readJson(
         await fetch(`${root}/api/v1/partners-portal/products`, {
           method: 'POST',
           headers: auth(tokenBrand),
@@ -442,43 +470,159 @@ async function main() {
             nameAr: `E2-A09 ${suffix}`,
             priceHalalas: 1000,
             category: 'clothes',
-            subcategory: 'clothes.wedding_dress',
-            attributes: { material: 999 },
-            externalUrl: 'https://example.test/e2-a09',
-          }),
-        }),
-      );
-      assert.equal(bad.status, 400);
-      const okCreate = await readJson(
-        await fetch(`${root}/api/v1/partners-portal/products`, {
-          method: 'POST',
-          headers: auth(tokenBrand),
-          body: JSON.stringify({
-            nameAr: `E2-A09 ${suffix}`,
-            priceHalalas: 1000,
-            category: 'clothes',
-            subcategory: 'clothes.wedding_dress',
+            subcategory: 'clothes.evening',
             attributes: { material: ['silk'] },
             externalUrl: 'https://example.test/e2-a09',
           }),
         }),
       );
-      assert.ok(okCreate.status === 200 || okCreate.status === 201, okCreate.text);
-      createdIds.push(okCreate.json.id);
-      const countAfter = await prisma.product.count({ where: { partnerId: brand.id } });
+      assert.ok(created.status === 200 || created.status === 201, created.text);
+      createdIds.push(created.json.id);
+      const id = created.json.id;
+      const countAfterCreate = await prisma.product.count({ where: { partnerId: brand.id, id } });
+      assert.equal(countAfterCreate, 1);
+      const badPatch = await readJson(
+        await fetch(`${root}/api/v1/partners-portal/products/${id}`, {
+          method: 'PATCH',
+          headers: auth(tokenBrand),
+          body: JSON.stringify({ attributes: { material: 999 } }),
+        }),
+      );
+      assert.equal(badPatch.status, 400);
+      const retry = await readJson(
+        await fetch(`${root}/api/v1/partners-portal/products/${id}`, {
+          method: 'PATCH',
+          headers: auth(tokenBrand),
+          body: JSON.stringify({ attributes: { material: ['cotton'] } }),
+        }),
+      );
+      assert.equal(retry.status, 200, retry.text);
+      const sameIdCount = await prisma.product.count({ where: { partnerId: brand.id, nameAr: `E2-A09 ${suffix}` } });
+      const row = await prisma.product.findUniqueOrThrow({ where: { id } });
+      const mat =
+        row.draftTaxonomySet && row.draftAttributesJson
+          ? (row.draftAttributesJson as any).material
+          : (row.attributesJson as any)?.material;
       record(
         'A09',
-        'فشل ثم إعادة محاولة لا تكرر منتجًا فاشلًا',
-        'delta=+1',
-        `before=${countBefore} after=${countAfter} bad=${bad.status}`,
-        countAfter === countBefore + 1 && bad.status === 400,
+        'فشل PATCH ثم إعادة محاولة على نفس المعرف دون تكرار',
+        'same id; material=cotton; count name=1',
+        `id=${id} sameNameCount=${sameIdCount} mat=${JSON.stringify(mat)} bad=${badPatch.status}`,
+        sameIdCount === 1 && JSON.stringify(mat) === JSON.stringify(['cotton']) && badPatch.status === 400,
       );
     }
 
-    // A10 — normal review path vs developer publish + steal rejected
+    // A02c — occasion-only / length-only independent persistence
+    {
+      const occ = await readJson(
+        await fetch(`${root}/api/v1/partners-portal/products`, {
+          method: 'POST',
+          headers: auth(tokenBrand),
+          body: JSON.stringify({
+            nameAr: `E2-OCC ${suffix}`,
+            priceHalalas: 1500,
+            category: 'clothes',
+            subcategory: 'clothes.evening',
+            attributes: { occasion: ['eid'] },
+            externalUrl: 'https://example.test/e2-occ',
+          }),
+        }),
+      );
+      assert.ok(occ.status === 200 || occ.status === 201, occ.text);
+      createdIds.push(occ.json.id);
+      const prev = await readJson(
+        await fetch(`${root}/api/v1/partners-portal/products/${occ.json.id}/preview`, {
+          headers: auth(tokenBrand),
+        }),
+      );
+      assert.equal(prev.status, 200);
+      const attrs =
+        prev.json.draftTaxonomySet && prev.json.draftAttributes != null
+          ? prev.json.draftAttributes
+          : prev.json.publishedAttributes || {};
+      record(
+        'A02c',
+        'مناسبة فقط تُحفظ وتُقرأ دون اعتماد على material/cut',
+        'occasion=[eid]',
+        `attrs=${JSON.stringify(attrs)}`,
+        JSON.stringify(attrs.occasion) === JSON.stringify(['eid']) && attrs.material == null,
+      );
+    }
+
+    // A-SUB — omit subcategory: must NOT invent wedding_dress
+    {
+      const created = await readJson(
+        await fetch(`${root}/api/v1/partners-portal/products`, {
+          method: 'POST',
+          headers: auth(tokenBrand),
+          body: JSON.stringify({
+            nameAr: `E2-NOSUB ${suffix}`,
+            priceHalalas: 1800,
+            category: 'clothes',
+            externalUrl: 'https://example.test/e2-nosub',
+          }),
+        }),
+      );
+      assert.ok(created.status === 200 || created.status === 201, created.text);
+      createdIds.push(created.json.id);
+      const row = await prisma.product.findUniqueOrThrow({ where: { id: created.json.id } });
+      const nameOnly = await readJson(
+        await fetch(`${root}/api/v1/partners-portal/products/${created.json.id}`, {
+          method: 'PATCH',
+          headers: auth(tokenBrand),
+          body: JSON.stringify({ nameAr: `E2-NOSUB محدث ${suffix}` }),
+        }),
+      );
+      assert.equal(nameOnly.status, 200, nameOnly.text);
+      const after = await prisma.product.findUniqueOrThrow({ where: { id: created.json.id } });
+      record(
+        'A-SUB',
+        'منتج بلا تصنيف فرعي لا يتحول إلى فستان زفاف؛ الاسم لا يغيّره',
+        'subcategory null/empty; not wedding_dress',
+        `before=${row.subcategory} after=${after.subcategory}`,
+        row.subcategory !== 'clothes.wedding_dress' &&
+          after.subcategory !== 'clothes.wedding_dress' &&
+          after.subcategory === row.subcategory,
+      );
+    }
+
+    // A10 — brand reaches pending_review with media; developer publishes; steal rejected; incomplete separate
     {
       const TINY_PNG =
         'iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAYAAAAfFcSJAAAADUlEQVR42mP8z8BQDwAEhQGAhKmMIQAAAABJRU5ErkJggg==';
+      const incomplete = await readJson(
+        await fetch(`${root}/api/v1/partners-portal/products`, {
+          method: 'POST',
+          headers: auth(tokenBrand),
+          body: JSON.stringify({
+            nameAr: `E2-A10inc ${suffix}`,
+            priceHalalas: 2100,
+            category: 'clothes',
+            subcategory: 'clothes.evening',
+            attributes: { material: ['silk'] },
+            externalUrl: 'https://example.test/e2-a10inc',
+          }),
+        }),
+      );
+      createdIds.push(incomplete.json.id);
+      const incompleteSubmit = await readJson(
+        await fetch(`${root}/api/v1/partners-portal/products/${incomplete.json.id}/submit-review`, {
+          method: 'POST',
+          headers: auth(tokenBrand),
+          body: '{}',
+        }),
+      );
+      const incompleteRow = await prisma.product.findUniqueOrThrow({ where: { id: incomplete.json.id } });
+      record(
+        'A10-incomplete',
+        'عرض ناقص (بلا وسائط) يُرفض أو لا يدخل المراجعة',
+        'submit fails OR not pending_review',
+        `submit=${incompleteSubmit.status} review=${incompleteRow.reviewStatus}`,
+        incompleteSubmit.status >= 400 ||
+          (incompleteRow.reviewStatus !== 'pending_review' &&
+            incompleteRow.reviewStatus !== 'in_review'),
+      );
+
       const normal = await readJson(
         await fetch(`${root}/api/v1/partners-portal/products`, {
           method: 'POST',
@@ -487,14 +631,21 @@ async function main() {
             nameAr: `E2-A10n ${suffix}`,
             priceHalalas: 2100,
             category: 'clothes',
-            subcategory: 'clothes.wedding_dress',
+            subcategory: 'clothes.evening',
             attributes: { material: ['silk'] },
             externalUrl: 'https://example.test/e2-a10n',
           }),
         }),
       );
       createdIds.push(normal.json.id);
-      const nRow = await prisma.product.findUniqueOrThrow({ where: { id: normal.json.id } });
+      const media = await readJson(
+        await fetch(`${root}/api/v1/partners-portal/products/${normal.json.id}/media`, {
+          method: 'POST',
+          headers: auth(tokenBrand),
+          body: JSON.stringify({ mimeType: 'image/png', dataBase64: TINY_PNG }),
+        }),
+      );
+      assert.ok(media.status === 200 || media.status === 201, media.text);
       const brandSubmit = await readJson(
         await fetch(`${root}/api/v1/partners-portal/products/${normal.json.id}/submit-review`, {
           method: 'POST',
@@ -502,12 +653,11 @@ async function main() {
           body: '{}',
         }),
       );
-      // brand may need media — either pending_review or 400 for missing media
+      assert.ok(brandSubmit.status === 200 || brandSubmit.status === 201, brandSubmit.text);
       const nAfter = await prisma.product.findUniqueOrThrow({ where: { id: normal.json.id } });
-      const brandGoesReview =
-        nAfter.reviewStatus === 'pending_review' ||
-        nAfter.contentStatus === 'draft' ||
-        brandSubmit.status >= 400;
+      const inReview =
+        nAfter.reviewStatus === 'pending_review' || nAfter.reviewStatus === 'in_review';
+      assert.ok(inReview, `expected review queue status, got ${nAfter.reviewStatus}`);
 
       const dev = await readJson(
         await fetch(`${root}/api/v1/partners-portal/products`, {
@@ -517,7 +667,7 @@ async function main() {
             nameAr: `E2-A10d ${suffix}`,
             priceHalalas: 2200,
             category: 'clothes',
-            subcategory: 'clothes.wedding_dress',
+            subcategory: 'clothes.evening',
             attributes: { material: ['cotton'] },
             externalUrl: 'https://example.test/e2-a10d',
           }),
@@ -547,16 +697,24 @@ async function main() {
           body: JSON.stringify({ nameAr: 'stolen' }),
         }),
       );
+      const selfDev = await readJson(
+        await fetch(`${root}/api/v1/partners-portal/products/${normal.json.id}/submit-review`, {
+          method: 'POST',
+          headers: auth(tokenOther),
+          body: '{}',
+        }),
+      );
       record(
         'A10',
-        'عادي مراجعة / مطور نشر مباشر / سرقة مرفوضة',
-        'brandReviewPath+devPublished+404',
-        `n=${nRow.contentStatus}/${nAfter.reviewStatus} brandSubmit=${brandSubmit.status} d=${dRow.contentStatus}/${dRow.active} steal=${steal.status} brandGoesReview=${brandGoesReview}`,
-        nRow.contentStatus === 'draft' &&
-          brandGoesReview &&
+        'حساب عادي → مراجعة؛ مطور → published؛ سرقة مرفوضة',
+        'in_review/pending_review + published + 404',
+        `brandSubmit=${brandSubmit.status} review=${nAfter.reviewStatus} d=${dRow.contentStatus}/${dRow.active} steal=${steal.status} otherSubmit=${selfDev.status}`,
+        brandSubmit.status < 300 &&
+          inReview &&
           dRow.contentStatus === 'published' &&
           dRow.active === true &&
-          (steal.status === 404 || steal.status === 403),
+          (steal.status === 404 || steal.status === 403) &&
+          (selfDev.status === 404 || selfDev.status === 403),
       );
     }
 

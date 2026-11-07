@@ -107,10 +107,25 @@
 
     let registry = null;
     let registryError = null;
+    let taxonomyDoc = null;
     try {
       registry = await PartnersApi.registry();
     } catch (e) {
       registryError = (e && (e.messageAr || e.message)) || String(e);
+    }
+    try {
+      if (typeof PartnersApi.taxonomy === 'function') {
+        taxonomyDoc = await PartnersApi.taxonomy({ lane: 'elegance' });
+      } else {
+        const base =
+          (window.MIRA_API_BASE ||
+            (window.PartnersApi && PartnersApi.baseUrl) ||
+            '/api/v1').replace(/\/$/, '');
+        const taxUrl = base.indexOf('/api/v1') >= 0 ? base + '/marketplace/taxonomy?lane=elegance' : '/api/v1/marketplace/taxonomy?lane=elegance';
+        taxonomyDoc = await fetch(taxUrl).then((r) => r.json());
+      }
+    } catch (_) {
+      taxonomyDoc = null;
     }
 
     const pType = (partner && partner.type) || '';
@@ -159,18 +174,18 @@
       const card = currentCard();
       const vals = (card && card.values) || {};
       const attrs =
-        vals.attributes && typeof vals.attributes === 'object'
-          ? vals.attributes
-          : vals.attributesJson && typeof vals.attributesJson === 'object'
-            ? vals.attributesJson
-            : vals.material != null || vals.cut != null
-              ? {
-                  material: vals.material,
-                  cut: vals.cut,
-                  occasion: vals.occasion,
-                  lengthCm: vals.lengthCm,
-                }
-              : {};
+        window.MiraRegistryAttributeFields &&
+        typeof MiraRegistryAttributeFields.extractAttributesFromValues === 'function'
+          ? MiraRegistryAttributeFields.extractAttributesFromValues(vals)
+          : Object.assign(
+              {},
+              vals.attributesJson && typeof vals.attributesJson === 'object' ? vals.attributesJson : {},
+              vals.attributes && typeof vals.attributes === 'object' ? vals.attributes : {},
+              Object.prototype.hasOwnProperty.call(vals, 'material') ? { material: vals.material } : {},
+              Object.prototype.hasOwnProperty.call(vals, 'cut') ? { cut: vals.cut } : {},
+              Object.prototype.hasOwnProperty.call(vals, 'occasion') ? { occasion: vals.occasion } : {},
+              Object.prototype.hasOwnProperty.call(vals, 'lengthCm') ? { lengthCm: vals.lengthCm } : {},
+            );
       state.fieldDraft = {
         nameAr: vals.nameAr || '',
         priceSar: vals.priceHalalas != null ? halalasToSar(vals.priceHalalas) : '',
@@ -178,7 +193,12 @@
         durationMin: vals.durationMin != null ? String(vals.durationMin) : '',
         deliveryMode: vals.deliveryMode || vals.fulfillmentMode || '',
         category: vals.category || '',
-        subcategory: vals.subcategory || '',
+        // Never invent subcategory — keep stored value or empty for explicit choice.
+        subcategory: Object.prototype.hasOwnProperty.call(vals, 'subcategory')
+          ? vals.subcategory == null
+            ? ''
+            : String(vals.subcategory)
+          : '',
         stock: vals.stock != null ? String(vals.stock) : '',
         optionsJson: vals.optionsJson != null ? vals.optionsJson : null,
         variantsJson: Array.isArray(vals.variantsJson) ? vals.variantsJson : [],
@@ -243,10 +263,13 @@
           if (d.inventoryMode) values.inventoryMode = d.inventoryMode;
         }
         if (d.subcategory) values.subcategory = d.subcategory;
-        else if (state.batch && state.batch.profileId === 'product.clothes' && !values.subcategory) {
-          values.subcategory = 'clothes.wedding_dress';
-        } else if (state.batch && state.batch.profileId === 'product.abaya') {
-          values.subcategory = 'clothes.abaya';
+        // Do not invent clothes.wedding_dress / profile defaults here.
+        if (state.attrMount && typeof state.attrMount.hasBlockingErrors === 'function') {
+          if (state.attrMount.hasBlockingErrors()) {
+            throw Object.assign(new Error('أصلحي قيم الخصائص الرقمية قبل الحفظ'), {
+              code: 'ATTR_VALIDATION',
+            });
+          }
         }
         // Flat registry field ids only (bulk rejects unknown keys like nested `attributes`).
         if (state.attrMount && typeof state.attrMount.getFlatValues === 'function') {
@@ -256,7 +279,7 @@
           });
         } else if (d.attributes && typeof d.attributes === 'object') {
           Object.keys(d.attributes).forEach((k) => {
-            if (d.attributes[k] !== undefined) values[k] = d.attributes[k];
+            if (Object.prototype.hasOwnProperty.call(d.attributes, k)) values[k] = d.attributes[k];
           });
         }
         if (d.stock !== '' && d.stock != null) {
@@ -696,25 +719,60 @@
               state.fieldDraft.inventoryMode = payload.inventoryMode;
             },
           });
+          const subOpts =
+            window.MiraRegistryAttributeFields &&
+            typeof MiraRegistryAttributeFields.subcategoriesFromTaxonomy === 'function'
+              ? MiraRegistryAttributeFields.subcategoriesFromTaxonomy(taxonomyDoc, category)
+              : [];
+          const subSel = el('select', {
+            'data-testid': 'bulk-subcategory',
+            onChange: (e) => {
+              const prevState =
+                state.attrMount && state.attrMount.captureEditorState
+                  ? state.attrMount.captureEditorState()
+                  : null;
+              state.fieldDraft.subcategory = e.target.value;
+              remountBulkAttrs(prevState);
+            },
+          });
+          subSel.appendChild(el('option', { value: '', text: '— اختاري التصنيف الفرعي —' }));
+          subOpts.forEach((o) => {
+            subSel.appendChild(el('option', { value: o.value, text: o.label }));
+          });
+          if (d.subcategory && subOpts.some((o) => o.value === d.subcategory)) {
+            subSel.value = d.subcategory;
+          } else if (d.subcategory) {
+            // Keep unsupported/stored value visible rather than silent replace.
+            subSel.appendChild(
+              el('option', {
+                value: d.subcategory,
+                text: d.subcategory + ' (محفوظ)',
+              }),
+            );
+            subSel.value = d.subcategory;
+          } else {
+            subSel.value = '';
+            state.fieldDraft.subcategory = '';
+          }
+          fields.appendChild(fieldInput('التصنيف الفرعي', false, subSel));
+
           const attrHost = el('div', {
             className: 'mira-attr-fields',
             'data-testid': 'bulk-registry-attribute-host',
           });
           fields.appendChild(attrHost);
-          if (window.MiraRegistryAttributeFields && registry) {
+
+          function remountBulkAttrs(preserveState) {
+            if (!(window.MiraRegistryAttributeFields && registry)) return;
+            if (state.attrMount && state.attrMount.destroy) state.attrMount.destroy();
             const profileId = batch.profileId || 'product.clothes';
-            if (!d.subcategory) {
-              state.fieldDraft.subcategory =
-                profileId === 'product.abaya'
-                  ? 'clothes.abaya'
-                  : category === 'clothes'
-                    ? 'clothes.wedding_dress'
-                    : d.subcategory || '';
-            }
+            const card = currentCard();
             state.attrMount = window.MiraRegistryAttributeFields.mount(attrHost, {
               registry: registry,
               profileId: profileId,
+              mountId: 'bulk-' + ((card && card.cardId) || 'x'),
               initialAttributes: d.attributes || {},
+              preserveState: preserveState || null,
               includeComponentContract: profileId === 'product.bags',
               persistComponentContract: false,
               onChange: (payload) => {
@@ -722,6 +780,7 @@
               },
             });
           }
+          remountBulkAttrs(null);
         } catch (e) {
           commerceHost.appendChild(
             el('p', {

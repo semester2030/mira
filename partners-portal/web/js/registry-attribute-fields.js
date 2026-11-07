@@ -1,16 +1,10 @@
 /**
- * Shared registry-driven attribute fields for partners portal (E2).
+ * Shared registry-driven attribute fields for partners portal (E2 corrections).
  * Single + group editors mount the same widgets; each mount owns independent state.
- *
- * Support tiers (from registry field + storage):
- *  - write: storage attributes.* and editable → round-trip via API attributes bag
- *  - read: editable false but storage present
- *  - deferred: no attributes.* storage or marked FUTURE / not in E2 allowlist
  */
 (function (global) {
   'use strict';
 
-  /** Fields fully wired for E2 clothes write round-trip. */
   var E2_WRITE_FIELD_IDS = {
     material: true,
     cut: true,
@@ -18,10 +12,14 @@
     lengthCm: true,
   };
 
-  /** Component-contract single-select (bags carryStyle) — UI proven in E2; category write = E4. */
   var E2_COMPONENT_CONTRACT_IDS = {
     carryStyle: true,
   };
+
+  /** Flat attribute field ids used when hydrating card/product values. */
+  var FLAT_ATTR_FIELD_IDS = ['material', 'cut', 'occasion', 'lengthCm', 'carryStyle'];
+
+  var mountSeq = 0;
 
   function isPlainObject(v) {
     return !!v && typeof v === 'object' && !Array.isArray(v);
@@ -90,6 +88,104 @@
     return out;
   }
 
+  /**
+   * Restore attributes from card/product values independently of material/cut.
+   * Priority: attributes bag → attributesJson → flat field ids (hasOwnProperty).
+   * Distinguishes missing key vs intentional null vs 0 vs present array/value.
+   */
+  function extractAttributesFromValues(vals, fieldIds) {
+    var ids = fieldIds || FLAT_ATTR_FIELD_IDS;
+    var out = {};
+    if (!vals || typeof vals !== 'object') return out;
+
+    var bag = null;
+    if (isPlainObject(vals.attributes)) bag = vals.attributes;
+    else if (isPlainObject(vals.attributesJson)) bag = vals.attributesJson;
+
+    if (bag) {
+      Object.keys(bag).forEach(function (k) {
+        if (Object.prototype.hasOwnProperty.call(bag, k)) out[k] = bag[k];
+      });
+    }
+
+    ids.forEach(function (fid) {
+      if (Object.prototype.hasOwnProperty.call(vals, fid)) {
+        // Flat key wins when present (newer card form stores flat registry ids).
+        out[fid] = vals[fid];
+      }
+    });
+
+    return out;
+  }
+
+  function validateNumberValue(def, raw) {
+    if (raw === undefined) return { ok: true, value: undefined };
+    if (raw === null) return { ok: true, value: null };
+    var s = String(raw).trim();
+    if (s === '') return { ok: true, value: null };
+    if (!/^-?\d+(\.\d+)?$/.test(s) && !Number.isFinite(Number(s))) {
+      return { ok: false, message: 'أدخلي رقمًا صالحًا أو اتركي الحقل فارغًا.' };
+    }
+    var n = Number(s);
+    if (!Number.isFinite(n)) {
+      return { ok: false, message: 'أدخلي رقمًا صالحًا أو اتركي الحقل فارغًا.' };
+    }
+    if (def && def.min != null && n < def.min) {
+      return {
+        ok: false,
+        message: 'الحد الأدنى ' + def.min + (def.unit ? ' ' + def.unit : ''),
+      };
+    }
+    if (def && def.max != null && n > def.max) {
+      return {
+        ok: false,
+        message: 'الحد الأقصى ' + def.max + (def.unit ? ' ' + def.unit : ''),
+      };
+    }
+    return { ok: true, value: n };
+  }
+
+  /**
+   * Filter a captured editor state onto defs of a (possibly new) profile.
+   * Compatible keys keep values+clears; incompatible keys listed separately.
+   */
+  function projectStateOntoDefs(state, defs) {
+    state = state || {};
+    var values = isPlainObject(state.values) ? state.values : {};
+    var cleared = state.cleared || {};
+    var dirty = state.dirty || {};
+    var allowed = Object.create(null);
+    (defs || []).forEach(function (def) {
+      var key = storageAttrKey(def);
+      if (key) allowed[key] = def;
+    });
+    var nextValues = {};
+    var nextCleared = Object.create(null);
+    var nextDirty = Object.create(null);
+    var incompatible = {};
+    Object.keys(values).forEach(function (k) {
+      if (allowed[k]) nextValues[k] = values[k];
+      else incompatible[k] = values[k];
+    });
+    Object.keys(cleared).forEach(function (k) {
+      if (allowed[k]) {
+        nextCleared[k] = true;
+        delete nextValues[k];
+      } else if (!Object.prototype.hasOwnProperty.call(incompatible, k)) {
+        incompatible[k] = null;
+      }
+    });
+    Object.keys(dirty).forEach(function (k) {
+      if (allowed[k]) nextDirty[k] = true;
+    });
+    return {
+      values: nextValues,
+      cleared: nextCleared,
+      dirty: nextDirty,
+      incompatible: incompatible,
+    };
+  }
+
   function el(tag, attrs, children) {
     var node = document.createElement(tag);
     if (attrs) {
@@ -99,8 +195,10 @@
         if (k === 'className') node.className = v;
         else if (k === 'text') node.textContent = v;
         else if (k === 'html') node.innerHTML = v;
-        else if (k.indexOf('on') === 0 && typeof v === 'function') node.addEventListener(k.slice(2).toLowerCase(), v);
-        else if (k === 'disabled') node.disabled = !!v;
+        else if (k.indexOf('on') === 0 && typeof v === 'function') {
+          node.addEventListener(k.slice(2).toLowerCase(), v);
+        } else if (k === 'disabled') node.disabled = !!v;
+        else if (k === 'checked') node.checked = !!v;
         else node.setAttribute(k, v);
       });
     }
@@ -113,14 +211,7 @@
 
   /**
    * @param {HTMLElement} host
-   * @param {{
-   *   registry: object,
-   *   profileId: string,
-   *   initialAttributes?: object|null,
-   *   includeComponentContract?: boolean,
-   *   readOnly?: boolean,
-   *   onChange?: function(state),
-   * }} options
+   * @param {object} options
    */
   function mount(host, options) {
     if (!host) throw new Error('registry-attribute-fields: host required');
@@ -128,40 +219,89 @@
     var registry = options.registry;
     var profileId = options.profileId;
     var readOnly = !!options.readOnly;
+    var mountId = String(options.mountId || 'm' + ++mountSeq);
     var defs = attributeFieldDefsForProfile(registry, profileId, {
       includeComponentContract: !!options.includeComponentContract,
     });
 
-    /** @type {Record<string, unknown>} */
     var values = {};
-    /** keys explicitly cleared (send null) */
     var cleared = Object.create(null);
-    /** keys user touched this session */
     var dirty = Object.create(null);
     var fieldErrors = Object.create(null);
+    /** Invalid typed number strings that must block save. */
+    var invalidInputs = Object.create(null);
+    var incompatibleNotice = null;
 
-    function seedFrom(attrs) {
+    function seedFrom(attrs, opts) {
+      opts = opts || {};
       values = {};
       cleared = Object.create(null);
       dirty = Object.create(null);
       fieldErrors = Object.create(null);
-      if (!isPlainObject(attrs)) return;
-      defs.forEach(function (def) {
-        var key = storageAttrKey(def);
-        if (!key) return;
-        if (Object.prototype.hasOwnProperty.call(attrs, key)) {
-          values[key] = attrs[key];
-        }
-      });
-      // Preserve unknown keys so reopen does not drop them from payload builders that merge.
-      Object.keys(attrs).forEach(function (k) {
-        if (!Object.prototype.hasOwnProperty.call(values, k)) {
-          values[k] = attrs[k];
-        }
-      });
+      invalidInputs = Object.create(null);
+      if (!isPlainObject(attrs) && !(opts.cleared && Object.keys(opts.cleared).length)) return;
+      if (isPlainObject(attrs)) {
+        defs.forEach(function (def) {
+          var key = storageAttrKey(def);
+          if (!key) return;
+          if (Object.prototype.hasOwnProperty.call(attrs, key)) {
+            values[key] = attrs[key];
+          }
+        });
+        Object.keys(attrs).forEach(function (k) {
+          if (!Object.prototype.hasOwnProperty.call(values, k)) {
+            values[k] = attrs[k];
+          }
+        });
+      }
+      if (opts.cleared) {
+        Object.keys(opts.cleared).forEach(function (k) {
+          if (opts.cleared[k]) {
+            cleared[k] = true;
+            delete values[k];
+          }
+        });
+      }
+      if (opts.dirty) {
+        Object.keys(opts.dirty).forEach(function (k) {
+          if (opts.dirty[k]) dirty[k] = true;
+        });
+      }
+      if (opts.invalidInputs) {
+        Object.keys(opts.invalidInputs).forEach(function (k) {
+          invalidInputs[k] = opts.invalidInputs[k];
+        });
+      }
     }
 
-    seedFrom(options.initialAttributes || null);
+    function applyInitial() {
+      var projected = null;
+      if (options.preserveState) {
+        projected = projectStateOntoDefs(options.preserveState, defs);
+        incompatibleNotice = projected.incompatible;
+        seedFrom(projected.values, {
+          cleared: projected.cleared,
+          dirty: projected.dirty,
+          invalidInputs: options.preserveState.invalidInputs,
+        });
+        // Also seed any compatible keys from server seed that weren't dirty
+        var server = options.initialAttributes;
+        if (isPlainObject(server)) {
+          defs.forEach(function (def) {
+            var key = storageAttrKey(def);
+            if (!key) return;
+            if (dirty[key] || cleared[key]) return;
+            if (Object.prototype.hasOwnProperty.call(server, key) && !Object.prototype.hasOwnProperty.call(values, key)) {
+              values[key] = server[key];
+            }
+          });
+        }
+      } else {
+        seedFrom(options.initialAttributes || null);
+      }
+    }
+
+    applyInitial();
 
     function notify() {
       if (typeof options.onChange === 'function') {
@@ -170,6 +310,7 @@
           dirty: Object.assign({}, dirty),
           cleared: Object.assign({}, cleared),
           attributesPatch: buildAttributesPatch(),
+          blockingErrors: validateAll().errors,
         });
       }
     }
@@ -205,7 +346,6 @@
       return patch;
     }
 
-    /** Full bag for draft materialize paths that map flat field ids. */
     function buildFlatValues() {
       var flat = {};
       defs.forEach(function (def) {
@@ -227,10 +367,64 @@
       return Object.prototype.hasOwnProperty.call(values, key) ? values[key] : null;
     }
 
+    function validateAll() {
+      var errors = [];
+      Object.keys(invalidInputs).forEach(function (fieldId) {
+        var def = defs.find(function (d) {
+          return d.id === fieldId;
+        });
+        var raw = invalidInputs[fieldId];
+        var v = validateNumberValue(def || { id: fieldId }, raw);
+        if (!v.ok) {
+          errors.push({ fieldId: fieldId, message: v.message });
+          setError(fieldId, v.message);
+        }
+      });
+      defs.forEach(function (def) {
+        if (!(def.type === 'number' || def.widget === 'number')) return;
+        if (invalidInputs[def.id]) return;
+        var key = storageAttrKey(def);
+        if (!key) return;
+        if (!Object.prototype.hasOwnProperty.call(values, key) && !cleared[key]) return;
+        var cur = cleared[key] ? null : values[key];
+        if (cur == null) return;
+        var v = validateNumberValue(def, cur);
+        if (!v.ok) {
+          errors.push({ fieldId: def.id, message: v.message });
+          setError(def.id, v.message);
+        }
+      });
+      return { ok: errors.length === 0, errors: errors };
+    }
+
+    function captureEditorState() {
+      return {
+        values: Object.assign({}, values),
+        cleared: Object.assign({}, cleared),
+        dirty: Object.assign({}, dirty),
+        invalidInputs: Object.assign({}, invalidInputs),
+        profileId: profileId,
+      };
+    }
+
     function paint() {
       host.innerHTML = '';
       host.classList.add('mira-attr-fields');
       host.setAttribute('dir', 'rtl');
+      host.setAttribute('data-mount-id', mountId);
+
+      if (incompatibleNotice && Object.keys(incompatibleNotice).length) {
+        host.appendChild(
+          el('p', {
+            className: 'lead mira-attr-incompatible',
+            'data-testid': 'attr-incompatible-notice',
+            text:
+              'بعض القيم غير متوافقة مع التصنيف الحالي وحُفظت مؤقتًا للرجوع: ' +
+              Object.keys(incompatibleNotice).join('، '),
+          }),
+        );
+      }
+
       if (!defs.length) {
         host.appendChild(
           el('p', {
@@ -264,18 +458,21 @@
         block.appendChild(title);
 
         var cur = currentValue(key);
-        var disabled = readOnly || tier === 'read' || (tier === 'component' && options.persistComponentContract !== true);
+        var disabled =
+          readOnly || tier === 'read' || (tier === 'component' && options.persistComponentContract !== true);
 
         if (def.type === 'array' && (def.widget === 'chips' || !def.widget)) {
-          var row = el('div', { className: 'choice-row mira-attr-chips', role: 'group', 'aria-label': def.labelAr || def.id });
+          var row = el('div', {
+            className: 'choice-row mira-attr-chips',
+            role: 'group',
+            'aria-label': def.labelAr || def.id,
+          });
           var selected = Array.isArray(cur) ? cur.slice() : [];
           (def.values || []).forEach(function (vid) {
-            var lab = el('label', { className: 'mira-attr-chip' + (selected.indexOf(vid) >= 0 ? ' is-selected' : '') });
-            var cb = el('input', {
-              type: 'checkbox',
-              value: vid,
-              disabled: disabled,
+            var lab = el('label', {
+              className: 'mira-attr-chip' + (selected.indexOf(vid) >= 0 ? ' is-selected' : ''),
             });
+            var cb = el('input', { type: 'checkbox', value: vid, disabled: disabled });
             cb.checked = selected.indexOf(vid) >= 0;
             cb.setAttribute('aria-label', labelFor(def, vid));
             cb.addEventListener('change', function () {
@@ -294,14 +491,20 @@
           });
           block.appendChild(row);
         } else if (def.type === 'enum' || def.widget === 'select') {
-          var group = el('div', { className: 'choice-row mira-attr-single', role: 'radiogroup', 'aria-label': def.labelAr || def.id });
+          var groupName = 'mira-attr-' + mountId + '-' + def.id;
+          var group = el('div', {
+            className: 'choice-row mira-attr-single',
+            role: 'radiogroup',
+            'aria-label': def.labelAr || def.id,
+            'data-radio-group': groupName,
+          });
           (def.values || []).forEach(function (vid) {
             var lab = el('label', {
               className: 'mira-attr-choice' + (cur === vid ? ' is-selected' : ''),
             });
             var radio = el('input', {
               type: 'radio',
-              name: 'mira-attr-' + def.id + '-' + String(Math.random()).slice(2, 8),
+              name: groupName,
               value: vid,
               disabled: disabled,
             });
@@ -312,6 +515,9 @@
               Array.prototype.forEach.call(group.querySelectorAll('.mira-attr-choice'), function (n) {
                 n.classList.remove('is-selected');
               });
+              Array.prototype.forEach.call(group.querySelectorAll('input[type=radio]'), function (r) {
+                r.checked = r === radio;
+              });
               lab.classList.add('is-selected');
               setError(def.id, '');
               markDirty(key, vid);
@@ -320,12 +526,12 @@
             lab.appendChild(document.createTextNode(' ' + labelFor(def, vid)));
             group.appendChild(lab);
           });
-          // Optional clear
           if (!disabled && def.nullMeaning) {
             var clearBtn = el('button', {
               type: 'button',
               className: 'btn btn-ghost mira-attr-clear',
               text: 'مسح',
+              'data-testid': 'attr-clear-' + def.id,
             });
             clearBtn.addEventListener('click', function () {
               Array.prototype.forEach.call(group.querySelectorAll('input[type=radio]'), function (r) {
@@ -346,35 +552,50 @@
             type: 'number',
             className: 'mira-attr-number',
             disabled: disabled,
+            'data-field-id': def.id,
           });
           if (def.min != null) num.min = String(def.min);
           if (def.max != null) num.max = String(def.max);
           if (def.unit) num.setAttribute('data-unit', def.unit);
-          if (cur != null && cur !== '') num.value = String(cur);
+          if (invalidInputs[def.id] != null) num.value = String(invalidInputs[def.id]);
+          else if (cur != null && cur !== '') num.value = String(cur);
           var unitHint = def.unit ? el('span', { className: 'mira-attr-unit', text: ' ' + def.unit }) : null;
-          num.addEventListener('change', function () {
+          function commitNumber() {
             var raw = String(num.value || '').trim();
             if (raw === '') {
+              delete invalidInputs[def.id];
               setError(def.id, '');
               markDirty(key, null);
               return;
             }
-            var n = Number(raw);
-            if (!Number.isFinite(n)) {
-              setError(def.id, 'أدخلي رقمًا صالحًا أو اتركي الحقل فارغًا.');
+            var v = validateNumberValue(def, raw);
+            if (!v.ok) {
+              invalidInputs[def.id] = raw;
+              setError(def.id, v.message);
+              notify();
               return;
             }
-            if (def.min != null && n < def.min) {
-              setError(def.id, 'الحد الأدنى ' + def.min + (def.unit ? ' ' + def.unit : ''));
-              return;
-            }
-            if (def.max != null && n > def.max) {
-              setError(def.id, 'الحد الأقصى ' + def.max + (def.unit ? ' ' + def.unit : ''));
-              return;
-            }
+            delete invalidInputs[def.id];
             setError(def.id, '');
-            markDirty(key, n);
+            markDirty(key, v.value);
+          }
+          num.addEventListener('input', function () {
+            var raw = String(num.value || '').trim();
+            if (raw === '') {
+              delete invalidInputs[def.id];
+              setError(def.id, '');
+              return;
+            }
+            var v = validateNumberValue(def, raw);
+            if (!v.ok) {
+              invalidInputs[def.id] = raw;
+              setError(def.id, v.message);
+            } else {
+              delete invalidInputs[def.id];
+              setError(def.id, '');
+            }
           });
+          num.addEventListener('change', commitNumber);
           var numRow = el('div', { className: 'mira-attr-number-row' }, [num]);
           if (unitHint) numRow.appendChild(unitHint);
           block.appendChild(numRow);
@@ -404,6 +625,7 @@
       destroy: function () {
         host.innerHTML = '';
       },
+      mountId: mountId,
       getAttributesPatch: buildAttributesPatch,
       getFlatValues: buildFlatValues,
       getValues: function () {
@@ -412,6 +634,11 @@
       hasDirty: function () {
         return Object.keys(dirty).length > 0;
       },
+      hasBlockingErrors: function () {
+        return !validateAll().ok;
+      },
+      validate: validateAll,
+      captureEditorState: captureEditorState,
       setFromAttributes: function (attrs) {
         seedFrom(attrs);
         paint();
@@ -421,11 +648,21 @@
       getDefs: function () {
         return defs.slice();
       },
+      getSelectedSingle: function (fieldId) {
+        var def = defs.find(function (d) {
+          return d.id === fieldId;
+        });
+        if (!def) return null;
+        var key = storageAttrKey(def);
+        return currentValue(key);
+      },
+      getRadioGroupName: function (fieldId) {
+        return 'mira-attr-' + mountId + '-' + fieldId;
+      },
       repaint: paint,
     };
   }
 
-  /** Pure helpers for tests without DOM. */
   function applySingleSelect(current, next) {
     if (next === undefined) return current;
     return next;
@@ -439,13 +676,43 @@
     return arr;
   }
 
+  /**
+   * Writable elegance subcategories from taxonomy projection.
+   * Only nodes with parentId and writeEnabled !== false (and not browseOnly).
+   */
+  function subcategoriesFromTaxonomy(taxonomyDoc, categoryId) {
+    var nodes = (taxonomyDoc && (taxonomyDoc.nodes || taxonomyDoc.tree)) || [];
+    if (!Array.isArray(nodes)) return [];
+    return nodes
+      .filter(function (n) {
+        if (!n || !n.id || !n.parentId) return false;
+        if (n.browseOnly) return false;
+        if (n.writeEnabled === false) return false;
+        if (categoryId && n.parentId !== categoryId) return false;
+        return true;
+      })
+      .map(function (n) {
+        return {
+          value: n.id,
+          label: n.labelAr || n.label || n.id,
+          profileId: n.profileId || null,
+          writeEnabled: n.writeEnabled !== false,
+        };
+      });
+  }
+
   global.MiraRegistryAttributeFields = {
     E2_WRITE_FIELD_IDS: E2_WRITE_FIELD_IDS,
     E2_COMPONENT_CONTRACT_IDS: E2_COMPONENT_CONTRACT_IDS,
+    FLAT_ATTR_FIELD_IDS: FLAT_ATTR_FIELD_IDS,
     attributeFieldDefsForProfile: attributeFieldDefsForProfile,
     classifyField: classifyField,
     storageAttrKey: storageAttrKey,
     labelFor: labelFor,
+    extractAttributesFromValues: extractAttributesFromValues,
+    validateNumberValue: validateNumberValue,
+    projectStateOntoDefs: projectStateOntoDefs,
+    subcategoriesFromTaxonomy: subcategoriesFromTaxonomy,
     mount: mount,
     applySingleSelect: applySingleSelect,
     applyMultiSelect: applyMultiSelect,

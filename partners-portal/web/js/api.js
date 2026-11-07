@@ -178,6 +178,13 @@
     login: (email, password) =>
       request('POST', '/partners-portal/login', { email, password }),
     dashboard: () => request('GET', '/partners-portal/me'),
+    /** Public elegance taxonomy (no partner token required). */
+    taxonomy: (opts) => {
+      const lane = (opts && opts.lane) || 'elegance';
+      return request('GET', `/marketplace/taxonomy?lane=${encodeURIComponent(lane)}`);
+    },
+    /** Portal read-back path used after save (not GET /products/:id). */
+    productPreview: (id) => request('GET', `/partners-portal/products/${id}/preview`),
     createProduct: (payload) =>
       request('POST', '/partners-portal/products', payload),
     updateProduct: (id, payload) =>

@@ -556,22 +556,11 @@
       ? PRODUCT_CATEGORIES
       : (type === 'clinic' ? CLINIC_CATEGORIES : (type === 'salon' ? SALON_CATEGORIES : SERVICE_CATEGORIES));
     const category = selectField(basics, 'التصنيف', 'category', seed.category || '', categories);
-    const ELEGANCE_SUBCATEGORY_OPTIONS = {
-      clothes: [
-        { value: 'clothes.wedding_dress', label: 'فساتين زفاف' },
-        { value: 'clothes.evening', label: 'سهرة' },
-        { value: 'clothes.abaya', label: 'عبايات' },
-      ],
-      bags: [
-        { value: 'bags', label: 'حقائب (كتابة مؤجلة E4)', disabled: true },
-      ],
-      shoes: [
-        { value: 'shoes', label: 'أحذية (كتابة مؤجلة E4)', disabled: true },
-      ],
-    };
     const subcategorySeed =
-      seed.draftTaxonomySet && seed.draftSubcategory !== undefined
-        ? seed.draftSubcategory
+      seed.draftTaxonomySet && Object.prototype.hasOwnProperty.call(seed, 'draftSubcategory')
+        ? seed.draftSubcategory == null
+          ? ''
+          : seed.draftSubcategory
         : seed.subcategory != null
           ? seed.subcategory
           : '';
@@ -579,34 +568,62 @@
       basics,
       'التصنيف الفرعي (أناقتك)',
       'subcategory',
-      subcategorySeed || (seed.category === 'clothes' ? 'clothes.wedding_dress' : ''),
-      (ELEGANCE_SUBCATEGORY_OPTIONS[seed.category] || [])
-        .filter((o) => !o.disabled)
-        .map((o) => [o.value, o.label]),
+      subcategorySeed || '',
+      [],
     );
-    function refreshSubcategoryOptions() {
+    let taxonomyCache = null;
+    let taxonomyLoadGen = 0;
+    async function loadTaxonomyDoc() {
+      if (taxonomyCache) return taxonomyCache;
+      try {
+        const base = (window.MIRA_API_BASE || '/api/v1').replace(/\/$/, '');
+        taxonomyCache = await fetch(base + '/marketplace/taxonomy?lane=elegance').then((r) => r.json());
+      } catch (_) {
+        taxonomyCache = { nodes: [] };
+      }
+      return taxonomyCache;
+    }
+    async function refreshSubcategoryOptions(opts) {
+      const keepValue = opts && Object.prototype.hasOwnProperty.call(opts, 'keepValue')
+        ? opts.keepValue
+        : subcategory.value;
       const cat = category.value;
-      const opts = ELEGANCE_SUBCATEGORY_OPTIONS[cat] || [];
       const wrap = subcategory.parentElement;
-      if (wrap) wrap.hidden = type !== 'brand' || !opts.length;
-      const prev = subcategory.value;
+      const gen = ++taxonomyLoadGen;
+      const doc = await loadTaxonomyDoc();
+      if (gen !== taxonomyLoadGen) return; // stale load
+      const list =
+        window.MiraRegistryAttributeFields &&
+        typeof MiraRegistryAttributeFields.subcategoriesFromTaxonomy === 'function'
+          ? MiraRegistryAttributeFields.subcategoriesFromTaxonomy(doc, cat)
+          : [];
+      if (wrap) wrap.hidden = type !== 'brand' || (cat !== 'clothes' && !list.length && !keepValue);
       subcategory.innerHTML = '';
       const empty = document.createElement('option');
       empty.value = '';
       empty.textContent = 'اختاري';
       subcategory.appendChild(empty);
-      opts.forEach((o) => {
+      list.forEach((o) => {
         const opt = document.createElement('option');
         opt.value = o.value;
         opt.textContent = o.label;
-        if (o.disabled) opt.disabled = true;
         subcategory.appendChild(opt);
       });
-      if (opts.some((o) => o.value === prev && !o.disabled)) subcategory.value = prev;
-      else if (cat === 'clothes') subcategory.value = opts[0] && !opts[0].disabled ? opts[0].value : '';
-      else subcategory.value = '';
+      if (keepValue) {
+        if (list.some((o) => o.value === keepValue)) {
+          subcategory.value = keepValue;
+        } else {
+          const orphan = document.createElement('option');
+          orphan.value = keepValue;
+          orphan.textContent = keepValue + ' (محفوظ)';
+          subcategory.appendChild(orphan);
+          subcategory.value = keepValue;
+        }
+      } else {
+        subcategory.value = '';
+      }
     }
-    refreshSubcategoryOptions();
+    refreshSubcategoryOptions({ keepValue: subcategorySeed || '' });
     const priceSeed =
       seed.priceHalalas == null || seed.priceHalalas === ''
         ? ''
@@ -1447,6 +1464,13 @@
           }
         }
         if (subcategory && subcategory.value) values.subcategory = subcategory.value;
+        if (attrMount && typeof attrMount.hasBlockingErrors === 'function' && attrMount.hasBlockingErrors()) {
+          const v = attrMount.validate ? attrMount.validate() : { errors: [] };
+          (v.errors || []).forEach((fe) => {
+            fieldErrors.push({ fieldId: fe.fieldId, message: fe.message });
+          });
+          return { ok: false, fieldErrors: fieldErrors, values: values };
+        }
         if (attrMount && typeof attrMount.getFlatValues === 'function') {
           const flat = attrMount.getFlatValues();
           Object.keys(flat).forEach((k) => {
@@ -2589,7 +2613,7 @@
     let lastCompatibleCategory = category.value;
     category.onchange = function () {
       cosmeticVisible();
-      refreshSubcategoryOptions();
+      refreshSubcategoryOptions({ keepValue: '' });
       if (type === 'brand') {
         // Keep selected values/variants; category drop of saved groups is a conflict (RC6-01).
         // Do not clear optionsState — merchant must revert category or explicit-clear.
@@ -2610,11 +2634,11 @@
           lastCompatibleCategory = next;
         }
         paintOptions();
-        remountAttributeFields();
+        remountAttributeFields({ preserveEdits: true });
       } else paintServiceTemplates();
     };
     subcategory.onchange = function () {
-      remountAttributeFields();
+      remountAttributeFields({ preserveEdits: true });
     };
     cosmeticVisible();
 
@@ -2685,7 +2709,8 @@
       attrSaveState.dataset.kind = kind || '';
       attrSaveState.textContent = msg || '';
     }
-    async function remountAttributeFields() {
+    let attrRemountGen = 0;
+    async function remountAttributeFields(opts) {
       if (type !== 'brand') {
         attrSection.hidden = true;
         return;
@@ -2693,6 +2718,11 @@
       const cat = category.value;
       const writeBlocked = cat === 'bags' || cat === 'shoes';
       attrSection.hidden = false;
+      const preserve =
+        opts && opts.preserveEdits && attrMount && typeof attrMount.captureEditorState === 'function'
+          ? attrMount.captureEditorState()
+          : null;
+      const gen = ++attrRemountGen;
       if (attrMount && attrMount.destroy) attrMount.destroy();
       attrMount = null;
       if (!window.MiraRegistryAttributeFields) {
@@ -2705,11 +2735,15 @@
             (window.MiraEditorV2 && MiraEditorV2.state && MiraEditorV2.state.localRegistry) ||
             (await fetch('js/field-registry.v2.json').then((r) => r.json()));
         }
+        if (gen !== attrRemountGen) return; // stale remount
         const profileId = profileIdForAttributes();
+        const ownerKey = resolveOwnerId() || (item && item.id) || form.id || 'new';
         attrMount = window.MiraRegistryAttributeFields.mount(attrHost, {
           registry: attrRegistryCache,
           profileId: profileId,
+          mountId: 'cat-' + String(ownerKey).slice(0, 12),
           initialAttributes: resolveAttributesSeed(),
+          preserveState: preserve,
           includeComponentContract: writeBlocked || profileId === 'product.bags',
           persistComponentContract: false,
           readOnly: writeBlocked,
@@ -4537,7 +4571,14 @@
         if (subcategory && subcategory.value) {
           payload.subcategory = subcategory.value;
         }
-        // Never send profileId unless user explicitly manages it — omit preserves cleared null (E1).
+        // Never invent subcategory; never send profileId unless user explicitly manages it (E1).
+        if (attrMount && typeof attrMount.hasBlockingErrors === 'function' && attrMount.hasBlockingErrors()) {
+          const v = attrMount.validate();
+          (v.errors || []).forEach((fe) => setFieldError(form, fe.fieldId, fe.message));
+          status.textContent = 'لم يُرسل الحفظ. أصلحي قيم الخصائص الرقمية. البيانات ما زالت في النموذج.';
+          setAttrSaveKind('error', 'تحقق الخصائص فشل');
+          return false;
+        }
         if (attrMount && typeof attrMount.getAttributesPatch === 'function' && attrMount.hasDirty()) {
           payload.attributes = attrMount.getAttributesPatch();
         }
