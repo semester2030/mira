@@ -43,6 +43,22 @@ assert.equal(decodeCatalogCursor('not-a-cursor', { sort: 'key', fingerprint: fpA
   assert.notEqual(base, withType);
 }
 
+// E1 subcategory is part of the cursor fingerprint — filter change must mismatch.
+{
+  const abaya = normalizeFilterFingerprint({ sort: 'key', subcategory: 'clothes.abaya' });
+  const wedding = normalizeFilterFingerprint({ sort: 'key', subcategory: 'clothes.wedding_dress' });
+  assert.notEqual(abaya, wedding);
+  const cursor = encodeCatalogCursor({
+    sort: 'key',
+    fingerprint: abaya,
+    kind: 'product',
+    id: 'p1',
+  });
+  const mismatch = decodeCatalogCursor(cursor, { sort: 'key', fingerprint: wedding });
+  assert.equal(mismatch.ok, false);
+  if (!mismatch.ok) assert.equal(mismatch.reason, 'cursor_mismatch');
+}
+
 // Legacy cursor rejected when filters are active.
 {
   const empty = emptyCatalogFingerprint();

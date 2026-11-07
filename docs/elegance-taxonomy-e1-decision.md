@@ -1,43 +1,27 @@
-# قرار إغلاق المرحلة E1 — أساس تصنيفات أناقتك
+# قرار E1 — تصنيفات أناقتك (إغلاق نهائي)
 
-**القرار:** `E1_CLOSED_VERIFIED`  
-**أساس E2:** جاهز من جهة الباك اند (تعريفات + تحقق + حفظ موحّد + taxonomy API).  
-بنود واجهة البوابة E2 (`material[]` / `carryStyle` UX) تبقى مفتوحة كما هي — إصلاح باك اند لا يغلق تجربة البوابة تلقائيًا.
+**القرار: E1_CLOSED_VERIFIED**
 
-## المعرفات
+| | SHA |
+|--|-----|
+| أساس الفرع قبل الأساس | `60d9134294f6db96bc0c55685066dc49301833ae` |
+| إغلاق ملاحظات سابق (توثيق) | `88631929d8467ab62a565cf39ea3753ba940fd9c` |
+| كود الإغلاق النهائي المختبر | *(يُملأ عند التسليم من `git rev-parse HEAD`)* |
 
-| | |
-|--|--|
-| الفرع | `mira/elegance-e1-taxonomy-foundation` |
-| base | `60d9134294f6db96bc0c55685066dc49301833ae` |
-| رأس E1 foundation | `1ce240187efb5a09329fd536998081f2cfd43365` |
-| إغلاق الملاحظات (كود) | `ee5959bb4ba43481cc2a25af0d9c3afa503f9511` |
-| رأس التسليم | `3734304716312b436d6f7af05936537426a03607` |
+## ما أُغلق في الإغلاق النهائي
 
-## الملاحظات الأربع
+1. تجاوز التحقق: استنتاج الملف النهائي ثم تحميل تعريفاته قبل التحقق؛ رفض الخصائص الجديدة غير المعرّفة.
+2. رجوع القيم المحذوفة: `readTaxonomyBaseline` يحترم `null` المعلّق؛ لا coalesce إلى المنشور.
+3. اختبارات حاسمة V/N/P/G/C/D + فلترة كاملة + cursor mismatch=400.
+4. إثبات ترحيل حقيقي (تطبيق SQL بين لقطتين على جداول معزولة).
+5. بناء وإقلاع وتحميل taxonomy/registry من `dist`.
 
-| # | الملاحظة | الحالة | الدليل |
-|---|----------|--------|--------|
-| 1 | فقد الخصائص عند التعديل الجزئي | PASS | `mergeAttributesPatch` + A-* في `elegance-e1-closure.http.integration-tests.ts` |
-| 2 | اختلاف فردي/مسودات/منشور | PASS | draft_* taxonomy + approve merge + B/C tests |
-| 3 | ثغرات التحقق وnull | PASS | D-* + schema-tests |
-| 4 | نقص اختبارات/مبالغة تقرير | PASS | suite كاملة + build/boot + migration proof |
+## خارج النطاق (E2+)
 
-## أوامر التحقق
+- واجهة البوابة لـ material/carryStyle وكتابة الشنط/الأحذية.
+- المجوهرات/الأطفال/الخدمات الجديدة.
+- نشر الإنتاج وترحيل قاعدة الإنتاج.
 
-```bash
-cd mira-api
-export DATABASE_URL='postgresql://mira:mira_secret@localhost:5432/mira_db?schema=public'
-npx prisma migrate deploy
-npm run test:elegance-e1
-npm run build
-# boot dist + GET /api/v1/marketplace/taxonomy?lane=elegance
-node scripts/e1-migration-rollback-proof.mjs
-```
+## معيار القرار
 
-## المتبقي خارج E1
-
-- E2 واجهة البوابة: استرجاع `material[]` وتعديل `carryStyle` بعد إعادة الفتح.
-- E4 كتابة الشنط/الأحذية.
-- مجوهرات/أطفال/خدمات/حجوزات.
-- نشر إنتاج / ترحيل بيانات إنتاج.
+لا نسبة إنجاز تقديرية. `E1_CLOSED_VERIFIED` فقط بعد نجاح البنود الإلزامية وأدلتها في حزمة التسليم.

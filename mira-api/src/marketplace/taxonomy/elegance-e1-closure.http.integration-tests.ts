@@ -361,15 +361,11 @@ async function main() {
         headers: auth(tokenBrand),
       }),
     );
-    // preview path may differ — fall back to admin decide path after submit
-    if (preview.status === 200) {
-      assert.equal(preview.json.draftTaxonomySet, true);
-      assert.equal(preview.json.publishedSubcategory, 'clothes.evening');
-      assert.equal(preview.json.draftSubcategory, 'clothes.abaya');
-      pass('C-preview-pending');
-    } else {
-      pass('C-preview-pending-SKIPPED');
-    }
+    assert.equal(preview.status, 200, `preview required (not SKIP): ${preview.text}`);
+    assert.equal(preview.json.draftTaxonomySet, true);
+    assert.equal(preview.json.publishedSubcategory, 'clothes.evening');
+    assert.equal(preview.json.draftSubcategory, 'clothes.abaya');
+    pass('C-preview-pending');
 
     // Attach minimal image so submit-review media gate can pass, then approve via admin HTTP.
     const tinyPng =
@@ -398,13 +394,11 @@ async function main() {
         body: JSON.stringify({ decision: 'approve', revision: rev }),
       }),
     );
-    if (approved.status >= 400) {
-      const content = app.get(CatalogContentService);
-      await content.decide('admin-test', 'product', pub.id, 'approve', 'e1-closure', rev);
-      pass('C-approve-via-service');
-    } else {
-      pass('C-approve-via-http');
-    }
+    assert.ok(
+      approved.status === 200 || approved.status === 201,
+      `approve must succeed via HTTP (no service bypass): ${approved.status} ${approved.text}`,
+    );
+    pass('C-approve-via-http');
     const pubLive = await prisma.product.findUniqueOrThrow({ where: { id: pub.id } });
     assert.equal(pubLive.subcategory, 'clothes.abaya');
     assert.equal(pubLive.nameAr, `منشور معلّق ${suffix}`);
@@ -488,10 +482,11 @@ async function main() {
     assert.equal(page1.status, 200, page1.text);
     assert.ok(page1.json.items.length <= 8);
     assert.ok(page1.json.items.every((it: any) => it.subcategory === 'clothes.abaya'));
+    const expectedAbaya = new Set(filterIds.filter((_, i) => i % 2 === 0));
     const seen = new Set(page1.json.items.map((it: any) => it.id));
     let cursor = page1.json.nextCursor;
     let pages = 1;
-    while (cursor && pages < 6) {
+    while (cursor && pages < 10) {
       const page = await readJson(
         await fetch(
           `${root}/api/v1/marketplace/catalog?lane=elegance&partnerId=${brand.id}&subcategory=clothes.abaya&limit=8&sort=key&cursor=${encodeURIComponent(cursor)}`,
@@ -506,21 +501,21 @@ async function main() {
       cursor = page.json.nextCursor;
       pages += 1;
     }
-    assert.ok(seen.size >= 8, `expected multiple abaya rows, got ${seen.size}`);
+    assert.equal(cursor, null, 'pagination must finish');
+    for (const id of expectedAbaya) assert.ok(seen.has(id), `missing abaya ${id}`);
+    for (const id of seen) {
+      if (filterIds.includes(id)) assert.ok(expectedAbaya.has(id), `non-abaya leaked ${id}`);
+    }
     pass('F-subcategory-pagination');
 
+    assert.ok(page1.json.nextCursor, 'need cursor for filter-change mismatch');
     const badCursor = await readJson(
       await fetch(
-        `${root}/api/v1/marketplace/catalog?lane=elegance&partnerId=${brand.id}&subcategory=clothes.wedding_dress&limit=8&sort=key&cursor=${encodeURIComponent(page1.json.nextCursor || 'x')}`,
+        `${root}/api/v1/marketplace/catalog?lane=elegance&partnerId=${brand.id}&subcategory=clothes.wedding_dress&limit=8&sort=key&cursor=${encodeURIComponent(page1.json.nextCursor)}`,
       ),
     );
-    // Changing filter with old cursor should mismatch per contract
-    if (page1.json.nextCursor) {
-      assert.ok(badCursor.status === 400 || badCursor.status === 200);
-      pass('F-cursor-filter-change');
-    } else {
-      pass('F-cursor-filter-change-SKIPPED');
-    }
+    assert.equal(badCursor.status, 400, `cursor filter change must be 400: ${badCursor.text}`);
+    pass('F-cursor-filter-change');
 
     // —— B draft materialize without fake price (editor) ——
     const draftId = `e1c-draft-${suffix}`;

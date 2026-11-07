@@ -72,6 +72,14 @@
     "attributesKeyNull": "clears that key",
     "nestedNull": "400 (DIMENSIONS_NULL for dimensionsCm.*)",
     "arrayReplace": "whole unit",
-    "publishedTaxonomy": "writes draft_* until approve"
+    "publishedTaxonomy": "writes draft_* until approve",
+    "draftTaxonomyBaseline": "when draftTaxonomySet=true use draft_* including null clears; never coalesce null back to published",
+    "validationOrder": "resolve final taxonomy → load final profile attribute defs → merge attributes → validate",
+    "unknownAttributeKeys": "reject newly patched unknown keys; preserve untouched legacy unknown keys",
+    "subcategoryNull": "explicit clear allowed (legacy); stored as draft null when published",
+    "catalogCursor": "subcategory is part of filter fingerprint; filter change with old cursor → 400"
+  },
+  "registry": {
+    "subcategoryField": "existing.subcategory — present on product.clothes and product.abaya profiles for editor drafts"
   }
 }

@@ -2,18 +2,23 @@ import { Prisma } from '@prisma/client';
 import { mergeAttributesPatch } from './attributes-patch.merge';
 import {
   normalizeOptionalId,
+  resolveFromSubcategory,
   validateProductTaxonomyWrite,
   type AttributeFieldDef,
   type ProductTaxonomyInput,
 } from './product-taxonomy.validate';
 import type { EleganceTaxonomyDoc, TaxonomyFieldError } from './taxonomy.types';
-import { resolveFromSubcategory } from './product-taxonomy.validate';
 
 export type TaxonomyWriteContext = {
   doc: EleganceTaxonomyDoc;
   knownProfileIds?: Set<string>;
+  /**
+   * Resolve attribute field defs for the FINAL profileId after taxonomy resolution.
+   * Must not use a stale/pre-patch profile.
+   */
+  resolveAttributeFieldDefs?: (profileId: string | null) => Map<string, AttributeFieldDef> | undefined;
+  /** @deprecated Prefer resolveAttributeFieldDefs; ignored when resolver is set. */
   attributeFieldDefs?: Map<string, AttributeFieldDef>;
-  allowUnknownAttributeKeys?: boolean;
 };
 
 export type ProductTaxonomyState = {
@@ -33,18 +38,72 @@ export type TaxonomyPatchInput = {
 export type AppliedTaxonomyWrite = {
   errors: TaxonomyFieldError[];
   next: ProductTaxonomyState;
-  /** Prisma fragment for unpublished (live) write */
   liveData: Record<string, unknown>;
-  /** Prisma fragment for published pending draft */
   draftData: Record<string, unknown>;
 };
+
+export type DraftTaxonomyRow = {
+  draftTaxonomySet?: boolean | null;
+  draftCategory?: string | null;
+  draftSubcategory?: string | null;
+  draftProfileId?: string | null;
+  draftAttributesJson?: unknown;
+  category?: string | null;
+  subcategory?: string | null;
+  profileId?: string | null;
+  attributesJson?: unknown;
+};
+
+/**
+ * Pending draft taxonomy is authoritative when draftTaxonomySet=true — including intentional nulls.
+ * Never coalesce null draft fields back to published values.
+ */
+export function readTaxonomyBaseline(row: DraftTaxonomyRow): ProductTaxonomyState {
+  if (row.draftTaxonomySet) {
+    return {
+      category: row.draftCategory ?? null,
+      subcategory: row.draftSubcategory ?? null,
+      profileId: row.draftProfileId ?? null,
+      attributesJson: row.draftAttributesJson ?? null,
+    };
+  }
+  return {
+    category: row.category ?? null,
+    subcategory: row.subcategory ?? null,
+    profileId: row.profileId ?? null,
+    attributesJson: row.attributesJson ?? null,
+  };
+}
+
+/** Apply pending draft taxonomy onto live columns (approve path). Null draft values clear live. */
+export function pendingTaxonomyToLiveWrite(row: DraftTaxonomyRow): Record<string, unknown> | null {
+  if (!row.draftTaxonomySet) return null;
+  return {
+    category: row.draftCategory ?? null,
+    subcategory: row.draftSubcategory ?? null,
+    profileId: row.draftProfileId ?? null,
+    attributesJson:
+      row.draftAttributesJson == null
+        ? Prisma.DbNull
+        : (row.draftAttributesJson as Prisma.InputJsonValue),
+    draftCategory: null,
+    draftSubcategory: null,
+    draftProfileId: null,
+    draftAttributesJson: Prisma.DbNull,
+    draftTaxonomySet: false,
+  };
+}
 
 function asJson(value: Record<string, unknown> | null): Prisma.InputJsonValue | typeof Prisma.DbNull {
   return value == null ? Prisma.DbNull : (value as Prisma.InputJsonValue);
 }
 
+function isPlainObject(v: unknown): v is Record<string, unknown> {
+  return !!v && typeof v === 'object' && !Array.isArray(v);
+}
+
 /**
- * Resolve next taxonomy state from current + patch, validate merged result, build Prisma fragments.
+ * Resolve next taxonomy state from current + patch, validate merged result against FINAL profile defs.
  */
 export function applyTaxonomyPatch(
   ctx: TaxonomyWriteContext,
@@ -63,18 +122,29 @@ export function applyTaxonomyPatch(
   let nextSubcategory = subcategoryIn !== undefined ? subcategoryIn : current.subcategory;
   let nextProfileId = profileIn !== undefined ? profileIn : current.profileId;
 
-  if (subcategoryIn) {
-    const resolved = resolveFromSubcategory(ctx.doc, subcategoryIn);
+  // Resolve canonical category/profile from subcategory when not explicitly conflicting.
+  if (nextSubcategory) {
+    const resolved = resolveFromSubcategory(ctx.doc, nextSubcategory);
     if (resolved) {
-      if (categoryIn === undefined && !current.category) nextCategory = resolved.category;
-      if (profileIn === undefined && !current.profileId && resolved.profileId) {
-        nextProfileId = resolved.profileId;
+      if (categoryIn === undefined && (nextCategory == null || nextCategory === '')) {
+        nextCategory = resolved.category;
+      }
+      if (profileIn === undefined) {
+        // Always prefer taxonomy-resolved profile when client omitted profileId,
+        // including when current.profileId was null OR when subcategory changed.
+        if (subcategoryIn !== undefined || nextProfileId == null || nextProfileId === '') {
+          nextProfileId = resolved.profileId;
+        }
       }
     }
   }
 
   let nextAttributes = current.attributesJson;
+  const patchedAttrKeys = new Set<string>();
   if (patch.attributes !== undefined) {
+    if (isPlainObject(patch.attributes)) {
+      for (const k of Object.keys(patch.attributes)) patchedAttrKeys.add(k);
+    }
     const merged = mergeAttributesPatch(current.attributesJson, patch.attributes);
     if (!merged.ok) {
       errors.push(...merged.errors);
@@ -83,30 +153,72 @@ export function applyTaxonomyPatch(
     }
   }
 
+  // Load field defs for the FINAL profile only (after taxonomy resolution).
+  const attributeFieldDefs =
+    ctx.resolveAttributeFieldDefs?.(nextProfileId) ??
+    (nextProfileId ? ctx.attributeFieldDefs : undefined) ??
+    undefined;
+
   const validateInput: ProductTaxonomyInput = {
     category: nextCategory,
     subcategory: nextSubcategory,
     profileId: nextProfileId,
-    attributes: patch.attributes !== undefined ? nextAttributes : undefined,
+    attributes: undefined,
     allowOmittedSubcategory: true,
     knownProfileIds: ctx.knownProfileIds,
-    attributeFieldDefs: ctx.attributeFieldDefs,
-    allowUnknownAttributeKeys: ctx.allowUnknownAttributeKeys ?? true,
+    attributeFieldDefs,
+    // Unknown keys only enforced for newly patched keys (see below).
+    allowUnknownAttributeKeys: true,
   };
-  // Always validate taxonomy ids even when attributes omitted.
-  if (patch.attributes === undefined) {
-    validateInput.attributes = undefined;
-  }
   errors.push(...validateProductTaxonomyWrite(ctx.doc, validateInput));
 
-  // When attributes were patched, also validate final merged bag types.
-  if (patch.attributes !== undefined && nextAttributes != null && typeof nextAttributes === 'object') {
-    const again = validateProductTaxonomyWrite(ctx.doc, {
-      ...validateInput,
-      attributes: nextAttributes,
-    });
-    for (const e of again) {
-      if (!errors.some((x) => x.fieldId === e.fieldId && x.code === e.code)) errors.push(e);
+  if (patch.attributes !== undefined && errors.every((e) => e.fieldId !== 'attributes')) {
+    if (nextAttributes != null && isPlainObject(nextAttributes)) {
+      // Validate types for all known fields present in the final bag.
+      const typed = validateProductTaxonomyWrite(ctx.doc, {
+        ...validateInput,
+        attributes: nextAttributes,
+        allowUnknownAttributeKeys: true,
+      });
+      for (const e of typed) {
+        if (!errors.some((x) => x.fieldId === e.fieldId && x.code === e.code)) errors.push(e);
+      }
+      // Reject NEW / patched unknown keys (not present in prior bag as legacy).
+      if (attributeFieldDefs) {
+        const prior = isPlainObject(current.attributesJson) ? current.attributesJson : {};
+        for (const key of patchedAttrKeys) {
+          if (key === 'dimensionsCm') continue;
+          if (attributeFieldDefs.has(key)) continue;
+          // Clearing an unknown legacy key with null is allowed (intentional clear).
+          const patchObj = isPlainObject(patch.attributes) ? patch.attributes : {};
+          if (patchObj[key] === null && Object.prototype.hasOwnProperty.call(prior, key)) {
+            continue;
+          }
+          // Brand-new unknown key, or modifying an unknown key's value → reject.
+          errors.push({
+            fieldId: key,
+            code: 'ATTRIBUTE_UNKNOWN',
+            messageAr: `خاصية غير مسموحة لهذا الملف: ${key}`,
+          });
+        }
+      } else if (nextProfileId && patchedAttrKeys.size > 0) {
+        // Profile known but no attribute defs resolved — still reject typed unknowns via PROFILE path.
+        // If profile has no attribute fields, any patched non-dimensions key is unknown.
+        for (const key of patchedAttrKeys) {
+          if (key === 'dimensionsCm') continue;
+          errors.push({
+            fieldId: key,
+            code: 'ATTRIBUTE_UNKNOWN',
+            messageAr: `خاصية غير مسموحة لهذا الملف: ${key}`,
+          });
+        }
+      }
+    } else if (nextAttributes != null) {
+      errors.push({
+        fieldId: 'attributes',
+        code: 'ATTRIBUTES_TYPE',
+        messageAr: 'خصائص المنتج يجب أن تكون كائنًا وليس مصفوفة',
+      });
     }
   }
 
@@ -132,26 +244,24 @@ export function applyTaxonomyPatch(
       draftData.draftSubcategory = next.subcategory;
       draftData.draftProfileId = next.profileId;
       draftData.draftAttributesJson = asJson(
-        next.attributesJson == null || typeof next.attributesJson !== 'object' || Array.isArray(next.attributesJson)
+        next.attributesJson == null || !isPlainObject(next.attributesJson)
           ? null
-          : (next.attributesJson as Record<string, unknown>),
+          : next.attributesJson,
       );
     }
   } else {
     if (patch.category !== undefined) liveData.category = next.category;
     if (patch.subcategory !== undefined) liveData.subcategory = next.subcategory;
     if (patch.profileId !== undefined) liveData.profileId = next.profileId;
-    if (subcategoryIn && !patch.category && !current.category && next.category) {
+    if (subcategoryIn && patch.category === undefined && next.category && current.category == null) {
       liveData.category = next.category;
     }
-    if (subcategoryIn && !patch.profileId && !current.profileId && next.profileId) {
+    if (subcategoryIn && patch.profileId === undefined && next.profileId) {
       liveData.profileId = next.profileId;
     }
     if (patch.attributes !== undefined) {
       liveData.attributesJson = asJson(
-        next.attributesJson == null || typeof next.attributesJson !== 'object' || Array.isArray(next.attributesJson)
-          ? null
-          : (next.attributesJson as Record<string, unknown>),
+        next.attributesJson == null || !isPlainObject(next.attributesJson) ? null : next.attributesJson,
       );
     }
   }

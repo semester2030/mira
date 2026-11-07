@@ -30,6 +30,7 @@ export function normalizeFilterFingerprint(
     q: (filter.q ?? '').trim(),
     tags: sortedUnique(filter.tags),
     category: (filter.category ?? '').trim(),
+    subcategory: (filter.subcategory ?? '').trim(),
     city: (filter.city ?? '').trim(),
     partnerId: (filter.partnerId ?? '').trim(),
     kind: filter.kind ?? '',

@@ -589,9 +589,10 @@ export class CatalogContentService {
               : {}),
             ...(row.draftTaxonomySet
               ? {
-                  category: row.draftCategory ?? row.category ?? null,
+                  // Intentional null draft fields clear published values — never coalesce back.
+                  category: row.draftCategory ?? null,
                   subcategory: row.draftSubcategory ?? null,
-                  profileId: row.draftProfileId ?? row.profileId ?? null,
+                  profileId: row.draftProfileId ?? null,
                   attributesJson:
                     row.draftAttributesJson == null
                       ? Prisma.DbNull

@@ -1,4 +1,4 @@
-# دليل المطوّر — أساس تصنيفات «أناقتك» (E1 مغلق)
+# دليل المطوّر — أساس تصنيفات «أناقتك» (E1 مغلق نهائيًا)
 
 ## مصدر التعريف
 
@@ -8,10 +8,21 @@
 | شجرة أناقتك | `mira-api/src/marketplace/taxonomy/elegance-taxonomy.v1.json` |
 | دمج PATCH للخصائص | `marketplace/taxonomy/attributes-patch.merge.ts` |
 | تحقق التصنيف | `marketplace/taxonomy/product-taxonomy.validate.ts` |
-| تطبيق الحفظ | `marketplace/taxonomy/taxonomy-write.apply.ts` |
+| تطبيق الحفظ | `marketplace/taxonomy/taxonomy-write.apply.ts` (`applyTaxonomyPatch`, `readTaxonomyBaseline`) |
 
 نسخة السجل للويب مشتقة: `partners-portal/web/js/field-registry.v2.json` (`npm run check:field-registry`).  
 إسقاط التطبيق العام: `GET /api/v1/marketplace/taxonomy?lane=elegance` (يُحمَّل JSON من `dist` بعد البناء — مضمّن في `nest-cli.json` assets).
+
+## ترتيب التحقق (إلزامي)
+
+1. احسب الحالة النهائية للتصنيف من الأساس + التعديل.
+2. حدّد `profileId` الفعلي من التصنيف (عند غياب تعارض صريح).
+3. ارفض تعارض `category` / `subcategory` / `profileId`.
+4. حمّل تعريفات الحقول للملف **النهائي** فقط (`resolveAttributeFieldDefs`).
+5. ادمج تعديل الخصائص.
+6. تحقق من القيم قبل الحفظ.
+
+لا تُحمَّل تعريفات الملف القديم بعد تغيير التصنيف. لا يُستخدم `allowUnknownAttributeKeys=true` كسماح شامل؛ المفاتيح الجديدة/المعدَّلة غير المعرّفة تُرفض، بينما الخصائص القديمة غير المعروفة تُحفظ عند عدم لمسها (توافق).
 
 ## عقد PATCH / null / المصفوفات
 
@@ -21,39 +32,42 @@
 - مفتاح علوي `null` → مسح ذلك المفتاح فقط.
 - مصفوفة مرسلة → استبدال كوحدة (لا دمج عناصر).
 - كائن متداخل (مثل `dimensionsCm`) → دمج عميق؛ `dimensionsCm.w=null` → 400 `DIMENSIONS_NULL`.
-- التحقق يُطبَّق على **النتيجة بعد الدمج**، مع قفل `FOR UPDATE` في التحديث الفردي.
+- `subcategory: null` / `profileId: null` مسموحان للمسح الصريح (legacy). إن رُفض المسح لاحقًا لعقد جديد فيجب أن يكون الرفض 400 من العملية الأولى لا تراجعًا صامتًا.
+- المسودة تسمح بنقص الحقول المطلوبة للنشر، وترفض القيم ذات النوع الخاطئ.
 
-## منشور مقابل معلّق
+## أساس التعديل المعلّق (`draftTaxonomySet`)
 
-للمنتج `contentStatus=published`:
-- الاسم/الوصف → `draftName*`
-- options/variants → `draftOptions*` / `draftVariants*`
-- category/subcategory/profileId/attributes → `draftCategory` / `draftSubcategory` / `draftProfileId` / `draftAttributesJson` + `draftTaxonomySet`
-- النسخة العامة لا تتغير حتى `approve` في `CatalogContentService.decide`
-- حساب `developer` يبقى بنشر مباشر بعد submit مع بقاء التحقق والملكية
-
-غير المنشور: الكتابة على الأعمدة الحية مباشرة.
+- `draftTaxonomySet=false` → الأساس = الأعمدة المنشورة.
+- `draftTaxonomySet=true` → الأساس = `draftCategory` / `draftSubcategory` / `draftProfileId` / `draftAttributesJson` **بما فيها null للمسح**.
+- ممنوع: `draftSubcategory ?? publishedSubcategory` لإلغاء مسح صريح.
+- نفس القاعدة في الفردي، materialize، المعاينة، والموافقة.
+- التعديل اللاحق يحافظ على المسح ما لم يُرسل المستخدم قيمة جديدة.
+- عند الموافقة تُطبَّق الحالة المعلّقة كاملة ثم تُصفَّر الأعلام داخل المعاملة.
+- الرفض لا يغيّر النسخة المنشورة.
+- مسودة المحتوى لا تُغيّر السعر/المخزون/الحجوزات التشغيلية على المنشور.
 
 ## المسارات
 
 1. فردي: `POST/PATCH /partners-portal/products`
-2. مسودة: editor PUT → materialize (`attributesJsonFromDraftValues` يجمع حقول `attributes.*`)
+2. مسودة: editor PUT → materialize (`attributesJsonFromDraftValues` يجمع حقول `attributes.*`؛ `subcategory` حقل سجل `existing.subcategory`)
 3. مجموعات: bulk → نفس materialize
 4. موافقة: admin `POST /admin/catalog-reviews/:kind/:id/decision`
+5. مطوّر مخوّل: submit → نشر مباشر بعد التحقق والعزل (صلاحية من `partner.type` في الخادم فقط)
 
 ## إضافة تصنيف فرعي مدعوم
 
 1. عقدة في `elegance-taxonomy.v1.json` (معرّف ثابت، parent/children متوافقان، `writeEnabled` صادق).
-2. `profileId` موجود في السجل.
+2. `profileId` موجود في السجل ومفعّل للكتابة عند الحاجة.
 3. `npm run check:elegance-taxonomy` و`npm run test:elegance-e1`.
 4. لا تفعّل الشنط/الأحذية للكتابة قبل E4.
 
-## اختبارات التوافق
+## اختبارات وإثبات
 
 ```bash
+export DATABASE_URL='postgresql://mira:mira_secret@localhost:5432/mira_db'
 npm run test:elegance-e1
+npm run test:elegance-e1-migration-proof
 npm run build   # يجب وجود dist/marketplace/taxonomy/elegance-taxonomy.v1.json
-node scripts/e1-migration-rollback-proof.mjs
 ```
 
-تراجع migration المفضّل: إعادة نشر بناء سابق مع إبقاء الأعمدة الإضافية.
+تراجع migration المفضّل: إعادة نشر بناء سابق مع إبقاء الأعمدة الإضافية. لا تَعُدّ DROP COLUMN رجوعًا آمنًا بعد اعتماد بيانات عليها.

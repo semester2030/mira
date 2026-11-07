@@ -24,7 +24,10 @@ import {
   placeModeFromServiceProfile,
 } from '../../marketplace/catalog-filters';
 import { TaxonomyService } from '../../marketplace/taxonomy/taxonomy.service';
-import { applyTaxonomyPatch } from '../../marketplace/taxonomy/taxonomy-write.apply';
+import {
+  applyTaxonomyPatch,
+  readTaxonomyBaseline,
+} from '../../marketplace/taxonomy/taxonomy-write.apply';
 import type { AttributeFieldDef } from '../../marketplace/taxonomy/product-taxonomy.validate';
 import { normalizeOptionalId } from '../../marketplace/taxonomy/product-taxonomy.validate';
 import { PARTNER_KIND_FORBIDDEN, partnerCanCreateKind } from '../partner-capabilities';
@@ -188,35 +191,34 @@ export class EditorDraftsService {
     if (!taxonomy) this.taxonomy.onModuleInit();
   }
 
-  private taxonomyWriteContext(profileId?: string | null) {
-    const knownProfileIds = new Set(this.registry.getRegistry().profiles.map((p) => p.id));
-    let attributeFieldDefs: Map<string, AttributeFieldDef> | undefined;
-    if (profileId) {
-      const profile = this.registry.getProfile(profileId);
-      if (profile) {
-        attributeFieldDefs = new Map();
-        const fields = this.registry.getRegistry().fields;
-        for (const fieldId of profile.fields ?? []) {
-          const def = fields[fieldId];
-          if (!def) continue;
-          const storage = (def as { storage?: string }).storage;
-          if (typeof storage === 'string' && storage.startsWith('attributes.')) {
-            attributeFieldDefs.set(fieldId, {
-              id: fieldId,
-              type: def.type,
-              values: def.values,
-              min: def.min ?? null,
-              max: def.max ?? null,
-            });
-          }
-        }
+  private attributeDefsForProfile(profileId: string | null): Map<string, AttributeFieldDef> | undefined {
+    if (!profileId) return undefined;
+    const profile = this.registry.getProfile(profileId);
+    if (!profile) return undefined;
+    const attributeFieldDefs = new Map<string, AttributeFieldDef>();
+    const fields = this.registry.getRegistry().fields;
+    for (const fieldId of profile.fields ?? []) {
+      const def = fields[fieldId];
+      if (!def) continue;
+      const storage = (def as { storage?: string }).storage;
+      if (typeof storage === 'string' && storage.startsWith('attributes.')) {
+        attributeFieldDefs.set(fieldId, {
+          id: fieldId,
+          type: def.type,
+          values: def.values,
+          min: def.min ?? null,
+          max: def.max ?? null,
+        });
       }
     }
+    return attributeFieldDefs;
+  }
+
+  private taxonomyWriteContext() {
     return {
       doc: this.taxonomy.getDoc(),
-      knownProfileIds,
-      attributeFieldDefs,
-      allowUnknownAttributeKeys: true,
+      knownProfileIds: new Set(this.registry.getRegistry().profiles.map((p) => p.id)),
+      resolveAttributeFieldDefs: (profileId: string | null) => this.attributeDefsForProfile(profileId),
     };
   }
 
@@ -641,7 +643,7 @@ export class EditorDraftsService {
     if (kind === 'product') {
       const attributesRaw = attributesJsonFromDraftValues(values, this.registry.getRegistry().fields);
       const applied = applyTaxonomyPatch(
-        this.taxonomyWriteContext(draft.profileId),
+        this.taxonomyWriteContext(),
         { category: null, subcategory: null, profileId: draft.profileId, attributesJson: null },
         {
           category: normalizeOptionalId(values.category) ?? null,
@@ -798,28 +800,15 @@ export class EditorDraftsService {
       }
 
       const attributesRaw = attributesJsonFromDraftValues(values, this.registry.getRegistry().fields);
-      const baseline =
-        published && current.draftTaxonomySet
-          ? {
-              category: current.draftCategory ?? current.category,
-              subcategory: current.draftSubcategory ?? current.subcategory,
-              profileId: current.draftProfileId ?? current.profileId,
-              attributesJson: current.draftAttributesJson ?? current.attributesJson,
-            }
-          : {
-              category: current.category,
-              subcategory: current.subcategory,
-              profileId: current.profileId,
-              attributesJson: current.attributesJson,
-            };
+      const baseline = readTaxonomyBaseline(current);
       const taxonomyTouched =
         values.category !== undefined ||
         values.subcategory !== undefined ||
         attributesRaw !== undefined ||
-        draft.profileId !== (current.profileId ?? '');
+        draft.profileId !== (baseline.profileId ?? '');
       const applied = taxonomyTouched
         ? applyTaxonomyPatch(
-            this.taxonomyWriteContext(draft.profileId),
+            this.taxonomyWriteContext(),
             baseline,
             {
               category: values.category === undefined ? undefined : normalizeOptionalId(values.category),
