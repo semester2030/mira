@@ -442,6 +442,204 @@ async function main() {
       );
     }
 
+    // —— P-CLEAR: clear profileId then attributes-only must not restore it ——
+    {
+      const pub = await prisma.product.create({
+        data: {
+          partnerId: brand.id,
+          nameAr: `PCLEAR ${suffix}`,
+          nameEn: `pclear-${suffix}`,
+          priceHalalas: 6600,
+          externalUrl: 'https://example.test/pclear',
+          category: 'clothes',
+          subcategory: 'clothes.abaya',
+          profileId: 'product.abaya',
+          attributesJson: { material: ['silk'] },
+          contentStatus: 'published',
+          reviewStatus: 'none',
+          active: true,
+          catalogSource: 'catalog',
+          concernTags: [],
+          skinTypes: [],
+          stockQty: 2,
+        },
+      });
+      createdIds.push(pub.id);
+      const media0 = await readJson(
+        await fetch(`${root}/api/v1/partners-portal/products/${pub.id}/media`, {
+          method: 'POST',
+          headers: auth(tokenBrand),
+          body: JSON.stringify({ mimeType: 'image/png', dataBase64: TINY_PNG }),
+        }),
+      );
+      assert.ok(media0.status === 200 || media0.status === 201, media0.text);
+      const mediaId0 = media0.json.id || media0.json.mediaId;
+
+      const clearProf = await readJson(
+        await fetch(`${root}/api/v1/partners-portal/products/${pub.id}`, {
+          method: 'PATCH',
+          headers: auth(tokenBrand),
+          body: JSON.stringify({ profileId: null }),
+        }),
+      );
+      assert.equal(clearProf.status, 200, clearProf.text);
+      const afterClear = await prisma.product.findUniqueOrThrow({ where: { id: pub.id } });
+      assert.equal(afterClear.draftTaxonomySet, true);
+      assert.equal(afterClear.draftProfileId, null);
+      assert.equal(afterClear.draftSubcategory, 'clothes.abaya');
+      assert.equal(afterClear.profileId, 'product.abaya', 'published profile unchanged until approve');
+      assert.equal(afterClear.subcategory, 'clothes.abaya');
+      assert.deepEqual(afterClear.attributesJson, { material: ['silk'] });
+
+      const attrPatch = await readJson(
+        await fetch(`${root}/api/v1/partners-portal/products/${pub.id}`, {
+          method: 'PATCH',
+          headers: auth(tokenBrand),
+          body: JSON.stringify({ attributes: { material: ['cotton'] } }),
+        }),
+      );
+      assert.equal(attrPatch.status, 200, attrPatch.text);
+      const afterAttr = await prisma.product.findUniqueOrThrow({ where: { id: pub.id } });
+      assert.equal(afterAttr.draftProfileId, null, 'cleared draftProfileId must stay null');
+      assert.equal(afterAttr.draftSubcategory, 'clothes.abaya');
+      assert.deepEqual(afterAttr.draftAttributesJson, { material: ['cotton'] });
+      assert.equal(afterAttr.profileId, 'product.abaya');
+      assert.deepEqual(afterAttr.attributesJson, { material: ['silk'] });
+      assert.equal(afterAttr.priceHalalas, 6600);
+      assert.equal(afterAttr.stockQty, 2);
+
+      const preview = await readJson(
+        await fetch(`${root}/api/v1/partners-portal/products/${pub.id}/preview`, {
+          headers: auth(tokenBrand),
+        }),
+      );
+      assert.equal(preview.status, 200, preview.text);
+      assert.equal(preview.json.draftTaxonomySet, true);
+      assert.equal(preview.json.draftProfileId, null);
+      assert.equal(preview.json.publishedProfileId, 'product.abaya');
+      assert.equal(preview.json.draftSubcategory, 'clothes.abaya');
+      assert.deepEqual(preview.json.draftAttributes, { material: ['cotton'] });
+
+      const submit = await readJson(
+        await fetch(`${root}/api/v1/partners-portal/products/${pub.id}/submit-review`, {
+          method: 'POST',
+          headers: auth(tokenBrand),
+          body: '{}',
+        }),
+      );
+      assert.ok(submit.status === 200 || submit.status === 201, submit.text);
+      const rev = submit.json.revision ?? submit.json.submittedRevision;
+      const approved = await readJson(
+        await fetch(`${root}/api/v1/admin/catalog-reviews/product/${pub.id}/decision`, {
+          method: 'POST',
+          headers: adminH,
+          body: JSON.stringify({ decision: 'approve', revision: rev }),
+        }),
+      );
+      assert.ok(approved.status === 200 || approved.status === 201, approved.text);
+      const live = await prisma.product.findUniqueOrThrow({ where: { id: pub.id } });
+      assert.equal(live.profileId, null);
+      assert.equal(live.subcategory, 'clothes.abaya');
+      assert.deepEqual(live.attributesJson, { material: ['cotton'] });
+      assert.equal(live.draftTaxonomySet, false);
+      assert.equal(live.draftProfileId, null);
+      assert.equal(live.priceHalalas, 6600);
+      assert.equal(live.stockQty, 2);
+      const mediaStill = await prisma.catalogMedia.findUnique({ where: { id: mediaId0 } });
+      assert.ok(mediaStill && mediaStill.ownerId === pub.id);
+
+      // Later attributes patch after approved null profile must not restore profile.
+      const later = await readJson(
+        await fetch(`${root}/api/v1/partners-portal/products/${pub.id}`, {
+          method: 'PATCH',
+          headers: auth(tokenBrand),
+          body: JSON.stringify({ attributes: { material: ['linen'] } }),
+        }),
+      );
+      assert.equal(later.status, 200, later.text);
+      const afterLater = await prisma.product.findUniqueOrThrow({ where: { id: pub.id } });
+      assert.equal(afterLater.profileId, null, 'live profile stays null until approve of later draft');
+      assert.equal(afterLater.draftTaxonomySet, true);
+      assert.equal(afterLater.draftProfileId, null);
+      assert.deepEqual(afterLater.draftAttributesJson, { material: ['linen'] });
+
+      record(
+        'P-CLEAR-PROFILE-SEQ',
+        'مسح profile ثم تعديل الخامة ثم معاينة ثم موافقة ثم تعديل لاحق',
+        'draftProfileId وprofile النهائي يبقيان null؛ material يتحدث؛ التحقق يبقى',
+        `draftAfterAttr=${afterAttr.draftProfileId} liveAfterApprove=${live.profileId} laterDraft=${afterLater.draftProfileId}`,
+        true,
+      );
+
+      // Unpublished: clear profile then attributes — no restore.
+      const draft = await prisma.product.create({
+        data: {
+          partnerId: brand.id,
+          nameAr: `PCLEAR-D ${suffix}`,
+          nameEn: `pcleard-${suffix}`,
+          priceHalalas: 1000,
+          externalUrl: 'https://example.test/pcleard',
+          category: 'clothes',
+          subcategory: 'clothes.abaya',
+          profileId: 'product.abaya',
+          attributesJson: { material: ['silk'] },
+          contentStatus: 'draft',
+          reviewStatus: 'draft',
+          active: false,
+          concernTags: [],
+          skinTypes: [],
+        },
+      });
+      createdIds.push(draft.id);
+      const dClear = await readJson(
+        await fetch(`${root}/api/v1/partners-portal/products/${draft.id}`, {
+          method: 'PATCH',
+          headers: auth(tokenBrand),
+          body: JSON.stringify({ profileId: null }),
+        }),
+      );
+      assert.equal(dClear.status, 200, dClear.text);
+      const dAttr = await readJson(
+        await fetch(`${root}/api/v1/partners-portal/products/${draft.id}`, {
+          method: 'PATCH',
+          headers: auth(tokenBrand),
+          body: JSON.stringify({ attributes: { material: ['cotton'] } }),
+        }),
+      );
+      assert.equal(dAttr.status, 200, dAttr.text);
+      const dRow = await prisma.product.findUniqueOrThrow({ where: { id: draft.id } });
+      assert.equal(dRow.profileId, null);
+      assert.deepEqual(dRow.attributesJson, { material: ['cotton'] });
+      record(
+        'P-CLEAR-UNPUBLISHED',
+        'منتج غير منشور: مسح profile ثم attributes',
+        'profileId يبقى null',
+        `profile=${dRow.profileId} attrs=${JSON.stringify(dRow.attributesJson)}`,
+        true,
+      );
+
+      // Name-only must not change taxonomy.
+      const nameOnly = await readJson(
+        await fetch(`${root}/api/v1/partners-portal/products/${draft.id}`, {
+          method: 'PATCH',
+          headers: auth(tokenBrand),
+          body: JSON.stringify({ nameAr: `PCLEAR-D اسم ${suffix}` }),
+        }),
+      );
+      assert.equal(nameOnly.status, 200, nameOnly.text);
+      const nameRow = await prisma.product.findUniqueOrThrow({ where: { id: draft.id } });
+      assert.equal(nameRow.profileId, null);
+      assert.equal(nameRow.subcategory, 'clothes.abaya');
+      assert.deepEqual(nameRow.attributesJson, { material: ['cotton'] });
+      record(
+        'P-NAME-ONLY-TAXONOMY',
+        'تعديل الاسم وحده',
+        'taxonomy بلا تغيير',
+        `profile=${nameRow.profileId} sub=${nameRow.subcategory}`,
+        true,
+      );
+    }
+
     // —— N01 ——
     {
       const pub = await prisma.product.create({

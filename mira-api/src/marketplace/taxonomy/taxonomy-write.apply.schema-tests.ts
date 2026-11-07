@@ -149,4 +149,70 @@ const ctx = {
   pass('V-explicit-clear-keeps-untouched-legacy');
 }
 
+{
+  // Clear profile, then attributes-only must NOT restore stored profileId.
+  const cleared = applyTaxonomyPatch(
+    ctx,
+    {
+      category: 'clothes',
+      subcategory: 'clothes.abaya',
+      profileId: 'product.abaya',
+      attributesJson: { material: ['silk'] },
+    },
+    { profileId: null },
+    { published: true },
+  );
+  assert.equal(cleared.errors.length, 0, JSON.stringify(cleared.errors));
+  assert.equal(cleared.next.profileId, null);
+  assert.equal(cleared.draftData.draftProfileId, null);
+  assert.equal(cleared.draftData.draftSubcategory, 'clothes.abaya');
+
+  const baseline = readTaxonomyBaseline({
+    draftTaxonomySet: true,
+    draftCategory: 'clothes',
+    draftSubcategory: 'clothes.abaya',
+    draftProfileId: null,
+    draftAttributesJson: { material: ['silk'] },
+    category: 'clothes',
+    subcategory: 'clothes.abaya',
+    profileId: 'product.abaya',
+    attributesJson: { material: ['silk'] },
+  });
+  const attrOnly = applyTaxonomyPatch(
+    ctx,
+    baseline,
+    { attributes: { material: ['cotton'] } },
+    { published: true },
+  );
+  assert.equal(attrOnly.errors.length, 0, JSON.stringify(attrOnly.errors));
+  assert.equal(attrOnly.next.profileId, null, 'cleared profile must stay null after attributes patch');
+  assert.equal(attrOnly.draftData.draftProfileId, null);
+  assert.equal(attrOnly.draftData.draftSubcategory, 'clothes.abaya');
+  assert.deepEqual(attrOnly.next.attributesJson, { material: ['cotton'] });
+  pass('P-cleared-profile-stays-null-on-attributes-patch');
+}
+
+{
+  // Re-sending the same subcategory must not undo an explicit profile clear.
+  const baseline = readTaxonomyBaseline({
+    draftTaxonomySet: true,
+    draftCategory: 'clothes',
+    draftSubcategory: 'clothes.abaya',
+    draftProfileId: null,
+    draftAttributesJson: { material: ['silk'] },
+    category: 'clothes',
+    subcategory: 'clothes.abaya',
+    profileId: 'product.abaya',
+    attributesJson: { material: ['silk'] },
+  });
+  const sameSub = applyTaxonomyPatch(
+    ctx,
+    baseline,
+    { subcategory: 'clothes.abaya' },
+    { published: true },
+  );
+  assert.equal(sameSub.next.profileId, null);
+  pass('P-same-subcategory-does-not-restore-cleared-profile');
+}
+
 console.log('taxonomy-write.apply.schema-tests: PASS');

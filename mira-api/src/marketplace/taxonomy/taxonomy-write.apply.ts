@@ -150,12 +150,19 @@ export function applyTaxonomyPatch(
         nextCategory = resolved.category;
       }
       if (profileIn === undefined) {
-        // Omitted profileId: infer from taxonomy when empty or subcategory changed.
-        if (subcategoryIn !== undefined || nextProfileId == null || nextProfileId === '') {
+        // Omitted profileId: only rewrite *stored* profile when subcategory is explicitly changing.
+        // Do NOT restore a previously cleared null just because attributes were patched or the
+        // same subcategory remains on the baseline.
+        const subcategoryChanged =
+          subcategoryIn !== undefined &&
+          (subcategoryIn ?? null) !== (current.subcategory ?? null);
+        if (subcategoryChanged) {
           nextProfileId = resolved.profileId;
           validationProfileId = resolved.profileId;
         } else {
-          validationProfileId = nextProfileId;
+          // Keep stored value (including intentional null). Validate via taxonomy profile.
+          validationProfileId =
+            nextProfileId != null && nextProfileId !== '' ? nextProfileId : resolved.profileId;
         }
       } else if (profileIn == null || profileIn === '') {
         // Explicit clear stays stored as null; still validate attributes against taxonomy profile.
