@@ -49,6 +49,21 @@ export class UpsertProductDto {
   @MaxLength(40)
   category?: string;
 
+  /** Taxonomy node id (never *.all). Omitted on legacy create is allowed. */
+  @IsOptional()
+  @IsString()
+  @MaxLength(80)
+  subcategory?: string;
+
+  @IsOptional()
+  @IsString()
+  @MaxLength(80)
+  profileId?: string;
+
+  /** Object bag only — arrays rejected by taxonomy write validation. */
+  @IsOptional()
+  attributes?: Record<string, unknown>;
+
   @IsOptional()
   @IsArray()
   @IsString({ each: true })
@@ -126,6 +141,21 @@ export class UpdateProductDto {
   @IsString()
   @MaxLength(40)
   category?: string;
+
+  /** Omitted on PATCH leaves existing subcategory unchanged. */
+  @IsOptional()
+  @IsString()
+  @MaxLength(80)
+  subcategory?: string;
+
+  @IsOptional()
+  @IsString()
+  @MaxLength(80)
+  profileId?: string;
+
+  /** Object bag; when sent, replaces attributes_json entirely (E2 may refine merge). */
+  @IsOptional()
+  attributes?: Record<string, unknown>;
 
   @IsOptional()
   @IsArray()

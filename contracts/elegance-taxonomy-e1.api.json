@@ -1,0 +1,61 @@
+{
+  "schemaVersion": 1,
+  "lane": "elegance",
+  "phase": "E1",
+  "endpoints": [
+    {
+      "method": "GET",
+      "path": "/api/v1/marketplace/taxonomy",
+      "auth": "none",
+      "query": { "lane": "elegance (required for this projection; other lanes 400)" },
+      "response": {
+        "schemaVersion": "number",
+        "lane": "elegance",
+        "definitionsVersion": "number",
+        "compatMinAppBuild": "number",
+        "nodes": [
+          {
+            "id": "string",
+            "parentId": "string|null",
+            "labelAr": "string",
+            "sort": "number",
+            "active": "boolean",
+            "browseOnly": "boolean",
+            "writeEnabled": "boolean",
+            "imageKey": "string|null",
+            "profileId": "string|null",
+            "children": ["string"]
+          }
+        ]
+      },
+      "notes": "Derived from mira-api/src/marketplace/taxonomy/elegance-taxonomy.v1.json. No partner session. No internal paths."
+    },
+    {
+      "method": "GET",
+      "path": "/api/v1/marketplace/catalog",
+      "auth": "none",
+      "queryAdded": { "subcategory": "exact persisted node id; applied before pagination" },
+      "productItemAdded": ["subcategory", "profileId"]
+    },
+    {
+      "method": "POST",
+      "path": "/api/v1/partners-portal/products",
+      "auth": "partner Bearer",
+      "bodyAdded": ["subcategory", "profileId", "attributes"],
+      "validation": "TaxonomyService.validateWrite — fieldErrors on 400"
+    },
+    {
+      "method": "PATCH",
+      "path": "/api/v1/partners-portal/products/:id",
+      "auth": "partner Bearer",
+      "bodyAdded": ["subcategory", "profileId", "attributes"],
+      "compat": "omitted subcategory does not clear existing"
+    }
+  ],
+  "storage": {
+    "products.subcategory": "TEXT nullable",
+    "products.attributes_json": "JSONB nullable",
+    "migration": "20261107210000_elegance_e1_product_subcategory",
+    "rollback": "DROP INDEX products_category_subcategory_idx; ALTER TABLE products DROP COLUMN subcategory, DROP COLUMN attributes_json;"
+  }
+}

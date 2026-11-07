@@ -1,4 +1,4 @@
-import { Body, Controller, Get, Inject, Param, Post, Query, UseGuards } from '@nestjs/common';
+import { BadRequestException, Body, Controller, Get, Inject, Optional, Param, Post, Query, UseGuards } from '@nestjs/common';
 import { CurrentUser } from '../common/decorators/current-user.decorator';
 import { FirebaseAuthGuard } from '../common/guards/firebase-auth.guard';
 import { RequestUser } from '../common/interfaces/request-user.interface';
@@ -6,6 +6,7 @@ import { coerceQueryParam } from './catalog-filters';
 import { MatchMarketplaceDto } from './dto/match-marketplace.dto';
 import { MarketplaceService } from './marketplace.service';
 import { listSaudiCities } from '../geo/saudi-cities';
+import { TaxonomyService } from './taxonomy/taxonomy.service';
 
 function qstr(raw: unknown): string | undefined {
   return coerceQueryParam(raw);
@@ -14,11 +15,33 @@ function qstr(raw: unknown): string | undefined {
 /** Public catalog + skin-based matching (no auth — no PII in request). */
 @Controller('marketplace')
 export class MarketplaceController {
-  constructor(@Inject(MarketplaceService) private readonly marketplace: MarketplaceService) {}
+  private readonly taxonomy: TaxonomyService;
+
+  constructor(
+    @Inject(MarketplaceService) private readonly marketplace: MarketplaceService,
+    @Optional() @Inject(TaxonomyService) taxonomy?: TaxonomyService,
+  ) {
+    this.taxonomy = taxonomy ?? new TaxonomyService();
+    if (!taxonomy) this.taxonomy.onModuleInit();
+  }
 
   @Post('match')
   match(@Body() dto: MatchMarketplaceDto) {
     return this.marketplace.match(dto);
+  }
+
+  /** Public elegance taxonomy projection (derived; no partner auth). */
+  @Get('taxonomy')
+  getTaxonomy(@Query('lane') lane?: string) {
+    const laneId = (lane ?? 'elegance').trim();
+    if (laneId !== 'elegance') {
+      throw new BadRequestException({
+        message: 'مسار التصنيفات غير مدعوم',
+        messageAr: 'مسار التصنيفات غير مدعوم',
+        code: 'TAXONOMY_LANE_UNSUPPORTED',
+      });
+    }
+    return this.taxonomy.publicProjection();
   }
 
   @Get('catalog')
@@ -33,6 +56,7 @@ export class MarketplaceController {
       limit: qstr(query.limit),
       partnerId: qstr(query.partnerId),
       category: qstr(query.category),
+      subcategory: qstr(query.subcategory),
       lane: qstr(query.lane),
       venue: qstr(query.venue),
       visual: qstr(query.visual),

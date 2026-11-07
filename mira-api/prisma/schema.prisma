@@ -303,6 +303,8 @@ model Product {
   externalUrl   String   @map("external_url")
   concernTags   String[] @map("concern_tags")
   category      String?
+  /// E1 elegance subcategory node id (never browseOnly *.all). Null = legacy unclassified.
+  subcategory   String?
   skinTypes     String[] @map("skin_types")
   stepAr        String?  @map("step_ar")
   sortOrder     Int      @default(0) @map("sort_order")
@@ -328,6 +330,8 @@ model Product {
   inventoryMode String   @default("product") @map("inventory_mode")
   optionsJson   Json?    @map("options_json")
   variantsJson  Json?    @map("variants_json")
+  /// Product-level attribute bag (material, cut, dimensionsCm, …). Object only — never array.
+  attributesJson Json?   @map("attributes_json")
   /// Pending options/variants for published rows — applied on content approve only.
   draftOptionsJson  Json? @map("draft_options_json")
   draftVariantsJson Json? @map("draft_variants_json")
@@ -343,6 +347,7 @@ model Product {
   variantInventories ProductVariantInventory[]
 
   @@index([partnerId, active])
+  @@index([category, subcategory])
   @@map("products")
 }
 

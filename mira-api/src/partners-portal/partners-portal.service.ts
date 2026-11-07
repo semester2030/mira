@@ -7,6 +7,7 @@ import {
   Logger,
   NotFoundException,
   OnModuleInit,
+  Optional,
 } from '@nestjs/common';
 import { PARTNER_KIND_FORBIDDEN, partnerCanCreateKind } from './partner-capabilities';
 import { ConfigService } from '@nestjs/config';
@@ -26,6 +27,7 @@ import {
 } from '../marketplace/commerce.types';
 import { lockPartnerScheduleScope } from '../marketplace/commerce-schedule-locks';
 import { PrismaService } from '../prisma/prisma.service';
+import { TaxonomyService } from '../marketplace/taxonomy/taxonomy.service';
 import { ApplyPartnerDto } from './dto/apply-partner.dto';
 import { UpdateProductDto, UpdateServiceDto, UpsertProductDto, UpsertServiceDto } from './dto/catalog.dto';
 import { TrackPartnerEventDto } from './dto/track-event.dto';
@@ -66,10 +68,33 @@ const SERVICE_CATEGORIES = new Set(['hair', 'skin', 'makeup', 'nails', 'care']);
 export class PartnersPortalService implements OnModuleInit {
   private readonly logger = new Logger(PartnersPortalService.name);
 
+  private readonly taxonomy: TaxonomyService;
+
   constructor(
     @Inject(PrismaService) private readonly prisma: PrismaService,
     @Inject(ConfigService) private readonly config: ConfigService,
-  ) {}
+    @Optional() @Inject(TaxonomyService) taxonomy?: TaxonomyService,
+  ) {
+    this.taxonomy = taxonomy ?? new TaxonomyService();
+    if (!taxonomy) this.taxonomy.onModuleInit();
+  }
+
+  private assertTaxonomyWrite(input: {
+    category?: string | null;
+    subcategory?: string | null;
+    profileId?: string | null;
+    attributes?: unknown;
+    allowOmittedSubcategory?: boolean;
+  }) {
+    const errors = this.taxonomy.validateWrite(input);
+    if (!errors.length) return;
+    throw new BadRequestException({
+      message: errors[0].messageAr,
+      messageAr: errors[0].messageAr,
+      code: errors[0].code,
+      fieldErrors: errors,
+    });
+  }
 
   /** One-shot: set password for an existing portal user from Render env (no chat dump). */
   async onModuleInit() {
@@ -429,7 +454,25 @@ export class PartnersPortalService implements OnModuleInit {
         code: PARTNER_KIND_FORBIDDEN,
       });
     }
-    const category = this.optionalCategory(dto.category, PRODUCT_CATEGORIES);
+    let category = this.optionalCategory(dto.category, PRODUCT_CATEGORIES);
+    let profileId: string | null = dto.profileId?.trim() || null;
+    const subcategory = dto.subcategory?.trim() || null;
+    this.assertTaxonomyWrite({
+      category,
+      subcategory,
+      profileId,
+      attributes: dto.attributes,
+      allowOmittedSubcategory: true,
+    });
+    if (subcategory) {
+      const resolved = this.taxonomy.resolveFromSubcategory(subcategory);
+      if (resolved) {
+        if (!category) {
+          category = this.optionalCategory(resolved.category, PRODUCT_CATEGORIES);
+        }
+        if (!profileId && resolved.profileId) profileId = resolved.profileId;
+      }
+    }
     const cosmetic = category === 'face' || category === 'body' || category === 'hair';
     const nameAr = dto.nameAr.trim();
     const commerce = normalizeProductCommerce(dto, null, dto.priceHalalas);
@@ -445,6 +488,16 @@ export class PartnersPortalService implements OnModuleInit {
         externalUrl: dto.externalUrl?.trim() || '',
         concernTags: dto.concernTags ?? [],
         category,
+        subcategory,
+        profileId,
+        ...(dto.attributes !== undefined
+          ? {
+              attributesJson:
+                dto.attributes == null
+                  ? Prisma.DbNull
+                  : (dto.attributes as Prisma.InputJsonValue),
+            }
+          : {}),
         skinTypes: cosmetic ? (dto.skinTypes ?? []) : [],
         stepAr: cosmetic ? (dto.stepAr?.trim() || null) : null,
         active: false,
@@ -472,6 +525,9 @@ export class PartnersPortalService implements OnModuleInit {
         externalUrl?: string;
         concernTags?: string[];
         category?: string | null;
+        subcategory?: string | null;
+        profileId?: string | null;
+        attributesJson?: Prisma.InputJsonValue | typeof Prisma.DbNull;
         skinTypes?: string[];
         stepAr?: string | null;
         reviewRevision: { increment: number };
@@ -507,6 +563,39 @@ export class PartnersPortalService implements OnModuleInit {
       if (dto.externalUrl !== undefined) data.externalUrl = dto.externalUrl.trim();
       if (dto.concernTags !== undefined) data.concernTags = dto.concernTags;
       if (dto.category !== undefined) data.category = this.optionalCategory(dto.category, PRODUCT_CATEGORIES);
+      // Omitted subcategory must not clear an existing value (E1 compat).
+      if (dto.subcategory !== undefined) {
+        data.subcategory = dto.subcategory.trim() || null;
+      }
+      if (dto.profileId !== undefined) {
+        data.profileId = dto.profileId.trim() || null;
+      }
+      if (dto.attributes !== undefined) {
+        data.attributesJson =
+          dto.attributes == null ? Prisma.DbNull : (dto.attributes as Prisma.InputJsonValue);
+      }
+      const nextCategory = data.category === undefined ? current.category : data.category;
+      const nextSubcategory =
+        data.subcategory === undefined ? current.subcategory : data.subcategory;
+      const nextProfileId = data.profileId === undefined ? current.profileId : data.profileId;
+      this.assertTaxonomyWrite({
+        category: nextCategory,
+        subcategory: nextSubcategory,
+        profileId: nextProfileId,
+        attributes: dto.attributes !== undefined ? dto.attributes : undefined,
+        allowOmittedSubcategory: true,
+      });
+      if (dto.subcategory !== undefined && nextSubcategory) {
+        const resolved = this.taxonomy.resolveFromSubcategory(nextSubcategory);
+        if (resolved) {
+          if (data.category === undefined && !current.category) {
+            data.category = this.optionalCategory(resolved.category, PRODUCT_CATEGORIES);
+          }
+          if (dto.profileId === undefined && !current.profileId && resolved.profileId) {
+            data.profileId = resolved.profileId;
+          }
+        }
+      }
       const category = data.category === undefined ? current.category : data.category;
       const cosmetic = category === 'face' || category === 'body' || category === 'hair';
       if (!cosmetic) {

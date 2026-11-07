@@ -12,6 +12,7 @@ import { CatalogMediaStorage, createCatalogMediaStorage } from './catalog-media.
 import { ConfigService } from '@nestjs/config';
 import { MarketplaceController } from './marketplace.controller';
 import { MarketplaceService } from './marketplace.service';
+import { TaxonomyService } from './taxonomy/taxonomy.service';
 
 @Module({
   controllers: [MarketplaceController, CatalogMediaController, CatalogReviewAdminController, CatalogAdAdminController, CatalogAdPublicController, CommerceController, CommerceAdminController],
@@ -20,9 +21,10 @@ import { MarketplaceService } from './marketplace.service';
     CatalogContentService,
     CatalogAdService,
     CommerceService,
+    TaxonomyService,
     { provide: CatalogMediaStorage, useFactory: (config: ConfigService) => createCatalogMediaStorage(config), inject: [ConfigService] },
     AdminApiKeyGuard,
   ],
-  exports: [MarketplaceService, CatalogContentService, CatalogMediaStorage, CatalogAdService, CommerceService],
+  exports: [MarketplaceService, CatalogContentService, CatalogMediaStorage, CatalogAdService, CommerceService, TaxonomyService],
 })
 export class MarketplaceModule {}

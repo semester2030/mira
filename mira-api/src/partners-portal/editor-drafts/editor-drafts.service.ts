@@ -4,6 +4,7 @@ import {
   Inject,
   Injectable,
   NotFoundException,
+  Optional,
 } from '@nestjs/common';
 import { Prisma } from '@prisma/client';
 import { PrismaService } from '../../prisma/prisma.service';
@@ -22,6 +23,7 @@ import {
   branchIdFromServiceProfile,
   placeModeFromServiceProfile,
 } from '../../marketplace/catalog-filters';
+import { TaxonomyService } from '../../marketplace/taxonomy/taxonomy.service';
 import { PARTNER_KIND_FORBIDDEN, partnerCanCreateKind } from '../partner-capabilities';
 
 /** Normalize coverage city ids (Arabic name → stable sa-* id). */
@@ -171,11 +173,45 @@ type PutBody = {
 
 @Injectable()
 export class EditorDraftsService {
+  private readonly taxonomy: TaxonomyService;
+
   constructor(
     @Inject(PrismaService) private readonly prisma: PrismaService,
     @Inject(RegistryService) private readonly registry: RegistryService,
     @Inject(CatalogContentService) private readonly content: CatalogContentService,
-  ) {}
+    @Optional() @Inject(TaxonomyService) taxonomy?: TaxonomyService,
+  ) {
+    this.taxonomy = taxonomy ?? new TaxonomyService();
+    if (!taxonomy) this.taxonomy.onModuleInit();
+  }
+
+  private assertProductTaxonomyValues(values: Record<string, unknown>, profileId: string) {
+    const category = typeof values.category === 'string' ? values.category : null;
+    const subcategory = typeof values.subcategory === 'string' ? values.subcategory : null;
+    const attributes =
+      values.attributes !== undefined
+        ? values.attributes
+        : values.attributesJson !== undefined
+          ? values.attributesJson
+          : undefined;
+    const errors = this.taxonomy.validateWrite({
+      category,
+      subcategory,
+      profileId,
+      attributes,
+      allowOmittedSubcategory: true,
+    });
+    if (!errors.length) return;
+    throw new HttpException(
+      {
+        message: errors[0].messageAr,
+        messageAr: errors[0].messageAr,
+        code: errors[0].code,
+        fieldErrors: errors,
+      },
+      HttpStatus.BAD_REQUEST,
+    );
+  }
 
   private async partnerType(partnerId: string): Promise<string> {
     const partner = await this.prisma.partner.findUnique({ where: { id: partnerId } });
@@ -583,6 +619,23 @@ export class EditorDraftsService {
     const nameAr = String(values.nameAr).trim();
     const priceHalalas = values.priceHalalas as number;
     if (kind === 'product') {
+      this.assertProductTaxonomyValues(values, draft.profileId);
+      let category = typeof values.category === 'string' ? values.category : null;
+      const subcategory = typeof values.subcategory === 'string' ? values.subcategory.trim() || null : null;
+      let profileId = draft.profileId;
+      if (subcategory) {
+        const resolved = this.taxonomy.resolveFromSubcategory(subcategory);
+        if (resolved) {
+          if (!category) category = resolved.category;
+          if (resolved.profileId) profileId = resolved.profileId;
+        }
+      }
+      const attributesRaw =
+        values.attributes !== undefined
+          ? values.attributes
+          : values.attributesJson !== undefined
+            ? values.attributesJson
+            : undefined;
       const row = await tx.product.create({
         data: {
           partnerId,
@@ -594,11 +647,20 @@ export class EditorDraftsService {
           concernTags: Array.isArray(values.concernTags)
             ? values.concernTags.filter((t): t is string => typeof t === 'string')
             : [],
-          category: typeof values.category === 'string' ? values.category : null,
+          category,
+          subcategory,
+          ...(attributesRaw !== undefined
+            ? {
+                attributesJson:
+                  attributesRaw == null
+                    ? Prisma.DbNull
+                    : (attributesRaw as Prisma.InputJsonValue),
+              }
+            : {}),
           active: false,
           contentStatus: 'draft',
           reviewStatus: 'draft',
-          profileId: draft.profileId,
+          profileId,
           schemaVersion: draft.schemaVersion,
           purchaseMode:
             values.purchaseMode === 'internal_cod' || values.purchaseMode === 'external'
@@ -705,6 +767,14 @@ export class EditorDraftsService {
       await tx.$executeRaw`SELECT id FROM products WHERE id = ${targetOwnerId} FOR UPDATE`;
       const current = await tx.product.findFirst({ where: { id: targetOwnerId, partnerId } });
       if (!current) throw new NotFoundException('المنتج غير موجود');
+      this.assertProductTaxonomyValues(
+        {
+          ...values,
+          category: values.category !== undefined ? values.category : current.category,
+          subcategory: values.subcategory !== undefined ? values.subcategory : current.subcategory,
+        },
+        draft.profileId,
+      );
       const published = current.contentStatus === 'published';
       const nameAr = typeof values.nameAr === 'string' ? values.nameAr.trim() : current.nameAr;
       const nameEn =
@@ -769,6 +839,25 @@ export class EditorDraftsService {
             ...(typeof values.category === 'string' || values.category === null
               ? { category: typeof values.category === 'string' ? values.category : null }
               : {}),
+            // Omitted subcategory leaves existing (E1 compat).
+            ...(typeof values.subcategory === 'string'
+              ? { subcategory: values.subcategory.trim() || null }
+              : {}),
+            ...(values.attributes !== undefined
+              ? {
+                  attributesJson:
+                    values.attributes == null
+                      ? Prisma.DbNull
+                      : (values.attributes as Prisma.InputJsonValue),
+                }
+              : values.attributesJson !== undefined
+                ? {
+                    attributesJson:
+                      values.attributesJson == null
+                        ? Prisma.DbNull
+                        : (values.attributesJson as Prisma.InputJsonValue),
+                  }
+                : {}),
             ...(mappedOptions !== undefined ? { optionsJson: mappedOptions } : {}),
             ...(values.variantsJson !== undefined
               ? {

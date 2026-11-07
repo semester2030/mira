@@ -348,4 +348,18 @@ const dress: CatalogFilterItem = {
   assert.equal(coerceQueryParam('black'), 'black');
 }
 
+// E1: subcategory exact-id filter (products only).
+{
+  const parsed = parseCatalogFilterQuery({ subcategory: 'clothes.abaya' });
+  assert.equal(parsed.ok, true);
+  if (parsed.ok) {
+    assert.equal(parsed.filter.subcategory, 'clothes.abaya');
+    const abaya: CatalogFilterItem = { ...dress, id: 'abaya-1', subcategory: 'clothes.abaya' };
+    const evening: CatalogFilterItem = { ...dress, id: 'eve-1', subcategory: 'clothes.evening' };
+    assert.ok(matchCatalogItem(abaya, parsed.filter));
+    assert.equal(matchCatalogItem(evening, parsed.filter), null);
+    assert.equal(matchCatalogItem({ ...dress, kind: 'service', subcategory: 'clothes.abaya' } as CatalogFilterItem, parsed.filter), null);
+  }
+}
+
 console.log('catalog-filters.schema-tests: PASS');

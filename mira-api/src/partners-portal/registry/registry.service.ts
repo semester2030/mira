@@ -1,7 +1,8 @@
 import { createHash } from 'node:crypto';
 import { readFileSync } from 'node:fs';
 import { join } from 'node:path';
-import { HttpException, HttpStatus, Injectable, OnModuleInit } from '@nestjs/common';
+import { HttpException, HttpStatus, Inject, Injectable, OnModuleInit, Optional } from '@nestjs/common';
+import { TaxonomyService } from '../../marketplace/taxonomy/taxonomy.service';
 import {
   EDITOR_SCHEMA_VERSION,
   FieldRegistryV2,
@@ -58,8 +59,16 @@ export class RegistryService implements OnModuleInit {
   private aliases: Record<string, { canonical?: string; action?: string }> = {};
   private templates = new Map<string, TemplateDef>();
 
+  constructor(@Optional() @Inject(TaxonomyService) private readonly taxonomy?: TaxonomyService) {}
+
   onModuleInit() {
     this.load();
+    if (this.taxonomy) {
+      // Registry may init before TaxonomyService — reload ensures doc is present.
+      this.taxonomy.reload();
+      const known = new Set(this.registry.profiles.map((p) => p.id));
+      this.taxonomy.assertProfilesKnown(known);
+    }
   }
 
   load() {

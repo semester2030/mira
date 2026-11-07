@@ -206,6 +206,7 @@ export class MarketplaceService implements OnModuleInit {
     limit?: string;
     partnerId?: string;
     category?: string;
+    subcategory?: string;
     lane?: string;
     venue?: string;
     visual?: string;
@@ -252,6 +253,7 @@ export class MarketplaceService implements OnModuleInit {
       q: params.q ?? params.hint,
       tag: params.tag,
       category: params.category,
+      subcategory: params.subcategory,
       city: params.city,
       partnerId: params.partnerId,
       kind: params.kind ?? (params.lane === 'elegance' ? 'product' : params.lane === 'beauty' ? 'service' : undefined),
@@ -333,6 +335,8 @@ export class MarketplaceService implements OnModuleInit {
           catalogSource: 'catalog',
           partner: productPartner,
           ...(filter.kind === 'service' ? { id: '__none__' } : {}),
+          // Push subcategory to SQL before in-memory pagination/facets (E1-11).
+          ...(filter.subcategory ? { subcategory: filter.subcategory } : {}),
         },
         include: {
           partner: true,
@@ -417,6 +421,7 @@ export class MarketplaceService implements OnModuleInit {
           nameEn: product.nameEn,
           descriptionAr: product.descriptionAr,
           category: product.category,
+          subcategory: product.subcategory,
           concernTags: product.concernTags,
           priceHalalas: product.priceHalalas,
           optionsJson: commerce.optionsJson,
@@ -601,6 +606,8 @@ export class MarketplaceService implements OnModuleInit {
             partnerEmoji: product.partner.logoEmoji,
             concernTags: product.concernTags,
             category: product.category,
+            subcategory: product.subcategory,
+            profileId: product.profileId,
             durationMin: null as number | null,
             ...commerce,
             bookingEnabled: false,

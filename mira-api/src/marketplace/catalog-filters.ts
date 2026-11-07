@@ -61,6 +61,8 @@ export type CatalogFilterInput = {
   q?: string;
   tags?: string[];
   category?: string;
+  /** Exact saved subcategory node id (never browseOnly *.all as a product value). */
+  subcategory?: string;
   city?: string;
   partnerId?: string;
   /** kind filter: product | service (optional; lane may already constrain). */
@@ -92,6 +94,7 @@ export type CatalogFilterItem = {
   nameEn: string;
   descriptionAr?: string | null;
   category?: string | null;
+  subcategory?: string | null;
   concernTags: string[];
   priceHalalas: number | null;
   durationMin?: number | null;
@@ -236,6 +239,7 @@ export function parseCatalogFilterQuery(params: Record<string, string | undefine
       q: (params.q ?? '').trim() || undefined,
       tags: splitCsv(params.tag),
       category: (params.category ?? '').trim() || undefined,
+      subcategory: (params.subcategory ?? '').trim() || undefined,
       city: (params.city ?? '').trim() || undefined,
       partnerId: (params.partnerId ?? '').trim() || undefined,
       kind: kindRaw ? (kindRaw as 'product' | 'service') : undefined,
@@ -365,6 +369,10 @@ export function matchCatalogItem(item: CatalogFilterItem, filter: CatalogFilterI
     }
   }
   if (filter.category && item.category !== filter.category) return null;
+  // Subcategory filter uses the exact persisted id; applied before pagination via filterCatalogItems.
+  if (filter.subcategory) {
+    if (item.kind !== 'product' || item.subcategory !== filter.subcategory) return null;
+  }
 
   if (filter.tags && filter.tags.length > 0) {
     if (!item.concernTags.some((t) => filter.tags!.includes(t))) return null;
