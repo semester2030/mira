@@ -822,7 +822,10 @@
               includeComponentContract: profileId === 'product.bags',
               persistComponentContract: false,
               onChange: (payload) => {
+                // Keep draft values for any source; only user edits mark the card dirty-for-save UX.
                 state.fieldDraft.attributes = Object.assign({}, payload.values || {});
+                if (payload && payload.source && payload.source !== 'user') return;
+                state.fieldDraft.attrsUserEdited = true;
               },
             });
           }

@@ -1,96 +1,89 @@
-# دليل مطور — E2أ إغلاق ملاحظات البوابة (C01–C05 / ARCH)
+# دليل مطور — E2أ (R01–R04 / ARCH 01–07)
 
-تاريخ التحديث: 2026-11-08 · النطاق: بوابة الشركاء فقط (لا E2ب/ج بصري، لا E3–E5، لا نشر إنتاج).
+تاريخ التحديث: 2026-11-08 · النطاق: بوابة الشركاء. خارج النطاق: E2ب/ج البصري، E3–E5، نشر إنتاج، تطبيق الجوال.
 
-## 1) خريطة الملفات ومسؤولياتها
+## معاني ARCH (ملزمة — لا تُعاد ترقيمها)
 
-| جزء | مسار فعلي | مسؤولية |
-|-----|-----------|---------|
-| مكوّن خصائص مشترك | `partners-portal/web/js/registry-attribute-fields.js` | عرض الحقول، حالة التحرير، parked غير المتوافق، استخراج القيم، لقطات الخادم الآمنة |
-| رحلة الفردي | `partners-portal/web/js/catalog-journey.js` | تحميل taxonomy عبر `PartnersApi`، remount مع `preserveEdits`، حماية رد الحفظ القديم |
-| رحلة المجموعات | `partners-portal/web/js/bulk-group-journey.js` | نفس المكوّن لكل بطاقة (`mountId` فريد)، استخراج من registry، إعادة محاولة taxonomy |
-| عميل API | `partners-portal/web/js/api.js` | `PartnersApi.base` من meta/`api-base`، `taxonomy`، `productPreview`، منتجات/مجموعات |
-| سجل الحقول | `partners-portal/web/js/field-registry.v2.json` + نسخة API | مصدر المعرفات/التخزين/الملفات الشخصية |
-| taxonomy | `mira-api/src/marketplace/taxonomy/elegance-taxonomy.v1.json` | عقد التصنيفات و`profileId` / `writeEnabled` |
-| تحقق خادم | `applyTaxonomyPatch` داخل خدمات الشركاء | ملكية، صلاحيات، قيم، مسودة taxonomy |
-| اختبار مكوّن | `mira-api/src/partners-portal/registry/registry-attribute-fields.schema-tests.ts` | C01/C02/C04 محليًا |
-| اختبار HTTP بوابة | `mira-api/src/marketplace/taxonomy/elegance-e2-portal.http.integration-tests.ts` | حفظ→DB→preview |
-| اختبار رحلة E2أ | `mira-api/src/marketplace/taxonomy/elegance-e2a-portal-journey.integration-tests.ts` | قبول C01–C05 على Nest حقيقي |
+| الرمز | المتطلب |
+|-------|---------|
+| ARCH 01 | فصل المجالات ومسؤولياتها (منتجات/مخزون ≠ خدمات/مواعيد؛ وسائط وصلاحيات بحدودها) |
+| ARCH 02 | منطق موحد للفردي والمجموعات |
+| ARCH 03 | تعريفات مركزية للحقول والتصنيفات والقيم |
+| ARCH 04 | ملفات محددة المسؤولية ومسار طلب واضح |
+| ARCH 05 | مسار توسعة منظم يحافظ على التوافق |
+| ARCH 06 | دليل المطور الجديد (هذا الملف) |
+| ARCH 07 | إثبات التغييرات والحدود في التسليم |
 
-حدود المجالات (ARCH): المنتجات/المخزون/التركيبات في مسارات `products` + commerce mounts؛ الخدمات/المواعيد في `services` + قوالب منفصلة؛ الوسائط عبر `/media`؛ الصلاحيات في `PartnerTokenGuard` + نوع الحساب.
+## 1) خريطة الملفات (ARCH 04)
 
-## 2) مسار طلب نموذجي (واجهة → DB → عرض)
+| جزء | مسار | مسؤولية |
+|-----|------|---------|
+| مكوّن خصائص | `partners-portal/web/js/registry-attribute-fields.js` | عرض، dirty، parked، invalid، مصدر إشعار `source` |
+| فردي | `partners-portal/web/js/catalog-journey.js` | remount، `withProgrammaticPaint`، حفظ/نشر، materialize |
+| مجموعات | `partners-portal/web/js/bulk-group-journey.js` | بطاقات مستقلة + نفس المكوّن |
+| API | `partners-portal/web/js/api.js` | `PartnersApi.base` / taxonomy / preview |
+| Registry | `field-registry.v2.json` (ويب + API) | مصدر الحقول |
+| Taxonomy | `elegance-taxonomy.v1.json` | تصنيفات و`profileId` |
+| اختبار مكوّن | `registry-attribute-fields.schema-tests.ts` | R01/R02/C* |
+| اختبار API | `elegance-e2-portal.http.integration-tests.ts` | HTTP+preview |
+| اختبار متصفح | `elegance-e2a-portal-browser.integration-tests.ts` | Chromium + dashboard |
 
-1. واجهة: المستخدم يعدّل حقلًا → `markDirty` / `bumpEditRevision` → `onChange` يرفع `formContentEpoch`.
-2. حفظ: `catalog-journey` يبني `payload.attributes` من `getAttributesPatch()` (مفاتيح dirty فقط؛ القيم المتوقفة parked لا تُرسل).
-3. API: `PartnersApi.updateProduct` / `createProduct` → `PATCH/POST /partners-portal/products`.
-4. تحقق: حارس التوكن → خدمة الشركاء → `applyTaxonomyPatch` + ملكية الشريك.
-5. DB: `attributesJson` / `draftAttributesJson` + subcategory.
-6. قراءة: `PartnersApi.productPreview(id)` — مسار البوابة؛ لا يُستبدل بنجاح قراءة Prisma وحدها.
-7. عرض: إن لم يتغيّر `editRevision` منذ الإرسال يُطبَّق الرد كاملًا؛ وإلا `applyServerSnapshot({ onlyClean: true })`.
+## 2) مسار الطلب (واجهة → DB → عرض)
 
-المجموعات: نفس المكوّن؛ القيم المسطّحة تُحوَّل عبر `extractAttributesFromValues(vals, registry)`.
+1. إدخال مستخدم → `notify({source:'user'})` → `bumpFormContentEpoch` / autosave.
+2. حفظ → `attributes` من `getAttributesPatch()` (dirty فقط؛ parked لا يُرسل).
+3. API → حارس توكن → خدمة → `applyTaxonomyPatch` → DB.
+4. رد مطابق → `setFromAttributes` / `applyServerSnapshot` داخل `withProgrammaticPaint` مع `source:'server'` — **لا** يرفع عداد المستخدم (R02).
+5. قراءة البوابة: `productPreview` / `dashboard` — لا DB وحدها كإثبات استعادة.
 
-## 3) المنطق المشترك فردي ↔ مجموعات
+## 3) فرق تغيير المستخدم عن تطبيق الخادم (R02)
 
-- المكوّن: `MiraRegistryAttributeFields.mount`
-- التحويل: `extractAttributesFromValues` / `attrFieldIdsFromRegistry` / `projectStateOntoDefs`
-- التصنيفات: `PartnersApi.taxonomy({ lane: 'elegance' })` + `subcategoriesFromTaxonomy`
-- لا تُنقل حالة parked بين بطاقات مختلفة (`mountId` / عدم تمرير `preserveState` عند تبديل البطاقة)
+| الحدث | `source` | هل يرفع `formContentEpoch`؟ | autosave؟ |
+|-------|----------|------------------------------|-----------|
+| اختيار/رقم/مسح في المكوّن | `user` | نعم | نعم |
+| `setFromAttributes` بعد حفظ مطابق | `server` | لا | لا |
+| `applyServerSnapshot(onlyClean)` | `server` | لا | لا |
+| تعبئة أولية / programmatic paint | عبر `withProgrammaticPaint` | لا | لا |
 
-## 4) إضافة تصنيف أو حقل / نوع خدمة لاحقًا
+لا تُصفَّر dirty/revisions عامة لإخفاء المشكلة. تعديلات المستخدم أثناء الطلب تبقى محمية بـ `onlyClean` + مقارنة `editRevision`/`formContentEpoch`.
 
-### تصنيف فرعي قابل للكتابة
+## 4) القيم المتوقفة والمدخلات غير الصالحة (R01 / C01)
 
-1. عقد في `elegance-taxonomy.v1.json` (`parentId`, `writeEnabled`, `profileId`).
-2. ملف profile في registry إن لزم.
-3. لا تخمين subcategory في الواجهة؛ أبقِ القيمة المخزّنة ظاهرة إن لم تكن في القائمة.
-4. اختبارات: schema + HTTP portal + عدم رجوع E1.
+- `parked` / `parkedCleared` / `parkedDirty` / `parkedInvalid` في `captureEditorState`.
+- استعادة `parkedInvalid` **مستقلة** عن وجود قيمة صحيحة سابقة.
+- المفاتيح تُحلّ عبر registry (معرف الحقل ↔ مفتاح التخزين).
+- أثناء تصنيف لا يدعم الحقل: لا إرسال؛ عند الرجوع يظهر الخام + الخطأ و`hasBlockingErrors()` يمنع الحفظ.
+- المسح الصريح يبقى مسحًا عبر `parkedCleared`.
+- لا تسرّب بين البطاقات (`mountId` / عدم مشاركة preserveState).
 
-### حقل خصائص جديد (E2 كتابة)
+## 5) المنطق المشترك فردي ↔ مجموعات (ARCH 02)
 
-1. تعريف في `field-registry.v2.json` مع `storage: "attributes.<key>"` و`currentStatus` مناسب.
-2. انسخ إلى نسخة الويب؛ ثبّت التطابق باختبار النسخ.
-3. أضفه إلى `profiles[].fields`.
-4. **لا** تضف اسمه إلى قائمة ثانية — `attrFieldIdsFromRegistry` يشتقه.
-5. الحقول `PROPOSED` تبقى مؤجّلة (`classifyField` → deferred) حتى تفعيل العقد.
+نفس `MiraRegistryAttributeFields.mount`، نفس `extractAttributesFromValues(vals, registry)`، نفس `PartnersApi.taxonomy`.
 
-### نوع خدمة مستقبلي
+## 6) إضافة حقل دون قوائم موازية (ARCH 03 / C04)
 
-مسار منفصل عن المنتجات: قالب خدمة + `ServiceProfileService`؛ لا تخلط حقول الموعد مع `attributesJson` للمنتج. وثّق العقد قبل التنفيذ (E2ج/E3 حسب الخطة).
+1. عرّف في registry مع `storage: attributes.<key>`.
+2. انسخ لنسخة الويب؛ اختبر التطابق.
+3. أضفه للـ profile.
+4. **لا** تضف اسمه لقائمة مسطّحة ثانية — `attrFieldIdsFromRegistry`.
+5. `PROPOSED` يبقى مؤجلاً.
 
-## 5) أوامر التشغيل والاختبار
+## 7) مسار توسعة متوافق (ARCH 05)
+
+تصنيف جديد: taxonomy + profile + اختبارات. نوع خدمة: مسار خدمات منفصل — لا تخلط مع `attributesJson` للمنتج.
+
+## 8) أوامر الاختبار (ARCH 07)
 
 ```bash
 cd mira-api
-# مكوّن
-npx tsx src/partners-portal/registry/registry-attribute-fields.schema-tests.ts
-# بوابة HTTP E2
-DATABASE_URL=… MIRA_PARTNER_EDITOR_V2=true npx tsx src/marketplace/taxonomy/elegance-e2-portal.http.integration-tests.ts
-# رحلة E2أ
-DATABASE_URL=… MIRA_PARTNER_EDITOR_V2=true npx tsx src/marketplace/taxonomy/elegance-e2a-portal-journey.integration-tests.ts
-# عدم رجوع E1 (إن وُجد سكربت المشروع)
-npx tsx src/marketplace/taxonomy/elegance-e1-*.ts
+npx tsx src/partners-portal/registry/registry-attribute-fields.schema-tests.ts   # مكوّن
+DATABASE_URL=… MIRA_PARTNER_EDITOR_V2=true npx tsx src/marketplace/taxonomy/elegance-e2-portal.http.integration-tests.ts  # API
+DATABASE_URL=… MIRA_PARTNER_EDITOR_V2=true npx tsx src/marketplace/taxonomy/elegance-e2a-portal-browser.integration-tests.ts  # متصفح
+DATABASE_URL=… npx tsx src/marketplace/taxonomy/elegance-e1-final-closure.http.integration-tests.ts  # عدم رجوع E1
 ```
 
-ملفات يجب تعديلها عند حقل جديد: نسختا registry، ربما taxonomy، اختبارات schema/HTTP — **ليس** قائمة `FLAT_ATTR_*` إلا كاحتياطي بلا registry.
+عند تعديل المكوّن/الرحلات: شغّل المجموعات الثلاث أعلاه على نفس code SHA. iPhone = E5.
 
-## 6) المنفَّذ مقابل المؤجّل
+## حدود منفَّذ / مؤجّل
 
-| منفَّذ في E2أ | مؤجّل |
-|---------------|--------|
-| C01 parked عبر التصنيف | E2ب/ج تطبيق التصور البصري |
-| C02 حماية رد الحفظ | E3 ربط التطبيق |
-| C03 مصدر taxonomy موحّد | E4 كتابة شنط/أحذية |
-| C04 اشتقاق الحقول من registry | E5 قبول iPhone حقيقي |
-| ARCH دليل + حدود المجالات المتأثرة | نشر إنتاج |
-
-## ARCH 01–07 (على الأجزاء المتأثرة)
-
-1. فصل منتجات/مخزون عن خدمات؛ وسائط وصلاحيات عبر مساراتها.
-2. المجموعات تنسّق وتعيد استخدام مكوّن الخصائص والتجارة.
-3. الخادم يتحقق في كل مسارات المنتجات/المجموعات المختبرة.
-4. التعريفات المركزية + اختبار تطابق نسختي registry.
-5. استقبال HTTP → حارس → خدمة مجال → Prisma (نمط Nest القائم).
-6. اتصال API وتحويل الحقول وحالة التحرير في المواضع المشتركة أعلاه.
-7. توافق البيانات القديمة؛ لا إعادة هيكلة شاملة خارج النطاق.
+منفَّذ في E2أ: R01–R04 ضمن البوابة. مؤجّل: E2ب/ج، E3، E4 كتابة شنط/أحذية، E5 جهاز.

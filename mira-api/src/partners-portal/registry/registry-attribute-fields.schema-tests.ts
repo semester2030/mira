@@ -410,4 +410,73 @@ function pass(id: string) {
   pass('E2-C01-card-isolation');
 }
 
+// --- R01: invalid raw input without prior value survives park/restore and blocks save ---
+{
+  const faceDefs = M.attributeFieldDefsForProfile(registry, 'product.face');
+  const clothesDefs = M.attributeFieldDefsForProfile(registry, 'product.clothes');
+  const invalidOnly = {
+    values: {},
+    cleared: {},
+    dirty: { lengthCm: true },
+    invalidInputs: { lengthCm: '999' },
+  };
+  const toFace = M.projectStateOntoDefs(invalidOnly, faceDefs);
+  assert.equal(toFace.parkedInvalid.lengthCm, '999');
+  assert.ok(!Object.prototype.hasOwnProperty.call(toFace.invalidInputs, 'lengthCm'));
+  const back = M.projectStateOntoDefs(
+    {
+      values: toFace.values,
+      cleared: toFace.cleared,
+      dirty: toFace.dirty,
+      invalidInputs: toFace.invalidInputs,
+      parked: toFace.parked,
+      parkedCleared: toFace.parkedCleared,
+      parkedDirty: toFace.parkedDirty,
+      parkedInvalid: toFace.parkedInvalid,
+    },
+    clothesDefs,
+  );
+  assert.equal(back.invalidInputs.lengthCm, '999');
+  assert.equal(back.dirty.lengthCm, true);
+
+  sandbox.document = makeDom().document;
+  const m = M.mount(makeDom().host, {
+    registry,
+    profileId: 'product.clothes',
+    mountId: 'r01',
+    preserveState: {
+      values: {},
+      cleared: {},
+      dirty: {},
+      invalidInputs: {},
+      parkedInvalid: { lengthCm: '999' },
+      parkedDirty: { lengthCm: true },
+    },
+  });
+  assert.equal(m.hasBlockingErrors(), true);
+  const v = m.validate();
+  assert.equal(v.ok, false);
+  pass('R01-invalid-only-park-restore-blocks');
+}
+
+// --- R02: server notify source must not be treated as user by default contract ---
+{
+  sandbox.document = makeDom().document;
+  const sources: string[] = [];
+  const m = M.mount(makeDom().host, {
+    registry,
+    profileId: 'product.clothes',
+    mountId: 'r02',
+    initialAttributes: { material: ['silk'] },
+    onChange: (p: any) => sources.push(p.source || 'missing'),
+  });
+  sources.length = 0;
+  m.setFromAttributes({ material: ['cotton'] });
+  assert.deepEqual(sources, ['server']);
+  sources.length = 0;
+  m.applyServerSnapshot({ material: ['linen'] }, { onlyClean: true });
+  assert.deepEqual(sources, ['server']);
+  pass('R02-server-notify-source');
+}
+
 console.log('registry-attribute-fields.schema-tests: PASS');

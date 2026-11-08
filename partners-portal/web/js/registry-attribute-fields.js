@@ -232,39 +232,103 @@
       if (allowed[k]) nextDirty[k] = true;
       else parkedDirty[k] = true;
     });
+    /**
+     * Map invalid-input keys that may be field ids onto storage keys for the active defs.
+     * Falls back to the raw key when no mapping exists (parked keys from another profile).
+     */
+    function resolveInvalidStorageKey(k) {
+      if (allowed[k]) return k;
+      for (var i = 0; i < (defs || []).length; i++) {
+        var def = defs[i];
+        if (def && def.id === k) {
+          var sk = storageAttrKey(def);
+          if (sk) return sk;
+        }
+      }
+      return k;
+    }
+
     Object.keys(invalidInputs).forEach(function (k) {
-      if (allowed[k]) nextInvalid[k] = invalidInputs[k];
-      else parkedInvalid[k] = invalidInputs[k];
+      var sk = resolveInvalidStorageKey(k);
+      if (allowed[sk]) {
+        // Keep field-id keys for mount paint/validate (def.id).
+        nextInvalid[allowed[sk].id || sk] = invalidInputs[k];
+      } else {
+        parkedInvalid[sk] = invalidInputs[k];
+      }
     });
+
+    function findAllowedDef(k) {
+      if (allowed[k]) return allowed[k];
+      var found = null;
+      Object.keys(allowed).forEach(function (sk) {
+        if (allowed[sk] && allowed[sk].id === k) found = allowed[sk];
+      });
+      return found;
+    }
 
     // Restore parked entries that are compatible with the new profile.
     Object.keys(parkedCleared).forEach(function (k) {
-      if (!allowed[k]) return;
-      nextCleared[k] = true;
-      delete nextValues[k];
-      if (parkedDirty[k]) nextDirty[k] = true;
-      if (Object.prototype.hasOwnProperty.call(parkedInvalid, k)) nextInvalid[k] = parkedInvalid[k];
+      var def = findAllowedDef(k);
+      if (!def) return;
+      var sk = storageAttrKey(def) || k;
+      nextCleared[sk] = true;
+      delete nextValues[sk];
+      if (parkedDirty[k] || parkedDirty[sk]) nextDirty[sk] = true;
+      if (Object.prototype.hasOwnProperty.call(parkedInvalid, k) || Object.prototype.hasOwnProperty.call(parkedInvalid, sk)) {
+        nextInvalid[def.id] = parkedInvalid[k] != null ? parkedInvalid[k] : parkedInvalid[sk];
+      }
       delete parked[k];
+      delete parked[sk];
       delete parkedCleared[k];
+      delete parkedCleared[sk];
       delete parkedDirty[k];
+      delete parkedDirty[sk];
       delete parkedInvalid[k];
+      delete parkedInvalid[sk];
     });
     Object.keys(parked).forEach(function (k) {
-      if (!allowed[k]) return;
-      if (nextCleared[k]) {
+      var def = findAllowedDef(k);
+      if (!def) return;
+      var sk = storageAttrKey(def) || k;
+      if (nextCleared[sk]) {
         delete parked[k];
+        delete parked[sk];
         delete parkedDirty[k];
+        delete parkedDirty[sk];
         delete parkedInvalid[k];
+        delete parkedInvalid[sk];
         return;
       }
-      if (!Object.prototype.hasOwnProperty.call(nextValues, k)) {
-        nextValues[k] = parked[k];
-        if (parkedDirty[k]) nextDirty[k] = true;
-        if (Object.prototype.hasOwnProperty.call(parkedInvalid, k)) nextInvalid[k] = parkedInvalid[k];
+      if (!Object.prototype.hasOwnProperty.call(nextValues, sk)) {
+        nextValues[sk] = parked[k];
+        if (parkedDirty[k] || parkedDirty[sk]) nextDirty[sk] = true;
+      }
+      // invalid raw may accompany a prior value — prefer invalid for blocking UI
+      if (Object.prototype.hasOwnProperty.call(parkedInvalid, k) || Object.prototype.hasOwnProperty.call(parkedInvalid, sk)) {
+        nextInvalid[def.id] = parkedInvalid[k] != null ? parkedInvalid[k] : parkedInvalid[sk];
+        nextDirty[sk] = true;
+        delete parkedInvalid[k];
+        delete parkedInvalid[sk];
       }
       delete parked[k];
+      delete parked[sk];
       delete parkedDirty[k];
+      delete parkedDirty[sk];
+    });
+
+    // R01: restore parked invalid raw input even when no prior valid value / clear exists.
+    Object.keys(parkedInvalid).forEach(function (k) {
+      var def = findAllowedDef(k);
+      if (!def) return;
+      var sk = storageAttrKey(def) || k;
+      nextInvalid[def.id] = parkedInvalid[k];
+      nextDirty[sk] = true;
       delete parkedInvalid[k];
+      delete parkedDirty[k];
+      delete parkedDirty[sk];
+      delete parked[k];
+      delete parked[sk];
     });
 
     return {
@@ -412,7 +476,14 @@
 
     applyInitial();
 
-    function notify() {
+    /**
+     * @param {{ source?: 'user'|'server'|'hydrate'|'programmatic' }} [meta]
+     * source=user → real editor input (bumps host form epoch / autosave).
+     * source=server|hydrate|programmatic → fill from API/paint; must not look like a user edit.
+     */
+    function notify(meta) {
+      meta = meta || {};
+      var source = meta.source || 'user';
       if (typeof options.onChange === 'function') {
         options.onChange({
           values: Object.assign({}, values),
@@ -420,6 +491,7 @@
           cleared: Object.assign({}, cleared),
           attributesPatch: buildAttributesPatch(),
           blockingErrors: validateAll().errors,
+          source: source,
         });
       }
     }
@@ -444,11 +516,12 @@
         delete cleared[key];
         values[key] = nextVal;
       }
-      notify();
+      notify({ source: 'user' });
     }
 
     /**
      * Apply server attributes onto clean keys only — never overwrite dirty/cleared/invalid local edits.
+     * Notifies with source=server so hosts do not bump user-edit epochs / autosave.
      */
     function applyServerSnapshot(serverAttrs, opts) {
       opts = opts || {};
@@ -467,7 +540,7 @@
         }
       });
       paint();
-      notify();
+      notify({ source: 'server' });
     }
 
     function buildAttributesPatch() {
@@ -500,22 +573,42 @@
       return Object.prototype.hasOwnProperty.call(values, key) ? values[key] : null;
     }
 
+    function invalidRawForDef(def) {
+      if (!def) return undefined;
+      if (Object.prototype.hasOwnProperty.call(invalidInputs, def.id)) return invalidInputs[def.id];
+      var key = storageAttrKey(def);
+      if (key && Object.prototype.hasOwnProperty.call(invalidInputs, key)) return invalidInputs[key];
+      return undefined;
+    }
+
     function validateAll() {
       var errors = [];
+      var seen = Object.create(null);
+      defs.forEach(function (def) {
+        var raw = invalidRawForDef(def);
+        if (raw === undefined) return;
+        seen[def.id] = true;
+        var v = validateNumberValue(def, raw);
+        if (!v.ok) {
+          errors.push({ fieldId: def.id, message: v.message });
+          setError(def.id, v.message);
+        }
+      });
       Object.keys(invalidInputs).forEach(function (fieldId) {
+        if (seen[fieldId]) return;
         var def = defs.find(function (d) {
-          return d.id === fieldId;
+          return d.id === fieldId || storageAttrKey(d) === fieldId;
         });
         var raw = invalidInputs[fieldId];
         var v = validateNumberValue(def || { id: fieldId }, raw);
         if (!v.ok) {
-          errors.push({ fieldId: fieldId, message: v.message });
-          setError(fieldId, v.message);
+          errors.push({ fieldId: (def && def.id) || fieldId, message: v.message });
+          setError((def && def.id) || fieldId, v.message);
         }
       });
       defs.forEach(function (def) {
         if (!(def.type === 'number' || def.widget === 'number')) return;
-        if (invalidInputs[def.id]) return;
+        if (invalidRawForDef(def) !== undefined) return;
         var key = storageAttrKey(def);
         if (!key) return;
         if (!Object.prototype.hasOwnProperty.call(values, key) && !cleared[key]) return;
@@ -700,7 +793,8 @@
           if (def.min != null) num.min = String(def.min);
           if (def.max != null) num.max = String(def.max);
           if (def.unit) num.setAttribute('data-unit', def.unit);
-          if (invalidInputs[def.id] != null) num.value = String(invalidInputs[def.id]);
+          var invalidRaw = invalidRawForDef(def);
+          if (invalidRaw != null) num.value = String(invalidRaw);
           else if (cur != null && cur !== '') num.value = String(cur);
           var unitHint = def.unit ? el('span', { className: 'mira-attr-unit', text: ' ' + def.unit }) : null;
           function commitNumber() {
@@ -714,9 +808,11 @@
             var v = validateNumberValue(def, raw);
             if (!v.ok) {
               invalidInputs[def.id] = raw;
+              // Track as user edit without installing an out-of-range value into values.
+              dirty[key] = true;
               bumpEditRevision();
               setError(def.id, v.message);
-              notify();
+              notify({ source: 'user' });
               return;
             }
             delete invalidInputs[def.id];
@@ -733,8 +829,10 @@
             var v = validateNumberValue(def, raw);
             if (!v.ok) {
               invalidInputs[def.id] = raw;
+              dirty[key] = true;
               bumpEditRevision();
               setError(def.id, v.message);
+              notify({ source: 'user' });
             } else {
               delete invalidInputs[def.id];
               setError(def.id, '');
@@ -787,7 +885,8 @@
       setFromAttributes: function (attrs) {
         seedFrom(attrs);
         paint();
-        notify();
+        // Server/hydrate fill — not a user edit (R02).
+        notify({ source: 'server' });
       },
       applyServerSnapshot: applyServerSnapshot,
       getEditRevision: function () {

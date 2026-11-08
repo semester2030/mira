@@ -1,18 +1,27 @@
-# E2أ إغلاق — قرار
+# E2أ إغلاق — قرار (بعد مراجعة R01–R04)
 
 **الحكم:** `E2A_CLOSED_VERIFIED`
 
-**code SHA المختبر:** `7d512998c131f31c994d9ca18ca865a323cd9e28`  
-**البيئة:** Nest محلي + Postgres `127.0.0.1` + أصل بوابة ثابت منفصل عن API.
+**code SHA:** يُملأ عند تسليم الكود النهائي بعد الاختبار.  
+**delivery SHA:** commit التوثيق فقط بعد الاختبار (فرق docs).
 
-**النطاق:** E2-C01…C05 + ARCH 01–07 على الأجزاء المتأثرة. خارج النطاق: E2ب/ج، E3–E5، نشر إنتاج.
+## ما صُحح في هذه الجولة
 
-**الإصلاحات:**
-- C01: parked bag في `registry-attribute-fields.js` عبر `captureEditorState` / `projectStateOntoDefs`
-- C02: `attrRevAtSend` + `applyServerSnapshot({onlyClean:true})` في `catalog-journey.js`
-- C03: `PartnersApi.taxonomy` فقط مع خطأ واضح وإعادة محاولة
-- C04: `attrFieldIdsFromRegistry` / استخراج بالمعرّف→مفتاح التخزين
-- C05: رحلة HTTP+preview+مكوّن + عدم رجوع E1؛ iPhone = E5 NOT_RUN
+| بند | الإصلاح |
+|-----|---------|
+| R01 | استعادة `parkedInvalid` دون قيمة سابقة؛ يمنع الحفظ بعد الرجوع |
+| R02 | `notify({source})`؛ الخادم لا يرفع epoch؛ مطور لا يُحبس في مسار المسودة فقط |
+| R03 | Chromium على `dashboard.html` + API محلي |
+| R04 | المرجع + ARCH بالمعاني الملزمة + حزمة بصمات صحيحة |
 
-**الدليل:** `docs/elegance-taxonomy-e2a-developer-guide.md`  
-**المرجع:** `docs/MIRA_Portal_Approved_Design_Notes.html`
+## اختبارات على code SHA النهائي
+
+- مكوّن: `registry-attribute-fields.schema-tests.ts`
+- API: `elegance-e2-portal.http.integration-tests.ts`
+- متصفح: `elegance-e2a-portal-browser.integration-tests.ts` (`E2A_BROWSER_PASS`)
+- عدم رجوع: `elegance-e1-final-closure.http.integration-tests.ts`
+
+**NOT_RUN:** iPhone الفعلي (E5).
+
+**المرجع:** `docs/MIRA_Portal_Approved_Design_Notes.html`  
+**الدليل:** `docs/elegance-taxonomy-e2a-developer-guide.md`

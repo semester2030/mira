@@ -2798,7 +2798,9 @@
           includeComponentContract: writeBlocked || profileId === 'product.bags',
           persistComponentContract: false,
           readOnly: writeBlocked,
-          onChange: function () {
+          onChange: function (payload) {
+            // R02: server/hydrate fills must not bump user-edit epoch or trigger autosave.
+            if (payload && payload.source && payload.source !== 'user') return;
             bumpFormContentEpoch();
             setAttrSaveKind('dirty', 'تغييرات خصائص غير محفوظة');
             scheduleEditorDraftAutosave();
@@ -4534,8 +4536,11 @@
       const persistOp = capturePersistOp();
       const liveOwnerId = resolveOwnerId();
 
-      // v2 without an owned item: draft autosave only. Once targetOwnerId/item.id exists, never create again.
-      if (window.MiraEditorV2 && MiraEditorV2.state.enabled && !liveOwnerId) {
+      // v2 without an owned item: draft autosave only (brand/salon/clinic).
+      // Developer accounts fall through to createProduct/createService so «نشر الآن» can complete
+      // without being trapped in draft-only flush (R02). Once targetOwnerId/item.id exists, never create again.
+      const partnerIsDeveloper = !!(window.sessionPartner && window.sessionPartner.type === 'developer');
+      if (window.MiraEditorV2 && MiraEditorV2.state.enabled && !liveOwnerId && !partnerIsDeveloper) {
         const built = buildEditorValues();
         if (!built.ok) {
           (built.fieldErrors || []).forEach((fe) => setFieldError(form, fe.fieldId, fe.message));
@@ -4919,11 +4924,15 @@
           const attrsUnchangedSinceSend =
             formContentEpoch === persistEpoch && attrRevNow === attrRevAtSend;
           if (attrsUnchangedSinceSend && typeof attrMount.setFromAttributes === 'function') {
-            attrMount.setFromAttributes(attrsLive || {});
+            withProgrammaticPaint(function () {
+              attrMount.setFromAttributes(attrsLive || {});
+            });
             setAttrSaveKind('saved', 'خصائص محفوظة');
           } else if (typeof attrMount.applyServerSnapshot === 'function') {
             // Stale response must not clobber newer in-form attribute edits.
-            attrMount.applyServerSnapshot(attrsLive || {}, { onlyClean: true });
+            withProgrammaticPaint(function () {
+              attrMount.applyServerSnapshot(attrsLive || {}, { onlyClean: true });
+            });
             if (attrMount.hasDirty && attrMount.hasDirty()) {
               setAttrSaveKind('dirty', 'خصائص أحدث لم تُحفظ بعد — الرد القديم لم يُطبَّق عليها');
             } else {
