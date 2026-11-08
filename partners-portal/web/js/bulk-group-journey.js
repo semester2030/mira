@@ -143,19 +143,35 @@
     const canProduct = isDeveloper || pType === 'brand';
     const canService = isDeveloper || pType === 'salon' || pType === 'clinic';
 
-    /** @type {{ step: string, batch: any, cardId: string|null, file: File|null, previewUrl: string|null, uploadPct: number, uploadStatus: string, mediaId: string|null, busy: boolean, publishResult: any }} */
+    /**
+     * fieldDraft / fieldBaseline: card field values.
+     * file / upload*: pending local upload for the CURRENT card only — never cleared by
+     * server field sync while a file or failed retry is outstanding.
+     * pendingByCard: stash when switching cards so uploads do not leak across offers.
+     */
     const state = {
       step: 'kind',
       batch: null,
       cardId: null,
       file: null,
       previewUrl: null,
+      previewObjectUrl: null,
+      previewError: '',
       uploadPct: 0,
       uploadStatus: '',
+      uploadSessionId: null,
       mediaId: null,
+      /** Explicit replace chosen by user — forces upload even when card.media is ready. */
+      replaceIntent: false,
+      /** Prior server media kept until replacement upload succeeds. */
+      priorMediaId: null,
       busy: false,
       publishResult: null,
       fieldDraft: {},
+      fieldBaseline: null,
+      pendingByCard: {},
+      commerceMount: null,
+      attrMount: null,
     };
 
     const status = el('p', { className: 'lead bulk-journey-status', role: 'status' });
@@ -180,7 +196,110 @@
       return (state.batch.cards || []).find((c) => c.cardId === state.cardId) || null;
     }
 
-    function syncFieldDraftFromCard() {
+    function hasPendingUpload() {
+      return !!(state.file || state.replaceIntent || state.uploadStatus === 'uploading' || state.uploadStatus === 'verifying' || (state.uploadStatus === 'failed' && state.file));
+    }
+
+    function stashPendingForCard(cardId) {
+      if (!cardId) return;
+      if (!hasPendingUpload() && !state.file && state.uploadStatus !== 'failed') {
+        delete state.pendingByCard[cardId];
+        return;
+      }
+      state.pendingByCard[cardId] = {
+        file: state.file,
+        previewUrl: state.previewUrl,
+        previewObjectUrl: state.previewObjectUrl,
+        previewError: state.previewError,
+        uploadPct: state.uploadPct,
+        uploadStatus: state.uploadStatus,
+        uploadSessionId: state.uploadSessionId,
+        mediaId: state.mediaId,
+        replaceIntent: state.replaceIntent,
+        priorMediaId: state.priorMediaId,
+      };
+    }
+
+    function restorePendingForCard(cardId) {
+      const p = cardId ? state.pendingByCard[cardId] : null;
+      if (!p) return false;
+      state.file = p.file || null;
+      state.previewUrl = p.previewUrl || null;
+      state.previewObjectUrl = p.previewObjectUrl || null;
+      state.previewError = p.previewError || '';
+      state.uploadPct = p.uploadPct || 0;
+      state.uploadStatus = p.uploadStatus || '';
+      state.uploadSessionId = p.uploadSessionId || null;
+      state.mediaId = p.mediaId || null;
+      state.replaceIntent = !!p.replaceIntent;
+      state.priorMediaId = p.priorMediaId || null;
+      return true;
+    }
+
+    function clearLocalPreviewObject() {
+      if (state.previewObjectUrl) {
+        try {
+          URL.revokeObjectURL(state.previewObjectUrl);
+        } catch (_) {}
+        state.previewObjectUrl = null;
+      }
+      if (state.previewUrl && String(state.previewUrl).indexOf('blob:') === 0 && state.previewUrl !== state.previewObjectUrl) {
+        try {
+          URL.revokeObjectURL(state.previewUrl);
+        } catch (_) {}
+      }
+    }
+
+    /** Authenticated partner media preview (works across portal/API origins). */
+    async function loadPartnerMediaPreview(mediaId) {
+      if (!mediaId) return null;
+      const base = (PartnersApi && PartnersApi.base) || '';
+      const token = localStorage.getItem('mira_partner_token') || '';
+      const url = String(base).replace(/\/$/, '') + '/partners-portal/media/' + encodeURIComponent(mediaId);
+      const res = await fetch(url, { headers: { Authorization: 'Bearer ' + token } });
+      if (!res.ok) throw new Error('تعذر معاينة المقطع (' + res.status + ')');
+      const blob = await res.blob();
+      if (!blob || !blob.size) throw new Error('معاينة فارغة');
+      return URL.createObjectURL(blob);
+    }
+
+    async function applyServerMediaToState(card, opts) {
+      const keepPending = opts && opts.preservePendingUpload && hasPendingUpload();
+      if (keepPending) return;
+      clearLocalPreviewObject();
+      state.previewError = '';
+      const media = card && card.media;
+      if (media && media.videoReady && media.videoMediaId) {
+        state.mediaId = media.videoMediaId;
+        state.uploadStatus = 'ready';
+        state.uploadPct = 1;
+        state.replaceIntent = false;
+        state.file = null;
+        state.uploadSessionId = null;
+        try {
+          if (media.previewUrl && /^https?:\/\//i.test(String(media.previewUrl))) {
+            state.previewUrl = media.previewUrl;
+          } else {
+            const obj = await loadPartnerMediaPreview(media.videoMediaId);
+            state.previewObjectUrl = obj;
+            state.previewUrl = obj;
+          }
+        } catch (e) {
+          state.previewUrl = null;
+          state.previewError = (e && e.message) || 'تعذر تشغيل المعاينة';
+          // Upload readiness is independent of preview playback.
+        }
+      } else if (!state.file) {
+        state.previewUrl = null;
+        state.uploadPct = 0;
+        state.uploadStatus = '';
+        state.mediaId = null;
+        state.uploadSessionId = null;
+        state.replaceIntent = false;
+      }
+    }
+
+    function syncFieldDraftFromCard(opts) {
       const card = currentCard();
       const vals = (card && card.values) || {};
       const attrs =
@@ -218,10 +337,14 @@
         inventoryMode = 'untracked';
         stockStr = '';
       }
+      const purchaseMode =
+        vals.purchaseMode === 'internal_cod' || vals.purchaseMode === 'external'
+          ? vals.purchaseMode
+          : '';
       state.fieldDraft = {
         nameAr: vals.nameAr || '',
         priceSar: vals.priceHalalas != null ? halalasToSar(vals.priceHalalas) : '',
-        descriptionAr: vals.descriptionAr || '',
+        descriptionAr: vals.descriptionAr == null ? '' : String(vals.descriptionAr),
         durationMin: vals.durationMin != null ? String(vals.durationMin) : '',
         deliveryMode: vals.deliveryMode || vals.fulfillmentMode || '',
         category: vals.category || '',
@@ -232,6 +355,7 @@
             : String(vals.subcategory)
           : '',
         stock: stockStr,
+        purchaseMode: purchaseMode,
         optionsJson: vals.optionsJson != null ? vals.optionsJson : null,
         variantsJson: Array.isArray(vals.variantsJson) ? vals.variantsJson : [],
         inventoryMode: inventoryMode || 'untracked',
@@ -242,28 +366,19 @@
             ? vals.cityIds
             : [],
       };
+      state.fieldBaseline = {
+        nameAr: state.fieldDraft.nameAr,
+        descriptionAr: state.fieldDraft.descriptionAr,
+        purchaseMode: state.fieldDraft.purchaseMode,
+        stock: state.fieldDraft.stock,
+        inventoryMode: state.fieldDraft.inventoryMode,
+      };
       state.commerceMount = null;
       state.attrMount = null;
-      state.file = null;
-      if (state.previewUrl && String(state.previewUrl).indexOf('blob:') === 0) {
-        try {
-          URL.revokeObjectURL(state.previewUrl);
-        } catch (_) {}
-      }
-      // Restore media from server card summary — never invent ready/mediaId.
-      const media = card && card.media;
-      if (media && media.videoReady && media.videoMediaId) {
-        state.mediaId = media.videoMediaId;
-        state.uploadStatus = 'ready';
-        state.uploadPct = 1;
-        state.previewUrl = media.previewUrl || null;
-      } else {
-        state.previewUrl = null;
-        state.uploadPct = 0;
-        state.uploadStatus = '';
-        state.mediaId = null;
-      }
-      state.uploadSessionId = null;
+      // Field sync must not cancel a user-selected file waiting to upload / retry.
+      return applyServerMediaToState(card, {
+        preservePendingUpload: !(opts && opts.resetUpload) && hasPendingUpload(),
+      });
     }
 
     async function refreshBatch(batchId) {
@@ -274,6 +389,8 @@
 
     function buildValuesFromDraft(kind) {
       const d = state.fieldDraft;
+      const baseline = state.fieldBaseline || {};
+      const cardVals = ((currentCard() && currentCard().values) || {});
       const values = {};
       const name = String(d.nameAr || '').trim();
       if (!name) throw new Error('الاسم مطلوب');
@@ -281,8 +398,14 @@
       const price = sarToHalalas(d.priceSar);
       if (price == null) throw new Error('السعر مطلوب');
       values.priceHalalas = price;
-      const desc = String(d.descriptionAr || '').trim();
-      if (desc) values.descriptionAr = desc;
+      // Distinguish unmodified / new / explicit clear for description.
+      const descNow = String(d.descriptionAr == null ? '' : d.descriptionAr).trim();
+      const descBase = String(baseline.descriptionAr == null ? '' : baseline.descriptionAr).trim();
+      if (descNow !== descBase) {
+        values.descriptionAr = descNow; // may be '' for intentional clear
+      } else if (descNow) {
+        values.descriptionAr = descNow;
+      }
       if (kind === 'service') {
         const dur = Number(d.durationMin);
         if (!Number.isFinite(dur) || dur <= 0) throw new Error('مدة الخدمة مطلوبة');
@@ -306,8 +429,27 @@
           if (Array.isArray(d.variantsJson) && d.variantsJson.length) values.variantsJson = d.variantsJson;
         }
         if (!values.category && d.category) values.category = d.category;
-        // Align with editor-v2 materialize default so publish validation sees a known mode.
-        if (!values.purchaseMode) values.purchaseMode = 'external';
+        // Preserve existing purchaseMode unless the user changed it. Never invent external
+        // over an internal_cod product on name-only edits — omit when unmodified.
+        const draftPm = d.purchaseMode;
+        const cardPm = cardVals.purchaseMode;
+        const basePm = baseline.purchaseMode;
+        const chosenPm =
+          draftPm === 'internal_cod' || draftPm === 'external'
+            ? draftPm
+            : cardPm === 'internal_cod' || cardPm === 'external'
+              ? cardPm
+              : basePm === 'internal_cod' || basePm === 'external'
+                ? basePm
+                : '';
+        if (chosenPm && basePm && chosenPm === basePm) {
+          // Unmodified — do not send purchaseMode (avoids accidental external overwrite).
+        } else if (chosenPm) {
+          values.purchaseMode = chosenPm;
+        } else {
+          // New draft with no prior mode — materialize needs a known mode.
+          values.purchaseMode = 'external';
+        }
         if (d.subcategory) values.subcategory = d.subcategory;
         // Do not invent clothes.wedding_dress / profile defaults here.
         if (state.attrMount && typeof state.attrMount.hasBlockingErrors === 'function') {
@@ -428,7 +570,8 @@
           await PartnersApi.updateService(card.targetOwnerId, payload);
         }
         await refreshBatch(batch.batchId);
-        syncFieldDraftFromCard();
+        // Preserve pending replacement file across field save.
+        await syncFieldDraftFromCard({ resetUpload: false });
         return currentCard();
       }
       const put = await PartnersApi.putBulkCard(batch.batchId, card.cardId, {
@@ -437,6 +580,7 @@
         overwriteWritten: true,
       });
       await refreshBatch(batch.batchId);
+      await syncFieldDraftFromCard({ resetUpload: false });
       return put;
     }
 
@@ -444,20 +588,24 @@
       const batch = state.batch;
       let card = currentCard();
       if (!batch || !card) throw new Error('لا يوجد عرض');
-      // Server-backed ready video — do not invent mediaId/ready locally.
-      if (card.media && card.media.videoReady && card.media.videoMediaId) {
-        state.mediaId = card.media.videoMediaId;
-        state.uploadStatus = 'ready';
-        state.uploadPct = 1;
-        if (card.media.previewUrl) state.previewUrl = card.media.previewUrl;
-        return state.mediaId;
-      }
-      if (state.mediaId && state.uploadStatus === 'ready' && !state.file) {
-        return state.mediaId;
-      }
-      if (!state.file) throw new Error('اختاري مقطع فيديو لهذا العرض');
 
-      const dur = await readVideoDuration(state.file);
+      // Explicit replace / first upload wins over any existing ready media on the card.
+      const pendingFile = state.file;
+      if (!pendingFile) {
+        if (card.media && card.media.videoReady && card.media.videoMediaId) {
+          state.mediaId = card.media.videoMediaId;
+          state.uploadStatus = 'ready';
+          state.uploadPct = 1;
+          state.replaceIntent = false;
+          return state.mediaId;
+        }
+        if (state.mediaId && state.uploadStatus === 'ready') {
+          return state.mediaId;
+        }
+        throw new Error('اختاري مقطع فيديو لهذا العرض');
+      }
+
+      const dur = await readVideoDuration(pendingFile);
       if (dur > VIDEO_MAX_SECONDS) throw new Error('الفيديو يتجاوز 5 دقائق');
 
       card = currentCard();
@@ -482,23 +630,26 @@
         }
         ownerId = row.targetOwnerId;
         await refreshBatch(batch.batchId);
-        // Do not syncFieldDraftFromCard here — it would clear the pending local file
-        // selected for this first upload.
+        // Keep pendingFile — do not sync-reset upload state here.
       }
 
-      const pendingFile = state.file;
-      if (!pendingFile) throw new Error('اختاري مقطع فيديو لهذا العرض');
+      if (!state.file) throw new Error('اختاري مقطع فيديو لهذا العرض');
       const ownerKindPath = batch.kind === 'product' ? 'products' : 'services';
+      const priorId =
+        state.priorMediaId ||
+        (card && card.media && card.media.videoMediaId) ||
+        state.mediaId ||
+        null;
       const clientMediaId = newClientMediaId();
       state.uploadStatus = 'uploading';
       state.uploadPct = 0;
       render();
       let uploadSessionId = state.uploadSessionId || null;
       try {
-        const session = await PartnersApi.uploadViaSession(ownerKindPath, ownerId, pendingFile, {
+        const session = await PartnersApi.uploadViaSession(ownerKindPath, ownerId, state.file, {
           clientMediaId: clientMediaId,
           sessionId: uploadSessionId || undefined,
-          mimeType: pendingFile.type || (/\.mov$/i.test(pendingFile.name || '') ? 'video/quicktime' : 'video/mp4'),
+          mimeType: state.file.type || (/\.mov$/i.test(state.file.name || '') ? 'video/quicktime' : 'video/mp4'),
           onSession: (s) => {
             if (s && s.sessionId) {
               state.uploadSessionId = s.sessionId;
@@ -522,13 +673,30 @@
             if (txt) txt.textContent = 'التحقق من المقطع…';
           },
         });
-        state.mediaId = session && (session.catalogMediaId || session.mediaId || session.id);
+        const newId = session && (session.catalogMediaId || session.mediaId || session.id);
+        if (!newId) throw new Error('اكتمل الرفع دون معرّف وسيط');
+        // After successful replace, drop the prior video association (setPrimary is image-only).
+        if (priorId && priorId !== newId) {
+          try {
+            await PartnersApi.removeMedia(ownerKindPath, ownerId, priorId);
+          } catch (_) {
+            /* prior may already be gone; new row remains */
+          }
+        }
+        state.mediaId = newId;
         state.uploadStatus = 'ready';
         state.uploadPct = 1;
         state.file = null;
         state.uploadSessionId = null;
+        state.replaceIntent = false;
+        state.priorMediaId = null;
+        if (state.cardId) delete state.pendingByCard[state.cardId];
         await refreshBatch(batch.batchId);
-        syncFieldDraftFromCard();
+        await syncFieldDraftFromCard({ resetUpload: true });
+        const shown2 = (currentCard() && currentCard().media && currentCard().media.videoMediaId) || null;
+        if (shown2 && shown2 !== newId) {
+          throw new Error('رُفع البديل لكن القراءة ما زالت تعرض المقطع السابق');
+        }
         return state.mediaId;
       } catch (e) {
         const stage = (e && e.stage) || (e && e.code) || '';
@@ -536,6 +704,9 @@
           (e && (e.messageAr || e.message)) ||
           String(e);
         state.uploadStatus = 'failed';
+        // Keep prior association usable until a later successful replace.
+        if (priorId) state.priorMediaId = priorId;
+        stashPendingForCard(state.cardId);
         throw Object.assign(new Error(ar + (stage ? ' · مرحلة: ' + stage : '')), e || {});
       }
     }
@@ -551,7 +722,7 @@
       });
       state.batch = b;
       state.cardId = (b.cards && b.cards[0] && b.cards[0].cardId) || 'c001';
-      syncFieldDraftFromCard();
+      await syncFieldDraftFromCard({ resetUpload: true });
       state.step = 'offer';
       setBulkUrl(b.batchId, state.cardId);
       setStatus('العرض ١ — أضيفي المقطع والبيانات');
@@ -722,17 +893,24 @@
           setStatus('الفيديو يتجاوز 5 دقائق', true);
           return;
         }
-        if (state.previewUrl && String(state.previewUrl).indexOf('blob:') === 0) {
-          try {
-            URL.revokeObjectURL(state.previewUrl);
-          } catch (_) {}
-        }
-        // Explicit replace — clear prior server media binding until new upload succeeds.
+        clearLocalPreviewObject();
+        const cardNow = currentCard();
+        const prior =
+          (cardNow && cardNow.media && cardNow.media.videoMediaId) ||
+          state.mediaId ||
+          state.priorMediaId ||
+          null;
+        // Explicit replace — keep prior server media until the new upload succeeds.
         state.file = file;
-        state.previewUrl = URL.createObjectURL(file);
-        state.mediaId = null;
+        state.previewObjectUrl = URL.createObjectURL(file);
+        state.previewUrl = state.previewObjectUrl;
+        state.previewError = '';
+        state.replaceIntent = true;
+        state.priorMediaId = prior;
         state.uploadStatus = 'selected';
         state.uploadPct = 0;
+        // Do not clear state.mediaId yet — prior association remains until upload OK.
+        stashPendingForCard(state.cardId);
         setStatus('مقطع جاهز للرفع مع الحفظ — استبدال صريح');
         render();
       });
@@ -746,7 +924,18 @@
             src: state.previewUrl,
             controls: true,
             playsinline: true,
+            'data-testid': 'bulk-media-video',
             style: 'width:100%;max-height:240px;margin-top:8px;background:#111',
+          }),
+        );
+      }
+      if (state.previewError) {
+        mediaBox.appendChild(
+          el('p', {
+            className: 'lead',
+            'data-testid': 'bulk-media-preview-error',
+            style: 'color:#b00020',
+            text: 'الرفع قد يكون مكتملًا — فشل المعاينة: ' + state.previewError,
           }),
         );
       }
@@ -757,13 +946,15 @@
         text:
           state.uploadStatus === 'ready'
             ? 'المقطع مرفوع وجاهز'
-            : state.uploadStatus === 'uploading'
-              ? 'رفع المقطع: ' + Math.round(state.uploadPct * 100) + '%'
-              : state.uploadStatus === 'verifying'
-                ? 'التحقق من المقطع…'
-                : state.file
-                  ? 'مقطع محدد — يُرفع عند الحفظ'
-                  : 'لم يُختر مقطع بعد',
+            : state.uploadStatus === 'failed'
+              ? 'فشل الرفع — الحقول محفوظة؛ أعيدي المحاولة'
+              : state.uploadStatus === 'uploading'
+                ? 'رفع المقطع: ' + Math.round(state.uploadPct * 100) + '%'
+                : state.uploadStatus === 'verifying'
+                  ? 'التحقق من المقطع…'
+                  : state.file
+                    ? 'مقطع محدد — يُرفع عند الحفظ'
+                    : 'لم يُختر مقطع بعد',
       });
       const barWrap = el('div', {
         style: 'height:10px;background:#e5e0d8;border-radius:4px;overflow:hidden;margin-top:6px',
@@ -1009,17 +1200,26 @@
             state.busy = true;
             try {
               // Save field values first (works for draft and materialized), then ensure media.
-              setStatus('حفظ العرض…');
+              setStatus('حفظ بيانات العرض…');
               await saveCurrentOffer();
               setStatus('رفع المقطع…');
               await ensureVideoReady();
               await refreshBatch(batch.batchId);
-              syncFieldDraftFromCard();
+              await syncFieldDraftFromCard({ resetUpload: true });
+              stashPendingForCard(state.cardId);
               const next = await PartnersApi.appendBulkCard(batch.batchId);
               state.batch = next;
               const cards = next.cards || [];
+              // Switching cards — clear live pending so it does not leak to the new empty card.
+              state.file = null;
+              state.replaceIntent = false;
+              state.uploadSessionId = null;
+              state.uploadStatus = '';
+              state.priorMediaId = null;
+              clearLocalPreviewObject();
+              state.previewUrl = null;
               state.cardId = cards[cards.length - 1].cardId;
-              syncFieldDraftFromCard();
+              await syncFieldDraftFromCard({ resetUpload: true });
               setBulkUrl(next.batchId, state.cardId);
               setStatus('العرض ' + cards.length + ' — بيانات فارغة لهذا المقطع');
               render();
@@ -1053,11 +1253,12 @@
             if (state.busy) return;
             state.busy = true;
             try {
-              setStatus('حفظ العرض…');
+              setStatus('حفظ بيانات العرض…');
               await saveCurrentOffer();
+              setStatus('رفع المقطع…');
               await ensureVideoReady();
               await refreshBatch(batch.batchId);
-              syncFieldDraftFromCard();
+              await syncFieldDraftFromCard({ resetUpload: true });
               state.step = 'summary';
               setStatus('مراجعة المجموعة قبل النشر');
               render();
@@ -1067,7 +1268,13 @@
               const feTxt = Array.isArray(fe) && fe.length
                 ? ' [' + fe.map((x) => (x.fieldId || '') + ':' + (x.code || '')).join(', ') + ']'
                 : '';
-              setStatus(((e && (e.messageAr || e.message)) || String(e)) + feTxt, true);
+              const msg = ((e && (e.messageAr || e.message)) || String(e)) + feTxt;
+              // Field save success must not be presented as video upload success.
+              if (state.uploadStatus === 'failed' || state.file) {
+                setStatus('حُفظت البيانات — فشل رفع المقطع: ' + msg, true);
+              } else {
+                setStatus(msg, true);
+              }
             } finally {
               state.busy = false;
               render();
@@ -1132,9 +1339,19 @@
             type: 'button',
             className: 'btn btn-ghost',
             text: ready.ok ? 'تعديل' : 'إكمال العرض',
-            onClick: () => {
+            onClick: async () => {
+              stashPendingForCard(state.cardId);
               state.cardId = card.cardId;
-              syncFieldDraftFromCard();
+              if (!restorePendingForCard(card.cardId)) {
+                state.file = null;
+                state.replaceIntent = false;
+                state.uploadSessionId = null;
+                state.priorMediaId = null;
+                clearLocalPreviewObject();
+                state.previewUrl = null;
+                state.uploadStatus = '';
+              }
+              await syncFieldDraftFromCard({ resetUpload: false });
               state.step = 'offer';
               setBulkUrl(batch.batchId, card.cardId);
               render();
@@ -1284,7 +1501,7 @@
           wantCard && (b.cards || []).some((c) => c.cardId === wantCard)
             ? wantCard
             : (b.cards && b.cards[0] && b.cards[0].cardId) || null;
-        syncFieldDraftFromCard();
+        await syncFieldDraftFromCard({ resetUpload: true });
         const allSubmitted = (b.cards || []).every(
           (c) => c.contentStatus === 'published' || c.submitReviewStatus === 'submitted',
         );

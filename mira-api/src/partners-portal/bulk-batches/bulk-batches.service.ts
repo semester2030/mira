@@ -71,7 +71,8 @@ function ownerRowToDraftValues(
     nameAr,
     priceHalalas: row.priceHalalas,
   };
-  if (descriptionAr != null && descriptionAr !== '') values.descriptionAr = descriptionAr;
+  // Preserve intentional empty description (clear) separately from "unset".
+  if (descriptionAr !== undefined && descriptionAr !== null) values.descriptionAr = descriptionAr;
   if (category != null) values.category = category;
   if (subcategory !== undefined) values.subcategory = subcategory;
   if (profileId != null) values.profileId = profileId;
@@ -501,23 +502,45 @@ export class BulkBatchesService {
             pendingRemoval: false,
           },
           orderBy: [{ sortOrder: 'asc' }, { createdAt: 'asc' }],
-          select: { id: true, kind: true, url: true, mimeType: true, publication: true, active: true },
+          select: {
+            id: true,
+            kind: true,
+            url: true,
+            mimeType: true,
+            publication: true,
+            active: true,
+            isPrimary: true,
+            draftIsPrimary: true,
+            placement: true,
+            createdAt: true,
+          },
         });
-        const video = mediaRows.find(
+        const videos = mediaRows.filter(
           (m) =>
             m.kind === 'video' ||
             (typeof m.mimeType === 'string' && m.mimeType.startsWith('video/')),
         );
+        // Video "primary" flags are image-cover semantics — for journey video pick the
+        // newest main-placement row so a successful replace is what reopen shows.
+        videos.sort((a, b) => {
+          const aMain = a.placement === 'main' || a.placement == null || a.placement === '' ? 1 : 0;
+          const bMain = b.placement === 'main' || b.placement == null || b.placement === '' ? 1 : 0;
+          if (bMain !== aMain) return bMain - aMain;
+          return (b.createdAt?.getTime?.() || 0) - (a.createdAt?.getTime?.() || 0);
+        });
+        const video = videos[0];
         if (video) {
+          // Partner-auth preview path (not public marketplace). Absolute https urls kept as-is.
           const previewUrl =
             typeof video.url === 'string' && /^https?:\/\//i.test(video.url)
               ? video.url
-              : `/api/v1/marketplace/media/${encodeURIComponent(video.id)}`;
+              : null;
           media = {
             videoMediaId: video.id,
-            // Ready for journey = present video not pending removal (draft or published).
             videoReady: true,
             previewUrl,
+            // Client resolves via PartnersApi.base + Bearer → blob (cross-origin safe).
+            partnerMediaPath: `/partners-portal/media/${encodeURIComponent(video.id)}`,
           };
         }
       }

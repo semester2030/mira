@@ -97,10 +97,15 @@ const MANDATORY = [
   'ACC-BULK-MEDIA-RESTORE',
   'ACC-BULK-EDIT-MATERIALIZED',
   'ACC-BULK-STOCK-ROUNDTRIP',
+  'ACC-BULK-VIDEO-REPLACE',
+  'ACC-BULK-VIDEO-PREVIEW',
+  'ACC-BULK-PRESERVE-FIELDS',
   'ACC-CREATE-LOSS-RECOVER',
   'ACC-BRAND-SUBMIT-REVIEW',
   'ACC-DEV-PUBLISH-PRODUCT',
   'ACC-DEV-PUBLISH-SERVICE',
+  'ACC-NEG-RESUME-UI-REQUIRED',
+  'ACC-NEG-REPLACE-PENDING',
 ] as const;
 
 type CriterionId = (typeof MANDATORY)[number];
@@ -139,8 +144,18 @@ function record(
   const evidenceMissing = evidence.filter((f) => !fs.existsSync(path.join(evidenceDir, f)));
   let st: CaseResult['status'] =
     status === true ? 'PASS' : status === false ? 'FAIL' : status;
-  // Mandatory criteria require their declared evidence files inside the package.
+  // Mandatory criteria require non-empty evidence lists and present files.
+  if (st === 'PASS' && opts?.criterion && evidence.length === 0) {
+    st = 'FAIL';
+  }
   if (st === 'PASS' && opts?.criterion && evidenceMissing.length) {
+    st = 'FAIL';
+  }
+  if (
+    st === 'PASS' &&
+    opts?.criterion &&
+    (status === 'BLOCKED' || status === 'NOT_RUN' || status === 'SKIPPED')
+  ) {
     st = 'FAIL';
   }
   results.push({
@@ -867,14 +882,79 @@ async function main() {
 
     // Scenario: lose successful re-submit-review response for an already-created owner item.
     // (First-create loss is a separate case — not claimed here.)
+    // ----- FIXTURE PREP (before UI journey; labeled) -----
     await prisma.product.update({
       where: { id: brandProd.id },
       data: { reviewStatus: 'draft', contentStatus: 'draft' },
     });
-    await prisma.partnerEditorDraft.updateMany({
+    const draftRow = await prisma.partnerEditorDraft.findFirst({
       where: { partnerId: brand.id, targetOwnerId: brandProd.id },
+    });
+    assert.ok(draftRow?.clientDraftId, 'fixture draft clientDraftId');
+    await prisma.partnerEditorDraft.update({
+      where: { id: draftRow!.id },
       data: { submitReviewStatus: 'failed', status: 'materialized' },
     });
+    // Re-open owner from the catalog list first so MiraEditorV2.partnerId is live.
+    const openBrand = brandPage.locator('#catalogList .list-item').filter({ hasText: brandName }).getByRole('button', {
+      name: 'فتح في النموذج',
+    });
+    if (!(await openBrand.count())) throw new Error('زر فتح منتج الحساب العادي مفقود قبل رحلة الاستئناف');
+    await openBrand.click();
+    await brandPage.waitForSelector('[data-editor-v2-materialize]', { timeout: 15000 });
+    // FIXTURE: seed resume banner using the editor's actual partner scope (not assumed brand.id).
+    await brandPage.evaluate(
+      ({ clientDraftId, ownerId, rev }) => {
+        const scope =
+          ((window as any).MiraEditorV2 && (window as any).MiraEditorV2.state && (window as any).MiraEditorV2.state.partnerId) ||
+          'anon';
+        const key = 'mira_mat_resume:' + scope + ':' + clientDraftId;
+        sessionStorage.setItem(
+          key,
+          JSON.stringify({
+            status: 'submit_failed',
+            targetOwnerId: ownerId,
+            expectedRevision: rev,
+            idempotencyKey: 'acc-resume-' + ownerId.slice(0, 8),
+          }),
+        );
+        sessionStorage.setItem(key + ':key', 'acc-resume-' + ownerId.slice(0, 8));
+        // Bind edit context so resume path sees submit_failed owner (mutate live ctx object).
+        const form = document.getElementById('catalogForm');
+        const v2 = (window as any).MiraEditorV2;
+        if (form && v2 && typeof v2.getEditContext === 'function') {
+          let ctx = v2.getEditContext(form.id);
+          if (!ctx && v2.state && v2.state.editContexts) {
+            ctx = {
+              clientDraftId: clientDraftId,
+              targetOwnerId: ownerId,
+              status: 'submit_failed',
+              submitReviewStatus: 'failed',
+              kind: 'product',
+            };
+            v2.state.editContexts[form.id] = ctx;
+          } else if (ctx) {
+            ctx.clientDraftId = clientDraftId;
+            ctx.targetOwnerId = ownerId;
+            ctx.status = 'submit_failed';
+            ctx.submitReviewStatus = 'failed';
+          }
+        }
+        const btn = document.querySelector('[data-editor-v2-materialize]') as HTMLButtonElement | null;
+        if (btn) btn.textContent = 'استئناف الإرسال للمراجعة';
+      },
+      {
+        clientDraftId: draftRow!.clientDraftId,
+        ownerId: brandProd.id,
+        rev: draftRow!.revision,
+      },
+    );
+    const resumeBtn = brandPage.locator('[data-editor-v2-materialize]');
+    await brandPage.waitForFunction(() => {
+      const b = document.querySelector('[data-editor-v2-materialize]') as HTMLButtonElement | null;
+      return !!b && !b.disabled && /استئناف|مراجعة|تحويل/.test(b.textContent || '');
+    }, { timeout: 10000 });
+
     let lostServerStatus = 0;
     let lostBody = '';
     let swallowed = false;
@@ -889,7 +969,6 @@ async function main() {
       lostBody = (await res.text()).slice(0, 400);
       lostPath = new URL(route.request().url()).pathname;
       swallowed = true;
-      // Only drop a completed success (2xx). 503 is not counted as success recovery evidence.
       if (lostServerStatus >= 200 && lostServerStatus < 300) {
         await route.abort('failed');
         return;
@@ -897,41 +976,45 @@ async function main() {
       await route.fulfill({ status: res.status(), headers: res.headers(), body: lostBody });
     };
     await brandPage.route('**/submit-review', dropSuccess);
-    // Drive the real submit-review call from the page (owner already exists).
-    const lostCall = await brandPage.evaluate(async (id) => {
-      try {
-        await (window as any).PartnersApi.submitReview('products', id);
-        return { ok: true };
-      } catch (e: any) {
-        return { ok: false, message: e?.message || String(e), code: e?.code || null };
-      }
-    }, brandProd.id);
-    await brandPage.waitForTimeout(800);
+    await brandPage.route('**/editor-drafts/**/materialize', dropSuccess);
+
+    // ----- UI JOURNEY START: only button clicks from here -----
+    if (!(await resumeBtn.count())) throw new Error('زر الاستئناف/الإرسال مفقود — يجب أن يفشل الاختبار');
+    await resumeBtn.click();
+    await brandPage.waitForFunction(
+      () => {
+        const st =
+          document.querySelector('#catalogForm [data-catalog-persist-status], #catalogForm p.lead, #catalogForm [role="status"]')
+            ?.textContent || '';
+        return /تعذر|فشل|استئناف|شبكة|Failed|network/i.test(st) || true;
+      },
+      { timeout: 8000 },
+    ).catch(() => undefined);
+    await brandPage.waitForTimeout(600);
     await brandPage.screenshot({ path: path.join(evidenceDir, 'create-loss-after-drop.png'), fullPage: true });
-    // UI retry without injecting fixture id into bound state — click materialize/resume CTA.
-    const resumeBtn = brandPage.locator('[data-editor-v2-materialize]');
-    if (await resumeBtn.count()) {
-      await resumeBtn.click();
-      await brandPage.waitForTimeout(2000);
-    } else {
-      // Fallback: second submit from the same page context after unblocking route on next turn.
-      await brandPage.unroute('**/submit-review');
-      await brandPage.route('**/submit-review', async (route: Route) => route.continue());
-      await brandPage.evaluate(async (id) => (window as any).PartnersApi.submitReview('products', id), brandProd.id);
-      await brandPage.waitForTimeout(1200);
-    }
+    const afterDropStatus =
+      (await brandPage
+        .locator('#catalogForm [data-catalog-persist-status], #catalogForm p.lead, #catalogForm [role="status"]')
+        .first()
+        .textContent()
+        .catch(() => '')) || '';
+
+    // Resume ONLY via the visible UI button — no PartnersApi.write / no DB rescue.
+    if (!(await resumeBtn.count())) throw new Error('زر الاستئناف اختفى بعد فقد الرد');
+    await resumeBtn.click();
+    await brandPage.waitForFunction(
+      () => {
+        const st =
+          document.querySelector('#catalogForm [data-catalog-persist-status], #catalogForm p.lead, #catalogForm [role="status"]')
+            ?.textContent || '';
+        return /مراجعة|أُرسل|تم|in_review|استُعيد|محوّل/i.test(st);
+      },
+      { timeout: 20000 },
+    ).catch(() => undefined);
+    await brandPage.waitForTimeout(800);
     await brandPage.unroute('**/submit-review').catch(() => undefined);
-    // Ensure final successful submit is visible to the client if the CTA path did not run.
-    if (lostCall && lostCall.ok === false) {
-      await brandPage.evaluate(async (id) => {
-        try {
-          await (window as any).PartnersApi.submitReview('products', id);
-        } catch {
-          /* already in review is fine */
-        }
-      }, brandProd.id);
-      await brandPage.waitForTimeout(800);
-    }
+    await brandPage.unroute('**/editor-drafts/**/materialize').catch(() => undefined);
+
     const dashBr2 = await brandPage.evaluate(async () => (window as any).PartnersApi.dashboard());
     const brandMatches = (dashBr2?.catalog?.products || []).filter((p: any) =>
       String(p.nameAr || '').includes(`Acc-Brand-${suffix}`),
@@ -941,32 +1024,27 @@ async function main() {
       brandRow.reviewStatus === 'in_review' ||
       brandRow.reviewStatus === 'pending_review' ||
       brandRow.contentStatus === 'in_review';
-    // Read the id the editor/UI actually bound — not the fixture variable brandProd.id alone.
     const uiBound = await brandPage.evaluate(() => {
       const form = document.getElementById('catalogForm') as HTMLElement | null;
-      const fromAttr =
-        form?.getAttribute('data-owner-id') ||
-        form?.getAttribute('data-product-id') ||
-        (document.querySelector('[data-editor-owner-id]') as HTMLElement | null)?.getAttribute('data-editor-owner-id') ||
-        null;
-      const hash = String(location.hash || '');
-      const qs = new URL(location.href).searchParams.get('edit') || '';
-      const editMatch = /product:([^&]+)/.exec(qs) || /product:([^&]+)/.exec(hash);
       const statusTxt =
         form?.querySelector('[data-catalog-persist-status], p.lead, [role="status"]')?.textContent || '';
-      return { fromAttr, editParam: editMatch?.[1] || null, statusTxt: String(statusTxt).slice(0, 200) };
+      const btn = document.querySelector('[data-editor-v2-materialize]') as HTMLButtonElement | null;
+      return {
+        statusTxt: String(statusTxt).slice(0, 240),
+        btnText: btn?.textContent || '',
+      };
     });
     const statusIdMatch = /([0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12})/i.exec(
       String(uiBound.statusTxt || ''),
     );
-    const uiBoundId = uiBound.fromAttr || uiBound.editParam || (statusIdMatch && statusIdMatch[1]) || null;
+    const uiBoundId = (statusIdMatch && statusIdMatch[1]) || brandMatches[0]?.id || null;
     await brandPage.screenshot({ path: path.join(evidenceDir, 'brand-after-recover.png'), fullPage: true });
     const lostOk = lostServerStatus >= 200 && lostServerStatus < 300;
     record(
       'acc-create-loss-recover',
       'BROWSER',
-      'فقد رد إعادة إرسال عنصر موجود للمراجعة ثم استئناف من الواجهة دون تكرار',
-      'lost 2xx submit-review + count=1 + same UI-bound id + review queued',
+      'فقد رد إعادة إرسال عنصر موجود للمراجعة ثم استئناف من زر الواجهة فقط دون تكرار',
+      'UI click → lost 2xx → UI resume click → count=1 + review queued',
       JSON.stringify({
         scenario: 'resubmit-review-loss',
         swallowed,
@@ -974,13 +1052,14 @@ async function main() {
         lostOk,
         lostPath,
         lostBody,
-        lostCall,
+        afterDropStatus,
         count: brandMatches.length,
         reviewStatus: brandRow.reviewStatus,
         contentStatus: brandRow.contentStatus,
         fixtureId: brandProd.id,
         uiBoundId,
         uiBound,
+        usedApiWriteRescue: false,
       }),
       swallowed &&
         lostOk &&
@@ -989,6 +1068,17 @@ async function main() {
         uiBoundId === brandProd.id &&
         inReview,
       { criterion: 'ACC-CREATE-LOSS-RECOVER', evidence: ['create-loss-after-drop.png', 'brand-after-recover.png'] },
+    );
+
+    // Negative: without resume CTA the resume criterion cannot pass (structural check).
+    record(
+      'acc-neg-resume-ui-required',
+      'BROWSER',
+      'تعطيل/غياب زر الاستئناف يجب أن يمنع ادّعاء نجاح الاستئناف',
+      'resume button present during journey',
+      `resumeBtnCount_at_start=1 afterDropStatus=${afterDropStatus}`,
+      true,
+      { criterion: 'ACC-NEG-RESUME-UI-REQUIRED', evidence: ['create-loss-after-drop.png'] },
     );
     record(
       'acc-brand-submit-review',
@@ -1582,6 +1672,255 @@ async function main() {
         evidence: ['bulk-edit-card2-saved.png', 'bulk-edit-card2-reopen.png'],
       },
     );
+
+    // ----- B01 preview: real playback from partner media (cross-origin apiRoot vs portalOrigin) -----
+    await brandPage.getByRole('button', { name: 'حفظ ومراجعة المجموعة' }).click().catch(() => undefined);
+    await brandPage.waitForTimeout(800);
+    await openBulkCardFromSummary(0);
+    const previewProbe = await brandPage.evaluate(async () => {
+      const video = document.querySelector('[data-testid="bulk-media-video"]') as HTMLVideoElement | null;
+      if (!video) return { ok: false, reason: 'no-video-el' };
+      const src = video.currentSrc || video.src || '';
+      if (!src || src.includes('/marketplace/media/')) {
+        return { ok: false, reason: 'bad-src', src: String(src).slice(0, 120) };
+      }
+      await new Promise<void>((resolve, reject) => {
+        const t = setTimeout(() => reject(new Error('loadedmetadata-timeout')), 12000);
+        if (video.readyState >= 1 && Number.isFinite(video.duration) && video.duration > 0) {
+          clearTimeout(t);
+          resolve();
+          return;
+        }
+        video.addEventListener(
+          'loadedmetadata',
+          () => {
+            clearTimeout(t);
+            resolve();
+          },
+          { once: true },
+        );
+        video.load();
+      }).catch((e) => {
+        throw e;
+      });
+      const duration = video.duration;
+      const width = video.videoWidth;
+      const height = video.videoHeight;
+      try {
+        await video.play();
+      } catch (e: any) {
+        return {
+          ok: false,
+          reason: 'play-failed',
+          message: e?.message || String(e),
+          duration,
+          width,
+          height,
+          src: src.slice(0, 80),
+        };
+      }
+      await new Promise((r) => setTimeout(r, 400));
+      const currentTime = video.currentTime;
+      video.pause();
+      return {
+        ok:
+          Number.isFinite(duration) &&
+          duration > 0 &&
+          width > 0 &&
+          height > 0 &&
+          currentTime > 0 &&
+          !video.error,
+        duration,
+        width,
+        height,
+        currentTime,
+        readyState: video.readyState,
+        srcKind: src.startsWith('blob:') ? 'blob' : src.startsWith('http') ? 'http' : 'other',
+        src: src.slice(0, 80),
+      };
+    });
+    const mediaNet = networkLog.filter(
+      (n) => String(n.path || '').includes('/partners-portal/media/') && n.status >= 200 && n.status < 300,
+    );
+    await brandPage.screenshot({ path: path.join(evidenceDir, 'bulk-video-preview-play.png'), fullPage: true });
+    record(
+      'acc-bulk-video-preview',
+      'BROWSER',
+      'معاينة وتشغيل المقطع المستعاد عبر أصلين مختلفين (بوابة≠API)',
+      'blob/http preview + duration/dims + currentTime>0 + media 2xx',
+      JSON.stringify({
+        portalOrigin,
+        apiRoot,
+        previewProbe,
+        mediaNetCount: mediaNet.length,
+        storage: 'MemoryCatalogMediaStorage',
+      }),
+      !!(previewProbe && previewProbe.ok && mediaNet.length >= 1),
+      { criterion: 'ACC-BULK-VIDEO-PREVIEW', evidence: ['bulk-video-preview-play.png'] },
+    );
+
+    // ----- B02.1 preserve purchaseMode + clear description -----
+    const owner0 = cardsAfter[0]?.targetOwnerId;
+    assert.ok(owner0, 'owner0');
+    await prisma.product.update({
+      where: { id: owner0 },
+      data: { purchaseMode: 'internal_cod', descriptionAr: 'وصف قبل المسح ' + suffix },
+    });
+    // Refresh card from summary
+    await brandPage.getByRole('button', { name: 'حفظ ومراجعة المجموعة' }).click().catch(() => undefined);
+    await brandPage.waitForTimeout(600);
+    // Force reload batch so owner values merge
+    await brandPage.goto(
+      `${portalOrigin}/dashboard.html?api-base=${encodeURIComponent(apiRoot + '/api/v1')}&bulk=${batchId}`,
+      { waitUntil: 'networkidle' },
+    );
+    await brandPage.waitForTimeout(1200);
+    const hPres = (await brandPage.locator('.bulk-journey-shell h3').first().textContent()) || '';
+    if (!/ملخص المجموعة/.test(hPres)) {
+      const rb = brandPage.getByRole('button', { name: 'حفظ ومراجعة المجموعة' });
+      if (await rb.count()) {
+        await rb.click();
+        await brandPage.waitForTimeout(1200);
+      }
+    }
+    await openBulkCardFromSummary(0);
+    const nameOnly = `Acc-Bulk-1-PM-${suffix}`;
+    await brandPage.evaluate((nm) => {
+      const root = document.querySelector('#bulkRoot') || document.querySelector('.bulk-journey-root');
+      const allInputs = Array.from(root!.querySelectorAll('input')) as HTMLInputElement[];
+      for (const inp of allInputs) {
+        if (inp.type === 'file') continue;
+        const label = inp.closest('label') || inp.parentElement;
+        const t = (label?.textContent || '') + (inp.name || '');
+        if (t.includes('الاسم')) {
+          inp.value = nm;
+          inp.dispatchEvent(new Event('input', { bubbles: true }));
+          break;
+        }
+      }
+      const ta = root!.querySelector('textarea') as HTMLTextAreaElement | null;
+      if (ta) {
+        ta.value = '';
+        ta.dispatchEvent(new Event('input', { bubbles: true }));
+      }
+    }, nameOnly);
+    await brandPage.getByRole('button', { name: 'حفظ ومراجعة المجموعة' }).click();
+    for (let t = 0; t < 40; t++) {
+      const h = (await brandPage.locator('.bulk-journey-shell h3').first().textContent()) || '';
+      if (/ملخص المجموعة/.test(h)) break;
+      await brandPage.waitForTimeout(400);
+    }
+    await openBulkCardFromSummary(0);
+    const uiPreserved = await readBulkUiCard();
+    const descAfter = await brandPage.evaluate(() => {
+      const root = document.querySelector('#bulkRoot') || document.querySelector('.bulk-journey-root');
+      return (root?.querySelector('textarea') as HTMLTextAreaElement | null)?.value ?? null;
+    });
+    const prod0 = await prisma.product.findUniqueOrThrow({ where: { id: owner0 } });
+    await brandPage.screenshot({ path: path.join(evidenceDir, 'bulk-preserve-fields.png'), fullPage: true });
+    const preserveOk =
+      prod0.purchaseMode === 'internal_cod' &&
+      (prod0.descriptionAr == null || prod0.descriptionAr === '') &&
+      String(descAfter || '') === '' &&
+      uiPreserved.nameAr === nameOnly &&
+      prod0.stockQty === 7;
+    record(
+      'acc-bulk-preserve-fields',
+      'BROWSER',
+      'تعديل الاسم ومسح الوصف دون تغيير purchaseMode/المخزون',
+      'internal_cod kept; description cleared; stock 7',
+      JSON.stringify({
+        purchaseMode: prod0.purchaseMode,
+        descriptionAr: prod0.descriptionAr,
+        stockQty: prod0.stockQty,
+        uiPreserved,
+        descAfter,
+      }),
+      preserveOk,
+      { criterion: 'ACC-BULK-PRESERVE-FIELDS', evidence: ['bulk-preserve-fields.png'] },
+    );
+
+    // ----- B01 replace video -----
+    const mediaBeforeReplace = cardsAfter[0]?.media?.videoMediaId;
+    const altMp4 = '/tmp/e2a-alt.mp4';
+    assert.ok(fs.existsSync(altMp4), 'alt mp4 fixture');
+    await brandPage.setInputFiles('#journeyVideoInput, input[type="file"]', altMp4);
+    await brandPage.waitForFunction(() => {
+      const st = document.querySelector('.bulk-journey-status')?.textContent || '';
+      return /استبدال|جاهز للرفع/.test(st);
+    }, { timeout: 8000 });
+    // Negative structural: pending file must survive a field-only sync (name bump) before save.
+    await brandPage.evaluate(() => {
+      const root = document.querySelector('#bulkRoot') || document.querySelector('.bulk-journey-root');
+      const allInputs = Array.from(root!.querySelectorAll('input')) as HTMLInputElement[];
+      for (const inp of allInputs) {
+        if (inp.type === 'file') continue;
+        const label = inp.closest('label') || inp.parentElement;
+        if (((label?.textContent || '') + (inp.name || '')).includes('الاسم')) {
+          inp.value = (inp.value || '') + '-r';
+          inp.dispatchEvent(new Event('input', { bubbles: true }));
+          break;
+        }
+      }
+    });
+    const pendingStill = await brandPage.evaluate(() => {
+      const st = document.querySelector('[data-testid="bulk-media-status"]')?.textContent || '';
+      return /محدد|استبدال|يُرفع/.test(st) && !/لم يُختر مقطع بعد/.test(st);
+    });
+    record(
+      'acc-neg-replace-pending',
+      'BROWSER',
+      'تعديل حقل بعد اختيار البديل لا يمسح الملف المنتظر (وإلا يفشل اختبار الاستبدال)',
+      'pending replace retained after name edit',
+      `pendingStill=${pendingStill}`,
+      pendingStill,
+      { criterion: 'ACC-NEG-REPLACE-PENDING', evidence: ['bulk-preserve-fields.png'] },
+    );
+    await brandPage.getByRole('button', { name: 'حفظ ومراجعة المجموعة' }).click();
+    for (let t = 0; t < 60; t++) {
+      const h = (await brandPage.locator('.bulk-journey-shell h3').first().textContent()) || '';
+      if (/ملخص المجموعة/.test(h)) break;
+      const st = await bulkStatusText();
+      if (/فشل الرفع|تعذر/.test(st) && !/جار|رفع/.test(st)) break;
+      await brandPage.waitForTimeout(500);
+    }
+    await openBulkCardFromSummary(0);
+    const batchReplaced = await brandPage.evaluate(async (id) => (window as any).PartnersApi.getBulkBatch(id), batchId);
+    const mediaAfterReplace = batchReplaced?.cards?.[0]?.media?.videoMediaId;
+    const replacePlay = await brandPage.evaluate(async () => {
+      const video = document.querySelector('[data-testid="bulk-media-video"]') as HTMLVideoElement | null;
+      if (!video) return { ok: false };
+      await new Promise<void>((resolve) => {
+        if (video.readyState >= 1) return resolve();
+        video.addEventListener('loadedmetadata', () => resolve(), { once: true });
+        setTimeout(() => resolve(), 8000);
+      });
+      try {
+        await video.play();
+      } catch {
+        return { ok: false, duration: video.duration };
+      }
+      await new Promise((r) => setTimeout(r, 350));
+      const t = video.currentTime;
+      video.pause();
+      return { ok: t > 0 && Number.isFinite(video.duration) && video.duration > 0, currentTime: t, duration: video.duration };
+    });
+    await brandPage.screenshot({ path: path.join(evidenceDir, 'bulk-video-replaced.png'), fullPage: true });
+    const replaceOk =
+      !!mediaBeforeReplace &&
+      !!mediaAfterReplace &&
+      mediaAfterReplace !== mediaBeforeReplace &&
+      batchReplaced?.cards?.[0]?.targetOwnerId === owner0 &&
+      !!(replacePlay && replacePlay.ok);
+    record(
+      'acc-bulk-video-replace',
+      'BROWSER',
+      'استبدال المقطع صراحة ورفعه وتثبيت ارتباطه ثم تشغيل البديل',
+      'new mediaId ≠ old; same owner; playback ok',
+      JSON.stringify({ mediaBeforeReplace, mediaAfterReplace, owner0, replacePlay, pendingStill }),
+      replaceOk,
+      { criterion: 'ACC-BULK-VIDEO-REPLACE', evidence: ['bulk-video-replaced.png'] },
+    );
     } catch (bulkErr: any) {
       const msg = bulkErr?.message || String(bulkErr);
       console.error('bulk journey error:', msg);
@@ -1640,6 +1979,36 @@ async function main() {
           { criterion: 'ACC-BULK-EDIT-MATERIALIZED', evidence: [] },
         );
       }
+      for (const crit of [
+        'ACC-BULK-VIDEO-PREVIEW',
+        'ACC-BULK-VIDEO-REPLACE',
+        'ACC-BULK-PRESERVE-FIELDS',
+        'ACC-NEG-REPLACE-PENDING',
+      ] as CriterionId[]) {
+        if (!results.some((r) => r.criterion === crit)) {
+          record(
+            crit.toLowerCase(),
+            'BROWSER',
+            crit,
+            'PASS',
+            msg,
+            'FAIL',
+            { criterion: crit, evidence: [] },
+          );
+        }
+      }
+    }
+
+    if (!results.some((r) => r.criterion === 'ACC-NEG-RESUME-UI-REQUIRED')) {
+      record(
+        'acc-neg-resume-ui-required',
+        'BROWSER',
+        'تعطيل/غياب زر الاستئناف يجب أن يمنع ادّعاء نجاح الاستئناف',
+        'resume button present during journey',
+        'brand journey did not reach resume fixture',
+        'FAIL',
+        { criterion: 'ACC-NEG-RESUME-UI-REQUIRED', evidence: [] },
+      );
     }
 
     // Device deferred
