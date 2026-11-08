@@ -1523,13 +1523,13 @@
           return { ok: false, fieldErrors: fieldErrors, values: values };
         }
         if (attrMount && typeof attrMount.getFlatValues === 'function') {
+          // Draft values use flat registry field ids (material/cut/lengthCm/…).
+          // Nested `attributes` is NOT a profile field — putEditorDraft validateValues
+          // rejects it as REGISTRY_UNKNOWN_FIELD and the flush surfaces as save-failed.
           const flat = attrMount.getFlatValues();
           Object.keys(flat).forEach((k) => {
             values[k] = flat[k];
           });
-          if (attrMount.hasDirty && attrMount.hasDirty()) {
-            values.attributes = attrMount.getAttributesPatch();
-          }
         }
       }
       if (type !== 'brand' && templateState && templateState.templateId) {

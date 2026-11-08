@@ -639,11 +639,23 @@
       };
     }
 
+    function syncErrorsFromInvalidInputs() {
+      Object.keys(invalidInputs).forEach(function (fieldId) {
+        var def = defs.find(function (d) {
+          return d.id === fieldId || storageAttrKey(d) === fieldId;
+        });
+        var raw = invalidInputs[fieldId];
+        var v = validateNumberValue(def || { id: fieldId }, raw);
+        if (!v.ok) fieldErrors[(def && def.id) || fieldId] = v.message;
+      });
+    }
+
     function paint() {
       host.innerHTML = '';
       host.classList.add('mira-attr-fields');
       host.setAttribute('dir', 'rtl');
       host.setAttribute('data-mount-id', mountId);
+      syncErrorsFromInvalidInputs();
 
       var parkedKeys = Object.keys(parkedBag);
       if (parkedKeys.length) {

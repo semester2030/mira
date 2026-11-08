@@ -264,14 +264,18 @@
         if (commerce) {
           if (commerce.category) values.category = commerce.category;
           if (commerce.optionsJson != null) values.optionsJson = commerce.optionsJson;
-          if (Array.isArray(commerce.variantsJson)) values.variantsJson = commerce.variantsJson;
-          if (commerce.inventoryMode) values.inventoryMode = commerce.inventoryMode;
+          // Only send variants when non-empty — empty [] is valid but unnecessary noise.
+          if (Array.isArray(commerce.variantsJson) && commerce.variantsJson.length) {
+            values.variantsJson = commerce.variantsJson;
+          }
         } else {
           if (d.category) values.category = d.category;
           if (d.optionsJson != null) values.optionsJson = d.optionsJson;
-          if (Array.isArray(d.variantsJson)) values.variantsJson = d.variantsJson;
-          if (d.inventoryMode) values.inventoryMode = d.inventoryMode;
+          if (Array.isArray(d.variantsJson) && d.variantsJson.length) values.variantsJson = d.variantsJson;
         }
+        if (!values.category && d.category) values.category = d.category;
+        // Align with editor-v2 materialize default so publish validation sees a known mode.
+        if (!values.purchaseMode) values.purchaseMode = 'external';
         if (d.subcategory) values.subcategory = d.subcategory;
         // Do not invent clothes.wedding_dress / profile defaults here.
         if (state.attrMount && typeof state.attrMount.hasBlockingErrors === 'function') {
@@ -292,10 +296,31 @@
             if (Object.prototype.hasOwnProperty.call(d.attributes, k)) values[k] = d.attributes[k];
           });
         }
-        if (d.stock !== '' && d.stock != null) {
-          const n = Number(d.stock);
-          if (Number.isFinite(n)) values.stock = n;
+        // inventoryMode=product makes stockQty publish-required. Only opt into product
+        // tracking when the partner entered stock; otherwise leave untracked.
+        const stockRaw = d.stock;
+        if (stockRaw !== '' && stockRaw != null && Number.isFinite(Number(stockRaw))) {
+          values.inventoryMode = 'product';
+          values.stockQty = Number(stockRaw);
+        } else if (commerce && commerce.inventoryMode === 'variant') {
+          values.inventoryMode = 'variant';
+        } else {
+          values.inventoryMode = 'untracked';
         }
+      }
+      // Drop keys not in the batch profile — commerce helpers may carry traits/legacy aliases
+      // that fail putEditorDraft with REGISTRY_UNKNOWN_FIELD («راجعي الحقول المحددة»).
+      const profileId = (state.batch && state.batch.profileId) || null;
+      const profiles = ((registry && registry.registry) || registry || {}).profiles || [];
+      const profile = profiles.find((p) => p && p.id === profileId);
+      if (profile && Array.isArray(profile.fields)) {
+        const allowed = {};
+        profile.fields.forEach((fid) => {
+          allowed[fid] = true;
+        });
+        Object.keys(values).forEach((k) => {
+          if (!allowed[k]) delete values[k];
+        });
       }
       return values;
     }
@@ -341,8 +366,13 @@
         );
         const row = (mat.results || []).find((r) => r.cardId === fresh.cardId);
         if (!(row && row.ok && row.targetOwnerId)) {
+          const err = row && row.error;
+          const fe = err && err.fieldErrors;
+          const feTxt = Array.isArray(fe) && fe.length
+            ? ' [' + fe.map((x) => (x.fieldId || '') + ':' + (x.code || '')).join(', ') + ']'
+            : '';
           throw new Error(
-            (row && row.error && (row.error.messageAr || row.error.code)) || 'تعذر إنشاء العنصر قبل الرفع',
+            ((err && (err.messageAr || err.message || err.code)) || 'تعذر إنشاء العنصر قبل الرفع') + feTxt,
           );
         }
         ownerId = row.targetOwnerId;
@@ -875,7 +905,17 @@
               render();
             } catch (e) {
               const body = e && e.body;
-              setStatus((e && (e.messageAr || e.message)) || (body && body.messageAr) || String(e), true);
+              const fe =
+                (e && e.fieldErrors) ||
+                (body && body.fieldErrors) ||
+                null;
+              const feTxt = Array.isArray(fe) && fe.length
+                ? ' [' + fe.map((x) => (x.fieldId || '') + ':' + (x.code || '')).join(', ') + ']'
+                : '';
+              setStatus(
+                ((e && (e.messageAr || e.message)) || (body && body.messageAr) || String(e)) + feTxt,
+                true,
+              );
             } finally {
               state.busy = false;
               render();
@@ -900,7 +940,12 @@
               setStatus('مراجعة المجموعة قبل النشر');
               render();
             } catch (e) {
-              setStatus((e && (e.messageAr || e.message)) || String(e), true);
+              const body = e && e.body;
+              const fe = (e && e.fieldErrors) || (body && body.fieldErrors) || null;
+              const feTxt = Array.isArray(fe) && fe.length
+                ? ' [' + fe.map((x) => (x.fieldId || '') + ':' + (x.code || '')).join(', ') + ']'
+                : '';
+              setStatus(((e && (e.messageAr || e.message)) || String(e)) + feTxt, true);
             } finally {
               state.busy = false;
               render();
