@@ -1,27 +1,33 @@
-# E2أ إغلاق — قرار (بعد مراجعة R01–R04)
+# E2أ إغلاق — قرار (B01.1 / B01.2 / B02.1 / T01)
 
 **الحكم:** `E2A_CLOSED_VERIFIED`
 
-**code SHA المختبر:** `7a36205d44e4ab8161b4f62e3d8c273edf64965e`  
-**delivery SHA:** commit التوثيق فقط بعد هذا الاختبار (المرجع HTML + القرار).
+**Code SHA المختبر:** `cb108867c59a503cf6e44a76b456c38b88cb5f62`  
+**Delivery SHA:** commit توثيق المرجع بعد هذا الملف (إن وُجد منفصلًا).
 
-## ما صُحح في هذه الجولة
+## ما أُغلق في هذه الجولة
 
 | بند | الإصلاح |
 |-----|---------|
-| R01 | استعادة `parkedInvalid` دون قيمة سابقة؛ يمنع الحفظ بعد الرجوع |
-| R02 | `notify({source})`؛ الخادم لا يرفع epoch؛ مطور لا يُحبس في مسار المسودة فقط |
-| R03 | Chromium على `dashboard.html` + API محلي |
-| R04 | المرجع + ARCH بالمعاني الملزمة + حزمة بصمات صحيحة |
+| B01.1 | ربط جلسة الرفع بهوية الملف؛ إلغاء عند ملف مختلف؛ استئناف نفس الملف |
+| B01.2 | `previewGen` + معاينة غير حاجزة؛ لا اختلاط بطاقات ولا طمس ملف محلي |
+| B02.1 | مسح صريح لـ subcategory/وصف؛ لا إسقاط truthy لـ `[]` |
+| T01 | استئناف من واجهة حقيقية بلا حقن حالة |
+| سلبي/ACL/حزمة | كواشف عطل حقيقية؛ ACL وسائط؛ fixture بديل موثّق |
 
-## اختبارات على code SHA النهائي
+## بوابة القبول
 
-- مكوّن: `registry-attribute-fields.schema-tests.ts`
-- API: `elegance-e2-portal.http.integration-tests.ts`
-- متصفح: `elegance-e2a-portal-browser.integration-tests.ts` (`E2A_BROWSER_PASS`)
-- عدم رجوع: `elegance-e1-final-closure.http.integration-tests.ts`
+```bash
+cd mira-api
+DATABASE_URL='postgresql://mira:mira_secret@localhost:5432/mira_db' \
+  MIRA_PARTNER_EDITOR_V2=true MIRA_PARTNER_UPLOAD_SESSION=true \
+  MIRA_UPLOAD_ALLOW_DIRECT_PARTS=true \
+  npx tsx src/marketplace/taxonomy/elegance-e2a-acceptance.browser.integration-tests.ts
+```
 
-**NOT_RUN:** iPhone الفعلي (E5).
+النتيجة على Code SHA أعلاه: `E2A_ACCEPTANCE_PASS` (كل ACC-* الإلزامية).
+
+**NOT_RUN:** iPhone الفعلي (E5). لا إعلان إنتاج/R2.
 
 **المرجع:** `docs/MIRA_Portal_Approved_Design_Notes.html`  
 **الدليل:** `docs/elegance-taxonomy-e2a-developer-guide.md`

@@ -12,7 +12,16 @@
 <p>دليل المراجعة: حزمة mira-elegance-e2-portal-closure-20261108، والكود المختبر المعلن 0cb7a568052a207ea19331e85fcd7e4e6608962d. الملفات الأساسية: registry-attribute-fields.js وcatalog-journey.js وbulk-group-journey.js وelegance-e2-portal.http.integration-tests.ts. مراجعة المكون كشفت مشاكل الكود؛ لم ينجح تشغيل متصفح محلي لدى المراجع، ولم يجر اختبار إنتاج مستقل. لا يعامل تشغيل المحول المحلي بوصفه اختبار متصفح أو قاعدة بيانات.</p>
 
 <h2>الحالة الحالية — قبول E2أ (إلزامي)</h2>
-<p><strong>الحكم:</strong> <code>E2A_CLOSED_VERIFIED</code> · تاريخ التحقق: 2026-11-08T02:10:00Z (UTC) · Code SHA: <code>e5c95137b2958bc44b5b8fb0da1cf17c4ad5d301</code> · أُغلقت B01 (استبدال+معاينة) وB02.1 وT01 (استئناف واجهة) على بوابة القبول · iPhone = E5.</p>
+<p><strong>الحكم:</strong> <code>E2A_CLOSED_VERIFIED</code> · تاريخ التحقق: 2026-11-08T03:00:00Z (UTC) · Code SHA: <code>cb108867c59a503cf6e44a76b456c38b88cb5f62</code> · أُغلقت B01.1 (جلسة الرفع) وB01.2 (عزل المعاينة) وB02.1 (مسح صريح) وT01 (استئناف واجهة بلا حقن) على بوابة القبول مع سلبيات وACL وسائط · iPhone = E5 · لا إنتاج/R2.</p>
+<h2>مراجعة e5c95137 — إغلاق بنود متبقية E2 أ</h2>
+<div class="table-wrap"><table><thead><tr><th>الرمز</th><th>العيب المثبت</th><th>الإصلاح</th><th>اختبار/دليل</th></tr></thead><tbody>
+<tr><td>B01.1</td><td>بعد فشل الرفع يُعاد استخدام <code>uploadSessionId</code> لملف مختلف فيُرفض اختلاف الحجم/البصمة</td><td><code>uploadFileKey</code> + إلغاء الجلسة عند تغيّر الملف؛ استئناف نفس الملف فقط؛ تجاهل callbacks لبطاقة/ملف آخر</td><td><code>ACC-BULK-UPLOAD-SESSION-SWITCH</code></td></tr>
+<tr><td>B01.2</td><td><code>applyServerMediaToState</code> يطبق معاينة متأخرة على بطاقة أخرى أو يطمس ملفًا محليًا؛ وانتظار المعاينة كان يحجب الواجهة</td><td><code>previewGen</code> + مطابقة البطاقة/الوسيط؛ تحميل معاينة غير حاجز؛ لا تطمس <code>state.file</code></td><td><code>ACC-BULK-PREVIEW-ISOLATION</code> (حبس حتمي للرد)</td></tr>
+<tr><td>B02.1</td><td><code>buildValuesFromDraft</code> يسقط <code>subcategory</code> الفارغ و<code>variantsJson=[]</code> بشرط truthy</td><td>تمييز unmodified/new/explicit clear؛ مسح التصنيف الفرعي → <code>null</code> في PATCH</td><td><code>ACC-BULK-EXPLICIT-CLEAR</code> + انحدار الوصف/<code>purchaseMode</code></td></tr>
+<tr><td>T01</td><td>حقن sessionStorage/editContexts/نص الزر و<code>|| true</code> وبديل API id</td><td>فتح من مسودات المحرر؛ إسقاط 2xx؛ خطأ ظاهر؛ استئناف زر حقيقي؛ <code>uiBoundId</code> من نص الحالة فقط</td><td><code>ACC-CREATE-LOSS-RECOVER</code> · سيناريو فقد رد إعادة إرسال عنصر موجود</td></tr>
+<tr><td>سلبي/ACL</td><td>سلبيات شكلية؛ بديل من <code>/tmp</code></td><td>تعطيل استئناف حقيقي؛ تخريب pending مكتشف؛ بوابة ترفض أدلة سيئة؛ fixture <code>valid-multipart.mp4</code>؛ ACL مالك/آخر/بدون توثيق</td><td><code>ACC-NEG-*</code> · <code>ACC-MEDIA-ACL</code> · <code>ACC-GATE-REJECTS-BAD</code></td></tr>
+</tbody></table></div>
+<p>مرجع المراجعة السابق Code SHA <code>e5c95137b2958bc44b5b8fb0da1cf17c4ad5d301</code> أُبقي في السجل أدناه. الحكم الحالي مربوط بـ Code SHA أعلاه بعد إعادة تشغيل بوابة القبول.</p>
 <h2>مراجعة b79d1de6 — بنود B01–B03 / T01</h2>
 <div class="table-wrap"><table><thead><tr><th>الرمز</th><th>العيب المثبت</th><th>الإصلاح</th><th>اختبار/دليل</th></tr></thead><tbody>
 <tr><td>B01</td><td>استعادة المقطع تُصفَّر عند العودة للمجموعة؛ <code>ensureVideoReady</code> لا تستعيد وسيط الخادم.</td><td><code>bulk-batches.service.get</code> يرفق <code>media</code>؛ العميل يستعيد من <code>card.media</code> دون اختراع ready.</td><td>مغلق ومثبت · ACC-BULK-MEDIA-RESTORE · bulk-card0-from-summary.png · bulk-ui-card*.png</td></tr>
@@ -61,7 +70,7 @@
 <h2>ضوابط قبول كل خطوة</h2>
 <ul><li>لا تسجل PASS إلا للاختبار المنفذ وبنطاقه الحقيقي. NOT_RUN وBLOCKED تبقيان ظاهرتين، ولا تحسبان نجاحًا.</li><li>اختبار fresh GET يستخدم مسار القراءة الفعلي للبوابة؛ قراءة DB وحدها لا تثبت استعادة واجهة المستخدم.</li><li>اختبارات الحساب العادي تستخدم بيانات ووسائط صالحة وتثبت الانتقال للمراجعة. المطور يثبت النشر المباشر دون تجاوز التحقق أو ملكية الحسابات.</li><li>اختبار 3 بطاقات على الأقل بخصائص مختلفة، وحالة حقول اختيارية منفردة، وتعديل اسم فقط، ومسح صريح، وفشل ثم إعادة محاولة، وتغيير تصنيف أثناء وجود تعديلات.</li><li>تسجيل بصري للبوابة الفعلية متصلة ببيئة اختبار حقيقية، مع مقارنة بالتصورين في الألوان والتكوين والمقاسات وحالات الاختيار. محاكاة عرض الهاتف تذكر كمحاكاة؛ قبول الجهاز النهائي يثبت في E5.</li><li>السجلات على commit الكود النهائي نفسه. أي commit تسليم لاحق يثبت أنه يغير التوثيق فقط؛ لا يغطي سجل قديم كودًا أحدث.</li><li>حزمة التسليم تضم الملفات المتغيرة والاختبارات والمخرجات وبيئة التنفيذ وبصمات الملفات ومصفوفة ملاحظة إلى إصلاح إلى اختبار، دون أسرار.</li><li>لا يصدر حكم إغلاق شامل مع بنود واجبة مفتوحة. عند تعذر اعتماد خارجي، يسجل العائق المحدد وما أُنجز دون تكرار طلب أعمال منفذة.</li></ul>
 <h2>القرار الحالي</h2>
-<p><strong>E2A_CLOSED_VERIFIED</strong> بعد إغلاق B01/B02.1/T01 على Code SHA <code>e5c95137b2958bc44b5b8fb0da1cf17c4ad5d301</code> مع أدلة تشغيل الفيديو واستئناف الواجهة (iPhone = E5 NOT_RUN). لا نشر إنتاج.</p>
+<p><strong>E2A_CLOSED_VERIFIED</strong> بعد إغلاق B01.1/B01.2/B02.1/T01 على Code SHA <code>cb108867c59a503cf6e44a76b456c38b88cb5f62</code> مع أدلة تشغيل الفيديو واستئناف الواجهة (iPhone = E5 NOT_RUN). لا نشر إنتاج.</p>
 <p>صُحح لإغلاق القبول: مسودة الفردي بدون <code>attributes</code> المتداخلة؛ مجموعات: <code>inventoryMode=untracked</code> ما لم يُدخل مخزون؛ تفعيل upload-sessions في بوابة القبول؛ مصفوفة ACC-* الإلزامية. بقي: E2ب/ج، E3–E5.</p>
 <p>ملاحظة: تعذّر سحب نسخة ChatGPT Library مباشرة في بيئة التنفيذ؛ حُدّث انطلاقًا من ملف Downloads البصري المرفق مع إدراج بنود R01–R04 ومتطلبات المالك ARCH كما في تكليف المالك.</p>
 <h2>إغلاق متابعة 8eb114d — B01 دورة الفيديو / B02.1 / T01 واجهة</h2>
@@ -71,5 +80,5 @@
 <tr><td>B02.1</td><td>عدم إرسال purchaseMode غير المعدّل؛ مسح الوصف بـ <code>''</code>.</td><td>ACC-BULK-PRESERVE-FIELDS · bulk-preserve-fields.png</td></tr>
 <tr><td>T01</td><td>فقد رد 2xx ثم استئناف بزر الواجهة فقط دون استدعاء API كتابة إنقاذي.</td><td>ACC-CREATE-LOSS-RECOVER · ACC-NEG-RESUME-UI-REQUIRED</td></tr>
 </tbody></table></div>
-<p><strong>E2A_CLOSED_VERIFIED</strong> على Code SHA <code>e5c95137b2958bc44b5b8fb0da1cf17c4ad5d301</code>. لا نشر إنتاج. iPhone = E5.</p>
+<p><strong>E2A_CLOSED_VERIFIED</strong> على Code SHA <code>cb108867c59a503cf6e44a76b456c38b88cb5f62</code>. لا نشر إنتاج. iPhone = E5.</p>
 </main></body></html>
