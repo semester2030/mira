@@ -44,11 +44,12 @@
 
 | بند | السلوك المعتمد |
 |-----|----------------|
-| B01 وسيط | `getBulkBatch` يعيد `card.media.{videoMediaId,videoReady,previewUrl}` من CatalogMedia. `syncFieldDraftFromCard` يستعيد الحالة؛ `ensureVideoReady` لا يخترع `mediaId`/`ready`. الاستبدال صريح عبر اختيار ملف جديد. |
-| B02 حفظ | بعد `materialized` لا يُستخدم `putBulkCard` (مسودة مغلقة). `saveCurrentOffer` يبني القيم ثم `updateProduct`/`updateService` على `targetOwnerId`. الحفظ منفصل عن جاهزية الوسيط. |
-| B03 مخزون | الكتابة والقراءة على `stockQty` (عقد مركزي). قراءة قديمة لـ`stock` تُحوَّل عند الاستعادة فقط. `0` ≠ فراغ ≠ `untracked`. لا مصدر مخزون ثانٍ. |
+| B01 وسيط | `getBulkBatch` يعيد `card.media` + `partnerMediaPath`. المعاينة عبر `GET /partners-portal/media/:id` + Bearer → blob (أصلان مختلفان). ملف الاستبدال/`replaceIntent` لا يُمسحان عند حفظ الحقول. بعد نجاح البديل يُزال السابق. |
+| B02 حفظ | بعد `materialized` → `updateProduct`/`updateService`. الحفظ منفصل عن الرفع. |
+| B02.1 حقول | لا تُرسل `purchaseMode` إن لم تتغير؛ مسح الوصف يُرسل `''` صراحة. |
+| B03 مخزون | `stockQty` موحّد؛ `0` ≠ فراغ ≠ `untracked`. |
 
-اختبارات الحماية: `ACC-BULK-MEDIA-RESTORE` · `ACC-BULK-EDIT-MATERIALIZED` · `ACC-BULK-STOCK-ROUNDTRIP` · `ACC-BULK-THREE-CARDS` داخل بوابة القبول (BROWSER، أدلة صور إلزامية).
+اختبارات: `ACC-BULK-MEDIA-RESTORE` · `ACC-BULK-VIDEO-PREVIEW` · `ACC-BULK-VIDEO-REPLACE` · `ACC-BULK-PRESERVE-FIELDS` · `ACC-CREATE-LOSS-RECOVER` (زر واجهة فقط) · سلبيات `ACC-NEG-*`.
 
 ## 3) فرق تغيير المستخدم عن تطبيق الخادم (R02)
 
