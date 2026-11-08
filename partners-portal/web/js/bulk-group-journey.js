@@ -196,6 +196,28 @@
               vals.attributesJson && typeof vals.attributesJson === 'object' ? vals.attributesJson : {},
               vals.attributes && typeof vals.attributes === 'object' ? vals.attributes : {},
             );
+      // Contract field is stockQty. Legacy drafts may still carry `stock`.
+      const stockSrc = Object.prototype.hasOwnProperty.call(vals, 'stockQty')
+        ? vals.stockQty
+        : Object.prototype.hasOwnProperty.call(vals, 'stock')
+          ? vals.stock
+          : undefined;
+      let inventoryMode = vals.inventoryMode || attrs.inventoryMode || null;
+      let stockStr = '';
+      if (stockSrc === 0 || stockSrc === '0') {
+        stockStr = '0';
+        if (inventoryMode !== 'variant') inventoryMode = 'product';
+      } else if (stockSrc != null && stockSrc !== '') {
+        stockStr = String(stockSrc);
+        if (inventoryMode !== 'variant') inventoryMode = 'product';
+      } else if (inventoryMode === 'variant') {
+        stockStr = '';
+      } else if (inventoryMode === 'product') {
+        stockStr = '';
+      } else {
+        inventoryMode = 'untracked';
+        stockStr = '';
+      }
       state.fieldDraft = {
         nameAr: vals.nameAr || '',
         priceSar: vals.priceHalalas != null ? halalasToSar(vals.priceHalalas) : '',
@@ -209,10 +231,10 @@
             ? ''
             : String(vals.subcategory)
           : '',
-        stock: vals.stock != null ? String(vals.stock) : '',
+        stock: stockStr,
         optionsJson: vals.optionsJson != null ? vals.optionsJson : null,
         variantsJson: Array.isArray(vals.variantsJson) ? vals.variantsJson : [],
-        inventoryMode: vals.inventoryMode === 'variant' ? 'variant' : 'product',
+        inventoryMode: inventoryMode || 'untracked',
         attributes: attrs,
         coverageCityIds: Array.isArray(vals.coverageZones)
           ? vals.coverageZones
@@ -223,15 +245,25 @@
       state.commerceMount = null;
       state.attrMount = null;
       state.file = null;
-      if (state.previewUrl) {
+      if (state.previewUrl && String(state.previewUrl).indexOf('blob:') === 0) {
         try {
           URL.revokeObjectURL(state.previewUrl);
         } catch (_) {}
       }
-      state.previewUrl = null;
-      state.uploadPct = 0;
-      state.uploadStatus = '';
-      state.mediaId = null;
+      // Restore media from server card summary — never invent ready/mediaId.
+      const media = card && card.media;
+      if (media && media.videoReady && media.videoMediaId) {
+        state.mediaId = media.videoMediaId;
+        state.uploadStatus = 'ready';
+        state.uploadPct = 1;
+        state.previewUrl = media.previewUrl || null;
+      } else {
+        state.previewUrl = null;
+        state.uploadPct = 0;
+        state.uploadStatus = '';
+        state.mediaId = null;
+      }
+      state.uploadSessionId = null;
     }
 
     async function refreshBatch(batchId) {
@@ -325,12 +357,80 @@
       return values;
     }
 
+    function valuesToOwnerPatch(kind, values) {
+      const top = {
+        nameAr: true,
+        nameEn: true,
+        descriptionAr: true,
+        priceHalalas: true,
+        category: true,
+        subcategory: true,
+        profileId: true,
+        purchaseMode: true,
+        stockQty: true,
+        deliveryFeeHalalas: true,
+        optionsJson: true,
+        variantsJson: true,
+        durationMin: true,
+        deliveryMode: true,
+        concernTags: true,
+      };
+      const payload = {};
+      if (values.nameAr) payload.nameAr = values.nameAr;
+      if (values.priceHalalas != null) payload.priceHalalas = values.priceHalalas;
+      if (Object.prototype.hasOwnProperty.call(values, 'descriptionAr')) {
+        payload.descriptionAr = values.descriptionAr == null ? '' : values.descriptionAr;
+      }
+      if (values.category) payload.category = values.category;
+      if (Object.prototype.hasOwnProperty.call(values, 'subcategory')) {
+        payload.subcategory = values.subcategory;
+      }
+      if (values.purchaseMode === 'internal_cod' || values.purchaseMode === 'external') {
+        payload.purchaseMode = values.purchaseMode;
+      } else if (values.purchaseMode) {
+        payload.purchaseMode = 'external';
+      }
+      if (values.inventoryMode === 'untracked') {
+        payload.stockQty = null;
+      } else if (Object.prototype.hasOwnProperty.call(values, 'stockQty')) {
+        payload.stockQty = values.stockQty;
+      }
+      if (values.optionsJson != null) payload.optionsJson = values.optionsJson;
+      if (Array.isArray(values.variantsJson)) payload.variantsJson = values.variantsJson;
+      if (kind === 'service' && values.durationMin != null) payload.durationMin = values.durationMin;
+      const attributes = {};
+      let hasAttr = false;
+      Object.keys(values).forEach((k) => {
+        if (top[k]) return;
+        attributes[k] = values[k];
+        hasAttr = true;
+      });
+      // Keep registry inventoryMode on attributes (contract storage), not as a parallel stock source.
+      if (values.inventoryMode === 'untracked' || values.inventoryMode === 'product' || values.inventoryMode === 'variant') {
+        attributes.inventoryMode = values.inventoryMode;
+        hasAttr = true;
+      }
+      if (hasAttr) payload.attributes = attributes;
+      return payload;
+    }
+
     async function saveCurrentOffer() {
       const batch = state.batch;
       const card = currentCard();
       if (!batch || !card) throw new Error('لا يوجد عرض مفتوح');
-      if (card.status === 'materialized') return card;
       const values = buildValuesFromDraft(batch.kind);
+      // Materialized cards cannot PUT the open draft — edit the owner item instead.
+      if (card.status === 'materialized' && card.targetOwnerId) {
+        const payload = valuesToOwnerPatch(batch.kind, values);
+        if (batch.kind === 'product') {
+          await PartnersApi.updateProduct(card.targetOwnerId, payload);
+        } else {
+          await PartnersApi.updateService(card.targetOwnerId, payload);
+        }
+        await refreshBatch(batch.batchId);
+        syncFieldDraftFromCard();
+        return currentCard();
+      }
       const put = await PartnersApi.putBulkCard(batch.batchId, card.cardId, {
         expectedRevision: card.revision,
         values: values,
@@ -342,29 +442,34 @@
 
     async function ensureVideoReady() {
       const batch = state.batch;
-      const card = currentCard();
+      let card = currentCard();
       if (!batch || !card) throw new Error('لا يوجد عرض');
-      if (state.mediaId) return state.mediaId;
-      if (card.targetOwnerId && !state.file) {
-        // Already has owner — assume prior media if uploadStatus ready
-        if (state.uploadStatus === 'ready' && state.mediaId) return state.mediaId;
+      // Server-backed ready video — do not invent mediaId/ready locally.
+      if (card.media && card.media.videoReady && card.media.videoMediaId) {
+        state.mediaId = card.media.videoMediaId;
+        state.uploadStatus = 'ready';
+        state.uploadPct = 1;
+        if (card.media.previewUrl) state.previewUrl = card.media.previewUrl;
+        return state.mediaId;
+      }
+      if (state.mediaId && state.uploadStatus === 'ready' && !state.file) {
+        return state.mediaId;
       }
       if (!state.file) throw new Error('اختاري مقطع فيديو لهذا العرض');
 
       const dur = await readVideoDuration(state.file);
       if (dur > VIDEO_MAX_SECONDS) throw new Error('الفيديو يتجاوز 5 دقائق');
 
-      await saveCurrentOffer();
-      const fresh = currentCard();
-      let ownerId = fresh && fresh.targetOwnerId;
+      card = currentCard();
+      let ownerId = card && card.targetOwnerId;
       if (!ownerId) {
         setStatus('إنشاء مسودة العنصر قبل الرفع…');
         const mat = await PartnersApi.materializeBulkBatch(
           batch.batchId,
-          { cardIds: [fresh.cardId], submitReview: false },
-          'journey-mat-' + batch.batchId + '-' + fresh.cardId,
+          { cardIds: [card.cardId], submitReview: false },
+          'journey-mat-' + batch.batchId + '-' + card.cardId,
         );
-        const row = (mat.results || []).find((r) => r.cardId === fresh.cardId);
+        const row = (mat.results || []).find((r) => r.cardId === card.cardId);
         if (!(row && row.ok && row.targetOwnerId)) {
           const err = row && row.error;
           const fe = err && err.fieldErrors;
@@ -377,8 +482,12 @@
         }
         ownerId = row.targetOwnerId;
         await refreshBatch(batch.batchId);
+        // Do not syncFieldDraftFromCard here — it would clear the pending local file
+        // selected for this first upload.
       }
 
+      const pendingFile = state.file;
+      if (!pendingFile) throw new Error('اختاري مقطع فيديو لهذا العرض');
       const ownerKindPath = batch.kind === 'product' ? 'products' : 'services';
       const clientMediaId = newClientMediaId();
       state.uploadStatus = 'uploading';
@@ -386,10 +495,10 @@
       render();
       let uploadSessionId = state.uploadSessionId || null;
       try {
-        const session = await PartnersApi.uploadViaSession(ownerKindPath, ownerId, state.file, {
+        const session = await PartnersApi.uploadViaSession(ownerKindPath, ownerId, pendingFile, {
           clientMediaId: clientMediaId,
           sessionId: uploadSessionId || undefined,
-          mimeType: state.file.type || (/\.mov$/i.test(state.file.name || '') ? 'video/quicktime' : 'video/mp4'),
+          mimeType: pendingFile.type || (/\.mov$/i.test(pendingFile.name || '') ? 'video/quicktime' : 'video/mp4'),
           onSession: (s) => {
             if (s && s.sessionId) {
               state.uploadSessionId = s.sessionId;
@@ -419,6 +528,7 @@
         state.file = null;
         state.uploadSessionId = null;
         await refreshBatch(batch.batchId);
+        syncFieldDraftFromCard();
         return state.mediaId;
       } catch (e) {
         const stage = (e && e.stage) || (e && e.code) || '';
@@ -612,17 +722,18 @@
           setStatus('الفيديو يتجاوز 5 دقائق', true);
           return;
         }
-        if (state.previewUrl) {
+        if (state.previewUrl && String(state.previewUrl).indexOf('blob:') === 0) {
           try {
             URL.revokeObjectURL(state.previewUrl);
           } catch (_) {}
         }
+        // Explicit replace — clear prior server media binding until new upload succeeds.
         state.file = file;
         state.previewUrl = URL.createObjectURL(file);
         state.mediaId = null;
         state.uploadStatus = 'selected';
         state.uploadPct = 0;
-        setStatus('مقطع جاهز للرفع مع الحفظ');
+        setStatus('مقطع جاهز للرفع مع الحفظ — استبدال صريح');
         render();
       });
 
@@ -642,6 +753,7 @@
       const uploadTxt = el('div', {
         id: 'journeyUploadTxt',
         className: 'lead',
+        'data-testid': 'bulk-media-status',
         text:
           state.uploadStatus === 'ready'
             ? 'المقطع مرفوع وجاهز'
@@ -728,7 +840,11 @@
       } else {
         const stockIn = el('input', {
           type: 'number',
+          min: '0',
+          step: '1',
           value: d.stock,
+          'data-testid': 'bulk-stock-qty',
+          placeholder: d.inventoryMode === 'untracked' ? 'غير محدد' : '',
           onInput: (e) => {
             state.fieldDraft.stock = e.target.value;
           },
@@ -892,9 +1008,13 @@
             if (state.busy) return;
             state.busy = true;
             try {
-              setStatus('حفظ العرض ورفع المقطع…');
+              // Save field values first (works for draft and materialized), then ensure media.
+              setStatus('حفظ العرض…');
+              await saveCurrentOffer();
+              setStatus('رفع المقطع…');
               await ensureVideoReady();
               await refreshBatch(batch.batchId);
+              syncFieldDraftFromCard();
               const next = await PartnersApi.appendBulkCard(batch.batchId);
               state.batch = next;
               const cards = next.cards || [];
@@ -934,8 +1054,10 @@
             state.busy = true;
             try {
               setStatus('حفظ العرض…');
+              await saveCurrentOffer();
               await ensureVideoReady();
               await refreshBatch(batch.batchId);
+              syncFieldDraftFromCard();
               state.step = 'summary';
               setStatus('مراجعة المجموعة قبل النشر');
               render();
@@ -963,7 +1085,9 @@
       if (state.batch.kind === 'service' && (vals.durationMin == null || vals.durationMin === '')) {
         return { ok: false, field: 'durationMin', label: 'المدة' };
       }
-      if (!card.targetOwnerId) return { ok: false, field: 'video', label: 'المقطع' };
+      // targetOwnerId alone does not prove video readiness — require server media summary.
+      const mediaOk = !!(card.media && card.media.videoReady && card.media.videoMediaId);
+      if (!mediaOk) return { ok: false, field: 'video', label: 'المقطع' };
       return { ok: true };
     }
 

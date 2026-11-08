@@ -44,6 +44,62 @@ function isWrittenValue(prev: unknown): boolean {
   );
 }
 
+/** Flatten owner product/service row into draft-shaped values for bulk reopen. */
+function ownerRowToDraftValues(
+  kind: 'product' | 'service',
+  row: Record<string, unknown>,
+): Record<string, unknown> {
+  const draftTaxonomySet = row.draftTaxonomySet === true;
+  const category = draftTaxonomySet ? row.draftCategory : row.category;
+  const subcategory = draftTaxonomySet ? row.draftSubcategory : row.subcategory;
+  const profileId = draftTaxonomySet ? row.draftProfileId : row.profileId;
+  const attrsRaw = draftTaxonomySet ? row.draftAttributesJson : row.attributesJson;
+  const attrs =
+    attrsRaw && typeof attrsRaw === 'object' && !Array.isArray(attrsRaw)
+      ? { ...(attrsRaw as Record<string, unknown>) }
+      : {};
+  const nameAr =
+    typeof row.draftNameAr === 'string' && row.draftNameAr.trim()
+      ? row.draftNameAr
+      : row.nameAr;
+  const descriptionAr =
+    row.draftDescriptionAr !== undefined && row.draftDescriptionAr !== null
+      ? row.draftDescriptionAr
+      : row.descriptionAr;
+  const values: Record<string, unknown> = {
+    ...attrs,
+    nameAr,
+    priceHalalas: row.priceHalalas,
+  };
+  if (descriptionAr != null && descriptionAr !== '') values.descriptionAr = descriptionAr;
+  if (category != null) values.category = category;
+  if (subcategory !== undefined) values.subcategory = subcategory;
+  if (profileId != null) values.profileId = profileId;
+  if (row.purchaseMode != null) values.purchaseMode = row.purchaseMode;
+  // Contract field is stockQty (null = untracked / unspecified).
+  if (Object.prototype.hasOwnProperty.call(row, 'stockQty')) {
+    values.stockQty = row.stockQty;
+  }
+  // Prefer explicit attribute, else derive from Product.inventoryMode + stockQty.
+  const attrMode = attrs.inventoryMode;
+  if (attrMode === 'untracked' || attrMode === 'product' || attrMode === 'variant') {
+    values.inventoryMode = attrMode;
+  } else if (row.inventoryMode === 'variant') {
+    values.inventoryMode = 'variant';
+  } else if (values.stockQty === 0 || (typeof values.stockQty === 'number' && Number.isFinite(values.stockQty))) {
+    values.inventoryMode = 'product';
+  } else if (values.stockQty == null) {
+    values.inventoryMode = 'untracked';
+  }
+  if (row.deliveryFeeHalalas !== undefined) values.deliveryFeeHalalas = row.deliveryFeeHalalas;
+  const optionsJson = row.draftOptionsSet ? row.draftOptionsJson : row.optionsJson;
+  const variantsJson = row.draftVariantsSet ? row.draftVariantsJson : row.variantsJson;
+  if (optionsJson !== undefined) values.optionsJson = optionsJson;
+  if (variantsJson !== undefined) values.variantsJson = variantsJson;
+  if (kind === 'service' && row.durationMin != null) values.durationMin = row.durationMin;
+  return values;
+}
+
 @Injectable()
 export class BulkBatchesService {
   constructor(
@@ -409,21 +465,60 @@ export class BulkBatchesService {
       }
       let contentStatus: string | null = null;
       let reviewStatus: string | null = null;
+      let values: Record<string, unknown> = { ...((draft.values as Record<string, unknown>) || {}) };
+      let media: {
+        videoMediaId: string | null;
+        videoReady: boolean;
+        previewUrl: string | null;
+      } = { videoMediaId: null, videoReady: false, previewUrl: null };
       if (draft.targetOwnerId) {
         if (draft.kind === 'product') {
           const p = await this.prisma.product.findFirst({
             where: { id: draft.targetOwnerId, partnerId },
-            select: { contentStatus: true, reviewStatus: true },
           });
           contentStatus = p?.contentStatus ?? null;
           reviewStatus = p?.reviewStatus ?? null;
+          // After materialize, owner row is the source of truth for reopen (draft PUT is blocked).
+          if (draft.status === 'materialized' && p) {
+            values = ownerRowToDraftValues('product', p as unknown as Record<string, unknown>);
+          }
         } else {
           const s = await this.prisma.service.findFirst({
             where: { id: draft.targetOwnerId, partnerId },
-            select: { contentStatus: true, reviewStatus: true },
           });
           contentStatus = s?.contentStatus ?? null;
           reviewStatus = s?.reviewStatus ?? null;
+          if (draft.status === 'materialized' && s) {
+            values = ownerRowToDraftValues('service', s as unknown as Record<string, unknown>);
+          }
+        }
+        // Draft uploads are stored with active=false + publication=draft until publish.
+        // Partner reopen must still see them — do not require active:true here.
+        const mediaRows = await this.prisma.catalogMedia.findMany({
+          where: {
+            ownerKind: draft.kind,
+            ownerId: draft.targetOwnerId,
+            pendingRemoval: false,
+          },
+          orderBy: [{ sortOrder: 'asc' }, { createdAt: 'asc' }],
+          select: { id: true, kind: true, url: true, mimeType: true, publication: true, active: true },
+        });
+        const video = mediaRows.find(
+          (m) =>
+            m.kind === 'video' ||
+            (typeof m.mimeType === 'string' && m.mimeType.startsWith('video/')),
+        );
+        if (video) {
+          const previewUrl =
+            typeof video.url === 'string' && /^https?:\/\//i.test(video.url)
+              ? video.url
+              : `/api/v1/marketplace/media/${encodeURIComponent(video.id)}`;
+          media = {
+            videoMediaId: video.id,
+            // Ready for journey = present video not pending removal (draft or published).
+            videoReady: true,
+            previewUrl,
+          };
         }
       }
       cards.push({
@@ -437,7 +532,8 @@ export class BulkBatchesService {
         submitReviewError: draft.submitReviewError,
         contentStatus,
         reviewStatus,
-        values: draft.values,
+        values,
+        media,
         openUrl: draft.targetOwnerId
           ? `/dashboard.html?edit=${encodeURIComponent(draft.kind)}:${encodeURIComponent(draft.targetOwnerId)}`
           : `/dashboard.html?bulk=${encodeURIComponent(batchId)}&card=${encodeURIComponent(cardId)}`,

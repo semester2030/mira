@@ -1,4 +1,4 @@
-# دليل مطور — E2أ (R01–R04 / ARCH 01–07)
+# دليل مطور — E2أ (R01–R04 / B01–B03 / ARCH 01–07)
 
 تاريخ التحديث: 2026-11-08 · النطاق: بوابة الشركاء. خارج النطاق: E2ب/ج البصري، E3–E5، نشر إنتاج، تطبيق الجوال.
 
@@ -20,9 +20,10 @@
 |-----|------|---------|
 | مكوّن خصائص | `partners-portal/web/js/registry-attribute-fields.js` | عرض، dirty، parked، invalid، مصدر إشعار `source` |
 | فردي | `partners-portal/web/js/catalog-journey.js` | remount، `withProgrammaticPaint`، حفظ/نشر، materialize |
-| مجموعات | `partners-portal/web/js/bulk-group-journey.js` | بطاقات مستقلة + نفس المكوّن |
-| API | `partners-portal/web/js/api.js` | `PartnersApi.base` / taxonomy / preview |
-| Registry | `field-registry.v2.json` (ويب + API) | مصدر الحقول |
+| مجموعات | `partners-portal/web/js/bulk-group-journey.js` | بطاقات مستقلة + استعادة وسيط/مخزون + حفظ بعد materialized |
+| دفعات مجموعات (API) | `mira-api/.../bulk-batches.service.ts` | `get()` يدمج قيم المالك + ملخص `media` بعد materialize |
+| API | `partners-portal/web/js/api.js` | `PartnersApi.base` / taxonomy / preview / updateProduct |
+| Registry | `field-registry.v2.json` (ويب + API) | مصدر الحقول (`stockQty`, `inventoryMode`) |
 | Taxonomy | `elegance-taxonomy.v1.json` | تصنيفات و`profileId` |
 | اختبار مكوّن | `registry-attribute-fields.schema-tests.ts` | R01/R02/C* |
 | اختبار API | `elegance-e2-portal.http.integration-tests.ts` | HTTP+preview |
@@ -38,6 +39,16 @@
 5. رد مطابق → `setFromAttributes` / `applyServerSnapshot` داخل `withProgrammaticPaint` مع `source:'server'` — **لا** يرفع عداد المستخدم (R02).
 6. قراءة البوابة: `productPreview` / `dashboard` — لا DB وحدها كإثبات استعادة.
 7. مجموعات: `inventoryMode=untracked` ما لم يُدخل مخزون (وإلا `product` + `stockQty`) حتى لا يفشل materialize بـ `PUBLISH_REQUIRED` على `stockQty`.
+
+## 2ب) مجموعات بعد `materialized` (B01–B03)
+
+| بند | السلوك المعتمد |
+|-----|----------------|
+| B01 وسيط | `getBulkBatch` يعيد `card.media.{videoMediaId,videoReady,previewUrl}` من CatalogMedia. `syncFieldDraftFromCard` يستعيد الحالة؛ `ensureVideoReady` لا يخترع `mediaId`/`ready`. الاستبدال صريح عبر اختيار ملف جديد. |
+| B02 حفظ | بعد `materialized` لا يُستخدم `putBulkCard` (مسودة مغلقة). `saveCurrentOffer` يبني القيم ثم `updateProduct`/`updateService` على `targetOwnerId`. الحفظ منفصل عن جاهزية الوسيط. |
+| B03 مخزون | الكتابة والقراءة على `stockQty` (عقد مركزي). قراءة قديمة لـ`stock` تُحوَّل عند الاستعادة فقط. `0` ≠ فراغ ≠ `untracked`. لا مصدر مخزون ثانٍ. |
+
+اختبارات الحماية: `ACC-BULK-MEDIA-RESTORE` · `ACC-BULK-EDIT-MATERIALIZED` · `ACC-BULK-STOCK-ROUNDTRIP` · `ACC-BULK-THREE-CARDS` داخل بوابة القبول (BROWSER، أدلة صور إلزامية).
 
 ## 3) فرق تغيير المستخدم عن تطبيق الخادم (R02)
 
