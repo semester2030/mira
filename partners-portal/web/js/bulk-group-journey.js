@@ -160,11 +160,15 @@
       uploadPct: 0,
       uploadStatus: '',
       uploadSessionId: null,
+      /** Fingerprint of the file bound to uploadSessionId (size|lastModified|type|name). */
+      uploadFileKey: null,
       mediaId: null,
       /** Explicit replace chosen by user — forces upload even when card.media is ready. */
       replaceIntent: false,
       /** Prior server media kept until replacement upload succeeds. */
       priorMediaId: null,
+      /** Monotonic generation so late preview responses cannot paint the wrong card. */
+      previewGen: 0,
       busy: false,
       publishResult: null,
       fieldDraft: {},
@@ -200,6 +204,23 @@
       return !!(state.file || state.replaceIntent || state.uploadStatus === 'uploading' || state.uploadStatus === 'verifying' || (state.uploadStatus === 'failed' && state.file));
     }
 
+    /** Identity for session binding — not name alone (size + mtime + type + name). */
+    function fileKey(file) {
+      if (!file) return null;
+      return [file.size || 0, file.lastModified || 0, String(file.type || ''), String(file.name || '')].join('|');
+    }
+
+    function abortStaleUploadSession(reason) {
+      const sid = state.uploadSessionId;
+      state.uploadSessionId = null;
+      state.uploadFileKey = null;
+      if (!sid || !PartnersApi || typeof PartnersApi.abortUploadSession !== 'function') return;
+      try {
+        void PartnersApi.abortUploadSession(sid).catch(function () {});
+      } catch (_) {}
+      void reason;
+    }
+
     function stashPendingForCard(cardId) {
       if (!cardId) return;
       if (!hasPendingUpload() && !state.file && state.uploadStatus !== 'failed') {
@@ -214,6 +235,7 @@
         uploadPct: state.uploadPct,
         uploadStatus: state.uploadStatus,
         uploadSessionId: state.uploadSessionId,
+        uploadFileKey: state.uploadFileKey,
         mediaId: state.mediaId,
         replaceIntent: state.replaceIntent,
         priorMediaId: state.priorMediaId,
@@ -230,6 +252,7 @@
       state.uploadPct = p.uploadPct || 0;
       state.uploadStatus = p.uploadStatus || '';
       state.uploadSessionId = p.uploadSessionId || null;
+      state.uploadFileKey = p.uploadFileKey || null;
       state.mediaId = p.mediaId || null;
       state.replaceIntent = !!p.replaceIntent;
       state.priorMediaId = p.priorMediaId || null;
@@ -266,28 +289,72 @@
     async function applyServerMediaToState(card, opts) {
       const keepPending = opts && opts.preservePendingUpload && hasPendingUpload();
       if (keepPending) return;
+      const expectCardId = card && card.cardId;
+      const media = card && card.media;
+      const expectMediaId = media && media.videoReady && media.videoMediaId ? media.videoMediaId : null;
+      const gen = ++state.previewGen;
       clearLocalPreviewObject();
       state.previewError = '';
-      const media = card && card.media;
-      if (media && media.videoReady && media.videoMediaId) {
-        state.mediaId = media.videoMediaId;
-        state.uploadStatus = 'ready';
-        state.uploadPct = 1;
-        state.replaceIntent = false;
-        state.file = null;
-        state.uploadSessionId = null;
+      if (expectMediaId) {
+        state.mediaId = expectMediaId;
+        if (!state.file) {
+          state.uploadStatus = 'ready';
+          state.uploadPct = 1;
+          state.replaceIntent = false;
+          state.uploadSessionId = null;
+          state.uploadFileKey = null;
+        }
         try {
+          let nextUrl = null;
+          let nextObj = null;
           if (media.previewUrl && /^https?:\/\//i.test(String(media.previewUrl))) {
-            state.previewUrl = media.previewUrl;
+            nextUrl = media.previewUrl;
           } else {
-            const obj = await loadPartnerMediaPreview(media.videoMediaId);
-            state.previewObjectUrl = obj;
-            state.previewUrl = obj;
+            nextObj = await loadPartnerMediaPreview(expectMediaId);
+            nextUrl = nextObj;
           }
+          // Ignore stale responses: wrong card, superseded generation, or user picked a local file meantime.
+          if (gen !== state.previewGen) {
+            if (nextObj) {
+              try {
+                URL.revokeObjectURL(nextObj);
+              } catch (_) {}
+            }
+            return;
+          }
+          if (state.cardId !== expectCardId) {
+            if (nextObj) {
+              try {
+                URL.revokeObjectURL(nextObj);
+              } catch (_) {}
+            }
+            return;
+          }
+          if (state.file || state.replaceIntent) {
+            if (nextObj) {
+              try {
+                URL.revokeObjectURL(nextObj);
+              } catch (_) {}
+            }
+            return;
+          }
+          const live = currentCard();
+          const liveMediaId = live && live.media && live.media.videoMediaId;
+          if (liveMediaId && liveMediaId !== expectMediaId) {
+            if (nextObj) {
+              try {
+                URL.revokeObjectURL(nextObj);
+              } catch (_) {}
+            }
+            return;
+          }
+          state.previewObjectUrl = nextObj;
+          state.previewUrl = nextUrl;
+          state.previewError = '';
         } catch (e) {
+          if (gen !== state.previewGen || state.cardId !== expectCardId || state.file) return;
           state.previewUrl = null;
           state.previewError = (e && e.message) || 'تعذر تشغيل المعاينة';
-          // Upload readiness is independent of preview playback.
         }
       } else if (!state.file) {
         state.previewUrl = null;
@@ -295,6 +362,7 @@
         state.uploadStatus = '';
         state.mediaId = null;
         state.uploadSessionId = null;
+        state.uploadFileKey = null;
         state.replaceIntent = false;
       }
     }
@@ -372,12 +440,21 @@
         purchaseMode: state.fieldDraft.purchaseMode,
         stock: state.fieldDraft.stock,
         inventoryMode: state.fieldDraft.inventoryMode,
+        subcategory: state.fieldDraft.subcategory,
+        variantsJson: Array.isArray(state.fieldDraft.variantsJson)
+          ? JSON.parse(JSON.stringify(state.fieldDraft.variantsJson))
+          : [],
+        category: state.fieldDraft.category,
       };
       state.commerceMount = null;
       state.attrMount = null;
-      // Field sync must not cancel a user-selected file waiting to upload / retry.
-      return applyServerMediaToState(card, {
+      // Preview fetch must not block card switch / local file pick — generation guard drops stale paints.
+      void applyServerMediaToState(card, {
         preservePendingUpload: !(opts && opts.resetUpload) && hasPendingUpload(),
+      }).then(function () {
+        try {
+          render();
+        } catch (_) {}
       });
     }
 
@@ -419,14 +496,28 @@
         if (commerce) {
           if (commerce.category) values.category = commerce.category;
           if (commerce.optionsJson != null) values.optionsJson = commerce.optionsJson;
-          // Only send variants when non-empty — empty [] is valid but unnecessary noise.
-          if (Array.isArray(commerce.variantsJson) && commerce.variantsJson.length) {
-            values.variantsJson = commerce.variantsJson;
+          // Explicit clear ([]), new value, or omit when unchanged — never drop clear intent via truthy.
+          if (Array.isArray(commerce.variantsJson)) {
+            const nowV = commerce.variantsJson;
+            const baseV = Array.isArray(baseline.variantsJson) ? baseline.variantsJson : [];
+            if (JSON.stringify(nowV) !== JSON.stringify(baseV)) {
+              values.variantsJson = nowV;
+            } else if (nowV.length) {
+              values.variantsJson = nowV;
+            }
           }
         } else {
           if (d.category) values.category = d.category;
           if (d.optionsJson != null) values.optionsJson = d.optionsJson;
-          if (Array.isArray(d.variantsJson) && d.variantsJson.length) values.variantsJson = d.variantsJson;
+          if (Array.isArray(d.variantsJson)) {
+            const nowV = d.variantsJson;
+            const baseV = Array.isArray(baseline.variantsJson) ? baseline.variantsJson : [];
+            if (JSON.stringify(nowV) !== JSON.stringify(baseV)) {
+              values.variantsJson = nowV;
+            } else if (nowV.length) {
+              values.variantsJson = nowV;
+            }
+          }
         }
         if (!values.category && d.category) values.category = d.category;
         // Preserve existing purchaseMode unless the user changed it. Never invent external
@@ -450,7 +541,21 @@
           // New draft with no prior mode — materialize needs a known mode.
           values.purchaseMode = 'external';
         }
-        if (d.subcategory) values.subcategory = d.subcategory;
+        // subcategory: unmodified omit / new value / explicit clear (null) — never truthy-drop ''.
+        {
+          const subNow = Object.prototype.hasOwnProperty.call(d, 'subcategory')
+            ? d.subcategory == null
+              ? ''
+              : String(d.subcategory)
+            : undefined;
+          const subBase =
+            baseline.subcategory == null ? '' : String(baseline.subcategory);
+          if (subNow !== undefined && subNow !== subBase) {
+            values.subcategory = subNow === '' ? null : subNow;
+          } else if (subNow) {
+            values.subcategory = subNow;
+          }
+        }
         // Do not invent clothes.wedding_dress / profile defaults here.
         if (state.attrMount && typeof state.attrMount.hasBlockingErrors === 'function') {
           if (state.attrMount.hasBlockingErrors()) {
@@ -525,7 +630,8 @@
       }
       if (values.category) payload.category = values.category;
       if (Object.prototype.hasOwnProperty.call(values, 'subcategory')) {
-        payload.subcategory = values.subcategory;
+        // Explicit clear must reach the owner PATCH as null (not omitted by truthy checks).
+        payload.subcategory = values.subcategory == null || values.subcategory === '' ? null : values.subcategory;
       }
       if (values.purchaseMode === 'internal_cod' || values.purchaseMode === 'external') {
         payload.purchaseMode = values.purchaseMode;
@@ -641,10 +747,23 @@
         state.mediaId ||
         null;
       const clientMediaId = newClientMediaId();
+      const expectCardId = state.cardId;
+      const expectOwnerId = ownerId;
+      const expectFileKey = fileKey(state.file);
+      // Resume only when the bound session matches this card+owner+file identity.
+      let uploadSessionId = null;
+      if (
+        state.uploadSessionId &&
+        state.uploadFileKey &&
+        state.uploadFileKey === expectFileKey
+      ) {
+        uploadSessionId = state.uploadSessionId;
+      } else if (state.uploadSessionId) {
+        abortStaleUploadSession('file-or-owner-mismatch');
+      }
       state.uploadStatus = 'uploading';
       state.uploadPct = 0;
       render();
-      let uploadSessionId = state.uploadSessionId || null;
       try {
         const session = await PartnersApi.uploadViaSession(ownerKindPath, ownerId, state.file, {
           clientMediaId: clientMediaId,
@@ -652,11 +771,15 @@
           mimeType: state.file.type || (/\.mov$/i.test(state.file.name || '') ? 'video/quicktime' : 'video/mp4'),
           onSession: (s) => {
             if (s && s.sessionId) {
+              // Ignore late callbacks after card/file switch.
+              if (state.cardId !== expectCardId || fileKey(state.file) !== expectFileKey) return;
               state.uploadSessionId = s.sessionId;
+              state.uploadFileKey = expectFileKey;
               uploadSessionId = s.sessionId;
             }
           },
           onProgress: (p) => {
+            if (state.cardId !== expectCardId || fileKey(state.file) !== expectFileKey) return;
             if (typeof p === 'number' && Number.isFinite(p)) {
               state.uploadPct = Math.max(0, Math.min(1, p));
               state.uploadStatus = 'uploading';
@@ -667,12 +790,19 @@
             }
           },
           onProcessing: () => {
+            if (state.cardId !== expectCardId || fileKey(state.file) !== expectFileKey) return;
             state.uploadStatus = 'verifying';
             state.uploadPct = 1;
             const txt = document.getElementById('journeyUploadTxt');
             if (txt) txt.textContent = 'التحقق من المقطع…';
           },
         });
+        if (state.cardId !== expectCardId || expectOwnerId !== ownerId) {
+          throw new Error('انتهت محاولة رفع لبطاقة أخرى — أُهملت النتيجة');
+        }
+        if (fileKey(state.file) !== expectFileKey) {
+          throw new Error('تغيّر الملف أثناء الرفع — أُهملت نتيجة المحاولة السابقة');
+        }
         const newId = session && (session.catalogMediaId || session.mediaId || session.id);
         if (!newId) throw new Error('اكتمل الرفع دون معرّف وسيط');
         // After successful replace, drop the prior video association (setPrimary is image-only).
@@ -688,6 +818,7 @@
         state.uploadPct = 1;
         state.file = null;
         state.uploadSessionId = null;
+        state.uploadFileKey = null;
         state.replaceIntent = false;
         state.priorMediaId = null;
         if (state.cardId) delete state.pendingByCard[state.cardId];
@@ -703,10 +834,12 @@
         const ar =
           (e && (e.messageAr || e.message)) ||
           String(e);
-        state.uploadStatus = 'failed';
-        // Keep prior association usable until a later successful replace.
-        if (priorId) state.priorMediaId = priorId;
-        stashPendingForCard(state.cardId);
+        // Do not paint failure onto a different card/file that the user switched to.
+        if (state.cardId === expectCardId && fileKey(state.file) === expectFileKey) {
+          state.uploadStatus = 'failed';
+          if (priorId) state.priorMediaId = priorId;
+          stashPendingForCard(state.cardId);
+        }
         throw Object.assign(new Error(ar + (stage ? ' · مرحلة: ' + stage : '')), e || {});
       }
     }
@@ -900,8 +1033,17 @@
           state.mediaId ||
           state.priorMediaId ||
           null;
+        const nextKey = fileKey(file);
+        // Different file identity → never reuse the previous upload session.
+        if (state.uploadSessionId && state.uploadFileKey && state.uploadFileKey !== nextKey) {
+          abortStaleUploadSession('different-file-selected');
+        } else if (state.uploadSessionId && !state.uploadFileKey) {
+          abortStaleUploadSession('unbound-session');
+        }
         // Explicit replace — keep prior server media until the new upload succeeds.
+        state.previewGen += 1; // invalidate in-flight server preview paints
         state.file = file;
+        state.uploadFileKey = nextKey;
         state.previewObjectUrl = URL.createObjectURL(file);
         state.previewUrl = state.previewObjectUrl;
         state.previewError = '';
@@ -1214,6 +1356,8 @@
               state.file = null;
               state.replaceIntent = false;
               state.uploadSessionId = null;
+              state.uploadFileKey = null;
+              state.previewGen += 1;
               state.uploadStatus = '';
               state.priorMediaId = null;
               clearLocalPreviewObject();
@@ -1342,10 +1486,12 @@
             onClick: async () => {
               stashPendingForCard(state.cardId);
               state.cardId = card.cardId;
+              state.previewGen += 1;
               if (!restorePendingForCard(card.cardId)) {
                 state.file = null;
                 state.replaceIntent = false;
                 state.uploadSessionId = null;
+                state.uploadFileKey = null;
                 state.priorMediaId = null;
                 clearLocalPreviewObject();
                 state.previewUrl = null;

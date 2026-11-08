@@ -45,11 +45,26 @@
 | بند | السلوك المعتمد |
 |-----|----------------|
 | B01 وسيط | `getBulkBatch` يعيد `card.media` + `partnerMediaPath`. المعاينة عبر `GET /partners-portal/media/:id` + Bearer → blob (أصلان مختلفان). ملف الاستبدال/`replaceIntent` لا يُمسحان عند حفظ الحقول. بعد نجاح البديل يُزال السابق. |
-| B02 حفظ | بعد `materialized` → `updateProduct`/`updateService`. الحفظ منفصل عن الرفع. |
-| B02.1 حقول | لا تُرسل `purchaseMode` إن لم تتغير؛ مسح الوصف يُرسل `''` صراحة. |
+| B01.1 جلسة الرفع | `uploadSessionId` مربوط بـ `uploadFileKey` (size\|mtime\|type\|name) + البطاقة/المالك. إعادة نفس الملف تستأنف؛ ملف مختلف يلغي الجلسة السابقة عبر `abortUploadSession`. callbacks المتأخرة تُتجاهل إن تغيّر الملف/البطاقة. |
+| B01.2 معاينة | `previewGen` + مطابقة `cardId`/`mediaId` قبل تطبيق نتيجة المعاينة. لا تطمس معاينة خادم متأخرة اختيار ملف محلي (`state.file`). |
+| B02 حفظ | بعد `materialized` → `updateProduct`/`updateService`. الحفظ منفصل عن الرفع. منطق المسح/القيم في `buildValuesFromDraft` + `valuesToOwnerPatch` مشترك مع قواعد الفردي (لا قوائم truthy موازية). |
+| B02.1 حقول | لا تُرسل `purchaseMode` إن لم تتغير؛ مسح الوصف يُرسل `''`؛ مسح `subcategory` يُرسل `null`؛ مسح/تغيير `variantsJson` يُرسل حتى `[]` عند التغيير الصريح. |
 | B03 مخزون | `stockQty` موحّد؛ `0` ≠ فراغ ≠ `untracked`. |
 
-اختبارات: `ACC-BULK-MEDIA-RESTORE` · `ACC-BULK-VIDEO-PREVIEW` · `ACC-BULK-VIDEO-REPLACE` · `ACC-BULK-PRESERVE-FIELDS` · `ACC-CREATE-LOSS-RECOVER` (زر واجهة فقط) · سلبيات `ACC-NEG-*`.
+### إضافة حقل اختياري يحفظ القيمة والمسح
+
+1. خزّن القيمة في `fieldDraft` و`fieldBaseline` عند `syncFieldDraftFromCard`.
+2. في `buildValuesFromDraft`: إن تغيّرت عن baseline أرسل القيمة الجديدة أو `null`/`''`/`[]` للمسح — **لا** Conditional truthy يسقط المسح.
+3. في `valuesToOwnerPatch`: استخدم `hasOwnProperty` / `Array.isArray` حتى تصل القيم الفارغة للعقد.
+4. أضف اختبار ACC يعيد الفتح + قراءة API/DB.
+
+### T01 استئناف بعد فقد رد إعادة الإرسال
+
+- تحضير حساب/مسودة على الخادم مسموح قبل الرحلة.
+- ممنوع حقن `sessionStorage` / `editContexts` / نص الزر لتمثيل نجاح.
+- المسار: فتح من القائمة → زر المستخدم يستعيد الحالة → إسقاط 2xx → خطأ ظاهر → زر استئناف حقيقي → نجاح مربوط بالمعرّف في نص الحالة (لا بديل API id).
+
+اختبارات: `ACC-BULK-MEDIA-RESTORE` · `ACC-BULK-VIDEO-PREVIEW` · `ACC-BULK-VIDEO-REPLACE` · `ACC-BULK-PRESERVE-FIELDS` · `ACC-BULK-EXPLICIT-CLEAR` · `ACC-BULK-UPLOAD-SESSION-SWITCH` · `ACC-BULK-PREVIEW-ISOLATION` · `ACC-CREATE-LOSS-RECOVER` · `ACC-MEDIA-ACL` · سلبيات `ACC-NEG-*` · `ACC-GATE-REJECTS-BAD`.
 
 ## 3) فرق تغيير المستخدم عن تطبيق الخادم (R02)
 
@@ -100,7 +115,12 @@ DATABASE_URL=… MIRA_PARTNER_EDITOR_V2=true MIRA_PARTNER_UPLOAD_SESSION=true \
 DATABASE_URL=… npx tsx src/marketplace/taxonomy/elegance-e1-final-closure.http.integration-tests.ts  # عدم رجوع E1
 ```
 
-Fixtures: فيديو `mira-api/src/partners-portal/upload-sessions/fixtures/valid-short.mp4`. نجاح البوابة = كل ACC-* = PASS مع أدلة في `.e2a-acceptance-evidence/`.
+Fixtures:
+- أساسي: `mira-api/src/partners-portal/upload-sessions/fixtures/valid-short.mp4`
+- بديل (حجم/بصمة مختلفة، ليس `/tmp`): `…/fixtures/valid-multipart.mp4`  
+  SHA256 = `ac3e157fd8758f7edf511bc22432767d802f7bb150447199238705917131fe99`
+
+نجاح البوابة = كل ACC-* = PASS مع أدلة في `.e2a-acceptance-evidence/`.
 
 عند تعديل المكوّن/الرحلات: شغّل بوابة القبول على نفس code SHA. iPhone = E5.
 

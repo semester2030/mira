@@ -2036,7 +2036,7 @@
       matBtn.className = 'secondary';
       matBtn.setAttribute('data-editor-v2-materialize', '1');
       matBtn.textContent = 'تحويل المسودة الخادمية وإرسال للمراجعة';
-      // Restore resume banner if page reloaded mid-flight.
+      // Restore resume banner if page reloaded mid-flight OR server draft already materialized/failed.
       (function restoreResumeBanner() {
         const ctx0 = MiraEditorV2.getEditContext(form.id);
         const cid = ctx0 && ctx0.clientDraftId;
@@ -2050,6 +2050,26 @@
           }
           matBtn.textContent = 'استئناف الإرسال للمراجعة';
           status.textContent = 'العنصر موجود (' + resume.targetOwnerId + ') — أكمل الوسائط ثم استأنفي الإرسال.';
+          return;
+        }
+        // Opening a server draft that already materialized (e.g. from مسودات المحرر) must show resume
+        // without requiring injected sessionStorage.
+        if (
+          ctx0 &&
+          ctx0.targetOwnerId &&
+          (ctx0.status === 'materialized' ||
+            ctx0.status === 'submit_failed' ||
+            ctx0.submitReviewStatus === 'failed')
+        ) {
+          item = Object.assign({}, item || {}, { id: ctx0.targetOwnerId });
+          matBtn.textContent = 'استئناف الإرسال للمراجعة';
+          status.textContent =
+            'العنصر موجود (' +
+            ctx0.targetOwnerId +
+            ') — ' +
+            (ctx0.submitReviewStatus === 'failed' || ctx0.status === 'submit_failed'
+              ? 'أكمل الوسائط ثم استأنفي الإرسال.'
+              : 'جاهز لإعادة الإرسال للمراجعة.');
         }
       })();
       matBtn.onclick = async () => {
@@ -2229,7 +2249,41 @@
           // Fresh materialize — require valid fields + confirmed draft save first.
           // If a prior attempt already materialized, recover instead of PUT.
           try {
-            const prior = await PartnersApi.getEditorDraft(clientDraftId);
+            let prior = null;
+            try {
+              prior = await PartnersApi.getEditorDraft(clientDraftId);
+            } catch (miss) {
+              prior = null;
+              void miss;
+            }
+            // Opening from catalog list uses owner:kind:id — resolve the real materialized draft by owner.
+            if (!(prior && prior.status === 'materialized' && prior.targetOwnerId) && item && item.id) {
+              try {
+                const listed = await PartnersApi.listEditorDrafts();
+                const rows = (listed && listed.items) || listed || [];
+                const match = (Array.isArray(rows) ? rows : []).find(
+                  (d) =>
+                    d &&
+                    d.targetOwnerId === item.id &&
+                    (d.status === 'materialized' || d.status === 'submit_failed'),
+                );
+                if (match) {
+                  prior = match;
+                  const bound = MiraEditorV2.getEditContext(form.id);
+                  if (bound) {
+                    bound.clientDraftId = match.clientDraftId;
+                    bound.targetOwnerId = match.targetOwnerId;
+                    bound.status = match.status || 'materialized';
+                    bound.submitReviewStatus = match.submitReviewStatus || 'failed';
+                    bound.revision = match.revision;
+                  }
+                  clientDraftId = match.clientDraftId;
+                  matOp = captureMaterializeOp(clientDraftId);
+                }
+              } catch (listErr) {
+                void listErr;
+              }
+            }
             if (!assertMatLive('preflight-get')) return;
             if (prior && prior.status === 'materialized' && prior.targetOwnerId) {
               const priorKey =
