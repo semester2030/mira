@@ -27,14 +27,17 @@
 | اختبار مكوّن | `registry-attribute-fields.schema-tests.ts` | R01/R02/C* |
 | اختبار API | `elegance-e2-portal.http.integration-tests.ts` | HTTP+preview |
 | اختبار متصفح | `elegance-e2a-portal-browser.integration-tests.ts` | Chromium + dashboard |
+| بوابة قبول E2أ | `elegance-e2a-acceptance.browser.integration-tests.ts` | معايير ACC-* الإلزامية على البوابة الفعلية |
 
 ## 2) مسار الطلب (واجهة → DB → عرض)
 
 1. إدخال مستخدم → `notify({source:'user'})` → `bumpFormContentEpoch` / autosave.
-2. حفظ → `attributes` من `getAttributesPatch()` (dirty فقط؛ parked لا يُرسل).
-3. API → حارس توكن → خدمة → `applyTaxonomyPatch` → DB.
-4. رد مطابق → `setFromAttributes` / `applyServerSnapshot` داخل `withProgrammaticPaint` مع `source:'server'` — **لا** يرفع عداد المستخدم (R02).
-5. قراءة البوابة: `productPreview` / `dashboard` — لا DB وحدها كإثبات استعادة.
+2. حفظ مسودة الفردي → قيم مسطّحة من `getFlatValues()` (معرفات الحقول في الملف). **لا** تُرسل حقيبة `attributes` المتداخلة في `putEditorDraft` — تُرفض كـ `REGISTRY_UNKNOWN_FIELD`.
+3. حفظ منتج منشور/مطور → `attributes` من `getAttributesPatch()` على مسار `createProduct`/`updateProduct` فقط.
+4. API → حارس توكن → خدمة → `applyTaxonomyPatch` → DB.
+5. رد مطابق → `setFromAttributes` / `applyServerSnapshot` داخل `withProgrammaticPaint` مع `source:'server'` — **لا** يرفع عداد المستخدم (R02).
+6. قراءة البوابة: `productPreview` / `dashboard` — لا DB وحدها كإثبات استعادة.
+7. مجموعات: `inventoryMode=untracked` ما لم يُدخل مخزون (وإلا `product` + `stockQty`) حتى لا يفشل materialize بـ `PUBLISH_REQUIRED` على `stockQty`.
 
 ## 3) فرق تغيير المستخدم عن تطبيق الخادم (R02)
 
@@ -78,12 +81,17 @@
 cd mira-api
 npx tsx src/partners-portal/registry/registry-attribute-fields.schema-tests.ts   # مكوّن
 DATABASE_URL=… MIRA_PARTNER_EDITOR_V2=true npx tsx src/marketplace/taxonomy/elegance-e2-portal.http.integration-tests.ts  # API
-DATABASE_URL=… MIRA_PARTNER_EDITOR_V2=true npx tsx src/marketplace/taxonomy/elegance-e2a-portal-browser.integration-tests.ts  # متصفح
+DATABASE_URL=… MIRA_PARTNER_EDITOR_V2=true npx tsx src/marketplace/taxonomy/elegance-e2a-portal-browser.integration-tests.ts  # متصفح استكشافي
+DATABASE_URL=… MIRA_PARTNER_EDITOR_V2=true MIRA_PARTNER_UPLOAD_SESSION=true \
+  MIRA_UPLOAD_ALLOW_DIRECT_PARTS=true \
+  npx tsx src/marketplace/taxonomy/elegance-e2a-acceptance.browser.integration-tests.ts  # بوابة قبول ACC-*
 DATABASE_URL=… npx tsx src/marketplace/taxonomy/elegance-e1-final-closure.http.integration-tests.ts  # عدم رجوع E1
 ```
 
-عند تعديل المكوّن/الرحلات: شغّل المجموعات الثلاث أعلاه على نفس code SHA. iPhone = E5.
+Fixtures: فيديو `mira-api/src/partners-portal/upload-sessions/fixtures/valid-short.mp4`. نجاح البوابة = كل ACC-* = PASS مع أدلة في `.e2a-acceptance-evidence/`.
+
+عند تعديل المكوّن/الرحلات: شغّل بوابة القبول على نفس code SHA. iPhone = E5.
 
 ## حدود منفَّذ / مؤجّل
 
-منفَّذ في E2أ: R01–R04 ضمن البوابة. مؤجّل: E2ب/ج، E3، E4 كتابة شنط/أحذية، E5 جهاز.
+منفَّذ في E2أ: R01–R04 + معايير ACC-* الإلزامية على البوابة. مؤجّل: E2ب/ج، E3، E4 كتابة شنط/أحذية، E5 جهاز.
