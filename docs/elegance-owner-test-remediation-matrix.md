@@ -10,4 +10,5 @@
 | اختفاء الحفظ/النشر في الجوال | فصل `editor-actions` عن خطوات الإخفاء | `e2b-mobile-actions-always.tests.mjs` | انحدار | محفوظ |
 | مسح يدوي يعيد القيم | تفريغ `customsList` كاملًا | `catalog-options-clear-restore.tests.mjs` | انحدار | محفوظ |
 | مجموعات بلا subcategory | تمرير السياق إلى mount | `bulk-group-journey.js` | انحدار | محفوظ |
-| نشر + Release جهاز | بعد اجتياز الاختبارات | Render + flutter | يُسجَّل عند التنفيذ الفعلي | قيد التنفيذ |
+| نشر API+بوابة | autoDeploy بعد push `d63ad66` | Render deploys live + health 200 + JS live | `dep-dbpmchq…r5g` / `…s10` | منفّذ |
+| Release جهاز | بناء Xcode نجح؛ التثبيت فشل | `flutter run --release` | الجهاز **مقفل** (`PasswordProtected=true`) | مفتوح — يحتاج فتح القفل |
