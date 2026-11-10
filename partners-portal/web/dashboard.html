@@ -505,6 +505,7 @@
       document.getElementById('partnerName').textContent = 'عرض واجهة موسوم';
       document.getElementById('partnerMeta').textContent = 'بيانات اختبار موسومة. ليست كتالوجًا عامًا.';
       document.body.dataset.partnerType = 'developer';
+      window.sessionPartner = { id: 'fixture-dev', type: 'developer', nameAr: 'عرض واجهة موسوم', city: 'الرياض' };
       document.getElementById('stats').replaceChildren();
       document.getElementById('stats').removeAttribute('aria-busy');
       document.getElementById('catalogList').replaceChildren();
@@ -512,7 +513,49 @@
       document.getElementById('commerceList').replaceChildren();
       document.getElementById('commerceList').removeAttribute('aria-busy');
       document.getElementById('serviceSection').classList.remove('hidden');
+      const sn = document.getElementById('settingsPartnerName');
+      const st = document.getElementById('settingsPartnerType');
+      const sc = document.getElementById('settingsPartnerCity');
+      if (sn) sn.textContent = window.sessionPartner.nameAr;
+      if (st) st.textContent = 'مطور';
+      if (sc) sc.textContent = window.sessionPartner.city;
       renderAds(labeledAdsFixture(), null);
+      // Paint real editors so shell/tabs/compose can be accepted without live auth.
+      try {
+        if (window.CatalogJourney) {
+          CatalogJourney.renderForm('brand', null, 'catalogForm', 'catalogTitle', 'مسودة اختبار واجهة');
+          CatalogJourney.renderForm('clinic', null, 'serviceForm', 'serviceTitle', 'مسودة خدمة اختبار');
+        }
+      } catch (paintErr) {
+        console.warn('labeled form paint', paintErr);
+      }
+      // Seed human draft cards for drafts view (no technical rev/localStorage text).
+      const draftsList = document.getElementById('editorDraftsList');
+      if (draftsList) {
+        draftsList.replaceChildren();
+        const sample = document.createElement('div');
+        sample.className = 'portal-draft-card list-row';
+        sample.setAttribute('data-portal-draft-card', '1');
+        sample.setAttribute('data-testid', 'portal-draft-row');
+        sample.innerHTML =
+          '<div class="portal-draft-meta">' +
+          '<strong class="portal-draft-name">فستان سهرة وردي</strong>' +
+          '<span class="portal-draft-kind">منتج</span>' +
+          '<span class="portal-draft-status">مسودة</span>' +
+          '<span class="portal-draft-updated">آخر تعديل: منذ قليل</span>' +
+          '</div>';
+        const openSample = document.createElement('button');
+        openSample.type = 'button';
+        openSample.className = 'btn btn-primary';
+        openSample.setAttribute('data-testid', 'portal-draft-open');
+        openSample.textContent = 'فتح';
+        openSample.onclick = () => {
+          if (window.MiraPortalShell) MiraPortalShell.navigate('products', 'edit', { force: true });
+          if (window.MiraE2BProductShell) MiraE2BProductShell.focusEditor();
+        };
+        sample.appendChild(openSample);
+        draftsList.appendChild(sample);
+      }
       if (window.MiraPortalShell) {
         MiraPortalShell.boot();
         MiraPortalShell.setDirtyGuard(function () {
@@ -521,7 +564,14 @@
         });
         MiraPortalShell.navigate('products', 'list', { replace: true, force: true });
       }
-      if (window.MiraE2BProductShell) MiraE2BProductShell.enableProductMode();
+      if (window.MiraE2BProductShell) {
+        MiraE2BProductShell.enableProductMode();
+        if (MiraE2BProductShell.composeCatalogLayout) MiraE2BProductShell.composeCatalogLayout();
+      }
+      if (window.MiraE2BServiceShell) {
+        MiraE2BServiceShell.enableServiceMode('serviceForm');
+        MiraE2BServiceShell.disableServiceMode();
+      }
     } else {
       load();
     }

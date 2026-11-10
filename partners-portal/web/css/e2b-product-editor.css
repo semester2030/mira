@@ -1121,15 +1121,19 @@ body.e2b-service-mode .e2c-map-preview img.e2c-map-img {
 /* —— Portal shell: one active view, sidebar right (RTL) —— */
 .portal-shell {
   display: grid;
-  grid-template-columns: 220px minmax(0, 1fr);
-  gap: 1.25rem;
+  grid-template-columns: 200px minmax(0, 1fr);
+  gap: 1rem;
   align-items: start;
-  width: min(1280px, 100%);
+  width: min(1440px, 100%);
   margin: 0 auto;
+  padding: 0 0.5rem 1.5rem;
 }
 .portal-rail {
   position: sticky;
   top: 1rem;
+}
+.portal-stage {
+  min-width: 0;
 }
 .portal-stage-head {
   display: flex;
@@ -1137,11 +1141,11 @@ body.e2b-service-mode .e2c-map-preview img.e2c-map-img {
   align-items: center;
   justify-content: space-between;
   gap: 0.75rem;
-  margin-bottom: 0.85rem;
+  margin-bottom: 0.65rem;
 }
 .portal-view-title {
   margin: 0;
-  font-size: 1.35rem;
+  font-size: 1.25rem;
   font-weight: 800;
   color: var(--e2b-ink, #3a2a40);
 }
@@ -1154,16 +1158,26 @@ body[data-portal-view] #portalStageContent > .card[data-portal-active="0"],
 body[data-portal-view] #portalStageContent > .card.hidden {
   display: none !important;
 }
-/* Hide legacy e2b inner rail when portal shell rail is present */
+/* Hide legacy e2b inner rail + redundant show-list when portal shell owns nav */
 #portalShell #e2bSideNav,
-#portalShell .e2b-workspace > .e2b-rail {
+#portalShell .e2b-workspace > .e2b-rail,
+#portalShell #e2bShowList {
   display: none !important;
 }
 #portalShell .e2b-workspace {
   grid-template-columns: 1fr;
 }
-body.portal-mode-edit #portalHomeCard,
-body.portal-mode-edit #portalAddCard {
+#portalShell #catalogSection.e2b-panel,
+#portalShell #serviceSection.e2b-panel {
+  margin-top: 0;
+}
+#portalShell #catalogSection > h2:first-child,
+#portalShell #catalogSection > p.lead:first-of-type {
+  /* List chrome lives in stage head; keep inner titles compact */
+  margin-top: 0;
+}
+body[data-portal-view] #portalHomeCard,
+body[data-portal-view] #portalAddCard {
   display: none !important;
 }
 body.portal-mode-list #e2bEditorPanel,
@@ -1174,22 +1188,34 @@ body.portal-mode-list #serviceEditorWrap,
 body.portal-mode-edit #serviceListWrap {
   display: none !important;
 }
+#editorDraftsSection .lead {
+  margin: 0.35rem 0 0.75rem;
+  max-width: 42rem;
+}
+#editorDraftsSection #refreshEditorDrafts {
+  margin-bottom: 0.75rem;
+}
+#editorDraftsList:empty::before,
+#editorDraftsList[data-empty="1"] {
+  display: block;
+  color: var(--e2b-muted, #7a6584);
+}
 .portal-draft-card {
   display: flex;
   flex-wrap: wrap;
   align-items: center;
   justify-content: space-between;
-  gap: 0.75rem;
-  padding: 0.85rem 1rem;
-  border-radius: 16px;
-  background: rgba(255, 255, 255, 0.7);
+  gap: 0.65rem 1rem;
+  padding: 0.7rem 0.9rem;
+  border-radius: 14px;
+  background: rgba(255, 255, 255, 0.78);
   border: 1px solid rgba(201, 166, 216, 0.45);
-  margin-bottom: 0.65rem;
+  margin-bottom: 0.5rem;
 }
 .portal-draft-meta {
   display: flex;
   flex-wrap: wrap;
-  gap: 0.45rem 0.85rem;
+  gap: 0.35rem 0.75rem;
   align-items: baseline;
 }
 .portal-draft-name { font-weight: 800; }

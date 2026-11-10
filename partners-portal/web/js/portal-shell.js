@@ -99,18 +99,27 @@
       el.setAttribute('data-portal-active', show ? '1' : '0');
     });
 
-    // Home/stats/quick-add only on list of products/services — not during editor.
+    // Shell owns chrome; legacy home/stats card stays out of product/service/draft flows.
+    // Settings has its own section — keep home hidden to avoid stacked empty cards.
     var home = document.getElementById('portalHomeCard');
     var addCard = document.getElementById('portalAddCard');
-    var showHome = mode === 'list' && (view === 'products' || view === 'services' || view === 'settings');
     if (home) {
-      home.classList.toggle('hidden', !showHome);
-      home.hidden = !showHome;
+      home.classList.add('hidden');
+      home.hidden = true;
+      home.setAttribute('data-portal-active', '0');
     }
     if (addCard) {
       // Stage-head «إضافة» replaces the legacy quick-add card.
       addCard.classList.add('hidden');
       addCard.hidden = true;
+      addCard.setAttribute('data-portal-active', '0');
+    }
+
+    // Hide legacy in-list «عرض القائمة» — shell owns list/edit exclusivity.
+    var showListBtn = document.getElementById('e2bShowList');
+    if (showListBtn) {
+      showListBtn.hidden = true;
+      showListBtn.classList.add('hidden');
     }
 
     var listPanel = document.getElementById('e2bListPanel');

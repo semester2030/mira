@@ -544,7 +544,7 @@
       : (editing
         ? 'مسودة على المعرف نفسه. السعر الظاهر ' + priceLabel + '. التعديل لا ينشر قبل اعتماد الإدارة.'
         : (seedingDraft
-          ? 'مسودة خادمية ' + draftCtx.clientDraftId + ' · rev ' + draftCtx.revision
+          ? 'مسودة: ' + (((draftCtx.values && draftCtx.values.nameAr) || seed.nameAr || seed.draftNameAr) || 'بدون اسم')
           : 'مسودة جديدة. لا يُطلب رابط متجر، والسعر يُكتب بالريال.'))));
     status.setAttribute('data-catalog-persist-status', '1');
     if (item && item.reviewNote) text(form, 'سبب المراجعة: ' + item.reviewNote);
