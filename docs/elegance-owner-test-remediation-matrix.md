@@ -11,5 +11,5 @@
 | ازدواج التصميم (إخفاء legacy فقط) | CTA قديم ما زال يستقبل أحداثًا | تعطيل legacy كاملًا + خطوات جوال قصيرة تحفظ الحالة | `e2b-product-shell.js` / `e2b-service-shell.js` + CSS | منفّذ |
 | `dependsOn` في JSON فقط | لا تحقق خادمي ولا تقليم عند تغيير التصنيف | واجهة + `pruneAttributesByDependsOn` في taxonomy-write | prune heelHeight على shoes.flat | منفّذ |
 | `shoeUsage` غير مربوط بالفلاتر | الواجهة/الاستعلام لم يمرّرا السمة | facet + query + Discover chips + stale drop | كود Discover + catalog-filters | منفّذ — بانتظار جهاز |
-| نشر + Release على الجوال | يحتاج دفع/نشر Render + تثبيت بعد فتح الجهاز | مسار النشر بعد اجتياز الاختبارات | بعد push/deploy | قيد التنفيذ |
+| نشر + Release على الجوال | يحتاج دفع/نشر Render + تثبيت بعد فتح الجهاز | push `4721da1` → mira-api + partners-portal live؛ `flutter run --release` على iPhone | Render dep live + log تثبيت الجهاز | منفّذ |
 | صور 56 فرع + الكل + رجوع | — | محفوظة من الحزمة السابقة دون إعادة توليد | ACC-ELEGANCE-ORB-ASSETS | محفوظ |
