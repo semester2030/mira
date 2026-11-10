@@ -64,6 +64,117 @@ function isStableCustomAttrId(id: string): boolean {
   return /^custom:[A-Za-z0-9\u0600-\u06FF\-_.]{1,48}$/.test(id);
 }
 
+const CUSTOM_ATTR_LABELS_KEY = 'customAttrLabels';
+
+function validateDimensionBag(
+  fieldId: string,
+  dim: unknown,
+  errors: TaxonomyFieldError[],
+): void {
+  if (dim === undefined || dim === null) return;
+  if (typeof dim !== 'object' || Array.isArray(dim)) {
+    errors.push({ fieldId, code: 'DIMENSIONS_TYPE', messageAr: 'الأبعاد يجب أن تكون كائنًا' });
+    return;
+  }
+  for (const axis of ['w', 'h', 'd'] as const) {
+    const v = (dim as Record<string, unknown>)[axis];
+    if (v === undefined) continue;
+    if (v === null) {
+      errors.push({
+        fieldId: `${fieldId}.${axis}`,
+        code: 'DIMENSIONS_NULL',
+        messageAr: 'البعد لا يقبل null',
+      });
+    } else if (typeof v !== 'number' || !Number.isFinite(v)) {
+      errors.push({
+        fieldId: `${fieldId}.${axis}`,
+        code: 'DIMENSIONS_TYPE',
+        messageAr: 'البعد يجب أن يكون رقمًا',
+      });
+    } else if (v < 0) {
+      errors.push({
+        fieldId: `${fieldId}.${axis}`,
+        code: 'DIMENSIONS_MIN',
+        messageAr: 'البعد لا يقبل قيمة سالبة',
+      });
+    }
+  }
+}
+
+/** Keep itemDimensions and legacy dimensionsCm as one authoritative bag. */
+export function unifyDimensionSources(
+  attrs: Record<string, unknown>,
+): TaxonomyFieldError[] {
+  const errors: TaxonomyFieldError[] = [];
+  const item = attrs.itemDimensions;
+  const legacy = attrs.dimensionsCm;
+  const itemObj = item != null && typeof item === 'object' && !Array.isArray(item) ? (item as Record<string, unknown>) : null;
+  const legacyObj =
+    legacy != null && typeof legacy === 'object' && !Array.isArray(legacy)
+      ? (legacy as Record<string, unknown>)
+      : null;
+  if (itemObj && legacyObj) {
+    for (const axis of ['w', 'h', 'd'] as const) {
+      if (!(axis in itemObj) || !(axis in legacyObj)) continue;
+      if (itemObj[axis] !== legacyObj[axis]) {
+        errors.push({
+          fieldId: `itemDimensions.${axis}`,
+          code: 'DIMENSIONS_CONFLICT',
+          messageAr: 'تعارض بين itemDimensions و dimensionsCm',
+        });
+      }
+    }
+    // Canonical field wins for storage after conflict reporting.
+    attrs.dimensionsCm = { ...itemObj };
+  } else if (itemObj && !legacyObj) {
+    attrs.dimensionsCm = { ...itemObj };
+  } else if (!itemObj && legacyObj) {
+    attrs.itemDimensions = { ...legacyObj };
+  }
+  return errors;
+}
+
+function validateCustomAttrLabels(
+  raw: unknown,
+  errors: TaxonomyFieldError[],
+): void {
+  if (raw == null) return;
+  if (typeof raw !== 'object' || Array.isArray(raw)) {
+    errors.push({
+      fieldId: CUSTOM_ATTR_LABELS_KEY,
+      code: 'CUSTOM_LABELS_TYPE',
+      messageAr: 'خريطة القيم اليدوية يجب أن تكون كائنًا',
+    });
+    return;
+  }
+  for (const [fieldId, bag] of Object.entries(raw as Record<string, unknown>)) {
+    if (typeof bag !== 'object' || bag == null || Array.isArray(bag)) {
+      errors.push({
+        fieldId: `${CUSTOM_ATTR_LABELS_KEY}.${fieldId}`,
+        code: 'CUSTOM_LABELS_TYPE',
+        messageAr: 'قيم التسميات اليدوية يجب أن تكون كائنًا',
+      });
+      continue;
+    }
+    for (const [id, label] of Object.entries(bag as Record<string, unknown>)) {
+      if (!isStableCustomAttrId(id)) {
+        errors.push({
+          fieldId: `${CUSTOM_ATTR_LABELS_KEY}.${fieldId}`,
+          code: 'CUSTOM_LABELS_ID',
+          messageAr: 'معرّف قيمة يدوية غير صالح',
+        });
+      }
+      if (typeof label !== 'string' || !label.trim() || label.length > 80) {
+        errors.push({
+          fieldId: `${CUSTOM_ATTR_LABELS_KEY}.${fieldId}`,
+          code: 'CUSTOM_LABELS_TEXT',
+          messageAr: 'نص القيمة اليدوية غير صالح',
+        });
+      }
+    }
+  }
+}
+
 function validateAttributeValue(
   fieldId: string,
   def: AttributeFieldDef,
@@ -184,30 +295,19 @@ function validateAttributesBag(
   input: ProductTaxonomyInput,
   errors: TaxonomyFieldError[],
 ) {
-  const dim = attrs.dimensionsCm;
-  if (dim !== undefined && dim !== null) {
-    if (typeof dim !== 'object' || Array.isArray(dim)) {
-      errors.push({ fieldId: 'dimensionsCm', code: 'DIMENSIONS_TYPE', messageAr: 'الأبعاد يجب أن تكون كائنًا' });
-    } else {
-      for (const axis of ['w', 'h', 'd'] as const) {
-        const v = (dim as Record<string, unknown>)[axis];
-        if (v === undefined) continue;
-        if (v === null) {
-          errors.push({ fieldId: `dimensionsCm.${axis}`, code: 'DIMENSIONS_NULL', messageAr: 'البعد لا يقبل null' });
-        } else if (typeof v !== 'number' || !Number.isFinite(v)) {
-          errors.push({ fieldId: `dimensionsCm.${axis}`, code: 'DIMENSIONS_TYPE', messageAr: 'البعد يجب أن يكون رقمًا' });
-        } else if (v < 0) {
-          errors.push({ fieldId: `dimensionsCm.${axis}`, code: 'DIMENSIONS_MIN', messageAr: 'البعد لا يقبل قيمة سالبة' });
-        }
-      }
-    }
+  validateDimensionBag('dimensionsCm', attrs.dimensionsCm, errors);
+  validateDimensionBag('itemDimensions', attrs.itemDimensions, errors);
+  errors.push(...unifyDimensionSources(attrs));
+  if (Object.prototype.hasOwnProperty.call(attrs, CUSTOM_ATTR_LABELS_KEY)) {
+    validateCustomAttrLabels(attrs[CUSTOM_ATTR_LABELS_KEY], errors);
   }
 
   const defs = input.attributeFieldDefs;
   if (!defs) return;
   const depCtx = { category: input.category, subcategory: input.subcategory };
   for (const [key, value] of Object.entries(attrs)) {
-    if (key === 'dimensionsCm') continue; // structural check above
+    if (key === 'dimensionsCm' || key === 'itemDimensions') continue; // structural check above
+    if (key === CUSTOM_ATTR_LABELS_KEY) continue; // meta map validated above
     const def = defs.get(key);
     if (!def) {
       if (!input.allowUnknownAttributeKeys) {

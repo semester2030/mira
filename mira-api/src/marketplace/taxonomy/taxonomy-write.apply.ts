@@ -110,7 +110,7 @@ function attributePatchRequiresTrustedContext(
 ): boolean {
   if (!isPlainObject(patchAttributes)) return patchAttributes != null;
   for (const key of patchedAttrKeys) {
-    if (key === 'dimensionsCm') continue;
+    if (key === 'dimensionsCm' || key === 'itemDimensions' || key === 'customAttrLabels') continue;
     if (patchAttributes[key] === null) continue; // explicit clear of a key
     return true;
   }
@@ -253,7 +253,7 @@ export function applyTaxonomyPatch(
       if (attributeFieldDefs) {
         const prior = isPlainObject(current.attributesJson) ? current.attributesJson : {};
         for (const key of patchedAttrKeys) {
-          if (key === 'dimensionsCm') continue;
+          if (key === 'dimensionsCm' || key === 'itemDimensions' || key === 'customAttrLabels') continue;
           if (attributeFieldDefs.has(key)) continue;
           // Clearing an unknown legacy key with null is allowed (intentional clear).
           const patchObj = isPlainObject(patch.attributes) ? patch.attributes : {};
@@ -270,7 +270,7 @@ export function applyTaxonomyPatch(
       } else if (needsTrustedContext && patchedAttrKeys.size > 0) {
         // No defs available for a write that requires context — reject non-clear keys.
         for (const key of patchedAttrKeys) {
-          if (key === 'dimensionsCm') continue;
+          if (key === 'dimensionsCm' || key === 'itemDimensions' || key === 'customAttrLabels') continue;
           const patchObj = isPlainObject(patch.attributes) ? patch.attributes : {};
           if (patchObj[key] === null) continue;
           errors.push({

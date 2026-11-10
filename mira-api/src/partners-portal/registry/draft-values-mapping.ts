@@ -73,5 +73,10 @@ export function attributesJsonFromDraftValues(
     Object.assign(bag, values.attributesJson as Record<string, unknown>);
     touched = true;
   }
+  // Meta map for original manual texts — not a registry field id, but must persist with attributes.
+  if (Object.prototype.hasOwnProperty.call(values, 'customAttrLabels')) {
+    bag.customAttrLabels = values.customAttrLabels;
+    touched = true;
+  }
   return touched ? bag : undefined;
 }

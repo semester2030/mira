@@ -39,7 +39,8 @@ function mergeNested(
     const fieldId = `${path}.${key}`;
     if (value === undefined) continue;
     if (value === null) {
-      const isDim = fieldId.startsWith('dimensionsCm.');
+      const isDim =
+        fieldId.startsWith('dimensionsCm.') || fieldId.startsWith('itemDimensions.');
       errors.push({
         fieldId,
         code: isDim ? 'DIMENSIONS_NULL' : 'ATTRIBUTES_NESTED_NULL',

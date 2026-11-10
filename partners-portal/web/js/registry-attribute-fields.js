@@ -139,6 +139,9 @@
     return ids;
   }
 
+  var CUSTOM_ATTR_LABELS_KEY = 'customAttrLabels';
+  var MAX_CUSTOM_LABEL_LEN = 80;
+
   /**
    * Restore attributes from card/product values independently of material/cut.
    * Priority documentation (nested vs flat):
@@ -188,6 +191,10 @@
       }
     });
 
+    if (Object.prototype.hasOwnProperty.call(vals, CUSTOM_ATTR_LABELS_KEY)) {
+      out[CUSTOM_ATTR_LABELS_KEY] = vals[CUSTOM_ATTR_LABELS_KEY];
+    }
+
     return out;
   }
 
@@ -196,18 +203,92 @@
     return Array.isArray(modes) && modes.indexOf('manual') >= 0;
   }
 
+  function hashLabel(label) {
+    var s = String(label || '');
+    var h = 2166136261;
+    for (var i = 0; i < s.length; i++) {
+      h ^= s.charCodeAt(i);
+      h = Math.imul(h, 16777619);
+    }
+    return (h >>> 0).toString(36);
+  }
+
+  /**
+   * Stable custom id from original label. Different labels must not collide.
+   * Original display text is kept separately in customAttrLabels — never show this slug to users.
+   */
   function customAttrId(label, index) {
-    var base = String(label || '')
-      .trim()
-      .toLowerCase()
-      .replace(/\s+/g, '-')
-      .replace(/[^a-z0-9\u0600-\u06FF\-]/g, '')
-      .slice(0, 40);
-    return 'custom:' + (base || 'v' + (index + 1));
+    var trimmed = String(label || '').trim();
+    var base = 'custom:v' + hashLabel(trimmed || 'empty');
+    if (index == null || index === 0) return base;
+    return base + '_' + String(index);
   }
 
   function isAllowedCustomAttrId(id) {
     return typeof id === 'string' && /^custom:[A-Za-z0-9\u0600-\u06FF\-_.]{1,48}$/.test(id);
+  }
+
+  function cloneCustomLabelMap(raw) {
+    var out = Object.create(null);
+    if (!isPlainObject(raw)) return out;
+    Object.keys(raw).forEach(function (fieldId) {
+      var bag = raw[fieldId];
+      if (!isPlainObject(bag)) return;
+      out[fieldId] = Object.create(null);
+      Object.keys(bag).forEach(function (id) {
+        if (!isAllowedCustomAttrId(id)) return;
+        var label = bag[id];
+        if (typeof label !== 'string') return;
+        out[fieldId][id] = label;
+      });
+    });
+    return out;
+  }
+
+  function findCustomIdForLabel(labelMap, fieldId, label) {
+    var bag = labelMap && labelMap[fieldId];
+    if (!bag) return null;
+    var keys = Object.keys(bag);
+    for (var i = 0; i < keys.length; i++) {
+      if (bag[keys[i]] === label) return keys[i];
+    }
+    return null;
+  }
+
+  /**
+   * Allocate a stable custom id for an original label without colliding with a different label.
+   * Reuses an existing id when the same original text is already mapped.
+   */
+  function allocateCustomAttrValue(label, fieldId, labelMap, usedIds) {
+    var trimmed = String(label || '').trim();
+    if (!trimmed) return null;
+    if (trimmed.length > MAX_CUSTOM_LABEL_LEN) {
+      return { error: 'الحد الأقصى لنص القيمة اليدوية ' + MAX_CUSTOM_LABEL_LEN + ' حرفًا.' };
+    }
+    if (!labelMap[fieldId]) labelMap[fieldId] = Object.create(null);
+    var existingForLabel = findCustomIdForLabel(labelMap, fieldId, trimmed);
+    if (existingForLabel) return { id: existingForLabel, label: trimmed };
+    var used = usedIds || new Set();
+    Object.keys(labelMap[fieldId]).forEach(function (id) {
+      used.add(id);
+    });
+    var n = 0;
+    var id = customAttrId(trimmed, 0);
+    while (used.has(id) && labelMap[fieldId][id] !== trimmed) {
+      n += 1;
+      id = customAttrId(trimmed, n);
+    }
+    labelMap[fieldId][id] = trimmed;
+    used.add(id);
+    return { id: id, label: trimmed };
+  }
+
+  function displayLabelForCustomId(id, fieldId, labelMap) {
+    if (!isAllowedCustomAttrId(id)) return id;
+    var bag = labelMap && labelMap[fieldId];
+    if (bag && typeof bag[id] === 'string' && bag[id]) return bag[id];
+    // Legacy ids without a label map: keep id stable; do not invent a prettier rewrite.
+    return String(id).replace(/^custom:/, '');
   }
 
   function normalizeDimensionsObject(raw) {
@@ -228,6 +309,20 @@
     return Object.keys(out).length ? out : null;
   }
 
+  function dimensionsAxisInvalidKey(fieldId, axis) {
+    return String(fieldId) + '.' + String(axis);
+  }
+
+  function parseDimensionsInvalidKey(key) {
+    var m = String(key || '').match(/^(itemDimensions|dimensionsCm)\.(w|h|d)$/);
+    if (!m) return null;
+    return { fieldId: m[1], axis: m[2] };
+  }
+
+  function validateDimensionAxisValue(raw, unit) {
+    return validateNumberValue({ id: 'dim', min: 0, unit: unit || 'cm' }, raw);
+  }
+
   /** Prefer itemDimensions; fall back to legacy dimensionsCm without dropping either when identical. */
   function coalesceDimensions(attrs) {
     if (!isPlainObject(attrs)) return attrs;
@@ -235,14 +330,14 @@
     var legacy = normalizeDimensionsObject(attrs.dimensionsCm);
     if (item && !legacy) {
       attrs.itemDimensions = item;
-      attrs.dimensionsCm = item;
+      attrs.dimensionsCm = Object.assign({}, item);
     } else if (!item && legacy) {
-      attrs.itemDimensions = legacy;
+      attrs.itemDimensions = Object.assign({}, legacy);
       attrs.dimensionsCm = legacy;
     } else if (item && legacy) {
+      // Canonical editor field wins; keep legacy mirrored so one source stays authoritative.
       attrs.itemDimensions = item;
-      // Keep legacy in sync with the canonical editor field when both present.
-      attrs.dimensionsCm = Object.assign({}, legacy, item);
+      attrs.dimensionsCm = Object.assign({}, item);
     }
     return attrs;
   }
@@ -443,6 +538,10 @@
           node.addEventListener(k.slice(2).toLowerCase(), v);
         } else if (k === 'disabled') node.disabled = !!v;
         else if (k === 'checked') node.checked = !!v;
+        else if (k === 'value') {
+          node.value = v;
+          node.setAttribute('value', v);
+        } else if (k === 'hidden') node.hidden = !!v;
         else node.setAttribute(k, v);
       });
     }
@@ -488,6 +587,7 @@
 
     var inputModes = Object.create(null);
     var manualDrafts = Object.create(null);
+    var customLabelMap = Object.create(null);
 
     function seedFrom(attrs, opts) {
       opts = opts || {};
@@ -498,9 +598,13 @@
       invalidInputs = Object.create(null);
       inputModes = Object.create(null);
       manualDrafts = Object.create(null);
+      customLabelMap = Object.create(null);
       if (!isPlainObject(attrs) && !(opts.cleared && Object.keys(opts.cleared).length)) return;
       if (isPlainObject(attrs)) {
         coalesceDimensions(attrs);
+        if (isPlainObject(attrs[CUSTOM_ATTR_LABELS_KEY])) {
+          customLabelMap = cloneCustomLabelMap(attrs[CUSTOM_ATTR_LABELS_KEY]);
+        }
         defs.forEach(function (def) {
           var key = storageAttrKey(def);
           if (!key) return;
@@ -509,11 +613,12 @@
           }
         });
         Object.keys(attrs).forEach(function (k) {
+          if (k === CUSTOM_ATTR_LABELS_KEY) return;
           if (!Object.prototype.hasOwnProperty.call(values, k)) {
             values[k] = attrs[k];
           }
         });
-        // Restore manual mode when saved values include custom: ids.
+        // Restore manual mode + original labels when saved values include custom: ids.
         defs.forEach(function (def) {
           if (!supportsManualInput(def)) return;
           var key = storageAttrKey(def);
@@ -523,12 +628,12 @@
             manualDrafts[def.id] = cur
               .filter(isAllowedCustomAttrId)
               .map(function (id) {
-                return String(id).replace(/^custom:/, '');
+                return displayLabelForCustomId(id, def.id, customLabelMap);
               })
               .join('، ');
           } else if (typeof cur === 'string' && isAllowedCustomAttrId(cur)) {
             inputModes[def.id] = 'manual';
-            manualDrafts[def.id] = String(cur).replace(/^custom:/, '');
+            manualDrafts[def.id] = displayLabelForCustomId(cur, def.id, customLabelMap);
           }
         });
       }
@@ -549,6 +654,9 @@
         Object.keys(opts.invalidInputs).forEach(function (k) {
           invalidInputs[k] = opts.invalidInputs[k];
         });
+      }
+      if (opts.customLabelMap) {
+        customLabelMap = cloneCustomLabelMap(opts.customLabelMap);
       }
     }
 
@@ -572,9 +680,15 @@
         if (options.preserveState && options.preserveState.manualDrafts) {
           manualDrafts = Object.assign(Object.create(null), options.preserveState.manualDrafts);
         }
+        if (options.preserveState && options.preserveState.customLabelMap) {
+          customLabelMap = cloneCustomLabelMap(options.preserveState.customLabelMap);
+        }
         // Also seed any compatible keys from server seed that weren't dirty
         var server = options.initialAttributes;
         if (isPlainObject(server)) {
+          if (isPlainObject(server[CUSTOM_ATTR_LABELS_KEY]) && !Object.keys(customLabelMap).length) {
+            customLabelMap = cloneCustomLabelMap(server[CUSTOM_ATTR_LABELS_KEY]);
+          }
           defs.forEach(function (def) {
             var key = storageAttrKey(def);
             if (!key) return;
@@ -656,7 +770,14 @@
       defs.forEach(function (def) {
         var key = storageAttrKey(def);
         if (!key) return;
-        if (onlyClean && (dirty[key] || cleared[key] || Object.prototype.hasOwnProperty.call(invalidInputs, def.id) || Object.prototype.hasOwnProperty.call(invalidInputs, key))) {
+        if (
+          onlyClean &&
+          (dirty[key] ||
+            cleared[key] ||
+            fieldHasBlockingInvalid(def.id) ||
+            Object.prototype.hasOwnProperty.call(invalidInputs, def.id) ||
+            Object.prototype.hasOwnProperty.call(invalidInputs, key))
+        ) {
           return;
         }
         if (Object.prototype.hasOwnProperty.call(serverAttrs, key)) {
@@ -665,6 +786,9 @@
           if (!onlyClean) delete dirty[key];
         }
       });
+      if (isPlainObject(serverAttrs[CUSTOM_ATTR_LABELS_KEY]) && !dirty[CUSTOM_ATTR_LABELS_KEY]) {
+        customLabelMap = cloneCustomLabelMap(serverAttrs[CUSTOM_ATTR_LABELS_KEY]);
+      }
       paint();
       notify({ source: 'server' });
     }
@@ -681,10 +805,33 @@
       return fieldDependsVisible(def, visibilityCtx());
     }
 
+    function fieldHasBlockingInvalid(fieldId) {
+      if (Object.prototype.hasOwnProperty.call(invalidInputs, fieldId)) return true;
+      var prefix = String(fieldId) + '.';
+      return Object.keys(invalidInputs).some(function (k) {
+        return k === fieldId || k.indexOf(prefix) === 0;
+      });
+    }
+
+    function buildCustomAttrLabelsPatch() {
+      var out = Object.create(null);
+      Object.keys(customLabelMap).forEach(function (fieldId) {
+        var bag = customLabelMap[fieldId];
+        if (!bag) return;
+        var next = Object.create(null);
+        Object.keys(bag).forEach(function (id) {
+          next[id] = bag[id];
+        });
+        if (Object.keys(next).length) out[fieldId] = next;
+      });
+      return Object.keys(out).length ? out : null;
+    }
+
     function buildAttributesPatch() {
       var patch = {};
       var ctx = visibilityCtx();
       Object.keys(dirty).forEach(function (key) {
+        if (key === CUSTOM_ATTR_LABELS_KEY) return;
         var def = defs.find(function (d) {
           return storageAttrKey(d) === key;
         });
@@ -695,9 +842,17 @@
           }
           return;
         }
+        // Never emit a stale committed value while the user still has an invalid typed draft.
+        if (def && fieldHasBlockingInvalid(def.id)) return;
+        if (key === 'itemDimensions' && fieldHasBlockingInvalid('itemDimensions')) return;
         if (cleared[key]) patch[key] = null;
         else if (Object.prototype.hasOwnProperty.call(values, key)) patch[key] = values[key];
       });
+      if (dirty[CUSTOM_ATTR_LABELS_KEY] || Object.keys(customLabelMap).length) {
+        var labels = buildCustomAttrLabelsPatch();
+        if (labels) patch[CUSTOM_ATTR_LABELS_KEY] = labels;
+        else if (dirty[CUSTOM_ATTR_LABELS_KEY]) patch[CUSTOM_ATTR_LABELS_KEY] = null;
+      }
       return patch;
     }
 
@@ -708,6 +863,7 @@
         if (!fieldDependsVisible(def, ctx)) return;
         var key = storageAttrKey(def);
         if (!key) return;
+        if (fieldHasBlockingInvalid(def.id)) return;
         if (cleared[key]) {
           flat[def.id] = null;
           return;
@@ -716,6 +872,8 @@
           flat[def.id] = values[key];
         }
       });
+      var labels = buildCustomAttrLabelsPatch();
+      if (labels) flat[CUSTOM_ATTR_LABELS_KEY] = labels;
       return flat;
     }
 
@@ -745,16 +903,31 @@
           setError(def.id, v.message);
         }
       });
-      Object.keys(invalidInputs).forEach(function (fieldId) {
-        if (seen[fieldId]) return;
+      Object.keys(invalidInputs).forEach(function (key) {
+        if (seen[key]) return;
+        var dimKey = parseDimensionsInvalidKey(key);
+        if (dimKey) {
+          seen[key] = true;
+          var rawDim = invalidInputs[key];
+          var unit =
+            (defs.find(function (d) {
+              return d.id === dimKey.fieldId;
+            }) || {}).unit || 'cm';
+          var dv = validateDimensionAxisValue(rawDim, unit);
+          if (!dv.ok) {
+            errors.push({ fieldId: dimKey.fieldId, message: dv.message, axis: dimKey.axis });
+            setError(dimKey.fieldId, dv.message);
+          }
+          return;
+        }
         var def = defs.find(function (d) {
-          return d.id === fieldId || storageAttrKey(d) === fieldId;
+          return d.id === key || storageAttrKey(d) === key;
         });
-        var raw = invalidInputs[fieldId];
-        var v = validateNumberValue(def || { id: fieldId }, raw);
+        var raw = invalidInputs[key];
+        var v = validateNumberValue(def || { id: key }, raw);
         if (!v.ok) {
-          errors.push({ fieldId: (def && def.id) || fieldId, message: v.message });
-          setError((def && def.id) || fieldId, v.message);
+          errors.push({ fieldId: (def && def.id) || key, message: v.message });
+          setError((def && def.id) || key, v.message);
         }
       });
       defs.forEach(function (def) {
@@ -771,6 +944,26 @@
           setError(def.id, v.message);
         }
       });
+      // Validate committed dimension objects too (negative / non-numeric axes).
+      defs.forEach(function (def) {
+        if (!(def.widget === 'dimensions' || def.id === 'itemDimensions' || def.type === 'object')) return;
+        if (def.id !== 'itemDimensions' && def.widget !== 'dimensions') return;
+        var key = storageAttrKey(def);
+        if (!key || cleared[key]) return;
+        var cur = values[key];
+        if (!isPlainObject(cur)) return;
+        var unit = def.unit || 'cm';
+        ['w', 'h', 'd'].forEach(function (axis) {
+          if (!Object.prototype.hasOwnProperty.call(cur, axis)) return;
+          if (Object.prototype.hasOwnProperty.call(invalidInputs, dimensionsAxisInvalidKey(def.id, axis))) return;
+          var axisVal = cur[axis];
+          var dv = validateDimensionAxisValue(axisVal, unit);
+          if (!dv.ok) {
+            errors.push({ fieldId: def.id, message: dv.message, axis: axis });
+            setError(def.id, dv.message);
+          }
+        });
+      });
       return { ok: errors.length === 0, errors: errors };
     }
 
@@ -782,6 +975,7 @@
         invalidInputs: Object.assign({}, invalidInputs),
         inputModes: Object.assign({}, inputModes),
         manualDrafts: Object.assign({}, manualDrafts),
+        customLabelMap: cloneCustomLabelMap(customLabelMap),
         parked: Object.assign({}, parkedBag),
         parkedCleared: Object.assign({}, parkedClearedBag),
         parkedDirty: Object.assign({}, parkedDirtyBag),
@@ -793,13 +987,23 @@
     }
 
     function syncErrorsFromInvalidInputs() {
-      Object.keys(invalidInputs).forEach(function (fieldId) {
+      Object.keys(invalidInputs).forEach(function (key) {
+        var dimKey = parseDimensionsInvalidKey(key);
+        if (dimKey) {
+          var unit =
+            (defs.find(function (d) {
+              return d.id === dimKey.fieldId;
+            }) || {}).unit || 'cm';
+          var dv = validateDimensionAxisValue(invalidInputs[key], unit);
+          if (!dv.ok) fieldErrors[dimKey.fieldId] = dv.message;
+          return;
+        }
         var def = defs.find(function (d) {
-          return d.id === fieldId || storageAttrKey(d) === fieldId;
+          return d.id === key || storageAttrKey(d) === key;
         });
-        var raw = invalidInputs[fieldId];
-        var v = validateNumberValue(def || { id: fieldId }, raw);
-        if (!v.ok) fieldErrors[(def && def.id) || fieldId] = v.message;
+        var raw = invalidInputs[key];
+        var v = validateNumberValue(def || { id: key }, raw);
+        if (!v.ok) fieldErrors[(def && def.id) || key] = v.message;
       });
     }
 
@@ -957,9 +1161,27 @@
                         .filter(Boolean);
                     };
               var parts = split(manualIn.value);
-              var next = parts.map(function (label, index) {
-                return customAttrId(label, index);
-              });
+              var used = new Set();
+              var next = [];
+              var errMsg = '';
+              // Drop previous labels for this field then re-allocate from current draft text.
+              customLabelMap[def.id] = Object.create(null);
+              for (var pi = 0; pi < parts.length; pi++) {
+                var allocated = allocateCustomAttrValue(parts[pi], def.id, customLabelMap, used);
+                if (allocated && allocated.error) {
+                  errMsg = allocated.error;
+                  break;
+                }
+                if (allocated && allocated.id) next.push(allocated.id);
+              }
+              dirty[CUSTOM_ATTR_LABELS_KEY] = true;
+              if (errMsg) {
+                setError(def.id, errMsg);
+                dirty[key] = true;
+                bumpEditRevision();
+                notify({ source: 'user' });
+                return;
+              }
               setError(def.id, '');
               if (!next.length) markDirty(key, null);
               else markDirty(key, next);
@@ -1039,14 +1261,28 @@
             enumManualIn.addEventListener('input', function () {
               manualDrafts[def.id] = enumManualIn.value;
               var label = String(enumManualIn.value || '').trim();
+              customLabelMap[def.id] = Object.create(null);
+              dirty[CUSTOM_ATTR_LABELS_KEY] = true;
+              if (!label) {
+                setError(def.id, '');
+                markDirty(key, null);
+                return;
+              }
+              var allocated = allocateCustomAttrValue(label, def.id, customLabelMap, new Set());
+              if (allocated && allocated.error) {
+                setError(def.id, allocated.error);
+                dirty[key] = true;
+                bumpEditRevision();
+                notify({ source: 'user' });
+                return;
+              }
               setError(def.id, '');
-              if (!label) markDirty(key, null);
-              else markDirty(key, customAttrId(label, 0));
+              markDirty(key, allocated.id);
             });
             enumManualLab.appendChild(enumManualIn);
             block.appendChild(enumManualLab);
           }
-        } else if (def.widget === 'dimensions' || def.id === 'itemDimensions' || def.type === 'object') {
+        } else if (def.widget === 'dimensions' || def.id === 'itemDimensions') {
           var dimCur = normalizeDimensionsObject(cur) || {};
           var dimRow = el('div', {
             className: 'mira-attr-dimensions',
@@ -1056,6 +1292,7 @@
           [['w', 'العرض'], ['h', 'الارتفاع'], ['d', 'العمق']].forEach(function (pair) {
             var axis = pair[0];
             var axisLabel = pair[1];
+            var axisInvalidKey = dimensionsAxisInvalidKey(def.id, axis);
             var lab = el('label', { className: 'mira-attr-dim-field', text: axisLabel + ' (' + unit + ')' });
             var inp = el('input', {
               type: 'number',
@@ -1065,25 +1302,29 @@
               'data-testid': 'attr-dim-' + def.id + '-' + axis,
               disabled: disabled,
             });
-            if (dimCur[axis] != null && dimCur[axis] !== '') inp.value = String(dimCur[axis]);
+            if (Object.prototype.hasOwnProperty.call(invalidInputs, axisInvalidKey)) {
+              inp.value = String(invalidInputs[axisInvalidKey]);
+            } else if (dimCur[axis] != null && dimCur[axis] !== '') {
+              inp.value = String(dimCur[axis]);
+            }
             function commitDim() {
               var next = Object.assign({}, normalizeDimensionsObject(currentValue(key)) || {});
               var raw = String(inp.value || '').trim();
               if (raw === '') {
                 delete next[axis];
-                delete invalidInputs[def.id + '.' + axis];
+                delete invalidInputs[axisInvalidKey];
                 setError(def.id, '');
               } else {
-                var v = validateNumberValue({ id: def.id, min: 0, unit: unit }, raw);
+                var v = validateDimensionAxisValue(raw, unit);
                 if (!v.ok) {
-                  invalidInputs[def.id + '.' + axis] = raw;
+                  invalidInputs[axisInvalidKey] = raw;
                   dirty[key] = true;
                   bumpEditRevision();
                   setError(def.id, v.message);
                   notify({ source: 'user' });
                   return;
                 }
-                delete invalidInputs[def.id + '.' + axis];
+                delete invalidInputs[axisInvalidKey];
                 next[axis] = v.value;
                 setError(def.id, '');
               }
@@ -1094,19 +1335,20 @@
             inp.addEventListener('input', function () {
               var raw = String(inp.value || '').trim();
               if (raw === '') {
-                delete invalidInputs[def.id + '.' + axis];
+                delete invalidInputs[axisInvalidKey];
+                // Partial clear of one axis is committed only on change/blur; keep typing free.
                 setError(def.id, '');
                 return;
               }
-              var v = validateNumberValue({ id: def.id, min: 0, unit: unit }, raw);
+              var v = validateDimensionAxisValue(raw, unit);
               if (!v.ok) {
-                invalidInputs[def.id + '.' + axis] = raw;
+                invalidInputs[axisInvalidKey] = raw;
                 dirty[key] = true;
                 bumpEditRevision();
                 setError(def.id, v.message);
                 notify({ source: 'user' });
               } else {
-                delete invalidInputs[def.id + '.' + axis];
+                delete invalidInputs[axisInvalidKey];
                 setError(def.id, '');
               }
             });
@@ -1122,7 +1364,7 @@
             });
             clearDim.addEventListener('click', function () {
               ['w', 'h', 'd'].forEach(function (axis) {
-                delete invalidInputs[def.id + '.' + axis];
+                delete invalidInputs[dimensionsAxisInvalidKey(def.id, axis)];
               });
               setError(def.id, '');
               markDirty(key, null);
@@ -1131,6 +1373,13 @@
             dimRow.appendChild(clearDim);
           }
           block.appendChild(dimRow);
+        } else if (def.type === 'object') {
+          block.appendChild(
+            el('p', {
+              className: 'lead',
+              text: 'نوع الحقل غير معروض في E2: ' + (def.widget || def.type),
+            }),
+          );
         } else if (def.type === 'number' || def.widget === 'number') {
           var num = el('input', {
             type: 'number',
@@ -1220,7 +1469,13 @@
       getAttributesPatch: buildAttributesPatch,
       getFlatValues: buildFlatValues,
       getValues: function () {
-        return Object.assign({}, values);
+        var out = Object.assign({}, values);
+        var labels = buildCustomAttrLabelsPatch();
+        if (labels) out[CUSTOM_ATTR_LABELS_KEY] = labels;
+        return out;
+      },
+      getCustomAttrLabels: function () {
+        return cloneCustomLabelMap(customLabelMap);
       },
       hasDirty: function () {
         return Object.keys(dirty).length > 0;
@@ -1304,6 +1559,8 @@
     E2_WRITE_FIELD_IDS: E2_WRITE_FIELD_IDS,
     E2_COMPONENT_CONTRACT_IDS: E2_COMPONENT_CONTRACT_IDS,
     FLAT_ATTR_FIELD_IDS: FLAT_ATTR_FIELD_IDS,
+    CUSTOM_ATTR_LABELS_KEY: CUSTOM_ATTR_LABELS_KEY,
+    MAX_CUSTOM_LABEL_LEN: MAX_CUSTOM_LABEL_LEN,
     attrFieldIdsFromRegistry: attrFieldIdsFromRegistry,
     attributeFieldDefsForProfile: attributeFieldDefsForProfile,
     classifyField: classifyField,
@@ -1311,10 +1568,13 @@
     labelFor: labelFor,
     extractAttributesFromValues: extractAttributesFromValues,
     validateNumberValue: validateNumberValue,
+    validateDimensionAxisValue: validateDimensionAxisValue,
     coalesceDimensions: coalesceDimensions,
     supportsManualInput: supportsManualInput,
     customAttrId: customAttrId,
     isAllowedCustomAttrId: isAllowedCustomAttrId,
+    allocateCustomAttrValue: allocateCustomAttrValue,
+    displayLabelForCustomId: displayLabelForCustomId,
     projectStateOntoDefs: projectStateOntoDefs,
     subcategoriesFromTaxonomy: subcategoriesFromTaxonomy,
     mount: mount,

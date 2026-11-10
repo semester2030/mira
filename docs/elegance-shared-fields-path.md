@@ -6,6 +6,8 @@
 | خيارات اللون/المقاس/الحجم | `catalog-options-core.js` ← `optionPresets(category, subcategory)` |
 | واجهة الخيارات | `product-commerce-fields.js` (مجموعات) و`catalog-journey.js` (فردي عبر نفس الـcore) |
 | خصائص السجل | `registry-attribute-fields.js` (mount واحد للفردي والمجموعات) |
+| قيم يدوية للخصائص | `customAttrLabels` داخل attributes + `allocateCustomAttrValue` (النص الأصلي ≠ المعرّف) |
+| أبعاد | `itemDimensions` canonical؛ `dimensionsCm` مرآة متزامنة |
 | تحقق الخادم | `product-taxonomy.validate.ts` + `taxonomy-write.apply.ts` |
 
 ## إضافة حقل جديد
@@ -14,3 +16,4 @@
 3. إن احتاج واجهة: وسّع `registry-attribute-fields.js` أو `optionPresets` — لا تنسخ قواعد داخل bulk فقط.
 4. حدّث التحقق الخادمي إن لزم (`dependsOn` / `inputModes` / نوع القيمة).
 5. مرّر `category` + `subcategory` عند `mount` من الفردي والمجموعات.
+6. إن كان يدويًا: أضف `inputModes: ["ready","manual"]` واحفظ النص في `customAttrLabels` لا في الـslug.

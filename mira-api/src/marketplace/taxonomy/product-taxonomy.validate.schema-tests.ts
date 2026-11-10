@@ -154,4 +154,44 @@ const nullSub = validateProductTaxonomyWrite(doc, {
 assert.equal(nullSub.length, 0);
 pass('E1-closure-null-subcategory-no-throw');
 
+const itemDimNeg = validateProductTaxonomyWrite(doc, {
+  allowOmittedSubcategory: true,
+  attributes: { itemDimensions: { w: -5, h: 10 } },
+});
+assert.ok(itemDimNeg.some((e) => e.code === 'DIMENSIONS_MIN' && String(e.fieldId).startsWith('itemDimensions')));
+pass('E1-05-reject-itemDimensions-negative');
+
+const dimConflict = validateProductTaxonomyWrite(doc, {
+  allowOmittedSubcategory: true,
+  attributes: {
+    itemDimensions: { w: 15 },
+    dimensionsCm: { w: 12 },
+  },
+});
+assert.ok(dimConflict.some((e) => e.code === 'DIMENSIONS_CONFLICT'));
+pass('E1-05-reject-dimensions-conflict');
+
+const customLabelsOk = validateProductTaxonomyWrite(doc, {
+  allowOmittedSubcategory: true,
+  attributes: {
+    material: ['custom:vabc123'],
+    customAttrLabels: { material: { 'custom:vabc123': 'جلد طبيعي 100%' } },
+  },
+  attributeFieldDefs: new Map([
+    ['material', { id: 'material', type: 'array', values: ['silk'], inputModes: ['ready', 'manual'] }],
+  ]),
+  allowUnknownAttributeKeys: false,
+});
+assert.equal(customLabelsOk.length, 0);
+pass('E1-05-accept-customAttrLabels-with-manual');
+
+const customLabelsBad = validateProductTaxonomyWrite(doc, {
+  allowOmittedSubcategory: true,
+  attributes: {
+    customAttrLabels: { material: { 'not-custom': 'x' } },
+  },
+});
+assert.ok(customLabelsBad.some((e) => e.code === 'CUSTOM_LABELS_ID'));
+pass('E1-05-reject-customAttrLabels-bad-id');
+
 console.log('E1-04/05 ALL PASS');

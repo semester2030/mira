@@ -1,13 +1,13 @@
 # جدول معالجة ملاحظات الاختبار — أناقتك
 
-التاريخ: 2026-11-10T18:30:00Z  
-الأساس: `mira-elegance-taxonomy-orbs-20261110T180219Z-4721da1` + إصلاحات لاحقة
+التاريخ: 2026-11-10T21:45:00Z  
+الأساس: `mira-elegance-taxonomy-orbs-20261110T182252Z-b7ce901` + إغلاق المتبقي
 
 | المشكلة | الإصلاح | الاختبار | الدليل | الحالة |
 |---|---|---|---|---|
-| اختفاء الحفظ/النشر في خطوات الجوال | فصل `editor-actions` عن tail + فرض الإظهار + كشف الخطوة عند خطأ | `e2b-mobile-actions-always.tests.mjs` | CSS/JS مصدر | منفّذ |
-| عودة القيم اليدوية بعد المسح | تفريغ `customsList`/`inputModes`؛ clone كامل؛ معاينة مشتركة | `catalog-options-clear-restore.tests.mjs` | مشمشي/زيتوني→مسح→أسود فقط | منفّذ |
-| itemDimensions غير معروض | ويدجت أبعاد + مزامنة dimensionsCm | `registry-attribute-dimensions.tests.mjs` | widget dimensions | منفّذ |
-| جاهز/يدوي للخامة/الحمل | أوضاع إدخال + `custom:` مع تحقق خادمي | validate custom accept / random reject | API validate | منفّذ |
-| مجموعات بلا subcategory | تمرير السياق وإعادة mount | مراجعة `bulk-group-journey.js` | mount args | منفّذ |
-| نشر + Release جهاز | بعد اجتياز الاختبارات | Render + flutter | بعد push | منفّذ |
+| أبعاد: خطأ ظاهر لكن validate=ok ويُرسل 12 القديمة بعد -5 | تحقق محاور `itemDimensions.w/h/d` عبر `invalidInputs` + منع patch أثناء المسودة غير الصالحة + تحقق خادمي موحّد مع `dimensionsCm` | `registry-attribute-dimensions-manual.tests.mjs` + schema API | 12→-5 يمنع الحفظ؛ 15 يُحفظ ويُستعاد | منفّذ |
+| يدوي: «جلد طبيعي 100%» → slug وتصادم مع «جلد طبيعي 100» | `customAttrLabels` + معرّف مستقر غير متصادم؛ عرض النص الأصلي عند إعادة الفتح | نفس ملف الاختبار + `CUSTOM_LABELS_*` API | النص الأصلي بعد reopen؛ معرّفان مختلفان | منفّذ |
+| اختفاء الحفظ/النشر في الجوال | فصل `editor-actions` عن خطوات الإخفاء | `e2b-mobile-actions-always.tests.mjs` | انحدار | محفوظ |
+| مسح يدوي يعيد القيم | تفريغ `customsList` كاملًا | `catalog-options-clear-restore.tests.mjs` | انحدار | محفوظ |
+| مجموعات بلا subcategory | تمرير السياق إلى mount | `bulk-group-journey.js` | انحدار | محفوظ |
+| نشر + Release جهاز | بعد اجتياز الاختبارات | Render + flutter | يُسجَّل عند التنفيذ الفعلي | قيد التنفيذ |

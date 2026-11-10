@@ -24,6 +24,14 @@
 <li><strong>المجموعات:</strong> تمرير <code>subcategory</code> لمكوّن التجارة والخصائص وإعادة التركيب عند تغيير الفرع.</li>
 <li><strong>أدلة:</strong> <code>catalog-options-clear-restore.tests.mjs</code>، <code>e2b-mobile-actions-always.tests.mjs</code>، <code>registry-attribute-dimensions.tests.mjs</code>، <code>docs/elegance-shared-fields-path.md</code>.</li>
 </ul></section>
+<section id="owner-followup-20261110-b7ce901-close" class="review-summary"><p><strong>إغلاق متبقي الحزمة b7ce901 — أبعاد غير صالحة + النص اليدوي الأصلي — 2026-11-10T21:45:00Z</strong></p>
+<ul>
+<li><strong>الأبعاد:</strong> مسودة محور غير صالحة (<code>itemDimensions.w/h/d</code>) تمنع <code>validate</code>/<code>hasBlockingErrors</code> وتمنع إرسال القيمة القديمة؛ توحيد مع <code>dimensionsCm</code> ورفض التعارض سالبًا على الخادم.</li>
+<li><strong>الكتابة اليدوية:</strong> حفظ النص الأصلي في <code>customAttrLabels</code> بمعرّف <code>custom:v…</code> غير متصادم؛ إعادة الفتح تعرض النص لا الـslug؛ «جلد طبيعي 100%» ≠ «جلد طبيعي 100».</li>
+<li><strong>محفوظ:</strong> أزرار الجوال، مسح الخيارات، subcategory للمجموعات، صور الدوائر، الصلاحيات.</li>
+<li><strong>أدلة:</strong> <code>registry-attribute-dimensions-manual.tests.mjs</code> + اختبارات schema للأبعاد/<code>customAttrLabels</code>؛ الجدول <code>docs/elegance-owner-test-remediation-matrix.md</code>.</li>
+<li><strong>مفتوح حتى التنفيذ الفعلي:</strong> نشر الإنتاج وتثبيت Release على الجهاز — يُسجَّل عند حدوثه فقط.</li>
+</ul></section>
 <section id="owner-followup-20261110-presets" class="review-summary"><p><strong>متابعة إصلاحات الحزمة 2f4e939 — 2026-11-10T18:05:00Z</strong></p>
 <ul>
 <li><strong>presets/profile:</strong> إصلاح <code>optionPresets(bags/shoes)</code> و<code>categoryFromProfileId(product.bags/shoes)</code> من المصدر المركزي.</li>
