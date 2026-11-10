@@ -10,17 +10,46 @@
     cut: true,
     occasion: true,
     lengthCm: true,
+    shoeUsage: true,
+    heelHeightCm: true,
+    itemDimensions: true,
+    carryStyle: true,
   };
 
   var E2_COMPONENT_CONTRACT_IDS = {
-    carryStyle: true,
+    // carryStyle is now a writable bags field; keep empty for legacy callers.
   };
 
   /**
    * Fallback flat ids only when no registry is passed to extractAttributesFromValues.
    * Prefer attrFieldIdsFromRegistry(registry) so new registry fields need no second list.
    */
-  var FLAT_ATTR_FIELD_IDS = ['material', 'cut', 'occasion', 'lengthCm', 'carryStyle'];
+  var FLAT_ATTR_FIELD_IDS = [
+    'material',
+    'cut',
+    'occasion',
+    'lengthCm',
+    'carryStyle',
+    'shoeUsage',
+    'heelHeightCm',
+    'itemDimensions',
+  ];
+
+  function fieldDependsVisible(def, ctx) {
+    if (!def || !def.dependsOn) return true;
+    var dep = def.dependsOn;
+    ctx = ctx || {};
+    if (dep.field === 'subcategory' && Array.isArray(dep.includes)) {
+      var sub = String(ctx.subcategory || '');
+      return dep.includes.indexOf(sub) >= 0;
+    }
+    if (dep.field && Object.prototype.hasOwnProperty.call(ctx, dep.field)) {
+      var cur = ctx[dep.field];
+      if (Array.isArray(dep.includes)) return dep.includes.indexOf(cur) >= 0;
+      if (dep.equals != null) return cur === dep.equals;
+    }
+    return true;
+  }
 
   var mountSeq = 0;
 
@@ -543,9 +572,32 @@
       notify({ source: 'server' });
     }
 
+    function visibilityCtx() {
+      return {
+        subcategory: options.subcategory || '',
+        category: options.category || '',
+        profileId: profileId,
+      };
+    }
+
+    function isDefVisible(def) {
+      return fieldDependsVisible(def, visibilityCtx());
+    }
+
     function buildAttributesPatch() {
       var patch = {};
+      var ctx = visibilityCtx();
       Object.keys(dirty).forEach(function (key) {
+        var def = defs.find(function (d) {
+          return storageAttrKey(d) === key;
+        });
+        // Hidden-by-dependsOn values must not be sent with the active subcategory.
+        if (def && !fieldDependsVisible(def, ctx)) {
+          if (Object.prototype.hasOwnProperty.call(values, key)) {
+            parkedBag[key] = values[key];
+          }
+          return;
+        }
         if (cleared[key]) patch[key] = null;
         else if (Object.prototype.hasOwnProperty.call(values, key)) patch[key] = values[key];
       });
@@ -554,7 +606,9 @@
 
     function buildFlatValues() {
       var flat = {};
+      var ctx = visibilityCtx();
       defs.forEach(function (def) {
+        if (!fieldDependsVisible(def, ctx)) return;
         var key = storageAttrKey(def);
         if (!key) return;
         if (cleared[key]) {
@@ -683,7 +737,13 @@
         return;
       }
 
+      var visibilityCtx = {
+        subcategory: options.subcategory || '',
+        category: options.category || '',
+        profileId: profileId,
+      };
       defs.forEach(function (def) {
+        if (!fieldDependsVisible(def, visibilityCtx)) return;
         var key = storageAttrKey(def);
         var tier = def.supportTier || classifyField(def);
         var block = el('div', {

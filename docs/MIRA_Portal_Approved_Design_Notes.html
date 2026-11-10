@@ -16,6 +16,16 @@
 <li><strong>خارج النطاق:</strong> المجوهرات والأطفال.</li>
 </ul>
 <p>الحالة عند هذا التحديث: تنفيذ جزئي قيد التحقق والنشر. لا إعلان إغلاق لبنود غير المختبرة على الجهاز بعد.</p></section>
+<section id="owner-followup-20261110-presets" class="review-summary"><p><strong>متابعة إصلاحات الحزمة 2f4e939 — 2026-11-10T18:05:00Z</strong></p>
+<ul>
+<li><strong>presets/profile:</strong> إصلاح <code>optionPresets(bags/shoes)</code> و<code>categoryFromProfileId(product.bags/shoes)</code> من المصدر المركزي.</li>
+<li><strong>قيم يدوية:</strong> فصل العرض عن الحفظ عبر <code>customsList</code> ودعم الفاصلتين؛ ثبات المعرّفات بعد حفظ→فتح→حفظ.</li>
+<li><strong>محرر واحد + جوال:</strong> تعطيل legacy فعليًا؛ خطوات قصيرة للمنتج/الخدمة على ≤900px دون نموذج طولي واحد.</li>
+<li><strong>dependsOn خادمي:</strong> تقليم الحقول غير المنطبقة عند تغيير التصنيف + رفض قيم غير المنطبقة في التحقق.</li>
+<li><strong>فلتر shoeUsage:</strong> ربط facet/query/واجهة Discover.</li>
+<li><strong>أدلة:</strong> <code>catalog-options-bags-shoes-customs.tests.mjs</code> + جدول <code>docs/elegance-owner-test-remediation-matrix.md</code>.</li>
+<li><strong>مفتوح:</strong> تثبيت Release على الجهاز بعد فتح القفل؛ إثبات بصري نهائي للصور/الفلاتر على الجوال.</li>
+</ul></section>
 <section id="latest-review" class="review-summary"><p><strong>إغلاق نطاق البوابة محليًا (E2ج/E3/E4/المجموعات/ARCH) — 2026-11-10</strong></p>
 <p><span class="status-verified">E2ج CLOSED_VERIFIED_LOCAL</span>: إغفال على سجل غير فارغ؛ مسح صريح مستقل؛ رفض UI للوقت/السعة غير الصالحين عبر <code>novalidate</code> + <code>avail-field-error</code>؛ عقود API للمسودة/التحويل/PATCH منفصلة. بوابة close8.</p>
 <p><span class="status-verified">E3 CLOSED_VERIFIED_LOCAL</span>: إعادة ربط بعد إصلاحات E2ج؛ lifecycle refresh؛ الاسم؛ الفلاتر؛ بلا debug refresh/cache/search.</p>

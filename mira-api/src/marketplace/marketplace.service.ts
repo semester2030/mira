@@ -426,6 +426,12 @@ export class MarketplaceService implements OnModuleInit {
           priceHalalas: product.priceHalalas,
           optionsJson: commerce.optionsJson,
           variantsJson: commerce.variantsJson,
+          attributesJson:
+            product.attributesJson &&
+            typeof product.attributesJson === 'object' &&
+            !Array.isArray(product.attributesJson)
+              ? (product.attributesJson as Record<string, unknown>)
+              : null,
           stockQty: commerce.stockQty,
           stockAvailable: commerce.stockAvailable,
           inventoryMode: product.inventoryMode,

@@ -46,6 +46,7 @@ class DiscoverCatalogFacets {
     this.colors = const [],
     this.sizes = const [],
     this.volumes = const [],
+    this.shoeUsage = const [],
     this.placeMode = const [],
     this.branch = const [],
     this.staleSelections = const [],
@@ -57,6 +58,7 @@ class DiscoverCatalogFacets {
   final List<DiscoverFacetBucket> colors;
   final List<DiscoverFacetBucket> sizes;
   final List<DiscoverFacetBucket> volumes;
+  final List<DiscoverFacetBucket> shoeUsage;
   final List<DiscoverFacetBucket> placeMode;
   final List<DiscoverFacetBucket> branch;
   final List<DiscoverStaleSelection> staleSelections;
@@ -89,6 +91,7 @@ class DiscoverCatalogFacets {
       colors: list('variant.color'),
       sizes: list('variant.size'),
       volumes: list('variant.volume'),
+      shoeUsage: list('shoeUsage'),
       placeMode: list('placeMode'),
       branch: list('branch'),
       staleSelections: stale,

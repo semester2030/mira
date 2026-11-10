@@ -533,6 +533,20 @@
             'data-e2c-field-order',
             roleKids.map((n) => n.getAttribute('data-section-role')).join(','),
           );
+          const actionsBarEarly = form.querySelector('[data-testid="e2b-editor-actions"]');
+          const saveEarly = document.getElementById(form.id + '-save');
+          const ctaEarly = actionsBarEarly
+            ? [actionsBarEarly]
+            : [saveEarly, form.querySelector('[data-testid="catalog-submit-review"]')].filter(Boolean);
+          mountServiceMobileSteps(
+            form,
+            compose,
+            fields,
+            mediaCol,
+            advanced,
+            afterCompose.map(byRole).filter(Boolean),
+            ctaEarly,
+          );
           return;
         }
       }
@@ -591,9 +605,93 @@
       compose.after(advanced);
       tail.forEach((n) => form.appendChild(n));
       ctaNodes.forEach((n) => form.appendChild(n));
+      mountServiceMobileSteps(form, compose, fields, mediaCol, advanced, tail, ctaNodes);
     } finally {
       composeBusy = false;
     }
+  }
+
+  function isNarrowServiceViewport() {
+    return typeof window.matchMedia === 'function' && window.matchMedia('(max-width: 900px)').matches;
+  }
+
+  function mountServiceMobileSteps(form, compose, fields, mediaCol, advanced, tail, ctaNodes) {
+    if (!form || !compose) return;
+    let nav = form.querySelector('[data-testid="e2c-mobile-steps"]');
+    if (!nav) {
+      nav = el('nav', {
+        className: 'e2b-mobile-steps e2c-mobile-steps',
+        'data-testid': 'e2c-mobile-steps',
+        role: 'tablist',
+        'aria-label': 'خطوات محرر الخدمة',
+      });
+      form.insertBefore(nav, compose);
+    }
+    const steps = [
+      { id: 'basics', label: 'الأساسيات', fieldRoles: ['service-orbs', 'basics', 'place', 'template', 'secondary'], showMedia: false, showAdvanced: false, showTail: false },
+      { id: 'media', label: 'الوسائط', fieldRoles: [], showMedia: true, showAdvanced: false, showTail: false },
+      { id: 'more', label: 'المزيد', fieldRoles: [], showMedia: false, showAdvanced: true, showTail: true },
+    ];
+    const current = form.dataset.e2cMobileStep || 'basics';
+    nav.replaceChildren();
+    steps.forEach((step) => {
+      const btn = el('button', {
+        type: 'button',
+        className: 'e2b-mobile-step' + (step.id === current ? ' is-active' : ''),
+        'data-step': step.id,
+        'data-testid': 'e2c-mobile-step-' + step.id,
+        role: 'tab',
+        'aria-selected': step.id === current ? 'true' : 'false',
+      });
+      btn.textContent = step.label;
+      btn.addEventListener('click', () => {
+        form.dataset.e2cMobileStep = step.id;
+        applyServiceMobileStep(form, steps, step.id, compose, fields, mediaCol, advanced, tail);
+        mountServiceMobileSteps(form, compose, fields, mediaCol, advanced, tail, ctaNodes);
+      });
+      nav.appendChild(btn);
+    });
+    applyServiceMobileStep(form, steps, current, compose, fields, mediaCol, advanced, tail);
+    (ctaNodes || []).forEach((n) => {
+      if (n) n.classList.add('e2b-mobile-actions-always');
+    });
+  }
+
+  function applyServiceMobileStep(form, steps, stepId, compose, fields, mediaCol, advanced, tail) {
+    const active = steps.find((s) => s.id === stepId) || steps[0];
+    form.dataset.e2cMobileStep = active.id;
+    form.setAttribute('data-e2c-mobile-step', active.id);
+    const narrow = isNarrowServiceViewport();
+    const byRole = (role) => form.querySelector('[data-section-role="' + role + '"]');
+    ['service-orbs', 'basics', 'place', 'template', 'secondary'].forEach((role) => {
+      const node = byRole(role);
+      if (!node) return;
+      const show = !narrow || active.fieldRoles.indexOf(role) >= 0;
+      node.hidden = !show;
+      node.classList.toggle('e2b-step-hidden', !show);
+    });
+    if (fields) {
+      const any = !narrow || active.fieldRoles.some((role) => byRole(role));
+      fields.hidden = !any;
+      fields.classList.toggle('e2b-step-hidden', !any);
+    }
+    if (mediaCol) {
+      const show = !narrow || active.showMedia;
+      mediaCol.hidden = !show;
+      mediaCol.classList.toggle('e2b-step-hidden', !show);
+    }
+    if (advanced) {
+      const show = !narrow || active.showAdvanced;
+      advanced.hidden = !show;
+      advanced.classList.toggle('e2b-step-hidden', !show);
+    }
+    (tail || []).forEach((node) => {
+      if (!node) return;
+      const show = !narrow || active.showTail;
+      node.hidden = !show;
+      node.classList.toggle('e2b-step-hidden', !show);
+    });
+    if (compose) compose.hidden = false;
   }
 
   function enableServiceMode(formId) {

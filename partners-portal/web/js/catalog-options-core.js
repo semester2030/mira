@@ -10,6 +10,7 @@
     const empty = {
       selected: {},
       customs: {},
+      customsList: {},
       traits: {},
       variants: [],
       valueIds: {},
@@ -46,6 +47,7 @@
     const selected = {};
     const valueIds = {};
     const customs = {};
+    const customsList = {};
     const inputModes = {};
     groups.forEach((group) => {
       const readyLabels = [];
@@ -61,7 +63,8 @@
       });
       selected[group.id] = readyLabels;
       if (manualLabels.length) {
-        customs[group.id] = manualLabels.join('، ');
+        customsList[group.id] = manualLabels.slice();
+        customs[group.id] = joinCustomLabels(manualLabels);
         inputModes[group.id] = 'manual';
       } else {
         inputModes[group.id] = 'ready';
@@ -89,6 +92,7 @@
     return {
       selected: selected,
       customs: customs,
+      customsList: customsList,
       traits: {},
       valueIds: valueIds,
       inputModes: inputModes,
@@ -234,18 +238,36 @@
    * presetGroups: [{ id, label, kind, presets?: string[] }]
    * Separates display label (labelAr) from stable value id.
    */
+  /** Split manual labels on Arabic or English commas; display join stays Arabic. */
+  function splitCustomLabels(raw) {
+    return String(raw || '')
+      .split(/[,،]+/u)
+      .map((part) => part.trim())
+      .filter(Boolean);
+  }
+
+  function joinCustomLabels(labels) {
+    return (labels || [])
+      .map((part) => String(part || '').trim())
+      .filter(Boolean)
+      .join('، ');
+  }
+
   function buildOptionGroups(presetGroups, state) {
     const groups = [];
     if (!state.valueIds) state.valueIds = {};
     (presetGroups || []).forEach((group) => {
       const labels = (state.selected[group.id] || []).slice();
-      String(state.customs[group.id] || '')
-        .split(',')
-        .map((part) => part.trim())
-        .filter(Boolean)
-        .forEach((part) => {
-          if (labels.indexOf(part) < 0) labels.push(part);
-        });
+      // Prefer structured customsList when present; fall back to text customs.
+      const fromList = Array.isArray(state.customsList && state.customsList[group.id])
+        ? state.customsList[group.id]
+        : null;
+      const customParts = fromList
+        ? fromList.map((part) => String(part || '').trim()).filter(Boolean)
+        : splitCustomLabels(state.customs[group.id] || '');
+      customParts.forEach((part) => {
+        if (labels.indexOf(part) < 0) labels.push(part);
+      });
       if (!labels.length) return;
       if (!state.valueIds[group.id]) state.valueIds[group.id] = {};
       groups.push({
@@ -282,13 +304,16 @@
 
   function labelsForGroup(state, groupId) {
     const labels = ((state.selected && state.selected[groupId]) || []).slice();
-    String((state.customs && state.customs[groupId]) || '')
-      .split(',')
-      .map((part) => part.trim())
-      .filter(Boolean)
-      .forEach((part) => {
-        if (labels.indexOf(part) < 0) labels.push(part);
-      });
+    const fromList =
+      state && state.customsList && Array.isArray(state.customsList[groupId])
+        ? state.customsList[groupId]
+        : null;
+    const customs = fromList
+      ? fromList.map((part) => String(part || '').trim()).filter(Boolean)
+      : splitCustomLabels((state.customs && state.customs[groupId]) || '');
+    customs.forEach((part) => {
+      if (labels.indexOf(part) < 0) labels.push(part);
+    });
     return labels;
   }
 
@@ -566,28 +591,87 @@
     return state;
   }
 
-  /** Same category → option groups as «إضافة منتج» (catalog-journey). */
-  function optionPresets(cat) {
+  /**
+   * Central option presets by main category + optional subcategory.
+   * Attribute fields (material/carryStyle/shoeUsage/heelHeight/dimensions) come from the registry.
+   */
+  function optionPresets(cat, subcategory) {
+    const sub = String(subcategory || '');
     if (cat === 'clothes') {
+      const sizePresets =
+        sub === 'clothes.skirt' || sub === 'clothes.abaya'
+          ? ['XS', 'S', 'M', 'L', 'XL', 'XXL', '52', '54', '56', '58']
+          : ['XS', 'S', 'M', 'L', 'XL', 'XXL'];
       return {
         groups: [
-          // Approved individual order: colors → sizes → materials → qty (materials/qty live in attribute section).
           { id: 'color', label: 'الألوان المتوفرة', kind: 'color', presets: APPROVED_COLOR_PRESETS.slice() },
-          { id: 'size', label: 'المقاس', kind: 'size', presets: ['XS', 'S', 'M', 'L', 'XL'] },
+          { id: 'size', label: 'المقاس', kind: 'size', presets: sizePresets },
         ],
         traits: ['العناية', 'دليل المقاسات'],
       };
     }
-    if (cat === 'face' || cat === 'body' || cat === 'hair') {
+    if (cat === 'bags') {
       return {
-        groups: [{ id: 'volume', label: 'الحجم', kind: 'volume', presets: ['50 مل', '100 مل'] }],
-        traits: ['المكونات', 'طريقة الاستخدام', 'الخامة'],
+        groups: [
+          { id: 'color', label: 'الألوان المتوفرة', kind: 'color', presets: APPROVED_COLOR_PRESETS.slice() },
+        ],
+        traits: [],
+      };
+    }
+    if (cat === 'shoes') {
+      return {
+        groups: [
+          { id: 'color', label: 'الألوان المتوفرة', kind: 'color', presets: APPROVED_COLOR_PRESETS.slice() },
+          {
+            id: 'size',
+            label: 'المقاس',
+            kind: 'size',
+            presets: ['35', '36', '37', '38', '39', '40', '41', '42', '43'],
+          },
+        ],
+        traits: [],
+      };
+    }
+    if (cat === 'hair') {
+      // Hair tools/devices must not show shampoo volume presets.
+      if (sub === 'hair.tools' || /(^|\.)tools$/.test(sub)) {
+        return {
+          groups: [],
+          traits: ['نوع الجهاز', 'الجهد الكهربائي', 'الضمان'],
+        };
+      }
+      return {
+        groups: [
+          {
+            id: 'volume',
+            label: 'الحجم',
+            kind: 'volume',
+            presets: ['50 مل', '100 مل', '200 مل', '250 مل', '400 مل'],
+          },
+        ],
+        traits: ['المكونات', 'طريقة الاستخدام'],
+      };
+    }
+    if (cat === 'face' || cat === 'body') {
+      return {
+        groups: [
+          {
+            id: 'volume',
+            label: 'الحجم',
+            kind: 'volume',
+            presets: ['15 مل', '30 مل', '50 مل', '100 مل', '200 مل'],
+          },
+        ],
+        traits: ['المكونات', 'طريقة الاستخدام'],
       };
     }
     if (cat === 'accessories') {
       return {
-        groups: [{ id: 'finish', label: 'التشطيب', kind: 'finish', presets: ['ذهبي', 'فضي'] }],
-        traits: ['الخامة', 'الأبعاد'],
+        groups: [
+          { id: 'color', label: 'الألوان المتوفرة', kind: 'color', presets: APPROVED_COLOR_PRESETS.slice() },
+          { id: 'finish', label: 'التشطيب', kind: 'finish', presets: ['ذهبي', 'فضي', 'أسود'] },
+        ],
+        traits: [],
       };
     }
     return { groups: [], traits: [] };
@@ -595,6 +679,8 @@
 
   function categoryFromProfileId(profileId) {
     const id = String(profileId || '');
+    if (/bags/i.test(id)) return 'bags';
+    if (/shoes/i.test(id)) return 'shoes';
     if (/clothes|abaya|outfit/i.test(id)) return 'clothes';
     if (/accessor/i.test(id)) return 'accessories';
     if (/face|makeup|skin|cosmetic/i.test(id)) return 'face';
@@ -623,5 +709,7 @@
     syncVariantMediaIdsFromServer: syncVariantMediaIdsFromServer,
     optionPresets: optionPresets,
     categoryFromProfileId: categoryFromProfileId,
+    splitCustomLabels: splitCustomLabels,
+    joinCustomLabels: joinCustomLabels,
   };
 })(typeof globalThis !== 'undefined' ? globalThis : this);

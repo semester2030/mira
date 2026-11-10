@@ -349,15 +349,33 @@
       const matBtn = form.querySelector(
         '[data-testid="materialize-draft"], [data-editor-v2-materialize="1"], button.mat-btn',
       );
-      // New design only: hide legacy submit CTA so it cannot affect layout or duplicate save.
+      // New design only: neutralize legacy submit CTA (hidden + disabled + no pointer events).
       form.querySelectorAll('[data-cta-role="legacy"]').forEach((node) => {
         node.hidden = true;
         node.setAttribute('aria-hidden', 'true');
-        if (node.style) node.style.display = 'none';
+        node.setAttribute('disabled', 'disabled');
+        node.classList.add('is-cta-suppressed');
+        if (node.style) {
+          node.style.display = 'none';
+          node.style.pointerEvents = 'none';
+        }
+        if (typeof node.removeAttribute === 'function') {
+          node.removeAttribute('onclick');
+        }
+        node.onclick = null;
+        node.addEventListener(
+          'click',
+          function (ev) {
+            ev.preventDefault();
+            ev.stopImmediatePropagation();
+            return false;
+          },
+          true,
+        );
       });
       const ctaNodes = actionsBar
         ? [actionsBar]
-        : [matBtn, save, submit].filter(Boolean);
+        : [matBtn, save, submit].filter(Boolean).filter((n) => !(n.getAttribute && n.getAttribute('data-cta-role') === 'legacy'));
 
       const alreadyOrdered =
         compose.parentElement === form &&
@@ -371,13 +389,6 @@
           if (!node) return true;
           return node.parentElement === form && !!(compose.compareDocumentPosition(node) & Node.DOCUMENT_POSITION_FOLLOWING);
         });
-      if (alreadyOrdered) return;
-
-      fieldOrder.forEach((role) => {
-        const node = byRole(role);
-        if (node) fields.appendChild(node);
-      });
-      mediaCol.appendChild(mediaSection);
 
       const tail = [];
       afterCompose.forEach((role) => {
@@ -385,24 +396,123 @@
         if (node) tail.push(node);
       });
 
-      const statusNodes = Array.from(form.children).filter((child) => {
-        if (child === compose) return false;
-        if (child.getAttribute && child.getAttribute('data-section-role')) return false;
-        if (child === mediaSection) return false;
-        if (ctaNodes.indexOf(child) >= 0) return false;
-        if (child.tagName === 'BUTTON') return false;
-        return true;
-      });
+      if (!alreadyOrdered) {
+        fieldOrder.forEach((role) => {
+          const node = byRole(role);
+          if (node) fields.appendChild(node);
+        });
+        mediaCol.appendChild(mediaSection);
 
-      statusNodes.forEach((n) => form.appendChild(n));
-      form.appendChild(compose);
-      tail.forEach((n) => form.appendChild(n));
-      ctaNodes.forEach((n) => form.appendChild(n));
+        const statusNodes = Array.from(form.children).filter((child) => {
+          if (child === compose) return false;
+          if (child.getAttribute && child.getAttribute('data-section-role')) return false;
+          if (child === mediaSection) return false;
+          if (ctaNodes.indexOf(child) >= 0) return false;
+          if (child.tagName === 'BUTTON') return false;
+          return true;
+        });
+
+        statusNodes.forEach((n) => form.appendChild(n));
+        form.appendChild(compose);
+        tail.forEach((n) => form.appendChild(n));
+        ctaNodes.forEach((n) => form.appendChild(n));
+      }
+      mountMobileEditorSteps(form, compose, fields, mediaCol, tail, ctaNodes);
     } finally {
       composeBusy = false;
       if (catalogFormObserver && form.isConnected) {
         catalogFormObserver.observe(form, { childList: true, subtree: true });
       }
+    }
+  }
+
+  /**
+   * Phone/tablet narrow: short steps that keep form state in the DOM (no remount).
+   * Desktop (≥901px) leaves the approved side-by-side compose intact.
+   */
+  function mountMobileEditorSteps(form, compose, fields, mediaCol, tail, ctaNodes) {
+    if (!form || !compose) return;
+    let nav = form.querySelector('[data-testid="e2b-mobile-steps"]');
+    if (!nav) {
+      nav = el('nav', {
+        className: 'e2b-mobile-steps',
+        'data-testid': 'e2b-mobile-steps',
+        role: 'tablist',
+        'aria-label': 'خطوات المحرر',
+      });
+      form.insertBefore(nav, compose);
+    }
+    const steps = [
+      { id: 'basics', label: 'الأساسيات', roles: ['basics'] },
+      { id: 'offer', label: 'العرض', roles: ['options', 'attributes', 'options-preview', 'commerce', 'template'] },
+      { id: 'media', label: 'الوسائط', roles: ['main-media'] },
+      { id: 'more', label: 'المزيد', roles: ['details', 'detail-media', 'variant-media', 'preview-publish'] },
+    ];
+    const current = form.dataset.e2bMobileStep || 'basics';
+    nav.replaceChildren();
+    steps.forEach((step) => {
+      const btn = el('button', {
+        type: 'button',
+        className: 'e2b-mobile-step' + (step.id === current ? ' is-active' : ''),
+        'data-step': step.id,
+        'data-testid': 'e2b-mobile-step-' + step.id,
+        role: 'tab',
+        'aria-selected': step.id === current ? 'true' : 'false',
+      });
+      btn.textContent = step.label;
+      btn.addEventListener('click', () => {
+        form.dataset.e2bMobileStep = step.id;
+        applyMobileEditorStep(form, steps, step.id, compose, fields, mediaCol, tail);
+        mountMobileEditorSteps(form, compose, fields, mediaCol, tail, ctaNodes);
+      });
+      nav.appendChild(btn);
+    });
+    applyMobileEditorStep(form, steps, current, compose, fields, mediaCol, tail);
+    (ctaNodes || []).forEach((n) => {
+      if (n) n.classList.add('e2b-mobile-actions-always');
+    });
+  }
+
+  function isNarrowEditorViewport() {
+    return typeof window.matchMedia === 'function' && window.matchMedia('(max-width: 900px)').matches;
+  }
+
+  function applyMobileEditorStep(form, steps, stepId, compose, fields, mediaCol, tail) {
+    const active = steps.find((s) => s.id === stepId) || steps[0];
+    form.dataset.e2bMobileStep = active.id;
+    form.setAttribute('data-e2b-mobile-step', active.id);
+    const narrow = isNarrowEditorViewport();
+    const showRole = (role) => !narrow || active.roles.indexOf(role) >= 0;
+    const byRole = (role) => form.querySelector('[data-section-role="' + role + '"]');
+    ['basics', 'options', 'attributes', 'options-preview', 'commerce', 'template'].forEach((role) => {
+      const node = byRole(role);
+      if (!node) return;
+      const show = showRole(role);
+      node.hidden = !show;
+      node.classList.toggle('e2b-step-hidden', !show);
+    });
+    if (mediaCol) {
+      const showMedia = !narrow || active.id === 'media';
+      mediaCol.hidden = !showMedia;
+      mediaCol.classList.toggle('e2b-step-hidden', !showMedia);
+    }
+    (tail || []).forEach((node) => {
+      if (!node || !node.getAttribute) return;
+      const role = node.getAttribute('data-section-role');
+      if (!role) return;
+      const show = showRole(role);
+      node.hidden = !show;
+      node.classList.toggle('e2b-step-hidden', !show);
+    });
+    if (compose) compose.hidden = false;
+    if (fields) {
+      const anyField =
+        !narrow ||
+        ['basics', 'options', 'attributes', 'options-preview', 'commerce', 'template'].some(
+          (role) => showRole(role) && byRole(role),
+        );
+      fields.hidden = !anyField;
+      fields.classList.toggle('e2b-step-hidden', !anyField);
     }
   }
 
@@ -715,6 +825,19 @@
       go.addEventListener('click', () => focusEditor(), true);
     }
     wireFormSync();
+    if (!window.__e2bMobileStepResizeWired) {
+      window.__e2bMobileStepResizeWired = true;
+      let resizeTimer = null;
+      window.addEventListener('resize', () => {
+        if (resizeTimer) clearTimeout(resizeTimer);
+        resizeTimer = window.setTimeout(() => {
+          const form = document.getElementById('catalogForm');
+          if (form && document.body.classList.contains('e2b-product-mode')) {
+            composeCatalogLayout();
+          }
+        }, 120);
+      });
+    }
   }
 
   window.MiraE2BProductShell = {

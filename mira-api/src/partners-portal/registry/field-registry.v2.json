@@ -1374,7 +1374,7 @@
       "unit": "cm",
       "values": [],
       "filter": null,
-      "currentStatus": "PROPOSED",
+      "currentStatus": "ATTRIBUTES_JSON",
       "draftRequired": false,
       "publishRequiredWhen": "optional",
       "source": "partner",

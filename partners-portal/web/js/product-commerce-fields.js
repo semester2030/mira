@@ -31,7 +31,8 @@
       throw new Error('MiraCatalogOptions غير محمّل');
     }
     const category = opts.category || 'clothes';
-    const preset = MO.optionPresets(category);
+    const subcategory = opts.subcategory || '';
+    const preset = MO.optionPresets(category, subcategory);
     let optionsState =
       opts.initialRow && typeof MO.optionsStateFromServer === 'function'
         ? MO.optionsStateFromServer(opts.initialRow)
@@ -134,7 +135,7 @@
         chips.hidden = mode === 'manual';
         const customLab = document.createElement('label');
         customLab.className = 'manual-input-label';
-        customLab.textContent = 'كتابة يدوية (افصلي بفاصلة؛ تُحفظ بعد إعادة الفتح)';
+        customLab.textContent = 'كتابة يدوية (افصلي بفاصلة عربية أو إنجليزية؛ تُحفظ كقيم مستقلة)';
         customLab.hidden = mode === 'ready';
         const custom = document.createElement('input');
         custom.type = 'text';
@@ -142,6 +143,14 @@
         custom.value = optionsState.customs[group.id] || '';
         custom.oninput = () => {
           optionsState.customs[group.id] = custom.value;
+          if (!optionsState.customsList) optionsState.customsList = {};
+          optionsState.customsList[group.id] =
+            typeof MO.splitCustomLabels === 'function'
+              ? MO.splitCustomLabels(custom.value)
+              : String(custom.value || '')
+                  .split(/[,،]+/)
+                  .map((p) => p.trim())
+                  .filter(Boolean);
           notify();
         };
         customLab.appendChild(custom);

@@ -345,17 +345,21 @@ class DiscoverPresentationScreenState extends State<DiscoverPresentationScreen>
         final dropColors = stale.where((s) => s.field == 'variant.color').map((s) => s.value).toSet();
         final dropSizes = stale.where((s) => s.field == 'variant.size').map((s) => s.value).toSet();
         final dropVolumes = stale.where((s) => s.field == 'variant.volume').map((s) => s.value).toSet();
+        final dropShoeUsage = stale.where((s) => s.field == 'shoeUsage').map((s) => s.value).toSet();
         final nextColors = next.query.colors.where((c) => !dropColors.contains(c)).toList();
         final nextSizes = next.query.sizes.where((c) => !dropSizes.contains(c)).toList();
         final nextVolumes = next.query.volumes.where((c) => !dropVolumes.contains(c)).toList();
+        final nextShoeUsage = next.query.shoeUsage.where((c) => !dropShoeUsage.contains(c)).toList();
         if (nextColors.length != next.query.colors.length ||
             nextSizes.length != next.query.sizes.length ||
-            nextVolumes.length != next.query.volumes.length) {
+            nextVolumes.length != next.query.volumes.length ||
+            nextShoeUsage.length != next.query.shoeUsage.length) {
           _reload(
             next.query.copyWith(
               colors: nextColors,
               sizes: nextSizes,
               volumes: nextVolumes,
+              shoeUsage: nextShoeUsage,
             ),
           );
           return;
@@ -637,6 +641,12 @@ class DiscoverPresentationScreenState extends State<DiscoverPresentationScreen>
         if (!_facets.volumes.any((b) => b.id == id))
           DiscoverFacetBucket(id: id, count: 0, labelAr: id),
     ];
+    final shoeUsageBuckets = [
+      ..._facets.shoeUsage,
+      for (final id in _query.shoeUsage)
+        if (!_facets.shoeUsage.any((b) => b.id == id))
+          DiscoverFacetBucket(id: id, count: 0, labelAr: id),
+    ];
     const placeLabels = {
       'branch': 'في الفرع',
       'home': 'منزلية',
@@ -753,6 +763,24 @@ class DiscoverPresentationScreenState extends State<DiscoverPresentationScreen>
                         subtitle: volume.count > 0 ? Text('${volume.count}') : null,
                         trailing: _query.volumes.contains(volume.id) ? const Icon(Icons.check) : null,
                         onTap: () => Navigator.pop(context, 'volume:${volume.id}'),
+                      ),
+                  ],
+                  if (shoeUsageBuckets.isNotEmpty ||
+                      _query.categoryId == 'shoes' ||
+                      (_query.subcategoryId?.startsWith('shoes.') ?? false)) ...[
+                    const ListTile(title: Text('استخدام الحذاء')),
+                    for (final usage in shoeUsageBuckets.isNotEmpty
+                        ? shoeUsageBuckets
+                        : const [
+                            DiscoverFacetBucket(id: 'formal', count: 0, labelAr: 'رسمي'),
+                            DiscoverFacetBucket(id: 'daily', count: 0, labelAr: 'يومي'),
+                            DiscoverFacetBucket(id: 'occasions', count: 0, labelAr: 'مناسبات'),
+                          ])
+                      ListTile(
+                        title: Text(usage.displayLabel),
+                        subtitle: usage.count > 0 ? Text('${usage.count}') : null,
+                        trailing: _query.shoeUsage.contains(usage.id) ? const Icon(Icons.check) : null,
+                        onTap: () => Navigator.pop(context, 'shoeUsage:${usage.id}'),
                       ),
                   ],
                   SwitchListTile(
@@ -924,6 +952,15 @@ class DiscoverPresentationScreenState extends State<DiscoverPresentationScreen>
         next.add(id);
       }
       await _reload(_query.copyWith(volumes: next).withoutInapplicableFilters());
+    } else if (type.startsWith('shoeUsage:')) {
+      final id = type.substring('shoeUsage:'.length);
+      final next = [..._query.shoeUsage];
+      if (next.contains(id)) {
+        next.remove(id);
+      } else {
+        next.add(id);
+      }
+      await _reload(_query.copyWith(shoeUsage: next).withoutInapplicableFilters());
     } else if (type.startsWith('place:')) {
       final id = type.substring(6);
       final next = [..._query.placeModes];

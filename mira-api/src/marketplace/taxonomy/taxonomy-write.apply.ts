@@ -2,6 +2,7 @@ import { Prisma } from '@prisma/client';
 import { mergeAttributesPatch } from './attributes-patch.merge';
 import {
   normalizeOptionalId,
+  pruneAttributesByDependsOn,
   resolveFromSubcategory,
   validateProductTaxonomyWrite,
   type AttributeFieldDef,
@@ -213,6 +214,15 @@ export function applyTaxonomyPatch(
     });
   }
 
+  // Strip dependsOn-incompatible keys so a subcategory change cannot keep prior fields hidden.
+  if (nextAttributes != null && isPlainObject(nextAttributes) && attributeFieldDefs) {
+    nextAttributes = pruneAttributesByDependsOn(
+      nextAttributes as Record<string, unknown>,
+      attributeFieldDefs,
+      { category: nextCategory, subcategory: nextSubcategory },
+    );
+  }
+
   const validateInput: ProductTaxonomyInput = {
     category: nextCategory,
     subcategory: nextSubcategory,
@@ -235,6 +245,8 @@ export function applyTaxonomyPatch(
         allowUnknownAttributeKeys: true,
       });
       for (const e of typed) {
+        // dependsOn mismatches are pruned above; ignore residual DEPENDS_ON noise.
+        if (e.code === 'ATTRIBUTE_DEPENDS_ON') continue;
         if (!errors.some((x) => x.fieldId === e.fieldId && x.code === e.code)) errors.push(e);
       }
       // Reject NEW / patched unknown keys (not present in prior bag as legacy).

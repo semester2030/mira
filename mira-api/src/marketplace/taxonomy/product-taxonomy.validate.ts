@@ -6,6 +6,8 @@ export type AttributeFieldDef = {
   values?: unknown[];
   min?: number | null;
   max?: number | null;
+  /** Registry dependsOn — e.g. heelHeightCm only when subcategory is shoes.heel. */
+  dependsOn?: { field?: string; includes?: string[]; equals?: unknown } | null;
 };
 
 export type ProductTaxonomyInput = {
@@ -112,6 +114,40 @@ function validateAttributeValue(
   return null;
 }
 
+export function attributeDependsVisible(
+  def: AttributeFieldDef | undefined | null,
+  ctx: { category?: string | null; subcategory?: string | null; [k: string]: unknown },
+): boolean {
+  if (!def || !def.dependsOn) return true;
+  const dep = def.dependsOn;
+  if (dep.field === 'subcategory' && Array.isArray(dep.includes)) {
+    return dep.includes.indexOf(String(ctx.subcategory || '')) >= 0;
+  }
+  if (dep.field && Object.prototype.hasOwnProperty.call(ctx, dep.field)) {
+    const cur = ctx[dep.field];
+    if (Array.isArray(dep.includes)) return dep.includes.indexOf(cur as string) >= 0;
+    if (dep.equals != null) return cur === dep.equals;
+  }
+  return true;
+}
+
+/** Drop attribute keys that fail dependsOn for the current category/subcategory. */
+export function pruneAttributesByDependsOn(
+  attrs: Record<string, unknown> | null | undefined,
+  defs: Map<string, AttributeFieldDef> | undefined,
+  ctx: { category?: string | null; subcategory?: string | null },
+): Record<string, unknown> | null {
+  if (attrs == null) return null;
+  if (!defs) return { ...attrs };
+  const out: Record<string, unknown> = {};
+  for (const [key, value] of Object.entries(attrs)) {
+    const def = defs.get(key);
+    if (def && !attributeDependsVisible(def, ctx)) continue;
+    out[key] = value;
+  }
+  return out;
+}
+
 function validateAttributesBag(
   attrs: Record<string, unknown>,
   input: ProductTaxonomyInput,
@@ -138,6 +174,7 @@ function validateAttributesBag(
 
   const defs = input.attributeFieldDefs;
   if (!defs) return;
+  const depCtx = { category: input.category, subcategory: input.subcategory };
   for (const [key, value] of Object.entries(attrs)) {
     if (key === 'dimensionsCm') continue; // structural check above
     const def = defs.get(key);
@@ -149,6 +186,14 @@ function validateAttributesBag(
           messageAr: `خاصية غير مسموحة لهذا الملف: ${key}`,
         });
       }
+      continue;
+    }
+    if (value != null && !attributeDependsVisible(def, depCtx)) {
+      errors.push({
+        fieldId: key,
+        code: 'ATTRIBUTE_DEPENDS_ON',
+        messageAr: `الحقل ${key} غير منطبق على التصنيف الحالي`,
+      });
       continue;
     }
     const err = validateAttributeValue(key, def, value);

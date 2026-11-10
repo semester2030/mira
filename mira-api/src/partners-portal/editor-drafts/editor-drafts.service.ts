@@ -270,13 +270,17 @@ export class EditorDraftsService {
       if (!def) continue;
       const storage = (def as { storage?: string }).storage;
       if (typeof storage === 'string' && storage.startsWith('attributes.')) {
-        attributeFieldDefs.set(fieldId, {
+        const entry: AttributeFieldDef = {
           id: fieldId,
           type: def.type,
           values: def.values,
           min: def.min ?? null,
           max: def.max ?? null,
-        });
+          dependsOn: (def as { dependsOn?: AttributeFieldDef['dependsOn'] }).dependsOn ?? null,
+        };
+        attributeFieldDefs.set(fieldId, entry);
+        const storageKey = storage.slice('attributes.'.length);
+        if (storageKey && storageKey !== fieldId) attributeFieldDefs.set(storageKey, entry);
       }
     }
     return attributeFieldDefs;

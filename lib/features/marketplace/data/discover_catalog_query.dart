@@ -115,6 +115,7 @@ class DiscoverCatalogQuery {
     this.colors = const [],
     this.sizes = const [],
     this.volumes = const [],
+    this.shoeUsage = const [],
     this.placeModes = const [],
     this.branchIds = const [],
     this.inStock,
@@ -147,6 +148,9 @@ class DiscoverCatalogQuery {
 
   /// Registry value ids for variant.volume (OR within). Empty = unset.
   final List<String> volumes;
+
+  /// Attribute shoeUsage ids (formal/daily/occasions). Empty = unset.
+  final List<String> shoeUsage;
 
   /// Service placeMode ids (OR within). Empty = unset.
   final List<String> placeModes;
@@ -184,6 +188,7 @@ class DiscoverCatalogQuery {
     if (colors.isNotEmpty) n += 1;
     if (sizes.isNotEmpty) n += 1;
     if (volumes.isNotEmpty) n += 1;
+    if (shoeUsage.isNotEmpty) n += 1;
     if (placeModes.isNotEmpty) n += 1;
     if (branchIds.isNotEmpty) n += 1;
     if (inStock != null) n += 1;
@@ -214,6 +219,7 @@ class DiscoverCatalogQuery {
         clearColors: true,
         clearSizes: true,
         clearVolumes: true,
+        clearShoeUsage: true,
         clearInStock: true,
       );
     }
@@ -232,6 +238,7 @@ class DiscoverCatalogQuery {
     List<String>? colors,
     List<String>? sizes,
     List<String>? volumes,
+    List<String>? shoeUsage,
     List<String>? placeModes,
     List<String>? branchIds,
     bool? inStock,
@@ -253,6 +260,7 @@ class DiscoverCatalogQuery {
     bool clearColors = false,
     bool clearSizes = false,
     bool clearVolumes = false,
+    bool clearShoeUsage = false,
     bool clearPlaceModes = false,
     bool clearBranchIds = false,
     bool clearInStock = false,
@@ -277,6 +285,7 @@ class DiscoverCatalogQuery {
       colors: clearColors ? const [] : colors ?? this.colors,
       sizes: clearSizes ? const [] : sizes ?? this.sizes,
       volumes: clearVolumes ? const [] : volumes ?? this.volumes,
+      shoeUsage: clearShoeUsage ? const [] : shoeUsage ?? this.shoeUsage,
       placeModes: clearPlaceModes ? const [] : placeModes ?? this.placeModes,
       branchIds: clearBranchIds ? const [] : branchIds ?? this.branchIds,
       inStock: clearInStock ? null : inStock ?? this.inStock,
@@ -297,6 +306,7 @@ class DiscoverCatalogQuery {
       clearColors: true,
       clearSizes: true,
       clearVolumes: true,
+      clearShoeUsage: true,
       clearPlaceModes: true,
       clearBranchIds: true,
       clearInStock: true,

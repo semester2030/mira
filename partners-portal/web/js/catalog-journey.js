@@ -3851,7 +3851,7 @@
         // Keep selected values/variants; category drop of saved groups is a conflict (RC6-01).
         // Do not clear optionsState — merchant must revert category or explicit-clear.
         const next = category.value;
-        const preset = optionPresets(next);
+        const preset = optionPresets(next, subcategory && subcategory.value);
         const orphans =
           window.MiraCatalogOptions && window.MiraCatalogOptions.incompatibleGroupIds
             ? window.MiraCatalogOptions.incompatibleGroupIds(optionsState, preset.groups)
@@ -3871,6 +3871,7 @@
       } else paintServiceTemplates();
     };
     subcategory.onchange = function () {
+      if (type === 'brand') paintOptions();
       remountAttributeFields({ preserveEdits: true });
     };
     cosmeticVisible();
@@ -3994,11 +3995,13 @@
         attrMount = window.MiraRegistryAttributeFields.mount(attrHost, {
           registry: attrRegistryCache,
           profileId: profileId,
+          category: category && category.value,
+          subcategory: subcategory && subcategory.value,
           mountId: 'cat-' + String(ownerKey).slice(0, 12),
           initialAttributes: resolveAttributesSeed(),
           preserveState: preserve,
           includeComponentContract: writeBlocked || profileId === 'product.bags',
-          persistComponentContract: false,
+          persistComponentContract: profileId === 'product.bags',
           readOnly: writeBlocked,
           onChange: function (payload) {
             // R02: server/hydrate fills must not bump user-edit epoch or trigger autosave.
@@ -4234,9 +4237,9 @@
       return true;
     }
 
-    function optionPresets(cat) {
+    function optionPresets(cat, subcategory) {
       if (window.MiraCatalogOptions && typeof window.MiraCatalogOptions.optionPresets === 'function') {
-        return window.MiraCatalogOptions.optionPresets(cat);
+        return window.MiraCatalogOptions.optionPresets(cat, subcategory);
       }
       return { groups: [], traits: [] };
     }
@@ -4400,7 +4403,7 @@
       if (optionsPreviewSection) optionsPreviewSection.hidden = false;
       if (attrSection) attrSection.hidden = false;
       syncOptionsActionBar();
-      const preset = optionPresets(category.value);
+      const preset = optionPresets(category.value, subcategory && subcategory.value);
 
       if (!preset.groups.length && !preset.traits.length) {
         text(optionsBody, 'هذا التصنيف لا يحتاج خيارات مقاس أو لون أو حجم.');
@@ -4563,20 +4566,54 @@
           });
           block.appendChild(chips);
         }
+        if (!optionsState.inputModes) optionsState.inputModes = {};
+        if (!optionsState.customsList) optionsState.customsList = {};
+        const mode = optionsState.inputModes[group.id] || 'ready';
+        const modeRow = document.createElement('div');
+        modeRow.className = 'choice-row input-mode-row';
+        modeRow.setAttribute('data-testid', 'input-mode-' + group.id);
+        [['ready', 'اختيار جاهز'], ['manual', 'كتابة يدوية']].forEach(([id, labelText]) => {
+          const lab = document.createElement('label');
+          lab.className = 'input-mode-choice' + (mode === id ? ' is-selected' : '');
+          const radio = document.createElement('input');
+          radio.type = 'radio';
+          radio.name = 'input-mode-' + group.id + '-' + (Date.now() % 100000);
+          radio.value = id;
+          radio.checked = mode === id;
+          radio.onchange = () => {
+            if (!radio.checked) return;
+            optionsState.inputModes[group.id] = id;
+            // Preserve ready selections + manual customs across mode switches.
+            paintOptions();
+          };
+          lab.append(radio, document.createTextNode(' ' + labelText));
+          modeRow.appendChild(lab);
+        });
+        block.appendChild(modeRow);
+        const readyHost = block.querySelector('.e2b-color-palette, .choice-row:not(.input-mode-row)');
+        if (readyHost) readyHost.hidden = mode === 'manual';
         const customDetails = document.createElement('details');
         customDetails.className = 'e2b-extra-details';
+        customDetails.open = mode === 'manual';
+        customDetails.hidden = mode === 'ready';
         const customSummary = document.createElement('summary');
-        customSummary.textContent = 'قيم خاصة لـ' + group.label;
+        customSummary.textContent = 'كتابة يدوية لـ' + group.label;
         customDetails.appendChild(customSummary);
         const custom = field(
           customDetails,
-          'قيم خاصة (افصلي بفاصلة)',
+          'كتابة يدوية (افصلي بفاصلة عربية أو إنجليزية؛ تُحفظ كقيم مستقلة)',
           'custom-' + group.id,
           optionsState.customs[group.id] || '',
           'text',
         );
+        custom.setAttribute('data-testid', 'manual-input-' + group.id);
         custom.oninput = () => {
           optionsState.customs[group.id] = custom.value;
+          const split =
+            window.MiraCatalogOptions && typeof window.MiraCatalogOptions.splitCustomLabels === 'function'
+              ? window.MiraCatalogOptions.splitCustomLabels
+              : (raw) => String(raw || '').split(/[,،]+/).map((s) => s.trim()).filter(Boolean);
+          optionsState.customsList[group.id] = split(custom.value);
           abandonClearIfValuesEntered();
           onOptionsValuesChanged();
         };
@@ -4889,7 +4926,7 @@
     }
 
     function buildOptionGroups() {
-      const preset = optionPresets(category.value);
+      const preset = optionPresets(category.value, subcategory && subcategory.value);
       if (window.MiraCatalogOptions && window.MiraCatalogOptions.buildOptionGroups) {
         return window.MiraCatalogOptions.buildOptionGroups(preset.groups, optionsState);
       }
@@ -4927,7 +4964,7 @@
     function structuredOptionsPayload() {
       const groups = buildOptionGroups();
       optionsState._builtGroups = groups;
-      const preset = optionPresets(category.value);
+      const preset = optionPresets(category.value, subcategory && subcategory.value);
       if (window.MiraCatalogOptions && window.MiraCatalogOptions.structuredOptionsPayload) {
         return window.MiraCatalogOptions.structuredOptionsPayload(optionsState, preset.groups);
       }
@@ -4991,7 +5028,7 @@
         if (editing && item.optionsJson) text(optionsPreview, 'المنشور الحالي ما زال ظاهرًا للعميلات حتى الاعتماد.');
         return;
       }
-      const preset = optionPresets(category.value);
+      const preset = optionPresets(category.value, subcategory && subcategory.value);
       preset.groups.forEach((group) => {
         const selected = (optionsState.selected[group.id] || []).slice();
         String(optionsState.customs[group.id] || '').split(',').map((part) => part.trim()).filter(Boolean).forEach((part) => {

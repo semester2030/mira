@@ -78,6 +78,11 @@ export type CatalogFilterInput = {
   placeModes?: string[];
   /** Partner branch ids from serviceProfileJson.answers.branchId when present. */
   branchIds?: string[];
+  /**
+   * Attribute filters (OR within one key, AND across keys).
+   * Example: { shoeUsage: ['formal','daily'] }.
+   */
+  attributeSelections?: Record<string, string[]>;
   /** Local Asia/Riyadh date YYYY-MM-DD — calendar day must not be closed/unconfigured. */
   availableOn?: string;
   sort?: CatalogSort;
@@ -123,6 +128,8 @@ export type CatalogFilterItem = {
   inventoryMode?: string;
   /** variantId → sellable qty (null = untracked). Absent ids treated as unavailable when mode=variant. */
   variantSellable?: Record<string, number | null>;
+  /** Product attributesJson projection for attribute facets/filters (e.g. shoeUsage). */
+  attributesJson?: Record<string, unknown> | null;
 };
 
 export type MatchedVariant = {
@@ -233,6 +240,12 @@ export function parseCatalogFilterQuery(params: Record<string, string | undefine
     return { ok: false, reason: 'invalid_available_on', messageAr: 'تاريخ الإتاحة غير صالح (YYYY-MM-DD)' };
   }
 
+  const attributeSelections: Record<string, string[]> = {};
+  for (const key of ['shoeUsage', 'carryStyle', 'occasion', 'material'] as const) {
+    const values = splitCsv(params[key] ?? params[`attributes.${key}`]);
+    if (values.length) attributeSelections[key] = values;
+  }
+
   return {
     ok: true,
     filter: {
@@ -244,6 +257,7 @@ export function parseCatalogFilterQuery(params: Record<string, string | undefine
       partnerId: (params.partnerId ?? '').trim() || undefined,
       kind: kindRaw ? (kindRaw as 'product' | 'service') : undefined,
       variantSelections: Object.keys(variantSelections).length ? variantSelections : undefined,
+      attributeSelections: Object.keys(attributeSelections).length ? attributeSelections : undefined,
       inStock,
       priceMinHalalas: priceMin,
       priceMaxHalalas: priceMax,
@@ -255,6 +269,26 @@ export function parseCatalogFilterQuery(params: Record<string, string | undefine
       sort: sortRaw as CatalogSort,
     },
   };
+}
+
+/** Attribute value match: scalar string or array contains any selected id (OR within field). */
+export function attributesMatchSelections(
+  attributesJson: Record<string, unknown> | null | undefined,
+  selections: Record<string, string[]> | undefined,
+): boolean {
+  if (!selections || Object.keys(selections).length === 0) return true;
+  const attrs = attributesJson && typeof attributesJson === 'object' ? attributesJson : {};
+  for (const [key, wanted] of Object.entries(selections)) {
+    if (!wanted.length) continue;
+    const raw = (attrs as Record<string, unknown>)[key];
+    const have = Array.isArray(raw)
+      ? raw.map((x) => String(x))
+      : raw == null || raw === ''
+        ? []
+        : [String(raw)];
+    if (!wanted.some((w) => have.includes(w))) return false;
+  }
+  return true;
 }
 
 /** Effective sell price for a variant: own price, else product base, else null (unknown). */
@@ -372,6 +406,10 @@ export function matchCatalogItem(item: CatalogFilterItem, filter: CatalogFilterI
   // Subcategory filter uses the exact persisted id; applied before pagination via filterCatalogItems.
   if (filter.subcategory) {
     if (item.kind !== 'product' || item.subcategory !== filter.subcategory) return null;
+  }
+  if (filter.attributeSelections && Object.keys(filter.attributeSelections).length > 0) {
+    if (item.kind !== 'product') return null;
+    if (!attributesMatchSelections(item.attributesJson, filter.attributeSelections)) return null;
   }
 
   if (filter.tags && filter.tags.length > 0) {
@@ -527,6 +565,7 @@ export type CatalogFacets = {
   'variant.color': FacetBucket[];
   'variant.size': FacetBucket[];
   'variant.volume': FacetBucket[];
+  shoeUsage: FacetBucket[];
   placeMode: FacetBucket[];
   branch: FacetBucket[];
   staleSelections: Array<{ field: string; value: string }>;
@@ -594,7 +633,13 @@ export function buildCatalogFacets(
   filter: CatalogFilterInput,
 ): CatalogFacets {
   const without = (
-    omit: keyof CatalogFilterInput | 'variant.color' | 'variant.size' | 'variant.volume' | 'variant',
+    omit:
+      | keyof CatalogFilterInput
+      | 'variant.color'
+      | 'variant.size'
+      | 'variant.volume'
+      | 'variant'
+      | 'shoeUsage',
   ): CatalogFilterInput => {
     if (
       omit === 'variant.color' ||
@@ -613,6 +658,13 @@ export function buildCatalogFacets(
       next.variantSelections = Object.keys(selections).length > 0 ? selections : undefined;
       return next;
     }
+    if (omit === 'shoeUsage') {
+      const attrs: Record<string, string[]> = { ...(filter.attributeSelections ?? {}) };
+      delete attrs.shoeUsage;
+      const next: CatalogFilterInput = { ...filter };
+      next.attributeSelections = Object.keys(attrs).length ? attrs : undefined;
+      return next;
+    }
     const next: CatalogFilterInput = { ...filter };
     delete (next as Record<string, unknown>)[omit];
     return next;
@@ -624,6 +676,7 @@ export function buildCatalogFacets(
   const colors = new Map<string, number>();
   const sizes = new Map<string, number>();
   const volumes = new Map<string, number>();
+  const shoeUsage = new Map<string, number>();
   const placeMode = new Map<string, number>();
   const branch = new Map<string, number>();
 
@@ -692,6 +745,13 @@ export function buildCatalogFacets(
     if (n > 0) volumes.set(valueId, n);
   }
 
+  for (const hit of filterCatalogItems(items, without('shoeUsage'))) {
+    if (hit.item.kind !== 'product') continue;
+    const raw = hit.item.attributesJson?.shoeUsage;
+    const vals = Array.isArray(raw) ? raw : raw == null || raw === '' ? [] : [raw];
+    for (const v of vals) bump(shoeUsage, String(v));
+  }
+
   for (const hit of filterCatalogItems(items, without('placeModes'))) {
     if (hit.item.placeMode) bump(placeMode, hit.item.placeMode);
   }
@@ -702,11 +762,17 @@ export function buildCatalogFacets(
   const colorMeta = collectOptionMeta(items, 'color');
   const sizeMeta = collectOptionMeta(items, 'size');
   const volumeMeta = collectOptionMeta(items, 'volume');
+  const shoeUsageLabels = new Map<string, { labelAr?: string }>([
+    ['formal', { labelAr: 'رسمي' }],
+    ['daily', { labelAr: 'يومي' }],
+    ['occasions', { labelAr: 'مناسبات' }],
+  ]);
 
   const staleSelections: Array<{ field: string; value: string }> = [];
   const colorFacet = new Set(toBuckets(colors).map((b) => b.id));
   const sizeFacet = new Set(toBuckets(sizes).map((b) => b.id));
   const volumeFacet = new Set(toBuckets(volumes).map((b) => b.id));
+  const shoeUsageFacet = new Set(toBuckets(shoeUsage).map((b) => b.id));
   for (const v of filter.variantSelections?.color ?? []) {
     if (!colorFacet.has(v)) staleSelections.push({ field: 'variant.color', value: v });
   }
@@ -716,6 +782,9 @@ export function buildCatalogFacets(
   for (const v of filter.variantSelections?.volume ?? []) {
     if (!volumeFacet.has(v)) staleSelections.push({ field: 'variant.volume', value: v });
   }
+  for (const v of filter.attributeSelections?.shoeUsage ?? []) {
+    if (!shoeUsageFacet.has(v)) staleSelections.push({ field: 'shoeUsage', value: v });
+  }
 
   return {
     concern: toBuckets(concern),
@@ -724,6 +793,7 @@ export function buildCatalogFacets(
     'variant.color': toBuckets(colors, colorMeta),
     'variant.size': toBuckets(sizes, sizeMeta),
     'variant.volume': toBuckets(volumes, volumeMeta),
+    shoeUsage: toBuckets(shoeUsage, shoeUsageLabels),
     placeMode: toBuckets(placeMode),
     branch: toBuckets(branch),
     staleSelections,

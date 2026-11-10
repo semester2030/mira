@@ -327,6 +327,14 @@ body.e2b-product-mode #partnerSettingsSection dd {
   margin: 0;
 }
 
+/* Mobile step nav — hidden on desktop; phone uses short steps (not one tall form). */
+.e2b-mobile-steps {
+  display: none;
+}
+body.e2b-product-mode .e2b-step-hidden {
+  display: none !important;
+}
+
 /* Phone: no page-level overflow clip to hide layout bugs; keep intentional circle scroll */
 @media (max-width: 900px) {
   body.e2b-product-mode.e2b-editor-focus .e2b-workspace {
@@ -338,11 +346,53 @@ body.e2b-product-mode #partnerSettingsSection dd {
   }
   body.e2b-product-mode .container {
     overflow-x: visible;
+    overflow-x: clip;
+  }
+  body.e2b-product-mode #catalogForm {
+    overflow-x: hidden;
   }
   .e2b-circle-list,
   .e2b-subcircles {
     overflow-x: auto;
     overflow-y: hidden;
+  }
+  body.e2b-product-mode .e2b-mobile-steps {
+    display: flex;
+    flex-wrap: nowrap;
+    gap: 0.35rem;
+    margin: 0.35rem 0 0.75rem;
+    padding: 0.25rem;
+    border-radius: 999px;
+    background: rgba(255, 255, 255, 0.72);
+    border: 1px solid rgba(201, 166, 216, 0.45);
+    overflow-x: auto;
+    -webkit-overflow-scrolling: touch;
+  }
+  body.e2b-product-mode .e2b-mobile-step {
+    flex: 1 0 auto;
+    min-width: 4.5rem;
+    border: 0;
+    border-radius: 999px;
+    padding: 0.45rem 0.7rem;
+    font-weight: 700;
+    font-size: 0.82rem;
+    color: var(--e2b-muted);
+    background: transparent;
+    cursor: pointer;
+  }
+  body.e2b-product-mode .e2b-mobile-step.is-active {
+    background: var(--e2b-rose-strong, #e8a4bc);
+    color: #3b2030;
+  }
+  body.e2b-product-mode .e2b-editor-compose {
+    display: block;
+  }
+  body.e2b-product-mode .e2b-editor-fields,
+  body.e2b-product-mode .e2b-editor-media {
+    width: 100%;
+  }
+  body.e2b-product-mode .e2b-name-price-row {
+    grid-template-columns: 1fr;
   }
 }
 
@@ -909,7 +959,38 @@ body.e2b-service-mode .e2c-time-chips {
   gap: 0.35rem;
   margin-bottom: 0.75rem;
 }
+body.e2b-service-mode .e2b-step-hidden {
+  display: none !important;
+}
 @media (max-width: 900px) {
+  body.e2b-service-mode .e2c-mobile-steps,
+  body.e2b-service-mode .e2b-mobile-steps {
+    display: flex;
+    flex-wrap: nowrap;
+    gap: 0.35rem;
+    margin: 0.35rem 0 0.75rem;
+    padding: 0.25rem;
+    border-radius: 999px;
+    background: rgba(255, 255, 255, 0.72);
+    border: 1px solid rgba(201, 166, 216, 0.45);
+    overflow-x: auto;
+  }
+  body.e2b-service-mode .e2b-mobile-step {
+    flex: 1 0 auto;
+    min-width: 4.5rem;
+    border: 0;
+    border-radius: 999px;
+    padding: 0.45rem 0.7rem;
+    font-weight: 700;
+    font-size: 0.82rem;
+    color: var(--e2b-muted);
+    background: transparent;
+    cursor: pointer;
+  }
+  body.e2b-service-mode .e2b-mobile-step.is-active {
+    background: var(--e2b-rose-strong, #e8a4bc);
+    color: #3b2030;
+  }
   /* Root cause of ~88px fields at 390px: sticky 220px rail + 2-col compose.
      Collapse workspace and rail first; then compose to a single column. */
   body.e2b-service-mode .e2c-workspace,
