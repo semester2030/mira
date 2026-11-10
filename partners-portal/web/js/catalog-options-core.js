@@ -711,5 +711,6 @@
     categoryFromProfileId: categoryFromProfileId,
     splitCustomLabels: splitCustomLabels,
     joinCustomLabels: joinCustomLabels,
+    labelsForGroup: labelsForGroup,
   };
 })(typeof globalThis !== 'undefined' ? globalThis : this);

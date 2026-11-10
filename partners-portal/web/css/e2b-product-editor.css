@@ -334,6 +334,21 @@ body.e2b-product-mode #partnerSettingsSection dd {
 body.e2b-product-mode .e2b-step-hidden {
   display: none !important;
 }
+/* Save/publish must never be collapsed by mobile step hiding. */
+body.e2b-product-mode .e2b-mobile-actions-always,
+body.e2b-product-mode [data-section-role="editor-actions"],
+body.e2b-product-mode [data-testid="e2b-editor-actions"],
+body.e2b-product-mode .e2b-editor-actions {
+  display: flex !important;
+  visibility: visible !important;
+  pointer-events: auto !important;
+}
+body.e2b-product-mode .e2b-mobile-actions-always.e2b-step-hidden,
+body.e2b-product-mode [data-section-role="editor-actions"].e2b-step-hidden,
+body.e2b-product-mode [data-testid="e2b-editor-actions"].e2b-step-hidden,
+body.e2b-product-mode .e2b-editor-actions.e2b-step-hidden {
+  display: flex !important;
+}
 
 /* Phone: no page-level overflow clip to hide layout bugs; keep intentional circle scroll */
 @media (max-width: 900px) {
@@ -961,6 +976,14 @@ body.e2b-service-mode .e2c-time-chips {
 }
 body.e2b-service-mode .e2b-step-hidden {
   display: none !important;
+}
+body.e2b-service-mode .e2b-mobile-actions-always,
+body.e2b-service-mode [data-section-role="editor-actions"],
+body.e2b-service-mode [data-testid="e2b-editor-actions"],
+body.e2b-service-mode .e2b-editor-actions {
+  display: flex !important;
+  visibility: visible !important;
+  pointer-events: auto !important;
 }
 @media (max-width: 900px) {
   body.e2b-service-mode .e2c-mobile-steps,

@@ -4062,6 +4062,8 @@
       return JSON.parse(JSON.stringify({
         selected: src.selected || {},
         customs: src.customs || {},
+        customsList: src.customsList || {},
+        inputModes: src.inputModes || {},
         traits: src.traits || {},
         variants: src.variants || [],
         valueIds: src.valueIds || {},
@@ -4074,6 +4076,48 @@
         inventoryLoadError: src.inventoryLoadError || '',
         inventoryHydrateProductId: src.inventoryHydrateProductId || null,
       }));
+    }
+
+    function clearOptionsStateValues() {
+      optionsState.selected = {};
+      optionsState.customs = {};
+      optionsState.customsList = {};
+      optionsState.inputModes = {};
+      optionsState.traits = {};
+      optionsState.variants = [];
+      optionsState.valueIds = {};
+      optionsState.categoryConflict = null;
+      optionsState.invalidVariantNote = '';
+      optionsState._builtGroups = null;
+    }
+
+    function labelsForPreviewGroup(groupId) {
+      if (window.MiraCatalogOptions && typeof window.MiraCatalogOptions.labelsForGroup === 'function') {
+        return window.MiraCatalogOptions.labelsForGroup(optionsState, groupId);
+      }
+      const selected = (optionsState.selected[groupId] || []).slice();
+      const split =
+        window.MiraCatalogOptions && typeof window.MiraCatalogOptions.splitCustomLabels === 'function'
+          ? window.MiraCatalogOptions.splitCustomLabels
+          : (raw) => String(raw || '').split(/[,،]+/).map((s) => s.trim()).filter(Boolean);
+      const fromList = Array.isArray(optionsState.customsList && optionsState.customsList[groupId])
+        ? optionsState.customsList[groupId]
+        : split(optionsState.customs[groupId] || '');
+      fromList.forEach((part) => {
+        if (selected.indexOf(part) < 0) selected.push(part);
+      });
+      return selected;
+    }
+
+    function revealInvalidInMobileStep(fieldName) {
+      const el =
+        (fieldName && form.querySelector('[name="' + fieldName + '"]')) ||
+        (fieldName && form.querySelector('[data-field-id="' + fieldName + '"]')) ||
+        form.querySelector('.field-error:not([hidden])') ||
+        form.querySelector('.mira-attr-error:not([hidden])');
+      if (window.MiraE2BProductShell && typeof MiraE2BProductShell.revealStepForElement === 'function' && el) {
+        MiraE2BProductShell.revealStepForElement(el);
+      }
     }
 
     /**
@@ -4323,13 +4367,7 @@
           clearUndoSnapshot = cloneOptionsState(optionsState);
           optionsState.clearingOptions = true;
           optionsState.clearingVariants = true;
-          optionsState.selected = {};
-          optionsState.customs = {};
-          optionsState.traits = {};
-          optionsState.variants = [];
-          optionsState.valueIds = {};
-          optionsState.categoryConflict = null;
-          optionsState.invalidVariantNote = '';
+          clearOptionsStateValues();
           saveOptionsDraft();
           paintOptions();
         };
@@ -5030,10 +5068,7 @@
       }
       const preset = optionPresets(category.value, subcategory && subcategory.value);
       preset.groups.forEach((group) => {
-        const selected = (optionsState.selected[group.id] || []).slice();
-        String(optionsState.customs[group.id] || '').split(',').map((part) => part.trim()).filter(Boolean).forEach((part) => {
-          if (selected.indexOf(part) < 0) selected.push(part);
-        });
+        const selected = labelsForPreviewGroup(group.id);
         if (!selected.length) return;
         text(optionsPreview, group.label);
         const row = document.createElement('div');
@@ -6022,6 +6057,16 @@
         }
       }
       if (blocked) {
+        const firstBad =
+          ['nameAr', 'priceSar', 'category', 'externalUrl', 'durationMin', 'stockQty', 'deliveryFeeSar', 'optionsJson', 'variantsJson']
+            .find((name) => {
+              const err = form.querySelector('[data-field-error="' + name + '"], [data-error-for="' + name + '"]');
+              return err && err.textContent && !err.hidden;
+            }) ||
+          (nameAr.value.trim().length < 2 ? 'nameAr' : null) ||
+          (!category.value ? 'category' : null) ||
+          'nameAr';
+        revealInvalidInMobileStep(firstBad);
         status.textContent = developerAccount
           ? 'لم يبدأ النشر. أكملي الاسم والسعر والتصنيف، والبيانات التي كتبتها ما زالت في النموذج.'
           : 'لم يُرسل الحفظ. البيانات التي كتبتها ما زالت في النموذج.';
@@ -6045,6 +6090,8 @@
         if (attrMount && typeof attrMount.hasBlockingErrors === 'function' && attrMount.hasBlockingErrors()) {
           const v = attrMount.validate();
           (v.errors || []).forEach((fe) => setFieldError(form, fe.fieldId, fe.message));
+          const firstAttr = (v.errors && v.errors[0] && v.errors[0].fieldId) || 'attributes';
+          revealInvalidInMobileStep(firstAttr);
           status.textContent = 'لم يُرسل الحفظ. أصلحي قيم الخصائص الرقمية. البيانات ما زالت في النموذج.';
           setAttrSaveKind('error', 'تحقق الخصائص فشل');
           return false;

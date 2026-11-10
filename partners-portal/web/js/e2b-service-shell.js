@@ -646,18 +646,15 @@
       btn.textContent = step.label;
       btn.addEventListener('click', () => {
         form.dataset.e2cMobileStep = step.id;
-        applyServiceMobileStep(form, steps, step.id, compose, fields, mediaCol, advanced, tail);
+        applyServiceMobileStep(form, steps, step.id, compose, fields, mediaCol, advanced, tail, ctaNodes);
         mountServiceMobileSteps(form, compose, fields, mediaCol, advanced, tail, ctaNodes);
       });
       nav.appendChild(btn);
     });
-    applyServiceMobileStep(form, steps, current, compose, fields, mediaCol, advanced, tail);
-    (ctaNodes || []).forEach((n) => {
-      if (n) n.classList.add('e2b-mobile-actions-always');
-    });
+    applyServiceMobileStep(form, steps, current, compose, fields, mediaCol, advanced, tail, ctaNodes);
   }
 
-  function applyServiceMobileStep(form, steps, stepId, compose, fields, mediaCol, advanced, tail) {
+  function applyServiceMobileStep(form, steps, stepId, compose, fields, mediaCol, advanced, tail, ctaNodes) {
     const active = steps.find((s) => s.id === stepId) || steps[0];
     form.dataset.e2cMobileStep = active.id;
     form.setAttribute('data-e2c-mobile-step', active.id);
@@ -687,10 +684,33 @@
     }
     (tail || []).forEach((node) => {
       if (!node) return;
+      const role = node.getAttribute && node.getAttribute('data-section-role');
+      const always =
+        role === 'editor-actions' ||
+        (node.getAttribute && node.getAttribute('data-testid') === 'e2b-editor-actions') ||
+        (node.classList && node.classList.contains('e2b-editor-actions')) ||
+        (node.classList && node.classList.contains('e2b-mobile-actions-always'));
+      if (always) {
+        node.hidden = false;
+        node.classList.remove('e2b-step-hidden');
+        return;
+      }
       const show = !narrow || active.showTail;
       node.hidden = !show;
       node.classList.toggle('e2b-step-hidden', !show);
     });
+    (ctaNodes || []).forEach((n) => {
+      if (!n) return;
+      n.classList.add('e2b-mobile-actions-always');
+      n.hidden = false;
+      n.classList.remove('e2b-step-hidden');
+      if (n.style && n.style.display === 'none') n.style.display = '';
+    });
+    const actionsRole = form.querySelector('[data-section-role="editor-actions"]');
+    if (actionsRole) {
+      actionsRole.hidden = false;
+      actionsRole.classList.remove('e2b-step-hidden');
+    }
     if (compose) compose.hidden = false;
   }
 

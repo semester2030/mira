@@ -8,6 +8,8 @@ export type AttributeFieldDef = {
   max?: number | null;
   /** Registry dependsOn — e.g. heelHeightCm only when subcategory is shoes.heel. */
   dependsOn?: { field?: string; includes?: string[]; equals?: unknown } | null;
+  /** When includes "manual", allow stable custom:<slug> values in addition to enum ids. */
+  inputModes?: string[] | null;
 };
 
 export type ProductTaxonomyInput = {
@@ -54,6 +56,14 @@ function allowedValueIds(def: AttributeFieldDef): Set<string> | null {
   return ids.size ? ids : null;
 }
 
+function allowsManualCustomIds(def: AttributeFieldDef): boolean {
+  return Array.isArray(def.inputModes) && def.inputModes.includes('manual');
+}
+
+function isStableCustomAttrId(id: string): boolean {
+  return /^custom:[A-Za-z0-9\u0600-\u06FF\-_.]{1,48}$/.test(id);
+}
+
 function validateAttributeValue(
   fieldId: string,
   def: AttributeFieldDef,
@@ -66,12 +76,32 @@ function validateAttributeValue(
       return { fieldId, code: 'ATTRIBUTE_TYPE', messageAr: `الحقل ${fieldId} يجب أن يكون مصفوفة` };
     }
     const allowed = allowedValueIds(def);
+    const manualOk = allowsManualCustomIds(def);
     for (const item of raw) {
       if (typeof item !== 'string') {
         return { fieldId, code: 'ATTRIBUTE_VALUE_TYPE', messageAr: `قيم ${fieldId} يجب أن تكون نصوصًا` };
       }
       if (allowed && !allowed.has(item)) {
+        if (manualOk && isStableCustomAttrId(item)) continue;
         return { fieldId, code: 'ATTRIBUTE_VALUE_UNKNOWN', messageAr: `قيمة غير معروفة في ${fieldId}` };
+      }
+    }
+    return null;
+  }
+  if (t === 'object' || fieldId === 'itemDimensions') {
+    if (raw === null) return null;
+    if (typeof raw !== 'object' || Array.isArray(raw)) {
+      return { fieldId, code: 'ATTRIBUTE_TYPE', messageAr: `الحقل ${fieldId} يجب أن يكون كائن أبعاد` };
+    }
+    for (const axis of ['w', 'h', 'd'] as const) {
+      const v = (raw as Record<string, unknown>)[axis];
+      if (v === undefined) continue;
+      if (typeof v !== 'number' || !Number.isFinite(v) || v < 0) {
+        return {
+          fieldId: `${fieldId}.${axis}`,
+          code: 'ATTRIBUTE_TYPE',
+          messageAr: `البعد ${axis} يجب أن يكون رقمًا غير سالب`,
+        };
       }
     }
     return null;
@@ -109,6 +139,7 @@ function validateAttributeValue(
   }
   const allowed = allowedValueIds(def);
   if (allowed && !allowed.has(raw)) {
+    if (allowsManualCustomIds(def) && isStableCustomAttrId(raw)) return null;
     return { fieldId, code: 'ATTRIBUTE_VALUE_UNKNOWN', messageAr: `قيمة غير معروفة في ${fieldId}` };
   }
   return null;

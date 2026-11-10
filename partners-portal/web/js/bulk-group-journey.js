@@ -1209,20 +1209,27 @@
               ? MO.categoryFromProfileId(batch.profileId)
               : 'clothes');
           state.fieldDraft.category = category;
-          state.commerceMount = window.MiraProductCommerceFields.mount(commerceHost, {
-            category: category,
-            initialRow: {
-              optionsJson: d.optionsJson,
-              variantsJson: d.variantsJson,
-              inventoryMode: d.inventoryMode,
-            },
-            onChange: (payload) => {
-              state.fieldDraft.category = payload.category;
-              state.fieldDraft.optionsJson = payload.optionsJson;
-              state.fieldDraft.variantsJson = payload.variantsJson;
-              state.fieldDraft.inventoryMode = payload.inventoryMode;
-            },
-          });
+          function remountBulkCommerce() {
+            if (state.commerceMount && state.commerceMount.destroy) state.commerceMount.destroy();
+            commerceHost.replaceChildren();
+            const subNow = state.fieldDraft.subcategory || d.subcategory || '';
+            state.commerceMount = window.MiraProductCommerceFields.mount(commerceHost, {
+              category: category,
+              subcategory: subNow,
+              initialRow: {
+                optionsJson: state.fieldDraft.optionsJson != null ? state.fieldDraft.optionsJson : d.optionsJson,
+                variantsJson: state.fieldDraft.variantsJson != null ? state.fieldDraft.variantsJson : d.variantsJson,
+                inventoryMode: state.fieldDraft.inventoryMode || d.inventoryMode,
+              },
+              onChange: (payload) => {
+                state.fieldDraft.category = payload.category || category;
+                state.fieldDraft.optionsJson = payload.optionsJson;
+                state.fieldDraft.variantsJson = payload.variantsJson;
+                state.fieldDraft.inventoryMode = payload.inventoryMode;
+              },
+            });
+          }
+          remountBulkCommerce();
           if (taxonomyError) {
             const taxErr = el('p', {
               className: 'lead',
@@ -1262,6 +1269,7 @@
                   ? state.attrMount.captureEditorState()
                   : null;
               state.fieldDraft.subcategory = e.target.value;
+              remountBulkCommerce();
               remountBulkAttrs(prevState);
             },
           });
@@ -1310,8 +1318,10 @@
             state.attrMount = window.MiraRegistryAttributeFields.mount(attrHost, {
               registry: registry,
               profileId: profileId,
+              category: category,
+              subcategory: state.fieldDraft.subcategory || d.subcategory || '',
               mountId: 'bulk-' + ((card && card.cardId) || 'x'),
-              initialAttributes: d.attributes || {},
+              initialAttributes: state.fieldDraft.attributes || d.attributes || {},
               preserveState: preserveState || null,
               includeComponentContract: profileId === 'product.bags',
               persistComponentContract: false,

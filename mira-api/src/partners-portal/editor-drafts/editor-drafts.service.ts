@@ -277,6 +277,7 @@ export class EditorDraftsService {
           min: def.min ?? null,
           max: def.max ?? null,
           dependsOn: (def as { dependsOn?: AttributeFieldDef['dependsOn'] }).dependsOn ?? null,
+          inputModes: (def as { inputModes?: string[] | null }).inputModes ?? null,
         };
         attributeFieldDefs.set(fieldId, entry);
         const storageKey = storage.slice('attributes.'.length);

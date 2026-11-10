@@ -10,6 +10,7 @@
     return {
       selected: {},
       customs: {},
+      customsList: {},
       traits: {},
       variants: [],
       valueIds: {},

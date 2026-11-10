@@ -342,13 +342,15 @@
 
       // options-preview after attributes so long preview never separates sizes from materials (I-02).
       const fieldOrder = ['basics', 'options', 'attributes', 'options-preview', 'commerce', 'template'];
-      const afterCompose = ['details', 'detail-media', 'variant-media', 'preview-publish', 'editor-actions'];
+      // editor-actions stay outside step-hidden tail — CTAs must remain usable on every mobile step.
+      const afterCompose = ['details', 'detail-media', 'variant-media', 'preview-publish'];
       const actionsBar = form.querySelector('[data-testid="e2b-editor-actions"]');
       const save = document.getElementById('catalogForm-save');
       const submit = form.querySelector('[data-testid="catalog-submit-review"]');
       const matBtn = form.querySelector(
         '[data-testid="materialize-draft"], [data-editor-v2-materialize="1"], button.mat-btn',
       );
+      const editorActionsRole = form.querySelector('[data-section-role="editor-actions"]');
       // New design only: neutralize legacy submit CTA (hidden + disabled + no pointer events).
       form.querySelectorAll('[data-cta-role="legacy"]').forEach((node) => {
         node.hidden = true;
@@ -373,9 +375,10 @@
           true,
         );
       });
-      const ctaNodes = actionsBar
-        ? [actionsBar]
-        : [matBtn, save, submit].filter(Boolean).filter((n) => !(n.getAttribute && n.getAttribute('data-cta-role') === 'legacy'));
+      const ctaNodes = [
+        ...(actionsBar ? [actionsBar] : [matBtn, save, submit].filter(Boolean)),
+        ...(editorActionsRole && editorActionsRole !== actionsBar ? [editorActionsRole] : []),
+      ].filter((n) => n && !(n.getAttribute && n.getAttribute('data-cta-role') === 'legacy'));
 
       const alreadyOrdered =
         compose.parentElement === form &&
@@ -462,22 +465,53 @@
       btn.textContent = step.label;
       btn.addEventListener('click', () => {
         form.dataset.e2bMobileStep = step.id;
-        applyMobileEditorStep(form, steps, step.id, compose, fields, mediaCol, tail);
+        applyMobileEditorStep(form, steps, step.id, compose, fields, mediaCol, tail, ctaNodes);
         mountMobileEditorSteps(form, compose, fields, mediaCol, tail, ctaNodes);
       });
       nav.appendChild(btn);
     });
-    applyMobileEditorStep(form, steps, current, compose, fields, mediaCol, tail);
-    (ctaNodes || []).forEach((n) => {
-      if (n) n.classList.add('e2b-mobile-actions-always');
-    });
+    applyMobileEditorStep(form, steps, current, compose, fields, mediaCol, tail, ctaNodes);
   }
 
   function isNarrowEditorViewport() {
     return typeof window.matchMedia === 'function' && window.matchMedia('(max-width: 900px)').matches;
   }
 
-  function applyMobileEditorStep(form, steps, stepId, compose, fields, mediaCol, tail) {
+  function isAlwaysVisibleActionsNode(node) {
+    if (!node || !node.getAttribute) return false;
+    const role = node.getAttribute('data-section-role');
+    if (role === 'editor-actions') return true;
+    if (node.getAttribute('data-testid') === 'e2b-editor-actions') return true;
+    if (node.classList && node.classList.contains('e2b-editor-actions')) return true;
+    if (node.classList && node.classList.contains('e2b-mobile-actions-always')) return true;
+    return false;
+  }
+
+  function forceShowActionsNodes(nodes) {
+    (nodes || []).forEach((n) => {
+      if (!n) return;
+      n.classList.add('e2b-mobile-actions-always');
+      n.hidden = false;
+      n.classList.remove('e2b-step-hidden');
+      if (n.style) {
+        if (n.style.display === 'none') n.style.display = '';
+        n.style.visibility = '';
+        n.style.pointerEvents = '';
+      }
+      n.removeAttribute('aria-hidden');
+      // Unhide ancestors that mobile steps may have marked hidden (never the form itself).
+      let parent = n.parentElement;
+      while (parent && parent !== document.body && parent.id !== 'catalogForm' && parent.tagName !== 'FORM') {
+        if (parent.classList && parent.classList.contains('e2b-step-hidden')) {
+          parent.classList.remove('e2b-step-hidden');
+          parent.hidden = false;
+        }
+        parent = parent.parentElement;
+      }
+    });
+  }
+
+  function applyMobileEditorStep(form, steps, stepId, compose, fields, mediaCol, tail, ctaNodes) {
     const active = steps.find((s) => s.id === stepId) || steps[0];
     form.dataset.e2bMobileStep = active.id;
     form.setAttribute('data-e2b-mobile-step', active.id);
@@ -498,8 +532,18 @@
     }
     (tail || []).forEach((node) => {
       if (!node || !node.getAttribute) return;
+      if (isAlwaysVisibleActionsNode(node)) {
+        node.hidden = false;
+        node.classList.remove('e2b-step-hidden');
+        return;
+      }
       const role = node.getAttribute('data-section-role');
       if (!role) return;
+      if (role === 'editor-actions') {
+        node.hidden = false;
+        node.classList.remove('e2b-step-hidden');
+        return;
+      }
       const show = showRole(role);
       node.hidden = !show;
       node.classList.toggle('e2b-step-hidden', !show);
@@ -514,6 +558,37 @@
       fields.hidden = !anyField;
       fields.classList.toggle('e2b-step-hidden', !anyField);
     }
+    forceShowActionsNodes(ctaNodes);
+    forceShowActionsNodes([
+      form.querySelector('[data-testid="e2b-editor-actions"]'),
+      form.querySelector('[data-section-role="editor-actions"]'),
+    ]);
+  }
+
+  /** Open the mobile step that contains a field/error target without remounting inputs. */
+  function revealStepForElement(target) {
+    const form = document.getElementById('catalogForm');
+    if (!form || !target || !form.contains(target)) return false;
+    const section = target.closest('[data-section-role]');
+    const role = section && section.getAttribute('data-section-role');
+    const mediaCol = form.querySelector('[data-testid="e2b-editor-media"]');
+    let stepId = form.dataset.e2bMobileStep || 'basics';
+    if (role === 'basics') stepId = 'basics';
+    else if (role === 'options' || role === 'attributes' || role === 'options-preview' || role === 'commerce' || role === 'template') {
+      stepId = 'offer';
+    } else if (role === 'main-media' || (mediaCol && mediaCol.contains(target))) stepId = 'media';
+    else if (role === 'details' || role === 'detail-media' || role === 'variant-media' || role === 'preview-publish') {
+      stepId = 'more';
+    }
+    form.dataset.e2bMobileStep = stepId;
+    composeCatalogLayout();
+    try {
+      target.scrollIntoView({ block: 'center', behavior: 'smooth' });
+      if (typeof target.focus === 'function') target.focus({ preventScroll: true });
+    } catch (_) {
+      /* optional */
+    }
+    return true;
   }
 
   async function loadTaxonomy(force) {
@@ -850,6 +925,7 @@
     selectSub: selectSub,
     syncFromForm: syncFromForm,
     composeCatalogLayout: composeCatalogLayout,
+    revealStepForElement: revealStepForElement,
     reloadTaxonomy: (opts) => {
       if (opts && opts.force) taxonomyCache = null;
       return loadAndPaintMains({ force: !!(opts && opts.force) });

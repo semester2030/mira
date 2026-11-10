@@ -191,6 +191,62 @@
     return out;
   }
 
+  function supportsManualInput(def) {
+    var modes = (def && def.inputModes) || [];
+    return Array.isArray(modes) && modes.indexOf('manual') >= 0;
+  }
+
+  function customAttrId(label, index) {
+    var base = String(label || '')
+      .trim()
+      .toLowerCase()
+      .replace(/\s+/g, '-')
+      .replace(/[^a-z0-9\u0600-\u06FF\-]/g, '')
+      .slice(0, 40);
+    return 'custom:' + (base || 'v' + (index + 1));
+  }
+
+  function isAllowedCustomAttrId(id) {
+    return typeof id === 'string' && /^custom:[A-Za-z0-9\u0600-\u06FF\-_.]{1,48}$/.test(id);
+  }
+
+  function normalizeDimensionsObject(raw) {
+    if (raw == null) return null;
+    if (!isPlainObject(raw)) return undefined;
+    var out = {};
+    ['w', 'h', 'd'].forEach(function (axis) {
+      if (!Object.prototype.hasOwnProperty.call(raw, axis)) return;
+      var v = raw[axis];
+      if (v === null || v === '') return;
+      var n = typeof v === 'number' ? v : Number(String(v).trim());
+      if (!Number.isFinite(n) || n < 0) {
+        out[axis] = v;
+      } else {
+        out[axis] = n;
+      }
+    });
+    return Object.keys(out).length ? out : null;
+  }
+
+  /** Prefer itemDimensions; fall back to legacy dimensionsCm without dropping either when identical. */
+  function coalesceDimensions(attrs) {
+    if (!isPlainObject(attrs)) return attrs;
+    var item = normalizeDimensionsObject(attrs.itemDimensions);
+    var legacy = normalizeDimensionsObject(attrs.dimensionsCm);
+    if (item && !legacy) {
+      attrs.itemDimensions = item;
+      attrs.dimensionsCm = item;
+    } else if (!item && legacy) {
+      attrs.itemDimensions = legacy;
+      attrs.dimensionsCm = legacy;
+    } else if (item && legacy) {
+      attrs.itemDimensions = item;
+      // Keep legacy in sync with the canonical editor field when both present.
+      attrs.dimensionsCm = Object.assign({}, legacy, item);
+    }
+    return attrs;
+  }
+
   function validateNumberValue(def, raw) {
     if (raw === undefined) return { ok: true, value: undefined };
     if (raw === null) return { ok: true, value: null };
@@ -430,6 +486,9 @@
       editRevision += 1;
     }
 
+    var inputModes = Object.create(null);
+    var manualDrafts = Object.create(null);
+
     function seedFrom(attrs, opts) {
       opts = opts || {};
       values = {};
@@ -437,8 +496,11 @@
       dirty = Object.create(null);
       fieldErrors = Object.create(null);
       invalidInputs = Object.create(null);
+      inputModes = Object.create(null);
+      manualDrafts = Object.create(null);
       if (!isPlainObject(attrs) && !(opts.cleared && Object.keys(opts.cleared).length)) return;
       if (isPlainObject(attrs)) {
+        coalesceDimensions(attrs);
         defs.forEach(function (def) {
           var key = storageAttrKey(def);
           if (!key) return;
@@ -449,6 +511,24 @@
         Object.keys(attrs).forEach(function (k) {
           if (!Object.prototype.hasOwnProperty.call(values, k)) {
             values[k] = attrs[k];
+          }
+        });
+        // Restore manual mode when saved values include custom: ids.
+        defs.forEach(function (def) {
+          if (!supportsManualInput(def)) return;
+          var key = storageAttrKey(def);
+          var cur = values[key];
+          if (Array.isArray(cur) && cur.some(isAllowedCustomAttrId)) {
+            inputModes[def.id] = 'manual';
+            manualDrafts[def.id] = cur
+              .filter(isAllowedCustomAttrId)
+              .map(function (id) {
+                return String(id).replace(/^custom:/, '');
+              })
+              .join('، ');
+          } else if (typeof cur === 'string' && isAllowedCustomAttrId(cur)) {
+            inputModes[def.id] = 'manual';
+            manualDrafts[def.id] = String(cur).replace(/^custom:/, '');
           }
         });
       }
@@ -486,6 +566,12 @@
           dirty: projected.dirty,
           invalidInputs: projected.invalidInputs,
         });
+        if (options.preserveState && options.preserveState.inputModes) {
+          inputModes = Object.assign(Object.create(null), options.preserveState.inputModes);
+        }
+        if (options.preserveState && options.preserveState.manualDrafts) {
+          manualDrafts = Object.assign(Object.create(null), options.preserveState.manualDrafts);
+        }
         // Also seed any compatible keys from server seed that weren't dirty
         var server = options.initialAttributes;
         if (isPlainObject(server)) {
@@ -544,6 +630,17 @@
       } else {
         delete cleared[key];
         values[key] = nextVal;
+      }
+      // Keep legacy dimensionsCm aligned with itemDimensions (single editor source).
+      if (key === 'itemDimensions') {
+        dirty.dimensionsCm = true;
+        if (nextVal === null || nextVal === undefined) {
+          cleared.dimensionsCm = true;
+          delete values.dimensionsCm;
+        } else {
+          delete cleared.dimensionsCm;
+          values.dimensionsCm = nextVal;
+        }
       }
       notify({ source: 'user' });
     }
@@ -683,6 +780,8 @@
         cleared: Object.assign({}, cleared),
         dirty: Object.assign({}, dirty),
         invalidInputs: Object.assign({}, invalidInputs),
+        inputModes: Object.assign({}, inputModes),
+        manualDrafts: Object.assign({}, manualDrafts),
         parked: Object.assign({}, parkedBag),
         parkedCleared: Object.assign({}, parkedClearedBag),
         parkedDirty: Object.assign({}, parkedDirtyBag),
@@ -769,12 +868,47 @@
         var disabled =
           readOnly || tier === 'read' || (tier === 'component' && options.persistComponentContract !== true);
 
+        if (supportsManualInput(def) && !disabled) {
+          var mode = inputModes[def.id] || 'ready';
+          var modeRow = el('div', {
+            className: 'choice-row input-mode-row',
+            'data-testid': 'attr-input-mode-' + def.id,
+          });
+          [['ready', 'اختيار جاهز'], ['manual', 'كتابة يدوية']].forEach(function (pair) {
+            var id = pair[0];
+            var labelText = pair[1];
+            var lab = el('label', {
+              className: 'input-mode-choice' + (mode === id ? ' is-selected' : ''),
+            });
+            var radio = el('input', {
+              type: 'radio',
+              name: 'attr-mode-' + mountId + '-' + def.id,
+              value: id,
+            });
+            radio.checked = mode === id;
+            radio.addEventListener('change', function () {
+              if (!radio.checked) return;
+              inputModes[def.id] = id;
+              // Preserve ready/manual drafts across mode switches; do not wipe values.
+              paint();
+              notify({ source: 'user' });
+            });
+            lab.appendChild(radio);
+            lab.appendChild(document.createTextNode(' ' + labelText));
+            modeRow.appendChild(lab);
+          });
+          block.appendChild(modeRow);
+        }
+
+        var attrMode = inputModes[def.id] || 'ready';
+
         if (def.type === 'array' && (def.widget === 'chips' || !def.widget)) {
           var row = el('div', {
             className: 'choice-row mira-attr-chips',
             role: 'group',
             'aria-label': def.labelAr || def.id,
           });
+          if (supportsManualInput(def) && attrMode === 'manual') row.hidden = true;
           var selected = Array.isArray(cur) ? cur.slice() : [];
           (def.values || []).forEach(function (vid) {
             var lab = el('label', {
@@ -798,6 +932,41 @@
             row.appendChild(lab);
           });
           block.appendChild(row);
+          if (supportsManualInput(def) && !disabled) {
+            var manualLab = el('label', {
+              className: 'manual-input-label',
+              text: 'كتابة يدوية (فاصلة عربية أو إنجليزية؛ تُحفظ كقيم custom: مستقرة)',
+            });
+            manualLab.hidden = attrMode !== 'manual';
+            var manualIn = el('input', {
+              type: 'text',
+              'data-testid': 'attr-manual-' + def.id,
+              value: manualDrafts[def.id] || '',
+            });
+            manualIn.addEventListener('input', function () {
+              manualDrafts[def.id] = manualIn.value;
+              var split =
+                global.MiraCatalogOptions && typeof global.MiraCatalogOptions.splitCustomLabels === 'function'
+                  ? global.MiraCatalogOptions.splitCustomLabels
+                  : function (raw) {
+                      return String(raw || '')
+                        .split(/[,،]+/)
+                        .map(function (p) {
+                          return p.trim();
+                        })
+                        .filter(Boolean);
+                    };
+              var parts = split(manualIn.value);
+              var next = parts.map(function (label, index) {
+                return customAttrId(label, index);
+              });
+              setError(def.id, '');
+              if (!next.length) markDirty(key, null);
+              else markDirty(key, next);
+            });
+            manualLab.appendChild(manualIn);
+            block.appendChild(manualLab);
+          }
         } else if (def.type === 'enum' || def.widget === 'select') {
           var groupName = 'mira-attr-' + mountId + '-' + def.id;
           var group = el('div', {
@@ -806,6 +975,7 @@
             'aria-label': def.labelAr || def.id,
             'data-radio-group': groupName,
           });
+          if (supportsManualInput(def) && attrMode === 'manual') group.hidden = true;
           (def.values || []).forEach(function (vid) {
             var lab = el('label', {
               className: 'mira-attr-choice' + (cur === vid ? ' is-selected' : ''),
@@ -855,6 +1025,112 @@
           } else {
             block.appendChild(group);
           }
+          if (supportsManualInput(def) && !disabled) {
+            var enumManualLab = el('label', {
+              className: 'manual-input-label',
+              text: 'كتابة يدوية لقيمة مخصصة (تُحفظ كـ custom:…)',
+            });
+            enumManualLab.hidden = attrMode !== 'manual';
+            var enumManualIn = el('input', {
+              type: 'text',
+              'data-testid': 'attr-manual-' + def.id,
+              value: manualDrafts[def.id] || '',
+            });
+            enumManualIn.addEventListener('input', function () {
+              manualDrafts[def.id] = enumManualIn.value;
+              var label = String(enumManualIn.value || '').trim();
+              setError(def.id, '');
+              if (!label) markDirty(key, null);
+              else markDirty(key, customAttrId(label, 0));
+            });
+            enumManualLab.appendChild(enumManualIn);
+            block.appendChild(enumManualLab);
+          }
+        } else if (def.widget === 'dimensions' || def.id === 'itemDimensions' || def.type === 'object') {
+          var dimCur = normalizeDimensionsObject(cur) || {};
+          var dimRow = el('div', {
+            className: 'mira-attr-dimensions',
+            'data-testid': 'attr-dimensions-' + def.id,
+          });
+          var unit = def.unit || 'cm';
+          [['w', 'العرض'], ['h', 'الارتفاع'], ['d', 'العمق']].forEach(function (pair) {
+            var axis = pair[0];
+            var axisLabel = pair[1];
+            var lab = el('label', { className: 'mira-attr-dim-field', text: axisLabel + ' (' + unit + ')' });
+            var inp = el('input', {
+              type: 'number',
+              min: '0',
+              step: 'any',
+              'data-dim-axis': axis,
+              'data-testid': 'attr-dim-' + def.id + '-' + axis,
+              disabled: disabled,
+            });
+            if (dimCur[axis] != null && dimCur[axis] !== '') inp.value = String(dimCur[axis]);
+            function commitDim() {
+              var next = Object.assign({}, normalizeDimensionsObject(currentValue(key)) || {});
+              var raw = String(inp.value || '').trim();
+              if (raw === '') {
+                delete next[axis];
+                delete invalidInputs[def.id + '.' + axis];
+                setError(def.id, '');
+              } else {
+                var v = validateNumberValue({ id: def.id, min: 0, unit: unit }, raw);
+                if (!v.ok) {
+                  invalidInputs[def.id + '.' + axis] = raw;
+                  dirty[key] = true;
+                  bumpEditRevision();
+                  setError(def.id, v.message);
+                  notify({ source: 'user' });
+                  return;
+                }
+                delete invalidInputs[def.id + '.' + axis];
+                next[axis] = v.value;
+                setError(def.id, '');
+              }
+              if (!Object.keys(next).length) markDirty(key, null);
+              else markDirty(key, next);
+            }
+            inp.addEventListener('change', commitDim);
+            inp.addEventListener('input', function () {
+              var raw = String(inp.value || '').trim();
+              if (raw === '') {
+                delete invalidInputs[def.id + '.' + axis];
+                setError(def.id, '');
+                return;
+              }
+              var v = validateNumberValue({ id: def.id, min: 0, unit: unit }, raw);
+              if (!v.ok) {
+                invalidInputs[def.id + '.' + axis] = raw;
+                dirty[key] = true;
+                bumpEditRevision();
+                setError(def.id, v.message);
+                notify({ source: 'user' });
+              } else {
+                delete invalidInputs[def.id + '.' + axis];
+                setError(def.id, '');
+              }
+            });
+            lab.appendChild(inp);
+            dimRow.appendChild(lab);
+          });
+          if (!disabled) {
+            var clearDim = el('button', {
+              type: 'button',
+              className: 'btn btn-ghost mira-attr-clear',
+              text: 'مسح الأبعاد',
+              'data-testid': 'attr-clear-' + def.id,
+            });
+            clearDim.addEventListener('click', function () {
+              ['w', 'h', 'd'].forEach(function (axis) {
+                delete invalidInputs[def.id + '.' + axis];
+              });
+              setError(def.id, '');
+              markDirty(key, null);
+              paint();
+            });
+            dimRow.appendChild(clearDim);
+          }
+          block.appendChild(dimRow);
         } else if (def.type === 'number' || def.widget === 'number') {
           var num = el('input', {
             type: 'number',
@@ -1035,6 +1311,10 @@
     labelFor: labelFor,
     extractAttributesFromValues: extractAttributesFromValues,
     validateNumberValue: validateNumberValue,
+    coalesceDimensions: coalesceDimensions,
+    supportsManualInput: supportsManualInput,
+    customAttrId: customAttrId,
+    isAllowedCustomAttrId: isAllowedCustomAttrId,
     projectStateOntoDefs: projectStateOntoDefs,
     subcategoriesFromTaxonomy: subcategoriesFromTaxonomy,
     mount: mount,
