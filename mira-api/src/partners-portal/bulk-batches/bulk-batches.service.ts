@@ -471,6 +471,7 @@ export class BulkBatchesService {
         videoMediaId: string | null;
         videoReady: boolean;
         previewUrl: string | null;
+        partnerMediaPath?: string | null;
       } = { videoMediaId: null, videoReady: false, previewUrl: null };
       if (draft.targetOwnerId) {
         if (draft.kind === 'product') {

@@ -24,7 +24,8 @@ export function compareAvailabilitySnapshot(expected: unknown, actual: unknown):
     const doc = value?.availability;
     if (!doc || doc.v !== 2 || typeof doc.timezone !== 'string' || !doc.timezone ||
         !Array.isArray(doc.windows) || !Array.isArray(doc.exceptions) || !Array.isArray(doc.closedDates) ||
-        !Object.hasOwn(value, 'placeMode') || !Object.hasOwn(value, 'branchId')) {
+        !Object.prototype.hasOwnProperty.call(value, 'placeMode') ||
+        !Object.prototype.hasOwnProperty.call(value, 'branchId')) {
       throw new Error('incomplete availability snapshot');
     }
     if (value.placeMode != null && typeof value.placeMode !== 'string') {

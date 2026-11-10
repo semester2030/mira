@@ -52,7 +52,7 @@ function normalizeCoverageJson(raw: unknown): { cityIds: string[] } | null {
 }
 
 function placeFieldsFromBulkValues(values: Record<string, unknown>): {
-  placeMode?: string;
+  placeMode?: string | null;
   branchId?: string | null;
   coverageJson?: Prisma.InputJsonValue | typeof Prisma.DbNull;
 } {
