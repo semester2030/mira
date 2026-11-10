@@ -1,0 +1,15 @@
+{
+  "devCta": {
+    "saveLabel": "نشر الآن",
+    "ctaRole": "final",
+    "finals": [
+      "نشر الآن",
+      "نشر الآن",
+      "مراجعة الحفظ ثم النشر"
+    ]
+  },
+  "id": "eea3cfdf-51ff-40f0-a723-b4e7c8fcae72",
+  "mediaPicked": true,
+  "mediaCount": 1,
+  "statusUi": "نُشر في التطبيق مباشرة، بلا مراجعة."
+}

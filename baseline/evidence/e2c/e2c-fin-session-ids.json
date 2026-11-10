@@ -1,0 +1,37 @@
+{
+  "finBaseline": {
+    "ok": true,
+    "reasons": []
+  },
+  "finNullSess": {
+    "ok": false,
+    "reasons": [
+      "missing fail session id"
+    ]
+  },
+  "finDelSess": {
+    "ok": false,
+    "reasons": [
+      "missing fail session id"
+    ]
+  },
+  "finMisSess": {
+    "ok": false,
+    "reasons": [
+      "cycle session diverged from fail session without proven reason"
+    ]
+  },
+  "finNullMain": {
+    "ok": false,
+    "reasons": [
+      "missing final main id"
+    ]
+  },
+  "finMisMain": {
+    "ok": false,
+    "reasons": [
+      "final main id does not match cycle media"
+    ]
+  },
+  "finIdsOk": true
+}

@@ -720,10 +720,23 @@
       "values": [
         "black",
         "ivory",
-        "brown",
+        "champagne",
+        "beige",
+        "nude",
+        "peach",
         "pink",
+        "red",
+        "burgundy",
+        "brown",
+        "purple",
         "blue",
+        "navy",
+        "teal",
         "green",
+        "gray",
+        "white",
+        "gold",
+        "silver",
         "multi"
       ],
       "filter": "variant.color",
@@ -750,7 +763,20 @@
         "pink": "وردي",
         "blue": "أزرق",
         "green": "أخضر",
-        "multi": "متعدد الألوان"
+        "multi": "متعدد الألوان",
+        "champagne": "شامبانيا",
+        "beige": "بيج",
+        "nude": "نود",
+        "peach": "خوخي",
+        "red": "أحمر",
+        "burgundy": "عنابي",
+        "purple": "بنفسجي",
+        "navy": "كحلي",
+        "teal": "تركواز",
+        "gray": "رمادي",
+        "white": "أبيض",
+        "gold": "ذهبي",
+        "silver": "فضي"
       }
     },
     "sizeSystem": {
@@ -847,6 +873,7 @@
         "linen",
         "polyester",
         "silk",
+        "satin",
         "other"
       ],
       "filter": "material",
@@ -870,7 +897,8 @@
         "linen": "كتان",
         "polyester": "بوليستر",
         "silk": "حرير",
-        "other": "أخرى"
+        "other": "أخرى",
+        "satin": "ساتان"
       }
     },
     "careInstructions": {
@@ -5076,7 +5104,7 @@
       "publicWhen": "published and applicable",
       "searchable": false,
       "unknownHandling": "omit from facets; never infer false, zero or stock",
-      "evidence": "E2 component contract; bags writeEnabled deferred to E4",
+      "evidence": "E2 component contract; bags writeEnabled enabled in E4",
       "valueLabels": {
         "hand": "يد",
         "shoulder": "كتف",
@@ -6496,11 +6524,11 @@
     },
     {
       "id": "product.bags",
-      "labelAr": "الحقائب (E4 كتابة)",
+      "labelAr": "الحقائب",
       "kind": "product",
       "legacyCategory": "bags",
-      "phase": "FUTURE_EXTENSION",
-      "enabledByDefault": false,
+      "phase": "CURRENT_CATEGORY",
+      "enabledByDefault": true,
       "partnerTypes": [
         "brand"
       ],
@@ -6534,7 +6562,54 @@
         "material",
         "carryStyle"
       ],
-      "schemaVersion": 2
+      "schemaVersion": 2,
+      "allowedLegacyCategories": [
+        "bags"
+      ]
+    },
+    {
+      "id": "product.shoes",
+      "labelAr": "الأحذية",
+      "kind": "product",
+      "legacyCategory": "shoes",
+      "phase": "CURRENT_CATEGORY",
+      "enabledByDefault": true,
+      "partnerTypes": [
+        "brand"
+      ],
+      "fields": [
+        "nameAr",
+        "nameEn",
+        "category",
+        "subcategory",
+        "descriptionAr",
+        "priceMode",
+        "priceHalalas",
+        "media",
+        "coverMediaId",
+        "tags",
+        "purchaseMode",
+        "externalUrl",
+        "inventoryMode",
+        "stockQty",
+        "deliveryFeeHalalas",
+        "colors",
+        "sizes",
+        "optionsJson",
+        "variantsJson",
+        "material"
+      ],
+      "draftRequired": [],
+      "publishRules": "specs/03-JOURNEYS.md#publication",
+      "suggestedGroups": [
+        "colors",
+        "sizes",
+        "material"
+      ],
+      "schemaVersion": 2,
+      "allowedLegacyCategories": [
+        "shoes"
+      ]
     },
     {
       "id": "product.abaya",
@@ -6878,7 +6953,7 @@
     {
       "id": "black",
       "labelAr": "أسود",
-      "hex": "#222222"
+      "hex": "#1A1A1A"
     },
     {
       "id": "ivory",
@@ -6886,9 +6961,24 @@
       "hex": "#F1E8D6"
     },
     {
-      "id": "brown",
-      "labelAr": "بني",
-      "hex": "#855337"
+      "id": "champagne",
+      "labelAr": "شامبانيا",
+      "hex": "#F7E7CE"
+    },
+    {
+      "id": "beige",
+      "labelAr": "بيج",
+      "hex": "#D8C3A5"
+    },
+    {
+      "id": "nude",
+      "labelAr": "نود",
+      "hex": "#E8C4B0"
+    },
+    {
+      "id": "peach",
+      "labelAr": "خوخي",
+      "hex": "#F2B8A0"
     },
     {
       "id": "pink",
@@ -6896,14 +6986,64 @@
       "hex": "#E86BA6"
     },
     {
+      "id": "red",
+      "labelAr": "أحمر",
+      "hex": "#C62828"
+    },
+    {
+      "id": "burgundy",
+      "labelAr": "عنابي",
+      "hex": "#7A1F3D"
+    },
+    {
+      "id": "brown",
+      "labelAr": "بني",
+      "hex": "#855337"
+    },
+    {
+      "id": "purple",
+      "labelAr": "بنفسجي",
+      "hex": "#7E57C2"
+    },
+    {
       "id": "blue",
       "labelAr": "أزرق",
       "hex": "#5C84BE"
     },
     {
+      "id": "navy",
+      "labelAr": "كحلي",
+      "hex": "#1B3A5C"
+    },
+    {
+      "id": "teal",
+      "labelAr": "تركواز",
+      "hex": "#2A9D8F"
+    },
+    {
       "id": "green",
       "labelAr": "أخضر",
       "hex": "#327859"
+    },
+    {
+      "id": "gray",
+      "labelAr": "رمادي",
+      "hex": "#8A8A8A"
+    },
+    {
+      "id": "white",
+      "labelAr": "أبيض",
+      "hex": "#FFFFFF"
+    },
+    {
+      "id": "gold",
+      "labelAr": "ذهبي",
+      "hex": "#C9A227"
+    },
+    {
+      "id": "silver",
+      "labelAr": "فضي",
+      "hex": "#B0B6BE"
     },
     {
       "id": "multi",

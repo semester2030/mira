@@ -1,0 +1,67 @@
+{
+  "design": {
+    "compose": true,
+    "media": true,
+    "month": true,
+    "toggle": true,
+    "durationChips": 3,
+    "placeChips": 3,
+    "nailsOrb": "assets/e2b-ref/orbs/nails.png",
+    "cols": "507.141px 374.859px",
+    "colCount": 2,
+    "rail": true,
+    "secondary": true,
+    "templateDetails": true,
+    "sideStack": true,
+    "subSelected": true,
+    "fieldRoles": [
+      "service-orbs",
+      "basics",
+      "place",
+      "template",
+      "secondary"
+    ],
+    "sideRoles": [
+      "main-media",
+      "availability"
+    ]
+  },
+  "phoneDesign": {
+    "cols": "324.594px",
+    "workspaceCols": "366.594px",
+    "workspaceTracks": 1,
+    "fieldsWidth": 324.59375,
+    "singleCol": true,
+    "orbs": 5,
+    "rail": true,
+    "secondaryOpen": false
+  },
+  "designMatchOrder": {
+    "ok": true
+  },
+  "geomMatch": {
+    "viewportWidth": 1280,
+    "orbsTop": 0,
+    "basicsTop": 351.875,
+    "fieldsLeft": 394.859375,
+    "fieldsRight": 902,
+    "fieldsWidth": 507.140625,
+    "mediaLeft": 0,
+    "mediaRight": 374.859375,
+    "mediaWidth": 374.859375,
+    "mediaTop": 0,
+    "previewLeft": 0,
+    "previewRight": 374.859375,
+    "previewTop": 216.140625,
+    "previewWidth": 374.859375,
+    "measuredPreview": true,
+    "availTop": 932,
+    "secondaryOpen": false,
+    "exceptionsOpen": false,
+    "weeklyEditOpen": false,
+    "sideBySidePx": 394.859375
+  },
+  "geomMatchEval": {
+    "ok": true
+  }
+}

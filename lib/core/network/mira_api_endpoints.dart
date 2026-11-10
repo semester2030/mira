@@ -33,6 +33,8 @@ abstract final class MiraApiEndpoints {
   static const marketplaceMatch = '/marketplace/match';
   static const marketplacePartners = '/marketplace/partners';
   static const marketplaceCatalog = '/marketplace/catalog';
+  /// Public elegance taxonomy projection (E3 circles / filters ids).
+  static const marketplaceTaxonomy = '/marketplace/taxonomy';
   static const marketplaceAds = '/marketplace/ads';
   static const marketplaceFavorites = '/marketplace/favorites';
   /// Customer cart, COD orders and service bookings (Firebase auth).

@@ -1,0 +1,2152 @@
+{
+  "andHit": {
+    "items": [
+      {
+        "kind": "product",
+        "id": "8a8c09ff-6813-49df-b3cf-b3d0672254a7",
+        "partnerId": "e4ead73e-2a1b-4198-9385-c65abd8a5626",
+        "partnerType": "brand",
+        "partnerNameAr": "E3 Brand b0990f57",
+        "city": "الرياض",
+        "contactPhone": null,
+        "nameAr": "E3 Dress b0990f57",
+        "nameEn": "E3 Dress",
+        "descriptionAr": null,
+        "priceHalalas": 10000,
+        "priceLabel": "100 ر.س",
+        "externalUrl": "https://example.test/e3-b0990f57",
+        "stepAr": null,
+        "partnerEmoji": null,
+        "concernTags": [],
+        "category": "clothes",
+        "subcategory": "clothes.evening",
+        "profileId": "product.clothes",
+        "durationMin": null,
+        "purchaseMode": "external",
+        "stockQty": null,
+        "stockAvailable": true,
+        "deliveryFeeHalalas": null,
+        "optionsJson": null,
+        "variantsJson": [
+          {
+            "id": "e3-b0990f57-bs",
+            "available": true,
+            "selections": {
+              "size": "s",
+              "color": "black"
+            },
+            "priceHalalas": 10000
+          },
+          {
+            "id": "e3-b0990f57-wm",
+            "available": true,
+            "selections": {
+              "size": "m",
+              "color": "white"
+            },
+            "priceHalalas": 12000
+          }
+        ],
+        "bookingEnabled": false,
+        "payMode": null,
+        "availabilityPresent": false,
+        "matchedVariantIds": [
+          "e3-b0990f57-bs"
+        ],
+        "matchedVariants": [
+          {
+            "variantId": "e3-b0990f57-bs",
+            "priceHalalas": 10000,
+            "priceInherited": false,
+            "selections": {
+              "size": "s",
+              "color": "black"
+            }
+          }
+        ],
+        "media": []
+      }
+    ],
+    "nextCursor": null,
+    "availableCities": [
+      "الرياض"
+    ],
+    "saudiCities": [
+      {
+        "id": "sa-riyadh",
+        "nameAr": "الرياض",
+        "nameEn": "Riyadh",
+        "lat": 24.7136,
+        "lng": 46.6753
+      },
+      {
+        "id": "sa-jeddah",
+        "nameAr": "جدة",
+        "nameEn": "Jeddah",
+        "lat": 21.4858,
+        "lng": 39.1925
+      },
+      {
+        "id": "sa-makkah",
+        "nameAr": "مكة المكرمة",
+        "nameEn": "Makkah",
+        "lat": 21.3891,
+        "lng": 39.8579
+      },
+      {
+        "id": "sa-madinah",
+        "nameAr": "المدينة المنورة",
+        "nameEn": "Madinah",
+        "lat": 24.5247,
+        "lng": 39.5692
+      },
+      {
+        "id": "sa-dammam",
+        "nameAr": "الدمام",
+        "nameEn": "Dammam",
+        "lat": 26.4207,
+        "lng": 50.0888
+      },
+      {
+        "id": "sa-khobar",
+        "nameAr": "الخبر",
+        "nameEn": "Khobar",
+        "lat": 26.2172,
+        "lng": 50.1971
+      },
+      {
+        "id": "sa-dhahran",
+        "nameAr": "الظهران",
+        "nameEn": "Dhahran",
+        "lat": 26.2361,
+        "lng": 50.0393
+      },
+      {
+        "id": "sa-taif",
+        "nameAr": "الطائف",
+        "nameEn": "Taif",
+        "lat": 21.2703,
+        "lng": 40.4158
+      },
+      {
+        "id": "sa-tabuk",
+        "nameAr": "تبوك",
+        "nameEn": "Tabuk",
+        "lat": 28.3838,
+        "lng": 36.555
+      },
+      {
+        "id": "sa-abha",
+        "nameAr": "أبها",
+        "nameEn": "Abha",
+        "lat": 18.2164,
+        "lng": 42.5053
+      },
+      {
+        "id": "sa-khamis",
+        "nameAr": "خميس مشيط",
+        "nameEn": "Khamis Mushait",
+        "lat": 18.3,
+        "lng": 42.7333
+      },
+      {
+        "id": "sa-najran",
+        "nameAr": "نجران",
+        "nameEn": "Najran",
+        "lat": 17.4924,
+        "lng": 44.1277
+      },
+      {
+        "id": "sa-jazan",
+        "nameAr": "جازان",
+        "nameEn": "Jazan",
+        "lat": 16.8892,
+        "lng": 42.561
+      },
+      {
+        "id": "sa-hail",
+        "nameAr": "حائل",
+        "nameEn": "Hail",
+        "lat": 27.5114,
+        "lng": 41.7208
+      },
+      {
+        "id": "sa-buraidah",
+        "nameAr": "بريدة",
+        "nameEn": "Buraidah",
+        "lat": 26.326,
+        "lng": 43.975
+      },
+      {
+        "id": "sa-unaizah",
+        "nameAr": "عنيزة",
+        "nameEn": "Unaizah",
+        "lat": 26.087,
+        "lng": 43.975
+      },
+      {
+        "id": "sa-jubail",
+        "nameAr": "الجبيل",
+        "nameEn": "Jubail",
+        "lat": 27.0046,
+        "lng": 49.646
+      },
+      {
+        "id": "sa-yanbu",
+        "nameAr": "ينبع",
+        "nameEn": "Yanbu",
+        "lat": 24.0895,
+        "lng": 38.0618
+      },
+      {
+        "id": "sa-qatif",
+        "nameAr": "القطيف",
+        "nameEn": "Qatif",
+        "lat": 26.565,
+        "lng": 49.994
+      },
+      {
+        "id": "sa-sakaka",
+        "nameAr": "سكاكا",
+        "nameEn": "Sakaka",
+        "lat": 29.9697,
+        "lng": 40.2064
+      },
+      {
+        "id": "sa-arf",
+        "nameAr": "عرعر",
+        "nameEn": "Arar",
+        "lat": 30.9753,
+        "lng": 41.0381
+      },
+      {
+        "id": "sa-albahah",
+        "nameAr": "الباحة",
+        "nameEn": "Al Bahah",
+        "lat": 20.0129,
+        "lng": 41.4677
+      },
+      {
+        "id": "sa-hafar",
+        "nameAr": "حفر الباطن",
+        "nameEn": "Hafar Al Batin",
+        "lat": 28.4342,
+        "lng": 45.9708
+      },
+      {
+        "id": "sa-kharj",
+        "nameAr": "الخرج",
+        "nameEn": "Al Kharj",
+        "lat": 24.1556,
+        "lng": 47.312
+      },
+      {
+        "id": "sa-qassim",
+        "nameAr": "القصيم",
+        "nameEn": "Al Qassim",
+        "lat": 26.207,
+        "lng": 43.483
+      }
+    ],
+    "totalMatched": 1,
+    "queryFingerprint": "33b06203",
+    "activeFilters": {
+      "q": null,
+      "tags": [],
+      "category": null,
+      "city": null,
+      "partnerId": "e4ead73e-2a1b-4198-9385-c65abd8a5626",
+      "kind": null,
+      "variantSelections": {
+        "color": [
+          "black"
+        ],
+        "size": [
+          "s"
+        ]
+      },
+      "inStock": true,
+      "priceMinHalalas": null,
+      "priceMaxHalalas": null,
+      "durationMin": null,
+      "durationMax": null,
+      "placeModes": [],
+      "branchIds": [],
+      "availableOn": null,
+      "sort": "key"
+    },
+    "facets": {
+      "concern": [],
+      "category": [
+        {
+          "id": "clothes",
+          "count": 1
+        }
+      ],
+      "city": [
+        {
+          "id": "الرياض",
+          "count": 1
+        }
+      ],
+      "variant.color": [
+        {
+          "id": "black",
+          "count": 1
+        }
+      ],
+      "variant.size": [
+        {
+          "id": "s",
+          "count": 1
+        }
+      ],
+      "variant.volume": [],
+      "placeMode": [],
+      "branch": [],
+      "staleSelections": []
+    }
+  },
+  "andMiss": {
+    "items": [],
+    "nextCursor": null,
+    "availableCities": [
+      "الرياض"
+    ],
+    "saudiCities": [
+      {
+        "id": "sa-riyadh",
+        "nameAr": "الرياض",
+        "nameEn": "Riyadh",
+        "lat": 24.7136,
+        "lng": 46.6753
+      },
+      {
+        "id": "sa-jeddah",
+        "nameAr": "جدة",
+        "nameEn": "Jeddah",
+        "lat": 21.4858,
+        "lng": 39.1925
+      },
+      {
+        "id": "sa-makkah",
+        "nameAr": "مكة المكرمة",
+        "nameEn": "Makkah",
+        "lat": 21.3891,
+        "lng": 39.8579
+      },
+      {
+        "id": "sa-madinah",
+        "nameAr": "المدينة المنورة",
+        "nameEn": "Madinah",
+        "lat": 24.5247,
+        "lng": 39.5692
+      },
+      {
+        "id": "sa-dammam",
+        "nameAr": "الدمام",
+        "nameEn": "Dammam",
+        "lat": 26.4207,
+        "lng": 50.0888
+      },
+      {
+        "id": "sa-khobar",
+        "nameAr": "الخبر",
+        "nameEn": "Khobar",
+        "lat": 26.2172,
+        "lng": 50.1971
+      },
+      {
+        "id": "sa-dhahran",
+        "nameAr": "الظهران",
+        "nameEn": "Dhahran",
+        "lat": 26.2361,
+        "lng": 50.0393
+      },
+      {
+        "id": "sa-taif",
+        "nameAr": "الطائف",
+        "nameEn": "Taif",
+        "lat": 21.2703,
+        "lng": 40.4158
+      },
+      {
+        "id": "sa-tabuk",
+        "nameAr": "تبوك",
+        "nameEn": "Tabuk",
+        "lat": 28.3838,
+        "lng": 36.555
+      },
+      {
+        "id": "sa-abha",
+        "nameAr": "أبها",
+        "nameEn": "Abha",
+        "lat": 18.2164,
+        "lng": 42.5053
+      },
+      {
+        "id": "sa-khamis",
+        "nameAr": "خميس مشيط",
+        "nameEn": "Khamis Mushait",
+        "lat": 18.3,
+        "lng": 42.7333
+      },
+      {
+        "id": "sa-najran",
+        "nameAr": "نجران",
+        "nameEn": "Najran",
+        "lat": 17.4924,
+        "lng": 44.1277
+      },
+      {
+        "id": "sa-jazan",
+        "nameAr": "جازان",
+        "nameEn": "Jazan",
+        "lat": 16.8892,
+        "lng": 42.561
+      },
+      {
+        "id": "sa-hail",
+        "nameAr": "حائل",
+        "nameEn": "Hail",
+        "lat": 27.5114,
+        "lng": 41.7208
+      },
+      {
+        "id": "sa-buraidah",
+        "nameAr": "بريدة",
+        "nameEn": "Buraidah",
+        "lat": 26.326,
+        "lng": 43.975
+      },
+      {
+        "id": "sa-unaizah",
+        "nameAr": "عنيزة",
+        "nameEn": "Unaizah",
+        "lat": 26.087,
+        "lng": 43.975
+      },
+      {
+        "id": "sa-jubail",
+        "nameAr": "الجبيل",
+        "nameEn": "Jubail",
+        "lat": 27.0046,
+        "lng": 49.646
+      },
+      {
+        "id": "sa-yanbu",
+        "nameAr": "ينبع",
+        "nameEn": "Yanbu",
+        "lat": 24.0895,
+        "lng": 38.0618
+      },
+      {
+        "id": "sa-qatif",
+        "nameAr": "القطيف",
+        "nameEn": "Qatif",
+        "lat": 26.565,
+        "lng": 49.994
+      },
+      {
+        "id": "sa-sakaka",
+        "nameAr": "سكاكا",
+        "nameEn": "Sakaka",
+        "lat": 29.9697,
+        "lng": 40.2064
+      },
+      {
+        "id": "sa-arf",
+        "nameAr": "عرعر",
+        "nameEn": "Arar",
+        "lat": 30.9753,
+        "lng": 41.0381
+      },
+      {
+        "id": "sa-albahah",
+        "nameAr": "الباحة",
+        "nameEn": "Al Bahah",
+        "lat": 20.0129,
+        "lng": 41.4677
+      },
+      {
+        "id": "sa-hafar",
+        "nameAr": "حفر الباطن",
+        "nameEn": "Hafar Al Batin",
+        "lat": 28.4342,
+        "lng": 45.9708
+      },
+      {
+        "id": "sa-kharj",
+        "nameAr": "الخرج",
+        "nameEn": "Al Kharj",
+        "lat": 24.1556,
+        "lng": 47.312
+      },
+      {
+        "id": "sa-qassim",
+        "nameAr": "القصيم",
+        "nameEn": "Al Qassim",
+        "lat": 26.207,
+        "lng": 43.483
+      }
+    ],
+    "totalMatched": 0,
+    "queryFingerprint": "f097eec2",
+    "activeFilters": {
+      "q": null,
+      "tags": [],
+      "category": null,
+      "city": null,
+      "partnerId": "e4ead73e-2a1b-4198-9385-c65abd8a5626",
+      "kind": null,
+      "variantSelections": {
+        "color": [
+          "black"
+        ],
+        "size": [
+          "m"
+        ]
+      },
+      "inStock": true,
+      "priceMinHalalas": null,
+      "priceMaxHalalas": null,
+      "durationMin": null,
+      "durationMax": null,
+      "placeModes": [],
+      "branchIds": [],
+      "availableOn": null,
+      "sort": "key"
+    }
+  },
+  "clothesFacets": {
+    "items": [
+      {
+        "kind": "product",
+        "id": "8a8c09ff-6813-49df-b3cf-b3d0672254a7",
+        "partnerId": "e4ead73e-2a1b-4198-9385-c65abd8a5626",
+        "partnerType": "brand",
+        "partnerNameAr": "E3 Brand b0990f57",
+        "city": "الرياض",
+        "contactPhone": null,
+        "nameAr": "E3 Dress b0990f57",
+        "nameEn": "E3 Dress",
+        "descriptionAr": null,
+        "priceHalalas": 10000,
+        "priceLabel": "100 ر.س",
+        "externalUrl": "https://example.test/e3-b0990f57",
+        "stepAr": null,
+        "partnerEmoji": null,
+        "concernTags": [],
+        "category": "clothes",
+        "subcategory": "clothes.evening",
+        "profileId": "product.clothes",
+        "durationMin": null,
+        "purchaseMode": "external",
+        "stockQty": null,
+        "stockAvailable": true,
+        "deliveryFeeHalalas": null,
+        "optionsJson": null,
+        "variantsJson": [
+          {
+            "id": "e3-b0990f57-bs",
+            "available": true,
+            "selections": {
+              "size": "s",
+              "color": "black"
+            },
+            "priceHalalas": 10000
+          },
+          {
+            "id": "e3-b0990f57-wm",
+            "available": true,
+            "selections": {
+              "size": "m",
+              "color": "white"
+            },
+            "priceHalalas": 12000
+          }
+        ],
+        "bookingEnabled": false,
+        "payMode": null,
+        "availabilityPresent": false,
+        "matchedVariantIds": [
+          "e3-b0990f57-bs"
+        ],
+        "matchedVariants": [
+          {
+            "variantId": "e3-b0990f57-bs",
+            "priceHalalas": 10000,
+            "priceInherited": false,
+            "selections": {
+              "size": "s",
+              "color": "black"
+            }
+          }
+        ],
+        "media": []
+      }
+    ],
+    "nextCursor": null,
+    "availableCities": [
+      "الرياض"
+    ],
+    "saudiCities": [
+      {
+        "id": "sa-riyadh",
+        "nameAr": "الرياض",
+        "nameEn": "Riyadh",
+        "lat": 24.7136,
+        "lng": 46.6753
+      },
+      {
+        "id": "sa-jeddah",
+        "nameAr": "جدة",
+        "nameEn": "Jeddah",
+        "lat": 21.4858,
+        "lng": 39.1925
+      },
+      {
+        "id": "sa-makkah",
+        "nameAr": "مكة المكرمة",
+        "nameEn": "Makkah",
+        "lat": 21.3891,
+        "lng": 39.8579
+      },
+      {
+        "id": "sa-madinah",
+        "nameAr": "المدينة المنورة",
+        "nameEn": "Madinah",
+        "lat": 24.5247,
+        "lng": 39.5692
+      },
+      {
+        "id": "sa-dammam",
+        "nameAr": "الدمام",
+        "nameEn": "Dammam",
+        "lat": 26.4207,
+        "lng": 50.0888
+      },
+      {
+        "id": "sa-khobar",
+        "nameAr": "الخبر",
+        "nameEn": "Khobar",
+        "lat": 26.2172,
+        "lng": 50.1971
+      },
+      {
+        "id": "sa-dhahran",
+        "nameAr": "الظهران",
+        "nameEn": "Dhahran",
+        "lat": 26.2361,
+        "lng": 50.0393
+      },
+      {
+        "id": "sa-taif",
+        "nameAr": "الطائف",
+        "nameEn": "Taif",
+        "lat": 21.2703,
+        "lng": 40.4158
+      },
+      {
+        "id": "sa-tabuk",
+        "nameAr": "تبوك",
+        "nameEn": "Tabuk",
+        "lat": 28.3838,
+        "lng": 36.555
+      },
+      {
+        "id": "sa-abha",
+        "nameAr": "أبها",
+        "nameEn": "Abha",
+        "lat": 18.2164,
+        "lng": 42.5053
+      },
+      {
+        "id": "sa-khamis",
+        "nameAr": "خميس مشيط",
+        "nameEn": "Khamis Mushait",
+        "lat": 18.3,
+        "lng": 42.7333
+      },
+      {
+        "id": "sa-najran",
+        "nameAr": "نجران",
+        "nameEn": "Najran",
+        "lat": 17.4924,
+        "lng": 44.1277
+      },
+      {
+        "id": "sa-jazan",
+        "nameAr": "جازان",
+        "nameEn": "Jazan",
+        "lat": 16.8892,
+        "lng": 42.561
+      },
+      {
+        "id": "sa-hail",
+        "nameAr": "حائل",
+        "nameEn": "Hail",
+        "lat": 27.5114,
+        "lng": 41.7208
+      },
+      {
+        "id": "sa-buraidah",
+        "nameAr": "بريدة",
+        "nameEn": "Buraidah",
+        "lat": 26.326,
+        "lng": 43.975
+      },
+      {
+        "id": "sa-unaizah",
+        "nameAr": "عنيزة",
+        "nameEn": "Unaizah",
+        "lat": 26.087,
+        "lng": 43.975
+      },
+      {
+        "id": "sa-jubail",
+        "nameAr": "الجبيل",
+        "nameEn": "Jubail",
+        "lat": 27.0046,
+        "lng": 49.646
+      },
+      {
+        "id": "sa-yanbu",
+        "nameAr": "ينبع",
+        "nameEn": "Yanbu",
+        "lat": 24.0895,
+        "lng": 38.0618
+      },
+      {
+        "id": "sa-qatif",
+        "nameAr": "القطيف",
+        "nameEn": "Qatif",
+        "lat": 26.565,
+        "lng": 49.994
+      },
+      {
+        "id": "sa-sakaka",
+        "nameAr": "سكاكا",
+        "nameEn": "Sakaka",
+        "lat": 29.9697,
+        "lng": 40.2064
+      },
+      {
+        "id": "sa-arf",
+        "nameAr": "عرعر",
+        "nameEn": "Arar",
+        "lat": 30.9753,
+        "lng": 41.0381
+      },
+      {
+        "id": "sa-albahah",
+        "nameAr": "الباحة",
+        "nameEn": "Al Bahah",
+        "lat": 20.0129,
+        "lng": 41.4677
+      },
+      {
+        "id": "sa-hafar",
+        "nameAr": "حفر الباطن",
+        "nameEn": "Hafar Al Batin",
+        "lat": 28.4342,
+        "lng": 45.9708
+      },
+      {
+        "id": "sa-kharj",
+        "nameAr": "الخرج",
+        "nameEn": "Al Kharj",
+        "lat": 24.1556,
+        "lng": 47.312
+      },
+      {
+        "id": "sa-qassim",
+        "nameAr": "القصيم",
+        "nameEn": "Al Qassim",
+        "lat": 26.207,
+        "lng": 43.483
+      }
+    ],
+    "totalMatched": 1,
+    "queryFingerprint": "1b5939be",
+    "activeFilters": {
+      "q": null,
+      "tags": [],
+      "category": "clothes",
+      "city": null,
+      "partnerId": "e4ead73e-2a1b-4198-9385-c65abd8a5626",
+      "kind": null,
+      "variantSelections": {
+        "color": [
+          "black"
+        ]
+      },
+      "inStock": null,
+      "priceMinHalalas": null,
+      "priceMaxHalalas": null,
+      "durationMin": null,
+      "durationMax": null,
+      "placeModes": [],
+      "branchIds": [],
+      "availableOn": null,
+      "sort": "key"
+    },
+    "facets": {
+      "concern": [],
+      "category": [
+        {
+          "id": "clothes",
+          "count": 1
+        }
+      ],
+      "city": [
+        {
+          "id": "الرياض",
+          "count": 1
+        }
+      ],
+      "variant.color": [
+        {
+          "id": "black",
+          "count": 1
+        },
+        {
+          "id": "white",
+          "count": 1
+        }
+      ],
+      "variant.size": [
+        {
+          "id": "s",
+          "count": 1
+        }
+      ],
+      "variant.volume": [],
+      "placeMode": [],
+      "branch": [],
+      "staleSelections": []
+    }
+  },
+  "faceFacets": {
+    "items": [],
+    "nextCursor": null,
+    "availableCities": [
+      "الرياض"
+    ],
+    "saudiCities": [
+      {
+        "id": "sa-riyadh",
+        "nameAr": "الرياض",
+        "nameEn": "Riyadh",
+        "lat": 24.7136,
+        "lng": 46.6753
+      },
+      {
+        "id": "sa-jeddah",
+        "nameAr": "جدة",
+        "nameEn": "Jeddah",
+        "lat": 21.4858,
+        "lng": 39.1925
+      },
+      {
+        "id": "sa-makkah",
+        "nameAr": "مكة المكرمة",
+        "nameEn": "Makkah",
+        "lat": 21.3891,
+        "lng": 39.8579
+      },
+      {
+        "id": "sa-madinah",
+        "nameAr": "المدينة المنورة",
+        "nameEn": "Madinah",
+        "lat": 24.5247,
+        "lng": 39.5692
+      },
+      {
+        "id": "sa-dammam",
+        "nameAr": "الدمام",
+        "nameEn": "Dammam",
+        "lat": 26.4207,
+        "lng": 50.0888
+      },
+      {
+        "id": "sa-khobar",
+        "nameAr": "الخبر",
+        "nameEn": "Khobar",
+        "lat": 26.2172,
+        "lng": 50.1971
+      },
+      {
+        "id": "sa-dhahran",
+        "nameAr": "الظهران",
+        "nameEn": "Dhahran",
+        "lat": 26.2361,
+        "lng": 50.0393
+      },
+      {
+        "id": "sa-taif",
+        "nameAr": "الطائف",
+        "nameEn": "Taif",
+        "lat": 21.2703,
+        "lng": 40.4158
+      },
+      {
+        "id": "sa-tabuk",
+        "nameAr": "تبوك",
+        "nameEn": "Tabuk",
+        "lat": 28.3838,
+        "lng": 36.555
+      },
+      {
+        "id": "sa-abha",
+        "nameAr": "أبها",
+        "nameEn": "Abha",
+        "lat": 18.2164,
+        "lng": 42.5053
+      },
+      {
+        "id": "sa-khamis",
+        "nameAr": "خميس مشيط",
+        "nameEn": "Khamis Mushait",
+        "lat": 18.3,
+        "lng": 42.7333
+      },
+      {
+        "id": "sa-najran",
+        "nameAr": "نجران",
+        "nameEn": "Najran",
+        "lat": 17.4924,
+        "lng": 44.1277
+      },
+      {
+        "id": "sa-jazan",
+        "nameAr": "جازان",
+        "nameEn": "Jazan",
+        "lat": 16.8892,
+        "lng": 42.561
+      },
+      {
+        "id": "sa-hail",
+        "nameAr": "حائل",
+        "nameEn": "Hail",
+        "lat": 27.5114,
+        "lng": 41.7208
+      },
+      {
+        "id": "sa-buraidah",
+        "nameAr": "بريدة",
+        "nameEn": "Buraidah",
+        "lat": 26.326,
+        "lng": 43.975
+      },
+      {
+        "id": "sa-unaizah",
+        "nameAr": "عنيزة",
+        "nameEn": "Unaizah",
+        "lat": 26.087,
+        "lng": 43.975
+      },
+      {
+        "id": "sa-jubail",
+        "nameAr": "الجبيل",
+        "nameEn": "Jubail",
+        "lat": 27.0046,
+        "lng": 49.646
+      },
+      {
+        "id": "sa-yanbu",
+        "nameAr": "ينبع",
+        "nameEn": "Yanbu",
+        "lat": 24.0895,
+        "lng": 38.0618
+      },
+      {
+        "id": "sa-qatif",
+        "nameAr": "القطيف",
+        "nameEn": "Qatif",
+        "lat": 26.565,
+        "lng": 49.994
+      },
+      {
+        "id": "sa-sakaka",
+        "nameAr": "سكاكا",
+        "nameEn": "Sakaka",
+        "lat": 29.9697,
+        "lng": 40.2064
+      },
+      {
+        "id": "sa-arf",
+        "nameAr": "عرعر",
+        "nameEn": "Arar",
+        "lat": 30.9753,
+        "lng": 41.0381
+      },
+      {
+        "id": "sa-albahah",
+        "nameAr": "الباحة",
+        "nameEn": "Al Bahah",
+        "lat": 20.0129,
+        "lng": 41.4677
+      },
+      {
+        "id": "sa-hafar",
+        "nameAr": "حفر الباطن",
+        "nameEn": "Hafar Al Batin",
+        "lat": 28.4342,
+        "lng": 45.9708
+      },
+      {
+        "id": "sa-kharj",
+        "nameAr": "الخرج",
+        "nameEn": "Al Kharj",
+        "lat": 24.1556,
+        "lng": 47.312
+      },
+      {
+        "id": "sa-qassim",
+        "nameAr": "القصيم",
+        "nameEn": "Al Qassim",
+        "lat": 26.207,
+        "lng": 43.483
+      }
+    ],
+    "totalMatched": 0,
+    "queryFingerprint": "22b02f48",
+    "activeFilters": {
+      "q": null,
+      "tags": [],
+      "category": "face",
+      "city": null,
+      "partnerId": "e4ead73e-2a1b-4198-9385-c65abd8a5626",
+      "kind": null,
+      "variantSelections": {
+        "color": [
+          "black"
+        ]
+      },
+      "inStock": null,
+      "priceMinHalalas": null,
+      "priceMaxHalalas": null,
+      "durationMin": null,
+      "durationMax": null,
+      "placeModes": [],
+      "branchIds": [],
+      "availableOn": null,
+      "sort": "key"
+    },
+    "facets": {
+      "concern": [],
+      "category": [
+        {
+          "id": "clothes",
+          "count": 1
+        }
+      ],
+      "city": [],
+      "variant.color": [],
+      "variant.size": [],
+      "variant.volume": [],
+      "placeMode": [],
+      "branch": [],
+      "staleSelections": [
+        {
+          "field": "variant.color",
+          "value": "black"
+        }
+      ]
+    }
+  },
+  "subHit": {
+    "items": [
+      {
+        "kind": "product",
+        "id": "8a8c09ff-6813-49df-b3cf-b3d0672254a7",
+        "partnerId": "e4ead73e-2a1b-4198-9385-c65abd8a5626",
+        "partnerType": "brand",
+        "partnerNameAr": "E3 Brand b0990f57",
+        "city": "الرياض",
+        "contactPhone": null,
+        "nameAr": "E3 Dress b0990f57",
+        "nameEn": "E3 Dress",
+        "descriptionAr": null,
+        "priceHalalas": 10000,
+        "priceLabel": "100 ر.س",
+        "externalUrl": "https://example.test/e3-b0990f57",
+        "stepAr": null,
+        "partnerEmoji": null,
+        "concernTags": [],
+        "category": "clothes",
+        "subcategory": "clothes.evening",
+        "profileId": "product.clothes",
+        "durationMin": null,
+        "purchaseMode": "external",
+        "stockQty": null,
+        "stockAvailable": true,
+        "deliveryFeeHalalas": null,
+        "optionsJson": null,
+        "variantsJson": [
+          {
+            "id": "e3-b0990f57-bs",
+            "available": true,
+            "selections": {
+              "size": "s",
+              "color": "black"
+            },
+            "priceHalalas": 10000
+          },
+          {
+            "id": "e3-b0990f57-wm",
+            "available": true,
+            "selections": {
+              "size": "m",
+              "color": "white"
+            },
+            "priceHalalas": 12000
+          }
+        ],
+        "bookingEnabled": false,
+        "payMode": null,
+        "availabilityPresent": false,
+        "matchedVariantIds": [],
+        "matchedVariants": [],
+        "media": []
+      }
+    ],
+    "nextCursor": null,
+    "availableCities": [
+      "الرياض"
+    ],
+    "saudiCities": [
+      {
+        "id": "sa-riyadh",
+        "nameAr": "الرياض",
+        "nameEn": "Riyadh",
+        "lat": 24.7136,
+        "lng": 46.6753
+      },
+      {
+        "id": "sa-jeddah",
+        "nameAr": "جدة",
+        "nameEn": "Jeddah",
+        "lat": 21.4858,
+        "lng": 39.1925
+      },
+      {
+        "id": "sa-makkah",
+        "nameAr": "مكة المكرمة",
+        "nameEn": "Makkah",
+        "lat": 21.3891,
+        "lng": 39.8579
+      },
+      {
+        "id": "sa-madinah",
+        "nameAr": "المدينة المنورة",
+        "nameEn": "Madinah",
+        "lat": 24.5247,
+        "lng": 39.5692
+      },
+      {
+        "id": "sa-dammam",
+        "nameAr": "الدمام",
+        "nameEn": "Dammam",
+        "lat": 26.4207,
+        "lng": 50.0888
+      },
+      {
+        "id": "sa-khobar",
+        "nameAr": "الخبر",
+        "nameEn": "Khobar",
+        "lat": 26.2172,
+        "lng": 50.1971
+      },
+      {
+        "id": "sa-dhahran",
+        "nameAr": "الظهران",
+        "nameEn": "Dhahran",
+        "lat": 26.2361,
+        "lng": 50.0393
+      },
+      {
+        "id": "sa-taif",
+        "nameAr": "الطائف",
+        "nameEn": "Taif",
+        "lat": 21.2703,
+        "lng": 40.4158
+      },
+      {
+        "id": "sa-tabuk",
+        "nameAr": "تبوك",
+        "nameEn": "Tabuk",
+        "lat": 28.3838,
+        "lng": 36.555
+      },
+      {
+        "id": "sa-abha",
+        "nameAr": "أبها",
+        "nameEn": "Abha",
+        "lat": 18.2164,
+        "lng": 42.5053
+      },
+      {
+        "id": "sa-khamis",
+        "nameAr": "خميس مشيط",
+        "nameEn": "Khamis Mushait",
+        "lat": 18.3,
+        "lng": 42.7333
+      },
+      {
+        "id": "sa-najran",
+        "nameAr": "نجران",
+        "nameEn": "Najran",
+        "lat": 17.4924,
+        "lng": 44.1277
+      },
+      {
+        "id": "sa-jazan",
+        "nameAr": "جازان",
+        "nameEn": "Jazan",
+        "lat": 16.8892,
+        "lng": 42.561
+      },
+      {
+        "id": "sa-hail",
+        "nameAr": "حائل",
+        "nameEn": "Hail",
+        "lat": 27.5114,
+        "lng": 41.7208
+      },
+      {
+        "id": "sa-buraidah",
+        "nameAr": "بريدة",
+        "nameEn": "Buraidah",
+        "lat": 26.326,
+        "lng": 43.975
+      },
+      {
+        "id": "sa-unaizah",
+        "nameAr": "عنيزة",
+        "nameEn": "Unaizah",
+        "lat": 26.087,
+        "lng": 43.975
+      },
+      {
+        "id": "sa-jubail",
+        "nameAr": "الجبيل",
+        "nameEn": "Jubail",
+        "lat": 27.0046,
+        "lng": 49.646
+      },
+      {
+        "id": "sa-yanbu",
+        "nameAr": "ينبع",
+        "nameEn": "Yanbu",
+        "lat": 24.0895,
+        "lng": 38.0618
+      },
+      {
+        "id": "sa-qatif",
+        "nameAr": "القطيف",
+        "nameEn": "Qatif",
+        "lat": 26.565,
+        "lng": 49.994
+      },
+      {
+        "id": "sa-sakaka",
+        "nameAr": "سكاكا",
+        "nameEn": "Sakaka",
+        "lat": 29.9697,
+        "lng": 40.2064
+      },
+      {
+        "id": "sa-arf",
+        "nameAr": "عرعر",
+        "nameEn": "Arar",
+        "lat": 30.9753,
+        "lng": 41.0381
+      },
+      {
+        "id": "sa-albahah",
+        "nameAr": "الباحة",
+        "nameEn": "Al Bahah",
+        "lat": 20.0129,
+        "lng": 41.4677
+      },
+      {
+        "id": "sa-hafar",
+        "nameAr": "حفر الباطن",
+        "nameEn": "Hafar Al Batin",
+        "lat": 28.4342,
+        "lng": 45.9708
+      },
+      {
+        "id": "sa-kharj",
+        "nameAr": "الخرج",
+        "nameEn": "Al Kharj",
+        "lat": 24.1556,
+        "lng": 47.312
+      },
+      {
+        "id": "sa-qassim",
+        "nameAr": "القصيم",
+        "nameEn": "Al Qassim",
+        "lat": 26.207,
+        "lng": 43.483
+      }
+    ],
+    "totalMatched": 1,
+    "queryFingerprint": "a6b60fad",
+    "activeFilters": {
+      "q": null,
+      "tags": [],
+      "category": "clothes",
+      "city": null,
+      "partnerId": "e4ead73e-2a1b-4198-9385-c65abd8a5626",
+      "kind": null,
+      "variantSelections": {},
+      "inStock": null,
+      "priceMinHalalas": null,
+      "priceMaxHalalas": null,
+      "durationMin": null,
+      "durationMax": null,
+      "placeModes": [],
+      "branchIds": [],
+      "availableOn": null,
+      "sort": "key"
+    },
+    "facets": {
+      "concern": [],
+      "category": [
+        {
+          "id": "clothes",
+          "count": 1
+        }
+      ],
+      "city": [
+        {
+          "id": "الرياض",
+          "count": 1
+        }
+      ],
+      "variant.color": [
+        {
+          "id": "black",
+          "count": 1
+        },
+        {
+          "id": "white",
+          "count": 1
+        }
+      ],
+      "variant.size": [
+        {
+          "id": "m",
+          "count": 1
+        },
+        {
+          "id": "s",
+          "count": 1
+        }
+      ],
+      "variant.volume": [],
+      "placeMode": [],
+      "branch": [],
+      "staleSelections": []
+    }
+  },
+  "subMiss": {
+    "items": [],
+    "nextCursor": null,
+    "availableCities": [],
+    "saudiCities": [
+      {
+        "id": "sa-riyadh",
+        "nameAr": "الرياض",
+        "nameEn": "Riyadh",
+        "lat": 24.7136,
+        "lng": 46.6753
+      },
+      {
+        "id": "sa-jeddah",
+        "nameAr": "جدة",
+        "nameEn": "Jeddah",
+        "lat": 21.4858,
+        "lng": 39.1925
+      },
+      {
+        "id": "sa-makkah",
+        "nameAr": "مكة المكرمة",
+        "nameEn": "Makkah",
+        "lat": 21.3891,
+        "lng": 39.8579
+      },
+      {
+        "id": "sa-madinah",
+        "nameAr": "المدينة المنورة",
+        "nameEn": "Madinah",
+        "lat": 24.5247,
+        "lng": 39.5692
+      },
+      {
+        "id": "sa-dammam",
+        "nameAr": "الدمام",
+        "nameEn": "Dammam",
+        "lat": 26.4207,
+        "lng": 50.0888
+      },
+      {
+        "id": "sa-khobar",
+        "nameAr": "الخبر",
+        "nameEn": "Khobar",
+        "lat": 26.2172,
+        "lng": 50.1971
+      },
+      {
+        "id": "sa-dhahran",
+        "nameAr": "الظهران",
+        "nameEn": "Dhahran",
+        "lat": 26.2361,
+        "lng": 50.0393
+      },
+      {
+        "id": "sa-taif",
+        "nameAr": "الطائف",
+        "nameEn": "Taif",
+        "lat": 21.2703,
+        "lng": 40.4158
+      },
+      {
+        "id": "sa-tabuk",
+        "nameAr": "تبوك",
+        "nameEn": "Tabuk",
+        "lat": 28.3838,
+        "lng": 36.555
+      },
+      {
+        "id": "sa-abha",
+        "nameAr": "أبها",
+        "nameEn": "Abha",
+        "lat": 18.2164,
+        "lng": 42.5053
+      },
+      {
+        "id": "sa-khamis",
+        "nameAr": "خميس مشيط",
+        "nameEn": "Khamis Mushait",
+        "lat": 18.3,
+        "lng": 42.7333
+      },
+      {
+        "id": "sa-najran",
+        "nameAr": "نجران",
+        "nameEn": "Najran",
+        "lat": 17.4924,
+        "lng": 44.1277
+      },
+      {
+        "id": "sa-jazan",
+        "nameAr": "جازان",
+        "nameEn": "Jazan",
+        "lat": 16.8892,
+        "lng": 42.561
+      },
+      {
+        "id": "sa-hail",
+        "nameAr": "حائل",
+        "nameEn": "Hail",
+        "lat": 27.5114,
+        "lng": 41.7208
+      },
+      {
+        "id": "sa-buraidah",
+        "nameAr": "بريدة",
+        "nameEn": "Buraidah",
+        "lat": 26.326,
+        "lng": 43.975
+      },
+      {
+        "id": "sa-unaizah",
+        "nameAr": "عنيزة",
+        "nameEn": "Unaizah",
+        "lat": 26.087,
+        "lng": 43.975
+      },
+      {
+        "id": "sa-jubail",
+        "nameAr": "الجبيل",
+        "nameEn": "Jubail",
+        "lat": 27.0046,
+        "lng": 49.646
+      },
+      {
+        "id": "sa-yanbu",
+        "nameAr": "ينبع",
+        "nameEn": "Yanbu",
+        "lat": 24.0895,
+        "lng": 38.0618
+      },
+      {
+        "id": "sa-qatif",
+        "nameAr": "القطيف",
+        "nameEn": "Qatif",
+        "lat": 26.565,
+        "lng": 49.994
+      },
+      {
+        "id": "sa-sakaka",
+        "nameAr": "سكاكا",
+        "nameEn": "Sakaka",
+        "lat": 29.9697,
+        "lng": 40.2064
+      },
+      {
+        "id": "sa-arf",
+        "nameAr": "عرعر",
+        "nameEn": "Arar",
+        "lat": 30.9753,
+        "lng": 41.0381
+      },
+      {
+        "id": "sa-albahah",
+        "nameAr": "الباحة",
+        "nameEn": "Al Bahah",
+        "lat": 20.0129,
+        "lng": 41.4677
+      },
+      {
+        "id": "sa-hafar",
+        "nameAr": "حفر الباطن",
+        "nameEn": "Hafar Al Batin",
+        "lat": 28.4342,
+        "lng": 45.9708
+      },
+      {
+        "id": "sa-kharj",
+        "nameAr": "الخرج",
+        "nameEn": "Al Kharj",
+        "lat": 24.1556,
+        "lng": 47.312
+      },
+      {
+        "id": "sa-qassim",
+        "nameAr": "القصيم",
+        "nameEn": "Al Qassim",
+        "lat": 26.207,
+        "lng": 43.483
+      }
+    ],
+    "totalMatched": 0,
+    "queryFingerprint": "9e095f27",
+    "activeFilters": {
+      "q": null,
+      "tags": [],
+      "category": "clothes",
+      "city": null,
+      "partnerId": "e4ead73e-2a1b-4198-9385-c65abd8a5626",
+      "kind": null,
+      "variantSelections": {},
+      "inStock": null,
+      "priceMinHalalas": null,
+      "priceMaxHalalas": null,
+      "durationMin": null,
+      "durationMax": null,
+      "placeModes": [],
+      "branchIds": [],
+      "availableOn": null,
+      "sort": "key"
+    },
+    "facets": {
+      "concern": [],
+      "category": [],
+      "city": [],
+      "variant.color": [],
+      "variant.size": [],
+      "variant.volume": [],
+      "placeMode": [],
+      "branch": [],
+      "staleSelections": []
+    }
+  },
+  "wdBrowse": {
+    "items": [
+      {
+        "kind": "product",
+        "id": "8a8c09ff-6813-49df-b3cf-b3d0672254a7",
+        "partnerId": "e4ead73e-2a1b-4198-9385-c65abd8a5626",
+        "partnerType": "brand",
+        "partnerNameAr": "E3 Brand b0990f57",
+        "city": "الرياض",
+        "contactPhone": null,
+        "nameAr": "E3 Dress b0990f57",
+        "nameEn": "E3 Dress",
+        "descriptionAr": null,
+        "priceHalalas": 10000,
+        "priceLabel": "100 ر.س",
+        "externalUrl": "https://example.test/e3-b0990f57",
+        "stepAr": null,
+        "partnerEmoji": null,
+        "concernTags": [],
+        "category": "clothes",
+        "subcategory": "clothes.evening",
+        "profileId": "product.clothes",
+        "durationMin": null,
+        "purchaseMode": "external",
+        "stockQty": null,
+        "stockAvailable": true,
+        "deliveryFeeHalalas": null,
+        "optionsJson": null,
+        "variantsJson": [
+          {
+            "id": "e3-b0990f57-bs",
+            "available": true,
+            "selections": {
+              "size": "s",
+              "color": "black"
+            },
+            "priceHalalas": 10000
+          },
+          {
+            "id": "e3-b0990f57-wm",
+            "available": true,
+            "selections": {
+              "size": "m",
+              "color": "white"
+            },
+            "priceHalalas": 12000
+          }
+        ],
+        "bookingEnabled": false,
+        "payMode": null,
+        "availabilityPresent": false,
+        "matchedVariantIds": [
+          "e3-b0990f57-bs"
+        ],
+        "matchedVariants": [
+          {
+            "variantId": "e3-b0990f57-bs",
+            "priceHalalas": 10000,
+            "priceInherited": false,
+            "selections": {
+              "size": "s",
+              "color": "black"
+            }
+          }
+        ],
+        "media": []
+      }
+    ],
+    "nextCursor": null,
+    "availableCities": [
+      "الرياض"
+    ],
+    "saudiCities": [
+      {
+        "id": "sa-riyadh",
+        "nameAr": "الرياض",
+        "nameEn": "Riyadh",
+        "lat": 24.7136,
+        "lng": 46.6753
+      },
+      {
+        "id": "sa-jeddah",
+        "nameAr": "جدة",
+        "nameEn": "Jeddah",
+        "lat": 21.4858,
+        "lng": 39.1925
+      },
+      {
+        "id": "sa-makkah",
+        "nameAr": "مكة المكرمة",
+        "nameEn": "Makkah",
+        "lat": 21.3891,
+        "lng": 39.8579
+      },
+      {
+        "id": "sa-madinah",
+        "nameAr": "المدينة المنورة",
+        "nameEn": "Madinah",
+        "lat": 24.5247,
+        "lng": 39.5692
+      },
+      {
+        "id": "sa-dammam",
+        "nameAr": "الدمام",
+        "nameEn": "Dammam",
+        "lat": 26.4207,
+        "lng": 50.0888
+      },
+      {
+        "id": "sa-khobar",
+        "nameAr": "الخبر",
+        "nameEn": "Khobar",
+        "lat": 26.2172,
+        "lng": 50.1971
+      },
+      {
+        "id": "sa-dhahran",
+        "nameAr": "الظهران",
+        "nameEn": "Dhahran",
+        "lat": 26.2361,
+        "lng": 50.0393
+      },
+      {
+        "id": "sa-taif",
+        "nameAr": "الطائف",
+        "nameEn": "Taif",
+        "lat": 21.2703,
+        "lng": 40.4158
+      },
+      {
+        "id": "sa-tabuk",
+        "nameAr": "تبوك",
+        "nameEn": "Tabuk",
+        "lat": 28.3838,
+        "lng": 36.555
+      },
+      {
+        "id": "sa-abha",
+        "nameAr": "أبها",
+        "nameEn": "Abha",
+        "lat": 18.2164,
+        "lng": 42.5053
+      },
+      {
+        "id": "sa-khamis",
+        "nameAr": "خميس مشيط",
+        "nameEn": "Khamis Mushait",
+        "lat": 18.3,
+        "lng": 42.7333
+      },
+      {
+        "id": "sa-najran",
+        "nameAr": "نجران",
+        "nameEn": "Najran",
+        "lat": 17.4924,
+        "lng": 44.1277
+      },
+      {
+        "id": "sa-jazan",
+        "nameAr": "جازان",
+        "nameEn": "Jazan",
+        "lat": 16.8892,
+        "lng": 42.561
+      },
+      {
+        "id": "sa-hail",
+        "nameAr": "حائل",
+        "nameEn": "Hail",
+        "lat": 27.5114,
+        "lng": 41.7208
+      },
+      {
+        "id": "sa-buraidah",
+        "nameAr": "بريدة",
+        "nameEn": "Buraidah",
+        "lat": 26.326,
+        "lng": 43.975
+      },
+      {
+        "id": "sa-unaizah",
+        "nameAr": "عنيزة",
+        "nameEn": "Unaizah",
+        "lat": 26.087,
+        "lng": 43.975
+      },
+      {
+        "id": "sa-jubail",
+        "nameAr": "الجبيل",
+        "nameEn": "Jubail",
+        "lat": 27.0046,
+        "lng": 49.646
+      },
+      {
+        "id": "sa-yanbu",
+        "nameAr": "ينبع",
+        "nameEn": "Yanbu",
+        "lat": 24.0895,
+        "lng": 38.0618
+      },
+      {
+        "id": "sa-qatif",
+        "nameAr": "القطيف",
+        "nameEn": "Qatif",
+        "lat": 26.565,
+        "lng": 49.994
+      },
+      {
+        "id": "sa-sakaka",
+        "nameAr": "سكاكا",
+        "nameEn": "Sakaka",
+        "lat": 29.9697,
+        "lng": 40.2064
+      },
+      {
+        "id": "sa-arf",
+        "nameAr": "عرعر",
+        "nameEn": "Arar",
+        "lat": 30.9753,
+        "lng": 41.0381
+      },
+      {
+        "id": "sa-albahah",
+        "nameAr": "الباحة",
+        "nameEn": "Al Bahah",
+        "lat": 20.0129,
+        "lng": 41.4677
+      },
+      {
+        "id": "sa-hafar",
+        "nameAr": "حفر الباطن",
+        "nameEn": "Hafar Al Batin",
+        "lat": 28.4342,
+        "lng": 45.9708
+      },
+      {
+        "id": "sa-kharj",
+        "nameAr": "الخرج",
+        "nameEn": "Al Kharj",
+        "lat": 24.1556,
+        "lng": 47.312
+      },
+      {
+        "id": "sa-qassim",
+        "nameAr": "القصيم",
+        "nameEn": "Al Qassim",
+        "lat": 26.207,
+        "lng": 43.483
+      }
+    ],
+    "totalMatched": 1,
+    "queryFingerprint": "1b5939be",
+    "activeFilters": {
+      "q": null,
+      "tags": [],
+      "category": "clothes",
+      "city": null,
+      "partnerId": "e4ead73e-2a1b-4198-9385-c65abd8a5626",
+      "kind": null,
+      "variantSelections": {
+        "color": [
+          "black"
+        ]
+      },
+      "inStock": null,
+      "priceMinHalalas": null,
+      "priceMaxHalalas": null,
+      "durationMin": null,
+      "durationMax": null,
+      "placeModes": [],
+      "branchIds": [],
+      "availableOn": null,
+      "sort": "key"
+    }
+  },
+  "afterTaxBrowse": {
+    "items": [
+      {
+        "kind": "product",
+        "id": "8a8c09ff-6813-49df-b3cf-b3d0672254a7",
+        "partnerId": "e4ead73e-2a1b-4198-9385-c65abd8a5626",
+        "partnerType": "brand",
+        "partnerNameAr": "E3 Brand b0990f57",
+        "city": "الرياض",
+        "contactPhone": null,
+        "nameAr": "E3 Dress b0990f57",
+        "nameEn": "E3 Dress",
+        "descriptionAr": null,
+        "priceHalalas": 10000,
+        "priceLabel": "100 ر.س",
+        "externalUrl": "https://example.test/e3-b0990f57",
+        "stepAr": null,
+        "partnerEmoji": null,
+        "concernTags": [],
+        "category": "clothes",
+        "subcategory": "clothes.evening",
+        "profileId": "product.clothes",
+        "durationMin": null,
+        "purchaseMode": "external",
+        "stockQty": null,
+        "stockAvailable": true,
+        "deliveryFeeHalalas": null,
+        "optionsJson": null,
+        "variantsJson": [
+          {
+            "id": "e3-b0990f57-bs",
+            "available": true,
+            "selections": {
+              "size": "s",
+              "color": "black"
+            },
+            "priceHalalas": 10000
+          },
+          {
+            "id": "e3-b0990f57-wm",
+            "available": true,
+            "selections": {
+              "size": "m",
+              "color": "white"
+            },
+            "priceHalalas": 12000
+          }
+        ],
+        "bookingEnabled": false,
+        "payMode": null,
+        "availabilityPresent": false,
+        "matchedVariantIds": [
+          "e3-b0990f57-bs"
+        ],
+        "matchedVariants": [
+          {
+            "variantId": "e3-b0990f57-bs",
+            "priceHalalas": 10000,
+            "priceInherited": false,
+            "selections": {
+              "size": "s",
+              "color": "black"
+            }
+          }
+        ],
+        "media": []
+      }
+    ],
+    "nextCursor": null,
+    "availableCities": [
+      "الرياض"
+    ],
+    "saudiCities": [
+      {
+        "id": "sa-riyadh",
+        "nameAr": "الرياض",
+        "nameEn": "Riyadh",
+        "lat": 24.7136,
+        "lng": 46.6753
+      },
+      {
+        "id": "sa-jeddah",
+        "nameAr": "جدة",
+        "nameEn": "Jeddah",
+        "lat": 21.4858,
+        "lng": 39.1925
+      },
+      {
+        "id": "sa-makkah",
+        "nameAr": "مكة المكرمة",
+        "nameEn": "Makkah",
+        "lat": 21.3891,
+        "lng": 39.8579
+      },
+      {
+        "id": "sa-madinah",
+        "nameAr": "المدينة المنورة",
+        "nameEn": "Madinah",
+        "lat": 24.5247,
+        "lng": 39.5692
+      },
+      {
+        "id": "sa-dammam",
+        "nameAr": "الدمام",
+        "nameEn": "Dammam",
+        "lat": 26.4207,
+        "lng": 50.0888
+      },
+      {
+        "id": "sa-khobar",
+        "nameAr": "الخبر",
+        "nameEn": "Khobar",
+        "lat": 26.2172,
+        "lng": 50.1971
+      },
+      {
+        "id": "sa-dhahran",
+        "nameAr": "الظهران",
+        "nameEn": "Dhahran",
+        "lat": 26.2361,
+        "lng": 50.0393
+      },
+      {
+        "id": "sa-taif",
+        "nameAr": "الطائف",
+        "nameEn": "Taif",
+        "lat": 21.2703,
+        "lng": 40.4158
+      },
+      {
+        "id": "sa-tabuk",
+        "nameAr": "تبوك",
+        "nameEn": "Tabuk",
+        "lat": 28.3838,
+        "lng": 36.555
+      },
+      {
+        "id": "sa-abha",
+        "nameAr": "أبها",
+        "nameEn": "Abha",
+        "lat": 18.2164,
+        "lng": 42.5053
+      },
+      {
+        "id": "sa-khamis",
+        "nameAr": "خميس مشيط",
+        "nameEn": "Khamis Mushait",
+        "lat": 18.3,
+        "lng": 42.7333
+      },
+      {
+        "id": "sa-najran",
+        "nameAr": "نجران",
+        "nameEn": "Najran",
+        "lat": 17.4924,
+        "lng": 44.1277
+      },
+      {
+        "id": "sa-jazan",
+        "nameAr": "جازان",
+        "nameEn": "Jazan",
+        "lat": 16.8892,
+        "lng": 42.561
+      },
+      {
+        "id": "sa-hail",
+        "nameAr": "حائل",
+        "nameEn": "Hail",
+        "lat": 27.5114,
+        "lng": 41.7208
+      },
+      {
+        "id": "sa-buraidah",
+        "nameAr": "بريدة",
+        "nameEn": "Buraidah",
+        "lat": 26.326,
+        "lng": 43.975
+      },
+      {
+        "id": "sa-unaizah",
+        "nameAr": "عنيزة",
+        "nameEn": "Unaizah",
+        "lat": 26.087,
+        "lng": 43.975
+      },
+      {
+        "id": "sa-jubail",
+        "nameAr": "الجبيل",
+        "nameEn": "Jubail",
+        "lat": 27.0046,
+        "lng": 49.646
+      },
+      {
+        "id": "sa-yanbu",
+        "nameAr": "ينبع",
+        "nameEn": "Yanbu",
+        "lat": 24.0895,
+        "lng": 38.0618
+      },
+      {
+        "id": "sa-qatif",
+        "nameAr": "القطيف",
+        "nameEn": "Qatif",
+        "lat": 26.565,
+        "lng": 49.994
+      },
+      {
+        "id": "sa-sakaka",
+        "nameAr": "سكاكا",
+        "nameEn": "Sakaka",
+        "lat": 29.9697,
+        "lng": 40.2064
+      },
+      {
+        "id": "sa-arf",
+        "nameAr": "عرعر",
+        "nameEn": "Arar",
+        "lat": 30.9753,
+        "lng": 41.0381
+      },
+      {
+        "id": "sa-albahah",
+        "nameAr": "الباحة",
+        "nameEn": "Al Bahah",
+        "lat": 20.0129,
+        "lng": 41.4677
+      },
+      {
+        "id": "sa-hafar",
+        "nameAr": "حفر الباطن",
+        "nameEn": "Hafar Al Batin",
+        "lat": 28.4342,
+        "lng": 45.9708
+      },
+      {
+        "id": "sa-kharj",
+        "nameAr": "الخرج",
+        "nameEn": "Al Kharj",
+        "lat": 24.1556,
+        "lng": 47.312
+      },
+      {
+        "id": "sa-qassim",
+        "nameAr": "القصيم",
+        "nameEn": "Al Qassim",
+        "lat": 26.207,
+        "lng": 43.483
+      }
+    ],
+    "totalMatched": 1,
+    "queryFingerprint": "1b5939be",
+    "activeFilters": {
+      "q": null,
+      "tags": [],
+      "category": "clothes",
+      "city": null,
+      "partnerId": "e4ead73e-2a1b-4198-9385-c65abd8a5626",
+      "kind": null,
+      "variantSelections": {
+        "color": [
+          "black"
+        ]
+      },
+      "inStock": null,
+      "priceMinHalalas": null,
+      "priceMaxHalalas": null,
+      "durationMin": null,
+      "durationMax": null,
+      "placeModes": [],
+      "branchIds": [],
+      "availableOn": null,
+      "sort": "key"
+    },
+    "facets": {
+      "concern": [],
+      "category": [
+        {
+          "id": "clothes",
+          "count": 1
+        }
+      ],
+      "city": [
+        {
+          "id": "الرياض",
+          "count": 1
+        }
+      ],
+      "variant.color": [
+        {
+          "id": "black",
+          "count": 1
+        },
+        {
+          "id": "white",
+          "count": 1
+        }
+      ],
+      "variant.size": [
+        {
+          "id": "s",
+          "count": 1
+        }
+      ],
+      "variant.volume": [],
+      "placeMode": [],
+      "branch": [],
+      "staleSelections": []
+    }
+  }
+}

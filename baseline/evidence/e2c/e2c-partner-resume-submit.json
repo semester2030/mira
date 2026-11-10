@@ -1,0 +1,25 @@
+{
+  "partnerResume": {
+    "ok": true,
+    "id": "ee3388f7-2437-4b7f-af12-6074522b7069",
+    "mediaPicked": true,
+    "mediaCount": 1,
+    "reviewStatus": "in_review",
+    "contentStatus": "draft",
+    "statusUi": "تم التحويل والإرسال للمراجعة · service ee3388f7-2437-4b7f-af12-6074522b7069"
+  },
+  "resumeLive": {
+    "id": "ee3388f7-2437-4b7f-af12-6074522b7069",
+    "expectedId": "ee3388f7-2437-4b7f-af12-6074522b7069",
+    "mediaCount": 1,
+    "reviewStatus": "in_review",
+    "contentStatus": "draft",
+    "statusUi": "تم التحويل والإرسال للمراجعة · service ee3388f7-2437-4b7f-af12-6074522b7069"
+  },
+  "negatives": {
+    "resumeNegWrongState": false,
+    "resumeNegWrongId": false,
+    "resumeNegNoMedia": false
+  },
+  "partnerResumeOk": true
+}

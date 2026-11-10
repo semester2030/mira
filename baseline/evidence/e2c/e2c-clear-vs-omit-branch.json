@@ -1,0 +1,162 @@
+{
+  "beforeClearBranch": "7dcd3100-6487-430a-a906-efde1296c120",
+  "homeUi": {
+    "mode": "home",
+    "branchVal": "",
+    "branchMounted": true
+  },
+  "seedPatch": {
+    "seen": true,
+    "status": 200,
+    "body": {
+      "nameAr": "E2C-Svc-72df437e-عدّل",
+      "descriptionAr": "",
+      "priceHalalas": 8500,
+      "category": "hair",
+      "concernTags": [],
+      "nameEn": "E2C-Svc-72df437e",
+      "durationMin": 45,
+      "bookingEnabled": true,
+      "payMode": "pay_at_venue",
+      "placeMode": "branch",
+      "branchId": "7dcd3100-6487-430a-a906-efde1296c120",
+      "availabilityJson": {
+        "v": 2,
+        "timezone": "Asia/Riyadh",
+        "windows": [
+          {
+            "weekday": 0,
+            "startMin": 600,
+            "endMin": 840,
+            "capacity": 2,
+            "resourceId": ""
+          }
+        ],
+        "closedDates": [
+          "2026-11-19"
+        ],
+        "exceptions": [
+          {
+            "date": "2026-11-01",
+            "kind": "closed",
+            "resourceId": "room-a"
+          },
+          {
+            "date": "2026-11-08",
+            "kind": "closed",
+            "resourceId": "room-a"
+          },
+          {
+            "date": "2026-11-08",
+            "kind": "special",
+            "endMin": 720,
+            "capacity": 1,
+            "startMin": 660,
+            "resourceId": "room-a"
+          },
+          {
+            "date": "2026-11-12",
+            "kind": "special",
+            "endMin": 780,
+            "capacity": 1,
+            "startMin": 660
+          }
+        ]
+      },
+      "expectedRevision": 5
+    }
+  },
+  "clearPatch": {
+    "seen": true,
+    "status": 200,
+    "body": {
+      "nameAr": "E2C-Svc-72df437e-عدّل",
+      "descriptionAr": "",
+      "priceHalalas": 8500,
+      "category": "hair",
+      "concernTags": [],
+      "nameEn": "E2C-Svc-72df437e",
+      "durationMin": 45,
+      "bookingEnabled": true,
+      "payMode": "pay_at_venue",
+      "placeMode": "home",
+      "branchId": null,
+      "availabilityJson": {
+        "v": 2,
+        "timezone": "Asia/Riyadh",
+        "windows": [
+          {
+            "weekday": 0,
+            "startMin": 600,
+            "endMin": 840,
+            "capacity": 2,
+            "resourceId": ""
+          }
+        ],
+        "closedDates": [
+          "2026-11-19"
+        ],
+        "exceptions": [
+          {
+            "date": "2026-11-01",
+            "kind": "closed",
+            "resourceId": "room-a"
+          },
+          {
+            "date": "2026-11-08",
+            "kind": "closed",
+            "resourceId": "room-a"
+          },
+          {
+            "date": "2026-11-08",
+            "kind": "special",
+            "endMin": 720,
+            "capacity": 1,
+            "startMin": 660,
+            "resourceId": "room-a"
+          },
+          {
+            "date": "2026-11-12",
+            "kind": "special",
+            "endMin": 780,
+            "capacity": 1,
+            "startMin": 660
+          }
+        ]
+      },
+      "expectedRevision": 6
+    }
+  },
+  "afterClearBranch": null,
+  "afterClearPlace": "home",
+  "restoreAfterClear": {
+    "mode": "home",
+    "branchId": ""
+  },
+  "geomAfterSave": {
+    "viewportWidth": 1280,
+    "orbsTop": 0,
+    "basicsTop": 351.875,
+    "fieldsLeft": 394.859375,
+    "fieldsRight": 902,
+    "fieldsWidth": 507.140625,
+    "mediaLeft": 0,
+    "mediaRight": 374.859375,
+    "mediaWidth": 374.859375,
+    "mediaTop": 0,
+    "previewLeft": 0,
+    "previewRight": 374.859375,
+    "previewTop": 216.140625,
+    "previewWidth": 374.859375,
+    "measuredPreview": true,
+    "availTop": 800.90625,
+    "secondaryOpen": false,
+    "exceptionsOpen": false,
+    "weeklyEditOpen": false,
+    "sideBySidePx": 394.859375
+  },
+  "geomAfterSaveEval": {
+    "ok": true
+  },
+  "usedApiFallback": false
+}

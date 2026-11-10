@@ -172,11 +172,27 @@
         notify();
       };
       addRow.appendChild(addBtn);
+      if ((optionsState.variants || []).length) {
+        const clearVariantsBtn = document.createElement('button');
+        clearVariantsBtn.type = 'button';
+        clearVariantsBtn.className = 'btn btn-ghost';
+        clearVariantsBtn.setAttribute('data-testid', 'commerce-clear-variants');
+        clearVariantsBtn.textContent = 'مسح التركيبات';
+        clearVariantsBtn.onclick = () => {
+          optionsState.variants = [];
+          optionsState.clearingVariants = true;
+          optionsState.invalidVariantNote = '';
+          paintVariants();
+          notify();
+        };
+        addRow.appendChild(clearVariantsBtn);
+      }
       root.appendChild(addRow);
 
       const variantHost = document.createElement('div');
       variantHost.className = 'variant-list';
       variantHost.id = 'commerceVariantList';
+      variantHost.setAttribute('data-testid', 'commerce-variant-list');
       root.appendChild(variantHost);
       paintVariants();
     }
@@ -231,9 +247,19 @@
         err.textContent = optionsState.invalidVariantNote;
         list.appendChild(err);
       }
+      if (!(optionsState.variants || []).length) {
+        const empty = document.createElement('p');
+        empty.className = 'lead';
+        empty.setAttribute('data-testid', 'commerce-variants-empty');
+        empty.textContent = 'لا توجد تركيبات';
+        list.appendChild(empty);
+        return;
+      }
       (optionsState.variants || []).forEach((variant, index) => {
         const row = document.createElement('div');
         row.className = 'variant-row';
+        row.setAttribute('data-testid', 'commerce-variant-row');
+        row.setAttribute('data-variant-index', String(index));
         const title = document.createElement('strong');
         title.textContent =
           Object.values(variant.labels || {}).join(' / ') || 'تركيبة ' + (index + 1);
@@ -279,10 +305,12 @@
         const rm = document.createElement('button');
         rm.type = 'button';
         rm.className = 'btn btn-ghost';
-        rm.textContent = 'إزالة';
+        rm.setAttribute('data-testid', 'commerce-remove-variant');
+        rm.textContent = 'إزالة التركيبة';
         rm.onclick = () => {
           optionsState.variants.splice(index, 1);
-          paintVariants();
+          if (!optionsState.variants.length) optionsState.clearingVariants = true;
+          paint();
           notify();
         };
         row.appendChild(rm);

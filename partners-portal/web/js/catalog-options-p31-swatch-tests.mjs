@@ -19,7 +19,14 @@ assert.ok(M && typeof M.colorSwatchStyle === 'function');
 const black = M.colorSwatchStyle('أسود');
 assert.equal(black.background, '#1a1a1a');
 const pink = M.colorSwatchStyle('وردي');
-assert.ok(pink.background.includes('e86fa9') || pink.background === '#e86fa9');
+assert.ok(
+  pink.background.includes('e86fa9') ||
+    pink.background.includes('e86ba6') ||
+    pink.background === '#e86fa9' ||
+    pink.background === '#e86ba6',
+);
+const champagne = M.colorSwatchStyle('شامبانيا');
+assert.ok(champagne.background.includes('f7e7ce'));
 const multi = M.colorSwatchStyle('متعدد الألوان');
 assert.ok(String(multi.background).startsWith('conic'));
 

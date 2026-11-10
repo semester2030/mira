@@ -1,0 +1,17 @@
+{
+  "ok": true,
+  "key": "2026-11-01",
+  "chips": [
+    {
+      "text": "13:00 · room-b",
+      "res": "room-b"
+    },
+    {
+      "text": "09:00",
+      "res": null
+    }
+  ],
+  "closedDay": null,
+  "resourceClosed": "room-a",
+  "wholeDayText": false
+}

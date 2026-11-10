@@ -695,17 +695,24 @@
       let card = currentCard();
       if (!batch || !card) throw new Error('لا يوجد عرض');
 
+      // Optional test plugin (harness script only) — production portal does not ship sabotage tools.
+      if (
+        window.__MIRA_BULK_JOURNEY_PLUGIN__ &&
+        typeof window.__MIRA_BULK_JOURNEY_PLUGIN__.beforeEnsureVideoReady === 'function'
+      ) {
+        window.__MIRA_BULK_JOURNEY_PLUGIN__.beforeEnsureVideoReady(state);
+      }
       // Explicit replace / first upload wins over any existing ready media on the card.
       const pendingFile = state.file;
       if (!pendingFile) {
-        if (card.media && card.media.videoReady && card.media.videoMediaId) {
+        if (card.media && card.media.videoReady && card.media.videoMediaId && !state.replaceIntent) {
           state.mediaId = card.media.videoMediaId;
           state.uploadStatus = 'ready';
           state.uploadPct = 1;
           state.replaceIntent = false;
           return state.mediaId;
         }
-        if (state.mediaId && state.uploadStatus === 'ready') {
+        if (state.mediaId && state.uploadStatus === 'ready' && !state.replaceIntent) {
           return state.mediaId;
         }
         throw new Error('اختاري مقطع فيديو لهذا العرض');
@@ -1053,23 +1060,31 @@
         state.uploadPct = 0;
         // Do not clear state.mediaId yet — prior association remains until upload OK.
         stashPendingForCard(state.cardId);
-        setStatus('مقطع جاهز للرفع مع الحفظ — استبدال صريح');
+        // Render first so action buttons remount before status signals "ready to save"
+        // (tests/automation must not click a detached pre-render handle).
         render();
+        setStatus('مقطع جاهز للرفع مع الحفظ — استبدال صريح');
       });
 
-      const mediaBox = el('div', { className: 'bulk-journey-media' });
+      const mediaBox = el('div', {
+        className: 'bulk-journey-media',
+        'data-testid': 'journey-media',
+      });
       mediaBox.appendChild(pickBtn);
       mediaBox.appendChild(fileInput);
       if (state.previewUrl) {
-        mediaBox.appendChild(
-          el('video', {
-            src: state.previewUrl,
-            controls: true,
-            playsinline: true,
-            'data-testid': 'bulk-media-video',
-            style: 'width:100%;max-height:240px;margin-top:8px;background:#111',
-          }),
-        );
+        const vidAttrs = {
+          src: state.previewUrl,
+          controls: true,
+          playsinline: true,
+          'data-testid': 'bulk-media-video',
+          'data-card-id': state.cardId || '',
+          'data-preview-gen': String(state.previewGen || 0),
+          style: 'width:100%;max-height:240px;margin-top:8px;background:#111',
+        };
+        if (state.mediaId && !state.file) vidAttrs['data-media-id'] = state.mediaId;
+        if (state.file) vidAttrs['data-local-file'] = '1';
+        mediaBox.appendChild(el('video', vidAttrs));
       }
       if (state.previewError) {
         mediaBox.appendChild(
@@ -1335,6 +1350,7 @@
         el('button', {
           type: 'button',
           className: 'btn btn-primary',
+          'data-testid': 'bulk-save-append',
           text: 'حفظ وإضافة مقطع آخر',
           disabled: state.busy,
           onClick: async () => {
@@ -1391,6 +1407,7 @@
         el('button', {
           type: 'button',
           className: 'btn btn-ghost',
+          'data-testid': 'bulk-save-review',
           text: 'حفظ ومراجعة المجموعة',
           disabled: state.busy,
           onClick: async () => {
@@ -1672,10 +1689,22 @@
       }
     }
 
+    if (
+      window.__MIRA_BULK_JOURNEY_PLUGIN__ &&
+      typeof window.__MIRA_BULK_JOURNEY_PLUGIN__.bind === 'function'
+    ) {
+      window.__MIRA_BULK_JOURNEY_PLUGIN__.bind({
+        state: state,
+        fileKey: fileKey,
+        clearLocalPreviewObject: clearLocalPreviewObject,
+        render: render,
+      });
+    }
+
     render();
   }
 
-  window.MiraGroupJourney = { open: openGroupJourney };
+  window.MiraGroupJourney = { open: openGroupJourney, __testHooks: null };
 
   // Take over bulk entry — keep legacy under openLegacy for tests.
   if (window.MiraBulkAdd && typeof window.MiraBulkAdd.open === 'function') {

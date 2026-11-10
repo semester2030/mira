@@ -173,14 +173,16 @@ class MarketplaceRepositoryImpl implements MarketplaceRepository, DiscoverCatalo
               query.categoryId,
             );
       final effective = query.withoutInapplicableFilters();
+      final categoryParam = effective.lane == null
+          ? (effective.categoryId == null || effective.categoryId == 'all' ? null : effective.categoryId)
+          : (selected == null || selected.matchesAll || selected.venueType != null ? null : selected.storedKey);
       final remote = await _api.browseCatalog(
         text: effective.text,
         partnerType: effective.lane == null ? effective.partnerType : null,
         city: effective.city,
         partnerId: effective.partnerId,
-        category: effective.lane == null
-            ? (effective.categoryId == null || effective.categoryId == 'all' ? null : effective.categoryId)
-            : (selected == null || selected.matchesAll || selected.venueType != null ? null : selected.storedKey),
+        category: categoryParam,
+        subcategory: effective.subcategoryId,
         lane: effective.lane?.name,
         venue: selected?.venueType,
         requireVisual: effective.requireVisual,

@@ -1,3 +1,5 @@
+import 'dart:async';
+
 import 'package:flutter/material.dart';
 import 'package:flutter/scheduler.dart';
 import 'package:share_plus/share_plus.dart';
@@ -17,6 +19,7 @@ import '../../data/discover_favorite_client.dart';
 import '../../data/discover_catalog_facets.dart';
 import '../../data/discover_catalog_query.dart';
 import '../../data/discover_match_scope.dart';
+import '../../data/elegance_taxonomy_source.dart';
 import '../../data/saudi_cities.dart';
 import '../../domain/catalog_offer_media.dart';
 import '../../domain/catalog_product_options.dart';
@@ -69,11 +72,15 @@ class DiscoverPresentationScreen extends StatefulWidget {
   final CommerceClient? commerce;
 
   @override
-  State<DiscoverPresentationScreen> createState() => _DiscoverPresentationScreenState();
+  DiscoverPresentationScreenState createState() => DiscoverPresentationScreenState();
 }
 
-class _DiscoverPresentationScreenState extends State<DiscoverPresentationScreen>
+class DiscoverPresentationScreenState extends State<DiscoverPresentationScreen>
     with WidgetsBindingObserver, RouteAware {
+  /// Same path as app-resume refresh; exposed for E3 open-screen acceptance only.
+  @visibleForTesting
+  Future<void> debugRefreshTaxonomyWhileOpen() => _refreshTaxonomyAndFeedWhileOpen();
+
   late List<PresentationSlide> _slides;
   late final PresentationVideoPort _video;
   late final bool _ownsVideo;
@@ -99,6 +106,8 @@ class _DiscoverPresentationScreenState extends State<DiscoverPresentationScreen>
   int? _totalMatched;
   CatalogTransport? _transport;
   int _category = 0;
+  /// When set (e.g. `clothes`), the elegance rail shows subcategory circles instead of roots.
+  String? _eleganceDrillParentId;
   DiscoverFeedController? _feed;
   DiscoverFeedPhase _phase = DiscoverFeedPhase.ready;
   bool _adsFailed = false;
@@ -125,6 +134,16 @@ class _DiscoverPresentationScreenState extends State<DiscoverPresentationScreen>
       _ownsFavorites = widget.favorites == null;
       _favorites!.addListener(_onFavorites);
       _favorites!.refresh();
+      // E3: load shared elegance taxonomy so circles/filters use backend ids.
+      if (widget.lane == DiscoverLane.elegance || widget.lane == null) {
+        EleganceTaxonomySource.ensureLoaded().then((_) async {
+          if (!mounted) return;
+          setState(() {});
+          // Revalidate definitionsVersion after first paint / subsequent resumes.
+          await EleganceTaxonomySource.reloadIfStale();
+          if (mounted) setState(() {});
+        });
+      }
     } else {
       _slides = widget.slides!;
     }
@@ -219,6 +238,35 @@ class _DiscoverPresentationScreenState extends State<DiscoverPresentationScreen>
       _video.pause();
     }
     _bump();
+    // E3: real in-session refresh — resume revalidates taxonomy then reloads the open feed.
+    if (foreground && _catalogDriven && (widget.lane == DiscoverLane.elegance || widget.lane == null)) {
+      unawaited(_refreshTaxonomyAndFeedWhileOpen());
+    }
+  }
+
+  Future<void> _refreshTaxonomyAndFeedWhileOpen() async {
+    await EleganceTaxonomySource.reloadIfStale();
+    if (!mounted || _released) return;
+    var next = _query;
+    final sub = next.subcategoryId;
+    if (sub != null && sub.isNotEmpty) {
+      final stillActive = EleganceTaxonomySource.nodes.any((n) => n.id == sub && n.active);
+      if (!stillActive) {
+        // Incompatible subcategory filter is cleared; keep compatible root category.
+        next = next.copyWith(clearSubcategory: true);
+        _eleganceDrillParentId = null;
+      }
+    }
+    final cat = next.categoryId;
+    if (cat != null && cat.isNotEmpty && cat != 'all') {
+      final catActive = EleganceTaxonomySource.nodes.any((n) => n.id == cat && n.active);
+      if (!catActive) {
+        next = next.copyWith(clearCategory: true, clearSubcategory: true);
+        _eleganceDrillParentId = null;
+      }
+    }
+    setState(() {});
+    await _reload(next);
   }
 
   @override
@@ -251,6 +299,7 @@ class _DiscoverPresentationScreenState extends State<DiscoverPresentationScreen>
       setState(() {
         _phase = next.phase;
         _query = next.query;
+        _reconcileEleganceDrill(next.query);
         _slides = DiscoverBrowseSequence.apply(
           shown: _slides,
           offers: next.offers.map(DiscoverPresentationCatalog.slideForOffer).toList(),
@@ -290,6 +339,28 @@ class _DiscoverPresentationScreenState extends State<DiscoverPresentationScreen>
         }
         if (_page >= _slides.length) _page = 0;
       });
+      // E3: strip incompatible facet selections reported by the server (same contract as portal).
+      final stale = next.facets.staleSelections;
+      if (stale.isNotEmpty) {
+        final dropColors = stale.where((s) => s.field == 'variant.color').map((s) => s.value).toSet();
+        final dropSizes = stale.where((s) => s.field == 'variant.size').map((s) => s.value).toSet();
+        final dropVolumes = stale.where((s) => s.field == 'variant.volume').map((s) => s.value).toSet();
+        final nextColors = next.query.colors.where((c) => !dropColors.contains(c)).toList();
+        final nextSizes = next.query.sizes.where((c) => !dropSizes.contains(c)).toList();
+        final nextVolumes = next.query.volumes.where((c) => !dropVolumes.contains(c)).toList();
+        if (nextColors.length != next.query.colors.length ||
+            nextSizes.length != next.query.sizes.length ||
+            nextVolumes.length != next.query.volumes.length) {
+          _reload(
+            next.query.copyWith(
+              colors: nextColors,
+              sizes: nextSizes,
+              volumes: nextVolumes,
+            ),
+          );
+          return;
+        }
+      }
       if (_vertical.hasClients && (_vertical.page?.round() ?? 0) != _page) {
         _vertical.jumpToPage(_page);
       }
@@ -339,16 +410,47 @@ class _DiscoverPresentationScreenState extends State<DiscoverPresentationScreen>
 
   Future<void> _reload(DiscoverCatalogQuery query) => _feed?.load(query) ?? Future.value();
 
+  /// Clears subcategory drill UI so rail circles match a root-level / empty query.
+  void _clearEleganceDrill({bool notify = true}) {
+    if (_eleganceDrillParentId == null && _category == 0) return;
+    void apply() {
+      _eleganceDrillParentId = null;
+      _category = 0;
+    }
+
+    if (notify && mounted) {
+      setState(apply);
+    } else {
+      apply();
+    }
+  }
+
+  /// Keep drill parent only when query still targets that category / subcategory.
+  void _reconcileEleganceDrill(DiscoverCatalogQuery query) {
+    final parent = _eleganceDrillParentId;
+    if (parent == null) return;
+    final cat = query.categoryId;
+    final sub = query.subcategoryId;
+    final stillOnParent = cat == parent || (sub != null && sub.startsWith('$parent.'));
+    if (!stillOnParent || cat == null || cat == 'all') {
+      _eleganceDrillParentId = null;
+    }
+  }
+
   int _categoryIndexFor(PresentationSlide slide) {
-    final items = DiscoverCatalogQueryEngine.forFamily(widget.lane == null ? _familyOf(slide) : _activeFamily());
-    final sameContext = widget.lane != null || _query.partnerType == null || _query.partnerType == _familyType(slide);
-    final id = sameContext ? (_query.categoryId ?? 'all') : 'all';
-    final index = items.indexWhere((item) => item.id == id);
-    return index < 0 ? 0 : index;
+    return _categoryIndex(_query);
   }
 
   int _categoryIndex(DiscoverCatalogQuery query) {
-    final items = DiscoverCatalogQueryEngine.forFamily(_queryFamily(query));
+    final items = _railDefs();
+    if (_eleganceDrillParentId != null) {
+      if (query.subcategoryId != null && query.subcategoryId!.isNotEmpty) {
+        final sub = items.indexWhere((item) => item.id == query.subcategoryId);
+        if (sub >= 0) return sub;
+      }
+      final allIdx = items.indexWhere((item) => item.id != '__back__' && item.matchesAll);
+      return allIdx >= 0 ? allIdx : (_category.clamp(0, items.isEmpty ? 0 : items.length - 1));
+    }
     final index = items.indexWhere((item) => item.id == (query.categoryId ?? 'all'));
     return index < 0 ? 0 : index;
   }
@@ -378,19 +480,98 @@ class _DiscoverPresentationScreenState extends State<DiscoverPresentationScreen>
     return 'product';
   }
 
+  List<DiscoverCategoryDef> _eleganceRailDefs() {
+    final parent = _eleganceDrillParentId;
+    if (parent != null && parent.isNotEmpty) {
+      final kids = EleganceTaxonomySource.childrenOf(parent);
+      if (kids.isNotEmpty) {
+        return [
+          const DiscoverCategoryDef(
+            id: '__back__',
+            label: 'رجوع',
+            family: 'elegance',
+            storedKey: '',
+            matchesAll: true,
+            browseOnly: true,
+            imageKey: 'elegance.all',
+          ),
+          ...kids,
+        ];
+      }
+    }
+    return DiscoverCatalogQueryEngine.forFamily('elegance');
+  }
+
+  List<DiscoverCategoryDef> _railDefs() {
+    if (widget.lane == DiscoverLane.elegance || _activeFamily() == 'elegance') {
+      return _eleganceRailDefs();
+    }
+    return DiscoverCatalogQueryEngine.forFamily(_activeFamily());
+  }
+
   void _onCategory(int index) {
     final family = _activeFamily();
-    final items = DiscoverCatalogQueryEngine.forFamily(family);
+    final items = _railDefs();
     if (index < 0 || index >= items.length) return;
     final selected = items[index];
+    setState(() => _category = index);
+
+    // E3 drill: back to root circles.
+    if (selected.id == '__back__') {
+      _clearEleganceDrill();
+      _reload(
+        _query.copyWith(
+          lane: widget.lane ?? DiscoverLane.elegance,
+          requireVisual: true,
+          clearCategory: true,
+          clearSubcategory: true,
+          clearType: true,
+          // Keep filters; server staleSelections + _onFeed prune incompatible ones.
+        ),
+      );
+      return;
+    }
+
+    // E3 drill: root with children replaces rail with subtypes (ids from taxonomy, not labels).
+    if ((widget.lane == DiscoverLane.elegance || family == 'elegance') &&
+        _eleganceDrillParentId == null &&
+        selected.parentId == null &&
+        !selected.matchesAll) {
+      final kids = EleganceTaxonomySource.childrenOf(selected.id);
+      if (kids.isNotEmpty) {
+        _eleganceDrillParentId = selected.id;
+        setState(() => _category = 0);
+        _reload(
+          _query.copyWith(
+            lane: DiscoverLane.elegance,
+            requireVisual: true,
+            categoryId: selected.storedKey.isEmpty ? selected.id : selected.storedKey,
+            clearSubcategory: true,
+            clearType: true,
+          ),
+        );
+        return;
+      }
+    }
+
+    final rootCategoryId = _eleganceDrillParentId ??
+        (selected.parentId != null
+            ? selected.parentId
+            : (selected.matchesAll ? null : (selected.storedKey.isEmpty ? selected.id : selected.storedKey)));
+    final nextSubcategory =
+        selected.parentId != null && !selected.matchesAll && !selected.browseOnly ? selected.id : null;
+
     if (widget.lane != null) {
       _reload(
         _query.copyWith(
           lane: widget.lane,
           requireVisual: true,
-          categoryId: selected.matchesAll ? null : selected.id,
-          clearCategory: selected.matchesAll,
+          categoryId: rootCategoryId,
+          subcategoryId: nextSubcategory,
+          clearCategory: rootCategoryId == null || rootCategoryId == 'all',
+          clearSubcategory: nextSubcategory == null,
           clearType: true,
+          // Compatible filters retained; incompatible pruned via facets.staleSelections.
         ),
       );
       return;
@@ -405,6 +586,7 @@ class _DiscoverPresentationScreenState extends State<DiscoverPresentationScreen>
         partnerType: selected.matchesAll ? _query.partnerType : type,
         categoryId: selected.id,
         clearCategory: selected.matchesAll,
+        clearSubcategory: true,
       ),
     );
   }
@@ -672,9 +854,11 @@ class _DiscoverPresentationScreenState extends State<DiscoverPresentationScreen>
     if (!mounted || type == null) return;
     if (type == 'clear') {
       _search.clear();
+      _clearEleganceDrill();
       await _reload(DiscoverCatalogQuery(lane: widget.lane, requireVisual: widget.lane != null));
     } else if (type == 'all') {
-      await _reload(_query.copyWith(clearType: true, clearCategory: true).withoutInapplicableFilters());
+      _clearEleganceDrill();
+      await _reload(_query.copyWith(clearType: true, clearCategory: true, clearSubcategory: true).withoutInapplicableFilters());
     } else if (type == 'nearby') {
       // Device GPS is not wired via a location plugin in this build — fall back to explicit city center.
       // Label must never claim the city midpoint is the customer's live location.
@@ -1130,6 +1314,7 @@ class _DiscoverPresentationScreenState extends State<DiscoverPresentationScreen>
                             const SizedBox(height: 12),
                             TextButton(onPressed: () {
                               _search.clear();
+                              _clearEleganceDrill();
                               _reload(DiscoverCatalogQuery(lane: widget.lane, requireVisual: widget.lane != null));
                             }, child: const Text('مسح البحث والفلاتر')),
                           ],
@@ -1181,7 +1366,7 @@ class _DiscoverPresentationScreenState extends State<DiscoverPresentationScreen>
                           provenance: null,
                           categoryLabels: widget.lane == null
                               ? null
-                              : DiscoverCatalogQueryEngine.forFamily(_activeFamily()).map((item) => item.label).toList(),
+                              : _railDefs().map((item) => item.label).toList(),
                           categoryAssetFamily: switch (widget.lane) {
                             DiscoverLane.elegance => 'elegance',
                             DiscoverLane.beauty => 'beauty',
@@ -1203,13 +1388,16 @@ class _DiscoverPresentationScreenState extends State<DiscoverPresentationScreen>
                 );
               },
             ),
-                if (_catalogDriven && _slides.isNotEmpty)
+                // E3: keep taxonomy rail visible even while the visual feed is empty
+                // so definitionsVersion / label bumps remain on-screen and tappable.
+                if (_catalogDriven)
                   Positioned(
                     left: 12,
                     right: 12,
                     bottom: MediaQuery.paddingOf(context).bottom + 8,
                     child: DiscoverCategoryRail(
-                      labels: DiscoverCatalogQueryEngine.forFamily(_activeFamily()).map((item) => item.label).toList(),
+                      labels: _railDefs().map((item) => item.label).toList(),
+                      ids: _railDefs().map((item) => item.id).toList(),
                       assetFamily: switch (widget.lane) {
                         DiscoverLane.elegance => 'elegance',
                         DiscoverLane.beauty => 'beauty',
@@ -1794,7 +1982,7 @@ class _PresentationPageState extends State<_PresentationPage> {
     final kind = widget.slide.product != null ? 'product' : 'service';
     final initial = widget.slide.matchedVariantSelections;
     final matchedIds = widget.slide.matchedVariantIds;
-    final parent = context.findAncestorStateOfType<_DiscoverPresentationScreenState>();
+    final parent = context.findAncestorStateOfType<DiscoverPresentationScreenState>();
     Navigator.of(context).push(
       MaterialPageRoute<void>(
         builder: (_) => CatalogRecordScope.page(

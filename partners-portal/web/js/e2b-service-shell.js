@@ -1,0 +1,698 @@
+/**
+ * E2 ج — صدفة محرر الخدمات وفق المرجع البصري الثاني (ref-2).
+ * دوائر رئيسية/فرعية، تبديل منتج↔خدمة، عمود إتاحة/وسائط، عزل عن وضع المنتجات.
+ */
+(function () {
+  const ORB_BY_SERVICE_CAT = {
+    hair: 'assets/e2b-ref/orbs/hair.png',
+    skin: 'assets/e2b-ref/orbs/skin.png',
+    makeup: 'assets/e2b-ref/orbs/makeup.png',
+    nails: 'assets/e2b-ref/orbs/nails.png',
+    care: 'assets/e2b-ref/orbs/spa.png',
+    spa: 'assets/e2b-ref/orbs/spa.png',
+    laser: 'assets/e2b-ref/orbs/body.png',
+    teeth: 'assets/e2b-ref/orbs/face.png',
+    face: 'assets/e2b-ref/orbs/face.png',
+    body: 'assets/e2b-ref/orbs/body.png',
+  };
+
+  const LABEL_BY_ID = {
+    hair: 'الشعر',
+    skin: 'البشرة',
+    makeup: 'المكياج',
+    nails: 'الأظافر',
+    care: 'السبا',
+    spa: 'السبا',
+    laser: 'الليزر',
+    teeth: 'الأسنان',
+  };
+
+  /** Preferred display order matching ref-2 (RTL visual: hair … spa). */
+  const MAIN_ORDER = ['hair', 'makeup', 'nails', 'skin', 'care', 'spa', 'laser', 'teeth'];
+
+  let selectedCatId = null;
+  let selectedSubId = null;
+  let syncingFromForm = false;
+  let formWired = false;
+  let composeBusy = false;
+  let activeFormId = null;
+
+  function el(tag, attrs, kids) {
+    const n = document.createElement(tag);
+    if (attrs) {
+      Object.keys(attrs).forEach((k) => {
+        if (k === 'text') n.textContent = attrs[k];
+        else if (k === 'className') n.className = attrs[k];
+        else if (k.slice(0, 2) === 'on' && typeof attrs[k] === 'function')
+          n.addEventListener(k.slice(2).toLowerCase(), attrs[k]);
+        else n.setAttribute(k, attrs[k]);
+      });
+    }
+    (kids || []).forEach((c) => c && n.appendChild(c));
+    return n;
+  }
+
+  function resolveForm() {
+    if (activeFormId) {
+      const f = document.getElementById(activeFormId);
+      if (f) return f;
+    }
+    const svc = document.getElementById('serviceForm');
+    if (svc && svc.querySelector('input[name="nameAr"]')) return svc;
+    return document.getElementById('catalogForm');
+  }
+
+  function clearProductModeArtifacts() {
+    document.body.classList.remove('e2b-product-mode');
+    // Hide product-only circle hosts while in service mode to prevent bleed.
+    const prodMains = document.getElementById('e2bMainCircles');
+    const prodSubs = document.getElementById('e2bSubCircles');
+    if (prodMains) prodMains.hidden = true;
+    if (prodSubs) prodSubs.hidden = true;
+    // Reveal service orb hosts when entering service mode.
+    const svcMains = document.getElementById('e2cMainCircles');
+    const svcSubs = document.getElementById('e2cSubCircles');
+    const svcHost = document.querySelector('[data-testid="e2c-orb-host"]');
+    if (svcMains) svcMains.hidden = false;
+    if (svcSubs) svcSubs.hidden = false;
+    if (svcHost) svcHost.hidden = false;
+    const serviceSection = document.getElementById('serviceSection');
+    if (serviceSection) serviceSection.hidden = false;
+    const catalogSection = document.getElementById('catalogSection');
+    // Developer keeps both sections in DOM; hide product catalog while editing services.
+    if (catalogSection && document.body.dataset.partnerType === 'developer') {
+      catalogSection.classList.add('e2c-inactive-editor');
+      catalogSection.hidden = true;
+      catalogSection.setAttribute('aria-hidden', 'true');
+    }
+  }
+
+  function hideServiceHosts() {
+    const svcMains = document.getElementById('e2cMainCircles');
+    const svcSubs = document.getElementById('e2cSubCircles');
+    const svcHost = document.querySelector('[data-testid="e2c-orb-host"]');
+    if (svcMains) svcMains.hidden = true;
+    if (svcSubs) svcSubs.hidden = true;
+    if (svcHost) svcHost.hidden = true;
+    // Hide entire service forms' orb/compose when product mode is active.
+    document.querySelectorAll('#serviceForm [data-testid="e2c-orb-host"], #catalogForm [data-testid="e2c-orb-host"]').forEach((n) => {
+      n.hidden = true;
+    });
+    document.querySelectorAll('#serviceForm [data-testid="e2c-editor-compose"], #catalogForm [data-testid="e2c-editor-compose"]').forEach((n) => {
+      // Keep DOM for data, but hide from view so inactive editor orbs/fields do not paint.
+      n.setAttribute('data-e2c-inactive', '1');
+      n.hidden = true;
+    });
+    const serviceSection = document.getElementById('serviceSection');
+    if (serviceSection && document.body.dataset.partnerType === 'developer') {
+      serviceSection.hidden = true;
+    }
+    const catalogSection = document.getElementById('catalogSection');
+    if (catalogSection) {
+      catalogSection.classList.remove('e2c-inactive-editor');
+      if (document.body.dataset.partnerType === 'developer') {
+        catalogSection.hidden = false;
+        catalogSection.removeAttribute('aria-hidden');
+      }
+    }
+  }
+
+  function restoreProductHosts() {
+    const prodMains = document.getElementById('e2bMainCircles');
+    const prodSubs = document.getElementById('e2bSubCircles');
+    if (prodMains) prodMains.hidden = false;
+    if (prodSubs) prodSubs.hidden = false;
+    hideServiceHosts();
+  }
+
+  function ensureKindToggle(host) {
+    let toggle = host.querySelector('[data-testid="e2c-kind-toggle"]');
+    if (toggle) return toggle;
+    toggle = el('div', { className: 'e2c-kind-toggle', 'data-testid': 'e2c-kind-toggle' });
+    const productBtn = el(
+      'button',
+      {
+        type: 'button',
+        className: 'e2c-kind-btn',
+        'data-kind': 'product',
+        'data-testid': 'e2c-kind-product',
+        text: 'منتج',
+        onClick: () => {
+          const go = document.getElementById('goProduct');
+          if (go) go.click();
+        },
+      },
+    );
+    const serviceBtn = el(
+      'button',
+      {
+        type: 'button',
+        className: 'e2c-kind-btn is-selected',
+        'data-kind': 'service',
+        'data-testid': 'e2c-kind-service',
+        text: 'خدمة',
+      },
+    );
+    toggle.append(productBtn, serviceBtn);
+    host.insertBefore(toggle, host.firstChild);
+    return toggle;
+  }
+
+  function ensureWorkspace(form) {
+    if (!form) return null;
+    const section =
+      form.id === 'serviceForm'
+        ? document.getElementById('serviceSection')
+        : document.getElementById('catalogSection');
+    if (!section) return null;
+    section.classList.add('e2b-panel', 'e2b-split', 'e2c-service-panel');
+    document.body.classList.add('e2b-service-mode');
+    clearProductModeArtifacts();
+
+    let host = form.querySelector('[data-testid="e2c-orb-host"]');
+    if (!host) {
+      host = el('div', {
+        className: 'e2c-orb-host',
+        'data-testid': 'e2c-orb-host',
+        'data-section-role': 'service-orbs',
+      });
+      ensureKindToggle(host);
+      host.append(
+        el('p', { className: 'e2b-cat-heading', text: 'تصنيف الخدمة' }),
+        el('div', {
+          className: 'e2b-circle-list e2b-circle-list-horizontal',
+          id: 'e2cMainCircles',
+          'data-testid': 'e2c-main-circles',
+        }),
+        el('p', { className: 'e2b-cat-heading e2c-sub-heading', text: 'النوع الفرعي' }),
+        el('div', {
+          className: 'e2b-circle-list e2b-circle-list-horizontal e2c-sub-circles',
+          id: 'e2cSubCircles',
+          'data-testid': 'e2c-sub-circles',
+        }),
+      );
+      form.insertBefore(host, form.firstChild);
+    } else {
+      ensureKindToggle(host);
+      if (!host.querySelector('#e2cSubCircles')) {
+        host.append(
+          el('p', { className: 'e2b-cat-heading e2c-sub-heading', text: 'النوع الفرعي' }),
+          el('div', {
+            className: 'e2b-circle-list e2b-circle-list-horizontal e2c-sub-circles',
+            id: 'e2cSubCircles',
+            'data-testid': 'e2c-sub-circles',
+          }),
+        );
+      }
+    }
+
+    // Mark list so editor-focus can hide the long list above the form (UX01).
+    const list =
+      document.getElementById('serviceList') ||
+      document.getElementById('catalogList');
+    if (list) {
+      list.setAttribute('data-testid', 'e2c-list-panel');
+      list.classList.add('e2c-list-panel');
+    }
+
+    // Right rail for provider (salon/clinic) and developer service surfaces — not product-only.
+    ensureServiceRail(section);
+    const nav = document.getElementById('e2bSideNav') || document.getElementById('e2cSideNav');
+    if (nav) {
+      let svcLink = nav.querySelector('[data-nav="services"]');
+      if (!svcLink) {
+        svcLink = el('a', {
+          href: '#' + section.id,
+          className: 'e2b-nav-link is-active',
+          'data-nav': 'services',
+          'data-testid': 'e2c-nav-services',
+          text: 'خدماتي',
+          onClick: (e) => {
+            e.preventDefault();
+            const go = document.getElementById('goService');
+            if (go) go.click();
+          },
+        });
+        nav.insertBefore(svcLink, nav.firstChild);
+      }
+      nav.querySelectorAll('.e2b-nav-link').forEach((a) => {
+        a.classList.toggle('is-active', a.getAttribute('data-nav') === 'services');
+      });
+    }
+    return form;
+  }
+
+  function ensureServiceRail(section) {
+    if (!section) return;
+    if (document.getElementById('e2bSideNav') || document.getElementById('e2cSideNav')) return;
+    // Build a dedicated service rail when product workspace is absent (salon/clinic).
+    let workspace = document.getElementById('e2cWorkspace');
+    if (workspace) return;
+    workspace = el('div', {
+      className: 'e2b-workspace e2c-workspace',
+      id: 'e2cWorkspace',
+      'data-testid': 'e2c-workspace',
+    });
+    const rail = el('aside', { className: 'e2b-rail e2c-rail', 'aria-label': 'تنقل البوابة', 'data-testid': 'e2c-side-rail' }, [
+      el('img', {
+        className: 'e2b-brand-mark',
+        src: 'assets/e2b-ref/mira-logo-icon.png',
+        alt: 'ميرا',
+        width: '56',
+        height: '56',
+      }),
+      el('p', { className: 'e2b-rail-title', text: 'ميرا · شركاء' }),
+      el('nav', { className: 'e2b-nav', id: 'e2cSideNav', 'data-testid': 'e2c-side-nav' }, [
+        el('a', {
+          href: '#' + section.id,
+          className: 'e2b-nav-link is-active',
+          'data-nav': 'services',
+          'data-testid': 'e2c-nav-services',
+          text: 'خدماتي',
+        }),
+        el('a', { href: '#editorDraftsSection', className: 'e2b-nav-link', 'data-nav': 'drafts', text: 'المسودات' }),
+        el('a', {
+          href: '#commerceSection',
+          className: 'e2b-nav-link',
+          'data-nav': 'bookings',
+          text: 'الحجوزات',
+        }),
+        el('a', {
+          href: '#partnerSettingsSection',
+          className: 'e2b-nav-link',
+          'data-nav': 'settings',
+          text: 'الإعدادات',
+        }),
+      ]),
+    ]);
+    const main = el('div', { className: 'e2b-main e2c-main', id: 'e2cMain' });
+    const parent = section.parentNode;
+    if (!parent) return;
+    parent.insertBefore(workspace, section);
+    workspace.append(rail, main);
+    main.appendChild(section);
+    section.classList.add('e2b-panel', 'e2b-split', 'e2c-service-panel');
+  }
+
+  function categoriesFromForm(form) {
+    const sel = form && form.querySelector('select[name="category"]');
+    if (!sel) return [];
+    const cats = Array.from(sel.options)
+      .filter((o) => o.value)
+      .map((o) => ({
+        id: o.value,
+        labelAr: LABEL_BY_ID[o.value] || o.textContent || o.value,
+        orb: ORB_BY_SERVICE_CAT[o.value] || ORB_BY_SERVICE_CAT.care,
+      }));
+    cats.sort((a, b) => {
+      const ia = MAIN_ORDER.indexOf(a.id);
+      const ib = MAIN_ORDER.indexOf(b.id);
+      return (ia < 0 ? 99 : ia) - (ib < 0 ? 99 : ib);
+    });
+    return cats;
+  }
+
+  function templatesForCategory(catId) {
+    const api = window.ServiceTemplates;
+    if (!api) return [];
+    if (typeof api.forPartner === 'function') {
+      const partnerType = (document.body.dataset.partnerType || 'salon').replace(/^developer$/, 'salon');
+      try {
+        return api.forPartner(partnerType === 'brand' ? 'salon' : partnerType, catId) || [];
+      } catch (_) {
+        /* fall through */
+      }
+    }
+    if (Array.isArray(api.templates)) {
+      return api.templates.filter((t) => t.category === catId);
+    }
+    return [];
+  }
+
+  function paintSubOrbs(form, catId) {
+    const host = document.getElementById('e2cSubCircles');
+    if (!host) return;
+    host.replaceChildren();
+    const templates = templatesForCategory(catId);
+    if (!templates.length) {
+      host.appendChild(
+        el('p', {
+          className: 'muted',
+          'data-testid': 'e2c-subs-empty',
+          text: 'لا أنواع فرعية ظاهرة — اختاري قالبًا من قسم القالب إن وُجد.',
+        }),
+      );
+      return;
+    }
+    templates.forEach((t) => {
+      const orbUrl = ORB_BY_SERVICE_CAT[catId] || ORB_BY_SERVICE_CAT.care;
+      const orb = el('span', { className: 'e2b-circle-orb' });
+      orb.style.backgroundImage = "url('" + orbUrl + "')";
+      const btn = el(
+        'button',
+        {
+          type: 'button',
+          className: 'e2b-circle' + (selectedSubId === t.id ? ' is-selected' : ''),
+          'data-testid': 'e2c-sub-circle',
+          'data-template-id': t.id,
+          'data-category-id': catId,
+          onClick: () => selectSub(t.id, { fromCircle: true }),
+        },
+        [orb, el('span', { className: 'e2b-circle-label', text: t.label || t.suggestedName || t.id })],
+      );
+      host.appendChild(btn);
+    });
+  }
+
+  function selectSub(templateId, opts) {
+    opts = opts || {};
+    selectedSubId = templateId || null;
+    document.querySelectorAll('#e2cSubCircles .e2b-circle').forEach((b) => {
+      b.classList.toggle('is-selected', b.getAttribute('data-template-id') === templateId);
+    });
+    const form = resolveForm();
+    if (!form || !templateId || opts.fromSync) return;
+    const sel = form.querySelector('select[name="serviceTemplateId"]');
+    if (sel && sel.value !== templateId) {
+      syncingFromForm = true;
+      sel.value = templateId;
+      sel.dispatchEvent(new Event('change', { bubbles: true }));
+      syncingFromForm = false;
+    }
+  }
+
+  function paintOrbs(form) {
+    const host = document.getElementById('e2cMainCircles');
+    if (!host || !form) return;
+    const cats = categoriesFromForm(form);
+    host.replaceChildren();
+    if (!cats.length) {
+      host.appendChild(
+        el('p', {
+          className: 'lead',
+          'data-testid': 'e2c-orbs-empty',
+          text: 'لا توجد تصنيفات خدمة في النموذج.',
+        }),
+      );
+      return;
+    }
+    cats.forEach((cat) => {
+      const orb = el('span', { className: 'e2b-circle-orb' });
+      orb.style.backgroundImage = "url('" + cat.orb + "')";
+      // Guard: nails must never use accessories/jewelry asset.
+      if (cat.id === 'nails' && /accessories/.test(cat.orb)) {
+        orb.style.backgroundImage = "url('assets/e2b-ref/orbs/nails.png')";
+      }
+      const btn = el(
+        'button',
+        {
+          type: 'button',
+          className: 'e2b-circle' + (selectedCatId === cat.id ? ' is-selected' : ''),
+          'data-testid': 'e2c-main-circle',
+          'data-category-id': cat.id,
+          'data-orb-src': cat.id === 'nails' ? 'assets/e2b-ref/orbs/nails.png' : cat.orb,
+          'aria-pressed': selectedCatId === cat.id ? 'true' : 'false',
+          onClick: () => selectCategory(cat.id, { fromCircle: true }),
+        },
+        [orb, el('span', { className: 'e2b-circle-label', text: cat.labelAr })],
+      );
+      if (selectedCatId === cat.id) {
+        btn.appendChild(el('span', { className: 'e2c-check', text: '✓' }));
+      }
+      host.appendChild(btn);
+    });
+    if (selectedCatId) paintSubOrbs(form, selectedCatId);
+  }
+
+  function selectCategory(catId, opts) {
+    opts = opts || {};
+    const same = selectedCatId === catId;
+    selectedCatId = catId || null;
+    if (!same && !opts.preserveSub) selectedSubId = null;
+    document.querySelectorAll('#e2cMainCircles .e2b-circle').forEach((b) => {
+      const on = b.getAttribute('data-category-id') === catId;
+      b.classList.toggle('is-selected', on);
+      b.setAttribute('aria-pressed', on ? 'true' : 'false');
+      const mark = b.querySelector('.e2c-check');
+      if (on && !mark) b.appendChild(el('span', { className: 'e2c-check', text: '✓' }));
+      else if (!on && mark) mark.remove();
+    });
+    const form = resolveForm();
+    const catSel = form && form.querySelector('select[name="category"]');
+    if (catSel && catId && catSel.value !== catId && !opts.fromSync) {
+      syncingFromForm = true;
+      catSel.value = catId;
+      catSel.dispatchEvent(new Event('change', { bubbles: true }));
+      syncingFromForm = false;
+    }
+    if (form && catId) paintSubOrbs(form, catId);
+  }
+
+  function syncFromForm(formOverride) {
+    if (syncingFromForm) return;
+    const form = formOverride || resolveForm();
+    if (!form) return;
+    activeFormId = form.id;
+    ensureWorkspace(form);
+    paintOrbs(form);
+    const catSel = form.querySelector('select[name="category"]');
+    const catId = catSel && catSel.value;
+    if (catId) selectCategory(catId, { fromSync: true, preserveSub: true });
+    else selectedCatId = null;
+    const tmpl = form.querySelector('select[name="serviceTemplateId"]');
+    if (tmpl && tmpl.value) selectSub(tmpl.value, { fromSync: true });
+  }
+
+  function composeServiceLayout(formOverride) {
+    const form = formOverride || resolveForm();
+    if (!form || !document.body.classList.contains('e2b-service-mode')) return;
+    if (composeBusy) return;
+    composeBusy = true;
+    try {
+      ensureWorkspace(form);
+      function byRole(role) {
+        return form.querySelector('[data-section-role="' + role + '"]');
+      }
+      const mediaSection =
+        byRole('main-media') || form.querySelector('[data-testid="catalog-main-media-section"]');
+      const basics = byRole('basics');
+      if (!basics) return;
+
+      let compose = form.querySelector('[data-testid="e2c-editor-compose"]');
+      let fields = form.querySelector('[data-testid="e2c-editor-fields"]');
+      let mediaCol = form.querySelector('[data-testid="e2c-editor-media"]');
+      const fieldOrder = ['service-orbs', 'basics', 'place', 'template', 'secondary'];
+      // Preview card beside basics first; compact availability below (not above pushing preview down).
+      const sideOrder = ['main-media', 'availability'];
+      const advancedRoles = ['detail-media', 'details', 'commerce'];
+      let advanced = form.querySelector('[data-testid="e2c-advanced-sections"]');
+      if (!advanced) {
+        advanced = el('details', {
+          className: 'e2c-secondary-details',
+          'data-testid': 'e2c-advanced-sections',
+          'data-section-role': 'advanced',
+        }, [el('summary', { text: 'وسائط التفاصيل والوسوم والإعدادات الإضافية' })]);
+      }
+      const afterCompose = ['preview-publish', 'editor-actions'];
+      // Skip reshuffle only when roles are in exact approved index order (contains ≠ position).
+      if (compose && fields && mediaCol) {
+        const roleKids = Array.from(fields.children).filter(
+          (n) => n.getAttribute && n.getAttribute('data-section-role'),
+        );
+        const presentFieldRoles = fieldOrder.filter((role) => !!byRole(role));
+        const fieldsOk =
+          presentFieldRoles.length > 0 &&
+          presentFieldRoles.every((role, i) => roleKids[i] === byRole(role));
+        const sideStack = mediaCol.querySelector('[data-testid="e2c-side-stack"]');
+        const avail = byRole('availability');
+        const sideKids = sideStack
+          ? Array.from(sideStack.children).filter(
+              (n) =>
+                (n.getAttribute && n.getAttribute('data-section-role')) ||
+                n.getAttribute('data-testid') === 'catalog-main-media-section' ||
+                n.classList.contains('e2b-media-stage'),
+            )
+          : [];
+        const mediaIdx = mediaSection ? sideKids.indexOf(mediaSection) : -1;
+        const availIdx = avail ? sideKids.indexOf(avail) : -1;
+        const sideOk =
+          !!sideStack &&
+          (!mediaSection || sideKids.includes(mediaSection)) &&
+          (mediaIdx === 0 || (!mediaSection && sideKids[0] === avail)) &&
+          (availIdx < 0 || mediaIdx < 0 || mediaIdx < availIdx);
+        const advancedOk = advanced.parentElement === form && compose.nextElementSibling === advanced &&
+          advancedRoles.every((role) => !byRole(role) || byRole(role).parentElement === advanced);
+        const noContentBeforeCompose = Array.from(form.children).every((node) =>
+          node === compose || !node.hasAttribute('data-section-role') ||
+          !!(compose.compareDocumentPosition(node) & Node.DOCUMENT_POSITION_FOLLOWING));
+        const alreadyOrdered = fieldsOk && sideOk && advancedOk && noContentBeforeCompose &&
+          form.contains(compose) && fields.parentElement === compose;
+        if (alreadyOrdered && !compose.hidden) {
+          compose.setAttribute('data-e2c-compose-stable', '1');
+          compose.setAttribute(
+            'data-e2c-field-order',
+            roleKids.map((n) => n.getAttribute('data-section-role')).join(','),
+          );
+          return;
+        }
+      }
+      if (!compose || !fields || !mediaCol) {
+        compose = el('div', {
+          className: 'e2b-editor-compose e2c-editor-compose',
+          'data-testid': 'e2c-editor-compose',
+        });
+        fields = el('div', { className: 'e2b-editor-fields', 'data-testid': 'e2c-editor-fields' });
+        mediaCol = el('div', { className: 'e2b-editor-media e2c-side-tools', 'data-testid': 'e2c-editor-media' });
+        compose.append(fields, mediaCol);
+      }
+
+      const actionsBar = form.querySelector('[data-testid="e2b-editor-actions"]');
+      const save = document.getElementById(form.id + '-save');
+      const ctaNodes = actionsBar
+        ? [actionsBar]
+        : [save, form.querySelector('[data-testid="catalog-submit-review"]')].filter(Boolean);
+
+      fieldOrder.forEach((role) => {
+        const node = byRole(role);
+        if (node) fields.appendChild(node);
+      });
+      // Side column: media preview first (beside fields), then compact availability.
+      let sideStack = mediaCol.querySelector('[data-testid="e2c-side-stack"]');
+      if (!sideStack) {
+        sideStack = el('div', { className: 'e2c-side-stack', 'data-testid': 'e2c-side-stack' });
+        mediaCol.appendChild(sideStack);
+      }
+      sideOrder.forEach((role) => {
+        const node = role === 'main-media' ? mediaSection : byRole(role);
+        if (node) {
+          if (role === 'main-media') node.classList.add('e2b-media-stage');
+          sideStack.appendChild(node);
+        }
+      });
+      compose.hidden = false;
+      compose.removeAttribute('data-e2c-inactive');
+      compose.setAttribute('data-e2c-compose-stable', '1');
+
+      const tail = [];
+      afterCompose.forEach((role) => {
+        const node = byRole(role);
+        if (node) tail.push(node);
+      });
+
+      // Move existing nodes, preserving inputs, event handlers and selected files.
+      advancedRoles.forEach((role) => {
+        const node = byRole(role);
+        if (node && node.parentElement !== advanced) advanced.appendChild(node);
+      });
+      // Place the editor before legacy role sections; status/help nodes may stay above it.
+      const firstSection = Array.from(form.children).find((node) =>
+        node === compose || node.hasAttribute('data-section-role'));
+      if (firstSection !== compose) form.insertBefore(compose, firstSection || null);
+      compose.after(advanced);
+      tail.forEach((n) => form.appendChild(n));
+      ctaNodes.forEach((n) => form.appendChild(n));
+    } finally {
+      composeBusy = false;
+    }
+  }
+
+  function enableServiceMode(formId) {
+    activeFormId = formId || activeFormId || 'catalogForm';
+    document.body.classList.add('e2b-service-mode');
+    clearProductModeArtifacts();
+    const form = resolveForm();
+    if (form) {
+      ensureWorkspace(form);
+      syncFromForm(form);
+      composeServiceLayout(form);
+    }
+  }
+
+  function disableServiceMode() {
+    document.body.classList.remove('e2b-service-mode', 'e2b-editor-focus');
+    restoreProductHosts();
+    activeFormId = null;
+    selectedCatId = null;
+    selectedSubId = null;
+  }
+
+  function focusEditor(formId) {
+    enableServiceMode(formId);
+    document.body.classList.add('e2b-editor-focus');
+    const form = resolveForm();
+    if (form) form.scrollIntoView({ behavior: 'smooth', block: 'start' });
+  }
+
+  function wireFormSync() {
+    if (formWired) return;
+    formWired = true;
+    document.addEventListener(
+      'change',
+      (e) => {
+        const t = e.target;
+        if (!t || !t.name) return;
+        if (!document.body.classList.contains('e2b-service-mode')) return;
+        const form = t.closest('form');
+        if (!form || (form.id !== 'catalogForm' && form.id !== 'serviceForm')) return;
+        if (form.id !== activeFormId && activeFormId) return;
+        if (syncingFromForm) return;
+        if (t.name === 'category' || t.name === 'serviceTemplateId') {
+          activeFormId = form.id;
+          syncFromForm(form);
+          // Re-assert approved layout after category/template swaps (no parallel form).
+          composeServiceLayout(form);
+        }
+      },
+      true,
+    );
+  }
+
+  function init() {
+    wireFormSync();
+    const go = document.getElementById('goService');
+    if (go && go.dataset.e2cWired !== '1') {
+      go.dataset.e2cWired = '1';
+      go.addEventListener(
+        'click',
+        () => {
+          if (window.MiraE2BProductShell && typeof MiraE2BProductShell.disableProductMode === 'function') {
+            try {
+              MiraE2BProductShell.disableProductMode();
+            } catch (_) {
+              /* optional */
+            }
+          }
+          document.body.classList.remove('e2b-product-mode');
+          const developer = (document.body.dataset.partnerType || '') === 'developer';
+          focusEditor(developer ? 'serviceForm' : 'catalogForm');
+        },
+        true,
+      );
+    }
+    const goProd = document.getElementById('goProduct');
+    if (goProd && goProd.dataset.e2cIsolate !== '1') {
+      goProd.dataset.e2cIsolate = '1';
+      goProd.addEventListener(
+        'click',
+        () => {
+          disableServiceMode();
+        },
+        true,
+      );
+    }
+  }
+
+  window.MiraE2BServiceShell = {
+    init: init,
+    enableServiceMode: enableServiceMode,
+    disableServiceMode: disableServiceMode,
+    focusEditor: focusEditor,
+    syncFromForm: syncFromForm,
+    composeServiceLayout: composeServiceLayout,
+    selectCategory: selectCategory,
+    selectSub: selectSub,
+  };
+
+  if (document.readyState === 'loading') document.addEventListener('DOMContentLoaded', init);
+  else init();
+})();

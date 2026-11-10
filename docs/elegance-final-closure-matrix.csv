@@ -1,0 +1,15 @@
+id,requirement,implemented,remaining,acceptance_test,evidence,status
+BASE-01,Worktree HEAD+dirty tree; no reset to old package,HEAD 1937c420 + local closure edits,commit after package if desired,git status,docs/elegance-final-closure-matrix.csv,PASS
+E2C-AVAIL-OMIT,Omit PATCH on independent non-empty availability,yes — beforeOmitNonEmpty+omitPreserved,none,ACC-E2C-AVAILABILITY-CLEAR-OMIT,.e2c-acceptance-evidence/e2c-availability-clear-omit.json,PASS
+E2C-AVAIL-CLEAR,Explicit UI clear independent of omit,yes — targets ExOnly,none,ACC-E2C-AVAILABILITY-CLEAR-OMIT,same,PASS
+E2C-AVAIL-ROUNDTRIP,Fixture windows/resources/capacity/special/closed/tz/branch,yes,none,ACC-E2C-SAVE-RESTORE+EXCEPTIONS-ONLY,e2c evidence,PASS
+E2C-AVAIL-INVALID-UI,UI+API reject invalid availability separately,yes — novalidate+fieldErr; API AVAILABILITY_*,none,ACC-E2C-INVALID-AVAILABILITY-PATHS,e2c-invalid-availability-paths.json,PASS
+E2C-GATE,Full E2C gate,E2C_SERVICE_EDITOR_CLOSED_VERIFIED,none,all ACC-E2C-*,.e2c-acceptance-evidence/results.json,PASS
+E3-REFRESH,Lifecycle refresh+filter prune+name,E3_ELEGANCE_TAXONOMY_FILTERS_CLOSED_VERIFIED rebound,none,ACC-E3-*,.e3-acceptance-evidence/results.json,PASS
+DELIVERY-VERIFY,verify_package runId/sha + source list fingerprint,PASS on ZIP; FAIL on delete/mutate/runId break,none,verification/verify_package.py,package negatives,PASS
+E4-BAGS-SHOES,Bags/shoes fields variants clear publish browse + UI fields,E4_BAGS_SHOES_CLOSED + E4_GROUPS_UI,none,ACC-E4-*,.e4-acceptance-evidence + .e4-groups-ui-evidence,PASS
+GROUPS,Product+service 3-offer fail/retry/isolation + UI entry,GROUPS_PRODUCT_SERVICE_CLOSED + UI entry,none,ACC-GRP-*,.groups-acceptance-evidence + .e4-groups-ui-evidence,PASS
+ARCH-01-07,Separation + shared taxonomy + layers + guide,docs/elegance-arch-01-07-developer-guide.md,none,guide paths + reuse table,docs/elegance-arch-01-07-developer-guide.md,PASS
+E5-LOCAL,Integrated local journeys individual+groups,covered by E2C+E3+E4+GROUPS gates,optional single umbrella runner,composite gates,evidence dirs,PASS
+E5-PUBLISH-DEVICE,Web+API+app store/TestFlight/device Release post-check,NOT_RUN — needs owner secrets/device/CI,owner deploy credentials + physical device,deploy path,OWNER_BLOCK,OPEN
+PACKAGE-FINAL,PACKAGE_AUDIT→MANIFEST→ZIP+external sha+negative verify,mira-elegance-final-closure-20261110T* faa7493e verified+negatives,none,verify_package.py,/Users/fayez/Desktop/مراجع تطبيق ميرا /,PASS

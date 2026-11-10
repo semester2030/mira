@@ -1,0 +1,338 @@
+{
+  "started": "2026-11-09T20:08:33.554Z",
+  "ended": "2026-11-09T20:09:50.535Z",
+  "testedSha": "1937c420190fcff239b352c776f6de2c8ae18c86",
+  "codeContentSha256": "3829101af4747adba51330e54e42ecec98e3c24da164395821836dedac3a4357",
+  "verdict": "E2C_SERVICE_EDITOR_CLOSED_VERIFIED — LOCAL/TEST ONLY",
+  "gate": {
+    "ok": true,
+    "missing": [],
+    "bad": [],
+    "evidenceGaps": []
+  },
+  "mandatory": [
+    "ACC-E2C-ORBS",
+    "ACC-E2C-PLACE",
+    "ACC-E2C-CALENDAR",
+    "ACC-E2C-EXCEPTIONS",
+    "ACC-E2C-CLOSED-NO-WEEKLY-SLOTS",
+    "ACC-E2C-RESOURCE-CLOSED-KEEPS-OTHERS",
+    "ACC-E2C-CLOSED-OVERRIDES-SPECIAL",
+    "ACC-E2C-SAVE-RESTORE",
+    "ACC-E2C-PARTNER-REVIEW-PENDING-MEDIA",
+    "ACC-E2C-PARTNER-RESUME-SUBMIT",
+    "ACC-E2C-DESIGN-AFTER-CATEGORY",
+    "ACC-E2C-OPTIONAL-EMPTY",
+    "ACC-E2C-BRANCH-OWNERSHIP",
+    "ACC-E2C-BRANCH-API",
+    "ACC-E2C-CLEAR-VS-OMIT-BRANCH",
+    "ACC-E2C-LAYOUTS-DESKTOP",
+    "ACC-E2C-LAYOUTS-PHONE",
+    "ACC-E2C-DESIGN-MATCH",
+    "ACC-E2C-DEV-PUBLISH",
+    "ACC-E2C-SERVICE-VIDEO-RETRY",
+    "ACC-E2C-ISOLATION",
+    "ACC-E2C-NO-REGRESS-PRODUCT-SHELL",
+    "ACC-E2C-FIN-SESSION-IDS",
+    "ACC-E2C-GATE-REJECTS-BAD"
+  ],
+  "results": [
+    {
+      "id": "ACC-E2C-ORBS",
+      "criterion": "ACC-E2C-ORBS",
+      "scenario": "دوائر الخدمة المصورة بأسماء أسفلها؛ الأظافر ليست مجوهرات",
+      "expected": "serviceMode + orbs>=3 + nails.png",
+      "actual": "{\"shell\":{\"serviceMode\":true,\"productMode\":false,\"orbHost\":true,\"compose\":true,\"place\":true,\"avail\":true,\"city\":\"\",\"phone\":\"وسيلة التواصل: 0500000001\",\"formOk\":true,\"orbs\":[{\"id\":\"hair\",\"label\":\"الشعر\",\"orb\":\"url(\\\"http://127.0.0.1:55816/assets/e2b-ref/orbs/hair.png\\\")\"},{\"id\":\"makeup\",\"label\":\"المكياج\",\"orb\":\"url(\\\"http://127.0.0.1:55816/assets/e2b-ref/orbs/makeup.png\\\")\"},{\"id\":\"nails\",\"label\":\"الأظافر\",\"orb\":\"url(\\\"http://127.0.0.1:55816/assets/e2b-ref/orbs/nails.png\\\")\"},{\"id\":\"skin\",\"label\":\"البشرة\",\"orb\":\"url(\\\"http://127.0.0.1:55816/assets/e2b-ref/orbs/skin.png\\\")\"},{\"id\":\"care\",\"label\":\"السبا\",\"orb\":\"url(\\\"http://127.0.0.1:55816/assets/e2b-ref/orbs/spa.png\\\")\"}]},\"nailsNotJewelry\":true}",
+      "status": "PASS",
+      "evidence": [
+        "e2c-orbs-desktop.png"
+      ],
+      "evidenceMissing": []
+    },
+    {
+      "id": "ACC-E2C-PLACE",
+      "criterion": "ACC-E2C-PLACE",
+      "scenario": "اختيار مكان التقديم + فرع/مدينة/خريطة OSM مربوطة بالإحداثيات",
+      "expected": "placeMode=branch + OSM embed with lat/lng + branch + phone + rail",
+      "actual": "{\"mode\":\"branch\",\"city\":\"اختاري فرعًا لإظهار المدينة.\",\"phone\":\"وسيلة التواصل: 0500000001\",\"map\":\"موقع الفرع · فرع الاختبار · جدة · 21.5400, 39.1700\",\"mapPin\":true,\"mapSrc\":\"https://www.openstreetmap.org/export/embed.html?bbox=39.16000%2C21.53000%2C39.18000%2C21.55000&layer=mapnik&marker=21.54000%2C39.17000\",\"chips\":3,\"branchOptions\":3,\"selectedBranchId\":\"7dcd3100-6487-430a-a906-efde1296c120\",\"builtBranchId\":\"7dcd3100-6487-430a-a906-efde1296c120\",\"rail\":true}",
+      "status": "PASS",
+      "evidence": [
+        "e2c-place.png"
+      ],
+      "evidenceMissing": []
+    },
+    {
+      "id": "ACC-E2C-CALENDAR",
+      "criterion": "ACC-E2C-CALENDAR",
+      "scenario": "محرر أسبوعي مختصر + تقويم شهري + نسخ + معاينة عند الطلب",
+      "expected": "dayBlocks=7; monthDays>=28; preview on demand; copy",
+      "actual": "{\"rows\":1,\"dayBlocks\":7,\"previewHiddenBefore\":true,\"previewHiddenAfter\":false,\"cells\":14,\"copy\":true,\"monthDays\":30}",
+      "status": "PASS",
+      "evidence": [
+        "e2c-calendar.png"
+      ],
+      "evidenceMissing": []
+    },
+    {
+      "id": "ACC-E2C-EXCEPTIONS",
+      "criterion": "ACC-E2C-EXCEPTIONS",
+      "scenario": "إضافة استثناء خاص مؤرخ في الواجهة قبل الحفظ",
+      "expected": "exception row visible",
+      "actual": "{\"ok\":true,\"key\":\"2026-11-12\",\"listText\":\"إغلاق يومفترة خاصة  —  سعة إضافة استثناء2026-11-12 · خاصة 11:00–13:00 سعة 1مسح\"}",
+      "status": "PASS",
+      "evidence": [
+        "e2c-exceptions-ui.json"
+      ],
+      "evidenceMissing": []
+    },
+    {
+      "id": "ACC-E2C-CLOSED-NO-WEEKLY-SLOTS",
+      "criterion": "ACC-E2C-CLOSED-NO-WEEKLY-SLOTS",
+      "scenario": "يوم مغلق لا يعرض أوقاتًا أسبوعية",
+      "expected": "chips=0 + data-closed-day + is-closed cell",
+      "actual": "{\"ok\":true,\"key\":\"2026-11-19\",\"chips\":0,\"closedAttr\":\"1\",\"text\":\"يوم مغلق — لا أوقات أسبوعية.\",\"cellClosed\":true}",
+      "status": "PASS",
+      "evidence": [
+        "e2c-closed-no-weekly.json"
+      ],
+      "evidenceMissing": []
+    },
+    {
+      "id": "ACC-E2C-RESOURCE-CLOSED-KEEPS-OTHERS",
+      "criterion": "ACC-E2C-RESOURCE-CLOSED-KEEPS-OTHERS",
+      "scenario": "إغلاق مورد محدد لا يخفي أوقات الموارد الأخرى",
+      "expected": "room-a closed; room-b chip remains; not whole-day closed",
+      "actual": "{\"ok\":true,\"key\":\"2026-11-01\",\"chips\":[{\"text\":\"13:00 · room-b\",\"res\":\"room-b\"},{\"text\":\"09:00\",\"res\":null}],\"closedDay\":null,\"resourceClosed\":\"room-a\",\"wholeDayText\":false}",
+      "status": "PASS",
+      "evidence": [
+        "e2c-resource-closed.json"
+      ],
+      "evidenceMissing": []
+    },
+    {
+      "id": "ACC-E2C-CLOSED-OVERRIDES-SPECIAL",
+      "criterion": "ACC-E2C-CLOSED-OVERRIDES-SPECIAL",
+      "scenario": "closed لنفس المورد يلغي special وفق عقد الخادم",
+      "expected": "no room-a special chip when closed(room-a) on same date",
+      "actual": "{\"ok\":true,\"key\":\"2026-11-08\",\"chips\":[{\"text\":\"13:00 · room-b\",\"res\":\"room-b\"},{\"text\":\"09:00\",\"res\":null}]}",
+      "status": "PASS",
+      "evidence": [
+        "e2c-closed-overrides-special.json"
+      ],
+      "evidenceMissing": []
+    },
+    {
+      "id": "ACC-E2C-SAVE-RESTORE",
+      "criterion": "ACC-E2C-SAVE-RESTORE",
+      "scenario": "إنشاء خدمة وحفظ وإعادة فتح مع استعادة الحقول والتقويم والموقع",
+      "expected": "draft reopen before materialize + post-materialize hair/windows/capacity/timezone/branch + compose order",
+      "actual": "{\"fill\":{\"ok\":true,\"cat\":\"hair\"},\"draftBeforeOk\":true,\"afterSave\":{\"id\":\"ee3388f7-2437-4b7f-af12-6074522b7069\",\"nameAr\":\"E2C-Svc-72df437e\",\"durationMin\":45,\"priceHalalas\":8500,\"category\":\"hair\",\"descriptionAr\":null,\"availabilityJson\":{\"v\":2,\"windows\":[{\"endMin\":840,\"weekday\":0,\"capacity\":2,\"startMin\":600,\"resourceId\":\"\"}],\"timezone\":\"Asia/Riyadh\",\"exceptions\":[{\"date\":\"2026-11-01\",\"kind\":\"closed\",\"resourceId\":\"room-a\"},{\"date\":\"2026-11-08\",\"kind\":\"closed\",\"resourceId\":\"room-a\"},{\"date\":\"2026-11-08\",\"kind\":\"special\",\"endMin\":720,\"capacity\":1,\"startMin\":660,\"resourceId\":\"room-a\"},{\"date\":\"2026-11-12\",\"kind\":\"special\",\"endMin\":780,\"capacity\":1,\"startMin\":660}],\"closedDates\":[\"2026-11-19\"]},\"statusUi\":\"تم إنشاء العنصر — أضيفي وسائط ثم اضغطي «استئناف الإرسال للمراجعة». · ee3388f7-2437-4b7f-af12-6074522b7069\"},\"restore\":{\"ok\":true,\"name\":\"E2C-Svc-72df437e\",\"price\":\"85\",\"dur\":\"45\",\"cat\":\"hair\",\"hairSelected\":true,\"rows\":[{\"weekday\":\"0\",\"start\":\"10:00\",\"end\":\"14:00\",\"capacity\":\"2\",\"resourceId\":\"\"}],\"city\":\"المدينة: جدة\",\"desc\":\"\",\"placeMode\":\"branch\",\"branchId\":\"7dcd3100-6487-430a-a906-efde1296c120\",\"monthDays\":30},\"serverSun\":{\"endMin\":840,\"weekday\":0,\"capacity\":2,\"startMin\":600,\"resourceId\":\"\"},\"serverTimezone\":\"Asia/Riyadh\",\"serverCapacity\":2,\"persistedBranchId\":\"7dcd3100-6487-430a-a906-efde1296c120\",\"persistedPlaceMode\":\"branch\",\"orderAfterReopenEval\":{\"ok\":true}}",
+      "status": "PASS",
+      "evidence": [
+        "e2c-save-restore.png",
+        "e2c-save-restore.json"
+      ],
+      "evidenceMissing": []
+    },
+    {
+      "id": "ACC-E2C-PARTNER-REVIEW-PENDING-MEDIA",
+      "criterion": "ACC-E2C-PARTNER-REVIEW-PENDING-MEDIA",
+      "scenario": "إنشاء بلا وسائط لا يظهر رسالة تعذر الإرسال الكاذبة",
+      "expected": "create/materialize without media → pending-media copy, not false submit failure",
+      "actual": "{\"statusUi\":\"تم إنشاء العنصر — أضيفي وسائط ثم اضغطي «استئناف الإرسال للمراجعة». · ee3388f7-2437-4b7f-af12-6074522b7069\",\"id\":\"ee3388f7-2437-4b7f-af12-6074522b7069\"}",
+      "status": "PASS",
+      "evidence": [
+        "e2c-partner-review-pending.json"
+      ],
+      "evidenceMissing": []
+    },
+    {
+      "id": "ACC-E2C-PARTNER-RESUME-SUBMIT",
+      "criterion": "ACC-E2C-PARTNER-RESUME-SUBMIT",
+      "scenario": "العادي: رفع وسائط ثم استئناف الإرسال للمراجعة بنجاح",
+      "expected": "server reviewStatus in_review|approved + same owner id; UI toast alone rejected",
+      "actual": "{\"resumeLive\":{\"id\":\"ee3388f7-2437-4b7f-af12-6074522b7069\",\"expectedId\":\"ee3388f7-2437-4b7f-af12-6074522b7069\",\"mediaCount\":1,\"reviewStatus\":\"in_review\",\"contentStatus\":\"draft\",\"statusUi\":\"تم التحويل والإرسال للمراجعة · service ee3388f7-2437-4b7f-af12-6074522b7069\"},\"negatives\":{\"resumeNegWrongState\":false,\"resumeNegWrongId\":false,\"resumeNegNoMedia\":false}}",
+      "status": "PASS",
+      "evidence": [
+        "e2c-partner-resume-submit.json"
+      ],
+      "evidenceMissing": []
+    },
+    {
+      "id": "ACC-E2C-DESIGN-AFTER-CATEGORY",
+      "criterion": "ACC-E2C-DESIGN-AFTER-CATEGORY",
+      "scenario": "ترتيب المحرر يبقى بعد تغيير التصنيف",
+      "expected": "exact fieldRoles + side-by-side geometry px + secondary collapsed",
+      "actual": "{\"designAfterCat\":{\"nailsSelected\":true,\"compose\":true,\"fields\":true,\"media\":true,\"sideHasAvail\":true,\"fieldRoles\":[\"service-orbs\",\"basics\",\"place\",\"template\",\"secondary\"],\"sideRoles\":[\"main-media\",\"availability\"],\"mediaBeforeAvail\":true,\"stable\":true,\"attrOrder\":null},\"designOrderEval\":{\"ok\":true},\"geomAfterCat\":{\"viewportWidth\":1280,\"orbsTop\":0,\"basicsTop\":351.875,\"fieldsLeft\":394.859375,\"fieldsRight\":902,\"fieldsWidth\":507.140625,\"mediaLeft\":0,\"mediaRight\":374.859375,\"mediaWidth\":374.859375,\"mediaTop\":0,\"previewLeft\":0,\"previewRight\":374.859375,\"previewTop\":216.140625,\"previewWidth\":374.859375,\"measuredPreview\":true,\"availTop\":800.90625,\"secondaryOpen\":false,\"exceptionsOpen\":false,\"weeklyEditOpen\":false,\"sideBySidePx\":394.859375},\"geomAfterCatEval\":{\"ok\":true}}",
+      "status": "PASS",
+      "evidence": [
+        "e2c-design-after-category.png",
+        "e2c-design-after-category.json"
+      ],
+      "evidenceMissing": []
+    },
+    {
+      "id": "ACC-E2C-OPTIONAL-EMPTY",
+      "criterion": "ACC-E2C-OPTIONAL-EMPTY",
+      "scenario": "المورد/الوصف الاختياريان الفارغان لا يتحولان إلى صفر",
+      "expected": "resource empty; description null",
+      "actual": "{\"resUi\":\"\",\"resServer\":\"\",\"descServer\":null,\"optionalEmptyOk\":true}",
+      "status": "PASS",
+      "evidence": [
+        "e2c-optional-empty.json"
+      ],
+      "evidenceMissing": []
+    },
+    {
+      "id": "ACC-E2C-BRANCH-OWNERSHIP",
+      "criterion": "ACC-E2C-BRANCH-OWNERSHIP",
+      "scenario": "تبديل فرع مملوك وحفظه وإعادة فتحه من الواجهة + رفض غير المملوك",
+      "expected": "UI save persists branch2 + map/city; reopen restores; foreign rejected with message",
+      "actual": "{\"switchUi\":{\"ok\":true,\"value\":\"4f10bf4f-1f41-47ae-9a64-26705edecb50\",\"placeMode\":\"branch\",\"city\":\"المدينة: الرياض\",\"mapHasCoords\":true},\"patchMeta\":{\"seen\":true,\"status\":200,\"reqBranchId\":\"4f10bf4f-1f41-47ae-9a64-26705edecb50\",\"reqPlaceMode\":\"branch\"},\"statusAfterSwitch\":\"حُفظت المسودة. السعر المخزن 8500 هللة (85 ر.س).\",\"branchAfterSwitch\":\"4f10bf4f-1f41-47ae-9a64-26705edecb50\",\"placeAfterSwitch\":\"branch\",\"expectedBranch2\":\"4f10bf4f-1f41-47ae-9a64-26705edecb50\",\"restoreUi\":{\"mode\":\"branch\",\"branchId\":\"4f10bf4f-1f41-47ae-9a64-26705edecb50\",\"city\":\"المدينة: الرياض\"},\"uiReject\":{\"ok\":true,\"statusUi\":\"تعذر الحفظ: الفرع غير موجود أو لا يخص هذه الجهة البيانات المكتوبة ما زالت في النموذج.\"}}",
+      "status": "PASS",
+      "evidence": [
+        "e2c-branch-ownership.json"
+      ],
+      "evidenceMissing": []
+    },
+    {
+      "id": "ACC-E2C-BRANCH-API",
+      "criterion": "ACC-E2C-BRANCH-API",
+      "scenario": "عقد API منفصل: رفض فرع أجنبي + إغفال يُبقي + مسح null",
+      "expected": "404 foreign; omit keeps; null clears",
+      "actual": "{\"rejectStatus\":404,\"rejectMsg\":\"الفرع غير موجود أو لا يخص هذه الجهة\",\"beforeRejectBranch\":\"4f10bf4f-1f41-47ae-9a64-26705edecb50\",\"branchUnchangedAfterReject\":true,\"seedStatus\":200,\"beforeOmitBranch\":\"7dcd3100-6487-430a-a906-efde1296c120\",\"omitStatus\":200,\"afterOmitBranch\":\"7dcd3100-6487-430a-a906-efde1296c120\",\"clearApiStatus\":200,\"afterClearApiBranch\":null,\"afterClearApiPlace\":\"home\"}",
+      "status": "PASS",
+      "evidence": [
+        "e2c-branch-api.json"
+      ],
+      "evidenceMissing": []
+    },
+    {
+      "id": "ACC-E2C-CLEAR-VS-OMIT-BRANCH",
+      "criterion": "ACC-E2C-CLEAR-VS-OMIT-BRANCH",
+      "scenario": "مسح صريح للفرع من الواجهة ثم إعادة فتح (بلا تعويض API)",
+      "expected": "home chip + save clears server branchId; reopen restores home; geometry ok",
+      "actual": "{\"beforeClearBranch\":\"7dcd3100-6487-430a-a906-efde1296c120\",\"homeUi\":{\"mode\":\"home\",\"branchVal\":\"\",\"branchMounted\":true},\"seedPatch\":{\"seen\":true,\"status\":200,\"body\":{\"nameAr\":\"E2C-Svc-72df437e-عدّل\",\"descriptionAr\":\"\",\"priceHalalas\":8500,\"category\":\"hair\",\"concernTags\":[],\"nameEn\":\"E2C-Svc-72df437e\",\"durationMin\":45,\"bookingEnabled\":true,\"payMode\":\"pay_at_venue\",\"placeMode\":\"branch\",\"branchId\":\"7dcd3100-6487-430a-a906-efde1296c120\",\"availabilityJson\":{\"v\":2,\"timezone\":\"Asia/Riyadh\",\"windows\":[{\"weekday\":0,\"startMin\":600,\"endMin\":840,\"capacity\":2,\"resourceId\":\"\"}],\"closedDates\":[\"2026-11-19\"],\"exceptions\":[{\"date\":\"2026-11-01\",\"kind\":\"closed\",\"resourceId\":\"room-a\"},{\"date\":\"2026-11-08\",\"kind\":\"closed\",\"resourceId\":\"room-a\"},{\"date\":\"2026-11-08\",\"kind\":\"special\",\"endMin\":720,\"capacity\":1,\"startMin\":660,\"resourceId\":\"room-a\"},{\"date\":\"2026-11-12\",\"kind\":\"special\",\"endMin\":780,\"capacity\":1,\"startMin\":660}]},\"expectedRevision\":5}},\"clearPatch\":{\"seen\":true,\"status\":200,\"body\":{\"nameAr\":\"E2C-Svc-72df437e-عدّل\",\"descriptionAr\":\"\",\"priceHalalas\":8500,\"category\":\"hair\",\"concernTags\":[],\"nameEn\":\"E2C-Svc-72df437e\",\"durationMin\":45,\"bookingEnabled\":true,\"payMode\":\"pay_at_venue\",\"placeMode\":\"home\",\"branchId\":null,\"availabilityJson\":{\"v\":2,\"timezone\":\"Asia/Riyadh\",\"windows\":[{\"weekday\":0,\"startMin\":600,\"endMin\":840,\"capacity\":2,\"resourceId\":\"\"}],\"closedDates\":[\"2026-11-19\"],\"exceptions\":[{\"date\":\"2026-11-01\",\"kind\":\"closed\",\"resourceId\":\"room-a\"},{\"date\":\"2026-11-08\",\"kind\":\"closed\",\"resourceId\":\"room-a\"},{\"date\":\"2026-11-08\",\"kind\":\"special\",\"endMin\":720,\"capacity\":1,\"startMin\":660,\"resourceId\":\"room-a\"},{\"date\":\"2026-11-12\",\"kind\":\"special\",\"endMin\":780,\"capacity\":1,\"startMin\":660}]},\"expectedRevision\":6}},\"afterClearBranch\":null,\"afterClearPlace\":\"home\",\"restoreAfterClear\":{\"mode\":\"home\",\"branchId\":\"\"},\"geomAfterSave\":{\"viewportWidth\":1280,\"orbsTop\":0,\"basicsTop\":351.875,\"fieldsLeft\":394.859375,\"fieldsRight\":902,\"fieldsWidth\":507.140625,\"mediaLeft\":0,\"mediaRight\":374.859375,\"mediaWidth\":374.859375,\"mediaTop\":0,\"previewLeft\":0,\"previewRight\":374.859375,\"previewTop\":216.140625,\"previewWidth\":374.859375,\"measuredPreview\":true,\"availTop\":800.90625,\"secondaryOpen\":false,\"exceptionsOpen\":false,\"weeklyEditOpen\":false,\"sideBySidePx\":394.859375},\"geomAfterSaveEval\":{\"ok\":true},\"usedApiFallback\":false}",
+      "status": "PASS",
+      "evidence": [
+        "e2c-clear-vs-omit-branch.json",
+        "e2c-design-after-save-reopen.png"
+      ],
+      "evidenceMissing": []
+    },
+    {
+      "id": "ACC-E2C-LAYOUTS-DESKTOP",
+      "criterion": "ACC-E2C-LAYOUTS-DESKTOP",
+      "scenario": "مطابقة سطح المكتب لمحرر الخدمة",
+      "expected": "compose + orbs + place + avail visible at 1280",
+      "actual": "{\"compose\":true,\"orbHost\":true}",
+      "status": "PASS",
+      "evidence": [
+        "e2c-orbs-desktop.png"
+      ],
+      "evidenceMissing": []
+    },
+    {
+      "id": "ACC-E2C-LAYOUTS-PHONE",
+      "criterion": "ACC-E2C-LAYOUTS-PHONE",
+      "scenario": "عرض الهاتف لمحاكاة البوابة (ليس جهازًا فعليًا)",
+      "expected": "workspace 1-col; fieldsWidth>=280; orbs visible",
+      "actual": "{\"compose\":true,\"cols\":\"324.594px\",\"workspaceCols\":\"366.594px\",\"workspaceTracks\":1,\"fieldsWidth\":324.59375,\"orbs\":5}",
+      "status": "PASS",
+      "evidence": [
+        "e2c-phone.png"
+      ],
+      "evidenceMissing": []
+    },
+    {
+      "id": "ACC-E2C-DEV-PUBLISH",
+      "criterion": "ACC-E2C-DEV-PUBLISH",
+      "scenario": "حساب المطور ينشر الخدمة مباشرة بعد التحقق",
+      "expected": "published + active via UI media+CTA (no addMedia/submitReview)",
+      "actual": "{\"id\":\"eea3cfdf-51ff-40f0-a723-b4e7c8fcae72\",\"status\":\"published\",\"active\":true,\"mediaCount\":1,\"statusUi\":\"نُشر في التطبيق مباشرة، بلا مراجعة.\",\"mediaPicked\":true}",
+      "status": "PASS",
+      "evidence": [
+        "e2c-dev-publish.png",
+        "e2c-dev-cta.json",
+        "e2c-dev-media-restore.json"
+      ],
+      "evidenceMissing": []
+    },
+    {
+      "id": "ACC-E2C-SERVICE-VIDEO-RETRY",
+      "criterion": "ACC-E2C-SERVICE-VIDEO-RETRY",
+      "scenario": "فشل رفع فيديو الخدمة ثم إعادة المحاولة الطبيعية دون تعديل جلسة الرفع",
+      "expected": "fail→retry same session; new media id vs before; card after reopen; failed+success-text rejects",
+      "actual": "{\"videoLive\":{\"sawFail\":true,\"sawRetryLabel\":true,\"mainRetryClicked\":true,\"durablePartsBeforeRetry\":true,\"resumedSameSession\":true,\"createdNewSessionOnRetry\":false,\"sessionBoundMediaId\":\"ad47a06b-8ce7-4998-ab26-ed895d24d97d\",\"cycleNewMediaId\":\"ad47a06b-8ce7-4998-ab26-ed895d24d97d\",\"mainsBefore\":[],\"mainsAfter\":[\"ad47a06b-8ce7-4998-ab26-ed895d24d97d\"],\"videoCardAfterReopen\":true,\"chromeState\":\"saved\",\"chromeText\":\"فيديو محفوظ على العنصر · draft — يمكن استبداله.\"},\"negatives\":{\"videoNegMissingCard\":false,\"videoNegExtraMedia\":false,\"videoNegWrongServer\":false,\"videoNegFailedDespiteSuccessText\":false}}",
+      "status": "PASS",
+      "evidence": [
+        "e2c-service-video-retry.json",
+        "e2c-service-video-retry.png"
+      ],
+      "evidenceMissing": []
+    },
+    {
+      "id": "ACC-E2C-NO-REGRESS-PRODUCT-SHELL",
+      "criterion": "ACC-E2C-NO-REGRESS-PRODUCT-SHELL",
+      "scenario": "صدفة المنتجات تبقى لمنتجات العلامة دون خلط أوضاع الخدمة",
+      "expected": "productMode + e2b circles + no service mode",
+      "actual": "{\"productMode\":true,\"serviceMode\":false,\"e2bCircles\":7,\"e2cCircles\":0,\"scriptLoaded\":true}",
+      "status": "PASS",
+      "evidence": [
+        "e2c-no-regress-product.png"
+      ],
+      "evidenceMissing": []
+    },
+    {
+      "id": "ACC-E2C-ISOLATION",
+      "criterion": "ACC-E2C-ISOLATION",
+      "scenario": "المطور: منتج←خدمة←منتج دون تسرب أوضاع/دوائر/حقول",
+      "expected": "modes exclusive; fields preserved; inactive controls not visible",
+      "actual": "{\"iso1\":{\"productMode\":true,\"serviceMode\":false,\"e2b\":7,\"e2cVisible\":0,\"e2cComposeVisible\":0,\"placeChipsVisible\":0,\"productName\":\"منتج-عزل-E2C\"},\"iso2\":{\"productMode\":false,\"serviceMode\":true,\"e2bHidden\":true,\"catalogSectionHidden\":true,\"e2c\":4,\"e2cVisible\":4,\"form\":true,\"serviceName\":\"خدمة-عزل-E2C\",\"placeChipsVisible\":3,\"productNameWhileService\":\"منتج-عزل-E2C\",\"durationVisible\":true},\"iso3\":{\"productMode\":true,\"serviceMode\":false,\"e2b\":7,\"e2cVisible\":0,\"e2cComposeVisible\":0,\"placeChipsVisible\":0,\"productName\":\"منتج-عزل-E2C\",\"serviceNameHiddenForm\":\"خدمة-عزل-E2C\",\"serviceFormStillServiceMode\":false}}",
+      "status": "PASS",
+      "evidence": [
+        "e2c-isolation.png",
+        "e2c-isolation.json"
+      ],
+      "evidenceMissing": []
+    },
+    {
+      "id": "ACC-E2C-DESIGN-MATCH",
+      "criterion": "ACC-E2C-DESIGN-MATCH",
+      "scenario": "مطابقة تكوين المرجع: سكة يمنى، دوائر، مدة، مكان، تقويم بجوار الوسائط، تفاصيل قابلة للطي",
+      "expected": "desktop geometry px + exact field order + phone stacked + secondary collapsed",
+      "actual": "{\"design\":{\"compose\":true,\"media\":true,\"month\":true,\"toggle\":true,\"durationChips\":3,\"placeChips\":3,\"nailsOrb\":\"assets/e2b-ref/orbs/nails.png\",\"cols\":\"507.141px 374.859px\",\"colCount\":2,\"rail\":true,\"secondary\":true,\"templateDetails\":true,\"sideStack\":true,\"subSelected\":true,\"fieldRoles\":[\"service-orbs\",\"basics\",\"place\",\"template\",\"secondary\"],\"sideRoles\":[\"main-media\",\"availability\"]},\"phoneDesign\":{\"cols\":\"324.594px\",\"workspaceCols\":\"366.594px\",\"workspaceTracks\":1,\"fieldsWidth\":324.59375,\"singleCol\":true,\"orbs\":5,\"rail\":true,\"secondaryOpen\":false},\"designMatchOrder\":{\"ok\":true},\"geomMatch\":{\"viewportWidth\":1280,\"orbsTop\":0,\"basicsTop\":351.875,\"fieldsLeft\":394.859375,\"fieldsRight\":902,\"fieldsWidth\":507.140625,\"mediaLeft\":0,\"mediaRight\":374.859375,\"mediaWidth\":374.859375,\"mediaTop\":0,\"previewLeft\":0,\"previewRight\":374.859375,\"previewTop\":216.140625,\"previewWidth\":374.859375,\"measuredPreview\":true,\"availTop\":932,\"secondaryOpen\":false,\"exceptionsOpen\":false,\"weeklyEditOpen\":false,\"sideBySidePx\":394.859375},\"geomMatchEval\":{\"ok\":true}}",
+      "status": "PASS",
+      "evidence": [
+        "e2c-design-desktop.png",
+        "e2c-design-phone.png",
+        "e2c-design-match.json"
+      ],
+      "evidenceMissing": []
+    },
+    {
+      "id": "ACC-E2C-FIN-SESSION-IDS",
+      "criterion": "ACC-E2C-FIN-SESSION-IDS",
+      "scenario": "failSessionId و finalMainId إلزاميان؛ null/حذف/عدم مطابقة ترفض",
+      "expected": "baseline ok; negatives reject",
+      "actual": "{\"finIdsOk\":true}",
+      "status": "PASS",
+      "evidence": [
+        "e2c-fin-session-ids.json"
+      ],
+      "evidenceMissing": []
+    },
+    {
+      "id": "ACC-E2C-GATE-REJECTS-BAD",
+      "criterion": "ACC-E2C-GATE-REJECTS-BAD",
+      "scenario": "البوابة ترفض معيارًا واحدًا فاشلًا من مجموعة مكتملة",
+      "expected": "gateBad.ok=false",
+      "actual": "{\"gateBad\":{\"ok\":false,\"missing\":[],\"bad\":[\"ACC-E2C-ORBS=FAIL\"],\"evidenceGaps\":[]}}",
+      "status": "PASS",
+      "evidence": [
+        "e2c-gate-reject.json"
+      ],
+      "evidenceMissing": []
+    }
+  ]
+}

@@ -239,6 +239,16 @@ export class UpdateServiceDto {
   payMode?: string;
 
   @IsOptional()
+  @IsString()
+  @MaxLength(20)
+  placeMode?: string | null;
+
+  @IsOptional()
+  @IsString()
+  @MaxLength(64)
+  branchId?: string | null;
+
+  @IsOptional()
   availabilityJson?: object | null;
 
   /** When true, rewrite sibling services' windows for resources in this payload to match. */
@@ -299,6 +309,16 @@ export class UpsertServiceDto {
   @IsOptional()
   @IsString()
   payMode?: string;
+
+  @IsOptional()
+  @IsString()
+  @MaxLength(20)
+  placeMode?: string | null;
+
+  @IsOptional()
+  @IsString()
+  @MaxLength(64)
+  branchId?: string | null;
 
   @IsOptional()
   availabilityJson?: object | null;

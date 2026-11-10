@@ -1,0 +1,132 @@
+{
+  "fill": {
+    "ok": true,
+    "cat": "hair"
+  },
+  "draftMeta": {
+    "clientDraftId": "new:1376daf1-952e-4e60-845d-5f7a54e60a0c:service:4cabc37d-44ba-48e2-a5c9-d60aec03a2f9",
+    "revision": 1,
+    "statusUi": "حُفظت المسودة الخادمية · rev 1. استخدمي زر التحويل للإرسال للمراجعة."
+  },
+  "draftReopen": {
+    "ok": true,
+    "name": "E2C-Svc-72df437e",
+    "rows": [
+      {
+        "weekday": "0",
+        "start": "10:00",
+        "end": "14:00",
+        "capacity": "2",
+        "resourceId": ""
+      }
+    ],
+    "placeMode": "branch",
+    "branchId": "7dcd3100-6487-430a-a906-efde1296c120",
+    "clientDraftId": "new:1376daf1-952e-4e60-845d-5f7a54e60a0c:service:4cabc37d-44ba-48e2-a5c9-d60aec03a2f9",
+    "materialized": false
+  },
+  "draftBeforeOk": true,
+  "afterSave": {
+    "id": "ee3388f7-2437-4b7f-af12-6074522b7069",
+    "nameAr": "E2C-Svc-72df437e",
+    "durationMin": 45,
+    "priceHalalas": 8500,
+    "category": "hair",
+    "descriptionAr": null,
+    "availabilityJson": {
+      "v": 2,
+      "windows": [
+        {
+          "endMin": 840,
+          "weekday": 0,
+          "capacity": 2,
+          "startMin": 600,
+          "resourceId": ""
+        }
+      ],
+      "timezone": "Asia/Riyadh",
+      "exceptions": [
+        {
+          "date": "2026-11-01",
+          "kind": "closed",
+          "resourceId": "room-a"
+        },
+        {
+          "date": "2026-11-08",
+          "kind": "closed",
+          "resourceId": "room-a"
+        },
+        {
+          "date": "2026-11-08",
+          "kind": "special",
+          "endMin": 720,
+          "capacity": 1,
+          "startMin": 660,
+          "resourceId": "room-a"
+        },
+        {
+          "date": "2026-11-12",
+          "kind": "special",
+          "endMin": 780,
+          "capacity": 1,
+          "startMin": 660
+        }
+      ],
+      "closedDates": [
+        "2026-11-19"
+      ]
+    },
+    "statusUi": "تم إنشاء العنصر — أضيفي وسائط ثم اضغطي «استئناف الإرسال للمراجعة». · ee3388f7-2437-4b7f-af12-6074522b7069"
+  },
+  "restore": {
+    "ok": true,
+    "name": "E2C-Svc-72df437e",
+    "price": "85",
+    "dur": "45",
+    "cat": "hair",
+    "hairSelected": true,
+    "rows": [
+      {
+        "weekday": "0",
+        "start": "10:00",
+        "end": "14:00",
+        "capacity": "2",
+        "resourceId": ""
+      }
+    ],
+    "city": "المدينة: جدة",
+    "desc": "",
+    "placeMode": "branch",
+    "branchId": "7dcd3100-6487-430a-a906-efde1296c120",
+    "monthDays": 30
+  },
+  "serverSun": {
+    "endMin": 840,
+    "weekday": 0,
+    "capacity": 2,
+    "startMin": 600,
+    "resourceId": ""
+  },
+  "serverTimezone": "Asia/Riyadh",
+  "serverCapacity": 2,
+  "restoreCapacity": 2,
+  "persistedBranchId": "7dcd3100-6487-430a-a906-efde1296c120",
+  "persistedPlaceMode": "branch",
+  "orderAfterReopen": {
+    "fieldRoles": [
+      "service-orbs",
+      "basics",
+      "place",
+      "template",
+      "secondary"
+    ],
+    "sideRoles": [
+      "main-media",
+      "availability"
+    ]
+  },
+  "orderAfterReopenEval": {
+    "ok": true
+  },
+  "restoreOk": true
+}

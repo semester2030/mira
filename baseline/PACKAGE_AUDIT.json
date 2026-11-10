@@ -1,0 +1,15 @@
+{
+  "package": "mira-elegance-e2c-e3-followup-20261109T201045Z-2e1ca044",
+  "E2C": "CLOSED_VERIFIED_LOCAL",
+  "E3": "CLOSED_VERIFIED_LOCAL",
+  "mandatoryNotRunOrFail": false,
+  "deferred": [
+    "groups DEFERRED_BY_OWNER",
+    "E4 bags/shoes write",
+    "production",
+    "E5 iPhone device"
+  ],
+  "codeContentSha256": "3829101af4747adba51330e54e42ecec98e3c24da164395821836dedac3a4357",
+  "priorPackage": "mira-elegance-e2c-e3-followup-2e1ca044",
+  "manifestSha256External": "9f0306728d825101d5c1e106c9c29872ebc0cc134fd59d8e33c7d2c7527eb15a"
+}

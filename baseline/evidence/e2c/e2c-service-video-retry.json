@@ -1,0 +1,80 @@
+{
+  "videoRetry": {
+    "ownerId": "eea3cfdf-51ff-40f0-a723-b4e7c8fcae72",
+    "policyProbe": {
+      "enabled": true,
+      "partSizeBytes": 262144,
+      "concurrency": 2,
+      "partMaxRetries": 3,
+      "imageMaxBytes": 20971520,
+      "videoMaxBytes": 2147483647,
+      "videoMaxDurationSec": 300,
+      "sessionTtlHours": 24,
+      "finalizeConcurrency": 2,
+      "finalizeMaxAttempts": 5,
+      "allowedImageMime": [
+        "image/jpeg",
+        "image/png",
+        "image/webp"
+      ],
+      "allowedVideoMime": [
+        "video/mp4",
+        "video/quicktime",
+        "video/x-m4v"
+      ],
+      "storeMode": "memory",
+      "directPartsAllowed": true
+    },
+    "sawFail": true,
+    "sawRetryLabel": true,
+    "mainRetryClicked": true,
+    "failSessionId": "79e61e2a-90d8-48c2-8edd-784e1f5648a2",
+    "cycleSessionId": "79e61e2a-90d8-48c2-8edd-784e1f5648a2",
+    "durablePartsBeforeRetry": true,
+    "createdNewSessionOnRetry": false,
+    "resumedSameSession": true,
+    "sessionBoundMediaId": "ad47a06b-8ce7-4998-ab26-ed895d24d97d",
+    "cycleNewMediaId": "ad47a06b-8ce7-4998-ab26-ed895d24d97d",
+    "cycleSaved": true,
+    "chromeAfterReopen": {
+      "text": "فيديو محفوظ على العنصر · draft — يمكن استبداله.",
+      "state": "saved",
+      "pick": "استبدال المقطع",
+      "pickAction": "replace"
+    },
+    "videoCardAfterReopen": {
+      "cardVisible": true,
+      "state": "saved",
+      "text": "فيديو محفوظ على العنصر · draft — يمكن استبداله.",
+      "savedCards": 2
+    },
+    "mainsBefore": [],
+    "mainsAfter": [
+      "ad47a06b-8ce7-4998-ab26-ed895d24d97d"
+    ]
+  },
+  "videoLive": {
+    "sawFail": true,
+    "sawRetryLabel": true,
+    "mainRetryClicked": true,
+    "durablePartsBeforeRetry": true,
+    "resumedSameSession": true,
+    "createdNewSessionOnRetry": false,
+    "sessionBoundMediaId": "ad47a06b-8ce7-4998-ab26-ed895d24d97d",
+    "cycleNewMediaId": "ad47a06b-8ce7-4998-ab26-ed895d24d97d",
+    "mainsBefore": [],
+    "mainsAfter": [
+      "ad47a06b-8ce7-4998-ab26-ed895d24d97d"
+    ],
+    "videoCardAfterReopen": true,
+    "chromeState": "saved",
+    "chromeText": "فيديو محفوظ على العنصر · draft — يمكن استبداله."
+  },
+  "negatives": {
+    "videoNegMissingCard": false,
+    "videoNegExtraMedia": false,
+    "videoNegWrongServer": false,
+    "videoNegFailedDespiteSuccessText": false
+  },
+  "videoRetryOk": true
+}

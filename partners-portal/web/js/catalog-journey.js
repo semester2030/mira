@@ -25,7 +25,8 @@
     ['hair', 'الشعر'],
     ['makeup', 'المكياج'],
     ['nails', 'الأظافر'],
-    ['care', 'العناية'],
+    ['skin', 'البشرة'],
+    ['care', 'السبا'],
   ];
   const IMAGE_TYPES = ['image/jpeg', 'image/png', 'image/webp'];
   const staged = { catalogForm: [], serviceForm: [] };
@@ -386,6 +387,9 @@
     items.forEach((item) => {
       const card = document.createElement('div');
       card.className = 'list-item';
+      if (item && item.id) card.setAttribute('data-id', String(item.id));
+      if (item && item.nameAr) card.setAttribute('data-name-ar', String(item.nameAr));
+      if (item && item.category) card.setAttribute('data-category-id', String(item.category));
       text(card, item.nameAr, 'strong');
       text(card, 'الحالة: ' + (item.contentStatus || 'draft') + ' · المراجعة: ' + (item.reviewStatus || 'draft') + ' · ' + categoryLabel(type, item.category));
       text(card, formatPrice(item.priceHalalas));
@@ -469,6 +473,11 @@
   function renderForm(type, item, formId, titleId, note, draftCtx) {
     const form = document.getElementById(formId || 'catalogForm');
     form.dataset.saving = '';
+    // Custom field errors (availability capacity/times, price, …) must run on submit.
+    // Native HTML5 min/max on number/time inputs otherwise blocks submit silently
+    // and never paints [data-testid="avail-field-error"] / persist status.
+    form.setAttribute('novalidate', 'novalidate');
+    form.noValidate = true;
     const title = document.getElementById(titleId || 'catalogTitle');
     const serviceSection = document.getElementById('serviceSection');
     const fullCatalog = Boolean(serviceSection && !serviceSection.classList.contains('hidden'));
@@ -546,12 +555,32 @@
 
     const basics = document.createElement('div');
     basics.className = 'form-section';
+    basics.setAttribute('data-section-role', 'basics');
     text(basics, 'البيانات الأساسية', 'h3');
     form.appendChild(basics);
     const nameSeed = seed.draftNameAr || seed.nameAr || '';
-    const nameAr = field(basics, 'الاسم', 'nameAr', nameSeed, 'text');
-    const nameEn = field(basics, 'الاسم بالإنجليزية (اختياري)', 'nameEn', seed.draftNameEn != null ? seed.draftNameEn : (seed.nameEn || ''), 'text');
+    const namePriceRow = document.createElement('div');
+    namePriceRow.className = 'e2b-name-price-row';
+    namePriceRow.setAttribute('data-testid', 'e2b-name-price-row');
+    basics.appendChild(namePriceRow);
+    const nameAr = field(namePriceRow, 'الاسم', 'nameAr', nameSeed, 'text');
+    const priceSeedEarly =
+      seed.priceHalalas == null || seed.priceHalalas === ''
+        ? ''
+        : halalasToInput(seed.priceHalalas);
+    const price = field(namePriceRow, 'السعر بالريال', 'priceSar', priceSeedEarly, 'text');
+    price.inputMode = 'decimal';
+    price.placeholder = '52';
     const descriptionAr = field(basics, 'الوصف', 'descriptionAr', seed.draftDescriptionAr != null ? seed.draftDescriptionAr : (seed.descriptionAr || ''), 'textarea');
+    descriptionAr.setAttribute('data-testid', 'catalog-description');
+    const nameEnDetails = document.createElement('details');
+    nameEnDetails.className = 'e2b-extra-details';
+    nameEnDetails.setAttribute('data-testid', 'catalog-extra-name-en');
+    const nameEnSummary = document.createElement('summary');
+    nameEnSummary.textContent = 'تفاصيل إضافية للاسم';
+    nameEnDetails.appendChild(nameEnSummary);
+    basics.appendChild(nameEnDetails);
+    const nameEn = field(nameEnDetails, 'الاسم بالإنجليزية (اختياري)', 'nameEn', seed.draftNameEn != null ? seed.draftNameEn : (seed.nameEn || ''), 'text');
     const categories = type === 'brand'
       ? PRODUCT_CATEGORIES
       : (type === 'clinic' ? CLINIC_CATEGORIES : (type === 'salon' ? SALON_CATEGORIES : SERVICE_CATEGORIES));
@@ -673,15 +702,16 @@
       } else {
         subcategory.value = '';
       }
+      // Circles may have painted before subcategory options existed — resync after restore.
+      if (window.MiraE2BProductShell && typeof MiraE2BProductShell.syncFromForm === 'function') {
+        try {
+          MiraE2BProductShell.syncFromForm();
+        } catch (_) {
+          /* non-fatal */
+        }
+      }
     }
     refreshSubcategoryOptions({ keepValue: subcategorySeed || '' });
-    const priceSeed =
-      seed.priceHalalas == null || seed.priceHalalas === ''
-        ? ''
-        : halalasToInput(seed.priceHalalas);
-    const price = field(basics, 'السعر بالريال', 'priceSar', priceSeed, 'text');
-    price.inputMode = 'decimal';
-    price.placeholder = '52';
     nameAr.addEventListener('input', bumpFormContentEpoch);
     nameEn.addEventListener('input', bumpFormContentEpoch);
     descriptionAr.addEventListener('input', bumpFormContentEpoch);
@@ -702,10 +732,237 @@
     let bookingToggle = null;
     let availabilityJson = null;
     if (type !== 'brand') {
-      duration = field(basics, 'المدة بالدقائق (اختياري)', 'durationMin', seed.durationMin != null && seed.durationMin !== '' ? seed.durationMin : '', 'number');
-      duration.min = '5';      const partner = window.sessionPartner || {};
-      text(basics, 'الفرع والمدينة المسجّلة: ' + (partner.city || 'غير مسجّلة') + '. لا توجد إحداثيات فرع.');
-      text(basics, partner.contactPhone ? 'وسيلة التواصل: ' + partner.contactPhone : 'لا توجد وسيلة تواصل مسجّلة على حساب الجهة.');
+      // CONTRACT: durationMin مطلوب عند التحويل/الإنشاء (Service.durationMin غير قابل للفراغ في Prisma).
+      // لا تُخترع قيمة افتراضية عند الفراغ — يُرفض التحويل حتى يُدخل العارض مدة صالحة.
+      duration = field(basics, 'المدة بالدقائق', 'durationMin', seed.durationMin != null && seed.durationMin !== '' ? seed.durationMin : '', 'number');
+      duration.min = '5';
+      duration.required = true;
+      duration.setAttribute('data-testid', 'e2c-duration-min');
+      duration.addEventListener('input', bumpFormContentEpoch);
+      const durationChips = document.createElement('div');
+      durationChips.className = 'e2c-chip-row';
+      durationChips.setAttribute('data-testid', 'e2c-duration-chips');
+      [30, 60, 90].forEach((mins) => {
+        const chip = document.createElement('button');
+        chip.type = 'button';
+        chip.className = 'e2c-chip';
+        chip.setAttribute('data-testid', 'e2c-duration-chip');
+        chip.setAttribute('data-mins', String(mins));
+        chip.textContent = mins + ' دقيقة';
+        if (String(duration.value) === String(mins)) chip.classList.add('is-selected');
+        chip.addEventListener('click', () => {
+          duration.value = String(mins);
+          duration.dispatchEvent(new Event('input', { bubbles: true }));
+          durationChips.querySelectorAll('.e2c-chip').forEach((c) => c.classList.remove('is-selected'));
+          chip.classList.add('is-selected');
+          bumpFormContentEpoch();
+        });
+        durationChips.appendChild(chip);
+      });
+      duration.parentElement.appendChild(durationChips);
+      duration.addEventListener('input', () => {
+        durationChips.querySelectorAll('.e2c-chip').forEach((c) => {
+          c.classList.toggle('is-selected', c.getAttribute('data-mins') === String(duration.value));
+        });
+      });
+
+      const partner = window.sessionPartner || {};
+      const placeBox = document.createElement('div');
+      placeBox.className = 'form-section e2c-place-box';
+      placeBox.setAttribute('data-section-role', 'place');
+      placeBox.setAttribute('data-testid', 'e2c-place-section');
+      text(placeBox, 'مكان تقديم الخدمة', 'h3');
+      const placeModeSeed =
+        seed.placeMode ||
+        (seed.draftPlaceMode != null ? seed.draftPlaceMode : '') ||
+        '';
+      const placeModeInput = document.createElement('input');
+      placeModeInput.type = 'hidden';
+      placeModeInput.name = 'placeMode';
+      placeModeInput.value = placeModeSeed;
+      placeModeInput.setAttribute('data-testid', 'e2c-place-mode');
+      placeBox.appendChild(placeModeInput);
+
+      const placeDetails = document.createElement('div');
+      placeDetails.setAttribute('data-testid', 'e2c-place-details');
+      placeBox.appendChild(placeDetails);
+
+      const branchSeed = seed.branchId || '';
+      const branchSelect = document.createElement('select');
+      branchSelect.name = 'branchId';
+      branchSelect.setAttribute('data-testid', 'e2c-branch-select');
+      const branchEmpty = document.createElement('option');
+      branchEmpty.value = '';
+      branchEmpty.textContent = 'اختاري الفرع';
+      branchSelect.appendChild(branchEmpty);
+      const branches = Array.isArray(window.sessionBranches) ? window.sessionBranches : [];
+      branches.forEach((b) => {
+        const opt = document.createElement('option');
+        opt.value = b.id;
+        opt.textContent = (b.nameAr || b.id) + (b.cityNameAr ? ' · ' + b.cityNameAr : '');
+        opt.dataset.city = b.cityNameAr || '';
+        opt.dataset.lat = b.lat != null ? String(b.lat) : '';
+        opt.dataset.lng = b.lng != null ? String(b.lng) : '';
+        if (b.id === branchSeed) opt.selected = true;
+        branchSelect.appendChild(opt);
+      });
+      branchSelect.addEventListener('change', () => {
+        bumpFormContentEpoch();
+        syncPlaceDetails();
+      });
+
+      const placeChips = document.createElement('div');
+      placeChips.className = 'e2c-chip-row';
+      placeChips.setAttribute('data-testid', 'e2c-place-mode-chips');
+      [
+        ['remote', 'عن بُعد'],
+        ['home', 'منزلية'],
+        ['branch', 'في الفرع'],
+      ].forEach(([val, label]) => {
+        const chip = document.createElement('button');
+        chip.type = 'button';
+        chip.className = 'e2c-chip';
+        chip.setAttribute('data-testid', 'e2c-place-chip');
+        chip.setAttribute('data-place-mode', val);
+        chip.textContent = label;
+        if (placeModeSeed === val) chip.classList.add('is-selected');
+        chip.addEventListener('click', () => {
+          placeModeInput.value = val;
+          placeChips.querySelectorAll('.e2c-chip').forEach((c) => c.classList.remove('is-selected'));
+          chip.classList.add('is-selected');
+          // Non-branch modes explicitly clear branch — do not keep a stale select value.
+          if (val !== 'branch') branchSelect.value = '';
+          syncPlaceDetails();
+          bumpFormContentEpoch();
+        });
+        placeChips.appendChild(chip);
+      });
+      placeBox.insertBefore(placeChips, placeDetails);
+
+      const cityLine = document.createElement('p');
+      cityLine.className = 'lead';
+      cityLine.setAttribute('data-testid', 'e2c-place-city');
+      const phoneLine = document.createElement('p');
+      phoneLine.className = 'lead';
+      phoneLine.setAttribute('data-testid', 'e2c-place-phone');
+      phoneLine.textContent = partner.contactPhone
+        ? 'وسيلة التواصل: ' + partner.contactPhone
+        : 'لا توجد وسيلة تواصل مسجّلة على حساب الجهة.';
+      const mapBox = document.createElement('div');
+      mapBox.className = 'e2c-map-preview';
+      mapBox.setAttribute('data-testid', 'e2c-map-preview');
+      const placeGap = document.createElement('p');
+      placeGap.className = 'muted';
+      placeGap.setAttribute('data-testid', 'e2c-place-contract-gap');
+
+      function syncPlaceDetails() {
+        placeDetails.replaceChildren();
+        const mode = placeModeInput.value;
+        if (!mode) {
+          placeGap.textContent =
+            'اختاري مكان التقديم. عرض المدينة/الهاتف وحدهما لا يثبت اكتمال اختيار الموقع.';
+          placeDetails.appendChild(placeGap);
+          placeDetails.appendChild(phoneLine);
+          return;
+        }
+        if (mode === 'remote') {
+          branchSelect.value = '';
+          branchSelect.hidden = true;
+          placeDetails.appendChild(branchSelect);
+          placeGap.textContent = 'خدمة عن بُعد — لا تُفترض إحداثيات أو فرع.';
+          placeDetails.append(placeGap, phoneLine);
+          return;
+        }
+        if (mode === 'home') {
+          // Keep branchId control mounted (hidden) so form.querySelector still sees explicit clear.
+          branchSelect.value = '';
+          branchSelect.hidden = true;
+          placeDetails.appendChild(branchSelect);
+          cityLine.textContent = partner.city
+            ? 'نطاق المدينة المسجّل على الحساب: ' + partner.city + ' (تغطية منزلية — يُحفظ عبر التغطية عند توفر العقد).'
+            : 'المدينة غير مسجّلة — استكملي بيانات الجهة قبل اعتماد التغطية المنزلية.';
+          placeDetails.append(cityLine, phoneLine);
+          return;
+        }
+        // branch
+        if (!branches.length) {
+          placeGap.textContent =
+            'لا فروع مسجّلة على الحساب (PartnerBranch). اختيار الفرع والإحداثيات غير مكتمل بالعقد الحالي — لا يُعلن نجاح موقع شكلي.';
+          cityLine.textContent = partner.city ? 'مدينة الحساب: ' + partner.city : 'المدينة غير مسجّلة.';
+          placeDetails.append(placeGap, cityLine, phoneLine);
+          return;
+        }
+        branchSelect.hidden = false;
+        const branchWrap = document.createElement('label');
+        branchWrap.className = 'field';
+        branchWrap.append(document.createTextNode('الفرع'), branchSelect);
+        placeDetails.appendChild(branchWrap);
+        const opt = branchSelect.selectedOptions[0];
+        const cityName =
+          (opt && (opt.dataset.city || opt.getAttribute('data-city'))) ||
+          (opt && opt.value
+            ? String(opt.textContent || '')
+                .split('·')
+                .pop()
+                ?.trim()
+            : '');
+        cityLine.textContent = cityName
+          ? 'المدينة: ' + cityName
+          : 'اختاري فرعًا لإظهار المدينة.';
+        placeDetails.appendChild(cityLine);
+        const hasCoords = opt && opt.dataset.lat && opt.dataset.lng;
+        mapBox.replaceChildren();
+        mapBox.style.backgroundImage = '';
+        if (hasCoords) {
+          const lat = Number(opt.dataset.lat);
+          const lng = Number(opt.dataset.lng);
+          const delta = 0.01;
+          const bbox =
+            (lng - delta).toFixed(5) +
+            '%2C' +
+            (lat - delta).toFixed(5) +
+            '%2C' +
+            (lng + delta).toFixed(5) +
+            '%2C' +
+            (lat + delta).toFixed(5);
+          // Real OSM embed bound to branch lat/lng — not a decorative gradient.
+          const frame = document.createElement('iframe');
+          frame.setAttribute('data-testid', 'e2c-map-embed');
+          frame.setAttribute('title', 'خريطة الفرع');
+          frame.loading = 'lazy';
+          frame.referrerPolicy = 'no-referrer-when-downgrade';
+          frame.src =
+            'https://www.openstreetmap.org/export/embed.html?bbox=' +
+            bbox +
+            '&layer=mapnik&marker=' +
+            lat.toFixed(5) +
+            '%2C' +
+            lng.toFixed(5);
+          const label = document.createElement('p');
+          label.className = 'e2c-map-label';
+          label.setAttribute('data-testid', 'e2c-map-pin');
+          label.textContent =
+            'موقع الفرع · ' +
+            (opt.textContent || '').trim() +
+            ' · ' +
+            lat.toFixed(4) +
+            ', ' +
+            lng.toFixed(4);
+          mapBox.append(frame, label);
+        } else {
+          mapBox.textContent = 'لا إحداثيات على الفرع المختار — واجهة الموقع غير مكتملة.';
+        }
+        placeDetails.append(mapBox, phoneLine);
+      }
+      syncPlaceDetails();
+      basics.appendChild(placeBox);
+      const secondaryDetails = document.createElement('details');
+      secondaryDetails.className = 'e2c-secondary-details';
+      secondaryDetails.setAttribute('data-testid', 'e2c-secondary-details');
+      secondaryDetails.setAttribute('data-section-role', 'secondary');
+      const secondarySummary = document.createElement('summary');
+      secondarySummary.textContent = 'تفاصيل إضافية (حجز ودفع)';
+      secondaryDetails.appendChild(secondarySummary);
       const bookingWrap = document.createElement('label');
       bookingWrap.className = 'check-row';
       bookingToggle = document.createElement('input');
@@ -714,24 +971,116 @@
       bookingToggle.checked = Boolean(editing && item.bookingEnabled);
       bookingToggle.addEventListener('change', bumpFormContentEpoch);
       bookingWrap.append(bookingToggle, document.createTextNode(' تفعيل طلب الموعد داخل ميرا (بانتظار قبول الجهة)'));
-      basics.appendChild(bookingWrap);
-      text(basics, 'الدفع لدى الجهة عند الموعد. لا تُطبَّق عبارة الدفع عند الاستلام الخاصة بالمنتجات على الخدمات.');
+      secondaryDetails.appendChild(bookingWrap);
+      text(secondaryDetails, 'الدفع لدى الجهة عند الموعد. لا تُطبَّق عبارة الدفع عند الاستلام الخاصة بالمنتجات على الخدمات.');
+      basics.appendChild(secondaryDetails);
       const availBox = document.createElement('div');
-      availBox.className = 'form-section';
+      availBox.className = 'form-section e2c-avail-box';
+      availBox.setAttribute('data-section-role', 'availability');
+      availBox.setAttribute('data-timezone', 'Asia/Riyadh');
+      availBox.setAttribute('data-testid', 'e2c-availability-section');
       text(availBox, 'التقويم والإتاحة', 'h3');
       text(availBox, 'المنطقة الزمنية: Asia/Riyadh (ثابتة — لا تُحوَّل حسب جهازك). غياب إعداد الإتاحة لا يعني أن الخدمة متاحة.');
       text(availBox, 'طلب الموعد داخل ميرا ليس حجزًا مؤكدًا. لا دفع ولا محفظة في هذه المرحلة.');
+      const monthHost = document.createElement('div');
+      monthHost.setAttribute('data-testid', 'e2c-month-calendar');
+      monthHost.className = 'e2c-month-host';
+      availBox.appendChild(monthHost);
+      const timeChipsHost = document.createElement('div');
+      timeChipsHost.className = 'e2c-time-chips';
+      timeChipsHost.setAttribute('data-testid', 'e2c-time-chips');
+      availBox.appendChild(timeChipsHost);
       const dayNames = ['الأحد', 'الإثنين', 'الثلاثاء', 'الأربعاء', 'الخميس', 'الجمعة', 'السبت'];
-      const rawAvail = editing && item && item.availabilityJson != null ? item.availabilityJson : null;
-      const seededDoc = (function normalizeClientAvail(raw) {
-        if (!raw) return { windows: [], closedDates: [], exceptions: [] };
-        if (Array.isArray(raw)) return { windows: raw, closedDates: [], exceptions: [] };
-        return {
-          windows: Array.isArray(raw.windows) ? raw.windows : [],
-          closedDates: Array.isArray(raw.closedDates) ? raw.closedDates.slice() : [],
-          exceptions: Array.isArray(raw.exceptions) ? raw.exceptions.map(function (e) { return Object.assign({}, e); }) : [],
-        };
-      })(rawAvail);
+      // Priority: saved service availabilityJson (freshest server) → draft weeklyHours/dateExceptions → empty.
+      // Draft autosave writes weeklyHours/dateExceptions, not availabilityJson — must hydrate before materialize.
+      const seededDoc = (function seedAvailabilityDoc() {
+        function fromCanonical(raw) {
+          if (!raw) return null;
+          if (Array.isArray(raw)) return { windows: raw, closedDates: [], exceptions: [] };
+          if (typeof raw !== 'object') return null;
+          return {
+            windows: Array.isArray(raw.windows) ? raw.windows.slice() : [],
+            closedDates: Array.isArray(raw.closedDates) ? raw.closedDates.slice() : [],
+            exceptions: Array.isArray(raw.exceptions)
+              ? raw.exceptions.map(function (e) {
+                  return Object.assign({}, e);
+                })
+              : [],
+          };
+        }
+        function fromBulk(values) {
+          if (!values || typeof values !== 'object') return null;
+          const hours = Array.isArray(values.weeklyHours) ? values.weeklyHours : null;
+          const rawEx = Array.isArray(values.dateExceptions) ? values.dateExceptions : null;
+          const hoursExplicit = Object.prototype.hasOwnProperty.call(values, 'weeklyHours');
+          const exExplicit = Object.prototype.hasOwnProperty.call(values, 'dateExceptions');
+          if (!hoursExplicit && !exExplicit && !(hours && hours.length) && !(rawEx && rawEx.length)) {
+            return null;
+          }
+          const dayMap = { sun: 0, mon: 1, tue: 2, wed: 3, thu: 4, fri: 5, sat: 6 };
+          const toMin = function (t) {
+            const s = String(t || '10:00');
+            const parts = s.split(':').map(Number);
+            if (!Number.isFinite(parts[0]) || !Number.isFinite(parts[1])) return null;
+            return parts[0] * 60 + parts[1];
+          };
+          const windows = (hours || [])
+            .map(function (raw) {
+              if (!raw || typeof raw !== 'object') return null;
+              const h = raw;
+              const dayKey = String(h.day || h.weekday || '');
+              const weekday =
+                typeof h.weekday === 'number' && Number.isInteger(h.weekday)
+                  ? h.weekday
+                  : dayMap[dayKey] != null
+                    ? dayMap[dayKey]
+                    : null;
+              const startMin = typeof h.startMin === 'number' ? h.startMin : toMin(h.open || h.start);
+              const endMin = typeof h.endMin === 'number' ? h.endMin : toMin(h.close || h.end);
+              if (weekday == null || startMin == null || endMin == null || endMin <= startMin) return null;
+              return {
+                weekday: weekday,
+                startMin: startMin,
+                endMin: endMin,
+                capacity: typeof h.capacity === 'number' ? h.capacity : h.capacity != null ? Number(h.capacity) : 1,
+                resourceId: typeof h.resourceId === 'string' ? h.resourceId : '',
+              };
+            })
+            .filter(Boolean);
+          const closedDates = [];
+          const exceptions = [];
+          (rawEx || []).forEach(function (x) {
+            if (typeof x === 'string') {
+              if (x.trim()) closedDates.push(x.trim());
+              return;
+            }
+            if (!x || typeof x !== 'object') return;
+            const date = String(x.date || '').trim();
+            if (!date) return;
+            const kind = String(x.kind || '').trim();
+            if (kind === 'special') exceptions.push(Object.assign({}, x, { date: date, kind: 'special' }));
+            else if (kind === 'closed' && x.resourceId) exceptions.push({ date: date, kind: 'closed', resourceId: String(x.resourceId) });
+            else closedDates.push(date);
+          });
+          // Explicit empty arrays = clear (empty doc), not "absent".
+          if (hoursExplicit && !(hours && hours.length) && exExplicit && !(rawEx && rawEx.length)) {
+            return { windows: [], closedDates: [], exceptions: [] };
+          }
+          if (!windows.length && !closedDates.length && !exceptions.length) {
+            return hoursExplicit || exExplicit ? { windows: [], closedDates: [], exceptions: [] } : null;
+          }
+          return { windows: windows, closedDates: closedDates, exceptions: exceptions };
+        }
+        const fromItem =
+          editing && item && item.availabilityJson != null ? fromCanonical(item.availabilityJson) : null;
+        if (fromItem && (fromItem.windows.length || fromItem.closedDates.length || fromItem.exceptions.length)) {
+          return fromItem;
+        }
+        const fromDraft = fromBulk(seed);
+        if (fromDraft) return fromDraft;
+        if (fromItem) return fromItem;
+        return { windows: [], closedDates: [], exceptions: [] };
+      })();
       // Empty seed stays empty (unconfigured). Preserve ALL windows per weekday (not just first).
       function minsToTime(m) {
         return String(Math.floor(Number(m) / 60)).padStart(2, '0') + ':' + String(Number(m) % 60).padStart(2, '0');
@@ -753,19 +1102,46 @@
       );
       const closedDates = seededDoc.closedDates.slice();
       const exceptions = seededDoc.exceptions.slice();
-      text(availBox, 'أيام العمل الأسبوعية — يمكن أكثر من فترة لنفس اليوم/المورد', 'h4');
+      const availSummary = document.createElement('p');
+      availSummary.className = 'muted e2c-avail-summary';
+      availSummary.setAttribute('data-testid', 'e2c-avail-summary');
+      function refreshAvailSummary() {
+        const winCount = daySegments.reduce((n, segs) => n + segs.length, 0);
+        const daysWith = daySegments.filter((segs) => segs.length > 0).length;
+        availSummary.textContent =
+          winCount > 0
+            ? 'ملخص الإتاحة: ' + daysWith + ' أيام · ' + winCount + ' فترات · Asia/Riyadh'
+            : 'ملخص الإتاحة: بلا فترات أسبوعية بعد — التقويم أعلاه للاختيار؛ التحرير التفصيلي بالأسفل.';
+      }
+      availBox.appendChild(availSummary);
+      const weeklyDetails = document.createElement('details');
+      weeklyDetails.className = 'e2c-secondary-details e2c-avail-edit-details';
+      weeklyDetails.setAttribute('data-testid', 'e2c-avail-edit-details');
+      const weeklySummary = document.createElement('summary');
+      weeklySummary.textContent = 'تحرير الأوقات والسعات والموارد';
+      weeklyDetails.appendChild(weeklySummary);
+      text(weeklyDetails, 'أيام العمل الأسبوعية — محرر تفصيلي؛ يمكن أكثر من فترة ونسخ يوم لآخر', 'h4');
       const weeklyBox = document.createElement('div');
       weeklyBox.setAttribute('data-testid', 'avail-weekly-windows');
-      availBox.appendChild(weeklyBox);
+      weeklyBox.className = 'e2c-weekly-compact';
+      weeklyDetails.appendChild(weeklyBox);
+      availBox.appendChild(weeklyDetails);
+      refreshAvailSummary();
       function paintWeekly() {
         weeklyBox.replaceChildren();
         dayNames.forEach((name, weekday) => {
-          const dayBlock = document.createElement('div');
-          dayBlock.className = 'form-section';
+          const dayBlock = document.createElement('details');
+          dayBlock.className = 'e2c-day-block';
           dayBlock.setAttribute('data-weekday', String(weekday));
-          const title = document.createElement('div');
+          dayBlock.setAttribute('data-testid', 'avail-day-block');
+          if (daySegments[weekday].length) dayBlock.open = true;
+          const title = document.createElement('summary');
           title.className = 'check-row';
-          title.textContent = name + (daySegments[weekday].length ? '' : ' · بلا فترات');
+          title.textContent =
+            name +
+            (daySegments[weekday].length
+              ? ' · ' + daySegments[weekday].length + ' فترة'
+              : ' · بلا فترات');
           dayBlock.appendChild(title);
           daySegments[weekday].forEach((seg, segIdx) => {
             const row = document.createElement('div');
@@ -780,6 +1156,7 @@
               seg.start = start.value;
               bumpFormContentEpoch();
               paintAvailPreview();
+              if (typeof paintMonthCalendar === 'function') paintMonthCalendar();
             };
             const end = document.createElement('input');
             end.type = 'time';
@@ -788,6 +1165,7 @@
               seg.end = end.value;
               bumpFormContentEpoch();
               paintAvailPreview();
+              if (typeof paintMonthCalendar === 'function') paintMonthCalendar();
             };
             const cap = document.createElement('input');
             cap.type = 'number';
@@ -822,6 +1200,7 @@
               daySegments[weekday].splice(segIdx, 1);
               bumpFormContentEpoch();
               paintWeekly();
+              refreshAvailSummary();
               paintAvailPreview();
             };
             row.append(
@@ -844,13 +1223,35 @@
             daySegments[weekday].push(emptySegment());
             bumpFormContentEpoch();
             paintWeekly();
+            refreshAvailSummary();
             paintAvailPreview();
           };
           dayBlock.appendChild(addSeg);
+          if (weekday > 0) {
+            const copyPrev = document.createElement('button');
+            copyPrev.type = 'button';
+            copyPrev.className = 'btn btn-ghost btn-sm';
+            copyPrev.textContent = 'نسخ فترات ' + dayNames[weekday - 1];
+            copyPrev.setAttribute('data-testid', 'avail-window-copy-prev');
+            copyPrev.onclick = () => {
+              daySegments[weekday] = daySegments[weekday - 1].map((s) => ({
+                start: s.start,
+                end: s.end,
+                capacity: s.capacity,
+                resourceId: s.resourceId,
+              }));
+              bumpFormContentEpoch();
+              paintWeekly();
+              refreshAvailSummary();
+              paintAvailPreview();
+            };
+            dayBlock.appendChild(copyPrev);
+          }
           weeklyBox.appendChild(dayBlock);
         });
       }
       paintWeekly();
+      refreshAvailSummary();
 
       text(availBox, 'أيام إغلاق واستثناءات بتاريخ محدد', 'h4');
       const closedWrap = document.createElement('div');
@@ -868,6 +1269,8 @@
         closedDates.forEach((d, idx) => {
           const row = document.createElement('div');
           row.className = 'check-row';
+          row.setAttribute('data-testid', 'avail-closed-date-row');
+          row.setAttribute('data-date', d);
           row.textContent = d + ' · مغلق';
           const rm = document.createElement('button');
           rm.type = 'button';
@@ -877,7 +1280,7 @@
             closedDates.splice(idx, 1);
             bumpFormContentEpoch();
             paintClosed();
-            paintAvailPreview();
+            refreshCalendarUi();
           };
           row.appendChild(rm);
           closedList.appendChild(row);
@@ -891,12 +1294,18 @@
         closedInput.value = '';
         bumpFormContentEpoch();
         paintClosed();
-        paintAvailPreview();
+        refreshCalendarUi();
       };
       closedWrap.append(closedInput, closedAdd, closedList);
       availBox.appendChild(closedWrap);
       paintClosed();
 
+      const exDetails = document.createElement('details');
+      exDetails.className = 'e2c-secondary-details';
+      exDetails.setAttribute('data-testid', 'e2c-exceptions-details');
+      const exSummary = document.createElement('summary');
+      exSummary.textContent = 'الاستثناءات وأيام الإغلاق المتقدمة';
+      exDetails.appendChild(exSummary);
       const exWrap = document.createElement('div');
       exWrap.setAttribute('data-testid', 'avail-exceptions');
       const exList = document.createElement('div');
@@ -916,6 +1325,10 @@
       exCap.max = '100';
       exCap.value = '1';
       exCap.style.width = '4rem';
+      const exRes = document.createElement('input');
+      exRes.type = 'text';
+      exRes.placeholder = 'مورد (اختياري — إغلاق مورد لا يغلق اليوم)';
+      exRes.setAttribute('data-testid', 'avail-exception-resource');
       const exAdd = document.createElement('button');
       exAdd.type = 'button';
       exAdd.className = 'btn btn-ghost btn-sm';
@@ -925,11 +1338,22 @@
         exceptions.forEach((e, idx) => {
           const row = document.createElement('div');
           row.className = 'check-row';
+          row.setAttribute('data-testid', 'avail-exception-row');
+          row.setAttribute('data-date', e.date);
+          row.setAttribute('data-kind', e.kind);
+          if (e.kind === 'special') {
+            row.setAttribute('data-start-min', String(e.startMin));
+            row.setAttribute('data-end-min', String(e.endMin));
+            row.setAttribute('data-capacity', String(e.capacity));
+          }
+          if (e.resourceId) row.setAttribute('data-resource-id', String(e.resourceId));
           row.textContent =
             e.date +
             ' · ' +
             (e.kind === 'closed'
-              ? 'إغلاق'
+              ? e.resourceId
+                ? 'إغلاق مورد ' + e.resourceId
+                : 'إغلاق يوم'
               : 'خاصة ' +
                 String(Math.floor((e.startMin || 0) / 60)).padStart(2, '0') +
                 ':' +
@@ -948,7 +1372,7 @@
             exceptions.splice(idx, 1);
             bumpFormContentEpoch();
             paintExceptions();
-            paintAvailPreview();
+            refreshCalendarUi();
           };
           row.appendChild(rm);
           exList.appendChild(row);
@@ -958,8 +1382,9 @@
       exAdd.onclick = () => {
         const d = exDate.value;
         if (!/^\d{4}-\d{2}-\d{2}$/.test(d)) return;
+        const resId = String(exRes.value || '').trim();
         if (exKind.value === 'closed') {
-          exceptions.push({ date: d, kind: 'closed' });
+          exceptions.push(resId ? { date: d, kind: 'closed', resourceId: resId } : { date: d, kind: 'closed' });
         } else {
           const sm = exStart.value.split(':').map(Number);
           const em = exEnd.value.split(':').map(Number);
@@ -969,12 +1394,20 @@
           if (!(endMin > startMin) || !Number.isInteger(capacity) || capacity < 1) {
             throw new Error('فترة الاستثناء غير صالحة');
           }
-          exceptions.push({ date: d, kind: 'special', startMin: startMin, endMin: endMin, capacity: capacity, resourceId: '' });
+          exceptions.push({
+            date: d,
+            kind: 'special',
+            startMin: startMin,
+            endMin: endMin,
+            capacity: capacity,
+            resourceId: resId,
+          });
         }
         exDate.value = '';
+        exRes.value = '';
         bumpFormContentEpoch();
         paintExceptions();
-        paintAvailPreview();
+        refreshCalendarUi();
       };
       exWrap.append(
         exDate,
@@ -985,18 +1418,41 @@
         exEnd,
         document.createTextNode(' سعة '),
         exCap,
+        exRes,
         exAdd,
         exList,
       );
-      availBox.appendChild(exWrap);
+      // Move closed-dates into the same advanced fold (keep controls; re-parent wrap).
+      if (closedWrap.parentElement === availBox) availBox.removeChild(closedWrap);
+      exDetails.appendChild(closedWrap);
+      exDetails.appendChild(exWrap);
+      availBox.appendChild(exDetails);
       paintExceptions();
 
+      const previewWrap = document.createElement('div');
+      previewWrap.className = 'e2c-avail-preview-wrap';
+      const previewToggle = document.createElement('button');
+      previewToggle.type = 'button';
+      previewToggle.className = 'btn btn-ghost btn-sm';
+      previewToggle.setAttribute('data-testid', 'avail-preview-toggle');
+      previewToggle.textContent = 'إظهار معاينة 14 يومًا';
       const previewCal = document.createElement('div');
       previewCal.setAttribute('data-testid', 'avail-calendar-preview');
       previewCal.className = 'options-preview';
-      text(availBox, 'معاينة ساعات العمل المُعدّة لـ 14 يومًا (Asia/Riyadh) — ليست توافر حجز محسوبًا', 'h4');
-      text(availBox, 'المفتاح: يوم عمل مُعدّ · مغلق/بدون جدول · غير مهيأ', 'p');
-      availBox.appendChild(previewCal);
+      previewCal.hidden = true;
+      const previewHint = document.createElement('p');
+      previewHint.className = 'muted';
+      previewHint.textContent =
+        'معاينة ساعات العمل المُعدّة (Asia/Riyadh) عند الطلب — ليست توافر حجز محسوبًا من الخادم.';
+      previewWrap.append(previewToggle, previewHint, previewCal);
+      weeklyDetails.appendChild(previewWrap);
+      let previewVisible = false;
+      previewToggle.onclick = () => {
+        previewVisible = !previewVisible;
+        previewCal.hidden = !previewVisible;
+        previewToggle.textContent = previewVisible ? 'إخفاء المعاينة' : 'إظهار معاينة 14 يومًا';
+        if (previewVisible) paintAvailPreview();
+      };
       function riyadhParts(ms) {
         const local = new Date(ms + 180 * 60 * 1000);
         return {
@@ -1023,25 +1479,47 @@
         });
         return windows;
       }
+      function isWholeDayClosed(dateKey) {
+        if (closedDates.indexOf(dateKey) >= 0) return true;
+        // Resource-scoped closed (kind=closed + resourceId) does NOT close the whole day.
+        return exceptions.some(
+          (e) => e.date === dateKey && e.kind === 'closed' && !String(e.resourceId || '').trim(),
+        );
+      }
+      function closedResourceIdsFor(dateKey) {
+        return exceptions
+          .filter((e) => e.date === dateKey && e.kind === 'closed' && String(e.resourceId || '').trim())
+          .map((e) => String(e.resourceId).trim());
+      }
       function dayStatus(dateKey, windows) {
-        if (closedDates.indexOf(dateKey) >= 0) return 'مغلق/بدون جدول';
+        if (isWholeDayClosed(dateKey)) return 'مغلق/بدون جدول';
         const dayEx = exceptions.filter((e) => e.date === dateKey);
-        if (dayEx.some((e) => e.kind === 'closed')) return 'مغلق/بدون جدول';
-        const specials = dayEx.filter((e) => e.kind === 'special');
+        const closedRes = closedResourceIdsFor(dateKey);
+        // Server contract: closed resource wins over special for the same resourceId.
+        const specials = dayEx.filter(
+          (e) =>
+            e.kind === 'special' &&
+            (!e.resourceId || closedRes.indexOf(String(e.resourceId)) < 0),
+        );
         let has = false;
         if (specials.length) has = true;
         else {
           const parts = riyadhParts(Date.parse(dateKey + 'T00:00:00.000Z') + (12 * 60 - 180) * 60 * 1000);
-          has = windows.some((w) => w.weekday === parts.weekday);
+          has = windows.some(
+            (w) =>
+              w.weekday === parts.weekday &&
+              (!w.resourceId || closedRes.indexOf(String(w.resourceId)) < 0),
+          );
         }
         if (!has) {
           return windows.length === 0 && exceptions.length === 0 && closedDates.length === 0
             ? 'غير مهيأ'
             : 'مغلق/بدون جدول';
         }
-        return 'يوم عمل مُعدّ';
+        return closedRes.length ? 'يوم عمل مُعدّ (بعض الموارد مغلقة)' : 'يوم عمل مُعدّ';
       }
       function paintAvailPreview() {
+        if (previewCal.hidden) return;
         previewCal.replaceChildren();
         const windows = buildWindowsSnapshot();
         const start = Date.now();
@@ -1055,7 +1533,126 @@
           previewCal.appendChild(cell);
         }
       }
-      paintAvailPreview();
+      let monthCursor = new Date();
+      let selectedMonthDay = null;
+      function paintMonthCalendar() {
+        monthHost.replaceChildren();
+        const title = document.createElement('div');
+        title.className = 'check-row';
+        const y = monthCursor.getFullYear();
+        const m = monthCursor.getMonth();
+        title.textContent = 'تقويم الإتاحة · ' + (m + 1) + '/' + y;
+        const prev = document.createElement('button');
+        prev.type = 'button';
+        prev.className = 'btn btn-ghost btn-sm';
+        prev.textContent = '‹';
+        prev.onclick = () => {
+          monthCursor = new Date(y, m - 1, 1);
+          paintMonthCalendar();
+        };
+        const next = document.createElement('button');
+        next.type = 'button';
+        next.className = 'btn btn-ghost btn-sm';
+        next.textContent = '›';
+        next.onclick = () => {
+          monthCursor = new Date(y, m + 1, 1);
+          paintMonthCalendar();
+        };
+        title.prepend(prev);
+        title.appendChild(next);
+        monthHost.appendChild(title);
+        const grid = document.createElement('div');
+        grid.className = 'e2c-month-grid';
+        const first = new Date(y, m, 1);
+        const startPad = first.getDay();
+        const daysInMonth = new Date(y, m + 1, 0).getDate();
+        const windows = buildWindowsSnapshot();
+        for (let i = 0; i < startPad; i++) {
+          grid.appendChild(document.createElement('div'));
+        }
+        for (let d = 1; d <= daysInMonth; d++) {
+          const dateKey =
+            y + '-' + String(m + 1).padStart(2, '0') + '-' + String(d).padStart(2, '0');
+          const st = dayStatus(dateKey, windows);
+          const cell = document.createElement('button');
+          cell.type = 'button';
+          cell.className = 'e2c-month-cell';
+          cell.textContent = String(d);
+          cell.setAttribute('data-date', dateKey);
+          cell.setAttribute('data-testid', 'e2c-month-day');
+          if (st.indexOf('مغلق') >= 0) cell.classList.add('is-closed');
+          if (selectedMonthDay === dateKey) cell.classList.add('is-selected');
+          cell.onclick = () => {
+            selectedMonthDay = dateKey;
+            paintMonthCalendar();
+            paintDayTimeChips(dateKey);
+          };
+          grid.appendChild(cell);
+        }
+        monthHost.appendChild(grid);
+      }
+      function paintDayTimeChips(dateKey) {
+        timeChipsHost.replaceChildren();
+        // Whole-day closed only — resource-scoped closed must keep other resources' slots.
+        if (isWholeDayClosed(dateKey)) {
+          timeChipsHost.textContent = 'يوم مغلق — لا أوقات أسبوعية.';
+          timeChipsHost.setAttribute('data-closed-day', '1');
+          timeChipsHost.removeAttribute('data-resource-closed');
+          return;
+        }
+        timeChipsHost.removeAttribute('data-closed-day');
+        const closedRes = closedResourceIdsFor(dateKey);
+        if (closedRes.length) timeChipsHost.setAttribute('data-resource-closed', closedRes.join(','));
+        else timeChipsHost.removeAttribute('data-resource-closed');
+        const windows = buildWindowsSnapshot();
+        const parts = riyadhParts(Date.parse(dateKey + 'T12:00:00.000Z'));
+        const dayWins = windows.filter(
+          (w) =>
+            Number(w.weekday) === parts.weekday &&
+            (!w.resourceId || closedRes.indexOf(String(w.resourceId)) < 0),
+        );
+        // Align with server resolveDay: omit specials for resources already closed that day.
+        const dayEx = exceptions.filter(
+          (e) =>
+            e.date === dateKey &&
+            e.kind === 'special' &&
+            (!e.resourceId || closedRes.indexOf(String(e.resourceId)) < 0),
+        );
+        const slots = dayEx.length
+          ? dayEx.map((e) => ({
+              startMin: e.startMin,
+              endMin: e.endMin,
+              resourceId: e.resourceId || '',
+            }))
+          : dayWins;
+        if (!slots.length) {
+          timeChipsHost.textContent = closedRes.length
+            ? 'لا أوقات ظاهرة بعد إغلاق المورد المحدد.'
+            : 'لا أوقات مُعدّة لهذا اليوم.';
+          return;
+        }
+        slots.forEach((s) => {
+          const chip = document.createElement('button');
+          chip.type = 'button';
+          chip.className = 'e2c-chip';
+          chip.setAttribute('data-testid', 'e2c-time-chip');
+          if (s.resourceId) chip.setAttribute('data-resource-id', String(s.resourceId));
+          const sh = String(Math.floor(Number(s.startMin) / 60)).padStart(2, '0');
+          const sm = String(Number(s.startMin) % 60).padStart(2, '0');
+          chip.textContent = sh + ':' + sm + (s.resourceId ? ' · ' + s.resourceId : '');
+          chip.onclick = () => {
+            timeChipsHost.querySelectorAll('.e2c-chip').forEach((c) => c.classList.remove('is-selected'));
+            chip.classList.add('is-selected');
+          };
+          timeChipsHost.appendChild(chip);
+        });
+      }
+      function refreshCalendarUi() {
+        if (typeof paintMonthCalendar === 'function') paintMonthCalendar();
+        if (selectedMonthDay) paintDayTimeChips(selectedMonthDay);
+        paintAvailPreview();
+      }
+      paintMonthCalendar();
 
       const unifyWrap = document.createElement('label');
       unifyWrap.className = 'check-row';
@@ -1121,10 +1718,14 @@
       };
     }
 
-    const templateSection = document.createElement('div');
-    templateSection.className = 'form-section';
+    const templateSection = document.createElement('details');
+    templateSection.className = 'form-section e2c-secondary-details';
+    templateSection.setAttribute('data-section-role', 'template');
+    templateSection.setAttribute('data-testid', 'e2c-template-details');
     templateSection.hidden = type === 'brand';
-    text(templateSection, 'قالب الخدمة وخصائصها', 'h3');
+    const templateSummary = document.createElement('summary');
+    templateSummary.textContent = 'قالب الخدمة وخصائصها';
+    templateSection.appendChild(templateSummary);
     text(templateSection, 'الحقول تتغير حسب نوع الخدمة. لا تُحدد الخدمات المشمولة أو المتطلبات تلقائيًا. الحفظ المحلي للخصائص حتى يتوفر تخزين دائم للحقول.');
     const templateSelect = document.createElement('select');
     templateSelect.name = 'serviceTemplateId';
@@ -1421,7 +2022,28 @@
     }
 
     const REGISTRY_SIZE_IDS = new Set(['XS', 'S', 'M', 'L', 'XL', 'XXL']);
-    const REGISTRY_COLOR_IDS = new Set(['black', 'ivory', 'brown', 'pink', 'blue', 'green', 'multi']);
+    const REGISTRY_COLOR_IDS = new Set([
+      'black',
+      'ivory',
+      'champagne',
+      'beige',
+      'nude',
+      'peach',
+      'pink',
+      'red',
+      'burgundy',
+      'brown',
+      'purple',
+      'blue',
+      'navy',
+      'teal',
+      'green',
+      'gray',
+      'white',
+      'gold',
+      'silver',
+      'multi',
+    ]);
 
     /**
      * Live owner id — never rely on the `editing` snapshot from form build time.
@@ -1539,6 +2161,61 @@
           priceMode: templateState.priceMode || 'fixed',
           answers: templateState.answers || {},
         };
+      }
+      if (type !== 'brand') {
+        const placeModeEl = form.querySelector('[name="placeMode"]');
+        const branchEl = form.querySelector('[name="branchId"]');
+        if (placeModeEl) {
+          // Always bind placeMode when control present (including empty → clear semantics upstream).
+          values.placeMode = String(placeModeEl.value || '').trim() || null;
+        }
+        // Non-branch modes must explicitly clear branchId even when the select is detached
+        // from the DOM (syncPlaceDetails only mounts it under placeMode=branch).
+        if (values.placeMode && values.placeMode !== 'branch') {
+          values.branchId = null;
+        } else if (branchEl) {
+          // HTMLSelectElement.value lives on the prototype — never use hasOwnProperty(branchEl,'value').
+          // Explicit empty clears branch; omit only when control absent AND mode is branch/unset.
+          values.branchId = String(branchEl.value || '').trim() || null;
+        }
+      }
+      // E2ج: التقويم عبر حقول السجل weeklyHours/dateExceptions (ليست availabilityJson الخام — ترفضها البوابة).
+      if (type !== 'brand' && availabilityJson && typeof availabilityJson.build === 'function') {
+        try {
+          const doc = availabilityJson.build();
+          const dayKeys = ['sun', 'mon', 'tue', 'wed', 'thu', 'fri', 'sat'];
+          values.weeklyHours = (doc.windows || []).map((w) => ({
+            day: dayKeys[Number(w.weekday)] || 'sun',
+            weekday: Number(w.weekday),
+            open:
+              String(Math.floor(Number(w.startMin) / 60)).padStart(2, '0') +
+              ':' +
+              String(Number(w.startMin) % 60).padStart(2, '0'),
+            close:
+              String(Math.floor(Number(w.endMin) / 60)).padStart(2, '0') +
+              ':' +
+              String(Number(w.endMin) % 60).padStart(2, '0'),
+            startMin: w.startMin,
+            endMin: w.endMin,
+            capacity: w.capacity,
+            resourceId: w.resourceId || '',
+          }));
+          // Preserve closedDates AND dated exceptions (special/closed) — never drop doc.exceptions.
+          const dateExceptions = [];
+          (Array.isArray(doc.closedDates) ? doc.closedDates : []).forEach((d) => {
+            if (d) dateExceptions.push(String(d));
+          });
+          (Array.isArray(doc.exceptions) ? doc.exceptions : []).forEach((e) => {
+            if (!e || !e.date) return;
+            dateExceptions.push(Object.assign({}, e));
+          });
+          values.dateExceptions = dateExceptions;
+        } catch (availErr) {
+          fieldErrors.push({
+            fieldId: 'availabilityJson',
+            message: (availErr && availErr.message) || 'إعداد الإتاحة غير صالح',
+          });
+        }
       }
       if (fieldErrors.length) return { ok: false, fieldErrors: fieldErrors, values: values };
       return { ok: true, values: values };
@@ -2021,21 +2698,84 @@
           });
         }
       }
-      if (reviewOk) clearResumeState(clientDraftId);
+      if (reviewOk) {
+        clearResumeState(clientDraftId);
+        const matDone = form.querySelector('[data-editor-v2-materialize="1"]');
+        if (matDone) matDone.dataset.resumeActive = '0';
+        if (typeof form._miraApplyFinalCtaPolicy === 'function') form._miraApplyFinalCtaPolicy();
+      } else if (submitFailed || (ownerId && !reviewOk)) {
+        // Created without review (pending media) or submit failed — keep resume CTA.
+        const matFail = form.querySelector('[data-editor-v2-materialize="1"]');
+        if (matFail) matFail.dataset.resumeActive = '1';
+        if (typeof form._miraApplyFinalCtaPolicy === 'function') form._miraApplyFinalCtaPolicy();
+      }
+      const submitReviewFlag = body.submitReview;
+      const submitStatus = String(body.submitReviewStatus || (result && result.submitReviewStatus) || '');
+      const createdPendingMedia =
+        !!ownerId &&
+        !reviewOk &&
+        (submitFailed ||
+          submitReviewFlag === false ||
+          submitStatus === 'none' ||
+          submitStatus === 'skipped' ||
+          submitStatus === 'pending' ||
+          submitStatus === 'failed');
+      const hasMediaNow = formHasReviewableMedia(form);
       status.textContent = reviewOk
         ? 'تم التحويل والإرسال للمراجعة · ' + (body.targetKind || kind) + ' ' + (ownerId || '')
-        : submitFailed
-          ? 'تم إنشاء العنصر، وتعذر الإرسال للمراجعة — ارفعي وسائط ثم أعيدي المحاولة. · ' + (ownerId || '')
-          : 'نتيجة التحويل: ' + (fromError && fromError.message ? fromError.message : 'غير معروفة');
+        : submitFailed && hasMediaNow
+          ? 'تم إنشاء العنصر، وتعذر الإرسال للمراجعة — راجعي الأخطاء ثم أعيدي المحاولة. · ' + (ownerId || '')
+          : createdPendingMedia && !hasMediaNow
+            ? 'تم إنشاء العنصر — أضيفي وسائط ثم اضغطي «استئناف الإرسال للمراجعة». · ' + (ownerId || '')
+            : createdPendingMedia && hasMediaNow && !submitFailed
+              ? 'تم إنشاء العنصر — أكملي الإرسال للمراجعة. · ' + (ownerId || '')
+            : submitFailed
+              ? 'تم إنشاء العنصر، وتعذر الإرسال للمراجعة — ارفعي وسائط ثم أعيدي المحاولة. · ' + (ownerId || '')
+              : 'نتيجة التحويل: ' + (fromError && fromError.message ? fromError.message : 'غير معروفة');
       return { ownerId: ownerId, reviewOk: reviewOk, submitFailed: submitFailed, stale: false };
+    }
+
+    function formHasReviewableMedia(targetForm) {
+      if (!targetForm) return false;
+      const savedCards = targetForm.querySelectorAll('[data-testid="media-card-saved"]').length;
+      const stagedCards = targetForm.querySelectorAll('[data-testid="media-card-staged"]').length;
+      const stagedState = staged[targetForm.id];
+      const stagedBucket = Array.isArray(stagedState) ? stagedState.length : 0;
+      return savedCards + stagedCards + stagedBucket > 0;
     }
 
     if (window.MiraEditorV2 && MiraEditorV2.state.enabled) {
       const matBtn = document.createElement('button');
       matBtn.type = 'button';
-      matBtn.className = 'secondary';
+      matBtn.className = developerAccount ? 'btn btn-ghost' : 'btn btn-primary';
       matBtn.setAttribute('data-editor-v2-materialize', '1');
-      matBtn.textContent = 'تحويل المسودة الخادمية وإرسال للمراجعة';
+      matBtn.setAttribute('data-testid', 'materialize-draft');
+      matBtn.textContent = developerAccount ? 'مراجعة الحفظ ثم النشر' : 'إرسال للمراجعة';
+      // Developer primary path is «نشر الآن» on save — keep materialize secondary/hidden unless resume.
+      // Use class+attr: `.btn { display:inline-flex }` overrides bare HTML hidden (I-01).
+      if (developerAccount) {
+        matBtn.hidden = true;
+        matBtn.classList.add('hidden', 'is-cta-suppressed');
+        matBtn.setAttribute('aria-hidden', 'true');
+        matBtn.setAttribute('tabindex', '-1');
+      }
+      function resumeFinalLabel(mode) {
+        // Developer publishes without human approval — never imply a review path.
+        if (developerAccount) return mode === 'complete' ? 'استكمال النشر' : 'استئناف النشر';
+        return 'استئناف الإرسال للمراجعة';
+      }
+      function revealMaterializeResume(label) {
+        matBtn.dataset.resumeActive = '1';
+        matBtn.textContent = label || resumeFinalLabel('resume');
+        if (typeof form._miraApplyFinalCtaPolicy === 'function') form._miraApplyFinalCtaPolicy();
+        else {
+          matBtn.hidden = false;
+          matBtn.classList.remove('hidden', 'is-cta-suppressed');
+          matBtn.removeAttribute('aria-hidden');
+          matBtn.removeAttribute('tabindex');
+          matBtn.className = 'btn btn-primary';
+        }
+      }
       // Restore resume banner if page reloaded mid-flight OR server draft already materialized/failed.
       (function restoreResumeBanner() {
         const ctx0 = MiraEditorV2.getEditContext(form.id);
@@ -2048,7 +2788,7 @@
             ctx0.status = 'submit_failed';
             ctx0.submitReviewStatus = 'failed';
           }
-          matBtn.textContent = 'استئناف الإرسال للمراجعة';
+          revealMaterializeResume(resumeFinalLabel('resume'));
           status.textContent = 'العنصر موجود (' + resume.targetOwnerId + ') — أكمل الوسائط ثم استأنفي الإرسال.';
           return;
         }
@@ -2062,14 +2802,20 @@
             ctx0.submitReviewStatus === 'failed')
         ) {
           item = Object.assign({}, item || {}, { id: ctx0.targetOwnerId });
-          matBtn.textContent = 'استئناف الإرسال للمراجعة';
+          const failed =
+            ctx0.submitReviewStatus === 'failed' || ctx0.status === 'submit_failed';
+          revealMaterializeResume(resumeFinalLabel(failed ? 'resume' : 'complete'));
           status.textContent =
             'العنصر موجود (' +
             ctx0.targetOwnerId +
             ') — ' +
-            (ctx0.submitReviewStatus === 'failed' || ctx0.status === 'submit_failed'
-              ? 'أكمل الوسائط ثم استأنفي الإرسال.'
-              : 'جاهز لإعادة الإرسال للمراجعة.');
+            (failed
+              ? developerAccount
+                ? 'أكمل الوسائط ثم استأنفي النشر.'
+                : 'أكمل الوسائط ثم استأنفي الإرسال.'
+              : developerAccount
+                ? 'جاهز لاستكمال النشر.'
+                : 'جاهز لإعادة الإرسال للمراجعة.');
         }
       })();
       matBtn.onclick = async () => {
@@ -2119,7 +2865,7 @@
                 );
                 if (out && out.stale) return;
                 if (draftRow.submitReviewStatus !== 'submitted') {
-                  matBtn.textContent = 'استئناف الإرسال للمراجعة';
+                  matBtn.textContent = resumeFinalLabel('resume');
                 }
                 await refreshLists();
                 if (!assertMatLive('recover-refresh')) return;
@@ -2163,7 +2909,7 @@
                     matOp,
                   );
                   if (out && out.stale) return;
-                  matBtn.textContent = 'استئناف الإرسال للمراجعة';
+                  matBtn.textContent = resumeFinalLabel('resume');
                   await refreshLists();
                   if (!assertMatLive('recover-already-refresh')) return;
                   resume = loadResumeState(clientDraftId);
@@ -2175,7 +2921,7 @@
               } else if (recoverErr && recoverErr.code === 'MATERIALIZE_SUBMIT_REVIEW_FAILED') {
                 const out = applyMaterializeOutcome(clientDraftId, null, recoverErr, matOp);
                 if (out && out.stale) return;
-                matBtn.textContent = 'استئناف الإرسال للمراجعة';
+                matBtn.textContent = resumeFinalLabel('resume');
                 await refreshLists();
                 if (!assertMatLive('recover-submit-fail')) return;
                 resume = loadResumeState(clientDraftId);
@@ -2304,7 +3050,7 @@
                 matOp,
               );
               if (out && out.stale) return;
-              matBtn.textContent = 'استئناف الإرسال للمراجعة';
+              matBtn.textContent = resumeFinalLabel('resume');
               status.textContent =
                 'استُعيد العنصر المحوّل مسبقًا (' + prior.targetOwnerId + ') — لا إنشاء بديل.';
               await refreshLists();
@@ -2354,7 +3100,7 @@
                   matOp,
                 );
                 if (out && out.stale) return;
-                matBtn.textContent = 'استئناف الإرسال للمراجعة';
+                matBtn.textContent = resumeFinalLabel('resume');
                 await refreshLists();
                 return;
               }
@@ -2380,7 +3126,7 @@
                   },
                   null,
                 matOp);
-                matBtn.textContent = 'استئناف الإرسال للمراجعة';
+                matBtn.textContent = resumeFinalLabel('resume');
                 await refreshLists();
                 return;
               }
@@ -2412,10 +3158,12 @@
           });
           if (!assertMatLive('before-materialize')) return;
           try {
+            // Do not auto-submit review without media — avoids false «تعذر الإرسال» on create-only.
+            const shouldSubmitReview = formHasReviewableMedia(form);
             const result = await MiraEditorV2.materialize(
               clientDraftId,
               expectedRevision,
-              true,
+              shouldSubmitReview,
               resumeKey,
             );
             if (!assertMatLive('after-materialize')) {
@@ -2426,7 +3174,7 @@
             const matOut = applyMaterializeOutcome(clientDraftId, result, null, matOp);
             if (matOut && matOut.stale) return;
             if (result && result.targetOwnerId && !(result.reviewSubmitted || result.submitReviewStatus === 'submitted')) {
-              matBtn.textContent = 'استئناف الإرسال للمراجعة';
+              matBtn.textContent = resumeFinalLabel('resume');
             }
           } catch (error) {
             if (!assertMatLive('materialize-catch')) {
@@ -2436,7 +3184,7 @@
             if (error && error.code === 'MATERIALIZE_SUBMIT_REVIEW_FAILED') {
               const matOut = applyMaterializeOutcome(clientDraftId, null, error, matOp);
               if (matOut && matOut.stale) return;
-              matBtn.textContent = 'استئناف الإرسال للمراجعة';
+              matBtn.textContent = resumeFinalLabel('resume');
             } else {
               const mCode = (error && error.code) || (error && error.body && error.body.code) || '';
               if (mCode === 'DRAFT_ALREADY_MATERIALIZED') {
@@ -2474,7 +3222,7 @@
                     matOp,
                   );
                   if (matOut && matOut.stale) return;
-                  matBtn.textContent = 'استئناف الإرسال للمراجعة';
+                  matBtn.textContent = resumeFinalLabel('resume');
                 } else {
                   throw error;
                 }
@@ -2500,6 +3248,7 @@
 
     const mediaSection = document.createElement('div');
     mediaSection.className = 'form-section';
+    mediaSection.setAttribute('data-section-role', 'main-media');
     text(mediaSection, 'وسائط العرض الرئيسي', 'h3');
     text(mediaSection, 'الفيديو أو الصور التي تظهر للمستخدم مباشرة أثناء تصفح اكتشفي بملء الشاشة.');
     text(mediaSection, 'فيديو واحد أو مجموعة صور. صور JPEG وPNG وWebP وصورة الآيفون حتى 5 ميغابايت. الفيديو حتى 5 دقائق.');
@@ -2514,18 +3263,257 @@
     const images = mediaInput(form.id + '-images', 'image/jpeg,image/png,image/webp,image/heic,image/heif,.heic,.heif,.jpg');
     const videos = mediaInput(form.id + '-videos', 'video/mp4,video/quicktime,video/x-m4v,.mov,.m4v,.mp4');
     videos.multiple = false;
+    videos.classList.add('e2b-file-input-native');
+    images.classList.add('e2b-file-input-native');
     const imageLabel = document.createElement('label');
     imageLabel.htmlFor = images.id;
+    imageLabel.className = 'e2b-media-pick-btn';
     imageLabel.textContent = 'إضافة صور للعرض الرئيسي';
-    const videoLabel = document.createElement('label');
-    videoLabel.htmlFor = videos.id;
-    videoLabel.textContent = 'إضافة فيديو للعرض الرئيسي';
+    const videoCard = document.createElement('div');
+    videoCard.className = 'e2b-video-card';
+    videoCard.setAttribute('data-testid', 'e2b-video-card');
+    const videoTitle = document.createElement('h4');
+    videoTitle.className = 'e2b-video-card-title';
+    videoTitle.textContent = 'الفيديو الرئيسي';
+    const videoStatus = document.createElement('p');
+    videoStatus.className = 'e2b-video-card-status';
+    videoStatus.setAttribute('data-testid', 'e2b-video-card-status');
+    videoStatus.setAttribute('role', 'status');
+    videoStatus.textContent = 'لم يُختر مقطع بعد — هذا ليس خطأ.';
+    const videoPick = document.createElement('label');
+    videoPick.htmlFor = videos.id;
+    videoPick.className = 'e2b-media-pick-btn e2b-video-pick';
+    videoPick.setAttribute('data-testid', 'e2b-video-pick');
+    videoPick.textContent = 'اختيار المقطع';
     const mainPreview = document.createElement('p');
+    mainPreview.className = 'e2b-media-hint';
     mainPreview.textContent = 'معاينة الموضع: تملأ شاشة اكتشفي من الحافة إلى الحافة.';
     const mediaBox = document.createElement('div');
-    mediaSection.append(imageLabel, images, videoLabel, videos, mainPreview, mediaBox);
+    mediaBox.className = 'media-box e2b-video-stage';
+    mediaBox.setAttribute('data-testid', 'catalog-media-stage');
+    videoCard.append(videoTitle, mediaBox, videoPick, videos, videoStatus);
+    mediaSection.classList.add('e2b-media-stage');
+    mediaSection.setAttribute('data-testid', 'catalog-main-media-section');
+    mediaSection.append(videoCard, imageLabel, images, mainPreview);
+    /**
+     * Normalize staged media → video card chrome. Prefer explicit phase over raw Arabic status
+     * or mere presence of uploadSessionId (session id alone ≠ currently uploading).
+     */
+    function normalizeVideoPhase(entry) {
+      if (!entry) return 'empty';
+      if (entry.error || entry.phase === 'failed' || /فشل|خطأ|تعذر/.test(String(entry.status || ''))) return 'failed';
+      if (entry.aborted || entry.phase === 'cancelled' || /أُلغي|الغي|cancel/i.test(String(entry.status || '')))
+        return 'cancelled';
+      if (entry.phase === 'ready' || entry.catalogMediaId || /جاهز|مكتمل|ready/i.test(String(entry.status || '')))
+        return 'ready';
+      if (entry.phase === 'processing' || /تحقق|معالجة|processing|verif/i.test(String(entry.status || '')))
+        return 'processing';
+      if (entry.phase === 'uploading' || entry._uploadBusy || /رفع|قراءة|تحضير/.test(String(entry.status || '')))
+        return 'uploading';
+      if (entry.phase === 'awaiting-save' || /انتظار|حفظ|البيانات/.test(String(entry.status || '')))
+        return 'awaiting-save';
+      if (entry.file) return 'selected';
+      return 'empty';
+    }
+    /** Cached saved main video — detail media updates must not wipe this by passing null. */
+    let lastKnownSavedMainVideo = null;
+    function progressPercentLabel(ratio) {
+      // Upload callbacks use 0..1; display as 0% / 50% / 100%.
+      if (ratio == null || typeof ratio !== 'number' || !Number.isFinite(ratio)) return '';
+      const pct = Math.max(0, Math.min(100, Math.round(ratio <= 1 ? ratio * 100 : ratio)));
+      return ' · ' + pct + '%';
+    }
+    function isMainVideoEntry(entry) {
+      return !!(entry && entry.placement !== 'detail' && entry.file && isPhoneVideo(entry.file));
+    }
+    /**
+     * @param {Array|null|undefined} serverMedia full media list when known
+     * @param {{ mainRemoved?: boolean }} [opts] mainRemoved=true only when main was explicitly deleted
+     */
+    function syncVideoCardChrome(serverMedia, opts) {
+      opts = opts || {};
+      if (Array.isArray(serverMedia)) {
+        const found = serverMedia.find(
+          (m) => m && m.kind === 'video' && m.placement !== 'detail' && !m.pendingRemoval,
+        );
+        if (found) lastKnownSavedMainVideo = found;
+        else if (opts.mainRemoved === true) lastKnownSavedMainVideo = null;
+        else lastKnownSavedMainVideo = null; // full list without main = absent on server
+      } else if (opts.mainRemoved === true) {
+        lastKnownSavedMainVideo = null;
+      }
+      // null serverMedia without mainRemoved = "no new main data" → keep cache.
+      const rows = staged[form.id] || [];
+      // Prefer an in-flight/ready main over an older failed row so retry+replace paints live progress.
+      const stagedMain =
+        rows.find((e) => isMainVideoEntry(e) && normalizeVideoPhase(e) !== 'failed' && normalizeVideoPhase(e) !== 'cancelled') ||
+        rows.find((e) => isMainVideoEntry(e));
+      const savedMain =
+        (Array.isArray(serverMedia) &&
+          serverMedia.find((m) => m && m.kind === 'video' && m.placement !== 'detail' && !m.pendingRemoval)) ||
+        (!opts.mainRemoved ? lastKnownSavedMainVideo : null);
+      const filePick = videos.files && videos.files[0];
+      const nameOf = (e) => (e && e.file && e.file.name) || '';
+      if (stagedMain) {
+        const phase = normalizeVideoPhase(stagedMain);
+        videoStatus.dataset.state = phase;
+        videoStatus.dataset.phase = phase;
+        if (phase === 'failed') {
+          videoStatus.textContent =
+            'فشل الرفع: ' +
+            (stagedMain.error || stagedMain.status || 'خطأ') +
+            ' — بيانات الحقول محفوظة.';
+          videoPick.textContent = 'إعادة المحاولة';
+          videoPick.dataset.action = 'retry';
+          return;
+        }
+        if (phase === 'cancelled') {
+          videoStatus.textContent = 'أُلغي الرفع' + (nameOf(stagedMain) ? ': ' + nameOf(stagedMain) : '') + '.';
+          videoPick.textContent = 'اختيار المقطع';
+          videoPick.dataset.action = 'pick';
+          return;
+        }
+        if (phase === 'processing') {
+          videoStatus.textContent =
+            'جارٍ التحقق/المعالجة' + (nameOf(stagedMain) ? ': ' + nameOf(stagedMain) : '');
+          videoPick.textContent = 'استبدال المقطع';
+          videoPick.dataset.action = 'replace';
+          return;
+        }
+        if (phase === 'uploading') {
+          videoStatus.textContent =
+            'جارٍ الرفع' + (nameOf(stagedMain) ? ': ' + nameOf(stagedMain) : '') + progressPercentLabel(stagedMain.percent);
+          videoPick.textContent = 'استبدال المقطع';
+          videoPick.dataset.action = 'replace';
+          return;
+        }
+        if (phase === 'awaiting-save') {
+          videoStatus.textContent =
+            'بانتظار الحفظ قبل الرفع' + (nameOf(stagedMain) ? ': ' + nameOf(stagedMain) : '');
+          videoPick.textContent = 'استبدال المقطع';
+          videoPick.dataset.action = 'replace';
+          return;
+        }
+        if (phase === 'ready') {
+          videoStatus.textContent = 'المقطع جاهز في المسودة' + (nameOf(stagedMain) ? ': ' + nameOf(stagedMain) : '');
+          videoPick.textContent = 'استبدال المقطع';
+          videoPick.dataset.action = 'replace';
+          return;
+        }
+        videoStatus.textContent =
+          'تم اختيار المقطع' + (nameOf(stagedMain) ? ': ' + nameOf(stagedMain) : '') + ' — بانتظار الرفع بعد الحفظ.';
+        videoPick.textContent = 'استبدال المقطع';
+        videoPick.dataset.action = 'replace';
+        return;
+      }
+      if (filePick) {
+        videoStatus.dataset.state = 'selected';
+        videoStatus.dataset.phase = 'selected';
+        videoStatus.textContent = 'تم اختيار المقطع: ' + filePick.name + ' — بانتظار الرفع بعد الحفظ.';
+        videoPick.textContent = 'استبدال المقطع';
+        videoPick.dataset.action = 'replace';
+        return;
+      }
+      if (savedMain) {
+        videoStatus.dataset.state = 'saved';
+        videoStatus.dataset.phase = 'saved';
+        videoStatus.textContent =
+          'فيديو محفوظ على العنصر' +
+          (savedMain.publication ? ' · ' + savedMain.publication : '') +
+          ' — يمكن استبداله.';
+        videoPick.textContent = 'استبدال المقطع';
+        videoPick.dataset.action = 'replace';
+        return;
+      }
+      videoStatus.dataset.state = 'empty';
+      videoStatus.dataset.phase = 'empty';
+      videoStatus.textContent = 'لم يُختر مقطع بعد — هذا ليس خطأ.';
+      videoPick.textContent = 'اختيار المقطع';
+      videoPick.dataset.action = 'pick';
+    }
+    videos.addEventListener('change', () => {
+      syncVideoCardChrome(undefined);
+    });
+    // Harness-only: drive chrome/progress through the same sync path (no DOM text injection).
+    if ((window).__MIRA_E2A_HARNESS__) {
+      form.__miraVideoChrome = {
+        progressPercentLabel: progressPercentLabel,
+        sync: (serverMedia, opts) => syncVideoCardChrome(serverMedia, opts),
+        applyMainProgressRatio: (ratio) => {
+          const rows = staged[form.id] || (staged[form.id] = []);
+          let entry = rows.find((e) => isMainVideoEntry(e));
+          if (!entry) {
+            entry = {
+              key: 'harness-main-video',
+              placement: 'main',
+              file: { name: 'harness-main.mp4', type: 'video/mp4', size: 1 },
+              status: 'جارٍ الرفع',
+              percent: ratio,
+              phase: 'uploading',
+              _uploadBusy: true,
+            };
+            rows.push(entry);
+          } else {
+            entry.status = 'جارٍ الرفع';
+            entry.percent = ratio;
+            entry.phase = 'uploading';
+            entry._uploadBusy = true;
+            entry.error = '';
+          }
+          syncMedia(entry);
+          return {
+            text: videoStatus.textContent || '',
+            state: videoStatus.dataset.state || '',
+            percent: entry.percent,
+          };
+        },
+        simulateDetailSync: () => {
+          const rows = staged[form.id] || (staged[form.id] = []);
+          const detail = {
+            key: 'harness-detail-' + Date.now(),
+            placement: 'detail',
+            file: { name: 'detail.png', type: 'image/png', size: 1 },
+            status: 'جارٍ الرفع',
+            percent: 0.5,
+            phase: 'uploading',
+            _uploadBusy: true,
+          };
+          rows.push(detail);
+          syncMedia(detail);
+          return {
+            text: videoStatus.textContent || '',
+            state: videoStatus.dataset.state || '',
+          };
+        },
+        read: () => ({
+          text: videoStatus.textContent || '',
+          state: videoStatus.dataset.state || '',
+          phase: videoStatus.dataset.phase || '',
+        }),
+      };
+    }
+    videoPick.addEventListener('click', (ev) => {
+      if (videoPick.dataset.action !== 'retry') return;
+      ev.preventDefault();
+      const rows = staged[form.id] || [];
+      const failed = rows.find(
+        (e) => e && e.placement !== 'detail' && e.file && isPhoneVideo(e.file) && normalizeVideoPhase(e) === 'failed',
+      );
+      if (!failed) {
+        videos.click();
+        return;
+      }
+      // Resume the same upload session (and any durable completed parts). Do not mint a
+      // replacement session for a transient transport error — file_mismatch / explicit
+      // abort paths clear uploadSessionId elsewhere with a proven reason.
+      failed.error = '';
+      failed.phase = null;
+      failed.status = 'بانتظار الحفظ';
+      void uploadOne(failed);
+    });
     const detailMediaSection = document.createElement('div');
     detailMediaSection.className = 'form-section';
+    detailMediaSection.setAttribute('data-section-role', 'detail-media');
     text(detailMediaSection, 'وسائط صفحة التفاصيل', 'h3');
     text(detailMediaSection, 'هذه الصور والمقاطع تظهر داخل صفحة التفاصيل بعد الضغط على زر التفاصيل.');
     text(detailMediaSection, 'الصور والفيديو مسموحة هنا، وتُعرض كاملة دون قص إجباري بنسبة شاشة اكتشفي.');
@@ -2543,6 +3531,7 @@
     detailMediaSection.append(detailImageLabel, detailImages, detailVideoLabel, detailVideos, detailPreview, detailMediaBox);
     const variantMediaSection = document.createElement('div');
     variantMediaSection.className = 'form-section';
+    variantMediaSection.setAttribute('data-section-role', 'variant-media');
     variantMediaSection.hidden = type !== 'brand';
     text(variantMediaSection, 'وسائط التركيبات', 'h3');
     text(variantMediaSection, 'اربط وسائط جاهزة بتركيبة معتمدة. الوسائط غير الجاهزة أو التابعة لمنتج آخر مرفوضة.');
@@ -2553,6 +3542,7 @@
 
     const detail = document.createElement('div');
     detail.className = 'form-section';
+    detail.setAttribute('data-section-role', 'details');
     text(detail, 'التفاصيل', 'h3');
     const tags = field(detail, 'وسوم اختيارية', 'concernTags', (seed.concernTags || []).join ? (seed.concernTags || []).join(', ') : (seed.concernTags || ''), 'text');
     tags.addEventListener('input', () => {
@@ -2567,8 +3557,18 @@
 
     const action = document.createElement('div');
     action.className = 'form-section';
-    text(action, 'الإجراء', 'h3');
+    action.setAttribute('data-section-role', 'commerce');
+    text(action, 'الشراء والإعدادات المتقدمة', 'h3');
+    const commerceDetails = document.createElement('details');
+    commerceDetails.className = 'e2b-extra-details';
+    commerceDetails.setAttribute('data-testid', 'e2b-commerce-details');
+    const commerceSummary = document.createElement('summary');
+    commerceSummary.textContent = 'وضع الشراء ورسوم التوصيل (اختياري)';
+    commerceDetails.appendChild(commerceSummary);
+    action.appendChild(commerceDetails);
     form.appendChild(action);
+    // Subsequent commerce fields append into the collapsible host (values preserved when collapsed).
+    const commerceHost = commerceDetails;
     let url = null;
     let internalToggle = null;
     let stockInput = null;
@@ -2579,8 +3579,8 @@
       const choices = document.createElement('div');
       choices.className = 'choice-row';
       choices.append(choice('purchaseMode', 'none', 'بدون شراء الآن', true), choice('purchaseMode', 'link', 'شراء عبر رابط', false), choice('purchaseMode', 'contact', 'تواصل', false));
-      action.appendChild(choices);
-      url = field(action, 'رابط الشراء (فقط عند اختيار الرابط)', 'externalUrl', editing && item.externalUrl ? item.externalUrl : '', 'url');
+      commerceHost.appendChild(choices);
+      url = field(commerceHost, 'رابط الشراء (فقط عند اختيار الرابط)', 'externalUrl', editing && item.externalUrl ? item.externalUrl : '', 'url');
       url.required = false;
       url.addEventListener('input', () => {
         bumpFormContentEpoch();
@@ -2593,7 +3593,7 @@
       if (editing && validUrl(item.externalUrl)) choices.querySelector('input[value="link"]').checked = true;
 
       // Operational commerce: in-Mira cart + cash on delivery. External URL stays the default.
-      text(action, 'الشراء داخل ميرا (الدفع عند الاستلام)', 'h4');
+      text(commerceHost, 'الشراء داخل ميرا (الدفع عند الاستلام)', 'h4');
       const internal = document.createElement('label');
       internalToggle = document.createElement('input');
       internalToggle.type = 'checkbox';
@@ -2605,14 +3605,17 @@
       });
       internal.append(internalToggle, document.createTextNode(' تفعيل الطلب داخل ميرا (دفع نقدًا عند الاستلام). رابط الشراء الخارجي يبقى للمنتجات الخارجية فقط.'));
       choices.addEventListener('change', bumpFormContentEpoch);
-      action.appendChild(internal);
+      commerceHost.appendChild(internal);
+      // Quantity belongs with core offer (colors/sizes/materials); created here then relocated to qtyHost.
       stockInput = field(
         action,
-        'المخزون (اتركيه فارغًا إذا لا يُتتبع)',
+        'الكمية (اختياري)',
         'stockQty',
         seed.stockQty != null ? seed.stockQty : (editing && item.stockQty != null ? item.stockQty : ''),
         'number',
       );
+      stockInput.setAttribute('data-testid', 'catalog-quantity');
+      stockInput.placeholder = 'اختياري';
       stockInput.min = '0';
       stockInput.step = '1';
       stockInput.addEventListener('input', () => {
@@ -2624,7 +3627,7 @@
         scheduleEditorDraftAutosave();
       });
       feeInput = field(
-        action,
+        commerceHost,
         'رسوم التوصيل بالريال (اتركيها فارغة إذا غير محددة، ولا تُعرض كمجانية)',
         'deliveryFeeSar',
         seed.deliveryFeeHalalas != null
@@ -2641,63 +3644,188 @@
         bumpFormContentEpoch();
         scheduleEditorDraftAutosave();
       });
-      const advancedWrap = document.createElement('label');
-      advancedWrap.className = 'check-row';
-      const advancedToggle = document.createElement('input');
-      advancedToggle.type = 'checkbox';
-      advancedToggle.name = 'optionsAdvancedJson';
-      advancedWrap.append(advancedToggle, document.createTextNode(' تعديل متقدم بصيغة JSON (يستبدل النموذج المبسّط عند التفعيل)'));
-      action.appendChild(advancedWrap);
-      optionsJsonInput = field(action, 'خيارات المنتج JSON (متقدم)', 'optionsJson', '', 'textarea');
-      optionsJsonInput.placeholder = '[{"id":"size","labelAr":"المقاس","kind":"size","values":[{"id":"m","labelAr":"M"}]}]';
-      variantsJsonInput = field(action, 'التركيبات JSON (متقدم)', 'variantsJson', '', 'textarea');
-      variantsJsonInput.placeholder = '[{"id":"m-black","selections":{"size":"m"},"priceHalalas":5200,"available":true}]';
-      function setAdvancedVisible(on) {
-        [optionsJsonInput, variantsJsonInput].forEach((input) => {
-          const box = input.closest('.field') || input.parentElement;
-          if (box) box.hidden = !on;
-          if (!on) input.value = '';
+      // Advanced JSON tools: developer-only. Brand/salon accounts stay on the simplified fields.
+      if (developerAccount) {
+        const advancedWrap = document.createElement('label');
+        advancedWrap.className = 'check-row';
+        advancedWrap.setAttribute('data-testid', 'developer-advanced-json');
+        const advancedToggle = document.createElement('input');
+        advancedToggle.type = 'checkbox';
+        advancedToggle.name = 'optionsAdvancedJson';
+        advancedWrap.append(
+          advancedToggle,
+          document.createTextNode(' تعديل متقدم بصيغة JSON (يستبدل النموذج المبسّط عند التفعيل)'),
+        );
+        commerceHost.appendChild(advancedWrap);
+        optionsJsonInput = field(commerceHost, 'خيارات المنتج JSON (متقدم)', 'optionsJson', '', 'textarea');
+        optionsJsonInput.placeholder =
+          '[{"id":"size","labelAr":"المقاس","kind":"size","values":[{"id":"m","labelAr":"M"}]}]';
+        variantsJsonInput = field(commerceHost, 'التركيبات JSON (متقدم)', 'variantsJson', '', 'textarea');
+        variantsJsonInput.placeholder =
+          '[{"id":"m-black","selections":{"size":"m"},"priceHalalas":5200,"available":true}]';
+        function setAdvancedVisible(on) {
+          [optionsJsonInput, variantsJsonInput].forEach((input) => {
+            const box = input.closest('.field') || input.parentElement;
+            if (box) box.hidden = !on;
+            if (!on) input.value = '';
+          });
+        }
+        setAdvancedVisible(false);
+        advancedToggle.onchange = () => {
+          setAdvancedVisible(advancedToggle.checked);
+          bumpFormContentEpoch();
+        };
+        optionsJsonInput.addEventListener('input', () => {
+          bumpFormContentEpoch();
+          scheduleEditorDraftAutosave();
         });
+        optionsJsonInput.addEventListener('change', bumpFormContentEpoch);
+        variantsJsonInput.addEventListener('input', () => {
+          bumpFormContentEpoch();
+          scheduleEditorDraftAutosave();
+        });
+        variantsJsonInput.addEventListener('change', bumpFormContentEpoch);
+        optionsJsonInput._advancedToggle = advancedToggle;
       }
-      setAdvancedVisible(false);
-      advancedToggle.onchange = () => {
-        setAdvancedVisible(advancedToggle.checked);
-        bumpFormContentEpoch();
-      };
-      optionsJsonInput.addEventListener('input', () => {
-        bumpFormContentEpoch();
-        scheduleEditorDraftAutosave();
-      });
-      optionsJsonInput.addEventListener('change', bumpFormContentEpoch);
-      variantsJsonInput.addEventListener('input', () => {
-        bumpFormContentEpoch();
-        scheduleEditorDraftAutosave();
-      });
-      variantsJsonInput.addEventListener('change', bumpFormContentEpoch);
-      optionsJsonInput._advancedToggle = advancedToggle;
-      text(action, 'المقاسات والألوان والأحجام تُحفظ من النموذج المبسّط أعلاه. المخزون ورسوم التوصيل ووضع الشراء يسري مباشرة؛ الخيارات للمنشور تمر بمسودة مراجعة.');
+      text(commerceHost, 'المخزون ورسوم التوصيل ووضع الشراء يسري مباشرة؛ الألوان والمقاسات من الخيارات الأساسية؛ التركيبات للمنشور تمر بمسودة مراجعة.');
     }
 
     const preview = document.createElement('div');
     preview.className = 'form-section';
     preview.setAttribute('data-testid', 'catalog-preview-panel');
+    preview.setAttribute('data-section-role', 'preview-publish');
     text(preview, 'المعاينة والنشر', 'h3');
     const previewBody = text(preview, '');
     previewBody.setAttribute('data-testid', 'catalog-preview-body');
     form.appendChild(preview);
 
+    const actionsBar = document.createElement('div');
+    actionsBar.className = 'e2b-editor-actions';
+    actionsBar.setAttribute('data-testid', 'e2b-editor-actions');
+    actionsBar.setAttribute('data-section-role', 'editor-actions');
     const save = document.createElement('button');
     save.type = 'submit';
     save.id = form.id + '-save';
-    save.className = 'btn btn-primary';
-    save.textContent = developerAccount ? 'نشر الآن' : 'حفظ المسودة';
+    save.setAttribute('data-testid', 'catalog-save');
+    save.className = 'btn btn-ghost';
+    save.textContent = 'حفظ المسودة';
     if (note && (note.indexOf('حُفظت المسودة') === 0 || note.indexOf('نُشر في التطبيق') === 0)) status.classList.add('save-ok');
     const submit = document.createElement('button');
     submit.type = 'button';
     submit.className = 'btn btn-ghost';
     submit.textContent = developerAccount ? 'نشر الآن' : 'إرسال للمراجعة';
-    if (developerAccount) submit.hidden = true;
-    form.append(save, submit);
+    submit.setAttribute('data-testid', 'catalog-submit-review');
+    /**
+     * I-01: `.btn { display:inline-flex }` overrides HTML `hidden`. Always suppress with
+     * class+attr, and pick exactly one final CTA from account + operation state.
+     */
+    function suppressCta(el, on) {
+      if (!el) return;
+      el.hidden = !!on;
+      el.classList.toggle('hidden', !!on);
+      el.classList.toggle('is-cta-suppressed', !!on);
+      el.setAttribute('aria-hidden', on ? 'true' : 'false');
+      if (on) {
+        el.setAttribute('tabindex', '-1');
+        el.disabled = true;
+        // Inline !important beats site `.btn { display:inline-flex }` for geometry evaluators.
+        el.style.setProperty('display', 'none', 'important');
+        el.style.setProperty('visibility', 'hidden', 'important');
+        el.style.setProperty('pointer-events', 'none', 'important');
+      } else {
+        el.removeAttribute('tabindex');
+        el.disabled = false;
+        el.style.removeProperty('display');
+        el.style.removeProperty('visibility');
+        el.style.removeProperty('pointer-events');
+      }
+    }
+    function resumeNeededFromContext() {
+      const mat = form.querySelector('[data-editor-v2-materialize="1"]');
+      if (mat && mat.dataset.resumeActive === '1') return true;
+      const ctxMat = window.MiraEditorV2 && MiraEditorV2.getEditContext(form.id);
+      if (!ctxMat) return false;
+      if (ctxMat.submitReviewStatus === 'submitted' || mat?.dataset.resumeActive === '0') return false;
+      return (
+        ctxMat.status === 'materialized' ||
+        ctxMat.status === 'submit_failed' ||
+        ctxMat.status === 'materializing' ||
+        ctxMat.submitReviewStatus === 'failed'
+      );
+    }
+    function applyFinalCtaPolicy() {
+      const mat = form.querySelector('[data-editor-v2-materialize="1"]');
+      const editorV2 = !!(window.MiraEditorV2 && MiraEditorV2.state.enabled);
+      const resume = resumeNeededFromContext();
+      // Always keep draft save available (never a second final publish/review).
+      suppressCta(save, false);
+      save.className = 'btn btn-ghost';
+      save.textContent = 'حفظ المسودة';
+      save.dataset.ctaRole = 'draft';
+      // Legacy submit never shares the bar with materialize.
+      suppressCta(submit, true);
+      submit.dataset.ctaRole = 'legacy';
+      if (mat && mat.parentElement !== actionsBar) actionsBar.appendChild(mat);
+      if (editorV2 && mat) {
+        if (resume) {
+          // One final action: resume/review completion — not «نشر الآن» beside it.
+          suppressCta(mat, false);
+          mat.className = 'btn btn-primary';
+          mat.dataset.ctaRole = 'final';
+          if (!/استئناف النشر|استكمال النشر|استئناف الإرسال للمراجعة|مراجعة الحفظ/.test(mat.textContent || '')) {
+            mat.textContent = developerAccount ? 'استئناف النشر' : 'استئناف الإرسال للمراجعة';
+          } else if (developerAccount && /إرسال للمراجعة/.test(mat.textContent || '')) {
+            mat.textContent = 'استئناف النشر';
+          }
+          actionsBar.dataset.finalCta = 'resume';
+        } else if (developerAccount) {
+          // Developer: sole final = save publish (relabel); materialize suppressed.
+          suppressCta(mat, true);
+          mat.dataset.ctaRole = 'suppressed';
+          save.className = 'btn btn-primary';
+          save.textContent = 'نشر الآن';
+          save.dataset.ctaRole = 'final';
+          actionsBar.dataset.finalCta = 'publish';
+        } else {
+          // Brand: sole final = materialize review; save stays draft.
+          suppressCta(mat, false);
+          mat.className = 'btn btn-primary';
+          mat.textContent = 'إرسال للمراجعة';
+          mat.dataset.ctaRole = 'final';
+          actionsBar.dataset.finalCta = 'review';
+        }
+      } else if (developerAccount) {
+        suppressCta(submit, false);
+        submit.className = 'btn btn-primary';
+        submit.textContent = 'نشر الآن';
+        submit.dataset.ctaRole = 'final';
+        save.className = 'btn btn-ghost';
+        save.textContent = 'حفظ المسودة';
+        save.dataset.ctaRole = 'draft';
+        // Non-V2 developer: submit is final publish; save is draft only.
+        // Actually persistListing on save with publish for developer — keep save as sole final.
+        suppressCta(submit, true);
+        save.className = 'btn btn-primary';
+        save.textContent = 'نشر الآن';
+        save.dataset.ctaRole = 'final';
+        actionsBar.dataset.finalCta = 'publish';
+      } else {
+        suppressCta(submit, false);
+        submit.className = 'btn btn-primary';
+        submit.textContent = 'إرسال للمراجعة';
+        submit.dataset.ctaRole = 'final';
+        actionsBar.dataset.finalCta = 'review';
+      }
+      actionsBar.dataset.account = developerAccount ? 'developer' : 'brand';
+      actionsBar.dataset.resume = resume ? '1' : '0';
+    }
+    form._miraApplyFinalCtaPolicy = applyFinalCtaPolicy;
+    actionsBar.appendChild(save);
+    actionsBar.appendChild(submit);
+    const matExisting = form.querySelector('[data-editor-v2-materialize="1"]');
+    if (matExisting && matExisting.parentElement !== actionsBar) actionsBar.appendChild(matExisting);
+    applyFinalCtaPolicy();
+    form.appendChild(actionsBar);
 
     function choice(name, value, label, checked) {
       const wrap = document.createElement('label');
@@ -2748,34 +3876,54 @@
     cosmeticVisible();
 
     const optionsSection = document.createElement('div');
-    optionsSection.className = 'form-section';
+    optionsSection.className = 'form-section e2b-core-offer';
+    optionsSection.setAttribute('data-section-role', 'options');
+    optionsSection.setAttribute('data-testid', 'e2b-core-offer');
     optionsSection.hidden = type !== 'brand';
-    text(optionsSection, 'خيارات المنتج', 'h3');
-    text(optionsSection, 'الحقول تتغير حسب التصنيف. الخيارات الجاهزة اقتراحات فقط وليست محددة تلقائيًا. التركيبات المتاحة تُختار يدويًا دون إنشاء كل الاحتمالات.');
+    text(optionsSection, 'الخيارات الأساسية', 'h3');
+    text(optionsSection, 'الألوان والمقاسات بجانب الخامات والكمية. التركيبات اختيار يدوي لاحقًا دون توليد تلقائي.');
     const optionsActionBar = document.createElement('div');
     optionsActionBar.setAttribute('data-options-action-bar', '1');
     const optionsBody = document.createElement('div');
+    optionsBody.className = 'e2b-core-options-body';
+    const qtyHost = document.createElement('div');
+    qtyHost.className = 'e2b-qty-host';
+    qtyHost.setAttribute('data-testid', 'e2b-qty-host');
     const optionsPreview = document.createElement('div');
     optionsPreview.className = 'options-preview';
-    optionsSection.append(optionsActionBar, optionsBody, optionsPreview);
+    // I-02: colors/sizes first — materials + qty follow as siblings; preview must NOT sit between them.
+    optionsSection.append(optionsActionBar, optionsBody);
     form.insertBefore(optionsSection, mediaSection);
 
     const attrSection = document.createElement('div');
-    attrSection.className = 'form-section';
+    attrSection.className = 'form-section e2b-core-attrs';
+    attrSection.setAttribute('data-section-role', 'attributes');
     attrSection.hidden = type !== 'brand';
     attrSection.setAttribute('data-testid', 'registry-attribute-section');
-    text(attrSection, 'خصائص التصنيف', 'h3');
+    text(attrSection, 'الخامات وخصائص التصنيف', 'h3');
     text(
       attrSection,
-      'الحقول من سجل الحقول المعتمد. الخامات اختيار متعدد؛ القصة اختيار مفرد. لا تُعرض كمحفوظة إلا بمسار تخزين attributes.',
+      'الخامات متعددة الاختيار من السجل المعتمد؛ القصة والطول حسب التصنيف. القيم تُحفظ عبر attributes دون مسح عند طي القسم.',
     );
     const attrSaveState = document.createElement('div');
     attrSaveState.className = 'mira-attr-save-state';
     attrSaveState.setAttribute('data-testid', 'attr-save-state');
     const attrHost = document.createElement('div');
     attrHost.setAttribute('data-testid', 'registry-attribute-host');
-    attrSection.append(attrSaveState, attrHost);
+    attrSection.append(attrSaveState, attrHost, qtyHost);
     form.insertBefore(attrSection, mediaSection);
+    // I-02: quantity sits with colors/sizes/materials — relocate without recreating (preserve value/listeners).
+    if (stockInput) {
+      const stockField = stockInput.closest('.field') || stockInput.parentElement;
+      if (stockField) qtyHost.appendChild(stockField);
+    }
+    const optionsPreviewSection = document.createElement('div');
+    optionsPreviewSection.className = 'form-section e2b-options-preview-section';
+    optionsPreviewSection.setAttribute('data-section-role', 'options-preview');
+    optionsPreviewSection.setAttribute('data-testid', 'e2b-options-preview-section');
+    optionsPreviewSection.hidden = type !== 'brand';
+    optionsPreviewSection.appendChild(optionsPreview);
+    form.insertBefore(optionsPreviewSection, mediaSection);
 
     let attrMount = null;
     let attrRegistryCache = null;
@@ -2821,7 +3969,7 @@
         return;
       }
       const cat = category.value;
-      const writeBlocked = cat === 'bags' || cat === 'shoes';
+      const writeBlocked = false; // E4: bags/shoes write enabled
       attrSection.hidden = false;
       const preserve =
         opts && opts.preserveEdits && attrMount && typeof attrMount.captureEditorState === 'function'
@@ -2863,7 +4011,7 @@
         if (writeBlocked) {
           setAttrSaveKind(
             'error',
-            'كتابة الحقائب/الأحذية مؤجلة إلى E4 — العرض للمكوّن فقط دون نشر.',
+            '', // E4 write unlocked
           );
         } else {
           setAttrSaveKind('', '');
@@ -3243,10 +4391,14 @@
       optionsPreview.replaceChildren();
       if (type !== 'brand') {
         optionsSection.hidden = true;
+        if (optionsPreviewSection) optionsPreviewSection.hidden = true;
+        if (attrSection) attrSection.hidden = true;
         syncOptionsActionBar();
         return;
       }
       optionsSection.hidden = false;
+      if (optionsPreviewSection) optionsPreviewSection.hidden = false;
+      if (attrSection) attrSection.hidden = false;
       syncOptionsActionBar();
       const preset = optionPresets(category.value);
 
@@ -3258,57 +4410,177 @@
       preset.groups.forEach((group) => {
         const block = document.createElement('div');
         block.className = 'option-group';
+        block.setAttribute('data-option-kind', group.kind || group.id);
         text(block, group.label, 'h4');
-        const chips = document.createElement('div');
-        chips.className = group.kind === 'color' ? 'choice-row swatch-row' : 'choice-row';
         if (!optionsState.selected[group.id]) optionsState.selected[group.id] = [];
-        group.presets.forEach((label) => {
-          const wrap = document.createElement('label');
-          wrap.className = group.kind === 'color' ? 'swatch-choice' : (group.kind === 'size' ? 'size-choice' : '');
-          const input = document.createElement('input');
-          input.type = 'checkbox';
-          input.checked = optionsState.selected[group.id].indexOf(label) >= 0;
-          input.setAttribute('aria-label', label);
-          input.onchange = () => {
-            const list = optionsState.selected[group.id];
-            const at = list.indexOf(label);
-            if (input.checked && at < 0) list.push(label);
-            if (!input.checked && at >= 0) list.splice(at, 1);
-            optionsState.clearingOptions = false;
-            optionsState.clearingVariants = false;
-            onOptionsValuesChanged();
-          };
-          if (group.kind === 'color') {
-            const swatch = document.createElement('span');
-            swatch.className = 'color-swatch';
-            swatch.setAttribute('data-color-label', label);
-            swatch.setAttribute('title', label);
-            const style =
-              window.MiraCatalogOptions && typeof window.MiraCatalogOptions.colorSwatchStyle === 'function'
-                ? window.MiraCatalogOptions.colorSwatchStyle(label)
-                : { background: '#d4c4ce', borderColor: '#d4c4ce' };
-            swatch.style.background = style.background;
-            swatch.style.borderColor = style.borderColor;
-            if (input.checked) wrap.classList.add('is-selected');
-            const name = document.createElement('span');
-            name.className = 'swatch-name';
-            name.textContent = label;
-            wrap.append(input, swatch, name);
-            input.addEventListener('change', () => {
-              wrap.classList.toggle('is-selected', input.checked);
+
+        function togglePresetLabel(label, on) {
+          const list = optionsState.selected[group.id];
+          const at = list.indexOf(label);
+          if (on && at < 0) list.push(label);
+          if (!on && at >= 0) list.splice(at, 1);
+          optionsState.clearingOptions = false;
+          optionsState.clearingVariants = false;
+          onOptionsValuesChanged();
+        }
+
+        if (group.kind === 'color') {
+          const palette = document.createElement('div');
+          palette.className = 'e2b-color-palette';
+          palette.setAttribute('data-testid', 'e2b-color-palette');
+          const search = document.createElement('input');
+          search.type = 'search';
+          search.className = 'e2b-color-search';
+          search.placeholder = 'ابحثي عن لون';
+          search.setAttribute('aria-label', 'ابحثي عن لون');
+          search.setAttribute('data-testid', 'e2b-color-search');
+          const chips = document.createElement('div');
+          chips.className = 'choice-row swatch-row e2b-swatch-grid';
+          chips.setAttribute('role', 'group');
+          chips.setAttribute('aria-label', group.label);
+          const selectedBar = document.createElement('div');
+          selectedBar.className = 'e2b-color-selected';
+          selectedBar.setAttribute('data-testid', 'e2b-color-selected');
+          const moreBtn = document.createElement('button');
+          moreBtn.type = 'button';
+          moreBtn.className = 'btn btn-ghost e2b-color-more';
+          moreBtn.setAttribute('data-testid', 'e2b-color-more');
+          moreBtn.textContent = 'جميع الألوان';
+          let showAll = group.presets.length <= 12;
+          const COLOR_PAGE = 12;
+
+          function paintSelectedChips() {
+            selectedBar.replaceChildren();
+            (optionsState.selected[group.id] || []).forEach((label) => {
+              const chip = document.createElement('button');
+              chip.type = 'button';
+              chip.className = 'e2b-color-chip';
+              chip.setAttribute('data-color-label', label);
+              chip.setAttribute('aria-label', 'إزالة ' + label);
+              const style =
+                window.MiraCatalogOptions && typeof window.MiraCatalogOptions.colorSwatchStyle === 'function'
+                  ? window.MiraCatalogOptions.colorSwatchStyle(label)
+                  : { background: '#d4c4ce', borderColor: '#d4c4ce' };
+              const dot = document.createElement('span');
+              dot.className = 'e2b-color-chip-dot';
+              dot.style.background = style.background;
+              chip.append(dot, document.createTextNode(label + ' ×'));
+              chip.onclick = () => {
+                togglePresetLabel(label, false);
+                paintColorGrid();
+                paintSelectedChips();
+              };
+              selectedBar.appendChild(chip);
             });
-          } else {
-            wrap.append(input, document.createTextNode(' ' + label));
+            if (!(optionsState.selected[group.id] || []).length) {
+              const empty = document.createElement('span');
+              empty.className = 'e2b-color-selected-empty';
+              empty.textContent = 'لم يُختر لون بعد (اختياري)';
+              selectedBar.appendChild(empty);
+            }
           }
-          chips.appendChild(wrap);
-        });
-        block.appendChild(chips);
-        const custom = field(block, 'قيم خاصة (افصلي بفاصلة)', 'custom-' + group.id, optionsState.customs[group.id] || '', 'text');
+
+          function paintColorGrid() {
+            chips.replaceChildren();
+            const q = String(search.value || '').trim();
+            const filtered = group.presets.filter((label) => !q || label.indexOf(q) >= 0);
+            const visible = showAll || q ? filtered : filtered.slice(0, COLOR_PAGE);
+            moreBtn.hidden = !!q || filtered.length <= COLOR_PAGE;
+            moreBtn.textContent = showAll ? 'عرض أقل' : 'جميع الألوان';
+            visible.forEach((label) => {
+              const wrap = document.createElement('label');
+              wrap.className = 'swatch-choice';
+              const input = document.createElement('input');
+              input.type = 'checkbox';
+              input.checked = optionsState.selected[group.id].indexOf(label) >= 0;
+              input.setAttribute('aria-label', label);
+              input.onchange = () => {
+                togglePresetLabel(label, input.checked);
+                wrap.classList.toggle('is-selected', input.checked);
+                paintSelectedChips();
+              };
+              const swatch = document.createElement('span');
+              swatch.className = 'color-swatch';
+              swatch.setAttribute('data-color-label', label);
+              swatch.setAttribute('title', label);
+              const style =
+                window.MiraCatalogOptions && typeof window.MiraCatalogOptions.colorSwatchStyle === 'function'
+                  ? window.MiraCatalogOptions.colorSwatchStyle(label)
+                  : { background: '#d4c4ce', borderColor: '#d4c4ce' };
+              swatch.style.background = style.background;
+              swatch.style.borderColor = style.borderColor;
+              if (input.checked) {
+                wrap.classList.add('is-selected');
+                const mark = document.createElement('span');
+                mark.className = 'e2b-swatch-check';
+                mark.setAttribute('aria-hidden', 'true');
+                mark.textContent = '✓';
+                swatch.appendChild(mark);
+              }
+              const name = document.createElement('span');
+              name.className = 'swatch-name';
+              name.textContent = label;
+              wrap.append(input, swatch, name);
+              chips.appendChild(wrap);
+            });
+          }
+
+          search.addEventListener('input', () => {
+            paintColorGrid();
+          });
+          moreBtn.addEventListener('click', () => {
+            showAll = !showAll;
+            paintColorGrid();
+          });
+          paintColorGrid();
+          paintSelectedChips();
+          palette.append(search, chips, moreBtn, selectedBar);
+          block.appendChild(palette);
+        } else {
+          const chips = document.createElement('div');
+          chips.className = 'choice-row' + (group.kind === 'size' ? ' size-row' : '');
+          group.presets.forEach((label) => {
+            const wrap = document.createElement('label');
+            wrap.className = group.kind === 'size' ? 'size-choice' : 'chip-choice';
+            const input = document.createElement('input');
+            input.type = 'checkbox';
+            input.checked = optionsState.selected[group.id].indexOf(label) >= 0;
+            input.setAttribute('aria-label', label);
+            input.onchange = () => {
+              togglePresetLabel(label, input.checked);
+              wrap.classList.toggle('is-selected', input.checked);
+            };
+            if (input.checked) wrap.classList.add('is-selected');
+            const mark = document.createElement('span');
+            mark.className = 'e2b-choice-check';
+            mark.setAttribute('aria-hidden', 'true');
+            mark.textContent = input.checked ? '✓ ' : '';
+            wrap.append(input, mark, document.createTextNode(label));
+            input.addEventListener('change', () => {
+              mark.textContent = input.checked ? '✓ ' : '';
+            });
+            chips.appendChild(wrap);
+          });
+          block.appendChild(chips);
+        }
+        const customDetails = document.createElement('details');
+        customDetails.className = 'e2b-extra-details';
+        const customSummary = document.createElement('summary');
+        customSummary.textContent = 'قيم خاصة لـ' + group.label;
+        customDetails.appendChild(customSummary);
+        const custom = field(
+          customDetails,
+          'قيم خاصة (افصلي بفاصلة)',
+          'custom-' + group.id,
+          optionsState.customs[group.id] || '',
+          'text',
+        );
         custom.oninput = () => {
           optionsState.customs[group.id] = custom.value;
           abandonClearIfValuesEntered();
           onOptionsValuesChanged();
         };
+        block.appendChild(customDetails);
         optionsBody.appendChild(block);
       });
       if (preset.traits.length) {
@@ -3324,7 +4596,13 @@
         });
         optionsBody.appendChild(traitBox);
       }
-      text(optionsBody, 'التركيبات (لا تُنشأ تلقائيًا من كل الاحتمالات)', 'h4');
+      // I-02: variants/advanced stay reachable but collapsed — values preserved when collapsed.
+      const variantsDetails = document.createElement('details');
+      variantsDetails.className = 'e2b-extra-details e2b-variants-details';
+      variantsDetails.setAttribute('data-testid', 'e2b-variants-details');
+      const variantsSummary = document.createElement('summary');
+      variantsSummary.textContent = 'التركيبات المتقدمة (لا تُنشأ تلقائيًا)';
+      variantsDetails.appendChild(variantsSummary);
       const variantList = document.createElement('div');
       variantList.className = 'variant-list';
       // P3.1 — inventory mode for variant stock adapter (empty ≠ 0).
@@ -3344,14 +4622,14 @@
         retryBtn.onclick = () => {
           retryInventoryHydrate();
         };
-        optionsBody.appendChild(failBanner);
-        optionsBody.appendChild(retryBtn);
+        variantsDetails.appendChild(failBanner);
+        variantsDetails.appendChild(retryBtn);
       } else if (optionsState.inventoryLoadState === 'loading') {
         const loadingNote = document.createElement('p');
         loadingNote.className = 'muted';
         loadingNote.setAttribute('data-testid', 'inventory-loading');
         loadingNote.textContent = 'جارٍ تحميل المخزون…';
-        optionsBody.appendChild(loadingNote);
+        variantsDetails.appendChild(loadingNote);
       }
       const invModeRow = document.createElement('div');
       invModeRow.className = 'choice-row';
@@ -3368,7 +4646,8 @@
       };
       invLabel.append(invCheck, document.createTextNode(' تتبع المخزون لكل تركيبة'));
       invModeRow.appendChild(invLabel);
-      optionsBody.appendChild(invModeRow);
+      variantsDetails.appendChild(invModeRow);
+      optionsBody.appendChild(variantsDetails);
 
       optionsState.variants.forEach((variant, index) => {
         const row = document.createElement('div');
@@ -3452,7 +4731,7 @@
         row.appendChild(remove);
         variantList.appendChild(row);
       });
-      optionsBody.appendChild(variantList);
+      variantsDetails.appendChild(variantList);
 
       const addBox = document.createElement('div');
       addBox.className = 'form-section';
@@ -3595,7 +4874,7 @@
         paintOptions();
       };
       addBox.appendChild(addBtn);
-      optionsBody.appendChild(addBox);
+      variantsDetails.appendChild(addBox);
       optionsBody._refreshVariantPickers = refreshVariantPickers;
       paintOptionsPreview();
     }
@@ -3928,6 +5207,7 @@
         retry.disabled = entry.status === 'جارٍ القراءة' || entry.status === 'جارٍ الرفع' || entry.status === 'جارٍ المعالجة' || entry.status === 'بانتظار الحفظ';
         retry.onclick = () => {
           // C04: retry may save draft / resume upload — never auto-publish.
+          // Keep uploadSessionId/clientMediaId so durable completed parts resume.
           if (!item || !item.id) persistListing({ publish: false });
           else uploadOne(entry);
         };
@@ -3969,6 +5249,7 @@
         text(mediaBox, developerAccount
           ? 'اختيار الملف يبدأ الرفع بعد حفظ المسودة. النشر يتم فقط عند ضغط «نشر الآن».'
           : 'الرفع يبدأ بعد حفظ المسودة. الملفات المختارة تبقى هنا.');
+        syncVideoCardChrome(null);
         return;
       }
       let media = serverMedia;
@@ -4001,6 +5282,9 @@
         } catch (error) {
           // Do not wipe variant binding UI on a failed media reload.
           text(mediaBox, 'تعذر تحميل الوسائط المحفوظة: ' + error.message);
+          videoStatus.textContent = 'تعذر مزامنة حالة الفيديو المحفوظ: ' + ((error && error.message) || error);
+          videoStatus.dataset.state = 'failed';
+          videoPick.textContent = 'إعادة المحاولة / استبدال المقطع';
           return;
         }
       } else if (paintGen !== mediaPaintGeneration) {
@@ -4066,6 +5350,7 @@
         remove.textContent = 'إزالة';
         remove.setAttribute('data-testid', 'media-remove');
         remove.onclick = async () => {
+          const wasMainVideo = row.kind === 'video' && row.placement !== 'detail';
           await PartnersApi.removeMedia(type === 'brand' ? 'products' : 'services', item.id, row.id);
           // Strip from editor optionsState immediately so general save cannot resurrect.
           locallyRemovedMediaIds.add(row.id);
@@ -4086,12 +5371,14 @@
               });
             });
           }
+          if (wasMainVideo) syncVideoCardChrome(undefined, { mainRemoved: true });
           paintMedia(null);
         };
         card.append(up, cover, remove);
         (row.placement === 'detail' ? detailMediaBox : mediaBox).appendChild(card);
       });
       paintVariantMediaBindings(media);
+      syncVideoCardChrome(media);
     }
 
     function paintVariantMediaBindings(serverMedia) {
@@ -4193,6 +5480,19 @@
     function syncMedia(entry) {
       const card = mediaBox.querySelector('[data-file-key="' + entry.key + '"]') || detailMediaBox.querySelector('[data-file-key="' + entry.key + '"]');
       const view = window.MiraMotion ? MiraMotion.describeMedia(entry) : { label: entry.status, mode: 'idle', percent: null };
+      // Keep explicit phase in sync with status so video chrome updates mid-upload (not only on paintMedia).
+      const st = String(entry.status || '');
+      if (entry.error || st === 'فشل' || /فشل|خطأ|تعذر/.test(st)) entry.phase = 'failed';
+      else if (st === 'أُلغي' || entry.aborted) entry.phase = 'cancelled';
+      else if (/تحقق|معالجة|verif|process/i.test(st)) entry.phase = 'processing';
+      else if (/رفع|تحضير|قراءة/.test(st) || entry._uploadBusy) entry.phase = 'uploading';
+      else if (/رُفع|جاهز|مكتمل|ready/i.test(st) || entry.catalogMediaId) entry.phase = 'ready';
+      else if (/انتظار|حفظ|البيانات/.test(st)) entry.phase = 'awaiting-save';
+      else if (entry.file) entry.phase = entry.phase || 'selected';
+      // Detail (or non-main) media must NOT reset the main video card via syncVideoCardChrome(null).
+      if (typeof syncVideoCardChrome === 'function' && isMainVideoEntry(entry)) {
+        syncVideoCardChrome(undefined);
+      }
       if (!card) return;
       if (entry.uploadSessionId) card.dataset.uploadSessionId = entry.uploadSessionId;
       if (entry.catalogMediaId) card.dataset.mediaId = entry.catalogMediaId;
@@ -4241,8 +5541,24 @@
       try {
         const kind = type === 'brand' ? 'products' : 'services';
         if (policy && policy.enabled === true && typeof PartnersApi.uploadViaSession === 'function') {
-          // F06/U04: restore upload session after reload / re-pick (name+size hint; checksum verified in API).
-          if (!entry.clientMediaId || !entry.uploadSessionId) {
+          // F06/U04: restore upload session after reload / re-pick.
+          // If clientMediaId was freshly minted after a transport fail, never revive a
+          // poisoned session via name+size scan — only exact key for that id.
+          if (entry.clientMediaId && !entry.uploadSessionId) {
+            try {
+              const exactKey = 'mira_upload_resume:' + item.id + ':' + entry.clientMediaId;
+              const saved = JSON.parse(sessionStorage.getItem(exactKey) || 'null');
+              if (
+                saved &&
+                saved.sessionId &&
+                saved.byteSize === entry.file.size &&
+                saved.name === entry.file.name
+              ) {
+                entry.uploadSessionId = saved.sessionId;
+                entry.uploadChecksum = saved.checksum || null;
+              }
+            } catch (_) {}
+          } else if (!entry.clientMediaId) {
             try {
               const prefix = 'mira_upload_resume:' + item.id + ':';
               for (let i = 0; i < sessionStorage.length; i++) {
@@ -4386,6 +5702,8 @@
           entry.error = error.message || 'فشل الرفع';
           status.textContent = developerAccount ? 'فشل الرفع ولم يُنشر: ' + entry.error : 'فشل الرفع وبقيت المسودة: ' + entry.error;
         }
+        // Paint chrome/cards immediately so «إعادة المحاولة» is bound before async preview returns.
+        syncMedia(entry);
         if (window.MiraMotion) MiraMotion.announce(status.textContent);
       } finally {
         entry._uploadBusy = false;
@@ -4449,8 +5767,13 @@
         abandonClearIfValuesEntered();
         return structuredOptionsPayload();
       })();
-      const advancedOn = Boolean(optionsJsonInput._advancedToggle && optionsJsonInput._advancedToggle.checked);
-      if (advancedOn) {
+      // Advanced JSON fields exist only for developer accounts — brand uses structured UI.
+      const advancedOn = Boolean(
+        optionsJsonInput &&
+          optionsJsonInput._advancedToggle &&
+          optionsJsonInput._advancedToggle.checked,
+      );
+      if (advancedOn && optionsJsonInput && variantsJsonInput) {
         const options = parseJsonList(optionsJsonInput.value, 'optionsJson', 'الخيارات');
         if (options.error) return options;
         const variants = parseJsonList(variantsJsonInput.value, 'variantsJson', 'التركيبات');
@@ -4703,6 +6026,17 @@
         if (duration && duration.value) payload.durationMin = parseInt(duration.value, 10);
         if (bookingToggle) payload.bookingEnabled = Boolean(bookingToggle.checked);
         payload.payMode = 'pay_at_venue';
+        const placeModeEl = form.querySelector('[name="placeMode"]');
+        const branchEl = form.querySelector('[name="branchId"]');
+        if (placeModeEl && String(placeModeEl.value || '').trim()) {
+          payload.placeMode = String(placeModeEl.value).trim();
+        }
+        // Home/remote must clear branch even if the select was unmounted from placeDetails.
+        if (payload.placeMode && payload.placeMode !== 'branch') {
+          payload.branchId = null;
+        } else if (branchEl) {
+          payload.branchId = String(branchEl.value || '').trim() || null;
+        }
         if (availabilityJson && typeof availabilityJson.build === 'function') {
           try {
             setFieldError(form, 'availabilityJson', '');
@@ -5216,10 +6550,27 @@
               paintUnsavedNewerNotice(saveNote);
             } else {
               publishedNote = 'نُشر في التطبيق مباشرة، بلا مراجعة.';
+              const matOk = form.querySelector('[data-editor-v2-materialize="1"]');
+              if (matOk) matOk.dataset.resumeActive = '0';
+              if (typeof form._miraApplyFinalCtaPolicy === 'function') form._miraApplyFinalCtaPolicy();
               await refreshLists();
             }
           } catch (error) {
             publishedNote = 'حُفظت البيانات ولم تُنشر: ' + error.message;
+            // FIN-01: publish failure after the item exists must surface a real resume CTA
+            // (app-painted — not a silent status-only note).
+            const matFail = form.querySelector('[data-editor-v2-materialize="1"]');
+            if (matFail) {
+              matFail.dataset.resumeActive = '1';
+              matFail.textContent = developerAccount ? 'استئناف النشر' : 'استئناف الإرسال للمراجعة';
+            }
+            const ctxFail = window.MiraEditorV2 && MiraEditorV2.getEditContext(form.id);
+            if (ctxFail && item && item.id) {
+              ctxFail.targetOwnerId = item.id;
+              ctxFail.status = 'submit_failed';
+              ctxFail.submitReviewStatus = 'failed';
+            }
+            if (typeof form._miraApplyFinalCtaPolicy === 'function') form._miraApplyFinalCtaPolicy();
           }
         } else if (!wantPublish && developerAccount && !failures.length && item && item.id) {
           publishedNote = 'حُفظت المسودة والوسائط. اضغط «نشر الآن» لنشرها في التطبيق.';
@@ -5404,8 +6755,49 @@
     }
     form.onsubmit = (event) => {
       event.preventDefault();
-      // Developer primary CTA is «نشر الآن» → explicit publish. Others save draft only.
-      return persistListing({ publish: !!developerAccount });
+      // Publish only when developer final CTA is «نشر الآن» (not during resume/draft-save).
+      const publish =
+        !!developerAccount &&
+        save.dataset.ctaRole === 'final' &&
+        /نشر الآن/.test(save.textContent || '') &&
+        !resumeNeededFromContext();
+      return Promise.resolve(persistListing({ publish })).catch((err) => {
+        status.textContent =
+          'تعذر الحفظ: ' + ((err && (err.messageAr || err.message)) || String(err));
+        return false;
+      });
     };
+
+    // E2ب: split fields ↔ video after the full form tree exists; re-sync taxonomy circles.
+    if (type === 'brand' && window.MiraE2BProductShell) {
+      try {
+        if (typeof MiraE2BProductShell.composeCatalogLayout === 'function') {
+          MiraE2BProductShell.composeCatalogLayout();
+        }
+        if (typeof MiraE2BProductShell.syncFromForm === 'function') {
+          MiraE2BProductShell.syncFromForm();
+        }
+      } catch (_) {
+        /* non-fatal shell enhance */
+      }
+    }
+    // E2ج: دوائر الخدمة + compose منفصل عن المنتجات/المخزون.
+    if (type !== 'brand' && window.MiraE2BServiceShell) {
+      try {
+        if (typeof MiraE2BServiceShell.enableServiceMode === 'function') {
+          MiraE2BServiceShell.enableServiceMode(form.id);
+        }
+        if (typeof MiraE2BServiceShell.composeServiceLayout === 'function') {
+          MiraE2BServiceShell.composeServiceLayout(form);
+        }
+        if (typeof MiraE2BServiceShell.syncFromForm === 'function') {
+          MiraE2BServiceShell.syncFromForm(form);
+        }
+      } catch (_) {
+        /* non-fatal service shell */
+      }
+    }
+    // Re-apply after compose so legacy submit cannot reappear beside materialize.
+    if (typeof form._miraApplyFinalCtaPolicy === 'function') form._miraApplyFinalCtaPolicy();
   }
 })();

@@ -1,0 +1,28 @@
+{
+  "switchUi": {
+    "ok": true,
+    "value": "4f10bf4f-1f41-47ae-9a64-26705edecb50",
+    "placeMode": "branch",
+    "city": "المدينة: الرياض",
+    "mapHasCoords": true
+  },
+  "patchMeta": {
+    "seen": true,
+    "status": 200,
+    "reqBranchId": "4f10bf4f-1f41-47ae-9a64-26705edecb50",
+    "reqPlaceMode": "branch"
+  },
+  "statusAfterSwitch": "حُفظت المسودة. السعر المخزن 8500 هللة (85 ر.س).",
+  "branchAfterSwitch": "4f10bf4f-1f41-47ae-9a64-26705edecb50",
+  "placeAfterSwitch": "branch",
+  "expectedBranch2": "4f10bf4f-1f41-47ae-9a64-26705edecb50",
+  "restoreUi": {
+    "mode": "branch",
+    "branchId": "4f10bf4f-1f41-47ae-9a64-26705edecb50",
+    "city": "المدينة: الرياض"
+  },
+  "uiReject": {
+    "ok": true,
+    "statusUi": "تعذر الحفظ: الفرع غير موجود أو لا يخص هذه الجهة البيانات المكتوبة ما زالت في النموذج."
+  }
+}

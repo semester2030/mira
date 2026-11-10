@@ -68,7 +68,7 @@ function commerceWrite(commerce: ProductCommerceData) {
   };
 }
 
-const PRODUCT_CATEGORIES = new Set(['face', 'body', 'hair', 'clothes', 'accessories']);
+const PRODUCT_CATEGORIES = new Set(['face', 'body', 'hair', 'clothes', 'bags', 'shoes', 'accessories']);
 const SERVICE_CATEGORIES = new Set(['hair', 'skin', 'makeup', 'nails', 'care']);
 
 @Injectable()
@@ -417,6 +417,7 @@ export class PartnersPortalService implements OnModuleInit {
       include: {
         products: { orderBy: { sortOrder: 'asc' } },
         services: { orderBy: { sortOrder: 'asc' } },
+        branches: { where: { active: true }, orderBy: { createdAt: 'asc' } },
       },
     });
     if (!partner) throw new NotFoundException('الشريك غير موجود');
@@ -448,6 +449,16 @@ export class PartnersPortalService implements OnModuleInit {
         contactPhone: partner.contactPhone,
         rating: partner.rating,
       },
+      branches: (partner.branches || []).map((b) => ({
+        id: b.id,
+        nameAr: b.nameAr,
+        cityId: b.cityId,
+        cityNameAr: b.cityNameAr,
+        addressAr: b.addressAr,
+        lat: b.lat,
+        lng: b.lng,
+        active: b.active,
+      })),
       catalog: {
         productCount: partner.products.length,
         serviceCount: partner.services.length,
@@ -730,6 +741,19 @@ export class PartnersPortalService implements OnModuleInit {
           ? await this.availabilityWrite(partnerId, null, dto.availabilityJson, tx, dto.unifySharedResources === true)
           : undefined;
 
+      const placeMode =
+        typeof dto.placeMode === 'string' && dto.placeMode.trim() ? dto.placeMode.trim() : undefined;
+      const branchId =
+        dto.branchId === null
+          ? null
+          : typeof dto.branchId === 'string' && dto.branchId.trim()
+            ? dto.branchId.trim()
+            : undefined;
+      if (branchId) {
+        const branch = await tx.partnerBranch.findFirst({ where: { id: branchId, partnerId, active: true } });
+        if (!branch) throw new NotFoundException('الفرع غير موجود أو لا يخص هذه الجهة');
+      }
+
       return tx.service.create({
         data: {
           partnerId,
@@ -742,6 +766,8 @@ export class PartnersPortalService implements OnModuleInit {
           category,
           bookingEnabled: dto.bookingEnabled === true,
           payMode: 'pay_at_venue',
+          ...(placeMode !== undefined ? { placeMode } : {}),
+          ...(branchId !== undefined ? { branchId } : {}),
           ...(availabilityJson !== undefined ? { availabilityJson } : {}),
           active: false,
           contentStatus: 'draft',
@@ -810,6 +836,8 @@ export class PartnersPortalService implements OnModuleInit {
         category?: string | null;
         bookingEnabled?: boolean;
         payMode?: string;
+        placeMode?: string | null;
+        branchId?: string | null;
         availabilityJson?: Prisma.InputJsonValue | typeof Prisma.DbNull;
         reviewRevision: { increment: number };
         reviewStatus: string;
@@ -837,6 +865,24 @@ export class PartnersPortalService implements OnModuleInit {
       if (dto.category !== undefined) data.category = this.optionalCategory(dto.category, SERVICE_CATEGORIES);
       if (dto.bookingEnabled !== undefined) data.bookingEnabled = dto.bookingEnabled === true;
       if (dto.payMode !== undefined) data.payMode = dto.payMode === 'pay_at_venue' ? 'pay_at_venue' : locked.payMode;
+      if (dto.placeMode !== undefined) {
+        data.placeMode =
+          dto.placeMode == null || String(dto.placeMode).trim() === ''
+            ? null
+            : String(dto.placeMode).trim();
+      }
+      if (dto.branchId !== undefined) {
+        if (dto.branchId == null || String(dto.branchId).trim() === '') {
+          data.branchId = null;
+        } else {
+          const bid = String(dto.branchId).trim();
+          const branch = await tx.partnerBranch.findFirst({
+            where: { id: bid, partnerId, active: true },
+          });
+          if (!branch) throw new NotFoundException('الفرع غير موجود أو لا يخص هذه الجهة');
+          data.branchId = bid;
+        }
+      }
       if (dto.availabilityJson !== undefined) {
         data.availabilityJson = await this.availabilityWrite(
           partnerId,

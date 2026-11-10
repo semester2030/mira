@@ -1,0 +1,24 @@
+{
+  "geomMatch": {
+    "viewportWidth": 1280,
+    "orbsTop": 12,
+    "basicsTop": 96,
+    "fieldsLeft": 24,
+    "fieldsRight": 620,
+    "fieldsWidth": 596,
+    "mediaLeft": 660,
+    "mediaRight": 1240,
+    "mediaWidth": 580,
+    "mediaTop": 12,
+    "previewLeft": 672,
+    "previewRight": 1180,
+    "previewTop": 48,
+    "previewWidth": 420,
+    "measuredPreview": true,
+    "availTop": 420,
+    "secondaryOpen": false,
+    "exceptionsOpen": false,
+    "weeklyEditOpen": false,
+    "sideBySidePx": 648
+  }
+}

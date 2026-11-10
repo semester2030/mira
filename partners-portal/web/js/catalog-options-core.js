@@ -107,25 +107,75 @@
   const COLOR_CANONICAL = {
     black: 'black', أسود: 'black',
     ivory: 'ivory', سكري: 'ivory', عاجي: 'ivory',
-    brown: 'brown', بني: 'brown',
+    champagne: 'champagne', شامبانيا: 'champagne',
+    beige: 'beige', بيج: 'beige',
+    nude: 'nude', نود: 'nude',
+    peach: 'peach', خوخي: 'peach',
     pink: 'pink', وردي: 'pink',
+    red: 'red', أحمر: 'red',
+    burgundy: 'burgundy', عنابي: 'burgundy',
+    brown: 'brown', بني: 'brown',
+    purple: 'purple', بنفسجي: 'purple',
     blue: 'blue', أزرق: 'blue',
+    navy: 'navy', كحلي: 'navy',
+    teal: 'teal', تركواز: 'teal',
     green: 'green', أخضر: 'green',
+    gray: 'gray', grey: 'gray', رمادي: 'gray',
+    white: 'white', أبيض: 'white',
+    gold: 'gold', ذهبي: 'gold',
+    silver: 'silver', فضي: 'silver',
     multi: 'multi', متعدد: 'multi', 'متعدد الألوان': 'multi',
   };
 
   /** P3.1 — CSS hex for known color ids/labels (swatch circles). Unknown → neutral. */
   const COLOR_SWATCH_HEX = {
     black: '#1a1a1a', أسود: '#1a1a1a',
-    ivory: '#fffff0', سكري: '#f5f0e6', عاجي: '#fffff0',
-    brown: '#6b3e2e', بني: '#6b3e2e',
-    pink: '#e86fa9', وردي: '#e86fa9',
-    blue: '#3b6ea5', أزرق: '#3b6ea5',
-    green: '#2e7d5a', أخضر: '#2e7d5a',
+    ivory: '#f1e8d6', سكري: '#f1e8d6', عاجي: '#f1e8d6',
+    champagne: '#f7e7ce', شامبانيا: '#f7e7ce',
+    beige: '#d8c3a5', بيج: '#d8c3a5',
+    nude: '#e8c4b0', نود: '#e8c4b0',
+    peach: '#f2b8a0', خوخي: '#f2b8a0',
+    pink: '#e86ba6', وردي: '#e86ba6',
+    red: '#c62828', أحمر: '#c62828',
+    burgundy: '#7a1f3d', عنابي: '#7a1f3d',
+    brown: '#855337', بني: '#855337',
+    purple: '#7e57c2', بنفسجي: '#7e57c2',
+    blue: '#5c84be', أزرق: '#5c84be',
+    navy: '#1b3a5c', كحلي: '#1b3a5c',
+    teal: '#2a9d8f', تركواز: '#2a9d8f',
+    green: '#327859', أخضر: '#327859',
+    gray: '#8a8a8a', grey: '#8a8a8a', رمادي: '#8a8a8a',
+    white: '#ffffff', أبيض: '#ffffff',
+    gold: '#c9a227', ذهبي: '#c9a227',
+    silver: '#b0b6be', فضي: '#b0b6be',
     multi: 'conic-gradient(red, yellow, lime, aqua, blue, magenta, red)',
     متعدد: 'conic-gradient(red, yellow, lime, aqua, blue, magenta, red)',
     'متعدد الألوان': 'conic-gradient(red, yellow, lime, aqua, blue, magenta, red)',
   };
+
+  /** Approved palette labels for clothes (registry ids via COLOR_CANONICAL). */
+  const APPROVED_COLOR_PRESETS = [
+    'أسود',
+    'سكري',
+    'شامبانيا',
+    'بيج',
+    'نود',
+    'خوخي',
+    'وردي',
+    'أحمر',
+    'عنابي',
+    'بني',
+    'بنفسجي',
+    'أزرق',
+    'كحلي',
+    'تركواز',
+    'أخضر',
+    'رمادي',
+    'أبيض',
+    'ذهبي',
+    'فضي',
+    'متعدد الألوان',
+  ];
 
   function colorSwatchStyle(labelOrId) {
     const key = String(labelOrId || '').trim();
@@ -134,7 +184,14 @@
     if (String(fill).startsWith('conic')) {
       return { background: fill, borderColor: '#9a8a94' };
     }
-    return { background: fill, borderColor: fill === '#fffff0' || fill === '#f5f0e6' ? '#c4b4be' : fill };
+    const light =
+      canon === 'white' ||
+      canon === 'ivory' ||
+      canon === 'champagne' ||
+      fill === '#ffffff' ||
+      fill === '#f1e8d6' ||
+      fill === '#f7e7ce';
+    return { background: fill, borderColor: light ? '#c4b4be' : fill };
   }
 
   function canonicalOptionValueId(groupId, label, index, existing) {
@@ -497,10 +554,11 @@
     if (cat === 'clothes') {
       return {
         groups: [
+          // Approved individual order: colors → sizes → materials → qty (materials/qty live in attribute section).
+          { id: 'color', label: 'الألوان المتوفرة', kind: 'color', presets: APPROVED_COLOR_PRESETS.slice() },
           { id: 'size', label: 'المقاس', kind: 'size', presets: ['XS', 'S', 'M', 'L', 'XL'] },
-          { id: 'color', label: 'اللون', kind: 'color', presets: ['أسود', 'سكري', 'بني', 'وردي', 'أزرق', 'أخضر', 'متعدد الألوان'] },
         ],
-        traits: ['الخامة', 'العناية', 'دليل المقاسات'],
+        traits: ['العناية', 'دليل المقاسات'],
       };
     }
     if (cat === 'face' || cat === 'body' || cat === 'hair') {
@@ -536,6 +594,7 @@
     incompatibleGroupIds: incompatibleGroupIds,
     stateHasOptionLabels: stateHasOptionLabels,
     colorSwatchStyle: colorSwatchStyle,
+    APPROVED_COLOR_PRESETS: APPROVED_COLOR_PRESETS,
     selectionKey: selectionKey,
     isDuplicateVariant: isDuplicateVariant,
     slugValue: slugValue,

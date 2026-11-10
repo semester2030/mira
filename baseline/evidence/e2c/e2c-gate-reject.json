@@ -1,0 +1,16 @@
+{
+  "gateBaseline": {
+    "ok": true,
+    "missing": [],
+    "bad": [],
+    "evidenceGaps": []
+  },
+  "gateBad": {
+    "ok": false,
+    "missing": [],
+    "bad": [
+      "ACC-E2C-ORBS=FAIL"
+    ],
+    "evidenceGaps": []
+  }
+}

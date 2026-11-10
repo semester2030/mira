@@ -48,13 +48,21 @@ const mismatchProfile = validateProductTaxonomyWrite(doc, {
 assert.ok(mismatchProfile.some((e) => e.code === 'PROFILE_SUBCATEGORY_MISMATCH'));
 pass('E1-04-reject-profile-mismatch');
 
-const bags = validateProductTaxonomyWrite(doc, {
+const bagsDisabledGone = validateProductTaxonomyWrite(doc, {
   category: 'bags',
   subcategory: 'bags.hand',
   profileId: 'product.bags',
 });
-assert.ok(bags.some((e) => e.code === 'SUBCATEGORY_WRITE_DISABLED'));
-pass('E1-04-reject-bags-write-disabled');
+assert.equal(bagsDisabledGone.some((e) => e.code === 'SUBCATEGORY_WRITE_DISABLED'), false);
+pass('E4-01-allow-bags-write-enabled');
+
+const shoesWrite = validateProductTaxonomyWrite(doc, {
+  category: 'shoes',
+  subcategory: 'shoes.heel',
+  profileId: 'product.shoes',
+});
+assert.equal(shoesWrite.some((e) => e.code === 'SUBCATEGORY_WRITE_DISABLED'), false);
+pass('E4-01-allow-shoes-write-enabled');
 
 const unknown = validateProductTaxonomyWrite(doc, { subcategory: 'clothes.nope' });
 assert.ok(unknown.some((e) => e.code === 'SUBCATEGORY_UNKNOWN'));

@@ -22,6 +22,41 @@ export class TaxonomyService implements OnModuleInit {
     this.hash = loaded.hash;
   }
 
+  /**
+   * LOCAL/TEST ONLY — bump definitionsVersion (and optional node label) so clients
+   * must refresh cache. Refuses outside NODE_ENV=test.
+   */
+  bumpDefinitionsForTest(opts?: {
+    nodeId?: string;
+    labelAr?: string;
+    active?: boolean;
+    deactivateNodeId?: string;
+  }) {
+    if (process.env.NODE_ENV !== 'test') {
+      throw new Error('bumpDefinitionsForTest is test-only');
+    }
+    const nodes = this.doc.nodes.map((n) => {
+      if (opts?.deactivateNodeId && n.id === opts.deactivateNodeId) {
+        return { ...n, active: false };
+      }
+      if (opts?.nodeId && n.id === opts.nodeId) {
+        return {
+          ...n,
+          ...(opts.labelAr ? { labelAr: opts.labelAr } : {}),
+          ...(typeof opts.active === 'boolean' ? { active: opts.active } : {}),
+        };
+      }
+      return n;
+    });
+    this.doc = {
+      ...this.doc,
+      definitionsVersion: Number(this.doc.definitionsVersion || 0) + 1,
+      nodes,
+    };
+    this.hash = `test-bump-${this.doc.definitionsVersion}-${Date.now()}`;
+    return this.doc.definitionsVersion;
+  }
+
   /** Optional: call after RegistryService load to ensure write-enabled profiles exist. */
   assertProfilesKnown(knownProfileIds: Set<string>) {
     const issues = validateTaxonomyProfilesExist(this.doc, knownProfileIds);

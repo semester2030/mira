@@ -864,9 +864,12 @@ class DiscoverCategoryRail extends StatelessWidget {
     required this.assetFamily,
     required this.selected,
     required this.onSelected,
+    this.ids,
   });
 
   final List<String> labels;
+  /// Taxonomy / stored ids aligned with [labels] for asset lookup (preferred over label).
+  final List<String>? ids;
   final String assetFamily;
   final int selected;
   final ValueChanged<int> onSelected;
@@ -887,9 +890,11 @@ class DiscoverCategoryRail extends StatelessWidget {
               ? ((constraints.maxWidth - (labels.length - 1) * gap) / labels.length).clamp(minSize, 94.0)
               : minSize;
           Widget chip(int index) {
+            final id = ids != null && index < ids!.length ? ids![index] : null;
             return _CategoryChip(
               assetFamily: assetFamily,
               label: labels[index],
+              id: id,
               selected: index == selected,
               size: size,
               onTap: () => onSelected(index),
@@ -926,17 +931,20 @@ class _CategoryChip extends StatelessWidget {
     required this.selected,
     required this.size,
     required this.onTap,
+    this.id,
   });
 
   final String assetFamily;
   final String label;
+  final String? id;
   final bool selected;
   final double size;
   final VoidCallback onTap;
 
   @override
   Widget build(BuildContext context) {
-    final path = DiscoverCategoryAssets.thumb(assetFamily, label);
+    final path = DiscoverCategoryAssets.thumbFor(family: assetFamily, id: id, label: label) ??
+        DiscoverCategoryAssets.thumb(assetFamily, label);
     return InkWell(
       onTap: onTap,
       child: SizedBox(

@@ -9,7 +9,12 @@ class ApiClient {
 
   static Dio? _dio;
 
+  /// Test-only override (widget/HTTP acceptance). When set, [instance] returns it
+  /// and skips Firebase auth interceptors.
+  static Dio? debugDioOverride;
+
   static Dio get instance {
+    if (debugDioOverride != null) return debugDioOverride!;
     _dio ??= _createDio();
     return _dio!;
   }
@@ -27,10 +32,14 @@ class ApiClient {
     dio.interceptors.add(
       InterceptorsWrapper(
         onRequest: (options, handler) async {
-          final user = FirebaseAuth.instance.currentUser;
-          if (user != null) {
-            final token = await user.getIdToken();
-            options.headers['Authorization'] = 'Bearer $token';
+          try {
+            final user = FirebaseAuth.instance.currentUser;
+            if (user != null) {
+              final token = await user.getIdToken();
+              options.headers['Authorization'] = 'Bearer $token';
+            }
+          } catch (_) {
+            // Firebase may be uninitialized in widget/HTTP acceptance tests.
           }
           handler.next(options);
         },
@@ -44,5 +53,6 @@ class ApiClient {
   static void reset() {
     _dio?.close();
     _dio = null;
+    debugDioOverride = null;
   }
 }

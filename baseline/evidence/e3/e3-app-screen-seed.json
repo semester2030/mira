@@ -1,0 +1,10 @@
+{
+  "apiRoot": "http://127.0.0.1:55764",
+  "partnerId": "e4ead73e-2a1b-4198-9385-c65abd8a5626",
+  "productId": "318d29e0-54c7-430b-883f-c6efa6818662",
+  "nameAr": "E3 Portal Edited b0990f57",
+  "definitionsVersionBefore": 1,
+  "definitionsVersionAfter": 2,
+  "clothesLabelAfter": "ملابس-b0990f57",
+  "resultPath": "/Users/fayez/Desktop/mira-wt/.e3-acceptance-evidence/e3-app-screen-result.json"
+}

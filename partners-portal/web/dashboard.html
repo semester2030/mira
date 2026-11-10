@@ -7,6 +7,7 @@
   <title>لوحة التحكم — شركاء ميرا</title>
   <link href="https://fonts.googleapis.com/css2?family=Tajawal:wght@400;700;800&display=swap" rel="stylesheet" />
   <link rel="stylesheet" href="css/site.css" />
+  <link rel="stylesheet" href="css/e2b-product-editor.css" />
 </head>
 <body>
   <header>
@@ -93,6 +94,17 @@
         </div>
       </div>
 
+      <div class="card" id="partnerSettingsSection">
+        <h2>الإعدادات</h2>
+        <p class="lead">بيانات حساب الشريك وإعدادات البوابة. ليست إعلانات المشاهير.</p>
+        <dl class="settings-dl" id="partnerSettingsBody">
+          <div><dt>الاسم</dt><dd id="settingsPartnerName">—</dd></div>
+          <div><dt>النوع</dt><dd id="settingsPartnerType">—</dd></div>
+          <div><dt>المدينة</dt><dd id="settingsPartnerCity">—</dd></div>
+        </dl>
+        <p class="lead">لتسجيل الخروج استخدمي الرابط في أعلى الصفحة.</p>
+      </div>
+
       <div class="card" id="adsSection">
         <h2>إعلانات المشاهير</h2>
         <p class="lead" id="adsNotice"></p>
@@ -116,6 +128,8 @@
   <script src="js/catalog-journey.js"></script>
   <script src="js/bulk-add.js"></script>
   <script src="js/bulk-group-journey.js"></script>
+  <script src="js/e2b-product-shell.js"></script>
+  <script src="js/e2b-service-shell.js"></script>
   <script src="js/commerce-orders.js"></script>
   <script>
     const labeledUi = new URLSearchParams(location.search).get('ui-fixture') === 'labeled';
@@ -264,7 +278,15 @@
         MiraMotion.announce('اكتمل تحميل لوحة الشريك');
 
         window.sessionPartner = p;
+        window.sessionBranches = Array.isArray(data.branches) ? data.branches : [];
+        document.body.dataset.partnerType = p.type || '';
         try { localStorage.setItem('mira_partner_id', p.id); } catch (e) {}
+        const sn = document.getElementById('settingsPartnerName');
+        const st = document.getElementById('settingsPartnerType');
+        const sc = document.getElementById('settingsPartnerCity');
+        if (sn) sn.textContent = p.nameAr || p.nameEn || p.id || '—';
+        if (st) st.textContent = p.type === 'developer' ? 'مطور' : (p.type || '—');
+        if (sc) sc.textContent = p.city || '—';
         if (window.MiraEditorV2) {
           await MiraEditorV2.bootstrap(p);
           if (window.renderEditorDrafts) renderEditorDrafts();
@@ -278,23 +300,41 @@
         serviceButton.hidden = !showServices;
         productButton.hidden = !showProducts;
         bulkButton.hidden = !(showServices || showProducts);
+        if (showProducts && window.MiraE2BProductShell) MiraE2BProductShell.enableProductMode();
+        if (showServices && !showProducts && window.MiraE2BServiceShell) {
+          MiraE2BServiceShell.enableServiceMode('catalogForm');
+        }
         productButton.onclick = () => {
           bulkSection.classList.add('hidden');
-          if (!options || !options.preserveForms) {
+          // Do not wipe an in-progress product editor when toggling product↔service (R-04 isolation).
+          const catalogForm = document.getElementById('catalogForm');
+          const hasProductEditor = !!(catalogForm && catalogForm.querySelector('input[name="nameAr"]'));
+          if ((!options || !options.preserveForms) && !hasProductEditor) {
             if (developer) renderForm('brand', null, 'catalogForm', 'catalogTitle');
             else if (p.type === 'brand') renderForm('brand', null, 'catalogForm', 'catalogTitle');
           }
-          scrollToForm('catalogForm');
+          if (window.MiraE2BProductShell) MiraE2BProductShell.focusEditor();
+          else scrollToForm('catalogForm');
         };
         serviceButton.onclick = () => {
           bulkSection.classList.add('hidden');
           if (developer) {
-            if (!options || !options.preserveForms) renderForm('clinic', null, 'serviceForm', 'serviceTitle');
-            scrollToForm('serviceForm');
+            const serviceForm = document.getElementById('serviceForm');
+            const hasServiceEditor = !!(serviceForm && serviceForm.querySelector('input[name="nameAr"]'));
+            if ((!options || !options.preserveForms) && !hasServiceEditor) {
+              renderForm('clinic', null, 'serviceForm', 'serviceTitle');
+            }
+            if (window.MiraE2BServiceShell) MiraE2BServiceShell.focusEditor('serviceForm');
+            else scrollToForm('serviceForm');
           } else {
             // Salon/clinic: services are edited in catalogForm (same as initial load).
-            if (!options || !options.preserveForms) renderForm(p.type, null, 'catalogForm', 'catalogTitle');
-            scrollToForm('catalogForm');
+            const catalogForm = document.getElementById('catalogForm');
+            const hasServiceEditor = !!(catalogForm && catalogForm.querySelector('input[name="nameAr"]'));
+            if ((!options || !options.preserveForms) && !hasServiceEditor) {
+              renderForm(p.type, null, 'catalogForm', 'catalogTitle');
+            }
+            if (window.MiraE2BServiceShell) MiraE2BServiceShell.focusEditor('catalogForm');
+            else scrollToForm('catalogForm');
           }
         };
         bulkButton.onclick = () => {

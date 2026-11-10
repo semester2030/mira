@@ -1,0 +1,14 @@
+{
+  "ok": true,
+  "key": "2026-11-08",
+  "chips": [
+    {
+      "text": "13:00 · room-b",
+      "res": "room-b"
+    },
+    {
+      "text": "09:00",
+      "res": null
+    }
+  ]
+}

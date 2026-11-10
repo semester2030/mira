@@ -10,6 +10,10 @@ import { Prisma } from '@prisma/client';
 import { PrismaService } from '../../prisma/prisma.service';
 import { CatalogContentService } from '../../marketplace/catalog-content.service';
 import {
+  assertAvailabilityConsistent,
+  assertResourceCapacitiesConsistent,
+  badRequest,
+  capacityBearingWindowsFromDocument,
   normalizeAvailabilityDocument,
   normalizeIdempotencyKey,
   stableFingerprint,
@@ -53,15 +57,28 @@ function placeFieldsFromBulkValues(values: Record<string, unknown>): {
   coverageJson?: Prisma.InputJsonValue | typeof Prisma.DbNull;
 } {
   const profile = values.serviceProfile;
-  let placeMode =
-    (typeof values.placeMode === 'string' && values.placeMode.trim()) ||
-    placeModeFromServiceProfile(profile) ||
-    null;
+  const placeModeExplicit = Object.prototype.hasOwnProperty.call(values, 'placeMode');
+  const branchIdExplicit = Object.prototype.hasOwnProperty.call(values, 'branchId');
+  let placeMode: string | null = null;
+  if (placeModeExplicit) {
+    const raw = values.placeMode;
+    placeMode = typeof raw === 'string' && raw.trim() ? raw.trim() : null;
+  } else {
+    placeMode = placeModeFromServiceProfile(profile) || null;
+  }
   if (placeMode === 'in_branch') placeMode = 'branch';
-  const branchId =
-    (typeof values.branchId === 'string' && values.branchId.trim()) ||
-    branchIdFromServiceProfile(profile) ||
-    null;
+  // Explicit null/'' clears branch — never fall through to serviceProfile.
+  // Absent key may restore from profile (legacy answers).
+  let branchId: string | null | undefined;
+  if (branchIdExplicit) {
+    const raw = values.branchId;
+    branchId =
+      typeof raw === 'string' && raw.trim() ? raw.trim() : null;
+  } else {
+    branchId = branchIdFromServiceProfile(profile) || null;
+  }
+  // Non-branch modes never keep a stale branchId.
+  if (placeMode && placeMode !== 'branch') branchId = null;
   let coverageJson: Prisma.InputJsonValue | typeof Prisma.DbNull | undefined;
   if (values.coverageJson != null) {
     const norm = normalizeCoverageJson(values.coverageJson);
@@ -95,12 +112,14 @@ function placeFieldsFromBulkValues(values: Record<string, unknown>): {
     }
   }
   const out: {
-    placeMode?: string;
+    placeMode?: string | null;
     branchId?: string | null;
     coverageJson?: Prisma.InputJsonValue | typeof Prisma.DbNull;
   } = {};
-  if (placeMode) out.placeMode = placeMode;
-  if (branchId !== null && branchId !== undefined) out.branchId = branchId || null;
+  if (placeModeExplicit) out.placeMode = placeMode;
+  else if (placeMode) out.placeMode = placeMode;
+  // Always emit branchId when explicit (including null clear) or when resolved to a value.
+  if (branchIdExplicit || branchId) out.branchId = branchId ?? null;
   if (coverageJson !== undefined) out.coverageJson = coverageJson;
   // Explicit empty coverageZones clears prior coverage on rematerialize.
   if (Array.isArray(values.coverageZones) && values.coverageZones.length === 0) {
@@ -122,46 +141,95 @@ function availabilityFromBulkSchedule(values: Record<string, unknown>) {
     if (!Number.isFinite(h) || !Number.isFinite(m)) return null;
     return h * 60 + m;
   };
-  const resourceId =
+  // Empty optional resourceId must stay empty — never invent «resource-1».
+  const defaultResourceId =
     typeof values.defaultResourceId === 'string' && values.defaultResourceId.trim()
       ? values.defaultResourceId.trim()
-      : 'resource-1';
+      : '';
   const capacity =
     typeof values.defaultCapacity === 'number' && Number.isInteger(values.defaultCapacity) && values.defaultCapacity > 0
       ? values.defaultCapacity
       : 1;
-  const windows = hours
-    .map((raw) => {
-      if (!raw || typeof raw !== 'object') return null;
-      const h = raw as Record<string, unknown>;
-      const dayKey = String(h.day || h.weekday || '');
-      const weekday =
-        typeof h.weekday === 'number' && Number.isInteger(h.weekday)
-          ? h.weekday
-          : dayMap[dayKey] != null
-            ? dayMap[dayKey]
-            : null;
-      const startMin = typeof h.startMin === 'number' ? h.startMin : toMin(h.open || h.start);
-      const endMin = typeof h.endMin === 'number' ? h.endMin : toMin(h.close || h.end);
-      if (weekday == null || startMin == null || endMin == null || endMin <= startMin) return null;
-      return {
-        weekday,
-        startMin,
-        endMin,
-        capacity: typeof h.capacity === 'number' ? h.capacity : capacity,
-        resourceId: typeof h.resourceId === 'string' && h.resourceId ? h.resourceId : resourceId,
-      };
-    })
-    .filter(Boolean);
-  const closedDates = (Array.isArray(values.dateExceptions) ? values.dateExceptions : [])
-    .map((x) => (typeof x === 'string' ? x : x && typeof x === 'object' ? String((x as { date?: string }).date || '') : ''))
-    .map((d) => d.trim())
-    .filter(Boolean);
-  if (!windows.length && !closedDates.length) return null;
-  return normalizeAvailabilityDocument(
-    { v: 2, timezone: 'Asia/Riyadh', windows, exceptions: [], closedDates },
+  const windows = hours.map((raw) => {
+    if (!raw || typeof raw !== 'object') {
+      throw badRequest('AVAILABILITY_WINDOW_INVALID', 'فترة توفر غير صالحة');
+    }
+    const h = raw as Record<string, unknown>;
+    const dayKey = String(h.day || h.weekday || '');
+    const weekday =
+      typeof h.weekday === 'number' && Number.isInteger(h.weekday)
+        ? h.weekday
+        : dayMap[dayKey] != null
+          ? dayMap[dayKey]
+          : null;
+    const startMin = typeof h.startMin === 'number' ? h.startMin : toMin(h.open || h.start);
+    const endMin = typeof h.endMin === 'number' ? h.endMin : toMin(h.close || h.end);
+    // Strict: never silently drop invalid draft/materialize windows.
+    if (weekday == null || startMin == null || endMin == null || endMin <= startMin) {
+      throw badRequest('AVAILABILITY_WINDOW_INVALID', 'فترة توفر غير صالحة');
+    }
+    const rowCapacity = typeof h.capacity === 'number' ? h.capacity : capacity;
+    if (!Number.isInteger(rowCapacity) || rowCapacity < 1 || rowCapacity > 100) {
+      throw badRequest('AVAILABILITY_WINDOW_INVALID', 'فترة توفر غير صالحة');
+    }
+    const rowResource =
+      typeof h.resourceId === 'string' && h.resourceId.trim() ? h.resourceId.trim() : defaultResourceId;
+    return {
+      weekday,
+      startMin,
+      endMin,
+      capacity: rowCapacity,
+      resourceId: rowResource,
+    };
+  });
+  // dateExceptions may be closed date strings OR exception objects {date, kind, ...}.
+  // Do not drop special/closed exception rows — prior code forced exceptions: [].
+  const closedDates: string[] = [];
+  const exceptions: Array<Record<string, unknown>> = [];
+  const rawExceptions = Array.isArray(values.dateExceptions) ? values.dateExceptions : [];
+  for (const x of rawExceptions) {
+    if (typeof x === 'string') {
+      const d = x.trim();
+      if (d) closedDates.push(d);
+      continue;
+    }
+    if (!x || typeof x !== 'object') continue;
+    const row = x as Record<string, unknown>;
+    const date = String(row.date || '').trim();
+    if (!date) continue;
+    const kind = String(row.kind || '').trim();
+    if (kind === 'special') {
+      exceptions.push({
+        date,
+        kind: 'special',
+        startMin: row.startMin,
+        endMin: row.endMin,
+        ...(row.capacity != null ? { capacity: row.capacity } : {}),
+        ...(typeof row.resourceId === 'string' && row.resourceId.trim()
+          ? { resourceId: row.resourceId.trim() }
+          : {}),
+      });
+    } else if (kind === 'closed') {
+      // Prefer closedDates list for kind=closed; also allow exception form.
+      if (row.resourceId) {
+        exceptions.push({ date, kind: 'closed', resourceId: String(row.resourceId).trim() });
+      } else {
+        closedDates.push(date);
+      }
+    } else if (!kind) {
+      // Bare {date} without kind → closed day.
+      closedDates.push(date);
+    }
+  }
+  if (!windows.length && !closedDates.length && !exceptions.length) return null;
+  // Same contract as partners-portal.availabilityWrite — draft materialize must not persist overlaps.
+  const doc = normalizeAvailabilityDocument(
+    { v: 2, timezone: 'Asia/Riyadh', windows, exceptions, closedDates },
     { strict: true },
   );
+  assertAvailabilityConsistent(doc.windows);
+  assertResourceCapacitiesConsistent(capacityBearingWindowsFromDocument(doc));
+  return doc;
 }
 
 function editorError(status: HttpStatus, code: string, messageAr: string, extra: Record<string, unknown> = {}) {
@@ -327,6 +395,29 @@ export class EditorDraftsService {
       schemaVersion,
       partnerType,
     });
+
+    // Draft save must reject invalid availability schedules (same contract as materialize/write).
+    // Empty/absent schedule stays allowed; only present weeklyHours/dateExceptions/availabilityJson are checked.
+    if (body.kind === 'service') {
+      const values = body.values as Record<string, unknown>;
+      const hasSchedule =
+        values.availabilityJson != null ||
+        Array.isArray(values.weeklyHours) ||
+        Array.isArray(values.dateExceptions);
+      if (hasSchedule) {
+        try {
+          availabilityFromBulkSchedule(values);
+        } catch (err) {
+          if (err instanceof HttpException) throw err;
+          const e = err as { message?: string };
+          throw editorError(
+            HttpStatus.BAD_REQUEST,
+            'AVAILABILITY_INVALID',
+            e?.message || 'إعداد الإتاحة غير صالح',
+          );
+        }
+      }
+    }
 
     if (body.targetOwnerId) {
       await this.assertTargetOwner(partnerId, body.kind, body.targetOwnerId);
@@ -947,30 +1038,27 @@ export class EditorDraftsService {
               }
             : {}),
           ...(() => {
-            try {
-              const scheduleTouched =
-                Array.isArray(values.weeklyHours) ||
-                Array.isArray(values.dateExceptions) ||
-                values.availabilityJson !== undefined;
-              if (!scheduleTouched) return {};
-              const availabilityDoc = availabilityFromBulkSchedule(values);
-              // Explicit empty weeklyHours/dateExceptions must clear stored availability
-              // (omit vs clear: missing keys = no schedule change; [] = clear).
-              if (!availabilityDoc) {
-                return {
-                  availabilityJson: Prisma.DbNull,
-                  bookingEnabled: false,
-                };
-              }
+            const scheduleTouched =
+              Array.isArray(values.weeklyHours) ||
+              Array.isArray(values.dateExceptions) ||
+              values.availabilityJson !== undefined;
+            if (!scheduleTouched) return {};
+            // Do not swallow normalize errors — surface as failed rematerialize.
+            const availabilityDoc = availabilityFromBulkSchedule(values);
+            // Explicit empty weeklyHours/dateExceptions must clear stored availability
+            // (omit vs clear: missing keys = no schedule change; [] = clear).
+            if (!availabilityDoc) {
               return {
-                availabilityJson: availabilityDoc as unknown as Prisma.InputJsonValue,
-                bookingEnabled:
-                  values.bookingEnabled === true ||
-                  (values.bookingEnabled !== false && (availabilityDoc.windows || []).length > 0),
+                availabilityJson: Prisma.DbNull,
+                bookingEnabled: false,
               };
-            } catch {
-              return {};
             }
+            return {
+              availabilityJson: availabilityDoc as unknown as Prisma.InputJsonValue,
+              bookingEnabled:
+                values.bookingEnabled === true ||
+                (values.bookingEnabled !== false && (availabilityDoc.windows || []).length > 0),
+            };
           })(),
           ...placeFieldsFromBulkValues(values),
         },

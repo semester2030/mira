@@ -1,0 +1,13 @@
+{
+  "rejectStatus": 404,
+  "rejectMsg": "الفرع غير موجود أو لا يخص هذه الجهة",
+  "beforeRejectBranch": "4f10bf4f-1f41-47ae-9a64-26705edecb50",
+  "branchUnchangedAfterReject": true,
+  "seedStatus": 200,
+  "beforeOmitBranch": "7dcd3100-6487-430a-a906-efde1296c120",
+  "omitStatus": 200,
+  "afterOmitBranch": "7dcd3100-6487-430a-a906-efde1296c120",
+  "clearApiStatus": 200,
+  "afterClearApiBranch": null,
+  "afterClearApiPlace": "home"
+}

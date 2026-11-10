@@ -1,0 +1,24 @@
+{
+  "draftMeta": {
+    "clientDraftId": "new:1376daf1-952e-4e60-845d-5f7a54e60a0c:service:4cabc37d-44ba-48e2-a5c9-d60aec03a2f9",
+    "revision": 1,
+    "statusUi": "حُفظت المسودة الخادمية · rev 1. استخدمي زر التحويل للإرسال للمراجعة."
+  },
+  "draftReopen": {
+    "ok": true,
+    "name": "E2C-Svc-72df437e",
+    "rows": [
+      {
+        "weekday": "0",
+        "start": "10:00",
+        "end": "14:00",
+        "capacity": "2",
+        "resourceId": ""
+      }
+    ],
+    "placeMode": "branch",
+    "branchId": "7dcd3100-6487-430a-a906-efde1296c120",
+    "clientDraftId": "new:1376daf1-952e-4e60-845d-5f7a54e60a0c:service:4cabc37d-44ba-48e2-a5c9-d60aec03a2f9",
+    "materialized": false
+  }
+}

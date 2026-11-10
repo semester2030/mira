@@ -1,0 +1,35 @@
+{
+  "iso1": {
+    "productMode": true,
+    "serviceMode": false,
+    "e2b": 7,
+    "e2cVisible": 0,
+    "e2cComposeVisible": 0,
+    "placeChipsVisible": 0,
+    "productName": "منتج-عزل-E2C"
+  },
+  "iso2": {
+    "productMode": false,
+    "serviceMode": true,
+    "e2bHidden": true,
+    "catalogSectionHidden": true,
+    "e2c": 4,
+    "e2cVisible": 4,
+    "form": true,
+    "serviceName": "خدمة-عزل-E2C",
+    "placeChipsVisible": 3,
+    "productNameWhileService": "منتج-عزل-E2C",
+    "durationVisible": true
+  },
+  "iso3": {
+    "productMode": true,
+    "serviceMode": false,
+    "e2b": 7,
+    "e2cVisible": 0,
+    "e2cComposeVisible": 0,
+    "placeChipsVisible": 0,
+    "productName": "منتج-عزل-E2C",
+    "serviceNameHiddenForm": "خدمة-عزل-E2C",
+    "serviceFormStillServiceMode": false
+  }
+}

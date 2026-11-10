@@ -1,0 +1,1 @@
+Historical supplier evidence only. These files are not results for the modified source in this package. Root REPORT.md and evidence/current are authoritative for this delivery. Historical paths/verdicts are preserved as originally provided.

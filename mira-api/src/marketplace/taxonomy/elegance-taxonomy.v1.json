@@ -4,7 +4,7 @@
   "definitionsVersion": 1,
   "compatMinAppBuild": 1,
   "status": "IMPLEMENTED",
-  "notes": "Public elegance taxonomy projection. browseOnly nodes must not be persisted. bags/shoes are browsable but writeEnabled=false until E4 allowlist/profiles.",
+  "notes": "Public elegance taxonomy projection. browseOnly nodes must not be persisted. bags/shoes writeEnabled=true for E4 allowlist/profiles.",
   "nodes": [
     {
       "id": "elegance.all",
@@ -25,7 +25,12 @@
       "imageKey": "elegance.clothes",
       "profileId": "product.clothes",
       "writeEnabled": true,
-      "children": ["clothes.all", "clothes.wedding_dress", "clothes.abaya", "clothes.evening"]
+      "children": [
+        "clothes.all",
+        "clothes.wedding_dress",
+        "clothes.abaya",
+        "clothes.evening"
+      ]
     },
     {
       "id": "clothes.all",
@@ -74,8 +79,13 @@
       "active": true,
       "imageKey": "elegance.bags",
       "profileId": "product.bags",
-      "writeEnabled": false,
-      "children": ["bags.all", "bags.hand", "bags.shoulder", "bags.clutch"]
+      "writeEnabled": true,
+      "children": [
+        "bags.all",
+        "bags.hand",
+        "bags.shoulder",
+        "bags.clutch"
+      ]
     },
     {
       "id": "bags.all",
@@ -93,7 +103,7 @@
       "sort": 10,
       "active": true,
       "profileId": "product.bags",
-      "writeEnabled": false,
+      "writeEnabled": true,
       "children": []
     },
     {
@@ -103,7 +113,7 @@
       "sort": 20,
       "active": true,
       "profileId": "product.bags",
-      "writeEnabled": false,
+      "writeEnabled": true,
       "children": []
     },
     {
@@ -113,7 +123,7 @@
       "sort": 30,
       "active": true,
       "profileId": "product.bags",
-      "writeEnabled": false,
+      "writeEnabled": true,
       "children": []
     },
     {
@@ -124,8 +134,13 @@
       "active": true,
       "imageKey": "elegance.shoes",
       "profileId": "product.shoes",
-      "writeEnabled": false,
-      "children": ["shoes.all", "shoes.heel", "shoes.flat", "shoes.sandal"]
+      "writeEnabled": true,
+      "children": [
+        "shoes.all",
+        "shoes.heel",
+        "shoes.flat",
+        "shoes.sandal"
+      ]
     },
     {
       "id": "shoes.all",
@@ -143,7 +158,7 @@
       "sort": 10,
       "active": true,
       "profileId": "product.shoes",
-      "writeEnabled": false,
+      "writeEnabled": true,
       "children": []
     },
     {
@@ -153,7 +168,7 @@
       "sort": 20,
       "active": true,
       "profileId": "product.shoes",
-      "writeEnabled": false,
+      "writeEnabled": true,
       "children": []
     },
     {
@@ -163,7 +178,7 @@
       "sort": 30,
       "active": true,
       "profileId": "product.shoes",
-      "writeEnabled": false,
+      "writeEnabled": true,
       "children": []
     },
     {
@@ -175,7 +190,9 @@
       "imageKey": "elegance.face",
       "profileId": "product.face",
       "writeEnabled": true,
-      "children": ["face.all"]
+      "children": [
+        "face.all"
+      ]
     },
     {
       "id": "face.all",
@@ -195,7 +212,9 @@
       "imageKey": "elegance.body",
       "profileId": "product.body",
       "writeEnabled": true,
-      "children": ["body.all"]
+      "children": [
+        "body.all"
+      ]
     },
     {
       "id": "body.all",
@@ -215,7 +234,9 @@
       "imageKey": "elegance.hair",
       "profileId": "product.hair",
       "writeEnabled": true,
-      "children": ["hair.all"]
+      "children": [
+        "hair.all"
+      ]
     },
     {
       "id": "hair.all",
@@ -235,7 +256,9 @@
       "imageKey": "elegance.accessories",
       "profileId": "product.accessories",
       "writeEnabled": true,
-      "children": ["accessories.all"]
+      "children": [
+        "accessories.all"
+      ]
     },
     {
       "id": "accessories.all",

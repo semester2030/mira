@@ -1,0 +1,97 @@
+{
+  "verdict": "E3_ELEGANCE_TAXONOMY_FILTERS_CLOSED_VERIFIED — LOCAL/TEST ONLY",
+  "gate": {
+    "ok": true,
+    "missing": [],
+    "bad": []
+  },
+  "started": "2026-11-09T20:07:50.971Z",
+  "ended": "2026-11-09T20:08:18.981Z",
+  "testedTree": "1937c420190fcff239b352c776f6de2c8ae18c86",
+  "cases": [
+    {
+      "id": "ACC-E3-TAXONOMY-ROOTS",
+      "status": "PASS",
+      "expected": "roots order matches Notes أناقتك",
+      "actual": "{\"rootIds\":[\"all\",\"clothes\",\"bags\",\"shoes\",\"face\",\"body\",\"hair\",\"accessories\"],\"lane\":\"elegance\"}"
+    },
+    {
+      "id": "ACC-E3-BAGS-SHOES-BROWSE-ONLY",
+      "status": "PASS",
+      "expected": "bags/shoes writeEnabled=false (E4 deferred) but present for browse",
+      "actual": "{\"bags\":{\"id\":\"bags\",\"parentId\":null,\"labelAr\":\"الشنط\",\"sort\":20,\"active\":true,\"browseOnly\":false,\"writeEnabled\":false,\"imageKey\":\"elegance.bags\",\"profileId\":\"product.bags\",\"children\":[\"bags.all\",\"bags.hand\",\"bags.shoulder\",\"bags.clutch\"]},\"shoes\":{\"id\":\"shoes\",\"parentId\":null,\"labelAr\":\"الأحذية\",\"sort\":30,\"active\":true,\"browseOnly\":false,\"writeEnabled\":false,\"imageKey\":\"elegance.shoes\",\"profileId\":\"product.shoes\",\"children\":[\"shoes.all\",\"shoes.heel\",\"shoes.flat\",\"shoes.sandal\"]}}"
+    },
+    {
+      "id": "ACC-E3-APP-PROJECTION-IDS",
+      "status": "PASS",
+      "expected": "app projection ids == API roots == taxonomy doc",
+      "actual": "{\"appIds\":[\"all\",\"clothes\",\"bags\",\"shoes\",\"face\",\"body\",\"hair\",\"accessories\"],\"docRootIds\":[\"all\",\"clothes\",\"bags\",\"shoes\",\"face\",\"body\",\"hair\",\"accessories\"]}"
+    },
+    {
+      "id": "ACC-E3-CLOTHES-CHILDREN",
+      "status": "PASS",
+      "expected": "clothes children match Notes drill-down ids",
+      "actual": "{\"clothesChildren\":[\"clothes.all\",\"clothes.wedding_dress\",\"clothes.abaya\",\"clothes.evening\"],\"clothesNode\":{\"id\":\"clothes\",\"parentId\":null,\"labelAr\":\"الملابس\",\"sort\":10,\"active\":true,\"browseOnly\":false,\"writeEnabled\":true,\"imageKey\":\"elegance.clothes\",\"profileId\":\"product.clothes\",\"children\":[\"clothes.all\",\"clothes.wedding_dress\",\"clothes.abaya\",\"clothes.evening\"]}}"
+    },
+    {
+      "id": "ACC-E3-VARIANT-AND-SAME",
+      "status": "PASS",
+      "expected": "color+size match only when same variant",
+      "actual": "{\"hitRow\":{\"kind\":\"product\",\"id\":\"8a8c09ff-6813-49df-b3cf-b3d0672254a7\",\"partnerId\":\"e4ead73e-2a1b-4198-9385-c65abd8a5626\",\"partnerType\":\"brand\",\"partnerNameAr\":\"E3 Brand b0990f57\",\"city\":\"الرياض\",\"contactPhone\":null,\"nameAr\":\"E3 Dress b0990f57\",\"nameEn\":\"E3 Dress\",\"descriptionAr\":null,\"priceHalalas\":10000,\"priceLabel\":\"100 ر.س\",\"externalUrl\":\"https://example.test/e3-b0990f57\",\"stepAr\":null,\"partnerEmoji\":null,\"concernTags\":[],\"category\":\"clothes\",\"subcategory\":\"clothes.evening\",\"profileId\":\"product.clothes\",\"durationMin\":null,\"purchaseMode\":\"external\",\"stockQty\":null,\"stockAvailable\":true,\"deliveryFeeHalalas\":null,\"optionsJson\":null,\"variantsJson\":[{\"id\":\"e3-b0990f57-bs\",\"available\":true,\"selections\":{\"size\":\"s\",\"color\":\"black\"},\"priceHalalas\":10000},{\"id\":\"e3-b0990f57-wm\",\"available\":true,\"selections\":{\"size\":\"m\",\"color\":\"white\"},\"priceHalalas\":12000}],\"bookingEnabled\":false,\"payMode\":null,\"availabilityPresent\":false,\"matchedVariantIds\":[\"e3-b0990f57-bs\"],\"matchedVariants\":[{\"variantId\":\"e3-b0990f57-bs\",\"priceHalalas\":10000,\"priceInherited\":false,\"selections\":{\"size\":\"s\",\"color\":\"black\"}}],\"media\":[]},\"total\":1}"
+    },
+    {
+      "id": "ACC-E3-VARIANT-AND-NEGATIVE",
+      "status": "PASS",
+      "expected": "black+M must NOT hit via cross-variant false match",
+      "actual": "{\"ids\":[]}"
+    },
+    {
+      "id": "ACC-E3-DRAFT-EXCLUDED",
+      "status": "PASS",
+      "expected": "draft products never appear in browse",
+      "actual": "{\"ids\":[\"8a8c09ff-6813-49df-b3cf-b3d0672254a7\"]}"
+    },
+    {
+      "id": "ACC-E3-WITHDRAWN-EXCLUDED",
+      "status": "PASS",
+      "expected": "withdrawn never appears in browse even when facets would match",
+      "actual": "{\"ids\":[\"8a8c09ff-6813-49df-b3cf-b3d0672254a7\"],\"withdrawnId\":\"3b52b1ac-cdc5-46c1-9625-5fd87eb3429d\"}"
+    },
+    {
+      "id": "ACC-E3-CATEGORY-FILTER-CLEAR",
+      "status": "PASS",
+      "expected": "category change drops incompatible filter results; no false clothes hit under face",
+      "actual": "{\"clothesHasColor\":true,\"faceStale\":true,\"faceHitClothes\":false,\"faceTotal\":0}"
+    },
+    {
+      "id": "ACC-E3-SUBCATEGORY-FILTER",
+      "status": "PASS",
+      "expected": "subcategory id filters exact node; wrong sub does not invent hits",
+      "actual": "{\"eveningIds\":[\"8a8c09ff-6813-49df-b3cf-b3d0672254a7\"],\"abayaIds\":[]}"
+    },
+    {
+      "id": "ACC-E3-PORTAL-CREATE-BROWSE",
+      "status": "PASS",
+      "expected": "إنشاء/تعديل/مراجعة/اعتماد عبر المسار الحقيقي ثم ظهوره في browse",
+      "actual": "{\"createStatus\":201,\"patchStatus\":200,\"patchBody\":{\"id\":\"318d29e0-54c7-430b-883f-c6efa6818662\",\"partnerId\":\"e4ead73e-2a1b-4198-9385-c65abd8a5626\",\"nameAr\":\"E3 Portal Edited b0990f57\",\"nameEn\":\"E3 Portal\",\"descriptionAr\":null,\"priceHalalas\":15000,\"externalUrl\":\"https://example.test/e3-portal-b0990f57\",\"concernTags\":[],\"category\":\"clothes\",\"subcategory\":\"clothes.evening\",\"skinTypes\":[],\"stepAr\":null,\"sortOrder\":0,\"active\":false,\"contentStatus\":\"draft\",\"reviewNote\":null,\"draftNameAr\":null,\"draftNameEn\":null,\"draftDescriptionAr\":null,\"submittedAt\":null,\"reviewedAt\":null,\"reviewedBy\":null,\"reviewStatus\":\"draft\",\"reviewRevision\":1,\"submittedRevision\":null,\"catalogSource\":\"catalog\",\"purchaseMode\":\"external\",\"stockQty\":null,\"reservedQty\":0,\"inventoryMode\":\"product\",\"optionsJson\":null,\"variantsJson\":null,\"attributesJson\":null,\"draftOptionsJson\":null,\"draftVariantsJson\":null,\"draftOptionsSet\":false,\"draftVariantsSet\":false,\"draftCategory\":null,\"draftSubcategory\":null,\"draftProfileId\":null,\"draftAttributesJson\":null,\"draftTaxonomySet\":false,\"deliveryFeeHalalas\":null,\"profileId\":\"product.clothes\",\"schemaVersion\":null,\"createdAt\":\"2026-11-09T20:07:51.131Z\"},\"mediaStatus\":201,\"mediaBody\":{\"id\":\"797c1b7a-6009-484a-974c-0ac209c46578\",\"ownerKind\":\"product\",\"ownerId\":\"318d29e0-54c7-430b-883f-c6efa6818662\",\"sortOrder\":0,\"kind\":\"image\",\"url\":\"\",\"active\":false,\"mimeType\":\"image/png\",\"byteSize\":70,\"storageKey\":\"2bc25e01-9a65-4170-8209-e6998ed77b5c\",\"isPrimary\":true,\"publication\":\"draft\",\"pendingRemoval\":false,\"draftSortOrder\":null,\"draftIsPrimary\":true,\"sourceMediaKey\":null,\"placement\":\"main\",\"createdAt\":\"2026-11-09T20:07:51.144Z\"},\"submitStatus\":201,\"submitBody\":{\"contentStatus\":\"draft\",\"reviewStatus\":\"in_review\",\"revision\":2,\"id\":\"318d29e0-54c7-430b-883f-c6efa6818662\"},\"reviewStatusQueued\":\"in_review\",\"revision\":2,\"decideStatus\":201,\"decideBody\":{\"contentStatus\":\"published\",\"id\":\"318d29e0-54c7-430b-883f-c6efa6818662\",\"cleanupPending\":false},\"afterDecide\":{\"contentStatus\":\"published\",\"active\":true,\"nameAr\":\"E3 Portal Edited b0990f57\"},\"portalRow\":{\"kind\":\"product\",\"id\":\"318d29e0-54c7-430b-883f-c6efa6818662\",\"partnerId\":\"e4ead73e-2a1b-4198-9385-c65abd8a5626\",\"partnerType\":\"brand\",\"partnerNameAr\":\"E3 Brand b0990f57\",\"city\":\"الرياض\",\"contactPhone\":null,\"nameAr\":\"E3 Portal Edited b0990f57\",\"nameEn\":\"E3 Portal\",\"descriptionAr\":null,\"priceHalalas\":15000,\"priceLabel\":\"150 ر.س\",\"externalUrl\":\"https://example.test/e3-portal-b0990f57\",\"stepAr\":null,\"partnerEmoji\":null,\"concernTags\":[],\"category\":\"clothes\",\"subcategory\":\"clothes.evening\",\"profileId\":\"product.clothes\",\"durationMin\":null,\"purchaseMode\":\"external\",\"stockQty\":null,\"stockAvailable\":true,\"deliveryFeeHalalas\":null,\"optionsJson\":null,\"variantsJson\":null,\"bookingEnabled\":false,\"payMode\":null,\"availabilityPresent\":false,\"matchedVariantIds\":[],\"matchedVariants\":[],\"media\":[{\"kind\":\"image\",\"url\":\"/api/v1/marketplace/media/797c1b7a-6009-484a-974c-0ac209c46578\",\"sortOrder\":0,\"isPrimary\":true,\"placement\":\"main\"}]}}"
+    },
+    {
+      "id": "ACC-E3-DEFS-CACHE",
+      "status": "PASS",
+      "expected": "تعريفات مستقرة ثم bump فعلي؛ browse يتحدث؛ فلاتر متوافقة/غير متوافقة؛ مسودة مطابقة تُستبعد",
+      "actual": "{\"defsBefore\":1,\"defsAfter\":2,\"tax3\":2,\"taxStable\":true,\"clothesLabelAfter\":\"ملابس-b0990f57\",\"stillHasPublished\":true,\"faceHitClothes\":false,\"portalVisibleAfterEdit\":true,\"matchingDraftExcluded\":true}"
+    },
+    {
+      "id": "ACC-E3-APP-SCREEN",
+      "status": "PASS",
+      "expected": "عنصر البوابة يظهر على شاشة التطبيق عبر browse الحي + تحديث كاش التعريفات",
+      "actual": "{\"ok\":true,\"productId\":\"318d29e0-54c7-430b-883f-c6efa6818662\",\"nameAr\":\"E3 Portal Edited b0990f57\",\"definitionsVersionBefore\":1,\"definitionsVersionAfter\":2,\"versionAtOpen\":\"2\",\"screenSawProduct\":true,\"defsReloaded\":true,\"catalogSource\":\"live-http-marketplace-repository\",\"taxonomySource\":\"live-http-ensureLoaded\",\"apiBase\":\"http://127.0.0.1:55764/api/v1\",\"replaceForTestUsed\":false,\"preBrowseSawProduct\":true,\"preBrowseVisualSawProduct\":true}"
+    },
+    {
+      "id": "ACC-E3-PAGINATION",
+      "status": "PASS",
+      "expected": "الصفحة التالية عبر nextCursor بلا تكرار معرفات الصفحة الأولى",
+      "actual": "{\"page1Ids\":[\"1208b4fe-049c-4e4c-b711-28b4a5970c97\",\"318d29e0-54c7-430b-883f-c6efa6818662\"],\"page2Ids\":[\"56372073-ad40-4aad-bff0-da471a85ef40\",\"5d187e8d-4a96-436b-851b-8403a799d27b\"],\"nextCursor\":\"v1.key.a6b60fad.product:318d29e0-54c7-430b-883f-c6efa6818662\",\"overlap\":[]}"
+    }
+  ]
+}

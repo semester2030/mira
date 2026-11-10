@@ -1,6 +1,7 @@
 import '../domain/catalog_offer_media.dart';
 import '../domain/entities/catalog_product.dart';
 import '../domain/entities/catalog_service.dart';
+import 'elegance_taxonomy_source.dart';
 import 'marketplace_local_catalog.dart';
 
 /// One published catalog row. It keeps the original product or service object.
@@ -81,6 +82,10 @@ class DiscoverCategoryDef {
     required this.storedKey,
     this.matchesAll = false,
     this.venueType,
+    this.writeEnabled = true,
+    this.browseOnly = false,
+    this.imageKey,
+    this.parentId,
   });
 
   final String id;
@@ -89,6 +94,12 @@ class DiscoverCategoryDef {
   final String storedKey;
   final bool matchesAll;
   final String? venueType;
+  /// False for deferred E4 write surfaces (bags/shoes) — still browsable in E3.
+  final bool writeEnabled;
+  final bool browseOnly;
+  final String? imageKey;
+  /// Taxonomy parent when this def is a subcategory circle.
+  final String? parentId;
 }
 
 class DiscoverCatalogQuery {
@@ -96,6 +107,7 @@ class DiscoverCatalogQuery {
     this.text = '',
     this.partnerType,
     this.categoryId,
+    this.subcategoryId,
     this.city,
     this.partnerId,
     this.lane,
@@ -120,6 +132,8 @@ class DiscoverCatalogQuery {
   final String text;
   final String? partnerType;
   final String? categoryId;
+  /// Exact taxonomy subcategory node id (e.g. clothes.abaya). Null = whole category.
+  final String? subcategoryId;
   final String? city;
   final String? partnerId;
   final DiscoverLane? lane;
@@ -164,6 +178,7 @@ class DiscoverCatalogQuery {
     var n = 0;
     if (text.trim().isNotEmpty) n += 1;
     if (categoryId != null && categoryId != 'all') n += 1;
+    if (subcategoryId != null && subcategoryId!.isNotEmpty) n += 1;
     if (city != null && city!.isNotEmpty) n += 1;
     if (partnerId != null) n += 1;
     if (colors.isNotEmpty) n += 1;
@@ -209,6 +224,7 @@ class DiscoverCatalogQuery {
     String? text,
     String? partnerType,
     String? categoryId,
+    String? subcategoryId,
     String? city,
     String? partnerId,
     DiscoverLane? lane,
@@ -230,6 +246,7 @@ class DiscoverCatalogQuery {
     bool? requestFacets,
     bool clearType = false,
     bool clearCategory = false,
+    bool clearSubcategory = false,
     bool clearCity = false,
     bool clearPartner = false,
     bool clearLane = false,
@@ -252,6 +269,7 @@ class DiscoverCatalogQuery {
       text: text ?? this.text,
       partnerType: clearType ? null : partnerType ?? this.partnerType,
       categoryId: clearCategory ? null : categoryId ?? this.categoryId,
+      subcategoryId: (clearCategory || clearSubcategory) ? null : subcategoryId ?? this.subcategoryId,
       city: clearCity ? null : city ?? this.city,
       partnerId: clearPartner ? null : partnerId ?? this.partnerId,
       lane: clearLane ? null : lane ?? this.lane,
@@ -324,11 +342,14 @@ abstract final class DiscoverCatalogQueryEngine {
     DiscoverCategoryDef(id: 'makeup', label: 'المكياج', family: 'salon', storedKey: 'makeup'),
     DiscoverCategoryDef(id: 'nails', label: 'الأظافر', family: 'salon', storedKey: 'nails'),
     DiscoverCategoryDef(id: 'care', label: 'العناية', family: 'salon', storedKey: 'care'),
-    DiscoverCategoryDef(id: 'all', label: 'الكل', family: 'elegance', storedKey: '', matchesAll: true),
+    // elegance roots: prefer EleganceTaxonomySource (API) via forFamily — static list is fallback only.
+    DiscoverCategoryDef(id: 'all', label: 'الكل', family: 'elegance', storedKey: '', matchesAll: true, browseOnly: true),
+    DiscoverCategoryDef(id: 'clothes', label: 'الملابس', family: 'elegance', storedKey: 'clothes'),
+    DiscoverCategoryDef(id: 'bags', label: 'الشنط', family: 'elegance', storedKey: 'bags', writeEnabled: false),
+    DiscoverCategoryDef(id: 'shoes', label: 'الأحذية', family: 'elegance', storedKey: 'shoes', writeEnabled: false),
     DiscoverCategoryDef(id: 'face', label: 'الوجه', family: 'elegance', storedKey: 'face'),
     DiscoverCategoryDef(id: 'body', label: 'الجسم', family: 'elegance', storedKey: 'body'),
     DiscoverCategoryDef(id: 'hair', label: 'الشعر', family: 'elegance', storedKey: 'hair'),
-    DiscoverCategoryDef(id: 'clothes', label: 'الملابس', family: 'elegance', storedKey: 'clothes'),
     DiscoverCategoryDef(id: 'accessories', label: 'الإكسسوارات', family: 'elegance', storedKey: 'accessories'),
     DiscoverCategoryDef(id: 'all', label: 'الكل', family: 'beauty', storedKey: '', matchesAll: true),
     DiscoverCategoryDef(id: 'venue-clinic', label: 'العيادات', family: 'beauty', storedKey: '', venueType: 'clinic'),
@@ -341,6 +362,10 @@ abstract final class DiscoverCatalogQueryEngine {
   ];
 
   static List<DiscoverCategoryDef> forFamily(String family) {
+    if (family == 'elegance') {
+      final fromApi = EleganceTaxonomySource.eleganceRoots();
+      if (fromApi.isNotEmpty) return fromApi;
+    }
     return categories.where((item) => item.family == family).toList();
   }
 
