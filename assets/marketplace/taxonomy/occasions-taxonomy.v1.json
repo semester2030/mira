@@ -1,0 +1,82 @@
+{
+  "schemaVersion": 1,
+  "lane": "occasions",
+  "definitionsVersion": 1,
+  "compatMinAppBuild": 1,
+  "status": "PHASE1_PREVIEW",
+  "publicBrowse": false,
+  "notes": "Phase1 occasions mixed product/service.",
+  "nodes": [
+    {
+      "id": "occasions_lane.all",
+      "parentId": null,
+      "labelAr": "الكل",
+      "sort": 0,
+      "active": true,
+      "browseOnly": true,
+      "imageKey": "occasions.all",
+      "children": []
+    },
+    {
+      "id": "occasions",
+      "parentId": null,
+      "labelAr": "مناسباتك",
+      "sort": 10,
+      "active": true,
+      "imageKey": "occasions",
+      "writeEnabled": true,
+      "children": [
+        "occasions.all",
+        "occasions.favors",
+        "occasions.decor",
+        "occasions.styling"
+      ]
+    },
+    {
+      "id": "occasions.all",
+      "parentId": "occasions",
+      "labelAr": "الكل",
+      "sort": 0,
+      "active": true,
+      "browseOnly": true,
+      "imageKey": "occasions",
+      "children": []
+    },
+    {
+      "id": "occasions.favors",
+      "parentId": "occasions",
+      "labelAr": "توزيعات",
+      "sort": 10,
+      "active": true,
+      "imageKey": "occasions.favors",
+      "profileId": "product.occasions_favors",
+      "writeEnabled": true,
+      "offerKind": "product",
+      "children": []
+    },
+    {
+      "id": "occasions.decor",
+      "parentId": "occasions",
+      "labelAr": "ضيافة للبيع",
+      "sort": 20,
+      "active": true,
+      "imageKey": "occasions.decor",
+      "profileId": "product.occasions_favors",
+      "writeEnabled": true,
+      "offerKind": "product",
+      "children": []
+    },
+    {
+      "id": "occasions.styling",
+      "parentId": "occasions",
+      "labelAr": "تنسيق المناسبة",
+      "sort": 30,
+      "active": true,
+      "imageKey": "occasions.styling",
+      "profileId": "service.occasions",
+      "writeEnabled": true,
+      "offerKind": "service",
+      "children": []
+    }
+  ]
+}

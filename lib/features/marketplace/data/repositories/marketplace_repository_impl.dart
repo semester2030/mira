@@ -162,6 +162,18 @@ class MarketplaceRepositoryImpl implements MarketplaceRepository, DiscoverCatalo
     int limit = 8,
   }) async {
     if (MiraFeatures.discoverVisualPreview && query.lane != null) {
+      // Embedded samples are elegance/beauty only. Preview lanes must stay empty —
+      // never pad jewelry/children/gifts/occasions with another section's clips.
+      if (query.lane!.isPreviewLane) {
+        return DiscoverBrowseResponse(
+          failed: false,
+          transport: CatalogTransport.visualPreview,
+          contentMark: ContentMark.explicitDemo,
+          items: const [],
+          nextCursor: null,
+          cities: const [],
+        );
+      }
       return DiscoverVisualPreviewCatalog.browse(query, cursor: cursor, limit: limit);
     }
     if (_api == null) return _localBrowse(query, cursor: cursor, limit: limit);
@@ -169,7 +181,7 @@ class MarketplaceRepositoryImpl implements MarketplaceRepository, DiscoverCatalo
       final selected = query.lane == null
           ? null
           : DiscoverCatalogQueryEngine.find(
-              query.lane == DiscoverLane.elegance ? 'elegance' : 'beauty',
+              query.lane!.assetFamily,
               query.categoryId,
             );
       final effective = query.withoutInapplicableFilters();

@@ -1,3 +1,5 @@
+import '../../data/lane_orb_assets.dart';
+
 /// Display copies for the circular categories. Full frames stay beside them.
 /// Prefer id-based keys (`elegance:clothes`); label keys remain for legacy callers.
 /// Subcategory thumbs are generated per taxonomy leaf id — never reuse another leaf image.
@@ -110,8 +112,23 @@ abstract final class DiscoverCategoryAssets {
 
   static String? thumb(String family, String label) => thumbs['$family:$label'];
 
-  /// Resolve by taxonomy id first, then Arabic label.
-  static String? thumbFor({required String family, String? id, String? label}) {
+  /// Resolve by taxonomy imageKey / id first, then Arabic label.
+  static String? thumbFor({
+    required String family,
+    String? id,
+    String? label,
+    String? imageKey,
+  }) {
+    final fromKey = LaneOrbAssets.thumbForImageKey(imageKey) ??
+        LaneOrbAssets.thumbForImageKey(id) ??
+        (id != null && id != 'all' && id != '__back__'
+            ? LaneOrbAssets.thumbForImageKey(id)
+            : null);
+    if (fromKey != null) return fromKey;
+    if (id == 'all' || id == '__back__') {
+      final laneThumb = LaneOrbAssets.thumbForImageKey(family);
+      if (laneThumb != null) return laneThumb;
+    }
     if (id != null && id.isNotEmpty) {
       final byId = thumbs['$family:$id'];
       if (byId != null) return byId;

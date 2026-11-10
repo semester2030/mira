@@ -1,0 +1,125 @@
+{
+  "version": 1,
+  "notes": "Phase2 lane/sub orbs. Same imageKey resolves in portal (e2b-ref) and Flutter (LaneOrbAssets). Thumbs derived from masters.",
+  "byImageKey": {
+    "jewelry": {
+      "labelAr": "المجوهرات",
+      "categoryId": "jewelry",
+      "orb": "assets/e2b-ref/orbs/jewelry.png",
+      "flutterMaster": "assets/marketplace/discover/lanes/jewelry.png",
+      "flutterThumb": "assets/marketplace/discover/thumbs/jewelry.png"
+    },
+    "jewelry.rings": {
+      "labelAr": "خواتم",
+      "categoryId": "jewelry.rings",
+      "orb": "assets/e2b-ref/orbs/jewelry_rings.png",
+      "flutterMaster": "assets/marketplace/discover/lanes/jewelry.rings.png",
+      "flutterThumb": "assets/marketplace/discover/thumbs/jewelry.rings.png"
+    },
+    "jewelry.necklaces": {
+      "labelAr": "قلائد",
+      "categoryId": "jewelry.necklaces",
+      "orb": "assets/e2b-ref/orbs/jewelry_necklaces.png",
+      "flutterMaster": "assets/marketplace/discover/lanes/jewelry.necklaces.png",
+      "flutterThumb": "assets/marketplace/discover/thumbs/jewelry.necklaces.png"
+    },
+    "jewelry.bracelets": {
+      "labelAr": "أساور",
+      "categoryId": "jewelry.bracelets",
+      "orb": "assets/e2b-ref/orbs/jewelry_bracelets.png",
+      "flutterMaster": "assets/marketplace/discover/lanes/jewelry.bracelets.png",
+      "flutterThumb": "assets/marketplace/discover/thumbs/jewelry.bracelets.png"
+    },
+    "jewelry.earrings": {
+      "labelAr": "أقراط",
+      "categoryId": "jewelry.earrings",
+      "orb": "assets/e2b-ref/orbs/jewelry_earrings.png",
+      "flutterMaster": "assets/marketplace/discover/lanes/jewelry.earrings.png",
+      "flutterThumb": "assets/marketplace/discover/thumbs/jewelry.earrings.png"
+    },
+    "children": {
+      "labelAr": "الأطفال",
+      "categoryId": "children",
+      "orb": "assets/e2b-ref/orbs/children.png",
+      "flutterMaster": "assets/marketplace/discover/lanes/children.png",
+      "flutterThumb": "assets/marketplace/discover/thumbs/children.png"
+    },
+    "children.clothes": {
+      "labelAr": "ملابس أطفال",
+      "categoryId": "children.clothes",
+      "orb": "assets/e2b-ref/orbs/children_clothes.png",
+      "flutterMaster": "assets/marketplace/discover/lanes/children.clothes.png",
+      "flutterThumb": "assets/marketplace/discover/thumbs/children.clothes.png"
+    },
+    "children.shoes": {
+      "labelAr": "أحذية أطفال",
+      "categoryId": "children.shoes",
+      "orb": "assets/e2b-ref/orbs/children_shoes.png",
+      "flutterMaster": "assets/marketplace/discover/lanes/children.shoes.png",
+      "flutterThumb": "assets/marketplace/discover/thumbs/children.shoes.png"
+    },
+    "children.newborn": {
+      "labelAr": "مستلزمات مواليد",
+      "categoryId": "children.newborn",
+      "orb": "assets/e2b-ref/orbs/children_newborn.png",
+      "flutterMaster": "assets/marketplace/discover/lanes/children.newborn.png",
+      "flutterThumb": "assets/marketplace/discover/thumbs/children.newborn.png"
+    },
+    "occasions": {
+      "labelAr": "مناسباتك",
+      "categoryId": "occasions",
+      "orb": "assets/e2b-ref/orbs/occasions.png",
+      "flutterMaster": "assets/marketplace/discover/lanes/occasions.png",
+      "flutterThumb": "assets/marketplace/discover/thumbs/occasions.png"
+    },
+    "occasions.favors": {
+      "labelAr": "توزيعات",
+      "categoryId": "occasions.favors",
+      "orb": "assets/e2b-ref/orbs/occasions_favors.png",
+      "flutterMaster": "assets/marketplace/discover/lanes/occasions.favors.png",
+      "flutterThumb": "assets/marketplace/discover/thumbs/occasions.favors.png"
+    },
+    "occasions.decor": {
+      "labelAr": "ضيافة للبيع",
+      "categoryId": "occasions.decor",
+      "orb": "assets/e2b-ref/orbs/occasions_decor.png",
+      "flutterMaster": "assets/marketplace/discover/lanes/occasions.decor.png",
+      "flutterThumb": "assets/marketplace/discover/thumbs/occasions.decor.png"
+    },
+    "occasions.styling": {
+      "labelAr": "تنسيق المناسبة",
+      "categoryId": "occasions.styling",
+      "orb": "assets/e2b-ref/orbs/occasions_styling.png",
+      "flutterMaster": "assets/marketplace/discover/lanes/occasions.styling.png",
+      "flutterThumb": "assets/marketplace/discover/thumbs/occasions.styling.png"
+    },
+    "gifts": {
+      "labelAr": "الهدايا",
+      "categoryId": "gifts",
+      "orb": "assets/e2b-ref/orbs/gifts.png",
+      "flutterMaster": "assets/marketplace/discover/lanes/gifts.png",
+      "flutterThumb": "assets/marketplace/discover/thumbs/gifts.png"
+    },
+    "gifts.boxes": {
+      "labelAr": "صناديق هدايا",
+      "categoryId": "gifts.boxes",
+      "orb": "assets/e2b-ref/orbs/gifts_boxes.png",
+      "flutterMaster": "assets/marketplace/discover/lanes/gifts.boxes.png",
+      "flutterThumb": "assets/marketplace/discover/thumbs/gifts.boxes.png"
+    },
+    "elegance": {
+      "labelAr": "أناقتك",
+      "categoryId": "elegance",
+      "orb": "(reused elegance_lane)",
+      "flutterMaster": "assets/marketplace/discover/elegance_lane.png",
+      "flutterThumb": "assets/marketplace/discover/elegance_lane.png"
+    },
+    "beauty": {
+      "labelAr": "جمالك",
+      "categoryId": "beauty",
+      "orb": "(reused beauty_lane)",
+      "flutterMaster": "assets/marketplace/discover/beauty_lane.png",
+      "flutterThumb": "assets/marketplace/discover/beauty_lane.png"
+    }
+  }
+}

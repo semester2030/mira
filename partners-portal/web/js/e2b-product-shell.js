@@ -13,6 +13,11 @@
     body: 'assets/e2b-ref/orbs/body.png',
     hair: 'assets/e2b-ref/orbs/hair.png',
     accessories: 'assets/e2b-ref/orbs/accessories.png',
+    // Phase2 lanes — same imageKey / categoryId as Flutter LaneOrbAssets.
+    jewelry: 'assets/e2b-ref/orbs/jewelry.png',
+    children: 'assets/e2b-ref/orbs/children.png',
+    gifts: 'assets/e2b-ref/orbs/gifts.png',
+    occasions: 'assets/e2b-ref/orbs/occasions.png',
   };
   /** Stable subcategory orb map by taxonomy id — never index-modulo reuse. */
   const SUB_ORB_BY_ID = {
@@ -79,6 +84,21 @@
     'shoes.sandal': 'assets/e2b-ref/orbs/shoes_sandal.png',
     'shoes.slipper': 'assets/e2b-ref/orbs/shoes_slipper.png',
     'shoes.sneaker': 'assets/e2b-ref/orbs/shoes_sneaker.png',
+    'jewelry.all': 'assets/e2b-ref/orbs/jewelry.png',
+    'jewelry.rings': 'assets/e2b-ref/orbs/jewelry_rings.png',
+    'jewelry.necklaces': 'assets/e2b-ref/orbs/jewelry_necklaces.png',
+    'jewelry.bracelets': 'assets/e2b-ref/orbs/jewelry_bracelets.png',
+    'jewelry.earrings': 'assets/e2b-ref/orbs/jewelry_earrings.png',
+    'children.all': 'assets/e2b-ref/orbs/children.png',
+    'children.clothes': 'assets/e2b-ref/orbs/children_clothes.png',
+    'children.shoes': 'assets/e2b-ref/orbs/children_shoes.png',
+    'children.newborn': 'assets/e2b-ref/orbs/children_newborn.png',
+    'gifts.all': 'assets/e2b-ref/orbs/gifts.png',
+    'gifts.boxes': 'assets/e2b-ref/orbs/gifts_boxes.png',
+    'occasions.all': 'assets/e2b-ref/orbs/occasions.png',
+    'occasions.favors': 'assets/e2b-ref/orbs/occasions_favors.png',
+    'occasions.decor': 'assets/e2b-ref/orbs/occasions_decor.png',
+    'occasions.styling': 'assets/e2b-ref/orbs/occasions_styling.png',
   };
   const SUB_ORB_FALLBACK = 'assets/e2b-ref/orbs/sub-0.png';
 

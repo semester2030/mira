@@ -865,11 +865,14 @@ class DiscoverCategoryRail extends StatelessWidget {
     required this.selected,
     required this.onSelected,
     this.ids,
+    this.imageKeys,
   });
 
   final List<String> labels;
   /// Taxonomy / stored ids aligned with [labels] for asset lookup (preferred over label).
   final List<String>? ids;
+  /// Taxonomy imageKeys aligned with [labels] — preferred for Phase2 orb thumbs.
+  final List<String?>? imageKeys;
   final String assetFamily;
   final int selected;
   final ValueChanged<int> onSelected;
@@ -891,10 +894,13 @@ class DiscoverCategoryRail extends StatelessWidget {
               : minSize;
           Widget chip(int index) {
             final id = ids != null && index < ids!.length ? ids![index] : null;
+            final imageKey =
+                imageKeys != null && index < imageKeys!.length ? imageKeys![index] : null;
             return _CategoryChip(
               assetFamily: assetFamily,
               label: labels[index],
               id: id,
+              imageKey: imageKey,
               selected: index == selected,
               size: size,
               onTap: () => onSelected(index),
@@ -932,18 +938,25 @@ class _CategoryChip extends StatelessWidget {
     required this.size,
     required this.onTap,
     this.id,
+    this.imageKey,
   });
 
   final String assetFamily;
   final String label;
   final String? id;
+  final String? imageKey;
   final bool selected;
   final double size;
   final VoidCallback onTap;
 
   @override
   Widget build(BuildContext context) {
-    final path = DiscoverCategoryAssets.thumbFor(family: assetFamily, id: id, label: label) ??
+    final path = DiscoverCategoryAssets.thumbFor(
+          family: assetFamily,
+          id: id,
+          label: label,
+          imageKey: imageKey,
+        ) ??
         DiscoverCategoryAssets.thumb(assetFamily, label);
     return InkWell(
       onTap: onTap,

@@ -70,8 +70,37 @@ class DiscoverOffer {
   CatalogMainOfferKind? get mainOfferKind => product?.mainOfferKind ?? service?.mainOfferKind;
 }
 
-/// أناقتك is products. جمالك is clinic and salon services.
-enum DiscoverLane { elegance, beauty }
+/// أناقتك/المجوهرات/الأطفال/الهدايا = منتجات؛ جمالك = خدمات؛ مناسباتك = مختلط.
+enum DiscoverLane {
+  elegance,
+  beauty,
+  jewelry,
+  children,
+  gifts,
+  occasions;
+
+  String get apiId => name;
+
+  String get assetFamily => name;
+
+  /// Preview lanes stay non-public in production; local browse uses partner audience for taxonomy.
+  bool get isPreviewLane =>
+      this == jewelry || this == children || this == gifts || this == occasions;
+
+  bool get usesTaxonomyRail => this != beauty;
+
+  bool get isProductOnlyLane =>
+      this == elegance || this == jewelry || this == children || this == gifts;
+
+  String get titleAr => switch (this) {
+        elegance => 'أناقتك',
+        beauty => 'جمالك',
+        jewelry => 'المجوهرات',
+        children => 'الأطفال',
+        gifts => 'الهدايا',
+        occasions => 'مناسباتك',
+      };
+}
 
 /// Visual labels stay. A category matches the stored category id, not a name guess.
 class DiscoverCategoryDef {
@@ -205,7 +234,9 @@ class DiscoverCatalogQuery {
     final beauty = lane == DiscoverLane.beauty ||
         partnerType == 'clinic' ||
         partnerType == 'salon';
-    final elegance = lane == DiscoverLane.elegance || partnerType == 'brand';
+    final elegance = lane == DiscoverLane.elegance ||
+        (lane?.isProductOnlyLane ?? false) ||
+        partnerType == 'brand';
     if (elegance && !beauty) {
       return copyWith(
         clearPlaceModes: true,
@@ -375,6 +406,12 @@ abstract final class DiscoverCatalogQueryEngine {
     if (family == 'elegance') {
       final fromApi = EleganceTaxonomySource.eleganceRoots();
       if (fromApi.isNotEmpty) return fromApi;
+    } else if (family == 'jewelry' ||
+        family == 'children' ||
+        family == 'gifts' ||
+        family == 'occasions') {
+      final fromApi = EleganceTaxonomySource.rootsForFamily(family);
+      if (fromApi.isNotEmpty) return fromApi;
     }
     return categories.where((item) => item.family == family).toList();
   }
@@ -410,8 +447,24 @@ abstract final class DiscoverCatalogQueryEngine {
   }
 
   static bool matches(DiscoverOffer offer, DiscoverCatalogQuery query, {String family = 'product'}) {
-    if (query.lane == DiscoverLane.elegance && offer.kind != 'product') return false;
-    if (query.lane == DiscoverLane.beauty && offer.kind != 'service') return false;
+    final lane = query.lane;
+    if (lane != null && lane.isProductOnlyLane && offer.kind != 'product') return false;
+    if (lane == DiscoverLane.beauty && offer.kind != 'service') return false;
+    // occasions: mixed — do not drop by kind here; taxonomy id match below.
+    if (lane != null &&
+        lane.isPreviewLane &&
+        EleganceTaxonomySource.cachedLane == lane.apiId &&
+        EleganceTaxonomySource.nodes.isNotEmpty) {
+      final allowed = EleganceTaxonomySource.nodes
+          .where((n) => !n.browseOnly && n.active)
+          .map((n) => n.id)
+          .toSet();
+      final cat = offer.category;
+      final inLane = cat != null &&
+          cat.isNotEmpty &&
+          (allowed.contains(cat) || allowed.any((id) => cat == id || cat.startsWith('$id.')));
+      if (!inLane) return false;
+    }
     if (query.requireVisual && !offer.media.any((item) => (item.kind == 'image' || item.kind == 'video') && item.url.isNotEmpty)) {
       return false;
     }
@@ -436,8 +489,7 @@ abstract final class DiscoverCatalogQueryEngine {
   }
 
   static String familyFor(DiscoverCatalogQuery query, DiscoverOffer offer) {
-    if (query.lane == DiscoverLane.elegance) return 'elegance';
-    if (query.lane == DiscoverLane.beauty) return 'beauty';
+    if (query.lane != null) return query.lane!.assetFamily;
     return switch (query.partnerType ?? offer.partnerType) {
       'clinic' => 'clinic',
       'salon' => 'salon',

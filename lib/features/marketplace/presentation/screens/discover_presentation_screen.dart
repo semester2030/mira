@@ -134,13 +134,21 @@ class DiscoverPresentationScreenState extends State<DiscoverPresentationScreen>
       _ownsFavorites = widget.favorites == null;
       _favorites!.addListener(_onFavorites);
       _favorites!.refresh();
-      // E3: load shared elegance taxonomy so circles/filters use backend ids.
-      if (widget.lane == DiscoverLane.elegance || widget.lane == null) {
-        EleganceTaxonomySource.ensureLoaded().then((_) async {
+      // Load lane taxonomy so circles/filters use backend (or bundled preview) ids.
+      final lane = widget.lane;
+      if (lane == null || lane == DiscoverLane.elegance || lane.usesTaxonomyRail) {
+        final apiLane = lane?.apiId ?? 'elegance';
+        final partnerAudience = lane?.isPreviewLane ?? false;
+        EleganceTaxonomySource.ensureLoaded(
+          lane: apiLane,
+          partnerAudience: partnerAudience,
+        ).then((_) async {
           if (!mounted) return;
           setState(() {});
-          // Revalidate definitionsVersion after first paint / subsequent resumes.
-          await EleganceTaxonomySource.reloadIfStale();
+          await EleganceTaxonomySource.reloadIfStale(
+            lane: apiLane,
+            partnerAudience: partnerAudience,
+          );
           if (mounted) setState(() {});
         });
       }
@@ -239,13 +247,20 @@ class DiscoverPresentationScreenState extends State<DiscoverPresentationScreen>
     }
     _bump();
     // E3: real in-session refresh — resume revalidates taxonomy then reloads the open feed.
-    if (foreground && _catalogDriven && (widget.lane == DiscoverLane.elegance || widget.lane == null)) {
+    final lane = widget.lane;
+    if (foreground &&
+        _catalogDriven &&
+        (lane == null || lane == DiscoverLane.elegance || lane.usesTaxonomyRail)) {
       unawaited(_refreshTaxonomyAndFeedWhileOpen());
     }
   }
 
   Future<void> _refreshTaxonomyAndFeedWhileOpen() async {
-    await EleganceTaxonomySource.reloadIfStale();
+    final lane = widget.lane;
+    await EleganceTaxonomySource.reloadIfStale(
+      lane: lane?.apiId ?? 'elegance',
+      partnerAudience: lane?.isPreviewLane ?? false,
+    );
     if (!mounted || _released) return;
     var next = _query;
     final sub = next.subcategoryId;
@@ -460,20 +475,16 @@ class DiscoverPresentationScreenState extends State<DiscoverPresentationScreen>
   }
 
   String _queryFamily(DiscoverCatalogQuery query) {
-    return switch (query.lane) {
-      DiscoverLane.elegance => 'elegance',
-      DiscoverLane.beauty => 'beauty',
-      null => switch (query.partnerType) {
-          'clinic' => 'clinic',
-          'salon' => 'salon',
-          _ => 'product',
-        },
+    if (query.lane != null) return query.lane!.assetFamily;
+    return switch (query.partnerType) {
+      'clinic' => 'clinic',
+      'salon' => 'salon',
+      _ => 'product',
     };
   }
 
   String _activeFamily() {
-    if (widget.lane == DiscoverLane.elegance) return 'elegance';
-    if (widget.lane == DiscoverLane.beauty) return 'beauty';
+    if (widget.lane != null) return widget.lane!.assetFamily;
     return _slides.isEmpty ? 'product' : _familyOf(_slides[_page.clamp(0, _slides.length - 1)]);
   }
 
@@ -484,33 +495,34 @@ class DiscoverPresentationScreenState extends State<DiscoverPresentationScreen>
     return 'product';
   }
 
-  List<DiscoverCategoryDef> _eleganceRailDefs() {
+  List<DiscoverCategoryDef> _taxonomyRailDefs(String family) {
     final parent = _eleganceDrillParentId;
     if (parent != null && parent.isNotEmpty) {
-      final kids = EleganceTaxonomySource.childrenOf(parent);
+      final kids = EleganceTaxonomySource.childrenOf(parent, family: family);
       if (kids.isNotEmpty) {
         return [
-          const DiscoverCategoryDef(
+          DiscoverCategoryDef(
             id: '__back__',
             label: 'رجوع',
-            family: 'elegance',
+            family: family,
             storedKey: '',
             matchesAll: true,
             browseOnly: true,
-            imageKey: 'elegance.all',
+            imageKey: family,
           ),
           ...kids,
         ];
       }
     }
-    return DiscoverCatalogQueryEngine.forFamily('elegance');
+    return DiscoverCatalogQueryEngine.forFamily(family);
   }
 
   List<DiscoverCategoryDef> _railDefs() {
-    if (widget.lane == DiscoverLane.elegance || _activeFamily() == 'elegance') {
-      return _eleganceRailDefs();
+    final family = _activeFamily();
+    if (widget.lane?.usesTaxonomyRail == true || family == 'elegance') {
+      return _taxonomyRailDefs(family == 'product' ? 'elegance' : family);
     }
-    return DiscoverCatalogQueryEngine.forFamily(_activeFamily());
+    return DiscoverCatalogQueryEngine.forFamily(family);
   }
 
   void _onCategory(int index) {
@@ -520,7 +532,7 @@ class DiscoverPresentationScreenState extends State<DiscoverPresentationScreen>
     final selected = items[index];
     setState(() => _category = index);
 
-    // E3 drill: back to root circles.
+    // Taxonomy drill: back to root circles.
     if (selected.id == '__back__') {
       _clearEleganceDrill();
       _reload(
@@ -536,18 +548,20 @@ class DiscoverPresentationScreenState extends State<DiscoverPresentationScreen>
       return;
     }
 
-    // E3 drill: root with children replaces rail with subtypes (ids from taxonomy, not labels).
-    if ((widget.lane == DiscoverLane.elegance || family == 'elegance') &&
+    // Taxonomy drill: root with children replaces rail with subtypes (ids from taxonomy).
+    final usesTaxonomy =
+        widget.lane?.usesTaxonomyRail == true || family == 'elegance';
+    if (usesTaxonomy &&
         _eleganceDrillParentId == null &&
         selected.parentId == null &&
         !selected.matchesAll) {
-      final kids = EleganceTaxonomySource.childrenOf(selected.id);
+      final kids = EleganceTaxonomySource.childrenOf(selected.id, family: family);
       if (kids.isNotEmpty) {
         _eleganceDrillParentId = selected.id;
         setState(() => _category = 0);
         _reload(
           _query.copyWith(
-            lane: DiscoverLane.elegance,
+            lane: widget.lane ?? DiscoverLane.elegance,
             requireVisual: true,
             categoryId: selected.storedKey.isEmpty ? selected.id : selected.storedKey,
             clearSubcategory: true,
@@ -1404,14 +1418,15 @@ class DiscoverPresentationScreenState extends State<DiscoverPresentationScreen>
                           categoryLabels: widget.lane == null
                               ? null
                               : _railDefs().map((item) => item.label).toList(),
-                          categoryAssetFamily: switch (widget.lane) {
-                            DiscoverLane.elegance => 'elegance',
-                            DiscoverLane.beauty => 'beauty',
-                            null => null,
-                          },
+                          categoryAssetFamily: widget.lane?.assetFamily,
                           searchHint: switch (widget.lane) {
-                            DiscoverLane.elegance => 'ابحثي عن منتج أو علامة',
                             DiscoverLane.beauty => 'ابحثي عن عيادة أو مشغل أو خدمة',
+                            DiscoverLane.elegance ||
+                            DiscoverLane.jewelry ||
+                            DiscoverLane.children ||
+                            DiscoverLane.gifts =>
+                              'ابحثي عن منتج أو علامة',
+                            DiscoverLane.occasions => 'ابحثي عن منتج أو تنسيق',
                             null => null,
                           },
                           appointmentLabel: 'احجزي موعدًا',
@@ -1435,11 +1450,8 @@ class DiscoverPresentationScreenState extends State<DiscoverPresentationScreen>
                     child: DiscoverCategoryRail(
                       labels: _railDefs().map((item) => item.label).toList(),
                       ids: _railDefs().map((item) => item.id).toList(),
-                      assetFamily: switch (widget.lane) {
-                        DiscoverLane.elegance => 'elegance',
-                        DiscoverLane.beauty => 'beauty',
-                        null => _activeFamily(),
-                      },
+                      imageKeys: _railDefs().map((item) => item.imageKey).toList(),
+                      assetFamily: widget.lane?.assetFamily ?? _activeFamily(),
                       selected: _category,
                       onSelected: _onCategory,
                     ),
@@ -1455,8 +1467,13 @@ class DiscoverPresentationScreenState extends State<DiscoverPresentationScreen>
                       searchFieldKey: _searchFieldKey,
                       searchFocus: _searchFocus,
                       searchHint: switch (widget.lane) {
-                        DiscoverLane.elegance => 'ابحثي عن منتج أو علامة',
                         DiscoverLane.beauty => 'ابحثي عن عيادة أو مشغل أو خدمة',
+                        DiscoverLane.elegance ||
+                        DiscoverLane.jewelry ||
+                        DiscoverLane.children ||
+                        DiscoverLane.gifts =>
+                          'ابحثي عن منتج أو علامة',
+                        DiscoverLane.occasions => 'ابحثي عن منتج أو تنسيق',
                         null => 'ابحثي في العروض',
                       },
                       preview: _slides.isNotEmpty && _slides[_page.clamp(0, _slides.length - 1)].preview,

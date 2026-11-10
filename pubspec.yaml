@@ -152,7 +152,9 @@ flutter:
     - assets/images/
     - assets/marketplace/samples/
     - assets/marketplace/discover/
+    - assets/marketplace/discover/lanes/
     - assets/marketplace/discover/thumbs/
+    - assets/marketplace/taxonomy/
     - assets/icons/
     - assets/icons/fashion/
     - assets/icons/fashion/illustrations/

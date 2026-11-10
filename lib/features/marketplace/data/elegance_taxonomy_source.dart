@@ -1,4 +1,7 @@
+import 'dart:convert';
+
 import 'package:dio/dio.dart';
+import 'package:flutter/services.dart' show rootBundle;
 
 import '../../../core/network/api_client.dart';
 import '../../../core/network/mira_api_endpoints.dart';
@@ -76,21 +79,72 @@ abstract final class EleganceTaxonomySource {
 
   /// Root browse circles for أناقتك (bags/shoes writeEnabled follows live taxonomy; E4 write started).
   static List<DiscoverCategoryDef> eleganceRoots({bool includeDeferredBrowse = true}) {
+    return rootsForFamily('elegance', includeDeferredBrowse: includeDeferredBrowse);
+  }
+
+  /// Roots for the currently cached lane projection (family == lane api id).
+  /// Preview lanes with a single section root promote children (+ الكل) onto the rail.
+  static List<DiscoverCategoryDef> rootsForFamily(
+    String family, {
+    bool includeDeferredBrowse = true,
+  }) {
+    if (_cachedLane != null && _cachedLane != family && family != 'elegance') {
+      // Cache holds another lane — do not invent circles from the wrong projection.
+      return const [];
+    }
     final roots = _nodes.where((n) => n.parentId == null && n.active).toList()
       ..sort((a, b) => a.sort.compareTo(b.sort));
-    if (roots.isEmpty) return _fallbackEleganceRoots();
+    if (roots.isEmpty && family == 'elegance') return _fallbackEleganceRoots();
+    if (family != 'elegance') {
+      final sectionRoots = roots
+          .where((n) => !n.browseOnly && !n.id.endsWith('_lane.all') && !n.id.endsWith('.all'))
+          .toList();
+      if (sectionRoots.length == 1 && sectionRoots.first.children.isNotEmpty) {
+        final parent = sectionRoots.first;
+        final allChip = DiscoverCategoryDef(
+          id: 'all',
+          label: 'الكل',
+          family: family,
+          storedKey: '',
+          matchesAll: true,
+          browseOnly: true,
+          imageKey: parent.imageKey ?? family,
+        );
+        final kids = childrenOf(parent.id, family: family)
+            .where((c) => !c.matchesAll && c.id != '__back__')
+            .toList();
+        // Surface subcategories immediately (Phase3: show the 11 sub orbs).
+        return [allChip, ...kids.map((c) => DiscoverCategoryDef(
+              id: c.id,
+              label: c.label,
+              family: family,
+              storedKey: c.storedKey,
+              matchesAll: false,
+              writeEnabled: c.writeEnabled,
+              browseOnly: c.browseOnly,
+              imageKey: c.imageKey,
+              parentId: parent.id,
+            ))];
+      }
+    }
     final out = <DiscoverCategoryDef>[];
     for (final n in roots) {
-      if (!includeDeferredBrowse && (n.id == 'bags' || n.id == 'shoes')) continue;
+      if (family == 'elegance' && !includeDeferredBrowse && (n.id == 'bags' || n.id == 'shoes')) {
+        continue;
+      }
+      if (family != 'elegance' && (n.id.endsWith('_lane.all') || n.id.endsWith('.all'))) {
+        continue;
+      }
+      final isAll = n.browseOnly || n.id.endsWith('.all') || n.id == 'elegance.all';
       out.add(
         DiscoverCategoryDef(
           id: n.id == 'elegance.all' ? 'all' : n.id,
           label: n.labelAr,
-          family: 'elegance',
-          storedKey: n.browseOnly || n.id == 'elegance.all' ? '' : n.id,
-          matchesAll: n.browseOnly || n.id == 'elegance.all',
+          family: family,
+          storedKey: isAll ? '' : n.id,
+          matchesAll: isAll,
           writeEnabled: n.writeEnabled,
-          browseOnly: n.browseOnly || n.id == 'elegance.all',
+          browseOnly: isAll,
           imageKey: n.imageKey,
         ),
       );
@@ -98,7 +152,8 @@ abstract final class EleganceTaxonomySource {
     return out;
   }
 
-  static List<DiscoverCategoryDef> childrenOf(String parentId) {
+  static List<DiscoverCategoryDef> childrenOf(String parentId, {String? family}) {
+    final fam = family ?? _cachedLane ?? 'elegance';
     EleganceTaxonomyNode? parent;
     for (final n in _nodes) {
       if (n.id == parentId) {
@@ -121,7 +176,7 @@ abstract final class EleganceTaxonomySource {
         DiscoverCategoryDef(
           id: n.id,
           label: n.labelAr,
-          family: 'elegance',
+          family: fam,
           storedKey: n.browseOnly ? parentId : n.id,
           matchesAll: n.browseOnly,
           writeEnabled: n.writeEnabled,
@@ -183,21 +238,66 @@ abstract final class EleganceTaxonomySource {
       _loadedAt = DateTime.now();
       return _nodes.isNotEmpty;
     } catch (_) {
-      // Never invent non-elegance lanes from the local elegance fallback.
-      if (lane != 'elegance') return false;
-      if (_nodes.isEmpty || !sameScope) {
-        _nodes = _fallbackNodes();
-        _cachedLane = 'elegance';
-        _cachedPartnerAudience = partnerAudience;
-        _definitionsVersion = null;
-        _loadedAt = DateTime.now();
+      if (lane == 'elegance') {
+        if (_nodes.isEmpty || !sameScope) {
+          _nodes = _fallbackNodes();
+          _cachedLane = 'elegance';
+          _cachedPartnerAudience = partnerAudience;
+          _definitionsVersion = null;
+          _loadedAt = DateTime.now();
+        }
+        return _nodes.isNotEmpty;
       }
+      // Preview lanes: load bundled taxonomy JSON (local preview; publicBrowse stays false).
+      return _loadBundledPreviewLane(lane, partnerAudience: partnerAudience);
+    }
+  }
+
+  static const _bundledPreviewAssets = <String, String>{
+    'jewelry': 'assets/marketplace/taxonomy/jewelry-taxonomy.v1.json',
+    'children': 'assets/marketplace/taxonomy/children-taxonomy.v1.json',
+    'gifts': 'assets/marketplace/taxonomy/gifts-taxonomy.v1.json',
+    'occasions': 'assets/marketplace/taxonomy/occasions-taxonomy.v1.json',
+  };
+
+  static Future<bool> _loadBundledPreviewLane(
+    String lane, {
+    required bool partnerAudience,
+  }) async {
+    final asset = _bundledPreviewAssets[lane];
+    if (asset == null) return false;
+    try {
+      final raw = await rootBundle.loadString(asset);
+      final data = jsonDecode(raw);
+      if (data is! Map) return false;
+      final nodes = data['nodes'];
+      if (nodes is! List) return false;
+      _nodes = nodes
+          .whereType<Map>()
+          .map((e) => EleganceTaxonomyNode.fromJson(Map<String, dynamic>.from(e)))
+          .toList();
+      _definitionsVersion = data['definitionsVersion']?.toString();
+      _cachedLane = lane;
+      _cachedPartnerAudience = partnerAudience;
+      _loadedAt = DateTime.now();
       return _nodes.isNotEmpty;
+    } catch (_) {
+      return false;
     }
   }
 
   /// Call after portal publish / pull-to-refresh so a new definitionsVersion replaces cache.
-  static Future<bool> reloadIfStale({Dio? dio}) => ensureLoaded(dio: dio, force: true);
+  static Future<bool> reloadIfStale({
+    Dio? dio,
+    String? lane,
+    bool? partnerAudience,
+  }) =>
+      ensureLoaded(
+        dio: dio,
+        force: true,
+        lane: lane ?? _cachedLane ?? 'elegance',
+        partnerAudience: partnerAudience ?? _cachedPartnerAudience,
+      );
 
   /// Test/harness: inject projection without HTTP.
   static void replaceForTest(

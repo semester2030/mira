@@ -15,7 +15,7 @@ import '../../../../shared/widgets/analysis_launch_card.dart';
 import '../../../../core/profile/user_level.dart';
 import '../../../profile/domain/entities/profile_entity.dart';
 import '../../../skin_analysis/presentation/widgets/face_frame_overlay.dart';
-import '../../../marketplace/presentation/widgets/discover_lane_entries.dart';
+import '../../../marketplace/presentation/widgets/mira_world_orbit_discover.dart';
 
 class DashboardScreen extends StatelessWidget {
   const DashboardScreen({super.key});
@@ -96,7 +96,7 @@ class DashboardScreen extends StatelessWidget {
             ),
           ),
           const SizedBox(height: 24),
-          const DiscoverLaneEntries(),
+          const MiraWorldOrbitDiscover(),
           const SizedBox(height: 16),
           PremiumCard(
             child: Row(
