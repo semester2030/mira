@@ -1,0 +1,712 @@
+{
+  "version": 1,
+  "byNodeId": {
+    "clothes.wedding_dress": {
+      "labelAr": "فساتين زفاف",
+      "orb": "assets/e2b-ref/orbs/clothes_wedding_dress.png",
+      "thumb": "assets/marketplace/discover/thumbs/clothes_wedding_dress.png",
+      "file": "clothes_wedding_dress.png"
+    },
+    "clothes.abaya": {
+      "labelAr": "عبايات",
+      "orb": "assets/e2b-ref/orbs/clothes_abaya.png",
+      "thumb": "assets/marketplace/discover/thumbs/clothes_abaya.png",
+      "file": "clothes_abaya.png"
+    },
+    "clothes.evening": {
+      "labelAr": "فساتين سهرة",
+      "orb": "assets/e2b-ref/orbs/clothes_evening.png",
+      "thumb": "assets/marketplace/discover/thumbs/clothes_evening.png",
+      "file": "clothes_evening.png"
+    },
+    "clothes.casual": {
+      "labelAr": "فساتين يومية",
+      "orb": "assets/e2b-ref/orbs/clothes_casual.png",
+      "thumb": "assets/marketplace/discover/thumbs/clothes_casual.png",
+      "file": "clothes_casual.png"
+    },
+    "clothes.skirt": {
+      "labelAr": "تنانير",
+      "orb": "assets/e2b-ref/orbs/clothes_skirt.png",
+      "thumb": "assets/marketplace/discover/thumbs/clothes_skirt.png",
+      "file": "clothes_skirt.png"
+    },
+    "clothes.blouse": {
+      "labelAr": "بلوزات",
+      "orb": "assets/e2b-ref/orbs/clothes_blouse.png",
+      "thumb": "assets/marketplace/discover/thumbs/clothes_blouse.png",
+      "file": "clothes_blouse.png"
+    },
+    "clothes.shirt": {
+      "labelAr": "قمصان",
+      "orb": "assets/e2b-ref/orbs/clothes_shirt.png",
+      "thumb": "assets/marketplace/discover/thumbs/clothes_shirt.png",
+      "file": "clothes_shirt.png"
+    },
+    "clothes.pants": {
+      "labelAr": "بناطيل",
+      "orb": "assets/e2b-ref/orbs/clothes_pants.png",
+      "thumb": "assets/marketplace/discover/thumbs/clothes_pants.png",
+      "file": "clothes_pants.png"
+    },
+    "clothes.jeans": {
+      "labelAr": "جينز",
+      "orb": "assets/e2b-ref/orbs/clothes_jeans.png",
+      "thumb": "assets/marketplace/discover/thumbs/clothes_jeans.png",
+      "file": "clothes_jeans.png"
+    },
+    "clothes.set": {
+      "labelAr": "أطقم",
+      "orb": "assets/e2b-ref/orbs/clothes_set.png",
+      "thumb": "assets/marketplace/discover/thumbs/clothes_set.png",
+      "file": "clothes_set.png"
+    },
+    "clothes.jacket": {
+      "labelAr": "جاكيتات ومعاطف",
+      "orb": "assets/e2b-ref/orbs/clothes_jacket.png",
+      "thumb": "assets/marketplace/discover/thumbs/clothes_jacket.png",
+      "file": "clothes_jacket.png"
+    },
+    "clothes.sportswear": {
+      "labelAr": "ملابس رياضية",
+      "orb": "assets/e2b-ref/orbs/clothes_sportswear.png",
+      "thumb": "assets/marketplace/discover/thumbs/clothes_sportswear.png",
+      "file": "clothes_sportswear.png"
+    },
+    "clothes.loungewear": {
+      "labelAr": "ملابس منزلية",
+      "orb": "assets/e2b-ref/orbs/clothes_loungewear.png",
+      "thumb": "assets/marketplace/discover/thumbs/clothes_loungewear.png",
+      "file": "clothes_loungewear.png"
+    },
+    "bags.hand": {
+      "labelAr": "شنط يد",
+      "orb": "assets/e2b-ref/orbs/bags_hand.png",
+      "thumb": "assets/marketplace/discover/thumbs/bags_hand.png",
+      "file": "bags_hand.png"
+    },
+    "bags.shoulder": {
+      "labelAr": "شنط كتف",
+      "orb": "assets/e2b-ref/orbs/bags_shoulder.png",
+      "thumb": "assets/marketplace/discover/thumbs/bags_shoulder.png",
+      "file": "bags_shoulder.png"
+    },
+    "bags.clutch": {
+      "labelAr": "كلاتش",
+      "orb": "assets/e2b-ref/orbs/bags_clutch.png",
+      "thumb": "assets/marketplace/discover/thumbs/bags_clutch.png",
+      "file": "bags_clutch.png"
+    },
+    "bags.crossbody": {
+      "labelAr": "كروس بودي",
+      "orb": "assets/e2b-ref/orbs/bags_crossbody.png",
+      "thumb": "assets/marketplace/discover/thumbs/bags_crossbody.png",
+      "file": "bags_crossbody.png"
+    },
+    "bags.backpack": {
+      "labelAr": "شنط ظهر",
+      "orb": "assets/e2b-ref/orbs/bags_backpack.png",
+      "thumb": "assets/marketplace/discover/thumbs/bags_backpack.png",
+      "file": "bags_backpack.png"
+    },
+    "bags.tote": {
+      "labelAr": "توت",
+      "orb": "assets/e2b-ref/orbs/bags_tote.png",
+      "thumb": "assets/marketplace/discover/thumbs/bags_tote.png",
+      "file": "bags_tote.png"
+    },
+    "bags.travel": {
+      "labelAr": "شنط سفر",
+      "orb": "assets/e2b-ref/orbs/bags_travel.png",
+      "thumb": "assets/marketplace/discover/thumbs/bags_travel.png",
+      "file": "bags_travel.png"
+    },
+    "bags.wallet": {
+      "labelAr": "محافظ",
+      "orb": "assets/e2b-ref/orbs/bags_wallet.png",
+      "thumb": "assets/marketplace/discover/thumbs/bags_wallet.png",
+      "file": "bags_wallet.png"
+    },
+    "shoes.heel": {
+      "labelAr": "كعب",
+      "orb": "assets/e2b-ref/orbs/shoes_heel.png",
+      "thumb": "assets/marketplace/discover/thumbs/shoes_heel.png",
+      "file": "shoes_heel.png"
+    },
+    "shoes.flat": {
+      "labelAr": "فلات",
+      "orb": "assets/e2b-ref/orbs/shoes_flat.png",
+      "thumb": "assets/marketplace/discover/thumbs/shoes_flat.png",
+      "file": "shoes_flat.png"
+    },
+    "shoes.sandal": {
+      "labelAr": "صنادل",
+      "orb": "assets/e2b-ref/orbs/shoes_sandal.png",
+      "thumb": "assets/marketplace/discover/thumbs/shoes_sandal.png",
+      "file": "shoes_sandal.png"
+    },
+    "shoes.sneaker": {
+      "labelAr": "أحذية رياضية",
+      "orb": "assets/e2b-ref/orbs/shoes_sneaker.png",
+      "thumb": "assets/marketplace/discover/thumbs/shoes_sneaker.png",
+      "file": "shoes_sneaker.png"
+    },
+    "shoes.loafer": {
+      "labelAr": "لوفر",
+      "orb": "assets/e2b-ref/orbs/shoes_loafer.png",
+      "thumb": "assets/marketplace/discover/thumbs/shoes_loafer.png",
+      "file": "shoes_loafer.png"
+    },
+    "shoes.boot": {
+      "labelAr": "بوت",
+      "orb": "assets/e2b-ref/orbs/shoes_boot.png",
+      "thumb": "assets/marketplace/discover/thumbs/shoes_boot.png",
+      "file": "shoes_boot.png"
+    },
+    "shoes.slipper": {
+      "labelAr": "سليبر",
+      "orb": "assets/e2b-ref/orbs/shoes_slipper.png",
+      "thumb": "assets/marketplace/discover/thumbs/shoes_slipper.png",
+      "file": "shoes_slipper.png"
+    },
+    "face.makeup_face": {
+      "labelAr": "مكياج الوجه",
+      "orb": "assets/e2b-ref/orbs/face_makeup_face.png",
+      "thumb": "assets/marketplace/discover/thumbs/face_makeup_face.png",
+      "file": "face_makeup_face.png"
+    },
+    "face.makeup_eyes": {
+      "labelAr": "مكياج العيون",
+      "orb": "assets/e2b-ref/orbs/face_makeup_eyes.png",
+      "thumb": "assets/marketplace/discover/thumbs/face_makeup_eyes.png",
+      "file": "face_makeup_eyes.png"
+    },
+    "face.makeup_lips": {
+      "labelAr": "مكياج الشفاه",
+      "orb": "assets/e2b-ref/orbs/face_makeup_lips.png",
+      "thumb": "assets/marketplace/discover/thumbs/face_makeup_lips.png",
+      "file": "face_makeup_lips.png"
+    },
+    "face.cleanser": {
+      "labelAr": "منظفات البشرة",
+      "orb": "assets/e2b-ref/orbs/face_cleanser.png",
+      "thumb": "assets/marketplace/discover/thumbs/face_cleanser.png",
+      "file": "face_cleanser.png"
+    },
+    "face.moisturizer": {
+      "labelAr": "مرطبات",
+      "orb": "assets/e2b-ref/orbs/face_moisturizer.png",
+      "thumb": "assets/marketplace/discover/thumbs/face_moisturizer.png",
+      "file": "face_moisturizer.png"
+    },
+    "face.serum": {
+      "labelAr": "سيرومات",
+      "orb": "assets/e2b-ref/orbs/face_serum.png",
+      "thumb": "assets/marketplace/discover/thumbs/face_serum.png",
+      "file": "face_serum.png"
+    },
+    "face.sunscreen": {
+      "labelAr": "واقي شمس",
+      "orb": "assets/e2b-ref/orbs/face_sunscreen.png",
+      "thumb": "assets/marketplace/discover/thumbs/face_sunscreen.png",
+      "file": "face_sunscreen.png"
+    },
+    "face.mask": {
+      "labelAr": "ماسكات",
+      "orb": "assets/e2b-ref/orbs/face_mask.png",
+      "thumb": "assets/marketplace/discover/thumbs/face_mask.png",
+      "file": "face_mask.png"
+    },
+    "face.makeup_tools": {
+      "labelAr": "أدوات المكياج",
+      "orb": "assets/e2b-ref/orbs/face_makeup_tools.png",
+      "thumb": "assets/marketplace/discover/thumbs/face_makeup_tools.png",
+      "file": "face_makeup_tools.png"
+    },
+    "body.wash": {
+      "labelAr": "غسول الجسم",
+      "orb": "assets/e2b-ref/orbs/body_wash.png",
+      "thumb": "assets/marketplace/discover/thumbs/body_wash.png",
+      "file": "body_wash.png"
+    },
+    "body.moisturizer": {
+      "labelAr": "مرطبات",
+      "orb": "assets/e2b-ref/orbs/body_moisturizer.png",
+      "thumb": "assets/marketplace/discover/thumbs/body_moisturizer.png",
+      "file": "body_moisturizer.png"
+    },
+    "body.scrub": {
+      "labelAr": "مقشرات",
+      "orb": "assets/e2b-ref/orbs/body_scrub.png",
+      "thumb": "assets/marketplace/discover/thumbs/body_scrub.png",
+      "file": "body_scrub.png"
+    },
+    "body.oil": {
+      "labelAr": "زيوت",
+      "orb": "assets/e2b-ref/orbs/body_oil.png",
+      "thumb": "assets/marketplace/discover/thumbs/body_oil.png",
+      "file": "body_oil.png"
+    },
+    "body.deodorant": {
+      "labelAr": "مزيلات العرق",
+      "orb": "assets/e2b-ref/orbs/body_deodorant.png",
+      "thumb": "assets/marketplace/discover/thumbs/body_deodorant.png",
+      "file": "body_deodorant.png"
+    },
+    "body.hand_care": {
+      "labelAr": "العناية باليدين",
+      "orb": "assets/e2b-ref/orbs/body_hand_care.png",
+      "thumb": "assets/marketplace/discover/thumbs/body_hand_care.png",
+      "file": "body_hand_care.png"
+    },
+    "body.foot_care": {
+      "labelAr": "العناية بالقدمين",
+      "orb": "assets/e2b-ref/orbs/body_foot_care.png",
+      "thumb": "assets/marketplace/discover/thumbs/body_foot_care.png",
+      "file": "body_foot_care.png"
+    },
+    "hair.shampoo": {
+      "labelAr": "شامبو",
+      "orb": "assets/e2b-ref/orbs/hair_shampoo.png",
+      "thumb": "assets/marketplace/discover/thumbs/hair_shampoo.png",
+      "file": "hair_shampoo.png"
+    },
+    "hair.conditioner": {
+      "labelAr": "بلسم",
+      "orb": "assets/e2b-ref/orbs/hair_conditioner.png",
+      "thumb": "assets/marketplace/discover/thumbs/hair_conditioner.png",
+      "file": "hair_conditioner.png"
+    },
+    "hair.mask": {
+      "labelAr": "ماسكات",
+      "orb": "assets/e2b-ref/orbs/hair_mask.png",
+      "thumb": "assets/marketplace/discover/thumbs/hair_mask.png",
+      "file": "hair_mask.png"
+    },
+    "hair.oil_serum": {
+      "labelAr": "زيوت وسيرومات",
+      "orb": "assets/e2b-ref/orbs/hair_oil_serum.png",
+      "thumb": "assets/marketplace/discover/thumbs/hair_oil_serum.png",
+      "file": "hair_oil_serum.png"
+    },
+    "hair.styling": {
+      "labelAr": "منتجات التصفيف",
+      "orb": "assets/e2b-ref/orbs/hair_styling.png",
+      "thumb": "assets/marketplace/discover/thumbs/hair_styling.png",
+      "file": "hair_styling.png"
+    },
+    "hair.dye": {
+      "labelAr": "صبغات",
+      "orb": "assets/e2b-ref/orbs/hair_dye.png",
+      "thumb": "assets/marketplace/discover/thumbs/hair_dye.png",
+      "file": "hair_dye.png"
+    },
+    "hair.tools": {
+      "labelAr": "أدوات وأجهزة الشعر",
+      "orb": "assets/e2b-ref/orbs/hair_tools.png",
+      "thumb": "assets/marketplace/discover/thumbs/hair_tools.png",
+      "file": "hair_tools.png"
+    },
+    "accessories.belt": {
+      "labelAr": "أحزمة",
+      "orb": "assets/e2b-ref/orbs/accessories_belt.png",
+      "thumb": "assets/marketplace/discover/thumbs/accessories_belt.png",
+      "file": "accessories_belt.png"
+    },
+    "accessories.scarf": {
+      "labelAr": "أوشحة وشالات",
+      "orb": "assets/e2b-ref/orbs/accessories_scarf.png",
+      "thumb": "assets/marketplace/discover/thumbs/accessories_scarf.png",
+      "file": "accessories_scarf.png"
+    },
+    "accessories.sunglasses": {
+      "labelAr": "نظارات شمسية",
+      "orb": "assets/e2b-ref/orbs/accessories_sunglasses.png",
+      "thumb": "assets/marketplace/discover/thumbs/accessories_sunglasses.png",
+      "file": "accessories_sunglasses.png"
+    },
+    "accessories.hat": {
+      "labelAr": "قبعات",
+      "orb": "assets/e2b-ref/orbs/accessories_hat.png",
+      "thumb": "assets/marketplace/discover/thumbs/accessories_hat.png",
+      "file": "accessories_hat.png"
+    },
+    "accessories.hair": {
+      "labelAr": "إكسسوارات الشعر",
+      "orb": "assets/e2b-ref/orbs/accessories_hair.png",
+      "thumb": "assets/marketplace/discover/thumbs/accessories_hair.png",
+      "file": "accessories_hair.png"
+    },
+    "clothes.all": {
+      "labelAr": "الكل",
+      "orb": "assets/e2b-ref/orbs/clothes.png",
+      "thumb": "assets/marketplace/discover/thumbs/product_clothes.jpg",
+      "file": "clothes.png",
+      "navOnly": true
+    },
+    "bags.all": {
+      "labelAr": "الكل",
+      "orb": "assets/e2b-ref/orbs/bags.png",
+      "thumb": "assets/marketplace/discover/thumbs/product_bags.png",
+      "file": "bags.png",
+      "navOnly": true
+    },
+    "shoes.all": {
+      "labelAr": "الكل",
+      "orb": "assets/e2b-ref/orbs/shoes.png",
+      "thumb": "assets/marketplace/discover/thumbs/product_shoes.png",
+      "file": "shoes.png",
+      "navOnly": true
+    },
+    "face.all": {
+      "labelAr": "الكل",
+      "orb": "assets/e2b-ref/orbs/face.png",
+      "thumb": "assets/marketplace/discover/thumbs/product_face.jpg",
+      "file": "face.png",
+      "navOnly": true
+    },
+    "body.all": {
+      "labelAr": "الكل",
+      "orb": "assets/e2b-ref/orbs/body.png",
+      "thumb": "assets/marketplace/discover/thumbs/product_body.jpg",
+      "file": "body.png",
+      "navOnly": true
+    },
+    "hair.all": {
+      "labelAr": "الكل",
+      "orb": "assets/e2b-ref/orbs/hair.png",
+      "thumb": "assets/marketplace/discover/thumbs/product_hair.jpg",
+      "file": "hair.png",
+      "navOnly": true
+    },
+    "accessories.all": {
+      "labelAr": "الكل",
+      "orb": "assets/e2b-ref/orbs/accessories.png",
+      "thumb": "assets/marketplace/discover/thumbs/product_accessories.png",
+      "file": "accessories.png",
+      "navOnly": true
+    }
+  },
+  "byImageKey": {
+    "elegance.clothes.wedding_dress": {
+      "orb": "assets/e2b-ref/orbs/clothes_wedding_dress.png",
+      "thumb": "assets/marketplace/discover/thumbs/clothes_wedding_dress.png",
+      "nodeId": "clothes.wedding_dress"
+    },
+    "elegance.clothes.abaya": {
+      "orb": "assets/e2b-ref/orbs/clothes_abaya.png",
+      "thumb": "assets/marketplace/discover/thumbs/clothes_abaya.png",
+      "nodeId": "clothes.abaya"
+    },
+    "elegance.clothes.evening": {
+      "orb": "assets/e2b-ref/orbs/clothes_evening.png",
+      "thumb": "assets/marketplace/discover/thumbs/clothes_evening.png",
+      "nodeId": "clothes.evening"
+    },
+    "elegance.clothes.casual": {
+      "orb": "assets/e2b-ref/orbs/clothes_casual.png",
+      "thumb": "assets/marketplace/discover/thumbs/clothes_casual.png",
+      "nodeId": "clothes.casual"
+    },
+    "elegance.clothes.skirt": {
+      "orb": "assets/e2b-ref/orbs/clothes_skirt.png",
+      "thumb": "assets/marketplace/discover/thumbs/clothes_skirt.png",
+      "nodeId": "clothes.skirt"
+    },
+    "elegance.clothes.blouse": {
+      "orb": "assets/e2b-ref/orbs/clothes_blouse.png",
+      "thumb": "assets/marketplace/discover/thumbs/clothes_blouse.png",
+      "nodeId": "clothes.blouse"
+    },
+    "elegance.clothes.shirt": {
+      "orb": "assets/e2b-ref/orbs/clothes_shirt.png",
+      "thumb": "assets/marketplace/discover/thumbs/clothes_shirt.png",
+      "nodeId": "clothes.shirt"
+    },
+    "elegance.clothes.pants": {
+      "orb": "assets/e2b-ref/orbs/clothes_pants.png",
+      "thumb": "assets/marketplace/discover/thumbs/clothes_pants.png",
+      "nodeId": "clothes.pants"
+    },
+    "elegance.clothes.jeans": {
+      "orb": "assets/e2b-ref/orbs/clothes_jeans.png",
+      "thumb": "assets/marketplace/discover/thumbs/clothes_jeans.png",
+      "nodeId": "clothes.jeans"
+    },
+    "elegance.clothes.set": {
+      "orb": "assets/e2b-ref/orbs/clothes_set.png",
+      "thumb": "assets/marketplace/discover/thumbs/clothes_set.png",
+      "nodeId": "clothes.set"
+    },
+    "elegance.clothes.jacket": {
+      "orb": "assets/e2b-ref/orbs/clothes_jacket.png",
+      "thumb": "assets/marketplace/discover/thumbs/clothes_jacket.png",
+      "nodeId": "clothes.jacket"
+    },
+    "elegance.clothes.sportswear": {
+      "orb": "assets/e2b-ref/orbs/clothes_sportswear.png",
+      "thumb": "assets/marketplace/discover/thumbs/clothes_sportswear.png",
+      "nodeId": "clothes.sportswear"
+    },
+    "elegance.clothes.loungewear": {
+      "orb": "assets/e2b-ref/orbs/clothes_loungewear.png",
+      "thumb": "assets/marketplace/discover/thumbs/clothes_loungewear.png",
+      "nodeId": "clothes.loungewear"
+    },
+    "elegance.bags.hand": {
+      "orb": "assets/e2b-ref/orbs/bags_hand.png",
+      "thumb": "assets/marketplace/discover/thumbs/bags_hand.png",
+      "nodeId": "bags.hand"
+    },
+    "elegance.bags.shoulder": {
+      "orb": "assets/e2b-ref/orbs/bags_shoulder.png",
+      "thumb": "assets/marketplace/discover/thumbs/bags_shoulder.png",
+      "nodeId": "bags.shoulder"
+    },
+    "elegance.bags.clutch": {
+      "orb": "assets/e2b-ref/orbs/bags_clutch.png",
+      "thumb": "assets/marketplace/discover/thumbs/bags_clutch.png",
+      "nodeId": "bags.clutch"
+    },
+    "elegance.bags.crossbody": {
+      "orb": "assets/e2b-ref/orbs/bags_crossbody.png",
+      "thumb": "assets/marketplace/discover/thumbs/bags_crossbody.png",
+      "nodeId": "bags.crossbody"
+    },
+    "elegance.bags.backpack": {
+      "orb": "assets/e2b-ref/orbs/bags_backpack.png",
+      "thumb": "assets/marketplace/discover/thumbs/bags_backpack.png",
+      "nodeId": "bags.backpack"
+    },
+    "elegance.bags.tote": {
+      "orb": "assets/e2b-ref/orbs/bags_tote.png",
+      "thumb": "assets/marketplace/discover/thumbs/bags_tote.png",
+      "nodeId": "bags.tote"
+    },
+    "elegance.bags.travel": {
+      "orb": "assets/e2b-ref/orbs/bags_travel.png",
+      "thumb": "assets/marketplace/discover/thumbs/bags_travel.png",
+      "nodeId": "bags.travel"
+    },
+    "elegance.bags.wallet": {
+      "orb": "assets/e2b-ref/orbs/bags_wallet.png",
+      "thumb": "assets/marketplace/discover/thumbs/bags_wallet.png",
+      "nodeId": "bags.wallet"
+    },
+    "elegance.shoes.heel": {
+      "orb": "assets/e2b-ref/orbs/shoes_heel.png",
+      "thumb": "assets/marketplace/discover/thumbs/shoes_heel.png",
+      "nodeId": "shoes.heel"
+    },
+    "elegance.shoes.flat": {
+      "orb": "assets/e2b-ref/orbs/shoes_flat.png",
+      "thumb": "assets/marketplace/discover/thumbs/shoes_flat.png",
+      "nodeId": "shoes.flat"
+    },
+    "elegance.shoes.sandal": {
+      "orb": "assets/e2b-ref/orbs/shoes_sandal.png",
+      "thumb": "assets/marketplace/discover/thumbs/shoes_sandal.png",
+      "nodeId": "shoes.sandal"
+    },
+    "elegance.shoes.sneaker": {
+      "orb": "assets/e2b-ref/orbs/shoes_sneaker.png",
+      "thumb": "assets/marketplace/discover/thumbs/shoes_sneaker.png",
+      "nodeId": "shoes.sneaker"
+    },
+    "elegance.shoes.loafer": {
+      "orb": "assets/e2b-ref/orbs/shoes_loafer.png",
+      "thumb": "assets/marketplace/discover/thumbs/shoes_loafer.png",
+      "nodeId": "shoes.loafer"
+    },
+    "elegance.shoes.boot": {
+      "orb": "assets/e2b-ref/orbs/shoes_boot.png",
+      "thumb": "assets/marketplace/discover/thumbs/shoes_boot.png",
+      "nodeId": "shoes.boot"
+    },
+    "elegance.shoes.slipper": {
+      "orb": "assets/e2b-ref/orbs/shoes_slipper.png",
+      "thumb": "assets/marketplace/discover/thumbs/shoes_slipper.png",
+      "nodeId": "shoes.slipper"
+    },
+    "elegance.face.makeup_face": {
+      "orb": "assets/e2b-ref/orbs/face_makeup_face.png",
+      "thumb": "assets/marketplace/discover/thumbs/face_makeup_face.png",
+      "nodeId": "face.makeup_face"
+    },
+    "elegance.face.makeup_eyes": {
+      "orb": "assets/e2b-ref/orbs/face_makeup_eyes.png",
+      "thumb": "assets/marketplace/discover/thumbs/face_makeup_eyes.png",
+      "nodeId": "face.makeup_eyes"
+    },
+    "elegance.face.makeup_lips": {
+      "orb": "assets/e2b-ref/orbs/face_makeup_lips.png",
+      "thumb": "assets/marketplace/discover/thumbs/face_makeup_lips.png",
+      "nodeId": "face.makeup_lips"
+    },
+    "elegance.face.cleanser": {
+      "orb": "assets/e2b-ref/orbs/face_cleanser.png",
+      "thumb": "assets/marketplace/discover/thumbs/face_cleanser.png",
+      "nodeId": "face.cleanser"
+    },
+    "elegance.face.moisturizer": {
+      "orb": "assets/e2b-ref/orbs/face_moisturizer.png",
+      "thumb": "assets/marketplace/discover/thumbs/face_moisturizer.png",
+      "nodeId": "face.moisturizer"
+    },
+    "elegance.face.serum": {
+      "orb": "assets/e2b-ref/orbs/face_serum.png",
+      "thumb": "assets/marketplace/discover/thumbs/face_serum.png",
+      "nodeId": "face.serum"
+    },
+    "elegance.face.sunscreen": {
+      "orb": "assets/e2b-ref/orbs/face_sunscreen.png",
+      "thumb": "assets/marketplace/discover/thumbs/face_sunscreen.png",
+      "nodeId": "face.sunscreen"
+    },
+    "elegance.face.mask": {
+      "orb": "assets/e2b-ref/orbs/face_mask.png",
+      "thumb": "assets/marketplace/discover/thumbs/face_mask.png",
+      "nodeId": "face.mask"
+    },
+    "elegance.face.makeup_tools": {
+      "orb": "assets/e2b-ref/orbs/face_makeup_tools.png",
+      "thumb": "assets/marketplace/discover/thumbs/face_makeup_tools.png",
+      "nodeId": "face.makeup_tools"
+    },
+    "elegance.body.wash": {
+      "orb": "assets/e2b-ref/orbs/body_wash.png",
+      "thumb": "assets/marketplace/discover/thumbs/body_wash.png",
+      "nodeId": "body.wash"
+    },
+    "elegance.body.moisturizer": {
+      "orb": "assets/e2b-ref/orbs/body_moisturizer.png",
+      "thumb": "assets/marketplace/discover/thumbs/body_moisturizer.png",
+      "nodeId": "body.moisturizer"
+    },
+    "elegance.body.scrub": {
+      "orb": "assets/e2b-ref/orbs/body_scrub.png",
+      "thumb": "assets/marketplace/discover/thumbs/body_scrub.png",
+      "nodeId": "body.scrub"
+    },
+    "elegance.body.oil": {
+      "orb": "assets/e2b-ref/orbs/body_oil.png",
+      "thumb": "assets/marketplace/discover/thumbs/body_oil.png",
+      "nodeId": "body.oil"
+    },
+    "elegance.body.deodorant": {
+      "orb": "assets/e2b-ref/orbs/body_deodorant.png",
+      "thumb": "assets/marketplace/discover/thumbs/body_deodorant.png",
+      "nodeId": "body.deodorant"
+    },
+    "elegance.body.hand_care": {
+      "orb": "assets/e2b-ref/orbs/body_hand_care.png",
+      "thumb": "assets/marketplace/discover/thumbs/body_hand_care.png",
+      "nodeId": "body.hand_care"
+    },
+    "elegance.body.foot_care": {
+      "orb": "assets/e2b-ref/orbs/body_foot_care.png",
+      "thumb": "assets/marketplace/discover/thumbs/body_foot_care.png",
+      "nodeId": "body.foot_care"
+    },
+    "elegance.hair.shampoo": {
+      "orb": "assets/e2b-ref/orbs/hair_shampoo.png",
+      "thumb": "assets/marketplace/discover/thumbs/hair_shampoo.png",
+      "nodeId": "hair.shampoo"
+    },
+    "elegance.hair.conditioner": {
+      "orb": "assets/e2b-ref/orbs/hair_conditioner.png",
+      "thumb": "assets/marketplace/discover/thumbs/hair_conditioner.png",
+      "nodeId": "hair.conditioner"
+    },
+    "elegance.hair.mask": {
+      "orb": "assets/e2b-ref/orbs/hair_mask.png",
+      "thumb": "assets/marketplace/discover/thumbs/hair_mask.png",
+      "nodeId": "hair.mask"
+    },
+    "elegance.hair.oil_serum": {
+      "orb": "assets/e2b-ref/orbs/hair_oil_serum.png",
+      "thumb": "assets/marketplace/discover/thumbs/hair_oil_serum.png",
+      "nodeId": "hair.oil_serum"
+    },
+    "elegance.hair.styling": {
+      "orb": "assets/e2b-ref/orbs/hair_styling.png",
+      "thumb": "assets/marketplace/discover/thumbs/hair_styling.png",
+      "nodeId": "hair.styling"
+    },
+    "elegance.hair.dye": {
+      "orb": "assets/e2b-ref/orbs/hair_dye.png",
+      "thumb": "assets/marketplace/discover/thumbs/hair_dye.png",
+      "nodeId": "hair.dye"
+    },
+    "elegance.hair.tools": {
+      "orb": "assets/e2b-ref/orbs/hair_tools.png",
+      "thumb": "assets/marketplace/discover/thumbs/hair_tools.png",
+      "nodeId": "hair.tools"
+    },
+    "elegance.accessories.belt": {
+      "orb": "assets/e2b-ref/orbs/accessories_belt.png",
+      "thumb": "assets/marketplace/discover/thumbs/accessories_belt.png",
+      "nodeId": "accessories.belt"
+    },
+    "elegance.accessories.scarf": {
+      "orb": "assets/e2b-ref/orbs/accessories_scarf.png",
+      "thumb": "assets/marketplace/discover/thumbs/accessories_scarf.png",
+      "nodeId": "accessories.scarf"
+    },
+    "elegance.accessories.sunglasses": {
+      "orb": "assets/e2b-ref/orbs/accessories_sunglasses.png",
+      "thumb": "assets/marketplace/discover/thumbs/accessories_sunglasses.png",
+      "nodeId": "accessories.sunglasses"
+    },
+    "elegance.accessories.hat": {
+      "orb": "assets/e2b-ref/orbs/accessories_hat.png",
+      "thumb": "assets/marketplace/discover/thumbs/accessories_hat.png",
+      "nodeId": "accessories.hat"
+    },
+    "elegance.accessories.hair": {
+      "orb": "assets/e2b-ref/orbs/accessories_hair.png",
+      "thumb": "assets/marketplace/discover/thumbs/accessories_hair.png",
+      "nodeId": "accessories.hair"
+    },
+    "elegance.all": {
+      "orb": "assets/e2b-ref/orbs/clothes.png",
+      "thumb": "assets/marketplace/discover/thumbs/product_all.jpg",
+      "nodeId": "elegance.all"
+    },
+    "elegance.clothes": {
+      "orb": "assets/e2b-ref/orbs/clothes.png",
+      "thumb": "assets/marketplace/discover/thumbs/product_clothes.jpg",
+      "nodeId": "clothes"
+    },
+    "elegance.bags": {
+      "orb": "assets/e2b-ref/orbs/bags.png",
+      "thumb": "assets/marketplace/discover/thumbs/product_bags.png",
+      "nodeId": "bags"
+    },
+    "elegance.shoes": {
+      "orb": "assets/e2b-ref/orbs/shoes.png",
+      "thumb": "assets/marketplace/discover/thumbs/product_shoes.png",
+      "nodeId": "shoes"
+    },
+    "elegance.face": {
+      "orb": "assets/e2b-ref/orbs/face.png",
+      "thumb": "assets/marketplace/discover/thumbs/product_face.jpg",
+      "nodeId": "face"
+    },
+    "elegance.body": {
+      "orb": "assets/e2b-ref/orbs/body.png",
+      "thumb": "assets/marketplace/discover/thumbs/product_body.jpg",
+      "nodeId": "body"
+    },
+    "elegance.hair": {
+      "orb": "assets/e2b-ref/orbs/hair.png",
+      "thumb": "assets/marketplace/discover/thumbs/product_hair.jpg",
+      "nodeId": "hair"
+    },
+    "elegance.accessories": {
+      "orb": "assets/e2b-ref/orbs/accessories.png",
+      "thumb": "assets/marketplace/discover/thumbs/product_accessories.png",
+      "nodeId": "accessories"
+    }
+  }
+}

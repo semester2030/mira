@@ -963,3 +963,31 @@ body.e2b-service-mode .e2c-map-preview img.e2c-map-img {
   height: 180px;
   border: 0;
 }
+
+/* Ready vs manual input modes for option groups */
+.input-mode-row {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.5rem;
+  margin: 0.5rem 0;
+}
+.input-mode-choice {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.35rem;
+  padding: 0.35rem 0.75rem;
+  border-radius: 999px;
+  border: 1px solid rgba(201, 166, 216, 0.7);
+  background: rgba(255, 255, 255, 0.7);
+  cursor: pointer;
+  font-size: 0.85rem;
+}
+.input-mode-choice.is-selected {
+  border-color: var(--e2b-rose-strong);
+  background: rgba(232, 111, 169, 0.12);
+  font-weight: 600;
+}
+.manual-input-label input {
+  width: 100%;
+  margin-top: 0.35rem;
+}

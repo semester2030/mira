@@ -13,6 +13,7 @@
       traits: {},
       variants: [],
       valueIds: {},
+      inputModes: {},
       clearingOptions: false,
       clearingVariants: false,
       invalidVariantNote: '',
@@ -106,10 +107,38 @@
           chips.appendChild(wrap);
         });
         block.appendChild(chips);
+        if (!optionsState.inputModes) optionsState.inputModes = {};
+        const mode = optionsState.inputModes[group.id] || 'ready';
+        const modeRow = document.createElement('div');
+        modeRow.className = 'choice-row input-mode-row';
+        modeRow.setAttribute('data-testid', 'input-mode-' + group.id);
+        [['ready', 'اختيار جاهز'], ['manual', 'كتابة يدوية']].forEach(([id, label]) => {
+          const lab = document.createElement('label');
+          lab.className = 'input-mode-choice' + (mode === id ? ' is-selected' : '');
+          const radio = document.createElement('input');
+          radio.type = 'radio';
+          radio.name = 'input-mode-' + group.id;
+          radio.value = id;
+          radio.checked = mode === id;
+          radio.onchange = () => {
+            if (!radio.checked) return;
+            optionsState.inputModes[group.id] = id;
+            // Preserve ready selections and manual customs across mode switches.
+            paint();
+            notify();
+          };
+          lab.append(radio, document.createTextNode(' ' + label));
+          modeRow.appendChild(lab);
+        });
+        block.appendChild(modeRow);
+        chips.hidden = mode === 'manual';
         const customLab = document.createElement('label');
-        customLab.textContent = 'قيم خاصة (افصلي بفاصلة)';
+        customLab.className = 'manual-input-label';
+        customLab.textContent = 'كتابة يدوية (افصلي بفاصلة؛ تُحفظ بعد إعادة الفتح)';
+        customLab.hidden = mode === 'ready';
         const custom = document.createElement('input');
         custom.type = 'text';
+        custom.setAttribute('data-testid', 'manual-input-' + group.id);
         custom.value = optionsState.customs[group.id] || '';
         custom.oninput = () => {
           optionsState.customs[group.id] = custom.value;

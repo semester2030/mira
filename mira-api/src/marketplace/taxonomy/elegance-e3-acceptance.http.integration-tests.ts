@@ -225,7 +225,22 @@ async function main() {
       .filter((n) => n.parentId === 'clothes')
       .sort((a, b) => a.sort - b.sort)
       .map((n) => n.id);
-    const expectedClothesKids = ['clothes.all', 'clothes.wedding_dress', 'clothes.abaya', 'clothes.evening'];
+    const expectedClothesKids = [
+      'clothes.all',
+      'clothes.wedding_dress',
+      'clothes.abaya',
+      'clothes.evening',
+      'clothes.casual',
+      'clothes.skirt',
+      'clothes.blouse',
+      'clothes.shirt',
+      'clothes.pants',
+      'clothes.jeans',
+      'clothes.set',
+      'clothes.jacket',
+      'clothes.sportswear',
+      'clothes.loungewear',
+    ];
     record(
       'ACC-E3-CLOTHES-CHILDREN',
       'clothes children match Notes drill-down ids',

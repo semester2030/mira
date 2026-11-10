@@ -5,6 +5,17 @@
 </style></head><body><main><span class="badge">إغلاق محلي: E2ج + E3 + E4 + المجموعات — E5 نشر/جهاز بانتظار المالك</span><h1>ميرا سجل ملاحظات البوابة والتصميم المعتمد ومراحل التنفيذ</h1><p>هذا هو سجل العمل المعتمد لملاحظات بوابة ميرا وربطها بمراحل التنفيذ. القرار: تنفيذ التصورين البصريين المعروضين في المحادثة بنفس التكوين والهوية، والتقدم خطوة بخطوة. تبقى E1 معتمدة؛ E2 غير مغلقة إلى أن تصحح الملاحظات وتجتاز القبول على البوابة الفعلية. اعتماد التصميم لا يعني أن الصور نموذج يعمل أو أن الحزمة الحالية نفذته.</p>
 
 <nav class="reference-nav" aria-label="أقسام المرجع"><a href="#latest-review">آخر مراجعة</a><a href="#visual-reference">التصميم المعتمد</a><a href="#e2-register">سجل الملاحظات</a><a href="#current-corrections">التصحيحات المتبقية</a><a href="#ux-notes">ملاحظات الواجهة</a><a href="#phases">المراحل</a><a href="#backend-contract">تنظيم الباك اند</a><a href="#acceptance">القبول والإغلاق</a></nav>
+<section id="owner-test-notes-20261110" class="review-summary"><p><strong>معالجة ملاحظات اختبار الجوال والموقع — 2026-11-10T17:11:39Z</strong></p>
+<p>المصدر: تكليف المالك بعد نشر E2ج/E3. لم تُرفق صور اختبار في رسالة التنفيذ؛ اعتمدنا المتطلبات المكتوبة والمرجع والبناء المنشور.</p>
+<ul>
+<li><strong>التصنيفات المركزية:</strong> توسيع أناقتك لفروع الملابس/الشنط/الأحذية/الوجه/الجسم/الشعر/الإكسسوارات مع الحفاظ على المعرفات السابقة وربط imageKey/profileId.</li>
+<li><strong>صور الفروع:</strong> جنريت مستقل لكل فرع بهوية لؤلؤية-ليلكية، وربط آلي id→ملف، ولوحة معاينة <code>partners-portal/web/assets/e2b-ref/taxonomy-orb-preview/index.html</code>، واختبار <code>elegance-orb-assets.schema-tests.ts</code> (صفر دوائر بلا صورة / صفر مشاركة صورة بين فرعين).</li>
+<li><strong>اختيار جاهز / كتابة يدوية:</strong> وضع إدخال صريح للمجموعات مع حفظ القيم عند التبديل واستعادة القيم المخصصة بعد إعادة الفتح.</li>
+<li><strong>التصميم الجديد وحده:</strong> إخفاء CTA القديم <code>data-cta-role=legacy</code> داخل compose حتى لا يؤثر على الحفظ/التخطيط.</li>
+<li><strong>الأحذية:</strong> الاستخدام (رسمي/يومي/مناسبات) كخاصية <code>shoeUsage</code> قابلة للفلترة؛ <code>heelHeightCm</code> عند انطباقه؛ الأبعاد/طريقة الحمل للشنط.</li>
+<li><strong>خارج النطاق:</strong> المجوهرات والأطفال.</li>
+</ul>
+<p>الحالة عند هذا التحديث: تنفيذ جزئي قيد التحقق والنشر. لا إعلان إغلاق لبنود غير المختبرة على الجهاز بعد.</p></section>
 <section id="latest-review" class="review-summary"><p><strong>إغلاق نطاق البوابة محليًا (E2ج/E3/E4/المجموعات/ARCH) — 2026-11-10</strong></p>
 <p><span class="status-verified">E2ج CLOSED_VERIFIED_LOCAL</span>: إغفال على سجل غير فارغ؛ مسح صريح مستقل؛ رفض UI للوقت/السعة غير الصالحين عبر <code>novalidate</code> + <code>avail-field-error</code>؛ عقود API للمسودة/التحويل/PATCH منفصلة. بوابة close8.</p>
 <p><span class="status-verified">E3 CLOSED_VERIFIED_LOCAL</span>: إعادة ربط بعد إصلاحات E2ج؛ lifecycle refresh؛ الاسم؛ الفلاتر؛ بلا debug refresh/cache/search.</p>

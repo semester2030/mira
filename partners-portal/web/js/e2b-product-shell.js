@@ -16,12 +16,69 @@
   };
   /** Stable subcategory orb map by taxonomy id — never index-modulo reuse. */
   const SUB_ORB_BY_ID = {
-    'clothes.wedding_dress': 'assets/e2b-ref/orbs/clothes_wedding_dress.png',
+    'accessories.all': 'assets/e2b-ref/orbs/accessories.png',
+    'accessories.belt': 'assets/e2b-ref/orbs/accessories_belt.png',
+    'accessories.hair': 'assets/e2b-ref/orbs/accessories_hair.png',
+    'accessories.hat': 'assets/e2b-ref/orbs/accessories_hat.png',
+    'accessories.scarf': 'assets/e2b-ref/orbs/accessories_scarf.png',
+    'accessories.sunglasses': 'assets/e2b-ref/orbs/accessories_sunglasses.png',
+    'bags.all': 'assets/e2b-ref/orbs/bags.png',
+    'bags.backpack': 'assets/e2b-ref/orbs/bags_backpack.png',
+    'bags.clutch': 'assets/e2b-ref/orbs/bags_clutch.png',
+    'bags.crossbody': 'assets/e2b-ref/orbs/bags_crossbody.png',
+    'bags.hand': 'assets/e2b-ref/orbs/bags_hand.png',
+    'bags.shoulder': 'assets/e2b-ref/orbs/bags_shoulder.png',
+    'bags.tote': 'assets/e2b-ref/orbs/bags_tote.png',
+    'bags.travel': 'assets/e2b-ref/orbs/bags_travel.png',
+    'bags.wallet': 'assets/e2b-ref/orbs/bags_wallet.png',
+    'body.all': 'assets/e2b-ref/orbs/body.png',
+    'body.deodorant': 'assets/e2b-ref/orbs/body_deodorant.png',
+    'body.foot_care': 'assets/e2b-ref/orbs/body_foot_care.png',
+    'body.hand_care': 'assets/e2b-ref/orbs/body_hand_care.png',
+    'body.moisturizer': 'assets/e2b-ref/orbs/body_moisturizer.png',
+    'body.oil': 'assets/e2b-ref/orbs/body_oil.png',
+    'body.scrub': 'assets/e2b-ref/orbs/body_scrub.png',
+    'body.wash': 'assets/e2b-ref/orbs/body_wash.png',
     'clothes.abaya': 'assets/e2b-ref/orbs/clothes_abaya.png',
-    'clothes.evening': 'assets/e2b-ref/orbs/clothes_evening.png',
-    'clothes.skirt': 'assets/e2b-ref/orbs/clothes_skirt.png',
-    'clothes.blouse': 'assets/e2b-ref/orbs/clothes_blouse.png',
     'clothes.all': 'assets/e2b-ref/orbs/clothes.png',
+    'clothes.blouse': 'assets/e2b-ref/orbs/clothes_blouse.png',
+    'clothes.casual': 'assets/e2b-ref/orbs/clothes_casual.png',
+    'clothes.evening': 'assets/e2b-ref/orbs/clothes_evening.png',
+    'clothes.jacket': 'assets/e2b-ref/orbs/clothes_jacket.png',
+    'clothes.jeans': 'assets/e2b-ref/orbs/clothes_jeans.png',
+    'clothes.loungewear': 'assets/e2b-ref/orbs/clothes_loungewear.png',
+    'clothes.pants': 'assets/e2b-ref/orbs/clothes_pants.png',
+    'clothes.set': 'assets/e2b-ref/orbs/clothes_set.png',
+    'clothes.shirt': 'assets/e2b-ref/orbs/clothes_shirt.png',
+    'clothes.skirt': 'assets/e2b-ref/orbs/clothes_skirt.png',
+    'clothes.sportswear': 'assets/e2b-ref/orbs/clothes_sportswear.png',
+    'clothes.wedding_dress': 'assets/e2b-ref/orbs/clothes_wedding_dress.png',
+    'face.all': 'assets/e2b-ref/orbs/face.png',
+    'face.cleanser': 'assets/e2b-ref/orbs/face_cleanser.png',
+    'face.makeup_eyes': 'assets/e2b-ref/orbs/face_makeup_eyes.png',
+    'face.makeup_face': 'assets/e2b-ref/orbs/face_makeup_face.png',
+    'face.makeup_lips': 'assets/e2b-ref/orbs/face_makeup_lips.png',
+    'face.makeup_tools': 'assets/e2b-ref/orbs/face_makeup_tools.png',
+    'face.mask': 'assets/e2b-ref/orbs/face_mask.png',
+    'face.moisturizer': 'assets/e2b-ref/orbs/face_moisturizer.png',
+    'face.serum': 'assets/e2b-ref/orbs/face_serum.png',
+    'face.sunscreen': 'assets/e2b-ref/orbs/face_sunscreen.png',
+    'hair.all': 'assets/e2b-ref/orbs/hair.png',
+    'hair.conditioner': 'assets/e2b-ref/orbs/hair_conditioner.png',
+    'hair.dye': 'assets/e2b-ref/orbs/hair_dye.png',
+    'hair.mask': 'assets/e2b-ref/orbs/hair_mask.png',
+    'hair.oil_serum': 'assets/e2b-ref/orbs/hair_oil_serum.png',
+    'hair.shampoo': 'assets/e2b-ref/orbs/hair_shampoo.png',
+    'hair.styling': 'assets/e2b-ref/orbs/hair_styling.png',
+    'hair.tools': 'assets/e2b-ref/orbs/hair_tools.png',
+    'shoes.all': 'assets/e2b-ref/orbs/shoes.png',
+    'shoes.boot': 'assets/e2b-ref/orbs/shoes_boot.png',
+    'shoes.flat': 'assets/e2b-ref/orbs/shoes_flat.png',
+    'shoes.heel': 'assets/e2b-ref/orbs/shoes_heel.png',
+    'shoes.loafer': 'assets/e2b-ref/orbs/shoes_loafer.png',
+    'shoes.sandal': 'assets/e2b-ref/orbs/shoes_sandal.png',
+    'shoes.slipper': 'assets/e2b-ref/orbs/shoes_slipper.png',
+    'shoes.sneaker': 'assets/e2b-ref/orbs/shoes_sneaker.png',
   };
   const SUB_ORB_FALLBACK = 'assets/e2b-ref/orbs/sub-0.png';
 
@@ -292,6 +349,12 @@
       const matBtn = form.querySelector(
         '[data-testid="materialize-draft"], [data-editor-v2-materialize="1"], button.mat-btn',
       );
+      // New design only: hide legacy submit CTA so it cannot affect layout or duplicate save.
+      form.querySelectorAll('[data-cta-role="legacy"]').forEach((node) => {
+        node.hidden = true;
+        node.setAttribute('aria-hidden', 'true');
+        if (node.style) node.style.display = 'none';
+      });
       const ctaNodes = actionsBar
         ? [actionsBar]
         : [matBtn, save, submit].filter(Boolean);

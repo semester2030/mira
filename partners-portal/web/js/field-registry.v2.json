@@ -777,7 +777,11 @@
         "white": "أبيض",
         "gold": "ذهبي",
         "silver": "فضي"
-      }
+      },
+      "inputModes": [
+        "ready",
+        "manual"
+      ]
     },
     "sizeSystem": {
       "id": "sizeSystem",
@@ -860,7 +864,11 @@
         "L": "L",
         "XL": "XL",
         "XXL": "XXL"
-      }
+      },
+      "inputModes": [
+        "ready",
+        "manual"
+      ]
     },
     "material": {
       "id": "material",
@@ -899,7 +907,11 @@
         "silk": "حرير",
         "other": "أخرى",
         "satin": "ساتان"
-      }
+      },
+      "inputModes": [
+        "ready",
+        "manual"
+      ]
     },
     "careInstructions": {
       "id": "careInstructions",
@@ -974,7 +986,11 @@
       "searchable": false,
       "unknownHandling": "omit from facets; never infer false, zero or stock",
       "evidence": "RC2 design decision",
-      "valueLabels": {}
+      "valueLabels": {},
+      "inputModes": [
+        "ready",
+        "manual"
+      ]
     },
     "cut": {
       "id": "cut",
@@ -1011,7 +1027,11 @@
         "fitted": "محددة",
         "open": "مفتوحة",
         "closed": "مغلقة"
-      }
+      },
+      "inputModes": [
+        "ready",
+        "manual"
+      ]
     },
     "occasion": {
       "id": "occasion",
@@ -1048,7 +1068,11 @@
         "eid": "عيد",
         "evening": "سهرة",
         "wedding": "زفاف"
-      }
+      },
+      "inputModes": [
+        "ready",
+        "manual"
+      ]
     },
     "volumeMl": {
       "id": "volumeMl",
@@ -1365,7 +1389,11 @@
       "searchable": false,
       "unknownHandling": "omit from facets; never infer false, zero or stock",
       "evidence": "RC2 design decision",
-      "valueLabels": {}
+      "valueLabels": {},
+      "inputModes": [
+        "ready",
+        "manual"
+      ]
     },
     "durationMin": {
       "id": "durationMin",
@@ -5110,7 +5138,84 @@
         "shoulder": "كتف",
         "crossbody": "عرضي",
         "backpack": "ظهر"
-      }
+      },
+      "inputModes": [
+        "ready",
+        "manual"
+      ]
+    },
+    "shoeUsage": {
+      "id": "shoeUsage",
+      "labelAr": "الاستخدام",
+      "type": "array",
+      "widget": "chips",
+      "unit": null,
+      "values": [
+        "formal",
+        "daily",
+        "occasions"
+      ],
+      "filter": "shoeUsage",
+      "currentStatus": "ATTRIBUTES_JSON",
+      "draftRequired": false,
+      "publishRequiredWhen": "optional",
+      "source": "partner",
+      "editable": true,
+      "nullMeaning": "unspecified",
+      "default": null,
+      "min": null,
+      "max": null,
+      "dependsOn": null,
+      "storage": "attributes.shoeUsage",
+      "publicWhen": "published and applicable",
+      "searchable": false,
+      "unknownHandling": "omit from facets; never infer false, zero or stock",
+      "evidence": "Owner test notes 2026-11-10 — usage is attribute not subcategory",
+      "valueLabels": {
+        "formal": "رسمي",
+        "daily": "يومي",
+        "occasions": "مناسبات"
+      },
+      "inputModes": [
+        "ready",
+        "manual"
+      ]
+    },
+    "heelHeightCm": {
+      "id": "heelHeightCm",
+      "labelAr": "ارتفاع الكعب",
+      "type": "number",
+      "widget": "number",
+      "unit": "cm",
+      "values": [],
+      "filter": "heelHeightCm",
+      "currentStatus": "ATTRIBUTES_JSON",
+      "draftRequired": false,
+      "publishRequiredWhen": "optional",
+      "source": "partner",
+      "editable": true,
+      "nullMeaning": "unspecified",
+      "default": null,
+      "min": 0,
+      "max": 20,
+      "dependsOn": {
+        "field": "subcategory",
+        "includes": [
+          "shoes.heel",
+          "shoes.boot",
+          "shoes.sandal"
+        ]
+      },
+      "storage": "attributes.heelHeightCm",
+      "publicWhen": "published and applicable",
+      "searchable": false,
+      "unknownHandling": "omit from facets; never infer false, zero or stock",
+      "evidence": "Owner test notes 2026-11-10",
+      "valueLabels": {},
+      "inputModes": [
+        "ready",
+        "manual"
+      ]
     }
   },
   "profiles": [
@@ -6553,14 +6658,16 @@
         "optionsJson",
         "variantsJson",
         "material",
-        "carryStyle"
+        "carryStyle",
+        "itemDimensions"
       ],
       "draftRequired": [],
       "publishRules": "specs/03-JOURNEYS.md#publication",
       "suggestedGroups": [
         "colors",
         "material",
-        "carryStyle"
+        "carryStyle",
+        "itemDimensions"
       ],
       "schemaVersion": 2,
       "allowedLegacyCategories": [
@@ -6597,14 +6704,21 @@
         "sizes",
         "optionsJson",
         "variantsJson",
-        "material"
+        "material",
+        "sizeSystem",
+        "shoeUsage",
+        "heelHeightCm",
+        "occasion"
       ],
       "draftRequired": [],
       "publishRules": "specs/03-JOURNEYS.md#publication",
       "suggestedGroups": [
         "colors",
         "sizes",
-        "material"
+        "material",
+        "sizeSystem",
+        "shoeUsage",
+        "heelHeightCm"
       ],
       "schemaVersion": 2,
       "allowedLegacyCategories": [

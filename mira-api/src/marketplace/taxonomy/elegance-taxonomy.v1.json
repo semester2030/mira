@@ -1,10 +1,10 @@
 {
   "schemaVersion": 1,
   "lane": "elegance",
-  "definitionsVersion": 1,
+  "definitionsVersion": 2,
   "compatMinAppBuild": 1,
   "status": "IMPLEMENTED",
-  "notes": "Public elegance taxonomy projection. browseOnly nodes must not be persisted. bags/shoes writeEnabled=true for E4 allowlist/profiles.",
+  "notes": "Central elegance taxonomy for portal+app+filters. browseOnly nodes are navigation-only. Jewelry/children out of scope. Each write leaf requires a dedicated orb image asset.",
   "nodes": [
     {
       "id": "elegance.all",
@@ -29,7 +29,17 @@
         "clothes.all",
         "clothes.wedding_dress",
         "clothes.abaya",
-        "clothes.evening"
+        "clothes.evening",
+        "clothes.casual",
+        "clothes.skirt",
+        "clothes.blouse",
+        "clothes.shirt",
+        "clothes.pants",
+        "clothes.jeans",
+        "clothes.set",
+        "clothes.jacket",
+        "clothes.sportswear",
+        "clothes.loungewear"
       ]
     },
     {
@@ -39,36 +49,7 @@
       "sort": 0,
       "active": true,
       "browseOnly": true,
-      "children": []
-    },
-    {
-      "id": "clothes.wedding_dress",
-      "parentId": "clothes",
-      "labelAr": "فساتين زفاف",
-      "sort": 10,
-      "active": true,
-      "profileId": "product.clothes",
-      "writeEnabled": true,
-      "children": []
-    },
-    {
-      "id": "clothes.abaya",
-      "parentId": "clothes",
-      "labelAr": "عبايات",
-      "sort": 20,
-      "active": true,
-      "profileId": "product.abaya",
-      "writeEnabled": true,
-      "children": []
-    },
-    {
-      "id": "clothes.evening",
-      "parentId": "clothes",
-      "labelAr": "فساتين سهرة",
-      "sort": 30,
-      "active": true,
-      "profileId": "product.clothes",
-      "writeEnabled": true,
+      "imageKey": "elegance.clothes",
       "children": []
     },
     {
@@ -84,7 +65,12 @@
         "bags.all",
         "bags.hand",
         "bags.shoulder",
-        "bags.clutch"
+        "bags.clutch",
+        "bags.crossbody",
+        "bags.backpack",
+        "bags.tote",
+        "bags.travel",
+        "bags.wallet"
       ]
     },
     {
@@ -94,36 +80,7 @@
       "sort": 0,
       "active": true,
       "browseOnly": true,
-      "children": []
-    },
-    {
-      "id": "bags.hand",
-      "parentId": "bags",
-      "labelAr": "شنط يد",
-      "sort": 10,
-      "active": true,
-      "profileId": "product.bags",
-      "writeEnabled": true,
-      "children": []
-    },
-    {
-      "id": "bags.shoulder",
-      "parentId": "bags",
-      "labelAr": "كتف",
-      "sort": 20,
-      "active": true,
-      "profileId": "product.bags",
-      "writeEnabled": true,
-      "children": []
-    },
-    {
-      "id": "bags.clutch",
-      "parentId": "bags",
-      "labelAr": "كلاتش",
-      "sort": 30,
-      "active": true,
-      "profileId": "product.bags",
-      "writeEnabled": true,
+      "imageKey": "elegance.bags",
       "children": []
     },
     {
@@ -139,7 +96,11 @@
         "shoes.all",
         "shoes.heel",
         "shoes.flat",
-        "shoes.sandal"
+        "shoes.sandal",
+        "shoes.sneaker",
+        "shoes.loafer",
+        "shoes.boot",
+        "shoes.slipper"
       ]
     },
     {
@@ -149,36 +110,7 @@
       "sort": 0,
       "active": true,
       "browseOnly": true,
-      "children": []
-    },
-    {
-      "id": "shoes.heel",
-      "parentId": "shoes",
-      "labelAr": "كعب",
-      "sort": 10,
-      "active": true,
-      "profileId": "product.shoes",
-      "writeEnabled": true,
-      "children": []
-    },
-    {
-      "id": "shoes.flat",
-      "parentId": "shoes",
-      "labelAr": "فلات",
-      "sort": 20,
-      "active": true,
-      "profileId": "product.shoes",
-      "writeEnabled": true,
-      "children": []
-    },
-    {
-      "id": "shoes.sandal",
-      "parentId": "shoes",
-      "labelAr": "صنادل",
-      "sort": 30,
-      "active": true,
-      "profileId": "product.shoes",
-      "writeEnabled": true,
+      "imageKey": "elegance.shoes",
       "children": []
     },
     {
@@ -191,7 +123,16 @@
       "profileId": "product.face",
       "writeEnabled": true,
       "children": [
-        "face.all"
+        "face.all",
+        "face.makeup_face",
+        "face.makeup_eyes",
+        "face.makeup_lips",
+        "face.cleanser",
+        "face.moisturizer",
+        "face.serum",
+        "face.sunscreen",
+        "face.mask",
+        "face.makeup_tools"
       ]
     },
     {
@@ -201,6 +142,7 @@
       "sort": 0,
       "active": true,
       "browseOnly": true,
+      "imageKey": "elegance.face",
       "children": []
     },
     {
@@ -213,7 +155,14 @@
       "profileId": "product.body",
       "writeEnabled": true,
       "children": [
-        "body.all"
+        "body.all",
+        "body.wash",
+        "body.moisturizer",
+        "body.scrub",
+        "body.oil",
+        "body.deodorant",
+        "body.hand_care",
+        "body.foot_care"
       ]
     },
     {
@@ -223,6 +172,7 @@
       "sort": 0,
       "active": true,
       "browseOnly": true,
+      "imageKey": "elegance.body",
       "children": []
     },
     {
@@ -235,7 +185,14 @@
       "profileId": "product.hair",
       "writeEnabled": true,
       "children": [
-        "hair.all"
+        "hair.all",
+        "hair.shampoo",
+        "hair.conditioner",
+        "hair.mask",
+        "hair.oil_serum",
+        "hair.styling",
+        "hair.dye",
+        "hair.tools"
       ]
     },
     {
@@ -245,6 +202,7 @@
       "sort": 0,
       "active": true,
       "browseOnly": true,
+      "imageKey": "elegance.hair",
       "children": []
     },
     {
@@ -257,7 +215,12 @@
       "profileId": "product.accessories",
       "writeEnabled": true,
       "children": [
-        "accessories.all"
+        "accessories.all",
+        "accessories.belt",
+        "accessories.scarf",
+        "accessories.sunglasses",
+        "accessories.hat",
+        "accessories.hair"
       ]
     },
     {
@@ -267,6 +230,679 @@
       "sort": 0,
       "active": true,
       "browseOnly": true,
+      "imageKey": "elegance.accessories",
+      "children": []
+    },
+    {
+      "id": "clothes.wedding_dress",
+      "parentId": "clothes",
+      "labelAr": "فساتين زفاف",
+      "sort": 10,
+      "active": true,
+      "imageKey": "elegance.clothes.wedding_dress",
+      "profileId": "product.clothes",
+      "writeEnabled": true,
+      "assetFile": "clothes_wedding_dress.png",
+      "children": []
+    },
+    {
+      "id": "clothes.abaya",
+      "parentId": "clothes",
+      "labelAr": "عبايات",
+      "sort": 20,
+      "active": true,
+      "imageKey": "elegance.clothes.abaya",
+      "profileId": "product.abaya",
+      "writeEnabled": true,
+      "assetFile": "clothes_abaya.png",
+      "children": []
+    },
+    {
+      "id": "clothes.evening",
+      "parentId": "clothes",
+      "labelAr": "فساتين سهرة",
+      "sort": 30,
+      "active": true,
+      "imageKey": "elegance.clothes.evening",
+      "profileId": "product.clothes",
+      "writeEnabled": true,
+      "assetFile": "clothes_evening.png",
+      "children": []
+    },
+    {
+      "id": "clothes.casual",
+      "parentId": "clothes",
+      "labelAr": "فساتين يومية",
+      "sort": 40,
+      "active": true,
+      "imageKey": "elegance.clothes.casual",
+      "profileId": "product.clothes",
+      "writeEnabled": true,
+      "assetFile": "clothes_casual.png",
+      "children": []
+    },
+    {
+      "id": "clothes.skirt",
+      "parentId": "clothes",
+      "labelAr": "تنانير",
+      "sort": 50,
+      "active": true,
+      "imageKey": "elegance.clothes.skirt",
+      "profileId": "product.clothes",
+      "writeEnabled": true,
+      "assetFile": "clothes_skirt.png",
+      "children": []
+    },
+    {
+      "id": "clothes.blouse",
+      "parentId": "clothes",
+      "labelAr": "بلوزات",
+      "sort": 60,
+      "active": true,
+      "imageKey": "elegance.clothes.blouse",
+      "profileId": "product.clothes",
+      "writeEnabled": true,
+      "assetFile": "clothes_blouse.png",
+      "children": []
+    },
+    {
+      "id": "clothes.shirt",
+      "parentId": "clothes",
+      "labelAr": "قمصان",
+      "sort": 70,
+      "active": true,
+      "imageKey": "elegance.clothes.shirt",
+      "profileId": "product.clothes",
+      "writeEnabled": true,
+      "assetFile": "clothes_shirt.png",
+      "children": []
+    },
+    {
+      "id": "clothes.pants",
+      "parentId": "clothes",
+      "labelAr": "بناطيل",
+      "sort": 80,
+      "active": true,
+      "imageKey": "elegance.clothes.pants",
+      "profileId": "product.clothes",
+      "writeEnabled": true,
+      "assetFile": "clothes_pants.png",
+      "children": []
+    },
+    {
+      "id": "clothes.jeans",
+      "parentId": "clothes",
+      "labelAr": "جينز",
+      "sort": 90,
+      "active": true,
+      "imageKey": "elegance.clothes.jeans",
+      "profileId": "product.clothes",
+      "writeEnabled": true,
+      "assetFile": "clothes_jeans.png",
+      "children": []
+    },
+    {
+      "id": "clothes.set",
+      "parentId": "clothes",
+      "labelAr": "أطقم",
+      "sort": 100,
+      "active": true,
+      "imageKey": "elegance.clothes.set",
+      "profileId": "product.clothes",
+      "writeEnabled": true,
+      "assetFile": "clothes_set.png",
+      "children": []
+    },
+    {
+      "id": "clothes.jacket",
+      "parentId": "clothes",
+      "labelAr": "جاكيتات ومعاطف",
+      "sort": 110,
+      "active": true,
+      "imageKey": "elegance.clothes.jacket",
+      "profileId": "product.clothes",
+      "writeEnabled": true,
+      "assetFile": "clothes_jacket.png",
+      "children": []
+    },
+    {
+      "id": "clothes.sportswear",
+      "parentId": "clothes",
+      "labelAr": "ملابس رياضية",
+      "sort": 120,
+      "active": true,
+      "imageKey": "elegance.clothes.sportswear",
+      "profileId": "product.clothes",
+      "writeEnabled": true,
+      "assetFile": "clothes_sportswear.png",
+      "children": []
+    },
+    {
+      "id": "clothes.loungewear",
+      "parentId": "clothes",
+      "labelAr": "ملابس منزلية",
+      "sort": 130,
+      "active": true,
+      "imageKey": "elegance.clothes.loungewear",
+      "profileId": "product.clothes",
+      "writeEnabled": true,
+      "assetFile": "clothes_loungewear.png",
+      "children": []
+    },
+    {
+      "id": "bags.hand",
+      "parentId": "bags",
+      "labelAr": "شنط يد",
+      "sort": 10,
+      "active": true,
+      "imageKey": "elegance.bags.hand",
+      "profileId": "product.bags",
+      "writeEnabled": true,
+      "assetFile": "bags_hand.png",
+      "children": []
+    },
+    {
+      "id": "bags.shoulder",
+      "parentId": "bags",
+      "labelAr": "شنط كتف",
+      "sort": 20,
+      "active": true,
+      "imageKey": "elegance.bags.shoulder",
+      "profileId": "product.bags",
+      "writeEnabled": true,
+      "assetFile": "bags_shoulder.png",
+      "children": []
+    },
+    {
+      "id": "bags.clutch",
+      "parentId": "bags",
+      "labelAr": "كلاتش",
+      "sort": 30,
+      "active": true,
+      "imageKey": "elegance.bags.clutch",
+      "profileId": "product.bags",
+      "writeEnabled": true,
+      "assetFile": "bags_clutch.png",
+      "children": []
+    },
+    {
+      "id": "bags.crossbody",
+      "parentId": "bags",
+      "labelAr": "كروس بودي",
+      "sort": 40,
+      "active": true,
+      "imageKey": "elegance.bags.crossbody",
+      "profileId": "product.bags",
+      "writeEnabled": true,
+      "assetFile": "bags_crossbody.png",
+      "children": []
+    },
+    {
+      "id": "bags.backpack",
+      "parentId": "bags",
+      "labelAr": "شنط ظهر",
+      "sort": 50,
+      "active": true,
+      "imageKey": "elegance.bags.backpack",
+      "profileId": "product.bags",
+      "writeEnabled": true,
+      "assetFile": "bags_backpack.png",
+      "children": []
+    },
+    {
+      "id": "bags.tote",
+      "parentId": "bags",
+      "labelAr": "توت",
+      "sort": 60,
+      "active": true,
+      "imageKey": "elegance.bags.tote",
+      "profileId": "product.bags",
+      "writeEnabled": true,
+      "assetFile": "bags_tote.png",
+      "children": []
+    },
+    {
+      "id": "bags.travel",
+      "parentId": "bags",
+      "labelAr": "شنط سفر",
+      "sort": 70,
+      "active": true,
+      "imageKey": "elegance.bags.travel",
+      "profileId": "product.bags",
+      "writeEnabled": true,
+      "assetFile": "bags_travel.png",
+      "children": []
+    },
+    {
+      "id": "bags.wallet",
+      "parentId": "bags",
+      "labelAr": "محافظ",
+      "sort": 80,
+      "active": true,
+      "imageKey": "elegance.bags.wallet",
+      "profileId": "product.bags",
+      "writeEnabled": true,
+      "assetFile": "bags_wallet.png",
+      "children": []
+    },
+    {
+      "id": "shoes.heel",
+      "parentId": "shoes",
+      "labelAr": "كعب",
+      "sort": 10,
+      "active": true,
+      "imageKey": "elegance.shoes.heel",
+      "profileId": "product.shoes",
+      "writeEnabled": true,
+      "assetFile": "shoes_heel.png",
+      "children": []
+    },
+    {
+      "id": "shoes.flat",
+      "parentId": "shoes",
+      "labelAr": "فلات",
+      "sort": 20,
+      "active": true,
+      "imageKey": "elegance.shoes.flat",
+      "profileId": "product.shoes",
+      "writeEnabled": true,
+      "assetFile": "shoes_flat.png",
+      "children": []
+    },
+    {
+      "id": "shoes.sandal",
+      "parentId": "shoes",
+      "labelAr": "صنادل",
+      "sort": 30,
+      "active": true,
+      "imageKey": "elegance.shoes.sandal",
+      "profileId": "product.shoes",
+      "writeEnabled": true,
+      "assetFile": "shoes_sandal.png",
+      "children": []
+    },
+    {
+      "id": "shoes.sneaker",
+      "parentId": "shoes",
+      "labelAr": "أحذية رياضية",
+      "sort": 40,
+      "active": true,
+      "imageKey": "elegance.shoes.sneaker",
+      "profileId": "product.shoes",
+      "writeEnabled": true,
+      "assetFile": "shoes_sneaker.png",
+      "children": []
+    },
+    {
+      "id": "shoes.loafer",
+      "parentId": "shoes",
+      "labelAr": "لوفر",
+      "sort": 50,
+      "active": true,
+      "imageKey": "elegance.shoes.loafer",
+      "profileId": "product.shoes",
+      "writeEnabled": true,
+      "assetFile": "shoes_loafer.png",
+      "children": []
+    },
+    {
+      "id": "shoes.boot",
+      "parentId": "shoes",
+      "labelAr": "بوت",
+      "sort": 60,
+      "active": true,
+      "imageKey": "elegance.shoes.boot",
+      "profileId": "product.shoes",
+      "writeEnabled": true,
+      "assetFile": "shoes_boot.png",
+      "children": []
+    },
+    {
+      "id": "shoes.slipper",
+      "parentId": "shoes",
+      "labelAr": "سليبر",
+      "sort": 70,
+      "active": true,
+      "imageKey": "elegance.shoes.slipper",
+      "profileId": "product.shoes",
+      "writeEnabled": true,
+      "assetFile": "shoes_slipper.png",
+      "children": []
+    },
+    {
+      "id": "face.makeup_face",
+      "parentId": "face",
+      "labelAr": "مكياج الوجه",
+      "sort": 10,
+      "active": true,
+      "imageKey": "elegance.face.makeup_face",
+      "profileId": "product.face",
+      "writeEnabled": true,
+      "assetFile": "face_makeup_face.png",
+      "children": []
+    },
+    {
+      "id": "face.makeup_eyes",
+      "parentId": "face",
+      "labelAr": "مكياج العيون",
+      "sort": 20,
+      "active": true,
+      "imageKey": "elegance.face.makeup_eyes",
+      "profileId": "product.face",
+      "writeEnabled": true,
+      "assetFile": "face_makeup_eyes.png",
+      "children": []
+    },
+    {
+      "id": "face.makeup_lips",
+      "parentId": "face",
+      "labelAr": "مكياج الشفاه",
+      "sort": 30,
+      "active": true,
+      "imageKey": "elegance.face.makeup_lips",
+      "profileId": "product.face",
+      "writeEnabled": true,
+      "assetFile": "face_makeup_lips.png",
+      "children": []
+    },
+    {
+      "id": "face.cleanser",
+      "parentId": "face",
+      "labelAr": "منظفات البشرة",
+      "sort": 40,
+      "active": true,
+      "imageKey": "elegance.face.cleanser",
+      "profileId": "product.face",
+      "writeEnabled": true,
+      "assetFile": "face_cleanser.png",
+      "children": []
+    },
+    {
+      "id": "face.moisturizer",
+      "parentId": "face",
+      "labelAr": "مرطبات",
+      "sort": 50,
+      "active": true,
+      "imageKey": "elegance.face.moisturizer",
+      "profileId": "product.face",
+      "writeEnabled": true,
+      "assetFile": "face_moisturizer.png",
+      "children": []
+    },
+    {
+      "id": "face.serum",
+      "parentId": "face",
+      "labelAr": "سيرومات",
+      "sort": 60,
+      "active": true,
+      "imageKey": "elegance.face.serum",
+      "profileId": "product.face",
+      "writeEnabled": true,
+      "assetFile": "face_serum.png",
+      "children": []
+    },
+    {
+      "id": "face.sunscreen",
+      "parentId": "face",
+      "labelAr": "واقي شمس",
+      "sort": 70,
+      "active": true,
+      "imageKey": "elegance.face.sunscreen",
+      "profileId": "product.face",
+      "writeEnabled": true,
+      "assetFile": "face_sunscreen.png",
+      "children": []
+    },
+    {
+      "id": "face.mask",
+      "parentId": "face",
+      "labelAr": "ماسكات",
+      "sort": 80,
+      "active": true,
+      "imageKey": "elegance.face.mask",
+      "profileId": "product.face",
+      "writeEnabled": true,
+      "assetFile": "face_mask.png",
+      "children": []
+    },
+    {
+      "id": "face.makeup_tools",
+      "parentId": "face",
+      "labelAr": "أدوات المكياج",
+      "sort": 90,
+      "active": true,
+      "imageKey": "elegance.face.makeup_tools",
+      "profileId": "product.face",
+      "writeEnabled": true,
+      "assetFile": "face_makeup_tools.png",
+      "children": []
+    },
+    {
+      "id": "body.wash",
+      "parentId": "body",
+      "labelAr": "غسول الجسم",
+      "sort": 10,
+      "active": true,
+      "imageKey": "elegance.body.wash",
+      "profileId": "product.body",
+      "writeEnabled": true,
+      "assetFile": "body_wash.png",
+      "children": []
+    },
+    {
+      "id": "body.moisturizer",
+      "parentId": "body",
+      "labelAr": "مرطبات",
+      "sort": 20,
+      "active": true,
+      "imageKey": "elegance.body.moisturizer",
+      "profileId": "product.body",
+      "writeEnabled": true,
+      "assetFile": "body_moisturizer.png",
+      "children": []
+    },
+    {
+      "id": "body.scrub",
+      "parentId": "body",
+      "labelAr": "مقشرات",
+      "sort": 30,
+      "active": true,
+      "imageKey": "elegance.body.scrub",
+      "profileId": "product.body",
+      "writeEnabled": true,
+      "assetFile": "body_scrub.png",
+      "children": []
+    },
+    {
+      "id": "body.oil",
+      "parentId": "body",
+      "labelAr": "زيوت",
+      "sort": 40,
+      "active": true,
+      "imageKey": "elegance.body.oil",
+      "profileId": "product.body",
+      "writeEnabled": true,
+      "assetFile": "body_oil.png",
+      "children": []
+    },
+    {
+      "id": "body.deodorant",
+      "parentId": "body",
+      "labelAr": "مزيلات العرق",
+      "sort": 50,
+      "active": true,
+      "imageKey": "elegance.body.deodorant",
+      "profileId": "product.body",
+      "writeEnabled": true,
+      "assetFile": "body_deodorant.png",
+      "children": []
+    },
+    {
+      "id": "body.hand_care",
+      "parentId": "body",
+      "labelAr": "العناية باليدين",
+      "sort": 60,
+      "active": true,
+      "imageKey": "elegance.body.hand_care",
+      "profileId": "product.body",
+      "writeEnabled": true,
+      "assetFile": "body_hand_care.png",
+      "children": []
+    },
+    {
+      "id": "body.foot_care",
+      "parentId": "body",
+      "labelAr": "العناية بالقدمين",
+      "sort": 70,
+      "active": true,
+      "imageKey": "elegance.body.foot_care",
+      "profileId": "product.body",
+      "writeEnabled": true,
+      "assetFile": "body_foot_care.png",
+      "children": []
+    },
+    {
+      "id": "hair.shampoo",
+      "parentId": "hair",
+      "labelAr": "شامبو",
+      "sort": 10,
+      "active": true,
+      "imageKey": "elegance.hair.shampoo",
+      "profileId": "product.hair",
+      "writeEnabled": true,
+      "assetFile": "hair_shampoo.png",
+      "children": []
+    },
+    {
+      "id": "hair.conditioner",
+      "parentId": "hair",
+      "labelAr": "بلسم",
+      "sort": 20,
+      "active": true,
+      "imageKey": "elegance.hair.conditioner",
+      "profileId": "product.hair",
+      "writeEnabled": true,
+      "assetFile": "hair_conditioner.png",
+      "children": []
+    },
+    {
+      "id": "hair.mask",
+      "parentId": "hair",
+      "labelAr": "ماسكات",
+      "sort": 30,
+      "active": true,
+      "imageKey": "elegance.hair.mask",
+      "profileId": "product.hair",
+      "writeEnabled": true,
+      "assetFile": "hair_mask.png",
+      "children": []
+    },
+    {
+      "id": "hair.oil_serum",
+      "parentId": "hair",
+      "labelAr": "زيوت وسيرومات",
+      "sort": 40,
+      "active": true,
+      "imageKey": "elegance.hair.oil_serum",
+      "profileId": "product.hair",
+      "writeEnabled": true,
+      "assetFile": "hair_oil_serum.png",
+      "children": []
+    },
+    {
+      "id": "hair.styling",
+      "parentId": "hair",
+      "labelAr": "منتجات التصفيف",
+      "sort": 50,
+      "active": true,
+      "imageKey": "elegance.hair.styling",
+      "profileId": "product.hair",
+      "writeEnabled": true,
+      "assetFile": "hair_styling.png",
+      "children": []
+    },
+    {
+      "id": "hair.dye",
+      "parentId": "hair",
+      "labelAr": "صبغات",
+      "sort": 60,
+      "active": true,
+      "imageKey": "elegance.hair.dye",
+      "profileId": "product.hair",
+      "writeEnabled": true,
+      "assetFile": "hair_dye.png",
+      "children": []
+    },
+    {
+      "id": "hair.tools",
+      "parentId": "hair",
+      "labelAr": "أدوات وأجهزة الشعر",
+      "sort": 70,
+      "active": true,
+      "imageKey": "elegance.hair.tools",
+      "profileId": "product.hair",
+      "writeEnabled": true,
+      "assetFile": "hair_tools.png",
+      "children": []
+    },
+    {
+      "id": "accessories.belt",
+      "parentId": "accessories",
+      "labelAr": "أحزمة",
+      "sort": 10,
+      "active": true,
+      "imageKey": "elegance.accessories.belt",
+      "profileId": "product.accessories",
+      "writeEnabled": true,
+      "assetFile": "accessories_belt.png",
+      "children": []
+    },
+    {
+      "id": "accessories.scarf",
+      "parentId": "accessories",
+      "labelAr": "أوشحة وشالات",
+      "sort": 20,
+      "active": true,
+      "imageKey": "elegance.accessories.scarf",
+      "profileId": "product.accessories",
+      "writeEnabled": true,
+      "assetFile": "accessories_scarf.png",
+      "children": []
+    },
+    {
+      "id": "accessories.sunglasses",
+      "parentId": "accessories",
+      "labelAr": "نظارات شمسية",
+      "sort": 30,
+      "active": true,
+      "imageKey": "elegance.accessories.sunglasses",
+      "profileId": "product.accessories",
+      "writeEnabled": true,
+      "assetFile": "accessories_sunglasses.png",
+      "children": []
+    },
+    {
+      "id": "accessories.hat",
+      "parentId": "accessories",
+      "labelAr": "قبعات",
+      "sort": 40,
+      "active": true,
+      "imageKey": "elegance.accessories.hat",
+      "profileId": "product.accessories",
+      "writeEnabled": true,
+      "assetFile": "accessories_hat.png",
+      "children": []
+    },
+    {
+      "id": "accessories.hair",
+      "parentId": "accessories",
+      "labelAr": "إكسسوارات الشعر",
+      "sort": 50,
+      "active": true,
+      "imageKey": "elegance.accessories.hair",
+      "profileId": "product.accessories",
+      "writeEnabled": true,
+      "assetFile": "accessories_hair.png",
       "children": []
     }
   ]

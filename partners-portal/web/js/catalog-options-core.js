@@ -13,6 +13,7 @@
       traits: {},
       variants: [],
       valueIds: {},
+      inputModes: {},
       clearingOptions: false,
       clearingVariants: false,
       invalidVariantNote: '',
@@ -44,12 +45,27 @@
 
     const selected = {};
     const valueIds = {};
+    const customs = {};
+    const inputModes = {};
     groups.forEach((group) => {
-      selected[group.id] = (group.values || []).map((v) => v.labelAr || v.id).filter(Boolean);
+      const readyLabels = [];
+      const manualLabels = [];
       valueIds[group.id] = {};
       (group.values || []).forEach((v) => {
-        if (v && v.labelAr) valueIds[group.id][v.labelAr] = v.id;
+        if (!v) return;
+        const label = v.labelAr || v.id;
+        if (!label) return;
+        valueIds[group.id][label] = v.id;
+        if (String(v.id || '').indexOf('custom:') === 0) manualLabels.push(label);
+        else readyLabels.push(label);
       });
+      selected[group.id] = readyLabels;
+      if (manualLabels.length) {
+        customs[group.id] = manualLabels.join('، ');
+        inputModes[group.id] = 'manual';
+      } else {
+        inputModes[group.id] = 'ready';
+      }
     });
 
     const variantRows = variants.map((variant) => ({
@@ -72,9 +88,10 @@
 
     return {
       selected: selected,
-      customs: {},
+      customs: customs,
       traits: {},
       valueIds: valueIds,
+      inputModes: inputModes,
       variants: variantRows,
       clearingOptions: clearingOptions,
       clearingVariants: clearingVariants,
