@@ -362,4 +362,54 @@ const dress: CatalogFilterItem = {
   }
 }
 
+// Phase1: ageMonths inclusive bounds; unknown age excluded only when filter set.
+{
+  const kid: CatalogFilterItem = {
+    ...dress,
+    id: 'kid-1',
+    category: 'children',
+    subcategory: 'children.clothes',
+    attributesJson: { ageMinMonths: 6, ageMaxMonths: 12 },
+  };
+  const unknown: CatalogFilterItem = {
+    ...dress,
+    id: 'kid-unk',
+    category: 'children',
+    subcategory: 'children.clothes',
+    attributesJson: {},
+  };
+  assert.ok(matchCatalogItem(kid, { ageMonths: 6 }));
+  assert.ok(matchCatalogItem(kid, { ageMonths: 12 }));
+  assert.equal(matchCatalogItem(kid, { ageMonths: 5 }), null);
+  assert.equal(matchCatalogItem(kid, { ageMonths: 13 }), null);
+  assert.equal(matchCatalogItem(unknown, { ageMonths: 8 }), null);
+  assert.ok(matchCatalogItem(unknown, {}), 'unknown age still visible without age filter');
+}
+
+// Phase1: giftEligible cross-list under gifts lane same product id.
+{
+  const necklace: CatalogFilterItem = {
+    ...dress,
+    id: 'neck-1',
+    category: 'jewelry',
+    subcategory: 'jewelry.necklaces',
+    attributesJson: { giftEligible: true, metal: 'gold' },
+  };
+  assert.ok(matchCatalogItem(necklace, { lane: 'gifts' }));
+  assert.ok(matchCatalogItem(necklace, { giftEligible: true }));
+  const cleared = { ...necklace, attributesJson: { giftEligible: false, metal: 'gold' } };
+  assert.equal(matchCatalogItem(cleared, { lane: 'gifts' }), null);
+  assert.ok(matchCatalogItem(cleared, { category: 'jewelry' }), 'origin jewelry still visible');
+}
+
+// Phase1: metal attribute filter parse.
+{
+  const parsed = parseCatalogFilterQuery({ metal: 'gold', purity: '21' });
+  assert.equal(parsed.ok, true);
+  if (parsed.ok) {
+    assert.deepEqual(parsed.filter.attributeSelections?.metal, ['gold']);
+    assert.deepEqual(parsed.filter.attributeSelections?.purityKarat, ['21']);
+  }
+}
+
 console.log('catalog-filters.schema-tests: PASS');

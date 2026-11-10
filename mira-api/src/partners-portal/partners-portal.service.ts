@@ -9,7 +9,11 @@ import {
   OnModuleInit,
   Optional,
 } from '@nestjs/common';
-import { PARTNER_KIND_FORBIDDEN, partnerCanCreateKind } from './partner-capabilities';
+import {
+  PARTNER_KIND_FORBIDDEN,
+  partnerCanCreateKind,
+  partnerCanCreateKindFromPartner,
+} from './partner-capabilities';
 import { ConfigService } from '@nestjs/config';
 import { Prisma } from '@prisma/client';
 import { randomBytes } from 'crypto';
@@ -68,8 +72,20 @@ function commerceWrite(commerce: ProductCommerceData) {
   };
 }
 
-const PRODUCT_CATEGORIES = new Set(['face', 'body', 'hair', 'clothes', 'bags', 'shoes', 'accessories']);
-const SERVICE_CATEGORIES = new Set(['hair', 'skin', 'makeup', 'nails', 'care']);
+const PRODUCT_CATEGORIES = new Set([
+  'face',
+  'body',
+  'hair',
+  'clothes',
+  'bags',
+  'shoes',
+  'accessories',
+  'jewelry',
+  'children',
+  'gifts',
+  'occasions',
+]);
+const SERVICE_CATEGORIES = new Set(['hair', 'skin', 'makeup', 'nails', 'care', 'occasions']);
 
 @Injectable()
 export class PartnersPortalService implements OnModuleInit {
@@ -500,7 +516,7 @@ export class PartnersPortalService implements OnModuleInit {
     const partner = await this.prisma.partner.findUnique({
       where: { id: partnerId },
     });
-    if (!partner || !partnerCanCreateKind(partner.type, 'product')) {
+    if (!partner || !partnerCanCreateKindFromPartner(partner, 'product')) {
       throw new ForbiddenException({
         message: 'المنتجات غير مسموحة لهذا الحساب',
         messageAr: 'المنتجات غير مسموحة لهذا الحساب',
@@ -708,7 +724,7 @@ export class PartnersPortalService implements OnModuleInit {
     const partner = await this.prisma.partner.findUnique({
       where: { id: partnerId },
     });
-    if (!partner || !partnerCanCreateKind(partner.type, 'service')) {
+    if (!partner || !partnerCanCreateKindFromPartner(partner, 'service')) {
       throw new ForbiddenException({
         message: 'الخدمات غير مسموحة لهذا الحساب',
         messageAr: 'الخدمات غير مسموحة لهذا الحساب',

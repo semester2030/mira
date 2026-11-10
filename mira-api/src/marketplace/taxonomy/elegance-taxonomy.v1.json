@@ -4,7 +4,7 @@
   "definitionsVersion": 2,
   "compatMinAppBuild": 1,
   "status": "IMPLEMENTED",
-  "notes": "Central elegance taxonomy for portal+app+filters. browseOnly nodes are navigation-only. Jewelry/children out of scope. Each write leaf requires a dedicated orb image asset.",
+  "notes": "Central elegance taxonomy. Jewelry/children/gifts/occasions live in sibling lane files (Phase1). browseOnly nodes are navigation-only.",
   "nodes": [
     {
       "id": "elegance.all",

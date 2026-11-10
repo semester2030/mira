@@ -149,7 +149,7 @@ model AuditLog {
 /// B2B partner — brand, clinic, or salon (v1 catalog + matching).
 model Partner {
   id            String   @id @default(uuid())
-  type          String   // brand | clinic | salon
+  type          String   // brand | clinic | salon | event_planner | developer
   status        String   @default("active") // pending | active | suspended
   nameAr        String   @map("name_ar")
   nameEn        String   @map("name_en")
@@ -157,6 +157,8 @@ model Partner {
   city          String   @default("الرياض")
   logoEmoji     String?  @map("logo_emoji")
   storeUrl      String?  @map("store_url")
+  /// Explicit sell capability for event_planner (favors). Independent of storeUrl.
+  canSellProducts Boolean @default(false) @map("can_sell_products")
   contactPhone  String?  @map("contact_phone")
   rating        Float    @default(4.5)
   createdAt     DateTime @default(now()) @map("created_at")

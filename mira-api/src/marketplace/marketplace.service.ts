@@ -237,7 +237,15 @@ export class MarketplaceService implements OnModuleInit {
     if (params.type && !['brand', 'clinic', 'salon'].includes(params.type)) {
       throw new BadRequestException('نوع الجهة غير صالح');
     }
-    if (params.lane && !['elegance', 'beauty'].includes(params.lane)) {
+    const allowedLanes = new Set([
+      'elegance',
+      'beauty',
+      'jewelry',
+      'children',
+      'gifts',
+      'occasions',
+    ]);
+    if (params.lane && !allowedLanes.has(params.lane)) {
       throw new BadRequestException('المسار غير صالح');
     }
     if (params.venue && !['clinic', 'salon'].includes(params.venue)) {
@@ -256,7 +264,16 @@ export class MarketplaceService implements OnModuleInit {
       subcategory: params.subcategory,
       city: params.city,
       partnerId: params.partnerId,
-      kind: params.kind ?? (params.lane === 'elegance' ? 'product' : params.lane === 'beauty' ? 'service' : undefined),
+      kind:
+        params.kind ??
+        (params.lane === 'elegance' ||
+        params.lane === 'jewelry' ||
+        params.lane === 'children' ||
+        params.lane === 'gifts'
+          ? 'product'
+          : params.lane === 'beauty'
+            ? 'service'
+            : undefined),
       color: params.color,
       size: params.size,
       volume: params.volume,
@@ -271,9 +288,15 @@ export class MarketplaceService implements OnModuleInit {
       branchId: params.branchId,
       availableOn: params.availableOn,
       sort: params.sort,
+      metal: (params as any).metal,
+      purity: (params as any).purity,
+      giftEligible: (params as any).giftEligible,
+      ageMonths: (params as any).ageMonths,
+      lane: params.lane,
       'variant.color': params['variant.color'] ?? params.color,
       'variant.size': params['variant.size'] ?? params.size,
       'variant.volume': params['variant.volume'] ?? params.volume,
+      'variant.ringSize': (params as any)['variant.ringSize'],
     });
     if (!parsedFilters.ok) {
       throw new BadRequestException(parsedFilters.messageAr);
@@ -306,19 +329,32 @@ export class MarketplaceService implements OnModuleInit {
       ? params.type === 'brand'
         ? { ...partnerBase, OR: [{ type: 'brand' }, { type: 'developer' }] }
         : { ...partnerBase, type: params.type }
-      : params.lane === 'elegance'
-        ? { ...partnerBase, OR: [{ type: 'brand' }, { type: 'developer' }] }
+      : params.lane === 'elegance' ||
+          params.lane === 'jewelry' ||
+          params.lane === 'children' ||
+          params.lane === 'gifts' ||
+          params.lane === 'occasions'
+        ? {
+            ...partnerBase,
+            OR: [{ type: 'brand' }, { type: 'developer' }, { type: 'event_planner' }],
+          }
         : partnerBase;
-    const servicePartner = params.lane === 'elegance'
+    const servicePartner = params.lane === 'elegance' ||
+      params.lane === 'jewelry' ||
+      params.lane === 'children' ||
+      params.lane === 'gifts'
       ? { ...partnerBase, id: '__none__' }
       : params.venue
         ? { ...partnerBase, type: params.venue }
         : params.type
-      ? params.type === 'clinic' || params.type === 'salon'
+      ? params.type === 'clinic' || params.type === 'salon' || params.type === 'event_planner'
         ? { ...partnerBase, OR: [{ type: params.type }, { type: 'developer' }] }
         : { ...partnerBase, type: params.type }
-      : params.lane === 'beauty'
-        ? { ...partnerBase, OR: [{ type: 'clinic' }, { type: 'salon' }, { type: 'developer' }] }
+      : params.lane === 'beauty' || params.lane === 'occasions'
+        ? {
+            ...partnerBase,
+            OR: [{ type: 'clinic' }, { type: 'salon' }, { type: 'event_planner' }, { type: 'developer' }],
+          }
         : partnerBase;
 
     const needVariantInventory =

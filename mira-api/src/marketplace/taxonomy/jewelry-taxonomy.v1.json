@@ -1,0 +1,92 @@
+{
+  "schemaVersion": 1,
+  "lane": "jewelry",
+  "definitionsVersion": 1,
+  "compatMinAppBuild": 1,
+  "status": "PHASE1_PREVIEW",
+  "publicBrowse": false,
+  "notes": "Phase1 jewelry. publicBrowse false until home orbit ships.",
+  "nodes": [
+    {
+      "id": "jewelry_lane.all",
+      "parentId": null,
+      "labelAr": "الكل",
+      "sort": 0,
+      "active": true,
+      "browseOnly": true,
+      "imageKey": "jewelry.all",
+      "children": []
+    },
+    {
+      "id": "jewelry",
+      "parentId": null,
+      "labelAr": "المجوهرات",
+      "sort": 10,
+      "active": true,
+      "imageKey": "jewelry",
+      "profileId": "product.jewelry",
+      "writeEnabled": true,
+      "children": [
+        "jewelry.all",
+        "jewelry.rings",
+        "jewelry.necklaces",
+        "jewelry.bracelets",
+        "jewelry.earrings"
+      ]
+    },
+    {
+      "id": "jewelry.all",
+      "parentId": "jewelry",
+      "labelAr": "الكل",
+      "sort": 0,
+      "active": true,
+      "browseOnly": true,
+      "imageKey": "jewelry",
+      "children": []
+    },
+    {
+      "id": "jewelry.rings",
+      "parentId": "jewelry",
+      "labelAr": "خواتم",
+      "sort": 10,
+      "active": true,
+      "imageKey": "jewelry.rings",
+      "profileId": "product.jewelry",
+      "writeEnabled": true,
+      "children": []
+    },
+    {
+      "id": "jewelry.necklaces",
+      "parentId": "jewelry",
+      "labelAr": "قلائد",
+      "sort": 20,
+      "active": true,
+      "imageKey": "jewelry.necklaces",
+      "profileId": "product.jewelry",
+      "writeEnabled": true,
+      "children": []
+    },
+    {
+      "id": "jewelry.bracelets",
+      "parentId": "jewelry",
+      "labelAr": "أساور",
+      "sort": 30,
+      "active": true,
+      "imageKey": "jewelry.bracelets",
+      "profileId": "product.jewelry",
+      "writeEnabled": true,
+      "children": []
+    },
+    {
+      "id": "jewelry.earrings",
+      "parentId": "jewelry",
+      "labelAr": "أقراط",
+      "sort": 40,
+      "active": true,
+      "imageKey": "jewelry.earrings",
+      "profileId": "product.jewelry",
+      "writeEnabled": true,
+      "children": []
+    }
+  ]
+}

@@ -178,10 +178,18 @@
     login: (email, password) =>
       request('POST', '/partners-portal/login', { email, password }),
     dashboard: () => request('GET', '/partners-portal/me'),
-    /** Public elegance taxonomy (no partner token required). */
+    /** Taxonomy projection (no partner token). Preview lanes: audience=partner. */
     taxonomy: (opts) => {
       const lane = (opts && opts.lane) || 'elegance';
-      return request('GET', `/marketplace/taxonomy?lane=${encodeURIComponent(lane)}`);
+      const audience = (opts && opts.audience) || '';
+      const q = [`lane=${encodeURIComponent(lane)}`];
+      if (audience) q.push(`audience=${encodeURIComponent(audience)}`);
+      return request('GET', `/marketplace/taxonomy?${q.join('&')}`);
+    },
+    /** Lane index from central manifest — do not hardcode new lane ids in the portal. */
+    taxonomyLanes: (opts) => {
+      const audience = (opts && opts.audience) || 'partner';
+      return request('GET', `/marketplace/taxonomy/lanes?audience=${encodeURIComponent(audience)}`);
     },
     /** Portal read-back path used after save (not GET /products/:id). */
     productPreview: (id) => request('GET', `/partners-portal/products/${id}/preview`),

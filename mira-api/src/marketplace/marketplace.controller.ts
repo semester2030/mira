@@ -30,18 +30,45 @@ export class MarketplaceController {
     return this.marketplace.match(dto);
   }
 
-  /** Public elegance taxonomy projection (derived; no partner auth). */
+  /** Lane index — public sees publicBrowse lanes only; audience=partner includes preview lanes. */
+  @Get('taxonomy/lanes')
+  listTaxonomyLanes(@Query('audience') audience?: string) {
+    const aud = audience === 'partner' ? 'partner' : 'public';
+    return {
+      schemaVersion: 1,
+      audience: aud,
+      lanes: this.taxonomy.listPublicLanes({ audience: aud }),
+    };
+  }
+
+  /**
+   * Public taxonomy projection for a lane (derived; no partner auth).
+   * Preview lanes (jewelry/children/…) require audience=partner until publicBrowse flips.
+   */
   @Get('taxonomy')
-  getTaxonomy(@Query('lane') lane?: string) {
+  getTaxonomy(@Query('lane') lane?: string, @Query('audience') audience?: string) {
     const laneId = (lane ?? 'elegance').trim();
-    if (laneId !== 'elegance') {
-      throw new BadRequestException({
-        message: 'مسار التصنيفات غير مدعوم',
-        messageAr: 'مسار التصنيفات غير مدعوم',
-        code: 'TAXONOMY_LANE_UNSUPPORTED',
-      });
+    const aud = audience === 'partner' ? 'partner' : 'public';
+    try {
+      return this.taxonomy.publicProjection({ lane: laneId, audience: aud });
+    } catch (e: any) {
+      const code = e?.code || '';
+      if (code === 'TAXONOMY_LANE_UNSUPPORTED') {
+        throw new BadRequestException({
+          message: 'مسار التصنيفات غير مدعوم',
+          messageAr: 'مسار التصنيفات غير مدعوم',
+          code: 'TAXONOMY_LANE_UNSUPPORTED',
+        });
+      }
+      if (code === 'TAXONOMY_LANE_NOT_PUBLIC') {
+        throw new BadRequestException({
+          message: 'هذا القسم غير متاح للعامة بعد',
+          messageAr: 'هذا القسم غير متاح للعامة بعد',
+          code: 'TAXONOMY_LANE_NOT_PUBLIC',
+        });
+      }
+      throw e;
     }
-    return this.taxonomy.publicProjection();
   }
 
   @Get('catalog')
@@ -81,7 +108,12 @@ export class MarketplaceController {
       'variant.color': qstr(query['variant.color']),
       'variant.size': qstr(query['variant.size']),
       'variant.volume': qstr(query['variant.volume']),
-    });
+      'variant.ringSize': qstr(query['variant.ringSize']),
+      metal: qstr(query.metal),
+      purity: qstr(query.purity ?? query.purityKarat),
+      giftEligible: qstr(query.giftEligible),
+      ageMonths: qstr(query.ageMonths),
+    } as any);
   }
 
   /** Documented Saudi cities catalog (stable ids) for searchable city UI. */

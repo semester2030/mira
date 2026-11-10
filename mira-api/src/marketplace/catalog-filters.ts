@@ -83,6 +83,15 @@ export type CatalogFilterInput = {
    * Example: { shoeUsage: ['formal','daily'] }.
    */
   attributeSelections?: Record<string, string[]>;
+  /**
+   * Children age filter in months (inclusive bounds on ageMinMonths/ageMaxMonths).
+   * Products missing both bounds are excluded when this filter is set.
+   */
+  ageMonths?: number;
+  /** When true, only products with attributes.giftEligible === true (cross-list). */
+  giftEligible?: boolean;
+  /** Discover lane — gifts lane expands match to giftEligible without duplicating rows. */
+  lane?: string;
   /** Local Asia/Riyadh date YYYY-MM-DD — calendar day must not be closed/unconfigured. */
   availableOn?: string;
   sort?: CatalogSort;
@@ -241,9 +250,45 @@ export function parseCatalogFilterQuery(params: Record<string, string | undefine
   }
 
   const attributeSelections: Record<string, string[]> = {};
-  for (const key of ['shoeUsage', 'carryStyle', 'occasion', 'material'] as const) {
+  for (const key of [
+    'shoeUsage',
+    'carryStyle',
+    'occasion',
+    'material',
+    'metal',
+    'purityKarat',
+    'purity',
+  ] as const) {
     const values = splitCsv(params[key] ?? params[`attributes.${key}`]);
-    if (values.length) attributeSelections[key] = values;
+    if (values.length) {
+      // Accept purity as alias for purityKarat.
+      const storeKey = key === 'purity' ? 'purityKarat' : key;
+      attributeSelections[storeKey] = values;
+    }
+  }
+
+  const ageRaw = (params.ageMonths ?? '').trim();
+  let ageMonths: number | undefined;
+  if (ageRaw) {
+    const n = Number(ageRaw);
+    if (!Number.isFinite(n) || n < 0 || !Number.isInteger(n)) {
+      return { ok: false, reason: 'invalid_age_months', messageAr: 'عمر غير صالح' };
+    }
+    ageMonths = n;
+  }
+
+  const giftRaw = (params.giftEligible ?? '').trim().toLowerCase();
+  let giftEligible: boolean | undefined;
+  if (giftRaw === '1' || giftRaw === 'true') giftEligible = true;
+  else if (giftRaw === '0' || giftRaw === 'false') giftEligible = false;
+  else if (giftRaw) {
+    return { ok: false, reason: 'invalid_gift_eligible', messageAr: 'قيمة أهلية الإهداء غير صالحة' };
+  }
+
+  // ringSize as variant option (same-combo as color/size).
+  const ringSizes = splitCsv(params['variant.ringSize'] ?? params.ringSize);
+  if (ringSizes.length) {
+    variantSelections.ringSize = [...new Set([...(variantSelections.ringSize ?? []), ...ringSizes])];
   }
 
   return {
@@ -258,6 +303,9 @@ export function parseCatalogFilterQuery(params: Record<string, string | undefine
       kind: kindRaw ? (kindRaw as 'product' | 'service') : undefined,
       variantSelections: Object.keys(variantSelections).length ? variantSelections : undefined,
       attributeSelections: Object.keys(attributeSelections).length ? attributeSelections : undefined,
+      ageMonths,
+      giftEligible,
+      lane: (params.lane ?? '').trim() || undefined,
       inStock,
       priceMinHalalas: priceMin,
       priceMaxHalalas: priceMax,
@@ -402,7 +450,14 @@ export function matchCatalogItem(item: CatalogFilterItem, filter: CatalogFilterI
       return null;
     }
   }
-  if (filter.category && item.category !== filter.category) return null;
+  if (filter.category && item.category !== filter.category) {
+    // Gifts lane may still match via giftEligible when category differs (cross-list).
+    const giftsCross =
+      filter.lane === 'gifts' &&
+      item.kind === 'product' &&
+      item.attributesJson?.giftEligible === true;
+    if (!giftsCross) return null;
+  }
   // Subcategory filter uses the exact persisted id; applied before pagination via filterCatalogItems.
   if (filter.subcategory) {
     if (item.kind !== 'product' || item.subcategory !== filter.subcategory) return null;
@@ -410,6 +465,32 @@ export function matchCatalogItem(item: CatalogFilterItem, filter: CatalogFilterI
   if (filter.attributeSelections && Object.keys(filter.attributeSelections).length > 0) {
     if (item.kind !== 'product') return null;
     if (!attributesMatchSelections(item.attributesJson, filter.attributeSelections)) return null;
+  }
+  if (filter.giftEligible === true) {
+    if (item.kind !== 'product' || item.attributesJson?.giftEligible !== true) return null;
+  }
+  if (filter.giftEligible === false) {
+    if (item.kind === 'product' && item.attributesJson?.giftEligible === true) return null;
+  }
+  // Gifts lane without explicit category: native gifts.* OR giftEligible cross-list.
+  if (filter.lane === 'gifts' && !filter.category && !filter.subcategory && item.kind === 'product') {
+    const cat = String(item.category || '');
+    const native = cat === 'gifts' || cat.startsWith('gifts');
+    const eligible = item.attributesJson?.giftEligible === true;
+    if (!native && !eligible) return null;
+  }
+  if (filter.ageMonths != null) {
+    if (item.kind !== 'product') return null;
+    const minRaw = item.attributesJson?.ageMinMonths;
+    const maxRaw = item.attributesJson?.ageMaxMonths;
+    const min = typeof minRaw === 'number' ? minRaw : Number(minRaw);
+    const max = typeof maxRaw === 'number' ? maxRaw : Number(maxRaw);
+    const hasMin = Number.isFinite(min);
+    const hasMax = Number.isFinite(max);
+    // Unknown age → exclude when age filter is active (spec: مجهول العمر يُستبعد من نتيجة هذا الفلتر فقط).
+    if (!hasMin && !hasMax) return null;
+    if (hasMin && filter.ageMonths < min) return null;
+    if (hasMax && filter.ageMonths > max) return null;
   }
 
   if (filter.tags && filter.tags.length > 0) {

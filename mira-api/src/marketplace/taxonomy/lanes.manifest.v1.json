@@ -1,0 +1,55 @@
+{
+  "schemaVersion": 1,
+  "definitionsVersion": 1,
+  "lanes": [
+    {
+      "id": "elegance",
+      "labelAr": "أناقتك",
+      "offerKind": "product",
+      "publicBrowse": true,
+      "partnerWrite": true,
+      "taxonomyFile": "elegance-taxonomy.v1.json"
+    },
+    {
+      "id": "beauty",
+      "labelAr": "جمالك",
+      "offerKind": "service",
+      "publicBrowse": true,
+      "partnerWrite": true,
+      "taxonomyFile": null,
+      "notes": "Beauty categories remain service-template driven; no product taxonomy file."
+    },
+    {
+      "id": "jewelry",
+      "labelAr": "المجوهرات",
+      "offerKind": "product",
+      "publicBrowse": false,
+      "partnerWrite": true,
+      "taxonomyFile": "jewelry-taxonomy.v1.json"
+    },
+    {
+      "id": "children",
+      "labelAr": "الأطفال",
+      "offerKind": "product",
+      "publicBrowse": false,
+      "partnerWrite": true,
+      "taxonomyFile": "children-taxonomy.v1.json"
+    },
+    {
+      "id": "gifts",
+      "labelAr": "الهدايا",
+      "offerKind": "product",
+      "publicBrowse": false,
+      "partnerWrite": true,
+      "taxonomyFile": "gifts-taxonomy.v1.json"
+    },
+    {
+      "id": "occasions",
+      "labelAr": "مناسباتك",
+      "offerKind": "mixed",
+      "publicBrowse": false,
+      "partnerWrite": true,
+      "taxonomyFile": "occasions-taxonomy.v1.json"
+    }
+  ]
+}

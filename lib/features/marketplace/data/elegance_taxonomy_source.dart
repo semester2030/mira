@@ -17,6 +17,8 @@ class EleganceTaxonomyNode {
     this.imageKey,
     this.profileId,
     this.children = const [],
+    this.fieldIds = const [],
+    this.filterKeys = const [],
   });
 
   final String id;
@@ -29,9 +31,14 @@ class EleganceTaxonomyNode {
   final String? imageKey;
   final String? profileId;
   final List<String> children;
+  /// From central registry via taxonomy projection (Phase1).
+  final List<String> fieldIds;
+  final List<String> filterKeys;
 
   factory EleganceTaxonomyNode.fromJson(Map<String, dynamic> json) {
     final kids = json['children'];
+    final fields = json['fieldIds'];
+    final filters = json['filterKeys'];
     return EleganceTaxonomyNode(
       id: '${json['id']}',
       parentId: json['parentId']?.toString(),
@@ -43,6 +50,8 @@ class EleganceTaxonomyNode {
       imageKey: json['imageKey']?.toString(),
       profileId: json['profileId']?.toString(),
       children: kids is List ? kids.map((e) => '$e').toList() : const [],
+      fieldIds: fields is List ? fields.map((e) => '$e').toList() : const [],
+      filterKeys: filters is List ? filters.map((e) => '$e').toList() : const [],
     );
   }
 }
@@ -120,17 +129,28 @@ abstract final class EleganceTaxonomySource {
     return kids;
   }
 
-  static Future<bool> ensureLoaded({Dio? dio, bool force = false}) async {
-    if (_harnessLocked && _nodes.isNotEmpty) return true;
+  /// Loads taxonomy for [lane] from the live API. Preview lanes need [partnerAudience].
+  /// Branch ids are never hardcoded here — adding a node server-side is enough.
+  static Future<bool> ensureLoaded({
+    Dio? dio,
+    bool force = false,
+    String lane = 'elegance',
+    bool partnerAudience = false,
+  }) async {
+    if (_harnessLocked && _nodes.isNotEmpty && !force) return true;
     final withinTtl = _nodes.isNotEmpty &&
         _loadedAt != null &&
-        DateTime.now().difference(_loadedAt!) < const Duration(minutes: 10);
-    if (!force && withinTtl) return true;
+        DateTime.now().difference(_loadedAt!) < const Duration(minutes: 10) &&
+        !force;
+    if (!force && withinTtl && lane == 'elegance') return true;
     try {
       final client = dio ?? ApiClient.instance;
       final response = await client.get<Map<String, dynamic>>(
         MiraApiEndpoints.marketplaceTaxonomy,
-        queryParameters: const {'lane': 'elegance'},
+        queryParameters: {
+          'lane': lane,
+          if (partnerAudience) 'audience': 'partner',
+        },
       );
       final data = response.data;
       if (data == null) return _nodes.isNotEmpty;
@@ -153,6 +173,8 @@ abstract final class EleganceTaxonomySource {
       _loadedAt = DateTime.now();
       return _nodes.isNotEmpty;
     } catch (_) {
+      // Never invent non-elegance lanes from the local elegance fallback.
+      if (lane != 'elegance') return false;
       if (_nodes.isEmpty) _nodes = _fallbackNodes();
       return _nodes.isNotEmpty;
     }

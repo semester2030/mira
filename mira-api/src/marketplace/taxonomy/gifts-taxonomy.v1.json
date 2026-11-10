@@ -1,0 +1,56 @@
+{
+  "schemaVersion": 1,
+  "lane": "gifts",
+  "definitionsVersion": 1,
+  "compatMinAppBuild": 1,
+  "status": "PHASE1_PREVIEW",
+  "publicBrowse": false,
+  "notes": "Phase1 gifts boxes; giftEligible cross-list is filter not node.",
+  "nodes": [
+    {
+      "id": "gifts_lane.all",
+      "parentId": null,
+      "labelAr": "الكل",
+      "sort": 0,
+      "active": true,
+      "browseOnly": true,
+      "imageKey": "gifts.all",
+      "children": []
+    },
+    {
+      "id": "gifts",
+      "parentId": null,
+      "labelAr": "الهدايا",
+      "sort": 10,
+      "active": true,
+      "imageKey": "gifts",
+      "profileId": "product.gifts",
+      "writeEnabled": true,
+      "children": [
+        "gifts.all",
+        "gifts.boxes"
+      ]
+    },
+    {
+      "id": "gifts.all",
+      "parentId": "gifts",
+      "labelAr": "الكل",
+      "sort": 0,
+      "active": true,
+      "browseOnly": true,
+      "imageKey": "gifts",
+      "children": []
+    },
+    {
+      "id": "gifts.boxes",
+      "parentId": "gifts",
+      "labelAr": "صناديق هدايا",
+      "sort": 10,
+      "active": true,
+      "imageKey": "gifts.boxes",
+      "profileId": "product.gifts",
+      "writeEnabled": true,
+      "children": []
+    }
+  ]
+}

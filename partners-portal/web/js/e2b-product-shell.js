@@ -586,7 +586,10 @@
       taxonomyError = 'عميل التصنيفات غير متاح';
       throw new Error(taxonomyError);
     }
-    const doc = await PartnersApi.taxonomy({ lane: 'elegance' });
+    // Lane from central switcher / test harness. New branches appear without portal code edits.
+    const lane = window.__MIRA_TAXONOMY_LANE__ || 'elegance';
+    const audience = lane === 'elegance' ? undefined : 'partner';
+    const doc = await PartnersApi.taxonomy({ lane: lane, audience: audience });
     taxonomyCache = doc || {};
     taxonomyError = null;
     return taxonomyCache;
@@ -594,12 +597,20 @@
 
   function mainCategoriesFromTaxonomy(doc) {
     const nodes = (doc && doc.nodes) || [];
+    const lane = (doc && doc.lane) || 'elegance';
     return nodes
-      .filter((n) => n && n.parentId == null && n.id !== 'elegance.all' && !n.browseOnly)
+      .filter(
+        (n) =>
+          n &&
+          n.parentId == null &&
+          !String(n.id).endsWith('.all') &&
+          !String(n.id).endsWith('_all') &&
+          !n.browseOnly,
+      )
       .map((n) => ({
         id: n.id,
         labelAr: n.labelAr || n.label || n.id,
-        deferredE4: !!DEFERRED_E4[n.id],
+        deferredE4: lane === 'elegance' ? !!DEFERRED_E4[n.id] : false,
         orb: ORB_BY_ID[n.id] || ORB_BY_ID.accessories,
       }));
   }

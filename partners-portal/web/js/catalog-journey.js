@@ -5,6 +5,10 @@
     ['hair', 'الشعر'],
     ['clothes', 'الملابس'],
     ['accessories', 'الإكسسوارات'],
+    ['jewelry', 'المجوهرات'],
+    ['children', 'الأطفال'],
+    ['gifts', 'الهدايا'],
+    ['occasions', 'مناسباتك'],
   ];
   const SERVICE_CATEGORIES = [
     ['hair', 'الشعر'],
@@ -3985,9 +3989,20 @@
       }
       try {
         if (!attrRegistryCache) {
-          attrRegistryCache =
-            (window.MiraEditorV2 && MiraEditorV2.state && MiraEditorV2.state.localRegistry) ||
-            (await fetch('js/field-registry.v2.json').then((r) => r.json()));
+          // Canonical registry is served by the API; static JSON is generated fallback only.
+          if (window.PartnersApi && typeof PartnersApi.registry === 'function') {
+            try {
+              const meta = await PartnersApi.registry();
+              attrRegistryCache = (meta && meta.registry) || meta;
+            } catch (_) {
+              /* fall through to generated static copy */
+            }
+          }
+          if (!attrRegistryCache) {
+            attrRegistryCache =
+              (window.MiraEditorV2 && MiraEditorV2.state && MiraEditorV2.state.localRegistry) ||
+              (await fetch('js/field-registry.v2.json').then((r) => r.json()));
+          }
         }
         if (gen !== attrRemountGen) return; // stale remount
         const profileId = profileIdForAttributes();

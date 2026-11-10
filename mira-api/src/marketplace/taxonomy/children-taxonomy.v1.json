@@ -1,0 +1,80 @@
+{
+  "schemaVersion": 1,
+  "lane": "children",
+  "definitionsVersion": 1,
+  "compatMinAppBuild": 1,
+  "status": "PHASE1_PREVIEW",
+  "publicBrowse": false,
+  "notes": "Phase1 children.",
+  "nodes": [
+    {
+      "id": "children_lane.all",
+      "parentId": null,
+      "labelAr": "الكل",
+      "sort": 0,
+      "active": true,
+      "browseOnly": true,
+      "imageKey": "children.all",
+      "children": []
+    },
+    {
+      "id": "children",
+      "parentId": null,
+      "labelAr": "الأطفال",
+      "sort": 10,
+      "active": true,
+      "imageKey": "children",
+      "profileId": "product.kids",
+      "writeEnabled": true,
+      "children": [
+        "children.all",
+        "children.clothes",
+        "children.shoes",
+        "children.newborn"
+      ]
+    },
+    {
+      "id": "children.all",
+      "parentId": "children",
+      "labelAr": "الكل",
+      "sort": 0,
+      "active": true,
+      "browseOnly": true,
+      "imageKey": "children",
+      "children": []
+    },
+    {
+      "id": "children.clothes",
+      "parentId": "children",
+      "labelAr": "ملابس أطفال",
+      "sort": 10,
+      "active": true,
+      "imageKey": "children.clothes",
+      "profileId": "product.kids",
+      "writeEnabled": true,
+      "children": []
+    },
+    {
+      "id": "children.shoes",
+      "parentId": "children",
+      "labelAr": "أحذية أطفال",
+      "sort": 20,
+      "active": true,
+      "imageKey": "children.shoes",
+      "profileId": "product.kids",
+      "writeEnabled": true,
+      "children": []
+    },
+    {
+      "id": "children.newborn",
+      "parentId": "children",
+      "labelAr": "مستلزمات مواليد",
+      "sort": 30,
+      "active": true,
+      "imageKey": "children.newborn",
+      "profileId": "product.kids",
+      "writeEnabled": true,
+      "children": []
+    }
+  ]
+}
