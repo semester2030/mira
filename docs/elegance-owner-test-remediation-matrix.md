@@ -10,4 +10,4 @@
 | itemDimensions غير معروض | ويدجت أبعاد + مزامنة dimensionsCm | `registry-attribute-dimensions.tests.mjs` | widget dimensions | منفّذ |
 | جاهز/يدوي للخامة/الحمل | أوضاع إدخال + `custom:` مع تحقق خادمي | validate custom accept / random reject | API validate | منفّذ |
 | مجموعات بلا subcategory | تمرير السياق وإعادة mount | مراجعة `bulk-group-journey.js` | mount args | منفّذ |
-| نشر + Release جهاز | بعد اجتياز الاختبارات | Render + flutter | بعد push | قيد التنفيذ |
+| نشر + Release جهاز | بعد اجتياز الاختبارات | Render + flutter | بعد push | منفّذ |
