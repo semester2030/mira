@@ -309,6 +309,31 @@ export class TaxonomyService implements OnModuleInit {
     return resolveFromSubcategory(this.requireDoc(lane), subcategory);
   }
 
+  /**
+   * Catalog browse helper: resolve a subcategory id to offerKind + profile + parent category.
+   * Used so service leaves (e.g. occasions.styling) are not mistaken for Product.subcategory.
+   */
+  resolveCatalogSubcategory(subcategory: string): {
+    id: string;
+    lane: string;
+    category: string;
+    profileId: string | null;
+    offerKind: 'product' | 'service' | null;
+  } | null {
+    const lane = this.findLaneForNodeId(subcategory);
+    if (!lane) return null;
+    const doc = this.requireDoc(lane);
+    const node = doc.nodes.find((n) => n.id === subcategory);
+    if (!node || node.browseOnly || !node.parentId) return null;
+    return {
+      id: node.id,
+      lane,
+      category: node.parentId,
+      profileId: node.profileId ?? null,
+      offerKind: node.offerKind ?? null,
+    };
+  }
+
   phrasesFor(subcategoryId: string) {
     return this.phrases.bySubcategory[subcategoryId] || [];
   }

@@ -65,10 +65,9 @@
 
 ```bash
 cd mira-api
-npm run check:field-registry
-npm run prove:field-registry-drift
-npx tsx src/partners-portal/phase1-event-planner-sell.schema-tests.ts
+export DATABASE_URL='postgresql://mira:mira_secret@127.0.0.1:5432/mira_phase1_corrective_test?schema=public'
 npm run test:phase1-four-lanes
+# يشمل: فلاتر/عمر/هدية، أتمتة مساري القراءة، مناسباتك، بوابة+Flutter+كاش، حفظ وصف+بيع مخزّن
 ```
 
 ## قواعد مهمة

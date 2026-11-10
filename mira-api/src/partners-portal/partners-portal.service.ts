@@ -133,12 +133,16 @@ export class PartnersPortalService implements OnModuleInit {
     return attributeFieldDefs;
   }
 
-  private taxonomyWriteContext() {
+  private taxonomyWriteContext(hint?: { subcategory?: string | null; category?: string | null }) {
     const knownProfileIds = this.registry
       ? new Set(this.registry.getRegistry().profiles.map((p) => p.id))
       : undefined;
+    const lane =
+      (hint?.subcategory && this.taxonomy.findLaneForNodeId(hint.subcategory)) ||
+      (hint?.category && this.taxonomy.findLaneForNodeId(hint.category)) ||
+      'elegance';
     return {
-      doc: this.taxonomy.getDoc(),
+      doc: this.taxonomy.getDoc(lane),
       knownProfileIds,
       resolveAttributeFieldDefs: (profileId: string | null) => this.attributeDefsForProfile(profileId),
     };
@@ -525,7 +529,10 @@ export class PartnersPortalService implements OnModuleInit {
     }
     const categoryRaw = this.optionalCategory(dto.category, PRODUCT_CATEGORIES);
     const applied = applyTaxonomyPatch(
-      this.taxonomyWriteContext(),
+      this.taxonomyWriteContext({
+        subcategory: dto.subcategory as string | null | undefined,
+        category: categoryRaw,
+      }),
       { category: null, subcategory: null, profileId: null, attributesJson: null },
       {
         category: categoryRaw,
@@ -646,7 +653,13 @@ export class PartnersPortalService implements OnModuleInit {
         // Pending draft taxonomy is authoritative when set — including intentional null clears.
         const baseline = readTaxonomyBaseline(current);
         const applied = applyTaxonomyPatch(
-          this.taxonomyWriteContext(),
+          this.taxonomyWriteContext({
+            subcategory:
+              (dto.subcategory as string | null | undefined) !== undefined
+                ? (dto.subcategory as string | null | undefined)
+                : baseline.subcategory,
+            category: categoryPatch !== undefined ? categoryPatch : baseline.category,
+          }),
           baseline,
           {
             category: categoryPatch,
@@ -775,6 +788,9 @@ export class PartnersPortalService implements OnModuleInit {
         if (!branch) throw new NotFoundException('الفرع غير موجود أو لا يخص هذه الجهة');
       }
 
+      const profileId =
+        typeof dto.profileId === 'string' && dto.profileId.trim() ? dto.profileId.trim() : undefined;
+
       return tx.service.create({
         data: {
           partnerId,
@@ -785,6 +801,7 @@ export class PartnersPortalService implements OnModuleInit {
           priceHalalas: dto.priceHalalas ?? 0,
           concernTags: dto.concernTags ?? [],
           category,
+          ...(profileId ? { profileId } : {}),
           bookingEnabled: dto.bookingEnabled === true,
           payMode: 'pay_at_venue',
           ...(placeMode !== undefined ? { placeMode } : {}),

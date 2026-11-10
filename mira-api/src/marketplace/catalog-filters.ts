@@ -92,6 +92,17 @@ export type CatalogFilterInput = {
   giftEligible?: boolean;
   /** Discover lane — gifts lane expands match to giftEligible without duplicating rows. */
   lane?: string;
+  /**
+   * Resolved from central taxonomy when `subcategory` is set (browse enrichment).
+   * Drives service vs product matching — never infer lane from partner type or title.
+   */
+  taxonomyNode?: {
+    id: string;
+    lane: string;
+    category: string;
+    profileId: string | null;
+    offerKind: 'product' | 'service' | null;
+  };
   /** Local Asia/Riyadh date YYYY-MM-DD — calendar day must not be closed/unconfigured. */
   availableOn?: string;
   sort?: CatalogSort;
@@ -109,6 +120,8 @@ export type CatalogFilterItem = {
   descriptionAr?: string | null;
   category?: string | null;
   subcategory?: string | null;
+  /** Registry / taxonomy profile id when persisted (services + products). */
+  profileId?: string | null;
   concernTags: string[];
   priceHalalas: number | null;
   durationMin?: number | null;
@@ -458,9 +471,19 @@ export function matchCatalogItem(item: CatalogFilterItem, filter: CatalogFilterI
       item.attributesJson?.giftEligible === true;
     if (!giftsCross) return null;
   }
-  // Subcategory filter uses the exact persisted id; applied before pagination via filterCatalogItems.
+  // Subcategory: products match persisted id; service leaves match taxonomy profile/category.
   if (filter.subcategory) {
-    if (item.kind !== 'product' || item.subcategory !== filter.subcategory) return null;
+    const node = filter.taxonomyNode;
+    if (item.kind === 'product') {
+      if (node?.offerKind === 'service') return null;
+      if (item.subcategory !== filter.subcategory) return null;
+    } else {
+      if (!node || node.offerKind !== 'service') return null;
+      const byProfile = !!node.profileId && item.profileId === node.profileId;
+      const byCategory = !!node.category && item.category === node.category;
+      const bySub = item.subcategory === filter.subcategory;
+      if (!byProfile && !byCategory && !bySub) return null;
+    }
   }
   if (filter.attributeSelections && Object.keys(filter.attributeSelections).length > 0) {
     if (item.kind !== 'product') return null;
@@ -471,6 +494,20 @@ export function matchCatalogItem(item: CatalogFilterItem, filter: CatalogFilterI
   }
   if (filter.giftEligible === false) {
     if (item.kind === 'product' && item.attributesJson?.giftEligible === true) return null;
+  }
+  // Lane membership by taxonomy ids — never by partner type or service title.
+  if (filter.lane === 'occasions' && !filter.category && !filter.subcategory) {
+    if (item.kind === 'product') {
+      const cat = String(item.category || '');
+      const sub = String(item.subcategory || '');
+      const native =
+        cat === 'occasions' || cat.startsWith('occasions') || sub.startsWith('occasions.');
+      if (!native) return null;
+    } else {
+      const cat = String(item.category || '');
+      const ok = cat === 'occasions' || item.profileId === 'service.occasions';
+      if (!ok) return null;
+    }
   }
   // Gifts lane without explicit category: native gifts.* OR giftEligible cross-list.
   if (filter.lane === 'gifts' && !filter.category && !filter.subcategory && item.kind === 'product') {

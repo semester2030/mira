@@ -62,12 +62,17 @@ abstract final class EleganceTaxonomySource {
   static List<EleganceTaxonomyNode> _nodes = const [];
   static String? _definitionsVersion;
   static DateTime? _loadedAt;
+  /// Lane + audience that currently populate [_nodes] (isolates elegance↔jewelry cache).
+  static String? _cachedLane;
+  static bool _cachedPartnerAudience = false;
   /// When true, skip HTTP (widget/unit harness used [replaceForTest]).
   static bool _harnessLocked = false;
 
   static List<EleganceTaxonomyNode> get nodes => _nodes;
   static String? get definitionsVersion => _definitionsVersion;
   static bool get isLoaded => _nodes.isNotEmpty;
+  static String? get cachedLane => _cachedLane;
+  static bool get cachedPartnerAudience => _cachedPartnerAudience;
 
   /// Root browse circles for أناقتك (bags/shoes writeEnabled follows live taxonomy; E4 write started).
   static List<DiscoverCategoryDef> eleganceRoots({bool includeDeferredBrowse = true}) {
@@ -138,11 +143,13 @@ abstract final class EleganceTaxonomySource {
     bool partnerAudience = false,
   }) async {
     if (_harnessLocked && _nodes.isNotEmpty && !force) return true;
+    final sameScope = _cachedLane == lane && _cachedPartnerAudience == partnerAudience;
     final withinTtl = _nodes.isNotEmpty &&
+        sameScope &&
         _loadedAt != null &&
         DateTime.now().difference(_loadedAt!) < const Duration(minutes: 10) &&
         !force;
-    if (!force && withinTtl && lane == 'elegance') return true;
+    if (!force && withinTtl) return true;
     try {
       final client = dio ?? ApiClient.instance;
       final response = await client.get<Map<String, dynamic>>(
@@ -153,10 +160,11 @@ abstract final class EleganceTaxonomySource {
         },
       );
       final data = response.data;
-      if (data == null) return _nodes.isNotEmpty;
+      if (data == null) return sameScope && _nodes.isNotEmpty;
       final nextVersion = data['definitionsVersion']?.toString();
-      // Same version + existing nodes: refresh TTL without rebuilding (cache policy).
+      // Same version + same lane/audience: refresh TTL without rebuilding.
       if (!force &&
+          sameScope &&
           nextVersion != null &&
           nextVersion == _definitionsVersion &&
           _nodes.isNotEmpty) {
@@ -164,18 +172,26 @@ abstract final class EleganceTaxonomySource {
         return true;
       }
       final raw = data['nodes'];
-      if (raw is! List) return _nodes.isNotEmpty;
+      if (raw is! List) return sameScope && _nodes.isNotEmpty;
       _nodes = raw
           .whereType<Map>()
           .map((e) => EleganceTaxonomyNode.fromJson(Map<String, dynamic>.from(e)))
           .toList();
       _definitionsVersion = nextVersion;
+      _cachedLane = lane;
+      _cachedPartnerAudience = partnerAudience;
       _loadedAt = DateTime.now();
       return _nodes.isNotEmpty;
     } catch (_) {
       // Never invent non-elegance lanes from the local elegance fallback.
       if (lane != 'elegance') return false;
-      if (_nodes.isEmpty) _nodes = _fallbackNodes();
+      if (_nodes.isEmpty || !sameScope) {
+        _nodes = _fallbackNodes();
+        _cachedLane = 'elegance';
+        _cachedPartnerAudience = partnerAudience;
+        _definitionsVersion = null;
+        _loadedAt = DateTime.now();
+      }
       return _nodes.isNotEmpty;
     }
   }
@@ -184,9 +200,16 @@ abstract final class EleganceTaxonomySource {
   static Future<bool> reloadIfStale({Dio? dio}) => ensureLoaded(dio: dio, force: true);
 
   /// Test/harness: inject projection without HTTP.
-  static void replaceForTest(List<EleganceTaxonomyNode> nodes, {String? definitionsVersion}) {
+  static void replaceForTest(
+    List<EleganceTaxonomyNode> nodes, {
+    String? definitionsVersion,
+    String lane = 'elegance',
+    bool partnerAudience = false,
+  }) {
     _nodes = List.unmodifiable(nodes);
     _definitionsVersion = definitionsVersion;
+    _cachedLane = lane;
+    _cachedPartnerAudience = partnerAudience;
     _loadedAt = DateTime.now();
     _harnessLocked = true;
   }
@@ -194,6 +217,8 @@ abstract final class EleganceTaxonomySource {
   static void clearCache() {
     _nodes = const [];
     _definitionsVersion = null;
+    _cachedLane = null;
+    _cachedPartnerAudience = false;
     _loadedAt = null;
     _harnessLocked = false;
   }

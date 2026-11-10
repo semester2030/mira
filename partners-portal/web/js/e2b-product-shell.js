@@ -581,16 +581,18 @@
   }
 
   async function loadTaxonomy(force) {
-    if (taxonomyCache && !force) return taxonomyCache;
+    // Isolate cache by lane + audience so elegance↔jewelry never share one projection.
+    const lane = window.__MIRA_TAXONOMY_LANE__ || 'elegance';
+    const audience = lane === 'elegance' ? '' : 'partner';
+    const cacheKey = lane + '|' + (audience || 'public');
+    if (taxonomyCache && taxonomyCache.__miraCacheKey === cacheKey && !force) return taxonomyCache;
     if (!(window.PartnersApi && typeof PartnersApi.taxonomy === 'function')) {
       taxonomyError = 'عميل التصنيفات غير متاح';
       throw new Error(taxonomyError);
     }
     // Lane from central switcher / test harness. New branches appear without portal code edits.
-    const lane = window.__MIRA_TAXONOMY_LANE__ || 'elegance';
-    const audience = lane === 'elegance' ? undefined : 'partner';
-    const doc = await PartnersApi.taxonomy({ lane: lane, audience: audience });
-    taxonomyCache = doc || {};
+    const doc = await PartnersApi.taxonomy({ lane: lane, audience: audience || undefined });
+    taxonomyCache = Object.assign({}, doc || {}, { __miraCacheKey: cacheKey });
     taxonomyError = null;
     return taxonomyCache;
   }

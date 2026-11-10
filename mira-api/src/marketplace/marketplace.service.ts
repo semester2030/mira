@@ -1,6 +1,15 @@
-import { BadRequestException, Inject, Injectable, NotFoundException, OnModuleInit, UnauthorizedException } from '@nestjs/common';
+import {
+  BadRequestException,
+  Inject,
+  Injectable,
+  NotFoundException,
+  OnModuleInit,
+  Optional,
+  UnauthorizedException,
+} from '@nestjs/common';
 import { Prisma } from '@prisma/client';
 import { PrismaService } from '../prisma/prisma.service';
+import { TaxonomyService } from './taxonomy/taxonomy.service';
 import {
   decodeCatalogCursor,
   encodeCatalogCursor,
@@ -84,7 +93,15 @@ export type PartnerSummaryDto = {
 
 @Injectable()
 export class MarketplaceService implements OnModuleInit {
-  constructor(@Inject(PrismaService) private readonly prisma: PrismaService) {}
+  private readonly taxonomy: TaxonomyService;
+
+  constructor(
+    @Inject(PrismaService) private readonly prisma: PrismaService,
+    @Optional() @Inject(TaxonomyService) taxonomy?: TaxonomyService,
+  ) {
+    this.taxonomy = taxonomy ?? new TaxonomyService();
+    if (!taxonomy) this.taxonomy.onModuleInit();
+  }
 
   async onModuleInit(): Promise<void> {
     try {
@@ -302,6 +319,11 @@ export class MarketplaceService implements OnModuleInit {
       throw new BadRequestException(parsedFilters.messageAr);
     }
     const filter = parsedFilters.filter;
+    // Enrich subcategory with central taxonomy so service leaves (occasions.styling) match services.
+    if (filter.subcategory) {
+      const node = this.taxonomy.resolveCatalogSubcategory(filter.subcategory);
+      if (node) filter.taxonomyNode = node;
+    }
     // City is applied in-memory so city facets can exclude the city filter itself (C03).
     const fingerprint = normalizeFilterFingerprint(filter, {
       type: params.type,
@@ -363,6 +385,9 @@ export class MarketplaceService implements OnModuleInit {
     // Published catalog only; cities derived from these rows (no extra partner scan).
     // Kind is pushed to SQL via impossible id when the other kind is requested (C06 partial).
     // Variant AND/OR, city/branch facets, and availability stay in-process for facet accuracy.
+    const subNode = filter.taxonomyNode;
+    const subcategoryIsService = subNode?.offerKind === 'service';
+    const subcategoryIsProduct = !subcategoryIsService && !!filter.subcategory;
     const [products, services] = await Promise.all([
       this.prisma.product.findMany({
         where: {
@@ -370,9 +395,17 @@ export class MarketplaceService implements OnModuleInit {
           contentStatus: 'published',
           catalogSource: 'catalog',
           partner: productPartner,
-          ...(filter.kind === 'service' ? { id: '__none__' } : {}),
-          // Push subcategory to SQL before in-memory pagination/facets (E1-11).
-          ...(filter.subcategory ? { subcategory: filter.subcategory } : {}),
+          ...(filter.kind === 'service' || subcategoryIsService ? { id: '__none__' } : {}),
+          // Push product subcategory to SQL only for product leaves (E1-11).
+          ...(subcategoryIsProduct ? { subcategory: filter.subcategory } : {}),
+          ...(params.lane === 'occasions' && !filter.subcategory && !filter.category
+            ? {
+                OR: [
+                  { category: 'occasions' },
+                  { subcategory: { startsWith: 'occasions.' } },
+                ],
+              }
+            : {}),
         },
         include: {
           partner: true,
@@ -392,7 +425,12 @@ export class MarketplaceService implements OnModuleInit {
           contentStatus: 'published',
           catalogSource: 'catalog',
           partner: servicePartner,
-          ...(filter.kind === 'product' ? { id: '__none__' } : {}),
+          ...(filter.kind === 'product' || subcategoryIsProduct ? { id: '__none__' } : {}),
+          // Service leaves / occasions lane: scope by taxonomy category id, never partner type alone.
+          ...(subcategoryIsService && subNode?.category ? { category: subNode.category } : {}),
+          ...(params.lane === 'occasions' && !filter.subcategory && !filter.category
+            ? { category: 'occasions' }
+            : {}),
         },
         include: { partner: true, branch: true },
       }),
@@ -458,6 +496,7 @@ export class MarketplaceService implements OnModuleInit {
           descriptionAr: product.descriptionAr,
           category: product.category,
           subcategory: product.subcategory,
+          profileId: (product as { profileId?: string | null }).profileId ?? null,
           concernTags: product.concernTags,
           priceHalalas: product.priceHalalas,
           optionsJson: commerce.optionsJson,
@@ -514,6 +553,7 @@ export class MarketplaceService implements OnModuleInit {
           nameEn: service.nameEn,
           descriptionAr: service.descriptionAr,
           category: service.category,
+          profileId: service.profileId ?? null,
           concernTags: service.concernTags,
           priceHalalas: service.priceHalalas,
           durationMin: service.durationMin,

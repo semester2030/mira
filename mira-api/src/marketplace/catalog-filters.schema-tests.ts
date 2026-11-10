@@ -348,7 +348,7 @@ const dress: CatalogFilterItem = {
   assert.equal(coerceQueryParam('black'), 'black');
 }
 
-// E1: subcategory exact-id filter (products only).
+// E1: subcategory exact-id filter (products; services need taxonomyNode.offerKind=service).
 {
   const parsed = parseCatalogFilterQuery({ subcategory: 'clothes.abaya' });
   assert.equal(parsed.ok, true);
@@ -360,6 +360,64 @@ const dress: CatalogFilterItem = {
     assert.equal(matchCatalogItem(evening, parsed.filter), null);
     assert.equal(matchCatalogItem({ ...dress, kind: 'service', subcategory: 'clothes.abaya' } as CatalogFilterItem, parsed.filter), null);
   }
+}
+
+// Phase1: occasions lane isolates hair; styling subcategory matches service by taxonomy ids.
+{
+  const styling: CatalogFilterItem = {
+    ...dress,
+    kind: 'service',
+    id: 'style-1',
+    category: 'occasions',
+    profileId: 'service.occasions',
+    subcategory: null,
+    priceHalalas: 50000,
+    durationMin: 60,
+    branchId: 'br-a',
+    availableOnDay: true,
+    bookingEnabled: true,
+  };
+  const hair: CatalogFilterItem = {
+    ...dress,
+    kind: 'service',
+    id: 'hair-1',
+    category: 'hair',
+    profileId: null,
+    subcategory: null,
+    priceHalalas: 20000,
+    durationMin: 45,
+  };
+  const favors: CatalogFilterItem = {
+    ...dress,
+    id: 'fav-1',
+    category: 'occasions',
+    subcategory: 'occasions.favors',
+    profileId: 'product.occasions_favors',
+  };
+  assert.ok(matchCatalogItem(styling, { lane: 'occasions' }));
+  assert.equal(matchCatalogItem(hair, { lane: 'occasions' }), null, 'hair must not enter occasions');
+  assert.ok(matchCatalogItem(hair, { lane: 'beauty', kind: 'service', category: 'hair' }));
+  assert.ok(matchCatalogItem(favors, { lane: 'occasions', kind: 'product' }));
+  assert.equal(matchCatalogItem(styling, { lane: 'occasions', kind: 'product' }), null);
+  assert.equal(matchCatalogItem(favors, { lane: 'occasions', kind: 'service' }), null);
+  const stylingFilter = {
+    lane: 'occasions',
+    subcategory: 'occasions.styling',
+    taxonomyNode: {
+      id: 'occasions.styling',
+      lane: 'occasions',
+      category: 'occasions',
+      profileId: 'service.occasions',
+      offerKind: 'service' as const,
+    },
+    branchIds: ['br-a'],
+    availableOn: '2026-11-10',
+  };
+  assert.ok(matchCatalogItem(styling, stylingFilter));
+  assert.equal(matchCatalogItem({ ...styling, branchId: 'br-b' }, stylingFilter), null);
+  assert.equal(matchCatalogItem({ ...styling, availableOnDay: false }, stylingFilter), null);
+  assert.equal(matchCatalogItem(favors, stylingFilter), null);
+  assert.equal(matchCatalogItem(hair, stylingFilter), null);
 }
 
 // Phase1: ageMonths inclusive bounds; unknown age excluded only when filter set.

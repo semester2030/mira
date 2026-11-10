@@ -231,6 +231,11 @@ export class UpdateServiceDto {
   category?: string;
 
   @IsOptional()
+  @IsString()
+  @MaxLength(80)
+  profileId?: string;
+
+  @IsOptional()
   @IsBoolean()
   bookingEnabled?: boolean;
 
@@ -301,6 +306,11 @@ export class UpsertServiceDto {
   @IsString()
   @MaxLength(40)
   category?: string;
+
+  @IsOptional()
+  @IsString()
+  @MaxLength(80)
+  profileId?: string;
 
   @IsOptional()
   @IsBoolean()
