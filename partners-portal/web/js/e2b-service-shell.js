@@ -620,17 +620,20 @@
     let nav = form.querySelector('[data-testid="e2c-mobile-steps"]');
     if (!nav) {
       nav = el('nav', {
-        className: 'e2b-mobile-steps e2c-mobile-steps',
+        className: 'e2b-mobile-steps e2c-mobile-steps e2b-editor-tabs',
         'data-testid': 'e2c-mobile-steps',
         role: 'tablist',
-        'aria-label': 'خطوات محرر الخدمة',
+        'aria-label': 'تبويبات محرر الخدمة',
       });
       form.insertBefore(nav, compose);
+    } else {
+      nav.classList.add('e2b-editor-tabs');
     }
     const steps = [
-      { id: 'basics', label: 'الأساسيات', fieldRoles: ['service-orbs', 'basics', 'place', 'template', 'secondary'], showMedia: false, showAdvanced: false, showTail: false },
-      { id: 'media', label: 'الوسائط', fieldRoles: [], showMedia: true, showAdvanced: false, showTail: false },
-      { id: 'more', label: 'المزيد', fieldRoles: [], showMedia: false, showAdvanced: true, showTail: true },
+      { id: 'basics', label: 'الأساسيات', fieldRoles: ['service-orbs', 'basics', 'template', 'secondary'], showMedia: true, showAdvanced: false, showTail: false },
+      { id: 'place', label: 'المكان', fieldRoles: ['place'], showMedia: true, showAdvanced: false, showTail: false },
+      { id: 'schedule', label: 'الإتاحة والتقويم', fieldRoles: ['availability'], showMedia: false, showAdvanced: true, showTail: false },
+      { id: 'media', label: 'الوسائط والتفاصيل', fieldRoles: [], showMedia: true, showAdvanced: false, showTail: true },
     ];
     const current = form.dataset.e2cMobileStep || 'basics';
     nav.replaceChildren();
@@ -660,25 +663,26 @@
     form.setAttribute('data-e2c-mobile-step', active.id);
     const narrow = isNarrowServiceViewport();
     const byRole = (role) => form.querySelector('[data-section-role="' + role + '"]');
+    // Always one tab of fields — never expand all on desktop via !narrow.
     ['service-orbs', 'basics', 'place', 'template', 'secondary'].forEach((role) => {
       const node = byRole(role);
       if (!node) return;
-      const show = !narrow || active.fieldRoles.indexOf(role) >= 0;
+      const show = active.fieldRoles.indexOf(role) >= 0;
       node.hidden = !show;
       node.classList.toggle('e2b-step-hidden', !show);
     });
     if (fields) {
-      const any = !narrow || active.fieldRoles.some((role) => byRole(role));
+      const any = active.fieldRoles.some((role) => byRole(role));
       fields.hidden = !any;
       fields.classList.toggle('e2b-step-hidden', !any);
     }
     if (mediaCol) {
-      const show = !narrow || active.showMedia;
+      const show = !narrow || active.showMedia || active.id === 'basics' || active.id === 'place';
       mediaCol.hidden = !show;
       mediaCol.classList.toggle('e2b-step-hidden', !show);
     }
     if (advanced) {
-      const show = !narrow || active.showAdvanced;
+      const show = !!active.showAdvanced;
       advanced.hidden = !show;
       advanced.classList.toggle('e2b-step-hidden', !show);
     }
@@ -695,7 +699,7 @@
         node.classList.remove('e2b-step-hidden');
         return;
       }
-      const show = !narrow || active.showTail;
+      const show = !!active.showTail;
       node.hidden = !show;
       node.classList.toggle('e2b-step-hidden', !show);
     });
@@ -737,6 +741,10 @@
   function focusEditor(formId) {
     enableServiceMode(formId);
     document.body.classList.add('e2b-editor-focus');
+    if (window.MiraPortalShell && typeof MiraPortalShell.openServiceEditor === 'function') {
+      MiraPortalShell.openServiceEditor();
+      return;
+    }
     const form = resolveForm();
     if (form) form.scrollIntoView({ behavior: 'smooth', block: 'start' });
   }

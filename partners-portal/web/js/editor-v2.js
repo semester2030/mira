@@ -664,6 +664,21 @@
         seq: mySeq,
         formId: formId,
       };
+      try {
+        if (typeof document !== 'undefined' && document.dispatchEvent) {
+          document.dispatchEvent(
+            new CustomEvent('mira:draft-saved', {
+              detail: {
+                formId: formId,
+                clientDraftId: built.clientDraftId,
+                revision: saved.revision,
+              },
+            }),
+          );
+        }
+      } catch (_) {
+        /* optional UI hook */
+      }
       return state.lastFlushResult[formId];
     } catch (error) {
       if (error && error.name === 'AbortError') {

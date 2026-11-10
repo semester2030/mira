@@ -1,0 +1,776 @@
+{
+  "ok": true,
+  "checks": [
+    {
+      "name": "d1366:shell",
+      "ok": true,
+      "detail": null
+    },
+    {
+      "name": "d1366:list-view",
+      "ok": true,
+      "detail": {
+        "view": "products",
+        "mode": "list",
+        "listVisible": true,
+        "editorVisible": false,
+        "draftsVisible": false,
+        "commerceVisible": false,
+        "navActive": true
+      }
+    },
+    {
+      "name": "d1366:list-not-editor",
+      "ok": true,
+      "detail": {
+        "view": "products",
+        "mode": "list",
+        "listVisible": true,
+        "editorVisible": false,
+        "draftsVisible": false,
+        "commerceVisible": false,
+        "navActive": true
+      }
+    },
+    {
+      "name": "d1366:list-hides-drafts",
+      "ok": true,
+      "detail": {
+        "view": "products",
+        "mode": "list",
+        "listVisible": true,
+        "editorVisible": false,
+        "draftsVisible": false,
+        "commerceVisible": false,
+        "navActive": true
+      }
+    },
+    {
+      "name": "d1366:list-hides-commerce",
+      "ok": true,
+      "detail": {
+        "view": "products",
+        "mode": "list",
+        "listVisible": true,
+        "editorVisible": false,
+        "draftsVisible": false,
+        "commerceVisible": false,
+        "navActive": true
+      }
+    },
+    {
+      "name": "d1366:nav-products",
+      "ok": true,
+      "detail": {
+        "view": "products",
+        "mode": "list",
+        "listVisible": true,
+        "editorVisible": false,
+        "draftsVisible": false,
+        "commerceVisible": false,
+        "navActive": true
+      }
+    },
+    {
+      "name": "d1366:edit-mode",
+      "ok": true,
+      "detail": {
+        "view": "products",
+        "mode": "edit",
+        "listVisible": false,
+        "editorVisible": true,
+        "draftsVisible": false,
+        "tabCount": 4,
+        "step": "basics",
+        "basicsVisible": true,
+        "optionsVisible": false,
+        "detailsVisible": false,
+        "actionsVisible": true,
+        "hash": "#/products/edit"
+      }
+    },
+    {
+      "name": "d1366:edit-hides-list",
+      "ok": true,
+      "detail": {
+        "view": "products",
+        "mode": "edit",
+        "listVisible": false,
+        "editorVisible": true,
+        "draftsVisible": false,
+        "tabCount": 4,
+        "step": "basics",
+        "basicsVisible": true,
+        "optionsVisible": false,
+        "detailsVisible": false,
+        "actionsVisible": true,
+        "hash": "#/products/edit"
+      }
+    },
+    {
+      "name": "d1366:edit-shows-editor",
+      "ok": true,
+      "detail": {
+        "view": "products",
+        "mode": "edit",
+        "listVisible": false,
+        "editorVisible": true,
+        "draftsVisible": false,
+        "tabCount": 4,
+        "step": "basics",
+        "basicsVisible": true,
+        "optionsVisible": false,
+        "detailsVisible": false,
+        "actionsVisible": true,
+        "hash": "#/products/edit"
+      }
+    },
+    {
+      "name": "d1366:edit-hides-drafts",
+      "ok": true,
+      "detail": {
+        "view": "products",
+        "mode": "edit",
+        "listVisible": false,
+        "editorVisible": true,
+        "draftsVisible": false,
+        "tabCount": 4,
+        "step": "basics",
+        "basicsVisible": true,
+        "optionsVisible": false,
+        "detailsVisible": false,
+        "actionsVisible": true,
+        "hash": "#/products/edit"
+      }
+    },
+    {
+      "name": "d1366:edit-hash",
+      "ok": true,
+      "detail": "#/products/edit"
+    },
+    {
+      "name": "d1366:tabs-present",
+      "ok": true,
+      "detail": {
+        "view": "products",
+        "mode": "edit",
+        "listVisible": false,
+        "editorVisible": true,
+        "draftsVisible": false,
+        "tabCount": 4,
+        "step": "basics",
+        "basicsVisible": true,
+        "optionsVisible": false,
+        "detailsVisible": false,
+        "actionsVisible": true,
+        "hash": "#/products/edit"
+      }
+    },
+    {
+      "name": "d1366:single-tab-fields",
+      "ok": true,
+      "detail": {
+        "view": "products",
+        "mode": "edit",
+        "listVisible": false,
+        "editorVisible": true,
+        "draftsVisible": false,
+        "tabCount": 4,
+        "step": "basics",
+        "basicsVisible": true,
+        "optionsVisible": false,
+        "detailsVisible": false,
+        "actionsVisible": true,
+        "hash": "#/products/edit"
+      }
+    },
+    {
+      "name": "d1366:actions-visible",
+      "ok": true,
+      "detail": {
+        "view": "products",
+        "mode": "edit",
+        "listVisible": false,
+        "editorVisible": true,
+        "draftsVisible": false,
+        "tabCount": 4,
+        "step": "basics",
+        "basicsVisible": true,
+        "optionsVisible": false,
+        "detailsVisible": false,
+        "actionsVisible": true,
+        "hash": "#/products/edit"
+      }
+    },
+    {
+      "name": "d1366:offer-hides-basics",
+      "ok": true,
+      "detail": {
+        "step": "offer",
+        "basics": false,
+        "options": true,
+        "details": false
+      }
+    },
+    {
+      "name": "d1366:offer-hides-details",
+      "ok": true,
+      "detail": {
+        "step": "offer",
+        "basics": false,
+        "options": true,
+        "details": false
+      }
+    },
+    {
+      "name": "d1366:drafts-alone",
+      "ok": true,
+      "detail": {
+        "view": "drafts",
+        "drafts": true,
+        "catalog": false,
+        "nav": true,
+        "hash": "#/drafts"
+      }
+    },
+    {
+      "name": "d1366:drafts-nav",
+      "ok": true,
+      "detail": {
+        "view": "drafts",
+        "drafts": true,
+        "catalog": false,
+        "nav": true,
+        "hash": "#/drafts"
+      }
+    },
+    {
+      "name": "d1366:history-back",
+      "ok": true,
+      "detail": {
+        "view": "products",
+        "mode": "edit",
+        "hash": "#/products/edit"
+      }
+    },
+    {
+      "name": "d1440:shell",
+      "ok": true,
+      "detail": null
+    },
+    {
+      "name": "d1440:list-view",
+      "ok": true,
+      "detail": {
+        "view": "products",
+        "mode": "list",
+        "listVisible": true,
+        "editorVisible": false,
+        "draftsVisible": false,
+        "commerceVisible": false,
+        "navActive": true
+      }
+    },
+    {
+      "name": "d1440:list-not-editor",
+      "ok": true,
+      "detail": {
+        "view": "products",
+        "mode": "list",
+        "listVisible": true,
+        "editorVisible": false,
+        "draftsVisible": false,
+        "commerceVisible": false,
+        "navActive": true
+      }
+    },
+    {
+      "name": "d1440:list-hides-drafts",
+      "ok": true,
+      "detail": {
+        "view": "products",
+        "mode": "list",
+        "listVisible": true,
+        "editorVisible": false,
+        "draftsVisible": false,
+        "commerceVisible": false,
+        "navActive": true
+      }
+    },
+    {
+      "name": "d1440:list-hides-commerce",
+      "ok": true,
+      "detail": {
+        "view": "products",
+        "mode": "list",
+        "listVisible": true,
+        "editorVisible": false,
+        "draftsVisible": false,
+        "commerceVisible": false,
+        "navActive": true
+      }
+    },
+    {
+      "name": "d1440:nav-products",
+      "ok": true,
+      "detail": {
+        "view": "products",
+        "mode": "list",
+        "listVisible": true,
+        "editorVisible": false,
+        "draftsVisible": false,
+        "commerceVisible": false,
+        "navActive": true
+      }
+    },
+    {
+      "name": "d1440:edit-mode",
+      "ok": true,
+      "detail": {
+        "view": "products",
+        "mode": "edit",
+        "listVisible": false,
+        "editorVisible": true,
+        "draftsVisible": false,
+        "tabCount": 4,
+        "step": "basics",
+        "basicsVisible": true,
+        "optionsVisible": false,
+        "detailsVisible": false,
+        "actionsVisible": true,
+        "hash": "#/products/edit"
+      }
+    },
+    {
+      "name": "d1440:edit-hides-list",
+      "ok": true,
+      "detail": {
+        "view": "products",
+        "mode": "edit",
+        "listVisible": false,
+        "editorVisible": true,
+        "draftsVisible": false,
+        "tabCount": 4,
+        "step": "basics",
+        "basicsVisible": true,
+        "optionsVisible": false,
+        "detailsVisible": false,
+        "actionsVisible": true,
+        "hash": "#/products/edit"
+      }
+    },
+    {
+      "name": "d1440:edit-shows-editor",
+      "ok": true,
+      "detail": {
+        "view": "products",
+        "mode": "edit",
+        "listVisible": false,
+        "editorVisible": true,
+        "draftsVisible": false,
+        "tabCount": 4,
+        "step": "basics",
+        "basicsVisible": true,
+        "optionsVisible": false,
+        "detailsVisible": false,
+        "actionsVisible": true,
+        "hash": "#/products/edit"
+      }
+    },
+    {
+      "name": "d1440:edit-hides-drafts",
+      "ok": true,
+      "detail": {
+        "view": "products",
+        "mode": "edit",
+        "listVisible": false,
+        "editorVisible": true,
+        "draftsVisible": false,
+        "tabCount": 4,
+        "step": "basics",
+        "basicsVisible": true,
+        "optionsVisible": false,
+        "detailsVisible": false,
+        "actionsVisible": true,
+        "hash": "#/products/edit"
+      }
+    },
+    {
+      "name": "d1440:edit-hash",
+      "ok": true,
+      "detail": "#/products/edit"
+    },
+    {
+      "name": "d1440:tabs-present",
+      "ok": true,
+      "detail": {
+        "view": "products",
+        "mode": "edit",
+        "listVisible": false,
+        "editorVisible": true,
+        "draftsVisible": false,
+        "tabCount": 4,
+        "step": "basics",
+        "basicsVisible": true,
+        "optionsVisible": false,
+        "detailsVisible": false,
+        "actionsVisible": true,
+        "hash": "#/products/edit"
+      }
+    },
+    {
+      "name": "d1440:single-tab-fields",
+      "ok": true,
+      "detail": {
+        "view": "products",
+        "mode": "edit",
+        "listVisible": false,
+        "editorVisible": true,
+        "draftsVisible": false,
+        "tabCount": 4,
+        "step": "basics",
+        "basicsVisible": true,
+        "optionsVisible": false,
+        "detailsVisible": false,
+        "actionsVisible": true,
+        "hash": "#/products/edit"
+      }
+    },
+    {
+      "name": "d1440:actions-visible",
+      "ok": true,
+      "detail": {
+        "view": "products",
+        "mode": "edit",
+        "listVisible": false,
+        "editorVisible": true,
+        "draftsVisible": false,
+        "tabCount": 4,
+        "step": "basics",
+        "basicsVisible": true,
+        "optionsVisible": false,
+        "detailsVisible": false,
+        "actionsVisible": true,
+        "hash": "#/products/edit"
+      }
+    },
+    {
+      "name": "d1440:offer-hides-basics",
+      "ok": true,
+      "detail": {
+        "step": "offer",
+        "basics": false,
+        "options": true,
+        "details": false
+      }
+    },
+    {
+      "name": "d1440:offer-hides-details",
+      "ok": true,
+      "detail": {
+        "step": "offer",
+        "basics": false,
+        "options": true,
+        "details": false
+      }
+    },
+    {
+      "name": "d1440:drafts-alone",
+      "ok": true,
+      "detail": {
+        "view": "drafts",
+        "drafts": true,
+        "catalog": false,
+        "nav": true,
+        "hash": "#/drafts"
+      }
+    },
+    {
+      "name": "d1440:drafts-nav",
+      "ok": true,
+      "detail": {
+        "view": "drafts",
+        "drafts": true,
+        "catalog": false,
+        "nav": true,
+        "hash": "#/drafts"
+      }
+    },
+    {
+      "name": "d1440:history-back",
+      "ok": true,
+      "detail": {
+        "view": "products",
+        "mode": "edit",
+        "hash": "#/products/edit"
+      }
+    },
+    {
+      "name": "m390:shell",
+      "ok": true,
+      "detail": null
+    },
+    {
+      "name": "m390:list-view",
+      "ok": true,
+      "detail": {
+        "view": "products",
+        "mode": "list",
+        "listVisible": true,
+        "editorVisible": false,
+        "draftsVisible": false,
+        "commerceVisible": false,
+        "navActive": true
+      }
+    },
+    {
+      "name": "m390:list-not-editor",
+      "ok": true,
+      "detail": {
+        "view": "products",
+        "mode": "list",
+        "listVisible": true,
+        "editorVisible": false,
+        "draftsVisible": false,
+        "commerceVisible": false,
+        "navActive": true
+      }
+    },
+    {
+      "name": "m390:list-hides-drafts",
+      "ok": true,
+      "detail": {
+        "view": "products",
+        "mode": "list",
+        "listVisible": true,
+        "editorVisible": false,
+        "draftsVisible": false,
+        "commerceVisible": false,
+        "navActive": true
+      }
+    },
+    {
+      "name": "m390:list-hides-commerce",
+      "ok": true,
+      "detail": {
+        "view": "products",
+        "mode": "list",
+        "listVisible": true,
+        "editorVisible": false,
+        "draftsVisible": false,
+        "commerceVisible": false,
+        "navActive": true
+      }
+    },
+    {
+      "name": "m390:nav-products",
+      "ok": true,
+      "detail": {
+        "view": "products",
+        "mode": "list",
+        "listVisible": true,
+        "editorVisible": false,
+        "draftsVisible": false,
+        "commerceVisible": false,
+        "navActive": true
+      }
+    },
+    {
+      "name": "m390:edit-mode",
+      "ok": true,
+      "detail": {
+        "view": "products",
+        "mode": "edit",
+        "listVisible": false,
+        "editorVisible": true,
+        "draftsVisible": false,
+        "tabCount": 4,
+        "step": "basics",
+        "basicsVisible": true,
+        "optionsVisible": false,
+        "detailsVisible": false,
+        "actionsVisible": true,
+        "hash": "#/products/edit"
+      }
+    },
+    {
+      "name": "m390:edit-hides-list",
+      "ok": true,
+      "detail": {
+        "view": "products",
+        "mode": "edit",
+        "listVisible": false,
+        "editorVisible": true,
+        "draftsVisible": false,
+        "tabCount": 4,
+        "step": "basics",
+        "basicsVisible": true,
+        "optionsVisible": false,
+        "detailsVisible": false,
+        "actionsVisible": true,
+        "hash": "#/products/edit"
+      }
+    },
+    {
+      "name": "m390:edit-shows-editor",
+      "ok": true,
+      "detail": {
+        "view": "products",
+        "mode": "edit",
+        "listVisible": false,
+        "editorVisible": true,
+        "draftsVisible": false,
+        "tabCount": 4,
+        "step": "basics",
+        "basicsVisible": true,
+        "optionsVisible": false,
+        "detailsVisible": false,
+        "actionsVisible": true,
+        "hash": "#/products/edit"
+      }
+    },
+    {
+      "name": "m390:edit-hides-drafts",
+      "ok": true,
+      "detail": {
+        "view": "products",
+        "mode": "edit",
+        "listVisible": false,
+        "editorVisible": true,
+        "draftsVisible": false,
+        "tabCount": 4,
+        "step": "basics",
+        "basicsVisible": true,
+        "optionsVisible": false,
+        "detailsVisible": false,
+        "actionsVisible": true,
+        "hash": "#/products/edit"
+      }
+    },
+    {
+      "name": "m390:edit-hash",
+      "ok": true,
+      "detail": "#/products/edit"
+    },
+    {
+      "name": "m390:tabs-present",
+      "ok": true,
+      "detail": {
+        "view": "products",
+        "mode": "edit",
+        "listVisible": false,
+        "editorVisible": true,
+        "draftsVisible": false,
+        "tabCount": 4,
+        "step": "basics",
+        "basicsVisible": true,
+        "optionsVisible": false,
+        "detailsVisible": false,
+        "actionsVisible": true,
+        "hash": "#/products/edit"
+      }
+    },
+    {
+      "name": "m390:single-tab-fields",
+      "ok": true,
+      "detail": {
+        "view": "products",
+        "mode": "edit",
+        "listVisible": false,
+        "editorVisible": true,
+        "draftsVisible": false,
+        "tabCount": 4,
+        "step": "basics",
+        "basicsVisible": true,
+        "optionsVisible": false,
+        "detailsVisible": false,
+        "actionsVisible": true,
+        "hash": "#/products/edit"
+      }
+    },
+    {
+      "name": "m390:actions-visible",
+      "ok": true,
+      "detail": {
+        "view": "products",
+        "mode": "edit",
+        "listVisible": false,
+        "editorVisible": true,
+        "draftsVisible": false,
+        "tabCount": 4,
+        "step": "basics",
+        "basicsVisible": true,
+        "optionsVisible": false,
+        "detailsVisible": false,
+        "actionsVisible": true,
+        "hash": "#/products/edit"
+      }
+    },
+    {
+      "name": "m390:offer-hides-basics",
+      "ok": true,
+      "detail": {
+        "step": "offer",
+        "basics": false,
+        "options": true,
+        "details": false
+      }
+    },
+    {
+      "name": "m390:offer-hides-details",
+      "ok": true,
+      "detail": {
+        "step": "offer",
+        "basics": false,
+        "options": true,
+        "details": false
+      }
+    },
+    {
+      "name": "m390:drafts-alone",
+      "ok": true,
+      "detail": {
+        "view": "drafts",
+        "drafts": true,
+        "catalog": false,
+        "nav": true,
+        "hash": "#/drafts"
+      }
+    },
+    {
+      "name": "m390:drafts-nav",
+      "ok": true,
+      "detail": {
+        "view": "drafts",
+        "drafts": true,
+        "catalog": false,
+        "nav": true,
+        "hash": "#/drafts"
+      }
+    },
+    {
+      "name": "m390:history-back",
+      "ok": true,
+      "detail": {
+        "view": "products",
+        "mode": "edit",
+        "hash": "#/products/edit"
+      }
+    }
+  ],
+  "screenshots": [
+    "/Users/fayez/Desktop/mira-wt/.portal-shell-acceptance/d1366-products-list.png",
+    "/Users/fayez/Desktop/mira-wt/.portal-shell-acceptance/d1366-products-edit-basics.png",
+    "/Users/fayez/Desktop/mira-wt/.portal-shell-acceptance/d1366-products-edit-offer.png",
+    "/Users/fayez/Desktop/mira-wt/.portal-shell-acceptance/d1366-drafts.png",
+    "/Users/fayez/Desktop/mira-wt/.portal-shell-acceptance/d1440-products-list.png",
+    "/Users/fayez/Desktop/mira-wt/.portal-shell-acceptance/d1440-products-edit-basics.png",
+    "/Users/fayez/Desktop/mira-wt/.portal-shell-acceptance/d1440-products-edit-offer.png",
+    "/Users/fayez/Desktop/mira-wt/.portal-shell-acceptance/d1440-drafts.png",
+    "/Users/fayez/Desktop/mira-wt/.portal-shell-acceptance/m390-products-list.png",
+    "/Users/fayez/Desktop/mira-wt/.portal-shell-acceptance/m390-products-edit-basics.png",
+    "/Users/fayez/Desktop/mira-wt/.portal-shell-acceptance/m390-products-edit-offer.png",
+    "/Users/fayez/Desktop/mira-wt/.portal-shell-acceptance/m390-drafts.png"
+  ],
+  "failures": []
+}

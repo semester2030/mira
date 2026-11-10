@@ -327,9 +327,31 @@ body.e2b-product-mode #partnerSettingsSection dd {
   margin: 0;
 }
 
-/* Mobile step nav — hidden on desktop; phone uses short steps (not one tall form). */
-.e2b-mobile-steps {
-  display: none;
+/* Editor tabs — visible on all viewports; one field group at a time (not one tall form). */
+.e2b-mobile-steps,
+.e2b-editor-tabs {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.4rem;
+  margin: 0 0 0.85rem;
+  padding: 0.35rem;
+  border-radius: 16px;
+  background: rgba(255, 255, 255, 0.55);
+  border: 1px solid rgba(201, 166, 216, 0.4);
+}
+.e2b-mobile-step {
+  border: 0;
+  background: transparent;
+  font: inherit;
+  font-weight: 700;
+  padding: 0.45rem 0.75rem;
+  border-radius: 12px;
+  cursor: pointer;
+  color: var(--e2b-muted);
+}
+.e2b-mobile-step.is-active {
+  background: rgba(232, 111, 169, 0.16);
+  color: var(--e2b-rose-strong);
 }
 body.e2b-product-mode .e2b-step-hidden {
   display: none !important;
@@ -1094,4 +1116,118 @@ body.e2b-service-mode .e2c-map-preview img.e2c-map-img {
 .manual-input-label input {
   width: 100%;
   margin-top: 0.35rem;
+}
+
+/* —— Portal shell: one active view, sidebar right (RTL) —— */
+.portal-shell {
+  display: grid;
+  grid-template-columns: 220px minmax(0, 1fr);
+  gap: 1.25rem;
+  align-items: start;
+  width: min(1280px, 100%);
+  margin: 0 auto;
+}
+.portal-rail {
+  position: sticky;
+  top: 1rem;
+}
+.portal-stage-head {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: space-between;
+  gap: 0.75rem;
+  margin-bottom: 0.85rem;
+}
+.portal-view-title {
+  margin: 0;
+  font-size: 1.35rem;
+  font-weight: 800;
+  color: var(--e2b-ink, #3a2a40);
+}
+.portal-stage-actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.5rem;
+}
+body[data-portal-view] #portalStageContent > .card[data-portal-active="0"],
+body[data-portal-view] #portalStageContent > .card.hidden {
+  display: none !important;
+}
+/* Hide legacy e2b inner rail when portal shell rail is present */
+#portalShell #e2bSideNav,
+#portalShell .e2b-workspace > .e2b-rail {
+  display: none !important;
+}
+#portalShell .e2b-workspace {
+  grid-template-columns: 1fr;
+}
+body.portal-mode-edit #portalHomeCard,
+body.portal-mode-edit #portalAddCard {
+  display: none !important;
+}
+body.portal-mode-list #e2bEditorPanel,
+body.portal-mode-edit #e2bListPanel {
+  display: none !important;
+}
+body.portal-mode-list #serviceEditorWrap,
+body.portal-mode-edit #serviceListWrap {
+  display: none !important;
+}
+.portal-draft-card {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: space-between;
+  gap: 0.75rem;
+  padding: 0.85rem 1rem;
+  border-radius: 16px;
+  background: rgba(255, 255, 255, 0.7);
+  border: 1px solid rgba(201, 166, 216, 0.45);
+  margin-bottom: 0.65rem;
+}
+.portal-draft-meta {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.45rem 0.85rem;
+  align-items: baseline;
+}
+.portal-draft-name { font-weight: 800; }
+.portal-draft-kind,
+.portal-draft-status,
+.portal-draft-updated {
+  color: var(--e2b-muted, #7a6584);
+  font-size: 0.88rem;
+}
+body.e2b-product-mode [data-section-role="editor-actions"],
+body.e2b-service-mode [data-section-role="editor-actions"],
+body.e2b-product-mode [data-testid="e2b-editor-actions"],
+body.e2b-service-mode [data-testid="e2b-editor-actions"] {
+  position: sticky;
+  bottom: 0;
+  z-index: 5;
+  margin-top: 0.75rem;
+  padding: 0.65rem 0.75rem;
+  border-radius: 16px 16px 0 0;
+  background: rgba(255, 252, 254, 0.94);
+  border-top: 1px solid rgba(201, 166, 216, 0.45);
+  backdrop-filter: blur(8px);
+}
+@media (max-width: 900px) {
+  .portal-shell {
+    grid-template-columns: 1fr;
+  }
+  .portal-rail {
+    position: static;
+  }
+  .portal-nav {
+    flex-direction: row;
+    flex-wrap: nowrap;
+    overflow-x: auto;
+    -webkit-overflow-scrolling: touch;
+  }
+  .portal-nav .e2b-nav-link {
+    flex: 0 0 auto;
+    white-space: nowrap;
+  }
 }

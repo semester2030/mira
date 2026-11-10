@@ -241,41 +241,26 @@
   }
 
   function wireSideNav() {
+    // Portal shell owns navigation; keep legacy rail links as no-op scroll when shell absent.
     const nav = document.getElementById('e2bSideNav');
     if (!nav || nav.dataset.wired === '1') return;
     nav.dataset.wired = '1';
     nav.addEventListener('click', (e) => {
       const a = e.target && e.target.closest ? e.target.closest('a.e2b-nav-link') : null;
       if (!a) return;
-      nav.querySelectorAll('.e2b-nav-link').forEach((n) => n.classList.toggle('is-active', n === a));
+      e.preventDefault();
       const kind = a.getAttribute('data-nav');
-      if (kind === 'products') {
-        e.preventDefault();
-        showList();
-        const section = document.getElementById('catalogSection');
-        if (section) section.scrollIntoView({ behavior: 'smooth', block: 'start' });
+      if (window.MiraPortalShell && typeof MiraPortalShell.navigate === 'function') {
+        if (kind === 'products') MiraPortalShell.navigate('products', 'list');
+        else if (kind === 'drafts') MiraPortalShell.navigate('drafts', 'list');
+        else if (kind === 'orders') MiraPortalShell.navigate('orders', 'list');
+        else if (kind === 'bookings') MiraPortalShell.navigate('bookings', 'list');
+        else if (kind === 'settings') MiraPortalShell.navigate('settings', 'list');
+        else if (kind === 'ads') MiraPortalShell.navigate('ads', 'list');
         return;
       }
-      if (kind === 'settings') {
-        e.preventDefault();
-        document.body.classList.remove('e2b-editor-focus');
-        const settings = document.getElementById('partnerSettingsSection');
-        if (settings) {
-          settings.classList.remove('hidden');
-          settings.scrollIntoView({ behavior: 'smooth', block: 'start' });
-        }
-        return;
-      }
-      if (kind === 'orders' || kind === 'bookings') {
-        document.body.classList.remove('e2b-editor-focus');
-        const tabBtn =
-          kind === 'bookings'
-            ? document.getElementById('commerceTabBookings')
-            : document.getElementById('commerceTabOrders');
-        if (tabBtn) tabBtn.click();
-      } else {
-        document.body.classList.remove('e2b-editor-focus');
-      }
+      nav.querySelectorAll('.e2b-nav-link').forEach((n) => n.classList.toggle('is-active', n === a));
+      if (kind === 'products') showList();
     });
   }
 
@@ -430,26 +415,29 @@
   }
 
   /**
-   * Phone/tablet narrow: short steps that keep form state in the DOM (no remount).
-   * Desktop (≥901px) leaves the approved side-by-side compose intact.
+   * Horizontal editor tabs on all viewports — one field group at a time.
+   * Desktop keeps media column beside fields; phone may focus media on its tab.
+   * Form state stays in the DOM (no remount).
    */
   function mountMobileEditorSteps(form, compose, fields, mediaCol, tail, ctaNodes) {
     if (!form || !compose) return;
     let nav = form.querySelector('[data-testid="e2b-mobile-steps"]');
     if (!nav) {
       nav = el('nav', {
-        className: 'e2b-mobile-steps',
+        className: 'e2b-mobile-steps e2b-editor-tabs',
         'data-testid': 'e2b-mobile-steps',
         role: 'tablist',
-        'aria-label': 'خطوات المحرر',
+        'aria-label': 'تبويبات المحرر',
       });
       form.insertBefore(nav, compose);
+    } else {
+      nav.classList.add('e2b-editor-tabs');
     }
     const steps = [
       { id: 'basics', label: 'الأساسيات', roles: ['basics'] },
-      { id: 'offer', label: 'العرض', roles: ['options', 'attributes', 'options-preview', 'commerce', 'template'] },
+      { id: 'offer', label: 'الخيارات والمخزون', roles: ['options', 'attributes', 'options-preview', 'commerce', 'template'] },
       { id: 'media', label: 'الوسائط', roles: ['main-media'] },
-      { id: 'more', label: 'المزيد', roles: ['details', 'detail-media', 'variant-media', 'preview-publish'] },
+      { id: 'more', label: 'التفاصيل والإعدادات', roles: ['details', 'detail-media', 'variant-media', 'preview-publish'] },
     ];
     const current = form.dataset.e2bMobileStep || 'basics';
     nav.replaceChildren();
@@ -516,7 +504,8 @@
     form.dataset.e2bMobileStep = active.id;
     form.setAttribute('data-e2b-mobile-step', active.id);
     const narrow = isNarrowEditorViewport();
-    const showRole = (role) => !narrow || active.roles.indexOf(role) >= 0;
+    // Always one field-group tab — never expand all roles on desktop (!narrow).
+    const showRole = (role) => active.roles.indexOf(role) >= 0;
     const byRole = (role) => form.querySelector('[data-section-role="' + role + '"]');
     ['basics', 'options', 'attributes', 'options-preview', 'commerce', 'template'].forEach((role) => {
       const node = byRole(role);
@@ -526,9 +515,11 @@
       node.classList.toggle('e2b-step-hidden', !show);
     });
     if (mediaCol) {
-      const showMedia = !narrow || active.id === 'media';
+      // Desktop: keep media beside active fields. Phone: media tab focuses the stage.
+      const showMedia = !narrow || active.id === 'media' || active.id === 'basics' || active.id === 'offer';
       mediaCol.hidden = !showMedia;
       mediaCol.classList.toggle('e2b-step-hidden', !showMedia);
+      mediaCol.classList.toggle('e2b-media-focus', active.id === 'media');
     }
     (tail || []).forEach((node) => {
       if (!node || !node.getAttribute) return;
@@ -550,11 +541,9 @@
     });
     if (compose) compose.hidden = false;
     if (fields) {
-      const anyField =
-        !narrow ||
-        ['basics', 'options', 'attributes', 'options-preview', 'commerce', 'template'].some(
-          (role) => showRole(role) && byRole(role),
-        );
+      const anyField = ['basics', 'options', 'attributes', 'options-preview', 'commerce', 'template'].some(
+        (role) => showRole(role) && byRole(role),
+      );
       fields.hidden = !anyField;
       fields.classList.toggle('e2b-step-hidden', !anyField);
     }
@@ -836,12 +825,20 @@
   function focusEditor() {
     enableProductMode();
     document.body.classList.add('e2b-editor-focus');
+    if (window.MiraPortalShell && typeof MiraPortalShell.openProductEditor === 'function') {
+      MiraPortalShell.openProductEditor();
+      return;
+    }
     const form = document.getElementById('catalogForm');
     if (form) form.scrollIntoView({ behavior: 'smooth', block: 'start' });
   }
 
   function showList() {
     document.body.classList.remove('e2b-editor-focus');
+    if (window.MiraPortalShell && typeof MiraPortalShell.showProductList === 'function') {
+      MiraPortalShell.showProductList();
+      return;
+    }
     const listPanel = document.getElementById('e2bListPanel');
     if (listPanel) listPanel.scrollIntoView({ behavior: 'smooth', block: 'start' });
   }

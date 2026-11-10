@@ -73,10 +73,10 @@
       </div>
 
       <div class="card" id="editorDraftsSection">
-        <h2>مسودات المحرر (الخادم)</h2>
-        <p class="lead">مسودات محفوظة على الخادم لكل شريك. إعادة الفتح لا تعتمد على localStorage.</p>
+        <h2>المسودات</h2>
+        <p class="lead">مسوداتك المحفوظة على الخادم. افتحي أي مسودة لمتابعة التحرير.</p>
         <button type="button" class="btn btn-ghost" id="refreshEditorDrafts">تحديث المسودات</button>
-        <div id="editorDraftsList"></div>
+        <div id="editorDraftsList" data-testid="editor-drafts-list"></div>
       </div>
 
       <div class="card" id="commerceSection">
@@ -128,6 +128,7 @@
   <script src="js/catalog-journey.js"></script>
   <script src="js/bulk-add.js"></script>
   <script src="js/bulk-group-journey.js"></script>
+  <script src="js/portal-shell.js"></script>
   <script src="js/e2b-product-shell.js"></script>
   <script src="js/e2b-service-shell.js"></script>
   <script src="js/commerce-orders.js"></script>
@@ -143,15 +144,36 @@
       location.href = 'login.html' + location.search;
     };
 
+    const DRAFT_STATUS_AR = {
+      draft: 'مسودة',
+      ready: 'جاهزة',
+      submitted: 'مُرسلة للمراجعة',
+      materialized: 'محفوظة كعرض',
+      discarded: 'مهملة',
+      error: 'خطأ',
+    };
+    const DRAFT_KIND_AR = { product: 'منتج', service: 'خدمة' };
+
+    function formatDraftUpdatedAt(value) {
+      if (!value) return '';
+      try {
+        const d = new Date(value);
+        if (Number.isNaN(d.getTime())) return String(value);
+        return d.toLocaleString('ar-SA', { dateStyle: 'medium', timeStyle: 'short' });
+      } catch (_) {
+        return String(value);
+      }
+    }
+
     window.renderEditorDrafts = async function renderEditorDrafts() {
       const list = document.getElementById('editorDraftsList');
       if (!list) return;
       if (!(window.MiraEditorV2 && MiraEditorV2.state.enabled)) {
-        list.textContent = 'محرر v2 غير مفعّل على الخادم.';
+        list.textContent = 'المحرر غير متاح حاليًا.';
         return;
       }
       if (MiraEditorV2.state.registryMismatch) {
-        list.textContent = 'اختلاف سجل الحقول بين البوابة والخادم — أوقِف التحرير حتى تتطابق النسخ.';
+        list.textContent = 'تعذر مزامنة المحرر — حدّثي الصفحة أو تواصلي مع الدعم.';
         return;
       }
       list.textContent = 'جارٍ التحميل…';
@@ -160,27 +182,43 @@
         list.replaceChildren();
         const items = (data && data.items) || [];
         if (!items.length) {
-          list.textContent = 'لا توجد مسودات خادمية بعد.';
+          list.textContent = 'لا توجد مسودات بعد.';
           return;
         }
         items.forEach((d) => {
           const row = document.createElement('div');
-          row.className = 'list-row';
-          const title = (d.values && d.values.nameAr) || '(بدون اسم)';
-          row.textContent =
-            d.kind + ' · ' + title + ' · rev ' + d.revision + ' · ' + d.status +
-            (d.submitReviewStatus ? ' · مراجعة:' + d.submitReviewStatus : '');
+          row.className = 'portal-draft-card list-row';
+          row.setAttribute('data-portal-draft-card', '1');
+          row.setAttribute('data-testid', 'portal-draft-row');
+          row.setAttribute('data-draft-id', d.clientDraftId || '');
+          row.setAttribute('data-draft-rev', String(d.revision != null ? d.revision : ''));
+          const title = (d.values && d.values.nameAr) || 'بدون اسم';
+          const kindLabel = DRAFT_KIND_AR[d.kind] || d.kind || 'عنصر';
+          const statusLabel = DRAFT_STATUS_AR[d.status] || d.status || 'مسودة';
+          const updatedLabel = formatDraftUpdatedAt(d.updatedAt || d.updated_at || d.modifiedAt);
+          const meta = document.createElement('div');
+          meta.className = 'portal-draft-meta';
+          meta.innerHTML =
+            '<strong class="portal-draft-name"></strong>' +
+            '<span class="portal-draft-kind"></span>' +
+            '<span class="portal-draft-status"></span>' +
+            (updatedLabel ? '<span class="portal-draft-updated"></span>' : '');
+          meta.querySelector('.portal-draft-name').textContent = title;
+          meta.querySelector('.portal-draft-kind').textContent = kindLabel;
+          meta.querySelector('.portal-draft-status').textContent = statusLabel;
+          if (updatedLabel) meta.querySelector('.portal-draft-updated').textContent = 'آخر تعديل: ' + updatedLabel;
           const openBtn = document.createElement('button');
           openBtn.type = 'button';
+          openBtn.className = 'btn btn-primary';
+          openBtn.setAttribute('data-testid', 'portal-draft-open');
           openBtn.textContent = 'فتح';
           openBtn.onclick = async () => {
             try {
               const draft = await MiraEditorV2.openDraft(d.clientDraftId);
+              const kindHint = draft.kind === 'service' ? 'services' : 'products';
+              if (window.MiraPortalShell) MiraPortalShell.navigate(kindHint, 'edit', { force: true });
               if (window.CatalogJourney && typeof CatalogJourney.reopenServerDraft === 'function') {
-                CatalogJourney.reopenServerDraft(
-                  draft,
-                  'مسودة خادمية ' + draft.clientDraftId + ' · rev ' + draft.revision,
-                );
+                CatalogJourney.reopenServerDraft(draft, 'مسودة: ' + ((draft.values && draft.values.nameAr) || title));
               } else {
                 const target = CatalogJourney.resolveFormTarget
                   ? CatalogJourney.resolveFormTarget(draft.kind)
@@ -203,7 +241,7 @@
                   stub,
                   target.formId,
                   target.titleId,
-                  'مسودة خادمية ' + draft.clientDraftId + ' · rev ' + draft.revision,
+                  'مسودة: ' + (values.nameAr || title),
                   {
                     clientDraftId: draft.clientDraftId,
                     kind: draft.kind,
@@ -217,11 +255,13 @@
                   },
                 );
               }
+              clearFormDirty(document.getElementById('catalogForm'));
+              clearFormDirty(document.getElementById('serviceForm'));
             } catch (error) {
               list.textContent = 'تعذر الفتح: ' + (error.message || error);
             }
           };
-          row.appendChild(openBtn);
+          row.append(meta, openBtn);
           list.appendChild(row);
         });
       } catch (error) {
@@ -247,11 +287,70 @@
     };
 
     function scrollToForm(id) {
-      document.getElementById(id).scrollIntoView({
-        behavior: MiraMotion.reduced() ? 'auto' : 'smooth',
-        block: 'start',
+      // Legacy helper — portal shell owns navigation; keep for fixtures without shell.
+      if (window.MiraPortalShell) return;
+      const node = document.getElementById(id);
+      if (node) {
+        node.scrollIntoView({
+          behavior: MiraMotion.reduced() ? 'auto' : 'smooth',
+          block: 'start',
+        });
+      }
+    }
+
+    function markFormDirty(form) {
+      if (!form) return;
+      form.dataset.dirty = '1';
+    }
+
+    function clearFormDirty(form) {
+      if (!form) return;
+      form.dataset.dirty = '0';
+    }
+
+    function formLooksDirty(form) {
+      if (!form) return false;
+      if (form.dataset && form.dataset.dirty === '1') return true;
+      if (window.MiraEditorV2 && MiraEditorV2.state && MiraEditorV2.state.pendingFlush) return true;
+      return false;
+    }
+
+    function wireDirtyTracking() {
+      if (window.__miraPortalDirtyWired) return;
+      window.__miraPortalDirtyWired = true;
+      document.addEventListener(
+        'input',
+        (e) => {
+          const t = e.target;
+          if (!t) return;
+          const form = t.closest && t.closest('#catalogForm, #serviceForm');
+          if (form) markFormDirty(form);
+        },
+        true,
+      );
+      document.addEventListener(
+        'change',
+        (e) => {
+          const t = e.target;
+          if (!t) return;
+          const form = t.closest && t.closest('#catalogForm, #serviceForm');
+          if (form) markFormDirty(form);
+        },
+        true,
+      );
+      window.addEventListener('beforeunload', (e) => {
+        if (formLooksDirty(document.getElementById('catalogForm')) || formLooksDirty(document.getElementById('serviceForm'))) {
+          e.preventDefault();
+          e.returnValue = '';
+        }
+      });
+      document.addEventListener('mira:draft-saved', (ev) => {
+        const formId = ev && ev.detail && ev.detail.formId;
+        clearFormDirty(document.getElementById(formId || 'catalogForm'));
+        if (!formId) clearFormDirty(document.getElementById('serviceForm'));
       });
     }
+    wireDirtyTracking();
 
     async function load(options) {
       try {
@@ -300,6 +399,15 @@
         serviceButton.hidden = !showServices;
         productButton.hidden = !showProducts;
         bulkButton.hidden = !(showServices || showProducts);
+        if (window.MiraPortalShell) {
+          MiraPortalShell.boot();
+          MiraPortalShell.setDirtyGuard(function () {
+            return formLooksDirty(document.getElementById('catalogForm')) ||
+              formLooksDirty(document.getElementById('serviceForm'));
+          });
+          if (showProducts) MiraPortalShell.navigate('products', 'list', { replace: true, force: true });
+          else if (showServices) MiraPortalShell.navigate('services', 'list', { replace: true, force: true });
+        }
         if (showProducts && window.MiraE2BProductShell) MiraE2BProductShell.enableProductMode();
         if (showServices && !showProducts && window.MiraE2BServiceShell) {
           MiraE2BServiceShell.enableServiceMode('catalogForm');
@@ -313,6 +421,7 @@
             if (developer) renderForm('brand', null, 'catalogForm', 'catalogTitle');
             else if (p.type === 'brand') renderForm('brand', null, 'catalogForm', 'catalogTitle');
           }
+          if (window.MiraPortalShell) MiraPortalShell.openProductEditor();
           if (window.MiraE2BProductShell) MiraE2BProductShell.focusEditor();
           else scrollToForm('catalogForm');
         };
@@ -324,6 +433,7 @@
             if ((!options || !options.preserveForms) && !hasServiceEditor) {
               renderForm('clinic', null, 'serviceForm', 'serviceTitle');
             }
+            if (window.MiraPortalShell) MiraPortalShell.openServiceEditor();
             if (window.MiraE2BServiceShell) MiraE2BServiceShell.focusEditor('serviceForm');
             else scrollToForm('serviceForm');
           } else {
@@ -333,11 +443,13 @@
             if ((!options || !options.preserveForms) && !hasServiceEditor) {
               renderForm(p.type, null, 'catalogForm', 'catalogTitle');
             }
+            if (window.MiraPortalShell) MiraPortalShell.openServiceEditor();
             if (window.MiraE2BServiceShell) MiraE2BServiceShell.focusEditor('catalogForm');
             else scrollToForm('catalogForm');
           }
         };
         bulkButton.onclick = () => {
+          if (window.MiraPortalShell) MiraPortalShell.navigate('bulk', 'list', { force: true });
           bulkSection.classList.remove('hidden');
           if (window.MiraBulkAdd) {
             const preferService = showServices && !showProducts;
@@ -349,7 +461,6 @@
               kindEl.dispatchEvent(new Event('change'));
             }
           }
-          bulkSection.scrollIntoView({ behavior: 'smooth', block: 'start' });
         };
         if (new URLSearchParams(location.search).get('bulk') && window.MiraBulkAdd) {
           bulkButton.click();
@@ -393,13 +504,24 @@
       document.getElementById('loading').textContent = '';
       document.getElementById('partnerName').textContent = 'عرض واجهة موسوم';
       document.getElementById('partnerMeta').textContent = 'بيانات اختبار موسومة. ليست كتالوجًا عامًا.';
+      document.body.dataset.partnerType = 'developer';
       document.getElementById('stats').replaceChildren();
       document.getElementById('stats').removeAttribute('aria-busy');
       document.getElementById('catalogList').replaceChildren();
       document.getElementById('catalogList').removeAttribute('aria-busy');
       document.getElementById('commerceList').replaceChildren();
       document.getElementById('commerceList').removeAttribute('aria-busy');
+      document.getElementById('serviceSection').classList.remove('hidden');
       renderAds(labeledAdsFixture(), null);
+      if (window.MiraPortalShell) {
+        MiraPortalShell.boot();
+        MiraPortalShell.setDirtyGuard(function () {
+          return formLooksDirty(document.getElementById('catalogForm')) ||
+            formLooksDirty(document.getElementById('serviceForm'));
+        });
+        MiraPortalShell.navigate('products', 'list', { replace: true, force: true });
+      }
+      if (window.MiraE2BProductShell) MiraE2BProductShell.enableProductMode();
     } else {
       load();
     }
