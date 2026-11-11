@@ -55,6 +55,7 @@ type OwnerRow = {
   draftSubcategory?: string | null;
   draftProfileId?: string | null;
   draftAttributesJson?: Prisma.JsonValue | null;
+  draftAttributesSet?: boolean;
   draftTaxonomySet?: boolean;
   category?: string | null;
   subcategory?: string | null;
