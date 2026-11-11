@@ -218,6 +218,11 @@
     });
     if (!listPanel.contains(list)) listPanel.appendChild(list);
 
+    const laneSwitcher = el('div', {
+      className: 'e2b-lane-switcher',
+      id: 'e2bLaneSwitcher',
+      'data-testid': 'e2b-lane-switcher',
+    });
     const catRow = el('div', { className: 'e2b-cat-row', id: 'e2bCatRow' }, [
       el('p', { className: 'e2b-cat-heading', text: 'التصنيف الرئيسي' }),
       el('div', { className: 'e2b-circle-list e2b-circle-list-horizontal', id: 'e2bMainCircles', 'data-testid': 'e2b-main-circles' }),
@@ -225,12 +230,25 @@
     const subRow = el('div', { className: 'e2b-subcircles', id: 'e2bSubCircles', 'data-testid': 'e2b-subcircles' });
 
     if (!editorPanel.contains(form)) {
+      editorPanel.appendChild(laneSwitcher);
       editorPanel.appendChild(catRow);
       editorPanel.appendChild(subRow);
       editorPanel.appendChild(form);
     } else {
       editorPanel.insertBefore(subRow, form);
       editorPanel.insertBefore(catRow, subRow);
+      editorPanel.insertBefore(laneSwitcher, catRow);
+    }
+    // List-side copy so lanes stay reachable before opening the editor.
+    if (!document.getElementById('e2bLaneSwitcherList')) {
+      const listSwitcher = el('div', {
+        className: 'e2b-lane-switcher',
+        id: 'e2bLaneSwitcherList',
+        'data-testid': 'e2b-lane-switcher-list',
+      });
+      const toolbar = listPanel.querySelector('.e2b-list-toolbar');
+      if (toolbar && toolbar.parentNode) toolbar.parentNode.insertBefore(listSwitcher, toolbar.nextSibling);
+      else listPanel.insertBefore(listSwitcher, listPanel.firstChild);
     }
 
     main.append(listPanel, editorPanel);
@@ -263,6 +281,9 @@
     loadAndPaintMains();
     wireFormSync();
     observeCatalogForm();
+    if (window.MiraLaneEntries && typeof MiraLaneEntries.paintLaneSwitcher === 'function') {
+      MiraLaneEntries.paintLaneSwitcher();
+    }
     return section;
   }
 
@@ -931,6 +952,9 @@
     if (prodMains) prodMains.hidden = false;
     if (prodSubs) prodSubs.hidden = false;
     ensureWorkspace();
+    if (window.MiraLaneEntries && typeof MiraLaneEntries.paintLaneSwitcher === 'function') {
+      MiraLaneEntries.paintLaneSwitcher();
+    }
   }
 
   function disableProductMode() {

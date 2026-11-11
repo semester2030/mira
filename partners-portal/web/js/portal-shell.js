@@ -324,6 +324,12 @@
       add.setAttribute('data-testid', 'portal-add-product');
       add.textContent = 'إضافة منتج';
       add.onclick = function () {
+        if (window.MiraLaneEntries && typeof MiraLaneEntries.startProductAdd === 'function') {
+          Promise.resolve(MiraLaneEntries.startProductAdd()).catch(function (e) {
+            console.warn('[portalAddProduct]', e);
+          });
+          return;
+        }
         var go = document.getElementById('goProduct');
         if (go) go.click();
         else navigate('products', 'edit');

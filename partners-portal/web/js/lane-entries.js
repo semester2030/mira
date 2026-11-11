@@ -131,6 +131,7 @@
         }
       }
     }
+    paintLaneSwitcher();
   }
 
   async function openOccasionsService(opts) {
@@ -229,66 +230,161 @@
     }
   }
 
-  function paintLaneEntries() {
-    var host = document.getElementById('laneEntries');
-    if (!host) return;
-    host.replaceChildren();
-    var lead = document.createElement('p');
-    lead.className = 'lead';
-    lead.textContent = 'مداخل الأقسام المستقلة — دون المرور عبر أناقتك/خدماتي.';
-    host.appendChild(lead);
-    var row = document.createElement('div');
-    row.className = 'journey-actions';
-    row.setAttribute('data-testid', 'lane-entries');
-    host.appendChild(row);
-
-    function addBtn(id, label, onClick) {
-      if (!laneAllowed(id) && id !== 'occasions_favors') return;
-      var btn = document.createElement('button');
-      btn.type = 'button';
-      btn.className = 'btn btn-primary';
-      btn.id = 'laneEntry_' + id;
-      btn.setAttribute('data-testid', 'lane-entry-' + id);
-      btn.textContent = label;
-      btn.addEventListener('click', function () {
-        Promise.resolve(onClick()).catch(function (e) {
-          console.warn('[lane-entries]', e);
-          alert((e && e.message) || 'تعذر فتح القسم');
-        });
-      });
-      row.appendChild(btn);
+  async function openEleganceProduct() {
+    clearLaneLock();
+    if (window.MiraE2BServiceShell && typeof MiraE2BServiceShell.disableServiceMode === 'function') {
+      try {
+        MiraE2BServiceShell.disableServiceMode();
+      } catch (_) {
+        /* optional */
+      }
     }
-
-    addBtn('jewelry', 'المجوهرات', function () {
-      return openProductLane('jewelry');
-    });
-    addBtn('children', 'الأطفال', function () {
-      return openProductLane('children');
-    });
-    addBtn('gifts', 'الهدايا', function () {
-      return openProductLane('gifts');
-    });
-    if (laneAllowed('occasions')) {
-      addBtn('occasions', 'مناسباتك — عرض حجز', function () {
-        return openOccasionsService();
-      });
+    var bulk = document.getElementById('bulkSection');
+    if (bulk) bulk.classList.add('hidden');
+    var catalogForm = document.getElementById('catalogForm');
+    var hasProductEditor = !!(catalogForm && catalogForm.querySelector('input[name="nameAr"]'));
+    if (!hasProductEditor && typeof window.renderForm === 'function') {
+      window.renderForm('brand', null, 'catalogForm', 'catalogTitle');
     }
-    // Favors sell: brand, developer, or event_planner with canSellProducts.
+    clearInactiveTaxonomyBanners('catalogForm');
+    var title = document.getElementById('catalogTitle');
+    if (title) title.textContent = 'أناقتك — إضافة منتج';
+    await reloadProductTaxonomy();
+    if (window.MiraPortalShell && typeof MiraPortalShell.openProductEditor === 'function') {
+      MiraPortalShell.openProductEditor();
+    }
+    if (window.MiraE2BProductShell) {
+      if (typeof MiraE2BProductShell.enableProductMode === 'function') MiraE2BProductShell.enableProductMode();
+      if (typeof MiraE2BProductShell.focusEditor === 'function') MiraE2BProductShell.focusEditor();
+    }
+    paintLaneSwitcher();
+  }
+
+  /** Product lanes the current account may open (developer = all). */
+  function productLaneChoices() {
+    var out = [{ id: 'elegance', label: 'أناقتك', run: openEleganceProduct }];
+    if (laneAllowed('jewelry')) out.push({ id: 'jewelry', label: 'المجوهرات', run: function () { return openProductLane('jewelry'); } });
+    if (laneAllowed('children')) out.push({ id: 'children', label: 'الأطفال', run: function () { return openProductLane('children'); } });
+    if (laneAllowed('gifts')) out.push({ id: 'gifts', label: 'الهدايا', run: function () { return openProductLane('gifts'); } });
     var t = partnerType();
     if (t === 'brand' || t === 'developer' || (t === 'event_planner' && canSellProducts())) {
-      var fav = document.createElement('button');
-      fav.type = 'button';
-      fav.className = 'btn btn-ghost';
-      fav.id = 'laneEntry_occasions_favors';
-      fav.setAttribute('data-testid', 'lane-entry-occasions-favors');
-      fav.textContent = 'مناسباتك — توزيعات للبيع';
-      fav.addEventListener('click', function () {
-        Promise.resolve(openOccasionsProductSell('occasions.favors')).catch(function (e) {
-          console.warn('[lane-entries]', e);
-        });
+      out.push({
+        id: 'occasions_favors',
+        label: 'توزيعات المناسبات',
+        run: function () { return openOccasionsProductSell('occasions.favors'); },
       });
-      row.appendChild(fav);
     }
+    return out;
+  }
+
+  function serviceLaneChoices() {
+    var out = [];
+    if (laneAllowed('occasions') || partnerType() === 'developer') {
+      out.push({
+        id: 'occasions',
+        label: 'مناسباتك — حجز',
+        run: function () { return openOccasionsService({ force: partnerType() === 'developer' }); },
+      });
+    }
+    return out;
+  }
+
+  function paintLaneSwitcher() {
+    var hosts = [];
+    var editorHost = document.getElementById('e2bLaneSwitcher');
+    if (editorHost) hosts.push(editorHost);
+    var listHost = document.getElementById('e2bLaneSwitcherList');
+    if (listHost) hosts.push(listHost);
+    var pageHost = document.getElementById('laneEntries');
+    if (pageHost) hosts.push(pageHost);
+    if (!hosts.length) return;
+
+    var active = window.__MIRA_TAXONOMY_LANE__ || 'elegance';
+    if (active === 'occasions' && window.__MIRA_LANE_PROFILE_ID__ === 'product.occasions_favors') {
+      active = 'occasions_favors';
+    }
+    var choices = productLaneChoices();
+
+    hosts.forEach(function (host) {
+      host.replaceChildren();
+      var lead = document.createElement('p');
+      lead.className = 'e2b-cat-heading';
+      lead.textContent = 'اختر القسم (مداخل مستقلة)';
+      host.appendChild(lead);
+      var row = document.createElement('div');
+      row.className = 'e2b-circle-list e2b-circle-list-horizontal journey-actions';
+      row.setAttribute('data-testid', 'lane-entries');
+      host.appendChild(row);
+      choices.forEach(function (choice) {
+        var btn = document.createElement('button');
+        btn.type = 'button';
+        btn.className = 'btn ' + (choice.id === active || (choice.id === 'elegance' && active === 'elegance') ? 'btn-primary' : 'btn-ghost');
+        btn.id = 'laneEntry_' + choice.id;
+        btn.setAttribute('data-testid', 'lane-entry-' + choice.id);
+        btn.setAttribute('data-lane-id', choice.id);
+        btn.textContent = choice.label;
+        if (choice.id === active) btn.classList.add('is-selected');
+        btn.addEventListener('click', function () {
+          Promise.resolve(choice.run()).then(function () {
+            paintLaneSwitcher();
+          }).catch(function (e) {
+            console.warn('[lane-entries]', e);
+            alert((e && e.message) || 'تعذر فتح القسم');
+          });
+        });
+        row.appendChild(btn);
+      });
+      // Occasions booking belongs to services — still surface for developer on product list.
+      if (host.id === 'laneEntries' || host.id === 'e2bLaneSwitcherList') {
+        serviceLaneChoices().forEach(function (choice) {
+          var btn = document.createElement('button');
+          btn.type = 'button';
+          btn.className = 'btn btn-ghost';
+          btn.id = 'laneEntry_' + choice.id;
+          btn.setAttribute('data-testid', 'lane-entry-' + choice.id);
+          btn.textContent = choice.label;
+          btn.addEventListener('click', function () {
+            Promise.resolve(choice.run()).catch(function (e) {
+              console.warn('[lane-entries]', e);
+              alert((e && e.message) || 'تعذر فتح القسم');
+            });
+          });
+          row.appendChild(btn);
+        });
+      }
+    });
+  }
+
+  function paintLaneEntries() {
+    paintLaneSwitcher();
+  }
+
+  /** Called by «إضافة منتج» — open chooser when multiple product lanes exist. */
+  async function startProductAdd() {
+    var choices = productLaneChoices();
+    if (choices.length <= 1) {
+      return openEleganceProduct();
+    }
+    // Prefer switcher in editor; open elegance first so the shell exists, then keep switcher visible.
+    await openEleganceProduct();
+    paintLaneSwitcher();
+    var switcher = document.getElementById('e2bLaneSwitcher');
+    if (switcher) {
+      switcher.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
+      switcher.classList.add('is-pulse');
+      window.setTimeout(function () { switcher.classList.remove('is-pulse'); }, 1200);
+    }
+  }
+
+  async function startServiceAdd(fallback) {
+    var choices = serviceLaneChoices();
+    if (choices.length && (partnerType() === 'developer' || laneAllowed('occasions'))) {
+      // Keep classic salon/clinic path via fallback; also ensure occasions is one click away.
+      if (typeof fallback === 'function') fallback();
+      paintLaneSwitcher();
+      return;
+    }
+    if (typeof fallback === 'function') return fallback();
   }
 
   window.MiraLaneEntries = {
@@ -296,9 +392,14 @@
     laneAllowed: laneAllowed,
     setLaneLock: setLaneLock,
     clearLaneLock: clearLaneLock,
+    openEleganceProduct: openEleganceProduct,
     openProductLane: openProductLane,
     openOccasionsService: openOccasionsService,
     openOccasionsProductSell: openOccasionsProductSell,
     paintLaneEntries: paintLaneEntries,
+    paintLaneSwitcher: paintLaneSwitcher,
+    productLaneChoices: productLaneChoices,
+    startProductAdd: startProductAdd,
+    startServiceAdd: startServiceAdd,
   };
 })();

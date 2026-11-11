@@ -566,6 +566,13 @@
         }
         productButton.onclick = () => {
           bulkSection.classList.add('hidden');
+          // المجوهرات/الأطفال/الهدايا مداخل مستقلة — لا تُفتح داخل أناقتك تلقائيًا.
+          if (window.MiraLaneEntries && typeof MiraLaneEntries.startProductAdd === 'function') {
+            Promise.resolve(MiraLaneEntries.startProductAdd()).catch(function (e) {
+              console.warn('[goProduct]', e);
+            });
+            return;
+          }
           if (window.MiraLaneEntries && typeof MiraLaneEntries.clearLaneLock === 'function') {
             MiraLaneEntries.clearLaneLock();
           } else {
@@ -585,32 +592,42 @@
         };
         serviceButton.onclick = () => {
           bulkSection.classList.add('hidden');
-          if (window.MiraLaneEntries && typeof MiraLaneEntries.clearLaneLock === 'function') {
-            MiraLaneEntries.clearLaneLock();
-          } else {
-            window.__MIRA_TAXONOMY_LANE__ = 'elegance';
-            window.__MIRA_LANE_PROFILE_ID__ = null;
-          }
-          if (developer) {
-            const serviceForm = document.getElementById('serviceForm');
-            const hasServiceEditor = !!(serviceForm && serviceForm.querySelector('input[name="nameAr"]'));
-            if ((!options || !options.preserveForms) && !hasServiceEditor) {
-              renderForm('clinic', null, 'serviceForm', 'serviceTitle');
+          const openClassicService = () => {
+            if (window.MiraLaneEntries && typeof MiraLaneEntries.clearLaneLock === 'function') {
+              MiraLaneEntries.clearLaneLock();
+            } else {
+              window.__MIRA_TAXONOMY_LANE__ = 'elegance';
+              window.__MIRA_LANE_PROFILE_ID__ = null;
             }
-            if (window.MiraPortalShell) MiraPortalShell.openServiceEditor();
-            if (window.MiraE2BServiceShell) MiraE2BServiceShell.focusEditor('serviceForm');
-            else scrollToForm('serviceForm');
-          } else {
-            // Salon/clinic: services are edited in catalogForm (same as initial load).
-            const catalogForm = document.getElementById('catalogForm');
-            const hasServiceEditor = !!(catalogForm && catalogForm.querySelector('input[name="nameAr"]'));
-            if ((!options || !options.preserveForms) && !hasServiceEditor) {
-              renderForm(p.type, null, 'catalogForm', 'catalogTitle');
+            if (developer) {
+              const serviceForm = document.getElementById('serviceForm');
+              const hasServiceEditor = !!(serviceForm && serviceForm.querySelector('input[name="nameAr"]'));
+              if ((!options || !options.preserveForms) && !hasServiceEditor) {
+                renderForm('clinic', null, 'serviceForm', 'serviceTitle');
+              }
+              if (window.MiraPortalShell) MiraPortalShell.openServiceEditor();
+              if (window.MiraE2BServiceShell) MiraE2BServiceShell.focusEditor('serviceForm');
+              else scrollToForm('serviceForm');
+            } else {
+              // Salon/clinic: services are edited in catalogForm (same as initial load).
+              const catalogForm = document.getElementById('catalogForm');
+              const hasServiceEditor = !!(catalogForm && catalogForm.querySelector('input[name="nameAr"]'));
+              if ((!options || !options.preserveForms) && !hasServiceEditor) {
+                renderForm(p.type, null, 'catalogForm', 'catalogTitle');
+              }
+              if (window.MiraPortalShell) MiraPortalShell.openServiceEditor();
+              if (window.MiraE2BServiceShell) MiraE2BServiceShell.focusEditor('catalogForm');
+              else scrollToForm('catalogForm');
             }
-            if (window.MiraPortalShell) MiraPortalShell.openServiceEditor();
-            if (window.MiraE2BServiceShell) MiraE2BServiceShell.focusEditor('catalogForm');
-            else scrollToForm('catalogForm');
+          };
+          if (window.MiraLaneEntries && typeof MiraLaneEntries.startServiceAdd === 'function') {
+            Promise.resolve(MiraLaneEntries.startServiceAdd(openClassicService)).catch(function (e) {
+              console.warn('[goService]', e);
+              openClassicService();
+            });
+            return;
           }
+          openClassicService();
         };
         bulkButton.onclick = () => {
           if (window.MiraPortalShell) MiraPortalShell.navigate('bulk', 'list', { force: true });

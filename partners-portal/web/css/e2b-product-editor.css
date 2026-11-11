@@ -71,6 +71,25 @@ body.e2b-product-mode .container {
 .e2b-cat-row {
   margin-bottom: 0.35rem;
 }
+.e2b-lane-switcher {
+  margin: 0 0 0.85rem;
+  padding: 0.65rem 0.75rem;
+  border: 1px solid rgba(232, 111, 169, 0.28);
+  border-radius: 14px;
+  background: linear-gradient(180deg, #fff8fc 0%, #ffffff 100%);
+}
+.e2b-lane-switcher .e2b-cat-heading {
+  margin-bottom: 0.45rem;
+}
+.e2b-lane-switcher .journey-actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.45rem;
+}
+.e2b-lane-switcher .btn.is-selected,
+.e2b-lane-switcher.is-pulse {
+  box-shadow: 0 0 0 3px rgba(232, 111, 169, 0.28);
+}
 .e2b-cat-heading {
   margin: 0 0 0.5rem;
   font-weight: 800;
