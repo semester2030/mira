@@ -511,6 +511,7 @@ export class PartnerActivitiesService {
     subcategory?: string | null;
     category?: string | null;
     profileId?: string | null;
+    attributes?: Record<string, unknown> | null;
   }): string | null {
     return this.catalog.resolveWriteActivity(input);
   }
