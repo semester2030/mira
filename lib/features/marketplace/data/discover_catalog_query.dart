@@ -88,7 +88,8 @@ enum DiscoverLane {
   bool get isPreviewLane =>
       this == jewelry || this == children || this == gifts || this == occasions;
 
-  bool get usesTaxonomyRail => this != beauty;
+  /// Beauty now uses server taxonomy (salons vs clinics + home_visit filter).
+  bool get usesTaxonomyRail => true;
 
   bool get isProductOnlyLane =>
       this == elegance || this == jewelry || this == children || this == gifts;
@@ -505,7 +506,8 @@ abstract final class DiscoverCatalogQueryEngine {
     if (family == 'elegance') {
       final fromApi = EleganceTaxonomySource.eleganceRoots();
       if (fromApi.isNotEmpty) return fromApi;
-    } else if (family == 'jewelry' ||
+    } else if (family == 'beauty' ||
+        family == 'jewelry' ||
         family == 'children' ||
         family == 'gifts' ||
         family == 'occasions') {
@@ -549,6 +551,19 @@ abstract final class DiscoverCatalogQueryEngine {
     final lane = query.lane;
     if (lane != null && lane.isProductOnlyLane && offer.kind != 'product') return false;
     if (lane == DiscoverLane.beauty && offer.kind != 'service') return false;
+    // Home-visit rail: never surface medical/clinic taxonomy leaves.
+    if (lane == DiscoverLane.beauty && query.placeModes.contains('home')) {
+      final cat = offer.category ?? '';
+      final medical = cat.startsWith('beauty.clinic') ||
+          cat == 'laser' ||
+          cat == 'teeth' ||
+          offer.partnerType == 'clinic';
+      if (medical) return false;
+      final nodes = EleganceTaxonomySource.nodes;
+      if (nodes.isNotEmpty && nodes.any((n) => n.medicalOnly && (n.id == cat || cat.startsWith('${n.id}.')))) {
+        return false;
+      }
+    }
     // occasions: mixed — do not drop by kind here; taxonomy id match below.
     if (lane != null &&
         lane.isPreviewLane &&

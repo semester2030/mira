@@ -664,6 +664,18 @@ export function matchCatalogItem(item: CatalogFilterItem, filter: CatalogFilterI
     if (Object.keys(filter.variantSelections ?? {}).length > 0) return null; // product-only facets
     if (filter.placeModes && filter.placeModes.length > 0) {
       if (!item.placeMode || !filter.placeModes.includes(item.placeMode)) return null;
+      // Beauty home-visit: medical/clinic leaves never appear under «تجيني للبيت».
+      if (filter.placeModes.includes('home')) {
+        const cat = String(item.category || '');
+        const sub = String(item.subcategory || '');
+        const medical =
+          item.partnerType === 'clinic' ||
+          cat === 'laser' ||
+          cat === 'teeth' ||
+          cat.startsWith('beauty.clinic') ||
+          sub.startsWith('beauty.clinic');
+        if (medical) return null;
+      }
     }
     if (filter.branchIds && filter.branchIds.length > 0) {
       if (!item.branchId || !filter.branchIds.includes(item.branchId)) return null;

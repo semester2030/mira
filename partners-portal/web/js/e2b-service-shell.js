@@ -17,6 +17,99 @@
     occasions: 'assets/e2b-ref/orbs/occasions_types.png',
   };
 
+  /** Per-template orbs — never reuse parent category art for cut vs color. */
+  const ORB_BY_TEMPLATE_ID = {
+    salon_hair_cut: 'assets/e2b-ref/orbs/hair_styling.png',
+    salon_hair_color: 'assets/e2b-ref/orbs/hair_dye.png',
+    salon_nails: 'assets/e2b-ref/orbs/nails.png',
+    salon_makeup: 'assets/e2b-ref/orbs/makeup.png',
+    salon_care: 'assets/e2b-ref/orbs/spa.png',
+    clinic_skin: 'assets/e2b-ref/orbs/skin.png',
+    clinic_laser: 'assets/e2b-ref/orbs/body.png',
+    clinic_consult: 'assets/e2b-ref/orbs/face.png',
+    clinic_teeth: 'assets/e2b-ref/orbs/face.png',
+  };
+
+  let beautyTaxonomyDoc = null;
+  let beautyTaxonomyPromise = null;
+
+  function loadBeautyTaxonomy(force) {
+    if (beautyTaxonomyDoc && !force) return Promise.resolve(beautyTaxonomyDoc);
+    if (beautyTaxonomyPromise && !force) return beautyTaxonomyPromise;
+    const api = window.PartnersApi;
+    beautyTaxonomyPromise = (api && typeof api.taxonomy === 'function'
+      ? api.taxonomy({ lane: 'beauty', audience: 'partner' })
+      : Promise.reject(new Error('no taxonomy api'))
+    )
+      .then((doc) => {
+        beautyTaxonomyDoc = doc;
+        return doc;
+      })
+      .catch(() =>
+        fetch('assets/phase2-taxonomy/beauty-taxonomy.v1.json')
+          .then((r) => (r.ok ? r.json() : Promise.reject(new Error('beauty taxonomy fallback'))))
+          .then((doc) => {
+            beautyTaxonomyDoc = doc;
+            return doc;
+          })
+          .catch(() => null),
+      );
+    return beautyTaxonomyPromise;
+  }
+
+  function orbUrlForTemplate(t, catId) {
+    if (t && t.icon && t.icon.smallUrl) return String(t.icon.smallUrl);
+    if (t && t.id && ORB_BY_TEMPLATE_ID[t.id]) return ORB_BY_TEMPLATE_ID[t.id];
+    if (t && t.imageKey && beautyTaxonomyDoc && Array.isArray(beautyTaxonomyDoc.nodes)) {
+      const node = beautyTaxonomyDoc.nodes.find((n) => n && (n.id === t.id || n.imageKey === t.imageKey));
+      if (node && node.icon && node.icon.smallUrl) return String(node.icon.smallUrl);
+    }
+    return ORB_BY_SERVICE_CAT[catId] || ORB_BY_SERVICE_CAT.care;
+  }
+
+  function beautyLeavesForCategory(catId) {
+    if (!beautyTaxonomyDoc || !Array.isArray(beautyTaxonomyDoc.nodes)) return [];
+    const partnerType = (document.body.dataset.partnerType || 'salon').replace(/^developer$/, 'salon');
+    const salonMap = {
+      hair: 'beauty.hair',
+      makeup: 'beauty.makeup',
+      nails: 'beauty.nails',
+      care: 'beauty.spa',
+      spa: 'beauty.spa',
+      // Salon cosmetic face care (not medical derm).
+      skin: 'beauty.face_care',
+    };
+    const clinicMap = {
+      hair: 'beauty.clinic.derm',
+      skin: 'beauty.clinic.derm',
+      laser: 'beauty.clinic.laser',
+      teeth: 'beauty.clinic.teeth',
+    };
+    const parentMap = partnerType === 'clinic' ? clinicMap : salonMap;
+    const parentId = parentMap[catId] || (String(catId).indexOf('beauty.') === 0 ? catId : null);
+    if (!parentId) return [];
+    return beautyTaxonomyDoc.nodes
+      .filter((n) => {
+        if (!n || n.parentId !== parentId || n.browseOnly || n.writeEnabled === false) return false;
+        if (n.children && n.children.length) return false;
+        // Clinic «شعر» = scalp/hair medical eval only — never salon color/cut fields.
+        if (partnerType === 'clinic' && catId === 'hair') return String(n.id).indexOf('hair_eval') >= 0;
+        if (partnerType === 'clinic' && catId === 'skin') return String(n.id).indexOf('hair_eval') < 0;
+        return true;
+      })
+      .sort((a, b) => (a.sort || 0) - (b.sort || 0) || String(a.id).localeCompare(String(b.id)))
+      .map((n) => ({
+        id: n.id,
+        label: n.labelAr,
+        suggestedName: n.labelAr,
+        category: catId,
+        imageKey: n.imageKey,
+        icon: n.icon,
+        profileId: n.profileId,
+        taxonomyLeaf: true,
+      }));
+  }
+
   const LABEL_BY_ID = {
     hair: 'الشعر',
     skin: 'البشرة',
@@ -374,7 +467,8 @@
     const host = subCirclesHost(form);
     if (!host) return;
     host.replaceChildren();
-    const templates = templatesForCategory(catId);
+    const beautyLeaves = beautyLeavesForCategory(catId);
+    const templates = beautyLeaves.length ? beautyLeaves : templatesForCategory(catId);
     if (!templates.length) {
       host.appendChild(
         el('p', {
@@ -386,9 +480,10 @@
       return;
     }
     templates.forEach((t) => {
-      const orbUrl = ORB_BY_SERVICE_CAT[catId] || ORB_BY_SERVICE_CAT.care;
+      const orbUrl = orbUrlForTemplate(t, catId);
       const orb = el('span', { className: 'e2b-circle-orb' });
       orb.style.backgroundImage = "url('" + orbUrl + "')";
+      if (t.imageKey) orb.setAttribute('data-image-key', t.imageKey);
       const btn = el(
         'button',
         {
@@ -396,8 +491,11 @@
           className: 'e2b-circle' + (selectedSubId === t.id ? ' is-selected' : ''),
           'data-testid': 'e2c-sub-circle',
           'data-template-id': t.id,
+          'data-subcategory-id': t.taxonomyLeaf ? t.id : '',
           'data-category-id': catId,
-          onClick: () => selectSub(t.id, { fromCircle: true }),
+          'data-orb-src': orbUrl,
+          'data-image-key': t.imageKey || '',
+          onClick: () => selectSub(t.id, { fromCircle: true, taxonomyLeaf: !!t.taxonomyLeaf, profileId: t.profileId }),
         },
         [orb, el('span', { className: 'e2b-circle-label', text: t.label || t.suggestedName || t.id })],
       );
@@ -413,6 +511,22 @@
     });
     const form = resolveForm();
     if (!form || !templateId || opts.fromSync) return;
+    // Beauty taxonomy leaf: persist subcategory id + sticky profile; do not force wrong template.
+    if (opts.taxonomyLeaf || String(templateId).indexOf('beauty.') === 0) {
+      let sub = form.querySelector('input[name="subcategory"]');
+      if (!sub) {
+        sub = document.createElement('input');
+        sub.type = 'hidden';
+        sub.name = 'subcategory';
+        form.appendChild(sub);
+      }
+      syncingFromForm = true;
+      sub.value = templateId;
+      if (opts.profileId) window.__MIRA_LANE_PROFILE_ID__ = opts.profileId;
+      sub.dispatchEvent(new Event('change', { bubbles: true }));
+      syncingFromForm = false;
+      return;
+    }
     const sel = form.querySelector('select[name="serviceTemplateId"]');
     if (sel && sel.value !== templateId) {
       syncingFromForm = true;
@@ -423,6 +537,16 @@
   }
 
   function paintOrbs(form) {
+    if (!form) return;
+    const host = mainCirclesHost(form);
+    if (!host) return;
+    loadBeautyTaxonomy(false).then(() => {
+      if (resolveForm() && resolveForm() !== form) return;
+      paintOrbsAfterTaxonomy(form);
+    });
+  }
+
+  function paintOrbsAfterTaxonomy(form) {
     if (!form) return;
     const host = mainCirclesHost(form);
     if (!host) return;
@@ -822,6 +946,7 @@
 
   function init() {
     wireFormSync();
+    loadBeautyTaxonomy(false);
     const go = document.getElementById('goService');
     if (go && go.dataset.e2cWired !== '1') {
       go.dataset.e2cWired = '1';

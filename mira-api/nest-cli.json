@@ -25,6 +25,10 @@
       {
         "include": "marketplace/taxonomy/catalog-icons/**/*",
         "watchAssets": true
+      },
+      {
+        "include": "marketplace/taxonomy/beauty-icons/**/*",
+        "watchAssets": true
       }
     ]
   }

@@ -26,6 +26,8 @@ class EleganceTaxonomyNode {
     this.fieldIds = const [],
     this.filterKeys = const [],
     this.offerKind,
+    this.placeModesAllowed = const [],
+    this.medicalOnly = false,
   });
 
   final String id;
@@ -46,11 +48,14 @@ class EleganceTaxonomyNode {
   final List<String> fieldIds;
   final List<String> filterKeys;
   final String? offerKind;
+  final List<String> placeModesAllowed;
+  final bool medicalOnly;
 
   factory EleganceTaxonomyNode.fromJson(Map<String, dynamic> json) {
     final kids = json['children'];
     final fields = json['fieldIds'];
     final filters = json['filterKeys'];
+    final places = json['placeModesAllowed'];
     final icon = json['icon'];
     Map<String, dynamic>? iconMap;
     if (icon is Map) {
@@ -73,6 +78,8 @@ class EleganceTaxonomyNode {
       fieldIds: fields is List ? fields.map((e) => '$e').toList() : const [],
       filterKeys: filters is List ? filters.map((e) => '$e').toList() : const [],
       offerKind: json['offerKind']?.toString(),
+      placeModesAllowed: places is List ? places.map((e) => '$e').toList() : const [],
+      medicalOnly: json['medicalOnly'] == true,
     );
   }
 }
@@ -134,8 +141,11 @@ abstract final class EleganceTaxonomySource {
         final kids = childrenOf(parent.id, family: family)
             .where((c) => !c.matchesAll && c.id != '__back__')
             .toList();
-        // Surface subcategories immediately (Phase3: show the 11 sub orbs).
-        return [allChip, ...kids.map((c) => DiscoverCategoryDef(
+        // Surface section children immediately (beauty: home_visit / salons / clinics / bridal).
+        return [
+          allChip,
+          ...kids.map(
+            (c) => DiscoverCategoryDef(
               id: c.id,
               label: c.label,
               family: family,
@@ -147,8 +157,11 @@ abstract final class EleganceTaxonomySource {
               iconSmallUrl: c.iconSmallUrl,
               iconLargeUrl: c.iconLargeUrl,
               iconVersion: c.iconVersion,
-              parentId: parent.id,
-            ))];
+              parentId: null,
+              venueType: c.venueType,
+            ),
+          ),
+        ];
       }
     }
     final out = <DiscoverCategoryDef>[];
@@ -199,13 +212,34 @@ abstract final class EleganceTaxonomySource {
         }
       }
       if (n == null || !n.active) continue;
+      // Browse filters (home_visit / bridal_prep) stay selectable chips — not «الكل».
+      final isBrowseFilter =
+          n.browseOnly && (n.id == 'beauty.home_visit' || n.id == 'beauty.bridal_prep');
+      final venueType = n.id == 'beauty.salons'
+          ? 'salon'
+          : n.id == 'beauty.clinics'
+              ? 'clinic'
+              : null;
+      // Legacy service.category still uses hair/makeup/… for older rows.
+      final legacyStored = switch (n.id) {
+        'beauty.hair' => 'hair',
+        'beauty.makeup' => 'makeup',
+        'beauty.nails' => 'nails',
+        'beauty.spa' || 'beauty.face_care' => 'care',
+        'beauty.clinic.derm' => 'skin',
+        'beauty.clinic.laser' => 'laser',
+        'beauty.clinic.teeth' => 'teeth',
+        _ => n.id,
+      };
       kids.add(
         DiscoverCategoryDef(
           id: n.id,
           label: n.labelAr,
           family: fam,
-          storedKey: n.browseOnly ? parentId : n.id,
-          matchesAll: n.browseOnly,
+          storedKey: isBrowseFilter
+              ? n.id
+              : (n.browseOnly ? parentId : (venueType != null ? n.id : legacyStored)),
+          matchesAll: n.browseOnly && !isBrowseFilter,
           writeEnabled: n.writeEnabled,
           browseOnly: n.browseOnly,
           imageKey: n.imageKey,
@@ -213,6 +247,7 @@ abstract final class EleganceTaxonomySource {
           iconLargeUrl: n.iconLargeUrl,
           iconVersion: n.iconVersion,
           parentId: parentId,
+          venueType: venueType,
         ),
       );
     }
@@ -278,12 +313,13 @@ abstract final class EleganceTaxonomySource {
         }
         return _nodes.isNotEmpty;
       }
-      // Preview lanes: load bundled taxonomy JSON (local preview; publicBrowse stays false).
+      // Beauty (public) + preview lanes: bundled taxonomy when API unreachable.
       return _loadBundledPreviewLane(lane, partnerAudience: partnerAudience);
     }
   }
 
   static const _bundledPreviewAssets = <String, String>{
+    'beauty': 'assets/marketplace/taxonomy/beauty-taxonomy.v1.json',
     'jewelry': 'assets/marketplace/taxonomy/jewelry-taxonomy.v1.json',
     'children': 'assets/marketplace/taxonomy/children-taxonomy.v1.json',
     'gifts': 'assets/marketplace/taxonomy/gifts-taxonomy.v1.json',

@@ -425,8 +425,9 @@
       };
       return map[category] || 'product.clothes';
     }
+    // Never map clinic+hair → clinic_skin (that mixed «شعر» orb with «جلسة بشرة» fields).
     const svc = {
-      hair: partnerType === 'clinic' ? 'service.clinic_skin' : 'service.salon_hair_cut',
+      hair: partnerType === 'clinic' ? 'service.clinic_consult' : 'service.salon_hair_cut',
       nails: 'service.salon_nails',
       makeup: 'service.salon_makeup',
       skin: 'service.clinic_skin',
@@ -435,7 +436,28 @@
       care: 'service.salon_care',
       teeth: 'service.clinic_teeth',
       occasions: 'service.occasions',
+      // Beauty taxonomy parents / leaves (profile from leaf preferred via preferred arg).
+      'beauty.hair': 'service.salon_hair_cut',
+      'beauty.makeup': 'service.salon_makeup',
+      'beauty.nails': 'service.salon_nails',
+      'beauty.face_care': 'service.salon_care',
+      'beauty.spa': 'service.salon_care',
+      'beauty.clinic.derm': 'service.clinic_skin',
+      'beauty.clinic.laser': 'service.clinic_laser',
+      'beauty.clinic.teeth': 'service.clinic_teeth',
     };
+    if (category && String(category).indexOf('beauty.hair.color') === 0) return 'service.salon_hair_color';
+    if (category && String(category).indexOf('beauty.hair.highlights') === 0) return 'service.salon_hair_color';
+    if (category && String(category).indexOf('beauty.hair.') === 0) return 'service.salon_hair_cut';
+    if (category && String(category).indexOf('beauty.makeup.') === 0) return 'service.salon_makeup';
+    if (category && String(category).indexOf('beauty.nails.') === 0) return 'service.salon_nails';
+    if (category && String(category).indexOf('beauty.clinic.laser') === 0) return 'service.clinic_laser';
+    if (category && String(category).indexOf('beauty.clinic.teeth') === 0) return 'service.clinic_teeth';
+    if (category && String(category).indexOf('beauty.clinic.derm') === 0) {
+      return String(category).indexOf('consult') >= 0 || String(category).indexOf('hair_eval') >= 0
+        ? 'service.clinic_consult'
+        : 'service.clinic_skin';
+    }
     if (category && svc[category]) return svc[category];
     return partnerType === 'clinic' ? 'service.clinic.generic' : 'service.salon.generic';
   }

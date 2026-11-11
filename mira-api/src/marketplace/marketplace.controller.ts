@@ -22,6 +22,7 @@ import { coerceQueryParam } from './catalog-filters';
 import { MatchMarketplaceDto } from './dto/match-marketplace.dto';
 import { MarketplaceService } from './marketplace.service';
 import { listSaudiCities } from '../geo/saudi-cities';
+import { absoluteBeautyIconPath } from './taxonomy/beauty-icon-assets';
 import { absoluteCatalogIconPath } from './taxonomy/catalog-icon-assets';
 import { TaxonomyService } from './taxonomy/taxonomy.service';
 
@@ -157,6 +158,19 @@ export class MarketplaceController {
     if (!abs) throw new NotFoundException({ code: 'CATALOG_ICON_NOT_FOUND' });
     res.setHeader('Content-Type', 'image/webp');
     createReadStream(abs).pipe(res);
+  }
+
+  /** Beauty lane orb images (PNG/JPEG) keyed by taxonomy imageKey files. */
+  @Get('beauty-icons/:file')
+  @Header('Cache-Control', 'public, max-age=31536000, immutable')
+  streamBeautyIcon(@Param('file') file: string, @Res() res: Response) {
+    if (!/^[a-z0-9._-]+\.(png|jpe?g|webp)$/i.test(file || '')) {
+      throw new BadRequestException({ code: 'BEAUTY_ICON_BAD_NAME' });
+    }
+    const hit = absoluteBeautyIconPath(file);
+    if (!hit) throw new NotFoundException({ code: 'BEAUTY_ICON_NOT_FOUND' });
+    res.setHeader('Content-Type', hit.contentType);
+    createReadStream(hit.abs).pipe(res);
   }
 
   @Get('catalog/:kind/:id')

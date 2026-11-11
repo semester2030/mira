@@ -16,6 +16,12 @@ export type TaxonomyNode = {
   synonymsAr?: string[];
   /** Browse facet attribute key when node is browseOnly metal/stone/trait. */
   filterAttribute?: string;
+  /** Allowed service place modes for this leaf (beauty lane). */
+  placeModesAllowed?: Array<'branch' | 'client_home' | 'provider_home' | 'event_venue' | 'clinic_only'>;
+  /** Partner identity kinds that may request this activity. */
+  partnerKindsAllowed?: string[];
+  /** Medical/clinic-only leaf — never appears under home-visit discovery. */
+  medicalOnly?: boolean;
   children: string[];
 };
 
@@ -69,6 +75,9 @@ export type PublicTaxonomyNode = {
   } | null;
   profileId: string | null;
   offerKind: 'product' | 'service' | null;
+  placeModesAllowed?: string[];
+  partnerKindsAllowed?: string[];
+  medicalOnly?: boolean;
   children: string[];
   /** Field ids from central registry profile (empty when browseOnly / no profile). */
   fieldIds: string[];

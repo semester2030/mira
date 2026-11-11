@@ -35,6 +35,7 @@
     "sync:field-registry": "node scripts/sync-field-registry.mjs",
     "prove:field-registry-drift": "node scripts/check-field-registry-sync.mjs --prove-drift",
     "check:elegance-taxonomy": "node scripts/check-elegance-taxonomy-sync.mjs",
+    "test:beauty-a": "tsx src/marketplace/taxonomy/beauty-a-acceptance.schema-tests.ts",
     "test:elegance-e1": "tsx src/marketplace/taxonomy/taxonomy.load.schema-tests.ts && tsx src/marketplace/taxonomy/product-taxonomy.validate.schema-tests.ts && tsx src/marketplace/taxonomy/attributes-patch.merge.schema-tests.ts && tsx src/marketplace/taxonomy/taxonomy-write.apply.schema-tests.ts && tsx src/marketplace/catalog-cursor.schema-tests.ts && tsx src/marketplace/taxonomy/elegance-e1.http.integration-tests.ts && tsx src/marketplace/taxonomy/elegance-e1-closure.http.integration-tests.ts && tsx src/marketplace/taxonomy/elegance-e1-final-closure.http.integration-tests.ts && npm run check:elegance-taxonomy && tsx src/marketplace/catalog-filters.schema-tests.ts",
     "test:phase1-occasions-catalog": "tsx src/marketplace/taxonomy/phase1-occasions-catalog.http.integration-tests.ts",
     "test:phase1-portal-flutter": "NODE_ENV=test tsx src/marketplace/taxonomy/phase1-portal-flutter-taxonomy.http.integration-tests.ts",

@@ -504,7 +504,19 @@ class DiscoverPresentationScreenState extends State<DiscoverPresentationScreen>
     if (parent == null) return;
     final cat = query.categoryId;
     final sub = query.subcategoryId;
-    final stillOnParent = cat == parent || (sub != null && sub.startsWith('$parent.'));
+    // Beauty venue roots (salons/clinics) clear category and filter by partnerType.
+    if (parent == 'beauty.salons' || parent == 'beauty.clinics') {
+      final want = parent == 'beauty.salons' ? 'salon' : 'clinic';
+      if (query.partnerType == want) return;
+      // Deeper beauty mid-node (beauty.hair) while still under venue.
+      if (cat != null && cat.startsWith('beauty.') && query.partnerType == want) return;
+      if (cat != null && const {'hair', 'makeup', 'nails', 'care', 'skin', 'laser', 'teeth'}.contains(cat)) {
+        return;
+      }
+    }
+    final stillOnParent = cat == parent ||
+        (sub != null && sub.startsWith('$parent.')) ||
+        (cat != null && cat.startsWith('$parent.'));
     if (!stillOnParent || cat == null || cat == 'all') {
       _eleganceDrillParentId = null;
     }
@@ -602,24 +614,52 @@ class DiscoverPresentationScreenState extends State<DiscoverPresentationScreen>
       return;
     }
 
-    // Taxonomy drill: root with children replaces rail with subtypes (ids from taxonomy).
+    // Beauty «تجيني للبيت»: home placeMode only — never medical/clinic leaves.
+    if (widget.lane == DiscoverLane.beauty && selected.id == 'beauty.home_visit') {
+      _eleganceDrillParentId = null;
+      _reload(
+        _query.copyWith(
+          lane: DiscoverLane.beauty,
+          requireVisual: true,
+          clearCategory: true,
+          clearSubcategory: true,
+          clearType: true,
+          placeModes: const ['home'],
+          partnerType: 'salon',
+        ),
+      );
+      return;
+    }
+
+    // Taxonomy drill: root/mid node with children replaces rail with subtypes.
     final usesTaxonomy =
         widget.lane?.usesTaxonomyRail == true || family == 'elegance';
+    final canDrillRoot = _eleganceDrillParentId == null && selected.parentId == null;
+    final canDrillBeautyMid =
+        widget.lane == DiscoverLane.beauty &&
+        _eleganceDrillParentId != null &&
+        selected.id.startsWith('beauty.') &&
+        !selected.browseOnly;
     if (usesTaxonomy &&
-        _eleganceDrillParentId == null &&
-        selected.parentId == null &&
-        !selected.matchesAll) {
+        (canDrillRoot || canDrillBeautyMid) &&
+        !selected.matchesAll &&
+        selected.id != 'beauty.bridal_prep' &&
+        selected.id != '__back__') {
       final kids = EleganceTaxonomySource.childrenOf(selected.id, family: family);
       if (kids.isNotEmpty) {
         _eleganceDrillParentId = selected.id;
         setState(() => _category = 0);
+        final isVenue = selected.venueType != null;
         _reload(
           _query.copyWith(
             lane: widget.lane ?? DiscoverLane.elegance,
             requireVisual: true,
-            categoryId: selected.storedKey.isEmpty ? selected.id : selected.storedKey,
+            categoryId: isVenue ? null : (selected.storedKey.isEmpty ? selected.id : selected.storedKey),
+            clearCategory: isVenue,
             clearSubcategory: true,
-            clearType: true,
+            partnerType: selected.venueType ?? _query.partnerType,
+            clearType: selected.venueType == null && _query.partnerType == null,
+            clearPlaceModes: true,
           ),
         );
         return;
@@ -634,6 +674,7 @@ class DiscoverPresentationScreenState extends State<DiscoverPresentationScreen>
         selected.parentId != null && !selected.matchesAll && !selected.browseOnly ? selected.id : null;
 
     if (widget.lane != null) {
+      final clearHome = selected.id != 'beauty.home_visit' && _query.placeModes.contains('home');
       _reload(
         _query.copyWith(
           lane: widget.lane,
@@ -642,7 +683,9 @@ class DiscoverPresentationScreenState extends State<DiscoverPresentationScreen>
           subcategoryId: nextSubcategory,
           clearCategory: rootCategoryId == null || rootCategoryId == 'all',
           clearSubcategory: nextSubcategory == null,
-          clearType: true,
+          clearType: selected.venueType == null,
+          partnerType: selected.venueType,
+          clearPlaceModes: clearHome || selected.matchesAll,
           // Compatible filters retained; incompatible pruned via facets.staleSelections.
         ),
       );

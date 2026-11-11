@@ -88,7 +88,31 @@ const PRODUCT_CATEGORIES = new Set([
   'gifts',
   'occasions',
 ]);
-const SERVICE_CATEGORIES = new Set(['hair', 'skin', 'makeup', 'nails', 'care', 'occasions']);
+const SERVICE_CATEGORIES = new Set([
+  'hair',
+  'skin',
+  'makeup',
+  'nails',
+  'care',
+  'laser',
+  'teeth',
+  'occasions',
+  // Beauty taxonomy parents (lane=beauty) — leaves stored in subcategory.
+  'beauty',
+  'beauty.salons',
+  'beauty.clinics',
+  'beauty.hair',
+  'beauty.makeup',
+  'beauty.nails',
+  'beauty.lashes_brows',
+  'beauty.face_care',
+  'beauty.hair_removal',
+  'beauty.henna',
+  'beauty.spa',
+  'beauty.clinic.derm',
+  'beauty.clinic.laser',
+  'beauty.clinic.teeth',
+]);
 
 @Injectable()
 export class PartnersPortalService implements OnModuleInit {

@@ -1,0 +1,383 @@
+{
+  "schemaVersion": 1,
+  "items": [
+    {
+      "imageKey": "beauty",
+      "file": "beauty.png",
+      "sha256": "67a279b4dd319b8e54e29a12fe79d8c8a511a95a2dd04a1f686b0efc717d9761",
+      "contentType": "image/png"
+    },
+    {
+      "imageKey": "beauty.bridal_prep",
+      "file": "beauty_bridal_prep.png",
+      "sha256": "d240dd9796d4609553f22e035902f3aa1f9db3e4b83dc835d284b065c0c937f6",
+      "contentType": "image/png"
+    },
+    {
+      "imageKey": "beauty.brows.shape",
+      "file": "beauty_brows_shape.png",
+      "sha256": "a5db416b26a0c5a91141307986418cbb2823beb7b462060b6e0027725f97a8cb",
+      "contentType": "image/png"
+    },
+    {
+      "imageKey": "beauty.brows.tint",
+      "file": "beauty_brows_tint.png",
+      "sha256": "438ac6551c0147967704045cee9ae2e1188fb85f1e517372190768be008ecba5",
+      "contentType": "image/png"
+    },
+    {
+      "imageKey": "beauty.clinic.derm",
+      "file": "beauty_clinic_derm.png",
+      "sha256": "d240dd9796d4609553f22e035902f3aa1f9db3e4b83dc835d284b065c0c937f6",
+      "contentType": "image/png"
+    },
+    {
+      "imageKey": "beauty.clinic.derm.consult",
+      "file": "beauty_clinic_derm_consult.jpg",
+      "sha256": "035e95f1582732b05d362ad7c2f6f4b40f2117e77fe42ba6a26834fd9af66d28",
+      "contentType": "image/jpeg"
+    },
+    {
+      "imageKey": "beauty.clinic.derm.hair_eval",
+      "file": "beauty_clinic_derm_hair_eval.jpg",
+      "sha256": "22b3f6bde7c637c26e334d59d1d0d4593ef7b7af06940e86c741e045cfd174c7",
+      "contentType": "image/jpeg"
+    },
+    {
+      "imageKey": "beauty.clinic.derm.procedures",
+      "file": "beauty_clinic_derm_procedures.png",
+      "sha256": "b23b41282cf868bcd8a0fc750195ce94a69c4a35acebd812216741e59ddaaeea",
+      "contentType": "image/png"
+    },
+    {
+      "imageKey": "beauty.clinic.derm.skin_eval",
+      "file": "beauty_clinic_derm_skin_eval.png",
+      "sha256": "ca007b982d9ea1b259a95b943eb117231f16a72f48016c1ac64c26b435ff9cf2",
+      "contentType": "image/png"
+    },
+    {
+      "imageKey": "beauty.clinic.laser",
+      "file": "beauty_clinic_laser.jpg",
+      "sha256": "476bdaa6912733a608efa678057145b79c1ab49597405090c0d3f999b1feb214",
+      "contentType": "image/jpeg"
+    },
+    {
+      "imageKey": "beauty.clinic.laser.hair",
+      "file": "beauty_clinic_laser_hair.png",
+      "sha256": "67a279b4dd319b8e54e29a12fe79d8c8a511a95a2dd04a1f686b0efc717d9761",
+      "contentType": "image/png"
+    },
+    {
+      "imageKey": "beauty.clinic.laser.skin_eval",
+      "file": "beauty_clinic_laser_skin_eval.png",
+      "sha256": "d240dd9796d4609553f22e035902f3aa1f9db3e4b83dc835d284b065c0c937f6",
+      "contentType": "image/png"
+    },
+    {
+      "imageKey": "beauty.clinic.teeth",
+      "file": "beauty_clinic_teeth.jpg",
+      "sha256": "2db42c69c60175dd61a2116c1e65202b06af0e00bf31ae810e47a16753b1b698",
+      "contentType": "image/jpeg"
+    },
+    {
+      "imageKey": "beauty.clinic.teeth.clean",
+      "file": "beauty_clinic_teeth_clean.png",
+      "sha256": "a5db416b26a0c5a91141307986418cbb2823beb7b462060b6e0027725f97a8cb",
+      "contentType": "image/png"
+    },
+    {
+      "imageKey": "beauty.clinic.teeth.consult",
+      "file": "beauty_clinic_teeth_consult.png",
+      "sha256": "d240dd9796d4609553f22e035902f3aa1f9db3e4b83dc835d284b065c0c937f6",
+      "contentType": "image/png"
+    },
+    {
+      "imageKey": "beauty.clinic.teeth.veneers_eval",
+      "file": "beauty_clinic_teeth_veneers_eval.png",
+      "sha256": "8e2f14216cea2ff99ac590e95434390263fa4f41cfeab7d5914dc6e6e59c43f6",
+      "contentType": "image/png"
+    },
+    {
+      "imageKey": "beauty.clinic.teeth.whitening",
+      "file": "beauty_clinic_teeth_whitening.png",
+      "sha256": "54b8ca10d79f2400ef02e2a2cc593bb2aa0a7ab485ee6ee0b2f565b3d1e0a7af",
+      "contentType": "image/png"
+    },
+    {
+      "imageKey": "beauty.clinics",
+      "file": "beauty_clinics.jpg",
+      "sha256": "b13c3b2f02f2d3d7400a2946180240d5217a1bda990fb7a82a519213270571bc",
+      "contentType": "image/jpeg"
+    },
+    {
+      "imageKey": "beauty.face_care",
+      "file": "beauty_face_care.png",
+      "sha256": "d240dd9796d4609553f22e035902f3aa1f9db3e4b83dc835d284b065c0c937f6",
+      "contentType": "image/png"
+    },
+    {
+      "imageKey": "beauty.face_care.cleanse",
+      "file": "beauty_face_care_cleanse.png",
+      "sha256": "a5db416b26a0c5a91141307986418cbb2823beb7b462060b6e0027725f97a8cb",
+      "contentType": "image/png"
+    },
+    {
+      "imageKey": "beauty.face_care.hydrate",
+      "file": "beauty_face_care_hydrate.png",
+      "sha256": "b23b41282cf868bcd8a0fc750195ce94a69c4a35acebd812216741e59ddaaeea",
+      "contentType": "image/png"
+    },
+    {
+      "imageKey": "beauty.face_care.pre_makeup",
+      "file": "beauty_face_care_pre_makeup.png",
+      "sha256": "54b8ca10d79f2400ef02e2a2cc593bb2aa0a7ab485ee6ee0b2f565b3d1e0a7af",
+      "contentType": "image/png"
+    },
+    {
+      "imageKey": "beauty.hair",
+      "file": "beauty_hair.png",
+      "sha256": "3dca4850e005148067564e8ccd2853e7a6899acb5c81c63894b5a02cfa17a1ff",
+      "contentType": "image/png"
+    },
+    {
+      "imageKey": "beauty.hair.blowdry",
+      "file": "beauty_hair_blowdry.png",
+      "sha256": "d891827e9f23c5001ab88eeab12d6b0e10d47fe188f27fef091683b2dc548a4b",
+      "contentType": "image/png"
+    },
+    {
+      "imageKey": "beauty.hair.braids",
+      "file": "beauty_hair_braids.png",
+      "sha256": "c9a7a680824721dbee1c726c89d93a8b3138b4e5dd8c2472d2525a8fab60136c",
+      "contentType": "image/png"
+    },
+    {
+      "imageKey": "beauty.hair.care",
+      "file": "beauty_hair_care.png",
+      "sha256": "3bb23411519557d585dc1571502ff7a8b7a352bbfbe0b8fedb555a1d27fca4e4",
+      "contentType": "image/png"
+    },
+    {
+      "imageKey": "beauty.hair.color",
+      "file": "beauty_hair_color.png",
+      "sha256": "438ac6551c0147967704045cee9ae2e1188fb85f1e517372190768be008ecba5",
+      "contentType": "image/png"
+    },
+    {
+      "imageKey": "beauty.hair.cut",
+      "file": "beauty_hair_cut.png",
+      "sha256": "f08b85e6271eebbe5b87309fffb73a111ecc4f67c366dda014480a1015cb2995",
+      "contentType": "image/png"
+    },
+    {
+      "imageKey": "beauty.hair.highlights",
+      "file": "beauty_hair_highlights.png",
+      "sha256": "6338e40d0b7c0d503d6d5fea2aeb7756bbb0bf486ceea46e1eea35959317e242",
+      "contentType": "image/png"
+    },
+    {
+      "imageKey": "beauty.hair.updo",
+      "file": "beauty_hair_updo.png",
+      "sha256": "1e9ffc56e6627d0525774d5fab3b18b9226ff800167290443514d8664a6850d9",
+      "contentType": "image/png"
+    },
+    {
+      "imageKey": "beauty.hair_removal",
+      "file": "beauty_hair_removal.png",
+      "sha256": "67a279b4dd319b8e54e29a12fe79d8c8a511a95a2dd04a1f686b0efc717d9761",
+      "contentType": "image/png"
+    },
+    {
+      "imageKey": "beauty.hair_removal.sugar",
+      "file": "beauty_hair_removal_sugar.png",
+      "sha256": "4e2c6166b8a69467a401c51a5bf66ae5c7f6e539319f6defb299349d70f9b6a5",
+      "contentType": "image/png"
+    },
+    {
+      "imageKey": "beauty.hair_removal.thread",
+      "file": "beauty_hair_removal_thread.png",
+      "sha256": "db65736f20bbfda8ad8b0f3a9a540d580672741e25d188802ebd1ddf6f8e61ef",
+      "contentType": "image/png"
+    },
+    {
+      "imageKey": "beauty.hair_removal.wax",
+      "file": "beauty_hair_removal_wax.png",
+      "sha256": "062c20dd40b1c95bc535ae08f1aa79895a31fe34ea8f3977064ec8a4e51e4e5f",
+      "contentType": "image/png"
+    },
+    {
+      "imageKey": "beauty.henna",
+      "file": "beauty_henna.png",
+      "sha256": "ba3ec8e5ed0e70ed18f0427d46df2aad0e323f0f9c6b60a5ca60677d56b4cd4a",
+      "contentType": "image/png"
+    },
+    {
+      "imageKey": "beauty.henna.bridal",
+      "file": "beauty_henna_bridal.png",
+      "sha256": "67a279b4dd319b8e54e29a12fe79d8c8a511a95a2dd04a1f686b0efc717d9761",
+      "contentType": "image/png"
+    },
+    {
+      "imageKey": "beauty.henna.feet",
+      "file": "beauty_henna_feet.png",
+      "sha256": "dd951da88cd8bfc6103e2c2724a0221868b0c7d6eb3064c4fc8ffdd20cfae999",
+      "contentType": "image/png"
+    },
+    {
+      "imageKey": "beauty.henna.group",
+      "file": "beauty_henna_group.png",
+      "sha256": "2e986294aeb8b5996cdaba19311a38176189e49a2913d7abb3c53c86680fc158",
+      "contentType": "image/png"
+    },
+    {
+      "imageKey": "beauty.henna.hands",
+      "file": "beauty_henna_hands.png",
+      "sha256": "db65736f20bbfda8ad8b0f3a9a540d580672741e25d188802ebd1ddf6f8e61ef",
+      "contentType": "image/png"
+    },
+    {
+      "imageKey": "beauty.home_visit",
+      "file": "beauty_home_visit.png",
+      "sha256": "67a279b4dd319b8e54e29a12fe79d8c8a511a95a2dd04a1f686b0efc717d9761",
+      "contentType": "image/png"
+    },
+    {
+      "imageKey": "beauty.lashes.daily",
+      "file": "beauty_lashes_daily.png",
+      "sha256": "9186e25999bfe457360118cff1c472abce86cf1f740b0d37a1ca9b219a1b771d",
+      "contentType": "image/png"
+    },
+    {
+      "imageKey": "beauty.lashes.extensions",
+      "file": "beauty_lashes_extensions.png",
+      "sha256": "dd08bcbd8f45c42815c6971b5f2f5651b0c9e6299806191507a6e95e061589cd",
+      "contentType": "image/png"
+    },
+    {
+      "imageKey": "beauty.lashes.lift",
+      "file": "beauty_lashes_lift.png",
+      "sha256": "54b8ca10d79f2400ef02e2a2cc593bb2aa0a7ab485ee6ee0b2f565b3d1e0a7af",
+      "contentType": "image/png"
+    },
+    {
+      "imageKey": "beauty.lashes_brows",
+      "file": "beauty_lashes_brows.png",
+      "sha256": "d240dd9796d4609553f22e035902f3aa1f9db3e4b83dc835d284b065c0c937f6",
+      "contentType": "image/png"
+    },
+    {
+      "imageKey": "beauty.makeup",
+      "file": "beauty_makeup.png",
+      "sha256": "d240dd9796d4609553f22e035902f3aa1f9db3e4b83dc835d284b065c0c937f6",
+      "contentType": "image/png"
+    },
+    {
+      "imageKey": "beauty.makeup.bridal",
+      "file": "beauty_makeup_bridal.png",
+      "sha256": "97405cf7c75c0c3633b73687f5a6e64a578fec808e0f9270b2555bd52521944c",
+      "contentType": "image/png"
+    },
+    {
+      "imageKey": "beauty.makeup.bridal_trial",
+      "file": "beauty_makeup_bridal_trial.png",
+      "sha256": "dd08bcbd8f45c42815c6971b5f2f5651b0c9e6299806191507a6e95e061589cd",
+      "contentType": "image/png"
+    },
+    {
+      "imageKey": "beauty.makeup.evening",
+      "file": "beauty_makeup_evening.png",
+      "sha256": "9186e25999bfe457360118cff1c472abce86cf1f740b0d37a1ca9b219a1b771d",
+      "contentType": "image/png"
+    },
+    {
+      "imageKey": "beauty.makeup.soft",
+      "file": "beauty_makeup_soft.png",
+      "sha256": "8e2f14216cea2ff99ac590e95434390263fa4f41cfeab7d5914dc6e6e59c43f6",
+      "contentType": "image/png"
+    },
+    {
+      "imageKey": "beauty.makeup.touchup",
+      "file": "beauty_makeup_touchup.png",
+      "sha256": "a5db416b26a0c5a91141307986418cbb2823beb7b462060b6e0027725f97a8cb",
+      "contentType": "image/png"
+    },
+    {
+      "imageKey": "beauty.nails",
+      "file": "beauty_nails.png",
+      "sha256": "7c26cb28a094f6854e8ddf0b1213263d0e76cca55c005dbe545df813729cf7bd",
+      "contentType": "image/png"
+    },
+    {
+      "imageKey": "beauty.nails.art",
+      "file": "beauty_nails_art.png",
+      "sha256": "7675f6797e50e5cb59a1bd7069b4b56858f37142e81a1b9ab214f60045e24d7e",
+      "contentType": "image/png"
+    },
+    {
+      "imageKey": "beauty.nails.extensions",
+      "file": "beauty_nails_extensions.png",
+      "sha256": "b23b41282cf868bcd8a0fc750195ce94a69c4a35acebd812216741e59ddaaeea",
+      "contentType": "image/png"
+    },
+    {
+      "imageKey": "beauty.nails.gel",
+      "file": "beauty_nails_gel.png",
+      "sha256": "ca007b982d9ea1b259a95b943eb117231f16a72f48016c1ac64c26b435ff9cf2",
+      "contentType": "image/png"
+    },
+    {
+      "imageKey": "beauty.nails.manicure",
+      "file": "beauty_nails_manicure.png",
+      "sha256": "7c26cb28a094f6854e8ddf0b1213263d0e76cca55c005dbe545df813729cf7bd",
+      "contentType": "image/png"
+    },
+    {
+      "imageKey": "beauty.nails.pedicure",
+      "file": "beauty_nails_pedicure.png",
+      "sha256": "dd951da88cd8bfc6103e2c2724a0221868b0c7d6eb3064c4fc8ffdd20cfae999",
+      "contentType": "image/png"
+    },
+    {
+      "imageKey": "beauty.nails.polish",
+      "file": "beauty_nails_polish.png",
+      "sha256": "54b8ca10d79f2400ef02e2a2cc593bb2aa0a7ab485ee6ee0b2f565b3d1e0a7af",
+      "contentType": "image/png"
+    },
+    {
+      "imageKey": "beauty.nails.removal",
+      "file": "beauty_nails_removal.png",
+      "sha256": "9690318c80a712eefcb0db2952a06fd07c186ce25dd5979cc0268daa46433a36",
+      "contentType": "image/png"
+    },
+    {
+      "imageKey": "beauty.salons",
+      "file": "beauty_salons.png",
+      "sha256": "d240dd9796d4609553f22e035902f3aa1f9db3e4b83dc835d284b065c0c937f6",
+      "contentType": "image/png"
+    },
+    {
+      "imageKey": "beauty.spa",
+      "file": "beauty_spa.png",
+      "sha256": "67a279b4dd319b8e54e29a12fe79d8c8a511a95a2dd04a1f686b0efc717d9761",
+      "contentType": "image/png"
+    },
+    {
+      "imageKey": "beauty.spa.body_care",
+      "file": "beauty_spa_body_care.png",
+      "sha256": "9bed1fd1d08ef0965065f71c19e2349ab8a75f56f6805382b66479ff80f87593",
+      "contentType": "image/png"
+    },
+    {
+      "imageKey": "beauty.spa.hammam",
+      "file": "beauty_spa_hammam.png",
+      "sha256": "062c20dd40b1c95bc535ae08f1aa79895a31fe34ea8f3977064ec8a4e51e4e5f",
+      "contentType": "image/png"
+    },
+    {
+      "imageKey": "beauty.spa.relax",
+      "file": "beauty_spa_relax.png",
+      "sha256": "67a279b4dd319b8e54e29a12fe79d8c8a511a95a2dd04a1f686b0efc717d9761",
+      "contentType": "image/png"
+    }
+  ]
+}

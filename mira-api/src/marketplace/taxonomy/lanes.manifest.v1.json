@@ -16,8 +16,8 @@
       "offerKind": "service",
       "publicBrowse": true,
       "partnerWrite": true,
-      "taxonomyFile": null,
-      "notes": "Beauty categories remain service-template driven; no product taxonomy file."
+      "taxonomyFile": "beauty-taxonomy.v1.json",
+      "notes": "صالونات/مختصّات منفصلة عن عيادات؛ home_visit فلتر غير طبي؛ الطبية clinic_only."
     },
     {
       "id": "jewelry",

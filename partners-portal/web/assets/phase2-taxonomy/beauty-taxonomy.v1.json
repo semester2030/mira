@@ -1,0 +1,1411 @@
+{
+  "schemaVersion": 1,
+  "lane": "beauty",
+  "definitionsVersion": 1,
+  "compatMinAppBuild": 1,
+  "status": "IMPLEMENTED",
+  "publicBrowse": true,
+  "notes": "جمالك: صالونات/مختصّات منفصلة عن عيادات. beauty.home_visit فلتر اكتشاف غير طبي. الطبية clinic_only فقط. تجهيز العروس اختصار اكتشاف (browseOnly).",
+  "nodes": [
+    {
+      "id": "beauty_lane.all",
+      "parentId": null,
+      "labelAr": "الكل",
+      "sort": 0,
+      "active": true,
+      "imageKey": "beauty",
+      "children": [],
+      "browseOnly": true
+    },
+    {
+      "id": "beauty",
+      "parentId": null,
+      "labelAr": "جمالك",
+      "sort": 10,
+      "active": true,
+      "imageKey": "beauty",
+      "children": [
+        "beauty.all",
+        "beauty.home_visit",
+        "beauty.salons",
+        "beauty.clinics",
+        "beauty.bridal_prep"
+      ],
+      "writeEnabled": true,
+      "offerKind": "service"
+    },
+    {
+      "id": "beauty.all",
+      "parentId": "beauty",
+      "labelAr": "الكل",
+      "sort": 0,
+      "active": true,
+      "imageKey": "beauty",
+      "children": [],
+      "browseOnly": true
+    },
+    {
+      "id": "beauty.home_visit",
+      "parentId": "beauty",
+      "labelAr": "تجيني للبيت",
+      "sort": 5,
+      "active": true,
+      "imageKey": "beauty.home_visit",
+      "children": [],
+      "browseOnly": true,
+      "synonymsAr": [
+        "زيارة منزلية",
+        "منزلي"
+      ]
+    },
+    {
+      "id": "beauty.bridal_prep",
+      "parentId": "beauty",
+      "labelAr": "تجهيز العروس",
+      "sort": 8,
+      "active": true,
+      "imageKey": "beauty.bridal_prep",
+      "children": [],
+      "browseOnly": true,
+      "synonymsAr": [
+        "باقة عروس"
+      ]
+    },
+    {
+      "id": "beauty.salons",
+      "parentId": "beauty",
+      "labelAr": "صالونات ومختصّات",
+      "sort": 10,
+      "active": true,
+      "imageKey": "beauty.salons",
+      "children": [
+        "beauty.hair",
+        "beauty.makeup",
+        "beauty.nails",
+        "beauty.lashes_brows",
+        "beauty.face_care",
+        "beauty.hair_removal",
+        "beauty.henna",
+        "beauty.spa"
+      ],
+      "writeEnabled": false,
+      "offerKind": "service",
+      "partnerKindsAllowed": [
+        "salon",
+        "studio",
+        "independent",
+        "spa"
+      ]
+    },
+    {
+      "id": "beauty.clinics",
+      "parentId": "beauty",
+      "labelAr": "عيادات تجميل",
+      "sort": 20,
+      "active": true,
+      "imageKey": "beauty.clinics",
+      "children": [
+        "beauty.clinic.derm",
+        "beauty.clinic.laser",
+        "beauty.clinic.teeth"
+      ],
+      "writeEnabled": false,
+      "offerKind": "service",
+      "partnerKindsAllowed": [
+        "clinic"
+      ],
+      "medicalOnly": true
+    },
+    {
+      "id": "beauty.hair",
+      "parentId": "beauty.salons",
+      "labelAr": "الشعر",
+      "sort": 10,
+      "active": true,
+      "imageKey": "beauty.hair",
+      "children": [
+        "beauty.hair.cut",
+        "beauty.hair.blowdry",
+        "beauty.hair.updo",
+        "beauty.hair.braids",
+        "beauty.hair.color",
+        "beauty.hair.highlights",
+        "beauty.hair.care"
+      ],
+      "writeEnabled": false,
+      "offerKind": "service",
+      "partnerKindsAllowed": [
+        "salon",
+        "studio",
+        "independent"
+      ]
+    },
+    {
+      "id": "beauty.hair.cut",
+      "parentId": "beauty.hair",
+      "labelAr": "قص وأطراف",
+      "sort": 10,
+      "active": true,
+      "imageKey": "beauty.hair.cut",
+      "children": [],
+      "writeEnabled": true,
+      "profileId": "service.salon_hair_cut",
+      "offerKind": "service",
+      "placeModesAllowed": [
+        "branch",
+        "client_home",
+        "provider_home",
+        "event_venue"
+      ],
+      "partnerKindsAllowed": [
+        "salon",
+        "studio",
+        "independent"
+      ],
+      "synonymsAr": [
+        "قص",
+        "أطراف"
+      ]
+    },
+    {
+      "id": "beauty.hair.blowdry",
+      "parentId": "beauty.hair",
+      "labelAr": "استشوار وويفي",
+      "sort": 20,
+      "active": true,
+      "imageKey": "beauty.hair.blowdry",
+      "children": [],
+      "writeEnabled": true,
+      "profileId": "service.salon_hair_cut",
+      "offerKind": "service",
+      "placeModesAllowed": [
+        "branch",
+        "client_home",
+        "provider_home",
+        "event_venue"
+      ],
+      "partnerKindsAllowed": [
+        "salon",
+        "studio",
+        "independent"
+      ],
+      "synonymsAr": [
+        "استشوار",
+        "ويفي"
+      ]
+    },
+    {
+      "id": "beauty.hair.updo",
+      "parentId": "beauty.hair",
+      "labelAr": "تسريحات ورفعات",
+      "sort": 30,
+      "active": true,
+      "imageKey": "beauty.hair.updo",
+      "children": [],
+      "writeEnabled": true,
+      "profileId": "service.salon_hair_cut",
+      "offerKind": "service",
+      "placeModesAllowed": [
+        "branch",
+        "client_home",
+        "provider_home",
+        "event_venue"
+      ],
+      "partnerKindsAllowed": [
+        "salon",
+        "studio",
+        "independent"
+      ],
+      "synonymsAr": [
+        "تسريحة",
+        "رفعة"
+      ]
+    },
+    {
+      "id": "beauty.hair.braids",
+      "parentId": "beauty.hair",
+      "labelAr": "ضفائر",
+      "sort": 40,
+      "active": true,
+      "imageKey": "beauty.hair.braids",
+      "children": [],
+      "writeEnabled": true,
+      "profileId": "service.salon_hair_cut",
+      "offerKind": "service",
+      "placeModesAllowed": [
+        "branch",
+        "client_home",
+        "provider_home",
+        "event_venue"
+      ],
+      "partnerKindsAllowed": [
+        "salon",
+        "studio",
+        "independent"
+      ],
+      "synonymsAr": [
+        "ضفيرة"
+      ]
+    },
+    {
+      "id": "beauty.hair.color",
+      "parentId": "beauty.hair",
+      "labelAr": "صبغة وجذور",
+      "sort": 50,
+      "active": true,
+      "imageKey": "beauty.hair.color",
+      "children": [],
+      "writeEnabled": true,
+      "profileId": "service.salon_hair_color",
+      "offerKind": "service",
+      "placeModesAllowed": [
+        "branch",
+        "client_home",
+        "provider_home",
+        "event_venue"
+      ],
+      "partnerKindsAllowed": [
+        "salon",
+        "studio",
+        "independent"
+      ],
+      "synonymsAr": [
+        "صبغة",
+        "جذور"
+      ]
+    },
+    {
+      "id": "beauty.hair.highlights",
+      "parentId": "beauty.hair",
+      "labelAr": "خصل وبالياج",
+      "sort": 60,
+      "active": true,
+      "imageKey": "beauty.hair.highlights",
+      "children": [],
+      "writeEnabled": true,
+      "profileId": "service.salon_hair_color",
+      "offerKind": "service",
+      "placeModesAllowed": [
+        "branch",
+        "client_home",
+        "provider_home",
+        "event_venue"
+      ],
+      "partnerKindsAllowed": [
+        "salon",
+        "studio",
+        "independent"
+      ],
+      "synonymsAr": [
+        "خصل",
+        "بالياج"
+      ]
+    },
+    {
+      "id": "beauty.hair.care",
+      "parentId": "beauty.hair",
+      "labelAr": "عناية وترطيب غير طبي",
+      "sort": 70,
+      "active": true,
+      "imageKey": "beauty.hair.care",
+      "children": [],
+      "writeEnabled": true,
+      "profileId": "service.salon_hair_cut",
+      "offerKind": "service",
+      "placeModesAllowed": [
+        "branch",
+        "client_home",
+        "provider_home",
+        "event_venue"
+      ],
+      "partnerKindsAllowed": [
+        "salon",
+        "studio",
+        "independent"
+      ],
+      "synonymsAr": [
+        "ترطيب شعر"
+      ]
+    },
+    {
+      "id": "beauty.makeup",
+      "parentId": "beauty.salons",
+      "labelAr": "المكياج",
+      "sort": 20,
+      "active": true,
+      "imageKey": "beauty.makeup",
+      "children": [
+        "beauty.makeup.soft",
+        "beauty.makeup.evening",
+        "beauty.makeup.bridal",
+        "beauty.makeup.bridal_trial",
+        "beauty.makeup.touchup"
+      ],
+      "writeEnabled": false,
+      "offerKind": "service",
+      "partnerKindsAllowed": [
+        "salon",
+        "studio",
+        "independent"
+      ]
+    },
+    {
+      "id": "beauty.makeup.soft",
+      "parentId": "beauty.makeup",
+      "labelAr": "مكياج ناعم",
+      "sort": 10,
+      "active": true,
+      "imageKey": "beauty.makeup.soft",
+      "children": [],
+      "writeEnabled": true,
+      "profileId": "service.salon_makeup",
+      "offerKind": "service",
+      "placeModesAllowed": [
+        "branch",
+        "client_home",
+        "provider_home",
+        "event_venue"
+      ],
+      "partnerKindsAllowed": [
+        "salon",
+        "studio",
+        "independent"
+      ],
+      "synonymsAr": [
+        "ناعم"
+      ]
+    },
+    {
+      "id": "beauty.makeup.evening",
+      "parentId": "beauty.makeup",
+      "labelAr": "سهرة ومناسبات",
+      "sort": 20,
+      "active": true,
+      "imageKey": "beauty.makeup.evening",
+      "children": [],
+      "writeEnabled": true,
+      "profileId": "service.salon_makeup",
+      "offerKind": "service",
+      "placeModesAllowed": [
+        "branch",
+        "client_home",
+        "provider_home",
+        "event_venue"
+      ],
+      "partnerKindsAllowed": [
+        "salon",
+        "studio",
+        "independent"
+      ],
+      "synonymsAr": [
+        "سهرة"
+      ]
+    },
+    {
+      "id": "beauty.makeup.bridal",
+      "parentId": "beauty.makeup",
+      "labelAr": "مكياج عروس",
+      "sort": 30,
+      "active": true,
+      "imageKey": "beauty.makeup.bridal",
+      "children": [],
+      "writeEnabled": true,
+      "profileId": "service.salon_makeup",
+      "offerKind": "service",
+      "placeModesAllowed": [
+        "branch",
+        "client_home",
+        "provider_home",
+        "event_venue"
+      ],
+      "partnerKindsAllowed": [
+        "salon",
+        "studio",
+        "independent"
+      ],
+      "synonymsAr": [
+        "عروس"
+      ]
+    },
+    {
+      "id": "beauty.makeup.bridal_trial",
+      "parentId": "beauty.makeup",
+      "labelAr": "تجربة مكياج العروس",
+      "sort": 40,
+      "active": true,
+      "imageKey": "beauty.makeup.bridal_trial",
+      "children": [],
+      "writeEnabled": true,
+      "profileId": "service.salon_makeup",
+      "offerKind": "service",
+      "placeModesAllowed": [
+        "branch",
+        "client_home",
+        "provider_home",
+        "event_venue"
+      ],
+      "partnerKindsAllowed": [
+        "salon",
+        "studio",
+        "independent"
+      ],
+      "synonymsAr": [
+        "تجربة عروس"
+      ]
+    },
+    {
+      "id": "beauty.makeup.touchup",
+      "parentId": "beauty.makeup",
+      "labelAr": "رتوش ومرافقة العروس",
+      "sort": 50,
+      "active": true,
+      "imageKey": "beauty.makeup.touchup",
+      "children": [],
+      "writeEnabled": true,
+      "profileId": "service.salon_makeup",
+      "offerKind": "service",
+      "placeModesAllowed": [
+        "branch",
+        "client_home",
+        "provider_home",
+        "event_venue"
+      ],
+      "partnerKindsAllowed": [
+        "salon",
+        "studio",
+        "independent"
+      ],
+      "synonymsAr": [
+        "رتوش",
+        "مرافقة"
+      ]
+    },
+    {
+      "id": "beauty.nails",
+      "parentId": "beauty.salons",
+      "labelAr": "الأظافر",
+      "sort": 30,
+      "active": true,
+      "imageKey": "beauty.nails",
+      "children": [
+        "beauty.nails.manicure",
+        "beauty.nails.pedicure",
+        "beauty.nails.polish",
+        "beauty.nails.gel",
+        "beauty.nails.extensions",
+        "beauty.nails.removal",
+        "beauty.nails.art"
+      ],
+      "writeEnabled": false,
+      "offerKind": "service",
+      "partnerKindsAllowed": [
+        "salon",
+        "studio",
+        "independent"
+      ]
+    },
+    {
+      "id": "beauty.nails.manicure",
+      "parentId": "beauty.nails",
+      "labelAr": "مناكير",
+      "sort": 10,
+      "active": true,
+      "imageKey": "beauty.nails.manicure",
+      "children": [],
+      "writeEnabled": true,
+      "profileId": "service.salon_nails",
+      "offerKind": "service",
+      "placeModesAllowed": [
+        "branch",
+        "client_home",
+        "provider_home"
+      ],
+      "partnerKindsAllowed": [
+        "salon",
+        "studio",
+        "independent"
+      ]
+    },
+    {
+      "id": "beauty.nails.pedicure",
+      "parentId": "beauty.nails",
+      "labelAr": "بديكير",
+      "sort": 20,
+      "active": true,
+      "imageKey": "beauty.nails.pedicure",
+      "children": [],
+      "writeEnabled": true,
+      "profileId": "service.salon_nails",
+      "offerKind": "service",
+      "placeModesAllowed": [
+        "branch",
+        "client_home",
+        "provider_home"
+      ],
+      "partnerKindsAllowed": [
+        "salon",
+        "studio",
+        "independent"
+      ]
+    },
+    {
+      "id": "beauty.nails.polish",
+      "parentId": "beauty.nails",
+      "labelAr": "لون عادي",
+      "sort": 30,
+      "active": true,
+      "imageKey": "beauty.nails.polish",
+      "children": [],
+      "writeEnabled": true,
+      "profileId": "service.salon_nails",
+      "offerKind": "service",
+      "placeModesAllowed": [
+        "branch",
+        "client_home",
+        "provider_home"
+      ],
+      "partnerKindsAllowed": [
+        "salon",
+        "studio",
+        "independent"
+      ]
+    },
+    {
+      "id": "beauty.nails.gel",
+      "parentId": "beauty.nails",
+      "labelAr": "جل",
+      "sort": 40,
+      "active": true,
+      "imageKey": "beauty.nails.gel",
+      "children": [],
+      "writeEnabled": true,
+      "profileId": "service.salon_nails",
+      "offerKind": "service",
+      "placeModesAllowed": [
+        "branch",
+        "client_home",
+        "provider_home"
+      ],
+      "partnerKindsAllowed": [
+        "salon",
+        "studio",
+        "independent"
+      ]
+    },
+    {
+      "id": "beauty.nails.extensions",
+      "parentId": "beauty.nails",
+      "labelAr": "تركيب وتعبئة",
+      "sort": 50,
+      "active": true,
+      "imageKey": "beauty.nails.extensions",
+      "children": [],
+      "writeEnabled": true,
+      "profileId": "service.salon_nails",
+      "offerKind": "service",
+      "placeModesAllowed": [
+        "branch",
+        "client_home",
+        "provider_home"
+      ],
+      "partnerKindsAllowed": [
+        "salon",
+        "studio",
+        "independent"
+      ]
+    },
+    {
+      "id": "beauty.nails.removal",
+      "parentId": "beauty.nails",
+      "labelAr": "إزالة",
+      "sort": 60,
+      "active": true,
+      "imageKey": "beauty.nails.removal",
+      "children": [],
+      "writeEnabled": true,
+      "profileId": "service.salon_nails",
+      "offerKind": "service",
+      "placeModesAllowed": [
+        "branch",
+        "client_home",
+        "provider_home"
+      ],
+      "partnerKindsAllowed": [
+        "salon",
+        "studio",
+        "independent"
+      ]
+    },
+    {
+      "id": "beauty.nails.art",
+      "parentId": "beauty.nails",
+      "labelAr": "رسم وتصاميم",
+      "sort": 70,
+      "active": true,
+      "imageKey": "beauty.nails.art",
+      "children": [],
+      "writeEnabled": true,
+      "profileId": "service.salon_nails",
+      "offerKind": "service",
+      "placeModesAllowed": [
+        "branch",
+        "client_home",
+        "provider_home"
+      ],
+      "partnerKindsAllowed": [
+        "salon",
+        "studio",
+        "independent"
+      ]
+    },
+    {
+      "id": "beauty.lashes_brows",
+      "parentId": "beauty.salons",
+      "labelAr": "الرموش والحواجب",
+      "sort": 40,
+      "active": true,
+      "imageKey": "beauty.lashes_brows",
+      "children": [
+        "beauty.lashes.daily",
+        "beauty.lashes.extensions",
+        "beauty.lashes.lift",
+        "beauty.brows.shape",
+        "beauty.brows.tint"
+      ],
+      "writeEnabled": false,
+      "offerKind": "service",
+      "partnerKindsAllowed": [
+        "salon",
+        "studio",
+        "independent"
+      ]
+    },
+    {
+      "id": "beauty.lashes.daily",
+      "parentId": "beauty.lashes_brows",
+      "labelAr": "رموش يومية",
+      "sort": 10,
+      "active": true,
+      "imageKey": "beauty.lashes.daily",
+      "children": [],
+      "writeEnabled": true,
+      "profileId": "service.salon.generic",
+      "offerKind": "service",
+      "placeModesAllowed": [
+        "branch",
+        "client_home",
+        "provider_home",
+        "event_venue"
+      ],
+      "partnerKindsAllowed": [
+        "salon",
+        "studio",
+        "independent"
+      ]
+    },
+    {
+      "id": "beauty.lashes.extensions",
+      "parentId": "beauty.lashes_brows",
+      "labelAr": "تركيب وتعبئة وإزالة رموش",
+      "sort": 20,
+      "active": true,
+      "imageKey": "beauty.lashes.extensions",
+      "children": [],
+      "writeEnabled": true,
+      "profileId": "service.salon.generic",
+      "offerKind": "service",
+      "placeModesAllowed": [
+        "branch",
+        "client_home",
+        "provider_home",
+        "event_venue"
+      ],
+      "partnerKindsAllowed": [
+        "salon",
+        "studio",
+        "independent"
+      ]
+    },
+    {
+      "id": "beauty.lashes.lift",
+      "parentId": "beauty.lashes_brows",
+      "labelAr": "رفع رموش",
+      "sort": 30,
+      "active": true,
+      "imageKey": "beauty.lashes.lift",
+      "children": [],
+      "writeEnabled": true,
+      "profileId": "service.salon.generic",
+      "offerKind": "service",
+      "placeModesAllowed": [
+        "branch",
+        "client_home",
+        "provider_home",
+        "event_venue"
+      ],
+      "partnerKindsAllowed": [
+        "salon",
+        "studio",
+        "independent"
+      ]
+    },
+    {
+      "id": "beauty.brows.shape",
+      "parentId": "beauty.lashes_brows",
+      "labelAr": "ترتيب وتصفيف حواجب",
+      "sort": 40,
+      "active": true,
+      "imageKey": "beauty.brows.shape",
+      "children": [],
+      "writeEnabled": true,
+      "profileId": "service.salon.generic",
+      "offerKind": "service",
+      "placeModesAllowed": [
+        "branch",
+        "client_home",
+        "provider_home",
+        "event_venue"
+      ],
+      "partnerKindsAllowed": [
+        "salon",
+        "studio",
+        "independent"
+      ]
+    },
+    {
+      "id": "beauty.brows.tint",
+      "parentId": "beauty.lashes_brows",
+      "labelAr": "صبغ حواجب",
+      "sort": 50,
+      "active": true,
+      "imageKey": "beauty.brows.tint",
+      "children": [],
+      "writeEnabled": true,
+      "profileId": "service.salon.generic",
+      "offerKind": "service",
+      "placeModesAllowed": [
+        "branch",
+        "client_home",
+        "provider_home",
+        "event_venue"
+      ],
+      "partnerKindsAllowed": [
+        "salon",
+        "studio",
+        "independent"
+      ]
+    },
+    {
+      "id": "beauty.face_care",
+      "parentId": "beauty.salons",
+      "labelAr": "العناية بالوجه",
+      "sort": 50,
+      "active": true,
+      "imageKey": "beauty.face_care",
+      "children": [
+        "beauty.face_care.cleanse",
+        "beauty.face_care.hydrate",
+        "beauty.face_care.pre_makeup"
+      ],
+      "writeEnabled": false,
+      "offerKind": "service",
+      "partnerKindsAllowed": [
+        "salon",
+        "studio",
+        "independent",
+        "spa"
+      ]
+    },
+    {
+      "id": "beauty.face_care.cleanse",
+      "parentId": "beauty.face_care",
+      "labelAr": "تنظيف تجميلي سطحي",
+      "sort": 10,
+      "active": true,
+      "imageKey": "beauty.face_care.cleanse",
+      "children": [],
+      "writeEnabled": true,
+      "profileId": "service.salon_care",
+      "offerKind": "service",
+      "placeModesAllowed": [
+        "branch",
+        "provider_home"
+      ],
+      "partnerKindsAllowed": [
+        "salon",
+        "studio",
+        "independent",
+        "spa"
+      ]
+    },
+    {
+      "id": "beauty.face_care.hydrate",
+      "parentId": "beauty.face_care",
+      "labelAr": "ترطيب وماسك",
+      "sort": 20,
+      "active": true,
+      "imageKey": "beauty.face_care.hydrate",
+      "children": [],
+      "writeEnabled": true,
+      "profileId": "service.salon_care",
+      "offerKind": "service",
+      "placeModesAllowed": [
+        "branch",
+        "provider_home"
+      ],
+      "partnerKindsAllowed": [
+        "salon",
+        "studio",
+        "independent",
+        "spa"
+      ]
+    },
+    {
+      "id": "beauty.face_care.pre_makeup",
+      "parentId": "beauty.face_care",
+      "labelAr": "عناية قبل المكياج",
+      "sort": 30,
+      "active": true,
+      "imageKey": "beauty.face_care.pre_makeup",
+      "children": [],
+      "writeEnabled": true,
+      "profileId": "service.salon_care",
+      "offerKind": "service",
+      "placeModesAllowed": [
+        "branch",
+        "provider_home"
+      ],
+      "partnerKindsAllowed": [
+        "salon",
+        "studio",
+        "independent",
+        "spa"
+      ]
+    },
+    {
+      "id": "beauty.hair_removal",
+      "parentId": "beauty.salons",
+      "labelAr": "إزالة الشعر غير الطبية",
+      "sort": 60,
+      "active": true,
+      "imageKey": "beauty.hair_removal",
+      "children": [
+        "beauty.hair_removal.wax",
+        "beauty.hair_removal.sugar",
+        "beauty.hair_removal.thread"
+      ],
+      "writeEnabled": false,
+      "offerKind": "service",
+      "partnerKindsAllowed": [
+        "salon",
+        "studio",
+        "independent"
+      ]
+    },
+    {
+      "id": "beauty.hair_removal.wax",
+      "parentId": "beauty.hair_removal",
+      "labelAr": "شمع",
+      "sort": 10,
+      "active": true,
+      "imageKey": "beauty.hair_removal.wax",
+      "children": [],
+      "writeEnabled": true,
+      "profileId": "service.salon_care",
+      "offerKind": "service",
+      "placeModesAllowed": [
+        "branch",
+        "client_home"
+      ],
+      "partnerKindsAllowed": [
+        "salon",
+        "studio",
+        "independent"
+      ]
+    },
+    {
+      "id": "beauty.hair_removal.sugar",
+      "parentId": "beauty.hair_removal",
+      "labelAr": "حلاوة",
+      "sort": 20,
+      "active": true,
+      "imageKey": "beauty.hair_removal.sugar",
+      "children": [],
+      "writeEnabled": true,
+      "profileId": "service.salon_care",
+      "offerKind": "service",
+      "placeModesAllowed": [
+        "branch",
+        "client_home"
+      ],
+      "partnerKindsAllowed": [
+        "salon",
+        "studio",
+        "independent"
+      ]
+    },
+    {
+      "id": "beauty.hair_removal.thread",
+      "parentId": "beauty.hair_removal",
+      "labelAr": "خيط وفتلة",
+      "sort": 30,
+      "active": true,
+      "imageKey": "beauty.hair_removal.thread",
+      "children": [],
+      "writeEnabled": true,
+      "profileId": "service.salon_care",
+      "offerKind": "service",
+      "placeModesAllowed": [
+        "branch",
+        "client_home"
+      ],
+      "partnerKindsAllowed": [
+        "salon",
+        "studio",
+        "independent"
+      ]
+    },
+    {
+      "id": "beauty.henna",
+      "parentId": "beauty.salons",
+      "labelAr": "الحناء والنقش",
+      "sort": 70,
+      "active": true,
+      "imageKey": "beauty.henna",
+      "children": [
+        "beauty.henna.hands",
+        "beauty.henna.feet",
+        "beauty.henna.bridal",
+        "beauty.henna.group"
+      ],
+      "writeEnabled": false,
+      "offerKind": "service",
+      "partnerKindsAllowed": [
+        "salon",
+        "studio",
+        "independent",
+        "independent"
+      ]
+    },
+    {
+      "id": "beauty.henna.hands",
+      "parentId": "beauty.henna",
+      "labelAr": "نقش يدين",
+      "sort": 10,
+      "active": true,
+      "imageKey": "beauty.henna.hands",
+      "children": [],
+      "writeEnabled": true,
+      "profileId": "service.salon.generic",
+      "offerKind": "service",
+      "placeModesAllowed": [
+        "branch",
+        "client_home",
+        "provider_home",
+        "event_venue"
+      ],
+      "partnerKindsAllowed": [
+        "salon",
+        "studio",
+        "independent",
+        "independent"
+      ]
+    },
+    {
+      "id": "beauty.henna.feet",
+      "parentId": "beauty.henna",
+      "labelAr": "نقش قدمين",
+      "sort": 20,
+      "active": true,
+      "imageKey": "beauty.henna.feet",
+      "children": [],
+      "writeEnabled": true,
+      "profileId": "service.salon.generic",
+      "offerKind": "service",
+      "placeModesAllowed": [
+        "branch",
+        "client_home",
+        "provider_home",
+        "event_venue"
+      ],
+      "partnerKindsAllowed": [
+        "salon",
+        "studio",
+        "independent",
+        "independent"
+      ]
+    },
+    {
+      "id": "beauty.henna.bridal",
+      "parentId": "beauty.henna",
+      "labelAr": "نقش عروس",
+      "sort": 30,
+      "active": true,
+      "imageKey": "beauty.henna.bridal",
+      "children": [],
+      "writeEnabled": true,
+      "profileId": "service.salon.generic",
+      "offerKind": "service",
+      "placeModesAllowed": [
+        "branch",
+        "client_home",
+        "provider_home",
+        "event_venue"
+      ],
+      "partnerKindsAllowed": [
+        "salon",
+        "studio",
+        "independent",
+        "independent"
+      ]
+    },
+    {
+      "id": "beauty.henna.group",
+      "parentId": "beauty.henna",
+      "labelAr": "نقش مناسبات لعدة ضيفات",
+      "sort": 40,
+      "active": true,
+      "imageKey": "beauty.henna.group",
+      "children": [],
+      "writeEnabled": true,
+      "profileId": "service.salon.generic",
+      "offerKind": "service",
+      "placeModesAllowed": [
+        "branch",
+        "client_home",
+        "provider_home",
+        "event_venue"
+      ],
+      "partnerKindsAllowed": [
+        "salon",
+        "studio",
+        "independent",
+        "independent"
+      ]
+    },
+    {
+      "id": "beauty.spa",
+      "parentId": "beauty.salons",
+      "labelAr": "السبا والعناية بالجسم",
+      "sort": 80,
+      "active": true,
+      "imageKey": "beauty.spa",
+      "children": [
+        "beauty.spa.hammam",
+        "beauty.spa.body_care",
+        "beauty.spa.relax"
+      ],
+      "writeEnabled": false,
+      "offerKind": "service",
+      "partnerKindsAllowed": [
+        "salon",
+        "spa"
+      ]
+    },
+    {
+      "id": "beauty.spa.hammam",
+      "parentId": "beauty.spa",
+      "labelAr": "حمام مغربي",
+      "sort": 10,
+      "active": true,
+      "imageKey": "beauty.spa.hammam",
+      "children": [],
+      "writeEnabled": true,
+      "profileId": "service.salon_care",
+      "offerKind": "service",
+      "placeModesAllowed": [
+        "branch"
+      ],
+      "partnerKindsAllowed": [
+        "salon",
+        "spa"
+      ]
+    },
+    {
+      "id": "beauty.spa.body_care",
+      "parentId": "beauty.spa",
+      "labelAr": "تقشير وعناية بالجسم",
+      "sort": 20,
+      "active": true,
+      "imageKey": "beauty.spa.body_care",
+      "children": [],
+      "writeEnabled": true,
+      "profileId": "service.salon_care",
+      "offerKind": "service",
+      "placeModesAllowed": [
+        "branch"
+      ],
+      "partnerKindsAllowed": [
+        "salon",
+        "spa"
+      ]
+    },
+    {
+      "id": "beauty.spa.relax",
+      "parentId": "beauty.spa",
+      "labelAr": "جلسة استرخاء غير علاجية",
+      "sort": 30,
+      "active": true,
+      "imageKey": "beauty.spa.relax",
+      "children": [],
+      "writeEnabled": true,
+      "profileId": "service.salon_care",
+      "offerKind": "service",
+      "placeModesAllowed": [
+        "branch"
+      ],
+      "partnerKindsAllowed": [
+        "salon",
+        "spa"
+      ]
+    },
+    {
+      "id": "beauty.clinic.derm",
+      "parentId": "beauty.clinics",
+      "labelAr": "الجلدية والتجميل الطبي",
+      "sort": 10,
+      "active": true,
+      "imageKey": "beauty.clinic.derm",
+      "children": [
+        "beauty.clinic.derm.consult",
+        "beauty.clinic.derm.skin_eval",
+        "beauty.clinic.derm.hair_eval",
+        "beauty.clinic.derm.procedures"
+      ],
+      "writeEnabled": false,
+      "offerKind": "service",
+      "partnerKindsAllowed": [
+        "clinic"
+      ],
+      "medicalOnly": true
+    },
+    {
+      "id": "beauty.clinic.derm.consult",
+      "parentId": "beauty.clinic.derm",
+      "labelAr": "استشارة جلدية تجميلية",
+      "sort": 10,
+      "active": true,
+      "imageKey": "beauty.clinic.derm.consult",
+      "children": [],
+      "writeEnabled": true,
+      "profileId": "service.clinic_consult",
+      "offerKind": "service",
+      "placeModesAllowed": [
+        "clinic_only"
+      ],
+      "partnerKindsAllowed": [
+        "clinic"
+      ],
+      "medicalOnly": true
+    },
+    {
+      "id": "beauty.clinic.derm.skin_eval",
+      "parentId": "beauty.clinic.derm",
+      "labelAr": "تقييم البشرة والتصبغات",
+      "sort": 20,
+      "active": true,
+      "imageKey": "beauty.clinic.derm.skin_eval",
+      "children": [],
+      "writeEnabled": true,
+      "profileId": "service.clinic_skin",
+      "offerKind": "service",
+      "placeModesAllowed": [
+        "clinic_only"
+      ],
+      "partnerKindsAllowed": [
+        "clinic"
+      ],
+      "medicalOnly": true
+    },
+    {
+      "id": "beauty.clinic.derm.hair_eval",
+      "parentId": "beauty.clinic.derm",
+      "labelAr": "تقييم الشعر وفروة الرأس",
+      "sort": 30,
+      "active": true,
+      "imageKey": "beauty.clinic.derm.hair_eval",
+      "children": [],
+      "writeEnabled": true,
+      "profileId": "service.clinic_consult",
+      "offerKind": "service",
+      "placeModesAllowed": [
+        "clinic_only"
+      ],
+      "partnerKindsAllowed": [
+        "clinic"
+      ],
+      "medicalOnly": true
+    },
+    {
+      "id": "beauty.clinic.derm.procedures",
+      "parentId": "beauty.clinic.derm",
+      "labelAr": "مواعيد الإجراءات التجميلية المعتمدة",
+      "sort": 40,
+      "active": true,
+      "imageKey": "beauty.clinic.derm.procedures",
+      "children": [],
+      "writeEnabled": true,
+      "profileId": "service.clinic_skin",
+      "offerKind": "service",
+      "placeModesAllowed": [
+        "clinic_only"
+      ],
+      "partnerKindsAllowed": [
+        "clinic"
+      ],
+      "medicalOnly": true
+    },
+    {
+      "id": "beauty.clinic.laser",
+      "parentId": "beauty.clinics",
+      "labelAr": "الليزر الطبي",
+      "sort": 20,
+      "active": true,
+      "imageKey": "beauty.clinic.laser",
+      "children": [
+        "beauty.clinic.laser.hair",
+        "beauty.clinic.laser.skin_eval"
+      ],
+      "writeEnabled": false,
+      "offerKind": "service",
+      "partnerKindsAllowed": [
+        "clinic"
+      ],
+      "medicalOnly": true
+    },
+    {
+      "id": "beauty.clinic.laser.hair",
+      "parentId": "beauty.clinic.laser",
+      "labelAr": "إزالة شعر بالليزر",
+      "sort": 10,
+      "active": true,
+      "imageKey": "beauty.clinic.laser.hair",
+      "children": [],
+      "writeEnabled": true,
+      "profileId": "service.clinic_laser",
+      "offerKind": "service",
+      "placeModesAllowed": [
+        "clinic_only"
+      ],
+      "partnerKindsAllowed": [
+        "clinic"
+      ],
+      "medicalOnly": true
+    },
+    {
+      "id": "beauty.clinic.laser.skin_eval",
+      "parentId": "beauty.clinic.laser",
+      "labelAr": "موعد تقييم ليزر للبشرة",
+      "sort": 20,
+      "active": true,
+      "imageKey": "beauty.clinic.laser.skin_eval",
+      "children": [],
+      "writeEnabled": true,
+      "profileId": "service.clinic_laser",
+      "offerKind": "service",
+      "placeModesAllowed": [
+        "clinic_only"
+      ],
+      "partnerKindsAllowed": [
+        "clinic"
+      ],
+      "medicalOnly": true
+    },
+    {
+      "id": "beauty.clinic.teeth",
+      "parentId": "beauty.clinics",
+      "labelAr": "تجميل الأسنان",
+      "sort": 30,
+      "active": true,
+      "imageKey": "beauty.clinic.teeth",
+      "children": [
+        "beauty.clinic.teeth.consult",
+        "beauty.clinic.teeth.clean",
+        "beauty.clinic.teeth.whitening",
+        "beauty.clinic.teeth.veneers_eval"
+      ],
+      "writeEnabled": false,
+      "offerKind": "service",
+      "partnerKindsAllowed": [
+        "clinic"
+      ],
+      "medicalOnly": true
+    },
+    {
+      "id": "beauty.clinic.teeth.consult",
+      "parentId": "beauty.clinic.teeth",
+      "labelAr": "استشارة تجميل الأسنان",
+      "sort": 10,
+      "active": true,
+      "imageKey": "beauty.clinic.teeth.consult",
+      "children": [],
+      "writeEnabled": true,
+      "profileId": "service.clinic_teeth",
+      "offerKind": "service",
+      "placeModesAllowed": [
+        "clinic_only"
+      ],
+      "partnerKindsAllowed": [
+        "clinic"
+      ],
+      "medicalOnly": true
+    },
+    {
+      "id": "beauty.clinic.teeth.clean",
+      "parentId": "beauty.clinic.teeth",
+      "labelAr": "تنظيف وتلميع",
+      "sort": 20,
+      "active": true,
+      "imageKey": "beauty.clinic.teeth.clean",
+      "children": [],
+      "writeEnabled": true,
+      "profileId": "service.clinic_teeth",
+      "offerKind": "service",
+      "placeModesAllowed": [
+        "clinic_only"
+      ],
+      "partnerKindsAllowed": [
+        "clinic"
+      ],
+      "medicalOnly": true
+    },
+    {
+      "id": "beauty.clinic.teeth.whitening",
+      "parentId": "beauty.clinic.teeth",
+      "labelAr": "تبييض",
+      "sort": 30,
+      "active": true,
+      "imageKey": "beauty.clinic.teeth.whitening",
+      "children": [],
+      "writeEnabled": true,
+      "profileId": "service.clinic_teeth",
+      "offerKind": "service",
+      "placeModesAllowed": [
+        "clinic_only"
+      ],
+      "partnerKindsAllowed": [
+        "clinic"
+      ],
+      "medicalOnly": true
+    },
+    {
+      "id": "beauty.clinic.teeth.veneers_eval",
+      "parentId": "beauty.clinic.teeth",
+      "labelAr": "تقييم قشور وتحسين الابتسامة",
+      "sort": 40,
+      "active": true,
+      "imageKey": "beauty.clinic.teeth.veneers_eval",
+      "children": [],
+      "writeEnabled": true,
+      "profileId": "service.clinic_teeth",
+      "offerKind": "service",
+      "placeModesAllowed": [
+        "clinic_only"
+      ],
+      "partnerKindsAllowed": [
+        "clinic"
+      ],
+      "medicalOnly": true
+    }
+  ]
+}

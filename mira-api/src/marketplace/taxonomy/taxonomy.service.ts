@@ -20,6 +20,7 @@ import {
   validateProductTaxonomyWrite,
   type ProductTaxonomyInput,
 } from './product-taxonomy.validate';
+import { resolveBeautyIcon } from './beauty-icon-assets';
 import { resolveCatalogIcon } from './catalog-icon-assets';
 
 type RegistrySnap = {
@@ -272,7 +273,14 @@ export class TaxonomyService implements OnModuleInit {
         ? { fieldIds: [] as string[], filterKeys: [] as string[] }
         : this.profileMeta(n.profileId);
     const imageKey = n.imageKey ?? null;
-    const icon = resolveCatalogIcon(imageKey);
+    const icon = resolveCatalogIcon(imageKey) || resolveBeautyIcon(imageKey);
+    const placeModesAllowed = Array.isArray((n as { placeModesAllowed?: string[] }).placeModesAllowed)
+      ? [...((n as { placeModesAllowed?: string[] }).placeModesAllowed || [])]
+      : undefined;
+    const partnerKindsAllowed = Array.isArray((n as { partnerKindsAllowed?: string[] }).partnerKindsAllowed)
+      ? [...((n as { partnerKindsAllowed?: string[] }).partnerKindsAllowed || [])]
+      : undefined;
+    const medicalOnly = !!(n as { medicalOnly?: boolean }).medicalOnly;
     return {
       id: n.id,
       parentId: n.parentId,
@@ -285,6 +293,9 @@ export class TaxonomyService implements OnModuleInit {
       icon: icon ?? null,
       profileId: n.profileId ?? null,
       offerKind: n.offerKind ?? null,
+      ...(placeModesAllowed ? { placeModesAllowed } : {}),
+      ...(partnerKindsAllowed ? { partnerKindsAllowed } : {}),
+      ...(medicalOnly ? { medicalOnly: true } : {}),
       children: [...(n.children || [])],
       fieldIds: meta.fieldIds,
       filterKeys: meta.filterKeys,
