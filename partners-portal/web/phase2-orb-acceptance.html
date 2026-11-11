@@ -1,0 +1,74 @@
+<!DOCTYPE html>
+<html lang="ar" dir="rtl">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>Phase2 orb acceptance — real e2b shell paint</title>
+  <link rel="stylesheet" href="css/site.css" />
+  <link rel="stylesheet" href="css/e2b-product-editor.css" />
+  <style>
+    body { margin: 0; background: #f7f2f6; font-family: Tajawal, sans-serif; }
+    #catalogSection { min-height: 100vh; padding: 16px; }
+    #phase2LaneBar { display: flex; gap: 8px; flex-wrap: wrap; margin-bottom: 12px; }
+    #phase2LaneBar button { padding: 8px 12px; }
+    #phase2LaneBar button.is-active { outline: 2px solid #c45b8a; }
+  </style>
+</head>
+<body class="e2b-product-mode">
+  <main id="catalogSection" class="e2b-panel e2b-split">
+    <div id="phase2LaneBar" data-testid="phase2-lane-bar">
+      <button type="button" data-lane="jewelry">المجوهرات</button>
+      <button type="button" data-lane="children">الأطفال</button>
+      <button type="button" data-lane="occasions">مناسباتك</button>
+      <button type="button" data-lane="gifts">الهدايا</button>
+    </div>
+    <div id="catalogList" hidden></div>
+    <form id="catalogForm">
+      <select name="category"></select>
+      <select name="subcategory"></select>
+    </form>
+    <div id="e2bWorkspace">
+      <div id="e2bMainCircles" data-testid="e2b-main-circles"></div>
+      <div id="e2bSubCircles" data-testid="e2b-sub-circles"></div>
+    </div>
+  </main>
+
+  <script>
+    window.__MIRA_TAXONOMY_LANE__ = 'jewelry';
+    window.__PHASE2_TAXONOMY__ = {};
+    async function loadFixture(lane) {
+      const r2 = await fetch('assets/phase2-taxonomy/' + lane + '-taxonomy.v1.json');
+      if (!r2.ok) throw new Error('missing taxonomy ' + lane);
+      return r2.json();
+    }
+    window.PartnersApi = {
+      taxonomy: async ({ lane }) => {
+        const key = lane || 'jewelry';
+        if (!window.__PHASE2_TAXONOMY__[key]) {
+          window.__PHASE2_TAXONOMY__[key] = await loadFixture(key);
+        }
+        return window.__PHASE2_TAXONOMY__[key];
+      },
+    };
+  </script>
+  <script src="js/e2b-product-shell.js"></script>
+  <script>
+    async function switchLane(lane) {
+      window.__MIRA_TAXONOMY_LANE__ = lane;
+      window.MiraE2BProductShell.clearTaxonomyCache();
+      document.querySelectorAll('#phase2LaneBar button').forEach((b) => {
+        b.classList.toggle('is-active', b.getAttribute('data-lane') === lane);
+      });
+      await window.MiraE2BProductShell.reloadTaxonomy({ force: true });
+    }
+    document.querySelectorAll('#phase2LaneBar button').forEach((b) => {
+      b.addEventListener('click', () => switchLane(b.getAttribute('data-lane')));
+    });
+    document.addEventListener('DOMContentLoaded', async () => {
+      window.MiraE2BProductShell.enableProductMode();
+      await switchLane('jewelry');
+      window.__PHASE2_ORB_READY__ = true;
+    });
+  </script>
+</body>
+</html>

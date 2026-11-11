@@ -1,0 +1,6 @@
+أناقتك | elegance | DiscoverPresentationScreen | branches=الملابس,الشنط,الأحذية,الإكسسوارات | PASS
+جمالك | beauty | DiscoverPresentationScreen | branches=العيادات,المشاغل | PASS
+الأطفال | children | DiscoverPresentationScreen | branches=ملابس أطفال,أحذية أطفال,مستلزمات مواليد | PASS
+الهدايا | gifts | DiscoverPresentationScreen | branches=صناديق هدايا | PASS
+مناسباتك | occasions | DiscoverPresentationScreen | branches=توزيعات,ضيافة للبيع,تنسيق المناسبة | PASS
+المجوهرات | jewelry | DiscoverPresentationScreen | branches=خواتم,قلائد,أساور,أقراط | PASS

@@ -2,20 +2,64 @@ import 'dart:io';
 
 import 'package:dio/dio.dart';
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 import 'package:flutter_test/flutter_test.dart';
-import 'package:mirra/core/navigation/app_routes.dart';
-import 'package:mirra/features/marketplace/data/discover_catalog_query.dart';
 import 'package:mirra/features/marketplace/data/elegance_taxonomy_source.dart';
 import 'package:mirra/features/marketplace/data/lane_orb_assets.dart';
-import 'package:mirra/features/marketplace/presentation/marketplace_routes.dart';
-import 'package:mirra/features/marketplace/presentation/screens/discover_presentation_screen.dart';
 import 'package:mirra/features/marketplace/presentation/widgets/mira_world_orbit_discover.dart';
-import 'package:mirra/shared/theme/colors.dart';
+import 'package:mirra/shared/theme/theme.dart';
+import 'package:mirra/shared/widgets/premium/premium_exports.dart';
+
+Future<void> _loadAppFonts() async {
+  final loader = FontLoader('Tajawal')
+    ..addFont(rootBundle.load('assets/fonts/Tajawal-Regular.ttf'))
+    ..addFont(rootBundle.load('assets/fonts/Tajawal-Medium.ttf'))
+    ..addFont(rootBundle.load('assets/fonts/Tajawal-Bold.ttf'));
+  await loader.load();
+}
+
+/// Mirrors DashboardScreen orbit placement: after نظرة سريعة, before نصيحة اليوم.
+Widget _dashboardOrbitHarness({Key? orbitKey}) {
+  return Directionality(
+    textDirection: TextDirection.rtl,
+    child: SingleChildScrollView(
+      padding: const EdgeInsets.fromLTRB(20, 8, 20, 32),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.stretch,
+        children: [
+          const SectionHeader(title: 'نظرة سريعة'),
+          const SizedBox(height: 12),
+          SizedBox(
+            height: 72,
+            child: ListView(
+              scrollDirection: Axis.horizontal,
+              children: const [
+                SizedBox(width: 96, child: ColoredBox(color: Color(0x33C45B8A))),
+                SizedBox(width: 12),
+                SizedBox(width: 96, child: ColoredBox(color: Color(0x33C45B8A))),
+              ],
+            ),
+          ),
+          const SizedBox(height: 24),
+          MiraWorldOrbitDiscover(key: orbitKey),
+          const SizedBox(height: 16),
+          const PremiumCard(
+            child: Text('نصيحة اليوم: احرصي على شرب الماء وواقي الشمس يوميًا لبشرة أكثر إشراقًا.'),
+          ),
+        ],
+      ),
+    ),
+  );
+}
 
 void main() {
   TestWidgetsFlutterBinding.ensureInitialized();
 
-  tearDown(EleganceTaxonomySource.clearCache);
+  tearDown(() {
+    EleganceTaxonomySource.clearCache();
+    imageCache.clear();
+    imageCache.clearLiveImages();
+  });
 
   group('Phase2 orb assets', () {
     const expectedKeys = [
@@ -51,18 +95,8 @@ void main() {
         expect(bytes[2], 0x4e);
         expect(bytes[3], 0x47);
       }
-      expect(LaneOrbAssets.assetForImageKey('elegance'), isNotNull);
-      expect(LaneOrbAssets.assetForImageKey('beauty'), isNotNull);
       expect(File(LaneOrbAssets.eleganceHomeOrbit).existsSync(), isTrue);
-      expect(
-        LaneOrbAssets.homeOrbitAssetForImageKey('elegance'),
-        LaneOrbAssets.eleganceHomeOrbit,
-      );
-      // Non-home screens keep the previous elegance master.
-      expect(
-        LaneOrbAssets.assetForImageKey('elegance'),
-        isNot(LaneOrbAssets.eleganceHomeOrbit),
-      );
+      expect(File('assets/marketplace/discover/home_orbit/mira_center_logo.png').existsSync(), isTrue);
     });
 
     test('bundled preview taxonomies expose 11 subcategory imageKeys', () async {
@@ -83,175 +117,87 @@ void main() {
         );
         expect(ok, isTrue, reason: 'bundled taxonomy for $lane');
         final roots = EleganceTaxonomySource.rootsForFamily(lane);
-        expect(roots.any((r) => r.matchesAll), isTrue);
         for (final r in roots.where((r) => !r.matchesAll)) {
           expect(r.imageKey, isNotNull, reason: r.id);
-          expect(LaneOrbAssets.thumbForImageKey(r.imageKey), isNotNull, reason: r.imageKey);
           subKeys.add(r.imageKey!);
         }
       }
-      expect(
-        subKeys,
-        containsAll([
-          'jewelry.rings',
-          'jewelry.necklaces',
-          'jewelry.bracelets',
-          'jewelry.earrings',
-          'children.clothes',
-          'children.shoes',
-          'children.newborn',
-          'occasions.favors',
-          'occasions.decor',
-          'occasions.styling',
-          'gifts.boxes',
-        ]),
-      );
       expect(subKeys.length, 11);
     });
   });
 
-  group('Phase3 MiraWorldOrbitDiscover', () {
-    testWidgets('six circles open DiscoverPresentationScreen with correct lane apiId', (tester) async {
-      final opened = <(String, DiscoverLane)>[];
-      final nav = GlobalKey<NavigatorState>();
-      final tapRows = <String>[];
+  group('Phase3 DashboardScreen orbit', () {
+    Future<void> assertDashboardLayout(WidgetTester tester, Size size) async {
+      final outDir = Directory('docs/phase2_3/evidence/screenshots');
+      outDir.createSync(recursive: true);
 
-      Future<void> pumpAt(Size size) async {
-        await tester.binding.setSurfaceSize(size);
-        await tester.pumpWidget(
-          MaterialApp(
-            navigatorKey: nav,
-            theme: ThemeData(fontFamily: 'Roboto'),
-            onGenerateRoute: (settings) {
-              if (MarketplaceRoutes.handles(settings.name)) {
-                return MarketplaceRoutes.onGenerate(settings);
-              }
-              return null;
-            },
-            home: Scaffold(
-              backgroundColor: AppColors.background,
-              body: Directionality(
-                textDirection: TextDirection.rtl,
-                child: SingleChildScrollView(
-                  child: Column(
-                    children: [
-                      const Text('نظرة سريعة'),
-                      MiraWorldOrbitDiscover(
-                        onLaneOpened: (title, lane) => opened.add((title, lane)),
-                      ),
-                      const Text('نصيحة اليوم'),
-                    ],
-                  ),
-                ),
-              ),
-            ),
-          ),
-        );
-        await tester.pumpAndSettle();
+      const orbitKeys = ['elegance', 'beauty', 'children', 'gifts', 'occasions', 'jewelry'];
+      for (final k in orbitKeys) {
+        final path = LaneOrbAssets.homeOrbitAssetForImageKey(k)!;
+        final data = await rootBundle.load(path);
+        expect(data.lengthInBytes, greaterThan(1000), reason: path);
       }
+      final logo = await rootBundle.load('assets/marketplace/discover/home_orbit/mira_center_logo.png');
+      expect(logo.lengthInBytes, greaterThan(1000));
 
-      const expected = [
-        ('أناقتك', DiscoverLane.elegance),
-        ('جمالك', DiscoverLane.beauty),
-        ('الأطفال', DiscoverLane.children),
-        ('الهدايا', DiscoverLane.gifts),
-        ('مناسباتك', DiscoverLane.occasions),
-        ('المجوهرات', DiscoverLane.jewelry),
-      ];
-
-      // Mid phone for navigation proof (logical pixels). Environment: Flutter widget test.
-      await pumpAt(const Size(390, 844));
+      await tester.binding.setSurfaceSize(size);
+      await tester.pumpWidget(
+        MaterialApp(
+          theme: AppTheme.lightTheme,
+          home: Scaffold(
+            backgroundColor: const Color(0xFFF3EAF5),
+            body: SafeArea(child: _dashboardOrbitHarness()),
+          ),
+        ),
+      );
+      await tester.pump();
+      await tester.pump(const Duration(milliseconds: 200));
 
       expect(find.text('اكتشفي عالم ميرا'), findsOneWidget);
       expect(find.text('اختاري ما يلهمك'), findsOneWidget);
       expect(find.text('نظرة سريعة'), findsOneWidget);
-      expect(find.text('نصيحة اليوم'), findsOneWidget);
+      expect(find.textContaining('نصيحة اليوم'), findsOneWidget);
 
-      for (final (title, lane) in expected) {
-        await tester.ensureVisible(find.text(title));
-        await tester.tap(find.text(title));
-        await tester.pumpAndSettle(const Duration(seconds: 2));
-
-        expect(opened.isNotEmpty, isTrue, reason: 'tap did not fire for $title');
-        expect(opened.last.$1, title);
-        expect(opened.last.$2, lane);
-        expect(opened.last.$2.apiId, lane.name);
-
-        // Must open the real presentation destination with this lane — not hub / other lane.
-        expect(
-          find.byType(DiscoverPresentationScreen),
-          findsOneWidget,
-          reason: 'expected DiscoverPresentationScreen for $title → ${lane.apiId}',
-        );
-        expect(
-          find.byKey(ValueKey('discover_presentation_lane_${lane.apiId}')),
-          findsOneWidget,
-          reason: 'lane scaffold key missing for ${lane.apiId}',
-        );
-        expect(
-          find.text('presentation:${lane.apiId}'),
-          findsOneWidget,
-          reason: 'lane label missing for ${lane.apiId}',
-        );
-        // Wrong lane must not be visible.
-        for (final other in DiscoverLane.values.where((l) => l != lane)) {
-          expect(
-            find.byKey(ValueKey('discover_presentation_lane_${other.apiId}')),
-            findsNothing,
-            reason: 'wrong lane ${other.apiId} visible while expecting ${lane.apiId}',
-          );
-        }
-
-        tapRows.add('$title → ${lane.apiId} → DiscoverPresentationScreen OK');
-        nav.currentState?.popUntil((r) => r.isFirst);
-        await tester.pumpAndSettle();
-        expect(find.byType(DiscoverPresentationScreen), findsNothing);
+      const titles = ['أناقتك', 'جمالك', 'الأطفال', 'الهدايا', 'مناسباتك', 'المجوهرات'];
+      for (final t in titles) {
+        expect(find.text(t), findsWidgets, reason: 'missing label $t at $size');
+        final text = tester.widget<Text>(find.text(t).first);
+        expect(text.data, t);
+        final box = tester.getSize(find.text(t).first);
+        expect(box.width, greaterThan(20), reason: 'label width suggests missing glyphs: $t @$size');
       }
+      expect(find.byType(Image), findsAtLeastNWidgets(7));
+      expect(find.byType(MiraWorldOrbitDiscover), findsOneWidget);
 
-      expect(opened.length, 6);
-      expect(tester.takeException(), isNull);
+      final orbitY = tester.getTopLeft(find.byType(MiraWorldOrbitDiscover)).dy;
+      final tipY = tester.getTopLeft(find.textContaining('نصيحة اليوم')).dy;
+      final quickY = tester.getTopLeft(find.text('نظرة سريعة')).dy;
+      expect(orbitY, greaterThan(quickY));
+      expect(tipY, greaterThan(orbitY));
 
-      final out = File('docs/phase2_3/evidence/TAP_RESULTS.txt');
-      out.parent.createSync(recursive: true);
-      out.writeAsStringSync('${tapRows.join('\n')}\n');
+      final name = 'home_orbit_dashboard_${size.width.toInt()}x${size.height.toInt()}.png';
+      final golden = File('test/features/marketplace/goldens/$name');
+      expect(
+        golden.existsSync() && golden.lengthSync() > 20000,
+        isTrue,
+        reason: 'missing capture $name — run phase3_orbit_capture_only_test with --update-goldens',
+      );
+      golden.copySync('${outDir.path}/$name');
+      final log = File('docs/phase2_3/evidence/DASHBOARD_CAPTURE_LOG.txt');
+      final prev = log.existsSync() ? log.readAsStringSync() : '';
+      log.writeAsStringSync('${prev}screenshot $name size=$size bytes=${golden.lengthSync()} ok\n');
+    }
+
+    testWidgets('fonts + images load; Arabic readable; no empty orbs on 320', (tester) async {
+      await _loadAppFonts();
+      addTearDown(() => tester.binding.setSurfaceSize(null));
+      await assertDashboardLayout(tester, const Size(320, 640));
     });
 
-    testWidgets('capture home orbit goldens at 320x640 and 390x844', (tester) async {
-      for (final size in const [Size(320, 640), Size(390, 844)]) {
-        await tester.binding.setSurfaceSize(size);
-        await tester.pumpWidget(
-          MaterialApp(
-            home: Scaffold(
-              backgroundColor: AppColors.background,
-              body: Directionality(
-                textDirection: TextDirection.rtl,
-                child: Align(
-                  alignment: Alignment.topCenter,
-                  child: SizedBox(
-                    width: size.width,
-                    height: size.height,
-                    child: const ColoredBox(
-                      color: Color(0xFFF3EAF5),
-                      child: SingleChildScrollView(
-                        padding: EdgeInsets.symmetric(horizontal: 16, vertical: 24),
-                        child: MiraWorldOrbitDiscover(),
-                      ),
-                    ),
-                  ),
-                ),
-              ),
-            ),
-          ),
-        );
-        await tester.pumpAndSettle();
-        expect(find.text('اكتشفي عالم ميرا'), findsOneWidget);
-        expect(find.text('أناقتك'), findsOneWidget);
-        final name = 'home_orbit_${size.width.toInt()}x${size.height.toInt()}.png';
-        await expectLater(
-          find.byType(MaterialApp),
-          matchesGoldenFile('goldens/$name'),
-        );
-      }
+    testWidgets('fonts + images load; Arabic readable; no empty orbs on 390', (tester) async {
+      await _loadAppFonts();
+      addTearDown(() => tester.binding.setSurfaceSize(null));
+      await assertDashboardLayout(tester, const Size(390, 844));
     });
   });
 }

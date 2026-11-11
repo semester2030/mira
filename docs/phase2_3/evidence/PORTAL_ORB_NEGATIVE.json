@@ -1,0 +1,12 @@
+{
+  "decoded": {
+    "ok": true,
+    "url": "http://127.0.0.1:52360/assets/e2b-ref/orbs/jewelry_rings.png",
+    "status": 200,
+    "bytes": 1038147,
+    "png": true,
+    "hash": "d238fb18ee90b76ec44c15b8fb9208ae6993bf7536cf2601ef4a6df4916e8515"
+  },
+  "expectedHash": "133e7af88d66b959ae16994c94521376336e248567327cd66950b19e38a89cdc",
+  "negativeFailedCorrectly": true
+}
