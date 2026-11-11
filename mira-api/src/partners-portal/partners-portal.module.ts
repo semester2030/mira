@@ -8,6 +8,8 @@ import { BulkBatchesService } from './bulk-batches/bulk-batches.service';
 import { EditorDraftsService } from './editor-drafts/editor-drafts.service';
 import { ServiceProfileService } from './editor-drafts/service-profile.service';
 import { PartnerTokenGuard } from './guards/partner-token.guard';
+import { PartnerActivitiesCatalog } from './partner-activities/partner-activities.catalog';
+import { PartnerActivitiesService } from './partner-activities/partner-activities.service';
 import { PartnersPortalController } from './partners-portal.controller';
 import { PartnersPortalService } from './partners-portal.service';
 import { RegistryService } from './registry/registry.service';
@@ -28,6 +30,8 @@ import { VariantInventoryService } from './variant-inventory.service';
   ],
   providers: [
     PartnersPortalService,
+    PartnerActivitiesCatalog,
+    PartnerActivitiesService,
     AdminApiKeyGuard,
     PartnerTokenGuard,
     RegistryService,

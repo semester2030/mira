@@ -19,12 +19,30 @@
     return p.canSellProducts === true;
   }
 
-  /** Visibility by partner.type + profile.partnerTypes (no new ACL table). */
+  /** Visibility by activity grants when present; else partner.type (legacy). */
   function laneAllowed(laneId) {
     var meta = LANE_META[laneId];
     if (!meta) return false;
     var t = partnerType();
     if (t === 'developer') return true;
+    var grants = window.sessionActivities && window.sessionActivities.grants;
+    if (Array.isArray(grants) && grants.length) {
+      var prefixes = {
+        elegance: ['clothes.', 'bags.', 'shoes.', 'face.', 'body.', 'hair.', 'accessories.'],
+        beauty: ['face.', 'body.', 'hair.', 'service.salon', 'service.clinic'],
+        jewelry: ['jewelry.'],
+        children: ['children.'],
+        gifts: ['gifts.'],
+        occasions: ['occasions.'],
+      };
+      var prefs = prefixes[laneId] || [];
+      return grants.some(function (g) {
+        var a = String(g.activity || '');
+        return prefs.some(function (p) {
+          return a.indexOf(p) === 0;
+        });
+      });
+    }
     if (meta.kind === 'product') {
       if (t === 'brand') return true;
       if (t === 'event_planner' && laneId === 'occasions') return canSellProducts();

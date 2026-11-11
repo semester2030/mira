@@ -103,6 +103,14 @@
           <div><dt>النوع</dt><dd id="settingsPartnerType">—</dd></div>
           <div><dt>المدينة</dt><dd id="settingsPartnerCity">—</dd></div>
         </dl>
+        <h2>أنشطتي وطلبات التوسعة</h2>
+        <p class="lead">المعتمد يبقى متاحًا أثناء انتظار التوسعة. الرفض لا يلغي اعتمادًا سابقًا.</p>
+        <div id="activitiesApproved"></div>
+        <div id="activitiesRequests"></div>
+        <div class="actions">
+          <button type="button" class="btn btn-primary" id="expandActivityBtn">طلب إضافة نشاط أو منتج</button>
+        </div>
+        <div id="expandActivityPanel" class="hidden" style="margin-top:1rem"></div>
         <p class="lead">لتسجيل الخروج استخدمي الرابط في أعلى الصفحة.</p>
       </div>
 
@@ -144,6 +152,122 @@
       PartnersApi.clearSession();
       if (window.MiraEditorV2) MiraEditorV2.cancelAllPending('logout');
       location.href = 'login.html' + location.search;
+    };
+
+    const ACTIVITY_STATE_AR = {
+      pending: 'قيد المراجعة',
+      approved: 'معتمد',
+      rejected: 'مرفوض',
+      partial: 'معتمد جزئيًا',
+    };
+    let activityCatalogCache = null;
+    window.renderPartnerActivities = async function renderPartnerActivities(activities, partner) {
+      const approvedEl = document.getElementById('activitiesApproved');
+      const reqEl = document.getElementById('activitiesRequests');
+      const expandBtn = document.getElementById('expandActivityBtn');
+      const expandPanel = document.getElementById('expandActivityPanel');
+      if (!approvedEl || !reqEl) return;
+      if (partner && partner.type === 'developer') {
+        approvedEl.textContent = 'حساب المطور: جميع تصنيفات المنتجات والخدمات متاحة ضمن صلاحياته الرسمية.';
+        reqEl.replaceChildren();
+        if (expandBtn) expandBtn.hidden = true;
+        return;
+      }
+      if (!activities) {
+        approvedEl.textContent = 'لا توجد منح أنشطة بعد (حساب قديم أو بانتظار المراجعة).';
+        reqEl.replaceChildren();
+        return;
+      }
+      try {
+        activityCatalogCache = activityCatalogCache || (await PartnersApi.activitiesCatalog());
+      } catch (e) {
+        activityCatalogCache = { items: [], identityKinds: {}, modes: {} };
+      }
+      const labelOf = (id) => {
+        const it = (activityCatalogCache.items || []).find((x) => x.id === id);
+        return it ? it.label : id;
+      };
+      approvedEl.replaceChildren();
+      const h = document.createElement('p');
+      h.innerHTML = '<b>المعتمد الآن</b>';
+      approvedEl.append(h);
+      if (!(activities.grants || []).length) {
+        approvedEl.append(document.createTextNode('لا أنشطة معتمدة بعد.'));
+      } else {
+        for (const g of activities.grants) {
+          const p = document.createElement('p');
+          p.textContent = labelOf(g.activity) + (g.item_name ? ' · ' + g.item_name : ' · فرع كامل');
+          approvedEl.append(p);
+        }
+      }
+      reqEl.replaceChildren();
+      const rh = document.createElement('p');
+      rh.innerHTML = '<b>الطلبات والقرارات</b>';
+      reqEl.append(rh);
+      for (const r of activities.requests || []) {
+        const art = document.createElement('article');
+        art.append(Object.assign(document.createElement('p'), {
+          textContent: (r.kind === 'join' ? 'انضمام' : 'توسعة') + ' · ' + (ACTIVITY_STATE_AR[r.state] || r.state),
+        }));
+        for (const l of r.lines || []) {
+          art.append(Object.assign(document.createElement('p'), {
+            textContent: labelOf(l.activity) + (l.item_name ? ' · ' + l.item_name : '') + ' — ' + (ACTIVITY_STATE_AR[l.decision] || l.decision),
+          }));
+        }
+        if (r.reason) art.append(Object.assign(document.createElement('p'), { textContent: 'سبب القرار: ' + r.reason }));
+        reqEl.append(art);
+      }
+      const pendingExpand = (activities.requests || []).some((r) => r.kind === 'expand' && r.state === 'pending');
+      if (expandBtn) {
+        expandBtn.hidden = false;
+        expandBtn.disabled = pendingExpand;
+        expandBtn.textContent = pendingExpand ? 'طلب توسعة قيد المراجعة' : 'طلب إضافة نشاط أو منتج';
+        expandBtn.onclick = async () => {
+          if (!expandPanel) return;
+          expandPanel.classList.remove('hidden');
+          expandPanel.replaceChildren();
+          const cat = activityCatalogCache || (await PartnersApi.activitiesCatalog());
+          const form = document.createElement('form');
+          form.append(Object.assign(document.createElement('p'), { textContent: 'اختاري فروعًا جديدة فقط. المعتمد يبقى متاحًا.' }));
+          const desc = document.createElement('textarea');
+          desc.required = true; desc.placeholder = 'وصف التوسعة'; desc.style.width = '100%';
+          form.append(desc);
+          const picks = [];
+          for (const it of cat.items || []) {
+            const grantedCat = (activities.grants || []).some((g) => g.activity === it.id && g.scope === 'category');
+            if (grantedCat) continue;
+            const lab = document.createElement('label');
+            lab.style.display = 'block';
+            const cb = document.createElement('input');
+            cb.type = 'checkbox'; cb.value = it.id;
+            lab.append(cb, document.createTextNode(' ' + it.group + ' · ' + it.label));
+            form.append(lab);
+            picks.push(cb);
+          }
+          const submit = document.createElement('button');
+          submit.type = 'submit'; submit.className = 'btn btn-primary'; submit.textContent = 'إرسال طلب التوسعة';
+          form.append(submit);
+          form.onsubmit = async (ev) => {
+            ev.preventDefault();
+            const lines = picks.filter((c) => c.checked).map((c) => ({ activity: c.value, scope: 'category' }));
+            if (!lines.length) return alert('اختاري نشاطًا');
+            const meta = partner.activitiesMeta || {};
+            try {
+              await PartnersApi.expandActivities({
+                identity: meta.identity || ['shop'],
+                locations: meta.locations || [],
+                description: desc.value.trim(),
+                lines,
+              });
+              alert('تم إرسال طلب التوسعة');
+              location.reload();
+            } catch (err) {
+              alert(err.messageAr || err.message);
+            }
+          };
+          expandPanel.append(form);
+        };
+      }
     };
 
     const DRAFT_STATUS_AR = {
@@ -380,6 +504,7 @@
 
         window.sessionPartner = p;
         window.sessionBranches = Array.isArray(data.branches) ? data.branches : [];
+        window.sessionActivities = data.activities || null;
         document.body.dataset.partnerType = p.type || '';
         try { localStorage.setItem('mira_partner_id', p.id); } catch (e) {}
         const sn = document.getElementById('settingsPartnerName');
@@ -388,6 +513,9 @@
         if (sn) sn.textContent = p.nameAr || p.nameEn || p.id || '—';
         if (st) st.textContent = p.type === 'developer' ? 'مطور' : (p.type || '—');
         if (sc) sc.textContent = p.city || '—';
+        if (typeof window.renderPartnerActivities === 'function') {
+          window.renderPartnerActivities(data.activities || null, p);
+        }
         if (window.MiraEditorV2) {
           await MiraEditorV2.bootstrap(p);
           if (window.renderEditorDrafts) renderEditorDrafts();
@@ -396,10 +524,27 @@
         const productButton = document.getElementById('goProduct');
         const bulkButton = document.getElementById('goBulk');
         const bulkSection = document.getElementById('bulkSection');
+        const grantList = (data.activities && data.activities.grants) || [];
+        const grantKinds = new Set();
+        if (activityCatalogCache || grantList.length) {
+          /* kinds resolved after catalog load in renderPartnerActivities; infer from id prefix */
+          for (const g of grantList) {
+            const a = String(g.activity || '');
+            if (a.indexOf('service.') === 0 || a.indexOf('occasions.type') === 0 || a === 'occasions.styling') {
+              grantKinds.add('service');
+            } else {
+              grantKinds.add('product');
+            }
+          }
+        }
         const showServices =
-          developer || p.type === 'clinic' || p.type === 'salon' || p.type === 'event_planner';
+          developer ||
+          grantKinds.has('service') ||
+          ((!grantList.length) && (p.type === 'clinic' || p.type === 'salon' || p.type === 'event_planner'));
         const showProducts =
-          developer || p.type === 'brand' || (p.type === 'event_planner' && p.canSellProducts === true);
+          developer ||
+          grantKinds.has('product') ||
+          ((!grantList.length) && (p.type === 'brand' || (p.type === 'event_planner' && p.canSellProducts === true)));
         serviceButton.hidden = !showServices;
         productButton.hidden = !showProducts;
         bulkButton.hidden = !(showServices || showProducts);

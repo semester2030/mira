@@ -41,6 +41,8 @@ import { normalizeOptionalId } from '../marketplace/taxonomy/product-taxonomy.va
 import { ApplyPartnerDto } from './dto/apply-partner.dto';
 import { UpdateProductDto, UpdateServiceDto, UpsertProductDto, UpsertServiceDto } from './dto/catalog.dto';
 import { TrackPartnerEventDto } from './dto/track-event.dto';
+import { PartnerActivitiesService } from './partner-activities/partner-activities.service';
+import { PolicyError } from './partner-activities/partner-activities.types';
 import { hashPartnerPassword, verifyPartnerPassword } from './partner-password';
 import { assertVariantMediaIdsEligible } from './variant-media-ids';
 import { RegistryService } from './registry/registry.service';
@@ -99,10 +101,80 @@ export class PartnersPortalService implements OnModuleInit {
     @Inject(ConfigService) private readonly config: ConfigService,
     @Optional() @Inject(TaxonomyService) taxonomy?: TaxonomyService,
     @Optional() @Inject(RegistryService) registry?: RegistryService,
+    @Optional() @Inject(PartnerActivitiesService) private readonly activities?: PartnerActivitiesService,
   ) {
     this.taxonomy = taxonomy ?? new TaxonomyService();
     if (!taxonomy) this.taxonomy.onModuleInit();
     this.registry = registry ?? null;
+  }
+
+  private mapPolicyError(err: unknown): never {
+    if (err instanceof PolicyError) {
+      throw new ForbiddenException({
+        message: err.code,
+        messageAr: err.code,
+        code: err.code,
+      });
+    }
+    throw err;
+  }
+
+  private async activityActor(partnerId: string) {
+    const partner = await this.prisma.partner.findUnique({ where: { id: partnerId } });
+    const user = await this.prisma.partnerUser.findUnique({ where: { partnerId } });
+    if (!partner || !user) throw new ForbiddenException('الحساب غير نشط');
+    return {
+      id: user.id,
+      role: (partner.type === 'developer' ? 'developer' : 'partner') as 'developer' | 'partner',
+      active: partner.status === 'active',
+      partnerId,
+      display: partner.nameAr,
+      partner,
+    };
+  }
+
+  private async enforceActivityWrite(
+    partnerId: string,
+    kind: 'product' | 'service',
+    fields: {
+      subcategory?: string | null;
+      category?: string | null;
+      profileId?: string | null;
+      title: string;
+      lineageId: string | null;
+    },
+  ): Promise<{ enforced: boolean; activity: string | null; needsBind: boolean }> {
+    if (!this.activities) return { enforced: false, activity: null, needsBind: false };
+    const activity = this.activities.resolveWriteActivity({
+      kind,
+      subcategory: fields.subcategory,
+      category: fields.category,
+      profileId: fields.profileId,
+    });
+    if (!activity) {
+      const has = await this.activities.hasGrants(partnerId);
+      if (has) {
+        throw new ForbiddenException({
+          message: 'ACTIVITY_NOT_APPROVED',
+          messageAr: 'هذا العرض خارج الأنشطة المعتمدة لحسابك',
+          code: 'ACTIVITY_NOT_APPROVED',
+        });
+      }
+      return { enforced: false, activity: null, needsBind: false };
+    }
+    const actor = await this.activityActor(partnerId);
+    try {
+      const gate = await this.activities.assertAuthorizedWrite(actor, {
+        partnerId,
+        kind,
+        activity,
+        title: fields.title,
+        lineageId: fields.lineageId,
+      });
+      return { enforced: gate.enforced, activity, needsBind: gate.needsBind };
+    } catch (err) {
+      this.mapPolicyError(err);
+    }
   }
 
   private attributeDefsForProfile(profileId: string | null): Map<string, AttributeFieldDef> | undefined {
@@ -204,18 +276,43 @@ export class PartnersPortalService implements OnModuleInit {
       };
     }
 
+    let partnerType = dto.type;
+    if (dto.activities && this.activities) {
+      try {
+        const validated = this.activities.validateRequest({
+          identity: dto.activities.identity,
+          locations: dto.activities.locations || [],
+          description: dto.activities.description,
+          lines: dto.activities.lines,
+        });
+        partnerType = this.activities.primaryPartnerType(validated.identity);
+      } catch (err) {
+        if (err instanceof PolicyError) {
+          throw new BadRequestException({ message: err.code, code: err.code });
+        }
+        throw err;
+      }
+    }
+    if (!partnerType) {
+      throw new BadRequestException({
+        message: 'INVALID_OPTIONS',
+        code: 'INVALID_OPTIONS',
+        messageAr: 'حددي صفة المنشأة أو المقدّمة',
+      });
+    }
+
     const statusToken = newToken();
     const passwordHash = await hashPartnerPassword(dto.password);
     const application = await this.prisma.partnerApplication.create({
       data: {
-        type: dto.type,
+        type: partnerType,
         nameAr: dto.nameAr,
         nameEn: dto.nameEn,
         contactName: dto.contactName,
         contactEmail: dto.contactEmail.toLowerCase(),
         contactPhone: dto.contactPhone,
         city: dto.city ?? 'الرياض',
-        descriptionAr: dto.descriptionAr,
+        descriptionAr: dto.descriptionAr || dto.activities?.description || null,
         storeUrl: dto.storeUrl,
         crNumber: dto.crNumber,
         vatNumber: dto.vatNumber,
@@ -225,7 +322,27 @@ export class PartnersPortalService implements OnModuleInit {
       },
     });
 
-    if (this.autoApproveEnabled()) {
+    let activitiesRequestId: string | undefined;
+    if (dto.activities && this.activities) {
+      try {
+        const created = await this.activities.createJoinRequest(application.id, {
+          identity: dto.activities.identity,
+          locations: dto.activities.locations || [],
+          description: dto.activities.description,
+          lines: dto.activities.lines,
+        });
+        activitiesRequestId = created.requestId;
+      } catch (err) {
+        await this.prisma.partnerApplication.delete({ where: { id: application.id } }).catch(() => undefined);
+        if (err instanceof PolicyError) {
+          throw new BadRequestException({ message: err.code, code: err.code });
+        }
+        throw err;
+      }
+    }
+
+    // Auto-approve only legacy applications without activity lines (never skip line review).
+    if (this.autoApproveEnabled() && !activitiesRequestId) {
       const approved = await this.approveApplication(application.id);
       const session = await this.login(dto.contactEmail, dto.password);
       return {
@@ -244,6 +361,7 @@ export class PartnersPortalService implements OnModuleInit {
       applicationId: application.id,
       status: 'pending',
       statusToken,
+      activitiesRequestId,
       statusUrl: `/status.html?token=${statusToken}`,
       message: 'تم استلام طلبك — سنراجعه خلال 1–3 أيام عمل. بعد الاعتماد ادخل بالبريد وكلمة المرور.',
     };
@@ -301,6 +419,8 @@ export class PartnersPortalService implements OnModuleInit {
         nameEn: user.partner.nameEn,
         city: user.partner.city,
         storeUrl: user.partner.storeUrl,
+        canSellProducts: user.partner.canSellProducts === true,
+        activitiesMeta: user.partner.activitiesMeta ?? null,
       },
     };
   }
@@ -327,7 +447,7 @@ export class PartnersPortalService implements OnModuleInit {
   }
 
   async listApplications(status = 'pending') {
-    return this.prisma.partnerApplication.findMany({
+    const apps = await this.prisma.partnerApplication.findMany({
       where: { status },
       orderBy: { createdAt: 'desc' },
       select: {
@@ -341,12 +461,52 @@ export class PartnersPortalService implements OnModuleInit {
         contactPhone: true,
         city: true,
         message: true,
+        descriptionAr: true,
+        storeUrl: true,
+        crNumber: true,
+        vatNumber: true,
         createdAt: true,
       },
     });
+    if (!this.activities) return apps;
+    const withLines = await Promise.all(
+      apps.map(async (app) => {
+        const req = await this.activities!.findJoinRequestForApplication(app.id);
+        return {
+          ...app,
+          activitiesRequest: req
+            ? {
+                id: req.id,
+                kind: req.kind,
+                state: req.state,
+                description: req.description,
+                meta: req.meta,
+                lines: req.lines.map((l) => ({
+                  id: l.id,
+                  activity: l.activity,
+                  scope: l.scope,
+                  item_name: l.itemName,
+                  decision: l.decision,
+                })),
+              }
+            : null,
+        };
+      }),
+    );
+    return withLines;
   }
 
-  async approveApplication(id: string) {
+  async approveApplication(
+    id: string,
+    opts?: {
+      partnerType?: string;
+      canSellProducts?: boolean;
+      activitiesMeta?: Record<string, unknown>;
+      /** When rejecting all activity lines — mark application rejected instead. */
+      rejectAll?: boolean;
+      reason?: string;
+    },
+  ) {
     const app = await this.prisma.partnerApplication.findUnique({
       where: { id },
     });
@@ -362,6 +522,20 @@ export class PartnersPortalService implements OnModuleInit {
     if (app.status !== 'pending') {
       throw new ConflictException(`الطلب في حالة: ${app.status}`);
     }
+
+    if (opts?.rejectAll) {
+      await this.prisma.partnerApplication.update({
+        where: { id },
+        data: {
+          status: 'rejected',
+          rejectReason: opts.reason || 'رفضت جميع الأنشطة المطلوبة',
+          reviewedAt: new Date(),
+          passwordHash: null,
+        },
+      });
+      return { partnerId: null as string | null, rejected: true };
+    }
+
     if (!app.passwordHash) {
       throw new BadRequestException(
         'الطلب بلا كلمة مرور — اطلب من مقدم الطلب إعادة التسجيل بكلمة مرور',
@@ -369,13 +543,14 @@ export class PartnersPortalService implements OnModuleInit {
     }
 
     const accessToken = newToken();
+    const type = opts?.partnerType || app.type;
     const emoji =
-      app.type === 'brand' ? '🛍️' : app.type === 'clinic' ? '🏥' : '💇';
+      type === 'brand' ? '🛍️' : type === 'clinic' ? '🏥' : type === 'event_planner' ? '🎉' : '💇';
 
     const result = await this.prisma.$transaction(async (tx) => {
       const partner = await tx.partner.create({
         data: {
-          type: app.type,
+          type,
           status: 'active',
           nameAr: app.nameAr,
           nameEn: app.nameEn,
@@ -383,6 +558,10 @@ export class PartnersPortalService implements OnModuleInit {
           city: app.city,
           logoEmoji: emoji,
           storeUrl: app.storeUrl,
+          canSellProducts: opts?.canSellProducts === true,
+          ...(opts?.activitiesMeta
+            ? { activitiesMeta: opts.activitiesMeta as Prisma.InputJsonValue }
+            : {}),
         },
       });
 
@@ -413,6 +592,61 @@ export class PartnersPortalService implements OnModuleInit {
       loginEmail: app.contactEmail.toLowerCase(),
       message: 'تم تفعيل الشريك — يدخل بالبريد وكلمة المرور (بدون رمز)',
     };
+  }
+
+  /** Admin line-level decision for join/expand activity requests. */
+  async decideActivities(
+    reviewerId: string,
+    body: { requestId: string; approvedLineIds: string[]; reason?: string; verificationNote?: string },
+  ) {
+    if (!this.activities) throw new BadRequestException('أنشطة الشركاء غير مفعّلة');
+    const actor = { id: reviewerId, role: 'admin' as const, active: true };
+    try {
+      const prepared = await this.activities.prepareDecision(actor, body.requestId, body);
+      let partnerId: string | null = prepared.request.partnerId;
+      if (prepared.request.kind === 'join') {
+        const applicationId = prepared.request.applicationId;
+        if (!applicationId) throw new BadRequestException('طلب الانضمام بلا معرّف طلب');
+        if (prepared.state === 'rejected') {
+          await this.approveApplication(applicationId, {
+            rejectAll: true,
+            reason: body.reason,
+          });
+          partnerId = null;
+        } else {
+          const partnerType = this.activities.primaryPartnerType(
+            prepared.meta.identity as Array<
+              'shop' | 'brand' | 'salon' | 'independent' | 'clinic' | 'events'
+            >,
+          );
+          const canSell = prepared.approvedActivities.some(
+            (a) =>
+              a.startsWith('occasions.favors') ||
+              a.startsWith('occasions.decor') ||
+              a === 'product.occasions_favors',
+          );
+          const approved = await this.approveApplication(applicationId, {
+            partnerType,
+            canSellProducts: canSell,
+            activitiesMeta: {
+              identity: prepared.meta.identity,
+              locations: prepared.meta.locations,
+            },
+          });
+          partnerId = approved.partnerId || null;
+        }
+      }
+      return await this.activities.commitDecision(actor, prepared, partnerId, body);
+    } catch (err) {
+      if (err instanceof PolicyError) {
+        const status = err.status;
+        if (status === 404) throw new NotFoundException(err.code);
+        if (status === 409) throw new ConflictException(err.code);
+        if (status === 403) throw new ForbiddenException({ code: err.code, message: err.code });
+        throw new BadRequestException({ code: err.code, message: err.code });
+      }
+      throw err;
+    }
   }
 
   async rejectApplication(id: string, reason?: string) {
@@ -461,6 +695,11 @@ export class PartnersPortalService implements OnModuleInit {
       counts[e.eventType] = e._count.id;
     }
 
+    const activitiesProfile =
+      this.activities && partner.type !== 'developer'
+        ? await this.activities.profile(partnerId)
+        : null;
+
     return {
       partner: {
         id: partner.id,
@@ -473,7 +712,14 @@ export class PartnersPortalService implements OnModuleInit {
         storeUrl: partner.storeUrl,
         contactPhone: partner.contactPhone,
         rating: partner.rating,
+        canSellProducts: partner.canSellProducts === true,
+        activitiesMeta: partner.activitiesMeta ?? null,
       },
+      activities: activitiesProfile,
+      activityCatalog:
+        partner.type === 'developer'
+          ? this.activities?.catalogItems() ?? []
+          : undefined,
       branches: (partner.branches || []).map((b) => ({
         id: b.id,
         nameAr: b.nameAr,
@@ -520,13 +766,6 @@ export class PartnersPortalService implements OnModuleInit {
     const partner = await this.prisma.partner.findUnique({
       where: { id: partnerId },
     });
-    if (!partner || !partnerCanCreateKindFromPartner(partner, 'product')) {
-      throw new ForbiddenException({
-        message: 'المنتجات غير مسموحة لهذا الحساب',
-        messageAr: 'المنتجات غير مسموحة لهذا الحساب',
-        code: PARTNER_KIND_FORBIDDEN,
-      });
-    }
     const categoryRaw = this.optionalCategory(dto.category, PRODUCT_CATEGORIES);
     const applied = applyTaxonomyPatch(
       this.taxonomyWriteContext({
@@ -549,9 +788,27 @@ export class PartnersPortalService implements OnModuleInit {
     const profileId = applied.next.profileId;
     const cosmetic = category === 'face' || category === 'body' || category === 'hair';
     const nameAr = dto.nameAr.trim();
+
+    const gate = await this.enforceActivityWrite(partnerId, 'product', {
+      subcategory,
+      category,
+      profileId,
+      title: nameAr,
+      lineageId: null,
+    });
+    if (!gate.enforced) {
+      if (!partner || !partnerCanCreateKindFromPartner(partner, 'product')) {
+        throw new ForbiddenException({
+          message: 'المنتجات غير مسموحة لهذا الحساب',
+          messageAr: 'المنتجات غير مسموحة لهذا الحساب',
+          code: PARTNER_KIND_FORBIDDEN,
+        });
+      }
+    }
+
     const commerce = normalizeProductCommerce(dto, null, dto.priceHalalas);
 
-    return this.prisma.product.create({
+    const created = await this.prisma.product.create({
       data: {
         ...commerceWrite(commerce),
         partnerId,
@@ -579,6 +836,15 @@ export class PartnersPortalService implements OnModuleInit {
         reviewStatus: 'draft',
       },
     });
+    if (gate.needsBind && gate.activity && this.activities) {
+      try {
+        await this.activities.bindSingleItem(partnerId, gate.activity, nameAr, created.id);
+      } catch (err) {
+        await this.prisma.product.delete({ where: { id: created.id } }).catch(() => undefined);
+        this.mapPolicyError(err);
+      }
+    }
+    return created;
   }
 
   async updateProduct(partnerId: string, productId: string, dto: UpdateProductDto) {
@@ -684,6 +950,30 @@ export class PartnersPortalService implements OnModuleInit {
         : data.category === undefined
           ? current.category
           : data.category;
+      const finalSub =
+        published
+          ? (data.draftSubcategory as string | null | undefined) ?? current.draftSubcategory ?? current.subcategory
+          : (data.subcategory as string | null | undefined) !== undefined
+            ? (data.subcategory as string | null)
+            : current.subcategory;
+      const finalProfile =
+        published
+          ? (data.draftProfileId as string | null | undefined) ?? current.draftProfileId ?? current.profileId
+          : (data.profileId as string | null | undefined) !== undefined
+            ? (data.profileId as string | null)
+            : current.profileId;
+      const finalTitle =
+        (typeof data.nameAr === 'string' && data.nameAr) ||
+        (typeof data.draftNameAr === 'string' && data.draftNameAr) ||
+        current.nameAr;
+      // Enforce final taxonomy after merge (not the previous leaf).
+      await this.enforceActivityWrite(partnerId, 'product', {
+        subcategory: finalSub,
+        category: typeof category === 'string' ? category : current.category,
+        profileId: finalProfile,
+        title: finalTitle,
+        lineageId: productId,
+      });
       const cosmetic = category === 'face' || category === 'body' || category === 'hair';
       if (!cosmetic) {
         data.skinTypes = [];
@@ -737,18 +1027,29 @@ export class PartnersPortalService implements OnModuleInit {
     const partner = await this.prisma.partner.findUnique({
       where: { id: partnerId },
     });
-    if (!partner || !partnerCanCreateKindFromPartner(partner, 'service')) {
-      throw new ForbiddenException({
-        message: 'الخدمات غير مسموحة لهذا الحساب',
-        messageAr: 'الخدمات غير مسموحة لهذا الحساب',
-        code: PARTNER_KIND_FORBIDDEN,
-      });
-    }
     const nameAr = dto.nameAr.trim();
     // Validate category before any availability side effects.
     const category = this.optionalCategory(dto.category, SERVICE_CATEGORIES);
+    const profileIdEarly =
+      typeof dto.profileId === 'string' && dto.profileId.trim() ? dto.profileId.trim() : null;
+    const gate = await this.enforceActivityWrite(partnerId, 'service', {
+      subcategory: category,
+      category,
+      profileId: profileIdEarly,
+      title: nameAr,
+      lineageId: null,
+    });
+    if (!gate.enforced) {
+      if (!partner || !partnerCanCreateKindFromPartner(partner, 'service')) {
+        throw new ForbiddenException({
+          message: 'الخدمات غير مسموحة لهذا الحساب',
+          messageAr: 'الخدمات غير مسموحة لهذا الحساب',
+          code: PARTNER_KIND_FORBIDDEN,
+        });
+      }
+    }
 
-    return this.prisma.$transaction(async (tx) => {
+    const created = await this.prisma.$transaction(async (tx) => {
       const seedResources = resourceIdsFromAvailability(dto.availabilityJson);
       await lockPartnerScheduleScope(tx, {
         partnerId,
@@ -813,6 +1114,15 @@ export class PartnersPortalService implements OnModuleInit {
         },
       });
     });
+    if (gate.needsBind && gate.activity && this.activities) {
+      try {
+        await this.activities.bindSingleItem(partnerId, gate.activity, nameAr, created.id);
+      } catch (err) {
+        await this.prisma.service.delete({ where: { id: created.id } }).catch(() => undefined);
+        this.mapPolicyError(err);
+      }
+    }
+    return created;
   }
 
   async updateService(partnerId: string, serviceId: string, dto: UpdateServiceDto) {

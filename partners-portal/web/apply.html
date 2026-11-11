@@ -7,6 +7,19 @@
   <title>طلب انضمام — شركاء ميرا</title>
   <link href="https://fonts.googleapis.com/css2?family=Tajawal:wght@400;700;800&display=swap" rel="stylesheet" />
   <link rel="stylesheet" href="css/site.css" />
+  <style>
+    .steps { display:flex; gap:.5rem; margin:0 0 1.25rem; flex-wrap:wrap; }
+    .steps span { padding:.35rem .75rem; border-radius:999px; background:#f7e9f2; color:#8a5a7a; font-size:.85rem; }
+    .steps span.on { background:linear-gradient(135deg,#e86fa9,#c19ee0); color:#fff; font-weight:700; }
+    .panel { display:none; }
+    .panel.on { display:block; }
+    .opts { display:grid; gap:.4rem; margin:.5rem 0 1rem; }
+    .opts label, .line { display:flex; gap:.5rem; align-items:flex-start; flex-wrap:wrap; }
+    details { border:1px solid #f0d6e6; border-radius:12px; padding:.6rem .8rem; margin:.4rem 0; background:#fff; }
+    summary { cursor:pointer; font-weight:700; }
+    .line select, .line textarea { min-width:10rem; }
+    .hint { color:#8a5a7a; font-size:.9rem; margin:.25rem 0 1rem; }
+  </style>
 </head>
 <body>
   <header>
@@ -19,83 +32,103 @@
   <main class="container">
     <div class="card">
       <h1>طلب انضمام كشريك</h1>
-      <p class="lead">املأ النموذج — سنراجع طلبك ونفعّل حسابك آلياً بعد الاعتماد.</p>
+      <p class="lead">من أنتِ؟ ثم ماذا تقدّمين؟ الإدارة تعتمد كل نشاط على حدة قبل فتح المحرر.</p>
+      <div class="steps" id="stepper">
+        <span class="on" data-s="1">1 · بيانات الشريك</span>
+        <span data-s="2">2 · الأنشطة المطلوبة</span>
+        <span data-s="3">3 · مراجعة وإرسال</span>
+      </div>
       <div id="msg" class="hidden"></div>
 
       <form id="applyForm">
-        <label>نوع الشريك</label>
-        <select name="type" required>
-          <option value="brand">ماركة تجميل</option>
-          <option value="clinic">عيادة</option>
-          <option value="salon">صالون</option>
-        </select>
-
-        <div class="grid-2">
-          <div>
-            <label>الاسم (عربي)</label>
-            <input name="nameAr" required minlength="2" placeholder="مثال: لمسة نور" />
+        <div class="panel on" data-panel="1">
+          <div class="grid-2">
+            <div>
+              <label>الاسم (عربي)</label>
+              <input name="nameAr" required minlength="2" placeholder="مثال: لمسة نور" />
+            </div>
+            <div>
+              <label>الاسم (English)</label>
+              <input name="nameEn" required minlength="2" placeholder="Lamsa Noor" />
+            </div>
           </div>
-          <div>
-            <label>الاسم (English)</label>
-            <input name="nameEn" required minlength="2" placeholder="Lamsa Noor" />
+          <div class="grid-2">
+            <div>
+              <label>اسم المسؤول</label>
+              <input name="contactName" required />
+            </div>
+            <div>
+              <label>البريد الإلكتروني</label>
+              <input name="contactEmail" type="email" required />
+            </div>
           </div>
-        </div>
-
-        <div class="grid-2">
-          <div>
-            <label>اسم المسؤول</label>
-            <input name="contactName" required />
+          <div class="grid-2">
+            <div>
+              <label>الجوال</label>
+              <input name="contactPhone" required placeholder="05xxxxxxxx" />
+            </div>
+            <div>
+              <label>المدينة</label>
+              <input name="city" value="الرياض" />
+            </div>
           </div>
-          <div>
-            <label>البريد الإلكتروني</label>
-            <input name="contactEmail" type="email" required />
+          <label>رابط متجر أو ملف أعمال (اختياري)</label>
+          <input name="storeUrl" type="url" placeholder="https://..." />
+          <div class="grid-2">
+            <div>
+              <label>السجل التجاري (اختياري)</label>
+              <input name="crNumber" />
+            </div>
+            <div>
+              <label>الرقم الضريبي (اختياري)</label>
+              <input name="vatNumber" />
+            </div>
           </div>
-        </div>
-
-        <div class="grid-2">
-          <div>
-            <label>الجوال</label>
-            <input name="contactPhone" required placeholder="05xxxxxxxx" />
+          <div class="grid-2">
+            <div>
+              <label>كلمة المرور</label>
+              <input name="password" type="password" required minlength="8" autocomplete="new-password" />
+            </div>
+            <div>
+              <label>تأكيد كلمة المرور</label>
+              <input name="passwordConfirm" type="password" required minlength="8" autocomplete="new-password" />
+            </div>
           </div>
-          <div>
-            <label>المدينة</label>
-            <input name="city" value="الرياض" />
-          </div>
-        </div>
-
-        <label>وصف مختصر (عربي)</label>
-        <textarea name="descriptionAr" placeholder="ماذا تقدّمون؟"></textarea>
-
-        <label>رابط المتجر (ماركات — اختياري)</label>
-        <input name="storeUrl" type="url" placeholder="https://..." />
-
-        <div class="grid-2">
-          <div>
-            <label>السجل التجاري (اختياري)</label>
-            <input name="crNumber" />
-          </div>
-          <div>
-            <label>الرقم الضريبي (اختياري)</label>
-            <input name="vatNumber" />
-          </div>
-        </div>
-
-        <label>رسالة إضافية</label>
-        <textarea name="message"></textarea>
-
-        <div class="grid-2">
-          <div>
-            <label>كلمة المرور (للدخول بعد الاعتماد)</label>
-            <input name="password" type="password" required minlength="8" autocomplete="new-password" />
-          </div>
-          <div>
-            <label>تأكيد كلمة المرور</label>
-            <input name="passwordConfirm" type="password" required minlength="8" autocomplete="new-password" />
+          <fieldset>
+            <legend>صفة النشاط (يمكن الجمع)</legend>
+            <div class="opts" id="identityBox"></div>
+            <p class="hint">الكوافيرة المنزلية والميك أب آرتست تختاران «مقدمة خدمة مستقلة»، ثم تحددان الخدمة ومكان تقديمها.</p>
+          </fieldset>
+          <div class="actions">
+            <button type="button" class="btn btn-primary" id="to2">التالي: الأنشطة</button>
           </div>
         </div>
 
-        <div class="actions">
-          <button type="submit" class="btn btn-primary">إرسال الطلب</button>
+        <div class="panel" data-panel="2">
+          <label>وصف النشاط</label>
+          <textarea name="description" id="actDesc" required minlength="2" placeholder="ماذا تقدّمين فعليًا؟"></textarea>
+          <fieldset>
+            <legend>مكان تقديم الخدمة (إلزامي إن اخترتِ خدمات)</legend>
+            <div class="opts" id="modesBox"></div>
+            <p class="hint">ميّزي صراحةً بين منزل العميلة ومقر مقدمة الخدمة.</p>
+          </fieldset>
+          <h2>الأنشطة من سجل ميرا</h2>
+          <p class="hint">فرع التصنيف (مثل شنط يد) يختلف عن الفرع الجغرافي للمنشأة. اختيار «كل فروع المجموعة» يثبّت الفروع الحالية فقط.</p>
+          <div id="activityTree"></div>
+          <div class="actions">
+            <button type="button" class="btn" id="back1">رجوع</button>
+            <button type="button" class="btn btn-primary" id="to3">التالي: مراجعة</button>
+          </div>
+        </div>
+
+        <div class="panel" data-panel="3">
+          <div id="reviewBox" class="hint"></div>
+          <label>رسالة إضافية (اختياري)</label>
+          <textarea name="message"></textarea>
+          <div class="actions">
+            <button type="button" class="btn" id="back2">رجوع</button>
+            <button type="submit" class="btn btn-primary">إرسال الطلب</button>
+          </div>
         </div>
       </form>
     </div>
@@ -105,44 +138,186 @@
   <script>
     const form = document.getElementById('applyForm');
     const msg = document.getElementById('msg');
+    let catalog = { items: [], identityKinds: {}, modes: {} };
+    const state = { identity: [], locations: [], lines: [] };
+
+    function showPanel(n) {
+      document.querySelectorAll('.panel').forEach((p) => p.classList.toggle('on', p.dataset.panel === String(n)));
+      document.querySelectorAll('#stepper span').forEach((s) => s.classList.toggle('on', s.dataset.s === String(n)));
+    }
+
+    function checked(box) {
+      return [...box.querySelectorAll('input[type=checkbox]:checked')].map((i) => i.value);
+    }
+
+    function collectLines() {
+      const rows = [...document.querySelectorAll('#activityTree .line')];
+      const out = [];
+      for (const row of rows) {
+        const cb = row.querySelector('input[type=checkbox]');
+        if (!cb || !cb.checked || cb.disabled) continue;
+        const scope = row.querySelector('select').value;
+        const name = row.querySelector('textarea');
+        if (scope === 'one') {
+          const names = name.value.split(/\r?\n/).map((x) => x.trim()).filter(Boolean);
+          if (!names.length) throw new Error('أدخلي اسم المنتج المفرد لكل نشاط محدد بالاسم');
+          for (const itemName of names) out.push({ activity: cb.value, scope: 'one', itemName });
+        } else {
+          out.push({ activity: cb.value, scope: 'category' });
+        }
+      }
+      return out;
+    }
+
+    function renderCatalog() {
+      const idBox = document.getElementById('identityBox');
+      const modesBox = document.getElementById('modesBox');
+      idBox.replaceChildren();
+      modesBox.replaceChildren();
+      for (const [k, label] of Object.entries(catalog.identityKinds)) {
+        const l = document.createElement('label');
+        const i = document.createElement('input');
+        i.type = 'checkbox'; i.value = k; i.name = 'identity';
+        l.append(i, document.createTextNode(' ' + label));
+        idBox.append(l);
+      }
+      for (const [k, label] of Object.entries(catalog.modes)) {
+        const l = document.createElement('label');
+        const i = document.createElement('input');
+        i.type = 'checkbox'; i.value = k; i.name = 'locations';
+        l.append(i, document.createTextNode(' ' + label));
+        modesBox.append(l);
+      }
+      const tree = document.getElementById('activityTree');
+      tree.replaceChildren();
+      const byGroup = {};
+      for (const it of catalog.items) {
+        (byGroup[it.group] ||= []).push(it);
+      }
+      for (const [group, items] of Object.entries(byGroup)) {
+        const box = document.createElement('details');
+        const sum = document.createElement('summary');
+        sum.textContent = group;
+        box.append(sum);
+        const tools = document.createElement('div');
+        tools.className = 'actions';
+        const allBtn = document.createElement('button');
+        allBtn.type = 'button'; allBtn.className = 'btn'; allBtn.textContent = 'اختيار فروع المجموعة';
+        const noneBtn = document.createElement('button');
+        noneBtn.type = 'button'; noneBtn.className = 'btn'; noneBtn.textContent = 'إلغاء المجموعة';
+        tools.append(allBtn, noneBtn);
+        box.append(tools);
+        const inputs = [];
+        for (const it of items) {
+          const row = document.createElement('div');
+          row.className = 'line';
+          const lab = document.createElement('label');
+          const cb = document.createElement('input');
+          cb.type = 'checkbox'; cb.value = it.id;
+          lab.append(cb, document.createTextNode(' ' + it.label));
+          const scope = document.createElement('select');
+          if (it.kind === 'product') {
+            scope.innerHTML = '<option value="category">جميع منتجات هذا الفرع</option><option value="one">منتج محدد بالاسم</option>';
+          } else {
+            scope.innerHTML = '<option value="category">هذه الخدمة</option>';
+          }
+          const ta = document.createElement('textarea');
+          ta.rows = 2; ta.placeholder = 'اسم منتج واحد في كل سطر'; ta.hidden = true;
+          const render = () => {
+            scope.hidden = !cb.checked;
+            ta.hidden = !(cb.checked && scope.value === 'one');
+          };
+          cb.onchange = scope.onchange = render;
+          render();
+          row.append(lab, scope, ta);
+          box.append(row);
+          inputs.push({ cb, render });
+        }
+        allBtn.onclick = () => { for (const r of inputs) { r.cb.checked = true; r.render(); } };
+        noneBtn.onclick = () => { for (const r of inputs) { r.cb.checked = false; r.render(); } };
+        tree.append(box);
+      }
+    }
+
+    document.getElementById('to2').onclick = () => {
+      if (!form.reportValidity()) return;
+      if (form.password.value !== form.passwordConfirm.value) {
+        msg.className = 'alert err'; msg.textContent = 'كلمتا المرور غير متطابقتين'; msg.classList.remove('hidden'); return;
+      }
+      if (!checked(document.getElementById('identityBox')).length) {
+        msg.className = 'alert err'; msg.textContent = 'اختاري صفة واحدةً واحدة الأقل'; msg.classList.remove('hidden'); return;
+      }
+      msg.classList.add('hidden');
+      showPanel(2);
+    };
+    document.getElementById('back1').onclick = () => showPanel(1);
+    document.getElementById('to3').onclick = () => {
+      try {
+        state.identity = checked(document.getElementById('identityBox'));
+        state.locations = checked(document.getElementById('modesBox'));
+        state.lines = collectLines();
+        const desc = document.getElementById('actDesc').value.trim();
+        if (!desc) throw new Error('اكتبي وصف النشاط');
+        if (!state.lines.length) throw new Error('اختاري نشاطًا واحدًا على الأقل');
+        const needsLoc = state.lines.some((l) => (catalog.items.find((i) => i.id === l.activity) || {}).kind === 'service');
+        if (needsLoc && !state.locations.length) throw new Error('حددي مكان تقديم الخدمة');
+        const labels = state.lines.map((l) => {
+          const it = catalog.items.find((i) => i.id === l.activity);
+          return (it ? it.label : l.activity) + (l.itemName ? ' · ' + l.itemName : ' · فرع كامل');
+        });
+        document.getElementById('reviewBox').innerHTML =
+          '<p><b>الصفة:</b> ' + state.identity.map((k) => catalog.identityKinds[k]).join('، ') + '</p>' +
+          (state.locations.length ? '<p><b>مكان التقديم:</b> ' + state.locations.map((k) => catalog.modes[k]).join('، ') + '</p>' : '') +
+          '<p><b>الأنشطة:</b></p><ul>' + labels.map((t) => '<li>' + t + '</li>').join('') + '</ul>';
+        msg.classList.add('hidden');
+        showPanel(3);
+      } catch (e) {
+        msg.className = 'alert err'; msg.textContent = e.message; msg.classList.remove('hidden');
+      }
+    };
+    document.getElementById('back2').onclick = () => showPanel(2);
 
     form.addEventListener('submit', async (e) => {
       e.preventDefault();
-      msg.className = 'alert warn';
-      msg.textContent = 'جاري الإرسال...';
-      msg.classList.remove('hidden');
-
+      msg.className = 'alert warn'; msg.textContent = 'جاري الإرسال...'; msg.classList.remove('hidden');
       const fd = new FormData(form);
       const payload = Object.fromEntries(fd.entries());
-      if (!payload.storeUrl) delete payload.storeUrl;
-      if (payload.password !== payload.passwordConfirm) {
-        msg.className = 'alert err';
-        msg.textContent = 'كلمتا المرور غير متطابقتين';
-        return;
-      }
       delete payload.passwordConfirm;
-
+      delete payload.description;
+      delete payload.identity;
+      delete payload.locations;
+      if (!payload.storeUrl) delete payload.storeUrl;
+      payload.activities = {
+        identity: state.identity,
+        locations: state.locations,
+        description: document.getElementById('actDesc').value.trim(),
+        lines: state.lines,
+      };
+      payload.descriptionAr = payload.activities.description;
       try {
         const res = await PartnersApi.apply(payload);
-        if (res.autoApproved && res.accessToken) {
-          PartnersApi.saveSession(res.loginEmail || payload.contactEmail, res.accessToken);
-          msg.className = 'alert ok';
-          msg.innerHTML = 'تم التفعيل! ادخل لاحقاً بالبريد وكلمة المرور. <a href="dashboard.html">لوحة التحكم</a>';
-        } else {
-          msg.className = 'alert ok';
-          msg.innerHTML =
-            'تم استلام طلبك. بعد الاعتماد ادخل بالبريد وكلمة المرور. رمز التتبع: <div class="token-box">' +
-            res.statusToken +
-            '</div> <a href="status.html?token=' +
-            encodeURIComponent(res.statusToken) +
-            '">تتبع الحالة</a>';
-        }
+        msg.className = 'alert ok';
+        msg.innerHTML =
+          'تم استلام طلبك. رمز التتبع: <div class="token-box">' +
+          res.statusToken +
+          '</div> <a href="status.html?token=' +
+          encodeURIComponent(res.statusToken) +
+          '">تتبع الحالة</a>';
         form.reset();
+        showPanel(1);
       } catch (err) {
         msg.className = 'alert err';
-        msg.textContent = err.message;
+        msg.textContent = err.messageAr || err.message;
       }
     });
+
+    PartnersApi.activitiesCatalog()
+      .then((data) => { catalog = data; renderCatalog(); })
+      .catch((err) => {
+        msg.className = 'alert err';
+        msg.textContent = 'تعذّر تحميل سجل التصنيفات: ' + (err.messageAr || err.message);
+        msg.classList.remove('hidden');
+      });
   </script>
 </body>
 </html>

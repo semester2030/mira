@@ -178,6 +178,8 @@ model Partner {
   commerceBookings CommerceBooking[]
   editorDrafts     PartnerEditorDraft[]
   uploadSessions   PartnerUploadSession[]
+  /// Approved identity kinds + service delivery modes from activities review (JSON).
+  activitiesMeta   Json?    @map("activities_meta")
 
   @@index([type, status])
   @@map("partners")
@@ -954,4 +956,66 @@ model JourneyEvent {
 
   @@index([createdAt])
   @@map("journey_events")
+}
+
+/// Partner activity join/expand request (partial approval of taxonomy leaves).
+model PaRequest {
+  id            String    @id @default(uuid())
+  applicationId String?   @unique @map("application_id")
+  partnerId     String?   @map("partner_id")
+  kind          String // join | expand
+  state         String // pending | approved | partial | rejected
+  description   String
+  meta          Json
+  submittedAt   DateTime  @default(now()) @map("submitted_at")
+  reviewedAt    DateTime? @map("reviewed_at")
+  reviewerId    String?   @map("reviewer_id")
+  reason        String?
+  lines         PaLine[]
+  history       PaHistory[]
+
+  @@index([state, submittedAt])
+  @@index([partnerId])
+  @@map("pa_requests")
+}
+
+model PaLine {
+  id        String   @id @default(uuid())
+  requestId String   @map("request_id")
+  request   PaRequest @relation(fields: [requestId], references: [id], onDelete: Cascade)
+  activity  String
+  scope     String // category | one
+  itemName  String   @default("") @map("item_name")
+  decision  String   @default("pending") // pending | approved | rejected
+  grant     PaGrant?
+
+  @@unique([requestId, activity, scope, itemName])
+  @@map("pa_lines")
+}
+
+model PaGrant {
+  partnerId String  @map("partner_id")
+  activity  String
+  scope     String
+  itemName  String  @default("") @map("item_name")
+  lineId    String  @unique @map("line_id")
+  line      PaLine  @relation(fields: [lineId], references: [id], onDelete: Restrict)
+  boundItem String? @map("bound_item")
+
+  @@id([partnerId, activity, scope, itemName])
+  @@index([partnerId])
+  @@map("pa_grants")
+}
+
+model PaHistory {
+  id         String   @id @default(uuid())
+  requestId  String   @map("request_id")
+  request    PaRequest @relation(fields: [requestId], references: [id], onDelete: Cascade)
+  actor      String
+  action     String
+  happenedAt DateTime @default(now()) @map("happened_at")
+  detail     Json
+
+  @@index([requestId])
+  @@map("pa_history")
 }

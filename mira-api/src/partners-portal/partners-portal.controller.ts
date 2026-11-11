@@ -1,10 +1,14 @@
 import {
+  BadRequestException,
   Body,
+  ConflictException,
   Controller,
   Delete,
+  ForbiddenException,
   Get,
   Headers,
   Inject,
+  NotFoundException,
   Param,
   Patch,
   Post,
@@ -21,12 +25,15 @@ import {
   PartnerTokenGuard,
 } from './guards/partner-token.guard';
 import { ApplyPartnerDto } from './dto/apply-partner.dto';
+import { ActivityRequestDto, DecideActivitiesDto } from './dto/apply-activities.dto';
 import { UpdateProductDto, UpdateServiceDto, UpsertProductDto, UpsertServiceDto } from './dto/catalog.dto';
 import { TrackPartnerEventDto } from './dto/track-event.dto';
 import { CatalogContentService } from '../marketplace/catalog-content.service';
 import { BulkBatchesService } from './bulk-batches/bulk-batches.service';
 import { EditorDraftsService } from './editor-drafts/editor-drafts.service';
 import { ServiceProfileService } from './editor-drafts/service-profile.service';
+import { PartnerActivitiesService } from './partner-activities/partner-activities.service';
+import { PolicyError } from './partner-activities/partner-activities.types';
 import { PartnersPortalService } from './partners-portal.service';
 import { RegistryService } from './registry/registry.service';
 import { VariantInventoryService } from './variant-inventory.service';
@@ -68,6 +75,7 @@ export class PartnersPortalController {
     @Inject(BulkBatchesService) private readonly bulkBatches: BulkBatchesService,
     @Inject(ServiceProfileService) private readonly serviceProfiles: ServiceProfileService,
     @Inject(VariantInventoryService) private readonly variantInventory: VariantInventoryService,
+    @Inject(PartnerActivitiesService) private readonly activities: PartnerActivitiesService,
   ) {}
 
   @Get('registry')
@@ -269,6 +277,62 @@ export class PartnersPortalController {
     },
   ) {
     return this.serviceProfiles.importLocal(req.partnerUser.partnerId, id, body);
+  }
+
+  @Get('activities/catalog')
+  activitiesCatalog() {
+    return {
+      items: this.activities.catalogItems(),
+      identityKinds: this.activities.identityKinds(),
+      modes: this.activities.modes(),
+    };
+  }
+
+  @Post('activities/expand')
+  @UseGuards(PartnerTokenGuard)
+  async expandActivities(@Req() req: PartnerRequest, @Body() body: ActivityRequestDto) {
+    try {
+      return await this.activities.expand(
+        {
+          id: req.partnerUser.id,
+          role: 'partner',
+          active: true,
+          partnerId: req.partnerUser.partnerId,
+        },
+        {
+          identity: body.identity,
+          locations: body.locations || [],
+          description: body.description,
+          lines: body.lines,
+        },
+      );
+    } catch (err) {
+      if (err instanceof PolicyError) {
+        if (err.status === 409) throw new ConflictException({ code: err.code, message: err.code });
+        if (err.status === 403) throw new ForbiddenException({ code: err.code, message: err.code });
+        throw new BadRequestException({ code: err.code, message: err.code });
+      }
+      throw err;
+    }
+  }
+
+  @Get('activities/me')
+  @UseGuards(PartnerTokenGuard)
+  myActivities(@Req() req: PartnerRequest) {
+    return this.activities.profile(req.partnerUser.partnerId);
+  }
+
+  @Get('admin/activities/queue')
+  @UseGuards(AdminApiKeyGuard)
+  activitiesQueue() {
+    return this.activities.queue();
+  }
+
+  @Post('admin/activities/decide')
+  @UseGuards(AdminApiKeyGuard)
+  decideActivities(@Body() dto: DecideActivitiesDto, @Headers('x-admin-key') adminKey?: string) {
+    const reviewerId = `admin:${(adminKey || 'key').slice(0, 8)}`;
+    return this.portal.decideActivities(reviewerId, dto);
   }
 
   @Post('apply')

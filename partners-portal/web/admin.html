@@ -17,8 +17,8 @@
 
   <main class="container">
     <div class="card">
-      <h1>طلبات الشراكة</h1>
-      <p class="lead">صفحة داخلية — أدخل مفتاح الإدارة (X-Admin-Key) من Render env.</p>
+      <h1>طلبات الشراكة والأنشطة</h1>
+      <p class="lead">اعتمدي البنود فرادى — اختيار علامة تجارية لا يثبت ملكية العلامة. وثّقي كيف تحققتِ.</p>
       <label>Admin API Key</label>
       <input id="adminKey" type="password" placeholder="ADMIN_API_KEY" />
       <div class="actions">
@@ -32,9 +32,8 @@
   <script src="js/api.js"></script>
   <script>
     const keyInput = document.getElementById('adminKey');
-    if (localStorage.getItem('mira_admin_key')) {
-      keyInput.value = localStorage.getItem('mira_admin_key');
-    }
+    if (localStorage.getItem('mira_admin_key')) keyInput.value = localStorage.getItem('mira_admin_key');
+    let catalogLabels = {};
 
     document.getElementById('loadBtn').onclick = load;
 
@@ -42,84 +41,113 @@
       const key = keyInput.value.trim();
       if (!key) return alert('أدخل المفتاح');
       localStorage.setItem('mira_admin_key', key);
-
       const msg = document.getElementById('msg');
       const list = document.getElementById('list');
-      msg.className = 'alert warn';
-      msg.textContent = 'جاري التحميل...';
-      msg.classList.remove('hidden');
-
+      msg.className = 'alert warn'; msg.textContent = 'جاري التحميل...'; msg.classList.remove('hidden');
       try {
-        const apps = await PartnersApi.adminList(key, 'pending');
+        const cat = await PartnersApi.activitiesCatalog();
+        catalogLabels = Object.fromEntries((cat.items || []).map((i) => [i.id, i.label]));
+        const [apps, queue] = await Promise.all([
+          PartnersApi.adminList(key, 'pending'),
+          PartnersApi.adminActivitiesQueue(key),
+        ]);
         msg.classList.add('hidden');
-
         list.replaceChildren();
-        if (!apps.length) {
-          const empty = document.createElement('p');
-          empty.className = 'lead';
-          empty.textContent = 'لا طلبات معلّقة.';
-          list.appendChild(empty);
+
+        // Prefer activity queue (join + expand) for line-level decisions.
+        const pending = queue && queue.length ? queue : [];
+        if (!pending.length && !apps.length) {
+          list.append(Object.assign(document.createElement('p'), { className: 'lead', textContent: 'لا طلبات معلّقة.' }));
           return;
         }
 
-        for (const application of apps) {
+        for (const r of pending) {
+          const app = apps.find((a) => a.id === r.applicationId) || {};
+          const item = document.createElement('div');
+          item.className = 'list-item';
+          const title = document.createElement('strong');
+          title.textContent = (r.kind === 'join' ? 'انضمام: ' : 'توسعة: ') + (app.nameAr || r.partnerId || r.id);
+          const meta = document.createElement('p');
+          meta.innerHTML = [
+            app.contactName, app.contactEmail, app.contactPhone, app.city, app.storeUrl, app.crNumber, app.vatNumber
+          ].filter(Boolean).join(' · ');
+          const ident = document.createElement('p');
+          const idents = (r.meta && r.meta.identity) || [];
+          const locs = (r.meta && r.meta.locations) || [];
+          ident.textContent =
+            'الصفة: ' + idents.map((k) => (cat.identityKinds || {})[k] || k).join('، ') +
+            (locs.length ? ' · المكان: ' + locs.map((k) => (cat.modes || {})[k] || k).join('، ') : '');
+          const desc = document.createElement('p');
+          desc.textContent = r.description || app.descriptionAr || '';
+          item.append(title, meta, ident, desc);
+
+          const cbs = [];
+          for (const line of r.lines || []) {
+            const p = document.createElement('label');
+            p.style.display = 'block';
+            const cb = document.createElement('input');
+            cb.type = 'checkbox'; cb.value = line.id; cb.checked = true;
+            p.append(cb, document.createTextNode(
+              ' ' + (catalogLabels[line.activity] || line.activity) +
+              (line.item_name ? ' · ' + line.item_name : ' · فرع كامل')
+            ));
+            item.append(p);
+            cbs.push(cb);
+          }
+          const verification = document.createElement('input');
+          verification.placeholder = 'كيف تحققتِ من الصفة والأنشطة؟ (مطلوب للاعتماد)';
+          verification.style.width = '100%'; verification.style.margin = '.5rem 0';
+          const why = document.createElement('input');
+          why.placeholder = 'سبب رفض البنود غير المعتمدة (إن وُجد رفض)';
+          why.style.width = '100%'; why.style.margin = '.5rem 0';
+          const btn = document.createElement('button');
+          btn.className = 'btn btn-primary'; btn.textContent = 'تسجيل القرار';
+          btn.onclick = async () => {
+            try {
+              await PartnersApi.adminDecideActivities(key, {
+                requestId: r.id,
+                approvedLineIds: cbs.filter((c) => c.checked).map((c) => c.value),
+                reason: why.value,
+                verificationNote: verification.value,
+              });
+              item.remove();
+            } catch (e) {
+              alert(e.messageAr || e.message);
+            }
+          };
+          item.append(verification, why, btn);
+          list.append(item);
+        }
+
+        // Legacy apps without activity request — whole approve/reject.
+        for (const application of apps.filter((a) => !a.activitiesRequest)) {
           const item = document.createElement('div');
           item.className = 'list-item';
           item.dataset.id = application.id;
-          const title = document.createElement('strong');
-          title.textContent = application.nameAr || '';
-          const meta = document.createElement('small');
-          meta.textContent = (application.contactName || '') + ' · ' + (application.contactPhone || '') + ' · ' + (application.city || '');
+          item.innerHTML = '<strong>' + (application.nameAr || '') + '</strong> (قديم · بدون بنود أنشطة) — ' + (application.contactEmail || '');
           const actions = document.createElement('div');
           actions.className = 'actions';
           const approve = document.createElement('button');
-          approve.className = 'btn btn-primary approve';
-          approve.textContent = 'اعتماد';
+          approve.className = 'btn btn-primary'; approve.textContent = 'اعتماد كامل (قديم)';
+          approve.onclick = async () => {
+            try {
+              const res = await PartnersApi.adminApprove(key, application.id);
+              item.textContent = 'تم! partnerId: ' + res.partnerId;
+            } catch (e) { alert(e.message); }
+          };
           const reject = document.createElement('button');
-          reject.className = 'btn btn-danger reject';
-          reject.textContent = 'رفض';
-          actions.append(approve, reject);
-          const result = document.createElement('div');
-          result.className = 'result hidden';
-          item.append(title, document.createTextNode(' (' + (application.type || '') + ') — ' + (application.contactEmail || '')), document.createElement('br'), meta, actions, result);
-          list.appendChild(item);
-        }
-
-        list.querySelectorAll('.approve').forEach((btn) => {
-          btn.onclick = async () => {
-            const item = btn.closest('.list-item');
-            const id = item.dataset.id;
+          reject.className = 'btn btn-danger'; reject.textContent = 'رفض';
+          reject.onclick = async () => {
+            const reason = prompt('سبب الرفض:');
             try {
-              const res = await PartnersApi.adminApprove(key, id);
-              const result = item.querySelector('.result');
-              result.className = 'alert ok';
-              result.replaceChildren();
-              result.append(
-                document.createTextNode(
-                  'تم! partnerId: ' +
-                    res.partnerId +
-                    ' — الدخول بالبريد وكلمة المرور فقط (بدون رمز)',
-                ),
-              );
-              btn.disabled = true;
-            } catch (e) {
-              alert(e.message);
-            }
-          };
-        });
-
-        list.querySelectorAll('.reject').forEach((btn) => {
-          btn.onclick = async () => {
-            const reason = prompt('سبب الرفض (اختياري):');
-            const item = btn.closest('.list-item');
-            try {
-              await PartnersApi.adminReject(key, item.dataset.id, reason || undefined);
+              await PartnersApi.adminReject(key, application.id, reason || undefined);
               item.remove();
-            } catch (e) {
-              alert(e.message);
-            }
+            } catch (e) { alert(e.message); }
           };
-        });
+          actions.append(approve, reject);
+          item.append(actions);
+          list.append(item);
+        }
       } catch (err) {
         msg.className = 'alert err';
         msg.textContent = err.message;

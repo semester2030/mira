@@ -700,6 +700,13 @@
       request('PUT', `/partners-portal/services/${encodeURIComponent(id)}/service-profile`, payload, null, opts),
     importLocalTemplate: (id, payload, opts) =>
       request('POST', `/partners-portal/services/${encodeURIComponent(id)}/import-local-template`, payload, null, opts),
+    activitiesCatalog: () => request('GET', '/partners-portal/activities/catalog'),
+    myActivities: () => request('GET', '/partners-portal/activities/me'),
+    expandActivities: (payload) => request('POST', '/partners-portal/activities/expand', payload),
+    adminActivitiesQueue: (adminKey) =>
+      request('GET', '/partners-portal/admin/activities/queue', null, { 'X-Admin-Key': adminKey }),
+    adminDecideActivities: (adminKey, payload) =>
+      request('POST', '/partners-portal/admin/activities/decide', payload, { 'X-Admin-Key': adminKey }),
     adminList: (adminKey, status) =>
       request(
         'GET',

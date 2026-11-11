@@ -1,3 +1,4 @@
+import { Type } from 'class-transformer';
 import {
   IsEmail,
   IsIn,
@@ -6,11 +7,15 @@ import {
   IsUrl,
   MaxLength,
   MinLength,
+  ValidateNested,
 } from 'class-validator';
+import { ActivityRequestDto } from './apply-activities.dto';
 
 export class ApplyPartnerDto {
-  @IsIn(['brand', 'clinic', 'salon'])
-  type!: string;
+  /** Legacy single type — derived from activities.identity when activities provided. */
+  @IsOptional()
+  @IsIn(['brand', 'clinic', 'salon', 'event_planner'])
+  type?: string;
 
   @IsString()
   @MinLength(2)
@@ -69,4 +74,10 @@ export class ApplyPartnerDto {
   @MinLength(8)
   @MaxLength(128)
   password!: string;
+
+  /** New multi-step activities request (identity + taxonomy lines). */
+  @IsOptional()
+  @ValidateNested()
+  @Type(() => ActivityRequestDto)
+  activities?: ActivityRequestDto;
 }

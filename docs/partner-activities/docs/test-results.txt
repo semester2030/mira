@@ -1,0 +1,18 @@
+✔ applicant selects multiple types/activities, cannot log in when pending; admin sees identity, evidence, categories; partial decision creates only selected grants (262.744316ms)
+✔ partner expansion: no early access, pending does not interrupt existing listings, reject then resubmit and approve; historical decisions persist (121.484921ms)
+✔ single cream: same name and canonical lineage across draft/update/publish; a second product or duplicate is denied; a different named cream requires an approved expansion (113.097366ms)
+✔ complete hair line is an explicit snapshot of selected leaves; supports multiple offers within granted leaf only (115.88865ms)
+✔ at-home makeup artist can book makeup only; salon with hair and makeup; mixed business supports both products and services (226.270016ms)
+✔ developer uses any registered product/service including jewelry; developer cannot be requested in registration; reject invented category, client role or foreign owner (110.327481ms)
+✔ negative paths: rejected join has no account access, foreign decision lines and missing reason cannot activate a partner (100.095476ms)
+✔ concurrent initial approvals grant once; write failure rolls back single-item binding; profile isolation (210.876598ms)
+✔ initial approval needs recorded verification basis; partial and rejected decisions keep an audit trail (58.444287ms)
+✔ HTTP: public join → pending → admin approval → sign in → save → expansion → publish; direct writes cannot grant another activity (850.955144ms)
+ℹ tests 10
+ℹ suites 0
+ℹ pass 10
+ℹ fail 0
+ℹ cancelled 0
+ℹ skipped 0
+ℹ todo 0
+ℹ duration_ms 1599.164017
