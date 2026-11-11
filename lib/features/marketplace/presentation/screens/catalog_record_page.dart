@@ -3,7 +3,9 @@ import 'package:flutter/material.dart';
 import '../../../../shared/theme/colors.dart';
 import '../../../../shared/theme/typography.dart';
 import '../../data/catalog_provenance.dart';
+import '../../data/discover_availability_context.dart';
 import '../../data/discover_catalog_gateway.dart';
+import '../../data/discover_catalog_query.dart';
 import '../../domain/entities/catalog_product.dart';
 import '../widgets/marketplace_data_banner.dart';
 import 'product_detail_screen.dart';
@@ -22,6 +24,8 @@ class CatalogRecordPage extends StatefulWidget {
     this.matchedVariantIds,
     this.bookingDateKey,
     this.bookingBranchId,
+    this.availabilityContext,
+    this.discoverLane,
   });
 
   final DiscoverCatalogGateway gateway;
@@ -34,6 +38,8 @@ class CatalogRecordPage extends StatefulWidget {
   final List<String>? matchedVariantIds;
   final String? bookingDateKey;
   final String? bookingBranchId;
+  final DiscoverAvailabilityContext? availabilityContext;
+  final DiscoverLane? discoverLane;
 
   @override
   State<CatalogRecordPage> createState() => _CatalogRecordPageState();
@@ -128,8 +134,10 @@ class _CatalogRecordPageState extends State<CatalogRecordPage> {
         return ServiceDetailScreen(
           service: widget.matchKnown ? service.withKnownMatch(widget.matchScore) : service,
           provenance: banner,
-          bookingDateKey: widget.bookingDateKey,
-          bookingBranchId: widget.bookingBranchId,
+          bookingDateKey: widget.bookingDateKey ?? widget.availabilityContext?.availableOn,
+          bookingBranchId: widget.bookingBranchId ?? widget.availabilityContext?.branchId,
+          availabilityContext: widget.availabilityContext,
+          discoverLane: widget.discoverLane,
         );
       },
     );

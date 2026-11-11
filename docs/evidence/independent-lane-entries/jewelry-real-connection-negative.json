@@ -1,0 +1,127 @@
+{
+  "ok": true,
+  "expectFail": true,
+  "checks": [
+    {
+      "name": "api-jewelry-200",
+      "ok": true,
+      "detail": "{\"status\":200,\"lane\":\"jewelry\"}"
+    },
+    {
+      "name": "api-jewelry-branches",
+      "ok": true,
+      "detail": "[\"jewelry_lane.all\",\"jewelry.all\",\"jewelry\",\"jewelry.rings\",\"jewelry.necklaces\",\"jewelry.bracelets\",\"jewelry.earrings\"]"
+    },
+    {
+      "name": "jewelry-lane",
+      "ok": true,
+      "detail": "jewelry"
+    },
+    {
+      "name": "jewelry-orbs",
+      "ok": false,
+      "detail": "[]"
+    },
+    {
+      "name": "jewelry-subbranches",
+      "ok": false,
+      "detail": "[\"accessories.belt\",\"bags.hand\",\"body.wash\",\"clothes.wedding_dress\",\"face.makeup_face\",\"hair.shampoo\",\"shoes.heel\",\"accessories.scarf\",\"bags.shoulder\",\"body.moisturizer\",\"clothes.abaya\",\"face.makeup_eyes\",\"hair.conditioner\",\"shoes.flat\",\"accessories.sunglasses\",\"bags.clutch\",\"body.scrub\",\"clothes.evening\",\"face.makeup_lips\",\"hair.mask\",\"shoes.sandal\",\"accessories.hat\",\"bags.crossbody\",\"body.oil\",\"clothes.casual\",\"face.cleanser\",\"hair.oil_serum\",\"shoes.sneaker\",\"accessories.hair\",\"bags.backpack\",\"body.deodorant\",\"clothes.skirt\",\"face.moisturizer\",\"hair.styling\",\"shoes.loafer\",\"bags.tote\",\"body.hand_care\",\"clothes.blouse\",\"face.serum\",\"hair.dye\",\"shoes.boot\",\"bags.travel\",\"body.foot_care\",\"clothes.shirt\",\"face.sunscreen\",\"hair.tools\",\"shoes.slipper\",\"bags.wallet\",\"clothes.pants\",\"face.mask\",\"clothes.jeans\",\"face.makeup_tools\",\"clothes.set\",\"clothes.jacket\",\"clothes.sportswear\",\"clothes.loungewear\"]"
+    },
+    {
+      "name": "no-visible-taxonomy-error",
+      "ok": false,
+      "detail": "[\"تعذر تحميل التصنيفات: Failed to fetch\",\"تعذر تحميل التصنيفات: Failed to fetch\"]"
+    },
+    {
+      "name": "taxonomy-source-server",
+      "ok": false,
+      "detail": "server-failed"
+    }
+  ],
+  "apiBase": "http://127.0.0.1:8765/api/v1",
+  "portalBase": "http://127.0.0.1:8765",
+  "state": {
+    "source": "server-failed",
+    "lane": "jewelry",
+    "orbs": [],
+    "subIds": [
+      "accessories.belt",
+      "bags.hand",
+      "body.wash",
+      "clothes.wedding_dress",
+      "face.makeup_face",
+      "hair.shampoo",
+      "shoes.heel",
+      "accessories.scarf",
+      "bags.shoulder",
+      "body.moisturizer",
+      "clothes.abaya",
+      "face.makeup_eyes",
+      "hair.conditioner",
+      "shoes.flat",
+      "accessories.sunglasses",
+      "bags.clutch",
+      "body.scrub",
+      "clothes.evening",
+      "face.makeup_lips",
+      "hair.mask",
+      "shoes.sandal",
+      "accessories.hat",
+      "bags.crossbody",
+      "body.oil",
+      "clothes.casual",
+      "face.cleanser",
+      "hair.oil_serum",
+      "shoes.sneaker",
+      "accessories.hair",
+      "bags.backpack",
+      "body.deodorant",
+      "clothes.skirt",
+      "face.moisturizer",
+      "hair.styling",
+      "shoes.loafer",
+      "bags.tote",
+      "body.hand_care",
+      "clothes.blouse",
+      "face.serum",
+      "hair.dye",
+      "shoes.boot",
+      "bags.travel",
+      "body.foot_care",
+      "clothes.shirt",
+      "face.sunscreen",
+      "hair.tools",
+      "shoes.slipper",
+      "bags.wallet",
+      "clothes.pants",
+      "face.mask",
+      "clothes.jeans",
+      "face.makeup_tools",
+      "clothes.set",
+      "clothes.jacket",
+      "clothes.sportswear",
+      "clothes.loungewear"
+    ],
+    "errs": [
+      "تعذر تحميل التصنيفات: Failed to fetch",
+      "تعذر تحميل التصنيفات: Failed to fetch"
+    ]
+  },
+  "apiProbe": {
+    "status": 200,
+    "lane": "jewelry",
+    "ids": [
+      "jewelry_lane.all",
+      "jewelry.all",
+      "jewelry",
+      "jewelry.rings",
+      "jewelry.necklaces",
+      "jewelry.bracelets",
+      "jewelry.earrings"
+    ]
+  },
+  "negativeGate": {
+    "ok": true,
+    "detail": "fallback/error must fail real-connection gate"
+  }
+}

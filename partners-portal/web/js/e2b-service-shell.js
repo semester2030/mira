@@ -14,6 +14,7 @@
     teeth: 'assets/e2b-ref/orbs/face.png',
     face: 'assets/e2b-ref/orbs/face.png',
     body: 'assets/e2b-ref/orbs/body.png',
+    occasions: 'assets/e2b-ref/orbs/occasions_types.png',
   };
 
   const LABEL_BY_ID = {
@@ -25,10 +26,11 @@
     spa: 'السبا',
     laser: 'الليزر',
     teeth: 'الأسنان',
+    occasions: 'مناسباتك',
   };
 
   /** Preferred display order matching ref-2 (RTL visual: hair … spa). */
-  const MAIN_ORDER = ['hair', 'makeup', 'nails', 'skin', 'care', 'spa', 'laser', 'teeth'];
+  const MAIN_ORDER = ['hair', 'makeup', 'nails', 'skin', 'care', 'spa', 'laser', 'teeth', 'occasions'];
 
   let selectedCatId = null;
   let selectedSubId = null;
@@ -62,13 +64,35 @@
     return document.getElementById('catalogForm');
   }
 
+  function mainCirclesHost(form) {
+    if (form) {
+      const local = form.querySelector('[data-testid="e2c-main-circles"]');
+      if (local) return local;
+    }
+    return document.getElementById('e2cMainCircles');
+  }
+
+  function subCirclesHost(form) {
+    if (form) {
+      const local = form.querySelector('[data-testid="e2c-sub-circles"]');
+      if (local) return local;
+    }
+    return document.getElementById('e2cSubCircles');
+  }
+
   function clearProductModeArtifacts() {
     document.body.classList.remove('e2b-product-mode');
-    // Hide product-only circle hosts while in service mode to prevent bleed.
+    // Hide + empty product-only circle hosts while in service mode to prevent bleed.
     const prodMains = document.getElementById('e2bMainCircles');
     const prodSubs = document.getElementById('e2bSubCircles');
-    if (prodMains) prodMains.hidden = true;
-    if (prodSubs) prodSubs.hidden = true;
+    if (prodMains) {
+      prodMains.hidden = true;
+      prodMains.replaceChildren();
+    }
+    if (prodSubs) {
+      prodSubs.hidden = true;
+      prodSubs.replaceChildren();
+    }
     // Reveal service orb hosts when entering service mode.
     const svcMains = document.getElementById('e2cMainCircles');
     const svcSubs = document.getElementById('e2cSubCircles');
@@ -297,13 +321,30 @@
   function categoriesFromForm(form) {
     const sel = form && form.querySelector('select[name="category"]');
     if (!sel) return [];
-    const cats = Array.from(sel.options)
+    const lane = window.__MIRA_TAXONOMY_LANE__ || '';
+    let cats = Array.from(sel.options)
       .filter((o) => o.value)
       .map((o) => ({
         id: o.value,
         labelAr: LABEL_BY_ID[o.value] || o.textContent || o.value,
         orb: ORB_BY_SERVICE_CAT[o.value] || ORB_BY_SERVICE_CAT.care,
       }));
+    // Occasions lock: never paint clinic/beauty orbs when lane is مناسباتك.
+    if (lane === 'occasions') {
+      cats = cats.filter((c) => c.id === 'occasions' || String(c.id).indexOf('occasions.') === 0);
+      if (!cats.length) {
+        cats = [
+          {
+            id: 'occasions',
+            labelAr: 'مناسباتك',
+            orb: ORB_BY_SERVICE_CAT.occasions,
+          },
+        ];
+      }
+    } else {
+      // Normal beauty/salon: never mix in occasions root from a sticky lane lock.
+      cats = cats.filter((c) => c.id !== 'occasions' && String(c.id).indexOf('occasions.') !== 0);
+    }
     cats.sort((a, b) => {
       const ia = MAIN_ORDER.indexOf(a.id);
       const ib = MAIN_ORDER.indexOf(b.id);
@@ -330,7 +371,7 @@
   }
 
   function paintSubOrbs(form, catId) {
-    const host = document.getElementById('e2cSubCircles');
+    const host = subCirclesHost(form);
     if (!host) return;
     host.replaceChildren();
     const templates = templatesForCategory(catId);
@@ -382,8 +423,13 @@
   }
 
   function paintOrbs(form) {
-    const host = document.getElementById('e2cMainCircles');
-    if (!host || !form) return;
+    if (!form) return;
+    const host = mainCirclesHost(form);
+    if (!host) return;
+    // Drop stale orbs on inactive forms (duplicate ids from catalogForm + serviceForm).
+    document.querySelectorAll('[data-testid="e2c-main-circles"]').forEach((h) => {
+      if (h !== host) h.replaceChildren();
+    });
     const cats = categoriesFromForm(form);
     host.replaceChildren();
     if (!cats.length) {
@@ -429,7 +475,9 @@
     const same = selectedCatId === catId;
     selectedCatId = catId || null;
     if (!same && !opts.preserveSub) selectedSubId = null;
-    document.querySelectorAll('#e2cMainCircles .e2b-circle').forEach((b) => {
+    const form = resolveForm();
+    const host = mainCirclesHost(form);
+    (host ? host.querySelectorAll('.e2b-circle') : []).forEach((b) => {
       const on = b.getAttribute('data-category-id') === catId;
       b.classList.toggle('is-selected', on);
       b.setAttribute('aria-pressed', on ? 'true' : 'false');
@@ -437,7 +485,6 @@
       if (on && !mark) b.appendChild(el('span', { className: 'e2c-check', text: '✓' }));
       else if (!on && mark) mark.remove();
     });
-    const form = resolveForm();
     const catSel = form && form.querySelector('select[name="category"]');
     if (catSel && catId && catSel.value !== catId && !opts.fromSync) {
       syncingFromForm = true;

@@ -22,6 +22,7 @@ class EleganceTaxonomyNode {
     this.children = const [],
     this.fieldIds = const [],
     this.filterKeys = const [],
+    this.offerKind,
   });
 
   final String id;
@@ -37,6 +38,7 @@ class EleganceTaxonomyNode {
   /// From central registry via taxonomy projection (Phase1).
   final List<String> fieldIds;
   final List<String> filterKeys;
+  final String? offerKind;
 
   factory EleganceTaxonomyNode.fromJson(Map<String, dynamic> json) {
     final kids = json['children'];
@@ -55,6 +57,7 @@ class EleganceTaxonomyNode {
       children: kids is List ? kids.map((e) => '$e').toList() : const [],
       fieldIds: fields is List ? fields.map((e) => '$e').toList() : const [],
       filterKeys: filters is List ? filters.map((e) => '$e').toList() : const [],
+      offerKind: json['offerKind']?.toString(),
     );
   }
 }

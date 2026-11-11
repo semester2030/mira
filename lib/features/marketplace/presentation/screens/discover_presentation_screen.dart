@@ -16,8 +16,10 @@ import '../../data/discover_catalog_gateway.dart';
 import '../../data/catalog_record_scope.dart';
 import '../../data/commerce_api_client.dart';
 import '../../data/discover_favorite_client.dart';
+import '../../data/discover_availability_context.dart';
 import '../../data/discover_catalog_facets.dart';
 import '../../data/discover_catalog_query.dart';
+import '../../data/discover_taxonomy_filters.dart';
 import '../../data/discover_match_scope.dart';
 import '../../data/elegance_taxonomy_source.dart';
 import '../../data/saudi_cities.dart';
@@ -361,20 +363,31 @@ class DiscoverPresentationScreenState extends State<DiscoverPresentationScreen>
         final dropSizes = stale.where((s) => s.field == 'variant.size').map((s) => s.value).toSet();
         final dropVolumes = stale.where((s) => s.field == 'variant.volume').map((s) => s.value).toSet();
         final dropShoeUsage = stale.where((s) => s.field == 'shoeUsage').map((s) => s.value).toSet();
+        final dropOccasionType = stale.where((s) => s.field == 'occasionType').map((s) => s.value).toSet();
+        final dropOccasionOffer =
+            stale.where((s) => s.field == 'occasionServiceOffer').map((s) => s.value).toSet();
         final nextColors = next.query.colors.where((c) => !dropColors.contains(c)).toList();
         final nextSizes = next.query.sizes.where((c) => !dropSizes.contains(c)).toList();
         final nextVolumes = next.query.volumes.where((c) => !dropVolumes.contains(c)).toList();
         final nextShoeUsage = next.query.shoeUsage.where((c) => !dropShoeUsage.contains(c)).toList();
+        final nextOccasionType =
+            next.query.occasionTypeIds.where((c) => !dropOccasionType.contains(c)).toList();
+        final nextOccasionOffer =
+            next.query.occasionServiceOffers.where((c) => !dropOccasionOffer.contains(c)).toList();
         if (nextColors.length != next.query.colors.length ||
             nextSizes.length != next.query.sizes.length ||
             nextVolumes.length != next.query.volumes.length ||
-            nextShoeUsage.length != next.query.shoeUsage.length) {
+            nextShoeUsage.length != next.query.shoeUsage.length ||
+            nextOccasionType.length != next.query.occasionTypeIds.length ||
+            nextOccasionOffer.length != next.query.occasionServiceOffers.length) {
           _reload(
             next.query.copyWith(
               colors: nextColors,
               sizes: nextSizes,
               volumes: nextVolumes,
               shoeUsage: nextShoeUsage,
+              occasionTypeIds: nextOccasionType,
+              occasionServiceOffers: nextOccasionOffer,
             ),
           );
           return;
@@ -427,7 +440,48 @@ class DiscoverPresentationScreenState extends State<DiscoverPresentationScreen>
     }
   }
 
-  Future<void> _reload(DiscoverCatalogQuery query) => _feed?.load(query) ?? Future.value();
+  Future<void> _reload(DiscoverCatalogQuery query) =>
+      _feed?.load(query.scopedToTaxonomyBranch()) ?? Future.value();
+
+  DiscoverAvailabilityContext get _availabilityContext => DiscoverAvailabilityContext(
+        availableOn: _query.availableOn,
+        branchId: _query.branchIds.length == 1 ? _query.branchIds.first : null,
+        occasionTypeIds: _query.occasionTypeIds,
+        occasionServiceOffers: _query.occasionServiceOffers,
+        laneApiId: widget.lane?.apiId,
+      );
+
+  bool _allowFilter(String filterKey) {
+    if (widget.lane == null) return false;
+    final keys = DiscoverTaxonomyFilters.keysForQuery(
+      lane: widget.lane,
+      categoryId: _query.categoryId,
+      subcategoryId: _query.subcategoryId,
+    );
+    if (keys.isEmpty) {
+      return DiscoverTaxonomyFilters.laneDefaults[widget.lane!.apiId]?.contains(filterKey) ?? false;
+    }
+    return keys.contains(filterKey);
+  }
+
+  bool get _laneProductFilters =>
+      _allowFilter('variant.color') ||
+      _allowFilter('variant.size') ||
+      _allowFilter('variant.volume') ||
+      _allowFilter('metal') ||
+      _allowFilter('purity') ||
+      _allowFilter('shoeUsage') ||
+      _allowFilter('inStock') ||
+      _allowFilter('giftEligible') ||
+      _allowFilter('ageMonths');
+
+  bool get _laneServiceFilters =>
+      _allowFilter('placeMode') ||
+      _allowFilter('branch') ||
+      _allowFilter('availableOn') ||
+      _allowFilter('duration') ||
+      _allowFilter('occasionType') ||
+      _allowFilter('occasionServiceOffer');
 
   /// Clears subcategory drill UI so rail circles match a root-level / empty query.
   void _clearEleganceDrill({bool notify = true}) {
@@ -661,6 +715,30 @@ class DiscoverPresentationScreenState extends State<DiscoverPresentationScreen>
         if (!_facets.shoeUsage.any((b) => b.id == id))
           DiscoverFacetBucket(id: id, count: 0, labelAr: id),
     ];
+    final metalBuckets = [
+      ..._facets.metal,
+      for (final id in _query.metals)
+        if (!_facets.metal.any((b) => b.id == id))
+          DiscoverFacetBucket(id: id, count: 0, labelAr: id),
+    ];
+    final purityBuckets = [
+      ..._facets.purity,
+      for (final id in _query.purityKarats)
+        if (!_facets.purity.any((b) => b.id == id))
+          DiscoverFacetBucket(id: id, count: 0, labelAr: id),
+    ];
+    final occasionTypeBuckets = [
+      ..._facets.occasionType,
+      for (final id in _query.occasionTypeIds)
+        if (!_facets.occasionType.any((b) => b.id == id))
+          DiscoverFacetBucket(id: id, count: 0, labelAr: id),
+    ];
+    final occasionOfferBuckets = [
+      ..._facets.occasionServiceOffer,
+      for (final id in _query.occasionServiceOffers)
+        if (!_facets.occasionServiceOffer.any((b) => b.id == id))
+          DiscoverFacetBucket(id: id, count: 0, labelAr: id),
+    ];
     const placeLabels = {
       'branch': 'في الفرع',
       'home': 'منزلية',
@@ -735,8 +813,9 @@ class DiscoverPresentationScreenState extends State<DiscoverPresentationScreen>
                           : null,
                       onTap: () => Navigator.pop(context, 'city:${city.id}'),
                     ),
-                if (elegance) ...[
+                if (elegance || (widget.lane != null && _laneProductFilters)) ...[
                   const Divider(),
+                  if (elegance || _allowFilter('variant.color')) ...[
                   const ListTile(title: Text('اللون')),
                   if (colorBuckets.isEmpty)
                     const ListTile(title: Text('لا توجد ألوان منشورة مطابقة حاليًا')),
@@ -759,6 +838,8 @@ class DiscoverPresentationScreenState extends State<DiscoverPresentationScreen>
                       trailing: _query.colors.contains(color.id) ? const Icon(Icons.check) : null,
                       onTap: () => Navigator.pop(context, 'color:${color.id}'),
                     ),
+                  ],
+                  if (elegance || _allowFilter('variant.size')) ...[
                   const ListTile(title: Text('المقاس')),
                   if (sizeBuckets.isEmpty)
                     const ListTile(title: Text('لا توجد مقاسات منشورة مطابقة حاليًا')),
@@ -769,7 +850,8 @@ class DiscoverPresentationScreenState extends State<DiscoverPresentationScreen>
                       trailing: _query.sizes.contains(size.id) ? const Icon(Icons.check) : null,
                       onTap: () => Navigator.pop(context, 'size:${size.id}'),
                     ),
-                  if (volumeBuckets.isNotEmpty) ...[
+                  ],
+                  if ((elegance || _allowFilter('variant.volume')) && volumeBuckets.isNotEmpty) ...[
                     const ListTile(title: Text('الحجم')),
                     for (final volume in volumeBuckets)
                       ListTile(
@@ -779,7 +861,28 @@ class DiscoverPresentationScreenState extends State<DiscoverPresentationScreen>
                         onTap: () => Navigator.pop(context, 'volume:${volume.id}'),
                       ),
                   ],
+                  if (_allowFilter('metal') || metalBuckets.isNotEmpty) ...[
+                    const ListTile(title: Text('المعدن')),
+                    for (final metal in metalBuckets)
+                      ListTile(
+                        title: Text(metal.displayLabel),
+                        subtitle: metal.count > 0 ? Text('${metal.count}') : null,
+                        trailing: _query.metals.contains(metal.id) ? const Icon(Icons.check) : null,
+                        onTap: () => Navigator.pop(context, 'metal:${metal.id}'),
+                      ),
+                  ],
+                  if (_allowFilter('purity') || purityBuckets.isNotEmpty) ...[
+                    const ListTile(title: Text('العيار')),
+                    for (final purity in purityBuckets)
+                      ListTile(
+                        title: Text(purity.displayLabel),
+                        subtitle: purity.count > 0 ? Text('${purity.count}') : null,
+                        trailing: _query.purityKarats.contains(purity.id) ? const Icon(Icons.check) : null,
+                        onTap: () => Navigator.pop(context, 'purity:${purity.id}'),
+                      ),
+                  ],
                   if (shoeUsageBuckets.isNotEmpty ||
+                      _allowFilter('shoeUsage') ||
                       _query.categoryId == 'shoes' ||
                       (_query.subcategoryId?.startsWith('shoes.') ?? false)) ...[
                     const ListTile(title: Text('استخدام الحذاء')),
@@ -797,11 +900,13 @@ class DiscoverPresentationScreenState extends State<DiscoverPresentationScreen>
                         onTap: () => Navigator.pop(context, 'shoeUsage:${usage.id}'),
                       ),
                   ],
-                  SwitchListTile(
-                    title: const Text('المتاح بالمخزون فقط'),
-                    value: _query.inStock == true,
-                    onChanged: (_) => Navigator.pop(context, 'stock'),
-                  ),
+                  if (elegance || _allowFilter('inStock'))
+                    SwitchListTile(
+                      title: const Text('المتاح بالمخزون فقط'),
+                      value: _query.inStock == true,
+                      onChanged: (_) => Navigator.pop(context, 'stock'),
+                    ),
+                  if (elegance || _allowFilter('price'))
                   ListTile(
                     title: Text(_priceRangeLabel()),
                     subtitle: const Text('حد أدنى وحد أعلى بالريال'),
@@ -814,17 +919,40 @@ class DiscoverPresentationScreenState extends State<DiscoverPresentationScreen>
                     onTap: () => Navigator.pop(context, 'priceRange'),
                   ),
                 ],
-                if (beauty) ...[
+                if (_allowFilter('occasionType') || occasionTypeBuckets.isNotEmpty) ...[
                   const Divider(),
-                  const ListTile(title: Text('مكان تقديم الخدمة')),
-                  for (final mode in placeBuckets)
+                  const ListTile(title: Text('نوع المناسبة')),
+                  for (final occ in occasionTypeBuckets)
                     ListTile(
-                      title: Text(placeLabels[mode.id] ?? mode.displayLabel),
-                      subtitle: mode.count > 0 ? Text('${mode.count}') : null,
-                      trailing: _query.placeModes.contains(mode.id) ? const Icon(Icons.check) : null,
-                      onTap: () => Navigator.pop(context, 'place:${mode.id}'),
+                      title: Text(occ.displayLabel),
+                      subtitle: occ.count > 0 ? Text('${occ.count}') : null,
+                      trailing: _query.occasionTypeIds.contains(occ.id) ? const Icon(Icons.check) : null,
+                      onTap: () => Navigator.pop(context, 'occasionType:${occ.id}'),
                     ),
-                  if (_facets.branch.isNotEmpty) ...[
+                ],
+                if (_allowFilter('occasionServiceOffer') || occasionOfferBuckets.isNotEmpty) ...[
+                  const ListTile(title: Text('عرض الخدمة')),
+                  for (final offer in occasionOfferBuckets)
+                    ListTile(
+                      title: Text(offer.displayLabel),
+                      subtitle: offer.count > 0 ? Text('${offer.count}') : null,
+                      trailing: _query.occasionServiceOffers.contains(offer.id) ? const Icon(Icons.check) : null,
+                      onTap: () => Navigator.pop(context, 'occasionServiceOffer:${offer.id}'),
+                    ),
+                ],
+                if (beauty || (widget.lane != null && _laneServiceFilters)) ...[
+                  const Divider(),
+                  if (beauty || _allowFilter('placeMode')) ...[
+                    const ListTile(title: Text('مكان تقديم الخدمة')),
+                    for (final mode in placeBuckets)
+                      ListTile(
+                        title: Text(placeLabels[mode.id] ?? mode.displayLabel),
+                        subtitle: mode.count > 0 ? Text('${mode.count}') : null,
+                        trailing: _query.placeModes.contains(mode.id) ? const Icon(Icons.check) : null,
+                        onTap: () => Navigator.pop(context, 'place:${mode.id}'),
+                      ),
+                  ],
+                  if ((beauty || _allowFilter('branch')) && _facets.branch.isNotEmpty) ...[
                     const ListTile(title: Text('الفرع')),
                     for (final branch in _facets.branch)
                       ListTile(
@@ -834,6 +962,7 @@ class DiscoverPresentationScreenState extends State<DiscoverPresentationScreen>
                         onTap: () => Navigator.pop(context, 'branch:${branch.id}'),
                       ),
                   ],
+                  if (beauty || _allowFilter('availableOn'))
                   ListTile(
                     title: Text(
                       _query.availableOn == null ? 'تاريخ الإتاحة' : 'تاريخ الإتاحة: ${_query.availableOn}',
@@ -846,6 +975,7 @@ class DiscoverPresentationScreenState extends State<DiscoverPresentationScreen>
                         : null,
                     onTap: () => Navigator.pop(context, 'availableOn'),
                   ),
+                  if (beauty || _allowFilter('duration'))
                   ListTile(
                     title: Text(_durationRangeLabel()),
                     subtitle: const Text('المدة بالدقائق'),
@@ -857,6 +987,7 @@ class DiscoverPresentationScreenState extends State<DiscoverPresentationScreen>
                         : null,
                     onTap: () => Navigator.pop(context, 'durationRange'),
                   ),
+                  if (beauty || _allowFilter('price'))
                   ListTile(
                     title: Text(_priceRangeLabel()),
                     subtitle: const Text('سعر الخدمة بالريال'),
@@ -975,6 +1106,42 @@ class DiscoverPresentationScreenState extends State<DiscoverPresentationScreen>
         next.add(id);
       }
       await _reload(_query.copyWith(shoeUsage: next).withoutInapplicableFilters());
+    } else if (type.startsWith('metal:')) {
+      final id = type.substring('metal:'.length);
+      final next = [..._query.metals];
+      if (next.contains(id)) {
+        next.remove(id);
+      } else {
+        next.add(id);
+      }
+      await _reload(_query.copyWith(metals: next).withoutInapplicableFilters());
+    } else if (type.startsWith('purity:')) {
+      final id = type.substring('purity:'.length);
+      final next = [..._query.purityKarats];
+      if (next.contains(id)) {
+        next.remove(id);
+      } else {
+        next.add(id);
+      }
+      await _reload(_query.copyWith(purityKarats: next).withoutInapplicableFilters());
+    } else if (type.startsWith('occasionType:')) {
+      final id = type.substring('occasionType:'.length);
+      final next = [..._query.occasionTypeIds];
+      if (next.contains(id)) {
+        next.remove(id);
+      } else {
+        next.add(id);
+      }
+      await _reload(_query.copyWith(occasionTypeIds: next).withoutInapplicableFilters());
+    } else if (type.startsWith('occasionServiceOffer:')) {
+      final id = type.substring('occasionServiceOffer:'.length);
+      final next = [..._query.occasionServiceOffers];
+      if (next.contains(id)) {
+        next.remove(id);
+      } else {
+        next.add(id);
+      }
+      await _reload(_query.copyWith(occasionServiceOffers: next).withoutInapplicableFilters());
     } else if (type.startsWith('place:')) {
       final id = type.substring(6);
       final next = [..._query.placeModes];
@@ -1308,6 +1475,8 @@ class DiscoverPresentationScreenState extends State<DiscoverPresentationScreen>
           service: service,
           initialDateKey: _query.availableOn,
           initialBranchId: _query.branchIds.length == 1 ? _query.branchIds.first : null,
+          availabilityContext: _availabilityContext,
+          discoverLane: widget.lane,
         ),
       ),
     );
@@ -2067,6 +2236,8 @@ class _PresentationPageState extends State<_PresentationPage> {
           bookingBranchId: parent != null && parent._query.branchIds.length == 1
               ? parent._query.branchIds.first
               : null,
+          availabilityContext: parent?._availabilityContext,
+          discoverLane: parent?.widget.lane,
         ),
       ),
     );

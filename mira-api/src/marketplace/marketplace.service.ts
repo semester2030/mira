@@ -542,6 +542,7 @@ export class MarketplaceService implements OnModuleInit {
           filter.availableOn == null
             ? null
             : bookableByServiceId?.has(service.id) === true;
+        const attrsRaw = (service as { attributesJson?: unknown }).attributesJson;
         return {
           kind: 'service' as const,
           id: service.id,
@@ -566,6 +567,10 @@ export class MarketplaceService implements OnModuleInit {
           availabilityJson: service.availabilityJson,
           bookingEnabled: service.bookingEnabled,
           availableOnDay,
+          attributesJson:
+            attrsRaw && typeof attrsRaw === 'object' && !Array.isArray(attrsRaw)
+              ? (attrsRaw as Record<string, unknown>)
+              : null,
         };
       }),
     ];

@@ -113,6 +113,10 @@ export class MarketplaceController {
       purity: qstr(query.purity ?? query.purityKarat),
       giftEligible: qstr(query.giftEligible),
       ageMonths: qstr(query.ageMonths),
+      occasionType: qstr(query.occasionType ?? query.occasionTypeIds),
+      occasionServiceOffer: qstr(query.occasionServiceOffer),
+      eventType: qstr(query.eventType),
+      shoeUsage: qstr(query.shoeUsage),
     } as any);
   }
 

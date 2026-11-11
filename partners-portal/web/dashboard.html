@@ -44,6 +44,7 @@
           <button type="button" class="btn btn-primary" id="goService">إضافة خدمة</button>
           <button type="button" class="btn btn-primary" id="goBulk">إضافة مجموعة</button>
         </div>
+        <div id="laneEntries" class="lane-entries" data-testid="lane-entries-host" style="margin-top:1rem"></div>
         <p id="storeLinkState"><strong>ربط متجر خارجي:</strong> غير متصل. لا يوجد تكامل API، وغيابه لا يمنع المسودة.</p>
       </div>
 
@@ -126,6 +127,7 @@
   <script src="js/inventory-editor-state.js"></script>
   <script src="js/editor-v2.js"></script>
   <script src="js/catalog-journey.js"></script>
+  <script src="js/lane-entries.js"></script>
   <script src="js/bulk-add.js"></script>
   <script src="js/bulk-group-journey.js"></script>
   <script src="js/portal-shell.js"></script>
@@ -394,11 +396,16 @@
         const productButton = document.getElementById('goProduct');
         const bulkButton = document.getElementById('goBulk');
         const bulkSection = document.getElementById('bulkSection');
-        const showServices = developer || p.type === 'clinic' || p.type === 'salon';
-        const showProducts = developer || p.type === 'brand';
+        const showServices =
+          developer || p.type === 'clinic' || p.type === 'salon' || p.type === 'event_planner';
+        const showProducts =
+          developer || p.type === 'brand' || (p.type === 'event_planner' && p.canSellProducts === true);
         serviceButton.hidden = !showServices;
         productButton.hidden = !showProducts;
         bulkButton.hidden = !(showServices || showProducts);
+        if (window.MiraLaneEntries && typeof MiraLaneEntries.paintLaneEntries === 'function') {
+          MiraLaneEntries.paintLaneEntries();
+        }
         if (window.MiraPortalShell) {
           MiraPortalShell.boot();
           MiraPortalShell.setDirtyGuard(function () {
@@ -414,6 +421,12 @@
         }
         productButton.onclick = () => {
           bulkSection.classList.add('hidden');
+          if (window.MiraLaneEntries && typeof MiraLaneEntries.clearLaneLock === 'function') {
+            MiraLaneEntries.clearLaneLock();
+          } else {
+            window.__MIRA_TAXONOMY_LANE__ = 'elegance';
+            window.__MIRA_LANE_PROFILE_ID__ = null;
+          }
           // Do not wipe an in-progress product editor when toggling product↔service (R-04 isolation).
           const catalogForm = document.getElementById('catalogForm');
           const hasProductEditor = !!(catalogForm && catalogForm.querySelector('input[name="nameAr"]'));
@@ -427,6 +440,12 @@
         };
         serviceButton.onclick = () => {
           bulkSection.classList.add('hidden');
+          if (window.MiraLaneEntries && typeof MiraLaneEntries.clearLaneLock === 'function') {
+            MiraLaneEntries.clearLaneLock();
+          } else {
+            window.__MIRA_TAXONOMY_LANE__ = 'elegance';
+            window.__MIRA_LANE_PROFILE_ID__ = null;
+          }
           if (developer) {
             const serviceForm = document.getElementById('serviceForm');
             const hasServiceEditor = !!(serviceForm && serviceForm.querySelector('input[name="nameAr"]'));

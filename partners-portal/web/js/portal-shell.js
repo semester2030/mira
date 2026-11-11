@@ -27,10 +27,14 @@
     return String(document.body.dataset.partnerType || '').toLowerCase();
   }
 
-  /** Salon/clinic edit services inside catalogSection (not serviceSection). */
+  /**
+   * Partners that edit services inside catalogSection (not serviceSection).
+   * event_planner must match — otherwise openOccasionsService paints catalogForm
+   * then openServiceEditor reveals clinic orbs on serviceSection.
+   */
   function usesCatalogAsServices() {
     var t = partnerType();
-    return t === 'clinic' || t === 'salon';
+    return t === 'clinic' || t === 'salon' || t === 'event_planner';
   }
 
   function sectionIdsFor(view) {
@@ -219,8 +223,18 @@
 
     var nav = rail.querySelector('#portalSideNav');
     var partnerType = (document.body.dataset.partnerType || '').toLowerCase();
-    var showProducts = !partnerType || partnerType === 'brand' || partnerType === 'developer';
-    var showServices = !partnerType || partnerType === 'clinic' || partnerType === 'salon' || partnerType === 'developer';
+    var partner = window.sessionPartner || {};
+    var showProducts =
+      !partnerType ||
+      partnerType === 'brand' ||
+      partnerType === 'developer' ||
+      (partnerType === 'event_planner' && partner.canSellProducts === true);
+    var showServices =
+      !partnerType ||
+      partnerType === 'clinic' ||
+      partnerType === 'salon' ||
+      partnerType === 'developer' ||
+      partnerType === 'event_planner';
 
     function addLink(view, label) {
       var a = document.createElement('a');

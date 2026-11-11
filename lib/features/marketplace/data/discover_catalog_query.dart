@@ -1,6 +1,7 @@
 import '../domain/catalog_offer_media.dart';
 import '../domain/entities/catalog_product.dart';
 import '../domain/entities/catalog_service.dart';
+import 'discover_taxonomy_filters.dart';
 import 'elegance_taxonomy_source.dart';
 import 'marketplace_local_catalog.dart';
 
@@ -145,6 +146,12 @@ class DiscoverCatalogQuery {
     this.sizes = const [],
     this.volumes = const [],
     this.shoeUsage = const [],
+    this.metals = const [],
+    this.purityKarats = const [],
+    this.occasionTypeIds = const [],
+    this.occasionServiceOffers = const [],
+    this.giftEligible,
+    this.ageMonths,
     this.placeModes = const [],
     this.branchIds = const [],
     this.inStock,
@@ -180,6 +187,21 @@ class DiscoverCatalogQuery {
 
   /// Attribute shoeUsage ids (formal/daily/occasions). Empty = unset.
   final List<String> shoeUsage;
+
+  /// Registry metal ids. Empty = unset.
+  final List<String> metals;
+
+  /// Registry purityKarat ids. Empty = unset.
+  final List<String> purityKarats;
+
+  /// Occasion type ids (registry occasionTypeIds / query occasionType).
+  final List<String> occasionTypeIds;
+
+  /// Occasion service offer ids (shared capacity grouping in catalog).
+  final List<String> occasionServiceOffers;
+
+  final bool? giftEligible;
+  final int? ageMonths;
 
   /// Service placeMode ids (OR within). Empty = unset.
   final List<String> placeModes;
@@ -218,6 +240,12 @@ class DiscoverCatalogQuery {
     if (sizes.isNotEmpty) n += 1;
     if (volumes.isNotEmpty) n += 1;
     if (shoeUsage.isNotEmpty) n += 1;
+    if (metals.isNotEmpty) n += 1;
+    if (purityKarats.isNotEmpty) n += 1;
+    if (occasionTypeIds.isNotEmpty) n += 1;
+    if (occasionServiceOffers.isNotEmpty) n += 1;
+    if (giftEligible != null) n += 1;
+    if (ageMonths != null) n += 1;
     if (placeModes.isNotEmpty) n += 1;
     if (branchIds.isNotEmpty) n += 1;
     if (inStock != null) n += 1;
@@ -234,6 +262,7 @@ class DiscoverCatalogQuery {
     final beauty = lane == DiscoverLane.beauty ||
         partnerType == 'clinic' ||
         partnerType == 'salon';
+    if (lane == DiscoverLane.occasions) return this;
     final elegance = lane == DiscoverLane.elegance ||
         (lane?.isProductOnlyLane ?? false) ||
         partnerType == 'brand';
@@ -251,10 +280,23 @@ class DiscoverCatalogQuery {
         clearSizes: true,
         clearVolumes: true,
         clearShoeUsage: true,
+        clearMetals: true,
+        clearPurityKarats: true,
+        clearGiftEligible: true,
+        clearAgeMonths: true,
         clearInStock: true,
       );
     }
     return this;
+  }
+
+  DiscoverCatalogQuery scopedToTaxonomyBranch() {
+    final keys = DiscoverTaxonomyFilters.keysForQuery(
+      lane: lane,
+      categoryId: categoryId,
+      subcategoryId: subcategoryId,
+    );
+    return DiscoverTaxonomyFilters.keepingOnlyFilterKeys(withoutInapplicableFilters(), keys);
   }
 
   DiscoverCatalogQuery copyWith({
@@ -270,6 +312,12 @@ class DiscoverCatalogQuery {
     List<String>? sizes,
     List<String>? volumes,
     List<String>? shoeUsage,
+    List<String>? metals,
+    List<String>? purityKarats,
+    List<String>? occasionTypeIds,
+    List<String>? occasionServiceOffers,
+    bool? giftEligible,
+    int? ageMonths,
     List<String>? placeModes,
     List<String>? branchIds,
     bool? inStock,
@@ -292,6 +340,12 @@ class DiscoverCatalogQuery {
     bool clearSizes = false,
     bool clearVolumes = false,
     bool clearShoeUsage = false,
+    bool clearMetals = false,
+    bool clearPurityKarats = false,
+    bool clearOccasionTypeIds = false,
+    bool clearOccasionServiceOffers = false,
+    bool clearGiftEligible = false,
+    bool clearAgeMonths = false,
     bool clearPlaceModes = false,
     bool clearBranchIds = false,
     bool clearInStock = false,
@@ -317,6 +371,14 @@ class DiscoverCatalogQuery {
       sizes: clearSizes ? const [] : sizes ?? this.sizes,
       volumes: clearVolumes ? const [] : volumes ?? this.volumes,
       shoeUsage: clearShoeUsage ? const [] : shoeUsage ?? this.shoeUsage,
+      metals: clearMetals ? const [] : metals ?? this.metals,
+      purityKarats: clearPurityKarats ? const [] : purityKarats ?? this.purityKarats,
+      occasionTypeIds: clearOccasionTypeIds ? const [] : occasionTypeIds ?? this.occasionTypeIds,
+      occasionServiceOffers: clearOccasionServiceOffers
+          ? const []
+          : occasionServiceOffers ?? this.occasionServiceOffers,
+      giftEligible: clearGiftEligible ? null : giftEligible ?? this.giftEligible,
+      ageMonths: clearAgeMonths ? null : ageMonths ?? this.ageMonths,
       placeModes: clearPlaceModes ? const [] : placeModes ?? this.placeModes,
       branchIds: clearBranchIds ? const [] : branchIds ?? this.branchIds,
       inStock: clearInStock ? null : inStock ?? this.inStock,
@@ -338,6 +400,12 @@ class DiscoverCatalogQuery {
       clearSizes: true,
       clearVolumes: true,
       clearShoeUsage: true,
+      clearMetals: true,
+      clearPurityKarats: true,
+      clearOccasionTypeIds: true,
+      clearOccasionServiceOffers: true,
+      clearGiftEligible: true,
+      clearAgeMonths: true,
       clearPlaceModes: true,
       clearBranchIds: true,
       clearInStock: true,

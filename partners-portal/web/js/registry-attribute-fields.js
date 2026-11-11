@@ -46,6 +46,7 @@
     if (dep.field && Object.prototype.hasOwnProperty.call(ctx, dep.field)) {
       var cur = ctx[dep.field];
       if (Array.isArray(dep.includes)) return dep.includes.indexOf(cur) >= 0;
+      if (Array.isArray(dep.anyOf)) return dep.anyOf.indexOf(cur) >= 0;
       if (dep.equals != null) return cur === dep.equals;
     }
     return true;
@@ -71,11 +72,17 @@
     return null;
   }
 
-  function fieldDef(registry, fieldId) {
+  function fieldDef(registry, fieldId, profileId) {
     var root = registryRoot(registry);
     var f = (root.fields || {})[fieldId];
     if (!f) return null;
-    return Object.assign({ id: fieldId }, f);
+    var out = Object.assign({ id: fieldId }, f);
+    if (profileId) {
+      var profile = profileById(registry, profileId);
+      var ov = profile && profile.fieldOverrides && profile.fieldOverrides[fieldId];
+      if (ov && typeof ov === 'object') out = Object.assign({}, out, ov, { id: fieldId });
+    }
+    return out;
   }
 
   function storageAttrKey(def) {
@@ -109,7 +116,7 @@
     var out = [];
     var ids = profile.fields || [];
     for (var i = 0; i < ids.length; i++) {
-      var def = fieldDef(registry, ids[i]);
+      var def = fieldDef(registry, ids[i], profileId);
       if (!def) continue;
       var tier = classifyField(def);
       if (tier === 'deferred' && !(opts.includeDeferred)) continue;

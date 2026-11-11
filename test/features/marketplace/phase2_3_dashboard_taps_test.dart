@@ -147,23 +147,26 @@ class _NoopFavorites extends DiscoverFavoriteClient {
 }
 
 Widget _dashboardOrbitHarness() {
-  return Directionality(
-    textDirection: TextDirection.rtl,
-    child: SingleChildScrollView(
-      padding: const EdgeInsets.fromLTRB(20, 8, 20, 32),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.stretch,
-        children: [
-          const SectionHeader(title: 'نظرة سريعة'),
-          const SizedBox(height: 12),
-          const SizedBox(height: 48, child: ColoredBox(color: Color(0x33C45B8A))),
-          const SizedBox(height: 24),
-          const MiraWorldOrbitDiscover(),
-          const SizedBox(height: 16),
-          const PremiumCard(
-            child: Text('نصيحة اليوم: احرصي على شرب الماء وواقي الشمس يوميًا لبشرة أكثر إشراقًا.'),
-          ),
-        ],
+  return MediaQuery(
+    data: const MediaQueryData(disableAnimations: true),
+    child: Directionality(
+      textDirection: TextDirection.rtl,
+      child: SingleChildScrollView(
+        padding: const EdgeInsets.fromLTRB(20, 8, 20, 32),
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.stretch,
+          children: [
+            const SectionHeader(title: 'نظرة سريعة'),
+            const SizedBox(height: 12),
+            const SizedBox(height: 48, child: ColoredBox(color: Color(0x33C45B8A))),
+            const SizedBox(height: 24),
+            const MiraWorldOrbitDiscover(),
+            const SizedBox(height: 16),
+            const PremiumCard(
+              child: Text('نصيحة اليوم: احرصي على شرب الماء وواقي الشمس يوميًا لبشرة أكثر إشراقًا.'),
+            ),
+          ],
+        ),
       ),
     ),
   );
@@ -245,10 +248,20 @@ void main() {
         await _lockTaxonomy(lane.apiId, partnerAudience: lane.isPreviewLane);
       }
 
-      await tester.ensureVisible(find.text(title).first);
-      await tester.tap(find.text(title).first);
+      final imageKey = switch (lane) {
+        DiscoverLane.elegance => 'elegance',
+        DiscoverLane.beauty => 'beauty',
+        DiscoverLane.children => 'children',
+        DiscoverLane.gifts => 'gifts',
+        DiscoverLane.occasions => 'occasions',
+        DiscoverLane.jewelry => 'jewelry',
+      };
+      final orb = find.byKey(ValueKey('home-orb-$imageKey'));
+      await tester.ensureVisible(orb);
+      await tester.tap(orb);
       await tester.pump();
-      await tester.pump(const Duration(milliseconds: 100));
+      // Orbit opens after ~150ms press settle (motion merge); allow margin.
+      await tester.pump(const Duration(milliseconds: 300));
 
       expect(find.byType(DiscoverPresentationScreen), findsOneWidget, reason: title);
       expect(find.byKey(ValueKey('discover_presentation_lane_${lane.apiId}')), findsOneWidget);
@@ -296,10 +309,17 @@ void main() {
           : (emptyOk ? 'empty_state' : 'lane_screen_only');
       rows.add('$title | ${lane.apiId} | DiscoverPresentationScreen | $content | PASS');
 
-      nav.currentState?.popUntil((r) => r.isFirst);
+      // Pop presentation; avoid pumpAndSettle (logo fill loop is infinite when animations on).
+      expect(nav.currentState?.canPop(), isTrue, reason: '$title stack');
+      nav.currentState!.pop();
       await tester.pump();
-      await tester.pump(const Duration(milliseconds: 300));
-      expect(find.byType(DiscoverPresentationScreen), findsNothing);
+      await tester.pump(const Duration(milliseconds: 400));
+      if (find.byType(DiscoverPresentationScreen).evaluate().isNotEmpty) {
+        nav.currentState?.popUntil((r) => r.isFirst);
+        await tester.pump();
+        await tester.pump(const Duration(milliseconds: 400));
+      }
+      expect(find.byType(DiscoverPresentationScreen), findsNothing, reason: '$title after pop');
     }
 
     File('docs/phase2_3/evidence/TAP_CONTENT_RESULTS.txt').writeAsStringSync('${rows.join('\n')}\n');

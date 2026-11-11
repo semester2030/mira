@@ -470,4 +470,68 @@ const dress: CatalogFilterItem = {
   }
 }
 
+// Independent lanes: occasionTypeIds + occasionServiceOffer on services; dual-read eventType.
+{
+  const styling: CatalogFilterItem = {
+    kind: 'service',
+    id: 'occ-svc-1',
+    partnerId: 'p1',
+    partnerType: 'event_planner',
+    partnerNameAr: 'منسّقة',
+    city: 'الرياض',
+    nameAr: 'تنسيق تخرج ومواليد',
+    nameEn: 'Styling',
+    category: 'occasions',
+    profileId: 'service.occasions',
+    concernTags: [],
+    priceHalalas: 50000,
+    durationMin: 120,
+    attributesJson: {
+      occasionTypeIds: ['graduation', 'baby_shower'],
+      occasionServiceOffer: 'styling_decor',
+    },
+  };
+  assert.ok(
+    matchCatalogItem(styling, {
+      attributeSelections: { occasionTypeIds: ['graduation'] },
+    }),
+    'graduation type must match multi-type offer',
+  );
+  assert.equal(
+    matchCatalogItem(styling, {
+      attributeSelections: { occasionTypeIds: ['wedding'] },
+    }),
+    null,
+    'unrelated type must not match',
+  );
+  assert.ok(
+    matchCatalogItem(styling, {
+      attributeSelections: { occasionServiceOffer: ['styling_decor'] },
+    }),
+  );
+  const legacy: CatalogFilterItem = {
+    ...styling,
+    id: 'occ-legacy',
+    attributesJson: { eventType: 'graduation' },
+  };
+  assert.ok(
+    matchCatalogItem(legacy, {
+      attributeSelections: { occasionTypeIds: ['graduation'] },
+    }),
+    'legacy eventType dual-read',
+  );
+  const parsedOcc = parseCatalogFilterQuery({
+    occasionType: 'graduation',
+    occasionServiceOffer: 'styling_decor',
+  });
+  assert.equal(parsedOcc.ok, true);
+  if (parsedOcc.ok) {
+    assert.deepEqual(parsedOcc.filter.attributeSelections?.occasionTypeIds, ['graduation']);
+    assert.deepEqual(parsedOcc.filter.attributeSelections?.occasionServiceOffer, ['styling_decor']);
+  }
+  const facets = buildCatalogFacets([styling, legacy], { lane: 'occasions' });
+  assert.ok(facets.occasionType.some((b) => b.id === 'graduation' && b.count >= 1));
+  assert.ok(facets.occasionServiceOffer.some((b) => b.id === 'styling_decor'));
+}
+
 console.log('catalog-filters.schema-tests: PASS');

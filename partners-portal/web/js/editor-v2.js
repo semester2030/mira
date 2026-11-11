@@ -408,6 +408,8 @@
 
   function profileIdFor(kind, category, partnerType, preferred) {
     if (preferred) return preferred;
+    // Sticky lane profile from independent section entries (jewelry/kids/gifts/occasions).
+    if (window.__MIRA_LANE_PROFILE_ID__) return window.__MIRA_LANE_PROFILE_ID__;
     if (kind === 'product') {
       const map = {
         clothes: 'product.clothes',
@@ -415,6 +417,11 @@
         body: 'product.body',
         hair: 'product.hair',
         accessories: 'product.accessories',
+        jewelry: 'product.jewelry',
+        children: 'product.kids',
+        kids: 'product.kids',
+        gifts: 'product.gifts',
+        occasions: 'product.occasions_favors',
       };
       return map[category] || 'product.clothes';
     }
@@ -427,6 +434,7 @@
       consult: 'service.clinic_consult',
       care: 'service.salon_care',
       teeth: 'service.clinic_teeth',
+      occasions: 'service.occasions',
     };
     if (category && svc[category]) return svc[category];
     return partnerType === 'clinic' ? 'service.clinic.generic' : 'service.salon.generic';

@@ -9,6 +9,8 @@ import '../../../../shared/widgets/premium/premium_exports.dart';
 import '../../data/catalog_price.dart';
 import '../../domain/catalog_offer_media.dart';
 import '../../domain/catalog_service_template.dart';
+import '../../data/discover_availability_context.dart';
+import '../../data/discover_catalog_query.dart';
 import '../../domain/entities/catalog_service.dart';
 import '../widgets/catalog_detail_media_section.dart';
 import 'booking_request_screen.dart';
@@ -18,6 +20,8 @@ class ServiceDetailScreen extends StatelessWidget {
   final Widget? provenance;
   final String? bookingDateKey;
   final String? bookingBranchId;
+  final DiscoverAvailabilityContext? availabilityContext;
+  final DiscoverLane? discoverLane;
 
   const ServiceDetailScreen({
     super.key,
@@ -25,6 +29,8 @@ class ServiceDetailScreen extends StatelessWidget {
     this.provenance,
     this.bookingDateKey,
     this.bookingBranchId,
+    this.availabilityContext,
+    this.discoverLane,
   });
 
   String get _priceText {
@@ -69,8 +75,10 @@ class ServiceDetailScreen extends StatelessWidget {
       MaterialPageRoute<void>(
         builder: (_) => BookingRequestScreen(
           service: service,
-          initialDateKey: bookingDateKey,
-          initialBranchId: bookingBranchId,
+          initialDateKey: bookingDateKey ?? availabilityContext?.availableOn,
+          initialBranchId: bookingBranchId ?? availabilityContext?.branchId,
+          availabilityContext: availabilityContext,
+          discoverLane: discoverLane,
         ),
       ),
     );

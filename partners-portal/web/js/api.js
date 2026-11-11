@@ -46,6 +46,10 @@
     if (localPage && override && /^https?:\/\/(127\.0\.0\.1|localhost):\d+(?:\/.*)?$/.test(override)) {
       return override.replace(/\/$/, '');
     }
+    // Local portal + same-origin proxy (/api/v1 → Render) avoids CORS Failed-to-fetch noise.
+    if (localPage && !override) {
+      return `${location.origin}/api/v1`;
+    }
     return fallback;
   }
 
@@ -74,8 +78,18 @@
     return err;
   }
 
+  /** Read-only paths still needed under ui-fixture=labeled so lane orbs can paint. */
+  function labeledAllowlist(method, path) {
+    if (String(method).toUpperCase() !== 'GET') return false;
+    const p = String(path || '');
+    return (
+      p.indexOf('/marketplace/taxonomy') === 0 ||
+      p.indexOf('/partners-portal/registry') === 0
+    );
+  }
+
   async function request(method, path, body, extraHeaders, opts) {
-    if (labeledPreview()) {
+    if (labeledPreview() && !labeledAllowlist(method, path)) {
       throw ApiError('محاكاة: لم يُرسل طلب ولم تُستخدم الجلسة');
     }
     const signal = opts && opts.signal;
@@ -113,7 +127,7 @@
   }
 
   function requestProgress(method, path, body, hooks) {
-    if (labeledPreview()) {
+    if (labeledPreview() && !labeledAllowlist(method, path)) {
       return Promise.reject(ApiError('محاكاة: لم يُرسل طلب ولم تُستخدم الجلسة'));
     }
     const notify = hooks || {};

@@ -1,11 +1,11 @@
 {
   "schemaVersion": 1,
   "lane": "occasions",
-  "definitionsVersion": 1,
+  "definitionsVersion": 2,
   "compatMinAppBuild": 1,
   "status": "PHASE1_PREVIEW",
   "publicBrowse": false,
-  "notes": "Phase1 occasions mixed product/service.",
+  "notes": "Occasions mixed lane. Occasion types (تخرج/مواليد/…) are browse + attribute filters (occasionTypeIds). Service offer (تنظيم/تنسيق/ضيافة) is registry field occasionServiceOffer — not duplicated as taxonomy leaves. favors/decor remain explicit product sell; styling is booking service.",
   "nodes": [
     {
       "id": "occasions_lane.all",
@@ -14,7 +14,7 @@
       "sort": 0,
       "active": true,
       "browseOnly": true,
-      "imageKey": "occasions.all",
+      "imageKey": "occasions",
       "children": []
     },
     {
@@ -27,6 +27,7 @@
       "writeEnabled": true,
       "children": [
         "occasions.all",
+        "occasions.types",
         "occasions.favors",
         "occasions.decor",
         "occasions.styling"
@@ -40,6 +41,72 @@
       "active": true,
       "browseOnly": true,
       "imageKey": "occasions",
+      "children": []
+    },
+    {
+      "id": "occasions.types",
+      "parentId": "occasions",
+      "labelAr": "نوع المناسبة",
+      "sort": 5,
+      "active": true,
+      "browseOnly": true,
+      "imageKey": "occasions.types",
+      "children": [
+        "occasions.type.graduation",
+        "occasions.type.baby_shower",
+        "occasions.type.wedding",
+        "occasions.type.birthday",
+        "occasions.type.private"
+      ]
+    },
+    {
+      "id": "occasions.type.graduation",
+      "parentId": "occasions.types",
+      "labelAr": "تخرج",
+      "sort": 10,
+      "active": true,
+      "browseOnly": true,
+      "imageKey": "occasions.type.graduation",
+      "children": []
+    },
+    {
+      "id": "occasions.type.baby_shower",
+      "parentId": "occasions.types",
+      "labelAr": "مواليد",
+      "sort": 20,
+      "active": true,
+      "browseOnly": true,
+      "imageKey": "occasions.type.baby_shower",
+      "children": []
+    },
+    {
+      "id": "occasions.type.wedding",
+      "parentId": "occasions.types",
+      "labelAr": "زفاف",
+      "sort": 30,
+      "active": true,
+      "browseOnly": true,
+      "imageKey": "occasions.type.wedding",
+      "children": []
+    },
+    {
+      "id": "occasions.type.birthday",
+      "parentId": "occasions.types",
+      "labelAr": "ميلاد",
+      "sort": 40,
+      "active": true,
+      "browseOnly": true,
+      "imageKey": "occasions.type.birthday",
+      "children": []
+    },
+    {
+      "id": "occasions.type.private",
+      "parentId": "occasions.types",
+      "labelAr": "مناسبة خاصة",
+      "sort": 50,
+      "active": true,
+      "browseOnly": true,
+      "imageKey": "occasions.type.private",
       "children": []
     },
     {

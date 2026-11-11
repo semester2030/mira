@@ -835,6 +835,7 @@ export class EditorDraftsService {
       const normalized = this.registry.normalizeServiceProfile(values.serviceProfile, partner.type);
       serviceProfileJson = normalized as unknown as Prisma.InputJsonValue;
     }
+    const attributesRaw = attributesJsonFromDraftValues(values, this.registry.getRegistry().fields);
     const availabilityDoc = availabilityFromBulkSchedule(values);
     const bookingEnabled =
       values.bookingEnabled === true ||
@@ -860,6 +861,9 @@ export class EditorDraftsService {
         profileId: draft.profileId,
         schemaVersion: draft.schemaVersion,
         ...(serviceProfileJson !== undefined ? { serviceProfileJson } : {}),
+        ...(attributesRaw !== undefined
+          ? { attributesJson: attributesRaw as Prisma.InputJsonValue }
+          : {}),
         ...(availabilityDoc
           ? { availabilityJson: availabilityDoc as unknown as Prisma.InputJsonValue }
           : {}),
@@ -998,6 +1002,7 @@ export class EditorDraftsService {
       values.serviceProfile && typeof values.serviceProfile === 'object'
         ? (values.serviceProfile as Prisma.InputJsonValue)
         : undefined;
+    const attributesRaw = attributesJsonFromDraftValues(values, this.registry.getRegistry().fields);
 
     if (published) {
       await tx.service.update({
@@ -1013,6 +1018,12 @@ export class EditorDraftsService {
           // Do NOT overwrite live price/duration/availability from draft content.
           ...(profileDoc !== undefined
             ? { draftServiceProfileSet: true, draftServiceProfileJson: profileDoc }
+            : {}),
+          ...(attributesRaw !== undefined
+            ? {
+                draftAttributesSet: true,
+                draftAttributesJson: attributesRaw as Prisma.InputJsonValue,
+              }
             : {}),
         },
       });
@@ -1040,6 +1051,13 @@ export class EditorDraftsService {
                 serviceProfileJson: profileDoc,
                 draftServiceProfileJson: Prisma.DbNull,
                 draftServiceProfileSet: false,
+              }
+            : {}),
+          ...(attributesRaw !== undefined
+            ? {
+                attributesJson: attributesRaw as Prisma.InputJsonValue,
+                draftAttributesJson: Prisma.DbNull,
+                draftAttributesSet: false,
               }
             : {}),
           ...(() => {

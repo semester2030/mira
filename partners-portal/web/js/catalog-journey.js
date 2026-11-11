@@ -518,14 +518,16 @@
     } else if (window.MiraEditorV2 && !editing) {
       // Explicit new draft identity for this form session.
       const newId = MiraEditorV2.allocateNewDraftId(kind);
+      const stickyProfile =
+        (draftCtx && draftCtx.profileId) || window.__MIRA_LANE_PROFILE_ID__ || null;
       MiraEditorV2.bindEditContext(form.id, {
         clientDraftId: newId,
         kind: kind,
-        profileId: null,
+        profileId: stickyProfile,
         revision: null,
         targetOwnerId: null,
         status: 'draft',
-        values: {},
+        values: (draftCtx && draftCtx.values) || {},
       });
     } else if (window.MiraEditorV2 && editing) {
       MiraEditorV2.bindEditContext(form.id, {
@@ -585,9 +587,31 @@
     nameEnDetails.appendChild(nameEnSummary);
     basics.appendChild(nameEnDetails);
     const nameEn = field(nameEnDetails, 'الاسم بالإنجليزية (اختياري)', 'nameEn', seed.draftNameEn != null ? seed.draftNameEn : (seed.nameEn || ''), 'text');
-    const categories = type === 'brand'
+    const laneLabelAr =
+      window.__MIRA_LANE_LABEL_AR__ ||
+      (window.__MIRA_TAXONOMY_LANE__ === 'jewelry'
+        ? 'المجوهرات'
+        : window.__MIRA_TAXONOMY_LANE__ === 'children'
+          ? 'الأطفال'
+          : window.__MIRA_TAXONOMY_LANE__ === 'gifts'
+            ? 'الهدايا'
+            : window.__MIRA_TAXONOMY_LANE__ === 'occasions'
+              ? 'مناسباتك'
+              : 'أناقتك');
+    let categories = type === 'brand'
       ? PRODUCT_CATEGORIES
       : (type === 'clinic' ? CLINIC_CATEGORIES : (type === 'salon' ? SALON_CATEGORIES : SERVICE_CATEGORIES));
+    if (window.__MIRA_TAXONOMY_LANE__ === 'occasions' && type !== 'brand') {
+      categories = [['occasions', 'مناسباتك']];
+    } else if (
+      type === 'brand' &&
+      window.__MIRA_TAXONOMY_LANE__ &&
+      window.__MIRA_TAXONOMY_LANE__ !== 'elegance'
+    ) {
+      const laneCat = window.__MIRA_TAXONOMY_LANE__;
+      const only = PRODUCT_CATEGORIES.filter((row) => row[0] === laneCat || (laneCat === 'children' && row[0] === 'children'));
+      if (only.length) categories = only;
+    }
     const category = selectField(basics, 'التصنيف', 'category', seed.category || '', categories);
     const subcategorySeed =
       seed.draftTaxonomySet && Object.prototype.hasOwnProperty.call(seed, 'draftSubcategory')
@@ -599,7 +623,7 @@
           : '';
     const subcategory = selectField(
       basics,
-      'التصنيف الفرعي (أناقتك)',
+      'التصنيف الفرعي (' + laneLabelAr + ')',
       'subcategory',
       subcategorySeed || '',
       [],
@@ -611,8 +635,10 @@
       const wrap = subcategory.parentElement;
       if (!wrap) return;
       let err = wrap.querySelector('[data-testid="taxonomy-load-error"]');
+      let retry = wrap.querySelector('[data-testid="taxonomy-load-retry"]');
       if (!taxonomyLoadError) {
         if (err) err.remove();
+        if (retry) retry.remove();
         return;
       }
       if (!err) {
@@ -620,7 +646,10 @@
         err.className = 'lead';
         err.style.color = '#b00020';
         err.setAttribute('data-testid', 'taxonomy-load-error');
-        const retry = document.createElement('button');
+        wrap.appendChild(err);
+      }
+      if (!retry) {
+        retry = document.createElement('button');
         retry.type = 'button';
         retry.className = 'btn btn-ghost';
         retry.textContent = 'إعادة المحاولة';
@@ -628,32 +657,119 @@
         retry.addEventListener('click', () => {
           refreshSubcategoryOptions({ forceReload: true, keepValue: subcategory.value });
         });
-        wrap.appendChild(err);
         wrap.appendChild(retry);
       }
       err.textContent = 'تعذر تحميل التصنيفات: ' + taxonomyLoadError;
     }
+    async function loadStaticLaneTaxonomy(lane) {
+      const map = {
+        jewelry: 'assets/phase2-taxonomy/jewelry-taxonomy.v1.json',
+        children: 'assets/phase2-taxonomy/children-taxonomy.v1.json',
+        gifts: 'assets/phase2-taxonomy/gifts-taxonomy.v1.json',
+        occasions: 'assets/phase2-taxonomy/occasions-taxonomy.v1.json',
+      };
+      const url = map[lane];
+      if (!url) return null;
+      const res = await fetch(url, { cache: 'no-store' });
+      if (!res.ok) throw new Error('تعذر تحميل تصنيفات ' + lane);
+      return res.json();
+    }
+    function labeledFixture() {
+      try {
+        return new URLSearchParams(location.search).get('ui-fixture') === 'labeled';
+      } catch (_) {
+        return false;
+      }
+    }
+    function requireServerTaxonomy() {
+      try {
+        return new URLSearchParams(location.search).get('taxonomy-source') === 'server';
+      } catch (_) {
+        return false;
+      }
+    }
+    function setTaxonomySource(source, meta) {
+      window.__MIRA_TAXONOMY_SOURCE__ = source;
+      window.__MIRA_TAXONOMY_SOURCE_META__ = meta || null;
+      try {
+        document.body.dataset.taxonomySource = source || '';
+      } catch (_) {
+        /* optional */
+      }
+    }
     async function loadTaxonomyDoc(opts) {
       const force = opts && opts.force;
-      if (taxonomyCache && !force) return taxonomyCache;
-      if (!window.PartnersApi || typeof PartnersApi.taxonomy !== 'function') {
-        taxonomyCache = null;
-        taxonomyLoadError = 'عميل التصنيفات (PartnersApi.taxonomy) غير متاح';
-        throw new Error(taxonomyLoadError);
+      const lane =
+        (opts && opts.lane) ||
+        window.__MIRA_TAXONOMY_LANE__ ||
+        (draftCtx && draftCtx.values && draftCtx.values.taxonomyLane) ||
+        'elegance';
+      const audience = lane === 'elegance' ? undefined : 'partner';
+      const cacheKey = lane + '|' + (audience || 'public');
+      if (taxonomyCache && taxonomyCache.__miraCacheKey === cacheKey && !force) {
+        if (taxonomyCache.__miraTaxonomySource) setTaxonomySource(taxonomyCache.__miraTaxonomySource);
+        return taxonomyCache;
+      }
+      const mustServer = requireServerTaxonomy();
+      // Labeled chrome smoke may use bundled JSON unless taxonomy-source=server.
+      if (labeledFixture() && !mustServer && lane && lane !== 'elegance') {
+        const local = await loadStaticLaneTaxonomy(lane);
+        if (local && Array.isArray(local.nodes)) {
+          taxonomyCache = Object.assign({}, local, {
+            __miraCacheKey: cacheKey,
+            __miraTaxonomySource: 'labeled-static',
+          });
+          taxonomyLoadError = null;
+          setTaxonomySource('labeled-static', { lane: lane });
+          paintTaxonomyLoadError();
+          return taxonomyCache;
+        }
       }
       try {
-        const doc = await PartnersApi.taxonomy({ lane: 'elegance' });
-        if (!doc || !Array.isArray(doc.nodes)) {
-          taxonomyCache = null;
-          taxonomyLoadError = 'استجابة تصنيفات غير صالحة';
-          throw new Error(taxonomyLoadError);
+        if (!window.PartnersApi || typeof PartnersApi.taxonomy !== 'function') {
+          throw new Error('عميل التصنيفات (PartnersApi.taxonomy) غير متاح');
         }
-        taxonomyCache = doc;
+        const doc = await PartnersApi.taxonomy({ lane: lane, audience: audience });
+        if (!doc || !Array.isArray(doc.nodes)) {
+          throw new Error('استجابة تصنيفات غير صالحة');
+        }
+        taxonomyCache = Object.assign({}, doc, {
+          __miraCacheKey: cacheKey,
+          __miraTaxonomySource: 'server',
+        });
         taxonomyLoadError = null;
+        setTaxonomySource('server', { lane: lane });
+        paintTaxonomyLoadError();
         return taxonomyCache;
       } catch (e) {
+        if (mustServer) {
+          taxonomyCache = null;
+          taxonomyLoadError = (e && (e.messageAr || e.message)) || String(e);
+          setTaxonomySource('server-failed', { message: taxonomyLoadError });
+          paintTaxonomyLoadError();
+          throw e;
+        }
+        // Offline / CORS: bundled lane taxonomy. Real-connection gate forbids this path.
+        if (lane && lane !== 'elegance') {
+          try {
+            const local = await loadStaticLaneTaxonomy(lane);
+            if (local && Array.isArray(local.nodes)) {
+              taxonomyCache = Object.assign({}, local, {
+                __miraCacheKey: cacheKey,
+                __miraTaxonomySource: 'static-fallback',
+              });
+              taxonomyLoadError = null;
+              setTaxonomySource('static-fallback', { lane: lane });
+              paintTaxonomyLoadError();
+              return taxonomyCache;
+            }
+          } catch (_) {
+            /* fall through */
+          }
+        }
         taxonomyCache = null;
         taxonomyLoadError = (e && (e.messageAr || e.message)) || String(e);
+        setTaxonomySource('server-failed', { message: taxonomyLoadError });
         throw e;
       }
     }
@@ -668,20 +784,37 @@
       try {
         doc = await loadTaxonomyDoc({ force: !!(opts && opts.forceReload) });
       } catch (_) {
-        if (gen !== taxonomyLoadGen) return;
+        if (gen !== taxonomyLoadGen) {
+          // A newer load may have cleared the error; sync banner either way.
+          paintTaxonomyLoadError();
+          return;
+        }
         paintTaxonomyLoadError();
         // Keep existing subcategory value; do not invent first/wedding_dress.
-        if (wrap) wrap.hidden = type !== 'brand';
+        if (wrap) {
+          wrap.hidden =
+            type !== 'brand' &&
+            !(window.__MIRA_TAXONOMY_LANE__ === 'occasions' || cat === 'occasions');
+        }
         return;
       }
-      if (gen !== taxonomyLoadGen) return; // stale load
+      if (gen !== taxonomyLoadGen) {
+        paintTaxonomyLoadError();
+        return; // stale load — still clear/keep banner from winning load
+      }
       paintTaxonomyLoadError();
       const list =
         window.MiraRegistryAttributeFields &&
         typeof MiraRegistryAttributeFields.subcategoriesFromTaxonomy === 'function'
           ? MiraRegistryAttributeFields.subcategoriesFromTaxonomy(doc, cat)
           : [];
-      if (wrap) wrap.hidden = type !== 'brand' || (cat !== 'clothes' && !list.length && !keepValue);
+      const occasionsTaxonomy =
+        window.__MIRA_TAXONOMY_LANE__ === 'occasions' || cat === 'occasions';
+      if (wrap) {
+        wrap.hidden =
+          (type !== 'brand' && !occasionsTaxonomy) ||
+          (type === 'brand' && cat !== 'clothes' && !list.length && !keepValue && !occasionsTaxonomy);
+      }
       subcategory.innerHTML = '';
       const empty = document.createElement('option');
       empty.value = '';
@@ -2158,6 +2291,27 @@
           });
         }
       }
+      // Occasions service: collect registry attribute fields (occasionTypeIds / offer).
+      if (
+        type !== 'brand' &&
+        attrMount &&
+        typeof attrMount.getFlatValues === 'function' &&
+        (window.__MIRA_TAXONOMY_LANE__ === 'occasions' ||
+          (category && category.value === 'occasions') ||
+          (draftCtx && draftCtx.profileId === 'service.occasions'))
+      ) {
+        if (typeof attrMount.hasBlockingErrors === 'function' && attrMount.hasBlockingErrors()) {
+          const v = attrMount.validate ? attrMount.validate() : { errors: [] };
+          (v.errors || []).forEach((fe) => {
+            fieldErrors.push({ fieldId: fe.fieldId, message: fe.message });
+          });
+          return { ok: false, fieldErrors: fieldErrors, values: values };
+        }
+        const flatOcc = attrMount.getFlatValues();
+        Object.keys(flatOcc).forEach((k) => {
+          values[k] = flatOcc[k];
+        });
+      }
       if (type !== 'brand' && templateState && templateState.templateId) {
         values.serviceProfile = {
           templateId: templateState.templateId,
@@ -2261,19 +2415,31 @@
       const clientDraftId =
         (ctx && ctx.clientDraftId) ||
         MiraEditorV2.clientDraftIdFor(kind, item && item.id, form.id);
-      const preferredProfile = (ctx && ctx.profileId) || (draftCtx && draftCtx.profileId) || null;
+      const preferredProfile =
+        (ctx && ctx.profileId) ||
+        (draftCtx && draftCtx.profileId) ||
+        window.__MIRA_LANE_PROFILE_ID__ ||
+        null;
       const snapshotValues = built.values;
       MiraEditorV2.scheduleAutosave(form, () => {
         const again = buildEditorValues();
         if (!again.ok) {
           return null;
         }
+        const values = again.values || snapshotValues || {};
+        if (window.__MIRA_TAXONOMY_LANE__ && window.__MIRA_TAXONOMY_LANE__ !== 'elegance') {
+          values.taxonomyLane = window.__MIRA_TAXONOMY_LANE__;
+        }
+        const nodeProfile =
+          typeof profileIdForAttributes === 'function' ? profileIdForAttributes() : null;
         return {
           clientDraftId: clientDraftId,
           kind: kind,
-          profileId: MiraEditorV2.profileIdFor(kind, category.value, partnerType, preferredProfile),
+          profileId:
+            nodeProfile ||
+            MiraEditorV2.profileIdFor(kind, category.value, partnerType, preferredProfile),
           targetOwnerId: resolveOwnerId(),
-          values: again.values || snapshotValues,
+          values: values,
         };
       });
     }
@@ -3903,9 +4069,9 @@
     const attrSection = document.createElement('div');
     attrSection.className = 'form-section e2b-core-attrs';
     attrSection.setAttribute('data-section-role', 'attributes');
-    attrSection.hidden = type !== 'brand';
+    attrSection.hidden = type !== 'brand' && window.__MIRA_TAXONOMY_LANE__ !== 'occasions';
     attrSection.setAttribute('data-testid', 'registry-attribute-section');
-    text(attrSection, 'الخامات وخصائص التصنيف', 'h3');
+    text(attrSection, type === 'brand' ? 'الخامات وخصائص التصنيف' : 'خصائص المناسبة', 'h3');
     text(
       attrSection,
       'الخامات متعددة الاختيار من السجل المعتمد؛ القصة والطول حسب التصنيف. القيم تُحفظ عبر attributes دون مسح عند طي القسم.',
@@ -3942,26 +4108,51 @@
       if (item && item.attributesJson && typeof item.attributesJson === 'object') return item.attributesJson;
       return {};
     }
+    function profileIdFromTaxonomyNode(subId, catId) {
+      const doc = taxonomyCache;
+      if (!doc || !Array.isArray(doc.nodes)) return null;
+      const id = subId || catId;
+      if (!id) return null;
+      const node = doc.nodes.find((n) => n && n.id === id);
+      if (node && node.profileId) return node.profileId;
+      if (subId && catId) {
+        const parent = doc.nodes.find((n) => n && n.id === catId);
+        if (parent && parent.profileId) return parent.profileId;
+      }
+      return null;
+    }
     function profileIdForAttributes() {
       const preferred =
+        (draftCtx && draftCtx.profileId) ||
+        window.__MIRA_LANE_PROFILE_ID__ ||
         (item && item.draftTaxonomySet ? item.draftProfileId : null) ||
         (item && item.profileId) ||
         (seed && seed.profileId) ||
         null;
+      const sub = subcategory && subcategory.value;
+      const fromNode = profileIdFromTaxonomyNode(sub, category && category.value);
+      if (fromNode) return fromNode;
       if (window.MiraEditorV2 && typeof MiraEditorV2.profileIdFor === 'function') {
         // Prefer taxonomy subcategory mapping for abaya etc.
-        const sub = subcategory && subcategory.value;
         if (sub === 'clothes.abaya') return 'product.abaya';
         if (sub && String(sub).indexOf('bags') === 0) return 'product.bags';
         if (sub && String(sub).indexOf('shoes') === 0) return 'product.shoes';
+        if (sub && String(sub).indexOf('jewelry') === 0) return 'product.jewelry';
+        if (sub && String(sub).indexOf('children') === 0) return 'product.kids';
+        if (sub && String(sub).indexOf('gifts') === 0) return 'product.gifts';
+        if (sub && String(sub).indexOf('occasions') === 0) {
+          return kind === 'service' || (window.__MIRA_TAXONOMY_LANE__ === 'occasions' && preferred === 'service.occasions')
+            ? 'service.occasions'
+            : 'product.occasions_favors';
+        }
         return MiraEditorV2.profileIdFor(
-          'product',
+          kind === 'service' ? 'service' : 'product',
           category.value,
           (window.sessionPartner && window.sessionPartner.type) || 'brand',
           preferred,
         );
       }
-      return preferred || 'product.clothes';
+      return preferred || (kind === 'service' ? 'service.salon.generic' : 'product.clothes');
     }
     function setAttrSaveKind(kind, msg) {
       attrSaveState.dataset.kind = kind || '';
@@ -3969,7 +4160,12 @@
     }
     let attrRemountGen = 0;
     async function remountAttributeFields(opts) {
-      if (type !== 'brand') {
+      const occasionsService =
+        type !== 'brand' &&
+        (window.__MIRA_TAXONOMY_LANE__ === 'occasions' ||
+          (draftCtx && draftCtx.profileId === 'service.occasions') ||
+          (category && category.value === 'occasions'));
+      if (type !== 'brand' && !occasionsService) {
         attrSection.hidden = true;
         return;
       }

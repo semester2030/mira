@@ -1,6 +1,8 @@
 import '../../../core/config/mira_api_config.dart';
 import 'catalog_provenance.dart';
+import 'discover_availability_context.dart';
 import 'discover_catalog_gateway.dart';
+import 'discover_catalog_query.dart';
 import 'repositories/marketplace_repository_impl.dart';
 import '../presentation/screens/catalog_record_page.dart';
 
@@ -17,6 +19,8 @@ abstract final class CatalogRecordScope {
     List<String>? matchedVariantIds,
     String? bookingDateKey,
     String? bookingBranchId,
+    DiscoverAvailabilityContext? availabilityContext,
+    DiscoverLane? discoverLane,
   }) {
     final resolvedTransport = transport ?? (MiraApiConfig.useBackend ? CatalogTransport.server : CatalogTransport.localCatalog);
     final useServer = resolvedTransport == CatalogTransport.server;
@@ -31,6 +35,8 @@ abstract final class CatalogRecordScope {
       matchedVariantIds: matchedVariantIds,
       bookingDateKey: bookingDateKey,
       bookingBranchId: bookingBranchId,
+      availabilityContext: availabilityContext,
+      discoverLane: discoverLane,
     );
   }
 }

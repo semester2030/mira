@@ -10,6 +10,8 @@ import '../../../../shared/widgets/premium/premium_card.dart';
 import '../../data/catalog_price.dart';
 import '../../data/commerce_api_client.dart';
 import '../../domain/commerce_models.dart';
+import '../../data/discover_availability_context.dart';
+import '../../data/discover_catalog_query.dart';
 import '../../domain/entities/catalog_service.dart';
 import '../widgets/commerce_common.dart';
 
@@ -22,6 +24,8 @@ class BookingRequestScreen extends StatefulWidget {
     this.now,
     this.initialDateKey,
     this.initialBranchId,
+    this.availabilityContext,
+    this.discoverLane,
   });
 
   final CatalogService service;
@@ -35,6 +39,8 @@ class BookingRequestScreen extends StatefulWidget {
 
   /// Discover filter context: branch id when the user filtered by branch.
   final String? initialBranchId;
+  final DiscoverAvailabilityContext? availabilityContext;
+  final DiscoverLane? discoverLane;
 
   @override
   State<BookingRequestScreen> createState() => _BookingRequestScreenState();
@@ -195,13 +201,19 @@ class _BookingRequestScreenState extends State<BookingRequestScreen> {
         children: [
           Text(service.nameAr, style: AppTypography.headlineSmall, textAlign: TextAlign.center),
           Text(service.partnerNameAr, style: AppTypography.titleMedium, textAlign: TextAlign.center),
-          if (widget.initialDateKey != null || widget.initialBranchId != null) ...[
+          if (widget.initialDateKey != null ||
+              widget.initialBranchId != null ||
+              widget.availabilityContext?.hasOccasionOfferContext == true) ...[
             const SizedBox(height: 8),
             Text(
               [
                 if (widget.initialDateKey != null) 'التاريخ المختار: ${widget.initialDateKey}',
                 if (widget.initialBranchId != null) 'الفرع: ${widget.initialBranchId}',
-              ].join(' · '),
+                if (widget.availabilityContext?.occasionServiceOffers.isNotEmpty == true)
+                  'عرض الخدمة: ${widget.availabilityContext!.occasionServiceOffers.join('، ')}',
+                if (widget.availabilityContext?.occasionTypeIds.isNotEmpty == true)
+                  'المناسبة: ${widget.availabilityContext!.occasionTypeIds.join('، ')}',
+              ].where((s) => s.isNotEmpty).join(' · '),
               style: AppTypography.bodyMedium,
               textAlign: TextAlign.center,
             ),

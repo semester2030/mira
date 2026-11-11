@@ -26,6 +26,12 @@ abstract final class LaneOrbAssets {
     'occasions.favors': '$_laneDir/occasions.favors.png',
     'occasions.decor': '$_laneDir/occasions.decor.png',
     'occasions.styling': '$_laneDir/occasions.styling.png',
+    'occasions.types': '$_laneDir/occasions.types.png',
+    'occasions.type.graduation': '$_laneDir/occasions.type.graduation.png',
+    'occasions.type.baby_shower': '$_laneDir/occasions.type.baby_shower.png',
+    'occasions.type.wedding': '$_laneDir/occasions.type.wedding.png',
+    'occasions.type.birthday': '$_laneDir/occasions.type.birthday.png',
+    'occasions.type.private': '$_laneDir/occasions.type.private.png',
     'gifts.boxes': '$_laneDir/gifts.boxes.png',
   };
 

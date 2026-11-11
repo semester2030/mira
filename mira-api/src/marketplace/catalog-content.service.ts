@@ -620,6 +620,16 @@ export class CatalogContentService {
                   draftServiceProfileSet: false,
                 }
               : {}),
+            ...(row.draftAttributesSet
+              ? {
+                  attributesJson:
+                    row.draftAttributesJson == null
+                      ? Prisma.DbNull
+                      : (row.draftAttributesJson as Prisma.InputJsonValue),
+                  draftAttributesJson: Prisma.DbNull,
+                  draftAttributesSet: false,
+                }
+              : {}),
           },
         });
       if (changed.count !== 1) throw new ConflictException('المسودة تغيرت بعد النسخة التي عُوينت');

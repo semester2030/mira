@@ -184,7 +184,7 @@ class MarketplaceRepositoryImpl implements MarketplaceRepository, DiscoverCatalo
               query.lane!.assetFamily,
               query.categoryId,
             );
-      final effective = query.withoutInapplicableFilters();
+      final effective = query.withoutInapplicableFilters().scopedToTaxonomyBranch();
       final categoryParam = effective.lane == null
           ? (effective.categoryId == null || effective.categoryId == 'all' ? null : effective.categoryId)
           : (selected == null || selected.matchesAll || selected.venueType != null ? null : selected.storedKey);
@@ -204,6 +204,12 @@ class MarketplaceRepositoryImpl implements MarketplaceRepository, DiscoverCatalo
         sizes: effective.sizes,
         volumes: effective.volumes,
         shoeUsage: effective.shoeUsage,
+        metals: effective.metals,
+        purityKarats: effective.purityKarats,
+        occasionTypeIds: effective.occasionTypeIds,
+        occasionServiceOffers: effective.occasionServiceOffers,
+        giftEligible: effective.giftEligible,
+        ageMonths: effective.ageMonths,
         placeModes: effective.placeModes,
         branchIds: effective.branchIds,
         inStock: effective.inStock,

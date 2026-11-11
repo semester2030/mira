@@ -99,6 +99,12 @@
     'occasions.favors': 'assets/e2b-ref/orbs/occasions_favors.png',
     'occasions.decor': 'assets/e2b-ref/orbs/occasions_decor.png',
     'occasions.styling': 'assets/e2b-ref/orbs/occasions_styling.png',
+    'occasions.types': 'assets/e2b-ref/orbs/occasions_types.png',
+    'occasions.type.graduation': 'assets/e2b-ref/orbs/occasions_type_graduation.png',
+    'occasions.type.baby_shower': 'assets/e2b-ref/orbs/occasions_type_baby_shower.png',
+    'occasions.type.wedding': 'assets/e2b-ref/orbs/occasions_type_wedding.png',
+    'occasions.type.birthday': 'assets/e2b-ref/orbs/occasions_type_birthday.png',
+    'occasions.type.private': 'assets/e2b-ref/orbs/occasions_type_private.png',
   };
   const SUB_ORB_FALLBACK = 'assets/e2b-ref/orbs/sub-0.png';
 
@@ -600,20 +606,89 @@
     return true;
   }
 
+  async function loadStaticLaneTaxonomy(lane) {
+    const map = {
+      jewelry: 'assets/phase2-taxonomy/jewelry-taxonomy.v1.json',
+      children: 'assets/phase2-taxonomy/children-taxonomy.v1.json',
+      gifts: 'assets/phase2-taxonomy/gifts-taxonomy.v1.json',
+      occasions: 'assets/phase2-taxonomy/occasions-taxonomy.v1.json',
+    };
+    const url = map[lane];
+    if (!url) return null;
+    const res = await fetch(url, { cache: 'no-store' });
+    if (!res.ok) throw new Error('تعذر تحميل تصنيفات ' + lane);
+    return res.json();
+  }
+
+  function setTaxonomySource(source, meta) {
+    window.__MIRA_TAXONOMY_SOURCE__ = source;
+    window.__MIRA_TAXONOMY_SOURCE_META__ = meta || null;
+    try {
+      document.body.dataset.taxonomySource = source || '';
+    } catch (_) {
+      /* optional */
+    }
+  }
+
   async function loadTaxonomy(force) {
     // Isolate cache by lane + audience so elegance↔jewelry never share one projection.
     const lane = window.__MIRA_TAXONOMY_LANE__ || 'elegance';
     const audience = lane === 'elegance' ? '' : 'partner';
     const cacheKey = lane + '|' + (audience || 'public');
-    if (taxonomyCache && taxonomyCache.__miraCacheKey === cacheKey && !force) return taxonomyCache;
-    if (!(window.PartnersApi && typeof PartnersApi.taxonomy === 'function')) {
-      taxonomyError = 'عميل التصنيفات غير متاح';
+    if (taxonomyCache && taxonomyCache.__miraCacheKey === cacheKey && !force) {
+      if (taxonomyCache.__miraTaxonomySource) setTaxonomySource(taxonomyCache.__miraTaxonomySource);
+      return taxonomyCache;
+    }
+    let doc = null;
+    let source = null;
+    const requireServer =
+      typeof location !== 'undefined' &&
+      new URLSearchParams(location.search).get('taxonomy-source') === 'server';
+    const labeled =
+      typeof location !== 'undefined' &&
+      new URLSearchParams(location.search).get('ui-fixture') === 'labeled';
+    // Labeled chrome smoke may use static JSON only when not forcing server.
+    if (labeled && !requireServer && lane !== 'elegance') {
+      doc = await loadStaticLaneTaxonomy(lane);
+      source = 'labeled-static';
+    } else {
+      try {
+        if (!(window.PartnersApi && typeof PartnersApi.taxonomy === 'function')) {
+          throw new Error('عميل التصنيفات غير متاح');
+        }
+        // Lane from central switcher / test harness. New branches appear without portal code edits.
+        doc = await PartnersApi.taxonomy({ lane: lane, audience: audience || undefined });
+        source = 'server';
+      } catch (err) {
+        if (requireServer) {
+          taxonomyError = (err && (err.messageAr || err.message)) || 'تعذر تحميل التصنيفات من الخادم';
+          setTaxonomySource('server-failed', { message: taxonomyError });
+          throw err instanceof Error ? err : new Error(taxonomyError);
+        }
+        // Offline API: paint from bundled phase2 taxonomy — never show another lane.
+        // Real-connection acceptance MUST use taxonomy-source=server (no silent fallback).
+        if (lane !== 'elegance') {
+          doc = await loadStaticLaneTaxonomy(lane);
+          source = 'static-fallback';
+        }
+        if (!doc) {
+          taxonomyError = (err && (err.messageAr || err.message)) || 'تعذر تحميل التصنيفات';
+          setTaxonomySource('server-failed', { message: taxonomyError });
+          throw err instanceof Error ? err : new Error(taxonomyError);
+        }
+      }
+    }
+    if (!doc) {
+      taxonomyError = 'تعذر تحميل التصنيفات';
+      setTaxonomySource('empty', null);
       throw new Error(taxonomyError);
     }
-    // Lane from central switcher / test harness. New branches appear without portal code edits.
-    const doc = await PartnersApi.taxonomy({ lane: lane, audience: audience || undefined });
-    taxonomyCache = Object.assign({}, doc || {}, { __miraCacheKey: cacheKey });
+    taxonomyCache = Object.assign({}, doc || {}, {
+      __miraCacheKey: cacheKey,
+      __miraTaxonomySource: source,
+    });
     taxonomyError = null;
+    setTaxonomySource(source, { lane: lane, cacheKey: cacheKey });
     return taxonomyCache;
   }
 
@@ -641,10 +716,17 @@
     opts = opts || {};
     const host = document.getElementById('e2bMainCircles');
     if (!host) return;
+    const laneAtStart = window.__MIRA_TAXONOMY_LANE__ || 'elegance';
     host.replaceChildren(el('p', { className: 'lead', 'data-testid': 'e2b-mains-loading', text: 'تحميل التصنيفات…' }));
     try {
       const doc = await loadTaxonomy(!!opts.force);
-      const mains = mainCategoriesFromTaxonomy(doc);
+      // Stale elegance boot must not overwrite an independent lane that locked meanwhile.
+      if ((window.__MIRA_TAXONOMY_LANE__ || 'elegance') !== laneAtStart) return;
+      if ((doc && doc.lane) && doc.lane !== laneAtStart && laneAtStart !== 'elegance') return;
+      const mains = mainCategoriesFromTaxonomy(doc).filter((cat) => {
+        if (laneAtStart === 'elegance') return true;
+        return cat.id === laneAtStart || String(cat.id).startsWith(laneAtStart + '.');
+      });
       host.replaceChildren();
       if (!mains.length) {
         host.appendChild(

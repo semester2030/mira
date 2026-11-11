@@ -2336,7 +2336,7 @@
     },
     "eventType": {
       "id": "eventType",
-      "labelAr": "نوع المناسبة",
+      "labelAr": "نوع المناسبة (قديم)",
       "type": "enum",
       "widget": "select",
       "unit": null,
@@ -2362,7 +2362,7 @@
       "publicWhen": "published and applicable",
       "searchable": false,
       "unknownHandling": "omit from facets; never infer false, zero or stock",
-      "evidence": "RC2 design decision",
+      "evidence": "RC2 design decision; dual-read only — prefer occasionTypeIds",
       "valueLabels": {
         "wedding": "زفاف",
         "graduation": "تخرج",
@@ -5291,6 +5291,76 @@
       "unknownHandling": "omit",
       "evidence": "Phase1 description contract",
       "valueLabels": {}
+    },
+    "occasionTypeIds": {
+      "id": "occasionTypeIds",
+      "labelAr": "أنواع المناسبة",
+      "type": "array",
+      "widget": "chips",
+      "unit": null,
+      "values": [
+        "wedding",
+        "graduation",
+        "birthday",
+        "baby_shower",
+        "private"
+      ],
+      "filter": "occasionType",
+      "currentStatus": "ATTRIBUTES_JSON",
+      "draftRequired": false,
+      "publishRequiredWhen": "optional",
+      "source": "partner",
+      "editable": true,
+      "nullMeaning": "unspecified",
+      "default": null,
+      "min": null,
+      "max": null,
+      "dependsOn": null,
+      "storage": "attributes.occasionTypeIds",
+      "publicWhen": "published and applicable",
+      "searchable": false,
+      "unknownHandling": "omit from facets; never infer false, zero or stock",
+      "evidence": "independent lane entries plan",
+      "valueLabels": {
+        "wedding": "زفاف",
+        "graduation": "تخرج",
+        "birthday": "ميلاد",
+        "baby_shower": "احتفال بالمولود",
+        "private": "مناسبة خاصة"
+      }
+    },
+    "occasionServiceOffer": {
+      "id": "occasionServiceOffer",
+      "labelAr": "الخدمة المقدّمة",
+      "type": "enum",
+      "widget": "select",
+      "unit": null,
+      "values": [
+        "full_planning",
+        "styling_decor",
+        "hospitality"
+      ],
+      "filter": "occasionServiceOffer",
+      "currentStatus": "ATTRIBUTES_JSON",
+      "draftRequired": false,
+      "publishRequiredWhen": "optional",
+      "source": "partner",
+      "editable": true,
+      "nullMeaning": "unspecified",
+      "default": null,
+      "min": null,
+      "max": null,
+      "dependsOn": null,
+      "storage": "attributes.occasionServiceOffer",
+      "publicWhen": "published and applicable",
+      "searchable": false,
+      "unknownHandling": "omit from facets; never infer false, zero or stock",
+      "evidence": "independent lane entries plan",
+      "valueLabels": {
+        "full_planning": "تنظيم كامل",
+        "styling_decor": "تنسيق وديكور",
+        "hospitality": "ضيافة"
+      }
     }
   },
   "profiles": [
@@ -7129,6 +7199,8 @@
         "packageValidityDays",
         "requiresAssessment",
         "assessmentNote",
+        "occasionTypeIds",
+        "occasionServiceOffer",
         "eventType",
         "guestsMin",
         "guestsMax",
@@ -7139,14 +7211,35 @@
       "draftRequired": [],
       "publishRules": "specs/03-JOURNEYS.md#publication",
       "suggestedGroups": [
-        "eventType",
+        "occasionTypeIds",
+        "occasionServiceOffer",
         "guestsMin",
         "guestsMax",
         "setupMinutes",
         "eventRequirements"
       ],
       "schemaVersion": 2,
-      "fieldOverrides": {}
+      "fieldOverrides": {
+        "branchId": {
+          "dependsOn": {
+            "field": "placeMode",
+            "includes": [
+              "branch",
+              "either"
+            ]
+          },
+          "publishRequiredWhen": "optional"
+        },
+        "coverageZones": {
+          "dependsOn": {
+            "field": "placeMode",
+            "includes": [
+              "home",
+              "either"
+            ]
+          }
+        }
+      }
     },
     {
       "id": "product.occasions_favors",
@@ -7186,6 +7279,7 @@
         "offerStart",
         "offerEnd",
         "offerPriceHalalas",
+        "occasionTypeIds",
         "eventType",
         "giftEligible",
         "optionsJson",
@@ -7194,7 +7288,7 @@
       "draftRequired": [],
       "publishRules": "specs/03-JOURNEYS.md#publication",
       "suggestedGroups": [
-        "eventType",
+        "occasionTypeIds",
         "giftEligible"
       ],
       "schemaVersion": 2

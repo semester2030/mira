@@ -1,0 +1,71 @@
+{
+  "ok": true,
+  "expectFail": false,
+  "checks": [
+    {
+      "name": "api-jewelry-200",
+      "ok": true,
+      "detail": "{\"status\":200,\"lane\":\"jewelry\"}"
+    },
+    {
+      "name": "api-jewelry-branches",
+      "ok": true,
+      "detail": "[\"jewelry_lane.all\",\"jewelry.all\",\"jewelry\",\"jewelry.rings\",\"jewelry.necklaces\",\"jewelry.bracelets\",\"jewelry.earrings\"]"
+    },
+    {
+      "name": "jewelry-lane",
+      "ok": true,
+      "detail": "jewelry"
+    },
+    {
+      "name": "jewelry-orbs",
+      "ok": true,
+      "detail": "[\"jewelry\"]"
+    },
+    {
+      "name": "jewelry-subbranches",
+      "ok": true,
+      "detail": "[\"jewelry.rings\",\"jewelry.necklaces\",\"jewelry.bracelets\",\"jewelry.earrings\"]"
+    },
+    {
+      "name": "no-visible-taxonomy-error",
+      "ok": true,
+      "detail": "[]"
+    },
+    {
+      "name": "taxonomy-source-server",
+      "ok": true,
+      "detail": "server"
+    }
+  ],
+  "apiBase": "http://127.0.0.1:8765/api/v1",
+  "portalBase": "http://127.0.0.1:8765",
+  "state": {
+    "source": "server",
+    "lane": "jewelry",
+    "orbs": [
+      "jewelry"
+    ],
+    "subIds": [
+      "jewelry.rings",
+      "jewelry.necklaces",
+      "jewelry.bracelets",
+      "jewelry.earrings"
+    ],
+    "errs": []
+  },
+  "apiProbe": {
+    "status": 200,
+    "lane": "jewelry",
+    "ids": [
+      "jewelry_lane.all",
+      "jewelry.all",
+      "jewelry",
+      "jewelry.rings",
+      "jewelry.necklaces",
+      "jewelry.bracelets",
+      "jewelry.earrings"
+    ]
+  },
+  "verdict": "PASS_REAL_JEWELRY_CONNECTION"
+}

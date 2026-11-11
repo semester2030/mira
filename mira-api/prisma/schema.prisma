@@ -420,6 +420,12 @@ model Service {
   draftServiceProfileJson Json? @map("draft_service_profile_json")
   /// True when a published-row profile draft is pending (including an explicit clear).
   draftServiceProfileSet Boolean @default(false) @map("draft_service_profile_set")
+  /// Service-level attribute bag (occasionTypeIds, occasionServiceOffer, …). Object only — never array.
+  attributesJson Json? @map("attributes_json")
+  /// Pending attributes for published rows — applied on content approve only.
+  draftAttributesJson Json? @map("draft_attributes_json")
+  /// True when a published-row attributes draft is pending (including an explicit clear).
+  draftAttributesSet Boolean @default(false) @map("draft_attributes_set")
   /// branch | home | remote — presentation mode for distance/coverage (optional until publish).
   placeMode       String?  @map("place_mode")
   /// FK to PartnerBranch for in-person branch services.

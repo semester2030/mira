@@ -1,0 +1,95 @@
+{
+  "ok": true,
+  "checks": [
+    {
+      "name": "lane-cta-jewelry",
+      "ok": true,
+      "detail": null
+    },
+    {
+      "name": "lane-cta-children",
+      "ok": true,
+      "detail": null
+    },
+    {
+      "name": "lane-cta-gifts",
+      "ok": true,
+      "detail": null
+    },
+    {
+      "name": "jewelry-lane-lock",
+      "ok": true,
+      "detail": "jewelry"
+    },
+    {
+      "name": "jewelry-profile-lock",
+      "ok": true,
+      "detail": "product.jewelry"
+    },
+    {
+      "name": "jewelry-no-sim-block",
+      "ok": true,
+      "detail": "[]"
+    },
+    {
+      "name": "jewelry-orbs-lane",
+      "ok": true,
+      "detail": "[\"jewelry\"]"
+    },
+    {
+      "name": "children-lane-lock",
+      "ok": true,
+      "detail": null
+    },
+    {
+      "name": "children-profile-lock",
+      "ok": true,
+      "detail": null
+    },
+    {
+      "name": "gifts-lane-lock",
+      "ok": true,
+      "detail": null
+    },
+    {
+      "name": "gifts-profile-lock",
+      "ok": true,
+      "detail": null
+    },
+    {
+      "name": "lane-cta-occasions",
+      "ok": true,
+      "detail": null
+    },
+    {
+      "name": "occasions-lane-lock",
+      "ok": true,
+      "detail": null
+    },
+    {
+      "name": "occasions-profile-lock",
+      "ok": true,
+      "detail": null
+    },
+    {
+      "name": "occasions-orbs-not-beauty",
+      "ok": true,
+      "detail": "[\"occasions\"]"
+    },
+    {
+      "name": "occasions-uses-catalog-section",
+      "ok": true,
+      "detail": "{\"catShown\":true,\"svcShown\":false,\"view\":\"services\"}"
+    },
+    {
+      "name": "lane-cta-favors-sell",
+      "ok": true,
+      "detail": null
+    },
+    {
+      "name": "favors-profile-lock",
+      "ok": true,
+      "detail": null
+    }
+  ]
+}

@@ -271,12 +271,18 @@ export function parseCatalogFilterQuery(params: Record<string, string | undefine
     'metal',
     'purityKarat',
     'purity',
+    'occasionType',
+    'occasionTypeIds',
+    'occasionServiceOffer',
+    'eventType',
   ] as const) {
     const values = splitCsv(params[key] ?? params[`attributes.${key}`]);
     if (values.length) {
-      // Accept purity as alias for purityKarat.
-      const storeKey = key === 'purity' ? 'purityKarat' : key;
-      attributeSelections[storeKey] = values;
+      // Accept purity as alias for purityKarat; occasionType/eventType → occasionTypeIds.
+      let storeKey: string = key;
+      if (key === 'purity') storeKey = 'purityKarat';
+      else if (key === 'occasionType' || key === 'eventType') storeKey = 'occasionTypeIds';
+      attributeSelections[storeKey] = [...new Set([...(attributeSelections[storeKey] ?? []), ...values])];
     }
   }
 
@@ -332,21 +338,35 @@ export function parseCatalogFilterQuery(params: Record<string, string | undefine
   };
 }
 
+/**
+ * Effective attribute values for matching/facets.
+ * Dual-read: legacy scalar `eventType` participates as occasionTypeIds when the new array is absent.
+ */
+export function effectiveAttributeValues(
+  attributesJson: Record<string, unknown> | null | undefined,
+  key: string,
+): string[] {
+  const attrs = attributesJson && typeof attributesJson === 'object' ? attributesJson : {};
+  const raw = (attrs as Record<string, unknown>)[key];
+  if (Array.isArray(raw)) return raw.map((x) => String(x)).filter(Boolean);
+  if (raw != null && raw !== '') return [String(raw)];
+  if (key === 'occasionTypeIds') {
+    const legacy = (attrs as Record<string, unknown>).eventType;
+    if (Array.isArray(legacy)) return legacy.map((x) => String(x)).filter(Boolean);
+    if (legacy != null && legacy !== '') return [String(legacy)];
+  }
+  return [];
+}
+
 /** Attribute value match: scalar string or array contains any selected id (OR within field). */
 export function attributesMatchSelections(
   attributesJson: Record<string, unknown> | null | undefined,
   selections: Record<string, string[]> | undefined,
 ): boolean {
   if (!selections || Object.keys(selections).length === 0) return true;
-  const attrs = attributesJson && typeof attributesJson === 'object' ? attributesJson : {};
   for (const [key, wanted] of Object.entries(selections)) {
     if (!wanted.length) continue;
-    const raw = (attrs as Record<string, unknown>)[key];
-    const have = Array.isArray(raw)
-      ? raw.map((x) => String(x))
-      : raw == null || raw === ''
-        ? []
-        : [String(raw)];
+    const have = effectiveAttributeValues(attributesJson, key);
     if (!wanted.some((w) => have.includes(w))) return false;
   }
   return true;
@@ -486,7 +506,7 @@ export function matchCatalogItem(item: CatalogFilterItem, filter: CatalogFilterI
     }
   }
   if (filter.attributeSelections && Object.keys(filter.attributeSelections).length > 0) {
-    if (item.kind !== 'product') return null;
+    // Products and services (occasions) both carry attributesJson for facet filters.
     if (!attributesMatchSelections(item.attributesJson, filter.attributeSelections)) return null;
   }
   if (filter.giftEligible === true) {
@@ -684,6 +704,8 @@ export type CatalogFacets = {
   'variant.size': FacetBucket[];
   'variant.volume': FacetBucket[];
   shoeUsage: FacetBucket[];
+  occasionType: FacetBucket[];
+  occasionServiceOffer: FacetBucket[];
   placeMode: FacetBucket[];
   branch: FacetBucket[];
   staleSelections: Array<{ field: string; value: string }>;
@@ -757,7 +779,9 @@ export function buildCatalogFacets(
       | 'variant.size'
       | 'variant.volume'
       | 'variant'
-      | 'shoeUsage',
+      | 'shoeUsage'
+      | 'occasionType'
+      | 'occasionServiceOffer',
   ): CatalogFilterInput => {
     if (
       omit === 'variant.color' ||
@@ -776,9 +800,11 @@ export function buildCatalogFacets(
       next.variantSelections = Object.keys(selections).length > 0 ? selections : undefined;
       return next;
     }
-    if (omit === 'shoeUsage') {
+    if (omit === 'shoeUsage' || omit === 'occasionType' || omit === 'occasionServiceOffer') {
       const attrs: Record<string, string[]> = { ...(filter.attributeSelections ?? {}) };
-      delete attrs.shoeUsage;
+      if (omit === 'shoeUsage') delete attrs.shoeUsage;
+      if (omit === 'occasionType') delete attrs.occasionTypeIds;
+      if (omit === 'occasionServiceOffer') delete attrs.occasionServiceOffer;
       const next: CatalogFilterInput = { ...filter };
       next.attributeSelections = Object.keys(attrs).length ? attrs : undefined;
       return next;
@@ -795,6 +821,8 @@ export function buildCatalogFacets(
   const sizes = new Map<string, number>();
   const volumes = new Map<string, number>();
   const shoeUsage = new Map<string, number>();
+  const occasionType = new Map<string, number>();
+  const occasionServiceOffer = new Map<string, number>();
   const placeMode = new Map<string, number>();
   const branch = new Map<string, number>();
 
@@ -870,6 +898,17 @@ export function buildCatalogFacets(
     for (const v of vals) bump(shoeUsage, String(v));
   }
 
+  for (const hit of filterCatalogItems(items, without('occasionType'))) {
+    for (const v of effectiveAttributeValues(hit.item.attributesJson, 'occasionTypeIds')) {
+      bump(occasionType, v);
+    }
+  }
+  for (const hit of filterCatalogItems(items, without('occasionServiceOffer'))) {
+    for (const v of effectiveAttributeValues(hit.item.attributesJson, 'occasionServiceOffer')) {
+      bump(occasionServiceOffer, v);
+    }
+  }
+
   for (const hit of filterCatalogItems(items, without('placeModes'))) {
     if (hit.item.placeMode) bump(placeMode, hit.item.placeMode);
   }
@@ -885,12 +924,26 @@ export function buildCatalogFacets(
     ['daily', { labelAr: 'يومي' }],
     ['occasions', { labelAr: 'مناسبات' }],
   ]);
+  const occasionTypeLabels = new Map<string, { labelAr?: string }>([
+    ['wedding', { labelAr: 'زفاف' }],
+    ['graduation', { labelAr: 'تخرج' }],
+    ['birthday', { labelAr: 'ميلاد' }],
+    ['baby_shower', { labelAr: 'احتفال بالمولود' }],
+    ['private', { labelAr: 'مناسبة خاصة' }],
+  ]);
+  const occasionServiceOfferLabels = new Map<string, { labelAr?: string }>([
+    ['full_planning', { labelAr: 'تنظيم كامل' }],
+    ['styling_decor', { labelAr: 'تنسيق وديكور' }],
+    ['hospitality', { labelAr: 'ضيافة' }],
+  ]);
 
   const staleSelections: Array<{ field: string; value: string }> = [];
   const colorFacet = new Set(toBuckets(colors).map((b) => b.id));
   const sizeFacet = new Set(toBuckets(sizes).map((b) => b.id));
   const volumeFacet = new Set(toBuckets(volumes).map((b) => b.id));
   const shoeUsageFacet = new Set(toBuckets(shoeUsage).map((b) => b.id));
+  const occasionTypeFacet = new Set(toBuckets(occasionType).map((b) => b.id));
+  const occasionServiceOfferFacet = new Set(toBuckets(occasionServiceOffer).map((b) => b.id));
   for (const v of filter.variantSelections?.color ?? []) {
     if (!colorFacet.has(v)) staleSelections.push({ field: 'variant.color', value: v });
   }
@@ -903,6 +956,12 @@ export function buildCatalogFacets(
   for (const v of filter.attributeSelections?.shoeUsage ?? []) {
     if (!shoeUsageFacet.has(v)) staleSelections.push({ field: 'shoeUsage', value: v });
   }
+  for (const v of filter.attributeSelections?.occasionTypeIds ?? []) {
+    if (!occasionTypeFacet.has(v)) staleSelections.push({ field: 'occasionType', value: v });
+  }
+  for (const v of filter.attributeSelections?.occasionServiceOffer ?? []) {
+    if (!occasionServiceOfferFacet.has(v)) staleSelections.push({ field: 'occasionServiceOffer', value: v });
+  }
 
   return {
     concern: toBuckets(concern),
@@ -912,6 +971,8 @@ export function buildCatalogFacets(
     'variant.size': toBuckets(sizes, sizeMeta),
     'variant.volume': toBuckets(volumes, volumeMeta),
     shoeUsage: toBuckets(shoeUsage, shoeUsageLabels),
+    occasionType: toBuckets(occasionType, occasionTypeLabels),
+    occasionServiceOffer: toBuckets(occasionServiceOffer, occasionServiceOfferLabels),
     placeMode: toBuckets(placeMode),
     branch: toBuckets(branch),
     staleSelections,

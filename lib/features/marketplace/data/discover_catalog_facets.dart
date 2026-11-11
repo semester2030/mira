@@ -47,6 +47,10 @@ class DiscoverCatalogFacets {
     this.sizes = const [],
     this.volumes = const [],
     this.shoeUsage = const [],
+    this.metal = const [],
+    this.purity = const [],
+    this.occasionType = const [],
+    this.occasionServiceOffer = const [],
     this.placeMode = const [],
     this.branch = const [],
     this.staleSelections = const [],
@@ -59,6 +63,10 @@ class DiscoverCatalogFacets {
   final List<DiscoverFacetBucket> sizes;
   final List<DiscoverFacetBucket> volumes;
   final List<DiscoverFacetBucket> shoeUsage;
+  final List<DiscoverFacetBucket> metal;
+  final List<DiscoverFacetBucket> purity;
+  final List<DiscoverFacetBucket> occasionType;
+  final List<DiscoverFacetBucket> occasionServiceOffer;
   final List<DiscoverFacetBucket> placeMode;
   final List<DiscoverFacetBucket> branch;
   final List<DiscoverStaleSelection> staleSelections;
@@ -92,6 +100,10 @@ class DiscoverCatalogFacets {
       sizes: list('variant.size'),
       volumes: list('variant.volume'),
       shoeUsage: list('shoeUsage'),
+      metal: list('metal'),
+      purity: [...list('purityKarat'), ...list('purity')],
+      occasionType: list('occasionType'),
+      occasionServiceOffer: list('occasionServiceOffer'),
       placeMode: list('placeMode'),
       branch: list('branch'),
       staleSelections: stale,
