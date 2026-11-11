@@ -24,6 +24,12 @@ export type ActivityDef = {
   kind: 'product' | 'service';
   selectable: true;
   imageKey?: string | null;
+  icon?: {
+    key: string;
+    smallUrl: string;
+    largeUrl: string;
+    version: string;
+  } | null;
   profileId?: string | null;
 };
 

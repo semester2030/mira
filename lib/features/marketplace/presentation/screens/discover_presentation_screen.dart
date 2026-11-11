@@ -1637,6 +1637,7 @@ class DiscoverPresentationScreenState extends State<DiscoverPresentationScreen>
                       labels: _railDefs().map((item) => item.label).toList(),
                       ids: _railDefs().map((item) => item.id).toList(),
                       imageKeys: _railDefs().map((item) => item.imageKey).toList(),
+                      iconUrls: _railDefs().map((item) => item.iconSmallUrl).toList(),
                       assetFamily: widget.lane?.assetFamily ?? _activeFamily(),
                       selected: _category,
                       onSelected: _onCategory,

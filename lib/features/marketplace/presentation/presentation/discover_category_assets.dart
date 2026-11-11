@@ -113,12 +113,15 @@ abstract final class DiscoverCategoryAssets {
   static String? thumb(String family, String label) => thumbs['$family:$label'];
 
   /// Resolve by taxonomy imageKey / id first, then Arabic label.
+  /// Prefer server [iconUrl] (HTTPS WebP) so portal and app show the same bytes.
   static String? thumbFor({
     required String family,
     String? id,
     String? label,
     String? imageKey,
+    String? iconUrl,
   }) {
+    if (iconUrl != null && iconUrl.isNotEmpty) return iconUrl;
     final fromKey = LaneOrbAssets.thumbForImageKey(imageKey) ??
         LaneOrbAssets.thumbForImageKey(id) ??
         (id != null && id != 'all' && id != '__back__'

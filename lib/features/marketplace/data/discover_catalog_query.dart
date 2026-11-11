@@ -115,6 +115,9 @@ class DiscoverCategoryDef {
     this.writeEnabled = true,
     this.browseOnly = false,
     this.imageKey,
+    this.iconSmallUrl,
+    this.iconLargeUrl,
+    this.iconVersion,
     this.parentId,
   });
 
@@ -128,6 +131,9 @@ class DiscoverCategoryDef {
   final bool writeEnabled;
   final bool browseOnly;
   final String? imageKey;
+  final String? iconSmallUrl;
+  final String? iconLargeUrl;
+  final String? iconVersion;
   /// Taxonomy parent when this def is a subcategory circle.
   final String? parentId;
 }

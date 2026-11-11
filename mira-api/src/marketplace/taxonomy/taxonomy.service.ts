@@ -20,6 +20,7 @@ import {
   validateProductTaxonomyWrite,
   type ProductTaxonomyInput,
 } from './product-taxonomy.validate';
+import { resolveCatalogIcon } from './catalog-icon-assets';
 
 type RegistrySnap = {
   fields: Record<string, { id?: string; filter?: string | null }>;
@@ -270,6 +271,8 @@ export class TaxonomyService implements OnModuleInit {
       n.browseOnly || !writeEnabled
         ? { fieldIds: [] as string[], filterKeys: [] as string[] }
         : this.profileMeta(n.profileId);
+    const imageKey = n.imageKey ?? null;
+    const icon = resolveCatalogIcon(imageKey);
     return {
       id: n.id,
       parentId: n.parentId,
@@ -278,7 +281,8 @@ export class TaxonomyService implements OnModuleInit {
       active: n.active,
       browseOnly: !!n.browseOnly,
       writeEnabled: n.browseOnly ? false : writeEnabled,
-      imageKey: n.imageKey ?? null,
+      imageKey,
+      icon: icon ?? null,
       profileId: n.profileId ?? null,
       offerKind: n.offerKind ?? null,
       children: [...(n.children || [])],
@@ -389,6 +393,17 @@ export class TaxonomyService implements OnModuleInit {
     }
     if (subcategory.startsWith('jewelry.stone.')) {
       const stone = subcategory.slice('jewelry.stone.'.length);
+      // Colored gems discovery filter — not a product leaf.
+      if (stone === 'gemstones') {
+        return {
+          lane,
+          clearSubcategory: true,
+          category: 'jewelry',
+          attributeSelections: {
+            [filterAttr]: ['emerald', 'ruby', 'sapphire', 'other'],
+          },
+        };
+      }
       return {
         lane,
         clearSubcategory: true,

@@ -1,4 +1,20 @@
-import { BadRequestException, Body, Controller, Get, Inject, Optional, Param, Post, Query, UseGuards } from '@nestjs/common';
+import {
+  BadRequestException,
+  Body,
+  Controller,
+  Get,
+  Header,
+  Inject,
+  NotFoundException,
+  Optional,
+  Param,
+  Post,
+  Query,
+  Res,
+  UseGuards,
+} from '@nestjs/common';
+import type { Response } from 'express';
+import { createReadStream } from 'node:fs';
 import { CurrentUser } from '../common/decorators/current-user.decorator';
 import { FirebaseAuthGuard } from '../common/guards/firebase-auth.guard';
 import { RequestUser } from '../common/interfaces/request-user.interface';
@@ -6,6 +22,7 @@ import { coerceQueryParam } from './catalog-filters';
 import { MatchMarketplaceDto } from './dto/match-marketplace.dto';
 import { MarketplaceService } from './marketplace.service';
 import { listSaudiCities } from '../geo/saudi-cities';
+import { absoluteCatalogIconPath } from './taxonomy/catalog-icon-assets';
 import { TaxonomyService } from './taxonomy/taxonomy.service';
 
 function qstr(raw: unknown): string | undefined {
@@ -124,6 +141,22 @@ export class MarketplaceController {
   @Get('cities')
   cities(@Query('q') q?: string) {
     return { items: listSaudiCities(q) };
+  }
+
+  /**
+   * Fingerprinted catalog orb WebP files (jewelry/occasions/gifts/materials).
+   * Taxonomy projection returns absolute URLs into this route — not merchant media.
+   */
+  @Get('catalog-icons/images/:file')
+  @Header('Cache-Control', 'public, max-age=31536000, immutable')
+  streamCatalogIcon(@Param('file') file: string, @Res() res: Response) {
+    if (!/^[a-z0-9._-]+\.webp$/i.test(file || '')) {
+      throw new BadRequestException({ code: 'CATALOG_ICON_BAD_NAME' });
+    }
+    const abs = absoluteCatalogIconPath(file);
+    if (!abs) throw new NotFoundException({ code: 'CATALOG_ICON_NOT_FOUND' });
+    res.setHeader('Content-Type', 'image/webp');
+    createReadStream(abs).pipe(res);
   }
 
   @Get('catalog/:kind/:id')

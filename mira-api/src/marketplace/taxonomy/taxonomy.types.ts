@@ -60,6 +60,13 @@ export type PublicTaxonomyNode = {
   browseOnly: boolean;
   writeEnabled: boolean;
   imageKey: string | null;
+  /** Server-resolved catalog icon URLs (same contract for portal + Flutter). */
+  icon?: {
+    key: string;
+    smallUrl: string;
+    largeUrl: string;
+    version: string;
+  } | null;
   profileId: string | null;
   offerKind: 'product' | 'service' | null;
   children: string[];

@@ -17,8 +17,8 @@ const occasions = load('occasions-taxonomy.v1.json');
 const gifts = load('gifts-taxonomy.v1.json');
 const phrases = load('description-phrases.v1.json');
 
-assert.equal(occasions.definitionsVersion, 3);
-assert.equal(gifts.definitionsVersion, 2);
+assert.equal(occasions.definitionsVersion, 4);
+assert.equal(gifts.definitionsVersion, 3);
 
 const byId = new Map(occasions.nodes.map((n: { id: string }) => [n.id, n]));
 for (const id of [

@@ -15,7 +15,7 @@ import {
 
 const HERE = __dirname;
 const jewelry = JSON.parse(readFileSync(join(HERE, 'jewelry-taxonomy.v1.json'), 'utf8'));
-assert.equal(jewelry.definitionsVersion, 2);
+assert.equal(jewelry.definitionsVersion, 3);
 
 const byId = new Map(jewelry.nodes.map((n: { id: string }) => [n.id, n]));
 for (const id of [

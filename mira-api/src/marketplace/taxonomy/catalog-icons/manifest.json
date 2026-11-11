@@ -1,0 +1,505 @@
+{
+  "schemaVersion": 1,
+  "items": [
+    {
+      "imageKey": "jewelry.rings",
+      "labelAr": "الخواتم والدبل",
+      "group": "jewelry",
+      "files": {
+        "160": {
+          "path": "images/jewelry.rings-160.cca05d071e49.webp",
+          "sha256": "cca05d071e4991faa6124c91a13b4c812aa5818b491cc3e90257e5cb126e080c"
+        },
+        "640": {
+          "path": "images/jewelry.rings-640.7b0e416badf3.webp",
+          "sha256": "7b0e416badf3dda87c24ffa13a813e0806b7e7b89b3f83c9c3c78bb74a5b7819"
+        }
+      },
+      "knownCategoryId": "jewelry.rings"
+    },
+    {
+      "imageKey": "jewelry.bangles",
+      "labelAr": "الأساور والبناجر",
+      "group": "jewelry",
+      "files": {
+        "160": {
+          "path": "images/jewelry.bangles-160.ad4324e41445.webp",
+          "sha256": "ad4324e41445405da23d0cf7a256a24ee04943bf08cf394bdfe7b8502eaa26b8"
+        },
+        "640": {
+          "path": "images/jewelry.bangles-640.cbb499c1f83a.webp",
+          "sha256": "cbb499c1f83af35dfc2df5e77a6c024c6dbbde9742c43dd01639d43ae31c727d"
+        }
+      },
+      "knownCategoryId": "jewelry.bracelets"
+    },
+    {
+      "imageKey": "jewelry.necklaces",
+      "labelAr": "العقود والسلاسل",
+      "group": "jewelry",
+      "files": {
+        "160": {
+          "path": "images/jewelry.necklaces-160.a8e1372f60b8.webp",
+          "sha256": "a8e1372f60b8e5cc0c61e15c611fefb139b23b1e9fa50eec1c27e8637a86270c"
+        },
+        "640": {
+          "path": "images/jewelry.necklaces-640.d9a2b7b3706f.webp",
+          "sha256": "d9a2b7b3706fd0ae570a2bab51ffa7f606026001e0b75ea7dc28480a1b85a9ad"
+        }
+      },
+      "knownCategoryId": "jewelry.necklaces"
+    },
+    {
+      "imageKey": "jewelry.pendants",
+      "labelAr": "التعليقات والدلايات",
+      "group": "jewelry",
+      "files": {
+        "160": {
+          "path": "images/jewelry.pendants-160.3c91c719ed61.webp",
+          "sha256": "3c91c719ed610acc0caaa99aa8904ec48889c40ceb55c2b6444fed70f860467d"
+        },
+        "640": {
+          "path": "images/jewelry.pendants-640.c17e1209911a.webp",
+          "sha256": "c17e1209911a6da3372be6a3c4f7c75abae6b430c552f10ddf7a6b9d9a7c0d8c"
+        }
+      }
+    },
+    {
+      "imageKey": "jewelry.earrings",
+      "labelAr": "الحلق والأقراط",
+      "group": "jewelry",
+      "files": {
+        "160": {
+          "path": "images/jewelry.earrings-160.af1dc8da7f6a.webp",
+          "sha256": "af1dc8da7f6af9b8ca7b9aed4f021a1872d16170d8e0a1f265946607c17fb5c2"
+        },
+        "640": {
+          "path": "images/jewelry.earrings-640.aa518727cde4.webp",
+          "sha256": "aa518727cde48662cc7e7bbc692b1c330a35fd6d847bfcb22fa4da82c2dbd504"
+        }
+      },
+      "knownCategoryId": "jewelry.earrings"
+    },
+    {
+      "imageKey": "jewelry.sets",
+      "labelAr": "الأطقم والشبكات",
+      "group": "jewelry",
+      "files": {
+        "160": {
+          "path": "images/jewelry.sets-160.fed33df00b86.webp",
+          "sha256": "fed33df00b86d2e08a180fd52504118143b89a3554318284a78683a7184d1fe7"
+        },
+        "640": {
+          "path": "images/jewelry.sets-640.c8cb7e862843.webp",
+          "sha256": "c8cb7e862843acb6d4cbc94eb415889dc3021326b1a9b51083fe666af664e41c"
+        }
+      }
+    },
+    {
+      "imageKey": "jewelry.hand-chains",
+      "labelAr": "الكفوف",
+      "group": "jewelry",
+      "files": {
+        "160": {
+          "path": "images/jewelry.hand-chains-160.5e79e6354257.webp",
+          "sha256": "5e79e6354257ac748a8c4a20545bd0457370db50d898d6da867265842d5f040e"
+        },
+        "640": {
+          "path": "images/jewelry.hand-chains-640.a2f35a6ace99.webp",
+          "sha256": "a2f35a6ace995ceed09ede993139b77e1da2f851dda7da7debac28e8dd36d699"
+        }
+      }
+    },
+    {
+      "imageKey": "jewelry.anklets",
+      "labelAr": "الخلاخيل",
+      "group": "jewelry",
+      "files": {
+        "160": {
+          "path": "images/jewelry.anklets-160.cc23977527c5.webp",
+          "sha256": "cc23977527c53f2ac28e772fb04dc7d72c2cce69ec0c85a90aab2ed4a11e950f"
+        },
+        "640": {
+          "path": "images/jewelry.anklets-640.5516e3f6ea19.webp",
+          "sha256": "5516e3f6ea19063a7a9416947841360b330173c14adfeacfb4ef7c04c354b208"
+        }
+      }
+    },
+    {
+      "imageKey": "jewelry.nose-jewelry",
+      "labelAr": "الزمام وحُلي الأنف",
+      "group": "jewelry",
+      "files": {
+        "160": {
+          "path": "images/jewelry.nose-jewelry-160.dc704f23268a.webp",
+          "sha256": "dc704f23268a2e7897825c2aada136e7d86afbf791a2e387795af990b915a24d"
+        },
+        "640": {
+          "path": "images/jewelry.nose-jewelry-640.6bf3ca64e961.webp",
+          "sha256": "6bf3ca64e961cd92469a9d656bc8d9f1f8054b4259a8d1f9fa388353b1d39cec"
+        }
+      }
+    },
+    {
+      "imageKey": "jewelry.brooches",
+      "labelAr": "البروش والدبابيس",
+      "group": "jewelry",
+      "files": {
+        "160": {
+          "path": "images/jewelry.brooches-160.86bd8460f26a.webp",
+          "sha256": "86bd8460f26a42b8e49398c3b02dd2b740d44cf2241eb23e7d0c08c26a323a24"
+        },
+        "640": {
+          "path": "images/jewelry.brooches-640.5a4f3d612f15.webp",
+          "sha256": "5a4f3d612f154e509731d9624c3222d80b738a879c8fcd6d0bb874c92fd33167"
+        }
+      }
+    },
+    {
+      "imageKey": "jewelry.head-jewelry",
+      "labelAr": "حُلي الرأس",
+      "group": "jewelry",
+      "files": {
+        "160": {
+          "path": "images/jewelry.head-jewelry-160.f6661ca6f953.webp",
+          "sha256": "f6661ca6f95368c05c63f8dec9489db4cb58acd7a78e729081afb42bf1f43c0d"
+        },
+        "640": {
+          "path": "images/jewelry.head-jewelry-640.e0bb6526aa8d.webp",
+          "sha256": "e0bb6526aa8d2ca342b683572b8a992970541e241b9526b9b256691e48235433"
+        }
+      }
+    },
+    {
+      "imageKey": "jewelry.waist-jewelry",
+      "labelAr": "حُلي الخصر",
+      "group": "jewelry",
+      "files": {
+        "160": {
+          "path": "images/jewelry.waist-jewelry-160.356d62d8699e.webp",
+          "sha256": "356d62d8699e2e54822ffc7d8237c7d5ab856fade56ba1a6c1d1eda983567a8c"
+        },
+        "640": {
+          "path": "images/jewelry.waist-jewelry-640.d170aa904eb7.webp",
+          "sha256": "d170aa904eb7224c4c80e8c33b1c4c6a7bf9b4eea2dfedd8d1d94594780eac0a"
+        }
+      }
+    },
+    {
+      "imageKey": "jewelry.armlets",
+      "labelAr": "حُلي العضد",
+      "group": "jewelry",
+      "files": {
+        "160": {
+          "path": "images/jewelry.armlets-160.c452921b9899.webp",
+          "sha256": "c452921b9899a83c5182caeb25daaded2dcb35c69c77248b33899e19eca666ed"
+        },
+        "640": {
+          "path": "images/jewelry.armlets-640.97762b489fc6.webp",
+          "sha256": "97762b489fc618e40a5877da1205cb6841018d1b08359ee5e30de6d39252f22c"
+        }
+      }
+    },
+    {
+      "imageKey": "occasions.planning",
+      "labelAr": "تنظيم وباقات حفلات",
+      "group": "occasions",
+      "files": {
+        "160": {
+          "path": "images/occasions.planning-160.f7a05734d659.webp",
+          "sha256": "f7a05734d6595898c7afd454b02b067af9056c9d0bbb8a24d56bf48141d63313"
+        },
+        "640": {
+          "path": "images/occasions.planning-640.d59ff84a0922.webp",
+          "sha256": "d59ff84a0922d6a7f71c0ce212e89af176aebb61d9613ee7fc7268aae3982305"
+        }
+      }
+    },
+    {
+      "imageKey": "occasions.stages",
+      "labelAr": "الكوش والمداخل",
+      "group": "occasions",
+      "files": {
+        "160": {
+          "path": "images/occasions.stages-160.1cdd1911aa32.webp",
+          "sha256": "1cdd1911aa3214962d732882dac7cd93b2589c5612f826dc08ba88e8b4d91127"
+        },
+        "640": {
+          "path": "images/occasions.stages-640.f5002ce95560.webp",
+          "sha256": "f5002ce955605185e8dd0474e0127dbf51206a4214e4967cd741a9bd57c64929"
+        }
+      }
+    },
+    {
+      "imageKey": "occasions.tables",
+      "labelAr": "تنسيق الطاولات والورد",
+      "group": "occasions",
+      "files": {
+        "160": {
+          "path": "images/occasions.tables-160.921e63ceb815.webp",
+          "sha256": "921e63ceb8153ed8133ddcccb647b8d542ea7420f25bd6ab776f0b7959849416"
+        },
+        "640": {
+          "path": "images/occasions.tables-640.9c82808bc9b5.webp",
+          "sha256": "9c82808bc9b50543aa48b9e78f9074d5134360fa869a985174970880acafa2c0"
+        }
+      },
+      "mappingNote": "Do not attach to legacy occasions.decor solely by name."
+    },
+    {
+      "imageKey": "occasions.hosts",
+      "labelAr": "الضيافة والاستقبال",
+      "group": "occasions",
+      "files": {
+        "160": {
+          "path": "images/occasions.hosts-160.b851ae6d355c.webp",
+          "sha256": "b851ae6d355ce52ca6fea1d1fac7289cc1f0ddf55d8ab54be0f6df2011f9e99d"
+        },
+        "640": {
+          "path": "images/occasions.hosts-640.f888b9843617.webp",
+          "sha256": "f888b98436179e59353f52fc26b7a29182f2654e7065858f90d929dac42a9e4d"
+        }
+      }
+    },
+    {
+      "imageKey": "occasions.catering",
+      "labelAr": "البوفيه وأركان الطعام",
+      "group": "occasions",
+      "files": {
+        "160": {
+          "path": "images/occasions.catering-160.696b32ced57b.webp",
+          "sha256": "696b32ced57b6ab15a7225b4e5b8379a339226e962a3ca7c80c8bb5dc471f859"
+        },
+        "640": {
+          "path": "images/occasions.catering-640.1ecd7f0ffdac.webp",
+          "sha256": "1ecd7f0ffdac3e8de389d0b57f7507c8d6a95ebd7061d7d92ac96d02b5ac8cf8"
+        }
+      }
+    },
+    {
+      "imageKey": "occasions.perfume",
+      "labelAr": "أركان العطور والبخور",
+      "group": "occasions",
+      "files": {
+        "160": {
+          "path": "images/occasions.perfume-160.a999607b5773.webp",
+          "sha256": "a999607b577368714cba428a4245999b394489256b19793b7c389e2cab7a5947"
+        },
+        "640": {
+          "path": "images/occasions.perfume-640.7abec1718533.webp",
+          "sha256": "7abec171853363944db6ab043b7e3dabb336270be6c6d9103e780c0d61091041"
+        }
+      }
+    },
+    {
+      "imageKey": "occasions.rentals",
+      "labelAr": "تأجير الأثاث والتجهيزات",
+      "group": "occasions",
+      "files": {
+        "160": {
+          "path": "images/occasions.rentals-160.d661bdc70173.webp",
+          "sha256": "d661bdc701736bda03a0048d99c418a1ee4634ae7488a9e89925d5ce7124f5c7"
+        },
+        "640": {
+          "path": "images/occasions.rentals-640.6cc370ba349f.webp",
+          "sha256": "6cc370ba349fb7ce57fe62dd2150e8cc01bf4bd024a1600bb932f028a0df6838"
+        }
+      }
+    },
+    {
+      "imageKey": "occasions.photography",
+      "labelAr": "التصوير وتجارب الحفل",
+      "group": "occasions",
+      "files": {
+        "160": {
+          "path": "images/occasions.photography-160.9abf7212903d.webp",
+          "sha256": "9abf7212903d227bbbed4ff00851f626d98e11febf9932c87af2946ab9334517"
+        },
+        "640": {
+          "path": "images/occasions.photography-640.53bd3a05c634.webp",
+          "sha256": "53bd3a05c634474ebfd2d6e64de9492509b801302f4e7593defc358b922bde8b"
+        }
+      }
+    },
+    {
+      "imageKey": "occasions.favors",
+      "labelAr": "توزيعات وضيافة جاهزة للبيع",
+      "group": "occasions",
+      "files": {
+        "160": {
+          "path": "images/occasions.favors-160.49e04d291bbb.webp",
+          "sha256": "49e04d291bbb66cab584456762b6348d04f4ecaec7a84ea9261f2c0260127b80"
+        },
+        "640": {
+          "path": "images/occasions.favors-640.f937ec772b83.webp",
+          "sha256": "f937ec772b830ed7d1884be3196aa77a33093803991e3c04df6cc9b325b88ffb"
+        }
+      }
+    },
+    {
+      "imageKey": "gifts.flowers",
+      "labelAr": "الورد والتنسيقات",
+      "group": "gifts",
+      "files": {
+        "160": {
+          "path": "images/gifts.flowers-160.70ce02fa6109.webp",
+          "sha256": "70ce02fa610972ce4ea81056be1f980fffcfc86e5798aea809fe7ef49211a0e6"
+        },
+        "640": {
+          "path": "images/gifts.flowers-640.b69c582270aa.webp",
+          "sha256": "b69c582270aa30b043375e8ae211396ad104d122eeb149a3436a3c8cfff50bd9"
+        }
+      }
+    },
+    {
+      "imageKey": "gifts.boxes",
+      "labelAr": "بوكسات وسلال الهدايا",
+      "group": "gifts",
+      "files": {
+        "160": {
+          "path": "images/gifts.boxes-160.5a7178097b8a.webp",
+          "sha256": "5a7178097b8a54c77367d2b2c038f9f930b72f7cbc7e3d2480d3e1a3d3403d4a"
+        },
+        "640": {
+          "path": "images/gifts.boxes-640.ccd866dfe869.webp",
+          "sha256": "ccd866dfe86940e2fdac9bca471ecce603feac516ae045efd2cfbd0cc91ecc89"
+        }
+      }
+    },
+    {
+      "imageKey": "gifts.sweets",
+      "labelAr": "الشوكولاتة والكيك",
+      "group": "gifts",
+      "files": {
+        "160": {
+          "path": "images/gifts.sweets-160.3f6f4e8cb462.webp",
+          "sha256": "3f6f4e8cb46211e034730631c848be75940e1a356617fc65b5ef2fed07e9deb4"
+        },
+        "640": {
+          "path": "images/gifts.sweets-640.cf12fd1c634f.webp",
+          "sha256": "cf12fd1c634fa839dd27684db89297597dcccc3d793f2bd8d8374e5846c883d8"
+        }
+      }
+    },
+    {
+      "imageKey": "gifts.fragrance",
+      "labelAr": "عطور وبخور للإهداء",
+      "group": "gifts",
+      "files": {
+        "160": {
+          "path": "images/gifts.fragrance-160.fe32b5fa8e38.webp",
+          "sha256": "fe32b5fa8e388058cc52a6699a0e8ff13ce2736475b4ae8350d643d630e28ade"
+        },
+        "640": {
+          "path": "images/gifts.fragrance-640.8c141cc66699.webp",
+          "sha256": "8c141cc66699013027ea877aa62c4d3913fafc45a0e7b121730b285c76f4440a"
+        }
+      }
+    },
+    {
+      "imageKey": "gifts.personalized",
+      "labelAr": "هدايا بالاسم",
+      "group": "gifts",
+      "files": {
+        "160": {
+          "path": "images/gifts.personalized-160.1a4723b0c13d.webp",
+          "sha256": "1a4723b0c13d12cd258980c73437b42bc0af6c6809395002bd527f58290f15cc"
+        },
+        "640": {
+          "path": "images/gifts.personalized-640.d82134c1c501.webp",
+          "sha256": "d82134c1c5014831b2c0c61c6939d811631aaa868e405d95200823a90a65a2f9"
+        }
+      }
+    },
+    {
+      "imageKey": "gifts.balloons",
+      "labelAr": "بالونات وإضافات الإهداء",
+      "group": "gifts",
+      "files": {
+        "160": {
+          "path": "images/gifts.balloons-160.39348f8b9552.webp",
+          "sha256": "39348f8b95525d2a8099da08664d84d60acbc207253e7c97a0b6933646030690"
+        },
+        "640": {
+          "path": "images/gifts.balloons-640.508f0b263fab.webp",
+          "sha256": "508f0b263fabbf6f931d5d3c1f5d67608c47771ebb8117b8d7e8fe129088600a"
+        }
+      }
+    },
+    {
+      "imageKey": "materials.gold",
+      "labelAr": "ذهب",
+      "group": "materials",
+      "files": {
+        "160": {
+          "path": "images/materials.gold-160.48fd0a11c516.webp",
+          "sha256": "48fd0a11c51639d8e9b95dba3e5637e96998f3c61dbf4999df1ceb96c5381811"
+        },
+        "640": {
+          "path": "images/materials.gold-640.e64a6a5e0620.webp",
+          "sha256": "e64a6a5e062036034a2407c199137926b03fd25a6388bb474e9bb6a075ed2d63"
+        }
+      }
+    },
+    {
+      "imageKey": "materials.silver",
+      "labelAr": "فضة",
+      "group": "materials",
+      "files": {
+        "160": {
+          "path": "images/materials.silver-160.3c365b0c2ccb.webp",
+          "sha256": "3c365b0c2ccb707769a04614ae737ca8d02413d6a8c1d8768b13d5896283a149"
+        },
+        "640": {
+          "path": "images/materials.silver-640.7ea7dcd6935e.webp",
+          "sha256": "7ea7dcd6935e1f38c1780d6a9b48995d0907293269ad82c23e85f1ddd9c07db9"
+        }
+      }
+    },
+    {
+      "imageKey": "materials.diamond",
+      "labelAr": "ألماس",
+      "group": "materials",
+      "files": {
+        "160": {
+          "path": "images/materials.diamond-160.ef5aa4c30a0b.webp",
+          "sha256": "ef5aa4c30a0b2804fc55b6320237fa7fbb895ea8bfb42c9bff1545f4dc7f9b08"
+        },
+        "640": {
+          "path": "images/materials.diamond-640.cc3b4f4c61a2.webp",
+          "sha256": "cc3b4f4c61a2f3496a965ced805ea0909f48ea83a44767f9103216fb3ca3f1c5"
+        }
+      }
+    },
+    {
+      "imageKey": "materials.gemstones",
+      "labelAr": "أحجار ملوّنة",
+      "group": "materials",
+      "files": {
+        "160": {
+          "path": "images/materials.gemstones-160.8558fed747f9.webp",
+          "sha256": "8558fed747f9c3e39b18b23098c337dc989fb28fa8ec16faf122202b5a5afe05"
+        },
+        "640": {
+          "path": "images/materials.gemstones-640.f5d19a811848.webp",
+          "sha256": "f5d19a81184836a530e952f95567b468f8778aa0e41a7009c014cf64fe105bde"
+        }
+      }
+    },
+    {
+      "imageKey": "materials.pearls",
+      "labelAr": "لؤلؤ",
+      "group": "materials",
+      "files": {
+        "160": {
+          "path": "images/materials.pearls-160.6d53da1aac58.webp",
+          "sha256": "6d53da1aac588e7db628c6d157e65219427e6975605f85ff08a48c3c50422f62"
+        },
+        "640": {
+          "path": "images/materials.pearls-640.b9ee64150b6a.webp",
+          "sha256": "b9ee64150b6a6fa1bd52d400cea4b7ef2b241f30874a559fea3f5bda68a9e9a7"
+        }
+      }
+    }
+  ]
+}

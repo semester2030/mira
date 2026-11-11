@@ -866,6 +866,7 @@ class DiscoverCategoryRail extends StatelessWidget {
     required this.onSelected,
     this.ids,
     this.imageKeys,
+    this.iconUrls,
   });
 
   final List<String> labels;
@@ -873,6 +874,8 @@ class DiscoverCategoryRail extends StatelessWidget {
   final List<String>? ids;
   /// Taxonomy imageKeys aligned with [labels] — preferred for Phase2 orb thumbs.
   final List<String?>? imageKeys;
+  /// Server catalog icon smallUrls (HTTPS) — preferred over bundled assets.
+  final List<String?>? iconUrls;
   final String assetFamily;
   final int selected;
   final ValueChanged<int> onSelected;
@@ -896,11 +899,14 @@ class DiscoverCategoryRail extends StatelessWidget {
             final id = ids != null && index < ids!.length ? ids![index] : null;
             final imageKey =
                 imageKeys != null && index < imageKeys!.length ? imageKeys![index] : null;
+            final iconUrl =
+                iconUrls != null && index < iconUrls!.length ? iconUrls![index] : null;
             return _CategoryChip(
               assetFamily: assetFamily,
               label: labels[index],
               id: id,
               imageKey: imageKey,
+              iconUrl: iconUrl,
               selected: index == selected,
               size: size,
               onTap: () => onSelected(index),
@@ -939,12 +945,14 @@ class _CategoryChip extends StatelessWidget {
     required this.onTap,
     this.id,
     this.imageKey,
+    this.iconUrl,
   });
 
   final String assetFamily;
   final String label;
   final String? id;
   final String? imageKey;
+  final String? iconUrl;
   final bool selected;
   final double size;
   final VoidCallback onTap;
@@ -956,8 +964,10 @@ class _CategoryChip extends StatelessWidget {
           id: id,
           label: label,
           imageKey: imageKey,
+          iconUrl: iconUrl,
         ) ??
         DiscoverCategoryAssets.thumb(assetFamily, label);
+    final isNetwork = path != null && (path.startsWith('http://') || path.startsWith('https://'));
     return InkWell(
       onTap: onTap,
       child: SizedBox(
@@ -976,6 +986,12 @@ class _CategoryChip extends StatelessWidget {
                 child: ClipOval(
                   child: path == null
                       ? const ColoredBox(color: AppColors.primaryLight)
+                      : isNetwork
+                      ? Image.network(
+                          path,
+                          fit: BoxFit.cover,
+                          errorBuilder: (_, __, ___) => const ColoredBox(color: AppColors.primaryLight),
+                        )
                       : Image.asset(
                           path,
                           fit: BoxFit.cover,

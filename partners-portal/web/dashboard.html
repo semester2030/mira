@@ -237,10 +237,26 @@
             const grantedCat = (activities.grants || []).some((g) => g.activity === it.id && g.scope === 'category');
             if (grantedCat) continue;
             const lab = document.createElement('label');
-            lab.style.display = 'block';
+            lab.style.display = 'flex';
+            lab.style.alignItems = 'center';
+            lab.style.gap = '8px';
             const cb = document.createElement('input');
             cb.type = 'checkbox'; cb.value = it.id;
-            lab.append(cb, document.createTextNode(' ' + it.group + ' · ' + it.label));
+            cb.setAttribute('data-activity-id', it.id);
+            if (it.imageKey) cb.setAttribute('data-image-key', it.imageKey);
+            lab.append(cb);
+            if (it.icon && it.icon.smallUrl) {
+              const img = document.createElement('img');
+              img.src = it.icon.smallUrl;
+              img.alt = it.label;
+              img.width = 36;
+              img.height = 36;
+              img.style.borderRadius = '50%';
+              img.style.objectFit = 'cover';
+              img.setAttribute('data-image-key', it.imageKey || '');
+              lab.append(img);
+            }
+            lab.append(document.createTextNode(' ' + it.group + ' · ' + it.label));
             form.append(lab);
             picks.push(cb);
           }

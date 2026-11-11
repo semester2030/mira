@@ -21,6 +21,10 @@
       {
         "include": "marketplace/taxonomy/*.json",
         "watchAssets": true
+      },
+      {
+        "include": "marketplace/taxonomy/catalog-icons/**/*",
+        "watchAssets": true
       }
     ]
   }

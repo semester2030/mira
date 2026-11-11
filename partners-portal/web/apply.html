@@ -212,9 +212,27 @@
           const row = document.createElement('div');
           row.className = 'line';
           const lab = document.createElement('label');
+          lab.style.display = 'flex';
+          lab.style.alignItems = 'center';
+          lab.style.gap = '8px';
           const cb = document.createElement('input');
           cb.type = 'checkbox'; cb.value = it.id;
-          lab.append(cb, document.createTextNode(' ' + it.label));
+          cb.setAttribute('data-activity-id', it.id);
+          if (it.imageKey) cb.setAttribute('data-image-key', it.imageKey);
+          lab.append(cb);
+          if (it.icon && it.icon.smallUrl) {
+            const img = document.createElement('img');
+            img.src = it.icon.smallUrl;
+            img.alt = it.label;
+            img.width = 40;
+            img.height = 40;
+            img.style.borderRadius = '50%';
+            img.style.objectFit = 'cover';
+            img.setAttribute('data-image-key', it.imageKey || '');
+            img.setAttribute('data-icon-version', it.icon.version || '');
+            lab.append(img);
+          }
+          lab.append(document.createTextNode(' ' + it.label));
           const scope = document.createElement('select');
           if (it.kind === 'product') {
             scope.innerHTML = '<option value="category">جميع منتجات هذا الفرع</option><option value="one">منتج محدد بالاسم</option>';

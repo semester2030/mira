@@ -182,6 +182,13 @@
     return 'assets/e2b-ref/orbs/' + safe + '.png';
   }
 
+  /** Prefer server catalog icon URLs (imageKey → small/large); never bind by Arabic label. */
+  function orbUrlForNode(n) {
+    const icon = n && n.icon;
+    if (icon && icon.smallUrl) return String(icon.smallUrl);
+    return SUB_ORB_BY_ID[n && n.id] || subOrbFor(n && n.id);
+  }
+
   function ensureWorkspace() {
     const section = document.getElementById('catalogSection');
     if (!section) return null;
@@ -914,10 +921,12 @@
         return;
       }
       nodes.forEach((n) => {
-        const orbUrl = SUB_ORB_BY_ID[n.id] || subOrbFor(n.id);
+        const orbUrl = orbUrlForNode(n);
         const orb = el('span', { className: 'e2b-circle-orb' });
         orb.style.backgroundImage = "url('" + orbUrl + "')";
         orb.setAttribute('data-orb-id', n.id);
+        if (n.imageKey) orb.setAttribute('data-image-key', n.imageKey);
+        if (n.icon && n.icon.version) orb.setAttribute('data-icon-version', n.icon.version);
         const btn = el(
           'button',
           {
@@ -927,6 +936,7 @@
             'data-subcategory-id': n.id,
             'data-parent-id': cat.id,
             'data-orb-src': orbUrl,
+            'data-image-key': n.imageKey || '',
             onClick: () => selectSub(n.id, { fromCircle: true }),
           },
           [orb, el('span', { className: 'e2b-circle-label', text: n.labelAr || n.id })],

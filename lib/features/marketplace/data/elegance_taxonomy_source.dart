@@ -18,6 +18,9 @@ class EleganceTaxonomyNode {
     required this.writeEnabled,
     this.parentId,
     this.imageKey,
+    this.iconSmallUrl,
+    this.iconLargeUrl,
+    this.iconVersion,
     this.profileId,
     this.children = const [],
     this.fieldIds = const [],
@@ -33,6 +36,10 @@ class EleganceTaxonomyNode {
   final bool browseOnly;
   final bool writeEnabled;
   final String? imageKey;
+  /// Server catalog icon URLs (same response as partners portal).
+  final String? iconSmallUrl;
+  final String? iconLargeUrl;
+  final String? iconVersion;
   final String? profileId;
   final List<String> children;
   /// From central registry via taxonomy projection (Phase1).
@@ -44,6 +51,11 @@ class EleganceTaxonomyNode {
     final kids = json['children'];
     final fields = json['fieldIds'];
     final filters = json['filterKeys'];
+    final icon = json['icon'];
+    Map<String, dynamic>? iconMap;
+    if (icon is Map) {
+      iconMap = icon.map((k, v) => MapEntry('$k', v));
+    }
     return EleganceTaxonomyNode(
       id: '${json['id']}',
       parentId: json['parentId']?.toString(),
@@ -53,6 +65,9 @@ class EleganceTaxonomyNode {
       browseOnly: json['browseOnly'] == true,
       writeEnabled: json['writeEnabled'] != false && json['browseOnly'] != true,
       imageKey: json['imageKey']?.toString(),
+      iconSmallUrl: iconMap?['smallUrl']?.toString(),
+      iconLargeUrl: iconMap?['largeUrl']?.toString(),
+      iconVersion: iconMap?['version']?.toString(),
       profileId: json['profileId']?.toString(),
       children: kids is List ? kids.map((e) => '$e').toList() : const [],
       fieldIds: fields is List ? fields.map((e) => '$e').toList() : const [],
@@ -112,6 +127,9 @@ abstract final class EleganceTaxonomySource {
           matchesAll: true,
           browseOnly: true,
           imageKey: parent.imageKey ?? family,
+          iconSmallUrl: parent.iconSmallUrl,
+          iconLargeUrl: parent.iconLargeUrl,
+          iconVersion: parent.iconVersion,
         );
         final kids = childrenOf(parent.id, family: family)
             .where((c) => !c.matchesAll && c.id != '__back__')
@@ -126,6 +144,9 @@ abstract final class EleganceTaxonomySource {
               writeEnabled: c.writeEnabled,
               browseOnly: c.browseOnly,
               imageKey: c.imageKey,
+              iconSmallUrl: c.iconSmallUrl,
+              iconLargeUrl: c.iconLargeUrl,
+              iconVersion: c.iconVersion,
               parentId: parent.id,
             ))];
       }
@@ -149,6 +170,9 @@ abstract final class EleganceTaxonomySource {
           writeEnabled: n.writeEnabled,
           browseOnly: isAll,
           imageKey: n.imageKey,
+          iconSmallUrl: n.iconSmallUrl,
+          iconLargeUrl: n.iconLargeUrl,
+          iconVersion: n.iconVersion,
         ),
       );
     }
@@ -185,6 +209,9 @@ abstract final class EleganceTaxonomySource {
           writeEnabled: n.writeEnabled,
           browseOnly: n.browseOnly,
           imageKey: n.imageKey,
+          iconSmallUrl: n.iconSmallUrl,
+          iconLargeUrl: n.iconLargeUrl,
+          iconVersion: n.iconVersion,
           parentId: parentId,
         ),
       );
