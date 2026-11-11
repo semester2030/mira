@@ -1333,10 +1333,27 @@ class DiscoverPresentationScreenState extends State<DiscoverPresentationScreen>
 
   @override
   Widget build(BuildContext context) {
+    final laneId = widget.lane?.apiId ?? 'all';
     return Scaffold(
+      key: ValueKey('discover_presentation_lane_$laneId'),
       backgroundColor: const Color(0xFF2C2428),
       body: Stack(
               children: [
+                // Stable lane identity for tests (empty or filled feed).
+                Positioned(
+                  left: 0,
+                  right: 0,
+                  top: 0,
+                  child: IgnorePointer(
+                    child: Opacity(
+                      opacity: 0.01,
+                      child: Text(
+                        'presentation:$laneId',
+                        key: ValueKey('presentation_lane_label_$laneId'),
+                      ),
+                    ),
+                  ),
+                ),
                 if (_slides.isEmpty)
                   Center(
                     child: Padding(

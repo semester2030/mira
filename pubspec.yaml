@@ -154,6 +154,7 @@ flutter:
     - assets/marketplace/discover/
     - assets/marketplace/discover/lanes/
     - assets/marketplace/discover/thumbs/
+    - assets/marketplace/discover/home_orbit/
     - assets/marketplace/taxonomy/
     - assets/icons/
     - assets/icons/fashion/

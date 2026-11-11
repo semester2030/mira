@@ -1,0 +1,8 @@
+ref=853x1844 (MIRA_discovery_home_FULL_853x1844.png)
+measured_orbitR≈275px (pink ring fit)
+measured_petalDiam≈143px (top أناقتك)
+prompt_center_to_petal_ratio≈1.25 → centerDiam≈179px
+layout_ratios_vs_orbit_canvas (side):
+  petal≈0.205  center=petal*1.25  orbitR≈0.395
+home elegance asset (orbit only): assets/marketplace/discover/home_orbit/elegance_home.png
+other screens keep: assets/marketplace/discover/elegance_lane.png

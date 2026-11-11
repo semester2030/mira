@@ -1,0 +1,5 @@
+environment: Flutter widget test / golden (macOS local)
+command: flutter test test/features/marketplace/phase2_3_orbit_and_orbs_test.dart --update-goldens
+sizes_logical: 320x640 and 390x844
+pixelRatio: Flutter golden default
+commit_base: 2a70887

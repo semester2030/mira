@@ -1,23 +1,27 @@
-<!DOCTYPE html>
-<html lang="ar" dir="rtl"><meta charset="utf-8"/>
-<title>ميرا — مقارنة الرئيسية</title>
+<!doctype html><html lang="ar" dir="rtl"><meta charset="utf-8">
+<title>مرجع | تنفيذ — اكتشفي عالم ميرا</title>
 <style>
-body{font-family:system-ui;margin:24px;background:#1a1216;color:#f7eef2}
-.row{display:flex;gap:24px;flex-wrap:wrap;align-items:flex-start}
-figure{margin:0;max-width:420px}
-img{width:100%;height:auto;border-radius:12px;border:1px solid #5a3a45}
-figcaption{margin-top:8px;opacity:.85}
-h1{font-size:1.25rem}
+body{font-family:system-ui,sans-serif;background:#1a1520;color:#f5eef7;margin:0;padding:24px}
+h1{font-size:18px;margin:0 0 8px}
+p{opacity:.8;margin:0 0 16px}
+.grid{display:grid;grid-template-columns:1fr 1fr;gap:16px;align-items:start}
+figure{margin:0;background:#2a2230;border-radius:12px;padding:12px}
+img{width:100%;height:auto;border-radius:8px;display:block}
+figcaption{margin-top:8px;font-size:13px}
+.notes{margin-top:20px;line-height:1.7;font-size:14px}
 </style>
-<h1>مرجع 853×1844 بجانب وصف التنفيذ</h1>
-<div class="row">
-<figure>
-<img src="../references/MIRA_home_full_853x1844.png" alt="reference"/>
-<figcaption>المرجع الأصلي الكامل 853×1844</figcaption>
-</figure>
-<figure>
-<img src="../references/MIRA_discovery_orbit_detail.png" alt="orbit detail"/>
-<figcaption>تفاصيل الحلقة (مرجع الدوائر فقط)</figcaption>
-</figure>
+<h1>مقارنة المرجع | التنفيذ</h1>
+<p>المرجع: الرئيسية الكاملة 853×1844 — التنفيذ: golden من MiraWorldOrbitDiscover على 390×844 (Flutter widget test)</p>
+<div class="grid">
+<figure><img src="../evidence/screenshots/REF_home_full_853x1844.png" alt="مرجع"><figcaption>المرجع (ليس لقطة تنفيذ)</figcaption></figure>
+<figure><img src="../evidence/screenshots/home_orbit_390x844.png" alt="تنفيذ"><figcaption>التنفيذ 390×844 — بيئة: Flutter golden محلي</figcaption></figure>
 </div>
-<p>التنفيذ الحي: <code>MiraWorldOrbitDiscover</code> داخل <code>dashboard_screen</code> بعد «نظرة سريعة» وقبل «نصيحة اليوم». لقطات الجهاز: اختبار ودجت بمقاسين 320×640 و390×844 (انظر TAP_MATRIX.md).</p>
+<div class="notes">
+<strong>نقاط المطابقة المطلوبة:</strong>
+<ul>
+<li>وسط ميرا أبيض أكبر من دائرة القسم (~1.25×)</li>
+<li>خط مدار وردي رفيع خلف صور الأقسام</li>
+<li>أناقتك = ملابس معلّقة (أصل home_orbit فقط)</li>
+<li>الأسماء تحت الدوائر؛ الترتيب مع عقارب الساعة من الأعلى</li>
+</ul>
+</div>

@@ -1,0 +1,156 @@
+{
+  "port": 51866,
+  "failed": 0,
+  "rows": [
+    {
+      "categoryId": "jewelry",
+      "imageKey": "jewelry",
+      "expectedPath": "assets/e2b-ref/orbs/jewelry.png",
+      "loadedUrl": "http://127.0.0.1:51866/assets/e2b-ref/orbs/jewelry.png",
+      "httpStatus": 200,
+      "bytes": 913420,
+      "pngMagic": true,
+      "result": "PASS"
+    },
+    {
+      "categoryId": "jewelry.rings",
+      "imageKey": "jewelry.rings",
+      "expectedPath": "assets/e2b-ref/orbs/jewelry_rings.png",
+      "loadedUrl": "http://127.0.0.1:51866/assets/e2b-ref/orbs/jewelry_rings.png",
+      "httpStatus": 200,
+      "bytes": 1008440,
+      "pngMagic": true,
+      "result": "PASS"
+    },
+    {
+      "categoryId": "jewelry.necklaces",
+      "imageKey": "jewelry.necklaces",
+      "expectedPath": "assets/e2b-ref/orbs/jewelry_necklaces.png",
+      "loadedUrl": "http://127.0.0.1:51866/assets/e2b-ref/orbs/jewelry_necklaces.png",
+      "httpStatus": 200,
+      "bytes": 954686,
+      "pngMagic": true,
+      "result": "PASS"
+    },
+    {
+      "categoryId": "jewelry.bracelets",
+      "imageKey": "jewelry.bracelets",
+      "expectedPath": "assets/e2b-ref/orbs/jewelry_bracelets.png",
+      "loadedUrl": "http://127.0.0.1:51866/assets/e2b-ref/orbs/jewelry_bracelets.png",
+      "httpStatus": 200,
+      "bytes": 1029414,
+      "pngMagic": true,
+      "result": "PASS"
+    },
+    {
+      "categoryId": "jewelry.earrings",
+      "imageKey": "jewelry.earrings",
+      "expectedPath": "assets/e2b-ref/orbs/jewelry_earrings.png",
+      "loadedUrl": "http://127.0.0.1:51866/assets/e2b-ref/orbs/jewelry_earrings.png",
+      "httpStatus": 200,
+      "bytes": 1038147,
+      "pngMagic": true,
+      "result": "PASS"
+    },
+    {
+      "categoryId": "children",
+      "imageKey": "children",
+      "expectedPath": "assets/e2b-ref/orbs/children.png",
+      "loadedUrl": "http://127.0.0.1:51866/assets/e2b-ref/orbs/children.png",
+      "httpStatus": 200,
+      "bytes": 1162455,
+      "pngMagic": true,
+      "result": "PASS"
+    },
+    {
+      "categoryId": "children.clothes",
+      "imageKey": "children.clothes",
+      "expectedPath": "assets/e2b-ref/orbs/children_clothes.png",
+      "loadedUrl": "http://127.0.0.1:51866/assets/e2b-ref/orbs/children_clothes.png",
+      "httpStatus": 200,
+      "bytes": 1239000,
+      "pngMagic": true,
+      "result": "PASS"
+    },
+    {
+      "categoryId": "children.shoes",
+      "imageKey": "children.shoes",
+      "expectedPath": "assets/e2b-ref/orbs/children_shoes.png",
+      "loadedUrl": "http://127.0.0.1:51866/assets/e2b-ref/orbs/children_shoes.png",
+      "httpStatus": 200,
+      "bytes": 1063245,
+      "pngMagic": true,
+      "result": "PASS"
+    },
+    {
+      "categoryId": "children.newborn",
+      "imageKey": "children.newborn",
+      "expectedPath": "assets/e2b-ref/orbs/children_newborn.png",
+      "loadedUrl": "http://127.0.0.1:51866/assets/e2b-ref/orbs/children_newborn.png",
+      "httpStatus": 200,
+      "bytes": 1092422,
+      "pngMagic": true,
+      "result": "PASS"
+    },
+    {
+      "categoryId": "occasions",
+      "imageKey": "occasions",
+      "expectedPath": "assets/e2b-ref/orbs/occasions.png",
+      "loadedUrl": "http://127.0.0.1:51866/assets/e2b-ref/orbs/occasions.png",
+      "httpStatus": 200,
+      "bytes": 1037152,
+      "pngMagic": true,
+      "result": "PASS"
+    },
+    {
+      "categoryId": "occasions.favors",
+      "imageKey": "occasions.favors",
+      "expectedPath": "assets/e2b-ref/orbs/occasions_favors.png",
+      "loadedUrl": "http://127.0.0.1:51866/assets/e2b-ref/orbs/occasions_favors.png",
+      "httpStatus": 200,
+      "bytes": 1090318,
+      "pngMagic": true,
+      "result": "PASS"
+    },
+    {
+      "categoryId": "occasions.decor",
+      "imageKey": "occasions.decor",
+      "expectedPath": "assets/e2b-ref/orbs/occasions_decor.png",
+      "loadedUrl": "http://127.0.0.1:51866/assets/e2b-ref/orbs/occasions_decor.png",
+      "httpStatus": 200,
+      "bytes": 1229833,
+      "pngMagic": true,
+      "result": "PASS"
+    },
+    {
+      "categoryId": "occasions.styling",
+      "imageKey": "occasions.styling",
+      "expectedPath": "assets/e2b-ref/orbs/occasions_styling.png",
+      "loadedUrl": "http://127.0.0.1:51866/assets/e2b-ref/orbs/occasions_styling.png",
+      "httpStatus": 200,
+      "bytes": 1320209,
+      "pngMagic": true,
+      "result": "PASS"
+    },
+    {
+      "categoryId": "gifts",
+      "imageKey": "gifts",
+      "expectedPath": "assets/e2b-ref/orbs/gifts.png",
+      "loadedUrl": "http://127.0.0.1:51866/assets/e2b-ref/orbs/gifts.png",
+      "httpStatus": 200,
+      "bytes": 905713,
+      "pngMagic": true,
+      "result": "PASS"
+    },
+    {
+      "categoryId": "gifts.boxes",
+      "imageKey": "gifts.boxes",
+      "expectedPath": "assets/e2b-ref/orbs/gifts_boxes.png",
+      "loadedUrl": "http://127.0.0.1:51866/assets/e2b-ref/orbs/gifts_boxes.png",
+      "httpStatus": 200,
+      "bytes": 866616,
+      "pngMagic": true,
+      "result": "PASS"
+    }
+  ]
+}

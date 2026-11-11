@@ -69,12 +69,20 @@ abstract final class MarketplaceRoutes {
       case AppRoutes.discover:
         return PremiumPageRoute(page: const DiscoverHubScreen(), settings: settings);
       case AppRoutes.discoverPresentation:
+        // Lane argument always opens the real presentation screen (home orbit + side menu).
+        // Without a lane, keep the legacy hub fallback when marketplace is off.
+        if (settings.arguments is DiscoverLane) {
+          final lane = settings.arguments! as DiscoverLane;
+          return PremiumPageRoute(
+            page: DiscoverPresentationScreen(lane: lane),
+            settings: settings,
+          );
+        }
         if (!MiraFeatures.marketplaceEnabled) {
           return PremiumPageRoute(page: const DiscoverHubScreen(), settings: settings);
         }
-        final lane = settings.arguments is DiscoverLane ? settings.arguments as DiscoverLane : DiscoverLane.elegance;
         return PremiumPageRoute(
-          page: DiscoverPresentationScreen(lane: lane),
+          page: const DiscoverPresentationScreen(lane: DiscoverLane.elegance),
           settings: settings,
         );
       case AppRoutes.discoverList:
