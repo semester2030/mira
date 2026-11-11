@@ -1,5 +1,6 @@
 import { Injectable } from '@nestjs/common';
 import { TaxonomyService } from '../../marketplace/taxonomy/taxonomy.service';
+import { resolveJewelryCapabilityActivity } from '../../marketplace/taxonomy/jewelry-material.policy';
 import { RegistryService } from '../registry/registry.service';
 import type { ActivityDef } from './partner-activities.types';
 
@@ -33,6 +34,8 @@ export class PartnerActivitiesCatalog {
         // Parent group nodes have children — not selectable grants.
         if (Array.isArray(node.children) && node.children.length > 0) continue;
         if (node.writeEnabled === false) continue;
+        // Jewelry piece leaves are product subcategories; metal capabilities are grantOnly.
+        // Both are selectable activities. grantOnly pieces stay out of editor orbs (client filter).
 
         const parent = node.parentId ? byId.get(node.parentId) : null;
         const group =
@@ -96,16 +99,31 @@ export class PartnerActivitiesCatalog {
     subcategory?: string | null;
     category?: string | null;
     profileId?: string | null;
+    /** Jewelry: metal/stones drive jewelry.cap.* grants (piece leaf is taxonomy only). */
+    attributes?: Record<string, unknown> | null;
   }): string | null {
     const map = this.asMap();
     const sub = typeof input.subcategory === 'string' ? input.subcategory.trim() : '';
+    const cat = typeof input.category === 'string' ? input.category.trim() : '';
+    const isJewelry =
+      cat === 'jewelry' ||
+      sub.startsWith('jewelry.') ||
+      input.profileId === 'product.jewelry';
+
+    if (isJewelry && input.kind === 'product') {
+      const cap = resolveJewelryCapabilityActivity(input.attributes ?? null);
+      if (cap && map.has(cap)) return cap;
+      // Piece leaf may still be granted for partners who selected piece activities.
+      if (sub && map.has(sub) && !String(sub).startsWith('jewelry.cap.')) return sub;
+      return cap;
+    }
+
     if (sub && map.has(sub)) return sub;
     const profile = typeof input.profileId === 'string' ? input.profileId.trim() : '';
     if (profile && map.has(profile)) return profile;
-    // Fallback: any leaf under category parent that matches profile — prefer explicit subcategory.
-    if (sub) return sub;
-    if (profile) return profile;
-    const cat = typeof input.category === 'string' ? input.category.trim() : '';
-    return cat || null;
+    // Unknown leaf/profile must not soft-pass as a fake activity id.
+    if (sub) return null;
+    if (cat && map.has(cat)) return cat;
+    return null;
   }
 }

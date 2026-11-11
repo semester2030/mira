@@ -1,0 +1,64 @@
+{
+  "schemaVersion": 1,
+  "definitionsVersion": 1,
+  "notes": "Mira jewelry material policy. steel/brass/copper/unknown rejected as base. silver_gold_plated is silver only. Lab diamond & plated silver require explicit admin flags.",
+  "allowedBaseMetals": [
+    "gold",
+    "silver",
+    "silver_gold_plated"
+  ],
+  "rejectedBaseMetals": [
+    "steel",
+    "brass",
+    "copper",
+    "unknown",
+    "other",
+    "platinum"
+  ],
+  "goldFilterMetals": [
+    "gold"
+  ],
+  "silverFilterMetals": [
+    "silver",
+    "silver_gold_plated"
+  ],
+  "adminFlags": {
+    "allowSilverGoldPlated": {
+      "default": false,
+      "labelAr": "قبول فضة مطلية بالذهب"
+    },
+    "allowLabDiamond": {
+      "default": false,
+      "labelAr": "قبول ألماس مختبري"
+    }
+  },
+  "diamondKinds": {
+    "natural": {
+      "labelAr": "طبيعي",
+      "countsAsDiamond": true
+    },
+    "lab": {
+      "labelAr": "مختبري",
+      "countsAsDiamond": true,
+      "requiresFlag": "allowLabDiamond"
+    },
+    "moissanite": {
+      "labelAr": "مويسانيت",
+      "countsAsDiamond": false
+    },
+    "cubic_zirconia": {
+      "labelAr": "زركونيا مكعبة",
+      "countsAsDiamond": false
+    }
+  },
+  "outOfScope": [
+    "platinum",
+    "coins",
+    "loose_stones",
+    "watches",
+    "used"
+  ],
+  "saudiHallmarkSource": null,
+  "saudiHallmarkVerifiedAt": null,
+  "saudiHallmarkNoteAr": "قبل تفعيل البيع طابقي العيارات والدمغة والفاتورة مع اللائحة السعودية النافذة؛ لا تعتمد مسودة استطلاع كنص نهائي."
+}

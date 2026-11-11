@@ -1101,13 +1101,13 @@
     },
     "weightG": {
       "id": "weightG",
-      "labelAr": "الوزن",
+      "labelAr": "الوزن الإجمالي (غرام)",
       "type": "number",
       "widget": "number",
       "unit": "g",
       "values": [],
-      "filter": null,
-      "currentStatus": "PROPOSED",
+      "filter": "weightG",
+      "currentStatus": "ATTRIBUTES_JSON",
       "draftRequired": false,
       "publishRequiredWhen": "optional",
       "source": "partner",
@@ -2080,8 +2080,7 @@
       "values": [
         "gold",
         "silver",
-        "steel",
-        "other"
+        "silver_gold_plated"
       ],
       "filter": "metal",
       "currentStatus": "ATTRIBUTES_JSON",
@@ -2098,12 +2097,15 @@
       "publicWhen": "published and applicable",
       "searchable": false,
       "unknownHandling": "omit from facets; never infer false, zero or stock",
-      "evidence": "RC2 design decision",
+      "evidence": "jewelry material policy — steel/brass rejected as base",
       "valueLabels": {
-        "gold": "ذهبي",
-        "silver": "فضي",
-        "steel": "ستانلس ستيل",
-        "other": "أخرى"
+        "gold": "ذهب",
+        "silver": "فضة",
+        "silver_gold_plated": "فضة مطلية بالذهب",
+        "steel": "ستانلس ستيل (مرفوض)",
+        "other": "أخرى (مرفوض)",
+        "brass": "نحاس (مرفوض)",
+        "copper": "نحاس أحمر (مرفوض)"
       }
     },
     "purityKarat": {
@@ -2116,7 +2118,9 @@
         "18",
         "21",
         "22",
-        "24"
+        "24",
+        "925",
+        "999"
       ],
       "filter": "purity",
       "currentStatus": "ATTRIBUTES_JSON",
@@ -2128,7 +2132,14 @@
       "default": null,
       "min": null,
       "max": null,
-      "dependsOn": null,
+      "dependsOn": {
+        "field": "metal",
+        "includes": [
+          "gold",
+          "silver",
+          "silver_gold_plated"
+        ]
+      },
       "storage": "attributes.purityKarat",
       "publicWhen": "published and applicable",
       "searchable": false,
@@ -2138,7 +2149,9 @@
         "18": "18",
         "21": "21",
         "22": "22",
-        "24": "24"
+        "24": "24",
+        "925": "925",
+        "999": "999"
       }
     },
     "ringSizeSystem": {
@@ -5299,10 +5312,14 @@
       "widget": "chips",
       "unit": null,
       "values": [
+        "engagement",
+        "milka",
         "wedding",
+        "henna",
         "graduation",
-        "birthday",
         "baby_shower",
+        "birthday",
+        "family",
         "private"
       ],
       "filter": "occasionType",
@@ -5320,14 +5337,181 @@
       "publicWhen": "published and applicable",
       "searchable": false,
       "unknownHandling": "omit from facets; never infer false, zero or stock",
-      "evidence": "independent lane entries plan",
+      "evidence": "occasions/gifts reorg — multi-select occasions independent of activity branch",
       "valueLabels": {
-        "wedding": "زفاف",
+        "engagement": "خطوبة",
+        "milka": "مِلكة / عقد قران",
+        "wedding": "زواج",
+        "henna": "حنّة / غمرة",
         "graduation": "تخرج",
-        "birthday": "ميلاد",
-        "baby_shower": "احتفال بالمولود",
-        "private": "مناسبة خاصة"
+        "baby_shower": "استقبال مولود",
+        "birthday": "عيد ميلاد",
+        "family": "اجتماع عائلي",
+        "private": "أخرى"
       }
+    },
+    "hostessCount": {
+      "id": "hostessCount",
+      "labelAr": "عدد المضيفات / الصبّابات",
+      "type": "number",
+      "widget": "number",
+      "unit": null,
+      "values": [],
+      "filter": "hostessCount",
+      "currentStatus": "ATTRIBUTES_JSON",
+      "draftRequired": false,
+      "publishRequiredWhen": "optional",
+      "source": "partner",
+      "editable": true,
+      "nullMeaning": "unspecified",
+      "default": null,
+      "min": 1,
+      "max": 50,
+      "dependsOn": {
+        "field": "subcategory",
+        "includes": [
+          "occasions.hospitality"
+        ]
+      },
+      "storage": "attributes.hostessCount",
+      "publicWhen": "published and applicable",
+      "searchable": false,
+      "unknownHandling": "omit",
+      "evidence": "occasions hospitality branch",
+      "valueLabels": {}
+    },
+    "serviceHours": {
+      "id": "serviceHours",
+      "labelAr": "عدد الساعات",
+      "type": "number",
+      "widget": "number",
+      "unit": "ساعة",
+      "values": [],
+      "filter": null,
+      "currentStatus": "ATTRIBUTES_JSON",
+      "draftRequired": false,
+      "publishRequiredWhen": "optional",
+      "source": "partner",
+      "editable": true,
+      "nullMeaning": "unspecified",
+      "default": null,
+      "min": 1,
+      "max": 24,
+      "dependsOn": {
+        "field": "subcategory",
+        "includes": [
+          "occasions.hospitality",
+          "occasions.buffet",
+          "occasions.perfume_corner",
+          "occasions.photography"
+        ]
+      },
+      "storage": "attributes.serviceHours",
+      "publicWhen": "published and applicable",
+      "searchable": false,
+      "unknownHandling": "omit",
+      "evidence": "occasions hospitality/buffet",
+      "valueLabels": {}
+    },
+    "packageIncludes": {
+      "id": "packageIncludes",
+      "labelAr": "ما تشمله الباقة",
+      "type": "string",
+      "widget": "textarea",
+      "unit": null,
+      "values": [],
+      "filter": null,
+      "currentStatus": "ATTRIBUTES_JSON",
+      "draftRequired": false,
+      "publishRequiredWhen": "optional",
+      "source": "partner",
+      "editable": true,
+      "nullMeaning": "unspecified",
+      "default": null,
+      "min": 2,
+      "max": 2000,
+      "dependsOn": {
+        "field": "subcategory",
+        "includes": [
+          "occasions.packages"
+        ]
+      },
+      "storage": "attributes.packageIncludes",
+      "publicWhen": "published and applicable",
+      "searchable": true,
+      "unknownHandling": "omit",
+      "evidence": "occasions packages — does not grant sibling leaves",
+      "valueLabels": {}
+    },
+    "buffetServingType": {
+      "id": "buffetServingType",
+      "labelAr": "نوع التقديم",
+      "type": "enum",
+      "widget": "select",
+      "unit": null,
+      "values": [
+        "buffet",
+        "stations",
+        "passed",
+        "seated"
+      ],
+      "filter": "buffetServingType",
+      "currentStatus": "ATTRIBUTES_JSON",
+      "draftRequired": false,
+      "publishRequiredWhen": "optional",
+      "source": "partner",
+      "editable": true,
+      "nullMeaning": "unspecified",
+      "default": null,
+      "min": null,
+      "max": null,
+      "dependsOn": {
+        "field": "subcategory",
+        "includes": [
+          "occasions.buffet"
+        ]
+      },
+      "storage": "attributes.buffetServingType",
+      "publicWhen": "published and applicable",
+      "searchable": false,
+      "unknownHandling": "omit",
+      "evidence": "occasions buffet branch",
+      "valueLabels": {
+        "buffet": "بوفيه مفتوح",
+        "stations": "أركان",
+        "passed": "تمرير",
+        "seated": "جلسات"
+      }
+    },
+    "sameDayDelivery": {
+      "id": "sameDayDelivery",
+      "labelAr": "توصيل اليوم متاح",
+      "type": "boolean",
+      "widget": "toggle",
+      "unit": null,
+      "values": [],
+      "filter": "sameDayDelivery",
+      "currentStatus": "ATTRIBUTES_JSON",
+      "draftRequired": false,
+      "publishRequiredWhen": "optional",
+      "source": "partner",
+      "editable": true,
+      "nullMeaning": "unspecified",
+      "default": null,
+      "min": null,
+      "max": null,
+      "dependsOn": {
+        "field": "category",
+        "includes": [
+          "gifts"
+        ]
+      },
+      "storage": "attributes.sameDayDelivery",
+      "publicWhen": "published and applicable",
+      "searchable": false,
+      "unknownHandling": "omit",
+      "evidence": "gifts same-day delivery filter",
+      "valueLabels": {}
     },
     "occasionServiceOffer": {
       "id": "occasionServiceOffer",
@@ -5338,7 +5522,13 @@
       "values": [
         "full_planning",
         "styling_decor",
-        "hospitality"
+        "hospitality",
+        "buffet",
+        "arches",
+        "perfume_corner",
+        "furniture_rental",
+        "photography",
+        "tables_decor"
       ],
       "filter": "occasionServiceOffer",
       "currentStatus": "ATTRIBUTES_JSON",
@@ -5359,7 +5549,702 @@
       "valueLabels": {
         "full_planning": "تنظيم كامل",
         "styling_decor": "تنسيق وديكور",
-        "hospitality": "ضيافة"
+        "hospitality": "ضيافة / صبّابات",
+        "buffet": "بوفيه وأركان",
+        "arches": "كوش ومداخل",
+        "perfume_corner": "ركن عطور وبخور",
+        "furniture_rental": "تأجير أثاث",
+        "photography": "تصوير وتجارب",
+        "tables_decor": "تنسيق طاولات"
+      }
+    },
+    "pieceStyle": {
+      "id": "pieceStyle",
+      "labelAr": "نوع القطعة التفصيلي",
+      "type": "enum",
+      "widget": "select",
+      "unit": null,
+      "values": [
+        "anklet",
+        "armband",
+        "bangle",
+        "bracelet_charm",
+        "brooch",
+        "center_stone",
+        "chain",
+        "charms",
+        "choker",
+        "clip",
+        "drop",
+        "ear_cuff",
+        "full_set",
+        "half_set",
+        "hand_chain",
+        "headpiece",
+        "hoop",
+        "layers",
+        "letter",
+        "long",
+        "medallion",
+        "mesh",
+        "name",
+        "nose_ring",
+        "nose_stud",
+        "open",
+        "paved",
+        "pearl_stones",
+        "pendant_chain",
+        "plain",
+        "plain_chain",
+        "set",
+        "solitaire",
+        "stone",
+        "stud",
+        "tennis",
+        "twins",
+        "waist",
+        "wedding_band"
+      ],
+      "filter": "pieceStyle",
+      "currentStatus": "ATTRIBUTES_JSON",
+      "draftRequired": false,
+      "publishRequiredWhen": "optional",
+      "source": "partner",
+      "editable": true,
+      "nullMeaning": "unspecified",
+      "default": null,
+      "min": null,
+      "max": null,
+      "dependsOn": null,
+      "storage": "attributes.pieceStyle",
+      "publicWhen": "published and applicable",
+      "searchable": true,
+      "unknownHandling": "omit",
+      "evidence": "jewelry reorg",
+      "valueLabels": {
+        "plain": "سادة",
+        "wedding_band": "دبلة",
+        "solitaire": "سوليتير",
+        "twins": "توينز",
+        "paved": "محبس مرصع",
+        "center_stone": "حجر مركزي",
+        "chain": "سلسلة",
+        "bangle": "بنجرة/غويشة صلبة",
+        "open": "مفتوحة",
+        "tennis": "تنس",
+        "name": "اسم",
+        "charms": "تعليقات",
+        "set": "مجموعة",
+        "plain_chain": "سلسلة سادة",
+        "pendant_chain": "سلسلة بتعليقة",
+        "choker": "شوكر",
+        "long": "طويل",
+        "layers": "طبقات",
+        "pearl_stones": "لؤلؤ أو أحجار",
+        "letter": "حرف",
+        "medallion": "ميدالية",
+        "stone": "حجر",
+        "bracelet_charm": "تعليقة سوار",
+        "stud": "مسمار",
+        "hoop": "دائري",
+        "drop": "متدلٍ",
+        "clip": "مشبك",
+        "ear_cuff": "كف أذن",
+        "full_set": "طقم كامل",
+        "half_set": "نصف طقم",
+        "mesh": "شبكة",
+        "hand_chain": "كف",
+        "anklet": "خلخال",
+        "nose_ring": "زمام",
+        "nose_stud": "مسمار أنف",
+        "brooch": "بروش",
+        "headpiece": "حلي رأس",
+        "waist": "حلي خصر",
+        "armband": "حلي عضد"
+      }
+    },
+    "metalColor": {
+      "id": "metalColor",
+      "labelAr": "لون المعدن",
+      "type": "enum",
+      "widget": "select",
+      "unit": null,
+      "values": [
+        "yellow",
+        "white",
+        "rose"
+      ],
+      "filter": "metalColor",
+      "currentStatus": "ATTRIBUTES_JSON",
+      "draftRequired": false,
+      "publishRequiredWhen": "optional",
+      "source": "partner",
+      "editable": true,
+      "nullMeaning": "unspecified",
+      "default": null,
+      "min": null,
+      "max": null,
+      "dependsOn": {
+        "field": "metal",
+        "includes": [
+          "gold"
+        ]
+      },
+      "storage": "attributes.metalColor",
+      "publicWhen": "published and applicable",
+      "searchable": false,
+      "unknownHandling": "omit",
+      "evidence": "jewelry reorg",
+      "valueLabels": {
+        "yellow": "أصفر",
+        "white": "أبيض",
+        "rose": "وردي"
+      }
+    },
+    "metalsSecondary": {
+      "id": "metalsSecondary",
+      "labelAr": "معادن ثمينة إضافية",
+      "type": "array",
+      "widget": "chips",
+      "unit": null,
+      "values": [
+        "gold",
+        "silver"
+      ],
+      "filter": null,
+      "currentStatus": "ATTRIBUTES_JSON",
+      "draftRequired": false,
+      "publishRequiredWhen": "optional",
+      "source": "partner",
+      "editable": true,
+      "nullMeaning": "unspecified",
+      "default": null,
+      "min": null,
+      "max": null,
+      "dependsOn": null,
+      "storage": "attributes.metalsSecondary",
+      "publicWhen": "published and applicable",
+      "searchable": false,
+      "unknownHandling": "omit",
+      "evidence": "jewelry multi-metal",
+      "valueLabels": {
+        "gold": "ذهب",
+        "silver": "فضة"
+      }
+    },
+    "metalWeightG": {
+      "id": "metalWeightG",
+      "labelAr": "وزن المعدن منفردًا (غرام)",
+      "type": "number",
+      "widget": "number",
+      "unit": "g",
+      "values": [],
+      "filter": null,
+      "currentStatus": "ATTRIBUTES_JSON",
+      "draftRequired": false,
+      "publishRequiredWhen": "optional",
+      "source": "partner",
+      "editable": true,
+      "nullMeaning": "unspecified",
+      "default": null,
+      "min": 0,
+      "max": null,
+      "dependsOn": null,
+      "storage": "attributes.metalWeightG",
+      "publicWhen": "published and applicable",
+      "searchable": false,
+      "unknownHandling": "omit",
+      "evidence": "jewelry reorg",
+      "valueLabels": {}
+    },
+    "hallmark": {
+      "id": "hallmark",
+      "labelAr": "الدمغة / بطاقة التعريف",
+      "type": "string",
+      "widget": "text",
+      "unit": null,
+      "values": [],
+      "filter": null,
+      "currentStatus": "ATTRIBUTES_JSON",
+      "draftRequired": false,
+      "publishRequiredWhen": "optional",
+      "source": "partner",
+      "editable": true,
+      "nullMeaning": "unspecified",
+      "default": null,
+      "min": null,
+      "max": 200,
+      "dependsOn": null,
+      "storage": "attributes.hallmark",
+      "publicWhen": "published and applicable",
+      "searchable": false,
+      "unknownHandling": "omit",
+      "evidence": "jewelry saudi disclosure",
+      "valueLabels": {}
+    },
+    "makerOrImporter": {
+      "id": "makerOrImporter",
+      "labelAr": "الصانع أو المستورد",
+      "type": "string",
+      "widget": "text",
+      "unit": null,
+      "values": [],
+      "filter": null,
+      "currentStatus": "ATTRIBUTES_JSON",
+      "draftRequired": false,
+      "publishRequiredWhen": "optional",
+      "source": "partner",
+      "editable": true,
+      "nullMeaning": "unspecified",
+      "default": null,
+      "min": null,
+      "max": 200,
+      "dependsOn": null,
+      "storage": "attributes.makerOrImporter",
+      "publicWhen": "published and applicable",
+      "searchable": false,
+      "unknownHandling": "omit",
+      "evidence": "jewelry saudi disclosure",
+      "valueLabels": {}
+    },
+    "plating": {
+      "id": "plating",
+      "labelAr": "الطلاء إن وجد",
+      "type": "string",
+      "widget": "text",
+      "unit": null,
+      "values": [],
+      "filter": null,
+      "currentStatus": "ATTRIBUTES_JSON",
+      "draftRequired": false,
+      "publishRequiredWhen": "optional",
+      "source": "partner",
+      "editable": true,
+      "nullMeaning": "unspecified",
+      "default": null,
+      "min": null,
+      "max": 200,
+      "dependsOn": {
+        "field": "metal",
+        "includes": [
+          "silver_gold_plated",
+          "silver"
+        ]
+      },
+      "storage": "attributes.plating",
+      "publicWhen": "published and applicable",
+      "searchable": false,
+      "unknownHandling": "omit",
+      "evidence": "jewelry plated silver",
+      "valueLabels": {}
+    },
+    "sellUnit": {
+      "id": "sellUnit",
+      "labelAr": "وحدة البيع",
+      "type": "enum",
+      "widget": "select",
+      "unit": null,
+      "values": [
+        "piece",
+        "pair",
+        "set"
+      ],
+      "filter": "sellUnit",
+      "currentStatus": "ATTRIBUTES_JSON",
+      "draftRequired": false,
+      "publishRequiredWhen": "optional",
+      "source": "partner",
+      "editable": true,
+      "nullMeaning": "unspecified",
+      "default": null,
+      "min": null,
+      "max": null,
+      "dependsOn": null,
+      "storage": "attributes.sellUnit",
+      "publicWhen": "published and applicable",
+      "searchable": false,
+      "unknownHandling": "omit",
+      "evidence": "jewelry bangle vs set",
+      "valueLabels": {
+        "piece": "بالحبة",
+        "pair": "زوج",
+        "set": "طقم/مجموعة"
+      }
+    },
+    "discoveryTraits": {
+      "id": "discoveryTraits",
+      "labelAr": "صفات الاكتشاف",
+      "type": "array",
+      "widget": "chips",
+      "unit": null,
+      "values": [
+        "bridal",
+        "newborn",
+        "gift",
+        "heritage",
+        "named"
+      ],
+      "filter": "discoveryTraits",
+      "currentStatus": "ATTRIBUTES_JSON",
+      "draftRequired": false,
+      "publishRequiredWhen": "optional",
+      "source": "partner",
+      "editable": true,
+      "nullMeaning": "unspecified",
+      "default": null,
+      "min": null,
+      "max": null,
+      "dependsOn": null,
+      "storage": "attributes.discoveryTraits",
+      "publicWhen": "published and applicable",
+      "searchable": true,
+      "unknownHandling": "omit",
+      "evidence": "jewelry discovery traits not products",
+      "valueLabels": {
+        "bridal": "عروس",
+        "newborn": "مولود",
+        "gift": "هدية",
+        "heritage": "تراثي",
+        "named": "بالاسم"
+      }
+    },
+    "stoneTypes": {
+      "id": "stoneTypes",
+      "labelAr": "أنواع الأحجار في القطعة",
+      "type": "array",
+      "widget": "chips",
+      "unit": null,
+      "values": [
+        "diamond",
+        "emerald",
+        "ruby",
+        "sapphire",
+        "pearl",
+        "other"
+      ],
+      "filter": "stoneTypes",
+      "currentStatus": "ATTRIBUTES_JSON",
+      "draftRequired": false,
+      "publishRequiredWhen": "optional",
+      "source": "partner",
+      "editable": true,
+      "nullMeaning": "unspecified",
+      "default": null,
+      "min": null,
+      "max": null,
+      "dependsOn": null,
+      "storage": "attributes.stoneTypes",
+      "publicWhen": "published and applicable",
+      "searchable": true,
+      "unknownHandling": "omit",
+      "evidence": "jewelry multi-stone",
+      "valueLabels": {
+        "diamond": "ألماس",
+        "emerald": "زمرد",
+        "ruby": "ياقوت",
+        "sapphire": "صفير",
+        "pearl": "لؤلؤ",
+        "other": "أخرى"
+      }
+    },
+    "diamondOrigin": {
+      "id": "diamondOrigin",
+      "labelAr": "أصل الألماس",
+      "type": "enum",
+      "widget": "select",
+      "unit": null,
+      "values": [
+        "natural",
+        "lab"
+      ],
+      "filter": "diamondOrigin",
+      "currentStatus": "ATTRIBUTES_JSON",
+      "draftRequired": false,
+      "publishRequiredWhen": "optional",
+      "source": "partner",
+      "editable": true,
+      "nullMeaning": "unspecified",
+      "default": null,
+      "min": null,
+      "max": null,
+      "dependsOn": {
+        "field": "stoneTypes",
+        "includes": [
+          "diamond"
+        ]
+      },
+      "storage": "attributes.diamondOrigin",
+      "publicWhen": "published and applicable",
+      "searchable": false,
+      "unknownHandling": "omit",
+      "evidence": "jewelry lab diamond flag",
+      "valueLabels": {
+        "natural": "طبيعي",
+        "lab": "مختبري"
+      }
+    },
+    "diamondRole": {
+      "id": "diamondRole",
+      "labelAr": "دور الألماس",
+      "type": "enum",
+      "widget": "select",
+      "unit": null,
+      "values": [
+        "center",
+        "side",
+        "both"
+      ],
+      "filter": "diamondRole",
+      "currentStatus": "ATTRIBUTES_JSON",
+      "draftRequired": false,
+      "publishRequiredWhen": "optional",
+      "source": "partner",
+      "editable": true,
+      "nullMeaning": "unspecified",
+      "default": null,
+      "min": null,
+      "max": null,
+      "dependsOn": {
+        "field": "stoneTypes",
+        "includes": [
+          "diamond"
+        ]
+      },
+      "storage": "attributes.diamondRole",
+      "publicWhen": "published and applicable",
+      "searchable": false,
+      "unknownHandling": "omit",
+      "evidence": "jewelry diamond center filter",
+      "valueLabels": {
+        "center": "مركزي",
+        "side": "جانبي",
+        "both": "مركزي وجانبي"
+      }
+    },
+    "diamondCenterCarat": {
+      "id": "diamondCenterCarat",
+      "labelAr": "وزن الحجر المركزي (قيراط)",
+      "type": "number",
+      "widget": "number",
+      "unit": "ct",
+      "values": [],
+      "filter": "diamondCenterCarat",
+      "currentStatus": "ATTRIBUTES_JSON",
+      "draftRequired": false,
+      "publishRequiredWhen": "optional",
+      "source": "partner",
+      "editable": true,
+      "nullMeaning": "unspecified",
+      "default": null,
+      "min": 0,
+      "max": 50,
+      "dependsOn": {
+        "field": "stoneTypes",
+        "includes": [
+          "diamond"
+        ]
+      },
+      "storage": "attributes.diamondCenterCarat",
+      "publicWhen": "published and applicable",
+      "searchable": false,
+      "unknownHandling": "omit",
+      "evidence": "jewelry center carat independent of total",
+      "valueLabels": {}
+    },
+    "diamondTotalCarat": {
+      "id": "diamondTotalCarat",
+      "labelAr": "إجمالي وزن الألماس (قيراط)",
+      "type": "number",
+      "widget": "number",
+      "unit": "ct",
+      "values": [],
+      "filter": null,
+      "currentStatus": "ATTRIBUTES_JSON",
+      "draftRequired": false,
+      "publishRequiredWhen": "optional",
+      "source": "partner",
+      "editable": true,
+      "nullMeaning": "unspecified",
+      "default": null,
+      "min": 0,
+      "max": 100,
+      "dependsOn": {
+        "field": "stoneTypes",
+        "includes": [
+          "diamond"
+        ]
+      },
+      "storage": "attributes.diamondTotalCarat",
+      "publicWhen": "published and applicable",
+      "searchable": false,
+      "unknownHandling": "omit",
+      "evidence": "jewelry total carat independent",
+      "valueLabels": {}
+    },
+    "stonesJson": {
+      "id": "stonesJson",
+      "labelAr": "بطاقات الأحجار واللؤلؤ",
+      "type": "json",
+      "widget": "json",
+      "unit": null,
+      "values": [],
+      "filter": null,
+      "currentStatus": "ATTRIBUTES_JSON",
+      "draftRequired": false,
+      "publishRequiredWhen": "optional",
+      "source": "partner",
+      "editable": true,
+      "nullMeaning": "unspecified",
+      "default": null,
+      "min": null,
+      "max": null,
+      "dependsOn": null,
+      "storage": "attributes.stonesJson",
+      "publicWhen": "published and applicable",
+      "searchable": false,
+      "unknownHandling": "omit",
+      "evidence": "jewelry repeatable stone cards",
+      "valueLabels": {}
+    },
+    "setComponentsJson": {
+      "id": "setComponentsJson",
+      "labelAr": "مكونات الطقم الفعلية",
+      "type": "json",
+      "widget": "json",
+      "unit": null,
+      "values": [],
+      "filter": null,
+      "currentStatus": "ATTRIBUTES_JSON",
+      "draftRequired": false,
+      "publishRequiredWhen": "optional",
+      "source": "partner",
+      "editable": true,
+      "nullMeaning": "unspecified",
+      "default": null,
+      "min": null,
+      "max": null,
+      "dependsOn": {
+        "field": "subcategory",
+        "includes": [
+          "jewelry.sets"
+        ]
+      },
+      "storage": "attributes.setComponentsJson",
+      "publicWhen": "published and applicable",
+      "searchable": false,
+      "unknownHandling": "omit",
+      "evidence": "jewelry sets no assumed components",
+      "valueLabels": {}
+    },
+    "braceletInnerDiameterMm": {
+      "id": "braceletInnerDiameterMm",
+      "labelAr": "القطر الداخلي (مم)",
+      "type": "number",
+      "widget": "number",
+      "unit": "mm",
+      "values": [],
+      "filter": "braceletInnerDiameterMm",
+      "currentStatus": "ATTRIBUTES_JSON",
+      "draftRequired": false,
+      "publishRequiredWhen": "optional",
+      "source": "partner",
+      "editable": true,
+      "nullMeaning": "unspecified",
+      "default": null,
+      "min": 10,
+      "max": 120,
+      "dependsOn": {
+        "field": "subcategory",
+        "includes": [
+          "jewelry.bracelets"
+        ]
+      },
+      "storage": "attributes.braceletInnerDiameterMm",
+      "publicWhen": "published and applicable",
+      "searchable": false,
+      "unknownHandling": "omit",
+      "evidence": "jewelry bangle filter",
+      "valueLabels": {}
+    },
+    "engravingText": {
+      "id": "engravingText",
+      "labelAr": "نص التخصيص / الاسم",
+      "type": "string",
+      "widget": "text",
+      "unit": null,
+      "values": [],
+      "filter": null,
+      "currentStatus": "ATTRIBUTES_JSON",
+      "draftRequired": false,
+      "publishRequiredWhen": "optional",
+      "source": "partner",
+      "editable": true,
+      "nullMeaning": "unspecified",
+      "default": null,
+      "min": null,
+      "max": 120,
+      "dependsOn": null,
+      "storage": "attributes.engravingText",
+      "publicWhen": "published and applicable",
+      "searchable": false,
+      "unknownHandling": "omit",
+      "evidence": "jewelry named newborn",
+      "valueLabels": {}
+    },
+    "engravingLeadDays": {
+      "id": "engravingLeadDays",
+      "labelAr": "مدة التجهيز للنقش (أيام)",
+      "type": "number",
+      "widget": "number",
+      "unit": "يوم",
+      "values": [],
+      "filter": null,
+      "currentStatus": "ATTRIBUTES_JSON",
+      "draftRequired": false,
+      "publishRequiredWhen": "optional",
+      "source": "partner",
+      "editable": true,
+      "nullMeaning": "unspecified",
+      "default": null,
+      "min": 0,
+      "max": 90,
+      "dependsOn": null,
+      "storage": "attributes.engravingLeadDays",
+      "publicWhen": "published and applicable",
+      "searchable": false,
+      "unknownHandling": "omit",
+      "evidence": "jewelry named restore",
+      "valueLabels": {}
+    },
+    "fulfillmentReady": {
+      "id": "fulfillmentReady",
+      "labelAr": "جاهزية البيع",
+      "type": "enum",
+      "widget": "select",
+      "unit": null,
+      "values": [
+        "ready",
+        "made_to_order"
+      ],
+      "filter": null,
+      "currentStatus": "ATTRIBUTES_JSON",
+      "draftRequired": false,
+      "publishRequiredWhen": "optional",
+      "source": "partner",
+      "editable": true,
+      "nullMeaning": "unspecified",
+      "default": null,
+      "min": null,
+      "max": null,
+      "dependsOn": null,
+      "storage": "attributes.fulfillmentReady",
+      "publicWhen": "published and applicable",
+      "searchable": false,
+      "unknownHandling": "omit",
+      "evidence": "jewelry ready vs MTO",
+      "valueLabels": {
+        "ready": "جاهزة",
+        "made_to_order": "حسب الطلب"
       }
     }
   },
@@ -7033,7 +7918,29 @@
         "gemstone",
         "personalization",
         "optionsJson",
-        "variantsJson"
+        "variantsJson",
+        "subcategory",
+        "pieceStyle",
+        "metalColor",
+        "metalsSecondary",
+        "metalWeightG",
+        "hallmark",
+        "makerOrImporter",
+        "plating",
+        "sellUnit",
+        "discoveryTraits",
+        "stoneTypes",
+        "diamondOrigin",
+        "diamondRole",
+        "diamondCenterCarat",
+        "diamondTotalCarat",
+        "stonesJson",
+        "setComponentsJson",
+        "braceletInnerDiameterMm",
+        "engravingText",
+        "engravingLeadDays",
+        "fulfillmentReady",
+        "occasionTypeIds"
       ],
       "draftRequired": [],
       "publishRules": "specs/03-JOURNEYS.md#publication",
@@ -7044,9 +7951,87 @@
         "ringSizeSystem",
         "ringSize",
         "gemstone",
-        "personalization"
+        "personalization",
+        "pieceStyle",
+        "metalColor",
+        "stoneTypes",
+        "diamondCenterCarat",
+        "sellUnit",
+        "discoveryTraits"
       ],
-      "schemaVersion": 2
+      "schemaVersion": 2,
+      "fieldOverrides": {
+        "pieceStyle": {
+          "dependsOn": {
+            "field": "subcategory",
+            "includes": [
+              "jewelry.rings",
+              "jewelry.bracelets",
+              "jewelry.necklaces",
+              "jewelry.pendants",
+              "jewelry.earrings",
+              "jewelry.sets",
+              "jewelry.hand_chains",
+              "jewelry.anklets",
+              "jewelry.nose",
+              "jewelry.brooches",
+              "jewelry.head",
+              "jewelry.waist",
+              "jewelry.armband"
+            ]
+          }
+        },
+        "ringSizeSystem": {
+          "dependsOn": {
+            "field": "subcategory",
+            "includes": [
+              "jewelry.rings",
+              "jewelry.hand_chains"
+            ]
+          }
+        },
+        "ringSize": {
+          "dependsOn": {
+            "field": "subcategory",
+            "includes": [
+              "jewelry.rings",
+              "jewelry.hand_chains"
+            ]
+          }
+        },
+        "braceletInnerDiameterMm": {
+          "dependsOn": {
+            "field": "subcategory",
+            "includes": [
+              "jewelry.bracelets"
+            ]
+          }
+        },
+        "setComponentsJson": {
+          "dependsOn": {
+            "field": "subcategory",
+            "includes": [
+              "jewelry.sets"
+            ]
+          }
+        },
+        "metalColor": {
+          "dependsOn": {
+            "field": "metal",
+            "includes": [
+              "gold"
+            ]
+          }
+        },
+        "plating": {
+          "dependsOn": {
+            "field": "metal",
+            "includes": [
+              "silver_gold_plated"
+            ]
+          }
+        }
+      }
     },
     {
       "id": "product.gifts",
@@ -7089,6 +8074,8 @@
         "giftMessage",
         "recipient",
         "personalization",
+        "occasionTypeIds",
+        "sameDayDelivery",
         "optionsJson",
         "variantsJson"
       ],
@@ -7099,6 +8086,8 @@
         "giftMessage",
         "recipient",
         "personalization",
+        "occasionTypeIds",
+        "sameDayDelivery",
         "leadDays"
       ],
       "schemaVersion": 2
@@ -7168,6 +8157,8 @@
         "nameEn",
         "category",
         "descriptionAr",
+        "descriptionDirty",
+        "descriptionPhraseIds",
         "priceMode",
         "priceHalalas",
         "media",
@@ -7206,6 +8197,10 @@
         "guestsMax",
         "setupMinutes",
         "eventRequirements",
+        "hostessCount",
+        "serviceHours",
+        "packageIncludes",
+        "buffetServingType",
         "serviceProfile"
       ],
       "draftRequired": [],
@@ -7215,6 +8210,10 @@
         "occasionServiceOffer",
         "guestsMin",
         "guestsMax",
+        "hostessCount",
+        "serviceHours",
+        "packageIncludes",
+        "buffetServingType",
         "setupMinutes",
         "eventRequirements"
       ],
@@ -7236,6 +8235,41 @@
             "includes": [
               "home",
               "either"
+            ]
+          }
+        },
+        "hostessCount": {
+          "dependsOn": {
+            "field": "subcategory",
+            "includes": [
+              "occasions.hospitality"
+            ]
+          }
+        },
+        "packageIncludes": {
+          "dependsOn": {
+            "field": "subcategory",
+            "includes": [
+              "occasions.packages"
+            ]
+          }
+        },
+        "buffetServingType": {
+          "dependsOn": {
+            "field": "subcategory",
+            "includes": [
+              "occasions.buffet"
+            ]
+          }
+        },
+        "serviceHours": {
+          "dependsOn": {
+            "field": "subcategory",
+            "includes": [
+              "occasions.hospitality",
+              "occasions.buffet",
+              "occasions.perfume_corner",
+              "occasions.photography"
             ]
           }
         }

@@ -46,6 +46,7 @@ import { PolicyError } from './partner-activities/partner-activities.types';
 import { hashPartnerPassword, verifyPartnerPassword } from './partner-password';
 import { assertVariantMediaIdsEligible } from './variant-media-ids';
 import { RegistryService } from './registry/registry.service';
+import { assertJewelryMaterialPolicy } from '../marketplace/taxonomy/jewelry-material.policy';
 
 function newToken(): string {
   return randomBytes(32).toString('hex');
@@ -142,6 +143,7 @@ export class PartnersPortalService implements OnModuleInit {
       profileId?: string | null;
       title: string;
       lineageId: string | null;
+      attributes?: Record<string, unknown> | null;
     },
   ): Promise<{ enforced: boolean; activity: string | null; needsBind: boolean }> {
     if (!this.activities) return { enforced: false, activity: null, needsBind: false };
@@ -150,6 +152,7 @@ export class PartnersPortalService implements OnModuleInit {
       subcategory: fields.subcategory,
       category: fields.category,
       profileId: fields.profileId,
+      attributes: fields.attributes,
     });
     if (!activity) {
       const has = await this.activities.hasGrants(partnerId);
@@ -788,6 +791,23 @@ export class PartnersPortalService implements OnModuleInit {
     const profileId = applied.next.profileId;
     const cosmetic = category === 'face' || category === 'body' || category === 'hair';
     const nameAr = dto.nameAr.trim();
+    const attrsBag =
+      applied.next.attributesJson &&
+      typeof applied.next.attributesJson === 'object' &&
+      !Array.isArray(applied.next.attributesJson)
+        ? (applied.next.attributesJson as Record<string, unknown>)
+        : (dto.attributes as Record<string, unknown> | undefined) ?? null;
+    if (category === 'jewelry' || profileId === 'product.jewelry' || (subcategory && subcategory.startsWith('jewelry.'))) {
+      const violations = assertJewelryMaterialPolicy(attrsBag);
+      if (violations.length) {
+        throw new ForbiddenException({
+          message: violations[0].code,
+          messageAr: violations[0].messageAr,
+          code: violations[0].code,
+          fieldErrors: violations,
+        });
+      }
+    }
 
     const gate = await this.enforceActivityWrite(partnerId, 'product', {
       subcategory,
@@ -795,6 +815,7 @@ export class PartnersPortalService implements OnModuleInit {
       profileId,
       title: nameAr,
       lineageId: null,
+      attributes: attrsBag,
     });
     if (!gate.enforced) {
       if (!partner || !partnerCanCreateKindFromPartner(partner, 'product')) {
@@ -966,13 +987,46 @@ export class PartnersPortalService implements OnModuleInit {
         (typeof data.nameAr === 'string' && data.nameAr) ||
         (typeof data.draftNameAr === 'string' && data.draftNameAr) ||
         current.nameAr;
+      const finalAttrs =
+        (data.attributesJson &&
+        typeof data.attributesJson === 'object' &&
+        !Array.isArray(data.attributesJson)
+          ? (data.attributesJson as Record<string, unknown>)
+          : null) ||
+        (data.draftAttributesJson &&
+        typeof data.draftAttributesJson === 'object' &&
+        !Array.isArray(data.draftAttributesJson)
+          ? (data.draftAttributesJson as Record<string, unknown>)
+          : null) ||
+        (current.attributesJson &&
+        typeof current.attributesJson === 'object' &&
+        !Array.isArray(current.attributesJson)
+          ? (current.attributesJson as Record<string, unknown>)
+          : null);
+      const catForPolicy = typeof category === 'string' ? category : current.category;
+      if (
+        catForPolicy === 'jewelry' ||
+        finalProfile === 'product.jewelry' ||
+        (typeof finalSub === 'string' && finalSub.startsWith('jewelry.'))
+      ) {
+        const violations = assertJewelryMaterialPolicy(finalAttrs);
+        if (violations.length) {
+          throw new ForbiddenException({
+            message: violations[0].code,
+            messageAr: violations[0].messageAr,
+            code: violations[0].code,
+            fieldErrors: violations,
+          });
+        }
+      }
       // Enforce final taxonomy after merge (not the previous leaf).
       await this.enforceActivityWrite(partnerId, 'product', {
         subcategory: finalSub,
-        category: typeof category === 'string' ? category : current.category,
+        category: catForPolicy,
         profileId: finalProfile,
         title: finalTitle,
         lineageId: productId,
+        attributes: finalAttrs,
       });
       const cosmetic = category === 'face' || category === 'body' || category === 'hair';
       if (!cosmetic) {

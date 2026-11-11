@@ -1,11 +1,11 @@
 {
   "schemaVersion": 1,
   "lane": "gifts",
-  "definitionsVersion": 1,
+  "definitionsVersion": 2,
   "compatMinAppBuild": 1,
-  "status": "PHASE1_PREVIEW",
+  "status": "IMPLEMENTED",
   "publicBrowse": false,
-  "notes": "Phase1 gifts boxes; giftEligible cross-list is filter not node.",
+  "notes": "الهدايا: فروع منتج للشراء. المناسبة اختيار متعدد (occasionTypeIds). لا تخلط مع أركان المناسبات القابلة للحجز.",
   "nodes": [
     {
       "id": "gifts_lane.all",
@@ -28,7 +28,12 @@
       "writeEnabled": true,
       "children": [
         "gifts.all",
-        "gifts.boxes"
+        "gifts.flowers",
+        "gifts.boxes",
+        "gifts.chocolate",
+        "gifts.perfume_incense",
+        "gifts.personalized",
+        "gifts.balloons"
       ]
     },
     {
@@ -42,14 +47,75 @@
       "children": []
     },
     {
+      "id": "gifts.flowers",
+      "parentId": "gifts",
+      "labelAr": "الورد والتنسيقات",
+      "sort": 10,
+      "active": true,
+      "imageKey": "gifts.flowers",
+      "profileId": "product.gifts",
+      "writeEnabled": true,
+      "offerKind": "product",
+      "children": []
+    },
+    {
       "id": "gifts.boxes",
       "parentId": "gifts",
-      "labelAr": "صناديق هدايا",
-      "sort": 10,
+      "labelAr": "بوكسات وسلال الهدايا",
+      "sort": 20,
       "active": true,
       "imageKey": "gifts.boxes",
       "profileId": "product.gifts",
       "writeEnabled": true,
+      "offerKind": "product",
+      "children": []
+    },
+    {
+      "id": "gifts.chocolate",
+      "parentId": "gifts",
+      "labelAr": "الشوكولاتة والكيك وضيافة الإهداء",
+      "sort": 30,
+      "active": true,
+      "imageKey": "gifts.chocolate",
+      "profileId": "product.gifts",
+      "writeEnabled": true,
+      "offerKind": "product",
+      "children": []
+    },
+    {
+      "id": "gifts.perfume_incense",
+      "parentId": "gifts",
+      "labelAr": "عطور وبخور للإهداء",
+      "sort": 40,
+      "active": true,
+      "imageKey": "gifts.perfume_incense",
+      "profileId": "product.gifts",
+      "writeEnabled": true,
+      "offerKind": "product",
+      "children": []
+    },
+    {
+      "id": "gifts.personalized",
+      "parentId": "gifts",
+      "labelAr": "هدايا مخصّصة بالاسم",
+      "sort": 50,
+      "active": true,
+      "imageKey": "gifts.personalized",
+      "profileId": "product.gifts",
+      "writeEnabled": true,
+      "offerKind": "product",
+      "children": []
+    },
+    {
+      "id": "gifts.balloons",
+      "parentId": "gifts",
+      "labelAr": "بالونات وإضافات الإهداء",
+      "sort": 60,
+      "active": true,
+      "imageKey": "gifts.balloons",
+      "profileId": "product.gifts",
+      "writeEnabled": true,
+      "offerKind": "product",
       "children": []
     }
   ]

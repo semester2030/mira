@@ -45,8 +45,22 @@
     }
     if (dep.field && Object.prototype.hasOwnProperty.call(ctx, dep.field)) {
       var cur = ctx[dep.field];
-      if (Array.isArray(dep.includes)) return dep.includes.indexOf(cur) >= 0;
-      if (Array.isArray(dep.anyOf)) return dep.anyOf.indexOf(cur) >= 0;
+      if (Array.isArray(dep.includes)) {
+        if (Array.isArray(cur)) {
+          return cur.some(function (v) {
+            return dep.includes.indexOf(v) >= 0;
+          });
+        }
+        return dep.includes.indexOf(cur) >= 0;
+      }
+      if (Array.isArray(dep.anyOf)) {
+        if (Array.isArray(cur)) {
+          return cur.some(function (v) {
+            return dep.anyOf.indexOf(v) >= 0;
+          });
+        }
+        return dep.anyOf.indexOf(cur) >= 0;
+      }
       if (dep.equals != null) return cur === dep.equals;
     }
     return true;
@@ -1548,6 +1562,7 @@
       .filter(function (n) {
         if (!n || !n.id || !n.parentId) return false;
         if (n.browseOnly) return false;
+        if (n.grantOnly) return false;
         if (n.writeEnabled === false) return false;
         if (categoryId && n.parentId !== categoryId) return false;
         return true;

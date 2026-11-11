@@ -1,11 +1,11 @@
 {
   "schemaVersion": 1,
   "lane": "occasions",
-  "definitionsVersion": 1,
+  "definitionsVersion": 3,
   "compatMinAppBuild": 1,
-  "status": "PHASE1_PREVIEW",
+  "status": "IMPLEMENTED",
   "publicBrowse": false,
-  "notes": "Phase1 occasions mixed product/service.",
+  "notes": "مناسباتك: فروع نشاط مستقلة. المناسبات (occasionTypeIds) اختيار متعدد على العرض — ليست نسخًا من الفرع. occasions.decor يبقى منتج ضيافة للبيع (ليس خدمة ديكور). occasions.tables_decor خدمة تنسيق الطاولات والورد. occasions.perfume_corner حجز ركن؛ الهدايا العطرية للبيع تحت gifts.",
   "nodes": [
     {
       "id": "occasions_lane.all",
@@ -14,7 +14,7 @@
       "sort": 0,
       "active": true,
       "browseOnly": true,
-      "imageKey": "occasions.all",
+      "imageKey": "occasions",
       "children": []
     },
     {
@@ -27,9 +27,18 @@
       "writeEnabled": true,
       "children": [
         "occasions.all",
+        "occasions.types",
+        "occasions.packages",
+        "occasions.arches",
+        "occasions.tables_decor",
+        "occasions.hospitality",
+        "occasions.buffet",
+        "occasions.perfume_corner",
+        "occasions.furniture_rental",
+        "occasions.photography",
+        "occasions.styling",
         "occasions.favors",
-        "occasions.decor",
-        "occasions.styling"
+        "occasions.decor"
       ]
     },
     {
@@ -43,10 +52,228 @@
       "children": []
     },
     {
+      "id": "occasions.types",
+      "parentId": "occasions",
+      "labelAr": "نوع المناسبة",
+      "sort": 5,
+      "active": true,
+      "browseOnly": true,
+      "imageKey": "occasions.types",
+      "children": [
+        "occasions.type.engagement",
+        "occasions.type.milka",
+        "occasions.type.wedding",
+        "occasions.type.henna",
+        "occasions.type.graduation",
+        "occasions.type.baby_shower",
+        "occasions.type.birthday",
+        "occasions.type.family",
+        "occasions.type.private"
+      ]
+    },
+    {
+      "id": "occasions.type.engagement",
+      "parentId": "occasions.types",
+      "labelAr": "خطوبة",
+      "sort": 10,
+      "active": true,
+      "browseOnly": true,
+      "imageKey": "occasions.type.engagement",
+      "children": []
+    },
+    {
+      "id": "occasions.type.milka",
+      "parentId": "occasions.types",
+      "labelAr": "مِلكة / عقد قران",
+      "sort": 20,
+      "active": true,
+      "browseOnly": true,
+      "imageKey": "occasions.type.milka",
+      "children": []
+    },
+    {
+      "id": "occasions.type.wedding",
+      "parentId": "occasions.types",
+      "labelAr": "زواج",
+      "sort": 30,
+      "active": true,
+      "browseOnly": true,
+      "imageKey": "occasions.type.wedding",
+      "children": []
+    },
+    {
+      "id": "occasions.type.henna",
+      "parentId": "occasions.types",
+      "labelAr": "حنّة / غمرة",
+      "sort": 40,
+      "active": true,
+      "browseOnly": true,
+      "imageKey": "occasions.type.henna",
+      "children": []
+    },
+    {
+      "id": "occasions.type.graduation",
+      "parentId": "occasions.types",
+      "labelAr": "تخرج",
+      "sort": 50,
+      "active": true,
+      "browseOnly": true,
+      "imageKey": "occasions.type.graduation",
+      "children": []
+    },
+    {
+      "id": "occasions.type.baby_shower",
+      "parentId": "occasions.types",
+      "labelAr": "استقبال مولود",
+      "sort": 60,
+      "active": true,
+      "browseOnly": true,
+      "imageKey": "occasions.type.baby_shower",
+      "children": []
+    },
+    {
+      "id": "occasions.type.birthday",
+      "parentId": "occasions.types",
+      "labelAr": "عيد ميلاد",
+      "sort": 70,
+      "active": true,
+      "browseOnly": true,
+      "imageKey": "occasions.type.birthday",
+      "children": []
+    },
+    {
+      "id": "occasions.type.family",
+      "parentId": "occasions.types",
+      "labelAr": "اجتماع عائلي",
+      "sort": 80,
+      "active": true,
+      "browseOnly": true,
+      "imageKey": "occasions.type.family",
+      "children": []
+    },
+    {
+      "id": "occasions.type.private",
+      "parentId": "occasions.types",
+      "labelAr": "أخرى",
+      "sort": 90,
+      "active": true,
+      "browseOnly": true,
+      "imageKey": "occasions.type.private",
+      "children": []
+    },
+    {
+      "id": "occasions.packages",
+      "parentId": "occasions",
+      "labelAr": "تنظيم وباقات حفلات",
+      "sort": 10,
+      "active": true,
+      "imageKey": "occasions.packages",
+      "profileId": "service.occasions",
+      "writeEnabled": true,
+      "offerKind": "service",
+      "children": []
+    },
+    {
+      "id": "occasions.arches",
+      "parentId": "occasions",
+      "labelAr": "الكوش والمداخل",
+      "sort": 20,
+      "active": true,
+      "imageKey": "occasions.arches",
+      "profileId": "service.occasions",
+      "writeEnabled": true,
+      "offerKind": "service",
+      "children": []
+    },
+    {
+      "id": "occasions.tables_decor",
+      "parentId": "occasions",
+      "labelAr": "تنسيق الطاولات والورد والديكور",
+      "sort": 30,
+      "active": true,
+      "imageKey": "occasions.tables_decor",
+      "profileId": "service.occasions",
+      "writeEnabled": true,
+      "offerKind": "service",
+      "children": []
+    },
+    {
+      "id": "occasions.hospitality",
+      "parentId": "occasions",
+      "labelAr": "الضيافة والاستقبال — صبّابات ومضيفات",
+      "sort": 40,
+      "active": true,
+      "imageKey": "occasions.hospitality",
+      "profileId": "service.occasions",
+      "writeEnabled": true,
+      "offerKind": "service",
+      "children": []
+    },
+    {
+      "id": "occasions.buffet",
+      "parentId": "occasions",
+      "labelAr": "البوفيه وأركان الطعام والحلويات",
+      "sort": 50,
+      "active": true,
+      "imageKey": "occasions.buffet",
+      "profileId": "service.occasions",
+      "writeEnabled": true,
+      "offerKind": "service",
+      "children": []
+    },
+    {
+      "id": "occasions.perfume_corner",
+      "parentId": "occasions",
+      "labelAr": "أركان العطور والبخور",
+      "sort": 60,
+      "active": true,
+      "imageKey": "occasions.perfume_corner",
+      "profileId": "service.occasions",
+      "writeEnabled": true,
+      "offerKind": "service",
+      "children": []
+    },
+    {
+      "id": "occasions.furniture_rental",
+      "parentId": "occasions",
+      "labelAr": "تأجير الأثاث والتجهيزات",
+      "sort": 70,
+      "active": true,
+      "imageKey": "occasions.furniture_rental",
+      "profileId": "service.occasions",
+      "writeEnabled": true,
+      "offerKind": "service",
+      "children": []
+    },
+    {
+      "id": "occasions.photography",
+      "parentId": "occasions",
+      "labelAr": "التصوير وتجارب الحفل",
+      "sort": 80,
+      "active": true,
+      "imageKey": "occasions.photography",
+      "profileId": "service.occasions",
+      "writeEnabled": true,
+      "offerKind": "service",
+      "children": []
+    },
+    {
+      "id": "occasions.styling",
+      "parentId": "occasions",
+      "labelAr": "تنسيق المناسبة",
+      "sort": 85,
+      "active": true,
+      "imageKey": "occasions.styling",
+      "profileId": "service.occasions",
+      "writeEnabled": true,
+      "offerKind": "service",
+      "children": []
+    },
+    {
       "id": "occasions.favors",
       "parentId": "occasions",
-      "labelAr": "توزيعات",
-      "sort": 10,
+      "labelAr": "توزيعات وضيافة جاهزة للبيع",
+      "sort": 90,
       "active": true,
       "imageKey": "occasions.favors",
       "profileId": "product.occasions_favors",
@@ -58,24 +285,12 @@
       "id": "occasions.decor",
       "parentId": "occasions",
       "labelAr": "ضيافة للبيع",
-      "sort": 20,
+      "sort": 100,
       "active": true,
       "imageKey": "occasions.decor",
       "profileId": "product.occasions_favors",
       "writeEnabled": true,
       "offerKind": "product",
-      "children": []
-    },
-    {
-      "id": "occasions.styling",
-      "parentId": "occasions",
-      "labelAr": "تنسيق المناسبة",
-      "sort": 30,
-      "active": true,
-      "imageKey": "occasions.styling",
-      "profileId": "service.occasions",
-      "writeEnabled": true,
-      "offerKind": "service",
       "children": []
     }
   ]

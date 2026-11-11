@@ -860,6 +860,9 @@ model CommerceOrderItem {
   productNameAr    String        @map("product_name_ar")
   variantKey       String        @default("") @map("variant_key")
   selectionsJson   Json?         @map("selections_json")
+  /// Frozen product/variant specs at purchase (jewelry attributes, weight, metal…).
+  /// Never backfilled from live product after order create.
+  specSnapshotJson Json?         @map("spec_snapshot_json")
   unitPriceHalalas Int           @map("unit_price_halalas")
   quantity         Int
   lineTotalHalalas Int           @map("line_total_halalas")

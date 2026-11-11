@@ -120,6 +120,125 @@
       "orb": "(reused beauty_lane)",
       "flutterMaster": "assets/marketplace/discover/beauty_lane.png",
       "flutterThumb": "assets/marketplace/discover/beauty_lane.png"
+    },
+    "occasions.packages": {
+      "labelAr": "تنظيم وباقات حفلات",
+      "categoryId": "occasions.packages",
+      "orb": "assets/e2b-ref/orbs/occasions_packages.png",
+      "flutterMaster": "assets/marketplace/discover/lanes/occasions.packages.png",
+      "flutterThumb": "assets/marketplace/discover/thumbs/occasions.packages.png"
+    },
+    "occasions.arches": {
+      "labelAr": "الكوش والمداخل",
+      "categoryId": "occasions.arches",
+      "orb": "assets/e2b-ref/orbs/occasions_arches.png",
+      "flutterMaster": "assets/marketplace/discover/lanes/occasions.arches.png",
+      "flutterThumb": "assets/marketplace/discover/thumbs/occasions.arches.png"
+    },
+    "occasions.tables_decor": {
+      "labelAr": "تنسيق الطاولات والورد",
+      "categoryId": "occasions.tables_decor",
+      "orb": "assets/e2b-ref/orbs/occasions_tables_decor.png",
+      "flutterMaster": "assets/marketplace/discover/lanes/occasions.tables_decor.png",
+      "flutterThumb": "assets/marketplace/discover/thumbs/occasions.tables_decor.png"
+    },
+    "occasions.hospitality": {
+      "labelAr": "الضيافة والصبّابات",
+      "categoryId": "occasions.hospitality",
+      "orb": "assets/e2b-ref/orbs/occasions_hospitality.png",
+      "flutterMaster": "assets/marketplace/discover/lanes/occasions.hospitality.png",
+      "flutterThumb": "assets/marketplace/discover/thumbs/occasions.hospitality.png"
+    },
+    "occasions.buffet": {
+      "labelAr": "البوفيه وأركان الطعام",
+      "categoryId": "occasions.buffet",
+      "orb": "assets/e2b-ref/orbs/occasions_buffet.png",
+      "flutterMaster": "assets/marketplace/discover/lanes/occasions.buffet.png",
+      "flutterThumb": "assets/marketplace/discover/thumbs/occasions.buffet.png"
+    },
+    "occasions.perfume_corner": {
+      "labelAr": "أركان العطور والبخور",
+      "categoryId": "occasions.perfume_corner",
+      "orb": "assets/e2b-ref/orbs/occasions_perfume_corner.png",
+      "flutterMaster": "assets/marketplace/discover/lanes/occasions.perfume_corner.png",
+      "flutterThumb": "assets/marketplace/discover/thumbs/occasions.perfume_corner.png"
+    },
+    "occasions.furniture_rental": {
+      "labelAr": "تأجير الأثاث",
+      "categoryId": "occasions.furniture_rental",
+      "orb": "assets/e2b-ref/orbs/occasions_furniture_rental.png",
+      "flutterMaster": "assets/marketplace/discover/lanes/occasions.furniture_rental.png",
+      "flutterThumb": "assets/marketplace/discover/thumbs/occasions.furniture_rental.png"
+    },
+    "occasions.photography": {
+      "labelAr": "التصوير وتجارب الحفل",
+      "categoryId": "occasions.photography",
+      "orb": "assets/e2b-ref/orbs/occasions_photography.png",
+      "flutterMaster": "assets/marketplace/discover/lanes/occasions.photography.png",
+      "flutterThumb": "assets/marketplace/discover/thumbs/occasions.photography.png"
+    },
+    "occasions.type.engagement": {
+      "labelAr": "خطوبة",
+      "categoryId": "occasions.type.engagement",
+      "orb": "assets/e2b-ref/orbs/occasions_type_engagement.png",
+      "flutterMaster": "assets/marketplace/discover/lanes/occasions.type.engagement.png",
+      "flutterThumb": "assets/marketplace/discover/thumbs/occasions.type.engagement.png"
+    },
+    "occasions.type.milka": {
+      "labelAr": "مِلكة / عقد قران",
+      "categoryId": "occasions.type.milka",
+      "orb": "assets/e2b-ref/orbs/occasions_type_milka.png",
+      "flutterMaster": "assets/marketplace/discover/lanes/occasions.type.milka.png",
+      "flutterThumb": "assets/marketplace/discover/thumbs/occasions.type.milka.png"
+    },
+    "occasions.type.henna": {
+      "labelAr": "حنّة / غمرة",
+      "categoryId": "occasions.type.henna",
+      "orb": "assets/e2b-ref/orbs/occasions_type_henna.png",
+      "flutterMaster": "assets/marketplace/discover/lanes/occasions.type.henna.png",
+      "flutterThumb": "assets/marketplace/discover/thumbs/occasions.type.henna.png"
+    },
+    "occasions.type.family": {
+      "labelAr": "اجتماع عائلي",
+      "categoryId": "occasions.type.family",
+      "orb": "assets/e2b-ref/orbs/occasions_type_family.png",
+      "flutterMaster": "assets/marketplace/discover/lanes/occasions.type.family.png",
+      "flutterThumb": "assets/marketplace/discover/thumbs/occasions.type.family.png"
+    },
+    "gifts.flowers": {
+      "labelAr": "الورد والتنسيقات",
+      "categoryId": "gifts.flowers",
+      "orb": "assets/e2b-ref/orbs/gifts_flowers.png",
+      "flutterMaster": "assets/marketplace/discover/lanes/gifts.flowers.png",
+      "flutterThumb": "assets/marketplace/discover/thumbs/gifts.flowers.png"
+    },
+    "gifts.chocolate": {
+      "labelAr": "الشوكولاتة والكيك",
+      "categoryId": "gifts.chocolate",
+      "orb": "assets/e2b-ref/orbs/gifts_chocolate.png",
+      "flutterMaster": "assets/marketplace/discover/lanes/gifts.chocolate.png",
+      "flutterThumb": "assets/marketplace/discover/thumbs/gifts.chocolate.png"
+    },
+    "gifts.perfume_incense": {
+      "labelAr": "عطور وبخور للإهداء",
+      "categoryId": "gifts.perfume_incense",
+      "orb": "assets/e2b-ref/orbs/gifts_perfume_incense.png",
+      "flutterMaster": "assets/marketplace/discover/lanes/gifts.perfume_incense.png",
+      "flutterThumb": "assets/marketplace/discover/thumbs/gifts.perfume_incense.png"
+    },
+    "gifts.personalized": {
+      "labelAr": "هدايا مخصّصة",
+      "categoryId": "gifts.personalized",
+      "orb": "assets/e2b-ref/orbs/gifts_personalized.png",
+      "flutterMaster": "assets/marketplace/discover/lanes/gifts.personalized.png",
+      "flutterThumb": "assets/marketplace/discover/thumbs/gifts.personalized.png"
+    },
+    "gifts.balloons": {
+      "labelAr": "بالونات وإضافات",
+      "categoryId": "gifts.balloons",
+      "orb": "assets/e2b-ref/orbs/gifts_balloons.png",
+      "flutterMaster": "assets/marketplace/discover/lanes/gifts.balloons.png",
+      "flutterThumb": "assets/marketplace/discover/thumbs/gifts.balloons.png"
     }
   }
 }

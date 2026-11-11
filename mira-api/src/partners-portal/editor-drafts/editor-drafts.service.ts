@@ -1,4 +1,5 @@
 import {
+  ForbiddenException,
   HttpException,
   HttpStatus,
   Inject,
@@ -35,6 +36,9 @@ import {
 import type { AttributeFieldDef } from '../../marketplace/taxonomy/product-taxonomy.validate';
 import { normalizeOptionalId } from '../../marketplace/taxonomy/product-taxonomy.validate';
 import { PARTNER_KIND_FORBIDDEN, partnerCanCreateKind } from '../partner-capabilities';
+import { PartnerActivitiesService } from '../partner-activities/partner-activities.service';
+import { PolicyError } from '../partner-activities/partner-activities.types';
+import { assertJewelryMaterialPolicy } from '../../marketplace/taxonomy/jewelry-material.policy';
 
 /** Normalize coverage city ids (Arabic name → stable sa-* id). */
 function normalizeCoverageJson(raw: unknown): { cityIds: string[] } | null {
@@ -254,9 +258,105 @@ export class EditorDraftsService {
     @Inject(RegistryService) private readonly registry: RegistryService,
     @Inject(CatalogContentService) private readonly content: CatalogContentService,
     @Optional() @Inject(TaxonomyService) taxonomy?: TaxonomyService,
+    @Optional() @Inject(PartnerActivitiesService) private readonly activities?: PartnerActivitiesService,
   ) {
     this.taxonomy = taxonomy ?? new TaxonomyService();
     if (!taxonomy) this.taxonomy.onModuleInit();
+  }
+
+  private mapPolicyError(err: unknown): never {
+    if (err instanceof PolicyError) {
+      throw new ForbiddenException({
+        message: err.code,
+        messageAr:
+          err.code === 'ACTIVITY_NOT_APPROVED'
+            ? 'هذا العرض خارج الأنشطة المعتمدة لحسابك'
+            : err.code,
+        code: err.code,
+      });
+    }
+    throw err;
+  }
+
+  /** Server write gate for draft create / taxonomy change / materialize. Developers bypass. */
+  private assertJewelryAttrs(values: Record<string, unknown>, profileId: string | null | undefined) {
+    const isJewelry =
+      profileId === 'product.jewelry' ||
+      values.category === 'jewelry' ||
+      (typeof values.subcategory === 'string' && values.subcategory.startsWith('jewelry.'));
+    if (!isJewelry) return;
+    const attrs = attributesJsonFromDraftValues(values, this.registry.getRegistry().fields);
+    const bag =
+      attrs && typeof attrs === 'object' && !Array.isArray(attrs)
+        ? (attrs as Record<string, unknown>)
+        : {};
+    // Also accept flat metal on values for early draft.
+    if (values.metal != null && bag.metal == null) bag.metal = values.metal;
+    if (values.stoneTypes != null && bag.stoneTypes == null) bag.stoneTypes = values.stoneTypes;
+    if (values.diamondOrigin != null && bag.diamondOrigin == null) bag.diamondOrigin = values.diamondOrigin;
+    const violations = assertJewelryMaterialPolicy(bag);
+    if (violations.length) {
+      throw editorError(HttpStatus.FORBIDDEN, violations[0].code, violations[0].messageAr, {
+        fieldErrors: violations.map((v) => ({ fieldId: v.fieldId || 'metal', code: v.code })),
+      });
+    }
+  }
+
+  private async enforceActivityWrite(
+    partnerId: string,
+    kind: 'product' | 'service',
+    fields: {
+      subcategory?: string | null;
+      category?: string | null;
+      profileId?: string | null;
+      title: string;
+      lineageId: string | null;
+      attributes?: Record<string, unknown> | null;
+    },
+  ): Promise<void> {
+    if (!this.activities) return;
+    const activity = this.activities.resolveWriteActivity({
+      kind,
+      subcategory: fields.subcategory,
+      category: fields.category,
+      profileId: fields.profileId,
+      attributes: fields.attributes,
+    });
+    const hasGrants = await this.activities.hasGrants(partnerId);
+    if (!activity) {
+      // Draft shell before leaf pick is allowed; a concrete unknown leaf is rejected.
+      if (hasGrants && fields.subcategory) {
+        throw new ForbiddenException({
+          message: 'ACTIVITY_NOT_APPROVED',
+          messageAr: 'هذا العرض خارج الأنشطة المعتمدة لحسابك',
+          code: 'ACTIVITY_NOT_APPROVED',
+        });
+      }
+      return;
+    }
+    const partner = await this.prisma.partner.findUnique({ where: { id: partnerId } });
+    const user = await this.prisma.partnerUser.findUnique({ where: { partnerId } });
+    if (!partner || !user) throw new ForbiddenException('الحساب غير نشط');
+    try {
+      await this.activities.assertAuthorizedWrite(
+        {
+          id: user.id,
+          role: partner.type === 'developer' ? 'developer' : 'partner',
+          active: partner.status === 'active',
+          partnerId,
+          display: partner.nameAr,
+        },
+        {
+          partnerId,
+          kind,
+          activity,
+          title: fields.title,
+          lineageId: fields.lineageId,
+        },
+      );
+    } catch (err) {
+      this.mapPolicyError(err);
+    }
   }
 
   private attributeDefsForProfile(profileId: string | null): Map<string, AttributeFieldDef> | undefined {
@@ -427,6 +527,26 @@ export class EditorDraftsService {
     if (body.targetOwnerId) {
       await this.assertTargetOwner(partnerId, body.kind, body.targetOwnerId);
     }
+
+    const valuesGate = body.values as Record<string, unknown>;
+    this.assertJewelryAttrs(valuesGate, body.profileId);
+    const titleGate =
+      typeof valuesGate.nameAr === 'string' && valuesGate.nameAr.trim()
+        ? valuesGate.nameAr.trim()
+        : 'مسودة';
+    const attrsGate = attributesJsonFromDraftValues(valuesGate, this.registry.getRegistry().fields);
+    await this.enforceActivityWrite(partnerId, body.kind, {
+      subcategory:
+        typeof valuesGate.subcategory === 'string' ? valuesGate.subcategory : null,
+      category: typeof valuesGate.category === 'string' ? valuesGate.category : null,
+      profileId: body.profileId,
+      title: titleGate,
+      lineageId: body.targetOwnerId ?? null,
+      attributes:
+        attrsGate && typeof attrsGate === 'object' && !Array.isArray(attrsGate)
+          ? (attrsGate as Record<string, unknown>)
+          : valuesGate,
+    });
 
     return this.prisma.$transaction(async (tx) => {
       const existing = await tx.partnerEditorDraft.findUnique({
@@ -625,6 +745,38 @@ export class EditorDraftsService {
           { fieldErrors },
         );
       }
+
+      const materializeSub =
+        typeof values.subcategory === 'string' && values.subcategory.trim()
+          ? values.subcategory.trim()
+          : null;
+      // Occasions/gifts leaves must be chosen before materialize — shared profile is not a grant.
+      if (
+        (draft.profileId === 'service.occasions' ||
+          draft.profileId === 'product.gifts' ||
+          draft.profileId === 'product.occasions_favors') &&
+        !materializeSub
+      ) {
+        throw editorError(
+          HttpStatus.UNPROCESSABLE_ENTITY,
+          'MATERIALIZE_INVALID',
+          'اختاري فرع النشاط قبل التحويل.',
+          { fieldErrors: [{ fieldId: 'subcategory', code: 'MATERIALIZE_REQUIRED' }] },
+        );
+      }
+      this.assertJewelryAttrs(values, draft.profileId);
+      const attrsMat = attributesJsonFromDraftValues(values, this.registry.getRegistry().fields);
+      await this.enforceActivityWrite(partnerId, draft.kind as 'product' | 'service', {
+        subcategory: materializeSub,
+        category: typeof values.category === 'string' ? values.category : null,
+        profileId: draft.profileId,
+        title: nameAr,
+        lineageId: draft.targetOwnerId ?? null,
+        attributes:
+          attrsMat && typeof attrsMat === 'object' && !Array.isArray(attrsMat)
+            ? (attrsMat as Record<string, unknown>)
+            : values,
+      });
 
       let targetOwnerId = draft.targetOwnerId;
       if (targetOwnerId) {
@@ -836,11 +988,33 @@ export class EditorDraftsService {
       serviceProfileJson = normalized as unknown as Prisma.InputJsonValue;
     }
     const attributesRaw = attributesJsonFromDraftValues(values, this.registry.getRegistry().fields);
+    // Persist taxonomy leaf on services (no Service.subcategory column) so browse filters stay exact.
+    const leaf =
+      typeof values.subcategory === 'string' && values.subcategory.trim()
+        ? values.subcategory.trim()
+        : null;
+    const mergedAttrs: Record<string, unknown> = {
+      ...(attributesRaw && typeof attributesRaw === 'object' && !Array.isArray(attributesRaw)
+        ? (attributesRaw as Record<string, unknown>)
+        : {}),
+    };
+    if (leaf) {
+      mergedAttrs.subcategory = leaf;
+      mergedAttrs.taxonomyLeaf = leaf;
+    }
+    const attributesJson =
+      Object.keys(mergedAttrs).length > 0 ? (mergedAttrs as Prisma.InputJsonValue) : undefined;
     const availabilityDoc = availabilityFromBulkSchedule(values);
     const bookingEnabled =
       values.bookingEnabled === true ||
       (values.bookingEnabled !== false && !!availabilityDoc && (availabilityDoc.windows || []).length > 0);
     const placeFields = placeFieldsFromBulkValues(values);
+    const category =
+      typeof values.category === 'string' && values.category.trim()
+        ? values.category.trim()
+        : leaf && leaf.startsWith('occasions.')
+          ? 'occasions'
+          : null;
     const row = await tx.service.create({
       data: {
         partnerId,
@@ -852,7 +1026,7 @@ export class EditorDraftsService {
         concernTags: Array.isArray(values.concernTags)
           ? values.concernTags.filter((t): t is string => typeof t === 'string')
           : [],
-        category: typeof values.category === 'string' ? values.category : null,
+        category,
         bookingEnabled,
         payMode: 'pay_at_venue',
         active: false,
@@ -861,9 +1035,7 @@ export class EditorDraftsService {
         profileId: draft.profileId,
         schemaVersion: draft.schemaVersion,
         ...(serviceProfileJson !== undefined ? { serviceProfileJson } : {}),
-        ...(attributesRaw !== undefined
-          ? { attributesJson: attributesRaw as Prisma.InputJsonValue }
-          : {}),
+        ...(attributesJson !== undefined ? { attributesJson } : {}),
         ...(availabilityDoc
           ? { availabilityJson: availabilityDoc as unknown as Prisma.InputJsonValue }
           : {}),
@@ -1003,6 +1175,21 @@ export class EditorDraftsService {
         ? (values.serviceProfile as Prisma.InputJsonValue)
         : undefined;
     const attributesRaw = attributesJsonFromDraftValues(values, this.registry.getRegistry().fields);
+    const leaf =
+      typeof values.subcategory === 'string' && values.subcategory.trim()
+        ? values.subcategory.trim()
+        : null;
+    const mergeServiceAttrs = (raw: unknown): Prisma.InputJsonValue | undefined => {
+      if (raw === undefined && !leaf) return undefined;
+      const base =
+        raw && typeof raw === 'object' && !Array.isArray(raw) ? { ...(raw as Record<string, unknown>) } : {};
+      if (leaf) {
+        base.subcategory = leaf;
+        base.taxonomyLeaf = leaf;
+      }
+      return base as Prisma.InputJsonValue;
+    };
+    const mergedAttrs = mergeServiceAttrs(attributesRaw);
 
     if (published) {
       await tx.service.update({
@@ -1019,10 +1206,10 @@ export class EditorDraftsService {
           ...(profileDoc !== undefined
             ? { draftServiceProfileSet: true, draftServiceProfileJson: profileDoc }
             : {}),
-          ...(attributesRaw !== undefined
+          ...(mergedAttrs !== undefined
             ? {
                 draftAttributesSet: true,
-                draftAttributesJson: attributesRaw as Prisma.InputJsonValue,
+                draftAttributesJson: mergedAttrs,
               }
             : {}),
         },
@@ -1045,7 +1232,9 @@ export class EditorDraftsService {
             : {}),
           ...(typeof values.category === 'string' || values.category === null
             ? { category: typeof values.category === 'string' ? values.category : null }
-            : {}),
+            : leaf
+              ? { category: leaf.startsWith('occasions.') ? 'occasions' : current.category }
+              : {}),
           ...(profileDoc !== undefined
             ? {
                 serviceProfileJson: profileDoc,
@@ -1053,9 +1242,9 @@ export class EditorDraftsService {
                 draftServiceProfileSet: false,
               }
             : {}),
-          ...(attributesRaw !== undefined
+          ...(mergedAttrs !== undefined
             ? {
-                attributesJson: attributesRaw as Prisma.InputJsonValue,
+                attributesJson: mergedAttrs,
                 draftAttributesJson: Prisma.DbNull,
                 draftAttributesSet: false,
               }

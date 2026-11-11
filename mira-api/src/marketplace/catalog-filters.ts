@@ -90,6 +90,16 @@ export type CatalogFilterInput = {
   ageMonths?: number;
   /** When true, only products with attributes.giftEligible === true (cross-list). */
   giftEligible?: boolean;
+  /** Gifts: require attributes.sameDayDelivery === true. */
+  sameDayDelivery?: boolean;
+  /** Occasions hospitality: require attributes.hostessCount >= this value. */
+  hostessCountMin?: number;
+  /** Occasions package/buffet: require guestsMin <= guestsCount <= guestsMax when bounds exist. */
+  guestsCount?: number;
+  /** Jewelry: exclude these base metals (e.g. gold facet excludes silver_gold_plated). */
+  excludeMetals?: string[];
+  /** Jewelry: minimum center diamond carat (independent of total). */
+  diamondCenterCaratMin?: number;
   /** Discover lane — gifts lane expands match to giftEligible without duplicating rows. */
   lane?: string;
   /**
@@ -269,12 +279,19 @@ export function parseCatalogFilterQuery(params: Record<string, string | undefine
     'occasion',
     'material',
     'metal',
+    'metalColor',
     'purityKarat',
     'purity',
     'occasionType',
     'occasionTypeIds',
     'occasionServiceOffer',
     'eventType',
+    'stoneTypes',
+    'discoveryTraits',
+    'sellUnit',
+    'pieceStyle',
+    'diamondOrigin',
+    'diamondRole',
   ] as const) {
     const values = splitCsv(params[key] ?? params[`attributes.${key}`]);
     if (values.length) {
@@ -304,6 +321,44 @@ export function parseCatalogFilterQuery(params: Record<string, string | undefine
     return { ok: false, reason: 'invalid_gift_eligible', messageAr: 'قيمة أهلية الإهداء غير صالحة' };
   }
 
+  const sameDayRaw = (params.sameDayDelivery ?? '').trim().toLowerCase();
+  let sameDayDelivery: boolean | undefined;
+  if (sameDayRaw === '1' || sameDayRaw === 'true') sameDayDelivery = true;
+  else if (sameDayRaw === '0' || sameDayRaw === 'false') sameDayDelivery = false;
+  else if (sameDayRaw) {
+    return { ok: false, reason: 'invalid_same_day_delivery', messageAr: 'قيمة توصيل اليوم غير صالحة' };
+  }
+
+  const hostessRaw = (params.hostessCountMin ?? params.hostessCount ?? '').trim();
+  let hostessCountMin: number | undefined;
+  if (hostessRaw) {
+    const n = Number(hostessRaw);
+    if (!Number.isFinite(n) || n < 1 || !Number.isInteger(n)) {
+      return { ok: false, reason: 'invalid_hostess_count', messageAr: 'عدد المضيفات غير صالح' };
+    }
+    hostessCountMin = n;
+  }
+
+  const guestsRaw = (params.guestsCount ?? params.guests ?? '').trim();
+  let guestsCount: number | undefined;
+  if (guestsRaw) {
+    const n = Number(guestsRaw);
+    if (!Number.isFinite(n) || n < 1 || !Number.isInteger(n)) {
+      return { ok: false, reason: 'invalid_guests_count', messageAr: 'عدد الضيوف غير صالح' };
+    }
+    guestsCount = n;
+  }
+
+  const centerCaratRaw = (params.diamondCenterCaratMin ?? params.centerCaratMin ?? '').trim();
+  let diamondCenterCaratMin: number | undefined;
+  if (centerCaratRaw) {
+    const n = Number(centerCaratRaw);
+    if (!Number.isFinite(n) || n < 0) {
+      return { ok: false, reason: 'invalid_center_carat', messageAr: 'وزن الحجر المركزي غير صالح' };
+    }
+    diamondCenterCaratMin = n;
+  }
+
   // ringSize as variant option (same-combo as color/size).
   const ringSizes = splitCsv(params['variant.ringSize'] ?? params.ringSize);
   if (ringSizes.length) {
@@ -324,6 +379,10 @@ export function parseCatalogFilterQuery(params: Record<string, string | undefine
       attributeSelections: Object.keys(attributeSelections).length ? attributeSelections : undefined,
       ageMonths,
       giftEligible,
+      sameDayDelivery: sameDayDelivery === true ? true : undefined,
+      hostessCountMin,
+      guestsCount,
+      diamondCenterCaratMin,
       lane: (params.lane ?? '').trim() || undefined,
       inStock,
       priceMinHalalas: priceMin,
@@ -491,7 +550,7 @@ export function matchCatalogItem(item: CatalogFilterItem, filter: CatalogFilterI
       item.attributesJson?.giftEligible === true;
     if (!giftsCross) return null;
   }
-  // Subcategory: products match persisted id; service leaves match taxonomy profile/category.
+  // Subcategory: products match persisted id; service leaves match attributes.subcategory (leaf id).
   if (filter.subcategory) {
     const node = filter.taxonomyNode;
     if (item.kind === 'product') {
@@ -499,10 +558,21 @@ export function matchCatalogItem(item: CatalogFilterItem, filter: CatalogFilterI
       if (item.subcategory !== filter.subcategory) return null;
     } else {
       if (!node || node.offerKind !== 'service') return null;
-      const byProfile = !!node.profileId && item.profileId === node.profileId;
-      const byCategory = !!node.category && item.category === node.category;
-      const bySub = item.subcategory === filter.subcategory;
-      if (!byProfile && !byCategory && !bySub) return null;
+      const leaf =
+        effectiveAttributeValues(item.attributesJson, 'subcategory')[0] ||
+        effectiveAttributeValues(item.attributesJson, 'taxonomyLeaf')[0] ||
+        item.subcategory ||
+        null;
+      if (leaf) {
+        if (leaf !== filter.subcategory) return null;
+      } else {
+        // Legacy occasions services without a leaf attribute: only match occasions.styling.
+        // New leaves (hospitality/buffet/packages/…) must not inherit via shared profileId.
+        if (filter.subcategory !== 'occasions.styling') return null;
+        const byProfile = !!node.profileId && item.profileId === node.profileId;
+        const byCategory = !!node.category && item.category === node.category;
+        if (!byProfile && !byCategory) return null;
+      }
     }
   }
   if (filter.attributeSelections && Object.keys(filter.attributeSelections).length > 0) {
@@ -514,6 +584,36 @@ export function matchCatalogItem(item: CatalogFilterItem, filter: CatalogFilterI
   }
   if (filter.giftEligible === false) {
     if (item.kind === 'product' && item.attributesJson?.giftEligible === true) return null;
+  }
+  if (filter.sameDayDelivery === true) {
+    if (item.kind !== 'product') return null;
+    const raw = item.attributesJson?.sameDayDelivery;
+    if (!(raw === true || raw === 'true' || raw === 1 || raw === '1')) return null;
+  }
+  if (filter.hostessCountMin != null) {
+    const raw = item.attributesJson?.hostessCount;
+    const n = typeof raw === 'number' ? raw : Number(raw);
+    if (!Number.isFinite(n) || n < filter.hostessCountMin) return null;
+  }
+  if (filter.guestsCount != null) {
+    const minRaw = item.attributesJson?.guestsMin;
+    const maxRaw = item.attributesJson?.guestsMax;
+    const min = typeof minRaw === 'number' ? minRaw : Number(minRaw);
+    const max = typeof maxRaw === 'number' ? maxRaw : Number(maxRaw);
+    const hasMin = Number.isFinite(min);
+    const hasMax = Number.isFinite(max);
+    if (!hasMin && !hasMax) return null;
+    if (hasMin && filter.guestsCount < min) return null;
+    if (hasMax && filter.guestsCount > max) return null;
+  }
+  if (filter.excludeMetals?.length) {
+    const metal = item.attributesJson?.metal != null ? String(item.attributesJson.metal) : '';
+    if (metal && filter.excludeMetals.includes(metal)) return null;
+  }
+  if (filter.diamondCenterCaratMin != null) {
+    const raw = item.attributesJson?.diamondCenterCarat;
+    const n = typeof raw === 'number' ? raw : Number(raw);
+    if (!Number.isFinite(n) || n < filter.diamondCenterCaratMin) return null;
   }
   // Lane membership by taxonomy ids — never by partner type or service title.
   if (filter.lane === 'occasions' && !filter.category && !filter.subcategory) {
@@ -925,11 +1025,15 @@ export function buildCatalogFacets(
     ['occasions', { labelAr: 'مناسبات' }],
   ]);
   const occasionTypeLabels = new Map<string, { labelAr?: string }>([
-    ['wedding', { labelAr: 'زفاف' }],
+    ['engagement', { labelAr: 'خطوبة' }],
+    ['milka', { labelAr: 'مِلكة / عقد قران' }],
+    ['wedding', { labelAr: 'زواج' }],
+    ['henna', { labelAr: 'حنّة / غمرة' }],
     ['graduation', { labelAr: 'تخرج' }],
-    ['birthday', { labelAr: 'ميلاد' }],
-    ['baby_shower', { labelAr: 'احتفال بالمولود' }],
-    ['private', { labelAr: 'مناسبة خاصة' }],
+    ['birthday', { labelAr: 'عيد ميلاد' }],
+    ['baby_shower', { labelAr: 'استقبال مولود' }],
+    ['family', { labelAr: 'اجتماع عائلي' }],
+    ['private', { labelAr: 'أخرى' }],
   ]);
   const occasionServiceOfferLabels = new Map<string, { labelAr?: string }>([
     ['full_planning', { labelAr: 'تنظيم كامل' }],

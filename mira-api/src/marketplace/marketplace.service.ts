@@ -321,8 +321,27 @@ export class MarketplaceService implements OnModuleInit {
     const filter = parsedFilters.filter;
     // Enrich subcategory with central taxonomy so service leaves (occasions.styling) match services.
     if (filter.subcategory) {
-      const node = this.taxonomy.resolveCatalogSubcategory(filter.subcategory);
-      if (node) filter.taxonomyNode = node;
+      const facet = this.taxonomy.resolveBrowseFacet(filter.subcategory);
+      if (facet) {
+        filter.subcategory = undefined;
+        if (facet.category) filter.category = filter.category || facet.category;
+        filter.attributeSelections = {
+          ...(filter.attributeSelections || {}),
+          ...(facet.attributeSelections || {}),
+        };
+        if (facet.metalColor) {
+          filter.attributeSelections.metalColor = [
+            ...new Set([...(filter.attributeSelections.metalColor || []), facet.metalColor]),
+          ];
+        }
+        // Gold facet never includes silver_gold_plated (policy).
+        if (facet.metal === 'gold') {
+          filter.excludeMetals = [...new Set([...(filter.excludeMetals || []), 'silver_gold_plated', 'silver'])];
+        }
+      } else {
+        const node = this.taxonomy.resolveCatalogSubcategory(filter.subcategory);
+        if (node) filter.taxonomyNode = node;
+      }
     }
     // City is applied in-memory so city facets can exclude the city filter itself (C03).
     const fingerprint = normalizeFilterFingerprint(filter, {

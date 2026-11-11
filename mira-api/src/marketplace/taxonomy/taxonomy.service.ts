@@ -325,6 +325,7 @@ export class TaxonomyService implements OnModuleInit {
     const doc = this.requireDoc(lane);
     const node = doc.nodes.find((n) => n.id === subcategory);
     if (!node || node.browseOnly || !node.parentId) return null;
+    if ((node as { grantOnly?: boolean }).grantOnly) return null;
     return {
       id: node.id,
       lane,
@@ -332,6 +333,79 @@ export class TaxonomyService implements OnModuleInit {
       profileId: node.profileId ?? null,
       offerKind: node.offerKind ?? null,
     };
+  }
+
+  /**
+   * Browse-only jewelry facets (metal/stone/trait) → attribute filter rewrite.
+   * Same product id appears under piece + metal + stone without duplication.
+   */
+  resolveBrowseFacet(subcategory: string): {
+    lane: string;
+    clearSubcategory: boolean;
+    category?: string;
+    attributeSelections?: Record<string, string[]>;
+    metalColor?: string;
+    metal?: string;
+  } | null {
+    const lane = this.findLaneForNodeId(subcategory);
+    if (!lane) return null;
+    const doc = this.requireDoc(lane);
+    const node = doc.nodes.find((n) => n.id === subcategory);
+    if (!node?.browseOnly) return null;
+    const filterAttr = (node as { filterAttribute?: string }).filterAttribute;
+    if (!filterAttr) return null;
+
+    if (subcategory.startsWith('jewelry.metal.')) {
+      const key = subcategory.slice('jewelry.metal.'.length);
+      if (key === 'gold' || key === 'white_gold' || key === 'rose_gold') {
+        const color = key === 'gold' ? 'yellow' : key === 'white_gold' ? 'white' : 'rose';
+        return {
+          lane,
+          clearSubcategory: true,
+          category: 'jewelry',
+          attributeSelections: { metal: ['gold'] },
+          metalColor: color === 'yellow' ? undefined : color,
+          metal: 'gold',
+        };
+      }
+      if (key === 'silver') {
+        return {
+          lane,
+          clearSubcategory: true,
+          category: 'jewelry',
+          attributeSelections: { metal: ['silver'] },
+          metal: 'silver',
+        };
+      }
+      if (key === 'silver_gold_plated') {
+        return {
+          lane,
+          clearSubcategory: true,
+          category: 'jewelry',
+          attributeSelections: { metal: ['silver_gold_plated'] },
+          metal: 'silver_gold_plated',
+        };
+      }
+    }
+    if (subcategory.startsWith('jewelry.stone.')) {
+      const stone = subcategory.slice('jewelry.stone.'.length);
+      return {
+        lane,
+        clearSubcategory: true,
+        category: 'jewelry',
+        attributeSelections: { [filterAttr]: [stone] },
+      };
+    }
+    if (subcategory.startsWith('jewelry.trait.')) {
+      const trait = subcategory.slice('jewelry.trait.'.length);
+      return {
+        lane,
+        clearSubcategory: true,
+        category: 'jewelry',
+        attributeSelections: { [filterAttr]: [trait] },
+      };
+    }
+    return null;
   }
 
   phrasesFor(subcategoryId: string) {

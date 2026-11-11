@@ -84,6 +84,8 @@ type PricedLine = {
   nameAr: string | null;
   variantKey: string;
   selections: SelectionSnapshot[];
+  /** Frozen product attributes + variant commerce at checkout. */
+  specSnapshot: Record<string, unknown> | null;
   quantity: number;
   unitPriceHalalas: number | null;
   lineTotalHalalas: number | null;
@@ -431,6 +433,7 @@ export class CommerceService {
         nameAr: product?.nameAr ?? null,
         variantKey: item.variantKey,
         selections: [],
+        specSnapshot: null,
         quantity: item.quantity,
         unitPriceHalalas: null,
         lineTotalHalalas: null,
@@ -461,6 +464,27 @@ export class CommerceService {
         base.unitPriceHalalas = resolved.unitPriceHalalas;
         base.lineTotalHalalas = lineTotal(resolved.unitPriceHalalas, item.quantity);
         base.availableQty = await this.availableQtyForLine(product, resolved.variantKey, db);
+        const attrs =
+          product.attributesJson &&
+          typeof product.attributesJson === 'object' &&
+          !Array.isArray(product.attributesJson)
+            ? (product.attributesJson as Record<string, unknown>)
+            : null;
+        base.specSnapshot = {
+          productId: product.id,
+          subcategory: product.subcategory,
+          category: product.category,
+          profileId: product.profileId,
+          nameAr: product.nameAr,
+          unitPriceHalalas: resolved.unitPriceHalalas,
+          variantKey: resolved.variantKey,
+          selections: resolved.snapshot,
+          attributes: attrs,
+          weightG: attrs?.weightG ?? null,
+          metal: attrs?.metal ?? null,
+          purityKarat: attrs?.purityKarat ?? null,
+          snapshottedAt: new Date().toISOString(),
+        };
       } catch (error) {
         const body = (error as { getResponse?: () => unknown }).getResponse?.() as Record<string, unknown> | undefined;
         base.issues.push({
@@ -888,6 +912,7 @@ export class CommerceService {
                     productNameAr: line.nameAr ?? '',
                     variantKey: line.variantKey,
                     selectionsJson: line.selections as unknown as Prisma.InputJsonValue,
+                    specSnapshotJson: (line.specSnapshot ?? null) as Prisma.InputJsonValue,
                     unitPriceHalalas: line.unitPriceHalalas!,
                     quantity: line.quantity,
                     lineTotalHalalas: line.lineTotalHalalas!,

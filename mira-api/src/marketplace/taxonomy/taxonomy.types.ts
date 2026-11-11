@@ -10,6 +10,12 @@ export type TaxonomyNode = {
   profileId?: string;
   /** product | service — occasions mixed lane leaves. */
   offerKind?: 'product' | 'service';
+  /** Partner activity grant leaf — not a product subcategory orb. */
+  grantOnly?: boolean;
+  /** Saudi search synonyms (bracelets → إسورة/بنجرة…). */
+  synonymsAr?: string[];
+  /** Browse facet attribute key when node is browseOnly metal/stone/trait. */
+  filterAttribute?: string;
   children: string[];
 };
 

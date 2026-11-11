@@ -579,6 +579,79 @@
     price.placeholder = '52';
     const descriptionAr = field(basics, 'الوصف', 'descriptionAr', seed.draftDescriptionAr != null ? seed.draftDescriptionAr : (seed.descriptionAr || ''), 'textarea');
     descriptionAr.setAttribute('data-testid', 'catalog-description');
+    const phraseBox = document.createElement('div');
+    phraseBox.className = 'e2b-desc-phrases';
+    phraseBox.setAttribute('data-testid', 'catalog-description-phrases');
+    phraseBox.hidden = true;
+    basics.appendChild(phraseBox);
+    const phraseHint = document.createElement('p');
+    phraseHint.className = 'muted';
+    phraseHint.style.fontSize = '12px';
+    phraseHint.textContent = 'عبارات مقترحة حسب الفرع — اختاري واحدة أو أكثر أو اكتبي وصفك؛ التعديل اليدوي لا يُمحى تلقائيًا.';
+    phraseBox.appendChild(phraseHint);
+    const phraseList = document.createElement('div');
+    phraseList.className = 'e2b-desc-phrase-list';
+    phraseBox.appendChild(phraseList);
+    let selectedPhraseIds = [];
+    try {
+      const seedAttrs =
+        (seed.draftAttributesSet && seed.draftAttributesJson) ||
+        seed.attributesJson ||
+        seed.attributes ||
+        {};
+      if (Array.isArray(seedAttrs.descriptionPhraseIds)) {
+        selectedPhraseIds = seedAttrs.descriptionPhraseIds.map(String);
+      }
+      if (seedAttrs.descriptionDirty === true) {
+        descriptionAr.dataset.descriptionDirty = '1';
+      }
+    } catch (_) {
+      /* ignore */
+    }
+    descriptionAr.addEventListener('input', function () {
+      descriptionAr.dataset.descriptionDirty = '1';
+    });
+    async function refreshDescriptionPhrases() {
+      const subId = subcategory && subcategory.value ? String(subcategory.value) : '';
+      phraseList.innerHTML = '';
+      if (!subId || !taxonomyCache || !taxonomyCache.descriptionPhrases) {
+        phraseBox.hidden = true;
+        return;
+      }
+      const phrases = taxonomyCache.descriptionPhrases[subId] || [];
+      if (!phrases.length) {
+        phraseBox.hidden = true;
+        return;
+      }
+      phraseBox.hidden = false;
+      const valid = new Set(phrases.map((p) => String(p.id)));
+      selectedPhraseIds = selectedPhraseIds.filter((id) => valid.has(id));
+      phrases.forEach(function (p) {
+        const btn = document.createElement('button');
+        btn.type = 'button';
+        btn.className = 'chip';
+        btn.setAttribute('data-phrase-id', p.id);
+        btn.textContent = p.textAr || p.id;
+        if (selectedPhraseIds.indexOf(String(p.id)) >= 0) btn.classList.add('is-selected');
+        btn.addEventListener('click', function () {
+          const id = String(p.id);
+          const ix = selectedPhraseIds.indexOf(id);
+          if (ix >= 0) selectedPhraseIds.splice(ix, 1);
+          else selectedPhraseIds.push(id);
+          btn.classList.toggle('is-selected', selectedPhraseIds.indexOf(id) >= 0);
+          if (descriptionAr.dataset.descriptionDirty !== '1') {
+            const texts = phrases
+              .filter((row) => selectedPhraseIds.indexOf(String(row.id)) >= 0)
+              .map((row) => row.textAr)
+              .filter(Boolean);
+            descriptionAr.value = texts.join('\n');
+          }
+          bumpFormContentEpoch();
+          scheduleEditorDraftAutosave();
+        });
+        phraseList.appendChild(btn);
+      });
+    }
     const nameEnDetails = document.createElement('details');
     nameEnDetails.className = 'e2b-extra-details';
     nameEnDetails.setAttribute('data-testid', 'catalog-extra-name-en');
@@ -847,6 +920,11 @@
           /* non-fatal */
         }
       }
+      try {
+        await refreshDescriptionPhrases();
+      } catch (_) {
+        /* non-fatal */
+      }
     }
     refreshSubcategoryOptions({ keepValue: subcategorySeed || '' });
     nameAr.addEventListener('input', bumpFormContentEpoch);
@@ -854,7 +932,10 @@
     descriptionAr.addEventListener('input', bumpFormContentEpoch);
     price.addEventListener('input', bumpFormContentEpoch);
     category.addEventListener('change', bumpFormContentEpoch);
-    subcategory.addEventListener('change', bumpFormContentEpoch);
+    subcategory.addEventListener('change', function () {
+      bumpFormContentEpoch();
+      refreshDescriptionPhrases();
+    });
 
     const cosmetic = document.createElement('div');
     const skin = field(cosmetic, 'نوع البشرة (اختياري)', 'skinTypes', (seed.skinTypes || []).join ? (seed.skinTypes || []).join(', ') : (seed.skinTypes || ''), 'text');
@@ -2209,6 +2290,12 @@
       if (nameEn && nameEn.value.trim()) values.nameEn = nameEn.value.trim();
       if (descriptionAr && String(descriptionAr.value || '').trim()) {
         values.descriptionAr = String(descriptionAr.value).trim();
+      }
+      if (selectedPhraseIds && selectedPhraseIds.length) {
+        values.descriptionPhraseIds = selectedPhraseIds.slice();
+      }
+      if (descriptionAr && descriptionAr.dataset.descriptionDirty === '1') {
+        values.descriptionDirty = true;
       }
       // Duration: empty optional ≠ invalid typed value. Never parseInt-coerce garbage.
       if (duration && String(duration.value || '').trim() !== '') {
@@ -4043,6 +4130,7 @@
     subcategory.onchange = function () {
       if (type === 'brand') paintOptions();
       remountAttributeFields({ preserveEdits: true });
+      refreshDescriptionPhrases();
     };
     cosmeticVisible();
 

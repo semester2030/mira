@@ -418,6 +418,13 @@ export function validateProductTaxonomyWrite(
       messageAr: 'لا يمكن حفظ خيار التصفح «الكل» كتصنيف للمنتج',
     });
   }
+  if ((node as { grantOnly?: boolean }).grantOnly) {
+    errors.push({
+      fieldId: 'subcategory',
+      code: 'SUBCATEGORY_GRANT_ONLY',
+      messageAr: 'نشاط البيع للشريك ليس تصنيف قطعة للمنتج',
+    });
+  }
   if (!resolveWriteEnabled(node, nodes)) {
     errors.push({
       fieldId: 'subcategory',

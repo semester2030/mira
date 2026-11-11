@@ -155,12 +155,13 @@
     var developer = p.type === 'developer';
     var formId = developer ? 'serviceForm' : 'catalogForm';
     var titleId = developer ? 'serviceTitle' : 'catalogTitle';
+    // Do not force a single leaf — partner picks packages/hospitality/buffet/… then multi-selects occasions.
     var draftCtx = {
       profileId: meta.profileId,
       kind: 'service',
       values: {
         category: 'occasions',
-        subcategory: 'occasions.styling',
+        subcategory: opts.subcategory || null,
         taxonomyLane: 'occasions',
         occasionTypeIds: opts.occasionTypeIds || [],
         occasionServiceOffer: opts.occasionServiceOffer || null,

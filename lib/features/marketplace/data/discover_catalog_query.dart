@@ -151,6 +151,9 @@ class DiscoverCatalogQuery {
     this.occasionTypeIds = const [],
     this.occasionServiceOffers = const [],
     this.giftEligible,
+    this.sameDayDelivery,
+    this.hostessCountMin,
+    this.guestsCount,
     this.ageMonths,
     this.placeModes = const [],
     this.branchIds = const [],
@@ -201,6 +204,16 @@ class DiscoverCatalogQuery {
   final List<String> occasionServiceOffers;
 
   final bool? giftEligible;
+
+  /// Gifts: require same-day delivery capability.
+  final bool? sameDayDelivery;
+
+  /// Occasions hospitality: minimum hostess/sabbah count.
+  final int? hostessCountMin;
+
+  /// Occasions package/buffet: desired guest count within offer bounds.
+  final int? guestsCount;
+
   final int? ageMonths;
 
   /// Service placeMode ids (OR within). Empty = unset.
@@ -245,6 +258,9 @@ class DiscoverCatalogQuery {
     if (occasionTypeIds.isNotEmpty) n += 1;
     if (occasionServiceOffers.isNotEmpty) n += 1;
     if (giftEligible != null) n += 1;
+    if (sameDayDelivery != null) n += 1;
+    if (hostessCountMin != null) n += 1;
+    if (guestsCount != null) n += 1;
     if (ageMonths != null) n += 1;
     if (placeModes.isNotEmpty) n += 1;
     if (branchIds.isNotEmpty) n += 1;
@@ -317,6 +333,9 @@ class DiscoverCatalogQuery {
     List<String>? occasionTypeIds,
     List<String>? occasionServiceOffers,
     bool? giftEligible,
+    bool? sameDayDelivery,
+    int? hostessCountMin,
+    int? guestsCount,
     int? ageMonths,
     List<String>? placeModes,
     List<String>? branchIds,
@@ -345,6 +364,9 @@ class DiscoverCatalogQuery {
     bool clearOccasionTypeIds = false,
     bool clearOccasionServiceOffers = false,
     bool clearGiftEligible = false,
+    bool clearSameDayDelivery = false,
+    bool clearHostessCountMin = false,
+    bool clearGuestsCount = false,
     bool clearAgeMonths = false,
     bool clearPlaceModes = false,
     bool clearBranchIds = false,
@@ -378,7 +400,10 @@ class DiscoverCatalogQuery {
           ? const []
           : occasionServiceOffers ?? this.occasionServiceOffers,
       giftEligible: clearGiftEligible ? null : giftEligible ?? this.giftEligible,
-      ageMonths: clearAgeMonths ? null : ageMonths ?? this.ageMonths,
+      sameDayDelivery: clearSameDayDelivery ? null : sameDayDelivery ?? this.sameDayDelivery,
+      hostessCountMin: clearHostessCountMin ? null : hostessCountMin ?? this.hostessCountMin,
+      guestsCount: clearGuestsCount ? null : guestsCount ?? this.guestsCount,
+      ageMonths: clearAgeMonths ? null : ageMonths ?? this.ageMonths;
       placeModes: clearPlaceModes ? const [] : placeModes ?? this.placeModes,
       branchIds: clearBranchIds ? const [] : branchIds ?? this.branchIds,
       inStock: clearInStock ? null : inStock ?? this.inStock,
