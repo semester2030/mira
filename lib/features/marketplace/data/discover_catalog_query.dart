@@ -409,7 +409,7 @@ class DiscoverCatalogQuery {
       sameDayDelivery: clearSameDayDelivery ? null : sameDayDelivery ?? this.sameDayDelivery,
       hostessCountMin: clearHostessCountMin ? null : hostessCountMin ?? this.hostessCountMin,
       guestsCount: clearGuestsCount ? null : guestsCount ?? this.guestsCount,
-      ageMonths: clearAgeMonths ? null : ageMonths ?? this.ageMonths;
+      ageMonths: clearAgeMonths ? null : ageMonths ?? this.ageMonths,
       placeModes: clearPlaceModes ? const [] : placeModes ?? this.placeModes,
       branchIds: clearBranchIds ? const [] : branchIds ?? this.branchIds,
       inStock: clearInStock ? null : inStock ?? this.inStock,
