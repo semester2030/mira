@@ -10,7 +10,7 @@
 | فيديو امتلاء/تفريغ + ضغط | **PASS محلي** | `MOTION_logo_fill_press.mp4` | Flutter |
 | commit | `8f8168b` (إصلاح API فوق `0799bcb`) | git | `mira/elegance-e1-taxonomy-foundation` + `main` |
 | بوابة Render | **LIVE** `dep-dbpv8bgae00c73fj220g` @ `0799bcb` ثم دفع `8f8168b` | https://mira-partners-portal.onrender.com | Fayez workspace |
-| API Render | أول بناء فشل (`draftAttributesSet`)؛ إصلاح `8f8168b` دُفع — تحقق الحالة أدناه | https://mira-api-n4p3.onrender.com | Fayez workspace |
+| API Render | **LIVE** `dep-dbpvcr4s728c738sq1l0` @ `8f8168b` | https://mira-api-n4p3.onrender.com | Fayez workspace |
 | آيفون Release | **FAILED** | `No space left on device` أثناء Xcode؛ الجهاز لاسلكي فقط | تثبيت كابل + تفريغ ≥10Gi |
 | متجر / TestFlight | **NOT DONE** | منفصل عن تثبيت الكابل | — |
 
