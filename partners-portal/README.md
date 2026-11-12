@@ -46,7 +46,7 @@ Base: `https://mira-api-n4p3.onrender.com/api/v1`
 
 ```
 ADMIN_API_KEY=...          # اعتماد الطلبات
-PARTNER_AUTO_APPROVE=false # true للتجربة المحلية فقط
+PARTNER_AUTO_APPROVE=false # يُتجاهل عند التسجيل — كل طلب ينتظر قرار الإدارة
 WEBSITE_CORS_ORIGINS=https://mira-partners-portal.onrender.com,...
 ```
 

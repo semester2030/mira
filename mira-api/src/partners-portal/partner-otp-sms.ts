@@ -1,12 +1,10 @@
 /**
- * Partner apply phone OTP delivery.
- * Success is returned only after the configured sender accepts the message.
+ * DEFERRED — not used by partner apply in this phase.
+ * Admin review gates registration; phone OTP is a later milestone (not a closure blocker).
  *
- * Modes (PARTNER_OTP_SMS_MODE):
- * - http: POST JSON { phone, code, purpose } to PARTNER_OTP_SMS_URL (required)
- * - outbox: append to PARTNER_OTP_SMS_OUTBOX file (test/local durable sink)
- *
- * Never claim "sent" when the provider call fails or mode is unset.
+ * Modes (PARTNER_OTP_SMS_MODE) when re-wired later:
+ * - http: POST JSON { phone, code, purpose } to PARTNER_OTP_SMS_URL
+ * - outbox: append to PARTNER_OTP_SMS_OUTBOX
  */
 import { createHash, randomBytes } from 'node:crypto';
 import { appendFile, mkdir } from 'node:fs/promises';

@@ -700,10 +700,6 @@
       request('PUT', `/partners-portal/services/${encodeURIComponent(id)}/service-profile`, payload, null, opts),
     importLocalTemplate: (id, payload, opts) =>
       request('POST', `/partners-portal/services/${encodeURIComponent(id)}/import-local-template`, payload, null, opts),
-    applyPhoneOtpStart: (payload) => request('POST', '/partners-portal/apply/phone/start', payload),
-    applyPhoneOtpVerify: (payload) => request('POST', '/partners-portal/apply/phone/verify', payload),
-    applyEmailOtpStart: (payload) => request('POST', '/partners-portal/apply/email/start', payload),
-    applyEmailOtpVerify: (payload) => request('POST', '/partners-portal/apply/email/verify', payload),
     activitiesCatalog: () => request('GET', '/partners-portal/activities/catalog'),
     myActivities: () => request('GET', '/partners-portal/activities/me'),
     expandActivities: (payload) => request('POST', '/partners-portal/activities/expand', payload),

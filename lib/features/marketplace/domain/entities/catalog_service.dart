@@ -25,6 +25,12 @@ class CatalogService {
   final bool matchKnown;
   final String? category;
   final String? placeMode;
+  /// Pinned partner branch when placeMode is branch (from catalog).
+  final String? branchId;
+  /// Home-visit coverage city ids (sa-*).
+  final List<String> coverageCityIds;
+  /// Published home travel fee in halalas; null when unset.
+  final int? travelFeeHalalas;
   final bool bookingEnabled;
   final List<String> concernTags;
   final List<CatalogMediaLink> media;
@@ -63,6 +69,9 @@ class CatalogService {
       matchKnown: true,
       category: category,
       placeMode: placeMode,
+      branchId: branchId,
+      coverageCityIds: coverageCityIds,
+      travelFeeHalalas: travelFeeHalalas,
       bookingEnabled: bookingEnabled,
       concernTags: concernTags,
       media: media,
@@ -96,6 +105,9 @@ class CatalogService {
     this.matchKnown = false,
     this.category,
     this.placeMode,
+    this.branchId,
+    this.coverageCityIds = const [],
+    this.travelFeeHalalas,
     required this.bookingEnabled,
     this.concernTags = const [],
     this.media = const [],

@@ -84,6 +84,11 @@ abstract class CommerceClient {
     required String contactPhone,
     String resourceId = '',
     String? notes,
+    String? placeMode,
+    String? branchId,
+    String? visitCityId,
+    String? visitAddress,
+    int? travelFeeHalalas,
   });
   Future<CommercePage<CommerceBooking>> listBookings({String? cursor});
   Future<CommerceBooking> getBooking(String id);
@@ -239,6 +244,11 @@ class ApiCommerceClient implements CommerceClient {
     required String contactPhone,
     String resourceId = '',
     String? notes,
+    String? placeMode,
+    String? branchId,
+    String? visitCityId,
+    String? visitAddress,
+    int? travelFeeHalalas,
   }) async {
     final json = await _send(
       'POST',
@@ -252,6 +262,11 @@ class ApiCommerceClient implements CommerceClient {
         'contactPhone': contactPhone,
         if (resourceId.isNotEmpty) 'resourceId': resourceId,
         if (notes != null && notes.trim().isNotEmpty) 'notes': notes.trim(),
+        if (placeMode != null && placeMode.trim().isNotEmpty) 'placeMode': placeMode.trim(),
+        if (branchId != null && branchId.trim().isNotEmpty) 'branchId': branchId.trim(),
+        if (visitCityId != null && visitCityId.trim().isNotEmpty) 'visitCityId': visitCityId.trim(),
+        if (visitAddress != null && visitAddress.trim().isNotEmpty) 'visitAddress': visitAddress.trim(),
+        if (travelFeeHalalas != null) 'travelFeeHalalas': travelFeeHalalas,
       },
     );
     return CommerceBookingResult(

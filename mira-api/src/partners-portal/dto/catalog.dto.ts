@@ -340,4 +340,8 @@ export class UpsertServiceDto {
   @IsOptional()
   @IsBoolean()
   active?: boolean;
+
+  /** Home coverage: { cityIds?: string[], travelFeeSar?: number, noteAr?: string } */
+  @IsOptional()
+  coverageJson?: object | null;
 }

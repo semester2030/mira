@@ -16,6 +16,7 @@ class _FakeBookings implements CommerceClient {
   final List<CommerceSlot> slots;
   final created = <String>[];
   final keys = <String>[];
+  final placePayloads = <Map<String, Object?>>[];
 
   @override
   Future<CommerceAvailability> availability(String serviceId, String date) async => CommerceAvailability(
@@ -36,9 +37,21 @@ class _FakeBookings implements CommerceClient {
     required String contactPhone,
     String resourceId = '',
     String? notes,
+    String? placeMode,
+    String? branchId,
+    String? visitCityId,
+    String? visitAddress,
+    int? travelFeeHalalas,
   }) async {
     created.add('$serviceId|$resourceId|${startsAt.toUtc().toIso8601String()}|$contactPhone');
     keys.add(idempotencyKey);
+    placePayloads.add({
+      'placeMode': placeMode,
+      'branchId': branchId,
+      'visitCityId': visitCityId,
+      'visitAddress': visitAddress,
+      'travelFeeHalalas': travelFeeHalalas,
+    });
     return CommerceBookingResult(
       idempotentReplay: false,
       booking: CommerceBooking(
@@ -64,11 +77,22 @@ class _FakeBookings implements CommerceClient {
   dynamic noSuchMethod(Invocation invocation) => super.noSuchMethod(invocation);
 }
 
-CatalogService _service({bool booking = true, bool availability = true}) => CatalogService(
+CatalogService _service({
+  bool booking = true,
+  bool availability = true,
+  String? placeMode,
+  String? branchId,
+  List<String> coverageCityIds = const [],
+  int? travelFeeHalalas,
+  String partnerType = 'clinic',
+  String? providerKind,
+}) =>
+    CatalogService(
       id: 'svc-1',
       partnerId: 'p-1',
       partnerNameAr: 'عيادة اختبار',
-      partnerType: 'clinic',
+      partnerType: partnerType,
+      providerKind: providerKind,
       city: 'الرياض',
       nameAr: 'استشارة',
       nameEn: 'Consult',
@@ -76,11 +100,20 @@ CatalogService _service({bool booking = true, bool availability = true}) => Cata
       priceHalalas: 25000,
       priceLabel: '250 ر.س',
       matchScore: 0,
+      placeMode: placeMode,
+      branchId: branchId,
+      coverageCityIds: coverageCityIds,
+      travelFeeHalalas: travelFeeHalalas,
       bookingEnabled: booking,
       availabilityPresent: availability,
     );
 
-Future<List<String>> _pump(WidgetTester tester, CommerceClient client, CatalogService service) async {
+Future<List<String>> _pump(
+  WidgetTester tester,
+  CommerceClient client,
+  CatalogService service, {
+  String? initialBranchId,
+}) async {
   tester.view.physicalSize = const Size(900, 2400);
   tester.view.devicePixelRatio = 1;
   addTearDown(tester.view.reset);
@@ -96,6 +129,7 @@ Future<List<String>> _pump(WidgetTester tester, CommerceClient client, CatalogSe
         service: service,
         client: client,
         now: () => DateTime.utc(2026, 10, 1, 9),
+        initialBranchId: initialBranchId,
       ),
     ),
   );
@@ -155,5 +189,67 @@ void main() {
   test('requested is never labelled confirmed', () {
     expect(CommerceLabels.booking('requested'), isNot(contains('مؤكد ')));
     expect(CommerceLabels.booking('requested'), isNot(CommerceLabels.booking('confirmed')));
+  });
+
+  testWidgets('branch placeMode sends branchId on createBooking', (tester) async {
+    final client = _FakeBookings(
+      slots: [
+        CommerceSlot(startsAt: DateTime.utc(2026, 10, 1, 10), endsAt: DateTime.utc(2026, 10, 1, 10, 45), remaining: 1, available: true),
+      ],
+    );
+    await _pump(
+      tester,
+      client,
+      _service(placeMode: 'branch', branchId: 'br-1', partnerType: 'salon'),
+      initialBranchId: 'br-1',
+    );
+    await tester.tap(find.text('13:00'));
+    await tester.pump();
+    await tester.enterText(find.widgetWithText(TextFormField, 'الاسم'), 'سارة');
+    await tester.enterText(find.widgetWithText(TextFormField, 'رقم الجوال'), '0501234567');
+    await tester.tap(find.widgetWithText(FilledButton, 'إرسال طلب الموعد'));
+    await tester.pump();
+    await tester.pump(const Duration(milliseconds: 400));
+    expect(client.placePayloads.single['placeMode'], 'branch');
+    expect(client.placePayloads.single['branchId'], 'br-1');
+    expect(client.placePayloads.single['visitCityId'], isNull);
+  });
+
+  testWidgets('home placeMode sends visit city and address', (tester) async {
+    final client = _FakeBookings(
+      slots: [
+        CommerceSlot(startsAt: DateTime.utc(2026, 10, 1, 10), endsAt: DateTime.utc(2026, 10, 1, 10, 45), remaining: 1, available: true),
+      ],
+    );
+    await _pump(
+      tester,
+      client,
+      _service(
+        placeMode: 'home',
+        partnerType: 'salon',
+        providerKind: 'independent',
+        coverageCityIds: const ['sa-jeddah'],
+        travelFeeHalalas: 5000,
+      ),
+    );
+    expect(find.text('في موقعك'), findsOneWidget);
+    await tester.tap(find.text('13:00'));
+    await tester.pump();
+    await tester.enterText(find.widgetWithText(TextFormField, 'الاسم'), 'سارة');
+    await tester.enterText(find.widgetWithText(TextFormField, 'رقم الجوال'), '0501234567');
+    await tester.enterText(find.widgetWithText(TextFormField, 'عنوان الزيارة'), 'حي الزهراء');
+    // Ensure visit city is selected (coverage only has Jeddah).
+    await tester.tap(find.byKey(const ValueKey('visit-city')));
+    await tester.pumpAndSettle();
+    await tester.tap(find.text('جدة').last);
+    await tester.pumpAndSettle();
+    await tester.tap(find.widgetWithText(FilledButton, 'إرسال طلب الموعد'));
+    await tester.pump();
+    await tester.pump(const Duration(milliseconds: 400));
+    expect(client.placePayloads.single['placeMode'], 'home');
+    expect(client.placePayloads.single['visitCityId'], 'sa-jeddah');
+    expect(client.placePayloads.single['visitAddress'], 'حي الزهراء');
+    expect(client.placePayloads.single['travelFeeHalalas'], 5000);
+    expect(client.placePayloads.single['branchId'], isNull);
   });
 }

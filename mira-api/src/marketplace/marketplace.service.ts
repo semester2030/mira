@@ -548,10 +548,15 @@ export class MarketplaceService implements OnModuleInit {
         const lat = branch && Number.isFinite(branch.lat) ? branch.lat : null;
         const lng = branch && Number.isFinite(branch.lng) ? branch.lng : null;
         let coverageCityIds: string[] | null = null;
+        let travelFeeHalalas: number | null = null;
         if (service.coverageJson && typeof service.coverageJson === 'object' && !Array.isArray(service.coverageJson)) {
-          const raw = (service.coverageJson as { cityIds?: unknown }).cityIds;
+          const cov = service.coverageJson as { cityIds?: unknown; travelFeeSar?: unknown };
+          const raw = cov.cityIds;
           if (Array.isArray(raw)) {
             coverageCityIds = raw.filter((x): x is string => typeof x === 'string' && !!x.trim());
+          }
+          if (typeof cov.travelFeeSar === 'number' && Number.isFinite(cov.travelFeeSar) && cov.travelFeeSar >= 0) {
+            travelFeeHalalas = Math.round(cov.travelFeeSar * 100);
           }
         }
         let distanceKm: number | null = null;
@@ -592,6 +597,7 @@ export class MarketplaceService implements OnModuleInit {
           lng,
           distanceKm,
           coverageCityIds,
+          travelFeeHalalas,
           availabilityJson: service.availabilityJson,
           bookingEnabled,
           availableOnDay,
@@ -809,6 +815,8 @@ export class MarketplaceService implements OnModuleInit {
           variantsJson: null as unknown,
           placeMode: item.placeMode,
           branchId: item.branchId,
+          coverageCityIds: item.coverageCityIds ?? null,
+          travelFeeHalalas: item.travelFeeHalalas ?? null,
           distanceKm: item.distanceKm ?? null,
           distanceLabelAr:
             item.distanceKm != null
@@ -1139,6 +1147,23 @@ export class MarketplaceService implements OnModuleInit {
       category: service.category,
       concernTags: service.concernTags,
       placeMode: service.placeMode ?? placeModeFromServiceProfile(service.serviceProfileJson),
+      branchId: service.branchId || branchIdFromServiceProfile(service.serviceProfileJson) || null,
+      coverageCityIds: (() => {
+        if (service.coverageJson && typeof service.coverageJson === 'object' && !Array.isArray(service.coverageJson)) {
+          const raw = (service.coverageJson as { cityIds?: unknown }).cityIds;
+          if (Array.isArray(raw)) {
+            return raw.filter((x): x is string => typeof x === 'string' && !!x.trim());
+          }
+        }
+        return null;
+      })(),
+      travelFeeHalalas: (() => {
+        if (service.coverageJson && typeof service.coverageJson === 'object' && !Array.isArray(service.coverageJson)) {
+          const fee = (service.coverageJson as { travelFeeSar?: unknown }).travelFeeSar;
+          if (typeof fee === 'number' && Number.isFinite(fee) && fee >= 0) return Math.round(fee * 100);
+        }
+        return null;
+      })(),
       ...publicServiceCommerce({
         ...service,
         bookingEnabled: publicBookingEnabled(service, service.partner),

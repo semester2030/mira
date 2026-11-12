@@ -907,6 +907,14 @@ model CommerceBooking {
   serviceId      String   @map("service_id")
   serviceNameAr  String   @map("service_name_ar")
   branchLabel    String?  @map("branch_label")
+  /// Customer place intent for this booking: branch | home (visit).
+  placeMode      String?  @map("place_mode")
+  /// Real PartnerBranch id when placeMode=branch (never a foreign branch).
+  branchId       String?  @map("branch_id")
+  /// Visit city id when placeMode=home (coverage city — not HQ city alone).
+  visitCityId    String?  @map("visit_city_id")
+  visitAddress   String?  @map("visit_address")
+  travelFeeHalalas Int?   @map("travel_fee_halalas")
   /// Empty string = legacy / no explicit resource. Same resource across services shares capacity.
   resourceId     String   @default("") @map("resource_id")
   startsAt       DateTime @map("starts_at")
@@ -930,6 +938,7 @@ model CommerceBooking {
   @@index([partnerId, serviceId, startsAt])
   @@index([partnerId, resourceId, startsAt])
   @@index([userId, createdAt(sort: Desc)])
+  @@index([branchId])
   @@map("commerce_bookings")
 }
 

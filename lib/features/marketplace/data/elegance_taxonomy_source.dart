@@ -5,6 +5,7 @@ import 'package:flutter/services.dart' show rootBundle;
 
 import '../../../core/network/api_client.dart';
 import '../../../core/network/mira_api_endpoints.dart';
+import 'beauty_id_compat.dart';
 import 'discover_catalog_query.dart';
 
 /// One public taxonomy node from `GET /marketplace/taxonomy?lane=elegance`.
@@ -221,19 +222,7 @@ abstract final class EleganceTaxonomySource {
               ? 'clinic'
               : null;
       // Legacy service.category still uses hair/makeup/… for older rows.
-      final legacyStored = switch (n.id) {
-        'beauty.hair' => 'hair',
-        'beauty.makeup' => 'makeup',
-        'beauty.nails' => 'nails',
-        'beauty.lashes_brows' => 'lashes_brows',
-        'beauty.hair_removal' => 'hair_removal',
-        'beauty.henna' => 'henna',
-        'beauty.spa' || 'beauty.face_care' => 'care',
-        'beauty.clinic.derm' => 'skin',
-        'beauty.clinic.laser' => 'laser',
-        'beauty.clinic.teeth' => 'teeth',
-        _ => n.id,
-      };
+      final legacyStored = legacyBeautyCategoryFor(n.id) ?? n.id;
       kids.add(
         DiscoverCategoryDef(
           id: n.id,

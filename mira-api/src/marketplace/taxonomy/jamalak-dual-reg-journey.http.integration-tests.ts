@@ -1,18 +1,15 @@
 /**
- * Connected jamalak journey against a running test API (not schema-only).
- * Requires: DATABASE_URL + server on MIRA_API_BASE (default http://127.0.0.1:3000/api/v1)
- * Env: PARTNER_OTP_SMS_MODE=outbox PARTNER_OTP_DEV=true ADMIN_API_KEY=...
+ * Dual registration without SMS/email OTP — admin review gates activation.
+ * Independent + facility apply → both in admin queue → approve one by requestId → other stays pending.
+ * Unapproved activity cannot be written (ACTIVITY_NOT_APPROVED).
  *
- * Does NOT secretly patch rows to force booking — uses apply → admin decide → catalog.
+ * Requires: running test API + ADMIN_API_KEY. Phone OTP is deferred — not required.
  */
 import assert from 'node:assert/strict';
-import { readFile, unlink } from 'node:fs/promises';
-import { createHash, randomBytes } from 'node:crypto';
+import { randomBytes } from 'node:crypto';
 
-const base = (process.env.MIRA_API_BASE || 'http://127.0.0.1:3000/api/v1').replace(/\/$/, '');
+const base = (process.env.MIRA_API_BASE || 'http://127.0.0.1:3011/api/v1').replace(/\/$/, '');
 const adminKey = process.env.ADMIN_API_KEY || process.env.MIRA_ADMIN_KEY || '';
-const outbox = process.env.PARTNER_OTP_SMS_OUTBOX || '/tmp/mira-partner-otp-outbox.ndjson';
-const emailOutbox = process.env.PARTNER_OTP_EMAIL_OUTBOX || outbox;
 const runId = `jamalak-${new Date().toISOString().replace(/[:.]/g, '-')}-${randomBytes(3).toString('hex')}`;
 
 async function req(method: string, path: string, body?: unknown, headers?: Record<string, string>) {
@@ -35,181 +32,175 @@ async function req(method: string, path: string, body?: unknown, headers?: Recor
   return { status: res.status, json, text };
 }
 
-async function readLatestCode(path: string, pred: (row: Record<string, unknown>) => boolean) {
-  const raw = await readFile(path, 'utf8').catch(() => '');
-  const lines = raw
-    .trim()
-    .split('\n')
-    .filter(Boolean)
-    .map((l) => JSON.parse(l) as Record<string, unknown>);
-  for (let i = lines.length - 1; i >= 0; i--) {
-    if (pred(lines[i]!)) return String(lines[i]!.code || '');
-  }
-  return '';
+function ok(status: number) {
+  return status === 200 || status === 201;
 }
 
 async function main() {
   const health = await req('GET', '/marketplace/cities').catch(() => null);
   if (!health || health.status >= 500) {
-    console.log(
-      JSON.stringify({
-        runId,
-        verdict: 'NOT_VERIFIED',
-        blocker: 'test API not reachable',
-        base,
-      }),
-    );
+    console.log(JSON.stringify({ runId, verdict: 'NOT_VERIFIED', blocker: 'test API not reachable', base }));
+    process.exit(2);
+  }
+  if (!adminKey) {
+    console.log(JSON.stringify({ runId, verdict: 'NOT_VERIFIED', blocker: 'ADMIN_API_KEY required' }));
     process.exit(2);
   }
 
-  const phone = `05${String(Date.now()).slice(-8)}`;
-  const email = `noura.${runId.slice(-8)}@example.test`;
+  const suffix = runId.slice(-12);
   const password = 'TestPass123!';
 
-  // Wrong OTP rejected
-  const badVerify = await req('POST', '/partners-portal/apply/phone/verify', {
-    phone,
-    code: '000000',
-  });
-  assert.equal(badVerify.status, 400);
-
-  const startPhone = await req('POST', '/partners-portal/apply/phone/start', { phone });
-  if (startPhone.status !== 200 && startPhone.status !== 201) {
-    console.log(
-      JSON.stringify({
-        runId,
-        verdict: 'NOT_VERIFIED',
-        blocker: 'phone OTP start failed — set PARTNER_OTP_SMS_MODE=outbox on API',
-        status: startPhone.status,
-        body: startPhone.json,
-      }),
-    );
-    process.exit(2);
-  }
-  const phoneCode =
-    (startPhone.json as { devCode?: string })?.devCode ||
-    (await readLatestCode(outbox, (r) => String(r.phoneLast4) === phone.slice(-4)));
-  assert.ok(phoneCode, 'phone OTP code missing from response/outbox');
-
-  const verifyPhone = await req('POST', '/partners-portal/apply/phone/verify', {
-    phone,
-    code: phoneCode,
-  });
-  assert.ok(verifyPhone.status === 200 || verifyPhone.status === 201, `verifyPhone ${verifyPhone.status}`);
-  const phoneVerifyToken = (verifyPhone.json as { phoneVerifyToken?: string }).phoneVerifyToken;
-  assert.ok(phoneVerifyToken);
-
-  // Expired-path: wrong code after verify still invalid for a fresh start challenge is separate.
-  const startEmail = await req('POST', '/partners-portal/apply/email/start', { email });
-  assert.ok(startEmail.status === 200 || startEmail.status === 201);
-  const emailCode =
-    (startEmail.json as { devCode?: string })?.devCode ||
-    (await readLatestCode(emailOutbox, (r) => String(r.phoneHash || '').length > 0));
-  assert.ok(emailCode);
-  const verifyEmail = await req('POST', '/partners-portal/apply/email/verify', {
-    email,
-    code: emailCode,
-  });
-  assert.ok(verifyEmail.status === 200 || verifyEmail.status === 201, `verifyEmail ${verifyEmail.status}`);
-  const emailVerifyToken = (verifyEmail.json as { emailVerifyToken?: string }).emailVerifyToken;
-
-  const apply = await req('POST', '/partners-portal/apply', {
-    nameAr: 'نورة',
-    nameEn: 'Noura',
-    contactName: 'نورة',
-    contactEmail: email,
-    contactPhone: phone,
+  const independent = await req('POST', '/partners-portal/apply', {
+    nameAr: 'نورة رحلة',
+    nameEn: 'Noura Journey',
+    contactName: 'نورة رحلة',
+    contactEmail: `noura.j.${suffix}@example.test`,
+    contactPhone: `05${String(Date.now()).slice(-8)}`,
     city: 'الرياض',
     password,
-    phoneVerifyToken,
-    emailVerifyToken,
     activities: {
       identity: ['independent'],
       locations: ['client_home'],
-      description: 'مكياج عروس في موقع العميلة',
+      description: 'مكياج عروس — مراجعة إدارة',
       lines: [{ activity: 'beauty.makeup.bridal', scope: 'category' }],
     },
-    descriptionAr: 'مكياج عروس في موقع العميلة',
+    descriptionAr: 'مكياج عروس — مراجعة إدارة',
   });
-  assert.ok(apply.status === 200 || apply.status === 201, `apply failed ${apply.status} ${apply.text}`);
-  const statusToken = (apply.json as { statusToken?: string }).statusToken;
-  assert.ok(statusToken);
+  assert.ok(ok(independent.status), `independent apply ${independent.status} ${independent.text}`);
+  const indBody = independent.json as {
+    status?: string;
+    messageAr?: string;
+    message?: string;
+    activitiesRequestId?: string;
+  };
+  assert.equal(indBody.status, 'pending');
+  assert.ok(String(indBody.messageAr || indBody.message || '').includes('قيد مراجعة الإدارة'));
+  assert.ok(indBody.activitiesRequestId);
 
-  // Independent must reject commercial register
-  const crReject = await req('POST', '/partners-portal/apply', {
-    nameAr: 'نورة2',
-    nameEn: 'Noura2',
-    contactName: 'نورة2',
-    contactEmail: `cr.${email}`,
-    contactPhone: phone,
+  const facility = await req('POST', '/partners-portal/apply', {
+    nameAr: 'صالون رحلة',
+    nameEn: 'Salon Journey',
+    contactName: 'مسؤولة',
+    contactEmail: `salon.j.${suffix}@example.test`,
+    contactPhone: `05${String(Date.now() + 7).slice(-8)}`,
     city: 'الرياض',
     password,
-    phoneVerifyToken,
-    emailVerifyToken,
-    crNumber: '1010101010',
     activities: {
-      identity: ['independent'],
-      locations: ['client_home'],
-      description: 'رفض السجل',
+      identity: ['salon'],
+      locations: ['venue', 'client_home'],
+      description: 'صالون — مراجعة إدارة',
       lines: [{ activity: 'beauty.makeup.bridal', scope: 'category' }],
     },
+    descriptionAr: 'صالون — مراجعة إدارة',
   });
-  assert.equal(crReject.status, 400);
+  assert.ok(ok(facility.status), `facility apply ${facility.status} ${facility.text}`);
+  const facBody = facility.json as { status?: string; activitiesRequestId?: string };
+  assert.equal(facBody.status, 'pending');
+  assert.ok(facBody.activitiesRequestId);
 
-  let decideStatus: string = 'SKIPPED_NO_ADMIN_KEY';
-  if (adminKey) {
-    const queue = await req('GET', '/partners-portal/admin/activities/queue', undefined, {
-      'X-Admin-Key': adminKey,
-    });
-    const rows = (queue.json as { id?: string; applicationId?: string; lines?: Array<{ id: string }> }[]) || [];
-    // queue may be array or wrapped
-    const list = Array.isArray(queue.json) ? queue.json : (queue.json as { items?: unknown[] })?.items;
-    const pending = (Array.isArray(list) ? list : rows) as Array<{
-      id: string;
-      lines?: Array<{ id: string }>;
-    }>;
-    const hit = pending.find((r) => Array.isArray(r.lines) && r.lines.length);
-    if (hit?.id && hit.lines?.length) {
-      const decided = await req(
-        'POST',
-        '/partners-portal/admin/activities/decide',
-        {
-          requestId: hit.id,
-          approvedLineIds: hit.lines.map((l) => l.id),
-          verificationNote: `journey ${runId} verified activity+place`,
-        },
-        { 'X-Admin-Key': adminKey },
-      );
-      decideStatus = `${decided.status}`;
-    } else {
-      decideStatus = 'SKIPPED_NO_PENDING_ROW';
-    }
-  }
+  const queue = await req('GET', '/partners-portal/admin/activities/queue', undefined, {
+    'X-Admin-Key': adminKey,
+  });
+  assert.ok(ok(queue.status), `queue ${queue.status} ${queue.text}`);
+  const list = (Array.isArray(queue.json) ? queue.json : []) as Array<{
+    id: string;
+    state?: string;
+    lines?: Array<{ id: string }>;
+  }>;
+  const indReq = list.find((r) => r.id === indBody.activitiesRequestId);
+  const facReq = list.find((r) => r.id === facBody.activitiesRequestId);
+  assert.ok(indReq, 'independent must appear in admin queue');
+  assert.ok(facReq, 'facility must appear in admin queue');
 
-  // Coverage city intent for either (schema already covers; catalog smoke)
-  const homeCatalog = await req(
-    'GET',
-    '/marketplace/catalog?lane=beauty&kind=service&placeMode=home&limit=5',
+  const decide = await req(
+    'POST',
+    '/partners-portal/admin/activities/decide',
+    {
+      requestId: indBody.activitiesRequestId,
+      approvedLineIds: (indReq.lines || []).map((l) => l.id),
+      verificationNote: `${runId} approve independent only`,
+    },
+    { 'X-Admin-Key': adminKey },
   );
-  assert.ok(homeCatalog.status === 200);
+  assert.ok(ok(decide.status), `decide ${decide.status} ${decide.text}`);
 
-  // Privacy: partner detail must not leak phone when publicContactVisible unset
-  // (seeded partners may differ — assert helper contract via response shape when partner found)
+  const queue2 = await req('GET', '/partners-portal/admin/activities/queue', undefined, {
+    'X-Admin-Key': adminKey,
+  });
+  const list2 = (Array.isArray(queue2.json) ? queue2.json : []) as Array<{ id: string; state?: string }>;
+  assert.ok(
+    list2.some((r) => r.id === facBody.activitiesRequestId),
+    'facility request must stay pending',
+  );
+  assert.ok(
+    !list2.some((r) => r.id === indBody.activitiesRequestId),
+    'approved independent must leave pending queue',
+  );
 
-  const fingerprint = createHash('sha256').update(runId).digest('hex').slice(0, 16);
+  const facLogin = await req('POST', '/partners-portal/login', {
+    email: `salon.j.${suffix}@example.test`,
+    password,
+  });
+  assert.ok(facLogin.status >= 400, 'pending facility must not login');
+
+  const indLogin = await req('POST', '/partners-portal/login', {
+    email: `noura.j.${suffix}@example.test`,
+    password,
+  });
+  assert.ok(ok(indLogin.status), `approved login ${indLogin.status} ${indLogin.text}`);
+  const token = (indLogin.json as { accessToken?: string }).accessToken;
+  assert.ok(token);
+
+  // Unapproved activity (hair) must not be creatable with bridal-only grant
+  const denied = await req(
+    'POST',
+    '/partners-portal/services',
+    {
+      nameAr: 'صبغة غير معتمدة',
+      category: 'beauty.hair.color',
+      priceHalalas: 10000,
+      durationMin: 60,
+      placeMode: 'home',
+    },
+    { Authorization: `Bearer ${token}` },
+  );
+  const deniedCode =
+    (denied.json as { code?: string; message?: string })?.code ||
+    (denied.json as { message?: string })?.message ||
+    '';
+  assert.ok(
+    denied.status === 403 || String(deniedCode).includes('ACTIVITY_NOT_APPROVED'),
+    `unapproved activity must be blocked, got ${denied.status} ${denied.text}`,
+  );
+
+  // Pending facility has no public bookable services
+  const publicCatalog = await req(
+    'GET',
+    `/marketplace/catalog?q=${encodeURIComponent('صالون رحلة')}&lane=beauty`,
+  );
+  const items = Array.isArray((publicCatalog.json as { items?: unknown[] })?.items)
+    ? ((publicCatalog.json as { items: Array<{ partnerNameAr?: string }> }).items)
+    : Array.isArray(publicCatalog.json)
+      ? (publicCatalog.json as Array<{ partnerNameAr?: string }>)
+      : [];
+  assert.ok(
+    !items.some((i) => String(i.partnerNameAr || '').includes('صالون رحلة')),
+    'pending facility must not appear in bookable catalog',
+  );
+
   console.log(
     JSON.stringify(
       {
         runId,
-        fingerprint,
-        verdict: adminKey && decideStatus.startsWith('2') ? 'PASS_API_JOURNEY' : 'PARTIAL_API_JOURNEY',
-        applyStatus: apply.status,
-        phoneOtp: 'PASS',
-        emailOtp: 'PASS',
-        crReject: crReject.status,
-        decideStatus,
-        note: 'Flutter device journeys remain separate — see ACCEPTANCE_TABLE',
-        redactedPhoneLast4: phone.slice(-4),
+        verdict: 'PASS',
+        independentRequestId: indBody.activitiesRequestId,
+        facilityRequestId: facBody.activitiesRequestId,
+        approved: indBody.activitiesRequestId,
+        stillPending: facBody.activitiesRequestId,
+        message: indBody.messageAr || indBody.message,
+        unapprovedWriteBlocked: true,
+        noOtp: true,
+        otpDeferred: true,
       },
       null,
       2,

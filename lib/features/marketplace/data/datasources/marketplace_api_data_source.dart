@@ -181,6 +181,13 @@ class MarketplaceApiDataSource {
       matchKnown: json.containsKey('matchScore'),
       category: json['category'] as String?,
       placeMode: json['placeMode'] as String?,
+      branchId: json['branchId'] as String?,
+      coverageCityIds: (json['coverageCityIds'] as List<dynamic>?)
+              ?.map((e) => e.toString())
+              .where((e) => e.isNotEmpty)
+              .toList() ??
+          const [],
+      travelFeeHalalas: (json['travelFeeHalalas'] as num?)?.toInt(),
       bookingEnabled: json['bookingEnabled'] as bool? ?? false,
       concernTags: (json['concernTags'] as List<dynamic>?)
               ?.map((e) => e.toString())
@@ -383,6 +390,13 @@ class MarketplaceApiDataSource {
           matchScore: 0,
           category: json['category'] as String?,
           placeMode: json['placeMode'] as String?,
+          branchId: json['branchId'] as String?,
+          coverageCityIds: (json['coverageCityIds'] as List<dynamic>?)
+                  ?.map((e) => e.toString())
+                  .where((e) => e.isNotEmpty)
+                  .toList() ??
+              const [],
+          travelFeeHalalas: (json['travelFeeHalalas'] as num?)?.toInt(),
           bookingEnabled: json['bookingEnabled'] as bool? ?? false,
           media: _media(json),
           mainOfferKind: CatalogMainOfferKindCodec.tryParse(json['mainOfferKind'] as String?),

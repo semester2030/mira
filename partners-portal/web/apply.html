@@ -30,8 +30,6 @@
     .path-card h2 { margin:0 0 .35rem; font-size:1.15rem; }
     .path-card p { margin:0; color:#8a5a7a; font-size:.92rem; line-height:1.45; }
     .facility-only.hidden, .independent-only.hidden { display:none !important; }
-    .otp-row { display:flex; gap:.5rem; flex-wrap:wrap; align-items:flex-end; }
-    .otp-row input { flex:1; min-width:8rem; }
   </style>
 </head>
 <body>
@@ -86,35 +84,12 @@
             </div>
             <div class="grid-2">
               <div>
-                <label>الجوال</label>
-                <div class="otp-row">
-                  <input name="contactPhone" id="contactPhone" placeholder="05xxxxxxxx" />
-                  <button type="button" class="btn" id="sendOtp">إرسال رمز</button>
-                </div>
+                <label>الجوال (للتواصل)</label>
+                <input name="contactPhone" id="contactPhone" placeholder="05xxxxxxxx" />
               </div>
               <div>
-                <label>رمز التحقق</label>
-                <div class="otp-row">
-                  <input name="phoneOtp" id="phoneOtp" inputmode="numeric" maxlength="6" placeholder="6 أرقام" autocomplete="one-time-code" />
-                  <button type="button" class="btn" id="verifyOtp">تأكيد</button>
-                </div>
-                <p class="hint" id="otpHint">توثيق الجوال ليس ترخيصًا للممارسة، ولن يُعرض للعامة افتراضيًا.</p>
-              </div>
-            </div>
-            <div class="grid-2">
-              <div>
-                <label>البريد الإلكتروني</label>
-                <div class="otp-row">
-                  <input name="contactEmail" id="contactEmail" type="email" />
-                  <button type="button" class="btn" id="sendEmailOtp">إرسال رمز</button>
-                </div>
-              </div>
-              <div>
-                <label>رمز تحقق البريد</label>
-                <div class="otp-row">
-                  <input name="emailOtp" id="emailOtp" inputmode="numeric" maxlength="6" placeholder="6 أرقام" />
-                  <button type="button" class="btn" id="verifyEmailOtp">تأكيد</button>
-                </div>
+                <label>البريد الإلكتروني (للتواصل)</label>
+                <input name="contactEmail" id="contactEmail" type="email" />
               </div>
             </div>
             <div>
@@ -122,7 +97,7 @@
               <input name="city" id="city" value="الرياض" />
             </div>
             <input type="hidden" name="contactName" id="contactName" />
-            <p class="hint">لا يُطلب سجل تجاري ولا اسم منشأة ولا عنوان صالون لإنشاء الملف. توثيق التواصل منفصل عن اعتماد النشاط وتفعيل الحجز.</p>
+            <p class="hint">لا يُطلب سجل تجاري ولا اسم منشأة ولا عنوان صالون. الجوال والبريد للتواصل فقط — الإدارة تراجع الطلب والأنشطة قبل التفعيل. لا يُعتبر إدخالهما توثيقًا.</p>
           </div>
 
           <div class="facility-only hidden">
@@ -142,13 +117,13 @@
                 <input name="facilityContactName" id="facilityContactName" />
               </div>
               <div>
-                <label>البريد الإلكتروني</label>
+                <label>البريد الإلكتروني (للتواصل)</label>
                 <input name="facilityEmail" id="facilityEmail" type="email" />
               </div>
             </div>
             <div class="grid-2">
               <div>
-                <label>الجوال</label>
+                <label>الجوال (للتواصل)</label>
                 <input name="facilityPhone" id="facilityPhone" placeholder="05xxxxxxxx" />
               </div>
               <div>
@@ -172,6 +147,7 @@
               <legend>نوع المنشأة</legend>
               <div class="opts" id="facilityIdentityBox"></div>
             </fieldset>
+            <p class="hint">الجوال والبريد للتواصل فقط — الإدارة تراجع الطلب والأنشطة قبل التفعيل. لا يُعتبر إدخالهما توثيقًا.</p>
           </div>
 
           <div class="grid-2">
@@ -230,10 +206,6 @@
       identity: [],
       locations: [],
       lines: [],
-      phoneVerified: false,
-      phoneVerifyToken: null,
-      emailVerified: false,
-      emailVerifyToken: null,
     };
 
     function showPanel(n) {
@@ -243,10 +215,6 @@
 
     function setPath(path) {
       state.path = path;
-      state.phoneVerified = path !== 'independent' ? true : false;
-      state.phoneVerifyToken = null;
-      state.emailVerified = path !== 'independent' ? true : false;
-      state.emailVerifyToken = null;
       document.getElementById('pathIndependent').classList.toggle('on', path === 'independent');
       document.getElementById('pathFacility').classList.toggle('on', path === 'facility');
       document.getElementById('pathIndependent').setAttribute('aria-pressed', path === 'independent' ? 'true' : 'false');
@@ -254,7 +222,6 @@
       document.getElementById('to1').disabled = !path;
       document.querySelectorAll('.independent-only').forEach((el) => el.classList.toggle('hidden', path !== 'independent'));
       document.querySelectorAll('.facility-only').forEach((el) => el.classList.toggle('hidden', path !== 'facility'));
-      // Required flags
       const ind = path === 'independent';
       ['nameAr', 'nameEn', 'contactPhone', 'contactEmail'].forEach((id) => {
         const el = document.getElementById(id);
@@ -387,84 +354,6 @@
       }
     }
 
-    document.getElementById('sendOtp').onclick = async () => {
-      const phone = document.getElementById('contactPhone').value.trim();
-      if (!phone || phone.length < 9) {
-        msg.className = 'alert err'; msg.textContent = 'أدخلي رقم جوال صالحًا'; msg.classList.remove('hidden');
-        return;
-      }
-      try {
-        const res = await PartnersApi.applyPhoneOtpStart({ phone });
-        state.phoneVerified = false;
-        state.phoneVerifyToken = null;
-        msg.className = 'alert ok';
-        msg.textContent = res.messageAr || 'أُرسل رمز التحقق' + (res.devCode ? ' (تجريبي: ' + res.devCode + ')' : '');
-        msg.classList.remove('hidden');
-      } catch (err) {
-        msg.className = 'alert err';
-        msg.textContent = err.messageAr || err.message;
-        msg.classList.remove('hidden');
-      }
-    };
-
-    document.getElementById('verifyOtp').onclick = async () => {
-      const phone = document.getElementById('contactPhone').value.trim();
-      const code = document.getElementById('phoneOtp').value.trim();
-      try {
-        const res = await PartnersApi.applyPhoneOtpVerify({ phone, code });
-        state.phoneVerified = true;
-        state.phoneVerifyToken = res.phoneVerifyToken;
-        msg.className = 'alert ok';
-        msg.textContent = 'تم توثيق الجوال — ليس ترخيص ممارسة ولن يُعرض للعامة افتراضيًا.';
-        msg.classList.remove('hidden');
-      } catch (err) {
-        state.phoneVerified = false;
-        state.phoneVerifyToken = null;
-        msg.className = 'alert err';
-        msg.textContent = err.messageAr || err.message;
-        msg.classList.remove('hidden');
-      }
-    };
-
-    document.getElementById('sendEmailOtp').onclick = async () => {
-      const email = document.getElementById('contactEmail').value.trim();
-      if (!email || email.indexOf('@') < 0) {
-        msg.className = 'alert err'; msg.textContent = 'أدخلي بريدًا صالحًا'; msg.classList.remove('hidden');
-        return;
-      }
-      try {
-        const res = await PartnersApi.applyEmailOtpStart({ email });
-        state.emailVerified = false;
-        state.emailVerifyToken = null;
-        msg.className = 'alert ok';
-        msg.textContent = res.messageAr || 'أُرسل رمز التحقق للبريد' + (res.devCode ? ' (تجريبي: ' + res.devCode + ')' : '');
-        msg.classList.remove('hidden');
-      } catch (err) {
-        msg.className = 'alert err';
-        msg.textContent = err.messageAr || err.message;
-        msg.classList.remove('hidden');
-      }
-    };
-
-    document.getElementById('verifyEmailOtp').onclick = async () => {
-      const email = document.getElementById('contactEmail').value.trim();
-      const code = document.getElementById('emailOtp').value.trim();
-      try {
-        const res = await PartnersApi.applyEmailOtpVerify({ email, code });
-        state.emailVerified = true;
-        state.emailVerifyToken = res.emailVerifyToken;
-        msg.className = 'alert ok';
-        msg.textContent = 'تم توثيق البريد — لن يُعرض للعامة افتراضيًا.';
-        msg.classList.remove('hidden');
-      } catch (err) {
-        state.emailVerified = false;
-        state.emailVerifyToken = null;
-        msg.className = 'alert err';
-        msg.textContent = err.messageAr || err.message;
-        msg.classList.remove('hidden');
-      }
-    };
-
     document.getElementById('to2').onclick = () => {
       if (!state.path) return;
       if (form.password.value !== form.passwordConfirm.value) {
@@ -475,13 +364,7 @@
           msg.className = 'alert err'; msg.textContent = 'أدخلي الاسم'; msg.classList.remove('hidden'); return;
         }
         if (!document.getElementById('contactEmail').value.trim() || !document.getElementById('contactPhone').value.trim()) {
-          msg.className = 'alert err'; msg.textContent = 'أدخلي الجوال والبريد'; msg.classList.remove('hidden'); return;
-        }
-        if (!state.phoneVerified || !state.phoneVerifyToken) {
-          msg.className = 'alert err'; msg.textContent = 'أكّدي رمز التحقق للجوال أولًا'; msg.classList.remove('hidden'); return;
-        }
-        if (!state.emailVerified || !state.emailVerifyToken) {
-          msg.className = 'alert err'; msg.textContent = 'أكّدي رمز التحقق للبريد أولًا'; msg.classList.remove('hidden'); return;
+          msg.className = 'alert err'; msg.textContent = 'أدخلي الجوال والبريد للتواصل'; msg.classList.remove('hidden'); return;
         }
         document.getElementById('contactName').value = document.getElementById('nameAr').value.trim();
       } else {
@@ -490,6 +373,9 @@
         }
         if (!document.getElementById('facilityNameAr').value.trim()) {
           msg.className = 'alert err'; msg.textContent = 'أدخلي اسم المنشأة'; msg.classList.remove('hidden'); return;
+        }
+        if (!document.getElementById('facilityEmail').value.trim() || !document.getElementById('facilityPhone').value.trim()) {
+          msg.className = 'alert err'; msg.textContent = 'أدخلي جوال وبريد التواصل للمنشأة'; msg.classList.remove('hidden'); return;
         }
       }
       if (!form.password.value || form.password.value.length < 8) {
@@ -523,7 +409,7 @@
           '<p><b>الصفة:</b> ' + state.identity.map((k) => catalog.identityKinds[k] || k).join('، ') + '</p>' +
           (state.locations.length ? '<p><b>مكان التقديم المتوقع:</b> ' + state.locations.map((k) => catalog.modes[k]).join('، ') + '</p>' : '') +
           '<p><b>الأنشطة:</b></p><ul>' + labels.map((t) => '<li>' + t + '</li>').join('') + '</ul>' +
-          '<p>تفعيل الحجز منفصل عن إنشاء الملف ويحتاج موافقة الإدارة.</p>';
+          '<p>بعد الإرسال يبقى الطلب قيد مراجعة الإدارة. لا نشر ولا حجز قبل موافقتها على الأنشطة المختارة.</p>';
         msg.classList.add('hidden');
         showPanel(3);
       } catch (e) {
@@ -554,8 +440,6 @@
         payload.contactEmail = document.getElementById('contactEmail').value.trim();
         payload.contactPhone = document.getElementById('contactPhone').value.trim();
         payload.city = document.getElementById('city').value.trim() || 'الرياض';
-        payload.phoneVerifyToken = state.phoneVerifyToken;
-        payload.emailVerifyToken = state.emailVerifyToken;
       } else {
         payload.nameAr = document.getElementById('facilityNameAr').value.trim();
         payload.nameEn = document.getElementById('facilityNameEn').value.trim();
@@ -574,15 +458,14 @@
         const res = await PartnersApi.apply(payload);
         msg.className = 'alert ok';
         msg.innerHTML =
-          'تم استلام طلبك. رمز التتبع: <div class="token-box">' +
+          '<p><b>تم استلام طلبك وهو قيد مراجعة الإدارة</b></p>' +
+          '<p>رمز التتبع:</p><div class="token-box">' +
           res.statusToken +
           '</div> <a href="status.html?token=' +
           encodeURIComponent(res.statusToken) +
           '">تتبع الحالة</a>';
         form.reset();
         state.path = null;
-        state.phoneVerified = false;
-        state.phoneVerifyToken = null;
         showPanel(0);
         document.getElementById('to1').disabled = true;
       } catch (err) {

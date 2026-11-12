@@ -458,6 +458,13 @@ export function bookingRequestFingerprint(input: {
   contactName: string;
   contactPhone: string;
   notes: string | null;
+  /** Requested place intent — omitted for legacy/no-place bookings so old fingerprints stay stable. */
+  place?: {
+    placeMode: string;
+    branchId?: string | null;
+    visitCityId?: string | null;
+    visitAddress?: string | null;
+  } | null;
 }): string {
   return stableFingerprint({
     serviceId: input.serviceId,
@@ -466,6 +473,14 @@ export function bookingRequestFingerprint(input: {
     contactName: input.contactName,
     contactPhone: input.contactPhone,
     notes: input.notes ?? '',
+    ...(input.place
+      ? {
+          placeMode: input.place.placeMode,
+          branchId: input.place.branchId ?? '',
+          visitCityId: input.place.visitCityId ?? '',
+          visitAddress: input.place.visitAddress ?? '',
+        }
+      : {}),
   });
 }
 

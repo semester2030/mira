@@ -11,6 +11,7 @@ import '../../../../core/navigation/mira_route_observer.dart';
 import '../../../../core/utils/mira_url_launcher.dart';
 import '../../../../shared/theme/colors.dart';
 import '../../../../shared/theme/typography.dart';
+import '../../data/beauty_id_compat.dart';
 import '../../data/catalog_provenance.dart';
 import '../../data/discover_catalog_gateway.dart';
 import '../../data/catalog_record_scope.dart';
@@ -447,6 +448,8 @@ class DiscoverPresentationScreenState extends State<DiscoverPresentationScreen>
   DiscoverAvailabilityContext get _availabilityContext => DiscoverAvailabilityContext(
         availableOn: _query.availableOn,
         branchId: _query.branchIds.length == 1 ? _query.branchIds.first : null,
+        placeMode: _query.placeModes.length == 1 ? _query.placeModes.first : null,
+        visitCityId: resolveSaudiCity(_query.city)?.id,
         occasionTypeIds: _query.occasionTypeIds,
         occasionServiceOffers: _query.occasionServiceOffers,
         laneApiId: widget.lane?.apiId,
@@ -500,53 +503,8 @@ class DiscoverPresentationScreenState extends State<DiscoverPresentationScreen>
   }
 
   /// Portal persists legacy Service.category (hair/makeup/…); taxonomy mids are beauty.*.
-  String? _beautyLegacyCategoryFor(String? taxonomyOrLegacy) {
-    if (taxonomyOrLegacy == null || taxonomyOrLegacy.isEmpty) return null;
-    const midToLegacy = <String, String>{
-      'beauty.hair': 'hair',
-      'beauty.makeup': 'makeup',
-      'beauty.nails': 'nails',
-      'beauty.spa': 'care',
-      'beauty.face_care': 'care',
-      'beauty.lashes_brows': 'lashes_brows',
-      'beauty.hair_removal': 'hair_removal',
-      'beauty.henna': 'henna',
-      'beauty.clinic.derm': 'skin',
-      'beauty.clinic.laser': 'laser',
-      'beauty.clinic.teeth': 'teeth',
-    };
-    if (midToLegacy.containsKey(taxonomyOrLegacy)) return midToLegacy[taxonomyOrLegacy];
-    if (const {
-      'hair',
-      'makeup',
-      'nails',
-      'lashes_brows',
-      'hair_removal',
-      'henna',
-      'care',
-      'spa',
-      'skin',
-      'laser',
-      'teeth',
-    }.contains(taxonomyOrLegacy)) {
-      return taxonomyOrLegacy == 'spa' ? 'care' : taxonomyOrLegacy;
-    }
-    if (taxonomyOrLegacy.startsWith('beauty.clinic.')) {
-      final parts = taxonomyOrLegacy.split('.');
-      if (parts.length >= 3) {
-        final mid = parts.take(3).join('.');
-        return midToLegacy[mid];
-      }
-    }
-    if (taxonomyOrLegacy.startsWith('beauty.')) {
-      final parts = taxonomyOrLegacy.split('.');
-      if (parts.length >= 2) {
-        final mid = '${parts[0]}.${parts[1]}';
-        return midToLegacy[mid];
-      }
-    }
-    return null;
-  }
+  String? _beautyLegacyCategoryFor(String? taxonomyOrLegacy) =>
+      legacyBeautyCategoryFor(taxonomyOrLegacy);
 
   /// Keep drill parent only when query still targets that category / subcategory.
   void _reconcileEleganceDrill(DiscoverCatalogQuery query) {

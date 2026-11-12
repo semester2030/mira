@@ -12,6 +12,7 @@ import '../../data/commerce_api_client.dart';
 import '../../domain/commerce_models.dart';
 import '../../data/discover_availability_context.dart';
 import '../../data/discover_catalog_query.dart';
+import '../../data/saudi_cities.dart';
 import '../../domain/entities/catalog_service.dart';
 import '../widgets/commerce_common.dart';
 
@@ -55,6 +56,7 @@ class _BookingRequestScreenState extends State<BookingRequestScreen> {
   final _name = TextEditingController();
   final _phone = TextEditingController();
   final _notes = TextEditingController();
+  final _visitAddress = TextEditingController();
 
   late final List<DateTime> _dates;
   int _dateIndex = 0;
@@ -70,7 +72,15 @@ class _BookingRequestScreenState extends State<BookingRequestScreen> {
   String? _idempotencyKey;
   String? _keySignature;
 
+  /// branch | home — resolved from service + discover context.
+  String? _placeMode;
+  String? _visitCityId;
+
   CatalogService get service => widget.service;
+
+  bool get _allowsEither => service.placeMode == 'either';
+  bool get _needsPlaceChoice =>
+      _allowsEither || service.placeMode == 'branch' || service.placeMode == 'home' || service.isIndependent;
 
   @override
   void initState() {
@@ -82,6 +92,11 @@ class _BookingRequestScreenState extends State<BookingRequestScreen> {
       final idx = _dates.indexWhere((d) => _dateKey(d) == preferred);
       if (idx >= 0) _dateIndex = idx;
     }
+    _placeMode = _resolveInitialPlaceMode();
+    _visitCityId = widget.availabilityContext?.visitCityId ?? resolveSaudiCity(service.city)?.id;
+    if (_visitCityId == null && service.coverageCityIds.length == 1) {
+      _visitCityId = service.coverageCityIds.first;
+    }
     if (!_client.signedIn) {
       _needsLogin = true;
     } else {
@@ -89,11 +104,27 @@ class _BookingRequestScreenState extends State<BookingRequestScreen> {
     }
   }
 
+  String? _resolveInitialPlaceMode() {
+    final serviceMode = service.placeMode;
+    final ctxMode = widget.availabilityContext?.placeMode;
+    if (serviceMode == 'branch' || serviceMode == 'home') return serviceMode;
+    if (serviceMode == 'either') {
+      if (ctxMode == 'home' || ctxMode == 'branch') return ctxMode;
+      if ((widget.initialBranchId ?? service.branchId)?.isNotEmpty == true) return 'branch';
+      return 'branch';
+    }
+    if (ctxMode == 'home' || ctxMode == 'branch') return ctxMode;
+    if (service.isIndependent) return 'home';
+    if ((widget.initialBranchId ?? service.branchId)?.isNotEmpty == true) return 'branch';
+    return null;
+  }
+
   @override
   void dispose() {
     _name.dispose();
     _phone.dispose();
     _notes.dispose();
+    _visitAddress.dispose();
     super.dispose();
   }
 
@@ -131,6 +162,17 @@ class _BookingRequestScreenState extends State<BookingRequestScreen> {
     }
   }
 
+  List<SaudiCity> get _visitCities {
+    final covered = service.coverageCityIds;
+    if (covered.isEmpty) return List<SaudiCity>.from(kSaudiCities);
+    final matched = <SaudiCity>[];
+    for (final id in covered) {
+      final city = resolveSaudiCity(id);
+      if (city != null) matched.add(city);
+    }
+    return matched.isEmpty ? List<SaudiCity>.from(kSaudiCities) : matched;
+  }
+
   Future<void> _confirm() async {
     if (_submitting) return;
     if (!_form.currentState!.validate()) return;
@@ -141,8 +183,30 @@ class _BookingRequestScreenState extends State<BookingRequestScreen> {
     }
     final phone = SaudiPhone.toE164(_phone.text);
     if (phone == null) return;
+
+    final placeMode = _placeMode;
+    final branchId = placeMode == 'branch' ? (widget.initialBranchId ?? service.branchId) : null;
+    final visitCityId = placeMode == 'home' ? _visitCityId : null;
+    final visitAddress = placeMode == 'home' ? _visitAddress.text.trim() : null;
+    final travelFee = placeMode == 'home' ? service.travelFeeHalalas : null;
+
+    if (placeMode == 'branch' && (branchId == null || branchId.isEmpty)) {
+      setState(() => _submitError = 'اختاري فرعًا من التصفية أو من تفاصيل الخدمة.');
+      return;
+    }
+    if (placeMode == 'home') {
+      if (visitCityId == null || visitCityId.isEmpty) {
+        setState(() => _submitError = 'اختاري مدينة الزيارة.');
+        return;
+      }
+      if (visitAddress == null || visitAddress.isEmpty) {
+        setState(() => _submitError = 'أدخلي عنوان الزيارة.');
+        return;
+      }
+    }
+
     final signature =
-        '${service.id}|${slot.resourceId}|${slot.startsAt.toIso8601String()}|${_name.text.trim()}|$phone|${_notes.text.trim()}';
+        '${service.id}|${slot.resourceId}|${slot.startsAt.toIso8601String()}|${_name.text.trim()}|$phone|${_notes.text.trim()}|$placeMode|$branchId|$visitCityId|$visitAddress|$travelFee';
     if (_idempotencyKey == null || _keySignature != signature) {
       _idempotencyKey = newIdempotencyKey();
       _keySignature = signature;
@@ -160,6 +224,11 @@ class _BookingRequestScreenState extends State<BookingRequestScreen> {
         contactPhone: phone,
         resourceId: slot.resourceId,
         notes: _notes.text,
+        placeMode: placeMode,
+        branchId: branchId,
+        visitCityId: visitCityId,
+        visitAddress: visitAddress,
+        travelFeeHalalas: travelFee,
       );
       _idempotencyKey = null;
       _keySignature = null;
@@ -225,6 +294,72 @@ class _BookingRequestScreenState extends State<BookingRequestScreen> {
             textAlign: TextAlign.center,
           ),
           Text(MarketplaceCopy.bookingPayAtVenue, style: AppTypography.bodySmall.copyWith(color: AppColors.textSecondary), textAlign: TextAlign.center),
+          if (_needsPlaceChoice) ...[
+            const SizedBox(height: 16),
+            Text('مكان الخدمة', style: AppTypography.titleMedium),
+            const SizedBox(height: 6),
+            Wrap(
+              spacing: 8,
+              children: [
+                if (_allowsEither || service.placeMode == 'branch' || _placeMode == 'branch')
+                  ChoiceChip(
+                    key: const ValueKey('place-branch'),
+                    selected: _placeMode == 'branch',
+                    label: const Text('في المقر'),
+                    onSelected: _allowsEither || service.placeMode == 'either'
+                        ? (_) => setState(() => _placeMode = 'branch')
+                        : null,
+                  ),
+                if (_allowsEither || service.placeMode == 'home' || service.isIndependent || _placeMode == 'home')
+                  ChoiceChip(
+                    key: const ValueKey('place-home'),
+                    selected: _placeMode == 'home',
+                    label: const Text('في موقعك'),
+                    onSelected: _allowsEither || service.placeMode == 'either' || service.isIndependent
+                        ? (_) => setState(() => _placeMode = 'home')
+                        : null,
+                  ),
+              ],
+            ),
+            if (_placeMode == 'branch' && (widget.initialBranchId ?? service.branchId) != null) ...[
+              const SizedBox(height: 8),
+              Text(
+                'الفرع: ${widget.initialBranchId ?? service.branchId}',
+                style: AppTypography.bodyMedium,
+                textAlign: TextAlign.center,
+              ),
+            ],
+            if (_placeMode == 'home') ...[
+              const SizedBox(height: 12),
+              DropdownButtonFormField<String>(
+                key: const ValueKey('visit-city'),
+                value: _visitCities.any((c) => c.id == _visitCityId) ? _visitCityId : null,
+                decoration: const InputDecoration(labelText: 'مدينة الزيارة'),
+                items: [
+                  for (final city in _visitCities)
+                    DropdownMenuItem(value: city.id, child: Text(city.nameAr)),
+                ],
+                onChanged: (v) => setState(() => _visitCityId = v),
+                validator: (v) => (v == null || v.isEmpty) ? 'اختاري مدينة الزيارة' : null,
+              ),
+              TextFormField(
+                key: const ValueKey('visit-address'),
+                controller: _visitAddress,
+                decoration: const InputDecoration(labelText: 'عنوان الزيارة'),
+                validator: (value) =>
+                    _placeMode == 'home' && (value == null || value.trim().isEmpty) ? 'عنوان الزيارة مطلوب' : null,
+              ),
+              if (service.travelFeeHalalas != null && service.travelFeeHalalas! > 0)
+                Padding(
+                  padding: const EdgeInsets.only(top: 8),
+                  child: Text(
+                    'رسوم التنقل: ${CatalogPrice.text(known: true, halalas: service.travelFeeHalalas!)}',
+                    style: AppTypography.bodySmall.copyWith(color: AppColors.textSecondary),
+                    textAlign: TextAlign.center,
+                  ),
+                ),
+            ],
+          ],
           const SizedBox(height: 16),
           Text('اليوم', style: AppTypography.titleMedium),
           const SizedBox(height: 6),

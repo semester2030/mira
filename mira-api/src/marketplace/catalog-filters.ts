@@ -147,6 +147,8 @@ export type CatalogFilterItem = {
   distanceKm?: number | null;
   /** Home coverage city ids when placeMode=home. */
   coverageCityIds?: string[] | null;
+  /** Published home travel fee in halalas (from coverageJson.travelFeeSar). */
+  travelFeeHalalas?: number | null;
   /** Raw availability document for calendar-day eligibility (services). */
   availabilityJson?: unknown;
   /**

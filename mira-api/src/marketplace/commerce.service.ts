@@ -2,6 +2,8 @@ import { HttpStatus, Inject, Injectable } from '@nestjs/common';
 import { Prisma } from '@prisma/client';
 import { RequestUser } from '../common/interfaces/request-user.interface';
 import { PrismaService } from '../prisma/prisma.service';
+import { resolveSaudiCity } from '../geo/saudi-cities';
+import { coverageIncludesCity } from './catalog-filters';
 import { journeyCode, recordJourney } from './journey-events';
 import {
   ACTIVE_BOOKING_STATUSES,
@@ -55,6 +57,13 @@ import {
   withPartnerResourceCaps,
 } from './commerce.types';
 import { lockPartnerScheduleScope } from './commerce-schedule-locks';
+
+/** Trimmed non-empty string capped at `max` chars, else null. */
+function optionalText(value: unknown, max: number): string | null {
+  if (typeof value !== 'string') return null;
+  const trimmed = value.trim();
+  return trimmed ? trimmed.slice(0, max) : null;
+}
 
 /** Who is acting. `scope` limits which rows they can see or change. */
 export type CommerceActor =
@@ -1421,6 +1430,11 @@ export class CommerceService {
     const notes = parseOptionalNotes(data.notes);
     const resourceId = normalizeResourceId(data.resourceId);
     const startsAtIso = startsAt.toISOString();
+    const rawPlace =
+      typeof data.placeMode === 'string' && data.placeMode.trim() ? data.placeMode.trim() : null;
+    const rawBranchId = optionalText(data.branchId, 64);
+    const rawVisitCityId = optionalText(data.visitCityId ?? data.coverageCityId, 64);
+    const rawVisitAddress = optionalText(data.visitAddress, 300);
     const requestFingerprint = bookingRequestFingerprint({
       serviceId,
       startsAt: startsAtIso,
@@ -1428,6 +1442,15 @@ export class CommerceService {
       contactName: contact.contactName,
       contactPhone: contact.contactPhone,
       notes,
+      place:
+        rawPlace === 'home' || rawPlace === 'branch'
+          ? {
+              placeMode: rawPlace,
+              branchId: rawBranchId,
+              visitCityId: rawVisitCityId,
+              visitAddress: rawVisitAddress,
+            }
+          : null,
     });
 
     try {
@@ -1487,14 +1510,38 @@ export class CommerceService {
         }
 
         // Place intent: customer-selected place must be approved on this service row.
-        const requestedPlace =
-          typeof data.placeMode === 'string' && data.placeMode.trim()
-            ? data.placeMode.trim()
-            : null;
         const servicePlace =
           typeof service.placeMode === 'string' && service.placeMode.trim()
             ? service.placeMode.trim()
             : null;
+        // Home / either / branch services always require an explicit placeMode (no HQ fallback).
+        // Legacy remote/unset rows may still omit place when neither home nor branch applies.
+        const placeRequired =
+          servicePlace === 'home' || servicePlace === 'either' || servicePlace === 'branch';
+        // Infer branch only when the service itself pins a branch (legacy branch-only rows).
+        const requestedPlace: string | null =
+          rawPlace ?? (servicePlace === 'branch' && service.branchId ? 'branch' : null);
+        if (placeRequired && requestedPlace !== 'home' && requestedPlace !== 'branch') {
+          throw badRequest('PLACE_REQUIRED', 'اختاري مكان تقديم الخدمة (مقر أو زيارة)', {
+            field: 'placeMode',
+            servicePlaceMode: servicePlace,
+          });
+        }
+        let placeData: {
+          placeMode: 'branch' | 'home' | null;
+          branchId: string | null;
+          visitCityId: string | null;
+          visitAddress: string | null;
+          travelFeeHalalas: number | null;
+          branchLabel: string;
+        } = {
+          placeMode: null,
+          branchId: null,
+          visitCityId: null,
+          visitAddress: null,
+          travelFeeHalalas: null,
+          branchLabel: `${service.partner.nameAr} - ${service.partner.city}`,
+        };
         if (requestedPlace === 'home' || requestedPlace === 'branch') {
           const ok =
             servicePlace === requestedPlace ||
@@ -1510,12 +1557,104 @@ export class CommerceService {
             );
           }
           if (requestedPlace === 'branch') {
-            const branchId =
-              typeof data.branchId === 'string' && data.branchId.trim()
-                ? data.branchId.trim()
-                : service.branchId || null;
+            // Prefer the customer's branch; else the service's pinned branch.
+            const branchId = rawBranchId || service.branchId || null;
             if (!branchId) {
               throw unprocessable('BRANCH_REQUIRED', 'اختاري فرع المقر لهذه الخدمة');
+            }
+            const branch = await tx.partnerBranch.findFirst({ where: { id: branchId } });
+            if (!branch || branch.partnerId !== service.partnerId) {
+              // Same code for missing and foreign ids — never reveal another partner's branch.
+              throw unprocessable('BRANCH_NOT_OWNED', 'هذا الفرع لا يتبع جهة الخدمة', { branchId });
+            }
+            if (!branch.active) {
+              throw unprocessable('BRANCH_INACTIVE', 'هذا الفرع غير نشط حاليًا', { branchId });
+            }
+            // Owned+active only: when the service pins a branch, reject sibling branches.
+            if (service.branchId && branch.id !== service.branchId) {
+              throw unprocessable(
+                'BRANCH_NOT_FOR_SERVICE',
+                'هذا الفرع غير مرتبط بهذه الخدمة',
+                { branchId: branch.id, serviceBranchId: service.branchId },
+              );
+            }
+            placeData = {
+              placeMode: 'branch',
+              branchId: branch.id,
+              visitCityId: null,
+              visitAddress: null,
+              travelFeeHalalas: null,
+              // Real branch name + city — not the partner HQ city.
+              branchLabel: `${branch.nameAr} - ${branch.cityNameAr}`,
+            };
+          } else {
+            if (!rawVisitCityId) {
+              throw badRequest('VISIT_CITY_REQUIRED', 'اختاري مدينة الزيارة', { field: 'visitCityId' });
+            }
+            if (!rawVisitAddress || rawVisitAddress.length < 3) {
+              throw badRequest('VISIT_ADDRESS_REQUIRED', 'عنوان الزيارة مطلوب', { field: 'visitAddress' });
+            }
+            const visitCity = resolveSaudiCity(rawVisitCityId);
+            if (!visitCity) {
+              throw badRequest('VISIT_CITY_INVALID', 'مدينة الزيارة غير معروفة', { field: 'visitCityId' });
+            }
+            const coverage =
+              service.coverageJson && typeof service.coverageJson === 'object' && !Array.isArray(service.coverageJson)
+                ? (service.coverageJson as { cityIds?: unknown; travelFeeSar?: unknown })
+                : {};
+            const coverageCityIds = Array.isArray(coverage.cityIds)
+              ? coverage.cityIds.filter((x): x is string => typeof x === 'string' && !!x.trim())
+              : [];
+            if (!coverageIncludesCity(coverageCityIds, visitCity.id)) {
+              throw unprocessable('PLACE_OUT_OF_COVERAGE', 'مدينة الزيارة خارج نطاق تغطية هذه الخدمة', {
+                visitCityId: visitCity.id,
+              });
+            }
+            const travelFeeHalalas =
+              typeof coverage.travelFeeSar === 'number' && Number.isFinite(coverage.travelFeeSar) && coverage.travelFeeSar >= 0
+                ? Math.round(coverage.travelFeeSar * 100)
+                : null;
+            if (data.travelFeeHalalas != null && data.travelFeeHalalas !== (travelFeeHalalas ?? 0)) {
+              throw unprocessable('TRAVEL_FEE_MISMATCH', 'رسوم التنقل لا تطابق رسوم الخدمة', {
+                expectedHalalas: travelFeeHalalas ?? 0,
+              });
+            }
+            placeData = {
+              placeMode: 'home',
+              branchId: null,
+              visitCityId: visitCity.id,
+              visitAddress: rawVisitAddress,
+              travelFeeHalalas,
+              branchLabel: `${service.partner.nameAr} - زيارة منزلية (${visitCity.nameAr})`,
+            };
+          }
+        }
+
+        // When the partner has activity grants, booking requires a matching approved activity.
+        const grantCount = await tx.paGrant.count({ where: { partnerId: service.partnerId } });
+        if (grantCount > 0) {
+          const activityId =
+            typeof service.category === 'string' && service.category.trim() ? service.category.trim() : '';
+          if (!activityId) {
+            throw unprocessable('ACTIVITY_NOT_APPROVED', 'هذه الخدمة خارج الأنشطة المعتمدة للجهة');
+          }
+          const titleNorm = service.nameAr.normalize('NFKC').trim().replace(/\s+/gu, ' ');
+          const categoryGrant = await tx.paGrant.findFirst({
+            where: { partnerId: service.partnerId, activity: activityId, scope: 'category' },
+          });
+          if (!categoryGrant) {
+            const oneGrant = await tx.paGrant.findFirst({
+              where: {
+                partnerId: service.partnerId,
+                activity: activityId,
+                scope: 'one',
+                itemName: titleNorm,
+              },
+            });
+            if (!oneGrant) {
+              throw unprocessable('ACTIVITY_NOT_APPROVED', 'هذه الخدمة خارج الأنشطة المعتمدة للجهة', {
+                activity: activityId,
+              });
             }
           }
         }
@@ -1572,7 +1711,12 @@ export class CommerceService {
             partnerId: service.partnerId,
             serviceId: service.id,
             serviceNameAr: service.nameAr,
-            branchLabel: `${service.partner.nameAr} - ${service.partner.city}`,
+            branchLabel: placeData.branchLabel,
+            placeMode: placeData.placeMode,
+            branchId: placeData.branchId,
+            visitCityId: placeData.visitCityId,
+            visitAddress: placeData.visitAddress,
+            travelFeeHalalas: placeData.travelFeeHalalas,
             resourceId,
             startsAt,
             endsAt: lockedSlot.endsAt,
@@ -1838,6 +1982,11 @@ export class CommerceService {
       serviceId: row.serviceId,
       serviceNameAr: row.serviceNameAr,
       branchLabel: row.branchLabel,
+      placeMode: row.placeMode ?? null,
+      branchId: row.branchId ?? null,
+      visitCityId: row.visitCityId ?? null,
+      visitAddress: row.visitAddress ?? null,
+      travelFeeHalalas: row.travelFeeHalalas ?? null,
       resourceId: row.resourceId || '',
       startsAt: row.startsAt.toISOString(),
       endsAt: row.endsAt.toISOString(),
