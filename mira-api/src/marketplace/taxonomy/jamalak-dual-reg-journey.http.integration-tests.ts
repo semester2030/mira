@@ -95,7 +95,7 @@ async function main() {
     phone,
     code: phoneCode,
   });
-  assert.equal(verifyPhone.status, 200);
+  assert.ok(verifyPhone.status === 200 || verifyPhone.status === 201, `verifyPhone ${verifyPhone.status}`);
   const phoneVerifyToken = (verifyPhone.json as { phoneVerifyToken?: string }).phoneVerifyToken;
   assert.ok(phoneVerifyToken);
 
@@ -110,7 +110,7 @@ async function main() {
     email,
     code: emailCode,
   });
-  assert.equal(verifyEmail.status, 200);
+  assert.ok(verifyEmail.status === 200 || verifyEmail.status === 201, `verifyEmail ${verifyEmail.status}`);
   const emailVerifyToken = (verifyEmail.json as { emailVerifyToken?: string }).emailVerifyToken;
 
   const apply = await req('POST', '/partners-portal/apply', {

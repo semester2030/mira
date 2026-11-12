@@ -1,36 +1,37 @@
-# جمالك — مساران + في موقعك — جدول القبول
+# جمالك — رحلة التسجيل→الحجز — جدول القبول
 
-**Base:** `98f9691` + local dual-registration changes (uncommitted at package time)  
-**تاريخ الحزمة:** 2026-11-12
+**commit:** `15f4435` (+follow-up journey assert fix if present)  
+**runId (API journey):** `jamalak-2026-11-12T03-03-38-596Z-11f524`  
+**test API:** `http://127.0.0.1:3011/api/v1` (local, not production)  
+**لا نشر إنتاج في هذه الجولة.**
 
-قاعدة المنتج: **من يقدّم الخدمة = اسم الحساب وصاحب الحجز**؛ **أين تُقدَّم = لكل خدمة**. فلتر «في موقعك» مكان فقط — لا يحوّل النوع إلى صالون ولا يستبعد المستقلات.
+| الخلل | الإصلاح | الاختبار | الدليل | الحالة |
+|--------|---------|----------|--------|--------|
+| OTP يقول «أُرسل» بلا مزوّد | `partner-otp-sms.ts` + `PARTNER_OTP_SMS_MODE`؛ فشل الإرسال = خطأ | outbox deliver + reject بدون mode + رمز خاطئ | `partner-otp-sms.schema-tests`؛ HTTP journey phone/email OTP PASS | **PASS** |
+| `getPartner` يسرّب `contactPhone` | `publicContactPhone()` موحّد لكل الاستجابات العامة | GET partner بعد كتالوج | `contactPhone= None` على الشريك المختبر | **PASS** |
+| `either` يطابق مدينة المقر عند «في موقعك» | `serviceCityMatchesPlaceIntent` — home→تغطية، branch→فرع | schema either الرياض/جدة | `dual-registration.schema-tests` eitherJeddahHome | **PASS** |
+| زر احجزي من الفيديو يتجاوز اختيار الخدمة | `openServiceBookingFlow` مشترك discover+detail + أسماء عربية | مراجعة الكود + بناء | `intro_video_booking.dart`؛ لا لقطة جهاز | **PASS (كود) / Flutter UI NOT_VERIFIED** |
+| ربط صبغة/استشوار أيقونة→عرض | منطق الربط السابق + اختبارات schema | catalog leaf queries على خادم الاختبار | n=0 عروض منشورة تحت الأوراق في DB الاختبار | **NOT_VERIFIED** — لا عروض صبغة/استشوار منشورة من محرر البوابة في هذه الجولة على خادم الاختبار |
+| مختصّة مستقلة تسجيل→حجز من Flutter | apply+OTP+decide على API | HTTP journey | apply 201 + decide 201 | **PARTIAL** — API PASS؛ **حجز Flutter NOT_VERIFIED** |
+| صالون مقر+موقع عميلة من البوابة→التطبيق | either coverage schema + محرر | schema | either cross-city PASS | **PARTIAL** — لا رحلة بوابة UI→Flutter على الجهاز |
+| عيادة فيديو عام/خاص من احجزي | unified booking + linkedServices عربي | كود + API linkedServices | لا تسجيل شاشة على iPhone | **NOT_VERIFIED** للجهاز |
 
-| الحالة | المتوقع | النتيجة الفعلية | الدليل |
-|--------|---------|-----------------|--------|
-| تسجيل نورة «أسجّل باسمي» بلا سجل/فرع | طلب join بهوية `independent` فقط، بلا `crNumber`، بلا `PartnerBranch` عند الاعتماد | **PASS (schema + apply UI + server rules)** | `apply.html` مسار مستقل؛ `INDEPENDENT_NO_COMMERCIAL_REGISTER`؛ approve لا ينشئ فرعًا؛ OTP جوال مطلوب |
-| توثيق جوال ≠ ترخيص / إخفاء عام | OTP يوثّق الجوال؛ الكتالوج لا يعرض الهاتف افتراضيًا | **PASS (server)** | `publicContactVisible: false`؛ `publicContactPhone()` يرجع null |
-| فصل الملف عن تفعيل الحجز | قبل اعتماد الأنشطة لا حجز؛ بعده `bookingActivated` | **PASS (server)** | `activitiesMeta.bookingActivated` عند decide؛ `publicBookingEnabled` |
-| صالون لمسة: نفس الخدمة فرع + موقع عميلة | `placeMode=either` يظهر تحت home و branch | **PASS (schema)** | `dual-registration.schema-tests.ts`؛ `placeModeMatchesFilter('either',…)` |
-| بحث «مكياج عروس ← في موقعي» | نورة (home) + الصالون (either) بهويتين | **PASS (schema filter)** | matchCatalogItem noura+lamsa تحت `placeModes:['home']` |
-| فلتر «في المقر» | يبقى الصالون؛ تختفي نورة إن كانت متنقلة فقط | **PASS (schema)** | noura `placeMode=home` → null تحت branch |
-| عيادة فيديو تعريفي vs خدمة | `videoScope=provider_intro\|service_specific`؛ الطبية خارج «في موقعك» | **PASS (portal+API+schema)** | محرر وسائط؛ detail يعيد videoScope؛ laser تحت home = null |
-| صبغة/استشوار offerId صحيح لكل دائرة | ربط الورقة السابق | **PASS (local binding prior)** / **prod portal→app NOT_VERIFIED** | `beauty-color-binding` + حزمة `98f9691`؛ إغلاق إنتاج كامل لم يُعَد في هذه الجولة |
-| رحلة بوابة شريك → Flutter فعلي (نورة/لمسة/عيادة) | تسجيل ونشر وحجز من الجوال | **NOT_VERIFIED** | لم تُنفَّذ رحلة موقع→جوال كاملة في هذه الحزمة (لا لقطات تسجيل/حجز حيّة) |
-| منع حجز الموظفة مرتين (تقويم واحد + resourceId) | تضارب سعة المورد | **PARTIAL** | التقويم الموحّد + `resourceId` موجودان سابقًا؛ لم يُثبت سيناريو موظفة صالون على جهاز |
+## أوامر إعادة الاختبار
 
-## اختبارات آلية نُفِّذت
-
-```
-npx tsx src/partners-portal/partner-activities/partner-activities.schema-tests.ts
+```bash
+cd mira-api
+# schema
+npx tsx src/partners-portal/partner-otp-sms.schema-tests.ts
 npx tsx src/partners-portal/partner-activities/dual-registration.schema-tests.ts
 npm run test:beauty-a
+
+# API journey (server must run with PARTNER_OTP_SMS_MODE=outbox)
+MIRA_API_BASE=http://127.0.0.1:3011/api/v1 ADMIN_API_KEY=… \
+  npx tsx src/marketplace/taxonomy/jamalak-dual-reg-journey.http.integration-tests.ts
 ```
 
-## ملفات رئيسية
+## موانع الإغلاق
 
-- `partners-portal/web/apply.html` — مساران
-- `mira-api/.../partner-activities.*` — providerKind + تعارض الهويات
-- `mira-api/.../catalog-filters.ts` — either + في موقعك طبي
-- `mira-api/.../beauty-taxonomy.v1.json` — تسمية «في موقعك»
-- `partners-portal/web/js/catalog-journey.js` — مكان لكل خدمة + فيديو
-- Flutter discover/service detail — تسميات + intro video picker
+1. لم تُنفَّذ ثلاث رحلات مستخدم كاملة من **بوابة المتصفح** إلى **Flutter على الجهاز** مع لقطات حجز (الجهاز اللاسلكي متاح لكن الرحلة التفاعلية لم تُغلق في هذه الجولة).
+2. لا عروض صبغة/استشوار منشورة على خادم الاختبار لإثبات `offerId` لكل دائرة من التطبيق.
+3. مزوّد SMS الإنتاج يحتاج `PARTNER_OTP_SMS_MODE=http` + `PARTNER_OTP_SMS_URL` — الاختبار استخدم `outbox` فقط.
