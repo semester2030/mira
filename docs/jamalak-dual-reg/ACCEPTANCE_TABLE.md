@@ -22,7 +22,8 @@
 | إزالة alias lists من Flutter | `beauty_id_compat.dart` مرآة لـ API | `beauty_id_compat_test` | unit | **PASS (unit)** |
 | فيديو عيادة → خدمات عربية | linkedServices؛ مسودة/أجنبي missing | `jamalak-clinic-video` | `clinic-vid-mwdh24cv-6ed7` | **PASS (API)** / Discover+احجزي **NOT_VERIFIED** |
 | أيقونة صبغة/استشوار → offerId | عروض منشورة + subcategory leaf | `jamalak-color-blowdry-publish` | `cb-2026-11-12T11-35-57-945Z-28c3` | **PASS (API catalog)** / نشر محرّر+ضغط أيقونة **NOT_VERIFIED** |
-| 3 رحلات بوابة→Flutter | — | — | — | **NOT_VERIFIED** |
+| بوابة apply مستقلة/صالون/عيادة بلا OTP | Playwright على apply.html + decide + نشر صبغة/استشوار | `jamalak-ui-portal-journeys` | `ui-portal-mwdh9vyg-8a03` | **PASS (portal UI)** |
+| 3 رحلات Flutter (حجز+أيقونات+فيديو) | محاكي على نفس API | — | — | **NOT_VERIFIED** |
 | رمز الجوال | مؤجّل عمدًا | — | — | **ليس مانع** |
 
 ## أوامر إعادة الاختبار

@@ -1,0 +1,20 @@
+{
+  "runId": "ui-portal-mwdh9vyg-8a03",
+  "verdict": "PASS_PORTAL_UI",
+  "apiBase": "http://127.0.0.1:3011/api/v1",
+  "evidenceDir": "/Users/fayez/Desktop/مراجع تطبيق ميرا /mira-wt/elegance-e1/docs/jamalak-dual-reg/evidence/ui-portal-mwdh9vyg-8a03",
+  "independentRequestId": "45459e92-ef87-454e-81ca-5ee4fcf86252",
+  "salonRequestId": "a340294a-d27f-40c7-b6bc-ec591fed8368",
+  "clinicRequestId": "d65e6385-6d3a-46c4-b0f9-e057bf7a641c",
+  "colorOfferId": "11e5ce27-ebe7-49e1-9612-e8bf6a233d78",
+  "blowdryOfferId": "cb344a98-4fc2-4016-bfd6-e030be737215",
+  "flutterRemaining": [
+    "independent home booking on simulator",
+    "salon branch+home booking on simulator",
+    "clinic intro video → Arabic service → book; foreign service hidden",
+    "tap color/blowdry icons with subcategory+offerId"
+  ],
+  "noOtp": true,
+  "autoApproveNever": true,
+  "gitHeadAtRun": "745a565"
+}
