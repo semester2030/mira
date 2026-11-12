@@ -112,6 +112,18 @@ async function waitCatalog(page: Page) {
   });
 }
 
+async function checkActivities(page: Page, activityIds: string[]) {
+  await page.evaluate(() => {
+    document.querySelectorAll('#activityTree details').forEach((d) => {
+      (d as HTMLDetailsElement).open = true;
+    });
+  });
+  for (const id of activityIds) {
+    const loc = page.locator(`#activityTree input[data-activity-id="${id}"]`);
+    if (await loc.count()) await loc.check({ force: true });
+  }
+}
+
 async function fillIndependent(page: Page, origin: string, suffix: string) {
   // No api-base override — same-origin /api/v1 proxy (see servePortal).
   await page.goto(`${origin}/apply.html`, { waitUntil: 'networkidle' });
@@ -136,9 +148,7 @@ async function fillIndependent(page: Page, origin: string, suffix: string) {
       (d as HTMLDetailsElement).open = true;
     });
   });
-  const bridal = page.locator('#activityTree input[data-activity-id="beauty.makeup.bridal"]');
-  if (await bridal.count()) await bridal.check({ force: true });
-  else await page.locator('#activityTree .line input[type=checkbox]').first().check({ force: true });
+  await checkActivities(page, ['beauty.makeup.bridal']);
   await page.click('#to3');
   await page.screenshot({ path: path.join(evidenceDir, '01-independent-review.png'), fullPage: true });
   const [resp] = await Promise.all([
@@ -165,7 +175,13 @@ async function fillFacility(
   page: Page,
   origin: string,
   suffix: string,
-  opts: { kind: 'salon' | 'clinic'; email: string; nameAr: string; activity: string; location: string },
+  opts: {
+    kind: 'salon' | 'clinic';
+    email: string;
+    nameAr: string;
+    activities: string[];
+    location: string;
+  },
 ) {
   await page.goto(`${origin}/apply.html`, { waitUntil: 'networkidle' });
   await waitCatalog(page);
@@ -192,14 +208,17 @@ async function fillFacility(
     if (await home.count()) await home.check();
   }
   await page.waitForSelector('#activityTree .line input[type=checkbox]', { state: 'attached', timeout: 15000 });
-  await page.evaluate(() => {
-    document.querySelectorAll('#activityTree details').forEach((d) => {
-      (d as HTMLDetailsElement).open = true;
-    });
-  });
-  const act = page.locator(`#activityTree input[data-activity-id="${opts.activity}"]`);
-  if (await act.count()) await act.check({ force: true });
-  else await page.locator('#activityTree .line input[type=checkbox]').first().check({ force: true });
+  await checkActivities(page, opts.activities);
+  // Capture selected activities text for evidence (must match later grants).
+  const selected = await page.evaluate(() =>
+    [...document.querySelectorAll('#activityTree input[type=checkbox]:checked')].map(
+      (el) => (el as HTMLInputElement).getAttribute('data-activity-id') || (el as HTMLInputElement).value,
+    ),
+  );
+  assert.ok(
+    opts.activities.every((a) => selected.includes(a)),
+    `expected activities ${opts.activities.join(',')} selected, got ${selected.join(',')}`,
+  );
   await page.click('#to3');
   await page.screenshot({
     path: path.join(evidenceDir, `03-${opts.kind}-review.png`),
@@ -380,30 +399,10 @@ async function main() {
       kind: 'salon',
       email: salonEmail,
       nameAr: `صالون واجهة ${suffix}`,
-      activity: 'beauty.hair.color',
+      activities: ['beauty.hair.color', 'beauty.hair.blowdry'],
       location: 'venue',
     });
-    // Also grant blowdry via expand after first approve — approve color line only then expand.
     await decide(salon.activitiesRequestId!);
-
-    // Expand salon for blowdry so both leaves can publish.
-    const loginSalon = await api('POST', '/partners-portal/login', { email: salonEmail, password });
-    assert.ok(loginSalon.status < 300, loginSalon.text);
-    const salonTok = (loginSalon.json as { accessToken?: string }).accessToken!;
-    const expand = await api(
-      'POST',
-      '/partners-portal/activities/expand',
-      {
-        identity: ['salon'],
-        locations: ['venue'],
-        description: 'توسيع استشوار',
-        lines: [{ activity: 'beauty.hair.blowdry', scope: 'category' }],
-      },
-      { Authorization: `Bearer ${salonTok}` },
-    );
-    assert.ok(expand.status < 300, expand.text);
-    const expandId = (expand.json as { requestId?: string }).requestId!;
-    await decide(expandId);
 
     const offers = await publishColorBlowdry(salonEmail);
 
@@ -411,19 +410,33 @@ async function main() {
       kind: 'clinic',
       email: `clinic.ui.${suffix}@example.test`,
       nameAr: `عيادة واجهة ${suffix}`,
-      activity: 'beauty.clinic.derm',
+      activities: ['beauty.clinic.derm.skin_eval', 'beauty.clinic.laser.hair'],
       location: 'venue',
     });
     await decide(clinic.activitiesRequestId!);
 
     const summary = {
       runId,
+      gitHead: (() => {
+        try {
+          return require('node:child_process')
+            .execSync('git rev-parse --short HEAD', {
+              cwd: path.resolve(__dirname, '../../../..'),
+              encoding: 'utf8',
+            })
+            .trim();
+        } catch {
+          return 'unknown';
+        }
+      })(),
       verdict: 'PASS_PORTAL_UI',
       apiBase,
       evidenceDir,
       independentRequestId: independent.activitiesRequestId,
       salonRequestId: salon.activitiesRequestId,
+      salonActivitiesSelected: ['beauty.hair.color', 'beauty.hair.blowdry'],
       clinicRequestId: clinic.activitiesRequestId,
+      clinicActivitiesSelected: ['beauty.clinic.derm.skin_eval', 'beauty.clinic.laser.hair'],
       colorOfferId: offers.colorId,
       blowdryOfferId: offers.blowId,
       flutterRemaining: [

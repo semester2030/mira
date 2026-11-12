@@ -1,0 +1,28 @@
+{
+  "runId": "ui-portal-mwdhrm1l-a5d2",
+  "gitHead": "01958d7",
+  "verdict": "PASS_PORTAL_UI",
+  "apiBase": "http://127.0.0.1:3011/api/v1",
+  "evidenceDir": "/Users/fayez/Desktop/مراجع تطبيق ميرا /mira-wt/elegance-e1/docs/jamalak-dual-reg/evidence/ui-portal-mwdhrm1l-a5d2",
+  "independentRequestId": "cae3ce6f-dbd1-4d9c-90c8-4a9b1f36759a",
+  "salonRequestId": "e237b1ec-7e0c-44af-878b-cbb9a1369fd1",
+  "salonActivitiesSelected": [
+    "beauty.hair.color",
+    "beauty.hair.blowdry"
+  ],
+  "clinicRequestId": "385ba756-a248-4b7a-a537-a02767e33149",
+  "clinicActivitiesSelected": [
+    "beauty.clinic.derm.skin_eval",
+    "beauty.clinic.laser.hair"
+  ],
+  "colorOfferId": "73b9b498-c87c-417a-921b-28e92757c19a",
+  "blowdryOfferId": "3cb32bcb-f8fc-4167-9ea4-79c524466523",
+  "flutterRemaining": [
+    "independent home booking on simulator",
+    "salon branch+home booking on simulator",
+    "clinic intro video → Arabic service → book; foreign service hidden",
+    "tap color/blowdry icons with subcategory+offerId"
+  ],
+  "noOtp": true,
+  "autoApproveNever": true
+}

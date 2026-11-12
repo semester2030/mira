@@ -126,6 +126,16 @@ const SERVICE_CATEGORIES = new Set([
   'beauty.hair.updo',
   'beauty.hair.braids',
   'beauty.hair.care',
+  'beauty.clinic.derm.consult',
+  'beauty.clinic.derm.skin_eval',
+  'beauty.clinic.derm.hair_eval',
+  'beauty.clinic.derm.procedures',
+  'beauty.clinic.laser.hair',
+  'beauty.clinic.laser.skin_eval',
+  'beauty.clinic.teeth.consult',
+  'beauty.clinic.teeth.whitening',
+  'beauty.clinic.teeth.veneers_eval',
+  'beauty.clinic.teeth.clean',
 ]);
 
 @Injectable()

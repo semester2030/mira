@@ -1631,18 +1631,33 @@ export class CommerceService {
         }
 
         // When the partner has activity grants, booking requires a matching approved activity.
+        // Prefer taxonomy leaf on attributesJson (catalog binding); fall back to category.
         const grantCount = await tx.paGrant.count({ where: { partnerId: service.partnerId } });
         if (grantCount > 0) {
-          const activityId =
+          const attrs =
+            service.attributesJson && typeof service.attributesJson === 'object' && !Array.isArray(service.attributesJson)
+              ? (service.attributesJson as { subcategory?: unknown; taxonomyLeaf?: unknown })
+              : {};
+          const leafFromAttrs =
+            (typeof attrs.taxonomyLeaf === 'string' && attrs.taxonomyLeaf.trim()) ||
+            (typeof attrs.subcategory === 'string' && attrs.subcategory.trim()) ||
+            '';
+          const categoryId =
             typeof service.category === 'string' && service.category.trim() ? service.category.trim() : '';
-          if (!activityId) {
+          const candidates = [...new Set([leafFromAttrs, categoryId].filter(Boolean))];
+          if (!candidates.length) {
             throw unprocessable('ACTIVITY_NOT_APPROVED', 'هذه الخدمة خارج الأنشطة المعتمدة للجهة');
           }
           const titleNorm = service.nameAr.normalize('NFKC').trim().replace(/\s+/gu, ' ');
-          const categoryGrant = await tx.paGrant.findFirst({
-            where: { partnerId: service.partnerId, activity: activityId, scope: 'category' },
-          });
-          if (!categoryGrant) {
+          let granted = false;
+          for (const activityId of candidates) {
+            const categoryGrant = await tx.paGrant.findFirst({
+              where: { partnerId: service.partnerId, activity: activityId, scope: 'category' },
+            });
+            if (categoryGrant) {
+              granted = true;
+              break;
+            }
             const oneGrant = await tx.paGrant.findFirst({
               where: {
                 partnerId: service.partnerId,
@@ -1651,11 +1666,15 @@ export class CommerceService {
                 itemName: titleNorm,
               },
             });
-            if (!oneGrant) {
-              throw unprocessable('ACTIVITY_NOT_APPROVED', 'هذه الخدمة خارج الأنشطة المعتمدة للجهة', {
-                activity: activityId,
-              });
+            if (oneGrant) {
+              granted = true;
+              break;
             }
+          }
+          if (!granted) {
+            throw unprocessable('ACTIVITY_NOT_APPROVED', 'هذه الخدمة خارج الأنشطة المعتمدة للجهة', {
+              activity: candidates[0],
+            });
           }
         }
 

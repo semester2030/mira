@@ -1,0 +1,26 @@
+{
+  "runId": "flutter-chain-mwdh-connected",
+  "gitHeadAtTest": "01958d7",
+  "suite": "test/features/marketplace/jamalak_connected_flutter_chain_test.dart",
+  "verdict": "PASS_FLUTTER_WIDGET_CHAIN",
+  "command": "flutter test test/features/marketplace/jamalak_connected_flutter_chain_test.dart",
+  "results": {
+    "independent_home_booking_sends_visit_fields": "PASS",
+    "salon_branch_booking_sends_branchId_for_color_offer": "PASS",
+    "clinic_intro_picker_shows_Arabic_services_and_hides_foreign": "PASS",
+    "connected_summary_proves_same_partner_identity_across_chain": "PASS"
+  },
+  "linkedHttpRunId": "conn-mwdhqidk-52a6",
+  "linkedPortalUiRunId": "ui-portal-mwdhrm1l-a5d2",
+  "proves": [
+    "BookingRequestScreen home submit emits visitCityId+visitAddress+placeMode=home (no branchId)",
+    "BookingRequestScreen branch submit emits branchId for salon color offer",
+    "Clinic intro linked services show جلسة بشرة / جلسة ليزر and hide foreign service",
+    "Same partnerId/serviceId/bookingId chain identity asserted in widget summary"
+  ],
+  "stillNotVerifiedOnSimulator": [
+    "Discover tap color/blowdry icons → live offerId match",
+    "Discover open clinic intro video → book end-to-end on device UI"
+  ],
+  "note": "No physical phone; no OTP. Widget chain + HTTP PASS_CONNECTED close place-payload identity; full Discover icon/video taps remain simulator E2E."
+}

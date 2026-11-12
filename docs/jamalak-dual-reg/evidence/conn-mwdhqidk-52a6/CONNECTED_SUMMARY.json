@@ -1,0 +1,74 @@
+{
+  "runId": "conn-mwdhqidk-52a6",
+  "gitHead": "01958d7",
+  "apiBase": "http://127.0.0.1:3011/api/v1",
+  "commerceBase": "http://127.0.0.1:54716/api/v1",
+  "verdict": "PASS_CONNECTED",
+  "independent": {
+    "applicationId": "ee06da9e-e224-4319-9803-b1c349312997",
+    "requestId": "41292fe6-e141-4395-9a94-37498cceed90",
+    "partnerId": "60e8fb4c-9a76-4448-8859-0590266e3b1b",
+    "serviceId": "4a0c390b-8951-4885-b7cf-f88b2db96eb6",
+    "bookingId": "f7ee2876-dca4-4afb-b456-87638699ec2a",
+    "visitCityId": "sa-jeddah",
+    "visitAddress": "حي الزهراء، جدة — سلسلة متصلة",
+    "travelFeeHalalas": 3500,
+    "partnerSeesBooking": true,
+    "noFakeBranch": true
+  },
+  "salon": {
+    "applicationId": "446c309b-56a5-4b48-bcd4-2bd077e101fa",
+    "requestId": "ebd334de-873a-4aa4-83a0-f448660917eb",
+    "approvedActivities": [
+      "beauty.hair.blowdry",
+      "beauty.hair.color"
+    ],
+    "partnerId": "b41c9a6b-d51d-4b1b-81d2-bb3bc84b58b2",
+    "branchId": "fd91cbe0-124f-4451-918a-7db51caec666",
+    "colorOfferId": "c0c34d1d-9337-4873-b4d2-6c0cd65e80d6",
+    "blowdryOfferId": "ad3e5795-e8b6-4eaa-9ecd-4928301868fe",
+    "bothUnderHairParent": false,
+    "hairParentNote": "parent category query did not return both — leaf queries still isolate correctly (not a pagination failure on leaf)",
+    "branchBookingId": "59dc2664-fd44-4c0f-9436-863f3f466c5c",
+    "homeBookingId": "c9735633-6504-4f13-839d-f31fc4320e97",
+    "homeTravelFeeHalalas": 5000,
+    "partnerSeesBoth": true
+  },
+  "clinic": {
+    "applicationId": "28578c8f-09aa-460d-a446-481dffd769e9",
+    "requestId": "4bc2a0a6-ce91-4ea8-a27e-2298cc2d8ff1",
+    "approvedActivities": [
+      "beauty.clinic.derm.skin_eval",
+      "beauty.clinic.laser.hair"
+    ],
+    "partnerId": "747bfa17-8dfa-4787-8573-b4f26daf9d47",
+    "branchId": "63d0887c-1c82-436f-add2-03b617698924",
+    "introVideoId": "72409213-ff9b-436a-b777-1e7edca751f1",
+    "dermServiceId": "0c29d25a-c052-4f46-91cc-f100c9e1a3a3",
+    "laserServiceId": "ca4baa04-8b95-4bb4-829f-84c8e496ac3b",
+    "foreignServiceId": "6c5ad86f-ff22-4f0b-b979-ff8a8ea3ce6a",
+    "linkedBookableAr": [
+      "جلسة بشرة",
+      "جلسة ليزر"
+    ],
+    "foreignHiddenOrDisabled": true,
+    "bookingId": "d11f0ead-3726-4998-9315-cb70ca48a61a",
+    "partnerSeesBooking": true
+  },
+  "sameIdentityProven": true,
+  "note": "Customer booking via in-process Scripted Firebase on same DATABASE_URL as live :3011 portal; partner booking lists hit live API.",
+  "flutterWidgetChain": {
+    "verdict": "PASS_FLUTTER_WIDGET_CHAIN",
+    "suite": "test/features/marketplace/jamalak_connected_flutter_chain_test.dart",
+    "evidence": "FLUTTER_CHAIN_SUMMARY.json"
+  },
+  "portalUiFixedActivities": {
+    "runId": "ui-portal-mwdhrm1l-a5d2",
+    "salonActivitiesSelected": ["beauty.hair.color", "beauty.hair.blowdry"],
+    "clinicActivitiesSelected": ["beauty.clinic.derm.skin_eval", "beauty.clinic.laser.hair"]
+  },
+  "flutterUiRemaining": [
+    "simulator: tap color/blowdry icons → match offerIds",
+    "simulator: Discover intro video → Arabic picker → book"
+  ]
+}
