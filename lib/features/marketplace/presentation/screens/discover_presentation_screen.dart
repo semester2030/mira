@@ -498,6 +498,55 @@ class DiscoverPresentationScreenState extends State<DiscoverPresentationScreen>
     }
   }
 
+  /// Portal persists legacy Service.category (hair/makeup/…); taxonomy mids are beauty.*.
+  String? _beautyLegacyCategoryFor(String? taxonomyOrLegacy) {
+    if (taxonomyOrLegacy == null || taxonomyOrLegacy.isEmpty) return null;
+    const midToLegacy = <String, String>{
+      'beauty.hair': 'hair',
+      'beauty.makeup': 'makeup',
+      'beauty.nails': 'nails',
+      'beauty.spa': 'care',
+      'beauty.face_care': 'care',
+      'beauty.lashes_brows': 'lashes_brows',
+      'beauty.hair_removal': 'hair_removal',
+      'beauty.henna': 'henna',
+      'beauty.clinic.derm': 'skin',
+      'beauty.clinic.laser': 'laser',
+      'beauty.clinic.teeth': 'teeth',
+    };
+    if (midToLegacy.containsKey(taxonomyOrLegacy)) return midToLegacy[taxonomyOrLegacy];
+    if (const {
+      'hair',
+      'makeup',
+      'nails',
+      'lashes_brows',
+      'hair_removal',
+      'henna',
+      'care',
+      'spa',
+      'skin',
+      'laser',
+      'teeth',
+    }.contains(taxonomyOrLegacy)) {
+      return taxonomyOrLegacy == 'spa' ? 'care' : taxonomyOrLegacy;
+    }
+    if (taxonomyOrLegacy.startsWith('beauty.clinic.')) {
+      final parts = taxonomyOrLegacy.split('.');
+      if (parts.length >= 3) {
+        final mid = parts.take(3).join('.');
+        return midToLegacy[mid];
+      }
+    }
+    if (taxonomyOrLegacy.startsWith('beauty.')) {
+      final parts = taxonomyOrLegacy.split('.');
+      if (parts.length >= 2) {
+        final mid = '${parts[0]}.${parts[1]}';
+        return midToLegacy[mid];
+      }
+    }
+    return null;
+  }
+
   /// Keep drill parent only when query still targets that category / subcategory.
   void _reconcileEleganceDrill(DiscoverCatalogQuery query) {
     final parent = _eleganceDrillParentId;
@@ -574,7 +623,8 @@ class DiscoverPresentationScreenState extends State<DiscoverPresentationScreen>
             storedKey: '',
             matchesAll: true,
             browseOnly: true,
-            imageKey: family,
+            // Nav control — not a service orb (avoid looking like a beauty section).
+            imageKey: null,
           ),
           ...kids,
         ];
@@ -614,7 +664,7 @@ class DiscoverPresentationScreenState extends State<DiscoverPresentationScreen>
       return;
     }
 
-    // Beauty «تجيني للبيت»: home placeMode only — never medical/clinic leaves.
+    // Beauty «تجيني للبيت»: place filter only — do not rewrite provider type.
     if (widget.lane == DiscoverLane.beauty && selected.id == 'beauty.home_visit') {
       _eleganceDrillParentId = null;
       _reload(
@@ -625,7 +675,24 @@ class DiscoverPresentationScreenState extends State<DiscoverPresentationScreen>
           clearSubcategory: true,
           clearType: true,
           placeModes: const ['home'],
-          partnerType: 'salon',
+        ),
+      );
+      return;
+    }
+
+    // تجهيز العروس: OR across bridal-compatible leaves (not a service leaf itself).
+    if (widget.lane == DiscoverLane.beauty && selected.id == 'beauty.bridal_prep') {
+      _eleganceDrillParentId = null;
+      const bridalLeaves =
+          'beauty.makeup.bridal,beauty.makeup.bridal_trial,beauty.hair.updo,beauty.henna.bridal,beauty.henna.group';
+      _reload(
+        _query.copyWith(
+          lane: DiscoverLane.beauty,
+          requireVisual: true,
+          clearCategory: true,
+          subcategoryId: bridalLeaves,
+          clearType: true,
+          clearPlaceModes: true,
         ),
       );
       return;
@@ -643,7 +710,6 @@ class DiscoverPresentationScreenState extends State<DiscoverPresentationScreen>
     if (usesTaxonomy &&
         (canDrillRoot || canDrillBeautyMid) &&
         !selected.matchesAll &&
-        selected.id != 'beauty.bridal_prep' &&
         selected.id != '__back__') {
       final kids = EleganceTaxonomySource.childrenOf(selected.id, family: family);
       if (kids.isNotEmpty) {
@@ -666,15 +732,28 @@ class DiscoverPresentationScreenState extends State<DiscoverPresentationScreen>
       }
     }
 
-    final rootCategoryId = _eleganceDrillParentId ??
+    // Beauty leaves: send legacy category (hair) + leaf id so portal-persisted rows match.
+    // Mid drill parent may be beauty.hair; storedKey on mid chips is already legacy.
+    String? rootCategoryId = _eleganceDrillParentId ??
         (selected.parentId != null
             ? selected.parentId
             : (selected.matchesAll ? null : (selected.storedKey.isEmpty ? selected.id : selected.storedKey)));
     final nextSubcategory =
         selected.parentId != null && !selected.matchesAll && !selected.browseOnly ? selected.id : null;
+    if (widget.lane == DiscoverLane.beauty && nextSubcategory != null && nextSubcategory.startsWith('beauty.')) {
+      rootCategoryId = _beautyLegacyCategoryFor(nextSubcategory) ??
+          _beautyLegacyCategoryFor(_eleganceDrillParentId) ??
+          rootCategoryId;
+    } else if (widget.lane == DiscoverLane.beauty &&
+        rootCategoryId != null &&
+        rootCategoryId.startsWith('beauty.')) {
+      rootCategoryId = _beautyLegacyCategoryFor(rootCategoryId) ?? rootCategoryId;
+    }
 
     if (widget.lane != null) {
       final clearHome = selected.id != 'beauty.home_visit' && _query.placeModes.contains('home');
+      // Home place filter must not quietly rewrite provider type.
+      final clearType = selected.venueType == null && selected.id != 'beauty.home_visit';
       _reload(
         _query.copyWith(
           lane: widget.lane,
@@ -683,7 +762,7 @@ class DiscoverPresentationScreenState extends State<DiscoverPresentationScreen>
           subcategoryId: nextSubcategory,
           clearCategory: rootCategoryId == null || rootCategoryId == 'all',
           clearSubcategory: nextSubcategory == null,
-          clearType: selected.venueType == null,
+          clearType: clearType,
           partnerType: selected.venueType,
           clearPlaceModes: clearHome || selected.matchesAll,
           // Compatible filters retained; incompatible pruned via facets.staleSelections.

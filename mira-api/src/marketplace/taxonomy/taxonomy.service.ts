@@ -22,6 +22,7 @@ import {
 } from './product-taxonomy.validate';
 import { resolveBeautyIcon } from './beauty-icon-assets';
 import { resolveCatalogIcon } from './catalog-icon-assets';
+import { legacyBeautyCategoryFor } from './beauty-id-compat';
 
 type RegistrySnap = {
   fields: Record<string, { id?: string; filter?: string | null }>;
@@ -341,10 +342,15 @@ export class TaxonomyService implements OnModuleInit {
     const node = doc.nodes.find((n) => n.id === subcategory);
     if (!node || node.browseOnly || !node.parentId) return null;
     if ((node as { grantOnly?: boolean }).grantOnly) return null;
+    // Beauty leaves: browse category is legacy (hair) so portal-persisted rows match Flutter queries.
+    const category =
+      lane === 'beauty'
+        ? legacyBeautyCategoryFor(node.id) || legacyBeautyCategoryFor(node.parentId) || node.parentId
+        : node.parentId;
     return {
       id: node.id,
       lane,
-      category: node.parentId,
+      category,
       profileId: node.profileId ?? null,
       offerKind: node.offerKind ?? null,
     };

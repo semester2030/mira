@@ -11,6 +11,7 @@
 
 import { isValidDateKey, parseOptionGroups, parseVariants, type ProductVariant } from './commerce.types';
 import { resolveSaudiCity } from '../geo/saudi-cities';
+import { beautyCategoriesEquivalent } from './taxonomy/beauty-id-compat';
 
 /** Match city filter against stored id or Arabic/English name. */
 export function citiesEquivalent(a: string | null | undefined, b: string | null | undefined): boolean {
@@ -548,30 +549,56 @@ export function matchCatalogItem(item: CatalogFilterItem, filter: CatalogFilterI
       filter.lane === 'gifts' &&
       item.kind === 'product' &&
       item.attributesJson?.giftEligible === true;
-    if (!giftsCross) return null;
+    // Beauty: portal persists legacy `hair` while Flutter may ask `beauty.hair`.
+    const beautyAlias =
+      (filter.lane === 'beauty' ||
+        filter.category.startsWith('beauty.') ||
+        (item.category || '').startsWith('beauty.') ||
+        ['hair', 'makeup', 'nails', 'care', 'spa', 'skin', 'laser', 'teeth'].includes(filter.category)) &&
+      beautyCategoriesEquivalent(filter.category, item.category);
+    // Leaf-only services: category on row may be legacy while filter carries mid id.
+    const leafUnderMid =
+      item.kind === 'service' &&
+      beautyCategoriesEquivalent(
+        filter.category,
+        effectiveAttributeValues(item.attributesJson, 'taxonomyLeaf')[0] ||
+          effectiveAttributeValues(item.attributesJson, 'subcategory')[0] ||
+          null,
+      );
+    if (!giftsCross && !beautyAlias && !leafUnderMid) return null;
   }
   // Subcategory: products match persisted id; service leaves match attributes.subcategory (leaf id).
+  // CSV = OR (bridal prep shortcut may send several beauty leaves).
   if (filter.subcategory) {
+    const subIds = filter.subcategory
+      .split(',')
+      .map((s) => s.trim())
+      .filter(Boolean);
     const node = filter.taxonomyNode;
     if (item.kind === 'product') {
       if (node?.offerKind === 'service') return null;
-      if (item.subcategory !== filter.subcategory) return null;
+      if (!subIds.includes(item.subcategory || '')) return null;
     } else {
-      if (!node || node.offerKind !== 'service') return null;
       const leaf =
         effectiveAttributeValues(item.attributesJson, 'subcategory')[0] ||
         effectiveAttributeValues(item.attributesJson, 'taxonomyLeaf')[0] ||
         item.subcategory ||
         null;
-      if (leaf) {
-        if (leaf !== filter.subcategory) return null;
+      if (subIds.length > 1) {
+        // Multi-leaf browse (e.g. تجهيز العروس) — no single taxonomyNode required.
+        if (!leaf || !subIds.includes(leaf)) return null;
       } else {
-        // Legacy occasions services without a leaf attribute: only match occasions.styling.
-        // New leaves (hospitality/buffet/packages/…) must not inherit via shared profileId.
-        if (filter.subcategory !== 'occasions.styling') return null;
-        const byProfile = !!node.profileId && item.profileId === node.profileId;
-        const byCategory = !!node.category && item.category === node.category;
-        if (!byProfile && !byCategory) return null;
+        if (!node || node.offerKind !== 'service') return null;
+        if (leaf) {
+          if (leaf !== filter.subcategory) return null;
+        } else {
+          // Legacy occasions services without a leaf attribute: only match occasions.styling.
+          // New leaves (hospitality/buffet/packages/…) must not inherit via shared profileId.
+          if (filter.subcategory !== 'occasions.styling') return null;
+          const byProfile = !!node.profileId && item.profileId === node.profileId;
+          const byCategory = !!node.category && item.category === node.category;
+          if (!byProfile && !byCategory) return null;
+        }
       }
     }
   }

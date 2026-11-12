@@ -320,7 +320,8 @@ export class MarketplaceService implements OnModuleInit {
     }
     const filter = parsedFilters.filter;
     // Enrich subcategory with central taxonomy so service leaves (occasions.styling) match services.
-    if (filter.subcategory) {
+    // CSV OR (bridal prep) skips single-node resolve — matchCatalogItem handles the set.
+    if (filter.subcategory && !filter.subcategory.includes(',')) {
       const facet = this.taxonomy.resolveBrowseFacet(filter.subcategory);
       if (facet) {
         filter.subcategory = undefined;

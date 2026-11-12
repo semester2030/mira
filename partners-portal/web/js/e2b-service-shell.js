@@ -8,6 +8,9 @@
     skin: 'assets/e2b-ref/orbs/skin.png',
     makeup: 'assets/e2b-ref/orbs/makeup.png',
     nails: 'assets/e2b-ref/orbs/nails.png',
+    lashes_brows: 'assets/e2b-ref/orbs/makeup.png',
+    hair_removal: 'assets/e2b-ref/orbs/body.png',
+    henna: 'assets/e2b-ref/orbs/spa.png',
     care: 'assets/e2b-ref/orbs/spa.png',
     spa: 'assets/e2b-ref/orbs/spa.png',
     laser: 'assets/e2b-ref/orbs/body.png',
@@ -78,6 +81,9 @@
       spa: 'beauty.spa',
       // Salon cosmetic face care (not medical derm).
       skin: 'beauty.face_care',
+      lashes_brows: 'beauty.lashes_brows',
+      hair_removal: 'beauty.hair_removal',
+      henna: 'beauty.henna',
     };
     const clinicMap = {
       hair: 'beauty.clinic.derm',
@@ -115,6 +121,9 @@
     skin: 'البشرة',
     makeup: 'المكياج',
     nails: 'الأظافر',
+    lashes_brows: 'الرموش والحواجب',
+    hair_removal: 'إزالة الشعر',
+    henna: 'الحناء',
     care: 'السبا',
     spa: 'السبا',
     laser: 'الليزر',
@@ -123,7 +132,20 @@
   };
 
   /** Preferred display order matching ref-2 (RTL visual: hair … spa). */
-  const MAIN_ORDER = ['hair', 'makeup', 'nails', 'skin', 'care', 'spa', 'laser', 'teeth', 'occasions'];
+  const MAIN_ORDER = [
+    'hair',
+    'makeup',
+    'nails',
+    'lashes_brows',
+    'hair_removal',
+    'henna',
+    'skin',
+    'care',
+    'spa',
+    'laser',
+    'teeth',
+    'occasions',
+  ];
 
   let selectedCatId = null;
   let selectedSubId = null;
@@ -411,9 +433,28 @@
     section.classList.add('e2b-panel', 'e2b-split', 'e2c-service-panel');
   }
 
+  function ensureSalonExtendedCategories(sel) {
+    if (!sel) return;
+    const partnerType = (document.body.dataset.partnerType || 'salon').replace(/^developer$/, 'salon');
+    if (partnerType !== 'salon' && partnerType !== 'independent' && partnerType !== 'studio') return;
+    const needed = [
+      ['lashes_brows', 'الرموش والحواجب'],
+      ['hair_removal', 'إزالة الشعر'],
+      ['henna', 'الحناء'],
+    ];
+    needed.forEach(([id, label]) => {
+      if ([...sel.options].some((o) => o.value === id)) return;
+      const opt = document.createElement('option');
+      opt.value = id;
+      opt.textContent = label;
+      sel.appendChild(opt);
+    });
+  }
+
   function categoriesFromForm(form) {
     const sel = form && form.querySelector('select[name="category"]');
     if (!sel) return [];
+    ensureSalonExtendedCategories(sel);
     const lane = window.__MIRA_TAXONOMY_LANE__ || '';
     let cats = Array.from(sel.options)
       .filter((o) => o.value)

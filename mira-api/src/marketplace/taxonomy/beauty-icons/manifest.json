@@ -219,8 +219,8 @@
     },
     {
       "imageKey": "beauty.henna.feet",
-      "file": "beauty_henna_feet.png",
-      "sha256": "dd951da88cd8bfc6103e2c2724a0221868b0c7d6eb3064c4fc8ffdd20cfae999",
+      "file": "beauty_henna_hands.png",
+      "sha256": "db65736f20bbfda8ad8b0f3a9a540d580672741e25d188802ebd1ddf6f8e61ef",
       "contentType": "image/png"
     },
     {
@@ -339,8 +339,8 @@
     },
     {
       "imageKey": "beauty.nails.polish",
-      "file": "beauty_nails_polish.png",
-      "sha256": "54b8ca10d79f2400ef02e2a2cc593bb2aa0a7ab485ee6ee0b2f565b3d1e0a7af",
+      "file": "beauty_nails_art.png",
+      "sha256": "7675f6797e50e5cb59a1bd7069b4b56858f37142e81a1b9ab214f60045e24d7e",
       "contentType": "image/png"
     },
     {
