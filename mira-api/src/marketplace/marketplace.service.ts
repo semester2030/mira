@@ -45,6 +45,11 @@ import { publicProductCommerce, publicServiceCommerce, sellableQty } from './com
 import { seedMarketplaceIfEmpty } from './marketplace.seed';
 import { recordJourney } from './journey-events';
 import { haversineKm, listSaudiCities } from '../geo/saudi-cities';
+import {
+  providerKindOf,
+  publicBookingEnabled,
+  publicContactPhone,
+} from './partner-public-contact';
 
 export type MatchedProductDto = {
   id: string;
@@ -483,7 +488,7 @@ export class MarketplaceService implements OnModuleInit {
           services.map((s) => ({
             id: s.id,
             partnerId: s.partnerId,
-            bookingEnabled: s.bookingEnabled,
+            bookingEnabled: publicBookingEnabled(s, s.partner),
             durationMin: s.durationMin,
             availabilityJson: s.availabilityJson,
             branchId: branchIdFromServiceProfile(s.serviceProfileJson),
@@ -563,11 +568,14 @@ export class MarketplaceService implements OnModuleInit {
             ? null
             : bookableByServiceId?.has(service.id) === true;
         const attrsRaw = (service as { attributesJson?: unknown }).attributesJson;
+        const providerKind = providerKindOf(service.partner);
+        const bookingEnabled = publicBookingEnabled(service, service.partner);
         return {
           kind: 'service' as const,
           id: service.id,
           partnerId: service.partnerId,
           partnerType: service.partner.type,
+          providerKind,
           partnerNameAr: service.partner.nameAr,
           city: (branch && branch.cityNameAr) || service.partner.city,
           nameAr: service.nameAr,
@@ -585,7 +593,7 @@ export class MarketplaceService implements OnModuleInit {
           distanceKm,
           coverageCityIds,
           availabilityJson: service.availabilityJson,
-          bookingEnabled: service.bookingEnabled,
+          bookingEnabled,
           availableOnDay,
           attributesJson:
             attrsRaw && typeof attrsRaw === 'object' && !Array.isArray(attrsRaw)
@@ -675,6 +683,40 @@ export class MarketplaceService implements OnModuleInit {
       ),
     ].sort();
 
+    const linkedIdSet = new Set<string>();
+    for (const match of pagedItems) {
+      const ids = match.item.attributesJson?.linkedServiceIds;
+      if (Array.isArray(ids)) {
+        for (const id of ids) {
+          if (typeof id === 'string' && id.trim()) linkedIdSet.add(id.trim());
+        }
+      }
+    }
+    const linkedRows =
+      linkedIdSet.size > 0
+        ? await this.prisma.service.findMany({
+            where: { id: { in: [...linkedIdSet] }, active: true, contentStatus: 'published' },
+            select: {
+              id: true,
+              nameAr: true,
+              bookingEnabled: true,
+              partnerId: true,
+              partner: { select: { activitiesMeta: true } },
+            },
+          })
+        : [];
+    const linkedMeta = new Map(
+      linkedRows.map((r) => [
+        r.id,
+        {
+          id: r.id,
+          nameAr: r.nameAr,
+          bookingEnabled: publicBookingEnabled(r, r.partner),
+          missing: false as boolean,
+        },
+      ]),
+    );
+
     return {
       items: pagedItems.map((match) => {
         const item = match.item;
@@ -702,7 +744,7 @@ export class MarketplaceService implements OnModuleInit {
             partnerType: product.partner.type,
             partnerNameAr: product.partner.nameAr,
             city: product.partner.city,
-            contactPhone: product.partner.contactPhone,
+            contactPhone: publicContactPhone(product.partner),
             nameAr: product.nameAr,
             nameEn: product.nameEn,
             descriptionAr: product.descriptionAr,
@@ -734,14 +776,19 @@ export class MarketplaceService implements OnModuleInit {
           };
         }
         const service = serviceById.get(item.id)!;
+        const commerce = publicServiceCommerce({
+          ...service,
+          bookingEnabled: publicBookingEnabled(service, service.partner),
+        });
         return {
           kind: 'service' as const,
           id: service.id,
           partnerId: service.partnerId,
           partnerType: service.partner.type,
+          providerKind: providerKindOf(service.partner),
           partnerNameAr: service.partner.nameAr,
           city: service.partner.city,
-          contactPhone: service.partner.contactPhone,
+          contactPhone: publicContactPhone(service.partner),
           nameAr: service.nameAr,
           nameEn: service.nameEn,
           descriptionAr: service.descriptionAr,
@@ -753,7 +800,7 @@ export class MarketplaceService implements OnModuleInit {
           concernTags: service.concernTags,
           category: service.category,
           durationMin: service.durationMin,
-          ...publicServiceCommerce(service),
+          ...commerce,
           purchaseMode: null as string | null,
           stockQty: null as number | null,
           stockAvailable: false,
@@ -768,9 +815,27 @@ export class MarketplaceService implements OnModuleInit {
               ? `تقريبًا ${item.distanceKm} كم`
               : item.placeMode === 'remote'
                 ? 'عن بُعد — بلا ترتيب مسافة'
-                : item.placeMode === 'home'
-                  ? 'منزلي — حسب التغطية'
+                : item.placeMode === 'home' || item.placeMode === 'either'
+                  ? 'في موقعك — حسب التغطية'
                   : null,
+          videoScope:
+            item.attributesJson &&
+            (item.attributesJson.videoScope === 'provider_intro' ||
+              item.attributesJson.videoScope === 'service_specific')
+              ? item.attributesJson.videoScope
+              : 'service_specific',
+          linkedServiceIds: Array.isArray(item.attributesJson?.linkedServiceIds)
+            ? (item.attributesJson!.linkedServiceIds as unknown[]).filter(
+                (x): x is string => typeof x === 'string',
+              )
+            : [],
+          linkedServices: (
+            Array.isArray(item.attributesJson?.linkedServiceIds)
+              ? (item.attributesJson!.linkedServiceIds as unknown[]).filter(
+                  (x): x is string => typeof x === 'string',
+                )
+              : []
+          ).map((id) => linkedMeta.get(id) || { id, nameAr: null, bookingEnabled: false, missing: true }),
           matchedVariantIds: [] as string[],
           matchedVariants: [] as CatalogFilterMatch['matchedVariants'],
           media: media
@@ -942,6 +1007,7 @@ export class MarketplaceService implements OnModuleInit {
     return {
       id: partner.id,
       type: partner.type,
+      providerKind: providerKindOf(partner),
       nameAr: partner.nameAr,
       nameEn: partner.nameEn,
       descriptionAr: partner.descriptionAr,
@@ -949,7 +1015,8 @@ export class MarketplaceService implements OnModuleInit {
       logoEmoji: partner.logoEmoji,
       rating: partner.rating,
       storeUrl: partner.storeUrl,
-      contactPhone: partner.contactPhone,
+      // Same redaction as catalog detail — never leak registration phone by default.
+      contactPhone: publicContactPhone(partner),
       products: partner.products.map((p) => ({
         id: p.id,
         nameAr: p.nameAr,
@@ -998,7 +1065,7 @@ export class MarketplaceService implements OnModuleInit {
         partnerType: product.partner.type,
         partnerNameAr: product.partner.nameAr,
         city: product.partner.city,
-        contactPhone: product.partner.contactPhone,
+            contactPhone: publicContactPhone(product.partner),
         nameAr: product.nameAr,
         nameEn: product.nameEn,
         descriptionAr: product.descriptionAr,
@@ -1021,15 +1088,48 @@ export class MarketplaceService implements OnModuleInit {
       where: publishedCatalogMediaWhere('service', service.id),
       orderBy: { sortOrder: 'asc' },
     });
+    const attrsRaw = service.attributesJson;
+    const attributes =
+      attrsRaw && typeof attrsRaw === 'object' && !Array.isArray(attrsRaw)
+        ? (attrsRaw as Record<string, unknown>)
+        : null;
+    const linkedServiceIds = Array.isArray(attributes?.linkedServiceIds)
+      ? (attributes!.linkedServiceIds as unknown[]).filter((x): x is string => typeof x === 'string' && !!x.trim())
+      : [];
+    const linkedRows =
+      linkedServiceIds.length > 0
+        ? await this.prisma.service.findMany({
+            where: {
+              id: { in: linkedServiceIds },
+              partnerId: service.partnerId,
+              active: true,
+              contentStatus: 'published',
+              catalogSource: 'catalog',
+            },
+            select: { id: true, nameAr: true, bookingEnabled: true, placeMode: true },
+          })
+        : [];
+    const linkedById = new Map(linkedRows.map((r) => [r.id, r]));
+    const linkedServices = linkedServiceIds.map((id) => {
+      const row = linkedById.get(id);
+      return {
+        id,
+        nameAr: row?.nameAr || null,
+        bookingEnabled: row ? publicBookingEnabled(row, service.partner) : false,
+        placeMode: row?.placeMode ?? null,
+        missing: !row,
+      };
+    });
     return {
       kind: 'service',
       id: service.id,
       partnerId: service.partnerId,
       partnerType: service.partner.type,
+      providerKind: providerKindOf(service.partner),
       partnerNameAr: service.partner.nameAr,
       partnerEmoji: service.partner.logoEmoji,
       city: service.partner.city,
-      contactPhone: service.partner.contactPhone,
+      contactPhone: publicContactPhone(service.partner),
       nameAr: service.nameAr,
       nameEn: service.nameEn,
       descriptionAr: service.descriptionAr,
@@ -1038,9 +1138,20 @@ export class MarketplaceService implements OnModuleInit {
       priceLabel: this.formatPrice(service.priceHalalas),
       category: service.category,
       concernTags: service.concernTags,
-      ...publicServiceCommerce(service),
+      placeMode: service.placeMode ?? placeModeFromServiceProfile(service.serviceProfileJson),
+      ...publicServiceCommerce({
+        ...service,
+        bookingEnabled: publicBookingEnabled(service, service.partner),
+      }),
       // Approved profile only — never draft_service_profile_json.
       serviceProfileJson: service.serviceProfileJson ?? null,
+      attributesJson: attributes,
+      videoScope:
+        attributes && (attributes.videoScope === 'provider_intro' || attributes.videoScope === 'service_specific')
+          ? attributes.videoScope
+          : 'service_specific',
+      linkedServiceIds,
+      linkedServices,
       media: media.map((row) => ({ kind: row.kind, url: row.url, sortOrder: row.sortOrder, isPrimary: row.isPrimary, placement: row.placement })),
     };
   }

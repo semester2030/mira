@@ -150,6 +150,12 @@ assert.equal(
 const laserBranch: CatalogFilterItem = { ...laserClinic, placeMode: 'branch' };
 assert.ok(matchCatalogItem(laserBranch, { placeModes: ['branch'], lane: 'beauty' }));
 
+assert.equal(homeVisit.labelAr, 'في موقعك');
+
+const eitherSalon: CatalogFilterItem = { ...homeMakeup, id: 'svc-either', placeMode: 'either' };
+assert.ok(matchCatalogItem(eitherSalon, { placeModes: ['home'], lane: 'beauty' }));
+assert.ok(matchCatalogItem(eitherSalon, { placeModes: ['branch'], lane: 'beauty' }));
+
 console.log('OK beauty-a acceptance', {
   writeLeaves: writeLeaves.length,
   distinctIconFiles: iconVersions.size,

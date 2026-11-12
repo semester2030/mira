@@ -290,6 +290,221 @@ export class PartnersPortalService implements OnModuleInit {
     return this.config.get<string>('PARTNER_AUTO_APPROVE') === 'true';
   }
 
+  /** In-memory OTP challenges — delivery goes through partner-otp-sms (never fake "sent"). */
+  private readonly applyPhoneOtps = new Map<
+    string,
+    { code: string; expiresAt: number; token?: string; verifiedAt?: number; attempts: number }
+  >();
+  private readonly applyEmailOtps = new Map<
+    string,
+    { code: string; expiresAt: number; token?: string; verifiedAt?: number; attempts: number }
+  >();
+
+  private normalizeApplyPhone(phone: string): string {
+    return String(phone || '').replace(/\s+/g, '').trim();
+  }
+
+  private normalizeApplyEmail(email: string): string {
+    return String(email || '').trim().toLowerCase();
+  }
+
+  async startApplyPhoneOtp(phoneRaw: string) {
+    const phone = this.normalizeApplyPhone(phoneRaw);
+    if (phone.length < 9 || phone.length > 20) {
+      throw new BadRequestException({
+        code: 'INVALID_PHONE',
+        message: 'INVALID_PHONE',
+        messageAr: 'رقم الجوال غير صالح',
+      });
+    }
+    const code = String(Math.floor(100000 + Math.random() * 900000));
+    const expiresAt = Date.now() + 10 * 60 * 1000;
+    // Deliver first — only persist challenge after the provider accepts.
+    const { deliverPartnerPhoneOtp, PartnerOtpSmsError } = await import('./partner-otp-sms');
+    let delivery;
+    try {
+      delivery = await deliverPartnerPhoneOtp(phone, code, {
+        mode: this.config.get<string>('PARTNER_OTP_SMS_MODE'),
+        url: this.config.get<string>('PARTNER_OTP_SMS_URL'),
+        outboxPath: this.config.get<string>('PARTNER_OTP_SMS_OUTBOX'),
+      });
+    } catch (err) {
+      if (err instanceof PartnerOtpSmsError) {
+        throw new BadRequestException({
+          code: err.code,
+          message: err.code,
+          messageAr: err.message,
+        });
+      }
+      throw err;
+    }
+    this.applyPhoneOtps.set(phone, { code, expiresAt, attempts: 0 });
+    this.logger.log(
+      `Apply phone OTP delivered via ${delivery.channel} for …${phone.slice(-4)}`,
+    );
+    const exposeDev =
+      this.config.get<string>('PARTNER_OTP_DEV') === 'true' ||
+      (this.config.get<string>('NODE_ENV') !== 'production' && delivery.channel === 'outbox');
+    return {
+      ok: true,
+      messageAr: 'أُرسل رمز التحقق إلى جوالك',
+      expiresInSec: 600,
+      channel: delivery.channel,
+      ...(exposeDev ? { devCode: code } : {}),
+    };
+  }
+
+  verifyApplyPhoneOtp(phoneRaw: string, codeRaw: string) {
+    const phone = this.normalizeApplyPhone(phoneRaw);
+    const code = String(codeRaw || '').trim();
+    const row = this.applyPhoneOtps.get(phone);
+    if (!row) {
+      throw new BadRequestException({
+        code: 'INVALID_OTP',
+        message: 'INVALID_OTP',
+        messageAr: 'رمز التحقق غير صحيح أو منتهٍ',
+      });
+    }
+    if (row.expiresAt < Date.now()) {
+      this.applyPhoneOtps.delete(phone);
+      throw new BadRequestException({
+        code: 'OTP_EXPIRED',
+        message: 'OTP_EXPIRED',
+        messageAr: 'انتهت صلاحية رمز التحقق — اطلبي رمزًا جديدًا',
+      });
+    }
+    if (row.code !== code) {
+      row.attempts += 1;
+      this.applyPhoneOtps.set(phone, row);
+      throw new BadRequestException({
+        code: 'INVALID_OTP',
+        message: 'INVALID_OTP',
+        messageAr: 'رمز التحقق غير صحيح أو منتهٍ',
+      });
+    }
+    const phoneVerifyToken = randomBytes(24).toString('hex');
+    this.applyPhoneOtps.set(phone, {
+      ...row,
+      token: phoneVerifyToken,
+      verifiedAt: Date.now(),
+      expiresAt: Date.now() + 30 * 60 * 1000,
+    });
+    return {
+      ok: true,
+      phoneVerifyToken,
+      messageAr: 'تم توثيق الجوال — ليس ترخيص ممارسة ولن يُعرض للعامة افتراضيًا',
+    };
+  }
+
+  /** Email OTP for independent apply — separate from activity approval / booking activation. */
+  async startApplyEmailOtp(emailRaw: string) {
+    const email = this.normalizeApplyEmail(emailRaw);
+    if (!email.includes('@') || email.length < 5) {
+      throw new BadRequestException({
+        code: 'INVALID_EMAIL',
+        message: 'INVALID_EMAIL',
+        messageAr: 'البريد غير صالح',
+      });
+    }
+    const code = String(Math.floor(100000 + Math.random() * 900000));
+    const expiresAt = Date.now() + 10 * 60 * 1000;
+    const { deliverPartnerPhoneOtp, PartnerOtpSmsError } = await import('./partner-otp-sms');
+    // Reuse outbox/http channel with purpose stamped in body via phone field = email for test sinks.
+    try {
+      await deliverPartnerPhoneOtp(`email:${email}`, code, {
+        mode: this.config.get<string>('PARTNER_OTP_SMS_MODE') || 'outbox',
+        url: this.config.get<string>('PARTNER_OTP_SMS_URL'),
+        outboxPath: this.config.get<string>('PARTNER_OTP_EMAIL_OUTBOX') ||
+          this.config.get<string>('PARTNER_OTP_SMS_OUTBOX'),
+      });
+    } catch (err) {
+      if (err instanceof PartnerOtpSmsError) {
+        throw new BadRequestException({
+          code: err.code === 'SMS_DELIVERY_FAILED' ? 'EMAIL_DELIVERY_FAILED' : err.code,
+          message: err.code,
+          messageAr: 'تعذّر إرسال رمز التحقق إلى البريد',
+        });
+      }
+      throw err;
+    }
+    this.applyEmailOtps.set(email, { code, expiresAt, attempts: 0 });
+    const exposeDev =
+      this.config.get<string>('PARTNER_OTP_DEV') === 'true' ||
+      this.config.get<string>('NODE_ENV') !== 'production';
+    return {
+      ok: true,
+      messageAr: 'أُرسل رمز التحقق إلى بريدك',
+      expiresInSec: 600,
+      ...(exposeDev ? { devCode: code } : {}),
+    };
+  }
+
+  verifyApplyEmailOtp(emailRaw: string, codeRaw: string) {
+    const email = this.normalizeApplyEmail(emailRaw);
+    const code = String(codeRaw || '').trim();
+    const row = this.applyEmailOtps.get(email);
+    if (!row) {
+      throw new BadRequestException({
+        code: 'INVALID_OTP',
+        message: 'INVALID_OTP',
+        messageAr: 'رمز التحقق غير صحيح أو منتهٍ',
+      });
+    }
+    if (row.expiresAt < Date.now()) {
+      this.applyEmailOtps.delete(email);
+      throw new BadRequestException({
+        code: 'OTP_EXPIRED',
+        message: 'OTP_EXPIRED',
+        messageAr: 'انتهت صلاحية رمز التحقق — اطلبي رمزًا جديدًا',
+      });
+    }
+    if (row.code !== code) {
+      row.attempts += 1;
+      this.applyEmailOtps.set(email, row);
+      throw new BadRequestException({
+        code: 'INVALID_OTP',
+        message: 'INVALID_OTP',
+        messageAr: 'رمز التحقق غير صحيح أو منتهٍ',
+      });
+    }
+    const emailVerifyToken = randomBytes(24).toString('hex');
+    this.applyEmailOtps.set(email, {
+      ...row,
+      token: emailVerifyToken,
+      verifiedAt: Date.now(),
+      expiresAt: Date.now() + 30 * 60 * 1000,
+    });
+    return {
+      ok: true,
+      emailVerifyToken,
+      messageAr: 'تم توثيق البريد — لن يُعرض للعامة افتراضيًا',
+    };
+  }
+
+  private assertIndependentPhoneVerified(phoneRaw: string, token?: string) {
+    const phone = this.normalizeApplyPhone(phoneRaw);
+    const row = this.applyPhoneOtps.get(phone);
+    if (!row?.token || !token || row.token !== token || !row.verifiedAt || row.expiresAt < Date.now()) {
+      throw new BadRequestException({
+        code: 'PHONE_VERIFY_REQUIRED',
+        message: 'PHONE_VERIFY_REQUIRED',
+        messageAr: 'يلزم توثيق الجوال برمز تحقق قبل تسجيل المختصّة المستقلة',
+      });
+    }
+  }
+
+  private assertIndependentEmailVerified(emailRaw: string, token?: string) {
+    const email = this.normalizeApplyEmail(emailRaw);
+    const row = this.applyEmailOtps.get(email);
+    if (!row?.token || !token || row.token !== token || !row.verifiedAt || row.expiresAt < Date.now()) {
+      throw new BadRequestException({
+        code: 'EMAIL_VERIFY_REQUIRED',
+        message: 'EMAIL_VERIFY_REQUIRED',
+        messageAr: 'يلزم توثيق البريد برمز تحقق قبل تسجيل المختصّة المستقلة',
+      });
+    }
+  }
+
   async apply(dto: ApplyPartnerDto) {
     const existing = await this.prisma.partnerApplication.findFirst({
       where: {
@@ -307,6 +522,7 @@ export class PartnersPortalService implements OnModuleInit {
     }
 
     let partnerType = dto.type;
+    let providerKind: 'independent' | 'facility' | null = null;
     if (dto.activities && this.activities) {
       try {
         const validated = this.activities.validateRequest({
@@ -316,6 +532,7 @@ export class PartnersPortalService implements OnModuleInit {
           lines: dto.activities.lines,
         });
         partnerType = this.activities.primaryPartnerType(validated.identity);
+        providerKind = validated.providerKind;
       } catch (err) {
         if (err instanceof PolicyError) {
           throw new BadRequestException({ message: err.code, code: err.code });
@@ -331,6 +548,19 @@ export class PartnersPortalService implements OnModuleInit {
       });
     }
 
+    // Independent specialists: no commercial register / VAT / facility URL required or stored.
+    if (providerKind === 'independent') {
+      if (dto.crNumber || dto.vatNumber) {
+        throw new BadRequestException({
+          message: 'INDEPENDENT_NO_COMMERCIAL_REGISTER',
+          code: 'INDEPENDENT_NO_COMMERCIAL_REGISTER',
+          messageAr: 'المختصّة المستقلة لا تُسجَّل بسجل تجاري أو رقم ضريبي',
+        });
+      }
+      this.assertIndependentPhoneVerified(dto.contactPhone, dto.phoneVerifyToken);
+      this.assertIndependentEmailVerified(dto.contactEmail, dto.emailVerifyToken);
+    }
+
     const statusToken = newToken();
     const passwordHash = await hashPartnerPassword(dto.password);
     const application = await this.prisma.partnerApplication.create({
@@ -338,14 +568,14 @@ export class PartnersPortalService implements OnModuleInit {
         type: partnerType,
         nameAr: dto.nameAr,
         nameEn: dto.nameEn,
-        contactName: dto.contactName,
+        contactName: providerKind === 'independent' ? dto.nameAr : dto.contactName,
         contactEmail: dto.contactEmail.toLowerCase(),
         contactPhone: dto.contactPhone,
         city: dto.city ?? 'الرياض',
         descriptionAr: dto.descriptionAr || dto.activities?.description || null,
-        storeUrl: dto.storeUrl,
-        crNumber: dto.crNumber,
-        vatNumber: dto.vatNumber,
+        storeUrl: providerKind === 'independent' ? null : dto.storeUrl,
+        crNumber: providerKind === 'independent' ? null : dto.crNumber,
+        vatNumber: providerKind === 'independent' ? null : dto.vatNumber,
         message: dto.message,
         passwordHash,
         statusToken,
@@ -588,12 +818,15 @@ export class PartnersPortalService implements OnModuleInit {
           city: app.city,
           logoEmoji: emoji,
           storeUrl: app.storeUrl,
+          contactPhone: app.contactPhone,
           canSellProducts: opts?.canSellProducts === true,
           ...(opts?.activitiesMeta
             ? { activitiesMeta: opts.activitiesMeta as Prisma.InputJsonValue }
             : {}),
         },
       });
+      // Never create a fake PartnerBranch on approval — facilities add branches later;
+      // independents have no salon/branch row.
 
       await tx.partnerUser.create({
         data: {
@@ -644,23 +877,29 @@ export class PartnersPortalService implements OnModuleInit {
           });
           partnerId = null;
         } else {
-          const partnerType = this.activities.primaryPartnerType(
-            prepared.meta.identity as Array<
-              'shop' | 'brand' | 'salon' | 'independent' | 'clinic' | 'events'
-            >,
-          );
+          const identity = prepared.meta.identity as Array<
+            'shop' | 'brand' | 'salon' | 'independent' | 'clinic' | 'events'
+          >;
+          const partnerType = this.activities.primaryPartnerType(identity);
+          const providerKind = this.activities.providerKind(identity);
           const canSell = prepared.approvedActivities.some(
             (a) =>
               a.startsWith('occasions.favors') ||
               a.startsWith('occasions.decor') ||
               a === 'product.occasions_favors',
           );
+          // Booking stays off until admin verification of activity + place of delivery.
+          const bookingActivated = prepared.state === 'approved' || prepared.state === 'partial';
           const approved = await this.approveApplication(applicationId, {
             partnerType,
             canSellProducts: canSell,
             activitiesMeta: {
               identity: prepared.meta.identity,
               locations: prepared.meta.locations,
+              providerKind,
+              bookingActivated,
+              publicContactVisible: false,
+              verificationNote: body.verificationNote || null,
             },
           });
           partnerId = approved.partnerId || null;

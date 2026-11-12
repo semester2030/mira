@@ -10,6 +10,8 @@ class CatalogService {
   final String partnerNameAr;
   final String? partnerEmoji;
   final String partnerType;
+  /// independent | facility — account owner identity; never inferred from placeMode.
+  final String? providerKind;
   final String city;
   final String? contactPhone;
   final String nameAr;
@@ -22,11 +24,17 @@ class CatalogService {
   final int matchScore;
   final bool matchKnown;
   final String? category;
+  final String? placeMode;
   final bool bookingEnabled;
   final List<String> concernTags;
   final List<CatalogMediaLink> media;
   final CatalogMainOfferKind? mainOfferKind;
   final CatalogServiceProfile profile;
+  /// provider_intro | service_specific
+  final String videoScope;
+  final List<String> linkedServiceIds;
+  /// Resolved Arabic labels for intro-video booking picker (never show bare ids).
+  final List<CatalogLinkedService> linkedServices;
 
   /// `pay_at_venue` today. Mira does not take payment for bookings.
   final String payMode;
@@ -41,6 +49,7 @@ class CatalogService {
       partnerNameAr: partnerNameAr,
       partnerEmoji: partnerEmoji,
       partnerType: partnerType,
+      providerKind: providerKind,
       city: city,
       contactPhone: contactPhone,
       nameAr: nameAr,
@@ -53,11 +62,15 @@ class CatalogService {
       matchScore: score,
       matchKnown: true,
       category: category,
+      placeMode: placeMode,
       bookingEnabled: bookingEnabled,
       concernTags: concernTags,
       media: media,
       mainOfferKind: mainOfferKind,
       profile: profile,
+      videoScope: videoScope,
+      linkedServiceIds: linkedServiceIds,
+      linkedServices: linkedServices,
       payMode: payMode,
       availabilityPresent: availabilityPresent,
     );
@@ -69,6 +82,7 @@ class CatalogService {
     required this.partnerNameAr,
     this.partnerEmoji,
     required this.partnerType,
+    this.providerKind,
     required this.city,
     this.contactPhone,
     required this.nameAr,
@@ -81,16 +95,41 @@ class CatalogService {
     required this.matchScore,
     this.matchKnown = false,
     this.category,
+    this.placeMode,
     required this.bookingEnabled,
     this.concernTags = const [],
     this.media = const [],
     this.mainOfferKind,
     this.profile = const CatalogServiceProfile(),
+    this.videoScope = 'service_specific',
+    this.linkedServiceIds = const [],
+    this.linkedServices = const [],
     this.payMode = 'pay_at_venue',
     this.availabilityPresent = false,
   });
 
   bool get isClinic => partnerType == 'clinic';
+  bool get isIndependent => providerKind == 'independent';
+  bool get isProviderIntroVideo => videoScope == 'provider_intro';
 
   CatalogServiceTemplateDef? get template => CatalogServiceTemplates.byId(profile.templateId);
+}
+
+class CatalogLinkedService {
+  final String id;
+  final String? nameAr;
+  final bool bookingEnabled;
+  final bool missing;
+
+  const CatalogLinkedService({
+    required this.id,
+    this.nameAr,
+    this.bookingEnabled = false,
+    this.missing = false,
+  });
+
+  String get displayNameAr {
+    final n = (nameAr ?? '').trim();
+    return n.isNotEmpty ? n : 'خدمة غير متاحة';
+  }
 }

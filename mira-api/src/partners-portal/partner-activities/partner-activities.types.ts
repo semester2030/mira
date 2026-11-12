@@ -2,20 +2,33 @@ export const IDENTITY_KINDS = {
   shop: 'متجر متعدد العلامات',
   brand: 'علامة تجارية',
   salon: 'صالون نسائي',
-  independent: 'مقدمة خدمة مستقلة',
+  independent: 'مختصّة مستقلة',
   clinic: 'عيادة',
   events: 'جهة تنظيم مناسبات',
 } as const;
 
+/** Where the service is delivered — not who owns the account. */
 export const SERVICE_MODES = {
-  venue: 'في مقر المنشأة',
-  client_home: 'في منزل العميلة',
-  provider_home: 'في استوديو أو مقر مقدمة الخدمة',
+  venue: 'في المقر',
+  client_home: 'في موقع العميلة (منزل / فندق / قاعة)',
+  provider_home: 'في استوديو معتمد لمقدمة الخدمة',
   remote: 'عن بُعد',
 } as const;
 
+/** Facility identities that may create branches and a team roster. */
+export const FACILITY_IDENTITY_KINDS = ['salon', 'clinic', 'shop', 'brand', 'events'] as const;
+
 export type IdentityKind = keyof typeof IDENTITY_KINDS;
 export type ServiceMode = keyof typeof SERVICE_MODES;
+export type ProviderKind = 'independent' | 'facility';
+
+/** Account ownership kind derived from registration identity — never inferred from placeMode. */
+export function providerKindFromIdentity(identity: IdentityKind[]): ProviderKind {
+  if (identity.includes('independent') && !identity.some((k) => (FACILITY_IDENTITY_KINDS as readonly string[]).includes(k))) {
+    return 'independent';
+  }
+  return 'facility';
+}
 
 export type ActivityDef = {
   id: string;

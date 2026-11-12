@@ -124,6 +124,8 @@ export type CatalogFilterItem = {
   id: string;
   partnerId: string;
   partnerType: string;
+  /** independent | facility — from activitiesMeta; never inferred from placeMode. */
+  providerKind?: 'independent' | 'facility' | null;
   partnerNameAr: string;
   city: string;
   nameAr: string;
@@ -503,6 +505,61 @@ export function placeModeFromServiceProfile(profileJson: unknown): string | null
   return extractPlaceMode(profileJson);
 }
 
+/**
+ * Match service placeMode against catalog placeMode filter.
+ * `either` means both premises (branch) and client-site (home) — never remote.
+ * Place filter never implies provider type.
+ */
+export function placeModeMatchesFilter(
+  itemPlaceMode: string | null | undefined,
+  filterModes: string[],
+): boolean {
+  if (!itemPlaceMode || !filterModes.length) return false;
+  if (filterModes.includes(itemPlaceMode)) return true;
+  if (itemPlaceMode === 'either') {
+    return filterModes.some((m) => m === 'home' || m === 'branch');
+  }
+  return false;
+}
+
+/**
+ * Match service city against the place the customer selected.
+ * - home-only intent: coverage cities (never HQ fallback)
+ * - branch-only intent: branch / partner city
+ * - both / unset: coverage OR premises city when the service supports that place
+ */
+export function serviceCityMatchesPlaceIntent(
+  item: Pick<CatalogFilterItem, 'placeMode' | 'city' | 'coverageCityIds'>,
+  filterCity: string,
+  placeModes?: string[] | null,
+): boolean {
+  const modes = Array.isArray(placeModes) ? placeModes : [];
+  const wantsHome = modes.includes('home');
+  const wantsBranch = modes.includes('branch');
+  const itemMode = item.placeMode || '';
+
+  if (wantsHome && !wantsBranch) {
+    if (itemMode !== 'home' && itemMode !== 'either') return false;
+    return coverageIncludesCity(item.coverageCityIds, filterCity);
+  }
+  if (wantsBranch && !wantsHome) {
+    if (itemMode !== 'branch' && itemMode !== 'either') return false;
+    return citiesEquivalent(item.city, filterCity);
+  }
+  // No single place intent (or both): preserve prior home-only coverage rule,
+  // otherwise premises city; either may match via coverage OR premises.
+  if (itemMode === 'home') {
+    return coverageIncludesCity(item.coverageCityIds, filterCity);
+  }
+  if (itemMode === 'either') {
+    return (
+      coverageIncludesCity(item.coverageCityIds, filterCity) ||
+      citiesEquivalent(item.city, filterCity)
+    );
+  }
+  return citiesEquivalent(item.city, filterCity);
+}
+
 export function branchIdFromServiceProfile(profileJson: unknown): string | null {
   return extractBranchId(profileJson);
 }
@@ -536,9 +593,11 @@ export function matchCatalogItem(item: CatalogFilterItem, filter: CatalogFilterI
   if (filter.kind && item.kind !== filter.kind) return null;
   if (filter.partnerId && item.partnerId !== filter.partnerId) return null;
   if (filter.city) {
-    // Home services: coverage only — never fall back to partner HQ / branch city.
-    if (item.kind === 'service' && item.placeMode === 'home') {
-      if (!coverageIncludesCity(item.coverageCityIds, filter.city)) return null;
+    // City match follows the *customer place intent*, not account HQ alone.
+    // «في موقعك» (home) → coverage cities; «في المقر» (branch) → branch/partner city.
+    // either services use coverage when the client asks for home, premises city for branch.
+    if (item.kind === 'service') {
+      if (!serviceCityMatchesPlaceIntent(item, filter.city, filter.placeModes)) return null;
     } else if (!citiesEquivalent(item.city, filter.city)) {
       return null;
     }
@@ -690,8 +749,9 @@ export function matchCatalogItem(item: CatalogFilterItem, filter: CatalogFilterI
   if (item.kind === 'service') {
     if (Object.keys(filter.variantSelections ?? {}).length > 0) return null; // product-only facets
     if (filter.placeModes && filter.placeModes.length > 0) {
-      if (!item.placeMode || !filter.placeModes.includes(item.placeMode)) return null;
-      // Beauty home-visit: medical/clinic leaves never appear under «تجيني للبيت».
+      if (!placeModeMatchesFilter(item.placeMode, filter.placeModes)) return null;
+      // Beauty «في موقعك»: medical/clinic leaves never appear under the home/on-site filter.
+      // Place filter does not rewrite providerKind (independent vs facility).
       if (filter.placeModes.includes('home')) {
         const cat = String(item.category || '');
         const sub = String(item.subcategory || '');

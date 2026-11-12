@@ -19,6 +19,19 @@
     summary { cursor:pointer; font-weight:700; }
     .line select, .line textarea { min-width:10rem; }
     .hint { color:#8a5a7a; font-size:.9rem; margin:.25rem 0 1rem; }
+    .path-grid { display:grid; gap:1rem; grid-template-columns:1fr; }
+    @media (min-width:720px) { .path-grid { grid-template-columns:1fr 1fr; } }
+    .path-card {
+      border:2px solid #f0d6e6; border-radius:16px; padding:1.1rem 1rem; background:#fff;
+      cursor:pointer; text-align:right; transition:border-color .15s, box-shadow .15s;
+    }
+    .path-card:hover, .path-card:focus { border-color:#e86fa9; outline:none; }
+    .path-card.on { border-color:#c19ee0; box-shadow:0 0 0 3px rgba(193,158,224,.25); }
+    .path-card h2 { margin:0 0 .35rem; font-size:1.15rem; }
+    .path-card p { margin:0; color:#8a5a7a; font-size:.92rem; line-height:1.45; }
+    .facility-only.hidden, .independent-only.hidden { display:none !important; }
+    .otp-row { display:flex; gap:.5rem; flex-wrap:wrap; align-items:flex-end; }
+    .otp-row input { flex:1; min-width:8rem; }
   </style>
 </head>
 <body>
@@ -32,58 +45,135 @@
   <main class="container">
     <div class="card">
       <h1>طلب انضمام كشريك</h1>
-      <p class="lead">من أنتِ؟ ثم ماذا تقدّمين؟ الإدارة تعتمد كل نشاط على حدة قبل فتح المحرر.</p>
+      <p class="lead">مساران منفصلان: <b>منشأة</b> أو <b>مختصّة مستقلة</b>. من يقدّم الخدمة يحدد اسم الحساب وصاحب الحجز؛ مكان التقديم يُحدَّد لكل خدمة لاحقًا.</p>
       <div class="steps" id="stepper">
-        <span class="on" data-s="1">1 · بيانات الشريك</span>
-        <span data-s="2">2 · الأنشطة المطلوبة</span>
-        <span data-s="3">3 · مراجعة وإرسال</span>
+        <span class="on" data-s="0">1 · نوع الحساب</span>
+        <span data-s="1">2 · البيانات</span>
+        <span data-s="2">3 · الأنشطة</span>
+        <span data-s="3">4 · إرسال</span>
       </div>
       <div id="msg" class="hidden"></div>
 
       <form id="applyForm">
-        <div class="panel on" data-panel="1">
-          <div class="grid-2">
-            <div>
-              <label>الاسم (عربي)</label>
-              <input name="nameAr" required minlength="2" placeholder="مثال: لمسة نور" />
-            </div>
-            <div>
-              <label>الاسم (English)</label>
-              <input name="nameEn" required minlength="2" placeholder="Lamsa Noor" />
-            </div>
+        <div class="panel on" data-panel="0">
+          <div class="path-grid">
+            <button type="button" class="path-card" id="pathIndependent" data-path="independent" aria-pressed="false">
+              <h2>أسجّل باسمي</h2>
+              <p>مختصّة مستقلة — الملف والحجز باسمك. بلا سجل تجاري أو فرع أو عنوان صالون.</p>
+            </button>
+            <button type="button" class="path-card" id="pathFacility" data-path="facility" aria-pressed="false">
+              <h2>أسجّل باسم منشأتي</h2>
+              <p>صالون أو مشغل أو عيادة — الفروع والفريق تحت اسم المنشأة؛ الموظفة تُعرض عند التعيين فقط.</p>
+            </button>
           </div>
-          <div class="grid-2">
-            <div>
-              <label>اسم المسؤول</label>
-              <input name="contactName" required />
-            </div>
-            <div>
-              <label>البريد الإلكتروني</label>
-              <input name="contactEmail" type="email" required />
-            </div>
+          <p class="hint">الصالون يستطيع إرسال مختصّة من فريقه إلى موقع العميلة دون تحويل الحساب إلى «مستقلة».</p>
+          <div class="actions">
+            <button type="button" class="btn btn-primary" id="to1" disabled>التالي: البيانات</button>
           </div>
-          <div class="grid-2">
-            <div>
-              <label>الجوال</label>
-              <input name="contactPhone" required placeholder="05xxxxxxxx" />
+        </div>
+
+        <div class="panel" data-panel="1">
+          <div class="independent-only hidden">
+            <div class="grid-2">
+              <div>
+                <label>الاسم</label>
+                <input name="nameAr" id="nameAr" minlength="2" placeholder="مثال: نورة" />
+              </div>
+              <div>
+                <label>الاسم بالإنجليزية</label>
+                <input name="nameEn" id="nameEn" minlength="2" placeholder="Noura" />
+              </div>
+            </div>
+            <div class="grid-2">
+              <div>
+                <label>الجوال</label>
+                <div class="otp-row">
+                  <input name="contactPhone" id="contactPhone" placeholder="05xxxxxxxx" />
+                  <button type="button" class="btn" id="sendOtp">إرسال رمز</button>
+                </div>
+              </div>
+              <div>
+                <label>رمز التحقق</label>
+                <div class="otp-row">
+                  <input name="phoneOtp" id="phoneOtp" inputmode="numeric" maxlength="6" placeholder="6 أرقام" autocomplete="one-time-code" />
+                  <button type="button" class="btn" id="verifyOtp">تأكيد</button>
+                </div>
+                <p class="hint" id="otpHint">توثيق الجوال ليس ترخيصًا للممارسة، ولن يُعرض للعامة افتراضيًا.</p>
+              </div>
+            </div>
+            <div class="grid-2">
+              <div>
+                <label>البريد الإلكتروني</label>
+                <div class="otp-row">
+                  <input name="contactEmail" id="contactEmail" type="email" />
+                  <button type="button" class="btn" id="sendEmailOtp">إرسال رمز</button>
+                </div>
+              </div>
+              <div>
+                <label>رمز تحقق البريد</label>
+                <div class="otp-row">
+                  <input name="emailOtp" id="emailOtp" inputmode="numeric" maxlength="6" placeholder="6 أرقام" />
+                  <button type="button" class="btn" id="verifyEmailOtp">تأكيد</button>
+                </div>
+              </div>
             </div>
             <div>
               <label>المدينة</label>
-              <input name="city" value="الرياض" />
+              <input name="city" id="city" value="الرياض" />
             </div>
+            <input type="hidden" name="contactName" id="contactName" />
+            <p class="hint">لا يُطلب سجل تجاري ولا اسم منشأة ولا عنوان صالون لإنشاء الملف. توثيق التواصل منفصل عن اعتماد النشاط وتفعيل الحجز.</p>
           </div>
-          <label>رابط متجر أو ملف أعمال (اختياري)</label>
-          <input name="storeUrl" type="url" placeholder="https://..." />
-          <div class="grid-2">
-            <div>
-              <label>السجل التجاري (اختياري)</label>
-              <input name="crNumber" />
+
+          <div class="facility-only hidden">
+            <div class="grid-2">
+              <div>
+                <label>اسم المنشأة (عربي)</label>
+                <input name="facilityNameAr" id="facilityNameAr" minlength="2" placeholder="مثال: صالون لمسة" />
+              </div>
+              <div>
+                <label>اسم المنشأة (English)</label>
+                <input name="facilityNameEn" id="facilityNameEn" minlength="2" placeholder="Lamsa Salon" />
+              </div>
             </div>
-            <div>
-              <label>الرقم الضريبي (اختياري)</label>
-              <input name="vatNumber" />
+            <div class="grid-2">
+              <div>
+                <label>اسم المسؤول</label>
+                <input name="facilityContactName" id="facilityContactName" />
+              </div>
+              <div>
+                <label>البريد الإلكتروني</label>
+                <input name="facilityEmail" id="facilityEmail" type="email" />
+              </div>
             </div>
+            <div class="grid-2">
+              <div>
+                <label>الجوال</label>
+                <input name="facilityPhone" id="facilityPhone" placeholder="05xxxxxxxx" />
+              </div>
+              <div>
+                <label>المدينة</label>
+                <input name="facilityCity" id="facilityCity" value="الرياض" />
+              </div>
+            </div>
+            <label>رابط الموقع (اختياري)</label>
+            <input name="storeUrl" id="storeUrl" type="url" placeholder="https://..." />
+            <div class="grid-2">
+              <div>
+                <label>السجل التجاري (اختياري عند التسجيل)</label>
+                <input name="crNumber" id="crNumber" />
+              </div>
+              <div>
+                <label>الرقم الضريبي (اختياري)</label>
+                <input name="vatNumber" id="vatNumber" />
+              </div>
+            </div>
+            <fieldset>
+              <legend>نوع المنشأة</legend>
+              <div class="opts" id="facilityIdentityBox"></div>
+            </fieldset>
           </div>
+
           <div class="grid-2">
             <div>
               <label>كلمة المرور</label>
@@ -94,12 +184,8 @@
               <input name="passwordConfirm" type="password" required minlength="8" autocomplete="new-password" />
             </div>
           </div>
-          <fieldset>
-            <legend>صفة النشاط (يمكن الجمع)</legend>
-            <div class="opts" id="identityBox"></div>
-            <p class="hint">الكوافيرة المنزلية والميك أب آرتست تختاران «مقدمة خدمة مستقلة»، ثم تحددان الخدمة ومكان تقديمها.</p>
-          </fieldset>
           <div class="actions">
+            <button type="button" class="btn" id="back0">رجوع</button>
             <button type="button" class="btn btn-primary" id="to2">التالي: الأنشطة</button>
           </div>
         </div>
@@ -108,12 +194,12 @@
           <label>وصف النشاط</label>
           <textarea name="description" id="actDesc" required minlength="2" placeholder="ماذا تقدّمين فعليًا؟"></textarea>
           <fieldset>
-            <legend>مكان تقديم الخدمة (إلزامي إن اخترتِ خدمات)</legend>
+            <legend>مكان تقديم الخدمة المتوقع (إلزامي للخدمات — يُفصَّل لكل خدمة لاحقًا)</legend>
             <div class="opts" id="modesBox"></div>
-            <p class="hint">ميّزي صراحةً بين منزل العميلة ومقر مقدمة الخدمة.</p>
+            <p class="hint">مكان التقديم لا يغيّر نوع الحساب. المستقلة المتنقلة لا تُظهر تحت «في المقر» في التطبيق.</p>
           </fieldset>
-          <h2>الأنشطة من سجل ميرا</h2>
-          <p class="hint">فرع التصنيف (مثل شنط يد) يختلف عن الفرع الجغرافي للمنشأة. اختيار «كل فروع المجموعة» يثبّت الفروع الحالية فقط.</p>
+          <h2 id="activitiesHeading">التخصصات والخدمات</h2>
+          <p class="hint" id="activitiesHint">اختيار متعدد من سجل ميرا. إنشاء الملف منفصل عن تفعيل الحجز — الإدارة تعتمد النشاط ومكانه قبل التفعيل.</p>
           <div id="activityTree"></div>
           <div class="actions">
             <button type="button" class="btn" id="back1">رجوع</button>
@@ -139,12 +225,57 @@
     const form = document.getElementById('applyForm');
     const msg = document.getElementById('msg');
     let catalog = { items: [], identityKinds: {}, modes: {} };
-    const state = { identity: [], locations: [], lines: [] };
+    const state = {
+      path: null, // independent | facility
+      identity: [],
+      locations: [],
+      lines: [],
+      phoneVerified: false,
+      phoneVerifyToken: null,
+      emailVerified: false,
+      emailVerifyToken: null,
+    };
 
     function showPanel(n) {
       document.querySelectorAll('.panel').forEach((p) => p.classList.toggle('on', p.dataset.panel === String(n)));
-      document.querySelectorAll('#stepper span').forEach((s) => s.classList.toggle('on', s.dataset.s === String(n)));
+      document.querySelectorAll('#stepper span').forEach((s) => s.classList.toggle('on', Number(s.dataset.s) <= n));
     }
+
+    function setPath(path) {
+      state.path = path;
+      state.phoneVerified = path !== 'independent' ? true : false;
+      state.phoneVerifyToken = null;
+      state.emailVerified = path !== 'independent' ? true : false;
+      state.emailVerifyToken = null;
+      document.getElementById('pathIndependent').classList.toggle('on', path === 'independent');
+      document.getElementById('pathFacility').classList.toggle('on', path === 'facility');
+      document.getElementById('pathIndependent').setAttribute('aria-pressed', path === 'independent' ? 'true' : 'false');
+      document.getElementById('pathFacility').setAttribute('aria-pressed', path === 'facility' ? 'true' : 'false');
+      document.getElementById('to1').disabled = !path;
+      document.querySelectorAll('.independent-only').forEach((el) => el.classList.toggle('hidden', path !== 'independent'));
+      document.querySelectorAll('.facility-only').forEach((el) => el.classList.toggle('hidden', path !== 'facility'));
+      // Required flags
+      const ind = path === 'independent';
+      ['nameAr', 'nameEn', 'contactPhone', 'contactEmail'].forEach((id) => {
+        const el = document.getElementById(id);
+        if (el) el.required = ind;
+      });
+      ['facilityNameAr', 'facilityNameEn', 'facilityContactName', 'facilityEmail', 'facilityPhone'].forEach((id) => {
+        const el = document.getElementById(id);
+        if (el) el.required = !ind;
+      });
+      document.getElementById('activitiesHeading').textContent = ind
+        ? 'التخصصات والخدمات التي تقدّمينها'
+        : 'أنشطة المنشأة من سجل ميرا';
+    }
+
+    document.getElementById('pathIndependent').onclick = () => setPath('independent');
+    document.getElementById('pathFacility').onclick = () => setPath('facility');
+    document.getElementById('to1').onclick = () => {
+      if (!state.path) return;
+      showPanel(1);
+    };
+    document.getElementById('back0').onclick = () => showPanel(0);
 
     function checked(box) {
       return [...box.querySelectorAll('input[type=checkbox]:checked')].map((i) => i.value);
@@ -170,16 +301,17 @@
     }
 
     function renderCatalog() {
-      const idBox = document.getElementById('identityBox');
+      const facBox = document.getElementById('facilityIdentityBox');
       const modesBox = document.getElementById('modesBox');
-      idBox.replaceChildren();
+      facBox.replaceChildren();
       modesBox.replaceChildren();
       for (const [k, label] of Object.entries(catalog.identityKinds)) {
+        if (k === 'independent') continue; // chosen via path cards
         const l = document.createElement('label');
         const i = document.createElement('input');
-        i.type = 'checkbox'; i.value = k; i.name = 'identity';
+        i.type = 'checkbox'; i.value = k; i.name = 'facilityIdentity';
         l.append(i, document.createTextNode(' ' + label));
-        idBox.append(l);
+        facBox.append(l);
       }
       for (const [k, label] of Object.entries(catalog.modes)) {
         const l = document.createElement('label');
@@ -202,7 +334,7 @@
         const tools = document.createElement('div');
         tools.className = 'actions';
         const allBtn = document.createElement('button');
-        allBtn.type = 'button'; allBtn.className = 'btn'; allBtn.textContent = 'اختيار فروع المجموعة';
+        allBtn.type = 'button'; allBtn.className = 'btn'; allBtn.textContent = 'اختيار المجموعة';
         const noneBtn = document.createElement('button');
         noneBtn.type = 'button'; noneBtn.className = 'btn'; noneBtn.textContent = 'إلغاء المجموعة';
         tools.append(allBtn, noneBtn);
@@ -228,8 +360,6 @@
             img.height = 40;
             img.style.borderRadius = '50%';
             img.style.objectFit = 'cover';
-            img.setAttribute('data-image-key', it.imageKey || '');
-            img.setAttribute('data-icon-version', it.icon.version || '');
             lab.append(img);
           }
           lab.append(document.createTextNode(' ' + it.label));
@@ -257,13 +387,113 @@
       }
     }
 
+    document.getElementById('sendOtp').onclick = async () => {
+      const phone = document.getElementById('contactPhone').value.trim();
+      if (!phone || phone.length < 9) {
+        msg.className = 'alert err'; msg.textContent = 'أدخلي رقم جوال صالحًا'; msg.classList.remove('hidden');
+        return;
+      }
+      try {
+        const res = await PartnersApi.applyPhoneOtpStart({ phone });
+        state.phoneVerified = false;
+        state.phoneVerifyToken = null;
+        msg.className = 'alert ok';
+        msg.textContent = res.messageAr || 'أُرسل رمز التحقق' + (res.devCode ? ' (تجريبي: ' + res.devCode + ')' : '');
+        msg.classList.remove('hidden');
+      } catch (err) {
+        msg.className = 'alert err';
+        msg.textContent = err.messageAr || err.message;
+        msg.classList.remove('hidden');
+      }
+    };
+
+    document.getElementById('verifyOtp').onclick = async () => {
+      const phone = document.getElementById('contactPhone').value.trim();
+      const code = document.getElementById('phoneOtp').value.trim();
+      try {
+        const res = await PartnersApi.applyPhoneOtpVerify({ phone, code });
+        state.phoneVerified = true;
+        state.phoneVerifyToken = res.phoneVerifyToken;
+        msg.className = 'alert ok';
+        msg.textContent = 'تم توثيق الجوال — ليس ترخيص ممارسة ولن يُعرض للعامة افتراضيًا.';
+        msg.classList.remove('hidden');
+      } catch (err) {
+        state.phoneVerified = false;
+        state.phoneVerifyToken = null;
+        msg.className = 'alert err';
+        msg.textContent = err.messageAr || err.message;
+        msg.classList.remove('hidden');
+      }
+    };
+
+    document.getElementById('sendEmailOtp').onclick = async () => {
+      const email = document.getElementById('contactEmail').value.trim();
+      if (!email || email.indexOf('@') < 0) {
+        msg.className = 'alert err'; msg.textContent = 'أدخلي بريدًا صالحًا'; msg.classList.remove('hidden');
+        return;
+      }
+      try {
+        const res = await PartnersApi.applyEmailOtpStart({ email });
+        state.emailVerified = false;
+        state.emailVerifyToken = null;
+        msg.className = 'alert ok';
+        msg.textContent = res.messageAr || 'أُرسل رمز التحقق للبريد' + (res.devCode ? ' (تجريبي: ' + res.devCode + ')' : '');
+        msg.classList.remove('hidden');
+      } catch (err) {
+        msg.className = 'alert err';
+        msg.textContent = err.messageAr || err.message;
+        msg.classList.remove('hidden');
+      }
+    };
+
+    document.getElementById('verifyEmailOtp').onclick = async () => {
+      const email = document.getElementById('contactEmail').value.trim();
+      const code = document.getElementById('emailOtp').value.trim();
+      try {
+        const res = await PartnersApi.applyEmailOtpVerify({ email, code });
+        state.emailVerified = true;
+        state.emailVerifyToken = res.emailVerifyToken;
+        msg.className = 'alert ok';
+        msg.textContent = 'تم توثيق البريد — لن يُعرض للعامة افتراضيًا.';
+        msg.classList.remove('hidden');
+      } catch (err) {
+        state.emailVerified = false;
+        state.emailVerifyToken = null;
+        msg.className = 'alert err';
+        msg.textContent = err.messageAr || err.message;
+        msg.classList.remove('hidden');
+      }
+    };
+
     document.getElementById('to2').onclick = () => {
-      if (!form.reportValidity()) return;
+      if (!state.path) return;
       if (form.password.value !== form.passwordConfirm.value) {
         msg.className = 'alert err'; msg.textContent = 'كلمتا المرور غير متطابقتين'; msg.classList.remove('hidden'); return;
       }
-      if (!checked(document.getElementById('identityBox')).length) {
-        msg.className = 'alert err'; msg.textContent = 'اختاري صفة واحدةً واحدة الأقل'; msg.classList.remove('hidden'); return;
+      if (state.path === 'independent') {
+        if (!document.getElementById('nameAr').value.trim() || !document.getElementById('nameEn').value.trim()) {
+          msg.className = 'alert err'; msg.textContent = 'أدخلي الاسم'; msg.classList.remove('hidden'); return;
+        }
+        if (!document.getElementById('contactEmail').value.trim() || !document.getElementById('contactPhone').value.trim()) {
+          msg.className = 'alert err'; msg.textContent = 'أدخلي الجوال والبريد'; msg.classList.remove('hidden'); return;
+        }
+        if (!state.phoneVerified || !state.phoneVerifyToken) {
+          msg.className = 'alert err'; msg.textContent = 'أكّدي رمز التحقق للجوال أولًا'; msg.classList.remove('hidden'); return;
+        }
+        if (!state.emailVerified || !state.emailVerifyToken) {
+          msg.className = 'alert err'; msg.textContent = 'أكّدي رمز التحقق للبريد أولًا'; msg.classList.remove('hidden'); return;
+        }
+        document.getElementById('contactName').value = document.getElementById('nameAr').value.trim();
+      } else {
+        if (!checked(document.getElementById('facilityIdentityBox')).length) {
+          msg.className = 'alert err'; msg.textContent = 'اختاري نوع المنشأة'; msg.classList.remove('hidden'); return;
+        }
+        if (!document.getElementById('facilityNameAr').value.trim()) {
+          msg.className = 'alert err'; msg.textContent = 'أدخلي اسم المنشأة'; msg.classList.remove('hidden'); return;
+        }
+      }
+      if (!form.password.value || form.password.value.length < 8) {
+        msg.className = 'alert err'; msg.textContent = 'كلمة المرور 8 أحرف على الأقل'; msg.classList.remove('hidden'); return;
       }
       msg.classList.add('hidden');
       showPanel(2);
@@ -271,7 +501,11 @@
     document.getElementById('back1').onclick = () => showPanel(1);
     document.getElementById('to3').onclick = () => {
       try {
-        state.identity = checked(document.getElementById('identityBox'));
+        if (state.path === 'independent') {
+          state.identity = ['independent'];
+        } else {
+          state.identity = checked(document.getElementById('facilityIdentityBox'));
+        }
         state.locations = checked(document.getElementById('modesBox'));
         state.lines = collectLines();
         const desc = document.getElementById('actDesc').value.trim();
@@ -281,12 +515,15 @@
         if (needsLoc && !state.locations.length) throw new Error('حددي مكان تقديم الخدمة');
         const labels = state.lines.map((l) => {
           const it = catalog.items.find((i) => i.id === l.activity);
-          return (it ? it.label : l.activity) + (l.itemName ? ' · ' + l.itemName : ' · فرع كامل');
+          return (it ? it.label : l.activity) + (l.itemName ? ' · ' + l.itemName : '');
         });
+        const pathLabel = state.path === 'independent' ? 'مختصّة مستقلة (باسمك)' : 'منشأة';
         document.getElementById('reviewBox').innerHTML =
-          '<p><b>الصفة:</b> ' + state.identity.map((k) => catalog.identityKinds[k]).join('، ') + '</p>' +
-          (state.locations.length ? '<p><b>مكان التقديم:</b> ' + state.locations.map((k) => catalog.modes[k]).join('، ') + '</p>' : '') +
-          '<p><b>الأنشطة:</b></p><ul>' + labels.map((t) => '<li>' + t + '</li>').join('') + '</ul>';
+          '<p><b>المسار:</b> ' + pathLabel + '</p>' +
+          '<p><b>الصفة:</b> ' + state.identity.map((k) => catalog.identityKinds[k] || k).join('، ') + '</p>' +
+          (state.locations.length ? '<p><b>مكان التقديم المتوقع:</b> ' + state.locations.map((k) => catalog.modes[k]).join('، ') + '</p>' : '') +
+          '<p><b>الأنشطة:</b></p><ul>' + labels.map((t) => '<li>' + t + '</li>').join('') + '</ul>' +
+          '<p>تفعيل الحجز منفصل عن إنشاء الملف ويحتاج موافقة الإدارة.</p>';
         msg.classList.add('hidden');
         showPanel(3);
       } catch (e) {
@@ -298,20 +535,41 @@
     form.addEventListener('submit', async (e) => {
       e.preventDefault();
       msg.className = 'alert warn'; msg.textContent = 'جاري الإرسال...'; msg.classList.remove('hidden');
-      const fd = new FormData(form);
-      const payload = Object.fromEntries(fd.entries());
-      delete payload.passwordConfirm;
-      delete payload.description;
-      delete payload.identity;
-      delete payload.locations;
-      if (!payload.storeUrl) delete payload.storeUrl;
-      payload.activities = {
-        identity: state.identity,
-        locations: state.locations,
-        description: document.getElementById('actDesc').value.trim(),
-        lines: state.lines,
+      const independent = state.path === 'independent';
+      const payload = {
+        password: form.password.value,
+        message: form.message.value || undefined,
+        activities: {
+          identity: state.identity,
+          locations: state.locations,
+          description: document.getElementById('actDesc').value.trim(),
+          lines: state.lines,
+        },
+        descriptionAr: document.getElementById('actDesc').value.trim(),
       };
-      payload.descriptionAr = payload.activities.description;
+      if (independent) {
+        payload.nameAr = document.getElementById('nameAr').value.trim();
+        payload.nameEn = document.getElementById('nameEn').value.trim();
+        payload.contactName = payload.nameAr;
+        payload.contactEmail = document.getElementById('contactEmail').value.trim();
+        payload.contactPhone = document.getElementById('contactPhone').value.trim();
+        payload.city = document.getElementById('city').value.trim() || 'الرياض';
+        payload.phoneVerifyToken = state.phoneVerifyToken;
+        payload.emailVerifyToken = state.emailVerifyToken;
+      } else {
+        payload.nameAr = document.getElementById('facilityNameAr').value.trim();
+        payload.nameEn = document.getElementById('facilityNameEn').value.trim();
+        payload.contactName = document.getElementById('facilityContactName').value.trim();
+        payload.contactEmail = document.getElementById('facilityEmail').value.trim();
+        payload.contactPhone = document.getElementById('facilityPhone').value.trim();
+        payload.city = document.getElementById('facilityCity').value.trim() || 'الرياض';
+        const storeUrl = document.getElementById('storeUrl').value.trim();
+        if (storeUrl) payload.storeUrl = storeUrl;
+        const cr = document.getElementById('crNumber').value.trim();
+        const vat = document.getElementById('vatNumber').value.trim();
+        if (cr) payload.crNumber = cr;
+        if (vat) payload.vatNumber = vat;
+      }
       try {
         const res = await PartnersApi.apply(payload);
         msg.className = 'alert ok';
@@ -322,7 +580,11 @@
           encodeURIComponent(res.statusToken) +
           '">تتبع الحالة</a>';
         form.reset();
-        showPanel(1);
+        state.path = null;
+        state.phoneVerified = false;
+        state.phoneVerifyToken = null;
+        showPanel(0);
+        document.getElementById('to1').disabled = true;
       } catch (err) {
         msg.className = 'alert err';
         msg.textContent = err.messageAr || err.message;

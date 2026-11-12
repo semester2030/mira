@@ -1035,14 +1035,29 @@
         syncPlaceDetails();
       });
 
+      const providerKind =
+        (partner.activitiesMeta && partner.activitiesMeta.providerKind) ||
+        (Array.isArray(partner.activitiesMeta && partner.activitiesMeta.identity) &&
+        partner.activitiesMeta.identity.indexOf('independent') >= 0
+          ? 'independent'
+          : 'facility');
       const placeChips = document.createElement('div');
       placeChips.className = 'e2c-chip-row';
       placeChips.setAttribute('data-testid', 'e2c-place-mode-chips');
-      [
-        ['remote', 'عن بُعد'],
-        ['home', 'منزلية'],
-        ['branch', 'في الفرع'],
-      ].forEach(([val, label]) => {
+      const placeOptions =
+        providerKind === 'independent'
+          ? [
+              ['home', 'في موقع العميلة'],
+              ['either', 'في موقع العميلة + استوديو معتمد'],
+              ['remote', 'عن بُعد'],
+            ]
+          : [
+              ['branch', 'في المقر'],
+              ['home', 'في موقع العميلة'],
+              ['either', 'في المقر وفي موقع العميلة'],
+              ['remote', 'عن بُعد'],
+            ];
+      placeOptions.forEach(([val, label]) => {
         const chip = document.createElement('button');
         chip.type = 'button';
         chip.className = 'e2c-chip';
@@ -1054,14 +1069,25 @@
           placeModeInput.value = val;
           placeChips.querySelectorAll('.e2c-chip').forEach((c) => c.classList.remove('is-selected'));
           chip.classList.add('is-selected');
-          // Non-branch modes explicitly clear branch — do not keep a stale select value.
-          if (val !== 'branch') branchSelect.value = '';
+          // Only pure branch keeps branchId; home/either/remote clear stale branch when not at premises.
+          if (val !== 'branch' && val !== 'either') branchSelect.value = '';
           syncPlaceDetails();
           bumpFormContentEpoch();
         });
         placeChips.appendChild(chip);
       });
       placeBox.insertBefore(placeChips, placeDetails);
+
+      const coverageSeed =
+        (seed.coverageJson && typeof seed.coverageJson === 'object' && seed.coverageJson) ||
+        (seed.draftCoverageJson && typeof seed.draftCoverageJson === 'object' && seed.draftCoverageJson) ||
+        {};
+      const coverageInput = document.createElement('input');
+      coverageInput.type = 'hidden';
+      coverageInput.name = 'coverageJson';
+      coverageInput.setAttribute('data-testid', 'e2c-coverage-json');
+      coverageInput.value = JSON.stringify(coverageSeed);
+      placeBox.appendChild(coverageInput);
 
       const cityLine = document.createElement('p');
       cityLine.className = 'lead';
@@ -1079,14 +1105,108 @@
       placeGap.className = 'muted';
       placeGap.setAttribute('data-testid', 'e2c-place-contract-gap');
 
+      function parseCoverage() {
+        try {
+          return JSON.parse(coverageInput.value || '{}') || {};
+        } catch (_) {
+          return {};
+        }
+      }
+      function writeCoverage(next) {
+        coverageInput.value = JSON.stringify(next || {});
+      }
+      function appendClientSiteCoverage() {
+        const cov = parseCoverage();
+        const wrap = document.createElement('div');
+        wrap.className = 'e2c-coverage-venues';
+        wrap.setAttribute('data-testid', 'e2c-coverage-venues');
+        const title = document.createElement('p');
+        title.className = 'lead';
+        title.textContent = 'الأماكن المعتمدة للموقع الخارجي (لكل خدمة على حدة)';
+        wrap.appendChild(title);
+        const venueOpts = [
+          ['home', 'منزل'],
+          ['hotel', 'فندق'],
+          ['hall', 'قاعة مناسبة'],
+        ];
+        const selected = Array.isArray(cov.venues) ? cov.venues.slice() : [];
+        venueOpts.forEach(([val, label]) => {
+          const lab = document.createElement('label');
+          lab.style.display = 'inline-flex';
+          lab.style.gap = '6px';
+          lab.style.marginInlineEnd = '12px';
+          const cb = document.createElement('input');
+          cb.type = 'checkbox';
+          cb.value = val;
+          cb.checked = selected.indexOf(val) >= 0;
+          cb.addEventListener('change', () => {
+            const cur = parseCoverage();
+            const set = new Set(Array.isArray(cur.venues) ? cur.venues : []);
+            if (cb.checked) set.add(val);
+            else set.delete(val);
+            cur.venues = [...set];
+            writeCoverage(cur);
+            bumpFormContentEpoch();
+          });
+          lab.append(cb, document.createTextNode(label));
+          wrap.appendChild(lab);
+        });
+        const note = document.createElement('label');
+        note.className = 'field';
+        note.append(document.createTextNode('أحياء / نطاق التغطية'));
+        const noteInput = document.createElement('input');
+        noteInput.type = 'text';
+        noteInput.value = cov.noteAr || '';
+        noteInput.placeholder = 'مثال: شمال الرياض · داخل 20 كم';
+        noteInput.addEventListener('change', () => {
+          const cur = parseCoverage();
+          cur.noteAr = noteInput.value.trim();
+          writeCoverage(cur);
+          bumpFormContentEpoch();
+        });
+        note.appendChild(noteInput);
+        wrap.appendChild(note);
+        const fee = document.createElement('label');
+        fee.className = 'field';
+        fee.append(document.createTextNode('رسوم الانتقال (ريال)'));
+        const feeInput = document.createElement('input');
+        feeInput.type = 'number';
+        feeInput.min = '0';
+        feeInput.value = cov.travelFeeSar != null ? String(cov.travelFeeSar) : '';
+        feeInput.addEventListener('change', () => {
+          const cur = parseCoverage();
+          const n = Number(feeInput.value);
+          cur.travelFeeSar = Number.isFinite(n) ? n : null;
+          writeCoverage(cur);
+          bumpFormContentEpoch();
+        });
+        fee.appendChild(feeInput);
+        wrap.appendChild(fee);
+        const travelMin = document.createElement('label');
+        travelMin.className = 'field';
+        travelMin.append(document.createTextNode('مدة الانتقال (دقيقة)'));
+        const travelInput = document.createElement('input');
+        travelInput.type = 'number';
+        travelInput.min = '0';
+        travelInput.value = cov.travelMin != null ? String(cov.travelMin) : '';
+        travelInput.addEventListener('change', () => {
+          const cur = parseCoverage();
+          const n = Number(travelInput.value);
+          cur.travelMin = Number.isFinite(n) ? n : null;
+          writeCoverage(cur);
+          bumpFormContentEpoch();
+        });
+        travelMin.appendChild(travelInput);
+        wrap.appendChild(travelMin);
+        placeDetails.appendChild(wrap);
+      }
       function syncPlaceDetails() {
         placeDetails.replaceChildren();
         const mode = placeModeInput.value;
         if (!mode) {
           placeGap.textContent =
-            'اختاري مكان التقديم. عرض المدينة/الهاتف وحدهما لا يثبت اكتمال اختيار الموقع.';
+            'اختاري مكان التقديم لكل خدمة. الفلتر «في موقعك» في التطبيق يرشّح المكان فقط ولا يغيّر نوع المقدّم.';
           placeDetails.appendChild(placeGap);
-          placeDetails.appendChild(phoneLine);
           return;
         }
         if (mode === 'remote') {
@@ -1094,26 +1214,55 @@
           branchSelect.hidden = true;
           placeDetails.appendChild(branchSelect);
           placeGap.textContent = 'خدمة عن بُعد — لا تُفترض إحداثيات أو فرع.';
-          placeDetails.append(placeGap, phoneLine);
+          placeDetails.append(placeGap);
           return;
         }
         if (mode === 'home') {
-          // Keep branchId control mounted (hidden) so form.querySelector still sees explicit clear.
           branchSelect.value = '';
           branchSelect.hidden = true;
           placeDetails.appendChild(branchSelect);
           cityLine.textContent = partner.city
-            ? 'نطاق المدينة المسجّل على الحساب: ' + partner.city + ' (تغطية منزلية — يُحفظ عبر التغطية عند توفر العقد).'
-            : 'المدينة غير مسجّلة — استكملي بيانات الجهة قبل اعتماد التغطية المنزلية.';
-          placeDetails.append(cityLine, phoneLine);
+            ? 'المدينة على الحساب: ' + partner.city + ' — حدّدي الأماكن المعتمدة أدناه لهذه الخدمة فقط.'
+            : 'المدينة غير مسجّلة — استكملي بيانات الجهة قبل اعتماد التغطية.';
+          placeDetails.append(cityLine);
+          appendClientSiteCoverage();
           return;
         }
-        // branch
+        if (mode === 'either') {
+          cityLine.textContent =
+            providerKind === 'independent'
+              ? 'كلاهما: موقع العميلة + استوديو معتمد — تقويم واحد يمنع تضارب المواعيد ويحسب الانتقال.'
+              : 'كلاهما: في المقر وفي موقع العميلة — تقويم واحد للمختصّة يمنع حجزها مرتين.';
+          placeDetails.append(cityLine);
+          if (providerKind !== 'independent' && branches.length) {
+            branchSelect.hidden = false;
+            const branchWrap = document.createElement('label');
+            branchWrap.className = 'field';
+            branchWrap.append(document.createTextNode('فرع المقر (عند التقديم في المقر)'), branchSelect);
+            placeDetails.appendChild(branchWrap);
+          } else if (providerKind !== 'independent' && !branches.length) {
+            placeGap.textContent = 'أضيفي فرعًا للمنشأة لاحقًا لربط «في المقر». التغطية الخارجية تُحفظ الآن.';
+            placeDetails.appendChild(placeGap);
+          } else {
+            branchSelect.value = '';
+            branchSelect.hidden = true;
+            placeDetails.appendChild(branchSelect);
+          }
+          appendClientSiteCoverage();
+          return;
+        }
+        // branch / في المقر
+        if (providerKind === 'independent') {
+          placeGap.textContent =
+            'المختصّة المستقلة لا تُظهر تحت «في المقر». اختاري موقع العميلة أو استوديو معتمد.';
+          placeDetails.appendChild(placeGap);
+          return;
+        }
         if (!branches.length) {
           placeGap.textContent =
-            'لا فروع مسجّلة على الحساب (PartnerBranch). اختيار الفرع والإحداثيات غير مكتمل بالعقد الحالي — لا يُعلن نجاح موقع شكلي.';
+            'لا فروع مسجّلة على الحساب (PartnerBranch). أضيفي فرعًا قبل اعتماد «في المقر».';
           cityLine.textContent = partner.city ? 'مدينة الحساب: ' + partner.city : 'المدينة غير مسجّلة.';
-          placeDetails.append(placeGap, cityLine, phoneLine);
+          placeDetails.append(placeGap, cityLine);
           return;
         }
         branchSelect.hidden = false;
@@ -1149,7 +1298,6 @@
             (lng + delta).toFixed(5) +
             '%2C' +
             (lat + delta).toFixed(5);
-          // Real OSM embed bound to branch lat/lng — not a decorative gradient.
           const frame = document.createElement('iframe');
           frame.setAttribute('data-testid', 'e2c-map-embed');
           frame.setAttribute('title', 'خريطة الفرع');
@@ -1176,7 +1324,7 @@
         } else {
           mapBox.textContent = 'لا إحداثيات على الفرع المختار — واجهة الموقع غير مكتملة.';
         }
-        placeDetails.append(mapBox, phoneLine);
+        placeDetails.append(mapBox);
       }
       syncPlaceDetails();
       basics.appendChild(placeBox);
@@ -2420,14 +2568,39 @@
           // Always bind placeMode when control present (including empty → clear semantics upstream).
           values.placeMode = String(placeModeEl.value || '').trim() || null;
         }
-        // Non-branch modes must explicitly clear branchId even when the select is detached
-        // from the DOM (syncPlaceDetails only mounts it under placeMode=branch).
-        if (values.placeMode && values.placeMode !== 'branch') {
+        // Home/remote clear branch; branch and either may keep a premises branchId.
+        if (values.placeMode && values.placeMode !== 'branch' && values.placeMode !== 'either') {
           values.branchId = null;
         } else if (branchEl) {
           // HTMLSelectElement.value lives on the prototype — never use hasOwnProperty(branchEl,'value').
           // Explicit empty clears branch; omit only when control absent AND mode is branch/unset.
           values.branchId = String(branchEl.value || '').trim() || null;
+        }
+        const coverageEl = form.querySelector('[name="coverageJson"]');
+        if (coverageEl && (values.placeMode === 'home' || values.placeMode === 'either')) {
+          try {
+            const cov = JSON.parse(coverageEl.value || '{}');
+            if (cov && typeof cov === 'object') values.coverageJson = cov;
+          } catch (_) {
+            /* ignore malformed coverage */
+          }
+        }
+        const videoScopeEl = form.querySelector('[name="videoScope"]');
+        if (videoScopeEl && String(videoScopeEl.value || '').trim()) {
+          values.videoScope = String(videoScopeEl.value).trim();
+        }
+        const linkedEl = form.querySelector('[name="linkedServiceIds"]');
+        if (linkedEl && values.videoScope === 'provider_intro') {
+          try {
+            const ids = JSON.parse(linkedEl.value || '[]');
+            if (Array.isArray(ids)) {
+              values.linkedServiceIds = ids.filter((x) => typeof x === 'string' && x.trim());
+            }
+          } catch (_) {
+            values.linkedServiceIds = [];
+          }
+        } else if (values.videoScope === 'service_specific') {
+          values.linkedServiceIds = [];
         }
       }
       // E2ج: التقويم عبر حقول السجل weeklyHours/dateExceptions (ليست availabilityJson الخام — ترفضها البوابة).
@@ -3515,6 +3688,96 @@
     text(mediaSection, 'وسائط العرض الرئيسي', 'h3');
     text(mediaSection, 'الفيديو أو الصور التي تظهر للمستخدم مباشرة أثناء تصفح اكتشفي بملء الشاشة.');
     text(mediaSection, 'فيديو واحد أو مجموعة صور. صور JPEG وPNG وWebP وصورة الآيفون حتى 5 ميغابايت. الفيديو حتى 5 دقائق.');
+    const videoScopeSeed =
+      (seed.attributesJson && seed.attributesJson.videoScope) ||
+      seed.videoScope ||
+      'service_specific';
+    const videoScopeInput = document.createElement('input');
+    videoScopeInput.type = 'hidden';
+    videoScopeInput.name = 'videoScope';
+    videoScopeInput.value = videoScopeSeed === 'provider_intro' ? 'provider_intro' : 'service_specific';
+    videoScopeInput.setAttribute('data-testid', 'e2c-video-scope');
+    mediaSection.appendChild(videoScopeInput);
+    const videoScopeRow = document.createElement('div');
+    videoScopeRow.className = 'e2c-chip-row';
+    videoScopeRow.setAttribute('data-testid', 'e2c-video-scope-chips');
+    [
+      ['provider_intro', 'فيديو تعريفي بي أو بمنشأتي'],
+      ['service_specific', 'فيديو لخدمة محددة'],
+    ].forEach(([val, label]) => {
+      const chip = document.createElement('button');
+      chip.type = 'button';
+      chip.className = 'e2c-chip';
+      chip.setAttribute('data-video-scope', val);
+      chip.textContent = label;
+      if (videoScopeInput.value === val) chip.classList.add('is-selected');
+      chip.addEventListener('click', () => {
+        videoScopeInput.value = val;
+        videoScopeRow.querySelectorAll('.e2c-chip').forEach((c) => c.classList.remove('is-selected'));
+        chip.classList.add('is-selected');
+        bumpFormContentEpoch();
+      });
+      videoScopeRow.appendChild(chip);
+    });
+    mediaSection.appendChild(videoScopeRow);
+    text(
+      mediaSection,
+      'التعريفي يفتح اختيار الخدمة ثم الفرع والموعد؛ المخصص يفتح الخدمة محددة مسبقًا. يمكن ربط التعريفي بعدة خدمات دون تكرار الفيديو.',
+    );
+    const linkedSeed = Array.isArray(
+      seed.attributesJson && seed.attributesJson.linkedServiceIds
+        ? seed.attributesJson.linkedServiceIds
+        : seed.linkedServiceIds,
+    )
+      ? (seed.attributesJson && seed.attributesJson.linkedServiceIds) || seed.linkedServiceIds || []
+      : [];
+    const linkedBox = document.createElement('div');
+    linkedBox.className = 'e2c-linked-services';
+    linkedBox.setAttribute('data-testid', 'e2c-linked-services');
+    linkedBox.hidden = videoScopeInput.value !== 'provider_intro';
+    const linkedTitle = document.createElement('p');
+    linkedTitle.className = 'lead';
+    linkedTitle.textContent = 'الخدمات المرتبطة بالفيديو التعريفي (أسماء عربية تظهر للعميلة)';
+    linkedBox.appendChild(linkedTitle);
+    const linkedHidden = document.createElement('input');
+    linkedHidden.type = 'hidden';
+    linkedHidden.name = 'linkedServiceIds';
+    linkedHidden.value = JSON.stringify(linkedSeed);
+    linkedHidden.setAttribute('data-testid', 'e2c-linked-service-ids');
+    linkedBox.appendChild(linkedHidden);
+    const peerServices = Array.isArray(window.sessionServices) ? window.sessionServices : [];
+    const selectedLinked = new Set(linkedSeed.map(String));
+    peerServices.forEach((svc) => {
+      if (!svc || !svc.id || svc.id === (item && item.id)) return;
+      const lab = document.createElement('label');
+      lab.style.display = 'flex';
+      lab.style.gap = '8px';
+      lab.style.alignItems = 'center';
+      const cb = document.createElement('input');
+      cb.type = 'checkbox';
+      cb.value = svc.id;
+      cb.checked = selectedLinked.has(String(svc.id));
+      cb.addEventListener('change', () => {
+        if (cb.checked) selectedLinked.add(String(svc.id));
+        else selectedLinked.delete(String(svc.id));
+        linkedHidden.value = JSON.stringify([...selectedLinked]);
+        bumpFormContentEpoch();
+      });
+      lab.append(cb, document.createTextNode(svc.nameAr || svc.id));
+      linkedBox.appendChild(lab);
+    });
+    if (!peerServices.length) {
+      const empty = document.createElement('p');
+      empty.className = 'muted';
+      empty.textContent = 'لا خدمات منشورة أخرى لربطها بعد — أنشئي الخدمات أولًا ثم اربطيها هنا.';
+      linkedBox.appendChild(empty);
+    }
+    mediaSection.appendChild(linkedBox);
+    videoScopeRow.querySelectorAll('.e2c-chip').forEach((chip) => {
+      chip.addEventListener('click', () => {
+        linkedBox.hidden = videoScopeInput.value !== 'provider_intro';
+      });
+    });
     function mediaInput(id, accept) {
       const input = document.createElement('input');
       input.type = 'file';
@@ -6420,11 +6683,20 @@
         if (placeModeEl && String(placeModeEl.value || '').trim()) {
           payload.placeMode = String(placeModeEl.value).trim();
         }
-        // Home/remote must clear branch even if the select was unmounted from placeDetails.
-        if (payload.placeMode && payload.placeMode !== 'branch') {
+        // Home/remote clear branch; branch and either may keep premises branchId.
+        if (payload.placeMode && payload.placeMode !== 'branch' && payload.placeMode !== 'either') {
           payload.branchId = null;
         } else if (branchEl) {
           payload.branchId = String(branchEl.value || '').trim() || null;
+        }
+        const coverageEl = form.querySelector('[name="coverageJson"]');
+        if (coverageEl && (payload.placeMode === 'home' || payload.placeMode === 'either')) {
+          try {
+            const cov = JSON.parse(coverageEl.value || '{}');
+            if (cov && typeof cov === 'object') payload.coverageJson = cov;
+          } catch (_) {
+            /* ignore */
+          }
         }
         if (availabilityJson && typeof availabilityJson.build === 'function') {
           try {

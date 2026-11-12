@@ -39,6 +39,7 @@ import '../presentation/discover_view_count.dart';
 import '../presentation/discover_visual_chrome.dart';
 import '../presentation/presentation_video_port.dart';
 import '../widgets/discover_scene_still.dart';
+import '../intro_video_booking.dart';
 import 'booking_request_screen.dart';
 import 'partner_detail_screen.dart';
 
@@ -664,7 +665,7 @@ class DiscoverPresentationScreenState extends State<DiscoverPresentationScreen>
       return;
     }
 
-    // Beauty «تجيني للبيت»: place filter only — do not rewrite provider type.
+    // Beauty «في موقعك»: place filter only — do not rewrite provider type.
     if (widget.lane == DiscoverLane.beauty && selected.id == 'beauty.home_visit') {
       _eleganceDrillParentId = null;
       _reload(
@@ -862,10 +863,10 @@ class DiscoverPresentationScreenState extends State<DiscoverPresentationScreen>
           DiscoverFacetBucket(id: id, count: 0, labelAr: id),
     ];
     const placeLabels = {
-      'branch': 'في الفرع',
-      'home': 'منزلية',
+      'branch': 'في المقر',
+      'home': 'في موقعك',
       'remote': 'عن بعد',
-      'either': 'مرن',
+      'either': 'في المقر أو موقعك',
     };
     final placeBuckets = _facets.placeMode.isNotEmpty
         ? _facets.placeMode
@@ -1581,6 +1582,7 @@ class DiscoverPresentationScreenState extends State<DiscoverPresentationScreen>
   }
 
   /// Appointment only: never a purchase. Phone contact lives on the detail page.
+  /// Intro clinic video uses the same Arabic service picker as service detail.
   Future<void> _contactVenue(BuildContext context, PresentationSlide slide) async {
     if (slide.preview) {
       _tell(context, MarketplaceCopy.previewAppointment);
@@ -1591,16 +1593,14 @@ class DiscoverPresentationScreenState extends State<DiscoverPresentationScreen>
       _tell(context, MarketplaceCopy.appointmentUnavailable);
       return;
     }
-    await Navigator.of(context).push(
-      MaterialPageRoute<void>(
-        builder: (_) => BookingRequestScreen(
-          service: service,
-          initialDateKey: _query.availableOn,
-          initialBranchId: _query.branchIds.length == 1 ? _query.branchIds.first : null,
-          availabilityContext: _availabilityContext,
-          discoverLane: widget.lane,
-        ),
-      ),
+    await openServiceBookingFlow(
+      context: context,
+      service: service,
+      bookingDateKey: _query.availableOn,
+      bookingBranchId: _query.branchIds.length == 1 ? _query.branchIds.first : null,
+      availabilityContext: _availabilityContext,
+      discoverLane: widget.lane,
+      tell: (m) => _tell(context, m),
     );
   }
 

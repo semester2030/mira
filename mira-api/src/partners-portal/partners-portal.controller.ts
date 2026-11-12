@@ -335,6 +335,26 @@ export class PartnersPortalController {
     return this.portal.decideActivities(reviewerId, dto);
   }
 
+  @Post('apply/phone/start')
+  applyPhoneStart(@Body() body: { phone?: string }) {
+    return this.portal.startApplyPhoneOtp(body?.phone || '');
+  }
+
+  @Post('apply/phone/verify')
+  applyPhoneVerify(@Body() body: { phone?: string; code?: string }) {
+    return this.portal.verifyApplyPhoneOtp(body?.phone || '', body?.code || '');
+  }
+
+  @Post('apply/email/start')
+  applyEmailStart(@Body() body: { email?: string }) {
+    return this.portal.startApplyEmailOtp(body?.email || '');
+  }
+
+  @Post('apply/email/verify')
+  applyEmailVerify(@Body() body: { email?: string; code?: string }) {
+    return this.portal.verifyApplyEmailOtp(body?.email || '', body?.code || '');
+  }
+
   @Post('apply')
   apply(@Body() dto: ApplyPartnerDto) {
     return this.portal.apply(dto);

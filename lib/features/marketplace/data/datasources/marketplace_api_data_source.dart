@@ -167,6 +167,7 @@ class MarketplaceApiDataSource {
       partnerNameAr: json['partnerNameAr'] as String,
       partnerEmoji: json['partnerEmoji'] as String?,
       partnerType: json['partnerType'] as String? ?? 'salon',
+      providerKind: json['providerKind'] as String?,
       city: json['city'] as String? ?? 'الرياض',
       contactPhone: json['contactPhone'] as String?,
       nameAr: json['nameAr'] as String,
@@ -179,6 +180,7 @@ class MarketplaceApiDataSource {
       matchScore: (json['matchScore'] as num?)?.toInt() ?? 0,
       matchKnown: json.containsKey('matchScore'),
       category: json['category'] as String?,
+      placeMode: json['placeMode'] as String?,
       bookingEnabled: json['bookingEnabled'] as bool? ?? false,
       concernTags: (json['concernTags'] as List<dynamic>?)
               ?.map((e) => e.toString())
@@ -186,11 +188,34 @@ class MarketplaceApiDataSource {
           const [],
       media: _media(json),
       mainOfferKind: CatalogMainOfferKindCodec.tryParse(json['mainOfferKind'] as String?),
+      videoScope: json['videoScope'] as String? ?? 'service_specific',
+      linkedServiceIds: (json['linkedServiceIds'] as List<dynamic>?)
+              ?.map((e) => e.toString())
+              .toList() ??
+          const [],
+      linkedServices: _linkedServices(json),
       payMode: json['payMode'] as String? ?? 'pay_at_venue',
       availabilityPresent: json['availabilityPresent'] == true,
       // Approved profile only — ignore any draft_* leakage if present.
       profile: CatalogServiceProfile.fromServiceProfileJson(json['serviceProfileJson']),
     );
+  }
+
+  List<CatalogLinkedService> _linkedServices(Map<String, dynamic> json) {
+    final raw = json['linkedServices'] as List<dynamic>?;
+    if (raw == null) return const [];
+    return raw.map((row) {
+      if (row is! Map) {
+        return CatalogLinkedService(id: row.toString(), missing: true);
+      }
+      final map = Map<String, dynamic>.from(row);
+      return CatalogLinkedService(
+        id: map['id']?.toString() ?? '',
+        nameAr: map['nameAr'] as String?,
+        bookingEnabled: map['bookingEnabled'] == true,
+        missing: map['missing'] == true || (map['nameAr'] == null),
+      );
+    }).where((e) => e.id.isNotEmpty).toList();
   }
 
   PartnerSummary _parsePartner(Map<String, dynamic> json) {
@@ -345,6 +370,7 @@ class MarketplaceApiDataSource {
           partnerNameAr: json['partnerNameAr'] as String? ?? '',
           partnerEmoji: json['partnerEmoji'] as String?,
           partnerType: json['partnerType'] as String? ?? 'salon',
+          providerKind: json['providerKind'] as String?,
           city: json['city'] as String? ?? '',
           contactPhone: json['contactPhone'] as String?,
           nameAr: json['nameAr'] as String? ?? '',
@@ -356,9 +382,15 @@ class MarketplaceApiDataSource {
           priceKnown: CatalogPrice.read(json).known,
           matchScore: 0,
           category: json['category'] as String?,
+          placeMode: json['placeMode'] as String?,
           bookingEnabled: json['bookingEnabled'] as bool? ?? false,
           media: _media(json),
           mainOfferKind: CatalogMainOfferKindCodec.tryParse(json['mainOfferKind'] as String?),
+          videoScope: json['videoScope'] as String? ?? 'service_specific',
+          linkedServiceIds: (json['linkedServiceIds'] as List<dynamic>? ?? const [])
+              .map((item) => item.toString())
+              .toList(),
+          linkedServices: _linkedServices(json),
           concernTags: (json['concernTags'] as List<dynamic>? ?? const []).map((item) => item.toString()).toList(),
           payMode: json['payMode'] as String? ?? 'pay_at_venue',
           availabilityPresent: json['availabilityPresent'] == true,

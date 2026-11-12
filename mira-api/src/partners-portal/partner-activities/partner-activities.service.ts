@@ -4,13 +4,16 @@ import { PrismaService } from '../../prisma/prisma.service';
 import { PartnerActivitiesCatalog } from './partner-activities.catalog';
 import {
   ACTIVITY_NOT_APPROVED,
+  FACILITY_IDENTITY_KINDS,
   IDENTITY_KINDS,
   PolicyError,
   SERVICE_MODES,
+  providerKindFromIdentity,
   type ActivityActor,
   type ActivityDef,
   type ActivityRequestInput,
   type IdentityKind,
+  type ProviderKind,
   type ServiceMode,
   type WriteTarget,
 } from './partner-activities.types';
@@ -59,14 +62,21 @@ export class PartnerActivitiesService {
     return this.catalog.asMap();
   }
 
-  /** Map registration identity → Partner.type (developer never from public apply). */
+  /**
+   * Map registration identity → Partner.type (developer never from public apply).
+   * Independent specialists stay type=salon for catalog venue filters, but
+   * activitiesMeta.providerKind='independent' is the source of account identity.
+   */
   primaryPartnerType(identity: IdentityKind[]): string {
     if (identity.includes('events')) return 'event_planner';
     if (identity.includes('clinic')) return 'clinic';
-    if (identity.includes('salon')) return 'salon';
-    if (identity.includes('independent')) return 'salon';
+    if (identity.includes('salon') || identity.includes('independent')) return 'salon';
     if (identity.includes('brand') || identity.includes('shop')) return 'brand';
     return 'brand';
+  }
+
+  providerKind(identity: IdentityKind[]): ProviderKind {
+    return providerKindFromIdentity(identity);
   }
 
   validateRequest(data: ActivityRequestInput): {
@@ -74,12 +84,23 @@ export class PartnerActivitiesService {
     locations: ServiceMode[];
     description: string;
     lines: Array<{ activity: string; scope: 'category' | 'one'; item_name: string }>;
+    providerKind: ProviderKind;
   } {
     if (!data || typeof data !== 'object') throw new PolicyError(400, 'INVALID_APPLICATION');
     const identity = codes(data.identity, IDENTITY_KINDS, true);
+    // Independent path is exclusive: cannot combine with facility identities on one account.
+    const hasIndependent = identity.includes('independent');
+    const hasFacility = identity.some((k) => (FACILITY_IDENTITY_KINDS as readonly string[]).includes(k));
+    if (hasIndependent && hasFacility) {
+      throw new PolicyError(400, 'IDENTITY_PATH_CONFLICT');
+    }
     const locations = codes(data.locations || [], SERVICE_MODES, false);
     if (!str(data.description, 800) || !Array.isArray(data.lines) || !data.lines.length || data.lines.length > 150) {
       throw new PolicyError(400, 'INVALID_APPLICATION');
+    }
+    // Independents must not claim facility premises as their only mode without a studio mode.
+    if (hasIndependent && locations.includes('venue') && !locations.includes('provider_home') && !locations.includes('client_home')) {
+      throw new PolicyError(400, 'INDEPENDENT_VENUE_REQUIRES_STUDIO_OR_CLIENT');
     }
     const cat = this.catalogMap();
     const seen = new Set<string>();
@@ -113,7 +134,13 @@ export class PartnerActivitiesService {
     ) {
       throw new PolicyError(400, 'OVERLAPPING_SCOPE');
     }
-    return { identity, locations, description: normalize(data.description), lines };
+    return {
+      identity,
+      locations,
+      description: normalize(data.description),
+      lines,
+      providerKind: providerKindFromIdentity(identity),
+    };
   }
 
   async createJoinRequest(applicationId: string, data: ActivityRequestInput) {

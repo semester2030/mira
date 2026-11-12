@@ -12,8 +12,8 @@ import '../../domain/catalog_service_template.dart';
 import '../../data/discover_availability_context.dart';
 import '../../data/discover_catalog_query.dart';
 import '../../domain/entities/catalog_service.dart';
+import '../intro_video_booking.dart';
 import '../widgets/catalog_detail_media_section.dart';
-import 'booking_request_screen.dart';
 
 class ServiceDetailScreen extends StatelessWidget {
   final CatalogService service;
@@ -60,33 +60,25 @@ class ServiceDetailScreen extends StatelessWidget {
     };
   }
 
-  /// Appointment only. Preview stays honest, real services need `bookingEnabled`.
-  Future<void> _requestAppointment(BuildContext context) async {
-    final messenger = ScaffoldMessenger.of(context);
-    if (service.id.startsWith('preview-')) {
-      messenger.showSnackBar(const SnackBar(content: Text(MarketplaceCopy.previewAppointment)));
-      return;
-    }
-    if (!service.bookingEnabled) {
-      messenger.showSnackBar(const SnackBar(content: Text(MarketplaceCopy.appointmentUnavailable)));
-      return;
-    }
-    await Navigator.of(context).push(
-      MaterialPageRoute<void>(
-        builder: (_) => BookingRequestScreen(
-          service: service,
-          initialDateKey: bookingDateKey ?? availabilityContext?.availableOn,
-          initialBranchId: bookingBranchId ?? availabilityContext?.branchId,
-          availabilityContext: availabilityContext,
-          discoverLane: discoverLane,
-        ),
-      ),
+  /// Appointment only. Same intro/service-specific path as discover «احجزي».
+  Future<void> _requestAppointment(BuildContext context) {
+    return openServiceBookingFlow(
+      context: context,
+      service: service,
+      bookingDateKey: bookingDateKey,
+      bookingBranchId: bookingBranchId,
+      availabilityContext: availabilityContext,
+      discoverLane: discoverLane,
     );
   }
 
   @override
   Widget build(BuildContext context) {
-    final typeLabel = service.isClinic ? 'عيادة' : 'صالون';
+    final typeLabel = service.isClinic
+        ? 'عيادة'
+        : service.isIndependent
+            ? 'مختصّة مستقلة'
+            : 'صالون';
     final details = CatalogOfferMedia.detailMedia(service.media);
     final template = service.template;
     final profile = service.profile;

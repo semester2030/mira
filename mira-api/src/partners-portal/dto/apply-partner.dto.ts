@@ -75,6 +75,18 @@ export class ApplyPartnerDto {
   @MaxLength(128)
   password!: string;
 
+  /** Required for independent path — token from apply/phone/verify. */
+  @IsOptional()
+  @IsString()
+  @MaxLength(128)
+  phoneVerifyToken?: string;
+
+  /** Required for independent path — token from apply/email/verify. */
+  @IsOptional()
+  @IsString()
+  @MaxLength(128)
+  emailVerifyToken?: string;
+
   /** New multi-step activities request (identity + taxonomy lines). */
   @IsOptional()
   @ValidateNested()

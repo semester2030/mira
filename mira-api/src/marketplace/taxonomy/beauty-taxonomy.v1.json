@@ -5,7 +5,7 @@
   "compatMinAppBuild": 1,
   "status": "IMPLEMENTED",
   "publicBrowse": true,
-  "notes": "جمالك: صالونات/مختصّات منفصلة عن عيادات. beauty.home_visit فلتر اكتشاف غير طبي. الطبية clinic_only فقط. تجهيز العروس اختصار اكتشاف (browseOnly).",
+  "notes": "جمالك: صالونات/مختصّات منفصلة عن عيادات. beauty.home_visit = فلتر «في موقعك» (مكان فقط، لا يغيّر نوع المقدّم). الطبية clinic_only فقط. تجهيز العروس اختصار اكتشاف (browseOnly).",
   "nodes": [
     {
       "id": "beauty_lane.all",
@@ -47,15 +47,17 @@
     {
       "id": "beauty.home_visit",
       "parentId": "beauty",
-      "labelAr": "تجيني للبيت",
+      "labelAr": "في موقعك",
       "sort": 5,
       "active": true,
       "imageKey": "beauty.home_visit",
       "children": [],
       "browseOnly": true,
       "synonymsAr": [
+        "تجيني للبيت",
         "زيارة منزلية",
-        "منزلي"
+        "منزلي",
+        "في موقع العميلة"
       ]
     },
     {

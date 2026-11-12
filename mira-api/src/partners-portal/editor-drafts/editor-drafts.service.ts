@@ -40,19 +40,37 @@ import { PartnerActivitiesService } from '../partner-activities/partner-activiti
 import { PolicyError } from '../partner-activities/partner-activities.types';
 import { assertJewelryMaterialPolicy } from '../../marketplace/taxonomy/jewelry-material.policy';
 
-/** Normalize coverage city ids (Arabic name → stable sa-* id). */
-function normalizeCoverageJson(raw: unknown): { cityIds: string[] } | null {
+/** Normalize coverage: city ids + optional client-site venues / travel (per service). */
+function normalizeCoverageJson(raw: unknown): Record<string, unknown> | null {
   if (!raw || typeof raw !== 'object' || Array.isArray(raw)) return null;
-  const cityIdsRaw = (raw as { cityIds?: unknown }).cityIds;
-  if (!Array.isArray(cityIdsRaw)) return null;
-  const cityIds = cityIdsRaw
-    .map((x) => {
-      if (typeof x !== 'string' || !x.trim()) return null;
-      const resolved = resolveSaudiCity(x.trim());
-      return resolved ? resolved.id : x.trim();
-    })
-    .filter((x): x is string => !!x);
-  return { cityIds };
+  const src = raw as {
+    cityIds?: unknown;
+    venues?: unknown;
+    noteAr?: unknown;
+    travelFeeSar?: unknown;
+    travelMin?: unknown;
+    radiusKm?: unknown;
+  };
+  const out: Record<string, unknown> = {};
+  if (Array.isArray(src.cityIds)) {
+    out.cityIds = src.cityIds
+      .map((x) => {
+        if (typeof x !== 'string' || !x.trim()) return null;
+        const resolved = resolveSaudiCity(x.trim());
+        return resolved ? resolved.id : x.trim();
+      })
+      .filter((x): x is string => !!x);
+  }
+  if (Array.isArray(src.venues)) {
+    const allowed = new Set(['home', 'hotel', 'hall', 'studio']);
+    out.venues = src.venues.filter((v): v is string => typeof v === 'string' && allowed.has(v));
+  }
+  if (typeof src.noteAr === 'string' && src.noteAr.trim()) out.noteAr = src.noteAr.trim().slice(0, 400);
+  if (typeof src.travelFeeSar === 'number' && Number.isFinite(src.travelFeeSar)) out.travelFeeSar = src.travelFeeSar;
+  if (typeof src.travelMin === 'number' && Number.isFinite(src.travelMin)) out.travelMin = src.travelMin;
+  if (typeof src.radiusKm === 'number' && Number.isFinite(src.radiusKm)) out.radiusKm = src.radiusKm;
+  if (!Object.keys(out).length) return null;
+  return out;
 }
 
 function placeFieldsFromBulkValues(values: Record<string, unknown>): {
@@ -81,8 +99,11 @@ function placeFieldsFromBulkValues(values: Record<string, unknown>): {
   } else {
     branchId = branchIdFromServiceProfile(profile) || null;
   }
-  // Non-branch modes never keep a stale branchId.
-  if (placeMode && placeMode !== 'branch') branchId = null;
+  // Home/remote never keep a stale branchId; either may keep premises branch.
+  if (placeMode && placeMode !== 'branch' && placeMode !== 'either') branchId = null;
+  if (placeMode && !['branch', 'home', 'remote', 'either'].includes(placeMode)) {
+    placeMode = null;
+  }
   let coverageJson: Prisma.InputJsonValue | typeof Prisma.DbNull | undefined;
   if (values.coverageJson != null) {
     const norm = normalizeCoverageJson(values.coverageJson);
@@ -1001,6 +1022,14 @@ export class EditorDraftsService {
     if (leaf) {
       mergedAttrs.subcategory = leaf;
       mergedAttrs.taxonomyLeaf = leaf;
+    }
+    if (values.videoScope === 'provider_intro' || values.videoScope === 'service_specific') {
+      mergedAttrs.videoScope = values.videoScope;
+    }
+    if (Array.isArray(values.linkedServiceIds)) {
+      mergedAttrs.linkedServiceIds = values.linkedServiceIds.filter(
+        (x): x is string => typeof x === 'string' && !!x.trim(),
+      );
     }
     const attributesJson =
       Object.keys(mergedAttrs).length > 0 ? (mergedAttrs as Prisma.InputJsonValue) : undefined;

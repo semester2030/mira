@@ -1486,6 +1486,40 @@ export class CommerceService {
           throw unprocessable('SERVICE_NOT_BOOKABLE', 'بيانات الخدمة غير مكتملة للحجز');
         }
 
+        // Place intent: customer-selected place must be approved on this service row.
+        const requestedPlace =
+          typeof data.placeMode === 'string' && data.placeMode.trim()
+            ? data.placeMode.trim()
+            : null;
+        const servicePlace =
+          typeof service.placeMode === 'string' && service.placeMode.trim()
+            ? service.placeMode.trim()
+            : null;
+        if (requestedPlace === 'home' || requestedPlace === 'branch') {
+          const ok =
+            servicePlace === requestedPlace ||
+            servicePlace === 'either' ||
+            (requestedPlace === 'home' && servicePlace === 'home') ||
+            (requestedPlace === 'branch' && servicePlace === 'branch');
+          if (!ok) {
+            throw unprocessable(
+              'PLACE_NOT_ALLOWED',
+              requestedPlace === 'home'
+                ? 'هذه الخدمة غير معتمدة في موقع العميلة'
+                : 'هذه الخدمة غير معتمدة في المقر',
+            );
+          }
+          if (requestedPlace === 'branch') {
+            const branchId =
+              typeof data.branchId === 'string' && data.branchId.trim()
+                ? data.branchId.trim()
+                : service.branchId || null;
+            if (!branchId) {
+              throw unprocessable('BRANCH_REQUIRED', 'اختاري فرع المقر لهذه الخدمة');
+            }
+          }
+        }
+
         const knownResources = new Set(resourceIdsFromAvailabilityDocument(service.availabilityJson));
         if (resourceId) {
           // Document association (weekly OR special). Date-specific open/closed is checkSlot's job.

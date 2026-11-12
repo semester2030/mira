@@ -520,6 +520,7 @@
 
         window.sessionPartner = p;
         window.sessionBranches = Array.isArray(data.branches) ? data.branches : [];
+        window.sessionServices = (data.catalog && Array.isArray(data.catalog.services)) ? data.catalog.services : [];
         window.sessionActivities = data.activities || null;
         document.body.dataset.partnerType = p.type || '';
         try { localStorage.setItem('mira_partner_id', p.id); } catch (e) {}
