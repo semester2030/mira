@@ -1,8 +1,8 @@
 {
   "runId": "all-close-mweyhk4d-0d19",
-  "gitHead": "0fd97c7",
+  "gitHead": "0139e94",
   "apiBase": "http://127.0.0.1:3011/api/v1",
-  "verdict": "PASS_ALL_SCOPE_CLOSURE_HTTP",
+  "verdict": "CLOSED_VERIFIED_LOCAL",
   "seeded": {
     "clothesId": "9b91e5bc-622b-4a32-b369-f1a5d036535b",
     "shoesId": "3670653a-19c1-4778-9cde-e929288d8380",
@@ -134,5 +134,6 @@
       "status": "PASS"
     }
   ],
-  "note": "playingOfferId = first item the UI would bind after section replace; empty stays empty."
+  "note": "playingOfferId = first item the UI would bind after section replace; empty stays empty.",
+  "commit": "0139e94de8e1dc717d37a44ec59294349edf82f2"
 }
