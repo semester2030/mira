@@ -22,6 +22,32 @@ class PresentationSlot {
 
 enum PresentationPlayback { idle, loading, ready, failed }
 
+/// Real player evidence: source-bound offer + media, not the visible card alone.
+class DiscoverPlaybackEvent {
+  const DiscoverPlaybackEvent({
+    required this.type,
+    required this.offerId,
+    required this.mediaUrl,
+    this.positionMs,
+    required this.at,
+  });
+
+  /// `started` | `progressed` | `stopped`
+  final String type;
+  final String offerId;
+  final String mediaUrl;
+  final int? positionMs;
+  final DateTime at;
+
+  Map<String, Object?> toJson() => {
+        'type': type,
+        'offerId': offerId,
+        'mediaUrl': mediaUrl,
+        'positionMs': positionMs,
+        'at': at.toUtc().toIso8601String(),
+      };
+}
+
 abstract class PresentationVideoPort extends ChangeNotifier {
   void notifyPlayback() {
     if (!hasListeners) return;
@@ -77,6 +103,29 @@ class AssetVideoPort extends PresentationVideoPort {
   String? _parkedPath;
   int _generation = 0;
   bool _released = false;
+  String? _lastOfferId;
+  String? _lastMediaUrl;
+  DateTime? _lastProgressAt;
+  final List<DiscoverPlaybackEvent> playbackEvents = <DiscoverPlaybackEvent>[];
+
+  /// Source URL bound to the controller (null when no video attached).
+  String? get activeMediaUrl => _activePath;
+
+  void _emitPlayback(String type, {int? positionMs, String? offerId, String? mediaUrl}) {
+    final oid = offerId ?? activeSlot?.slideId ?? _lastOfferId ?? '';
+    final url = mediaUrl ?? _activePath ?? _lastMediaUrl ?? '';
+    if (oid.isNotEmpty) _lastOfferId = oid;
+    if (url.isNotEmpty) _lastMediaUrl = url;
+    playbackEvents.add(
+      DiscoverPlaybackEvent(
+        type: type,
+        offerId: oid,
+        mediaUrl: url,
+        positionMs: positionMs,
+        at: DateTime.now().toUtc(),
+      ),
+    );
+  }
 
   @override
   Future<void> setMuted(bool muted) async {
@@ -238,6 +287,12 @@ class AssetVideoPort extends PresentationVideoPort {
       }
       playback = PresentationPlayback.ready;
       errorText = null;
+      _emitPlayback(
+        'started',
+        positionMs: controller.value.position.inMilliseconds,
+        offerId: slot.slideId,
+        mediaUrl: assetPath,
+      );
       _notify();
     } catch (error) {
       if (_controller == controller) _controller = null;
@@ -256,7 +311,14 @@ class AssetVideoPort extends PresentationVideoPort {
       errorText = 'تعذر تشغيل الفيديو';
       controller.pause();
       _notify();
+      return;
     }
+    if (!controller.value.isPlaying || playback != PresentationPlayback.ready) return;
+    final now = DateTime.now().toUtc();
+    final last = _lastProgressAt;
+    if (last != null && now.difference(last) < const Duration(milliseconds: 400)) return;
+    _lastProgressAt = now;
+    _emitPlayback('progressed', positionMs: controller.value.position.inMilliseconds);
   }
 
   @override
@@ -265,9 +327,13 @@ class AssetVideoPort extends PresentationVideoPort {
     final token = ++_generation;
     final controller = _controller;
     final path = _activePath;
+    final pos = controller?.value.position.inMilliseconds;
     if (_controller == controller) {
       _controller = null;
       _activePath = null;
+    }
+    if (path != null && path.isNotEmpty) {
+      _emitPlayback('stopped', positionMs: pos, offerId: slot.slideId, mediaUrl: path);
     }
     activeSlot = null;
     playback = PresentationPlayback.idle;
@@ -283,8 +349,13 @@ class AssetVideoPort extends PresentationVideoPort {
   Future<void> pause() async {
     final token = ++_generation;
     final controller = _controller;
+    final path = _activePath;
+    final pos = controller?.value.position.inMilliseconds;
     if (controller != null) {
       await controller.pause();
+    }
+    if (path != null && path.isNotEmpty) {
+      _emitPlayback('stopped', positionMs: pos, mediaUrl: path);
     }
     if (token != _generation || _released) return;
   }
@@ -296,6 +367,11 @@ class AssetVideoPort extends PresentationVideoPort {
     final controller = _controller;
     final warm = _warm;
     final parked = _parked;
+    final path = _activePath;
+    final pos = controller?.value.position.inMilliseconds;
+    if (path != null && path.isNotEmpty) {
+      _emitPlayback('stopped', positionMs: pos, mediaUrl: path);
+    }
     _controller = null;
     _activePath = null;
     _warm = null;

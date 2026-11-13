@@ -408,9 +408,13 @@ export class EditorDraftsService {
     return attributeFieldDefs;
   }
 
-  private taxonomyWriteContext() {
+  private taxonomyWriteContext(hint?: { subcategory?: string | null; category?: string | null }) {
+    const lane =
+      (hint?.subcategory && this.taxonomy.findLaneForNodeId(hint.subcategory)) ||
+      (hint?.category && this.taxonomy.findLaneForNodeId(hint.category)) ||
+      'elegance';
     return {
-      doc: this.taxonomy.getDoc(),
+      doc: this.taxonomy.getDoc(lane),
       knownProfileIds: new Set(this.registry.getRegistry().profiles.map((p) => p.id)),
       resolveAttributeFieldDefs: (profileId: string | null) => this.attributeDefsForProfile(profileId),
     };
@@ -911,12 +915,18 @@ export class EditorDraftsService {
     const priceHalalas = values.priceHalalas as number;
     if (kind === 'product') {
       const attributesRaw = attributesJsonFromDraftValues(values, this.registry.getRegistry().fields);
+      const categoryNorm = normalizeOptionalId(values.category) ?? null;
+      const subcategoryNorm =
+        values.subcategory === undefined ? undefined : normalizeOptionalId(values.subcategory);
       const applied = applyTaxonomyPatch(
-        this.taxonomyWriteContext(),
+        this.taxonomyWriteContext({
+          subcategory: typeof subcategoryNorm === 'string' ? subcategoryNorm : null,
+          category: categoryNorm,
+        }),
         { category: null, subcategory: null, profileId: draft.profileId, attributesJson: null },
         {
-          category: normalizeOptionalId(values.category) ?? null,
-          subcategory: values.subcategory === undefined ? undefined : normalizeOptionalId(values.subcategory),
+          category: categoryNorm,
+          subcategory: subcategoryNorm,
           profileId: draft.profileId,
           attributes: attributesRaw,
         },
@@ -1107,13 +1117,23 @@ export class EditorDraftsService {
         values.subcategory !== undefined ||
         attributesRaw !== undefined ||
         draft.profileId !== (baseline.profileId ?? '');
+      const patchCategory =
+        values.category === undefined ? undefined : normalizeOptionalId(values.category);
+      const patchSubcategory =
+        values.subcategory === undefined ? undefined : normalizeOptionalId(values.subcategory);
       const applied = taxonomyTouched
         ? applyTaxonomyPatch(
-            this.taxonomyWriteContext(),
+            this.taxonomyWriteContext({
+              subcategory:
+                (typeof patchSubcategory === 'string' ? patchSubcategory : null) ||
+                baseline.subcategory,
+              category:
+                (typeof patchCategory === 'string' ? patchCategory : null) || baseline.category,
+            }),
             baseline,
             {
-              category: values.category === undefined ? undefined : normalizeOptionalId(values.category),
-              subcategory: values.subcategory === undefined ? undefined : normalizeOptionalId(values.subcategory),
+              category: patchCategory,
+              subcategory: patchSubcategory,
               profileId: draft.profileId,
               attributes: attributesRaw,
             },

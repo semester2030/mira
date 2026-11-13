@@ -95,12 +95,32 @@ class DiscoverPresentationScreenState extends State<DiscoverPresentationScreen>
   List<String> get debugRailIds => _railDefs().map((d) => d.id).toList(growable: false);
 
   /// Offer id bound to the active slide / video player (empty when feed empty).
+  /// Not proof of playback — use [debugPlaybackEvents] / [debugActiveMediaUrl].
   @visibleForTesting
   String get debugPlayingOfferId {
     if (_slides.isEmpty) return '';
     final i = _page.clamp(0, _slides.length - 1);
     return _slides[i].entityId;
   }
+
+  /// Media URL currently attached to [AssetVideoPort] (empty when idle / image-only).
+  @visibleForTesting
+  String get debugActiveMediaUrl {
+    final port = _video;
+    if (port is AssetVideoPort) return port.activeMediaUrl ?? '';
+    return '';
+  }
+
+  /// Real player start/progress/stop events for the owned [AssetVideoPort].
+  @visibleForTesting
+  List<DiscoverPlaybackEvent> get debugPlaybackEvents {
+    final port = _video;
+    if (port is AssetVideoPort) return List<DiscoverPlaybackEvent>.unmodifiable(port.playbackEvents);
+    return const [];
+  }
+
+  @visibleForTesting
+  String? get debugEleganceDrillParentId => _eleganceDrillParentId;
 
   late List<PresentationSlide> _slides;
   late final PresentationVideoPort _video;
@@ -523,6 +543,83 @@ class DiscoverPresentationScreenState extends State<DiscoverPresentationScreen>
     }
   }
 
+  /// «رجوع» climbs one taxonomy level (makeup → salons), not all the way to the lane root.
+  void _popEleganceDrillOneLevel() {
+    final currentId = _eleganceDrillParentId;
+    if (currentId == null || currentId.isEmpty) {
+      _clearEleganceDrill();
+      _reload(
+        _query.copyWith(
+          lane: widget.lane ?? DiscoverLane.elegance,
+          requireVisual: true,
+          clearCategory: true,
+          clearSubcategory: true,
+          clearType: true,
+        ),
+      );
+      return;
+    }
+
+    EleganceTaxonomyNode? current;
+    for (final n in EleganceTaxonomySource.nodes) {
+      if (n.id == currentId) {
+        current = n;
+        break;
+      }
+    }
+    final upId = current?.parentId;
+    EleganceTaxonomyNode? up;
+    if (upId != null && upId.isNotEmpty) {
+      for (final n in EleganceTaxonomySource.nodes) {
+        if (n.id == upId) {
+          up = n;
+          break;
+        }
+      }
+    }
+
+    // Ascended to the lane section root (parentId null) → show root rail.
+    if (up == null || up.parentId == null) {
+      _clearEleganceDrill();
+      _reload(
+        _query.copyWith(
+          lane: widget.lane ?? DiscoverLane.elegance,
+          requireVisual: true,
+          clearCategory: true,
+          clearSubcategory: true,
+          clearType: true,
+        ),
+      );
+      return;
+    }
+
+    final venueType = up.id == 'beauty.salons'
+        ? 'salon'
+        : up.id == 'beauty.clinics'
+            ? 'clinic'
+            : null;
+    final stored = venueType != null
+        ? up.id
+        : (legacyBeautyCategoryFor(up.id) ?? up.id);
+    _eleganceDrillParentId = up.id;
+    if (mounted) {
+      setState(() => _category = 0);
+    } else {
+      _category = 0;
+    }
+    _reload(
+      _query.copyWith(
+        lane: widget.lane ?? DiscoverLane.elegance,
+        requireVisual: true,
+        categoryId: venueType != null ? null : stored,
+        clearCategory: venueType != null,
+        clearSubcategory: true,
+        partnerType: venueType ?? _query.partnerType,
+        clearType: venueType == null && _query.partnerType == null,
+      ),
+    );
+  }
+
   /// Portal persists legacy Service.category (hair/makeup/…); taxonomy mids are beauty.*.
   String? _beautyLegacyCategoryFor(String? taxonomyOrLegacy) =>
       legacyBeautyCategoryFor(taxonomyOrLegacy);
@@ -543,6 +640,10 @@ class DiscoverPresentationScreenState extends State<DiscoverPresentationScreen>
         return;
       }
     }
+    // Beauty mid-nodes persist legacy Service.category (makeup/hair/…) while rail id is beauty.*.
+    final legacyParent = legacyBeautyCategoryFor(parent);
+    if (legacyParent != null && cat == legacyParent) return;
+    if (sub != null && (sub == parent || sub.startsWith('$parent.'))) return;
     final stillOnParent = cat == parent ||
         (sub != null && sub.startsWith('$parent.')) ||
         (cat != null && cat.startsWith('$parent.'));
@@ -647,19 +748,9 @@ class DiscoverPresentationScreenState extends State<DiscoverPresentationScreen>
     final selected = items[index];
     setState(() => _category = index);
 
-    // Taxonomy drill: back to root circles.
+    // Taxonomy drill: climb one level (keep filters; server prunes incompatible ones).
     if (selected.id == '__back__') {
-      _clearEleganceDrill();
-      _reload(
-        _query.copyWith(
-          lane: widget.lane ?? DiscoverLane.elegance,
-          requireVisual: true,
-          clearCategory: true,
-          clearSubcategory: true,
-          clearType: true,
-          // Keep filters; server staleSelections + _onFeed prune incompatible ones.
-        ),
-      );
+      _popEleganceDrillOneLevel();
       return;
     }
 
