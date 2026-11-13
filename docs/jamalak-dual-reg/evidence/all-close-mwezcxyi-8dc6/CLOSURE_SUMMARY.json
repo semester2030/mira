@@ -1,0 +1,82 @@
+{
+  "runId": "all-close-mwezcxyi-8dc6",
+  "gitHead": "6a32655",
+  "apiBase": "http://127.0.0.1:3011/api/v1",
+  "verdict": "NOT_VERIFIED",
+  "startedAt": "2026-11-13T13:06:40.560364Z",
+  "finishedAt": "2026-11-13T13:26:05.123214Z",
+  "publishedVia": "partners-portal editor-drafts + media base64 upload + admin approve",
+  "published": {
+    "kidsClothes": {
+      "offerId": "6f697796-e0dc-406e-af82-25431af9681b",
+      "mediaId": "39b94c0d-6329-4bd5-9a39-14e2da8cb501",
+      "mediaUrl": "http://127.0.0.1:3011/api/v1/marketplace/media/39b94c0d-6329-4bd5-9a39-14e2da8cb501"
+    },
+    "kidsShoes": {
+      "offerId": "35b5feb7-15a9-49e8-88da-f0979b0cb8cd",
+      "mediaId": "bd85d908-6cc1-493d-85c4-ac186fb673cf",
+      "mediaUrl": "http://127.0.0.1:3011/api/v1/marketplace/media/bd85d908-6cc1-493d-85c4-ac186fb673cf"
+    },
+    "makeupKit": {
+      "offerId": "af3a393f-b33a-4462-94e7-4b0b2c7bc4be",
+      "mediaId": "4ab8aa5b-8bb5-4dde-a4a7-628476e9d893",
+      "mediaUrl": "http://127.0.0.1:3011/api/v1/marketplace/media/4ab8aa5b-8bb5-4dde-a4a7-628476e9d893"
+    },
+    "jewelry": {
+      "offerId": "3e42ea0e-5086-4b76-8fa4-81c429254bf3",
+      "mediaId": "5a585b81-677e-4f66-9670-172587f22aa6",
+      "mediaUrl": "http://127.0.0.1:3011/api/v1/marketplace/media/5a585b81-677e-4f66-9670-172587f22aa6"
+    },
+    "gift": {
+      "offerId": "6c00d949-fa18-405e-80f1-d1a7ee02cd86",
+      "mediaId": "af9eb305-d280-4e0f-af0c-aaac93d5c2c2",
+      "mediaUrl": "http://127.0.0.1:3011/api/v1/marketplace/media/af9eb305-d280-4e0f-af0c-aaac93d5c2c2"
+    },
+    "eleganceDress": {
+      "offerId": "1e683582-f67f-449c-8460-dec2436eb1dd",
+      "mediaId": "a1b2d00d-479a-49b6-acbd-7ed2cdc04d36",
+      "mediaUrl": "http://127.0.0.1:3011/api/v1/marketplace/media/a1b2d00d-479a-49b6-acbd-7ed2cdc04d36"
+    },
+    "hairColor": {
+      "offerId": "0c667d8e-c5de-4658-85d0-c076f690733b",
+      "mediaId": "ae6f0f23-8a3b-4924-95be-f40676a8b120",
+      "mediaUrl": "http://127.0.0.1:3011/api/v1/marketplace/media/ae6f0f23-8a3b-4924-95be-f40676a8b120"
+    },
+    "hairBlow": {
+      "offerId": "544b9ced-0fab-4ba0-9358-0e77afae5e81",
+      "mediaId": "2f6d06cd-42d7-4831-84b7-53ac9baa57e7",
+      "mediaUrl": "http://127.0.0.1:3011/api/v1/marketplace/media/2f6d06cd-42d7-4831-84b7-53ac9baa57e7"
+    },
+    "makeupHome": {
+      "offerId": "1b47c5bb-16ca-4b44-9bc4-29047f88d351",
+      "mediaId": "aaf6a672-586f-4378-b6ca-cb0651f23a4a",
+      "mediaUrl": "http://127.0.0.1:3011/api/v1/marketplace/media/aaf6a672-586f-4378-b6ca-cb0651f23a4a"
+    },
+    "makeupVenue": {
+      "offerId": "e5311a1c-d3de-4365-ad29-e4ab2dd86520",
+      "mediaId": "c4dcc448-32c2-4f1a-801a-1a4db0d58064",
+      "mediaUrl": "http://127.0.0.1:3011/api/v1/marketplace/media/c4dcc448-32c2-4f1a-801a-1a4db0d58064"
+    }
+  },
+  "brandPartnerId": "b707c547-ebce-4c08-b72f-5b4bff6311a6",
+  "salonPartnerId": "94127c69-98cd-496d-8478-7f73301ffdc4",
+  "widgetTests": "PASS beauty_one_level_back + children_all_scope + elegance_drill",
+  "partnerPublish": "PASS real mp4 ftyp served from /marketplace/media/:id",
+  "httpScopeMatrix": "PASS_SUPPORTING",
+  "flutterConnectedJourneys": "NOT_VERIFIED",
+  "blockers": [
+    {
+      "step": "Flutter iOS simulator build",
+      "blocker": "TensorFlowLiteC linked for device-only; disk exhaustion during DerivedData"
+    },
+    {
+      "step": "Flutter macOS connected integration_test",
+      "blocker": "App sandbox blocked file reads; subsequent lean rebuild still compiling after multi-minute Pod build; no CONNECTED_SUMMARY produced yet"
+    },
+    {
+      "step": "simctl screen recording of Discover journey",
+      "blocker": "No successful Flutter UI session on simulator to record (TFLite linker)"
+    }
+  ],
+  "note": "Do not treat HTTP_SCOPE_MATRIX or widget tests as CLOSED_VERIFIED_LOCAL. Player start/stop events require connected Flutter run."
+}

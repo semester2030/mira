@@ -1,0 +1,194 @@
+{
+  "kind": "http_supporting_only",
+  "note": "Scope+playable video bytes. Not Flutter player evidence.",
+  "failed": 0,
+  "rows": [
+    {
+      "path": "الأطفال ← الكل",
+      "litCircle": "all",
+      "filters": {},
+      "request": "/marketplace/catalog?lane=children&category=children&partnerId=b707c547-ebce-4c08-b72f-5b4bff6311a6&visual=1&limit=20",
+      "resultIds": [
+        "35b5feb7-15a9-49e8-88da-f0979b0cb8cd",
+        "6f697796-e0dc-406e-af82-25431af9681b"
+      ],
+      "media": [
+        {
+          "id": "6f697796-e0dc-406e-af82-25431af9681b",
+          "status": 200,
+          "ftyp": true,
+          "url": "http://127.0.0.1:3011/api/v1/marketplace/media/39b94c0d-6329-4bd5-9a39-14e2da8cb501"
+        },
+        {
+          "id": "35b5feb7-15a9-49e8-88da-f0979b0cb8cd",
+          "status": 200,
+          "ftyp": true,
+          "url": "http://127.0.0.1:3011/api/v1/marketplace/media/bd85d908-6cc1-493d-85c4-ac186fb673cf"
+        }
+      ],
+      "status": "PASS"
+    },
+    {
+      "path": "الأطفال ← أحذية",
+      "litCircle": "children.shoes",
+      "filters": {},
+      "request": "/marketplace/catalog?lane=children&category=children&subcategory=children.shoes&partnerId=b707c547-ebce-4c08-b72f-5b4bff6311a6&visual=1&limit=20",
+      "resultIds": [
+        "35b5feb7-15a9-49e8-88da-f0979b0cb8cd"
+      ],
+      "media": [
+        {
+          "id": "35b5feb7-15a9-49e8-88da-f0979b0cb8cd",
+          "status": 200,
+          "ftyp": true,
+          "url": "http://127.0.0.1:3011/api/v1/marketplace/media/bd85d908-6cc1-493d-85c4-ac186fb673cf"
+        }
+      ],
+      "status": "PASS"
+    },
+    {
+      "path": "مكياج + placeMode=home",
+      "litCircle": "all",
+      "filters": {
+        "placeMode": "home"
+      },
+      "request": "/marketplace/catalog?lane=beauty&category=makeup&placeMode=home&partnerId=94127c69-98cd-496d-8478-7f73301ffdc4&visual=1&limit=20",
+      "resultIds": [
+        "1b47c5bb-16ca-4b44-9bc4-29047f88d351"
+      ],
+      "media": [
+        {
+          "id": "1b47c5bb-16ca-4b44-9bc4-29047f88d351",
+          "status": 200,
+          "ftyp": true,
+          "url": "http://127.0.0.1:3011/api/v1/marketplace/media/aaf6a672-586f-4378-b6ca-cb0651f23a4a"
+        }
+      ],
+      "status": "PASS"
+    },
+    {
+      "path": "الشعر",
+      "litCircle": "all",
+      "filters": {},
+      "request": "/marketplace/catalog?lane=beauty&category=hair&partnerId=94127c69-98cd-496d-8478-7f73301ffdc4&visual=1&limit=20",
+      "resultIds": [
+        "0c667d8e-c5de-4658-85d0-c076f690733b",
+        "544b9ced-0fab-4ba0-9358-0e77afae5e81"
+      ],
+      "media": [
+        {
+          "id": "0c667d8e-c5de-4658-85d0-c076f690733b",
+          "status": 200,
+          "ftyp": true,
+          "url": "http://127.0.0.1:3011/api/v1/marketplace/media/ae6f0f23-8a3b-4924-95be-f40676a8b120"
+        },
+        {
+          "id": "544b9ced-0fab-4ba0-9358-0e77afae5e81",
+          "status": 200,
+          "ftyp": true,
+          "url": "http://127.0.0.1:3011/api/v1/marketplace/media/2f6d06cd-42d7-4831-84b7-53ac9baa57e7"
+        }
+      ],
+      "status": "PASS"
+    },
+    {
+      "path": "صبغة",
+      "litCircle": "beauty.hair.color",
+      "filters": {},
+      "request": "/marketplace/catalog?lane=beauty&category=hair&subcategory=beauty.hair.color&partnerId=94127c69-98cd-496d-8478-7f73301ffdc4&visual=1&limit=20",
+      "resultIds": [
+        "0c667d8e-c5de-4658-85d0-c076f690733b"
+      ],
+      "media": [
+        {
+          "id": "0c667d8e-c5de-4658-85d0-c076f690733b",
+          "status": 200,
+          "ftyp": true,
+          "url": "http://127.0.0.1:3011/api/v1/marketplace/media/ae6f0f23-8a3b-4924-95be-f40676a8b120"
+        }
+      ],
+      "status": "PASS"
+    },
+    {
+      "path": "استشوار",
+      "litCircle": "beauty.hair.blowdry",
+      "filters": {},
+      "request": "/marketplace/catalog?lane=beauty&category=hair&subcategory=beauty.hair.blowdry&partnerId=94127c69-98cd-496d-8478-7f73301ffdc4&visual=1&limit=20",
+      "resultIds": [
+        "544b9ced-0fab-4ba0-9358-0e77afae5e81"
+      ],
+      "media": [
+        {
+          "id": "544b9ced-0fab-4ba0-9358-0e77afae5e81",
+          "status": 200,
+          "ftyp": true,
+          "url": "http://127.0.0.1:3011/api/v1/marketplace/media/2f6d06cd-42d7-4831-84b7-53ac9baa57e7"
+        }
+      ],
+      "status": "PASS"
+    },
+    {
+      "path": "المجوهرات",
+      "litCircle": "all",
+      "filters": {},
+      "request": "/marketplace/catalog?lane=jewelry&partnerId=b707c547-ebce-4c08-b72f-5b4bff6311a6&visual=1&limit=20",
+      "resultIds": [
+        "3e42ea0e-5086-4b76-8fa4-81c429254bf3"
+      ],
+      "media": [
+        {
+          "id": "3e42ea0e-5086-4b76-8fa4-81c429254bf3",
+          "status": 200,
+          "ftyp": true,
+          "url": "http://127.0.0.1:3011/api/v1/marketplace/media/5a585b81-677e-4f66-9670-172587f22aa6"
+        }
+      ],
+      "status": "PASS"
+    },
+    {
+      "path": "الهدايا",
+      "litCircle": "all",
+      "filters": {},
+      "request": "/marketplace/catalog?lane=gifts&partnerId=b707c547-ebce-4c08-b72f-5b4bff6311a6&visual=1&limit=20",
+      "resultIds": [
+        "6c00d949-fa18-405e-80f1-d1a7ee02cd86"
+      ],
+      "media": [
+        {
+          "id": "6c00d949-fa18-405e-80f1-d1a7ee02cd86",
+          "status": 200,
+          "ftyp": true,
+          "url": "http://127.0.0.1:3011/api/v1/marketplace/media/af9eb305-d280-4e0f-af0c-aaac93d5c2c2"
+        }
+      ],
+      "status": "PASS"
+    },
+    {
+      "path": "أناقتك",
+      "litCircle": "all",
+      "filters": {},
+      "request": "/marketplace/catalog?lane=elegance&partnerId=b707c547-ebce-4c08-b72f-5b4bff6311a6&visual=1&limit=20",
+      "resultIds": [
+        "1e683582-f67f-449c-8460-dec2436eb1dd",
+        "af3a393f-b33a-4462-94e7-4b0b2c7bc4be"
+      ],
+      "media": [
+        {
+          "id": "1e683582-f67f-449c-8460-dec2436eb1dd",
+          "status": 200,
+          "ftyp": true,
+          "url": "http://127.0.0.1:3011/api/v1/marketplace/media/a1b2d00d-479a-49b6-acbd-7ed2cdc04d36"
+        }
+      ],
+      "status": "PASS"
+    },
+    {
+      "path": "مواليد فارغ",
+      "litCircle": "children.newborn",
+      "request": "subcategory=children.newborn",
+      "resultIds": [],
+      "status": "PASS"
+    }
+  ],
+  "at": "2026-11-13T13:26:05.122414Z"
+}
