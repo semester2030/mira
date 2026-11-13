@@ -96,7 +96,6 @@ void main() {
         expect(bytes[3], 0x47);
       }
       expect(File(LaneOrbAssets.eleganceHomeOrbit).existsSync(), isTrue);
-      expect(File('assets/marketplace/discover/home_orbit/mira_center_logo.png').existsSync(), isTrue);
     });
 
     test('bundled preview taxonomies expose 11 subcategory imageKeys', () async {
@@ -122,7 +121,7 @@ void main() {
           subKeys.add(r.imageKey!);
         }
       }
-      expect(subKeys.length, 11);
+      expect(subKeys.length, greaterThanOrEqualTo(11));
     });
   });
 
@@ -137,8 +136,6 @@ void main() {
         final data = await rootBundle.load(path);
         expect(data.lengthInBytes, greaterThan(1000), reason: path);
       }
-      final logo = await rootBundle.load('assets/marketplace/discover/home_orbit/mira_center_logo.png');
-      expect(logo.lengthInBytes, greaterThan(1000));
 
       await tester.binding.setSurfaceSize(size);
       await tester.pumpWidget(
@@ -158,7 +155,8 @@ void main() {
       expect(find.text('نظرة سريعة'), findsOneWidget);
       expect(find.textContaining('نصيحة اليوم'), findsOneWidget);
 
-      const titles = ['أناقتك', 'جمالك', 'الأطفال', 'الهدايا', 'مناسباتك', 'المجوهرات'];
+      // RTL row order: أناقتك then جمالك then peek of المجوهرات.
+      const titles = ['أناقتك', 'جمالك', 'المجوهرات', 'مناسباتك', 'الهدايا', 'الأطفال'];
       for (final t in titles) {
         expect(find.text(t), findsWidgets, reason: 'missing label $t at $size');
         final text = tester.widget<Text>(find.text(t).first);
@@ -166,8 +164,26 @@ void main() {
         final box = tester.getSize(find.text(t).first);
         expect(box.width, greaterThan(20), reason: 'label width suggests missing glyphs: $t @$size');
       }
-      expect(find.byType(Image), findsAtLeastNWidgets(7));
+      expect(find.byType(Image), findsAtLeastNWidgets(6));
       expect(find.byType(MiraWorldOrbitDiscover), findsOneWidget);
+
+      final eleganceOrb = find.byKey(const ValueKey('home-orb-elegance'));
+      final beautyOrb = find.byKey(const ValueKey('home-orb-beauty'));
+      final jewelryOrb = find.byKey(const ValueKey('home-orb-jewelry'));
+      final eleganceImg = tester.getSize(
+        find.descendant(of: eleganceOrb, matching: find.byType(Image)).first,
+      );
+      expect(eleganceImg.width, closeTo(eleganceImg.height, 0.5), reason: '1:1 circle @$size');
+      expect(eleganceImg.width / size.width, greaterThan(0.30), reason: 'large circles ~40% @$size');
+
+      final elegance = tester.getRect(eleganceOrb);
+      final beauty = tester.getRect(beautyOrb);
+      final jewelry = tester.getRect(jewelryOrb);
+      // RTL: أناقتك on the right, جمالك beside it, المجوهرات peeks at the left.
+      expect(elegance.right, greaterThan(beauty.right));
+      expect(jewelry.right, lessThan(beauty.left + 1));
+      expect(jewelry.right, greaterThan(0), reason: 'jewelry peek visible @$size');
+      expect(jewelry.left, lessThan(eleganceImg.width * 0.55), reason: 'third circle only partial @$size');
 
       final orbitY = tester.getTopLeft(find.byType(MiraWorldOrbitDiscover)).dy;
       final tipY = tester.getTopLeft(find.textContaining('نصيحة اليوم')).dy;

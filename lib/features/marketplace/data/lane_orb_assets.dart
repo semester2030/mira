@@ -4,11 +4,11 @@ abstract final class LaneOrbAssets {
   static const _laneDir = 'assets/marketplace/discover/lanes';
   static const _thumbDir = 'assets/marketplace/discover/thumbs';
 
-  /// Home-orbit only: hanging clothes for أناقتك (reference 853×1844).
+  /// Home «اكتشفي عالم ميرا» row only: hanging clothes for أناقتك.
   /// Other screens keep [byImageKey] elegance_lane.png unchanged.
   static const String eleganceHomeOrbit = 'assets/marketplace/discover/home_orbit/elegance_home.png';
 
-  /// Home-orbit / subcategory masters keyed by taxonomy imageKey.
+  /// Home row / subcategory masters keyed by taxonomy imageKey.
   static const Map<String, String> byImageKey = {
     'elegance': 'assets/marketplace/discover/elegance_lane.png',
     'beauty': 'assets/marketplace/discover/beauty_lane.png',
@@ -106,7 +106,7 @@ abstract final class LaneOrbAssets {
     return byImageKey[imageKey];
   }
 
-  /// Asset used by the home «اكتشفي عالم ميرا» orbit only.
+  /// Asset used by the home «اكتشفي عالم ميرا» circle row only.
   static String? homeOrbitAssetForImageKey(String? imageKey) {
     if (imageKey == 'elegance') return eleganceHomeOrbit;
     return assetForImageKey(imageKey);

@@ -8,11 +8,11 @@ import 'package:flutter_test/flutter_test.dart';
 import 'package:mirra/features/marketplace/presentation/widgets/mira_world_orbit_discover.dart';
 import 'package:mirra/shared/theme/theme.dart';
 
-/// Frame dump: logo fill→empty, then press glow on أناقتك (no navigation).
+/// Frame dump: horizontal swipe across lane circles then settle on الأطفال.
 void main() {
   TestWidgetsFlutterBinding.ensureInitialized();
 
-  testWidgets('record logo fill then press glow', (tester) async {
+  testWidgets('record horizontal swipe to children', (tester) async {
     final loader = FontLoader('Tajawal')
       ..addFont(rootBundle.load('assets/fonts/Tajawal-Regular.ttf'))
       ..addFont(rootBundle.load('assets/fonts/Tajawal-Bold.ttf'));
@@ -41,7 +41,7 @@ void main() {
       ),
     );
     await tester.pump();
-    await tester.pump(const Duration(milliseconds: 500));
+    await tester.pump(const Duration(milliseconds: 200));
 
     final dir = Directory('docs/phase2_3/evidence/motion_merge/frames');
     dir.createSync(recursive: true);
@@ -64,24 +64,28 @@ void main() {
       ).writeAsBytesSync(bd!.buffer.asUint8List());
     }
 
-    // Fill / hold / empty (~2s fill + pause + reverse).
-    var i = 0;
-    for (; i < 20; i++) {
-      await tester.pump(const Duration(milliseconds: 140));
+    await shot(0);
+
+    final row = find.descendant(
+      of: find.byType(MiraWorldOrbitDiscover),
+      matching: find.byType(SingleChildScrollView),
+    );
+    final start = tester.getCenter(row);
+    final gesture = await tester.startGesture(start);
+    // Drag toward the left in screen space → reveal later RTL items (الأطفال).
+    for (var i = 1; i <= 12; i++) {
+      await gesture.moveBy(const Offset(-28, 0));
+      await tester.pump(const Duration(milliseconds: 40));
       await shot(i);
     }
-    // Press glow on elegance orb (cancel before open).
-    final orb = find.byKey(const ValueKey('home-orb-elegance'));
-    await tester.ensureVisible(orb);
-    final gesture = await tester.startGesture(tester.getCenter(orb));
-    await tester.pump(const Duration(milliseconds: 80));
-    await shot(i++);
-    await tester.pump(const Duration(milliseconds: 80));
-    await shot(i++);
-    await gesture.cancel();
-    await tester.pump(const Duration(milliseconds: 200));
-    await shot(i++);
+    await gesture.up();
+    await tester.pump(const Duration(milliseconds: 320));
+    await shot(13);
 
-    expect(dir.listSync().length, greaterThanOrEqualTo(20));
+    await tester.ensureVisible(find.byKey(const ValueKey('home-orb-children')));
+    await tester.pump();
+    await shot(14);
+
+    expect(dir.listSync().length, greaterThanOrEqualTo(14));
   }, timeout: const Timeout(Duration(seconds: 90)));
 }

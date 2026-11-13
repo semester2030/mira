@@ -88,12 +88,6 @@ void main() {
           ctx,
         );
       }
-      await precacheImage(
-        const AssetImage(
-          'assets/marketplace/discover/home_orbit/mira_center_logo.png',
-        ),
-        ctx,
-      );
     });
     await tester.pump(const Duration(milliseconds: 50));
     await tester.pump();
