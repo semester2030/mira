@@ -1,6 +1,6 @@
 {
   "runId": "all-close-mweyhk4d-0d19",
-  "gitHead": "0139e94",
+  "gitHead": "83d6810",
   "apiBase": "http://127.0.0.1:3011/api/v1",
   "verdict": "CLOSED_VERIFIED_LOCAL",
   "seeded": {
@@ -135,5 +135,5 @@
     }
   ],
   "note": "playingOfferId = first item the UI would bind after section replace; empty stays empty.",
-  "commit": "0139e94de8e1dc717d37a44ec59294349edf82f2"
+  "commit": "83d6810cfc28f17bd666ad7a2939aad8a408d961"
 }
