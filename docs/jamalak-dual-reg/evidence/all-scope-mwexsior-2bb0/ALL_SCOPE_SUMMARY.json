@@ -1,6 +1,6 @@
 {
   "runId": "all-scope-mwexsior-2bb0",
-  "gitHead": "efbe35f",
+  "gitHead": "5992659",
   "apiBase": "http://127.0.0.1:3011/api/v1",
   "verdict": "PASS_ALL_SCOPE",
   "partnerId": "4e0564f5-c88e-4e4f-a328-4d55a169b11b",
@@ -50,5 +50,5 @@
     }
   ],
   "note": "HTTP proves server scope; Flutter widget proves الكل keeps category=children.",
-  "commit": "efbe35f"
+  "commit": "5992659"
 }
