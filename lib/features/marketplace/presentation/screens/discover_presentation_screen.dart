@@ -315,6 +315,10 @@ class DiscoverPresentationScreenState extends State<DiscoverPresentationScreen>
       final next = feed.state;
       final replaced = next.replacement != _replacement;
       final previousKey = _slides.isEmpty ? null : _slides[_page.clamp(0, _slides.length - 1)].slotId;
+      if (replaced) {
+        // Stop prior section video before slides swap (prevents makeup bleed into children).
+        _video.pause();
+      }
       setState(() {
         _phase = next.phase;
         _query = next.query;
@@ -691,12 +695,20 @@ class DiscoverPresentationScreenState extends State<DiscoverPresentationScreen>
       }
     }
 
-    // Beauty leaves: send legacy category (hair) + leaf id so portal-persisted rows match.
-    // Mid drill parent may be beauty.hair; storedKey on mid chips is already legacy.
-    String? rootCategoryId = _eleganceDrillParentId ??
-        (selected.parentId != null
-            ? selected.parentId
-            : (selected.matchesAll ? null : (selected.storedKey.isEmpty ? selected.id : selected.storedKey)));
+    // «الكل» = section scope (keep category, clear leaf only). Never drop to lane-wide catalog.
+    // Beauty leaves: legacy category (hair) + leaf id so portal-persisted rows match.
+    String? rootCategoryId = _eleganceDrillParentId;
+    if (rootCategoryId == null || rootCategoryId.isEmpty) {
+      if (selected.matchesAll) {
+        rootCategoryId = selected.storedKey.isNotEmpty
+            ? selected.storedKey
+            : (selected.parentId != null && selected.parentId!.isNotEmpty ? selected.parentId : null);
+      } else if (selected.parentId != null && selected.parentId!.isNotEmpty) {
+        rootCategoryId = selected.parentId;
+      } else {
+        rootCategoryId = selected.storedKey.isEmpty ? selected.id : selected.storedKey;
+      }
+    }
     final nextSubcategory =
         selected.parentId != null && !selected.matchesAll && !selected.browseOnly ? selected.id : null;
     if (widget.lane == DiscoverLane.beauty && nextSubcategory != null && nextSubcategory.startsWith('beauty.')) {
@@ -713,13 +725,19 @@ class DiscoverPresentationScreenState extends State<DiscoverPresentationScreen>
       final clearHome = selected.id != 'beauty.home_visit' && _query.placeModes.contains('home');
       // Home place filter must not quietly rewrite provider type.
       final clearType = selected.venueType == null && selected.id != 'beauty.home_visit';
+      // Lane-root «الكل» (elegance.all / beauty all with empty scope) may clear category;
+      // section «الكل» (children / clothes / makeup mid) must keep the section id.
+      final clearCategory = rootCategoryId == null ||
+          rootCategoryId == 'all' ||
+          rootCategoryId == 'elegance.all' ||
+          rootCategoryId.endsWith('_lane.all');
       _reload(
         _query.copyWith(
           lane: widget.lane,
           requireVisual: true,
-          categoryId: rootCategoryId,
+          categoryId: clearCategory ? null : rootCategoryId,
           subcategoryId: nextSubcategory,
-          clearCategory: rootCategoryId == null || rootCategoryId == 'all',
+          clearCategory: clearCategory,
           clearSubcategory: nextSubcategory == null,
           clearType: clearType,
           partnerType: selected.venueType,

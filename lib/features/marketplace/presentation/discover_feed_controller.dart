@@ -116,6 +116,18 @@ class DiscoverFeedController extends ChangeNotifier {
     final generation = ++_queryGeneration;
     _moreGeneration += 1;
     _loadingMore = false;
+    // Drop previous section's offers immediately so a late makeup response cannot
+    // keep playing after the customer moved to children (or any other section).
+    state = DiscoverFeedState(
+      phase: DiscoverFeedPhase.loading,
+      query: query,
+      offers: const [],
+      ads: const [],
+      cities: state.cities,
+      facets: DiscoverCatalogFacets.empty,
+      replacement: state.replacement + 1,
+    );
+    _notify();
     DiscoverBrowseResponse response;
     try {
       response = await _gateway.browse(query);

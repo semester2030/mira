@@ -185,9 +185,18 @@ class MarketplaceRepositoryImpl implements MarketplaceRepository, DiscoverCatalo
               query.categoryId,
             );
       final effective = query.withoutInapplicableFilters().scopedToTaxonomyBranch();
-      final categoryParam = effective.lane == null
-          ? (effective.categoryId == null || effective.categoryId == 'all' ? null : effective.categoryId)
-          : (selected == null || selected.matchesAll || selected.venueType != null ? null : selected.storedKey);
+      // Prefer the query's section/leaf ids. «الكل» keeps categoryId=section and clears subcategory.
+      // Never drop a real section id just because the rail chip is matchesAll.
+      final rawCategory = effective.categoryId;
+      final categoryParam = selected?.venueType != null
+          ? null
+          : (rawCategory == null ||
+                  rawCategory.isEmpty ||
+                  rawCategory == 'all' ||
+                  rawCategory == 'elegance.all' ||
+                  rawCategory.endsWith('_lane.all')
+              ? null
+              : rawCategory);
       final remote = await _api.browseCatalog(
         text: effective.text,
         partnerType: effective.lane == null ? effective.partnerType : null,

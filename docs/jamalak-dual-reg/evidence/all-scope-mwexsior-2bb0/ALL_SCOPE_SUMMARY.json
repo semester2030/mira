@@ -1,0 +1,54 @@
+{
+  "runId": "all-scope-mwexsior-2bb0",
+  "gitHead": "efbe35f",
+  "apiBase": "http://127.0.0.1:3011/api/v1",
+  "verdict": "PASS_ALL_SCOPE",
+  "partnerId": "4e0564f5-c88e-4e4f-a328-4d55a169b11b",
+  "seeded": {
+    "clothesId": "0ae6572f-9e32-4089-a524-d2df5a258102",
+    "shoesId": "d058b3d9-2934-4fc4-8476-917a0da75415",
+    "makeupId": "e3a3c9aa-6d5f-438e-aed7-4208ef2eb28e"
+  },
+  "rows": [
+    {
+      "path": "الأطفال ← (بدون فئة / كل المسار)",
+      "request": "GET .../catalog?lane=children",
+      "resultIds": [
+        "0ae6572f-9e32-4089-a524-d2df5a258102",
+        "d058b3d9-2934-4fc4-8476-917a0da75415"
+      ],
+      "videoOfferId": "0ae6572f-9e32-4089-a524-d2df5a258102",
+      "status": "PASS"
+    },
+    {
+      "path": "الأطفال ← الكل",
+      "request": "GET .../catalog?lane=children&category=children",
+      "resultIds": [
+        "0ae6572f-9e32-4089-a524-d2df5a258102",
+        "d058b3d9-2934-4fc4-8476-917a0da75415"
+      ],
+      "videoOfferId": "0ae6572f-9e32-4089-a524-d2df5a258102",
+      "status": "PASS"
+    },
+    {
+      "path": "الأطفال ← أحذية أطفال",
+      "request": "GET .../catalog?lane=children&category=children&subcategory=children.shoes",
+      "resultIds": [
+        "d058b3d9-2934-4fc4-8476-917a0da75415"
+      ],
+      "videoOfferId": "d058b3d9-2934-4fc4-8476-917a0da75415",
+      "status": "PASS"
+    },
+    {
+      "path": "الأطفال ← ملابس أطفال (category=leaf)",
+      "request": "GET .../catalog?lane=children&category=children.clothes",
+      "resultIds": [
+        "0ae6572f-9e32-4089-a524-d2df5a258102"
+      ],
+      "videoOfferId": "0ae6572f-9e32-4089-a524-d2df5a258102",
+      "status": "PASS"
+    }
+  ],
+  "note": "HTTP proves server scope; Flutter widget proves الكل keeps category=children.",
+  "commit": "efbe35f"
+}

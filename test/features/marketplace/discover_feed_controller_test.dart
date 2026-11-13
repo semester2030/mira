@@ -74,10 +74,13 @@ void main() {
     var notified = 0;
     feed.addListener(() => notified++);
     final pending = feed.load(const DiscoverCatalogQuery());
+    // load() notifies once for the immediate empty/loading swap, then dispose.
+    final afterLoadingSwap = notified;
+    expect(afterLoadingSwap, greaterThanOrEqualTo(1));
     feed.dispose();
     gateway.complete(0, _page([offers.first]));
     await pending;
-    expect(notified, 0);
+    expect(notified, afterLoadingSwap);
   });
 
   test('favorite rows stay inside the account that saved them', () async {

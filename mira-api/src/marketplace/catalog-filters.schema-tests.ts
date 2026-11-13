@@ -420,6 +420,39 @@ const dress: CatalogFilterItem = {
   assert.equal(matchCatalogItem(hair, stylingFilter), null);
 }
 
+// Children / jewelry / elegance lane membership — «الكل» without category must not bleed.
+{
+  const kidClothes: CatalogFilterItem = {
+    ...dress,
+    id: 'kid-clothes',
+    category: 'children',
+    subcategory: 'children.clothes',
+  };
+  const makeupKit: CatalogFilterItem = {
+    ...dress,
+    id: 'makeup-kit',
+    category: 'face',
+    subcategory: 'face.makeup_kit',
+    nameAr: 'طقم مكياج',
+  };
+  const jewel: CatalogFilterItem = {
+    ...dress,
+    id: 'ring-1',
+    category: 'jewelry',
+    subcategory: 'jewelry.rings',
+  };
+  assert.ok(matchCatalogItem(kidClothes, { lane: 'children' }));
+  assert.equal(matchCatalogItem(makeupKit, { lane: 'children' }), null);
+  assert.ok(matchCatalogItem(kidClothes, { lane: 'children', category: 'children' }));
+  assert.ok(matchCatalogItem(kidClothes, { lane: 'children', category: 'children.clothes' }));
+  assert.equal(matchCatalogItem(makeupKit, { lane: 'children', category: 'children' }), null);
+  assert.ok(matchCatalogItem(jewel, { lane: 'jewelry' }));
+  assert.equal(matchCatalogItem(kidClothes, { lane: 'jewelry' }), null);
+  assert.ok(matchCatalogItem(dress, { lane: 'elegance', category: 'clothes' }));
+  assert.equal(matchCatalogItem(kidClothes, { lane: 'elegance' }), null, 'children must not appear under elegance الكل');
+  assert.equal(matchCatalogItem(jewel, { lane: 'elegance' }), null, 'jewelry must not appear under elegance الكل');
+}
+
 // Phase1: ageMonths inclusive bounds; unknown age excluded only when filter set.
 {
   const kid: CatalogFilterItem = {

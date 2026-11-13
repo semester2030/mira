@@ -626,7 +626,17 @@ export function matchCatalogItem(item: CatalogFilterItem, filter: CatalogFilterI
           effectiveAttributeValues(item.attributesJson, 'subcategory')[0] ||
           null,
       );
-    if (!giftsCross && !beautyAlias && !leafUnderMid) return null;
+    // Section/mid browse: products store category=section + subcategory=leaf
+    // (children + children.clothes). Filter category=children.clothes must hit the leaf;
+    // filter category=children must hit any descendant under the section.
+    const itemSub = String(item.subcategory || '');
+    const filterCat = filter.category;
+    const leafAsCategory =
+      item.kind === 'product' &&
+      (itemSub === filterCat ||
+        itemSub.startsWith(`${filterCat}.`) ||
+        (item.category || '').startsWith(`${filterCat}.`));
+    if (!giftsCross && !beautyAlias && !leafUnderMid && !leafAsCategory) return null;
   }
   // Subcategory: products match persisted id; service leaves match attributes.subcategory (leaf id).
   // CSV = OR (bridal prep shortcut may send several beauty leaves).
@@ -716,6 +726,32 @@ export function matchCatalogItem(item: CatalogFilterItem, filter: CatalogFilterI
       const ok = cat === 'occasions' || item.profileId === 'service.occasions';
       if (!ok) return null;
     }
+  }
+  // Children lane without explicit category: children.* only (never makeup/elegance bleed).
+  if (filter.lane === 'children' && !filter.category && !filter.subcategory && item.kind === 'product') {
+    const cat = String(item.category || '');
+    const sub = String(item.subcategory || '');
+    const native =
+      cat === 'children' || cat.startsWith('children.') || sub.startsWith('children.');
+    if (!native) return null;
+  }
+  // Jewelry lane without explicit category: jewelry.* only.
+  if (filter.lane === 'jewelry' && !filter.category && !filter.subcategory && item.kind === 'product') {
+    const cat = String(item.category || '');
+    const sub = String(item.subcategory || '');
+    const native =
+      cat === 'jewelry' || cat.startsWith('jewelry.') || sub.startsWith('jewelry.');
+    if (!native) return null;
+  }
+  // Elegance lane without explicit category: known أناقتك section roots only.
+  if (filter.lane === 'elegance' && !filter.category && !filter.subcategory && item.kind === 'product') {
+    const cat = String(item.category || '');
+    const sub = String(item.subcategory || '');
+    const roots = ['clothes', 'bags', 'shoes', 'face', 'body', 'hair', 'accessories'];
+    const native = roots.some(
+      (r) => cat === r || cat.startsWith(`${r}.`) || sub === r || sub.startsWith(`${r}.`),
+    );
+    if (!native) return null;
   }
   // Gifts lane without explicit category: native gifts.* OR giftEligible cross-list.
   if (filter.lane === 'gifts' && !filter.category && !filter.subcategory && item.kind === 'product') {

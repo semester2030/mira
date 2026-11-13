@@ -127,17 +127,21 @@ abstract final class EleganceTaxonomySource {
           .toList();
       if (sectionRoots.length == 1 && sectionRoots.first.children.isNotEmpty) {
         final parent = sectionRoots.first;
+        // «الكل» keeps the section id so the server scopes to this lane section,
+        // not the whole catalog. Leaf chips keep parentId so taps send
+        // category=<section> + subcategory=<leaf>.
         final allChip = DiscoverCategoryDef(
           id: 'all',
           label: 'الكل',
           family: family,
-          storedKey: '',
+          storedKey: parent.id,
           matchesAll: true,
           browseOnly: true,
           imageKey: parent.imageKey ?? family,
           iconSmallUrl: parent.iconSmallUrl,
           iconLargeUrl: parent.iconLargeUrl,
           iconVersion: parent.iconVersion,
+          parentId: parent.id,
         );
         final kids = childrenOf(parent.id, family: family)
             .where((c) => !c.matchesAll && c.id != '__back__')
@@ -158,7 +162,7 @@ abstract final class EleganceTaxonomySource {
               iconSmallUrl: c.iconSmallUrl,
               iconLargeUrl: c.iconLargeUrl,
               iconVersion: c.iconVersion,
-              parentId: null,
+              parentId: parent.id,
               venueType: c.venueType,
             ),
           ),

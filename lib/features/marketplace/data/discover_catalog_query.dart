@@ -586,13 +586,31 @@ abstract final class DiscoverCatalogQueryEngine {
     if (query.lane == null && query.partnerType != null && offer.partnerType != query.partnerType) return false;
     if (query.city != null && query.city!.isNotEmpty && offer.city != query.city) return false;
     final category = find(familyFor(query, offer), query.categoryId);
-    if (query.categoryId != null && query.categoryId != 'all') {
+    final subId = query.subcategoryId;
+    if (subId != null && subId.isNotEmpty) {
+      // Leaf browse: local samples store the leaf on category; live rows use server subcategory.
+      final cat = offer.category ?? '';
+      final traitSub = offer.product?.traits['subcategory'];
+      final ok = cat == subId || cat.startsWith('$subId.') || traitSub == subId;
+      if (!ok) return false;
+    } else if (query.categoryId != null && query.categoryId != 'all') {
       final selected = category;
-      if (selected == null || selected.matchesAll) {
-        if (selected == null) return false;
-      } else if (selected.venueType != null) {
-        if (offer.partnerType != selected.venueType) return false;
-      } else if (offer.category != selected.storedKey) {
+      final scope = selected?.venueType != null
+          ? null
+          : (selected == null || selected.matchesAll
+              ? query.categoryId
+              : (selected.storedKey.isEmpty ? selected.id : selected.storedKey));
+      if (selected?.venueType != null) {
+        if (offer.partnerType != selected!.venueType) return false;
+      } else if (scope != null && scope.isNotEmpty) {
+        final cat = offer.category ?? '';
+        final traitSub = offer.product?.traits['subcategory'] ?? '';
+        final underScope = cat == scope ||
+            cat.startsWith('$scope.') ||
+            traitSub == scope ||
+            traitSub.startsWith('$scope.');
+        if (!underScope) return false;
+      } else if (selected == null) {
         return false;
       }
     }
