@@ -1,0 +1,138 @@
+{
+  "runId": "all-close-mweyhk4d-0d19",
+  "gitHead": "0fd97c7",
+  "apiBase": "http://127.0.0.1:3011/api/v1",
+  "verdict": "PASS_ALL_SCOPE_CLOSURE_HTTP",
+  "seeded": {
+    "clothesId": "9b91e5bc-622b-4a32-b369-f1a5d036535b",
+    "shoesId": "3670653a-19c1-4778-9cde-e929288d8380",
+    "makeupId": "c4de0d32-2ddf-4fa7-a1c5-efa5d8780c95",
+    "ringId": "2adf4817-2ea4-4005-a8ce-95977b0c9842",
+    "giftId": "e23dae1b-18ee-4c3d-8ba7-0094b5548f6d",
+    "colorId": "245d3912-af04-4178-9aec-4ef3da6ad706",
+    "blowId": "e8bde7f5-4215-4bdf-a734-bbd081b8d1fc"
+  },
+  "rows": [
+    {
+      "path": "children ← الكل (lane membership)",
+      "litCircle": "all",
+      "filters": {},
+      "request": "lane=children&partnerId=a6017040-a1a4-450f-ba44-4376d4ea5c7b",
+      "resultIds": [
+        "3670653a-19c1-4778-9cde-e929288d8380",
+        "9b91e5bc-622b-4a32-b369-f1a5d036535b"
+      ],
+      "playingOfferId": "3670653a-19c1-4778-9cde-e929288d8380",
+      "status": "PASS"
+    },
+    {
+      "path": "jewelry ← الكل (lane membership)",
+      "litCircle": "all",
+      "filters": {},
+      "request": "lane=jewelry&partnerId=a6017040-a1a4-450f-ba44-4376d4ea5c7b",
+      "resultIds": [
+        "2adf4817-2ea4-4005-a8ce-95977b0c9842"
+      ],
+      "playingOfferId": "2adf4817-2ea4-4005-a8ce-95977b0c9842",
+      "status": "PASS"
+    },
+    {
+      "path": "gifts ← الكل (lane membership)",
+      "litCircle": "all",
+      "filters": {},
+      "request": "lane=gifts&partnerId=a6017040-a1a4-450f-ba44-4376d4ea5c7b",
+      "resultIds": [
+        "e23dae1b-18ee-4c3d-8ba7-0094b5548f6d"
+      ],
+      "playingOfferId": "e23dae1b-18ee-4c3d-8ba7-0094b5548f6d",
+      "status": "PASS"
+    },
+    {
+      "path": "elegance ← الكل (lane membership)",
+      "litCircle": "all",
+      "filters": {},
+      "request": "lane=elegance&partnerId=a6017040-a1a4-450f-ba44-4376d4ea5c7b",
+      "resultIds": [],
+      "playingOfferId": "",
+      "status": "PASS"
+    },
+    {
+      "path": "الأطفال ← الكل",
+      "litCircle": "all",
+      "filters": {},
+      "request": "lane=children&category=children&partnerId=a6017040-a1a4-450f-ba44-4376d4ea5c7b",
+      "resultIds": [
+        "3670653a-19c1-4778-9cde-e929288d8380",
+        "9b91e5bc-622b-4a32-b369-f1a5d036535b"
+      ],
+      "playingOfferId": "3670653a-19c1-4778-9cde-e929288d8380",
+      "status": "PASS"
+    },
+    {
+      "path": "الأطفال ← أحذية أطفال",
+      "litCircle": "children.shoes",
+      "filters": {},
+      "request": "lane=children&category=children&subcategory=children.shoes",
+      "resultIds": [
+        "3670653a-19c1-4778-9cde-e929288d8380"
+      ],
+      "playingOfferId": "3670653a-19c1-4778-9cde-e929288d8380",
+      "status": "PASS"
+    },
+    {
+      "path": "الشعر ← الكل",
+      "litCircle": "all",
+      "filters": {},
+      "request": "lane=beauty&category=hair&partnerId=d8c089a6-b7fe-4e75-8116-cefe4a3a7870",
+      "resultIds": [
+        "245d3912-af04-4178-9aec-4ef3da6ad706",
+        "e8bde7f5-4215-4bdf-a734-bbd081b8d1fc"
+      ],
+      "playingOfferId": "245d3912-af04-4178-9aec-4ef3da6ad706",
+      "status": "PASS"
+    },
+    {
+      "path": "الشعر ← صبغة",
+      "litCircle": "beauty.hair.color",
+      "filters": {},
+      "request": "lane=beauty&category=hair&subcategory=beauty.hair.color&partnerId=d8c089a6-b7fe-4e75-8116-cefe4a3a7870",
+      "resultIds": [
+        "245d3912-af04-4178-9aec-4ef3da6ad706"
+      ],
+      "playingOfferId": "245d3912-af04-4178-9aec-4ef3da6ad706",
+      "status": "PASS"
+    },
+    {
+      "path": "الشعر ← استشوار",
+      "litCircle": "beauty.hair.blowdry",
+      "filters": {},
+      "request": "lane=beauty&category=hair&subcategory=beauty.hair.blowdry&partnerId=d8c089a6-b7fe-4e75-8116-cefe4a3a7870",
+      "resultIds": [
+        "e8bde7f5-4215-4bdf-a734-bbd081b8d1fc"
+      ],
+      "playingOfferId": "e8bde7f5-4215-4bdf-a734-bbd081b8d1fc",
+      "status": "PASS"
+    },
+    {
+      "path": "خدمات المكياج + في موقعك",
+      "litCircle": "all",
+      "filters": {
+        "placeMode": "home"
+      },
+      "request": "lane=beauty&category=makeup&placeMode=home",
+      "resultIds": [],
+      "playingOfferId": "",
+      "status": "PASS"
+    },
+    {
+      "path": "قسم فارغ (children.__empty_test__)",
+      "litCircle": "children.__empty_test__",
+      "filters": {},
+      "request": "lane=children&category=children&subcategory=children.__empty_test__",
+      "resultIds": [],
+      "playingOfferId": "",
+      "status": "PASS"
+    }
+  ],
+  "note": "playingOfferId = first item the UI would bind after section replace; empty stays empty."
+}

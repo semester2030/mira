@@ -258,7 +258,8 @@ abstract final class EleganceTaxonomySource {
     String lane = 'elegance',
     bool partnerAudience = false,
   }) async {
-    if (_harnessLocked && _nodes.isNotEmpty && !force) return true;
+    // Widget harness must never be overwritten by force/reloadIfStale HTTP.
+    if (_harnessLocked && _nodes.isNotEmpty) return true;
     final sameScope = _cachedLane == lane && _cachedPartnerAudience == partnerAudience;
     final withinTtl = _nodes.isNotEmpty &&
         sameScope &&

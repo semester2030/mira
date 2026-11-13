@@ -228,6 +228,7 @@ void main() {
     await tester.binding.setSurfaceSize(const Size(390, 844));
     addTearDown(() => tester.binding.setSurfaceSize(null));
     final gateway = _RecordingGateway();
+    final screenKey = GlobalKey<DiscoverPresentationScreenState>();
 
     await tester.pumpWidget(
       MaterialApp(
@@ -235,6 +236,7 @@ void main() {
         locale: const Locale('ar'),
         builder: (context, child) => Directionality(textDirection: TextDirection.rtl, child: child!),
         home: DiscoverPresentationScreen(
+          key: screenKey,
           lane: DiscoverLane.children,
           gateway: gateway,
           favorites: _NoopFavorites(),
@@ -249,36 +251,156 @@ void main() {
     // Initial / الكل — section scope, no makeup.
     await tester.tap(find.text('الكل').first);
     await tester.pumpAndSettle();
+    final state = screenKey.currentState!;
     final allQ = gateway.queries.last;
     expect(allQ.lane, DiscoverLane.children);
     expect(allQ.categoryId, 'children');
     expect(allQ.subcategoryId, isNull);
+    expect(state.debugQuery.categoryId, 'children');
+    expect(state.debugRailIds[state.debugCategoryIndex], 'all');
     expect(find.text('فستان أطفال'), findsWidgets);
     expect(find.text('طقم مكياج'), findsNothing);
+    expect(state.debugPlayingOfferId, isNot(equals('p-makeup-kit')));
     // Both children offers matched in the last browse (pager may show one slide).
     final allBrowse = await gateway.browse(allQ);
     expect(allBrowse.items.map((o) => o.id).toSet(), {'p-kids-clothes', 'p-kids-shoes'});
 
-    // أحذية أطفال leaf
+    // أحذية أطفال leaf — lit circle stays on shoes after load.
     await tester.tap(find.text('أحذية أطفال').last);
     await tester.pumpAndSettle();
     final shoesQ = gateway.queries.last;
     expect(shoesQ.categoryId, 'children');
     expect(shoesQ.subcategoryId, 'children.shoes');
+    expect(state.debugQuery.subcategoryId, 'children.shoes');
+    expect(state.debugRailIds[state.debugCategoryIndex], 'children.shoes');
     expect(find.text('حذاء أطفال'), findsWidgets);
     expect(find.text('فستان أطفال'), findsNothing);
     expect(find.text('طقم مكياج'), findsNothing);
+    expect(state.debugPlayingOfferId, 'p-kids-shoes');
 
-    // الكل again — clothes return, makeup never
+    // الكل again — lit «الكل», clothes return, makeup never
     await tester.tap(find.text('الكل').first);
     await tester.pumpAndSettle();
     final allAgain = gateway.queries.last;
     expect(allAgain.categoryId, 'children');
     expect(allAgain.subcategoryId, isNull);
+    expect(state.debugRailIds[state.debugCategoryIndex], 'all');
     expect(find.text('فستان أطفال'), findsWidgets);
     expect(find.text('طقم مكياج'), findsNothing);
     final allAgainBrowse = await gateway.browse(allAgain);
     expect(allAgainBrowse.items.map((o) => o.id), containsAll(['p-kids-clothes', 'p-kids-shoes']));
     expect(allAgainBrowse.items.any((o) => o.id == 'p-makeup-kit'), isFalse);
+  });
+
+  testWidgets('الكل keeps في موقعك placeModes on beauty makeup section', (tester) async {
+    await tester.binding.setSurfaceSize(const Size(390, 844));
+    addTearDown(() => tester.binding.setSurfaceSize(null));
+    EleganceTaxonomySource.replaceForTest(
+      const [
+        EleganceTaxonomyNode(
+          id: 'beauty',
+          labelAr: 'جمالك',
+          sort: 10,
+          active: true,
+          browseOnly: false,
+          writeEnabled: true,
+          children: ['beauty.home_visit', 'beauty.salons'],
+        ),
+        EleganceTaxonomyNode(
+          id: 'beauty.home_visit',
+          parentId: 'beauty',
+          labelAr: 'في موقعك',
+          sort: 0,
+          active: true,
+          browseOnly: true,
+          writeEnabled: false,
+          children: [],
+        ),
+        EleganceTaxonomyNode(
+          id: 'beauty.salons',
+          parentId: 'beauty',
+          labelAr: 'صالونات ومختصّات',
+          sort: 10,
+          active: true,
+          browseOnly: false,
+          writeEnabled: false,
+          children: ['beauty.makeup', 'beauty.hair'],
+        ),
+        EleganceTaxonomyNode(
+          id: 'beauty.makeup',
+          parentId: 'beauty.salons',
+          labelAr: 'المكياج',
+          sort: 10,
+          active: true,
+          browseOnly: false,
+          writeEnabled: true,
+          children: ['beauty.makeup.all', 'beauty.makeup.bridal'],
+        ),
+        EleganceTaxonomyNode(
+          id: 'beauty.makeup.all',
+          parentId: 'beauty.makeup',
+          labelAr: 'الكل',
+          sort: 0,
+          active: true,
+          browseOnly: true,
+          writeEnabled: false,
+          children: [],
+        ),
+        EleganceTaxonomyNode(
+          id: 'beauty.makeup.bridal',
+          parentId: 'beauty.makeup',
+          labelAr: 'مكياج عروس',
+          sort: 10,
+          active: true,
+          browseOnly: false,
+          writeEnabled: true,
+          children: [],
+        ),
+        EleganceTaxonomyNode(
+          id: 'beauty.hair',
+          parentId: 'beauty.salons',
+          labelAr: 'الشعر',
+          sort: 20,
+          active: true,
+          browseOnly: false,
+          writeEnabled: true,
+          children: [],
+        ),
+      ],
+      definitionsVersion: 'beauty-place-1',
+      lane: 'beauty',
+    );
+    final gateway = _RecordingGateway();
+    final screenKey = GlobalKey<DiscoverPresentationScreenState>();
+
+    await tester.pumpWidget(
+      MaterialApp(
+        theme: AppTheme.lightTheme,
+        locale: const Locale('ar'),
+        builder: (context, child) => Directionality(textDirection: TextDirection.rtl, child: child!),
+        home: DiscoverPresentationScreen(
+          key: screenKey,
+          lane: DiscoverLane.beauty,
+          gateway: gateway,
+          favorites: _NoopFavorites(),
+        ),
+      ),
+    );
+    await tester.pumpAndSettle();
+
+    expect(find.text('في موقعك'), findsWidgets);
+    await tester.tap(find.text('في موقعك').first);
+    await tester.pumpAndSettle();
+    expect(gateway.queries.last.placeModes, contains('home'));
+
+    await tester.tap(find.text('صالونات ومختصّات').last);
+    await tester.pumpAndSettle();
+    await tester.tap(find.text('المكياج').last);
+    await tester.pumpAndSettle();
+    await tester.tap(find.text('الكل').first);
+    await tester.pumpAndSettle();
+    final q = gateway.queries.last;
+    expect(q.placeModes, contains('home'), reason: '«الكل» must keep في موقعك in the request');
+    expect(q.lane, DiscoverLane.beauty);
   });
 }

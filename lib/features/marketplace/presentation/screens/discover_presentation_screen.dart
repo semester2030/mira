@@ -85,6 +85,23 @@ class DiscoverPresentationScreenState extends State<DiscoverPresentationScreen>
   @visibleForTesting
   Future<void> debugRefreshTaxonomyWhileOpen() => _refreshTaxonomyAndFeedWhileOpen();
 
+  @visibleForTesting
+  DiscoverCatalogQuery get debugQuery => _query;
+
+  @visibleForTesting
+  int get debugCategoryIndex => _category;
+
+  @visibleForTesting
+  List<String> get debugRailIds => _railDefs().map((d) => d.id).toList(growable: false);
+
+  /// Offer id bound to the active slide / video player (empty when feed empty).
+  @visibleForTesting
+  String get debugPlayingOfferId {
+    if (_slides.isEmpty) return '';
+    final i = _page.clamp(0, _slides.length - 1);
+    return _slides[i].entityId;
+  }
+
   late List<PresentationSlide> _slides;
   late final PresentationVideoPort _video;
   late final bool _ownsVideo;
@@ -540,16 +557,35 @@ class DiscoverPresentationScreenState extends State<DiscoverPresentationScreen>
 
   int _categoryIndex(DiscoverCatalogQuery query) {
     final items = _railDefs();
-    if (_eleganceDrillParentId != null) {
-      if (query.subcategoryId != null && query.subcategoryId!.isNotEmpty) {
-        final sub = items.indexWhere((item) => item.id == query.subcategoryId);
-        if (sub >= 0) return sub;
-      }
-      final allIdx = items.indexWhere((item) => item.id != '__back__' && item.matchesAll);
-      return allIdx >= 0 ? allIdx : (_category.clamp(0, items.isEmpty ? 0 : items.length - 1));
+    if (items.isEmpty) return 0;
+    // 1) Lit circle follows the leaf on the current rail (after load, not only on tap).
+    final sub = query.subcategoryId;
+    if (sub != null && sub.isNotEmpty) {
+      final subIdx = items.indexWhere((item) => item.id == sub || item.storedKey == sub);
+      if (subIdx >= 0) return subIdx;
     }
-    final index = items.indexWhere((item) => item.id == (query.categoryId ?? 'all'));
-    return index < 0 ? 0 : index;
+    final cat = query.categoryId;
+    // 2) Exact chip id (clothes, beauty.hair, …) when present on this rail.
+    if (cat != null && cat.isNotEmpty && cat != 'all') {
+      final exact = items.indexWhere((item) => item.id == cat || item.storedKey == cat);
+      if (exact >= 0) return exact;
+      // 3) Promoted section rail (children): category=children + no leaf → «الكل».
+      final sectionAll = items.indexWhere(
+        (item) =>
+            item.id != '__back__' &&
+            item.matchesAll &&
+            (item.storedKey == cat || item.parentId == cat),
+      );
+      if (sectionAll >= 0) return sectionAll;
+    }
+    // 4) Drill rail without leaf → «الكل» (not رجوع).
+    if (_eleganceDrillParentId != null) {
+      final allIdx = items.indexWhere((item) => item.id != '__back__' && item.matchesAll);
+      return allIdx >= 0 ? allIdx : 0;
+    }
+    // 5) Lane-root «الكل».
+    final allRoot = items.indexWhere((item) => item.id == 'all' || (item.matchesAll && item.id != '__back__'));
+    return allRoot >= 0 ? allRoot : 0;
   }
 
   String _queryFamily(DiscoverCatalogQuery query) {
@@ -662,9 +698,10 @@ class DiscoverPresentationScreenState extends State<DiscoverPresentationScreen>
     }
 
     // Taxonomy drill: root/mid node with children replaces rail with subtypes.
+    // Promoted preview rails set parentId on section chips (children/beauty) — still drillable.
     final usesTaxonomy =
         widget.lane?.usesTaxonomyRail == true || family == 'elegance';
-    final canDrillRoot = _eleganceDrillParentId == null && selected.parentId == null;
+    final canDrillRoot = _eleganceDrillParentId == null;
     final canDrillBeautyMid =
         widget.lane == DiscoverLane.beauty &&
         _eleganceDrillParentId != null &&
@@ -673,6 +710,7 @@ class DiscoverPresentationScreenState extends State<DiscoverPresentationScreen>
     if (usesTaxonomy &&
         (canDrillRoot || canDrillBeautyMid) &&
         !selected.matchesAll &&
+        !selected.browseOnly &&
         selected.id != '__back__') {
       final kids = EleganceTaxonomySource.childrenOf(selected.id, family: family);
       if (kids.isNotEmpty) {
@@ -688,7 +726,7 @@ class DiscoverPresentationScreenState extends State<DiscoverPresentationScreen>
             clearSubcategory: true,
             partnerType: selected.venueType ?? _query.partnerType,
             clearType: selected.venueType == null && _query.partnerType == null,
-            clearPlaceModes: true,
+            // Keep compatible place/city/price filters while drilling (e.g. في موقعك → مكياج).
           ),
         );
         return;
@@ -722,7 +760,6 @@ class DiscoverPresentationScreenState extends State<DiscoverPresentationScreen>
     }
 
     if (widget.lane != null) {
-      final clearHome = selected.id != 'beauty.home_visit' && _query.placeModes.contains('home');
       // Home place filter must not quietly rewrite provider type.
       final clearType = selected.venueType == null && selected.id != 'beauty.home_visit';
       // Lane-root «الكل» (elegance.all / beauty all with empty scope) may clear category;
@@ -741,8 +778,8 @@ class DiscoverPresentationScreenState extends State<DiscoverPresentationScreen>
           clearSubcategory: nextSubcategory == null,
           clearType: clearType,
           partnerType: selected.venueType,
-          clearPlaceModes: clearHome || selected.matchesAll,
-          // Compatible filters retained; incompatible pruned via facets.staleSelections.
+          // «الكل» and leaf taps must NOT drop في موقعك / city / price — only incompatible
+          // keys are pruned later via facets.staleSelections.
         ),
       );
       return;
@@ -1648,9 +1685,18 @@ class DiscoverPresentationScreenState extends State<DiscoverPresentationScreen>
                           if (_catalogDriven) ...[
                             const SizedBox(height: 12),
                             TextButton(onPressed: () {
+                              // Clear search + customer filters only; keep open section/branch/drill.
                               _search.clear();
-                              _clearEleganceDrill();
-                              _reload(DiscoverCatalogQuery(lane: widget.lane, requireVisual: widget.lane != null));
+                              _reload(
+                                _query.clearAdvancedFilters().copyWith(
+                                  text: '',
+                                  lane: widget.lane ?? _query.lane,
+                                  requireVisual: true,
+                                  categoryId: _query.categoryId,
+                                  subcategoryId: _query.subcategoryId,
+                                  partnerType: _query.partnerType,
+                                ),
+                              );
                             }, child: const Text('مسح البحث والفلاتر')),
                           ],
                         ],

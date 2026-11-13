@@ -223,7 +223,7 @@ void main() {
     expect(find.text('الملابس'), findsWidgets);
     expect(find.text('الشنط'), findsWidgets);
 
-    // Drill again → empty subcategory → empty-state clear must reset rail + query.
+    // Drill again → empty subcategory → clear filters keeps open section (clothes) + rail drill.
     await tester.tap(find.text('الملابس').last);
     await tester.pumpAndSettle();
     expect(find.text('رجوع'), findsOneWidget);
@@ -233,12 +233,8 @@ void main() {
     expect(find.text('مسح البحث والفلاتر'), findsOneWidget);
     await tester.tap(find.text('مسح البحث والفلاتر'));
     await tester.pumpAndSettle();
-    expect(find.text('رجوع'), findsNothing);
-    expect(find.text('الملابس'), findsWidgets);
-    expect(
-      gateway.queries.last.categoryId == null || gateway.queries.last.categoryId == 'all',
-      isTrue,
-    );
-    expect(gateway.queries.last.subcategoryId, isNull);
+    expect(find.text('رجوع'), findsOneWidget, reason: 'clear filters must not eject from clothes drill');
+    expect(gateway.queries.last.categoryId, 'clothes');
+    expect(gateway.queries.last.subcategoryId, 'clothes.abaya');
   });
 }
