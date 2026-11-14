@@ -1,0 +1,17 @@
+npm warn Unknown env config "devdir". This will stop working in the next major version of npm.
+[PASS][ثبت من الخادم فقط] عزل رقم الحجز: المالكة 200 · عميلة أخرى 404 — A=200 B=404 ref=MB-261114-UT3A4C
+[PASS][ثبت من الخادم فقط] دعم يقرأ الطلب ويُرفض تعديله (403 ADMIN_READ_ONLY) — get=200 mutate=403 actor=ops.support
+[PASS][ثبت من الخادم فقط] سر الدعم يثبت الهوية ولا يُزوَّر عبر X-Admin-Actor — actor=ops.support role=support
+[PASS][ثبت من الخادم فقط] دعم يرى «يحتاج تدخل» لنفس الطلب المتأخر — hit=true
+[PASS][ثبت من الواجهة] واجهة الدعم: تفتح الطلب ولا تعرض أزرار التعديل/التحصيل — sees=true collectBtn=false
+[PASS][ثبت من الواجهة] مشرف موثّق يقبل نفس طلب ميرا ويظهر اسمه وسببه في السجل — status=accepted actor=ops.sara note=قبول مشرف موثّق على طلب ميرا display=موظف إدارة (ops.sara)
+[PASS][ثبت من الخادم فقط] بعد قبول المشرف يختفي تنبيه مهلة القبول لنفس الرقم — still=false
+[PASS][ثبت من الواجهة] الإدارة تفتح تفاصيل الحجز بالرقم مع المقدّم والخطوة والتسلسل — ref=MB-261114-UT3A4C ok=true
+[PASS][ثبت من الواجهة] شريك آخر يبحث برقم حجز ميرا ولا يراه — sees=false
+[FAIL][لم يُختبر] Flutter من فيديو → نسخ الرقم — ما زال مانع OTP/Firebase على المحاكي؛ الكود جاهز للنسخ والخطوة التالية
+staff closure done {
+  orderPublic: 'MO-261114-D46ESU',
+  bookingPublic: 'MB-261114-UT3A4C',
+  orderId: 'f0d04ea3-2ef9-4916-8baf-21b30ba736e1',
+  bookingId: 'f33e0068-b269-45c5-85d6-9d95d7d64476'
+}

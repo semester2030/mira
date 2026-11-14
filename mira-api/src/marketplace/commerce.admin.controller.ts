@@ -1,11 +1,22 @@
-import { Body, Controller, Get, Inject, Param, Post, Query, Req, UseGuards } from '@nestjs/common';
+import {
+  Body,
+  Controller,
+  ForbiddenException,
+  Get,
+  Inject,
+  Param,
+  Post,
+  Query,
+  Req,
+  UseGuards,
+} from '@nestjs/common';
 import { AdminApiKeyGuard, AdminRequest } from '../common/guards/admin-api-key.guard';
 import { adminActorFromId, CommerceService } from './commerce.service';
 
 /**
- * Admin sees every partner. Mutations need a reason in `note`.
- * Served at /admin/commerce/* (matches the catalog-review admin routes) and /marketplace/commerce/admin/*.
- * Actor id comes from X-Admin-Actor when provided; otherwise "admin-key" (shared key, unnamed staff).
+ * Admin commerce ops. Read allowed for support + supervisor + shared key.
+ * Mutations require supervisor (staff secret) or shared master key — never support.
+ * Staff secret binds actorId; shared key may carry X-Admin-Actor as a display label only.
  */
 @Controller(['admin/commerce', 'marketplace/commerce/admin'])
 @UseGuards(AdminApiKeyGuard)
@@ -14,6 +25,35 @@ export class CommerceAdminController {
 
   private actor(req: AdminRequest) {
     return adminActorFromId(req.adminActorId);
+  }
+
+  private assertCanMutate(req: AdminRequest) {
+    if (req.adminCanMutate) return;
+    throw new ForbiddenException({
+      code: 'ADMIN_READ_ONLY',
+      message: 'حساب الدعم للقراءة والمتابعة فقط. تعديل الحالة أو التحصيل يتطلب مشرفًا.',
+      messageAr: 'حساب الدعم للقراءة والمتابعة فقط. تعديل الحالة أو التحصيل يتطلب مشرفًا.',
+      role: req.adminRole,
+      actorId: req.adminActorId,
+    });
+  }
+
+  @Get('session')
+  session(@Req() req: AdminRequest) {
+    return {
+      actorId: req.adminActorId,
+      role: req.adminRole,
+      canMutate: req.adminCanMutate,
+      source: req.adminAuthSource,
+      labelAr:
+        req.adminRole === 'support'
+          ? `دعم · ${req.adminActorId} (قراءة فقط)`
+          : req.adminRole === 'supervisor'
+            ? `مشرف · ${req.adminActorId}`
+            : req.adminActorId === 'admin-key'
+              ? 'مفتاح الإدارة المشترك (بلا موظف مسمّى)'
+              : `مفتاح مشترك · تسمية ${req.adminActorId}`,
+    };
   }
 
   @Get('attention')
@@ -33,16 +73,19 @@ export class CommerceAdminController {
 
   @Post('orders/:id/transition')
   transitionOrder(@Req() req: AdminRequest, @Param('id') id: string, @Body() body: unknown) {
+    this.assertCanMutate(req);
     return this.commerce.transitionOrderFor(this.actor(req), id, body);
   }
 
   @Post('orders/:id/collect-payment')
   collectPayment(@Req() req: AdminRequest, @Param('id') id: string, @Body() body: unknown) {
+    this.assertCanMutate(req);
     return this.commerce.collectPayment(this.actor(req), id, body);
   }
 
   @Post('orders/:id/waive-payment')
   waivePayment(@Req() req: AdminRequest, @Param('id') id: string, @Body() body: unknown) {
+    this.assertCanMutate(req);
     return this.commerce.waivePayment(this.actor(req), id, body);
   }
 
@@ -58,6 +101,7 @@ export class CommerceAdminController {
 
   @Post('bookings/:id/transition')
   transitionBooking(@Req() req: AdminRequest, @Param('id') id: string, @Body() body: unknown) {
+    this.assertCanMutate(req);
     return this.commerce.transitionBookingFor(this.actor(req), id, body);
   }
 }

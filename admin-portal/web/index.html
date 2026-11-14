@@ -22,14 +22,15 @@
         </div>
       </div>
       <p class="lead" style="color:var(--text-muted);margin:0 0 0.5rem;">
-        أدخلي مفتاح الإدارة (<code style="font-size:0.85em">X-Admin-Key</code>) من متغيرات Render.
+        دخولي الموظفين: سرّ الموظف من <code>MIRA_ADMIN_STAFF</code> (دعم=قراءة، مشرف=تعديل).
+        أو المفتاح المشترك <code>ADMIN_API_KEY</code>.
       </p>
-      <label for="adminKey">Admin API Key</label>
-      <input id="adminKey" type="password" placeholder="ADMIN_API_KEY" autocomplete="off" />
-      <label for="adminActor" style="margin-top:0.75rem;">معرّف الموظف (اختياري — لإسناد الإجراءات)</label>
-      <input id="adminActor" type="text" placeholder="مثال: ops.sara" autocomplete="off" />
+      <label for="adminKey">سرّ الدخول / Admin Key</label>
+      <input id="adminKey" type="password" placeholder="سر الموظف أو المفتاح المشترك" autocomplete="off" />
+      <label for="adminActor" style="margin-top:0.75rem;">تسمية اختيارية (للمفتاح المشترك فقط)</label>
+      <input id="adminActor" type="text" placeholder="لا تُستخدم مع سرّ الموظف الموثّق" autocomplete="off" />
       <p class="lead" style="color:var(--text-muted);margin:0.4rem 0 0.75rem;font-size:0.85rem;">
-        بدون معرّف يُسجَّل الإجراء تحت «مفتاح الإدارة المشترك» وليس باسم موظف.
+        سرّ الموظف يُثبت الهوية من الخادم. الدعم لا يستطيع تغيير الحالات أو التحصيل.
       </p>
       <button id="loginBtn" class="btn btn-primary btn-block">دخول آمن</button>
       <div id="loginError" class="alert err hidden"></div>

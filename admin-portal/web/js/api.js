@@ -66,10 +66,23 @@
     clearKey: () => {
       localStorage.removeItem('mira_admin_key');
       localStorage.removeItem('mira_admin_actor');
+      localStorage.removeItem('mira_admin_session');
     },
     hasKey: () => !!adminKey(),
-    actorId: () => adminActor() || 'admin-key',
-    verifyKey: () => request('GET', '/admin/stats/overview'),
+    actorId: () => {
+      const s = window.MiraAdminApi.session && window.MiraAdminApi.session();
+      if (s && s.actorId) return s.actorId;
+      return adminActor() || 'admin-key';
+    },
+    verifyKey: async () => {
+      // Prefer commerce session (roles). Fall back to legacy overview for older servers.
+      try {
+        return await request('GET', '/admin/commerce/session');
+      } catch (e) {
+        if (e && e.status === 404) return request('GET', '/admin/stats/overview');
+        throw e;
+      }
+    },
     commerceAttention: () => request('GET', '/admin/commerce/attention'),
     overview: () => request('GET', '/admin/stats/overview'),
     analysesTrend: (days) =>
@@ -121,6 +134,7 @@
       if (q) params.set('q', q);
       return request('GET', `/admin/commerce/orders?${params}`);
     },
+    commerceSession: () => request('GET', '/admin/commerce/session'),
     commerceOrder: (id) => request('GET', `/admin/commerce/orders/${id}`),
     commerceOrderTransition: (id, body) =>
       request('POST', `/admin/commerce/orders/${id}/transition`, body),
@@ -132,8 +146,24 @@
       if (q) params.set('q', q);
       return request('GET', `/admin/commerce/bookings?${params}`);
     },
+    commerceBooking: (id) => request('GET', `/admin/commerce/bookings/${id}`),
     commerceBookingTransition: (id, body) =>
       request('POST', `/admin/commerce/bookings/${id}/transition`, body),
+    setSession: (session) => {
+      if (session) localStorage.setItem('mira_admin_session', JSON.stringify(session));
+      else localStorage.removeItem('mira_admin_session');
+    },
+    session: () => {
+      try {
+        return JSON.parse(localStorage.getItem('mira_admin_session') || 'null');
+      } catch (_) {
+        return null;
+      }
+    },
+    canMutate: () => {
+      const s = window.MiraAdminApi.session();
+      return !s || s.canMutate !== false;
+    },
     adReviews: () => request('GET', '/admin/catalog-ads'),
     adPreview: (id) => request('GET', `/admin/catalog-ads/${id}`),
     adDecision: (id, decision, note, revision) =>

@@ -100,16 +100,18 @@
   async function login() {
     const key = adminKeyInput.value.trim();
     if (!key) {
-      showError(loginError, 'أدخلي مفتاح الإدارة');
+      showError(loginError, 'أدخلي سرّ الدخول أو مفتاح الإدارة');
       return;
     }
     hideError(loginError);
     MiraAdminApi.setKey(key);
     MiraAdminApi.setActor(adminActorInput ? adminActorInput.value : '');
     try {
-      await MiraAdminApi.verifyKey();
+      const session = await MiraAdminApi.verifyKey();
+      if (session && session.actorId) MiraAdminApi.setSession(session);
+      else MiraAdminApi.setSession(null);
       showApp();
-      navigate('dashboard');
+      navigate('orders');
     } catch (e) {
       MiraAdminApi.clearKey();
       showError(loginError, e.message);
@@ -823,15 +825,20 @@
     });
     root.appendChild(tabs);
 
+    const session = MiraAdminApi.session && MiraAdminApi.session();
     const actorHint = document.createElement('p');
     actorHint.className = 'muted';
-    actorHint.textContent = 'جلسة الإدارة: ' + (MiraAdminApi.actorId() === 'admin-key'
-      ? 'مفتاح مشترك — الإجراءات بلا موظف مسمّى'
-      : 'موظف ' + MiraAdminApi.actorId());
+    actorHint.textContent = session && session.labelAr
+      ? 'جلسة: ' + session.labelAr + (session.canMutate ? '' : ' · أزرار التعديل مخفية')
+      : 'جلسة الإدارة: ' + MiraAdminApi.actorId();
     root.appendChild(actorHint);
 
     if (state.ordersDetail && state.ordersTab === 'orders') {
       await renderOrderDetail(state.ordersDetail);
+      return;
+    }
+    if (state.ordersDetail && state.ordersTab === 'bookings') {
+      await renderBookingDetail(state.ordersDetail);
       return;
     }
 
@@ -924,13 +931,12 @@
           tr.appendChild(td);
         });
         const actionTd = document.createElement('td');
-        if (state.ordersTab === 'orders') {
-          const open = document.createElement('button');
-          open.className = 'btn btn-sm';
-          open.textContent = 'تفاصيل';
-          open.onclick = () => { state.ordersDetail = row.id; renderOrders(); };
-          actionTd.appendChild(open);
-        } else {
+        const open = document.createElement('button');
+        open.className = 'btn btn-sm';
+        open.textContent = 'تفاصيل';
+        open.onclick = () => { state.ordersDetail = row.id; renderOrders(); };
+        actionTd.appendChild(open);
+        if (state.ordersTab === 'bookings' && MiraAdminApi.canMutate()) {
           (BOOKING_NEXT_ADMIN[row.status] || []).forEach((step) => {
             const b = document.createElement('button');
             b.className = 'btn btn-sm';
@@ -990,17 +996,10 @@
         open.className = 'btn btn-sm btn-primary';
         open.textContent = 'فتح العملية';
         open.onclick = () => {
-          if (row.kind === 'order') {
-            state.ordersTab = 'orders';
-            state.ordersDetail = row.id;
-            state.ordersQuery = row.publicNumber;
-            renderOrders();
-          } else {
-            state.ordersTab = 'bookings';
-            state.ordersQuery = row.publicNumber;
-            state.ordersDetail = null;
-            renderOrders();
-          }
+          state.ordersTab = row.kind === 'order' ? 'orders' : 'bookings';
+          state.ordersDetail = row.id;
+          state.ordersQuery = row.publicNumber;
+          renderOrders();
         };
         card.appendChild(open);
         panel.appendChild(card);
@@ -1059,49 +1058,137 @@
       });
       reviewText(panel, 'المجموع: ' + (order.totalHalalas / 100).toFixed(2) + ' ر.س (منتجات ' + (order.subtotalHalalas / 100).toFixed(2) + ' + توصيل ' + (order.deliveryFeeHalalas == null ? 'غير محدد' : (order.deliveryFeeHalalas / 100).toFixed(2)) + ')');
 
-      const actions = document.createElement('div');
-      actions.className = 'toolbar';
-      (ORDER_NEXT_ADMIN[order.fulfillmentStatus] || []).forEach((step) => {
-        const b = document.createElement('button');
-        b.className = 'btn btn-sm btn-primary';
-        b.textContent = step[1];
-        b.onclick = async () => {
-          const note = prompt('سبب التدخل الإداري (مطلوب)');
-          if (!note) return;
-          try {
-            await MiraAdminApi.commerceOrderTransition(order.id, { fulfillmentStatus: step[0], note });
-            state.ordersDetail = order.id;
-            renderOrders();
-          } catch (error) {
-            alert(error.message);
-          }
-        };
-        actions.appendChild(b);
-      });
-      if (order.paymentCollectionStatus === 'uncollected' && order.fulfillmentStatus === 'delivered') {
-        const collect = document.createElement('button');
-        collect.className = 'btn btn-sm';
-        collect.textContent = 'تسجيل التحصيل';
-        collect.onclick = async () => {
-          const note = prompt('ملاحظة التحصيل (مطلوبة للإدارة)');
-          if (!note) return;
-          try {
-            await MiraAdminApi.commerceCollectPayment(order.id, note);
-            state.ordersDetail = order.id;
-            renderOrders();
-          } catch (error) {
-            alert(error.message);
-          }
-        };
-        actions.appendChild(collect);
+      if (MiraAdminApi.canMutate()) {
+        const actions = document.createElement('div');
+        actions.className = 'toolbar';
+        (ORDER_NEXT_ADMIN[order.fulfillmentStatus] || []).forEach((step) => {
+          const b = document.createElement('button');
+          b.className = 'btn btn-sm btn-primary';
+          b.textContent = step[1];
+          b.onclick = async () => {
+            const note = prompt('سبب التدخل الإداري (مطلوب)');
+            if (!note) return;
+            try {
+              await MiraAdminApi.commerceOrderTransition(order.id, { fulfillmentStatus: step[0], note });
+              state.ordersDetail = order.id;
+              renderOrders();
+            } catch (error) {
+              alert(error.message);
+            }
+          };
+          actions.appendChild(b);
+        });
+        if (order.paymentCollectionStatus === 'uncollected' && order.fulfillmentStatus === 'delivered') {
+          const collect = document.createElement('button');
+          collect.className = 'btn btn-sm';
+          collect.textContent = 'تسجيل التحصيل';
+          collect.onclick = async () => {
+            const note = prompt('ملاحظة التحصيل (مطلوبة للإدارة)');
+            if (!note) return;
+            try {
+              await MiraAdminApi.commerceCollectPayment(order.id, note);
+              state.ordersDetail = order.id;
+              renderOrders();
+            } catch (error) {
+              alert(error.message);
+            }
+          };
+          actions.appendChild(collect);
+        }
+        panel.appendChild(actions);
+      } else {
+        reviewText(panel, 'صلاحية الدعم: متابعة وقراءة فقط — لا أزرار تعديل.');
       }
-      panel.appendChild(actions);
 
       reviewText(panel, 'الخط الزمني');
       (order.events || []).forEach((ev) => {
         reviewText(
           panel,
           fmtDate(ev.createdAt) + ' · ' + (ev.field || '') + ' · ' + (ev.fromStatus || '') + ' → ' + (ev.toStatus || '') +
+            ' · ' + (ev.actorDisplayAr || ev.actorType || '') + (ev.note ? ' · ' + ev.note : ''),
+        );
+      });
+    } catch (error) {
+      panel.replaceChildren();
+      const alert = document.createElement('div');
+      alert.className = 'alert err';
+      alert.textContent = error.message;
+      panel.appendChild(alert);
+    }
+  }
+
+  async function renderBookingDetail(bookingId) {
+    const panel = document.createElement('div');
+    panel.className = 'panel';
+    root.appendChild(panel);
+    reviewText(panel, 'جارٍ تحميل تفاصيل الحجز');
+    try {
+      const booking = await MiraAdminApi.commerceBooking(bookingId);
+      panel.replaceChildren();
+      const back = document.createElement('button');
+      back.className = 'btn btn-sm';
+      back.textContent = 'رجوع للقائمة';
+      back.onclick = () => { state.ordersDetail = null; renderOrders(); };
+      panel.appendChild(back);
+      const title = document.createElement('div');
+      title.style.display = 'flex';
+      title.style.gap = '0.5rem';
+      title.style.alignItems = 'center';
+      const titleText = document.createElement('strong');
+      titleText.textContent = 'حجز ' + booking.publicNumber;
+      const copyBtn = document.createElement('button');
+      copyBtn.className = 'btn btn-sm';
+      copyBtn.textContent = 'نسخ الرقم';
+      copyBtn.onclick = async () => {
+        try {
+          await navigator.clipboard.writeText(booking.publicNumber);
+          copyBtn.textContent = 'تم النسخ';
+        } catch (_) {
+          copyBtn.textContent = booking.publicNumber;
+        }
+      };
+      title.append(titleText, copyBtn);
+      panel.appendChild(title);
+      reviewText(panel, 'الحالة: ' + (BOOKING_STATUS_LABELS[booking.status] || booking.status));
+      reviewText(panel, 'مقدّم الخدمة: ' + ((booking.partner && booking.partner.nameAr) || booking.partnerId));
+      reviewText(panel, 'الخدمة: ' + booking.serviceNameAr);
+      reviewText(panel, 'الموعد: ' + fmtDate(booking.startsAt) + ' → ' + fmtDate(booking.endsAt));
+      if (booking.nextActionAr) reviewText(panel, 'الخطوة التالية: ' + booking.nextActionAr + ' · ' + (booking.responsibleLabelAr || ''));
+      reviewText(panel, 'العميلة: ' + booking.contactName + ' · ' + booking.contactPhone);
+      reviewText(panel, 'الدفع: في مقر الجهة عند تقديم الخدمة (لا يُعرض كمدفوع بلا تسجيل موثوق)');
+
+      if (MiraAdminApi.canMutate()) {
+        const actions = document.createElement('div');
+        actions.className = 'toolbar';
+        (BOOKING_NEXT_ADMIN[booking.status] || []).forEach((step) => {
+          const b = document.createElement('button');
+          b.className = 'btn btn-sm btn-primary';
+          b.textContent = step[1];
+          b.onclick = async () => {
+            const note = prompt('سبب التدخل الإداري (مطلوب)');
+            if (!note) return;
+            try {
+              await MiraAdminApi.commerceBookingTransition(booking.id, { status: step[0], note });
+              state.ordersDetail = booking.id;
+              renderOrders();
+            } catch (error) {
+              alert(error.message);
+            }
+          };
+          actions.appendChild(b);
+        });
+        panel.appendChild(actions);
+      } else {
+        reviewText(panel, 'صلاحية الدعم: متابعة وقراءة فقط — لا أزرار تعديل.');
+      }
+
+      reviewText(panel, 'الخط الزمني');
+      const events = booking.events || [];
+      if (!events.length) reviewText(panel, 'لا أحداث مسجّلة بعد.');
+      events.forEach((ev) => {
+        reviewText(
+          panel,
+          fmtDate(ev.createdAt) + ' · ' + (ev.fromStatus || '—') + ' → ' + (ev.toStatus || '—') +
             ' · ' + (ev.actorDisplayAr || ev.actorType || '') + (ev.note ? ' · ' + ev.note : ''),
         );
       });
