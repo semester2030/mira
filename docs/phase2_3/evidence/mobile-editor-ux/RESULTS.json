@@ -1,0 +1,39 @@
+{
+  "list": {
+    "hScroll": false,
+    "toggleDisplay": "flex",
+    "addInView": true
+  },
+  "navOpen": true,
+  "edit": {
+    "collapsed": true,
+    "summaryText": "أناقتك ‹ الملابس ‹ سهرة",
+    "summaryShown": true,
+    "pickerHidden": true,
+    "nameTop": 225,
+    "priceTop": 340,
+    "mediaHidden": true,
+    "nameValue": "فستان سهرة طويل جدًا للاختبار على الجوال مع اسم ممتد",
+    "hScroll": false
+  },
+  "afterChange": {
+    "collapsed": false,
+    "nameStill": "فستان سهرة طويل جدًا للاختبار على الجوال مع اسم ممتد"
+  },
+  "add": {
+    "collapsed": true,
+    "summary": "أناقتك ‹ الملابس ‹ سهرة",
+    "nameTop": 520
+  },
+  "desktop": {
+    "toggleDisplay": "none",
+    "pickerDisplay": "block",
+    "railWidth": 220
+  },
+  "w360": {
+    "hScroll": false
+  },
+  "w430": {
+    "hScroll": false
+  }
+}

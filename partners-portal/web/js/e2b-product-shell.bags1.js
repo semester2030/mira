@@ -154,6 +154,7 @@
 
   let selectSeq = 0;
   let selectedMainId = null;
+  let taxonomyCollapsed = false;
   let selectedSubId = null;
   let taxonomyCache = null;
   let taxonomyError = null;
@@ -269,6 +270,27 @@
     });
     if (!listPanel.contains(list)) listPanel.appendChild(list);
 
+    const taxonomySummary = el('div', {
+      className: 'e2b-taxonomy-summary',
+      id: 'e2bTaxonomySummary',
+      'data-testid': 'e2b-taxonomy-summary',
+      hidden: true,
+    });
+    const summaryText = el('p', {
+      className: 'e2b-taxonomy-summary-text',
+      id: 'e2bTaxonomySummaryText',
+      text: '',
+    });
+    const summaryChange = el('button', {
+      type: 'button',
+      className: 'btn btn-ghost btn-sm e2b-taxonomy-change',
+      id: 'e2bTaxonomyChange',
+      'data-testid': 'e2b-taxonomy-change',
+      text: 'تغيير',
+    });
+    summaryChange.addEventListener('click', () => expandTaxonomyPicker());
+    taxonomySummary.append(summaryText, summaryChange);
+
     const laneSwitcher = el('div', {
       className: 'e2b-lane-switcher',
       id: 'e2bLaneSwitcher',
@@ -279,16 +301,19 @@
       el('div', { className: 'e2b-circle-list e2b-circle-list-horizontal', id: 'e2bMainCircles', 'data-testid': 'e2b-main-circles' }),
     ]);
     const subRow = el('div', { className: 'e2b-subcircles', id: 'e2bSubCircles', 'data-testid': 'e2b-subcircles' });
+    const taxonomyPicker = el('div', {
+      className: 'e2b-taxonomy-picker',
+      id: 'e2bTaxonomyPicker',
+      'data-testid': 'e2b-taxonomy-picker',
+    }, [laneSwitcher, catRow, subRow]);
 
     if (!editorPanel.contains(form)) {
-      editorPanel.appendChild(laneSwitcher);
-      editorPanel.appendChild(catRow);
-      editorPanel.appendChild(subRow);
+      editorPanel.appendChild(taxonomySummary);
+      editorPanel.appendChild(taxonomyPicker);
       editorPanel.appendChild(form);
     } else {
-      editorPanel.insertBefore(subRow, form);
-      editorPanel.insertBefore(catRow, subRow);
-      editorPanel.insertBefore(laneSwitcher, catRow);
+      editorPanel.insertBefore(taxonomyPicker, form);
+      editorPanel.insertBefore(taxonomySummary, taxonomyPicker);
     }
     // List-side copy so lanes stay reachable before opening the editor.
     if (!document.getElementById('e2bLaneSwitcherList')) {
@@ -639,8 +664,8 @@
       node.classList.toggle('e2b-step-hidden', !show);
     });
     if (mediaCol) {
-      // Desktop: keep media beside active fields. Phone: media tab focuses the stage.
-      const showMedia = !narrow || active.id === 'media' || active.id === 'basics' || active.id === 'offer';
+      // Desktop: keep media beside active fields. Phone: media only on «الوسائط» so name/price stay first.
+      const showMedia = !narrow || active.id === 'media';
       mediaCol.hidden = !showMedia;
       mediaCol.classList.toggle('e2b-step-hidden', !showMedia);
       mediaCol.classList.toggle('e2b-media-focus', active.id === 'media');
@@ -950,7 +975,8 @@
       subHost.replaceChildren();
       subHost.setAttribute('data-parent-id', cat.id);
       if (!nodes.length) {
-        subHost.appendChild(el('p', { className: 'lead', text: 'لا توجد تصنيفات فرعية ظاهرة لهذا القسم.' }));
+        subHost.appendChild(el('p', { className: 'lead e2b-subs-empty', text: 'لا توجد تصنيفات فرعية ظاهرة لهذا القسم.' }));
+        maybeCollapseTaxonomy();
         return;
       }
       nodes.forEach((n) => {
@@ -977,6 +1003,7 @@
         subHost.appendChild(btn);
       });
       if (selectedSubId) selectSub(selectedSubId, { fromSync: true, silentMissing: true });
+      else updateTaxonomySummary();
     } catch (e) {
       if (seq !== selectSeq || selectedMainId !== cat.id) return;
       subHost.replaceChildren();
@@ -1000,6 +1027,82 @@
     }
   }
 
+  function laneLabelForSummary() {
+    const lane = window.__MIRA_TAXONOMY_LANE__ || 'elegance';
+    if (lane === 'elegance') return 'أناقتك';
+    if (window.__MIRA_LANE_LABEL_AR__) return String(window.__MIRA_LANE_LABEL_AR__);
+    const meta = window.MiraLaneEntries && MiraLaneEntries.LANE_META && MiraLaneEntries.LANE_META[lane];
+    return (meta && meta.labelAr) || lane;
+  }
+
+  function mainLabelForSummary() {
+    if (!selectedMainId) return '';
+    const btn = document.querySelector(
+      '#e2bMainCircles .e2b-circle[data-category-id="' + selectedMainId + '"] .e2b-circle-label',
+    );
+    if (btn && btn.textContent) return btn.textContent.trim();
+    const form = document.getElementById('catalogForm');
+    const catSel = form && form.querySelector('select[name="category"]');
+    if (catSel && catSel.selectedOptions && catSel.selectedOptions[0]) {
+      return catSel.selectedOptions[0].textContent.trim();
+    }
+    return selectedMainId;
+  }
+
+  function subLabelForSummary() {
+    if (!selectedSubId) return '';
+    const btn = document.querySelector(
+      '#e2bSubCircles .e2b-circle[data-subcategory-id="' + selectedSubId + '"] .e2b-circle-label',
+    );
+    if (btn && btn.textContent) return btn.textContent.trim();
+    const form = document.getElementById('catalogForm');
+    const subSel = form && form.querySelector('select[name="subcategory"]');
+    if (subSel && subSel.selectedOptions && subSel.selectedOptions[0] && subSel.value) {
+      return subSel.selectedOptions[0].textContent.trim();
+    }
+    return '';
+  }
+
+  function updateTaxonomySummary() {
+    const textEl = document.getElementById('e2bTaxonomySummaryText');
+    if (!textEl) return;
+    const parts = [laneLabelForSummary()];
+    const main = mainLabelForSummary();
+    const sub = subLabelForSummary();
+    if (main) parts.push(main);
+    if (sub) parts.push(sub);
+    textEl.textContent = parts.join(' ‹ ');
+  }
+
+  function collapseTaxonomyPicker() {
+    if (!selectedMainId) return;
+    taxonomyCollapsed = true;
+    document.body.classList.add('e2b-taxonomy-collapsed');
+    updateTaxonomySummary();
+    const summary = document.getElementById('e2bTaxonomySummary');
+    if (summary) summary.hidden = false;
+  }
+
+  function expandTaxonomyPicker() {
+    taxonomyCollapsed = false;
+    document.body.classList.remove('e2b-taxonomy-collapsed');
+    const summary = document.getElementById('e2bTaxonomySummary');
+    if (summary) summary.hidden = true;
+  }
+
+  /** Collapse picker on phone once the seller finished the available choices. */
+  function maybeCollapseTaxonomy() {
+    if (!isNarrowEditorViewport()) return;
+    if (!selectedMainId) return;
+    const subHost = document.getElementById('e2bSubCircles');
+    const hasSubChoices = !!(subHost && subHost.querySelector('[data-testid="e2b-sub-circle"]'));
+    if (hasSubChoices && !selectedSubId) {
+      updateTaxonomySummary();
+      return;
+    }
+    collapseTaxonomyPicker();
+  }
+
   function selectSub(subId, opts) {
     opts = opts || {};
     selectedSubId = subId || null;
@@ -1009,7 +1112,10 @@
     });
     const form = document.getElementById('catalogForm');
     const subSel = form && form.querySelector('select[name="subcategory"]');
-    if (!subSel) return;
+    if (!subSel) {
+      maybeCollapseTaxonomy();
+      return;
+    }
     let has = Array.from(subSel.options).some((o) => o.value === subId);
     if (!has) {
       // Circle click before taxonomy options land (or after category option was missing):
@@ -1061,6 +1167,8 @@
       }
       syncingFromForm = false;
     }
+    if (!opts.fromSync || opts.fromCircle) maybeCollapseTaxonomy();
+    else updateTaxonomySummary();
   }
 
   function enableProductMode() {
@@ -1090,16 +1198,27 @@
   function focusEditor() {
     enableProductMode();
     document.body.classList.add('e2b-editor-focus');
+    // Editing an existing product: start with taxonomy collapsed on phone so name/price show first.
+    const form = document.getElementById('catalogForm');
+    const catSel = form && form.querySelector('select[name="category"]');
+    const hasCategory = !!(catSel && catSel.value);
+    if (hasCategory) {
+      syncFromForm();
+      maybeCollapseTaxonomy();
+      if (!taxonomyCollapsed && selectedMainId) collapseTaxonomyPicker();
+    } else {
+      expandTaxonomyPicker();
+    }
     if (window.MiraPortalShell && typeof MiraPortalShell.openProductEditor === 'function') {
       MiraPortalShell.openProductEditor();
       return;
     }
-    const form = document.getElementById('catalogForm');
     if (form) form.scrollIntoView({ behavior: 'smooth', block: 'start' });
   }
 
   function showList() {
-    document.body.classList.remove('e2b-editor-focus');
+    document.body.classList.remove('e2b-editor-focus', 'e2b-taxonomy-collapsed');
+    taxonomyCollapsed = false;
     if (window.MiraPortalShell && typeof MiraPortalShell.showProductList === 'function') {
       MiraPortalShell.showProductList();
       return;
@@ -1188,6 +1307,9 @@
     syncFromForm: syncFromForm,
     composeCatalogLayout: composeCatalogLayout,
     revealStepForElement: revealStepForElement,
+    expandTaxonomyPicker: expandTaxonomyPicker,
+    collapseTaxonomyPicker: collapseTaxonomyPicker,
+    maybeCollapseTaxonomy: maybeCollapseTaxonomy,
     reloadTaxonomy: (opts) => {
       if (opts && opts.force) taxonomyCache = null;
       return loadAndPaintMains({ force: !!(opts && opts.force) });

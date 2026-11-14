@@ -1285,31 +1285,203 @@ body.e2b-service-mode [data-testid="e2b-editor-actions"] {
   border-top: 1px solid rgba(201, 166, 216, 0.45);
   backdrop-filter: blur(8px);
 }
+.portal-nav-toggle {
+  display: none;
+  border: 0;
+  background: rgba(232, 111, 169, 0.12);
+  color: var(--e2b-rose-strong, #e86fa9);
+  width: 44px;
+  height: 44px;
+  min-width: 44px;
+  min-height: 44px;
+  border-radius: 12px;
+  font-size: 1.25rem;
+  line-height: 1;
+  cursor: pointer;
+  flex: 0 0 auto;
+}
+.portal-nav-backdrop {
+  display: none;
+}
+.e2b-taxonomy-summary {
+  display: none;
+  align-items: center;
+  justify-content: space-between;
+  gap: 0.65rem;
+  margin: 0 0 0.75rem;
+  padding: 0.65rem 0.85rem;
+  border-radius: 14px;
+  background: linear-gradient(180deg, #fff8fc 0%, #ffffff 100%);
+  border: 1px solid rgba(232, 111, 169, 0.28);
+}
+.e2b-taxonomy-summary-text {
+  margin: 0;
+  font-weight: 800;
+  font-size: 0.95rem;
+  color: var(--e2b-ink, #3a2a40);
+  min-width: 0;
+  overflow-wrap: anywhere;
+}
+.e2b-taxonomy-change {
+  flex: 0 0 auto;
+  min-height: 44px;
+}
+
 @media (max-width: 900px) {
+  body[data-portal-view] > header {
+    min-height: 52px;
+    height: 52px;
+    margin-bottom: 0;
+  }
+  body[data-portal-view] > header .container.wrap,
+  body[data-portal-view] > main.container {
+    padding-inline: 12px;
+  }
   .portal-shell {
     grid-template-columns: 1fr;
-    padding: 0 16px 1.25rem;
+    padding: 0 12px 1rem;
     min-height: auto;
+    gap: 0.5rem;
+  }
+  .portal-stage-head {
+    position: sticky;
+    top: 0;
+    z-index: 55;
+    min-height: 52px;
+    margin: 0 0 0.55rem;
+    padding: 0.35rem 0;
+    background: rgba(255, 250, 252, 0.94);
+    backdrop-filter: blur(8px);
+  }
+  .portal-nav-toggle {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    position: relative;
+    z-index: 56;
+  }
+  .portal-view-title {
+    font-size: 1.05rem;
+    flex: 1 1 auto;
+    min-width: 0;
+  }
+  .portal-stage-actions .btn {
+    min-height: 44px;
   }
   .portal-rail {
-    position: static;
-    width: 100%;
+    position: fixed;
+    top: 0;
+    bottom: 0;
+    inset-inline-end: 0;
+    width: min(280px, 86vw);
     max-width: none;
+    z-index: 50;
+    margin: 0;
+    border-radius: 18px 0 0 18px;
+    transform: translateX(105%);
+    transition: transform 0.22s ease, visibility 0.22s ease;
+    overflow-y: auto;
+    -webkit-overflow-scrolling: touch;
+    pointer-events: none;
+    visibility: hidden;
+  }
+  html[dir='rtl'] .portal-rail {
+    border-radius: 0 18px 18px 0;
+    transform: translateX(105%);
+  }
+  body.portal-nav-open .portal-rail {
+    transform: translateX(0);
+    pointer-events: auto;
+    visibility: visible;
+  }
+  .portal-nav-backdrop {
+    display: block;
+    position: fixed;
+    inset: 0;
+    z-index: 45;
+    background: rgba(40, 24, 40, 0.35);
+  }
+  .portal-nav-backdrop[hidden] {
+    display: none !important;
   }
   .portal-nav {
-    flex-direction: row;
+    flex-direction: column;
     flex-wrap: nowrap;
-    overflow-x: auto;
-    -webkit-overflow-scrolling: touch;
+    overflow: visible;
   }
   .portal-nav .e2b-nav-link {
     flex: 0 0 auto;
-    white-space: nowrap;
+    white-space: normal;
+    min-height: 44px;
+    display: flex;
+    align-items: center;
   }
   body.e2b-product-mode #catalogForm,
   body.e2b-service-mode #catalogForm,
   body.e2b-service-mode #serviceForm {
     max-width: 100%;
+  }
+  /* Taxonomy: finger-scroll row with next-item peek */
+  .e2b-taxonomy-picker .e2b-circle-list-horizontal,
+  .e2b-taxonomy-picker .e2b-subcircles {
+    display: flex;
+    flex-direction: row;
+    flex-wrap: nowrap;
+    gap: 0.75rem;
+    overflow-x: auto;
+    overflow-y: hidden;
+    -webkit-overflow-scrolling: touch;
+    scroll-snap-type: x proximity;
+    padding: 0.35rem 1.1rem 0.65rem 0.15rem;
+  }
+  .e2b-taxonomy-picker .e2b-circle {
+    scroll-snap-align: start;
+  }
+  body.e2b-taxonomy-collapsed .e2b-taxonomy-picker,
+  body.e2b-taxonomy-collapsed #e2bLaneSwitcherList {
+    display: none !important;
+  }
+  body.e2b-taxonomy-collapsed .e2b-taxonomy-summary {
+    display: flex;
+  }
+  body.e2b-product-mode.portal-mode-edit #catalogForm {
+    padding-bottom: calc(5.75rem + env(safe-area-inset-bottom, 0px));
+  }
+  body.e2b-product-mode.portal-mode-edit [data-section-role='editor-actions'],
+  body.e2b-product-mode.portal-mode-edit [data-testid='e2b-editor-actions'],
+  body.e2b-product-mode.portal-mode-edit .e2b-editor-actions {
+    position: fixed;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    z-index: 20;
+    margin: 0;
+    border-radius: 16px 16px 0 0;
+    padding: 0.75rem 12px calc(0.75rem + env(safe-area-inset-bottom, 0px));
+    box-shadow: 0 -10px 28px rgba(160, 100, 150, 0.14);
+  }
+  body.e2b-product-mode.portal-mode-edit [data-section-role='editor-actions'] .btn,
+  body.e2b-product-mode.portal-mode-edit [data-testid='e2b-editor-actions'] .btn,
+  body.e2b-product-mode .e2b-mobile-step {
+    min-height: 44px;
+  }
+  #catalogSection.card,
+  #e2bEditorPanel.e2b-panel,
+  #e2bListPanel.e2b-panel {
+    padding: 0.85rem 0.75rem;
+    box-shadow: none;
+  }
+  .catalog-product-card {
+    align-items: start;
+  }
+  .catalog-product-name {
+    overflow-wrap: anywhere;
+  }
+  .catalog-product-actions {
+    width: 100%;
+  }
+  .catalog-card-action {
+    min-height: 44px;
   }
 }
 

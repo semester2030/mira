@@ -255,6 +255,9 @@
     }
     if (window.MiraE2BProductShell) {
       if (typeof MiraE2BProductShell.enableProductMode === 'function') MiraE2BProductShell.enableProductMode();
+      if (typeof MiraE2BProductShell.expandTaxonomyPicker === 'function') {
+        MiraE2BProductShell.expandTaxonomyPicker();
+      }
       if (typeof MiraE2BProductShell.focusEditor === 'function') MiraE2BProductShell.focusEditor();
     }
     paintLaneSwitcher();

@@ -214,6 +214,7 @@
       history.pushState({ portal: true, view: view, mode: mode }, '', nextHash);
     }
     applyVisibility(view, mode);
+    setMobileNavOpen(false);
     return true;
   }
 
@@ -285,6 +286,7 @@
     var head = document.createElement('div');
     head.className = 'portal-stage-head';
     head.innerHTML =
+      '<button type="button" class="portal-nav-toggle" id="portalNavToggle" data-testid="portal-nav-toggle" aria-label="فتح القائمة" aria-controls="portalShell" aria-expanded="false">☰</button>' +
       '<h1 id="portalViewTitle" class="portal-view-title">منتجاتي</h1>' +
       '<div class="portal-stage-actions" id="portalStageActions"></div>';
     stage.appendChild(head);
@@ -297,9 +299,53 @@
     while (app.firstChild) content.appendChild(app.firstChild);
     stage.appendChild(content);
 
+    var backdrop = document.createElement('div');
+    backdrop.id = 'portalNavBackdrop';
+    backdrop.className = 'portal-nav-backdrop';
+    backdrop.setAttribute('data-testid', 'portal-nav-backdrop');
+    backdrop.hidden = true;
+
     shell.appendChild(rail);
     shell.appendChild(stage);
     app.appendChild(shell);
+    app.appendChild(backdrop);
+    wireMobileNav(rail, backdrop);
+  }
+
+  function setMobileNavOpen(open) {
+    document.body.classList.toggle('portal-nav-open', !!open);
+    var toggle = document.getElementById('portalNavToggle');
+    var backdrop = document.getElementById('portalNavBackdrop');
+    if (toggle) {
+      toggle.setAttribute('aria-expanded', open ? 'true' : 'false');
+      toggle.setAttribute('aria-label', open ? 'إغلاق القائمة' : 'فتح القائمة');
+    }
+    if (backdrop) backdrop.hidden = !open;
+  }
+
+  function wireMobileNav(rail, backdrop) {
+    var toggle = document.getElementById('portalNavToggle');
+    if (toggle && toggle.dataset.wired !== '1') {
+      toggle.dataset.wired = '1';
+      toggle.addEventListener('click', function (e) {
+        e.preventDefault();
+        setMobileNavOpen(!document.body.classList.contains('portal-nav-open'));
+      });
+    }
+    if (backdrop && backdrop.dataset.wired !== '1') {
+      backdrop.dataset.wired = '1';
+      backdrop.addEventListener('click', function () {
+        setMobileNavOpen(false);
+      });
+    }
+    if (rail && rail.dataset.navCloseWired !== '1') {
+      rail.dataset.navCloseWired = '1';
+      rail.addEventListener('click', function (e) {
+        var a = e.target && e.target.closest ? e.target.closest('[data-portal-nav]') : null;
+        if (!a) return;
+        setMobileNavOpen(false);
+      });
+    }
   }
 
   function wrapServicePanels() {
