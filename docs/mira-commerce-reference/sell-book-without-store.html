@@ -25,7 +25,7 @@
     <h1>البيع والحجز عبر ميرا دون متجر خاص</h1>
     <p class="muted">دراسة مبنية على الكود + إثبات خادم على قاعدة اختبار محلية معزولة — بدون تنفيذ ميزات ودون لمس بيانات الإنتاج.</p>
     <p class="muted">قاعدة الإثبات: <code>mira_sbws_proof_test</code> @ 127.0.0.1 · سكربت <code>sell-book-without-store.proof.ts</code> · تاريخ: 2026-11-14</p>
-    <p class="muted">طبقة الواجهة (Flutter / بوابة المتصفح): <strong>لم تُشغَّل في هذه الجولة</strong> — الأدلة أدناه خادم/خدمة ما لم يُذكر غير ذلك.</p>
+    <p class="muted">بعد تصحيح صاحب المشروع: بائع المقاطع السابقة = حساب المطوّر «ميرا» (من رفعها) — <strong>لا دعوة ملكية ولا نقل</strong>. جولة الإغلاق: محرر حقيقي + أزرار بوابة ميرا + دخول إدارة من شاشة المفتاح. Discover على الجوال: <strong>لم يُغلق</strong>.</p>
   </header>
 
   <section>
@@ -174,10 +174,10 @@
       <tr><td>طلب موعد → قبول → تأكيد العميلة</td><td>HTTP عميلة+صالون</td><td><span class="tag partial">ثبت من الخادم فقط</span></td><td><code>MB-261114-P5K68Z</code> requested→confirmed؛ البائع 404؛ إلغاء يحرّر الموعد</td><td>نفس الملفات</td></tr>
       <tr><td>«عرض فقط» vs رابط خارجي</td><td>مسار محرر (coerce)</td><td><span class="tag partial">ثبت من الخادم فقط</span></td><td><code>display</code> يُحفظ <code>external</code> — لا فرق تخزين عن رابط خارجي</td><td><code>editor-drafts.service.ts</code></td></tr>
       <tr><td>مقطعان لنفس العرض + عرض مستقل</td><td>خادم</td><td><span class="tag partial">ثبت من الخادم فقط</span></td><td>تفعيل المنتج يغيّر الاثنين؛ المستقل يبقى external</td><td>HTTP_JOURNEY</td></tr>
-      <tr><td>إسناد عرض إداري لصاحبه</td><td>واجهة/API</td><td><span class="tag missing">فشل</span></td><td>آخر نجاح: إنشاء عرض إداري بـ partner_id ميرا. أول فشل: لا مسار claim. السبب: لا API دعوة. أقل تعديل: رحلة دعوة+قبول+ربط ملكية</td><td>STOP</td></tr>
+      <tr><td>إسناد عرض إداري / دعوة ملكية</td><td>—</td><td><span class="tag ext">خارج النطاق</span></td><td>تصحيح صاحب المشروع: المقاطع السابقة مملوكة لحساب ميرا البائع أصلًا — لا يُبنى claim</td><td>ملغى</td></tr>
       <tr><td>سباق آخر قطعة / موعد / ضغط مزدوج</td><td>HTTP</td><td><span class="tag partial">ثبت من الخادم فقط</span></td><td>فائز واحد OUT_OF_STOCK؛ طلب معلّق واحد فقط (BOOKING_SLOT_FULL)؛ idempotent 201/201</td><td>HTTP_JOURNEY</td></tr>
-      <tr><td>فيديو Discover على الجوال</td><td>Flutter</td><td><span class="tag ext">لم يُختبر</span></td><td>الافتراضي → إنتاج؛ مرفوض لمس الإنتاج</td><td><code>MiraApiConfig</code></td></tr>
-      <tr><td>متصفح بوابة الشركاء</td><td>UI</td><td><span class="tag ext">لم يُختبر</span></td><td>الانتقالات عبر HTTP API فقط</td><td>حد الإثبات</td></tr>
+      <tr><td>فيديو Discover على الجوال</td><td>Flutter</td><td><span class="tag ext">لم يُختبر</span></td><td>مانع: دخول العميلة (OTP/Firebase). هوك <code>MIRA_USE_AUTH_EMULATOR</code> موجود؛ MiraRC2 أقلع؛ الرحلة من الشاشة لم تُكمَل</td><td>شاشة الدخول</td></tr>
+      <tr><td>متصفح بوابة ميرا البائع + الإدارة</td><td>UI</td><td><span class="tag ok">ثبت من الواجهة</span></td><td>انظر §٨ — أزرار حقيقية + دخول مفتاح الإدارة</td><td><code>mira-seller/*</code></td></tr>
     </table>
     <table>
       <tr><th>أمر</th><th>النتيجة</th><th>الدليل</th></tr>
@@ -197,7 +197,7 @@
       <tr><td>سباقات + ضغط مزدوج</td><td><span class="tag partial">ثبت من الخادم فقط</span></td><td>HTTP_JOURNEY</td></tr>
       <tr><td>رحلة من فيديو التطبيق / متصفح البوابة</td><td><span class="tag ext">لم يُختبر</span></td><td>يحتاج API محلي + جلسة UI بلا إنتاج</td></tr>
       <tr><td>display persisted كقيمة مستقلة</td><td><span class="tag missing">فشل/ناقص</span></td><td>يُحوَّل إلى external</td></tr>
-      <tr><td>دعوة ملكية عرض إداري</td><td><span class="tag missing">فشل</span></td><td>STOP</td></tr>
+      <tr><td>دعوة ملكية عرض إداري</td><td><span class="tag ext">خارج النطاق</span></td><td>ميرا هي البائع أصلًا</td></tr>
     </table>
   </section>
 
@@ -213,28 +213,45 @@
       <tr><td>لوحة الإدارة ترى نفس رقمي الطلب والحجز</td><td><span class="tag ok">ثبت من الواجهة</span></td><td>ui/09–10</td></tr>
       <tr><td>محرر: عرض فقط=external؛ تفعيل internal_cod؛ مستقل يبقى external</td><td><span class="tag ok">ثبت من الواجهة</span></td><td>ui/11</td></tr>
       <tr><td>إنشاء الطلب/الحجز من فيديو Discover على الجوال</td><td><span class="tag ext">لم يُختبر</span></td><td>مانع: Firebase على العميل — أُنشئا عبر API ثم أُكملا على البوابات</td></tr>
-      <tr><td>إسناد عرض ميرا لصاحبه</td><td><span class="tag missing">فشل</span></td><td>لا claim UI</td></tr>
+      <tr><td>إسناد / claim</td><td><span class="tag ext">خارج النطاق</span></td><td>ميرا البائع = رافع المقاطع</td></tr>
       <tr><td>commerce.concurrency كاملة بعد E2</td><td><span class="tag ok">ثبت من الخادم فقط</span></td><td>exit 0</td></tr>
     </table>
   </section>
 
   <section>
-    <h2>أربع إجابات مباشرة</h2>
+    <h2>٨) إغلاق ميرا البائع (بعد 444081e) — بلا claim</h2>
+    <p>سكربت <code>sell-book-without-store.mira-seller.closure.ts</code> على <code>mira_sbws_proof_test</code>. البائع = <code>type=developer</code> اسمه «ميرا»، بلا <code>storeUrl</code>. دخول الشريك من نموذج البريد/كلمة المرور. تفعيل العرض القديم من المحرر: «فتح في النموذج» → «بدون شراء» → تفعيل COD → «نشر الآن». تنفيذ الطلب والحجز بأزرار البوابة الظاهرة (لا <code>page.evaluate</code>). الإدارة: شاشة المفتاح → تفاصيل الطلب والحجز.</p>
+    <p>مراجع التشغيل: طلب <code>MO-261114-8LEDWL</code> · حجز <code>MB-261114-TNVZQC</code> · أدلة <code>evidence/sell-book-without-store/mira-seller/</code> + <code>MIRA_SELLER_CLOSURE.md</code>.</p>
+    <table>
+      <tr><th>الخطوة</th><th>التصنيف</th><th>ما حدث</th><th>الدليل</th></tr>
+      <tr><td>تمثيل ميرا كبائع developer</td><td><span class="tag partial">ثبت من الخادم فقط</span></td><td>partnerId ثابت في التشغيل؛ storeUrl=null؛ canSellProducts</td><td>MIRA_SELLER_CLOSURE</td></tr>
+      <tr><td>دخول بوابة الشريك بصفة ميرا</td><td><span class="tag ok">ثبت من الواجهة</span></td><td>نموذج الدخول → لوحة «ميرا»</td><td>mira-seller/01_*.png</td></tr>
+      <tr><td>تفعيل عرض قديم من المحرر</td><td><span class="tag ok">ثبت من الواجهة</span></td><td>عباية قديمة → internal_cod؛ المستقل بقي external؛ معرّفات الوسائط ثابتة</td><td>02*.png + BEFORE/AFTER_IDS</td></tr>
+      <tr><td>طلب COD → قبول…تحصيل من أزرار ميرا</td><td><span class="tag ok">ثبت من الواجهة</span> (إنشاء الطلب <span class="tag partial">API</span>)</td><td>MO-261114-8LEDWL → delivered+collected؛ S=1 M=3</td><td>03–08_*.png</td></tr>
+      <tr><td>حجز → تأكيد → إتمام من أزرار ميرا المقدّم</td><td><span class="tag ok">ثبت من الواجهة</span> (طلب الموعد <span class="tag partial">API</span>)</td><td>MB-261114-TNVZQC → completed؛ إلغاء ثانٍ يحرّر الموعد</td><td>09–11_*.png</td></tr>
+      <tr><td>الإدارة تفتح تفاصيل العمليتين</td><td><span class="tag ok">ثبت من الواجهة</span></td><td>دخول مفتاح → تفاصيل الطلب (شريك=ميرا) + قائمة الحجز</td><td>12–15_*.png</td></tr>
+      <tr><td>Flutter: فيديو اكتشفي → سلة → طلباتي</td><td><span class="tag ext">لم يُختبر</span></td><td>مانع: شاشة دخول العميلة (OTP). MiraRC2 أقلع؛ هوك محاكي المصادقة جاهز؛ لم يُغلق المسار من الشاشات</td><td>main.dart MIRA_USE_AUTH_EMULATOR</td></tr>
+    </table>
+  </section>
+
+  <section>
+    <h2>أربع إجابات مباشرة (معيار الإغلاق الحالي)</h2>
     <ol>
-      <li><strong>هل اشترت العميلة من الفيديو ووصل الطلب للبائع بلا متجر؟</strong>
-        <span class="tag ext">لم يُختبر من الجوال</span> /
-        <span class="tag ok">نعم عبر API ثم بوابة البائع</span>.
-        دليل: <code>MO-261114-Y9BP7T</code> ظهر في بوابة البائع وأُكمل حتى <code>collected</code>؛ الإدارة تراه؛ الصالون لا يراه؛ مقاس M لم ينقص.</li>
-      <li><strong>هل حجزت من الفيديو وأكّد الشريك وأتمّه من واجهته؟</strong>
-        <span class="tag ext">لم يُختبر من الجوال</span> /
-        <span class="tag ok">نعم تأكيد+إتمام من بوابة الصالون</span>.
-        دليل: <code>MB-261114-P8KXY2</code> <code>requested</code>→<code>confirmed</code>؛ إتمام حجز بعد وقت البدء من الواجهة؛ البائع لا يرى الحجز.</li>
-      <li><strong>هل تستطيع الإدارة تفعيل عرض قديم لصاحبه، وأي مقاطع يتأثر زرها؟</strong>
-        <span class="tag missing">لا — فشل claim</span>.
-        إن ملك الشريك العرض: تفعيل المنتج من المحرر يؤثر على مقاطعه؛ العرض المستقل يبقى <code>external</code>. <code>display</code> لا يُحفظ كقيمة مستقلة.</li>
-      <li><strong>هل اجتازت مجموعة التزامن كاملة بعد إصلاح E2؟</strong>
-        <span class="tag ok">نعم</span> — <code>commerce.concurrency.schema-tests</code> exit 0 مع E2 PASS.</li>
+      <li><strong>هل فُعّل عرض قديم من المحرر، وما المقاطع التي تغيّر زرها؟</strong>
+        <span class="tag ok">نعم من المحرر الحقيقي</span>.
+        التفعيل على <em>صف المنتج</em> (<code>purchaseMode=internal_cod</code>) فيؤثّر على مقطعي «عباية قديمة ميرا» معًا؛ المنتج المستقل بقي «عرض فقط» (<code>external</code>). معرّفات الوسائط لم تتغير. ظهور زر «أضيفي للسلة» على الجوال: <span class="tag ext">لم يُشاهد من Flutter</span>.</li>
+      <li><strong>هل اشترت العميلة من الفيديو ووصل نفس الطلب إلى حساب ميرا البائع حتى التحصيل؟</strong>
+        <span class="tag ext">ليس من فيديو الجوال</span> /
+        <span class="tag ok">نعم نفس الطلب إلى ميرا حتى التحصيل من أزرار البوابة</span>.
+        دليل: <code>MO-261114-8LEDWL</code> partner=ميرا → قبول→تجهيز→توصيل→تسليم→تأكيد استلام النقد؛ الإدارة تعرض الشريك «ميرا» وحالة حُصِّل.</li>
+      <li><strong>هل طلبت العميلة موعدًا ووصل نفس الحجز إلى مقدّم الخدمة حتى الإتمام؟</strong>
+        <span class="tag ext">ليس من فيديو الجوال</span> /
+        <span class="tag ok">نعم نفس الحجز إلى ميرا المقدّم حتى الإتمام من الأزرار</span>.
+        دليل: <code>MB-261114-TNVZQC</code> تأكيد ثم «اكتمل» (ساعة اختبار بعد التأكيد)؛ إلغاء حجز ثانٍ أعاد الموعد متاحًا.</li>
+      <li><strong>هل استطاعت الإدارة فتح تفاصيل العمليتين من واجهتها؟</strong>
+        <span class="tag ok">نعم</span> — دخول من شاشة المفتاح ثم تفاصيل <code>MO-261114-8LEDWL</code> (شريك ميرا) وقائمة <code>MB-261114-TNVZQC</code>. لقطات 12–15.</li>
     </ol>
+    <p><strong>إعلان الإغلاق:</strong> رحلة بوابة ميرا البائع/المقدّم + المحرر + لوحة الإدارة <span class="tag ok">مغلقة من الشاشات</span>. رحلة Flutter من فيديو «اكتشفي» <span class="tag ext">مفتوحة</span> — المانع: شاشة دخول العميلة (OTP/Firebase) رغم جاهزية المحاكي والهوك.</p>
   </section>
 
   <footer class="footer-note">

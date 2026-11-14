@@ -1,0 +1,120 @@
+{
+  "run": "sbmiramwfq7ypq",
+  "database": "mira_sbws_proof_test",
+  "apiBase": "http://127.0.0.1:49686/api/v1",
+  "miraPartnerId": "98175826-524a-4aa4-bfa5-0f6d62b90b51",
+  "refs": {
+    "orderPublic": "MO-261114-8LEDWL",
+    "bookingPublic": "MB-261114-TNVZQC",
+    "orderId": "539c1505-d779-4d75-ade2-343f250e740d",
+    "bookingId": "f0f296ea-e3d2-4dbf-bdda-6282b67b5169"
+  },
+  "beforeIds": {
+    "productId": "04a92df1-a88d-4b9c-b5ce-ab4dc9c2d9d0",
+    "ownerPartnerId": "98175826-524a-4aa4-bfa5-0f6d62b90b51",
+    "media": [
+      "d81b05c4-3cf2-424d-a615-c2887e89fccc",
+      "feaa0b71-c023-49b6-ac35-ddf65d25f39f"
+    ],
+    "independentId": "ca2bf6b1-9085-4002-999d-38f162c9ca30",
+    "purchaseMode": "external"
+  },
+  "after": {
+    "purchaseMode": "internal_cod",
+    "media": [
+      "d81b05c4-3cf2-424d-a615-c2887e89fccc",
+      "feaa0b71-c023-49b6-ac35-ddf65d25f39f"
+    ],
+    "independent": "external"
+  },
+  "rows": [
+    {
+      "step": "تمثيل حساب ميرا كبائع (developer) بلا storeUrl",
+      "actor": "seed",
+      "classification": "ثبت من الخادم فقط",
+      "actual": "partnerId=98175826-524a-4aa4-bfa5-0f6d62b90b51 type=developer nameAr=ميرا storeUrl=null email=mira-seller-sbmiramwfq7ypq@test.local",
+      "ok": true,
+      "evidence": "نفس علاقة type=developer المعتمدة لصلاحية البيع+الخدمة"
+    },
+    {
+      "step": "دخول بوابة الشريك بصفة ميرا البائع (نموذج الدخول)",
+      "actor": "mira seller UI",
+      "classification": "ثبت من الواجهة",
+      "actual": "name=ميرا url=http://127.0.0.1:18775/dashboard.html?api-base=http%3A%2F%2F127.0.0.1%3A49686%2Fapi%2Fv1",
+      "ok": true,
+      "evidence": "mira-seller/01_mira_seller_dashboard.png"
+    },
+    {
+      "step": "تفعيل شراء العرض القديم من المحرر الحقيقي (فتح في النموذج → تفعيل COD → نشر الآن)",
+      "actor": "mira editor UI",
+      "classification": "ثبت من الواجهة",
+      "actual": "mode=internal_cod mediaUnchanged=true indep=external editorUiOk=true",
+      "ok": true,
+      "evidence": "mira-seller/02*.png + BEFORE/AFTER_IDS — التفعيل على صف المنتج؛ المستقل عرض فقط"
+    },
+    {
+      "step": "طلب من عرض ميرا القديم — المستلم partner_id = ميرا",
+      "actor": "customer API (Flutter Discover لم يُغلق بعد)",
+      "classification": "ثبت من الخادم فقط",
+      "actual": "ref=MO-261114-8LEDWL partner=98175826-524a-4aa4-bfa5-0f6d62b90b51 nameAr=ميرا",
+      "ok": true,
+      "evidence": "orderId=539c1505-d779-4d75-ade2-343f250e740d"
+    },
+    {
+      "step": "ميرا البائع يرى الطلب في البوابة",
+      "actor": "mira seller UI",
+      "classification": "ثبت من الواجهة",
+      "actual": "sees MO-261114-8LEDWL=true",
+      "ok": true,
+      "evidence": "mira-seller/03_mira_orders_new.png"
+    },
+    {
+      "step": "ضغط أزرار القبول→التجهيز→التوصيل→التسليم→التحصيل",
+      "actor": "mira seller UI buttons",
+      "classification": "ثبت من الواجهة",
+      "actual": "fulfillment=delivered payment=collected S=1 M=3",
+      "ok": true,
+      "evidence": "mira-seller/04–08_*.png — لا page.evaluate للانتقالات"
+    },
+    {
+      "step": "طلب موعد على خدمة ميرا — status=requested",
+      "actor": "customer API",
+      "classification": "ثبت من الخادم فقط",
+      "actual": "ref=MB-261114-TNVZQC partner=98175826-524a-4aa4-bfa5-0f6d62b90b51",
+      "ok": true,
+      "evidence": "bookingId=f0f296ea-e3d2-4dbf-bdda-6282b67b5169"
+    },
+    {
+      "step": "تأكيد ثم إتمام نفس الحجز من أزرار البوابة",
+      "actor": "mira provider UI buttons",
+      "classification": "ثبت من الواجهة",
+      "actual": "status=completed (ساعة اختبار: تحريك startsAt للماضي بعد التأكيد لنفس MB-261114-TNVZQC)",
+      "ok": true,
+      "evidence": "mira-seller/09–11_*.png"
+    },
+    {
+      "step": "إلغاء حجز ثانٍ وتحرير الموعد",
+      "actor": "customer API",
+      "classification": "ثبت من الخادم فقط",
+      "actual": "cancel=cancelled slotFree=true",
+      "ok": true,
+      "evidence": "second=MB-261114-ECTB4T"
+    },
+    {
+      "step": "الإدارة: دخول من شاشة المفتاح ثم تفاصيل الطلب والحجز",
+      "actor": "admin UI",
+      "classification": "ثبت من الواجهة",
+      "actual": "shellOpen=true order=true miraSellerVisible=true booking=true refs=MO-261114-8LEDWL/MB-261114-TNVZQC",
+      "ok": true,
+      "evidence": "mira-seller/12–15_*.png"
+    },
+    {
+      "step": "Flutter Discover من فيديو → سلة → طلباتي",
+      "actor": "iOS MiraRC2",
+      "classification": "لم يُختبر",
+      "actual": "أُضيف MIRA_USE_AUTH_EMULATOR في main.dart؛ إغلاق الشراء من الجوال يتطلب تشغيل المحاكي+التطبيق بنفس apiBase — يُتابع في خطوة التشغيل إن نجحت",
+      "ok": false,
+      "evidence": "lib/main.dart auth emulator hook"
+    }
+  ]
+}

@@ -3,6 +3,7 @@ import 'dart:typed_data';
 import 'package:flutter/material.dart';
 import 'package:flutter_localizations/flutter_localizations.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:firebase_auth/firebase_auth.dart';
 import 'package:firebase_core/firebase_core.dart';
 import 'firebase_options.dart';
 import 'core/config/mira_features.dart';
@@ -99,6 +100,13 @@ void main() async {
     await Firebase.initializeApp(
       options: DefaultFirebaseOptions.currentPlatform,
     );
+    // Isolated journeys only: --dart-define=MIRA_USE_AUTH_EMULATOR=true
+    // Host machine Auth emulator (default 127.0.0.1:9099). Never enable in production builds.
+    if (const bool.fromEnvironment('MIRA_USE_AUTH_EMULATOR')) {
+      // ignore: avoid_print
+      print('MIRA_USE_AUTH_EMULATOR: connecting Firebase Auth emulator at 127.0.0.1:9099');
+      await FirebaseAuth.instance.useAuthEmulator('127.0.0.1', 9099);
+    }
   } catch (e, st) {
     debugPrint('Firebase.initializeApp failed: $e\n$st');
   }

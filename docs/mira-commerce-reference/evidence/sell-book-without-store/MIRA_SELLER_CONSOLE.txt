@@ -1,0 +1,18 @@
+npm warn Unknown env config "devdir". This will stop working in the next major version of npm.
+[PASS][ثبت من الخادم فقط] تمثيل حساب ميرا كبائع (developer) بلا storeUrl — partnerId=98175826-524a-4aa4-bfa5-0f6d62b90b51 type=developer nameAr=ميرا storeUrl=null email=mira-seller-sbmiramwfq7ypq@test.local
+[PASS][ثبت من الواجهة] دخول بوابة الشريك بصفة ميرا البائع (نموذج الدخول) — name=ميرا url=http://127.0.0.1:18775/dashboard.html?api-base=http%3A%2F%2F127.0.0.1%3A49686%2Fapi%2Fv1
+[PASS][ثبت من الواجهة] تفعيل شراء العرض القديم من المحرر الحقيقي (فتح في النموذج → تفعيل COD → نشر الآن) — mode=internal_cod mediaUnchanged=true indep=external editorUiOk=true
+[PASS][ثبت من الخادم فقط] طلب من عرض ميرا القديم — المستلم partner_id = ميرا — ref=MO-261114-8LEDWL partner=98175826-524a-4aa4-bfa5-0f6d62b90b51 nameAr=ميرا
+[PASS][ثبت من الواجهة] ميرا البائع يرى الطلب في البوابة — sees MO-261114-8LEDWL=true
+[PASS][ثبت من الواجهة] ضغط أزرار القبول→التجهيز→التوصيل→التسليم→التحصيل — fulfillment=delivered payment=collected S=1 M=3
+[PASS][ثبت من الخادم فقط] طلب موعد على خدمة ميرا — status=requested — ref=MB-261114-TNVZQC partner=98175826-524a-4aa4-bfa5-0f6d62b90b51
+[PASS][ثبت من الواجهة] تأكيد ثم إتمام نفس الحجز من أزرار البوابة — status=completed (ساعة اختبار: تحريك startsAt للماضي بعد التأكيد لنفس MB-261114-TNVZQC)
+[PASS][ثبت من الخادم فقط] إلغاء حجز ثانٍ وتحرير الموعد — cancel=cancelled slotFree=true
+[PASS][ثبت من الواجهة] الإدارة: دخول من شاشة المفتاح ثم تفاصيل الطلب والحجز — shellOpen=true order=true miraSellerVisible=true booking=true refs=MO-261114-8LEDWL/MB-261114-TNVZQC
+[FAIL][لم يُختبر] Flutter Discover من فيديو → سلة → طلباتي — أُضيف MIRA_USE_AUTH_EMULATOR في main.dart؛ إغلاق الشراء من الجوال يتطلب تشغيل المحاكي+التطبيق بنفس apiBase — يُتابع في خطوة التشغيل إن نجحت
+MIRA seller closure done {
+  orderPublic: 'MO-261114-8LEDWL',
+  bookingPublic: 'MB-261114-TNVZQC',
+  orderId: '539c1505-d779-4d75-ade2-343f250e740d',
+  bookingId: 'f0f296ea-e3d2-4dbf-bdda-6282b67b5169'
+}

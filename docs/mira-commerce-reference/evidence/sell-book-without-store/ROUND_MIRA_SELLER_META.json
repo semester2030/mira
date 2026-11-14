@@ -1,0 +1,33 @@
+{
+  "round": "mira-seller-closure",
+  "baseCommit": "444081e",
+  "database": "mira_sbws_proof_test",
+  "script": "mira-api/src/marketplace/sell-book-without-store.mira-seller.closure.ts",
+  "refs": {
+    "orderPublic": "MO-261114-8LEDWL",
+    "bookingPublic": "MB-261114-TNVZQC"
+  },
+  "miraSeller": {
+    "type": "developer",
+    "nameAr": "ميرا",
+    "storeUrl": null,
+    "claimPath": "not_built_by_design"
+  },
+  "closedFromScreens": [
+    "partner login form",
+    "catalog editor open+COD activate+publish",
+    "partner fulfillment buttons accept→collect",
+    "partner booking confirm+complete buttons",
+    "admin login key screen → order detail + booking list"
+  ],
+  "open": [
+    {
+      "screen": "Flutter login / Discover video",
+      "action": "customer OTP login → أضيفي للسلة → طلباتي",
+      "actual": "MiraRC2 booted; MIRA_USE_AUTH_EMULATOR hook present; full phone OTP session not completed this run"
+    }
+  ],
+  "regression": {
+    "commerce.concurrency (incl E2)": "PASS on 444081e package"
+  }
+}
