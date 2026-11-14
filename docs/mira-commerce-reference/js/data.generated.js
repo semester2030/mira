@@ -2727,6 +2727,17 @@ window.MIRA_STUDY = {
         "بلا تنفيذ ميزات وبلا تغيير بيانات إنتاج"
       ],
       "baselineCommit": "dd836b9c20805d0a2f0b55da21110eb8668f67ec"
+    },
+    {
+      "version": "إثبات — بيع وحجز بلا متجر على DB اختبار",
+      "date": "2026-11-14T03:40:00+03:00",
+      "changesAr": [
+        "قاعدة mira_sbws_proof_test + sell-book-without-store.proof.ts",
+        "أول بيع COD وأول حجز مؤكَّد على الخادم مع عزل الشركاء وسباقات",
+        "commerce.service وcommerce.http PASS؛ واجهة Flutter لم تُشغَّل؛ claim إداري متوقف",
+        "تحديث صفحة الدراسة بجدول الخطوات وثلاث إجابات"
+      ],
+      "baselineCommit": "a712b24"
     }
   ],
   "categories": [
@@ -5191,6 +5202,10 @@ window.MIRA_STUDY = {
   ],
   "sectionContent": {
     "s0": [
+      {
+        "type": "callout",
+        "text": "2026-11-14 — إثبات مساري البيع/الحجز بلا متجر على mira_sbws_proof_test: أول بيع وأول حجز اكتملا على الخادم؛ تفعيل عرض إداري لصاحبه من الواجهة متوقف (لا claim). الصفحة: sell-book-without-store.html."
+      },
       {
         "type": "callout",
         "text": "2026-11-14 — دراسة «البيع والحجز عبر ميرا دون متجر خاص» أُضيفت كصفحة رسمية: sell-book-without-store.html (كود + اختبارات معزولة؛ بلا تنفيذ ميزات وبلا لمس إنتاج)."

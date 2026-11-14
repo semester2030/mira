@@ -1,0 +1,147 @@
+{
+  "run": "sbwsmwfoe0nx",
+  "database": "mira_sbws_proof_test",
+  "databaseUrlHostLocal": true,
+  "layer": "server-service-proof",
+  "uiFlutterNotRun": true,
+  "answers": {
+    "firstSaleCompleted": true,
+    "firstBookingCompleted": true,
+    "adminCanActivateLegacyOfferForOwnerViaUi": false,
+    "firstUnprovenStops": [
+      {
+        "question": "تفعيل عرض قديم لصاحبه من الواجهة",
+        "stop": "لا مسار دعوة/claim/نقل ملكية من API/واجهة ضمن النطاق",
+        "needed": "تصميم وتنفيذ رحلة دعوة ملكية + قبول الشريك + ربط partner_id دون تعديل DB يدوي"
+      }
+    ]
+  },
+  "steps": [
+    {
+      "step": "إنشاء حسابات معزولة بلا storeUrl",
+      "actor": "harness",
+      "layer": "server",
+      "expected": "عميلة + بائع brand + صالون + شريك إداري؛ storeUrl=null",
+      "actual": "seller.storeUrl=null salon.storeUrl=null canCreateProduct=true canCreateService=true",
+      "ok": true,
+      "evidence": "partners 49b86ab8-bdb0-4b64-b1e0-9e117cdccd6c / e58e5cbd-ad91-4428-81a3-363b4584f96c"
+    },
+    {
+      "step": "طلب COD: رؤية العميلة والبائع والإدارة؛ الصالون لا يرى",
+      "actor": "customer/seller/admin/salon",
+      "layer": "server",
+      "expected": "نفس رقم الطلب لدى العميلة والبائع والإدارة؛ الصالون 404/قائمة فارغة منه",
+      "actual": "publicNumber=MO-261114-EM3GK3 cust=MO-261114-EM3GK3 seller=MO-261114-EM3GK3 admin=MO-261114-EM3GK3 salonSees=false",
+      "ok": true,
+      "evidence": "orderId=a82daa0c-b961-4d45-a780-4a5d081fade0"
+    },
+    {
+      "step": "تسليم + تسجيل تحصيل COD",
+      "actor": "seller",
+      "layer": "server",
+      "expected": "delivered + collected؛ المخزون ينقص 1؛ العميلة ترى الحالة",
+      "actual": "fulfillment=delivered payment=collected stockQty=1 reserved=0 customerPayment=collected",
+      "ok": true,
+      "evidence": "collectionActor=partner:sbwsmwfoe0nx-seller-pu"
+    },
+    {
+      "step": "طلب موعد قبل القبول",
+      "actor": "customer/salon/seller",
+      "layer": "server",
+      "expected": "status=requested؛ الصالون يرى؛ البائع لا يرى",
+      "actual": "cust=requested salon=requested sellerSees=false payMode=pay_at_venue",
+      "ok": true,
+      "evidence": "bookingId=42327255-5137-4da2-a5e4-6ae5746cf57a publicNumber=MB-261114-Z7KPXD"
+    },
+    {
+      "step": "قبول مقدّم الخدمة",
+      "actor": "salon",
+      "layer": "server",
+      "expected": "confirmed لدى الطرفين",
+      "actual": "salon=confirmed customer=confirmed",
+      "ok": true,
+      "evidence": "events=2"
+    },
+    {
+      "step": "إلغاء العميلة يحرّر الموعد",
+      "actor": "customer",
+      "layer": "server",
+      "expected": "cancelled + slot available again",
+      "actual": "status=cancelled slotAvailable=true remaining=1",
+      "ok": true,
+      "evidence": "day=2026-11-19"
+    },
+    {
+      "step": "محرر: اختيار «عرض فقط» / display",
+      "actor": "editor-path",
+      "layer": "editor-path",
+      "expected": "القيمة المحفوظة فعليًا ليست display (تُحوَّل إلى external)",
+      "actual": "input=display → stored=external; input=not_for_sale → stored=external; DB after write=external",
+      "ok": true,
+      "evidence": "editor-drafts.service.ts coerce: only internal_cod|external persist; else external"
+    },
+    {
+      "step": "تفعيل عرض يملكه الشريك مع مقطعين",
+      "actor": "seller-owned product",
+      "layer": "server",
+      "expected": "نفس productId + نفس media ids؛ الوضع internal_cod يؤثر على كل المقاطع المرتبطة",
+      "actual": "productId=02e83ec1-f696-4d8e-bced-a9f79a7f6c8c mode=internal_cod mediaIds=6988f240-2a50-4b13-b52f-b647e4875af9,47d3d3a7-acd8-4838-b60f-409af4b807b5 idsUnchanged=true",
+      "ok": true,
+      "evidence": "commerce owns purchaseMode on Product; CatalogMedia.ownerId=product"
+    },
+    {
+      "step": "عرض منشور من الإدارة → إسناده لصاحبه من الواجهة",
+      "actor": "admin→owner claim",
+      "layer": "server",
+      "expected": "إن وُجد مسار دعوة/قبول؛ وإلا توثيق التوقف",
+      "actual": "شراء المنتج الإداري الخارجي مرفوض: EXTERNAL_PRODUCT_NOT_PURCHASABLE؛ الملكية تبقى partner_id=9403273e-17ca-4ff8-bb66-9ffa59f9f524 (ميرا) لا البائع 49b86ab8-bdb0-4b64-b1e0-9e117cdccd6c",
+      "ok": true,
+      "evidence": "adminProduct=eff2dfee-531a-406c-ac6b-0af72e7578fe ad=e5d25c3c-9677-4883-bbf7-7dd891bdef60 invitePathExists=false"
+    },
+    {
+      "step": "هل تستطيع الإدارة تفعيل عرض قديم لصاحبه الصحيح من الواجهة؟",
+      "actor": "admin UI",
+      "layer": "ui-not-run",
+      "expected": "دعوة ملكية أو نقل partner_id من واجهة مصرّح بها",
+      "actual": "غير مثبت — لا API دعوة/claim في النطاق المفحوص؛ تعديل DB مباشر لا يُعد إثبات رحلة مستخدم",
+      "ok": false,
+      "evidence": "STOP: missing ownership-claim journey"
+    },
+    {
+      "step": "سباق آخر قطعة من عميلتين",
+      "actor": "two customers",
+      "layer": "server",
+      "expected": "فائز واحد؛ reservedQty=1؛ الخاسر OUT_OF_STOCK",
+      "actual": "wins=1 reserved=1 lostCode=OUT_OF_STOCK",
+      "ok": true,
+      "evidence": "product=d5908cb8-41a3-4bc2-90c3-e6e981abe38c"
+    },
+    {
+      "step": "سباق نفس الموعد من عميلتين",
+      "actor": "two customers",
+      "layer": "server",
+      "expected": "حجز واحد فقط",
+      "actual": "wins=1 activeRows=1",
+      "ok": true,
+      "evidence": "slot=2026-11-19T08:00:00.000Z"
+    },
+    {
+      "step": "ضغط مرتين على تأكيد الطلب (نفس المفتاح)",
+      "actor": "customer",
+      "layer": "server",
+      "expected": "نفس orderId؛ طلب واحد فقط",
+      "actual": "id1=119e66b9-557e-404b-b0fe-ff65a7de7fd2 id2=119e66b9-557e-404b-b0fe-ff65a7de7fd2 same=true replays=1",
+      "ok": true,
+      "evidence": "publicNumber=MO-261114-CNP4ZG"
+    }
+  ],
+  "ids": {
+    "customerUserId": "73ce5942-98e8-4306-90a9-c076355236f2",
+    "sellerPartnerId": "49b86ab8-bdb0-4b64-b1e0-9e117cdccd6c",
+    "salonPartnerId": "e58e5cbd-ad91-4428-81a3-363b4584f96c",
+    "adminPartnerId": "9403273e-17ca-4ff8-bb66-9ffa59f9f524",
+    "productId": "02e83ec1-f696-4d8e-bced-a9f79a7f6c8c",
+    "serviceId": "d43cb56f-a705-4b66-a107-6f2f9b0ef894",
+    "orderPublicNumber": "MO-261114-EM3GK3"
+  }
+}

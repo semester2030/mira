@@ -84,5 +84,16 @@
       "بلا تنفيذ ميزات وبلا تغيير بيانات إنتاج"
     ],
     "baselineCommit": "dd836b9c20805d0a2f0b55da21110eb8668f67ec"
+  },
+  {
+    "version": "إثبات — بيع وحجز بلا متجر على DB اختبار",
+    "date": "2026-11-14T03:40:00+03:00",
+    "changesAr": [
+      "قاعدة mira_sbws_proof_test + sell-book-without-store.proof.ts",
+      "أول بيع COD وأول حجز مؤكَّد على الخادم مع عزل الشركاء وسباقات",
+      "commerce.service وcommerce.http PASS؛ واجهة Flutter لم تُشغَّل؛ claim إداري متوقف",
+      "تحديث صفحة الدراسة بجدول الخطوات وثلاث إجابات"
+    ],
+    "baselineCommit": "a712b24"
   }
 ]

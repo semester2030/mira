@@ -1,0 +1,22 @@
+npm warn Unknown env config "devdir". This will stop working in the next major version of npm.
+[concurrency] A: seed product + cart
+[concurrency] A: holder begins FOR UPDATE
+[concurrency] A: holder acquired lock pid=1939
+[concurrency] B: createOrder starts (must wait on product lock)
+[concurrency] product-row contention holder_pid=1939 waiters=1940/transactionid
+[concurrency] B: observed waiting lock behind products holder
+[concurrency] A: holder committed price=9000
+[concurrency] A PASS: waiter saw new price via QUOTE_STALE
+[concurrency] product-row contention holder_pid=1939 waiters=1941/transactionid
+[concurrency] B: flipped to external under lock pid=1939
+[concurrency] B PASS: EXTERNAL under protected verify
+[concurrency] D PASS: single winner on last unit
+[concurrency] F PASS: one booking on shared Arabic resource capacity
+[concurrency] E1: schedule locks held commerce-booking-resource:3fd9303c-6ea0-431d-ac5f-8d1b2a2e60be:غرفة-تعطيل | commerce-booking-service:7f1f69d7-da10-4861-96b9-7a616d5d3d39
+[concurrency] E1: createBooking waiting on partner-scoped resource advisory
+[concurrency] E1: bookingEnabled=false under held schedule locks
+[concurrency] E1 PASS: booking waited then rejected after disable under shared keys
+[concurrency] E2: locks held before updateService
+[concurrency] E2: production updateService waiting on same resource advisory
+TypeError: afterCap.availabilityJson.map is not a function
+    at main (/Users/fayez/Desktop/مراجع تطبيق ميرا /mira-wt/elegance-e1/mira-api/src/marketplace/commerce.concurrency.schema-tests.ts:474:77)

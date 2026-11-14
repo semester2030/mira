@@ -23,8 +23,9 @@
   <p class="nav-top"><a href="index.html">← المرجع الرسمي للمتاجر</a></p>
   <header class="brand" style="margin-bottom:24px">
     <h1>البيع والحجز عبر ميرا دون متجر خاص</h1>
-    <p class="muted">دراسة مبنية على الكود واختبارات معزولة — بدون تنفيذ ميزات ودون لمس بيانات الإنتاج.</p>
-    <p class="muted">Commit المفحوص: <code>dd836b9</code> · فرع <code>mira/elegance-e1-taxonomy-foundation</code> · تاريخ الدراسة: 2026-11-14</p>
+    <p class="muted">دراسة مبنية على الكود + إثبات خادم على قاعدة اختبار محلية معزولة — بدون تنفيذ ميزات ودون لمس بيانات الإنتاج.</p>
+    <p class="muted">قاعدة الإثبات: <code>mira_sbws_proof_test</code> @ 127.0.0.1 · سكربت <code>sell-book-without-store.proof.ts</code> · تاريخ: 2026-11-14</p>
+    <p class="muted">طبقة الواجهة (Flutter / بوابة المتصفح): <strong>لم تُشغَّل في هذه الجولة</strong> — الأدلة أدناه خادم/خدمة ما لم يُذكر غير ذلك.</p>
   </header>
 
   <section>
@@ -162,45 +163,50 @@
   </section>
 
   <section>
-    <h2>٦) الاختبارات المعزولة المنفَّذة</h2>
+    <h2>٦) إثبات المسارين على قاعدة اختبار محلية</h2>
+    <p>قاعدة: <code>mira_sbws_proof_test</code> على 127.0.0.1. حارس الأمان رفض <code>DATABASE_URL</code> غير المحلي (exit 1). لا قراءة/كتابة إنتاج.</p>
+    <h3>الخطوة | المنفّذ | ما حدث فعليًا | الدليل</h3>
     <table>
-      <tr><th>السيناريو</th><th>المتوقع</th><th>الفعلي</th><th>الدليل</th></tr>
-      <tr><td>قواعد التجارة النقية (حالات/أخطاء)</td><td>تمر</td><td>مرت</td><td><code>evidence/sell-book-without-store/COMMERCE_PURE_TESTS.txt</code> — <code>npm run test:commerce-pure</code></td></tr>
-      <tr><td>مصفوفة قدرات الشريك بلا storeUrl</td><td>storeUrl لا يمنح البيع</td><td>مرت (<code>PARTNER_CAPABILITIES_MATRIX</code>)</td><td>نفس الملف + <code>partner-capabilities.ts</code></td></tr>
-      <tr><td>commerce.service.schema-tests</td><td>تحتاج DB اختبار محلية</td><td><code>REFUSE: DATABASE_URL must be a local test database</code></td><td><code>COMMERCE_SERVICE_SCHEMA_TESTS.txt</code></td></tr>
-      <tr><td>سباق آخر قطعة / بائعين / استرداد جزئي / دعوة ملكية</td><td>—</td><td><span class="tag missing">لم تُنفَّذ — تحتاج بيئة اختبار + بيانات معزولة</span></td><td>أول مانع: لا DATABASE_URL اختبار في هذه الجلسة؛ سلة متعددة البائعين غير مدعومة أصلًا</td></tr>
+      <tr><th>الخطوة</th><th>المنفّذ</th><th>الطبقة</th><th>ما حدث فعليًا</th><th>الدليل</th></tr>
+      <tr><td>حسابات بلا storeUrl</td><td>harness</td><td>خادم</td><td>brand+salon بـ storeUrl=null؛ صلاحية منتج/خدمة صحيحة</td><td><code>PROOF_RUN.json</code></td></tr>
+      <tr><td>شراء COD حتى التحصيل</td><td>عميلة→بائع→إدارة</td><td>خادم</td><td>طلب <code>MO-261114-EM3GK3</code> نفسه لدى الثلاثة؛ الصالون لا يراه؛ delivered+collected؛ المخزون −1</td><td><code>PROOF_STEPS.md</code> + <code>commerce.service.schema-tests</code> PASS</td></tr>
+      <tr><td>طلب موعد → قبول → إلغاء يحرّر</td><td>عميلة→صالون</td><td>خادم</td><td>requested ثم confirmed؛ البائع لا يرى الحجز؛ بعد الإلغاء الموعد متاح</td><td>نفس الملفات + HTTP bookings guards</td></tr>
+      <tr><td>«عرض فقط» من المحرر</td><td>مسار المحرر</td><td>محرر→DB</td><td><code>display</code> يُحفظ <code>external</code> (ليس display)</td><td><code>editor-drafts.service.ts</code> coerce</td></tr>
+      <tr><td>تفعيل عرض الشريك بمقطعين</td><td>منتج الشريك</td><td>خادم</td><td>نفس productId وmedia ids؛ internal_cod يؤثر على المقطعين</td><td>PROOF</td></tr>
+      <tr><td>عرض إداري → صاحبه</td><td>إدارة</td><td>واجهة/API</td><td><span class="tag missing">توقف</span> — لا دعوة/claim؛ DB يدوي لا يُحسب رحلة</td><td>STOP في PROOF</td></tr>
+      <tr><td>سباق آخر قطعة / نفس الموعد / ضغط مزدوج</td><td>عميلتان</td><td>خادم</td><td>فائز واحد + OUT_OF_STOCK؛ حجز واحد؛ idempotent replay</td><td>PROOF + concurrency (جزئي)</td></tr>
+    </table>
+    <table>
+      <tr><th>حزمة اختبار</th><th>النتيجة</th><th>الدليل</th></tr>
+      <tr><td><code>test:commerce-pure</code></td><td>PASS سابقًا</td><td><code>COMMERCE_PURE_TESTS.txt</code></td></tr>
+      <tr><td><code>commerce.service.schema-tests</code></td><td>PASS على mira_sbws_proof_test</td><td><code>COMMERCE_SERVICE_SCHEMA_TESTS.txt</code></td></tr>
+      <tr><td><code>commerce.http.integration-tests</code></td><td>PASS</td><td><code>COMMERCE_HTTP_TESTS.txt</code></td></tr>
+      <tr><td><code>commerce.concurrency.schema-tests</code></td><td><span class="tag partial">جزئي</span> — سباقات المخزون/الحجز مرت؛ توقف لاحق E2 <code>availabilityJson.map</code></td><td><code>COMMERCE_CONCURRENCY_TESTS.txt</code></td></tr>
+      <tr><td>Flutter / بوابة متصفح لنهاية الرحلة</td><td><span class="tag missing">لم تُنفَّذ</span></td><td>يلزم جهاز/جلسة بوابة منفصلة</td></tr>
     </table>
   </section>
 
   <section>
-    <h2>جدول الفجوات</h2>
+    <h2>جدول الفجوات (بعد الإثبات)</h2>
     <table>
       <tr><th>القدرة</th><th>التصنيف</th><th>الربط</th></tr>
-      <tr><td>بيع COD لشريك بلا متجر (brand + internal_cod)</td><td><span class="tag ok">موجود ومختبر جزئيًا (قواعد)</span></td><td>commerce + partner-capabilities</td></tr>
-      <tr><td>حجز pay_at_venue بلا متجر</td><td><span class="tag partial">موجود وغير مختبر متصل هنا</span></td><td>createBooking</td></tr>
-      <tr><td>قيمة purchaseMode=display persisted</td><td><span class="tag missing">ناقص</span></td><td>registry vs DTO/DB</td></tr>
-      <tr><td>دعوة ملكية مقطع إداري</td><td><span class="tag missing">ناقص</span></td><td>—</td></tr>
+      <tr><td>بيع COD لشريك بلا متجر</td><td><span class="tag ok">موجود ومختبر (خادم)</span></td><td>PROOF + service/http</td></tr>
+      <tr><td>حجز pay_at_venue بلا متجر + عزل الشركاء</td><td><span class="tag ok">موجود ومختبر (خادم)</span></td><td>PROOF</td></tr>
+      <tr><td>سباق مخزون/موعد + ضغط مزدوج</td><td><span class="tag ok">موجود ومختبر (خادم)</span></td><td>PROOF</td></tr>
+      <tr><td>رحلة Flutter عميلة→شريك</td><td><span class="tag missing">غير مختبر واجهة</span></td><td>—</td></tr>
+      <tr><td>قيمة purchaseMode=display persisted</td><td><span class="tag missing">ناقص (تُحوَّل إلى external)</span></td><td>editor coerce</td></tr>
+      <tr><td>دعوة ملكية مقطع إداري من الواجهة</td><td><span class="tag missing">ناقص — نقطة التوقف</span></td><td>STOP</td></tr>
       <tr><td>سلة متعددة البائعين</td><td><span class="tag missing">ناقص (مرفوض صراحة)</span></td><td>CART_PARTNER_CONFLICT</td></tr>
-      <tr><td>دفع إلكتروني / تسوية / استرداد</td><td><span class="tag ext">يعتمد قرارًا + مزوّدًا</span></td><td>DEC-0001 في المرجع</td></tr>
-      <tr><td>مستحقات ولوحة مالية للشريك</td><td><span class="tag missing">ناقص</span></td><td>—</td></tr>
-      <tr><td>إحصاء +٣٠ مقطع إنتاج</td><td><span class="tag ext">معلومة فريق</span></td><td>لم تُقرأ قاعدة الإنتاج</td></tr>
+      <tr><td>دفع إلكتروني / تسوية / استرداد</td><td><span class="tag ext">يعتمد قرارًا + مزوّدًا</span></td><td>DEC-0001</td></tr>
     </table>
   </section>
 
   <section>
-    <h2>إجابة مباشرة — خمسة أسئلة</h2>
+    <h2>ثلاث إجابات بعد الإثبات</h2>
     <ol>
-      <li><strong>هل يستطيع بائع بلا متجر البيع اليوم؟</strong> يبدأ بإنشاء/اعتماد حساب شريك نوع brand (أو صلاحية بيع)، ونشر منتج، وضبط <code>purchaseMode=internal_cod</code> مع سعر ومخزون. يتوقف عند: غياب COD كامل للعميلة إن بقي external؛ غياب تحصيل إلكتروني؛ سلة شريك واحد فقط؛ لا دفتر مستحقات داخل ميرا.</li>
-      <li><strong>هل يستطيع مقدّم خدمة بلا متجر استقبال حجز؟</strong> نعم إذا كانت الخدمة <code>bookingEnabled</code> و<code>payMode=pay_at_venue</code> والجدول صالح. يؤكده الشريك (قبول من <code>requested</code> إلى <code>confirmed</code>). ميرا لا تحصّل المبلغ.</li>
-      <li><strong>هل يمكن تفعيل مقطع قديم واحد بإذن صاحبه وبقاء البقية عرضًا؟</strong> تقنيًا: نعم على مستوى صف المنتج/الخدمة بتغيير حقله دون مسح الوسائط/المعرّف. تشغيليًا: يحتاج ملكية <code>partner_id</code> الصحيحة؛ مسار دعوة/نقل ملكية من نشر إداري <strong>غير موجود</strong>.</li>
-      <li><strong>مهام الشريك / أتمتة ميرا / الإدارة؟</strong> الشريك: بيانات العرض، المخزون/الجدول، قبول الطلبات، التنفيذ، التحصيل النقدي. ميرا: التحقق، حجز المخزون/الوقت، آلات الحالات، عزل البيانات، إشعارات محدودة حسب ما هو موصول. الإدارة: مراجعة المحتوى والتجاوز عند الصلاحية — بلا تسوية مالية آلية.</li>
-      <li><strong>أقل تغييرات لأول بيع وأول حجز لشريكين مستقلين؟</strong>
-        <ul>
-          <li>بيع: حسابا brand + منتجان internal_cod + مخزون + عميلة تجريبية + مسار COD على بيئة اختبار.</li>
-          <li>حجز: خدمتان bookingEnabled + توفّر غير متداخل + قبول الشريك.</li>
-          <li>قرارات قبل الإطلاق الحقيقي: DEC الدفع الداخلي؛ نموذج الفوترة/الضريبة؛ هل تُبنى دعوة الملكية؛ هل تُرفع قيود السلة متعددة البائعين؛ اعتماد مستشار ضريبي لـ٤٧(٣) إن بدأت المنصة التحصيل.</li>
-        </ul>
-      </li>
+      <li><strong>هل اكتمل أول بيع؟</strong> <span class="tag ok">نعم على طبقة الخادم</span> — طلب <code>MO-261114-EM3GK3</code> من عميلة اختبار إلى بائع بلا storeUrl حتى <code>delivered</code> + <code>collected</code>، والإدارة تراه، ومقدّم الخدمة لا يراه. <em>لم يُثبت من تطبيق الجوال.</em></li>
+      <li><strong>هل اكتمل أول حجز؟</strong> <span class="tag ok">نعم على طبقة الخادم</span> — طلب موعد <code>requested</code> ثم قبول الشريك <code>confirmed</code>؛ الإلغاء يحرّر الموعد؛ البائع لا يرى الحجز. الزر الأدق ما زال «اطلبي موعدًا». <em>لم يُثبت من تطبيق الجوال.</em></li>
+      <li><strong>هل تستطيع الإدارة تفعيل عرض قديم لصاحبه الصحيح من الواجهة؟</strong> <span class="tag missing">لا — غير مثبت</span>. نقطة التوقف: لا مسار دعوة/claim/نقل <code>partner_id</code> في API/الواجهة ضمن النطاق. ما يلزم: تصميم رحلة دعوة + قبول الشريك + ربط الملكية دون تعديل قاعدة بيانات يدوي. إن كان العرض أصلًا بـ<code>partner_id</code> الصحيح، تفعيل <code>internal_cod</code> / <code>bookingEnabled</code> على نفس الصف يحفظ الوسائط ويؤثر على كل المقاطع المرتبطة بذلك العرض.</li>
     </ol>
   </section>
 

@@ -2,19 +2,28 @@
   "id": "STUDY-SELL-BOOK-WITHOUT-STORE",
   "titleAr": "البيع والحجز عبر ميرا دون متجر خاص",
   "page": "sell-book-without-store.html",
-  "commit": "dd836b9c20805d0a2f0b55da21110eb8668f67ec",
-  "studiedAt": "2026-11-14T00:15:00Z",
+  "studiedAt": "2026-11-14T00:36:00Z",
   "scope": {
     "featuresImplemented": false,
     "productionDataChanged": false,
-    "productionRead": false
+    "productionRead": false,
+    "uiFlutterRun": false
   },
-  "teamClaimsUnverified": [
-    "أكثر من 30 مقطعًا منشورًا — معلومة فريق دون إحصاء من إنتاج"
-  ],
+  "database": {
+    "name": "mira_sbws_proof_test",
+    "host": "127.0.0.1",
+    "refuseNonLocalExit": 1
+  },
   "tests": {
     "commercePure": "PASS",
-    "partnerCapabilities": "PASS",
-    "commerceServiceSchema": "REFUSED_NO_LOCAL_TEST_DB"
+    "commerceServiceSchema": "PASS",
+    "commerceHttp": "PASS",
+    "commerceConcurrency": "PARTIAL_E2_MAP_ERROR",
+    "sbwsProof": "PASS_EXCEPT_ADMIN_CLAIM_UI"
+  },
+  "answers": {
+    "firstSaleCompleted": "YES_SERVER",
+    "firstBookingCompleted": "YES_SERVER",
+    "adminActivateLegacyViaUi": "NO_STOP_NO_CLAIM_API"
   }
 }
