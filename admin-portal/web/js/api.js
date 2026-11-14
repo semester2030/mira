@@ -34,13 +34,12 @@
     if (!key && path !== '/health') {
       throw new Error('أدخلي مفتاح الإدارة أولاً');
     }
-    const actor = adminActor();
+    // Do not send X-Admin-Actor: named attribution comes only from staff secrets.
     const res = await fetch(`${API_BASE}${path}`, {
       method,
       headers: {
         Accept: 'application/json',
         'X-Admin-Key': key,
-        ...(actor ? { 'X-Admin-Actor': actor } : {}),
         ...(body ? { 'Content-Type': 'application/json' } : {}),
       },
       body: body ? JSON.stringify(body) : undefined,

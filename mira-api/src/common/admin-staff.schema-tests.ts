@@ -37,8 +37,9 @@ const shared = resolveAdminSession({
   staff,
 });
 assert.equal(shared?.role, 'shared');
-assert.equal(shared?.actorId, 'ops.label');
+assert.equal(shared?.actorId, 'admin-key');
 assert.equal(shared?.canMutate, true);
+assert.notEqual(shared?.actorId, 'ops.label');
 
 assert.equal(
   resolveAdminSession({ key: 'nope', masterKey: 'master', staff }),

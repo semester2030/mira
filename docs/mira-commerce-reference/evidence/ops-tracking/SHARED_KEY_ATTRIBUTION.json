@@ -1,0 +1,20 @@
+{
+  "orderPublic": "MO-261114-JB2N5W",
+  "sharedSession": {
+    "actorId": "admin-key",
+    "role": "shared",
+    "canMutate": true,
+    "source": "shared-key",
+    "labelAr": "مفتاح الإدارة المشترك (بلا موظف مسمّى)"
+  },
+  "cancelActorId": "admin-key",
+  "cancelActorDisplayAr": "مفتاح الإدارة المشترك (بلا موظف مسمّى)",
+  "staffSession": {
+    "actorId": "ops.support",
+    "role": "support",
+    "canMutate": false,
+    "source": "staff-secret",
+    "labelAr": "دعم · ops.support (قراءة فقط)"
+  },
+  "verdict": "PASS"
+}

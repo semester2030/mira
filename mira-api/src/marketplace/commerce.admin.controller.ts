@@ -50,9 +50,7 @@ export class CommerceAdminController {
           ? `دعم · ${req.adminActorId} (قراءة فقط)`
           : req.adminRole === 'supervisor'
             ? `مشرف · ${req.adminActorId}`
-            : req.adminActorId === 'admin-key'
-              ? 'مفتاح الإدارة المشترك (بلا موظف مسمّى)'
-              : `مفتاح مشترك · تسمية ${req.adminActorId}`,
+            : 'مفتاح الإدارة المشترك (بلا موظف مسمّى)',
     };
   }
 

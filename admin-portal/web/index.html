@@ -27,10 +27,10 @@
       </p>
       <label for="adminKey">سرّ الدخول / Admin Key</label>
       <input id="adminKey" type="password" placeholder="سر الموظف أو المفتاح المشترك" autocomplete="off" />
-      <label for="adminActor" style="margin-top:0.75rem;">تسمية اختيارية (للمفتاح المشترك فقط)</label>
-      <input id="adminActor" type="text" placeholder="لا تُستخدم مع سرّ الموظف الموثّق" autocomplete="off" />
+      <input id="adminActor" type="hidden" value="" />
       <p class="lead" style="color:var(--text-muted);margin:0.4rem 0 0.75rem;font-size:0.85rem;">
-        سرّ الموظف يُثبت الهوية من الخادم. الدعم لا يستطيع تغيير الحالات أو التحصيل.
+        سرّ الموظف يُثبت الاسم والدور من الخادم. المفتاح المشترك يُسجَّل دائمًا كـ«مفتاح الإدارة المشترك» بلا اسم موظف.
+        الدعم قراءة فقط.
       </p>
       <button id="loginBtn" class="btn btn-primary btn-block">دخول آمن</button>
       <div id="loginError" class="alert err hidden"></div>

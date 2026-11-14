@@ -1,5 +1,6 @@
 import 'dart:async';
 
+import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import '../../../../core/navigation/app_routes.dart';
@@ -18,8 +19,19 @@ import '../../domain/usecases/send_phone_otp_usecase.dart';
 import '../../domain/usecases/verify_phone_otp_usecase.dart';
 
 /// Unified sign-in / sign-up: name + Saudi phone + SMS OTP only.
+/// Isolated Auth-emulator builds may also offer email sign-in for local ops proofs.
 class LoginScreen extends StatefulWidget {
   const LoginScreen({super.key});
+
+  static const bool _authEmulator = bool.fromEnvironment('MIRA_USE_AUTH_EMULATOR');
+  static const String _emuEmail = String.fromEnvironment(
+    'MIRA_OPS_EMU_EMAIL',
+    defaultValue: 'ops-iphone@test.local',
+  );
+  static const String _emuPassword = String.fromEnvironment(
+    'MIRA_OPS_EMU_PASSWORD',
+    defaultValue: 'TestPass123!',
+  );
 
   @override
   State<LoginScreen> createState() => _LoginScreenState();
@@ -74,6 +86,46 @@ class _LoginScreenState extends State<LoginScreen> {
         setState(() => _resendSeconds--);
       }
     });
+  }
+
+  Future<void> _emulatorEmailSignIn() async {
+    if (!LoginScreen._authEmulator) return;
+    setState(() => _loading = true);
+    try {
+      await GuestSessionService.clear();
+      try {
+        await FirebaseAuth.instance.signInWithEmailAndPassword(
+          email: LoginScreen._emuEmail,
+          password: LoginScreen._emuPassword,
+        );
+      } on FirebaseAuthException catch (e) {
+        if (e.code == 'user-not-found' ||
+            e.code == 'invalid-credential' ||
+            e.code == 'wrong-password' ||
+            e.code == 'INVALID_LOGIN_CREDENTIALS') {
+          await FirebaseAuth.instance.createUserWithEmailAndPassword(
+            email: LoginScreen._emuEmail,
+            password: LoginScreen._emuPassword,
+          );
+        } else {
+          rethrow;
+        }
+      }
+      final user = FirebaseAuth.instance.currentUser;
+      if (user != null && (user.displayName == null || user.displayName!.trim().isEmpty)) {
+        final name = _nameController.text.trim().isEmpty ? 'عميلة اختبار' : _nameController.text.trim();
+        await user.updateDisplayName(name);
+      }
+      if (!mounted) return;
+      Navigator.of(context).pushNamedAndRemoveUntil(AppRoutes.home, (_) => false);
+    } catch (e) {
+      if (!mounted) return;
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(content: Text(friendlyFirebaseMessage(e)), backgroundColor: AppColors.error),
+      );
+    } finally {
+      if (mounted) setState(() => _loading = false);
+    }
   }
 
   Future<void> _sendCode() async {
@@ -262,6 +314,15 @@ class _LoginScreenState extends State<LoginScreen> {
                             loading: _loading,
                             onPressed: _loading ? null : _sendCode,
                           ),
+                          if (LoginScreen._authEmulator) ...[
+                            const SizedBox(height: 12),
+                            PremiumButton(
+                              label: 'دخول محاكي Auth (اختبار محلي)',
+                              variant: PremiumButtonVariant.ghost,
+                              loading: _loading,
+                              onPressed: _loading ? null : _emulatorEmailSignIn,
+                            ),
+                          ],
                         ] else ...[
                           PremiumInputField(
                             label: 'رمز التحقق (6 أرقام)',

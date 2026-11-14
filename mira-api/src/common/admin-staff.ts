@@ -61,14 +61,11 @@ export function resolveAdminSession(params: {
     };
   }
   if (key === masterKey) {
-    const labeled =
-      typeof actorHeader === 'string' && /^[A-Za-z0-9_.:@-]{2,64}$/.test(actorHeader.trim())
-        ? actorHeader.trim()
-        : 'admin-key';
-    // Shared master key: may label actor for display, but role stays shared (full mutate).
-    // Prefer staff secrets for real attribution.
+    // Shared master key: always attribute as the shared key — never trust X-Admin-Actor.
+    // Named staff attribution requires that person's own secret (staff-secret path above).
+    void actorHeader;
     return {
-      actorId: labeled,
+      actorId: 'admin-key',
       role: 'shared',
       canMutate: true,
       source: 'shared-key',

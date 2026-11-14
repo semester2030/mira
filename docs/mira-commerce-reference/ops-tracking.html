@@ -47,9 +47,10 @@
       <tr><td>حساب developer (ميرا)</td><td>طلباته وحجوزاته معًا</td><td>حسب نوع العملية</td><td>ضمن ملكيته</td></tr>
       <tr><td>دعم <code>support</code></td><td>الكل + يحتاج تدخل</td><td><strong>ممنوع</strong> (403 + أزرار مخفية)</td><td>الكل — الهوية من سرّ الموظف</td></tr>
       <tr><td>مشرف <code>supervisor</code></td><td>الكل</td><td>مع سبب إلزامي</td><td>الكل — الهوية من سرّ الموظف في السجل</td></tr>
-      <tr><td>مفتاح مشترك <code>ADMIN_API_KEY</code></td><td>الكل</td><td>نعم</td><td>إن بلا سر موظف: «مفتاح مشترك» بلا موظف مسمّى</td></tr>
+      <tr><td>مفتاح مشترك <code>ADMIN_API_KEY</code></td><td>الكل</td><td>نعم</td><td>يُسجَّل دائمًا «مفتاح الإدارة المشترك» — يُتجاهل <code>X-Admin-Actor</code></td></tr>
     </table>
-    <p><strong>دخول الموظفين:</strong> <code>MIRA_ADMIN_STAFF=id:role:secret</code> — السرّ يثبت الهوية من الخادم ولا يُزوَّر عبر <code>X-Admin-Actor</code>.</p>
+    <p><strong>دخول الموظفين:</strong> <code>MIRA_ADMIN_STAFF=id:role:secret</code> — السرّ يثبت الاسم والدور. المفتاح المشترك لا يقبل تسمية موظف مرسلة.</p>
+    <p>دليل الإسناد: <code>evidence/ops-tracking/SHARED_KEY_ATTRIBUTION.md</code> · إلغاء <code>MO-261114-JB2N5W</code> بـactorId=<code>admin-key</code> رغم إرسال ops.sara.</p>
   </section>
 
   <section>
@@ -100,7 +101,7 @@
       <li><strong>من يغيّر الحالة؟</strong> الشريك حسب آلة الحالات · العميلة للإلغاء المسموح · <strong>المشرف فقط</strong> من موظفي الإدارة (الدعم 403). التحصيل منفصل عن التسليم.</li>
       <li><strong>هل تعرف الإدارة من نفّذ آخر إجراء ومتى؟</strong> نعم عندما يدخل المشرف بسرّه الموثّق — يظهر <code>ops.sara</code> ووقته وسببه في سجل <em>نفس الطلب</em> على الشاشة. سرّ الموظف لا يُزوَّر بترويسة اسم. المفتاح المشترك بلا سر موظف يبقى «مشتركًا» بلا موظف مسمّى.</li>
     </ol>
-    <p><strong>متبقي للإغلاق الكامل:</strong> رحلة العميلة من فيديو الآيفون (OTP).</p>
+    <p><strong>متبقي للإغلاق الكامل:</strong> رحلة العميلة من فيديو الآيفون — هوك محاكي Auth جاهز (<code>MIRA_USE_AUTH_EMULATOR</code> + زر دخول محلي)؛ لم تُكمَل مطابقة الرقم من الجوال في هذا التشغيل بسبب ضيق المساحة/بناء المحاكي.</p>
   </section>
 </body>
 </html>
