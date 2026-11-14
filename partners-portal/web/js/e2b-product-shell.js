@@ -896,6 +896,13 @@
     // Only dispatch change when the value actually changes — never wipe subcategory on same-main re-click.
     if (catSel && catSel.value !== cat.id && !opts.fromSync) {
       syncingFromForm = true;
+      // Ensure <option> exists (bags/shoes were historically missing from PRODUCT_CATEGORIES).
+      if (!Array.from(catSel.options).some((o) => o.value === cat.id)) {
+        const opt = document.createElement('option');
+        opt.value = cat.id;
+        opt.textContent = cat.labelAr || cat.id;
+        catSel.appendChild(opt);
+      }
       catSel.value = cat.id;
       catSel.dispatchEvent(new Event('change', { bubbles: true }));
       syncingFromForm = false;
@@ -977,10 +984,48 @@
     const form = document.getElementById('catalogForm');
     const subSel = form && form.querySelector('select[name="subcategory"]');
     if (!subSel) return;
-    const has = Array.from(subSel.options).some((o) => o.value === subId);
+    let has = Array.from(subSel.options).some((o) => o.value === subId);
     if (!has) {
-      if (!opts.silentMissing) return;
-      return;
+      // Circle click before taxonomy options land (or after category option was missing):
+      // inject the leaf so التصنيف الفرعي mirrors the orb; silentMissing still skips.
+      if (opts.fromCircle && subId) {
+        const btn = document.querySelector(
+          '#e2bSubCircles .e2b-circle[data-subcategory-id="' + subId + '"]',
+        );
+        const label =
+          (btn &&
+            btn.querySelector('.e2b-circle-label') &&
+            btn.querySelector('.e2b-circle-label').textContent) ||
+          subId;
+        const opt = document.createElement('option');
+        opt.value = subId;
+        opt.textContent = label;
+        subSel.appendChild(opt);
+        has = true;
+        // Also ensure parent category select matches the circle's parent.
+        // Set value without change event — a change would async-clear subcategory
+        // via refreshSubcategoryOptions({ keepValue: '' }) before we assign the leaf.
+        const parentId = btn && btn.getAttribute('data-parent-id');
+        const catSel = form.querySelector('select[name="category"]');
+        if (parentId && catSel && catSel.value !== parentId) {
+          if (!Array.from(catSel.options).some((o) => o.value === parentId)) {
+            const copt = document.createElement('option');
+            copt.value = parentId;
+            copt.textContent =
+              (document.querySelector(
+                '#e2bMainCircles .e2b-circle[data-category-id="' + parentId + '"] .e2b-circle-label',
+              ) || {}).textContent || parentId;
+            catSel.appendChild(copt);
+          }
+          syncingFromForm = true;
+          catSel.value = parentId;
+          syncingFromForm = false;
+        }
+      } else if (opts.silentMissing) {
+        return;
+      } else {
+        return;
+      }
     }
     if (subSel.value !== subId) {
       syncingFromForm = true;

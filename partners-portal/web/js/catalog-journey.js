@@ -1,9 +1,13 @@
 (function () {
+  // Must include bags/shoes — e2b orbs + API PRODUCT_CATEGORIES accept them.
+  // Missing options make selectMain's catSel.value='bags'|'shoes' no-op → empty التصنيف.
   const PRODUCT_CATEGORIES = [
     ['face', 'الوجه'],
     ['body', 'الجسم'],
     ['hair', 'الشعر'],
     ['clothes', 'الملابس'],
+    ['bags', 'الشنط'],
+    ['shoes', 'الأحذية'],
     ['accessories', 'الإكسسوارات'],
     ['jewelry', 'المجوهرات'],
     ['children', 'الأطفال'],
