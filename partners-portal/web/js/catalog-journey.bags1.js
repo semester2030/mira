@@ -372,6 +372,7 @@
   window.CatalogJourney = {
     formatPrice: formatPrice,
     renderCatalog: renderCatalog,
+    paintCatalogState: paintCatalogState,
     renderForm: renderForm,
     refreshLists: refreshLists,
     reopenServerDraft: reopenServerDraft,
@@ -390,34 +391,150 @@
     renderCatalog(partner.type, data.catalog, 'catalogList', 'catalogForm', 'catalogTitle');
   }
 
+  function paintCatalogState(list, kind, opts) {
+    if (!list) return;
+    opts = opts || {};
+    list.replaceChildren();
+    list.removeAttribute('aria-busy');
+    list.setAttribute('data-catalog-state', kind);
+    const wrap = document.createElement('div');
+    wrap.className = 'catalog-state';
+    wrap.setAttribute('data-testid', 'catalog-state-' + kind);
+    if (kind === 'loading') {
+      wrap.innerHTML = '<p class="catalog-state-msg" role="status">جارٍ تحميل منتجاتك…</p>';
+      list.setAttribute('aria-busy', 'true');
+    } else if (kind === 'empty') {
+      const msg = document.createElement('p');
+      msg.className = 'catalog-state-msg';
+      msg.textContent = opts.message || 'ما عندك منتجات حتى الآن';
+      wrap.appendChild(msg);
+      if (opts.addHandler) {
+        const add = document.createElement('button');
+        add.type = 'button';
+        add.className = 'btn btn-primary';
+        add.setAttribute('data-testid', 'catalog-empty-add');
+        add.textContent = opts.addLabel || 'إضافة منتج';
+        add.onclick = opts.addHandler;
+        wrap.appendChild(add);
+      }
+    } else if (kind === 'error') {
+      const msg = document.createElement('p');
+      msg.className = 'catalog-state-msg';
+      msg.textContent = opts.message || 'تعذر تحميل القائمة';
+      wrap.appendChild(msg);
+      if (opts.retryHandler) {
+        const retry = document.createElement('button');
+        retry.type = 'button';
+        retry.className = 'btn btn-primary';
+        retry.setAttribute('data-testid', 'catalog-retry');
+        retry.textContent = 'إعادة المحاولة';
+        retry.onclick = opts.retryHandler;
+        wrap.appendChild(retry);
+      }
+    } else if (kind === 'filtered-empty') {
+      const msg = document.createElement('p');
+      msg.className = 'catalog-state-msg';
+      msg.textContent = opts.message || 'لا نتائج مطابقة للفلتر الحالي';
+      wrap.appendChild(msg);
+      if (opts.clearHandler) {
+        const clear = document.createElement('button');
+        clear.type = 'button';
+        clear.className = 'btn btn-ghost';
+        clear.setAttribute('data-testid', 'catalog-clear-filters');
+        clear.textContent = 'مسح الفلاتر';
+        clear.onclick = opts.clearHandler;
+        wrap.appendChild(clear);
+      }
+    }
+    list.appendChild(wrap);
+  }
+
   function renderCatalog(type, catalog, listId, formId, titleId) {
     const list = document.getElementById(listId || 'catalogList');
-    const items = type === 'brand' ? catalog.products : catalog.services;
+    if (!list) return;
+    const raw = catalog && (type === 'brand' ? catalog.products : catalog.services);
+    const items = Array.isArray(raw) ? raw : null;
     list.replaceChildren();
-    if (!items.length) {
-      text(list, 'لا عناصر بعد في هذا الحساب. الكتالوج العام لا يُحذف من هنا.', 'p');
+    list.removeAttribute('aria-busy');
+    if (!items) {
+      paintCatalogState(list, 'error', {
+        message: 'تعذر قراءة قائمة ' + (type === 'brand' ? 'المنتجات' : 'الخدمات'),
+        retryHandler: () => {
+          if (window.reloadPartnerDashboard) window.reloadPartnerDashboard({ preserveForms: true });
+        },
+      });
       return;
     }
+    if (!items.length) {
+      paintCatalogState(list, 'empty', {
+        message: type === 'brand' ? 'ما عندك منتجات حتى الآن' : 'ما عندك خدمات حتى الآن',
+        addLabel: type === 'brand' ? 'إضافة منتج' : 'إضافة خدمة',
+        addHandler: () => {
+          const btn = document.getElementById(type === 'brand' ? 'portalAddProduct' : 'portalAddService')
+            || document.getElementById(type === 'brand' ? 'goProduct' : 'goService');
+          if (btn) btn.click();
+        },
+      });
+      return;
+    }
+    list.setAttribute('data-catalog-state', 'ready');
     items.forEach((item) => {
       const card = document.createElement('div');
-      card.className = 'list-item';
+      card.className = 'list-item catalog-product-card';
       if (item && item.id) card.setAttribute('data-id', String(item.id));
       if (item && item.nameAr) card.setAttribute('data-name-ar', String(item.nameAr));
       if (item && item.category) card.setAttribute('data-category-id', String(item.category));
-      text(card, item.nameAr, 'strong');
-      text(card, 'الحالة: ' + (item.contentStatus || 'draft') + ' · المراجعة: ' + (item.reviewStatus || 'draft') + ' · ' + categoryLabel(type, item.category));
-      text(card, formatPrice(item.priceHalalas));
-      if (item.reviewNote) text(card, 'سبب المراجعة: ' + item.reviewNote);
+      const thumbUrl =
+        (item && item.primaryImageUrl) ||
+        (item && item.imageUrl) ||
+        (item && item.media && item.media[0] && (item.media[0].url || item.media[0].smallUrl)) ||
+        '';
+      if (thumbUrl) {
+        const img = document.createElement('img');
+        img.className = 'catalog-product-thumb';
+        img.alt = '';
+        img.loading = 'lazy';
+        img.src = String(thumbUrl);
+        card.appendChild(img);
+      }
+      const body = document.createElement('div');
+      body.className = 'catalog-product-body';
+      text(body, item.nameAr, 'strong');
+      const statusLine =
+        'الحالة: ' +
+        (item.contentStatus || 'draft') +
+        ' · المراجعة: ' +
+        (item.reviewStatus || 'draft') +
+        ' · ' +
+        categoryLabel(type, item.category);
+      text(body, statusLine);
+      text(body, formatPrice(item.priceHalalas));
+      if (item.reviewNote) text(body, 'سبب المراجعة: ' + item.reviewNote);
+      card.appendChild(body);
+      const actions = document.createElement('div');
+      actions.className = 'catalog-product-actions';
       const open = document.createElement('button');
       open.type = 'button';
       open.className = 'btn btn-ghost btn-sm';
       open.textContent = 'فتح في النموذج';
       open.onclick = () => {
         renderForm(type, item, formId, titleId);
-        document.getElementById(formId).scrollIntoView({
-          behavior: window.MiraMotion && MiraMotion.reduced() ? 'auto' : 'smooth',
-          block: 'start',
-        });
+        if (type === 'brand' && window.MiraPortalShell && typeof MiraPortalShell.openProductEditor === 'function') {
+          MiraPortalShell.openProductEditor();
+          if (window.MiraE2BProductShell && typeof MiraE2BProductShell.focusEditor === 'function') {
+            MiraE2BProductShell.focusEditor();
+          }
+        } else if (type !== 'brand' && window.MiraPortalShell && typeof MiraPortalShell.openServiceEditor === 'function') {
+          MiraPortalShell.openServiceEditor();
+        } else {
+          const formEl = document.getElementById(formId);
+          if (formEl) {
+            formEl.scrollIntoView({
+              behavior: window.MiraMotion && MiraMotion.reduced() ? 'auto' : 'smooth',
+              block: 'start',
+            });
+          }
+        }
       };
       const pull = document.createElement('button');
       pull.type = 'button';
@@ -430,10 +547,11 @@
           else await PartnersApi.deleteService(item.id);
           if (window.reloadPartnerDashboard) await window.reloadPartnerDashboard();
         } catch (error) {
-          text(card, 'تعذر السحب: ' + error.message, 'p');
+          text(body, 'تعذر السحب: ' + error.message, 'p');
         }
       };
-      card.append(open, pull);
+      actions.append(open, pull);
+      card.appendChild(actions);
       list.appendChild(card);
     });
   }
@@ -7586,16 +7704,23 @@
       }
     }
     // E2ج: دوائر الخدمة + compose منفصل عن المنتجات/المخزون.
+    // Do not activate service mode while portal is on «منتجاتي» — developer boot
+    // paints serviceForm in the background and must not hide #catalogSection.
     if (type !== 'brand' && window.MiraE2BServiceShell) {
       try {
-        if (typeof MiraE2BServiceShell.enableServiceMode === 'function') {
-          MiraE2BServiceShell.enableServiceMode(form.id);
-        }
-        if (typeof MiraE2BServiceShell.composeServiceLayout === 'function') {
-          MiraE2BServiceShell.composeServiceLayout(form);
-        }
-        if (typeof MiraE2BServiceShell.syncFromForm === 'function') {
-          MiraE2BServiceShell.syncFromForm(form);
+        const portalView = String(document.body.getAttribute('data-portal-view') || '');
+        const onProductsView = portalView === 'products';
+        const paintingIdleServiceForm = onProductsView && form.id === 'serviceForm';
+        if (!paintingIdleServiceForm) {
+          if (typeof MiraE2BServiceShell.enableServiceMode === 'function') {
+            MiraE2BServiceShell.enableServiceMode(form.id);
+          }
+          if (typeof MiraE2BServiceShell.composeServiceLayout === 'function') {
+            MiraE2BServiceShell.composeServiceLayout(form);
+          }
+          if (typeof MiraE2BServiceShell.syncFromForm === 'function') {
+            MiraE2BServiceShell.syncFromForm(form);
+          }
         }
       } catch (_) {
         /* non-fatal service shell */

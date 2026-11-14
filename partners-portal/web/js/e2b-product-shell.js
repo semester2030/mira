@@ -313,6 +313,7 @@
       search.addEventListener('input', (e) => {
         const q = String(e.target.value || '').trim().toLowerCase();
         // Scope: loaded dashboard catalog rows only (explicit). Not a claim of full-server search.
+        const list = document.getElementById('catalogList');
         const rows = document.querySelectorAll('#catalogList .list-item');
         let shown = 0;
         rows.forEach((row) => {
@@ -326,6 +327,31 @@
         });
         search.setAttribute('data-match-count', String(shown));
         search.setAttribute('data-loaded-count', String(rows.length));
+        let filterEmpty = list && list.querySelector('[data-testid="catalog-state-filtered-empty"]');
+        if (q && rows.length && shown === 0) {
+          if (!filterEmpty && window.CatalogJourney && CatalogJourney.paintCatalogState) {
+            // Keep rows in DOM (hidden); append clear-filters hint once.
+            filterEmpty = document.createElement('div');
+            filterEmpty.className = 'catalog-state';
+            filterEmpty.setAttribute('data-testid', 'catalog-state-filtered-empty');
+            const msg = document.createElement('p');
+            msg.className = 'catalog-state-msg';
+            msg.textContent = 'لا نتائج مطابقة للفلتر الحالي';
+            const clear = document.createElement('button');
+            clear.type = 'button';
+            clear.className = 'btn btn-ghost';
+            clear.setAttribute('data-testid', 'catalog-clear-filters');
+            clear.textContent = 'مسح الفلاتر';
+            clear.onclick = () => {
+              search.value = '';
+              search.dispatchEvent(new Event('input', { bubbles: true }));
+            };
+            filterEmpty.append(msg, clear);
+            list.appendChild(filterEmpty);
+          }
+        } else if (filterEmpty) {
+          filterEmpty.remove();
+        }
       });
     }
     wireSideNav();

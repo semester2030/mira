@@ -19,8 +19,13 @@ body.e2b-product-mode {
   color: var(--e2b-ink);
 }
 
-body.e2b-product-mode .container {
-  width: min(1180px, 94%);
+body.e2b-product-mode .container,
+body.e2b-service-mode .container,
+body[data-portal-view] .container {
+  width: 100%;
+  max-width: none;
+  margin: 0;
+  padding: 0 0 1.5rem;
 }
 
 .e2b-workspace {
@@ -108,15 +113,22 @@ body.e2b-product-mode .container {
 }
 .e2b-circle-list-horizontal {
   flex-direction: row;
-  flex-wrap: nowrap;
+  flex-wrap: wrap;
   justify-content: flex-start;
   align-items: flex-start;
   max-height: none;
-  overflow-x: auto;
-  overflow-y: hidden;
+  overflow-x: visible;
+  overflow-y: visible;
   gap: 0.85rem;
   padding: 0.35rem 0.15rem 0.65rem;
   -webkit-overflow-scrolling: touch;
+}
+@media (max-width: 900px) {
+  .e2b-circle-list-horizontal {
+    flex-wrap: nowrap;
+    overflow-x: auto;
+    overflow-y: hidden;
+  }
 }
 .e2b-circle-list-horizontal .e2b-circle {
   flex: 0 0 auto;
@@ -240,8 +252,13 @@ img.e2b-brand-mark {
 }
 
 body.e2b-product-mode #catalogSection.e2b-split #catalogList {
-  max-height: 280px;
-  overflow: auto;
+  max-height: none;
+  overflow: visible;
+}
+#portalShell body.e2b-product-mode #catalogSection.e2b-split #catalogList,
+#portalShell #catalogList {
+  max-height: none;
+  overflow: visible;
 }
 
 /* True list/editor separation — not opacity fade of the list. */
@@ -782,7 +799,8 @@ body.e2b-product-mode .journey-actions .btn-primary {
     height: 64px;
   }
   body.e2b-product-mode .container {
-    width: min(100%, 96%);
+    width: 100%;
+    max-width: none;
   }
   body.e2b-product-mode .e2b-name-price-row {
     grid-template-columns: 1fr;
@@ -798,7 +816,9 @@ body.e2b-service-mode {
   color: var(--e2b-ink);
 }
 body.e2b-service-mode .container {
-  width: min(1180px, 94%);
+  width: 100%;
+  max-width: none;
+  margin: 0;
 }
 body.e2b-service-mode .e2c-orb-host {
   margin-bottom: 1rem;
@@ -1137,22 +1157,28 @@ body.e2b-service-mode .e2c-map-preview img.e2c-map-img {
   margin-top: 0.35rem;
 }
 
-/* —— Portal shell: one active view, sidebar right (RTL) —— */
+/* —— Portal shell: full-bleed work surface, sidebar at RTL edge —— */
 .portal-shell {
   display: grid;
-  grid-template-columns: 200px minmax(0, 1fr);
+  grid-template-columns: 220px minmax(0, 1fr);
   gap: 1rem;
   align-items: start;
-  width: min(1440px, 100%);
-  margin: 0 auto;
-  padding: 0 0.5rem 1.5rem;
+  width: 100%;
+  max-width: none;
+  margin: 0;
+  padding: 0 22px 1.5rem;
+  box-sizing: border-box;
+  min-height: calc(100vh - 64px);
 }
 .portal-rail {
   position: sticky;
-  top: 1rem;
+  top: 0.75rem;
+  width: 220px;
+  max-width: 230px;
 }
 .portal-stage {
   min-width: 0;
+  width: 100%;
 }
 .portal-stage-head {
   display: flex;
@@ -1160,7 +1186,8 @@ body.e2b-service-mode .e2c-map-preview img.e2c-map-img {
   align-items: center;
   justify-content: space-between;
   gap: 0.75rem;
-  margin-bottom: 0.65rem;
+  margin: 0 0 0.75rem;
+  min-height: 2.5rem;
 }
 .portal-view-title {
   margin: 0;
@@ -1261,9 +1288,13 @@ body.e2b-service-mode [data-testid="e2b-editor-actions"] {
 @media (max-width: 900px) {
   .portal-shell {
     grid-template-columns: 1fr;
+    padding: 0 16px 1.25rem;
+    min-height: auto;
   }
   .portal-rail {
     position: static;
+    width: 100%;
+    max-width: none;
   }
   .portal-nav {
     flex-direction: row;
@@ -1274,5 +1305,57 @@ body.e2b-service-mode [data-testid="e2b-editor-actions"] {
   .portal-nav .e2b-nav-link {
     flex: 0 0 auto;
     white-space: nowrap;
+  }
+  body.e2b-product-mode #catalogForm,
+  body.e2b-service-mode #catalogForm,
+  body.e2b-service-mode #serviceForm {
+    max-width: 100%;
+  }
+}
+
+/* Catalog list states + product cards */
+.catalog-state {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  gap: 0.75rem;
+  padding: 1.25rem 0.25rem 0.5rem;
+  min-height: 6rem;
+}
+.catalog-state-msg {
+  margin: 0;
+  color: var(--e2b-muted, #7a6584);
+  font-weight: 700;
+}
+.catalog-product-card {
+  display: grid;
+  grid-template-columns: auto minmax(0, 1fr) auto;
+  gap: 0.75rem 1rem;
+  align-items: center;
+}
+.catalog-product-thumb {
+  width: 56px;
+  height: 56px;
+  border-radius: 12px;
+  object-fit: cover;
+  background: #fff;
+  border: 1px solid rgba(201, 166, 216, 0.45);
+}
+.catalog-product-body {
+  min-width: 0;
+}
+.catalog-product-actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.35rem;
+  justify-content: flex-end;
+}
+@media (max-width: 640px) {
+  .catalog-product-card {
+    grid-template-columns: auto minmax(0, 1fr);
+  }
+  .catalog-product-actions {
+    grid-column: 1 / -1;
+    justify-content: flex-start;
   }
 }

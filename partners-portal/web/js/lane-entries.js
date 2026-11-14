@@ -242,9 +242,8 @@
     }
     var bulk = document.getElementById('bulkSection');
     if (bulk) bulk.classList.add('hidden');
-    var catalogForm = document.getElementById('catalogForm');
-    var hasProductEditor = !!(catalogForm && catalogForm.querySelector('input[name="nameAr"]'));
-    if (!hasProductEditor && typeof window.renderForm === 'function') {
+    // «إضافة منتج» always opens a blank form — never reuse a previously opened item.
+    if (typeof window.renderForm === 'function') {
       window.renderForm('brand', null, 'catalogForm', 'catalogTitle');
     }
     clearInactiveTaxonomyBanners('catalogForm');

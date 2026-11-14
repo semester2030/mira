@@ -6,8 +6,8 @@
   <meta name="mira-api-base" content="https://mira-api-n4p3.onrender.com/api/v1" />
   <title>لوحة التحكم — شركاء ميرا</title>
   <link href="https://fonts.googleapis.com/css2?family=Tajawal:wght@400;700;800&display=swap" rel="stylesheet" />
-  <link rel="stylesheet" href="css/site.css?v=purchase-mode1" />
-  <link rel="stylesheet" href="css/e2b-product-editor.css?v=purchase-mode1" />
+  <link rel="stylesheet" href="css/site.css?v=products-list-fix1" />
+  <link rel="stylesheet" href="css/e2b-product-editor.css?v=products-list-fix1" />
 </head>
 <body>
   <header>
@@ -128,24 +128,24 @@
     </div>
   </main>
 
-  <script src="js/api.js?v=purchase-mode1"></script>
-  <script src="js/motion.js?v=purchase-mode1"></script>
-  <script src="js/motion-fixture.js?v=purchase-mode1"></script>
-  <script src="js/ads.js?v=purchase-mode1"></script>
-  <script src="js/service-templates.js?v=purchase-mode1"></script>
-  <script src="js/catalog-options-core.js?v=purchase-mode1"></script>
-  <script src="js/product-commerce-fields.js?v=purchase-mode1"></script>
-  <script src="js/registry-attribute-fields.js?v=purchase-mode1"></script>
-  <script src="js/inventory-editor-state.js?v=purchase-mode1"></script>
-  <script src="js/editor-v2.js?v=purchase-mode1"></script>
-  <script src="js/catalog-journey.bags1.js?v=purchase-mode1"></script>
-  <script src="js/lane-entries.js?v=purchase-mode1"></script>
-  <script src="js/bulk-add.js?v=purchase-mode1"></script>
-  <script src="js/bulk-group-journey.js?v=purchase-mode1"></script>
-  <script src="js/portal-shell.js?v=purchase-mode1"></script>
-  <script src="js/e2b-product-shell.bags1.js?v=purchase-mode1"></script>
-  <script src="js/e2b-service-shell.js?v=purchase-mode1"></script>
-  <script src="js/commerce-orders.js?v=purchase-mode1"></script>
+  <script src="js/api.js?v=products-list-fix1"></script>
+  <script src="js/motion.js?v=products-list-fix1"></script>
+  <script src="js/motion-fixture.js?v=products-list-fix1"></script>
+  <script src="js/ads.js?v=products-list-fix1"></script>
+  <script src="js/service-templates.js?v=products-list-fix1"></script>
+  <script src="js/catalog-options-core.js?v=products-list-fix1"></script>
+  <script src="js/product-commerce-fields.js?v=products-list-fix1"></script>
+  <script src="js/registry-attribute-fields.js?v=products-list-fix1"></script>
+  <script src="js/inventory-editor-state.js?v=products-list-fix1"></script>
+  <script src="js/editor-v2.js?v=products-list-fix1"></script>
+  <script src="js/catalog-journey.bags1.js?v=products-list-fix1"></script>
+  <script src="js/lane-entries.js?v=products-list-fix1"></script>
+  <script src="js/bulk-add.js?v=products-list-fix1"></script>
+  <script src="js/bulk-group-journey.js?v=products-list-fix1"></script>
+  <script src="js/portal-shell.js?v=products-list-fix1"></script>
+  <script src="js/e2b-product-shell.bags1.js?v=products-list-fix1"></script>
+  <script src="js/e2b-service-shell.js?v=products-list-fix1"></script>
+  <script src="js/commerce-orders.js?v=products-list-fix1"></script>
   <script>
     const labeledUi = new URLSearchParams(location.search).get('ui-fixture') === 'labeled';
     if (!labeledUi && !PartnersApi.isLoggedIn()) location.href = 'login.html' + location.search;
@@ -585,6 +585,11 @@
         if (showServices && !showProducts && window.MiraE2BServiceShell) {
           MiraE2BServiceShell.enableServiceMode('catalogForm');
         }
+        // Keep list chrome honest while data loads into #catalogList.
+        const catalogListEl = document.getElementById('catalogList');
+        if (catalogListEl && showProducts && window.CatalogJourney && CatalogJourney.paintCatalogState) {
+          CatalogJourney.paintCatalogState(catalogListEl, 'loading');
+        }
         productButton.onclick = () => {
           bulkSection.classList.add('hidden');
           // المجوهرات/الأطفال/الهدايا مداخل مستقلة — لا تُفتح داخل أناقتك تلقائيًا.
@@ -600,12 +605,9 @@
             window.__MIRA_TAXONOMY_LANE__ = 'elegance';
             window.__MIRA_LANE_PROFILE_ID__ = null;
           }
-          // Do not wipe an in-progress product editor when toggling product↔service (R-04 isolation).
-          const catalogForm = document.getElementById('catalogForm');
-          const hasProductEditor = !!(catalogForm && catalogForm.querySelector('input[name="nameAr"]'));
-          if ((!options || !options.preserveForms) && !hasProductEditor) {
-            if (developer) renderForm('brand', null, 'catalogForm', 'catalogTitle');
-            else if (p.type === 'brand') renderForm('brand', null, 'catalogForm', 'catalogTitle');
+          // Explicit «إضافة منتج» opens a blank form (independent of a previously opened item).
+          if (developer || p.type === 'brand' || p.canSellProducts === true) {
+            renderForm('brand', null, 'catalogForm', 'catalogTitle');
           }
           if (window.MiraPortalShell) MiraPortalShell.openProductEditor();
           if (window.MiraE2BProductShell) MiraE2BProductShell.focusEditor();
@@ -674,7 +676,18 @@
           renderCatalog('brand', data.catalog, 'catalogList', 'catalogForm', 'catalogTitle');
           if (!options || !options.preserveForms) renderForm('brand', null, 'catalogForm', 'catalogTitle');
           renderCatalog('clinic', data.catalog, 'serviceList', 'serviceForm', 'serviceTitle');
+          // Pre-paint service form without activating service mode (portal still on products).
           if (!options || !options.preserveForms) renderForm('clinic', null, 'serviceForm', 'serviceTitle');
+          // Re-assert products landing: serviceForm paint must not blank «منتجاتي».
+          if (showProducts) {
+            if (window.MiraE2BServiceShell && typeof MiraE2BServiceShell.disableServiceMode === 'function') {
+              try { MiraE2BServiceShell.disableServiceMode(); } catch (_) {}
+            }
+            if (window.MiraE2BProductShell) MiraE2BProductShell.enableProductMode();
+            if (window.MiraPortalShell) {
+              MiraPortalShell.navigate('products', 'list', { replace: true, force: true });
+            }
+          }
         } else {
           // Do not unhide empty serviceSection for salon/clinic — catalogForm is the service editor.
           renderCatalog(p.type, data.catalog, 'catalogList', 'catalogForm', 'catalogTitle');
@@ -695,8 +708,16 @@
         document.getElementById('loadErrorText').textContent = 'تعذر تحميل البيانات: ' + err.message;
         error.classList.remove('hidden');
         document.getElementById('stats').removeAttribute('aria-busy');
-        document.getElementById('catalogList').replaceChildren();
-        document.getElementById('catalogList').removeAttribute('aria-busy');
+        const errList = document.getElementById('catalogList');
+        if (errList && window.CatalogJourney && CatalogJourney.paintCatalogState) {
+          CatalogJourney.paintCatalogState(errList, 'error', {
+            message: 'تعذر تحميل القائمة: ' + err.message,
+            retryHandler: () => { if (window.reloadPartnerDashboard) window.reloadPartnerDashboard(); },
+          });
+        } else if (errList) {
+          errList.replaceChildren();
+          errList.removeAttribute('aria-busy');
+        }
         document.getElementById('loadingRetry').focus();
       }
     }

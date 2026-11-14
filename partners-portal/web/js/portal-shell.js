@@ -135,6 +135,26 @@
     if (useCatalogPanels) {
       setExclusive(listPanel, editorPanel, mode);
       document.body.classList.toggle('e2b-editor-focus', mode === 'edit');
+      // Products view must never leave #catalogSection blanked by a prior service-mode paint.
+      if (view === 'products') {
+        var catalogSection = document.getElementById('catalogSection');
+        if (catalogSection) {
+          catalogSection.classList.remove('e2c-inactive-editor', 'hidden');
+          catalogSection.hidden = false;
+          catalogSection.removeAttribute('aria-hidden');
+          catalogSection.setAttribute('data-portal-active', '1');
+        }
+        if (mode === 'list') {
+          document.body.classList.remove('e2b-service-mode');
+          if (window.MiraE2BProductShell && typeof MiraE2BProductShell.enableProductMode === 'function') {
+            try {
+              MiraE2BProductShell.enableProductMode();
+            } catch (_) {
+              /* optional */
+            }
+          }
+        }
+      }
     } else {
       if (listPanel && view !== 'products') {
         /* leave panels alone when another section is active */
@@ -324,6 +344,14 @@
       add.setAttribute('data-testid', 'portal-add-product');
       add.textContent = 'إضافة منتج';
       add.onclick = function () {
+        // Prefer a blank product form immediately, then lane chooser if present.
+        if (typeof window.renderForm === 'function') {
+          try {
+            window.renderForm('brand', null, 'catalogForm', 'catalogTitle');
+          } catch (_) {
+            /* optional */
+          }
+        }
         if (window.MiraLaneEntries && typeof MiraLaneEntries.startProductAdd === 'function') {
           Promise.resolve(MiraLaneEntries.startProductAdd()).catch(function (e) {
             console.warn('[portalAddProduct]', e);
@@ -358,9 +386,14 @@
       backBtn.setAttribute('data-testid', 'portal-back-to-list');
       backBtn.textContent = 'العودة للقائمة';
       backBtn.onclick = function () {
-        navigate(view, 'list');
+        // Returning to the list is not discarding an in-progress create — force list mode.
+        var ok = navigate(view, 'list', { force: true });
+        if (!ok) return;
         if (view === 'products' && window.MiraE2BProductShell && MiraE2BProductShell.showList) {
           MiraE2BProductShell.showList();
+        }
+        if (view === 'services' && window.MiraE2BServiceShell && typeof MiraE2BServiceShell.disableServiceMode === 'function') {
+          /* keep service mode for services list; product catalog stays gated by portal view */
         }
       };
       actions.appendChild(backBtn);
