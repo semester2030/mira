@@ -1,0 +1,10 @@
+{
+  "bytes": 37573,
+  "sha256_12": "5ec913fccbfc",
+  "portal_shell_script": true,
+  "e2b_css": true,
+  "commerce_search": true,
+  "go_bulk": true,
+  "drafts": true,
+  "cache_bust": true
+}
