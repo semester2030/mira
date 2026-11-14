@@ -1,0 +1,149 @@
+{
+  "run": "sbhttpmwforet0",
+  "database": "mira_sbws_proof_test",
+  "baseUrl": "http://127.0.0.1:64019/api/v1",
+  "commit": "local",
+  "answers": {
+    "q1_customerBoughtFromVideo_sellerReceived": {
+      "answer": "لا من الواجهة — نعم من الخادم/HTTP",
+      "ui": false,
+      "server": true,
+      "evidence": "MO-261114-5EPEJ2"
+    },
+    "q2_customerBooked_partnerConfirmed_customerSees": {
+      "answer": "لا من الواجهة — نعم من الخادم/HTTP",
+      "ui": false,
+      "server": true,
+      "evidence": "MB-261114-P5K68Z"
+    },
+    "q3_adminActivateLegacyViaUi": {
+      "answer": "لا",
+      "ui": false,
+      "server": false,
+      "stop": "لا مسار دعوة/claim",
+      "activationScopeIfPartnerOwned": "تفعيل صف المنتج يغيّر زر كل المقاطع المرتبطة بنفس ownerId؛ عرض مستقل يبقى كما هو"
+    }
+  },
+  "rows": [
+    {
+      "step": "حسابات اختبار بلا storeUrl",
+      "actor": "seed",
+      "classification": "ثبت من الخادم فقط",
+      "actual": "seller.storeUrl=null salon.storeUrl=null",
+      "ok": true,
+      "evidence": "Prisma seed — تجهيز اختبار"
+    },
+    {
+      "step": "تجهيز منتج بمقاسين ومخزون (seed)",
+      "actor": "seed→seller product",
+      "classification": "ثبت من الخادم فقط",
+      "actual": "S stock=1 M stock=3 mode=internal_cod",
+      "ok": true,
+      "evidence": "productId=edef6af3-cd13-4a33-a90b-ac4ad0f5cbbb — تجهيز اختبار وليس محرر شريك حي"
+    },
+    {
+      "step": "شراء COD مقاس S عبر HTTP تجارة",
+      "actor": "customer+seller+admin",
+      "classification": "ثبت من الخادم فقط",
+      "actual": "ref=MO-261114-5EPEJ2 cust=200 seller=200 admin=200 salonGet=404 salonListHas=false S.reserved=1 M.reserved=0 M.stock=3",
+      "ok": true,
+      "evidence": "orderId=798eb8ee-27b5-4d2d-8a06-4562be0ba239 HTTP Nest commerce — ليس تطبيق الجوال"
+    },
+    {
+      "step": "قبول→تجهيز→تسليم→تحصيل من بوابة البائع (HTTP)",
+      "actor": "seller partner API",
+      "classification": "ثبت من الخادم فقط",
+      "actual": "collect=201 payment=collected S.stock=0 S.reserved=0",
+      "ok": true,
+      "evidence": "partners/me/commerce — ليس متصفح البوابة"
+    },
+    {
+      "step": "طلب موعد قبل القبول (HTTP)",
+      "actor": "customer",
+      "classification": "ثبت من الخادم فقط",
+      "actual": "ref=MB-261114-P5K68Z status=requested payMode=pay_at_venue",
+      "ok": true,
+      "evidence": "قبل قبول الشريك — الحالة requested"
+    },
+    {
+      "step": "قبول الشريك وظهور التأكيد للعميلة والإدارة",
+      "actor": "salon+customer+admin",
+      "classification": "ثبت من الخادم فقط",
+      "actual": "accept=confirmed customer=confirmed admin=200 sellerGet=404",
+      "ok": true,
+      "evidence": "bookingId=f972ba27-6c8d-45de-8f2d-02b961600dad"
+    },
+    {
+      "step": "حجز ثانٍ ثم إلغاء — عودة الموعد",
+      "actor": "customer",
+      "classification": "ثبت من الخادم فقط",
+      "actual": "cancel=cancelled slot720.available=true",
+      "ok": true,
+      "evidence": "day=2026-11-20"
+    },
+    {
+      "step": "محرر: عرض فقط → القيمة المحفوظة",
+      "actor": "editor-path coerce",
+      "classification": "ثبت من الخادم فقط",
+      "actual": "input=display saved=external (ليس display؛ يساوي رابط خارجي external)",
+      "ok": true,
+      "evidence": "editor-drafts.service.ts coerce — محرر المتصفح لم يُفتح"
+    },
+    {
+      "step": "تفعيل عرض الشريك بمقطعين + عرض مستقل",
+      "actor": "product row",
+      "classification": "ثبت من الخادم فقط",
+      "actual": "activated=internal_cod mediaIds unchanged=3b52ced5-4af8-48eb-8594-123969558075,c60779bd-e480-4c92-a0c5-ba84d5f084af independent=external",
+      "ok": true,
+      "evidence": "تفعيل المنتج يؤثر على مقاطعه؛ المستقل يبقى external"
+    },
+    {
+      "step": "إسناد عرض الإدارة لصاحبه من الواجهة",
+      "actor": "admin UI",
+      "classification": "فشل",
+      "actual": "publisher=39e7ed5b-06bf-44ef-a19b-53a33281ef3c advertiser=39e7ed5b-06bf-44ef-a19b-53a33281ef3c product.partner_id=39e7ed5b-06bf-44ef-a19b-53a33281ef3c — لا مسار claim؛ تعديل partner_id اليدوي مرفوض كدليل",
+      "ok": false,
+      "evidence": "STOP: missing ownership-claim journey"
+    },
+    {
+      "step": "سباق آخر قطعة مقاس S",
+      "actor": "two customers HTTP",
+      "classification": "ثبت من الخادم فقط",
+      "actual": "wins=1 lostStatus=409 lostCode=OUT_OF_STOCK",
+      "ok": true,
+      "evidence": "آخر وحدة size-s"
+    },
+    {
+      "step": "سباق نفس الموعد (طلب معلّق)",
+      "actor": "two customers HTTP",
+      "classification": "ثبت من الخادم فقط",
+      "actual": "wins=1 codes=BOOKING_SLOT_FULL,requested",
+      "ok": true,
+      "evidence": "capacity=1 يمنع طلبين متعارضين أصلًا قبل التأكيد"
+    },
+    {
+      "step": "ضغط تأكيد مرتين بنفس المفتاح",
+      "actor": "customer HTTP",
+      "classification": "ثبت من الخادم فقط",
+      "actual": "sameId=true statuses=201,201 codes=undefined,undefined detail={\"order\":{\"id\":\"5dd59a18-9145-4f9b-a483-292a7993d7da\",\"publicNumber\":\"MO-261114-R7WVHT\",\"partner\":{\"id\":\"e54bff6c-9aac-4632-b3f5-5babea94b90d\",\"nameAr\":\"بائع HTTP بلا متجر\"},\"fulfi",
+      "ok": true,
+      "evidence": "publicNumber=MO-261114-R7WVHT"
+    },
+    {
+      "step": "تطبيق العميلة من فيديو Discover",
+      "actor": "Flutter iOS",
+      "classification": "لم يُختبر",
+      "actual": "الافتراضي يشير لإنتاج mira-api-n4p3؛ تشغيل الشراء على الهاتف يلمس/يقرأ إنتاجًا — مرفوض في هذا التكليف",
+      "ok": false,
+      "evidence": "MiraApiConfig.baseUrl default = production"
+    },
+    {
+      "step": "متصفح بوابة الشركاء (UI)",
+      "actor": "partners portal browser",
+      "classification": "لم يُختبر",
+      "actual": "لم تُفتح جلسة متصفح؛ الانتقالات نُفذت عبر HTTP API للبوابة",
+      "ok": false,
+      "evidence": "limit: no portal browser session"
+    }
+  ]
+}

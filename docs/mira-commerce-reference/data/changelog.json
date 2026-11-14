@@ -95,5 +95,16 @@
       "تحديث صفحة الدراسة بجدول الخطوات وثلاث إجابات"
     ],
     "baselineCommit": "a712b24"
+  },
+  {
+    "version": "إثبات HTTP — مقاسين وتصنيف واجهة/خادم",
+    "date": "2026-11-14T03:55:00+03:00",
+    "changesAr": [
+      "sell-book-without-store.http-journey.proof.ts مع مخزون مقاس S/M",
+      "مراجع MO-261114-5EPEJ2 و MB-261114-P5K68Z + CLASSIFICATION.json",
+      "COMMANDS_LOG يوضح تجاوز REFUSE على قاعدة معزولة",
+      "ثلاث إجابات: لا من الواجهة / نعم من الخادم؛ claim فشل"
+    ],
+    "baselineCommit": "b54c671"
   }
 ]

@@ -1,5 +1,5 @@
 {
-  "run": "sbwsmwfoe0nx",
+  "run": "sbwsmwfoq6ag",
   "database": "mira_sbws_proof_test",
   "databaseUrlHostLocal": true,
   "layer": "server-service-proof",
@@ -24,16 +24,16 @@
       "expected": "عميلة + بائع brand + صالون + شريك إداري؛ storeUrl=null",
       "actual": "seller.storeUrl=null salon.storeUrl=null canCreateProduct=true canCreateService=true",
       "ok": true,
-      "evidence": "partners 49b86ab8-bdb0-4b64-b1e0-9e117cdccd6c / e58e5cbd-ad91-4428-81a3-363b4584f96c"
+      "evidence": "partners edd5d3e7-d17f-4f7c-b3f9-83dd58cf62c8 / 7ebf1c9f-333a-4f9a-99e4-411a77538ae0"
     },
     {
       "step": "طلب COD: رؤية العميلة والبائع والإدارة؛ الصالون لا يرى",
       "actor": "customer/seller/admin/salon",
       "layer": "server",
       "expected": "نفس رقم الطلب لدى العميلة والبائع والإدارة؛ الصالون 404/قائمة فارغة منه",
-      "actual": "publicNumber=MO-261114-EM3GK3 cust=MO-261114-EM3GK3 seller=MO-261114-EM3GK3 admin=MO-261114-EM3GK3 salonSees=false",
+      "actual": "publicNumber=MO-261114-BW24ME cust=MO-261114-BW24ME seller=MO-261114-BW24ME admin=MO-261114-BW24ME salonSees=false",
       "ok": true,
-      "evidence": "orderId=a82daa0c-b961-4d45-a780-4a5d081fade0"
+      "evidence": "orderId=c120864b-af24-488e-8972-ca5e77b9bb49"
     },
     {
       "step": "تسليم + تسجيل تحصيل COD",
@@ -42,7 +42,7 @@
       "expected": "delivered + collected؛ المخزون ينقص 1؛ العميلة ترى الحالة",
       "actual": "fulfillment=delivered payment=collected stockQty=1 reserved=0 customerPayment=collected",
       "ok": true,
-      "evidence": "collectionActor=partner:sbwsmwfoe0nx-seller-pu"
+      "evidence": "collectionActor=partner:sbwsmwfoq6ag-seller-pu"
     },
     {
       "step": "طلب موعد قبل القبول",
@@ -51,7 +51,7 @@
       "expected": "status=requested؛ الصالون يرى؛ البائع لا يرى",
       "actual": "cust=requested salon=requested sellerSees=false payMode=pay_at_venue",
       "ok": true,
-      "evidence": "bookingId=42327255-5137-4da2-a5e4-6ae5746cf57a publicNumber=MB-261114-Z7KPXD"
+      "evidence": "bookingId=e2b60290-fa6d-4ffa-b263-b769709ffbd4 publicNumber=MB-261114-GFC5Q2"
     },
     {
       "step": "قبول مقدّم الخدمة",
@@ -85,7 +85,7 @@
       "actor": "seller-owned product",
       "layer": "server",
       "expected": "نفس productId + نفس media ids؛ الوضع internal_cod يؤثر على كل المقاطع المرتبطة",
-      "actual": "productId=02e83ec1-f696-4d8e-bced-a9f79a7f6c8c mode=internal_cod mediaIds=6988f240-2a50-4b13-b52f-b647e4875af9,47d3d3a7-acd8-4838-b60f-409af4b807b5 idsUnchanged=true",
+      "actual": "productId=fc94c69f-e63a-4947-b41f-d3cce7eab71d mode=internal_cod mediaIds=4c761c6a-cccc-415d-8f44-4888cec9508a,f93930e0-9859-44b7-a8e4-b7bb1842e240 idsUnchanged=true",
       "ok": true,
       "evidence": "commerce owns purchaseMode on Product; CatalogMedia.ownerId=product"
     },
@@ -94,9 +94,9 @@
       "actor": "admin→owner claim",
       "layer": "server",
       "expected": "إن وُجد مسار دعوة/قبول؛ وإلا توثيق التوقف",
-      "actual": "شراء المنتج الإداري الخارجي مرفوض: EXTERNAL_PRODUCT_NOT_PURCHASABLE؛ الملكية تبقى partner_id=9403273e-17ca-4ff8-bb66-9ffa59f9f524 (ميرا) لا البائع 49b86ab8-bdb0-4b64-b1e0-9e117cdccd6c",
+      "actual": "شراء المنتج الإداري الخارجي مرفوض: EXTERNAL_PRODUCT_NOT_PURCHASABLE؛ الملكية تبقى partner_id=511f919d-0bb9-440e-b631-0a187f8e9005 (ميرا) لا البائع edd5d3e7-d17f-4f7c-b3f9-83dd58cf62c8",
       "ok": true,
-      "evidence": "adminProduct=eff2dfee-531a-406c-ac6b-0af72e7578fe ad=e5d25c3c-9677-4883-bbf7-7dd891bdef60 invitePathExists=false"
+      "evidence": "adminProduct=5e72e486-5f05-4f55-9a9c-42c8b3e1c403 ad=60926680-d5e0-4a32-8901-bf886cfeab1d invitePathExists=false"
     },
     {
       "step": "هل تستطيع الإدارة تفعيل عرض قديم لصاحبه الصحيح من الواجهة؟",
@@ -114,7 +114,7 @@
       "expected": "فائز واحد؛ reservedQty=1؛ الخاسر OUT_OF_STOCK",
       "actual": "wins=1 reserved=1 lostCode=OUT_OF_STOCK",
       "ok": true,
-      "evidence": "product=d5908cb8-41a3-4bc2-90c3-e6e981abe38c"
+      "evidence": "product=cbe7c9fd-02f9-4d5c-b178-cefc5a37cfba"
     },
     {
       "step": "سباق نفس الموعد من عميلتين",
@@ -130,18 +130,18 @@
       "actor": "customer",
       "layer": "server",
       "expected": "نفس orderId؛ طلب واحد فقط",
-      "actual": "id1=119e66b9-557e-404b-b0fe-ff65a7de7fd2 id2=119e66b9-557e-404b-b0fe-ff65a7de7fd2 same=true replays=1",
+      "actual": "id1=f77ebf62-a125-4411-beb8-336aaca832c8 id2=f77ebf62-a125-4411-beb8-336aaca832c8 same=true replays=1",
       "ok": true,
-      "evidence": "publicNumber=MO-261114-CNP4ZG"
+      "evidence": "publicNumber=MO-261114-DMYFYG"
     }
   ],
   "ids": {
-    "customerUserId": "73ce5942-98e8-4306-90a9-c076355236f2",
-    "sellerPartnerId": "49b86ab8-bdb0-4b64-b1e0-9e117cdccd6c",
-    "salonPartnerId": "e58e5cbd-ad91-4428-81a3-363b4584f96c",
-    "adminPartnerId": "9403273e-17ca-4ff8-bb66-9ffa59f9f524",
-    "productId": "02e83ec1-f696-4d8e-bced-a9f79a7f6c8c",
-    "serviceId": "d43cb56f-a705-4b66-a107-6f2f9b0ef894",
-    "orderPublicNumber": "MO-261114-EM3GK3"
+    "customerUserId": "ae712454-85be-4293-a8f1-509834cba5ec",
+    "sellerPartnerId": "edd5d3e7-d17f-4f7c-b3f9-83dd58cf62c8",
+    "salonPartnerId": "7ebf1c9f-333a-4f9a-99e4-411a77538ae0",
+    "adminPartnerId": "511f919d-0bb9-440e-b631-0a187f8e9005",
+    "productId": "fc94c69f-e63a-4947-b41f-d3cce7eab71d",
+    "serviceId": "2075ecaf-3335-4817-a0bc-7d63afcf858a",
+    "orderPublicNumber": "MO-261114-BW24ME"
   }
 }

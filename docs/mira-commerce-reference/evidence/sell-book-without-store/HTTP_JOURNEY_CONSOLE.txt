@@ -1,0 +1,23 @@
+npm warn Unknown env config "devdir". This will stop working in the next major version of npm.
+[PASS][ثبت من الخادم فقط] حسابات اختبار بلا storeUrl — seller.storeUrl=null salon.storeUrl=null
+[PASS][ثبت من الخادم فقط] تجهيز منتج بمقاسين ومخزون (seed) — S stock=1 M stock=3 mode=internal_cod
+[PASS][ثبت من الخادم فقط] شراء COD مقاس S عبر HTTP تجارة — ref=MO-261114-8VMQBC cust=200 seller=200 admin=200 salonGet=404 salonListHas=false S.reserved=1 M.reserved=0 M.stock=3
+[PASS][ثبت من الخادم فقط] قبول→تجهيز→تسليم→تحصيل من بوابة البائع (HTTP) — collect=201 payment=collected S.stock=0 S.reserved=0
+[PASS][ثبت من الخادم فقط] طلب موعد قبل القبول (HTTP) — ref=MB-261114-HPW2UC status=requested payMode=pay_at_venue
+[PASS][ثبت من الخادم فقط] قبول الشريك وظهور التأكيد للعميلة والإدارة — accept=confirmed customer=confirmed admin=200 sellerGet=404
+[PASS][ثبت من الخادم فقط] حجز ثانٍ ثم إلغاء — عودة الموعد — cancel=cancelled slot720.available=true
+[PASS][ثبت من الخادم فقط] محرر: عرض فقط → القيمة المحفوظة — input=display saved=external (ليس display؛ يساوي رابط خارجي external)
+[PASS][ثبت من الخادم فقط] تفعيل عرض الشريك بمقطعين + عرض مستقل — activated=internal_cod mediaIds unchanged=99047de5-5947-43c2-80bd-8bf3b700f92e,0cd71b25-e090-4a01-bce0-75604774d777 independent=external
+[FAIL][فشل] إسناد عرض الإدارة لصاحبه من الواجهة — publisher=3ad8d676-5513-414d-afa3-068482e47ae8 advertiser=3ad8d676-5513-414d-afa3-068482e47ae8 product.partner_id=3ad8d676-5513-414d-afa3-068482e47ae8 — لا مسار claim؛ تعديل partner_id اليدوي مرفوض كدليل
+[PASS][ثبت من الخادم فقط] سباق آخر قطعة مقاس S — wins=1 lostStatus=409 lostCode=OUT_OF_STOCK
+[PASS][ثبت من الخادم فقط] سباق نفس الموعد (طلب معلّق) — wins=1 codes=BOOKING_SLOT_FULL,requested
+[PASS][ثبت من الخادم فقط] ضغط تأكيد مرتين بنفس المفتاح — sameId=true statuses=201,201 codes=undefined,undefined detail={"order":{"id":"a9a5b86b-0a6a-49c2-9b4c-8a26b70bcf56","publicNumber":"MO-261114-3NKZNT","partner":{"id":"11578985-cd0f-4d55-bdb9-0ab43abfea7e","nameAr":"بائع HTTP بلا متجر"},"fulfi
+[FAIL][لم يُختبر] تطبيق العميلة من فيديو Discover — الافتراضي يشير لإنتاج mira-api-n4p3؛ تشغيل الشراء على الهاتف يلمس/يقرأ إنتاجًا — مرفوض في هذا التكليف
+[FAIL][لم يُختبر] متصفح بوابة الشركاء (UI) — لم تُفتح جلسة متصفح؛ الانتقالات نُفذت عبر HTTP API للبوابة
+HTTP journey proof done {
+  saleOk: true,
+  bookOk: true,
+  claimOk: false,
+  publicNumber: 'MO-261114-8VMQBC',
+  bkPublic: 'MB-261114-HPW2UC'
+}

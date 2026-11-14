@@ -163,26 +163,28 @@
   </section>
 
   <section>
-    <h2>٦) إثبات المسارين على قاعدة اختبار محلية</h2>
-    <p>قاعدة: <code>mira_sbws_proof_test</code> على 127.0.0.1. حارس الأمان رفض <code>DATABASE_URL</code> غير المحلي (exit 1). لا قراءة/كتابة إنتاج.</p>
-    <h3>الخطوة | المنفّذ | ما حدث فعليًا | الدليل</h3>
+    <h2>٦) إزالة عائق البيئة + إثبات الرحلتين</h2>
+    <p><strong>ملاحظة عن الحزمة القديمة:</strong> <code>MIRA_SELL_BOOK_WITHOUT_STORE_20261114T002359Z_a712b24</code> توقفت عند REFUSE لأنها بلا قاعدة اختبار. هذه الجولة تستخدم <code>mira_sbws_proof_test</code> @ 127.0.0.1 مع الحارس مفعّلًا (غير المحلي → exit 1). أوامر التشغيل: <code>evidence/sell-book-without-store/COMMANDS_LOG.txt</code>.</p>
+    <p>تصنيف النتائج: <span class="tag ok">ثبت من الواجهة</span> · <span class="tag partial">ثبت من الخادم فقط</span> · <span class="tag missing">فشل</span> · <span class="tag ext">لم يُختبر</span></p>
     <table>
-      <tr><th>الخطوة</th><th>المنفّذ</th><th>الطبقة</th><th>ما حدث فعليًا</th><th>الدليل</th></tr>
-      <tr><td>حسابات بلا storeUrl</td><td>harness</td><td>خادم</td><td>brand+salon بـ storeUrl=null؛ صلاحية منتج/خدمة صحيحة</td><td><code>PROOF_RUN.json</code></td></tr>
-      <tr><td>شراء COD حتى التحصيل</td><td>عميلة→بائع→إدارة</td><td>خادم</td><td>طلب <code>MO-261114-EM3GK3</code> نفسه لدى الثلاثة؛ الصالون لا يراه؛ delivered+collected؛ المخزون −1</td><td><code>PROOF_STEPS.md</code> + <code>commerce.service.schema-tests</code> PASS</td></tr>
-      <tr><td>طلب موعد → قبول → إلغاء يحرّر</td><td>عميلة→صالون</td><td>خادم</td><td>requested ثم confirmed؛ البائع لا يرى الحجز؛ بعد الإلغاء الموعد متاح</td><td>نفس الملفات + HTTP bookings guards</td></tr>
-      <tr><td>«عرض فقط» من المحرر</td><td>مسار المحرر</td><td>محرر→DB</td><td><code>display</code> يُحفظ <code>external</code> (ليس display)</td><td><code>editor-drafts.service.ts</code> coerce</td></tr>
-      <tr><td>تفعيل عرض الشريك بمقطعين</td><td>منتج الشريك</td><td>خادم</td><td>نفس productId وmedia ids؛ internal_cod يؤثر على المقطعين</td><td>PROOF</td></tr>
-      <tr><td>عرض إداري → صاحبه</td><td>إدارة</td><td>واجهة/API</td><td><span class="tag missing">توقف</span> — لا دعوة/claim؛ DB يدوي لا يُحسب رحلة</td><td>STOP في PROOF</td></tr>
-      <tr><td>سباق آخر قطعة / نفس الموعد / ضغط مزدوج</td><td>عميلتان</td><td>خادم</td><td>فائز واحد + OUT_OF_STOCK؛ حجز واحد؛ idempotent replay</td><td>PROOF + concurrency (جزئي)</td></tr>
+      <tr><th>الخطوة</th><th>المنفّذ</th><th>التصنيف</th><th>ما حدث فعليًا</th><th>الدليل</th></tr>
+      <tr><td>حارس DATABASE_URL</td><td>commerce.service + http-journey</td><td><span class="tag ok">ثبت من الخادم فقط</span></td><td>غير المحلي يرفض exit 1؛ المحلي يمر</td><td><code>COMMANDS_LOG.txt</code></td></tr>
+      <tr><td>منتج مقاسين S/M + internal_cod</td><td>seed تجهيز اختبار</td><td><span class="tag partial">ثبت من الخادم فقط</span></td><td>S=1، M=3؛ شراء S لا يمسّ M</td><td><code>HTTP_JOURNEY_PROOF.json</code></td></tr>
+      <tr><td>شراء COD → طلباتي/بائع/إدارة → تحصيل</td><td>HTTP عميلة+بائع+admin</td><td><span class="tag partial">ثبت من الخادم فقط</span></td><td>آخر مرجع ناجح <code>MO-261114-5EPEJ2</code>؛ صالون 404؛ S.stock→0 بعد التسليم</td><td>HTTP Nest + <code>CLASSIFICATION.json</code></td></tr>
+      <tr><td>طلب موعد → قبول → تأكيد العميلة</td><td>HTTP عميلة+صالون</td><td><span class="tag partial">ثبت من الخادم فقط</span></td><td><code>MB-261114-P5K68Z</code> requested→confirmed؛ البائع 404؛ إلغاء يحرّر الموعد</td><td>نفس الملفات</td></tr>
+      <tr><td>«عرض فقط» vs رابط خارجي</td><td>مسار محرر (coerce)</td><td><span class="tag partial">ثبت من الخادم فقط</span></td><td><code>display</code> يُحفظ <code>external</code> — لا فرق تخزين عن رابط خارجي</td><td><code>editor-drafts.service.ts</code></td></tr>
+      <tr><td>مقطعان لنفس العرض + عرض مستقل</td><td>خادم</td><td><span class="tag partial">ثبت من الخادم فقط</span></td><td>تفعيل المنتج يغيّر الاثنين؛ المستقل يبقى external</td><td>HTTP_JOURNEY</td></tr>
+      <tr><td>إسناد عرض إداري لصاحبه</td><td>واجهة/API</td><td><span class="tag missing">فشل</span></td><td>آخر نجاح: إنشاء عرض إداري بـ partner_id ميرا. أول فشل: لا مسار claim. السبب: لا API دعوة. أقل تعديل: رحلة دعوة+قبول+ربط ملكية</td><td>STOP</td></tr>
+      <tr><td>سباق آخر قطعة / موعد / ضغط مزدوج</td><td>HTTP</td><td><span class="tag partial">ثبت من الخادم فقط</span></td><td>فائز واحد OUT_OF_STOCK؛ طلب معلّق واحد فقط (BOOKING_SLOT_FULL)؛ idempotent 201/201</td><td>HTTP_JOURNEY</td></tr>
+      <tr><td>فيديو Discover على الجوال</td><td>Flutter</td><td><span class="tag ext">لم يُختبر</span></td><td>الافتراضي → إنتاج؛ مرفوض لمس الإنتاج</td><td><code>MiraApiConfig</code></td></tr>
+      <tr><td>متصفح بوابة الشركاء</td><td>UI</td><td><span class="tag ext">لم يُختبر</span></td><td>الانتقالات عبر HTTP API فقط</td><td>حد الإثبات</td></tr>
     </table>
     <table>
-      <tr><th>حزمة اختبار</th><th>النتيجة</th><th>الدليل</th></tr>
-      <tr><td><code>test:commerce-pure</code></td><td>PASS سابقًا</td><td><code>COMMERCE_PURE_TESTS.txt</code></td></tr>
-      <tr><td><code>commerce.service.schema-tests</code></td><td>PASS على mira_sbws_proof_test</td><td><code>COMMERCE_SERVICE_SCHEMA_TESTS.txt</code></td></tr>
+      <tr><th>أمر</th><th>النتيجة</th><th>الدليل</th></tr>
+      <tr><td><code>commerce.service.schema-tests</code></td><td>PASS</td><td><code>COMMERCE_SERVICE_SCHEMA_TESTS.txt</code></td></tr>
       <tr><td><code>commerce.http.integration-tests</code></td><td>PASS</td><td><code>COMMERCE_HTTP_TESTS.txt</code></td></tr>
-      <tr><td><code>commerce.concurrency.schema-tests</code></td><td><span class="tag partial">جزئي</span> — سباقات المخزون/الحجز مرت؛ توقف لاحق E2 <code>availabilityJson.map</code></td><td><code>COMMERCE_CONCURRENCY_TESTS.txt</code></td></tr>
-      <tr><td>Flutter / بوابة متصفح لنهاية الرحلة</td><td><span class="tag missing">لم تُنفَّذ</span></td><td>يلزم جهاز/جلسة بوابة منفصلة</td></tr>
+      <tr><td><code>sell-book-without-store.proof.ts</code></td><td>PASS (ما عدا claim UI)</td><td><code>PROOF_*.json/md</code></td></tr>
+      <tr><td><code>sell-book-without-store.http-journey.proof.ts</code></td><td>PASS (خادم) + فشل claim + لم تُختبر الواجهات</td><td><code>HTTP_JOURNEY_PROOF.*</code></td></tr>
     </table>
   </section>
 
@@ -190,23 +192,29 @@
     <h2>جدول الفجوات (بعد الإثبات)</h2>
     <table>
       <tr><th>القدرة</th><th>التصنيف</th><th>الربط</th></tr>
-      <tr><td>بيع COD لشريك بلا متجر</td><td><span class="tag ok">موجود ومختبر (خادم)</span></td><td>PROOF + service/http</td></tr>
-      <tr><td>حجز pay_at_venue بلا متجر + عزل الشركاء</td><td><span class="tag ok">موجود ومختبر (خادم)</span></td><td>PROOF</td></tr>
-      <tr><td>سباق مخزون/موعد + ضغط مزدوج</td><td><span class="tag ok">موجود ومختبر (خادم)</span></td><td>PROOF</td></tr>
-      <tr><td>رحلة Flutter عميلة→شريك</td><td><span class="tag missing">غير مختبر واجهة</span></td><td>—</td></tr>
-      <tr><td>قيمة purchaseMode=display persisted</td><td><span class="tag missing">ناقص (تُحوَّل إلى external)</span></td><td>editor coerce</td></tr>
-      <tr><td>دعوة ملكية مقطع إداري من الواجهة</td><td><span class="tag missing">ناقص — نقطة التوقف</span></td><td>STOP</td></tr>
-      <tr><td>سلة متعددة البائعين</td><td><span class="tag missing">ناقص (مرفوض صراحة)</span></td><td>CART_PARTNER_CONFLICT</td></tr>
-      <tr><td>دفع إلكتروني / تسوية / استرداد</td><td><span class="tag ext">يعتمد قرارًا + مزوّدًا</span></td><td>DEC-0001</td></tr>
+      <tr><td>بيع COD بمقاسين بلا متجر</td><td><span class="tag partial">ثبت من الخادم فقط</span></td><td>HTTP_JOURNEY</td></tr>
+      <tr><td>حجز + عزل الشركاء</td><td><span class="tag partial">ثبت من الخادم فقط</span></td><td>HTTP_JOURNEY</td></tr>
+      <tr><td>سباقات + ضغط مزدوج</td><td><span class="tag partial">ثبت من الخادم فقط</span></td><td>HTTP_JOURNEY</td></tr>
+      <tr><td>رحلة من فيديو التطبيق / متصفح البوابة</td><td><span class="tag ext">لم يُختبر</span></td><td>يحتاج API محلي + جلسة UI بلا إنتاج</td></tr>
+      <tr><td>display persisted كقيمة مستقلة</td><td><span class="tag missing">فشل/ناقص</span></td><td>يُحوَّل إلى external</td></tr>
+      <tr><td>دعوة ملكية عرض إداري</td><td><span class="tag missing">فشل</span></td><td>STOP</td></tr>
     </table>
   </section>
 
   <section>
-    <h2>ثلاث إجابات بعد الإثبات</h2>
+    <h2>ثلاث إجابات صريحة</h2>
     <ol>
-      <li><strong>هل اكتمل أول بيع؟</strong> <span class="tag ok">نعم على طبقة الخادم</span> — طلب <code>MO-261114-EM3GK3</code> من عميلة اختبار إلى بائع بلا storeUrl حتى <code>delivered</code> + <code>collected</code>، والإدارة تراه، ومقدّم الخدمة لا يراه. <em>لم يُثبت من تطبيق الجوال.</em></li>
-      <li><strong>هل اكتمل أول حجز؟</strong> <span class="tag ok">نعم على طبقة الخادم</span> — طلب موعد <code>requested</code> ثم قبول الشريك <code>confirmed</code>؛ الإلغاء يحرّر الموعد؛ البائع لا يرى الحجز. الزر الأدق ما زال «اطلبي موعدًا». <em>لم يُثبت من تطبيق الجوال.</em></li>
-      <li><strong>هل تستطيع الإدارة تفعيل عرض قديم لصاحبه الصحيح من الواجهة؟</strong> <span class="tag missing">لا — غير مثبت</span>. نقطة التوقف: لا مسار دعوة/claim/نقل <code>partner_id</code> في API/الواجهة ضمن النطاق. ما يلزم: تصميم رحلة دعوة + قبول الشريك + ربط الملكية دون تعديل قاعدة بيانات يدوي. إن كان العرض أصلًا بـ<code>partner_id</code> الصحيح، تفعيل <code>internal_cod</code> / <code>bookingEnabled</code> على نفس الصف يحفظ الوسائط ويؤثر على كل المقاطع المرتبطة بذلك العرض.</li>
+      <li><strong>هل أكملت عميلة شراءً من فيديو لبائع بلا متجر ووصل للبائع الصحيح؟</strong>
+        <span class="tag ext">لم يُختبر من الواجهة</span> /
+        <span class="tag partial">نعم من الخادم/HTTP</span>.
+        دليل: طلب <code>MO-261114-5EPEJ2</code> ظهر للعميلة والبائع والإدارة؛ الصالون 404؛ تسليم+تحصيل. السبب لعدم الواجهة: تطبيق الجوال يشير للإنتاج افتراضيًا.</li>
+      <li><strong>هل طلبت عميلة موعدًا من فيديو وأكّد الشريك وظهر التأكيد عندها؟</strong>
+        <span class="tag ext">لم يُختبر من الواجهة</span> /
+        <span class="tag partial">نعم من الخادم/HTTP</span>.
+        دليل: حجز <code>MB-261114-P5K68Z</code> <code>requested</code>→<code>confirmed</code> لدى العميلة والصالون والإدارة؛ البائع لا يراه.</li>
+      <li><strong>هل تستطيع إدارة ميرا تفعيل عرض قديم لصاحبه من الواجهة، وما نطاق التأثير؟</strong>
+        <span class="tag missing">لا</span>.
+        دليل: لا مسار claim. إن مَلَك الشريك العرض أصلًا، تفعيل صف المنتج يغيّر زر <em>كل</em> المقاطع المرتبطة بنفس <code>ownerId</code>؛ عرض مستقل بـ<code>external</code> يبقى بلا شراء.</li>
     </ol>
   </section>
 

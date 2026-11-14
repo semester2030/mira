@@ -1,0 +1,121 @@
+{
+  "database": "mira_sbws_proof_test",
+  "answers": {
+    "q1_customerBoughtFromVideo_sellerReceived": {
+      "answer": "لا من الواجهة — نعم من الخادم/HTTP",
+      "ui": false,
+      "server": true,
+      "evidence": "MO-261114-5EPEJ2"
+    },
+    "q2_customerBooked_partnerConfirmed_customerSees": {
+      "answer": "لا من الواجهة — نعم من الخادم/HTTP",
+      "ui": false,
+      "server": true,
+      "evidence": "MB-261114-P5K68Z"
+    },
+    "q3_adminActivateLegacyViaUi": {
+      "answer": "لا",
+      "ui": false,
+      "server": false,
+      "stop": "لا مسار دعوة/claim",
+      "activationScopeIfPartnerOwned": "تفعيل صف المنتج يغيّر زر كل المقاطع المرتبطة بنفس ownerId؛ عرض مستقل يبقى كما هو"
+    }
+  },
+  "byClassification": {
+    "ثبت من الخادم فقط": 12,
+    "فشل": 1,
+    "لم يُختبر": 2
+  },
+  "steps": [
+    {
+      "step": "حسابات اختبار بلا storeUrl",
+      "classification": "ثبت من الخادم فقط",
+      "ok": true,
+      "actual": "seller.storeUrl=null salon.storeUrl=null"
+    },
+    {
+      "step": "تجهيز منتج بمقاسين ومخزون (seed)",
+      "classification": "ثبت من الخادم فقط",
+      "ok": true,
+      "actual": "S stock=1 M stock=3 mode=internal_cod"
+    },
+    {
+      "step": "شراء COD مقاس S عبر HTTP تجارة",
+      "classification": "ثبت من الخادم فقط",
+      "ok": true,
+      "actual": "ref=MO-261114-5EPEJ2 cust=200 seller=200 admin=200 salonGet=404 salonListHas=false S.reserved=1 M.reserved=0 M.stock=3"
+    },
+    {
+      "step": "قبول→تجهيز→تسليم→تحصيل من بوابة البائع (HTTP)",
+      "classification": "ثبت من الخادم فقط",
+      "ok": true,
+      "actual": "collect=201 payment=collected S.stock=0 S.reserved=0"
+    },
+    {
+      "step": "طلب موعد قبل القبول (HTTP)",
+      "classification": "ثبت من الخادم فقط",
+      "ok": true,
+      "actual": "ref=MB-261114-P5K68Z status=requested payMode=pay_at_venue"
+    },
+    {
+      "step": "قبول الشريك وظهور التأكيد للعميلة والإدارة",
+      "classification": "ثبت من الخادم فقط",
+      "ok": true,
+      "actual": "accept=confirmed customer=confirmed admin=200 sellerGet=404"
+    },
+    {
+      "step": "حجز ثانٍ ثم إلغاء — عودة الموعد",
+      "classification": "ثبت من الخادم فقط",
+      "ok": true,
+      "actual": "cancel=cancelled slot720.available=true"
+    },
+    {
+      "step": "محرر: عرض فقط → القيمة المحفوظة",
+      "classification": "ثبت من الخادم فقط",
+      "ok": true,
+      "actual": "input=display saved=external (ليس display؛ يساوي رابط خارجي external)"
+    },
+    {
+      "step": "تفعيل عرض الشريك بمقطعين + عرض مستقل",
+      "classification": "ثبت من الخادم فقط",
+      "ok": true,
+      "actual": "activated=internal_cod mediaIds unchanged=3b52ced5-4af8-48eb-8594-123969558075,c60779bd-e480-4c92-a0c5-ba84d5f084af independent=external"
+    },
+    {
+      "step": "إسناد عرض الإدارة لصاحبه من الواجهة",
+      "classification": "فشل",
+      "ok": false,
+      "actual": "publisher=39e7ed5b-06bf-44ef-a19b-53a33281ef3c advertiser=39e7ed5b-06bf-44ef-a19b-53a33281ef3c product.partner_id=39e7ed5b-06bf-44ef-a19b-53a33281ef3c — لا مسار"
+    },
+    {
+      "step": "سباق آخر قطعة مقاس S",
+      "classification": "ثبت من الخادم فقط",
+      "ok": true,
+      "actual": "wins=1 lostStatus=409 lostCode=OUT_OF_STOCK"
+    },
+    {
+      "step": "سباق نفس الموعد (طلب معلّق)",
+      "classification": "ثبت من الخادم فقط",
+      "ok": true,
+      "actual": "wins=1 codes=BOOKING_SLOT_FULL,requested"
+    },
+    {
+      "step": "ضغط تأكيد مرتين بنفس المفتاح",
+      "classification": "ثبت من الخادم فقط",
+      "ok": true,
+      "actual": "sameId=true statuses=201,201 codes=undefined,undefined detail={\"order\":{\"id\":\"5dd59a18-9145-4f9b-a483-292a7993d7da\",\"publicNumber\":\"MO-261114-R7WVHT\",\"partner\":"
+    },
+    {
+      "step": "تطبيق العميلة من فيديو Discover",
+      "classification": "لم يُختبر",
+      "ok": false,
+      "actual": "الافتراضي يشير لإنتاج mira-api-n4p3؛ تشغيل الشراء على الهاتف يلمس/يقرأ إنتاجًا — مرفوض في هذا التكليف"
+    },
+    {
+      "step": "متصفح بوابة الشركاء (UI)",
+      "classification": "لم يُختبر",
+      "ok": false,
+      "actual": "لم تُفتح جلسة متصفح؛ الانتقالات نُفذت عبر HTTP API للبوابة"
+    }
+  ]
+}

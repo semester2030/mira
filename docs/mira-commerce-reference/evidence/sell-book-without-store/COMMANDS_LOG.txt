@@ -1,0 +1,64 @@
+# COMMANDS_LOG
+commit=b54c671
+DATABASE_URL=postgresql://fayez@127.0.0.1:5432/mira_sbws_proof_test  # secrets redacted if any
+
+## 1) Refuse guard
+npm warn Unknown env config "devdir". This will stop working in the next major version of npm.
+REFUSE: DATABASE_URL must be a local test database
+commerce.service REFUSE_EXIT=1
+npm warn Unknown env config "devdir". This will stop working in the next major version of npm.
+REFUSE: DATABASE_URL must be a local test database
+http-journey REFUSE_EXIT=1
+
+## 2) commerce.service.schema-tests
+npm warn Unknown env config "devdir". This will stop working in the next major version of npm.
+commerce.service schema tests passed
+EXIT=0
+
+## 3) commerce.http.integration-tests
+npm warn Unknown env config "devdir". This will stop working in the next major version of npm.
+commerce HTTP integration tests passed
+EXIT=0
+
+## 4) sell-book-without-store.proof.ts
+npm warn Unknown env config "devdir". This will stop working in the next major version of npm.
+[PASS] إنشاء حسابات معزولة بلا storeUrl | harness | seller.storeUrl=null salon.storeUrl=null canCreateProduct=true canCreateService=true
+[PASS] طلب COD: رؤية العميلة والبائع والإدارة؛ الصالون لا يرى | customer/seller/admin/salon | publicNumber=MO-261114-BW24ME cust=MO-261114-BW24ME seller=MO-261114-BW24ME admin=MO-261114-BW24ME salonSees=false
+[PASS] تسليم + تسجيل تحصيل COD | seller | fulfillment=delivered payment=collected stockQty=1 reserved=0 customerPayment=collected
+[PASS] طلب موعد قبل القبول | customer/salon/seller | cust=requested salon=requested sellerSees=false payMode=pay_at_venue
+[PASS] قبول مقدّم الخدمة | salon | salon=confirmed customer=confirmed
+[PASS] إلغاء العميلة يحرّر الموعد | customer | status=cancelled slotAvailable=true remaining=1
+[PASS] محرر: اختيار «عرض فقط» / display | editor-path | input=display → stored=external; input=not_for_sale → stored=external; DB after write=external
+[PASS] تفعيل عرض يملكه الشريك مع مقطعين | seller-owned product | productId=fc94c69f-e63a-4947-b41f-d3cce7eab71d mode=internal_cod mediaIds=4c761c6a-cccc-415d-8f44-4888cec9508a,f93930e0-9859-44b7-a8e4-b7bb1842e240 idsUnchanged=true
+[PASS] عرض منشور من الإدارة → إسناده لصاحبه من الواجهة | admin→owner claim | شراء المنتج الإداري الخارجي مرفوض: EXTERNAL_PRODUCT_NOT_PURCHASABLE؛ الملكية تبقى partner_id=511f919d-0bb9-440e-b631-0a187f8e9005 (ميرا) لا البائع edd5d3e7-d17f-4f7c-b3f9-83dd58cf62c8
+[FAIL] هل تستطيع الإدارة تفعيل عرض قديم لصاحبه الصحيح من الواجهة؟ | admin UI | غير مثبت — لا API دعوة/claim في النطاق المفحوص؛ تعديل DB مباشر لا يُعد إثبات رحلة مستخدم
+[PASS] سباق آخر قطعة من عميلتين | two customers | wins=1 reserved=1 lostCode=OUT_OF_STOCK
+[PASS] سباق نفس الموعد من عميلتين | two customers | wins=1 activeRows=1
+[PASS] ضغط مرتين على تأكيد الطلب (نفس المفتاح) | customer | id1=f77ebf62-a125-4411-beb8-336aaca832c8 id2=f77ebf62-a125-4411-beb8-336aaca832c8 same=true replays=1
+SBWS proof finished { saleOk: true, bookOk: true, claimOk: false, steps: 13 }
+EXIT=0
+
+## 5) sell-book-without-store.http-journey.proof.ts
+npm warn Unknown env config "devdir". This will stop working in the next major version of npm.
+[PASS][ثبت من الخادم فقط] حسابات اختبار بلا storeUrl — seller.storeUrl=null salon.storeUrl=null
+[PASS][ثبت من الخادم فقط] تجهيز منتج بمقاسين ومخزون (seed) — S stock=1 M stock=3 mode=internal_cod
+[PASS][ثبت من الخادم فقط] شراء COD مقاس S عبر HTTP تجارة — ref=MO-261114-RW7UDH cust=200 seller=200 admin=200 salonGet=404 salonListHas=false S.reserved=1 M.reserved=0 M.stock=3
+[PASS][ثبت من الخادم فقط] قبول→تجهيز→تسليم→تحصيل من بوابة البائع (HTTP) — collect=201 payment=collected S.stock=0 S.reserved=0
+[PASS][ثبت من الخادم فقط] طلب موعد قبل القبول (HTTP) — ref=MB-261114-Q4ARFQ status=requested payMode=pay_at_venue
+[PASS][ثبت من الخادم فقط] قبول الشريك وظهور التأكيد للعميلة والإدارة — accept=confirmed customer=confirmed admin=200 sellerGet=404
+[PASS][ثبت من الخادم فقط] حجز ثانٍ ثم إلغاء — عودة الموعد — cancel=cancelled slot720.available=true
+[PASS][ثبت من الخادم فقط] محرر: عرض فقط → القيمة المحفوظة — input=display saved=external (ليس display؛ يساوي رابط خارجي external)
+[PASS][ثبت من الخادم فقط] تفعيل عرض الشريك بمقطعين + عرض مستقل — activated=internal_cod mediaIds unchanged=6c70e3d6-42fe-45da-b080-6952d703c1d9,7840d6e2-000a-491a-9608-832367970158 independent=external
+[FAIL][فشل] إسناد عرض الإدارة لصاحبه من الواجهة — publisher=99fc43d3-e202-4402-b87d-d58f00d31bd9 advertiser=99fc43d3-e202-4402-b87d-d58f00d31bd9 product.partner_id=99fc43d3-e202-4402-b87d-d58f00d31bd9 — لا مسار claim؛ تعديل partner_id اليدوي مرفوض كدليل
+[FAIL][ثبت من الخادم فقط] سباق آخر قطعة مقاس S — wins=0 lostStatus=400 lostCode=ADDRESS_INVALID
+[PASS][ثبت من الخادم فقط] سباق نفس الموعد (طلب معلّق) — wins=1 codes=requested,BOOKING_SLOT_FULL
+[FAIL][ثبت من الخادم فقط] ضغط تأكيد مرتين بنفس المفتاح — sameId=true statuses=400,400
+[FAIL][لم يُختبر] تطبيق العميلة من فيديو Discover — الافتراضي يشير لإنتاج mira-api-n4p3؛ تشغيل الشراء على الهاتف يلمس/يقرأ إنتاجًا — مرفوض في هذا التكليف
+[FAIL][لم يُختبر] متصفح بوابة الشركاء (UI) — لم تُفتح جلسة متصفح؛ الانتقالات نُفذت عبر HTTP API للبوابة
+HTTP journey proof done {
+  saleOk: true,
+  bookOk: true,
+  claimOk: false,
+  publicNumber: 'MO-261114-RW7UDH',
+  bkPublic: 'MB-261114-Q4ARFQ'
+}

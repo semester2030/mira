@@ -2738,6 +2738,17 @@ window.MIRA_STUDY = {
         "تحديث صفحة الدراسة بجدول الخطوات وثلاث إجابات"
       ],
       "baselineCommit": "a712b24"
+    },
+    {
+      "version": "إثبات HTTP — مقاسين وتصنيف واجهة/خادم",
+      "date": "2026-11-14T03:55:00+03:00",
+      "changesAr": [
+        "sell-book-without-store.http-journey.proof.ts مع مخزون مقاس S/M",
+        "مراجع MO-261114-5EPEJ2 و MB-261114-P5K68Z + CLASSIFICATION.json",
+        "COMMANDS_LOG يوضح تجاوز REFUSE على قاعدة معزولة",
+        "ثلاث إجابات: لا من الواجهة / نعم من الخادم؛ claim فشل"
+      ],
+      "baselineCommit": "b54c671"
     }
   ],
   "categories": [
@@ -5202,6 +5213,10 @@ window.MIRA_STUDY = {
   ],
   "sectionContent": {
     "s0": [
+      {
+        "type": "callout",
+        "text": "2026-11-14 — جولة HTTP: طلب MO-261114-5EPEJ2 وحجز MB-261114-P5K68Z على mira_sbws_proof_test (مقاسين+سباقات). الواجهة Flutter/بوابة لم تُختبر (إنتاج مرفوض). claim إداري فشل. الحزمة a712b24 قديمة بلا DB."
+      },
       {
         "type": "callout",
         "text": "2026-11-14 — إثبات مساري البيع/الحجز بلا متجر على mira_sbws_proof_test: أول بيع وأول حجز اكتملا على الخادم؛ تفعيل عرض إداري لصاحبه من الواجهة متوقف (لا claim). الصفحة: sell-book-without-store.html."
