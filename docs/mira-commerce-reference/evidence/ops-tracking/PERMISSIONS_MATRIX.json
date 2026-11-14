@@ -1,0 +1,29 @@
+{
+  "customer": {
+    "sees": "own MO/MB only",
+    "mutate": "cancel when allowed",
+    "searchByPublic": "own only → 404 else"
+  },
+  "partner_seller": {
+    "sees": "own orders",
+    "mutate": "fulfillment + collect",
+    "searchByPublic": "own scope"
+  },
+  "partner_provider": {
+    "sees": "own bookings",
+    "mutate": "confirm/complete/cancel",
+    "searchByPublic": "own scope"
+  },
+  "admin_shared_key": {
+    "sees": "all",
+    "mutate": "with note",
+    "actorLabel": "مفتاح الإدارة المشترك"
+  },
+  "admin_named_staff": {
+    "sees": "all",
+    "mutate": "with note",
+    "actorHeader": "X-Admin-Actor",
+    "example": "ops.sara"
+  },
+  "support_read_note": "لا دور قراءة منفصل في المشروع اليوم؛ مفتاح الإدارة يفتح القراءة والتعديل. الفصل التشغيلي عبر عدم منح المفتاح لمن يحتاج المتابعة فقط — موثّق في صفحة المتابعة."
+}

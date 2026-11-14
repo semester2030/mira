@@ -57,6 +57,16 @@ import {
   withPartnerResourceCaps,
 } from './commerce.types';
 import { lockPartnerScheduleScope } from './commerce-schedule-locks';
+import {
+  actorDisplayAr,
+  AttentionItem,
+  bookingOpsHint,
+  isPublicBookingRef,
+  isPublicOrderRef,
+  opsSlaHours,
+  opsSlaMs,
+  orderOpsHint,
+} from './commerce.ops';
 
 /** Trimmed non-empty string capped at `max` chars, else null. */
 function optionalText(value: unknown, max: number): string | null {
@@ -76,6 +86,10 @@ export const partnerActor = (partnerUserId: string, partnerId: string): Commerce
   type: 'partner',
   id: partnerUserId,
   partnerId,
+});
+export const adminActorFromId = (actorId?: string | null): CommerceActor => ({
+  type: 'admin',
+  id: actorId && actorId.trim() ? actorId.trim() : 'admin-key',
 });
 
 type Tx = Prisma.TransactionClient;
@@ -1061,9 +1075,19 @@ export class CommerceService {
     return {};
   }
 
+  private orderRefWhere(ref: string): Prisma.CommerceOrderWhereInput {
+    const trimmed = ref.trim();
+    return isPublicOrderRef(trimmed) ? { publicNumber: { equals: trimmed, mode: 'insensitive' } } : { id: trimmed };
+  }
+
+  private bookingRefWhere(ref: string): Prisma.CommerceBookingWhereInput {
+    const trimmed = ref.trim();
+    return isPublicBookingRef(trimmed) ? { publicNumber: { equals: trimmed, mode: 'insensitive' } } : { id: trimmed };
+  }
+
   private async getOrderDetail(orderId: string, scope: Prisma.CommerceOrderWhereInput, view: ActorType) {
     const row = await this.prisma.commerceOrder.findFirst({
-      where: { id: orderId, ...scope },
+      where: { ...this.orderRefWhere(orderId), ...scope },
       include: ORDER_DETAIL_INCLUDE,
     });
     if (!row) throw notFound('ORDER_NOT_FOUND', 'الطلب غير موجود');
@@ -1078,7 +1102,10 @@ export class CommerceService {
     input: { fulfillmentStatus?: FulfillmentStatus; deliveryStatus?: DeliveryStatus; note: string | null },
   ) {
     this.requireReason(actor, input.note);
-    const order = await this.prisma.commerceOrder.findFirst({ where: { id: orderId, ...scope }, select: { id: true, fulfillmentStatus: true, deliveryStatus: true } });
+    const order = await this.prisma.commerceOrder.findFirst({
+      where: { ...this.orderRefWhere(orderId), ...scope },
+      select: { id: true, fulfillmentStatus: true, deliveryStatus: true },
+    });
     if (!order) throw notFound('ORDER_NOT_FOUND', 'الطلب غير موجود');
 
     const impliedFromDelivery = input.deliveryStatus ? fulfillmentForDelivery(input.deliveryStatus) : null;
@@ -1281,7 +1308,7 @@ export class CommerceService {
     const note = parseOptionalNotes(record(body).note);
     this.requireReason(actor, note);
     const scope = this.orderScope(actor);
-    const order = await this.prisma.commerceOrder.findFirst({ where: { id: orderId, ...scope } });
+    const order = await this.prisma.commerceOrder.findFirst({ where: { ...this.orderRefWhere(orderId), ...scope } });
     if (!order) throw notFound('ORDER_NOT_FOUND', 'الطلب غير موجود');
     if (order.paymentCollectionStatus === 'collected') {
       return { ...(await this.getOrderDetail(order.id, scope, actor.type)), alreadyCollected: true };
@@ -1323,7 +1350,7 @@ export class CommerceService {
     if (actor.type !== 'admin') throw commerceError(HttpStatus.FORBIDDEN, 'PAYMENT_FORBIDDEN', 'هذا الإجراء للإدارة فقط');
     const note = parseOptionalNotes(record(body).note);
     this.requireReason(actor, note);
-    const order = await this.prisma.commerceOrder.findUnique({ where: { id: orderId } });
+    const order = await this.prisma.commerceOrder.findFirst({ where: this.orderRefWhere(orderId) });
     if (!order) throw notFound('ORDER_NOT_FOUND', 'الطلب غير موجود');
     await this.prisma.$transaction(async (tx) => {
       const marked = await tx.commerceOrder.updateMany({
@@ -1350,6 +1377,8 @@ export class CommerceService {
 
   private orderDto(row: OrderRow | OrderDetailRow, view: ActorType) {
     const events = 'events' in row ? row.events : undefined;
+    const hint = orderOpsHint(row.fulfillmentStatus, row.paymentCollectionStatus, view);
+    const lastEvent = events && events.length ? events[events.length - 1] : null;
     return {
       id: row.id,
       publicNumber: row.publicNumber,
@@ -1373,6 +1402,13 @@ export class CommerceService {
       notes: row.notes,
       createdAt: row.createdAt.toISOString(),
       updatedAt: row.updatedAt.toISOString(),
+      nextActionAr: hint.nextActionAr,
+      responsibleRole: hint.responsibleRole,
+      responsibleLabelAr: hint.responsibleLabelAr,
+      lastEventAt: lastEvent?.createdAt.toISOString() ?? row.updatedAt.toISOString(),
+      lastEventSummaryAr: lastEvent
+        ? `${lastEvent.field}: ${lastEvent.fromStatus || '—'} → ${lastEvent.toStatus || '—'} · ${actorDisplayAr(lastEvent.actorType, lastEvent.actorId)}`
+        : null,
       items: row.items.map((item) => ({
         id: item.id,
         productId: item.productId,
@@ -1391,6 +1427,7 @@ export class CommerceService {
                 id: e.id,
                 actorType: e.actorType,
                 actorId: view === 'customer' ? undefined : e.actorId,
+                actorDisplayAr: view === 'customer' ? undefined : actorDisplayAr(e.actorType, e.actorId),
                 field: e.field,
                 fromStatus: e.fromStatus,
                 toStatus: e.toStatus,
@@ -1400,6 +1437,97 @@ export class CommerceService {
           }
         : {}),
     };
+  }
+
+  /** Admin ops queue: overdue accept / pending booking reply / delivered without collect. */
+  async listAttention(actor: CommerceActor): Promise<{ items: AttentionItem[]; sla: ReturnType<typeof opsSlaHours>; generatedAt: string }> {
+    if (actor.type !== 'admin') {
+      throw commerceError(HttpStatus.FORBIDDEN, 'ATTENTION_FORBIDDEN', 'قائمة التدخل للإدارة فقط');
+    }
+    const sla = opsSlaMs();
+    const hours = opsSlaHours();
+    const now = Date.now();
+    const acceptBefore = new Date(now - sla.orderAcceptMs);
+    const collectBefore = new Date(now - sla.collectMs);
+    const bookingHorizon = new Date(now + sla.bookingReplyMs);
+
+    const [staleNew, uncollected, pendingBookings] = await Promise.all([
+      this.prisma.commerceOrder.findMany({
+        where: { fulfillmentStatus: 'new', createdAt: { lte: acceptBefore } },
+        include: { partner: { select: { id: true, nameAr: true } } },
+        orderBy: { createdAt: 'asc' },
+        take: 50,
+      }),
+      this.prisma.commerceOrder.findMany({
+        where: {
+          fulfillmentStatus: 'delivered',
+          paymentCollectionStatus: 'uncollected',
+          updatedAt: { lte: collectBefore },
+        },
+        include: { partner: { select: { id: true, nameAr: true } } },
+        orderBy: { updatedAt: 'asc' },
+        take: 50,
+      }),
+      this.prisma.commerceBooking.findMany({
+        where: {
+          status: 'requested',
+          startsAt: { lte: bookingHorizon },
+        },
+        include: { partner: { select: { id: true, nameAr: true } } },
+        orderBy: { startsAt: 'asc' },
+        take: 50,
+      }),
+    ]);
+
+    const items: AttentionItem[] = [];
+    for (const row of staleNew) {
+      items.push({
+        kind: 'order',
+        id: row.id,
+        publicNumber: row.publicNumber,
+        partnerId: row.partner.id,
+        partnerNameAr: row.partner.nameAr,
+        reasonCode: 'ORDER_ACCEPT_OVERDUE',
+        reasonAr: `تجاوز مهلة قبول الطلب (${hours.orderAcceptHours} ساعة)`,
+        responsibleRole: 'partner',
+        responsibleLabelAr: 'البائع',
+        since: row.createdAt.toISOString(),
+        status: row.fulfillmentStatus,
+        paymentCollectionStatus: row.paymentCollectionStatus,
+      });
+    }
+    for (const row of uncollected) {
+      items.push({
+        kind: 'order',
+        id: row.id,
+        publicNumber: row.publicNumber,
+        partnerId: row.partner.id,
+        partnerNameAr: row.partner.nameAr,
+        reasonCode: 'ORDER_COLLECT_OVERDUE',
+        reasonAr: `سُلّم وما زال التحصيل غير مسجّل بعد ${hours.collectHours} ساعة`,
+        responsibleRole: 'partner',
+        responsibleLabelAr: 'البائع',
+        since: row.updatedAt.toISOString(),
+        status: row.fulfillmentStatus,
+        paymentCollectionStatus: row.paymentCollectionStatus,
+      });
+    }
+    for (const row of pendingBookings) {
+      items.push({
+        kind: 'booking',
+        id: row.id,
+        publicNumber: row.publicNumber,
+        partnerId: row.partner.id,
+        partnerNameAr: row.partner.nameAr,
+        reasonCode: 'BOOKING_REPLY_DUE',
+        reasonAr: `حجز يقترب موعده وما زال ينتظر الرد (أفق ${hours.bookingReplyHours} ساعة)`,
+        responsibleRole: 'partner',
+        responsibleLabelAr: 'مقدّم الخدمة',
+        since: row.createdAt.toISOString(),
+        status: row.status,
+      });
+    }
+    return { items, sla: hours, generatedAt: new Date().toISOString() };
   }
 
   // =========================================================================
@@ -1882,7 +2010,7 @@ export class CommerceService {
       ...pageArgs(query.limit, query.cursor),
     });
     const page = finishPage(rows, query.limit);
-    return { items: page.rows.map((r) => this.bookingDto(r)), nextCursor: page.nextCursor };
+    return { items: page.rows.map((r) => this.bookingDto(r, false, 'customer')), nextCursor: page.nextCursor };
   }
 
   async getCustomerBooking(actor: CommerceActor & { type: 'customer' }, bookingId: string) {
@@ -1917,7 +2045,11 @@ export class CommerceService {
       ...pageArgs(query.limit, query.cursor),
     });
     const page = finishPage(rows, query.limit);
-    return { items: page.rows.map((r) => this.bookingDto(r, actor.type === 'admin')), nextCursor: page.nextCursor };
+    const hintView = actor.type === 'admin' ? 'admin' : actor.type === 'partner' ? 'partner' : 'customer';
+    return {
+      items: page.rows.map((r) => this.bookingDto(r, actor.type === 'admin', hintView)),
+      nextCursor: page.nextCursor,
+    };
   }
 
   getBooking(actor: CommerceActor, bookingId: string) {
@@ -1938,16 +2070,18 @@ export class CommerceService {
 
   private async getBookingDetail(bookingId: string, scope: Prisma.CommerceBookingWhereInput, view: ActorType) {
     const row = await this.prisma.commerceBooking.findFirst({
-      where: { id: bookingId, ...scope },
+      where: { ...this.bookingRefWhere(bookingId), ...scope },
       include: { ...BOOKING_INCLUDE, events: { orderBy: { createdAt: 'asc' } } },
     });
     if (!row) throw notFound('BOOKING_NOT_FOUND', 'الحجز غير موجود');
+    const hintView = view === 'admin' ? 'admin' : view === 'partner' ? 'partner' : 'customer';
     return {
-      ...this.bookingDto(row, view === 'admin'),
+      ...this.bookingDto(row, view === 'admin', hintView),
       events: row.events.map((e) => ({
         id: e.id,
         actorType: e.actorType,
         actorId: view === 'customer' ? undefined : e.actorId,
+        actorDisplayAr: view === 'customer' ? undefined : actorDisplayAr(e.actorType, e.actorId),
         fromStatus: e.fromStatus,
         toStatus: e.toStatus,
         note: view === 'customer' && e.actorType !== 'customer' ? undefined : e.note,
@@ -1964,7 +2098,7 @@ export class CommerceService {
     note: string | null,
   ) {
     this.requireReason(actor, note);
-    const booking = await this.prisma.commerceBooking.findFirst({ where: { id: bookingId, ...scope } });
+    const booking = await this.prisma.commerceBooking.findFirst({ where: { ...this.bookingRefWhere(bookingId), ...scope } });
     if (!booking) throw notFound('BOOKING_NOT_FOUND', 'الحجز غير موجود');
     if (booking.status === target) {
       return { ...(await this.getBookingDetail(booking.id, scope, actor.type)), unchanged: true };
@@ -1992,7 +2126,8 @@ export class CommerceService {
     return this.getBookingDetail(booking.id, scope, actor.type);
   }
 
-  private bookingDto(row: BookingRow, includeUser = false) {
+  private bookingDto(row: BookingRow, includeUser = false, hintView: 'customer' | 'partner' | 'admin' = 'customer') {
+    const hint = bookingOpsHint(row.status, hintView);
     return {
       id: row.id,
       publicNumber: row.publicNumber,
@@ -2019,6 +2154,9 @@ export class CommerceService {
       notes: row.notes,
       createdAt: row.createdAt.toISOString(),
       updatedAt: row.updatedAt.toISOString(),
+      nextActionAr: hint.nextActionAr,
+      responsibleRole: hint.responsibleRole,
+      responsibleLabelAr: hint.responsibleLabelAr,
     };
   }
 }

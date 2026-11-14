@@ -26,6 +26,11 @@
       </p>
       <label for="adminKey">Admin API Key</label>
       <input id="adminKey" type="password" placeholder="ADMIN_API_KEY" autocomplete="off" />
+      <label for="adminActor" style="margin-top:0.75rem;">معرّف الموظف (اختياري — لإسناد الإجراءات)</label>
+      <input id="adminActor" type="text" placeholder="مثال: ops.sara" autocomplete="off" />
+      <p class="lead" style="color:var(--text-muted);margin:0.4rem 0 0.75rem;font-size:0.85rem;">
+        بدون معرّف يُسجَّل الإجراء تحت «مفتاح الإدارة المشترك» وليس باسم موظف.
+      </p>
       <button id="loginBtn" class="btn btn-primary btn-block">دخول آمن</button>
       <div id="loginError" class="alert err hidden"></div>
     </div>
@@ -52,7 +57,7 @@
       <button class="nav-item" data-view="applications"><span class="icon">✓</span> طلبات الشركاء</button>
       <button class="nav-item" data-view="reviews"><span class="icon">✎</span> مراجعة المحتوى</button>
       <button class="nav-item" data-view="ads"><span class="icon">▹</span> مراجعة الإعلانات</button>
-      <button class="nav-item" data-view="orders"><span class="icon">▦</span> الطلبات</button>
+      <button class="nav-item" data-view="orders"><span class="icon">▦</span> متابعة العمليات</button>
       <button class="nav-item" data-view="partners"><span class="icon">◇</span> الشركاء</button>
       <button class="nav-item" data-view="leads"><span class="icon">✉</span> رسائل الموقع</button>
 

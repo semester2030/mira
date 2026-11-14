@@ -131,7 +131,9 @@ class _CheckoutScreenState extends State<CheckoutScreen> {
       _idempotencyKey = null;
       _keySignature = null;
       if (!mounted) return;
-      ScaffoldMessenger.of(context).showSnackBar(const SnackBar(content: Text(MarketplaceCopy.orderRequested)));
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(content: Text('${MarketplaceCopy.orderRequested} · ${result.order.publicNumber}')),
+      );
       await Navigator.of(context).pushReplacementNamed(AppRoutes.orderDetail, arguments: result.order.id);
     } on CommerceAuthException {
       if (mounted) setState(() => _needsLogin = true);

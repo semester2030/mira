@@ -1,0 +1,20 @@
+npm warn Unknown env config "devdir". This will stop working in the next major version of npm.
+[PASS][ثبت من الخادم فقط] إنشاء طلب MO + ثبات الرقم عند إعادة التأكيد — ref=MO-261114-8KULVA replaySame=true
+[PASS][ثبت من الخادم فقط] العميلة أ تفتح برقمها العام؛ العميلة ب لا ترى نفس الرقم — A=200 B=404
+[PASS][ثبت من الخادم فقط] إنشاء حجز MB على مقدّم ميرا — ref=MB-261114-Y7HMMF partner=ميرا
+[PASS][ثبت من الخادم فقط] يحتاج تدخل: طلب تجاوز مهلة القبول — hit=true count=3
+[PASS][ثبت من الواجهة] ميرا البائع تبحث برقم طلبها وتراه؛ لا ترى طلب الشريك الآخر — own=true foreign=false
+[PASS][ثبت من الواجهة] شريك غير مالك يبحث برقم طلب ميرا ولا يراه — seesForeign=false
+[PASS][ثبت من الخادم فقط] بعد القبول يزول تنبيه مهلة القبول لنفس الرقم — stillStale=false
+[PASS][ثبت من الخادم فقط] إجراء إداري يُسند لموظف عبر X-Admin-Actor وليس المفتاح وحده — actorId=ops.sara display=موظف إدارة (ops.sara)
+[PASS][ثبت من الواجهة] الإدارة: دخول بموظف مسمّى + بحث بالرقم + تفاصيل مع الخطوة التالية — sees=true next=true staff=ops.sara
+[PASS][ثبت من الواجهة] الإدارة تفتح/تجد الحجز بنفس الرقم MB — booking=MB-261114-Y7HMMF sees=true
+[PASS][ثبت من الخادم فقط] تفاصيل العميلة تتضمن nextActionAr والرقم العام — next=المتجر قبل الطلب ويجهّزه ref=MO-261114-8KULVA
+[FAIL][لم يُختبر] Flutter Discover → طلباتي مع نسخ الرقم — أُضيف نسخ الرقم والخطوة التالية في شاشات الطلب/الحجز؛ مسار OTP على المحاكي لم يُغلق في هذا التشغيل
+ops-tracking proof done {
+  orderPublic: 'MO-261114-8KULVA',
+  bookingPublic: 'MB-261114-Y7HMMF',
+  otherPublic: 'MO-261114-MP53LJ',
+  orderId: '296c73d3-6cd6-45a6-aba1-b46a143f5a67',
+  bookingId: '8e12e247-df17-44c6-b4ff-1823e32b799a'
+}

@@ -123,6 +123,8 @@ class _OrdersListScreenState extends State<OrdersListScreen> {
                 children: [
                   Text('طلب ${order.publicNumber}', style: AppTypography.titleMedium),
                   Text(order.partnerNameAr, style: AppTypography.bodySmall),
+                  if (order.nextActionAr != null && order.nextActionAr!.isNotEmpty)
+                    Text('الخطوة التالية: ${order.nextActionAr}', style: AppTypography.bodySmall),
                   const SizedBox(height: 8),
                   Wrap(
                     spacing: 8,

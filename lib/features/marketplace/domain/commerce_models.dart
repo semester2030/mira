@@ -229,6 +229,9 @@ class CommerceOrder {
     this.deliveryFeeHalalas,
     this.notes,
     this.createdAt,
+    this.updatedAt,
+    this.nextActionAr,
+    this.responsibleLabelAr,
   });
 
   final String id;
@@ -247,6 +250,9 @@ class CommerceOrder {
   final String city;
   final String? notes;
   final DateTime? createdAt;
+  final DateTime? updatedAt;
+  final String? nextActionAr;
+  final String? responsibleLabelAr;
   final List<CommerceOrderItem> items;
   final List<CommerceEvent> events;
 
@@ -270,6 +276,9 @@ class CommerceOrder {
         city: _str(json['city']),
         notes: json['notes'] as String?,
         createdAt: DateTime.tryParse(_str(json['createdAt'])),
+        updatedAt: DateTime.tryParse(_str(json['updatedAt'])),
+        nextActionAr: json['nextActionAr'] as String?,
+        responsibleLabelAr: json['responsibleLabelAr'] as String?,
         items: [for (final item in (json['items'] as List? ?? const [])) if (item is Map) CommerceOrderItem.fromJson(_map(item))],
         events: [for (final item in (json['events'] as List? ?? const [])) if (item is Map) CommerceEvent.fromJson(_map(item))],
       );
@@ -366,6 +375,9 @@ class CommerceBooking {
     required this.contactName,
     required this.contactPhone,
     this.notes,
+    this.nextActionAr,
+    this.responsibleLabelAr,
+    this.updatedAt,
   });
 
   final String id;
@@ -383,6 +395,9 @@ class CommerceBooking {
   final String contactName;
   final String contactPhone;
   final String? notes;
+  final String? nextActionAr;
+  final String? responsibleLabelAr;
+  final DateTime? updatedAt;
 
   bool get customerCanCancel => status == 'requested' || status == 'confirmed';
 
@@ -402,6 +417,9 @@ class CommerceBooking {
         contactName: _str(json['contactName']),
         contactPhone: _str(json['contactPhone']),
         notes: json['notes'] as String?,
+        nextActionAr: json['nextActionAr'] as String?,
+        responsibleLabelAr: json['responsibleLabelAr'] as String?,
+        updatedAt: DateTime.tryParse(_str(json['updatedAt'])),
       );
 }
 

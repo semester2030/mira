@@ -18,6 +18,10 @@
     return localStorage.getItem('mira_admin_key') || '';
   }
 
+  function adminActor() {
+    return localStorage.getItem('mira_admin_actor') || '';
+  }
+
   function labeledPreview() {
     return new URLSearchParams(location.search).get('ui-fixture') === 'labeled';
   }
@@ -30,11 +34,13 @@
     if (!key && path !== '/health') {
       throw new Error('أدخلي مفتاح الإدارة أولاً');
     }
+    const actor = adminActor();
     const res = await fetch(`${API_BASE}${path}`, {
       method,
       headers: {
         Accept: 'application/json',
         'X-Admin-Key': key,
+        ...(actor ? { 'X-Admin-Actor': actor } : {}),
         ...(body ? { 'Content-Type': 'application/json' } : {}),
       },
       body: body ? JSON.stringify(body) : undefined,
@@ -52,9 +58,19 @@
   window.MiraAdminApi = {
     base: API_BASE,
     setKey: (key) => localStorage.setItem('mira_admin_key', key),
-    clearKey: () => localStorage.removeItem('mira_admin_key'),
+    setActor: (actor) => {
+      const value = String(actor || '').trim();
+      if (value) localStorage.setItem('mira_admin_actor', value);
+      else localStorage.removeItem('mira_admin_actor');
+    },
+    clearKey: () => {
+      localStorage.removeItem('mira_admin_key');
+      localStorage.removeItem('mira_admin_actor');
+    },
     hasKey: () => !!adminKey(),
+    actorId: () => adminActor() || 'admin-key',
     verifyKey: () => request('GET', '/admin/stats/overview'),
+    commerceAttention: () => request('GET', '/admin/commerce/attention'),
     overview: () => request('GET', '/admin/stats/overview'),
     analysesTrend: (days) =>
       request('GET', `/admin/stats/analyses-trend?days=${days || 14}`),

@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 
 import '../../../../core/constants/marketplace_copy.dart';
 import '../../../../shared/theme/colors.dart';
@@ -148,8 +149,22 @@ class _BookingsListScreenState extends State<BookingsListScreen> {
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.stretch,
                 children: [
-                  Text('حجز ${booking.publicNumber}', style: AppTypography.titleMedium),
+                  Row(
+                    children: [
+                      Expanded(child: Text('حجز ${booking.publicNumber}', style: AppTypography.titleMedium)),
+                      IconButton(
+                        tooltip: 'نسخ الرقم',
+                        onPressed: () async {
+                          await Clipboard.setData(ClipboardData(text: booking.publicNumber));
+                          if (!context.mounted) return;
+                          ScaffoldMessenger.of(context).showSnackBar(const SnackBar(content: Text('نُسخ رقم الحجز')));
+                        },
+                        icon: const Icon(Icons.copy, size: 18),
+                      ),
+                    ],
+                  ),
                   Text(booking.serviceNameAr, style: AppTypography.bodyMedium),
+                  Text(booking.partnerNameAr, style: AppTypography.bodySmall),
                   Text(booking.branchLabel, style: AppTypography.bodySmall),
                   const SizedBox(height: 6),
                   Text('الموعد: ${riyadhDateTimeLabel(booking.startsAt)}', style: AppTypography.bodyMedium),
@@ -157,6 +172,8 @@ class _BookingsListScreenState extends State<BookingsListScreen> {
                     '${CommerceLabels.money(booking.priceHalalas)} · الدفع في الفرع',
                     style: AppTypography.bodySmall,
                   ),
+                  if (booking.nextActionAr != null && booking.nextActionAr!.isNotEmpty)
+                    Text('الخطوة التالية: ${booking.nextActionAr}', style: AppTypography.bodySmall),
                   const SizedBox(height: 8),
                   Align(
                     alignment: AlignmentDirectional.centerStart,

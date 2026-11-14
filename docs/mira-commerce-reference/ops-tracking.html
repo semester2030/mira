@@ -1,0 +1,100 @@
+<!DOCTYPE html>
+<html lang="ar" dir="rtl">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>متابعة عمليات الشراء والحجز وصلاحياتها — ميرا</title>
+  <link rel="stylesheet" href="css/tokens.css" />
+  <link rel="stylesheet" href="css/layout.css" />
+  <link rel="stylesheet" href="css/components.css" />
+  <link rel="stylesheet" href="css/responsive.css" />
+  <style>
+    body { max-width: 980px; margin: 0 auto; padding: 24px; }
+    table { width: 100%; border-collapse: collapse; margin: 12px 0 24px; font-size: 0.92rem; }
+    th, td { border: 1px solid #e8d5e4; padding: 8px 10px; vertical-align: top; }
+    th { background: #f8eef6; }
+    .tag { display: inline-block; padding: 2px 8px; border-radius: 999px; font-size: 0.75rem; }
+    .ok { background: #e6f6ea; } .partial { background: #fff4d6; } .missing { background: #fde8e8; } .ext { background: #e8eefc; }
+    code { font-size: 0.85em; }
+  </style>
+</head>
+<body>
+  <p><a href="index.html">← المرجع الرسمي للمتاجر</a> · <a href="sell-book-without-store.html">البيع والحجز دون متجر</a></p>
+  <header>
+    <h1>متابعة عمليات الشراء والحجز وصلاحياتها</h1>
+    <p class="muted">مرجع تشغيلي مبني على الكود الحالي + إثبات معزول على <code>mira_sbws_proof_test</code>. النطاق: COD + حجز ادفع في المقر. بائع مقاطع ميرا = حساب المطوّر «ميرا».</p>
+    <p class="muted">إثبات هذه الجولة: <code>evidence/ops-tracking/</code> · سكربت <code>ops-tracking.ui.proof.ts</code> · مراجع: <code>MO-261114-8KULVA</code> / <code>MB-261114-Y7HMMF</code></p>
+  </header>
+
+  <section>
+    <h2>١) هوية العملية</h2>
+    <ul>
+      <li>رقم عام ثابت: <code>MO-…</code> للطلب و<code>MB-…</code> للحجز — فريد في قاعدة البيانات (<code>@@unique</code>).</li>
+      <li>معرّف داخلي UUID للربط التقني.</li>
+      <li>إعادة إرسال نفس مفتاح التأكيد تعيد نفس العملية (idempotency).</li>
+      <li>الفتح بالرقم العام مدعوم في مسارات التفاصيل ضمن نطاق الصلاحية؛ غير المالك يحصل 404.</li>
+    </ul>
+  </section>
+
+  <section>
+    <h2>٢) مصفوفة الصلاحيات</h2>
+    <table>
+      <tr><th>الدور</th><th>ما يراه</th><th>ما يغيّره</th><th>البحث بالرقم</th></tr>
+      <tr><td>العميلة</td><td>عملياتها فقط · حالة · بائع/مقدّم · خطوة تالية · سجل بلا ملاحظات داخلية</td><td>إلغاء عند السماح</td><td>عملياتها فقط</td></tr>
+      <tr><td>ميرا البائع / شريك منتجات</td><td>طلبات شريكه</td><td>قبول→…→تسليم · تحصيل نقدي منفصل</td><td>ضمن نطاقه فقط</td></tr>
+      <tr><td>مقدّم خدمة</td><td>حجوزاته</td><td>تأكيد / إتمام / إلغاء</td><td>ضمن نطاقه فقط</td></tr>
+      <tr><td>حساب developer (ميرا)</td><td>طلباته وحجوزاته معًا</td><td>حسب نوع العملية</td><td>ضمن ملكيته</td></tr>
+      <tr><td>إدارة بمفتاح مشترك فقط</td><td>الكل</td><td>مع سبب إلزامي</td><td>الكل — الإسناد = «مفتاح الإدارة المشترك»</td></tr>
+      <tr><td>إدارة + <code>X-Admin-Actor</code></td><td>الكل</td><td>مع سبب</td><td>الكل — الإسناد لموظف مسمّى (مثل ops.sara)</td></tr>
+    </table>
+    <p><strong>ملاحظة قراءة فقط:</strong> لا يوجد دور دعم منفصل في المشروع اليوم. من يملك مفتاح الإدارة يستطيع القراءة والتعديل. الفصل التشغيلي يتم بعدم منح المفتاح لمن يحتاج المتابعة فقط، أو باستخدام موظف مسمّى مع إجراءات مضبوطة.</p>
+  </section>
+
+  <section>
+    <h2>٣) السجل الزمني والخطوة التالية</h2>
+    <ul>
+      <li>أحداث الطلب: <code>CommerceOrderEvent</code> (fulfillment / delivery / payment / note).</li>
+      <li>أحداث الحجز: <code>CommerceBookingEvent</code>.</li>
+      <li>التسليم والتحصيل منفصلان؛ لا يُستنتج التحصيل من التسليم.</li>
+      <li>الحجز <code>requested</code> ليس «مدفوعًا» ولا «مؤكدًا».</li>
+      <li>DTO يضيف <code>nextActionAr</code> و<code>responsibleLabelAr</code> و<code>actorDisplayAr</code> للأحداث (غير ظاهرة للعميلة كهويات داخلية).</li>
+    </ul>
+  </section>
+
+  <section>
+    <h2>٤) يحتاج تدخل</h2>
+    <p>مسار <code>GET /admin/commerce/attention</code> — مهلات قابلة للضبط:</p>
+    <ul>
+      <li><code>MIRA_OPS_ORDER_ACCEPT_HOURS</code> (افتراضي 24)</li>
+      <li><code>MIRA_OPS_BOOKING_REPLY_HOURS</code> (افتراضي 24)</li>
+      <li><code>MIRA_OPS_COLLECT_HOURS</code> (افتراضي 48)</li>
+    </ul>
+    <p>كل بند يعرض الرقم والسبب والمسؤول. بعد معالجة السبب يختفي من القائمة. <strong>قرار إنتاج:</strong> ثبّت المهلات قبل التفعيل العام.</p>
+  </section>
+
+  <section>
+    <h2>٥) نتائج الإثبات</h2>
+    <table>
+      <tr><th>الخطوة</th><th>التصنيف</th><th>الدليل</th></tr>
+      <tr><td>MO ثابت + idempotent replay</td><td><span class="tag partial">ثبت من الخادم فقط</span></td><td>OPS_TRACKING_PROOF</td></tr>
+      <tr><td>عميلتان: أ ترى / ب 404 لنفس الرقم</td><td><span class="tag partial">ثبت من الخادم فقط</span></td><td>نفس الملف</td></tr>
+      <tr><td>بحث ميرا بالرقم · شريك آخر لا يرى</td><td><span class="tag ok">ثبت من الواجهة</span></td><td>ui/01–02</td></tr>
+      <tr><td>يحتاج تدخل يظهر ثم يزول بعد القبول</td><td><span class="tag partial">ثبت من الخادم فقط</span></td><td>attention API</td></tr>
+      <tr><td>إسناد موظف ops.sara في السجل</td><td><span class="tag partial">ثبت من الخادم فقط</span></td><td>events.actorDisplayAr</td></tr>
+      <tr><td>إدارة: دخول موظف + بحث + تفاصيل + حجز</td><td><span class="tag ok">ثبت من الواجهة</span></td><td>ui/04–07</td></tr>
+      <tr><td>Flutter Discover → نسخ الرقم من الجوال</td><td><span class="tag ext">لم يُختبر</span></td><td>OTP — الكود جاهز في الشاشات</td></tr>
+    </table>
+  </section>
+
+  <section>
+    <h2>إجابة مباشرة</h2>
+    <p><strong>إذا أعطتنا عميلة رقم طلب أو حجز اليوم:</strong></p>
+    <ol>
+      <li><strong>من يفتحه؟</strong> العميلة صاحبة العملية · الشريك المالك (ميرا للطلبات/الحجوزات التي تملكها) · إدارة ميرا بمفتاح صالح. معرفة الرقم وحدها لا تكفي لطرف آخر (404).</li>
+      <li><strong>ماذا يرى كل طرف؟</strong> الحالة · الطرف المسؤول · الخطوة التالية · السجل المتاح لصلاحياته. العميلة لا ترى ملاحظات الدعم الداخلية ولا معرّفات المنفّذين.</li>
+      <li><strong>من يغيّر الحالة؟</strong> الشريك حسب آلة الحالات · العميلة للإلغاء المسموح · الإدارة مع سبب. التحصيل منفصل عن التسليم ولا يُمنح تلقائيًا بمجرد رؤية العملية.</li>
+      <li><strong>هل تعرف الإدارة من نفّذ آخر إجراء ومتى؟</strong> نعم عند إدخال معرّف موظف (<code>X-Admin-Actor</code>) يظهر في الخط الزمني على الشاشة. بمفتاح مشترك فقط يُعرض «مفتاح الإدارة المشترك (بلا موظف مسمّى)» — لا اختلاق أسماء.</li>
+    </ol>
+  </section>
+</body>
+</html>

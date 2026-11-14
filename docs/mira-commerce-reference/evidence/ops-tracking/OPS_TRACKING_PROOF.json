@@ -1,0 +1,141 @@
+{
+  "run": "opsmwfqtgl4",
+  "database": "mira_sbws_proof_test",
+  "apiBase": "http://127.0.0.1:50422/api/v1",
+  "refs": {
+    "orderPublic": "MO-261114-8KULVA",
+    "bookingPublic": "MB-261114-Y7HMMF",
+    "otherPublic": "MO-261114-MP53LJ",
+    "orderId": "296c73d3-6cd6-45a6-aba1-b46a143f5a67",
+    "bookingId": "8e12e247-df17-44c6-b4ff-1823e32b799a"
+  },
+  "miraPartnerId": "ebe9fbae-4f0a-4421-9c05-c63fddaf41a1",
+  "staffId": "ops.sara",
+  "matrix": {
+    "customer": {
+      "sees": "own MO/MB only",
+      "mutate": "cancel when allowed",
+      "searchByPublic": "own only → 404 else"
+    },
+    "partner_seller": {
+      "sees": "own orders",
+      "mutate": "fulfillment + collect",
+      "searchByPublic": "own scope"
+    },
+    "partner_provider": {
+      "sees": "own bookings",
+      "mutate": "confirm/complete/cancel",
+      "searchByPublic": "own scope"
+    },
+    "admin_shared_key": {
+      "sees": "all",
+      "mutate": "with note",
+      "actorLabel": "مفتاح الإدارة المشترك"
+    },
+    "admin_named_staff": {
+      "sees": "all",
+      "mutate": "with note",
+      "actorHeader": "X-Admin-Actor",
+      "example": "ops.sara"
+    },
+    "support_read_note": "لا دور قراءة منفصل في المشروع اليوم؛ مفتاح الإدارة يفتح القراءة والتعديل. الفصل التشغيلي عبر عدم منح المفتاح لمن يحتاج المتابعة فقط — موثّق في صفحة المتابعة."
+  },
+  "rows": [
+    {
+      "step": "إنشاء طلب MO + ثبات الرقم عند إعادة التأكيد",
+      "actor": "customer A API",
+      "classification": "ثبت من الخادم فقط",
+      "actual": "ref=MO-261114-8KULVA replaySame=true",
+      "ok": true,
+      "evidence": "MO-261114-8KULVA"
+    },
+    {
+      "step": "العميلة أ تفتح برقمها العام؛ العميلة ب لا ترى نفس الرقم",
+      "actor": "customer scope",
+      "classification": "ثبت من الخادم فقط",
+      "actual": "A=200 B=404",
+      "ok": true,
+      "evidence": "MO-261114-8KULVA"
+    },
+    {
+      "step": "إنشاء حجز MB على مقدّم ميرا",
+      "actor": "customer A API",
+      "classification": "ثبت من الخادم فقط",
+      "actual": "ref=MB-261114-Y7HMMF partner=ميرا",
+      "ok": true,
+      "evidence": "MB-261114-Y7HMMF"
+    },
+    {
+      "step": "يحتاج تدخل: طلب تجاوز مهلة القبول",
+      "actor": "admin API",
+      "classification": "ثبت من الخادم فقط",
+      "actual": "hit=true count=3",
+      "ok": true,
+      "evidence": "attention before accept"
+    },
+    {
+      "step": "ميرا البائع تبحث برقم طلبها وتراه؛ لا ترى طلب الشريك الآخر",
+      "actor": "mira partner UI",
+      "classification": "ثبت من الواجهة",
+      "actual": "own=true foreign=false",
+      "ok": true,
+      "evidence": "ui/01_mira_search_order.png"
+    },
+    {
+      "step": "شريك غير مالك يبحث برقم طلب ميرا ولا يراه",
+      "actor": "other partner UI",
+      "classification": "ثبت من الواجهة",
+      "actual": "seesForeign=false",
+      "ok": true,
+      "evidence": "ui/02_other_search_mira_order.png"
+    },
+    {
+      "step": "بعد القبول يزول تنبيه مهلة القبول لنفس الرقم",
+      "actor": "admin API after UI accept",
+      "classification": "ثبت من الخادم فقط",
+      "actual": "stillStale=false",
+      "ok": true,
+      "evidence": "MO-261114-8KULVA"
+    },
+    {
+      "step": "إجراء إداري يُسند لموظف عبر X-Admin-Actor وليس المفتاح وحده",
+      "actor": "admin API",
+      "classification": "ثبت من الخادم فقط",
+      "actual": "actorId=ops.sara display=موظف إدارة (ops.sara)",
+      "ok": true,
+      "evidence": "MO-261114-MP53LJ"
+    },
+    {
+      "step": "الإدارة: دخول بموظف مسمّى + بحث بالرقم + تفاصيل مع الخطوة التالية",
+      "actor": "admin UI",
+      "classification": "ثبت من الواجهة",
+      "actual": "sees=true next=true staff=ops.sara",
+      "ok": true,
+      "evidence": "ui/04–06_*.png"
+    },
+    {
+      "step": "الإدارة تفتح/تجد الحجز بنفس الرقم MB",
+      "actor": "admin UI",
+      "classification": "ثبت من الواجهة",
+      "actual": "booking=MB-261114-Y7HMMF sees=true",
+      "ok": true,
+      "evidence": "ui/07_admin_booking_search.png"
+    },
+    {
+      "step": "تفاصيل العميلة تتضمن nextActionAr والرقم العام",
+      "actor": "customer API",
+      "classification": "ثبت من الخادم فقط",
+      "actual": "next=المتجر قبل الطلب ويجهّزه ref=MO-261114-8KULVA",
+      "ok": true,
+      "evidence": "order DTO"
+    },
+    {
+      "step": "Flutter Discover → طلباتي مع نسخ الرقم",
+      "actor": "iOS MiraRC2",
+      "classification": "لم يُختبر",
+      "actual": "أُضيف نسخ الرقم والخطوة التالية في شاشات الطلب/الحجز؛ مسار OTP على المحاكي لم يُغلق في هذا التشغيل",
+      "ok": false,
+      "evidence": "order_detail_screen / bookings_list_screen"
+    }
+  ]
+}

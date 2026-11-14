@@ -7,7 +7,7 @@
     applications: { title: 'طلبات الشركاء', subtitle: 'اعتماد ورفض طلبات الانضمام' },
     reviews: { title: 'مراجعة المحتوى', subtitle: 'نشر أو رفض محتوى المنتجات والخدمات' },
     ads: { title: 'مراجعة الإعلانات', subtitle: 'اعتماد النسخة المعروضة فقط' },
-    orders: { title: 'الطلبات والحجوزات', subtitle: 'متابعة COD والتحصيل والحجوزات مع سبب لكل تدخل' },
+    orders: { title: 'متابعة العمليات', subtitle: 'طلبات COD والحجوزات · بحث بالرقم · يحتاج تدخل · إسناد الموظف' },
     partners: { title: 'الشركاء', subtitle: 'إدارة حالة الشركاء النشطين' },
     leads: { title: 'رسائل الموقع', subtitle: 'Leads من الموقع التعريفي' },
     system: { title: 'النظام', subtitle: 'Providers · Feature flags · Security' },
@@ -34,6 +34,7 @@
   const appShell = $('#appShell');
   const loginError = $('#loginError');
   const adminKeyInput = $('#adminKey');
+  const adminActorInput = $('#adminActor');
 
   function fmtDate(iso) {
     if (!iso) return '—';
@@ -104,6 +105,7 @@
     }
     hideError(loginError);
     MiraAdminApi.setKey(key);
+    MiraAdminApi.setActor(adminActorInput ? adminActorInput.value : '');
     try {
       await MiraAdminApi.verifyKey();
       showApp();
@@ -812,7 +814,7 @@
     if (!state.ordersTab) state.ordersTab = 'orders';
     const tabs = document.createElement('div');
     tabs.className = 'toolbar';
-    [['orders', 'الطلبات'], ['bookings', 'الحجوزات']].forEach(([id, label]) => {
+    [['orders', 'الطلبات'], ['bookings', 'الحجوزات'], ['attention', 'يحتاج تدخل']].forEach(([id, label]) => {
       const btn = document.createElement('button');
       btn.className = 'btn btn-sm' + (state.ordersTab === id ? ' btn-primary' : '');
       btn.textContent = label;
@@ -821,8 +823,20 @@
     });
     root.appendChild(tabs);
 
+    const actorHint = document.createElement('p');
+    actorHint.className = 'muted';
+    actorHint.textContent = 'جلسة الإدارة: ' + (MiraAdminApi.actorId() === 'admin-key'
+      ? 'مفتاح مشترك — الإجراءات بلا موظف مسمّى'
+      : 'موظف ' + MiraAdminApi.actorId());
+    root.appendChild(actorHint);
+
     if (state.ordersDetail && state.ordersTab === 'orders') {
       await renderOrderDetail(state.ordersDetail);
+      return;
+    }
+
+    if (state.ordersTab === 'attention') {
+      await renderAttentionQueue();
       return;
     }
 
@@ -950,6 +964,56 @@
     }
   }
 
+  async function renderAttentionQueue() {
+    const panel = document.createElement('div');
+    panel.className = 'panel';
+    root.appendChild(panel);
+    reviewText(panel, 'جارٍ تحميل ما يحتاج تدخل');
+    try {
+      const data = await MiraAdminApi.commerceAttention();
+      panel.replaceChildren();
+      reviewText(panel, 'المهلات: قبول طلب ' + data.sla.orderAcceptHours + 'س · رد حجز ' + data.sla.bookingReplyHours + 'س · تحصيل بعد التسليم ' + data.sla.collectHours + 'س');
+      const items = data.items || [];
+      if (!items.length) {
+        reviewText(panel, 'لا بنود تحتاج تدخل الآن.');
+        return;
+      }
+      items.forEach((row) => {
+        const card = document.createElement('div');
+        card.className = 'panel';
+        card.style.marginTop = '0.75rem';
+        reviewText(card, (row.kind === 'order' ? 'طلب ' : 'حجز ') + row.publicNumber);
+        reviewText(card, row.reasonAr);
+        reviewText(card, 'الشريك: ' + row.partnerNameAr + ' · المسؤول: ' + row.responsibleLabelAr);
+        reviewText(card, 'منذ: ' + fmtDate(row.since));
+        const open = document.createElement('button');
+        open.className = 'btn btn-sm btn-primary';
+        open.textContent = 'فتح العملية';
+        open.onclick = () => {
+          if (row.kind === 'order') {
+            state.ordersTab = 'orders';
+            state.ordersDetail = row.id;
+            state.ordersQuery = row.publicNumber;
+            renderOrders();
+          } else {
+            state.ordersTab = 'bookings';
+            state.ordersQuery = row.publicNumber;
+            state.ordersDetail = null;
+            renderOrders();
+          }
+        };
+        card.appendChild(open);
+        panel.appendChild(card);
+      });
+    } catch (error) {
+      panel.replaceChildren();
+      const alert = document.createElement('div');
+      alert.className = 'alert err';
+      alert.textContent = error.message;
+      panel.appendChild(alert);
+    }
+  }
+
   async function renderOrderDetail(orderId) {
     const panel = document.createElement('div');
     panel.className = 'panel';
@@ -963,11 +1027,31 @@
       back.textContent = 'رجوع للقائمة';
       back.onclick = () => { state.ordersDetail = null; renderOrders(); };
       panel.appendChild(back);
-      reviewText(panel, 'طلب ' + order.publicNumber);
+      const title = document.createElement('div');
+      title.style.display = 'flex';
+      title.style.gap = '0.5rem';
+      title.style.alignItems = 'center';
+      const titleText = document.createElement('strong');
+      titleText.textContent = 'طلب ' + order.publicNumber;
+      const copyBtn = document.createElement('button');
+      copyBtn.className = 'btn btn-sm';
+      copyBtn.textContent = 'نسخ الرقم';
+      copyBtn.onclick = async () => {
+        try {
+          await navigator.clipboard.writeText(order.publicNumber);
+          copyBtn.textContent = 'تم النسخ';
+        } catch (_) {
+          copyBtn.textContent = order.publicNumber;
+        }
+      };
+      title.append(titleText, copyBtn);
+      panel.appendChild(title);
       reviewText(panel, 'التنفيذ: ' + (ORDER_STATUS_LABELS[order.fulfillmentStatus] || order.fulfillmentStatus));
       reviewText(panel, 'التوصيل: ' + (order.deliveryStatus || '—'));
       reviewText(panel, 'التحصيل: ' + (PAYMENT_STATUS_LABELS[order.paymentCollectionStatus] || order.paymentCollectionStatus));
-      reviewText(panel, 'الشريك: ' + ((order.partner && order.partner.nameAr) || order.partnerId));
+      reviewText(panel, 'الشريك المسؤول: ' + ((order.partner && order.partner.nameAr) || order.partnerId));
+      if (order.nextActionAr) reviewText(panel, 'الخطوة التالية: ' + order.nextActionAr + ' · ' + (order.responsibleLabelAr || ''));
+      if (order.lastEventSummaryAr) reviewText(panel, 'آخر حدث: ' + order.lastEventSummaryAr);
       reviewText(panel, 'العميلة: ' + order.contactName + ' · ' + order.contactPhone);
       reviewText(panel, 'العنوان: ' + order.city + ' · ' + order.addressLine);
       (order.items || []).forEach((item) => {
@@ -986,6 +1070,7 @@
           if (!note) return;
           try {
             await MiraAdminApi.commerceOrderTransition(order.id, { fulfillmentStatus: step[0], note });
+            state.ordersDetail = order.id;
             renderOrders();
           } catch (error) {
             alert(error.message);
@@ -1002,6 +1087,7 @@
           if (!note) return;
           try {
             await MiraAdminApi.commerceCollectPayment(order.id, note);
+            state.ordersDetail = order.id;
             renderOrders();
           } catch (error) {
             alert(error.message);
@@ -1016,7 +1102,7 @@
         reviewText(
           panel,
           fmtDate(ev.createdAt) + ' · ' + (ev.field || '') + ' · ' + (ev.fromStatus || '') + ' → ' + (ev.toStatus || '') +
-            (ev.actorType ? ' · ' + ev.actorType : '') + (ev.note ? ' · ' + ev.note : ''),
+            ' · ' + (ev.actorDisplayAr || ev.actorType || '') + (ev.note ? ' · ' + ev.note : ''),
         );
       });
     } catch (error) {
@@ -1227,6 +1313,7 @@
     navigate('ads');
   } else if (MiraAdminApi.hasKey()) {
     adminKeyInput.value = localStorage.getItem('mira_admin_key') || '';
+    if (adminActorInput) adminActorInput.value = localStorage.getItem('mira_admin_actor') || '';
   }
 
   if (!labeledUi) {

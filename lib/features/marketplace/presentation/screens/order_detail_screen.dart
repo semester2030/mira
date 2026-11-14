@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 
 import '../../../../core/constants/marketplace_copy.dart';
 import '../../../../shared/theme/colors.dart';
@@ -110,10 +111,20 @@ class _OrderDetailScreenState extends State<OrderDetailScreen> {
     if (_needsLogin) return const CommerceLoginRequired(message: MarketplaceCopy.loginRequiredOrders);
     if (_error != null) return CommerceErrorRetry(message: _error!, onRetry: _load);
     final order = _order!;
+    final nextAction = order.nextActionAr ?? CommerceLabels.fulfillment(order.fulfillmentStatus);
     return ListView(
       padding: const EdgeInsets.all(16),
       children: [
         Text('طلب ${order.publicNumber}', style: AppTypography.headlineSmall, textAlign: TextAlign.center),
+        TextButton.icon(
+          onPressed: () async {
+            await Clipboard.setData(ClipboardData(text: order.publicNumber));
+            if (!context.mounted) return;
+            ScaffoldMessenger.of(context).showSnackBar(const SnackBar(content: Text('نُسخ رقم الطلب')));
+          },
+          icon: const Icon(Icons.copy, size: 18),
+          label: const Text('نسخ الرقم'),
+        ),
         Text(order.partnerNameAr, style: AppTypography.titleMedium, textAlign: TextAlign.center),
         const SizedBox(height: 12),
         Wrap(
@@ -125,6 +136,12 @@ class _OrderDetailScreenState extends State<OrderDetailScreen> {
             CommerceStatusChip(CommerceLabels.paymentCollection(order.paymentCollectionStatus)),
           ],
         ),
+        const SizedBox(height: 8),
+        Text('الخطوة التالية: $nextAction', style: AppTypography.bodyMedium, textAlign: TextAlign.center),
+        if (order.responsibleLabelAr != null && order.responsibleLabelAr!.isNotEmpty)
+          Text('المسؤول: ${order.responsibleLabelAr}', style: AppTypography.bodySmall, textAlign: TextAlign.center),
+        if (order.updatedAt != null)
+          Text('آخر تحديث: ${riyadhDateTimeLabel(order.updatedAt!)}', style: AppTypography.bodySmall, textAlign: TextAlign.center),
         const SizedBox(height: 12),
         PremiumCard(
           child: Column(

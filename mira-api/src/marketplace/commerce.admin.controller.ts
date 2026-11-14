@@ -1,53 +1,63 @@
-import { Body, Controller, Get, Inject, Param, Post, Query, UseGuards } from '@nestjs/common';
-import { AdminApiKeyGuard } from '../common/guards/admin-api-key.guard';
-import { ADMIN_ACTOR, CommerceService } from './commerce.service';
+import { Body, Controller, Get, Inject, Param, Post, Query, Req, UseGuards } from '@nestjs/common';
+import { AdminApiKeyGuard, AdminRequest } from '../common/guards/admin-api-key.guard';
+import { adminActorFromId, CommerceService } from './commerce.service';
 
 /**
  * Admin sees every partner. Mutations need a reason in `note`.
  * Served at /admin/commerce/* (matches the catalog-review admin routes) and /marketplace/commerce/admin/*.
+ * Actor id comes from X-Admin-Actor when provided; otherwise "admin-key" (shared key, unnamed staff).
  */
 @Controller(['admin/commerce', 'marketplace/commerce/admin'])
 @UseGuards(AdminApiKeyGuard)
 export class CommerceAdminController {
   constructor(@Inject(CommerceService) private readonly commerce: CommerceService) {}
 
+  private actor(req: AdminRequest) {
+    return adminActorFromId(req.adminActorId);
+  }
+
+  @Get('attention')
+  attention(@Req() req: AdminRequest) {
+    return this.commerce.listAttention(this.actor(req));
+  }
+
   @Get('orders')
-  orders(@Query() query: Record<string, unknown>) {
-    return this.commerce.listOrders(ADMIN_ACTOR, query);
+  orders(@Req() req: AdminRequest, @Query() query: Record<string, unknown>) {
+    return this.commerce.listOrders(this.actor(req), query);
   }
 
   @Get('orders/:id')
-  order(@Param('id') id: string) {
-    return this.commerce.getOrder(ADMIN_ACTOR, id);
+  order(@Req() req: AdminRequest, @Param('id') id: string) {
+    return this.commerce.getOrder(this.actor(req), id);
   }
 
   @Post('orders/:id/transition')
-  transitionOrder(@Param('id') id: string, @Body() body: unknown) {
-    return this.commerce.transitionOrderFor(ADMIN_ACTOR, id, body);
+  transitionOrder(@Req() req: AdminRequest, @Param('id') id: string, @Body() body: unknown) {
+    return this.commerce.transitionOrderFor(this.actor(req), id, body);
   }
 
   @Post('orders/:id/collect-payment')
-  collectPayment(@Param('id') id: string, @Body() body: unknown) {
-    return this.commerce.collectPayment(ADMIN_ACTOR, id, body);
+  collectPayment(@Req() req: AdminRequest, @Param('id') id: string, @Body() body: unknown) {
+    return this.commerce.collectPayment(this.actor(req), id, body);
   }
 
   @Post('orders/:id/waive-payment')
-  waivePayment(@Param('id') id: string, @Body() body: unknown) {
-    return this.commerce.waivePayment(ADMIN_ACTOR, id, body);
+  waivePayment(@Req() req: AdminRequest, @Param('id') id: string, @Body() body: unknown) {
+    return this.commerce.waivePayment(this.actor(req), id, body);
   }
 
   @Get('bookings')
-  bookings(@Query() query: Record<string, unknown>) {
-    return this.commerce.listBookings(ADMIN_ACTOR, query);
+  bookings(@Req() req: AdminRequest, @Query() query: Record<string, unknown>) {
+    return this.commerce.listBookings(this.actor(req), query);
   }
 
   @Get('bookings/:id')
-  booking(@Param('id') id: string) {
-    return this.commerce.getBooking(ADMIN_ACTOR, id);
+  booking(@Req() req: AdminRequest, @Param('id') id: string) {
+    return this.commerce.getBooking(this.actor(req), id);
   }
 
   @Post('bookings/:id/transition')
-  transitionBooking(@Param('id') id: string, @Body() body: unknown) {
-    return this.commerce.transitionBookingFor(ADMIN_ACTOR, id, body);
+  transitionBooking(@Req() req: AdminRequest, @Param('id') id: string, @Body() body: unknown) {
+    return this.commerce.transitionBookingFor(this.actor(req), id, body);
   }
 }

@@ -34,7 +34,7 @@
     confirmed: [['completed', 'اكتمل'], ['cancelled', 'إلغاء']],
   };
 
-  const state = { tab: 'orders', items: [], changedId: '' };
+  const state = { tab: 'orders', items: [], changedId: '', q: '' };
 
   function money(halalas) {
     if (halalas == null) return 'غير محددة';
@@ -78,10 +78,20 @@
     card.className = 'card commerce-card';
     card.dataset.id = order.id;
     if (state.changedId === order.id) card.classList.add('status-changed');
-    node(card, 'طلب ' + order.publicNumber, 'h3');
+    const head = document.createElement('div');
+    head.className = 'journey-actions';
+    const title = node(head, 'طلب ' + order.publicNumber, 'h3');
+    title.style.margin = '0';
+    button(head, 'نسخ الرقم', async () => {
+      try {
+        await navigator.clipboard.writeText(order.publicNumber);
+      } catch (_) {}
+    });
+    card.appendChild(head);
     const orderState = node(card, 'حالة التنفيذ: ' + (ORDER_LABELS[order.fulfillmentStatus] || order.fulfillmentStatus));
     orderState.dataset.state = 'fulfillment';
     node(card, 'تحصيل الدفع: ' + (PAYMENT_LABELS[order.paymentCollectionStatus] || order.paymentCollectionStatus) + ' · الدفع عند الاستلام');
+    if (order.nextActionAr) node(card, 'الخطوة التالية: ' + order.nextActionAr + (order.responsibleLabelAr ? ' · ' + order.responsibleLabelAr : ''));
     node(card, 'العميلة: ' + order.contactName + ' · ' + order.contactPhone);
     node(card, 'العنوان: ' + order.city + ' · ' + order.addressLine);
     if (order.notes) node(card, 'ملاحظات: ' + order.notes);
@@ -110,9 +120,19 @@
     card.className = 'card commerce-card';
     card.dataset.id = booking.id;
     if (state.changedId === booking.id) card.classList.add('status-changed');
-    node(card, 'حجز ' + booking.publicNumber, 'h3');
+    const head = document.createElement('div');
+    head.className = 'journey-actions';
+    const title = node(head, 'حجز ' + booking.publicNumber, 'h3');
+    title.style.margin = '0';
+    button(head, 'نسخ الرقم', async () => {
+      try {
+        await navigator.clipboard.writeText(booking.publicNumber);
+      } catch (_) {}
+    });
+    card.appendChild(head);
     const bookingState = node(card, 'الحالة: ' + (BOOKING_LABELS[booking.status] || booking.status));
     bookingState.dataset.state = 'booking';
+    if (booking.nextActionAr) node(card, 'الخطوة التالية: ' + booking.nextActionAr + (booking.responsibleLabelAr ? ' · ' + booking.responsibleLabelAr : ''));
     node(card, booking.serviceNameAr + ' · ' + booking.durationMin + ' دقيقة · ' + money(booking.priceHalalas) + ' · الدفع في الفرع');
     node(card, 'الموعد: ' + when(booking.startsAt));
     node(card, 'العميلة: ' + booking.contactName + ' · ' + booking.contactPhone);
@@ -224,9 +244,11 @@
     if (ordersTab) ordersTab.setAttribute('aria-pressed', state.tab === 'orders' ? 'true' : 'false');
     if (bookingsTab) bookingsTab.setAttribute('aria-pressed', state.tab === 'bookings' ? 'true' : 'false');
     try {
+      const params = new URLSearchParams({ limit: '30' });
+      if (state.q) params.set('q', state.q);
       const data = state.tab === 'orders'
-        ? await PartnersApi.commerceOrders('limit=30')
-        : await PartnersApi.commerceBookings('limit=30');
+        ? await PartnersApi.commerceOrders(params.toString())
+        : await PartnersApi.commerceBookings(params.toString());
       const items = (data.items || []).slice();
       if (state.changedId) {
         const local = state.items.find((item) => item.id === state.changedId);
@@ -249,6 +271,19 @@
       document.getElementById('commerceTabOrders').onclick = () => { state.tab = 'orders'; state.changedId = ''; load({ replace: true }); };
       document.getElementById('commerceTabBookings').onclick = () => { state.tab = 'bookings'; state.changedId = ''; load({ replace: true }); };
       document.getElementById('commerceRefresh').onclick = () => load();
+      const searchInput = document.getElementById('commerceSearch');
+      const searchBtn = document.getElementById('commerceSearchBtn');
+      const runSearch = () => {
+        state.q = searchInput && searchInput.value ? searchInput.value.trim() : '';
+        state.changedId = '';
+        load({ replace: true });
+      };
+      if (searchBtn) searchBtn.onclick = runSearch;
+      if (searchInput) {
+        searchInput.addEventListener('keydown', (e) => {
+          if (e.key === 'Enter') runSearch();
+        });
+      }
     }
     load();
   }
