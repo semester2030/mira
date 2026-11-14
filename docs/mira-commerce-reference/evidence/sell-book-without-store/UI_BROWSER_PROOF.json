@@ -1,0 +1,125 @@
+{
+  "run": "sbuimwfpf1qa",
+  "database": "mira_sbws_proof_test",
+  "apiBase": "http://127.0.0.1:65296/api/v1",
+  "refs": {
+    "orderPublic": "MO-261114-Y9BP7T",
+    "bookingPublic": "MB-261114-P8KXY2",
+    "orderId": "11b7c0e4-091b-4871-b37b-2fbabf15c9e2",
+    "bookingId": "cf8b4812-05c7-4743-a92a-c27ad74ce94d"
+  },
+  "rows": [
+    {
+      "step": "تجهيز حسابات ومحتوى (seed)",
+      "actor": "harness",
+      "classification": "ثبت من الخادم فقط",
+      "actual": "storeUrl null; product=7a2b3175-a0cb-4748-ba88-504e5fc721ba; independent=509ef26b-1310-4d7a-aa9f-d37e7aab2f17; adminOffer.owner=4ba27708-5a9b-4624-8c40-c3e967a1468d",
+      "ok": true,
+      "evidence": "Prisma seed"
+    },
+    {
+      "step": "التحقق من وجهة API قبل التجربة",
+      "actor": "harness",
+      "classification": "ثبت من الخادم فقط",
+      "actual": "apiBase=http://127.0.0.1:65296/api/v1 me=200 name=بائع واجهة بلا متجر storeUrl=null",
+      "ok": true,
+      "evidence": "GET /partners-portal/me"
+    },
+    {
+      "step": "إنشاء طلب COD عبر API (بدل فيديو الجوال)",
+      "actor": "customer API AUTH_SKIP",
+      "classification": "ثبت من الخادم فقط",
+      "actual": "ref=MO-261114-Y9BP7T",
+      "ok": true,
+      "evidence": "orderId=11b7c0e4-091b-4871-b37b-2fbabf15c9e2"
+    },
+    {
+      "step": "إنشاء طلب موعد عبر API — حالة بانتظار الموافقة",
+      "actor": "customer API",
+      "classification": "ثبت من الخادم فقط",
+      "actual": "ref=MB-261114-P8KXY2 status=requested",
+      "ok": true,
+      "evidence": "bookingId=cf8b4812-05c7-4743-a92a-c27ad74ce94d"
+    },
+    {
+      "step": "بوابة البائع تعرض الطلب",
+      "actor": "seller browser",
+      "classification": "ثبت من الواجهة",
+      "actual": "name=بائع واجهة بلا متجر sees MO-261114-Y9BP7T=true",
+      "ok": true,
+      "evidence": "ui/02_seller_orders.png"
+    },
+    {
+      "step": "قبول→تجهيز→تسليم→تحصيل من جلسة بوابة البائع",
+      "actor": "seller browser",
+      "classification": "ثبت من الواجهة",
+      "actual": "accepted→preparing→out_for_delivery→delivered→collected",
+      "ok": true,
+      "evidence": "ui/04_seller_collected.png — PartnersApi داخل صفحة البوابة"
+    },
+    {
+      "step": "محرر البوابة: عرض فقط / تفعيل شراء",
+      "actor": "seller browser editor",
+      "classification": "ثبت من الواجهة",
+      "actual": "errors=none DB indep=external product=internal_cod",
+      "ok": true,
+      "evidence": "ui/11_seller_editor_after.png — لا قيمة display منفصلة؛ external = بلا شراء داخلي"
+    },
+    {
+      "step": "مقدّم الخدمة لا يرى طلب البائع",
+      "actor": "salon browser",
+      "classification": "ثبت من الواجهة",
+      "actual": "apiList=[] seesOrder=false",
+      "ok": true,
+      "evidence": "ui/05_salon_no_order.png"
+    },
+    {
+      "step": "قبول الحجز وإتمام حجز بعد وقت البدء من بوابة الصالون",
+      "actor": "salon browser",
+      "classification": "ثبت من الواجهة",
+      "actual": "listHad=true confirm=confirmed complete=completed",
+      "ok": true,
+      "evidence": "ui/07_salon_confirmed.png"
+    },
+    {
+      "step": "البائع لا يرى حجز الصالون",
+      "actor": "seller browser",
+      "classification": "ثبت من الواجهة",
+      "actual": "apiList=[] has=false",
+      "ok": true,
+      "evidence": "ui/08_seller_no_booking.png + PartnersApi.commerceBookings"
+    },
+    {
+      "step": "إسناد عرض ميرا لصاحبه من الواجهة",
+      "actor": "admin/partner UI",
+      "classification": "فشل",
+      "actual": "adminOffer.partner_id=4ba27708-5a9b-4624-8c40-c3e967a1468d; لا عنصر دعوة/claim في لوحة الشريك",
+      "ok": false,
+      "evidence": "STOP — no claim UI; DB partner_id edit not used"
+    },
+    {
+      "step": "لوحة الإدارة تعرض الطلب والحجز",
+      "actor": "admin browser",
+      "classification": "ثبت من الواجهة",
+      "actual": "order=true booking=true err=none",
+      "ok": true,
+      "evidence": "ui/09_admin_orders.png + ui/10_admin_bookings.png"
+    },
+    {
+      "step": "المخزون بعد التحصيل",
+      "actor": "DB",
+      "classification": "ثبت من الخادم فقط",
+      "actual": "S=1/0 M=4/0",
+      "ok": true,
+      "evidence": "variant inventory"
+    },
+    {
+      "step": "Flutter Discover من فيديو حتى السلة",
+      "actor": "iOS",
+      "classification": "لم يُختبر",
+      "actual": "مانع: التطبيق يتطلب Firebase؛ لا AUTH تجريبي على العميل. الطلب أُنشئ عبر API ثم أُكمل على بوابات المتصفح.",
+      "ok": false,
+      "evidence": "blocker client auth"
+    }
+  ]
+}

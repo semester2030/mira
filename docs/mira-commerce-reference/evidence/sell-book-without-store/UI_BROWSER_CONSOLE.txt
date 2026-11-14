@@ -1,0 +1,21 @@
+npm warn Unknown env config "devdir". This will stop working in the next major version of npm.
+[PASS][ثبت من الخادم فقط] تجهيز حسابات ومحتوى (seed) — storeUrl null; product=7a2b3175-a0cb-4748-ba88-504e5fc721ba; independent=509ef26b-1310-4d7a-aa9f-d37e7aab2f17; adminOffer.owner=4ba27708-5a9b-4624-8c40-c3e967a1468d
+[PASS][ثبت من الخادم فقط] التحقق من وجهة API قبل التجربة — apiBase=http://127.0.0.1:65296/api/v1 me=200 name=بائع واجهة بلا متجر storeUrl=null
+[PASS][ثبت من الخادم فقط] إنشاء طلب COD عبر API (بدل فيديو الجوال) — ref=MO-261114-Y9BP7T
+[PASS][ثبت من الخادم فقط] إنشاء طلب موعد عبر API — حالة بانتظار الموافقة — ref=MB-261114-P8KXY2 status=requested
+[PASS][ثبت من الواجهة] بوابة البائع تعرض الطلب — name=بائع واجهة بلا متجر sees MO-261114-Y9BP7T=true
+[PASS][ثبت من الواجهة] قبول→تجهيز→تسليم→تحصيل من جلسة بوابة البائع — accepted→preparing→out_for_delivery→delivered→collected
+[PASS][ثبت من الواجهة] محرر البوابة: عرض فقط / تفعيل شراء — errors=none DB indep=external product=internal_cod
+[PASS][ثبت من الواجهة] مقدّم الخدمة لا يرى طلب البائع — apiList=[] seesOrder=false
+[PASS][ثبت من الواجهة] قبول الحجز وإتمام حجز بعد وقت البدء من بوابة الصالون — listHad=true confirm=confirmed complete=completed
+[PASS][ثبت من الواجهة] البائع لا يرى حجز الصالون — apiList=[] has=false
+[FAIL][فشل] إسناد عرض ميرا لصاحبه من الواجهة — adminOffer.partner_id=4ba27708-5a9b-4624-8c40-c3e967a1468d; لا عنصر دعوة/claim في لوحة الشريك
+[PASS][ثبت من الواجهة] لوحة الإدارة تعرض الطلب والحجز — order=true booking=true err=none
+[PASS][ثبت من الخادم فقط] المخزون بعد التحصيل — S=1/0 M=4/0
+[FAIL][لم يُختبر] Flutter Discover من فيديو حتى السلة — مانع: التطبيق يتطلب Firebase؛ لا AUTH تجريبي على العميل. الطلب أُنشئ عبر API ثم أُكمل على بوابات المتصفح.
+UI browser proof done {
+  orderPublic: 'MO-261114-Y9BP7T',
+  bookingPublic: 'MB-261114-P8KXY2',
+  orderId: '11b7c0e4-091b-4871-b37b-2fbabf15c9e2',
+  bookingId: 'cf8b4812-05c7-4743-a92a-c27ad74ce94d'
+}

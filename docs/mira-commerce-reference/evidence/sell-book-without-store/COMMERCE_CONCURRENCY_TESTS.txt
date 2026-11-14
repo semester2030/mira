@@ -1,22 +1,69 @@
 npm warn Unknown env config "devdir". This will stop working in the next major version of npm.
 [concurrency] A: seed product + cart
 [concurrency] A: holder begins FOR UPDATE
-[concurrency] A: holder acquired lock pid=1939
+[concurrency] A: holder acquired lock pid=19423
 [concurrency] B: createOrder starts (must wait on product lock)
-[concurrency] product-row contention holder_pid=1939 waiters=1940/transactionid
+[concurrency] product-row contention holder_pid=19423 waiters=19424/transactionid
 [concurrency] B: observed waiting lock behind products holder
 [concurrency] A: holder committed price=9000
 [concurrency] A PASS: waiter saw new price via QUOTE_STALE
-[concurrency] product-row contention holder_pid=1939 waiters=1941/transactionid
-[concurrency] B: flipped to external under lock pid=1939
+[concurrency] product-row contention holder_pid=19423 waiters=19425/transactionid
+[concurrency] B: flipped to external under lock pid=19423
 [concurrency] B PASS: EXTERNAL under protected verify
 [concurrency] D PASS: single winner on last unit
 [concurrency] F PASS: one booking on shared Arabic resource capacity
-[concurrency] E1: schedule locks held commerce-booking-resource:3fd9303c-6ea0-431d-ac5f-8d1b2a2e60be:غرفة-تعطيل | commerce-booking-service:7f1f69d7-da10-4861-96b9-7a616d5d3d39
+[concurrency] E1: schedule locks held commerce-booking-resource:05275210-fedc-43bb-a1c7-4d9215e1044d:غرفة-تعطيل | commerce-booking-service:404b2b25-06bb-4528-aa48-0f7427dfcecb
 [concurrency] E1: createBooking waiting on partner-scoped resource advisory
 [concurrency] E1: bookingEnabled=false under held schedule locks
 [concurrency] E1 PASS: booking waited then rejected after disable under shared keys
 [concurrency] E2: locks held before updateService
 [concurrency] E2: production updateService waiting on same resource advisory
-TypeError: afterCap.availabilityJson.map is not a function
-    at main (/Users/fayez/Desktop/مراجع تطبيق ميرا /mira-wt/elegance-e1/mira-api/src/marketplace/commerce.concurrency.schema-tests.ts:474:77)
+[concurrency] E2 PASS: updateService shared schedule lock protocol
+[concurrency] E3: booking-side locks held
+[concurrency] E3: capacity/duration update waiting
+[concurrency] E3 PASS: schedule/capacity update synchronized with booking locks
+[concurrency] E4 PASS: production updateService won; booking rejected
+[concurrency] E5: withdraw-equivalent locks held
+[concurrency] E5: createBooking waiting during withdraw barrier
+[concurrency] E5: withdrawn under held locks
+[concurrency] E5 PASS: withdraw committed first; booking rejected
+[concurrency] E6: booking-side locks held before deleteService
+[concurrency] E6: production deleteService waiting
+[concurrency] E6 PASS: deleteService shared schedule lock protocol
+[concurrency] H PASS: historical booking snapshot retained after portal price edit
+[concurrency] I PASS: two partners same resource name book independently
+commerce.concurrency schema tests passed
+--- event order ---
+2026-11-14T01:05:55.370Z A: seed product + cart
+2026-11-14T01:05:55.380Z A: holder begins FOR UPDATE
+2026-11-14T01:05:55.381Z A: holder acquired lock pid=19423
+2026-11-14T01:05:55.381Z B: createOrder starts (must wait on product lock)
+2026-11-14T01:05:55.412Z product-row contention holder_pid=19423 waiters=19424/transactionid
+2026-11-14T01:05:55.412Z B: observed waiting lock behind products holder
+2026-11-14T01:05:55.413Z A: holder committed price=9000
+2026-11-14T01:05:55.417Z A PASS: waiter saw new price via QUOTE_STALE
+2026-11-14T01:05:55.454Z product-row contention holder_pid=19423 waiters=19425/transactionid
+2026-11-14T01:05:55.455Z B: flipped to external under lock pid=19423
+2026-11-14T01:05:55.459Z B PASS: EXTERNAL under protected verify
+2026-11-14T01:05:55.483Z D PASS: single winner on last unit
+2026-11-14T01:05:55.501Z F PASS: one booking on shared Arabic resource capacity
+2026-11-14T01:05:55.502Z E1: schedule locks held commerce-booking-resource:05275210-fedc-43bb-a1c7-4d9215e1044d:غرفة-تعطيل | commerce-booking-service:404b2b25-06bb-4528-aa48-0f7427dfcecb
+2026-11-14T01:05:55.530Z E1: createBooking waiting on partner-scoped resource advisory
+2026-11-14T01:05:55.531Z E1: bookingEnabled=false under held schedule locks
+2026-11-14T01:05:55.534Z E1 PASS: booking waited then rejected after disable under shared keys
+2026-11-14T01:05:55.535Z E2: locks held before updateService
+2026-11-14T01:05:55.562Z E2: production updateService waiting on same resource advisory
+2026-11-14T01:05:55.567Z E2 PASS: updateService shared schedule lock protocol
+2026-11-14T01:05:55.567Z E3: booking-side locks held
+2026-11-14T01:05:55.594Z E3: capacity/duration update waiting
+2026-11-14T01:05:55.598Z E3 PASS: schedule/capacity update synchronized with booking locks
+2026-11-14T01:05:55.607Z E4 PASS: production updateService won; booking rejected
+2026-11-14T01:05:55.608Z E5: withdraw-equivalent locks held
+2026-11-14T01:05:55.635Z E5: createBooking waiting during withdraw barrier
+2026-11-14T01:05:55.636Z E5: withdrawn under held locks
+2026-11-14T01:05:55.641Z E5 PASS: withdraw committed first; booking rejected
+2026-11-14T01:05:55.643Z E6: booking-side locks held before deleteService
+2026-11-14T01:05:55.670Z E6: production deleteService waiting
+2026-11-14T01:05:55.674Z E6 PASS: deleteService shared schedule lock protocol
+2026-11-14T01:05:55.685Z H PASS: historical booking snapshot retained after portal price edit
+2026-11-14T01:05:55.694Z I PASS: two partners same resource name book independently

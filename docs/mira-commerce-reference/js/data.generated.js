@@ -2749,6 +2749,17 @@ window.MIRA_STUDY = {
         "ثلاث إجابات: لا من الواجهة / نعم من الخادم؛ claim فشل"
       ],
       "baselineCommit": "b54c671"
+    },
+    {
+      "version": "واجهات شريك/إدارة + إصلاح E2",
+      "date": "2026-11-14T04:15:00+03:00",
+      "changesAr": [
+        "إصلاح commerce.concurrency E2: قراءة availabilityJson كمستند v2",
+        "إثبات Playwright لبوابتي الشريك والإدارة والمحرر على API محلي",
+        "مراجع MO-261114-Y9BP7T و MB-261114-P8KXY2 مع لقطات ui/",
+        "Flutter Discover ما زال لم يُختبر؛ claim إداري فشل؛ أربع إجابات"
+      ],
+      "baselineCommit": "41065b7"
     }
   ],
   "categories": [
@@ -5213,6 +5224,10 @@ window.MIRA_STUDY = {
   ],
   "sectionContent": {
     "s0": [
+      {
+        "type": "callout",
+        "text": "2026-11-14 — جولة واجهات: MO-261114-Y9BP7T / MB-261114-P8KXY2 على بوابتي الشريك والإدارة + محرر؛ Flutter Discover لم يُختبر (Firebase). E2 التزامن أُصلح ومجموعته PASS. claim فشل."
+      },
       {
         "type": "callout",
         "text": "2026-11-14 — جولة HTTP: طلب MO-261114-5EPEJ2 وحجز MB-261114-P5K68Z على mira_sbws_proof_test (مقاسين+سباقات). الواجهة Flutter/بوابة لم تُختبر (إنتاج مرفوض). claim إداري فشل. الحزمة a712b24 قديمة بلا DB."

@@ -1,0 +1,17 @@
+{
+  "commit_pending": true,
+  "e2_fix": {
+    "root_cause": "test assumed availabilityJson bare array; production updateService persists v2 document {v,timezone,windows}",
+    "fix_file": "mira-api/src/marketplace/commerce.concurrency.schema-tests.ts",
+    "fix": "parseAvailability(afterCap.availabilityJson); assert not Array.isArray",
+    "concurrency_suite": "PASS exit 0"
+  },
+  "ui_refs": {
+    "orderPublic": "MO-261114-Y9BP7T",
+    "bookingPublic": "MB-261114-P8KXY2",
+    "orderId": "11b7c0e4-091b-4871-b37b-2fbabf15c9e2",
+    "bookingId": "cf8b4812-05c7-4743-a92a-c27ad74ce94d"
+  },
+  "flutter": "NOT_TESTED_CLIENT_FIREBASE",
+  "claim": "FAIL_NO_UI"
+}

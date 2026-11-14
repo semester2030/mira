@@ -1,34 +1,27 @@
 {
   "id": "STUDY-SELL-BOOK-WITHOUT-STORE",
-  "titleAr": "البيع والحجز عبر ميرا دون متجر خاص",
   "page": "sell-book-without-store.html",
-  "studiedAt": "2026-11-14T00:50:00Z",
-  "database": {
-    "name": "mira_sbws_proof_test",
-    "host": "127.0.0.1",
-    "refuseNonLocalExit": 1
-  },
-  "scope": {
-    "featuresImplemented": false,
-    "productionDataChanged": false,
-    "productionRead": false,
-    "uiFlutterRun": false,
-    "portalBrowserRun": false
+  "studiedAt": "2026-11-14T01:10:00Z",
+  "database": { "name": "mira_sbws_proof_test", "host": "127.0.0.1" },
+  "latestRefs": {
+    "orderPublicNumber": "MO-261114-Y9BP7T",
+    "bookingPublicNumber": "MB-261114-P8KXY2"
   },
   "tests": {
+    "commerceConcurrency": "PASS_AFTER_E2_FIX",
     "commerceServiceSchema": "PASS",
     "commerceHttp": "PASS",
-    "sbwsProof": "PASS_EXCEPT_ADMIN_CLAIM_UI",
-    "httpJourney": "PASS_SERVER_FAIL_CLAIM_UI_NOT_TESTED"
+    "uiBrowser": "PASS_PARTNER_ADMIN_EDITOR_FAIL_CLAIM_FLUTTER_NOT_TESTED"
   },
-  "latestRefs": {
-    "orderPublicNumber": "MO-261114-5EPEJ2",
-    "bookingPublicNumber": "MB-261114-P5K68Z"
+  "e2": {
+    "cause": "test assumed bare array; production persists v2 availability document",
+    "fixedIn": "commerce.concurrency.schema-tests.ts"
   },
   "answers": {
-    "q1": "NO_UI / YES_SERVER_HTTP",
-    "q2": "NO_UI / YES_SERVER_HTTP",
-    "q3": "NO_STOP_NO_CLAIM_API"
+    "q1": "NO_FLUTTER / YES_API_THEN_SELLER_PORTAL_UI",
+    "q2": "NO_FLUTTER / YES_SALON_PORTAL_CONFIRM_COMPLETE",
+    "q3": "NO_CLAIM_UI",
+    "q4": "YES_CONCURRENCY_PASS"
   },
-  "supersedesPackage": "MIRA_SELL_BOOK_WITHOUT_STORE_20261114T002359Z_a712b24"
+  "supersedes": ["a712b24", "41065b7"]
 }

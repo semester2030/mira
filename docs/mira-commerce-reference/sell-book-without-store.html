@@ -202,19 +202,38 @@
   </section>
 
   <section>
-    <h2>ثلاث إجابات صريحة</h2>
+    <h2>٧) جولة الواجهات + إصلاح E2 (بعد حزمة 41065b7)</h2>
+    <p>تشغيل واحد على <code>mira_sbws_proof_test</code> + خادم Nest محلي + بوابتي الشريك/الإدارة على 127.0.0.1. محاكي <code>MiraRC2</code> أقلع؛ تطبيق Flutter لم يُشغَّل للشراء (مانع Firebase على العميل).</p>
+    <p><strong>E2:</strong> السبب في <em>افتراض الاختبار</em> (مصفوفة) بينما <code>updateService</code> يحفظ مستند v2. أُصلح بـ<code>parseAvailability</code>. مجموعة التزامن كاملة: <span class="tag ok">PASS</span> — <code>COMMERCE_CONCURRENCY_TESTS.txt</code>.</p>
+    <table>
+      <tr><th>الخطوة</th><th>التصنيف</th><th>الدليل</th></tr>
+      <tr><td>طلب <code>MO-261114-Y9BP7T</code> في بوابة البائع → قبول/تجهيز/تسليم/تحصيل</td><td><span class="tag ok">ثبت من الواجهة</span></td><td><code>ui/02..04_*.png</code> + UI_BROWSER_PROOF</td></tr>
+      <tr><td>صالون لا يرى الطلب؛ بائع لا يرى الحجز</td><td><span class="tag ok">ثبت من الواجهة</span></td><td>ui/05 + ui/08</td></tr>
+      <tr><td>حجز <code>MB-261114-P8KXY2</code> قبول+إتمام من بوابة الصالون</td><td><span class="tag ok">ثبت من الواجهة</span></td><td>ui/06–07</td></tr>
+      <tr><td>لوحة الإدارة ترى نفس رقمي الطلب والحجز</td><td><span class="tag ok">ثبت من الواجهة</span></td><td>ui/09–10</td></tr>
+      <tr><td>محرر: عرض فقط=external؛ تفعيل internal_cod؛ مستقل يبقى external</td><td><span class="tag ok">ثبت من الواجهة</span></td><td>ui/11</td></tr>
+      <tr><td>إنشاء الطلب/الحجز من فيديو Discover على الجوال</td><td><span class="tag ext">لم يُختبر</span></td><td>مانع: Firebase على العميل — أُنشئا عبر API ثم أُكملا على البوابات</td></tr>
+      <tr><td>إسناد عرض ميرا لصاحبه</td><td><span class="tag missing">فشل</span></td><td>لا claim UI</td></tr>
+      <tr><td>commerce.concurrency كاملة بعد E2</td><td><span class="tag ok">ثبت من الخادم فقط</span></td><td>exit 0</td></tr>
+    </table>
+  </section>
+
+  <section>
+    <h2>أربع إجابات مباشرة</h2>
     <ol>
-      <li><strong>هل أكملت عميلة شراءً من فيديو لبائع بلا متجر ووصل للبائع الصحيح؟</strong>
-        <span class="tag ext">لم يُختبر من الواجهة</span> /
-        <span class="tag partial">نعم من الخادم/HTTP</span>.
-        دليل: طلب <code>MO-261114-5EPEJ2</code> ظهر للعميلة والبائع والإدارة؛ الصالون 404؛ تسليم+تحصيل. السبب لعدم الواجهة: تطبيق الجوال يشير للإنتاج افتراضيًا.</li>
-      <li><strong>هل طلبت عميلة موعدًا من فيديو وأكّد الشريك وظهر التأكيد عندها؟</strong>
-        <span class="tag ext">لم يُختبر من الواجهة</span> /
-        <span class="tag partial">نعم من الخادم/HTTP</span>.
-        دليل: حجز <code>MB-261114-P5K68Z</code> <code>requested</code>→<code>confirmed</code> لدى العميلة والصالون والإدارة؛ البائع لا يراه.</li>
-      <li><strong>هل تستطيع إدارة ميرا تفعيل عرض قديم لصاحبه من الواجهة، وما نطاق التأثير؟</strong>
-        <span class="tag missing">لا</span>.
-        دليل: لا مسار claim. إن مَلَك الشريك العرض أصلًا، تفعيل صف المنتج يغيّر زر <em>كل</em> المقاطع المرتبطة بنفس <code>ownerId</code>؛ عرض مستقل بـ<code>external</code> يبقى بلا شراء.</li>
+      <li><strong>هل اشترت العميلة من الفيديو ووصل الطلب للبائع بلا متجر؟</strong>
+        <span class="tag ext">لم يُختبر من الجوال</span> /
+        <span class="tag ok">نعم عبر API ثم بوابة البائع</span>.
+        دليل: <code>MO-261114-Y9BP7T</code> ظهر في بوابة البائع وأُكمل حتى <code>collected</code>؛ الإدارة تراه؛ الصالون لا يراه؛ مقاس M لم ينقص.</li>
+      <li><strong>هل حجزت من الفيديو وأكّد الشريك وأتمّه من واجهته؟</strong>
+        <span class="tag ext">لم يُختبر من الجوال</span> /
+        <span class="tag ok">نعم تأكيد+إتمام من بوابة الصالون</span>.
+        دليل: <code>MB-261114-P8KXY2</code> <code>requested</code>→<code>confirmed</code>؛ إتمام حجز بعد وقت البدء من الواجهة؛ البائع لا يرى الحجز.</li>
+      <li><strong>هل تستطيع الإدارة تفعيل عرض قديم لصاحبه، وأي مقاطع يتأثر زرها؟</strong>
+        <span class="tag missing">لا — فشل claim</span>.
+        إن ملك الشريك العرض: تفعيل المنتج من المحرر يؤثر على مقاطعه؛ العرض المستقل يبقى <code>external</code>. <code>display</code> لا يُحفظ كقيمة مستقلة.</li>
+      <li><strong>هل اجتازت مجموعة التزامن كاملة بعد إصلاح E2؟</strong>
+        <span class="tag ok">نعم</span> — <code>commerce.concurrency.schema-tests</code> exit 0 مع E2 PASS.</li>
     </ol>
   </section>
 

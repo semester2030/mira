@@ -6,7 +6,7 @@ import { PrismaService } from '../prisma/prisma.service';
 import { PartnersPortalService } from '../partners-portal/partners-portal.service';
 import { acquireScheduleLocks, bookingResourceLockKey, scheduleLockKeys } from './commerce-schedule-locks';
 import { CommerceService, type CommerceActor } from './commerce.service';
-import { localInstant, localParts } from './commerce.types';
+import { localInstant, localParts, parseAvailability } from './commerce.types';
 
 /**
  * Barrier-ordered concurrency tests on real PostgreSQL (two independent clients).
@@ -471,8 +471,11 @@ async function main() {
     await holdForMerchant;
     await merchantWait;
     const afterCap = await prismaA.service.findUniqueOrThrow({ where: { id: svc.id } });
-    const caps = (afterCap.availabilityJson as Array<{ capacity: number }>).map((w) => w.capacity);
-    assert.ok(caps.every((c) => c === 2));
+    // Production updateService persists v2 document { v, timezone, windows, ... }, not a bare array.
+    assert.equal(Array.isArray(afterCap.availabilityJson), false, 'availabilityJson must be v2 document after portal write');
+    const caps = parseAvailability(afterCap.availabilityJson).map((w) => w.capacity);
+    assert.ok(caps.length > 0, 'windows must remain after capacity update');
+    assert.ok(caps.every((c) => c === 2), `expected all capacities 2, got ${caps.join(',')}`);
     step('E2 PASS: updateService shared schedule lock protocol');
 
     // E3: booking holds first; capacity/schedule update waits; both finish consistently
