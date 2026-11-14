@@ -1,0 +1,211 @@
+<!DOCTYPE html>
+<html lang="ar" dir="rtl">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>البيع والحجز عبر ميرا دون متجر خاص — دراسة</title>
+  <link rel="stylesheet" href="css/tokens.css" />
+  <link rel="stylesheet" href="css/layout.css" />
+  <link rel="stylesheet" href="css/components.css" />
+  <link rel="stylesheet" href="css/responsive.css" />
+  <style>
+    body { max-width: 980px; margin: 0 auto; padding: 24px; }
+    table { width: 100%; border-collapse: collapse; margin: 12px 0 24px; font-size: 0.92rem; }
+    th, td { border: 1px solid #e8d5e4; padding: 8px 10px; vertical-align: top; }
+    th { background: #f8eef6; }
+    .tag { display: inline-block; padding: 2px 8px; border-radius: 999px; font-size: 0.75rem; }
+    .ok { background: #e6f6ea; } .partial { background: #fff4d6; } .missing { background: #fde8e8; } .ext { background: #e8eefc; }
+    code { font-size: 0.85em; }
+    .nav-top { margin-bottom: 24px; }
+  </style>
+</head>
+<body>
+  <p class="nav-top"><a href="index.html">← المرجع الرسمي للمتاجر</a></p>
+  <header class="brand" style="margin-bottom:24px">
+    <h1>البيع والحجز عبر ميرا دون متجر خاص</h1>
+    <p class="muted">دراسة مبنية على الكود واختبارات معزولة — بدون تنفيذ ميزات ودون لمس بيانات الإنتاج.</p>
+    <p class="muted">Commit المفحوص: <code>dd836b9</code> · فرع <code>mira/elegance-e1-taxonomy-foundation</code> · تاريخ الدراسة: 2026-11-14</p>
+  </header>
+
+  <section>
+    <h2>١) الوضع الفعلي في المشروع</h2>
+    <h3>مسار المقطع من «اكتشفي»</h3>
+    <ol>
+      <li>تطبيق العميلة: <code>lib/features/marketplace/presentation/screens/discover_presentation_screen.dart</code> يعرض العروض من بوابة الكتالوج.</li>
+      <li>الخادم: <code>mira-api/src/marketplace/marketplace.controller.ts</code> / <code>marketplace.service.ts</code> يقرآن الجداول المنشورة.</li>
+      <li>المنتج: جدول <code>products</code> (<code>prisma/schema.prisma</code>) — الحقل <code>purchase_mode</code>.</li>
+      <li>الخدمة: جدول <code>services</code> — <code>booking_enabled</code> و<code>pay_mode</code>.</li>
+      <li>بوابة الشركاء: محرر المسودات <code>editor-drafts.service.ts</code> + السجل <code>field-registry.v2.json</code>.</li>
+      <li>إعلان مشهور (إن وُجد): جدول <code>catalog_ads</code> يفصل <code>advertiser_partner_id</code> عن <code>publisher_partner_id</code>؛ السعر والمخزون يبقيان على المنتج/الخدمة المرتبطين.</li>
+    </ol>
+
+    <h3>«عرض فقط» — أين يُحفظ؟</h3>
+    <table>
+      <tr><th>الطبقة</th><th>ما يوجد فعليًا</th><th>الحكم</th></tr>
+      <tr>
+        <td>سجل الحقول</td>
+        <td><code>purchaseMode</code> قيمه في الواجهة: <code>external</code> / <code>internal_cod</code> / <code>contact</code> / <code>display</code> («عرض فقط»)</td>
+        <td><span class="tag partial">واجهة تصميم</span></td>
+      </tr>
+      <tr>
+        <td>قاعدة البيانات</td>
+        <td><code>products.purchase_mode</code> افتراضي <code>external</code>. التعليق الرسمي: external = رابط خارجي (ليس شراء ميرا) · internal_cod = سلة + دفع عند الاستلام</td>
+        <td><span class="tag ok">مُثبت</span></td>
+      </tr>
+      <tr>
+        <td>DTO الخادم</td>
+        <td><code>catalog.dto.ts</code> يقبل فقط <code>external|internal_cod</code></td>
+        <td><span class="tag partial">لا يوجد display persisted</span></td>
+      </tr>
+      <tr>
+        <td>تطبيق العميلة</td>
+        <td><code>CatalogPurchaseMode</code> يعرف <code>external|internal_cod</code> فقط</td>
+        <td><span class="tag ok">مُثبت</span></td>
+      </tr>
+      <tr>
+        <td>التجارة</td>
+        <td><code>commerce.service.ts#assertInAppProduct</code> يرفض أي شيء غير <code>internal_cod</code> بـ <code>EXTERNAL_PRODUCT_NOT_PURCHASABLE</code></td>
+        <td><span class="tag ok">مُثبت</span></td>
+      </tr>
+    </table>
+    <p><strong>الخلاصة:</strong> «عرض فقط» اليوم = منتج منشور بـ<code>purchaseMode=external</code> (غالبًا بلا مسار شراء داخلي فعّال)، أو خدمة بـ<code>bookingEnabled=false</code>. تفعيل البيع = تعديل <code>purchaseMode</code> إلى <code>internal_cod</code> مع مخزون/سعر صالح. تفعيل الحجز = <code>bookingEnabled=true</code> و<code>payMode=pay_at_venue</code>. معرّف الصف ووسائط <code>catalog_media</code> تبقيان لأن التعديل على نفس الصف.</p>
+
+    <h3>الأدوار: ناشر / صاحب العرض / منفّذ / مستفيد مالي</h3>
+    <ul>
+      <li><strong>صاحب المنتج/الخدمة:</strong> <code>products.partner_id</code> / <code>services.partner_id</code> — مصدر ملكية التجارة.</li>
+      <li><strong>ناشر/معلن الإعلان:</strong> <code>catalog_ads.publisher_partner_id</code> و<code>advertiser_partner_id</code> — منفصلان عن السعر والمخزون.</li>
+      <li><strong>منفّذ الحجز:</strong> <code>commerce_bookings.resource_id</code> (+ فرع/زيارة) ضمن نفس <code>partner_id</code>.</li>
+      <li><strong>المستفيد المالي اليوم:</strong> لا يوجد تقسيم مستحقات داخل ميرا؛ المنتج COD يُحصّل عند التسليم، والحجز «ادفع في المقر». لا جدول تسوية/تحويل لشريك.</li>
+      <li><strong>رفع إداري نيابةً عن صاحب:</strong> مسار المراجعة الإدارية للمحتوى موجود (<code>reviewed_by</code> / قرارات الإعلان). <strong>لا يوجد</strong> في الكود مسار «دعوة ملكية» أو «claim» ينقل <code>partner_id</code> بعد نشر إداري — فجوة موثّقة.</li>
+    </ul>
+
+    <h3>هل المتجر الخاص شرط؟</h3>
+    <table>
+      <tr><th>الادعاء</th><th>الدليل</th><th>النتيجة</th></tr>
+      <tr><td><code>storeUrl</code> إلزامي للبيع</td><td><code>Partner.storeUrl</code> اختياري؛ المستقلون يُحفظون بـ<code>storeUrl=null</code>؛ <code>partnerCanSellProducts</code> يعتمد <code>canSellProducts</code> فقط ويصرّح أن storeUrl لا يمنح البيع</td><td><span class="tag ok">ليس شرطًا</span></td></tr>
+      <tr><td>إنشاء منتج brand</td><td><code>partnerCanCreateKind('brand','product') === true</code> بدون storeUrl</td><td><span class="tag ok">مسموح</span></td></tr>
+      <tr><td>سلة داخل ميرا</td><td>تحتاج <code>purchaseMode=internal_cod</code> لا وجود متجر</td><td><span class="tag ok">بلا متجر</span></td></tr>
+      <tr><td>مرجع قديم</td><td><code>evidence/contracts/marketplace-catalog.md</code>: «التاجر بلا storeUrl: الشراء يبقى على externalUrl»</td><td><span class="tag partial">يصف الوضع القديم للرابط الخارجي؛ لا يمنع COD</span></td></tr>
+    </table>
+
+    <h3>المقاطع المنشورة (&gt;٣٠)</h3>
+    <p><span class="tag ext">معلومة فريق — غير محققة من إنتاج</span> أُبلغ بوجود أكثر من ٣٠ مقطعًا منشورًا. هذه الدراسة <strong>لم تقرأ قاعدة الإنتاج</strong> ولم تغيّر حالة أي مقطع. للتحقق لاحقًا يلزم مصدر قراءة مصرّح يجمّع حسب <code>purchase_mode</code> / <code>booking_enabled</code> وربط <code>partner_id</code>.</p>
+  </section>
+
+  <section>
+    <h2>٢) انضمام الشريك بلا متجر</h2>
+    <h3>رحلات الهوية</h3>
+    <ul>
+      <li><strong>أبيع منتجات:</strong> نوع <code>brand</code> (أو <code>event_planner</code> مع <code>canSellProducts=true</code>) → مسودة منتج → مراجعة → نشر → لتعمل السلة: <code>internal_cod</code> + مخزون/سعر.</li>
+      <li><strong>أقدّم خدمات:</strong> <code>salon</code> / <code>clinic</code> / <code>event_planner</code> → خدمة + توفّر + <code>bookingEnabled</code> + مكان (فرع/منزل).</li>
+      <li><strong>الاثنان معًا:</strong> حساب واحد بقدرات النوع؛ المصفوفة في <code>partner-capabilities.ts</code>. المستقل (<code>providerKind=independent</code>) لا يُطلب منه سجل تجاري/ضريبة في مسار التقديم الحالي.</li>
+    </ul>
+    <h3>الدعوة وربط العرض بصاحبه</h3>
+    <p><span class="tag missing">ناقص</span> لا مسار كود لـ: دعوة من الإدارة → قبول الشريك → نقل ملكية منتج/إعلان مع منع الربط الخاطئ. اليوم الملكية = <code>partner_id</code> عند الإنشاء. ما تراه العميلة عن البائع: اسم الشريك والمدينة من صف الشريك المرتبط بالعرض المنشور.</p>
+  </section>
+
+  <section>
+    <h2>٣) رحلتي البيع والحجز</h2>
+    <h3>أ) البيع (عباية بمقاسين ومخزون مستقل)</h3>
+    <table>
+      <tr><th>الحالة</th><th>الحدث</th><th>التالي</th><th>من ينفّذ</th><th>أثر</th></tr>
+      <tr><td>منشور external/عرض</td><td>تعديل purchaseMode→internal_cod + مخزون متغير</td><td>قابل للسلة</td><td>شريك/إدارة محتوى</td><td>العميلة ترى إضافة للسلة</td></tr>
+      <tr><td>سلة فارغة/لنفس الشريك</td><td>addCartItem</td><td>بند محجوز منطقيًا عند الطلب</td><td>عميلة</td><td>رفض CART_PARTNER_CONFLICT إن اختلف الشريك</td></tr>
+      <tr><td>سلة جاهزة</td><td>checkout (COD)</td><td>order fulfillment=new · paymentCollection=uncollected</td><td>عميلة</td><td>حجز reservedQty</td></tr>
+      <tr><td>new</td><td>قبول/رفض</td><td>accepted / rejected</td><td>شريك أو إدارة</td><td>رفض يحرر المخزون</td></tr>
+      <tr><td>accepted→preparing→out_for_delivery</td><td>تجهيز/شحن</td><td>حالات التنفيذ</td><td>شريك</td><td>محاور delivery/payment مستقلة</td></tr>
+      <tr><td>delivered</td><td>تحصيل نقدي</td><td>paymentCollection=collected</td><td>شريك</td><td>لا تحويل ميرا</td></tr>
+      <tr><td>new/accepted/…</td><td>إلغاء</td><td>cancelled + تحرير مخزون إن قبل التسليم</td><td>عميلة/شريك/إدارة حسب الانتقال</td><td>انظر FULFILLMENT_TRANSITIONS</td></tr>
+    </table>
+    <p><strong>سلة لبائعين:</strong> <span class="tag missing">غير مدعوم</span> — السلة مربوطة بـ<code>commerce_carts.partner_id</code> واحد. لا توزيع شحن/خصم/استرداد بين بائعين.</p>
+    <p><strong>الدفع الإلكتروني / الاسترداد الجزئي / الفاتورة الضريبية للمنصة:</strong> <span class="tag missing">غير موجود في طبقة commerce</span> — الطريقة الوحيدة <code>payment_method=cod</code>.</p>
+
+    <h3>ب) الحجز (خدمة بمدة وسعر ومنفّذ)</h3>
+    <table>
+      <tr><th>الحالة</th><th>الحدث</th><th>التالي</th><th>من</th><th>أثر</th></tr>
+      <tr><td>خدمة منشورة بلا حجز</td><td>bookingEnabled=true و payMode=pay_at_venue</td><td>قابلة للطلب</td><td>شريك</td><td>«احجزي/اطلبي موعدًا» يظهر حسب الواجهة</td></tr>
+      <tr><td>—</td><td>createBooking</td><td>requested</td><td>عميلة</td><td>أقفال جدول شريك؛ مكان branch/home</td></tr>
+      <tr><td>requested</td><td>قبول/رفض</td><td>confirmed / rejected</td><td>شريك</td><td>مهل/بدائل: جزئي في الكود؛ التذكير وإعادة الجدولة المتقدمة ناقصة كمنتج متكامل</td></tr>
+      <tr><td>confirmed</td><td>إتمام/إلغاء</td><td>completed / cancelled</td><td>شريك/عميلة حسب القواعد</td><td>الدفع خارج ميرا (في المقر)</td></tr>
+    </table>
+    <p><strong>متى «احجزي الآن» مقابل «اطلبي موعدًا»:</strong> الواجهة تستخدم تسميات موعد؛ الخادم يقبل طلب حجز فقط إذا اكتملت البيانات والتوفر. لا مسار دفعة مقدمة أو دفع كامل عبر ميرا (<code>PAY_MODE_UNSUPPORTED</code> لغير pay_at_venue).</p>
+  </section>
+
+  <section>
+    <h2>٤) مصفوفة «أعمالي» والأتمتة</h2>
+    <table>
+      <tr><th>المهمة</th><th>يُدخلها الشريك/العميلة</th><th>ميرا آليًا</th><th>إنسان</th><th>مهلة</th><th>الإدارة</th><th>دليل الإغلاق</th></tr>
+      <tr><td>تفعيل شراء داخلي</td><td>purchaseMode + مخزون</td><td>رفض السلة إن بقي external</td><td>مراجعة محتوى إن لزم</td><td>—</td><td>مراجعة/اعتماد</td><td>commerce.service assertInAppProduct</td></tr>
+      <tr><td>طلب COD</td><td>عنوان وهاتف</td><td>حجز مخزون + رقم عام + أحداث</td><td>قبول/تجهيز/تحصيل</td><td>غير ممهلة في الكود</td><td>تجاوز حالات</td><td>commerce.types FULFILLMENT_TRANSITIONS</td></tr>
+      <tr><td>طلب حجز</td><td>وقت + مكان</td><td>قفل جدول + تعارض موارد</td><td>قبول/رفض</td><td>جزئي</td><td>مراقبة</td><td>createBooking + schedule locks</td></tr>
+      <tr><td>مستحقات</td><td>—</td><td>—</td><td>تحصيل يدوي عند التسليم/المقر</td><td>—</td><td>لا دفتر تسوية</td><td><span class="tag missing">ناقص</span></td></tr>
+      <tr><td>استثناء دفع ناجح بلا طلب</td><td>—</td><td>لا بوابة دفع ميرا</td><td>—</td><td>—</td><td>—</td><td>غير منطبق اليوم</td></tr>
+      <tr><td>عزل الشركاء</td><td>—</td><td>حراس الملكية على مسارات الشريك</td><td>مراجعة</td><td>—</td><td>مفتاح إدارة منفصل</td><td>partner guards / assert ownership</td></tr>
+    </table>
+  </section>
+
+  <section>
+    <h2>٥) المالي والنظامي</h2>
+    <ul>
+      <li><strong>مزوّد الدفع الحالي لتجارة الكتالوج:</strong> لا تكامل Moyasar/Tap/HyperPay في <code>commerce.*</code>. التحصيل = نقد عند الاستلام أو في المقر.</li>
+      <li><strong>تقسيم مستحقات عدة شركاء / استرداد جزئي / اعتراضات:</strong> غير منفّذ.</li>
+      <li><strong>نجاح دفع تجريبي ≠ عقد تسوية:</strong> لا يوجد دليل تقني على تسوية متعددة الشركاء.</li>
+      <li><strong>ضريبة القيمة المضافة — المادة ٤٧(٣) لائحة تنفيذية:</strong> السؤال لمستشار ضريبي: هل ميرا وسيط يسهّل توريدات شركاء مقيمين غير مسجلين؟ وما التزام الفوترة إن بدأت المنصة التحصيل؟ مصادر أولية في <code>data/regulatory.json</code> (REG-0001…) — الدراسة لا تستخرج التزامًا مادةً بمادة.</li>
+    </ul>
+    <table>
+      <tr><th>النموذج</th><th>من ينفّذ</th><th>من يحصّل</th><th>فاتورة</th><th>إلغاء</th><th>استحقاق الشريك</th></tr>
+      <tr><td>بيع COD داخلي</td><td>الشريك</td><td>الشريك عند التسليم</td><td>خارج ميرا</td><td>حسب آلة الحالات</td><td>عند التحصيل اليدوي</td></tr>
+      <tr><td>رابط خارجي</td><td>متجر الشريك</td><td>خارج ميرا</td><td>خارج ميرا</td><td>خارج ميرا</td><td>خارج ميرا</td></tr>
+      <tr><td>حجز pay_at_venue</td><td>الشريك</td><td>في المقر</td><td>خارج ميرا</td><td>حالات الحجز</td><td>عند الزيارة</td></tr>
+      <tr><td>حجز مدفوع عبر ميرا</td><td>—</td><td>—</td><td>—</td><td>—</td><td><span class="tag missing">غير موجود</span></td></tr>
+    </table>
+  </section>
+
+  <section>
+    <h2>٦) الاختبارات المعزولة المنفَّذة</h2>
+    <table>
+      <tr><th>السيناريو</th><th>المتوقع</th><th>الفعلي</th><th>الدليل</th></tr>
+      <tr><td>قواعد التجارة النقية (حالات/أخطاء)</td><td>تمر</td><td>مرت</td><td><code>evidence/sell-book-without-store/COMMERCE_PURE_TESTS.txt</code> — <code>npm run test:commerce-pure</code></td></tr>
+      <tr><td>مصفوفة قدرات الشريك بلا storeUrl</td><td>storeUrl لا يمنح البيع</td><td>مرت (<code>PARTNER_CAPABILITIES_MATRIX</code>)</td><td>نفس الملف + <code>partner-capabilities.ts</code></td></tr>
+      <tr><td>commerce.service.schema-tests</td><td>تحتاج DB اختبار محلية</td><td><code>REFUSE: DATABASE_URL must be a local test database</code></td><td><code>COMMERCE_SERVICE_SCHEMA_TESTS.txt</code></td></tr>
+      <tr><td>سباق آخر قطعة / بائعين / استرداد جزئي / دعوة ملكية</td><td>—</td><td><span class="tag missing">لم تُنفَّذ — تحتاج بيئة اختبار + بيانات معزولة</span></td><td>أول مانع: لا DATABASE_URL اختبار في هذه الجلسة؛ سلة متعددة البائعين غير مدعومة أصلًا</td></tr>
+    </table>
+  </section>
+
+  <section>
+    <h2>جدول الفجوات</h2>
+    <table>
+      <tr><th>القدرة</th><th>التصنيف</th><th>الربط</th></tr>
+      <tr><td>بيع COD لشريك بلا متجر (brand + internal_cod)</td><td><span class="tag ok">موجود ومختبر جزئيًا (قواعد)</span></td><td>commerce + partner-capabilities</td></tr>
+      <tr><td>حجز pay_at_venue بلا متجر</td><td><span class="tag partial">موجود وغير مختبر متصل هنا</span></td><td>createBooking</td></tr>
+      <tr><td>قيمة purchaseMode=display persisted</td><td><span class="tag missing">ناقص</span></td><td>registry vs DTO/DB</td></tr>
+      <tr><td>دعوة ملكية مقطع إداري</td><td><span class="tag missing">ناقص</span></td><td>—</td></tr>
+      <tr><td>سلة متعددة البائعين</td><td><span class="tag missing">ناقص (مرفوض صراحة)</span></td><td>CART_PARTNER_CONFLICT</td></tr>
+      <tr><td>دفع إلكتروني / تسوية / استرداد</td><td><span class="tag ext">يعتمد قرارًا + مزوّدًا</span></td><td>DEC-0001 في المرجع</td></tr>
+      <tr><td>مستحقات ولوحة مالية للشريك</td><td><span class="tag missing">ناقص</span></td><td>—</td></tr>
+      <tr><td>إحصاء +٣٠ مقطع إنتاج</td><td><span class="tag ext">معلومة فريق</span></td><td>لم تُقرأ قاعدة الإنتاج</td></tr>
+    </table>
+  </section>
+
+  <section>
+    <h2>إجابة مباشرة — خمسة أسئلة</h2>
+    <ol>
+      <li><strong>هل يستطيع بائع بلا متجر البيع اليوم؟</strong> يبدأ بإنشاء/اعتماد حساب شريك نوع brand (أو صلاحية بيع)، ونشر منتج، وضبط <code>purchaseMode=internal_cod</code> مع سعر ومخزون. يتوقف عند: غياب COD كامل للعميلة إن بقي external؛ غياب تحصيل إلكتروني؛ سلة شريك واحد فقط؛ لا دفتر مستحقات داخل ميرا.</li>
+      <li><strong>هل يستطيع مقدّم خدمة بلا متجر استقبال حجز؟</strong> نعم إذا كانت الخدمة <code>bookingEnabled</code> و<code>payMode=pay_at_venue</code> والجدول صالح. يؤكده الشريك (قبول من <code>requested</code> إلى <code>confirmed</code>). ميرا لا تحصّل المبلغ.</li>
+      <li><strong>هل يمكن تفعيل مقطع قديم واحد بإذن صاحبه وبقاء البقية عرضًا؟</strong> تقنيًا: نعم على مستوى صف المنتج/الخدمة بتغيير حقله دون مسح الوسائط/المعرّف. تشغيليًا: يحتاج ملكية <code>partner_id</code> الصحيحة؛ مسار دعوة/نقل ملكية من نشر إداري <strong>غير موجود</strong>.</li>
+      <li><strong>مهام الشريك / أتمتة ميرا / الإدارة؟</strong> الشريك: بيانات العرض، المخزون/الجدول، قبول الطلبات، التنفيذ، التحصيل النقدي. ميرا: التحقق، حجز المخزون/الوقت، آلات الحالات، عزل البيانات، إشعارات محدودة حسب ما هو موصول. الإدارة: مراجعة المحتوى والتجاوز عند الصلاحية — بلا تسوية مالية آلية.</li>
+      <li><strong>أقل تغييرات لأول بيع وأول حجز لشريكين مستقلين؟</strong>
+        <ul>
+          <li>بيع: حسابا brand + منتجان internal_cod + مخزون + عميلة تجريبية + مسار COD على بيئة اختبار.</li>
+          <li>حجز: خدمتان bookingEnabled + توفّر غير متداخل + قبول الشريك.</li>
+          <li>قرارات قبل الإطلاق الحقيقي: DEC الدفع الداخلي؛ نموذج الفوترة/الضريبة؛ هل تُبنى دعوة الملكية؛ هل تُرفع قيود السلة متعددة البائعين؛ اعتماد مستشار ضريبي لـ٤٧(٣) إن بدأت المنصة التحصيل.</li>
+        </ul>
+      </li>
+    </ol>
+  </section>
+
+  <footer class="footer-note">
+    <p>هذه الصفحة جزء من مرجع GATE-00. لا تغيّر سلوك المنتج. لا أسرار ولا بيانات شخصية.</p>
+  </footer>
+</body>
+</html>

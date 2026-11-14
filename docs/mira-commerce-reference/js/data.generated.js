@@ -2621,6 +2621,24 @@ window.MIRA_STUDY = {
       "doesNotProve": "لا يثبت تسليمًا بعد إغلاق التطبيق ولا أن إلغاء العميل ألغى معالجة الخادم ولا أن المشاهدات مفعّلة",
       "runtime": "UNIT",
       "limitations": "البصمة السابقة 76230d79ad84c120784e91689af0512e485dc771710172c60cef0bc0f0e07fe7 كانت لقائمة RC6 قبل الإلغاء والحد. أُبقيت هنا. السعة 32 والحفظ 10 دقائق. abandoned ليس نجاحًا."
+    },
+    {
+      "id": "EVD-SBWS-001",
+      "claim": "Commerce pure rules and partner sell capability without storeUrl",
+      "claimType": "fact",
+      "freshnessRole": "current",
+      "currentClaimStatus": "verified_by_local_schema_tests",
+      "repo": "mira",
+      "path": "docs/mira-commerce-reference/evidence/sell-book-without-store/COMMERCE_PURE_TESTS.txt",
+      "symbol": "test:commerce-pure + partner-capabilities.schema-tests",
+      "lines": "",
+      "commitSha": "dd836b9c20805d0a2f0b55da21110eb8668f67ec",
+      "fileSha256": "",
+      "excerptFile": "evidence/sell-book-without-store/COMMERCE_PURE_TESTS.txt",
+      "proves": "قواعد حالات الطلب/الحجز النقية تمر؛ storeUrl لا يمنح canSellProducts",
+      "doesNotProve": "لا يثبت رحلة جهاز أو إنتاج أو سلة متعددة البائعين أو دعوة ملكية أو دفع إلكتروني",
+      "runtime": "UNIT",
+      "limitations": "commerce.service.schema-tests رُفض بلا DATABASE_URL اختبار محلية"
     }
   ],
   "changelog": [
@@ -2698,6 +2716,17 @@ window.MIRA_STUDY = {
         "روابط تسليم RC1 وRC2 دون إدراج بصمة الحزمة الجديدة داخلها"
       ],
       "baselineCommit": "15fe65c40d3dedb9afdd95619f2945bd84cb616a"
+    },
+    {
+      "version": "دراسة — البيع والحجز دون متجر خاص",
+      "date": "2026-11-14T03:15:00+03:00",
+      "changesAr": [
+        "صفحة sell-book-without-store.html في المرجع الرسمي",
+        "خرائط البيع/الحجز ومصفوفة الأتمتة وجدول الفجوات وخمسة إجابات مباشرة",
+        "أدلة test:commerce-pure وقدرات الشريك؛ رفض اختبار الخدمة بلا DB محلية",
+        "بلا تنفيذ ميزات وبلا تغيير بيانات إنتاج"
+      ],
+      "baselineCommit": "dd836b9c20805d0a2f0b55da21110eb8668f67ec"
     }
   ],
   "categories": [
@@ -5162,6 +5191,10 @@ window.MIRA_STUDY = {
   ],
   "sectionContent": {
     "s0": [
+      {
+        "type": "callout",
+        "text": "2026-11-14 — دراسة «البيع والحجز عبر ميرا دون متجر خاص» أُضيفت كصفحة رسمية: sell-book-without-store.html (كود + اختبارات معزولة؛ بلا تنفيذ ميزات وبلا لمس إنتاج)."
+      },
       {
         "type": "callout",
         "text": "RC3 — تصحيح الموقع بعد المراجعة. الحالة: بانتظار إعادة المراجعة. GATE-00 غير مغلق. أرشيف مصدر الأماكن 0125 لم يُعد تغليفه."

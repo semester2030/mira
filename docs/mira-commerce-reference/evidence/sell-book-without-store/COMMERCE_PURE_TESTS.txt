@@ -1,0 +1,9 @@
+npm warn Unknown env config "devdir". This will stop working in the next major version of npm.
+
+> mira-api@1.0.0 test:commerce-pure
+> tsx src/marketplace/commerce.types.schema-tests.ts && tsx src/marketplace/commerce-public.schema-tests.ts
+
+commerce.types schema tests passed
+commerce-public schema tests passed
+npm warn Unknown env config "devdir". This will stop working in the next major version of npm.
+{"ok":true,"id":"PARTNER_CAPABILITIES_MATRIX"}
