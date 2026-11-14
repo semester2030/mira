@@ -391,8 +391,10 @@ async function main() {
     adIds.push(ad.id);
 
     // simulate editor coerce for display on partner-owned product
-    const displayInput = 'display';
-    const coerced = displayInput === 'internal_cod' || displayInput === 'external' ? displayInput : 'external';
+    // (editor accepts free text then coerces unknown → external)
+    const displayInput: string = 'display';
+    const coerced =
+      displayInput === 'internal_cod' || displayInput === 'external' ? displayInput : 'external';
     await prisma.product.update({ where: { id: product.id }, data: { purchaseMode: coerced } });
     const savedDisplay = await prisma.product.findUniqueOrThrow({ where: { id: product.id } });
     // independent offer stays display/external

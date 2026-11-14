@@ -66,32 +66,34 @@ export function actorDisplayAr(actorType: string | null | undefined, actorId: st
 export function orderOpsHint(
   fulfillmentStatus: string,
   paymentCollectionStatus: string,
-  view: 'customer' | 'partner' | 'admin',
+  view: 'customer' | 'partner' | 'admin' | 'system',
 ): OpsHint {
+  // system uses partner/admin-facing copy (not customer)
+  const audience = view === 'customer' ? 'customer' : 'staff';
   if (fulfillmentStatus === 'new') {
     return {
-      nextActionAr: view === 'customer' ? 'بانتظار قبول المتجر' : 'اقبلِ الطلب أو ارفضه',
+      nextActionAr: audience === 'customer' ? 'بانتظار قبول المتجر' : 'اقبلِ الطلب أو ارفضه',
       responsibleRole: 'partner',
       responsibleLabelAr: 'البائع',
     };
   }
   if (fulfillmentStatus === 'accepted') {
     return {
-      nextActionAr: view === 'customer' ? 'المتجر قبل الطلب ويجهّزه' : 'ابدئي التجهيز',
+      nextActionAr: audience === 'customer' ? 'المتجر قبل الطلب ويجهّزه' : 'ابدئي التجهيز',
       responsibleRole: 'partner',
       responsibleLabelAr: 'البائع',
     };
   }
   if (fulfillmentStatus === 'preparing') {
     return {
-      nextActionAr: view === 'customer' ? 'الطلب قيد التجهيز' : 'سجّلي الخروج للتوصيل عند الجاهزية',
+      nextActionAr: audience === 'customer' ? 'الطلب قيد التجهيز' : 'سجّلي الخروج للتوصيل عند الجاهزية',
       responsibleRole: 'partner',
       responsibleLabelAr: 'البائع',
     };
   }
   if (fulfillmentStatus === 'out_for_delivery') {
     return {
-      nextActionAr: view === 'customer' ? 'الطلب في الطريق إليكِ' : 'أكّدي التسليم أو تعذّره',
+      nextActionAr: audience === 'customer' ? 'الطلب في الطريق إليكِ' : 'أكّدي التسليم أو تعذّره',
       responsibleRole: 'partner',
       responsibleLabelAr: 'البائع',
     };
