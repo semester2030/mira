@@ -1176,6 +1176,40 @@ export class PartnersPortalService implements OnModuleInit {
     return { ok: true };
   }
 
+  /**
+   * Drop pending edits on a live published product without changing the published snapshot.
+   * Does not touch editor-draft rows; only Product.draft* columns.
+   */
+  async discardPendingProductEdits(partnerId: string, productId: string) {
+    await this.assertProductOwner(partnerId, productId);
+    const current = await this.prisma.product.findFirst({
+      where: { id: productId, partnerId },
+      select: { contentStatus: true },
+    });
+    if (!current) throw new NotFoundException('المنتج غير موجود');
+    if (current.contentStatus !== 'published') {
+      throw new BadRequestException('لا توجد نسخة منشورة لحفظها عند حذف التعديلات');
+    }
+    await this.prisma.product.update({
+      where: { id: productId },
+      data: {
+        draftNameAr: null,
+        draftNameEn: null,
+        draftDescriptionAr: null,
+        draftOptionsJson: Prisma.DbNull,
+        draftVariantsJson: Prisma.DbNull,
+        draftOptionsSet: false,
+        draftVariantsSet: false,
+        draftCategory: null,
+        draftSubcategory: null,
+        draftProfileId: null,
+        draftAttributesJson: Prisma.DbNull,
+        draftTaxonomySet: false,
+      },
+    });
+    return { ok: true, contentStatus: 'published' };
+  }
+
   async createService(partnerId: string, dto: UpsertServiceDto) {
     const partner = await this.prisma.partner.findUnique({
       where: { id: partnerId },

@@ -373,11 +373,20 @@
     formatPrice: formatPrice,
     renderCatalog: renderCatalog,
     paintCatalogState: paintCatalogState,
+    resolveListingCardState: resolveListingCardState,
     renderForm: renderForm,
     refreshLists: refreshLists,
     reopenServerDraft: reopenServerDraft,
     resolveFormTarget: resolveFormTarget,
   };
+
+  if (!window.__miraCatalogMoreWired) {
+    window.__miraCatalogMoreWired = true;
+    document.addEventListener('click', () => {
+      document.querySelectorAll('.catalog-more-menu').forEach((m) => m.classList.add('hidden'));
+      document.querySelectorAll('[data-testid="catalog-card-more"]').forEach((t) => t.setAttribute('aria-expanded', 'false'));
+    });
+  }
 
   async function refreshLists() {
     const data = await PartnersApi.dashboard();
@@ -449,6 +458,212 @@
     list.appendChild(wrap);
   }
 
+  function listingHasPendingEdits(item) {
+    if (!item || String(item.contentStatus || '') !== 'published') return false;
+    return Boolean(
+      item.draftNameAr ||
+        item.draftNameEn ||
+        item.draftDescriptionAr ||
+        item.draftOptionsSet ||
+        item.draftVariantsSet ||
+        item.draftTaxonomySet ||
+        item.draftCategory ||
+        item.draftSubcategory,
+    );
+  }
+
+  function listingAdminStopped(item) {
+    if (!item || String(item.contentStatus || '') !== 'withdrawn') return false;
+    const by = String(item.reviewedBy || '');
+    return !!by && by.indexOf('partner:') !== 0;
+  }
+
+  /** Map server content/review fields → seller-facing card state (Arabic, no raw enums). */
+  function resolveListingCardState(item) {
+    const content = String((item && item.contentStatus) || 'draft');
+    const review = String((item && item.reviewStatus) || 'none');
+    const pendingEdits = listingHasPendingEdits(item);
+    const adminStopped = listingAdminStopped(item);
+    if (review === 'in_review') {
+      return {
+        key: 'in_review',
+        label: 'قيد المراجعة',
+        icon: '🕓',
+        pendingEdits: false,
+        adminStopped: false,
+      };
+    }
+    if (content === 'published') {
+      return {
+        key: 'published',
+        label: 'منشور',
+        icon: '🟢',
+        pendingEdits: pendingEdits,
+        adminStopped: false,
+      };
+    }
+    if (content === 'withdrawn') {
+      return {
+        key: adminStopped ? 'admin_stopped' : 'stopped',
+        label: 'متوقف عن العرض',
+        icon: '⚪',
+        pendingEdits: false,
+        adminStopped: adminStopped,
+      };
+    }
+    return {
+      key: 'draft',
+      label: 'مسودة',
+      icon: '📝',
+      pendingEdits: false,
+      adminStopped: false,
+    };
+  }
+
+  function catalogActionButton(opts) {
+    const btn = document.createElement('button');
+    btn.type = 'button';
+    btn.className = 'btn btn-ghost btn-sm catalog-card-action' + (opts.primary ? ' catalog-card-action-primary' : '');
+    if (opts.testId) btn.setAttribute('data-testid', opts.testId);
+    if (opts.title) btn.title = opts.title;
+    const icon = document.createElement('span');
+    icon.className = 'catalog-card-action-icon';
+    icon.setAttribute('aria-hidden', 'true');
+    icon.textContent = opts.icon || '';
+    const label = document.createElement('span');
+    label.className = 'catalog-card-action-label';
+    label.textContent = opts.label || '';
+    btn.append(icon, label);
+    btn.onclick = opts.onClick;
+    return btn;
+  }
+
+  function openListingInEditor(type, item, formId, titleId) {
+    renderForm(type, item, formId, titleId);
+    if (type === 'brand' && window.MiraPortalShell && typeof MiraPortalShell.openProductEditor === 'function') {
+      MiraPortalShell.openProductEditor();
+      if (window.MiraE2BProductShell && typeof MiraE2BProductShell.focusEditor === 'function') {
+        MiraE2BProductShell.focusEditor();
+      }
+    } else if (type !== 'brand' && window.MiraPortalShell && typeof MiraPortalShell.openServiceEditor === 'function') {
+      MiraPortalShell.openServiceEditor();
+    } else {
+      const formEl = document.getElementById(formId);
+      if (formEl) {
+        formEl.scrollIntoView({
+          behavior: window.MiraMotion && MiraMotion.reduced() ? 'auto' : 'smooth',
+          block: 'start',
+        });
+      }
+    }
+  }
+
+  async function runCatalogCardAction(card, body, work) {
+    const prev = card.getAttribute('data-action-busy');
+    if (prev === '1') return;
+    card.setAttribute('data-action-busy', '1');
+    card.classList.add('is-busy');
+    try {
+      await work();
+      if (window.reloadPartnerDashboard) await window.reloadPartnerDashboard({ preserveForms: true });
+    } catch (error) {
+      const msg = (error && (error.messageAr || error.message)) || String(error);
+      let errEl = body.querySelector('.catalog-card-error');
+      if (!errEl) {
+        errEl = document.createElement('p');
+        errEl.className = 'catalog-card-error';
+        body.appendChild(errEl);
+      }
+      errEl.textContent = msg;
+    } finally {
+      card.removeAttribute('data-action-busy');
+      card.classList.remove('is-busy');
+    }
+  }
+
+  function buildListingMoreMenu(type, item, state, card, body) {
+    const wrap = document.createElement('div');
+    wrap.className = 'catalog-more';
+    const toggle = document.createElement('button');
+    toggle.type = 'button';
+    toggle.className = 'btn btn-ghost btn-sm catalog-card-action';
+    toggle.setAttribute('data-testid', 'catalog-card-more');
+    toggle.setAttribute('aria-haspopup', 'true');
+    toggle.setAttribute('aria-expanded', 'false');
+    toggle.innerHTML =
+      '<span class="catalog-card-action-icon" aria-hidden="true">⋯</span>' +
+      '<span class="catalog-card-action-label">المزيد</span>';
+    const menu = document.createElement('div');
+    menu.className = 'catalog-more-menu hidden';
+    menu.setAttribute('role', 'menu');
+
+    function addMenuItem(label, testId, onClick) {
+      const b = document.createElement('button');
+      b.type = 'button';
+      b.className = 'catalog-more-item';
+      b.setAttribute('role', 'menuitem');
+      b.setAttribute('data-testid', testId);
+      b.textContent = label;
+      b.onclick = async (ev) => {
+        ev.stopPropagation();
+        menu.classList.add('hidden');
+        toggle.setAttribute('aria-expanded', 'false');
+        await onClick();
+      };
+      menu.appendChild(b);
+    }
+
+    const name = (item && item.nameAr) || 'هذا المنتج';
+    if (state.key === 'published' && state.pendingEdits && type === 'brand') {
+      addMenuItem('حذف التعديلات غير المنشورة', 'catalog-discard-pending', () => {
+        if (!confirm('حذف التعديلات غير المنشورة لـ «' + name + '» مع الإبقاء على النسخة المنشورة؟')) return;
+        return runCatalogCardAction(card, body, async () => {
+          await PartnersApi.discardPendingProductEdits(item.id);
+        });
+      });
+    }
+    if (state.key === 'draft') {
+      addMenuItem(type === 'brand' ? 'حذف المسودة' : 'حذف مسودة الخدمة', 'catalog-delete-draft', () => {
+        if (!confirm('حذف مسودة «' + name + '»؟ لن تظهر للعميلات.')) return;
+        return runCatalogCardAction(card, body, async () => {
+          if (type === 'brand') await PartnersApi.deleteProduct(item.id);
+          else await PartnersApi.deleteService(item.id);
+        });
+      });
+    } else if (state.key !== 'admin_stopped') {
+      // Soft archive = same withdraw endpoint; keeps order history because row stays in DB.
+      const archiveLabel = type === 'brand' ? 'أرشفة المنتج' : 'أرشفة الخدمة';
+      addMenuItem(archiveLabel, 'catalog-archive', () => {
+        if (
+          !confirm(
+            'أرشفة «' +
+              name +
+              '»؟ ستختفي من العرض العام وتبقى في سجل طلباتك. لا يُحذف السجل نهائيًا من هنا.',
+          )
+        ) {
+          return;
+        }
+        return runCatalogCardAction(card, body, async () => {
+          if (type === 'brand') await PartnersApi.deleteProduct(item.id);
+          else await PartnersApi.deleteService(item.id);
+        });
+      });
+    }
+
+    toggle.onclick = (ev) => {
+      ev.stopPropagation();
+      const open = menu.classList.contains('hidden');
+      document.querySelectorAll('.catalog-more-menu').forEach((m) => m.classList.add('hidden'));
+      document.querySelectorAll('[data-testid="catalog-card-more"]').forEach((t) => t.setAttribute('aria-expanded', 'false'));
+      if (open) {
+        menu.classList.remove('hidden');
+        toggle.setAttribute('aria-expanded', 'true');
+      }
+    };
+    wrap.append(toggle, menu);
+    return wrap;
+  }
+
   function renderCatalog(type, catalog, listId, formId, titleId) {
     const list = document.getElementById(listId || 'catalogList');
     if (!list) return;
@@ -478,79 +693,153 @@
       return;
     }
     list.setAttribute('data-catalog-state', 'ready');
+    const partnerIsDeveloper =
+      !!(window.sessionPartner && window.sessionPartner.type === 'developer') ||
+      document.body.dataset.partnerType === 'developer';
+
     items.forEach((item) => {
+      const state = resolveListingCardState(item);
       const card = document.createElement('div');
       card.className = 'list-item catalog-product-card';
+      card.setAttribute('data-card-state', state.key);
       if (item && item.id) card.setAttribute('data-id', String(item.id));
       if (item && item.nameAr) card.setAttribute('data-name-ar', String(item.nameAr));
       if (item && item.category) card.setAttribute('data-category-id', String(item.category));
+      card.setAttribute('data-content-status', String((item && item.contentStatus) || ''));
+      card.setAttribute('data-review-status', String((item && item.reviewStatus) || ''));
+
       const thumbUrl =
         (item && item.primaryImageUrl) ||
         (item && item.imageUrl) ||
         (item && item.media && item.media[0] && (item.media[0].url || item.media[0].smallUrl)) ||
         '';
+      const thumb = document.createElement('div');
+      thumb.className = 'catalog-product-thumb-wrap';
       if (thumbUrl) {
         const img = document.createElement('img');
         img.className = 'catalog-product-thumb';
         img.alt = '';
         img.loading = 'lazy';
         img.src = String(thumbUrl);
-        card.appendChild(img);
+        thumb.appendChild(img);
+      } else {
+        thumb.classList.add('is-empty');
+        thumb.setAttribute('aria-hidden', 'true');
       }
+      card.appendChild(thumb);
+
       const body = document.createElement('div');
       body.className = 'catalog-product-body';
-      text(body, item.nameAr, 'strong');
-      const statusLine =
-        'الحالة: ' +
-        (item.contentStatus || 'draft') +
-        ' · المراجعة: ' +
-        (item.reviewStatus || 'draft') +
-        ' · ' +
-        categoryLabel(type, item.category);
-      text(body, statusLine);
-      text(body, formatPrice(item.priceHalalas));
-      if (item.reviewNote) text(body, 'سبب المراجعة: ' + item.reviewNote);
+      const titleRow = document.createElement('div');
+      titleRow.className = 'catalog-product-title-row';
+      const nameEl = document.createElement('strong');
+      nameEl.className = 'catalog-product-name';
+      nameEl.textContent = (item && item.nameAr) || 'بدون اسم';
+      titleRow.appendChild(nameEl);
+      const statusEl = document.createElement('span');
+      statusEl.className = 'catalog-product-status';
+      statusEl.setAttribute('data-testid', 'catalog-card-status');
+      statusEl.setAttribute('data-status-key', state.key);
+      statusEl.textContent = state.icon + ' ' + state.label;
+      titleRow.appendChild(statusEl);
+      if (state.pendingEdits) {
+        const pend = document.createElement('span');
+        pend.className = 'catalog-product-status catalog-product-status-pending';
+        pend.setAttribute('data-testid', 'catalog-card-pending-edits');
+        pend.textContent = 'تعديلات غير منشورة';
+        titleRow.appendChild(pend);
+      }
+      body.appendChild(titleRow);
+      const meta = document.createElement('div');
+      meta.className = 'catalog-product-meta';
+      meta.textContent = categoryLabel(type, item && item.category);
+      body.appendChild(meta);
+      const priceEl = document.createElement('div');
+      priceEl.className = 'catalog-product-price';
+      priceEl.textContent = formatPrice(item && item.priceHalalas) || '—';
+      body.appendChild(priceEl);
+      if (item && item.reviewNote) {
+        const note = document.createElement('p');
+        note.className = 'catalog-product-note';
+        note.textContent =
+          (state.adminStopped ? 'إيقاف إداري: ' : 'ملاحظة: ') + String(item.reviewNote);
+        body.appendChild(note);
+      }
       card.appendChild(body);
+
       const actions = document.createElement('div');
       actions.className = 'catalog-product-actions';
-      const open = document.createElement('button');
-      open.type = 'button';
-      open.className = 'btn btn-ghost btn-sm';
-      open.textContent = 'فتح في النموذج';
-      open.onclick = () => {
-        renderForm(type, item, formId, titleId);
-        if (type === 'brand' && window.MiraPortalShell && typeof MiraPortalShell.openProductEditor === 'function') {
-          MiraPortalShell.openProductEditor();
-          if (window.MiraE2BProductShell && typeof MiraE2BProductShell.focusEditor === 'function') {
-            MiraE2BProductShell.focusEditor();
-          }
-        } else if (type !== 'brand' && window.MiraPortalShell && typeof MiraPortalShell.openServiceEditor === 'function') {
-          MiraPortalShell.openServiceEditor();
-        } else {
-          const formEl = document.getElementById(formId);
-          if (formEl) {
-            formEl.scrollIntoView({
-              behavior: window.MiraMotion && MiraMotion.reduced() ? 'auto' : 'smooth',
-              block: 'start',
-            });
-          }
-        }
-      };
-      const pull = document.createElement('button');
-      pull.type = 'button';
-      pull.className = 'btn btn-ghost btn-sm';
-      pull.textContent = 'سحب';
-      pull.onclick = async () => {
-        if (!confirm('سحب هذا العنصر من النشر؟')) return;
-        try {
-          if (type === 'brand') await PartnersApi.deleteProduct(item.id);
-          else await PartnersApi.deleteService(item.id);
-          if (window.reloadPartnerDashboard) await window.reloadPartnerDashboard();
-        } catch (error) {
-          text(body, 'تعذر السحب: ' + error.message, 'p');
-        }
-      };
-      actions.append(open, pull);
+
+      const editLabel =
+        state.key === 'draft' ? 'إكمال التعديل' : state.key === 'in_review' ? 'عرض التفاصيل' : 'تعديل';
+      const editIcon = state.key === 'in_review' ? '👁' : '✎';
+      actions.appendChild(
+        catalogActionButton({
+          icon: editIcon,
+          label: editLabel,
+          primary: true,
+          testId: 'catalog-card-edit',
+          onClick: () => openListingInEditor(type, item, formId, titleId),
+        }),
+      );
+
+      if (state.key === 'published') {
+        actions.appendChild(
+          catalogActionButton({
+            icon: '⏸',
+            label: 'إيقاف العرض',
+            testId: 'catalog-card-stop',
+            onClick: () => {
+              const name = (item && item.nameAr) || 'هذا المنتج';
+              if (
+                !confirm(
+                  'إيقاف عرض «' +
+                    name +
+                    '»؟ سيختفي من اكتشفي والعرض العام، ويبقى عندك في منتجاتي للتعديل أو إعادة النشر.',
+                )
+              ) {
+                return;
+              }
+              return runCatalogCardAction(card, body, async () => {
+                if (type === 'brand') await PartnersApi.deleteProduct(item.id);
+                else await PartnersApi.deleteService(item.id);
+              });
+            },
+          }),
+        );
+      } else if (state.key === 'stopped') {
+        const republishLabel = partnerIsDeveloper ? 'إعادة النشر' : 'إرسال للمراجعة';
+        actions.appendChild(
+          catalogActionButton({
+            icon: '↺',
+            label: republishLabel,
+            testId: 'catalog-card-republish',
+            onClick: () =>
+              runCatalogCardAction(card, body, async () => {
+                const kind = type === 'brand' ? 'products' : 'services';
+                await PartnersApi.submitReview(kind, item.id);
+              }),
+          }),
+        );
+      } else if (state.key === 'draft') {
+        actions.appendChild(
+          catalogActionButton({
+            icon: '🗑',
+            label: 'حذف المسودة',
+            testId: 'catalog-card-delete-draft',
+            onClick: () => {
+              const name = (item && item.nameAr) || 'هذه المسودة';
+              if (!confirm('حذف مسودة «' + name + '»؟')) return;
+              return runCatalogCardAction(card, body, async () => {
+                if (type === 'brand') await PartnersApi.deleteProduct(item.id);
+                else await PartnersApi.deleteService(item.id);
+              });
+            },
+          }),
+        );
+      }
+      // إلغاء طلب النشر غير مدعوم في الخادم حاليًا — لا نعرضه.
+      actions.appendChild(buildListingMoreMenu(type, item, state, card, body));
       card.appendChild(actions);
       list.appendChild(card);
     });

@@ -1,0 +1,90 @@
+[
+  {
+    "id": "p-pub",
+    "state": "published",
+    "status": "🟢 منشور",
+    "pending": false,
+    "actions": [
+      "تعديل",
+      "إيقاف العرض",
+      "المزيد"
+    ],
+    "hasStop": true,
+    "hasRepublish": false,
+    "hasEdit": true,
+    "rawStatusVisible": false
+  },
+  {
+    "id": "p-stop",
+    "state": "stopped",
+    "status": "⚪ متوقف عن العرض",
+    "pending": false,
+    "actions": [
+      "تعديل",
+      "إعادة النشر",
+      "المزيد"
+    ],
+    "hasStop": false,
+    "hasRepublish": true,
+    "hasEdit": true,
+    "rawStatusVisible": false
+  },
+  {
+    "id": "p-draft",
+    "state": "draft",
+    "status": "📝 مسودة",
+    "pending": false,
+    "actions": [
+      "إكمال التعديل",
+      "حذف المسودة",
+      "المزيد"
+    ],
+    "hasStop": false,
+    "hasRepublish": false,
+    "hasEdit": true,
+    "rawStatusVisible": false
+  },
+  {
+    "id": "p-review",
+    "state": "in_review",
+    "status": "🕓 قيد المراجعة",
+    "pending": false,
+    "actions": [
+      "عرض التفاصيل",
+      "المزيد"
+    ],
+    "hasStop": false,
+    "hasRepublish": false,
+    "hasEdit": true,
+    "rawStatusVisible": false
+  },
+  {
+    "id": "p-pending",
+    "state": "published",
+    "status": "🟢 منشور",
+    "pending": true,
+    "actions": [
+      "تعديل",
+      "إيقاف العرض",
+      "المزيد"
+    ],
+    "hasStop": true,
+    "hasRepublish": false,
+    "hasEdit": true,
+    "rawStatusVisible": false
+  },
+  {
+    "id": "p-admin",
+    "state": "admin_stopped",
+    "status": "⚪ متوقف عن العرض",
+    "pending": false,
+    "actions": [
+      "تعديل",
+      "المزيد"
+    ],
+    "hasStop": false,
+    "hasRepublish": false,
+    "hasEdit": true,
+    "rawStatusVisible": false
+  }
+]

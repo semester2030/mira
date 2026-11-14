@@ -399,6 +399,13 @@ export class PartnersPortalController {
     return this.portal.deleteProduct(req.partnerUser.partnerId, id);
   }
 
+  /** Clear pending draft* fields on a published product; keeps the live published copy. */
+  @Post('products/:id/discard-pending-edits')
+  @UseGuards(PartnerTokenGuard)
+  discardPendingProductEdits(@Req() req: PartnerRequest, @Param('id') id: string) {
+    return this.portal.discardPendingProductEdits(req.partnerUser.partnerId, id);
+  }
+
   @Post('services')
   @UseGuards(PartnerTokenGuard)
   createService(@Req() req: PartnerRequest, @Body() dto: UpsertServiceDto) {
