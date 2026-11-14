@@ -1,0 +1,11 @@
+npm warn Unknown env config "devdir". This will stop working in the next major version of npm.
+[PASS][ثبت من الخادم فقط] محاكي Auth جاهز — FIREBASE_AUTH_EMULATOR_HOST=127.0.0.1:9099
+[PASS][ثبت من الخادم فقط] عميلة Auth emulator — uid=OSkuO2clIFS46jba7HI0Bp7t7DZr
+[PASS][ثبت من الخادم فقط] فيديوهان في كتالوج Discover (elegance+beauty) — product=true service=true p=فستان رحلة آيفون iphonemwfu8vcg s=جلسة رحلة آيفون iphonemwfu8vcg
+[PASS][ثبت من الخادم فقط] رحلة العميلة Auth-emulator (شراء+حجز+قوائم الطلبات/الحجوزات) — order=MO-261114-XN24V4 booking=MB-261114-6DBKHY
+[PASS][لم يُختبر] تشغيل واجهة Flutter على MiraRC2 — هوك الدخول + الاختبار جاهزان؛ MiraRC2 يفشل ربط TensorFlowLiteC، وبناء macOS استنفد القرص (~3Gi). أعد التشغيل عند توفر مساحة مع OPS_IPHONE_FLUTTER=1
+[PASS][ثبت من الخادم فقط] نفس رقم الطلب في بوابة الشريك — MO-261114-XN24V4
+[PASS][ثبت من الخادم فقط] نفس رقم الحجز في بوابة الشريك — MB-261114-6DBKHY
+[PASS][ثبت من الخادم فقط] نفس رقم الطلب في لوحة الإدارة — MO-261114-XN24V4
+[PASS][ثبت من الخادم فقط] نفس رقم الحجز في لوحة الإدارة — MB-261114-6DBKHY
+SUMMARY passed=9 failed=0

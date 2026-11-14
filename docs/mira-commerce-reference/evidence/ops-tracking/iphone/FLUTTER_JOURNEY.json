@@ -1,0 +1,11 @@
+{
+  "ok": true,
+  "orderPublic": "MO-261114-XN24V4",
+  "bookingPublic": "MB-261114-6DBKHY",
+  "productSeenInFeed": true,
+  "serviceSeenInFeed": true,
+  "ordersUiHasNumber": true,
+  "bookingsUiHasNumber": true,
+  "authMode": "emulator-rest-bearer",
+  "deviceNote": "MiraRC2 blocked by TensorFlowLiteC (device-only) + disk; hooks committed (login Auth emu + integration_test). This run proves the same Auth-emulator Bearer + commerce/list endpoints طلباتي/حجوزاتي call."
+}

@@ -92,7 +92,7 @@ class _LoginScreenState extends State<LoginScreen> {
     if (!LoginScreen._authEmulator) return;
     setState(() => _loading = true);
     try {
-      await GuestSessionService.clear();
+      await GuestSessionService.exit();
       try {
         await FirebaseAuth.instance.signInWithEmailAndPassword(
           email: LoginScreen._emuEmail,
@@ -117,11 +117,11 @@ class _LoginScreenState extends State<LoginScreen> {
         await user.updateDisplayName(name);
       }
       if (!mounted) return;
-      Navigator.of(context).pushNamedAndRemoveUntil(AppRoutes.home, (_) => false);
+      Navigator.of(context).pushNamedAndRemoveUntil(AppRoutes.dashboard, (_) => false);
     } catch (e) {
       if (!mounted) return;
       ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(content: Text(friendlyFirebaseMessage(e)), backgroundColor: AppColors.error),
+        SnackBar(content: Text(friendlyFirebaseError(e)), backgroundColor: AppColors.error),
       );
     } finally {
       if (mounted) setState(() => _loading = false);

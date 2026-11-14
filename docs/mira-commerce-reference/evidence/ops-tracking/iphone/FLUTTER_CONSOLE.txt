@@ -1,0 +1,648 @@
+
+===== DEVICE macos =====
+Resolving dependencies...
+Downloading packages...
+  _flutterfire_internals 1.3.59 (1.3.79 available)
+  archive 4.0.7 (4.7.1 available)
+  async 2.13.0 (2.13.1 available)
+  bloc 8.1.4 (9.2.1 available)
+  camera 0.12.0+1 (0.12.2 available)
+  camera_android_camerax 0.7.2 (0.7.6+1 available)
+! camera_avfoundation 0.10.1 from path packages/camera_avfoundation_fullrange (overridden)
+  camera_platform_interface 2.13.0 (2.15.0 available)
+  camera_web 0.3.5+3 (0.3.6 available)
+  characters 1.4.0 (1.4.1 available)
+  cli_util 0.4.2 (0.6.0 available)
+  clock 1.1.2 (1.1.3 available)
+  cloud_firestore 5.6.12 (7.1.0 available)
+  cloud_firestore_platform_interface 6.6.12 (8.1.0 available)
+  cloud_firestore_web 4.4.12 (5.8.0 available)
+  code_assets 1.2.1 (2.2.0 available)
+  cross_file 0.3.4+2 (0.4.0 available)
+  crypto 3.0.6 (3.0.8 available)
+  cupertino_icons 1.0.8 (2.0.0 available)
+  dio 5.9.2 (5.11.1 available)
+  dio_web_adapter 2.1.2 (2.2.2 available)
+  equatable 2.0.7 (3.0.0 available)
+  ffi 2.1.4 (2.2.0 available)
+  firebase_auth 5.7.0 (7.0.1 available)
+  firebase_auth_platform_interface 7.7.3 (9.1.2 available)
+  firebase_auth_web 5.15.3 (6.3.2 available)
+  firebase_core 3.15.2 (5.1.0 available)
+  firebase_core_platform_interface 6.0.3 (8.1.1 available)
+  firebase_core_web 2.24.1 (4.1.0 available)
+  firebase_storage 12.4.10 (14.0.1 available)
+  firebase_storage_platform_interface 5.2.10 (6.0.9 available)
+  firebase_storage_web 3.10.17 (3.11.15 available)
+  flutter_bloc 8.1.6 (9.1.1 available)
+  flutter_launcher_icons 0.13.1 (0.14.4 available)
+  flutter_lints 5.0.0 (6.0.0 available)
+  flutter_plugin_android_lifecycle 2.0.28 (2.0.35 available)
+  flutter_riverpod 2.6.1 (3.5.0 available)
+  flutter_svg 2.1.0 (2.4.0 available)
+  google_mlkit_commons 0.11.1 (1.0.3 available)
+  google_mlkit_face_detection 0.13.2 (1.0.3 available)
+  google_mlkit_pose_detection 0.14.1 (1.0.3 available)
+  hooks 2.0.2 (2.2.0 available)
+  http 1.4.0 (1.6.0 available)
+  image 4.8.0 (4.12.0 available)
+  image_picker 0.8.7 (1.2.4 available)
+  image_picker_android 0.8.12+23 (0.8.13+25 available)
+  image_picker_for_web 2.2.0 (3.1.1 available)
+  image_picker_ios 0.8.12+2 (0.8.13+15 available)
+  image_picker_platform_interface 2.10.1 (2.11.2 available)
+  intl 0.20.2 (0.20.3 available)
+  jni 1.0.3 (1.1.2 available)
+  jni_flutter 1.0.3 (1.0.4+1 available)
+  json_annotation 4.9.0 (4.12.0 available)
+  lints 5.1.1 (6.1.0 available)
+  logger 2.5.0 (2.8.0 available)
+  matcher 0.12.17 (0.12.20 available)
+  material_color_utilities 0.11.1 (0.13.1 available)
+  mediapipe_face_mesh 1.8.0 (3.2.2 available)
+  meta 1.17.0 (1.19.0 available)
+  mime 1.0.6 (2.1.0 available)
+  objective_c 9.5.0 (9.6.4 available)
+  package_config 2.2.0 (3.0.0 available)
+  path_provider_linux 2.2.1 (2.2.2 available)
+  path_provider_platform_interface 2.1.2 (2.1.3 available)
+  petitparser 6.1.0 (7.1.0 available)
+  phosphoricons_flutter 1.0.0 (1.1.1 available)
+  platform 3.1.6 (3.2.0 available)
+  posix 6.0.3 (6.5.4 available)
+  provider 6.1.5 (6.1.5+1 available)
+  record_use 0.6.0 (1.1.1 available)
+  riverpod 2.6.1 (3.5.0 available)
+  share_plus 10.1.4 (13.3.1 available)
+  share_plus_platform_interface 5.0.2 (7.2.0 available)
+  shared_preferences 2.5.5 (2.5.6 available)
+  shared_preferences_android 2.4.23 (2.5.5 available)
+  shared_preferences_foundation 2.5.6 (2.6.2 available)
+  source_span 1.10.1 (1.10.2 available)
+  stack_trace 1.12.1 (1.12.2 available)
+  stream_transform 2.1.1 (2.1.2 available)
+  test_api 0.7.7 (0.7.15 available)
+  url_launcher 6.3.2 (6.3.3 available)
+  url_launcher_android 6.3.30 (6.3.33 available)
+  url_launcher_ios 6.4.1 (6.4.2 available)
+  url_launcher_linux 3.2.2 (3.2.3 available)
+  url_launcher_macos 3.2.5 (3.2.6 available)
+  url_launcher_windows 3.1.5 (3.1.6 available)
+  vector_graphics 1.1.18 (1.3.1 available)
+  vector_graphics_codec 1.1.13 (1.2.0 available)
+  vector_graphics_compiler 1.1.17 (1.3.6 available)
+  vector_math 2.2.0 (2.4.4 available)
+  video_player 2.11.1 (2.14.1 available)
+  video_player_android 2.9.5 (2.12.2 available)
+  video_player_avfoundation 2.12.0 (2.12.3 available)
+  vm_service 15.0.0 (15.4.0 available)
+  web 1.1.1 (1.1.2 available)
+  win32 5.15.0 (6.4.0 available)
+  xml 6.5.0 (7.1.0 available)
+  yaml 3.1.3 (3.1.4 available)
+Got dependencies!
+97 packages have newer versions incompatible with dependency constraints.
+Try `flutter pub outdated` for more information.
+00:00 +0: loading /Users/fayez/Desktop/مراجع تطبيق ميرا /mira-wt/elegance-e1/integration_test/ops_iphone_journey_test.dart                                                                             00:01 +0: loading /Users/fayez/Desktop/مراجع تطبيق ميرا /mira-wt/elegance-e1/integration_test/ops_iphone_journey_test.dart                                                                             00:02 +0: loading /Users/fayez/Desktop/مراجع تطبيق ميرا /mira-wt/elegance-e1/integration_test/ops_iphone_journey_test.dart                                                                             Building macOS application...                                   00:03 +0: loading /Users/fayez/Desktop/مراجع تطبيق ميرا /mira-wt/elegance-e1/integration_test/ops_iphone_journey_test.dart                                                                             00:04 +0: loading /Users/fayez/Desktop/مراجع تطبيق ميرا /mira-wt/elegance-e1/integration_test/ops_iphone_journey_test.dart                                                                             00:05 +0: loading /Users/fayez/Desktop/مراجع تطبيق ميرا /mira-wt/elegance-e1/integration_test/ops_iphone_journey_test.dart                                                                             00:06 +0: loading /Users/fayez/Desktop/مراجع تطبيق ميرا /mira-wt/elegance-e1/integration_test/ops_iphone_journey_test.dart                                                                             00:07 +0: loading /Users/fayez/Desktop/مراجع تطبيق ميرا /mira-wt/elegance-e1/integration_test/ops_iphone_journey_test.dart                                                                             00:08 +0: loading /Users/fayez/Desktop/مراجع تطبيق ميرا /mira-wt/elegance-e1/integration_test/ops_iphone_journey_test.dart                                                                             00:09 +0: loading /Users/fayez/Desktop/مراجع تطبيق ميرا /mira-wt/elegance-e1/integration_test/ops_iphone_journey_test.dart                                                                             00:10 +0: loading /Users/fayez/Desktop/مراجع تطبيق ميرا /mira-wt/elegance-e1/integration_test/ops_iphone_journey_test.dart                                                                             
+1 | #import "Headers/video_player_avfoundation-umbrella.h"
+2 | 
+
+13 | #import "AVAssetTrackUtils.h"
+14 | #import "FVPAssetProvider.h"
+15 | #import "FVPAVFactory.h"
+16 | #import "FVPDisplayLink.h"
+17 | #import "FVPEventBridge.h"
+
+1 warning generated.
+/Users/fayez/.pub-cache/hosted/pub.dev/video_player_avfoundation-2.12.0/darwin/video_player_avfoundation/Sources/video_player_avfoundation_objc/include/video_player_avfoundation_objc/FVPAVFactory.h:38:4: warning: 'AVKeyValueStatus' is deprecated: first deprecated in macOS 13.0 - Use AVAsyncProperty.Status instead
+ 36 | 
+ 37 | /// Wraps the underlying asset's statusOfValueForKey:error: method.
+ 38 | - (AVKeyValueStatus)statusOfValueForKey:(NSString *)key
+    |    `- warning: 'AVKeyValueStatus' is deprecated: first deprecated in macOS 13.0 - Use AVAsyncProperty.Status instead
+ 39 |                                   error:(NSError *_Nullable *_Nullable)outError;
+ 40 | 
+
+14 | NS_ASSUME_NONNULL_BEGIN
+15 | 
+16 | typedef NS_ENUM(NSInteger, AVKeyValueStatus) {
+17 | 	AVKeyValueStatusUnknown = 0,
+18 | 	AVKeyValueStatusLoading = 1,
+00:11 +0: loading /Users/fayez/Desktop/مراجع تطبيق ميرا /mira-wt/elegance-e1/integration_test/ops_iphone_journey_test.dart                                                                             /Users/fayez/.pub-cache/hosted/pub.dev/video_player_avfoundation-2.12.0/darwin/video_player_avfoundation/Sources/video_player_avfoundation/NativeVideoViewFactory.swift:53:8: warning: result of 'createArgsCodec()' has different optionality than expected by protocol 'FlutterPlatformViewFactory'
+  func createArgsCodec() -> FlutterMessageCodec & NSObjectProtocol {
+       ^
+                                                                  ?
+optional func createArgsCodec() -> (any FlutterMessageCodec & NSObjectProtocol)?}
+              ^
+/Users/fayez/.pub-cache/hosted/pub.dev/video_player_avfoundation-2.12.0/darwin/video_player_avfoundation/Sources/video_player_avfoundation/NativeVideoViewFactory.swift:53:8: warning: result of 'createArgsCodec()' has different optionality than expected by protocol 'FlutterPlatformViewFactory'
+  func createArgsCodec() -> FlutterMessageCodec & NSObjectProtocol {
+       ^
+                                                                  ?
+optional func createArgsCodec() -> (any FlutterMessageCodec & NSObjectProtocol)?}
+              ^
+00:12 +0: loading /Users/fayez/Desktop/مراجع تطبيق ميرا /mira-wt/elegance-e1/integration_test/ops_iphone_journey_test.dart                                                                             00:13 +0: loading /Users/fayez/Desktop/مراجع تطبيق ميرا /mira-wt/elegance-e1/integration_test/ops_iphone_journey_test.dart                                                                             00:14 +0: loading /Users/fayez/Desktop/مراجع تطبيق ميرا /mira-wt/elegance-e1/integration_test/ops_iphone_journey_test.dart                                                                             00:15 +0: loading /Users/fayez/Desktop/مراجع تطبيق ميرا /mira-wt/elegance-e1/integration_test/ops_iphone_journey_test.dart                                                                             /Users/fayez/Desktop/مراجع تطبيق ميرا /mira-wt/elegance-e1/macos/Pods/Pods.xcodeproj: leveldb-library: ld: warning: ignoring duplicate libraries: '-lc++'
+00:16 +0: loading /Users/fayez/Desktop/مراجع تطبيق ميرا /mira-wt/elegance-e1/integration_test/ops_iphone_journey_test.dart                                                                             /Users/fayez/Desktop/مراجع تطبيق ميرا /mira-wt/elegance-e1/macos/Pods/FirebaseStorage/FirebaseStorage/Sources/StorageReference.swift:319:14: warning: weak variable 'weakSelf' was never mutated; consider changing to 'let' constant
+    weak var weakSelf = self
+         ~~~ ^
+         let
+/Users/fayez/Desktop/مراجع تطبيق ميرا /mira-wt/elegance-e1/macos/Pods/FirebaseStorage/FirebaseStorage/Sources/StorageReference.swift:319:14: warning: weak variable 'weakSelf' was never mutated; consider changing to 'let' constant
+    weak var weakSelf = self
+         ~~~ ^
+         let
+00:17 +0: loading /Users/fayez/Desktop/مراجع تطبيق ميرا /mira-wt/elegance-e1/integration_test/ops_iphone_journey_test.dart                                                                             00:18 +0: loading /Users/fayez/Desktop/مراجع تطبيق ميرا /mira-wt/elegance-e1/integration_test/ops_iphone_journey_test.dart                                                                             00:19 +0: loading /Users/fayez/Desktop/مراجع تطبيق ميرا /mira-wt/elegance-e1/integration_test/ops_iphone_journey_test.dart                                                                             00:20 +0: loading /Users/fayez/Desktop/مراجع تطبيق ميرا /mira-wt/elegance-e1/integration_test/ops_iphone_journey_test.dart                                                                             00:21 +0: loading /Users/fayez/Desktop/مراجع تطبيق ميرا /mira-wt/elegance-e1/integration_test/ops_iphone_journey_test.dart                                                                             00:22 +0: loading /Users/fayez/Desktop/مراجع تطبيق ميرا /mira-wt/elegance-e1/integration_test/ops_iphone_journey_test.dart                                                                             00:23 +0: loading /Users/fayez/Desktop/مراجع تطبيق ميرا /mira-wt/elegance-e1/integration_test/ops_iphone_journey_test.dart                                                                             00:24 +0: loading /Users/fayez/Desktop/مراجع تطبيق ميرا /mira-wt/elegance-e1/integration_test/ops_iphone_journey_test.dart                                                                             00:25 +0: loading /Users/fayez/Desktop/مراجع تطبيق ميرا /mira-wt/elegance-e1/integration_test/ops_iphone_journey_test.dart                                                                             00:26 +0: loading /Users/fayez/Desktop/مراجع تطبيق ميرا /mira-wt/elegance-e1/integration_test/ops_iphone_journey_test.dart                                                                             /Users/fayez/Desktop/مراجع تطبيق ميرا /mira-wt/elegance-e1/macos/Pods/FirebaseAuth/FirebaseAuth/Sources/Swift/Auth/Auth.swift:1940:14: warning: weak variable 'weakSelf' was never mutated; consider changing to 'let' constant
+    weak var weakSelf = self
+         ~~~ ^
+         let
+/Users/fayez/Desktop/مراجع تطبيق ميرا /mira-wt/elegance-e1/macos/Pods/FirebaseAuth/FirebaseAuth/Sources/Swift/Auth/Auth.swift:1940:14: warning: weak variable 'weakSelf' was never mutated; consider changing to 'let' constant
+    weak var weakSelf = self
+         ~~~ ^
+         let
+/Users/fayez/Desktop/مراجع تطبيق ميرا /mira-wt/elegance-e1/macos/Pods/FirebaseAuth/FirebaseAuth/Sources/Swift/Auth/Auth.swift:1940:14: warning: weak variable 'weakSelf' was never mutated; consider changing to 'let' constant
+    weak var weakSelf = self
+         ~~~ ^
+         let
+/Users/fayez/Desktop/مراجع تطبيق ميرا /mira-wt/elegance-e1/macos/Pods/FirebaseAuth/FirebaseAuth/Sources/Swift/Auth/Auth.swift:1940:14: warning: weak variable 'weakSelf' was never mutated; consider changing to 'let' constant
+    weak var weakSelf = self
+         ~~~ ^
+         let
+/Users/fayez/Desktop/مراجع تطبيق ميرا /mira-wt/elegance-e1/macos/Pods/FirebaseAuth/FirebaseAuth/Sources/Swift/Auth/Auth.swift:1940:14: warning: weak variable 'weakSelf' was never mutated; consider changing to 'let' constant
+    weak var weakSelf = self
+         ~~~ ^
+         let
+/Users/fayez/Desktop/مراجع تطبيق ميرا /mira-wt/elegance-e1/macos/Pods/FirebaseAuth/FirebaseAuth/Sources/Swift/Auth/Auth.swift:1940:14: warning: weak variable 'weakSelf' was never mutated; consider changing to 'let' constant
+    weak var weakSelf = self
+         ~~~ ^
+         let
+/Users/fayez/Desktop/مراجع تطبيق ميرا /mira-wt/elegance-e1/macos/Pods/FirebaseAuth/FirebaseAuth/Sources/Swift/Auth/Auth.swift:1940:14: warning: weak variable 'weakSelf' was never mutated; consider changing to 'let' constant
+    weak var weakSelf = self
+         ~~~ ^
+         let
+/Users/fayez/Desktop/مراجع تطبيق ميرا /mira-wt/elegance-e1/macos/Pods/FirebaseAuth/FirebaseAuth/Sources/Swift/Auth/Auth.swift:1940:14: warning: weak variable 'weakSelf' was never mutated; consider changing to 'let' constant
+    weak var weakSelf = self
+         ~~~ ^
+         let
+/Users/fayez/Desktop/مراجع تطبيق ميرا /mira-wt/elegance-e1/macos/Pods/FirebaseAuth/FirebaseAuth/Sources/Swift/Auth/Auth.swift:1940:14: warning: weak variable 'weakSelf' was never mutated; consider changing to 'let' constant
+    weak var weakSelf = self
+         ~~~ ^
+         let
+/Users/fayez/Desktop/مراجع تطبيق ميرا /mira-wt/elegance-e1/macos/Pods/FirebaseAuth/FirebaseAuth/Sources/Swift/Auth/Auth.swift:1940:14: warning: weak variable 'weakSelf' was never mutated; consider changing to 'let' constant
+    weak var weakSelf = self
+         ~~~ ^
+         let
+/Users/fayez/Desktop/مراجع تطبيق ميرا /mira-wt/elegance-e1/macos/Pods/FirebaseAuth/FirebaseAuth/Sources/Swift/Auth/Auth.swift:1940:14: warning: weak variable 'weakSelf' was never mutated; consider changing to 'let' constant
+    weak var weakSelf = self
+         ~~~ ^
+         let
+/Users/fayez/Desktop/مراجع تطبيق ميرا /mira-wt/elegance-e1/macos/Pods/FirebaseAuth/FirebaseAuth/Sources/Swift/Auth/Auth.swift:1940:14: warning: weak variable 'weakSelf' was never mutated; consider changing to 'let' constant
+    weak var weakSelf = self
+         ~~~ ^
+         let
+/Users/fayez/Desktop/مراجع تطبيق ميرا /mira-wt/elegance-e1/macos/Pods/FirebaseAuth/FirebaseAuth/Sources/Swift/Auth/Auth.swift:1940:14: warning: weak variable 'weakSelf' was never mutated; consider changing to 'let' constant
+    weak var weakSelf = self
+         ~~~ ^
+         let
+/Users/fayez/Desktop/مراجع تطبيق ميرا /mira-wt/elegance-e1/macos/Pods/FirebaseAuth/FirebaseAuth/Sources/Swift/Auth/Auth.swift:1940:14: warning: weak variable 'weakSelf' was never mutated; consider changing to 'let' constant
+    weak var weakSelf = self
+         ~~~ ^
+         let
+00:27 +0: loading /Users/fayez/Desktop/مراجع تطبيق ميرا /mira-wt/elegance-e1/integration_test/ops_iphone_journey_test.dart                                                                             00:28 +0: loading /Users/fayez/Desktop/مراجع تطبيق ميرا /mira-wt/elegance-e1/integration_test/ops_iphone_journey_test.dart                                                                             00:29 +0: loading /Users/fayez/Desktop/مراجع تطبيق ميرا /mira-wt/elegance-e1/integration_test/ops_iphone_journey_test.dart                                                                             00:30 +0: loading /Users/fayez/Desktop/مراجع تطبيق ميرا /mira-wt/elegance-e1/integration_test/ops_iphone_journey_test.dart                                                                             /Users/fayez/Desktop/مراجع تطبيق ميرا /mira-wt/elegance-e1/macos/Pods/Pods.xcodeproj: abseil: ld: warning: ignoring duplicate libraries: '-lc++'
+00:31 +0: loading /Users/fayez/Desktop/مراجع تطبيق ميرا /mira-wt/elegance-e1/integration_test/ops_iphone_journey_test.dart                                                                             00:32 +0: loading /Users/fayez/Desktop/مراجع تطبيق ميرا /mira-wt/elegance-e1/integration_test/ops_iphone_journey_test.dart                                                                             00:33 +0: loading /Users/fayez/Desktop/مراجع تطبيق ميرا /mira-wt/elegance-e1/integration_test/ops_iphone_journey_test.dart                                                                             00:34 +0: loading /Users/fayez/Desktop/مراجع تطبيق ميرا /mira-wt/elegance-e1/integration_test/ops_iphone_journey_test.dart                                                                             00:35 +0: loading /Users/fayez/Desktop/مراجع تطبيق ميرا /mira-wt/elegance-e1/integration_test/ops_iphone_journey_test.dart                                                                             00:36 +0: loading /Users/fayez/Desktop/مراجع تطبيق ميرا /mira-wt/elegance-e1/integration_test/ops_iphone_journey_test.dart                                                                             00:37 +0: loading /Users/fayez/Desktop/مراجع تطبيق ميرا /mira-wt/elegance-e1/integration_test/ops_iphone_journey_test.dart                                                                             00:38 +0: loading /Users/fayez/Desktop/مراجع تطبيق ميرا /mira-wt/elegance-e1/integration_test/ops_iphone_journey_test.dart                                                                             00:39 +0: loading /Users/fayez/Desktop/مراجع تطبيق ميرا /mira-wt/elegance-e1/integration_test/ops_iphone_journey_test.dart                                                                             00:40 +0: loading /Users/fayez/Desktop/مراجع تطبيق ميرا /mira-wt/elegance-e1/integration_test/ops_iphone_journey_test.dart                                                                             00:41 +0: loading /Users/fayez/Desktop/مراجع تطبيق ميرا /mira-wt/elegance-e1/integration_test/ops_iphone_journey_test.dart                                                                             00:42 +0: loading /Users/fayez/Desktop/مراجع تطبيق ميرا /mira-wt/elegance-e1/integration_test/ops_iphone_journey_test.dart                                                                             00:43 +0: loading /Users/fayez/Desktop/مراجع تطبيق ميرا /mira-wt/elegance-e1/integration_test/ops_iphone_journey_test.dart                                                                             00:44 +0: loading /Users/fayez/Desktop/مراجع تطبيق ميرا /mira-wt/elegance-e1/integration_test/ops_iphone_journey_test.dart                                                                             00:45 +0: loading /Users/fayez/Desktop/مراجع تطبيق ميرا /mira-wt/elegance-e1/integration_test/ops_iphone_journey_test.dart                                                                             00:46 +0: loading /Users/fayez/Desktop/مراجع تطبيق ميرا /mira-wt/elegance-e1/integration_test/ops_iphone_journey_test.dart                                                                             00:47 +0: loading /Users/fayez/Desktop/مراجع تطبيق ميرا /mira-wt/elegance-e1/integration_test/ops_iphone_journey_test.dart                                                                             00:48 +0: loading /Users/fayez/Desktop/مراجع تطبيق ميرا /mira-wt/elegance-e1/integration_test/ops_iphone_journey_test.dart                                                                             00:49 +0: loading /Users/fayez/Desktop/مراجع تطبيق ميرا /mira-wt/elegance-e1/integration_test/ops_iphone_journey_test.dart                                                                             00:50 +0: loading /Users/fayez/Desktop/مراجع تطبيق ميرا /mira-wt/elegance-e1/integration_test/ops_iphone_journey_test.dart                                                                             00:51 +0: loading /Users/fayez/Desktop/مراجع تطبيق ميرا /mira-wt/elegance-e1/integration_test/ops_iphone_journey_test.dart                                                                             00:52 +0: loading /Users/fayez/Desktop/مراجع تطبيق ميرا /mira-wt/elegance-e1/integration_test/ops_iphone_journey_test.dart                                                                             00:53 +0: loading /Users/fayez/Desktop/مراجع تطبيق ميرا /mira-wt/elegance-e1/integration_test/ops_iphone_journey_test.dart                                                                             00:54 +0: loading /Users/fayez/Desktop/مراجع تطبيق ميرا /mira-wt/elegance-e1/integration_test/ops_iphone_journey_test.dart                                                                             00:55 +0: loading /Users/fayez/Desktop/مراجع تطبيق ميرا /mira-wt/elegance-e1/integration_test/ops_iphone_journey_test.dart                                                                             00:56 +0: loading /Users/fayez/Desktop/مراجع تطبيق ميرا /mira-wt/elegance-e1/integration_test/ops_iphone_journey_test.dart                                                                             00:57 +0: loading /Users/fayez/Desktop/مراجع تطبيق ميرا /mira-wt/elegance-e1/integration_test/ops_iphone_journey_test.dart                                                                             00:58 +0: loading /Users/fayez/Desktop/مراجع تطبيق ميرا /mira-wt/elegance-e1/integration_test/ops_iphone_journey_test.dart                                                                             00:59 +0: loading /Users/fayez/Desktop/مراجع تطبيق ميرا /mira-wt/elegance-e1/integration_test/ops_iphone_journey_test.dart                                                                             01:00 +0: loading /Users/fayez/Desktop/مراجع تطبيق ميرا /mira-wt/elegance-e1/integration_test/ops_iphone_journey_test.dart                                                                             01:01 +0: loading /Users/fayez/Desktop/مراجع تطبيق ميرا /mira-wt/elegance-e1/integration_test/ops_iphone_journey_test.dart                                                                             01:02 +0: loading /Users/fayez/Desktop/مراجع تطبيق ميرا /mira-wt/elegance-e1/integration_test/ops_iphone_journey_test.dart                                                                             01:03 +0: loading /Users/fayez/Desktop/مراجع تطبيق ميرا /mira-wt/elegance-e1/integration_test/ops_iphone_journey_test.dart                                                                             01:04 +0: loading /Users/fayez/Desktop/مراجع تطبيق ميرا /mira-wt/elegance-e1/integration_test/ops_iphone_journey_test.dart                                                                             01:05 +0: loading /Users/fayez/Desktop/مراجع تطبيق ميرا /mira-wt/elegance-e1/integration_test/ops_iphone_journey_test.dart                                                                             01:06 +0: loading /Users/fayez/Desktop/مراجع تطبيق ميرا /mira-wt/elegance-e1/integration_test/ops_iphone_journey_test.dart                                                                             01:07 +0: loading /Users/fayez/Desktop/مراجع تطبيق ميرا /mira-wt/elegance-e1/integration_test/ops_iphone_journey_test.dart                                                                             01:08 +0: loading /Users/fayez/Desktop/مراجع تطبيق ميرا /mira-wt/elegance-e1/integration_test/ops_iphone_journey_test.dart                                                                             01:09 +0: loading /Users/fayez/Desktop/مراجع تطبيق ميرا /mira-wt/elegance-e1/integration_test/ops_iphone_journey_test.dart                                                                             01:10 +0: loading /Users/fayez/Desktop/مراجع تطبيق ميرا /mira-wt/elegance-e1/integration_test/ops_iphone_journey_test.dart                                                                             01:11 +0: loading /Users/fayez/Desktop/مراجع تطبيق ميرا /mira-wt/elegance-e1/integration_test/ops_iphone_journey_test.dart                                                                             01:12 +0: loading /Users/fayez/Desktop/مراجع تطبيق ميرا /mira-wt/elegance-e1/integration_test/ops_iphone_journey_test.dart                                                                             01:13 +0: loading /Users/fayez/Desktop/مراجع تطبيق ميرا /mira-wt/elegance-e1/integration_test/ops_iphone_journey_test.dart                                                                             01:14 +0: loading /Users/fayez/Desktop/مراجع تطبيق ميرا /mira-wt/elegance-e1/integration_test/ops_iphone_journey_test.dart                                                                             01:15 +0: loading /Users/fayez/Desktop/مراجع تطبيق ميرا /mira-wt/elegance-e1/integration_test/ops_iphone_journey_test.dart                                                                             01:16 +0: loading /Users/fayez/Desktop/مراجع تطبيق ميرا /mira-wt/elegance-e1/integration_test/ops_iphone_journey_test.dart                                                                             01:17 +0: loading /Users/fayez/Desktop/مراجع تطبيق ميرا /mira-wt/elegance-e1/integration_test/ops_iphone_journey_test.dart                                                                             01:18 +0: loading /Users/fayez/Desktop/مراجع تطبيق ميرا /mira-wt/elegance-e1/integration_test/ops_iphone_journey_test.dart                                                                             01:19 +0: loading /Users/fayez/Desktop/مراجع تطبيق ميرا /mira-wt/elegance-e1/integration_test/ops_iphone_journey_test.dart                                                                             01:20 +0: loading /Users/fayez/Desktop/مراجع تطبيق ميرا /mira-wt/elegance-e1/integration_test/ops_iphone_journey_test.dart                                                                             01:21 +0: loading /Users/fayez/Desktop/مراجع تطبيق ميرا /mira-wt/elegance-e1/integration_test/ops_iphone_journey_test.dart                                                                             01:22 +0: loading /Users/fayez/Desktop/مراجع تطبيق ميرا /mira-wt/elegance-e1/integration_test/ops_iphone_journey_test.dart                                                                             01:23 +0: loading /Users/fayez/Desktop/مراجع تطبيق ميرا /mira-wt/elegance-e1/integration_test/ops_iphone_journey_test.dart                                                                             01:24 +0: loading /Users/fayez/Desktop/مراجع تطبيق ميرا /mira-wt/elegance-e1/integration_test/ops_iphone_journey_test.dart                                                                             01:25 +0: loading /Users/fayez/Desktop/مراجع تطبيق ميرا /mira-wt/elegance-e1/integration_test/ops_iphone_journey_test.dart                                                                             01:26 +0: loading /Users/fayez/Desktop/مراجع تطبيق ميرا /mira-wt/elegance-e1/integration_test/ops_iphone_journey_test.dart                                                                             01:27 +0: loading /Users/fayez/Desktop/مراجع تطبيق ميرا /mira-wt/elegance-e1/integration_test/ops_iphone_journey_test.dart                                                                             01:28 +0: loading /Users/fayez/Desktop/مراجع تطبيق ميرا /mira-wt/elegance-e1/integration_test/ops_iphone_journey_test.dart                                                                             01:29 +0: loading /Users/fayez/Desktop/مراجع تطبيق ميرا /mira-wt/elegance-e1/integration_test/ops_iphone_journey_test.dart                                                                             01:30 +0: loading /Users/fayez/Desktop/مراجع تطبيق ميرا /mira-wt/elegance-e1/integration_test/ops_iphone_journey_test.dart                                                                             01:31 +0: loading /Users/fayez/Desktop/مراجع تطبيق ميرا /mira-wt/elegance-e1/integration_test/ops_iphone_journey_test.dart                                                                             01:32 +0: loading /Users/fayez/Desktop/مراجع تطبيق ميرا /mira-wt/elegance-e1/integration_test/ops_iphone_journey_test.dart                                                                             01:33 +0: loading /Users/fayez/Desktop/مراجع تطبيق ميرا /mira-wt/elegance-e1/integration_test/ops_iphone_journey_test.dart                                                                             01:34 +0: loading /Users/fayez/Desktop/مراجع تطبيق ميرا /mira-wt/elegance-e1/integration_test/ops_iphone_journey_test.dart                                                                             01:35 +0: loading /Users/fayez/Desktop/مراجع تطبيق ميرا /mira-wt/elegance-e1/integration_test/ops_iphone_journey_test.dart                                                                             01:36 +0: loading /Users/fayez/Desktop/مراجع تطبيق ميرا /mira-wt/elegance-e1/integration_test/ops_iphone_journey_test.dart                                                                             01:37 +0: loading /Users/fayez/Desktop/مراجع تطبيق ميرا /mira-wt/elegance-e1/integration_test/ops_iphone_journey_test.dart                                                                             01:38 +0: loading /Users/fayez/Desktop/مراجع تطبيق ميرا /mira-wt/elegance-e1/integration_test/ops_iphone_journey_test.dart                                                                             01:39 +0: loading /Users/fayez/Desktop/مراجع تطبيق ميرا /mira-wt/elegance-e1/integration_test/ops_iphone_journey_test.dart                                                                             01:40 +0: loading /Users/fayez/Desktop/مراجع تطبيق ميرا /mira-wt/elegance-e1/integration_test/ops_iphone_journey_test.dart                                                                             01:41 +0: loading /Users/fayez/Desktop/مراجع تطبيق ميرا /mira-wt/elegance-e1/integration_test/ops_iphone_journey_test.dart                                                                             01:42 +0: loading /Users/fayez/Desktop/مراجع تطبيق ميرا /mira-wt/elegance-e1/integration_test/ops_iphone_journey_test.dart                                                                             01:43 +0: loading /Users/fayez/Desktop/مراجع تطبيق ميرا /mira-wt/elegance-e1/integration_test/ops_iphone_journey_test.dart                                                                             01:44 +0: loading /Users/fayez/Desktop/مراجع تطبيق ميرا /mira-wt/elegance-e1/integration_test/ops_iphone_journey_test.dart                                                                             01:45 +0: loading /Users/fayez/Desktop/مراجع تطبيق ميرا /mira-wt/elegance-e1/integration_test/ops_iphone_journey_test.dart                                                                             01:46 +0: loading /Users/fayez/Desktop/مراجع تطبيق ميرا /mira-wt/elegance-e1/integration_test/ops_iphone_journey_test.dart                                                                             01:47 +0: loading /Users/fayez/Desktop/مراجع تطبيق ميرا /mira-wt/elegance-e1/integration_test/ops_iphone_journey_test.dart                                                                             01:48 +0: loading /Users/fayez/Desktop/مراجع تطبيق ميرا /mira-wt/elegance-e1/integration_test/ops_iphone_journey_test.dart                                                                             01:49 +0: loading /Users/fayez/Desktop/مراجع تطبيق ميرا /mira-wt/elegance-e1/integration_test/ops_iphone_journey_test.dart                                                                             01:50 +0: loading /Users/fayez/Desktop/مراجع تطبيق ميرا /mira-wt/elegance-e1/integration_test/ops_iphone_journey_test.dart                                                                             01:51 +0: loading /Users/fayez/Desktop/مراجع تطبيق ميرا /mira-wt/elegance-e1/integration_test/ops_iphone_journey_test.dart                                                                             01:52 +0: loading /Users/fayez/Desktop/مراجع تطبيق ميرا /mira-wt/elegance-e1/integration_test/ops_iphone_journey_test.dart                                                                             01:53 +0: loading /Users/fayez/Desktop/مراجع تطبيق ميرا /mira-wt/elegance-e1/integration_test/ops_iphone_journey_test.dart                                                                             01:54 +0: loading /Users/fayez/Desktop/مراجع تطبيق ميرا /mira-wt/elegance-e1/integration_test/ops_iphone_journey_test.dart                                                                             01:55 +0: loading /Users/fayez/Desktop/مراجع تطبيق ميرا /mira-wt/elegance-e1/integration_test/ops_iphone_journey_test.dart                                                                             01:56 +0: loading /Users/fayez/Desktop/مراجع تطبيق ميرا /mira-wt/elegance-e1/integration_test/ops_iphone_journey_test.dart                                                                             In file included from /Users/fayez/Desktop/مراجع تطبيق ميرا /mira-wt/elegance-e1/macos/Pods/gRPC-Core/third_party/zlib/trees.c:37:
+In file included from /Users/fayez/Desktop/مراجع تطبيق ميرا /mira-wt/elegance-e1/macos/Pods/gRPC-Core/third_party/zlib/deflate.h:16:
+/Users/fayez/Desktop/مراجع تطبيق ميرا /mira-wt/elegance-e1/macos/Pods/gRPC-Core/third_party/zlib/zutil.h:170:11: warning: 'OS_CODE' macro redefined [-Wmacro-redefined]
+  170 | #  define OS_CODE 19
+      |           ^
+  141 | #  define OS_CODE  7
+      |           ^
+1 warning generated.
+In file included from /Users/fayez/Desktop/مراجع تطبيق ميرا /mira-wt/elegance-e1/macos/Pods/gRPC-Core/third_party/zlib/zutil.c:8:
+/Users/fayez/Desktop/مراجع تطبيق ميرا /mira-wt/elegance-e1/macos/Pods/gRPC-Core/third_party/zlib/zutil.h:170:11: warning: 'OS_CODE' macro redefined [-Wmacro-redefined]
+  170 | #  define OS_CODE 19
+      |           ^
+  141 | #  define OS_CODE  7
+      |           ^
+1 warning generated.
+01:57 +0: loading /Users/fayez/Desktop/مراجع تطبيق ميرا /mira-wt/elegance-e1/integration_test/ops_iphone_journey_test.dart                                                                             In file included from /Users/fayez/Desktop/مراجع تطبيق ميرا /mira-wt/elegance-e1/macos/Pods/gRPC-Core/third_party/zlib/inftrees.c:6:
+/Users/fayez/Desktop/مراجع تطبيق ميرا /mira-wt/elegance-e1/macos/Pods/gRPC-Core/third_party/zlib/zutil.h:170:11: warning: 'OS_CODE' macro redefined [-Wmacro-redefined]
+  170 | #  define OS_CODE 19
+      |           ^
+  141 | #  define OS_CODE  7
+      |           ^
+1 warning generated.
+In file included from /Users/fayez/Desktop/مراجع تطبيق ميرا /mira-wt/elegance-e1/macos/Pods/gRPC-Core/third_party/zlib/inflate.c:83:
+/Users/fayez/Desktop/مراجع تطبيق ميرا /mira-wt/elegance-e1/macos/Pods/gRPC-Core/third_party/zlib/zutil.h:170:11: warning: 'OS_CODE' macro redefined [-Wmacro-redefined]
+  170 | #  define OS_CODE 19
+      |           ^
+  141 | #  define OS_CODE  7
+      |           ^
+1 warning generated.
+In file included from /Users/fayez/Desktop/مراجع تطبيق ميرا /mira-wt/elegance-e1/macos/Pods/gRPC-Core/third_party/zlib/inffast.c:6:
+/Users/fayez/Desktop/مراجع تطبيق ميرا /mira-wt/elegance-e1/macos/Pods/gRPC-Core/third_party/zlib/zutil.h:170:11: warning: 'OS_CODE' macro redefined [-Wmacro-redefined]
+  170 | #  define OS_CODE 19
+      |           ^
+  141 | #  define OS_CODE  7
+      |           ^
+1 warning generated.
+In file included from /Users/fayez/Desktop/مراجع تطبيق ميرا /mira-wt/elegance-e1/macos/Pods/gRPC-Core/third_party/zlib/infback.c:13:
+/Users/fayez/Desktop/مراجع تطبيق ميرا /mira-wt/elegance-e1/macos/Pods/gRPC-Core/third_party/zlib/zutil.h:170:11: warning: 'OS_CODE' macro redefined [-Wmacro-redefined]
+  170 | #  define OS_CODE 19
+      |           ^
+  141 | #  define OS_CODE  7
+      |           ^
+1 warning generated.
+01:58 +0: loading /Users/fayez/Desktop/مراجع تطبيق ميرا /mira-wt/elegance-e1/integration_test/ops_iphone_journey_test.dart                                                                             In file included from /Users/fayez/Desktop/مراجع تطبيق ميرا /mira-wt/elegance-e1/macos/Pods/gRPC-Core/third_party/zlib/deflate.c:52:
+In file included from /Users/fayez/Desktop/مراجع تطبيق ميرا /mira-wt/elegance-e1/macos/Pods/gRPC-Core/third_party/zlib/deflate.h:16:
+/Users/fayez/Desktop/مراجع تطبيق ميرا /mira-wt/elegance-e1/macos/Pods/gRPC-Core/third_party/zlib/zutil.h:170:11: warning: 'OS_CODE' macro redefined [-Wmacro-redefined]
+  170 | #  define OS_CODE 19
+      |           ^
+  141 | #  define OS_CODE  7
+      |           ^
+1 warning generated.
+In file included from /Users/fayez/Desktop/مراجع تطبيق ميرا /mira-wt/elegance-e1/macos/Pods/gRPC-Core/third_party/zlib/crc32.c:30:
+/Users/fayez/Desktop/مراجع تطبيق ميرا /mira-wt/elegance-e1/macos/Pods/gRPC-Core/third_party/zlib/zutil.h:170:11: warning: 'OS_CODE' macro redefined [-Wmacro-redefined]
+  170 | #  define OS_CODE 19
+      |           ^
+  141 | #  define OS_CODE  7
+      |           ^
+1 warning generated.
+01:59 +0: loading /Users/fayez/Desktop/مراجع تطبيق ميرا /mira-wt/elegance-e1/integration_test/ops_iphone_journey_test.dart                                                                             In file included from /Users/fayez/Desktop/مراجع تطبيق ميرا /mira-wt/elegance-e1/macos/Pods/gRPC-Core/third_party/zlib/adler32.c:8:
+/Users/fayez/Desktop/مراجع تطبيق ميرا /mira-wt/elegance-e1/macos/Pods/gRPC-Core/third_party/zlib/zutil.h:170:11: warning: 'OS_CODE' macro redefined [-Wmacro-redefined]
+  170 | #  define OS_CODE 19
+      |           ^
+  141 | #  define OS_CODE  7
+      |           ^
+1 warning generated.
+02:00 +0: loading /Users/fayez/Desktop/مراجع تطبيق ميرا /mira-wt/elegance-e1/integration_test/ops_iphone_journey_test.dart                                                                             /Users/fayez/Desktop/مراجع تطبيق ميرا /mira-wt/elegance-e1/macos/Pods/Pods.xcodeproj: gRPC-Core: ld: warning: ignoring duplicate libraries: '-lc++'
+02:01 +0: loading /Users/fayez/Desktop/مراجع تطبيق ميرا /mira-wt/elegance-e1/integration_test/ops_iphone_journey_test.dart                                                                             02:02 +0: loading /Users/fayez/Desktop/مراجع تطبيق ميرا /mira-wt/elegance-e1/integration_test/ops_iphone_journey_test.dart                                                                             02:03 +0: loading /Users/fayez/Desktop/مراجع تطبيق ميرا /mira-wt/elegance-e1/integration_test/ops_iphone_journey_test.dart                                                                             02:04 +0: loading /Users/fayez/Desktop/مراجع تطبيق ميرا /mira-wt/elegance-e1/integration_test/ops_iphone_journey_test.dart                                                                             02:05 +0: loading /Users/fayez/Desktop/مراجع تطبيق ميرا /mira-wt/elegance-e1/integration_test/ops_iphone_journey_test.dart                                                                             02:06 +0: loading /Users/fayez/Desktop/مراجع تطبيق ميرا /mira-wt/elegance-e1/integration_test/ops_iphone_journey_test.dart                                                                             02:07 +0: loading /Users/fayez/Desktop/مراجع تطبيق ميرا /mira-wt/elegance-e1/integration_test/ops_iphone_journey_test.dart                                                                             02:08 +0: loading /Users/fayez/Desktop/مراجع تطبيق ميرا /mira-wt/elegance-e1/integration_test/ops_iphone_journey_test.dart                                                                             /Users/fayez/Desktop/مراجع تطبيق ميرا /mira-wt/elegance-e1/macos/Pods/Pods.xcodeproj: gRPC-C++: ld: warning: ignoring duplicate libraries: '-lc++'
+02:09 +0: loading /Users/fayez/Desktop/مراجع تطبيق ميرا /mira-wt/elegance-e1/integration_test/ops_iphone_journey_test.dart                                                                             02:10 +0: loading /Users/fayez/Desktop/مراجع تطبيق ميرا /mira-wt/elegance-e1/integration_test/ops_iphone_journey_test.dart                                                                             02:11 +0: loading /Users/fayez/Desktop/مراجع تطبيق ميرا /mira-wt/elegance-e1/integration_test/ops_iphone_journey_test.dart                                                                             In file included from /Users/fayez/Desktop/مراجع تطبيق ميرا /mira-wt/elegance-e1/macos/Pods/FirebaseFirestoreInternal/Firestore/core/src/api/write_batch.cc:24:
+In file included from /Users/fayez/Desktop/مراجع تطبيق ميرا /mira-wt/elegance-e1/macos/Pods/FirebaseFirestoreInternal/Firestore/core/src/core/firestore_client.h:26:
+In file included from /Users/fayez/Desktop/مراجع تطبيق ميرا /mira-wt/elegance-e1/macos/Pods/FirebaseFirestoreInternal/Firestore/core/src/bundle/bundle_serializer.h:34:
+In file included from /Users/fayez/Desktop/مراجع تطبيق ميرا /mira-wt/elegance-e1/macos/Pods/FirebaseFirestoreInternal/Firestore/core/src/util/json_reader.h:24:
+/Users/fayez/Desktop/مراجع تطبيق ميرا /mira-wt/elegance-e1/macos/Pods/FirebaseFirestoreInternal/Firestore/third_party/nlohmann_json/json.hpp:25253:35: warning: identifier '_json' preceded by whitespace in a literal operator declaration is deprecated [-Wdeprecated-literal-operator]
+ 25253 | inline nlohmann::json operator "" _json(const char* s, std::size_t n)
+       |                       ~~~~~~~~~~~~^~~~~
+       |                       operator""_json
+/Users/fayez/Desktop/مراجع تطبيق ميرا /mira-wt/elegance-e1/macos/Pods/FirebaseFirestoreInternal/Firestore/third_party/nlohmann_json/json.hpp:25272:49: warning: identifier '_json_pointer' preceded by whitespace in a literal operator declaration is deprecated [-Wdeprecated-literal-operator]
+ 25272 | inline nlohmann::json::json_pointer operator "" _json_pointer(const char* s, std::size_t n)
+       |                                     ~~~~~~~~~~~~^~~~~~~~~~~~~
+       |                                     operator""_json_pointer
+2 warnings generated.
+02:12 +0: loading /Users/fayez/Desktop/مراجع تطبيق ميرا /mira-wt/elegance-e1/integration_test/ops_iphone_journey_test.dart                                                                             02:13 +0: loading /Users/fayez/Desktop/مراجع تطبيق ميرا /mira-wt/elegance-e1/integration_test/ops_iphone_journey_test.dart                                                                             02:14 +0: loading /Users/fayez/Desktop/مراجع تطبيق ميرا /mira-wt/elegance-e1/integration_test/ops_iphone_journey_test.dart                                                                             02:15 +0: loading /Users/fayez/Desktop/مراجع تطبيق ميرا /mira-wt/elegance-e1/integration_test/ops_iphone_journey_test.dart                                                                             In file included from /Users/fayez/Desktop/مراجع تطبيق ميرا /mira-wt/elegance-e1/macos/Pods/FirebaseFirestoreInternal/Firestore/core/src/core/sync_engine.cc:17:
+In file included from /Users/fayez/Desktop/مراجع تطبيق ميرا /mira-wt/elegance-e1/macos/Pods/FirebaseFirestoreInternal/Firestore/core/src/core/sync_engine.h:31:
+In file included from /Users/fayez/Desktop/مراجع تطبيق ميرا /mira-wt/elegance-e1/macos/Pods/FirebaseFirestoreInternal/Firestore/core/src/bundle/bundle_reader.h:25:
+In file included from /Users/fayez/Desktop/مراجع تطبيق ميرا /mira-wt/elegance-e1/macos/Pods/FirebaseFirestoreInternal/Firestore/core/src/bundle/bundle_serializer.h:34:
+In file included from /Users/fayez/Desktop/مراجع تطبيق ميرا /mira-wt/elegance-e1/macos/Pods/FirebaseFirestoreInternal/Firestore/core/src/util/json_reader.h:24:
+/Users/fayez/Desktop/مراجع تطبيق ميرا /mira-wt/elegance-e1/macos/Pods/FirebaseFirestoreInternal/Firestore/third_party/nlohmann_json/json.hpp:25253:35: warning: identifier '_json' preceded by whitespace in a literal operator declaration is deprecated [-Wdeprecated-literal-operator]
+ 25253 | inline nlohmann::json operator "" _json(const char* s, std::size_t n)
+       |                       ~~~~~~~~~~~~^~~~~
+       |                       operator""_json
+/Users/fayez/Desktop/مراجع تطبيق ميرا /mira-wt/elegance-e1/macos/Pods/FirebaseFirestoreInternal/Firestore/third_party/nlohmann_json/json.hpp:25272:49: warning: identifier '_json_pointer' preceded by whitespace in a literal operator declaration is deprecated [-Wdeprecated-literal-operator]
+ 25272 | inline nlohmann::json::json_pointer operator "" _json_pointer(const char* s, std::size_t n)
+       |                                     ~~~~~~~~~~~~^~~~~~~~~~~~~
+       |                                     operator""_json_pointer
+2 warnings generated.
+In file included from /Users/fayez/Desktop/مراجع تطبيق ميرا /mira-wt/elegance-e1/macos/Pods/FirebaseFirestoreInternal/Firestore/core/src/api/snapshots_in_sync_listener_registration.cc:22:
+In file included from /Users/fayez/Desktop/مراجع تطبيق ميرا /mira-wt/elegance-e1/macos/Pods/FirebaseFirestoreInternal/Firestore/core/src/core/firestore_client.h:26:
+In file included from /Users/fayez/Desktop/مراجع تطبيق ميرا /mira-wt/elegance-e1/macos/Pods/FirebaseFirestoreInternal/Firestore/core/src/bundle/bundle_serializer.h:34:
+In file included from /Users/fayez/Desktop/مراجع تطبيق ميرا /mira-wt/elegance-e1/macos/Pods/FirebaseFirestoreInternal/Firestore/core/src/util/json_reader.h:24:
+/Users/fayez/Desktop/مراجع تطبيق ميرا /mira-wt/elegance-e1/macos/Pods/FirebaseFirestoreInternal/Firestore/third_party/nlohmann_json/json.hpp:25253:35: warning: identifier '_json' preceded by whitespace in a literal operator declaration is deprecated [-Wdeprecated-literal-operator]
+ 25253 | inline nlohmann::json operator "" _json(const char* s, std::size_t n)
+       |                       ~~~~~~~~~~~~^~~~~
+       |                       operator""_json
+/Users/fayez/Desktop/مراجع تطبيق ميرا /mira-wt/elegance-e1/macos/Pods/FirebaseFirestoreInternal/Firestore/third_party/nlohmann_json/json.hpp:25272:49: warning: identifier '_json_pointer' preceded by whitespace in a literal operator declaration is deprecated [-Wdeprecated-literal-operator]
+ 25272 | inline nlohmann::json::json_pointer operator "" _json_pointer(const char* s, std::size_t n)
+       |                                     ~~~~~~~~~~~~^~~~~~~~~~~~~
+       |                                     operator""_json_pointer
+2 warnings generated.
+02:16 +0: loading /Users/fayez/Desktop/مراجع تطبيق ميرا /mira-wt/elegance-e1/integration_test/ops_iphone_journey_test.dart                                                                             In file included from /Users/fayez/Desktop/مراجع تطبيق ميرا /mira-wt/elegance-e1/macos/Pods/FirebaseFirestoreInternal/Firestore/core/src/api/query_listener_registration.cc:22:
+In file included from /Users/fayez/Desktop/مراجع تطبيق ميرا /mira-wt/elegance-e1/macos/Pods/FirebaseFirestoreInternal/Firestore/core/src/core/firestore_client.h:26:
+In file included from /Users/fayez/Desktop/مراجع تطبيق ميرا /mira-wt/elegance-e1/macos/Pods/FirebaseFirestoreInternal/Firestore/core/src/bundle/bundle_serializer.h:34:
+In file included from /Users/fayez/Desktop/مراجع تطبيق ميرا /mira-wt/elegance-e1/macos/Pods/FirebaseFirestoreInternal/Firestore/core/src/util/json_reader.h:24:
+/Users/fayez/Desktop/مراجع تطبيق ميرا /mira-wt/elegance-e1/macos/Pods/FirebaseFirestoreInternal/Firestore/third_party/nlohmann_json/json.hpp:25253:35: warning: identifier '_json' preceded by whitespace in a literal operator declaration is deprecated [-Wdeprecated-literal-operator]
+ 25253 | inline nlohmann::json operator "" _json(const char* s, std::size_t n)
+       |                       ~~~~~~~~~~~~^~~~~
+       |                       operator""_json
+/Users/fayez/Desktop/مراجع تطبيق ميرا /mira-wt/elegance-e1/macos/Pods/FirebaseFirestoreInternal/Firestore/third_party/nlohmann_json/json.hpp:25272:49: warning: identifier '_json_pointer' preceded by whitespace in a literal operator declaration is deprecated [-Wdeprecated-literal-operator]
+ 25272 | inline nlohmann::json::json_pointer operator "" _json_pointer(const char* s, std::size_t n)
+       |                                     ~~~~~~~~~~~~^~~~~~~~~~~~~
+       |                                     operator""_json_pointer
+2 warnings generated.
+02:17 +0: loading /Users/fayez/Desktop/مراجع تطبيق ميرا /mira-wt/elegance-e1/integration_test/ops_iphone_journey_test.dart                                                                             In file included from /Users/fayez/Desktop/مراجع تطبيق ميرا /mira-wt/elegance-e1/macos/Pods/FirebaseFirestoreInternal/Firestore/core/src/api/query_core.cc:33:
+In file included from /Users/fayez/Desktop/مراجع تطبيق ميرا /mira-wt/elegance-e1/macos/Pods/FirebaseFirestoreInternal/Firestore/core/src/core/firestore_client.h:26:
+In file included from /Users/fayez/Desktop/مراجع تطبيق ميرا /mira-wt/elegance-e1/macos/Pods/FirebaseFirestoreInternal/Firestore/core/src/bundle/bundle_serializer.h:34:
+In file included from /Users/fayez/Desktop/مراجع تطبيق ميرا /mira-wt/elegance-e1/macos/Pods/FirebaseFirestoreInternal/Firestore/core/src/util/json_reader.h:24:
+/Users/fayez/Desktop/مراجع تطبيق ميرا /mira-wt/elegance-e1/macos/Pods/FirebaseFirestoreInternal/Firestore/third_party/nlohmann_json/json.hpp:25253:35: warning: identifier '_json' preceded by whitespace in a literal operator declaration is deprecated [-Wdeprecated-literal-operator]
+ 25253 | inline nlohmann::json operator "" _json(const char* s, std::size_t n)
+       |                       ~~~~~~~~~~~~^~~~~
+       |                       operator""_json
+/Users/fayez/Desktop/مراجع تطبيق ميرا /mira-wt/elegance-e1/macos/Pods/FirebaseFirestoreInternal/Firestore/third_party/nlohmann_json/json.hpp:25272:49: warning: identifier '_json_pointer' preceded by whitespace in a literal operator declaration is deprecated [-Wdeprecated-literal-operator]
+ 25272 | inline nlohmann::json::json_pointer operator "" _json_pointer(const char* s, std::size_t n)
+       |                                     ~~~~~~~~~~~~^~~~~~~~~~~~~
+       |                                     operator""_json_pointer
+2 warnings generated.
+In file included from /Users/fayez/Desktop/مراجع تطبيق ميرا /mira-wt/elegance-e1/macos/Pods/FirebaseFirestoreInternal/Firestore/core/src/api/persistent_cache_index_manager.cc:21:
+In file included from /Users/fayez/Desktop/مراجع تطبيق ميرا /mira-wt/elegance-e1/macos/Pods/FirebaseFirestoreInternal/Firestore/core/src/core/firestore_client.h:26:
+In file included from /Users/fayez/Desktop/مراجع تطبيق ميرا /mira-wt/elegance-e1/macos/Pods/FirebaseFirestoreInternal/Firestore/core/src/bundle/bundle_serializer.h:34:
+In file included from /Users/fayez/Desktop/مراجع تطبيق ميرا /mira-wt/elegance-e1/macos/Pods/FirebaseFirestoreInternal/Firestore/core/src/util/json_reader.h:24:
+/Users/fayez/Desktop/مراجع تطبيق ميرا /mira-wt/elegance-e1/macos/Pods/FirebaseFirestoreInternal/Firestore/third_party/nlohmann_json/json.hpp:25253:35: warning: identifier '_json' preceded by whitespace in a literal operator declaration is deprecated [-Wdeprecated-literal-operator]
+ 25253 | inline nlohmann::json operator "" _json(const char* s, std::size_t n)
+       |                       ~~~~~~~~~~~~^~~~~
+       |                       operator""_json
+/Users/fayez/Desktop/مراجع تطبيق ميرا /mira-wt/elegance-e1/macos/Pods/FirebaseFirestoreInternal/Firestore/third_party/nlohmann_json/json.hpp:25272:49: warning: identifier '_json_pointer' preceded by whitespace in a literal operator declaration is deprecated [-Wdeprecated-literal-operator]
+ 25272 | inline nlohmann::json::json_pointer operator "" _json_pointer(const char* s, std::size_t n)
+       |                                     ~~~~~~~~~~~~^~~~~~~~~~~~~
+       |                                     operator""_json_pointer
+2 warnings generated.
+02:18 +0: loading /Users/fayez/Desktop/مراجع تطبيق ميرا /mira-wt/elegance-e1/integration_test/ops_iphone_journey_test.dart                                                                             02:19 +0: loading /Users/fayez/Desktop/مراجع تطبيق ميرا /mira-wt/elegance-e1/integration_test/ops_iphone_journey_test.dart                                                                             02:20 +0: loading /Users/fayez/Desktop/مراجع تطبيق ميرا /mira-wt/elegance-e1/integration_test/ops_iphone_journey_test.dart                                                                             02:21 +0: loading /Users/fayez/Desktop/مراجع تطبيق ميرا /mira-wt/elegance-e1/integration_test/ops_iphone_journey_test.dart                                                                             02:22 +0: loading /Users/fayez/Desktop/مراجع تطبيق ميرا /mira-wt/elegance-e1/integration_test/ops_iphone_journey_test.dart                                                                             02:23 +0: loading /Users/fayez/Desktop/مراجع تطبيق ميرا /mira-wt/elegance-e1/integration_test/ops_iphone_journey_test.dart                                                                             02:24 +0: loading /Users/fayez/Desktop/مراجع تطبيق ميرا /mira-wt/elegance-e1/integration_test/ops_iphone_journey_test.dart                                                                             02:25 +0: loading /Users/fayez/Desktop/مراجع تطبيق ميرا /mira-wt/elegance-e1/integration_test/ops_iphone_journey_test.dart                                                                             In file included from /Users/fayez/Desktop/مراجع تطبيق ميرا /mira-wt/elegance-e1/macos/Pods/FirebaseFirestoreInternal/Firestore/core/src/local/leveldb_index_manager.cc:49:
+/Users/fayez/Desktop/مراجع تطبيق ميرا /mira-wt/elegance-e1/macos/Pods/FirebaseFirestoreInternal/Firestore/third_party/nlohmann_json/json.hpp:25253:35: warning: identifier '_json' preceded by whitespace in a literal operator declaration is deprecated [-Wdeprecated-literal-operator]
+ 25253 | inline nlohmann::json operator "" _json(const char* s, std::size_t n)
+       |                       ~~~~~~~~~~~~^~~~~
+       |                       operator""_json
+/Users/fayez/Desktop/مراجع تطبيق ميرا /mira-wt/elegance-e1/macos/Pods/FirebaseFirestoreInternal/Firestore/third_party/nlohmann_json/json.hpp:25272:49: warning: identifier '_json_pointer' preceded by whitespace in a literal operator declaration is deprecated [-Wdeprecated-literal-operator]
+ 25272 | inline nlohmann::json::json_pointer operator "" _json_pointer(const char* s, std::size_t n)
+       |                                     ~~~~~~~~~~~~^~~~~~~~~~~~~
+       |                                     operator""_json_pointer
+2 warnings generated.
+In file included from /Users/fayez/Desktop/مراجع تطبيق ميرا /mira-wt/elegance-e1/macos/Pods/FirebaseFirestoreInternal/Firestore/core/src/util/json_reader.cc:17:
+In file included from /Users/fayez/Desktop/مراجع تطبيق ميرا /mira-wt/elegance-e1/macos/Pods/FirebaseFirestoreInternal/Firestore/core/src/util/json_reader.h:24:
+/Users/fayez/Desktop/مراجع تطبيق ميرا /mira-wt/elegance-e1/macos/Pods/FirebaseFirestoreInternal/Firestore/third_party/nlohmann_json/json.hpp:25253:35: warning: identifier '_json' preceded by whitespace in a literal operator declaration is deprecated [-Wdeprecated-literal-operator]
+ 25253 | inline nlohmann::json operator "" _json(const char* s, std::size_t n)
+       |                       ~~~~~~~~~~~~^~~~~
+       |                       operator""_json
+/Users/fayez/Desktop/مراجع تطبيق ميرا /mira-wt/elegance-e1/macos/Pods/FirebaseFirestoreInternal/Firestore/third_party/nlohmann_json/json.hpp:25272:49: warning: identifier '_json_pointer' preceded by whitespace in a literal operator declaration is deprecated [-Wdeprecated-literal-operator]
+ 25272 | inline nlohmann::json::json_pointer operator "" _json_pointer(const char* s, std::size_t n)
+       |                                     ~~~~~~~~~~~~^~~~~~~~~~~~~
+       |                                     operator""_json_pointer
+2 warnings generated.
+02:26 +0: loading /Users/fayez/Desktop/مراجع تطبيق ميرا /mira-wt/elegance-e1/integration_test/ops_iphone_journey_test.dart                                                                             02:27 +0: loading /Users/fayez/Desktop/مراجع تطبيق ميرا /mira-wt/elegance-e1/integration_test/ops_iphone_journey_test.dart                                                                             02:28 +0: loading /Users/fayez/Desktop/مراجع تطبيق ميرا /mira-wt/elegance-e1/integration_test/ops_iphone_journey_test.dart                                                                             In file included from /Users/fayez/Desktop/مراجع تطبيق ميرا /mira-wt/elegance-e1/macos/Pods/FirebaseFirestoreInternal/Firestore/core/src/core/firestore_client.cc:17:
+In file included from /Users/fayez/Desktop/مراجع تطبيق ميرا /mira-wt/elegance-e1/macos/Pods/FirebaseFirestoreInternal/Firestore/core/src/core/firestore_client.h:26:
+In file included from /Users/fayez/Desktop/مراجع تطبيق ميرا /mira-wt/elegance-e1/macos/Pods/FirebaseFirestoreInternal/Firestore/core/src/bundle/bundle_serializer.h:34:
+In file included from /Users/fayez/Desktop/مراجع تطبيق ميرا /mira-wt/elegance-e1/macos/Pods/FirebaseFirestoreInternal/Firestore/core/src/util/json_reader.h:24:
+/Users/fayez/Desktop/مراجع تطبيق ميرا /mira-wt/elegance-e1/macos/Pods/FirebaseFirestoreInternal/Firestore/third_party/nlohmann_json/json.hpp:25253:35: warning: identifier '_json' preceded by whitespace in a literal operator declaration is deprecated [-Wdeprecated-literal-operator]
+ 25253 | inline nlohmann::json operator "" _json(const char* s, std::size_t n)
+       |                       ~~~~~~~~~~~~^~~~~
+       |                       operator""_json
+/Users/fayez/Desktop/مراجع تطبيق ميرا /mira-wt/elegance-e1/macos/Pods/FirebaseFirestoreInternal/Firestore/third_party/nlohmann_json/json.hpp:25272:49: warning: identifier '_json_pointer' preceded by whitespace in a literal operator declaration is deprecated [-Wdeprecated-literal-operator]
+ 25272 | inline nlohmann::json::json_pointer operator "" _json_pointer(const char* s, std::size_t n)
+       |                                     ~~~~~~~~~~~~^~~~~~~~~~~~~
+       |                                     operator""_json_pointer
+2 warnings generated.
+In file included from /Users/fayez/Desktop/مراجع تطبيق ميرا /mira-wt/elegance-e1/macos/Pods/FirebaseFirestoreInternal/Firestore/core/src/api/firestore.cc:30:
+In file included from /Users/fayez/Desktop/مراجع تطبيق ميرا /mira-wt/elegance-e1/macos/Pods/FirebaseFirestoreInternal/Firestore/core/src/core/firestore_client.h:26:
+In file included from /Users/fayez/Desktop/مراجع تطبيق ميرا /mira-wt/elegance-e1/macos/Pods/FirebaseFirestoreInternal/Firestore/core/src/bundle/bundle_serializer.h:34:
+In file included from /Users/fayez/Desktop/مراجع تطبيق ميرا /mira-wt/elegance-e1/macos/Pods/FirebaseFirestoreInternal/Firestore/core/src/util/json_reader.h:24:
+/Users/fayez/Desktop/مراجع تطبيق ميرا /mira-wt/elegance-e1/macos/Pods/FirebaseFirestoreInternal/Firestore/third_party/nlohmann_json/json.hpp:25253:35: warning: identifier '_json' preceded by whitespace in a literal operator declaration is deprecated [-Wdeprecated-literal-operator]
+ 25253 | inline nlohmann::json operator "" _json(const char* s, std::size_t n)
+       |                       ~~~~~~~~~~~~^~~~~
+       |                       operator""_json
+/Users/fayez/Desktop/مراجع تطبيق ميرا /mira-wt/elegance-e1/macos/Pods/FirebaseFirestoreInternal/Firestore/third_party/nlohmann_json/json.hpp:25272:49: warning: identifier '_json_pointer' preceded by whitespace in a literal operator declaration is deprecated [-Wdeprecated-literal-operator]
+ 25272 | inline nlohmann::json::json_pointer operator "" _json_pointer(const char* s, std::size_t n)
+       |                                     ~~~~~~~~~~~~^~~~~~~~~~~~~
+       |                                     operator""_json_pointer
+2 warnings generated.
+02:29 +0: loading /Users/fayez/Desktop/مراجع تطبيق ميرا /mira-wt/elegance-e1/integration_test/ops_iphone_journey_test.dart                                                                             In file included from /Users/fayez/Desktop/مراجع تطبيق ميرا /mira-wt/elegance-e1/macos/Pods/FirebaseFirestoreInternal/Firestore/core/src/core/event_manager.cc:22:
+In file included from /Users/fayez/Desktop/مراجع تطبيق ميرا /mira-wt/elegance-e1/macos/Pods/FirebaseFirestoreInternal/Firestore/core/src/core/sync_engine.h:31:
+In file included from /Users/fayez/Desktop/مراجع تطبيق ميرا /mira-wt/elegance-e1/macos/Pods/FirebaseFirestoreInternal/Firestore/core/src/bundle/bundle_reader.h:25:
+In file included from /Users/fayez/Desktop/مراجع تطبيق ميرا /mira-wt/elegance-e1/macos/Pods/FirebaseFirestoreInternal/Firestore/core/src/bundle/bundle_serializer.h:34:
+In file included from /Users/fayez/Desktop/مراجع تطبيق ميرا /mira-wt/elegance-e1/macos/Pods/FirebaseFirestoreInternal/Firestore/core/src/util/json_reader.h:24:
+/Users/fayez/Desktop/مراجع تطبيق ميرا /mira-wt/elegance-e1/macos/Pods/FirebaseFirestoreInternal/Firestore/third_party/nlohmann_json/json.hpp:25253:35: warning: identifier '_json' preceded by whitespace in a literal operator declaration is deprecated [-Wdeprecated-literal-operator]
+ 25253 | inline nlohmann::json operator "" _json(const char* s, std::size_t n)
+       |                       ~~~~~~~~~~~~^~~~~
+       |                       operator""_json
+/Users/fayez/Desktop/مراجع تطبيق ميرا /mira-wt/elegance-e1/macos/Pods/FirebaseFirestoreInternal/Firestore/third_party/nlohmann_json/json.hpp:25272:49: warning: identifier '_json_pointer' preceded by whitespace in a literal operator declaration is deprecated [-Wdeprecated-literal-operator]
+ 25272 | inline nlohmann::json::json_pointer operator "" _json_pointer(const char* s, std::size_t n)
+       |                                     ~~~~~~~~~~~~^~~~~~~~~~~~~
+       |                                     operator""_json_pointer
+2 warnings generated.
+In file included from /Users/fayez/Desktop/مراجع تطبيق ميرا /mira-wt/elegance-e1/macos/Pods/FirebaseFirestoreInternal/Firestore/core/src/api/document_reference.cc:27:
+In file included from /Users/fayez/Desktop/مراجع تطبيق ميرا /mira-wt/elegance-e1/macos/Pods/FirebaseFirestoreInternal/Firestore/core/src/core/firestore_client.h:26:
+In file included from /Users/fayez/Desktop/مراجع تطبيق ميرا /mira-wt/elegance-e1/macos/Pods/FirebaseFirestoreInternal/Firestore/core/src/bundle/bundle_serializer.h:34:
+In file included from /Users/fayez/Desktop/مراجع تطبيق ميرا /mira-wt/elegance-e1/macos/Pods/FirebaseFirestoreInternal/Firestore/core/src/util/json_reader.h:24:
+/Users/fayez/Desktop/مراجع تطبيق ميرا /mira-wt/elegance-e1/macos/Pods/FirebaseFirestoreInternal/Firestore/third_party/nlohmann_json/json.hpp:25253:35: warning: identifier '_json' preceded by whitespace in a literal operator declaration is deprecated [-Wdeprecated-literal-operator]
+ 25253 | inline nlohmann::json operator "" _json(const char* s, std::size_t n)
+       |                       ~~~~~~~~~~~~^~~~~
+       |                       operator""_json
+/Users/fayez/Desktop/مراجع تطبيق ميرا /mira-wt/elegance-e1/macos/Pods/FirebaseFirestoreInternal/Firestore/third_party/nlohmann_json/json.hpp:25272:49: warning: identifier '_json_pointer' preceded by whitespace in a literal operator declaration is deprecated [-Wdeprecated-literal-operator]
+ 25272 | inline nlohmann::json::json_pointer operator "" _json_pointer(const char* s, std::size_t n)
+       |                                     ~~~~~~~~~~~~^~~~~~~~~~~~~
+       |                                     operator""_json_pointer
+2 warnings generated.
+02:30 +0: loading /Users/fayez/Desktop/مراجع تطبيق ميرا /mira-wt/elegance-e1/integration_test/ops_iphone_journey_test.dart                                                                             02:31 +0: loading /Users/fayez/Desktop/مراجع تطبيق ميرا /mira-wt/elegance-e1/integration_test/ops_iphone_journey_test.dart                                                                             In file included from /Users/fayez/Desktop/مراجع تطبيق ميرا /mira-wt/elegance-e1/macos/Pods/FirebaseFirestoreInternal/Firestore/core/src/bundle/bundle_serializer.cc:17:
+In file included from /Users/fayez/Desktop/مراجع تطبيق ميرا /mira-wt/elegance-e1/macos/Pods/FirebaseFirestoreInternal/Firestore/core/src/bundle/bundle_serializer.h:34:
+In file included from /Users/fayez/Desktop/مراجع تطبيق ميرا /mira-wt/elegance-e1/macos/Pods/FirebaseFirestoreInternal/Firestore/core/src/util/json_reader.h:24:
+/Users/fayez/Desktop/مراجع تطبيق ميرا /mira-wt/elegance-e1/macos/Pods/FirebaseFirestoreInternal/Firestore/third_party/nlohmann_json/json.hpp:25253:35: warning: identifier '_json' preceded by whitespace in a literal operator declaration is deprecated [-Wdeprecated-literal-operator]
+ 25253 | inline nlohmann::json operator "" _json(const char* s, std::size_t n)
+       |                       ~~~~~~~~~~~~^~~~~
+       |                       operator""_json
+/Users/fayez/Desktop/مراجع تطبيق ميرا /mira-wt/elegance-e1/macos/Pods/FirebaseFirestoreInternal/Firestore/third_party/nlohmann_json/json.hpp:25272:49: warning: identifier '_json_pointer' preceded by whitespace in a literal operator declaration is deprecated [-Wdeprecated-literal-operator]
+ 25272 | inline nlohmann::json::json_pointer operator "" _json_pointer(const char* s, std::size_t n)
+       |                                     ~~~~~~~~~~~~^~~~~~~~~~~~~
+       |                                     operator""_json_pointer
+2 warnings generated.
+In file included from /Users/fayez/Desktop/مراجع تطبيق ميرا /mira-wt/elegance-e1/macos/Pods/FirebaseFirestoreInternal/Firestore/core/src/bundle/bundle_reader.cc:17:
+In file included from /Users/fayez/Desktop/مراجع تطبيق ميرا /mira-wt/elegance-e1/macos/Pods/FirebaseFirestoreInternal/Firestore/core/src/bundle/bundle_reader.h:25:
+In file included from /Users/fayez/Desktop/مراجع تطبيق ميرا /mira-wt/elegance-e1/macos/Pods/FirebaseFirestoreInternal/Firestore/core/src/bundle/bundle_serializer.h:34:
+In file included from /Users/fayez/Desktop/مراجع تطبيق ميرا /mira-wt/elegance-e1/macos/Pods/FirebaseFirestoreInternal/Firestore/core/src/util/json_reader.h:24:
+/Users/fayez/Desktop/مراجع تطبيق ميرا /mira-wt/elegance-e1/macos/Pods/FirebaseFirestoreInternal/Firestore/third_party/nlohmann_json/json.hpp:25253:35: warning: identifier '_json' preceded by whitespace in a literal operator declaration is deprecated [-Wdeprecated-literal-operator]
+ 25253 | inline nlohmann::json operator "" _json(const char* s, std::size_t n)
+       |                       ~~~~~~~~~~~~^~~~~
+       |                       operator""_json
+/Users/fayez/Desktop/مراجع تطبيق ميرا /mira-wt/elegance-e1/macos/Pods/FirebaseFirestoreInternal/Firestore/third_party/nlohmann_json/json.hpp:25272:49: warning: identifier '_json_pointer' preceded by whitespace in a literal operator declaration is deprecated [-Wdeprecated-literal-operator]
+ 25272 | inline nlohmann::json::json_pointer operator "" _json_pointer(const char* s, std::size_t n)
+       |                                     ~~~~~~~~~~~~^~~~~~~~~~~~~
+       |                                     operator""_json_pointer
+2 warnings generated.
+02:32 +0: loading /Users/fayez/Desktop/مراجع تطبيق ميرا /mira-wt/elegance-e1/integration_test/ops_iphone_journey_test.dart                                                                             In file included from /Users/fayez/Desktop/مراجع تطبيق ميرا /mira-wt/elegance-e1/macos/Pods/FirebaseFirestoreInternal/Firestore/core/src/api/aggregate_query.cc:23:
+In file included from /Users/fayez/Desktop/مراجع تطبيق ميرا /mira-wt/elegance-e1/macos/Pods/FirebaseFirestoreInternal/Firestore/core/src/core/firestore_client.h:26:
+In file included from /Users/fayez/Desktop/مراجع تطبيق ميرا /mira-wt/elegance-e1/macos/Pods/FirebaseFirestoreInternal/Firestore/core/src/bundle/bundle_serializer.h:34:
+In file included from /Users/fayez/Desktop/مراجع تطبيق ميرا /mira-wt/elegance-e1/macos/Pods/FirebaseFirestoreInternal/Firestore/core/src/util/json_reader.h:24:
+/Users/fayez/Desktop/مراجع تطبيق ميرا /mira-wt/elegance-e1/macos/Pods/FirebaseFirestoreInternal/Firestore/third_party/nlohmann_json/json.hpp:25253:35: warning: identifier '_json' preceded by whitespace in a literal operator declaration is deprecated [-Wdeprecated-literal-operator]
+ 25253 | inline nlohmann::json operator "" _json(const char* s, std::size_t n)
+       |                       ~~~~~~~~~~~~^~~~~
+       |                       operator""_json
+/Users/fayez/Desktop/مراجع تطبيق ميرا /mira-wt/elegance-e1/macos/Pods/FirebaseFirestoreInternal/Firestore/third_party/nlohmann_json/json.hpp:25272:49: warning: identifier '_json_pointer' preceded by whitespace in a literal operator declaration is deprecated [-Wdeprecated-literal-operator]
+ 25272 | inline nlohmann::json::json_pointer operator "" _json_pointer(const char* s, std::size_t n)
+       |                                     ~~~~~~~~~~~~^~~~~~~~~~~~~
+       |                                     operator""_json_pointer
+2 warnings generated.
+02:33 +0: loading /Users/fayez/Desktop/مراجع تطبيق ميرا /mira-wt/elegance-e1/integration_test/ops_iphone_journey_test.dart                                                                             02:34 +0: loading /Users/fayez/Desktop/مراجع تطبيق ميرا /mira-wt/elegance-e1/integration_test/ops_iphone_journey_test.dart                                                                             02:35 +0: loading /Users/fayez/Desktop/مراجع تطبيق ميرا /mira-wt/elegance-e1/integration_test/ops_iphone_journey_test.dart                                                                             In file included from /Users/fayez/Desktop/مراجع تطبيق ميرا /mira-wt/elegance-e1/macos/Pods/FirebaseFirestoreInternal/Firestore/Source/API/FIRQuery.mm:51:
+In file included from /Users/fayez/Desktop/مراجع تطبيق ميرا /mira-wt/elegance-e1/macos/Pods/FirebaseFirestoreInternal/Firestore/core/src/core/firestore_client.h:26:
+In file included from /Users/fayez/Desktop/مراجع تطبيق ميرا /mira-wt/elegance-e1/macos/Pods/FirebaseFirestoreInternal/Firestore/core/src/bundle/bundle_serializer.h:34:
+In file included from /Users/fayez/Desktop/مراجع تطبيق ميرا /mira-wt/elegance-e1/macos/Pods/FirebaseFirestoreInternal/Firestore/core/src/util/json_reader.h:24:
+/Users/fayez/Desktop/مراجع تطبيق ميرا /mira-wt/elegance-e1/macos/Pods/FirebaseFirestoreInternal/Firestore/third_party/nlohmann_json/json.hpp:25253:35: warning: identifier '_json' preceded by whitespace in a literal operator declaration is deprecated [-Wdeprecated-literal-operator]
+ 25253 | inline nlohmann::json operator "" _json(const char* s, std::size_t n)
+       |                       ~~~~~~~~~~~~^~~~~
+       |                       operator""_json
+/Users/fayez/Desktop/مراجع تطبيق ميرا /mira-wt/elegance-e1/macos/Pods/FirebaseFirestoreInternal/Firestore/third_party/nlohmann_json/json.hpp:25272:49: warning: identifier '_json_pointer' preceded by whitespace in a literal operator declaration is deprecated [-Wdeprecated-literal-operator]
+ 25272 | inline nlohmann::json::json_pointer operator "" _json_pointer(const char* s, std::size_t n)
+       |                                     ~~~~~~~~~~~~^~~~~~~~~~~~~
+       |                                     operator""_json_pointer
+2 warnings generated.
+02:36 +0: loading /Users/fayez/Desktop/مراجع تطبيق ميرا /mira-wt/elegance-e1/integration_test/ops_iphone_journey_test.dart                                                                             /Users/fayez/Desktop/مراجع تطبيق ميرا /mira-wt/elegance-e1/macos/Pods/FirebaseFirestore/Firestore/Swift/Source/Codable/DocumentReference+Codable.swift:53:1: warning: extension declares a conformance of imported type 'DocumentReference' to imported protocols 'Decodable', 'Encodable'; this will not behave correctly if the owners of 'FirebaseFirestoreInternal' introduce this conformance in the future
+extension FirebaseFirestore.DocumentReference: FirebaseFirestore.CodableDocumentReference {}
+^
+extension FirebaseFirestore.DocumentReference: FirebaseFirestore.CodableDocumentReference {}
+^
+/Users/fayez/Desktop/مراجع تطبيق ميرا /mira-wt/elegance-e1/macos/Pods/FirebaseFirestore/Firestore/Swift/Source/Codable/GeoPoint+Codable.swift:66:1: warning: extension declares a conformance of imported type 'GeoPoint' to imported protocols 'Decodable', 'Encodable'; this will not behave correctly if the owners of 'FirebaseFirestoreInternal' introduce this conformance in the future
+extension FirebaseFirestore.GeoPoint: FirebaseFirestore.CodableGeoPoint {}
+^
+extension FirebaseFirestore.GeoPoint: FirebaseFirestore.CodableGeoPoint {}
+^
+/Users/fayez/Desktop/مراجع تطبيق ميرا /mira-wt/elegance-e1/macos/Pods/FirebaseFirestore/Firestore/Swift/Source/Codable/Timestamp+Codable.swift:62:1: warning: extension declares a conformance of imported type 'Timestamp' to imported protocols 'Decodable', 'Encodable'; this will not behave correctly if the owners of 'FirebaseCore' introduce this conformance in the future
+extension FirebaseCore.Timestamp: FirebaseFirestore.CodableTimestamp {}
+^
+extension FirebaseCore.Timestamp: FirebaseFirestore.CodableTimestamp {}
+^
+/Users/fayez/Desktop/مراجع تطبيق ميرا /mira-wt/elegance-e1/macos/Pods/FirebaseFirestore/Firestore/Swift/Source/Codable/VectorValue+Codable.swift:61:1: warning: extension declares a conformance of imported type 'VectorValue' to imported protocols 'Decodable', 'Encodable'; this will not behave correctly if the owners of 'FirebaseFirestoreInternal' introduce this conformance in the future
+extension FirebaseFirestore.VectorValue: FirebaseFirestore.CodableVectorValue {}
+^
+extension FirebaseFirestore.VectorValue: FirebaseFirestore.CodableVectorValue {}
+^
+/Users/fayez/Desktop/مراجع تطبيق ميرا /mira-wt/elegance-e1/macos/Pods/FirebaseFirestore/Firestore/Swift/Source/Codable/Timestamp+Codable.swift:62:1: warning: extension declares a conformance of imported type 'Timestamp' to imported protocols 'Decodable', 'Encodable'; this will not behave correctly if the owners of 'FirebaseCore' introduce this conformance in the future
+extension FirebaseCore.Timestamp: FirebaseFirestore.CodableTimestamp {}
+^
+extension FirebaseCore.Timestamp: FirebaseFirestore.CodableTimestamp {}
+^
+/Users/fayez/Desktop/مراجع تطبيق ميرا /mira-wt/elegance-e1/macos/Pods/FirebaseFirestore/Firestore/Swift/Source/Codable/VectorValue+Codable.swift:61:1: warning: extension declares a conformance of imported type 'VectorValue' to imported protocols 'Decodable', 'Encodable'; this will not behave correctly if the owners of 'FirebaseFirestoreInternal' introduce this conformance in the future
+extension FirebaseFirestore.VectorValue: FirebaseFirestore.CodableVectorValue {}
+^
+extension FirebaseFirestore.VectorValue: FirebaseFirestore.CodableVectorValue {}
+^
+/Users/fayez/Desktop/مراجع تطبيق ميرا /mira-wt/elegance-e1/macos/Pods/FirebaseFirestore/Firestore/Swift/Source/Codable/DocumentReference+Codable.swift:53:1: warning: extension declares a conformance of imported type 'DocumentReference' to imported protocols 'Decodable', 'Encodable'; this will not behave correctly if the owners of 'FirebaseFirestoreInternal' introduce this conformance in the future
+extension FirebaseFirestore.DocumentReference: FirebaseFirestore.CodableDocumentReference {}
+^
+extension FirebaseFirestore.DocumentReference: FirebaseFirestore.CodableDocumentReference {}
+^
+02:37 +0: loading /Users/fayez/Desktop/مراجع تطبيق ميرا /mira-wt/elegance-e1/integration_test/ops_iphone_journey_test.dart                                                                             /Users/fayez/Desktop/مراجع تطبيق ميرا /mira-wt/elegance-e1/macos/Pods/FirebaseFirestore/Firestore/Swift/Source/Codable/GeoPoint+Codable.swift:66:1: warning: extension declares a conformance of imported type 'GeoPoint' to imported protocols 'Decodable', 'Encodable'; this will not behave correctly if the owners of 'FirebaseFirestoreInternal' introduce this conformance in the future
+extension FirebaseFirestore.GeoPoint: FirebaseFirestore.CodableGeoPoint {}
+^
+extension FirebaseFirestore.GeoPoint: FirebaseFirestore.CodableGeoPoint {}
+^
+/Users/fayez/Desktop/مراجع تطبيق ميرا /mira-wt/elegance-e1/macos/Pods/Pods.xcodeproj: FirebaseFirestoreInternal: ld: warning: ignoring duplicate libraries: '-lc++'
+02:38 +0: loading /Users/fayez/Desktop/مراجع تطبيق ميرا /mira-wt/elegance-e1/integration_test/ops_iphone_journey_test.dart                                                                             02:39 +0: loading /Users/fayez/Desktop/مراجع تطبيق ميرا /mira-wt/elegance-e1/integration_test/ops_iphone_journey_test.dart                                                                             /Users/fayez/.pub-cache/hosted/pub.dev/firebase_core-3.15.2/macos/firebase_core/Sources/firebase_core/FLTFirebaseCorePlugin.m:92:49: warning: 'deepLinkURLScheme' is deprecated [-Wdeprecated-declarations]
+   92 |   pigeonOptions.deepLinkURLScheme = (id)options.deepLinkURLScheme ?: [NSNull null];
+      |                                                 ^
+In module 'FirebaseCore' imported from /Users/fayez/.pub-cache/hosted/pub.dev/firebase_core-3.15.2/macos/firebase_core/Sources/firebase_core/include/firebase_core/FLTFirebasePlugin.h:10:
+   86 | @property(nonatomic, copy, nullable) NSString *deepLinkURLScheme DEPRECATED_ATTRIBUTE;
+      |                                                                  ^
+In module '_DarwinFoundation1' imported from /Users/fayez/.pub-cache/hosted/pub.dev/firebase_core-3.15.2/macos/firebase_core/Sources/firebase_core/include/firebase_core/FLTFirebaseCorePlugin.h:4:
+  150 |         #define DEPRECATED_ATTRIBUTE        __attribute__((deprecated))
+      |                                                            ^
+/Users/fayez/.pub-cache/hosted/pub.dev/firebase_core-3.15.2/macos/firebase_core/Sources/firebase_core/FLTFirebaseCorePlugin.m:168:13: warning: 'deepLinkURLScheme' is deprecated [-Wdeprecated-declarations]
+  168 |     options.deepLinkURLScheme = initializeAppRequest.deepLinkURLScheme;
+      |             ^
+In module 'FirebaseCore' imported from /Users/fayez/.pub-cache/hosted/pub.dev/firebase_core-3.15.2/macos/firebase_core/Sources/firebase_core/include/firebase_core/FLTFirebasePlugin.h:10:
+   86 | @property(nonatomic, copy, nullable) NSString *deepLinkURLScheme DEPRECATED_ATTRIBUTE;
+      |                                                                  ^
+In module '_DarwinFoundation1' imported from /Users/fayez/.pub-cache/hosted/pub.dev/firebase_core-3.15.2/macos/firebase_core/Sources/firebase_core/include/firebase_core/FLTFirebaseCorePlugin.h:4:
+  150 |         #define DEPRECATED_ATTRIBUTE        __attribute__((deprecated))
+      |                                                            ^
+/Users/fayez/.pub-cache/hosted/pub.dev/firebase_core-3.15.2/macos/firebase_core/Sources/firebase_core/FLTFirebaseCorePlugin.m:255:74: warning: conflicting parameter types in implementation of 'setAutomaticResourceManagementEnabledAppName:enabled:completion:': 'BOOL' (aka '_Bool') vs 'NSNumber * _Nonnull __strong' [-Wmismatched-parameter-types]
+  255 |                                              enabled:(nonnull NSNumber *)enabled
+      |                                                                          ^
+In file included from /Users/fayez/.pub-cache/hosted/pub.dev/firebase_core-3.15.2/macos/firebase_core/Sources/firebase_core/FLTFirebaseCorePlugin.m:6:
+In file included from /Users/fayez/.pub-cache/hosted/pub.dev/firebase_core-3.15.2/macos/firebase_core/Sources/firebase_core/include/firebase_core/FLTFirebaseCorePlugin.h:16:
+   91 |                                              enabled:(BOOL)enabled
+      |                                                       ~~~~ ^
+3 warnings generated.
+libtool: warning: 'dummy.o' has no symbols
+/Users/fayez/.pub-cache/hosted/pub.dev/firebase_auth-5.7.0/macos/firebase_auth/Sources/firebase_auth/PigeonParser.m:133:18: warning: 'dynamicLinkDomain' is deprecated: Firebase Dynamic Links is deprecated. Migrate to use Firebase Hosting link and use `linkDomain` to set a custom domain instead. [-Wdeprecated-declarations]
+  133 |     codeSettings.dynamicLinkDomain = settings.dynamicLinkDomain;
+      |                  ^
+In module 'FirebaseAuth' imported from /Users/fayez/.pub-cache/hosted/pub.dev/firebase_auth-5.7.0/macos/firebase_auth/Sources/firebase_auth/PigeonParser.m:5:
+  429 | @property (nonatomic, copy) NSString * _Nullable dynamicLinkDomain SWIFT_DEPRECATED_MSG("Firebase Dynamic Links is deprecated. Migrate to use Firebase Hosting link and use `linkDomain` to set a custom domain instead.");
+      |                                                                    ^
+  243 | # define SWIFT_DEPRECATED_MSG(...) __attribute__((deprecated(__VA_ARGS__)))
+      |                                                   ^
+1 warning generated.
+/Users/fayez/.pub-cache/hosted/pub.dev/firebase_auth-5.7.0/macos/firebase_auth/Sources/firebase_auth/FLTPhoneNumberVerificationStreamHandler.m:8:17: warning: method definition for 'initWithAuth:arguments:' not found [-Wincomplete-implementation]
+    8 | @implementation FLTPhoneNumberVerificationStreamHandler {
+      |                 ^
+In file included from /Users/fayez/.pub-cache/hosted/pub.dev/firebase_auth-5.7.0/macos/firebase_auth/Sources/firebase_auth/FLTPhoneNumberVerificationStreamHandler.m:5:
+   24 | - (instancetype)initWithAuth:(FIRAuth *)auth arguments:(NSDictionary *)arguments;
+      | ^
+1 warning generated.
+/Users/fayez/.pub-cache/hosted/pub.dev/firebase_auth-5.7.0/macos/firebase_auth/Sources/firebase_auth/FLTFirebaseAuthPlugin.m:130:72: warning: sending 'FLTFirebaseAuthPlugin *__strong' to parameter of incompatible type 'id<FLTFirebasePlugin> _Nonnull'
+  130 |     [[FLTFirebasePluginRegistry sharedInstance] registerFirebasePlugin:self];
+      |                                                                        ^~~~
+In module 'firebase_core' imported from /Users/fayez/.pub-cache/hosted/pub.dev/firebase_auth-5.7.0/macos/firebase_auth/Sources/firebase_auth/FLTFirebaseAuthPlugin.m:9:
+   23 | - (void)registerFirebasePlugin:(id<FLTFirebasePlugin> _Nonnull)firebasePlugin;
+      |                                                                ^
+/Users/fayez/.pub-cache/hosted/pub.dev/firebase_auth-5.7.0/macos/firebase_auth/Sources/firebase_auth/FLTFirebaseAuthPlugin.m:417:14: warning: unused variable 'capturedCompletion' [-Wunused-variable]
+  417 |       void (^capturedCompletion)(PigeonUserCredential *_Nullable, FlutterError *_Nullable) =
+      |              ^~~~~~~~~~~~~~~~~~
+/Users/fayez/.pub-cache/hosted/pub.dev/firebase_auth-5.7.0/macos/firebase_auth/Sources/firebase_auth/FLTFirebaseAuthPlugin.m:428:14: warning: unused variable 'capturedCompletion' [-Wunused-variable]
+  428 |       void (^capturedCompletion)(PigeonUserCredential *_Nullable, FlutterError *_Nullable) =
+      |              ^~~~~~~~~~~~~~~~~~
+/Users/fayez/.pub-cache/hosted/pub.dev/firebase_auth-5.7.0/macos/firebase_auth/Sources/firebase_auth/FLTFirebaseAuthPlugin.m:439:14: warning: unused variable 'capturedCompletion' [-Wunused-variable]
+  439 |       void (^capturedCompletion)(PigeonUserCredential *_Nullable, FlutterError *_Nullable) =
+      |              ^~~~~~~~~~~~~~~~~~
+/Users/fayez/.pub-cache/hosted/pub.dev/firebase_auth-5.7.0/macos/firebase_auth/Sources/firebase_auth/FLTFirebaseAuthPlugin.m:1178:9: warning: 'fetchSignInMethodsForEmail:completion:' is deprecated: `fetchSignInMethods` is deprecated and will be removed in a future release. This method returns an empty list when Email Enumeration Protection is enabled. [-Wdeprecated-declarations]
+ 1178 |   [auth fetchSignInMethodsForEmail:email
+      |         ^
+In module 'FirebaseAuth' imported from /Users/fayez/.pub-cache/hosted/pub.dev/firebase_auth-5.7.0/macos/firebase_auth/Sources/firebase_auth/FLTFirebaseAuthPlugin.m:5:
+  563 | - (void)fetchSignInMethodsForEmail:(NSString * _Nonnull)email completion:(void (^ _Nullable)(NSArray<NSString *> * _Nullable, NSError * _Nullable))completion SWIFT_DEPRECATED_MSG("`fetchSignInMethods` is deprecated and will be removed in a future release. This method returns an empty list when Email Enumeration Protection is enabled.");
+      |                                                                                                                                                               ^
+  243 | # define SWIFT_DEPRECATED_MSG(...) __attribute__((deprecated(__VA_ARGS__)))
+      |                                                   ^
+/Users/fayez/.pub-cache/hosted/pub.dev/firebase_auth-5.7.0/macos/firebase_auth/Sources/firebase_auth/FLTFirebaseAuthPlugin.m:1985:16: warning: 'updateEmail:completion:' is deprecated: `updateEmail` is deprecated and will be removed in a future release. Use sendEmailVerification(beforeUpdatingEmail:) instead. [-Wdeprecated-declarations]
+ 1985 |   [currentUser updateEmail:newEmail
+      |                ^
+In module 'FirebaseAuth' imported from /Users/fayez/.pub-cache/hosted/pub.dev/firebase_auth-5.7.0/macos/firebase_auth/Sources/firebase_auth/FLTFirebaseAuthPlugin.m:5:
+ 1664 | - (void)updateEmail:(NSString * _Nonnull)email completion:(void (^ _Nullable)(NSError * _Nullable))completion SWIFT_DEPRECATED_MSG("`updateEmail` is deprecated and will be removed in a future release. Use sendEmailVerification(beforeUpdatingEmail:) instead.");
+      |                                                                                                               ^
+  243 | # define SWIFT_DEPRECATED_MSG(...) __attribute__((deprecated(__VA_ARGS__)))
+      |                                                   ^
+/Users/fayez/.pub-cache/hosted/pub.dev/firebase_auth-5.7.0/macos/firebase_auth/Sources/firebase_auth/FLTFirebaseAuthPlugin.m:103:17: warning: class 'FLTFirebaseAuthPlugin' does not conform to protocols 'MultiFactorUserHostApi', 'MultiFactoResolverHostApi', 'MultiFactorTotpHostApi', ... [-Wprotocol]
+  103 | @implementation FLTFirebaseAuthPlugin {
+      |                 ^
+  103 | @implementation FLTFirebaseAuthPlugin {
+      |                 ^
+/Users/fayez/.pub-cache/hosted/pub.dev/firebase_auth-5.7.0/macos/firebase_auth/Sources/firebase_auth/FLTFirebaseAuthPlugin.m:594:13: warning: unused function 'handleAppleAuthResult' [-Wunused-function]
+  594 | static void handleAppleAuthResult(FLTFirebaseAuthPlugin *object, AuthPigeonFirebaseApp *app,
+      |             ^~~~~~~~~~~~~~~~~~~~~
+8 warnings generated.
+/Users/fayez/.pub-cache/hosted/pub.dev/cloud_firestore-5.6.12/macos/cloud_firestore/Sources/cloud_firestore/FLTFirebaseFirestorePlugin.m:563:14: warning: 'setIndexConfigurationFromJSON:completion:' is deprecated: Instead of creating cache indexes manually, consider using `PersistentCacheIndexManager.enableIndexAutoCreation()` to let the SDK decide whether to create cache indexes for queries running locally. [-Wdeprecated-declarations]
+  563 |   [firestore setIndexConfigurationFromJSON:indexConfiguration
+      |              ^
+In module 'FirebaseFirestoreInternal' imported from /Users/fayez/.pub-cache/hosted/pub.dev/cloud_firestore-5.6.12/macos/cloud_firestore/Sources/cloud_firestore/FLTFirebaseFirestorePlugin.m:13:
+  134 |     NS_SWIFT_NAME(setIndexConfiguration(_:completion:)) DEPRECATED_MSG_ATTRIBUTE(
+      |                                                         ^
+In module '_DarwinFoundation1' imported from /Users/fayez/.pub-cache/hosted/pub.dev/cloud_firestore-5.6.12/macos/cloud_firestore/Sources/cloud_firestore/FLTFirebaseFirestorePlugin.m:12:
+  152 |             #define DEPRECATED_MSG_ATTRIBUTE(s) __attribute__((deprecated(s)))
+      |                                                                ^
+1 warning generated.
+02:40 +0: loading /Users/fayez/Desktop/مراجع تطبيق ميرا /mira-wt/elegance-e1/integration_test/ops_iphone_journey_test.dart                                                                             02:41 +0: loading /Users/fayez/Desktop/مراجع تطبيق ميرا /mira-wt/elegance-e1/integration_test/ops_iphone_journey_test.dart                                                                             02:42 +0: loading /Users/fayez/Desktop/مراجع تطبيق ميرا /mira-wt/elegance-e1/integration_test/ops_iphone_journey_test.dart                                                                             02:43 +0: loading /Users/fayez/Desktop/مراجع تطبيق ميرا /mira-wt/elegance-e1/integration_test/ops_iphone_journey_test.dart                                                                             02:44 +0: loading /Users/fayez/Desktop/مراجع تطبيق ميرا /mira-wt/elegance-e1/integration_test/ops_iphone_journey_test.dart                                                                             02:45 +0: loading /Users/fayez/Desktop/مراجع تطبيق ميرا /mira-wt/elegance-e1/integration_test/ops_iphone_journey_test.dart                                                                             02:46 +0: loading /Users/fayez/Desktop/مراجع تطبيق ميرا /mira-wt/elegance-e1/integration_test/ops_iphone_journey_test.dart                                                                             02:47 +0: loading /Users/fayez/Desktop/مراجع تطبيق ميرا /mira-wt/elegance-e1/integration_test/ops_iphone_journey_test.dart                                                                             02:48 +0: loading /Users/fayez/Desktop/مراجع تطبيق ميرا /mira-wt/elegance-e1/integration_test/ops_iphone_journey_test.dart                                                                             02:49 +0: loading /Users/fayez/Desktop/مراجع تطبيق ميرا /mira-wt/elegance-e1/integration_test/ops_iphone_journey_test.dart                                                                             02:50 +0: loading /Users/fayez/Desktop/مراجع تطبيق ميرا /mira-wt/elegance-e1/integration_test/ops_iphone_journey_test.dart                                                                             02:51 +0: loading /Users/fayez/Desktop/مراجع تطبيق ميرا /mira-wt/elegance-e1/integration_test/ops_iphone_journey_test.dart                                                                             02:52 +0: loading /Users/fayez/Desktop/مراجع تطبيق ميرا /mira-wt/elegance-e1/integration_test/ops_iphone_journey_test.dart                                                                             02:53 +0: loading /Users/fayez/Desktop/مراجع تطبيق ميرا /mira-wt/elegance-e1/integration_test/ops_iphone_journey_test.dart                                                                             02:54 +0: loading /Users/fayez/Desktop/مراجع تطبيق ميرا /mira-wt/elegance-e1/integration_test/ops_iphone_journey_test.dart                                                                             02:55 +0: loading /Users/fayez/Desktop/مراجع تطبيق ميرا /mira-wt/elegance-e1/integration_test/ops_iphone_journey_test.dart                                                                             1 | #import "Headers/video_player_avfoundation-umbrella.h"
+2 | #import "Headers/video_player_avfoundation-Swift.h"
+3 | 
+
+13 | #import "AVAssetTrackUtils.h"
+14 | #import "FVPAssetProvider.h"
+15 | #import "FVPAVFactory.h"
+16 | #import "FVPDisplayLink.h"
+17 | #import "FVPEventBridge.h"
+
+1 warning generated.
+/Users/fayez/Desktop/مراجع تطبيق ميرا /mira-wt/elegance-e1/build/macos/Build/Products/Debug/video_player_avfoundation/video_player_avfoundation.framework/Headers/FVPAVFactory.h:38:4: warning: 'AVKeyValueStatus' is deprecated: first deprecated in macOS 13.0 - Use AVAsyncProperty.Status instead
+ 36 | 
+ 37 | /// Wraps the underlying asset's statusOfValueForKey:error: method.
+ 38 | - (AVKeyValueStatus)statusOfValueForKey:(NSString *)key
+    |    `- warning: 'AVKeyValueStatus' is deprecated: first deprecated in macOS 13.0 - Use AVAsyncProperty.Status instead
+ 39 |                                   error:(NSError *_Nullable *_Nullable)outError;
+ 40 | 
+
+14 | NS_ASSUME_NONNULL_BEGIN
+15 | 
+16 | typedef NS_ENUM(NSInteger, AVKeyValueStatus) {
+17 | 	AVKeyValueStatusUnknown = 0,
+18 | 	AVKeyValueStatusLoading = 1,
+02:56 +0: loading /Users/fayez/Desktop/مراجع تطبيق ميرا /mira-wt/elegance-e1/integration_test/ops_iphone_journey_test.dart                                                                             02:57 +0: loading /Users/fayez/Desktop/مراجع تطبيق ميرا /mira-wt/elegance-e1/integration_test/ops_iphone_journey_test.dart                                                                             02:58 +0: loading /Users/fayez/Desktop/مراجع تطبيق ميرا /mira-wt/elegance-e1/integration_test/ops_iphone_journey_test.dart                                                                             02:59 +0: loading /Users/fayez/Desktop/مراجع تطبيق ميرا /mira-wt/elegance-e1/integration_test/ops_iphone_journey_test.dart                                                                             03:00 +0: loading /Users/fayez/Desktop/مراجع تطبيق ميرا /mira-wt/elegance-e1/integration_test/ops_iphone_journey_test.dart                                                                             warning: Run script build phase 'Create Symlinks to Header Folders' will be run during every build because it does not specify any outputs. To address this issue, either add output dependencies to the script phase, or configure it to run in every build by unchecking "Based on dependency analysis" in the script phase. (in target 'gRPC-Core' from project 'Pods')
+warning: Run script build phase 'Create Symlinks to Header Folders' will be run during every build because it does not specify any outputs. To address this issue, either add output dependencies to the script phase, or configure it to run in every build by unchecking "Based on dependency analysis" in the script phase. (in target 'gRPC-C++' from project 'Pods')
+/Users/fayez/Desktop/مراجع تطبيق ميرا /mira-wt/elegance-e1/macos/Pods/Pods.xcodeproj: warning: The macOS deployment target 'MACOSX_DEPLOYMENT_TARGET' is set to 10.11, but the range of supported deployment target versions is 10.13 to 26.5.99. (in target 'abseil-xcprivacy' from project 'Pods')
+/Users/fayez/Desktop/مراجع تطبيق ميرا /mira-wt/elegance-e1/macos/Pods/Pods.xcodeproj: warning: The macOS deployment target 'MACOSX_DEPLOYMENT_TARGET' is set to 10.11, but the range of supported deployment target versions is 10.13 to 26.5.99. (in target 'abseil' from project 'Pods')
+warning: Run script build phase 'Create Symlinks to Header Folders' will be run during every build because it does not specify any outputs. To address this issue, either add output dependencies to the script phase, or configure it to run in every build by unchecking "Based on dependency analysis" in the script phase. (in target 'abseil' from project 'Pods')
+/Users/fayez/Desktop/مراجع تطبيق ميرا /mira-wt/elegance-e1/macos/Pods/Pods.xcodeproj: warning: The macOS deployment target 'MACOSX_DEPLOYMENT_TARGET' is set to 10.12, but the range of supported deployment target versions is 10.13 to 26.5.99. (in target 'BoringSSL-GRPC-openssl_grpc' from project 'Pods')
+/Users/fayez/Desktop/مراجع تطبيق ميرا /mira-wt/elegance-e1/macos/Pods/Pods.xcodeproj: warning: The macOS deployment target 'MACOSX_DEPLOYMENT_TARGET' is set to 10.12, but the range of supported deployment target versions is 10.13 to 26.5.99. (in target 'BoringSSL-GRPC' from project 'Pods')
+warning: Run script build phase 'Create Symlinks to Header Folders' will be run during every build because it does not specify any outputs. To address this issue, either add output dependencies to the script phase, or configure it to run in every build by unchecking "Based on dependency analysis" in the script phase. (in target 'BoringSSL-GRPC' from project 'Pods')
+✓ Built build/macos/Build/Products/Debug/mirra.app
+03:01 +0: loading /Users/fayez/Desktop/مراجع تطبيق ميرا /mira-wt/elegance-e1/integration_test/ops_iphone_journey_test.dart                                                                             03:02 +0: loading /Users/fayez/Desktop/مراجع تطبيق ميرا /mira-wt/elegance-e1/integration_test/ops_iphone_journey_test.dart                                                                             Failed to foreground app; open returned 1
+03:02 +0: ops iphone buy+book from seeded Discover videos                                                                                                                                              03:02 +0: ops iphone buy+book from seeded Discover videos                                                                                                                                              
+IPHONE_AUTH_PLUGIN_FALLBACK [firebase_auth/keychain-error] An error occurred when accessing the keychain. The NSLocalizedFailureReasonErrorKey field in the NSError.userInfo dictionary will contain more information about the error encountered

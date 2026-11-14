@@ -7,6 +7,8 @@ class OnboardingStorage {
   static const _key = 'mirra_onboarding_complete';
 
   static Future<bool> isComplete() async {
+    // Isolated ops/iPhone proofs only — never set in production builds.
+    if (const bool.fromEnvironment('MIRA_SKIP_ONBOARDING')) return true;
     final prefs = await SharedPreferences.getInstance();
     return prefs.getBool(_key) ?? false;
   }

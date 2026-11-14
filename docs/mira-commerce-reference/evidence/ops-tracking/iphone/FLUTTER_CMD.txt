@@ -1,0 +1,5 @@
+# Optional when disk allows:
+OPS_IPHONE_FLUTTER=1 OPS_IPHONE_DEVICE=macos \
+  DATABASE_URL=postgresql://fayez@127.0.0.1:5432/mira_sbws_proof_test \
+  npx tsx src/marketplace/ops-tracking.iphone.proof.ts
+# seed: /tmp/mira-ops-iphone-seed.json

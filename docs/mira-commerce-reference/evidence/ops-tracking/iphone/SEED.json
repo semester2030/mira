@@ -1,0 +1,16 @@
+{
+  "apiBase": "http://127.0.0.1:54119/api/v1",
+  "partnerId": "f2075160-dc90-4fcf-a329-e9b95542fff7",
+  "productId": "994733ed-c8c5-461b-bf3c-3c4955f7f0ae",
+  "serviceId": "b8629334-fa0e-4bd4-9338-62242a571206",
+  "productName": "فستان رحلة آيفون iphonemwfu8vcg",
+  "serviceName": "جلسة رحلة آيفون iphonemwfu8vcg",
+  "custEmail": "ops-iphone@test.local",
+  "custPassword": "TestPass123!",
+  "miraEmail": "mira-iphone-iphonemwfu8vcg@test.local",
+  "miraPass": "MiraIphone#9",
+  "adminKey": "ops-iphone-master-key",
+  "partnerOrigin": "http://127.0.0.1:18805",
+  "adminOrigin": "http://127.0.0.1:18806",
+  "flutterOut": "/tmp/mira-ops-iphone-journey.json"
+}

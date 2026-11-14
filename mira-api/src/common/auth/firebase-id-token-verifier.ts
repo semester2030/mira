@@ -34,10 +34,16 @@ export class FirebaseAdminIdTokenVerifier extends FirebaseIdTokenVerifier {
     if (!projectId) {
       throw new UnauthorizedException('Firebase is not configured on the server');
     }
-    admin.initializeApp({
-      credential: admin.credential.applicationDefault(),
-      projectId,
-    });
+    // Auth emulator (FIREBASE_AUTH_EMULATOR_HOST) accepts projectId-only init — no ADC.
+    const emu = this.env('FIREBASE_AUTH_EMULATOR_HOST') || process.env.FIREBASE_AUTH_EMULATOR_HOST;
+    if (emu) {
+      admin.initializeApp({ projectId });
+    } else {
+      admin.initializeApp({
+        credential: admin.credential.applicationDefault(),
+        projectId,
+      });
+    }
     this.initialized = true;
   }
 

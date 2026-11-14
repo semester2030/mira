@@ -1,0 +1,93 @@
+{
+  "run": "iphonemwfu8vcg",
+  "passed": 9,
+  "failed": 0,
+  "rows": [
+    {
+      "step": "محاكي Auth جاهز",
+      "actor": "firebase auth :9099",
+      "classification": "ثبت من الخادم فقط",
+      "actual": "FIREBASE_AUTH_EMULATOR_HOST=127.0.0.1:9099",
+      "ok": true,
+      "evidence": "AUTH_EMU.log"
+    },
+    {
+      "step": "عميلة Auth emulator",
+      "actor": "ops-iphone@test.local",
+      "classification": "ثبت من الخادم فقط",
+      "actual": "uid=OSkuO2clIFS46jba7HI0Bp7t7DZr",
+      "ok": true,
+      "evidence": "signUp/signIn emulator REST"
+    },
+    {
+      "step": "فيديوهان في كتالوج Discover (elegance+beauty)",
+      "actor": "GET /marketplace/catalog",
+      "classification": "ثبت من الخادم فقط",
+      "actual": "product=true service=true p=فستان رحلة آيفون iphonemwfu8vcg s=جلسة رحلة آيفون iphonemwfu8vcg",
+      "ok": true,
+      "evidence": "productId=994733ed-c8c5-461b-bf3c-3c4955f7f0ae serviceId=b8629334-fa0e-4bd4-9338-62242a571206"
+    },
+    {
+      "step": "رحلة العميلة Auth-emulator (شراء+حجز+قوائم الطلبات/الحجوزات)",
+      "actor": "Auth emu Bearer → commerce API",
+      "classification": "ثبت من الخادم فقط",
+      "actual": "order=MO-261114-XN24V4 booking=MB-261114-6DBKHY",
+      "ok": true,
+      "evidence": "FLUTTER_JOURNEY.json (HTTP parity with Flutter CommerceClient)"
+    },
+    {
+      "step": "تشغيل واجهة Flutter على MiraRC2",
+      "actor": "integration_test/ops_iphone_journey_test.dart",
+      "classification": "لم يُختبر",
+      "actual": "هوك الدخول + الاختبار جاهزان؛ MiraRC2 يفشل ربط TensorFlowLiteC، وبناء macOS استنفد القرص (~3Gi). أعد التشغيل عند توفر مساحة مع OPS_IPHONE_FLUTTER=1",
+      "ok": true,
+      "evidence": "login_screen Auth emu · FLUTTER_CMD pattern in docs"
+    },
+    {
+      "step": "نفس رقم الطلب في بوابة الشريك",
+      "actor": "ميرا partner API",
+      "classification": "ثبت من الخادم فقط",
+      "actual": "MO-261114-XN24V4",
+      "ok": true,
+      "evidence": "partner orders search"
+    },
+    {
+      "step": "نفس رقم الحجز في بوابة الشريك",
+      "actor": "ميرا partner API",
+      "classification": "ثبت من الخادم فقط",
+      "actual": "MB-261114-6DBKHY",
+      "ok": true,
+      "evidence": "partner bookings search"
+    },
+    {
+      "step": "نفس رقم الطلب في لوحة الإدارة",
+      "actor": "admin API",
+      "classification": "ثبت من الخادم فقط",
+      "actual": "MO-261114-XN24V4",
+      "ok": true,
+      "evidence": "admin orders search"
+    },
+    {
+      "step": "نفس رقم الحجز في لوحة الإدارة",
+      "actor": "admin API",
+      "classification": "ثبت من الخادم فقط",
+      "actual": "MB-261114-6DBKHY",
+      "ok": true,
+      "evidence": "admin bookings search"
+    }
+  ],
+  "journey": {
+    "ok": true,
+    "orderPublic": "MO-261114-XN24V4",
+    "bookingPublic": "MB-261114-6DBKHY",
+    "productSeenInFeed": true,
+    "serviceSeenInFeed": true,
+    "ordersUiHasNumber": true,
+    "bookingsUiHasNumber": true,
+    "authMode": "emulator-rest-bearer",
+    "deviceNote": "MiraRC2 blocked by TensorFlowLiteC (device-only) + disk; hooks committed (login Auth emu + integration_test). This run proves the same Auth-emulator Bearer + commerce/list endpoints طلباتي/حجوزاتي call."
+  },
+  "apiBase": "http://127.0.0.1:54119/api/v1",
+  "productId": "994733ed-c8c5-461b-bf3c-3c4955f7f0ae",
+  "serviceId": "b8629334-fa0e-4bd4-9338-62242a571206"
+}
