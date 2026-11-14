@@ -13,7 +13,21 @@ assert.equal('reservedQty' in pub, false);
 assert.equal(publicProductCommerce({ ...base, stockQty: 3 }).stockAvailable, false);
 assert.equal(publicProductCommerce({ ...base, stockQty: null }).stockQty, null);
 assert.equal(publicProductCommerce({ ...base, stockQty: null }).stockAvailable, true);
-assert.equal(publicProductCommerce({ ...base, purchaseMode: 'weird' }).purchaseMode, 'external');
+assert.equal(publicProductCommerce({ ...base, purchaseMode: 'weird' }).purchaseMode, 'display');
+assert.equal(
+  publicProductCommerce({ ...base, purchaseMode: 'external', externalUrl: '' }).purchaseMode,
+  'display',
+);
+assert.equal(
+  publicProductCommerce({
+    ...base,
+    purchaseMode: 'external',
+    externalUrl: 'https://shop.example/item',
+  }).purchaseMode,
+  'external',
+);
+assert.equal(publicProductCommerce({ ...base, purchaseMode: 'display' }).purchaseMode, 'display');
+assert.equal(publicProductCommerce({ ...base, purchaseMode: 'contact' }).purchaseMode, 'contact');
 
 // Options are passed through only when valid.
 const groups = [{ id: 'size', labelAr: 'المقاس', values: [{ id: 's', labelAr: 'S' }] }];

@@ -79,7 +79,7 @@ export class UpsertProductDto {
   active?: boolean;
 
   @IsOptional()
-  @IsIn(['external', 'internal_cod'])
+  @IsIn(['display', 'external', 'contact', 'internal_cod'])
   purchaseMode?: string;
 
   /** null = stock not tracked. */
@@ -168,7 +168,7 @@ export class UpdateProductDto {
   stepAr?: string | null;
 
   @IsOptional()
-  @IsIn(['external', 'internal_cod'])
+  @IsIn(['display', 'external', 'contact', 'internal_cod'])
   purchaseMode?: string;
 
   /** null = stock not tracked. */

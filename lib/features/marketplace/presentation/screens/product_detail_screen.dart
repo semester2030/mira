@@ -220,9 +220,15 @@ class _ProductDetailScreenState extends State<ProductDetailScreen> {
               ),
             ],
             const SizedBox(height: 24),
-            if (product.isInternalCod && !_isPreview) ...[
+            if (product.isDisplayOnly && !_isPreview) ...[
+              Text(
+                'هذا المنتج للعرض فقط — بلا زر شراء أو تواصل.',
+                style: AppTypography.bodyMedium,
+                textAlign: TextAlign.center,
+              ),
+            ] else if (product.isInternalCod && !_isPreview) ...[
               ..._inAppPurchase(context),
-            ] else if (_hasPurchaseLink) ...[
+            ] else if (product.isExternalPurchase && _hasPurchaseLink) ...[
               PremiumButton(
                 label: 'الشراء من متجر ${product.partnerNameAr}',
                 icon: Icons.shopping_bag_outlined,
@@ -235,10 +241,10 @@ class _ProductDetailScreenState extends State<ProductDetailScreen> {
                 style: AppTypography.bodySmall.copyWith(color: AppColors.textTertiary),
                 textAlign: TextAlign.center,
               ),
-            ] else ...[
+            ] else if (product.isContactMode) ...[
               Text(
                 (product.contactPhone ?? '').trim().isEmpty
-                    ? 'لا يوجد مسار شراء أو وسيلة تواصل منشورة لهذا المنتج.'
+                    ? 'لا توجد وسيلة تواصل منشورة لهذا المنتج.'
                     : 'للتواصل: ${product.contactPhone}',
                 style: AppTypography.bodyMedium,
                 textAlign: TextAlign.center,
@@ -251,7 +257,19 @@ class _ProductDetailScreenState extends State<ProductDetailScreen> {
                   variant: PremiumButtonVariant.gold,
                   onPressed: () => MiraUrlLauncher.openExternal(context, 'tel:${product.contactPhone!.trim()}'),
                 ),
+                const SizedBox(height: 8),
+                Text(
+                  'التواصل لا ينشئ طلب شراء داخل ميرا.',
+                  style: AppTypography.bodySmall.copyWith(color: AppColors.textTertiary),
+                  textAlign: TextAlign.center,
+                ),
               ],
+            ] else ...[
+              Text(
+                'لا يوجد مسار شراء أو وسيلة تواصل منشورة لهذا المنتج.',
+                style: AppTypography.bodyMedium,
+                textAlign: TextAlign.center,
+              ),
             ],
           ],
         ),

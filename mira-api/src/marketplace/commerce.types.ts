@@ -11,6 +11,51 @@ export type ActorType = 'customer' | 'partner' | 'admin' | 'system';
 
 export const PURCHASE_MODE_EXTERNAL = 'external';
 export const PURCHASE_MODE_INTERNAL_COD = 'internal_cod';
+/** Browse-only: no buy / contact CTA on the customer video. */
+export const PURCHASE_MODE_DISPLAY = 'display';
+/** Partner phone contact — not a Mira order. */
+export const PURCHASE_MODE_CONTACT = 'contact';
+
+export const PRODUCT_PURCHASE_MODES = [
+  PURCHASE_MODE_DISPLAY,
+  PURCHASE_MODE_EXTERNAL,
+  PURCHASE_MODE_CONTACT,
+  PURCHASE_MODE_INTERNAL_COD,
+] as const;
+export type ProductPurchaseMode = (typeof PRODUCT_PURCHASE_MODES)[number];
+
+/** True when `url` is an http(s) purchase link the customer can open. */
+export function isUsableExternalPurchaseUrl(url: unknown): boolean {
+  const raw = typeof url === 'string' ? url.trim() : '';
+  if (!raw) return false;
+  try {
+    const u = new URL(raw);
+    return u.protocol === 'http:' || u.protocol === 'https:';
+  } catch {
+    return false;
+  }
+}
+
+/**
+ * Customer-facing purchase mode. Legacy rows stored as `external` without a usable
+ * URL are treated as `display` so a leftover link cannot invent a buy button.
+ * Does not rewrite the database.
+ */
+export function resolvePublicPurchaseMode(row: {
+  purchaseMode?: string | null;
+  externalUrl?: string | null;
+}): ProductPurchaseMode {
+  const mode = String(row.purchaseMode || '').trim();
+  if (mode === PURCHASE_MODE_INTERNAL_COD) return PURCHASE_MODE_INTERNAL_COD;
+  if (mode === PURCHASE_MODE_CONTACT) return PURCHASE_MODE_CONTACT;
+  if (mode === PURCHASE_MODE_DISPLAY) return PURCHASE_MODE_DISPLAY;
+  if (mode === PURCHASE_MODE_EXTERNAL) {
+    return isUsableExternalPurchaseUrl(row.externalUrl) ? PURCHASE_MODE_EXTERNAL : PURCHASE_MODE_DISPLAY;
+  }
+  // Unknown / empty: infer from fields (legacy ambiguous).
+  if (isUsableExternalPurchaseUrl(row.externalUrl)) return PURCHASE_MODE_EXTERNAL;
+  return PURCHASE_MODE_DISPLAY;
+}
 
 export const FULFILLMENT_STATUSES = [
   'new',

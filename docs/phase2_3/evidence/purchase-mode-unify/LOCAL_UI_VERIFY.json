@@ -1,0 +1,12 @@
+{
+  "title": "كيف تطلب العميلة هذا المنتج؟",
+  "modes": [
+    "display",
+    "internal_cod",
+    "external",
+    "contact*"
+  ],
+  "hasInternalCheckbox": false,
+  "preview": "لا توجد وسيلة تواصل على حساب الجهة. أضيفي رقمًا في الإعدادات قبل تفعيل هذا الخيار.",
+  "commerceVisible": true
+}

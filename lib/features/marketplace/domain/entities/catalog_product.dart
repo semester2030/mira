@@ -4,13 +4,26 @@ import '../catalog_product_options.dart';
 export '../catalog_offer_media.dart' show CatalogMediaLink, CatalogMainOfferKind, CatalogMediaPlacement, CatalogOfferMedia, CatalogMainOfferKindCodec;
 export '../catalog_product_options.dart';
 
-/// How a product is bought. `external` opens the merchant URL (not a purchase inside Mira).
-/// `internal_cod` uses the Mira cart and cash on delivery.
+/// How a customer requests this product.
+/// - [display]: browse only — no buy / contact CTA
+/// - [external]: open merchant URL (not a Mira order)
+/// - [contact]: partner phone (not a Mira order)
+/// - [internalCod]: Mira cart + cash on delivery
 abstract final class CatalogPurchaseMode {
+  static const display = 'display';
   static const external = 'external';
+  static const contact = 'contact';
   static const internalCod = 'internal_cod';
 
-  static String parse(Object? raw) => raw == internalCod ? internalCod : external;
+  static String parse(Object? raw) {
+    final s = raw?.toString() ?? '';
+    if (s == internalCod) return internalCod;
+    if (s == contact) return contact;
+    if (s == display) return display;
+    if (s == external) return external;
+    // Unknown → display so a leftover URL cannot invent a buy button.
+    return display;
+  }
 }
 
 class CatalogProduct {
@@ -37,7 +50,7 @@ class CatalogProduct {
   final List<CatalogProductVariant> variants;
   final Map<String, String> traits;
 
-  /// `external` | `internal_cod`. Defaults to external when the server does not say.
+  /// `display` | `external` | `contact` | `internal_cod`.
   final String purchaseMode;
 
   /// Units a customer can still order. null = not tracked (unlimited).
@@ -47,6 +60,12 @@ class CatalogProduct {
   final int? deliveryFeeHalalas;
 
   bool get isInternalCod => purchaseMode == CatalogPurchaseMode.internalCod;
+
+  bool get isDisplayOnly => purchaseMode == CatalogPurchaseMode.display;
+
+  bool get isContactMode => purchaseMode == CatalogPurchaseMode.contact;
+
+  bool get isExternalPurchase => purchaseMode == CatalogPurchaseMode.external;
 
   /// True only when the server enabled in-Mira ordering, the price is real, and stock is not known to be empty.
   bool get canOrderInMira =>
@@ -108,7 +127,7 @@ class CatalogProduct {
     this.optionGroups = const [],
     this.variants = const [],
     this.traits = const {},
-    this.purchaseMode = CatalogPurchaseMode.external,
+    this.purchaseMode = CatalogPurchaseMode.display,
     this.stockQty,
     this.deliveryFeeHalalas,
   });

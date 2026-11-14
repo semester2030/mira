@@ -926,7 +926,11 @@ export class PartnersPortalService implements OnModuleInit {
 
     const created = await this.prisma.product.create({
       data: {
-        ...commerceWrite(commerce),
+        ...commerceWrite({
+          ...commerce,
+          // New products default to browse-only until the seller picks a path.
+          purchaseMode: commerce.purchaseMode ?? 'display',
+        }),
         partnerId,
         nameAr,
         nameEn: dto.nameEn?.trim() || nameAr,

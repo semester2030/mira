@@ -22,16 +22,25 @@ enum BuyRoute {
   /// `external`: open the merchant URL. Not a purchase inside Mira.
   external,
 
-  /// No purchase path at all.
+  /// `contact`: open partner phone. Not a purchase inside Mira.
+  contact,
+
+  /// `display` or no purchase path at all.
   none,
 }
 
 BuyRoute decideBuyRoute({required CatalogProduct? product, required bool preview}) {
   if (preview || product == null) return BuyRoute.preview;
+  if (product.isDisplayOnly) return BuyRoute.none;
+  if (product.isContactMode) {
+    final phone = (product.contactPhone ?? '').trim();
+    return phone.isEmpty ? BuyRoute.none : BuyRoute.contact;
+  }
   if (product.isInternalCod) {
     if (product.outOfStock) return BuyRoute.outOfStock;
     return product.canOrderInMira ? BuyRoute.inApp : BuyRoute.unavailable;
   }
+  if (!product.isExternalPurchase) return BuyRoute.none;
   final uri = Uri.tryParse(product.externalUrl.trim());
   return uri != null && uri.hasScheme && uri.host.isNotEmpty ? BuyRoute.external : BuyRoute.none;
 }

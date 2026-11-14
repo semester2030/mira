@@ -2309,13 +2309,31 @@ class _PresentationPageState extends State<_PresentationPage> {
           ),
           advertisementLabel: slide.advertisement?.disclosureLine,
           showPurchaseLink: widget.catalog?.showPurchaseLink ??
-              ((slide.product != null || slide.service == null) &&
-                  (slide.advertisement == null || slide.advertisement!.openLink || slide.product != null)),
+              () {
+                if (slide.advertisement != null) {
+                  return slide.advertisement!.openLink;
+                }
+                final route = decideBuyRoute(product: slide.product, preview: slide.preview);
+                return route == BuyRoute.inApp ||
+                    route == BuyRoute.external ||
+                    route == BuyRoute.contact ||
+                    route == BuyRoute.outOfStock ||
+                    route == BuyRoute.unavailable;
+              }(),
           showAppointmentRequest: widget.catalog?.showAppointmentRequest ??
               (slide.service != null && slide.product == null && (slide.advertisement == null || slide.advertisement!.appointmentOperational)),
           purchaseLabel: slide.advertisement != null
               ? 'افتحي الرابط'
-              : (slide.product?.outOfStock == true ? 'غير متوفر' : MarketplaceCopy.addToCart),
+              : () {
+                  final p = slide.product;
+                  if (p == null) return MarketplaceCopy.addToCart;
+                  if (p.outOfStock) return 'غير متوفر';
+                  final route = decideBuyRoute(product: p, preview: slide.preview);
+                  if (route == BuyRoute.contact) return 'تواصلي';
+                  if (route == BuyRoute.external) return 'الشراء من متجر ${p.partnerNameAr}';
+                  if (route == BuyRoute.inApp) return MarketplaceCopy.addToCart;
+                  return MarketplaceCopy.addToCart;
+                }(),
           onUnavailable: (message) {
             ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text(message)));
           },
@@ -2398,7 +2416,20 @@ class _PresentationPageState extends State<_PresentationPage> {
       case BuyRoute.unavailable:
         tell('الطلب داخل ميرا غير متاح لهذا المنتج الآن.');
       case BuyRoute.none:
-        tell('لا يوجد رابط شراء صالح');
+        tell(
+          product?.isDisplayOnly == true
+              ? 'هذا المنتج للعرض فقط — لا يوجد شراء أو تواصل من الفيديو.'
+              : 'لا يوجد مسار شراء أو تواصل صالح لهذا المنتج',
+        );
+      case BuyRoute.contact:
+        final phone = (product?.contactPhone ?? '').trim();
+        if (phone.isEmpty) {
+          tell('لا توجد وسيلة تواصل منشورة لهذا المنتج');
+          return;
+        }
+        final opened = await MiraUrlLauncher.openExternal(context, 'tel:$phone');
+        if (!context.mounted || !opened) return;
+        tell('فُتح رقم التواصل. هذا ليس طلب شراء داخل ميرا');
       case BuyRoute.inApp:
         if (_cartBusy) return;
         _cartBusy = true;

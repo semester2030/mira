@@ -740,7 +740,7 @@ export class EditorDraftsService {
       // Default purchaseMode only when omitted — empty externalUrl remains allowed.
       // Do NOT invent priceMode here: if omitted, priceHalalas publish rule stays inactive
       // and the materialize Prisma gate returns MATERIALIZE_INVALID without fake zeros.
-      if (values.purchaseMode == null && draft.kind === 'product') values.purchaseMode = 'external';
+      if (values.purchaseMode == null && draft.kind === 'product') values.purchaseMode = 'display';
       this.registry.validateValues({
         profile,
         values,
@@ -960,9 +960,12 @@ export class EditorDraftsService {
           profileId: applied.next.profileId ?? draft.profileId,
           schemaVersion: draft.schemaVersion,
           purchaseMode:
-            values.purchaseMode === 'internal_cod' || values.purchaseMode === 'external'
+            values.purchaseMode === 'internal_cod' ||
+            values.purchaseMode === 'external' ||
+            values.purchaseMode === 'display' ||
+            values.purchaseMode === 'contact'
               ? String(values.purchaseMode)
-              : 'external',
+              : 'display',
           stockQty: typeof values.stockQty === 'number' && Number.isInteger(values.stockQty) ? values.stockQty : null,
           inventoryMode:
             values.inventoryMode === 'variant' || values.inventoryMode === 'product'

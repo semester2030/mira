@@ -4088,60 +4088,110 @@
     const action = document.createElement('div');
     action.className = 'form-section';
     action.setAttribute('data-section-role', 'commerce');
-    text(action, 'الشراء والإعدادات المتقدمة', 'h3');
-    const commerceDetails = document.createElement('details');
-    commerceDetails.className = 'e2b-extra-details';
+    text(action, 'كيف تطلب العميلة هذا المنتج؟', 'h3');
+    const commerceDetails = document.createElement('div');
+    commerceDetails.className = 'e2b-commerce-ask';
     commerceDetails.setAttribute('data-testid', 'e2b-commerce-details');
-    const commerceSummary = document.createElement('summary');
-    commerceSummary.textContent = 'وضع الشراء ورسوم التوصيل (اختياري)';
-    commerceDetails.appendChild(commerceSummary);
     action.appendChild(commerceDetails);
     form.appendChild(action);
-    // Subsequent commerce fields append into the collapsible host (values preserved when collapsed).
     const commerceHost = commerceDetails;
     let url = null;
-    let internalToggle = null;
+    let internalToggle = null; // exclusive radios replace the old checkbox
     let stockInput = null;
     let feeInput = null;
     let optionsJsonInput = null;
     let variantsJsonInput = null;
+    let purchaseModeHint = null;
+    let miraCodPanel = null;
+    let contactHint = null;
+    let mediaModeWarn = null;
     if (type === 'brand') {
+      function inferUiPurchaseMode(src) {
+        const mode = src && src.purchaseMode != null ? String(src.purchaseMode) : '';
+        if (mode === 'internal_cod') return 'internal_cod';
+        if (mode === 'contact') return 'contact';
+        if (mode === 'display') return 'display';
+        if (mode === 'external' || mode === 'link') {
+          return validUrl(src && src.externalUrl) ? 'external' : 'display';
+        }
+        if (validUrl(src && src.externalUrl)) return 'external';
+        return 'display';
+      }
+      const initialMode = inferUiPurchaseMode(
+        seed.purchaseMode != null || seed.externalUrl != null
+          ? seed
+          : editing
+            ? item
+            : { purchaseMode: 'display' },
+      );
+      const sellerName =
+        (window.sessionPartner && window.sessionPartner.nameAr) ||
+        (editing && item && item.partnerNameAr) ||
+        'ميرا';
+      const phoneReady = Boolean(window.sessionPartner && window.sessionPartner.contactPhone);
+      const phoneLabel = phoneReady ? String(window.sessionPartner.contactPhone) : '';
+
+      text(
+        commerceHost,
+        'اختاري طريقة واحدة. المعاينة تتغير فورًا؛ العرض المنشور لا يتغير إلا بعد حفظ مقصود.',
+        'p',
+      );
       const choices = document.createElement('div');
-      choices.className = 'choice-row';
-      choices.append(choice('purchaseMode', 'none', 'بدون شراء الآن', true), choice('purchaseMode', 'link', 'شراء عبر رابط', false), choice('purchaseMode', 'contact', 'تواصل', false));
+      choices.className = 'choice-row purchase-mode-exclusive';
+      choices.setAttribute('data-testid', 'purchase-mode-choices');
+      choices.append(
+        choice('purchaseMode', 'display', 'عرض فقط', initialMode === 'display'),
+        choice('purchaseMode', 'internal_cod', 'شراء داخل ميرا · الدفع عند الاستلام', initialMode === 'internal_cod'),
+        choice('purchaseMode', 'external', 'شراء من متجر خارجي', initialMode === 'external'),
+        choice('purchaseMode', 'contact', 'تواصل للاستفسار', initialMode === 'contact'),
+      );
       commerceHost.appendChild(choices);
-      url = field(commerceHost, 'رابط الشراء (فقط عند اختيار الرابط)', 'externalUrl', editing && item.externalUrl ? item.externalUrl : '', 'url');
+
+      purchaseModeHint = document.createElement('p');
+      purchaseModeHint.className = 'lead';
+      purchaseModeHint.setAttribute('data-testid', 'purchase-mode-preview');
+      commerceHost.appendChild(purchaseModeHint);
+
+      mediaModeWarn = document.createElement('p');
+      mediaModeWarn.className = 'lead';
+      mediaModeWarn.style.color = '#8a4b00';
+      mediaModeWarn.hidden = true;
+      mediaModeWarn.setAttribute('data-testid', 'purchase-mode-media-warn');
+      commerceHost.appendChild(mediaModeWarn);
+
+      url = field(
+        commerceHost,
+        'رابط الشراء (مطلوب لمتجر خارجي)',
+        'externalUrl',
+        editing && item.externalUrl ? item.externalUrl : seed.externalUrl || '',
+        'url',
+      );
       url.required = false;
       url.addEventListener('input', () => {
         bumpFormContentEpoch();
         scheduleEditorDraftAutosave();
+        syncPurchaseModeUi();
       });
       url.addEventListener('change', () => {
         bumpFormContentEpoch();
         scheduleEditorDraftAutosave();
+        syncPurchaseModeUi();
       });
-      if (editing && validUrl(item.externalUrl)) choices.querySelector('input[value="link"]').checked = true;
 
-      // Operational commerce: in-Mira cart + cash on delivery. External URL stays the default.
-      text(commerceHost, 'الشراء داخل ميرا (الدفع عند الاستلام)', 'h4');
-      const internal = document.createElement('label');
-      internalToggle = document.createElement('input');
-      internalToggle.type = 'checkbox';
-      internalToggle.name = 'internalCod';
-      internalToggle.checked = Boolean(seed.purchaseMode === 'internal_cod' || (editing && item.purchaseMode === 'internal_cod'));
-      internalToggle.addEventListener('change', () => {
-        bumpFormContentEpoch();
-        scheduleEditorDraftAutosave();
-      });
-      internal.append(internalToggle, document.createTextNode(' تفعيل الطلب داخل ميرا (دفع نقدًا عند الاستلام). رابط الشراء الخارجي يبقى للمنتجات الخارجية فقط.'));
-      choices.addEventListener('change', bumpFormContentEpoch);
-      commerceHost.appendChild(internal);
-      // Quantity belongs with core offer (colors/sizes/materials); created here then relocated to qtyHost.
+      contactHint = document.createElement('p');
+      contactHint.className = 'lead';
+      contactHint.setAttribute('data-testid', 'purchase-mode-contact-hint');
+      commerceHost.appendChild(contactHint);
+
+      miraCodPanel = document.createElement('div');
+      miraCodPanel.setAttribute('data-testid', 'purchase-mode-cod-panel');
+      commerceHost.appendChild(miraCodPanel);
+
       stockInput = field(
         action,
         'الكمية (اختياري)',
         'stockQty',
-        seed.stockQty != null ? seed.stockQty : (editing && item.stockQty != null ? item.stockQty : ''),
+        seed.stockQty != null ? seed.stockQty : editing && item.stockQty != null ? item.stockQty : '',
         'number',
       );
       stockInput.setAttribute('data-testid', 'catalog-quantity');
@@ -4157,12 +4207,14 @@
         scheduleEditorDraftAutosave();
       });
       feeInput = field(
-        commerceHost,
+        miraCodPanel,
         'رسوم التوصيل بالريال (اتركيها فارغة إذا غير محددة، ولا تُعرض كمجانية)',
         'deliveryFeeSar',
         seed.deliveryFeeHalalas != null
           ? halalasToInput(seed.deliveryFeeHalalas)
-          : (editing && item.deliveryFeeHalalas != null ?halalasToInput(item.deliveryFeeHalalas) : ''),
+          : editing && item.deliveryFeeHalalas != null
+            ? halalasToInput(item.deliveryFeeHalalas)
+            : '',
         'text',
       );
       feeInput.inputMode = 'decimal';
@@ -4174,11 +4226,72 @@
         bumpFormContentEpoch();
         scheduleEditorDraftAutosave();
       });
-      // Advanced JSON tools: developer-only. Brand/salon accounts stay on the simplified fields.
+
+      function linkedMediaCount() {
+        if (!editing || !item) return 0;
+        if (Array.isArray(item.media)) return item.media.length;
+        if (typeof item.mediaCount === 'number') return item.mediaCount;
+        return 0;
+      }
+
+      function syncPurchaseModeUi() {
+        const mode = purchaseMode();
+        const urlBox = url.closest('.field') || url.parentElement;
+        if (urlBox) urlBox.hidden = mode !== 'external';
+        miraCodPanel.hidden = mode !== 'internal_cod';
+        if (mode === 'display') {
+          purchaseModeHint.textContent =
+            'المعاينة: الفيديو والتفاصيل فقط — بلا زر شراء أو تواصل. هذا هو الاختيار الابتدائي للمنتج الجديد.';
+        } else if (mode === 'internal_cod') {
+          purchaseModeHint.textContent =
+            'المعاينة: سترى العميلة زر «أضيفي للسلة»، وسيصل طلب الدفع عند الاستلام (MO-…) إلى قسم الطلبات في حساب «' +
+            sellerName +
+            '».';
+        } else if (mode === 'external') {
+          purchaseModeHint.textContent = validUrl(url.value)
+            ? 'المعاينة: تنتقل العميلة إلى متجر البائع. الضغط لا ينشئ طلبًا داخل ميرا.'
+            : 'أدخلي رابط شراء صالحًا (https://…) قبل التفعيل. الرابط مطلوب لهذا الخيار.';
+        } else if (mode === 'contact') {
+          purchaseModeHint.textContent = phoneReady
+            ? 'المعاينة: تظهر وسيلة التواصل «' + phoneLabel + '». التواصل لا ينشئ طلب شراء داخل ميرا.'
+            : 'لا توجد وسيلة تواصل على حساب الجهة. أضيفي رقمًا في الإعدادات قبل تفعيل هذا الخيار.';
+          contactHint.textContent = phoneReady
+            ? 'وسيلة التواصل المعتمدة: ' + phoneLabel
+            : 'وسيلة التواصل غير متاحة على هذا الحساب.';
+          contactHint.style.color = phoneReady ? '' : '#b00020';
+        }
+        contactHint.hidden = mode !== 'contact';
+        const mediaN = linkedMediaCount();
+        if (mediaN >= 2) {
+          mediaModeWarn.hidden = false;
+          mediaModeWarn.textContent =
+            'هذا المنتج مرتبط بـ ' +
+            mediaN +
+            ' مقاطع. تغيير طريقة الطلب عند الحفظ يسري على كل المقاطع المرتبطة بهذا المنتج.';
+        } else {
+          mediaModeWarn.hidden = true;
+        }
+        try {
+          paintPreview();
+        } catch (_) {
+          /* previewBody may not exist yet during first paint */
+        }
+      }
+      choices.addEventListener('change', () => {
+        bumpFormContentEpoch();
+        scheduleEditorDraftAutosave();
+        syncPurchaseModeUi();
+      });
+
       if (developerAccount) {
+        const advancedDetails = document.createElement('details');
+        advancedDetails.className = 'e2b-extra-details';
+        advancedDetails.setAttribute('data-testid', 'developer-advanced-json');
+        const advancedSummary = document.createElement('summary');
+        advancedSummary.textContent = 'إعدادات متقدمة · JSON';
+        advancedDetails.appendChild(advancedSummary);
         const advancedWrap = document.createElement('label');
         advancedWrap.className = 'check-row';
-        advancedWrap.setAttribute('data-testid', 'developer-advanced-json');
         const advancedToggle = document.createElement('input');
         advancedToggle.type = 'checkbox';
         advancedToggle.name = 'optionsAdvancedJson';
@@ -4186,11 +4299,12 @@
           advancedToggle,
           document.createTextNode(' تعديل متقدم بصيغة JSON (يستبدل النموذج المبسّط عند التفعيل)'),
         );
-        commerceHost.appendChild(advancedWrap);
-        optionsJsonInput = field(commerceHost, 'خيارات المنتج JSON (متقدم)', 'optionsJson', '', 'textarea');
+        advancedDetails.appendChild(advancedWrap);
+        commerceHost.appendChild(advancedDetails);
+        optionsJsonInput = field(advancedDetails, 'خيارات المنتج JSON (متقدم)', 'optionsJson', '', 'textarea');
         optionsJsonInput.placeholder =
           '[{"id":"size","labelAr":"المقاس","kind":"size","values":[{"id":"m","labelAr":"M"}]}]';
-        variantsJsonInput = field(commerceHost, 'التركيبات JSON (متقدم)', 'variantsJson', '', 'textarea');
+        variantsJsonInput = field(advancedDetails, 'التركيبات JSON (متقدم)', 'variantsJson', '', 'textarea');
         variantsJsonInput.placeholder =
           '[{"id":"m-black","selections":{"size":"m"},"priceHalalas":5200,"available":true}]';
         function setAdvancedVisible(on) {
@@ -4217,7 +4331,11 @@
         variantsJsonInput.addEventListener('change', bumpFormContentEpoch);
         optionsJsonInput._advancedToggle = advancedToggle;
       }
-      text(commerceHost, 'المخزون ورسوم التوصيل ووضع الشراء يسري مباشرة؛ الألوان والمقاسات من الخيارات الأساسية؛ التركيبات للمنشور تمر بمسودة مراجعة.');
+      syncPurchaseModeUi();
+      text(
+        commerceHost,
+        'الحفظ المسودة أو النشر يثبّت طريقة الطلب على المنتج وكل مقاطعه المرتبطة. الخروج دون حفظ يترك العرض المنشور كما هو.',
+      );
     }
 
     const preview = document.createElement('div');
@@ -5682,7 +5800,12 @@
 
     function purchaseMode() {
       const selected = form.querySelector('input[name="purchaseMode"]:checked');
-      return selected ? selected.value : 'none';
+      const v = selected ? selected.value : 'display';
+      if (v === 'none' || v === 'link') {
+        // legacy radio values from older sessions
+        return v === 'link' ? 'external' : 'display';
+      }
+      return v || 'display';
     }
 
     function paintPreview() {
@@ -5692,9 +5815,11 @@
         halalas == null ? 'السعر غير صالح' : formatPrice(halalas),
       ];
       if (type === 'brand') {
-        if (purchaseMode() === 'link') lines.push(validUrl(url.value) ? 'سيظهر شراء عبر الرابط' : 'الرابط غير صالح، ولن يظهر اشتري الآن');
-        else if (purchaseMode() === 'contact') lines.push('سيظهر تواصل إذا كان للجهة رقم');
-        else lines.push('لن يظهر اشتري الآن');
+        const mode = purchaseMode();
+        if (mode === 'external') lines.push(validUrl(url.value) ? 'سيظهر شراء من متجر خارجي' : 'الرابط غير صالح — لن يظهر زر الشراء');
+        else if (mode === 'contact') lines.push('سيظهر تواصل إذا كان للجهة رقم');
+        else if (mode === 'internal_cod') lines.push('سيظهر أضيفي للسلة · طلب داخل ميرا');
+        else lines.push('عرض فقط — بلا زر شراء أو تواصل');
       } else {
         lines.push(duration && duration.value ? 'المدة ' + duration.value + ' دقيقة' : 'بدون مدة');
       }
@@ -5702,6 +5827,14 @@
     }
     form.oninput = paintPreview;
     paintPreview();
+    try {
+      const modeInputs = form.querySelectorAll('input[name="purchaseMode"]');
+      if (modeInputs.length) {
+        // Refresh exclusive-mode preview now that previewBody exists.
+        modeInputs[0].dispatchEvent(new Event('change', { bubbles: true }));
+      }
+    } catch (_) {}
+
 
     async function addStaged(fileList, placement) {
       for (const raw of Array.from(fileList || [])) {
@@ -6393,7 +6526,13 @@
 
     // Builds the commerce part of the payload. `null` clears a column on the server.
     function readCommerce() {
-      const value = { purchaseMode: internalToggle.checked ? 'internal_cod' : 'external' };
+      const mode = purchaseMode();
+      const value = {
+        purchaseMode:
+          mode === 'internal_cod' || mode === 'external' || mode === 'contact' || mode === 'display'
+            ? mode
+            : 'display',
+      };
       const stockRaw = stockInput.value.trim();
       if (stockRaw === '') value.stockQty = null;
       else if (/^\d+$/.test(stockRaw)) value.stockQty = parseInt(stockRaw, 10);
@@ -6604,12 +6743,12 @@
         setFieldError(form, 'category', 'اختاري التصنيف.');
         blocked = true;
       }
-      if (type === 'brand' && purchaseMode() === 'link' && !validUrl(url.value)) {
-        setFieldError(form, 'externalUrl', 'رابط الشراء غير صالح. اتركيه فارغًا إذا لا يوجد شراء.');
+      if (type === 'brand' && purchaseMode() === 'external' && !validUrl(url.value)) {
+        setFieldError(form, 'externalUrl', 'رابط الشراء مطلوب وصالح عند اختيار متجر خارجي.');
         blocked = true;
       }
       if (type === 'brand' && purchaseMode() === 'contact' && !(window.sessionPartner && window.sessionPartner.contactPhone)) {
-        status.textContent = 'لا توجد وسيلة تواصل صالحة على حساب الجهة.';
+        status.textContent = 'لا توجد وسيلة تواصل صالحة على حساب الجهة. لا يمكن تفعيل «تواصل للاستفسار».';
         blocked = true;
       }
       if (duration && duration.value && Number(duration.value) < 5) {
@@ -6653,7 +6792,7 @@
       };
       payload.nameEn = String(new FormData(form).get('nameEn') || '').trim();
       if (type === 'brand') {
-        payload.externalUrl = purchaseMode() === 'link' ? url.value.trim() : '';
+        payload.externalUrl = purchaseMode() === 'external' && url ? url.value.trim() : '';
         Object.assign(payload, commerce.value);
         if (subcategory && subcategory.value) {
           payload.subcategory = subcategory.value;
@@ -6895,7 +7034,7 @@
               concernTags: tags.value.split(',').map((part) => part.trim()).filter(Boolean),
             });
             if (type === 'brand') {
-              basicsPayload.externalUrl = purchaseMode() === 'link' && url ? url.value.trim() : '';
+              basicsPayload.externalUrl = purchaseMode() === 'external' && url ? url.value.trim() : '';
               if (cosmeticVisible()) {
                 basicsPayload.skinTypes = skin.value.split(',').map((part) => part.trim()).filter(Boolean);
                 basicsPayload.stepAr = step.value.trim();

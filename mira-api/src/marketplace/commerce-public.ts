@@ -1,11 +1,13 @@
 import { BadRequestException } from '@nestjs/common';
 import {
+  PRODUCT_PURCHASE_MODES,
   PURCHASE_MODE_EXTERNAL,
   PURCHASE_MODE_INTERNAL_COD,
   canonicalVariantKey,
   parseAvailability,
   parseOptionGroups,
   parseVariants,
+  resolvePublicPurchaseMode,
 } from './commerce.types';
 
 function assertVariantIdsUnique(variantsJson: unknown[]): void {
@@ -99,6 +101,8 @@ type ProductCommerceRow = {
   deliveryFeeHalalas: number | null;
   optionsJson: unknown;
   variantsJson: unknown;
+  /** Used only to resolve legacy external-without-URL → display for customers. */
+  externalUrl?: string | null;
 };
 
 type ServiceCommerceRow = {
@@ -115,9 +119,9 @@ export function sellableQty(row: Pick<ProductCommerceRow, 'stockQty' | 'reserved
 
 export function publicProductCommerce(row: ProductCommerceRow) {
   const available = sellableQty(row);
-  const inApp = row.purchaseMode === PURCHASE_MODE_INTERNAL_COD;
+  const purchaseMode = resolvePublicPurchaseMode(row);
   return {
-    purchaseMode: inApp ? PURCHASE_MODE_INTERNAL_COD : PURCHASE_MODE_EXTERNAL,
+    purchaseMode,
     // Sellable units (stock minus reservations). null = not tracked.
     stockQty: available,
     stockAvailable: available === null || available > 0,
@@ -177,7 +181,7 @@ export function normalizeProductCommerce(
   const out: ProductCommerceData = {};
 
   if (input.purchaseMode !== undefined) {
-    if (input.purchaseMode !== PURCHASE_MODE_EXTERNAL && input.purchaseMode !== PURCHASE_MODE_INTERNAL_COD) {
+    if (!(PRODUCT_PURCHASE_MODES as readonly string[]).includes(String(input.purchaseMode))) {
       throw new BadRequestException('طريقة الشراء غير صالحة');
     }
     out.purchaseMode = input.purchaseMode;
