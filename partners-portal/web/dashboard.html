@@ -6,7 +6,8 @@
   <meta name="mira-api-base" content="https://mira-api-n4p3.onrender.com/api/v1" />
   <title>لوحة التحكم — شركاء ميرا</title>
   <link href="https://fonts.googleapis.com/css2?family=Tajawal:wght@400;700;800&display=swap" rel="stylesheet" />
-  <link rel="stylesheet" href="css/site.css" />
+  <link rel="stylesheet" href="css/site.css?v=portal-shell-restore1" />
+  <link rel="stylesheet" href="css/e2b-product-editor.css?v=portal-shell-restore1" />
 </head>
 <body>
   <header>
@@ -41,8 +42,16 @@
         <div class="journey-actions">
           <button type="button" class="btn btn-primary" id="goProduct">إضافة منتج</button>
           <button type="button" class="btn btn-primary" id="goService">إضافة خدمة</button>
+          <button type="button" class="btn btn-primary" id="goBulk">إضافة مجموعة</button>
         </div>
+        <div id="laneEntries" class="lane-entries" data-testid="lane-entries-host" style="margin-top:1rem"></div>
         <p id="storeLinkState"><strong>ربط متجر خارجي:</strong> غير متصل. لا يوجد تكامل API، وغيابه لا يمنع المسودة.</p>
+      </div>
+
+      <div class="card hidden" id="bulkSection">
+        <h2>إضافة مجموعة</h2>
+        <p class="lead">مقطع واحد لكل عرض، ثم ملخص، ثم نشر المجموعة دفعة واحدة. لا يُطلب العدد مسبقًا.</p>
+        <div id="bulkRoot"></div>
       </div>
 
       <div class="card" id="catalogSection">
@@ -64,6 +73,13 @@
         <form id="serviceForm"></form>
       </div>
 
+      <div class="card" id="editorDraftsSection">
+        <h2>المسودات</h2>
+        <p class="lead">مسوداتك المحفوظة على الخادم. افتحي أي مسودة لمتابعة التحرير.</p>
+        <button type="button" class="btn btn-ghost" id="refreshEditorDrafts">تحديث المسودات</button>
+        <div id="editorDraftsList" data-testid="editor-drafts-list"></div>
+      </div>
+
       <div class="card" id="commerceSection">
         <h2>الطلبات والحجوزات</h2>
         <p class="lead">طلبات الدفع عند الاستلام داخل ميرا وطلبات المواعيد. «طلب موعد» ليس حجزًا مؤكدًا حتى تؤكديه.</p>
@@ -83,6 +99,25 @@
         </div>
       </div>
 
+      <div class="card" id="partnerSettingsSection">
+        <h2>الإعدادات</h2>
+        <p class="lead">بيانات حساب الشريك وإعدادات البوابة. ليست إعلانات المشاهير.</p>
+        <dl class="settings-dl" id="partnerSettingsBody">
+          <div><dt>الاسم</dt><dd id="settingsPartnerName">—</dd></div>
+          <div><dt>النوع</dt><dd id="settingsPartnerType">—</dd></div>
+          <div><dt>المدينة</dt><dd id="settingsPartnerCity">—</dd></div>
+        </dl>
+        <h2>أنشطتي وطلبات التوسعة</h2>
+        <p class="lead">المعتمد يبقى متاحًا أثناء انتظار التوسعة. الرفض لا يلغي اعتمادًا سابقًا.</p>
+        <div id="activitiesApproved"></div>
+        <div id="activitiesRequests"></div>
+        <div class="actions">
+          <button type="button" class="btn btn-primary" id="expandActivityBtn">طلب إضافة نشاط أو منتج</button>
+        </div>
+        <div id="expandActivityPanel" class="hidden" style="margin-top:1rem"></div>
+        <p class="lead">لتسجيل الخروج استخدمي الرابط في أعلى الصفحة.</p>
+      </div>
+
       <div class="card" id="adsSection">
         <h2>إعلانات المشاهير</h2>
         <p class="lead" id="adsNotice"></p>
@@ -93,23 +128,294 @@
     </div>
   </main>
 
-  <script src="js/api.js"></script>
-  <script src="js/motion.js"></script>
-  <script src="js/motion-fixture.js"></script>
-  <script src="js/ads.js"></script>
-  <script src="js/service-templates.js"></script>
-  <script src="js/catalog-options-core.js"></script>
-  <script src="js/catalog-journey.js"></script>
-  <script src="js/commerce-orders.js"></script>
+  <script src="js/api.js?v=portal-shell-restore1"></script>
+  <script src="js/motion.js?v=portal-shell-restore1"></script>
+  <script src="js/motion-fixture.js?v=portal-shell-restore1"></script>
+  <script src="js/ads.js?v=portal-shell-restore1"></script>
+  <script src="js/service-templates.js?v=portal-shell-restore1"></script>
+  <script src="js/catalog-options-core.js?v=portal-shell-restore1"></script>
+  <script src="js/product-commerce-fields.js?v=portal-shell-restore1"></script>
+  <script src="js/registry-attribute-fields.js?v=portal-shell-restore1"></script>
+  <script src="js/inventory-editor-state.js?v=portal-shell-restore1"></script>
+  <script src="js/editor-v2.js?v=portal-shell-restore1"></script>
+  <script src="js/catalog-journey.js?v=portal-shell-restore1"></script>
+  <script src="js/lane-entries.js?v=portal-shell-restore1"></script>
+  <script src="js/bulk-add.js?v=portal-shell-restore1"></script>
+  <script src="js/bulk-group-journey.js?v=portal-shell-restore1"></script>
+  <script src="js/portal-shell.js?v=portal-shell-restore1"></script>
+  <script src="js/e2b-product-shell.js?v=portal-shell-restore1"></script>
+  <script src="js/e2b-service-shell.js?v=portal-shell-restore1"></script>
+  <script src="js/commerce-orders.js?v=portal-shell-restore1"></script>
   <script>
     const labeledUi = new URLSearchParams(location.search).get('ui-fixture') === 'labeled';
     if (!labeledUi && !PartnersApi.isLoggedIn()) location.href = 'login.html' + location.search;
 
     document.getElementById('logout').onclick = (e) => {
       e.preventDefault();
+      // clearSession bumps auth generation and cancels via mira:auth-change.
       PartnersApi.clearSession();
+      if (window.MiraEditorV2) MiraEditorV2.cancelAllPending('logout');
       location.href = 'login.html' + location.search;
     };
+
+    const ACTIVITY_STATE_AR = {
+      pending: 'قيد المراجعة',
+      approved: 'معتمد',
+      rejected: 'مرفوض',
+      partial: 'معتمد جزئيًا',
+    };
+    let activityCatalogCache = null;
+    window.renderPartnerActivities = async function renderPartnerActivities(activities, partner) {
+      const approvedEl = document.getElementById('activitiesApproved');
+      const reqEl = document.getElementById('activitiesRequests');
+      const expandBtn = document.getElementById('expandActivityBtn');
+      const expandPanel = document.getElementById('expandActivityPanel');
+      if (!approvedEl || !reqEl) return;
+      if (partner && partner.type === 'developer') {
+        approvedEl.textContent = 'حساب المطور: جميع تصنيفات المنتجات والخدمات متاحة ضمن صلاحياته الرسمية.';
+        reqEl.replaceChildren();
+        if (expandBtn) expandBtn.hidden = true;
+        return;
+      }
+      if (!activities) {
+        approvedEl.textContent = 'لا توجد منح أنشطة بعد (حساب قديم أو بانتظار المراجعة).';
+        reqEl.replaceChildren();
+        return;
+      }
+      try {
+        activityCatalogCache = activityCatalogCache || (await PartnersApi.activitiesCatalog());
+      } catch (e) {
+        activityCatalogCache = { items: [], identityKinds: {}, modes: {} };
+      }
+      const labelOf = (id) => {
+        const it = (activityCatalogCache.items || []).find((x) => x.id === id);
+        return it ? it.label : id;
+      };
+      approvedEl.replaceChildren();
+      const h = document.createElement('p');
+      h.innerHTML = '<b>المعتمد الآن</b>';
+      approvedEl.append(h);
+      if (!(activities.grants || []).length) {
+        approvedEl.append(document.createTextNode('لا أنشطة معتمدة بعد.'));
+      } else {
+        for (const g of activities.grants) {
+          const p = document.createElement('p');
+          p.textContent = labelOf(g.activity) + (g.item_name ? ' · ' + g.item_name : ' · فرع كامل');
+          approvedEl.append(p);
+        }
+      }
+      reqEl.replaceChildren();
+      const rh = document.createElement('p');
+      rh.innerHTML = '<b>الطلبات والقرارات</b>';
+      reqEl.append(rh);
+      for (const r of activities.requests || []) {
+        const art = document.createElement('article');
+        art.append(Object.assign(document.createElement('p'), {
+          textContent: (r.kind === 'join' ? 'انضمام' : 'توسعة') + ' · ' + (ACTIVITY_STATE_AR[r.state] || r.state),
+        }));
+        for (const l of r.lines || []) {
+          art.append(Object.assign(document.createElement('p'), {
+            textContent: labelOf(l.activity) + (l.item_name ? ' · ' + l.item_name : '') + ' — ' + (ACTIVITY_STATE_AR[l.decision] || l.decision),
+          }));
+        }
+        if (r.reason) art.append(Object.assign(document.createElement('p'), { textContent: 'سبب القرار: ' + r.reason }));
+        reqEl.append(art);
+      }
+      const pendingExpand = (activities.requests || []).some((r) => r.kind === 'expand' && r.state === 'pending');
+      if (expandBtn) {
+        expandBtn.hidden = false;
+        expandBtn.disabled = pendingExpand;
+        expandBtn.textContent = pendingExpand ? 'طلب توسعة قيد المراجعة' : 'طلب إضافة نشاط أو منتج';
+        expandBtn.onclick = async () => {
+          if (!expandPanel) return;
+          expandPanel.classList.remove('hidden');
+          expandPanel.replaceChildren();
+          const cat = activityCatalogCache || (await PartnersApi.activitiesCatalog());
+          const form = document.createElement('form');
+          form.append(Object.assign(document.createElement('p'), { textContent: 'اختاري فروعًا جديدة فقط. المعتمد يبقى متاحًا.' }));
+          const desc = document.createElement('textarea');
+          desc.required = true; desc.placeholder = 'وصف التوسعة'; desc.style.width = '100%';
+          form.append(desc);
+          const picks = [];
+          for (const it of cat.items || []) {
+            const grantedCat = (activities.grants || []).some((g) => g.activity === it.id && g.scope === 'category');
+            if (grantedCat) continue;
+            const lab = document.createElement('label');
+            lab.style.display = 'flex';
+            lab.style.alignItems = 'center';
+            lab.style.gap = '8px';
+            const cb = document.createElement('input');
+            cb.type = 'checkbox'; cb.value = it.id;
+            cb.setAttribute('data-activity-id', it.id);
+            if (it.imageKey) cb.setAttribute('data-image-key', it.imageKey);
+            lab.append(cb);
+            if (it.icon && it.icon.smallUrl) {
+              const img = document.createElement('img');
+              img.src = it.icon.smallUrl;
+              img.alt = it.label;
+              img.width = 36;
+              img.height = 36;
+              img.style.borderRadius = '50%';
+              img.style.objectFit = 'cover';
+              img.setAttribute('data-image-key', it.imageKey || '');
+              lab.append(img);
+            }
+            lab.append(document.createTextNode(' ' + it.group + ' · ' + it.label));
+            form.append(lab);
+            picks.push(cb);
+          }
+          const submit = document.createElement('button');
+          submit.type = 'submit'; submit.className = 'btn btn-primary'; submit.textContent = 'إرسال طلب التوسعة';
+          form.append(submit);
+          form.onsubmit = async (ev) => {
+            ev.preventDefault();
+            const lines = picks.filter((c) => c.checked).map((c) => ({ activity: c.value, scope: 'category' }));
+            if (!lines.length) return alert('اختاري نشاطًا');
+            const meta = partner.activitiesMeta || {};
+            try {
+              await PartnersApi.expandActivities({
+                identity: meta.identity || ['shop'],
+                locations: meta.locations || [],
+                description: desc.value.trim(),
+                lines,
+              });
+              alert('تم إرسال طلب التوسعة');
+              location.reload();
+            } catch (err) {
+              alert(err.messageAr || err.message);
+            }
+          };
+          expandPanel.append(form);
+        };
+      }
+    };
+
+    const DRAFT_STATUS_AR = {
+      draft: 'مسودة',
+      ready: 'جاهزة',
+      submitted: 'مُرسلة للمراجعة',
+      materialized: 'محفوظة كعرض',
+      discarded: 'مهملة',
+      error: 'خطأ',
+    };
+    const DRAFT_KIND_AR = { product: 'منتج', service: 'خدمة' };
+
+    function formatDraftUpdatedAt(value) {
+      if (!value) return '';
+      try {
+        const d = new Date(value);
+        if (Number.isNaN(d.getTime())) return String(value);
+        return d.toLocaleString('ar-SA', { dateStyle: 'medium', timeStyle: 'short' });
+      } catch (_) {
+        return String(value);
+      }
+    }
+
+    window.renderEditorDrafts = async function renderEditorDrafts() {
+      const list = document.getElementById('editorDraftsList');
+      if (!list) return;
+      if (!(window.MiraEditorV2 && MiraEditorV2.state.enabled)) {
+        list.textContent = 'المحرر غير متاح حاليًا.';
+        return;
+      }
+      if (MiraEditorV2.state.registryMismatch) {
+        list.textContent = 'تعذر مزامنة المحرر — حدّثي الصفحة أو تواصلي مع الدعم.';
+        return;
+      }
+      list.textContent = 'جارٍ التحميل…';
+      try {
+        const data = await MiraEditorV2.listDrafts();
+        list.replaceChildren();
+        const items = (data && data.items) || [];
+        if (!items.length) {
+          list.textContent = 'لا توجد مسودات بعد.';
+          return;
+        }
+        items.forEach((d) => {
+          const row = document.createElement('div');
+          row.className = 'portal-draft-card list-row';
+          row.setAttribute('data-portal-draft-card', '1');
+          row.setAttribute('data-testid', 'portal-draft-row');
+          row.setAttribute('data-draft-id', d.clientDraftId || '');
+          row.setAttribute('data-draft-rev', String(d.revision != null ? d.revision : ''));
+          const title = (d.values && d.values.nameAr) || 'بدون اسم';
+          const kindLabel = DRAFT_KIND_AR[d.kind] || d.kind || 'عنصر';
+          const statusLabel = DRAFT_STATUS_AR[d.status] || d.status || 'مسودة';
+          const updatedLabel = formatDraftUpdatedAt(d.updatedAt || d.updated_at || d.modifiedAt);
+          const meta = document.createElement('div');
+          meta.className = 'portal-draft-meta';
+          meta.innerHTML =
+            '<strong class="portal-draft-name"></strong>' +
+            '<span class="portal-draft-kind"></span>' +
+            '<span class="portal-draft-status"></span>' +
+            (updatedLabel ? '<span class="portal-draft-updated"></span>' : '');
+          meta.querySelector('.portal-draft-name').textContent = title;
+          meta.querySelector('.portal-draft-kind').textContent = kindLabel;
+          meta.querySelector('.portal-draft-status').textContent = statusLabel;
+          if (updatedLabel) meta.querySelector('.portal-draft-updated').textContent = 'آخر تعديل: ' + updatedLabel;
+          const openBtn = document.createElement('button');
+          openBtn.type = 'button';
+          openBtn.className = 'btn btn-primary';
+          openBtn.setAttribute('data-testid', 'portal-draft-open');
+          openBtn.textContent = 'فتح';
+          openBtn.onclick = async () => {
+            try {
+              const draft = await MiraEditorV2.openDraft(d.clientDraftId);
+              const kindHint = draft.kind === 'service' ? 'services' : 'products';
+              if (window.MiraPortalShell) MiraPortalShell.navigate(kindHint, 'edit', { force: true });
+              if (window.CatalogJourney && typeof CatalogJourney.reopenServerDraft === 'function') {
+                CatalogJourney.reopenServerDraft(draft, 'مسودة: ' + ((draft.values && draft.values.nameAr) || title));
+              } else {
+                const target = CatalogJourney.resolveFormTarget
+                  ? CatalogJourney.resolveFormTarget(draft.kind)
+                  : {
+                      formId: draft.kind === 'product' ? 'catalogForm' : 'serviceForm',
+                      titleId: draft.kind === 'product' ? 'catalogTitle' : 'serviceTitle',
+                      type: draft.kind === 'product' ? 'brand' : (window.sessionPartner.type === 'clinic' ? 'clinic' : 'salon'),
+                    };
+                const values = draft.values || {};
+                const stub = draft.targetOwnerId
+                  ? {
+                      id: draft.targetOwnerId,
+                      nameAr: values.nameAr || '',
+                      priceHalalas: values.priceHalalas,
+                      category: values.category || '',
+                    }
+                  : null;
+                CatalogJourney.renderForm(
+                  target.type,
+                  stub,
+                  target.formId,
+                  target.titleId,
+                  'مسودة: ' + (values.nameAr || title),
+                  {
+                    clientDraftId: draft.clientDraftId,
+                    kind: draft.kind,
+                    profileId: draft.profileId,
+                    schemaVersion: draft.schemaVersion,
+                    revision: draft.revision,
+                    targetOwnerId: draft.targetOwnerId || null,
+                    status: draft.status,
+                    submitReviewStatus: draft.submitReviewStatus || null,
+                    values: values,
+                  },
+                );
+              }
+              clearFormDirty(document.getElementById('catalogForm'));
+              clearFormDirty(document.getElementById('serviceForm'));
+            } catch (error) {
+              list.textContent = 'تعذر الفتح: ' + (error.message || error);
+            }
+          };
+          row.append(meta, openBtn);
+          list.appendChild(row);
+        });
+      } catch (error) {
+        list.textContent = 'تعذر التحميل: ' + (error.message || error);
+      }
+    };
+    const refreshDraftsBtn = document.getElementById('refreshEditorDrafts');
+    if (refreshDraftsBtn) refreshDraftsBtn.onclick = () => window.renderEditorDrafts();
 
     function renderCatalog(type, catalog, listId, formId, titleId) {
       CatalogJourney.renderCatalog(type, catalog, listId, formId, titleId);
@@ -127,11 +433,70 @@
     };
 
     function scrollToForm(id) {
-      document.getElementById(id).scrollIntoView({
-        behavior: MiraMotion.reduced() ? 'auto' : 'smooth',
-        block: 'start',
+      // Legacy helper — portal shell owns navigation; keep for fixtures without shell.
+      if (window.MiraPortalShell) return;
+      const node = document.getElementById(id);
+      if (node) {
+        node.scrollIntoView({
+          behavior: MiraMotion.reduced() ? 'auto' : 'smooth',
+          block: 'start',
+        });
+      }
+    }
+
+    function markFormDirty(form) {
+      if (!form) return;
+      form.dataset.dirty = '1';
+    }
+
+    function clearFormDirty(form) {
+      if (!form) return;
+      form.dataset.dirty = '0';
+    }
+
+    function formLooksDirty(form) {
+      if (!form) return false;
+      if (form.dataset && form.dataset.dirty === '1') return true;
+      if (window.MiraEditorV2 && MiraEditorV2.state && MiraEditorV2.state.pendingFlush) return true;
+      return false;
+    }
+
+    function wireDirtyTracking() {
+      if (window.__miraPortalDirtyWired) return;
+      window.__miraPortalDirtyWired = true;
+      document.addEventListener(
+        'input',
+        (e) => {
+          const t = e.target;
+          if (!t) return;
+          const form = t.closest && t.closest('#catalogForm, #serviceForm');
+          if (form) markFormDirty(form);
+        },
+        true,
+      );
+      document.addEventListener(
+        'change',
+        (e) => {
+          const t = e.target;
+          if (!t) return;
+          const form = t.closest && t.closest('#catalogForm, #serviceForm');
+          if (form) markFormDirty(form);
+        },
+        true,
+      );
+      window.addEventListener('beforeunload', (e) => {
+        if (formLooksDirty(document.getElementById('catalogForm')) || formLooksDirty(document.getElementById('serviceForm'))) {
+          e.preventDefault();
+          e.returnValue = '';
+        }
+      });
+      document.addEventListener('mira:draft-saved', (ev) => {
+        const formId = ev && ev.detail && ev.detail.formId;
+        clearFormDirty(document.getElementById(formId || 'catalogForm'));
+        if (!formId) clearFormDirty(document.getElementById('serviceForm'));
       });
     }
+    wireDirtyTracking();
 
     async function load(options) {
       try {
@@ -158,14 +523,150 @@
         MiraMotion.announce('اكتمل تحميل لوحة الشريك');
 
         window.sessionPartner = p;
+        window.sessionBranches = Array.isArray(data.branches) ? data.branches : [];
+        window.sessionServices = (data.catalog && Array.isArray(data.catalog.services)) ? data.catalog.services : [];
+        window.sessionActivities = data.activities || null;
+        document.body.dataset.partnerType = p.type || '';
+        try { localStorage.setItem('mira_partner_id', p.id); } catch (e) {}
+        const sn = document.getElementById('settingsPartnerName');
+        const st = document.getElementById('settingsPartnerType');
+        const sc = document.getElementById('settingsPartnerCity');
+        if (sn) sn.textContent = p.nameAr || p.nameEn || p.id || '—';
+        if (st) st.textContent = p.type === 'developer' ? 'مطور' : (p.type || '—');
+        if (sc) sc.textContent = p.city || '—';
+        if (typeof window.renderPartnerActivities === 'function') {
+          window.renderPartnerActivities(data.activities || null, p);
+        }
+        if (window.MiraEditorV2) {
+          await MiraEditorV2.bootstrap(p);
+          if (window.renderEditorDrafts) renderEditorDrafts();
+        }
         const serviceButton = document.getElementById('goService');
         const productButton = document.getElementById('goProduct');
-        const showServices = developer || p.type === 'clinic' || p.type === 'salon';
-        const showProducts = developer || p.type === 'brand';
+        const bulkButton = document.getElementById('goBulk');
+        const bulkSection = document.getElementById('bulkSection');
+        const grantList = (data.activities && data.activities.grants) || [];
+        const grantKinds = new Set();
+        if (activityCatalogCache || grantList.length) {
+          /* kinds resolved after catalog load in renderPartnerActivities; infer from id prefix */
+          for (const g of grantList) {
+            const a = String(g.activity || '');
+            if (a.indexOf('service.') === 0 || a.indexOf('occasions.type') === 0 || a === 'occasions.styling') {
+              grantKinds.add('service');
+            } else {
+              grantKinds.add('product');
+            }
+          }
+        }
+        const showServices =
+          developer ||
+          grantKinds.has('service') ||
+          ((!grantList.length) && (p.type === 'clinic' || p.type === 'salon' || p.type === 'event_planner'));
+        const showProducts =
+          developer ||
+          grantKinds.has('product') ||
+          ((!grantList.length) && (p.type === 'brand' || (p.type === 'event_planner' && p.canSellProducts === true)));
         serviceButton.hidden = !showServices;
         productButton.hidden = !showProducts;
-        serviceButton.onclick = () => scrollToForm('serviceForm');
-        productButton.onclick = () => scrollToForm('catalogForm');
+        bulkButton.hidden = !(showServices || showProducts);
+        if (window.MiraLaneEntries && typeof MiraLaneEntries.paintLaneEntries === 'function') {
+          MiraLaneEntries.paintLaneEntries();
+        }
+        if (window.MiraPortalShell) {
+          MiraPortalShell.boot();
+          MiraPortalShell.setDirtyGuard(function () {
+            return formLooksDirty(document.getElementById('catalogForm')) ||
+              formLooksDirty(document.getElementById('serviceForm'));
+          });
+          if (showProducts) MiraPortalShell.navigate('products', 'list', { replace: true, force: true });
+          else if (showServices) MiraPortalShell.navigate('services', 'list', { replace: true, force: true });
+        }
+        if (showProducts && window.MiraE2BProductShell) MiraE2BProductShell.enableProductMode();
+        if (showServices && !showProducts && window.MiraE2BServiceShell) {
+          MiraE2BServiceShell.enableServiceMode('catalogForm');
+        }
+        productButton.onclick = () => {
+          bulkSection.classList.add('hidden');
+          // المجوهرات/الأطفال/الهدايا مداخل مستقلة — لا تُفتح داخل أناقتك تلقائيًا.
+          if (window.MiraLaneEntries && typeof MiraLaneEntries.startProductAdd === 'function') {
+            Promise.resolve(MiraLaneEntries.startProductAdd()).catch(function (e) {
+              console.warn('[goProduct]', e);
+            });
+            return;
+          }
+          if (window.MiraLaneEntries && typeof MiraLaneEntries.clearLaneLock === 'function') {
+            MiraLaneEntries.clearLaneLock();
+          } else {
+            window.__MIRA_TAXONOMY_LANE__ = 'elegance';
+            window.__MIRA_LANE_PROFILE_ID__ = null;
+          }
+          // Do not wipe an in-progress product editor when toggling product↔service (R-04 isolation).
+          const catalogForm = document.getElementById('catalogForm');
+          const hasProductEditor = !!(catalogForm && catalogForm.querySelector('input[name="nameAr"]'));
+          if ((!options || !options.preserveForms) && !hasProductEditor) {
+            if (developer) renderForm('brand', null, 'catalogForm', 'catalogTitle');
+            else if (p.type === 'brand') renderForm('brand', null, 'catalogForm', 'catalogTitle');
+          }
+          if (window.MiraPortalShell) MiraPortalShell.openProductEditor();
+          if (window.MiraE2BProductShell) MiraE2BProductShell.focusEditor();
+          else scrollToForm('catalogForm');
+        };
+        serviceButton.onclick = () => {
+          bulkSection.classList.add('hidden');
+          const openClassicService = () => {
+            if (window.MiraLaneEntries && typeof MiraLaneEntries.clearLaneLock === 'function') {
+              MiraLaneEntries.clearLaneLock();
+            } else {
+              window.__MIRA_TAXONOMY_LANE__ = 'elegance';
+              window.__MIRA_LANE_PROFILE_ID__ = null;
+            }
+            if (developer) {
+              const serviceForm = document.getElementById('serviceForm');
+              const hasServiceEditor = !!(serviceForm && serviceForm.querySelector('input[name="nameAr"]'));
+              if ((!options || !options.preserveForms) && !hasServiceEditor) {
+                renderForm('clinic', null, 'serviceForm', 'serviceTitle');
+              }
+              if (window.MiraPortalShell) MiraPortalShell.openServiceEditor();
+              if (window.MiraE2BServiceShell) MiraE2BServiceShell.focusEditor('serviceForm');
+              else scrollToForm('serviceForm');
+            } else {
+              // Salon/clinic: services are edited in catalogForm (same as initial load).
+              const catalogForm = document.getElementById('catalogForm');
+              const hasServiceEditor = !!(catalogForm && catalogForm.querySelector('input[name="nameAr"]'));
+              if ((!options || !options.preserveForms) && !hasServiceEditor) {
+                renderForm(p.type, null, 'catalogForm', 'catalogTitle');
+              }
+              if (window.MiraPortalShell) MiraPortalShell.openServiceEditor();
+              if (window.MiraE2BServiceShell) MiraE2BServiceShell.focusEditor('catalogForm');
+              else scrollToForm('catalogForm');
+            }
+          };
+          if (window.MiraLaneEntries && typeof MiraLaneEntries.startServiceAdd === 'function') {
+            Promise.resolve(MiraLaneEntries.startServiceAdd(openClassicService)).catch(function (e) {
+              console.warn('[goService]', e);
+              openClassicService();
+            });
+            return;
+          }
+          openClassicService();
+        };
+        bulkButton.onclick = () => {
+          if (window.MiraPortalShell) MiraPortalShell.navigate('bulk', 'list', { force: true });
+          bulkSection.classList.remove('hidden');
+          if (window.MiraBulkAdd) {
+            const preferService = showServices && !showProducts;
+            const kindSelectWillDefault = preferService ? 'service' : 'product';
+            MiraBulkAdd.open(document.getElementById('bulkRoot'), p);
+            const kindEl = document.getElementById('bulkKind');
+            if (kindEl) {
+              kindEl.value = kindSelectWillDefault;
+              kindEl.dispatchEvent(new Event('change'));
+            }
+          }
+        };
+        if (new URLSearchParams(location.search).get('bulk') && window.MiraBulkAdd) {
+          bulkButton.click();
+        }
         if (developer) {
           document.getElementById('serviceSection').classList.remove('hidden');
           document.getElementById('catalogTitle').textContent = 'منتجات الملابس وماركات التجميل';
@@ -175,7 +676,7 @@
           renderCatalog('clinic', data.catalog, 'serviceList', 'serviceForm', 'serviceTitle');
           if (!options || !options.preserveForms) renderForm('clinic', null, 'serviceForm', 'serviceTitle');
         } else {
-          if (showServices) document.getElementById('serviceSection').classList.remove('hidden');
+          // Do not unhide empty serviceSection for salon/clinic — catalogForm is the service editor.
           renderCatalog(p.type, data.catalog, 'catalogList', 'catalogForm', 'catalogTitle');
           if (!options || !options.preserveForms) renderForm(p.type, null, 'catalogForm', 'catalogTitle');
         }
@@ -205,13 +706,74 @@
       document.getElementById('loading').textContent = '';
       document.getElementById('partnerName').textContent = 'عرض واجهة موسوم';
       document.getElementById('partnerMeta').textContent = 'بيانات اختبار موسومة. ليست كتالوجًا عامًا.';
+      document.body.dataset.partnerType = 'developer';
+      window.sessionPartner = { id: 'fixture-dev', type: 'developer', nameAr: 'عرض واجهة موسوم', city: 'الرياض' };
       document.getElementById('stats').replaceChildren();
       document.getElementById('stats').removeAttribute('aria-busy');
       document.getElementById('catalogList').replaceChildren();
       document.getElementById('catalogList').removeAttribute('aria-busy');
       document.getElementById('commerceList').replaceChildren();
       document.getElementById('commerceList').removeAttribute('aria-busy');
+      document.getElementById('serviceSection').classList.remove('hidden');
+      const sn = document.getElementById('settingsPartnerName');
+      const st = document.getElementById('settingsPartnerType');
+      const sc = document.getElementById('settingsPartnerCity');
+      if (sn) sn.textContent = window.sessionPartner.nameAr;
+      if (st) st.textContent = 'مطور';
+      if (sc) sc.textContent = window.sessionPartner.city;
       renderAds(labeledAdsFixture(), null);
+      // Paint real editors so shell/tabs/compose can be accepted without live auth.
+      try {
+        if (window.CatalogJourney) {
+          CatalogJourney.renderForm('brand', null, 'catalogForm', 'catalogTitle', 'مسودة اختبار واجهة');
+          CatalogJourney.renderForm('clinic', null, 'serviceForm', 'serviceTitle', 'مسودة خدمة اختبار');
+        }
+      } catch (paintErr) {
+        console.warn('labeled form paint', paintErr);
+      }
+      // Seed human draft cards for drafts view (no technical rev/localStorage text).
+      const draftsList = document.getElementById('editorDraftsList');
+      if (draftsList) {
+        draftsList.replaceChildren();
+        const sample = document.createElement('div');
+        sample.className = 'portal-draft-card list-row';
+        sample.setAttribute('data-portal-draft-card', '1');
+        sample.setAttribute('data-testid', 'portal-draft-row');
+        sample.innerHTML =
+          '<div class="portal-draft-meta">' +
+          '<strong class="portal-draft-name">فستان سهرة وردي</strong>' +
+          '<span class="portal-draft-kind">منتج</span>' +
+          '<span class="portal-draft-status">مسودة</span>' +
+          '<span class="portal-draft-updated">آخر تعديل: منذ قليل</span>' +
+          '</div>';
+        const openSample = document.createElement('button');
+        openSample.type = 'button';
+        openSample.className = 'btn btn-primary';
+        openSample.setAttribute('data-testid', 'portal-draft-open');
+        openSample.textContent = 'فتح';
+        openSample.onclick = () => {
+          if (window.MiraPortalShell) MiraPortalShell.navigate('products', 'edit', { force: true });
+          if (window.MiraE2BProductShell) MiraE2BProductShell.focusEditor();
+        };
+        sample.appendChild(openSample);
+        draftsList.appendChild(sample);
+      }
+      if (window.MiraPortalShell) {
+        MiraPortalShell.boot();
+        MiraPortalShell.setDirtyGuard(function () {
+          return formLooksDirty(document.getElementById('catalogForm')) ||
+            formLooksDirty(document.getElementById('serviceForm'));
+        });
+        MiraPortalShell.navigate('products', 'list', { replace: true, force: true });
+      }
+      if (window.MiraE2BProductShell) {
+        MiraE2BProductShell.enableProductMode();
+        if (MiraE2BProductShell.composeCatalogLayout) MiraE2BProductShell.composeCatalogLayout();
+      }
+      if (window.MiraE2BServiceShell) {
+        MiraE2BServiceShell.enableServiceMode('serviceForm');
+        MiraE2BServiceShell.disableServiceMode();
+      }
     } else {
       load();
     }
