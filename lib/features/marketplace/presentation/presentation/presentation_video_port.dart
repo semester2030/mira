@@ -200,7 +200,10 @@ class AssetVideoPort extends PresentationVideoPort {
     } catch (_) {}
   }
 
-  /// Keeps the clip just left so a swipe back does not initialize it again.
+  /// Parks the clip just left for a fast swipe-back. On memory-constrained
+  /// surfaces (iOS Simulator + 1080p) keeping active+warm+parked alive leaves
+  /// the next attach stuck isBuffering forever — dispose instead when a warm
+  /// slot is already held.
   Future<void> _parkLeaving(VideoPlayerController leaving, String? path) async {
     if (path == null || path.isEmpty || !leaving.value.isInitialized) {
       await _silence(leaving);
@@ -208,6 +211,11 @@ class AssetVideoPort extends PresentationVideoPort {
       return;
     }
     await _silence(leaving);
+    // Prefer freeing the decoder for the upcoming warm/active clip.
+    if (_warm != null) {
+      await leaving.dispose();
+      return;
+    }
     final old = _parked;
     _parked = leaving;
     _parkedPath = path;
@@ -254,14 +262,35 @@ class AssetVideoPort extends PresentationVideoPort {
       _warm = null;
       _warmPath = null;
       _warmFuture = null;
+      var warmOk = true;
       if (pending != null) {
         try {
           await pending;
-        } catch (_) {}
+        } catch (_) {
+          warmOk = false;
+        }
       }
-      claimedReady = claimed?.value.isInitialized ?? false;
-      claimSource = 'warm';
-      lastAttachPhases['warmClaimed'] = _msSince(settleStarted);
+      // Reject a warm that never decoded a progressing frame — claiming it
+      // recreates the v10 stall (isPlaying+isBuffering, pos0, sizeW=1080).
+      if (!warmOk ||
+          claimed == null ||
+          !claimed.value.isInitialized ||
+          claimed.value.hasError ||
+          claimed.value.position <= Duration.zero) {
+        lastAttachPhases['warmRejected'] = _msSince(settleStarted);
+        if (claimed != null) {
+          try {
+            await claimed.dispose();
+          } catch (_) {}
+        }
+        claimed = null;
+        claimedReady = false;
+        claimSource = 'cold';
+      } else {
+        claimedReady = true;
+        claimSource = 'warm';
+        lastAttachPhases['warmClaimed'] = _msSince(settleStarted);
+      }
     } else if (_parkedPath == assetPath && _parked != null) {
       claimed = _parked;
       _parked = null;
@@ -660,16 +689,22 @@ class AssetVideoPort extends PresentationVideoPort {
     _emitPlayback('warm_started', mediaUrl: assetPath);
     final future = () async {
       await controller.initialize();
+      if (controller.value.hasError) {
+        throw StateError('warm init error');
+      }
       await controller.setVolume(0);
-      // Mute-play briefly so AVPlayer fills the first buffer — initialize+pause alone
-      // left 1080p clips stuck isBuffering with position 0 after swipe attach.
-      // Do NOT seek back to 0 after priming: on iOS that flushes the decoded buffer
-      // and recreates the v7 stall (isPlaying+isBuffering, position stuck at 0).
+      // Mute-play until position actually advances. A 450ms window was too short
+      // for 1080p on the simulator — those warms stayed at pos0 and poisoned attach.
+      // Do NOT seek back to 0 after priming (flushes the iOS buffer).
       await controller.play();
-      final primed = DateTime.now().toUtc().add(const Duration(milliseconds: 450));
-      while (DateTime.now().toUtc().isBefore(primed)) {
-        if (controller.value.position > Duration.zero || controller.value.hasError) break;
+      final deadline = DateTime.now().toUtc().add(const Duration(milliseconds: 2500));
+      while (DateTime.now().toUtc().isBefore(deadline)) {
+        if (controller.value.hasError) throw StateError('warm play error');
+        if (controller.value.position > Duration.zero) break;
         await Future<void>.delayed(const Duration(milliseconds: 40));
+      }
+      if (controller.value.position <= Duration.zero) {
+        throw StateError('warm never advanced');
       }
       await controller.pause();
     }();
