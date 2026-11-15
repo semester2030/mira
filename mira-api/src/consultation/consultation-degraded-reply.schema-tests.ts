@@ -33,4 +33,10 @@ import { buildDegradedAdvisorReply } from './services/consultation-scope';
   console.log('pass generic_degraded');
 }
 
+{
+  const product = buildDegradedAdvisorReply('رشّحي لي واقي شمس من ميرا بأقل من ١٠٠ ريال', []);
+  assert.match(product, /بحث الكتالوج غير مفعّل|لن أخترع بطاقة/);
+  console.log('pass product_discovery_off');
+}
+
 console.log('OK consultation degraded reply schema tests');
