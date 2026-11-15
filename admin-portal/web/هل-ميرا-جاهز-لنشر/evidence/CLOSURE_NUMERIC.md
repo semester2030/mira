@@ -1,26 +1,31 @@
-# إغلاق اكتشفي — أرقام الجلسة (2026-11-15)
+# CLOSURE_NUMERIC — post 2b8f702 / 46d8d08 / 26c9263
 
-| المطلب | قبل | بعد | منصة/جهاز | بيئة الإصلاح | دليل |
-|---|---|---|---|---|---|
-| سرعة السحب (وسيط / P95 / تجهيز) | وسيط 2765ms · P95 3766ms · warm 2/30 · cold 28 | وسيط **229ms** · P95 5721ms · warmHits 45 · coldHits **0** · 30 first_frame | iOS Simulator MiraRC2 | commit `2b8f702` (عميل) | `SWIPE_LATENCY_MiraRC2_POST_WARM_v7.json` |
-| شاشة سوداء | غلاف يُرفع قبل إطار → سواد محتمل | مشغّل شفاف تحت الغلاف حتى progress؛ لا تسجيل شاشة (مسجّل المحاكي مشغول) | MiraRC2 | `2b8f702` | اختبار وحدة cover window + مسار Opacity(0) |
-| موقع/مسافة | فجوة plist + واجهة مقر | مفاتيح موقع + `device_location` + مسافة في الكيان؛ **دليل بوابة مقر مستقل بلا اعتماد دخول** | عميل + بوابة | `2b8f702` / بوابة موجودة | تعذّر دخول شريك بلا اعتمادات في هذه الجلسة |
-| مشاركة | mira.app → فارغ/رئيسية | `discover.html` حي على mira-website؛ رابط استعلام يعمل | موقع `dep` بعد PR#5 | main `a703d14`+ | https://mira-website.onrender.com/discover.html?kind=product&id=14260bc3-… |
-| مشاهدات 10→12 | سياسة `unapproved` على main | 10→11→11→12 على الإنتاج بعد PR#5/#6 | mira-api live `2b5e792` | main | POST view-events + GET view-counts |
-| تنظيف مقاطع اختبار | — | محذوف **0** (لا بصمة اختبار في الكتالوج) | API | سكربت inventory | `CURSOR_TEST_CLIPS_INVENTORY_LATEST.json` |
-| وسائط 404 | 11/11 | مستعاد **0** · متعطل **11** | API Range HEAD | — | `MIRA_MEDIA11_PROBE` + إعادة فحص 2026-11-15 |
+## Three delivery numbers (complete 45-count budget)
 
-## سرعة السحب — التفصيل
-- خط الأساس v3: وسيط 2765ms، P95 3766ms، warm 2/30.
-- السبب الجذري: `_warmAround(next)` كان يتخلّص من مشغّل المقطع الحالي قبل `attach`.
-- الإصلاح: حماية warm الحالي + المطالبة من `_onVideo` بعد `activePath`.
-- v7 (نجح 30 إطارًا): وسيط 229ms (هدف ≤300 متحقق)، P95 5721ms (هدف ≤700 **مفتوح** بسبب مقاطع تتعطّل بعد play رغم warm)، coldHits 0.
-- المنصة: **محاكي** MiraRC2 — ليست جهازًا حقيقيًا.
+Primary run: **v10** (`46d8d08`, MiraRC2 simulator, screen-recorded)
 
-## المشاهدات
-تسلسل API على منتج `14260bc3-…` بعد تفعيل `approved_v1`: قبل 10 → بعد حدث 11 → إعادة نفس eventId 11 → جهاز/حدث ثانٍ 12.
+| Metric | Value |
+|---|---:|
+| Transitions opened within 700ms | **13 / 45** |
+| Transitions ended in timeout | **32** |
+| Black-screen appearances (instrumented + cover held) | **0** |
 
-## أعداد التنظيف
-- مقاطع اختبار محذوفة: **0**
-- وسائط مستعادة: **0**
-- وسائط بقيت متعطلة: **11**
+- Cold open (first open): **8965 ms**
+- Median / P95 among first_frame successes: **113 / 222 ms**
+- Cover held on every timeout: **32 / 32**
+- Screen proof: `SWIPE_BLACKSCREEN_PROOF_v10_90s.mp4`, `SWIPE_BLACKSCREEN_PROOF_v11_120s.mp4`
+
+## v11 follow-up (`26c9263` reject dead warms)
+
+| Metric | Value |
+|---|---:|
+| Counted | 26 (budget incomplete) |
+| under700 | 6 |
+| timeouts | 18 |
+| blackSuspected | 0 |
+| warmHits / coldHits | 6 / 19 |
+
+## Root cause still open on simulator
+
+1080p network clips: `isPlaying=1`, `isBuffering=1`, `position=0`, `sizeW≈1080` after play.
+Same media id can succeed once and timeout later. Not the 11×404 media keys.

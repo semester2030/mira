@@ -1,0 +1,4 @@
+git=26c9263f9802a4f6f4431fe6bed0996d6819a01d
+apk=/Users/fayez/Desktop/MIRA_DEBUG_20261115T050714Z_26c9263.apk
+sha256=4325a047805aafc720c130be4bd970432de0ffc76759f68bb78784771528164d
+platform=android-debug

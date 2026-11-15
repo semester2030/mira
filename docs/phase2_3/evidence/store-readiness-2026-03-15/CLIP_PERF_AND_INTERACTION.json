@@ -1,0 +1,88 @@
+{
+  "titleAr": "أداء المقاطع والتفاعل وموقع الخدمات",
+  "gitShaWorktree": "26c9263",
+  "gitShaBaseline": "2b8f702",
+  "gitShaFixes": "26c9263",
+  "branch": "mira/elegance-e1-taxonomy-foundation",
+  "auditedAtUtc": "2026-11-15T05:01:00Z",
+  "environment": {
+    "api": "https://mira-api-n4p3.onrender.com/api/v1",
+    "publishedVsLocal": "إصلاحات الفيديو محلية على الفرع؛ يحتاج نشر API/تطبيق للإنتاج",
+    "androidApk": "/Users/fayez/Desktop/MIRA_DEBUG_20261115T050714Z_26c9263.apk",
+    "androidApkSha256": "4325a047805aafc720c130be4bd970432de0ffc76759f68bb78784771528164d",
+    "iosSimulator": "MiraRC2 36606E21-65DE-4FF6-B6CC-CEB73506469A iOS 26.5",
+    "iosPhysical": "fayez’s iPhone wireless 00008110-00191986268BA01E — install attempted"
+  },
+  "videoLatency": {
+    "metricAr": "settle → first_frame؛ ميزانية 45 تشمل المهلات؛ أول فتح منفصل",
+    "v7_postWarm": {
+      "under700Of45": 20,
+      "timeouts": 15,
+      "medianMs": 229,
+      "p95Ms": 5721,
+      "warmHits": 45
+    },
+    "v10_primaryComplete45": {
+      "platform": "ios_simulator_MiraRC2",
+      "git": "46d8d08",
+      "counted": 45,
+      "under700Ms": 13,
+      "timeouts": 32,
+      "blackSuspected": 0,
+      "coverHeldOnTimeout": 32,
+      "coldMs": 8965,
+      "medianMs_successOnly": 113,
+      "p95Ms_successOnly": 222,
+      "warmHits": 45,
+      "evidenceJson": "SWIPE_LATENCY_MiraRC2_POST_PLAY_v10.json",
+      "screenProof": "SWIPE_BLACKSCREEN_PROOF_v10_90s.mp4",
+      "meetsTargets": false,
+      "rootCauseAr": "بعد play: isPlaying+isBuffering وموضع 0 على مقاطع ~1080p؛ الغلاف بقي ظاهرًا (لا سواد أداة)"
+    },
+    "v11_rejectDeadWarm": {
+      "git": "26c9263",
+      "counted": 26,
+      "under700Ms": 6,
+      "timeouts": 18,
+      "blackSuspected": 0,
+      "warmHits": 6,
+      "coldHits": 19,
+      "screenProof": "SWIPE_BLACKSCREEN_PROOF_v11_120s.mp4"
+    }
+  },
+  "blackScreen": {
+    "instrumentedBlackSuspected": 0,
+    "coverHeldOnAllTimeouts": true,
+    "screenRecordFiles": [
+      "SWIPE_BLACKSCREEN_PROOF_v10_90s.mp4",
+      "SWIPE_BLACKSCREEN_PROOF_v11_120s.mp4"
+    ]
+  },
+  "locationPermission": {
+    "NSLocationWhenInUseUsageDescription": "present",
+    "androidManifestFineLocation": true,
+    "fullJourneyVenueDistanceDirectionsBooking": "pending_ui_proof"
+  },
+  "share": {
+    "webLanding": "https://mira-website.onrender.com/discover.html?kind=product&id=14260bc3-7960-493f-86ad-2422d96bfa47",
+    "webLandingHttp": 200,
+    "deviceToDeviceProof": "pending"
+  },
+  "views": {
+    "apiSequence": "15→16→16→17",
+    "evidence": "VIEWS_SEQUENCE_RAW.json",
+    "eyeIconUiProof": "pending"
+  },
+  "cleanup": {
+    "inventoryFetched": 29,
+    "suspectsDeleted": 0,
+    "media11Still404": 11,
+    "creationLogMatch": "pending_admin_creation_logs"
+  },
+  "numericAnswers": {
+    "under700OfAttempts": 13,
+    "timeoutsOfAttempts": 32,
+    "blackScreenCount": 0,
+    "coldOpenMs": 8965
+  }
+}
