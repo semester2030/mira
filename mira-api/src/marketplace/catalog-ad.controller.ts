@@ -99,8 +99,8 @@ export class CatalogAdPublicController {
   }
 
   @Get('view-counts/:kind/:id')
-  count() {
-    return this.ads.viewCount();
+  count(@Param('kind') kind: string, @Param('id') id: string) {
+    return this.ads.viewCount(kind, id);
   }
 
   @Post('view-events')
