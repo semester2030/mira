@@ -282,8 +282,8 @@ class AssetVideoPort extends PresentationVideoPort {
   }
 
   /// Prefetch bytes to disk without creating a decoder (shared by mediaId).
-  void prefetchDisk(String assetPath) {
-    _diskCache?.prefetch(assetPath);
+  void prefetchDisk(String assetPath, {bool lowPriority = false}) {
+    _diskCache?.prefetch(assetPath, lowPriority: lowPriority);
   }
 
   Future<void> _silence(VideoPlayerController controller) async {

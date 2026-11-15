@@ -1,3 +1,4 @@
+import 'dart:async';
 import 'dart:io';
 
 import 'package:flutter_test/flutter_test.dart';
@@ -185,7 +186,17 @@ void main() {
     expect(played.length, prefix);
     expect(played, bytes.sublist(0, prefix));
 
-    final stats = cache.lastServeStats!;
+    Future<DiscoverByteServeStats> waitStats() async {
+      for (var i = 0; i < 100; i++) {
+        final s = cache.lastServeStats;
+        if (s != null) return s;
+        await Future<void>.delayed(const Duration(milliseconds: 10));
+      }
+      fail('lastServeStats stayed null');
+      throw StateError('unreachable');
+    }
+
+    final stats = await waitStats();
     expect(stats.bytesFromDisk, prefix);
     expect(stats.bytesFromNetwork, 0);
     // Must not re-GET the already-local prefix from origin.
@@ -194,6 +205,7 @@ void main() {
 
     // Now ask past the prefix — only the missing tail may be fetched.
     final needEnd = prefix + 4095;
+    cache.lastServeStats = null;
     final playReq2 = await client.getUrl(source.uri!);
     playReq2.headers.set(HttpHeaders.rangeHeader, 'bytes=0-$needEnd');
     final playResp2 = await playReq2.close();
@@ -204,7 +216,7 @@ void main() {
     expect(played2.length, needEnd + 1);
     expect(played2, bytes.sublist(0, needEnd + 1));
 
-    final stats2 = cache.lastServeStats!;
+    final stats2 = await waitStats();
     expect(stats2.bytesFromDisk, greaterThanOrEqualTo(prefix));
     expect(stats2.bytesFromNetwork, greaterThan(0));
     expect(stats2.bytesFromNetwork, lessThanOrEqualTo(needEnd + 1 - prefix + 1024));
@@ -311,7 +323,17 @@ void main() {
     expect(body.length, greaterThanOrEqualTo(prefix));
     expect(body.sublist(0, prefix), bodies[firstId]!.sublist(0, prefix));
 
-    final stats = cache.lastServeStats!;
+    Future<DiscoverByteServeStats> waitStats() async {
+      for (var i = 0; i < 100; i++) {
+        final s = cache.lastServeStats;
+        if (s != null) return s;
+        await Future<void>.delayed(const Duration(milliseconds: 10));
+      }
+      fail('lastServeStats stayed null');
+      throw StateError('unreachable');
+    }
+
+    final stats = await waitStats();
     expect(stats.bytesFromDisk, greaterThanOrEqualTo(prefix));
     expect(stats.bytesFromNetwork, 0);
 
@@ -323,11 +345,12 @@ void main() {
 
     // Extend past prefix — only tail from network.
     final mid = getsAfter.length;
+    cache.lastServeStats = null;
     final req2 = await client.getUrl(source.uri!);
     req2.headers.set(HttpHeaders.rangeHeader, 'bytes=0-${prefix + 2047}');
     final resp2 = await req2.close();
     await resp2.drain<void>();
-    final stats2 = cache.lastServeStats!;
+    final stats2 = await waitStats();
     expect(stats2.bytesFromDisk, greaterThanOrEqualTo(prefix));
     expect(stats2.bytesFromNetwork, greaterThan(0));
     final tailStarts = (originGets[firstId] ?? []).skip(mid).toList();
@@ -340,5 +363,232 @@ void main() {
     // ignore: avoid_print
     print('LOGICAL_20_IDS localFirst=$localAfter20 others=${othersLocal.values.fold<int>(0, (a, b) => a + b)} '
         'prefix=$prefix bodySize=$bodySize');
+  });
+
+  test('stream local prefix before origin releases the held tail (bytes=0-)', () async {
+    final root = Directory.systemTemp.createTempSync('mira_vid_firstbyte_');
+    addTearDown(() {
+      try {
+        root.deleteSync(recursive: true);
+      } catch (_) {}
+    });
+
+    HttpServer? origin;
+    addTearDown(() async {
+      await origin?.close(force: true);
+    });
+    origin = await HttpServer.bind(InternetAddress.loopbackIPv4, 0);
+    final bytes = List<int>.generate(32 * 1024, (i) => (i * 7) % 256);
+    const prefix = 8 * 1024;
+    final tailGate = Completer<void>();
+    final rangeStarts = <int>[];
+    var fullGets = 0;
+    origin.listen((req) async {
+      if (req.method == 'HEAD') {
+        req.response.contentLength = bytes.length;
+        req.response.headers.set(HttpHeaders.acceptRangesHeader, 'bytes');
+        await req.response.close();
+        return;
+      }
+      final range = req.headers.value(HttpHeaders.rangeHeader);
+      req.response.headers.contentType = ContentType('video', 'mp4');
+      if (range != null && range.startsWith('bytes=')) {
+        final start = int.parse(range.substring(6).split('-').first);
+        rangeStarts.add(start);
+        if (start >= prefix) {
+          // Hold the missing tail until the client has already received local bytes.
+          await tailGate.future;
+        }
+        req.response.statusCode = HttpStatus.partialContent;
+        req.response.headers.set(
+          HttpHeaders.contentRangeHeader,
+          'bytes $start-${bytes.length - 1}/${bytes.length}',
+        );
+        req.response.add(bytes.sublist(start));
+      } else {
+        fullGets += 1;
+        req.response.contentLength = bytes.length;
+        req.response.add(bytes);
+      }
+      await req.response.close();
+    });
+
+    final mediaId = 'cccccccc-cccc-cccc-cccc-cccccccccccc';
+    final url = 'http://${origin.address.host}:${origin.port}/api/v1/marketplace/media/$mediaId';
+    final cache = DiscoverVideoDiskCache(root: root, httpClient: HttpClient());
+    addTearDown(() async {
+      await cache.disposeProxy();
+    });
+
+    final seeded = await cache.ensureLocal(url, stopAfterBytes: prefix);
+    expect(seeded.bytesOnDisk, greaterThanOrEqualTo(prefix));
+    expect(seeded.complete, isFalse);
+
+    final source = await cache.resolvePlaySource(url);
+    expect(source.isProxy, isTrue);
+
+    final client = HttpClient();
+    final sw = Stopwatch()..start();
+    final req = await client.getUrl(source.uri!);
+    req.headers.set(HttpHeaders.rangeHeader, 'bytes=0-');
+    final resp = await req.close();
+
+    final firstByte = Completer<int>();
+    final chunks = <int>[];
+    var sawPrefix = false;
+    final sub = resp.listen((chunk) {
+      if (chunk.isEmpty) return;
+      chunks.addAll(chunk);
+      if (!firstByte.isCompleted) {
+        firstByte.complete(sw.elapsedMilliseconds);
+      }
+      if (!sawPrefix && chunks.length >= prefix) {
+        sawPrefix = true;
+        // Decisive: saved prefix arrived while origin tail is still gated.
+        expect(tailGate.isCompleted, isFalse);
+        // ignore: avoid_print
+        print('FIRST_BYTE_MS=${firstByte.isCompleted ? 'pending' : ''}');
+      }
+    });
+
+    final firstByteMs = await firstByte.future.timeout(const Duration(seconds: 5));
+    expect(firstByteMs, greaterThanOrEqualTo(0));
+    expect(tailGate.isCompleted, isFalse);
+    // Wait until at least the local prefix has been delivered.
+    final prefixDeadline = DateTime.now().add(const Duration(seconds: 5));
+    while (chunks.length < prefix && DateTime.now().isBefore(prefixDeadline)) {
+      await Future<void>.delayed(const Duration(milliseconds: 10));
+    }
+    expect(chunks.length, greaterThanOrEqualTo(prefix));
+    expect(chunks.sublist(0, prefix), bytes.sublist(0, prefix));
+    expect(tailGate.isCompleted, isFalse);
+    // ignore: avoid_print
+    print('FIRST_BYTE_MS=$firstByteMs PREFIX_ARRIVED_BEFORE_TAIL_RELEASE=true');
+
+    // Now release the origin tail and finish.
+    tailGate.complete();
+    await sub.asFuture<void>();
+    final completeMs = sw.elapsedMilliseconds;
+    expect(chunks, bytes);
+    expect(rangeStarts.where((s) => s > 0 && s < prefix), isEmpty);
+    // Resume must start at/after the saved prefix — never re-GET byte 0 as a full body for the tail.
+    expect(rangeStarts.where((s) => s >= prefix), isNotEmpty);
+    final stats = cache.lastServeStats!;
+    expect(stats.bytesFromDisk, greaterThanOrEqualTo(prefix));
+    expect(stats.firstByteMs, isNotNull);
+    // ignore: avoid_print
+    print('COMPLETE_MS=$completeMs STATS=${stats.toJson()} FULL_GETS=$fullGets RANGE_STARTS=$rangeStarts');
+
+    client.close(force: true);
+  });
+
+  test('after 20 ids, open-ended Range still streams saved prefix before held tail', () async {
+    final root = Directory.systemTemp.createTempSync('mira_vid_firstbyte20_');
+    addTearDown(() {
+      try {
+        root.deleteSync(recursive: true);
+      } catch (_) {}
+    });
+    HttpServer? origin;
+    addTearDown(() async {
+      await origin?.close(force: true);
+    });
+    origin = await HttpServer.bind(InternetAddress.loopbackIPv4, 0);
+    const bodySize = 24 * 1024;
+    const prefix = 8 * 1024;
+    final bodies = <String, List<int>>{};
+    final originGets = <String, List<int>>{};
+    final gates = <String, Completer<void>>{};
+    origin.listen((req) async {
+      final id = req.uri.pathSegments.isNotEmpty ? req.uri.pathSegments.last : '';
+      bodies.putIfAbsent(id, () => List<int>.generate(bodySize, (i) => (i + id.hashCode) % 256));
+      final bytes = bodies[id]!;
+      if (req.method == 'HEAD') {
+        req.response.contentLength = bytes.length;
+        await req.response.close();
+        return;
+      }
+      final range = req.headers.value(HttpHeaders.rangeHeader);
+      originGets.putIfAbsent(id, () => <int>[]);
+      if (range != null && range.startsWith('bytes=')) {
+        final start = int.parse(range.substring(6).split('-').first);
+        originGets[id]!.add(start);
+        if (start >= prefix) {
+          final g = gates.putIfAbsent(id, Completer<void>.new);
+          await g.future;
+        }
+        req.response.statusCode = HttpStatus.partialContent;
+        req.response.headers.set(
+          HttpHeaders.contentRangeHeader,
+          'bytes $start-${bytes.length - 1}/${bytes.length}',
+        );
+        req.response.add(bytes.sublist(start));
+      } else {
+        originGets[id]!.add(-1);
+        req.response.contentLength = bytes.length;
+        req.response.add(bytes);
+      }
+      await req.response.close();
+    });
+
+    final cache = DiscoverVideoDiskCache(root: root, httpClient: HttpClient(), maxEntries: 28);
+    addTearDown(() async {
+      await cache.disposeProxy();
+    });
+
+    String urlFor(int i) {
+      final hex = i.toRadixString(16).padLeft(12, '0');
+      return 'http://${origin!.address.host}:${origin.port}/api/v1/marketplace/media/dddddddd-dddd-dddd-dddd-$hex';
+    }
+
+    final firstUrl = urlFor(0);
+    final firstId = DiscoverVideoDiskCache.mediaIdFromUrl(firstUrl)!;
+    await cache.ensureLocal(firstUrl, stopAfterBytes: prefix);
+    for (var i = 1; i <= 20; i++) {
+      await cache.ensureLocal(urlFor(i), stopAfterBytes: prefix);
+    }
+
+    gates.putIfAbsent(firstId, Completer<void>.new);
+    final source = await cache.resolvePlaySource(firstUrl);
+    final client = HttpClient();
+    final sw = Stopwatch()..start();
+    final req = await client.getUrl(source.uri!);
+    req.headers.set(HttpHeaders.rangeHeader, 'bytes=0-');
+    final resp = await req.close();
+    final chunks = <int>[];
+    var firstByteMs = -1;
+    final done = Completer<void>();
+    resp.listen((c) {
+      if (c.isEmpty) return;
+      if (firstByteMs < 0) firstByteMs = sw.elapsedMilliseconds;
+      chunks.addAll(c);
+      if (chunks.length >= prefix && !gates[firstId]!.isCompleted) {
+        // Prefix delivered while tail still held.
+        expect(gates[firstId]!.isCompleted, isFalse);
+      }
+    }, onDone: done.complete, onError: done.completeError);
+
+    final prefixDeadline = DateTime.now().add(const Duration(seconds: 5));
+    while (chunks.length < prefix && DateTime.now().isBefore(prefixDeadline)) {
+      await Future<void>.delayed(const Duration(milliseconds: 10));
+    }
+    expect(chunks.length, greaterThanOrEqualTo(prefix));
+    expect(gates[firstId]!.isCompleted, isFalse);
+    expect(firstByteMs, greaterThanOrEqualTo(0));
+    // ignore: avoid_print
+    print('AFTER20_FIRST_BYTE_MS=$firstByteMs');
+
+    gates[firstId]!.complete();
+    await done.future;
+    final completeMs = sw.elapsedMilliseconds;
+    expect(chunks, bodies[firstId]);
+    final starts = originGets[firstId] ?? const <int>[];
+    expect(starts.where((s) => s >= 0 && s < prefix), isEmpty);
+    expect(starts.where((s) => s >= prefix), isNotEmpty);
+    // ignore: avoid_print
+    print('AFTER20_COMPLETE_MS=$completeMs RANGE_STARTS=$starts '
+        'localFirst=${await cache.bytesOnDiskFor(firstUrl)}');
+
+    client.close(force: true);
   });
 }

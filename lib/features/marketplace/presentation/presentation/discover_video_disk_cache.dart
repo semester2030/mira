@@ -47,6 +47,12 @@ class DiscoverVideoDiskCache {
   /// Last Range-serve stats (for logic tests / diagnostics).
   DiscoverByteServeStats? lastServeStats;
 
+  /// Media id currently on screen — fill jobs for this id start before others.
+  String? _priorityMediaId;
+
+  /// Serialize all origin writes per mediaId (proxy + prefetch share one GET).
+  final Map<String, Future<void>> _writeLocks = {};
+
   static String? mediaIdFromUrl(String url) {
     final uri = Uri.tryParse(url);
     if (uri == null) return null;
@@ -80,8 +86,27 @@ class DiscoverVideoDiskCache {
     }
   }
 
+  /// Prefer fill for the on-screen clip over background neighbors.
+  void prioritize(String url) {
+    _priorityMediaId = mediaIdFromUrl(url);
+  }
+
   /// Fire-and-forget prefetch. Safe to call repeatedly — joins the same download.
-  void prefetch(String url) {
+  void prefetch(String url, {bool lowPriority = false}) {
+    final id = mediaIdFromUrl(url);
+    if (lowPriority &&
+        _priorityMediaId != null &&
+        id != null &&
+        id != _priorityMediaId &&
+        _inflight.containsKey(_priorityMediaId)) {
+      // Defer neighbor fill until the visible clip's shared download settles.
+      // ignore: discarded_futures
+      _inflight[_priorityMediaId]!.whenComplete(() {
+        // ignore: discarded_futures
+        ensureLocal(url);
+      });
+      return;
+    }
     // ignore: discarded_futures
     ensureLocal(url);
   }
@@ -101,21 +126,52 @@ class DiscoverVideoDiskCache {
     }
     _originByMediaId[mediaId] = url;
 
+    // Single shared job per mediaId — proxy + prefetch never open a second GET.
     final pending = _inflight[mediaId];
     if (pending != null && stopAfterBytes == null) {
       return pending;
     }
 
-    final future = _download(mediaId, url, stopAfterBytes: stopAfterBytes);
+    final gate = Completer<DiscoverCachedVideo>();
     if (stopAfterBytes == null) {
-      _inflight[mediaId] = future;
+      final raced = _inflight.putIfAbsent(mediaId, () => gate.future);
+      if (!identical(raced, gate.future)) {
+        return raced;
+      }
     }
+
     try {
-      return await future;
+      final result = await _withWriteLock(
+        mediaId,
+        () => _download(mediaId, url, stopAfterBytes: stopAfterBytes),
+      );
+      if (!gate.isCompleted) gate.complete(result);
+      return result;
+    } catch (e, st) {
+      if (!gate.isCompleted) gate.completeError(e, st);
+      rethrow;
     } finally {
-      if (stopAfterBytes == null && identical(_inflight[mediaId], future)) {
+      if (stopAfterBytes == null && identical(_inflight[mediaId], gate.future)) {
         _inflight.remove(mediaId);
       }
+    }
+  }
+
+  Future<T> _withWriteLock<T>(String mediaId, Future<T> Function() fn) async {
+    while (_writeLocks.containsKey(mediaId)) {
+      try {
+        await _writeLocks[mediaId];
+      } catch (_) {}
+    }
+    final done = Completer<void>();
+    _writeLocks[mediaId] = done.future;
+    try {
+      return await fn();
+    } finally {
+      if (identical(_writeLocks[mediaId], done.future)) {
+        _writeLocks.remove(mediaId);
+      }
+      if (!done.isCompleted) done.complete();
     }
   }
 
@@ -162,6 +218,7 @@ class DiscoverVideoDiskCache {
       return DiscoverPlaySource.remote(url);
     }
     _originByMediaId[mediaId] = url;
+    prioritize(url);
 
     final complete = await peekComplete(url);
     if (complete != null) {
@@ -198,6 +255,21 @@ class DiscoverVideoDiskCache {
     return server.port!;
   }
 
+  Future<File> _openBodyFile(String mediaId) async {
+    final root = await _ensureRoot();
+    for (final e in _lru.entries) {
+      if (e.value.mediaId == mediaId && e.value.complete) {
+        final f = File(e.value.path);
+        if (await f.exists()) return f;
+      }
+    }
+    final part = File('${root.path}/$mediaId.part');
+    if (!await part.exists()) {
+      await part.create(recursive: true);
+    }
+    return part;
+  }
+
   Future<void> _handleProxyRequest(HttpRequest req) async {
     try {
       final segments = req.uri.pathSegments;
@@ -214,38 +286,30 @@ class DiscoverVideoDiskCache {
         return;
       }
 
-      final root = await _ensureRoot();
+      _priorityMediaId = mediaId;
       var total = _knownLength[mediaId];
-      File? bodyFile;
-      for (final e in _lru.entries) {
-        if (e.value.mediaId == mediaId && e.value.complete) {
-          bodyFile = File(e.value.path);
-          total = e.value.contentLength;
-          break;
-        }
-      }
-      bodyFile ??= File('${root.path}/$mediaId.part');
-      if (!await bodyFile.exists()) {
-        await bodyFile.create(recursive: true);
-      }
+      var file = await _openBodyFile(mediaId);
+      var have = await file.length();
 
       if (total == null || total <= 0) {
-        total = await _headLength(origin) ?? await bodyFile.length();
-        if (total > 0) _knownLength[mediaId] = total;
+        total = await _headLength(origin) ?? (have > 0 ? have : null);
+        if (total != null && total > 0) _knownLength[mediaId] = total;
       }
 
       final range = req.headers.value(HttpHeaders.rangeHeader);
       var start = 0;
-      var end = (total > 0 ? total : await bodyFile.length()) - 1;
+      var end = (total != null && total > 0 ? total : math.max(have, 1)) - 1;
       if (range != null && range.startsWith('bytes=')) {
         final spec = range.substring(6);
         final parts = spec.split('-');
         start = int.tryParse(parts[0]) ?? 0;
         if (parts.length > 1 && parts[1].isNotEmpty) {
           end = int.tryParse(parts[1]) ?? end;
+        } else if (total != null && total > 0) {
+          end = total - 1;
         }
       }
-      if (total > 0) {
+      if (total != null && total > 0) {
         end = math.min(end, total - 1);
       }
       if (start < 0) start = 0;
@@ -255,85 +319,116 @@ class DiscoverVideoDiskCache {
         return;
       }
 
-      final needed = end - start + 1;
-      // Ensure prefix covers [0, end] so the requested window can be served in order.
-      final ensureTo = end + 1;
-      final fill = await _ensurePrefix(
-        mediaId: mediaId,
-        origin: origin,
-        needBytes: ensureTo,
-        knownTotal: total > 0 ? total : null,
-      );
-      total = fill.contentLength ?? total;
-      if (total != null && total > 0) _knownLength[mediaId] = total;
-
-      final file = fill.file ?? bodyFile;
-      final have = await file.length();
+      // If we don't even have the first requested byte yet, kick the shared
+      // download and wait only until that byte lands — never for the full end.
+      if (have <= start) {
+        prefetch(origin);
+        final deadline = DateTime.now().toUtc().add(const Duration(seconds: 20));
+        while (have <= start && DateTime.now().toUtc().isBefore(deadline)) {
+          await Future<void>.delayed(const Duration(milliseconds: 20));
+          file = await _openBodyFile(mediaId);
+          have = await file.length();
+          total = _knownLength[mediaId] ?? total;
+          if (total != null && total > 0) end = math.min(end, total - 1);
+        }
+      }
       if (have <= start) {
         req.response.statusCode = HttpStatus.serviceUnavailable;
         await req.response.close();
         return;
       }
-      final serveEnd = math.min(end, have - 1);
-      final fromDisk = serveEnd - start + 1;
-      final fromNet = fill.bytesDownloaded;
 
-      lastServeStats = DiscoverByteServeStats(
-        mediaId: mediaId,
-        bytesFromDisk: fill.bytesReused + (fromDisk > fill.bytesReused ? 0 : fromDisk),
-        bytesFromNetwork: fromNet,
-        contentLength: total,
-        source: 'proxy',
-        requestStart: start,
-        requestEnd: serveEnd,
-      );
-      // Prefer precise: bytes served from local file for this response window
-      // that were already present before this fill.
-      final alreadyHad = fill.bytesOnDiskBefore;
-      final diskPortion = start < alreadyHad
-          ? math.min(serveEnd + 1, alreadyHad) - start
-          : 0;
-      final netPortion = fromDisk - diskPortion;
-      lastServeStats = DiscoverByteServeStats(
-        mediaId: mediaId,
-        bytesFromDisk: diskPortion < 0 ? 0 : diskPortion,
-        bytesFromNetwork: netPortion < 0 ? fromNet : netPortion,
-        contentLength: total,
-        source: 'proxy',
-        requestStart: start,
-        requestEnd: serveEnd,
-      );
+      final alreadyHad = have;
+      final serveEnd = end;
+      final bodyLen = serveEnd - start + 1;
 
       req.response.statusCode =
           (start == 0 && total != null && serveEnd == total - 1) ? HttpStatus.ok : HttpStatus.partialContent;
       req.response.headers.contentType = ContentType('video', 'mp4');
+      req.response.headers.set(HttpHeaders.acceptRangesHeader, 'bytes');
       if (total != null && total > 0) {
         req.response.headers.set(HttpHeaders.contentRangeHeader, 'bytes $start-$serveEnd/$total');
-        req.response.headers.contentLength = serveEnd - start + 1;
       }
-      req.response.headers.set(HttpHeaders.acceptRangesHeader, 'bytes');
+      req.response.headers.contentLength = bodyLen;
+      // Buffering off so the first local chunk reaches AVPlayer immediately.
+      req.response.bufferOutput = false;
 
-      final raf = await file.open();
+      // Shared fill for the missing tail — same write lock as prefetch.
+      if (total == null || have < serveEnd + 1) {
+        prefetch(origin);
+      }
+
+      final started = DateTime.now().toUtc();
+      int? firstByteMs;
+      var bytesFromDisk = 0;
+      var bytesFromNetwork = 0;
+      void publishStats({int? completeMs}) {
+        lastServeStats = DiscoverByteServeStats(
+          mediaId: mediaId,
+          bytesFromDisk: bytesFromDisk,
+          bytesFromNetwork: bytesFromNetwork,
+          contentLength: total,
+          source: 'proxy_stream',
+          requestStart: start,
+          requestEnd: serveEnd,
+          firstByteMs: firstByteMs,
+          completeMs: completeMs,
+        );
+      }
+
+      var pos = start;
+      var openPath = file.path;
+      var raf = await file.open();
       try {
         await raf.setPosition(start);
-        var left = serveEnd - start + 1;
-        final buf = List<int>.filled(math.min(64 * 1024, left), 0);
-        while (left > 0) {
-          final n = await raf.readInto(buf, 0, math.min(buf.length, left));
-          if (n <= 0) break;
-          req.response.add(buf.sublist(0, n));
-          left -= n;
+        final buf = List<int>.filled(64 * 1024, 0);
+        while (pos <= serveEnd) {
+          file = await _openBodyFile(mediaId);
+          have = await file.length();
+          if (have <= pos) {
+            // Wait for the shared downloader to append — do not block the
+            // already-sent local prefix on the full requested end.
+            if (_inflight[mediaId] == null && (total == null || have < serveEnd + 1)) {
+              prefetch(origin);
+            }
+            await Future<void>.delayed(const Duration(milliseconds: 20));
+            continue;
+          }
+          // Re-open if the .part was renamed to a complete file.
+          if (openPath != file.path) {
+            await raf.close();
+            raf = await file.open();
+            await raf.setPosition(pos);
+            openPath = file.path;
+          }
+          final canReadTo = math.min(serveEnd, have - 1);
+          var left = canReadTo - pos + 1;
+          while (left > 0) {
+            final n = await raf.readInto(buf, 0, math.min(buf.length, left));
+            if (n <= 0) break;
+            req.response.add(buf.sublist(0, n));
+            await req.response.flush();
+            firstByteMs ??= DateTime.now().toUtc().difference(started).inMilliseconds;
+            final diskEnd = math.min(pos + n, alreadyHad);
+            if (diskEnd > pos) {
+              bytesFromDisk += diskEnd - pos;
+            }
+            if (pos + n > alreadyHad) {
+              bytesFromNetwork += pos + n - math.max(pos, alreadyHad);
+            }
+            pos += n;
+            left -= n;
+            // Publish on first byte so tests/clients never race the final close.
+            publishStats();
+          }
         }
       } finally {
-        await raf.close();
+        try {
+          await raf.close();
+        } catch (_) {}
       }
+      publishStats(completeMs: DateTime.now().toUtc().difference(started).inMilliseconds);
       await req.response.close();
-
-      // Continue filling the rest in the background via the shared path.
-      if (total != null && have < total) {
-        // ignore: discarded_futures
-        ensureLocal(origin);
-      }
     } catch (_) {
       try {
         req.response.statusCode = HttpStatus.internalServerError;
@@ -831,6 +926,8 @@ class DiscoverByteServeStats {
     required this.source,
     this.requestStart,
     this.requestEnd,
+    this.firstByteMs,
+    this.completeMs,
   });
 
   final String mediaId;
@@ -840,6 +937,8 @@ class DiscoverByteServeStats {
   final String source;
   final int? requestStart;
   final int? requestEnd;
+  final int? firstByteMs;
+  final int? completeMs;
 
   Map<String, Object?> toJson() => {
         'mediaId': mediaId,
@@ -849,6 +948,8 @@ class DiscoverByteServeStats {
         'source': source,
         'requestStart': requestStart,
         'requestEnd': requestEnd,
+        'firstByteMs': firstByteMs,
+        'completeMs': completeMs,
       };
 }
 

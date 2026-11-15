@@ -628,8 +628,9 @@ class DiscoverPresentationScreenState extends State<DiscoverPresentationScreen>
       // Disk prefetch for neighbors is cheap and survives warm-controller swaps.
       final nextPath = index + 1 < _slides.length ? _videoPath(_slides[index + 1]) : null;
       final prevPath = index - 1 >= 0 ? _videoPath(_slides[index - 1]) : null;
-      if (nextPath != null) port.prefetchDisk(nextPath);
-      if (prevPath != null) port.prefetchDisk(prevPath);
+      // Visible clip fill wins; neighbors are deferred while it is downloading.
+      if (nextPath != null) port.prefetchDisk(nextPath, lowPriority: true);
+      if (prevPath != null) port.prefetchDisk(prevPath, lowPriority: true);
       // Protect the warm slot that still holds the current page's controller.
       // attach() must claim it first; warming next would dispose it → cold path.
       if (deferIfCurrentWarm &&
