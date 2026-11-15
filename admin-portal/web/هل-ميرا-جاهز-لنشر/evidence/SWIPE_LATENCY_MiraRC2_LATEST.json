@@ -1,14 +1,14 @@
 {
   "kind": "discover_ui_live_swipe_latency_v4_warm_fix",
-  "atUtc": "2026-11-15T03:28:54.895456Z",
+  "atUtc": "2026-11-15T03:38:42.144784Z",
   "gitHint": "warm-inflight-claim",
   "baselineGit": "f3a7567",
   "baselineFile": "MIRA_SWIPE_LATENCY_MiraRC2_20261115T021759Z_v3.json",
   "platform": "ios_simulator_MiraRC2",
   "platformNoteAr": "إصلاح: attach يعيد استخدام warm قيد التهيئة بدل التخلص منه. الغلاف يبقى حتى first_frame.",
   "coldOpen": {
-    "type": "first_frame_timeout",
-    "positionMs": 10698,
+    "type": "first_frame",
+    "positionMs": 3624,
     "offerId": "14260bc3-7960-493f-86ad-2422d96bfa47",
     "mediaUrl": "https://mira-api-n4p3.onrender.com/api/v1/marketplace/media/71062d9e-622f-4377-bf22-8df75fc63afb",
     "pass": 1,
@@ -25,43 +25,48 @@
   "warmRootCauseAr": "خط الأساس v3: 28/30 cold لأن السحب أثناء التجهيز كان يتخلص من المشغّل نصف الجاهز ويفتح مسارًا باردًا.",
   "transitions": {
     "requested": 30,
-    "attempts": 42,
+    "attempts": 48,
     "passes": 4,
-    "nFirstFrame": 25,
+    "nFirstFrame": 30,
     "samplesMs": [
-      1545,
-      1585,
-      1615,
-      1645,
-      1672,
-      1769,
-      2389,
-      2556,
-      2899,
-      2913,
-      2984,
-      3071,
-      3130,
-      3517,
-      3586,
-      3654,
-      3934,
-      3941,
-      4028,
-      5459,
-      5816,
-      7635,
-      8256,
-      8488,
-      12296
+      113,
+      119,
+      120,
+      122,
+      126,
+      128,
+      129,
+      131,
+      137,
+      211,
+      212,
+      214,
+      222,
+      223,
+      228,
+      229,
+      229,
+      232,
+      233,
+      332,
+      918,
+      1014,
+      1529,
+      1730,
+      2529,
+      3032,
+      3040,
+      3630,
+      5721,
+      7828
     ],
-    "medianMs": 3130,
-    "p95Ms": 8488,
-    "timeouts": 13,
+    "medianMs": 229,
+    "p95Ms": 5721,
+    "timeouts": 15,
     "timeoutRows": [
       {
         "type": "first_frame_timeout",
-        "positionMs": 9851,
+        "positionMs": 8037,
         "offerId": "1b782572-9bce-40f3-9d8b-771d1ed3c8fd",
         "mediaUrl": "https://mira-api-n4p3.onrender.com/api/v1/marketplace/media/f8c0535f-f87f-4ef7-86df-7a93d373ead5",
         "attempt": 1,
@@ -87,134 +92,60 @@
         },
         "beforeUrl": "https://mira-api-n4p3.onrender.com/api/v1/marketplace/media/71062d9e-622f-4377-bf22-8df75fc63afb",
         "phases": {
-          "warmClaimed": null,
-          "initStart": 0,
-          "initDone": 1842,
-          "firstByteProxy": 1842,
-          "playStart": 1843,
+          "warmClaimed": 17,
+          "initStart": 17,
+          "initDone": 17,
+          "firstByteProxy": 17,
+          "playStart": 23,
           "firstFrame": null,
-          "source": 0
+          "source": 1
         }
       },
       {
         "type": "first_frame_timeout",
-        "positionMs": 9580,
-        "offerId": "29300b08-9564-470e-a5d6-563724aae2ba",
-        "mediaUrl": "https://mira-api-n4p3.onrender.com/api/v1/marketplace/media/76dbf34d-a204-4d11-b31a-408d4ef4b908",
-        "attempt": 2,
-        "i": 0,
+        "positionMs": 8027,
+        "offerId": "660b00e5-04c8-4960-8313-811cdfd3244f",
+        "mediaUrl": "https://mira-api-n4p3.onrender.com/api/v1/marketplace/media/df8af611-970d-42bd-8fcc-492025f6b5b1",
+        "attempt": 5,
+        "i": 3,
         "pass": 1,
         "before": {
-          "page": 1,
+          "page": 4,
           "slideCount": 14,
-          "offerId": "1b782572-9bce-40f3-9d8b-771d1ed3c8fd",
-          "mediaUrl": "https://mira-api-n4p3.onrender.com/api/v1/marketplace/media/f8c0535f-f87f-4ef7-86df-7a93d373ead5",
+          "offerId": "3542be11-d726-4dcf-9ead-08c0ae8e649a",
+          "mediaUrl": "https://mira-api-n4p3.onrender.com/api/v1/marketplace/media/9e62959e-c0bc-439f-92d9-c08b1dca62fb",
           "nextCursor": null,
           "loadingMore": false,
           "loadMoreError": null
         },
         "after": {
-          "page": 2,
+          "page": 5,
           "slideCount": 14,
-          "offerId": "29300b08-9564-470e-a5d6-563724aae2ba",
-          "mediaUrl": "https://mira-api-n4p3.onrender.com/api/v1/marketplace/media/76dbf34d-a204-4d11-b31a-408d4ef4b908",
+          "offerId": "660b00e5-04c8-4960-8313-811cdfd3244f",
+          "mediaUrl": "https://mira-api-n4p3.onrender.com/api/v1/marketplace/media/df8af611-970d-42bd-8fcc-492025f6b5b1",
           "nextCursor": null,
           "loadingMore": false,
           "loadMoreError": null
         },
-        "beforeUrl": "https://mira-api-n4p3.onrender.com/api/v1/marketplace/media/f8c0535f-f87f-4ef7-86df-7a93d373ead5",
+        "beforeUrl": "https://mira-api-n4p3.onrender.com/api/v1/marketplace/media/9e62959e-c0bc-439f-92d9-c08b1dca62fb",
         "phases": {
-          "warmClaimed": null,
-          "initStart": 0,
-          "initDone": 1577,
-          "firstByteProxy": 1577,
-          "playStart": 1578,
+          "warmClaimed": 12,
+          "initStart": 12,
+          "initDone": 12,
+          "firstByteProxy": 12,
+          "playStart": 17,
           "firstFrame": null,
-          "source": 0
+          "source": 1
         }
       },
       {
         "type": "first_frame_timeout",
-        "positionMs": 9942,
-        "offerId": "1b782572-9bce-40f3-9d8b-771d1ed3c8fd",
-        "mediaUrl": "https://mira-api-n4p3.onrender.com/api/v1/marketplace/media/f8c0535f-f87f-4ef7-86df-7a93d373ead5",
-        "attempt": 10,
-        "i": 6,
-        "pass": 2,
-        "before": {
-          "page": 0,
-          "slideCount": 14,
-          "offerId": "14260bc3-7960-493f-86ad-2422d96bfa47",
-          "mediaUrl": "https://mira-api-n4p3.onrender.com/api/v1/marketplace/media/71062d9e-622f-4377-bf22-8df75fc63afb",
-          "nextCursor": null,
-          "loadingMore": false,
-          "loadMoreError": null
-        },
-        "after": {
-          "page": 1,
-          "slideCount": 14,
-          "offerId": "1b782572-9bce-40f3-9d8b-771d1ed3c8fd",
-          "mediaUrl": "https://mira-api-n4p3.onrender.com/api/v1/marketplace/media/f8c0535f-f87f-4ef7-86df-7a93d373ead5",
-          "nextCursor": null,
-          "loadingMore": false,
-          "loadMoreError": null
-        },
-        "beforeUrl": "https://mira-api-n4p3.onrender.com/api/v1/marketplace/media/71062d9e-622f-4377-bf22-8df75fc63afb",
-        "phases": {
-          "warmClaimed": null,
-          "initStart": 0,
-          "initDone": 1930,
-          "firstByteProxy": 1930,
-          "playStart": 1931,
-          "firstFrame": null,
-          "source": 0
-        }
-      },
-      {
-        "type": "first_frame_timeout",
-        "positionMs": 9874,
-        "offerId": "2b12c3bb-f50b-4b12-8f47-97400ebf2e72",
-        "mediaUrl": "https://mira-api-n4p3.onrender.com/api/v1/marketplace/media/73eeeb73-30df-47c3-98fa-2384e42f17f4",
-        "attempt": 12,
-        "i": 7,
-        "pass": 2,
-        "before": {
-          "page": 2,
-          "slideCount": 14,
-          "offerId": "29300b08-9564-470e-a5d6-563724aae2ba",
-          "mediaUrl": "https://mira-api-n4p3.onrender.com/api/v1/marketplace/media/76dbf34d-a204-4d11-b31a-408d4ef4b908",
-          "nextCursor": null,
-          "loadingMore": false,
-          "loadMoreError": null
-        },
-        "after": {
-          "page": 3,
-          "slideCount": 14,
-          "offerId": "2b12c3bb-f50b-4b12-8f47-97400ebf2e72",
-          "mediaUrl": "https://mira-api-n4p3.onrender.com/api/v1/marketplace/media/73eeeb73-30df-47c3-98fa-2384e42f17f4",
-          "nextCursor": null,
-          "loadingMore": false,
-          "loadMoreError": null
-        },
-        "beforeUrl": "https://mira-api-n4p3.onrender.com/api/v1/marketplace/media/76dbf34d-a204-4d11-b31a-408d4ef4b908",
-        "phases": {
-          "warmClaimed": null,
-          "initStart": 0,
-          "initDone": 1854,
-          "firstByteProxy": 1854,
-          "playStart": 1856,
-          "firstFrame": null,
-          "source": 0
-        }
-      },
-      {
-        "type": "first_frame_timeout",
-        "positionMs": 9626,
+        "positionMs": 8032,
         "offerId": "e6e7e32d-ea25-490c-a8cc-65f1e879fd44",
         "mediaUrl": "https://mira-api-n4p3.onrender.com/api/v1/marketplace/media/2af09164-f1ac-4c91-99bf-71c4eba0833e",
-        "attempt": 20,
-        "i": 14,
-        "pass": 2,
+        "attempt": 11,
+        "i": 8,
+        "pass": 1,
         "before": {
           "page": 10,
           "slideCount": 14,
@@ -235,22 +166,170 @@
         },
         "beforeUrl": "https://mira-api-n4p3.onrender.com/api/v1/marketplace/media/caf212f3-48fb-47d1-bde3-8a813e228296",
         "phases": {
-          "warmClaimed": null,
-          "initStart": 0,
-          "initDone": 1622,
-          "firstByteProxy": 1622,
-          "playStart": 1623,
+          "warmClaimed": 10,
+          "initStart": 10,
+          "initDone": 10,
+          "firstByteProxy": 10,
+          "playStart": 15,
           "firstFrame": null,
-          "source": 0
+          "source": 1
         }
       },
       {
         "type": "first_frame_timeout",
-        "positionMs": 10332,
+        "positionMs": 8030,
         "offerId": "e8d1f183-687d-4235-b564-87d385c3f039",
         "mediaUrl": "https://mira-api-n4p3.onrender.com/api/v1/marketplace/media/f78679c8-6225-4938-8b7b-343439421327",
-        "attempt": 21,
-        "i": 14,
+        "attempt": 12,
+        "i": 8,
+        "pass": 1,
+        "before": {
+          "page": 11,
+          "slideCount": 14,
+          "offerId": "e6e7e32d-ea25-490c-a8cc-65f1e879fd44",
+          "mediaUrl": "https://mira-api-n4p3.onrender.com/api/v1/marketplace/media/2af09164-f1ac-4c91-99bf-71c4eba0833e",
+          "nextCursor": null,
+          "loadingMore": false,
+          "loadMoreError": null
+        },
+        "after": {
+          "page": 12,
+          "slideCount": 14,
+          "offerId": "e8d1f183-687d-4235-b564-87d385c3f039",
+          "mediaUrl": "https://mira-api-n4p3.onrender.com/api/v1/marketplace/media/f78679c8-6225-4938-8b7b-343439421327",
+          "nextCursor": null,
+          "loadingMore": false,
+          "loadMoreError": null
+        },
+        "beforeUrl": "https://mira-api-n4p3.onrender.com/api/v1/marketplace/media/2af09164-f1ac-4c91-99bf-71c4eba0833e",
+        "phases": {
+          "warmClaimed": 8,
+          "initStart": 8,
+          "initDone": 8,
+          "firstByteProxy": 8,
+          "playStart": 14,
+          "firstFrame": null,
+          "source": 1
+        }
+      },
+      {
+        "type": "first_frame_timeout",
+        "positionMs": 8030,
+        "offerId": "ed1aa75a-607d-4156-86ab-5fef2d5ac659",
+        "mediaUrl": "https://mira-api-n4p3.onrender.com/api/v1/marketplace/media/dc16dda8-17f9-4edc-afe6-9276ace6d44e",
+        "attempt": 13,
+        "i": 8,
+        "pass": 1,
+        "before": {
+          "page": 12,
+          "slideCount": 14,
+          "offerId": "e8d1f183-687d-4235-b564-87d385c3f039",
+          "mediaUrl": "https://mira-api-n4p3.onrender.com/api/v1/marketplace/media/f78679c8-6225-4938-8b7b-343439421327",
+          "nextCursor": null,
+          "loadingMore": false,
+          "loadMoreError": null
+        },
+        "after": {
+          "page": 13,
+          "slideCount": 14,
+          "offerId": "ed1aa75a-607d-4156-86ab-5fef2d5ac659",
+          "mediaUrl": "https://mira-api-n4p3.onrender.com/api/v1/marketplace/media/dc16dda8-17f9-4edc-afe6-9276ace6d44e",
+          "nextCursor": null,
+          "loadingMore": false,
+          "loadMoreError": null
+        },
+        "beforeUrl": "https://mira-api-n4p3.onrender.com/api/v1/marketplace/media/f78679c8-6225-4938-8b7b-343439421327",
+        "phases": {
+          "warmClaimed": 11,
+          "initStart": 11,
+          "initDone": 11,
+          "firstByteProxy": 11,
+          "playStart": 16,
+          "firstFrame": null,
+          "source": 1
+        }
+      },
+      {
+        "type": "first_frame_timeout",
+        "positionMs": 8026,
+        "offerId": "29300b08-9564-470e-a5d6-563724aae2ba",
+        "mediaUrl": "https://mira-api-n4p3.onrender.com/api/v1/marketplace/media/76dbf34d-a204-4d11-b31a-408d4ef4b908",
+        "attempt": 16,
+        "i": 9,
+        "pass": 2,
+        "before": {
+          "page": 1,
+          "slideCount": 14,
+          "offerId": "1b782572-9bce-40f3-9d8b-771d1ed3c8fd",
+          "mediaUrl": "https://mira-api-n4p3.onrender.com/api/v1/marketplace/media/f8c0535f-f87f-4ef7-86df-7a93d373ead5",
+          "nextCursor": null,
+          "loadingMore": false,
+          "loadMoreError": null
+        },
+        "after": {
+          "page": 2,
+          "slideCount": 14,
+          "offerId": "29300b08-9564-470e-a5d6-563724aae2ba",
+          "mediaUrl": "https://mira-api-n4p3.onrender.com/api/v1/marketplace/media/76dbf34d-a204-4d11-b31a-408d4ef4b908",
+          "nextCursor": null,
+          "loadingMore": false,
+          "loadMoreError": null
+        },
+        "beforeUrl": "https://mira-api-n4p3.onrender.com/api/v1/marketplace/media/f8c0535f-f87f-4ef7-86df-7a93d373ead5",
+        "phases": {
+          "warmClaimed": 8,
+          "initStart": 8,
+          "initDone": 8,
+          "firstByteProxy": 8,
+          "playStart": 12,
+          "firstFrame": null,
+          "source": 1
+        }
+      },
+      {
+        "type": "first_frame_timeout",
+        "positionMs": 8026,
+        "offerId": "c471c1dc-b750-483f-907d-03694f9ea099",
+        "mediaUrl": "https://mira-api-n4p3.onrender.com/api/v1/marketplace/media/caf212f3-48fb-47d1-bde3-8a813e228296",
+        "attempt": 24,
+        "i": 16,
+        "pass": 2,
+        "before": {
+          "page": 9,
+          "slideCount": 14,
+          "offerId": "bbf14222-f7e1-4858-81b1-d5d637e9acc5",
+          "mediaUrl": "https://mira-api-n4p3.onrender.com/api/v1/marketplace/media/9c68017c-ac54-4287-bf7f-2bba17553f2e",
+          "nextCursor": null,
+          "loadingMore": false,
+          "loadMoreError": null
+        },
+        "after": {
+          "page": 10,
+          "slideCount": 14,
+          "offerId": "c471c1dc-b750-483f-907d-03694f9ea099",
+          "mediaUrl": "https://mira-api-n4p3.onrender.com/api/v1/marketplace/media/caf212f3-48fb-47d1-bde3-8a813e228296",
+          "nextCursor": null,
+          "loadingMore": false,
+          "loadMoreError": null
+        },
+        "beforeUrl": "https://mira-api-n4p3.onrender.com/api/v1/marketplace/media/9c68017c-ac54-4287-bf7f-2bba17553f2e",
+        "phases": {
+          "warmClaimed": 5,
+          "initStart": 5,
+          "initDone": 5,
+          "firstByteProxy": 5,
+          "playStart": 9,
+          "firstFrame": null,
+          "source": 1
+        }
+      },
+      {
+        "type": "first_frame_timeout",
+        "positionMs": 8027,
+        "offerId": "e8d1f183-687d-4235-b564-87d385c3f039",
+        "mediaUrl": "https://mira-api-n4p3.onrender.com/api/v1/marketplace/media/f78679c8-6225-4938-8b7b-343439421327",
+        "attempt": 26,
+        "i": 17,
         "pass": 2,
         "before": {
           "page": 11,
@@ -272,22 +351,22 @@
         },
         "beforeUrl": "https://mira-api-n4p3.onrender.com/api/v1/marketplace/media/2af09164-f1ac-4c91-99bf-71c4eba0833e",
         "phases": {
-          "warmClaimed": null,
-          "initStart": 0,
-          "initDone": 2322,
-          "firstByteProxy": 2322,
-          "playStart": 2324,
+          "warmClaimed": 6,
+          "initStart": 6,
+          "initDone": 6,
+          "firstByteProxy": 6,
+          "playStart": 10,
           "firstFrame": null,
-          "source": 0
+          "source": 1
         }
       },
       {
         "type": "first_frame_timeout",
-        "positionMs": 8023,
+        "positionMs": 8048,
         "offerId": "ed1aa75a-607d-4156-86ab-5fef2d5ac659",
         "mediaUrl": "https://mira-api-n4p3.onrender.com/api/v1/marketplace/media/dc16dda8-17f9-4edc-afe6-9276ace6d44e",
-        "attempt": 22,
-        "i": 14,
+        "attempt": 27,
+        "i": 17,
         "pass": 2,
         "before": {
           "page": 12,
@@ -313,18 +392,18 @@
           "initStart": 10,
           "initDone": 10,
           "firstByteProxy": 10,
-          "playStart": 12,
+          "playStart": 16,
           "firstFrame": null,
           "source": 1
         }
       },
       {
         "type": "first_frame_timeout",
-        "positionMs": 9935,
+        "positionMs": 8037,
         "offerId": "1b782572-9bce-40f3-9d8b-771d1ed3c8fd",
         "mediaUrl": "https://mira-api-n4p3.onrender.com/api/v1/marketplace/media/f8c0535f-f87f-4ef7-86df-7a93d373ead5",
-        "attempt": 24,
-        "i": 14,
+        "attempt": 29,
+        "i": 17,
         "pass": 3,
         "before": {
           "page": 0,
@@ -346,24 +425,33 @@
         },
         "beforeUrl": "https://mira-api-n4p3.onrender.com/api/v1/marketplace/media/71062d9e-622f-4377-bf22-8df75fc63afb",
         "phases": {
-          "warmClaimed": null,
-          "initStart": 0,
-          "initDone": 1894,
-          "firstByteProxy": 1894,
-          "playStart": 1925,
+          "warmClaimed": 8,
+          "initStart": 8,
+          "initDone": 8,
+          "firstByteProxy": 8,
+          "playStart": 16,
           "firstFrame": null,
-          "source": 0
+          "source": 1
         }
       },
       {
         "type": "first_frame_timeout",
-        "positionMs": 9688,
-        "offerId": "2b12c3bb-f50b-4b12-8f47-97400ebf2e72",
-        "mediaUrl": "https://mira-api-n4p3.onrender.com/api/v1/marketplace/media/73eeeb73-30df-47c3-98fa-2384e42f17f4",
-        "attempt": 26,
-        "i": 15,
+        "positionMs": 8041,
+        "offerId": "29300b08-9564-470e-a5d6-563724aae2ba",
+        "mediaUrl": "https://mira-api-n4p3.onrender.com/api/v1/marketplace/media/76dbf34d-a204-4d11-b31a-408d4ef4b908",
+        "attempt": 30,
+        "i": 17,
         "pass": 3,
         "before": {
+          "page": 1,
+          "slideCount": 14,
+          "offerId": "1b782572-9bce-40f3-9d8b-771d1ed3c8fd",
+          "mediaUrl": "https://mira-api-n4p3.onrender.com/api/v1/marketplace/media/f8c0535f-f87f-4ef7-86df-7a93d373ead5",
+          "nextCursor": null,
+          "loadingMore": false,
+          "loadMoreError": null
+        },
+        "after": {
           "page": 2,
           "slideCount": 14,
           "offerId": "29300b08-9564-470e-a5d6-563724aae2ba",
@@ -372,71 +460,25 @@
           "loadingMore": false,
           "loadMoreError": null
         },
-        "after": {
-          "page": 3,
-          "slideCount": 14,
-          "offerId": "2b12c3bb-f50b-4b12-8f47-97400ebf2e72",
-          "mediaUrl": "https://mira-api-n4p3.onrender.com/api/v1/marketplace/media/73eeeb73-30df-47c3-98fa-2384e42f17f4",
-          "nextCursor": null,
-          "loadingMore": false,
-          "loadMoreError": null
-        },
-        "beforeUrl": "https://mira-api-n4p3.onrender.com/api/v1/marketplace/media/76dbf34d-a204-4d11-b31a-408d4ef4b908",
+        "beforeUrl": "https://mira-api-n4p3.onrender.com/api/v1/marketplace/media/f8c0535f-f87f-4ef7-86df-7a93d373ead5",
         "phases": {
-          "warmClaimed": null,
-          "initStart": 0,
-          "initDone": 1683,
-          "firstByteProxy": 1683,
-          "playStart": 1684,
+          "warmClaimed": 10,
+          "initStart": 10,
+          "initDone": 10,
+          "firstByteProxy": 10,
+          "playStart": 16,
           "firstFrame": null,
-          "source": 0
+          "source": 1
         }
       },
       {
         "type": "first_frame_timeout",
-        "positionMs": 9796,
-        "offerId": "1b782572-9bce-40f3-9d8b-771d1ed3c8fd",
-        "mediaUrl": "https://mira-api-n4p3.onrender.com/api/v1/marketplace/media/f8c0535f-f87f-4ef7-86df-7a93d373ead5",
-        "attempt": 29,
-        "i": 16,
-        "pass": 4,
-        "before": {
-          "page": 0,
-          "slideCount": 14,
-          "offerId": "14260bc3-7960-493f-86ad-2422d96bfa47",
-          "mediaUrl": "https://mira-api-n4p3.onrender.com/api/v1/marketplace/media/71062d9e-622f-4377-bf22-8df75fc63afb",
-          "nextCursor": null,
-          "loadingMore": false,
-          "loadMoreError": null
-        },
-        "after": {
-          "page": 1,
-          "slideCount": 14,
-          "offerId": "1b782572-9bce-40f3-9d8b-771d1ed3c8fd",
-          "mediaUrl": "https://mira-api-n4p3.onrender.com/api/v1/marketplace/media/f8c0535f-f87f-4ef7-86df-7a93d373ead5",
-          "nextCursor": null,
-          "loadingMore": false,
-          "loadMoreError": null
-        },
-        "beforeUrl": "https://mira-api-n4p3.onrender.com/api/v1/marketplace/media/71062d9e-622f-4377-bf22-8df75fc63afb",
-        "phases": {
-          "warmClaimed": null,
-          "initStart": 0,
-          "initDone": 1792,
-          "firstByteProxy": 1792,
-          "playStart": 1793,
-          "firstFrame": null,
-          "source": 0
-        }
-      },
-      {
-        "type": "first_frame_timeout",
-        "positionMs": 9917,
+        "positionMs": 8040,
         "offerId": "2b12c3bb-f50b-4b12-8f47-97400ebf2e72",
         "mediaUrl": "https://mira-api-n4p3.onrender.com/api/v1/marketplace/media/73eeeb73-30df-47c3-98fa-2384e42f17f4",
         "attempt": 31,
         "i": 17,
-        "pass": 4,
+        "pass": 3,
         "before": {
           "page": 2,
           "slideCount": 14,
@@ -457,118 +499,131 @@
         },
         "beforeUrl": "https://mira-api-n4p3.onrender.com/api/v1/marketplace/media/76dbf34d-a204-4d11-b31a-408d4ef4b908",
         "phases": {
-          "warmClaimed": null,
-          "initStart": 0,
-          "initDone": 1880,
-          "firstByteProxy": 1880,
-          "playStart": 1882,
+          "warmClaimed": 9,
+          "initStart": 9,
+          "initDone": 9,
+          "firstByteProxy": 9,
+          "playStart": 15,
           "firstFrame": null,
-          "source": 0
+          "source": 1
         }
       },
       {
         "type": "first_frame_timeout",
-        "positionMs": 9790,
-        "offerId": "e6e7e32d-ea25-490c-a8cc-65f1e879fd44",
-        "mediaUrl": "https://mira-api-n4p3.onrender.com/api/v1/marketplace/media/2af09164-f1ac-4c91-99bf-71c4eba0833e",
-        "attempt": 39,
-        "i": 24,
-        "pass": 4,
+        "positionMs": 8041,
+        "offerId": "660b00e5-04c8-4960-8313-811cdfd3244f",
+        "mediaUrl": "https://mira-api-n4p3.onrender.com/api/v1/marketplace/media/df8af611-970d-42bd-8fcc-492025f6b5b1",
+        "attempt": 33,
+        "i": 18,
+        "pass": 3,
         "before": {
-          "page": 10,
+          "page": 4,
           "slideCount": 14,
-          "offerId": "c471c1dc-b750-483f-907d-03694f9ea099",
-          "mediaUrl": "https://mira-api-n4p3.onrender.com/api/v1/marketplace/media/caf212f3-48fb-47d1-bde3-8a813e228296",
+          "offerId": "3542be11-d726-4dcf-9ead-08c0ae8e649a",
+          "mediaUrl": "https://mira-api-n4p3.onrender.com/api/v1/marketplace/media/9e62959e-c0bc-439f-92d9-c08b1dca62fb",
           "nextCursor": null,
           "loadingMore": false,
           "loadMoreError": null
         },
         "after": {
-          "page": 11,
+          "page": 5,
           "slideCount": 14,
-          "offerId": "e6e7e32d-ea25-490c-a8cc-65f1e879fd44",
-          "mediaUrl": "https://mira-api-n4p3.onrender.com/api/v1/marketplace/media/2af09164-f1ac-4c91-99bf-71c4eba0833e",
+          "offerId": "660b00e5-04c8-4960-8313-811cdfd3244f",
+          "mediaUrl": "https://mira-api-n4p3.onrender.com/api/v1/marketplace/media/df8af611-970d-42bd-8fcc-492025f6b5b1",
           "nextCursor": null,
           "loadingMore": false,
           "loadMoreError": null
         },
-        "beforeUrl": "https://mira-api-n4p3.onrender.com/api/v1/marketplace/media/caf212f3-48fb-47d1-bde3-8a813e228296",
+        "beforeUrl": "https://mira-api-n4p3.onrender.com/api/v1/marketplace/media/9e62959e-c0bc-439f-92d9-c08b1dca62fb",
         "phases": {
-          "warmClaimed": null,
-          "initStart": 0,
-          "initDone": 1774,
-          "firstByteProxy": 1774,
-          "playStart": 1775,
+          "warmClaimed": 9,
+          "initStart": 9,
+          "initDone": 10,
+          "firstByteProxy": 10,
+          "playStart": 15,
           "firstFrame": null,
-          "source": 0
+          "source": 1
         }
       },
       {
         "type": "first_frame_timeout",
-        "positionMs": 10029,
-        "offerId": "e8d1f183-687d-4235-b564-87d385c3f039",
-        "mediaUrl": "https://mira-api-n4p3.onrender.com/api/v1/marketplace/media/f78679c8-6225-4938-8b7b-343439421327",
-        "attempt": 40,
+        "positionMs": 8015,
+        "offerId": "29300b08-9564-470e-a5d6-563724aae2ba",
+        "mediaUrl": "https://mira-api-n4p3.onrender.com/api/v1/marketplace/media/76dbf34d-a204-4d11-b31a-408d4ef4b908",
+        "attempt": 41,
         "i": 24,
         "pass": 4,
         "before": {
-          "page": 11,
+          "page": 1,
           "slideCount": 14,
-          "offerId": "e6e7e32d-ea25-490c-a8cc-65f1e879fd44",
-          "mediaUrl": "https://mira-api-n4p3.onrender.com/api/v1/marketplace/media/2af09164-f1ac-4c91-99bf-71c4eba0833e",
+          "offerId": "1b782572-9bce-40f3-9d8b-771d1ed3c8fd",
+          "mediaUrl": "https://mira-api-n4p3.onrender.com/api/v1/marketplace/media/f8c0535f-f87f-4ef7-86df-7a93d373ead5",
           "nextCursor": null,
           "loadingMore": false,
           "loadMoreError": null
         },
         "after": {
-          "page": 12,
+          "page": 2,
           "slideCount": 14,
-          "offerId": "e8d1f183-687d-4235-b564-87d385c3f039",
-          "mediaUrl": "https://mira-api-n4p3.onrender.com/api/v1/marketplace/media/f78679c8-6225-4938-8b7b-343439421327",
+          "offerId": "29300b08-9564-470e-a5d6-563724aae2ba",
+          "mediaUrl": "https://mira-api-n4p3.onrender.com/api/v1/marketplace/media/76dbf34d-a204-4d11-b31a-408d4ef4b908",
           "nextCursor": null,
           "loadingMore": false,
           "loadMoreError": null
         },
-        "beforeUrl": "https://mira-api-n4p3.onrender.com/api/v1/marketplace/media/2af09164-f1ac-4c91-99bf-71c4eba0833e",
+        "beforeUrl": "https://mira-api-n4p3.onrender.com/api/v1/marketplace/media/f8c0535f-f87f-4ef7-86df-7a93d373ead5",
         "phases": {
-          "warmClaimed": null,
-          "initStart": 0,
-          "initDone": 2018,
-          "firstByteProxy": 2018,
-          "playStart": 2021,
+          "warmClaimed": 6,
+          "initStart": 6,
+          "initDone": 6,
+          "firstByteProxy": 6,
+          "playStart": 10,
           "firstFrame": null,
-          "source": 0
+          "source": 1
+        }
+      },
+      {
+        "type": "first_frame_timeout",
+        "positionMs": 8035,
+        "offerId": "660b00e5-04c8-4960-8313-811cdfd3244f",
+        "mediaUrl": "https://mira-api-n4p3.onrender.com/api/v1/marketplace/media/df8af611-970d-42bd-8fcc-492025f6b5b1",
+        "attempt": 44,
+        "i": 26,
+        "pass": 4,
+        "before": {
+          "page": 4,
+          "slideCount": 14,
+          "offerId": "3542be11-d726-4dcf-9ead-08c0ae8e649a",
+          "mediaUrl": "https://mira-api-n4p3.onrender.com/api/v1/marketplace/media/9e62959e-c0bc-439f-92d9-c08b1dca62fb",
+          "nextCursor": null,
+          "loadingMore": false,
+          "loadMoreError": null
+        },
+        "after": {
+          "page": 5,
+          "slideCount": 14,
+          "offerId": "660b00e5-04c8-4960-8313-811cdfd3244f",
+          "mediaUrl": "https://mira-api-n4p3.onrender.com/api/v1/marketplace/media/df8af611-970d-42bd-8fcc-492025f6b5b1",
+          "nextCursor": null,
+          "loadingMore": false,
+          "loadMoreError": null
+        },
+        "beforeUrl": "https://mira-api-n4p3.onrender.com/api/v1/marketplace/media/9e62959e-c0bc-439f-92d9-c08b1dca62fb",
+        "phases": {
+          "warmClaimed": 9,
+          "initStart": 9,
+          "initDone": 9,
+          "firstByteProxy": 9,
+          "playStart": 16,
+          "firstFrame": null,
+          "source": 1
         }
       }
     ],
     "endOfFeedRows": [
       {
-        "attempt": 9,
+        "attempt": 14,
         "pass": 1,
-        "reason": "end_of_feed",
-        "before": {
-          "page": 8,
-          "slideCount": 14,
-          "offerId": "ac4fd919-4185-4685-8d86-64d300e7418c",
-          "mediaUrl": "https://mira-api-n4p3.onrender.com/api/v1/marketplace/media/c325f933-a218-4eea-a134-2768597b7ca8",
-          "nextCursor": null,
-          "loadingMore": false,
-          "loadMoreError": null
-        },
-        "after": {
-          "page": 8,
-          "slideCount": 14,
-          "offerId": "ac4fd919-4185-4685-8d86-64d300e7418c",
-          "mediaUrl": "https://mira-api-n4p3.onrender.com/api/v1/marketplace/media/c325f933-a218-4eea-a134-2768597b7ca8",
-          "nextCursor": null,
-          "loadingMore": false,
-          "loadMoreError": null
-        },
-        "loadMoreError": null
-      },
-      {
-        "attempt": 23,
-        "pass": 2,
         "reason": "end_of_feed",
         "before": {
           "page": 13,
@@ -592,22 +647,22 @@
       },
       {
         "attempt": 28,
-        "pass": 3,
+        "pass": 2,
         "reason": "end_of_feed",
         "before": {
-          "page": 4,
+          "page": 13,
           "slideCount": 14,
-          "offerId": "3542be11-d726-4dcf-9ead-08c0ae8e649a",
-          "mediaUrl": "https://mira-api-n4p3.onrender.com/api/v1/marketplace/media/9e62959e-c0bc-439f-92d9-c08b1dca62fb",
+          "offerId": "ed1aa75a-607d-4156-86ab-5fef2d5ac659",
+          "mediaUrl": "https://mira-api-n4p3.onrender.com/api/v1/marketplace/media/dc16dda8-17f9-4edc-afe6-9276ace6d44e",
           "nextCursor": null,
           "loadingMore": false,
           "loadMoreError": null
         },
         "after": {
-          "page": 4,
+          "page": 13,
           "slideCount": 14,
-          "offerId": "3542be11-d726-4dcf-9ead-08c0ae8e649a",
-          "mediaUrl": "https://mira-api-n4p3.onrender.com/api/v1/marketplace/media/9e62959e-c0bc-439f-92d9-c08b1dca62fb",
+          "offerId": "ed1aa75a-607d-4156-86ab-5fef2d5ac659",
+          "mediaUrl": "https://mira-api-n4p3.onrender.com/api/v1/marketplace/media/dc16dda8-17f9-4edc-afe6-9276ace6d44e",
           "nextCursor": null,
           "loadingMore": false,
           "loadMoreError": null
@@ -615,23 +670,23 @@
         "loadMoreError": null
       },
       {
-        "attempt": 42,
-        "pass": 4,
+        "attempt": 39,
+        "pass": 3,
         "reason": "end_of_feed",
         "before": {
-          "page": 13,
+          "page": 10,
           "slideCount": 14,
-          "offerId": "ed1aa75a-607d-4156-86ab-5fef2d5ac659",
-          "mediaUrl": "https://mira-api-n4p3.onrender.com/api/v1/marketplace/media/dc16dda8-17f9-4edc-afe6-9276ace6d44e",
+          "offerId": "c471c1dc-b750-483f-907d-03694f9ea099",
+          "mediaUrl": "https://mira-api-n4p3.onrender.com/api/v1/marketplace/media/caf212f3-48fb-47d1-bde3-8a813e228296",
           "nextCursor": null,
           "loadingMore": false,
           "loadMoreError": null
         },
         "after": {
-          "page": 13,
+          "page": 10,
           "slideCount": 14,
-          "offerId": "ed1aa75a-607d-4156-86ab-5fef2d5ac659",
-          "mediaUrl": "https://mira-api-n4p3.onrender.com/api/v1/marketplace/media/dc16dda8-17f9-4edc-afe6-9276ace6d44e",
+          "offerId": "c471c1dc-b750-483f-907d-03694f9ea099",
+          "mediaUrl": "https://mira-api-n4p3.onrender.com/api/v1/marketplace/media/caf212f3-48fb-47d1-bde3-8a813e228296",
           "nextCursor": null,
           "loadingMore": false,
           "loadMoreError": null
@@ -640,20 +695,29 @@
       }
     ],
     "stalledRows": [],
-    "warmHits": 2,
+    "warmHits": 45,
     "parkedHits": 0,
-    "coldHits": 36
+    "coldHits": 0
   },
   "extremes": {
     "fastest": {
       "type": "first_frame",
-      "positionMs": 1545,
-      "offerId": "9b8edf30-65f7-4951-a994-fa79c65caedc",
-      "mediaUrl": "https://mira-api-n4p3.onrender.com/api/v1/marketplace/media/37dbc44c-0057-4ed2-b1e7-3c4c37f92e5c",
-      "attempt": 35,
-      "i": 20,
-      "pass": 4,
+      "positionMs": 113,
+      "offerId": "7d4625bf-7f34-4ffa-af5d-4fa9ed48b017",
+      "mediaUrl": "https://mira-api-n4p3.onrender.com/api/v1/marketplace/media/94d514e3-99bf-4c5f-b517-fe4178aacb0f",
+      "attempt": 34,
+      "i": 18,
+      "pass": 3,
       "before": {
+        "page": 5,
+        "slideCount": 14,
+        "offerId": "660b00e5-04c8-4960-8313-811cdfd3244f",
+        "mediaUrl": "https://mira-api-n4p3.onrender.com/api/v1/marketplace/media/df8af611-970d-42bd-8fcc-492025f6b5b1",
+        "nextCursor": null,
+        "loadingMore": false,
+        "loadMoreError": null
+      },
+      "after": {
         "page": 6,
         "slideCount": 14,
         "offerId": "7d4625bf-7f34-4ffa-af5d-4fa9ed48b017",
@@ -662,7 +726,26 @@
         "loadingMore": false,
         "loadMoreError": null
       },
-      "after": {
+      "beforeUrl": "https://mira-api-n4p3.onrender.com/api/v1/marketplace/media/df8af611-970d-42bd-8fcc-492025f6b5b1",
+      "phases": {
+        "warmClaimed": 5,
+        "initStart": 5,
+        "initDone": 6,
+        "firstByteProxy": 6,
+        "playStart": 10,
+        "firstFrame": 113,
+        "source": 1
+      }
+    },
+    "slowest": {
+      "type": "first_frame",
+      "positionMs": 7828,
+      "offerId": "ac4fd919-4185-4685-8d86-64d300e7418c",
+      "mediaUrl": "https://mira-api-n4p3.onrender.com/api/v1/marketplace/media/c325f933-a218-4eea-a134-2768597b7ca8",
+      "attempt": 47,
+      "i": 28,
+      "pass": 4,
+      "before": {
         "page": 7,
         "slideCount": 14,
         "offerId": "9b8edf30-65f7-4951-a994-fa79c65caedc",
@@ -671,52 +754,24 @@
         "loadingMore": false,
         "loadMoreError": null
       },
-      "beforeUrl": "https://mira-api-n4p3.onrender.com/api/v1/marketplace/media/94d514e3-99bf-4c5f-b517-fe4178aacb0f",
-      "phases": {
-        "warmClaimed": null,
-        "initStart": 0,
-        "initDone": 1442,
-        "firstByteProxy": 1442,
-        "playStart": 1442,
-        "firstFrame": 1545,
-        "source": 0
-      }
-    },
-    "slowest": {
-      "type": "first_frame",
-      "positionMs": 12296,
-      "offerId": "1b782572-9bce-40f3-9d8b-771d1ed3c8fd",
-      "mediaUrl": "https://mira-api-n4p3.onrender.com/api/v1/marketplace/media/f8c0535f-f87f-4ef7-86df-7a93d373ead5",
-      "attempt": 30,
-      "i": 16,
-      "pass": 4,
-      "before": {
-        "page": 1,
-        "slideCount": 14,
-        "offerId": "1b782572-9bce-40f3-9d8b-771d1ed3c8fd",
-        "mediaUrl": "https://mira-api-n4p3.onrender.com/api/v1/marketplace/media/f8c0535f-f87f-4ef7-86df-7a93d373ead5",
-        "nextCursor": null,
-        "loadingMore": false,
-        "loadMoreError": null
-      },
       "after": {
-        "page": 2,
+        "page": 8,
         "slideCount": 14,
-        "offerId": "29300b08-9564-470e-a5d6-563724aae2ba",
-        "mediaUrl": "https://mira-api-n4p3.onrender.com/api/v1/marketplace/media/76dbf34d-a204-4d11-b31a-408d4ef4b908",
+        "offerId": "ac4fd919-4185-4685-8d86-64d300e7418c",
+        "mediaUrl": "https://mira-api-n4p3.onrender.com/api/v1/marketplace/media/c325f933-a218-4eea-a134-2768597b7ca8",
         "nextCursor": null,
         "loadingMore": false,
         "loadMoreError": null
       },
-      "beforeUrl": "https://mira-api-n4p3.onrender.com/api/v1/marketplace/media/f8c0535f-f87f-4ef7-86df-7a93d373ead5",
+      "beforeUrl": "https://mira-api-n4p3.onrender.com/api/v1/marketplace/media/37dbc44c-0057-4ed2-b1e7-3c4c37f92e5c",
       "phases": {
-        "warmClaimed": null,
-        "initStart": 0,
-        "initDone": null,
-        "firstByteProxy": null,
-        "playStart": null,
-        "firstFrame": null,
-        "source": 0
+        "warmClaimed": 9,
+        "initStart": 9,
+        "initDone": 9,
+        "firstByteProxy": 9,
+        "playStart": 14,
+        "firstFrame": 7828,
+        "source": 1
       }
     }
   },
@@ -738,8 +793,8 @@
   ],
   "raw": [
     {
-      "type": "first_frame_timeout",
-      "positionMs": 10698,
+      "type": "first_frame",
+      "positionMs": 3624,
       "offerId": "14260bc3-7960-493f-86ad-2422d96bfa47",
       "mediaUrl": "https://mira-api-n4p3.onrender.com/api/v1/marketplace/media/71062d9e-622f-4377-bf22-8df75fc63afb",
       "pass": 1,
@@ -756,7 +811,7 @@
     },
     {
       "type": "first_frame_timeout",
-      "positionMs": 9851,
+      "positionMs": 8037,
       "offerId": "1b782572-9bce-40f3-9d8b-771d1ed3c8fd",
       "mediaUrl": "https://mira-api-n4p3.onrender.com/api/v1/marketplace/media/f8c0535f-f87f-4ef7-86df-7a93d373ead5",
       "attempt": 1,
@@ -782,18 +837,18 @@
       },
       "beforeUrl": "https://mira-api-n4p3.onrender.com/api/v1/marketplace/media/71062d9e-622f-4377-bf22-8df75fc63afb",
       "phases": {
-        "warmClaimed": null,
-        "initStart": 0,
-        "initDone": 1842,
-        "firstByteProxy": 1842,
-        "playStart": 1843,
+        "warmClaimed": 17,
+        "initStart": 17,
+        "initDone": 17,
+        "firstByteProxy": 17,
+        "playStart": 23,
         "firstFrame": null,
-        "source": 0
+        "source": 1
       }
     },
     {
-      "type": "first_frame_timeout",
-      "positionMs": 9580,
+      "type": "first_frame",
+      "positionMs": 3040,
       "offerId": "29300b08-9564-470e-a5d6-563724aae2ba",
       "mediaUrl": "https://mira-api-n4p3.onrender.com/api/v1/marketplace/media/76dbf34d-a204-4d11-b31a-408d4ef4b908",
       "attempt": 2,
@@ -819,22 +874,22 @@
       },
       "beforeUrl": "https://mira-api-n4p3.onrender.com/api/v1/marketplace/media/f8c0535f-f87f-4ef7-86df-7a93d373ead5",
       "phases": {
-        "warmClaimed": null,
-        "initStart": 0,
-        "initDone": 1577,
-        "firstByteProxy": 1577,
-        "playStart": 1578,
-        "firstFrame": null,
-        "source": 0
+        "warmClaimed": 13,
+        "initStart": 13,
+        "initDone": 13,
+        "firstByteProxy": 13,
+        "playStart": 20,
+        "firstFrame": 3040,
+        "source": 1
       }
     },
     {
       "type": "first_frame",
-      "positionMs": 8256,
+      "positionMs": 3630,
       "offerId": "2b12c3bb-f50b-4b12-8f47-97400ebf2e72",
       "mediaUrl": "https://mira-api-n4p3.onrender.com/api/v1/marketplace/media/73eeeb73-30df-47c3-98fa-2384e42f17f4",
       "attempt": 3,
-      "i": 0,
+      "i": 1,
       "pass": 1,
       "before": {
         "page": 2,
@@ -856,22 +911,22 @@
       },
       "beforeUrl": "https://mira-api-n4p3.onrender.com/api/v1/marketplace/media/76dbf34d-a204-4d11-b31a-408d4ef4b908",
       "phases": {
-        "warmClaimed": null,
-        "initStart": 0,
-        "initDone": 1753,
-        "firstByteProxy": 1753,
-        "playStart": 1754,
-        "firstFrame": 8256,
-        "source": 0
+        "warmClaimed": 9,
+        "initStart": 9,
+        "initDone": 9,
+        "firstByteProxy": 9,
+        "playStart": 13,
+        "firstFrame": 3630,
+        "source": 1
       }
     },
     {
       "type": "first_frame",
-      "positionMs": 3654,
+      "positionMs": 233,
       "offerId": "3542be11-d726-4dcf-9ead-08c0ae8e649a",
       "mediaUrl": "https://mira-api-n4p3.onrender.com/api/v1/marketplace/media/9e62959e-c0bc-439f-92d9-c08b1dca62fb",
       "attempt": 4,
-      "i": 1,
+      "i": 2,
       "pass": 1,
       "before": {
         "page": 3,
@@ -893,22 +948,22 @@
       },
       "beforeUrl": "https://mira-api-n4p3.onrender.com/api/v1/marketplace/media/73eeeb73-30df-47c3-98fa-2384e42f17f4",
       "phases": {
-        "warmClaimed": null,
-        "initStart": 0,
-        "initDone": 1549,
-        "firstByteProxy": 1549,
-        "playStart": 1550,
-        "firstFrame": 3654,
-        "source": 0
+        "warmClaimed": 12,
+        "initStart": 12,
+        "initDone": 12,
+        "firstByteProxy": 12,
+        "playStart": 16,
+        "firstFrame": 233,
+        "source": 1
       }
     },
     {
-      "type": "first_frame",
-      "positionMs": 5459,
+      "type": "first_frame_timeout",
+      "positionMs": 8027,
       "offerId": "660b00e5-04c8-4960-8313-811cdfd3244f",
       "mediaUrl": "https://mira-api-n4p3.onrender.com/api/v1/marketplace/media/df8af611-970d-42bd-8fcc-492025f6b5b1",
       "attempt": 5,
-      "i": 2,
+      "i": 3,
       "pass": 1,
       "before": {
         "page": 4,
@@ -930,18 +985,18 @@
       },
       "beforeUrl": "https://mira-api-n4p3.onrender.com/api/v1/marketplace/media/9e62959e-c0bc-439f-92d9-c08b1dca62fb",
       "phases": {
-        "warmClaimed": null,
-        "initStart": 0,
-        "initDone": 1657,
-        "firstByteProxy": 1657,
-        "playStart": 1657,
-        "firstFrame": 5459,
-        "source": 0
+        "warmClaimed": 12,
+        "initStart": 12,
+        "initDone": 12,
+        "firstByteProxy": 12,
+        "playStart": 17,
+        "firstFrame": null,
+        "source": 1
       }
     },
     {
       "type": "first_frame",
-      "positionMs": 1769,
+      "positionMs": 119,
       "offerId": "7d4625bf-7f34-4ffa-af5d-4fa9ed48b017",
       "mediaUrl": "https://mira-api-n4p3.onrender.com/api/v1/marketplace/media/94d514e3-99bf-4c5f-b517-fe4178aacb0f",
       "attempt": 6,
@@ -967,18 +1022,18 @@
       },
       "beforeUrl": "https://mira-api-n4p3.onrender.com/api/v1/marketplace/media/df8af611-970d-42bd-8fcc-492025f6b5b1",
       "phases": {
-        "warmClaimed": null,
-        "initStart": 0,
-        "initDone": 1644,
-        "firstByteProxy": 1644,
-        "playStart": 1660,
-        "firstFrame": 1769,
-        "source": 0
+        "warmClaimed": 11,
+        "initStart": 11,
+        "initDone": 11,
+        "firstByteProxy": 11,
+        "playStart": 15,
+        "firstFrame": 119,
+        "source": 1
       }
     },
     {
       "type": "first_frame",
-      "positionMs": 1585,
+      "positionMs": 122,
       "offerId": "9b8edf30-65f7-4951-a994-fa79c65caedc",
       "mediaUrl": "https://mira-api-n4p3.onrender.com/api/v1/marketplace/media/37dbc44c-0057-4ed2-b1e7-3c4c37f92e5c",
       "attempt": 7,
@@ -1004,18 +1059,18 @@
       },
       "beforeUrl": "https://mira-api-n4p3.onrender.com/api/v1/marketplace/media/94d514e3-99bf-4c5f-b517-fe4178aacb0f",
       "phases": {
-        "warmClaimed": null,
-        "initStart": 0,
-        "initDone": 1483,
-        "firstByteProxy": 1483,
-        "playStart": 1484,
-        "firstFrame": 1585,
-        "source": 0
+        "warmClaimed": 12,
+        "initStart": 12,
+        "initDone": 12,
+        "firstByteProxy": 12,
+        "playStart": 17,
+        "firstFrame": 122,
+        "source": 1
       }
     },
     {
       "type": "first_frame",
-      "positionMs": 3941,
+      "positionMs": 222,
       "offerId": "ac4fd919-4185-4685-8d86-64d300e7418c",
       "mediaUrl": "https://mira-api-n4p3.onrender.com/api/v1/marketplace/media/c325f933-a218-4eea-a134-2768597b7ca8",
       "attempt": 8,
@@ -1041,18 +1096,203 @@
       },
       "beforeUrl": "https://mira-api-n4p3.onrender.com/api/v1/marketplace/media/37dbc44c-0057-4ed2-b1e7-3c4c37f92e5c",
       "phases": {
-        "warmClaimed": null,
-        "initStart": 0,
-        "initDone": 1538,
-        "firstByteProxy": 1538,
-        "playStart": 1538,
-        "firstFrame": 3941,
-        "source": 0
+        "warmClaimed": 12,
+        "initStart": 12,
+        "initDone": 12,
+        "firstByteProxy": 12,
+        "playStart": 19,
+        "firstFrame": 222,
+        "source": 1
+      }
+    },
+    {
+      "type": "first_frame",
+      "positionMs": 131,
+      "offerId": "bbf14222-f7e1-4858-81b1-d5d637e9acc5",
+      "mediaUrl": "https://mira-api-n4p3.onrender.com/api/v1/marketplace/media/9c68017c-ac54-4287-bf7f-2bba17553f2e",
+      "attempt": 9,
+      "i": 6,
+      "pass": 1,
+      "before": {
+        "page": 8,
+        "slideCount": 14,
+        "offerId": "ac4fd919-4185-4685-8d86-64d300e7418c",
+        "mediaUrl": "https://mira-api-n4p3.onrender.com/api/v1/marketplace/media/c325f933-a218-4eea-a134-2768597b7ca8",
+        "nextCursor": null,
+        "loadingMore": false,
+        "loadMoreError": null
+      },
+      "after": {
+        "page": 9,
+        "slideCount": 14,
+        "offerId": "bbf14222-f7e1-4858-81b1-d5d637e9acc5",
+        "mediaUrl": "https://mira-api-n4p3.onrender.com/api/v1/marketplace/media/9c68017c-ac54-4287-bf7f-2bba17553f2e",
+        "nextCursor": null,
+        "loadingMore": false,
+        "loadMoreError": null
+      },
+      "beforeUrl": "https://mira-api-n4p3.onrender.com/api/v1/marketplace/media/c325f933-a218-4eea-a134-2768597b7ca8",
+      "phases": {
+        "warmClaimed": 9,
+        "initStart": 9,
+        "initDone": 9,
+        "firstByteProxy": 9,
+        "playStart": 13,
+        "firstFrame": 131,
+        "source": 1
+      }
+    },
+    {
+      "type": "first_frame",
+      "positionMs": 232,
+      "offerId": "c471c1dc-b750-483f-907d-03694f9ea099",
+      "mediaUrl": "https://mira-api-n4p3.onrender.com/api/v1/marketplace/media/caf212f3-48fb-47d1-bde3-8a813e228296",
+      "attempt": 10,
+      "i": 7,
+      "pass": 1,
+      "before": {
+        "page": 9,
+        "slideCount": 14,
+        "offerId": "bbf14222-f7e1-4858-81b1-d5d637e9acc5",
+        "mediaUrl": "https://mira-api-n4p3.onrender.com/api/v1/marketplace/media/9c68017c-ac54-4287-bf7f-2bba17553f2e",
+        "nextCursor": null,
+        "loadingMore": false,
+        "loadMoreError": null
+      },
+      "after": {
+        "page": 10,
+        "slideCount": 14,
+        "offerId": "c471c1dc-b750-483f-907d-03694f9ea099",
+        "mediaUrl": "https://mira-api-n4p3.onrender.com/api/v1/marketplace/media/caf212f3-48fb-47d1-bde3-8a813e228296",
+        "nextCursor": null,
+        "loadingMore": false,
+        "loadMoreError": null
+      },
+      "beforeUrl": "https://mira-api-n4p3.onrender.com/api/v1/marketplace/media/9c68017c-ac54-4287-bf7f-2bba17553f2e",
+      "phases": {
+        "warmClaimed": 10,
+        "initStart": 10,
+        "initDone": 10,
+        "firstByteProxy": 10,
+        "playStart": 15,
+        "firstFrame": 232,
+        "source": 1
       }
     },
     {
       "type": "first_frame_timeout",
-      "positionMs": 9667,
+      "positionMs": 8032,
+      "offerId": "e6e7e32d-ea25-490c-a8cc-65f1e879fd44",
+      "mediaUrl": "https://mira-api-n4p3.onrender.com/api/v1/marketplace/media/2af09164-f1ac-4c91-99bf-71c4eba0833e",
+      "attempt": 11,
+      "i": 8,
+      "pass": 1,
+      "before": {
+        "page": 10,
+        "slideCount": 14,
+        "offerId": "c471c1dc-b750-483f-907d-03694f9ea099",
+        "mediaUrl": "https://mira-api-n4p3.onrender.com/api/v1/marketplace/media/caf212f3-48fb-47d1-bde3-8a813e228296",
+        "nextCursor": null,
+        "loadingMore": false,
+        "loadMoreError": null
+      },
+      "after": {
+        "page": 11,
+        "slideCount": 14,
+        "offerId": "e6e7e32d-ea25-490c-a8cc-65f1e879fd44",
+        "mediaUrl": "https://mira-api-n4p3.onrender.com/api/v1/marketplace/media/2af09164-f1ac-4c91-99bf-71c4eba0833e",
+        "nextCursor": null,
+        "loadingMore": false,
+        "loadMoreError": null
+      },
+      "beforeUrl": "https://mira-api-n4p3.onrender.com/api/v1/marketplace/media/caf212f3-48fb-47d1-bde3-8a813e228296",
+      "phases": {
+        "warmClaimed": 10,
+        "initStart": 10,
+        "initDone": 10,
+        "firstByteProxy": 10,
+        "playStart": 15,
+        "firstFrame": null,
+        "source": 1
+      }
+    },
+    {
+      "type": "first_frame_timeout",
+      "positionMs": 8030,
+      "offerId": "e8d1f183-687d-4235-b564-87d385c3f039",
+      "mediaUrl": "https://mira-api-n4p3.onrender.com/api/v1/marketplace/media/f78679c8-6225-4938-8b7b-343439421327",
+      "attempt": 12,
+      "i": 8,
+      "pass": 1,
+      "before": {
+        "page": 11,
+        "slideCount": 14,
+        "offerId": "e6e7e32d-ea25-490c-a8cc-65f1e879fd44",
+        "mediaUrl": "https://mira-api-n4p3.onrender.com/api/v1/marketplace/media/2af09164-f1ac-4c91-99bf-71c4eba0833e",
+        "nextCursor": null,
+        "loadingMore": false,
+        "loadMoreError": null
+      },
+      "after": {
+        "page": 12,
+        "slideCount": 14,
+        "offerId": "e8d1f183-687d-4235-b564-87d385c3f039",
+        "mediaUrl": "https://mira-api-n4p3.onrender.com/api/v1/marketplace/media/f78679c8-6225-4938-8b7b-343439421327",
+        "nextCursor": null,
+        "loadingMore": false,
+        "loadMoreError": null
+      },
+      "beforeUrl": "https://mira-api-n4p3.onrender.com/api/v1/marketplace/media/2af09164-f1ac-4c91-99bf-71c4eba0833e",
+      "phases": {
+        "warmClaimed": 8,
+        "initStart": 8,
+        "initDone": 8,
+        "firstByteProxy": 8,
+        "playStart": 14,
+        "firstFrame": null,
+        "source": 1
+      }
+    },
+    {
+      "type": "first_frame_timeout",
+      "positionMs": 8030,
+      "offerId": "ed1aa75a-607d-4156-86ab-5fef2d5ac659",
+      "mediaUrl": "https://mira-api-n4p3.onrender.com/api/v1/marketplace/media/dc16dda8-17f9-4edc-afe6-9276ace6d44e",
+      "attempt": 13,
+      "i": 8,
+      "pass": 1,
+      "before": {
+        "page": 12,
+        "slideCount": 14,
+        "offerId": "e8d1f183-687d-4235-b564-87d385c3f039",
+        "mediaUrl": "https://mira-api-n4p3.onrender.com/api/v1/marketplace/media/f78679c8-6225-4938-8b7b-343439421327",
+        "nextCursor": null,
+        "loadingMore": false,
+        "loadMoreError": null
+      },
+      "after": {
+        "page": 13,
+        "slideCount": 14,
+        "offerId": "ed1aa75a-607d-4156-86ab-5fef2d5ac659",
+        "mediaUrl": "https://mira-api-n4p3.onrender.com/api/v1/marketplace/media/dc16dda8-17f9-4edc-afe6-9276ace6d44e",
+        "nextCursor": null,
+        "loadingMore": false,
+        "loadMoreError": null
+      },
+      "beforeUrl": "https://mira-api-n4p3.onrender.com/api/v1/marketplace/media/f78679c8-6225-4938-8b7b-343439421327",
+      "phases": {
+        "warmClaimed": 11,
+        "initStart": 11,
+        "initDone": 11,
+        "firstByteProxy": 11,
+        "playStart": 16,
+        "firstFrame": null,
+        "source": 1
+      }
+    },
+    {
+      "type": "first_frame_timeout",
+      "positionMs": 10770,
       "offerId": "14260bc3-7960-493f-86ad-2422d96bfa47",
       "mediaUrl": "https://mira-api-n4p3.onrender.com/api/v1/marketplace/media/71062d9e-622f-4377-bf22-8df75fc63afb",
       "kind": "pass_open",
@@ -1060,20 +1300,20 @@
       "phases": {
         "warmClaimed": null,
         "initStart": 0,
-        "initDone": 1650,
-        "firstByteProxy": 1650,
-        "playStart": 1651,
+        "initDone": 2722,
+        "firstByteProxy": 2722,
+        "playStart": 2723,
         "firstFrame": null,
         "source": 0
       }
     },
     {
-      "type": "first_frame_timeout",
-      "positionMs": 9942,
+      "type": "first_frame",
+      "positionMs": 1730,
       "offerId": "1b782572-9bce-40f3-9d8b-771d1ed3c8fd",
       "mediaUrl": "https://mira-api-n4p3.onrender.com/api/v1/marketplace/media/f8c0535f-f87f-4ef7-86df-7a93d373ead5",
-      "attempt": 10,
-      "i": 6,
+      "attempt": 15,
+      "i": 8,
       "pass": 2,
       "before": {
         "page": 0,
@@ -1095,22 +1335,22 @@
       },
       "beforeUrl": "https://mira-api-n4p3.onrender.com/api/v1/marketplace/media/71062d9e-622f-4377-bf22-8df75fc63afb",
       "phases": {
-        "warmClaimed": null,
-        "initStart": 0,
-        "initDone": 1930,
-        "firstByteProxy": 1930,
-        "playStart": 1931,
-        "firstFrame": null,
-        "source": 0
+        "warmClaimed": 9,
+        "initStart": 9,
+        "initDone": 9,
+        "firstByteProxy": 9,
+        "playStart": 16,
+        "firstFrame": 1730,
+        "source": 1
       }
     },
     {
-      "type": "first_frame",
-      "positionMs": 2984,
+      "type": "first_frame_timeout",
+      "positionMs": 8026,
       "offerId": "29300b08-9564-470e-a5d6-563724aae2ba",
       "mediaUrl": "https://mira-api-n4p3.onrender.com/api/v1/marketplace/media/76dbf34d-a204-4d11-b31a-408d4ef4b908",
-      "attempt": 11,
-      "i": 6,
+      "attempt": 16,
+      "i": 9,
       "pass": 2,
       "before": {
         "page": 1,
@@ -1132,22 +1372,22 @@
       },
       "beforeUrl": "https://mira-api-n4p3.onrender.com/api/v1/marketplace/media/f8c0535f-f87f-4ef7-86df-7a93d373ead5",
       "phases": {
-        "warmClaimed": null,
-        "initStart": 0,
-        "initDone": 1481,
-        "firstByteProxy": 1481,
-        "playStart": 1482,
-        "firstFrame": 2984,
-        "source": 0
+        "warmClaimed": 8,
+        "initStart": 8,
+        "initDone": 8,
+        "firstByteProxy": 8,
+        "playStart": 12,
+        "firstFrame": null,
+        "source": 1
       }
     },
     {
-      "type": "first_frame_timeout",
-      "positionMs": 9874,
+      "type": "first_frame",
+      "positionMs": 5721,
       "offerId": "2b12c3bb-f50b-4b12-8f47-97400ebf2e72",
       "mediaUrl": "https://mira-api-n4p3.onrender.com/api/v1/marketplace/media/73eeeb73-30df-47c3-98fa-2384e42f17f4",
-      "attempt": 12,
-      "i": 7,
+      "attempt": 17,
+      "i": 9,
       "pass": 2,
       "before": {
         "page": 2,
@@ -1169,22 +1409,22 @@
       },
       "beforeUrl": "https://mira-api-n4p3.onrender.com/api/v1/marketplace/media/76dbf34d-a204-4d11-b31a-408d4ef4b908",
       "phases": {
-        "warmClaimed": null,
-        "initStart": 0,
-        "initDone": 1854,
-        "firstByteProxy": 1854,
-        "playStart": 1856,
-        "firstFrame": null,
-        "source": 0
+        "warmClaimed": 11,
+        "initStart": 11,
+        "initDone": 11,
+        "firstByteProxy": 11,
+        "playStart": 17,
+        "firstFrame": 5721,
+        "source": 1
       }
     },
     {
       "type": "first_frame",
-      "positionMs": 2899,
+      "positionMs": 229,
       "offerId": "3542be11-d726-4dcf-9ead-08c0ae8e649a",
       "mediaUrl": "https://mira-api-n4p3.onrender.com/api/v1/marketplace/media/9e62959e-c0bc-439f-92d9-c08b1dca62fb",
-      "attempt": 13,
-      "i": 7,
+      "attempt": 18,
+      "i": 10,
       "pass": 2,
       "before": {
         "page": 3,
@@ -1206,22 +1446,22 @@
       },
       "beforeUrl": "https://mira-api-n4p3.onrender.com/api/v1/marketplace/media/73eeeb73-30df-47c3-98fa-2384e42f17f4",
       "phases": {
-        "warmClaimed": null,
-        "initStart": 0,
-        "initDone": 1896,
-        "firstByteProxy": 1896,
-        "playStart": 1896,
-        "firstFrame": 2899,
-        "source": 0
+        "warmClaimed": 8,
+        "initStart": 8,
+        "initDone": 8,
+        "firstByteProxy": 8,
+        "playStart": 14,
+        "firstFrame": 229,
+        "source": 1
       }
     },
     {
       "type": "first_frame",
-      "positionMs": 3071,
+      "positionMs": 332,
       "offerId": "660b00e5-04c8-4960-8313-811cdfd3244f",
       "mediaUrl": "https://mira-api-n4p3.onrender.com/api/v1/marketplace/media/df8af611-970d-42bd-8fcc-492025f6b5b1",
-      "attempt": 14,
-      "i": 8,
+      "attempt": 19,
+      "i": 11,
       "pass": 2,
       "before": {
         "page": 4,
@@ -1243,22 +1483,22 @@
       },
       "beforeUrl": "https://mira-api-n4p3.onrender.com/api/v1/marketplace/media/9e62959e-c0bc-439f-92d9-c08b1dca62fb",
       "phases": {
-        "warmClaimed": null,
-        "initStart": 0,
-        "initDone": 1568,
-        "firstByteProxy": 1568,
-        "playStart": 1569,
-        "firstFrame": 3071,
-        "source": 0
+        "warmClaimed": 10,
+        "initStart": 10,
+        "initDone": 10,
+        "firstByteProxy": 10,
+        "playStart": 16,
+        "firstFrame": 332,
+        "source": 1
       }
     },
     {
       "type": "first_frame",
-      "positionMs": 1645,
+      "positionMs": 128,
       "offerId": "7d4625bf-7f34-4ffa-af5d-4fa9ed48b017",
       "mediaUrl": "https://mira-api-n4p3.onrender.com/api/v1/marketplace/media/94d514e3-99bf-4c5f-b517-fe4178aacb0f",
-      "attempt": 15,
-      "i": 9,
+      "attempt": 20,
+      "i": 12,
       "pass": 2,
       "before": {
         "page": 5,
@@ -1280,22 +1520,22 @@
       },
       "beforeUrl": "https://mira-api-n4p3.onrender.com/api/v1/marketplace/media/df8af611-970d-42bd-8fcc-492025f6b5b1",
       "phases": {
-        "warmClaimed": null,
-        "initStart": 0,
-        "initDone": 1542,
-        "firstByteProxy": 1542,
-        "playStart": 1543,
-        "firstFrame": 1645,
-        "source": 0
+        "warmClaimed": 8,
+        "initStart": 8,
+        "initDone": 8,
+        "firstByteProxy": 8,
+        "playStart": 13,
+        "firstFrame": 128,
+        "source": 1
       }
     },
     {
       "type": "first_frame",
-      "positionMs": 1615,
+      "positionMs": 137,
       "offerId": "9b8edf30-65f7-4951-a994-fa79c65caedc",
       "mediaUrl": "https://mira-api-n4p3.onrender.com/api/v1/marketplace/media/37dbc44c-0057-4ed2-b1e7-3c4c37f92e5c",
-      "attempt": 16,
-      "i": 10,
+      "attempt": 21,
+      "i": 13,
       "pass": 2,
       "before": {
         "page": 6,
@@ -1317,22 +1557,22 @@
       },
       "beforeUrl": "https://mira-api-n4p3.onrender.com/api/v1/marketplace/media/94d514e3-99bf-4c5f-b517-fe4178aacb0f",
       "phases": {
-        "warmClaimed": null,
-        "initStart": 0,
-        "initDone": 1502,
-        "firstByteProxy": 1502,
-        "playStart": 1511,
-        "firstFrame": 1615,
-        "source": 0
+        "warmClaimed": 10,
+        "initStart": 10,
+        "initDone": 10,
+        "firstByteProxy": 10,
+        "playStart": 17,
+        "firstFrame": 137,
+        "source": 1
       }
     },
     {
       "type": "first_frame",
-      "positionMs": 2389,
+      "positionMs": 1014,
       "offerId": "ac4fd919-4185-4685-8d86-64d300e7418c",
       "mediaUrl": "https://mira-api-n4p3.onrender.com/api/v1/marketplace/media/c325f933-a218-4eea-a134-2768597b7ca8",
-      "attempt": 17,
-      "i": 11,
+      "attempt": 22,
+      "i": 14,
       "pass": 2,
       "before": {
         "page": 7,
@@ -1354,22 +1594,22 @@
       },
       "beforeUrl": "https://mira-api-n4p3.onrender.com/api/v1/marketplace/media/37dbc44c-0057-4ed2-b1e7-3c4c37f92e5c",
       "phases": {
-        "warmClaimed": null,
-        "initStart": 0,
-        "initDone": 1585,
-        "firstByteProxy": 1585,
-        "playStart": 1586,
-        "firstFrame": 2389,
-        "source": 0
+        "warmClaimed": 6,
+        "initStart": 6,
+        "initDone": 6,
+        "firstByteProxy": 6,
+        "playStart": 10,
+        "firstFrame": 1014,
+        "source": 1
       }
     },
     {
       "type": "first_frame",
-      "positionMs": 3517,
+      "positionMs": 212,
       "offerId": "bbf14222-f7e1-4858-81b1-d5d637e9acc5",
       "mediaUrl": "https://mira-api-n4p3.onrender.com/api/v1/marketplace/media/9c68017c-ac54-4287-bf7f-2bba17553f2e",
-      "attempt": 18,
-      "i": 12,
+      "attempt": 23,
+      "i": 15,
       "pass": 2,
       "before": {
         "page": 8,
@@ -1391,22 +1631,22 @@
       },
       "beforeUrl": "https://mira-api-n4p3.onrender.com/api/v1/marketplace/media/c325f933-a218-4eea-a134-2768597b7ca8",
       "phases": {
-        "warmClaimed": null,
-        "initStart": 0,
-        "initDone": 1612,
-        "firstByteProxy": 1612,
-        "playStart": 1614,
-        "firstFrame": 3517,
-        "source": 0
+        "warmClaimed": 6,
+        "initStart": 6,
+        "initDone": 6,
+        "firstByteProxy": 6,
+        "playStart": 9,
+        "firstFrame": 212,
+        "source": 1
       }
     },
     {
-      "type": "first_frame",
-      "positionMs": 7635,
+      "type": "first_frame_timeout",
+      "positionMs": 8026,
       "offerId": "c471c1dc-b750-483f-907d-03694f9ea099",
       "mediaUrl": "https://mira-api-n4p3.onrender.com/api/v1/marketplace/media/caf212f3-48fb-47d1-bde3-8a813e228296",
-      "attempt": 19,
-      "i": 13,
+      "attempt": 24,
+      "i": 16,
       "pass": 2,
       "before": {
         "page": 9,
@@ -1428,22 +1668,22 @@
       },
       "beforeUrl": "https://mira-api-n4p3.onrender.com/api/v1/marketplace/media/9c68017c-ac54-4287-bf7f-2bba17553f2e",
       "phases": {
-        "warmClaimed": null,
-        "initStart": 0,
-        "initDone": 1732,
-        "firstByteProxy": 1732,
-        "playStart": 1733,
-        "firstFrame": 7635,
-        "source": 0
+        "warmClaimed": 5,
+        "initStart": 5,
+        "initDone": 5,
+        "firstByteProxy": 5,
+        "playStart": 9,
+        "firstFrame": null,
+        "source": 1
       }
     },
     {
-      "type": "first_frame_timeout",
-      "positionMs": 9626,
+      "type": "first_frame",
+      "positionMs": 918,
       "offerId": "e6e7e32d-ea25-490c-a8cc-65f1e879fd44",
       "mediaUrl": "https://mira-api-n4p3.onrender.com/api/v1/marketplace/media/2af09164-f1ac-4c91-99bf-71c4eba0833e",
-      "attempt": 20,
-      "i": 14,
+      "attempt": 25,
+      "i": 16,
       "pass": 2,
       "before": {
         "page": 10,
@@ -1465,22 +1705,22 @@
       },
       "beforeUrl": "https://mira-api-n4p3.onrender.com/api/v1/marketplace/media/caf212f3-48fb-47d1-bde3-8a813e228296",
       "phases": {
-        "warmClaimed": null,
-        "initStart": 0,
-        "initDone": 1622,
-        "firstByteProxy": 1622,
-        "playStart": 1623,
-        "firstFrame": null,
-        "source": 0
+        "warmClaimed": 9,
+        "initStart": 9,
+        "initDone": 9,
+        "firstByteProxy": 9,
+        "playStart": 14,
+        "firstFrame": 918,
+        "source": 1
       }
     },
     {
       "type": "first_frame_timeout",
-      "positionMs": 10332,
+      "positionMs": 8027,
       "offerId": "e8d1f183-687d-4235-b564-87d385c3f039",
       "mediaUrl": "https://mira-api-n4p3.onrender.com/api/v1/marketplace/media/f78679c8-6225-4938-8b7b-343439421327",
-      "attempt": 21,
-      "i": 14,
+      "attempt": 26,
+      "i": 17,
       "pass": 2,
       "before": {
         "page": 11,
@@ -1502,22 +1742,22 @@
       },
       "beforeUrl": "https://mira-api-n4p3.onrender.com/api/v1/marketplace/media/2af09164-f1ac-4c91-99bf-71c4eba0833e",
       "phases": {
-        "warmClaimed": null,
-        "initStart": 0,
-        "initDone": 2322,
-        "firstByteProxy": 2322,
-        "playStart": 2324,
+        "warmClaimed": 6,
+        "initStart": 6,
+        "initDone": 6,
+        "firstByteProxy": 6,
+        "playStart": 10,
         "firstFrame": null,
-        "source": 0
+        "source": 1
       }
     },
     {
       "type": "first_frame_timeout",
-      "positionMs": 8023,
+      "positionMs": 8048,
       "offerId": "ed1aa75a-607d-4156-86ab-5fef2d5ac659",
       "mediaUrl": "https://mira-api-n4p3.onrender.com/api/v1/marketplace/media/dc16dda8-17f9-4edc-afe6-9276ace6d44e",
-      "attempt": 22,
-      "i": 14,
+      "attempt": 27,
+      "i": 17,
       "pass": 2,
       "before": {
         "page": 12,
@@ -1543,14 +1783,14 @@
         "initStart": 10,
         "initDone": 10,
         "firstByteProxy": 10,
-        "playStart": 12,
+        "playStart": 16,
         "firstFrame": null,
         "source": 1
       }
     },
     {
       "type": "first_frame_timeout",
-      "positionMs": 10102,
+      "positionMs": 10054,
       "offerId": "14260bc3-7960-493f-86ad-2422d96bfa47",
       "mediaUrl": "https://mira-api-n4p3.onrender.com/api/v1/marketplace/media/71062d9e-622f-4377-bf22-8df75fc63afb",
       "kind": "pass_open",
@@ -1558,186 +1798,21 @@
       "phases": {
         "warmClaimed": null,
         "initStart": 0,
-        "initDone": 2096,
-        "firstByteProxy": 2096,
-        "playStart": 2098,
+        "initDone": 2047,
+        "firstByteProxy": 2047,
+        "playStart": 2048,
         "firstFrame": null,
         "source": 0
       }
     },
     {
       "type": "first_frame_timeout",
-      "positionMs": 9935,
-      "offerId": "1b782572-9bce-40f3-9d8b-771d1ed3c8fd",
-      "mediaUrl": "https://mira-api-n4p3.onrender.com/api/v1/marketplace/media/f8c0535f-f87f-4ef7-86df-7a93d373ead5",
-      "attempt": 24,
-      "i": 14,
-      "pass": 3,
-      "before": {
-        "page": 0,
-        "slideCount": 14,
-        "offerId": "14260bc3-7960-493f-86ad-2422d96bfa47",
-        "mediaUrl": "https://mira-api-n4p3.onrender.com/api/v1/marketplace/media/71062d9e-622f-4377-bf22-8df75fc63afb",
-        "nextCursor": null,
-        "loadingMore": false,
-        "loadMoreError": null
-      },
-      "after": {
-        "page": 1,
-        "slideCount": 14,
-        "offerId": "1b782572-9bce-40f3-9d8b-771d1ed3c8fd",
-        "mediaUrl": "https://mira-api-n4p3.onrender.com/api/v1/marketplace/media/f8c0535f-f87f-4ef7-86df-7a93d373ead5",
-        "nextCursor": null,
-        "loadingMore": false,
-        "loadMoreError": null
-      },
-      "beforeUrl": "https://mira-api-n4p3.onrender.com/api/v1/marketplace/media/71062d9e-622f-4377-bf22-8df75fc63afb",
-      "phases": {
-        "warmClaimed": null,
-        "initStart": 0,
-        "initDone": 1894,
-        "firstByteProxy": 1894,
-        "playStart": 1925,
-        "firstFrame": null,
-        "source": 0
-      }
-    },
-    {
-      "type": "first_frame",
-      "positionMs": 3130,
-      "offerId": "29300b08-9564-470e-a5d6-563724aae2ba",
-      "mediaUrl": "https://mira-api-n4p3.onrender.com/api/v1/marketplace/media/76dbf34d-a204-4d11-b31a-408d4ef4b908",
-      "attempt": 25,
-      "i": 14,
-      "pass": 3,
-      "before": {
-        "page": 1,
-        "slideCount": 14,
-        "offerId": "1b782572-9bce-40f3-9d8b-771d1ed3c8fd",
-        "mediaUrl": "https://mira-api-n4p3.onrender.com/api/v1/marketplace/media/f8c0535f-f87f-4ef7-86df-7a93d373ead5",
-        "nextCursor": null,
-        "loadingMore": false,
-        "loadMoreError": null
-      },
-      "after": {
-        "page": 2,
-        "slideCount": 14,
-        "offerId": "29300b08-9564-470e-a5d6-563724aae2ba",
-        "mediaUrl": "https://mira-api-n4p3.onrender.com/api/v1/marketplace/media/76dbf34d-a204-4d11-b31a-408d4ef4b908",
-        "nextCursor": null,
-        "loadingMore": false,
-        "loadMoreError": null
-      },
-      "beforeUrl": "https://mira-api-n4p3.onrender.com/api/v1/marketplace/media/f8c0535f-f87f-4ef7-86df-7a93d373ead5",
-      "phases": {
-        "warmClaimed": null,
-        "initStart": 0,
-        "initDone": 1527,
-        "firstByteProxy": 1527,
-        "playStart": 1527,
-        "firstFrame": 3130,
-        "source": 0
-      }
-    },
-    {
-      "type": "first_frame_timeout",
-      "positionMs": 9688,
-      "offerId": "2b12c3bb-f50b-4b12-8f47-97400ebf2e72",
-      "mediaUrl": "https://mira-api-n4p3.onrender.com/api/v1/marketplace/media/73eeeb73-30df-47c3-98fa-2384e42f17f4",
-      "attempt": 26,
-      "i": 15,
-      "pass": 3,
-      "before": {
-        "page": 2,
-        "slideCount": 14,
-        "offerId": "29300b08-9564-470e-a5d6-563724aae2ba",
-        "mediaUrl": "https://mira-api-n4p3.onrender.com/api/v1/marketplace/media/76dbf34d-a204-4d11-b31a-408d4ef4b908",
-        "nextCursor": null,
-        "loadingMore": false,
-        "loadMoreError": null
-      },
-      "after": {
-        "page": 3,
-        "slideCount": 14,
-        "offerId": "2b12c3bb-f50b-4b12-8f47-97400ebf2e72",
-        "mediaUrl": "https://mira-api-n4p3.onrender.com/api/v1/marketplace/media/73eeeb73-30df-47c3-98fa-2384e42f17f4",
-        "nextCursor": null,
-        "loadingMore": false,
-        "loadMoreError": null
-      },
-      "beforeUrl": "https://mira-api-n4p3.onrender.com/api/v1/marketplace/media/76dbf34d-a204-4d11-b31a-408d4ef4b908",
-      "phases": {
-        "warmClaimed": null,
-        "initStart": 0,
-        "initDone": 1683,
-        "firstByteProxy": 1683,
-        "playStart": 1684,
-        "firstFrame": null,
-        "source": 0
-      }
-    },
-    {
-      "type": "first_frame",
-      "positionMs": 3586,
-      "offerId": "3542be11-d726-4dcf-9ead-08c0ae8e649a",
-      "mediaUrl": "https://mira-api-n4p3.onrender.com/api/v1/marketplace/media/9e62959e-c0bc-439f-92d9-c08b1dca62fb",
-      "attempt": 27,
-      "i": 15,
-      "pass": 3,
-      "before": {
-        "page": 3,
-        "slideCount": 14,
-        "offerId": "2b12c3bb-f50b-4b12-8f47-97400ebf2e72",
-        "mediaUrl": "https://mira-api-n4p3.onrender.com/api/v1/marketplace/media/73eeeb73-30df-47c3-98fa-2384e42f17f4",
-        "nextCursor": null,
-        "loadingMore": false,
-        "loadMoreError": null
-      },
-      "after": {
-        "page": 4,
-        "slideCount": 14,
-        "offerId": "3542be11-d726-4dcf-9ead-08c0ae8e649a",
-        "mediaUrl": "https://mira-api-n4p3.onrender.com/api/v1/marketplace/media/9e62959e-c0bc-439f-92d9-c08b1dca62fb",
-        "nextCursor": null,
-        "loadingMore": false,
-        "loadMoreError": null
-      },
-      "beforeUrl": "https://mira-api-n4p3.onrender.com/api/v1/marketplace/media/73eeeb73-30df-47c3-98fa-2384e42f17f4",
-      "phases": {
-        "warmClaimed": null,
-        "initStart": 0,
-        "initDone": 1582,
-        "firstByteProxy": 1582,
-        "playStart": 1583,
-        "firstFrame": 3586,
-        "source": 0
-      }
-    },
-    {
-      "type": "first_frame_timeout",
-      "positionMs": 9650,
-      "offerId": "14260bc3-7960-493f-86ad-2422d96bfa47",
-      "mediaUrl": "https://mira-api-n4p3.onrender.com/api/v1/marketplace/media/71062d9e-622f-4377-bf22-8df75fc63afb",
-      "kind": "pass_open",
-      "pass": 4,
-      "phases": {
-        "warmClaimed": null,
-        "initStart": 0,
-        "initDone": 1638,
-        "firstByteProxy": 1638,
-        "playStart": 1639,
-        "firstFrame": null,
-        "source": 0
-      }
-    },
-    {
-      "type": "first_frame_timeout",
-      "positionMs": 9796,
+      "positionMs": 8037,
       "offerId": "1b782572-9bce-40f3-9d8b-771d1ed3c8fd",
       "mediaUrl": "https://mira-api-n4p3.onrender.com/api/v1/marketplace/media/f8c0535f-f87f-4ef7-86df-7a93d373ead5",
       "attempt": 29,
-      "i": 16,
-      "pass": 4,
+      "i": 17,
+      "pass": 3,
       "before": {
         "page": 0,
         "slideCount": 14,
@@ -1758,23 +1833,23 @@
       },
       "beforeUrl": "https://mira-api-n4p3.onrender.com/api/v1/marketplace/media/71062d9e-622f-4377-bf22-8df75fc63afb",
       "phases": {
-        "warmClaimed": null,
-        "initStart": 0,
-        "initDone": 1792,
-        "firstByteProxy": 1792,
-        "playStart": 1793,
+        "warmClaimed": 8,
+        "initStart": 8,
+        "initDone": 8,
+        "firstByteProxy": 8,
+        "playStart": 16,
         "firstFrame": null,
-        "source": 0
+        "source": 1
       }
     },
     {
-      "type": "first_frame",
-      "positionMs": 12296,
-      "offerId": "1b782572-9bce-40f3-9d8b-771d1ed3c8fd",
-      "mediaUrl": "https://mira-api-n4p3.onrender.com/api/v1/marketplace/media/f8c0535f-f87f-4ef7-86df-7a93d373ead5",
+      "type": "first_frame_timeout",
+      "positionMs": 8041,
+      "offerId": "29300b08-9564-470e-a5d6-563724aae2ba",
+      "mediaUrl": "https://mira-api-n4p3.onrender.com/api/v1/marketplace/media/76dbf34d-a204-4d11-b31a-408d4ef4b908",
       "attempt": 30,
-      "i": 16,
-      "pass": 4,
+      "i": 17,
+      "pass": 3,
       "before": {
         "page": 1,
         "slideCount": 14,
@@ -1795,22 +1870,409 @@
       },
       "beforeUrl": "https://mira-api-n4p3.onrender.com/api/v1/marketplace/media/f8c0535f-f87f-4ef7-86df-7a93d373ead5",
       "phases": {
-        "warmClaimed": null,
-        "initStart": 0,
-        "initDone": null,
-        "firstByteProxy": null,
-        "playStart": null,
+        "warmClaimed": 10,
+        "initStart": 10,
+        "initDone": 10,
+        "firstByteProxy": 10,
+        "playStart": 16,
         "firstFrame": null,
-        "source": 0
+        "source": 1
       }
     },
     {
       "type": "first_frame_timeout",
-      "positionMs": 9917,
+      "positionMs": 8040,
       "offerId": "2b12c3bb-f50b-4b12-8f47-97400ebf2e72",
       "mediaUrl": "https://mira-api-n4p3.onrender.com/api/v1/marketplace/media/73eeeb73-30df-47c3-98fa-2384e42f17f4",
       "attempt": 31,
       "i": 17,
+      "pass": 3,
+      "before": {
+        "page": 2,
+        "slideCount": 14,
+        "offerId": "29300b08-9564-470e-a5d6-563724aae2ba",
+        "mediaUrl": "https://mira-api-n4p3.onrender.com/api/v1/marketplace/media/76dbf34d-a204-4d11-b31a-408d4ef4b908",
+        "nextCursor": null,
+        "loadingMore": false,
+        "loadMoreError": null
+      },
+      "after": {
+        "page": 3,
+        "slideCount": 14,
+        "offerId": "2b12c3bb-f50b-4b12-8f47-97400ebf2e72",
+        "mediaUrl": "https://mira-api-n4p3.onrender.com/api/v1/marketplace/media/73eeeb73-30df-47c3-98fa-2384e42f17f4",
+        "nextCursor": null,
+        "loadingMore": false,
+        "loadMoreError": null
+      },
+      "beforeUrl": "https://mira-api-n4p3.onrender.com/api/v1/marketplace/media/76dbf34d-a204-4d11-b31a-408d4ef4b908",
+      "phases": {
+        "warmClaimed": 9,
+        "initStart": 9,
+        "initDone": 9,
+        "firstByteProxy": 9,
+        "playStart": 15,
+        "firstFrame": null,
+        "source": 1
+      }
+    },
+    {
+      "type": "first_frame",
+      "positionMs": 228,
+      "offerId": "3542be11-d726-4dcf-9ead-08c0ae8e649a",
+      "mediaUrl": "https://mira-api-n4p3.onrender.com/api/v1/marketplace/media/9e62959e-c0bc-439f-92d9-c08b1dca62fb",
+      "attempt": 32,
+      "i": 17,
+      "pass": 3,
+      "before": {
+        "page": 3,
+        "slideCount": 14,
+        "offerId": "2b12c3bb-f50b-4b12-8f47-97400ebf2e72",
+        "mediaUrl": "https://mira-api-n4p3.onrender.com/api/v1/marketplace/media/73eeeb73-30df-47c3-98fa-2384e42f17f4",
+        "nextCursor": null,
+        "loadingMore": false,
+        "loadMoreError": null
+      },
+      "after": {
+        "page": 4,
+        "slideCount": 14,
+        "offerId": "3542be11-d726-4dcf-9ead-08c0ae8e649a",
+        "mediaUrl": "https://mira-api-n4p3.onrender.com/api/v1/marketplace/media/9e62959e-c0bc-439f-92d9-c08b1dca62fb",
+        "nextCursor": null,
+        "loadingMore": false,
+        "loadMoreError": null
+      },
+      "beforeUrl": "https://mira-api-n4p3.onrender.com/api/v1/marketplace/media/73eeeb73-30df-47c3-98fa-2384e42f17f4",
+      "phases": {
+        "warmClaimed": 8,
+        "initStart": 8,
+        "initDone": 8,
+        "firstByteProxy": 8,
+        "playStart": 14,
+        "firstFrame": 228,
+        "source": 1
+      }
+    },
+    {
+      "type": "first_frame_timeout",
+      "positionMs": 8041,
+      "offerId": "660b00e5-04c8-4960-8313-811cdfd3244f",
+      "mediaUrl": "https://mira-api-n4p3.onrender.com/api/v1/marketplace/media/df8af611-970d-42bd-8fcc-492025f6b5b1",
+      "attempt": 33,
+      "i": 18,
+      "pass": 3,
+      "before": {
+        "page": 4,
+        "slideCount": 14,
+        "offerId": "3542be11-d726-4dcf-9ead-08c0ae8e649a",
+        "mediaUrl": "https://mira-api-n4p3.onrender.com/api/v1/marketplace/media/9e62959e-c0bc-439f-92d9-c08b1dca62fb",
+        "nextCursor": null,
+        "loadingMore": false,
+        "loadMoreError": null
+      },
+      "after": {
+        "page": 5,
+        "slideCount": 14,
+        "offerId": "660b00e5-04c8-4960-8313-811cdfd3244f",
+        "mediaUrl": "https://mira-api-n4p3.onrender.com/api/v1/marketplace/media/df8af611-970d-42bd-8fcc-492025f6b5b1",
+        "nextCursor": null,
+        "loadingMore": false,
+        "loadMoreError": null
+      },
+      "beforeUrl": "https://mira-api-n4p3.onrender.com/api/v1/marketplace/media/9e62959e-c0bc-439f-92d9-c08b1dca62fb",
+      "phases": {
+        "warmClaimed": 9,
+        "initStart": 9,
+        "initDone": 10,
+        "firstByteProxy": 10,
+        "playStart": 15,
+        "firstFrame": null,
+        "source": 1
+      }
+    },
+    {
+      "type": "first_frame",
+      "positionMs": 113,
+      "offerId": "7d4625bf-7f34-4ffa-af5d-4fa9ed48b017",
+      "mediaUrl": "https://mira-api-n4p3.onrender.com/api/v1/marketplace/media/94d514e3-99bf-4c5f-b517-fe4178aacb0f",
+      "attempt": 34,
+      "i": 18,
+      "pass": 3,
+      "before": {
+        "page": 5,
+        "slideCount": 14,
+        "offerId": "660b00e5-04c8-4960-8313-811cdfd3244f",
+        "mediaUrl": "https://mira-api-n4p3.onrender.com/api/v1/marketplace/media/df8af611-970d-42bd-8fcc-492025f6b5b1",
+        "nextCursor": null,
+        "loadingMore": false,
+        "loadMoreError": null
+      },
+      "after": {
+        "page": 6,
+        "slideCount": 14,
+        "offerId": "7d4625bf-7f34-4ffa-af5d-4fa9ed48b017",
+        "mediaUrl": "https://mira-api-n4p3.onrender.com/api/v1/marketplace/media/94d514e3-99bf-4c5f-b517-fe4178aacb0f",
+        "nextCursor": null,
+        "loadingMore": false,
+        "loadMoreError": null
+      },
+      "beforeUrl": "https://mira-api-n4p3.onrender.com/api/v1/marketplace/media/df8af611-970d-42bd-8fcc-492025f6b5b1",
+      "phases": {
+        "warmClaimed": 5,
+        "initStart": 5,
+        "initDone": 6,
+        "firstByteProxy": 6,
+        "playStart": 10,
+        "firstFrame": 113,
+        "source": 1
+      }
+    },
+    {
+      "type": "first_frame",
+      "positionMs": 120,
+      "offerId": "9b8edf30-65f7-4951-a994-fa79c65caedc",
+      "mediaUrl": "https://mira-api-n4p3.onrender.com/api/v1/marketplace/media/37dbc44c-0057-4ed2-b1e7-3c4c37f92e5c",
+      "attempt": 35,
+      "i": 19,
+      "pass": 3,
+      "before": {
+        "page": 6,
+        "slideCount": 14,
+        "offerId": "7d4625bf-7f34-4ffa-af5d-4fa9ed48b017",
+        "mediaUrl": "https://mira-api-n4p3.onrender.com/api/v1/marketplace/media/94d514e3-99bf-4c5f-b517-fe4178aacb0f",
+        "nextCursor": null,
+        "loadingMore": false,
+        "loadMoreError": null
+      },
+      "after": {
+        "page": 7,
+        "slideCount": 14,
+        "offerId": "9b8edf30-65f7-4951-a994-fa79c65caedc",
+        "mediaUrl": "https://mira-api-n4p3.onrender.com/api/v1/marketplace/media/37dbc44c-0057-4ed2-b1e7-3c4c37f92e5c",
+        "nextCursor": null,
+        "loadingMore": false,
+        "loadMoreError": null
+      },
+      "beforeUrl": "https://mira-api-n4p3.onrender.com/api/v1/marketplace/media/94d514e3-99bf-4c5f-b517-fe4178aacb0f",
+      "phases": {
+        "warmClaimed": 10,
+        "initStart": 10,
+        "initDone": 10,
+        "firstByteProxy": 10,
+        "playStart": 15,
+        "firstFrame": 120,
+        "source": 1
+      }
+    },
+    {
+      "type": "first_frame",
+      "positionMs": 229,
+      "offerId": "ac4fd919-4185-4685-8d86-64d300e7418c",
+      "mediaUrl": "https://mira-api-n4p3.onrender.com/api/v1/marketplace/media/c325f933-a218-4eea-a134-2768597b7ca8",
+      "attempt": 36,
+      "i": 20,
+      "pass": 3,
+      "before": {
+        "page": 7,
+        "slideCount": 14,
+        "offerId": "9b8edf30-65f7-4951-a994-fa79c65caedc",
+        "mediaUrl": "https://mira-api-n4p3.onrender.com/api/v1/marketplace/media/37dbc44c-0057-4ed2-b1e7-3c4c37f92e5c",
+        "nextCursor": null,
+        "loadingMore": false,
+        "loadMoreError": null
+      },
+      "after": {
+        "page": 8,
+        "slideCount": 14,
+        "offerId": "ac4fd919-4185-4685-8d86-64d300e7418c",
+        "mediaUrl": "https://mira-api-n4p3.onrender.com/api/v1/marketplace/media/c325f933-a218-4eea-a134-2768597b7ca8",
+        "nextCursor": null,
+        "loadingMore": false,
+        "loadMoreError": null
+      },
+      "beforeUrl": "https://mira-api-n4p3.onrender.com/api/v1/marketplace/media/37dbc44c-0057-4ed2-b1e7-3c4c37f92e5c",
+      "phases": {
+        "warmClaimed": 8,
+        "initStart": 8,
+        "initDone": 8,
+        "firstByteProxy": 8,
+        "playStart": 13,
+        "firstFrame": 229,
+        "source": 1
+      }
+    },
+    {
+      "type": "first_frame",
+      "positionMs": 223,
+      "offerId": "bbf14222-f7e1-4858-81b1-d5d637e9acc5",
+      "mediaUrl": "https://mira-api-n4p3.onrender.com/api/v1/marketplace/media/9c68017c-ac54-4287-bf7f-2bba17553f2e",
+      "attempt": 37,
+      "i": 21,
+      "pass": 3,
+      "before": {
+        "page": 8,
+        "slideCount": 14,
+        "offerId": "ac4fd919-4185-4685-8d86-64d300e7418c",
+        "mediaUrl": "https://mira-api-n4p3.onrender.com/api/v1/marketplace/media/c325f933-a218-4eea-a134-2768597b7ca8",
+        "nextCursor": null,
+        "loadingMore": false,
+        "loadMoreError": null
+      },
+      "after": {
+        "page": 9,
+        "slideCount": 14,
+        "offerId": "bbf14222-f7e1-4858-81b1-d5d637e9acc5",
+        "mediaUrl": "https://mira-api-n4p3.onrender.com/api/v1/marketplace/media/9c68017c-ac54-4287-bf7f-2bba17553f2e",
+        "nextCursor": null,
+        "loadingMore": false,
+        "loadMoreError": null
+      },
+      "beforeUrl": "https://mira-api-n4p3.onrender.com/api/v1/marketplace/media/c325f933-a218-4eea-a134-2768597b7ca8",
+      "phases": {
+        "warmClaimed": 6,
+        "initStart": 6,
+        "initDone": 6,
+        "firstByteProxy": 6,
+        "playStart": 12,
+        "firstFrame": 223,
+        "source": 1
+      }
+    },
+    {
+      "type": "first_frame",
+      "positionMs": 1529,
+      "offerId": "c471c1dc-b750-483f-907d-03694f9ea099",
+      "mediaUrl": "https://mira-api-n4p3.onrender.com/api/v1/marketplace/media/caf212f3-48fb-47d1-bde3-8a813e228296",
+      "attempt": 38,
+      "i": 22,
+      "pass": 3,
+      "before": {
+        "page": 9,
+        "slideCount": 14,
+        "offerId": "bbf14222-f7e1-4858-81b1-d5d637e9acc5",
+        "mediaUrl": "https://mira-api-n4p3.onrender.com/api/v1/marketplace/media/9c68017c-ac54-4287-bf7f-2bba17553f2e",
+        "nextCursor": null,
+        "loadingMore": false,
+        "loadMoreError": null
+      },
+      "after": {
+        "page": 10,
+        "slideCount": 14,
+        "offerId": "c471c1dc-b750-483f-907d-03694f9ea099",
+        "mediaUrl": "https://mira-api-n4p3.onrender.com/api/v1/marketplace/media/caf212f3-48fb-47d1-bde3-8a813e228296",
+        "nextCursor": null,
+        "loadingMore": false,
+        "loadMoreError": null
+      },
+      "beforeUrl": "https://mira-api-n4p3.onrender.com/api/v1/marketplace/media/9c68017c-ac54-4287-bf7f-2bba17553f2e",
+      "phases": {
+        "warmClaimed": 9,
+        "initStart": 9,
+        "initDone": 9,
+        "firstByteProxy": 9,
+        "playStart": 15,
+        "firstFrame": 1529,
+        "source": 1
+      }
+    },
+    {
+      "type": "first_frame_timeout",
+      "positionMs": 10344,
+      "offerId": "14260bc3-7960-493f-86ad-2422d96bfa47",
+      "mediaUrl": "https://mira-api-n4p3.onrender.com/api/v1/marketplace/media/71062d9e-622f-4377-bf22-8df75fc63afb",
+      "kind": "pass_open",
+      "pass": 4,
+      "phases": {
+        "warmClaimed": null,
+        "initStart": 0,
+        "initDone": 2330,
+        "firstByteProxy": 2330,
+        "playStart": 2331,
+        "firstFrame": null,
+        "source": 0
+      }
+    },
+    {
+      "type": "first_frame",
+      "positionMs": 2529,
+      "offerId": "1b782572-9bce-40f3-9d8b-771d1ed3c8fd",
+      "mediaUrl": "https://mira-api-n4p3.onrender.com/api/v1/marketplace/media/f8c0535f-f87f-4ef7-86df-7a93d373ead5",
+      "attempt": 40,
+      "i": 23,
+      "pass": 4,
+      "before": {
+        "page": 0,
+        "slideCount": 14,
+        "offerId": "14260bc3-7960-493f-86ad-2422d96bfa47",
+        "mediaUrl": "https://mira-api-n4p3.onrender.com/api/v1/marketplace/media/71062d9e-622f-4377-bf22-8df75fc63afb",
+        "nextCursor": null,
+        "loadingMore": false,
+        "loadMoreError": null
+      },
+      "after": {
+        "page": 1,
+        "slideCount": 14,
+        "offerId": "1b782572-9bce-40f3-9d8b-771d1ed3c8fd",
+        "mediaUrl": "https://mira-api-n4p3.onrender.com/api/v1/marketplace/media/f8c0535f-f87f-4ef7-86df-7a93d373ead5",
+        "nextCursor": null,
+        "loadingMore": false,
+        "loadMoreError": null
+      },
+      "beforeUrl": "https://mira-api-n4p3.onrender.com/api/v1/marketplace/media/71062d9e-622f-4377-bf22-8df75fc63afb",
+      "phases": {
+        "warmClaimed": 8,
+        "initStart": 8,
+        "initDone": 8,
+        "firstByteProxy": 8,
+        "playStart": 15,
+        "firstFrame": 2529,
+        "source": 1
+      }
+    },
+    {
+      "type": "first_frame_timeout",
+      "positionMs": 8015,
+      "offerId": "29300b08-9564-470e-a5d6-563724aae2ba",
+      "mediaUrl": "https://mira-api-n4p3.onrender.com/api/v1/marketplace/media/76dbf34d-a204-4d11-b31a-408d4ef4b908",
+      "attempt": 41,
+      "i": 24,
+      "pass": 4,
+      "before": {
+        "page": 1,
+        "slideCount": 14,
+        "offerId": "1b782572-9bce-40f3-9d8b-771d1ed3c8fd",
+        "mediaUrl": "https://mira-api-n4p3.onrender.com/api/v1/marketplace/media/f8c0535f-f87f-4ef7-86df-7a93d373ead5",
+        "nextCursor": null,
+        "loadingMore": false,
+        "loadMoreError": null
+      },
+      "after": {
+        "page": 2,
+        "slideCount": 14,
+        "offerId": "29300b08-9564-470e-a5d6-563724aae2ba",
+        "mediaUrl": "https://mira-api-n4p3.onrender.com/api/v1/marketplace/media/76dbf34d-a204-4d11-b31a-408d4ef4b908",
+        "nextCursor": null,
+        "loadingMore": false,
+        "loadMoreError": null
+      },
+      "beforeUrl": "https://mira-api-n4p3.onrender.com/api/v1/marketplace/media/f8c0535f-f87f-4ef7-86df-7a93d373ead5",
+      "phases": {
+        "warmClaimed": 6,
+        "initStart": 6,
+        "initDone": 6,
+        "firstByteProxy": 6,
+        "playStart": 10,
+        "firstFrame": null,
+        "source": 1
+      }
+    },
+    {
+      "type": "first_frame",
+      "positionMs": 3032,
+      "offerId": "2b12c3bb-f50b-4b12-8f47-97400ebf2e72",
+      "mediaUrl": "https://mira-api-n4p3.onrender.com/api/v1/marketplace/media/73eeeb73-30df-47c3-98fa-2384e42f17f4",
+      "attempt": 42,
+      "i": 24,
       "pass": 4,
       "before": {
         "page": 2,
@@ -1832,22 +2294,22 @@
       },
       "beforeUrl": "https://mira-api-n4p3.onrender.com/api/v1/marketplace/media/76dbf34d-a204-4d11-b31a-408d4ef4b908",
       "phases": {
-        "warmClaimed": null,
-        "initStart": 0,
-        "initDone": 1880,
-        "firstByteProxy": 1880,
-        "playStart": 1882,
-        "firstFrame": null,
-        "source": 0
+        "warmClaimed": 9,
+        "initStart": 9,
+        "initDone": 9,
+        "firstByteProxy": 9,
+        "playStart": 14,
+        "firstFrame": 3032,
+        "source": 1
       }
     },
     {
       "type": "first_frame",
-      "positionMs": 2556,
+      "positionMs": 214,
       "offerId": "3542be11-d726-4dcf-9ead-08c0ae8e649a",
       "mediaUrl": "https://mira-api-n4p3.onrender.com/api/v1/marketplace/media/9e62959e-c0bc-439f-92d9-c08b1dca62fb",
-      "attempt": 32,
-      "i": 17,
+      "attempt": 43,
+      "i": 25,
       "pass": 4,
       "before": {
         "page": 3,
@@ -1869,22 +2331,22 @@
       },
       "beforeUrl": "https://mira-api-n4p3.onrender.com/api/v1/marketplace/media/73eeeb73-30df-47c3-98fa-2384e42f17f4",
       "phases": {
-        "warmClaimed": null,
-        "initStart": 0,
-        "initDone": 1754,
-        "firstByteProxy": 1754,
-        "playStart": 1754,
-        "firstFrame": 2556,
-        "source": 0
+        "warmClaimed": 5,
+        "initStart": 5,
+        "initDone": 5,
+        "firstByteProxy": 5,
+        "playStart": 9,
+        "firstFrame": 214,
+        "source": 1
       }
     },
     {
-      "type": "first_frame",
-      "positionMs": 3934,
+      "type": "first_frame_timeout",
+      "positionMs": 8035,
       "offerId": "660b00e5-04c8-4960-8313-811cdfd3244f",
       "mediaUrl": "https://mira-api-n4p3.onrender.com/api/v1/marketplace/media/df8af611-970d-42bd-8fcc-492025f6b5b1",
-      "attempt": 33,
-      "i": 18,
+      "attempt": 44,
+      "i": 26,
       "pass": 4,
       "before": {
         "page": 4,
@@ -1906,22 +2368,22 @@
       },
       "beforeUrl": "https://mira-api-n4p3.onrender.com/api/v1/marketplace/media/9e62959e-c0bc-439f-92d9-c08b1dca62fb",
       "phases": {
-        "warmClaimed": null,
-        "initStart": 0,
-        "initDone": 1631,
-        "firstByteProxy": 1631,
-        "playStart": 1632,
-        "firstFrame": 3934,
-        "source": 0
+        "warmClaimed": 9,
+        "initStart": 9,
+        "initDone": 9,
+        "firstByteProxy": 9,
+        "playStart": 16,
+        "firstFrame": null,
+        "source": 1
       }
     },
     {
       "type": "first_frame",
-      "positionMs": 1672,
+      "positionMs": 126,
       "offerId": "7d4625bf-7f34-4ffa-af5d-4fa9ed48b017",
       "mediaUrl": "https://mira-api-n4p3.onrender.com/api/v1/marketplace/media/94d514e3-99bf-4c5f-b517-fe4178aacb0f",
-      "attempt": 34,
-      "i": 19,
+      "attempt": 45,
+      "i": 26,
       "pass": 4,
       "before": {
         "page": 5,
@@ -1943,22 +2405,22 @@
       },
       "beforeUrl": "https://mira-api-n4p3.onrender.com/api/v1/marketplace/media/df8af611-970d-42bd-8fcc-492025f6b5b1",
       "phases": {
-        "warmClaimed": null,
-        "initStart": 0,
-        "initDone": 1560,
-        "firstByteProxy": 1560,
-        "playStart": 1564,
-        "firstFrame": 1672,
-        "source": 0
+        "warmClaimed": 7,
+        "initStart": 7,
+        "initDone": 7,
+        "firstByteProxy": 7,
+        "playStart": 13,
+        "firstFrame": 126,
+        "source": 1
       }
     },
     {
       "type": "first_frame",
-      "positionMs": 1545,
+      "positionMs": 129,
       "offerId": "9b8edf30-65f7-4951-a994-fa79c65caedc",
       "mediaUrl": "https://mira-api-n4p3.onrender.com/api/v1/marketplace/media/37dbc44c-0057-4ed2-b1e7-3c4c37f92e5c",
-      "attempt": 35,
-      "i": 20,
+      "attempt": 46,
+      "i": 27,
       "pass": 4,
       "before": {
         "page": 6,
@@ -1980,22 +2442,22 @@
       },
       "beforeUrl": "https://mira-api-n4p3.onrender.com/api/v1/marketplace/media/94d514e3-99bf-4c5f-b517-fe4178aacb0f",
       "phases": {
-        "warmClaimed": null,
-        "initStart": 0,
-        "initDone": 1442,
-        "firstByteProxy": 1442,
-        "playStart": 1442,
-        "firstFrame": 1545,
-        "source": 0
+        "warmClaimed": 8,
+        "initStart": 8,
+        "initDone": 8,
+        "firstByteProxy": 8,
+        "playStart": 14,
+        "firstFrame": 129,
+        "source": 1
       }
     },
     {
       "type": "first_frame",
-      "positionMs": 4028,
+      "positionMs": 7828,
       "offerId": "ac4fd919-4185-4685-8d86-64d300e7418c",
       "mediaUrl": "https://mira-api-n4p3.onrender.com/api/v1/marketplace/media/c325f933-a218-4eea-a134-2768597b7ca8",
-      "attempt": 36,
-      "i": 21,
+      "attempt": 47,
+      "i": 28,
       "pass": 4,
       "before": {
         "page": 7,
@@ -2017,22 +2479,22 @@
       },
       "beforeUrl": "https://mira-api-n4p3.onrender.com/api/v1/marketplace/media/37dbc44c-0057-4ed2-b1e7-3c4c37f92e5c",
       "phases": {
-        "warmClaimed": null,
-        "initStart": 0,
-        "initDone": 1525,
-        "firstByteProxy": 1525,
-        "playStart": 1525,
-        "firstFrame": 4028,
-        "source": 0
+        "warmClaimed": 9,
+        "initStart": 9,
+        "initDone": 9,
+        "firstByteProxy": 9,
+        "playStart": 14,
+        "firstFrame": 7828,
+        "source": 1
       }
     },
     {
       "type": "first_frame",
-      "positionMs": 2913,
+      "positionMs": 211,
       "offerId": "bbf14222-f7e1-4858-81b1-d5d637e9acc5",
       "mediaUrl": "https://mira-api-n4p3.onrender.com/api/v1/marketplace/media/9c68017c-ac54-4287-bf7f-2bba17553f2e",
-      "attempt": 37,
-      "i": 22,
+      "attempt": 48,
+      "i": 29,
       "pass": 4,
       "before": {
         "page": 8,
@@ -2054,160 +2516,12 @@
       },
       "beforeUrl": "https://mira-api-n4p3.onrender.com/api/v1/marketplace/media/c325f933-a218-4eea-a134-2768597b7ca8",
       "phases": {
-        "warmClaimed": null,
-        "initStart": 0,
-        "initDone": 2010,
-        "firstByteProxy": 2010,
-        "playStart": 2011,
-        "firstFrame": 2913,
-        "source": 0
-      }
-    },
-    {
-      "type": "first_frame",
-      "positionMs": 8488,
-      "offerId": "c471c1dc-b750-483f-907d-03694f9ea099",
-      "mediaUrl": "https://mira-api-n4p3.onrender.com/api/v1/marketplace/media/caf212f3-48fb-47d1-bde3-8a813e228296",
-      "attempt": 38,
-      "i": 23,
-      "pass": 4,
-      "before": {
-        "page": 9,
-        "slideCount": 14,
-        "offerId": "bbf14222-f7e1-4858-81b1-d5d637e9acc5",
-        "mediaUrl": "https://mira-api-n4p3.onrender.com/api/v1/marketplace/media/9c68017c-ac54-4287-bf7f-2bba17553f2e",
-        "nextCursor": null,
-        "loadingMore": false,
-        "loadMoreError": null
-      },
-      "after": {
-        "page": 10,
-        "slideCount": 14,
-        "offerId": "c471c1dc-b750-483f-907d-03694f9ea099",
-        "mediaUrl": "https://mira-api-n4p3.onrender.com/api/v1/marketplace/media/caf212f3-48fb-47d1-bde3-8a813e228296",
-        "nextCursor": null,
-        "loadingMore": false,
-        "loadMoreError": null
-      },
-      "beforeUrl": "https://mira-api-n4p3.onrender.com/api/v1/marketplace/media/9c68017c-ac54-4287-bf7f-2bba17553f2e",
-      "phases": {
-        "warmClaimed": null,
-        "initStart": 0,
-        "initDone": 1585,
-        "firstByteProxy": 1585,
-        "playStart": 1586,
-        "firstFrame": 8488,
-        "source": 0
-      }
-    },
-    {
-      "type": "first_frame_timeout",
-      "positionMs": 9790,
-      "offerId": "e6e7e32d-ea25-490c-a8cc-65f1e879fd44",
-      "mediaUrl": "https://mira-api-n4p3.onrender.com/api/v1/marketplace/media/2af09164-f1ac-4c91-99bf-71c4eba0833e",
-      "attempt": 39,
-      "i": 24,
-      "pass": 4,
-      "before": {
-        "page": 10,
-        "slideCount": 14,
-        "offerId": "c471c1dc-b750-483f-907d-03694f9ea099",
-        "mediaUrl": "https://mira-api-n4p3.onrender.com/api/v1/marketplace/media/caf212f3-48fb-47d1-bde3-8a813e228296",
-        "nextCursor": null,
-        "loadingMore": false,
-        "loadMoreError": null
-      },
-      "after": {
-        "page": 11,
-        "slideCount": 14,
-        "offerId": "e6e7e32d-ea25-490c-a8cc-65f1e879fd44",
-        "mediaUrl": "https://mira-api-n4p3.onrender.com/api/v1/marketplace/media/2af09164-f1ac-4c91-99bf-71c4eba0833e",
-        "nextCursor": null,
-        "loadingMore": false,
-        "loadMoreError": null
-      },
-      "beforeUrl": "https://mira-api-n4p3.onrender.com/api/v1/marketplace/media/caf212f3-48fb-47d1-bde3-8a813e228296",
-      "phases": {
-        "warmClaimed": null,
-        "initStart": 0,
-        "initDone": 1774,
-        "firstByteProxy": 1774,
-        "playStart": 1775,
-        "firstFrame": null,
-        "source": 0
-      }
-    },
-    {
-      "type": "first_frame_timeout",
-      "positionMs": 10029,
-      "offerId": "e8d1f183-687d-4235-b564-87d385c3f039",
-      "mediaUrl": "https://mira-api-n4p3.onrender.com/api/v1/marketplace/media/f78679c8-6225-4938-8b7b-343439421327",
-      "attempt": 40,
-      "i": 24,
-      "pass": 4,
-      "before": {
-        "page": 11,
-        "slideCount": 14,
-        "offerId": "e6e7e32d-ea25-490c-a8cc-65f1e879fd44",
-        "mediaUrl": "https://mira-api-n4p3.onrender.com/api/v1/marketplace/media/2af09164-f1ac-4c91-99bf-71c4eba0833e",
-        "nextCursor": null,
-        "loadingMore": false,
-        "loadMoreError": null
-      },
-      "after": {
-        "page": 12,
-        "slideCount": 14,
-        "offerId": "e8d1f183-687d-4235-b564-87d385c3f039",
-        "mediaUrl": "https://mira-api-n4p3.onrender.com/api/v1/marketplace/media/f78679c8-6225-4938-8b7b-343439421327",
-        "nextCursor": null,
-        "loadingMore": false,
-        "loadMoreError": null
-      },
-      "beforeUrl": "https://mira-api-n4p3.onrender.com/api/v1/marketplace/media/2af09164-f1ac-4c91-99bf-71c4eba0833e",
-      "phases": {
-        "warmClaimed": null,
-        "initStart": 0,
-        "initDone": 2018,
-        "firstByteProxy": 2018,
-        "playStart": 2021,
-        "firstFrame": null,
-        "source": 0
-      }
-    },
-    {
-      "type": "first_frame",
-      "positionMs": 5816,
-      "offerId": "ed1aa75a-607d-4156-86ab-5fef2d5ac659",
-      "mediaUrl": "https://mira-api-n4p3.onrender.com/api/v1/marketplace/media/dc16dda8-17f9-4edc-afe6-9276ace6d44e",
-      "attempt": 41,
-      "i": 24,
-      "pass": 4,
-      "before": {
-        "page": 12,
-        "slideCount": 14,
-        "offerId": "e8d1f183-687d-4235-b564-87d385c3f039",
-        "mediaUrl": "https://mira-api-n4p3.onrender.com/api/v1/marketplace/media/f78679c8-6225-4938-8b7b-343439421327",
-        "nextCursor": null,
-        "loadingMore": false,
-        "loadMoreError": null
-      },
-      "after": {
-        "page": 13,
-        "slideCount": 14,
-        "offerId": "ed1aa75a-607d-4156-86ab-5fef2d5ac659",
-        "mediaUrl": "https://mira-api-n4p3.onrender.com/api/v1/marketplace/media/dc16dda8-17f9-4edc-afe6-9276ace6d44e",
-        "nextCursor": null,
-        "loadingMore": false,
-        "loadMoreError": null
-      },
-      "beforeUrl": "https://mira-api-n4p3.onrender.com/api/v1/marketplace/media/f78679c8-6225-4938-8b7b-343439421327",
-      "phases": {
-        "warmClaimed": 9,
-        "initStart": 9,
-        "initDone": 9,
-        "firstByteProxy": 9,
-        "playStart": 11,
-        "firstFrame": 5816,
+        "warmClaimed": 4,
+        "initStart": 4,
+        "initDone": 4,
+        "firstByteProxy": 4,
+        "playStart": 7,
+        "firstFrame": 211,
         "source": 1
       }
     }
