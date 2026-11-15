@@ -145,4 +145,36 @@ post_install do |installer|
     target.build_phases.move(phase, 0)
   end
   installer.pods_project.save
+
+  # mediapipe vendors TensorFlowLiteC as MH_OBJECT. Embedding it as a .framework
+  # produces CodeDirectory hashes=1+3 which iOS 26 rejects (0xe8008029). Strip it
+  # from the app after copy — symbols stay linked via the static archive path.
+  runner_project = installer.aggregate_targets
+    .map(&:user_project)
+    .compact
+    .uniq
+    .find { |p| p.path.to_s.end_with?('Runner.xcodeproj') }
+  if runner_project
+    runner_project.targets.each do |target|
+      next unless target.name == 'Runner'
+      phase_name = 'MIRA Strip static TensorFlowLiteC embed'
+      target.shell_script_build_phases.delete_if { |p| p.name == phase_name }
+      phase = target.new_shell_script_build_phase(phase_name)
+      phase.shell_script = <<~'SCRIPT'
+        set -e
+        FW="${TARGET_BUILD_DIR}/${FRAMEWORKS_FOLDER_PATH}/TensorFlowLiteC.framework"
+        BIN="$FW/TensorFlowLiteC"
+        if [ -f "$BIN" ]; then
+          KIND=$(file -b "$BIN" 2>/dev/null || true)
+          case "$KIND" in
+            *object*|*OBJECT*)
+              echo "MIRA: removing static TensorFlowLiteC embed (iOS rejects MH_OBJECT codesign)"
+              rm -rf "$FW"
+              ;;
+          esac
+        fi
+      SCRIPT
+    end
+    runner_project.save
+  end
 end
