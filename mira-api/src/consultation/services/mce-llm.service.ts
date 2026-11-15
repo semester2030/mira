@@ -34,8 +34,17 @@ export class MceLlmService {
 
   constructor(private readonly config: ConfigService) {}
 
+  /** Canonical `LLM_API_KEY`; `OPENAI_API_KEY` accepted as legacy alias only. */
+  resolveApiKey(): string {
+    return (
+      this.config.get<string>('LLM_API_KEY')?.trim() ||
+      this.config.get<string>('OPENAI_API_KEY')?.trim() ||
+      ''
+    );
+  }
+
   isConfigured(): boolean {
-    return Boolean(this.config.get<string>('LLM_API_KEY')?.trim());
+    return this.resolveApiKey().length > 0;
   }
 
   configuredModel(): string {
@@ -46,14 +55,14 @@ export class MceLlmService {
     messages: MceLlmMessage[],
     options?: MceLlmCallOptions,
   ): Promise<{ payload: MceAssistantPayloadV1; modelId: string; tokenCountOut?: number }> {
-    const apiKey = this.config.get<string>('LLM_API_KEY')?.trim();
+    const apiKey = this.resolveApiKey();
     const baseUrl = this.config.get<string>('LLM_BASE_URL', 'https://api.openai.com/v1');
     const model = this.config.get<string>('MCE_LLM_MODEL') ?? this.config.get<string>('LLM_MODEL', 'gpt-4o-mini');
 
     if (!apiKey) {
       throw new ServiceUnavailableException({
         code: 'MCE_LLM_NOT_CONFIGURED',
-        message: 'LLM_API_KEY غير مضبوط على السيرفر',
+        message: 'محرك الاستشارة غير متاح حالياً. أعيدي المحاولة بعد قليل.',
       });
     }
 
@@ -122,14 +131,14 @@ export class MceLlmService {
     messages: MceLlmMessage[],
     options?: MceLlmCallOptions,
   ): AsyncGenerator<string> {
-    const apiKey = this.config.get<string>('LLM_API_KEY')?.trim();
+    const apiKey = this.resolveApiKey();
     const baseUrl = this.config.get<string>('LLM_BASE_URL', 'https://api.openai.com/v1');
     const model = this.config.get<string>('MCE_LLM_MODEL') ?? this.config.get<string>('LLM_MODEL', 'gpt-4o-mini');
 
     if (!apiKey) {
       throw new ServiceUnavailableException({
         code: 'MCE_LLM_NOT_CONFIGURED',
-        message: 'LLM_API_KEY غير مضبوط على السيرفر',
+        message: 'محرك الاستشارة غير متاح حالياً. أعيدي المحاولة بعد قليل.',
       });
     }
 

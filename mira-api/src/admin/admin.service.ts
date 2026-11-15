@@ -466,7 +466,10 @@ export class AdminService {
           this.config.get<string>('NODE_ENV', 'development') !== 'production',
         fashnKeySet:
           (this.config.get<string>('FASHN_API_KEY') ?? '').length > 0,
-        llmKeySet: (this.config.get<string>('LLM_API_KEY') ?? '').length > 0,
+        llmKeySet: Boolean(
+          (this.config.get<string>('LLM_API_KEY') ?? '').trim() ||
+            (this.config.get<string>('OPENAI_API_KEY') ?? '').trim(),
+        ),
       },
       features: {
         subscriptionsEnabled: subscriptionsEnabled(),

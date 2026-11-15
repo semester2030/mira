@@ -219,7 +219,31 @@ export class ConsultationMessageService {
     messageId: string,
     attemptToken: string,
     turnStatus: 'pending' | 'complete' | 'failed',
+    failMeta?: { code?: string; message?: string },
   ): Promise<boolean> {
+    if (turnStatus === 'failed' && failMeta) {
+      const row = await this.prisma.consultationMessage.findFirst({
+        where: { id: messageId, attemptToken, turnStatus: 'pending' },
+      });
+      if (!row) return false;
+      const prev =
+        row.payloadJson && typeof row.payloadJson === 'object' && !Array.isArray(row.payloadJson)
+          ? (row.payloadJson as Record<string, unknown>)
+          : {};
+      await this.prisma.consultationMessage.update({
+        where: { id: messageId },
+        data: {
+          turnStatus,
+          payloadJson: {
+            ...prev,
+            failCode: failMeta.code ?? 'MCE_TURN_FAILED',
+            failMessage: failMeta.message ?? null,
+            failedAt: new Date().toISOString(),
+          },
+        },
+      });
+      return true;
+    }
     const updated = await this.prisma.consultationMessage.updateMany({
       where: { id: messageId, attemptToken, turnStatus: 'pending' },
       data: { turnStatus },
