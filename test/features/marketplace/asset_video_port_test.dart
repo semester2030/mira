@@ -347,25 +347,23 @@ void main() {
     await port.release();
   });
 
-  test('buildView mounts invisible until first visible progress (cover window)', () async {
+  test('buildView stays opaque under cover; progress clears cover gate', () async {
     final controller = ControllableVideoController(_clip)..advanceOnPlay = false;
     final port = AssetVideoPort(createController: (_) => controller);
     final pending = port.attach(_slotA, _clip);
     await Future<void>.delayed(const Duration(milliseconds: 30));
     expect(port.playback, PresentationPlayback.ready);
     final before = port.buildView();
-    expect(before, isNotNull, reason: 'decoder must stay mounted for position ticks');
-    expect(before, isA<Opacity>(), reason: 'surface hidden under cover until progress');
-    expect((before! as Opacity).opacity, 0);
+    expect(before, isNotNull, reason: 'opaque surface so iOS decoder can advance');
+    expect(before, isNot(isA<Opacity>()));
+    expect(port.hasVisibleProgress, isFalse, reason: 'cover stays until position advances');
     controller.value = controller.value.copyWith(
       isPlaying: true,
       position: const Duration(milliseconds: 16),
     );
     await pending;
     expect(port.hasVisibleProgress, isTrue);
-    final after = port.buildView();
-    expect(after, isNotNull);
-    expect(after, isNot(isA<Opacity>()), reason: 'opaque video after first frame');
+    expect(port.buildView(), isNotNull);
     await port.release();
   });
 }

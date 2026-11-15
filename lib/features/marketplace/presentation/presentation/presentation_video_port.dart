@@ -342,6 +342,7 @@ class AssetVideoPort extends PresentationVideoPort {
       // Capture floor before play so parked/rewind clips must advance again after activate.
       _progressFloor = controller.value.position;
       lastAttachPhases['playStart'] = _msSince(settleStarted);
+      lastAttachPhases['posAtPlayMs'] = controller.value.position.inMilliseconds;
       await controller.play();
       if (token != _generation || _released || _controller != controller) {
         await _dropIfStale(controller, token);
@@ -380,15 +381,88 @@ class AssetVideoPort extends PresentationVideoPort {
     String assetPath,
   ) async {
     if (_firstFrameEmitted || _firstFrameTimedOut) return;
-    // Real network decode often needs >3s after play; keep cover up until progress.
+    // Keep cover up until progress. Kick a stalled decoder once (~500ms) — warm/play
+    // can return before AVPlayer advances position on iOS.
     final deadline = DateTime.now().toUtc().add(const Duration(seconds: 8));
+    var kicked = false;
+    var sampleN = 0;
     while (DateTime.now().toUtc().isBefore(deadline)) {
       if (token != _generation || _released || _controller != controller) return;
       if (_markProgressIfVisible(controller, token, settleStarted, slot, assetPath)) return;
+      final v = controller.value;
+      if (sampleN < 3 || sampleN % 30 == 0) {
+        lastAttachPhases['posSampleMs'] = v.position.inMilliseconds;
+        lastAttachPhases['isPlaying'] = v.isPlaying ? 1 : 0;
+        lastAttachPhases['isBuffering'] = v.isBuffering ? 1 : 0;
+        lastAttachPhases['hasError'] = v.hasError ? 1 : 0;
+        lastAttachPhases['sizeW'] = v.size.width.round();
+      }
+      sampleN += 1;
+      final elapsed = DateTime.now().toUtc().difference(settleStarted);
+      if (!kicked && elapsed.inMilliseconds >= 500 && v.position <= _progressFloor) {
+        kicked = true;
+        lastAttachPhases['stallKickMs'] = _msSince(settleStarted);
+        try {
+          await controller.play();
+          if (token != _generation || _released || _controller != controller) return;
+          if (controller.value.position <= _progressFloor) {
+            await controller.seekTo(_progressFloor);
+            if (token != _generation || _released || _controller != controller) return;
+            await controller.play();
+          }
+          // Still frozen after seek+play → cold reopen once (warm buffer may be dead).
+          await Future<void>.delayed(const Duration(milliseconds: 400));
+          if (token != _generation || _released || _controller != controller) return;
+          if (controller.value.position <= _progressFloor && !controller.value.hasError) {
+            lastAttachPhases['stallReopenMs'] = _msSince(settleStarted);
+            final path = assetPath;
+            final fresh = _open(path);
+            if (identical(fresh, controller)) {
+              // Factory reused the same instance (unit tests) — cannot cold-reopen.
+              lastAttachPhases['stallReopenSkipped'] = 1;
+              await controller.play();
+            } else {
+              if (_controller == controller) {
+                _controller = null;
+                _activePath = null;
+              }
+              await controller.pause();
+              await controller.dispose();
+              if (token != _generation || _released) {
+                await fresh.dispose();
+                return;
+              }
+              _controller = fresh;
+              _activePath = path;
+              _progressFloor = Duration.zero;
+              fresh.addListener(() => _onController(fresh, token));
+              await fresh.initialize().timeout(const Duration(seconds: 10));
+              if (token != _generation || _released || _controller != fresh) {
+                await fresh.dispose();
+                return;
+              }
+              await fresh.setLooping(true);
+              await fresh.setVolume(_muted ? 0 : 1);
+              lastAttachPhases['initDone'] = _msSince(settleStarted);
+              lastAttachPhases['playStart'] = _msSince(settleStarted);
+              lastAttachPhases['source'] = 0; // cold reopen after stalled warm
+              await fresh.play();
+              _notify();
+              _emitPlayback('started', positionMs: 0, offerId: slot.slideId, mediaUrl: path);
+              return _awaitFirstVisibleProgress(fresh, token, settleStarted, slot, path);
+            }
+          }
+        } catch (_) {}
+      }
       await Future<void>.delayed(const Duration(milliseconds: 16));
     }
     if (!_firstFrameEmitted && !_firstFrameTimedOut && token == _generation && _controller == controller) {
       final ms = DateTime.now().toUtc().difference(settleStarted).inMilliseconds;
+      final v = controller.value;
+      lastAttachPhases['posAtTimeoutMs'] = v.position.inMilliseconds;
+      lastAttachPhases['isPlaying'] = v.isPlaying ? 1 : 0;
+      lastAttachPhases['isBuffering'] = v.isBuffering ? 1 : 0;
+      lastAttachPhases['hasError'] = v.hasError ? 1 : 0;
       _firstFrameTimedOut = true;
       _emitPlayback('first_frame_timeout', positionMs: ms, offerId: slot.slideId, mediaUrl: assetPath);
     }
@@ -403,7 +477,8 @@ class AssetVideoPort extends PresentationVideoPort {
   ) {
     if (token != _generation || _controller != controller || _released) return false;
     if (!controller.value.isInitialized || controller.value.hasError) return false;
-    if (!controller.value.isPlaying) return false;
+    // Position advance is the proof of a decoded frame. Do not require isPlaying —
+    // iOS often reports !isPlaying while buffering even after play() succeeded.
     if (controller.value.position <= _progressFloor) return false;
     _hasVisibleProgress = true;
     _firstFrameTimedOut = false;
@@ -411,6 +486,9 @@ class AssetVideoPort extends PresentationVideoPort {
       _firstFrameEmitted = true;
       final ms = DateTime.now().toUtc().difference(settleStarted).inMilliseconds;
       lastAttachPhases['firstFrame'] = ms;
+      lastAttachPhases['posAtFirstMs'] = controller.value.position.inMilliseconds;
+      lastAttachPhases['isPlaying'] = controller.value.isPlaying ? 1 : 0;
+      lastAttachPhases['isBuffering'] = controller.value.isBuffering ? 1 : 0;
       _emitPlayback('first_frame', positionMs: ms, offerId: slot.slideId, mediaUrl: assetPath);
     }
     return true;
@@ -425,7 +503,7 @@ class AssetVideoPort extends PresentationVideoPort {
       _notify();
       return;
     }
-    if (!controller.value.isPlaying || playback != PresentationPlayback.ready) return;
+    if (playback != PresentationPlayback.ready) return;
     final settle = _settleStartedAt;
     if (settle != null && activeSlot != null && _activePath != null) {
       _markProgressIfVisible(controller, token, settle, activeSlot!, _activePath!);
@@ -559,7 +637,18 @@ class AssetVideoPort extends PresentationVideoPort {
     final future = () async {
       await controller.initialize();
       await controller.setVolume(0);
+      // Mute-play briefly so AVPlayer fills the first buffer — initialize+pause alone
+      // left 1080p clips stuck isBuffering with position 0 after swipe attach.
+      await controller.play();
+      final primed = DateTime.now().toUtc().add(const Duration(milliseconds: 450));
+      while (DateTime.now().toUtc().isBefore(primed)) {
+        if (controller.value.position > Duration.zero || controller.value.hasError) break;
+        await Future<void>.delayed(const Duration(milliseconds: 40));
+      }
       await controller.pause();
+      if (controller.value.position > Duration.zero) {
+        await controller.seekTo(Duration.zero);
+      }
     }();
     _warmFuture = future;
     try {
@@ -586,17 +675,16 @@ class AssetVideoPort extends PresentationVideoPort {
   @override
   Widget? buildView() {
     final controller = _controller;
-    // Mount the player as soon as it is ready so the platform decoder can advance
-    // position (iOS/Android often stall if VideoPlayer is not in the tree). Keep it
-    // invisible until the first progressing frame; the Discover cover sits under /
-    // around this opacity-0 surface so the user never sees a black decode flash.
+    // Always paint an opaque VideoPlayer once ready. Discover stacks the cover
+    // *above* this surface until hasVisibleProgress — opacity-0 starved the iOS
+    // decoder and caused play→8s timeout with position stuck at the floor.
     if (controller == null ||
         playback != PresentationPlayback.ready ||
         !controller.value.isInitialized) {
       return null;
     }
     final size = controller.value.size;
-    final surface = FittedBox(
+    return FittedBox(
       fit: BoxFit.cover,
       clipBehavior: Clip.hardEdge,
       child: SizedBox(
@@ -605,8 +693,6 @@ class AssetVideoPort extends PresentationVideoPort {
         child: VideoPlayer(controller),
       ),
     );
-    if (_hasVisibleProgress) return surface;
-    return Opacity(opacity: 0, child: IgnorePointer(child: surface));
   }
 
   @override

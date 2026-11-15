@@ -1,0 +1,68 @@
+{
+  "productId": "14260bc3-7960-493f-86ad-2422d96bfa47",
+  "sequence": [
+    {
+      "step": "before",
+      "response": {
+        "state": "available",
+        "count": 13,
+        "policyStatus": "approved_v1"
+      }
+    },
+    {
+      "step": "after_play",
+      "eventId": "ui-proof-1794715855-a",
+      "post": {
+        "recorded": true,
+        "alreadyRecorded": false,
+        "views": {
+          "state": "available",
+          "count": 14,
+          "policyStatus": "approved_v1"
+        }
+      },
+      "count": {
+        "state": "available",
+        "count": 14,
+        "policyStatus": "approved_v1"
+      }
+    },
+    {
+      "step": "retry_same_event",
+      "eventId": "ui-proof-1794715855-a",
+      "post": {
+        "recorded": false,
+        "alreadyRecorded": true,
+        "views": {
+          "state": "available",
+          "count": 14,
+          "policyStatus": "approved_v1"
+        }
+      },
+      "count": {
+        "state": "available",
+        "count": 14,
+        "policyStatus": "approved_v1"
+      }
+    },
+    {
+      "step": "second_device_event",
+      "eventId": "ui-proof-1794715859-b",
+      "post": {
+        "recorded": true,
+        "alreadyRecorded": false,
+        "views": {
+          "state": "available",
+          "count": 15,
+          "policyStatus": "approved_v1"
+        }
+      },
+      "count": {
+        "state": "available",
+        "count": 15,
+        "policyStatus": "approved_v1"
+      }
+    }
+  ],
+  "expectedPatternAr": "قبل، بعد تشغيل (+1)، إعادة نفس الحدث (ثابت)، حدث ثانٍ (+1)"
+}

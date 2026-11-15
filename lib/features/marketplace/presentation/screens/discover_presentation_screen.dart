@@ -2875,16 +2875,21 @@ class _MediaFrameState extends State<_MediaFrame> {
       final view = owns ? video.buildView() : null;
       final cover = widget.coverPath;
       final failed = owns && video.playback == PresentationPlayback.failed;
-      // Cover stays under an opacity-0 player until the first progressing frame.
-      // On failure the cover remains with a retry affordance — never a bare black plate.
+      final showCover = !owns ||
+          failed ||
+          (video is AssetVideoPort && !video.hasVisibleProgress) ||
+          view == null;
+      // Opaque VideoPlayer underneath (so the decoder runs); cover on top until
+      // the first progressing frame — never a bare black plate.
       return ColoredBox(
         color: const Color(0xFF2A2226),
         child: Stack(
           fit: StackFit.expand,
           children: [
-            if (cover != null)
+            if (view != null) Positioned.fill(child: view),
+            if (showCover && cover != null)
               DiscoverSceneCover(path: cover)
-            else if (view == null)
+            else if (showCover)
               const DecoratedBox(
                 decoration: BoxDecoration(
                   gradient: LinearGradient(
@@ -2894,7 +2899,6 @@ class _MediaFrameState extends State<_MediaFrame> {
                   ),
                 ),
               ),
-            if (view != null) Positioned.fill(child: view),
             if (failed)
               _Failure(
                 message: video.errorText ?? 'تعذر تشغيل الفيديو',
