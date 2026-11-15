@@ -221,8 +221,12 @@ class AssetVideoPort extends PresentationVideoPort {
     return _defaultOpen(assetPath);
   }
 
-  /// Resolves HTTP media through the disk cache when a complete file exists or
-  /// finishes downloading. In-flight downloads are shared by mediaId.
+  /// Resolves HTTP media through the disk cache.
+  ///
+  /// Complete files open via [VideoPlayerController.file]. Partial prefixes open
+  /// via the cache loopback Range proxy so AVPlayer reads local bytes first and
+  /// the same download path appends only the missing tail — never a cold origin
+  /// GET from byte 0 in parallel with the cache.
   Future<VideoPlayerController> _openResolved(
     String assetPath, {
     required bool waitForDisk,
@@ -236,63 +240,44 @@ class AssetVideoPort extends PresentationVideoPort {
       return _openRaw(assetPath);
     }
 
-    // Instant hit if already complete on disk.
-    final peeked = await cache.peekComplete(assetPath);
-    if (peeked != null) {
-      phases?['cacheSource'] = 3; // disk
-      phases?['cacheBytes'] = await peeked.length();
+    // waitForDisk kept for call-site compatibility; partials are playable via
+    // proxy immediately, so we no longer block up to 2200ms on a full GET.
+    phases?['waitForDisk'] = waitForDisk ? 1 : 0;
+    final source = await cache.resolvePlaySource(assetPath);
+    if (source.isFile && source.file != null) {
+      phases?['cacheSource'] = 3;
+      phases?['cacheBytes'] = source.bytesOnDisk;
       _recordDiag({
-        'mediaId': DiscoverVideoDiskCache.mediaIdFromUrl(assetPath),
+        'mediaId': source.mediaId,
         'source': 'disk',
-        'bytesReused': phases?['cacheBytes'],
+        'bytesReused': source.bytesOnDisk,
         'bytesDownloaded': 0,
       });
-      return VideoPlayerController.file(peeked);
+      return VideoPlayerController.file(source.file!);
     }
-
-    if (waitForDisk) {
-      // Prefer a finished file, but never stall mute-prime on a 10–40MB GET.
-      // Prefetch continues in the background for rewind / later swipe.
-      DiscoverCachedVideo cached;
-      try {
-        cached = await cache
-            .ensureLocal(assetPath)
-            .timeout(const Duration(milliseconds: 2200));
-      } on TimeoutException {
-        cached = DiscoverCachedVideo.network(
-          url: assetPath,
-          mediaId: DiscoverVideoDiskCache.mediaIdFromUrl(assetPath),
-          reason: 'disk_wait_timeout',
-        );
-      }
-      if (cached.playableFromDisk && cached.file != null) {
-        phases?['cacheSource'] = 3;
-        phases?['cacheBytes'] = cached.bytesOnDisk;
-        _recordDiag({
-          'mediaId': cached.mediaId,
-          'source': cached.fromDisk ? 'disk' : 'network_to_disk',
-          'bytesReused': cached.fromDisk ? cached.bytesOnDisk : 0,
-          'bytesDownloaded': cached.bytesDownloaded,
-        });
-        return VideoPlayerController.file(cached.file!);
-      }
-      // Keep download going; play from network this time.
-      // ignore: discarded_futures
-      cache.ensureLocal(assetPath);
-      phases?['cacheSource'] = 0;
+    if (source.isProxy && source.uri != null) {
+      // Background fill via the shared download path (does not cancel/restart).
+      cache.prefetch(assetPath);
+      phases?['cacheSource'] = 4; // loopback proxy over partial/complete fill
+      phases?['cacheBytes'] = source.bytesOnDisk;
       _recordDiag({
-        'mediaId': cached.mediaId ?? DiscoverVideoDiskCache.mediaIdFromUrl(assetPath),
-        'source': 'network',
-        'bytesReused': cached.bytesOnDisk,
-        'bytesDownloaded': cached.bytesDownloaded,
-        'error': cached.reason,
+        'mediaId': source.mediaId,
+        'source': 'proxy_partial',
+        'bytesReused': source.bytesOnDisk,
+        'bytesDownloaded': 0,
+        'playUrl': source.uri.toString(),
       });
-      return _openRaw(assetPath);
+      return VideoPlayerController.networkUrl(source.uri!);
     }
 
-    // Non-blocking: start download for later rewind; play network now.
-    cache.prefetch(assetPath);
     phases?['cacheSource'] = 0;
+    _recordDiag({
+      'mediaId': DiscoverVideoDiskCache.mediaIdFromUrl(assetPath),
+      'source': 'network',
+      'bytesReused': 0,
+      'bytesDownloaded': 0,
+      'error': 'no_play_source',
+    });
     return _openRaw(assetPath);
   }
 
