@@ -37,6 +37,7 @@ import {
   decideConsultationScope,
   guardScopeAnswer,
   historyForBeautyTurn,
+  isProductOrCatalogAsk,
 } from './consultation-scope';
 
 @Injectable()
@@ -483,6 +484,7 @@ export class ConsultationOrchestratorService {
     streamFactory?: () => AsyncIterable<string>,
   ): Promise<MceAssistantPayloadV1> {
     if (ctx.localReply) {
+      const degraded = !this.llm.isConfigured();
       return guardScopeAnswer(this.validator.validate({
         answerAr: ctx.localReply,
         confidence: 'high',
@@ -491,6 +493,7 @@ export class ConsultationOrchestratorService {
         suggestedQuestionsAr: [],
         blocked: false,
         disclaimerAr: '',
+        replySource: degraded ? 'degraded' : 'dialogue',
       }, ctx.factRegistry, ctx.userRow.contentAr), ctx.userRow.contentAr);
     }
     if (ctx.mod.blocked && ctx.mod.safeReply) {
@@ -568,7 +571,11 @@ export class ConsultationOrchestratorService {
       answerText,
       assistantPayload,
       {
-        modelId: this.llm.isConfigured() ? undefined : 'rule-fallback',
+        modelId: assistantPayload.replySource === 'llm'
+        ? this.llm.configuredModel()
+        : assistantPayload.replySource === 'degraded' || !this.llm.isConfigured()
+          ? 'rule-fallback'
+          : this.llm.configuredModel(),
         latencyMs: Date.now() - ctx.started,
         blocked: assistantPayload.blocked,
         replyToMessageId: ctx.userRow.id,
@@ -595,6 +602,8 @@ export class ConsultationOrchestratorService {
         userId: ctx.user.id,
         action: 'consultation.message',
         metadata: {
+          replySource: assistantPayload.replySource ?? null,
+          llmConfigured: this.llm.isConfigured(),
           sessionId: ctx.session.id,
           snapshotId: ctx.snapshotId,
           intent: assistantPayload.intent,

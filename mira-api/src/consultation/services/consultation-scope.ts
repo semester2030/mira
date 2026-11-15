@@ -1,5 +1,29 @@
 import { MceAssistantPayloadV1 } from '../contracts/mce-context-snapshot.v1';
 
+/** Map English severity tokens from the report contract to Arabic display labels. */
+export function severityLabelAr(severity: string | null | undefined): string {
+  const key = String(severity ?? '')
+    .trim()
+    .toLowerCase();
+  switch (key) {
+    case 'mild':
+      return 'خفيف';
+    case 'moderate':
+      return 'متوسط';
+    case 'priority':
+    case 'severe':
+    case 'noticeable':
+      return 'أولوية عناية';
+    case 'none':
+      return 'ضمن النطاق الإيجابي';
+    case 'unavailable':
+    case '':
+      return 'غير متاح';
+    default:
+      return String(severity).trim();
+  }
+}
+
 export const SCOPE_REDIRECT_AR =
   'هذا خارج اختصاص ميرا. أقدر أساعدك في الجمال والعناية والبشرة والشعر والمكياج والعطور والملابس والألوان والإكسسوارات والمناسبات والمنتجات. إذا أعجبتك ألوان صورة، اطلبي استلهام إطلالة منها.';
 
@@ -81,54 +105,6 @@ export function answerStaysInScope(answer: string, userMessage: string): boolean
   return true;
 }
 
-/** Offline advisor when LLM_API_KEY is missing — facts only, no invented scores. */
-export function buildDegradedAdvisorReply(
-  message: string,
-  facts: Array<{ id: string; labelAr?: string; valueAr?: string }> = [],
-): string {
-  const text = message.trim();
-  const moisture = facts.find((f) => /moisture|hydration|ترطيب/i.test(`${f.id} ${f.labelAr ?? ''}`));
-  const asksMoisture = /ترطيب/.test(text);
-  const asksSunscreen = /واقي.?الشمس|sunscreen|spf/i.test(text);
-  const asksProduct = /رشّح|رشح|من ميرا|أقل من|بأقل من|سعر|اشتري/.test(text);
-
-  if (asksMoisture) {
-    if (moisture?.valueAr?.trim()) {
-      return [
-        `حسب تقرير بشرتكِ، مؤشر ${moisture.labelAr?.trim() || 'الترطيب'} المسجّل هو ${moisture.valueAr.trim()}.`,
-        'هذه قراءة تجميلية من التحليل وليست تشخيصاً طبياً. إذا لاحظتِ جفافاً أو شدّاً، ركّزي على مرطّب لطيف صباحاً ومساءً، وواقي شمس في النهار.',
-        'إذا رغبتِ بتفاصيل أدق عن خطوة معيّنة في روتينكِ، اسألي مباشرة.',
-      ].join('\n');
-    }
-    return [
-      'لا أجد درجة ترطيب واضحة في سياق هذه الجلسة حالياً، لذلك لن أخمن رقماً.',
-      'عمومًا: روتين لطيف = تنظيف خفيف، ترطيب منتظم، وواقي شمس نهاراً.',
-      'أعيدي فتح المستشار من تقرير البشرة إن أردتِ الربط بالدرجات المسجّلة.',
-    ].join('\n');
-  }
-
-  if (asksSunscreen && !asksProduct) {
-    return [
-      'واقي الشمس خطوة أساسية في الروتين اليومي حتى في الأيام الغائمة: يحمي من التجفّف والتصبّغات المبكرة ويحافظ على نتائج العناية.',
-      'اختاري قواماً يناسب بشرتكِ (خفيف للبشرة المختلطة/الدهنية، أغنى للجافة)، وضعيه صباحاً كآخر خطوة قبل المكياج أو الخروج.',
-      'هذه إرشاد عناية عام — ليست وصفة طبية. إذا رغبتِ بترشيح منتج من ميرا فاذكري الميزانية والمدينة.',
-    ].join('\n');
-  }
-
-  if (asksProduct) {
-    return [
-      'فهمتُ طلب ترشيح منتج من ميرا، لكن بحث الكتالوج غير مفعّل في هذه البيئة حالياً — لذلك لن أخترع بطاقة منتج.',
-      'يمكنني الآن شرح درجة الترطيب من تقريركِ، أو أهمية واقي الشمس في روتينكِ، أو أي خطوة عناية عامة.',
-      'عند تفعيل اكتشاف المنتجات سأبحث عن عرض منشور يطابق الميزانية والمدينة إن وُجد.',
-    ].join('\n');
-  }
-
-  return [
-    'محرك الاستشارة الذكي غير متصل الآن، لذلك أردّ بإرشاد عناية عام فقط.',
-    'يمكنكِ سؤالي عن الترطيب أو واقي الشمس أو روتينكِ من التقرير، أو إعادة المحاولة بعد لحظات.',
-  ].join('\n');
-}
-
 export function guardScopeAnswer(
   payload: MceAssistantPayloadV1,
   userMessage: string,
@@ -147,4 +123,87 @@ export function guardScopeAnswer(
     };
   }
   return payload;
+}
+
+export function isProductOrCatalogAsk(message: string): boolean {
+  const text = message.trim();
+  if (/نفس هذا|مثل هذا|زي هذا|هالمنتج|هذا المنتج|نفس المنتج|ابي نفس|أبغى نفس|ابغى نفس/.test(text)) {
+    return true;
+  }
+  if (/رشّح|رشح|من ميرا/.test(text) && /أقل من|بأقل من|باقل من|\d|منتج|واقي|مرطب/.test(text)) {
+    return true;
+  }
+  return /اشتري|بشتري|سعر/.test(text) && /منتج|كريم|واقي|مرطب|من ميرا/.test(text);
+}
+
+/** Prefer numeric score facts; never surface raw English severity tokens. */
+export function resolveMoistureDisplay(
+  facts: Array<{ id: string; labelAr?: string; valueAr?: string }> = [],
+): { labelAr: string; valueAr: string } | null {
+  const score = facts.find((f) => /skin\.score\.(moisture|hydration)/i.test(f.id));
+  if (score?.valueAr?.trim()) {
+    return {
+      labelAr: score.labelAr?.trim() || 'الترطيب',
+      valueAr: score.valueAr.trim(),
+    };
+  }
+  const concern = facts.find((f) => /moisture|hydration|ترطيب/i.test(`${f.id} ${f.labelAr ?? ''}`));
+  if (!concern?.valueAr?.trim()) return null;
+  return {
+    labelAr: concern.labelAr?.trim() || 'الترطيب',
+    valueAr: severityLabelAr(concern.valueAr.trim()),
+  };
+}
+
+/** Offline advisor when LLM_API_KEY is missing — facts only, no invented scores. */
+export function buildDegradedAdvisorReply(
+  message: string,
+  facts: Array<{ id: string; labelAr?: string; valueAr?: string }> = [],
+): string {
+  const text = message.trim();
+  const asksMoisture = /ترطيب/.test(text);
+  const asksSunscreen = /واقي.?الشمس|sunscreen|spf/i.test(text);
+  const asksProduct = isProductOrCatalogAsk(text);
+  const asksSameProduct =
+    /نفس هذا|مثل هذا|زي هذا|هالمنتج|هذا المنتج|نفس المنتج|ابي نفس|أبغى نفس|ابغى نفس/.test(text);
+
+  // Product / image-match asks must never fall through to hydration prose.
+  if (asksProduct || asksSameProduct) {
+    return [
+      asksSameProduct
+        ? 'طلبتِ مطابقة المنتج من الصورة أو «نفس هذا المنتج».'
+        : 'فهمتُ طلب ترشيح/بحث منتج من ميرا.',
+      'بحث الكتالوج غير متاح في هذه البيئة حالياً — لذلك لم أنفّذ بحثاً ولن أعرض بطاقة منتج ولن أخمن مطابقاً.',
+      'إذا رغبتِ بإرشاد عناية (ترطيب أو واقي شمس من تقريركِ) اسألي ذلك صراحةً.',
+    ].join('\n');
+  }
+
+  if (asksMoisture) {
+    const moisture = resolveMoistureDisplay(facts);
+    if (moisture) {
+      return [
+        `حسب تقرير بشرتكِ، مؤشر ${moisture.labelAr} المسجّل هو ${moisture.valueAr}.`,
+        'هذه قراءة تجميلية من التحليل وليست تشخيصاً طبياً. إذا لاحظتِ جفافاً أو شدّاً، ركّزي على مرطّب لطيف صباحاً ومساءً، وواقي شمس في النهار.',
+        'إذا رغبتِ بتفاصيل أدق عن خطوة معيّنة في روتينكِ، اسألي مباشرة.',
+      ].join('\n');
+    }
+    return [
+      'لا أجد درجة ترطيب واضحة في سياق هذه الجلسة حالياً، لذلك لن أخمن رقماً.',
+      'عمومًا: روتين لطيف = تنظيف خفيف، ترطيب منتظم، وواقي شمس نهاراً.',
+      'أعيدي فتح المستشار من تقرير البشرة إن أردتِ الربط بالدرجات المسجّلة.',
+    ].join('\n');
+  }
+
+  if (asksSunscreen) {
+    return [
+      'واقي الشمس خطوة أساسية في الروتين اليومي حتى في الأيام الغائمة: يحمي من التجفّف والتصبّغات المبكرة ويحافظ على نتائج العناية.',
+      'اختاري قواماً يناسب بشرتكِ (خفيف للبشرة المختلطة/الدهنية، أغنى للجافة)، وضعيه صباحاً كآخر خطوة قبل المكياج أو الخروج.',
+      'هذه إرشاد عناية عام — ليست وصفة طبية. إذا رغبتِ بترشيح منتج من ميرا فاذكري الميزانية والمدينة.',
+    ].join('\n');
+  }
+
+  return [
+    'محرك الاستشارة الذكي غير متصل الآن، لذلك أردّ بإرشاد عناية عام فقط.',
+    'يمكنكِ سؤالي عن الترطيب أو واقي الشمس أو روتينكِ من التقرير، أو إعادة المحاولة بعد لحظات.',
+  ].join('\n');
 }

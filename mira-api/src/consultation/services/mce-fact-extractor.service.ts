@@ -10,6 +10,7 @@ import {
   SkinContextSummaryV1,
   AtelierContextSummaryV1,
 } from '../contracts/mce-context-snapshot.v1';
+import { severityLabelAr } from './consultation-scope';
 
 @Injectable()
 export class MceFactExtractorService {
@@ -100,17 +101,18 @@ export class MceFactExtractorService {
         facts.push({
           id: `skin.concern.${c.id}`,
           labelAr: c.titleAr,
-          valueAr: c.severity,
+          valueAr: severityLabelAr(c.severity),
           confidence: 'high',
         });
       }
       for (const s of skin.concernScores) {
         const score = readContractUiScore(s.score);
         if (score == null) continue;
+        const severityAr = severityLabelAr(s.severity);
         facts.push({
           id: `skin.score.${s.concernId}`,
           labelAr: s.labelAr,
-          valueAr: `${score} — مؤشر تقديري من الصورة`,
+          valueAr: `${score}/100 — ${severityAr} (مؤشر تقديري من الصورة)`,
           confidence: 'medium' as MceConfidenceLevel,
         });
       }
