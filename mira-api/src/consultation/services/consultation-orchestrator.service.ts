@@ -32,7 +32,12 @@ import { evaluateMceFashionQuarantine } from '../../fashion-knowledge/advisor-in
 import { isDirectCommercialQuestion, serverCommercialTurnReply } from './mce-commercial-guard';
 import { ConsultationDialogueService } from './consultation-attachment.service';
 import { answerCacheAllowed, consultationQuarantineApplies, readPinnedAttachmentIds } from './consultation-dialogue';
-import { decideConsultationScope, guardScopeAnswer, historyForBeautyTurn } from './consultation-scope';
+import {
+  buildDegradedAdvisorReply,
+  decideConsultationScope,
+  guardScopeAnswer,
+  historyForBeautyTurn,
+} from './consultation-scope';
 
 @Injectable()
 export class ConsultationOrchestratorService {
@@ -201,10 +206,13 @@ export class ConsultationOrchestratorService {
         throw new ConflictException({ code: 'MCE_TURN_LEASE_LOST', message: 'انتهت محاولة هذا الطلب بعد بدء محاولة أحدث.' });
       }
       if (!ctx.localReply && !ctx.mod.blocked && !ctx.cached && !serverPriced && (!this.llm.isConfigured() || !ctx.llmMessages)) {
-        await this.failOwned(opened.userRow.id, attemptToken);
+        await this.failOwned(opened.userRow.id, attemptToken, {
+          code: 'MCE_LLM_NOT_CONFIGURED',
+          message: 'محرك الاستشارة غير متاح حالياً. أعيدي المحاولة بعد قليل.',
+        });
         write('error', {
           code: 'MCE_LLM_NOT_CONFIGURED',
-          message: 'محرك الاستشارة غير متاح',
+          message: 'محرك الاستشارة غير متاح حالياً. أعيدي المحاولة بعد قليل.',
         });
         res.end();
         return;
@@ -219,11 +227,10 @@ export class ConsultationOrchestratorService {
     } catch (error) {
       const body = error instanceof HttpException ? error.getResponse() : null;
       const coded = body && typeof body === 'object' ? (body as { code?: string; message?: string }) : null;
-      await this.failOwned(opened.userRow.id, attemptToken);
-      write('error', {
-        code: coded?.code ?? 'MCE_LLM_FAILED',
-        message: coded?.message ?? 'تعذر إكمال الرد',
-      });
+      const code = coded?.code ?? 'MCE_LLM_FAILED';
+      const message = coded?.message ?? 'تعذر إكمال الرد. أعيدي المحاولة بنفس الطلب.';
+      await this.failOwned(opened.userRow.id, attemptToken, { code, message });
+      write('error', { code, message });
       res.end();
       return;
     }
@@ -326,6 +333,11 @@ export class ConsultationOrchestratorService {
       if (!scope.allow) localReply = scope.replyAr;
     }
 
+    // Degraded path: keep basic skin/care replies available when the LLM key is absent.
+    if (!localReply && !mod.blocked && !this.llm.isConfigured()) {
+      localReply = buildDegradedAdvisorReply(dto.message.trim(), loaded.factRegistry);
+    }
+
     let llmMessages: ReturnType<McePromptAssemblerService['buildMessages']> | undefined;
     let detectedIntent: MceConsultationIntent | undefined;
     const modelHistory = historyForBeautyTurn(priorHistory);
@@ -408,12 +420,16 @@ export class ConsultationOrchestratorService {
     };
   }
 
-  private async failOwned(messageId: string, attemptToken: string | null): Promise<void> {
+  private async failOwned(
+    messageId: string,
+    attemptToken: string | null,
+    failMeta?: { code?: string; message?: string },
+  ): Promise<void> {
     if (!attemptToken) {
       await this.messages.markTurn(messageId, 'failed');
       return;
     }
-    await this.messages.markOwned(messageId, attemptToken, 'failed');
+    await this.messages.markOwned(messageId, attemptToken, 'failed', failMeta);
   }
 
   private async completeOwned(messageId: string, attemptToken: string | null): Promise<void> {

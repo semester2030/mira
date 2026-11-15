@@ -98,6 +98,14 @@ export class HealthController {
         perfectCorpKeySet: perfect.apiKey.length > 0,
         perfectCorpBaseUrl: perfect.baseUrl,
         perfectCorpFallbackMock: fallbackAllowed,
+        llmKeySet: Boolean(
+          (this.config.get<string>('LLM_API_KEY') ?? '').trim() ||
+            (this.config.get<string>('OPENAI_API_KEY') ?? '').trim(),
+        ),
+        consultantDiscoveryV1:
+          String(this.config.get('MIRA_CONSULTANT_DISCOVERY_V1', 'false'))
+            .trim()
+            .toLowerCase() === 'true',
         hint: !perfect.apiKey.length
           ? 'PERFECT_API_KEY missing on server'
           : skinProvider !== 'perfect_corp'

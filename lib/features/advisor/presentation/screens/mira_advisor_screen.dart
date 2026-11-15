@@ -335,8 +335,10 @@ class _MiraAdvisorScreenState extends State<MiraAdvisorScreen> {
       stage = 'session';
       final skinId = outfitPrimary && args.skinReport == null
           ? null
-          : (args.skinReport?.id ??
-              (outfitPrimary ? null : AnalysisSession.lastSkin?.id));
+          : _uuidOrNull(
+              args.skinReport?.id ??
+                  (outfitPrimary ? null : AnalysisSession.lastSkin?.id),
+            );
 
       final faceLabel = _faceContext?.contextLabelAr;
       final focus = args.discussionFocus?.trim();
@@ -346,6 +348,61 @@ class _MiraAdvisorScreenState extends State<MiraAdvisorScreen> {
         if (args.outfitAnalysis != null)
           'مناسبة التقرير: ${args.outfitAnalysis!.occasion.labelAr}',
       ].join(' · ');
+
+      // Resume skin-report chat like outfit — avoid orphan sessions mid-conversation.
+      if (skinId != null && outfitAnalysisId == null && recolorId == null) {
+        final rememberedSkin = prefs.getString('mira_skin_chat_$skinId');
+        if (rememberedSkin != null && rememberedSkin.isNotEmpty) {
+          stage = 'resume';
+          try {
+            final history = await _consultationApi.listMessages(rememberedSkin);
+            final imageLimit = await _consultationApi.dialogueImageLimit();
+            final sessions = await _consultationApi.listSessions();
+            final match = sessions.where((s) => s.id == rememberedSkin);
+            final snapshotId =
+                match.isNotEmpty ? match.first.activeSnapshotId : null;
+            if (!mounted) return;
+            setState(() {
+              _messages
+                ..clear()
+                ..addAll(history.messages.map((message) => AdvisorMessage(
+                      id: message.id,
+                      text: message.contentAr,
+                      isUser: message.isUser,
+                      at: message.createdAt,
+                      confidence: message.confidence,
+                      attachmentIds: message.attachmentIds,
+                      clientMessageId: message.clientMessageId,
+                      citedFacts: message.citedFacts
+                          .map(
+                            (f) => MceCitedFact(
+                              id: f.id,
+                              labelAr: f.labelAr,
+                              valueAr: f.valueAr,
+                            ),
+                          )
+                          .toList(),
+                    )));
+              _sessionId = rememberedSkin;
+              _snapshotId = snapshotId;
+              _sessionReady = true;
+              _sessionError = null;
+              _maxImages = imageLimit;
+              _focus = _faceContext != null
+                  ? _ConsultationFocus.face
+                  : _ConsultationFocus.skin;
+              _contextCardText = statedGoal.isEmpty ? focus : statedGoal;
+              if (_messages.isEmpty && _followUps.isEmpty) {
+                _followUps = _skinStarterQuestions;
+              }
+            });
+            return;
+          } catch (_) {
+            await prefs.remove('mira_skin_chat_$skinId');
+          }
+        }
+      }
+
       final session = await _consultationApi.createSession(
         skinAnalysisId: skinId,
         outfitAnalysisId: outfitAnalysisId,
@@ -358,6 +415,9 @@ class _MiraAdvisorScreenState extends State<MiraAdvisorScreen> {
       if (!mounted) return;
       if (outfitAnalysisId != null) {
         await prefs.setString('mira_outfit_chat_$outfitAnalysisId', session.id);
+      }
+      if (skinId != null && outfitAnalysisId == null) {
+        await prefs.setString('mira_skin_chat_$skinId', session.id);
       }
       setState(() {
         _sessionId = session.id;
@@ -579,7 +639,10 @@ class _MiraAdvisorScreenState extends State<MiraAdvisorScreen> {
         );
     if (outbound.appendUserBubble) {
       final uploaded = await _uploadDrafts();
-      if (uploaded == null) return;
+      if (uploaded == null) {
+        if (mounted) setState(() => _loading = false);
+        return;
+      }
       outbound = outbound.withAttachments(uploaded);
       setState(() {
         _loading = true;
@@ -799,8 +862,18 @@ class _MiraAdvisorScreenState extends State<MiraAdvisorScreen> {
 
   String _arabicSendError(Object error) {
     final text = error.toString().replaceFirst('Exception: ', '').trim();
-    if (text.contains('أعيدي') || text.contains('تعذر')) return text;
-    return 'تعذر عرض الرد. أعيدي المحاولة وسنستخدم الطلب نفسه.';
+    if (text.isEmpty) {
+      return 'تعذر عرض الرد. أعيدي المحاولة وسنستخدم الطلب نفسه.';
+    }
+    // Prefer the server/stream message — do not hide "محرك الاستشارة غير متاح".
+    if (error is ConsultationStreamException) return text;
+    if (text.contains('أعيدي') ||
+        text.contains('تعذر') ||
+        text.contains('غير متاح') ||
+        text.contains('انقطع')) {
+      return text;
+    }
+    return 'تعذر عرض الرد. أعيدي المحاولة وسنستخدم الطلب نفسه.\n$text';
   }
 
   void _scrollToEnd() {

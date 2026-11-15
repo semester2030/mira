@@ -81,6 +81,46 @@ export function answerStaysInScope(answer: string, userMessage: string): boolean
   return true;
 }
 
+/** Offline advisor when LLM_API_KEY is missing — facts only, no invented scores. */
+export function buildDegradedAdvisorReply(
+  message: string,
+  facts: Array<{ id: string; labelAr?: string; valueAr?: string }> = [],
+): string {
+  const text = message.trim();
+  const moisture = facts.find((f) => /moisture|hydration|ترطيب/i.test(`${f.id} ${f.labelAr ?? ''}`));
+  const asksMoisture = /ترطيب/.test(text);
+  const asksSunscreen = /واقي.?الشمس|sunscreen|spf/i.test(text);
+  const asksProduct = /رشّح|رشح|من ميرا|أقل من|بأقل من|سعر|اشتري/.test(text);
+
+  if (asksMoisture) {
+    if (moisture?.valueAr?.trim()) {
+      return [
+        `حسب تقرير بشرتكِ، مؤشر ${moisture.labelAr?.trim() || 'الترطيب'} المسجّل هو ${moisture.valueAr.trim()}.`,
+        'هذه قراءة تجميلية من التحليل وليست تشخيصاً طبياً. إذا لاحظتِ جفافاً أو شدّاً، ركّزي على مرطّب لطيف صباحاً ومساءً، وواقي شمس في النهار.',
+        'إذا رغبتِ بتفاصيل أدق عن خطوة معيّنة في روتينكِ، اسألي مباشرة.',
+      ].join('\n');
+    }
+    return [
+      'لا أجد درجة ترطيب واضحة في سياق هذه الجلسة حالياً، لذلك لن أخمن رقماً.',
+      'عمومًا: روتين لطيف = تنظيف خفيف، ترطيب منتظم، وواقي شمس نهاراً.',
+      'أعيدي فتح المستشار من تقرير البشرة إن أردتِ الربط بالدرجات المسجّلة.',
+    ].join('\n');
+  }
+
+  if (asksSunscreen && !asksProduct) {
+    return [
+      'واقي الشمس خطوة أساسية في الروتين اليومي حتى في الأيام الغائمة: يحمي من التجفّف والتصبّغات المبكرة ويحافظ على نتائج العناية.',
+      'اختاري قواماً يناسب بشرتكِ (خفيف للبشرة المختلطة/الدهنية، أغنى للجافة)، وضعيه صباحاً كآخر خطوة قبل المكياج أو الخروج.',
+      'هذه إرشاد عناية عام — ليست وصفة طبية. إذا رغبتِ بترشيح منتج من ميرا فاذكري الميزانية والمدينة.',
+    ].join('\n');
+  }
+
+  return [
+    'محرك الاستشارة الذكي غير متصل الآن، لذلك أردّ بإرشاد عناية عام فقط.',
+    'يمكنكِ سؤالي عن الترطيب أو واقي الشمس أو روتينكِ من التقرير، أو إعادة المحاولة بعد لحظات.',
+  ].join('\n');
+}
+
 export function guardScopeAnswer(
   payload: MceAssistantPayloadV1,
   userMessage: string,
