@@ -41,6 +41,12 @@ post_install do |installer|
     flutter_additional_ios_build_settings(target)
     target.build_configurations.each do |config|
       config.build_settings['IPHONEOS_DEPLOYMENT_TARGET'] = '15.5'
+      # mediapipe ships device-only arm64 TensorFlowLiteC; allow Apple Silicon simulators.
+      config.build_settings['EXCLUDED_ARCHS[sdk=iphonesimulator*]'] = 'i386 x86_64'
+      config.build_settings['ONLY_ACTIVE_ARCH'] = 'YES'
+      # MLKit sim stubs may omit rare absl objs; commerce UI proof does not call ML Kit.
+      config.build_settings['OTHER_LDFLAGS[sdk=iphonesimulator*]'] =
+        '$(inherited) -undefined dynamic_lookup'
     end
 
     # Xcode 16+ mis-parses -GCC_WARN_INHIBIT_ALL_WARNINGS as -G on BoringSSL-GRPC sources.
@@ -54,4 +60,89 @@ post_install do |installer|
       end
     end
   end
+
+  # mediapipe vendors a device-only TFLite binary via pub-cache symlink. Keep a device
+  # backup and install the ios-sim stub at pod-install time so simulator links succeed.
+  # Device builds restore the backup in a pre-build phase.
+  stub = File.expand_path('Vendor/TensorFlowLiteCSim/TensorFlowLiteC.framework/TensorFlowLiteC', __dir__)
+  device_bak = File.expand_path('Vendor/TensorFlowLiteCDevice/TensorFlowLiteC', __dir__)
+  tflite_bins = Dir.glob("#{Dir.home}/.pub-cache/hosted/pub.dev/mediapipe_face_mesh-*/ios/Frameworks/TensorFlowLiteC.framework/TensorFlowLiteC")
+  tflite_bins += Dir.glob("#{installer.sandbox.root}/**/TensorFlowLiteC.framework/TensorFlowLiteC")
+  if File.file?(stub)
+    FileUtils.mkdir_p(File.dirname(device_bak))
+    tflite_bins.uniq.each do |bin|
+      next unless File.file?(bin)
+      # Backup original once (device fat binary ~47MB).
+      if !File.file?(device_bak) || File.size(device_bak) < 1_000_000
+        FileUtils.cp(bin, device_bak)
+        puts "MIRA TFLite: backed up device binary -> #{device_bak}"
+      end
+      FileUtils.cp(stub, bin)
+      puts "MIRA TFLite: installed ios-sim stub -> #{bin}"
+    end
+  end
+
+  installer.pods_project.targets.each do |target|
+    next unless target.name == 'mediapipe_face_mesh'
+    phase_name = 'MIRA TFLite platform shim'
+    target.build_phases.delete_if { |p| p.respond_to?(:name) && p.name == phase_name }
+    phase = target.new_shell_script_build_phase(phase_name)
+    phase.shell_script = <<~'SCRIPT'
+      set -e
+      STUB="${SRCROOT}/../Vendor/TensorFlowLiteCSim/TensorFlowLiteC.framework/TensorFlowLiteC"
+      DEVICE="${SRCROOT}/../Vendor/TensorFlowLiteCDevice/TensorFlowLiteC"
+      if [ "${PLATFORM_NAME}" = "iphonesimulator" ]; then SRC="$STUB"; else SRC="$DEVICE"; fi
+      if [ ! -f "$SRC" ]; then echo "warning: missing TFLite shim $SRC"; exit 0; fi
+      for dest in \
+        "${HOME}"/.pub-cache/hosted/pub.dev/mediapipe_face_mesh-*/ios/Frameworks/TensorFlowLiteC.framework/TensorFlowLiteC \
+        "${PODS_ROOT}"/**/TensorFlowLiteC.framework/TensorFlowLiteC
+      do
+        [ -f "$dest" ] || continue
+        cp -f "$SRC" "$dest"
+        # Ensure Info.plist exists (Xcode 26 embed requires it for sim).
+        fw="$(dirname "$dest")"
+        if [ ! -f "$fw/Info.plist" ] && [ -f "${SRCROOT}/../Vendor/TensorFlowLiteCSim/TensorFlowLiteC.framework/Info.plist" ]; then
+          cp -f "${SRCROOT}/../Vendor/TensorFlowLiteCSim/TensorFlowLiteC.framework/Info.plist" "$fw/Info.plist"
+        fi
+        echo "MIRA TFLite shim: ${PLATFORM_NAME} -> $dest"
+      done
+    SCRIPT
+    target.build_phases.move(phase, 0)
+  end
+
+  # Google MLKit ships device-platform object archives; patch-install sim stubs so MiraRC2 links.
+  mlkit_names = %w[
+    MLImage MLKitCommon MLKitVision MLKitFaceDetection
+    MLKitPoseDetection MLKitPoseDetectionCommon MLKitPoseDetectionAccurate MLKitXenoCommon
+  ]
+  mlkit_names.each do |name|
+    sim = File.expand_path("Vendor/MLKitSimStubs/#{name}.sim", __dir__)
+    next unless File.file?(sim)
+    Dir.glob("#{installer.sandbox.root}/**/Frameworks/#{name}.framework/#{name}").each do |bin|
+      FileUtils.cp(sim, bin)
+      puts "MIRA MLKit sim stub at pod-install: #{bin}"
+    end
+  end
+
+  installer.pods_project.targets.each do |target|
+    next unless target.name == 'Pods-Runner'
+    phase_name = 'MIRA MLKit platform shim'
+    target.build_phases.delete_if { |p| p.respond_to?(:name) && p.name == phase_name }
+    phase = target.new_shell_script_build_phase(phase_name)
+    phase.shell_script = <<~'SCRIPT'
+      set -e
+      STUB_DIR="${SRCROOT}/../Vendor/MLKitSimStubs"
+      for name in MLImage MLKitCommon MLKitVision MLKitFaceDetection MLKitPoseDetection MLKitPoseDetectionCommon MLKitPoseDetectionAccurate MLKitXenoCommon; do
+        if [ "${PLATFORM_NAME}" = "iphonesimulator" ]; then SRC="$STUB_DIR/$name.sim"; else SRC="$STUB_DIR/$name.device"; fi
+        [ -f "$SRC" ] || continue
+        for dest in "${PODS_ROOT}"/**/Frameworks/$name.framework/$name; do
+          [ -f "$dest" ] || continue
+          cp -f "$SRC" "$dest"
+          echo "MIRA MLKit shim: ${PLATFORM_NAME} $name -> $dest"
+        done
+      done
+    SCRIPT
+    target.build_phases.move(phase, 0)
+  end
+  installer.pods_project.save
 end
