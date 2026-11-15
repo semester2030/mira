@@ -145,6 +145,21 @@ class DiscoverPresentationScreenState extends State<DiscoverPresentationScreen>
     return const {};
   }
 
+  /// Cover should stay up until the player reports visible progress (no bare black plate).
+  @visibleForTesting
+  bool get debugCoverVisible {
+    final port = _video;
+    if (port is! AssetVideoPort) return true;
+    if (port.playback == PresentationPlayback.failed) return true;
+    return !port.hasVisibleProgress;
+  }
+
+  @visibleForTesting
+  bool get debugHasVisibleProgress {
+    final port = _video;
+    return port is AssetVideoPort && port.hasVisibleProgress;
+  }
+
   late List<PresentationSlide> _slides;
   late final PresentationVideoPort _video;
   late final bool _ownsVideo;

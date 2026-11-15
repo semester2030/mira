@@ -118,21 +118,31 @@ void main() {
           continue;
         }
 
-        final ev = await _waitFrameEvent(tester, state, since: beforeLen, timeoutMs: 12000);
+        final ev = await _waitFrameEvent(tester, state, since: beforeLen, timeoutMs: 14000);
         final phases = Map<String, int?>.from(state.debugLastAttachPhases);
+        final coverUp = state.debugCoverVisible;
         if (ev == null) {
           final row = {
+            'type': 'first_frame_timeout',
+            'positionMs': 14000,
             'attempt': attempts,
+            'i': countedTransitions,
             'pass': pass,
             'reason': 'no_event',
             'before': before,
             'after': after,
             'beforeUrl': beforeUrl,
             'phases': phases,
+            'coverVisible': coverUp,
+            'blackSuspected': coverUp != true,
           };
           timeouts.add(row);
+          raw.add(row);
+          phaseRows.add(row);
+          countedTransitions += 1;
           // ignore: avoid_print
-          print('LATENCY_NO_EVENT ${jsonEncode(row)}');
+          print('LATENCY_T$countedTransitions ${jsonEncode(row)}');
+          await _settle(tester, 400);
           continue;
         }
 
@@ -145,10 +155,12 @@ void main() {
           'after': after,
           'beforeUrl': beforeUrl,
           'phases': phases,
+          'coverVisible': coverUp,
+          'blackSuspected': coverUp != true && ev['type'] != 'first_frame',
         };
         raw.add(row);
         phaseRows.add(row);
-        final url = '${ev['mediaUrl'] ?? ''}';
+        final url = '${ev['mediaUrl'] ?? after['mediaUrl'] ?? ''}';
         if (url.isNotEmpty) mediaSeen.add(url);
 
         // Every page-changing attach counts — timeouts included in the 45 budget.
@@ -160,7 +172,7 @@ void main() {
         }
         // ignore: avoid_print
         print('LATENCY_T$countedTransitions ${jsonEncode(row)}');
-        await _settle(tester, 1800);
+        await _settle(tester, 1200);
       }
     }
 
@@ -180,17 +192,17 @@ void main() {
     }
 
     final out = <String, Object?>{
-      'kind': 'discover_ui_live_swipe_latency_v8_post_play',
+      'kind': 'discover_ui_live_swipe_latency_v10_no_seek_prime',
       'atUtc': DateTime.now().toUtc().toIso8601String(),
-      'gitHint': 'cover-over-opaque-player+stall-kick',
+      'gitHint': 'warm-prime-without-seek0+count-timeouts',
       'baselineGit': '2b8f702',
       'baselineFile': 'SWIPE_LATENCY_MiraRC2_POST_WARM_v7.json',
       'platform': 'ios_simulator_MiraRC2',
       'platformNoteAr':
-          'إصلاح: مشغّل غير شفاف تحت الغلاف + ركلة seek/play عند توقف الموضع بعد play. الميزانية 45 انتقالًا تشمل المهلات.',
+          'إصلاح: تهيئة صامتة دون seek(0) الذي كان يفرّغ المخزن على iOS؛ المهلات تُحسب ضمن 45.',
       'coldOpen': cold,
       'postPlayRootCauseAr':
-          'v7: play خلال 9–23ms ثم موضع عالق → مهلة 8ث. Opacity(0) كان يمنع فك الترميز على iOS؛ الغلاف أصبح فوق المشغّل.',
+          'v9: بعد mute-prime كان seekTo(0) يصفّر المخزن → isBuffering+pos0؛ وno_event لم تُحسب في الميزانية.',
       'transitions': {
         'requested': targetTransitions,
         'counted': countedTransitions,
@@ -202,6 +214,8 @@ void main() {
         'medianMs': median(transitionSamples),
         'p95Ms': p95(transitionSamples),
         'timeouts': timeouts.length,
+        'blackSuspected': phaseRows.where((r) => r['blackSuspected'] == true).length,
+        'coverHeldOnTimeout': timeouts.where((r) => r['coverVisible'] == true).length,
         'timeoutRows': timeouts,
         'endOfFeedRows': endOfFeed,
         'stalledRows': stalled,
@@ -250,6 +264,7 @@ void main() {
       'parkedHits': phaseRows.where((r) => (r['phases'] as Map?)?['source'] == 2).length,
       'coldHits': phaseRows.where((r) => (r['phases'] as Map?)?['source'] == 0).length,
       'timeouts': timeouts.length,
+      'blackSuspected': phaseRows.where((r) => r['blackSuspected'] == true).length,
       'endOfFeed': endOfFeed.length,
       'distinctMedia': mediaSeen.length,
       'attempts': attempts,
