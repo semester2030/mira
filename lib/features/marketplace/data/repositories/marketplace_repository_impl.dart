@@ -16,6 +16,7 @@ import '../marketplace_matching.dart';
 import '../../../../core/config/mira_api_config.dart';
 import '../../../../core/config/mira_features.dart';
 import '../discover_visual_preview_catalog.dart';
+import '../../presentation/presentation/discover_view_count.dart';
 
 class MarketplaceRepositoryImpl implements MarketplaceRepository, DiscoverCatalogGateway {
   final MarketplaceApiDataSource? _api;
@@ -278,6 +279,32 @@ class MarketplaceRepositoryImpl implements MarketplaceRepository, DiscoverCatalo
   Future<bool> confirmAdLink({required String adId, required String url}) async {
     if (_api == null) return false;
     return _api.confirmAdLink(adId: adId, url: url);
+  }
+
+  Future<DiscoverViewSnapshot> fetchViewCount({
+    required String targetKind,
+    required String targetId,
+    required int generation,
+  }) async {
+    if (_api == null) {
+      return DiscoverViewSnapshot.disabled(targetKind: targetKind, targetId: targetId);
+    }
+    return _api.fetchViewCount(targetKind: targetKind, targetId: targetId, generation: generation);
+  }
+
+  Future<DiscoverViewSnapshot?> recordQualifiedView({
+    required String targetKind,
+    required String targetId,
+    required String eventId,
+    required int generation,
+  }) async {
+    if (_api == null) return null;
+    return _api.recordQualifiedView(
+      targetKind: targetKind,
+      targetId: targetId,
+      eventId: eventId,
+      generation: generation,
+    );
   }
 
   DiscoverBrowseResponse _localBrowse(

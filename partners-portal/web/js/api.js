@@ -213,6 +213,9 @@
       request('PATCH', `/partners-portal/products/${id}`, payload),
     deleteProduct: (id) =>
       request('DELETE', `/partners-portal/products/${id}`),
+    /** Drop unpublished edits on a published product; keeps the live copy. */
+    discardPendingProductEdits: (id) =>
+      request('POST', `/partners-portal/products/${id}/discard-pending-edits`, {}),
     createService: (payload) =>
       request('POST', '/partners-portal/services', payload),
     updateService: (id, payload) =>

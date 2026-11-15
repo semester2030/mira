@@ -16,6 +16,7 @@ import '../discover_catalog_gateway.dart';
 import '../discover_published_ad.dart';
 import '../discover_favorite_client.dart';
 import '../discover_catalog_query.dart';
+import '../../presentation/presentation/discover_view_count.dart';
 
 class MarketplaceApiDataSource {
   final Dio _dio;
@@ -182,6 +183,11 @@ class MarketplaceApiDataSource {
       category: json['category'] as String?,
       placeMode: json['placeMode'] as String?,
       branchId: json['branchId'] as String?,
+      branchNameAr: json['branchNameAr'] as String?,
+      lat: (json['lat'] as num?)?.toDouble(),
+      lng: (json['lng'] as num?)?.toDouble(),
+      distanceKm: (json['distanceKm'] as num?)?.toDouble(),
+      distanceLabelAr: json['distanceLabelAr'] as String?,
       coverageCityIds: (json['coverageCityIds'] as List<dynamic>?)
               ?.map((e) => e.toString())
               .where((e) => e.isNotEmpty)
@@ -571,6 +577,77 @@ class MarketplaceApiDataSource {
       return true;
     } catch (_) {
       return false;
+    }
+  }
+
+  Future<DiscoverViewSnapshot> fetchViewCount({
+    required String targetKind,
+    required String targetId,
+    required int generation,
+  }) async {
+    try {
+      final res = await _dio.get<Map<String, dynamic>>(
+        MiraApiEndpoints.marketplaceViewCount(targetKind, targetId),
+      );
+      final data = res.data ?? const <String, dynamic>{};
+      final stateRaw = data['state'] as String? ?? 'disabled';
+      final count = (data['count'] as num?)?.toInt();
+      final state = switch (stateRaw) {
+        'available' => DiscoverViewState.available,
+        'unavailable' => DiscoverViewState.unavailable,
+        'loading' => DiscoverViewState.loading,
+        _ => DiscoverViewState.disabled,
+      };
+      return DiscoverViewSnapshot(
+        state: state,
+        targetKind: targetKind,
+        targetId: targetId,
+        count: count,
+        generation: generation,
+      );
+    } catch (_) {
+      return DiscoverViewSnapshot(
+        state: DiscoverViewState.unavailable,
+        targetKind: targetKind,
+        targetId: targetId,
+        generation: generation,
+      );
+    }
+  }
+
+  /// Records one qualified view. Prefetch must never call this.
+  Future<DiscoverViewSnapshot?> recordQualifiedView({
+    required String targetKind,
+    required String targetId,
+    required String eventId,
+    required int generation,
+  }) async {
+    try {
+      final res = await _dio.post<Map<String, dynamic>>(
+        MiraApiEndpoints.marketplaceViewEvents,
+        data: {
+          'targetKind': targetKind,
+          'targetId': targetId,
+          'eventId': eventId,
+          'eventType': 'qualified_view',
+          'policyVersion': 'approved_v1',
+        },
+      );
+      final views = res.data?['views'];
+      if (views is! Map) {
+        return fetchViewCount(targetKind: targetKind, targetId: targetId, generation: generation);
+      }
+      final map = Map<String, dynamic>.from(views);
+      final stateRaw = map['state'] as String? ?? 'available';
+      return DiscoverViewSnapshot(
+        state: stateRaw == 'available' ? DiscoverViewState.available : DiscoverViewState.disabled,
+        targetKind: targetKind,
+        targetId: targetId,
+        count: (map['count'] as num?)?.toInt(),
+        generation: generation,
+      );
+    } catch (_) {
+      return null;
     }
   }
 }

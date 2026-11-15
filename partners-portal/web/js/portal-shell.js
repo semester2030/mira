@@ -135,6 +135,26 @@
     if (useCatalogPanels) {
       setExclusive(listPanel, editorPanel, mode);
       document.body.classList.toggle('e2b-editor-focus', mode === 'edit');
+      // Products view must never leave #catalogSection blanked by a prior service-mode paint.
+      if (view === 'products') {
+        var catalogSection = document.getElementById('catalogSection');
+        if (catalogSection) {
+          catalogSection.classList.remove('e2c-inactive-editor', 'hidden');
+          catalogSection.hidden = false;
+          catalogSection.removeAttribute('aria-hidden');
+          catalogSection.setAttribute('data-portal-active', '1');
+        }
+        if (mode === 'list') {
+          document.body.classList.remove('e2b-service-mode');
+          if (window.MiraE2BProductShell && typeof MiraE2BProductShell.enableProductMode === 'function') {
+            try {
+              MiraE2BProductShell.enableProductMode();
+            } catch (_) {
+              /* optional */
+            }
+          }
+        }
+      }
     } else {
       if (listPanel && view !== 'products') {
         /* leave panels alone when another section is active */
@@ -194,6 +214,7 @@
       history.pushState({ portal: true, view: view, mode: mode }, '', nextHash);
     }
     applyVisibility(view, mode);
+    setMobileNavOpen(false);
     return true;
   }
 
@@ -265,6 +286,7 @@
     var head = document.createElement('div');
     head.className = 'portal-stage-head';
     head.innerHTML =
+      '<button type="button" class="portal-nav-toggle" id="portalNavToggle" data-testid="portal-nav-toggle" aria-label="فتح القائمة" aria-controls="portalShell" aria-expanded="false">☰</button>' +
       '<h1 id="portalViewTitle" class="portal-view-title">منتجاتي</h1>' +
       '<div class="portal-stage-actions" id="portalStageActions"></div>';
     stage.appendChild(head);
@@ -277,9 +299,53 @@
     while (app.firstChild) content.appendChild(app.firstChild);
     stage.appendChild(content);
 
+    var backdrop = document.createElement('div');
+    backdrop.id = 'portalNavBackdrop';
+    backdrop.className = 'portal-nav-backdrop';
+    backdrop.setAttribute('data-testid', 'portal-nav-backdrop');
+    backdrop.hidden = true;
+
     shell.appendChild(rail);
     shell.appendChild(stage);
     app.appendChild(shell);
+    app.appendChild(backdrop);
+    wireMobileNav(rail, backdrop);
+  }
+
+  function setMobileNavOpen(open) {
+    document.body.classList.toggle('portal-nav-open', !!open);
+    var toggle = document.getElementById('portalNavToggle');
+    var backdrop = document.getElementById('portalNavBackdrop');
+    if (toggle) {
+      toggle.setAttribute('aria-expanded', open ? 'true' : 'false');
+      toggle.setAttribute('aria-label', open ? 'إغلاق القائمة' : 'فتح القائمة');
+    }
+    if (backdrop) backdrop.hidden = !open;
+  }
+
+  function wireMobileNav(rail, backdrop) {
+    var toggle = document.getElementById('portalNavToggle');
+    if (toggle && toggle.dataset.wired !== '1') {
+      toggle.dataset.wired = '1';
+      toggle.addEventListener('click', function (e) {
+        e.preventDefault();
+        setMobileNavOpen(!document.body.classList.contains('portal-nav-open'));
+      });
+    }
+    if (backdrop && backdrop.dataset.wired !== '1') {
+      backdrop.dataset.wired = '1';
+      backdrop.addEventListener('click', function () {
+        setMobileNavOpen(false);
+      });
+    }
+    if (rail && rail.dataset.navCloseWired !== '1') {
+      rail.dataset.navCloseWired = '1';
+      rail.addEventListener('click', function (e) {
+        var a = e.target && e.target.closest ? e.target.closest('[data-portal-nav]') : null;
+        if (!a) return;
+        setMobileNavOpen(false);
+      });
+    }
   }
 
   function wrapServicePanels() {
@@ -324,6 +390,14 @@
       add.setAttribute('data-testid', 'portal-add-product');
       add.textContent = 'إضافة منتج';
       add.onclick = function () {
+        // Prefer a blank product form immediately, then lane chooser if present.
+        if (typeof window.renderForm === 'function') {
+          try {
+            window.renderForm('brand', null, 'catalogForm', 'catalogTitle');
+          } catch (_) {
+            /* optional */
+          }
+        }
         if (window.MiraLaneEntries && typeof MiraLaneEntries.startProductAdd === 'function') {
           Promise.resolve(MiraLaneEntries.startProductAdd()).catch(function (e) {
             console.warn('[portalAddProduct]', e);
@@ -358,9 +432,14 @@
       backBtn.setAttribute('data-testid', 'portal-back-to-list');
       backBtn.textContent = 'العودة للقائمة';
       backBtn.onclick = function () {
-        navigate(view, 'list');
+        // Returning to the list is not discarding an in-progress create — force list mode.
+        var ok = navigate(view, 'list', { force: true });
+        if (!ok) return;
         if (view === 'products' && window.MiraE2BProductShell && MiraE2BProductShell.showList) {
           MiraE2BProductShell.showList();
+        }
+        if (view === 'services' && window.MiraE2BServiceShell && typeof MiraE2BServiceShell.disableServiceMode === 'function') {
+          /* keep service mode for services list; product catalog stays gated by portal view */
         }
       };
       actions.appendChild(backBtn);

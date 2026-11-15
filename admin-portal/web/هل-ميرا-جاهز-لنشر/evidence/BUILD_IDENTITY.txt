@@ -1,0 +1,9 @@
+client_fix_commit=2b8f702e86f7d22c135fb539e30b6964b78d0e1a
+evidence_commit=379347b
+api_views_commit=2b5e792c5695472388ad69fe92f5cd929ea372b8
+website_share_commit=a703d145b13b01484229ba1fe8aa24c8690b8675
+latency_v7=SWIPE_LATENCY_MiraRC2_POST_WARM_v7.json
+platform_latency=ios_simulator_MiraRC2
+apk_path=/Users/fayez/Desktop/مراجع تطبيق ميرا /MIRA_DEBUG_20261115T005303Z_f3a7567.apk
+apk_note=Debug APK from f3a7567; warm-fix client is 2b8f702 — rebuild blocked by NDK reinstall / disk
+apk_sha256=a936cf6517afb009794cebdd8cbb1a24b5188e2f6f3a7d085a2f0f546f6f2843

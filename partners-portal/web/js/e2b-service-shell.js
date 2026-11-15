@@ -218,8 +218,14 @@
     const serviceSection = document.getElementById('serviceSection');
     if (serviceSection) serviceSection.hidden = false;
     const catalogSection = document.getElementById('catalogSection');
-    // Developer keeps both sections in DOM; hide product catalog while editing services.
-    if (catalogSection && document.body.dataset.partnerType === 'developer') {
+    // Developer keeps both sections in DOM; hide product catalog only while the
+    // portal is actually on services. Never blank «منتجاتي» during boot paint of serviceForm.
+    const portalView = String(document.body.getAttribute('data-portal-view') || '');
+    if (
+      catalogSection &&
+      document.body.dataset.partnerType === 'developer' &&
+      portalView === 'services'
+    ) {
       catalogSection.classList.add('e2c-inactive-editor');
       catalogSection.hidden = true;
       catalogSection.setAttribute('aria-hidden', 'true');

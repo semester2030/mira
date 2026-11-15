@@ -112,7 +112,8 @@ export class CatalogMediaController {
         'catalog-media-missing',
         `id=${id} key=${keyHint}… bytes=${row.byteSize ?? 'n/a'}`,
       );
-      throw new NotFoundException('الوسيط غير منشور');
+      // Row may still be published in Postgres while the blob is gone from object storage.
+      throw new NotFoundException('ملف الوسائط غير موجود في التخزين');
     }
 
     res.setHeader('Accept-Ranges', 'bytes');

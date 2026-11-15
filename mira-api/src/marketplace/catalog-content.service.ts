@@ -383,18 +383,34 @@ export class CatalogContentService {
         return { contentStatus: row.contentStatus, reviewStatus: 'in_review', id: row.id, alreadyApplied: true };
       }
       const revision = row.reviewRevision;
+      // Seller republish after withdraw: re-queue review while contentStatus stays withdrawn
+      // until approve sets published+active. Do not leave a withdrawn row stuck forever.
+      const submitData = {
+        reviewStatus: 'in_review',
+        submittedRevision: revision,
+        submittedAt: new Date(),
+        reviewNote: null as string | null,
+      };
       if (kind === 'product') {
         await tx.product.update({
           where: { id },
-          data: { reviewStatus: 'in_review', submittedRevision: revision, submittedAt: new Date(), reviewNote: null },
+          data: submitData,
         });
       } else {
         await tx.service.update({
           where: { id },
-          data: { reviewStatus: 'in_review', submittedRevision: revision, submittedAt: new Date(), reviewNote: null },
+          data: submitData,
         });
       }
-      await tx.catalogReviewLog.create({ data: { ownerKind: kind, ownerId: id, actor: `partner:${partnerId}`, action: 'submit', note: null } });
+      await tx.catalogReviewLog.create({
+        data: {
+          ownerKind: kind,
+          ownerId: id,
+          actor: `partner:${partnerId}`,
+          action: row.contentStatus === 'withdrawn' ? 'resubmit' : 'submit',
+          note: row.contentStatus === 'withdrawn' ? 'إعادة نشر بعد إيقاف العرض' : null,
+        },
+      });
       return { contentStatus: row.contentStatus, reviewStatus: 'in_review', revision, id: row.id };
     });
     // Developer-only: publish immediately after submit (items + bulk groups). Other partner types stay in review.
@@ -466,7 +482,14 @@ export class CatalogContentService {
       if (decision === 'reject' && row.reviewStatus === 'rejected') {
         return { contentStatus: row.contentStatus, reviewStatus: 'rejected', alreadyApplied: true, id };
       }
-      if (row.contentStatus === 'withdrawn') throw new ConflictException('العنصر سُحب قبل إتمام هذا القرار');
+      // Allow approve/reject of a fresh in_review queue even when the live row is still withdrawn
+      // (seller «إعادة النشر» / developer auto-approve). Block only stale decisions.
+      if (
+        row.contentStatus === 'withdrawn' &&
+        !(row.reviewStatus === 'in_review' && (decision === 'approve' || decision === 'reject'))
+      ) {
+        throw new ConflictException('العنصر سُحب قبل إتمام هذا القرار');
+      }
       if (row.reviewStatus !== 'in_review' || revision == null || revision !== row.submittedRevision || revision !== row.reviewRevision) {
         throw new ConflictException('المسودة تغيرت بعد النسخة التي عُوينت');
       }

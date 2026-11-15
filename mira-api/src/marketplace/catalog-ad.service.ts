@@ -10,6 +10,7 @@ import {
 import { CatalogAd, Prisma } from '@prisma/client';
 import { PrismaService } from '../prisma/prisma.service';
 import { publishedCatalogMediaWhere } from './catalog-published-media';
+import { filterPlayableCatalogMedia } from './catalog-media-playable';
 import {
   availableViewCount,
   disabledViewCount,
@@ -134,9 +135,9 @@ export class CatalogAdService {
   }
 
   async stats(advertiserPartnerId: string, id: string) {
-    await this.owned(advertiserPartnerId, id);
+    const ad = await this.owned(advertiserPartnerId, id);
     const linkOpens = await this.prisma.catalogAdAction.count({ where: { adId: id, action: 'link_open' } });
-    return { id, linkOpens, views: disabledViewCount() };
+    return { id, linkOpens, views: await this.viewCount(ad.targetKind, ad.targetId) };
   }
 
   async listReviews() {
@@ -272,7 +273,7 @@ export class CatalogAdService {
         appointmentOperational: false,
         appointmentConfirmed: false,
       },
-      views: disabledViewCount(),
+      views: await this.viewCount(ad.targetKind, ad.targetId),
     };
   }
 
@@ -414,10 +415,12 @@ export class CatalogAdService {
   }
 
   private async publishedMedia(kind: Kind, id: string) {
-    const rows = await this.prisma.catalogMedia.findMany({
-      where: publishedCatalogMediaWhere(kind, id),
-      orderBy: { sortOrder: 'asc' },
-    });
+    const rows = filterPlayableCatalogMedia(
+      await this.prisma.catalogMedia.findMany({
+        where: publishedCatalogMediaWhere(kind, id),
+        orderBy: { sortOrder: 'asc' },
+      }),
+    );
     return rows.map((row) => ({ id: row.id, kind: row.kind, url: `/api/v1/marketplace/media/${row.id}` }));
   }
 

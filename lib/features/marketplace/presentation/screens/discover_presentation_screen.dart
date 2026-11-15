@@ -22,6 +22,7 @@ import '../../data/discover_catalog_facets.dart';
 import '../../data/discover_catalog_query.dart';
 import '../../data/discover_taxonomy_filters.dart';
 import '../../data/discover_match_scope.dart';
+import '../../data/device_location.dart';
 import '../../data/elegance_taxonomy_source.dart';
 import '../../data/saudi_cities.dart';
 import '../../domain/catalog_offer_media.dart';
@@ -121,6 +122,43 @@ class DiscoverPresentationScreenState extends State<DiscoverPresentationScreen>
 
   @visibleForTesting
   String? get debugEleganceDrillParentId => _eleganceDrillParentId;
+
+  @visibleForTesting
+  int get debugPageIndex => _page;
+
+  @visibleForTesting
+  int get debugSlideCount => _slides.length;
+
+  @visibleForTesting
+  String? get debugNextCursor => _nextCursor;
+
+  @visibleForTesting
+  String? get debugLoadMoreError => _loadMoreError;
+
+  @visibleForTesting
+  bool get debugLoadingMore => _feed?.state.loadingMore ?? false;
+
+  @visibleForTesting
+  Map<String, int?> get debugLastAttachPhases {
+    final port = _video;
+    if (port is AssetVideoPort) return Map<String, int?>.from(port.lastAttachPhases);
+    return const {};
+  }
+
+  /// Cover should stay up until the player reports visible progress (no bare black plate).
+  @visibleForTesting
+  bool get debugCoverVisible {
+    final port = _video;
+    if (port is! AssetVideoPort) return true;
+    if (port.playback == PresentationPlayback.failed) return true;
+    return !port.hasVisibleProgress;
+  }
+
+  @visibleForTesting
+  bool get debugHasVisibleProgress {
+    final port = _video;
+    return port is AssetVideoPort && port.hasVisibleProgress;
+  }
 
   late List<PresentationSlide> _slides;
   late final PresentationVideoPort _video;
@@ -273,8 +311,96 @@ class DiscoverPresentationScreenState extends State<DiscoverPresentationScreen>
     });
   }
 
+  final DiscoverViewLatch _viewLatch = DiscoverViewLatch();
+  /// Server-confirmed qualified views for this session.
+  final Set<String> _confirmedViewKeys = <String>{};
+  /// In-flight sends — not counted as confirmed until the server answers.
+  final Set<String> _pendingViewKeys = <String>{};
+  /// Stable eventId per target for retries; unique across devices/sessions.
+  final Map<String, String> _viewEventIds = <String, String>{};
+  DiscoverViewSnapshot _activeViewCount = const DiscoverViewSnapshot.disabled(targetKind: '', targetId: '');
+
+  void _bindActiveViewTarget() {
+    if (!_catalogDriven || _page < 0 || _page >= _slides.length) return;
+    final slide = _slides[_page];
+    final kind = slide.product != null ? 'product' : 'service';
+    final id = slide.advertisement?.targetId.isNotEmpty == true ? slide.advertisement!.targetId : slide.entityId;
+    if (id.isEmpty) return;
+    _viewLatch.bind(kind, id, countingEnabled: true);
+    _activeViewCount = _viewLatch.current;
+    final gen = _viewLatch.generation;
+    unawaited(() async {
+      final snap = await _catalog.fetchViewCount(targetKind: kind, targetId: id, generation: gen);
+      if (!mounted || _released) return;
+      if (_viewLatch.apply(snap)) setState(() => _activeViewCount = _viewLatch.current);
+    }());
+  }
+
+  String _newQualifiedViewEventId(String key) {
+    final stamp = DateTime.now().toUtc().microsecondsSinceEpoch;
+    final entropy = Object.hash(key, stamp, identityHashCode(this), _page);
+    return 'qv-$key-$stamp-${entropy.toRadixString(16)}';
+  }
+
+  void _maybeRecordQualifiedView() {
+    if (!_catalogDriven || _page < 0 || _page >= _slides.length) return;
+    // Warm/ready/timeout alone must not count — require visible progressing playback.
+    final port = _video;
+    // Only AssetVideoPort exposes visible-progress evidence; other ports never auto-count.
+    final progressed = port is AssetVideoPort && port.hasVisibleProgress;
+    if (!progressed) return;
+    if (_video.playback != PresentationPlayback.ready) return;
+    final slide = _slides[_page];
+    final kind = slide.product != null ? 'product' : 'service';
+    final id = slide.advertisement?.targetId.isNotEmpty == true ? slide.advertisement!.targetId : slide.entityId;
+    if (id.isEmpty) return;
+    final key = '$kind:$id';
+    if (_confirmedViewKeys.contains(key) || _pendingViewKeys.contains(key)) return;
+    // One eventId per qualified attempt — network retry keeps the same id.
+    final eventId = _viewEventIds.putIfAbsent(key, () => _newQualifiedViewEventId(key));
+    _pendingViewKeys.add(key);
+    final gen = _viewLatch.generation;
+    unawaited(() async {
+      const maxAttempts = 3;
+      for (var attempt = 1; attempt <= maxAttempts; attempt++) {
+        try {
+          final snap = await _catalog.recordQualifiedView(
+            targetKind: kind,
+            targetId: id,
+            eventId: eventId,
+            generation: gen,
+          );
+          if (!mounted || _released) return;
+          _pendingViewKeys.remove(key);
+          if (snap == null) {
+            // Soft miss — allow a later retry in-session.
+            return;
+          }
+          _confirmedViewKeys.add(key);
+          if (_viewLatch.apply(snap)) setState(() => _activeViewCount = _viewLatch.current);
+          return;
+        } catch (_) {
+          if (attempt == maxAttempts) {
+            _pendingViewKeys.remove(key);
+            return;
+          }
+          await Future<void>.delayed(Duration(milliseconds: 200 * attempt));
+        }
+      }
+    }());
+  }
+
   void _onVideo() {
     if (!mounted || _released) return;
+    _maybeRecordQualifiedView();
+    // After attach claims the current warm slot, start warming the next clip.
+    final port = _video;
+    if (port is AssetVideoPort && _page >= 0 && _page < _slides.length) {
+      final current = _videoPath(_slides[_page]);
+      if (current != null && port.activePath == current) {
+        _warmAround(_page);
+      }
+    }
     setState(() {});
   }
 
@@ -399,6 +525,8 @@ class DiscoverPresentationScreenState extends State<DiscoverPresentationScreen>
         }
         if (_page >= _slides.length) _page = 0;
       });
+      _bindActiveViewTarget();
+      _warmAround(_page);
       // E3: strip incompatible facet selections reported by the server (same contract as portal).
       final stale = next.facets.staleSelections;
       if (stale.isNotEmpty) {
@@ -440,6 +568,7 @@ class DiscoverPresentationScreenState extends State<DiscoverPresentationScreen>
         _vertical.jumpToPage(_page);
       }
       _warmAround(_page);
+      _maybeLoadMore(_page);
     }
 
     final phase = WidgetsBinding.instance.schedulerPhase;
@@ -452,8 +581,19 @@ class DiscoverPresentationScreenState extends State<DiscoverPresentationScreen>
 
   void _onPage(int index) {
     setState(() => _page = index);
-    _warmAround(index);
-    if (_catalogDriven && _nextCursor != null && index >= _slides.length - 1) {
+    _bindActiveViewTarget();
+    // Do not warm(next) yet — that would dispose the warm slot holding *this*
+    // page's controller before the PageView child calls attach(). Warm next
+    // from _onVideo once activePath matches this page (claim completed).
+    _warmAround(index, deferIfCurrentWarm: true);
+    _maybeLoadMore(index);
+  }
+
+  void _maybeLoadMore(int index) {
+    if (!_catalogDriven || _nextCursor == null) return;
+    if (_feed?.state.loadingMore == true) return;
+    // Prefetch early: within last 4 slides, or whenever the loaded window is still short.
+    if (index >= _slides.length - 4 || _slides.length < 12) {
       _feed?.loadMore();
     }
   }
@@ -465,12 +605,42 @@ class DiscoverPresentationScreenState extends State<DiscoverPresentationScreen>
     return null;
   }
 
-  void _warmAround(int index) {
+  /// Start warming the next clip while the finger is still dragging (before settle).
+  bool _onVerticalScroll(ScrollNotification note) {
+    if (note.metrics.axis != Axis.vertical) return false;
+    if (note is! ScrollUpdateNotification && note is! OverscrollNotification) return false;
+    final page = _vertical.hasClients ? (_vertical.page ?? _page.toDouble()) : _page.toDouble();
+    final target = page > _page ? _page + 1 : (page < _page ? _page - 1 : null);
+    if (target == null || target < 0 || target >= _slides.length) return false;
+    final path = _videoPath(_slides[target]);
+    final port = _video;
+    if (path != null && port is AssetVideoPort) {
+      port.warm(path);
+    }
+    return false;
+  }
+
+  void _warmAround(int index, {bool deferIfCurrentWarm = false}) {
     final port = _video;
     if (index < 0 || index >= _slides.length) return;
     if (port is AssetVideoPort) {
+      final current = _videoPath(_slides[index]);
+      // Protect the warm slot that still holds the current page's controller.
+      // attach() must claim it first; warming next would dispose it → cold path.
+      if (deferIfCurrentWarm &&
+          current != null &&
+          current.isNotEmpty &&
+          port.warmingPath == current) {
+        return;
+      }
+      // Prefer next once current is active (or was never warming).
       final next = index + 1 < _slides.length ? _videoPath(_slides[index + 1]) : null;
-      if (next != null) port.warm(next);
+      if (next != null) {
+        port.warm(next);
+      } else {
+        final prev = index - 1 >= 0 ? _videoPath(_slides[index - 1]) : null;
+        if (prev != null) port.warm(prev);
+      }
     }
     if (!mounted) return;
     final ahead = index + 1 < _slides.length ? _slides[index + 1] : null;
@@ -1260,13 +1430,28 @@ class DiscoverPresentationScreenState extends State<DiscoverPresentationScreen>
       _clearEleganceDrill();
       await _reload(_query.copyWith(clearType: true, clearCategory: true, clearSubcategory: true).withoutInapplicableFilters());
     } else if (type == 'nearby') {
-      // Device GPS is not wired via a location plugin in this build — fall back to explicit city center.
-      // Label must never claim the city midpoint is the customer's live location.
+      final loc = await requestDeviceLocationForDistance();
+      if (!mounted) return;
+      if (loc.isOk) {
+        _nearSourceLabelAr = 'يبعد عن موقعك الحالي';
+        await _reload(
+          _query
+              .copyWith(
+                nearLat: loc.lat,
+                nearLng: loc.lng,
+                sort: 'distance',
+                clearCity: true,
+              )
+              .withoutInapplicableFilters(),
+        );
+        return;
+      }
+      // Fall back to explicit city center — never claim the midpoint is live GPS.
       final picked = await _pickSaudiCity(
         context,
         title: 'نقطة بحث للأقرب',
         subtitle:
-            'تعذّر استخدام موقع الجهاز أو رُفض الإذن — اختاري مدينة كنقطة مركز صريحة. سيُعرض الترتيب كـ«الأقرب إلى مركز المدينة المحددة».',
+            '${loc.messageAr ?? 'تعذّر استخدام موقع الجهاز'} — اختاري مدينة كنقطة مركز صريحة. سيُعرض الترتيب كـ«الأقرب إلى مركز المدينة المحددة».',
       );
       if (!mounted || picked == null) return;
       _nearSourceLabelAr = 'الأقرب إلى مركز المدينة المحددة (${picked.nameAr})';
@@ -1682,7 +1867,15 @@ class DiscoverPresentationScreenState extends State<DiscoverPresentationScreen>
       _tell(context, 'موقع المعاينة ليس موقعك ولا فرعًا حقيقيًا.');
       return;
     }
-    _tell(context, 'لا توجد إحداثيات للفرع، لذلك لا تُفتح الخريطة على مركز المدينة.');
+    final service = slide.service;
+    if (service == null || !service.hasBranchCoords) {
+      _tell(context, 'لا توجد إحداثيات للفرع، لذلك لا تُفتح الخريطة.');
+      return;
+    }
+    final lat = service.lat!;
+    final lng = service.lng!;
+    final url = 'https://www.google.com/maps/dir/?api=1&destination=${Uri.encodeComponent('$lat,$lng')}';
+    await MiraUrlLauncher.openExternal(context, url);
   }
 
   /// Appointment only: never a purchase. Phone contact lives on the detail page.
@@ -1795,7 +1988,9 @@ class DiscoverPresentationScreenState extends State<DiscoverPresentationScreen>
                     ),
                   )
                 else
-                PageView.builder(
+                NotificationListener<ScrollNotification>(
+              onNotification: _onVerticalScroll,
+              child: PageView.builder(
               controller: _vertical,
               scrollDirection: Axis.vertical,
               itemCount: _slides.length,
@@ -1835,6 +2030,7 @@ class DiscoverPresentationScreenState extends State<DiscoverPresentationScreen>
                           searchFieldKey: index == _page ? _searchFieldKey : null,
                           searchFocus: index == _page ? _searchFocus : null,
                           onShare: () => _share(context, _slides[index]),
+                          viewCount: index == _page ? _activeViewCount : null,
                           provenance: null,
                           categoryLabels: widget.lane == null
                               ? null
@@ -1861,6 +2057,7 @@ class DiscoverPresentationScreenState extends State<DiscoverPresentationScreen>
                 );
               },
             ),
+                ),
                 // E3: keep taxonomy rail visible even while the visual feed is empty
                 // so definitionsVersion / label bumps remain on-screen and tappable.
                 if (_catalogDriven)
@@ -2005,6 +2202,7 @@ class _CatalogHooks {
     this.showPurchaseLink = true,
     this.showAppointmentRequest = true,
     this.includeSearch = true,
+    this.viewCount,
   });
 
   final TextEditingController search;
@@ -2028,6 +2226,7 @@ class _CatalogHooks {
   final bool showPurchaseLink;
   final bool showAppointmentRequest;
   final bool includeSearch;
+  final DiscoverViewSnapshot? viewCount;
 }
 
 class _CatalogTopChrome extends StatelessWidget {
@@ -2265,7 +2464,7 @@ class _PresentationPageState extends State<_PresentationPage> {
                 media: slide.media[index],
                 slot: PresentationSlot(slide.slotId, index),
                 video: widget.video,
-                coverPath: slide.mainOfferKind == CatalogMainOfferKind.video ? slide.videoCoverPath : null,
+                coverPath: coverPathForSlideMedia(slide, index),
               );
             },
           ),
@@ -2303,10 +2502,16 @@ class _PresentationPageState extends State<_PresentationPage> {
           categoryAssetFamily: widget.catalog?.categoryAssetFamily,
           searchHintText: widget.catalog?.searchHint,
           appointmentLabel: widget.catalog?.appointmentLabel ?? 'احجزي موعدًا',
-          viewCount: DiscoverViewSnapshot.disabled(
-            targetKind: slide.advertisement == null ? (slide.product != null ? 'product' : 'service') : 'ad',
-            targetId: slide.advertisement?.id ?? slide.entityId,
-          ),
+          viewCount: widget.active
+              ? (widget.catalog?.viewCount ??
+                  DiscoverViewSnapshot.disabled(
+                    targetKind: slide.product != null ? 'product' : 'service',
+                    targetId: slide.entityId,
+                  ))
+              : DiscoverViewSnapshot.disabled(
+                  targetKind: slide.product != null ? 'product' : 'service',
+                  targetId: slide.entityId,
+                ),
           advertisementLabel: slide.advertisement?.disclosureLine,
           showPurchaseLink: widget.catalog?.showPurchaseLink ??
               () {
@@ -2685,13 +2890,30 @@ class _MediaFrameState extends State<_MediaFrame> {
       final view = owns ? video.buildView() : null;
       final cover = widget.coverPath;
       final failed = owns && video.playback == PresentationPlayback.failed;
+      final showCover = !owns ||
+          failed ||
+          (video is AssetVideoPort && !video.hasVisibleProgress) ||
+          view == null;
+      // Opaque VideoPlayer underneath (so the decoder runs); cover on top until
+      // the first progressing frame — never a bare black plate.
       return ColoredBox(
-        color: const Color(0xFF111111),
+        color: const Color(0xFF2A2226),
         child: Stack(
           fit: StackFit.expand,
           children: [
-            if (cover != null && view == null) DiscoverSceneCover(path: cover),
             if (view != null) Positioned.fill(child: view),
+            if (showCover && cover != null)
+              DiscoverSceneCover(path: cover)
+            else if (showCover)
+              const DecoratedBox(
+                decoration: BoxDecoration(
+                  gradient: LinearGradient(
+                    begin: Alignment.topCenter,
+                    end: Alignment.bottomCenter,
+                    colors: [Color(0xFF3A3034), Color(0xFF1E181C)],
+                  ),
+                ),
+              ),
             if (failed)
               _Failure(
                 message: video.errorText ?? 'تعذر تشغيل الفيديو',
@@ -2729,12 +2951,34 @@ class _Failure extends StatelessWidget {
   }
 }
 
-/// Share text for one slide. Preview slides are not real records, so they carry no link.
+/// Poster shown under video until the first progressing frame (avoids black flash).
+String? coverPathForSlideMedia(PresentationSlide slide, int mediaIndex) {
+  final cover = (slide.videoCoverPath ?? '').trim();
+  if (cover.isNotEmpty) return cover;
+  for (final item in slide.media) {
+    if (item.kind == PresentationMediaKind.image && item.assetPath.isNotEmpty) {
+      return item.assetPath;
+    }
+  }
+  return null;
+}
+
+/// Share text for one slide. Uses a stable catalog deep link — never a temporary media URL.
 String discoverShareText(PresentationSlide slide) {
   final lines = <String>[slide.title, slide.partnerName];
-  if (!slide.preview && slide.advertisement == null && slide.entityId.isNotEmpty) {
-    final kind = slide.product != null ? 'product' : 'service';
-    lines.add('${MiraPublicUrls.siteBase}/discover/$kind/${Uri.encodeComponent(slide.entityId)}');
-  }
+  if (slide.preview || slide.entityId.isEmpty) return lines.join('\n');
+  final ad = slide.advertisement;
+  final kind = ad != null
+      ? (ad.targetKind == 'service' ? 'service' : 'product')
+      : (slide.product != null ? 'product' : 'service');
+  final id = ad?.targetId.isNotEmpty == true ? ad!.targetId : slide.entityId;
+  if (id.isEmpty) return lines.join('\n');
+  // Query form works on static hosting; path form remains parseable by the app/router.
+  final web = Uri.parse(MiraPublicUrls.siteBase).replace(
+    path: '/discover.html',
+    queryParameters: {'kind': kind, 'id': id},
+  );
+  lines.add(web.toString());
+  lines.add('${MiraPublicUrls.siteBase}/discover/$kind/${Uri.encodeComponent(id)}');
   return lines.join('\n');
 }

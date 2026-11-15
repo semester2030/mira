@@ -32,7 +32,9 @@ class DiscoverPlaybackEvent {
     required this.at,
   });
 
-  /// `started` | `progressed` | `stopped`
+  /// `started` | `first_frame` | `first_frame_timeout` | `progressed` | `stopped`
+  /// `first_frame`: swipe-settle → first visible progressing frame (ms).
+  /// `first_frame_timeout`: settle→deadline with no progress (stall — not success).
   final String type;
   final String offerId;
   final String mediaUrl;
@@ -90,9 +92,17 @@ typedef AssetVideoControllerFactory = VideoPlayerController Function(String asse
 
 class AssetVideoPort extends PresentationVideoPort {
   AssetVideoPort({AssetVideoControllerFactory? createController})
-      : _createController = createController ?? VideoPlayerController.asset;
+      : _createController = createController ?? AssetVideoPort._defaultOpen;
 
   final AssetVideoControllerFactory _createController;
+
+  static VideoPlayerController _defaultOpen(String assetPath) {
+    final uri = Uri.tryParse(assetPath);
+    if (uri != null && (uri.isScheme('http') || uri.isScheme('https'))) {
+      return VideoPlayerController.networkUrl(uri);
+    }
+    return VideoPlayerController.asset(assetPath);
+  }
 
   VideoPlayerController? _controller;
   String? _activePath;
@@ -106,10 +116,28 @@ class AssetVideoPort extends PresentationVideoPort {
   String? _lastOfferId;
   String? _lastMediaUrl;
   DateTime? _lastProgressAt;
+  DateTime? _settleStartedAt;
+  Duration _progressFloor = Duration.zero;
+  bool _firstFrameEmitted = false;
+  bool _firstFrameTimedOut = false;
+  bool _hasVisibleProgress = false;
   final List<DiscoverPlaybackEvent> playbackEvents = <DiscoverPlaybackEvent>[];
 
   /// Source URL bound to the controller (null when no video attached).
   String? get activeMediaUrl => _activePath;
+
+  /// True after the active clip advanced past the post-play floor while playing.
+  bool get hasVisibleProgress => _hasVisibleProgress;
+
+  /// True when settle→deadline elapsed with no progressing frame.
+  bool get firstFrameTimedOut => _firstFrameTimedOut;
+
+  /// Phase timings (ms from swipe settle) for the latest [attach].
+  /// Keys: warmClaimed | initStart | initDone | playStart | firstFrame | firstByteProxy
+  /// `firstByteProxy` = initDone (player reports initialized; no raw HTTP byte hook).
+  Map<String, int?> lastAttachPhases = <String, int?>{};
+
+  int _msSince(DateTime settle) => DateTime.now().toUtc().difference(settle).inMilliseconds;
 
   void _emitPlayback(String type, {int? positionMs, String? offerId, String? mediaUrl}) {
     final oid = offerId ?? activeSlot?.slideId ?? _lastOfferId ?? '';
@@ -163,13 +191,7 @@ class AssetVideoPort extends PresentationVideoPort {
 
   void _notify() => notifyPlayback();
 
-  VideoPlayerController _open(String assetPath) {
-    final uri = Uri.tryParse(assetPath);
-    if (uri != null && (uri.isScheme('http') || uri.isScheme('https'))) {
-      return VideoPlayerController.networkUrl(uri);
-    }
-    return _createController(assetPath);
-  }
+  VideoPlayerController _open(String assetPath) => _createController(assetPath);
 
   Future<void> _silence(VideoPlayerController controller) async {
     try {
@@ -178,7 +200,10 @@ class AssetVideoPort extends PresentationVideoPort {
     } catch (_) {}
   }
 
-  /// Keeps the clip just left so a swipe back does not initialize it again.
+  /// Parks the clip just left for a fast swipe-back. On memory-constrained
+  /// surfaces (iOS Simulator + 1080p) keeping active+warm+parked alive leaves
+  /// the next attach stuck isBuffering forever — dispose instead when a warm
+  /// slot is already held.
   Future<void> _parkLeaving(VideoPlayerController leaving, String? path) async {
     if (path == null || path.isEmpty || !leaving.value.isInitialized) {
       await _silence(leaving);
@@ -186,6 +211,11 @@ class AssetVideoPort extends PresentationVideoPort {
       return;
     }
     await _silence(leaving);
+    // Prefer freeing the decoder for the upcoming warm/active clip.
+    if (_warm != null) {
+      await leaving.dispose();
+      return;
+    }
     final old = _parked;
     _parked = leaving;
     _parkedPath = path;
@@ -197,6 +227,22 @@ class AssetVideoPort extends PresentationVideoPort {
   @override
   Future<void> attach(PresentationSlot slot, String assetPath) async {
     if (_released) return;
+    // Clock starts at swipe settle — before waiting on warm/park/previous dispose.
+    final settleStarted = DateTime.now().toUtc();
+    _settleStartedAt = settleStarted;
+    _progressFloor = Duration.zero;
+    _firstFrameEmitted = false;
+    _firstFrameTimedOut = false;
+    _hasVisibleProgress = false;
+    lastAttachPhases = <String, int?>{
+      'warmClaimed': null,
+      'initStart': null,
+      'initDone': null,
+      'firstByteProxy': null,
+      'playStart': null,
+      'firstFrame': null,
+      'source': null,
+    };
     final token = ++_generation;
     final previous = _controller;
     final previousPath = _activePath;
@@ -209,24 +255,51 @@ class AssetVideoPort extends PresentationVideoPort {
 
     VideoPlayerController? claimed;
     var claimedReady = false;
+    var claimSource = 'cold';
     if (_warmPath == assetPath && _warm != null) {
       claimed = _warm;
       final pending = _warmFuture;
       _warm = null;
       _warmPath = null;
       _warmFuture = null;
+      var warmOk = true;
       if (pending != null) {
         try {
           await pending;
-        } catch (_) {}
+        } catch (_) {
+          warmOk = false;
+        }
       }
-      claimedReady = claimed?.value.isInitialized ?? false;
+      // Reject a warm that never decoded a progressing frame — claiming it
+      // recreates the v10 stall (isPlaying+isBuffering, pos0, sizeW=1080).
+      if (!warmOk ||
+          claimed == null ||
+          !claimed.value.isInitialized ||
+          claimed.value.hasError ||
+          claimed.value.position <= Duration.zero) {
+        lastAttachPhases['warmRejected'] = _msSince(settleStarted);
+        if (claimed != null) {
+          try {
+            await claimed.dispose();
+          } catch (_) {}
+        }
+        claimed = null;
+        claimedReady = false;
+        claimSource = 'cold';
+      } else {
+        claimedReady = true;
+        claimSource = 'warm';
+        lastAttachPhases['warmClaimed'] = _msSince(settleStarted);
+      }
     } else if (_parkedPath == assetPath && _parked != null) {
       claimed = _parked;
       _parked = null;
       _parkedPath = null;
       claimedReady = claimed?.value.isInitialized ?? false;
+      claimSource = 'parked';
+      lastAttachPhases['warmClaimed'] = _msSince(settleStarted);
     }
+    lastAttachPhases['source'] = claimSource == 'cold' ? 0 : (claimSource == 'warm' ? 1 : 2);
     if (token != _generation || _released) {
       if (claimed != null && claimed != _controller && claimed != _warm && claimed != _parked) {
         await claimed.dispose();
@@ -241,11 +314,15 @@ class AssetVideoPort extends PresentationVideoPort {
     }
     if (token != _generation || _released) return;
 
+    // Keep an in-flight warm/parked controller — never dispose and re-open the same URL.
+    // Previous bug: swipe during warm disposed the half-ready player → cold 1.5–3s path.
     late final VideoPlayerController controller;
-    if (claimed != null && claimedReady) {
+    if (claimed != null) {
       controller = claimed;
+      if (!claimedReady) {
+        lastAttachPhases['initStart'] = lastAttachPhases['warmClaimed'] ?? _msSince(settleStarted);
+      }
     } else {
-      if (claimed != null) await claimed.dispose();
       controller = _open(assetPath);
     }
     _controller = controller;
@@ -253,7 +330,35 @@ class AssetVideoPort extends PresentationVideoPort {
     controller.addListener(() => _onController(controller, token));
     try {
       if (!controller.value.isInitialized) {
-        await controller.initialize().timeout(const Duration(seconds: 12));
+        lastAttachPhases['initStart'] ??= _msSince(settleStarted);
+        try {
+          await controller.initialize().timeout(const Duration(seconds: 6));
+        } on TimeoutException {
+          lastAttachPhases['initTimeoutMs'] = _msSince(settleStarted);
+          // Slow network/decode — emit a countable timeout instead of hanging the swipe budget.
+          _firstFrameTimedOut = true;
+          _emitPlayback(
+            'first_frame_timeout',
+            positionMs: _msSince(settleStarted),
+            offerId: slot.slideId,
+            mediaUrl: assetPath,
+          );
+          playback = PresentationPlayback.failed;
+          errorText = 'تعذر تشغيل الفيديو';
+          _notify();
+          return;
+        }
+        lastAttachPhases['initDone'] = _msSince(settleStarted);
+        lastAttachPhases['firstByteProxy'] = lastAttachPhases['initDone'];
+        // Still count as warm/parked source if we reused the preparing controller.
+        if (claimSource != 'cold') {
+          lastAttachPhases['source'] = claimSource == 'warm' ? 1 : 2;
+        }
+      } else {
+        // Already warm/parked — init was paid earlier; still stamp for comparison.
+        lastAttachPhases['initStart'] = lastAttachPhases['warmClaimed'] ?? 0;
+        lastAttachPhases['initDone'] = _msSince(settleStarted);
+        lastAttachPhases['firstByteProxy'] = lastAttachPhases['initDone'];
       }
       if (token != _generation || _released || _controller != controller) {
         await _dropIfStale(controller, token);
@@ -264,16 +369,25 @@ class AssetVideoPort extends PresentationVideoPort {
         await _dropIfStale(controller, token);
         return;
       }
+      // Show the decoded surface (cover → video), then start play and wait for real progress.
+      if (controller.value.hasError) {
+        playback = PresentationPlayback.failed;
+        errorText = 'تعذر تشغيل الفيديو';
+        _notify();
+        return;
+      }
+      playback = PresentationPlayback.ready;
+      errorText = null;
+      _notify();
       await controller.setVolume(_muted ? 0 : 1);
       if (!_canStart(controller, token)) {
         await _dropIfStale(controller, token);
         return;
       }
-      await controller.setVolume(_muted ? 0 : 1);
-      if (!_canStart(controller, token)) {
-        await _dropIfStale(controller, token);
-        return;
-      }
+      // Capture floor before play so parked/rewind clips must advance again after activate.
+      _progressFloor = controller.value.position;
+      lastAttachPhases['playStart'] = _msSince(settleStarted);
+      lastAttachPhases['posAtPlayMs'] = controller.value.position.inMilliseconds;
       await controller.play();
       if (token != _generation || _released || _controller != controller) {
         await _dropIfStale(controller, token);
@@ -285,14 +399,13 @@ class AssetVideoPort extends PresentationVideoPort {
         _notify();
         return;
       }
-      playback = PresentationPlayback.ready;
-      errorText = null;
       _emitPlayback(
         'started',
         positionMs: controller.value.position.inMilliseconds,
         offerId: slot.slideId,
         mediaUrl: assetPath,
       );
+      await _awaitFirstVisibleProgress(controller, token, settleStarted, slot, assetPath);
       _notify();
     } catch (error) {
       if (_controller == controller) _controller = null;
@@ -304,6 +417,136 @@ class AssetVideoPort extends PresentationVideoPort {
     }
   }
 
+  /// Ends latency when position advances past the post-play floor (not cover/ready alone).
+  Future<void> _awaitFirstVisibleProgress(
+    VideoPlayerController controller,
+    int token,
+    DateTime settleStarted,
+    PresentationSlot slot,
+    String assetPath,
+  ) async {
+    if (_firstFrameEmitted || _firstFrameTimedOut) return;
+    // Keep cover up until progress. Kick a stalled decoder once (~350ms after play) —
+    // warm/play can return before AVPlayer advances position on iOS.
+    final playStartedAt = DateTime.now().toUtc();
+    final deadline = playStartedAt.add(const Duration(seconds: 5));
+    var kicked = false;
+    var sampleN = 0;
+    while (DateTime.now().toUtc().isBefore(deadline)) {
+      if (token != _generation || _released || _controller != controller) return;
+      if (_markProgressIfVisible(controller, token, settleStarted, slot, assetPath)) return;
+      final v = controller.value;
+      if (sampleN < 3 || sampleN % 30 == 0) {
+        lastAttachPhases['posSampleMs'] = v.position.inMilliseconds;
+        lastAttachPhases['isPlaying'] = v.isPlaying ? 1 : 0;
+        lastAttachPhases['isBuffering'] = v.isBuffering ? 1 : 0;
+        lastAttachPhases['hasError'] = v.hasError ? 1 : 0;
+        lastAttachPhases['sizeW'] = v.size.width.round();
+      }
+      sampleN += 1;
+      final sincePlay = DateTime.now().toUtc().difference(playStartedAt);
+      if (!kicked && sincePlay.inMilliseconds >= 350 && v.position <= _progressFloor) {
+        kicked = true;
+        lastAttachPhases['stallKickMs'] = _msSince(settleStarted);
+        try {
+          // Nudge only — avoid seek-to-zero which flushes the warm buffer on iOS.
+          await controller.play();
+          if (token != _generation || _released || _controller != controller) return;
+          await Future<void>.delayed(const Duration(milliseconds: 280));
+          if (token != _generation || _released || _controller != controller) return;
+          if (_markProgressIfVisible(controller, token, settleStarted, slot, assetPath)) return;
+          if (controller.value.position <= _progressFloor && !controller.value.hasError) {
+            lastAttachPhases['stallReopenMs'] = _msSince(settleStarted);
+            final path = assetPath;
+            final fresh = _open(path);
+            if (identical(fresh, controller)) {
+              lastAttachPhases['stallReopenSkipped'] = 1;
+              await controller.play();
+            } else {
+              if (_controller == controller) {
+                _controller = null;
+                _activePath = null;
+              }
+              await controller.pause();
+              await controller.dispose();
+              if (token != _generation || _released) {
+                await fresh.dispose();
+                return;
+              }
+              _controller = fresh;
+              _activePath = path;
+              _progressFloor = Duration.zero;
+              fresh.addListener(() => _onController(fresh, token));
+              await fresh.initialize().timeout(const Duration(seconds: 5));
+              if (token != _generation || _released || _controller != fresh) {
+                await fresh.dispose();
+                return;
+              }
+              await fresh.setLooping(true);
+              await fresh.setVolume(_muted ? 0 : 1);
+              lastAttachPhases['initDone'] = _msSince(settleStarted);
+              lastAttachPhases['playStart'] = _msSince(settleStarted);
+              lastAttachPhases['reopened'] = 1;
+              await fresh.play();
+              _notify();
+              _emitPlayback('started', positionMs: 0, offerId: slot.slideId, mediaUrl: path);
+              // Short second chance only — do not nest another full deadline.
+              final reopenDeadline = DateTime.now().toUtc().add(const Duration(seconds: 3));
+              while (DateTime.now().toUtc().isBefore(reopenDeadline)) {
+                if (token != _generation || _released || _controller != fresh) return;
+                if (_markProgressIfVisible(fresh, token, settleStarted, slot, path)) return;
+                await Future<void>.delayed(const Duration(milliseconds: 16));
+              }
+              if (!_firstFrameEmitted && !_firstFrameTimedOut && token == _generation && _controller == fresh) {
+                final ms = _msSince(settleStarted);
+                _firstFrameTimedOut = true;
+                _emitPlayback('first_frame_timeout', positionMs: ms, offerId: slot.slideId, mediaUrl: path);
+              }
+              return;
+            }
+          }
+        } catch (_) {}
+      }
+      await Future<void>.delayed(const Duration(milliseconds: 16));
+    }
+    if (!_firstFrameEmitted && !_firstFrameTimedOut && token == _generation && _controller == controller) {
+      final ms = DateTime.now().toUtc().difference(settleStarted).inMilliseconds;
+      final v = controller.value;
+      lastAttachPhases['posAtTimeoutMs'] = v.position.inMilliseconds;
+      lastAttachPhases['isPlaying'] = v.isPlaying ? 1 : 0;
+      lastAttachPhases['isBuffering'] = v.isBuffering ? 1 : 0;
+      lastAttachPhases['hasError'] = v.hasError ? 1 : 0;
+      _firstFrameTimedOut = true;
+      _emitPlayback('first_frame_timeout', positionMs: ms, offerId: slot.slideId, mediaUrl: assetPath);
+    }
+  }
+
+  bool _markProgressIfVisible(
+    VideoPlayerController controller,
+    int token,
+    DateTime settleStarted,
+    PresentationSlot slot,
+    String assetPath,
+  ) {
+    if (token != _generation || _controller != controller || _released) return false;
+    if (!controller.value.isInitialized || controller.value.hasError) return false;
+    // Position advance is the proof of a decoded frame. Do not require isPlaying —
+    // iOS often reports !isPlaying while buffering even after play() succeeded.
+    if (controller.value.position <= _progressFloor) return false;
+    _hasVisibleProgress = true;
+    _firstFrameTimedOut = false;
+    if (!_firstFrameEmitted) {
+      _firstFrameEmitted = true;
+      final ms = DateTime.now().toUtc().difference(settleStarted).inMilliseconds;
+      lastAttachPhases['firstFrame'] = ms;
+      lastAttachPhases['posAtFirstMs'] = controller.value.position.inMilliseconds;
+      lastAttachPhases['isPlaying'] = controller.value.isPlaying ? 1 : 0;
+      lastAttachPhases['isBuffering'] = controller.value.isBuffering ? 1 : 0;
+      _emitPlayback('first_frame', positionMs: ms, offerId: slot.slideId, mediaUrl: assetPath);
+    }
+    return true;
+  }
+
   void _onController(VideoPlayerController controller, int token) {
     if (token != _generation || _controller != controller || _released) return;
     if (controller.value.hasError && playback != PresentationPlayback.failed) {
@@ -313,12 +556,19 @@ class AssetVideoPort extends PresentationVideoPort {
       _notify();
       return;
     }
-    if (!controller.value.isPlaying || playback != PresentationPlayback.ready) return;
+    if (playback != PresentationPlayback.ready) return;
+    final settle = _settleStartedAt;
+    if (settle != null && activeSlot != null && _activePath != null) {
+      _markProgressIfVisible(controller, token, settle, activeSlot!, _activePath!);
+    }
+    if (controller.value.position <= _progressFloor) return;
+    _hasVisibleProgress = true;
     final now = DateTime.now().toUtc();
     final last = _lastProgressAt;
     if (last != null && now.difference(last) < const Duration(milliseconds: 400)) return;
     _lastProgressAt = now;
     _emitPlayback('progressed', positionMs: controller.value.position.inMilliseconds);
+    _notify();
   }
 
   @override
@@ -390,36 +640,87 @@ class AssetVideoPort extends PresentationVideoPort {
     if (token != _generation) return;
   }
 
+  /// Path currently being warmed (null when idle).
+  String? get warmingPath => _warmPath;
+
+  /// Path of the active (on-screen) controller, if any.
+  String? get activePath => _activePath;
+
+  /// True when a warm controller exists for [warmingPath] (ready or still initializing).
+  bool get hasWarmSlot => _warm != null && (_warmPath?.isNotEmpty ?? false);
+
   /// Initializes the next clip without playing it or playing its audio.
+  /// Safe to call repeatedly for the same URL — keeps the in-flight future.
   Future<void> warm(String assetPath) async {
-    if (_released || assetPath.isEmpty || _warmPath == assetPath || _activePath == assetPath || _parkedPath == assetPath) return;
+    if (_released || assetPath.isEmpty) return;
+    if (_activePath == assetPath || _parkedPath == assetPath) return;
+    if (_warmPath == assetPath && _warm != null) {
+      // Already warming / warm — join the same future so callers can await progress.
+      final pending = _warmFuture;
+      if (pending != null) {
+        try {
+          await pending;
+        } catch (_) {}
+      }
+      return;
+    }
     final previous = _warm;
+    final previousPath = _warmPath;
+    final previousFuture = _warmFuture;
     _warm = null;
     _warmPath = null;
     _warmFuture = null;
+    // Cancel previous warm without blocking the new one on its dispose.
     if (previous != null && previous != _controller && previous != _parked) {
-      await previous.dispose();
+      if (previousFuture != null) {
+        // ignore: unawaited_futures
+        previousFuture.catchError((_) {});
+      }
+      // ignore: unawaited_futures
+      previous.dispose();
+      if (previousPath != null && previousPath.isNotEmpty) {
+        _emitPlayback('warm_cancelled', mediaUrl: previousPath);
+      }
     }
     if (_released) return;
-    final uri = Uri.tryParse(assetPath);
-    if (uri == null || !(uri.isScheme('http') || uri.isScheme('https'))) return;
     final controller = _open(assetPath);
     _warm = controller;
     _warmPath = assetPath;
+    _emitPlayback('warm_started', mediaUrl: assetPath);
     final future = () async {
       await controller.initialize();
+      if (controller.value.hasError) {
+        throw StateError('warm init error');
+      }
       await controller.setVolume(0);
+      // Mute-play until position actually advances. A 450ms window was too short
+      // for 1080p on the simulator — those warms stayed at pos0 and poisoned attach.
+      // Do NOT seek back to 0 after priming (flushes the iOS buffer).
+      await controller.play();
+      final deadline = DateTime.now().toUtc().add(const Duration(milliseconds: 2500));
+      while (DateTime.now().toUtc().isBefore(deadline)) {
+        if (controller.value.hasError) throw StateError('warm play error');
+        if (controller.value.position > Duration.zero) break;
+        await Future<void>.delayed(const Duration(milliseconds: 40));
+      }
+      if (controller.value.position <= Duration.zero) {
+        throw StateError('warm never advanced');
+      }
       await controller.pause();
     }();
     _warmFuture = future;
     try {
       await future;
+      if (_warm == controller) {
+        _emitPlayback('warm_ready', mediaUrl: assetPath);
+      }
     } catch (_) {
       if (_warm == controller) {
         _warm = null;
         _warmPath = null;
         _warmFuture = null;
         await controller.dispose();
+        _emitPlayback('warm_failed', mediaUrl: assetPath);
       }
     }
   }
@@ -432,7 +733,12 @@ class AssetVideoPort extends PresentationVideoPort {
   @override
   Widget? buildView() {
     final controller = _controller;
-    if (controller == null || playback != PresentationPlayback.ready || !controller.value.isInitialized) {
+    // Always paint an opaque VideoPlayer once ready. Discover stacks the cover
+    // *above* this surface until hasVisibleProgress — opacity-0 starved the iOS
+    // decoder and caused play→8s timeout with position stuck at the floor.
+    if (controller == null ||
+        playback != PresentationPlayback.ready ||
+        !controller.value.isInitialized) {
       return null;
     }
     final size = controller.value.size;

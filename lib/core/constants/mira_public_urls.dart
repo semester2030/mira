@@ -2,10 +2,11 @@
 abstract final class MiraPublicUrls {
   MiraPublicUrls._();
 
-  /// Host docs on GitHub Pages, Render static site, or mira.app — update before release.
+  /// Public web base for share / privacy links.
+  /// mira.app currently 301s off-product; default to the hosted Mira static site.
   static const siteBase = String.fromEnvironment(
     'MIRA_PUBLIC_SITE_URL',
-    defaultValue: 'https://mira.app',
+    defaultValue: 'https://mira-website.onrender.com',
   );
 
   static const privacyPolicy = '$siteBase/docs/privacy-policy.html';

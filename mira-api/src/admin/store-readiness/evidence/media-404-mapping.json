@@ -1,0 +1,183 @@
+{
+  "atUtc": "2026-11-15T00:30:00Z",
+  "gitSha": "8d178f6+",
+  "api": "https://mira-api-n4p3.onrender.com/api/v1",
+  "scopeAr": "كل عناصر visual=1 (29) وليس فقط عينة الـ16 السابقة",
+  "catalogScope": {
+    "visual1": 29,
+    "fullCatalog": 41,
+    "explanationAr": "visual=1 يستبعد العناصر بلا وسيط منشور نشط قبل الترقيم. الـ41 هو الكتالوج الكامل بلا فلتر visual."
+  },
+  "playbackProbe": {
+    "checked": 29,
+    "ok": 18,
+    "fail": 11
+  },
+  "rootCauseAr": "صفوف catalog_media منشورة ونشطة، لكن storage_key بصيغة UUID عارية والكائن مفقود من R2/S3. مفاتيح upload/... تعمل. لا يمكن استعادة البايتات من قاعدة البيانات وحدها.",
+  "fixLocalAr": "إخفاء بالمعرّف المثبت فقط (لا قاعدة UUID). تعطيل admin بلا mediaIds يتوقف بلا تعديل.",
+  "restorableFromStorage": 0,
+  "keptMiraOriginals": true,
+  "fails": [
+    {
+      "nameAr": "فستان يومي",
+      "kind": "product",
+      "itemId": "206bf465-f770-4865-8f7f-f06595812a22",
+      "mediaId": "7fbf6a79-abe2-4fc5-8400-230059928d5b",
+      "storageKey": "8a8b9f42-fa08-45b9-9277-6a451f7d4e62",
+      "byteSize": 3618,
+      "cause": "bare_uuid_missing_blob",
+      "probeHttp": 404,
+      "probeClass": "missing_or_unpublished",
+      "restorable": false
+    },
+    {
+      "nameAr": "فستان سهرة",
+      "kind": "product",
+      "itemId": "481f2b68-5ef5-41b6-81d3-66f91b224b54",
+      "mediaId": "7df5abb5-b5f1-4132-abc9-5b76928f180b",
+      "storageKey": "eb281459-a726-4852-89c1-7e65e1781700",
+      "byteSize": 3618,
+      "cause": "bare_uuid_missing_blob",
+      "probeHttp": 404,
+      "probeClass": "missing_or_unpublished",
+      "restorable": false
+    },
+    {
+      "nameAr": "جاكيت خفيف",
+      "kind": "product",
+      "itemId": "6efb0a4d-a370-4db3-b1a1-cdd067c90776",
+      "mediaId": "fe6cc966-07fd-484a-a742-ac9176c90b06",
+      "storageKey": "7822e0d4-14fe-47d0-871e-11d35a6d3beb",
+      "byteSize": 3618,
+      "cause": "bare_uuid_missing_blob",
+      "probeHttp": 404,
+      "probeClass": "missing_or_unpublished",
+      "restorable": false
+    },
+    {
+      "nameAr": "عباية سوداء",
+      "kind": "product",
+      "itemId": "9cb5bee8-56b9-4ffb-bfcc-768dadda44f8",
+      "mediaId": "97e4706e-77a3-48f3-aa20-1c4be244ba01",
+      "storageKey": "8adedfa2-0ac8-4142-8502-2dd31100e8a9",
+      "byteSize": 3618,
+      "cause": "bare_uuid_missing_blob",
+      "probeHttp": 404,
+      "probeClass": "missing_or_unpublished",
+      "restorable": false
+    },
+    {
+      "nameAr": "تنورة طويلة",
+      "kind": "product",
+      "itemId": "af5dc107-e392-4029-96a8-c9dbfbcd81a5",
+      "mediaId": "0daf602c-98b2-46d5-9148-182b9780b868",
+      "storageKey": "b1eb99d6-d097-4618-b68a-e5f2e635ad4d",
+      "byteSize": 3618,
+      "cause": "bare_uuid_missing_blob",
+      "probeHttp": 404,
+      "probeClass": "missing_or_unpublished",
+      "restorable": false
+    },
+    {
+      "nameAr": "فستان زواج",
+      "kind": "product",
+      "itemId": "e1f0f225-07e1-43ef-8b52-bb37ca2827fe",
+      "mediaId": "0eb8d0e0-3991-4a2a-a435-81642baa7b79",
+      "storageKey": "705c0282-c12a-4657-bbc9-c63b07ab8e74",
+      "byteSize": 3618,
+      "cause": "bare_uuid_missing_blob",
+      "probeHttp": 404,
+      "probeClass": "missing_or_unpublished",
+      "restorable": false
+    },
+    {
+      "nameAr": "بلوزة حرير",
+      "kind": "product",
+      "itemId": "fb67e102-53c3-467f-a056-2f2dce58f4e7",
+      "mediaId": "a9a871ca-df82-482e-b4b8-3ab7eab7e412",
+      "storageKey": "2fa744cc-9d0a-406d-9439-b7b41c4f7642",
+      "byteSize": 3618,
+      "cause": "bare_uuid_missing_blob",
+      "probeHttp": 404,
+      "probeClass": "missing_or_unpublished",
+      "restorable": false
+    },
+    {
+      "nameAr": "صالون ميرا",
+      "kind": "service",
+      "itemId": "756a4bf9-e8c9-41d9-930b-524c6bef799b",
+      "mediaId": "ff222451-9e16-4a84-8f1f-974adf34f7ee",
+      "storageKey": "496fa98d-3a04-41b7-abd4-0a443da06f55",
+      "byteSize": 3236700,
+      "cause": "bare_uuid_missing_blob",
+      "probeHttp": 404,
+      "probeClass": "missing_or_unpublished",
+      "restorable": false
+    },
+    {
+      "nameAr": "العناية بالبشرة",
+      "kind": "service",
+      "itemId": "ca2d4f94-0bf5-4f8b-89f0-4936cc02f941",
+      "mediaId": "38f83110-07ae-450e-9299-04ed12bf61f1",
+      "storageKey": "4a26a640-5bee-488a-9fe4-9582bf4fca0f",
+      "byteSize": 2154752,
+      "cause": "bare_uuid_missing_blob",
+      "probeHttp": 404,
+      "probeClass": "missing_or_unpublished",
+      "restorable": false
+    },
+    {
+      "nameAr": "خدمة فرع مجدولة",
+      "kind": "service",
+      "itemId": "d8e122ae-0603-4631-98e5-37696d47025f",
+      "mediaId": "ea3ba1cd-0618-41f3-90aa-5f85b1ad265b",
+      "storageKey": "38d73c98-e0eb-4c5a-aa12-d75d5a1da48e",
+      "byteSize": 3618,
+      "cause": "bare_uuid_missing_blob",
+      "probeHttp": 404,
+      "probeClass": "missing_or_unpublished",
+      "restorable": false
+    },
+    {
+      "nameAr": "خدمة منزلية جدة",
+      "kind": "service",
+      "itemId": "fa54d557-d52e-404a-a5ba-f75dd52799ee",
+      "mediaId": "1a2614ae-63f8-448a-b1a6-92d8cc2600fe",
+      "storageKey": "dd9c0f58-23d3-4e1e-aacf-0c0c46b3b87d",
+      "byteSize": 3618,
+      "cause": "bare_uuid_missing_blob",
+      "probeHttp": 404,
+      "probeClass": "missing_or_unpublished",
+      "restorable": false
+    }
+  ],
+  "sampleFiveFromPriorPackage": [
+    "صالون ميرا",
+    "فستان يومي",
+    "فستان سهرة",
+    "جاكيت خفيف",
+    "عباية سوداء"
+  ],
+  "gitShaPrecise": "local-dirty-over-8d178f6",
+  "storageProbe": {
+    "method": "GET Range bytes=0-64 via /marketplace/media/:id",
+    "classes": {
+      "missing_or_unpublished": 11
+    },
+    "restored": 0,
+    "hiddenByIdDenylistLocal": 11,
+    "noteAr": "كل الـ11 أعادت 404 missing_or_unpublished. لا صلاحية/اتصال 503. لا نسخة أصل في R2 للاستعادة بهذه الجلسة. UUID صالح الشكل ما زال مسموحًا في الفلتر."
+  },
+  "counts": {
+    "restored": 0,
+    "hiddenLocalByProvenIds": 11,
+    "remainingBrokenLiveUntilDeploy": 11,
+    "testClipsDeleted": 0
+  },
+  "uuidKeyStillAllowed": true,
+  "uuidKeyWorkingExampleChecked": {
+    "mediaId": "255ad08f-2544-4376-8f0c-6b23d6b67b66",
+    "result": "also_404_but_not_auto_hidden",
+    "noteAr": "مفتاح UUID كبير الحجم فشل أيضًا؛ الفلتر لا يخفيه تلقائيًا حتى يُثبت في القائمة."
+  }
+}

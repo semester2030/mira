@@ -1,0 +1,12 @@
+{
+  "afterStop": "stopped",
+  "afterRepub": "published",
+  "lastDelete": "http://127.0.0.1:8765/api/v1/partners-portal/products/p-pub",
+  "lastSubmit": "http://127.0.0.1:8765/api/v1/partners-portal/products/p-stop/submit-review",
+  "lastDiscard": null,
+  "edit": {
+    "mode": "edit",
+    "name": "فستان زواج",
+    "owner": null
+  }
+}

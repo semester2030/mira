@@ -242,9 +242,8 @@
     }
     var bulk = document.getElementById('bulkSection');
     if (bulk) bulk.classList.add('hidden');
-    var catalogForm = document.getElementById('catalogForm');
-    var hasProductEditor = !!(catalogForm && catalogForm.querySelector('input[name="nameAr"]'));
-    if (!hasProductEditor && typeof window.renderForm === 'function') {
+    // «إضافة منتج» always opens a blank form — never reuse a previously opened item.
+    if (typeof window.renderForm === 'function') {
       window.renderForm('brand', null, 'catalogForm', 'catalogTitle');
     }
     clearInactiveTaxonomyBanners('catalogForm');
@@ -256,6 +255,9 @@
     }
     if (window.MiraE2BProductShell) {
       if (typeof MiraE2BProductShell.enableProductMode === 'function') MiraE2BProductShell.enableProductMode();
+      if (typeof MiraE2BProductShell.expandTaxonomyPicker === 'function') {
+        MiraE2BProductShell.expandTaxonomyPicker();
+      }
       if (typeof MiraE2BProductShell.focusEditor === 'function') MiraE2BProductShell.focusEditor();
     }
     paintLaneSwitcher();

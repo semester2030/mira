@@ -1,3 +1,4 @@
+# Share deep links → discover landing (keeps path for JS parsing when possible)
 /discover/product/*  /discover.html  200
 /discover/service/*  /discover.html  200
 /discover/*          /discover.html  200

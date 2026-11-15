@@ -1,0 +1,68 @@
+{
+  "productId": "14260bc3-7960-493f-86ad-2422d96bfa47",
+  "sequence": [
+    {
+      "step": "before",
+      "status": 200,
+      "response": {
+        "state": "available",
+        "count": 15,
+        "policyStatus": "approved_v1"
+      }
+    },
+    {
+      "step": "after_play",
+      "eventId": "ui-proof-v10-1794717441-a",
+      "post": {
+        "recorded": true,
+        "alreadyRecorded": false,
+        "views": {
+          "state": "available",
+          "count": 16,
+          "policyStatus": "approved_v1"
+        }
+      },
+      "count": {
+        "state": "available",
+        "count": 16,
+        "policyStatus": "approved_v1"
+      }
+    },
+    {
+      "step": "retry_same_event",
+      "eventId": "ui-proof-v10-1794717441-a",
+      "post": {
+        "recorded": false,
+        "alreadyRecorded": true,
+        "views": {
+          "state": "available",
+          "count": 16,
+          "policyStatus": "approved_v1"
+        }
+      },
+      "count": {
+        "state": "available",
+        "count": 16,
+        "policyStatus": "approved_v1"
+      }
+    },
+    {
+      "step": "second_device_event",
+      "eventId": "ui-proof-v10-1794717444-b",
+      "post": {
+        "recorded": true,
+        "alreadyRecorded": false,
+        "views": {
+          "state": "available",
+          "count": 17,
+          "policyStatus": "approved_v1"
+        }
+      },
+      "count": {
+        "state": "available",
+        "count": 17,
+        "policyStatus": "approved_v1"
+      }
+    }
+  ]
+}

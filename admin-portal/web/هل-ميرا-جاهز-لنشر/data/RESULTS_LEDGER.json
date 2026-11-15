@@ -1,0 +1,4 @@
+{
+  "error": "PROTECTED",
+  "messageAr": "سجل الجاهزية خلف صلاحيات الإدارة. استخدم مفتاح الإدارة عبر /api/v1/admin/store-readiness."
+}

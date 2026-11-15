@@ -41,6 +41,10 @@ import {
   scoreServiceMatch,
 } from './marketplace-matching.engine';
 import { publishedCatalogMediaWhere } from './catalog-published-media';
+import {
+  filterPlayableCatalogMedia,
+  isCatalogMediaAllowedInFeed,
+} from './catalog-media-playable';
 import { publicProductCommerce, publicServiceCommerce, sellableQty } from './commerce-public';
 import { seedMarketplaceIfEmpty } from './marketplace.seed';
 import { recordJourney } from './journey-events';
@@ -626,9 +630,11 @@ export class MarketplaceService implements OnModuleInit {
                   kind: { in: ['image', 'video'] },
                   OR: visualOwnerOr,
                 },
-                select: { ownerKind: true, ownerId: true },
+                select: { id: true, ownerKind: true, ownerId: true },
               })
-            ).map((row) => `${row.ownerKind}:${row.ownerId}`),
+            )
+              .filter((row) => isCatalogMediaAllowedInFeed(row.id))
+              .map((row) => `${row.ownerKind}:${row.ownerId}`),
           )
         : requireVisual
           ? new Set<string>()
@@ -672,14 +678,16 @@ export class MarketplaceService implements OnModuleInit {
     const serviceById = new Map(services.map((s) => [s.id, s]));
 
     const media = pagedItems.length
-      ? await this.prisma.catalogMedia.findMany({
-          where: {
-            active: true,
-            publication: 'published',
-            OR: pagedItems.map((m) => ({ ownerKind: m.item.kind, ownerId: m.item.id })),
-          },
-          orderBy: { sortOrder: 'asc' },
-        })
+      ? filterPlayableCatalogMedia(
+          await this.prisma.catalogMedia.findMany({
+            where: {
+              active: true,
+              publication: 'published',
+              OR: pagedItems.map((m) => ({ ownerKind: m.item.kind, ownerId: m.item.id })),
+            },
+            orderBy: { sortOrder: 'asc' },
+          }),
+        )
       : [];
     const cities = [
       ...new Set(
@@ -793,7 +801,7 @@ export class MarketplaceService implements OnModuleInit {
           partnerType: service.partner.type,
           providerKind: providerKindOf(service.partner),
           partnerNameAr: service.partner.nameAr,
-          city: service.partner.city,
+          city: (service.branch && service.branch.cityNameAr) || service.partner.city,
           contactPhone: publicContactPhone(service.partner),
           nameAr: service.nameAr,
           nameEn: service.nameEn,
@@ -815,17 +823,16 @@ export class MarketplaceService implements OnModuleInit {
           variantsJson: null as unknown,
           placeMode: item.placeMode,
           branchId: item.branchId,
+          branchNameAr: service.branch?.nameAr ?? null,
+          lat: item.lat ?? null,
+          lng: item.lng ?? null,
           coverageCityIds: item.coverageCityIds ?? null,
           travelFeeHalalas: item.travelFeeHalalas ?? null,
           distanceKm: item.distanceKm ?? null,
           distanceLabelAr:
             item.distanceKm != null
-              ? `تقريبًا ${item.distanceKm} كم`
-              : item.placeMode === 'remote'
-                ? 'عن بُعد — بلا ترتيب مسافة'
-                : item.placeMode === 'home' || item.placeMode === 'either'
-                  ? 'في موقعك — حسب التغطية'
-                  : null,
+              ? `يبعد عنك حوالي ${String(item.distanceKm).replace('.', '٫')} كم`
+              : null,
           videoScope:
             item.attributesJson &&
             (item.attributesJson.videoScope === 'provider_intro' ||
@@ -1062,10 +1069,12 @@ export class MarketplaceService implements OnModuleInit {
         include: { partner: true },
       });
       if (!product) throw new NotFoundException('العنصر غير متاح');
-      const media = await this.prisma.catalogMedia.findMany({
-        where: publishedCatalogMediaWhere('product', product.id),
-        orderBy: { sortOrder: 'asc' },
-      });
+      const media = filterPlayableCatalogMedia(
+        await this.prisma.catalogMedia.findMany({
+          where: publishedCatalogMediaWhere('product', product.id),
+          orderBy: { sortOrder: 'asc' },
+        }),
+      );
       return {
         kind: 'product',
         id: product.id,
@@ -1092,10 +1101,12 @@ export class MarketplaceService implements OnModuleInit {
     });
     if (!service) throw new NotFoundException('العنصر غير متاح');
     await recordJourney({ name: 'service_viewed', kind: 'service', subjectId: service.id }, this.prisma);
-    const media = await this.prisma.catalogMedia.findMany({
-      where: publishedCatalogMediaWhere('service', service.id),
-      orderBy: { sortOrder: 'asc' },
-    });
+    const media = filterPlayableCatalogMedia(
+      await this.prisma.catalogMedia.findMany({
+        where: publishedCatalogMediaWhere('service', service.id),
+        orderBy: { sortOrder: 'asc' },
+      }),
+    );
     const attrsRaw = service.attributesJson;
     const attributes =
       attrsRaw && typeof attrsRaw === 'object' && !Array.isArray(attrsRaw)

@@ -500,4 +500,77 @@ export class AdminService {
       count: r._count.id,
     }));
   }
+
+  /**
+   * Soft-deactivate specific published media IDs after a proven probe failure.
+   * Empty / missing mediaIds → no scan and no writes (protects MIRA originals).
+   */
+  async deactivateOrphanBareUuidMedia(mediaIds?: string[]) {
+    const { PROVEN_BROKEN_CATALOG_MEDIA_IDS } = await import(
+      '../marketplace/catalog-media-playable'
+    );
+    const requested = Array.isArray(mediaIds)
+      ? [...new Set(mediaIds.filter((id) => typeof id === 'string' && id.trim()))]
+      : [];
+    if (!requested.length) {
+      return {
+        scanned: 0,
+        deactivated: 0,
+        mediaIds: [] as string[],
+        refusedIds: [] as string[],
+        samples: [] as Array<{
+          mediaId: string;
+          itemId: string;
+          ownerKind: string;
+          storageKey: string | null;
+          byteSize: number | null;
+        }>,
+        refused: 'mediaIds_required',
+        messageAr: 'يُرفض التعطيل الجماعي بلا قائمة معرّفات — أرسلي mediaIds المثبت تعطلها فقط.',
+      };
+    }
+    const allowed = requested.filter((id) => PROVEN_BROKEN_CATALOG_MEDIA_IDS.has(id));
+    const refusedIds = requested.filter((id) => !PROVEN_BROKEN_CATALOG_MEDIA_IDS.has(id));
+    if (!allowed.length) {
+      return {
+        scanned: 0,
+        deactivated: 0,
+        mediaIds: [] as string[],
+        refusedIds,
+        samples: [],
+        refused: 'not_proven_broken',
+        messageAr: 'يُرفض تعطيل معرّفات غير مثبت تعطلها — مقاطع ميرا السليمة تبقى فعّالة.',
+      };
+    }
+    const rows = await this.prisma.catalogMedia.findMany({
+      where: { id: { in: allowed }, active: true, publication: 'published' },
+      select: {
+        id: true,
+        ownerKind: true,
+        ownerId: true,
+        storageKey: true,
+        byteSize: true,
+      },
+    });
+    const foundIds = rows.map((row) => row.id);
+    if (foundIds.length) {
+      await this.prisma.catalogMedia.updateMany({
+        where: { id: { in: foundIds } },
+        data: { active: false },
+      });
+    }
+    return {
+      scanned: rows.length,
+      deactivated: foundIds.length,
+      mediaIds: foundIds,
+      refusedIds,
+      samples: rows.slice(0, 20).map((row) => ({
+        mediaId: row.id,
+        itemId: row.ownerId,
+        ownerKind: row.ownerKind,
+        storageKey: row.storageKey,
+        byteSize: row.byteSize,
+      })),
+    };
+  }
 }

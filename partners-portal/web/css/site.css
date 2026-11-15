@@ -26,11 +26,38 @@ html, body {
 
 .container { width: min(960px, 92%); margin: 0 auto; padding: 1rem 0 3rem; }
 
+/* Dashboard with portal shell: use the full browser width */
+body[data-portal-view] > header .container.wrap,
+body[data-portal-view] > main.container {
+  width: 100%;
+  max-width: none;
+  margin: 0;
+  padding-inline: 22px;
+  box-sizing: border-box;
+}
+body[data-portal-view] > main.container {
+  padding-block: 0 1.5rem;
+}
+
 header {
   border-bottom: 1px solid var(--border);
   background: rgba(255, 248, 252, 0.95);
-  padding: 0.75rem 0;
-  margin-bottom: 1.5rem;
+  padding: 0;
+  margin-bottom: 0.75rem;
+  min-height: 60px;
+  height: 64px;
+  display: flex;
+  align-items: center;
+}
+body[data-portal-view] > header {
+  margin-bottom: 0.5rem;
+}
+header .container.wrap {
+  width: 100%;
+  max-width: none;
+  margin: 0;
+  padding-inline: 22px;
+  box-sizing: border-box;
 }
 
 header .wrap {

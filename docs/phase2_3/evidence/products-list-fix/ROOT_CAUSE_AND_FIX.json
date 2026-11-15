@@ -1,0 +1,30 @@
+{
+  "rootCause": "Developer boot called renderForm(clinic) which enabled e2b-service-mode and hid #catalogSection while portal chrome stayed on منتجاتى — DOM had products at 0×0.",
+  "fixes": [
+    "renderForm skips enableServiceMode when painting idle serviceForm on products view",
+    "clearProductModeArtifacts only hides catalogSection when portal view is services",
+    "portal navigate to products re-shows catalogSection and re-enables product mode",
+    "dashboard re-asserts product mode after developer dual paint",
+    "renderCatalog: loading/empty/error/retry + open via portal editor",
+    "full-bleed layout: rail 220px, header 64px, shell width 100%",
+    "إضافة منتج opens blank form"
+  ],
+  "geometry1920": null,
+  "back": {
+    "mode": "list",
+    "items": 8
+  },
+  "add": {
+    "mode": "edit",
+    "nameVal": ""
+  },
+  "geometry1440": {
+    "shellWidth": 1396,
+    "railWidth": 220,
+    "railRightGap": 44,
+    "headerHeight": 64,
+    "listItems": 8,
+    "catalogDisplay": "block",
+    "body": "portal-mode-list e2b-product-mode"
+  }
+}
