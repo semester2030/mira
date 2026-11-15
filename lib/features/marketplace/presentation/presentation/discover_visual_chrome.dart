@@ -217,7 +217,7 @@ class DiscoverVisualChrome extends StatelessWidget {
                 mainAxisSize: MainAxisSize.min,
                 crossAxisAlignment: CrossAxisAlignment.stretch,
                 children: [
-                  _OfferCopy(slide: slide, family: family),
+                  _OfferCopy(slide: slide, family: family, onLocation: onLocation),
                   if (advertisementLabel != null) ...[
                     const SizedBox(height: 4),
                     Text(
@@ -321,10 +321,11 @@ class _InteractionColumn extends StatelessWidget {
 }
 
 class _OfferCopy extends StatelessWidget {
-  const _OfferCopy({required this.slide, required this.family});
+  const _OfferCopy({required this.slide, required this.family, this.onLocation});
 
   final PresentationSlide slide;
   final DiscoverVisualFamily family;
+  final VoidCallback? onLocation;
 
   @override
   Widget build(BuildContext context) {
@@ -352,13 +353,36 @@ class _OfferCopy extends StatelessWidget {
         ],
       );
     }
+    final service = slide.service;
+    final branchLabel = (service?.branchNameAr ?? '').trim();
+    final distance = (service?.distanceLabelAr ?? '').trim();
+    final placeLine = [
+      if (branchLabel.isNotEmpty) branchLabel,
+      if ((service?.city ?? '').trim().isNotEmpty) service!.city,
+    ].join(' · ');
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
         title,
         partner,
-        if (slide.service != null)
-          Text(slide.service!.city, style: AppTypography.bodySmall.copyWith(color: Colors.white70, shadows: shadow)),
+        if (placeLine.isNotEmpty)
+          Text(placeLine, style: AppTypography.bodySmall.copyWith(color: Colors.white70, shadows: shadow)),
+        if (distance.isNotEmpty && service != null && service.hasBranchCoords)
+          Padding(
+            padding: const EdgeInsets.only(top: 4),
+            child: GestureDetector(
+              onTap: onLocation,
+              child: Text(
+                distance,
+                style: AppTypography.labelSmall.copyWith(
+                  color: Colors.white,
+                  shadows: shadow,
+                  decoration: onLocation != null ? TextDecoration.underline : TextDecoration.none,
+                  decorationColor: Colors.white70,
+                ),
+              ),
+            ),
+          ),
         if (slide.priceLabel != null)
           Text(slide.priceLabel!, style: AppTypography.titleMedium.copyWith(color: Colors.white, shadows: shadow)),
       ],

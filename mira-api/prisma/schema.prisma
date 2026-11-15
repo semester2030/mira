@@ -597,6 +597,18 @@ model CatalogAdAction {
   @@map("catalog_ad_actions")
 }
 
+/// Qualified Discover views for products/services (and ads via target). Idempotent by eventId.
+model CatalogQualifiedView {
+  id         String   @id @default(uuid())
+  eventId    String   @unique @map("event_id")
+  targetKind String   @map("target_kind")
+  targetId   String   @map("target_id")
+  createdAt  DateTime @default(now()) @map("created_at")
+
+  @@index([targetKind, targetId])
+  @@map("catalog_qualified_views")
+}
+
 /// Account-scoped catalog favorite. Rows are readable only for their user.
 model CatalogFavorite {
   id        String   @id @default(uuid())

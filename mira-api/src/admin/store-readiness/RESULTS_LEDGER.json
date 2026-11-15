@@ -1,0 +1,1054 @@
+{
+  "siteNameAr": "هل ميرا جاهز لنشر",
+  "auditId": "SR-2026-03-15-8d178f6",
+  "auditedAtUtc": "2026-11-14T23:35:32Z",
+  "auditedAtLocal": "2026-03-15 (توقيت التنفيذ في الجلسة)",
+  "scope": "تقييم وتوثيق فقط — أي إرسال للمراجعة أو نشر عام بقرار مستقل من المالك",
+  "identity": {
+    "repo": "https://github.com/semester2030/mira.git",
+    "branch": "mira/elegance-e1-taxonomy-foundation",
+    "gitSha": "8d178f6e644b946ef4fee5a3d743842c4272f0d9",
+    "gitShort": "8d178f6",
+    "versionName": "1.0.0",
+    "versionCode": 2026110301,
+    "pubspec": "1.0.0+2026110301",
+    "applicationId": "app.mira.beauty",
+    "iosBundleId": "app.mira.beauty",
+    "releaseServices": {
+      "api": "https://mira-api-n4p3.onrender.com/api/v1",
+      "partnersPortal": "https://mira-partners-portal.onrender.com",
+      "adminPortal": "https://mira-admin-portal.onrender.com",
+      "publicSiteDefault": "https://mira.app"
+    },
+    "environments": {
+      "localWorktree": "/Users/fayez/Desktop/مراجع تطبيق ميرا /mira-wt/elegance-e1 @ 8d178f6",
+      "backendLive": "mira-api-n4p3.onrender.com — health 200 يوم التدقيق",
+      "testFlight": "غير متحقق من هذه الجلسة — يلزم لقطة App Store Connect",
+      "playConsole": "غير متحقق من هذه الجلسة — يلزم لقطة Play Console"
+    },
+    "productionDartDefinesIos": {
+      "MIRA_MARKETPLACE_ENABLED": "true",
+      "MIRA_DISCOVER_VISUAL_PREVIEW": "false",
+      "MIRA_OUTFIT_CAMERA_CAPTURE": "false",
+      "source": "ios/Flutter/production_dart_defines.json"
+    },
+    "androidReleaseSigningInRepo": "signingConfig = debug في android/app/build.gradle.kts — لا يوجد key.properties / upload keystore في المستودع"
+  },
+  "platforms": {
+    "ios": {
+      "readinessPct": 50.0,
+      "uploadVerdict": "غير محسوم",
+      "submitVerdict": "غير جاهز للإرسال",
+      "topBlocker": "رابط الخصوصية العام خاطئ + إفصاح AI + Privacy Manifest + لا Profile للأرشفة",
+      "lastVerifiedAt": "2026-03-15",
+      "coveragePct": 75.0,
+      "provenOk": 8,
+      "applicable": 16,
+      "failed": 4,
+      "unverified": 4
+    },
+    "android": {
+      "readinessPct": 50.0,
+      "uploadVerdict": "لا",
+      "submitVerdict": "غير جاهز للإرسال",
+      "topBlocker": "AAB مبني بنجاح لكنه موقّع Android Debug — مع موانع الخصوصية/AI ولوحة Play",
+      "lastVerifiedAt": "2026-03-15",
+      "coveragePct": 75.0,
+      "provenOk": 6,
+      "applicable": 12,
+      "failed": 3,
+      "unverified": 3
+    }
+  },
+  "checklists": {
+    "ios": [
+      {
+        "id": "IOS-ID-1",
+        "title": "هوية النسخة مثبتة (SHA/إصدار/Bundle)",
+        "mandatory": true,
+        "status": "ناجح بدليل",
+        "evidence": "BUILD_IDENTITY.txt · pubspec 1.0.0+2026110301 · app.mira.beauty · SHA 8d178f6",
+        "notes": "فرع mira/elegance-e1-taxonomy-foundation",
+        "source": null,
+        "clause": null,
+        "verifiedAt": "2026-03-15"
+      },
+      {
+        "id": "IOS-SIGN-1",
+        "title": "هوية توقيع Distribution متوفرة على الجهاز",
+        "mandatory": true,
+        "status": "ناجح بدليل",
+        "evidence": "security find-identity: Apple Distribution: TARIQ ALDALBAHI (A97F7227YM)",
+        "notes": "Team A97F7227YM",
+        "source": null,
+        "clause": null,
+        "verifiedAt": "2026-03-15"
+      },
+      {
+        "id": "IOS-PROV-1",
+        "title": "Provisioning Profile لتوزيع App Store",
+        "mandatory": true,
+        "status": "فشل مثبت",
+        "evidence": "عدد ملفات ~/Library/MobileDevice/Provisioning Profiles = 0",
+        "notes": "يمنع الأرشفة/التصدير الموثّق حتى يوفّر المالك الملف",
+        "source": null,
+        "clause": null,
+        "verifiedAt": "2026-03-15"
+      },
+      {
+        "id": "IOS-ARCHIVE-1",
+        "title": "أرشفة Release + تصدير IPA ناجح",
+        "mandatory": true,
+        "status": "غير متحقق",
+        "evidence": "PROD_FINAL1_IOS_RELEASE_BUILD.md: NOT STARTED · لم يُنفَّذ archive في هذه الجلسة",
+        "notes": "بسبب غياب الـ Profile لم يُثبت الرفع · محاولة Android أوضحت أيضاً عطل IconTreeShaker/const_finder على أداة Flutter المحلية",
+        "source": null,
+        "clause": null,
+        "verifiedAt": "2026-03-15"
+      },
+      {
+        "id": "IOS-PKG-1",
+        "title": "حزمة موقّعة صالحة للرفع مع SHA-256",
+        "mandatory": true,
+        "status": "غير متحقق",
+        "evidence": "لا يوجد IPA/أرشيف ناتج عن هذه الجلسة",
+        "notes": "حكم الرفع: غير محسوم إلى حين الأرشفة · محاولة Android أوضحت أيضاً عطل IconTreeShaker/const_finder على أداة Flutter المحلية",
+        "source": null,
+        "clause": null,
+        "verifiedAt": "2026-03-15"
+      },
+      {
+        "id": "IOS-SDK-1",
+        "title": "أدوات البناء Flutter/Xcode حديثة بما يكفي",
+        "mandatory": true,
+        "status": "ناجح بدليل",
+        "evidence": "Flutter 3.38.9 stable · Dart 3.10.8",
+        "notes": "يُستحسن مطابقة الحد الأدنى لـ App Store Connect عند الرفع",
+        "source": null,
+        "clause": null,
+        "verifiedAt": "2026-03-15"
+      },
+      {
+        "id": "IOS-PRIVACY-MANIFEST",
+        "title": "PrivacyInfo.xcprivacy موجود",
+        "mandatory": true,
+        "status": "ناجح بدليل",
+        "evidence": "ios/Runner/PrivacyInfo.xcprivacy",
+        "notes": "Accessed API: UserDefaults + FileTimestamp",
+        "source": null,
+        "clause": null,
+        "verifiedAt": "2026-03-15"
+      },
+      {
+        "id": "IOS-PRIVACY-TYPES",
+        "title": "NSPrivacyCollectedDataTypes يطابق السلوك الفعلي",
+        "mandatory": true,
+        "status": "فشل مثبت",
+        "evidence": "المصفوفة فارغة رغم جمع صور وتحليلات ومزودي AI خارجيين (سياسة الخصوصية تذكر Perfect Corp وFASHN.ai)",
+        "notes": "خطر رفض/تعارض مع App Privacy في ASC",
+        "source": null,
+        "clause": null,
+        "verifiedAt": "2026-03-15"
+      },
+      {
+        "id": "IOS-PERMS-1",
+        "title": "أوصاف الكاميرا والمكتبة بالعربية واضحة",
+        "mandatory": true,
+        "status": "ناجح بدليل",
+        "evidence": "Info.plist NSCameraUsageDescription + NSPhotoLibraryUsageDescription",
+        "notes": "مربوطة بتحليل البشرة/الإطلالة",
+        "source": null,
+        "clause": null,
+        "verifiedAt": "2026-03-15"
+      },
+      {
+        "id": "IOS-AI-DISCLOSE",
+        "title": "إفصاح وموافقة قبل مشاركة بيانات شخصية مع مزود ذكاء اصطناعي خارجي",
+        "mandatory": true,
+        "status": "فشل مثبت",
+        "evidence": "شاشة الموافقة تقول «لا نشاركها» بينما privacy_policy_content يذكر مزودين خارجيين",
+        "notes": "Apple 5.1.2 — يلزم إذن صريح قبل المشاركة + مطابقة نص الموافقة",
+        "source": null,
+        "clause": null,
+        "verifiedAt": "2026-03-15"
+      },
+      {
+        "id": "IOS-DELETE-1",
+        "title": "مسار حذف الحساب داخل التطبيق",
+        "mandatory": true,
+        "status": "ناجح بدليل",
+        "evidence": "settings_screen.dart + AccountDeletionService + users.controller deleteAccount",
+        "notes": "مسار كود موجود؛ اختبار واجهة Release غير متحقق",
+        "source": null,
+        "clause": null,
+        "verifiedAt": "2026-03-15"
+      },
+      {
+        "id": "IOS-POLICY-URL",
+        "title": "رابط سياسة خصوصية عام صالح للميتاداتا",
+        "mandatory": true,
+        "status": "فشل مثبت",
+        "evidence": "curl -SIL https://mira.app/docs/privacy-policy.html → يعيد التوجيه إلى miracare.com (منتج آخر) بصفحة 200 HTML غريبة عن ميرا",
+        "notes": "مانع ميتاداتا App Store — الرابط العام لا يعرض سياسة ميرا",
+        "source": null,
+        "clause": null,
+        "verifiedAt": "2026-03-15"
+      },
+      {
+        "id": "IOS-REVIEWER-OTP",
+        "title": "تعليمات دخول المراجع مع OTP في ASC",
+        "mandatory": true,
+        "status": "غير متحقق",
+        "evidence": "يلزم لقطة/حقل App Store Connect من المالك",
+        "notes": "OWN-ASC-1",
+        "source": null,
+        "clause": null,
+        "verifiedAt": "2026-03-15"
+      },
+      {
+        "id": "IOS-ASC-META",
+        "title": "بيانات صفحة المتجر (لقطات/تصنيف عمري/وصف)",
+        "mandatory": true,
+        "status": "غير متحقق",
+        "evidence": "لا وصول للوحة ASC في هذه الجلسة",
+        "notes": "OWN-ASC-1",
+        "source": null,
+        "clause": null,
+        "verifiedAt": "2026-03-15"
+      },
+      {
+        "id": "IOS-MARKETPLACE-FLAG",
+        "title": "Discover/Marketplace مفعّل في تعريف الإنتاج iOS",
+        "mandatory": true,
+        "status": "ناجح بدليل",
+        "evidence": "production_dart_defines.json MIRA_MARKETPLACE_ENABLED=true",
+        "notes": "الافتراضي في الكود false — الإنتاج يتجاوزه",
+        "source": null,
+        "clause": null,
+        "verifiedAt": "2026-03-15"
+      },
+      {
+        "id": "IOS-ENCRYPTION",
+        "title": "ITSAppUsesNonExemptEncryption=false",
+        "mandatory": false,
+        "status": "ناجح بدليل",
+        "evidence": "Info.plist",
+        "notes": "Export compliance جاهز في المصدر",
+        "source": null,
+        "clause": null,
+        "verifiedAt": "2026-03-15"
+      }
+    ],
+    "android": [
+      {
+        "id": "AND-ID-1",
+        "title": "هوية النسخة مثبتة (SHA/إصدار/applicationId)",
+        "mandatory": true,
+        "status": "ناجح بدليل",
+        "evidence": "BUILD_IDENTITY.txt · app.mira.beauty · 1.0.0+2026110301",
+        "notes": "",
+        "source": null,
+        "clause": null,
+        "verifiedAt": "2026-03-15"
+      },
+      {
+        "id": "AND-SIGN-DEBUG",
+        "title": "توقيع Release بمفتاح إنتاجي (ليس debug)",
+        "mandatory": true,
+        "status": "فشل مثبت",
+        "evidence": "android/app/build.gradle.kts: signingConfig = signingConfigs.getByName(\"debug\") · لا key.properties",
+        "notes": "مانع رفع إنتاجي حتى مع نجاح بناء AAB",
+        "source": null,
+        "clause": null,
+        "verifiedAt": "2026-03-15"
+      },
+      {
+        "id": "AND-AAB-1",
+        "title": "بناء AAB Release فعلي",
+        "mandatory": true,
+        "status": "ناجح بدليل",
+        "evidence": "android-aab-build.log · Built app-release.aab 164.7MB · --no-tree-shake-icons",
+        "notes": "نجاح البناء لا يعني صلاحية الرفع — التوقيع Debug",
+        "source": null,
+        "clause": null,
+        "verifiedAt": "2026-03-15"
+      },
+      {
+        "id": "AND-SHA256",
+        "title": "بصمة SHA-256 لحزمة الرفع النهائية",
+        "mandatory": true,
+        "status": "ناجح بدليل",
+        "evidence": "android-aab-sha256.txt · 75ce1fa6d458d2c1f9a151f90479c4cd5108b28c5b5dbb97f657962fa16f7c76",
+        "notes": "بصمة لحزمة debug-signed — ليست حزمة رفع إنتاجي",
+        "source": null,
+        "clause": null,
+        "verifiedAt": "2026-03-15"
+      },
+      {
+        "id": "AND-PERMS",
+        "title": "أذونات Manifest مطابقة للسلوك",
+        "mandatory": true,
+        "status": "ناجح بدليل",
+        "evidence": "CAMERA + INTERNET فقط في AndroidManifest.xml",
+        "notes": "لا أذونات زائدة ظاهرة",
+        "source": null,
+        "clause": null,
+        "verifiedAt": "2026-03-15"
+      },
+      {
+        "id": "AND-TARGET",
+        "title": "targetSdk عبر Flutter tooling",
+        "mandatory": true,
+        "status": "ناجح بدليل",
+        "evidence": "targetSdk = flutter.targetSdkVersion · Flutter 3.38.9",
+        "notes": "يُؤكَّد رقم API في تقرير الحزمة بعد البناء",
+        "source": null,
+        "clause": null,
+        "verifiedAt": "2026-03-15"
+      },
+      {
+        "id": "AND-DATA-SAFETY",
+        "title": "نموذج Data safety مطابق للسلوك والباك اند",
+        "mandatory": true,
+        "status": "غير متحقق",
+        "evidence": "يلزم لقطة Play Console من المالك",
+        "notes": "OWN-PLAY-1",
+        "source": null,
+        "clause": null,
+        "verifiedAt": "2026-03-15"
+      },
+      {
+        "id": "AND-APP-ACCESS",
+        "title": "App access: مسار مراجع مع تسجيل دخول/OTP",
+        "mandatory": true,
+        "status": "غير متحقق",
+        "evidence": "التطبيق يعتمد هاتف سعودي + OTP — يلزم تعليمات/بيانات مراجع في Play Console",
+        "notes": "OWN-PLAY-1",
+        "source": null,
+        "clause": null,
+        "verifiedAt": "2026-03-15"
+      },
+      {
+        "id": "AND-DELETE",
+        "title": "حذف الحساب ورابطه عند الانطباق",
+        "mandatory": true,
+        "status": "ناجح بدليل",
+        "evidence": "نفس مسار AccountDeletionService في التطبيق + API",
+        "notes": "رابط الويب العام للحذف (إن طلبته السياسة) غير متحقق",
+        "source": null,
+        "clause": null,
+        "verifiedAt": "2026-03-15"
+      },
+      {
+        "id": "AND-POLICY-URL",
+        "title": "رابط سياسة الخصوصية في المتجر",
+        "mandatory": true,
+        "status": "فشل مثبت",
+        "evidence": "نفس تحويل mira.app إلى miracare.com",
+        "notes": "يلزم استضافة سياسة ميرا العامة قبل الإرسال",
+        "source": null,
+        "clause": null,
+        "verifiedAt": "2026-03-15"
+      },
+      {
+        "id": "AND-CONSOLE-META",
+        "title": "بيانات المتجر والتنبيهات في Play Console",
+        "mandatory": true,
+        "status": "غير متحقق",
+        "evidence": "لا وصول للوحة في هذه الجلسة",
+        "notes": "OWN-PLAY-1",
+        "source": null,
+        "clause": null,
+        "verifiedAt": "2026-03-15"
+      },
+      {
+        "id": "AND-AI-DISCLOSE",
+        "title": "إفصاح مشاركة البيانات مع مزودي AI في Data safety/UX",
+        "mandatory": true,
+        "status": "فشل مثبت",
+        "evidence": "تناقض نص الموافقة مع مشاركة Perfect Corp/FASHN.ai/OpenAI",
+        "notes": "يجب تصحيح التصريح والسلوك المعروض للعميلة",
+        "source": null,
+        "clause": null,
+        "verifiedAt": "2026-03-15"
+      }
+    ]
+  },
+  "journeys": [
+    {
+      "id": "J-AUTH",
+      "title": "تثبيت جديد ← دخول OTP ← استعادة الجلسة",
+      "platforms": [
+        "ios",
+        "android"
+      ],
+      "priority": 1,
+      "status": "غير متحقق",
+      "device": "لم يُنفَّذ على جهاز/محاكي Release في هذه الجلسة",
+      "stepsTried": [
+        "مراجعة LoginScreen (هاتف سعودي + OTP عبر Firebase)",
+        "وجود GuestSessionService واستعادة FirebaseAuth في Splash"
+      ],
+      "expected": "دخول ناجح واستعادة جلسة بعد إعادة الفتح؛ رفض إذن/شبكة يُعالج",
+      "actual": "اختبار واجهة Release غير منفّذ — الكود يدعم المسار",
+      "evidence": [
+        "lib/features/auth/presentation/screens/login_screen.dart"
+      ],
+      "serverNote": "Firebase Auth حيّ في إعدادات التطبيق"
+    },
+    {
+      "id": "J-DISCOVER",
+      "title": "اكتشفي ← أقسام ← فيديو/صور ← سحب ← تفاصيل",
+      "platforms": [
+        "ios",
+        "android"
+      ],
+      "priority": 1,
+      "status": "ناجح بدليل",
+      "device": "فحص خادم API من جلسة التدقيق (ليس مشغّل التطبيق على جهاز)",
+      "stepsTried": [
+        "جلب كامل الكتالوج المنشور",
+        "HEAD/Range على روابط /marketplace/media/*"
+      ],
+      "expected": "وسائط الكتالوج الحي قابلة للوصول",
+      "actual": "كتالوج حي: 41 عنصر (منتجات 31 / خدمات 10). أوضاع الشراء: {'display': 21, 'internal_cod': 4, 'external': 6, 'None': 10}. وسائط HEAD: نجح 18 / فشل 11 / بلا وسائط 12. عينة تشغيل بايتات: نجح 11 / فشل 5 من 16 (يشمل display + internal_cod؛ خدمة صالون ميرا 404 على وسيطتها).",
+      "evidence": [
+        "catalog-media-probe.json",
+        "catalog.json"
+      ],
+      "serverNote": "totalMatched catalog live=41"
+    },
+    {
+      "id": "J-PRODUCT-MODES",
+      "title": "منتج مشاهدة / COD داخل ميرا / رابط خارجي",
+      "platforms": [
+        "ios",
+        "android"
+      ],
+      "priority": 1,
+      "status": "غير متحقق",
+      "device": "كتالوج حي عبر API فقط",
+      "stepsTried": [
+        "تصنيف purchaseMode من الكتالوج الحي"
+      ],
+      "expected": "الأوضاع الثلاثة موجودة ويمكن اختبارها من التطبيق",
+      "actual": "أعداد حية من API: {'display': 21, 'internal_cod': 4, 'external': 6, 'None': 10} — واجهة التطبيق Release غير مختبرة",
+      "evidence": [
+        "commerce_cart_actions.dart",
+        "catalog.json"
+      ],
+      "serverNote": "لا إنشاء طلبات على منتجات حية — منتج اختبار مطوّر ميرا مطلوب للجهاز"
+    },
+    {
+      "id": "J-BOOKING",
+      "title": "خدمة قابلة للحجز ← موعد ← قبول مقدّم ← تحديث العميلة",
+      "platforms": [
+        "ios",
+        "android"
+      ],
+      "priority": 1,
+      "status": "غير متحقق",
+      "device": "غير منفّذ على الجهاز",
+      "stepsTried": [
+        "مراجعة commerce bookings endpoints في API"
+      ],
+      "expected": "تمييز طلب حجز عن حجز مؤكد",
+      "actual": "مسارات API موجودة؛ رحلة واجهة Release غير متحققة",
+      "evidence": [
+        "mira-api commerce.controller bookings"
+      ],
+      "serverNote": ""
+    },
+    {
+      "id": "J-AI",
+      "title": "تحليل الوجه/الإطلالة/الاستشارة + فشل الرفع ورفض الإذن",
+      "platforms": [
+        "ios",
+        "android"
+      ],
+      "priority": 1,
+      "status": "فشل مثبت",
+      "device": "مراجعة كود + سياسة",
+      "stepsTried": [
+        "تتبع PrivacyConsentScreen",
+        "privacy_policy_content معالجو AI",
+        "مسارات vision في API"
+      ],
+      "expected": "موافقة صريحة قبل مغادرة الصورة الجهاز لمزود خارجي + رسائل فشل واضحة",
+      "actual": "الموافقة الحالية تنفي المشاركة بينما السياسة تُقرّ بالمزودين — مانع امتثال",
+      "evidence": [
+        "privacy_consent_screen.dart",
+        "privacy_policy_content.dart"
+      ],
+      "serverNote": "الصورة تُرسل إلى خوادم ميرا ثم قد تمر لمزودين (Perfect Corp / FASHN / OpenAI)"
+    },
+    {
+      "id": "J-DELETE-SUPPORT",
+      "title": "حذف الحساب ومسار الدعم",
+      "platforms": [
+        "ios",
+        "android"
+      ],
+      "priority": 2,
+      "status": "غير متحقق",
+      "device": "غير منفّذ على الجهاز",
+      "stepsTried": [
+        "مراجعة UI حذف الحساب وhelp_screen"
+      ],
+      "expected": "حذف ناجح + قناة دعم",
+      "actual": "الكود موجود؛ اختبار E2E غير منفّذ",
+      "evidence": [
+        "settings_screen.dart",
+        "help_screen.dart"
+      ],
+      "serverNote": "support@mira.app / privacy@mira.app"
+    }
+  ],
+  "storeRequirements": [
+    {
+      "id": "SR-APPLE-5.1.1",
+      "platform": "ios",
+      "title": "سياسة خصوصية في الميتاداتا وداخل التطبيق",
+      "source": "https://developer.apple.com/app-store/review/guidelines/",
+      "clause": "5.1.1 Data Collection and Storage (i)",
+      "whyApplies": "ميرا تجمع صورًا وبيانات حساب ونتائج تحليل",
+      "status": "فشل مثبت",
+      "appBehavior": "رابط MiraPublicUrls.privacyPolicy لا يوصل إلى سياسة ميرا (mira.app → miracare.com)",
+      "verifiedAt": "2026-03-15"
+    },
+    {
+      "id": "SR-APPLE-5.1.2",
+      "platform": "ios",
+      "title": "إذن قبل مشاركة البيانات الشخصية / مع أطراف ثالثة وAI",
+      "source": "https://developer.apple.com/app-store/review/guidelines/",
+      "clause": "5.1.2 Data Use and Sharing",
+      "whyApplies": "تحليل الوجه/الإطلالة قد يشارك الصورة مع Perfect Corp وFASHN.ai وOpenAI",
+      "status": "فشل مثبت",
+      "appBehavior": "نص الموافقة يخالف الإفصاح الفعلي في السياسة",
+      "verifiedAt": "2026-03-15"
+    },
+    {
+      "id": "SR-APPLE-ACCOUNT-DELETE",
+      "platform": "ios",
+      "title": "حذف الحساب بسهولة داخل التطبيق",
+      "source": "https://developer.apple.com/support/offering-account-deletion-in-your-app/",
+      "clause": "Account deletion requirement",
+      "whyApplies": "تسجيل دخول بحساب مستخدمة",
+      "status": "ناجح بدليل",
+      "appBehavior": "زر حذف الحساب في الإعدادات + API",
+      "verifiedAt": "2026-03-15"
+    },
+    {
+      "id": "SR-APPLE-PRIVACY-MANIFEST",
+      "platform": "ios",
+      "title": "Privacy Manifest لواجهات API المطلوبة",
+      "source": "https://developer.apple.com/documentation/bundleresources/privacy_manifest_files",
+      "clause": "Privacy manifest",
+      "whyApplies": "تطبيق iOS يستخدم UserDefaults وغيره",
+      "status": "ناجح بدليل",
+      "appBehavior": "PrivacyInfo.xcprivacy موجود — لكن CollectedDataTypes فارغة خلاف السلوك",
+      "verifiedAt": "2026-03-15"
+    },
+    {
+      "id": "SR-PLAY-DATA-SAFETY",
+      "platform": "android",
+      "title": "نموذج Data safety",
+      "source": "https://support.google.com/googleplay/android-developer/answer/10787469",
+      "clause": "Data safety",
+      "whyApplies": "جمع صور وبيانات حساب ومشاركة محتملة مع مزودي تحليل",
+      "status": "غير متحقق",
+      "appBehavior": "يلزم مطابقة التصريح مع الباك اند — لوحة Console غير متاحة",
+      "verifiedAt": "2026-03-15"
+    },
+    {
+      "id": "SR-PLAY-APP-ACCESS",
+      "platform": "android",
+      "title": "App access للوظائف المحمية بتسجيل الدخول",
+      "source": "https://support.google.com/googleplay/android-developer/answer/13392821",
+      "clause": "App access",
+      "whyApplies": "OTP هاتفي يحمي وظائف التطبيق",
+      "status": "غير متحقق",
+      "appBehavior": "يلزم تعليمات مراجع + بيانات اختبار في Play Console",
+      "verifiedAt": "2026-03-15"
+    },
+    {
+      "id": "SR-PLAY-TARGET-API",
+      "platform": "android",
+      "title": "متطلبات مستوى واجهة API المستهدف",
+      "source": "https://developer.android.com/google/play/requirements/target-sdk",
+      "clause": "Target API level",
+      "whyApplies": "رفع جديد على Play",
+      "status": "ناجح بدليل",
+      "appBehavior": "يعتمد targetSdk الخاص بـ Flutter 3.38.9",
+      "verifiedAt": "2026-03-15"
+    },
+    {
+      "id": "SR-PLAY-SIGNING",
+      "platform": "android",
+      "title": "توقيع حزمة الإنتاج",
+      "source": "https://developer.android.com/studio/publish/app-signing",
+      "clause": "App signing",
+      "whyApplies": "AAB للإنتاج",
+      "status": "فشل مثبت",
+      "appBehavior": "Release موقّع debug في المستودع الحالي",
+      "verifiedAt": "2026-03-15"
+    }
+  ],
+  "blockers": [
+    {
+      "id": "BLK-PRIVACY-URL",
+      "platform": "both",
+      "mandatory": true,
+      "title": "رابط سياسة الخصوصية العام لا يعرض سياسة ميرا",
+      "impact": "رفض شبه مؤكد لـ App Privacy / Data safety metadata",
+      "fix": "استضافة docs/privacy-policy.html على نطاق ميرا المملوك وإثبات HTTP 200 بالمحتوى العربي المطابق",
+      "evidence": [
+        "mira_public_urls.dart",
+        "curl -SIL mira.app/docs/privacy-policy.html"
+      ]
+    },
+    {
+      "id": "BLK-AND-DEBUG-SIGN",
+      "platform": "android",
+      "severity": true,
+      "title": "توقيع Android Release بمفتاح التصحيح",
+      "impact": "لا يمكن رفع حزمة إنتاجية موثوقة إلى Play",
+      "fix": "إنشاء upload keystore خارج Git + key.properties + تعديل build.gradle.kts ثم إعادة بناء AAB وإثبات SHA-256",
+      "evidence": [
+        "android/app/build.gradle.kts"
+      ]
+    },
+    {
+      "id": "BLK-AI-CONSENT",
+      "platform": "both",
+      "severity": true,
+      "title": "تناقض موافقة الخصوصية مع مشاركة مزودي الذكاء الاصطناعي",
+      "impact": "رفض محتمل من Apple (5.1.2) وتعارض Data safety",
+      "fix": "تعديل نص الموافقة ليفصح عن المغادرة والمزودين قبل الإرسال؛ مواءمة App Privacy / Data safety؛ اختبار رفض الموافقة",
+      "evidence": [
+        "privacy_consent_screen.dart",
+        "privacy_policy_content.dart"
+      ]
+    },
+    {
+      "id": "BLK-IOS-PROV",
+      "platform": "ios",
+      "severity": true,
+      "title": "لا يوجد Provisioning Profile على جهاز الأرشفة",
+      "impact": "تعذّر إثبات أرشفة/تصدير IPA اليوم",
+      "fix": "تثبيت Profile توزيع App Store لـ app.mira.beauty ثم archive/export",
+      "evidence": [
+        "security find-identity",
+        "Provisioning Profiles count=0"
+      ]
+    },
+    {
+      "id": "BLK-PRIVACY-TYPES",
+      "platform": "ios",
+      "severity": true,
+      "title": "Privacy Manifest: CollectedDataTypes فارغة",
+      "impact": "تعارض مع السلوك الفعلي وبيانات App Privacy",
+      "fix": "تحديث PrivacyInfo.xcprivacy وأنواع البيانات المعلنة",
+      "evidence": [
+        "ios/Runner/PrivacyInfo.xcprivacy"
+      ]
+    },
+    {
+      "id": "BLK-STORE-CONSOLES",
+      "platform": "both",
+      "severity": true,
+      "title": "لوحات المتجرين غير مدقّقة في هذه الجلسة",
+      "impact": "حكم الإرسال يبقى غير محسوم حتى مع إصلاح البناء",
+      "fix": "المالك يوفّر لقطات OWN-ASC-1 و OWN-PLAY-1",
+      "evidence": []
+    }
+  ],
+  "gaps": [
+    {
+      "id": "GAP-AI-CONSENT-COPY",
+      "rank": "مانع إطلاق",
+      "screen": "الخصوصية والموافقة",
+      "step": "قبل التقاط/رفع صورة التحليل",
+      "observed": "النص يقول إن الصور لا تُشارك بينما السياسة تذكر مزودين خارجيين",
+      "evidence": "privacy_consent_screen.dart مقابل privacy_policy_content.dart",
+      "change": "إفصاح صريح: الصورة تغادر الجهاز إلى خوادم ميرا وقد تُعالج لدى مزود تحليل؛ موافقة منفصلة قبل الإرسال",
+      "impact": "امتثال المتاجر وثقة العميلة",
+      "effort": "S (0.5–1 يوم)",
+      "acceptance": "رفض الموافقة يمنع الإرسال؛ نص الموافقة يذكر المزودين؛ لقطة قبل/بعد"
+    },
+    {
+      "id": "GAP-ANDROID-UPLOAD-KEY",
+      "rank": "مانع إطلاق",
+      "screen": "مسار البناء",
+      "step": "bundleRelease",
+      "observed": "signingConfig=debug",
+      "evidence": "build.gradle.kts",
+      "change": "keystore إنتاجي + تعطيل debug لـ release",
+      "impact": "إمكانية الرفع إلى Play",
+      "effort": "S",
+      "acceptance": "apksigner/bundletool يُظهر شهادة غير debug + SHA-256 محفوظ"
+    },
+    {
+      "id": "GAP-REVIEWER-OTP-PACK",
+      "rank": "مانع إطلاق",
+      "screen": "App Store Connect / Play Console",
+      "step": "ملاحظات المراجع",
+      "observed": "الدخول بـ OTP سعودي بدون حزمة مراجع موثّقة في التدقيق",
+      "evidence": "login_screen.dart",
+      "change": "رقم اختبار + خطوات OTP + فيديو مسار المراجع",
+      "impact": "تجنّب رفض Incomplete Info / App access",
+      "effort": "S",
+      "acceptance": "المراجع يكمل الدخول دون مراسلة إضافية"
+    },
+    {
+      "id": "GAP-PUBLIC-PRIVACY-PAGE",
+      "rank": "مانع إطلاق",
+      "screen": "mira.app/docs/privacy-policy.html",
+      "step": "فتح الرابط من المتجر",
+      "observed": "mira.app يحوّل إلى miracare.com وليس سياسة ميرا",
+      "evidence": "mira_public_urls.dart",
+      "change": "استضافة نسخة عامة مستقرة مطابقة لنص التطبيق",
+      "impact": "5.1.1 / Data safety",
+      "effort": "S",
+      "acceptance": "HTTP 200 ومحتوى عربي يطابق التطبيق"
+    },
+    {
+      "id": "GAP-RELEASE-JOURNEY-MATRIX",
+      "rank": "تحسين مهم قبل الإطلاق",
+      "screen": "اكتشفي + طلب + حجز + تحليل",
+      "step": "رحلات العميلة على Release",
+      "observed": "التحقق الحالي من الخادم/الكود وليس من واجهة الجوال Release",
+      "evidence": "journeys status",
+      "change": "مصفوفة أجهزة + تسجيلات شاشة لكل رحلة إلزامية",
+      "impact": "خفض رفض Guideline 2.1",
+      "effort": "M (2–4 أيام)",
+      "acceptance": "كل رحلة إلزامية = ناجح بدليل فيديو على iOS وAndroid"
+    },
+    {
+      "id": "GAP-BOOKING-STATUS-COPY",
+      "rank": "تطوير بعد الإطلاق",
+      "screen": "تفاصيل الحجز",
+      "step": "بعد إرسال الطلب وقبل قبول المقدّم",
+      "observed": "تمييز «طلب حجز»/«حجز مؤكد» يحتاج إثبات UX على الجهاز",
+      "evidence": "J-BOOKING غير متحقق على الجهاز",
+      "change": "نسخ حالات أوضح + اختبار قبول المقدّم",
+      "impact": "تقليل ارتباك العميلة",
+      "effort": "S–M",
+      "acceptance": "الحالتان ظاهرتان بوضوح في حساب العميلة"
+    },
+    {
+      "id": "GAP-OFFLINE-SENSITIVE",
+      "rank": "تطوير بعد الإطلاق",
+      "screen": "OTP / الدفع عند الاستلام / التحليل",
+      "step": "انقطاع الشبكة",
+      "observed": "لم يُختبر رفض الشبكة على Release",
+      "evidence": "J-AUTH",
+      "change": "رسائل خطأ واضحة وإعادة محاولة",
+      "impact": "ثبات الإدراك",
+      "effort": "M",
+      "acceptance": "سيناريوهات الشبكة المقطوعة موثّقة فيديو"
+    }
+  ],
+  "evidenceIndex": [
+    {
+      "id": "EV-ID",
+      "path": "docs/phase2_3/evidence/store-readiness-2026-03-15/BUILD_IDENTITY.txt"
+    },
+    {
+      "id": "EV-MEDIA",
+      "path": "docs/phase2_3/evidence/store-readiness-2026-03-15/catalog-media-probe.json"
+    },
+    {
+      "id": "EV-AAB",
+      "path": "build/app/outputs/bundle/release/app-release.aab"
+    },
+    {
+      "id": "EV-AAB-SHA",
+      "path": "docs/phase2_3/evidence/store-readiness-2026-03-15/android-aab-sha256.txt"
+    },
+    {
+      "id": "EV-PRIVACY-URL",
+      "path": "docs/phase2_3/evidence/store-readiness-2026-03-15/privacy-url-headers.txt"
+    },
+    {
+      "id": "EV-LEDGER",
+      "path": "admin-portal/web/هل-ميرا-جاهز-لنشر/data/RESULTS_LEDGER.json"
+    }
+  ],
+  "ownerActionsRequired": [
+    {
+      "id": "OWN-ASC-1",
+      "title": "لقطات App Store Connect",
+      "need": "حالة التطبيق، البناءات، App Privacy، لقطات المتجر، تعليمات المراجع مع OTP، رابط سياسة الخصوصية في الميتاداتا"
+    },
+    {
+      "id": "OWN-PLAY-1",
+      "title": "لقطات Play Console",
+      "need": "حالة الإصدار، Data safety، App access (مسار OTP)، حذف الحساب، التصنيف العمري، تنبيهات الأهلية للإنتاج"
+    },
+    {
+      "id": "OWN-ANDROID-KEY-1",
+      "title": "Upload keystore للـ Android",
+      "need": "توفير keystore إنتاجي وإعداد key.properties خارج Git ثم إعادة بناء AAB موقّع"
+    },
+    {
+      "id": "OWN-IOS-PROV-1",
+      "title": "Provisioning Profile توزيع",
+      "need": "ملف توزيع App Store لـ app.mira.beauty على جهاز الأرشفة (Team A97F7227YM متوفر كهوية Distribution)"
+    },
+    {
+      "id": "OWN-DEVICE-1",
+      "title": "اختبار جهاز فعلي Release",
+      "need": "TestFlight أو مسار داخلي لإكمال رحلات العميلة على iOS/Android Release"
+    }
+  ],
+  "summaries": {
+    "ios": {
+      "provenOk": 8,
+      "applicable": 16,
+      "failed": 4,
+      "unverified": 4,
+      "readinessPct": 50.0,
+      "coveragePct": 75.0,
+      "submitVerdict": "غير جاهز للإرسال",
+      "mandatoryFailures": [
+        "IOS-PROV-1",
+        "IOS-PRIVACY-TYPES",
+        "IOS-AI-DISCLOSE",
+        "IOS-POLICY-URL"
+      ],
+      "mandatoryUnverified": [
+        "IOS-ARCHIVE-1",
+        "IOS-PKG-1",
+        "IOS-REVIEWER-OTP",
+        "IOS-ASC-META"
+      ]
+    },
+    "android": {
+      "provenOk": 6,
+      "applicable": 12,
+      "failed": 3,
+      "unverified": 3,
+      "readinessPct": 50.0,
+      "coveragePct": 75.0,
+      "submitVerdict": "غير جاهز للإرسال",
+      "mandatoryFailures": [
+        "AND-SIGN-DEBUG",
+        "AND-POLICY-URL",
+        "AND-AI-DISCLOSE"
+      ],
+      "mandatoryUnverified": [
+        "AND-DATA-SAFETY",
+        "AND-APP-ACCESS",
+        "AND-CONSOLE-META"
+      ]
+    }
+  },
+  "topPriorities": [
+    {
+      "id": "GAP-AI-CONSENT-COPY",
+      "why": "مانع امتثال مباشر على المنصتين ويخص جوهر ميرا (الذكاء الاصطناعي)"
+    },
+    {
+      "id": "GAP-ANDROID-UPLOAD-KEY",
+      "why": "بدونها لا يوجد رفع Android إنتاجي"
+    },
+    {
+      "id": "GAP-REVIEWER-OTP-PACK",
+      "why": "المراجعان على Apple/Google لن يدخلا بدون OTP مجهز"
+    },
+    {
+      "id": "GAP-PUBLIC-PRIVACY-PAGE",
+      "why": "رابط إلزامي في صفحتي المتجرين"
+    },
+    {
+      "id": "GAP-RELEASE-JOURNEY-MATRIX",
+      "why": "يغطي مخاطر الرفض الوظيفي بعد تجاوز البناء"
+    }
+  ],
+  "mediaProbe": {
+    "catalogItems": 41,
+    "products": 31,
+    "services": 10,
+    "purchaseModes": {
+      "display": 21,
+      "internal_cod": 4,
+      "external": 6,
+      "None": 10
+    },
+    "mediaHead": {
+      "ok": 18,
+      "fail": 11,
+      "noMedia": 12,
+      "checked": 29
+    },
+    "playbackSample": {
+      "checked": 16,
+      "ok": 11,
+      "fail": 5,
+      "samples": [
+        {
+          "nameAr": "فستان زواج",
+          "kind": "product",
+          "purchaseMode": "display",
+          "mediaKind": "video",
+          "http": 206,
+          "ctype": "video/mp4",
+          "bytes": 2048,
+          "ok": true
+        },
+        {
+          "nameAr": "منتجات شعر",
+          "kind": "product",
+          "purchaseMode": "internal_cod",
+          "mediaKind": "video",
+          "http": 206,
+          "ctype": "video/mp4",
+          "bytes": 2048,
+          "ok": true
+        },
+        {
+          "nameAr": "صالون ميرا",
+          "ok": false,
+          "err": "HTTP Error 404: Not Found"
+        },
+        {
+          "nameAr": "فساتين يوميه",
+          "kind": "product",
+          "purchaseMode": "display",
+          "mediaKind": "video",
+          "http": 206,
+          "ctype": "video/mp4",
+          "bytes": 2048,
+          "ok": true
+        },
+        {
+          "nameAr": "فستان يومي",
+          "ok": false,
+          "err": "HTTP Error 404: Not Found"
+        },
+        {
+          "nameAr": "مرطب وجه",
+          "kind": "product",
+          "purchaseMode": "display",
+          "mediaKind": "video",
+          "http": 206,
+          "ctype": "video/mp4",
+          "bytes": 2048,
+          "ok": true
+        },
+        {
+          "nameAr": "طقم مكياج",
+          "kind": "product",
+          "purchaseMode": "display",
+          "mediaKind": "video",
+          "http": 206,
+          "ctype": "video/mp4",
+          "bytes": 2048,
+          "ok": true
+        },
+        {
+          "nameAr": "فستان سهرة",
+          "ok": false,
+          "err": "HTTP Error 404: Not Found"
+        },
+        {
+          "nameAr": "عبايات فاخرة",
+          "kind": "product",
+          "purchaseMode": "display",
+          "mediaKind": "video",
+          "http": 206,
+          "ctype": "video/mp4",
+          "bytes": 2048,
+          "ok": true
+        },
+        {
+          "nameAr": "جاكيت خفيف",
+          "ok": false,
+          "err": "HTTP Error 404: Not Found"
+        },
+        {
+          "nameAr": "طقم ذهب",
+          "kind": "product",
+          "purchaseMode": "display",
+          "mediaKind": "video",
+          "http": 206,
+          "ctype": "video/mp4",
+          "bytes": 2048,
+          "ok": true
+        },
+        {
+          "nameAr": "شنط يد انيقه",
+          "kind": "product",
+          "purchaseMode": "display",
+          "mediaKind": "video",
+          "http": 206,
+          "ctype": "video/mp4",
+          "bytes": 2048,
+          "ok": true
+        },
+        {
+          "nameAr": "فستان زواج",
+          "kind": "product",
+          "purchaseMode": "display",
+          "mediaKind": "video",
+          "http": 206,
+          "ctype": "video/quicktime",
+          "bytes": 2048,
+          "ok": true
+        },
+        {
+          "nameAr": "فستان سهرة",
+          "kind": "product",
+          "purchaseMode": "display",
+          "mediaKind": "video",
+          "http": 206,
+          "ctype": "video/quicktime",
+          "bytes": 2048,
+          "ok": true
+        },
+        {
+          "nameAr": "عباية سوداء",
+          "ok": false,
+          "err": "HTTP Error 404: Not Found"
+        },
+        {
+          "nameAr": "طقم ذهب",
+          "kind": "product",
+          "purchaseMode": "display",
+          "mediaKind": "video",
+          "http": 206,
+          "ctype": "video/mp4",
+          "bytes": 2048,
+          "ok": true
+        }
+      ]
+    }
+  },
+  "finalTable": [
+    {
+      "platform": "iOS",
+      "readinessPct": 50.0,
+      "canUploadToday": "غير محسوم",
+      "canSubmitToday": "غير جاهز للإرسال",
+      "shortestRemaining": [
+        "إصلاح استضافة سياسة الخصوصية العامة لميرا (لا miracare)",
+        "إصلاح نص موافقة AI + Privacy Manifest/App Privacy",
+        "Provisioning Profile + أرشفة IPA وSHA-256",
+        "تعليمات OTP للمراجع + لقطات ASC + رحلات جهاز"
+      ]
+    },
+    {
+      "platform": "Android",
+      "readinessPct": 50.0,
+      "canUploadToday": "لا",
+      "canSubmitToday": "غير جاهز للإرسال",
+      "shortestRemaining": [
+        "استبدال توقيع debug بـ upload keystore ثم إعادة بناء AAB",
+        "إصلاح رابط الخصوصية + Data safety/إفصاح AI",
+        "App access OTP في Play Console",
+        "رحلات جهاز Release"
+      ]
+    }
+  ]
+}

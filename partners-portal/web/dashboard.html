@@ -36,6 +36,39 @@
         </div>
       </div>
 
+      <div class="card" id="branchesSection">
+        <h2 data-venue-lead>فروع وموقع الحجز</h2>
+        <p class="lead">
+          موقع المقر/الفرع هو مصدر المسافة والاتجاهات والحجز. المقدمة المستقلة تحفظ مقرّ استقبال واحدًا.
+          استخدم موقع الجهاز، أو الصق الإحداثيات يدويًا. لا مفتاح Google مطلوب — المعاينة تفتح خرائط Google برابط عام.
+        </p>
+        <div id="branchesList"></div>
+        <p id="branchCreateHint" class="lead hidden">لا مقر بعد — أدخلي الاسم والإحداثيات واحفظي؛ يُنشأ المقر من هذه الصفحة دون الرجوع للإدارة.</p>
+        <form id="branchLocationForm" class="branch-location-form" style="margin-top:1rem;display:grid;gap:0.75rem;max-width:28rem;">
+          <label>الفرع / المقر
+            <select id="branchSelect"></select>
+          </label>
+          <label>اسم الفرع
+            <input id="branchNameAr" type="text" autocomplete="organization" />
+          </label>
+          <label>مدينة المقر
+            <select id="branchCityId" required></select>
+          </label>
+          <label>خط العرض (مثال: 24.7136)
+            <input id="branchLat" type="text" inputmode="decimal" placeholder="24.7136" />
+          </label>
+          <label>خط الطول (مثال: 46.6753)
+            <input id="branchLng" type="text" inputmode="decimal" placeholder="46.6753" />
+          </label>
+          <div class="journey-actions">
+            <button type="button" class="btn btn-ghost" id="branchUseMyLocation">استخدم موقعي الحالي</button>
+            <a class="btn btn-ghost" id="branchMapPreview" href="#" target="_blank" rel="noopener">معاينة الموقع على الخريطة</a>
+            <button type="submit" class="btn btn-primary">حفظ موقع الفرع</button>
+          </div>
+          <p id="branchLocationStatus" class="lead" role="status" aria-live="polite"></p>
+        </form>
+      </div>
+
       <div class="card">
         <h2>إضافة محتوى</h2>
         <p class="lead">المنتج والخدمة يُحفظان يدويًا من هذه الصفحة. لا يُشترط متجر خارجي ولا حساب زد.</p>
@@ -129,6 +162,7 @@
   </main>
 
   <script src="js/api.js?v=mobile-editor1"></script>
+  <script src="js/branch-location.js?v=branch-loc1"></script>
   <script src="js/motion.js?v=mobile-editor1"></script>
   <script src="js/motion-fixture.js?v=mobile-editor1"></script>
   <script src="js/ads.js?v=mobile-editor1"></script>
@@ -526,6 +560,7 @@
         window.sessionBranches = Array.isArray(data.branches) ? data.branches : [];
         window.sessionServices = (data.catalog && Array.isArray(data.catalog.services)) ? data.catalog.services : [];
         window.sessionActivities = data.activities || null;
+        if (window.MiraBranchLocation) MiraBranchLocation.refresh(window.sessionBranches);
         document.body.dataset.partnerType = p.type || '';
         try { localStorage.setItem('mira_partner_id', p.id); } catch (e) {}
         const sn = document.getElementById('settingsPartnerName');

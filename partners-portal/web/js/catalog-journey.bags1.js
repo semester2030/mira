@@ -1458,8 +1458,9 @@
       const placeOptions =
         providerKind === 'independent'
           ? [
+              ['branch', 'في مقرّك / استوديو الاستقبال'],
               ['home', 'في موقع العميلة'],
-              ['either', 'في موقع العميلة + استوديو معتمد'],
+              ['either', 'في مقرّك وفي موقع العميلة'],
               ['remote', 'عن بُعد'],
             ]
           : [
@@ -1642,36 +1643,38 @@
         if (mode === 'either') {
           cityLine.textContent =
             providerKind === 'independent'
-              ? 'كلاهما: موقع العميلة + استوديو معتمد — تقويم واحد يمنع تضارب المواعيد ويحسب الانتقال.'
+              ? 'كلاهما: مقرّك + موقع العميلة — تقويم واحد يمنع تضارب المواعيد ويحسب الانتقال.'
               : 'كلاهما: في المقر وفي موقع العميلة — تقويم واحد للمختصّة يمنع حجزها مرتين.';
           placeDetails.append(cityLine);
-          if (providerKind !== 'independent' && branches.length) {
+          if (branches.length) {
             branchSelect.hidden = false;
             const branchWrap = document.createElement('label');
             branchWrap.className = 'field';
-            branchWrap.append(document.createTextNode('فرع المقر (عند التقديم في المقر)'), branchSelect);
+            branchWrap.append(
+              document.createTextNode(
+                providerKind === 'independent'
+                  ? 'مقرّ الاستقبال (عند التقديم في مقرّك)'
+                  : 'فرع المقر (عند التقديم في المقر)',
+              ),
+              branchSelect,
+            );
             placeDetails.appendChild(branchWrap);
-          } else if (providerKind !== 'independent' && !branches.length) {
-            placeGap.textContent = 'أضيفي فرعًا للمنشأة لاحقًا لربط «في المقر». التغطية الخارجية تُحفظ الآن.';
-            placeDetails.appendChild(placeGap);
           } else {
-            branchSelect.value = '';
-            branchSelect.hidden = true;
-            placeDetails.appendChild(branchSelect);
+            placeGap.textContent =
+              providerKind === 'independent'
+                ? 'أضيفي مقرّ استقبال واحد من قسم الموقع ثم اربطي هذه الخدمة.'
+                : 'أضيفي فرعًا للمنشأة لاحقًا لربط «في المقر». التغطية الخارجية تُحفظ الآن.';
+            placeDetails.appendChild(placeGap);
           }
           appendClientSiteCoverage();
           return;
         }
-        // branch / في المقر
-        if (providerKind === 'independent') {
-          placeGap.textContent =
-            'المختصّة المستقلة لا تُظهر تحت «في المقر». اختاري موقع العميلة أو استوديو معتمد.';
-          placeDetails.appendChild(placeGap);
-          return;
-        }
+        // branch / في المقر (facility) أو مقرّ الاستقبال (independent)
         if (!branches.length) {
           placeGap.textContent =
-            'لا فروع مسجّلة على الحساب (PartnerBranch). أضيفي فرعًا قبل اعتماد «في المقر».';
+            providerKind === 'independent'
+              ? 'لا مقرّ استقبال مسجّل بعد. أضيفي موقعًا واحدًا من قسم «موقع تقديم الخدمة» ثم ارجعي هنا.'
+              : 'لا فروع مسجّلة على الحساب (PartnerBranch). أضيفي فرعًا قبل اعتماد «في المقر».';
           cityLine.textContent = partner.city ? 'مدينة الحساب: ' + partner.city : 'المدينة غير مسجّلة.';
           placeDetails.append(placeGap, cityLine);
           return;

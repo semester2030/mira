@@ -65,9 +65,11 @@ void main() {
     final controller = _controllerFor(port);
     await port.detach(_slotA);
     expect(controller.pauseCalls, greaterThan(0));
-    expect(controller.disposeCalls, 1);
+    // Park keeps the initialized controller for a fast swipe-back.
+    expect(controller.disposed, isFalse);
     expect(port.playback, PresentationPlayback.idle);
     await port.release();
+    expect(controller.disposed, isTrue);
   });
 
   test('same file on two slides keeps the latest slot', () async {
@@ -78,12 +80,14 @@ void main() {
     await port.attach(_slotB, _clip);
     await Future<void>.delayed(const Duration(milliseconds: 20));
     expect(port.activeSlot, _slotB);
-    expect(first.disposed, isTrue);
-    expect(ControllableVideoController.instances.where((c) => !c.disposed).length, 1);
+    // Previous clip is parked (muted), not disposed.
+    expect(first.disposed, isFalse);
+    expect(first.lastVolume, 0);
+    expect(ControllableVideoController.instances.where((c) => !c.disposed).length, lessThanOrEqualTo(2));
     await port.release();
   });
 
-  test('detach of A may finish pause/dispose after B attach without harming B', () async {
+  test('detach of A may finish pause after B attach without harming B', () async {
     final a = ControllableVideoController(_clip);
     final b = ControllableVideoController(_clip);
     a.pauseGate = Completer<void>();
@@ -104,9 +108,7 @@ void main() {
     expect(port.activeSlot, _slotB);
     expect(b.disposed, isFalse);
     expect(b.playCalls, greaterThan(0));
-    expect(a.disposed, isTrue);
     expect(a.pauseCalls, greaterThan(0));
-    expect(a.disposeCalls, 1);
     await port.release();
   });
 
@@ -200,7 +202,9 @@ void main() {
     expect(ControllableVideoController.instances.where((c) => !c.disposed).length, 1);
     await port.attach(_slotB, _clip);
     await Future<void>.delayed(const Duration(milliseconds: 20));
-    expect(ControllableVideoController.instances.where((c) => !c.disposed).length, 1);
+    // Active + parked previous clip (muted) may both exist; release clears both.
+    expect(ControllableVideoController.instances.where((c) => !c.disposed).length, lessThanOrEqualTo(2));
+    expect(port.activeSlot, _slotB);
     await port.release();
     expect(ControllableVideoController.instances.where((c) => !c.disposed), isEmpty);
   });
@@ -222,13 +226,95 @@ void main() {
     final port = _port();
     await port.setMuted(true);
     await port.attach(_slotA, _clip);
-    final first = ControllableVideoController.instances.single;
+    final first = ControllableVideoController.instances.where((item) => !item.disposed).single;
     expect(first.lastVolume, 0);
     expect(first.playCalls, 1);
     await port.attach(_slotB, _clip);
-    final live = ControllableVideoController.instances.where((item) => !item.disposed).single;
+    final live = ControllableVideoController.instances.where((item) => !item.disposed).last;
     expect(port.isMuted, isTrue);
     expect(live.lastVolume, 0);
+    await port.release();
+  });
+
+  test('ready exposes the view as soon as initialize finishes', () async {
+    final controller = ControllableVideoController(_clip);
+    final port = AssetVideoPort(createController: (_) => controller);
+    await port.attach(_slotA, _clip);
+    expect(port.playback, PresentationPlayback.ready);
+    expect(port.buildView(), isNotNull);
+    expect(controller.playCalls, greaterThan(0));
+    final firstFrame = port.playbackEvents.where((e) => e.type == 'first_frame');
+    expect(firstFrame, isNotEmpty);
+    expect(port.hasVisibleProgress, isTrue);
+    await port.release();
+  });
+
+  test('first_frame waits for progressing position after play, not initialize alone', () async {
+    final controller = ControllableVideoController(_clip);
+    final port = AssetVideoPort(createController: (_) => controller);
+    await port.attach(_slotA, _clip);
+    final first = port.playbackEvents.where((e) => e.type == 'first_frame').single;
+    expect(controller.playCalls, greaterThan(0));
+    expect(controller.value.position > Duration.zero, isTrue);
+    expect(first.positionMs, isNotNull);
+    expect(port.hasVisibleProgress, isTrue);
+    await port.release();
+  });
+
+  test('settle timer includes warm wait (starts before pending warm completes)', () async {
+    final warmCtrl = ControllableVideoController(_clip)..initDelay = const Duration(milliseconds: 120);
+    final playCtrl = ControllableVideoController(_clip);
+    var n = 0;
+    final port = AssetVideoPort(
+      createController: (_) {
+        n += 1;
+        return n == 1 ? warmCtrl : playCtrl;
+      },
+    );
+    // Start warm with a slow initialize, then attach same path (claims warm).
+    unawaited(port.warm(_clip));
+    await Future<void>.delayed(const Duration(milliseconds: 20));
+    final started = DateTime.now().toUtc();
+    await port.attach(_slotA, _clip);
+    final first = port.playbackEvents.where((e) => e.type == 'first_frame').single;
+    final wall = DateTime.now().toUtc().difference(started).inMilliseconds;
+    // first_frame ms must reflect settle→progress including remaining warm wait.
+    expect(first.positionMs, greaterThanOrEqualTo(80));
+    expect(first.positionMs, lessThanOrEqualTo(wall + 50));
+    await port.release();
+  });
+
+  test('stalled play emits first_frame_timeout not first_frame', () async {
+    final controller = ControllableVideoController(_clip)..advanceOnPlay = false;
+    final port = AssetVideoPort(createController: (_) => controller);
+    await port.attach(_slotA, _clip);
+    expect(port.playbackEvents.where((e) => e.type == 'first_frame'), isEmpty);
+    expect(port.playbackEvents.where((e) => e.type == 'first_frame_timeout'), isNotEmpty);
+    expect(port.hasVisibleProgress, isFalse);
+    expect(port.firstFrameTimedOut, isTrue);
+    await port.release();
+  });
+
+  test('reactivating a parked clip requires new progress past prior position', () async {
+    final controller = ControllableVideoController(_clip);
+    final port = AssetVideoPort(createController: (_) => controller);
+    await port.attach(_slotA, _clip);
+    expect(port.hasVisibleProgress, isTrue);
+    final firstPos = controller.value.position;
+    await port.detach(_slotA);
+    // Parked controller keeps prior position; next attach must advance beyond it.
+    controller.advanceOnPlay = false;
+    final pending = port.attach(_slotA, _clip);
+    await Future<void>.delayed(const Duration(milliseconds: 40));
+    expect(port.playbackEvents.where((e) => e.type == 'first_frame').length, 1);
+    // Advance past the floor after reactivation.
+    controller.value = controller.value.copyWith(
+      isPlaying: true,
+      position: firstPos + const Duration(milliseconds: 32),
+    );
+    await pending;
+    expect(port.playbackEvents.where((e) => e.type == 'first_frame').length, 2);
+    expect(port.hasVisibleProgress, isTrue);
     await port.release();
   });
 }

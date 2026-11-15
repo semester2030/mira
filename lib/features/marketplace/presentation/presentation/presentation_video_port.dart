@@ -32,7 +32,9 @@ class DiscoverPlaybackEvent {
     required this.at,
   });
 
-  /// `started` | `progressed` | `stopped`
+  /// `started` | `first_frame` | `first_frame_timeout` | `progressed` | `stopped`
+  /// `first_frame`: swipe-settle → first visible progressing frame (ms).
+  /// `first_frame_timeout`: settle→deadline with no progress (stall — not success).
   final String type;
   final String offerId;
   final String mediaUrl;
@@ -106,10 +108,21 @@ class AssetVideoPort extends PresentationVideoPort {
   String? _lastOfferId;
   String? _lastMediaUrl;
   DateTime? _lastProgressAt;
+  DateTime? _settleStartedAt;
+  Duration _progressFloor = Duration.zero;
+  bool _firstFrameEmitted = false;
+  bool _firstFrameTimedOut = false;
+  bool _hasVisibleProgress = false;
   final List<DiscoverPlaybackEvent> playbackEvents = <DiscoverPlaybackEvent>[];
 
   /// Source URL bound to the controller (null when no video attached).
   String? get activeMediaUrl => _activePath;
+
+  /// True after the active clip advanced past the post-play floor while playing.
+  bool get hasVisibleProgress => _hasVisibleProgress;
+
+  /// True when settle→deadline elapsed with no progressing frame.
+  bool get firstFrameTimedOut => _firstFrameTimedOut;
 
   void _emitPlayback(String type, {int? positionMs, String? offerId, String? mediaUrl}) {
     final oid = offerId ?? activeSlot?.slideId ?? _lastOfferId ?? '';
@@ -197,6 +210,13 @@ class AssetVideoPort extends PresentationVideoPort {
   @override
   Future<void> attach(PresentationSlot slot, String assetPath) async {
     if (_released) return;
+    // Clock starts at swipe settle — before waiting on warm/park/previous dispose.
+    final settleStarted = DateTime.now().toUtc();
+    _settleStartedAt = settleStarted;
+    _progressFloor = Duration.zero;
+    _firstFrameEmitted = false;
+    _firstFrameTimedOut = false;
+    _hasVisibleProgress = false;
     final token = ++_generation;
     final previous = _controller;
     final previousPath = _activePath;
@@ -264,16 +284,23 @@ class AssetVideoPort extends PresentationVideoPort {
         await _dropIfStale(controller, token);
         return;
       }
+      // Show the decoded surface (cover → video), then start play and wait for real progress.
+      if (controller.value.hasError) {
+        playback = PresentationPlayback.failed;
+        errorText = 'تعذر تشغيل الفيديو';
+        _notify();
+        return;
+      }
+      playback = PresentationPlayback.ready;
+      errorText = null;
+      _notify();
       await controller.setVolume(_muted ? 0 : 1);
       if (!_canStart(controller, token)) {
         await _dropIfStale(controller, token);
         return;
       }
-      await controller.setVolume(_muted ? 0 : 1);
-      if (!_canStart(controller, token)) {
-        await _dropIfStale(controller, token);
-        return;
-      }
+      // Capture floor before play so parked/rewind clips must advance again after activate.
+      _progressFloor = controller.value.position;
       await controller.play();
       if (token != _generation || _released || _controller != controller) {
         await _dropIfStale(controller, token);
@@ -285,14 +312,13 @@ class AssetVideoPort extends PresentationVideoPort {
         _notify();
         return;
       }
-      playback = PresentationPlayback.ready;
-      errorText = null;
       _emitPlayback(
         'started',
         positionMs: controller.value.position.inMilliseconds,
         offerId: slot.slideId,
         mediaUrl: assetPath,
       );
+      await _awaitFirstVisibleProgress(controller, token, settleStarted, slot, assetPath);
       _notify();
     } catch (error) {
       if (_controller == controller) _controller = null;
@@ -302,6 +328,49 @@ class AssetVideoPort extends PresentationVideoPort {
       errorText = 'تعذر تشغيل الفيديو';
       _notify();
     }
+  }
+
+  /// Ends latency when position advances past the post-play floor (not cover/ready alone).
+  Future<void> _awaitFirstVisibleProgress(
+    VideoPlayerController controller,
+    int token,
+    DateTime settleStarted,
+    PresentationSlot slot,
+    String assetPath,
+  ) async {
+    if (_firstFrameEmitted || _firstFrameTimedOut) return;
+    final deadline = DateTime.now().toUtc().add(const Duration(seconds: 3));
+    while (DateTime.now().toUtc().isBefore(deadline)) {
+      if (token != _generation || _released || _controller != controller) return;
+      if (_markProgressIfVisible(controller, token, settleStarted, slot, assetPath)) return;
+      await Future<void>.delayed(const Duration(milliseconds: 16));
+    }
+    if (!_firstFrameEmitted && !_firstFrameTimedOut && token == _generation && _controller == controller) {
+      final ms = DateTime.now().toUtc().difference(settleStarted).inMilliseconds;
+      _firstFrameTimedOut = true;
+      _emitPlayback('first_frame_timeout', positionMs: ms, offerId: slot.slideId, mediaUrl: assetPath);
+    }
+  }
+
+  bool _markProgressIfVisible(
+    VideoPlayerController controller,
+    int token,
+    DateTime settleStarted,
+    PresentationSlot slot,
+    String assetPath,
+  ) {
+    if (token != _generation || _controller != controller || _released) return false;
+    if (!controller.value.isInitialized || controller.value.hasError) return false;
+    if (!controller.value.isPlaying) return false;
+    if (controller.value.position <= _progressFloor) return false;
+    _hasVisibleProgress = true;
+    _firstFrameTimedOut = false;
+    if (!_firstFrameEmitted) {
+      _firstFrameEmitted = true;
+      final ms = DateTime.now().toUtc().difference(settleStarted).inMilliseconds;
+      _emitPlayback('first_frame', positionMs: ms, offerId: slot.slideId, mediaUrl: assetPath);
+    }
+    return true;
   }
 
   void _onController(VideoPlayerController controller, int token) {
@@ -314,11 +383,18 @@ class AssetVideoPort extends PresentationVideoPort {
       return;
     }
     if (!controller.value.isPlaying || playback != PresentationPlayback.ready) return;
+    final settle = _settleStartedAt;
+    if (settle != null && activeSlot != null && _activePath != null) {
+      _markProgressIfVisible(controller, token, settle, activeSlot!, _activePath!);
+    }
+    if (controller.value.position <= _progressFloor) return;
+    _hasVisibleProgress = true;
     final now = DateTime.now().toUtc();
     final last = _lastProgressAt;
     if (last != null && now.difference(last) < const Duration(milliseconds: 400)) return;
     _lastProgressAt = now;
     _emitPlayback('progressed', positionMs: controller.value.position.inMilliseconds);
+    _notify();
   }
 
   @override

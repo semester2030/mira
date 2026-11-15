@@ -1,0 +1,5 @@
+75ce1fa6d458d2c1f9a151f90479c4cd5108b28c5b5dbb97f657962fa16f7c76  app-release.aab
+path=build/app/outputs/bundle/release/app-release.aab
+size=164.7MB
+signer=CN=Android Debug (NOT production upload key)
+flags=--release --no-tree-shake-icons

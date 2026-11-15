@@ -1,0 +1,159 @@
+{
+  "catalogItems": 41,
+  "products": 31,
+  "services": 10,
+  "purchaseModes": {
+    "display": 21,
+    "internal_cod": 4,
+    "external": 6,
+    "None": 10
+  },
+  "mediaHead": {
+    "ok": 18,
+    "fail": 11,
+    "noMedia": 12,
+    "checked": 29
+  },
+  "playbackSample": {
+    "checked": 16,
+    "ok": 11,
+    "fail": 5,
+    "samples": [
+      {
+        "nameAr": "فستان زواج",
+        "kind": "product",
+        "purchaseMode": "display",
+        "mediaKind": "video",
+        "http": 206,
+        "ctype": "video/mp4",
+        "bytes": 2048,
+        "ok": true
+      },
+      {
+        "nameAr": "منتجات شعر",
+        "kind": "product",
+        "purchaseMode": "internal_cod",
+        "mediaKind": "video",
+        "http": 206,
+        "ctype": "video/mp4",
+        "bytes": 2048,
+        "ok": true
+      },
+      {
+        "nameAr": "صالون ميرا",
+        "ok": false,
+        "err": "HTTP Error 404: Not Found"
+      },
+      {
+        "nameAr": "فساتين يوميه",
+        "kind": "product",
+        "purchaseMode": "display",
+        "mediaKind": "video",
+        "http": 206,
+        "ctype": "video/mp4",
+        "bytes": 2048,
+        "ok": true
+      },
+      {
+        "nameAr": "فستان يومي",
+        "ok": false,
+        "err": "HTTP Error 404: Not Found"
+      },
+      {
+        "nameAr": "مرطب وجه",
+        "kind": "product",
+        "purchaseMode": "display",
+        "mediaKind": "video",
+        "http": 206,
+        "ctype": "video/mp4",
+        "bytes": 2048,
+        "ok": true
+      },
+      {
+        "nameAr": "طقم مكياج",
+        "kind": "product",
+        "purchaseMode": "display",
+        "mediaKind": "video",
+        "http": 206,
+        "ctype": "video/mp4",
+        "bytes": 2048,
+        "ok": true
+      },
+      {
+        "nameAr": "فستان سهرة",
+        "ok": false,
+        "err": "HTTP Error 404: Not Found"
+      },
+      {
+        "nameAr": "عبايات فاخرة",
+        "kind": "product",
+        "purchaseMode": "display",
+        "mediaKind": "video",
+        "http": 206,
+        "ctype": "video/mp4",
+        "bytes": 2048,
+        "ok": true
+      },
+      {
+        "nameAr": "جاكيت خفيف",
+        "ok": false,
+        "err": "HTTP Error 404: Not Found"
+      },
+      {
+        "nameAr": "طقم ذهب",
+        "kind": "product",
+        "purchaseMode": "display",
+        "mediaKind": "video",
+        "http": 206,
+        "ctype": "video/mp4",
+        "bytes": 2048,
+        "ok": true
+      },
+      {
+        "nameAr": "شنط يد انيقه",
+        "kind": "product",
+        "purchaseMode": "display",
+        "mediaKind": "video",
+        "http": 206,
+        "ctype": "video/mp4",
+        "bytes": 2048,
+        "ok": true
+      },
+      {
+        "nameAr": "فستان زواج",
+        "kind": "product",
+        "purchaseMode": "display",
+        "mediaKind": "video",
+        "http": 206,
+        "ctype": "video/quicktime",
+        "bytes": 2048,
+        "ok": true
+      },
+      {
+        "nameAr": "فستان سهرة",
+        "kind": "product",
+        "purchaseMode": "display",
+        "mediaKind": "video",
+        "http": 206,
+        "ctype": "video/quicktime",
+        "bytes": 2048,
+        "ok": true
+      },
+      {
+        "nameAr": "عباية سوداء",
+        "ok": false,
+        "err": "HTTP Error 404: Not Found"
+      },
+      {
+        "nameAr": "طقم ذهب",
+        "kind": "product",
+        "purchaseMode": "display",
+        "mediaKind": "video",
+        "http": 206,
+        "ctype": "video/mp4",
+        "bytes": 2048,
+        "ok": true
+      }
+    ]
+  }
+}

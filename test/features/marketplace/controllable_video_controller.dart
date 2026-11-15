@@ -30,6 +30,9 @@ class ControllableVideoController extends ValueNotifier<VideoPlayerValue>
   int setVolumeCalls = 0;
   double? lastVolume;
 
+  /// When false, [play] marks isPlaying without advancing position (stall simulation).
+  bool advanceOnPlay = true;
+
   @override
   int playerId = VideoPlayerController.kUninitializedPlayerId;
 
@@ -82,7 +85,15 @@ class ControllableVideoController extends ValueNotifier<VideoPlayerValue>
   Future<void> play() async {
     playCalls += 1;
     if (disposed || value.hasError) return;
-    value = value.copyWith(isPlaying: true);
+    if (advanceOnPlay) {
+      // Simulate a decoded progressing frame so first_frame waits on real progress.
+      value = value.copyWith(
+        isPlaying: true,
+        position: value.position + const Duration(milliseconds: 16),
+      );
+    } else {
+      value = value.copyWith(isPlaying: true);
+    }
     if (failAfterReady) {
       value = value.copyWith(
         errorDescription: 'runtime',

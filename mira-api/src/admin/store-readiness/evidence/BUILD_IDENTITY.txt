@@ -1,0 +1,9 @@
+repo=https://github.com/semester2030/mira.git
+branch=mira/elegance-e1-taxonomy-foundation
+sha=8d178f6e644b946ef4fee5a3d743842c4272f0d9
+short=8d178f6
+version=19:version: 1.0.0+2026110301
+applicationId=app.mira.beauty
+api_default=https://mira-api-n4p3.onrender.com/api/v1
+portal=https://mira-partners-portal.onrender.com
+admin=https://mira-admin-portal.onrender.com

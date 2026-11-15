@@ -1,0 +1,83 @@
+{
+  "titleAr": "أداء المقاطع والتفاعل وموقع الخدمات",
+  "gitSha": "see_commit_after_push",
+  "gitShaBase": "8d178f6e644b946ef4fee5a3d743842c4272f0d9",
+  "branch": "mira/elegance-e1-taxonomy-foundation",
+  "auditedAtUtc": "2026-11-15T00:40:00Z",
+  "environment": {
+    "localWorktree": "elegance-e1",
+    "api": "https://mira-api-n4p3.onrender.com/api/v1",
+    "publishedVsLocal": "تعديلات هذه الجولة محلية؛ الإنتاج على Render لم يتحدّث بعد",
+    "iosSimulatorBuild": "flutter build ios --simulator --debug",
+    "androidDevice": "لا محاكٍ متصل؛ الآيفون الفعلي غير متاح لاسلكيًا (Developer Mode)"
+  },
+  "media404": {
+    "visualChecked": 29,
+    "ok": 18,
+    "fail": 11,
+    "restoredBlobs": 0,
+    "hiddenByProvenIdDenylistLocal": 11,
+    "uuidShapeBanRemoved": true,
+    "deactivateWithoutIds": "no_op",
+    "deactivateHealthyId": "refused_not_proven_broken",
+    "evidence": "evidence/media-404-mapping.json"
+  },
+  "videoLatency": {
+    "metricAr": "استقرار السحب → first_frame بعد تقدّم الموضع؛ المهلة = first_frame_timeout منفصل",
+    "beforeAr": "غير مقيس على جهاز",
+    "afterLocalAr": "غير مقيس على جهاز عميلة — harness وحدة 30 انتقالًا (ليس جهازًا)",
+    "files": [
+      "lib/features/marketplace/presentation/presentation/presentation_video_port.dart",
+      "test/features/marketplace/asset_video_port_test.dart",
+      "test/features/marketplace/discover_swipe_latency_harness_test.dart"
+    ],
+    "targets": { "medianMs": 300, "p95Ms": 700, "status": "instrumented_pending_device_sample" },
+    "deviceSample": {
+      "ios": { "nTransitions": 0, "medianMs": null, "p95Ms": null, "reasonAr": "لا عيّنة UI على المحاكي/الجهاز؛ بناء simulator جاهز" },
+      "android": { "nTransitions": 0, "medianMs": null, "p95Ms": null, "reasonAr": "لا محاكٍ أندرويد متصل" },
+      "nTransitions": 0,
+      "medianMs": null,
+      "p95Ms": null,
+      "meetsTargets": false,
+      "unitHarness": "docs/phase2_3/evidence/store-readiness-2026-03-15/SWIPE_LATENCY_HARNESS_LATEST.json"
+    }
+  },
+  "testClips": {
+    "visual1": 29,
+    "fullCatalog": 41,
+    "totalFetched": 29,
+    "suspectDeleted": 0,
+    "suspectRemaining": 0,
+    "noteAr": "جرد Cursor منفصل عن 404. محذوف=0."
+  },
+  "share": {
+    "status": "untested_device",
+    "resultAr": "غير مختبر من هاتف إلى هاتف"
+  },
+  "views": {
+    "policy": "approved_v1 — pending vs confirmed؛ إعادة محاولة بنفس eventId",
+    "tableOnProd": false,
+    "deviceProof": false
+  },
+  "branchDistance": {
+    "status": "local_code",
+    "independentVenue": "إنشاء مقر + اختيار مدينة صريح (لا افتراض الرياض) يشمل مكة",
+    "deviceProof": false
+  },
+  "adminGate": {
+    "status": "local_code",
+    "staticPublicFiles": "PROTECTED",
+    "liveApiRouteDeployed": false
+  },
+  "numericAnswers": {
+    "videoWaitBeforeMs": "غير مقيس",
+    "videoWaitAfterMs": "غير مقيس",
+    "testClipsDeleted": 0,
+    "shareOk": "غير مختبر",
+    "viewsOk": "غير مختبر",
+    "distanceOk": "غير مختبر",
+    "mediaRestored": 0,
+    "mediaHiddenLocal": 11,
+    "localVsPublished": "محلي · غير منشور"
+  }
+}

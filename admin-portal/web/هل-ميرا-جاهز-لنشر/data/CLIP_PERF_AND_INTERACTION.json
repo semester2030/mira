@@ -1,0 +1,4 @@
+{
+  "error": "PROTECTED",
+  "messageAr": "تقرير أداء المقاطع خلف صلاحيات الإدارة. استخدم /api/v1/admin/store-readiness/clip-perf."
+}
