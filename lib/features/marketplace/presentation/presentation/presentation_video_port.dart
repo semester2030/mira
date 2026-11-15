@@ -1,7 +1,10 @@
 import 'dart:async';
+import 'dart:io';
 
 import 'package:flutter/widgets.dart';
 import 'package:video_player/video_player.dart';
+
+import 'discover_video_disk_cache.dart';
 
 /// Identity of one slide and one media item. The asset path is not enough:
 /// two presentations may use the same file.
@@ -91,17 +94,38 @@ abstract class PresentationVideoPort extends ChangeNotifier {
 typedef AssetVideoControllerFactory = VideoPlayerController Function(String assetPath);
 
 class AssetVideoPort extends PresentationVideoPort {
-  AssetVideoPort({AssetVideoControllerFactory? createController})
-      : _createController = createController ?? AssetVideoPort._defaultOpen;
+  AssetVideoPort({
+    AssetVideoControllerFactory? createController,
+    DiscoverVideoDiskCache? diskCache,
+  })  : _createController = createController,
+        _diskCache = diskCache ??
+            (createController == null ? DiscoverVideoDiskCache.instance : null);
 
-  final AssetVideoControllerFactory _createController;
+  /// When non-null (unit tests), paths are passed straight to this factory and
+  /// disk cache is skipped.
+  final AssetVideoControllerFactory? _createController;
+  final DiscoverVideoDiskCache? _diskCache;
 
   static VideoPlayerController _defaultOpen(String assetPath) {
     final uri = Uri.tryParse(assetPath);
     if (uri != null && (uri.isScheme('http') || uri.isScheme('https'))) {
       return VideoPlayerController.networkUrl(uri);
     }
+    if (assetPath.startsWith('/') || assetPath.startsWith('file:')) {
+      final path = assetPath.startsWith('file:') ? Uri.parse(assetPath).toFilePath() : assetPath;
+      return VideoPlayerController.file(File(path));
+    }
     return VideoPlayerController.asset(assetPath);
+  }
+
+  /// Lightweight diagnostics for post-session review (not shown in customer UI).
+  final List<Map<String, Object?>> playbackDiagnostics = <Map<String, Object?>>[];
+
+  void _recordDiag(Map<String, Object?> row) {
+    playbackDiagnostics.add(row);
+    if (playbackDiagnostics.length > 60) {
+      playbackDiagnostics.removeRange(0, playbackDiagnostics.length - 60);
+    }
   }
 
   VideoPlayerController? _controller;
@@ -191,7 +215,91 @@ class AssetVideoPort extends PresentationVideoPort {
 
   void _notify() => notifyPlayback();
 
-  VideoPlayerController _open(String assetPath) => _createController(assetPath);
+  VideoPlayerController _openRaw(String assetPath) {
+    final factory = _createController;
+    if (factory != null) return factory(assetPath);
+    return _defaultOpen(assetPath);
+  }
+
+  /// Resolves HTTP media through the disk cache when a complete file exists or
+  /// finishes downloading. In-flight downloads are shared by mediaId.
+  Future<VideoPlayerController> _openResolved(
+    String assetPath, {
+    required bool waitForDisk,
+    Map<String, int?>? phases,
+  }) async {
+    final cache = _diskCache;
+    final uri = Uri.tryParse(assetPath);
+    final isHttp = uri != null && (uri.isScheme('http') || uri.isScheme('https'));
+    if (cache == null || !isHttp || _createController != null) {
+      phases?['cacheSource'] = 0;
+      return _openRaw(assetPath);
+    }
+
+    // Instant hit if already complete on disk.
+    final peeked = await cache.peekComplete(assetPath);
+    if (peeked != null) {
+      phases?['cacheSource'] = 3; // disk
+      phases?['cacheBytes'] = await peeked.length();
+      _recordDiag({
+        'mediaId': DiscoverVideoDiskCache.mediaIdFromUrl(assetPath),
+        'source': 'disk',
+        'bytesReused': phases?['cacheBytes'],
+        'bytesDownloaded': 0,
+      });
+      return VideoPlayerController.file(peeked);
+    }
+
+    if (waitForDisk) {
+      // Prefer a finished file, but never stall mute-prime on a 10–40MB GET.
+      // Prefetch continues in the background for rewind / later swipe.
+      DiscoverCachedVideo cached;
+      try {
+        cached = await cache
+            .ensureLocal(assetPath)
+            .timeout(const Duration(milliseconds: 2200));
+      } on TimeoutException {
+        cached = DiscoverCachedVideo.network(
+          url: assetPath,
+          mediaId: DiscoverVideoDiskCache.mediaIdFromUrl(assetPath),
+          reason: 'disk_wait_timeout',
+        );
+      }
+      if (cached.playableFromDisk && cached.file != null) {
+        phases?['cacheSource'] = 3;
+        phases?['cacheBytes'] = cached.bytesOnDisk;
+        _recordDiag({
+          'mediaId': cached.mediaId,
+          'source': cached.fromDisk ? 'disk' : 'network_to_disk',
+          'bytesReused': cached.fromDisk ? cached.bytesOnDisk : 0,
+          'bytesDownloaded': cached.bytesDownloaded,
+        });
+        return VideoPlayerController.file(cached.file!);
+      }
+      // Keep download going; play from network this time.
+      // ignore: discarded_futures
+      cache.ensureLocal(assetPath);
+      phases?['cacheSource'] = 0;
+      _recordDiag({
+        'mediaId': cached.mediaId ?? DiscoverVideoDiskCache.mediaIdFromUrl(assetPath),
+        'source': 'network',
+        'bytesReused': cached.bytesOnDisk,
+        'bytesDownloaded': cached.bytesDownloaded,
+        'error': cached.reason,
+      });
+      return _openRaw(assetPath);
+    }
+
+    // Non-blocking: start download for later rewind; play network now.
+    cache.prefetch(assetPath);
+    phases?['cacheSource'] = 0;
+    return _openRaw(assetPath);
+  }
+
+  /// Prefetch bytes to disk without creating a decoder (shared by mediaId).
+  void prefetchDisk(String assetPath) {
+    _diskCache?.prefetch(assetPath);
+  }
 
   Future<void> _silence(VideoPlayerController controller) async {
     try {
@@ -256,12 +364,8 @@ class AssetVideoPort extends PresentationVideoPort {
     VideoPlayerController? claimed;
     var claimedReady = false;
     var claimSource = 'cold';
-    if (_warmPath == assetPath && _warm != null) {
-      claimed = _warm;
+    if (_warmPath == assetPath) {
       final pending = _warmFuture;
-      _warm = null;
-      _warmPath = null;
-      _warmFuture = null;
       var warmOk = true;
       if (pending != null) {
         try {
@@ -270,8 +374,13 @@ class AssetVideoPort extends PresentationVideoPort {
           warmOk = false;
         }
       }
+      claimed = _warm;
+      _warm = null;
+      _warmPath = null;
+      _warmFuture = null;
       // Reject a warm that never decoded a progressing frame — claiming it
       // recreates the v10 stall (isPlaying+isBuffering, pos0, sizeW=1080).
+      // After reject, _openResolved still prefers a completed disk file.
       if (!warmOk ||
           claimed == null ||
           !claimed.value.isInitialized ||
@@ -323,7 +432,13 @@ class AssetVideoPort extends PresentationVideoPort {
         lastAttachPhases['initStart'] = lastAttachPhases['warmClaimed'] ?? _msSince(settleStarted);
       }
     } else {
-      controller = _open(assetPath);
+      // Prefer complete disk file (rewind after many swipes) without blocking the
+      // first-ever play on a full download — network plays while bytes land.
+      controller = await _openResolved(
+        assetPath,
+        waitForDisk: false,
+        phases: lastAttachPhases,
+      );
     }
     _controller = controller;
     _activePath = assetPath;
@@ -458,7 +573,7 @@ class AssetVideoPort extends PresentationVideoPort {
           if (controller.value.position <= _progressFloor && !controller.value.hasError) {
             lastAttachPhases['stallReopenMs'] = _msSince(settleStarted);
             final path = assetPath;
-            final fresh = _open(path);
+            final fresh = await _openResolved(path, waitForDisk: true, phases: lastAttachPhases);
             if (identical(fresh, controller)) {
               lastAttachPhases['stallReopenSkipped'] = 1;
               await controller.play();
@@ -651,11 +766,16 @@ class AssetVideoPort extends PresentationVideoPort {
 
   /// Initializes the next clip without playing it or playing its audio.
   /// Safe to call repeatedly for the same URL — keeps the in-flight future.
+  ///
+  /// Disk download for [assetPath] is shared by mediaId and is NOT cancelled when
+  /// this warm controller is disposed for another URL.
   Future<void> warm(String assetPath) async {
     if (_released || assetPath.isEmpty) return;
     if (_activePath == assetPath || _parkedPath == assetPath) return;
-    if (_warmPath == assetPath && _warm != null) {
-      // Already warming / warm — join the same future so callers can await progress.
+    // Always keep the shared disk fetch alive for this (and previous) URL.
+    prefetchDisk(assetPath);
+    // Join while download OR mute-prime is still in flight (_warm may still be null).
+    if (_warmPath == assetPath) {
       final pending = _warmFuture;
       if (pending != null) {
         try {
@@ -670,7 +790,7 @@ class AssetVideoPort extends PresentationVideoPort {
     _warm = null;
     _warmPath = null;
     _warmFuture = null;
-    // Cancel previous warm without blocking the new one on its dispose.
+    // Dispose previous decoder only — disk download for previousPath continues.
     if (previous != null && previous != _controller && previous != _parked) {
       if (previousFuture != null) {
         // ignore: unawaited_futures
@@ -679,34 +799,43 @@ class AssetVideoPort extends PresentationVideoPort {
       // ignore: unawaited_futures
       previous.dispose();
       if (previousPath != null && previousPath.isNotEmpty) {
+        prefetchDisk(previousPath);
         _emitPlayback('warm_cancelled', mediaUrl: previousPath);
       }
     }
     if (_released) return;
-    final controller = _open(assetPath);
-    _warm = controller;
+
+    // Reserve the warm path immediately so duplicate warm() calls join this future
+    // while the shared disk download is still running.
     _warmPath = assetPath;
-    _emitPlayback('warm_started', mediaUrl: assetPath);
+    VideoPlayerController? controller;
     final future = () async {
-      await controller.initialize();
-      if (controller.value.hasError) {
+      // Download+open from disk when possible so mute-prime is local (no pos0 stall).
+      final opened = await _openResolved(assetPath, waitForDisk: true);
+      controller = opened;
+      if (_released || _warmPath != assetPath) {
+        await opened.dispose();
+        return;
+      }
+      _warm = opened;
+      _emitPlayback('warm_started', mediaUrl: assetPath);
+      await opened.initialize();
+      if (opened.value.hasError) {
         throw StateError('warm init error');
       }
-      await controller.setVolume(0);
-      // Mute-play until position actually advances. A 450ms window was too short
-      // for 1080p on the simulator — those warms stayed at pos0 and poisoned attach.
-      // Do NOT seek back to 0 after priming (flushes the iOS buffer).
-      await controller.play();
+      await opened.setVolume(0);
+      // Mute-play until position advances. Do NOT seekTo(0) after priming.
+      await opened.play();
       final deadline = DateTime.now().toUtc().add(const Duration(milliseconds: 2500));
       while (DateTime.now().toUtc().isBefore(deadline)) {
-        if (controller.value.hasError) throw StateError('warm play error');
-        if (controller.value.position > Duration.zero) break;
+        if (opened.value.hasError) throw StateError('warm play error');
+        if (opened.value.position > Duration.zero) break;
         await Future<void>.delayed(const Duration(milliseconds: 40));
       }
-      if (controller.value.position <= Duration.zero) {
+      if (opened.value.position <= Duration.zero) {
         throw StateError('warm never advanced');
       }
-      await controller.pause();
+      await opened.pause();
     }();
     _warmFuture = future;
     try {
@@ -715,11 +844,13 @@ class AssetVideoPort extends PresentationVideoPort {
         _emitPlayback('warm_ready', mediaUrl: assetPath);
       }
     } catch (_) {
-      if (_warm == controller) {
+      if (_warm == controller || (_warmPath == assetPath && controller != null)) {
         _warm = null;
         _warmPath = null;
         _warmFuture = null;
-        await controller.dispose();
+        try {
+          await controller?.dispose();
+        } catch (_) {}
         _emitPlayback('warm_failed', mediaUrl: assetPath);
       }
     }
