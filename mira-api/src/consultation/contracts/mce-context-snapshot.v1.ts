@@ -112,6 +112,16 @@ export interface MceContextSnapshotV1 {
   builtAt: string;
 }
 
+export type MceReplySource =
+  | 'llm'
+  | 'degraded'
+  | 'discovery'
+  | 'cache'
+  | 'commercial'
+  | 'scope'
+  | 'dialogue'
+  | 'moderation';
+
 export interface MceAssistantPayloadV1 {
   answerAr: string;
   confidence: MceConfidenceLevel;
@@ -120,4 +130,5 @@ export interface MceAssistantPayloadV1 {
   suggestedQuestionsAr: string[];
   blocked: boolean;
   disclaimerAr: string;
+  replySource?: MceReplySource;
 }
