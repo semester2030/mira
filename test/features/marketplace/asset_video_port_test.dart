@@ -1,5 +1,6 @@
 import 'dart:async';
 
+import 'package:flutter/widgets.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:mirra/features/marketplace/presentation/presentation/discover_presentation_catalog.dart';
 import 'package:mirra/features/marketplace/presentation/presentation/presentation_models.dart';
@@ -315,6 +316,56 @@ void main() {
     await pending;
     expect(port.playbackEvents.where((e) => e.type == 'first_frame').length, 2);
     expect(port.hasVisibleProgress, isTrue);
+    await port.release();
+  });
+
+  test('attach reuses in-flight warm controller instead of disposing it', () async {
+    final warmCtrl = ControllableVideoController(_clip)
+      ..initGate = Completer<void>()
+      ..initDelay = Duration.zero;
+    var created = 0;
+    final port = AssetVideoPort(
+      createController: (_) {
+        created += 1;
+        return created == 1 ? warmCtrl : ControllableVideoController('$_clip-cold');
+      },
+    );
+    final warming = port.warm(_clip);
+    await Future<void>.delayed(const Duration(milliseconds: 20));
+    expect(port.warmingPath, _clip);
+    expect(created, 1);
+    // Swipe while warm is still initializing — must keep the same controller.
+    final attaching = port.attach(_slotA, _clip);
+    await Future<void>.delayed(const Duration(milliseconds: 20));
+    warmCtrl.initGate!.complete();
+    await warming;
+    await attaching;
+    expect(created, 1, reason: 'must not open a second cold controller');
+    expect(port.lastAttachPhases['source'], 1);
+    expect(warmCtrl.playCalls, greaterThan(0));
+    expect(warmCtrl.disposed, isFalse);
+    await port.release();
+  });
+
+  test('buildView mounts invisible until first visible progress (cover window)', () async {
+    final controller = ControllableVideoController(_clip)..advanceOnPlay = false;
+    final port = AssetVideoPort(createController: (_) => controller);
+    final pending = port.attach(_slotA, _clip);
+    await Future<void>.delayed(const Duration(milliseconds: 30));
+    expect(port.playback, PresentationPlayback.ready);
+    final before = port.buildView();
+    expect(before, isNotNull, reason: 'decoder must stay mounted for position ticks');
+    expect(before, isA<Opacity>(), reason: 'surface hidden under cover until progress');
+    expect((before! as Opacity).opacity, 0);
+    controller.value = controller.value.copyWith(
+      isPlaying: true,
+      position: const Duration(milliseconds: 16),
+    );
+    await pending;
+    expect(port.hasVisibleProgress, isTrue);
+    final after = port.buildView();
+    expect(after, isNotNull);
+    expect(after, isNot(isA<Opacity>()), reason: 'opaque video after first frame');
     await port.release();
   });
 }
