@@ -598,6 +598,17 @@ model CatalogAdAction {
 }
 
 /// Account-scoped catalog favorite. Rows are readable only for their user.
+model CatalogQualifiedView {
+  id         String   @id @default(uuid())
+  eventId    String   @unique @map("event_id")
+  targetKind String   @map("target_kind")
+  targetId   String   @map("target_id")
+  createdAt  DateTime @default(now()) @map("created_at")
+
+  @@index([targetKind, targetId])
+  @@map("catalog_qualified_views")
+}
+
 model CatalogFavorite {
   id        String   @id @default(uuid())
   userId    String   @map("user_id")

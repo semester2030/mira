@@ -10,7 +10,14 @@ import {
 import { CatalogAd, Prisma } from '@prisma/client';
 import { PrismaService } from '../prisma/prisma.service';
 import { publishedCatalogMediaWhere } from './catalog-published-media';
-import { disabledViewCount, refuseQualifiedView, QualifiedViewRequest } from './catalog-view.policy';
+import { filterPlayableCatalogMedia } from './catalog-media-playable';
+import {
+  availableViewCount,
+  disabledViewCount,
+  refuseQualifiedView,
+  viewCountingEnabled,
+  QualifiedViewRequest,
+} from './catalog-view.policy';
 
 type Kind = 'product' | 'service';
 type DecisionName = 'approve' | 'reject' | 'withdraw';
@@ -128,9 +135,9 @@ export class CatalogAdService {
   }
 
   async stats(advertiserPartnerId: string, id: string) {
-    await this.owned(advertiserPartnerId, id);
+    const ad = await this.owned(advertiserPartnerId, id);
     const linkOpens = await this.prisma.catalogAdAction.count({ where: { adId: id, action: 'link_open' } });
-    return { id, linkOpens, views: disabledViewCount() };
+    return { id, linkOpens, views: await this.viewCount(ad.targetKind, ad.targetId) };
   }
 
   async listReviews() {
@@ -266,7 +273,7 @@ export class CatalogAdService {
         appointmentOperational: false,
         appointmentConfirmed: false,
       },
-      views: disabledViewCount(),
+      views: await this.viewCount(ad.targetKind, ad.targetId),
     };
   }
 
@@ -291,17 +298,42 @@ export class CatalogAdService {
     }
   }
 
-  viewCount() {
-    return disabledViewCount();
+  async viewCount(kindRaw?: string, id?: string) {
+    if (!viewCountingEnabled()) return disabledViewCount();
+    if (!kindRaw || !id) return availableViewCount(0);
+    const kind = this.kind(kindRaw);
+    const count = await this.prisma.catalogQualifiedView.count({
+      where: { targetKind: kind, targetId: id },
+    });
+    return availableViewCount(count);
   }
 
   async recordView(input: QualifiedViewRequest) {
     const refusal = refuseQualifiedView(input);
     if (refusal === 'client-total') throw new BadRequestException('العدد لا يُقبل من العميل');
     if (refusal === 'invalid') throw new BadRequestException('حدث المشاهدة غير مكتمل');
+    if (refusal === 'unapproved') throw new ServiceUnavailableException('قواعد العد غير معتمدة');
     const kind = this.kind(input.targetKind);
-    if (!(await this.targetEligible(kind, input.targetId || ''))) throw new NotFoundException('الهدف غير متاح');
-    throw new ServiceUnavailableException('قواعد العد غير معتمدة');
+    const targetId = input.targetId || '';
+    if (!(await this.targetEligible(kind, targetId))) throw new NotFoundException('الهدف غير متاح');
+    const eventId = String(input.eventId || '').trim();
+    try {
+      await this.prisma.catalogQualifiedView.create({
+        data: { eventId, targetKind: kind, targetId },
+      });
+      const count = await this.prisma.catalogQualifiedView.count({
+        where: { targetKind: kind, targetId },
+      });
+      return { recorded: true, alreadyRecorded: false, views: availableViewCount(count) };
+    } catch (error) {
+      if (error instanceof Prisma.PrismaClientKnownRequestError && error.code === 'P2002') {
+        const count = await this.prisma.catalogQualifiedView.count({
+          where: { targetKind: kind, targetId },
+        });
+        return { recorded: false, alreadyRecorded: true, views: availableViewCount(count) };
+      }
+      throw error;
+    }
   }
 
   private partnerView(ad: CatalogAd) {
@@ -333,7 +365,7 @@ export class CatalogAdService {
       publisher: publisher ? { id: publisher.id, nameAr: publisher.nameAr } : null,
       seller: live?.seller ?? null,
       liveTarget: live?.target ?? null,
-      views: disabledViewCount(),
+      views: await this.viewCount(ad.targetKind, ad.targetId),
     };
   }
 
@@ -383,10 +415,12 @@ export class CatalogAdService {
   }
 
   private async publishedMedia(kind: Kind, id: string) {
-    const rows = await this.prisma.catalogMedia.findMany({
-      where: publishedCatalogMediaWhere(kind, id),
-      orderBy: { sortOrder: 'asc' },
-    });
+    const rows = filterPlayableCatalogMedia(
+      await this.prisma.catalogMedia.findMany({
+        where: publishedCatalogMediaWhere(kind, id),
+        orderBy: { sortOrder: 'asc' },
+      }),
+    );
     return rows.map((row) => ({ id: row.id, kind: row.kind, url: `/api/v1/marketplace/media/${row.id}` }));
   }
 

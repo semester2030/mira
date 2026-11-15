@@ -1,0 +1,90 @@
+<!DOCTYPE html>
+<html lang="ar" dir="rtl">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <meta name="mira-api-base" content="https://mira-api-n4p3.onrender.com/api/v1" />
+  <title>ميرا · اكتشفي</title>
+  <link href="https://fonts.googleapis.com/css2?family=Tajawal:wght@400;700&display=swap" rel="stylesheet" />
+  <style>
+    :root { --ink:#1a1216; --muted:#6b5b63; --bg:#f7f1f3; --card:#fff; --accent:#b84d6a; }
+    * { box-sizing: border-box; }
+    body { margin:0; font-family:Tajawal,sans-serif; background:var(--bg); color:var(--ink); }
+    main { max-width:28rem; margin:2rem auto; padding:1.25rem; }
+    .card { background:var(--card); border-radius:16px; padding:1.25rem; box-shadow:0 8px 28px rgba(26,18,22,.08); }
+    h1 { font-size:1.35rem; margin:0 0 .35rem; }
+    p { margin:.35rem 0; color:var(--muted); line-height:1.6; }
+    .title { color:var(--ink); font-weight:700; font-size:1.1rem; }
+    .actions { display:flex; flex-wrap:wrap; gap:.6rem; margin-top:1rem; }
+    a.btn { display:inline-block; padding:.65rem 1rem; border-radius:999px; text-decoration:none; font-weight:700; }
+    a.primary { background:var(--accent); color:#fff; }
+    a.ghost { background:#f0e6ea; color:var(--ink); }
+    .err { color:#9b2c2c; }
+    .mono { font-size:.8rem; word-break:break-all; }
+  </style>
+</head>
+<body>
+  <main>
+    <div class="card" id="root">
+      <h1>ميرا · اكتشفي</h1>
+      <p id="status">جاري فتح المحتوى…</p>
+    </div>
+  </main>
+  <script>
+    (function () {
+      var root = document.getElementById('root');
+      var status = document.getElementById('status');
+      var path = location.pathname.replace(/\/+$/, '');
+      // Accept /discover.html?... or /discover/product|service/{id} via rewrite
+      var parts = path.split('/').filter(Boolean);
+      var kind = null, id = null;
+      var di = parts.indexOf('discover');
+      if (di >= 0 && parts.length >= di + 3) {
+        kind = parts[di + 1];
+        id = decodeURIComponent(parts[di + 2]);
+      }
+      var q = new URLSearchParams(location.search);
+      if ((!kind || !id) && q.get('kind') && q.get('id')) {
+        kind = q.get('kind');
+        id = q.get('id');
+      }
+      if ((kind !== 'product' && kind !== 'service') || !id) {
+        status.className = 'err';
+        status.textContent = 'رابط غير مكتمل. افتحي الرابط من مشاركة داخل تطبيق ميرا.';
+        return;
+      }
+
+      var appScheme = 'mira://discover/' + kind + '/' + encodeURIComponent(id);
+      var apiBase = (document.querySelector('meta[name="mira-api-base"]') || {}).content ||
+        'https://mira-api-n4p3.onrender.com/api/v1';
+
+      status.innerHTML = 'المعرّف: <span class="mono">' + kind + '/' + id + '</span>';
+
+      // Try opening the installed app first.
+      var iframe = document.createElement('iframe');
+      iframe.style.display = 'none';
+      iframe.src = appScheme;
+      document.body.appendChild(iframe);
+      setTimeout(function () { try { iframe.remove(); } catch (_) {} }, 1500);
+
+      fetch(apiBase + '/marketplace/catalog/' + encodeURIComponent(kind) + 's/' + encodeURIComponent(id))
+        .then(function (r) { return r.ok ? r.json() : null; })
+        .catch(function () { return null; })
+        .then(function (item) {
+          var title = (item && (item.nameAr || item.titleAr)) || (kind === 'service' ? 'خدمة' : 'منتج');
+          var partner = (item && (item.partnerNameAr || (item.partner && item.partner.nameAr))) || '';
+          root.innerHTML =
+            '<h1>ميرا · اكتشفي</h1>' +
+            '<p class="title">' + title + '</p>' +
+            (partner ? '<p>' + partner + '</p>' : '') +
+            '<p class="mono">' + kind + ' · ' + id + '</p>' +
+            '<div class="actions">' +
+              '<a class="btn primary" href="' + appScheme + '">فتح في تطبيق ميرا</a>' +
+              '<a class="btn ghost" href="./index.html">الموقع</a>' +
+            '</div>' +
+            '<p style="margin-top:1rem">إذا كان التطبيق مثبتًا سيُفتح نفس المحتوى. وإلا يمكنك تحميل ميرا لاحقًا.</p>';
+        });
+    })();
+  </script>
+</body>
+</html>
