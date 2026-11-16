@@ -1,17 +1,17 @@
 {
   "titleAr": "أداء المقاطع والتفاعل وموقع الخدمات",
-  "gitShaWorktree": "26c9263",
+  "gitShaWorktree": "6d4a535",
   "gitShaBaseline": "2b8f702",
-  "gitShaFixes": "26c9263",
-  "branch": "mira/elegance-e1-taxonomy-foundation",
-  "auditedAtUtc": "2026-11-15T05:01:00Z",
+  "gitShaFixes": "cfcd801",
+  "branch": "mira/ask-mira-rc13",
+  "auditedAtUtc": "2026-11-16T11:34:39Z",
   "environment": {
     "api": "https://mira-api-n4p3.onrender.com/api/v1",
-    "publishedVsLocal": "إصلاحات الفيديو محلية على الفرع؛ يحتاج نشر API/تطبيق للإنتاج",
+    "publishedVsLocal": "إصلاح كاش الفيديو أُعيد دمجه في ask-mira-rc13 (cfcd801)؛ إخفاء مقطع 1200 المعطوب نُشر على API main 97027d2؛ تثبيت iOS 2026111609",
     "androidApk": "/Users/fayez/Desktop/MIRA_DEBUG_20261115T050714Z_26c9263.apk",
     "androidApkSha256": "4325a047805aafc720c130be4bd970432de0ffc76759f68bb78784771528164d",
     "iosSimulator": "MiraRC2 36606E21-65DE-4FF6-B6CC-CEB73506469A iOS 26.5",
-    "iosPhysical": "fayez’s iPhone wireless 00008110-00191986268BA01E — install attempted"
+    "iosPhysical": "fayez’s iPhone 00008110-00191986268BA01E — Release 1.0.0+2026111609"
   },
   "videoLatency": {
     "metricAr": "settle → first_frame؛ ميزانية 45 تشمل المهلات؛ أول فتح منفصل",
@@ -84,5 +84,14 @@
     "timeoutsOfAttempts": 32,
     "blackScreenCount": 0,
     "coldOpenMs": 8965
+  },
+  "regression20261116": {
+    "missingDiskCacheOnAskMira": true,
+    "referenceFix": "6e9caed",
+    "restoreCommit": "cfcd801",
+    "brokenStubHidden": "94d514e3-99bf-4c5f-b517-fe4178aacb0f",
+    "dailyDressMediaOk": "f8c0535f-f87f-4ef7-86df-7a93d373ead5",
+    "unitCacheFirstByteMs": 2,
+    "noteAr": "رقم 2ms محلي لاختبار الكاش وليس إطار الآيفون"
   }
 }

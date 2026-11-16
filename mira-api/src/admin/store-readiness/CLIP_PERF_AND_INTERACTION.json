@@ -1,83 +1,97 @@
 {
   "titleAr": "أداء المقاطع والتفاعل وموقع الخدمات",
-  "gitSha": "29167dc8d5517e735cf90350177582278619ef17",
-  "gitShaBase": "8d178f6e644b946ef4fee5a3d743842c4272f0d9",
-  "branch": "mira/elegance-e1-taxonomy-foundation",
-  "auditedAtUtc": "2026-11-15T00:40:00Z",
+  "gitShaWorktree": "6d4a535",
+  "gitShaBaseline": "2b8f702",
+  "gitShaFixes": "cfcd801",
+  "branch": "mira/ask-mira-rc13",
+  "auditedAtUtc": "2026-11-16T11:34:39Z",
   "environment": {
-    "localWorktree": "elegance-e1",
     "api": "https://mira-api-n4p3.onrender.com/api/v1",
-    "publishedVsLocal": "تعديلات هذه الجولة محلية؛ الإنتاج على Render لم يتحدّث بعد",
-    "iosSimulatorBuild": "flutter build ios --simulator --debug",
-    "androidDevice": "لا محاكٍ متصل؛ الآيفون الفعلي غير متاح لاسلكيًا (Developer Mode)"
-  },
-  "media404": {
-    "visualChecked": 29,
-    "ok": 18,
-    "fail": 11,
-    "restoredBlobs": 0,
-    "hiddenByProvenIdDenylistLocal": 11,
-    "uuidShapeBanRemoved": true,
-    "deactivateWithoutIds": "no_op",
-    "deactivateHealthyId": "refused_not_proven_broken",
-    "evidence": "evidence/media-404-mapping.json"
+    "publishedVsLocal": "إصلاح كاش الفيديو أُعيد دمجه في ask-mira-rc13 (cfcd801)؛ إخفاء مقطع 1200 المعطوب نُشر على API main 97027d2؛ تثبيت iOS 2026111609",
+    "androidApk": "/Users/fayez/Desktop/MIRA_DEBUG_20261115T050714Z_26c9263.apk",
+    "androidApkSha256": "4325a047805aafc720c130be4bd970432de0ffc76759f68bb78784771528164d",
+    "iosSimulator": "MiraRC2 36606E21-65DE-4FF6-B6CC-CEB73506469A iOS 26.5",
+    "iosPhysical": "fayez’s iPhone 00008110-00191986268BA01E — Release 1.0.0+2026111609"
   },
   "videoLatency": {
-    "metricAr": "استقرار السحب → first_frame بعد تقدّم الموضع؛ المهلة = first_frame_timeout منفصل",
-    "beforeAr": "غير مقيس على جهاز",
-    "afterLocalAr": "غير مقيس على جهاز عميلة — harness وحدة 30 انتقالًا (ليس جهازًا)",
-    "files": [
-      "lib/features/marketplace/presentation/presentation/presentation_video_port.dart",
-      "test/features/marketplace/asset_video_port_test.dart",
-      "test/features/marketplace/discover_swipe_latency_harness_test.dart"
-    ],
-    "targets": { "medianMs": 300, "p95Ms": 700, "status": "instrumented_pending_device_sample" },
-    "deviceSample": {
-      "ios": { "nTransitions": 0, "medianMs": null, "p95Ms": null, "reasonAr": "لا عيّنة UI على المحاكي/الجهاز؛ بناء simulator جاهز" },
-      "android": { "nTransitions": 0, "medianMs": null, "p95Ms": null, "reasonAr": "لا محاكٍ أندرويد متصل" },
-      "nTransitions": 0,
-      "medianMs": null,
-      "p95Ms": null,
+    "metricAr": "settle → first_frame؛ ميزانية 45 تشمل المهلات؛ أول فتح منفصل",
+    "v7_postWarm": {
+      "under700Of45": 20,
+      "timeouts": 15,
+      "medianMs": 229,
+      "p95Ms": 5721,
+      "warmHits": 45
+    },
+    "v10_primaryComplete45": {
+      "platform": "ios_simulator_MiraRC2",
+      "git": "46d8d08",
+      "counted": 45,
+      "under700Ms": 13,
+      "timeouts": 32,
+      "blackSuspected": 0,
+      "coverHeldOnTimeout": 32,
+      "coldMs": 8965,
+      "medianMs_successOnly": 113,
+      "p95Ms_successOnly": 222,
+      "warmHits": 45,
+      "evidenceJson": "SWIPE_LATENCY_MiraRC2_POST_PLAY_v10.json",
+      "screenProof": "SWIPE_BLACKSCREEN_PROOF_v10_90s.mp4",
       "meetsTargets": false,
-      "unitHarness": "docs/phase2_3/evidence/store-readiness-2026-03-15/SWIPE_LATENCY_HARNESS_LATEST.json"
+      "rootCauseAr": "بعد play: isPlaying+isBuffering وموضع 0 على مقاطع ~1080p؛ الغلاف بقي ظاهرًا (لا سواد أداة)"
+    },
+    "v11_rejectDeadWarm": {
+      "git": "26c9263",
+      "counted": 26,
+      "under700Ms": 6,
+      "timeouts": 18,
+      "blackSuspected": 0,
+      "warmHits": 6,
+      "coldHits": 19,
+      "screenProof": "SWIPE_BLACKSCREEN_PROOF_v11_120s.mp4"
     }
   },
-  "testClips": {
-    "visual1": 29,
-    "fullCatalog": 41,
-    "totalFetched": 29,
-    "suspectDeleted": 0,
-    "suspectRemaining": 0,
-    "noteAr": "جرد Cursor منفصل عن 404. محذوف=0."
+  "blackScreen": {
+    "instrumentedBlackSuspected": 0,
+    "coverHeldOnAllTimeouts": true,
+    "screenRecordFiles": [
+      "SWIPE_BLACKSCREEN_PROOF_v10_90s.mp4",
+      "SWIPE_BLACKSCREEN_PROOF_v11_120s.mp4"
+    ]
+  },
+  "locationPermission": {
+    "NSLocationWhenInUseUsageDescription": "present",
+    "androidManifestFineLocation": true,
+    "fullJourneyVenueDistanceDirectionsBooking": "pending_ui_proof"
   },
   "share": {
-    "status": "untested_device",
-    "resultAr": "غير مختبر من هاتف إلى هاتف"
+    "webLanding": "https://mira-website.onrender.com/discover.html?kind=product&id=14260bc3-7960-493f-86ad-2422d96bfa47",
+    "webLandingHttp": 200,
+    "deviceToDeviceProof": "pending"
   },
   "views": {
-    "policy": "approved_v1 — pending vs confirmed؛ إعادة محاولة بنفس eventId",
-    "tableOnProd": false,
-    "deviceProof": false
+    "apiSequence": "15→16→16→17",
+    "evidence": "VIEWS_SEQUENCE_RAW.json",
+    "eyeIconUiProof": "pending"
   },
-  "branchDistance": {
-    "status": "local_code",
-    "independentVenue": "إنشاء مقر + اختيار مدينة صريح (لا افتراض الرياض) يشمل مكة",
-    "deviceProof": false
-  },
-  "adminGate": {
-    "status": "local_code",
-    "staticPublicFiles": "PROTECTED",
-    "liveApiRouteDeployed": false
+  "cleanup": {
+    "inventoryFetched": 29,
+    "suspectsDeleted": 0,
+    "media11Still404": 11,
+    "creationLogMatch": "pending_admin_creation_logs"
   },
   "numericAnswers": {
-    "videoWaitBeforeMs": "غير مقيس",
-    "videoWaitAfterMs": "غير مقيس",
-    "testClipsDeleted": 0,
-    "shareOk": "غير مختبر",
-    "viewsOk": "غير مختبر",
-    "distanceOk": "غير مختبر",
-    "mediaRestored": 0,
-    "mediaHiddenLocal": 11,
-    "localVsPublished": "محلي · غير منشور"
+    "under700OfAttempts": 13,
+    "timeoutsOfAttempts": 32,
+    "blackScreenCount": 0,
+    "coldOpenMs": 8965
+  },
+  "regression20261116": {
+    "missingDiskCacheOnAskMira": true,
+    "referenceFix": "6e9caed",
+    "restoreCommit": "cfcd801",
+    "brokenStubHidden": "94d514e3-99bf-4c5f-b517-fe4178aacb0f",
+    "dailyDressMediaOk": "f8c0535f-f87f-4ef7-86df-7a93d373ead5",
+    "unitCacheFirstByteMs": 2,
+    "noteAr": "رقم 2ms محلي لاختبار الكاش وليس إطار الآيفون"
   }
 }
