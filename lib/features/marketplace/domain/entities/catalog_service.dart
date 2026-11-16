@@ -27,6 +27,13 @@ class CatalogService {
   final String? placeMode;
   /// Pinned partner branch when placeMode is branch (from catalog).
   final String? branchId;
+  /// Display name for the pinned branch when present.
+  final String? branchNameAr;
+  /// Branch map coordinates when the partner published them.
+  final double? lat;
+  final double? lng;
+  final double? distanceKm;
+  final String? distanceLabelAr;
   /// Home-visit coverage city ids (sa-*).
   final List<String> coverageCityIds;
   /// Published home travel fee in halalas; null when unset.
@@ -70,6 +77,11 @@ class CatalogService {
       category: category,
       placeMode: placeMode,
       branchId: branchId,
+      branchNameAr: branchNameAr,
+      lat: lat,
+      lng: lng,
+      distanceKm: distanceKm,
+      distanceLabelAr: distanceLabelAr,
       coverageCityIds: coverageCityIds,
       travelFeeHalalas: travelFeeHalalas,
       bookingEnabled: bookingEnabled,
@@ -106,6 +118,11 @@ class CatalogService {
     this.category,
     this.placeMode,
     this.branchId,
+    this.branchNameAr,
+    this.lat,
+    this.lng,
+    this.distanceKm,
+    this.distanceLabelAr,
     this.coverageCityIds = const [],
     this.travelFeeHalalas,
     required this.bookingEnabled,
@@ -123,6 +140,7 @@ class CatalogService {
   bool get isClinic => partnerType == 'clinic';
   bool get isIndependent => providerKind == 'independent';
   bool get isProviderIntroVideo => videoScope == 'provider_intro';
+  bool get hasBranchCoords => lat != null && lng != null;
 
   CatalogServiceTemplateDef? get template => CatalogServiceTemplates.byId(profile.templateId);
 }

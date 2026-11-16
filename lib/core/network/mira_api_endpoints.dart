@@ -37,6 +37,10 @@ abstract final class MiraApiEndpoints {
   static const marketplaceTaxonomy = '/marketplace/taxonomy';
   static const marketplaceAds = '/marketplace/ads';
   static const marketplaceFavorites = '/marketplace/favorites';
+  /// Qualified Discover view counts (server-gated).
+  static String marketplaceViewCount(String kind, String id) =>
+      '/marketplace/view-counts/$kind/$id';
+  static const marketplaceViewEvents = '/marketplace/view-events';
   /// Customer cart, COD orders and service bookings (Firebase auth).
   static const marketplaceCommerce = '/marketplace/commerce';
   static const partnersPortalTrack = '/partners-portal/track';
