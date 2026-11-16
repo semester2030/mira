@@ -3,6 +3,8 @@ abstract final class ConsultationApiEndpoints {
   static String limits() => '/consultation/limits';
   static String sessionMessages(String sessionId) =>
       '/consultation/sessions/$sessionId/messages';
+  static String sessionTranscript(String sessionId) =>
+      '/consultation/sessions/$sessionId/messages/transcript';
   static String sessionAttachments(String sessionId) =>
       '/consultation/sessions/$sessionId/attachments';
   static String attachment(String attachmentId) =>

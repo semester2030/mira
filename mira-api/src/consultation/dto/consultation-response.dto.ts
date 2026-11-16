@@ -15,6 +15,8 @@ export class ConsultationSessionResponseDto {
   suggestedStartersAr!: string[];
   createdAt!: string;
   updatedAt!: string;
+  /** Echo of clientPreferenceOpId after a successful preference bind. */
+  appliedPreferenceOpId?: string | null;
 }
 
 export class ConsultationMessageResponseDto {

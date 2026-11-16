@@ -1,0 +1,24 @@
+{
+  "probedAt": "2026-11-15",
+  "apiBase": "https://mira-api-n4p3.onrender.com/api/v1",
+  "queries": {
+    "شنطة": {
+      "totalMatched": 2,
+      "sample": [
+        {"id": "49d6042f-9961-403e-96cb-5379f2b2878d", "nameAr": "شنطة يد", "priceLabel": "180 ر.س", "purchaseMode": "display"},
+        {"id": "9bf9336d-b515-4922-a45d-8733f824c9a0", "nameAr": "شنطة يد", "priceLabel": "240 ر.س", "purchaseMode": "display"}
+      ],
+      "journey": "guest_bag_under_300 — both under 300 SAR"
+    },
+    "فستان": {
+      "totalMatched": 9,
+      "sampleNote": "includes فستان زواج 15000 ر.س"
+    },
+    "مكياج": {
+      "totalMatched": 3,
+      "includesService": true
+    },
+    "مولود": {"totalMatched": 0, "note": "no invent — honest empty"},
+    "تنسيق": {"totalMatched": 0, "note": "stylist/organizer — no published offers"}
+  }
+}

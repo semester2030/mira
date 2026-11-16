@@ -2,6 +2,7 @@ import 'dart:typed_data';
 
 import '../../../consultation/domain/dialogue_history.dart';
 import '../../../../core/json/json_as_string.dart';
+import 'consultant_discovery_offer.dart';
 
 class AdvisorMessage {
   final String text;
@@ -16,6 +17,8 @@ class AdvisorMessage {
   final String? clientMessageId;
   final String? id;
   final bool failed;
+  final List<ConsultantDiscoveryOffer> discoveryOffers;
+  final ConsultantDiscoveryOffer? discoverySideOffer;
 
   const AdvisorMessage({
     required this.text,
@@ -30,6 +33,8 @@ class AdvisorMessage {
     this.clientMessageId,
     this.id,
     this.failed = false,
+    this.discoveryOffers = const [],
+    this.discoverySideOffer,
   });
 
   AdvisorMessage copyWith({
@@ -45,6 +50,8 @@ class AdvisorMessage {
     String? clientMessageId,
     String? id,
     bool? failed,
+    List<ConsultantDiscoveryOffer>? discoveryOffers,
+    ConsultantDiscoveryOffer? discoverySideOffer,
   }) {
     return AdvisorMessage(
       text: text ?? this.text,
@@ -59,6 +66,8 @@ class AdvisorMessage {
       clientMessageId: clientMessageId ?? this.clientMessageId,
       id: id ?? this.id,
       failed: failed ?? this.failed,
+      discoveryOffers: discoveryOffers ?? this.discoveryOffers,
+      discoverySideOffer: discoverySideOffer ?? this.discoverySideOffer,
     );
   }
 }

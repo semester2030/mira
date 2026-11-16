@@ -29,6 +29,10 @@
       {
         "include": "marketplace/taxonomy/beauty-icons/**/*",
         "watchAssets": true
+      },
+      {
+        "include": "consultant-discovery/*.json",
+        "watchAssets": true
       }
     ]
   }

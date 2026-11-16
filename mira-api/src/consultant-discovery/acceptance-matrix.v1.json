@@ -1,0 +1,147 @@
+{
+  "version": "consultant-discovery.v1",
+  "featureFlag": "MIRA_CONSULTANT_DISCOVERY_V1",
+  "cases": [
+    {
+      "id": "A01",
+      "requestAr": "عندي زواج أنا ضيفة وأبي شنطة تحت 300",
+      "expectedKind": "direct_product_search",
+      "expectedRules": ["R005", "R016"],
+      "catalogNote": "يعتمد على عروض شنط منشورة في elegance تحت 300 ر.س"
+    },
+    {
+      "id": "A02",
+      "requestAr": "أنا أرتب زواج أختي بالرياض وأبي منسقة",
+      "expectedKind": "direct_service_search",
+      "expectedRules": ["R002", "R070"],
+      "catalogNote": "occasions.styling قد يكون بلا عروض منشورة حالياً — يمتنع عن الاختلاق"
+    },
+    {
+      "id": "A03",
+      "requestAr": "عندي زواج",
+      "expectedKind": "clarify",
+      "expectedRules": ["R002", "gate.clarify_role"],
+      "catalogNote": "لا بحث قبل توضيح الدور"
+    },
+    {
+      "id": "A04",
+      "requestAr": "أبي فستان زفاف بس",
+      "expectedKind": "direct_product_search",
+      "expectedRules": ["R001"],
+      "catalogNote": "بدون اقتراح جانبي"
+    },
+    {
+      "id": "A05",
+      "requestAr": "لا أبي منظمة للحفل",
+      "expectedKind": "refuse_path",
+      "expectedRules": ["gate.refuse"],
+      "catalogNote": "لا نتائج"
+    },
+    {
+      "id": "A06",
+      "requestAr": "شو رأيكم؟",
+      "hasFaceImage": true,
+      "expectedKind": "advice_only",
+      "expectedRules": ["gate.face_no_clinic"],
+      "catalogNote": "صورة الوجه وحدها لا تبرر عيادة"
+    },
+    {
+      "id": "A07",
+      "requestAr": "أبي حجز ليزر في الرياض",
+      "expectedKind": "direct_service_search",
+      "expectedRules": ["R077"],
+      "catalogNote": "beauty.clinic_laser عبر browse"
+    },
+    {
+      "id": "A08",
+      "requestAr": "أبي جلسة مكياج للمناسبة",
+      "expectedKind": "direct_service_search",
+      "expectedRules": ["R074"],
+      "catalogNote": "خدمات مكياج منشورة إن وُجدت"
+    },
+    {
+      "id": "A09",
+      "requestAr": "أبي هدية لمولود",
+      "expectedKind": "direct_product_search",
+      "expectedRules": ["R065", "R067"],
+      "catalogNote": "لا تُحفظ كتفضيل شخصي؛ قد لا توجد عروض أطفال منشورة"
+    },
+    {
+      "id": "A10",
+      "requestAr": "أبي منسقة",
+      "expectedKind": "advice_only",
+      "expectedRules": ["gate.advice"],
+      "catalogNote": "بدون إشارة زواج كافية → استشارة عامة أو توضيح لاحق"
+    },
+    {
+      "id": "A11",
+      "requestAr": "أنا العروس وأبي فستان زواج",
+      "expectedKind": "direct_product_search",
+      "expectedRules": ["R001"],
+      "catalogNote": "دور عروس + فستان"
+    },
+    {
+      "id": "A12",
+      "requestAr": "أبي شنطة كلاتش لإكمال اللوك",
+      "expectedKind": "direct_product_search",
+      "expectedRules": ["R005", "R016"],
+      "catalogNote": "بحث شنط"
+    },
+    {
+      "id": "A13",
+      "requestAr": "أبي مكياج في جدة",
+      "expectedKind": "direct_service_search",
+      "expectedRules": ["R074"],
+      "catalogNote": "city=جدة"
+    },
+    {
+      "id": "A14",
+      "requestAr": "هدية مو لي لمولود",
+      "expectedKind": "direct_product_search",
+      "expectedRules": ["R065", "R067"],
+      "catalogNote": "saveAsPersonalPreference=false"
+    },
+    {
+      "id": "A15",
+      "requestAr": "الفستان بس بدون إكسسوارات",
+      "expectedKind": "direct_product_search",
+      "expectedRules": ["R001"],
+      "catalogNote": "dress_only blocker"
+    },
+    {
+      "id": "A16",
+      "requestAr": "أرتب حفل زفاف وأبي تنسيق",
+      "expectedKind": "clarify",
+      "expectedRules": ["R002", "R070"],
+      "catalogNote": "تحتاج مدينة قبل البحث"
+    },
+    {
+      "id": "A17",
+      "requestAr": "وش أفضل روتين صباحي؟",
+      "expectedKind": "advice_only",
+      "expectedRules": ["gate.advice"],
+      "catalogNote": "استشارة عامة بلا تجارة — يمر لمسار MCE في التطبيق"
+    },
+    {
+      "id": "A18",
+      "requestAr": "ضيفة زواج وأبي حقيبة تحت 250",
+      "expectedKind": "direct_product_search",
+      "expectedRules": ["R005", "R016"],
+      "catalogNote": "priceMax=250"
+    },
+    {
+      "id": "A19",
+      "requestAr": "أبي خدمة مكياج",
+      "expectedKind": "direct_service_search",
+      "expectedRules": ["R074"],
+      "catalogNote": "خدمة"
+    },
+    {
+      "id": "A20",
+      "requestAr": "أخبريني عن العناية فقط",
+      "expectedKind": "advice_only",
+      "expectedRules": ["gate.advice"],
+      "catalogNote": "لا تجارة — يمر لمسار MCE عند التفعيل في التطبيق"
+    }
+  ]
+}

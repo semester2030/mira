@@ -1,0 +1,1371 @@
+{
+  "version": "consultant-discovery.v1",
+  "rules": [
+    {
+      "ruleId": "R001",
+      "laneAr": "أناقتك",
+      "sourceNameAr": "فساتين زفاف",
+      "sourceId": "clothes.wedding_dress",
+      "signalAr": "تطلب إكمال إطلالة الزفاف بعد اختيار الفستان",
+      "targetIds": [
+        "bags.clutch",
+        "jewelry.earrings"
+      ],
+      "blockerAr": "إن كانت تتصفح فقط، اكتفِ بالفساتين.",
+      "liveSourceId": "clothes.wedding_dress",
+      "liveTargetIds": [
+        "bags.clutch",
+        "jewelry.earrings"
+      ],
+      "visibility": "public_candidate",
+      "version": "consultant-discovery.v1"
+    },
+    {
+      "ruleId": "R002",
+      "laneAr": "أناقتك",
+      "sourceNameAr": "فساتين زفاف",
+      "sourceId": "clothes.wedding_dress",
+      "signalAr": "تقول إنها مسؤولة عن التجهيز وتريد من يساعدها بالتنظيم",
+      "targetIds": [
+        "occasions.styling"
+      ],
+      "blockerAr": "«عندي زواج» وحدها لا تكفي. سؤال عن دورها عند الالتباس، ولا تفترض أنها العروس.",
+      "liveSourceId": "clothes.wedding_dress",
+      "liveTargetIds": [
+        "occasions.styling"
+      ],
+      "visibility": "public_candidate",
+      "version": "consultant-discovery.v1"
+    },
+    {
+      "ruleId": "R003",
+      "laneAr": "أناقتك",
+      "sourceNameAr": "فساتين زفاف",
+      "sourceId": "clothes.wedding_dress",
+      "signalAr": "تسأل عن الاستعداد الشخصي يوم الزواج وترغب في حجز",
+      "targetIds": [
+        "service.salon_makeup",
+        "service.salon_hair_cut"
+      ],
+      "blockerAr": "اطلب المدينة والتاريخ فقط إن لم يُذكرا؛ افصل التصفيف عن القص.",
+      "liveSourceId": "clothes.wedding_dress",
+      "liveTargetIds": [
+        "beauty.makeup",
+        "beauty.hair.cut"
+      ],
+      "visibility": "public_candidate",
+      "version": "consultant-discovery.v1"
+    },
+    {
+      "ruleId": "R004",
+      "laneAr": "أناقتك",
+      "sourceNameAr": "عبايات",
+      "sourceId": "clothes.abaya",
+      "signalAr": "تريد تنسيق شيلة أو حقيبة مع العباية",
+      "targetIds": [
+        "accessories.scarf",
+        "bags.shoulder"
+      ],
+      "blockerAr": "لا تفرض لونًا أو غطاء رأس؛ تحقق من الوصف الفعلي للوشاح.",
+      "liveSourceId": "clothes.abaya",
+      "liveTargetIds": [
+        "accessories.scarf",
+        "bags.shoulder"
+      ],
+      "visibility": "public_candidate",
+      "version": "consultant-discovery.v1"
+    },
+    {
+      "ruleId": "R005",
+      "laneAr": "أناقتك",
+      "sourceNameAr": "فساتين سهرة",
+      "sourceId": "clothes.evening",
+      "signalAr": "تطلب شنطة سهرة أو حذاء مريح للحفل",
+      "targetIds": [
+        "bags.clutch",
+        "shoes.flat"
+      ],
+      "blockerAr": "لا تنتقل للتنظيم لمجرد أنها ضيفة.",
+      "liveSourceId": "clothes.evening",
+      "liveTargetIds": [
+        "bags.clutch",
+        "shoes.flat"
+      ],
+      "visibility": "public_candidate",
+      "version": "consultant-discovery.v1"
+    },
+    {
+      "ruleId": "R006",
+      "laneAr": "أناقتك",
+      "sourceNameAr": "فساتين يومية",
+      "sourceId": "clothes.casual",
+      "signalAr": "تريد إطلالة يومية للمشي",
+      "targetIds": [
+        "shoes.sneaker",
+        "bags.crossbody"
+      ],
+      "blockerAr": "احترم تفضيلها للحذاء وإن رفضت الرياضي.",
+      "liveSourceId": "clothes.casual",
+      "liveTargetIds": [
+        "shoes.sneaker",
+        "bags.crossbody"
+      ],
+      "visibility": "public_candidate",
+      "version": "consultant-discovery.v1"
+    },
+    {
+      "ruleId": "R007",
+      "laneAr": "أناقتك",
+      "sourceNameAr": "تنانير",
+      "sourceId": "clothes.skirt",
+      "signalAr": "تسأل عن قطعة علوية لتنسيق التنورة",
+      "targetIds": [
+        "clothes.blouse"
+      ],
+      "blockerAr": "طابق المناسبة والخامة والتغطية التي طلبتها.",
+      "liveSourceId": "clothes.skirt",
+      "liveTargetIds": [
+        "clothes.blouse"
+      ],
+      "visibility": "public_candidate",
+      "version": "consultant-discovery.v1"
+    },
+    {
+      "ruleId": "R008",
+      "laneAr": "أناقتك",
+      "sourceNameAr": "بلوزات",
+      "sourceId": "clothes.blouse",
+      "signalAr": "تريد إكمال الإطلالة بقطعة سفلية",
+      "targetIds": [
+        "clothes.skirt",
+        "clothes.pants"
+      ],
+      "blockerAr": "لا تفترض مقاسها من الصورة.",
+      "liveSourceId": "clothes.blouse",
+      "liveTargetIds": [
+        "clothes.skirt",
+        "clothes.pants"
+      ],
+      "visibility": "public_candidate",
+      "version": "consultant-discovery.v1"
+    },
+    {
+      "ruleId": "R009",
+      "laneAr": "أناقتك",
+      "sourceNameAr": "قمصان",
+      "sourceId": "clothes.shirt",
+      "signalAr": "تذكر الدوام وتريد تنسيقًا رسميًا",
+      "targetIds": [
+        "clothes.pants",
+        "shoes.loafer"
+      ],
+      "blockerAr": "لا تقترح ملابس سهرة بسبب لون القميص.",
+      "liveSourceId": "clothes.shirt",
+      "liveTargetIds": [
+        "clothes.pants",
+        "shoes.loafer"
+      ],
+      "visibility": "public_candidate",
+      "version": "consultant-discovery.v1"
+    },
+    {
+      "ruleId": "R010",
+      "laneAr": "أناقتك",
+      "sourceNameAr": "بناطيل",
+      "sourceId": "clothes.pants",
+      "signalAr": "تريد قميصًا للعمل أو تسأل عن حزام",
+      "targetIds": [
+        "clothes.shirt",
+        "accessories.belt"
+      ],
+      "blockerAr": "تحقّق من قابلية البنطال للحزام إن كانت مهمة.",
+      "liveSourceId": "clothes.pants",
+      "liveTargetIds": [
+        "clothes.shirt",
+        "accessories.belt"
+      ],
+      "visibility": "public_candidate",
+      "version": "consultant-discovery.v1"
+    },
+    {
+      "ruleId": "R011",
+      "laneAr": "أناقتك",
+      "sourceNameAr": "جينز",
+      "sourceId": "clothes.jeans",
+      "signalAr": "تطلب تنسيقًا يوميًا مع الجينز",
+      "targetIds": [
+        "shoes.sneaker",
+        "clothes.blouse"
+      ],
+      "blockerAr": "لا تستنتج العمر أو البنية.",
+      "liveSourceId": "clothes.jeans",
+      "liveTargetIds": [
+        "shoes.sneaker",
+        "clothes.blouse"
+      ],
+      "visibility": "public_candidate",
+      "version": "consultant-discovery.v1"
+    },
+    {
+      "ruleId": "R012",
+      "laneAr": "أناقتك",
+      "sourceNameAr": "أطقم",
+      "sourceId": "clothes.set",
+      "signalAr": "تريد إكسسوارًا للطقم المكتمل",
+      "targetIds": [
+        "bags.hand",
+        "shoes.flat"
+      ],
+      "blockerAr": "لا تقترح شراء قطعة هي ضمن الطقم.",
+      "liveSourceId": "clothes.set",
+      "liveTargetIds": [
+        "bags.hand",
+        "shoes.flat"
+      ],
+      "visibility": "public_candidate",
+      "version": "consultant-discovery.v1"
+    },
+    {
+      "ruleId": "R013",
+      "laneAr": "أناقتك",
+      "sourceNameAr": "جاكيتات ومعاطف",
+      "sourceId": "clothes.jacket",
+      "signalAr": "تذكر بردًا أو سفرًا وتريد إكمال الإطلالة",
+      "targetIds": [
+        "accessories.scarf",
+        "shoes.boot"
+      ],
+      "blockerAr": "لا تفترض الطقس دون كلامها.",
+      "liveSourceId": "clothes.jacket",
+      "liveTargetIds": [
+        "accessories.scarf",
+        "shoes.boot"
+      ],
+      "visibility": "public_candidate",
+      "version": "consultant-discovery.v1"
+    },
+    {
+      "ruleId": "R014",
+      "laneAr": "أناقتك",
+      "sourceNameAr": "ملابس رياضية",
+      "sourceId": "clothes.sportswear",
+      "signalAr": "تطلب حذاء لنشاط صرّحت به",
+      "targetIds": [
+        "shoes.sneaker"
+      ],
+      "blockerAr": "لا تدّعِ ملاءمة لنشاط محدد بلا وصف منتج يثبتها.",
+      "liveSourceId": "clothes.sportswear",
+      "liveTargetIds": [
+        "shoes.sneaker"
+      ],
+      "visibility": "public_candidate",
+      "version": "consultant-discovery.v1"
+    },
+    {
+      "ruleId": "R015",
+      "laneAr": "أناقتك",
+      "sourceNameAr": "ملابس منزلية",
+      "sourceId": "clothes.loungewear",
+      "signalAr": "تريد طقمًا منزليًا مع حذاء منزلي",
+      "targetIds": [
+        "shoes.slipper"
+      ],
+      "blockerAr": "لا تربط ذلك بمناسبة عائلية.",
+      "liveSourceId": "clothes.loungewear",
+      "liveTargetIds": [
+        "shoes.slipper"
+      ],
+      "visibility": "public_candidate",
+      "version": "consultant-discovery.v1"
+    },
+    {
+      "ruleId": "R016",
+      "laneAr": "أناقتك",
+      "sourceNameAr": "شنط يد",
+      "sourceId": "bags.hand",
+      "signalAr": "تسأل عن محفظة تناسب الحقيبة",
+      "targetIds": [
+        "bags.wallet"
+      ],
+      "blockerAr": "إن أعطت أبعادًا فلا تخمّن القياسات الناقصة.",
+      "liveSourceId": "bags.hand",
+      "liveTargetIds": [
+        "bags.wallet"
+      ],
+      "visibility": "public_candidate",
+      "version": "consultant-discovery.v1"
+    },
+    {
+      "ruleId": "R017",
+      "laneAr": "أناقتك",
+      "sourceNameAr": "شنط كتف",
+      "sourceId": "bags.shoulder",
+      "signalAr": "تريد بديلًا يترك يديها حرتين",
+      "targetIds": [
+        "bags.crossbody"
+      ],
+      "blockerAr": "بديل لنفس الحاجة، لا تعرض الحقيبتين كشراء لازم.",
+      "liveSourceId": "bags.shoulder",
+      "liveTargetIds": [
+        "bags.crossbody"
+      ],
+      "visibility": "public_candidate",
+      "version": "consultant-discovery.v1"
+    },
+    {
+      "ruleId": "R018",
+      "laneAr": "أناقتك",
+      "sourceNameAr": "كلاتش",
+      "sourceId": "bags.clutch",
+      "signalAr": "تبحث عن قطعة واحدة تكمل لون الكلاتش للسهرة",
+      "targetIds": [
+        "jewelry.earrings"
+      ],
+      "blockerAr": "لا تفترض أنها تفضل الذهب من لون الحقيبة.",
+      "liveSourceId": "bags.clutch",
+      "liveTargetIds": [
+        "jewelry.earrings"
+      ],
+      "visibility": "public_candidate",
+      "version": "consultant-discovery.v1"
+    },
+    {
+      "ruleId": "R019",
+      "laneAr": "أناقتك",
+      "sourceNameAr": "كروس بودي",
+      "sourceId": "bags.crossbody",
+      "signalAr": "تخطط للمشي وتريد حذاء معها",
+      "targetIds": [
+        "shoes.sneaker",
+        "shoes.flat"
+      ],
+      "blockerAr": "لا تستنتج السفر من شكل الحقيبة.",
+      "liveSourceId": "bags.crossbody",
+      "liveTargetIds": [
+        "shoes.sneaker",
+        "shoes.flat"
+      ],
+      "visibility": "public_candidate",
+      "version": "consultant-discovery.v1"
+    },
+    {
+      "ruleId": "R020",
+      "laneAr": "أناقتك",
+      "sourceNameAr": "شنط ظهر",
+      "sourceId": "bags.backpack",
+      "signalAr": "تطلب بديلًا يسع أغراض الدوام",
+      "targetIds": [
+        "bags.tote"
+      ],
+      "blockerAr": "السعة ومقاس الجهاز من بيانات المنتج.",
+      "liveSourceId": "bags.backpack",
+      "liveTargetIds": [
+        "bags.tote"
+      ],
+      "visibility": "public_candidate",
+      "version": "consultant-discovery.v1"
+    },
+    {
+      "ruleId": "R021",
+      "laneAr": "أناقتك",
+      "sourceNameAr": "توت",
+      "sourceId": "bags.tote",
+      "signalAr": "تسأل عن محفظة أو تنظيم مقتنياتها",
+      "targetIds": [
+        "bags.wallet"
+      ],
+      "blockerAr": "لا تدّعِ وجود جيوب أو ملحقات غير مسجلة.",
+      "liveSourceId": "bags.tote",
+      "liveTargetIds": [
+        "bags.wallet"
+      ],
+      "visibility": "public_candidate",
+      "version": "consultant-discovery.v1"
+    },
+    {
+      "ruleId": "R022",
+      "laneAr": "أناقتك",
+      "sourceNameAr": "شنط سفر",
+      "sourceId": "bags.travel",
+      "signalAr": "تذكر رحلة وتطلب حقيبة شخصية إضافية",
+      "targetIds": [
+        "bags.backpack",
+        "bags.crossbody"
+      ],
+      "blockerAr": "لا تدّعِ قبول قياسها لدى شركة طيران.",
+      "liveSourceId": "bags.travel",
+      "liveTargetIds": [
+        "bags.backpack",
+        "bags.crossbody"
+      ],
+      "visibility": "public_candidate",
+      "version": "consultant-discovery.v1"
+    },
+    {
+      "ruleId": "R023",
+      "laneAr": "أناقتك",
+      "sourceNameAr": "محافظ",
+      "sourceId": "bags.wallet",
+      "signalAr": "تقول إن المحفظة هدية وتريد تقديمها في صندوق",
+      "targetIds": [
+        "gifts.boxes"
+      ],
+      "blockerAr": "تحقق من إمكان شراء صندوق منفصل وحجمه.",
+      "liveSourceId": "bags.wallet",
+      "liveTargetIds": [
+        "gifts.boxes"
+      ],
+      "visibility": "public_candidate",
+      "version": "consultant-discovery.v1"
+    },
+    {
+      "ruleId": "R024",
+      "laneAr": "أناقتك",
+      "sourceNameAr": "كعب",
+      "sourceId": "shoes.heel",
+      "signalAr": "تسأل عن بديل بدون كعب لنفس الحفل",
+      "targetIds": [
+        "shoes.flat"
+      ],
+      "blockerAr": "بديل بنفس المقاس والميزانية، لا تصف سببًا صحيًا.",
+      "liveSourceId": "shoes.heel",
+      "liveTargetIds": [
+        "shoes.flat"
+      ],
+      "visibility": "public_candidate",
+      "version": "consultant-discovery.v1"
+    },
+    {
+      "ruleId": "R025",
+      "laneAr": "أناقتك",
+      "sourceNameAr": "فلات",
+      "sourceId": "shoes.flat",
+      "signalAr": "تريد حقيبة مكملة لإطلالة بسيطة",
+      "targetIds": [
+        "bags.hand"
+      ],
+      "blockerAr": "إذا طلبت فلات فقط لا تعرض أكسسوارات.",
+      "liveSourceId": "shoes.flat",
+      "liveTargetIds": [
+        "bags.hand"
+      ],
+      "visibility": "public_candidate",
+      "version": "consultant-discovery.v1"
+    },
+    {
+      "ruleId": "R026",
+      "laneAr": "أناقتك",
+      "sourceNameAr": "صنادل",
+      "sourceId": "shoes.sandal",
+      "signalAr": "تريد فستانًا يوميًا ينسجم مع الصندل",
+      "targetIds": [
+        "clothes.casual"
+      ],
+      "blockerAr": "احترم قيود اللون والتغطية.",
+      "liveSourceId": "shoes.sandal",
+      "liveTargetIds": [
+        "clothes.casual"
+      ],
+      "visibility": "public_candidate",
+      "version": "consultant-discovery.v1"
+    },
+    {
+      "ruleId": "R027",
+      "laneAr": "أناقتك",
+      "sourceNameAr": "أحذية رياضية",
+      "sourceId": "shoes.sneaker",
+      "signalAr": "تطلب طقمًا رياضيًا متناسقًا",
+      "targetIds": [
+        "clothes.sportswear"
+      ],
+      "blockerAr": "إذا كان الحذاء للدوام لا تقفز لملابس الرياضة.",
+      "liveSourceId": "shoes.sneaker",
+      "liveTargetIds": [
+        "clothes.sportswear"
+      ],
+      "visibility": "public_candidate",
+      "version": "consultant-discovery.v1"
+    },
+    {
+      "ruleId": "R028",
+      "laneAr": "أناقتك",
+      "sourceNameAr": "لوفر",
+      "sourceId": "shoes.loafer",
+      "signalAr": "تريد تنسيق لوفر للمكتب",
+      "targetIds": [
+        "clothes.pants"
+      ],
+      "blockerAr": "لا تفترض طبيعة الدوام.",
+      "liveSourceId": "shoes.loafer",
+      "liveTargetIds": [
+        "clothes.pants"
+      ],
+      "visibility": "public_candidate",
+      "version": "consultant-discovery.v1"
+    },
+    {
+      "ruleId": "R029",
+      "laneAr": "أناقتك",
+      "sourceNameAr": "بوت",
+      "sourceId": "shoes.boot",
+      "signalAr": "تطلب تنسيقًا للبرد مع البوت",
+      "targetIds": [
+        "clothes.jacket"
+      ],
+      "blockerAr": "لا تربط تلقائيًا كل بوت بالشتاء.",
+      "liveSourceId": "shoes.boot",
+      "liveTargetIds": [
+        "clothes.jacket"
+      ],
+      "visibility": "public_candidate",
+      "version": "consultant-discovery.v1"
+    },
+    {
+      "ruleId": "R030",
+      "laneAr": "أناقتك",
+      "sourceNameAr": "سليبر",
+      "sourceId": "shoes.slipper",
+      "signalAr": "تريد استكمال طقم منزلي",
+      "targetIds": [
+        "clothes.loungewear"
+      ],
+      "blockerAr": "إذا كان لغرض آخر اسأل أو اقتصر على البدائل.",
+      "liveSourceId": "shoes.slipper",
+      "liveTargetIds": [
+        "clothes.loungewear"
+      ],
+      "visibility": "public_candidate",
+      "version": "consultant-discovery.v1"
+    },
+    {
+      "ruleId": "R031",
+      "laneAr": "أناقتك",
+      "sourceNameAr": "مكياج الوجه",
+      "sourceId": "face.makeup_face",
+      "signalAr": "تسأل عن أداة لتطبيق مستحضر بعينه",
+      "targetIds": [
+        "face.makeup_tools"
+      ],
+      "blockerAr": "تحقق من نوع الأداة؛ لا تستنتج درجة دقيقة من الإضاءة.",
+      "liveSourceId": "face.makeup_face",
+      "liveTargetIds": [
+        "face.makeup_tools"
+      ],
+      "visibility": "public_candidate",
+      "version": "consultant-discovery.v1"
+    },
+    {
+      "ruleId": "R032",
+      "laneAr": "أناقتك",
+      "sourceNameAr": "مكياج العيون",
+      "sourceId": "face.makeup_eyes",
+      "signalAr": "تطلب فرشاة أو أداة لنوع مكياج العيون",
+      "targetIds": [
+        "face.makeup_tools"
+      ],
+      "blockerAr": "لا تربط مظهر العين بمرض أو علاج.",
+      "liveSourceId": "face.makeup_eyes",
+      "liveTargetIds": [
+        "face.makeup_tools"
+      ],
+      "visibility": "public_candidate",
+      "version": "consultant-discovery.v1"
+    },
+    {
+      "ruleId": "R033",
+      "laneAr": "أناقتك",
+      "sourceNameAr": "مكياج الشفاه",
+      "sourceId": "face.makeup_lips",
+      "signalAr": "تريد تنسيق اللون مع بقية المكياج",
+      "targetIds": [
+        "face.makeup_face"
+      ],
+      "blockerAr": "لا تعد بتطابق درجة لون الشاشة.",
+      "liveSourceId": "face.makeup_lips",
+      "liveTargetIds": [
+        "face.makeup_face"
+      ],
+      "visibility": "public_candidate",
+      "version": "consultant-discovery.v1"
+    },
+    {
+      "ruleId": "R034",
+      "laneAr": "أناقتك",
+      "sourceNameAr": "منظفات البشرة",
+      "sourceId": "face.cleanser",
+      "signalAr": "تطلب روتينًا تجميليًا بسيطًا يتضمن مرطبًا",
+      "targetIds": [
+        "face.moisturizer"
+      ],
+      "blockerAr": "لا تفترض نوع البشرة أو خلو المنتج من مادة غير مذكورة.",
+      "liveSourceId": "face.cleanser",
+      "liveTargetIds": [
+        "face.moisturizer"
+      ],
+      "visibility": "public_candidate",
+      "version": "consultant-discovery.v1"
+    },
+    {
+      "ruleId": "R035",
+      "laneAr": "أناقتك",
+      "sourceNameAr": "مرطبات",
+      "sourceId": "face.moisturizer",
+      "signalAr": "تطلب منتج تنظيف إلى جانب مرطبها",
+      "targetIds": [
+        "face.cleanser"
+      ],
+      "blockerAr": "إذا طلبت مرطبًا فقط أو رفضت خطوة إضافية فتوقف.",
+      "liveSourceId": "face.moisturizer",
+      "liveTargetIds": [
+        "face.cleanser"
+      ],
+      "visibility": "public_candidate",
+      "version": "consultant-discovery.v1"
+    },
+    {
+      "ruleId": "R036",
+      "laneAr": "أناقتك",
+      "sourceNameAr": "سيرومات",
+      "sourceId": "face.serum",
+      "signalAr": "تطلب مقارنة تركيبة أو ميزانية مع بديل من الفرع نفسه",
+      "targetIds": [],
+      "blockerAr": "لا تركّب مواد فعالة ولا تعد بنتيجة علاجية.",
+      "liveSourceId": "face.serum",
+      "liveTargetIds": [],
+      "visibility": "public_candidate",
+      "version": "consultant-discovery.v1"
+    },
+    {
+      "ruleId": "R037",
+      "laneAr": "أناقتك",
+      "sourceNameAr": "واقي شمس",
+      "sourceId": "face.sunscreen",
+      "signalAr": "تطلب بديلًا بمعامل حماية أو ملمس معين",
+      "targetIds": [],
+      "blockerAr": "اعتمد بيان المنتج؛ لا تستنتج الحماية من شكل العبوة.",
+      "liveSourceId": "face.sunscreen",
+      "liveTargetIds": [],
+      "visibility": "public_candidate",
+      "version": "consultant-discovery.v1"
+    },
+    {
+      "ruleId": "R038",
+      "laneAr": "أناقتك",
+      "sourceNameAr": "ماسكات",
+      "sourceId": "face.mask",
+      "signalAr": "تطلب مقارنة قناع بآخر تجميليًا",
+      "targetIds": [],
+      "blockerAr": "لا تقترح إجراءً عياديًا استنادًا للصورة.",
+      "liveSourceId": "face.mask",
+      "liveTargetIds": [],
+      "visibility": "public_candidate",
+      "version": "consultant-discovery.v1"
+    },
+    {
+      "ruleId": "R039",
+      "laneAr": "أناقتك",
+      "sourceNameAr": "أدوات المكياج",
+      "sourceId": "face.makeup_tools",
+      "signalAr": "تسأل لأي مستحضر تستخدم أداة معينة وتطلب منتجات",
+      "targetIds": [
+        "face.makeup_eyes",
+        "face.makeup_face"
+      ],
+      "blockerAr": "لا تربط أداة بمنتج غير متوافق.",
+      "liveSourceId": "face.makeup_tools",
+      "liveTargetIds": [
+        "face.makeup_eyes",
+        "face.makeup_face"
+      ],
+      "visibility": "public_candidate",
+      "version": "consultant-discovery.v1"
+    },
+    {
+      "ruleId": "R040",
+      "laneAr": "أناقتك",
+      "sourceNameAr": "غسول الجسم",
+      "sourceId": "body.wash",
+      "signalAr": "تطلب مجموعة عناية بالجسم أو رائحة متناسقة",
+      "targetIds": [
+        "body.moisturizer"
+      ],
+      "blockerAr": "إذا طلبت دون عطر فهو شرط قطعي.",
+      "liveSourceId": "body.wash",
+      "liveTargetIds": [
+        "body.moisturizer"
+      ],
+      "visibility": "public_candidate",
+      "version": "consultant-discovery.v1"
+    },
+    {
+      "ruleId": "R041",
+      "laneAr": "أناقتك",
+      "sourceNameAr": "مرطبات",
+      "sourceId": "body.moisturizer",
+      "signalAr": "تطلب غسولًا يرافق المرطب",
+      "targetIds": [
+        "body.wash"
+      ],
+      "blockerAr": "لا تستبدل مرطب الوجه بمرطب الجسم تلقائيًا.",
+      "liveSourceId": "body.moisturizer",
+      "liveTargetIds": [
+        "body.wash"
+      ],
+      "visibility": "public_candidate",
+      "version": "consultant-discovery.v1"
+    },
+    {
+      "ruleId": "R042",
+      "laneAr": "أناقتك",
+      "sourceNameAr": "مقشرات",
+      "sourceId": "body.scrub",
+      "signalAr": "تسأل عن بدائل من الفئة نفسها",
+      "targetIds": [],
+      "blockerAr": "لا تبنِ روتينًا علاجيًا أو اقترانًا بإجراء عيادي.",
+      "liveSourceId": "body.scrub",
+      "liveTargetIds": [],
+      "visibility": "public_candidate",
+      "version": "consultant-discovery.v1"
+    },
+    {
+      "ruleId": "R043",
+      "laneAr": "أناقتك",
+      "sourceNameAr": "زيوت",
+      "sourceId": "body.oil",
+      "signalAr": "تطلب بديلًا بملمس مختلف",
+      "targetIds": [
+        "body.moisturizer"
+      ],
+      "blockerAr": "يُعرض كبديل، لا كخطوة إلزامية.",
+      "liveSourceId": "body.oil",
+      "liveTargetIds": [
+        "body.moisturizer"
+      ],
+      "visibility": "public_candidate",
+      "version": "consultant-discovery.v1"
+    },
+    {
+      "ruleId": "R044",
+      "laneAr": "أناقتك",
+      "sourceNameAr": "مزيلات العرق",
+      "sourceId": "body.deodorant",
+      "signalAr": "تطلب مواصفات أو رائحة بديلة",
+      "targetIds": [],
+      "blockerAr": "لا تستنتج مشكلة جسدية أو تسوّق بناءً عليها.",
+      "liveSourceId": "body.deodorant",
+      "liveTargetIds": [],
+      "visibility": "public_candidate",
+      "version": "consultant-discovery.v1"
+    },
+    {
+      "ruleId": "R045",
+      "laneAr": "أناقتك",
+      "sourceNameAr": "العناية باليدين",
+      "sourceId": "body.hand_care",
+      "signalAr": "تذكر صراحة أنها تريد موعد عناية بالأظافر",
+      "targetIds": [
+        "service.salon_nails"
+      ],
+      "blockerAr": "الاهتمام بكريم يدين لا يعني رغبة بحجز.",
+      "liveSourceId": "body.hand_care",
+      "liveTargetIds": [
+        "beauty.nails"
+      ],
+      "visibility": "public_candidate",
+      "version": "consultant-discovery.v1"
+    },
+    {
+      "ruleId": "R046",
+      "laneAr": "أناقتك",
+      "sourceNameAr": "العناية بالقدمين",
+      "sourceId": "body.foot_care",
+      "signalAr": "تطلب منتج عناية آخر للقدمين",
+      "targetIds": [],
+      "blockerAr": "لا تستنتج احتياجًا طبيًا أو حجزًا.",
+      "liveSourceId": "body.foot_care",
+      "liveTargetIds": [],
+      "visibility": "public_candidate",
+      "version": "consultant-discovery.v1"
+    },
+    {
+      "ruleId": "R047",
+      "laneAr": "أناقتك",
+      "sourceNameAr": "شامبو",
+      "sourceId": "hair.shampoo",
+      "signalAr": "تطلب مجموعة غسيل أو بلسمًا مطابقًا",
+      "targetIds": [
+        "hair.conditioner"
+      ],
+      "blockerAr": "لا تفترض نوع الشعر؛ تحقق من وصف السلسلة.",
+      "liveSourceId": "hair.shampoo",
+      "liveTargetIds": [
+        "hair.conditioner"
+      ],
+      "visibility": "public_candidate",
+      "version": "consultant-discovery.v1"
+    },
+    {
+      "ruleId": "R048",
+      "laneAr": "أناقتك",
+      "sourceNameAr": "بلسم",
+      "sourceId": "hair.conditioner",
+      "signalAr": "تبحث عن شامبو من المجموعة نفسها",
+      "targetIds": [
+        "hair.shampoo"
+      ],
+      "blockerAr": "الاسم المتشابه لا يثبت أنه من المجموعة ذاتها.",
+      "liveSourceId": "hair.conditioner",
+      "liveTargetIds": [
+        "hair.shampoo"
+      ],
+      "visibility": "public_candidate",
+      "version": "consultant-discovery.v1"
+    },
+    {
+      "ruleId": "R049",
+      "laneAr": "أناقتك",
+      "sourceNameAr": "ماسكات",
+      "sourceId": "hair.mask",
+      "signalAr": "تسأل عن بديل تجميلي من الفئة نفسها",
+      "targetIds": [],
+      "blockerAr": "لا تقفز إلى خدمات علاجية.",
+      "liveSourceId": "hair.mask",
+      "liveTargetIds": [],
+      "visibility": "public_candidate",
+      "version": "consultant-discovery.v1"
+    },
+    {
+      "ruleId": "R050",
+      "laneAr": "أناقتك",
+      "sourceNameAr": "زيوت وسيرومات",
+      "sourceId": "hair.oil_serum",
+      "signalAr": "تسأل عن إكمال تصفيف محدد",
+      "targetIds": [
+        "hair.styling"
+      ],
+      "blockerAr": "تحقق أن الاستخدام مذكور ولا تصف أثرًا علاجيًا.",
+      "liveSourceId": "hair.oil_serum",
+      "liveTargetIds": [
+        "hair.styling"
+      ],
+      "visibility": "public_candidate",
+      "version": "consultant-discovery.v1"
+    },
+    {
+      "ruleId": "R051",
+      "laneAr": "أناقتك",
+      "sourceNameAr": "منتجات التصفيف",
+      "sourceId": "hair.styling",
+      "signalAr": "تريد أداة تساعدها في تنفيذ تسريحة في المنزل",
+      "targetIds": [
+        "hair.tools"
+      ],
+      "blockerAr": "لا تعِد بحماية حرارية لا تثبتها العبوة.",
+      "liveSourceId": "hair.styling",
+      "liveTargetIds": [
+        "hair.tools"
+      ],
+      "visibility": "public_candidate",
+      "version": "consultant-discovery.v1"
+    },
+    {
+      "ruleId": "R052",
+      "laneAr": "أناقتك",
+      "sourceNameAr": "صبغات",
+      "sourceId": "hair.dye",
+      "signalAr": "تقول إنها تفضل أن تصبغ لدى مختصة",
+      "targetIds": [
+        "service.salon_hair_color"
+      ],
+      "blockerAr": "لا توصي بخلط مواد ولا تعرض شراء وحجزًا معًا بلا حاجة.",
+      "liveSourceId": "hair.dye",
+      "liveTargetIds": [
+        "beauty.hair.color"
+      ],
+      "visibility": "public_candidate",
+      "version": "consultant-discovery.v1"
+    },
+    {
+      "ruleId": "R053",
+      "laneAr": "أناقتك",
+      "sourceNameAr": "أدوات وأجهزة الشعر",
+      "sourceId": "hair.tools",
+      "signalAr": "تطلب مستحضر تصفيف متوافقًا مع الأداة",
+      "targetIds": [
+        "hair.styling"
+      ],
+      "blockerAr": "التوافق خاص بالمنتج لا باسم الفرع.",
+      "liveSourceId": "hair.tools",
+      "liveTargetIds": [
+        "hair.styling"
+      ],
+      "visibility": "public_candidate",
+      "version": "consultant-discovery.v1"
+    },
+    {
+      "ruleId": "R054",
+      "laneAr": "أناقتك",
+      "sourceNameAr": "أحزمة",
+      "sourceId": "accessories.belt",
+      "signalAr": "تريد بنطالًا مناسبًا للحزام",
+      "targetIds": [
+        "clothes.pants"
+      ],
+      "blockerAr": "احترم المقاس ونوع حلقات الحزام إن عُرف.",
+      "liveSourceId": "accessories.belt",
+      "liveTargetIds": [
+        "clothes.pants"
+      ],
+      "visibility": "public_candidate",
+      "version": "consultant-discovery.v1"
+    },
+    {
+      "ruleId": "R055",
+      "laneAr": "أناقتك",
+      "sourceNameAr": "أوشحة وشالات",
+      "sourceId": "accessories.scarf",
+      "signalAr": "تطلب عباية تنسّقها مع وشاح",
+      "targetIds": [
+        "clothes.abaya"
+      ],
+      "blockerAr": "لا تفترض أنها تبحث عن زي معين من الصورة.",
+      "liveSourceId": "accessories.scarf",
+      "liveTargetIds": [
+        "clothes.abaya"
+      ],
+      "visibility": "public_candidate",
+      "version": "consultant-discovery.v1"
+    },
+    {
+      "ruleId": "R056",
+      "laneAr": "أناقتك",
+      "sourceNameAr": "نظارات شمسية",
+      "sourceId": "accessories.sunglasses",
+      "signalAr": "تريد إكمال إطلالة خارجية بقبعة",
+      "targetIds": [
+        "accessories.hat"
+      ],
+      "blockerAr": "لا تعِد بحماية صحية غير مثبتة.",
+      "liveSourceId": "accessories.sunglasses",
+      "liveTargetIds": [
+        "accessories.hat"
+      ],
+      "visibility": "public_candidate",
+      "version": "consultant-discovery.v1"
+    },
+    {
+      "ruleId": "R057",
+      "laneAr": "أناقتك",
+      "sourceNameAr": "قبعات",
+      "sourceId": "accessories.hat",
+      "signalAr": "تطلب نظارة مناسبة مع القبعة",
+      "targetIds": [
+        "accessories.sunglasses"
+      ],
+      "blockerAr": "لا تكوّن ملفًا عن الوجه.",
+      "liveSourceId": "accessories.hat",
+      "liveTargetIds": [
+        "accessories.sunglasses"
+      ],
+      "visibility": "public_candidate",
+      "version": "consultant-discovery.v1"
+    },
+    {
+      "ruleId": "R058",
+      "laneAr": "أناقتك",
+      "sourceNameAr": "إكسسوارات الشعر",
+      "sourceId": "accessories.hair",
+      "signalAr": "تطلب مختصة تنفّذ تسريحة بالإكسسوار",
+      "targetIds": [
+        "service.salon_hair_cut"
+      ],
+      "blockerAr": "فلتر تصفيف فقط؛ لا تقترح القص تلقائيًا.",
+      "liveSourceId": "accessories.hair",
+      "liveTargetIds": [
+        "beauty.hair.cut"
+      ],
+      "visibility": "public_candidate",
+      "version": "consultant-discovery.v1"
+    },
+    {
+      "ruleId": "R059",
+      "laneAr": "المجوهرات",
+      "sourceNameAr": "خواتم",
+      "sourceId": "jewelry.rings",
+      "signalAr": "تطلب قطعة من المعدن أو اللون نفسه لتكوين طقم",
+      "targetIds": [
+        "jewelry.bracelets"
+      ],
+      "blockerAr": "الخاتم ليس دليل خطوبة؛ تحقق من المعدن والعيار والمقاس.",
+      "liveSourceId": "jewelry.rings",
+      "liveTargetIds": [
+        "jewelry.bracelets"
+      ],
+      "visibility": "public_candidate",
+      "version": "consultant-discovery.v1"
+    },
+    {
+      "ruleId": "R060",
+      "laneAr": "المجوهرات",
+      "sourceNameAr": "قلائد",
+      "sourceId": "jewelry.necklaces",
+      "signalAr": "تريد إكمال الطقم أو هدية متناسقة",
+      "targetIds": [
+        "jewelry.earrings"
+      ],
+      "blockerAr": "اللون الذهبي ليس دليلًا على أنه ذهب.",
+      "liveSourceId": "jewelry.necklaces",
+      "liveTargetIds": [
+        "jewelry.earrings"
+      ],
+      "visibility": "public_candidate",
+      "version": "consultant-discovery.v1"
+    },
+    {
+      "ruleId": "R061",
+      "laneAr": "المجوهرات",
+      "sourceNameAr": "أساور",
+      "sourceId": "jewelry.bracelets",
+      "signalAr": "تطلب تغليف هدية أو قطعة مكملة للسوار",
+      "targetIds": [
+        "gifts.boxes",
+        "jewelry.rings"
+      ],
+      "blockerAr": "اختر المسار الذي ذكرته؛ لا تفترض علاقة المتلقي بها.",
+      "liveSourceId": "jewelry.bracelets",
+      "liveTargetIds": [
+        "gifts.boxes",
+        "jewelry.rings"
+      ],
+      "visibility": "public_candidate",
+      "version": "consultant-discovery.v1"
+    },
+    {
+      "ruleId": "R062",
+      "laneAr": "المجوهرات",
+      "sourceNameAr": "أقراط",
+      "sourceId": "jewelry.earrings",
+      "signalAr": "تبحث عن طقم للسهرة",
+      "targetIds": [
+        "jewelry.necklaces"
+      ],
+      "blockerAr": "لا تعتبر ادعاء خلو مادة مسببة للحساسية حقيقة دون توثيق.",
+      "liveSourceId": "jewelry.earrings",
+      "liveTargetIds": [
+        "jewelry.necklaces"
+      ],
+      "visibility": "public_candidate",
+      "version": "consultant-discovery.v1"
+    },
+    {
+      "ruleId": "R063",
+      "laneAr": "الأطفال",
+      "sourceNameAr": "ملابس أطفال",
+      "sourceId": "children.clothes",
+      "signalAr": "تذكر أنها تريد طقمًا كاملًا للطفل",
+      "targetIds": [
+        "children.shoes"
+      ],
+      "blockerAr": "اطلب مقاس الحذاء؛ لا تستخرجه من العمر أو صورة.",
+      "liveSourceId": "children.clothes",
+      "liveTargetIds": [
+        "children.shoes"
+      ],
+      "visibility": "public_candidate",
+      "version": "consultant-discovery.v1"
+    },
+    {
+      "ruleId": "R064",
+      "laneAr": "الأطفال",
+      "sourceNameAr": "أحذية أطفال",
+      "sourceId": "children.shoes",
+      "signalAr": "تطلب ملابس تناسب حذاء الطفل للمناسبة",
+      "targetIds": [
+        "children.clothes"
+      ],
+      "blockerAr": "احترم ميزانية الطقم ولا تفترض جنس الطفل.",
+      "liveSourceId": "children.shoes",
+      "liveTargetIds": [
+        "children.clothes"
+      ],
+      "visibility": "public_candidate",
+      "version": "consultant-discovery.v1"
+    },
+    {
+      "ruleId": "R065",
+      "laneAr": "الأطفال",
+      "sourceNameAr": "مستلزمات مواليد",
+      "sourceId": "children.newborn",
+      "signalAr": "تذكر أن المشتريات هدية لمولود وتريد تقديمها",
+      "targetIds": [
+        "gifts.boxes"
+      ],
+      "blockerAr": "زيارة مولود ليست دليل حمل أو أمومة أو تنظيم حفلة.",
+      "liveSourceId": "children.newborn",
+      "liveTargetIds": [
+        "gifts.boxes"
+      ],
+      "visibility": "public_candidate",
+      "version": "consultant-discovery.v1"
+    },
+    {
+      "ruleId": "R066",
+      "laneAr": "الأطفال",
+      "sourceNameAr": "مستلزمات مواليد",
+      "sourceId": "children.newborn",
+      "signalAr": "تقول إنها تنظم استقبال مولود وتبحث عما توزعه",
+      "targetIds": [
+        "occasions.favors"
+      ],
+      "blockerAr": "لا تستخدم مشتريات الأطفال وحدها لإطلاق عروض تسويقية.",
+      "liveSourceId": "children.newborn",
+      "liveTargetIds": [
+        "occasions.favors"
+      ],
+      "visibility": "public_candidate",
+      "version": "consultant-discovery.v1"
+    },
+    {
+      "ruleId": "R067",
+      "laneAr": "الهدايا",
+      "sourceNameAr": "صناديق هدايا",
+      "sourceId": "gifts.boxes",
+      "signalAr": "تحدد محتوى مطلوبًا أو مستفيدًا واضحًا: سوار أو هدية مولود",
+      "targetIds": [
+        "jewelry.bracelets",
+        "children.newborn"
+      ],
+      "blockerAr": "لا تفترض أن المحتوى ضمن سعر الصندوق.",
+      "liveSourceId": "gifts.boxes",
+      "liveTargetIds": [
+        "jewelry.bracelets",
+        "children.newborn"
+      ],
+      "visibility": "public_candidate",
+      "version": "consultant-discovery.v1"
+    },
+    {
+      "ruleId": "R068",
+      "laneAr": "مناسباتك",
+      "sourceNameAr": "توزيعات",
+      "sourceId": "occasions.favors",
+      "signalAr": "تطلب ضيافة تُشترى مع توزيعات مناسبة محددة",
+      "targetIds": [
+        "occasions.decor"
+      ],
+      "blockerAr": "تحقق من العدد والمهلة والمنطقة؛ البيع يختلف عن حجز مقدم ضيافة.",
+      "liveSourceId": "occasions.favors",
+      "liveTargetIds": [
+        "occasions.decor"
+      ],
+      "visibility": "public_candidate",
+      "version": "consultant-discovery.v1"
+    },
+    {
+      "ruleId": "R069",
+      "laneAr": "مناسباتك",
+      "sourceNameAr": "ضيافة للبيع",
+      "sourceId": "occasions.decor",
+      "signalAr": "تسأل أيضًا عن شخص ينظم تجهيز المناسبة",
+      "targetIds": [
+        "occasions.styling"
+      ],
+      "blockerAr": "هذه العقدة «ضيافة للبيع» رغم اسم decor؛ لا تعد بحجز ضيافة دون عرض خدمة مؤهل.",
+      "liveSourceId": "occasions.decor",
+      "liveTargetIds": [
+        "occasions.styling"
+      ],
+      "visibility": "public_candidate",
+      "version": "consultant-discovery.v1"
+    },
+    {
+      "ruleId": "R070",
+      "laneAr": "مناسباتك",
+      "sourceNameAr": "تنسيق المناسبة",
+      "sourceId": "occasions.styling",
+      "signalAr": "تذكر عدد الضيوف وتريد توزيعات أو ضيافة للشراء بجانب الحجز",
+      "targetIds": [
+        "occasions.favors",
+        "occasions.decor"
+      ],
+      "blockerAr": "تحقق مما يشمله عرض التنسيق قبل اقتراح شراء مكرر.",
+      "liveSourceId": "occasions.styling",
+      "liveTargetIds": [
+        "occasions.favors",
+        "occasions.decor"
+      ],
+      "visibility": "public_candidate",
+      "version": "consultant-discovery.v1"
+    },
+    {
+      "ruleId": "R071",
+      "laneAr": "جمالك",
+      "sourceNameAr": "قص وتصفيف الشعر",
+      "sourceId": "service.salon_hair_cut",
+      "signalAr": "بعد اختيار التصفيف تطلب إكمال تجهيز المناسبة",
+      "targetIds": [
+        "accessories.hair",
+        "service.salon_makeup"
+      ],
+      "blockerAr": "تأكد هل الباقة تشمل المكياج أو الإكسسوار أصلًا.",
+      "liveSourceId": "beauty.hair.cut",
+      "liveTargetIds": [
+        "accessories.hair",
+        "beauty.makeup"
+      ],
+      "visibility": "public_candidate",
+      "version": "consultant-discovery.v1"
+    },
+    {
+      "ruleId": "R072",
+      "laneAr": "جمالك",
+      "sourceNameAr": "صبغة الشعر",
+      "sourceId": "service.salon_hair_color",
+      "signalAr": "تبحث عن حجز لون محدد أو مقارنة الأسعار",
+      "targetIds": [],
+      "blockerAr": "تحقق من عرض اللون والفرع؛ لا تحدد ملاءمة صبغة صحيًا.",
+      "liveSourceId": "beauty.hair.color",
+      "liveTargetIds": [],
+      "visibility": "public_candidate",
+      "version": "consultant-discovery.v1"
+    },
+    {
+      "ruleId": "R073",
+      "laneAr": "جمالك",
+      "sourceNameAr": "العناية بالأظافر",
+      "sourceId": "service.salon_nails",
+      "signalAr": "تطلب عناية تجميلية باليدين بعد اختيار الحجز",
+      "targetIds": [
+        "body.hand_care"
+      ],
+      "blockerAr": "لا تقدّم تعليمات إجراء أو علاج.",
+      "liveSourceId": "beauty.nails",
+      "liveTargetIds": [
+        "body.hand_care"
+      ],
+      "visibility": "public_candidate",
+      "version": "consultant-discovery.v1"
+    },
+    {
+      "ruleId": "R074",
+      "laneAr": "جمالك",
+      "sourceNameAr": "المكياج",
+      "sourceId": "service.salon_makeup",
+      "signalAr": "تطلب باقة مكياج وتصفيف لمناسبة في يوم معلوم",
+      "targetIds": [
+        "service.salon_hair_cut"
+      ],
+      "blockerAr": "تحقق من شمول الباقة وإتاحة الموعدين، لا تعد بحجز مؤكد.",
+      "liveSourceId": "beauty.makeup",
+      "liveTargetIds": [
+        "beauty.hair.cut"
+      ],
+      "visibility": "public_candidate",
+      "version": "consultant-discovery.v1"
+    },
+    {
+      "ruleId": "R075",
+      "laneAr": "جمالك",
+      "sourceNameAr": "عناية عامة",
+      "sourceId": "service.salon_care",
+      "signalAr": "تحدد نوع خدمة العناية التي تريدها",
+      "targetIds": [],
+      "blockerAr": "اطلب تحديد الخدمة؛ التصنيف العام لا يكفي لبيع شيء إضافي.",
+      "liveSourceId": "beauty.face_care",
+      "liveTargetIds": [],
+      "visibility": "public_candidate",
+      "version": "consultant-discovery.v1"
+    },
+    {
+      "ruleId": "R076",
+      "laneAr": "جمالك",
+      "sourceNameAr": "العناية بالبشرة",
+      "sourceId": "service.clinic_skin",
+      "signalAr": "تطلب جهة تقدم خدمة محددة للبشرة",
+      "targetIds": [],
+      "blockerAr": "عرض مقدّم عند الطلب؛ لا تشخيص أو وعد علاجي أو ترشيح تلقائي من صورة.",
+      "liveSourceId": "beauty.clinic_derm",
+      "liveTargetIds": [],
+      "visibility": "public_candidate",
+      "version": "consultant-discovery.v1"
+    },
+    {
+      "ruleId": "R077",
+      "laneAr": "جمالك",
+      "sourceNameAr": "إزالة الشعر بالليزر",
+      "sourceId": "service.clinic_laser",
+      "signalAr": "تطلب صراحة حجز خدمة ليزر في مدينة محددة",
+      "targetIds": [],
+      "blockerAr": "لا تقترح الليزر بسبب إطلالة أو صورة أو موعد زفاف.",
+      "liveSourceId": "beauty.clinic_laser",
+      "liveTargetIds": [],
+      "visibility": "public_candidate",
+      "version": "consultant-discovery.v1"
+    },
+    {
+      "ruleId": "R078",
+      "laneAr": "جمالك",
+      "sourceNameAr": "استشارة أو تقييم",
+      "sourceId": "service.clinic_consult",
+      "signalAr": "تطلب التواصل مع جهة مختصة",
+      "targetIds": [],
+      "blockerAr": "لا تحوّل الاستشارة إلى تسويق أو تستخدم بياناتها لإعلان.",
+      "liveSourceId": "beauty.clinic_derm",
+      "liveTargetIds": [],
+      "visibility": "public_candidate",
+      "version": "consultant-discovery.v1"
+    },
+    {
+      "ruleId": "R079",
+      "laneAr": "جمالك",
+      "sourceNameAr": "الأسنان (محدود)",
+      "sourceId": "service.clinic_teeth",
+      "signalAr": "تطلب بنفسها مقدم خدمة أسنان مدعومة",
+      "targetIds": [],
+      "blockerAr": "لا تستنتج احتياجًا من صورة ابتسامة؛ افحص حدود العرض.",
+      "liveSourceId": "beauty.clinic_teeth",
+      "liveTargetIds": [],
+      "visibility": "public_candidate",
+      "version": "consultant-discovery.v1"
+    },
+    {
+      "ruleId": "R080",
+      "laneAr": "جمالك",
+      "sourceNameAr": "خدمة صالون مخصصة",
+      "sourceId": "service.salon.generic",
+      "signalAr": "تذكر خدمة محددة يصفها مقدمها بوضوح",
+      "targetIds": [],
+      "blockerAr": "لا تخمّن معنى العرض المخصص؛ عند الغموض اطلب توضيحًا.",
+      "liveSourceId": "beauty.salons",
+      "liveTargetIds": [],
+      "visibility": "public_candidate",
+      "version": "consultant-discovery.v1"
+    },
+    {
+      "ruleId": "R081",
+      "laneAr": "جمالك",
+      "sourceNameAr": "خدمة عيادة مخصصة",
+      "sourceId": "service.clinic.generic",
+      "signalAr": "تطلب اختصاصًا وله وصف موثوق لدى الجهة",
+      "targetIds": [],
+      "blockerAr": "لا تحوّل قالبًا عامًا إلى إجراء طبي معلوم.",
+      "liveSourceId": "beauty.clinics",
+      "liveTargetIds": [],
+      "visibility": "public_candidate",
+      "version": "consultant-discovery.v1"
+    }
+  ],
+  "idMap": {
+    "service.salon_hair_cut": "beauty.hair.cut",
+    "service.salon_hair_color": "beauty.hair.color",
+    "service.salon_nails": "beauty.nails",
+    "service.salon_makeup": "beauty.makeup",
+    "service.salon_care": "beauty.face_care",
+    "service.clinic_skin": "beauty.clinic_derm",
+    "service.clinic_laser": "beauty.clinic_laser",
+    "service.clinic_consult": "beauty.clinic_derm",
+    "service.clinic_teeth": "beauty.clinic_teeth",
+    "service.salon.generic": "beauty.salons",
+    "service.clinic.generic": "beauty.clinics"
+  }
+}

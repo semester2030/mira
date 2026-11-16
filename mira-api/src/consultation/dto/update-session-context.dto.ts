@@ -23,4 +23,10 @@ export class UpdateConsultationContextDto {
   @IsString()
   @MaxLength(500)
   statedGoalAr?: string;
+
+  /** Client idempotency key for preference sync — echoed as appliedPreferenceOpId when applied. */
+  @IsOptional()
+  @IsString()
+  @MaxLength(128)
+  clientPreferenceOpId?: string;
 }

@@ -126,7 +126,7 @@ export function guardScopeAnswer(
 }
 
 export const MIRA_CATALOG_UNAVAILABLE_AR =
-  'ما أقدر أتحقق من منتجات ميرا الآن — بحث الكتالوج غير متاح في هذه البيئة، لذلك لن أنسب أي منتج أو مكوّن أو سعر إلى كتالوج ميرا ولن أعرض رابطًا.';
+  'ما أقدر أتحقق من منتجات أو خدمات ميرا الآن — بحث الكتالوج غير متاح في هذه البيئة، لذلك لن أنسب أي منتج أو خدمة أو سعر إلى كتالوج ميرا ولن أعرض رابطًا.';
 
 export function isProductOrCatalogAsk(message: string): boolean {
   const text = message.trim();
@@ -134,11 +134,11 @@ export function isProductOrCatalogAsk(message: string): boolean {
     return true;
   }
   // Link / open-product follow-ups after a catalog ask.
-  if (/^(أعطني|اعطني|أبغى|ابغى|أبي|ابي)?\s*(ال)?رابط|رابط (المنتج|ميرا)|افتح(ي)? (المنتج|البطاقة)/.test(text)) {
+  if (/^(أعطني|اعطني|عطيني|أبغى|ابغى|أبي|ابي)?\s*(ال)?رابط|رابط (المنتج|ميرا)|افتح(ي)? (المنتج|البطاقة)/.test(text)) {
     return true;
   }
   if (
-    /(أعطني|اعطني|أبغى|ابغى|أبي|ابي|رشّح|رشح|اقترح|اقترحي|ورّيني|وريني)/.test(text) &&
+    /(أعطني|اعطني|عطيني|أبغى|ابغى|أبي|ابي|رشّح|رشح|اقترح|اقترحي|ورّيني|وريني)/.test(text) &&
     /(مرطب|واقي|منتج|كريم|سيروم|من ميرا)/.test(text)
   ) {
     return true;
@@ -152,21 +152,263 @@ export function isProductOrCatalogAsk(message: string): boolean {
   return /اشتري|بشتري|سعر/.test(text) && /منتج|كريم|واقي|مرطب|من ميرا/.test(text);
 }
 
-/** True when answer invents / attributes a Mira catalog SKU without a published offer. */
-export function claimsMiraCatalogProduct(answerAr: string): boolean {
-  const text = String(answerAr ?? '');
-  if (!text.trim()) return false;
-  const attributesToMira = /من ميرا|منتجات ميرا|كتالوج ميرا|متجر ميرا|في ميرا/.test(text);
-  const looksLikeSku =
-    /[A-Za-z][A-Za-z0-9]+(?:\s+[A-Za-z][A-Za-z0-9]+){0,4}\s+(Moisturizer|Cream|Serum|Sunscreen|SPF|Cleanser|Toner|Mask)/i.test(
-      text,
-    ) || /مرطب\s+[«"']?[A-Za-z]/.test(text);
-  return attributesToMira && (looksLikeSku || /حمض الهيالورونيك|مكوّن|مكونات/.test(text));
+/** Eastern + Western digits → Western; Arabic decimal ٫ → `.` for hallala checks. */
+export function normalizeArabicDigits(text: string): string {
+  const map: Record<string, string> = {
+    '٠': '0',
+    '١': '1',
+    '٢': '2',
+    '٣': '3',
+    '٤': '4',
+    '٥': '5',
+    '٦': '6',
+    '٧': '7',
+    '٨': '8',
+    '٩': '9',
+  };
+  return text
+    .replace(/[٠-٩]/g, (d) => map[d] ?? d)
+    .replace(/\u066B/g, '.') // ٫ Arabic decimal separator
+    .replace(/\u066C/g, ''); // ٬ Arabic thousands separator
 }
 
-export function stripInventedMiraCatalogClaims(answerAr: string): string {
+/**
+ * True when answer invents / attributes a Mira catalog product OR service
+ * without a published offer. Search-intent phrasing (I'll look for…) is allowed.
+ */
+export function claimsMiraCatalogProduct(answerAr: string): boolean {
+  const raw = String(answerAr ?? '');
+  if (!raw.trim()) return false;
+  const text = normalizeArabicDigits(raw);
+
+  // Honest search / unavailable language — not a catalog claim.
+  if (
+    /أقدر أبحث|أبحث لك|ما أقدر أتحقق|بحث الكتالوج غير متاح|لن أنسب|بدون نسبة منتج|إذا وُجد في الكتالوج|عند توفره في ميرا/.test(
+      text,
+    )
+  ) {
+    return false;
+  }
+
+  const attributesToMira = /من ميرا|منتجات ميرا|خدمات ميرا|كتالوج ميرا|متجر ميرا|في ميرا|لدى ميرا|عبر ميرا/.test(
+    text,
+  );
+  if (!attributesToMira) return false;
+
+  const looksLikeLatinSku =
+    /[A-Za-z][A-Za-z0-9]+(?:\s+[A-Za-z][A-Za-z0-9]+){0,4}\s+(Moisturizer|Cream|Serum|Sunscreen|SPF|Cleanser|Toner|Mask|Session|Service)/i.test(
+      text,
+    ) || /مرطب\s+[«"']?[A-Za-z]/.test(text);
+
+  const namedProduct =
+    /(مرطب|كريم|سيروم|واقي(?:\s*شمس)?|منتج)\s+[\u0600-\u06FFA-Za-z0-9«»"'\-]{2,40}/.test(text);
+  const namedService =
+    /(جلسة|تسريحة|صبغة|مكياج|عناية|خدمة|حجز)\s+[\u0600-\u06FFA-Za-z0-9«»"'\-]{2,40}/.test(text);
+  const priced =
+    /(?:سعر|بـ|بـِ|بمبلغ)\s*\d+/.test(text) ||
+    /\d+\s*(?:ريال|ر\.?\s*س)/.test(text);
+  const ingredients = /حمض الهيالورونيك|مكوّن|مكونات/.test(text);
+
+  // Named offer (product/service) or priced Mira attribution = inventing a record.
+  return looksLikeLatinSku || namedProduct || namedService || (priced && (namedProduct || namedService || /ميرا/.test(text))) || ingredients;
+}
+
+/** Published catalog row the advisor may attribute to Mira (product or service). */
+export type PublishedCatalogOffer = {
+  id?: string;
+  titleAr: string;
+  kind?: string;
+  priceSar?: number | null;
+  inStock?: boolean | null;
+};
+
+/** Honest label when the catalog row has no registered price. */
+export const PRICE_UNSPECIFIED_AR = 'غير مذكور';
+
+export function publishedPriceLabelAr(offer: PublishedCatalogOffer): string {
+  const n = offer.priceSar;
+  if (n == null || !Number.isFinite(Number(n))) return PRICE_UNSPECIFIED_AR;
+  const halalas = Math.round(Number(n) * 100);
+  const riyals = Math.trunc(halalas / 100);
+  const frac = Math.abs(halalas % 100);
+  const body = frac === 0 ? `${riyals}` : `${riyals}.${frac.toString().padStart(2, '0')}`;
+  return `${body} ريال`;
+}
+
+/** Fields the advisor may cite for one published offer — never invent beyond this row. */
+export function recommendationFieldsFromOffer(offer: PublishedCatalogOffer): {
+  id: string;
+  kind: string;
+  titleAr: string;
+  priceLabelAr: string;
+  inStock: boolean | null;
+} {
+  return {
+    id: String(offer.id ?? '').trim(),
+    kind: String(offer.kind ?? 'product'),
+    titleAr: String(offer.titleAr ?? '').trim(),
+    priceLabelAr: publishedPriceLabelAr(offer),
+    inStock: offer.inStock ?? null,
+  };
+}
+
+type OfferMention = {
+  title: string;
+  kind: 'product' | 'service';
+  priceSar: number | null;
+  claimsInStock: boolean | null;
+};
+
+/** Parse SAR including hallalas (49.99). Integer capture alone is not enough. */
+export function parseCitedPriceSar(fragment: string): number | null {
+  const m =
+    fragment.match(/(?:بـ|بـِ|بسعر|بمبلغ)\s*(\d+(?:\.\d{1,2})?)/)?.[1] ??
+    fragment.match(/(\d+(?:\.\d{1,2})?)\s*(?:ريال|ر\.?\s*س)/)?.[1] ??
+    null;
+  if (m == null) return null;
+  const n = Number(m);
+  return Number.isFinite(n) ? n : null;
+}
+
+/** Compare at halala precision — 49 ≠ 49.99. */
+export function pricesMatchHalalas(a: number, b: number): boolean {
+  return Math.round(a * 100) === Math.round(b * 100);
+}
+
+function findPublishedByTitle(
+  published: PublishedCatalogOffer[],
+  title: string,
+): PublishedCatalogOffer | undefined {
+  const needle = title.trim();
+  if (needle.length < 2) return undefined;
+  return published.find((offer) => {
+    const t = String(offer.titleAr ?? '').trim();
+    if (t.length < 2) return false;
+    return t === needle || t.includes(needle) || needle.includes(t);
+  });
+}
+
+function stockClaimInFragment(around: string): boolean | null {
+  if (/غير\s*متوفر|نفد(?:ت)?|غير\s*متاح/.test(around)) return false;
+  if (/متوفر|متاح(?:\s*للطلب)?|موجود/.test(around)) return true;
+  return null;
+}
+
+/**
+ * Each product/service name attributed in the answer — one correct product never
+ * authorizes a second undocumented service in the same reply.
+ */
+export function extractMiraOfferMentions(answerAr: string): OfferMention[] {
+  const text = normalizeArabicDigits(String(answerAr ?? ''));
+  const out: OfferMention[] = [];
+  const seen = new Set<string>();
+
+  const push = (kind: 'product' | 'service', rawTitle: string, around: string) => {
+    const title = rawTitle.replace(/[«»"']/g, '').trim();
+    if (title.length < 2) return;
+    const key = `${kind}:${title}`;
+    if (seen.has(key)) return;
+    seen.add(key);
+    out.push({
+      title,
+      kind,
+      priceSar: parseCitedPriceSar(around),
+      claimsInStock: stockClaimInFragment(around),
+    });
+  };
+
+  const productRe =
+    /(مرطب|كريم|سيروم|واقي(?:\s*شمس)?|منتج)\s+([\u0600-\u06FFA-Za-z0-9«»"'\-]{2,40})/g;
+  let m: RegExpExecArray | null;
+  while ((m = productRe.exec(text)) != null) {
+    const start = Math.max(0, m.index - 8);
+    const end = Math.min(text.length, m.index + m[0].length + 36);
+    push('product', `${m[1]} ${m[2]}`.trim(), text.slice(start, end));
+  }
+
+  const serviceRe =
+    /(جلسة|تسريحة|صبغة|مكياج|عناية|خدمة)\s+([\u0600-\u06FFA-Za-z0-9«»"'\-]{2,40})/g;
+  while ((m = serviceRe.exec(text)) != null) {
+    const start = Math.max(0, m.index - 8);
+    const end = Math.min(text.length, m.index + m[0].length + 36);
+    push('service', m[0].trim(), text.slice(start, end));
+  }
+
+  return out;
+}
+
+function replaceUnregisteredPrices(text: string, published: PublishedCatalogOffer[]): string {
+  let out = text;
+  for (const offer of published) {
+    const title = String(offer.titleAr ?? '').trim();
+    if (title.length < 2 || offer.priceSar != null) continue;
+    if (!out.includes(title)) continue;
+    const idx = out.indexOf(title);
+    const windowEnd = Math.min(out.length, idx + title.length + 48);
+    const head = out.slice(0, idx + title.length);
+    let tail = out.slice(idx + title.length, windowEnd);
+    const rest = out.slice(windowEnd);
+    tail = tail
+      .replace(/(?:بـ|بـِ|بسعر|بمبلغ)\s*\d+(?:\.\d{1,2})?/g, `بـ ${PRICE_UNSPECIFIED_AR}`)
+      .replace(/\d+(?:\.\d{1,2})?\s*(?:ريال|ر\.?\s*س)/g, PRICE_UNSPECIFIED_AR);
+    out = head + tail + rest;
+  }
+  return out;
+}
+
+/**
+ * True only when every named offer maps to a published row, cited price matches
+ * at halala precision, and availability claims match inStock.
+ */
+export function answerGroundedInPublishedCatalog(
+  answerAr: string,
+  published: PublishedCatalogOffer[] = [],
+): boolean {
+  if (!claimsMiraCatalogProduct(answerAr)) return true;
+  if (!published.length) return false;
+  const text = normalizeArabicDigits(String(answerAr ?? ''));
+  const mentions = extractMiraOfferMentions(text);
+  if (!mentions.length) return false;
+
+  for (const mention of mentions) {
+    const offer = findPublishedByTitle(published, mention.title);
+    if (!offer) return false;
+    if (mention.priceSar != null) {
+      if (offer.priceSar == null) return false;
+      if (!pricesMatchHalalas(Number(offer.priceSar), mention.priceSar)) return false;
+    }
+    if (mention.claimsInStock != null && offer.inStock != null) {
+      if (mention.claimsInStock !== offer.inStock) return false;
+    }
+  }
+  return true;
+}
+
+/**
+ * Bind each Mira attribution to a published catalog row returned by search.
+ * Missing registered price → «غير مذكور». Wrong hallalas / stock → strip.
+ * One grounded product never clears an invented second service.
+ */
+export function stripInventedMiraCatalogClaims(
+  answerAr: string,
+  published: PublishedCatalogOffer[] = [],
+): string {
   if (!claimsMiraCatalogProduct(answerAr)) return answerAr;
-  return MIRA_CATALOG_UNAVAILABLE_AR;
+  const text = normalizeArabicDigits(String(answerAr ?? ''));
+  const mentions = extractMiraOfferMentions(text);
+  if (!mentions.length) return MIRA_CATALOG_UNAVAILABLE_AR;
+
+  for (const mention of mentions) {
+    if (!findPublishedByTitle(published, mention.title)) {
+      return MIRA_CATALOG_UNAVAILABLE_AR;
+    }
+  }
+
+  const rewritten = replaceUnregisteredPrices(text, published);
+  if (!answerGroundedInPublishedCatalog(rewritten, published)) {
+    return MIRA_CATALOG_UNAVAILABLE_AR;
+  }
+  return rewritten;
 }
 
 /** Prefer numeric score facts; never surface raw English severity tokens. */

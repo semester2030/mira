@@ -109,6 +109,9 @@ export interface MceContextSnapshotV1 {
   faceSelection?: FaceSelectionContextV1;
   user: UserConsultationProfileV1;
   occasionId?: string;
+  /** Optional ids used only to prefer image-kind when the message is ambiguous. */
+  skinAnalysisId?: string;
+  outfitAnalysisId?: string;
   builtAt: string;
 }
 
@@ -120,7 +123,8 @@ export type MceReplySource =
   | 'commercial'
   | 'scope'
   | 'dialogue'
-  | 'moderation';
+  | 'moderation'
+  | 'transcript';
 
 export interface MceAssistantPayloadV1 {
   answerAr: string;
@@ -131,4 +135,9 @@ export interface MceAssistantPayloadV1 {
   blocked: boolean;
   disclaimerAr: string;
   replySource?: MceReplySource;
+  /** Cards built only from published catalog rows returned by this turn's search. */
+  discoveryOffers?: Array<Record<string, unknown>>;
+  discoverySideOffer?: Record<string, unknown> | null;
+  searchFailed?: boolean;
+  searchErrorAr?: string;
 }

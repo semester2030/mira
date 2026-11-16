@@ -46,6 +46,7 @@ class ConsultationApiDataSource {
     String? outfitAnalysisId,
     String? occasionId,
     String? statedGoalAr,
+    String? clientPreferenceOpId,
   }) async {
     final response = await _dio.patch<Map<String, dynamic>>(
       '${ConsultationApiEndpoints.sessions()}/$sessionId/context',
@@ -55,13 +56,32 @@ class ConsultationApiDataSource {
         if (outfitAnalysisId != null && outfitAnalysisId.isNotEmpty)
           'outfitAnalysisId': outfitAnalysisId,
         if (occasionId != null && occasionId.isNotEmpty) 'occasionId': occasionId,
-        if (statedGoalAr != null && statedGoalAr.isNotEmpty)
-          'statedGoalAr': statedGoalAr,
+        // Allow empty string so forget/correct can clear preference text on the server.
+        if (statedGoalAr != null) 'statedGoalAr': statedGoalAr,
+        if (clientPreferenceOpId != null && clientPreferenceOpId.isNotEmpty)
+          'clientPreferenceOpId': clientPreferenceOpId,
       },
     );
     final data = response.data;
     if (data == null) throw Exception('استجابة فارغة من محرك الاستشارة');
     return ConsultationSession.fromJson(data);
+  }
+
+  /// Persist user + assistant once without LLM (link ask / clarify).
+  Future<void> recordTranscriptTurn({
+    required String sessionId,
+    required String userContentAr,
+    required String assistantContentAr,
+    required String clientMessageId,
+  }) async {
+    await _dio.post<Map<String, dynamic>>(
+      ConsultationApiEndpoints.sessionTranscript(sessionId),
+      data: {
+        'userContentAr': userContentAr,
+        'assistantContentAr': assistantContentAr,
+        'clientMessageId': clientMessageId,
+      },
+    );
   }
 
   Future<ConsultationTurn> sendMessage({

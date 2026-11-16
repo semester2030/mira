@@ -450,6 +450,12 @@ async function runScenario(scenario: Scenario, mode: 'local' | 'live', counts: C
     new McePromptAssemblerService(moderation),
     new MceResponseValidatorService(moderation),
     llm as never,
+    // discovery (required); dialogue optional — live B4 harness does not exercise discovery.
+    {
+      enabled: () => false,
+      turn: async () => ({ enabled: false }),
+      shouldHandleAsDiscovery: () => false,
+    } as never,
   );
   const prompts = scenario.turns ?? [scenario.prompt];
   const rows = [];

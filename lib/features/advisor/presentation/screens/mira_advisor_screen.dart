@@ -6,6 +6,7 @@ import 'package:flutter/material.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import 'package:image_picker/image_picker.dart';
 
+import '../../../../core/config/mira_api_config.dart';
 import '../../../../core/config/mira_features.dart';
 import '../../../../core/entitlements/mira_runtime_entitlement_store.dart';
 import '../../../../core/navigation/route_args.dart';
@@ -25,14 +26,35 @@ import '../../../consultation/data/datasources/consultation_stream_data_source.d
 import '../../../consultation/domain/consultation_session_gate.dart';
 import '../../../consultation/domain/dialogue_history.dart';
 import '../../../consultation/domain/dialogue_outbound.dart';
+import '../../../consultation/domain/entities/consultation_entities.dart'
+    hide MceCitedFact;
 import '../../../consultation/presentation/widgets/consultation_composer.dart';
 import '../../../consultation/presentation/widgets/consultation_image_strip.dart';
 import '../../../outfit_analysis/data/datasources/outfit_analysis_api_data_source.dart';
 import '../../../outfit_analysis/domain/helpers/outfit_consultation_mapper.dart';
 import '../../../outfit_analysis/domain/helpers/outfit_local_image_index.dart';
 import '../../domain/entities/advisor_response.dart';
+import '../../domain/entities/consultant_discovery_offer.dart';
+import 'package:firebase_auth/firebase_auth.dart';
+
+import '../../domain/services/mira_advisor_memory_store.dart';
+import '../../domain/services/mira_offer_link_resolver.dart';
+import '../widgets/consultant_offer_cards.dart';
+import '../../../marketplace/data/catalog_provenance.dart';
+import '../../../marketplace/data/catalog_record_scope.dart';
+import '../../../marketplace/data/discover_catalog_gateway.dart';
+import '../../../marketplace/data/repositories/marketplace_repository_impl.dart';
 import '../../domain/services/fashion_advisor_route_decision.dart';
 import '../../../face_analysis_experience/advisor_context/advisor_context.dart';
+
+const _homeStarterQuestions = [
+  'أبي مرطب بدون عطر',
+  'أبي ترطيب لطيف لروتيني',
+  'عندي مناسبة وأحتاج إطلالة',
+];
+
+const _openDialogueWelcomeAr =
+    'اسأليني بطريقتك، أو أرسلي صورة منتج أو إطلالة أبحث لك عنها.';
 
 const _skinStarterQuestions = [
   'لماذا درجة ترطيبي كذا؟',
@@ -70,16 +92,28 @@ class _MiraAdvisorScreenState extends State<MiraAdvisorScreen> {
   String? _contextCardText;
   String? _bindContextError;
   _ConsultationFocus _focus = _ConsultationFocus.skin;
+  bool _memoryEnabled = false;
 
   final bool _fashionAdvisorSticky = false;
   final bool _faceAdvisorSticky = false;
   int mceStreamCallCount = 0;
+
+  Future<void> _refreshMemoryConsentUi() async {
+    await _bindMemoryToAccountAndSession();
+    final enabled = await MiraAdvisorMemoryStore.isEnabled();
+    if (!mounted) return;
+    setState(() => _memoryEnabled = enabled);
+  }
 
   @override
   void initState() {
     super.initState();
     WidgetsBinding.instance.addPostFrameCallback((_) async {
       await _ensureSession();
+      if (!mounted) return;
+      await _flushPendingNetworkWork();
+      if (!mounted) return;
+      await _refreshMemoryConsentUi();
       if (!mounted) return;
       final args = _args;
       final face = args?.faceContext;
@@ -94,10 +128,30 @@ class _MiraAdvisorScreenState extends State<MiraAdvisorScreen> {
       }
       if (_followUps.isEmpty) {
         final outfit = args?.outfitAnalysis != null || args?.outfitAnalysisId != null;
+        final home = args == null ||
+            (args.skinReport == null &&
+                args.outfitAnalysis == null &&
+                (args.outfitAnalysisId == null || args.outfitAnalysisId!.isEmpty) &&
+                args.faceContext == null &&
+                args.recolorAttemptId == null);
         setState(() {
           _followUps = outfit
               ? OutfitConsultationMapper.outfitStarterQuestions
-              : _skinStarterQuestions;
+              : home
+                  ? _homeStarterQuestions
+                  : _skinStarterQuestions;
+        });
+      }
+      // One-time open-dialogue welcome — does not trap the client in a report scope.
+      if (_openDialogue && _messages.isEmpty && mounted) {
+        setState(() {
+          _messages.add(
+            AdvisorMessage(
+              text: _openDialogueWelcomeAr,
+              isUser: false,
+              at: DateTime.now(),
+            ),
+          );
         });
       }
     });
@@ -204,6 +258,7 @@ class _MiraAdvisorScreenState extends State<MiraAdvisorScreen> {
       });
       return;
     }
+    await _bindMemoryToAccountAndSession();
     if (_sessionReady) return;
     if (args == null) {
       await _openOrResume();
@@ -286,6 +341,7 @@ class _MiraAdvisorScreenState extends State<MiraAdvisorScreen> {
               if (args.outfitAnalysis != null)
                 'مناسبة التقرير: ${args.outfitAnalysis!.occasion.labelAr}',
             ].join(' · ');
+            final statedWithPrefs = await _preferenceGoalAr(base: statedGoal);
             String? acceptedFocus;
             String? snapshotId;
             String? bindError;
@@ -294,7 +350,7 @@ class _MiraAdvisorScreenState extends State<MiraAdvisorScreen> {
                 sessionId: remembered,
                 outfitAnalysisId: outfitAnalysisId,
                 occasionId: args.outfitAnalysis?.occasion.id,
-                statedGoalAr: statedGoal.isEmpty ? null : statedGoal,
+                statedGoalAr: statedWithPrefs,
               );
               snapshotId = bound.activeSnapshotId;
               acceptedFocus = statedGoal.isEmpty ? focus : statedGoal;
@@ -302,19 +358,14 @@ class _MiraAdvisorScreenState extends State<MiraAdvisorScreen> {
               bindError =
                   'تعذر تحديث سياق النقاش على الخادم — لن نعرضه كأنه نجح.';
             }
+            final resumed = history.messages.map(_messageFromConsultation).toList();
+            await MiraAdvisorMemoryStore.bindSession(remembered);
+            await _restoreOffersMemoryFromMessages(resumed, sessionId: remembered);
             if (!mounted) return;
             setState(() {
               _messages
                 ..clear()
-                ..addAll(history.messages.map((message) => AdvisorMessage(
-                      id: message.id,
-                      text: message.contentAr,
-                      isUser: message.isUser,
-                      at: message.createdAt,
-                      confidence: message.confidence,
-                      attachmentIds: message.attachmentIds,
-                      clientMessageId: message.clientMessageId,
-                    )));
+                ..addAll(resumed);
               _sessionId = remembered;
               _snapshotId = snapshotId;
               _sessionReady = true;
@@ -361,28 +412,14 @@ class _MiraAdvisorScreenState extends State<MiraAdvisorScreen> {
             final match = sessions.where((s) => s.id == rememberedSkin);
             final snapshotId =
                 match.isNotEmpty ? match.first.activeSnapshotId : null;
+            final resumed = history.messages.map(_messageFromConsultation).toList();
+            await MiraAdvisorMemoryStore.bindSession(rememberedSkin);
+            await _restoreOffersMemoryFromMessages(resumed, sessionId: rememberedSkin);
             if (!mounted) return;
             setState(() {
               _messages
                 ..clear()
-                ..addAll(history.messages.map((message) => AdvisorMessage(
-                      id: message.id,
-                      text: message.contentAr,
-                      isUser: message.isUser,
-                      at: message.createdAt,
-                      confidence: message.confidence,
-                      attachmentIds: message.attachmentIds,
-                      clientMessageId: message.clientMessageId,
-                      citedFacts: message.citedFacts
-                          .map(
-                            (f) => MceCitedFact(
-                              id: f.id,
-                              labelAr: f.labelAr,
-                              valueAr: f.valueAr,
-                            ),
-                          )
-                          .toList(),
-                    )));
+                ..addAll(resumed);
               _sessionId = rememberedSkin;
               _snapshotId = snapshotId;
               _sessionReady = true;
@@ -403,14 +440,16 @@ class _MiraAdvisorScreenState extends State<MiraAdvisorScreen> {
         }
       }
 
+      final statedWithPrefs = await _preferenceGoalAr(base: statedGoal);
       final session = await _consultationApi.createSession(
         skinAnalysisId: skinId,
         outfitAnalysisId: outfitAnalysisId,
         recolorAttemptId: _uuidOrNull(recolorId),
         occasionId: args.outfitAnalysis?.occasion.id,
-        statedGoalAr: statedGoal.isEmpty ? null : statedGoal,
+        statedGoalAr: statedWithPrefs,
         face: _faceContext?.toJson(),
       );
+      await MiraAdvisorMemoryStore.bindSession(session.id);
       final imageLimit = await _consultationApi.dialogueImageLimit();
       if (!mounted) return;
       if (outfitAnalysisId != null) {
@@ -486,21 +525,10 @@ class _MiraAdvisorScreenState extends State<MiraAdvisorScreen> {
             message.attachmentIds,
             _consultationApi.downloadAttachment,
           );
-          loaded.add(AdvisorMessage(
-            id: message.id,
-            text: message.contentAr,
-            isUser: message.isUser,
-            at: message.createdAt,
-            confidence: message.confidence,
-            images: [for (final slot in slots) if (slot.bytes != null) slot.bytes!],
-            imageSlots: slots,
-            attachmentIds: message.attachmentIds,
-            clientMessageId: message.clientMessageId,
-            citedFacts: message.citedFacts
-                .map((f) => MceCitedFact(id: f.id, labelAr: f.labelAr, valueAr: f.valueAr))
-                .toList(),
-          ));
+          loaded.add(_messageFromConsultation(message, imageSlots: slots));
         }
+        await MiraAdvisorMemoryStore.bindSession(latest.id);
+        await _restoreOffersMemoryFromMessages(loaded, sessionId: latest.id);
         if (!mounted) return;
         setState(() {
           _messages
@@ -517,7 +545,11 @@ class _MiraAdvisorScreenState extends State<MiraAdvisorScreen> {
         });
         return;
       }
-      final session = await _consultationApi.createSession();
+      final prefGoal = await _preferenceGoalAr();
+      final session = await _consultationApi.createSession(
+        statedGoalAr: prefGoal,
+      );
+      await MiraAdvisorMemoryStore.bindSession(session.id);
       if (!mounted) return;
       setState(() {
         _sessionId = session.id;
@@ -572,18 +604,11 @@ class _MiraAdvisorScreenState extends State<MiraAdvisorScreen> {
           message.attachmentIds,
           _consultationApi.downloadAttachment,
         );
-        older.add(AdvisorMessage(
-          id: message.id,
-          text: message.contentAr,
-          isUser: message.isUser,
-          at: message.createdAt,
-          images: [for (final slot in slots) if (slot.bytes != null) slot.bytes!],
-          imageSlots: slots,
-          attachmentIds: message.attachmentIds,
-          clientMessageId: message.clientMessageId,
-        ));
+        older.add(_messageFromConsultation(message, imageSlots: slots));
       }
       final merged = prependOlderMessages(older, _messages, (message) => message.id);
+      await _restoreOffersMemoryFromMessages(merged, sessionId: sessionId);
+      if (!mounted) return;
       setState(() {
         _messages
           ..clear()
@@ -619,6 +644,374 @@ class _MiraAdvisorScreenState extends State<MiraAdvisorScreen> {
     });
   }
 
+
+
+  AdvisorMessage _messageFromConsultation(ConsultationMessage message, {
+    List<DialogueImageSlot> imageSlots = const [],
+  }) {
+    final offers = [
+      for (final raw in message.discoveryOffers)
+        ConsultantDiscoveryOffer.fromJson(raw),
+    ].where((o) => o.id.isNotEmpty).toList();
+    final side = message.discoverySideOffer == null
+        ? null
+        : ConsultantDiscoveryOffer.fromJson(message.discoverySideOffer!);
+    return AdvisorMessage(
+      id: message.id,
+      text: message.contentAr,
+      isUser: message.isUser,
+      at: message.createdAt,
+      confidence: message.confidence,
+      images: [for (final slot in imageSlots) if (slot.bytes != null) slot.bytes!],
+      imageSlots: imageSlots,
+      attachmentIds: message.attachmentIds,
+      clientMessageId: message.clientMessageId,
+      citedFacts: message.citedFacts
+          .map((f) => MceCitedFact(id: f.id, labelAr: f.labelAr, valueAr: f.valueAr))
+          .toList(),
+      discoveryOffers: offers,
+      discoverySideOffer: side,
+    );
+  }
+
+  Future<void> _restoreOffersMemoryFromMessages(
+    List<AdvisorMessage> messages, {
+    String? sessionId,
+  }) async {
+    // Prefer the session id the caller just bound — widget `_sessionId` may
+    // still be null until setState runs after restore.
+    await _bindMemoryToAccountAndSession(sessionId: sessionId ?? _sessionId);
+    for (final m in messages.reversed) {
+      if (m.isUser) continue;
+      final list = <({String id, String kind, String titleAr, String? liveStatus})>[
+        for (final o in m.discoveryOffers)
+          (id: o.id, kind: o.kind, titleAr: o.titleAr, liveStatus: null),
+        if (m.discoverySideOffer != null && m.discoverySideOffer!.id.isNotEmpty)
+          (
+            id: m.discoverySideOffer!.id,
+            kind: m.discoverySideOffer!.kind,
+            titleAr: m.discoverySideOffer!.titleAr,
+            liveStatus: null,
+          ),
+      ];
+      if (list.isNotEmpty) {
+        await MiraAdvisorMemoryStore.rememberTurnOffers(list);
+        return;
+      }
+    }
+  }
+
+  Future<void> _flushPendingNetworkWork() async {
+    await _flushPendingPreferenceSync();
+    await _flushPendingTranscripts();
+  }
+
+  Future<void> _flushPendingPreferenceSync() async {
+    final ops = await MiraAdvisorMemoryStore.pendingPreferenceOps();
+    if (ops.isEmpty) return;
+    final currentUid = FirebaseAuth.instance.currentUser?.uid ?? '';
+    for (final pending in ops) {
+      final opUid = pending['accountUid'] as String? ?? '';
+      final opId = pending['opId'] as String? ?? '';
+      if (opUid.isNotEmpty && currentUid.isNotEmpty && opUid != currentUid) {
+        // Drop foreign-account ops — never apply cross-account.
+        if (opId.isNotEmpty) {
+          await MiraAdvisorMemoryStore.acknowledgePendingPreferenceOp(opId);
+        }
+        continue;
+      }
+      final opSessionId = (pending['sessionId'] as String?)?.trim() ?? '';
+      if (opSessionId.isEmpty) continue;
+      final op = pending['op'] as String? ?? 'set';
+      final goalAr = op == 'clear' ? '' : (pending['goalAr'] as String? ?? '');
+      try {
+        final bound = await _consultationApi.bindContext(
+          sessionId: opSessionId,
+          statedGoalAr: goalAr,
+          clientPreferenceOpId: opId.isEmpty ? null : opId,
+        );
+        // Strict ack: only drop when server echoes the exact opId.
+        if (opId.isNotEmpty && bound.appliedPreferenceOpId == opId) {
+          await MiraAdvisorMemoryStore.acknowledgePendingPreferenceOp(opId);
+          if (mounted && opSessionId == _sessionId) {
+            setState(() {
+              _snapshotId = bound.activeSnapshotId ?? _snapshotId;
+            });
+          }
+        }
+        // Missing/mismatched appliedPreferenceOpId → keep queued and retry same opId.
+      } catch (_) {
+        // Keep this session's op queued until connectivity returns.
+      }
+    }
+  }
+
+  Future<void> _flushPendingTranscripts() async {
+    final rows = await MiraAdvisorMemoryStore.pendingTranscripts();
+    if (rows.isEmpty) return;
+    final remaining = <Map<String, dynamic>>[];
+    for (final row in rows) {
+      final sessionId = row['sessionId'] as String? ?? _sessionId;
+      final userText = row['userContentAr'] as String?;
+      final assistantText = row['assistantContentAr'] as String?;
+      final clientMessageId = row['clientMessageId'] as String?;
+      if (sessionId == null ||
+          sessionId.isEmpty ||
+          userText == null ||
+          assistantText == null ||
+          clientMessageId == null) {
+        continue;
+      }
+      try {
+        await _consultationApi.recordTranscriptTurn(
+          sessionId: sessionId,
+          userContentAr: userText,
+          assistantContentAr: assistantText,
+          clientMessageId: clientMessageId,
+        );
+      } catch (_) {
+        remaining.add(row);
+      }
+    }
+    await MiraAdvisorMemoryStore.savePendingTranscripts(remaining);
+  }
+
+  Future<bool> _persistLinkTranscriptOnce({
+    required String userText,
+    required String assistantText,
+    required String clientMessageId,
+  }) async {
+    final sessionId = _sessionId;
+    if (sessionId == null || sessionId.isEmpty) return false;
+    for (var attempt = 0; attempt < 3; attempt++) {
+      try {
+        await _consultationApi.recordTranscriptTurn(
+          sessionId: sessionId,
+          userContentAr: userText,
+          assistantContentAr: assistantText,
+          clientMessageId: clientMessageId,
+        );
+        return true;
+      } catch (_) {
+        await Future<void>.delayed(Duration(milliseconds: 250 * (attempt + 1)));
+      }
+    }
+    await MiraAdvisorMemoryStore.enqueuePendingTranscript(
+      sessionId: sessionId,
+      userContentAr: userText,
+      assistantContentAr: assistantText,
+      clientMessageId: clientMessageId,
+    );
+    if (mounted) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(
+          content: Text('تعذر حفظ حوار الرابط — سيُعاد عند عودة الاتصال'),
+        ),
+      );
+    }
+    return false;
+  }
+
+  Future<MiraOfferLinkDecision> _handleOfferLinkAsk(
+    String text, {
+    required String clientMessageId,
+  }) async {
+    final decision = await MiraOfferLinkResolver.resolve(text);
+    if (decision.kind == MiraOfferLinkKind.none) return decision;
+    if (!mounted) return decision;
+    if (decision.kind == MiraOfferLinkKind.clarify) {
+      final clarify = decision.clarifyAr ?? 'أي عرض تقصدين؟';
+      setState(() {
+        _messages.add(
+          AdvisorMessage(
+            text: clarify,
+            isUser: false,
+            at: DateTime.now(),
+          ),
+        );
+      });
+      await _persistLinkTranscriptOnce(
+        userText: text,
+        assistantText: clarify,
+        clientMessageId: clientMessageId,
+      );
+      _scrollToEnd();
+      return decision;
+    }
+    final kind = decision.offerKind ?? 'product';
+    final id = decision.offerId!;
+    // Verify live catalog before claiming «منشور» or navigating.
+    final verified = await _verifyOfferStillPublished(kind: kind, id: id);
+    if (!verified.ok) {
+      final msg = verified.messageAr;
+      setState(() {
+        _messages.add(
+          AdvisorMessage(text: msg, isUser: false, at: DateTime.now()),
+        );
+      });
+      await MiraAdvisorMemoryStore.rememberTurnOffers([
+        for (final o in await MiraAdvisorMemoryStore.lastTurnOffers())
+          (
+            id: o.id,
+            kind: o.kind,
+            titleAr: o.titleAr,
+            liveStatus: o.id == id ? verified.liveStatus : o.liveStatus,
+          ),
+      ]);
+      await _persistLinkTranscriptOnce(
+        userText: text,
+        assistantText: msg,
+        clientMessageId: clientMessageId,
+      );
+      _scrollToEnd();
+      // Handled in-place — do not open another offer.
+      return const MiraOfferLinkDecision.none();
+    }
+    final openNote =
+        'فتح عرض منشور من الكتالوج: ${decision.titleAr ?? decision.offerId}';
+    await _persistLinkTranscriptOnce(
+      userText: text,
+      assistantText: openNote,
+      clientMessageId: clientMessageId,
+    );
+    if (!mounted) return decision;
+    await Navigator.of(context).push(
+      MaterialPageRoute<void>(
+        builder: (_) => CatalogRecordScope.page(kind: kind, id: id),
+      ),
+    );
+    return decision;
+  }
+
+  Future<({bool ok, String messageAr, String liveStatus})> _verifyOfferStillPublished({
+    required String kind,
+    required String id,
+  }) async {
+    try {
+      final repo = MarketplaceRepositoryImpl(useServer: MiraApiConfig.useBackend);
+      final result = await repo.loadRecord(
+        kind: kind,
+        id: id,
+        transport: MiraApiConfig.useBackend
+            ? CatalogTransport.server
+            : CatalogTransport.localCatalog,
+      );
+      if (result.status == CatalogRecordStatus.network) {
+        return (
+          ok: false,
+          messageAr: 'تعذّر التحقق من توفر هذا العرض الآن. أعيدي المحاولة عند استقرار الاتصال.',
+          liveStatus: 'unverifiable',
+        );
+      }
+      if (result.status == CatalogRecordStatus.missing ||
+          (result.product == null && result.service == null)) {
+        return (
+          ok: false,
+          messageAr:
+              'هذا العرض لم يعد منشورًا في الكتالوج — لن أفتح شراء أو حجزًا له، ولن أستبدله بعرض آخر.',
+          liveStatus: 'withdrawn',
+        );
+      }
+      return (ok: true, messageAr: '', liveStatus: 'published');
+    } catch (_) {
+      return (
+        ok: false,
+        messageAr: 'تعذّر التحقق من توفر هذا العرض الآن.',
+        liveStatus: 'unverifiable',
+      );
+    }
+  }
+
+  Future<void> _bindMemoryToAccountAndSession({String? sessionId}) async {
+    final uid = FirebaseAuth.instance.currentUser?.uid;
+    await MiraAdvisorMemoryStore.bindAccount(uid);
+    await MiraAdvisorMemoryStore.bindSession(sessionId ?? _sessionId);
+  }
+
+  Future<String?> _preferenceGoalAr({String? base}) async {
+    await _bindMemoryToAccountAndSession();
+    final brief = await MiraAdvisorMemoryStore.preferenceBriefAr();
+    final parts = <String>[
+      if (base != null && base.trim().isNotEmpty) base.trim(),
+      if (brief != null && brief.isNotEmpty) brief,
+    ];
+    if (parts.isEmpty) return null;
+    return parts.join(' · ');
+  }
+
+  /// Push current preference brief into the server snapshot (also after forget/correct).
+  /// Always adopt the returned activeSnapshotId so the next turn does not reuse a stale goal.
+  /// On network failure, queue the goal and block send until flush succeeds (or user retries).
+  Future<bool> _syncPreferencesToServer() async {
+    final sessionId = _sessionId;
+    if (sessionId == null || sessionId.isEmpty) return false;
+    final goal = await _preferenceGoalAr(base: _contextCardText);
+    final uid = FirebaseAuth.instance.currentUser?.uid;
+    final isClear = goal == null || goal.trim().isEmpty;
+    // Reuse opId only for the exact same command fingerprint (account+session+op+content).
+    final opKind = isClear ? 'clear' : 'set';
+    final fingerprint = MiraAdvisorMemoryStore.preferenceOpFingerprint(
+      op: opKind,
+      sessionId: sessionId,
+      accountUid: uid,
+      goalAr: isClear ? null : goal,
+    );
+    final pendingOps = await MiraAdvisorMemoryStore.pendingPreferenceOps();
+    Map<String, dynamic>? existing;
+    for (final e in pendingOps) {
+      if (e['fingerprint'] == fingerprint) {
+        existing = e;
+        break;
+      }
+    }
+    final existingOpId = existing?['opId'] as String?;
+    final opId = (existingOpId != null && existingOpId.isNotEmpty)
+        ? existingOpId
+        : 'prefs-${DateTime.now().microsecondsSinceEpoch}';
+    await MiraAdvisorMemoryStore.queuePendingPreferenceOp(
+      op: opKind,
+      sessionId: sessionId,
+      opId: opId,
+      accountUid: uid,
+      goalAr: isClear ? null : goal,
+    );
+    try {
+      final bound = await _consultationApi.bindContext(
+        sessionId: sessionId,
+        statedGoalAr: goal ?? '',
+        clientPreferenceOpId: opId,
+      );
+      if (bound.appliedPreferenceOpId != opId) {
+        // Server did not confirm this opId — keep queued; do not treat as success.
+        return false;
+      }
+      await MiraAdvisorMemoryStore.acknowledgePendingPreferenceOp(opId);
+      if (!mounted) return true;
+      setState(() {
+        _snapshotId = bound.activeSnapshotId ?? _snapshotId;
+      });
+      return true;
+    } catch (_) {
+      // Same opId stays queued for retry — never invent a new id on failure.
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(
+            content: Text(
+              'تعذر مزامنة التفضيلات مع الخادم — لن نرسل السؤال بالمعرّف القديم',
+            ),
+          ),
+        );
+      }
+      return false;
+    }
+  }
+
+  Future<void> _enableMemoryFromConsent() async {
+    await MiraAdvisorMemoryStore.setEnabled(true);
+    await _syncPreferencesToServer();
+    await _refreshMemoryConsentUi();
+  }
+
   Future<void> _send(String text, {DialogueOutbound? retry}) async {
     final trimmed = (retry?.text ?? text).trim();
     if ((trimmed.isEmpty && _drafts.isEmpty && retry == null) || _loading) return;
@@ -628,6 +1021,32 @@ class _MiraAdvisorScreenState extends State<MiraAdvisorScreen> {
         const SnackBar(content: Text('سجّلي الدخول لاستخدام مستشار ميرا الذكي')),
       );
       return;
+    }
+
+    await _bindMemoryToAccountAndSession();
+    await _flushPendingNetworkWork();
+
+    if (retry == null) {
+      await MiraAdvisorMemoryStore.absorbExplicitPrefsFromMessage(trimmed);
+      // City forget/correct/enable must update the server statedGoal for the next turn.
+      final synced = await _syncPreferencesToServer();
+      if (!synced) return;
+      if (await MiraOfferLinkResolver.isOfferLinkTurn(trimmed)) {
+        final clientMessageId =
+            'c-link-${DateTime.now().microsecondsSinceEpoch}';
+        setState(() {
+          _messages.add(
+            AdvisorMessage(
+              text: trimmed,
+              isUser: true,
+              at: DateTime.now(),
+              clientMessageId: clientMessageId,
+            ),
+          );
+        });
+        await _handleOfferLinkAsk(trimmed, clientMessageId: clientMessageId);
+        return;
+      }
     }
 
     setState(() => _loading = true);
@@ -775,6 +1194,31 @@ class _MiraAdvisorScreenState extends State<MiraAdvisorScreen> {
 
     if (!mounted) return;
     final assistant = turn.assistantMessage;
+    final discoveryOffers = [
+      for (final raw in assistant.discoveryOffers)
+        ConsultantDiscoveryOffer.fromJson(raw),
+    ].where((o) => o.id.isNotEmpty).toList();
+    final side = assistant.discoverySideOffer == null
+        ? null
+        : ConsultantDiscoveryOffer.fromJson(assistant.discoverySideOffer!);
+    final remembered =
+        <({String id, String kind, String titleAr, String? liveStatus})>[
+      for (final o in discoveryOffers)
+        (
+          id: o.id,
+          kind: o.kind,
+          titleAr: o.titleAr,
+          liveStatus: o.liveStatus ?? 'published',
+        ),
+      if (side != null && side.id.isNotEmpty)
+        (
+          id: side.id,
+          kind: side.kind,
+          titleAr: side.titleAr,
+          liveStatus: side.liveStatus ?? 'published',
+        ),
+    ];
+    await MiraAdvisorMemoryStore.rememberTurnOffers(remembered);
     setState(() {
       _messages[streamIndex] = AdvisorMessage(
         id: assistant.id,
@@ -791,6 +1235,8 @@ class _MiraAdvisorScreenState extends State<MiraAdvisorScreen> {
               ),
             )
             .toList(),
+        discoveryOffers: discoveryOffers,
+        discoverySideOffer: side,
       );
       _snapshotId = turn.session.activeSnapshotId ?? _snapshotId;
       _followUps = assistant.suggestedQuestionsAr;
@@ -820,22 +1266,24 @@ class _MiraAdvisorScreenState extends State<MiraAdvisorScreen> {
       return 'محادثة مفتوحة عن الإطلالات والألوان والعناية. اسألي ميرا مباشرة.';
     }
     if (_openDialogue) {
-      return 'محادثة مفتوحة عن الجمال والعناية والمكياج والشعر والإطلالات. الصور للمناقشة ولا تغيّر تقرير البشرة.';
+      return _openDialogueWelcomeAr;
     }
     return switch (_focus) {
       _ConsultationFocus.atelier =>
         'إجابات مُؤَسَّسة على تجربة Atelier وQEL — تلوين قماش فقط',
       _ConsultationFocus.outfit =>
-        'إجابات مُؤَسَّسة على تحليل إطلالتك — أسلوب · مناسبة · إكسسوارات',
+        'بخصوص هذه الإطلالة — أسلوب · مناسبة · إكسسوارات',
       _ConsultationFocus.face =>
         'ميرا تشرح نتائج ملامحك من الأدلة المتاحة — بدون إعادة تحليل',
       _ConsultationFocus.skin =>
-        'إجابات مُؤَسَّسة على تقرير بشرتكِ — لا إعادة تحليل للصورة',
+        'بخصوص تقرير بشرتك — إجابات من التقرير المعروض فقط، بدون إعادة تحليل',
     };
   }
 
   String get _inputHint {
-    if (_openDialogue) return 'اسألي عن العناية أو المكياج أو الشعر أو الإطلالة…';
+    if (_openDialogue) {
+      return 'اسأليني بطريقتك، أو أرسلي صورة منتج أو إطلالة…';
+    }
     return switch (_focus) {
       _ConsultationFocus.atelier =>
         'اسألي عن التلوين · QEL · دقة اللون · الهوية…',
@@ -843,7 +1291,9 @@ class _MiraAdvisorScreenState extends State<MiraAdvisorScreen> {
         'اسألي عن الأسلوب · المناسبة · الإكسسوارات · المكياج…',
       _ConsultationFocus.face =>
         'اسألي عن شكل الوجه · النسب · الإرشاد المرتبط…',
-      _ConsultationFocus.skin => 'اسألي عن العناية · الروتين · المنتجات…',
+      // Skin report seeds context; client may still ask about any product photo.
+      _ConsultationFocus.skin =>
+        'اسألي عن بشرتك أو أرسلي صورة منتج أبحث لك عنها…',
     };
   }
 
@@ -916,6 +1366,39 @@ class _MiraAdvisorScreenState extends State<MiraAdvisorScreen> {
                   textAlign: TextAlign.center,
                 ),
               ),
+              if (!_memoryEnabled)
+                Padding(
+                  padding: const EdgeInsets.fromLTRB(16, 8, 16, 0),
+                  child: Material(
+                    key: const Key('ask_mira_memory_consent'),
+                    color: AppColors.surface,
+                    borderRadius: BorderRadius.circular(12),
+                    child: Padding(
+                      padding: const EdgeInsets.symmetric(
+                        horizontal: 12,
+                        vertical: 8,
+                      ),
+                      child: Row(
+                        children: [
+                          Expanded(
+                            child: Text(
+                              'التذكّر طويل الأمد متوقف. وافقي إن رغبتِ أن تحفظ ميرا مدينتك وميزانيتك عبر الجلسات.',
+                              style: AppTypography.labelSmall.copyWith(
+                                color: AppColors.textSecondary,
+                                height: 1.35,
+                              ),
+                              textAlign: TextAlign.right,
+                            ),
+                          ),
+                          TextButton(
+                            onPressed: _loading ? null : _enableMemoryFromConsent,
+                            child: const Text('أوافق'),
+                          ),
+                        ],
+                      ),
+                    ),
+                  ),
+                ),
               if (_focus == _ConsultationFocus.outfit &&
                   (_boundOutfitAnalysisId != null ||
                       _args?.outfitAnalysis != null ||
@@ -1115,6 +1598,15 @@ class _Bubble extends StatelessWidget {
                     .map((f) => (label: f.labelAr, value: f.valueAr))
                     .toList(),
               ),
+            if (!isUser &&
+                (message.discoveryOffers.isNotEmpty ||
+                    message.discoverySideOffer != null)) ...[
+              const SizedBox(height: 10),
+              ConsultantOfferCards(
+                offers: message.discoveryOffers,
+                sideOffer: message.discoverySideOffer,
+              ),
+            ],
           ],
         ),
       ),

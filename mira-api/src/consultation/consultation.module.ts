@@ -1,5 +1,6 @@
 import { Module } from '@nestjs/common';
 import { CommonModule } from '../common/common.module';
+import { ConsultantDiscoveryModule } from '../consultant-discovery/consultant-discovery.module';
 import { IntelligenceModule } from '../intelligence/intelligence.module';
 import { RedisModule } from '../redis/redis.module';
 import { UsersModule } from '../users/users.module';
@@ -22,7 +23,7 @@ import {
 import { ConsultationDialogueService } from './services/consultation-attachment.service';
 
 @Module({
-  imports: [IntelligenceModule, UsersModule, CommonModule, RedisModule],
+  imports: [IntelligenceModule, UsersModule, CommonModule, RedisModule, ConsultantDiscoveryModule],
   controllers: [ConsultationController],
   providers: [
     MceFactExtractorService,

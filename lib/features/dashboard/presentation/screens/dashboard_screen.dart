@@ -16,6 +16,7 @@ import '../../../../core/profile/user_level.dart';
 import '../../../profile/domain/entities/profile_entity.dart';
 import '../../../skin_analysis/presentation/widgets/face_frame_overlay.dart';
 import '../../../marketplace/presentation/widgets/mira_world_orbit_discover.dart';
+import '../widgets/ask_mira_home_entry.dart';
 
 class DashboardScreen extends StatelessWidget {
   const DashboardScreen({super.key});
@@ -314,7 +315,10 @@ class _DashboardAnalysisCardsState extends State<_DashboardAnalysisCards> {
             ),
           ),
         ),
-        const SizedBox(height: 24),
+        // Handoff order: skin → outfit → Ask Mira → progress row.
+        const SizedBox(height: 14),
+        const AskMiraHomeEntry(),
+        const SizedBox(height: 18),
         Row(
           children: [
             Expanded(
