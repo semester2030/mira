@@ -108,6 +108,29 @@ export class RedisService implements OnModuleInit, OnModuleDestroy {
     }
   }
 
+  /** Roll back a just-taken rate/quota token when the request is rejected. */
+  async decrementRateLimit(key: string): Promise<void> {
+    const redis = await this.ensureClient();
+    if (!redis) {
+      throw new RedisCriticalControlUnavailableError(
+        'Critical Redis counter is not configured',
+      );
+    }
+    try {
+      const next = await redis.decr(key);
+      if (next < 0) {
+        await redis.set(key, '0', 'KEEPTTL');
+      }
+    } catch (err) {
+      this.logger.error(
+        `Critical Redis counter rollback failed: ${(err as Error).message}`,
+      );
+      this.client = null;
+      this.ready = false;
+      throw new RedisCriticalControlUnavailableError();
+    }
+  }
+
   runtimeStatus(): {
     configured: boolean;
     state: RedisRuntimeState;

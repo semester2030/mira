@@ -64,22 +64,32 @@ class ConsultationStreamDataSource {
     String? clientMessageId,
     void Function(String deltaText)? onDelta,
   }) async {
-    final response = await _dio.post<ResponseBody>(
-      '${ConsultationApiEndpoints.sessionMessages(sessionId)}/stream',
-      data: {
-        'message': message,
-        if (contextSnapshotId != null && contextSnapshotId.isNotEmpty)
-          'contextSnapshotId': contextSnapshotId,
-        if (attachmentIds.isNotEmpty) 'attachmentIds': attachmentIds,
-        if (clientMessageId != null && clientMessageId.isNotEmpty)
-          'clientMessageId': clientMessageId,
-      },
-      options: Options(
-        responseType: ResponseType.stream,
-        headers: {'Accept': 'text/event-stream'},
-        receiveTimeout: const Duration(seconds: 120),
-      ),
-    );
+    late final Response<ResponseBody> response;
+    try {
+      response = await _dio.post<ResponseBody>(
+        '${ConsultationApiEndpoints.sessionMessages(sessionId)}/stream',
+        data: {
+          'message': message,
+          if (contextSnapshotId != null && contextSnapshotId.isNotEmpty)
+            'contextSnapshotId': contextSnapshotId,
+          if (attachmentIds.isNotEmpty) 'attachmentIds': attachmentIds,
+          if (clientMessageId != null && clientMessageId.isNotEmpty)
+            'clientMessageId': clientMessageId,
+        },
+        options: Options(
+          responseType: ResponseType.stream,
+          headers: {'Accept': 'text/event-stream'},
+          receiveTimeout: const Duration(seconds: 120),
+          // Keep clientMessageId on the request for device log correlation.
+          extra: {
+            if (clientMessageId != null && clientMessageId.isNotEmpty)
+              'clientMessageId': clientMessageId,
+          },
+        ),
+      );
+    } on DioException catch (error) {
+      throw await _mapHttpFailure(error);
+    }
 
     final body = response.data;
     if (body == null) throw Exception('بث الاستشارة فارغ');
@@ -137,6 +147,52 @@ class ConsultationStreamDataSource {
       }
     }
     return (rest: buffer, turn: turn);
+  }
+
+  Future<ConsultationStreamException> _mapHttpFailure(DioException error) async {
+    final status = error.response?.statusCode;
+    final parsed = await _readErrorPayload(error.response?.data);
+    final message = () {
+      final fromMap = parsed?['message'] ?? parsed?['messageAr'];
+      if (fromMap is String && fromMap.trim().isNotEmpty) return fromMap.trim();
+      if (error.message != null && error.message!.contains('تعذر')) {
+        return error.message!.trim();
+      }
+      if (status == 429) {
+        return 'وصلتِ لحد الاستشارة اليوم. حاولي لاحقاً أو غداً.';
+      }
+      return 'تعذر إكمال الرد. أعيدي المحاولة بنفس الطلب.';
+    }();
+    // ignore: avoid_print
+    print(
+      'mira_consultation_stream_http status=$status '
+      'clientMessageId=${error.requestOptions.extra['clientMessageId']} '
+      'code=${parsed?['code']}',
+    );
+    return ConsultationStreamException(message);
+  }
+
+  Future<Map<String, dynamic>?> _readErrorPayload(Object? data) async {
+    if (data is Map<String, dynamic>) return data;
+    if (data is Map) return Map<String, dynamic>.from(data);
+    String? raw;
+    if (data is ResponseBody) {
+      raw = await utf8.decoder.bind(data.stream).join();
+    } else if (data is List<int>) {
+      raw = utf8.decode(data);
+    } else if (data is String) {
+      raw = data;
+    }
+    if (raw == null || raw.trim().isEmpty) return null;
+    try {
+      final decoded = jsonDecode(raw);
+      if (decoded is Map<String, dynamic>) return decoded;
+      if (decoded is Map) return Map<String, dynamic>.from(decoded);
+      if (decoded is String) return {'message': decoded};
+    } catch (_) {
+      return {'message': raw.trim()};
+    }
+    return null;
   }
 
   int _eventSeparator(String buffer) {

@@ -18,7 +18,9 @@ export class RateLimitService {
   ) {}
 
   async assertWithinLimit(userId: string, action: string): Promise<void> {
-    const limit = this.config.get<number>('RATE_LIMIT_PER_HOUR', 30);
+    const raw = this.config.get<number | string>('RATE_LIMIT_PER_HOUR', 30);
+    const limit = typeof raw === 'number' ? raw : Number(raw);
+    const safeLimit = Number.isFinite(limit) && limit > 0 ? limit : 30;
     const key = `rate:${action}:${userId}`;
     let count: number;
     try {
@@ -36,9 +38,19 @@ export class RateLimitService {
       throw error;
     }
 
-    if (count > limit) {
+    if (count > safeLimit) {
+      // Rejected attempt must not keep consuming the window — retries were
+      // digging a deeper hole after the free/daily cap was already hit.
+      try {
+        await this.redis.decrementRateLimit(key);
+      } catch {
+        // Still throw the original 429 even if rollback fails.
+      }
       throw new HttpException(
-        'تم تجاوز حد التحليلات المسموح. حاولي لاحقاً.',
+        {
+          code: 'RATE_LIMIT_EXCEEDED',
+          message: 'تم تجاوز حد التحليلات المسموح. حاولي لاحقاً.',
+        },
         HttpStatus.TOO_MANY_REQUESTS,
       );
     }

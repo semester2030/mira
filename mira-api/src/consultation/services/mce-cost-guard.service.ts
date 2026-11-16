@@ -46,8 +46,10 @@ export function buildAnswerCacheKey(ctx: AnswerCacheContext): string | null {
 }
 
 const PLAN_DAILY_LIMITS: Record<string, number> = {
-  free: 10,
-  premium: 100,
+  // Chip journeys (مناسبة → زفاف → ضيفة → إطلالة) need several turns; 10
+  // was exhausted by morning QA and then every retry kept failing closed.
+  free: 40,
+  premium: 200,
 };
 
 @Injectable()
@@ -66,7 +68,9 @@ export class MceCostGuardService {
   async assertDailyQuota(userId: string, planTier: string): Promise<void> {
     const limit = this.dailyLimit(planTier);
     const day = new Date().toISOString().slice(0, 10);
-    const key = `mce:daily:${userId}:${day}`;
+    // v2 key: resets counters inflated by pre-fix retries that incremented
+    // past the cap without rolling back (see RateLimitService / this method).
+    const key = `mce:daily:v2:${userId}:${day}`;
     let count: number;
     try {
       count = await this.redis.incrementRateLimit(key, 86_400);
@@ -84,6 +88,11 @@ export class MceCostGuardService {
     }
 
     if (count > limit) {
+      try {
+        await this.redis.decrementRateLimit(key);
+      } catch {
+        // Prefer surfacing the quota error even if rollback fails.
+      }
       throw new HttpException(
         {
           code: 'MCE_DAILY_LIMIT',
