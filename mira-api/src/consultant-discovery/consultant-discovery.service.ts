@@ -621,6 +621,7 @@ export class ConsultantDiscoveryService {
         requireFragranceFree: false,
         replyAr: 'مستشار الاكتشاف غير مفعّل في هذه البيئة.',
         askAr: null,
+        choiceChipsAr: [],
         sideSuggestionAr: null,
         sideTargetIds: [],
         blockers: ['feature_flag_off'],

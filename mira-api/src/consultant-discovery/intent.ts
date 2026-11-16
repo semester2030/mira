@@ -60,6 +60,11 @@ export interface SessionDiscoveryContext {
   placeModes?: string[] | null;
   providerKindPrefer?: 'independent' | 'facility' | null;
   servicePlace?: 'home' | 'venue' | null;
+  /** Soft occasion continuity across short chip replies (e.g. «أنا ضيفة»). */
+  occasion?: 'wedding' | null;
+  weddingRole?: WeddingRole | null;
+  /** Guest journey step after role is known. */
+  guestLookStep?: 'need_goal' | 'coord_dress' | 'makeup_hair' | null;
 }
 
 export interface ConsultantSignals {
@@ -144,6 +149,8 @@ export interface ConsultantIntent {
   requireFragranceFree: boolean;
   replyAr: string;
   askAr: string | null;
+  /** Short tap answers / actions for the client chips — never Mira's own question. */
+  choiceChipsAr: string[];
   sideSuggestionAr: string | null;
   sideTargetIds: string[];
   blockers: string[];
@@ -232,10 +239,19 @@ export function extractSignals(
   const attachmentCount = Math.max(0, opts?.attachmentCount ?? 0);
   const budget = parseBudget(n);
   let weddingRole: WeddingRole = 'unknown';
-  if (/ضيف|ضيفه|مدعوه/.test(n)) weddingRole = 'guest';
+  if (/^(انا\s+)?(الضيفه|الضيفه|ضيفه|ضيف|مدعوه)\b/.test(n) || /انا ضيفه|أنا ضيفة|انا ضيفة/.test(n)) {
+    weddingRole = 'guest';
+  } else if (/^(انا\s+)?(العروس|عروس)\b/.test(n) || /انا العروس|أنا العروس/.test(n)) {
+    weddingRole = 'bride';
+  } else if (/ارتب الحفل|أرتّب الحفل|ارتب لشخص|لشخص اخر|لشخص آخر/.test(n)) {
+    weddingRole = 'organizer';
+  } else if (/ضيف|ضيفه|مدعوه/.test(n)) weddingRole = 'guest';
   else if (/عروس|فستان زفاف|فستان زواج/.test(n) && !/اختي|اختى/.test(n)) weddingRole = 'bride';
   else if (/ارتب|انظم|منسق|منسقه|اختي|حفل/.test(n) && /زواج|زفاف/.test(n)) {
     weddingRole = 'organizer';
+  }
+  if (weddingRole === 'unknown' && opts?.session?.weddingRole) {
+    weddingRole = opts.session.weddingRole;
   }
 
   let imageKind: ImageKind =
@@ -256,10 +272,13 @@ export function extractSignals(
     /^(بدون|بلا)\s+/.test(n) ||
     (/مو ذهبي|مو دهبي|بدون عطر|بلا عطر/.test(n) && n.length < 40);
 
+  const weddingMentioned =
+    /زواج|زفاف/.test(n) || opts?.session?.occasion === 'wedding';
+
   return {
     raw,
     normalized: n,
-    weddingMentioned: /زواج|زفاف/.test(n),
+    weddingMentioned,
     weddingRole,
     budgetMaxSar: budget?.max ?? null,
     priceBound: budget?.bound ?? null,
@@ -746,14 +765,217 @@ export function decideIntent(
     });
   }
 
+  // Soft occasion opener («عندي مناسبة») before a specific wedding/event word.
+  if (
+    /عندي مناسب|عندي مناسبة|ابي مناسبه|أبي مناسبة|مناسبه واحتاج|مناسبة وأحتاج/.test(
+      signals.normalized,
+    ) &&
+    !signals.weddingMentioned &&
+    signals.weddingRole === 'unknown' &&
+    !signals.wantsBag
+  ) {
+    return base({
+      kind: 'clarify',
+      ruleIds: ['gate.clarify_occasion'],
+      replyAr: 'تمام، وش نوع المناسبة؟',
+      askAr: null,
+      choiceChipsAr: ['زفاف', 'خطوبة', 'سهرة', 'مناسبة أخرى'],
+      blockers: ['ambiguous_occasion'],
+      sessionPatch: {
+        ...(sess ?? {}),
+        occasion: null,
+        weddingRole: null,
+        guestLookStep: null,
+      },
+    });
+  }
+
   if (signals.weddingMentioned && signals.weddingRole === 'unknown' && !signals.wantsBag && !signals.wantsStylist) {
     return base({
       kind: 'clarify',
       ruleIds: ['R002', 'gate.clarify_role'],
       sourceId: 'clothes.wedding_dress',
-      replyAr: 'حتى أساعدك صح: هل أنتِ ضيفة، العروس، أو ترتّبين الحفل لشخص آخر؟',
-      askAr: 'هل أنتِ ضيفة، العروس، أو ترتّبين الحفل؟',
+      replyAr: 'حلو، وش دورك في الزفاف؟',
+      askAr: null,
+      choiceChipsAr: ['أنا العروس', 'أنا ضيفة', 'أرتّب الحفل لشخص آخر'],
       blockers: ['ambiguous_wedding'],
+      sessionPatch: {
+        ...(sess ?? {}),
+        occasion: 'wedding',
+        weddingRole: 'unknown',
+        guestLookStep: null,
+      },
+    });
+  }
+
+  const isGuest =
+    signals.weddingRole === 'guest' || sess?.weddingRole === 'guest';
+  const picksGuestDressShop = /اختار فستان|أختار فستان/.test(signals.normalized);
+  const picksGuestCoordDress =
+    /انسق فستان|أنسّق فستان|انسق فستاني|فستان عندي/.test(signals.normalized);
+  const picksGuestMakeupHair =
+    /ابي مكياج|أبي مكياج|مكياج وشعر|كوافير/.test(signals.normalized);
+  const picksBagOrShoes =
+    /شنط|حقيبه|حذاء|اقترحي شنط|أقترحي شنط/.test(signals.normalized);
+  const picksDressColor = /اختار لونه|أختار لونه|لون الفستان|لونه/.test(
+    signals.normalized,
+  );
+
+  if (isGuest && picksGuestDressShop) {
+    return productSearch({
+      ruleIds: ['R005', 'gate.guest_pick_dress'],
+      sourceId: 'clothes.evening',
+      targetIds: ['clothes.evening'],
+      q: 'فستان سهرة',
+      signals,
+      replyAr: 'أبحث لكِ عن فساتين مناسبة كضيفة.',
+      sideSuggestionAr: 'كلاتش',
+      sideTargetIds: ['bags.clutch'],
+      blockers: ['guest_dress_shop'],
+      askAr: null,
+    });
+  }
+
+  // Guest after role: pick look goal (dress / makeup / …).
+  // Skip when they already named a product/service ask («أكمّل اللوك» → bags).
+  if (
+    isGuest &&
+    signals.weddingMentioned &&
+    !signals.wantsBag &&
+    !signals.wantsClutchOrBag &&
+    !signals.wantsDressOnly &&
+    !signals.wantsEveningDress &&
+    !signals.makeupService &&
+    !signals.wantsHairstyleService &&
+    !signals.wantsStylist &&
+    !picksGuestCoordDress &&
+    !picksGuestMakeupHair &&
+    !picksBagOrShoes &&
+    !picksDressColor &&
+    sess?.guestLookStep !== 'coord_dress' &&
+    sess?.guestLookStep !== 'makeup_hair'
+  ) {
+    return base({
+      kind: 'clarify',
+      ruleIds: ['R002', 'gate.guest_look_goal'],
+      sourceId: 'clothes.evening',
+      replyAr: 'وش ودّك نبدأ فيه لإطلالتك؟',
+      askAr: null,
+      choiceChipsAr: ['أختار فستان', 'أنسّق فستان عندي', 'أبي مكياج وشعر'],
+      blockers: ['guest_need_goal'],
+      sessionPatch: {
+        ...(sess ?? {}),
+        occasion: 'wedding',
+        weddingRole: 'guest',
+        guestLookStep: 'need_goal',
+      },
+    });
+  }
+
+  if (
+    isGuest &&
+    (picksGuestCoordDress ||
+      (sess?.guestLookStep === 'coord_dress' &&
+        !picksBagOrShoes &&
+        !picksDressColor))
+  ) {
+    return base({
+      kind: 'clarify',
+      ruleIds: ['R002', 'gate.guest_dress_photo'],
+      sourceId: 'clothes.evening',
+      replyAr: 'أرسلي صورته، أو اختاري كيف نبدأ.',
+      askAr: null,
+      choiceChipsAr: ['أرسل صورة الفستان', 'أختار لونه', 'أقترحي شنطة وحذاء'],
+      blockers: ['guest_coord_dress'],
+      sessionPatch: {
+        ...(sess ?? {}),
+        occasion: 'wedding',
+        weddingRole: 'guest',
+        guestLookStep: 'coord_dress',
+      },
+    });
+  }
+
+  if (isGuest && picksDressColor) {
+    return base({
+      kind: 'clarify',
+      ruleIds: ['R002', 'gate.guest_dress_color'],
+      sourceId: 'clothes.evening',
+      replyAr: 'وش لون فستانك تقريبًا؟',
+      askAr: null,
+      choiceChipsAr: ['أسود', 'بيج', 'أخضر زمردي', 'لون ثاني'],
+      blockers: ['guest_dress_color'],
+      sessionPatch: {
+        ...(sess ?? {}),
+        occasion: 'wedding',
+        weddingRole: 'guest',
+        guestLookStep: 'coord_dress',
+      },
+    });
+  }
+
+  if (isGuest && picksGuestMakeupHair && !sess?.servicePlace) {
+    return base({
+      kind: 'clarify',
+      ruleIds: ['R002', 'gate.guest_makeup_place'],
+      sourceId: 'beauty.makeup',
+      replyAr: 'وين تبين الخدمة؟',
+      askAr: null,
+      choiceChipsAr: ['في الصالون', 'في البيت', 'في القاعة'],
+      blockers: ['guest_makeup_place'],
+      sessionPatch: {
+        ...(sess ?? {}),
+        occasion: 'wedding',
+        weddingRole: 'guest',
+        guestLookStep: 'makeup_hair',
+        pendingServiceAsk: true,
+        awaitingCity: true,
+      },
+    });
+  }
+
+  // Place chips after makeup/hair goal.
+  if (
+    isGuest &&
+    sess?.guestLookStep === 'makeup_hair' &&
+    /في الصالون|في البيت|في القاعه|في القاعة/.test(signals.normalized)
+  ) {
+    const place: 'home' | 'venue' | 'salon' = /قاع/.test(signals.normalized)
+      ? 'venue'
+      : /بيت|منزل/.test(signals.normalized)
+        ? 'home'
+        : 'salon';
+    const city = signals.city ?? sess?.city ?? null;
+    return base({
+      kind: city ? 'direct_service_search' : 'clarify',
+      ruleIds: ['R002', 'gate.guest_makeup_place_chosen'],
+      sourceId: place === 'home' ? 'hair.home' : 'beauty.makeup',
+      targetIds:
+        place === 'home'
+          ? ['hair.home', 'beauty.makeup']
+          : ['beauty.makeup', 'hair.styling'],
+      lane: 'elegance',
+      kindFilter: 'service',
+      q: place === 'venue' ? 'مكياج قاعة' : place === 'home' ? 'مكياج منزل' : 'مكياج صالون',
+      city,
+      replyAr: city
+        ? `أبحث عن خدمة مكياج/شعر ${place === 'venue' ? 'للقاعة' : place === 'home' ? 'في البيت' : 'في الصالون'} في ${city}.`
+        : `تمام — ${place === 'venue' ? 'في القاعة' : place === 'home' ? 'في البيت' : 'في الصالون'}. في أي مدينة؟`,
+      askAr: null,
+      choiceChipsAr: city ? [] : ['في الرياض', 'في جدة', 'في الدمام', 'مدينة أخرى'],
+      blockers: city ? ['guest_makeup_search'] : ['guest_makeup_need_city'],
+      sessionPatch: {
+        ...(sess ?? {}),
+        occasion: 'wedding',
+        weddingRole: 'guest',
+        guestLookStep: 'makeup_hair',
+        pendingServiceAsk: true,
+        awaitingCity: !city,
+        servicePlace: place === 'salon' ? null : place,
+        kindFilter: 'service',
+        q: place === 'venue' ? 'مكياج قاعة' : place === 'home' ? 'مكياج منزل' : 'مكياج صالون',
+        city,
+      },
     });
   }
 
@@ -1355,6 +1577,7 @@ function base(
     requireFragranceFree: partial.requireFragranceFree ?? false,
     replyAr: partial.replyAr,
     askAr: partial.askAr ?? null,
+    choiceChipsAr: partial.choiceChipsAr ?? [],
     sideSuggestionAr: partial.sideSuggestionAr ?? null,
     sideTargetIds: partial.sideTargetIds ?? [],
     blockers: partial.blockers ?? [],

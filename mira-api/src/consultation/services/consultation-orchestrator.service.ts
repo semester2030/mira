@@ -401,9 +401,19 @@ export class ConsultationOrchestratorService {
         attachmentCues,
       });
       if (discoveryTurn.enabled && this.discovery.shouldHandleAsDiscovery(discoveryTurn.intent)) {
+        const replyAr = (discoveryTurn.intent.replyAr ?? '').trim();
+        const askAr = (discoveryTurn.intent.askAr ?? '').trim();
+        const chips = discoveryTurn.intent.choiceChipsAr ?? [];
+        // One visible question: never echo askAr when chips answer it, or when reply already asks.
+        const askAlreadyInReply =
+          !askAr ||
+          replyAr.includes(askAr) ||
+          (askAr.length > 12 && replyAr.includes(askAr.slice(0, 12)));
+        const askIsMiraQuestion =
+          /[؟?]/.test(askAr) || /^(هل|وش|ما |وين|في أي|أي )/.test(askAr);
         const replyParts = [
-          discoveryTurn.intent.replyAr,
-          discoveryTurn.intent.askAr,
+          replyAr || null,
+          chips.length || askAlreadyInReply || askIsMiraQuestion ? null : askAr || null,
           discoveryTurn.searchFailed ? discoveryTurn.searchErrorAr : null,
         ].filter((s): s is string => !!s && s.trim().length > 0);
         localReply = replyParts.join('\n');
@@ -647,16 +657,51 @@ export class ConsultationOrchestratorService {
   }
 
   private discoveryFollowUps(turn: ConsultantTurnResult): string[] {
-    const ask = turn.intent.askAr?.trim();
+    const chips = (turn.intent.choiceChipsAr ?? [])
+      .map((c) => c.trim())
+      .filter((c) => c.length > 0);
+    if (chips.length) return [...new Set(chips)].slice(0, 4);
+
+    const ask = turn.intent.askAr?.trim() ?? '';
     const out: string[] = [];
-    if (ask) out.push(ask);
+    // Answers/actions only — never put Mira's own question on the chip row.
+    const askIsMiraQuestion =
+      /[؟?]/.test(ask) || /^(هل|وش|ما |وين|في أي|أي )/.test(ask);
+    if (ask && !askIsMiraQuestion) out.push(ask);
+
     const kind = turn.intent.kind;
     const blockers = turn.intent.blockers ?? [];
-    // Advice / clarify: never push buy/link chips — keep free-text field available.
-    if (kind === 'clarify' || blockers.includes('bare_advice_clarify')) {
-      out.push('عن بشرتي');
-      out.push('عن شعري');
-      out.push('أبي منتج معيّن');
+
+    if (blockers.includes('bare_advice_clarify')) {
+      out.push('عن بشرتي', 'عن شعري', 'عندي مناسبة', 'أبي منتج معيّن');
+      return [...new Set(out)].slice(0, 4);
+    }
+    if (blockers.includes('ambiguous_occasion')) {
+      out.push('زفاف', 'خطوبة', 'سهرة', 'مناسبة أخرى');
+      return [...new Set(out)].slice(0, 4);
+    }
+    if (blockers.includes('ambiguous_wedding')) {
+      out.push('أنا العروس', 'أنا ضيفة', 'أرتّب الحفل لشخص آخر');
+      return [...new Set(out)].slice(0, 4);
+    }
+    if (blockers.includes('guest_need_goal')) {
+      out.push('أختار فستان', 'أنسّق فستان عندي', 'أبي مكياج وشعر');
+      return [...new Set(out)].slice(0, 4);
+    }
+    if (blockers.includes('guest_coord_dress')) {
+      out.push('أرسل صورة الفستان', 'أختار لونه', 'أقترحي شنطة وحذاء');
+      return [...new Set(out)].slice(0, 4);
+    }
+    if (blockers.includes('guest_makeup_place') || blockers.includes('guest_makeup_need_city')) {
+      if (blockers.includes('guest_makeup_need_city')) {
+        out.push('في الرياض', 'في جدة', 'في الدمام');
+      } else {
+        out.push('في الصالون', 'في البيت', 'في القاعة');
+      }
+      return [...new Set(out)].slice(0, 4);
+    }
+    if (blockers.includes('ambiguous_hospitality')) {
+      out.push('شراء جاهز', 'حجز مقدم خدمة');
       return [...new Set(out)].slice(0, 4);
     }
     if (kind === 'advice_only' && blockers.includes('skin_explain_not_catalog')) {
@@ -666,13 +711,16 @@ export class ConsultationOrchestratorService {
     }
     if (blockers.includes('home_hair_service') || blockers.includes('venue_artist_service')) {
       if (!turn.intent.city) out.push('في الرياض');
-      out.push('تبين مختصة فردية أو صالون يقدم زيارات؟');
       out.push('مختصة فردية');
       out.push(
         blockers.includes('venue_artist_service')
           ? 'صالون يثبت الحضور للقاعة'
           : 'صالون يقدم زيارات',
       );
+      return [...new Set(out)].slice(0, 4);
+    }
+    if (kind === 'clarify') {
+      // No generic skin/hair fallback for unrelated clarifies.
       return [...new Set(out)].slice(0, 4);
     }
     if (turn.offers.length >= 2) {

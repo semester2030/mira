@@ -48,13 +48,39 @@ import '../../domain/services/fashion_advisor_route_decision.dart';
 import '../../../face_analysis_experience/advisor_context/advisor_context.dart';
 
 const _homeStarterQuestions = [
-  'أبي مرطب بدون عطر',
-  'أبي ترطيب لطيف لروتيني',
-  'عندي مناسبة وأحتاج إطلالة',
+  'عندي مناسبة',
+  'عن بشرتي',
+  'أبحث بصورة',
+  'أبي خدمة',
 ];
 
-const _openDialogueWelcomeAr =
-    'اسأليني بطريقتك، أو أرسلي صورة منتج أو إطلالة أبحث لك عنها.';
+const _openDialogueWelcomeFallbackAr = 'يا هلا فيكِ ✨ وش بخاطرك اليوم؟';
+
+String _openDialogueWelcomeAr() {
+  final raw = FirebaseAuth.instance.currentUser?.displayName?.trim() ?? '';
+  final name = _displayFirstNameAr(raw);
+  if (name == null) return _openDialogueWelcomeFallbackAr;
+  return 'يا هلا $name ✨ وش بخاطرك اليوم؟';
+}
+
+/// Prefer a short first name; never show phone or email as the greeting name.
+String? _displayFirstNameAr(String raw) {
+  final t = raw.trim();
+  if (t.isEmpty) return null;
+  if (t.contains('@')) return null;
+  if (RegExp(r'^\+?\d[\d\s-]{6,}$').hasMatch(t)) return null;
+  final first = t.split(RegExp(r'\s+')).first.trim();
+  if (first.length < 2 || first.length > 24) return null;
+  return first;
+}
+
+bool _chipOpensPhotoPicker(String label) {
+  final n = label.trim();
+  return n == 'أبحث بصورة' ||
+      n == 'أرسل صورة' ||
+      n == 'أرسل صورة الفستان' ||
+      n.startsWith('أرسل صورة');
+}
 
 const _skinStarterQuestions = [
   'لماذا درجة ترطيبي كذا؟',
@@ -126,7 +152,9 @@ class _MiraAdvisorScreenState extends State<MiraAdvisorScreen> {
       if (args?.initialQuestion != null && args!.initialQuestion!.trim().isNotEmpty) {
         _input.text = args.initialQuestion!.trim();
       }
-      if (_followUps.isEmpty) {
+      // Starters only for a fresh empty thread — never overlay moisturizer/home chips
+      // on a resumed conversation that already has turns.
+      if (_followUps.isEmpty && _messages.isEmpty) {
         final outfit = args?.outfitAnalysis != null || args?.outfitAnalysisId != null;
         final home = args == null ||
             (args.skinReport == null &&
@@ -141,13 +169,21 @@ class _MiraAdvisorScreenState extends State<MiraAdvisorScreen> {
                   ? _homeStarterQuestions
                   : _skinStarterQuestions;
         });
+      } else if (_followUps.isEmpty && _messages.isNotEmpty) {
+        final lastAssistant = _messages.lastWhere(
+          (m) => !m.isUser && m.suggestedQuestionsAr.isNotEmpty,
+          orElse: () => _messages.last,
+        );
+        if (!lastAssistant.isUser && lastAssistant.suggestedQuestionsAr.isNotEmpty) {
+          setState(() => _followUps = lastAssistant.suggestedQuestionsAr);
+        }
       }
-      // One-time open-dialogue welcome — does not trap the client in a report scope.
+      // One-time open-dialogue welcome — never repeat on resume/restore.
       if (_openDialogue && _messages.isEmpty && mounted) {
         setState(() {
           _messages.add(
             AdvisorMessage(
-              text: _openDialogueWelcomeAr,
+              text: _openDialogueWelcomeAr(),
               isUser: false,
               at: DateTime.now(),
             ),
@@ -671,6 +707,7 @@ class _MiraAdvisorScreenState extends State<MiraAdvisorScreen> {
           .toList(),
       discoveryOffers: offers,
       discoverySideOffer: side,
+      suggestedQuestionsAr: message.suggestedQuestionsAr,
     );
   }
 
@@ -1237,6 +1274,7 @@ class _MiraAdvisorScreenState extends State<MiraAdvisorScreen> {
             .toList(),
         discoveryOffers: discoveryOffers,
         discoverySideOffer: side,
+        suggestedQuestionsAr: assistant.suggestedQuestionsAr,
       );
       _snapshotId = turn.session.activeSnapshotId ?? _snapshotId;
       _followUps = assistant.suggestedQuestionsAr;
@@ -1266,7 +1304,7 @@ class _MiraAdvisorScreenState extends State<MiraAdvisorScreen> {
       return 'محادثة مفتوحة عن الإطلالات والألوان والعناية. اسألي ميرا مباشرة.';
     }
     if (_openDialogue) {
-      return _openDialogueWelcomeAr;
+      return 'اسأليني بطريقتك، أو اختاري من الاقتراحات.';
     }
     return switch (_focus) {
       _ConsultationFocus.atelier =>
@@ -1493,13 +1531,21 @@ class _MiraAdvisorScreenState extends State<MiraAdvisorScreen> {
                     itemCount: _followUps.length,
                     separatorBuilder: (_, __) => const SizedBox(width: 8),
                     itemBuilder: (context, i) {
+                      final chip = _followUps[i];
                       return ActionChip(
                         label: Text(
-                          _followUps[i],
+                          chip,
                           style: AppTypography.labelSmall,
                         ),
-                        onPressed:
-                            _loading ? null : () => _send(_followUps[i]),
+                        onPressed: _loading
+                            ? null
+                            : () {
+                                if (_chipOpensPhotoPicker(chip)) {
+                                  _pickGalleryImage();
+                                  return;
+                                }
+                                _send(chip);
+                              },
                       );
                     },
                   ),

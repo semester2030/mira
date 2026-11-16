@@ -19,6 +19,7 @@ class AdvisorMessage {
   final bool failed;
   final List<ConsultantDiscoveryOffer> discoveryOffers;
   final ConsultantDiscoveryOffer? discoverySideOffer;
+  final List<String> suggestedQuestionsAr;
 
   const AdvisorMessage({
     required this.text,
@@ -35,6 +36,7 @@ class AdvisorMessage {
     this.failed = false,
     this.discoveryOffers = const [],
     this.discoverySideOffer,
+    this.suggestedQuestionsAr = const [],
   });
 
   AdvisorMessage copyWith({
@@ -52,6 +54,7 @@ class AdvisorMessage {
     bool? failed,
     List<ConsultantDiscoveryOffer>? discoveryOffers,
     ConsultantDiscoveryOffer? discoverySideOffer,
+    List<String>? suggestedQuestionsAr,
   }) {
     return AdvisorMessage(
       text: text ?? this.text,
@@ -68,6 +71,7 @@ class AdvisorMessage {
       failed: failed ?? this.failed,
       discoveryOffers: discoveryOffers ?? this.discoveryOffers,
       discoverySideOffer: discoverySideOffer ?? this.discoverySideOffer,
+      suggestedQuestionsAr: suggestedQuestionsAr ?? this.suggestedQuestionsAr,
     );
   }
 }
