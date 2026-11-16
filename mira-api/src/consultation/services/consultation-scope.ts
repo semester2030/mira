@@ -156,12 +156,21 @@ export function isProductOrCatalogAsk(message: string): boolean {
 export function claimsMiraCatalogProduct(answerAr: string): boolean {
   const text = String(answerAr ?? '');
   if (!text.trim()) return false;
-  const attributesToMira = /من ميرا|منتجات ميرا|كتالوج ميرا|متجر ميرا|في ميرا/.test(text);
-  const looksLikeSku =
+  const attributesToMira = /من ميرا|منتجات ميرا|كتالوج ميرا|متجر ميرا|في ميرا|لدى ميرا|عبر ميرا/.test(
+    text,
+  );
+  if (!attributesToMira) return false;
+  const looksLikeLatinSku =
     /[A-Za-z][A-Za-z0-9]+(?:\s+[A-Za-z][A-Za-z0-9]+){0,4}\s+(Moisturizer|Cream|Serum|Sunscreen|SPF|Cleanser|Toner|Mask)/i.test(
       text,
     ) || /مرطب\s+[«"']?[A-Za-z]/.test(text);
-  return attributesToMira && (looksLikeSku || /حمض الهيالورونيك|مكوّن|مكونات/.test(text));
+  // Arabic invented product + price/ingredient claims (e.g. «مرطب الندى بـ ٤٩ ريال من ميرا»).
+  const looksLikeArabicOffer =
+    /(مرطب|كريم|سيروم|واقي(?:\s*شمس)?|منتج)\s+[\u0600-\u06FFA-Za-z0-9«»"'\-]{2,40}/.test(text) ||
+    /(?:سعر|بـ|بـِ|بمبلغ|ريال|ر\.?\s*س)\s*\d+/.test(text) ||
+    /\d+\s*(?:ريال|ر\.?\s*س)/.test(text) ||
+    /حمض الهيالورونيك|مكوّن|مكونات/.test(text);
+  return looksLikeLatinSku || looksLikeArabicOffer;
 }
 
 export function stripInventedMiraCatalogClaims(answerAr: string): string {

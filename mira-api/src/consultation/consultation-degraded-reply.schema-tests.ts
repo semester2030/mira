@@ -79,4 +79,11 @@ console.log('pass product_ask_detect');
   console.log('pass strip_invented_mira_sku');
 }
 
+{
+  const arInvented = 'جرّبي مرطب الندى من ميرا بسعر ٤٩ ريال مع حمض الهيالورونيك';
+  assert.equal(claimsMiraCatalogProduct(arInvented), true);
+  assert.match(stripInventedMiraCatalogClaims(arInvented), /ما أقدر أتحقق من منتجات ميرا/);
+  console.log('pass strip_invented_arabic_sku_price');
+}
+
 console.log('OK consultation degraded reply schema tests');

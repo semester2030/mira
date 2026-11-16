@@ -4,14 +4,19 @@ import '../../../../core/navigation/app_routes.dart';
 import '../../../../shared/theme/colors.dart';
 import '../../../../shared/theme/typography.dart';
 
-/// Home entry: circular Mira portrait + name, RTL-end aligned under outfit card.
-/// Single tap target opens the same advisor used from skin/outfit results.
+/// Home entry: circular Mira portrait + name under outfit card.
+///
+/// Visual **right** in Arabic (RTL): use [AlignmentDirectional.centerStart]
+/// because in RTL `start` = right edge and `end` = left edge.
 class AskMiraHomeEntry extends StatelessWidget {
   const AskMiraHomeEntry({super.key, this.onOpened});
 
   final VoidCallback? onOpened;
 
   static const double avatarLogicalSize = 80;
+
+  /// Exposed for layout tests — visual right under RTL Directionality.
+  static const AlignmentGeometry homeAlignment = AlignmentDirectional.centerStart;
 
   void _open(BuildContext context) {
     onOpened?.call();
@@ -21,7 +26,7 @@ class AskMiraHomeEntry extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return Align(
-      alignment: AlignmentDirectional.centerEnd,
+      alignment: homeAlignment,
       child: Semantics(
         button: true,
         label: 'اسألي ميرا',
@@ -32,9 +37,10 @@ class AskMiraHomeEntry extends StatelessWidget {
             onTap: () => _open(context),
             borderRadius: BorderRadius.circular(48),
             child: Padding(
+              // In RTL, start = right margin (match analysis cards).
               padding: const EdgeInsetsDirectional.only(
-                start: 8,
-                end: 0,
+                start: 0,
+                end: 8,
                 top: 2,
                 bottom: 2,
               ),
