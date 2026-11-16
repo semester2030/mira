@@ -125,15 +125,48 @@ export function guardScopeAnswer(
   return payload;
 }
 
+export const MIRA_CATALOG_UNAVAILABLE_AR =
+  'ما أقدر أتحقق من منتجات ميرا الآن — بحث الكتالوج غير متاح في هذه البيئة، لذلك لن أنسب أي منتج أو مكوّن أو سعر إلى كتالوج ميرا ولن أعرض رابطًا.';
+
 export function isProductOrCatalogAsk(message: string): boolean {
   const text = message.trim();
   if (/نفس هذا|مثل هذا|زي هذا|هالمنتج|هذا المنتج|نفس المنتج|ابي نفس|أبغى نفس|ابغى نفس/.test(text)) {
+    return true;
+  }
+  // Link / open-product follow-ups after a catalog ask.
+  if (/^(أعطني|اعطني|أبغى|ابغى|أبي|ابي)?\s*(ال)?رابط|رابط (المنتج|ميرا)|افتح(ي)? (المنتج|البطاقة)/.test(text)) {
+    return true;
+  }
+  if (
+    /(أعطني|اعطني|أبغى|ابغى|أبي|ابي|رشّح|رشح|اقترح|اقترحي|ورّيني|وريني)/.test(text) &&
+    /(مرطب|واقي|منتج|كريم|سيروم|من ميرا)/.test(text)
+  ) {
+    return true;
+  }
+  if (/من ميرا/.test(text) && /(مرطب|واقي|منتج|كريم|سيروم|رابط)/.test(text)) {
     return true;
   }
   if (/رشّح|رشح|من ميرا/.test(text) && /أقل من|بأقل من|باقل من|\d|منتج|واقي|مرطب/.test(text)) {
     return true;
   }
   return /اشتري|بشتري|سعر/.test(text) && /منتج|كريم|واقي|مرطب|من ميرا/.test(text);
+}
+
+/** True when answer invents / attributes a Mira catalog SKU without a published offer. */
+export function claimsMiraCatalogProduct(answerAr: string): boolean {
+  const text = String(answerAr ?? '');
+  if (!text.trim()) return false;
+  const attributesToMira = /من ميرا|منتجات ميرا|كتالوج ميرا|متجر ميرا|في ميرا/.test(text);
+  const looksLikeSku =
+    /[A-Za-z][A-Za-z0-9]+(?:\s+[A-Za-z][A-Za-z0-9]+){0,4}\s+(Moisturizer|Cream|Serum|Sunscreen|SPF|Cleanser|Toner|Mask)/i.test(
+      text,
+    ) || /مرطب\s+[«"']?[A-Za-z]/.test(text);
+  return attributesToMira && (looksLikeSku || /حمض الهيالورونيك|مكوّن|مكونات/.test(text));
+}
+
+export function stripInventedMiraCatalogClaims(answerAr: string): string {
+  if (!claimsMiraCatalogProduct(answerAr)) return answerAr;
+  return MIRA_CATALOG_UNAVAILABLE_AR;
 }
 
 /** Prefer numeric score facts; never surface raw English severity tokens. */
@@ -173,8 +206,8 @@ export function buildDegradedAdvisorReply(
       asksSameProduct
         ? 'طلبتِ مطابقة المنتج من الصورة أو «نفس هذا المنتج».'
         : 'فهمتُ طلب ترشيح/بحث منتج من ميرا.',
-      'بحث الكتالوج غير متاح في هذه البيئة حالياً — لذلك لم أنفّذ بحثاً ولن أعرض بطاقة منتج ولن أخمن مطابقاً.',
-      'إذا رغبتِ بإرشاد عناية (ترطيب أو واقي شمس من تقريركِ) اسألي ذلك صراحةً.',
+      MIRA_CATALOG_UNAVAILABLE_AR,
+      'إذا رغبتِ بإرشاد عناية (ترطيب أو واقي شمس من تقريركِ) اسألي ذلك صراحةً — بدون نسبة منتج إلى ميرا.',
     ].join('\n');
   }
 

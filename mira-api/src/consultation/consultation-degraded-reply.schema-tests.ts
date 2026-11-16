@@ -4,9 +4,11 @@
 import assert from 'node:assert/strict';
 import {
   buildDegradedAdvisorReply,
+  claimsMiraCatalogProduct,
   isProductOrCatalogAsk,
   resolveMoistureDisplay,
   severityLabelAr,
+  stripInventedMiraCatalogClaims,
 } from './services/consultation-scope';
 
 assert.equal(severityLabelAr('mild'), 'خفيف');
@@ -42,20 +44,38 @@ console.log('pass severity_ar');
 
 assert.equal(isProductOrCatalogAsk('ابي نفس هذا المنتج'), true);
 assert.equal(isProductOrCatalogAsk('طيب رشّحي لي واحد من ميرا بأقل من ١٠٠ ريال'), true);
+assert.equal(isProductOrCatalogAsk('أعطني مرطب للبشرة من ميرا'), true);
+assert.equal(isProductOrCatalogAsk('أعطني الرابط'), true);
+console.log('pass product_ask_detect');
 
 {
   const same = buildDegradedAdvisorReply('ابي نفس هذا المنتج', [
     { id: 'skin.concern.moisture', labelAr: 'الترطيب', valueAr: 'خفيف' },
   ]);
-  assert.match(same, /بحث الكتالوج غير متاح|لم أنفّذ بحثاً/);
+  assert.match(same, /ما أقدر أتحقق من منتجات ميرا|بحث الكتالوج غير متاح|لم أنفّذ بحثاً/);
   assert.doesNotMatch(same, /مؤشر الترطيب|درجة ترطيب/);
   console.log('pass same_product_not_hydration');
 }
 
 {
   const product = buildDegradedAdvisorReply('رشّحي لي واقي شمس من ميرا بأقل من ١٠٠ ريال', []);
-  assert.match(product, /بحث الكتالوج غير متاح|لم أنفّذ بحثاً/);
+  assert.match(product, /ما أقدر أتحقق من منتجات ميرا|بحث الكتالوج غير متاح|لم أنفّذ بحثاً/);
   console.log('pass product_discovery_off');
+}
+
+{
+  const moistAsk = buildDegradedAdvisorReply('أعطني مرطب للبشرة من ميرا', []);
+  assert.match(moistAsk, /ما أقدر أتحقق من منتجات ميرا/);
+  assert.doesNotMatch(moistAsk, /Hydra|Moisturizer|هيالورونيك/);
+  console.log('pass moisturizer_mira_unavailable');
+}
+
+{
+  const invented =
+    'يمكنك استخدام مرطب "Hydra Boost Moisturizer" من ميرا، فهو يحتوي على حمض الهيالورونيك';
+  assert.equal(claimsMiraCatalogProduct(invented), true);
+  assert.match(stripInventedMiraCatalogClaims(invented), /ما أقدر أتحقق من منتجات ميرا/);
+  console.log('pass strip_invented_mira_sku');
 }
 
 console.log('OK consultation degraded reply schema tests');

@@ -334,6 +334,11 @@ export class ConsultationOrchestratorService {
       if (!scope.allow) localReply = scope.replyAr;
     }
 
+    // Catalog discovery OFF: never invent Mira products via LLM — honest unavailable copy.
+    if (!localReply && !mod.blocked && isProductOrCatalogAsk(dto.message.trim()) && !this.discoveryEnabled()) {
+      localReply = buildDegradedAdvisorReply(dto.message.trim(), loaded.factRegistry);
+    }
+
     // Degraded path: keep basic skin/care replies available when the LLM key is absent.
     if (!localReply && !mod.blocked && !this.llm.isConfigured()) {
       localReply = buildDegradedAdvisorReply(dto.message.trim(), loaded.factRegistry);
@@ -376,6 +381,14 @@ export class ConsultationOrchestratorService {
     };
   }
 
+  private discoveryEnabled(): boolean {
+    return (
+      String(this.config.get('MIRA_CONSULTANT_DISCOVERY_V1', 'false'))
+        .trim()
+        .toLowerCase() === 'true'
+    );
+  }
+
   private async openTurn(
     authUser: RequestUser,
     sessionId: string,
@@ -400,15 +413,22 @@ export class ConsultationOrchestratorService {
     }
     const claim = await this.messages.claimUser({
       sessionId,
-      contentAr: dto.message.trim(),
+      contentAr: dto.message
+        .trim()
+        .replace(/PROVIDER_PIXEL_MASK/g, '')
+        .replace(/PROVIDER_SUBREGION_MASKS/g, '')
+        .replace(/\(\s*\)/g, '')
+        .replace(/[ \t]{2,}/g, ' ')
+        .trim(),
       attachmentIds: dto.attachmentIds,
       clientMessageId: dto.clientMessageId,
     });
     if (claim.status === 'complete') {
+      const assistantDto = this.messages.toDto(claim.assistant);
       return {
         turn: {
           userMessage: this.messages.toDto(claim.user),
-          assistantMessage: this.messages.toDto(claim.assistant),
+          assistantMessage: assistantDto,
           session: this.sessions.toDto(session),
         },
       };
@@ -467,7 +487,10 @@ export class ConsultationOrchestratorService {
         disclaimerAr: '',
       };
     }
-    return this.validator.validate(parsed, factRegistry, userMessage);
+    const validated = this.validator.validate(parsed, factRegistry, userMessage, {
+      discoveryEnabled: this.discoveryEnabled(),
+    });
+    return { ...validated, replySource: validated.replySource ?? 'llm' };
   }
 
   private async resolveAssistantPayload(
@@ -484,17 +507,27 @@ export class ConsultationOrchestratorService {
     streamFactory?: () => AsyncIterable<string>,
   ): Promise<MceAssistantPayloadV1> {
     if (ctx.localReply) {
-      const degraded = !this.llm.isConfigured();
-      return guardScopeAnswer(this.validator.validate({
-        answerAr: ctx.localReply,
-        confidence: 'high',
-        intent: 'general',
-        citedFactIds: [],
-        suggestedQuestionsAr: [],
-        blocked: false,
-        disclaimerAr: '',
-        replySource: degraded ? 'degraded' : 'dialogue',
-      }, ctx.factRegistry, ctx.userRow.contentAr), ctx.userRow.contentAr);
+      const catalogBlocked =
+        isProductOrCatalogAsk(ctx.userRow.contentAr) && !this.discoveryEnabled();
+      const replySource = catalogBlocked || !this.llm.isConfigured() ? 'degraded' : 'dialogue';
+      return guardScopeAnswer(
+        this.validator.validate(
+          {
+            answerAr: ctx.localReply,
+            confidence: 'high',
+            intent: catalogBlocked ? 'product' : 'general',
+            citedFactIds: [],
+            suggestedQuestionsAr: [],
+            blocked: false,
+            disclaimerAr: '',
+            replySource,
+          },
+          ctx.factRegistry,
+          ctx.userRow.contentAr,
+          { discoveryEnabled: this.discoveryEnabled() },
+        ),
+        ctx.userRow.contentAr,
+      );
     }
     if (ctx.mod.blocked && ctx.mod.safeReply) {
       return this.validator.blockedPayload(
@@ -517,7 +550,7 @@ export class ConsultationOrchestratorService {
     }
     if (ctx.cached) {
       return guardScopeAnswer(
-        this.validator.validate(ctx.cached, ctx.factRegistry, ctx.userRow.contentAr),
+        this.validator.validate(ctx.cached, ctx.factRegistry, ctx.userRow.contentAr, { discoveryEnabled: this.discoveryEnabled() }),
         ctx.userRow.contentAr,
       );
     }
@@ -533,8 +566,12 @@ export class ConsultationOrchestratorService {
           (await this.llm.complete(ctx.llmMessages, { signal: ctx.signal })).payload,
           ctx.factRegistry,
           ctx.userRow.contentAr,
+          { discoveryEnabled: this.discoveryEnabled() },
         );
-    const scoped = guardScopeAnswer(payload, ctx.userRow.contentAr);
+    const scoped = guardScopeAnswer(
+      { ...payload, replySource: payload.replySource ?? 'llm' },
+      ctx.userRow.contentAr,
+    );
     if (ctx.faqKey) await this.costGuard.setFaqCache(ctx.faqKey, scoped);
     return scoped;
   }
@@ -674,9 +711,11 @@ export class ConsultationOrchestratorService {
         suggestedQuestionsAr: [],
         blocked: false,
         disclaimerAr: '',
+        replySource: 'commercial',
       },
       facts,
       message,
+      { discoveryEnabled: this.discoveryEnabled() },
     );
   }
 
@@ -740,7 +779,7 @@ export class ConsultationOrchestratorService {
       userMessage: message.trim(),
     });
     const llmResult = await this.llm.complete(llmMessages);
-    const payload = this.validator.validate(llmResult.payload, grounding.factRegistry, message.trim());
+    const payload = this.validator.validate(llmResult.payload, grounding.factRegistry, message.trim(), { discoveryEnabled: this.discoveryEnabled() });
 
     await this.users.writeAuditLog({
       userId: user.id,

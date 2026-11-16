@@ -1,3 +1,5 @@
+import '../../../../core/json/json_as_string.dart';
+
 class ConsultationSession {
   final String id;
   final String? titleAr;
@@ -55,6 +57,11 @@ class ConsultationMessage {
   });
 
   factory ConsultationMessage.fromJson(Map<String, dynamic> json) {
+    final payload = json['payload'];
+    final payloadMap =
+        payload is Map<String, dynamic> ? payload : const <String, dynamic>{};
+    final confidenceRaw = json['confidence'] ?? payloadMap['confidence'];
+    final intentRaw = json['intent'] ?? payloadMap['intent'];
     return ConsultationMessage(
       id: json['id'] as String? ?? '',
       role: json['role'] as String? ?? 'assistant',
@@ -62,8 +69,10 @@ class ConsultationMessage {
       blocked: json['blocked'] as bool? ?? false,
       createdAt: DateTime.tryParse(json['createdAt'] as String? ?? '') ??
           DateTime.now(),
-      confidence: json['confidence'] as String?,
-      intent: json['intent'] as String?,
+      confidence: confidenceRaw == null
+          ? null
+          : JsonAsString.confidenceLabel(confidenceRaw),
+      intent: JsonAsString.optional(intentRaw),
       citedFacts: (json['citedFacts'] as List<dynamic>?)
               ?.map((e) => MceCitedFact.fromJson(e as Map<String, dynamic>))
               .toList() ??
@@ -72,8 +81,10 @@ class ConsultationMessage {
               ?.map((e) => e.toString())
               .toList() ??
           const [],
-      clientMessageId: json['clientMessageId'] as String?,
-      suggestedQuestionsAr: (json['suggestedQuestionsAr'] as List<dynamic>?)
+      clientMessageId: json['clientMessageId'] as String? ??
+          JsonAsString.optional(payloadMap['clientMessageId']),
+      suggestedQuestionsAr: (json['suggestedQuestionsAr'] as List<dynamic>? ??
+              payloadMap['suggestedQuestionsAr'] as List<dynamic>?)
               ?.map((e) => e.toString())
               .toList() ??
           const [],
@@ -98,8 +109,8 @@ class MceCitedFact {
   factory MceCitedFact.fromJson(Map<String, dynamic> json) {
     return MceCitedFact(
       id: json['id'] as String? ?? '',
-      labelAr: json['labelAr'] as String? ?? '',
-      valueAr: json['valueAr'] as String? ?? '',
+      labelAr: JsonAsString.required(json['labelAr']),
+      valueAr: JsonAsString.required(json['valueAr']),
     );
   }
 }

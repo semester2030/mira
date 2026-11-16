@@ -323,8 +323,7 @@ class _SkinInteractiveReportScreenState
         (focus == null
             ? null
             : 'اشرحي لي مؤشر ${MetricPresentationPolicy.publicLabelAr(focus)} '
-                  'بناءً على تقريري، مع العلم أن المواقع المكانية من أقنعة الاكتشاف '
-                  '(${SkinClaimPolicy.mapTruthVerdict}).');
+                  'بناءً على تقريري');
     Navigator.pushNamed(
       context,
       AppRoutes.miraAdvisor,
@@ -709,7 +708,7 @@ class _TransparencyPanel extends StatelessWidget {
       ),
       (
         t: 'خريطة البشرة',
-        s: '${SkinClaimPolicy.mapTruthClass.labelAr}. الحكم الهندسي: ${SkinClaimPolicy.mapTruthVerdict}.',
+        s: '${SkinClaimPolicy.mapTruthClass.labelAr}. الحكم الهندسي: أقنعة اكتشاف المزوّد (دقة مكانية تقديرية).',
       ),
       (
         t: 'الروتين',

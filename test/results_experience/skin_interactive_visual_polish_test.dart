@@ -36,12 +36,10 @@ void main() {
       );
     });
 
-    test('Ask Mira seed references provider masks without fake precision', () {
-      const seed =
-          'اشرحي لي مؤشر الترطيب بناءً على تقريري، مع العلم أن المواقع المكانية من أقنعة الاكتشاف '
-          '(PROVIDER_PIXEL_MASK).';
-      expect(seed.contains('PROVIDER_PIXEL_MASK'), isTrue);
-      expect(seed.contains('أقنعة'), isTrue);
+    test('Ask Mira seed stays consumer Arabic without internal tokens', () {
+      const seed = 'اشرحي لي مؤشر الترطيب بناءً على تقريري';
+      expect(seed.contains('PROVIDER_PIXEL_MASK'), isFalse);
+      expect(seed, contains('بناءً على تقريري'));
       expect(seed.contains('pixel'), isFalse);
     });
   });

@@ -1,13 +1,24 @@
 import { Inject, Injectable } from '@nestjs/common';
 import {
   MceAssistantPayloadV1,
+  MceConfidenceLevel,
   MceContextSnapshotV1,
   MceFactEntry,
 } from '../contracts/mce-context-snapshot.v1';
 import { MceModerationService } from './mce-moderation.service';
 import { MceConsultationIntent } from './mce-intent-classifier.service';
 import { guardCommercialTurn, hasUntrustedAmount, isCommercialClaim, retainTrustedSkinNumbers } from './mce-commercial-guard';
+import { stripInventedMiraCatalogClaims } from './consultation-scope';
 import { dialogueSystemRules, LlmContentPart, recallUserStatements, userContentForModel } from './consultation-dialogue';
+
+function scrubInternalTokens(text: string): string {
+  return String(text ?? '')
+    .replace(/PROVIDER_PIXEL_MASK/g, '')
+    .replace(/PROVIDER_SUBREGION_MASKS/g, '')
+    .replace(/\(\s*\)/g, '')
+    .replace(/[ \t]{2,}/g, ' ')
+    .trim();
+}
 
 @Injectable()
 export class McePromptAssemblerService {
@@ -45,6 +56,7 @@ export class McePromptAssemblerService {
 
     system.push(
       '٦) لا تذكري سعرًا أو توفرًا أو خصمًا أو موعدًا لميرا أو لمقدم خدمة إلا إذا طابق سجل الحقائق التجارية. طلب المستخدمة اختراع رقم ليس مصدرًا.',
+      '٦ب) لا تنسبي منتجًا أو مكوّنًا أو رابطًا إلى كتالوج ميرا ما لم تُزوَّدي بعروض منشورة (offerId). إذا لم تتوفر عروض، قولي إنكِ لا تقدرين التحقق من منتجات ميرا الآن — ولا تخترعي أسماء منتجات.',
       '٧) درجات البشرة في السياق مؤشرات تقديرية من الصورة، وليست قياسًا مخبريًا ولا نسبة دقة مثبتة.',
       '٨) إذا ظهرت في CONTEXT حقائق بشرة أو تاريخ تقرير أو معلومة من المحادثة، استخدميها. لا تقولي إن البيانات غير متوفرة ما دامت هذه الحقائق موجودة.',
       '٩) سؤال إعادة تحليل الصورة لا يعني أن التقرير غائب. إن وُجد نوع البشرة أو مؤشر في CONTEXT فاذكريه، وقولي إن الصورة لا تُعاد تحليلها داخل الاستشارة.',
@@ -65,12 +77,12 @@ export class McePromptAssemblerService {
     ];
 
     for (const h of input.history.slice(-8)) {
-      messages.push({ role: h.role, content: h.content });
+      messages.push({ role: h.role, content: scrubInternalTokens(h.content) });
     }
     messages.push({
       role: 'user',
       content: userContentForModel(
-        input.userMessage,
+        scrubInternalTokens(input.userMessage),
         (input.imageDataUrls ?? []).map((url, index) => ({
           url,
           labelAr: input.imageLabels?.[index] ?? 'صورة مرفقة',
@@ -192,6 +204,22 @@ export class McePromptAssemblerService {
   }
 }
 
+
+function normalizeConfidence(raw: unknown): MceConfidenceLevel {
+  if (raw === 'high' || raw === 'medium' || raw === 'low') return raw;
+  if (typeof raw === 'string') {
+    const v = raw.trim().toLowerCase();
+    if (v === 'high' || v === 'medium' || v === 'low') return v;
+  }
+  if (typeof raw === 'number' && Number.isFinite(raw)) {
+    const score = raw <= 1 ? raw : Math.min(1, Math.max(0, raw / 100));
+    if (score >= 0.75) return 'high';
+    if (score >= 0.45) return 'medium';
+    return 'low';
+  }
+  return 'medium';
+}
+
 @Injectable()
 export class MceResponseValidatorService {
   constructor(@Inject(MceModerationService) private readonly moderation: MceModerationService) {}
@@ -200,11 +228,12 @@ export class MceResponseValidatorService {
     raw: MceAssistantPayloadV1,
     factRegistry: MceFactEntry[],
     userMessage?: string,
+    opts?: { discoveryEnabled?: boolean },
   ): MceAssistantPayloadV1 {
     const allowed = new Set(factRegistry.map((f) => f.id));
     const cited = (raw.citedFactIds ?? []).filter((id) => allowed.has(id));
 
-    let confidence = raw.confidence ?? 'medium';
+    let confidence = normalizeConfidence(raw.confidence);
     const asksPersonalReport = /درجتي|تقريري|نتيجتي|مؤشري/.test(userMessage ?? '');
     if (cited.length === 0 && asksPersonalReport && factRegistry.length > 0) {
       confidence = 'low';
@@ -212,6 +241,10 @@ export class MceResponseValidatorService {
 
     const guarded = guardCommercialTurn(String(raw.answerAr ?? ''), factRegistry, userMessage);
     guarded.text = retainTrustedSkinNumbers(guarded.text, factRegistry);
+    // When catalog discovery is off, never let LLM invent Mira-attributed SKUs.
+    if (!opts?.discoveryEnabled) {
+      guarded.text = stripInventedMiraCatalogClaims(guarded.text);
+    }
     const questions = (Array.isArray(raw.suggestedQuestionsAr) ? raw.suggestedQuestionsAr : [])
       .map(String)
       .filter((question) => !isCommercialClaim(question) && !hasUntrustedAmount(question))
@@ -226,6 +259,7 @@ export class MceResponseValidatorService {
       suggestedQuestionsAr: questions,
       blocked: Boolean(raw.blocked),
       disclaimerAr: needsCareDisclaimer(guarded.text, userMessage) ? this.moderation.disclaimer() : '',
+      replySource: raw.replySource,
     };
   }
 
