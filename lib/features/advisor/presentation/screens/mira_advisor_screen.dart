@@ -2,6 +2,7 @@ import 'dart:io';
 
 import 'package:crypto/crypto.dart';
 import 'package:dio/dio.dart';
+import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import 'package:image_picker/image_picker.dart';
@@ -551,36 +552,10 @@ class _MiraAdvisorScreenState extends State<MiraAdvisorScreen> {
 
   Future<void> _openOrResume() async {
     try {
-      final sessions = await _consultationApi.listSessions();
-      if (sessions.isNotEmpty) {
-        final latest = sessions.first;
-        final history = await _consultationApi.listMessages(latest.id);
-        final loaded = <AdvisorMessage>[];
-        for (final message in history.messages) {
-          final slots = await loadDialogueImages(
-            message.attachmentIds,
-            _consultationApi.downloadAttachment,
-          );
-          loaded.add(_messageFromConsultation(message, imageSlots: slots));
-        }
-        await MiraAdvisorMemoryStore.bindSession(latest.id);
-        await _restoreOffersMemoryFromMessages(loaded, sessionId: latest.id);
-        if (!mounted) return;
-        setState(() {
-          _messages
-            ..clear()
-            ..addAll(loaded);
-          _sessionId = latest.id;
-          _snapshotId = latest.activeSnapshotId;
-          _sessionReady = true;
-          _sessionError = null;
-          _olderCursor = history.nextCursor;
-          if (_messages.isEmpty && latest.suggestedStartersAr.isNotEmpty) {
-            _followUps = latest.suggestedStartersAr;
-          }
-        });
-        return;
-      }
+      // Home «اسألي ميرا» must open a *new* empty thread. Auto-resuming the
+      // latest session buried the named greeting and kept stale chips (e.g.
+      // moisturizer) from an older turn — Fayez saw «no change» on 2026111611
+      // even though the binary already contained the new starters.
       final prefGoal = await _preferenceGoalAr();
       final session = await _consultationApi.createSession(
         statedGoalAr: prefGoal,
@@ -588,14 +563,19 @@ class _MiraAdvisorScreenState extends State<MiraAdvisorScreen> {
       await MiraAdvisorMemoryStore.bindSession(session.id);
       if (!mounted) return;
       setState(() {
+        _messages.clear();
         _sessionId = session.id;
         _snapshotId = session.activeSnapshotId;
         _sessionReady = true;
         _sessionError = null;
-        if (session.suggestedStartersAr.isNotEmpty) {
-          _followUps = session.suggestedStartersAr;
-        }
+        _olderCursor = null;
+        _followUps = _homeStarterQuestions;
       });
+      debugPrint(
+        'MIRA_ASK_OPEN freshSession=${session.id} '
+        'starters=$_homeStarterQuestions '
+        'serverStartersIgnored=${session.suggestedStartersAr}',
+      );
     } catch (e) {
       if (!mounted) return;
       setState(() {
@@ -1283,6 +1263,13 @@ class _MiraAdvisorScreenState extends State<MiraAdvisorScreen> {
       _drafts.clear();
       _input.clear();
     });
+    debugPrint(
+      'MIRA_ASK_CHIPS clientMessageId=${outbound.clientMessageId} '
+      'serverChips=${assistant.suggestedQuestionsAr} '
+      'uiChips=$_followUps '
+      'replySource=${assistant.intent} '
+      'textLen=${assistant.contentAr.length}',
+    );
   }
 
   List<String> _followUps = const [];

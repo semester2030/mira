@@ -12,10 +12,10 @@ import { MceGroundingPipelineService } from './mce-grounding-pipeline.service';
 import { MceContextSnapshotService } from './mce-context-snapshot.service';
 
 const STARTERS_OPEN = [
-  'ما روتين عناية بسيط للبداية؟',
-  'كيف أنسخ إطلالة مناسبة لسهرة؟',
-  'ما الفرق بين مكياج نهاري ومكياج سهرة؟',
-  'كيف أختار حقيبة تناسب فستانًا؟',
+  'عندي مناسبة',
+  'عن بشرتي',
+  'أبحث بصورة',
+  'أبي خدمة',
 ];
 
 const STARTERS_SKIN = [
